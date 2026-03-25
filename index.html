@@ -2,62 +2,56 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>Zelda-like 3D Game</title>
+<title>Zelda-like 3D TPS</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #000; overflow: hidden; }
-#hud {
-  position: fixed; top: 0; left: 0; width: 100%; height: 44px;
-  background: rgba(0,0,0,0.75); display: flex; align-items: center;
-  padding: 0 16px; gap: 24px; z-index: 10; border-bottom: 1px solid #444;
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;overflow:hidden}
+#hud{
+  position:fixed;top:0;left:0;width:100%;height:44px;
+  background:rgba(0,0,0,0.72);display:flex;align-items:center;
+  padding:0 16px;gap:20px;z-index:10;border-bottom:1px solid #444
 }
-#hud .label { color: #aaa; font: 13px monospace; }
-#hearts { display: flex; gap: 4px; }
-.heart { width: 20px; height: 20px; }
-#score-val { color: #f5d020; font: bold 18px monospace; }
-#wave-val  { color: #88aaff; font: 14px monospace; }
-#hint {
-  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
-  color: rgba(255,255,200,0.8); font: 13px monospace; pointer-events: none;
-  transition: opacity 1s;
+#hud .lbl{color:#aaa;font:13px monospace}
+#hearts{display:flex;gap:4px}
+#score-val{color:#f5d020;font:bold 18px monospace}
+#wave-val{color:#88aaff;font:14px monospace}
+#overlay{
+  position:fixed;inset:0;display:none;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.72);z-index:20
 }
-#overlay {
-  position: fixed; inset: 0; display: none; flex-direction: column;
-  align-items: center; justify-content: center;
-  background: rgba(0,0,0,0.72); z-index: 20;
+#overlay h1{color:#e83030;font:bold 56px monospace;margin-bottom:16px}
+#overlay .sub{color:#fff;font:22px monospace;margin-bottom:8px}
+#overlay .rst{color:#aaa;font:15px monospace}
+#hint{
+  position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
+  color:rgba(255,255,200,0.85);font:13px monospace;pointer-events:none;
+  transition:opacity 1.2s
 }
-#overlay h1 { color: #e83030; font: bold 56px monospace; margin-bottom: 20px; }
-#overlay .sub { color: #fff; font: 24px monospace; margin-bottom: 10px; }
-#overlay .restart { color: #aaa; font: 16px monospace; }
-#canvas3d { display: block; }
 </style>
 </head>
 <body>
-
 <div id="hud">
-  <span class="label">HP</span>
-  <div id="hearts"></div>
-  <span class="label">SCORE</span>
-  <span id="score-val">0</span>
-  <span class="label" style="margin-left:auto">WAVE</span>
-  <span id="wave-val">1</span>
+  <span class="lbl">HP</span><div id="hearts"></div>
+  <span class="lbl">SCORE</span><span id="score-val">0</span>
+  <span class="lbl" style="margin-left:auto">WAVE</span><span id="wave-val">1</span>
 </div>
-
 <div id="overlay">
-  <h1 id="overlay-title">GAME OVER</h1>
-  <div class="sub" id="overlay-score"></div>
-  <div class="restart">Press SPACE to restart</div>
+  <h1 id="ov-title">GAME OVER</h1>
+  <div class="sub" id="ov-score"></div>
+  <div class="rst">Press SPACE to restart</div>
 </div>
-
 <div id="hint">WASD / 矢印キーで移動 &nbsp; SPACE で剣攻撃</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-// ─── MAP ─────────────────────────────────────────────────────────────────────
-const T_GRASS=0, T_WALL=1, T_WATER=2;
-const COLS=20, ROWS=15, TS=2; // tile size in 3D units
+// ═══════════════════════════════════════════════════
+//  MAP
+// ═══════════════════════════════════════════════════
+const T_GRASS=0,T_WALL=1,T_WATER=2;
+const COLS=20,ROWS=15,TS=3;
 
-const mapData=[
+const MAP=[
   [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
   [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
   [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
@@ -75,395 +69,399 @@ const mapData=[
   [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 ];
 
-function tileAt(tx,ty){ return (ty>=0&&ty<ROWS&&tx>=0&&tx<COLS)?mapData[ty][tx]:T_WALL; }
-function walkable(wx,wz){
-  const tx=Math.floor(wx/TS), tz=Math.floor(wz/TS);
-  return tileAt(tx,tz)===T_GRASS;
+function tileAt(tx,tz){
+  if(tx<0||tz<0||tx>=COLS||tz>=ROWS) return T_WALL;
+  return MAP[tz][tx];
 }
-function walkableRect(wx,wz,hw){
-  return walkable(wx-hw,wz-hw)&&walkable(wx+hw,wz-hw)&&
-         walkable(wx-hw,wz+hw)&&walkable(wx+hw,wz+hw);
+function passable(wx,wz){
+  return tileAt(Math.floor(wx/TS),Math.floor(wz/TS))===T_GRASS;
+}
+function passableCircle(wx,wz,r){
+  return passable(wx-r,wz)&&passable(wx+r,wz)&&
+         passable(wx,wz-r)&&passable(wx,wz+r);
 }
 
-// ─── THREE.JS SETUP ──────────────────────────────────────────────────────────
-const W=window.innerWidth, H=window.innerHeight;
+// ═══════════════════════════════════════════════════
+//  THREE SETUP
+// ═══════════════════════════════════════════════════
 const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(W,H);
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.domElement.id='canvas3d';
 document.body.appendChild(renderer.domElement);
-
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x111a11);
-scene.fog=new THREE.Fog(0x111a11,30,60);
-
-const camera=new THREE.PerspectiveCamera(55,W/H,0.1,100);
-camera.position.set(0,18,10);
-camera.lookAt(0,0,0);
-
 window.addEventListener('resize',()=>{
-  renderer.setSize(window.innerWidth,window.innerHeight);
-  camera.aspect=window.innerWidth/window.innerHeight;
-  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+  cam.aspect=innerWidth/innerHeight;
+  cam.updateProjectionMatrix();
 });
 
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x0a120a);
+scene.fog=new THREE.Fog(0x0a120a,22,45);
+
+const cam=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,0.1,80);
+
 // Lights
-const ambient=new THREE.AmbientLight(0x334433,1.2);
-scene.add(ambient);
-const sun=new THREE.DirectionalLight(0xfff5cc,1.6);
-sun.position.set(10,20,10);
+scene.add(new THREE.AmbientLight(0x334433,1.4));
+const sun=new THREE.DirectionalLight(0xfff5cc,1.8);
+sun.position.set(15,25,10);
 sun.castShadow=true;
 sun.shadow.mapSize.set(2048,2048);
-sun.shadow.camera.left=-25; sun.shadow.camera.right=25;
-sun.shadow.camera.top=25;  sun.shadow.camera.bottom=-25;
-sun.shadow.camera.near=1;  sun.shadow.camera.far=60;
+sun.shadow.camera.left=sun.shadow.camera.bottom=-30;
+sun.shadow.camera.right=sun.shadow.camera.top=30;
+sun.shadow.camera.near=1; sun.shadow.camera.far=70;
 scene.add(sun);
-const fill=new THREE.DirectionalLight(0x3355aa,0.4);
-fill.position.set(-8,6,-6);
-scene.add(fill);
+scene.add(Object.assign(new THREE.DirectionalLight(0x2244aa,0.5),{position:new THREE.Vector3(-8,5,-8)}));
 
-// ─── MAP GEOMETRY ────────────────────────────────────────────────────────────
-const matGrass=new THREE.MeshLambertMaterial({color:0x3a7a2a});
-const matGrass2=new THREE.MeshLambertMaterial({color:0x2d6020});
-const matWall=new THREE.MeshLambertMaterial({color:0x777070});
-const matWallTop=new THREE.MeshLambertMaterial({color:0x999090});
-const matWater=new THREE.MeshLambertMaterial({color:0x1a5599,transparent:true,opacity:0.85});
+// ═══════════════════════════════════════════════════
+//  MAP BUILD
+// ═══════════════════════════════════════════════════
+const MAT={
+  g1:new THREE.MeshLambertMaterial({color:0x3a7a2a}),
+  g2:new THREE.MeshLambertMaterial({color:0x2d6020}),
+  wall:new THREE.MeshLambertMaterial({color:0x7a7070}),
+  wallTop:new THREE.MeshLambertMaterial({color:0x9a9090}),
+  water:new THREE.MeshLambertMaterial({color:0x1a5599,transparent:true,opacity:0.82}),
+  waterFloor:new THREE.MeshLambertMaterial({color:0x102244}),
+};
 
-function buildMap(){
-  const floorGeo=new THREE.BoxGeometry(TS,0.2,TS);
-  const wallGeo=new THREE.BoxGeometry(TS,1.6,TS);
-  const waterGeo=new THREE.BoxGeometry(TS,0.15,TS);
-
+(function buildMap(){
+  const GF=new THREE.BoxGeometry(TS,0.25,TS);
+  const WG=new THREE.BoxGeometry(TS,2.4,TS);
+  const WA=new THREE.BoxGeometry(TS,0.22,TS);
+  const WT=new THREE.BoxGeometry(TS,0.2,TS);
   for(let tz=0;tz<ROWS;tz++){
     for(let tx=0;tx<COLS;tx++){
-      const t=mapData[tz][tx];
-      const wx=tx*TS+TS/2, wz=tz*TS+TS/2;
+      const t=MAP[tz][tx];
+      const cx=tx*TS+TS/2, cz=tz*TS+TS/2;
       if(t===T_GRASS){
-        const m=new THREE.Mesh(floorGeo, (tx+tz)%2===0?matGrass:matGrass2);
-        m.position.set(wx,0,wz); m.receiveShadow=true;
-        scene.add(m);
+        const m=new THREE.Mesh(GF,(tx+tz)%2===0?MAT.g1:MAT.g2);
+        m.position.set(cx,0,cz); m.receiveShadow=true; scene.add(m);
       } else if(t===T_WALL){
-        // floor
-        const f=new THREE.Mesh(floorGeo,matWall);
-        f.position.set(wx,-0.1,wz); f.receiveShadow=true; scene.add(f);
-        // wall body
-        const w=new THREE.Mesh(wallGeo,matWall);
-        w.position.set(wx,0.9,wz); w.castShadow=true; w.receiveShadow=true; scene.add(w);
-        // top cap
-        const cap=new THREE.Mesh(new THREE.BoxGeometry(TS,0.2,TS),matWallTop);
-        cap.position.set(wx,1.8,wz); cap.castShadow=true; scene.add(cap);
+        const f=new THREE.Mesh(GF,MAT.wall);
+        f.position.set(cx,0,cz); scene.add(f);
+        const w=new THREE.Mesh(WG,MAT.wall);
+        w.position.set(cx,1.45,cz); w.castShadow=true; w.receiveShadow=true; scene.add(w);
+        const cap=new THREE.Mesh(WT,MAT.wallTop);
+        cap.position.set(cx,2.66,cz); cap.castShadow=true; scene.add(cap);
       } else if(t===T_WATER){
-        const f=new THREE.Mesh(floorGeo,matGrass);
-        f.position.set(wx,-0.1,wz); f.receiveShadow=true; scene.add(f);
-        const wt=new THREE.Mesh(waterGeo,matWater);
-        wt.position.set(wx,0.05,wz); scene.add(wt);
+        const f=new THREE.Mesh(GF,MAT.waterFloor);
+        f.position.set(cx,-0.1,cz); scene.add(f);
+        const wt=new THREE.Mesh(WA,MAT.water);
+        wt.position.set(cx,0.08,cz); scene.add(wt);
       }
     }
   }
-}
-buildMap();
+})();
 
-// ─── PLAYER ──────────────────────────────────────────────────────────────────
-function makePlayerMesh(){
+// ═══════════════════════════════════════════════════
+//  PLAYER MESH
+// ═══════════════════════════════════════════════════
+function buildPlayer(){
   const g=new THREE.Group();
-
-  // Body (tunic)
-  const body=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.65,0.35),
-    new THREE.MeshLambertMaterial({color:0x2d9e47}));
-  body.position.y=0.55; body.castShadow=true; g.add(body);
-
-  // Belt
-  const belt=new THREE.Mesh(new THREE.BoxGeometry(0.57,0.1,0.37),
-    new THREE.MeshLambertMaterial({color:0x8b5a00}));
-  belt.position.y=0.32; g.add(belt);
-
+  const add=(geo,color,px,py,pz,cast=true)=>{
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color}));
+    m.position.set(px,py,pz);
+    if(cast) m.castShadow=true;
+    g.add(m); return m;
+  };
   // Legs
-  const legMat=new THREE.MeshLambertMaterial({color:0x1a4a1a});
-  const legL=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.32,0.28),legMat);
-  legL.position.set(-0.13,0.16,0); legL.castShadow=true; g.add(legL);
-  const legR=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.32,0.28),legMat);
-  legR.position.set(0.13,0.16,0); legR.castShadow=true; g.add(legR);
-
+  const lL=add(new THREE.BoxGeometry(0.22,0.38,0.25),0x1a4a1a,-0.13,0.19,0);
+  const lR=add(new THREE.BoxGeometry(0.22,0.38,0.25),0x1a4a1a, 0.13,0.19,0);
+  // Feet
+  add(new THREE.BoxGeometry(0.2,0.1,0.28),0x3a2a10,-0.13,0.05,0.02);
+  add(new THREE.BoxGeometry(0.2,0.1,0.28),0x3a2a10, 0.13,0.05,0.02);
+  // Body
+  add(new THREE.BoxGeometry(0.58,0.6,0.34),0x2d9e47,0,0.67,0);
+  // Belt
+  add(new THREE.BoxGeometry(0.60,0.1,0.36),0x8b5a00,0,0.43,0,false);
+  // Arms
+  const aL=add(new THREE.BoxGeometry(0.2,0.42,0.22),0x2d9e47,-0.39,0.67,0);
+  const aR=add(new THREE.BoxGeometry(0.2,0.42,0.22),0x2d9e47, 0.39,0.67,0);
+  // Hands
+  add(new THREE.BoxGeometry(0.18,0.14,0.2),0xf5c87a,-0.39,0.47,0);
+  add(new THREE.BoxGeometry(0.18,0.14,0.2),0xf5c87a, 0.39,0.47,0);
   // Head
-  const skinMat=new THREE.MeshLambertMaterial({color:0xf5c87a});
-  const head=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.48,0.44),skinMat);
-  head.position.y=1.07; head.castShadow=true; g.add(head);
-
-  // Hat
-  const hatBrim=new THREE.Mesh(new THREE.BoxGeometry(0.58,0.08,0.52),
-    new THREE.MeshLambertMaterial({color:0x1a6b2e}));
-  hatBrim.position.y=1.32; g.add(hatBrim);
-  const hatTop=new THREE.Mesh(new THREE.ConeGeometry(0.26,0.5,4),
-    new THREE.MeshLambertMaterial({color:0x1a6b2e}));
-  hatTop.position.y=1.62; hatTop.rotation.y=Math.PI/4; g.add(hatTop);
-
+  add(new THREE.BoxGeometry(0.52,0.5,0.46),0xf5c87a,0,1.21,0);
+  // Hat brim
+  add(new THREE.BoxGeometry(0.62,0.09,0.56),0x1a6b2e,0,1.48,0,false);
+  // Hat cone (approximated with box)
+  add(new THREE.BoxGeometry(0.42,0.55,0.38),0x1a6b2e,0,1.78,0);
   // Eyes
-  const eyeMat=new THREE.MeshBasicMaterial({color:0x111111});
-  const eyeL=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.08,0.05),eyeMat);
-  eyeL.position.set(-0.13,1.08,0.22); g.add(eyeL);
-  const eyeR=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.08,0.05),eyeMat);
-  eyeR.position.set(0.13,1.08,0.22); g.add(eyeR);
+  const eyeM=new THREE.MeshBasicMaterial({color:0x111111});
+  const eL=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.08,0.05),eyeM);
+  eL.position.set(-0.14,1.22,0.23); g.add(eL);
+  const eR=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.08,0.05),eyeM);
+  eR.position.set(0.14,1.22,0.23); g.add(eR);
 
-  // Sword group
-  const swordGroup=new THREE.Group();
-  swordGroup.position.set(0.4,0.7,0);
-
-  const blade=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.9,0.06),
-    new THREE.MeshLambertMaterial({color:0xd0d8f0}));
-  blade.position.y=0.5; swordGroup.add(blade);
-
-  const guard=new THREE.Mesh(new THREE.BoxGeometry(0.34,0.09,0.12),
-    new THREE.MeshLambertMaterial({color:0xc8a020}));
-  guard.position.y=0.06; swordGroup.add(guard);
-
-  const handle=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.24,0.09),
+  // Sword group (right arm child)
+  const sg=new THREE.Group();
+  sg.position.set(0.1,0.46,0);
+  // handle
+  const hn=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.3,0.08),
     new THREE.MeshLambertMaterial({color:0x8b4513}));
-  handle.position.y=-0.12; swordGroup.add(handle);
+  hn.position.y=0.15; sg.add(hn);
+  // guard
+  const gd=new THREE.Mesh(new THREE.BoxGeometry(0.34,0.1,0.12),
+    new THREE.MeshLambertMaterial({color:0xc8a020}));
+  gd.position.y=0.33; sg.add(gd);
+  // blade
+  const bl=new THREE.Mesh(new THREE.BoxGeometry(0.07,0.85,0.06),
+    new THREE.MeshLambertMaterial({color:0xd8e0f8}));
+  bl.position.y=0.77; sg.add(bl);
+  // gleam
+  const gl=new THREE.Mesh(new THREE.BoxGeometry(0.03,0.7,0.03),
+    new THREE.MeshBasicMaterial({color:0xffffff}));
+  gl.position.set(0.02,0.78,0); sg.add(gl);
+  sg.visible=false;
+  aR.add(sg);
 
-  swordGroup.visible=false;
-  g.add(swordGroup);
-  g.userData.swordGroup=swordGroup;
-  g.userData.legL=legL;
-  g.userData.legR=legR;
-
+  g.userData={lL,lR,aL,aR,sg};
   return g;
 }
-
-const playerMesh=makePlayerMesh();
+const playerMesh=buildPlayer();
 scene.add(playerMesh);
 
-const player={
-  x:3*TS+TS/2, z:3*TS+TS/2,
-  w:0.4, spd:4,
-  hp:5, maxHp:5,
-  facing:0, // angle around Y
-  invincible:0,
-  sword:{active:false,timer:0,duration:0.35,angle:0,arcWidth:Math.PI*0.75},
-  animT:0,
-};
-
-// ─── ENEMIES ─────────────────────────────────────────────────────────────────
-function makeSlimeMesh(color){
+// ═══════════════════════════════════════════════════
+//  SLIME MESH
+// ═══════════════════════════════════════════════════
+const ECOLS=[0x3aaa50,0x4ab060,0x55bb44,0x2a9940,0x60cc44];
+function buildSlime(color){
   const g=new THREE.Group();
   const mat=new THREE.MeshLambertMaterial({color});
-  const body=new THREE.Mesh(new THREE.SphereGeometry(0.42,12,8),mat);
-  body.scale.y=0.75; body.castShadow=true; g.add(body);
-
-  const eyeMat=new THREE.MeshBasicMaterial({color:0x111111});
-  const eyeL=new THREE.Mesh(new THREE.SphereGeometry(0.08,6,6),eyeMat);
-  eyeL.position.set(-0.16,0.16,0.32); g.add(eyeL);
-  const eyeR=new THREE.Mesh(new THREE.SphereGeometry(0.08,6,6),eyeMat);
-  eyeR.position.set(0.16,0.16,0.32); g.add(eyeR);
-
-  const shineMat=new THREE.MeshBasicMaterial({color:0xffffff});
-  const shine=new THREE.Mesh(new THREE.SphereGeometry(0.06,4,4),shineMat);
-  shine.position.set(-0.08,0.28,0.36); g.add(shine);
-
-  g.userData.body=body;
+  const body=new THREE.Mesh(new THREE.SphereGeometry(0.48,10,8),mat);
+  body.scale.y=0.7; body.castShadow=true; g.add(body);
+  const eM=new THREE.MeshBasicMaterial({color:0x111111});
+  const sM=new THREE.MeshBasicMaterial({color:0xffffff});
+  for(const[ox,oy,oz]of[[-0.18,0.14,0.36],[0.18,0.14,0.36]]){
+    const e=new THREE.Mesh(new THREE.SphereGeometry(0.09,6,6),eM);
+    e.position.set(ox,oy,oz); g.add(e);
+    const s=new THREE.Mesh(new THREE.SphereGeometry(0.04,4,4),sM);
+    s.position.set(ox+0.04,oy+0.04,oz+0.05); g.add(s);
+  }
+  // mouth
+  const mth=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.05,0.05),
+    new THREE.MeshBasicMaterial({color:0x111111}));
+  mth.position.set(0,-0.06,0.42); g.add(mth);
+  g.userData.body=body; g.userData.mat=mat;
   return g;
 }
 
-const spawnPositions=[
-  [15,2],[17,2],[16,5],[12,7],[5,9],[8,11],[14,11],[17,10],[3,12],[11,2],
-  [6,6],[18,6],[2,7],[13,4],
+// ═══════════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════════
+const SPAWN_POS=[
+  [15,2],[17,2],[16,5],[12,7],[5,9],[8,11],
+  [14,11],[17,10],[3,12],[11,2],[6,6],[18,6],[2,7],[13,4]
 ];
-const enemyColors=[0x3aaa50,0x4ab060,0x55bb44,0x2a9940];
 
-let enemies=[];
+// Player starts at tile (2,2) → world (7.5, 7.5) with TS=3 → (2*3+1.5=7.5)
+// mapData[2][2]=0 (grass) ✓
+const PSTART={x:2*TS+TS/2, z:2*TS+TS/2};
+
+let plr={
+  x:PSTART.x, z:PSTART.z,
+  vx:0, vz:0,
+  facing:0, // radians, rotation around Y
+  hp:5, maxHp:5,
+  invT:0,
+  sword:{active:false,t:0,dur:0.32,baseAngle:0},
+  animT:0,
+};
+let enemies=[], particles=[];
+let score=0, wave=1, gameState='play';
+
+// Camera
+let camYaw=0; // tracks player facing for smooth follow
+const CAM_DIST=7, CAM_H=4.5, CAM_LOOK_H=1.0;
+
 function spawnWave(w){
+  enemies.forEach(e=>scene.remove(e.mesh));
   enemies=[];
-  const count=Math.min(8+w*2,spawnPositions.length);
-  for(let i=0;i<count;i++){
-    const [tx,tz]=spawnPositions[i];
-    if(mapData[tz][tx]!==T_GRASS) continue;
-    const color=enemyColors[i%enemyColors.length];
-    const mesh=makeSlimeMesh(color);
+  const n=Math.min(8+w*2, SPAWN_POS.length);
+  for(let i=0;i<n;i++){
+    const[tx,tz]=SPAWN_POS[i];
+    if(MAP[tz][tx]!==T_GRASS) continue;
+    const mesh=buildSlime(ECOLS[i%ECOLS.length]);
     const ex=tx*TS+TS/2, ez=tz*TS+TS/2;
-    mesh.position.set(ex,0.32,ez);
+    mesh.position.set(ex,0.34,ez);
     scene.add(mesh);
-    enemies.push({x:ex,z:ez,mesh,hp:2,spd:1.2+Math.random()*0.5,
-      hurtT:0,deathT:0,dead:false,bobOffset:Math.random()*Math.PI*2});
+    enemies.push({x:ex,z:ez,mesh,hp:2,spd:1.4+Math.random()*0.5,
+      hurtT:0,dead:false,deathT:0,bob:Math.random()*Math.PI*2,
+      colIdx:i%ECOLS.length});
   }
 }
 
-// ─── PARTICLES ───────────────────────────────────────────────────────────────
-const particles=[];
-function spawnParticles(x,y,z,color,count){
-  const mat=new THREE.MeshBasicMaterial({color});
-  const geo=new THREE.SphereGeometry(0.07,4,4);
-  for(let i=0;i<count;i++){
-    const m=new THREE.Mesh(geo,mat.clone());
-    m.position.set(x,y,z);
-    const a=Math.random()*Math.PI*2, el=Math.random()*Math.PI-Math.PI/2;
-    const sp=2+Math.random()*3;
-    scene.add(m);
-    particles.push({mesh:m,vx:Math.cos(el)*Math.cos(a)*sp,vy:Math.abs(Math.sin(el))*sp+1,
-      vz:Math.cos(el)*Math.sin(a)*sp,life:1,maxLife:1,t:0,dt:0.03+Math.random()*0.02});
-  }
+function resetGame(){
+  plr.x=PSTART.x; plr.z=PSTART.z;
+  plr.vx=0; plr.vz=0;
+  plr.facing=0; plr.hp=plr.maxHp;
+  plr.invT=0; plr.sword.active=false;
+  particles.forEach(p=>scene.remove(p.mesh));
+  particles=[];
+  camYaw=0;
+  score=0; wave=1;
+  spawnWave(1);
+  document.getElementById('overlay').style.display='none';
+  updateHUD();
+  gameState='play';
 }
 
-// ─── SWORD TRAIL ─────────────────────────────────────────────────────────────
-let swordTrail=null;
-function clearTrail(){
-  if(swordTrail){scene.remove(swordTrail);swordTrail=null;}
-}
-
-// ─── GAME STATE ──────────────────────────────────────────────────────────────
-let state='play', score=0, wave=1;
-const hintEl=document.getElementById('hint');
-const overlayEl=document.getElementById('overlay');
-const overlay=document.getElementById('overlay');
-const overlayTitle=document.getElementById('overlay-title');
-const overlayScore=document.getElementById('overlay-score');
-
+// ═══════════════════════════════════════════════════
+//  HUD
+// ═══════════════════════════════════════════════════
 function updateHUD(){
   document.getElementById('score-val').textContent=score;
   document.getElementById('wave-val').textContent=wave;
-  const heartsEl=document.getElementById('hearts');
-  heartsEl.innerHTML='';
-  for(let i=0;i<player.maxHp;i++){
-    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-    svg.setAttribute('viewBox','0 0 20 20');
-    svg.setAttribute('width','20'); svg.setAttribute('height','20');
-    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d','M10 17 C10 17 2 11 2 6 A4 4 0 0 1 10 4.5 A4 4 0 0 1 18 6 C18 11 10 17 10 17Z');
-    path.setAttribute('fill', i<player.hp ? '#e83030' : '#444');
-    svg.appendChild(path);
-    heartsEl.appendChild(svg);
+  const hc=document.getElementById('hearts');
+  hc.innerHTML='';
+  for(let i=0;i<plr.maxHp;i++){
+    const s=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    s.setAttribute('viewBox','0 0 20 20'); s.setAttribute('width','20'); s.setAttribute('height','20');
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d','M10 17 C10 17 2 11 2 6 A4 4 0 0 1 10 4.2 A4 4 0 0 1 18 6 C18 11 10 17 10 17Z');
+    p.setAttribute('fill',i<plr.hp?'#e83030':'#444');
+    s.appendChild(p); hc.appendChild(s);
   }
 }
 
-function showOverlay(title,sc){
-  overlayTitle.textContent=title;
-  overlayScore.textContent=`SCORE: ${sc}`;
-  overlay.style.display='flex';
-}
-function hideOverlay(){ overlay.style.display='none'; }
-
-// ─── INPUT ───────────────────────────────────────────────────────────────────
-const keys={};
-document.addEventListener('keydown',e=>{
-  keys[e.code]=true;
+// ═══════════════════════════════════════════════════
+//  INPUT
+// ═══════════════════════════════════════════════════
+const K={};
+addEventListener('keydown',e=>{
+  K[e.code]=true;
   if(e.code==='Space'){
     e.preventDefault();
-    if(state==='play'&&!player.sword.active){
-      player.sword.active=true;
-      player.sword.timer=0;
-      player.sword.angle=player.facing-player.sword.arcWidth/2;
+    if(gameState==='play'&&!plr.sword.active){
+      plr.sword.active=true;
+      plr.sword.t=0;
+      plr.sword.baseAngle=plr.facing;
     }
-    if(state==='gameover'||state==='clear') resetGame();
+    if(gameState!=='play') resetGame();
   }
 });
-document.addEventListener('keyup',e=>{ keys[e.code]=false; });
+addEventListener('keyup',e=>{ K[e.code]=false; });
 
-// ─── RESET ───────────────────────────────────────────────────────────────────
-function resetGame(){
-  player.x=3*TS+TS/2; player.z=3*TS+TS/2;
-  player.hp=player.maxHp; player.invincible=0;
-  player.sword.active=false;
-  score=0; wave=1;
-  enemies.forEach(e=>scene.remove(e.mesh));
-  particles.forEach(p=>scene.remove(p.mesh));
-  particles.length=0;
-  clearTrail();
-  spawnWave(wave);
-  hideOverlay();
-  updateHUD();
-  state='play';
+// ═══════════════════════════════════════════════════
+//  PARTICLES
+// ═══════════════════════════════════════════════════
+function burst(x,y,z,color,n){
+  const geo=new THREE.SphereGeometry(0.07,4,4);
+  for(let i=0;i<n;i++){
+    const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:1});
+    const m=new THREE.Mesh(geo,mat);
+    m.position.set(x,y,z);
+    const a=Math.random()*Math.PI*2, el=(Math.random()-0.3)*Math.PI;
+    const sp=2+Math.random()*3;
+    scene.add(m);
+    particles.push({mesh:m,vx:Math.cos(el)*Math.cos(a)*sp,
+      vy:Math.abs(Math.sin(el))*sp*1.4+0.5,vz:Math.cos(el)*Math.sin(a)*sp,
+      t:0,dt:0.025+Math.random()*0.02});
+  }
 }
 
-// ─── COLLISION ───────────────────────────────────────────────────────────────
-function circleRect(cx,cz,cr, rx,rz,rw,rh){
-  const nx=Math.max(rx,Math.min(cx,rx+rw));
-  const nz=Math.max(rz,Math.min(cz,rz+rh));
-  const dx=cx-nx, dz=cz-nz;
-  return dx*dx+dz*dz<cr*cr;
+// ═══════════════════════════════════════════════════
+//  LERP ANGLE
+// ═══════════════════════════════════════════════════
+function lerpAngle(a,b,t){
+  let d=((b-a+Math.PI*3)%(Math.PI*2))-Math.PI;
+  return a+d*Math.min(t,1);
 }
 
-// ─── UPDATE LOOP ─────────────────────────────────────────────────────────────
-let lastTime=0;
-let hintFadeStart=3;
+// ═══════════════════════════════════════════════════
+//  UPDATE
+// ═══════════════════════════════════════════════════
+let hintT=4;
+const hintEl=document.getElementById('hint');
 
 function update(dt){
-  if(state!=='play') return;
+  if(gameState!=='play') return;
 
-  hintFadeStart-=dt;
-  if(hintFadeStart<0&&hintFadeStart>-1.5)
-    hintEl.style.opacity=((hintFadeStart+1.5)/1.5).toString();
-  else if(hintFadeStart<=-1.5) hintEl.style.opacity='0';
+  // Hint fade
+  hintT-=dt;
+  if(hintT<1.5&&hintT>0) hintEl.style.opacity=(hintT/1.5).toString();
+  else if(hintT<=0) hintEl.style.opacity='0';
 
-  // ── Player movement
+  // ── Movement (camera-relative)
+  // Camera forward direction (flat)
+  const cfx=Math.sin(camYaw), cfz=Math.cos(camYaw);
+  const crx=Math.sin(camYaw+Math.PI/2), crz=Math.cos(camYaw+Math.PI/2);
   let mx=0,mz=0;
-  if(keys['ArrowLeft'] ||keys['KeyA']) mx-=1;
-  if(keys['ArrowRight']||keys['KeyD']) mx+=1;
-  if(keys['ArrowUp']   ||keys['KeyW']) mz-=1;
-  if(keys['ArrowDown'] ||keys['KeyS']) mz+=1;
+  if(K['ArrowUp']   ||K['KeyW']){ mx+=cfx; mz+=cfz; }
+  if(K['ArrowDown'] ||K['KeyS']){ mx-=cfx; mz-=cfz; }
+  if(K['ArrowLeft'] ||K['KeyA']){ mx-=crx; mz-=crz; }
+  if(K['ArrowRight']||K['KeyD']){ mx+=crx; mz+=crz; }
 
-  const moving=(mx!==0||mz!==0);
+  const moving=mx!==0||mz!==0;
   if(moving){
     const len=Math.sqrt(mx*mx+mz*mz);
-    mx=mx/len*player.spd*dt; mz=mz/len*player.spd*dt;
-    player.facing=Math.atan2(mx,mz);
-    if(walkableRect(player.x+mx,player.z,player.w)) player.x+=mx;
-    if(walkableRect(player.x,player.z+mz,player.w)) player.z+=mz;
+    const spd=4.5;
+    const dx=mx/len*spd*dt;
+    const dz=mz/len*spd*dt;
+    plr.facing=Math.atan2(mx/len,mz/len);
+    if(passableCircle(plr.x+dx,plr.z,0.38)) plr.x+=dx;
+    if(passableCircle(plr.x,plr.z+dz,0.38)) plr.z+=dz;
   }
 
-  // Animate player
-  player.animT+=dt*(moving?8:2);
-  const legSwing=moving?Math.sin(player.animT)*0.35:0;
-  playerMesh.userData.legL.rotation.x= legSwing;
-  playerMesh.userData.legR.rotation.x=-legSwing;
-  playerMesh.position.set(player.x,0,player.z);
-  playerMesh.rotation.y=-player.facing;
+  // Animate legs/arms
+  plr.animT+=dt*(moving?9:1.5);
+  const sw=Math.sin(plr.animT);
+  const ud=playerMesh.userData;
+  ud.lL.rotation.x= moving?sw*0.5:0;
+  ud.lR.rotation.x= moving?-sw*0.5:0;
+  ud.aL.rotation.x= moving?-sw*0.4:0;
+  ud.aR.rotation.x= moving?sw*0.3:0;
 
-  if(player.invincible>0){
-    player.invincible-=dt;
-    playerMesh.visible=Math.floor(player.invincible*10)%2===0?false:true;
-  } else {
-    playerMesh.visible=true;
-  }
+  // Body slight bob
+  playerMesh.position.set(plr.x, moving?Math.abs(Math.sin(plr.animT))*0.06:0, plr.z);
+  playerMesh.rotation.y=-plr.facing;
 
-  // ── Sword
-  const sw=player.sword;
-  if(sw.active){
-    sw.timer+=dt;
-    const progress=sw.timer/sw.duration;
-    const curAngle=sw.angle+progress*sw.arcWidth;
+  // Invincibility blink
+  if(plr.invT>0){
+    plr.invT-=dt;
+    playerMesh.visible=Math.floor(plr.invT*12)%2===0;
+  } else { playerMesh.visible=true; }
 
-    // Position sword
-    const sg=playerMesh.userData.swordGroup;
-    sg.visible=true;
-    sg.rotation.y=-(curAngle-player.facing);
-    sg.rotation.z=-(Math.PI/2)*Math.sin(progress*Math.PI)*0.6;
+  // ── Sword attack
+  const sw2=plr.sword;
+  if(sw2.active){
+    sw2.t+=dt;
+    const prog=sw2.t/sw2.dur;
+    const arc=Math.PI*0.85;
+    const curAngle=sw2.baseAngle-arc/2+prog*arc;
 
-    // Hit check
-    const swordReach=1.2;
-    const sx=player.x+Math.sin(curAngle)*swordReach;
-    const sz=player.z+Math.cos(curAngle)*swordReach;
+    // Swing arm
+    ud.aR.rotation.z=-Math.sin(prog*Math.PI)*1.4;
+    ud.aR.rotation.x=-Math.cos(prog*Math.PI)*0.8;
+    ud.sg.visible=true;
+
+    // Hit detection
+    const reach=1.5;
+    const hx=plr.x+Math.sin(curAngle)*reach;
+    const hz=plr.z+Math.cos(curAngle)*reach;
     for(let i=enemies.length-1;i>=0;i--){
       const e=enemies[i];
       if(e.dead||e.hurtT>0) continue;
-      const dx=e.x-sx, dz=e.z-sz;
-      if(dx*dx+dz*dz<0.7){
-        e.hp--;
-        e.hurtT=0.3;
-        e.mesh.userData.body.material.color.setHex(0xffffff);
-        spawnParticles(e.x,0.5,e.z,0x44ff88,6);
+      const dx=e.x-hx, dz=e.z-hz;
+      if(dx*dx+dz*dz<0.65*0.65){
+        e.hp--; e.hurtT=0.28;
+        e.mesh.userData.mat.color.setHex(0xffffff);
+        burst(e.x,0.5,e.z,0x44ff88,5);
         if(e.hp<=0){
           e.dead=true;
-          spawnParticles(e.x,0.5,e.z,0x88ff44,10);
-          spawnParticles(e.x,0.5,e.z,0xffffff,6);
-          score+=100;
-          updateHUD();
+          burst(e.x,0.5,e.z,0x88ff44,10);
+          burst(e.x,0.5,e.z,0xffffff,5);
+          score+=100; updateHUD();
         }
       }
     }
 
-    if(sw.timer>=sw.duration){
-      sw.active=false;
-      playerMesh.userData.swordGroup.visible=false;
+    if(sw2.t>=sw2.dur){
+      sw2.active=false;
+      ud.sg.visible=false;
+      ud.aR.rotation.z=0;
     }
   }
 
@@ -471,82 +469,99 @@ function update(dt){
   for(let i=enemies.length-1;i>=0;i--){
     const e=enemies[i];
     if(e.dead){
-      e.deathT=(e.deathT||0)+dt;
-      e.mesh.scale.setScalar(Math.max(0,1-e.deathT*3));
+      e.deathT+=dt;
+      const s=Math.max(0,1-e.deathT*3.5);
+      e.mesh.scale.setScalar(s);
       if(e.deathT>0.4){ scene.remove(e.mesh); enemies.splice(i,1); }
       continue;
     }
     if(e.hurtT>0){
       e.hurtT-=dt;
-      if(e.hurtT<=0) e.mesh.userData.body.material.color.setHex(enemyColors[i%enemyColors.length]);
+      if(e.hurtT<=0) e.mesh.userData.mat.color.setHex(ECOLS[e.colIdx]);
     }
 
-    const dx=player.x-e.x, dz=player.z-e.z;
+    // Chase
+    const dx=plr.x-e.x, dz=plr.z-e.z;
     const dist=Math.sqrt(dx*dx+dz*dz);
-    if(dist>0.01){
+    if(dist>0.05){
       const nx=dx/dist*e.spd*dt, nz=dz/dist*e.spd*dt;
-      if(walkableRect(e.x+nx,e.z,0.38)) e.x+=nx;
-      if(walkableRect(e.x,e.z+nz,0.38)) e.z+=nz;
+      if(passableCircle(e.x+nx,e.z,0.36)) e.x+=nx;
+      if(passableCircle(e.x,e.z+nz,0.36)) e.z+=nz;
+      e.mesh.rotation.y=Math.atan2(dx,dz);
     }
-
     // Bob
-    const bob=Math.sin(Date.now()*0.004+e.bobOffset)*0.04;
-    e.mesh.position.set(e.x,0.32+bob,e.z);
-    e.mesh.rotation.y+=dt*1.2;
+    e.bob+=dt*3.5;
+    e.mesh.position.set(e.x,0.34+Math.sin(e.bob)*0.06,e.z);
 
     // Hit player
-    if(player.invincible<=0){
-      const pdx=player.x-e.x, pdz=player.z-e.z;
-      if(pdx*pdx+pdz*pdz<0.7){
-        player.hp--;
-        player.invincible=1.5;
-        spawnParticles(player.x,0.8,player.z,0xff4444,8);
-        updateHUD();
-        if(player.hp<=0){ state='gameover'; showOverlay('GAME OVER',score); }
+    if(plr.invT<=0&&dx*dx+dz*dz<0.75*0.75){
+      plr.hp--; plr.invT=1.6;
+      burst(plr.x,0.9,plr.z,0xff4444,8);
+      updateHUD();
+      if(plr.hp<=0){
+        gameState='gameover';
+        const ov=document.getElementById('overlay');
+        document.getElementById('ov-title').textContent='GAME OVER';
+        document.getElementById('ov-score').textContent=`SCORE: ${score}`;
+        ov.style.display='flex';
       }
     }
   }
 
   // Next wave
   if(enemies.length===0){
-    wave++;
-    score+=500;
-    updateHUD();
-    spawnWave(wave);
+    wave++; score+=500; updateHUD(); spawnWave(wave);
   }
 
   // ── Particles
   for(let i=particles.length-1;i>=0;i--){
     const p=particles[i];
-    p.t+=p.dt;
-    p.mesh.position.x+=p.vx*p.dt;
-    p.mesh.position.y+=p.vy*p.dt; p.vy-=12*p.dt;
-    p.mesh.position.z+=p.vz*p.dt;
-    p.mesh.material.opacity=1-p.t;
-    p.mesh.material.transparent=true;
+    p.t+=p.dt*60*dt;
+    p.mesh.position.x+=p.vx*dt;
+    p.mesh.position.y+=p.vy*dt; p.vy-=14*dt;
+    p.mesh.position.z+=p.vz*dt;
+    p.mesh.material.opacity=Math.max(0,1-p.t);
     if(p.t>=1){ scene.remove(p.mesh); particles.splice(i,1); }
   }
 
-  // ── Camera follow player
-  const camTargetX=player.x, camTargetZ=player.z;
-  camera.position.x+=(camTargetX-camera.position.x)*0.07;
-  camera.position.z+=(camTargetZ+9-camera.position.z)*0.07;
-  camera.position.y=18;
-  camera.lookAt(camTargetX,0,camTargetZ);
+  // ── TPS Camera
+  // Smoothly follow player facing when moving
+  if(moving){
+    camYaw=lerpAngle(camYaw, plr.facing, dt*3.5);
+  }
+
+  // Camera position: behind player
+  const behindX=plr.x - Math.sin(camYaw)*CAM_DIST;
+  const behindZ=plr.z - Math.cos(camYaw)*CAM_DIST;
+  cam.position.x+=(behindX-cam.position.x)*Math.min(1,dt*8);
+  cam.position.z+=(behindZ-cam.position.z)*Math.min(1,dt*8);
+  cam.position.y+=(CAM_H   -cam.position.y)*Math.min(1,dt*8);
+
+  // Look at point slightly ahead of player
+  const lookX=plr.x+Math.sin(plr.facing)*1.2;
+  const lookZ=plr.z+Math.cos(plr.facing)*1.2;
+  cam.lookAt(lookX, CAM_LOOK_H, lookZ);
 }
 
-// ─── RENDER LOOP ─────────────────────────────────────────────────────────────
-spawnWave(wave);
+// ═══════════════════════════════════════════════════
+//  MAIN LOOP
+// ═══════════════════════════════════════════════════
+spawnWave(1);
 updateHUD();
 
-function animate(time){
-  requestAnimationFrame(animate);
-  const dt=Math.min((time-lastTime)/1000,0.05);
-  lastTime=time;
+// Set initial camera
+cam.position.set(PSTART.x, CAM_H, PSTART.z+CAM_DIST);
+cam.lookAt(PSTART.x,1,PSTART.z);
+
+let prev=0;
+function loop(t){
+  requestAnimationFrame(loop);
+  const dt=Math.min((t-prev)/1000, 0.05);
+  prev=t;
   update(dt);
-  renderer.render(scene,camera);
+  renderer.render(scene,cam);
 }
-requestAnimationFrame(animate);
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>

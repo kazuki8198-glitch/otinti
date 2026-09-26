@@ -107,12 +107,30 @@ h1{margin:6px 0 0;font:700 clamp(34px,6vw,52px)/1.05 var(--jp);letter-spacing:.0
 @media (orientation:portrait) and (pointer:coarse){
   #rotate-hint{display:block;position:fixed;left:50%;top:40%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 14px;font-size:13px;z-index:4;pointer-events:none;white-space:nowrap}
 }
+/* tutorial */
+.mission.tutorial{border-color:rgba(95,212,255,.55)}
+#tut{position:fixed;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);width:min(460px,calc(100% - 32px));z-index:4;
+  background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--cyan);border-radius:6px;padding:10px 14px 12px;display:grid;gap:6px;transition:border-color .2s}
+#tut.ok{border-left-color:var(--green)}
+.tut-head{display:flex;justify-content:space-between;align-items:center}
+#tut-skip{background:transparent;border:1px solid var(--line);border-radius:4px;color:var(--muted);font-size:11px;padding:3px 8px;cursor:pointer}
+#tut-title{font:700 17px/1.3 var(--jp)}
+#tut.ok #tut-title{color:var(--green)}
+#tut-text{font:13px/1.6 var(--jp);color:var(--ink)}
+.tut-bar{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.tut-bar i{display:block;height:100%;width:0;background:var(--cyan);transition:width .2s}
+#tut.ok .tut-bar i{background:var(--green)}
+body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
+.pulse{animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(95,212,255,.0)}50%{box-shadow:0 0 0 4px rgba(95,212,255,.8)}}
+@media (pointer:coarse){#tut{width:min(420px,calc(100% - 300px));padding:7px 10px 9px;gap:4px}#tut-title{font-size:14px}#tut-text{font-size:11.5px;line-height:1.45}}
 @media (max-height:520px){
   #menu{align-items:flex-start}
   .menu-panel{gap:10px;margin-top:0}
   h1{font-size:30px;margin-top:4px}
   .lede{display:none}
   .missions{grid-template-columns:1fr 1fr;gap:6px}
+  .mission.tutorial{grid-column:1 / -1}
   .mission{padding:8px 10px;column-gap:8px}
   .mission .m-sub{display:none}
   .menu-panel{width:min(560px,100%)}
@@ -142,6 +160,7 @@ h1{margin:6px 0 0;font:700 clamp(34px,6vw,52px)/1.05 var(--jp);letter-spacing:.0
       <p class="lede">南の島の小さな飛行場から、自由に空へ。<br>全長 20 km の島を、軽飛行機で飛び回れます。</p>
     </header>
     <div class="missions" id="missions">
+      <button class="mission tutorial" data-mode="tutorial"><span class="code">TUT</span><span class="m-title">はじめての飛行（チュートリアル）</span><span class="m-sub">離陸から旋回まで、1 ステップずつ案内します</span></button>
       <button class="mission" data-mode="runway"><span class="code">RWY</span><span class="m-title">滑走路から離陸</span><span class="m-sub">RWY 09 に停止中。スロットルを上げて離陸</span></button>
       <button class="mission" data-mode="air"><span class="code">AIR</span><span class="m-title">空中スタート</span><span class="m-sub">高度 2,000 ft、巡航速度で島の南から</span></button>
       <button class="mission" data-mode="rings"><span class="code">RNG</span><span class="m-title">リングチャレンジ</span><span class="m-sub">山あいの 10 個のリングを順番に通過 <span class="best" id="best-rings"></span></span></button>
@@ -197,6 +216,12 @@ h1{margin:6px 0 0;font:700 clamp(34px,6vw,52px)/1.05 var(--jp);letter-spacing:.0
     <button type="button" data-act="hud">計器</button>
     <button type="button" data-act="pause">Ⅱ</button>
   </div>
+</div>
+<div id="tut" hidden role="status" aria-live="polite">
+  <div class="tut-head"><span class="eyebrow" id="tut-step"></span><button type="button" id="tut-skip">スキップ</button></div>
+  <div id="tut-title"></div>
+  <div id="tut-text"></div>
+  <div class="tut-bar"><i id="tut-bar"></i></div>
 </div>
 <div id="rotate-hint">横向きにすると遊びやすくなります</div>
 
@@ -1842,7 +1867,7 @@ function spawn(mode) {
     vs: 0, alpha: 0, beta: 0,
   });
   const L = RWY.len / 2;
-  if (mode === 'runway') {
+  if (mode === 'runway' || mode === 'tutorial') {
     s.pos = rwyToWorld(-L + 45, 0, RWY.elev + 0.12 - WHEEL_BOTTOM - 0.06);
     s.q = qFromHPB(RWY.hdg, 0.9, 0); s.vel = [0, 0, 0];
     s.thr = 0; s.flapIdx = 1; s.flapDeg = 10; s.gearDown = true; s.gearPos = 1;
@@ -1868,6 +1893,7 @@ function spawn(mode) {
   }
   s.gLoad = 1; s.agl = 100;
   game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.resultTimer = 0;
+  if (mode === 'tutorial') tutStart(); else tutHide();
   cam.q = s.q.slice(); cam.flyPos = null; cam.lookYaw = cam.lookPitch = 0;
   if (cam.mode === 'orbit' && cam.autoOrbit) { cam.mode = cam.prevMode || 'chase'; cam.autoOrbit = false; }
   particles.length = 0;
@@ -2315,6 +2341,7 @@ function updateRings(prevPos) {
 
 // ---------- screens ----------
 function showMenu(paused) {
+  tutHide();
   $('menu').hidden = false; $('resume').hidden = !paused; $('touch').hidden = true; $('result').hidden = true;
   $('best-rings').textContent = game.best.rings ? '· ベスト ' + fmtTime(game.best.rings) : '';
   $('best-landing').textContent = game.best.landing ? '· ベスト ' + game.best.landing + ' 点' : '';
@@ -2340,9 +2367,11 @@ function pauseGame() {
 function resumeGame() {
   if (game.state !== 'paused') return;
   game.state = 'flying'; $('menu').hidden = true; $('touch').hidden = !game.touch; glCanvas.focus();
+  if (game.mode === 'tutorial') tutShow();
 }
 function showResult(r) {
   game.state = 'result';
+  tutHide();
   $('touch').hidden = true;
   $('res-eyebrow').textContent = r.eyebrow; $('res-title').textContent = r.title;
   const dl = $('res-list'); dl.textContent = '';
@@ -2674,6 +2703,16 @@ function drawHUD() {
   else drawStatusStrip(g, pfdX, pfdY + 258 * sc, sc);
   drawMinimap(g, W, H, touch, att);
   drawInfo(g, W, H, touch, sc, pfdY + 258 * sc + 30);
+  const ex = pfdX + 390 * sc, R_ = (x, y, w, h) => [x, y, w, h];
+  hud.rects = {
+    attitude: R_(pfdX + 62 * sc, pfdY + 12 * sc, 236 * sc, 200 * sc), speed: R_(pfdX + 4 * sc, pfdY + 10 * sc, 56 * sc, 204 * sc),
+    alt: R_(pfdX + 298 * sc, pfdY + 10 * sc, 58 * sc, 204 * sc), vsi: R_(pfdX + 355 * sc, pfdY + 10 * sc, 22 * sc, 204 * sc),
+    heading: R_(pfdX + 60 * sc, pfdY + 200 * sc, 240 * sc, 48 * sc),
+    thr: touch ? null : R_(ex + 8 * sc, pfdY + 8 * sc, 34 * sc, 228 * sc),
+    flaps: touch ? null : R_(ex + 46 * sc, pfdY + 36 * sc, 108 * sc, 22 * sc),
+    gear: touch ? null : R_(ex + 46 * sc, pfdY + 60 * sc, 108 * sc, 40 * sc),
+  };
+  if (game.mode === 'tutorial') tutHighlight(g);
 }
 function drawRingTarget(g, W, H) {
   const ring = course.rings[game.ringIdx];
@@ -2911,7 +2950,7 @@ function drawMinimap(g, W, H, touch, att) {
 }
 function drawInfo(g, W, H, touch, sc, touchY) {
   const lines = [];
-  const modeName = { runway: 'フリーフライト', air: 'フリーフライト', rings: 'リングチャレンジ', landing: '着陸チャレンジ' }[game.mode];
+  const modeName = { tutorial: 'チュートリアル', runway: 'フリーフライト', air: 'フリーフライト', rings: 'リングチャレンジ', landing: '着陸チャレンジ' }[game.mode];
   lines.push([modeName, COL.cyan, `700 12px ${UI}`]);
   if (game.mode === 'rings') {
     lines.push([fmtTime(game.ringTime), COL.ink, `700 22px ${MONO}`]);
@@ -2945,6 +2984,128 @@ function drawInfo(g, W, H, touch, sc, touchY) {
   }
 }
 
+
+// ---------- tutorial: a guided first flight ----------
+const tut = { i: 0, doneT: 0, hold: 0, turn: 0, lastHdg: 0, t0: 0, targetFt: 0 };
+const kt = () => sim.ias * 1.94384;
+const upKey = () => game.invert ? 'W（↑）' : 'S（↓）';
+const downKey = () => game.invert ? 'S（↓）' : 'W（↑）';
+const stickUp = () => game.invert ? '上に押す' : '下に引く';
+const TUT_STEPS = [
+  { title: 'スロットルを全開にする', hl: 'thr',
+    key: () => 'R キーを押し続けて、スロットル（エンジン出力）を 100% まで上げましょう。F キーで下げられます。',
+    touch: () => '右端の THR スライダーを一番上までドラッグしましょう。',
+    progress: () => sim.thr, done: () => sim.thr >= 0.95 },
+  { title: '滑走して 55 kt まで加速', hl: 'speed',
+    key: () => '左の速度計（IAS KT）を見ながら待ちます。機体が左右にそれたら A / D で修正しましょう。',
+    touch: () => '左の速度計（IAS KT）を見ながら待ちます。左右にそれたらスティックを左右に倒して修正。',
+    progress: () => kt() / 55, done: () => kt() >= 55 },
+  { title: '機首を上げて離陸', hl: 'attitude',
+    key: () => `${upKey()} を押して機首を上げます。姿勢指示器の黄色いマークが「10」の線の少し下（約 8°）に来たら、キーを離して保ちましょう。`,
+    touch: () => `スティックを${stickUp()}と機首が上がります。姿勢指示器で約 8° 上向きを保ちましょう。`,
+    progress: () => sim.agl / 15, done: () => sim.agl > 15 && !sim.onGround },
+  { title: 'ギアを上げる', hl: 'gear',
+    key: () => '地面を離れたら G キーで車輪（ギア）を格納します。空気抵抗が減って速くなります。',
+    touch: () => '「ギア」ボタンを押して車輪を格納します。空気抵抗が減って速くなります。',
+    done: () => !sim.gearDown },
+  { title: 'フラップを 0° に戻す', hl: 'flaps',
+    key: () => 'V キーを押してフラップを 0° にします（10° → 20° → 30° → 0° の順に切り替わります）。',
+    touch: () => '「フラップ」ボタンを押して 0° にします（10° → 20° → 30° → 0° の順）。',
+    done: () => sim.flapIdx === 0 },
+  { title: '', hl: 'alt', setup: () => { tut.targetFt = Math.round((RWY.elev * 3.28084 + 1000) / 100) * 100; },
+    titleFn: () => `高度 ${tut.targetFt.toLocaleString()} ft まで上昇`,
+    key: () => `機首を少し上げたまま上昇を続けます。右の高度計が ${tut.targetFt.toLocaleString()} を超えるまで。速度が 70 kt より落ちたら ${downKey()} で機首を下げましょう。`,
+    touch: () => `機首を少し上げたまま上昇します。右の高度計が ${tut.targetFt.toLocaleString()} を超えるまで。`,
+    progress: () => ((sim.pos[1] + WHEEL_BOTTOM) * 3.28084 - RWY.elev * 3.28084) / (tut.targetFt - RWY.elev * 3.28084),
+    done: () => (sim.pos[1] + WHEEL_BOTTOM) * 3.28084 >= tut.targetFt },
+  { title: '水平飛行に移る', hl: 'vsi',
+    key: () => `${downKey()} で機首を水平まで下げ、F でスロットルを 60% 前後に。右端の昇降計の矢印がほぼ真ん中（上下 300 fpm 以内）で 3 秒保ちましょう。`,
+    touch: () => 'スティックで機首を水平に戻し、スロットルを 60% 前後に。右端の昇降計の矢印をほぼ真ん中で 3 秒保ちましょう。',
+    setup: () => { tut.hold = 0; },
+    tick: dt => { tut.hold = Math.abs(sim.vs * 196.85) < 300 && sim.thr < 0.8 && sim.agl > 60 ? tut.hold + dt : 0; },
+    progress: () => tut.hold / 3, done: () => tut.hold >= 3 },
+  { title: '左に 90° 旋回', hl: 'heading',
+    key: () => `A で左に 20〜30° 傾けたら離し、${upKey()} を軽く押して高度を保ちます。下の方位計が 90° 変わったら D で水平に戻しましょう。`,
+    touch: () => `スティックを左に倒して 20〜30° 傾け、少し${stickUp()}て高度を保ちます。方位が 90° 変わったら水平に戻しましょう。`,
+    setup: () => { tut.turn = 0; tut.lastHdg = attitude().hdg; },
+    tick: () => { const h = attitude().hdg; tut.turn += ((h - tut.lastHdg + 540) % 360) - 180; tut.lastHdg = h; },
+    progress: () => -tut.turn / 90, done: () => tut.turn <= -90 },
+  { title: '右に 90° 旋回して戻る', hl: 'heading',
+    key: () => '今度は D で右に傾けて旋回します。旋回中は高度が下がりやすいので、高度計も見ておきましょう。',
+    touch: () => '今度はスティックを右に倒して旋回します。旋回中は高度が下がりやすいので、高度計も見ておきましょう。',
+    setup: () => { tut.turn = 0; tut.lastHdg = attitude().hdg; },
+    tick: () => { const h = attitude().hdg; tut.turn += ((h - tut.lastHdg + 540) % 360) - 180; tut.lastHdg = h; },
+    progress: () => tut.turn / 90, done: () => tut.turn >= 90 },
+  { title: 'カメラを切り替えてみる', hl: null,
+    key: () => 'C キーでカメラを切り替えられます（追尾 → コックピット → 周回 → フライバイ）。マウスでドラッグすると見回せます。',
+    touch: () => '「カメラ」ボタンでカメラを切り替えられます。画面をドラッグすると見回せます。',
+    setup: () => { tut.cam = cam.mode; }, done: () => cam.mode !== tut.cam },
+];
+function tutStep() { return TUT_STEPS[tut.i]; }
+function tutShow() {
+  const st = tutStep();
+  $('tut').hidden = false; document.body.classList.add('tut-on');
+  $('tut-step').textContent = `STEP ${tut.i + 1} / ${TUT_STEPS.length}`;
+  $('tut-title').textContent = st.titleFn ? st.titleFn() : st.title;
+  $('tut-text').textContent = game.touch ? st.touch() : st.key();
+  $('tut').classList.remove('ok');
+  document.querySelectorAll('.pulse').forEach(e => e.classList.remove('pulse'));
+  if (game.touch) {
+    const el = { thr: $('thr'), gear: document.querySelector('[data-act=gear]'), flaps: document.querySelector('[data-act=flaps]') }[st.hl];
+    if (el) el.classList.add('pulse');
+    if (st === TUT_STEPS[TUT_STEPS.length - 1]) document.querySelector('[data-act=cam]').classList.add('pulse');
+  }
+}
+function tutStart() { tut.i = 0; tut.doneT = 0; tut.t0 = 0; if (TUT_STEPS[0].setup) TUT_STEPS[0].setup(); tutShow(); }
+function tutHide() {
+  $('tut').hidden = true; document.body.classList.remove('tut-on');
+  document.querySelectorAll('.pulse').forEach(e => e.classList.remove('pulse'));
+}
+function tutAdvance() {
+  tut.i++; tut.doneT = 0;
+  if (tut.i >= TUT_STEPS.length) {
+    tutHide();
+    game.best.tutorial = true; saveBest();
+    showResult({ eyebrow: 'TUTORIAL', title: 'チュートリアル完了', rows: [
+      ['所要時間', '', fmtTime(game.t)],
+      ['次のおすすめ', '', '着陸チャレンジ'],
+      ['ヒント', '', 'T キーで今の舵角をトリム固定'],
+    ] });
+    return;
+  }
+  const st = tutStep();
+  if (st.setup) st.setup();
+  tutShow();
+}
+function tutUpdate(dt) {
+  const st = tutStep();
+  if (!st) return;
+  if (tut.doneT > 0) {           // short pause on the "OK" state before the next step
+    tut.doneT -= dt;
+    if (tut.doneT <= 0) tutAdvance();
+    return;
+  }
+  if (st.tick) st.tick(dt);
+  const pr = st.progress ? clamp(st.progress(), 0, 1) : 0;
+  $('tut-bar').style.width = (pr * 100).toFixed(0) + '%';
+  if (st.done()) {
+    tut.doneT = 1.3;
+    $('tut').classList.add('ok'); $('tut-bar').style.width = '100%';
+    $('tut-title').textContent = '✓ ' + $('tut-title').textContent;
+    audio.ring();
+  }
+}
+function tutHighlight(g) {
+  const st = tutStep();
+  if (!st || !st.hl || !hud.rects) return;
+  const r = hud.rects[st.hl];
+  if (!r) return;
+  const a = 0.65 + 0.3 * Math.sin(R.time * 6);
+  g.save(); g.strokeStyle = `rgba(95,212,255,${a})`; g.lineWidth = 3;
+  rr(g, r[0] - 3, r[1] - 3, r[2] + 6, r[3] + 6, 6); g.stroke(); g.restore();
+}
+$('tut-skip').addEventListener('click', () => { if (game.mode === 'tutorial' && game.state === 'flying') { tut.doneT = 0; tutAdvance(); } glCanvas.focus(); });
+
 // ---------- main loop ----------
 let lastT = performance.now(), acc = 0;
 const STEP = 1 / 120;
@@ -2966,6 +3127,7 @@ function frame(now) {
       }
       if (n >= 14) acc = 0;
       if (game.state === 'flying') gameChecks(dt);
+      if (game.state === 'flying' && game.mode === 'tutorial') tutUpdate(dt);
     } else acc = 0;
     if (game.state === 'crashed') {
       game.resultTimer -= dt;

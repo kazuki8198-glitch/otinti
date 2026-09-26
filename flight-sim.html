@@ -146,6 +146,13 @@ h1{margin:6px 0 0;font:700 clamp(34px,6vw,52px)/1.05 var(--jp);letter-spacing:.0
 .gt{border-collapse:collapse;width:100%}
 .gt td{padding:5px 6px;border-top:1px solid rgba(150,176,206,.14);vertical-align:top}
 .gt td:first-child{white-space:nowrap;width:1%}
+.nt{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:8px}
+.nt th,.nt td{padding:5px 6px;border-top:1px solid rgba(150,176,206,.14);text-align:right;white-space:nowrap}
+.nt th{color:var(--muted);font-weight:700;font-size:11px}
+.nt td:first-child,.nt th:first-child{text-align:left;white-space:normal}
+.nt tr.grp td{color:var(--cyan);font-weight:700;text-align:left;padding-top:12px}
+.num-wrap{overflow-x:auto}
+.note-box{border:1px solid var(--cyan);border-radius:6px;padding:8px 10px;background:rgba(95,212,255,.08)}
 kbd{font:700 11.5px var(--mono);background:rgba(95,212,255,.12);border:1px solid rgba(95,212,255,.4);border-radius:4px;padding:1px 5px;color:var(--cyan)}
 .guide-demo{margin-bottom:6px;padding:9px 12px;border-radius:6px;border:1px solid var(--cyan);background:rgba(95,212,255,.12);font:700 13px var(--jp);cursor:pointer}
 #callout{position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);width:min(620px,calc(100% - 24px));max-height:46%;overflow-y:auto;z-index:6;
@@ -259,7 +266,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
     </div>
     <button type="button" class="guide-btn" id="open-map">🗺 日本地図を開いて空港を選ぶ（M）</button>
     <button type="button" class="guide-btn" id="open-guide">？ ガイド：画面の見方・操作・用語・飛び方のコツ</button>
-    <p class="credit">地形・航空写真・地図：国土地理院 地理院タイル（標高データは加工して使用）／ 空港：OurAirports ／ 地名：GeoNames</p>
+    <p class="credit">地形・航空写真・地図：国土地理院 地理院タイル（標高データは加工して使用）／ 建物・樹木：© OpenStreetMap contributors（OpenFreeMap）／ 空港：OurAirports ／ 地名：GeoNames</p>
    </div>
    <div class="col-b">
     <div class="eyebrow mission-head">MISSION ・ 遊び方を選ぶ</div>
@@ -282,6 +289,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
       <button type="button" role="tab" data-tab="screen" class="on">画面の見方</button>
       <button type="button" role="tab" data-tab="controls">操作と「中立」</button>
       <button type="button" role="tab" data-tab="tips">飛び方のコツ</button>
+      <button type="button" role="tab" data-tab="numbers">数値の目安</button>
       <button type="button" role="tab" data-tab="terms">用語集</button>
     </div>
     <div class="guide-body">
@@ -334,6 +342,28 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
         <ol><li>メニューで出発空港と目的地を選ぶ（または <kbd>M</kbd> の地図で空港をクリック）</li><li>離陸して上昇し、安全な高度（旅客機なら 10,000 ft 以上）で <kbd>O</kbd>（オートパイロット）</li><li><kbd>Z</kbd> で時間を早送り。地図（<kbd>M</kbd>）で現在地を確認</li><li>目的地の 30 km 手前で知らせが出たら <kbd>O</kbd> で解除し、高度を下げて着陸</li></ol>
         <h3>困ったときは</h3>
         <ul><li>「STALL 失速」が出たら：機首を下げ（<kbd>W</kbd>）、スロットルを上げる</li><li>「PULL UP」が出たら：地面や山が近い。機首を上げてスロットル全開</li><li>どうなっているかわからない：<kbd>L</kbd> で水平飛行に戻す</li></ul>
+      </section>
+      <section data-tab="numbers" hidden>
+        <h3>どこを見ればいい？</h3>
+        <ul>
+          <li><b>ピッチ（機首の上げ下げの角度）</b>：姿勢指示器（青と茶色の丸）で、黄色い機体記号が水平線からどれだけ上にあるか。はしご状の線は 10° ごと、短い線は 5° ごとです。</li>
+          <li><b>バンク（左右の傾き）</b>：姿勢指示器の上の弧の目盛り。10°・20°・30°・45°・60° に印があります。上の白い三角が目盛りのどこを指しているかで読みます。</li>
+          <li><b>スロットル</b>：計器パネル中央の THR の緑のバー（%）。<kbd>R</kbd> で上げる、<kbd>F</kbd> で下げる。</li>
+          <li><b>水平かどうか</b>：昇降計（高度計の右の細い目盛り）が 0、高度計の数字が変わらなければ水平飛行です。</li>
+        </ul>
+        <p class="note-box">飛行中は、計器パネルの右に<b>「目安」パネル</b>が出ます。いまの傾き（バンク）とフラップに合わせて、水平飛行を保つためのスロットルとピッチを表示し、合っていれば緑、ずれていれば黄色になります。</p>
+        <h3>基本のルール</h3>
+        <ol>
+          <li><b>高さはピッチで、速さはスロットルで</b>調整します。高度が下がってきたら機首を 1° 上げる、速度が落ちてきたらスロットルを 5% 上げる、の繰り返しです。</li>
+          <li><b>傾けると（旋回すると）機体は沈みます</b>。翼の力の一部が横向きになるからです。水平を保つには、機首を少し上げ、スロットルも少し足します。必要な量はバンクが深いほど大きくなります。</li>
+          <li>旋回中は体にかかる重さ（G）が増えます：15° で 1.04 倍、30° で 1.15 倍、45° で 1.41 倍、60° で 2 倍。<b>失速する速度も上がる</b>ので、低速で深く傾けるのは危険です。低い高度や遅い速度では 30° までにしましょう。</li>
+          <li>旋回をやめるときは、傾きを戻すと同時に、足した機首上げとスロットルを元に戻します（戻さないと上昇して速度が落ちます）。</li>
+        </ol>
+        <p><b>操縦アシスト ON</b> のときは、ピッチの調整（沈まないように機首を上げる）は自動でやってくれます。スロットルだけ下の表を目安に合わせてください。<b>アシスト OFF</b> のときは、ピッチもスロットルも自分で合わせます。</p>
+        <h3>機体ごとの数値</h3>
+        <div class="field" style="max-width:320px"><label class="f-label" for="num-acft">機体</label><select id="num-acft"></select></div>
+        <div id="num-table"></div>
+        <p class="keys-note">この飛行シミュレーターの計算で、高度 約 3,000 ft・無風のときに測った値です。高度や重さが変わると少しずれるので、昇降計と速度計を見ながら微調整してください。ピッチは「＋」が機首上げ、昇降の「−」は降下です。</p>
       </section>
       <section data-tab="terms" hidden>
         <dl class="gl">
@@ -696,7 +726,10 @@ vec3 skyColor(vec3 d){
   vec2 sz = normalize(uSunDir.xz + vec2(1e-5));
   float towards = dot(hz, sz) * 0.5 + 0.5;
   vec3 hor = mix(uHorizonAway, uHorizon, towards * towards);
-  vec3 c = mix(hor, uZenith, pow(clamp(y, 0.0, 1.0), 0.55));
+  float alt = clamp(uCamPos.y / 11000.0, 0.0, 1.0);
+  vec3 zen = uZenith * mix(1.0, 0.58, alt) * mix(vec3(1.0), vec3(0.85, 0.9, 1.05), alt);   // deeper blue high up
+  vec3 c = mix(hor, zen, pow(clamp(y, 0.0, 1.0), mix(0.55, 0.35, alt)));
+  c = mix(c, hor * 1.04 + vec3(0.02), exp(-abs(y) * 30.0) * 0.45);                           // bright haze band at the horizon
   c = mix(c, hor * 0.82, smoothstep(0.0, -0.3, y));
   float sd = max(dot(d, uSunDir), 0.0);
   c += uSunCol * (pow(sd, 5.0) * 0.10 + pow(sd, 60.0) * 0.30);
@@ -2190,6 +2223,10 @@ function buildAircraftParts(A) {
 }
 
 // ---------- physics data derived from the description ----------
+// steady-flight reference values measured from this flight model at 3,000 ft
+// [speed kt, throttle %, pitch deg, vertical speed fpm, bank deg, turn rate deg/s, flap index]
+const TRIM = {"trainer":{"level":[105,75,0.7,0,0,0,0],"turn15":[105,79,0.9,0,15,2.5,0],"turn30":[105,80,1.4,0,30,5.4,0],"turn45":[105,86,2.3,0,45,9.3,0],"turn60":[100,100,3.7,0,60,16.9,0],"slow":[78,52,1.1,0,0,0,1],"slowturn15":[78,54,1.5,0,15,3.3,1],"slowturn30":[78,57,2.4,0,30,7.1,1],"climb":[72,100,10.6,750,0,0,0],"descent":[105,42,-2.1,-550,0,0,0],"approach":[65,25,-1.7,-390,0,0,2]},"sport":{"level":[115,61,0.8,0,0,0,0],"turn15":[115,64,0.9,0,15,2.3,0],"turn30":[115,63,1.4,0,30,5,0],"turn45":[115,73,2,0,45,8.6,0],"turn60":[115,85,2.8,0,60,14.8,0],"slow":[84,53,1.3,0,0,0,1],"slowturn15":[84,55,1.6,0,15,3.1,1],"slowturn30":[84,56,2.4,0,30,6.7,1],"climb":[79,100,12.6,1170,0,0,0],"descent":[115,32,-1.8,-550,0,0,0],"approach":[70,26,-1.6,-420,0,0,2]},"aero":{"level":[140,59,2.8,0,0,0,0],"turn15":[140,60,2.9,0,15,1.9,0],"turn30":[140,60,2.9,0,30,4.2,0],"turn45":[140,63,3,0,45,7.2,0],"turn60":[140,76,3.1,0,60,12.5,0],"slow":[96,23,6,0,0,0,1],"slowturn15":[96,26,6,0,15,2.8,1],"slowturn30":[96,25,6.2,0,30,6.1,1],"climb":[88,100,19.9,2320,0,0,0],"descent":[140,42,0.7,-540,0,0,0],"approach":[80,4,5.5,-470,0,0,0]},"twin":{"level":[200,84,0.2,0,0,0,0],"turn15":[200,85,0.4,0,15,1.3,0],"turn30":[200,89,0.8,0,30,2.9,0],"turn45":[200,91,1.3,0,45,5,0],"turn60":[192,100,2.3,0,60,8.9,0],"slow":[132,60,1.2,0,0,0,1],"slowturn15":[132,63,1.5,0,15,2,1],"slowturn30":[132,64,2.3,0,30,4.3,1],"climb":[136,100,10.6,1720,0,0,0],"descent":[200,65,-1.2,-530,0,0,0],"approach":[110,30,-1.9,-640,0,0,2]},"airliner":{"level":[275,25,2.1,0,0,0,0],"turn15":[275,25,2.2,0,15,1,0],"turn30":[274,25,2.6,0,30,2.1,0],"turn45":[273,27,3.1,0,45,3.7,0],"turn60":[269,60,3.8,0,60,6.4,0],"slow":[195,49,2,0,0,0,1],"slowturn15":[195,50,2.2,0,15,1.4,1],"slowturn30":[196,56,3,0,30,2.9,1],"climb":[221,100,13.2,3800,0,0,0],"descent":[273,20,1.1,-540,0,0,0],"approach":[144,39,-2.5,-740,0,0,3]},"fighter":{"level":[355,21,3.1,0,0,0,0],"turn15":[355,20,3.1,0,15,0.8,0],"turn30":[353,23,3.2,0,30,1.7,0],"turn45":[352,38,3.2,0,45,2.9,0],"turn60":[351,45,3.3,0,60,5,0],"slow":[188,37,9.1,0,0,0,1],"slowturn15":[189,37,9.2,0,15,1.4,1],"slowturn30":[188,39,9.5,0,30,3.1,1],"climb":[244,100,31.2,17880,0,0,0],"descent":[354,35,2.3,-540,0,0,0],"approach":[161,18,8.3,-920,0,0,2]}};
+for (const a of AIRCRAFT) if (TRIM[a.id]) a.v.cruiseThr = TRIM[a.id].level[1] / 100;
 let ACFT = AIRCRAFT[0], AC = null, WHEELS = [], TAILSKID = null, HARDPTS = [], WHEEL_BOTTOM = -1.45;
 function deriveAircraft(A) {
   const P = A.phys, m = P.mass, g = 9.81;
@@ -2268,6 +2305,7 @@ function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
   const auto = game.ap && airborne && !s.crashed;
   s.assistOn = (game.assist || leveling || auto) && airborne && !s.crashed;
   if (!s.assistOn) {
+    s.gI = 0;
     const k = sens.direct;
     s.elev = s.pIn * (s.onGround ? Math.max(k, 0.9) : k); s.ail = s.rIn * k;   // full elevator available for rotation
     return;
@@ -2299,10 +2337,13 @@ function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
   // --- pitch: flight-path-angle command, turns are flown level automatically ---
   const gMax = sens.gamma * (AC.maxG > 6 ? 1.6 : 1) * DEG;
   const gammaCmd = pIn * gMax;
-  const gdot = clamp((gammaCmd - gamma) * 0.7, -AC.pitchRate * DEG, AC.pitchRate * DEG);
+  // integral term: removes the steady sink that a pure proportional command leaves in turns
+  s.gI = clamp((s.gI || 0) * (1 - 0.1 / 120) + clamp(gammaCmd - gamma, -1.5 * DEG, 1.5 * DEG) * (1 / 120) * 0.35, -0.08, 0.08);
+  const gdot = clamp((gammaCmd - gamma) * 0.7 + s.gI, -AC.pitchRate * DEG, AC.pitchRate * DEG);
   const nCmd = clamp(Math.cos(gamma) / Math.max(Math.cos(bank), 0.35) + spd * gdot / 9.81, -1, AC.maxG);
-  let aReq = (nCmd * AC.mass * 9.81 / Math.max(qd * AC.S, 1) - cl0) / AC.CLa;
-  aReq = clamp(aReq, -aS * 0.7, aS - 0.04);                // stall protection
+  const aFree = (nCmd * AC.mass * 9.81 / Math.max(qd * AC.S, 1) - cl0) / AC.CLa;
+  const aReq = clamp(aFree, -aS * 0.7, aS - 0.04);          // stall protection
+  if (aReq !== aFree) s.gI *= 0.97;                         // no wind-up while the wing is at its limit
   const ratio = qd / Math.max(qdc, 1);
   let e = (-AC.Cma * Math.sin(aReq) - AC.Cm0) / AC.Cmde * ratio;
   e += 2.2 * (aReq - alpha) - 0.08 * s.w[0] * AC.c * Math.abs(AC.Cmq) / Math.max(V, 10);
@@ -2888,9 +2929,24 @@ function jwNetFail() {
   JW.netFails = (JW.netFails || 0) + 1;
   if (JW.netFails > 6 && !JW.loadedPhotos && !JW.loadedDems) { JW.online = false; toast('詳細地図を読み込めないため、内蔵の簡易地形で表示します', 3500); }
 }
+// if the first check failed (slow start, flaky connection), keep trying quietly in the background
+async function jwRecheckOnline() {
+  if (JW.rechecking) return;
+  JW.rechecking = true;
+  try {
+    const b = await Promise.race([fetchBitmap(`${GSI}dem_png/5/28/12.png`), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 12000))]);
+    if (b && b !== 404 && JW.online === false) {
+      JW.online = true; JW.netFails = 0;
+      for (const t of JW.tiles.values()) if (t.mesh) JW.dirty.push(t);
+      toast('詳細地図（航空写真・建物）に接続しました', 2500);
+      if (game.state === 'menu') updateMenuTexts();
+    }
+  } catch (e) { /* still offline */ }
+  finally { JW.rechecking = false; }
+}
 async function jwCheckOnline() {
   if (JW.online !== null) return JW.online;
-  try { const b = await Promise.race([fetchBitmap(`${GSI}dem_png/5/28/12.png`), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))]); JW.online = !!b && b !== 404; }
+  try { const b = await Promise.race([fetchBitmap(`${GSI}dem_png/5/28/12.png`), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 12000))]); JW.online = !!b && b !== 404; }
   catch (e) { JW.online = false; }
   return JW.online;
 }
@@ -2898,7 +2954,7 @@ async function jwCheckOnline() {
 // ---------- tile selection ----------
 function jwSelect(planes, eye) {
   const f = ++JW.frame, out = [], wantMesh = [], want = [];
-  const zmax = JW.online ? (game.touch ? 15 : 16) : 12, K = game.touch ? 0.9 : 1.25;
+  const zmax = JW.online ? (game.touch ? 16 : 17) : 12, K = game.touch ? 0.9 : 1.25;
   const visit = t => {
     t.used = f;
     if (t.seaGuess && !t.mesh) return;
@@ -2988,7 +3044,10 @@ void main(){
   vec3 col;
   if (uHasPhoto == 1) {
     vec3 ph = texture(uPhoto, vUv).rgb;
-    col = ph * (uAmbSky * 0.6 + uSunCol * (0.5 + 0.38 * diff));
+    float lum = dot(ph, vec3(0.3, 0.55, 0.15));
+    ph = mix(vec3(lum), ph, 1.18);                                   // aerial photos are slightly hazy: restore colour
+    ph = pow(max(ph, 0.0), vec3(1.12));
+    col = ph * (uAmbSky * 0.55 + uSunCol * (0.46 + 0.36 * diff));
   } else {
     float d1 = texture(uNoise, vWorld.xz / 61.0).b, d2 = texture(uNoise, vWorld.xz / 9.0).b, d3 = texture(uNoise, vWorld.xz / 2300.0).a, d4 = texture(uNoise, vWorld.xz / 700.0).b;
     float slope = 1.0 - n.y, h = vH;
@@ -3325,6 +3384,829 @@ function drawMapTo(g, x, y, w, h, lat, lon, zoom, opt = {}) {
   }
   g.restore();
 }
+
+// =====================================================================
+//  CITY: real 3D buildings and trees from OpenStreetMap (OpenFreeMap
+//  vector tiles, zoom 14). A worker decodes each tile, extrudes every
+//  building to its mapped height and scatters trees over woods and
+//  parks; the main thread only uploads the finished buffers.
+// =====================================================================
+function cityWorkerMain() {
+  const KZ = 110574, DEG = Math.PI / 180;
+  const latFromMerc = my => Math.atan(Math.sinh(Math.PI * (1 - 2 * my))) / DEG;
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const td = new TextDecoder();
+  // ---- protobuf / MVT ----
+  let B, P;
+  const rv = () => { let r = 0, s = 1, c; do { c = B[P++]; r += (c & 0x7f) * s; s *= 128; } while (c >= 0x80); return r; };
+  const skip = t => { if (t === 0) rv(); else if (t === 1) P += 8; else if (t === 2) { const l = rv(); P += l; } else if (t === 5) P += 4; };
+  function readValue(end) {
+    let v = null;
+    while (P < end) {
+      const k = rv(), f = k >> 3, t = k & 7;
+      if (f === 1) { const l = rv(); v = td.decode(B.subarray(P, P + l)); P += l; }
+      else if (f === 2) { v = new DataView(B.buffer, B.byteOffset + P, 4).getFloat32(0, true); P += 4; }
+      else if (f === 3) { v = new DataView(B.buffer, B.byteOffset + P, 8).getFloat64(0, true); P += 8; }
+      else if (f === 4 || f === 5) v = rv();
+      else if (f === 6) { const n = rv(); v = n % 2 ? -(n + 1) / 2 : n / 2; }
+      else if (f === 7) v = !!rv();
+      else skip(t);
+    }
+    return v;
+  }
+  function readLayers(buf, wanted) {
+    B = buf; P = 0; const out = {};
+    while (P < B.length) {
+      const k = rv(), f = k >> 3, t = k & 7;
+      if (f !== 3 || t !== 2) { skip(t); continue; }
+      const end = rv() + P, L = { name: '', keys: [], vals: [], feats: [], extent: 4096 };
+      let keep = true;
+      while (P < end) {
+        const k2 = rv(), f2 = k2 >> 3, t2 = k2 & 7;
+        if (f2 === 1) { const l = rv(); L.name = td.decode(B.subarray(P, P + l)); P += l; if (!wanted.includes(L.name)) { keep = false; break; } }
+        else if (f2 === 2) { const l = rv(); L.feats.push([P, P + l]); P += l; }
+        else if (f2 === 3) { const l = rv(); L.keys.push(td.decode(B.subarray(P, P + l))); P += l; }
+        else if (f2 === 4) { const l = rv(); L.vals.push(readValue(P + l)); }
+        else if (f2 === 5) L.extent = rv();
+        else skip(t2);
+      }
+      P = end;
+      if (keep && L.name) out[L.name] = L;
+    }
+    return out;
+  }
+  function readFeature(L, fe) {
+    P = fe[0]; const end = fe[1], props = {}; let type = 0, geom = null;
+    while (P < end) {
+      const k = rv(), f = k >> 3, t = k & 7;
+      if (f === 2) { const e = rv() + P; while (P < e) { const ki = rv(), vi = rv(); props[L.keys[ki]] = L.vals[vi]; } }
+      else if (f === 3) type = rv();
+      else if (f === 4) { const e = rv() + P; geom = []; while (P < e) geom.push(rv()); }
+      else skip(t);
+    }
+    return { props, type, geom };
+  }
+  function decodeRings(geom) {
+    const out = []; let x = 0, y = 0, i = 0, cur = null;
+    while (i < geom.length) {
+      const c = geom[i++], cmd = c & 7, cnt = c >> 3;
+      if (cmd === 7) { if (cur && cur.length >= 6) out.push(cur); cur = null; continue; }
+      for (let j = 0; j < cnt; j++) {
+        const dx = geom[i++], dy = geom[i++];
+        x += (dx >>> 1) ^ -(dx & 1); y += (dy >>> 1) ^ -(dy & 1);
+        if (cmd === 1) { if (cur && cur.length >= 6) out.push(cur); cur = [x, y]; } else if (cur) cur.push(x, y);
+      }
+    }
+    if (cur && cur.length >= 6) out.push(cur);
+    return out;
+  }
+  // Sutherland-Hodgman against the tile square; points on the border are snapped exactly
+  function clipRing(r, E) {
+    let pts = r;
+    for (let side = 0; side < 4 && pts.length >= 6; side++) {
+      const out = [], n = pts.length;
+      const ins = (x, y) => side === 0 ? x >= 0 : side === 1 ? x <= E : side === 2 ? y >= 0 : y <= E;
+      const cut = (ax, ay, bx, by) => {
+        if (side < 2) { const X = side ? E : 0, t = (X - ax) / (bx - ax); out.push(X, ay + (by - ay) * t); }
+        else { const Y = side === 3 ? E : 0, t = (Y - ay) / (by - ay); out.push(ax + (bx - ax) * t, Y); }
+      };
+      for (let i = 0; i < n; i += 2) {
+        const sx = pts[(i - 2 + n) % n], sy = pts[(i - 1 + n) % n], ex = pts[i], ey = pts[i + 1];
+        const ie = ins(ex, ey), is = ins(sx, sy);
+        if (ie) { if (!is) cut(sx, sy, ex, ey); out.push(ex, ey); }
+        else if (is) cut(sx, sy, ex, ey);
+      }
+      pts = out;
+    }
+    const o = [];
+    for (let i = 0; i < pts.length; i += 2) { const l = o.length; if (l && o[l - 2] === pts[i] && o[l - 1] === pts[i + 1]) continue; o.push(pts[i], pts[i + 1]); }
+    if (o.length >= 4 && o[0] === o[o.length - 2] && o[1] === o[o.length - 1]) o.length -= 2;
+    return o.length >= 6 ? o : null;
+  }
+  const ringArea = r => { let s = 0; for (let i = 0, n = r.length; i < n; i += 2) { const j = (i + 2) % n; s += r[i] * r[j + 1] - r[j] * r[i + 1]; } return s / 2; };
+  function polygons(L, E, filter) {
+    const out = [];
+    if (!L) return out;
+    for (const fe of L.feats) {
+      const f = readFeature(L, fe);
+      if (f.type !== 3 || !f.geom || !filter(f.props)) continue;
+      let cur = null;
+      for (const r0 of decodeRings(f.geom)) {
+        const a0 = ringArea(r0);
+        if (a0 === 0) continue;
+        const r = clipRing(r0, E); if (!r) continue;
+        const a = ringArea(r);
+        if (Math.abs(a) < 1e-3) continue;
+        if (a0 > 0) { cur = { rings: [r], props: f.props }; out.push(cur); }
+        else if (cur) cur.rings.push(r);
+      }
+    }
+    return out;
+  }
+  // ---- earcut (after Mapbox earcut, without the z-order hash) ----
+  function earcut(data, holes) {
+    const outerLen = holes.length ? holes[0] * 2 : data.length;
+    let outer = linkedList(data, 0, outerLen, true);
+    const tris = [];
+    if (!outer || outer.next === outer.prev) return tris;
+    if (holes.length) outer = eliminateHoles(data, holes, outer);
+    earcutLinked(outer, tris, 0);
+    return tris;
+  }
+  function linkedList(data, start, end, cw) {
+    let last;
+    if (cw === (signedArea(data, start, end) > 0)) for (let i = start; i < end; i += 2) last = insertNode(i / 2, data[i], data[i + 1], last);
+    else for (let i = end - 2; i >= start; i -= 2) last = insertNode(i / 2, data[i], data[i + 1], last);
+    if (last && equals(last, last.next)) { removeNode(last); last = last.next; }
+    return last;
+  }
+  function filterPoints(start, end) {
+    if (!start) return start;
+    if (!end) end = start;
+    let p = start, again;
+    do {
+      again = false;
+      if (!p.steiner && (equals(p, p.next) || area(p.prev, p, p.next) === 0)) { removeNode(p); p = end = p.prev; if (p === p.next) break; again = true; }
+      else p = p.next;
+    } while (again || p !== end);
+    return end;
+  }
+  function earcutLinked(ear, tris, pass) {
+    if (!ear) return;
+    let stop = ear, guard = 0;
+    while (ear.prev !== ear.next && guard++ < 200000) {
+      const prev = ear.prev, next = ear.next;
+      if (isEar(ear)) { tris.push(prev.i, ear.i, next.i); removeNode(ear); ear = next.next; stop = next.next; continue; }
+      ear = next;
+      if (ear === stop) {
+        if (!pass) earcutLinked(filterPoints(ear), tris, 1);
+        else if (pass === 1) { ear = cureLocalIntersections(filterPoints(ear), tris); earcutLinked(ear, tris, 2); }
+        else if (pass === 2) splitEarcut(ear, tris);
+        break;
+      }
+    }
+  }
+  function isEar(ear) {
+    const a = ear.prev, b = ear, c = ear.next;
+    if (area(a, b, c) >= 0) return false;
+    let p = c.next;
+    while (p !== a) {
+      if (pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) && area(p.prev, p, p.next) >= 0) return false;
+      p = p.next;
+    }
+    return true;
+  }
+  function cureLocalIntersections(start, tris) {
+    let p = start;
+    do {
+      const a = p.prev, b = p.next.next;
+      if (!equals(a, b) && intersects(a, p, p.next, b) && locallyInside(a, b) && locallyInside(b, a)) {
+        tris.push(a.i, p.i, b.i); removeNode(p); removeNode(p.next); p = start = b;
+      }
+      p = p.next;
+    } while (p !== start);
+    return filterPoints(p);
+  }
+  function splitEarcut(start, tris) {
+    let a = start;
+    do {
+      let b = a.next.next;
+      while (b !== a.prev) {
+        if (a.i !== b.i && isValidDiagonal(a, b)) {
+          let c = splitPolygon(a, b);
+          a = filterPoints(a, a.next); c = filterPoints(c, c.next);
+          earcutLinked(a, tris, 0); earcutLinked(c, tris, 0);
+          return;
+        }
+        b = b.next;
+      }
+      a = a.next;
+    } while (a !== start);
+  }
+  function eliminateHoles(data, holes, outer) {
+    const q = [];
+    for (let i = 0; i < holes.length; i++) {
+      const s = holes[i] * 2, e = i < holes.length - 1 ? holes[i + 1] * 2 : data.length;
+      const list = linkedList(data, s, e, false);
+      if (!list) continue;
+      if (list === list.next) list.steiner = true;
+      q.push(getLeftmost(list));
+    }
+    q.sort((a, b) => a.x - b.x);
+    for (const h of q) { const br = findHoleBridge(h, outer); if (!br) continue; const rev = splitPolygon(br, h); filterPoints(rev, rev.next); outer = filterPoints(br, br.next); }
+    return outer;
+  }
+  function findHoleBridge(hole, outer) {
+    let p = outer, qx = -Infinity, m;
+    const hx = hole.x, hy = hole.y;
+    do {
+      if (hy <= p.y && hy >= p.next.y && p.next.y !== p.y) {
+        const x = p.x + (hy - p.y) * (p.next.x - p.x) / (p.next.y - p.y);
+        if (x <= hx && x > qx) { qx = x; m = p.x < p.next.x ? p : p.next; if (x === hx) return m; }
+      }
+      p = p.next;
+    } while (p !== outer);
+    if (!m) return null;
+    const stop = m, mx = m.x, my = m.y; let tanMin = Infinity;
+    p = m;
+    do {
+      if (hx >= p.x && p.x >= mx && hx !== p.x && pointInTriangle(hy < my ? hx : qx, hy, mx, my, hy < my ? qx : hx, hy, p.x, p.y)) {
+        const tan = Math.abs(hy - p.y) / (hx - p.x);
+        if (locallyInside(p, hole) && (tan < tanMin || (tan === tanMin && (p.x > m.x || (p.x === m.x && area(m.prev, m, p.prev) < 0 && area(p.next, m, m.next) < 0))))) { m = p; tanMin = tan; }
+      }
+      p = p.next;
+    } while (p !== stop);
+    return m;
+  }
+  function getLeftmost(s) { let p = s, l = s; do { if (p.x < l.x || (p.x === l.x && p.y < l.y)) l = p; p = p.next; } while (p !== s); return l; }
+  function pointInTriangle(ax, ay, bx, by, cx, cy, px, py) {
+    return (cx - px) * (ay - py) >= (ax - px) * (cy - py) && (ax - px) * (by - py) >= (bx - px) * (ay - py) && (bx - px) * (cy - py) >= (cx - px) * (by - py);
+  }
+  function isValidDiagonal(a, b) {
+    return a.next.i !== b.i && a.prev.i !== b.i && !intersectsPolygon(a, b) &&
+      ((locallyInside(a, b) && locallyInside(b, a) && middleInside(a, b) && (area(a.prev, a, b.prev) || area(a, b.prev, b))) ||
+       (equals(a, b) && area(a.prev, a, a.next) > 0 && area(b.prev, b, b.next) > 0));
+  }
+  const area = (p, q, r) => (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+  const equals = (a, b) => a.x === b.x && a.y === b.y;
+  const sign = v => v > 0 ? 1 : v < 0 ? -1 : 0;
+  const onSeg = (p, q, r) => q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) && q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y);
+  function intersects(p1, q1, p2, q2) {
+    const o1 = sign(area(p1, q1, p2)), o2 = sign(area(p1, q1, q2)), o3 = sign(area(p2, q2, p1)), o4 = sign(area(p2, q2, q1));
+    if (o1 !== o2 && o3 !== o4) return true;
+    return (o1 === 0 && onSeg(p1, p2, q1)) || (o2 === 0 && onSeg(p1, q2, q1)) || (o3 === 0 && onSeg(p2, p1, q2)) || (o4 === 0 && onSeg(p2, q1, q2));
+  }
+  function intersectsPolygon(a, b) {
+    let p = a;
+    do { if (p.i !== a.i && p.next.i !== a.i && p.i !== b.i && p.next.i !== b.i && intersects(p, p.next, a, b)) return true; p = p.next; } while (p !== a);
+    return false;
+  }
+  const locallyInside = (a, b) => area(a.prev, a, a.next) < 0 ? area(a, b, a.next) >= 0 && area(a, a.prev, b) >= 0 : area(a, b, a.prev) < 0 || area(a, a.next, b) < 0;
+  function middleInside(a, b) {
+    let p = a, inside = false; const px = (a.x + b.x) / 2, py = (a.y + b.y) / 2;
+    do { if (((p.y > py) !== (p.next.y > py)) && p.next.y !== p.y && (px < (p.next.x - p.x) * (py - p.y) / (p.next.y - p.y) + p.x)) inside = !inside; p = p.next; } while (p !== a);
+    return inside;
+  }
+  function splitPolygon(a, b) {
+    const a2 = mk(a.i, a.x, a.y), b2 = mk(b.i, b.x, b.y), an = a.next, bp = b.prev;
+    a.next = b; b.prev = a; a2.next = an; an.prev = a2; b2.next = a2; a2.prev = b2; bp.next = b2; b2.prev = bp;
+    return b2;
+  }
+  function insertNode(i, x, y, last) {
+    const p = mk(i, x, y);
+    if (!last) { p.prev = p; p.next = p; } else { p.next = last.next; p.prev = last; last.next.prev = p; last.next = p; }
+    return p;
+  }
+  function removeNode(p) { p.next.prev = p.prev; p.prev.next = p.next; }
+  function mk(i, x, y) { return { i, x, y, prev: null, next: null, steiner: false }; }
+  function signedArea(d, s, e) { let sum = 0; for (let i = s, j = e - 2; i < e; i += 2) { sum += (d[j] - d[i]) * (d[i + 1] + d[j + 1]); j = i; } return sum; }
+
+  // ---- tile build ----
+  const hash = (a, b) => { let h = (Math.imul(a | 0, 73856093) ^ Math.imul(b | 0, 19349663)) >>> 0; h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0; return (h ^ (h >>> 16)) >>> 0; };
+  function build(buf, m) {
+    const L = readLayers(buf, ['building', 'landcover']);
+    const E = (L.building || L.landcover || { extent: 4096 }).extent;
+    const n = 2 ** m.z, dLon = m.lonE - m.lonW, kxN = 111320 * Math.cos(m.latN * DEG);
+    const W = dLon * kxN, Hm = (m.latN - m.latS) * KZ;
+    const latCache = new Map();
+    const lz = py => { let v = latCache.get(py); if (v === undefined) { v = -(latFromMerc((m.y + py / E) / n) - m.latN) * KZ; if (latCache.size < 20000) latCache.set(py, v); } return v; };
+    const lx = px => px / E * dLon * kxN;
+    const dem = m.dem;
+    const ground = (px, py) => {
+      if (!dem) return m.g0;
+      const fx = clamp(px / E * 256 - 0.5, 0, 254.999), fy = clamp(py / E * 256 - 0.5, 0, 254.999);
+      const ix = fx | 0, iy = fy | 0, tx = fx - ix, ty = fy - iy, k = iy * 256 + ix;
+      const g = v => v !== v ? 0 : v;
+      return (g(dem[k]) * (1 - tx) + g(dem[k + 1]) * tx) * (1 - ty) + (g(dem[k + 256]) * (1 - tx) + g(dem[k + 257]) * tx) * ty;
+    };
+    // ---------- buildings ----------
+    const bpolys = polygons(L.building, E, p => !p.hide_3d);
+    let nv = 0, ni = 0;
+    for (const p of bpolys) for (let r = 0; r < p.rings.length; r++) { const k = p.rings[r].length / 2; nv += k * 4 + (r === 0 || true ? k : 0); ni += k * 6; }
+    ni += nv;                                                         // generous room for roof triangles
+    const vb = new ArrayBuffer(nv * 20), i16 = new Int16Array(vb), f32 = new Float32Array(vb), i8 = new Int8Array(vb);
+    let idx = new Uint32Array(ni);
+    let v = 0, q = 0;
+    const put = (x, z, y, nx, ny, nz, u, st, h, yr) => {
+      const s = v * 10;
+      i16[s] = Math.round(x * 10); i16[s + 1] = Math.round(z * 10); f32[v * 5 + 1] = y;
+      i8[v * 20 + 8] = nx; i8[v * 20 + 9] = ny; i8[v * 20 + 10] = nz;
+      i16[s + 6] = clamp(Math.round(u * 10), -32767, 32767); i16[s + 7] = st; i16[s + 8] = clamp(Math.round(h * 10), 0, 32767); i16[s + 9] = clamp(Math.round(yr * 10), -32767, 32767);
+      return v++;
+    };
+    const tri = (a, b, c) => { if (q + 3 > idx.length) { const g = new Uint32Array(idx.length * 2); g.set(idx); idx = g; } idx[q++] = a; idx[q++] = b; idx[q++] = c; };
+    const boxes = [], ringXZ = [], ringOff = [0];
+    let maxTop = -1e9, minG = 1e9;
+    for (let bi = 0; bi < bpolys.length; bi++) {
+      const poly = bpolys[bi], pr = poly.props, ext = poly.rings[0];
+      let h = +pr.render_height || 0, mh = +pr.render_min_height || 0;
+      if (h < 2.5) h = 3;
+      if (mh >= h - 0.5) continue;
+      // ground: lowest point under the footprint so no corner floats
+      let gmin = 1e9, gmax = -1e9, cx = 0, cy = 0;
+      const nk = ext.length / 2, stp = Math.max(1, Math.floor(nk / 12));
+      for (let i = 0; i < ext.length; i += 2) { cx += ext[i]; cy += ext[i + 1]; }
+      cx /= nk; cy /= nk;
+      for (let i = 0; i < ext.length; i += 2 * stp) { const g = ground(ext[i], ext[i + 1]); gmin = Math.min(gmin, g); gmax = Math.max(gmax, g); }
+      const gc = ground(cx, cy); gmin = Math.min(gmin, gc); gmax = Math.max(gmax, gc);
+      const base = gmin, top = (gmin + gmax) / 2 + h, bot = mh > 0 ? (gmin + gmax) / 2 + mh : base - 2.5;
+      const H = top - base, seed = hash(ext[0] + bi * 7, ext[1]) & 255;
+      maxTop = Math.max(maxTop, top); minG = Math.min(minG, bot);
+      // walls
+      for (const r of poly.rings) {
+        const k = r.length / 2;
+        for (let i = 0; i < k; i++) {
+          const j = (i + 1) % k, ax = r[i * 2], ay = r[i * 2 + 1], bx = r[j * 2], by = r[j * 2 + 1];
+          if ((ax === 0 && bx === 0) || (ax === E && bx === E) || (ay === 0 && by === 0) || (ay === E && by === E)) continue;
+          const x0 = lx(ax), z0 = lz(ay), x1 = lx(bx), z1 = lz(by), dx = x1 - x0, dz = z1 - z0, len = Math.hypot(dx, dz);
+          if (len < 0.05) continue;
+          const nx = Math.round(dz / len * 127), nz = Math.round(-dx / len * 127);
+          const a0 = put(x0, z0, bot, nx, 0, nz, 0, seed, H, bot - base), b0 = put(x1, z1, bot, nx, 0, nz, len, seed, H, bot - base);
+          const b1 = put(x1, z1, top, nx, 0, nz, len, seed, H, H), a1 = put(x0, z0, top, nx, 0, nz, 0, seed, H, H);
+          tri(a0, b1, b0); tri(a0, a1, b1);
+        }
+      }
+      // roof
+      const flat = [], holes = [];
+      for (let r = 0; r < poly.rings.length; r++) { if (r) holes.push(flat.length / 2); const rr = poly.rings[r]; for (let i = 0; i < rr.length; i += 2) flat.push(lx(rr[i]), lz(rr[i + 1])); }
+      const t = earcut(flat, holes);
+      if (t.length) {
+        const v0 = v;
+        for (let i = 0; i < flat.length; i += 2) put(flat[i], flat[i + 1], top, 0, 127, 0, 0, seed + 256, H, H);
+        for (let i = 0; i < t.length; i += 3) {
+          const a = t[i], b = t[i + 1], c = t[i + 2];
+          const e1x = flat[b * 2] - flat[a * 2], e1z = flat[b * 2 + 1] - flat[a * 2 + 1], e2x = flat[c * 2] - flat[a * 2], e2z = flat[c * 2 + 1] - flat[a * 2 + 1];
+          if (e1z * e2x - e1x * e2z >= 0) tri(v0 + a, v0 + b, v0 + c); else tri(v0 + a, v0 + c, v0 + b);
+        }
+      }
+      // collision footprint (outer ring, local metres)
+      let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+      for (let i = 0; i < ext.length; i += 2) { const X = lx(ext[i]), Z = lz(ext[i + 1]); ringXZ.push(X, Z); x0 = Math.min(x0, X); x1 = Math.max(x1, X); z0 = Math.min(z0, Z); z1 = Math.max(z1, Z); }
+      ringOff.push(ringXZ.length);
+      boxes.push(x0, z0, x1, z1, top);
+    }
+    // collision grid 32 x 32
+    const G = 32, nb = boxes.length / 5, cellCount = new Uint32Array(G * G + 1);
+    const cellOf = (X, sz) => clamp(Math.floor(X / sz * G), 0, G - 1);
+    for (let b = 0; b < nb; b++) for (let cz = cellOf(boxes[b * 5 + 1], Hm); cz <= cellOf(boxes[b * 5 + 3], Hm); cz++) for (let cx = cellOf(boxes[b * 5], W); cx <= cellOf(boxes[b * 5 + 2], W); cx++) cellCount[cz * G + cx + 1]++;
+    for (let i = 1; i <= G * G; i++) cellCount[i] += cellCount[i - 1];
+    const fill = cellCount.slice(), items = new Uint32Array(cellCount[G * G]);
+    for (let b = 0; b < nb; b++) for (let cz = cellOf(boxes[b * 5 + 1], Hm); cz <= cellOf(boxes[b * 5 + 3], Hm); cz++) for (let cx = cellOf(boxes[b * 5], W); cx <= cellOf(boxes[b * 5 + 2], W); cx++) items[fill[cz * G + cx]++] = b;
+    // ---------- trees over woods and parks ----------
+    const tpolys = polygons(L.landcover, E, p => p.class === 'wood' || (p.class === 'grass' && (p.subclass === 'park' || p.subclass === 'garden')));
+    let totalA = 0;
+    for (const p of tpolys) { const s = p.props.class === 'wood' ? 1 : 0.25; for (let r = 0; r < p.rings.length; r++) totalA += (r ? -1 : 1) * Math.abs(ringArea(p.rings[r])) * s; }
+    totalA *= (W / E) * (Hm / E);
+    const maxTrees = m.maxTrees, S0 = Math.max(9, Math.sqrt(totalA / maxTrees));
+    const trees = [];
+    for (const p of tpolys) {
+      const wood = p.props.class === 'wood', S = wood ? S0 : S0 * 1.8;
+      const rings = p.rings.map(r => { const o = []; for (let i = 0; i < r.length; i += 2) o.push(lx(r[i]), lz(r[i + 1])); return o; });
+      let zmin = 1e9, zmax = -1e9;
+      for (let i = 1; i < rings[0].length; i += 2) { zmin = Math.min(zmin, rings[0][i]); zmax = Math.max(zmax, rings[0][i]); }
+      for (let gz = Math.ceil(zmin / S); gz * S <= zmax; gz++) {
+        const z = gz * S, xs = [];
+        for (const r of rings) for (let i = 0, k = r.length; i < k; i += 2) {
+          const j = (i + 2) % k, za = r[i + 1], zb = r[j + 1];
+          if ((za <= z) !== (zb <= z)) xs.push(r[i] + (z - za) / (zb - za) * (r[j] - r[i]));
+        }
+        xs.sort((a, b) => a - b);
+        for (let s = 0; s + 1 < xs.length; s += 2) for (let gx = Math.ceil(xs[s] / S); gx * S <= xs[s + 1]; gx++) {
+          const hh = hash(gx + m.x * 4096, gz + m.y * 4096);
+          if (!wood && (hh & 1023) > 600) continue;
+          const X = gx * S + ((hh >>> 10 & 255) / 255 - 0.5) * S * 0.8, Z = z + ((hh >>> 18 & 255) / 255 - 0.5) * S * 0.8;
+          const px = X / (dLon * kxN) * E;
+          let py = (Z / Hm) * E;                                           // near-linear inside a z14 tile
+          const g = ground(px, py);
+          if (g < 0.5) continue;
+          const conifer = ((hh >>> 26) & 63) < (wood ? (g > 150 ? 38 : 20) : 8) ? 1 : 0;
+          trees.push(X, Z, g, ((hh >>> 3) & 1023) / 1024 * 0.999 + conifer * 2);
+          if (trees.length >= maxTrees * 4) break;
+        }
+      }
+    }
+    const tr = new Float32Array(trees);
+    const vbuf = v === nv ? vb : vb.slice(0, v * 20);
+    const ib = idx.slice(0, q);
+    const res = {
+      id: m.id, nv: v, ni: q, vb: vbuf, ib: ib.buffer, trees: tr.buffer, nTrees: tr.length / 4,
+      boxes: new Float32Array(boxes).buffer, ringXZ: new Float32Array(ringXZ).buffer, ringOff: new Uint32Array(ringOff).buffer,
+      cells: cellCount.buffer, items: items.buffer, maxTop: nb ? maxTop : -1e9, minG: nb ? minG : 0, nBuild: nb, W, Hm,
+    };
+    return res;
+  }
+  onmessage = async e => {
+    const m = e.data;
+    try {
+      let r = null;
+      for (let tries = 0; ; tries++) {
+        const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 30000);
+        try { r = await fetch(m.url, { signal: ctl.signal, mode: 'cors' }); if (r.ok || r.status === 404 || r.status === 204) break; }
+        catch (err) { if (tries >= 3) throw err; }
+        finally { clearTimeout(timer); }
+        if (tries >= 3) break;
+        await new Promise(res => setTimeout(res, 1200 * (tries + 1)));
+      }
+      if (r.status === 404 || r.status === 204) { postMessage({ id: m.id, empty: true }); return; }
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const res = build(new Uint8Array(await r.arrayBuffer()), m);
+      postMessage(res, [res.vb, res.ib, res.trees, res.boxes, res.ringXZ, res.ringOff, res.cells, res.items]);
+    } catch (err) { postMessage({ id: m.id, error: String((err && err.message) || err) }); }
+  };
+}
+
+const CITY = {
+  on: true, url: null, workers: [], jobs: new Map(), tiles: new Map(), nextId: 1, verts: 0, trees: 0, failed: 0,
+  prog: null, treeProg: null, treeTex: null, treeGeo: null, ready: false,
+};
+async function cityInit() {
+  if (CITY.ready || CITY.initStarted) return;
+  CITY.initStarted = true;
+  try {
+    const r = await fetch('https://tiles.openfreemap.org/planet', { mode: 'cors' });
+    const j = await r.json();
+    CITY.url = j.tiles[0];
+  } catch (e) { CITY.url = null; }
+  if (!CITY.url) { CITY.on = false; return; }
+  try {
+    const src = '(' + cityWorkerMain.toString() + ')()';
+    const wurl = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+    for (let i = 0; i < (game.touch ? 1 : 2); i++) {
+      const w = new Worker(wurl);
+      w.onmessage = e => cityReceive(e.data);
+      w.busy = 0;
+      CITY.workers.push(w);
+    }
+  } catch (e) { CITY.on = false; return; }
+  CITY.prog = makeProgram(BLDG_VS, BLDG_FS);
+  CITY.treeProg = makeProgram(TREE_VS, TREE_FS);
+  CITY.treeTex = makeTreeTexture();
+  // tree geometry: two crossed vertical cards and one horizontal canopy card
+  const g = [];
+  const quad = (pl) => { for (const [x, y] of [[-0.5, 0], [0.5, 0], [0.5, 1], [-0.5, 0], [0.5, 1], [-0.5, 1]]) g.push(x, y, pl); };
+  quad(0); quad(1); quad(2);
+  CITY.treeGeo = { buf: gl.createBuffer(), count: g.length / 3 };
+  gl.bindBuffer(gl.ARRAY_BUFFER, CITY.treeGeo.buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(g), gl.STATIC_DRAW);
+  CITY.ready = true;
+}
+function makeTreeTexture() {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 256;
+  const g = c.getContext('2d');
+  let s = 12345; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const leaf = (x, y, r, dark) => {
+    const l = 22 + rnd() * 16 - dark * 10, sat = 38 + rnd() * 20;
+    g.fillStyle = `hsl(${88 + rnd() * 30},${sat}%,${l}%)`; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+  };
+  // cell 0: broadleaf (side)
+  g.fillStyle = '#4a3a2a'; g.fillRect(60, 180, 8, 76);
+  for (let i = 0; i < 260; i++) { const a = rnd() * 6.283, rr = Math.sqrt(rnd()); const x = 64 + Math.cos(a) * rr * 52, y = 112 + Math.sin(a) * rr * 80; leaf(x, y, 7 + rnd() * 9, (y - 40) / 150 + (x - 20) / 200); }
+  // cell 1: conifer / cedar (side)
+  g.fillStyle = '#3d2e22'; g.fillRect(189, 200, 6, 56);
+  for (let i = 0; i < 320; i++) { const t = rnd(), y = 8 + t * 200, w = 6 + t * 46; const x = 192 + (rnd() * 2 - 1) * w; const l = 16 + rnd() * 12 - t * 6; g.fillStyle = `hsl(${120 + rnd() * 30},${30 + rnd() * 20}%,${l}%)`; g.beginPath(); g.arc(x, y, 5 + rnd() * 6, 0, 7); g.fill(); }
+  // cell 2: broadleaf (top)
+  for (let i = 0; i < 240; i++) { const a = rnd() * 6.283, rr = Math.sqrt(rnd()); const x = 320 + Math.cos(a) * rr * 56, y = 128 + Math.sin(a) * rr * 56; leaf(x, y, 8 + rnd() * 9, (x - 264) / 160 + (y - 72) / 160); }
+  // cell 3: conifer (top)
+  for (let i = 0; i < 200; i++) { const a = rnd() * 6.283, rr = Math.sqrt(rnd()); const x = 448 + Math.cos(a) * rr * 44, y = 128 + Math.sin(a) * rr * 44; const l = 26 - rr * 12 + rnd() * 6; g.fillStyle = `hsl(${125 + rnd() * 25},${30 + rnd() * 15}%,${l}%)`; g.beginPath(); g.arc(x, y, 4 + rnd() * 5, 0, 7); g.fill(); }
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  return tex;
+}
+function cityTile(x, y) {
+  const key = x + '/' + y;
+  let t = CITY.tiles.get(key);
+  if (t) return t;
+  const n = 2 ** 14;
+  t = { key, x, y, lonW: x / n * 360 - 180, lonE: (x + 1) / n * 360 - 180, latN: latFromMerc(y / n), latS: latFromMerc((y + 1) / n), state: 0, used: 0 };
+  t.kxN = kxAt(t.latN);
+  CITY.tiles.set(key, t);
+  return t;
+}
+function cityDispatch(t) {
+  const w = CITY.workers.reduce((a, b) => (b.busy < a.busy ? b : a));
+  const dt = getTile(14, t.x, t.y);
+  const id = CITY.nextId++;
+  t.state = 1; t.job = id; w.busy++;
+  CITY.jobs.set(id, { t, w });
+  const [la, lo] = [(t.latN + t.latS) / 2, (t.lonW + t.lonE) / 2];
+  w.postMessage({
+    id, url: CITY.url.replace('{z}', 14).replace('{x}', t.x).replace('{y}', t.y), z: 14, x: t.x, y: t.y,
+    latN: t.latN, latS: t.latS, lonW: t.lonW, lonE: t.lonE, dem: dt.dem ? dt.dem.slice() : null, g0: Math.max(rawHeightGeo(la, lo), 0),
+    maxTrees: game.touch ? 15000 : 45000,
+  });
+}
+function cityReceive(r) {
+  const job = CITY.jobs.get(r.id);
+  if (!job) return;
+  CITY.jobs.delete(r.id); job.w.busy--;
+  const t = job.t;
+  if (!CITY.tiles.has(t.key) || t.job !== r.id) return;
+  if (r.error) { t.state = 3; t.retry = R.time + 8; CITY.failed++; console.warn('CITY tile', t.key, r.error); return; }
+  t.state = 2;
+  if (r.empty) { t.nv = 0; t.nTrees = 0; return; }
+  t.nv = r.nv; t.ni = r.ni; t.nTrees = r.nTrees; t.maxTop = r.maxTop; t.minG = r.minG; t.W = r.W; t.Hm = r.Hm;
+  t.col = { boxes: new Float32Array(r.boxes), ringXZ: new Float32Array(r.ringXZ), ringOff: new Uint32Array(r.ringOff), cells: new Uint32Array(r.cells), items: new Uint32Array(r.items) };
+  if (r.nv) {
+    const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, r.vb, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.SHORT, false, 20, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 20, 4);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.BYTE, true, 20, 8);
+    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.SHORT, false, 20, 12);
+    const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(r.ib), gl.STATIC_DRAW);
+    gl.bindVertexArray(null);
+    t.vao = vao; t.vb = vb; t.ib = ib;
+    CITY.verts += r.nv;
+  }
+  if (r.nTrees) {
+    const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, CITY.treeGeo.buf); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    const tb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, tb); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(r.trees), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 0, 0); gl.vertexAttribDivisor(1, 1);
+    gl.bindVertexArray(null);
+    t.tvao = vao; t.tb = tb;
+    CITY.trees += r.nTrees;
+  }
+  t.ov = -1;
+}
+function cityDispose(t) {
+  if (t.vao) { gl.deleteVertexArray(t.vao); gl.deleteBuffer(t.vb); gl.deleteBuffer(t.ib); CITY.verts -= t.nv; }
+  if (t.tvao) { gl.deleteVertexArray(t.tvao); gl.deleteBuffer(t.tb); CITY.trees -= t.nTrees; }
+  t.vao = t.tvao = null; t.col = null;
+  CITY.tiles.delete(t.key);
+}
+// world-space bounding box, refreshed when the floating origin moves
+function cityBox(t) {
+  if (t.ov === JW.ov) return t.box;
+  const c = [geoToWorld(t.latN, t.lonW), geoToWorld(t.latN, t.lonE), geoToWorld(t.latS, t.lonW), geoToWorld(t.latS, t.lonE)];
+  t.box = [Math.min(...c.map(p => p[0])), Math.min(...c.map(p => p[1])), Math.max(...c.map(p => p[0])), Math.max(...c.map(p => p[1]))];
+  t.ov = JW.ov;
+  return t.box;
+}
+function cityUpdate() {
+  if (JW.active && JW.online === false && R.time > (JW.recheckAt || 0)) { JW.recheckAt = R.time + 25; jwRecheckOnline(); }
+  if (!JW.active || !JW.online || !CITY.on) return;
+  if (!CITY.ready) { cityInit(); return; }
+  const eye = R.eye, [la, lo] = worldToGeo(eye[0], eye[2]);
+  const agl = eye[1] - Math.max(rawHeightGeo(la, lo), 0);
+  const radius = game.touch ? clamp(1800 + agl * 1.5, 1800, 3500) : clamp(2800 + agl * 2.2, 2800, 7000);
+  CITY.treeR = game.touch ? 1500 : 2600;
+  const n = 2 ** 14, fx = (lo + 180) / 360 * n, fy = mercY(la) * n;
+  const tw = (360 / n) * kxAt(la), rr = Math.ceil(radius / tw) + 1;
+  const want = [];
+  const f = R.frame || 0;
+  for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) {
+    const x = Math.floor(fx) + dx, y = Math.floor(fy) + dy;
+    const cx = (x + 0.5 - fx) * tw, cy = (y + 0.5 - fy) * tw, d = Math.max(Math.hypot(cx, cy) - tw * 0.7, 0);
+    if (d > radius) continue;
+    const t = cityTile(x, y); t.used = f; t.dist = d;
+    want.push(t);
+  }
+  want.sort((a, b) => a.dist - b.dist);
+  const vBudget = game.touch ? 1.5e6 : 5e6;
+  let busy = 0; for (const w of CITY.workers) busy += w.busy;
+  for (const t of want) {
+    if (busy >= CITY.workers.length * 2) break;
+    if (CITY.verts > vBudget && t.dist > 1500) break;
+    if (t.state === 3 && R.time > t.retry && CITY.failed < 40) t.state = 0;
+    if (t.state !== 0) continue;
+    const dt = getTile(14, t.x, t.y);
+    if (dt.demState === 0) { loadDem(dt); continue; }
+    if (dt.demState === 1) continue;
+    cityDispatch(t); busy++;
+  }
+  // drop tiles that fell well outside the radius
+  if (CITY.tiles.size > want.length + 6 || CITY.verts > vBudget) {
+    for (const t of [...CITY.tiles.values()]) if (t.used < f - 30 && t.state !== 1) cityDispose(t);
+  }
+}
+function citySetTile(u, t) {
+  gl.uniform4f(u.uTileA, t.lonW - JW.lon0, t.latN - JW.lat0, t.latN, t.kxN);
+}
+function drawCity(planes) {
+  if (!CITY.ready || !JW.online) return;
+  const pr = CITY.prog, u = pr.u;
+  setCommon(pr);
+  gl.uniform1i(u.uNoise, 2);
+  gl.uniform1f(u.uNight, clamp((0.3 - ENV.sunDir[1]) * 4, 0, 1));
+  gl.enable(gl.CULL_FACE);
+  for (const t of CITY.tiles.values()) {
+    if (!t.vao) continue;
+    const b = cityBox(t);
+    if (!boxInFrustum(planes, b[0], t.minG - 60, b[1], b[2], t.maxTop + 5, b[3])) continue;
+    citySetTile(u, t);
+    gl.bindVertexArray(t.vao);
+    gl.drawElements(gl.TRIANGLES, t.ni, gl.UNSIGNED_INT, 0);
+  }
+  // trees
+  const tp = CITY.treeProg, tu = tp.u;
+  setCommon(tp);
+  gl.activeTexture(gl.TEXTURE7); gl.bindTexture(gl.TEXTURE_2D, CITY.treeTex); gl.activeTexture(gl.TEXTURE0);
+  gl.uniform1i(tu.uTreeTex, 7);
+  gl.uniform1f(tu.uFade, CITY.treeR);
+  gl.disable(gl.CULL_FACE);
+  for (const t of CITY.tiles.values()) {
+    if (!t.tvao || t.dist > CITY.treeR) continue;
+    const b = cityBox(t);
+    if (!boxInFrustum(planes, b[0], -50, b[1], b[2], 4000, b[3])) continue;
+    citySetTile(tu, t);
+    gl.bindVertexArray(t.tvao);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, CITY.treeGeo.count, t.nTrees);
+  }
+  gl.enable(gl.CULL_FACE);
+}
+// collision: aircraft centre and wing tips against building footprints
+function cityCollide() {
+  if (!CITY.ready || !JW.online || sim.crashed || sim.onGround) return null;
+  const r = qrot(sim.q, [1, 0, 0]), half = (AC.b || 10) * 0.45;
+  for (const s of [0, -1, 1]) {
+    const p = [sim.pos[0] + r[0] * half * s, sim.pos[1] + r[1] * half * s, sim.pos[2] + r[2] * half * s];
+    const [la, lo] = worldToGeo(p[0], p[2]);
+    const n = 2 ** 14, x = Math.floor((lo + 180) / 360 * n), y = Math.floor(mercY(la) * n);
+    const t = CITY.tiles.get(x + '/' + y);
+    if (!t || !t.col || p[1] > t.maxTop + 2) continue;
+    const X = (lo - t.lonW) * t.kxN, Z = -(la - t.latN) * KZ;
+    const G = 32, cx = clamp(Math.floor(X / t.W * G), 0, G - 1), cz = clamp(Math.floor(Z / t.Hm * G), 0, G - 1), c = t.col;
+    for (let k = c.cells[cz * G + cx]; k < c.cells[cz * G + cx + 1]; k++) {
+      const b = c.items[k], B = c.boxes;
+      if (p[1] > B[b * 5 + 4] || X < B[b * 5] || X > B[b * 5 + 2] || Z < B[b * 5 + 1] || Z > B[b * 5 + 3]) continue;
+      let inside = false;
+      for (let i = c.ringOff[b], j = c.ringOff[b + 1] - 2; i < c.ringOff[b + 1]; j = i, i += 2) {
+        const zi = c.ringXZ[i + 1], zj = c.ringXZ[j + 1];
+        if ((zi > Z) !== (zj > Z) && X < (c.ringXZ[j] - c.ringXZ[i]) * (Z - zi) / (zj - zi) + c.ringXZ[i]) inside = !inside;
+      }
+      if (inside) return s === 0 ? '建物に衝突しました' : '翼が建物に接触しました';
+    }
+  }
+  return null;
+}
+
+// ---------- shaders ----------
+const CITY_POS_GLSL = `
+uniform vec4 uTileA;   // lonW - lon0, latN - lat0, latN, metres per degree of longitude at latN
+vec3 cityWorld(vec2 l, float y){
+  float dlat = -l.y / 110574.0;
+  float lat = uTileA.z + dlat;
+  return vec3((uTileA.x + l.x / uTileA.w) * 111320.0 * cos(radians(lat)), y, -(uTileA.y + dlat) * 110574.0);
+}`;
+const BLDG_VS = GLSL_HEAD + `
+layout(location=0) in vec2 aXZ;
+layout(location=1) in float aY;
+layout(location=2) in vec3 aN;
+layout(location=3) in vec4 aM;       // u (dm), seed + 256*roof, height (dm), height above ground (dm)
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv;
+` + CITY_POS_GLSL + `
+out vec3 vWorld; out vec3 vN; out vec3 vM; flat out float vSeed; flat out float vRoof;
+void main(){
+  vec3 w = cityWorld(aXZ * 0.1, aY);
+  vec2 d = w.xz - uCamPos.xz;
+  vWorld = w;
+  w.y -= dot(d, d) * uCurv;
+  vN = aN;
+  vM = vec3(aM.x * 0.1, aM.z * 0.1, aM.w * 0.1);
+  vRoof = aM.y >= 256.0 ? 1.0 : 0.0;
+  vSeed = mod(aM.y, 256.0);
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+const BLDG_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec3 vWorld; in vec3 vN; in vec3 vM; flat in float vSeed; flat in float vRoof;
+uniform sampler2D uNoise;
+uniform float uNight;
+out vec4 outColor;
+float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
+float h2(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+void main(){
+  vec3 n = normalize(vN);
+  float H = vM.y, s1 = h1(vSeed + 0.13), s2 = h1(vSeed + 5.71), s3 = h1(vSeed + 9.3);
+  vec3 V = normalize(uCamPos - vWorld);
+  float dist = length(uCamPos - vWorld);
+  float diff = max(dot(n, uSunDir), 0.0);
+  vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5) * 1.15;
+  vec3 col;
+  float gloss = 0.0;
+  bool tower = H > 45.0, house = H < 11.0;
+  if (vRoof > 0.5) {
+    vec3 rc;
+    if (house) {
+      int k = int(s1 * 7.0);
+      rc = k == 0 ? vec3(0.22, 0.24, 0.28) : k == 1 ? vec3(0.34, 0.25, 0.20) : k == 2 ? vec3(0.42, 0.43, 0.44) :
+           k == 3 ? vec3(0.19, 0.28, 0.32) : k == 4 ? vec3(0.44, 0.23, 0.17) : k == 5 ? vec3(0.60, 0.61, 0.62) : vec3(0.30, 0.31, 0.30);
+    } else {
+      rc = mix(vec3(0.50, 0.50, 0.49), vec3(0.66, 0.65, 0.62), s1);
+      if (s2 > 0.85) rc = vec3(0.30, 0.42, 0.26);                 // rooftop garden
+    }
+    float nz = texture(uNoise, vWorld.xz / 7.0).b * 0.5 + texture(uNoise, vWorld.xz / 1.3).b * 0.5;
+    rc *= 0.86 + nz * 0.28;
+    // rooftop equipment / edge band on larger flat roofs
+    col = rc * (uSunCol * diff * 0.95 + amb);
+  } else {
+    // wall: palette per building
+    vec3 wc;
+    if (house) {
+      int k = int(s1 * 6.0);
+      wc = k == 0 ? vec3(0.86, 0.84, 0.79) : k == 1 ? vec3(0.80, 0.74, 0.64) : k == 2 ? vec3(0.70, 0.70, 0.69) :
+           k == 3 ? vec3(0.55, 0.46, 0.37) : k == 4 ? vec3(0.88, 0.87, 0.84) : vec3(0.62, 0.64, 0.66);
+    } else if (!tower) {
+      int k = int(s1 * 6.0);
+      wc = k == 0 ? vec3(0.78, 0.76, 0.72) : k == 1 ? vec3(0.62, 0.52, 0.44) : k == 2 ? vec3(0.66, 0.66, 0.65) :
+           k == 3 ? vec3(0.84, 0.82, 0.76) : k == 4 ? vec3(0.52, 0.47, 0.42) : vec3(0.72, 0.70, 0.66);
+    } else {
+      wc = mix(vec3(0.55, 0.60, 0.66), vec3(0.70, 0.72, 0.72), s1);
+    }
+    float fh = house ? 2.9 : tower ? 4.0 : 3.3;
+    float ws = house ? 3.4 : tower ? 1.8 : mix(2.6, 3.8, s2);
+    vec2 g = vec2(vM.x / ws, vM.z / fh);
+    vec2 cell = floor(g), fp = fract(g);
+    vec2 fw = fwidth(g);
+    float aa = clamp(1.0 - max(fw.x, fw.y) * 1.2, 0.0, 1.0);
+    float win;
+    float cov;
+    if (tower) {
+      float band = smoothstep(0.10, 0.16, fp.y) * (1.0 - smoothstep(0.86, 0.92, fp.y));
+      float mull = smoothstep(0.03, 0.08, fp.x) * (1.0 - smoothstep(0.92, 0.97, fp.x));
+      win = band * mull; cov = 0.66;
+      if (s3 > 0.5) { win = band; cov = 0.76; }                        // ribbon glazing
+    } else {
+      float wx = smoothstep(0.18, 0.22, fp.x) * (1.0 - smoothstep(0.78, 0.82, fp.x));
+      float wy = smoothstep(0.30, 0.34, fp.y) * (1.0 - smoothstep(house ? 0.78 : 0.84, house ? 0.82 : 0.88, fp.y));
+      win = wx * wy;
+      float skipW = house ? 0.45 : 0.12;
+      if (h2(cell + vSeed) < skipW) win = 0.0;
+      cov = 0.36 * (1.0 - skipW);
+      if (!house && s3 > 0.6) { win = wy * smoothstep(0.02, 0.06, fp.x) * (1.0 - smoothstep(0.94, 0.98, fp.x)); cov = 0.5; }   // balcony bands
+    }
+    if (vM.z < 0.3 || vM.z > H - 0.9) win = 0.0;                      // plinth and parapet
+    win = mix(cov, win, aa);
+    // glass: sky reflection with Fresnel, dark interior
+    vec3 r = reflect(-V, n);
+    float fres = 0.12 + 0.75 * pow(1.0 - max(dot(n, V), 0.0), 4.0);
+    vec3 glass = mix(vec3(0.05, 0.06, 0.08), skyColor(r) * 0.9, fres + (tower ? 0.25 : 0.0));
+    glass += uSunCol * pow(max(dot(r, uSunDir), 0.0), 120.0) * 2.0;
+    float lit = step(0.62, h2(cell * 1.7 + vSeed)) * uNight;
+    glass = mix(glass, vec3(1.0, 0.82, 0.55) * 0.95, lit * mix(1.0, aa, 0.5) );
+    vec3 wallLit = wc * (uSunCol * diff * 0.9 + amb);
+    col = mix(wallLit, glass, win);
+    // ground-floor shade and contact darkening
+    col *= mix(0.62, 1.0, smoothstep(0.0, 7.0, vM.z));
+    if (!house && vM.z < 3.6 && vM.z > 0.3 && s2 > 0.4) col = mix(col, glass * 0.8, 0.5 * aa);   // shop fronts
+  }
+  outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
+}`;
+const TREE_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aC;       // card corner x, y, card index (2 = horizontal)
+layout(location=1) in vec4 aI;       // local x, z, ground y, seed + 2*conifer
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv;
+uniform float uFade;
+` + CITY_POS_GLSL + `
+out vec2 vUv; out float vY; out float vSeed; out float vFade; out vec3 vWorld; flat out float vCard;
+void main(){
+  float con = floor(aI.w * 0.5), seed = aI.w - con * 2.0;
+  vec3 b = cityWorld(aI.xy, aI.z);
+  float dist = length(b - uCamPos);
+  vFade = 1.0 - smoothstep(uFade * 0.75, uFade, dist);
+  float hgt = con > 0.5 ? mix(13.0, 24.0, seed) : mix(7.0, 14.0, fract(seed * 7.31));
+  float wid = con > 0.5 ? hgt * 0.45 : hgt * 0.85;
+  float rot = seed * 6.2832;
+  vec3 p;
+  float col;
+  if (aC.z < 1.5) {
+    float a = rot + aC.z * 1.5708;
+    p = vec3(cos(a) * aC.x * wid, aC.y * hgt, sin(a) * aC.x * wid);
+    col = con;
+    vUv = vec2((aC.x + 0.5 + col) * 0.25, 1.0 - aC.y);
+  } else {
+    float ch = con > 0.5 ? 0.42 : 0.62;
+    p = vec3(aC.x * wid * 0.95, hgt * ch, (aC.y - 0.5) * wid * 0.95);
+    col = 2.0 + con;
+    vUv = vec2((aC.x + 0.5 + col) * 0.25, aC.y * 0.5 + 0.25);
+  }
+  vCard = aC.z; vY = aC.z < 1.5 ? aC.y : 0.8; vSeed = seed;
+  vec3 w = b + p;
+  vWorld = w;
+  vec2 d = w.xz - uCamPos.xz;
+  w.y -= dot(d, d) * uCurv;
+  gl_Position = vFade <= 0.0 ? vec4(2.0, 2.0, 2.0, 1.0) : uViewProj * vec4(w, 1.0);
+}`;
+const TREE_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec2 vUv; in float vY; in float vSeed; in float vFade; in vec3 vWorld; flat in float vCard;
+uniform sampler2D uTreeTex;
+out vec4 outColor;
+void main(){
+  vec4 t = texture(uTreeTex, vUv);
+  float dith = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+  if (t.a < 0.5 || dith > vFade) discard;
+  vec3 c = t.rgb * mix(vec3(0.9, 1.0, 0.85), vec3(1.1, 1.05, 0.9), vSeed);
+  float light = mix(0.55, 1.0, vY) * (0.75 + 0.45 * max(uSunDir.y, 0.0));
+  vec3 col = c * (uSunCol * light * 0.75 + uAmbSky * 0.9);
+  outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
+}`;
 
 // =====================================================================
 //  GAME: environment, camera, input, audio, particles, HUD, modes, loop
@@ -3987,10 +4869,10 @@ function updateMenuTexts() {
     if (JW.dest) t += `目的地：${JW.dest.name}まで ${Math.round(geoDist(JW.dep.lat, JW.dep.lon, JW.dest.lat, JW.dest.lon) / 1000).toLocaleString()} km。`;
     $('map-desc').textContent = t;
     $('net-desc').textContent = JW.online
-      ? '詳細地図：オンライン。国土地理院の航空写真と 10 m 標高を読み込みながら飛びます。'
+      ? '詳細地図：オンライン。国土地理院の航空写真・10 m 標高と、OpenStreetMap の建物（実際の高さ）・木を読み込みながら飛びます。'
       : '';
     if (!JW.online) {
-      const a = document.createElement('a'); a.href = FULL_URL; a.target = '_blank'; a.rel = 'noopener'; a.textContent = '航空写真付きの詳細版を開く';
+      const a = document.createElement('a'); a.href = FULL_URL; a.target = '_blank'; a.rel = 'noopener'; a.textContent = '航空写真と 3D の街並み付きの詳細版を開く';
       $('net-desc').append('詳細地図：オフライン（内蔵の簡易地形で表示中）。', a);
     }
     $('sub-air').textContent = `${JW.dep.name}の近くを巡航中の状態から自由に飛ぶ`;
@@ -4060,9 +4942,38 @@ function setupMenu() {
     document.querySelectorAll('.guide-body section').forEach(sec => { sec.hidden = sec.dataset.tab !== b.dataset.tab; });
   }));
   $('guide-demo').addEventListener('click', showCallouts);
+  const na = $('num-acft');
+  for (const a of AIRCRAFT) { const o = document.createElement('option'); o.value = a.id; o.textContent = `${a.name} — ${a.kind}`; na.append(o); }
+  na.addEventListener('change', () => renderNumbers(na.value));
   $('callout-close').addEventListener('click', hideCallouts);
 }
+// reference numbers for steady flight, per aircraft (see TRIM)
+function renderNumbers(id) {
+  const T = TRIM[id], A = AIRCRAFT.find(a => a.id === id);
+  if (!T) return;
+  $('num-acft').value = id;
+  const fl = i => A.wing.flap ? FLAP_DEG[i] + '°' : '—';
+  const sg = v => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v).toFixed(1) + '°';
+  const vs = v => Math.abs(v) < 30 ? '0（水平）' : (v > 0 ? '+' : '−') + Math.abs(v).toLocaleString();
+  const turn = r => r[5] > 0.2 ? `${Math.round(360 / r[5])} 秒` : '—';
+  const row = (label, r, extra = '') => `<tr><td>${label}${extra}</td><td>${r[0]} kt</td><td>${fl(r[6])}</td><td><b>${r[1]}%</b></td><td><b>${sg(r[2])}</b></td><td>${r[4] ? r[4] + '°' : '0°'}</td><td>${vs(r[3])}</td><td>${turn(r)}</td></tr>`;
+  const L = T.level, dThr = b => { const d = T['turn' + b][1] - L[1]; return (d >= 0 ? '+' : '−') + Math.abs(d) + '%'; }, dP = b => { const d = T['turn' + b][2] - L[2]; return (d >= 0 ? '+' : '−') + Math.abs(d).toFixed(1) + '°'; };
+  let h = `<div class="num-wrap"><table class="nt"><tr><th>状況</th><th>速度</th><th>フラップ</th><th>スロットル</th><th>ピッチ</th><th>バンク</th><th>昇降 fpm</th><th>1 周</th></tr>`;
+  h += `<tr class="grp"><td colspan="8">巡航（ふつうに飛ぶとき）</td></tr>`;
+  h += row('水平飛行', L);
+  for (const b of [15, 30, 45, 60]) h += row(`水平旋回 ${b}°`, T['turn' + b], `<br><small>水平飛行から スロットル ${dThr(b)}・ピッチ ${dP(b)}</small>`);
+  h += `<tr class="grp"><td colspan="8">低速（空港の周り・着陸の準備）ギアを下げた状態</td></tr>`;
+  h += row('水平飛行', T.slow);
+  for (const b of [15, 30]) h += row(`水平旋回 ${b}°`, T['slowturn' + b]);
+  h += `<tr class="grp"><td colspan="8">上昇・降下</td></tr>`;
+  h += row('上昇（スロットル全開）', T.climb);
+  h += row('ゆるやかな降下（約 500 fpm）', T.descent);
+  h += row('着陸の進入（3° の坂）', T.approach);
+  h += `</table></div>`;
+  $('num-table').innerHTML = h;
+}
 function openGuide(tab) {
+  renderNumbers(game.acftId);
   if (game.state === 'flying') pauseGame();
   $('guide').hidden = false;
   if (tab) document.querySelector(`.tabs [data-tab="${tab}"]`).click();
@@ -4244,7 +5155,7 @@ function render() {
 }
 function drawScene(planes, far) {
   gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
-  if (JW.active) { drawJapanTerrain(planes); drawJapanRunways(); }
+  if (JW.active) { drawJapanTerrain(planes); drawJapanRunways(); drawCity(planes); }
   else {
   // terrain
   setCommon(progTerrain); shadowUniforms(progTerrain);
@@ -4483,7 +5394,7 @@ function drawHUD() {
   // PFD & engine panel
   const pfdX = touch ? 12 : 16, pfdY = touch ? 12 : H - 16 - 252 * sc;
   drawPFD(g, pfdX, pfdY, sc, att);
-  if (!touch) { drawEngine(g, pfdX + 390 * sc, pfdY, sc); drawStick(g, pfdX + 598 * sc, pfdY + 108 * sc, sc); }
+  if (!touch) { drawEngine(g, pfdX + 390 * sc, pfdY, sc); drawStick(g, pfdX + 598 * sc, pfdY + 108 * sc, sc); drawTargets(g, pfdX + 742 * sc, pfdY + 108 * sc, sc); }
   else drawStatusStrip(g, pfdX, pfdY + 258 * sc, sc);
   drawMinimap(g, W, H, touch, att);
   drawInfo(g, W, H, touch, sc, pfdY + 258 * sc + 30);
@@ -4727,6 +5638,50 @@ function drawStick(g, x0, y0, sc) {
     g.font = `11px ${UI}`; g.fillStyle = 'rgba(88,224,140,0.9)'; g.textAlign = 'left'; g.textBaseline = 'top';
     g.fillText(game.levelT > 0 ? '水平に戻しています…' : neutral ? 'アシスト：水平飛行を保持中' : 'アシスト：離すと水平に戻ります', x0, y0 - 18 * sc);
   }
+}
+// "targets" panel: throttle and pitch that keep level flight at the current bank and flap setting
+function trimTarget() {
+  const T = TRIM[ACFT.id]; if (!T) return null;
+  const s = sim, a = attitude(), b = Math.min(Math.abs(a.bank), 60);
+  const slow = s.flapIdx > 0 || (s.gearDown && !ACFT.gear.fixed);
+  const pts = slow ? [[0, T.slow], [15, T.slowturn15], [30, T.slowturn30]] : [[0, T.level], [15, T.turn15], [30, T.turn30], [45, T.turn45], [60, T.turn60]];
+  let i = 0; while (i < pts.length - 2 && b > pts[i + 1][0]) i++;
+  const [b0, r0] = pts[i], [b1, r1] = pts[i + 1], f = clamp((b - b0) / (b1 - b0), 0, 1);
+  return { v: r0[0], thr: lerp(r0[1], r1[1], f), pitch: lerp(r0[2], r1[2], f), bank: b, slow, over: slow && b > 32, pitchNow: a.pitch };
+}
+function drawTargets(g, x0, y0, sc) {
+  const s = sim;
+  if (s.onGround || game.state !== 'flying' || s.agl < 30) return;
+  const t = trimTarget(); if (!t) return;
+  const W = 214, Hh = 144;
+  g.save(); g.translate(x0, y0); g.scale(sc, sc);
+  rr(g, 0, 0, W, Hh, 8); g.fillStyle = 'rgba(6,12,22,0.66)'; g.fill();
+  g.textBaseline = 'top'; g.textAlign = 'left';
+  g.font = `10px ${UI}`; g.fillStyle = COL.muted;
+  g.fillText(`目安：水平飛行（バンク ${Math.round(t.bank)}°${t.slow ? '・低速' : ''}）`, 10, 7);
+  const thrNow = s.thr * 100, dT = thrNow - t.thr, dP = t.pitchNow - t.pitch;
+  const line = (y, label, want, now, ok, unit, sign) => {
+    g.font = `11px ${UI}`; g.fillStyle = COL.muted; g.fillText(label, 10, y);
+    g.font = `700 15px ${MONO}`; g.fillStyle = COL.ink;
+    const fmt = v => (sign && v > 0 ? '+' : '') + v.toFixed(sign ? 1 : 0) + unit;
+    g.fillText(fmt(want), 76, y - 2);
+    g.font = `11px ${MONO}`; g.fillStyle = ok ? COL.green : COL.amber; g.fillText('今 ' + fmt(now), 146, y);
+  };
+  line(28, 'スロットル', t.thr, thrNow, Math.abs(dT) < 6, '%', false);
+  line(52, 'ピッチ', t.pitch, t.pitchNow, Math.abs(dP) < 1.2, '°', true);
+  g.font = `11px ${UI}`; g.fillStyle = COL.muted; g.fillText(`速度 ${t.v} kt のときの値`, 10, 76);
+  const vsFpm = s.vs * 196.85, spd = s.ias * 1.94384;
+  let hint = '';
+  if (t.over) hint = '低速で深く傾けています。30° までに';
+  else if (vsFpm < -150) hint = game.assist ? '沈んでいます：スロットルを少し足す' : '沈んでいます：機首を 1° 上げる';
+  else if (vsFpm > 150) hint = game.assist ? '上昇中' : '上がっています：機首を 1° 下げる';
+  else if (spd < t.v - 8) hint = '遅くなっています：スロットルを 5% 足す';
+  else if (spd > t.v + 12) hint = '速くなっています：スロットルを 5% 絞る';
+  else hint = '水平飛行を保てています';
+  g.font = `700 11px ${UI}`; g.fillStyle = hint.startsWith('水平') ? COL.green : COL.amber;
+  g.fillText(hint, 10, 96);
+  g.font = `10px ${UI}`; g.fillStyle = COL.muted; g.fillText('詳しくはガイド「数値の目安」', 10, 120);
+  g.restore();
 }
 function drawStatusStrip(g, x, y, sc) {
   const s = sim;
@@ -5144,6 +6099,7 @@ function frame(now) {
       }
       if (n >= 14 * ts) acc = 0;
       if (JW.active) jwFrame(dt * ts);
+      if (JW.active && game.state === 'flying') { const hit = cityCollide(); if (hit) crash(hit); }
       if (game.state === 'flying') gameChecks(dt);
       if (game.state === 'flying' && game.mode === 'tutorial') tutUpdate(dt);
     } else acc = 0;
@@ -5153,7 +6109,7 @@ function frame(now) {
     }
     updateParticles(dt);
     updateCamera(dt);
-    if (!JW.active) updateTrees(cam.eye); else jwUpdateClouds();
+    if (!JW.active) updateTrees(cam.eye); else { jwUpdateClouds(); cityUpdate(); }
     render();
     drawHUD();
     if (mapv.open) drawMapView();

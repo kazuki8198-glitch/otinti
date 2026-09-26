@@ -1,0 +1,3020 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>空島フライト</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=B612:wght@400;700&family=B612+Mono:wght@400;700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#07101d;
+  --panel:rgba(8,17,31,.84);
+  --panel-solid:#0c1a2e;
+  --line:rgba(150,176,206,.26);
+  --ink:#e8f0fa;
+  --muted:#92a5be;
+  --cyan:#5fd4ff;
+  --magenta:#e36bdc;
+  --amber:#ffb547;
+  --red:#ff5a4f;
+  --green:#58e08c;
+  --ui:"B612","Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --jp:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --mono:"B612 Mono","Zen Kaku Gothic New",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--jp);
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none;touch-action:none}
+canvas#hud{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+.screen{position:fixed;inset:0;display:flex;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+
+/* loading */
+#loading{align-items:center;justify-content:center;background:var(--bg)}
+.load-box{width:min(360px,100%);display:grid;gap:12px}
+.load-box .brand{font:700 28px/1.2 var(--jp);letter-spacing:.06em}
+.load-box .eyebrow{margin:0}
+#load-text{color:var(--muted);font-size:14px}
+.bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--cyan);transition:width .15s}
+
+/* menu */
+#menu{align-items:flex-end;justify-content:flex-start;gap:16px;background:linear-gradient(90deg,rgba(5,11,20,.82) 0,rgba(5,11,20,.55) 420px,rgba(5,11,20,0) 760px);overflow-y:auto}
+.menu-panel{width:min(400px,100%);display:grid;gap:18px;margin-top:auto}
+.eyebrow{font:700 11px/1 var(--ui);letter-spacing:.22em;color:var(--cyan);text-transform:uppercase}
+h1{margin:6px 0 0;font:700 clamp(34px,6vw,52px)/1.05 var(--jp);letter-spacing:.04em;text-wrap:balance}
+.lede{margin:8px 0 0;color:var(--muted);font-size:14px;line-height:1.6}
+.missions{display:grid;gap:8px}
+.mission{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:14px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--line);background:var(--panel);cursor:pointer;transition:border-color .15s,background .15s}
+.mission:hover{border-color:var(--cyan);background:rgba(20,40,66,.9)}
+.mission .code{font:700 12px/1 var(--mono);color:var(--cyan);width:34px;letter-spacing:.04em}
+.mission .m-title{font:700 16px/1.3 var(--jp)}
+.mission .m-sub{grid-column:2;font:12px/1.5 var(--jp);color:var(--muted)}
+.mission .best{color:var(--amber);font-family:var(--mono)}
+.opts{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;font-size:13px;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{background:transparent;border:0;padding:6px 12px;cursor:pointer;color:var(--muted)}
+.seg button.on{background:var(--cyan);color:#04121f;font-weight:700}
+.chk{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+.chk input{accent-color:var(--cyan);width:16px;height:16px}
+.resume{padding:12px 14px;border-radius:6px;border:1px solid var(--cyan);background:rgba(95,212,255,.14);font:700 15px var(--jp);cursor:pointer;text-align:left}
+.keys{margin-top:auto;margin-left:auto;width:min(330px,100%);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+.keys h2{margin:0 0 10px;font:700 11px/1 var(--ui);letter-spacing:.22em;color:var(--muted)}
+.keys table{width:100%;border-collapse:collapse;font-size:12.5px}
+.keys td{padding:4px 0;vertical-align:top;border-top:1px solid rgba(150,176,206,.12)}
+.keys tr:first-child td{border-top:0}
+.keys td:last-child{text-align:right;font-family:var(--mono);color:var(--cyan);white-space:nowrap;padding-left:10px}
+@media (max-width:860px){.keys{display:none}}
+@media (pointer:coarse){.keys{display:none}}
+
+/* results */
+#result{align-items:center;justify-content:center;background:rgba(4,9,17,.55)}
+.result-panel{width:min(420px,100%);background:var(--panel-solid);border:1px solid var(--line);border-radius:8px;padding:22px 22px 18px;display:grid;gap:14px}
+.result-panel h2{margin:4px 0 0;font:700 28px/1.2 var(--jp)}
+#res-list{margin:0;display:grid;grid-template-columns:1fr auto;gap:6px 16px;font-size:14px}
+#res-list dt{color:var(--muted)}
+#res-list dd{margin:0;text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+#res-list .total{font-size:18px;color:var(--amber);font-weight:700}
+.res-actions{display:flex;gap:10px;flex-wrap:wrap}
+.res-actions button{flex:1;padding:11px 14px;border-radius:6px;border:1px solid var(--line);background:transparent;font:700 14px var(--jp);cursor:pointer}
+.res-actions button.primary{background:var(--cyan);border-color:var(--cyan);color:#04121f}
+
+/* toast */
+#toast{position:fixed;left:50%;top:max(14px,env(safe-area-inset-top));transform:translateX(-50%);display:grid;gap:6px;justify-items:center;pointer-events:none;z-index:5;width:max-content;max-width:calc(100% - 32px)}
+#toast div{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:6px 14px;font:13px/1.4 var(--jp);transition:opacity .4s}
+
+/* touch controls */
+#touch{position:fixed;inset:0;pointer-events:none;z-index:3}
+.stick{position:absolute;left:max(22px,env(safe-area-inset-left));bottom:max(22px,env(safe-area-inset-bottom));width:150px;height:150px;border-radius:50%;border:1.5px solid rgba(232,240,250,.35);background:rgba(8,17,31,.35);pointer-events:auto;touch-action:none}
+.stick::before,.stick::after{content:"";position:absolute;background:rgba(232,240,250,.18)}
+.stick::before{left:50%;top:10px;bottom:10px;width:1px}
+.stick::after{top:50%;left:10px;right:10px;height:1px}
+.stick-knob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:rgba(95,212,255,.55);border:1.5px solid var(--cyan)}
+.thr{position:absolute;right:max(22px,env(safe-area-inset-right));bottom:max(22px,env(safe-area-inset-bottom));width:56px;height:170px;border-radius:8px;border:1.5px solid rgba(232,240,250,.35);background:rgba(8,17,31,.35);pointer-events:auto;overflow:hidden;touch-action:none}
+.thr-fill{position:absolute;left:0;right:0;bottom:0;background:rgba(88,224,140,.45);border-top:2px solid var(--green)}
+.thr-label{position:absolute;left:0;right:0;top:6px;text-align:center;font:700 11px var(--mono);color:var(--ink)}
+.tbtns{position:absolute;right:calc(max(22px,env(safe-area-inset-right)) + 70px);bottom:max(22px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3,64px);gap:8px;pointer-events:auto}
+.tbtns button{height:44px;padding:0 2px;border-radius:6px;border:1px solid rgba(232,240,250,.3);background:rgba(8,17,31,.6);font:700 12px var(--jp);white-space:nowrap;touch-action:none}
+.tbtns button.on{border-color:var(--amber);color:var(--amber)}
+#rotate-hint{display:none}
+@media (orientation:portrait) and (pointer:coarse){
+  #rotate-hint{display:block;position:fixed;left:50%;top:40%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 14px;font-size:13px;z-index:4;pointer-events:none;white-space:nowrap}
+}
+@media (max-height:520px){
+  #menu{align-items:flex-start}
+  .menu-panel{gap:10px;margin-top:0}
+  h1{font-size:30px;margin-top:4px}
+  .lede{display:none}
+  .missions{grid-template-columns:1fr 1fr;gap:6px}
+  .mission{padding:8px 10px;column-gap:8px}
+  .mission .m-sub{display:none}
+  .menu-panel{width:min(560px,100%)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="gl" tabindex="0"></canvas>
+<canvas id="hud"></canvas>
+<div id="toast" aria-live="polite"></div>
+
+<div id="loading" class="screen">
+  <div class="load-box">
+    <div class="eyebrow">Sorajima Flight Simulator</div>
+    <div class="brand">空島フライト</div>
+    <div id="load-text">島の地形を生成しています…</div>
+    <div class="bar"><i id="load-bar"></i></div>
+  </div>
+</div>
+
+<div id="menu" class="screen" hidden>
+  <div class="menu-panel">
+    <header>
+      <div class="eyebrow">Sorajima Flight Simulator</div>
+      <h1>空島フライト</h1>
+      <p class="lede">南の島の小さな飛行場から、自由に空へ。<br>全長 20 km の島を、軽飛行機で飛び回れます。</p>
+    </header>
+    <div class="missions" id="missions">
+      <button class="mission" data-mode="runway"><span class="code">RWY</span><span class="m-title">滑走路から離陸</span><span class="m-sub">RWY 09 に停止中。スロットルを上げて離陸</span></button>
+      <button class="mission" data-mode="air"><span class="code">AIR</span><span class="m-title">空中スタート</span><span class="m-sub">高度 2,000 ft、巡航速度で島の南から</span></button>
+      <button class="mission" data-mode="rings"><span class="code">RNG</span><span class="m-title">リングチャレンジ</span><span class="m-sub">山あいの 10 個のリングを順番に通過 <span class="best" id="best-rings"></span></span></button>
+      <button class="mission" data-mode="landing"><span class="code">LDG</span><span class="m-title">着陸チャレンジ</span><span class="m-sub">3° の進入経路から RWY 09 に着陸 <span class="best" id="best-landing"></span></span></button>
+    </div>
+    <button id="resume" class="resume" hidden>飛行を再開する（Esc）</button>
+    <div class="opts">
+      <span>時間帯</span>
+      <div class="seg" role="group" aria-label="時間帯"><button type="button" data-tod="day" class="on">昼</button><button type="button" data-tod="evening">夕方</button></div>
+      <label class="chk"><input type="checkbox" id="opt-invert"> ピッチ反転</label>
+      <label class="chk"><input type="checkbox" id="opt-sound" checked> サウンド</label>
+    </div>
+  </div>
+  <aside class="keys" aria-label="操作方法">
+    <h2>CONTROLS</h2>
+    <table>
+      <tr><td>機首 下げ／上げ</td><td>W S · ↑ ↓</td></tr>
+      <tr><td>ロール（左右に傾ける）</td><td>A D · ← →</td></tr>
+      <tr><td>ラダー（機首を左右に）</td><td>Q E</td></tr>
+      <tr><td>スロットル</td><td>R F · ホイール</td></tr>
+      <tr><td>フラップ 0→10→20→30°</td><td>V</td></tr>
+      <tr><td>ギア 上げ／下げ</td><td>G</td></tr>
+      <tr><td>ブレーキ（押している間）</td><td>B · Space</td></tr>
+      <tr><td>トリム（今の操縦桿で固定）</td><td>T</td></tr>
+      <tr><td>スモーク</td><td>X</td></tr>
+      <tr><td>カメラ切替／見回し</td><td>C · ドラッグ</td></tr>
+      <tr><td>計器表示</td><td>H</td></tr>
+      <tr><td>ポーズ</td><td>Esc · P</td></tr>
+    </table>
+  </aside>
+</div>
+
+<div id="result" class="screen" hidden>
+  <div class="result-panel" role="dialog" aria-labelledby="res-title">
+    <div class="eyebrow" id="res-eyebrow"></div>
+    <h2 id="res-title"></h2>
+    <dl id="res-list"></dl>
+    <div class="res-actions">
+      <button id="res-retry" class="primary" type="button">もう一度</button>
+      <button id="res-menu" type="button">メニューへ</button>
+    </div>
+  </div>
+</div>
+
+<div id="touch" hidden>
+  <div class="stick" id="stick"><div class="stick-knob" id="stick-knob"></div></div>
+  <div class="thr" id="thr"><div class="thr-fill" id="thr-fill"></div><div class="thr-label">THR</div></div>
+  <div class="tbtns">
+    <button type="button" data-act="gear">ギア</button>
+    <button type="button" data-act="flaps">フラップ</button>
+    <button type="button" data-act="brake">ブレーキ</button>
+    <button type="button" data-act="cam">カメラ</button>
+    <button type="button" data-act="hud">計器</button>
+    <button type="button" data-act="pause">Ⅱ</button>
+  </div>
+</div>
+<div id="rotate-hint">横向きにすると遊びやすくなります</div>
+
+<script>
+'use strict';
+// =====================================================================
+//  空島フライト — single-file WebGL2 flight simulator (no libraries)
+// =====================================================================
+
+// ---------- small math ----------
+const DEG = Math.PI / 180;
+const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
+const lerp = (a, b, t) => a + (b - a) * t;
+const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const damp = (a, b, rate, dt) => lerp(a, b, 1 - Math.exp(-rate * dt));
+
+const vadd = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const vsub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const vscale = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const vmadd = (a, b, s) => [a[0] + b[0] * s, a[1] + b[1] * s, a[2] + b[2] * s];
+const vdot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const vcross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const vlen = a => Math.hypot(a[0], a[1], a[2]);
+const vnorm = a => { const l = vlen(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+const vlerp = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+const vdist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+
+// quaternions [x, y, z, w]; body frame: +x right, +y up, -z forward (nose)
+const qmul = (a, b) => [
+  a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1],
+  a[3] * b[1] - a[0] * b[2] + a[1] * b[3] + a[2] * b[0],
+  a[3] * b[2] + a[0] * b[1] - a[1] * b[0] + a[2] * b[3],
+  a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2]];
+const qconj = q => [-q[0], -q[1], -q[2], q[3]];
+const qaxis = (ax, ang) => { const s = Math.sin(ang / 2); return [ax[0] * s, ax[1] * s, ax[2] * s, Math.cos(ang / 2)]; };
+const qnorm = q => { const l = Math.hypot(q[0], q[1], q[2], q[3]) || 1; return [q[0] / l, q[1] / l, q[2] / l, q[3] / l]; };
+function qrot(q, v) {
+  const x = q[0], y = q[1], z = q[2], w = q[3];
+  const tx = 2 * (y * v[2] - z * v[1]), ty = 2 * (z * v[0] - x * v[2]), tz = 2 * (x * v[1] - y * v[0]);
+  return [v[0] + w * tx + (y * tz - z * ty), v[1] + w * ty + (z * tx - x * tz), v[2] + w * tz + (x * ty - y * tx)];
+}
+function qslerp(a, b, t) {
+  let d = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
+  if (d < 0) { b = [-b[0], -b[1], -b[2], -b[3]]; d = -d; }
+  if (d > 0.9995) return qnorm([lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t), lerp(a[3], b[3], t)]);
+  const th = Math.acos(d), s = Math.sin(th), wa = Math.sin((1 - t) * th) / s, wb = Math.sin(t * th) / s;
+  return [a[0] * wa + b[0] * wb, a[1] * wa + b[1] * wb, a[2] * wa + b[2] * wb, a[3] * wa + b[3] * wb];
+}
+// orientation from heading (deg, clockwise from north = -Z), pitch and bank (deg)
+function qFromHPB(hdg, pitch = 0, bank = 0) {
+  let q = qaxis([0, 1, 0], -hdg * DEG);
+  q = qmul(q, qaxis([1, 0, 0], pitch * DEG));
+  q = qmul(q, qaxis([0, 0, 1], -bank * DEG));
+  return q;
+}
+
+// ---------- 4x4 matrices (column-major) ----------
+const M4 = {
+  persp(fovy, asp, n, f) {
+    const t = 1 / Math.tan(fovy / 2), m = new Float32Array(16);
+    m[0] = t / asp; m[5] = t; m[10] = (f + n) / (n - f); m[11] = -1; m[14] = 2 * f * n / (n - f);
+    return m;
+  },
+  mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
+      o[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+    }
+    return o;
+  },
+  fromQP(q, p, s = 1) {
+    const [x, y, z, w] = q, m = new Float32Array(16);
+    m[0] = (1 - 2 * (y * y + z * z)) * s; m[1] = 2 * (x * y + w * z) * s; m[2] = 2 * (x * z - w * y) * s;
+    m[4] = 2 * (x * y - w * z) * s; m[5] = (1 - 2 * (x * x + z * z)) * s; m[6] = 2 * (y * z + w * x) * s;
+    m[8] = 2 * (x * z + w * y) * s; m[9] = 2 * (y * z - w * x) * s; m[10] = (1 - 2 * (x * x + y * y)) * s;
+    m[12] = p[0]; m[13] = p[1]; m[14] = p[2]; m[15] = 1;
+    return m;
+  },
+  lookAt(e, t, up) {
+    const f = vnorm(vsub(t, e)); const s = vnorm(vcross(f, up)); const u = vcross(s, f);
+    return new Float32Array([s[0], u[0], -f[0], 0, s[1], u[1], -f[1], 0, s[2], u[2], -f[2], 0,
+      -vdot(s, e), -vdot(u, e), vdot(f, e), 1]);
+  },
+  // rotation about an axis through a pivot point
+  pivotRot(pivot, axis, ang) {
+    const q = qaxis(vnorm(axis), ang);
+    const r = M4.fromQP(q, [0, 0, 0]);
+    const rp = qrot(q, pivot);
+    r[12] = pivot[0] - rp[0]; r[13] = pivot[1] - rp[1]; r[14] = pivot[2] - rp[2];
+    return r;
+  },
+  ident() { const m = new Float32Array(16); m[0] = m[5] = m[10] = m[15] = 1; return m; },
+};
+function frustumPlanes(m) {
+  const P = [];
+  const row = r => [m[r], m[4 + r], m[8 + r], m[12 + r]];
+  const r0 = row(0), r1 = row(1), r2 = row(2), r3 = row(3);
+  for (const [a, s] of [[r0, 1], [r0, -1], [r1, 1], [r1, -1], [r2, 1], [r2, -1]]) {
+    P.push([r3[0] + s * a[0], r3[1] + s * a[1], r3[2] + s * a[2], r3[3] + s * a[3]]);
+  }
+  return P;
+}
+function boxInFrustum(P, x0, y0, z0, x1, y1, z1) {
+  for (const p of P) {
+    const x = p[0] > 0 ? x1 : x0, y = p[1] > 0 ? y1 : y0, z = p[2] > 0 ? z1 : z0;
+    if (p[0] * x + p[1] * y + p[2] * z + p[3] < 0) return false;
+  }
+  return true;
+}
+
+// ---------- random & noise ----------
+function makeRng(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s + 0x6D2B79F5) >>> 0; let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function hash2(x, y, s = 0) {
+  let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + Math.imul(s | 0, 1440662683)) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
+}
+const PERM = new Uint8Array(512);
+(() => {
+  const r = makeRng(20240917), p = [...Array(256).keys()];
+  for (let i = 255; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; }
+  for (let i = 0; i < 512; i++) PERM[i] = p[i & 255];
+})();
+const GX = new Float32Array(16), GY = new Float32Array(16);
+for (let i = 0; i < 16; i++) { GX[i] = Math.cos(i * Math.PI / 8); GY[i] = Math.sin(i * Math.PI / 8); }
+function perlinCore(xf, yf, a, b, c, d) {
+  const u = xf * xf * xf * (xf * (xf * 6 - 15) + 10), v = yf * yf * yf * (yf * (yf * 6 - 15) + 10);
+  const n00 = GX[a] * xf + GY[a] * yf, n10 = GX[b] * (xf - 1) + GY[b] * yf;
+  const n01 = GX[c] * xf + GY[c] * (yf - 1), n11 = GX[d] * (xf - 1) + GY[d] * (yf - 1);
+  const x0 = n00 + u * (n10 - n00), x1 = n01 + u * (n11 - n01);
+  return (x0 + v * (x1 - x0)) * 1.42;
+}
+function perlin(x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y), X = xi & 255, Y = yi & 255;
+  return perlinCore(x - xi, y - yi, PERM[X + PERM[Y]] & 15, PERM[X + 1 + PERM[Y]] & 15,
+    PERM[X + PERM[Y + 1]] & 15, PERM[X + 1 + PERM[Y + 1]] & 15);
+}
+function perlinP(x, y, per) { // tileable with period `per`
+  const xi = Math.floor(x), yi = Math.floor(y);
+  const X0 = ((xi % per) + per) % per, Y0 = ((yi % per) + per) % per, X1 = (X0 + 1) % per, Y1 = (Y0 + 1) % per;
+  return perlinCore(x - xi, y - yi, PERM[X0 + PERM[Y0]] & 15, PERM[X1 + PERM[Y0]] & 15,
+    PERM[X0 + PERM[Y1]] & 15, PERM[X1 + PERM[Y1]] & 15);
+}
+function fbm(x, y, oct) {
+  let s = 0, a = 1, n = 0;
+  for (let i = 0; i < oct; i++) { s += a * perlin(x, y); n += a; a *= 0.5; x = x * 2.02 + 17.3; y = y * 2.02 - 9.1; }
+  return s / n;
+}
+function ridged(x, y, oct) {
+  let s = 0, a = 0.5, w = 1, n = 0;
+  for (let i = 0; i < oct; i++) {
+    let r = 1 - Math.abs(perlin(x, y)); r *= r; r *= w; w = clamp(r * 2, 0, 1);
+    s += r * a; n += a; a *= 0.5; x = x * 2.03 + 5.1; y = y * 2.03 - 3.7;
+  }
+  return s / n;
+}
+
+// ---------- WebGL2 setup ----------
+const $ = id => document.getElementById(id);
+const glCanvas = $('gl');
+const gl = glCanvas.getContext('webgl2', { antialias: true, alpha: false, powerPreference: 'high-performance' });
+if (!gl) {
+  $('load-text').textContent = 'このブラウザは WebGL2 に対応していないため起動できません。Chrome・Edge・Firefox・Safari の最新版でお試しください。';
+  throw new Error('WebGL2 not supported');
+}
+const anisoExt = gl.getExtension('EXT_texture_filter_anisotropic');
+gl.enable(gl.DEPTH_TEST);
+gl.enable(gl.CULL_FACE);
+
+function compileShader(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+    const log = gl.getShaderInfoLog(s);
+    console.error(log + '\n' + src.split('\n').map((l, i) => (i + 1) + ': ' + l).join('\n'));
+    throw new Error('Shader compile failed: ' + log);
+  }
+  return s;
+}
+function makeProgram(vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, compileShader(gl.VERTEX_SHADER, vs));
+  gl.attachShader(p, compileShader(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('Link failed: ' + gl.getProgramInfoLog(p));
+  const u = {};
+  const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < n; i++) {
+    const info = gl.getActiveUniform(p, i);
+    u[info.name.replace(/\[0\]$/, '')] = gl.getUniformLocation(p, info.name);
+  }
+  return { p, u };
+}
+// vertex buffers: attribs = [{loc, size, data, divisor?, dynamic?}] ; interleaved = {loc: [size, offset]}
+function makeVAO(attribs, indices) {
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  const bufs = [];
+  for (const a of attribs) {
+    const b = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, b);
+    gl.bufferData(gl.ARRAY_BUFFER, a.data, a.dynamic ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);
+    if (a.layout) { // interleaved
+      const stride = a.stride * 4;
+      for (const [loc, size, off] of a.layout) {
+        gl.enableVertexAttribArray(loc);
+        gl.vertexAttribPointer(loc, size, gl.FLOAT, false, stride, off * 4);
+        if (a.divisor) gl.vertexAttribDivisor(loc, a.divisor);
+      }
+    } else {
+      gl.enableVertexAttribArray(a.loc);
+      gl.vertexAttribPointer(a.loc, a.size, gl.FLOAT, false, 0, 0);
+      if (a.divisor) gl.vertexAttribDivisor(a.loc, a.divisor);
+    }
+    bufs.push(b);
+  }
+  let ib = null;
+  if (indices) {
+    ib = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+  }
+  gl.bindVertexArray(null);
+  return { vao, bufs, ib, count: indices ? indices.length : 0 };
+}
+function makeTexture(opts) {
+  const t = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+  if (opts.source) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, opts.source);
+  else gl.texImage2D(gl.TEXTURE_2D, 0, opts.internal, opts.w, opts.h, 0, opts.format, opts.type, opts.data);
+  const wrap = opts.wrap || gl.CLAMP_TO_EDGE;
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap);
+  if (opts.nearest) {
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  } else {
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    if (anisoExt && opts.aniso) {
+      gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT,
+        Math.min(opts.aniso, gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+    }
+  }
+  return t;
+}
+
+// ---------- shared shader code: sky, fog, lighting ----------
+const GLSL_HEAD = `#version 300 es
+precision highp float;
+precision highp int;
+precision highp sampler2D;
+`;
+const GLSL_COMMON = `
+uniform vec3 uSunDir;
+uniform vec3 uSunCol;
+uniform vec3 uZenith;
+uniform vec3 uHorizon;
+uniform vec3 uHorizonAway;
+uniform vec3 uAmbSky;
+uniform vec3 uAmbGround;
+uniform vec3 uCamPos;
+uniform float uFogDens;
+uniform float uTime;
+vec3 skyColor(vec3 d){
+  float y = d.y;
+  vec2 hz = normalize(d.xz + vec2(1e-5));
+  vec2 sz = normalize(uSunDir.xz + vec2(1e-5));
+  float towards = dot(hz, sz) * 0.5 + 0.5;
+  vec3 hor = mix(uHorizonAway, uHorizon, towards * towards);
+  vec3 c = mix(hor, uZenith, pow(clamp(y, 0.0, 1.0), 0.55));
+  c = mix(c, hor * 0.82, smoothstep(0.0, -0.3, y));
+  float sd = max(dot(d, uSunDir), 0.0);
+  c += uSunCol * (pow(sd, 5.0) * 0.10 + pow(sd, 60.0) * 0.30);
+  return c;
+}
+vec3 applyFog(vec3 col, vec3 p){
+  vec3 dv = p - uCamPos;
+  float dist = length(dv);
+  vec3 dir = dv / max(dist, 1e-3);
+  const float b = 0.00042;
+  float cy = max(uCamPos.y, 0.0);
+  float dy = dir.y;
+  float fog = abs(dy) > 1e-4
+    ? uFogDens * exp(-cy * b) * (1.0 - exp(-dist * dy * b)) / (dy * b)
+    : uFogDens * exp(-cy * b) * dist;
+  fog = 1.0 - exp(-max(fog, 0.0));
+  return mix(col, skyColor(dir), clamp(fog, 0.0, 1.0));
+}
+vec3 tonemap(vec3 c){
+  return c / (1.0 + max(c - 0.85, 0.0) * 0.9);
+}
+`;
+
+// ---------- procedural textures ----------
+function makeNoiseTexture() {
+  const S = 256, data = new Uint8Array(S * S * 4);
+  const hA = new Float32Array(S * S);
+  const f = (u, v, base, oct, off) => {
+    let s = 0, a = 0.5;
+    for (let o = 0; o < oct; o++) { const p = base << o; s += a * perlinP(u * p + off, v * p + off, p); a *= 0.5; }
+    return s;
+  };
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) hA[y * S + x] = f(x / S, y / S, 8, 5, 0);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const i = (y * S + x) * 4;
+    const dx = hA[y * S + ((x + 1) % S)] - hA[y * S + ((x + S - 1) % S)];
+    const dy = hA[((y + 1) % S) * S + x] - hA[((y + S - 1) % S) * S + x];
+    data[i] = clamp(128 - dx * 900, 0, 255);
+    data[i + 1] = clamp(128 - dy * 900, 0, 255);
+    data[i + 2] = clamp(128 + f(x / S, y / S, 16, 4, 64) * 330, 0, 255);
+    data[i + 3] = clamp(128 + f(x / S, y / S, 4, 4, 128) * 300, 0, 255);
+  }
+  return makeTexture({ internal: gl.RGBA8, format: gl.RGBA, type: gl.UNSIGNED_BYTE, w: S, h: S, data, wrap: gl.REPEAT, aniso: 8 });
+}
+function makePuffTexture() {
+  const S = 128, data = new Uint8Array(S * S);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const dx = (x + 0.5) / S * 2 - 1, dy = (y + 0.5) / S * 2 - 1, r = Math.hypot(dx, dy);
+    const base = smoothstep(1.0, 0.2, r);
+    const n = fbm(dx * 2.6 + 5.3, dy * 2.6 + 1.7, 4) * 0.5 + 0.5;
+    data[y * S + x] = clamp((base * (0.45 + 0.95 * n) - 0.12 * (1 - base)) * 255, 0, 255);
+  }
+  return makeTexture({ internal: gl.R8, format: gl.RED, type: gl.UNSIGNED_BYTE, w: S, h: S, data });
+}
+function makeDotTexture() {
+  const S = 64, data = new Uint8Array(S * S);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const r = Math.hypot((x + 0.5) / S * 2 - 1, (y + 0.5) / S * 2 - 1);
+    data[y * S + x] = clamp((1 - smoothstep(0.0, 1.0, r)) * 255 * 1.2, 0, 255);
+  }
+  return makeTexture({ internal: gl.R8, format: gl.RED, type: gl.UNSIGNED_BYTE, w: S, h: S, data });
+}
+
+// =====================================================================
+//  WORLD: heightmap island, airport, vegetation, clouds, rings
+// =====================================================================
+const HM_N = 1024, HM_CELL = 20, HM_HALF = HM_N * HM_CELL / 2;   // 20.48 km square
+const heights = new Float32Array(HM_N * HM_N);
+const vegData = new Float32Array(HM_N * HM_N);
+
+const RWY = { cx: -900, cz: 3900, hdg: 90, len: 1400, wid: 30, elev: 20 };
+RWY.dir = [Math.sin(RWY.hdg * DEG), 0, -Math.cos(RWY.hdg * DEG)];
+RWY.perp = [Math.cos(RWY.hdg * DEG), 0, Math.sin(RWY.hdg * DEG)];     // points to the right of RWY 09
+const rwyToWorld = (u, v, y = RWY.elev) => [RWY.cx + RWY.dir[0] * u + RWY.perp[0] * v, y, RWY.cz + RWY.dir[2] * u + RWY.perp[2] * v];
+const worldToRwy = (x, z) => { const dx = x - RWY.cx, dz = z - RWY.cz; return [dx * RWY.dir[0] + dz * RWY.dir[2], dx * RWY.perp[0] + dz * RWY.perp[2]]; };
+const APRON = { u0: -330, u1: 20, v0: -150, v1: -45 };
+
+function hTexel(i, j) {
+  i = i < 0 ? 0 : i >= HM_N ? HM_N - 1 : i;
+  j = j < 0 ? 0 : j >= HM_N ? HM_N - 1 : j;
+  return heights[j * HM_N + i];
+}
+function terrainHeight(x, z) {
+  const fx = (x + HM_HALF) / HM_CELL, fz = (z + HM_HALF) / HM_CELL;
+  const ix = Math.floor(fx), iz = Math.floor(fz), tx = fx - ix, tz = fz - iz;
+  const a = hTexel(ix, iz), b = hTexel(ix + 1, iz), c = hTexel(ix, iz + 1), d = hTexel(ix + 1, iz + 1);
+  return lerp(lerp(a, b, tx), lerp(c, d, tx), tz);
+}
+function terrainNormal(x, z) {
+  const e = HM_CELL;
+  return vnorm([terrainHeight(x - e, z) - terrainHeight(x + e, z), 2 * e, terrainHeight(x, z - e) - terrainHeight(x, z + e)]);
+}
+function vegAt(x, z) {
+  const i = clamp(Math.round((x + HM_HALF) / HM_CELL), 0, HM_N - 1), j = clamp(Math.round((z + HM_HALF) / HM_CELL), 0, HM_N - 1);
+  return vegData[j * HM_N + i];
+}
+function onPaved(x, z) {
+  const [u, v] = worldToRwy(x, z);
+  if (Math.abs(u) <= RWY.len / 2 && Math.abs(v) <= RWY.wid / 2) return 'rwy';
+  if (u >= APRON.u0 && u <= APRON.u1 && v >= APRON.v0 && v <= APRON.v1) return 'apron';
+  if (u >= -300 && u <= -270 && v >= -45 && v <= -15) return 'apron';
+  if (u >= -20 && u <= 10 && v >= -45 && v <= -15) return 'apron';
+  return null;
+}
+// ground used by the physics: water counts as a (deadly) surface at y = 0
+function groundAt(x, z) {
+  const h = terrainHeight(x, z);
+  const paved = onPaved(x, z);
+  if (paved) return { h: RWY.elev + (paved === 'rwy' ? 0.12 : 0.08), n: [0, 1, 0], paved: true, water: false };
+  if (h < 0) return { h: 0, n: [0, 1, 0], paved: false, water: true };
+  return { h, n: terrainNormal(x, z), paved: false, water: false };
+}
+
+function terrainNatural(x, z) {
+  const nx = x / HM_HALF, nz = z / HM_HALF;
+  const wx = fbm(nx * 1.6 + 3.1, nz * 1.6 - 7.4, 3) * 0.16, wz = fbm(nx * 1.6 - 2.3, nz * 1.6 + 5.5, 3) * 0.16;
+  const px = nx + wx, pz = nz + wz;
+  const r = Math.hypot(px, pz * 1.1);
+  const land = 1 - smoothstep(0.40, 0.80, r + fbm(nx * 4.3 + 1.7, nz * 4.3 + 9.2, 4) * 0.12);
+  let h = (land - 0.52) * 170;
+  h += fbm(px * 7 + 4.4, pz * 7 - 1.3, 5) * 60 * land;
+  const mx = px - 0.04, mz = pz + 0.16;
+  const md = Math.hypot(mx * 1.15, mz) + fbm(px * 3.1 - 6, pz * 3.1 + 2, 3) * 0.18;
+  const mMask = (1 - smoothstep(0.04, 0.52, md)) * land;
+  const rg = ridged(px * 3.6 + 11.7, pz * 3.6 + 3.3, 6);
+  h += mMask * (150 + Math.pow(rg, 1.7) * 1500);
+  return Math.max(h, -95);
+}
+
+const tick = () => new Promise(r => setTimeout(r, 0));
+async function generateWorld(onProgress) {
+  const N = HM_N;
+  for (let j = 0; j < N; j++) {
+    const z = -HM_HALF + j * HM_CELL;
+    for (let i = 0; i < N; i++) heights[j * N + i] = terrainNatural(-HM_HALF + i * HM_CELL, z);
+    if ((j & 15) === 15) { onProgress(0.05 + 0.75 * j / N); await tick(); }
+  }
+  // airport: runway elevation from the natural terrain, then flatten
+  let sum = 0, cnt = 0;
+  for (let u = -RWY.len / 2; u <= RWY.len / 2; u += 50) for (let v = -80; v <= 40; v += 20) {
+    const p = rwyToWorld(u, v); sum += terrainHeight(p[0], p[2]); cnt++;
+  }
+  RWY.elev = Math.max(8, Math.round(sum / cnt));
+  const reach = RWY.len / 2 + 1100;
+  const i0 = Math.floor((RWY.cx - reach + HM_HALF) / HM_CELL), i1 = Math.ceil((RWY.cx + reach + HM_HALF) / HM_CELL);
+  const j0 = Math.floor((RWY.cz - reach + HM_HALF) / HM_CELL), j1 = Math.ceil((RWY.cz + reach + HM_HALF) / HM_CELL);
+  for (let j = Math.max(0, j0); j <= Math.min(N - 1, j1); j++) for (let i = Math.max(0, i0); i <= Math.min(N - 1, i1); i++) {
+    const x = -HM_HALF + i * HM_CELL, z = -HM_HALF + j * HM_CELL;
+    const [u, v] = worldToRwy(x, z);
+    const du = Math.max(Math.abs(u) - (RWY.len / 2 + 160), 0), dv = Math.max(v - 70, -210 - v, 0);
+    const t = smoothstep(0, 520, Math.hypot(du, dv));
+    const k = j * N + i;
+    heights[k] = lerp(RWY.elev, heights[k], t);
+  }
+  onProgress(0.84); await tick();
+  // vegetation density
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const x = -HM_HALF + i * HM_CELL, z = -HM_HALF + j * HM_CELL, h = heights[j * N + i];
+    let v = clamp(fbm(x / 1500 + 31, z / 1500 - 12, 4) * 0.95 + 0.5, 0, 1);
+    v *= 1 - smoothstep(650, 1000, h);
+    const [u, w] = worldToRwy(x, z);
+    if (Math.abs(u) < RWY.len / 2 + 250 && w > -260 && w < 120) v *= 0.1;
+    vegData[j * N + i] = v;
+  }
+  onProgress(0.9); await tick();
+  buildMinMax();
+}
+
+// ---------- GPU resources for terrain ----------
+let heightTex, normalTex, noiseTex, puffTex, dotTex;
+function uploadWorldTextures() {
+  const N = HM_N;
+  heightTex = makeTexture({ internal: gl.R32F, format: gl.RED, type: gl.FLOAT, w: N, h: N, data: heights, nearest: true });
+  const nd = new Uint8Array(N * N * 4);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const dx = hTexel(i - 1, j) - hTexel(i + 1, j), dz = hTexel(i, j - 1) - hTexel(i, j + 1);
+    const n = vnorm([dx, 2 * HM_CELL, dz]), k = (j * N + i) * 4;
+    nd[k] = (n[0] * 0.5 + 0.5) * 255; nd[k + 1] = (n[1] * 0.5 + 0.5) * 255; nd[k + 2] = (n[2] * 0.5 + 0.5) * 255;
+    nd[k + 3] = vegData[j * N + i] * 255;
+  }
+  normalTex = makeTexture({ internal: gl.RGBA8, format: gl.RGBA, type: gl.UNSIGNED_BYTE, w: N, h: N, data: nd, aniso: 8 });
+  noiseTex = makeNoiseTexture();
+  puffTex = makePuffTexture();
+  dotTex = makeDotTexture();
+}
+
+// ---------- CDLOD terrain ----------
+const LEAF = 320, LOD_TOP = 6;                    // 320 m leaves ... 20480 m root
+const LOD_RANGE = [700, 1400, 2800, 5600, 11200, 22400, 44800];
+const minmax = [];
+function buildMinMax() {
+  const leafCells = LEAF / HM_CELL, n0 = HM_N * HM_CELL / LEAF;
+  let prev = new Float32Array(n0 * n0 * 2);
+  for (let j = 0; j < n0; j++) for (let i = 0; i < n0; i++) {
+    let mn = 1e9, mx = -1e9;
+    for (let y = j * leafCells; y <= (j + 1) * leafCells; y++) for (let x = i * leafCells; x <= (i + 1) * leafCells; x++) {
+      const h = hTexel(x, y); if (h < mn) mn = h; if (h > mx) mx = h;
+    }
+    prev[(j * n0 + i) * 2] = mn; prev[(j * n0 + i) * 2 + 1] = mx;
+  }
+  minmax[0] = prev;
+  for (let L = 1, n = n0 / 2; L <= LOD_TOP; L++, n /= 2) {
+    const cur = new Float32Array(n * n * 2), pn = n * 2;
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+      let mn = 1e9, mx = -1e9;
+      for (let c = 0; c < 4; c++) {
+        const k = ((j * 2 + (c >> 1)) * pn + i * 2 + (c & 1)) * 2;
+        mn = Math.min(mn, prev[k]); mx = Math.max(mx, prev[k + 1]);
+      }
+      cur[(j * n + i) * 2] = mn; cur[(j * n + i) * 2 + 1] = mx;
+    }
+    minmax[L] = cur; prev = cur;
+  }
+}
+function boxDist2(p, x0, y0, z0, x1, y1, z1) {
+  const dx = Math.max(x0 - p[0], 0, p[0] - x1), dy = Math.max(y0 - p[1], 0, p[1] - y1), dz = Math.max(z0 - p[2], 0, p[2] - z1);
+  return dx * dx + dy * dy + dz * dz;
+}
+function selectTerrain(cam, planes) {
+  const out = [];
+  const rec = (L, i, j) => {
+    const size = LEAF << L, x0 = -HM_HALF + i * size, z0 = -HM_HALF + j * size;
+    const n = (HM_N * HM_CELL / LEAF) >> L, k = (j * n + i) * 2;
+    const mn = minmax[L][k] - 1, mx = minmax[L][k + 1] + 1;
+    if (!boxInFrustum(planes, x0, mn, z0, x0 + size, mx, z0 + size)) return;
+    if (L === 0) { out.push([x0, z0, size, 0, 32]); return; }
+    const r = LOD_RANGE[L - 1];
+    if (boxDist2(cam, x0, mn, z0, x0 + size, mx, z0 + size) > r * r) { out.push([x0, z0, size, L, 32]); return; }
+    const h = size / 2, cn = n * 2;
+    for (let c = 0; c < 4; c++) {
+      const ci = i * 2 + (c & 1), cj = j * 2 + (c >> 1), cx = -HM_HALF + ci * h, cz = -HM_HALF + cj * h;
+      const ck = (cj * cn + ci) * 2, cmn = minmax[L - 1][ck] - 1, cmx = minmax[L - 1][ck + 1] + 1;
+      if (boxDist2(cam, cx, cmn, cz, cx + h, cmx, cz + h) <= r * r) rec(L - 1, ci, cj);
+      else if (boxInFrustum(planes, cx, cmn, cz, cx + h, cmx, cz + h)) out.push([cx, cz, h, L, 16]);
+    }
+  };
+  rec(LOD_TOP, 0, 0);
+  return out;
+}
+function makeGrid(G) {
+  const v = new Float32Array((G + 1) * (G + 1) * 2);
+  for (let j = 0; j <= G; j++) for (let i = 0; i <= G; i++) { v[(j * (G + 1) + i) * 2] = i; v[(j * (G + 1) + i) * 2 + 1] = j; }
+  const idx = new Uint16Array(G * G * 6); let k = 0;
+  for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
+    const a = j * (G + 1) + i, b = a + 1, c = a + G + 1, d = c + 1;
+    idx[k++] = a; idx[k++] = c; idx[k++] = b; idx[k++] = b; idx[k++] = c; idx[k++] = d;
+  }
+  return makeVAO([{ loc: 0, size: 2, data: v }], idx);
+}
+
+const GLSL_TERRAIN_H = `
+uniform sampler2D uHeight;
+uniform vec3 uHM;           // half size, cell, N
+float hTexel(ivec2 c){ c = clamp(c, ivec2(0), ivec2(int(uHM.z) - 1)); return texelFetch(uHeight, c, 0).r; }
+float terrainH(vec2 p){
+  vec2 t = (p + uHM.x) / uHM.y; vec2 i = floor(t); vec2 f = t - i; ivec2 c = ivec2(i);
+  float a = hTexel(c), b = hTexel(c + ivec2(1, 0)), d = hTexel(c + ivec2(0, 1)), e = hTexel(c + ivec2(1, 1));
+  return mix(mix(a, b, f.x), mix(d, e, f.x), f.y);
+}
+`;
+const TERRAIN_VS = GLSL_HEAD + GLSL_TERRAIN_H + `
+layout(location=0) in vec2 aGrid;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform vec4 uNode;
+uniform vec2 uMorph;
+out vec3 vPos;
+void main(){
+  float G = uNode.w;
+  vec2 p = uNode.xy + aGrid / G * uNode.z;
+  float h = terrainH(p);
+  float k = clamp((distance(vec3(p.x, h, p.y), uCamPos) - uMorph.x) / (uMorph.y - uMorph.x), 0.0, 1.0);
+  vec2 g = aGrid - fract(aGrid * 0.5) * 2.0 * k;
+  p = uNode.xy + g / G * uNode.z;
+  vPos = vec3(p.x, terrainH(p), p.y);
+  gl_Position = uViewProj * vec4(vPos, 1.0);
+}`;
+const GLSL_SHADOW = `
+uniform vec4 uShadowA;   // shadow centre x,z ; plane forward x,z
+uniform vec2 uShadowB;   // strength, softness
+float planeShadow(vec2 p){
+  if (uShadowB.x <= 0.0) return 1.0;
+  vec2 d = p - uShadowA.xy;
+  vec2 f = uShadowA.zw, r = vec2(-f.y, f.x);
+  float a = dot(d, f), b = dot(d, r);
+  float s = uShadowB.y;
+  float fus = smoothstep(1.0 + s, 1.0 - s * 0.5, length(vec2(a / 3.8, b / 0.55)));
+  float wing = smoothstep(1.0 + s, 1.0 - s * 0.5, length(vec2((a + 0.1) / 0.75, b / 4.8)));
+  float tail = smoothstep(1.0 + s, 1.0 - s * 0.5, length(vec2((a + 3.4) / 0.4, b / 1.7)));
+  return 1.0 - max(fus, max(wing, tail)) * uShadowB.x;
+}
+`;
+const TERRAIN_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vPos;
+uniform sampler2D uNormalTex;
+uniform sampler2D uNoise;
+uniform vec3 uHM;
+out vec4 outColor;
+void main(){
+  vec2 uv = ((vPos.xz + uHM.x) / uHM.y + 0.5) / uHM.z;
+  vec4 nt = texture(uNormalTex, uv);
+  vec3 n = normalize(nt.xyz * 2.0 - 1.0);
+  float veg = nt.a;
+  float dist = distance(vPos, uCamPos);
+  float near = 1.0 - smoothstep(150.0, 1400.0, dist);
+  float d1 = texture(uNoise, vPos.xz / 61.0).b;
+  float d2 = texture(uNoise, vPos.xz / 8.7).b;
+  float d3 = texture(uNoise, vPos.xz / 530.0).a;
+  vec2 dn = (texture(uNoise, vPos.xz / 23.0).rg * 2.0 - 1.0) * 0.35 * near;
+  n = normalize(n + vec3(dn.x, 0.0, dn.y));
+  float h = vPos.y, slope = 1.0 - n.y;
+  vec3 grass = mix(vec3(0.30, 0.43, 0.16), vec3(0.45, 0.52, 0.22), d1);
+  grass = mix(grass, vec3(0.52, 0.52, 0.27), smoothstep(0.55, 0.8, d3) * 0.5);
+  vec3 forest = mix(vec3(0.13, 0.24, 0.10), vec3(0.18, 0.30, 0.12), d2);
+  vec3 rock = mix(vec3(0.40, 0.37, 0.34), vec3(0.56, 0.53, 0.48), d1);
+  vec3 dirt = vec3(0.47, 0.40, 0.28);
+  vec3 sand = mix(vec3(0.80, 0.74, 0.56), vec3(0.88, 0.83, 0.66), d2);
+  vec3 col = mix(grass, forest, smoothstep(0.50, 0.66, veg + (d3 - 0.5) * 0.25));
+  col = mix(col, dirt, smoothstep(0.30, 0.45, slope + (d2 - 0.5) * 0.1) * 0.7);
+  col = mix(col, rock, smoothstep(0.40, 0.55, slope + (d1 - 0.5) * 0.15));
+  col = mix(col, rock, smoothstep(650.0, 1000.0, h + d1 * 160.0) * 0.85);
+  float snow = smoothstep(1080.0, 1250.0, h + d3 * 200.0) * (1.0 - smoothstep(0.42, 0.62, slope));
+  col = mix(col, vec3(0.94, 0.96, 1.0), snow);
+  col = mix(col, sand, 1.0 - smoothstep(2.5, 7.0, h + (d1 - 0.5) * 5.0));
+  col = mix(col, vec3(0.30, 0.55, 0.55), smoothstep(0.0, -4.0, h));
+  col *= mix(1.0, 0.82 + 0.36 * d2, near);
+  float diff = max(dot(n, uSunDir), 0.0) * planeShadow(vPos.xz);
+  vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
+  vec3 lit = col * (uSunCol * diff + amb);
+  lit += uSunCol * snow * pow(max(dot(n, normalize(uSunDir + normalize(uCamPos - vPos))), 0.0), 30.0) * 0.25;
+  outColor = vec4(tonemap(applyFog(lit, vPos)), 1.0);
+}`;
+
+// ---------- water ----------
+const WATER_VS = GLSL_HEAD + `
+layout(location=0) in vec2 aCorner;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+out vec3 vPos;
+void main(){
+  vPos = vec3(uCamPos.x + aCorner.x * 60000.0, 0.0, uCamPos.z + aCorner.y * 60000.0);
+  gl_Position = uViewProj * vec4(vPos, 1.0);
+}`;
+const WATER_FS = GLSL_HEAD + GLSL_COMMON + GLSL_TERRAIN_H + `
+in vec3 vPos;
+uniform sampler2D uNoise;
+out vec4 outColor;
+void main(){
+  float th = terrainH(vPos.xz);
+  float depth = max(-th, 0.0);
+  float dist = distance(vPos, uCamPos);
+  vec2 uv1 = vPos.xz / 41.0 + vec2(uTime * 0.011, uTime * 0.007);
+  vec2 uv2 = vPos.xz / 13.0 - vec2(uTime * 0.019, -uTime * 0.012);
+  vec2 uv3 = vPos.xz / 190.0 + vec2(-uTime * 0.003, uTime * 0.004);
+  vec2 w = (texture(uNoise, uv1).rg * 2.0 - 1.0) + (texture(uNoise, uv2).rg * 2.0 - 1.0) * 0.55 + (texture(uNoise, uv3).rg * 2.0 - 1.0) * 0.8;
+  float fade = 1.0 - smoothstep(200.0, 9000.0, dist) * 0.85;
+  vec3 n = normalize(vec3(w.x * 0.32 * fade, 1.0, w.y * 0.32 * fade));
+  vec3 V = normalize(uCamPos - vPos);
+  float fres = 0.02 + 0.98 * pow(1.0 - max(dot(n, V), 0.0), 5.0);
+  vec3 refl = skyColor(reflect(-V, n));
+  vec3 deep = vec3(0.02, 0.13, 0.25), shallow = vec3(0.09, 0.50, 0.53);
+  vec3 wcol = mix(shallow, deep, smoothstep(0.0, 32.0, depth));
+  vec3 col = wcol * (uSunCol * 0.45 * (max(dot(n, uSunDir), 0.0) * 0.5 + 0.5) + uAmbSky * 0.7);
+  col = mix(col, refl, clamp(fres, 0.0, 1.0) * 0.9);
+  vec3 H = normalize(uSunDir + V);
+  col += uSunCol * pow(max(dot(n, H), 0.0), 220.0) * 1.6;
+  float fn = texture(uNoise, vPos.xz / 7.0 + vec2(uTime * 0.02, 0.0)).b;
+  float foam = (1.0 - smoothstep(0.0, 1.6, depth)) * smoothstep(0.35, 0.65, fn + sin(uTime * 1.4 - depth * 3.0) * 0.18);
+  col = mix(col, vec3(0.92, 0.95, 0.96) * (uSunCol * 0.6 + uAmbSky * 0.6), foam * 0.75);
+  outColor = vec4(tonemap(applyFog(col, vPos)), 1.0);
+}`;
+
+// ---------- sky ----------
+const SKY_VS = GLSL_HEAD + `
+layout(location=0) in vec2 aCorner;
+out vec2 vNdc;
+void main(){ vNdc = aCorner; gl_Position = vec4(aCorner, 1.0, 1.0); }`;
+const SKY_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec2 vNdc;
+uniform vec3 uCamF, uCamR, uCamU;
+uniform vec2 uTan;
+uniform sampler2D uNoise;
+out vec4 outColor;
+void main(){
+  vec3 d = normalize(uCamF + vNdc.x * uTan.x * uCamR + vNdc.y * uTan.y * uCamU);
+  vec3 c = skyColor(d);
+  float sd = dot(d, uSunDir);
+  c += uSunCol * smoothstep(0.99955, 0.99975, sd) * 3.0;
+  if (d.y > 0.0) {
+    float t = (6500.0 - uCamPos.y) / max(d.y, 0.02);
+    vec2 p = uCamPos.xz + d.xz * t;
+    float cl = texture(uNoise, p / 11000.0 + vec2(uTime * 0.0004, 0.0)).b * 0.65 + texture(uNoise, p / 2900.0).b * 0.35;
+    cl = smoothstep(0.63, 0.86, cl) * smoothstep(0.03, 0.3, d.y) * 0.32;
+    vec3 ccol = mix(vec3(1.0), uSunCol, 0.35) * 0.95 + uSunCol * pow(max(sd, 0.0), 6.0) * 0.4;
+    c = mix(c, ccol, cl);
+  }
+  outColor = vec4(tonemap(c), 1.0);
+}`;
+
+// ---------- generic lit meshes (airport, plane, rings) ----------
+const MESH_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNormal;
+layout(location=2) in vec3 aColor;
+uniform mat4 uViewProj;
+uniform mat4 uModel;
+out vec3 vWorld; out vec3 vN; out vec3 vCol; out vec3 vLocal;
+void main(){
+  vec4 wp = uModel * vec4(aPos, 1.0);
+  vWorld = wp.xyz; vN = mat3(uModel) * aNormal; vCol = aColor; vLocal = aPos;
+  gl_Position = uViewProj * wp;
+}`;
+const MESH_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec3 vWorld; in vec3 vN; in vec3 vCol; in vec3 vLocal;
+uniform float uSpec;
+uniform vec3 uEmissive;
+uniform float uAlpha;
+uniform int uLivery;
+uniform vec3 uPaint;
+out vec4 outColor;
+vec3 livery(vec3 p){
+  vec3 white = vec3(0.93, 0.94, 0.96), navy = vec3(0.07, 0.15, 0.36), red = vec3(0.80, 0.11, 0.13);
+  if (uPaint.x >= 0.0) { red = uPaint; navy = uPaint * 0.35; }
+  float ax = abs(p.x);
+  if (ax < 0.12 && p.y > 0.42 && p.z > 2.4) { if (p.y > 1.22) return red; if (p.y > 1.08) return navy; return white; }
+  if (ax < 0.8) {
+    float d = p.y - (-0.02 + 0.035 * p.z);
+    if (d > -0.09 && d < 0.01) return navy;
+    if (d > 0.05 && d < 0.10) return red;
+    if (p.z < -3.0) return red * 0.9;
+    if (p.z < -1.25 && p.y > 0.36 + (p.z + 1.25) * 0.05) return vec3(0.08, 0.085, 0.095);   // anti-glare panel
+    return white;
+  }
+  if (ax > 4.2) return red;
+  if (ax > 1.45 && p.z > 2.6) return red;
+  return white;
+}
+void main(){
+  vec3 base = vCol;
+  if (uLivery == 1 && base.r > 0.99 && base.g > 0.99 && base.b > 0.99) base = livery(vLocal);
+  vec3 n = normalize(vN); if (!gl_FrontFacing) n = -n;
+  vec3 V = normalize(uCamPos - vWorld);
+  float diff = max(dot(n, uSunDir), 0.0);
+  vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
+  vec3 H = normalize(uSunDir + V);
+  float spec = pow(max(dot(n, H), 0.0), 70.0) * uSpec;
+  float rim = pow(1.0 - max(dot(n, V), 0.0), 4.0) * 0.12 * uSpec;
+  vec3 col = base * (uSunCol * diff + amb) + uSunCol * spec * smoothstep(0.0, 0.15, diff) + skyColor(reflect(-V, n)) * rim + uEmissive;
+  outColor = vec4(tonemap(applyFog(col, vWorld)), uAlpha);
+}`;
+
+// ---------- instanced props (trees, houses) ----------
+const INST_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNormal;
+layout(location=2) in vec3 aColor;
+layout(location=4) in vec3 iPos;
+layout(location=5) in vec2 iParam;
+layout(location=6) in vec3 iTint;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uFadeDist;
+out vec3 vWorld; out vec3 vN; out vec3 vCol;
+void main(){
+  float d = distance(iPos.xz, uCamPos.xz);
+  float s = iParam.x * (1.0 - smoothstep(uFadeDist * 0.8, uFadeDist, d));
+  float c = cos(iParam.y), sn = sin(iParam.y);
+  mat3 R = mat3(c, 0.0, -sn, 0.0, 1.0, 0.0, sn, 0.0, c);
+  vec3 wp = iPos + R * (aPos * s);
+  vWorld = wp; vN = R * aNormal; vCol = aColor.r < 0.0 ? iTint : aColor;
+  gl_Position = uViewProj * vec4(wp, 1.0);
+}`;
+const INST_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec3 vWorld; in vec3 vN; in vec3 vCol;
+out vec4 outColor;
+void main(){
+  vec3 n = normalize(vN);
+  float diff = max(dot(n, uSunDir), 0.0) * 0.85 + 0.15 * max(dot(-n, uSunDir), 0.0);
+  vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
+  vec3 col = vCol * (uSunCol * diff + amb);
+  outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
+}`;
+
+// ---------- camera-facing sprites (clouds, smoke, fire, lights) ----------
+const SPRITE_VS = GLSL_HEAD + `
+layout(location=0) in vec2 aCorner;
+layout(location=4) in vec4 iPos;     // xyz, size (negative = keep a minimum on-screen size)
+layout(location=5) in vec4 iCol;
+layout(location=6) in float iRot;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos, uCamR, uCamU;
+uniform float uNearFade;
+uniform float uFar;
+uniform float uMinPix;
+out vec2 vUv; out vec4 vCol; out vec3 vWorld; out float vFade;
+void main(){
+  float dist = distance(iPos.xyz, uCamPos);
+  float size = iPos.w < 0.0 ? max(-iPos.w, dist * uMinPix) : iPos.w;
+  float c = cos(iRot), s = sin(iRot);
+  vec2 q = vec2(c * aCorner.x - s * aCorner.y, s * aCorner.x + c * aCorner.y);
+  vec3 wp = iPos.xyz + (uCamR * q.x + uCamU * q.y) * size;
+  vUv = aCorner * 0.5 + 0.5; vCol = iCol; vWorld = wp;
+  vFade = (uNearFade > 0.0 ? smoothstep(size * 0.25, size * uNearFade, dist) : 1.0) * (1.0 - smoothstep(uFar * 0.7, uFar, dist));
+  gl_Position = uViewProj * vec4(wp, 1.0);
+}`;
+const SPRITE_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec2 vUv; in vec4 vCol; in vec3 vWorld; in float vFade;
+uniform sampler2D uTex;
+uniform float uSilver;
+uniform int uFog;
+out vec4 outColor;
+void main(){
+  float a = texture(uTex, vUv).r * vCol.a * vFade;
+  if (a < 0.004) discard;
+  vec3 c = vCol.rgb;
+  if (uSilver > 0.0) {
+    vec3 vd = normalize(vWorld - uCamPos);
+    c += uSunCol * pow(max(dot(vd, uSunDir), 0.0), 7.0) * uSilver * (1.0 - a);
+  }
+  if (uFog == 1) c = applyFog(c, vWorld);
+  outColor = vec4(tonemap(c), a);
+}`;
+
+let progTerrain, progWater, progSky, progMesh, progInst, progSprite;
+let grid32, grid16, quadVAO, spriteQuad;
+function buildPrograms() {
+  progTerrain = makeProgram(TERRAIN_VS, TERRAIN_FS);
+  progWater = makeProgram(WATER_VS, WATER_FS);
+  progSky = makeProgram(SKY_VS, SKY_FS);
+  progMesh = makeProgram(MESH_VS, MESH_FS);
+  progInst = makeProgram(INST_VS, INST_FS);
+  progSprite = makeProgram(SPRITE_VS, SPRITE_FS);
+  progRunway = makeProgram(RUNWAY_VS, RUNWAY_FS);
+  grid32 = makeGrid(32); grid16 = makeGrid(16);
+  quadVAO = makeVAO([{ loc: 0, size: 2, data: new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]) }]);
+}
+
+// ---------- mesh building ----------
+class MeshBuilder {
+  constructor() { this.pos = []; this.nrm = []; this.col = []; }
+  tri(a, b, c, na, nb, nc, ca, cb, cc) {
+    this.pos.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
+    this.nrm.push(na[0], na[1], na[2], nb[0], nb[1], nb[2], nc[0], nc[1], nc[2]);
+    this.col.push(ca[0], ca[1], ca[2], cb[0], cb[1], cb[2], cc[0], cc[1], cc[2]);
+  }
+  // quad a-b-c-d, oriented to face away from `ref`, flat shaded
+  quad(a, b, c, d, col, ref) {
+    let n = vcross(vsub(c, a), vsub(d, b));
+    const fc = vscale(vadd(vadd(a, b), vadd(c, d)), 0.25);
+    if (vdot(n, vsub(fc, ref)) < 0) { [b, d] = [d, b]; n = vscale(n, -1); }
+    n = vnorm(n);
+    this.tri(a, b, c, n, n, n, col, col, col); this.tri(a, c, d, n, n, n, col, col, col);
+  }
+  box(c, s, col, yaw = 0) {
+    const cs = Math.cos(yaw), sn = Math.sin(yaw);
+    const P = (x, y, z) => [c[0] + x * cs + z * sn, c[1] + y, c[2] - x * sn + z * cs];
+    const hx = s[0] / 2, hy = s[1] / 2, hz = s[2] / 2;
+    const v = [P(-hx, -hy, -hz), P(hx, -hy, -hz), P(hx, hy, -hz), P(-hx, hy, -hz), P(-hx, -hy, hz), P(hx, -hy, hz), P(hx, hy, hz), P(-hx, hy, hz)];
+    const cc = typeof col[0] === 'number' ? () => col : i => col[i];
+    this.quad(v[0], v[1], v[2], v[3], cc(0), c); this.quad(v[4], v[5], v[6], v[7], cc(1), c);
+    this.quad(v[0], v[1], v[5], v[4], cc(2), c); this.quad(v[3], v[2], v[6], v[7], cc(3), c);
+    this.quad(v[0], v[3], v[7], v[4], cc(4), c); this.quad(v[1], v[2], v[6], v[5], cc(5), c);
+  }
+  // loft through closed rings (arrays of points, equal length). color: [r,g,b] or fn(point)
+  loft(rings, color, opt = {}) {
+    const R = rings.length, M = rings[0].length, smooth = opt.smooth !== false;
+    const colorOf = typeof color === 'function' ? color : () => color;
+    const cent = rings.map(r => vscale(r.reduce((s, p) => vadd(s, p), [0, 0, 0]), 1 / r.length));
+    const acc = rings.map(r => r.map(() => [0, 0, 0]));
+    const faces = [];
+    for (let r = 0; r < R - 1; r++) {
+      const axis = vlerp(cent[r], cent[r + 1], 0.5);
+      for (let m = 0; m < M; m++) {
+        let q = [[r, m], [r, (m + 1) % M], [r + 1, (m + 1) % M], [r + 1, m]];
+        const P = q.map(([a, b]) => rings[a][b]);
+        let n = vcross(vsub(P[2], P[0]), vsub(P[3], P[1]));
+        const fc = vscale(vadd(vadd(P[0], P[1]), vadd(P[2], P[3])), 0.25);
+        if (vdot(n, vsub(fc, opt.ref || axis)) < 0) { q = [q[0], q[3], q[2], q[1]]; n = vscale(n, -1); }
+        if (vlen(n) < 1e-9) continue;
+        n = vnorm(n);
+        faces.push([q, n]);
+        for (const [a, b] of q) acc[a][b] = vadd(acc[a][b], n);
+      }
+    }
+    for (const [q, n] of faces) {
+      const P = q.map(([a, b]) => rings[a][b]);
+      const N = q.map(([a, b]) => smooth ? vnorm(acc[a][b]) : n);
+      const C = P.map(colorOf);
+      this.tri(P[0], P[1], P[2], N[0], N[1], N[2], C[0], C[1], C[2]);
+      this.tri(P[0], P[2], P[3], N[0], N[2], N[3], C[0], C[2], C[3]);
+    }
+    const cap = (r, other) => {
+      const c = cent[r], out = vnorm(vsub(c, cent[other]));
+      for (let m = 0; m < M; m++) {
+        let a = rings[r][m], b = rings[r][(m + 1) % M];
+        let n = vcross(vsub(a, c), vsub(b, c));
+        if (vdot(n, out) < 0) { [a, b] = [b, a]; }
+        const cc = colorOf(c);
+        this.tri(c, a, b, out, out, out, cc, colorOf(a), colorOf(b));
+      }
+    };
+    if (opt.capStart) cap(0, 1);
+    if (opt.capEnd) cap(R - 1, R - 2);
+  }
+  cylinder(p0, p1, r0, r1, seg, col, caps = true) {
+    const ax = vnorm(vsub(p1, p0));
+    const helper = Math.abs(ax[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+    const u = vnorm(vcross(ax, helper)), v = vcross(ax, u);
+    const ring = (p, r) => Array.from({ length: seg }, (_, i) => {
+      const a = i / seg * Math.PI * 2; return vadd(p, vadd(vscale(u, Math.cos(a) * r), vscale(v, Math.sin(a) * r)));
+    });
+    this.loft([ring(p0, r0), ring(p1, r1)], col, { capStart: caps, capEnd: caps, smooth: seg > 6 });
+  }
+  build() {
+    return { pos: new Float32Array(this.pos), nrm: new Float32Array(this.nrm), col: new Float32Array(this.col), count: this.pos.length / 3 };
+  }
+}
+function uploadMesh(m, instanceData) {
+  const attrs = [{ loc: 0, size: 3, data: m.pos }, { loc: 1, size: 3, data: m.nrm }, { loc: 2, size: 3, data: m.col }];
+  if (instanceData) attrs.push({ data: instanceData, stride: 8, layout: [[4, 3, 0], [5, 2, 3], [6, 3, 5]], divisor: 1, dynamic: true });
+  const v = makeVAO(attrs);
+  v.count = m.count;
+  return v;
+}
+
+// ---------- props: trees & houses ----------
+const TINT = [-1, -1, -1];
+function makeConiferMesh() {
+  const b = new MeshBuilder();
+  b.cylinder([0, 0, 0], [0, 0.2, 0], 0.045, 0.035, 5, [0.30, 0.22, 0.14], false);
+  const cone = (y0, y1, r) => {
+    const ring = Array.from({ length: 7 }, (_, i) => { const a = i / 7 * Math.PI * 2; return [Math.cos(a) * r, y0, Math.sin(a) * r]; });
+    const tip = Array.from({ length: 7 }, () => [0, y1, 0]);
+    b.loft([ring, tip], TINT, { capStart: true, smooth: false });
+  };
+  cone(0.12, 0.62, 0.30); cone(0.36, 0.84, 0.24); cone(0.60, 1.0, 0.16);
+  return b.build();
+}
+function makeBroadleafMesh() {
+  const b = new MeshBuilder();
+  b.cylinder([0, 0, 0], [0, 0.42, 0], 0.05, 0.035, 5, [0.33, 0.24, 0.15], false);
+  const rings = [];
+  const lat = 6, lon = 8, rng = makeRng(5);
+  for (let i = 0; i <= lat; i++) {
+    const t = i / lat * Math.PI, rr = Math.sin(t) * 0.36, y = 0.62 - Math.cos(t) * 0.32;
+    rings.push(Array.from({ length: lon }, (_, k) => {
+      const a = k / lon * Math.PI * 2, j = i > 0 && i < lat ? 0.85 + rng() * 0.3 : 1;
+      return [Math.cos(a) * rr * j, y, Math.sin(a) * rr * j];
+    }));
+  }
+  b.loft(rings, TINT, { smooth: false, ref: [0, 0.62, 0] });
+  return b.build();
+}
+function makeHouseMesh() {
+  const b = new MeshBuilder();
+  const wall = [0.90, 0.87, 0.80];
+  b.box([0, 0.28, 0], [1, 0.56, 0.72], wall);
+  // gable roof along x
+  const y0 = 0.56, y1 = 0.88, hw = 0.56, hd = 0.44;
+  const A = [-hw, y0, -hd], B = [hw, y0, -hd], C = [hw, y1, 0], D = [-hw, y1, 0], E = [-hw, y0, hd], F = [hw, y0, hd];
+  const ref = [0, 0.5, 0];
+  b.quad(A, B, C, D, TINT, ref); b.quad(E, F, C, D, TINT, ref);
+  b.quad([-0.5, y0, -0.36], [-0.5, y0, 0.36], [-0.5, 0.84, 0], [-0.5, 0.84, 0], wall, ref);
+  b.quad([0.5, y0, -0.36], [0.5, y0, 0.36], [0.5, 0.84, 0], [0.5, 0.84, 0], wall, ref);
+  return b.build();
+}
+const props = { conifer: null, broad: null, house: null, center: [1e9, 0, 1e9], treeR: 2400 };
+function initProps() {
+  props.conifer = uploadMesh(makeConiferMesh(), new Float32Array(8));
+  props.broad = uploadMesh(makeBroadleafMesh(), new Float32Array(8));
+  props.house = uploadMesh(makeHouseMesh(), new Float32Array(8));
+  props.nConifer = props.nBroad = 0;
+  // village
+  const rng = makeRng(4242), houses = [];
+  const centres = [rwyToWorld(250, 520), rwyToWorld(-450, 700), rwyToWorld(900, 380)];
+  for (let tries = 0; tries < 4000 && houses.length < 180; tries++) {
+    const c = centres[tries % centres.length];
+    const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 520;
+    const x = c[0] + Math.cos(a) * r, z = c[2] + Math.sin(a) * r;
+    const h = terrainHeight(x, z);
+    if (h < 3 || h > 120 || terrainNormal(x, z)[1] < 0.965 || onPaved(x, z)) continue;
+    const [u, v] = worldToRwy(x, z);
+    if (Math.abs(u) < RWY.len / 2 + 250 && v > -230 && v < 110) continue;
+    if (houses.some(o => Math.hypot(o[0] - x, o[2] - z) < 22)) continue;
+    const roofs = [[0.62, 0.20, 0.15], [0.35, 0.38, 0.45], [0.20, 0.30, 0.48], [0.50, 0.30, 0.22]];
+    const rc = roofs[Math.floor(rng() * roofs.length)];
+    houses.push([x, h - 0.3, z, 9 + rng() * 5, (Math.round(rng() * 4) * Math.PI / 2) + (rng() - 0.5) * 0.3, rc[0], rc[1], rc[2]]);
+  }
+  props.houseList = houses;
+  gl.bindBuffer(gl.ARRAY_BUFFER, props.house.bufs[3]);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(houses.flat()), gl.STATIC_DRAW);
+  props.nHouse = houses.length;
+}
+function updateTrees(cam) {
+  if (Math.hypot(cam[0] - props.center[0], cam[2] - props.center[2]) < 250) return;
+  props.center = [cam[0], 0, cam[2]];
+  const cell = 24, gx0 = Math.floor((cam[0] - props.treeR) / cell), gx1 = Math.ceil((cam[0] + props.treeR) / cell);
+  const gz0 = Math.floor((cam[2] - props.treeR) / cell), gz1 = Math.ceil((cam[2] + props.treeR) / cell);
+  const con = [], brd = [];
+  for (let gz = gz0; gz <= gz1; gz++) for (let gx = gx0; gx <= gx1; gx++) {
+    const r0 = hash2(gx, gz, 1);
+    const x = (gx + hash2(gx, gz, 2)) * cell, z = (gz + hash2(gx, gz, 3)) * cell;
+    if (Math.abs(x) > HM_HALF || Math.abs(z) > HM_HALF) continue;
+    if ((x - cam[0]) ** 2 + (z - cam[2]) ** 2 > props.treeR * props.treeR) continue;
+    const veg = vegAt(x, z);
+    const p = smoothstep(0.48, 0.70, veg) * 0.95 + 0.03;
+    if (r0 > p) continue;
+    const h = terrainHeight(x, z);
+    if (h < 4 || h > 980) continue;
+    const n = terrainNormal(x, z);
+    if (n[1] < 0.84) continue;
+    if (onPaved(x, z)) continue;
+    const s = 9 + hash2(gx, gz, 4) * 9, yaw = hash2(gx, gz, 5) * 6.28, t = hash2(gx, gz, 6);
+    const conifer = h > 260 + t * 200 || (veg > 0.62 && t < 0.35);
+    if (conifer) con.push(x, h - 0.4, z, s * 1.15, yaw, 0.13 + t * 0.06, 0.25 + t * 0.07, 0.13 + t * 0.03);
+    else brd.push(x, h - 0.4, z, s, yaw, 0.20 + t * 0.12, 0.34 + t * 0.12, 0.12 + t * 0.05);
+  }
+  gl.bindBuffer(gl.ARRAY_BUFFER, props.conifer.bufs[3]);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(con), gl.DYNAMIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, props.broad.bufs[3]);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(brd), gl.DYNAMIC_DRAW);
+  props.nConifer = con.length / 8; props.nBroad = brd.length / 8;
+}
+
+// ---------- airport ----------
+function makeRunwayTexture() {
+  const W = 128, H = 4096, c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  const mpx = RWY.wid / W, mpy = RWY.len / H;     // metres per pixel
+  const X = m => W / 2 - m / mpx;                    // lateral metres (+ = right of RWY 09) -> px
+  const Y = m => m / mpy;                            // metres from west end -> px
+  g.fillStyle = '#3b3e42'; g.fillRect(0, 0, W, H);
+  const rng = makeRng(7);
+  for (let i = 0; i < 9000; i++) {
+    const v = 40 + rng() * 40; g.fillStyle = `rgba(${v},${v},${v + 4},0.35)`;
+    g.fillRect(rng() * W, rng() * H, 1 + rng() * 2, 1 + rng() * 3);
+  }
+  // tyre marks in the touchdown zones
+  for (const [a, b] of [[250, 700], [RWY.len - 700, RWY.len - 250]]) for (let i = 0; i < 70; i++) {
+    const y = Y(a + rng() * (b - a)), x = W / 2 + (rng() - 0.5) * 30;
+    g.fillStyle = 'rgba(15,15,17,0.35)'; g.fillRect(x, y, 2.5, Y(8 + rng() * 40));
+  }
+  g.fillStyle = '#e9ebe6';
+  // edge lines
+  g.fillRect(X(RWY.wid / 2 - 0.6), 0, 0.9 / mpx, H); g.fillRect(X(-RWY.wid / 2 + 1.5), 0, 0.9 / mpx, H);
+  // centreline dashes
+  for (let m = 110; m < RWY.len - 110; m += 50) g.fillRect(X(0.45), Y(m), 0.9 / mpx, Y(30));
+  for (const end of [0, 1]) {
+    const at = m => end ? RWY.len - m : m;
+    // threshold piano keys
+    for (let k = 0; k < 4; k++) for (const s of [-1, 1]) {
+      const lat = s * (3 + k * 3.2);
+      const y0 = Math.min(Y(at(6)), Y(at(36)));
+      g.fillRect(X(lat + 0.9), y0, 1.8 / mpx, Y(30));
+    }
+    // aiming point
+    for (const s of [-1, 1]) {
+      const y0 = Math.min(Y(at(300)), Y(at(345)));
+      g.fillRect(X(s * 7 + 2), y0, 4 / mpx, Y(45));
+    }
+    // touchdown zone bars
+    for (const d of [150, 450, 600]) for (const s of [-1, 1]) {
+      const y0 = Math.min(Y(at(d)), Y(at(d + 22)));
+      g.fillRect(X(s * 7 + 1), y0, 1.8 / mpx, Y(22)); g.fillRect(X(s * 10 + 1), y0, 1.8 / mpx, Y(22));
+    }
+    // designation numbers
+    g.save();
+    const txt = end ? '27' : '09';
+    g.translate(W / 2, Y(at(62)));
+    if (!end) g.rotate(Math.PI);
+    g.scale(1, (mpx / mpy) * 1.7);
+    g.font = 'bold 44px "B612 Mono", monospace';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(txt, 0, 0);
+    g.restore();
+  }
+  return makeTexture({ source: c, aniso: 16 });
+}
+let runwayTex, runwayMesh, airportMesh;
+function initAirport() {
+  runwayTex = makeRunwayTexture();
+  // runway quad (pos, uv) drawn with the mesh program + texture via vertex colours? -> dedicated tiny program
+  const L = RWY.len / 2, Wd = RWY.wid / 2, y = RWY.elev + 0.12;
+  const p = [rwyToWorld(-L, -Wd, y), rwyToWorld(L, -Wd, y), rwyToWorld(L, Wd, y), rwyToWorld(-L, Wd, y)];
+  // texture coords: s = (W/2 - v)/W , t = (u + L)/len
+  const uv = [[1, 0], [1, 1], [0, 1], [0, 0]];
+  const pos = new Float32Array([...p[0], ...p[2], ...p[1], ...p[0], ...p[3], ...p[2]]);
+  const tc = new Float32Array([...uv[0], ...uv[2], ...uv[1], ...uv[0], ...uv[3], ...uv[2]]);
+  runwayMesh = makeVAO([{ loc: 0, size: 3, data: pos }, { loc: 1, size: 2, data: tc }]);
+  runwayMesh.count = 6;
+
+  const b = new MeshBuilder();
+  const E = RWY.elev;
+  const conc = [0.56, 0.56, 0.54], grass = [0.34, 0.45, 0.2];
+  const flat = (u0, u1, v0, v1, yy, col) => {
+    const a = rwyToWorld(u0, v0, yy), bb = rwyToWorld(u1, v0, yy), c = rwyToWorld(u1, v1, yy), d = rwyToWorld(u0, v1, yy);
+    b.quad(a, bb, c, d, col, [a[0], yy - 10, a[2]]);
+  };
+  flat(APRON.u0, APRON.u1, APRON.v0, APRON.v1, E + 0.08, conc);
+  flat(-300, -270, -45, -15, E + 0.08, [0.45, 0.46, 0.46]);
+  flat(-20, 10, -45, -15, E + 0.08, [0.45, 0.46, 0.46]);
+  // hangars (with arched-looking stepped roofs) and buildings along the north edge of the apron
+  const bx = (u, v, w, d, h, col, yaw = 0) => b.box(rwyToWorld(u, v, E + h / 2), [w, h, d], col, yaw);
+  const roofCol = [0.62, 0.64, 0.66];
+  for (const [u, w] of [[-300, 34], [-250, 34], [-200, 28]]) {
+    bx(u, -178, w, 26, 9, [0.80, 0.80, 0.78]);
+    bx(u, -178, w - 2, 20, 11, roofCol);
+    bx(u, -178, w - 6, 10, 12.2, roofCol);
+    bx(u, -164.8, w * 0.7, 0.5, 7.5, [0.30, 0.34, 0.40]);   // hangar door
+  }
+  bx(-120, -175, 36, 14, 6, [0.86, 0.84, 0.78]);       // terminal
+  bx(-120, -175, 37, 15, 0.6, [0.30, 0.32, 0.36]);
+  bx(-60, -172, 6, 6, 16, [0.86, 0.86, 0.84]);         // tower shaft
+  bx(-60, -172, 9, 9, 3.5, [0.14, 0.24, 0.32]);
+  b.box(rwyToWorld(-60, -172, E + 19.5), [9, 3.5, 9], [0.20, 0.34, 0.44]);
+  b.box(rwyToWorld(-60, -172, E + 21.6), [10, 0.7, 10], [0.9, 0.9, 0.88]);
+  b.cylinder(rwyToWorld(-10, -170, E), rwyToWorld(-10, -170, E + 7), 4, 4, 14, [0.88, 0.88, 0.86]);  // fuel tank
+  b.cylinder(rwyToWorld(4, -170, E), rwyToWorld(4, -170, E + 7), 4, 4, 14, [0.88, 0.88, 0.86]);
+  // windsock (wind blows from the east, so the sock streams west)
+  const ws = rwyToWorld(-RWY.len / 2 + 180, -40, E);
+  b.cylinder(ws, vadd(ws, [0, 7, 0]), 0.1, 0.08, 6, [0.8, 0.8, 0.8]);
+  for (let k = 0; k < 4; k++) {
+    const col = k % 2 ? [0.95, 0.95, 0.95] : [0.95, 0.42, 0.12];
+    b.cylinder(vadd(ws, [-k * 0.9, 6.8 - k * 0.12, 0]), vadd(ws, [-(k + 1) * 0.9, 6.8 - (k + 1) * 0.12, 0]), 0.45 - k * 0.07, 0.38 - k * 0.07, 10, col, false);
+  }
+  // PAPI boxes
+  for (const pl of papiLights()) b.box(vadd(pl.p, [0, -0.4, 0]), [1.2, 0.8, 0.8], [0.15, 0.15, 0.15]);
+  // grass verge darker strip beside runway for contrast
+  flat(-L - 60, L + 60, Wd + 0.1, Wd + 45, E + 0.03, grass);
+  flat(-L - 60, L + 60, -Wd - 45, -Wd - 0.1, E + 0.03, grass);
+  airportMesh = uploadMesh(b.build());
+}
+const RUNWAY_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec2 aUv;
+uniform mat4 uViewProj;
+out vec3 vWorld; out vec2 vUv;
+void main(){ vWorld = aPos; vUv = aUv; gl_Position = uViewProj * vec4(aPos, 1.0); }`;
+const RUNWAY_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec2 vUv;
+uniform sampler2D uTex;
+out vec4 outColor;
+void main(){
+  vec3 base = texture(uTex, vUv).rgb;
+  float diff = max(uSunDir.y, 0.0) * planeShadow(vWorld.xz);
+  vec3 col = base * (uSunCol * diff + uAmbSky);
+  outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
+}`;
+let progRunway;
+
+// PAPI: four lights left of each runway's aiming point
+function papiLights() {
+  const out = [];
+  const ang = [3.5, 3.17, 2.83, 2.5];
+  for (const end of [0, 1]) {
+    const u = end ? RWY.len / 2 - 300 : -RWY.len / 2 + 300;
+    const side = end ? 1 : -1;       // pilot's left
+    for (let i = 0; i < 4; i++) {
+      out.push({ p: rwyToWorld(u, side * (RWY.wid / 2 + 15 + i * 9), RWY.elev + 0.9), ang: ang[i], end });
+    }
+  }
+  return out;
+}
+
+// ---------- clouds ----------
+const clouds = { puffs: [], data: null, vao: null };
+function initClouds() {
+  const rng = makeRng(99);
+  const puffs = [];
+  for (let c = 0; c < 60; c++) {
+    const cx = (rng() * 2 - 1) * 17000, cz = (rng() * 2 - 1) * 17000;
+    if (Math.hypot(cx - RWY.cx, cz - RWY.cz) < 2500) continue;
+    const base = 1450 + rng() * 550, w = 450 + rng() * 900, n = 9 + Math.floor(rng() * 13);
+    for (let k = 0; k < n; k++) {
+      const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * w;
+      const px = cx + Math.cos(a) * r * 1.3, pz = cz + Math.sin(a) * r * 0.8;
+      const up = rng() * w * 0.38 * (1 - r / w * 0.6);
+      const size = 190 + rng() * 240 * (1 - r / w * 0.5);
+      puffs.push({ p: [px, base + up + size * 0.35, pz], size, shade: clamp(up / (w * 0.3), 0, 1), rot: rng() * 6.28 });
+    }
+  }
+  clouds.puffs = puffs;
+  clouds.data = new Float32Array(puffs.length * 9);
+  clouds.vao = makeVAO([{ loc: 0, size: 2, data: new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]) },
+  { data: clouds.data, stride: 9, layout: [[4, 4, 0], [5, 4, 4], [6, 1, 8]], divisor: 1, dynamic: true }]);
+}
+
+// ---------- ring course ----------
+const course = { rings: [], radius: 30 };
+function buildRingCourse() {
+  const rng = makeRng(31);
+  const cx = 0.04 * HM_HALF, cz = -0.16 * HM_HALF;
+  const pts = [];
+  const n = 10;
+  for (let i = 0; i < n; i++) {
+    const a = Math.PI * 0.55 - i / n * Math.PI * 2 * 0.92;
+    const r = 3300 + Math.sin(i * 2.1) * 900 + rng() * 300;
+    pts.push([cx + Math.cos(a) * r, 0, cz + Math.sin(a) * r]);
+  }
+  // altitude: clear the local terrain; then make sure each leg is flyable
+  for (const p of pts) {
+    let top = 0;
+    for (let k = 0; k < 12; k++) {
+      const a = k / 12 * Math.PI * 2;
+      top = Math.max(top, terrainHeight(p[0] + Math.cos(a) * 160, p[2] + Math.sin(a) * 160));
+    }
+    top = Math.max(top, terrainHeight(p[0], p[2]));
+    p[1] = Math.max(top + 90 + rng() * 60, 160);
+  }
+  for (let pass = 0; pass < 6; pass++) for (let i = 0; i < n - 1; i++) {
+    const a = pts[i], b = pts[i + 1];
+    for (let t = 0.05; t < 1; t += 0.05) {
+      const x = lerp(a[0], b[0], t), z = lerp(a[2], b[2], t), y = lerp(a[1], b[1], t);
+      const need = terrainHeight(x, z) + 100;
+      if (y < need) { a[1] += (need - y) * 0.6; b[1] += (need - y) * 0.6; }
+    }
+    const d = Math.hypot(b[0] - a[0], b[2] - a[2]), maxDy = d * 0.14;
+    if (b[1] - a[1] > maxDy) a[1] = b[1] - maxDy;
+    if (a[1] - b[1] > maxDy) b[1] = a[1] - maxDy;
+  }
+  course.rings = pts.map((p, i) => {
+    const prev = pts[Math.max(0, i - 1)], next = pts[Math.min(n - 1, i + 1)];
+    const dir = i === 0 ? vnorm(vsub(next, p)) : i === n - 1 ? vnorm(vsub(p, prev)) : vnorm(vsub(next, prev));
+    return { p, n: vnorm([dir[0], dir[1] * 0.5, dir[2]]) };
+  });
+  // torus mesh
+  const b = new MeshBuilder();
+  const R = 1, r = 0.065, seg = 48, sides = 8, rings = [];
+  for (let i = 0; i <= seg; i++) {
+    const a = i / seg * Math.PI * 2, c = [Math.cos(a) * R, Math.sin(a) * R, 0];
+    rings.push(Array.from({ length: sides }, (_, k) => {
+      const t = k / sides * Math.PI * 2;
+      return [c[0] + Math.cos(a) * Math.cos(t) * r, c[1] + Math.sin(a) * Math.cos(t) * r, Math.sin(t) * r];
+    }));
+  }
+  for (let i = 0; i < seg; i++) b.loft([rings[i], rings[i + 1]], [1, 1, 1], { smooth: true });
+  course.mesh = uploadMesh(b.build());
+}
+
+// ---------- minimap image ----------
+function makeMinimap() {
+  const S = 256, c = document.createElement('canvas');
+  c.width = c.height = S;
+  const g = c.getContext('2d'), img = g.createImageData(S, S);
+  const sun = vnorm([0.5, 0.7, 0.4]);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const wx = -HM_HALF + (x + 0.5) / S * HM_HALF * 2, wz = -HM_HALF + (y + 0.5) / S * HM_HALF * 2;
+    const h = terrainHeight(wx, wz);
+    let col;
+    if (h < 0) {
+      const t = smoothstep(0, 60, -h);
+      col = [lerp(40, 14, t), lerp(120, 50, t), lerp(140, 96, t)];
+    } else {
+      const n = terrainNormal(wx, wz), sh = clamp(vdot(n, sun) * 1.25, 0.35, 1.15);
+      const v = vegAt(wx, wz);
+      let base = h < 5 ? [196, 186, 140] : v > 0.58 ? [52, 88, 46] : [104, 128, 64];
+      if (h > 700) base = [132, 124, 112];
+      if (h > 1150) base = [226, 230, 236];
+      col = base.map(k => k * sh);
+    }
+    const k = (y * S + x) * 4;
+    img.data[k] = col[0]; img.data[k + 1] = col[1]; img.data[k + 2] = col[2]; img.data[k + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  return c;
+}
+
+// =====================================================================
+//  AIRCRAFT: model + flight dynamics
+//  body frame: +x right wing, +y up, -z nose.  CG at the origin.
+// =====================================================================
+const FUSE = [ // z, half-width, half-height, centre-y
+  [-3.25, 0.30, 0.30, 0.02], [-3.05, 0.42, 0.42, 0.02], [-2.5, 0.53, 0.53, 0.04], [-1.5, 0.58, 0.60, 0.06],
+  [-0.5, 0.58, 0.62, 0.08], [0.6, 0.52, 0.56, 0.10], [1.7, 0.38, 0.44, 0.16], [2.8, 0.22, 0.30, 0.24],
+  [3.7, 0.09, 0.17, 0.30], [3.98, 0.03, 0.07, 0.32]];
+function fuseAt(z) {
+  for (let i = 0; i < FUSE.length - 1; i++) {
+    const a = FUSE[i], b = FUSE[i + 1];
+    if (z <= b[0]) { const t = clamp((z - a[0]) / (b[0] - a[0]), 0, 1); return a.map((v, k) => lerp(v, b[k], t)); }
+  }
+  return FUSE[FUSE.length - 1];
+}
+function superRing(z, hw, hh, yc, n = 22, e = 2.5) {
+  return Array.from({ length: n }, (_, k) => {
+    const t = k / n * Math.PI * 2, c = Math.cos(t), s = Math.sin(t);
+    return [hw * Math.sign(c) * Math.pow(Math.abs(c), 2 / e), yc + hh * Math.sign(s) * Math.pow(Math.abs(s), 2 / e), z];
+  });
+}
+const NACA = xc => 5 * (0.2969 * Math.sqrt(xc) - 0.1260 * xc - 0.3516 * xc * xc + 0.2843 * xc ** 3 - 0.1036 * xc ** 4);
+// airfoil ring. horizontal: points (span, base±t, z) ; vertical: (±t, span, z)
+function foil(span, base, zLE, chord, thick, xc0, xc1, vertical = false) {
+  // fixed station count so sections with different extents can be lofted together
+  const ss = xc0 <= 1e-3 ? [0, 0.015, 0.05, 0.12, 0.22, 0.35, 0.5, 0.65, 0.8, 0.92, 1] : [0, 0.35, 0.7, 1];
+  const xs = ss.map(v => xc0 + (xc1 - xc0) * v);
+  const P = (xc, sgn) => {
+    const t = NACA(Math.max(xc, 0)) * thick * chord * sgn, z = zLE + xc * chord;
+    return vertical ? [t, span, z] : [span, base + t, z];
+  };
+  const up = xs.slice().reverse().map(x => P(x, 1));
+  const lo = xs.map(x => P(x, -1));
+  if (xc0 <= 1e-3) lo.shift();          // shared leading-edge point
+  if (xc1 >= 0.999) lo.pop();           // shared trailing-edge point
+  return [...up, ...lo];
+}
+const wingY = ax => -0.42 + (ax - 0.55) * 0.0875;
+const wingC = ax => lerp(1.7, 1.1, (ax - 0.55) / 4.2);
+const wingLE = ax => lerp(-1.05, -0.7, (ax - 0.55) / 4.2);
+const wingT = ax => lerp(0.15, 0.11, (ax - 0.55) / 4.2);
+const HINGE = 0.73;
+const wingHinge = x => { const ax = Math.abs(x); return [x, wingY(ax), wingLE(ax) + HINGE * wingC(ax)]; };
+const stabLE = ax => lerp(2.95, 3.22, ax / 1.75);
+const finLE = y => lerp(2.5, 3.22, (y - 0.3) / 1.15);
+
+const WHITE = [1, 1, 1];
+function buildPlaneParts() {
+  const parts = [];
+  const add = (name, b, opt = {}) => { const m = b.build(); parts.push({ name, vao: uploadMesh(m), ...opt }); };
+  // ---- airframe ----
+  let b = new MeshBuilder();
+  b.loft(FUSE.map(f => superRing(f[0], f[1], f[2], f[3])), WHITE, { capStart: true, capEnd: true });
+  for (const s of [1, -1]) {
+    const secs = [0.55, 2.6, 4.75].map(ax => foil(s * ax, wingY(ax), wingLE(ax), wingC(ax), wingT(ax), 0, HINGE - 0.005));
+    b.loft(secs, WHITE, { capStart: true, capEnd: true });
+    // wing root fairing under the fuselage
+  }
+  b.loft([-1.75, 0, 1.75].map(x => {
+    const ax = Math.abs(x), le = stabLE(ax), ch = 3.9 - le;
+    return foil(x, 0.32, le, ch, 0.10, 0, (3.5 - le) / ch);
+  }), WHITE, { capStart: true, capEnd: true });
+  b.loft([0.2, 1.45].map(y => {
+    const le = finLE(y), ch = 3.96 - le;
+    return foil(y, 0, le, ch, 0.11, 0, (3.5 - le) / ch, true);
+  }), WHITE, { capStart: true, capEnd: true });
+  // spinner & cowl details
+  b.loft([[-3.25, 0.27], [-3.42, 0.25], [-3.6, 0.16], [-3.72, 0.02]].map(([z, r]) => superRing(z, r, r, 0.02, 16, 2)),
+    [0.80, 0.11, 0.13], { capEnd: true });
+  b.box([0, -0.34, -3.0], [0.34, 0.1, 0.18], [0.12, 0.12, 0.13]);            // air intake
+  b.cylinder([0.22, -0.46, -2.1], [0.24, -0.5, -1.6], 0.045, 0.04, 6, [0.25, 0.23, 0.22]);   // exhaust
+  b.cylinder([0, 0.68, 0.9], [0, 1.02, 1.1], 0.015, 0.01, 4, [0.2, 0.2, 0.2], false);          // antenna
+  add('body', b, { spec: 0.9 });
+
+  // ---- canopy ----
+  b = new MeshBuilder();
+  const cz = [-1.3, -1.0, -0.6, -0.15, 0.3, 0.62], ch = [0.0, 0.26, 0.40, 0.40, 0.27, 0.02], cw = [0.26, 0.40, 0.46, 0.46, 0.40, 0.24];
+  b.loft(cz.map((z, i) => {
+    const f = fuseAt(z), top = f[3] + f[2] * 0.93, pts = [];
+    for (let k = 0; k <= 10; k++) { const a = k / 10 * Math.PI; pts.push([Math.cos(a) * cw[i], top - 0.06 + Math.sin(a) * (ch[i] + 0.06), z]); }
+    return pts;
+  }), [0.10, 0.16, 0.22], { capStart: true, capEnd: true });
+  add('canopy', b, { spec: 2.2, cockpitHide: true });
+
+  // ---- control surfaces ----
+  const surf = (name, x0, x1, hingeFn, secFn, axisHint, angleFn) => {
+    const bb = new MeshBuilder();
+    bb.loft([secFn(x0), secFn(x1)], WHITE, { capStart: true, capEnd: true });
+    const p0 = hingeFn(x0), p1 = hingeFn(x1);
+    let axis = vnorm(vsub(p1, p0));
+    if (vdot(axis, axisHint) < 0) axis = vscale(axis, -1);
+    const m = bb.build();
+    parts.push({ name, vao: uploadMesh(m), spec: 0.9, pivot: p0, axis, angle: angleFn });
+  };
+  const aileronSec = x => { const ax = Math.abs(x); return foil(x, wingY(ax), wingLE(ax), wingC(ax), wingT(ax), HINGE + 0.01, 1); };
+  surf('ailR', 2.62, 4.62, wingHinge, aileronSec, [1, 0, 0], s => -s.ail * 18 * DEG);
+  surf('ailL', -2.62, -4.62, wingHinge, aileronSec, [1, 0, 0], s => s.ail * 18 * DEG);
+  surf('flapR', 0.62, 2.52, wingHinge, aileronSec, [1, 0, 0], s => s.flapDeg * DEG);
+  surf('flapL', -0.62, -2.52, wingHinge, aileronSec, [1, 0, 0], s => s.flapDeg * DEG);
+  {
+    const bb = new MeshBuilder();
+    bb.loft([-1.68, 0, 1.68].map(x => { const ax = Math.abs(x), le = stabLE(ax), c = 3.9 - le; return foil(x, 0.32, le, c, 0.10, (3.52 - le) / c, 1); }),
+      WHITE, { capStart: true, capEnd: true });
+    parts.push({ name: 'elev', vao: uploadMesh(bb.build()), spec: 0.9, pivot: [0, 0.32, 3.51], axis: [1, 0, 0], angle: s => -clamp(s.elev + s.trim, -1, 1) * 22 * DEG });
+  }
+  {
+    const bb = new MeshBuilder();
+    bb.loft([0.42, 1.45].map(y => { const le = finLE(y), c = 3.96 - le; return foil(y, 0, le, c, 0.11, (3.52 - le) / c, 1, true); }),
+      WHITE, { capStart: true, capEnd: true });
+    parts.push({ name: 'rud', vao: uploadMesh(bb.build()), spec: 0.9, pivot: [0, 0.42, 3.51], axis: [0, 1, 0], angle: s => s.rud * 25 * DEG });
+  }
+  // ---- propeller ----
+  b = new MeshBuilder();
+  for (const sg of [1, -1]) {
+    b.box([0, sg * 0.53, -3.34], [0.11, 0.84, 0.035], [0.16, 0.16, 0.17], 0.42 * sg);
+    b.box([0, sg * 0.9, -3.34], [0.112, 0.1, 0.037], [0.95, 0.78, 0.15], 0.42 * sg);
+  }
+  parts.push({ name: 'prop', vao: uploadMesh(b.build()), spec: 0.6, pivot: [0, 0.02, -3.34], axis: [0, 0, 1], angle: s => s.propAng, propBlade: true });
+  b = new MeshBuilder();
+  for (let i = 0; i < 40; i++) {
+    const a0 = i / 40 * Math.PI * 2, a1 = (i + 1) / 40 * Math.PI * 2, n = [0, 0, -1];
+    b.tri([0, 0.02, -3.36], [Math.cos(a0) * 0.96, 0.02 + Math.sin(a0) * 0.96, -3.36], [Math.cos(a1) * 0.96, 0.02 + Math.sin(a1) * 0.96, -3.36], n, n, n,
+      [0.35, 0.35, 0.36], [0.35, 0.35, 0.36], [0.35, 0.35, 0.36]);
+  }
+  parts.push({ name: 'disc', vao: uploadMesh(b.build()), spec: 0, disc: true });
+  // ---- landing gear ----
+  const gear = (name, pivot, axle, width, axis, angleFn) => {
+    const bb = new MeshBuilder();
+    bb.cylinder(pivot, axle, 0.045, 0.04, 6, [0.72, 0.73, 0.75]);
+    bb.cylinder(vadd(axle, [-width / 2, 0, 0]), vadd(axle, [width / 2, 0, 0]), 0.28, 0.28, 14, [0.09, 0.09, 0.1]);
+    bb.cylinder(vadd(axle, [-width / 2 - 0.01, 0, 0]), vadd(axle, [width / 2 + 0.01, 0, 0]), 0.11, 0.11, 10, [0.75, 0.75, 0.78]);
+    parts.push({ name, vao: uploadMesh(bb.build()), spec: 0.5, pivot, axis, angle: angleFn, gear: true });
+  };
+  gear('gearN', [0, -0.45, -2.35], [0, -1.17, -2.3], 0.12, [1, 0, 0], s => -(1 - s.gearPos) * 90 * DEG);
+  gear('gearR', [1.25, -0.38, 0.2], [1.3, -1.17, 0.25], 0.15, [0, 0, 1], s => -(1 - s.gearPos) * 88 * DEG);
+  gear('gearL', [-1.25, -0.38, 0.2], [-1.3, -1.17, 0.25], 0.15, [0, 0, 1], s => (1 - s.gearPos) * 88 * DEG);
+  return parts;
+}
+
+// ---------- aerodynamic data (sporty 4-seat single, ~1000 kg) ----------
+const AC = {
+  mass: 1000, S: 14.5, b: 9.5, c: 1.55,
+  I: [1850, 2700, 1350],                     // pitch (x), yaw (y), roll (z)
+  CL0: 0.25, CLa: 4.8, aStall: 0.27,
+  CD0: 0.027, K: 0.052, CDgear: 0.016,
+  Cm0: 0.013, Cma: -1.1, Cmde: 0.30, Cmq: -14,
+  Clda: 0.085, Clp: -0.48, Clb: -0.08,
+  Cnb: 0.10, Cndr: 0.03, Cnr: -0.13,
+  CYb: -0.65,
+  Tstatic: 3300, Pthr: 120000,
+};
+const FLAP_DEG = [0, 10, 20, 30];
+const WHEEL_BOTTOM = -1.45;
+const WHEELS = [
+  { off: [0, WHEEL_BOTTOM, -2.3], k: 26000, c: 3400, nose: true },
+  { off: [-1.3, WHEEL_BOTTOM, 0.25], k: 42000, c: 5200 },
+  { off: [1.3, WHEEL_BOTTOM, 0.25], k: 42000, c: 5200 },
+];
+const TAILSKID = { off: [0, 0.08, 3.85], k: 30000, c: 4000 };
+const HARDPTS = [
+  { off: [0, 0.02, -3.72], name: '機首' },
+  { off: [0, -0.95, -3.34], name: 'プロペラ' },
+  { off: [-4.75, -0.06, -0.15], name: '左の翼端' },
+  { off: [4.75, -0.06, -0.15], name: '右の翼端' },
+  { off: [-2.6, -0.3, -0.2], name: '左翼' },
+  { off: [2.6, -0.3, -0.2], name: '右翼' },
+  { off: [0, -0.64, -1.0], name: '胴体下面' },
+  { off: [0, -0.52, 1.2], name: '胴体下面' },
+  { off: [0, 1.45, 3.6], name: '垂直尾翼' },
+  { off: [0, 1.12, -0.45], name: 'キャノピー' },
+  { off: [-1.75, 0.32, 3.45], name: '水平尾翼' },
+  { off: [1.75, 0.32, 3.45], name: '水平尾翼' },
+];
+
+const sim = {
+  pos: [0, 0, 0], vel: [0, 0, 0], q: [0, 0, 0, 1], w: [0, 0, 0],
+  thr: 0, elev: 0, ail: 0, rud: 0, trim: 0, brake: false,
+  flapIdx: 0, flapDeg: 0, gearDown: true, gearPos: 1, smoke: false,
+  rpm: 0, propAng: 0,
+  onGround: false, mainContact: false, airTime: 0, crashed: false, crashReason: '',
+  alpha: 0, beta: 0, ias: 0, tas: 0, gLoad: 1, stallW: 0, stallWarn: false, agl: 0, groundH: 0, vs: 0,
+  lastTouchdown: null, contacts: [false, false, false],
+};
+
+function windAt(p, t) {
+  const gust = Math.min(1, Math.max(p[1], 0) / 300 + 0.4);
+  return [-3 + perlin(t * 0.35, 1.7) * 1.4 * gust, perlin(t * 0.5, 4.4) * 0.5 * gust, perlin(t * 0.31, 8.2) * 1.0 * gust];
+}
+
+function physicsStep(dt, t) {
+  const s = sim;
+  s.flapDeg += clamp(FLAP_DEG[s.flapIdx] - s.flapDeg, -8 * dt, 8 * dt);
+  if (!(s.onGround && !s.gearDown)) s.gearPos = clamp(s.gearPos + (s.gearDown ? dt : -dt) / 4.5, 0, 1);
+  const flapF = s.flapDeg / 30;
+  const rho = 1.225 * Math.exp(-Math.max(s.pos[1], 0) / 8500);
+  const qi = qconj(s.q);
+  const vb = qrot(qi, vsub(s.vel, windAt(s.pos, t)));
+  const V = vlen(vb);
+  const u = -vb[2];
+  const alpha = Math.atan2(-vb[1], u);
+  const beta = V > 0.5 ? Math.asin(clamp(vb[0] / V, -1, 1)) : 0;
+  const qd = 0.5 * rho * V * V;
+  const ground = groundAt(s.pos[0], s.pos[2]);
+  const agl = s.pos[1] + WHEEL_BOTTOM - ground.h;
+
+  // --- aerodynamics (body frame) ---
+  const F = [0, 0, 0];
+  const aS = AC.aStall - 0.045 * flapF;
+  const cl0 = AC.CL0 + 0.7 * flapF;
+  const over = Math.max(alpha - aS, (-aS - 0.06) - alpha);
+  const stallW = smoothstep(0, 0.07, over);
+  const clLin = cl0 + AC.CLa * alpha;
+  const CL = lerp(clLin, 1.15 * Math.sin(2 * alpha), stallW);
+  const hx = Math.max(agl + 1.3, 0.3) / AC.b, ge = (16 * hx * hx) / (1 + 16 * hx * hx);
+  const CD = AC.CD0 + 0.02 * flapF + 0.05 * flapF * flapF + AC.CDgear * s.gearPos
+    + AC.K * clLin * clLin * (1 - stallW) * ge + stallW * 1.25 * Math.sin(alpha) ** 2 + 0.6 * beta * beta;
+  if (V > 0.3) {
+    const iv = 1 / V, L = CL * qd * AC.S, D = CD * qd * AC.S;
+    const ln = Math.hypot(vb[1], vb[2]) || 1;
+    F[0] += -vb[0] * iv * D + qd * AC.S * AC.CYb * beta;
+    F[1] += (-vb[2] / ln) * L - vb[1] * iv * D;
+    F[2] += (vb[1] / ln) * L - vb[2] * iv * D;
+  }
+  // engine & propeller
+  const thrEff = 0.04 + 0.96 * s.thr;
+  const T = thrEff * Math.min(AC.Tstatic, AC.Pthr / Math.max(Math.abs(u), 1)) - (1 - s.thr) * 2.5 * Math.max(u, 0);
+  F[2] -= T;
+  // --- moments (pilot convention: roll right, pitch up, yaw right) ---
+  const p = -s.w[2], qq = s.w[0], r = -s.w[1];
+  const qdc = qd + 240 * s.thr;
+  const hv = 0.25 * rho * V;
+  const elevEff = clamp(s.elev + s.trim, -1, 1);
+  const Mp = qd * AC.S * AC.c * (AC.Cm0 + AC.Cma * Math.sin(alpha) - 0.10 * stallW * Math.sign(alpha))
+    + qdc * AC.S * AC.c * AC.Cmde * elevEff + hv * AC.S * AC.c * AC.c * AC.Cmq * qq;
+  // roll damping reverses in a stall (autorotation) but saturates, which gives a bounded spin
+  const pAuto = p - 1.7 * stallW * 1.5 * Math.tanh(p / 1.5);
+  let Lr = qd * AC.S * AC.b * (AC.Clda * s.ail + AC.Clb * Math.sin(beta)) + hv * AC.S * AC.b * AC.b * AC.Clp * pAuto;
+  if (stallW > 0.15) Lr += qd * AC.S * AC.b * 0.03 * stallW * perlin(t * 0.8, 12.5);
+  const Nr = qd * AC.S * AC.b * AC.Cnb * Math.sin(beta) + qdc * AC.S * AC.b * AC.Cndr * s.rud + hv * AC.S * AC.b * AC.b * AC.Cnr * r;
+  const Tb = [Mp, -Nr, -Lr];
+
+  // --- ground contact (world frame) ---
+  const Fw = qrot(s.q, F);
+  const Tw = [0, 0, 0];
+  const wW = qrot(s.q, s.w);
+  const gs = Math.hypot(s.vel[0], s.vel[2]);
+  const steer = clamp(s.rud + s.ail * 0.5, -1, 1) * lerp(32, 5, clamp(gs / 25, 0, 1)) * DEG;
+  let yLoad = F[1];
+  const contact = (off, k, c, kind) => {
+    const rw = qrot(s.q, off), cp = vadd(s.pos, rw);
+    const g = groundAt(cp[0], cp[2]);
+    const pen = g.h - cp[1];
+    if (pen <= 0) return false;
+    if (g.water) { crash(kind === 'hard' ? '海に墜落しました' : '海に着水してしまいました'); return true; }
+    const vc = vadd(s.vel, vcross(wW, rw));
+    const vn = vdot(vc, g.n);
+    if (kind === 'hard') { crash(off.name + 'が地面に接触しました'); return true; }
+    if (kind === 'wheel' && (pen > 0.5 || vn < -6)) { crash('接地の衝撃で脚が壊れました（降下率 ' + Math.round(-vn * 196.85) + ' fpm）'); return true; }
+    if (kind === 'skid' && vn < -4) { crash('尾部を強く打ちつけました'); return true; }
+    const Fn = Math.max(0, k * pen - c * vn);
+    let fb = [0, 0, -1];
+    if (off === WHEELS[0].off) fb = [Math.sin(steer), 0, -Math.cos(steer)];
+    let fwd = qrot(s.q, fb);
+    fwd = vnorm(vsub(fwd, vscale(g.n, vdot(fwd, g.n))));
+    const lat = vnorm(vcross(g.n, fwd));
+    const vl = vdot(vc, fwd), vt = vdot(vc, lat);
+    const mu = kind === 'skid' ? 0.5 : g.paved ? 0.85 : 0.6;
+    const rr = kind === 'skid' ? 0.5 : (g.paved ? 0.015 : 0.05) + (s.brake && off !== WHEELS[0].off ? 0.6 : 0);
+    const Ft = clamp(-vt * 9000, -mu * Fn, mu * Fn);
+    const Fl = clamp(-vl * 6000, -rr * Fn, rr * Fn);
+    const Fc = vadd(vadd(vscale(g.n, Fn), vscale(fwd, Fl)), vscale(lat, Ft));
+    Fw[0] += Fc[0]; Fw[1] += Fc[1]; Fw[2] += Fc[2];
+    const tq = vcross(rw, Fc); Tw[0] += tq[0]; Tw[1] += tq[1]; Tw[2] += tq[2];
+    yLoad += vdot(qrot(qi, Fc), [0, 1, 0]);
+    return true;
+  };
+  const hard = HARDPTS.map(h => Object.assign(h.off.slice(), { name: h.name }));
+  if (agl < 8) {
+    for (let i = 0; i < 3; i++) s.contacts[i] = s.gearPos > 0.98 ? contact(WHEELS[i].off, WHEELS[i].k, WHEELS[i].c, 'wheel') : false;
+    contact(TAILSKID.off, TAILSKID.k, TAILSKID.c, 'skid');
+    for (const h of hard) { if (s.crashed) break; contact(h, 0, 0, 'hard'); }
+  } else if (agl < 30) {
+    for (const h of hard) { if (s.crashed) break; contact(h, 0, 0, 'hard'); }
+    s.contacts[0] = s.contacts[1] = s.contacts[2] = false;
+  } else s.contacts[0] = s.contacts[1] = s.contacts[2] = false;
+  if (s.crashed) return;
+  // terrain collisions far above wheel range (mountainsides hit wing-first etc.) are covered by the hard points
+
+  // --- integrate ---
+  Fw[1] -= AC.mass * 9.81;
+  const saved = { pos: s.pos, vel: s.vel, q: s.q, w: s.w.slice() };
+  s.vel = vmadd(s.vel, Fw, dt / AC.mass);
+  s.pos = vmadd(s.pos, s.vel, dt);
+  const Tt = vadd(Tb, qrot(qi, Tw));
+  const Iw = [AC.I[0] * s.w[0], AC.I[1] * s.w[1], AC.I[2] * s.w[2]];
+  const gyro = vcross(s.w, Iw);
+  for (let k = 0; k < 3; k++) s.w[k] += (Tt[k] - gyro[k] - AC.I[k] * s.w[k] * 0.05) / AC.I[k] * dt;
+  const dq = qmul(s.q, [s.w[0], s.w[1], s.w[2], 0]);
+  s.q = qnorm([s.q[0] + 0.5 * dt * dq[0], s.q[1] + 0.5 * dt * dq[1], s.q[2] + 0.5 * dt * dq[2], s.q[3] + 0.5 * dt * dq[3]]);
+
+  if (![...s.pos, ...s.vel, ...s.q, ...s.w].every(Number.isFinite)) {
+    Object.assign(s, saved);
+    crash('機体が制御不能になりました');
+    return;
+  }
+  // --- derived state ---
+  const wasMain = s.mainContact;
+  s.mainContact = s.contacts[1] || s.contacts[2];
+  s.onGround = s.mainContact || s.contacts[0];
+  if (s.mainContact && !wasMain && s.airTime > 1.5) onTouchdown();
+  s.airTime = s.onGround ? 0 : s.airTime + dt;
+  s.alpha = alpha; s.beta = beta; s.tas = V; s.ias = V * Math.sqrt(rho / 1.225);
+  s.stallW = stallW;
+  s.stallWarn = !s.onGround && V > 8 && alpha > aS - 0.045;
+  s.gLoad = lerp(s.gLoad, yLoad / (AC.mass * 9.81), 0.1);
+  s.agl = agl; s.groundH = ground.h; s.vs = s.vel[1];
+  const rpmT = s.thr > 0 || V > 5 ? 700 + 1950 * s.thr + 9 * Math.max(u, 0) : 700;
+  s.rpm += (Math.min(rpmT, 2750) - s.rpm) * Math.min(1, dt * 1.8);
+  s.propAng = (s.propAng + s.rpm / 60 * Math.PI * 2 * dt) % (Math.PI * 2);
+}
+
+let planeParts;
+function planeMatrix(pos, q) { return M4.fromQP(q, pos); }
+function drawPlane(base, st, opt = {}) {
+  const u = progMesh.u;
+  gl.uniform1i(u.uLivery, 1);
+  gl.uniform3fv(u.uPaint, opt.paint || [-1, -1, -1]);
+  gl.uniform3f(u.uEmissive, 0, 0, 0);
+  gl.uniform1f(u.uAlpha, 1);
+  const fastProp = st.rpm > 900;
+  for (const part of planeParts) {
+    if (part.disc) continue;
+    if (opt.cockpit && part.cockpitHide) continue;
+    if (!opt.cockpit && part.cockpitOnly) continue;
+    if (part.propBlade && fastProp) continue;
+    if (part.gear && st.gearPos < 0.02) continue;
+    let m = base;
+    if (part.pivot) m = M4.mul(base, M4.pivotRot(part.pivot, part.axis, part.angle(st)));
+    gl.uniformMatrix4fv(u.uModel, false, m);
+    gl.uniform1f(u.uSpec, part.spec);
+    gl.bindVertexArray(part.vao.vao);
+    gl.drawArrays(gl.TRIANGLES, 0, part.vao.count);
+  }
+}
+function drawPropDisc(base, st) {
+  if (st.rpm <= 900) return;
+  const u = progMesh.u, part = planeParts.find(p => p.disc);
+  gl.uniform1i(u.uLivery, 0);
+  gl.uniform3f(u.uEmissive, 0, 0, 0);
+  gl.uniform1f(u.uAlpha, clamp((st.rpm - 900) / 2000, 0.12, 0.3));
+  gl.uniform1f(u.uSpec, 0);
+  gl.uniformMatrix4fv(u.uModel, false, base);
+  gl.bindVertexArray(part.vao.vao);
+  gl.drawArrays(gl.TRIANGLES, 0, part.vao.count);
+}
+
+// =====================================================================
+//  GAME: environment, camera, input, audio, particles, HUD, modes, loop
+// =====================================================================
+const TOD = {
+  day: {
+    sunDir: vnorm([0.5, 0.62, 0.55]), sunCol: [1.05, 1.0, 0.92], zenith: [0.19, 0.41, 0.76], horizon: [0.72, 0.83, 0.93],
+    horizonAway: [0.64, 0.77, 0.92], ambSky: [0.32, 0.40, 0.52], ambGround: [0.20, 0.19, 0.15], fog: 4.2e-5,
+  },
+  evening: {
+    sunDir: vnorm([-0.86, 0.13, 0.34]), sunCol: [1.28, 0.74, 0.42], zenith: [0.15, 0.22, 0.44], horizon: [1.0, 0.64, 0.40],
+    horizonAway: [0.46, 0.46, 0.60], ambSky: [0.26, 0.26, 0.37], ambGround: [0.17, 0.12, 0.10], fog: 5.6e-5,
+  },
+};
+let ENV = TOD.day;
+
+const game = {
+  state: 'loading', mode: 'runway', hud: true, invert: false, touch: false, sound: true,
+  t: 0, ringIdx: 0, ringTime: 0, ringDone: false, firstTouch: null, landingDone: false,
+  warnPull: false, warnGear: false, resultTimer: 0, best: {},
+};
+try { game.best = JSON.parse(localStorage.getItem('sorajima-best') || '{}') || {}; } catch (e) { game.best = {}; }
+function saveBest() { try { localStorage.setItem('sorajima-best', JSON.stringify(game.best)); } catch (e) { /* storage unavailable */ } }
+
+// ---------- toasts ----------
+function toast(msg, ms = 2400) {
+  const box = $('toast'), d = document.createElement('div');
+  d.textContent = msg; box.appendChild(d);
+  while (box.children.length > 3) box.removeChild(box.firstChild);
+  setTimeout(() => { d.style.opacity = '0'; setTimeout(() => d.remove(), 450); }, ms);
+}
+
+// ---------- spawning ----------
+const parked = [];
+function spawn(mode) {
+  const s = sim;
+  Object.assign(s, {
+    w: [0, 0, 0], elev: 0, ail: 0, rud: 0, trim: 0, brake: false, smoke: false, crashed: false, crashReason: '',
+    onGround: false, mainContact: false, airTime: 0, gLoad: 1, stallW: 0, stallWarn: false, rpm: 700, contacts: [false, false, false],
+    vs: 0, alpha: 0, beta: 0,
+  });
+  const L = RWY.len / 2;
+  if (mode === 'runway') {
+    s.pos = rwyToWorld(-L + 45, 0, RWY.elev + 0.12 - WHEEL_BOTTOM - 0.06);
+    s.q = qFromHPB(RWY.hdg, 0.9, 0); s.vel = [0, 0, 0];
+    s.thr = 0; s.flapIdx = 1; s.flapDeg = 10; s.gearDown = true; s.gearPos = 1;
+    s.mainContact = true; s.onGround = true;
+  } else if (mode === 'air') {
+    s.pos = [600, 640, 9300]; s.q = qFromHPB(348, 0.5, 0);
+    s.vel = vscale(qrot(s.q, [0, 0, -1]), 62);
+    s.thr = 0.55; s.flapIdx = 0; s.flapDeg = 0; s.gearDown = false; s.gearPos = 0; s.airTime = 10;
+  } else if (mode === 'rings') {
+    const r0 = course.rings[0], dir = vnorm([r0.n[0], 0, r0.n[2]]);
+    s.pos = vsub(r0.p, vscale(dir, 1400));
+    s.pos[1] = Math.max(r0.p[1], terrainHeight(s.pos[0], s.pos[2]) + 150);
+    const hdg = Math.atan2(dir[0], -dir[2]) / DEG;
+    s.q = qFromHPB(hdg, 0.5, 0); s.vel = vscale(dir, 64);
+    s.thr = 0.62; s.flapIdx = 0; s.flapDeg = 0; s.gearDown = false; s.gearPos = 0; s.airTime = 10;
+    game.ringIdx = 0; game.ringTime = 0; game.ringDone = false;
+  } else if (mode === 'landing') {
+    const D = 4300, aim = rwyToWorld(-L + 300, 0);
+    s.pos = vsub(aim, vscale(RWY.dir, D)); s.pos[1] = RWY.elev + Math.tan(3 * DEG) * D - WHEEL_BOTTOM;
+    s.q = qFromHPB(RWY.hdg, -1.4, 0);
+    s.vel = vadd(vscale(RWY.dir, 36), [0, -36 * Math.tan(3 * DEG), 0]);
+    s.thr = 0.2; s.flapIdx = 2; s.flapDeg = 20; s.gearDown = true; s.gearPos = 1; s.trim = 0.06; s.airTime = 10;
+  }
+  s.gLoad = 1; s.agl = 100;
+  game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.resultTimer = 0;
+  cam.q = s.q.slice(); cam.flyPos = null; cam.lookYaw = cam.lookPitch = 0;
+  if (cam.mode === 'orbit' && cam.autoOrbit) { cam.mode = cam.prevMode || 'chase'; cam.autoOrbit = false; }
+  particles.length = 0;
+  props.center = [1e9, 0, 1e9];
+}
+function initParked() {
+  parked.length = 0;
+  for (const [u, col] of [[-160, [0.10, 0.32, 0.72]], [-122, [0.12, 0.52, 0.30]], [-84, [0.78, 0.46, 0.10]]]) {
+    const p = rwyToWorld(u, -105, RWY.elev + 0.08 - WHEEL_BOTTOM - 0.06);
+    parked.push({ m: M4.fromQP(qFromHPB(RWY.hdg + 90, 0.9, 0), p), col });
+  }
+}
+const parkedState = { ail: 0, elev: 0, trim: 0, rud: 0, flapDeg: 0, gearPos: 1, propAng: 0.4, rpm: 0 };
+
+// ---------- camera ----------
+const CAM_MODES = ['chase', 'cockpit', 'orbit', 'flyby'];
+const CAM_NAMES = { chase: '追尾カメラ', cockpit: 'コックピット', orbit: '周回カメラ（ドラッグで回転）', flyby: 'フライバイ' };
+const cam = { mode: 'chase', q: [0, 0, 0, 1], lookYaw: 0, lookPitch: 0, orbitYaw: 2.4, orbitPitch: 0.22, dist: 22,
+  flyPos: null, eye: [0, 50, 0], view: M4.ident(), fov: 58, near: 0.3, dragging: false };
+function updateCamera(dt) {
+  const s = sim;
+  let eye, target, up = [0, 1, 0], fov = 58, near = 0.35;
+  const mode = game.state === 'menu' ? 'attract' : cam.mode;
+  if (!cam.dragging && mode !== 'cockpit') { cam.lookYaw = damp(cam.lookYaw, 0, 1.6, dt); cam.lookPitch = damp(cam.lookPitch, 0, 1.6, dt); }
+  if (mode === 'attract') {
+    if (!cam.dragging) cam.orbitYaw += dt * 0.07;
+    const d = 30, p = 0.16 + cam.orbitPitch * 0.3;
+    eye = vadd(s.pos, [Math.sin(cam.orbitYaw) * Math.cos(p) * d, Math.sin(p) * d + 2, Math.cos(cam.orbitYaw) * Math.cos(p) * d]);
+    target = vadd(s.pos, [0, 0.5, 0]); fov = 50;
+  } else if (mode === 'chase') {
+    cam.q = qslerp(cam.q, s.q, 1 - Math.exp(-dt * 5));
+    const lq = qmul(cam.q, qmul(qaxis([0, 1, 0], cam.lookYaw), qaxis([1, 0, 0], cam.lookPitch)));
+    eye = vadd(s.pos, qrot(lq, [0, 3.1, 15.5]));
+    target = vadd(s.pos, qrot(lq, [0, 1.4, -6]));
+    up = qrot(cam.q, [0, 1, 0]);
+  } else if (mode === 'cockpit') {
+    const lq = qmul(s.q, qmul(qaxis([0, 1, 0], cam.lookYaw), qaxis([1, 0, 0], cam.lookPitch)));
+    eye = vadd(s.pos, qrot(s.q, [0, 0.98, -0.3]));
+    target = vadd(eye, qrot(lq, [0, -0.6, -10]));
+    up = qrot(lq, [0, 1, 0]); fov = 70; near = 0.15;
+  } else if (mode === 'orbit') {
+    const d = cam.dist, p = cam.orbitPitch;
+    eye = vadd(s.pos, [Math.sin(cam.orbitYaw) * Math.cos(p) * d, Math.sin(p) * d, Math.cos(cam.orbitYaw) * Math.cos(p) * d]);
+    target = s.pos;
+  } else {
+    const spd = vlen(s.vel);
+    const away = cam.flyPos ? vdot(s.vel, vsub(s.pos, cam.flyPos)) > 0 : true;
+    if (!cam.flyPos || (vdist(cam.flyPos, s.pos) > 380 && away) || vdist(cam.flyPos, s.pos) > 900) {
+      const dir = spd > 3 ? vscale(s.vel, 1 / spd) : qrot(s.q, [0, 0, -1]);
+      const side = vnorm(vcross(dir, [0, 1, 0]));
+      const p = vadd(vadd(s.pos, vscale(dir, Math.max(160, spd * 4.5))), vscale(side, 22 * (Math.random() < 0.5 ? -1 : 1)));
+      p[1] += 5 + Math.random() * 8;
+      p[1] = Math.max(p[1], Math.max(terrainHeight(p[0], p[2]), 0) + 3);
+      cam.flyPos = p;
+    }
+    eye = cam.flyPos; target = s.pos;
+    fov = clamp(2 * Math.atan(9 / Math.max(vdist(eye, target), 1)) / DEG, 8, 60);
+  }
+  const gh = Math.max(terrainHeight(eye[0], eye[2]), 0) + 1.0;
+  if (eye[1] < gh) eye[1] = gh;
+  if (Math.abs(vdot(vnorm(vsub(target, eye)), vnorm(up))) > 0.999) up = [0, 0, 1];
+  cam.eye = eye; cam.fov = fov; cam.near = near;
+  cam.view = M4.lookAt(eye, target, up);
+}
+function cycleCamera() {
+  const i = CAM_MODES.indexOf(cam.mode);
+  cam.mode = CAM_MODES[(i + 1) % CAM_MODES.length];
+  cam.lookYaw = cam.lookPitch = 0; cam.flyPos = null; cam.autoOrbit = false;
+  toast(CAM_NAMES[cam.mode], 1400);
+}
+
+// ---------- input ----------
+const keys = {};
+const touchIn = { stickOn: false, x: 0, y: 0, brake: false };
+const padPrev = [];
+function pressedAny(...codes) { return codes.some(c => keys[c]); }
+function doAction(a) {
+  const s = sim;
+  if (game.state !== 'flying') return;
+  if (a === 'gear') {
+    if (s.onGround && s.gearDown) { toast('地上ではギアを上げられません', 1600); return; }
+    s.gearDown = !s.gearDown; toast(s.gearDown ? 'ギア ダウン' : 'ギア アップ', 1300); audio.blip(s.gearDown ? 330 : 440, 0.12, 'square', 0.06);
+  } else if (a === 'flaps') {
+    s.flapIdx = (s.flapIdx + 1) % 4; toast('フラップ ' + FLAP_DEG[s.flapIdx] + '°', 1200); audio.blip(520, 0.06, 'square', 0.05);
+  } else if (a === 'cam') cycleCamera();
+  else if (a === 'hud') { game.hud = !game.hud; }
+  else if (a === 'smoke') { s.smoke = !s.smoke; toast(s.smoke ? 'スモーク ON' : 'スモーク OFF', 1200); }
+  else if (a === 'trim') { s.trim = clamp(s.trim + s.elev, -0.6, 0.6); s.elev = 0; toast('トリム ' + (s.trim >= 0 ? '機首上げ ' : '機首下げ ') + Math.abs(Math.round(s.trim * 100)) + '%', 1300); }
+  else if (a === 'trimReset') { s.trim = 0; toast('トリム リセット', 1200); }
+  else if (a === 'pause') pauseGame();
+}
+addEventListener('keydown', e => {
+  if (e.target && e.target.tagName === 'INPUT') return;
+  keys[e.code] = true;
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'PageUp', 'PageDown'].includes(e.code)) e.preventDefault();
+  if (e.repeat) return;
+  const st = game.state;
+  if (e.code === 'Escape' || e.code === 'KeyP') {
+    if (st === 'flying') pauseGame(); else if (st === 'paused') resumeGame();
+    return;
+  }
+  if (e.code === 'Enter' && (st === 'result' || st === 'crashed') && game.resultTimer <= 0) { e.preventDefault(); startMode(game.mode); return; }
+  if (e.code === 'KeyM') { setSound(!game.sound); toast(game.sound ? 'サウンド ON' : 'サウンド OFF', 1200); return; }
+  if (e.code === 'KeyC' && (st === 'flying' || st === 'crashed')) { cycleCamera(); return; }
+  const map = { KeyG: 'gear', KeyV: 'flaps', KeyH: 'hud', KeyX: 'smoke' };
+  if (map[e.code]) doAction(map[e.code]);
+  if (e.code === 'KeyT') doAction(e.shiftKey ? 'trimReset' : 'trim');
+});
+addEventListener('keyup', e => { keys[e.code] = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+
+let dragPt = null;
+glCanvas.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'touch') enableTouch();
+  dragPt = { id: e.pointerId, x: e.clientX, y: e.clientY };
+  cam.dragging = true;
+  try { glCanvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+});
+glCanvas.addEventListener('pointermove', e => {
+  if (!dragPt || dragPt.id !== e.pointerId) return;
+  const dx = e.clientX - dragPt.x, dy = e.clientY - dragPt.y;
+  dragPt.x = e.clientX; dragPt.y = e.clientY;
+  if (game.state === 'menu' || cam.mode === 'orbit') {
+    cam.orbitYaw -= dx * 0.006; cam.orbitPitch = clamp(cam.orbitPitch + dy * 0.004, -0.2, 1.3);
+  } else {
+    cam.lookYaw = clamp(cam.lookYaw - dx * 0.005, -Math.PI, Math.PI);
+    cam.lookPitch = clamp(cam.lookPitch - dy * 0.004, -1.2, 1.2);
+  }
+});
+const endDrag = e => { if (dragPt && dragPt.id === e.pointerId) { dragPt = null; cam.dragging = false; } };
+glCanvas.addEventListener('pointerup', endDrag);
+glCanvas.addEventListener('pointercancel', endDrag);
+glCanvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (game.state === 'flying') sim.thr = clamp(sim.thr - Math.sign(e.deltaY) * 0.05, 0, 1);
+  else if (cam.mode === 'orbit') cam.dist = clamp(cam.dist * (e.deltaY > 0 ? 1.1 : 0.9), 8, 120);
+}, { passive: false });
+
+// touch controls
+function enableTouch() {
+  if (game.touch) return;
+  game.touch = true;
+  applyQuality();
+  if (game.state === 'flying') $('touch').hidden = false;
+}
+if (matchMedia('(pointer: coarse)').matches) game.touch = true;
+function applyQuality() { props.treeR = game.touch ? 1600 : 2400; props.center = [1e9, 0, 1e9]; }
+(() => {
+  const stick = $('stick'), knob = $('stick-knob');
+  const setStick = e => {
+    const r = stick.getBoundingClientRect(), rad = r.width / 2;
+    let x = (e.clientX - (r.left + rad)) / (rad * 0.8), y = (e.clientY - (r.top + rad)) / (rad * 0.8);
+    const l = Math.hypot(x, y); if (l > 1) { x /= l; y /= l; }
+    touchIn.x = x; touchIn.y = y;
+    knob.style.transform = `translate(${x * rad * 0.8}px, ${y * rad * 0.8}px)`;
+  };
+  stick.addEventListener('pointerdown', e => { touchIn.stickOn = true; stick.setPointerCapture(e.pointerId); setStick(e); e.preventDefault(); });
+  stick.addEventListener('pointermove', e => { if (touchIn.stickOn) setStick(e); });
+  const release = () => { touchIn.stickOn = false; touchIn.x = touchIn.y = 0; knob.style.transform = ''; };
+  stick.addEventListener('pointerup', release); stick.addEventListener('pointercancel', release);
+  const thr = $('thr');
+  let thrOn = false;
+  const setThr = e => { const r = thr.getBoundingClientRect(); sim.thr = clamp(1 - (e.clientY - r.top) / r.height, 0, 1); };
+  thr.addEventListener('pointerdown', e => { thrOn = true; thr.setPointerCapture(e.pointerId); setThr(e); e.preventDefault(); });
+  thr.addEventListener('pointermove', e => { if (thrOn) setThr(e); });
+  thr.addEventListener('pointerup', () => { thrOn = false; }); thr.addEventListener('pointercancel', () => { thrOn = false; });
+  for (const btn of document.querySelectorAll('#touch [data-act]')) {
+    const act = btn.dataset.act;
+    if (act === 'brake') {
+      btn.addEventListener('pointerdown', e => { touchIn.brake = true; btn.classList.add('on'); e.preventDefault(); });
+      for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) btn.addEventListener(ev, () => { touchIn.brake = false; btn.classList.remove('on'); });
+    } else btn.addEventListener('click', () => doAction(act));
+  }
+})();
+
+function updateControls(dt) {
+  const s = sim;
+  let tp = (pressedAny('KeyS', 'ArrowDown') ? 1 : 0) - (pressedAny('KeyW', 'ArrowUp') ? 1 : 0);
+  let tr = (pressedAny('KeyD', 'ArrowRight') ? 1 : 0) - (pressedAny('KeyA', 'ArrowLeft') ? 1 : 0);
+  let ty = (keys.KeyE ? 1 : 0) - (keys.KeyQ ? 1 : 0);
+  let analog = false, brake = pressedAny('KeyB', 'Space') || touchIn.brake;
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  const gp = Array.from(pads || []).find(p => p && p.connected);
+  if (gp) {
+    const dz = v => Math.abs(v) < 0.12 ? 0 : (v - Math.sign(v) * 0.12) / 0.88;
+    const ax = gp.axes;
+    if (Math.abs(dz(ax[0])) + Math.abs(dz(ax[1])) > 0) { tr = dz(ax[0]); tp = dz(ax[1]); analog = true; }
+    if (ax.length > 2 && dz(ax[2])) ty = dz(ax[2]);
+    const b = i => gp.buttons[i] ? gp.buttons[i].value : 0;
+    if (game.state === 'flying') s.thr = clamp(s.thr + (b(7) - b(6)) * 0.6 * dt, 0, 1);
+    const edge = i => { const now = b(i) > 0.5, was = padPrev[i]; padPrev[i] = now; return now && !was; };
+    if (edge(0)) doAction('gear');
+    if (edge(1)) doAction('flaps');
+    if (edge(3)) doAction('cam');
+    if (edge(4)) doAction('smoke');
+    if (edge(9)) { if (game.state === 'flying') pauseGame(); else if (game.state === 'paused') resumeGame(); }
+    if (b(2) > 0.5) brake = true;
+  }
+  if (touchIn.stickOn) { tr = touchIn.x; tp = touchIn.y; analog = true; }
+  if (game.invert) tp = -tp;
+  if (game.state !== 'flying') { tp = tr = ty = 0; }
+  const k = (cur, tgt) => analog ? damp(cur, tgt, 14, dt) : cur + clamp(tgt - cur, -(tgt === 0 ? 4 : 2.6) * dt, (tgt === 0 ? 4 : 2.6) * dt);
+  s.elev = k(s.elev, tp); s.ail = k(s.ail, tr);
+  s.rud = s.rud + clamp(ty - s.rud, -3 * dt, 3 * dt);
+  if (game.state === 'flying') {
+    if (pressedAny('KeyR', 'PageUp')) s.thr = clamp(s.thr + 0.45 * dt, 0, 1);
+    if (pressedAny('KeyF', 'PageDown')) s.thr = clamp(s.thr - 0.45 * dt, 0, 1);
+  }
+  s.brake = brake;
+  if (game.touch) $('thr-fill').style.height = (s.thr * 100).toFixed(1) + '%';
+}
+
+// ---------- audio ----------
+const audio = {
+  ctx: null,
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    const AC_ = window.AudioContext || window.webkitAudioContext;
+    if (!AC_) return;
+    const ctx = this.ctx = new AC_();
+    const master = this.master = ctx.createGain(); master.gain.value = game.sound ? 0.55 : 0; master.connect(ctx.destination);
+    const nb = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), d = nb.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    this.noiseBuf = nb;
+    const noise = () => { const n = ctx.createBufferSource(); n.buffer = nb; n.loop = true; n.start(); return n; };
+    const gain = v => { const g = ctx.createGain(); g.gain.value = v; return g; };
+    const filt = (type, f, Q = 1) => { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = Q; return b; };
+    this.o1 = ctx.createOscillator(); this.o1.type = 'sawtooth';
+    this.o2 = ctx.createOscillator(); this.o2.type = 'square';
+    this.eF = filt('lowpass', 500, 2.5); this.eG = gain(0);
+    this.o1.connect(this.eF); this.o2.connect(gain(0.45)).connect(this.eF); this.eF.connect(this.eG).connect(master);
+    this.o1.start(); this.o2.start();
+    this.pF = filt('bandpass', 160, 1.4); this.pG = gain(0); noise().connect(this.pF).connect(this.pG).connect(master);
+    this.wF = filt('lowpass', 400, 0.7); this.wG = gain(0); noise().connect(this.wF).connect(this.wG).connect(master);
+    const horn = ctx.createOscillator(); horn.type = 'square'; horn.frequency.value = 410;
+    this.hG = gain(0); horn.connect(filt('lowpass', 1300)).connect(this.hG).connect(master); horn.start();
+    const beep = ctx.createOscillator(); beep.type = 'sine'; beep.frequency.value = 900;
+    this.bG = gain(0); beep.connect(this.bG).connect(master); beep.start();
+  },
+  update() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime, s = sim;
+    const live = game.state === 'flying' || game.state === 'menu';
+    const f = Math.max(s.rpm, 1) / 60 * 2;
+    let near = cam.mode === 'cockpit' ? 1.15 : cam.mode === 'flyby' ? clamp(60 / Math.max(vdist(cam.eye, s.pos), 1), 0.08, 1.2) : 0.85;
+    if (game.state === 'menu') near = 0.45;
+    const eng = live && !s.crashed ? (0.07 + s.thr * 0.12) * near : 0;
+    this.o1.frequency.setTargetAtTime(f, t, 0.05); this.o2.frequency.setTargetAtTime(f * 0.5, t, 0.05);
+    this.eF.frequency.setTargetAtTime(260 + s.thr * 800 + f * 3, t, 0.1);
+    this.eG.gain.setTargetAtTime(eng, t, 0.08);
+    this.pF.frequency.setTargetAtTime(80 + f * 2.2, t, 0.1);
+    this.pG.gain.setTargetAtTime(live && !s.crashed ? (0.12 + s.thr * 0.3) * near : 0, t, 0.1);
+    const v = game.state === 'flying' ? s.tas : 0;
+    this.wF.frequency.setTargetAtTime(220 + v * 16, t, 0.1);
+    this.wG.gain.setTargetAtTime(Math.min(0.45, (v / 70) ** 2 * 0.2), t, 0.15);
+    this.hG.gain.setTargetAtTime(game.state === 'flying' && s.stallWarn ? 0.06 : 0, t, 0.02);
+    const on = game.state === 'flying' && game.warnPull && (t * 3.2 % 1) < 0.5;
+    this.bG.gain.setTargetAtTime(on ? 0.07 : 0, t, 0.01);
+  },
+  setMaster(v) { if (this.ctx) this.master.gain.setTargetAtTime(v, this.ctx.currentTime, 0.05); },
+  blip(freq, dur = 0.08, type = 'sine', vol = 0.12, at = 0) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime + at, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = type; o.frequency.value = freq; g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+    o.connect(g).connect(this.master); o.start(t); o.stop(t + dur + 0.05);
+  },
+  burst(dur, f0, f1, vol, type = 'bandpass') {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime, src = this.ctx.createBufferSource(), f = this.ctx.createBiquadFilter(), g = this.ctx.createGain();
+    src.buffer = this.noiseBuf; src.loop = true; f.type = type; f.Q.value = 0.8;
+    f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+    src.connect(f).connect(g).connect(this.master); src.start(t); src.stop(t + dur + 0.05);
+  },
+  crash() {
+    this.burst(2.6, 2200, 90, 0.9, 'lowpass');
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.frequency.setValueAtTime(90, t); o.frequency.exponentialRampToValueAtTime(30, t + 1.2);
+    g.gain.setValueAtTime(0.6, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.4);
+    o.connect(g).connect(this.master); o.start(t); o.stop(t + 1.5);
+  },
+  ring() { this.blip(880, 0.18, 'sine', 0.14); this.blip(1318, 0.3, 'sine', 0.12, 0.09); },
+};
+function setSound(v) {
+  game.sound = v; $('opt-sound').checked = v;
+  audio.setMaster(v ? 0.55 : 0);
+}
+
+// ---------- particles ----------
+const particles = [];
+const PMAX = 2500;
+let pData, pVAO;
+function initParticles() {
+  pData = new Float32Array(PMAX * 9);
+  pVAO = makeVAO([{ loc: 0, size: 2, data: new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]) },
+  { data: pData, stride: 9, layout: [[4, 4, 0], [5, 4, 4], [6, 1, 8]], divisor: 1, dynamic: true }]);
+  pVAO.papiData = new Float32Array(8 * 9);
+  pVAO.papi = makeVAO([{ loc: 0, size: 2, data: new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]) },
+  { data: pVAO.papiData, stride: 9, layout: [[4, 4, 0], [5, 4, 4], [6, 1, 8]], divisor: 1, dynamic: true }]);
+}
+function emit(p, v, o) {
+  if (particles.length >= PMAX) particles.shift();
+  particles.push({ p: p.slice(), v: v.slice(), age: 0, life: o.life, size: o.size, grow: o.grow || 0, col: o.col, a: o.a, add: !!o.add, drag: o.drag || 0.5, rise: o.rise || 0, rot: Math.random() * 6.28 });
+}
+let smokeAcc = 0;
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const q = particles[i];
+    q.age += dt;
+    if (q.age >= q.life) { particles.splice(i, 1); continue; }
+    const k = Math.exp(-q.drag * dt);
+    q.v = [q.v[0] * k, q.v[1] * k + q.rise * dt, q.v[2] * k];
+    q.p = vmadd(q.p, q.v, dt);
+    q.size += q.grow * dt;
+  }
+  const s = sim;
+  if (game.state === 'flying' && s.smoke && s.tas > 10) {
+    smokeAcc += dt;
+    while (smokeAcc > 0.025) {
+      smokeAcc -= 0.025;
+      const tail = vadd(s.pos, qrot(s.q, [0, 0.1, 4.1]));
+      emit(tail, vadd(vscale(s.vel, 0.05), [(Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.6]),
+        { life: 9, size: 1.3, grow: 2.2, col: [0.96, 0.96, 0.97], a: 0.6, drag: 0.35 });
+    }
+  }
+  if (s.crashed && game.state !== 'menu' && Math.random() < dt * 25) {
+    const wreck = s.pos;
+    emit(vadd(wreck, [(Math.random() - 0.5) * 3, 1, (Math.random() - 0.5) * 3]), [(Math.random() - 0.5) * 2, 4 + Math.random() * 3, (Math.random() - 0.5) * 2],
+      { life: 9, size: 3, grow: 4, col: [0.18, 0.17, 0.17], a: 0.55, drag: 0.4, rise: 0.5 });
+    if (Math.random() < 0.5) emit(vadd(wreck, [(Math.random() - 0.5) * 2, 0.8, (Math.random() - 0.5) * 2]), [0, 3, 0],
+      { life: 0.8, size: 2.2, grow: 2, col: [1.0, 0.5, 0.12], a: 0.3, add: true });
+  }
+}
+function explode(p, water) {
+  for (let i = 0; i < 70; i++) {
+    const d = vnorm([Math.random() - 0.5, Math.random() * 0.8, Math.random() - 0.5]), sp = 6 + Math.random() * 22;
+    if (water) emit(p, vscale(d, sp * 0.8), { life: 2 + Math.random() * 2, size: 2, grow: 5, col: [0.92, 0.95, 0.97], a: 0.8, drag: 1.2, rise: -6 });
+    else {
+      if (i % 2) emit(p, vscale(d, sp), { life: 0.7 + Math.random() * 0.6, size: 2.5, grow: 7, col: [1.0, 0.42 + Math.random() * 0.25, 0.08], a: 0.28, add: true, drag: 2.5 });
+      emit(p, vscale(d, sp * 0.5), { life: 5 + Math.random() * 4, size: 3, grow: 5, col: [0.16, 0.15, 0.15], a: 0.6, drag: 1.2, rise: 1.5 });
+    }
+  }
+}
+function tyreSmoke() {
+  const s = sim;
+  for (const wh of [WHEELS[1], WHEELS[2]]) {
+    const p = vadd(s.pos, qrot(s.q, wh.off));
+    for (let i = 0; i < 6; i++) emit(p, [(Math.random() - 0.5) * 2, 0.5 + Math.random(), (Math.random() - 0.5) * 2],
+      { life: 1.6, size: 0.6, grow: 2.2, col: [0.85, 0.85, 0.85], a: 0.45, drag: 1.5 });
+  }
+}
+
+// ---------- flight events ----------
+function onTouchdown() {
+  const s = sim, fpm = Math.round(-s.vel[1] * 196.85);
+  const [u, v] = worldToRwy(s.pos[0], s.pos[2]);
+  const paved = onPaved(s.pos[0], s.pos[2]) === 'rwy';
+  audio.burst(0.3, 1500, 800, clamp(fpm / 600, 0.1, 0.5));
+  tyreSmoke();
+  const rating = fpm < 150 ? 'とてもスムーズ' : fpm < 350 ? '良好' : fpm < 650 ? '硬め' : 'ハードランディング';
+  if (!game.firstTouch) game.firstTouch = { fpm, u, v, paved };
+  if (game.mode !== 'landing') toast(`接地 ${fpm} fpm ― ${rating}`, 2600);
+}
+function crash(reason) {
+  const s = sim;
+  if (s.crashed) return;
+  s.crashed = true; s.crashReason = reason;
+  s.vel = [0, 0, 0]; s.w = [0, 0, 0];
+  const water = terrainHeight(s.pos[0], s.pos[2]) < 0;
+  if (water) s.pos[1] = 0.5;
+  explode(s.pos, water);
+  audio.crash();
+  game.state = 'crashed';
+  cam.prevMode = cam.mode; cam.mode = 'orbit'; cam.autoOrbit = true; cam.dist = 45; cam.orbitPitch = 0.35;
+  cam.orbitYaw = Math.atan2(cam.eye[0] - s.pos[0], cam.eye[2] - s.pos[2]);
+  game.resultTimer = 2.2;
+  game.pendingResult = {
+    eyebrow: 'CRASH', title: '墜落しました', rows: [['原因', reason], ['飛行時間', fmtTime(game.t)]],
+  };
+}
+function fmtTime(t) { const m = Math.floor(t / 60), s = t - m * 60; return m + ':' + s.toFixed(1).padStart(4, '0'); }
+function gameChecks(dt) {
+  const s = sim;
+  // warnings
+  const p5 = vmadd(s.pos, s.vel, 6);
+  const ahead = Math.max(terrainHeight(p5[0], p5[2]), 0);
+  const [ru, rv] = worldToRwy(s.pos[0], s.pos[2]);
+  const approach = s.gearDown && s.flapIdx > 0 && ru < RWY.len / 2 && ru > -RWY.len / 2 - 5000 && Math.abs(rv) < 400;
+  game.warnPull = !s.onGround && s.airTime > 2 && !approach && (p5[1] + WHEEL_BOTTOM < ahead + 25 || (s.vs < -8 && s.agl < -s.vs * 5));
+  game.warnGear = !s.gearDown && s.agl < 150 && s.ias < 40 && s.vs < -1;
+  // landing challenge: finished when stopped
+  if (game.mode === 'landing' && game.firstTouch && !game.landingDone && s.onGround && Math.hypot(s.vel[0], s.vel[2]) < 1.0) {
+    game.landingDone = true;
+    finishLanding();
+  }
+}
+function finishLanding() {
+  const ft = game.firstTouch, s = sim;
+  const aimU = -RWY.len / 2 + 300;
+  const d = ft.u - aimU;
+  const sink = Math.round(40 * (1 - smoothstep(100, 650, ft.fpm)));
+  const zone = ft.u < -RWY.len / 2 ? 0 : Math.round(30 * (1 - smoothstep(30, 420, Math.abs(d))));
+  const centre = Math.round(20 * (1 - smoothstep(1, 12, Math.abs(ft.v))));
+  const stopOk = onPaved(s.pos[0], s.pos[2]) === 'rwy' ? 10 : 0;
+  const total = ft.paved ? sink + zone + centre + stopOk : Math.round((sink + centre) * 0.3);
+  const grade = total >= 90 ? 'S' : total >= 75 ? 'A' : total >= 55 ? 'B' : 'C';
+  const prev = game.best.landing || 0;
+  if (total > prev) { game.best.landing = total; saveBest(); }
+  showResult({
+    eyebrow: 'LANDING CHALLENGE', title: `着陸 評価 ${grade}`,
+    rows: [
+      ['接地時の降下率', ft.fpm + ' fpm', sink + ' / 40'],
+      ['接地点（目標からの距離）', (ft.u < -RWY.len / 2 ? '滑走路手前' : (d >= 0 ? '+' : '') + Math.round(d) + ' m'), zone + ' / 30'],
+      ['センターラインからのずれ', Math.abs(ft.v).toFixed(1) + ' m', centre + ' / 20'],
+      ['滑走路上で停止', stopOk ? 'はい' : 'いいえ', stopOk + ' / 10'],
+      ['合計', '', total + ' 点', true],
+      ['ベスト', '', Math.max(total, prev) + ' 点'],
+    ],
+  });
+}
+function updateRings(prevPos) {
+  const ring = course.rings[game.ringIdx];
+  if (!ring || game.ringDone) return;
+  const a = vdot(vsub(prevPos, ring.p), ring.n), b = vdot(vsub(sim.pos, ring.p), ring.n);
+  if ((a < 0 && b >= 0) || (a > 0 && b <= 0)) {   // either direction counts
+    const hit = vlerp(prevPos, sim.pos, a / (a - b));
+    const off = vsub(hit, ring.p), radial = vlen(vsub(off, vscale(ring.n, vdot(off, ring.n))));
+    if (radial <= course.radius) {
+      game.ringIdx++;
+      audio.ring();
+      if (game.ringIdx >= course.rings.length) {
+        game.ringDone = true;
+        const t = game.ringTime, prev = game.best.rings;
+        if (!prev || t < prev) { game.best.rings = t; saveBest(); }
+        showResult({
+          eyebrow: 'RING CHALLENGE', title: 'コースクリア',
+          rows: [['タイム', '', fmtTime(t), true], ['ベスト', '', fmtTime(Math.min(t, prev || t))], ['通過リング', '', course.rings.length + ' / ' + course.rings.length]],
+        });
+      } else toast(`リング ${game.ringIdx} / ${course.rings.length} 通過`, 1500);
+    }
+  }
+}
+
+// ---------- screens ----------
+function showMenu(paused) {
+  $('menu').hidden = false; $('resume').hidden = !paused; $('touch').hidden = true; $('result').hidden = true;
+  $('best-rings').textContent = game.best.rings ? '· ベスト ' + fmtTime(game.best.rings) : '';
+  $('best-landing').textContent = game.best.landing ? '· ベスト ' + game.best.landing + ' 点' : '';
+}
+function startMode(mode) {
+  audio.init();
+  spawn(mode);
+  game.state = 'flying';
+  $('menu').hidden = true; $('result').hidden = true; $('touch').hidden = !game.touch;
+  glCanvas.focus();
+  const hints = {
+    runway: game.touch ? ['右のスライダーでスロットルを上げて加速', '速度 55 kt を超えたらスティックを下に引いて離陸'] : ['R でスロットルを上げて滑走開始', '55 kt を超えたら S（↓）で機首を上げて離陸', '上昇したら G でギアを上げましょう'],
+    air: ['島の上空を自由に飛べます。C でカメラ切替'],
+    rings: ['画面のマゼンタの枠が次のリング。順番に通過しよう'],
+    landing: ['PAPI（滑走路左の灯火）が赤2・白2なら正しい進入角', '接地したらブレーキ（B）で停止'],
+  };
+  (hints[mode] || []).forEach((h, i) => setTimeout(() => { if (game.state === 'flying' && game.mode === mode) toast(h, 3800); }, 600 + i * 4200));
+}
+function pauseGame() {
+  if (game.state !== 'flying') return;
+  game.state = 'paused'; showMenu(true);
+}
+function resumeGame() {
+  if (game.state !== 'paused') return;
+  game.state = 'flying'; $('menu').hidden = true; $('touch').hidden = !game.touch; glCanvas.focus();
+}
+function showResult(r) {
+  game.state = 'result';
+  $('touch').hidden = true;
+  $('res-eyebrow').textContent = r.eyebrow; $('res-title').textContent = r.title;
+  const dl = $('res-list'); dl.textContent = '';
+  for (const [k, a, b, total] of r.rows) {
+    const dt = document.createElement('dt'), dd = document.createElement('dd');
+    dt.textContent = k; dd.textContent = b !== undefined ? (a ? a + '　' + b : b) : a;
+    if (total) dd.className = 'total';
+    dl.append(dt, dd);
+  }
+  $('result').hidden = false;
+  $('res-retry').focus();
+}
+document.querySelectorAll('.mission').forEach(b => b.addEventListener('click', () => startMode(b.dataset.mode)));
+$('resume').addEventListener('click', resumeGame);
+$('res-retry').addEventListener('click', () => startMode(game.mode));
+$('res-menu').addEventListener('click', () => { spawn('runway'); game.state = 'menu'; showMenu(false); });
+document.querySelectorAll('[data-tod]').forEach(b => b.addEventListener('click', () => {
+  ENV = TOD[b.dataset.tod];
+  document.querySelectorAll('[data-tod]').forEach(o => o.classList.toggle('on', o === b));
+}));
+$('opt-invert').addEventListener('change', e => { game.invert = e.target.checked; });
+$('opt-sound').addEventListener('change', e => setSound(e.target.checked));
+document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
+
+// ---------- rendering ----------
+const R = { VP: null, eye: [0, 0, 0], time: 0, W: 1, H: 1, camR: [1, 0, 0], camU: [0, 1, 0], camF: [0, 0, -1], tanX: 1, tanY: 1 };
+function setCommon(pr) {
+  const u = pr.u;
+  gl.useProgram(pr.p);
+  if (u.uSunDir) gl.uniform3fv(u.uSunDir, ENV.sunDir);
+  if (u.uSunCol) gl.uniform3fv(u.uSunCol, ENV.sunCol);
+  if (u.uZenith) gl.uniform3fv(u.uZenith, ENV.zenith);
+  if (u.uHorizon) gl.uniform3fv(u.uHorizon, ENV.horizon);
+  if (u.uHorizonAway) gl.uniform3fv(u.uHorizonAway, ENV.horizonAway);
+  if (u.uAmbSky) gl.uniform3fv(u.uAmbSky, ENV.ambSky);
+  if (u.uAmbGround) gl.uniform3fv(u.uAmbGround, ENV.ambGround);
+  if (u.uFogDens) gl.uniform1f(u.uFogDens, ENV.fog);
+  if (u.uCamPos) gl.uniform3fv(u.uCamPos, R.eye);
+  if (u.uTime) gl.uniform1f(u.uTime, R.time);
+  if (u.uViewProj) gl.uniformMatrix4fv(u.uViewProj, false, R.VP);
+  if (u.uHM) gl.uniform3f(u.uHM, HM_HALF, HM_CELL, HM_N);
+  if (u.uHeight) gl.uniform1i(u.uHeight, 0);
+  if (u.uNormalTex) gl.uniform1i(u.uNormalTex, 1);
+  if (u.uNoise) gl.uniform1i(u.uNoise, 2);
+}
+function shadowUniforms(pr) {
+  const s = sim, u = pr.u;
+  let h = Math.max(terrainHeight(s.pos[0], s.pos[2]), 0), c = [s.pos[0], s.pos[2]];
+  for (let i = 0; i < 2; i++) {
+    const t = (s.pos[1] - h) / ENV.sunDir[1];
+    c = [s.pos[0] - ENV.sunDir[0] * t, s.pos[2] - ENV.sunDir[2] * t];
+    h = Math.max(terrainHeight(c[0], c[1]), 0);
+    const pv = onPaved(c[0], c[1]); if (pv) h = RWY.elev;
+  }
+  const above = s.pos[1] - h;
+  const f = qrot(s.q, [0, 0, -1]); const fl = Math.hypot(f[0], f[2]) || 1;
+  const str = s.crashed ? 0 : 0.6 * (1 - smoothstep(20, 260, above)) * clamp(ENV.sunDir[1] * 3, 0, 1);
+  gl.uniform4f(u.uShadowA, c[0], c[1], f[0] / fl, f[2] / fl);
+  gl.uniform2f(u.uShadowB, str, 0.12 + above * 0.004);
+}
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, game.touch ? 1.5 : 1.75);
+  const w = Math.max(1, Math.round(glCanvas.clientWidth * dpr)), h = Math.max(1, Math.round(glCanvas.clientHeight * dpr));
+  if (glCanvas.width !== w || glCanvas.height !== h) { glCanvas.width = w; glCanvas.height = h; }
+  const hd = Math.min(window.devicePixelRatio || 1, 2), hc = hud.cv;
+  const hw = Math.round(hc.clientWidth * hd), hh = Math.round(hc.clientHeight * hd);
+  if (hc.width !== hw || hc.height !== hh) { hc.width = hw; hc.height = hh; }
+  hud.dpr = hd; hud.W = hc.clientWidth; hud.H = hc.clientHeight;
+}
+// The scene is drawn in two depth ranges (far: 600 m .. 60 km, near: camera .. 600 m) so that a
+// 24-bit depth buffer keeps full precision for both the cockpit and distant coastlines.
+const DEPTH_SPLIT = 600;
+function render() {
+  resize();
+  const W = glCanvas.width, H = glCanvas.height, asp = W / H;
+  gl.viewport(0, 0, W, H);
+  gl.clearColor(ENV.horizon[0], ENV.horizon[1], ENV.horizon[2], 1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  let fovY = cam.fov * DEG;
+  if (asp < 1.2) fovY = 2 * Math.atan(Math.tan(fovY / 2) * 1.2 / asp);   // keep horizontal view on tall screens
+  const v = cam.view;
+  R.eye = cam.eye; R.W = W; R.H = H; R.frame = (R.frame || 0) + 1;
+  R.camR = [v[0], v[4], v[8]]; R.camU = [v[1], v[5], v[9]]; R.camF = [-v[2], -v[6], -v[10]];
+  R.tanY = Math.tan(fovY / 2); R.tanX = R.tanY * asp;
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, heightTex);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, normalTex);
+  gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, noiseTex);
+  gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, puffTex);
+  gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, dotTex);
+  gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, runwayTex);
+  R.nodes = 0;
+  for (const far of [true, false]) {
+    const proj = far ? M4.persp(fovY, asp, DEPTH_SPLIT, 60000) : M4.persp(fovY, asp, cam.near, DEPTH_SPLIT * 1.02);
+    R.VP = M4.mul(proj, v);
+    if (!far) gl.clear(gl.DEPTH_BUFFER_BIT);
+    drawScene(frustumPlanes(R.VP), far);
+  }
+}
+function drawScene(planes, far) {
+  gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
+  // terrain
+  setCommon(progTerrain); shadowUniforms(progTerrain);
+  const nodes = selectTerrain(R.eye, planes);
+  let lastG = 0;
+  for (const [x0, z0, size, L, G] of nodes) {
+    if (G !== lastG) { gl.bindVertexArray(G === 32 ? grid32.vao : grid16.vao); lastG = G; }
+    const prev = L > 0 ? LOD_RANGE[L - 1] : 0, end = LOD_RANGE[L] * 0.96;
+    gl.uniform4f(progTerrain.u.uNode, x0, z0, size, G);
+    gl.uniform2f(progTerrain.u.uMorph, lerp(prev, end, 0.66), end);
+    gl.drawElements(gl.TRIANGLES, G === 32 ? grid32.count : grid16.count, gl.UNSIGNED_SHORT, 0);
+  }
+  R.nodes += nodes.length;
+  // runway
+  gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-2, -4);
+  setCommon(progRunway); shadowUniforms(progRunway); gl.uniform1i(progRunway.u.uTex, 5);
+  gl.bindVertexArray(runwayMesh.vao); gl.drawArrays(gl.TRIANGLES, 0, 6);
+  // airport buildings / aprons
+  setCommon(progMesh);
+  gl.uniform1i(progMesh.u.uLivery, 0); gl.uniform3f(progMesh.u.uEmissive, 0, 0, 0); gl.uniform1f(progMesh.u.uAlpha, 1);
+  gl.uniform1f(progMesh.u.uSpec, 0.15); gl.uniform3f(progMesh.u.uPaint, -1, -1, -1);
+  gl.uniformMatrix4fv(progMesh.u.uModel, false, M4.ident());
+  gl.bindVertexArray(airportMesh.vao); gl.drawArrays(gl.TRIANGLES, 0, airportMesh.count);
+  gl.disable(gl.POLYGON_OFFSET_FILL);
+  // aircraft
+  const pm = planeMatrix(sim.pos, sim.q);
+  const showPlane = !(sim.crashed && game.state !== 'menu');
+  if (showPlane) drawPlane(pm, sim, { cockpit: cam.mode === 'cockpit' && game.state !== 'menu' });
+  for (const pk of parked) if (vdist(R.eye, [pk.m[12], pk.m[13], pk.m[14]]) < 6000) drawPlane(pk.m, parkedState, { paint: pk.col });
+  // trees & houses
+  setCommon(progInst);
+  gl.uniform1f(progInst.u.uFadeDist, props.treeR);
+  for (const [m, n] of [[props.conifer, props.nConifer], [props.broad, props.nBroad]]) {
+    if (!n) continue; gl.bindVertexArray(m.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, m.count, n);
+  }
+  gl.uniform1f(progInst.u.uFadeDist, 9000);
+  if (props.nHouse) { gl.bindVertexArray(props.house.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, props.house.count, props.nHouse); }
+  // water
+  gl.disable(gl.CULL_FACE);
+  setCommon(progWater);
+  gl.bindVertexArray(quadVAO.vao); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  // sky (far pass only: it fills whatever is still at the far plane)
+  if (far) {
+    gl.depthFunc(gl.LEQUAL); gl.depthMask(false);
+    setCommon(progSky);
+    gl.uniform3fv(progSky.u.uCamF, R.camF); gl.uniform3fv(progSky.u.uCamR, R.camR); gl.uniform3fv(progSky.u.uCamU, R.camU);
+    gl.uniform2f(progSky.u.uTan, R.tanX, R.tanY);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.depthFunc(gl.LESS);
+  }
+  // ---- transparent ----
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+  if (!far && showPlane) { setCommon(progMesh); drawPropDisc(pm, sim); }
+  drawRings();
+  drawClouds();
+  drawParticles();
+  drawPapi();
+  gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
+}
+function drawRings() {
+  if (game.mode !== 'rings' || game.state === 'menu') return;
+  setCommon(progMesh);
+  const u = progMesh.u;
+  gl.uniform1i(u.uLivery, 0); gl.uniform1f(u.uSpec, 0.4);
+  for (let i = game.ringIdx; i < course.rings.length; i++) {
+    const r = course.rings[i], next = i === game.ringIdx;
+    const q = quatFromTo([0, 0, 1], r.n);
+    const pulse = next ? 0.75 + 0.25 * Math.sin(R.time * 5) : 0;
+    gl.uniformMatrix4fv(u.uModel, false, M4.fromQP(q, r.p, course.radius));
+    gl.uniform3fv(u.uEmissive, next ? [0.85 * pulse + 0.2, 0.25, 0.8 * pulse + 0.2] : [0.35, 0.45, 0.6]);
+    gl.uniform1f(u.uAlpha, next ? 0.95 : 0.35);
+    gl.bindVertexArray(course.mesh.vao); gl.drawArrays(gl.TRIANGLES, 0, course.mesh.count);
+  }
+}
+function quatFromTo(a, b) {
+  const d = vdot(a, b);
+  if (d < -0.9999) return qaxis([0, 1, 0], Math.PI);
+  const c = vcross(a, b);
+  return qnorm([c[0], c[1], c[2], 1 + d]);
+}
+function drawClouds() {
+  const P = clouds.puffs, n = P.length, eye = R.eye;
+  if (clouds.frame !== R.frame) {
+  clouds.frame = R.frame;
+  const order = clouds.order || (clouds.order = P.map((_, i) => i));
+  const d2 = clouds.d2 || (clouds.d2 = new Float32Array(n));
+  for (let i = 0; i < n; i++) { const p = P[i].p; d2[i] = (p[0] - eye[0]) ** 2 + (p[1] - eye[1]) ** 2 + (p[2] - eye[2]) ** 2; }
+  order.sort((a, b) => d2[b] - d2[a]);
+  const lit = vadd(vscale(ENV.sunCol, 0.78), vscale(ENV.ambSky, 0.55)), dark = vadd(vscale(ENV.ambSky, 1.05), vscale(ENV.sunCol, 0.18));
+  const D = clouds.data;
+  for (let k = 0; k < n; k++) {
+    const pf = P[order[k]], o = k * 9, sh = pf.shade;
+    D[o] = pf.p[0]; D[o + 1] = pf.p[1]; D[o + 2] = pf.p[2]; D[o + 3] = pf.size;
+    D[o + 4] = lerp(dark[0], lit[0], sh); D[o + 5] = lerp(dark[1], lit[1], sh); D[o + 6] = lerp(dark[2], lit[2], sh); D[o + 7] = 0.85;
+    D[o + 8] = pf.rot;
+  }
+  gl.bindBuffer(gl.ARRAY_BUFFER, clouds.vao.bufs[1]); gl.bufferData(gl.ARRAY_BUFFER, D, gl.DYNAMIC_DRAW);
+  }
+  setCommon(progSprite);
+  const u = progSprite.u;
+  gl.uniform3fv(u.uCamR, R.camR); gl.uniform3fv(u.uCamU, R.camU);
+  gl.uniform1f(u.uNearFade, 1.3); gl.uniform1f(u.uFar, 32000); gl.uniform1f(u.uMinPix, 0);
+  gl.uniform1i(u.uTex, 3); gl.uniform1f(u.uSilver, 0.45); gl.uniform1i(u.uFog, 1);
+  gl.depthMask(false);
+  gl.bindVertexArray(clouds.vao.vao); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, n);
+}
+function drawParticles() {
+  if (!particles.length) return;
+  const eye = R.eye;
+  const alphaP = particles.filter(p => !p.add).sort((a, b) => vdist(b.p, eye) - vdist(a.p, eye));
+  const addP = particles.filter(p => p.add);
+  setCommon(progSprite);
+  const u = progSprite.u;
+  gl.uniform3fv(u.uCamR, R.camR); gl.uniform3fv(u.uCamU, R.camU);
+  gl.uniform1f(u.uNearFade, 0); gl.uniform1f(u.uFar, 20000); gl.uniform1f(u.uMinPix, 0);
+  gl.uniform1i(u.uTex, 3); gl.uniform1f(u.uSilver, 0);
+  const lightK = vadd(vscale(ENV.sunCol, 0.7), vscale(ENV.ambSky, 0.6));
+  const pass = (list, additive) => {
+    if (!list.length) return;
+    let k = 0;
+    for (const q of list) {
+      const o = k * 9, f = q.age / q.life, fade = additive ? (1 - f) : (1 - f) * smoothstep(0, 0.08, f);
+      pData[o] = q.p[0]; pData[o + 1] = q.p[1]; pData[o + 2] = q.p[2]; pData[o + 3] = q.size;
+      const lk = additive ? [1.1, 1.1, 1.1] : lightK;
+      pData[o + 4] = q.col[0] * lk[0]; pData[o + 5] = q.col[1] * lk[1]; pData[o + 6] = q.col[2] * lk[2]; pData[o + 7] = q.a * fade;
+      pData[o + 8] = q.rot; k++;
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, pVAO.bufs[1]); gl.bufferData(gl.ARRAY_BUFFER, pData.subarray(0, k * 9), gl.DYNAMIC_DRAW);
+    gl.uniform1i(u.uFog, additive ? 0 : 1);
+    gl.blendFunc(gl.SRC_ALPHA, additive ? gl.ONE : gl.ONE_MINUS_SRC_ALPHA);
+    gl.bindVertexArray(pVAO.vao); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, k);
+  };
+  gl.depthMask(false);
+  pass(alphaP, false); pass(addP, true);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+}
+function drawPapi() {
+  const lights = papiLights(), eye = R.eye, D = pVAO.papiData;
+  let k = 0;
+  for (const l of lights) {
+    const [lu] = worldToRwy(l.p[0], l.p[2]), [eu] = worldToRwy(eye[0], eye[2]);
+    const facing = l.end ? eu > lu : eu < lu;
+    if (!facing) continue;
+    const hd = Math.hypot(eye[0] - l.p[0], eye[2] - l.p[2]);
+    if (hd > 9000) continue;
+    const ang = Math.atan2(eye[1] - l.p[1], hd) / DEG;
+    const white = ang > l.ang, o = k * 9;
+    D[o] = l.p[0]; D[o + 1] = l.p[1]; D[o + 2] = l.p[2]; D[o + 3] = -0.9;
+    D[o + 4] = white ? 1.6 : 1.8; D[o + 5] = white ? 1.6 : 0.15; D[o + 6] = white ? 1.5 : 0.1; D[o + 7] = 1;
+    D[o + 8] = 0; k++;
+  }
+  if (!k) return;
+  gl.bindBuffer(gl.ARRAY_BUFFER, pVAO.papi.bufs[1]); gl.bufferData(gl.ARRAY_BUFFER, D, gl.DYNAMIC_DRAW);
+  setCommon(progSprite);
+  const u = progSprite.u;
+  gl.uniform3fv(u.uCamR, R.camR); gl.uniform3fv(u.uCamU, R.camU);
+  gl.uniform1f(u.uNearFade, 0); gl.uniform1f(u.uFar, 12000); gl.uniform1f(u.uMinPix, 2.2 * R.tanY / R.H * 2);
+  gl.uniform1i(u.uTex, 4); gl.uniform1f(u.uSilver, 0); gl.uniform1i(u.uFog, 0);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE); gl.depthMask(false);
+  gl.bindVertexArray(pVAO.papi.vao); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, k);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+}
+
+// ---------- HUD (glass-cockpit style, drawn with Canvas 2D) ----------
+const hud = { cv: $('hud'), ctx: null, dpr: 1, W: 1, H: 1, minimap: null };
+hud.ctx = hud.cv.getContext('2d');
+const MONO = '"B612 Mono", ui-monospace, Menlo, monospace';
+const UI = '"B612", "Zen Kaku Gothic New", system-ui, sans-serif';
+const COL = { cyan: '#5fd4ff', magenta: '#e36bdc', amber: '#ffb547', red: '#ff5a4f', green: '#58e08c', ink: '#e8f0fa', muted: '#92a5be' };
+function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function project(p) {
+  const m = R.VP, x = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], y = m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13];
+  const w = m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15];
+  return { x: (x / w * 0.5 + 0.5) * hud.W, y: (1 - (y / w * 0.5 + 0.5)) * hud.H, w, nx: x / w, ny: y / w };
+}
+function attitude() {
+  const f = qrot(sim.q, [0, 0, -1]), r = qrot(sim.q, [1, 0, 0]), up = qrot(sim.q, [0, 1, 0]);
+  return {
+    pitch: Math.asin(clamp(f[1], -1, 1)) / DEG,
+    bank: Math.atan2(-r[1], up[1]) / DEG,
+    hdg: (Math.atan2(f[0], -f[2]) / DEG + 360) % 360,
+  };
+}
+function drawHUD() {
+  const g = hud.ctx;
+  g.setTransform(hud.dpr, 0, 0, hud.dpr, 0, 0);
+  g.clearRect(0, 0, hud.W, hud.H);
+  const st = game.state;
+  if (st !== 'flying' && st !== 'paused') return;
+  const W = hud.W, H = hud.H, s = sim, att = attitude();
+  // G-force vignette
+  if (s.gLoad > 4.5 || s.gLoad < -2) {
+    const neg = s.gLoad < 0, k = neg ? clamp((-s.gLoad - 2) / 2.5, 0, 0.7) : clamp((s.gLoad - 4.5) / 3.5, 0, 0.85);
+    const grd = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.25, W / 2, H / 2, Math.max(W, H) * 0.75);
+    grd.addColorStop(0, 'rgba(0,0,0,0)'); grd.addColorStop(1, neg ? `rgba(140,0,0,${k})` : `rgba(0,0,0,${k})`);
+    g.fillStyle = grd; g.fillRect(0, 0, W, H);
+  }
+  const warn = [];
+  if (s.stallWarn) warn.push(['STALL 失速', COL.red]);
+  if (game.warnPull) warn.push(['PULL UP 機首上げ', COL.red]);
+  if (game.warnGear) warn.push(['GEAR ギアが上がっています', COL.amber]);
+  if (s.ias > 88) warn.push(['OVERSPEED 速度超過', COL.amber]);
+  const blink = (R.time * 2.5 % 1) < 0.7;
+  warn.forEach(([txt, col], i) => {
+    if (!blink && col === COL.red) return;
+    g.font = `700 16px ${UI}`;
+    const w = g.measureText(txt).width + 26, x = W / 2 - w / 2, y = H * 0.17 + i * 34;
+    rr(g, x, y, w, 28, 4); g.fillStyle = 'rgba(6,12,22,0.7)'; g.fill(); g.strokeStyle = col; g.lineWidth = 2; g.stroke();
+    g.fillStyle = col; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, W / 2, y + 14);
+  });
+  if (!game.hud) return;
+  const touch = game.touch;
+  const sc = clamp(Math.min(W / 1180, H / 700), 0.52, 1.05) * (touch ? 0.86 : 1);
+  // flight path marker
+  const spd = vlen(s.vel);
+  if (spd > 12 && !s.onGround) {
+    const pp = project(vmadd(s.pos, s.vel, 3000 / spd));
+    if (pp.w > 0 && Math.abs(pp.nx) < 0.95 && Math.abs(pp.ny) < 0.95) {
+      g.strokeStyle = COL.green; g.lineWidth = 2;
+      g.beginPath(); g.arc(pp.x, pp.y, 7, 0, Math.PI * 2);
+      g.moveTo(pp.x - 7, pp.y); g.lineTo(pp.x - 18, pp.y); g.moveTo(pp.x + 7, pp.y); g.lineTo(pp.x + 18, pp.y);
+      g.moveTo(pp.x, pp.y - 7); g.lineTo(pp.x, pp.y - 13); g.stroke();
+    }
+  }
+  if (game.mode === 'rings' && !game.ringDone) drawRingTarget(g, W, H);
+  // PFD & engine panel
+  const pfdX = touch ? 12 : 16, pfdY = touch ? 12 : H - 16 - 252 * sc;
+  drawPFD(g, pfdX, pfdY, sc, att);
+  if (!touch) drawEngine(g, pfdX + 390 * sc, pfdY, sc);
+  else drawStatusStrip(g, pfdX, pfdY + 258 * sc, sc);
+  drawMinimap(g, W, H, touch, att);
+  drawInfo(g, W, H, touch, sc, pfdY + 258 * sc + 30);
+}
+function drawRingTarget(g, W, H) {
+  const ring = course.rings[game.ringIdx];
+  if (!ring) return;
+  const p = project(ring.p), dist = vdist(sim.pos, ring.p);
+  const on = p.w > 0 && Math.abs(p.nx) < 0.92 && Math.abs(p.ny) < 0.88;
+  g.strokeStyle = COL.magenta; g.fillStyle = COL.magenta; g.lineWidth = 2.5;
+  if (on) {
+    const e = project(vadd(ring.p, vscale(R.camU, course.radius)));
+    const r = clamp(Math.abs(e.y - p.y), 14, 400), c = r * 0.35;
+    g.beginPath();
+    for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      g.moveTo(p.x + sx * r, p.y + sy * (r - c)); g.lineTo(p.x + sx * r, p.y + sy * r); g.lineTo(p.x + sx * (r - c), p.y + sy * r);
+    }
+    g.stroke();
+    g.font = `700 13px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'top';
+    const lbl = `${game.ringIdx + 1}/${course.rings.length}  ${(dist / 1000).toFixed(2)} km`;
+    g.fillStyle = 'rgba(6,12,22,0.75)'; const tw = g.measureText(lbl).width + 10; g.fillRect(p.x - tw / 2, p.y + r + 4, tw, 18);
+    g.fillStyle = COL.magenta; g.fillText(lbl, p.x, p.y + r + 6);
+  } else {
+    let dx = p.nx, dy = -p.ny;
+    if (p.w <= 0) { dx = -dx; dy = -dy; }
+    const a = Math.atan2(dy, dx), cx = W / 2, cy = H / 2, rad = Math.min(W, H) * 0.36;
+    const x = cx + Math.cos(a) * rad, y = cy + Math.sin(a) * rad;
+    g.save(); g.translate(x, y); g.rotate(a);
+    g.beginPath(); g.moveTo(16, 0); g.lineTo(-8, -11); g.lineTo(-3, 0); g.lineTo(-8, 11); g.closePath(); g.fill();
+    g.restore();
+    g.font = `700 12px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(`${(dist / 1000).toFixed(1)} km`, x - Math.cos(a) * 30, y - Math.sin(a) * 26);
+  }
+}
+function drawPFD(g, x0, y0, sc, att) {
+  const s = sim;
+  g.save(); g.translate(x0, y0); g.scale(sc, sc);
+  rr(g, 0, 0, 380, 252, 8); g.fillStyle = 'rgba(6,12,22,0.66)'; g.fill();
+  g.strokeStyle = 'rgba(150,176,206,0.25)'; g.lineWidth = 1; g.stroke();
+  const ax = 62, ay = 12, aw = 236, ah = 200, cx = ax + aw / 2, cy = ay + ah / 2, ppd = 4.4;
+  // --- attitude ---
+  g.save(); rr(g, ax, ay, aw, ah, 6); g.clip();
+  g.translate(cx, cy); g.rotate(-att.bank * DEG);
+  g.save(); g.translate(0, att.pitch * ppd);
+  let grd = g.createLinearGradient(0, -420, 0, 0); grd.addColorStop(0, '#1d4f96'); grd.addColorStop(1, '#4f8fd0');
+  g.fillStyle = grd; g.fillRect(-500, -900, 1000, 900);
+  grd = g.createLinearGradient(0, 0, 0, 420); grd.addColorStop(0, '#8a6038'); grd.addColorStop(1, '#4e3520');
+  g.fillStyle = grd; g.fillRect(-500, 0, 1000, 900);
+  g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.moveTo(-500, 0); g.lineTo(500, 0); g.stroke();
+  g.lineWidth = 1.5; g.font = `12px ${MONO}`; g.fillStyle = '#fff'; g.textBaseline = 'middle';
+  for (let d = -90; d <= 90; d += 2.5) {
+    if (d === 0) continue;
+    const y = -d * ppd;
+    if (Math.abs(y + att.pitch * ppd) > 125) continue;
+    const w = d % 10 === 0 ? 36 : d % 5 === 0 ? 18 : 7;
+    g.beginPath(); g.moveTo(-w, y); g.lineTo(w, y); g.stroke();
+    if (d % 10 === 0) { g.textAlign = 'right'; g.fillText(Math.abs(d), -w - 5, y); g.textAlign = 'left'; g.fillText(Math.abs(d), w + 5, y); }
+  }
+  g.restore();
+  // bank scale rotates with horizon (sky pointer)
+  g.strokeStyle = '#fff'; g.lineWidth = 1.5;
+  g.beginPath(); g.arc(0, 0, 90, (-90 - 60) * DEG, (-90 + 60) * DEG); g.stroke();
+  for (const a of [-60, -45, -30, -20, -10, 10, 20, 30, 45, 60]) {
+    const r0 = 90, r1 = Math.abs(a) % 30 === 0 ? 102 : 96, t = (a - 90) * DEG;
+    g.beginPath(); g.moveTo(Math.cos(t) * r0, Math.sin(t) * r0); g.lineTo(Math.cos(t) * r1, Math.sin(t) * r1); g.stroke();
+  }
+  g.fillStyle = '#fff'; g.beginPath(); g.moveTo(0, -90); g.lineTo(-6, -100); g.lineTo(6, -100); g.closePath(); g.fill();
+  g.restore();
+  // fixed roll pointer + slip
+  g.fillStyle = '#ffd24a';
+  g.beginPath(); g.moveTo(cx, cy - 88); g.lineTo(cx - 8, cy - 76); g.lineTo(cx + 8, cy - 76); g.closePath(); g.fill();
+  const slip = clamp(-s.beta / DEG * 1.6, -14, 14);
+  g.fillRect(cx - 8 + slip, cy - 73, 16, 4);
+  // aircraft symbol
+  g.fillStyle = '#ffd24a'; g.strokeStyle = '#111'; g.lineWidth = 1;
+  for (const sg of [-1, 1]) { g.beginPath(); g.rect(cx + sg * 22 - (sg > 0 ? 0 : 38), cy - 2.5, 38, 5); g.fill(); g.stroke(); }
+  g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx - 16, cy + 9); g.lineTo(cx, cy + 4); g.lineTo(cx + 16, cy + 9); g.closePath(); g.fill(); g.stroke();
+  // --- speed tape ---
+  const kt = s.ias * 1.94384;
+  tape(g, 6, ay, 52, ah, kt, 3.0, 10, 5, v => v >= 0 ? String(v) : '', [
+    [0, 48, COL.red], [45, 85, '#ffffff'], [55, 140, COL.green], [140, 165, COL.amber], [165, 400, COL.red]], 'left');
+  // --- altitude tape ---
+  const ft = (s.pos[1] + WHEEL_BOTTOM) * 3.28084;
+  tape(g, 300, ay, 54, ah, ft, 0.26, 200, 100, v => String(v), null, 'right', s.groundH * 3.28084);
+  // VSI
+  const fpm = s.vs * 196.85, vy = clamp(Math.sign(fpm) * Math.sqrt(Math.abs(fpm) / 2000) * 88, -92, 92);
+  g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(357, ay + 8, 18, ah - 16);
+  g.strokeStyle = COL.muted; g.lineWidth = 1;
+  for (const v of [-2000, -1000, -500, 0, 500, 1000, 2000]) {
+    const y = cy - Math.sign(v) * Math.sqrt(Math.abs(v) / 2000) * 88;
+    g.beginPath(); g.moveTo(357, y); g.lineTo(v === 0 ? 369 : 363, y); g.stroke();
+  }
+  g.fillStyle = COL.cyan; g.beginPath(); g.moveTo(358, cy - vy); g.lineTo(374, cy - vy - 6); g.lineTo(374, cy - vy + 6); g.closePath(); g.fill();
+  g.font = `11px ${MONO}`; g.textAlign = 'center'; g.fillStyle = COL.ink; g.textBaseline = 'alphabetic';
+  if (Math.abs(fpm) > 90) g.fillText(Math.round(fpm / 10) * 10, 330, ay - 1 + (fpm > 0 ? 0 : ah + 12));
+  // --- heading tape ---
+  const hy = 218, hx = ax, hw = aw;
+  g.save(); rr(g, hx, hy, hw, 28, 4); g.fillStyle = 'rgba(0,0,0,0.4)'; g.fill(); g.clip();
+  const ppdH = 2.6, hc = hx + hw / 2;
+  g.strokeStyle = '#fff'; g.fillStyle = '#fff'; g.lineWidth = 1.2; g.font = `12px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  const names = { 0: 'N', 90: 'E', 180: 'S', 270: 'W' };
+  for (let d = Math.floor((att.hdg - 50) / 5) * 5; d <= att.hdg + 50; d += 5) {
+    const x = hc + (d - att.hdg) * ppdH, dn = ((d % 360) + 360) % 360;
+    g.beginPath(); g.moveTo(x, hy); g.lineTo(x, hy + (dn % 10 === 0 ? 8 : 4)); g.stroke();
+    if (dn % 30 === 0) g.fillText(names[dn] || String(dn / 10), x, hy + 18);
+  }
+  const brg = targetBearing();
+  if (brg !== null) {
+    let dd = ((brg - att.hdg + 540) % 360) - 180; dd = clamp(dd, -44, 44);
+    const x = hc + dd * ppdH;
+    g.fillStyle = COL.magenta; g.fillRect(x - 5, hy, 10, 5); g.fillRect(x - 1.5, hy, 3, 10);
+  }
+  g.restore();
+  g.fillStyle = '#000'; g.strokeStyle = '#fff'; g.lineWidth = 1.2;
+  rr(g, hc - 22, hy - 16, 44, 17, 3); g.fill(); g.stroke();
+  g.fillStyle = '#fff'; g.font = `700 13px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(String(Math.round(att.hdg) % 360).padStart(3, '0') + '°', hc, hy - 7.5);
+  // labels
+  g.font = `10px ${UI}`; g.fillStyle = COL.muted; g.textAlign = 'center';
+  g.fillText('IAS KT', 32, 238); g.fillText('ALT FT', 327, 238);
+  if (s.agl < 760) { g.fillStyle = COL.ink; g.font = `700 11px ${MONO}`; g.fillText('RA ' + Math.max(0, Math.round(s.agl * 3.28084)), 327, 226); }
+  g.restore();
+}
+function tape(g, x, y, w, h, val, ppu, labelStep, tickStep, fmt, bands, side, groundVal) {
+  const cy = y + h / 2;
+  g.save(); rr(g, x, y, w, h, 4); g.fillStyle = 'rgba(0,0,0,0.42)'; g.fill(); g.clip();
+  if (groundVal !== undefined) {
+    const gy = cy - (groundVal - val) * ppu;
+    if (gy < y + h) { g.fillStyle = 'rgba(138,96,56,0.55)'; g.fillRect(x, gy, w, y + h - gy); }
+  }
+  if (bands) for (const [a, b, c] of bands) {
+    const ya = cy - (a - val) * ppu, yb = cy - (b - val) * ppu;
+    g.fillStyle = c; g.fillRect(x + w - (c === '#ffffff' ? 9 : 5), yb, c === '#ffffff' ? 3 : 5, ya - yb);
+  }
+  g.strokeStyle = '#fff'; g.fillStyle = '#fff'; g.lineWidth = 1.2; g.font = `12px ${MONO}`; g.textBaseline = 'middle';
+  const range = h / 2 / ppu + tickStep;
+  for (let v = Math.floor((val - range) / tickStep) * tickStep; v <= val + range; v += tickStep) {
+    const ty = cy - (v - val) * ppu;
+    const major = v % labelStep === 0;
+    if (side === 'left') {
+      g.beginPath(); g.moveTo(x + w, ty); g.lineTo(x + w - (major ? 10 : 6), ty); g.stroke();
+      if (major) { g.textAlign = 'right'; g.fillText(fmt(v), x + w - 13, ty); }
+    } else {
+      g.beginPath(); g.moveTo(x, ty); g.lineTo(x + (major ? 10 : 6), ty); g.stroke();
+      if (major) { g.textAlign = 'left'; g.fillText(fmt(v), x + 13, ty); }
+    }
+  }
+  g.restore();
+  g.fillStyle = '#000'; g.strokeStyle = '#fff'; g.lineWidth = 1.3;
+  const bw = w + 2, bx = side === 'left' ? x - 1 : x - 1;
+  g.beginPath();
+  if (side === 'left') { g.moveTo(bx, cy - 12); g.lineTo(bx + bw - 6, cy - 12); g.lineTo(bx + bw + 2, cy); g.lineTo(bx + bw - 6, cy + 12); g.lineTo(bx, cy + 12); }
+  else { g.moveTo(bx + bw, cy - 12); g.lineTo(bx + 6, cy - 12); g.lineTo(bx - 2, cy); g.lineTo(bx + 6, cy + 12); g.lineTo(bx + bw, cy + 12); }
+  g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#fff'; g.font = `700 14px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(String(Math.round(val)), x + w / 2 + (side === 'left' ? -2 : 3), cy + 0.5);
+}
+function targetBearing() {
+  let t = null;
+  if (game.mode === 'rings' && course.rings[game.ringIdx]) t = course.rings[game.ringIdx].p;
+  else if (game.mode === 'landing') t = rwyToWorld(-RWY.len / 2, 0);
+  if (!t) return null;
+  return (Math.atan2(t[0] - sim.pos[0], -(t[2] - sim.pos[2])) / DEG + 360) % 360;
+}
+function drawEngine(g, x0, y0, sc) {
+  const s = sim;
+  g.save(); g.translate(x0, y0); g.scale(sc, sc);
+  rr(g, 0, 0, 158, 252, 8); g.fillStyle = 'rgba(6,12,22,0.66)'; g.fill();
+  g.strokeStyle = 'rgba(150,176,206,0.25)'; g.lineWidth = 1; g.stroke();
+  g.textBaseline = 'alphabetic';
+  // throttle bar
+  g.fillStyle = 'rgba(0,0,0,0.4)'; g.fillRect(14, 28, 22, 180);
+  g.fillStyle = COL.green; g.fillRect(14, 28 + 180 * (1 - s.thr), 22, 180 * s.thr);
+  g.font = `10px ${UI}`; g.fillStyle = COL.muted; g.textAlign = 'center'; g.fillText('THR', 25, 20);
+  g.font = `700 12px ${MONO}`; g.fillStyle = COL.ink; g.fillText(Math.round(s.thr * 100) + '%', 25, 226);
+  // readouts
+  const row = (label, value, y, col = COL.ink) => {
+    g.textAlign = 'left'; g.font = `10px ${UI}`; g.fillStyle = COL.muted; g.fillText(label, 50, y);
+    g.textAlign = 'right'; g.font = `700 14px ${MONO}`; g.fillStyle = col; g.fillText(value, 146, y);
+  };
+  row('RPM', String(Math.round(s.rpm / 10) * 10), 26);
+  row('FLAPS', FLAP_DEG[s.flapIdx] + '°', 50, s.flapIdx ? COL.cyan : COL.ink);
+  const gearTxt = s.gearPos >= 1 ? 'DOWN' : s.gearPos <= 0 ? 'UP' : 'MOVING';
+  row('GEAR', gearTxt, 74, s.gearPos >= 1 ? COL.green : s.gearPos <= 0 ? COL.ink : COL.amber);
+  // gear lights
+  for (let i = 0; i < 3; i++) {
+    const x = 70 + i * 24, y = 90;
+    g.beginPath(); g.arc(x, y, 6, 0, Math.PI * 2);
+    if (s.gearPos >= 1) { g.fillStyle = COL.green; g.fill(); }
+    else if (s.gearPos > 0) { g.fillStyle = COL.amber; g.fill(); }
+    else { g.strokeStyle = COL.muted; g.lineWidth = 1; g.stroke(); }
+  }
+  row('TRIM', (s.trim >= 0 ? '▲' : '▼') + Math.abs(Math.round(s.trim * 100)), 118);
+  row('BRAKE', s.brake ? 'ON' : 'OFF', 142, s.brake ? COL.amber : COL.muted);
+  row('G', s.gLoad.toFixed(1), 166, s.gLoad > 4.5 || s.gLoad < -1.5 ? COL.amber : COL.ink);
+  row('AOA', (s.alpha / DEG).toFixed(1) + '°', 190, s.stallWarn ? COL.red : COL.ink);
+  row('SMOKE', s.smoke ? 'ON' : 'OFF', 214, s.smoke ? COL.cyan : COL.muted);
+  row('GS', Math.round(Math.hypot(s.vel[0], s.vel[2]) * 1.94384) + ' kt', 238);
+  g.restore();
+}
+function drawStatusStrip(g, x, y, sc) {
+  const s = sim;
+  const items = [[`THR ${Math.round(s.thr * 100)}%`, COL.green], [`FLAPS ${FLAP_DEG[s.flapIdx]}°`, s.flapIdx ? COL.cyan : COL.ink],
+  [`GEAR ${s.gearPos >= 1 ? 'DN' : s.gearPos <= 0 ? 'UP' : '··'}`, s.gearPos >= 1 ? COL.green : COL.amber]];
+  if (s.brake) items.push(['BRK', COL.amber]);
+  g.font = `700 ${Math.round(12 * sc / 0.86)}px ${MONO}`; g.textBaseline = 'top'; g.textAlign = 'left';
+  let cx = x;
+  for (const [t, c] of items) {
+    const w = g.measureText(t).width + 12;
+    rr(g, cx, y, w, 20 * sc / 0.86, 4); g.fillStyle = 'rgba(6,12,22,0.66)'; g.fill();
+    g.fillStyle = c; g.fillText(t, cx + 6, y + 4); cx += w + 6;
+  }
+}
+function drawMinimap(g, W, H, touch, att) {
+  const S = touch ? 118 : 176, x = W - S - (touch ? 12 : 16), y = touch ? 12 : 16;
+  g.save();
+  rr(g, x - 4, y - 4, S + 8, S + 8, 8); g.fillStyle = 'rgba(6,12,22,0.66)'; g.fill();
+  rr(g, x, y, S, S, 5); g.clip();
+  g.drawImage(hud.minimap, x, y, S, S);
+  const map = (wx, wz) => [x + (wx + HM_HALF) / (HM_HALF * 2) * S, y + (wz + HM_HALF) / (HM_HALF * 2) * S];
+  // runway
+  const a = map(...[rwyToWorld(-RWY.len / 2, 0)].map(p => [p[0], p[2]])[0]), b = map(...[rwyToWorld(RWY.len / 2, 0)].map(p => [p[0], p[2]])[0]);
+  g.strokeStyle = '#fff'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
+  if (game.mode === 'rings') {
+    for (let i = game.ringIdx; i < course.rings.length; i++) {
+      const r = course.rings[i], m = map(r.p[0], r.p[2]);
+      g.beginPath(); g.arc(m[0], m[1], i === game.ringIdx ? 4 : 2.5, 0, Math.PI * 2);
+      g.fillStyle = i === game.ringIdx ? COL.magenta : 'rgba(227,107,220,0.55)'; g.fill();
+    }
+  }
+  const pm = map(sim.pos[0], sim.pos[2]);
+  g.translate(pm[0], pm[1]); g.rotate(att.hdg * DEG);
+  g.fillStyle = '#ffd24a'; g.strokeStyle = '#000'; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(0, -8); g.lineTo(5.5, 6); g.lineTo(0, 3); g.lineTo(-5.5, 6); g.closePath(); g.fill(); g.stroke();
+  g.restore();
+  g.font = `700 11px ${MONO}`; g.fillStyle = COL.ink; g.textAlign = 'center'; g.textBaseline = 'top';
+  g.fillText('N', x + S / 2, y + 3);
+}
+function drawInfo(g, W, H, touch, sc, touchY) {
+  const lines = [];
+  const modeName = { runway: 'フリーフライト', air: 'フリーフライト', rings: 'リングチャレンジ', landing: '着陸チャレンジ' }[game.mode];
+  lines.push([modeName, COL.cyan, `700 12px ${UI}`]);
+  if (game.mode === 'rings') {
+    lines.push([fmtTime(game.ringTime), COL.ink, `700 22px ${MONO}`]);
+    lines.push([`リング ${Math.min(game.ringIdx + 1, course.rings.length)} / ${course.rings.length}`, COL.muted, `12px ${UI}`]);
+  } else if (game.mode === 'landing') {
+    const thr = rwyToWorld(-RWY.len / 2, 0);
+    const d = Math.hypot(sim.pos[0] - thr[0], sim.pos[2] - thr[2]);
+    const [u] = worldToRwy(sim.pos[0], sim.pos[2]);
+    if (u < -RWY.len / 2 + 300) {
+      const gp = Math.atan2(sim.pos[1] + WHEEL_BOTTOM - RWY.elev, Math.max(1, -RWY.len / 2 + 300 - u)) / DEG;
+      lines.push([`RWY 09 まで ${(d / 1000).toFixed(1)} km`, COL.ink, `700 14px ${UI}`]);
+      lines.push([`進入角 ${gp.toFixed(1)}°（目標 3.0°）`, Math.abs(gp - 3) < 0.6 ? COL.green : COL.amber, `12px ${UI}`]);
+    }
+  } else {
+    const [u, v] = worldToRwy(sim.pos[0], sim.pos[2]);
+    const d = Math.hypot(u, v);
+    if (d > 1500) lines.push([`飛行場まで ${(d / 1000).toFixed(1)} km`, COL.muted, `12px ${UI}`]);
+  }
+  const x = touch ? 14 : 16, y = touch ? touchY : 16;
+  let yy = y;
+  g.textAlign = 'left'; g.textBaseline = 'top';
+  for (const [t, c, f] of lines) {
+    g.font = f; g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillText(t, x + 1, yy + 1);
+    g.fillStyle = c; g.fillText(t, x, yy); yy += parseInt(f.match(/(\d+)px/)[1], 10) + 6;
+  }
+  if (touch) return;
+  // compact key reminder while on the ground at the start
+  if (game.mode === 'runway' && sim.onGround && game.t < 40) {
+    g.font = `12px ${UI}`; g.textAlign = 'center'; g.fillStyle = 'rgba(232,240,250,0.8)';
+    g.fillText('R / F スロットル　W S 機首　A D ロール　G ギア　V フラップ　C カメラ　Esc メニュー', W / 2, H - 28);
+  }
+}
+
+// ---------- main loop ----------
+let lastT = performance.now(), acc = 0;
+const STEP = 1 / 120;
+function frame(now) {
+  const dt = Math.min(0.1, Math.max(0, (now - lastT) / 1000)); lastT = now;
+  R.time += dt;
+  try {
+    updateControls(dt);
+    if (game.state === 'flying') {
+      acc += dt; let n = 0;
+      while (acc >= STEP && n < 14) {
+        const prev = sim.pos.slice();
+        game.t += STEP;
+        physicsStep(STEP, game.t);
+        if (sim.crashed) break;
+        if (game.mode === 'rings' && !game.ringDone) { game.ringTime += STEP; updateRings(prev); }
+        if (game.state !== 'flying') break;
+        acc -= STEP; n++;
+      }
+      if (n >= 14) acc = 0;
+      if (game.state === 'flying') gameChecks(dt);
+    } else acc = 0;
+    if (game.state === 'crashed') {
+      game.resultTimer -= dt;
+      if (game.resultTimer <= 0 && game.pendingResult) { const r = game.pendingResult; game.pendingResult = null; showResult(r); }
+    }
+    updateParticles(dt);
+    updateCamera(dt);
+    updateTrees(cam.eye);
+    render();
+    drawHUD();
+    audio.update(dt);
+  } catch (err) {
+    console.error(err);
+    $('load-text').textContent = 'エラーが発生しました: ' + err.message;
+    $('loading').hidden = false;
+    return;
+  }
+  requestAnimationFrame(frame);
+}
+
+async function init() {
+  const setLoad = (p, t) => { $('load-bar').style.width = Math.round(p * 100) + '%'; if (t) $('load-text').textContent = t; };
+  setLoad(0.02);
+  await tick();
+  await generateWorld(p => setLoad(p));
+  setLoad(0.93, 'テクスチャと機体を準備しています…');
+  await tick();
+  try { await Promise.race([document.fonts.load('bold 44px "B612 Mono"'), new Promise(r => setTimeout(r, 1500))]); } catch (e) { /* fonts optional */ }
+  buildPrograms();
+  uploadWorldTextures();
+  initAirport();
+  initProps();
+  initClouds();
+  buildRingCourse();
+  planeParts = buildPlaneParts();
+  initParticles();
+  initParked();
+  hud.minimap = makeMinimap();
+  applyQuality();
+  setLoad(1, '準備完了');
+  spawn('runway');
+  game.state = 'menu';
+  $('loading').hidden = true;
+  showMenu(false);
+  lastT = performance.now();
+  requestAnimationFrame(frame);
+}
+window.SORAJIMA = { sim, game, cam, startMode, spawn, course, RWY, terrainHeight };
+init().catch(err => { console.error(err); $('load-text').textContent = '起動できませんでした: ' + err.message; });
+</script>
+</body>
+</html>

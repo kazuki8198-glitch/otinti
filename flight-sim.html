@@ -51,8 +51,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-o
 .eyebrow{font:700 11px/1 var(--ui);letter-spacing:.22em;color:var(--cyan);text-transform:uppercase}
 h1{margin:6px 0 0;font:700 clamp(34px,6vw,52px)/1.05 var(--jp);letter-spacing:.04em;text-wrap:balance}
 .lede{margin:8px 0 0;color:var(--muted);font-size:14px;line-height:1.6}
-.missions{display:grid;gap:8px}
-.mission{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:14px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--line);background:var(--panel);cursor:pointer;transition:border-color .15s,background .15s}
+.missions{display:grid;gap:6px}
+.mission{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:14px;text-align:left;padding:8px 14px;border-radius:6px;border:1px solid var(--line);background:var(--panel);cursor:pointer;transition:border-color .15s,background .15s}
 .mission:hover{border-color:var(--cyan);background:rgba(20,40,66,.9)}
 .mission .code{font:700 12px/1 var(--mono);color:var(--cyan);width:34px;letter-spacing:.04em}
 .mission .m-title{font:700 16px/1.3 var(--jp)}
@@ -151,6 +151,8 @@ h1{margin:6px 0 0;font:700 clamp(34px,6vw,52px)/1.05 var(--jp);letter-spacing:.0
 .nt th{color:var(--muted);font-weight:700;font-size:11px}
 .nt td:first-child,.nt th:first-child{text-align:left;white-space:normal}
 .nt tr.grp td{color:var(--cyan);font-weight:700;text-align:left;padding-top:12px}
+.nt td.nx{color:var(--muted)}
+.nt td small{color:var(--muted);font-weight:400}
 .num-wrap{overflow-x:auto}
 .note-box{border:1px solid var(--cyan);border-radius:6px;padding:8px 10px;background:rgba(95,212,255,.08)}
 kbd{font:700 11.5px var(--mono);background:rgba(95,212,255,.12);border:1px solid rgba(95,212,255,.4);border-radius:4px;padding:1px 5px;color:var(--cyan)}
@@ -260,13 +262,13 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
     </div>
     <div class="opts">
       <span>時間帯</span>
-      <div class="seg" role="group" aria-label="時間帯"><button type="button" data-tod="day" class="on">昼</button><button type="button" data-tod="evening">夕方</button></div>
+      <div class="seg" role="group" aria-label="時間帯"><button type="button" data-tod="day" class="on">昼</button><button type="button" data-tod="evening">夕方</button><button type="button" data-tod="night">夜</button></div>
       <label class="chk"><input type="checkbox" id="opt-invert"> ピッチ反転</label>
       <label class="chk"><input type="checkbox" id="opt-sound" checked> サウンド</label>
     </div>
     <button type="button" class="guide-btn" id="open-map">🗺 日本地図を開いて空港を選ぶ（M）</button>
     <button type="button" class="guide-btn" id="open-guide">？ ガイド：画面の見方・操作・用語・飛び方のコツ</button>
-    <p class="credit">地形・航空写真・地図：国土地理院 地理院タイル（標高データは加工して使用）／ 建物・樹木：© OpenStreetMap contributors（OpenFreeMap）／ 空港：OurAirports ／ 地名：GeoNames</p>
+    <p class="credit">地形・航空写真・地図：国土地理院 地理院タイル（標高データは加工して使用）／ 3D 都市モデル：国土交通省 PLATEAU ／ 建物・樹木：© OpenStreetMap contributors（OpenFreeMap）／ 空港：OurAirports ／ 地名：GeoNames</p>
    </div>
    <div class="col-b">
     <div class="eyebrow mission-head">MISSION ・ 遊び方を選ぶ</div>
@@ -275,6 +277,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
       <button class="mission" data-mode="runway"><span class="code">RWY</span><span class="m-title">滑走路から離陸</span><span class="m-sub" id="sub-runway">滑走路に停止中。スロットルを上げて離陸</span></button>
       <button class="mission" data-mode="air"><span class="code">AIR</span><span class="m-title">空中スタート</span><span class="m-sub" id="sub-air">島の沖合を巡航中の状態から自由に飛ぶ</span></button>
       <button class="mission" data-mode="rings"><span class="code">RNG</span><span class="m-title">リングチャレンジ</span><span class="m-sub" id="sub-rings"><span>島を一周する 10 個のリングを順番に通過 </span><span class="best" id="best-rings"></span></span></button>
+      <button class="mission jw-only" data-mode="tour"><span class="code">TOUR</span><span class="m-title">観光フライト</span><span class="m-sub" id="sub-tour">近くの名所をリングでめぐる</span></button>
       <button class="mission" data-mode="landing"><span class="code">LDG</span><span class="m-title">着陸チャレンジ</span><span class="m-sub" id="sub-landing">3° の進入経路から着陸 <span class="best" id="best-landing"></span></span></button>
     </div>
     <button id="resume" class="resume" hidden>飛行を再開する（Esc）</button>
@@ -340,6 +343,12 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
         <ol><li>滑走路の延長線上に機首を合わせる（方位計の紫の印が目印）</li><li>ギアを下げ、フラップを 20〜30° に</li><li>滑走路左の 4 つの灯火（PAPI）が「赤 2・白 2」になる角度で降りていく。白が多いと高すぎ、赤が多いと低すぎ</li><li>スロットルを少しずつ絞り、地面の直前で機首を軽く上げる（フレア）</li><li>接地したらスロットル 0、<kbd>B</kbd> でブレーキ</li></ol>
         <h3>遠くの空港へ（例：羽田 → 那覇）</h3>
         <ol><li>メニューで出発空港と目的地を選ぶ（または <kbd>M</kbd> の地図で空港をクリック）</li><li>離陸して上昇し、安全な高度（旅客機なら 10,000 ft 以上）で <kbd>O</kbd>（オートパイロット）</li><li><kbd>Z</kbd> で時間を早送り。地図（<kbd>M</kbd>）で現在地を確認</li><li>目的地の 30 km 手前で知らせが出たら <kbd>O</kbd> で解除し、高度を下げて着陸</li></ol>
+        <h3>観光フライト</h3>
+        <p>メニューの「観光フライト」を選ぶと、出発空港の近くの名所（東京なら東京タワー・スカイツリー・皇居など）の横にリングが並びます。紫の枠を順番にくぐると、その名所の説明が表示されます。★ の付いた金色の名前が名所です。</p>
+        <h3>夜の飛行</h3>
+        <p>メニューの「時間帯」で「夜」を選ぶと、街の明かり・ビルの窓の灯り・滑走路の灯火・星空の中を飛べます。滑走路の両側の白い灯火の列、手前の緑（入口）、奥の赤（終わり）を目印に着陸します。翼の先の赤（左）と緑（右）は自分の機体の航法灯です。</p>
+        <h3>本物の 3D の街</h3>
+        <p>詳細版では、東京 23 区・大阪・名古屋・京都・福岡など全国 300 地域で、国土交通省 PLATEAU の「写真の貼られた 3D 建物」が表示されます（近づくと読み込まれます）。それ以外の地域は OpenStreetMap の建物を実際の高さで表示します。</p>
         <h3>困ったときは</h3>
         <ul><li>「STALL 失速」が出たら：機首を下げ（<kbd>W</kbd>）、スロットルを上げる</li><li>「PULL UP」が出たら：地面や山が近い。機首を上げてスロットル全開</li><li>どうなっているかわからない：<kbd>L</kbd> で水平飛行に戻す</li></ul>
       </section>
@@ -351,13 +360,15 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
           <li><b>スロットル</b>：計器パネル中央の THR の緑のバー（%）。<kbd>R</kbd> で上げる、<kbd>F</kbd> で下げる。</li>
           <li><b>水平かどうか</b>：昇降計（高度計の右の細い目盛り）が 0、高度計の数字が変わらなければ水平飛行です。</li>
         </ul>
-        <p class="note-box">飛行中は、計器パネルの右に<b>「目安」パネル</b>が出ます。いまの傾き（バンク）とフラップに合わせて、水平飛行を保つためのスロットルとピッチを表示し、合っていれば緑、ずれていれば黄色になります。</p>
+        <p class="note-box">飛行中は、計器パネルの右に<b>「目安」パネル</b>が出ます。いまが水平・上昇・降下のどれか、傾き（バンク）とフラップに合わせて、その状態で安定させるスロットルとピッチを表示します。合っていれば緑、ずれていれば黄色になります。</p>
         <h3>基本のルール</h3>
         <ol>
           <li><b>高さはピッチで、速さはスロットルで</b>調整します。高度が下がってきたら機首を 1° 上げる、速度が落ちてきたらスロットルを 5% 上げる、の繰り返しです。</li>
           <li><b>傾けると（旋回すると）機体は沈みます</b>。翼の力の一部が横向きになるからです。水平を保つには、機首を少し上げ、スロットルも少し足します。必要な量はバンクが深いほど大きくなります。</li>
           <li>旋回中は体にかかる重さ（G）が増えます：15° で 1.04 倍、30° で 1.15 倍、45° で 1.41 倍、60° で 2 倍。<b>失速する速度も上がる</b>ので、低速で深く傾けるのは危険です。低い高度や遅い速度では 30° までにしましょう。</li>
           <li>旋回をやめるときは、傾きを戻すと同時に、足した機首上げとスロットルを元に戻します（戻さないと上昇して速度が落ちます）。</li>
+          <li><b>上昇・降下のはじめかた</b>：① ピッチを表の値に合わせる → ② スロットルを表の値に合わせる → ③ 昇降計の数字が目標（例：+500）になるまで待って、ずれていればピッチを 1° ずつ直す。止めるとき（水平に戻すとき）は逆に ① ピッチを水平の値に戻す → ② スロットルを水平の値に戻す。</li>
+          <li>上昇・降下しながら曲がるときは、バンク 10〜20° までにしましょう。表の 10° と 20° の値を使います。</li>
         </ol>
         <p><b>操縦アシスト ON</b> のときは、ピッチの調整（沈まないように機首を上げる）は自動でやってくれます。スロットルだけ下の表を目安に合わせてください。<b>アシスト OFF</b> のときは、ピッチもスロットルも自分で合わせます。</p>
         <h3>機体ごとの数値</h3>
@@ -1239,17 +1250,26 @@ in vec2 vNdc;
 uniform vec3 uCamF, uCamR, uCamU;
 uniform vec2 uTan;
 uniform sampler2D uNoise;
+uniform float uStars;
 out vec4 outColor;
 void main(){
   vec3 d = normalize(uCamF + vNdc.x * uTan.x * uCamR + vNdc.y * uTan.y * uCamU);
   vec3 c = skyColor(d);
   float sd = dot(d, uSunDir);
   c += uSunCol * smoothstep(0.99955, 0.99975, sd) * 3.0;
+  if (uStars > 0.0 && d.y > 0.0) {
+    vec3 q = d * 380.0, id = floor(q);
+    float h = fract(sin(dot(id, vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+    vec3 f = fract(q) - 0.5;
+    float star = step(0.9965, h) * smoothstep(0.35, 0.0, length(f)) * (0.35 + 0.65 * fract(h * 97.0));
+    c += vec3(0.85, 0.9, 1.0) * star * uStars * smoothstep(0.0, 0.12, d.y) * 1.6;
+    c += vec3(0.02, 0.025, 0.04) * uStars * pow(max(0.0, 1.0 - abs(dot(d, normalize(vec3(0.3, 0.55, 0.78))))), 18.0);   // faint milky way
+  }
   if (d.y > 0.0) {
     float t = (6500.0 - uCamPos.y) / max(d.y, 0.02);
     vec2 p = uCamPos.xz + d.xz * t;
     float cl = texture(uNoise, p / 11000.0 + vec2(uTime * 0.0004, 0.0)).b * 0.65 + texture(uNoise, p / 2900.0).b * 0.35;
-    cl = smoothstep(0.63, 0.86, cl) * smoothstep(0.03, 0.3, d.y) * 0.32;
+    cl = smoothstep(0.63, 0.86, cl) * smoothstep(0.03, 0.3, d.y) * 0.32 * (1.0 - uStars * 0.8);
     vec3 ccol = mix(vec3(1.0), uSunCol, 0.35) * 0.95 + uSunCol * pow(max(sd, 0.0), 6.0) * 0.4;
     c = mix(c, ccol, cl);
   }
@@ -2223,10 +2243,11 @@ function buildAircraftParts(A) {
 }
 
 // ---------- physics data derived from the description ----------
-// steady-flight reference values measured from this flight model at 3,000 ft
-// [speed kt, throttle %, pitch deg, vertical speed fpm, bank deg, turn rate deg/s, flap index]
-const TRIM = {"trainer":{"level":[105,75,0.7,0,0,0,0],"turn15":[105,79,0.9,0,15,2.5,0],"turn30":[105,80,1.4,0,30,5.4,0],"turn45":[105,86,2.3,0,45,9.3,0],"turn60":[100,100,3.7,0,60,16.9,0],"slow":[78,52,1.1,0,0,0,1],"slowturn15":[78,54,1.5,0,15,3.3,1],"slowturn30":[78,57,2.4,0,30,7.1,1],"climb":[72,100,10.6,750,0,0,0],"descent":[105,42,-2.1,-550,0,0,0],"approach":[65,25,-1.7,-390,0,0,2]},"sport":{"level":[115,61,0.8,0,0,0,0],"turn15":[115,64,0.9,0,15,2.3,0],"turn30":[115,63,1.4,0,30,5,0],"turn45":[115,73,2,0,45,8.6,0],"turn60":[115,85,2.8,0,60,14.8,0],"slow":[84,53,1.3,0,0,0,1],"slowturn15":[84,55,1.6,0,15,3.1,1],"slowturn30":[84,56,2.4,0,30,6.7,1],"climb":[79,100,12.6,1170,0,0,0],"descent":[115,32,-1.8,-550,0,0,0],"approach":[70,26,-1.6,-420,0,0,2]},"aero":{"level":[140,59,2.8,0,0,0,0],"turn15":[140,60,2.9,0,15,1.9,0],"turn30":[140,60,2.9,0,30,4.2,0],"turn45":[140,63,3,0,45,7.2,0],"turn60":[140,76,3.1,0,60,12.5,0],"slow":[96,23,6,0,0,0,1],"slowturn15":[96,26,6,0,15,2.8,1],"slowturn30":[96,25,6.2,0,30,6.1,1],"climb":[88,100,19.9,2320,0,0,0],"descent":[140,42,0.7,-540,0,0,0],"approach":[80,4,5.5,-470,0,0,0]},"twin":{"level":[200,84,0.2,0,0,0,0],"turn15":[200,85,0.4,0,15,1.3,0],"turn30":[200,89,0.8,0,30,2.9,0],"turn45":[200,91,1.3,0,45,5,0],"turn60":[192,100,2.3,0,60,8.9,0],"slow":[132,60,1.2,0,0,0,1],"slowturn15":[132,63,1.5,0,15,2,1],"slowturn30":[132,64,2.3,0,30,4.3,1],"climb":[136,100,10.6,1720,0,0,0],"descent":[200,65,-1.2,-530,0,0,0],"approach":[110,30,-1.9,-640,0,0,2]},"airliner":{"level":[275,25,2.1,0,0,0,0],"turn15":[275,25,2.2,0,15,1,0],"turn30":[274,25,2.6,0,30,2.1,0],"turn45":[273,27,3.1,0,45,3.7,0],"turn60":[269,60,3.8,0,60,6.4,0],"slow":[195,49,2,0,0,0,1],"slowturn15":[195,50,2.2,0,15,1.4,1],"slowturn30":[196,56,3,0,30,2.9,1],"climb":[221,100,13.2,3800,0,0,0],"descent":[273,20,1.1,-540,0,0,0],"approach":[144,39,-2.5,-740,0,0,3]},"fighter":{"level":[355,21,3.1,0,0,0,0],"turn15":[355,20,3.1,0,15,0.8,0],"turn30":[353,23,3.2,0,30,1.7,0],"turn45":[352,38,3.2,0,45,2.9,0],"turn60":[351,45,3.3,0,60,5,0],"slow":[188,37,9.1,0,0,0,1],"slowturn15":[189,37,9.2,0,15,1.4,1],"slowturn30":[188,39,9.5,0,30,3.1,1],"climb":[244,100,31.2,17880,0,0,0],"descent":[354,35,2.3,-540,0,0,0],"approach":[161,18,8.3,-920,0,0,2]}};
-for (const a of AIRCRAFT) if (TRIM[a.id]) a.v.cruiseThr = TRIM[a.id].level[1] / 100;
+// steady-flight reference values measured from this flight model at about 4,000 ft
+// key = group_case_bank ; value = [speed kt, throttle %, pitch deg, vertical speed fpm, bank deg, turn rate deg/s, flap index, flag]
+// flag: 1 ok, 0 not reachable (throttle at its limit), 2 keeps accelerating even at full climb angle
+const TRIM = {"trainer":{"c_level_0":[105,79,0.6,0,0,0,0,1],"c_level_10":[105,79,0.7,0,10,1.6,0,1],"c_level_20":[105,78,1,0,20,3.3,0,1],"c_d500_0":[105,43,-2,-500,0,0,0,1],"c_d500_10":[105,43,-1.9,-500,10,1.6,0,1],"c_d500_20":[105,43,-1.6,-500,20,3.4,0,1],"c_d1000_0":[105,14,-4.4,-1000,0,0,0,1],"c_d1000_10":[105,14,-4.4,-1000,10,1.6,0,1],"c_d1000_20":[105,13,-4.1,-1000,20,3.3,0,1],"c_c500_0":[94,100,4.3,500,0,0,0,0],"c_c500_10":[94,100,4.5,500,10,1.8,0,0],"c_c500_20":[93,100,4.9,500,20,3.7,0,0],"y_c500_0":[73,77,8.5,500,0,0,0,1],"y_c500_10":[73,79,8.6,500,10,2.3,0,1],"y_c500_20":[73,79,8.9,490,20,4.7,0,1],"y_c1000_0":[50,100,20.3,650,0,0,0,0],"y_c1000_10":[51,100,20,650,10,3.2,0,0],"y_c1000_20":[52,100,18.8,590,21,6.5,0,0],"y_full_0":[73,100,10.3,780,0,0,0,1],"y_full_10":[73,100,10.3,760,10,2.3,0,1],"y_full_20":[73,100,10.5,750,20,4.7,0,1],"s_level_0":[78,54,1.1,0,0,0,1,1],"s_level_10":[78,56,1.2,0,10,2.2,1,1],"s_level_20":[78,57,1.7,0,20,4.5,1,1],"s_c500_0":[78,93,4.4,500,0,0,1,1],"s_c500_10":[78,94,4.5,500,10,2.1,1,1],"s_c500_20":[78,94,5,490,20,4.4,1,1],"s_d500_0":[78,19,-2.4,-500,0,0,1,1],"s_d500_10":[78,21,-2.2,-500,10,2.2,1,1],"s_d500_20":[78,22,-1.8,-490,19,4.6,1,1],"a_3deg_0":[65,28,-1.4,-340,0,0,2,1],"a_3deg_10":[65,30,-1.1,-340,10,2.6,2,1],"a_3deg_20":[65,30,-0.6,-350,19,5.4,2,1],"c_level_30":[105,80,1.4,0,30,5.3,0,1],"c_level_45":[105,88,2.2,0,45,9.2,0,1],"c_level_60":[97,100,4,0,60,17.1,0,0]},"sport":{"c_level_0":[115,62,0.8,0,0,0,0,1],"c_level_10":[115,62,0.8,0,10,1.5,0,1],"c_level_20":[115,63,1,0,20,3.1,0,1],"c_d500_0":[115,35,-1.6,-500,0,0,0,1],"c_d500_10":[115,35,-1.5,-500,10,1.5,0,1],"c_d500_20":[115,37,-1.3,-500,20,3.1,0,1],"c_d1000_0":[115,14,-3.9,-1000,0,0,0,1],"c_d1000_10":[115,13,-3.8,-1000,10,1.5,0,1],"c_d1000_20":[115,14,-3.6,-1000,20,3.1,0,1],"c_c500_0":[115,92,3,500,0,0,0,1],"c_c500_10":[115,92,3.1,500,10,1.5,0,1],"c_c500_20":[115,92,3.3,500,20,3,0,1],"y_c500_0":[79,58,8.2,500,0,0,0,1],"y_c500_10":[79,59,8.2,500,10,2.1,0,1],"y_c500_20":[79,58,8.5,490,20,4.4,0,1],"y_c1000_0":[79,89,11.1,1000,0,0,0,1],"y_c1000_10":[79,90,11.2,1000,10,2.1,0,1],"y_c1000_20":[79,91,11.5,990,20,4.3,0,1],"y_full_0":[79,100,12.1,1160,0,0,0,1],"y_full_10":[79,100,12,1140,10,2.1,0,1],"y_full_20":[79,100,12.1,1100,20,4.3,0,1],"s_level_0":[84,54,1.3,0,0,0,1,1],"s_level_10":[84,55,1.4,0,10,2,1,1],"s_level_20":[84,56,1.8,0,20,4.2,1,1],"s_c500_0":[84,83,4.3,500,0,0,1,1],"s_c500_10":[84,85,4.4,500,10,2,1,1],"s_c500_20":[84,86,4.8,500,20,4.1,1,1],"s_d500_0":[84,27,-2,-500,0,0,1,1],"s_d500_10":[84,28,-1.9,-500,10,2.1,1,1],"s_d500_20":[84,30,-1.4,-500,20,4.3,1,1],"a_3deg_0":[70,29,-1.3,-370,0,0,2,1],"a_3deg_10":[70,30,-1.1,-370,10,2.5,2,1],"a_3deg_20":[70,30,-0.5,-370,20,5.1,2,1],"c_level_30":[115,64,1.3,0,30,4.9,0,1],"c_level_45":[115,73,2,0,45,8.5,0,1],"c_level_60":[115,85,2.8,0,60,14.6,0,1]},"aero":{"c_level_0":[140,60,2.8,0,0,0,0,1],"c_level_10":[140,61,2.8,0,10,1.3,0,1],"c_level_20":[140,62,2.8,0,20,2.6,0,1],"c_d500_0":[140,43,0.9,-500,0,0,0,1],"c_d500_10":[140,43,0.9,-500,10,1.3,0,1],"c_d500_20":[140,44,0.9,-500,20,2.7,0,1],"c_d1000_0":[140,31,-1,-1000,0,0,0,1],"c_d1000_10":[140,32,-1,-1000,10,1.3,0,1],"c_d1000_20":[140,33,-0.9,-990,20,2.6,0,1],"c_c500_0":[140,79,4.6,500,0,0,0,1],"c_c500_10":[140,80,4.6,500,10,1.2,0,1],"c_c500_20":[140,82,4.7,500,20,2.5,0,1],"y_c500_0":[88,38,9.9,500,0,0,0,1],"y_c500_10":[88,39,10,500,10,1.9,0,1],"y_c500_20":[88,41,10.1,500,20,4,0,1],"y_c1000_0":[88,57,12.6,1000,0,0,0,1],"y_c1000_10":[88,57,12.7,1000,10,1.9,0,1],"y_c1000_20":[88,59,12.8,1010,20,3.9,0,1],"y_full_0":[89,100,21.4,2580,0,0,0,1],"y_full_10":[89,100,21.4,2560,10,1.9,0,1],"y_full_20":[89,100,21.2,2510,21,3.9,0,1],"s_level_0":[96,26,5.9,0,0,0,1,1],"s_level_10":[96,26,6,0,10,1.8,1,1],"s_level_20":[96,27,6,0,20,3.8,1,1],"s_c500_0":[96,43,8.6,500,0,0,1,1],"s_c500_10":[96,43,8.6,500,10,1.8,1,1],"s_c500_20":[96,44,8.7,500,20,3.7,1,1],"s_d500_0":[96,10,3.1,-500,0,0,1,1],"s_d500_10":[96,10,3.2,-500,10,1.9,1,1],"s_d500_20":[96,12,3.2,-500,20,3.8,1,1],"a_3deg_0":[80,6,5.7,-420,0,0,0,1],"a_3deg_10":[80,7,5.8,-420,10,2.2,0,1],"a_3deg_20":[80,8,5.9,-420,20,4.7,0,1],"c_level_30":[140,63,2.9,0,30,4.1,0,1],"c_level_45":[140,65,3,0,45,7.1,0,1],"c_level_60":[140,76,3.1,0,60,12.4,0,1]},"twin":{"c_level_0":[200,87,0.2,0,0,0,0,1],"c_level_10":[200,87,0.3,0,10,0.9,0,1],"c_level_20":[200,89,0.4,0,20,1.8,0,1],"c_d500_0":[200,66,-1.1,-500,0,0,0,1],"c_d500_10":[200,66,-1.1,-500,10,0.9,0,1],"c_d500_20":[200,68,-0.9,-500,20,1.8,0,1],"c_d1000_0":[200,53,-2.4,-1000,0,0,0,1],"c_d1000_10":[200,55,-2.4,-1000,10,0.9,0,1],"c_d1000_20":[200,55,-2.2,-1000,20,1.8,0,1],"c_c500_0":[191,100,1.9,500,0,0,0,0],"c_c500_10":[190,100,1.9,500,10,0.9,0,0],"c_c500_20":[190,100,2.2,500,20,1.8,0,0],"y_c500_0":[136,62,5.7,500,0,0,0,1],"y_c500_10":[136,61,5.7,500,10,1.2,0,1],"y_c500_20":[136,66,6,500,20,2.6,0,1],"y_c1000_0":[136,84,7.4,1000,0,0,0,1],"y_c1000_10":[136,84,7.5,1000,10,1.2,0,1],"y_c1000_20":[136,87,7.7,1000,20,2.5,0,1],"y_full_0":[136,100,8.4,1290,0,0,0,1],"y_full_10":[136,100,8.3,1260,10,1.2,0,1],"y_full_20":[136,100,8.5,1240,20,2.5,0,1],"s_level_0":[132,63,1.1,0,0,0,1,1],"s_level_10":[132,63,1.3,0,10,1.3,1,1],"s_level_20":[132,66,1.6,0,20,2.7,1,1],"s_c500_0":[132,86,3.1,500,0,0,1,1],"s_c500_10":[132,86,3.2,500,10,1.3,1,1],"s_c500_20":[132,89,3.6,500,20,2.6,1,1],"s_d500_0":[132,41,-0.9,-500,0,0,1,1],"s_d500_10":[132,42,-0.8,-500,10,1.3,1,1],"s_d500_20":[132,44,-0.4,-500,20,2.8,1,1],"a_3deg_0":[110,31,-1.7,-580,0,0,2,1],"a_3deg_10":[110,32,-1.5,-590,10,1.6,2,1],"a_3deg_20":[110,34,-1,-580,20,3.3,2,1],"c_level_30":[200,89,0.7,0,30,2.8,0,1],"c_level_45":[200,93,1.3,0,45,4.9,0,1],"c_level_60":[189,100,2.4,0,60,9,0,0]},"airliner":{"c_level_0":[272,23,2.2,0,0,0,0,1],"c_level_10":[273,23,2.2,0,10,0.6,0,1],"c_level_20":[272,35,2.4,0,20,1.3,0,1],"c_d500_0":[273,18,1.2,-500,0,0,0,1],"c_d500_10":[271,27,1.3,-500,10,0.7,0,1],"c_d500_20":[273,28,1.4,-500,20,1.3,0,1],"c_d1000_0":[279,0,0.1,-1000,0,0,0,0],"c_d1000_10":[278,0,0.1,-1000,10,0.6,0,0],"c_d1000_20":[277,0,0.3,-1000,20,1.3,0,0],"c_c500_0":[272,31,3.1,500,0,0,0,1],"c_c500_10":[271,32,3.2,500,10,0.6,0,1],"c_c500_20":[271,33,3.4,500,20,1.3,0,1],"y_c500_0":[212,39,6.2,500,0,0,0,1],"y_c500_10":[212,37,6.3,500,10,0.8,0,1],"y_c500_20":[212,31,6.4,500,20,1.7,0,1],"y_c1000_0":[209,47,7.6,1000,0,0,0,1],"y_c1000_10":[209,47,7.7,1000,10,0.8,0,1],"y_c1000_20":[209,49,7.8,1000,20,1.6,0,1],"y_full_0":[209,100,19.1,5950,0,0,0,1],"y_full_10":[209,100,19.1,5930,10,0.8,0,1],"y_full_20":[208,100,18.9,5780,20,1.6,0,1],"s_level_0":[197,42,1.8,0,0,0,1,1],"s_level_10":[197,41,1.9,0,10,0.9,1,1],"s_level_20":[197,43,2.3,0,20,1.8,1,1],"s_c500_0":[195,51,3.3,500,0,0,1,1],"s_c500_10":[195,50,3.4,500,10,0.9,1,1],"s_c500_20":[195,53,3.8,500,20,1.8,1,1],"s_d500_0":[199,36,0.3,-500,0,0,1,1],"s_d500_10":[200,35,0.3,-500,10,0.9,1,1],"s_d500_20":[200,31,0.7,-500,20,1.8,1,1],"a_3deg_0":[142,38,-2.2,-750,0,0,3,1],"a_3deg_10":[142,39,-1.8,-730,10,1.2,3,1],"a_3deg_20":[141,42,-0.8,-740,20,2.6,3,1],"c_level_30":[272,39,2.6,0,30,2.1,0,1],"c_level_45":[273,32,3,0,45,3.6,0,1],"c_level_60":[270,51,3.8,20,60,6.3,0,1]},"fighter":{"c_level_0":[354,28,3.1,0,0,0,0,1],"c_level_10":[353,28,3.1,0,10,0.5,0,1],"c_level_20":[353,28,3.1,0,20,1,0,1],"c_d500_0":[354,26,2.4,-500,0,0,0,1],"c_d500_10":[354,28,2.4,-500,10,0.5,0,1],"c_d500_20":[354,26,2.4,-500,20,1.1,0,1],"c_d1000_0":[353,22,1.6,-1000,0,0,0,1],"c_d1000_10":[353,26,1.6,-1000,10,0.5,0,1],"c_d1000_20":[353,25,1.6,-1000,20,1,0,1],"c_c500_0":[353,39,3.8,500,0,0,0,1],"c_c500_10":[353,37,3.8,500,10,0.5,0,1],"c_c500_20":[353,34,3.9,500,20,1,0,1],"y_c500_0":[199,28,11,500,0,0,0,1],"y_c500_10":[199,28,11.1,500,10,0.9,0,1],"y_c500_20":[197,32,11.3,500,20,1.8,0,1],"y_c1000_0":[199,33,12.2,1000,0,0,0,1],"y_c1000_10":[198,30,12.4,1000,10,0.8,0,1],"y_c1000_20":[196,33,12.6,1000,20,1.8,0,1],"y_full_0":[484,100,30.5,27190,0,0,0,2],"y_full_10":[487,100,30.2,27080,10,0.3,0,2],"y_full_20":[490,100,29.9,27020,20,0.7,0,2],"s_level_0":[189,28,9.1,0,0,0,1,1],"s_level_10":[188,31,9.2,0,10,0.9,1,1],"s_level_20":[186,39,9.5,0,20,1.9,1,1],"s_c500_0":[188,38,10.4,500,0,0,1,1],"s_c500_10":[188,37,10.5,500,10,0.9,1,1],"s_c500_20":[187,38,10.7,500,20,1.9,1,1],"s_d500_0":[190,27,7.5,-500,0,0,1,1],"s_d500_10":[190,27,7.6,-500,10,0.9,1,1],"s_d500_20":[188,38,7.9,-500,20,2,1,1],"a_3deg_0":[158,40,9,-830,0,0,2,1],"a_3deg_10":[159,36,8.9,-840,10,1.1,2,1],"a_3deg_20":[158,29,9.5,-810,20,2.4,2,1],"c_level_30":[352,31,3.2,0,30,1.6,0,1],"c_level_45":[353,30,3.2,0,45,2.8,0,1],"c_level_60":[350,43,3.3,0,60,5,0,1]}};
+for (const a of AIRCRAFT) if (TRIM[a.id]) a.v.cruiseThr = TRIM[a.id].c_level_0[1] / 100;
 let ACFT = AIRCRAFT[0], AC = null, WHEELS = [], TAILSKID = null, HARDPTS = [], WHEEL_BOTTOM = -1.45;
 function deriveAircraft(A) {
   const P = A.phys, m = P.mass, g = 9.81;
@@ -3037,6 +3058,7 @@ in vec3 vWorld; in vec3 vN; in vec2 vUv; in float vH;
 uniform sampler2D uPhoto;
 uniform sampler2D uNoise;
 uniform int uHasPhoto;
+uniform float uNightF;
 out vec4 outColor;
 void main(){
   vec3 n = normalize(vN);
@@ -3048,6 +3070,13 @@ void main(){
     ph = mix(vec3(lum), ph, 1.18);                                   // aerial photos are slightly hazy: restore colour
     ph = pow(max(ph, 0.0), vec3(1.12));
     col = ph * (uAmbSky * 0.55 + uSunCol * (0.46 + 0.36 * diff));
+    if (uNightF > 0.0) {
+      float sat = max(ph.r, max(ph.g, ph.b)) - min(ph.r, min(ph.g, ph.b));
+      float urban = smoothstep(0.17, 0.07, sat) * smoothstep(0.22, 0.42, lum) * (1.0 - smoothstep(0.0, 0.25, 1.0 - n.y));
+      float sp = texture(uNoise, vWorld.xz / 31.0).b, sp2 = texture(uNoise, vWorld.xz / 3.7).b, sp3 = texture(uNoise, vWorld.xz / 610.0).a;
+      vec3 lights = mix(vec3(1.0, 0.66, 0.32), vec3(0.95, 0.95, 1.0), step(0.6, sp)) * urban * (smoothstep(0.58, 0.82, sp2) * 1.6 + 0.10) * (0.5 + sp3);
+      col = col * 0.6 + lights * 1.2;
+    }
   } else {
     float d1 = texture(uNoise, vWorld.xz / 61.0).b, d2 = texture(uNoise, vWorld.xz / 9.0).b, d3 = texture(uNoise, vWorld.xz / 2300.0).a, d4 = texture(uNoise, vWorld.xz / 700.0).b;
     float slope = 1.0 - n.y, h = vH;
@@ -3152,6 +3181,80 @@ function drawJapanRunways() {
   gl.bindTexture(gl.TEXTURE_2D, runwayTex);
   gl.activeTexture(gl.TEXTURE0);
   gl.disable(gl.POLYGON_OFFSET_FILL);
+}
+// ---------- lights: runway edge/threshold/approach lights and the aircraft's navigation lights ----------
+const LIGHT_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec4 aCol;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv;
+uniform float uPx;
+out vec4 vCol;
+void main(){
+  vec3 w = aPos; vec2 d = w.xz - uCamPos.xz; w.y -= dot(d, d) * uCurv;
+  float dist = length(aPos - uCamPos);
+  gl_Position = uViewProj * vec4(w, 1.0);
+  gl_PointSize = clamp(uPx * aCol.a * 900.0 / max(dist, 1.0), 1.5, 14.0);
+  vCol = vec4(aCol.rgb, clamp(1.4 - dist / 26000.0, 0.0, 1.0));
+}`;
+const LIGHT_FS = GLSL_HEAD + `
+in vec4 vCol;
+out vec4 outColor;
+void main(){
+  vec2 p = gl_PointCoord * 2.0 - 1.0;
+  float r = dot(p, p);
+  if (r > 1.0) discard;
+  float a = exp(-r * 3.5) * vCol.a;
+  outColor = vec4(vCol.rgb * a * 1.6, a);
+}`;
+let progLight = null, lightBuf = null;
+function runwayLightPoints(r) {
+  if (r.lights && r.lightsOv === JW.ov) return r.lights;
+  const [cx, cz] = geoToWorld(r.lat, r.lon), L = r.len / 2, W = r.wid / 2 + 1.5, y = r.elev + 0.6;
+  const dir = [r.sin, -r.cos], perp = [r.cos, r.sin], out = [];
+  const P = (u, v, yy, c, s) => out.push(cx + dir[0] * u + perp[0] * v, yy, cz + dir[1] * u + perp[1] * v, c[0], c[1], c[2], s);
+  for (let u = -L; u <= L + 1; u += 60) { const c = Math.abs(u) > L - 600 ? [1, 0.85, 0.45] : [1, 0.96, 0.85]; P(u, W, y, c, 1); P(u, -W, y, c, 1); }
+  for (let v = -W; v <= W + 0.1; v += 4) { P(-L - 2, v, y, [0.3, 1, 0.45], 1.1); P(L + 2, v, y, [0.3, 1, 0.45], 1.1); }
+  for (let v = -W; v <= W + 0.1; v += 6) { P(-L + 3, v, y, [1, 0.2, 0.15], 0.8); P(L - 3, v, y, [1, 0.2, 0.15], 0.8); }
+  for (const sgn of [-1, 1]) for (let k = 1; k <= 30; k++) {                 // approach light bars, 900 m
+    const u = sgn * (L + k * 30);
+    const g = Math.max(jwHeightGeo(...worldToGeo(cx + dir[0] * u, cz + dir[1] * u)), r.elev) + 1.2;
+    for (let v = -6; v <= 6; v += 3) P(u, v, g, [1, 0.97, 0.9], k % 10 === 0 ? 1.4 : 1);
+  }
+  r.lights = new Float32Array(out); r.lightsOv = JW.ov;
+  return r.lights;
+}
+function drawLights() {
+  const night = ENV.night ? 1 : ENV === TOD.evening ? 0.55 : 0;
+  if (!night) return;
+  if (!progLight) { progLight = makeProgram(LIGHT_VS, LIGHT_FS); lightBuf = gl.createBuffer(); JW.lightVAO = gl.createVertexArray();
+    gl.bindVertexArray(JW.lightVAO); gl.bindBuffer(gl.ARRAY_BUFFER, lightBuf);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 28, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 28, 12); gl.bindVertexArray(null); }
+  const parts = [];
+  if (JW.active) {
+    const [lat, lon] = worldToGeo(R.eye[0], R.eye[2]);
+    for (const r of JW.rws) if (Math.abs(r.lat - lat) < 0.25 && Math.abs(r.lon - lon) < 0.3 && geoDist(lat, lon, r.lat, r.lon) < 25000) parts.push(runwayLightPoints(r));
+  }
+  // navigation lights: red left tip, green right tip, white tail, flashing strobes
+  if (!(sim.crashed && game.state !== 'menu')) {
+    const rt = qrot(sim.q, [1, 0, 0]), fw = qrot(sim.q, [0, 0, -1]), half = (AC.b || 10) / 2 - 0.2;
+    const tip = s => vadd(sim.pos, vscale(rt, half * s)), strobe = (R.time % 1.2) < 0.08 ? 1 : 0;
+    const nav = [...tip(-1), 1, 0.12, 0.1, 0.5, ...tip(1), 0.1, 1, 0.3, 0.5, ...vadd(sim.pos, vscale(fw, -(ACFT.phys.L || 8) * 0.5)), 1, 1, 1, 0.4];
+    if (strobe) nav.push(...tip(-1), 1, 1, 1, 1.2, ...tip(1), 1, 1, 1, 1.2);
+    parts.push(new Float32Array(nav));
+  }
+  let n = 0; for (const p of parts) n += p.length;
+  if (!n) return;
+  const all = new Float32Array(n); let o = 0; for (const p of parts) { all.set(p, o); o += p.length; }
+  setCommon(progLight);
+  gl.uniform1f(progLight.u.uPx, (R.H / 900) * night);
+  gl.bindVertexArray(JW.lightVAO);
+  gl.bindBuffer(gl.ARRAY_BUFFER, lightBuf); gl.bufferData(gl.ARRAY_BUFFER, all, gl.STREAM_DRAW);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE); gl.depthMask(false);
+  gl.drawArrays(gl.POINTS, 0, n / 7);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 }
 // clouds live on a lat/lon grid around the aircraft
 function jwUpdateClouds() {
@@ -3345,6 +3448,17 @@ function drawMapTo(g, x, y, w, h, lat, lon, zoom, opt = {}) {
     g.fillStyle = p.k === 'm' ? '#6b4a1e' : '#1d2733';
     g.beginPath(); g.arc(s[0], s[1], 2.5, 0, 7); g.fill();
     g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = 3; g.strokeText(p.n, s[0] + 5, s[1]); g.fillText(p.n, s[0] + 5, s[1]);
+  }
+  // landmarks (sightseeing)
+  if (opt.labels && zoom >= 6.5 && typeof LANDMARKS !== 'undefined') {
+    g.font = `700 12px ${UI}`;
+    for (const l of LANDMARKS) {
+      const sp = P(l[1], l[2]); if (!inView(sp)) continue;
+      const tw = g.measureText('★' + l[0]).width;
+      if (!fits(sp[0] - 7, sp[1] - 8, tw + 10, 16)) continue;
+      g.strokeStyle = 'rgba(255,255,255,0.9)'; g.lineWidth = 3; g.strokeText('★' + l[0], sp[0] - 6, sp[1]);
+      g.fillStyle = '#b07800'; g.fillText('★' + l[0], sp[0] - 6, sp[1]);
+    }
   }
   // airports & runways
   for (let i = aps.length - 1; i >= 0; i--) {
@@ -3695,7 +3809,7 @@ function cityWorkerMain() {
       return v++;
     };
     const tri = (a, b, c) => { if (q + 3 > idx.length) { const g = new Uint32Array(idx.length * 2); g.set(idx); idx = g; } idx[q++] = a; idx[q++] = b; idx[q++] = c; };
-    const boxes = [], ringXZ = [], ringOff = [0];
+    const boxes = [], ringXZ = [], ringOff = [0], bRange = [], bCen = [];
     let maxTop = -1e9, minG = 1e9;
     for (let bi = 0; bi < bpolys.length; bi++) {
       const poly = bpolys[bi], pr = poly.props, ext = poly.rings[0];
@@ -3711,6 +3825,7 @@ function cityWorkerMain() {
       const gc = ground(cx, cy); gmin = Math.min(gmin, gc); gmax = Math.max(gmax, gc);
       const base = gmin, top = (gmin + gmax) / 2 + h, bot = mh > 0 ? (gmin + gmax) / 2 + mh : base - 2.5;
       const H = top - base, seed = hash(ext[0] + bi * 7, ext[1]) & 255;
+      const iStart = q;
       maxTop = Math.max(maxTop, top); minG = Math.min(minG, bot);
       // walls
       for (const r of poly.rings) {
@@ -3739,6 +3854,7 @@ function cityWorkerMain() {
           if (e1z * e2x - e1x * e2z >= 0) tri(v0 + a, v0 + b, v0 + c); else tri(v0 + a, v0 + c, v0 + b);
         }
       }
+      bRange.push(iStart, q - iStart); bCen.push(lx(cx), lz(cy));
       // collision footprint (outer ring, local metres)
       let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
       for (let i = 0; i < ext.length; i += 2) { const X = lx(ext[i]), Z = lz(ext[i + 1]); ringXZ.push(X, Z); x0 = Math.min(x0, X); x1 = Math.max(x1, X); z0 = Math.min(z0, Z); z1 = Math.max(z1, Z); }
@@ -3791,7 +3907,7 @@ function cityWorkerMain() {
     const res = {
       id: m.id, nv: v, ni: q, vb: vbuf, ib: ib.buffer, trees: tr.buffer, nTrees: tr.length / 4,
       boxes: new Float32Array(boxes).buffer, ringXZ: new Float32Array(ringXZ).buffer, ringOff: new Uint32Array(ringOff).buffer,
-      cells: cellCount.buffer, items: items.buffer, maxTop: nb ? maxTop : -1e9, minG: nb ? minG : 0, nBuild: nb, W, Hm,
+      cells: cellCount.buffer, items: items.buffer, bRange: new Uint32Array(bRange).buffer, bCen: new Float32Array(bCen).buffer, maxTop: nb ? maxTop : -1e9, minG: nb ? minG : 0, nBuild: nb, W, Hm,
     };
     return res;
   }
@@ -3810,7 +3926,7 @@ function cityWorkerMain() {
       if (r.status === 404 || r.status === 204) { postMessage({ id: m.id, empty: true }); return; }
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const res = build(new Uint8Array(await r.arrayBuffer()), m);
-      postMessage(res, [res.vb, res.ib, res.trees, res.boxes, res.ringXZ, res.ringOff, res.cells, res.items]);
+      postMessage(res, [res.vb, res.ib, res.trees, res.boxes, res.ringXZ, res.ringOff, res.cells, res.items, res.bRange, res.bCen]);
     } catch (err) { postMessage({ id: m.id, error: String((err && err.message) || err) }); }
   };
 }
@@ -3916,7 +4032,8 @@ function cityReceive(r) {
     gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 20, 4);
     gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.BYTE, true, 20, 8);
     gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.SHORT, false, 20, 12);
-    const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(r.ib), gl.STATIC_DRAW);
+    t.ibCpu = new Uint32Array(r.ib); t.bRange = new Uint32Array(r.bRange); t.bCen = new Float32Array(r.bCen); t.hideKey = '';
+    const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, t.ibCpu, gl.STATIC_DRAW);
     gl.bindVertexArray(null);
     t.vao = vao; t.vb = vb; t.ib = ib;
     CITY.verts += r.nv;
@@ -3931,6 +4048,34 @@ function cityReceive(r) {
     CITY.trees += r.nTrees;
   }
   t.ov = -1;
+  if (typeof PLAT !== 'undefined' && PLAT.rects.length) cityApplyHidden(t, PLAT.rects);
+}
+// hide OSM buildings that a loaded PLATEAU model already shows (rects: [south, west, north, east] in degrees)
+function cityApplyHidden(t, rects) {
+  if (!t.vao || !t.bRange) return;
+  const hit = rects.filter(r => r[0] < t.latN && r[2] > t.latS && r[1] < t.lonE && r[3] > t.lonW);
+  const key = hit.map(r => r[4]).join(',');
+  if (key === t.hideKey) return false;
+  t.hideKey = key;
+  let out;
+  if (!hit.length) out = t.ibCpu;
+  else {
+    out = new Uint32Array(t.ibCpu.length); let n = 0;
+    const nb = t.bRange.length / 2;
+    for (let b = 0; b < nb; b++) {
+      const lat = t.latN - t.bCen[b * 2 + 1] / KZ, lon = t.lonW + t.bCen[b * 2] / t.kxN;
+      let hidden = false;
+      for (const r of hit) if (lat > r[0] && lat < r[2] && lon > r[1] && lon < r[3]) { hidden = true; break; }
+      if (hidden) continue;
+      const s0 = t.bRange[b * 2], c = t.bRange[b * 2 + 1];
+      out.set(t.ibCpu.subarray(s0, s0 + c), n); n += c;
+    }
+    out = out.subarray(0, n);
+  }
+  gl.bindVertexArray(null);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, t.ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, out, gl.STATIC_DRAW);
+  t.ni = out.length;
+  return true;
 }
 function cityDispose(t) {
   if (t.vao) { gl.deleteVertexArray(t.vao); gl.deleteBuffer(t.vb); gl.deleteBuffer(t.ib); CITY.verts -= t.nv; }
@@ -3991,7 +4136,7 @@ function drawCity(planes) {
   const pr = CITY.prog, u = pr.u;
   setCommon(pr);
   gl.uniform1i(u.uNoise, 2);
-  gl.uniform1f(u.uNight, clamp((0.3 - ENV.sunDir[1]) * 4, 0, 1));
+  gl.uniform1f(u.uNight, ENV.night ? 1 : clamp((0.3 - ENV.sunDir[1]) * 4, 0, 1));
   gl.enable(gl.CULL_FACE);
   for (const t of CITY.tiles.values()) {
     if (!t.vao) continue;
@@ -4207,6 +4352,527 @@ void main(){
   vec3 col = c * (uSunCol * light * 0.75 + uAmbSky * 0.9);
   outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
 }`;
+// PLATEAU (MLIT) textured LOD2 building datasets: [name, path under assets/, south, west, north, east]
+const PLATEAU_BASE = "https://assets.cms.plateau.reearth.io/assets/";
+const PLATEAU_SETS = [["札幌市 中央区","16/06e56d-a2d4-4fe4-ac91-b2762b96e033/01100_sapporo-shi_city_2020_citygml_7_op_bldg_3dtiles_01101_chuo-ku_lod2",43.01327,141.24832,43.08448,141.3884],["札幌市 北区","0d/7900b4-4d6c-4720-8edd-2f129b431235/01100_sapporo-shi_city_2020_citygml_7_op_bldg_3dtiles_01102_kita-ku_lod2",43.06729,141.26753,43.18428,141.43369],["札幌市 東区","18/cbc248-5c55-4a9e-a20d-78055b72b6d9/01100_sapporo-shi_city_2020_citygml_7_op_bldg_3dtiles_01103_higashi-ku_lod2",43.06847,141.34373,43.1565,141.45626],["札幌市 西区","f0/03f2fd-3a52-4620-97a9-6b55a0e81933/01100_sapporo-shi_city_2020_citygml_7_op_bldg_3dtiles_01107_nishi-ku_lod2",43.02797,141.19307,43.11587,141.32762],["青森県 鰺ヶ沢町","67/fba68b-9697-4c35-9cdc-2baa0c48716c/02321_ajigasawa-machi_city_2025_citygml_1_op_bldg_3dtiles_lod2",40.76876,140.18054,40.7866,140.23835],["岩手県 盛岡市","01/3332d3-97b0-4854-8b28-c6f2d73b35e3/03201_morioka-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",39.60265,141.01496,39.89853,141.20361],["岩手県 宮古市","9b/54b0fb-92ca-4823-b90a-41a1342d8545/03202_miyako-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",39.55054,141.84797,39.74781,141.98549],["仙台市 青葉区","29/10aacf-3830-4ded-8adc-f58ecc71772e/04100_sendai-shi_city_2024_citygml_1_op_bldg_3dtiles_04101_aoba-ku_lod2",38.23958,140.72421,38.32264,140.89968],["仙台市 宮城野区","df/87cf81-c64a-43df-8365-117b6d1a961b/04100_sendai-shi_city_2024_citygml_1_op_bldg_3dtiles_04102_miyagino-ku_lod2",38.23332,140.88272,38.33559,141.04346],["秋田県 大館市","be/1cbeb6-445b-45ad-a5b1-5d1f7425efcb/05204_odate-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",40.25499,140.52616,40.30428,140.58441],["福島県 福島市","5d/b7d2dc-415b-42ea-989e-1893f59c6c2a/07201_fukushima-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",37.64753,140.35518,37.85556,140.53345],["福島県 郡山市","89/6f5d07-3a44-4462-93b4-7a9d30270962/07203_koriyama-shi_city_2020_citygml_9_op_bldg_3dtiles_lod2",37.32417,140.25036,37.49549,140.44254],["福島県 いわき市","03/e813e9-dc42-442d-8526-70cd6b8169fe/07204_iwaki-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",36.85752,140.72281,37.15768,141.00016],["福島県 白河市","9b/3d05bf-4d1e-4d47-b6b1-39719deeecb8/07205_shirakawa-shi_city_2020_citygml_8_op_bldg_3dtiles_lod2",37.02281,140.14356,37.24057,140.41274],["福島県 相馬市","c9/53b140-2a81-4e09-bc05-d4c33251926a/07209_soma-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",37.72155,140.68199,37.84344,141.01139],["福島県 南相馬市","d6/da863e-5a43-4585-bef2-4744a827e223/07212_minamisouma-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2",37.51065,140.906,37.74416,141.03323],["茨城県 つくば市","44/60c228-5d7c-426d-8cbd-13407ee83578/08220_tsukuba-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",35.94757,139.99869,36.23608,140.17271],["茨城県 鉾田市","0f/2fa8bd-5d59-4ded-ad3c-334b92d6e8fe/08234_hokota-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2",36.06407,140.41802,36.27014,140.61027],["茨城県 境町","17/011e91-1043-404e-9064-5cf5bfc16aac/08546_sakai-machi_city_2023_citygml_2_op_bldg_3dtiles_lod2",36.06029,139.76192,36.15476,139.84979],["栃木県 宇都宮市","a9/d11fa4-af62-44ba-a221-c60761e5c884/09201_utsunomiya-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",36.46516,139.74488,36.72539,140.0114],["群馬県 前橋市","7c/4010a7-82ca-4fba-9c2f-43b327c6534b/10201_maebashi-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",36.31808,139.00237,36.56002,139.23032],["群馬県 桐生市","3a/b115f4-03f6-44b3-bd75-b73ac06696dc/10203_kiryu-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",36.36187,139.20354,36.52962,139.43489],["群馬県 館林市","7e/ea6c2e-6dc8-445b-a82f-df4450de84f6/10207_tatebayashi-shi_city_2020_citygml_8_op_bldg_3dtiles_lod2",36.21047,139.4587,36.28357,139.62311],["さいたま市 大宮区","fb/dd5dd6-eae8-4173-9c3c-73516fdc0c10/11100_saitama-shi_city_2025_citygml_1_op_bldg_3dtiles_11103_omiya-ku_lod2",35.88777,139.59588,35.92511,139.64941],["さいたま市 中央区","db/bc8662-fa14-4e03-a702-e366e367b1d4/11100_saitama-shi_city_2025_citygml_1_op_bldg_3dtiles_11105_chuo-ku_lod2",35.85473,139.60425,35.90234,139.64583],["さいたま市 浦和区","54/f558f0-9676-4976-b72e-325df2165799/11100_saitama-shi_city_2025_citygml_1_op_bldg_3dtiles_11107_urawa-ku_lod2",35.84676,139.63324,35.90136,139.66871],["さいたま市 南区","aa/d72d50-1fd6-4b49-8d03-8dfcc0789d02/11100_saitama-shi_city_2025_citygml_1_op_bldg_3dtiles_11108_minami-ku_lod2",35.82868,139.6185,35.86693,139.69793],["さいたま市 緑区","7b/41590b-da57-4fba-9140-269ddf6bbb13/11100_saitama-shi_city_2025_citygml_1_op_bldg_3dtiles_11109_midori-ku_lod2",35.85711,139.66132,35.9161,139.74447],["さいたま市 岩槻区","61/f34b51-0fa0-476c-ad4c-c0433310b3ee/11100_saitama-shi_city_2025_citygml_1_op_bldg_3dtiles_11110_iwatsuki-ku_lod2",35.8802,139.65336,36.00237,139.75725],["埼玉県 熊谷市","58/440871-4efa-42ba-9b90-a569136c2b64/11202_kumagaya-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",36.0697,139.29015,36.25313,139.44001],["埼玉県 川口市","2d/85f566-430a-4f23-8ece-86b79b578300/11203_kawaguchi-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2",35.78318,139.67508,35.8869,139.78803],["埼玉県 秩父市","cd/cd4906-8b78-4986-b226-474d1973915e/11207_chichibu-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.95086,139.01796,36.05957,139.154],["埼玉県 所沢市","1f/b946e6-0bb9-4c34-8c46-89af9080aed3/11208_tokorozawa-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2",35.76629,139.38468,35.84242,139.54565],["埼玉県 加須市","4f/6c8d2e-9009-4ea4-b5fe-7eca94d44f88/11210_kazo-shi_pref_2023_citygml_2_op_bldg_3dtiles_lod2",36.07181,139.52402,36.21392,139.69923],["埼玉県 本庄市","52/4a7ecd-d9ab-4c5b-9e00-4f7def463494/11211_honjo-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",36.12118,139.06209,36.26923,139.24658],["埼玉県 春日部市","96/856604-bfb4-4a20-957e-1f472e73d71e/11214_kasukabe-shi_pref_2023_citygml_2_op_bldg_3dtiles_lod2",35.93541,139.70834,36.04058,139.83022],["埼玉県 狭山市","04/cb8140-d354-4b93-8e0e-f20db216526a/11215_sayama-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.81773,139.36212,35.89885,139.47722],["埼玉県 羽生市","55/52b551-d6a8-4a0a-975f-46c15991c0be/11216_hanyu-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",36.13683,139.48839,36.20554,139.61224],["埼玉県 鴻巣市","ef/6d4771-89d4-4ce7-90c2-6c79300d6404/11217_konosu-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2",36.03058,139.43224,36.12237,139.5698],["埼玉県 深谷市","c6/0e9c87-d124-4b4f-a38d-26af0af6ddac/11218_fukaya-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",36.10491,139.18297,36.24537,139.33626],["埼玉県 上尾市","ed/05e629-6afb-4f8b-b2a5-c98bd247d951/11219_ageo-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.92585,139.53555,36.00971,139.64984],["埼玉県 草加市","f5/c8ea6e-d6f1-4a6d-9d04-9dee4f076554/11221_soka-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.8054,139.76375,35.87137,139.83905],["埼玉県 越谷市","ad/279bb7-f67b-488c-99ea-42218b2d5bcd/11222_koshigaya-shi_pref_2023_citygml_2_op_bldg_3dtiles_lod2",35.85496,139.74545,35.95818,139.83893],["埼玉県 蕨市","47/4174c0-b95e-431a-8421-e63258999700/11223_warabi-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2",35.81374,139.66288,35.83553,139.70989],["埼玉県 入間市","fe/607cef-6fb1-4491-aca6-31091bb369a4/11225_iruma-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.78407,139.31693,35.86183,139.41941],["埼玉県 朝霞市","a8/ebef91-2c76-4d93-817d-e855ccf7fcc2/11227_asaka-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.78451,139.57303,35.83286,139.62166],["埼玉県 志木市","fd/146941-bdc3-45fd-8448-ef978fab6363/11228_shiki-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2",35.81864,139.55555,35.85914,139.60514],["埼玉県 和光市","d1/74f31a-818d-44e2-9c6d-fe5bb7b17c17/11229_wako-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.76665,139.59697,35.81155,139.6461],["埼玉県 新座市","c1/593f99-0d60-46a3-8bca-f2876b99b09d/11230_niiza-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2",35.75352,139.5168,35.82533,139.59073],["埼玉県 桶川市","c4/53aecc-a1b2-4b1d-b382-64d36b2ebe6e/11231_okegawa-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.96711,139.50725,36.04046,139.59552],["埼玉県 久喜市","c7/1b6151-c47e-4066-be04-efb9b29c3b48/11232_kuki-shi_pref_2023_citygml_2_op_bldg_3dtiles_lod2",36.02929,139.55871,36.14386,139.72518],["埼玉県 北本市","fe/990eb7-d2bb-421d-a829-32ac54e0a57b/11233_kitamoto-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",36.001,139.50401,36.05739,139.56428],["埼玉県 八潮市","0b/07cae5-17dd-4486-acc8-288c204c474b/11234_yashio-shi_pref_2023_citygml_2_op_bldg_3dtiles_lod2",35.79153,139.81162,35.85816,139.86687],["埼玉県 富士見市","0b/e02632-8a41-4277-87a1-347345a20817/11235_fujimi-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2",35.82779,139.51128,35.8873,139.58656],["埼玉県 三郷市","4b/de5b11-3aa2-4728-8397-5bfbce21d119/11237_misato-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2",35.78139,139.84105,35.86787,139.89504],["埼玉県 蓮田市","99/4a92d1-6f1c-434a-9a64-080e3059c052/11238_hasuda-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2",35.9619,139.59072,36.03688,139.69433],["埼玉県 坂戸市","2d/5a08bd-47c9-4c15-ac2b-dc9cb224b38e/11239_sakado-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.92007,139.32441,35.99566,139.465],["埼玉県 幸手市","da/b287af-7545-4482-b0fe-307be0e63a56/11240_satte-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2",36.03816,139.69174,36.1092,139.78786],["埼玉県 鶴ヶ島市","bf/6ad950-6a23-411e-b33f-1d83b148eea4/11241_tsurugashima-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2",35.91431,139.3525,35.9582,139.42876],["埼玉県 吉川市","a4/5c7cbe-3b92-4031-b9dd-dc86eebbd8d0/11243_yoshikawa-shi_pref_2023_citygml_2_op_bldg_3dtiles_lod2",35.85986,139.82891,35.93938,139.8951],["埼玉県 ふじみ野市","28/b3729f-0be5-4056-802f-040105943033/11245_fujimino-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.84296,139.47469,35.89204,139.55062],["埼玉県 白岡市","e6/660030-7984-4482-b3a4-3f1e1b0195fd/11246_shiraoka-shi_pref_2023_citygml_2_op_bldg_3dtiles_lod2",35.99622,139.60384,36.04727,139.71246],["埼玉県 伊奈町","7b/3eff82-9f8b-46a5-8a95-c3d10a6ea70c/11301_ina-machi_pref_2024_citygml_1_op_bldg_3dtiles_lod2",35.97027,139.59141,36.02699,139.64582],["埼玉県 三芳町","96/5f62dc-9c0e-4fa7-a90c-1822ce77f6f8/11324_miyoshi-machi_pref_2024_citygml_1_op_bldg_3dtiles_lod2",35.81466,139.4787,35.85186,139.55453],["埼玉県 毛呂山町","70/789df7-0c85-4086-b5f0-403a1ac253c0/11326_moroyama-machi_city_2020_citygml_10_op_bldg_3dtiles_lod2",35.90204,139.26646,35.96749,139.36092],["埼玉県 滑川町","9d/64442e-84f6-4d4c-b5ae-585ae1979bb9/11341_namegawa-machi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",36.03699,139.32118,36.10341,139.38719],["埼玉県 嵐山町","ef/9f3222-944d-4af1-ada5-724ea2793306/11342_ranzan-machi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",36.00909,139.28888,36.10959,139.34327],["埼玉県 小川町","ca/d81f0c-6c10-4561-b319-b04f8441326a/11343_ogawa-machi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",36.01862,139.18977,36.09876,139.3078],["埼玉県 川島町","d2/1a3f2d-85d0-4ae5-9213-6c06f2e5f909/11346_kawajima-machi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.94833,139.42473,36.01932,139.54224],["埼玉県 吉見町","d2/bd39e0-22e9-4ca6-ade0-96b9f9e65ec1/11347_yoshimi-machi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",36.01266,139.41386,36.08188,139.49946],["埼玉県 鳩山町","bb/0b9c36-b2a1-433a-bd7a-dedfd59e5127/11348_hatoyama-machi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.96189,139.28761,36.01001,139.37621],["埼玉県 上里町","cd/c7b954-7625-42e1-a671-3d604afb3ef1/11385_kamisato-machi_pref_2024_citygml_1_op_bldg_3dtiles_lod2",36.21905,139.09986,36.2777,139.17173],["埼玉県 寄居町","89/39eae0-b1b3-4423-a744-14e4e6cdd145/11408_yorii-machi_city_2025_citygml_1_op_bldg_3dtiles_lod2",36.07681,139.13856,36.17569,139.28918],["埼玉県 宮代町","c7/28c040-2896-4abf-b619-aa879c7f50a3/11442_miyashiro-machi_pref_2023_citygml_2_op_bldg_3dtiles_lod2",35.99679,139.68319,36.05763,139.75275],["埼玉県 杉戸町","41/6fc695-9182-419a-bae6-2a5f38bcf84b/11464_sugito-machi_pref_2023_citygml_2_op_bldg_3dtiles_lod2",35.99959,139.69774,36.06216,139.80577],["埼玉県 松伏町","55/9003db-7993-4580-a4ef-25504b8a97ff/11465_matsubushi-machi_pref_2023_citygml_2_op_bldg_3dtiles_lod2",35.90653,139.80302,35.96685,139.84877],["千葉市 中央区","19/3f90ce-ffa2-4dfa-945e-e84161ec4a0d/12100_chiba-shi_city_2024_citygml_1_op_bldg_3dtiles_12101_chuo-ku_lod2",35.54286,140.08323,35.62894,140.17449],["千葉県 木更津市","1e/225359-e1d4-4fb7-a0cc-fc47cd1812f7/12206_kisarazu-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",35.3167,139.88856,35.44402,140.12806],["千葉県 茂原市","52/097c4c-b6cb-4f2f-8ad8-a9cc57808bf8/12210_mobara-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2",35.38023,140.2452,35.50241,140.38131],["千葉県 柏市","d7/e3b0a2-850c-452d-bf50-b665c3186954/12217_kashiwa-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",35.78051,139.91251,35.93123,140.1101],["千葉県 八千代市","e5/be8b14-f1cf-41bb-a623-3fb1b2b184b8/12221_yachiyo-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2",35.69209,140.06282,35.78324,140.14796],["千葉県 多古町","ac/9f223f-69bb-4824-a53a-e349f317c0fa/12347_tako-machi_city_2025_citygml_1_op_bldg_3dtiles_lod2",35.69231,140.40255,35.78642,140.48015],["東京都 千代田区","28/07d0a1-b6be-46ef-bd87-4f0683b5ef6e/13101_chiyoda-ku_pref_2025_citygml_1_op_bldg_3dtiles_13101_chiyoda-ku_lod2",35.66901,139.73017,35.70518,139.78277],["東京都 中央区","09/83a3f6-6605-477c-84dc-a973008b5a27/13102_chuo-ku_pref_2025_citygml_1_op_bldg_3dtiles_13102_chuo-ku_lod2",35.64627,139.75884,35.69644,139.79198],["東京都 港区","b5/b5f79e-0c6c-4fc7-adde-6522014243a2/13103_minato-ku_pref_2025_citygml_1_op_bldg_3dtiles_13103_minato-ku_lod2",35.61883,139.70885,35.68248,139.78244],["東京都 新宿区","00/bed0bd-f882-4cde-b942-21d0f8d2ddc2/13104_shinjuku-ku_pref_2025_citygml_1_op_bldg_3dtiles_13104_shinjuku-ku_lod2",35.67353,139.67329,35.72973,139.74444],["東京都 文京区","c6/c5c89a-859d-4dce-8e25-04e02a39b270/13105_bunkyo-ku_pref_2025_citygml_1_op_bldg_3dtiles_13105_bunkyo-ku_lod2",35.69957,139.7173,35.73588,139.77244],["東京都 台東区","75/76c6bc-df54-4bf4-a869-b513526b5bd2/13106_taito-ku_city_2025_citygml_1_op_bldg_3dtiles_lod2",35.69525,139.76241,35.73159,139.80881],["東京都 墨田区","9d/d19b09-1e4d-4315-804b-d62c0124f1e3/13107_sumida-ku_pref_2025_citygml_1_op_bldg_3dtiles_13107_sumida-ku_lod2",35.68677,139.78972,35.74244,139.83961],["東京都 江東区","80/e01efb-831d-4752-a10e-63b407ee2201/13108_koto-ku_pref_2025_citygml_1_op_bldg_3dtiles_13108_koto-ku_lod2",35.5787,139.77017,35.70757,139.84927],["東京都 品川区","e3/6b15f6-43f5-442f-abb8-dea27f5b16c3/13109_shinagawa-ku_pref_2025_citygml_1_op_bldg_3dtiles_13109_shinagawa-ku_lod2",35.58507,139.69524,35.64155,139.77355],["東京都 目黒区","66/f1f857-965f-4850-827e-4d7aae84d879/13110_meguro-ku_pref_2025_citygml_1_op_bldg_3dtiles_13110_meguro-ku_lod2",35.60063,139.66168,35.66406,139.71772],["東京都 大田区","a9/ea2016-3ecc-4dc4-84f8-488b13f2816b/13111_ota-ku_pref_2025_citygml_1_op_bldg_3dtiles_13111_ota-ku_lod2",35.52342,139.65288,35.6131,139.82542],["東京都 世田谷区","bc/1c2533-8fb5-4b1b-a6fc-37caa55b3f53/13112_setagaya-ku_pref_2025_citygml_1_op_bldg_3dtiles_13112_setagaya-ku_lod2",35.59188,139.58252,35.68284,139.68649],["東京都 渋谷区","16/b016d3-42ef-4428-ad99-d229310b39fd/13113_shibuya-ku_pref_2025_citygml_1_op_bldg_3dtiles_13113_shibuya-ku_lod2",35.64125,139.6614,35.69211,139.72377],["東京都 中野区","69/c68a38-eae5-4a70-b981-497109b3e7f7/13114_nakano-ku_pref_2025_citygml_1_op_bldg_3dtiles_13114_nakano-ku_lod2",35.67661,139.62428,35.73552,139.69411],["東京都 杉並区","df/8baea0-cf08-472e-a3fe-ae42aa939560/13115_suginami-ku_city_2025_citygml_1_op_bldg_3dtiles_13115_suginami-ku_lod2",35.66592,139.58516,35.73045,139.66753],["東京都 豊島区","a6/85dfbe-994a-4da4-90fc-ec7f4661d469/13116_toshima-ku_pref_2025_citygml_1_op_bldg_3dtiles_13116_toshima-ku_lod2",35.71243,139.67767,35.74593,139.75263],["東京都 北区","fc/e0156d-7dbe-45a0-a379-0d62ae2348d8/13117_kita-ku_pref_2025_citygml_1_op_bldg_3dtiles_13117_kita-ku_lod2",35.73174,139.68947,35.79546,139.77066],["東京都 荒川区","0f/762e7a-da56-427d-827b-2c9dfc29edab/13118_arakawa-ku_pref_2025_citygml_1_op_bldg_3dtiles_13118_arakawa-ku_lod2",35.7248,139.74951,35.7542,139.81345],["東京都 板橋区","17/6b90ce-370e-4787-9c83-4c7905d0d82a/13119_itabashi-ku_pref_2025_citygml_1_op_bldg_3dtiles_13119_itabashi-ku_lod2",35.73584,139.62453,35.79952,139.72275],["東京都 練馬区","1b/b26cf7-16e5-41a8-8867-7e4cccbb9d10/13120_nerima-ku_pref_2025_citygml_1_op_bldg_3dtiles_13120_nerima-ku_lod2",35.71184,139.56303,35.77998,139.68111],["東京都 足立区","07/090a83-e971-41f3-afee-9bddaa166c29/13121_adachi-ku_pref_2025_citygml_1_op_bldg_3dtiles_13121_adachi-ku_lod2",35.73924,139.73668,35.8175,139.85776],["東京都 葛飾区","75/8a1ab9-084d-4d29-9ac9-3591a73267c8/13122_katsushika-ku_pref_2025_citygml_1_op_bldg_3dtiles_13122_katsushika-ku_lod2",35.71224,139.81339,35.79664,139.89055],["東京都 江戸川区","ab/8f247e-adad-49c8-8ead-038bf23c8f00/13123_edogawa-ku_pref_2025_citygml_1_op_bldg_3dtiles_13123_edogawa-ku_lod2",35.63794,139.83372,35.75054,139.91755],["東京都 八王子市","5b/5071b2-6b29-40b8-99a9-890e22b8feff/13201_hachioji-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.59801,139.16646,35.71732,139.42987],["東京都 立川市","6b/861a0f-060e-4fee-929f-8c023a1f3227/13202_tachikawa-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.68305,139.35356,35.74403,139.44608],["東京都 武蔵野市","5a/227f7c-af33-4c90-8f75-7d7b18400b74/13203_musashino-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.69427,139.52475,35.72174,139.59547],["東京都 三鷹市","f2/3b146e-b063-4160-bfeb-084da71c967c/13204_mitaka-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.66002,139.52505,35.70703,139.59387],["東京都 青梅市","9a/8e3df9-57dd-4e7f-a852-8c47ae2420e1/13205_ome-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.75722,139.1416,35.84396,139.33019],["東京都 府中市","18/3001ac-46e8-4c79-aa5d-03de53b1d5d7/13206_fuchu-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.64945,139.43078,35.69959,139.52601],["東京都 昭島市","be/ad9a6c-4c94-497f-bbff-3526b1a0624c/13207_akishima-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.69152,139.33347,35.72633,139.39803],["東京都 調布市","b8/aa66ef-876e-4198-81dd-75d6ec4bde8a/13208_chofu-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.63626,139.51731,35.68725,139.59326],["東京都 町田市","2f/2ad03e-01f7-412d-893b-06b72fedf68a/13209_machida-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.50125,139.27414,35.62319,139.50729],["東京都 小金井市","e6/ee00d9-6040-4907-91db-5c358bae58e7/13210_koganei-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.68387,139.48458,35.71855,139.53395],["東京都 小平市","e7/2acb72-5546-41f5-8dc7-a9c7645bb61c/13211_kodaira-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.70833,139.42357,35.74607,139.52467],["東京都 日野市","0c/68d8aa-fdc1-4057-b2ac-1fd22986143d/13212_hino-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.63979,139.35716,35.68798,139.44053],["東京都 東村山市","f4/aa81ba-2efc-4e6e-97a2-b2c72a13aa51/13213_higashimurayama-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",35.7344,139.44078,35.78138,139.5044],["東京都 国分寺市","bd/b1e2b2-9f9b-4ebf-815f-bd973c913e38/13214_kokubunji-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.68852,139.42838,35.7229,139.49154],["東京都 国立市","11/fe8fa2-2c61-4e02-95c7-a8ef4ff8d83b/13215_kunitachi-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.67082,139.41804,35.70373,139.45977],["東京都 福生市","f5/328e5d-29e7-4f68-beeb-d3ee815b803f/13218_fussa-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.71345,139.31577,35.75452,139.35506],["東京都 狛江市","49/3468d5-76cf-49ec-91e5-6bd8b677d50b/13219_komae-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.62081,139.56288,35.65071,139.59404],["東京都 清瀬市","94/f2dc0c-a99d-4fed-8102-9d62ec9d935f/13221_kiyose-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.76145,139.4959,35.80697,139.54734],["東京都 東久留米市","d6/e1bb7c-822a-4f94-a109-4d912f5700b7/13222_higashikurume-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.73215,139.48667,35.77435,139.54794],["東京都 多摩市","33/530b6f-43e3-4e65-8a88-606846b8dfbd/13224_tama-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.60606,139.39429,35.65639,139.47217],["東京都 稲城市","39/dfff0f-2be2-41af-b7b4-f6064fff3a95/13225_inagi-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.60458,139.46402,35.65175,139.52447],["東京都 西東京市","4f/99e8f7-efbe-4d9f-9d96-6d3b37a0402b/13229_nishitokyo-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",35.71125,139.51687,35.76154,139.56936],["横浜市 鶴見区","88/ca8e5f-33c7-46db-a272-64ad0a504633/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14101_tsurumi-ku_lod2",35.44991,139.63545,35.54065,139.7241],["横浜市 神奈川区","67/51cc26-b148-4296-892d-807ba6798fa8/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14102_kanagawa-ku_lod2",35.46539,139.56796,35.50628,139.66795],["横浜市 西区","4a/84f474-71c4-4b33-a328-0c5798b79f2f/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14103_nishi-ku_lod2",35.44182,139.60309,35.47206,139.63855],["横浜市 中区","94/a960a4-7e19-439f-8249-b743e939102a/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14104_naka-ku_lod2",35.39683,139.62172,35.45749,139.6902],["横浜市 瀬谷区","25/728dfc-42c2-4c82-947f-fc5db2bf2ae7/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14114_seya-ku_lod2",35.43476,139.46522,35.50412,139.51132],["川崎市 川崎区","a5/0d010f-3fac-4ece-abd3-48bcf5f9c566/14130_kawasaki-shi_city_2022_citygml_4_op_bldg_3dtiles_14131_kawasaki-ku_lod2",35.47023,139.68799,35.5411,139.83529],["川崎市 幸区","49/7f0c86-9d4d-495a-96d7-a946a7f6253e/14130_kawasaki-shi_city_2022_citygml_4_op_bldg_3dtiles_14132_saiwai-ku_lod2",35.52597,139.65458,35.56169,139.70274],["川崎市 中原区","ac/c9d592-4f94-4a3b-9fe8-62f0d379950f/14130_kawasaki-shi_city_2022_citygml_4_op_bldg_3dtiles_14133_nakahara-ku_lod2",35.55252,139.62656,35.59625,139.68346],["川崎市 宮前区","fa/1f604f-410e-4108-a9fe-2c68ab7c9fa5/14130_kawasaki-shi_city_2022_citygml_4_op_bldg_3dtiles_14136_miyamae-ku_lod2",35.56459,139.52502,35.60729,139.62042],["相模原市 緑区","c2/672b89-74f8-4e03-b6f1-8c3ac03e2cea/14150_sagamihara-shi_city_2024_citygml_1_op_bldg_3dtiles_14151_midori-ku_lod2",35.525,139.10561,35.66006,139.36137],["相模原市 中央区","5b/07d400-ea5e-47ed-9fcc-51108c5ee88e/14150_sagamihara-shi_city_2024_citygml_1_op_bldg_3dtiles_14152_chuo-ku_lod2",35.52875,139.32472,35.5991,139.4181],["神奈川県 横須賀市","16/f1f7ae-4b56-4b5f-9dd4-a0070bd78c94/14201_yokosuka-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",35.19081,139.58311,35.33005,139.7448],["神奈川県 鎌倉市","fe/641541-cf5c-42a9-bcb8-532d159db8c9/14204_kamakura-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",35.2998,139.48875,35.36825,139.5893],["神奈川県 藤沢市","22/a4cda2-f741-43fb-8d75-a51b941b7577/14205_fujisawa-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",35.29808,139.3936,35.4291,139.51676],["神奈川県 厚木市","30/24e9f1-ac64-4db3-be10-524d20bebf91/14212_atsugi-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",35.39323,139.23075,35.5259,139.37836],["神奈川県 箱根町","56/f380ca-8336-41b6-80d4-3f28edc54d43/14382_hakone-machi_city_2020_citygml_9_op_bldg_3dtiles_lod2",35.17559,138.97417,35.28992,139.12143],["新潟市 中央区","1a/a1aff2-e86f-4573-998f-b706ff95decf/15100_niigata-shi_city_2023_citygml_2_op_bldg_3dtiles_15103_chuo-ku_lod2",37.87304,138.99822,37.94563,139.09861],["新潟県 長岡市","98/4ab0a8-976f-45e8-92de-917fbe9a9058/15202_nagaoka-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",37.22838,138.7013,37.66441,139.02243],["新潟県 三条市","33/ca724c-2d54-4b64-88c6-e1e9454f3ccd/15204_sanjo-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",37.63046,138.95318,37.63342,138.95706],["新潟県 新発田市","6f/f66c55-e9fe-4f86-89c0-0a3cffe97896/15206_shibata-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",37.89984,139.2422,37.98481,139.37947],["新潟県 加茂市","fc/19b389-8905-4adf-9915-6191909e3132/15209_kamo-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",37.58025,138.98933,37.70593,139.14464],["新潟県 上越市","e4/6378ee-7975-4069-a769-b59729a1af5e/15222_joetsu-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",37.05663,138.2103,37.29198,138.40974],["富山県 高岡市","f4/7e0ed7-43b1-4a86-b21e-2c29bf2daf79/16202_takaoka-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",36.657,136.84047,36.82908,137.10129],["富山県 舟橋村","b1/d7e9a8-e02d-4cac-88aa-71721ba300db/16321_funahashi-mura_city_2025_citygml_1_op_bldg_3dtiles_lod2",36.6868,137.29486,36.7121,137.32027],["石川県 金沢市","da/e43eb7-f9b1-49a5-b7b3-6b15c2e0b0de/17201_kanazawa-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",36.49579,136.55834,36.67376,136.74967],["石川県 加賀市","1d/decef9-40e0-4eba-8768-6ad9b6d39a7b/17206_kaga-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",36.22155,136.2443,36.38282,136.41786],["山梨県 甲府市","a7/9a1496-bf6f-4f13-8e1c-43b6c6e88c6f/19201_kofu-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",35.56193,138.52413,35.7178,138.63624],["長野県 松本市","4a/e01f60-24e9-4933-8cc6-3e4b5230f7aa/20202_matsumoto-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",36.12835,137.78101,36.29804,138.07201],["長野県 岡谷市","6c/1bd20a-d8e7-447f-8bab-c703573ac208/20204_okaya-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2",36.00965,138.00943,36.09948,138.07836],["長野県 諏訪市","bc/86b1ea-5124-48c0-8275-b191c5915e51/20206_suwa-shi_city_2023_citygml_3_op_bldg_3dtiles_lod2",35.9556,138.03701,36.12165,138.19866],["長野県 伊那市","1b/63da9f-c231-47c2-98e4-28eb86d2f3ea/20209_ina-shi_city_2020_citygml_8_op_bldg_3dtiles_lod2",35.69627,137.86431,35.92502,138.14466],["長野県 飯山市","98/479aa9-5a75-4b7e-a117-d7b968d3b6b8/20213_iiyama-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",36.80544,138.28635,37.02342,138.52671],["長野県 茅野市","d8/9a5be8-45fb-44c5-951c-37287af1bc5a/20214_chino-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",35.93641,138.12283,36.11236,138.3725],["長野県 佐久市","68/ccdbaf-bd6a-4a36-8424-dd280146dc1d/20217_saku-shi_city_2025_citygml_5_op_bldg_3dtiles_lod2",36.15503,138.30072,36.3157,138.60725],["長野県 安曇野市","74/9cce7f-80c4-492e-ba0f-4d0c9cde2128/20220_azumino-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",36.23773,137.80543,36.41164,137.98138],["岐阜県 岐阜市","97/225aa4-1fa1-4767-a1fd-17ab176a3815/21201_gifu-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",35.35113,136.68051,35.53533,136.88612],["岐阜県 大垣市","c7/ec04d5-6062-4fbb-85d7-e5501361031a/21202_ogaki-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",35.29587,136.54262,35.4086,136.68795],["岐阜県 美濃加茂市","74/3519a8-76f0-4ede-b651-22b33a64f2fb/21211_minokamo-shi_city_2024_citygml_4_op_bldg_3dtiles_lod2",35.43047,136.95969,35.54498,137.08613],["静岡市 葵区","16/f01621-f72d-4c64-9c40-67c97cee7c5f/22100_shizuoka-shi_city_2023_citygml_3_op_bldg_3dtiles_22101_aoi-ku_lod2",34.95656,138.18166,35.32284,138.43638],["静岡市 清水区","f7/8d92ad-e4e2-416e-8ea7-8968145878c3/22100_shizuoka-shi_city_2023_citygml_3_op_bldg_3dtiles_22103_shimizu-ku_lod2",34.96255,138.41077,35.19419,138.63011],["浜松市 中区","8e/e64279-974c-4b98-861d-1d2fa7c6a327/22130_hamamatsu-shi_city_2023_citygml_2_op_bldg_3dtiles_22131_naka-ku_lod2",34.68036,137.68085,34.78313,137.76112],["浜松市 東区","4c/42de6c-ad75-430f-a05d-e38ac912591d/22130_hamamatsu-shi_city_2023_citygml_2_op_bldg_3dtiles_22132_higashi-ku_lod2",34.70584,137.73248,34.78648,137.8153],["浜松市 西区","80/6d4bf9-528b-46f8-9cde-8745daf91e26/22130_hamamatsu-shi_city_2023_citygml_2_op_bldg_3dtiles_22133_nishi-ku_lod2",34.6729,137.58326,34.78807,137.70014],["浜松市 南区","85/fc3819-da13-496a-8df8-38a94f68d1a0/22130_hamamatsu-shi_city_2023_citygml_2_op_bldg_3dtiles_22134_minami-ku_lod2",34.6493,137.67242,34.7205,137.79578],["浜松市 北区","bb/837a45-ce49-4fa9-b677-5a851f91aaaa/22130_hamamatsu-shi_city_2023_citygml_2_op_bldg_3dtiles_22135_kita-ku_lod2",34.7543,137.49155,34.9535,137.76135],["浜松市 浜北区","16/7e978c-2c6c-4f13-87e1-56c702dcc2c1/22130_hamamatsu-shi_city_2023_citygml_2_op_bldg_3dtiles_22136_hamakita-ku_lod2",34.77318,137.7329,34.8742,137.82343],["浜松市 天竜区","2b/cefa4f-e3c9-4b98-8e72-e528e85295b8/22130_hamamatsu-shi_city_2023_citygml_2_op_bldg_3dtiles_22137_tenryu-ku_lod2",34.84019,137.70608,35.25006,138.03433],["静岡県 沼津市","6c/84a1db-3dd8-4474-abca-2a3b85886064/22203_numazu-shi_city_2023_citygml_3_op_bldg_3dtiles_lod2",34.94175,138.75301,35.19844,138.92183],["静岡県 富士市","a5/706a09-6a64-41dd-bd8c-1b38d26d4f51/22210_fuji-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",35.12354,138.56001,35.30302,138.78629],["静岡県 掛川市","ee/5b0215-5df6-4618-a2f5-7894293f36b1/22213_kakegawa-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",34.6439,137.93866,34.91192,138.10198],["静岡県 菊川市","ae/a5ca08-98e3-4735-bd54-37ca7a83b0db/22224_kikugawa-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",34.65931,138.04895,34.80826,138.14613],["名古屋市 東区","8c/61d87b-1235-4a68-8f92-d9fabc3a83a6/23100_nagoya-shi_city_2022_citygml_4_op_bldg_3dtiles_23102_higashi-ku_lod2",35.16951,136.90732,35.19871,136.96545],["名古屋市 西区","39/2a339e-9442-4e4e-bed6-ee48d5ca8feb/23100_nagoya-shi_city_2022_citygml_4_op_bldg_3dtiles_23104_nishi-ku_lod2",35.17112,136.85595,35.23421,136.90649],["名古屋市 中村区","e2/807542-e5d2-4f05-a1e2-85fa59db11b3/23100_nagoya-shi_city_2022_citygml_4_op_bldg_3dtiles_23105_nakamura-ku_lod2",35.14549,136.83073,35.19017,136.89288],["名古屋市 中区","40/8090fa-6b99-4e7c-b21c-0e2634f65e01/23100_nagoya-shi_city_2022_citygml_4_op_bldg_3dtiles_23106_naka-ku_lod2",35.14235,136.8921,35.18668,136.92965],["名古屋市 中川区","07/acbe1b-356a-47a1-8ea3-b6d7490f7989/23100_nagoya-shi_city_2022_citygml_4_op_bldg_3dtiles_23110_nakagawa-ku_lod2",35.1114,136.79723,35.16873,136.89795],["名古屋市 港区","a0/e447aa-07b0-4036-bb01-56dc6cbb9984/23100_nagoya-shi_city_2022_citygml_4_op_bldg_3dtiles_23111_minato-ku_lod2",35.03475,136.79171,35.12668,136.91123],["愛知県 豊橋市","d0/913540-3985-48d1-9c38-814ca0e85e88/23201_toyohashi-shi_city_2024_citygml_2_op_bldg_3dtiles_lod2",34.64916,137.30637,34.85967,137.49701],["愛知県 岡崎市","5c/ba9f77-5acb-4e3d-83fa-70c279a7c51e/23202_okazaki-shi_city_2020_citygml_8_op_files_bldg_3dtiles_lod2",34.86375,137.10354,35.03876,137.37807],["愛知県 春日井市","a7/7c4c28-c235-4c21-899b-142d36d5e7e4/23206_kasugai-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",35.21764,136.92499,35.33783,137.08433],["愛知県 豊川市","04/8ab6d2-1915-4fb1-87a2-865e9841b382/23207_toyokawa-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2",34.7846,137.26176,34.90941,137.45983],["愛知県 津島市","4f/41b964-6121-4659-83e7-aa0cc3d2e51a/23208_tsushima-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",35.13293,136.70729,35.19979,136.78631],["愛知県 豊田市","03/ba4c95-5488-48ba-9b80-9ce3e4a24231/23211_toyota-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",34.99024,137.0395,35.28968,137.57814],["愛知県 安城市","66/70b2fa-b43e-4a9d-b5f4-ff3b0921ab94/23212_anjo-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",34.88818,137.01049,35.00992,137.12574],["愛知県 日進市","bc/d09648-b94b-401f-a057-288d57300c50/23230_nisshin-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",35.1077,137.00106,35.16862,137.09785],["三重県 四日市市","7a/87ad1c-f1a0-4e52-aa02-eb2778e31121/24202_yokkaichi-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2",34.90154,136.43208,35.06663,136.67692],["三重県 伊勢市","08/28dd29-9a01-49d6-ad03-258bcc1f393a/24203_ise-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",34.39268,136.63643,34.56541,136.81702],["三重県 熊野市","d9/6d7fb3-eaca-43cb-a6d7-15eddcea6144/24212_kumano-shi_city_2022_citygml_5_op_bldg_3dtiles_lod2",33.79485,135.85529,34.03268,136.2191],["滋賀県 長浜市","f6/96474b-a3f1-409f-bd5c-0d621db58ed1/25203_nagahama-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2",35.40703,136.24062,35.44285,136.29184],["滋賀県 近江八幡市","81/88846c-8c51-41a8-af5a-57f611407b2b/25204_oumihachiman-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",35.07588,136.01893,35.20938,136.17315],["京都市 北区","7a/918715-89fb-4f45-a48a-a77ee6288577/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26101_kita-ku_lod2",35.02226,135.71119,35.08644,135.77206],["京都市 上京区","71/0af6ab-875e-4c69-bb5e-9e06096e6fcb/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26102_kamigyo-ku_lod2",35.01492,135.73291,35.03919,135.77093],["京都市 左京区","96/d17b9d-5527-4610-90c8-9e9c44d500c3/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26103_sakyo-ku_lod2",35.00682,135.75435,35.09396,135.82416],["京都市 中京区","04/eaac56-936e-49e2-a91b-0db31a6ed192/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26104_nakagyo-ku_lod2",34.99633,135.72387,35.02264,135.77141],["京都市 東山区","25/dd4c50-5342-4a0b-ac51-05ffb138b8b5/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26105_higashiyama-ku_lod2",34.96989,135.76561,35.01087,135.79086],["京都市 下京区","f0/2ed501-5480-4ccb-8293-9469a3856f9a/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26106_shimogyo-ku_lod2",34.98157,135.7272,35.00451,135.77113],["京都市 南区","1c/596e87-af58-4394-a4e7-ef429ba5732c/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26107_minami-ku_lod2",34.94242,135.70504,34.98584,135.7673],["京都市 右京区","64/cf6354-e5ff-4ee4-84d6-1751734da17c/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26108_ukyo-ku_lod2",34.98167,135.66227,35.04902,135.73301],["京都市 伏見区","6c/10f912-836b-483d-a6b2-881e298d7006/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26109_fushimi-ku_lod2",34.88253,135.70378,34.97687,135.82467],["京都府 舞鶴市","6d/966590-0428-4c56-88a6-ffc32a94c32d/26202_maizuru-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",35.39877,135.28131,35.51728,135.4461],["京都府 与謝野町","1a/7cb689-0513-4b0c-8805-5eaec1198af6/26465_yosano-cho_city_2025_citygml_1_op_bldg_3dtiles_lod2",35.51241,135.07778,35.55,135.1379],["大阪市 都島区","f6/438555-e27f-4fb7-bce3-7a11906ce06a/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27102_miyakojima-ku_lod2",34.69134,135.51609,34.73034,135.54066],["大阪市 福島区","72/90e183-bf4b-463e-b8d9-11936f32d256/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27103_fukushima-ku_lod2",34.681,135.46279,34.70414,135.49074],["大阪市 此花区","1b/2acef6-47d7-46b1-a391-050836fe0a96/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27104_konohana-ku_lod2",34.64342,135.37593,34.69619,135.47167],["大阪市 西区","32/6117a6-a930-4fe1-bce2-7cbdddc6c52f/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27106_nishi-ku_lod2",34.66722,135.46198,34.69248,135.49773],["大阪市 浪速区","32/d6ef51-5aac-4519-a690-aea78e8bd039/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27111_naniwa-ku_lod2",34.64822,135.48112,34.66974,135.51077],["大阪市 東淀川区","e2/4e8207-5f8d-4d8e-8891-334c4b090eb2/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27114_higashiyodogawa-ku_lod2",34.72184,135.502,34.7683,135.55813],["大阪市 東成区","62/c35aea-229b-4345-9535-7d9f9146d433/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27115_higashinari-ku_lod2",34.66439,135.5304,34.6832,135.56333],["大阪市 城東区","02/821890-fea9-4a5b-b480-6e14102b6eb0/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27118_joto-ku_lod2",34.678,135.53428,34.71537,135.56593],["大阪市 淀川区","54/260d5c-b57b-4882-92c6-b2cb20f65198/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27123_yodogawa-ku_lod2",34.70962,135.44716,34.75111,135.50547],["大阪市 北区","92/1459fa-4102-4cfe-a56f-6fe5c7764178/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27127_kita-ku_lod2",34.68553,135.47707,34.72002,135.52216],["大阪市 中央区","6b/bea10b-2d85-46e6-8786-4ef504aeeb28/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27128_chuo-ku_lod2",34.66248,135.49676,34.69503,135.53603],["堺市 堺区","b6/575505-d65d-452d-a572-be462c2b2d99/27140_sakai-shi_city_2024_citygml_1_op_bldg_3dtiles_27141_sakai-ku_lod2",34.54567,135.4252,34.60566,135.50248],["堺市 西区","fc/86811d-685b-4773-9f69-6f2e01f9d597/27140_sakai-shi_city_2024_citygml_1_op_bldg_3dtiles_27144_nishi-ku_lod2",34.50024,135.40368,34.59787,135.48913],["大阪府 豊中市","81/44547b-ce6c-4915-9b3c-dca2fb340902/27203_toyonaka-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",34.73085,135.43983,34.82454,135.50714],["大阪府 池田市","fc/727d0a-d7f1-4b37-b0a5-dbb5caddcb98/27204_ikeda-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",34.79095,135.41693,34.87448,135.45959],["大阪府 高槻市","6d/413503-4030-4f5a-b0d1-889f9d60d958/27207_takatsuki-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",34.78296,135.56605,34.8906,135.66961],["大阪府 河内長野市","c6/dd91f6-d594-481c-98bf-3717baff16b1/27216_kawachinagano-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",34.33788,135.48828,34.47982,135.6585],["大阪府 柏原市","6d/aaccde-4f74-4937-8ddc-7069cb7032f1/27221_kashiwara-shi_city_2022_citygml_5_op_bldg_3dtiles_lod2",34.5485,135.60754,34.60433,135.6806],["大阪府 摂津市","02/7534f5-d7c2-46fa-9584-2bff6a2d90c1/27224_settsu-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",34.75511,135.53653,34.79845,135.59972],["大阪府 東大阪市","e4/e748fa-3593-43f2-8497-f95c52d7dec2/27227_higashiosaka-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",34.63232,135.55712,34.70402,135.67909],["大阪府 忠岡町","d1/0c59a3-84d3-4cc3-a74e-04102dad8705/27341_tadaoka-cho_city_2020_citygml_7_op_bldg_3dtiles_lod2",34.47351,135.3714,34.50683,135.41858],["兵庫県 姫路市","0e/d29649-6196-4d81-97c7-41cc343b0942/28201_himeji-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",34.64105,134.46069,35.09027,134.80906],["兵庫県 加古川市","7e/9b8262-4de8-49d7-b745-e2f2b155f74e/28210_kakogawa-shi_city_2020_citygml_6_op_bldg_3dtiles_lod2",34.70759,134.802,34.85144,134.93341],["兵庫県 三木市","23/8d91d2-ecce-4ef5-80dc-bd6071b1b38a/28215_miki-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",34.76018,134.92231,34.94449,135.16857],["兵庫県 朝来市","5c/81b9a2-d421-4fd8-9bee-79891b4025d0/28225_asago-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2",35.28114,134.8104,35.36946,134.87884],["兵庫県 たつの市","d4/dfed4b-e6a1-487a-924b-82160adafbef/28229_tatsuno-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",34.75634,134.42579,35.00772,134.59767],["奈良県 香芝市","2d/baf0aa-62b0-49a2-a0c2-033f24d654c6/29210_kashiba-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",34.51887,135.65636,34.57475,135.72936],["奈良県 三郷町","20/d3630d-bc76-4a97-ac56-d4219f988e07/29343_sango-cho_city_2025_citygml_1_op_bldg_3dtiles_lod2",34.58525,135.65071,34.61569,135.71226],["和歌山県 和歌山市","df/de815d-a9a0-4419-b1d2-fb71c0a691ad/30201_wakayama-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",34.1509,135.00135,34.31169,135.31341],["和歌山県 すさみ町","a9/767319-b96b-4f29-a9f7-7502806e585a/30406_susami-cho_city_2025_citygml_1_op_bldg_3dtiles_lod2",33.50067,135.46805,33.61935,135.65051],["鳥取県 鳥取市","b2/e3987a-2bb9-4780-ba84-d49f8c83cc72/31201_tottori-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",35.36155,133.97048,35.56182,134.29006],["鳥取県 米子市","34/d81154-ca19-427b-8b3b-8c5d7c1d9b7a/31202_yonago-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",35.37792,133.24216,35.49846,133.47925],["鳥取県 境港市","c9/fc1f1d-c6d1-43a0-baf7-c867f36aadf4/31204_sakaiminato-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2",35.48807,133.19853,35.5517,133.26941],["鳥取県 日吉津村","d7/fdca32-92dd-4889-9152-6dc2028051e7/31384_hiezu-son_city_2023_citygml_2_op_bldg_3dtiles_lod2",35.42963,133.37009,35.45534,133.39157],["島根県 松江市","f9/02807f-2639-4ba2-9d49-1f4bfbe2566c/32201_matsue-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",35.34463,132.87512,35.60385,133.32553],["島根県 益田市","d9/61a376-36cc-4b6d-bf28-1d6c404340e3/32204_masuda-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",34.64243,131.76658,34.7088,131.87533],["島根県 隠岐の島町","90/7926df-7726-4a4e-a3c7-462514ece18d/32528_okinoshima-cho_city_2024_citygml_1_op_bldg_3dtiles_lod2",36.17124,133.28476,36.24306,133.36292],["岡山市 北区","85/287c2c-3aef-4d97-873f-ce323360dfda/33100_okayama-shi_city_2025_citygml_1_op_bldg_3dtiles_33101_kita-ku_lod2",34.61997,133.74421,34.9488,133.99349],["岡山県 倉敷市","42/929b43-4f53-4882-b7bc-7f50457dd377/33202_kurashiki-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",34.53991,133.70816,34.66874,133.84337],["岡山県 津山市","3b/d3d113-9623-4634-b086-ff1d56ebbf75/33203_tsuyama-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",35.05705,133.99759,35.06569,134.00878],["岡山県 備前市","32/a5a3a8-33f4-4cac-8015-f7d7f1b79efb/33211_bizen-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",34.68052,134.10484,34.92794,134.32644],["岡山県 早島町","e8/cc8292-d7e6-4ab6-999c-61ca1371a52f/33423_hayashima-cho_city_2024_citygml_1_op_bldg_3dtiles_lod2",34.591,133.80231,34.62728,133.83972],["広島市 中区","c3/b0b031-11c9-47c8-90a7-404c5f4c186a/34100_hiroshima-shi_city_2024_citygml_1_op_bldg_3dtiles_34101_naka-ku_lod2",34.35507,132.42299,34.41416,132.47028],["広島市 東区","0a/7618a4-d9f9-4a3b-a1bb-a8000be1aa39/34100_hiroshima-shi_city_2024_citygml_1_op_bldg_3dtiles_34102_higashi-ku_lod2",34.38958,132.46348,34.46016,132.568],["広島市 南区","60/984e4f-a2d5-44c3-9b9a-0c2561d260bc/34100_hiroshima-shi_city_2024_citygml_1_op_bldg_3dtiles_34103_minami-ku_lod2",34.34041,132.43986,34.40315,132.51783],["広島県 呉市","c1/dbac1c-b93d-4824-8a2c-1995e790becf/34202_kure-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",34.05031,132.45162,34.32594,132.86854],["広島県 竹原市","92/e0f0ec-f809-4336-80c9-ac3f9dec1c24/34203_takehara-shi_city_2023_citygml_3_op_bldg_3dtiles_lod2",34.29766,132.78508,34.42994,133.01035],["広島県 福山市","eb/3d65ca-cefd-4dae-b9a6-8be3da7ae10a/34207_fukuyama-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",34.3354,133.21112,34.71095,133.46608],["広島県 三次市","95/2283c6-3f94-4aaf-8df3-8d785b9e0435/34209_miyoshi-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2",34.68979,132.81171,34.83063,133.01219],["広島県 海田町","13/2cd8e8-086c-4a58-a88e-c0b396efba0e/34304_kaita-cho_city_2025_citygml_1_op_bldg_3dtiles_lod2",34.35289,132.51919,34.38501,132.57161],["山口県 周南市","8c/2abf80-eac8-4960-a904-eec94a1932fd/35215_shunan-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",33.97065,131.6574,34.24269,132.00722],["徳島県 徳島市","38/7256b1-e34d-40c3-992f-a2b98c1a80c8/36201_tokushima-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",33.95545,134.42428,34.12929,134.60499],["徳島県 美波町","a3/9fedc2-ee87-4d6e-829f-9592a984b89f/36387_minami-cho_city_2025_citygml_1_op_bldg_3dtiles_lod2",33.70411,134.50121,33.78024,134.602],["香川県 高松市","c9/c62023-a95e-4c78-b1cf-9abe576fb820/37201_takamatsu-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2",34.11174,133.92462,34.43365,134.1662],["香川県 さぬき市","a9/b9c439-23fa-4b60-81ed-b60c10826ccc/37206_sanuki-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",34.16661,134.155,34.36948,134.28825],["愛媛県 松山市","2a/95b8c4-d747-4f3d-88f4-d33d57157657/38201_matsuyama-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",33.7355,132.63723,34.00949,132.87514],["愛媛県 宇和島市","ff/eb2a76-1307-4dda-9288-0c5853a67470/38203_uwajima-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",33.05174,132.47296,33.30281,132.61568],["愛媛県 東温市","b2/e217b0-5c86-4405-b8e4-6d9bf2ffbed7/38215_toon-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",33.7705,132.82233,33.82045,132.92339],["高知県 高知市","fd/54bb5f-3a2a-4ca2-b360-961bf2c0848a/39201_kouchi-shi_pref_2023_citygml_2_op_bldg_3dtiles_lod2",33.53383,133.48063,33.58224,133.56866],["高知県 安芸市","7c/5d01ea-8675-4541-b42f-3678d5fa6247/39203_aki-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",33.44726,133.82022,33.52264,133.95729],["高知県 香南市","7a/1af4e7-7016-4e12-854b-d6025572c4ba/39211_konan-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2",33.51598,133.68134,33.5695,133.7762],["高知県 いの町","ed/64b217-5799-4b69-a3e4-cd2af54a644c/39386_ino-cho_city_2024_citygml_1_op_bldg_3dtiles_lod2",33.51067,133.39779,33.57379,133.47319],["北九州市 小倉北区","0e/a8d7bc-9d5b-42f4-a1af-e79555656f38/40100_kitakyushu-shi_city_2020_citygml_7_op_bldg_3dtiles_40106_kokurakita-ku_lod2",33.82479,130.84112,33.91555,130.91677],["北九州市 八幡東区","ab/247b62-f07e-401a-a90a-e181af1b0a38/40100_kitakyushu-shi_city_2020_citygml_7_op_bldg_3dtiles_40108_yahatahigashi-ku_lod2",33.84401,130.77918,33.88745,130.86038],["福岡市 東区","9b/97b1bd-2c68-469e-bfd2-9e5e65e0128a/40130_fukuoka-shi_city_2024_citygml_2_op_bldg_3dtiles_40131_higashi-ku_lod2",33.60592,130.28692,33.71124,130.49503],["福岡市 博多区","15/c3e22e-aa0a-411c-b34d-d40035ae940b/40130_fukuoka-shi_city_2024_citygml_2_op_bldg_3dtiles_40132_hakata-ku_lod2",33.53846,130.39639,33.61235,130.48202],["福岡市 中央区","bf/d8ff81-ad03-486b-a021-6865e50c3b23/40130_fukuoka-shi_city_2024_citygml_2_op_bldg_3dtiles_40133_chuo-ku_lod2",33.55805,130.35778,33.60957,130.41493],["福岡県 大牟田市","21/9a7576-cefd-492c-98e0-52d90e796f17/40202_omuta-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",33.00137,130.39633,33.09733,130.54216],["福岡県 久留米市","f7/d323d8-14af-46e4-86bb-aa6f62cb8493/40203_kurume-shi_city_2020_citygml_6_op_bldg_3dtiles_lod2",33.22441,130.38772,33.36818,130.73145],["福岡県 飯塚市","33/c69890-8285-4c1e-91be-1c50df67b60b/40205_iizuka-shi_city_2020_citygml_9_op_bldg_3dtiles_lod2",33.50459,130.56004,33.70496,130.76621],["福岡県 宗像市","25/f501e0-79d6-4f24-992d-a902a259bce5/40220_munakata-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",33.75673,130.40797,33.91337,130.63842],["福岡県 古賀市","ff/0ed22d-bb17-4015-843d-a85844ba818d/40223_koga-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",33.69331,130.44939,33.75307,130.55839],["福岡県 うきは市","62/d0062d-3382-4843-bd54-cb0d2020f242/40225_ukiha-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",33.26139,130.71879,33.36733,130.86617],["福岡県 筑前町","2f/a8a174-f6ed-4d83-9ceb-23138402b959/40447_chikuzen-machi_city_2023_citygml_3_op_bldg_3dtiles_lod2",33.40613,130.5611,33.51021,130.66387],["佐賀県 鳥栖市","95/23596f-f1fe-4cf4-9e87-13a3cfec1cbc/41203_tosu-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",33.32704,130.44476,33.42003,130.54222],["佐賀県 武雄市","85/e989cb-cb60-4a66-a9b0-920daac4887b/41206_takeo-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2",33.11217,129.90259,33.28103,130.10199],["佐賀県 小城市","3b/fd4f8e-f410-4648-a150-9670aeea3c1c/41208_ogi-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2",33.19544,130.14065,33.33513,130.24336],["佐賀県 大町町","07/b9092d-ba78-4618-830a-ac49693f70de/41423_omachi-cho_city_2022_citygml_4_op_bldg_3dtiles_lod2",33.19869,130.08969,33.23677,130.13683],["佐賀県 江北町","d3/66cc8a-ef50-4bff-ac98-b59becd2fe0a/41424_kouhoku-machi_city_2022_citygml_4_op_bldg_3dtiles_lod2",33.18761,130.12472,33.24956,130.20229],["佐賀県 白石町","19/f424b0-c9ba-471f-9f3a-b57584c3a845/41425_shiroisi-chou_city_2022_citygml_4_op_bldg_3dtiles_lod2",33.11376,130.0705,33.21165,130.2297],["長崎県 佐世保市","52/20fb30-58fd-47ed-96ed-4fd980a4f27b/42202_sasebo-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2",33.05037,129.06447,33.34123,129.86961],["長崎県 松浦市","1d/0033cb-e429-407c-9381-f569766cfd49/42208_matsuura-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",33.32522,129.64597,33.39856,129.79324],["長崎県 波佐見町","5a/e0dfc0-dab6-4b90-a1fe-c5016e0d8e48/42323_hasami-cho_city_2024_citygml_1_op_bldg_3dtiles_lod2",33.10177,129.84405,33.16473,129.95477],["熊本市 中央区","8f/1f1fdf-f581-4047-a65d-899224f82573/43100_kumamoto-shi_city_2022_citygml_4_op_bldg_3dtiles_43101_chuo-ku_lod2",32.7732,130.68598,32.82348,130.76373],["熊本県 荒尾市","11/541c3a-11cc-4e83-87ec-c24026c2211a/43443_mashiki-machi_city_2023_citygml_2_op_bldg_3dtiles_lod2",32.93687,130.41592,33.01135,130.52734],["熊本県 玉名市","aa/76624d-fe06-4588-80ef-14a0d76052bb/43206_tamana-shi_city_2024_citygml_2_op_bldg_3dtiles_lod2",32.84409,130.47719,32.99504,130.62153],["熊本県 宇城市","cf/4f8ba0-05ac-4ea6-b71c-8d543064dc75/43213_uki-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",32.57263,130.64971,32.67754,130.72437],["熊本県 益城町","ce/cdeffa-ece6-4744-9276-a3e95a9cb403/43443_mashiki-machi_city_2023_citygml_2_op_bldg_3dtiles_lod2",32.73634,130.77801,32.83803,130.8864],["大分県 日田市","7d/a6bad0-bcf9-4712-ae6e-c088845049b9/44204_hita-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",33.28069,130.875,33.37196,130.98427],["大分県 臼杵市","34/5caca2-e413-45a1-afbf-1bbdd3e548fd/44206_usuki-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2",33.08572,131.74058,33.17625,131.83421],["鹿児島県 南さつま市","96/133e5c-dfca-4ac8-bc4c-a9afd6b663b4/46220_minamisatuma-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",31.40317,130.28374,31.43713,130.34164],["沖縄県 那覇市","4c/53c8dd-e920-48f6-a493-f52155496a57/47201_naha-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2",26.17651,127.63997,26.2472,127.73877]];
+
+// =====================================================================
+//  PLATEAU: photo-textured 3D city models (MLIT Project PLATEAU, LOD2)
+//  for the 300 areas that publish them - all 23 wards of Tokyo, Osaka,
+//  Nagoya, Kyoto, Fukuoka and more. The 3D Tiles are streamed near the
+//  aircraft; a worker decodes the Draco meshes and WebP facade photos.
+//  Where a PLATEAU model is loaded, the plain OSM buildings are hidden.
+// =====================================================================
+function platWorkerMain() {
+  const DRACO = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/gltf/';
+  const td = new TextDecoder();
+  let dracoP = null;
+  function getDraco() {
+    if (!dracoP) dracoP = (async () => {
+      importScripts(DRACO + 'draco_wasm_wrapper.js');
+      const wasm = await (await fetch(DRACO + 'draco_decoder.wasm')).arrayBuffer();
+      return await new Promise(res => { DracoDecoderModule({ wasmBinary: wasm, onModuleLoaded: m => res({ m }) }); });
+    })();
+    return dracoP;
+  }
+  const A = 6378137, F = 1 / 298.257223563, E2 = F * (2 - F), R2D = 180 / Math.PI, KZ = 110574;
+  function geo(x, y, z, out) {
+    const p = Math.hypot(x, y); let lat = Math.atan2(z, p * (1 - E2)), h = 0;
+    for (let i = 0; i < 3; i++) { const s = Math.sin(lat), N = A / Math.sqrt(1 - E2 * s * s); h = p / Math.cos(lat) - N; lat = Math.atan2(z, p * (1 - E2 * N / (N + h))); }
+    out[0] = lat * R2D; out[1] = Math.atan2(y, x) * R2D; out[2] = h;
+  }
+  const TYPES = { 5120: Int8Array, 5121: Uint8Array, 5122: Int16Array, 5123: Uint16Array, 5125: Uint32Array, 5126: Float32Array };
+  const COMPS = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 };
+  async function fetchRetry(url) {
+    for (let tries = 0; ; tries++) {
+      const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 40000);
+      try { const r = await fetch(url, { signal: ctl.signal, mode: 'cors' }); if (r.ok) return r; if (r.status === 404) throw new Error('404'); }
+      catch (e) { if (tries >= 3 || String(e.message) === '404') throw e; }
+      finally { clearTimeout(timer); }
+      await new Promise(res => setTimeout(res, 1500 * (tries + 1)));
+    }
+  }
+  async function decode(m) {
+    const buf = await (await fetchRetry(m.url)).arrayBuffer();
+    const dv = new DataView(buf), u8 = new Uint8Array(buf);
+    const magic = td.decode(u8.subarray(0, 4));
+    let glb = 0, rtc = null;
+    if (magic === 'b3dm') {
+      const ftj = dv.getUint32(12, true), ftb = dv.getUint32(16, true), btj = dv.getUint32(20, true), btb = dv.getUint32(24, true);
+      if (ftj) { const ft = JSON.parse(td.decode(u8.subarray(28, 28 + ftj))); if (Array.isArray(ft.RTC_CENTER)) rtc = ft.RTC_CENTER; }
+      glb = 28 + ftj + ftb + btj + btb;
+    } else if (magic !== 'glTF') throw new Error('unsupported tile ' + magic);
+    const jl = dv.getUint32(glb + 12, true), gj = JSON.parse(td.decode(u8.subarray(glb + 20, glb + 20 + jl)));
+    const bin = glb + 20 + jl + 8;
+    if (gj.extensions && gj.extensions.CESIUM_RTC) rtc = gj.extensions.CESIUM_RTC.center;
+    rtc = rtc || [0, 0, 0];
+    const view = i => { const v = gj.bufferViews[i]; return u8.subarray(bin + (v.byteOffset || 0), bin + (v.byteOffset || 0) + v.byteLength); };
+    const accessor = i => {
+      const a = gj.accessors[i], C = TYPES[a.componentType], nc = COMPS[a.type], v = gj.bufferViews[a.bufferView];
+      const off = bin + (v.byteOffset || 0) + (a.byteOffset || 0), es = C.BYTES_PER_ELEMENT, stride = v.byteStride || nc * es;
+      const out = new C(a.count * nc);
+      if (stride === nc * es) out.set(new C(buf.slice(off, off + a.count * nc * es)));
+      else { const dvv = new DataView(buf); for (let k = 0; k < a.count; k++) for (let c = 0; c < nc; c++) {
+        const o = off + k * stride + c * es;
+        out[k * nc + c] = C === Float32Array ? dvv.getFloat32(o, true) : C === Uint16Array ? dvv.getUint16(o, true) : C === Uint32Array ? dvv.getUint32(o, true) : C === Uint8Array ? dvv.getUint8(o) : C === Int16Array ? dvv.getInt16(o, true) : dvv.getInt8(o);
+      } }
+      return { data: out, nc, norm: !!a.normalized, type: a.componentType };
+    };
+    // node transforms (matrix only; PLATEAU tiles use none)
+    const meshMat = {};
+    (gj.nodes || []).forEach(n => { if (n.mesh != null) meshMat[n.mesh] = n.matrix || null; });
+    // first image used as the tile's texture
+    let imgIndex = -1;
+    const texOf = mat => {
+      const pbr = (mat && mat.pbrMetallicRoughness) || {}, ti = pbr.baseColorTexture ? pbr.baseColorTexture.index : null;
+      if (ti == null) return -1;
+      const t = gj.textures[ti]; return t.source != null ? t.source : (t.extensions && t.extensions.EXT_texture_webp ? t.extensions.EXT_texture_webp.source : -1);
+    };
+    const parts = [];
+    let draco = null;
+    for (let mi = 0; mi < gj.meshes.length; mi++) for (const p of gj.meshes[mi].primitives) {
+      if (p.mode != null && p.mode !== 4) continue;
+      let P, N = null, UV = null, COL = null, BID = null, IDX;
+      const dext = p.extensions && p.extensions.KHR_draco_mesh_compression;
+      if (dext) {
+        if (!draco) draco = (await getDraco()).m;
+        const bytes = view(dext.bufferView);
+        const dbuf = new draco.DecoderBuffer(); dbuf.Init(new Int8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength), bytes.byteLength);
+        const dec = new draco.Decoder(), mesh = new draco.Mesh();
+        const st = dec.DecodeBufferToMesh(dbuf, mesh);
+        if (!st.ok() || mesh.ptr === 0) { draco.destroy(mesh); draco.destroy(dec); draco.destroy(dbuf); continue; }
+        const np = mesh.num_points();
+        const get = (id) => {
+          const at = dec.GetAttributeByUniqueId(mesh, id), nc = at.num_components(), nv = np * nc, bl = nv * 4, ptr = draco._malloc(bl);
+          dec.GetAttributeDataArrayForAllPoints(mesh, at, draco.DT_FLOAT32, bl, ptr);
+          const arr = new Float32Array(draco.HEAPF32.buffer, ptr, nv).slice(); draco._free(ptr);
+          return { data: arr, nc };
+        };
+        const at = dext.attributes;
+        P = get(at.POSITION);
+        if (at.NORMAL != null) N = get(at.NORMAL);
+        if (at.TEXCOORD_0 != null) UV = get(at.TEXCOORD_0);
+        if (at.COLOR_0 != null) COL = get(at.COLOR_0);
+        if (at._BATCHID != null) BID = get(at._BATCHID);
+        const nf = mesh.num_faces(), ni = nf * 3, bl = ni * 4, ptr = draco._malloc(bl);
+        dec.GetTrianglesUInt32Array(mesh, bl, ptr);
+        IDX = new Uint32Array(draco.HEAPF32.buffer, ptr, ni).slice(); draco._free(ptr);
+        draco.destroy(mesh); draco.destroy(dec); draco.destroy(dbuf);
+      } else {
+        const at = p.attributes;
+        P = accessor(at.POSITION);
+        if (at.NORMAL != null) N = accessor(at.NORMAL);
+        if (at.TEXCOORD_0 != null) UV = accessor(at.TEXCOORD_0);
+        if (at.COLOR_0 != null) COL = accessor(at.COLOR_0);
+        if (at._BATCHID != null) BID = accessor(at._BATCHID);
+        IDX = p.indices != null ? Uint32Array.from(accessor(p.indices).data) : Uint32Array.from({ length: P.data.length / 3 }, (_, k) => k);
+      }
+      const mat = gj.materials && p.material != null ? gj.materials[p.material] : null;
+      const pbr = (mat && mat.pbrMetallicRoughness) || {};
+      const factor = pbr.baseColorFactor || [1, 1, 1, 1];
+      let src = texOf(mat);
+      if (src >= 0 && imgIndex < 0) imgIndex = src;
+      const textured = src >= 0 && src === imgIndex && UV;
+      parts.push({ P, N, UV: textured ? UV : null, COL, BID, IDX, factor, M: meshMat[mi] });
+    }
+    // merge into one vertex set in local metres around the node centre
+    let nv = 0, ni = 0;
+    for (const q of parts) { nv += q.P.data.length / 3; ni += q.IDX.length; }
+    const pos = new Float32Array(nv * 3), nrm = new Int8Array(nv * 4), uv = new Float32Array(nv * 2), col = new Uint8Array(nv * 4), idx = new Uint32Array(ni);
+    const refLat = m.refLat, refLon = m.refLon, kx = 111320 * Math.cos(refLat * Math.PI / 180);
+    const la = refLat * Math.PI / 180, lo = refLon * Math.PI / 180;
+    const Ex = -Math.sin(lo), Ey = Math.cos(lo), Nx = -Math.sin(la) * Math.cos(lo), Ny = -Math.sin(la) * Math.sin(lo), Nz = Math.cos(la);
+    const Ux = Math.cos(la) * Math.cos(lo), Uy = Math.cos(la) * Math.sin(lo), Uz = Math.sin(la);
+    const g = [0, 0, 0], batchMin = new Map();
+    let v0 = 0, i0 = 0, hmin = 1e9, hmax = -1e9;
+    for (const q of parts) {
+      const n = q.P.data.length / 3, M = q.M;
+      const cs = q.COL ? (q.COL.data.some(v => v > 1.001) ? 1 / 255 : 1) : 1;
+      for (let k = 0; k < n; k++) {
+        let x = q.P.data[k * 3], y = q.P.data[k * 3 + 1], z = q.P.data[k * 3 + 2];
+        if (M) { const X = M[0] * x + M[4] * y + M[8] * z + M[12], Y = M[1] * x + M[5] * y + M[9] * z + M[13], Z = M[2] * x + M[6] * y + M[10] * z + M[14]; x = X; y = Y; z = Z; }
+        // glTF is y-up: rotate to z-up, then add the RTC centre (ECEF)
+        geo(rtc[0] + x, rtc[1] - z, rtc[2] + y, g);
+        const o = v0 + k;
+        pos[o * 3] = (g[1] - refLon) * kx; pos[o * 3 + 1] = g[2]; pos[o * 3 + 2] = -(g[0] - refLat) * KZ;
+        hmin = Math.min(hmin, g[2]); hmax = Math.max(hmax, g[2]);
+        if (q.BID) {
+          const b = q.BID.data[k] | 0, cur = batchMin.get(b);
+          if (!cur || g[2] < cur[2]) batchMin.set(b, [g[0], g[1], g[2]]);
+        }
+        if (q.N) {
+          let nx = q.N.data[k * 3], ny = q.N.data[k * 3 + 1], nz = q.N.data[k * 3 + 2];
+          if (M) { const X = M[0] * nx + M[4] * ny + M[8] * nz, Y = M[1] * nx + M[5] * ny + M[9] * nz, Z = M[2] * nx + M[6] * ny + M[10] * nz; nx = X; ny = Y; nz = Z; }
+          const ex = nx, ey = -nz, ez = ny;                               // y-up -> z-up (ECEF directions)
+          const e = Ex * ex + Ey * ey, nn = Nx * ex + Ny * ey + Nz * ez, u = Ux * ex + Uy * ey + Uz * ez;
+          const l = Math.hypot(e, nn, u) || 1;
+          nrm[o * 4] = Math.round(e / l * 127); nrm[o * 4 + 1] = Math.round(u / l * 127); nrm[o * 4 + 2] = Math.round(-nn / l * 127);
+        } else nrm[o * 4 + 1] = 127;
+        if (q.UV) { uv[o * 2] = q.UV.data[k * 2]; uv[o * 2 + 1] = q.UV.data[k * 2 + 1]; } else { uv[o * 2] = -1; uv[o * 2 + 1] = -1; }
+        let r = q.factor[0], gg = q.factor[1], bb = q.factor[2];
+        if (q.COL) { const c = q.COL.nc; r *= q.COL.data[k * c] * cs; gg *= q.COL.data[k * c + 1] * cs; bb *= q.COL.data[k * c + 2] * cs; }
+        col[o * 4] = Math.min(255, r * 255); col[o * 4 + 1] = Math.min(255, gg * 255); col[o * 4 + 2] = Math.min(255, bb * 255); col[o * 4 + 3] = 255;
+      }
+      for (let k = 0; k < q.IDX.length; k++) idx[i0 + k] = q.IDX[k] + v0;
+      v0 += n; i0 += q.IDX.length;
+    }
+    // footprint samples (lowest point of each building) for the height datum
+    const samples = [...batchMin.values()].slice(0, 80).flat();
+    let bitmap = null;
+    if (imgIndex >= 0) {
+      const im = gj.images[imgIndex];
+      if (im.bufferView != null) {
+        const bytes = view(im.bufferView).slice();
+        try {
+          bitmap = await createImageBitmap(new Blob([bytes], { type: im.mimeType || 'image/webp' }));
+          const mx = m.maxTex || 2048;
+          if (bitmap.width > mx || bitmap.height > mx) {
+            const k = mx / Math.max(bitmap.width, bitmap.height);
+            const small = await createImageBitmap(bitmap, { resizeWidth: Math.max(1, Math.round(bitmap.width * k)), resizeHeight: Math.max(1, Math.round(bitmap.height * k)), resizeQuality: 'high' });
+            bitmap.close(); bitmap = small;
+          }
+        } catch (e) { bitmap = null; }
+      }
+    }
+    return { id: m.id, nv, ni, pos: pos.buffer, nrm: nrm.buffer, uv: uv.buffer, col: col.buffer, idx: idx.buffer, samples: new Float32Array(samples).buffer, bitmap, hmin, hmax };
+  }
+  onmessage = async e => {
+    const m = e.data;
+    try {
+      const r = await decode(m);
+      const tr = [r.pos, r.nrm, r.uv, r.col, r.idx, r.samples];
+      if (r.bitmap) tr.push(r.bitmap);
+      postMessage(r, tr);
+    } catch (err) { postMessage({ id: m.id, error: String((err && err.message) || err) }); }
+  };
+}
+
+const PLAT = { on: true, ready: false, workers: [], jobs: new Map(), nextId: 1, sets: new Map(), loaded: 0, bytes: 0, prog: null, frame: 0, active: [], rects: [], rectsDirty: false };
+function platInit() {
+  if (PLAT.ready || PLAT.failed) return;
+  try {
+    const wurl = URL.createObjectURL(new Blob(['(' + platWorkerMain.toString() + ')()'], { type: 'text/javascript' }));
+    for (let i = 0; i < (game.touch ? 1 : 3); i++) { const w = new Worker(wurl); w.busy = 0; w.onmessage = e => platReceive(e.data); PLAT.workers.push(w); }
+  } catch (e) { PLAT.failed = true; return; }
+  PLAT.prog = makeProgram(PLAT_VS, PLAT_FS);
+  PLAT.ready = true;
+}
+function platLoadSet(S) {
+  S.state = 1;
+  fetch(S.base + '/tileset.json', { mode: 'cors' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(j => {
+    const conv = (n, parent, baseUrl) => {
+      const bv = n.boundingVolume || {}, rg = bv.region;
+      const node = { parent, ge: n.geometricError != null ? n.geometricError : (parent ? parent.ge / 2 : 100), children: [], mesh: null, state: 0, used: 0, set: S };
+      if (rg) {
+        node.s = rg[1] * 180 / Math.PI; node.w = rg[0] * 180 / Math.PI; node.n = rg[3] * 180 / Math.PI; node.e = rg[2] * 180 / Math.PI;
+        node.h0 = rg[4]; node.h1 = rg[5];
+      } else if (parent) Object.assign(node, { s: parent.s, w: parent.w, n: parent.n, e: parent.e, h0: parent.h0, h1: parent.h1 });
+      const c = n.content && (n.content.uri || n.content.url);
+      if (c) {
+        const url = new URL(c, baseUrl).href;
+        if (/\.json(\?|$)/.test(c)) node.ext = url; else node.uri = url;
+      }
+      node.size = Math.hypot((node.n - node.s) * KZ, (node.e - node.w) * kxAt((node.n + node.s) / 2));
+      node.key = S.id + ':' + (PLAT.nextKey = (PLAT.nextKey || 0) + 1);
+      for (const ch of n.children || []) node.children.push(conv(ch, node, baseUrl));
+      return node;
+    };
+    S.conv = conv;
+    S.root = conv(j.root, null, S.base + '/tileset.json');
+    S.state = 2;
+  }).catch(() => { S.state = 3; S.retry = R.time + 6; });
+}
+function platBox(n) {
+  if (n.ov === JW.ov) return n.box;
+  const c = [geoToWorld(n.s, n.w), geoToWorld(n.s, n.e), geoToWorld(n.n, n.w), geoToWorld(n.n, n.e)];
+  n.box = [Math.min(c[0][0], c[1][0], c[2][0], c[3][0]), Math.min(c[0][1], c[1][1], c[2][1], c[3][1]), Math.max(c[0][0], c[1][0], c[2][0], c[3][0]), Math.max(c[0][1], c[1][1], c[2][1], c[3][1])];
+  n.ov = JW.ov;
+  return n.box;
+}
+function platUpdate(planes) {
+  if (!JW.active || !JW.online || !PLAT.on) return;
+  if (!PLAT.ready) { platInit(); if (!PLAT.ready) return; }
+  const f = ++PLAT.frame, eye = R.eye, [la, lo] = worldToGeo(eye[0], eye[2]);
+  const agl = eye[1] - Math.max(rawHeightGeo(la, lo), 0);
+  const radius = game.touch ? 1800 : 3200;
+  if (agl > 3500) { PLAT.active = []; platEvict(f); return; }
+  const dLat = radius / KZ, dLon = radius / kxAt(la);
+  const out = [], req = [];
+  const K = R.H / (2 * R.tanY), SSE = game.touch ? 24 : 14;
+  const dist = n => { const b = platBox(n), off = n.set.off || 37; return Math.hypot(Math.max(b[0] - eye[0], 0, eye[0] - b[2]), Math.max(n.h0 - off - eye[1], 0, eye[1] - (n.h1 - off)), Math.max(b[1] - eye[2], 0, eye[2] - b[3])); };
+  const ready = n => n.uri ? !!n.mesh : n.ext ? false : n.children.length > 0 && n.children.every(c => dist(c) > radius || ready(c));
+  const visit = n => {
+    const d = dist(n);
+    if (d > radius) return;
+    n.used = f;
+    if (n.ext) { if (!n.extState) platLoadExt(n); return; }
+    const b = platBox(n), off = n.set.off || 37;
+    const vis = boxInFrustum(planes, b[0], n.h0 - off - 5, b[1], b[2], n.h1 - off + 5, b[3]);
+    const big = n.size > 1400;                                        // very large nodes are only containers
+    const wantKids = n.children.length && (big || !n.uri || n.ge * K / Math.max(d, 1) > SSE);
+    if (!wantKids) { if (n.uri) { if (n.mesh) { if (vis) out.push(n); } else req.push([n, d]); } return; }
+    const kidsReady = n.children.every(c => dist(c) > radius || ready(c));
+    if (kidsReady || big || !n.uri) { for (const c of n.children) visit(c); if (!kidsReady && n.uri && !big && !n.mesh) req.push([n, d]); else if (!kidsReady && n.mesh && vis && !big) out.push(n); }
+    else { if (n.mesh) { if (vis) out.push(n); } else req.push([n, d]); for (const c of n.children) { const dc = dist(c); if (dc <= radius) { c.used = f; if (c.uri && !c.mesh) req.push([c, dc + 50]); } } }
+  };
+  for (const S of PLAT.list) {
+    if (S.n < la - dLat || S.s > la + dLat || S.e < lo - dLon || S.w > lo + dLon) continue;
+    if (S.state === 0 || (S.state === 3 && R.time > S.retry)) { platLoadSet(S); continue; }
+    if (S.state !== 2) continue;
+    S.used = f;
+    visit(S.root);
+  }
+  PLAT.active = out;
+  // requests: nearest first
+  req.sort((a, b) => a[1] - b[1]);
+  let busy = 0; for (const w of PLAT.workers) busy += w.busy;
+  for (const [n, d] of req) {
+    if (busy >= PLAT.workers.length * 2) break;
+    if (n.state !== 0) continue;
+    platDispatch(n, d); busy++;
+  }
+  platEvict(f);
+  // hide OSM buildings under loaded PLATEAU nodes (throttled)
+  if (PLAT.rectsDirty && R.time > (PLAT.rectsT || 0)) {
+    PLAT.rectsDirty = false; PLAT.rectsT = R.time + 0.7;
+    const rects = [];
+    for (const S of PLAT.list) if (S.root) (function walk(n) { if (n.mesh && !n.mesh.empty && n.size <= 1400) rects.push([n.s, n.w, n.n, n.e, n.key]); for (const c of n.children) walk(c); })(S.root);
+    PLAT.rects = rects;
+    PLAT.hideQueue = [...CITY.tiles.values()];
+  }
+  if (PLAT.hideQueue && PLAT.hideQueue.length) {
+    let n = 0;
+    while (PLAT.hideQueue.length && n < 2) { const t = PLAT.hideQueue.shift(); if (cityApplyHidden(t, PLAT.rects)) n++; }
+  }
+}
+function platLoadExt(n) {
+  n.extState = 1;
+  fetch(n.ext, { mode: 'cors' }).then(r => r.json()).then(j => {
+    const sub = n.set.conv(j.root, n, n.ext);
+    n.children.push(sub); n.ext = null; n.extState = 2;
+  }).catch(() => { n.extState = 3; });
+}
+function platDispatch(n, d) {
+  const w = PLAT.workers.reduce((a, b) => (b.busy < a.busy ? b : a));
+  const id = PLAT.nextId++;
+  n.state = 1; n.job = id; w.busy++;
+  n.refLat = (n.s + n.n) / 2; n.refLon = (n.w + n.e) / 2; n.kx = kxAt(n.refLat);
+  PLAT.jobs.set(id, { n, w });
+  w.postMessage({ id, url: n.uri, refLat: n.refLat, refLon: n.refLon, maxTex: game.touch ? 1024 : d < 700 ? 2048 : 1024 });
+}
+function platReceive(r) {
+  const job = PLAT.jobs.get(r.id); if (!job) return;
+  PLAT.jobs.delete(r.id); job.w.busy--;
+  const n = job.n;
+  if (n.job !== r.id) { if (r.bitmap) r.bitmap.close(); return; }
+  if (r.error) { n.state = 3; if (r.error !== '404') setTimeout(() => { if (n.state === 3) n.state = 0; }, 20000); return; }
+  n.state = 2;
+  if (!r.nv) { n.mesh = { empty: true, count: 0 }; PLAT.rectsDirty = true; return; }
+  // height datum: PLATEAU heights are ellipsoidal; compare building bases with the terrain
+  const sm = new Float32Array(r.samples), diffs = [];
+  for (let k = 0; k < sm.length; k += 3) {
+    const zt = 2 ** 14, dt = JW.tiles.get('14/' + Math.floor((sm[k + 1] + 180) / 360 * zt) + '/' + Math.floor(mercY(sm[k]) * zt));
+    if (!dt || !dt.dem) continue;                                     // only trust the 10 m elevation data
+    const gh = sampleDem(dt, sm[k], sm[k + 1]); if (gh > -5) diffs.push(sm[k + 2] - gh);
+  }
+  if (diffs.length >= 3) {
+    diffs.sort((a, b) => a - b);
+    const med = diffs[diffs.length >> 1];
+    const S = n.set; S.offs = S.offs || []; S.offs.push(clamp(med, 20, 55)); if (S.offs.length > 25) S.offs.shift();
+    const so = [...S.offs].sort((a, b) => a - b); S.off = so[so.length >> 1];
+  }
+  const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+  const mk = (data, loc, size, type, norm) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, type, norm, 0, 0); return b; };
+  const bufs = [mk(r.pos, 0, 3, gl.FLOAT, false), mk(r.nrm, 1, 3, gl.BYTE, true), mk(r.uv, 2, 2, gl.FLOAT, false), mk(r.col, 3, 4, gl.UNSIGNED_BYTE, true)];
+  const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, r.idx, gl.STATIC_DRAW); bufs.push(ib);
+  gl.bindVertexArray(null);
+  let tex = null;
+  if (r.bitmap) {
+    tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, r.bitmap);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, 4);
+    PLAT.bytes += r.bitmap.width * r.bitmap.height * 4 * 1.33; n.tw = r.bitmap.width + "x" + r.bitmap.height;
+    n.texBytes = r.bitmap.width * r.bitmap.height * 4 * 1.33;
+    r.bitmap.close();
+  }
+  n.mesh = { vao, bufs, tex, count: r.ni };
+  n.vbytes = r.nv * 32 + r.ni * 4; PLAT.bytes += n.vbytes; n.nv = r.nv; n.uri2 = n.uri.split("/").pop();
+  PLAT.loaded++;
+  PLAT.rectsDirty = true;
+}
+function platFree(n) {
+  if (n.mesh && !n.mesh.empty) {
+    gl.deleteVertexArray(n.mesh.vao); for (const b of n.mesh.bufs) gl.deleteBuffer(b);
+    if (n.mesh.tex) gl.deleteTexture(n.mesh.tex);
+    PLAT.bytes -= (n.vbytes || 0) + (n.texBytes || 0); PLAT.loaded--;
+  }
+  n.mesh = null; n.state = 0; n.job = 0;
+  PLAT.rectsDirty = true;
+}
+function platEvict(f) {
+  if (f % 30) return;
+  const budget = game.touch ? 250e6 : 700e6;
+  const all = [];
+  for (const S of PLAT.list) if (S.root) (function walk(n) { if (n.mesh) all.push(n); for (const c of n.children) walk(c); })(S.root);
+  for (const n of all) if (n.used < f - 240) platFree(n);
+  if (PLAT.bytes > budget) {
+    all.filter(n => n.mesh).sort((a, b) => a.used - b.used).slice(0, 20).forEach(platFree);
+  }
+}
+function drawPlateau() {
+  if (!PLAT.ready || !PLAT.active.length) return;
+  const pr = PLAT.prog, u = pr.u;
+  setCommon(pr);
+  gl.uniform1i(u.uTex, 8);
+  gl.disable(gl.CULL_FACE);
+  gl.activeTexture(gl.TEXTURE8);
+  for (const n of PLAT.active) {
+    if (!n.mesh || n.mesh.empty) continue;
+    gl.uniform4f(u.uTileA, n.refLon - JW.lon0, n.refLat - JW.lat0, n.refLat, n.kx);
+    gl.uniform1f(u.uYOff, n.set.off || 37);
+    if (n.mesh.tex) { gl.bindTexture(gl.TEXTURE_2D, n.mesh.tex); gl.uniform1i(u.uHasTex, 1); } else gl.uniform1i(u.uHasTex, 0);
+    gl.bindVertexArray(n.mesh.vao);
+    gl.drawElements(gl.TRIANGLES, n.mesh.count, gl.UNSIGNED_INT, 0);
+  }
+  gl.activeTexture(gl.TEXTURE0);
+  gl.enable(gl.CULL_FACE);
+}
+PLAT.list = PLATEAU_SETS.map((r, i) => ({ id: i, name: r[0], base: PLATEAU_BASE + r[1], s: r[2], w: r[3], n: r[4], e: r[5], state: 0, root: null }));
+
+const PLAT_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aN;
+layout(location=2) in vec2 aUv;
+layout(location=3) in vec4 aCol;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv;
+uniform float uYOff;
+` + CITY_POS_GLSL + `
+out vec3 vWorld; out vec3 vN; out vec2 vUv; out vec3 vCol;
+void main(){
+  vec3 w = cityWorld(aPos.xz, aPos.y - uYOff);
+  vWorld = w;
+  vec2 d = w.xz - uCamPos.xz;
+  w.y -= dot(d, d) * uCurv;
+  vN = aN; vUv = aUv; vCol = aCol.rgb;
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+const PLAT_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec3 vWorld; in vec3 vN; in vec2 vUv; in vec3 vCol;
+uniform sampler2D uTex;
+uniform int uHasTex;
+uniform float uNightF;
+out vec4 outColor;
+void main(){
+  vec3 n = normalize(vN);
+  if (!gl_FrontFacing) n = -n;
+  vec3 base = vCol;
+  if (uHasTex == 1 && vUv.x >= 0.0) base *= texture(uTex, vUv).rgb * 1.05;
+  else base *= 0.82;
+  float diff = max(dot(n, uSunDir), 0.0);
+  vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
+  vec3 col = base * (uSunCol * (0.30 + 0.62 * diff) + amb * 0.9);
+  if (uNightF > 0.0 && uHasTex == 1 && vUv.x >= 0.0) {
+    vec2 g = vUv * vec2(260.0, 180.0), cell = floor(g), f = fract(g);
+    float h = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
+    float box = step(0.2, f.x) * step(f.x, 0.8) * step(0.25, f.y) * step(f.y, 0.75);
+    float aa = clamp(1.0 - max(fwidth(g.x), fwidth(g.y)) * 0.8, 0.0, 1.0);
+    float lit = step(0.86, h) * mix(0.36, box, aa);
+    col = col * 0.8 + vec3(1.0, 0.8, 0.52) * lit * (1.0 - abs(n.y)) * 0.75;
+  }
+  outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
+}`;
+
+// =====================================================================
+//  SIGHTSEEING FLIGHT: rings placed beside famous landmarks near the
+//  departure airport; each ring tells you what you are looking at.
+//  [name, lat, lon, height above ground (m) or -1 for a summit, description]
+// =====================================================================
+const LANDMARKS = [
+  ['東京タワー', 35.6586, 139.7454, 333, '1958 年に完成した電波塔。高さ 333 m。赤と白の塗装は航空法で決められた色です。'],
+  ['東京スカイツリー', 35.7101, 139.8107, 634, '2012 年開業、高さ 634 m の世界一高い電波塔。634 は旧国名「武蔵（むさし）」の語呂合わせ。'],
+  ['皇居', 35.6852, 139.7528, 0, '江戸城の跡。周りを堀と森に囲まれた、都心の大きな緑地です。'],
+  ['東京駅', 35.6812, 139.7671, 30, '1914 年開業。赤レンガの丸の内駅舎は 2012 年に創建当時の姿に復元されました。'],
+  ['東京都庁', 35.6896, 139.6917, 243, '新宿副都心の高層ビル群の中心。高さ 243 m、2 本の塔が並ぶ形が特徴です。'],
+  ['レインボーブリッジ', 35.6365, 139.7633, 126, '芝浦とお台場を結ぶ吊り橋。全長 798 m、上下 2 段に道路とゆりかもめが通ります。'],
+  ['浅草寺', 35.7148, 139.7967, 53, '東京で最も古いお寺（628 年創建と伝わる）。雷門と五重塔が目印です。'],
+  ['明治神宮', 35.6764, 139.6993, 0, '1920 年創建。約 70 ha の森は、全国から献木された木を植えて人の手で作られました。'],
+  ['横浜ランドマークタワー', 35.4547, 139.6317, 296, 'みなとみらいの高さ 296 m のビル。すぐそばに観覧車「コスモクロック 21」があります。'],
+  ['鎌倉大仏', 35.3167, 139.5358, 0, '高徳院の銅造阿弥陀如来坐像。高さ約 11 m、鎌倉時代から露天に座っています。'],
+  ['富士山', 35.3606, 138.7274, -1, '日本一高い山、標高 3,776 m。山頂の噴火口は直径約 700 m。晴れた日は 100 km 以上先から見えます。'],
+  ['芦ノ湖', 35.2046, 139.0247, 0, '箱根の火山のカルデラにできた湖。晴れていれば湖の向こうに富士山が見えます。'],
+  ['日光東照宮', 36.7581, 139.5988, 0, '徳川家康をまつる神社。極彩色の陽明門が有名な世界遺産です。'],
+  ['伊豆大島 三原山', 34.7244, 139.3946, -1, '伊豆大島の中央にある活火山（標高 758 m）。1986 年の噴火では全島民が避難しました。'],
+  ['大阪城', 34.6873, 135.5262, 55, '豊臣秀吉が築いた城。いまの天守は 1931 年に市民の寄付で再建されました。'],
+  ['通天閣', 34.6525, 135.5063, 103, '新世界のシンボル。いまの塔は 1956 年に建てられた 2 代目です。'],
+  ['あべのハルカス', 34.6457, 135.5134, 300, '2014 年完成、高さ 300 m。完成当時は日本一高いビルでした。'],
+  ['梅田スカイビル', 34.7053, 135.4907, 173, '2 本の塔を最上階の「空中庭園」でつないだ、梅田の高層ビルです。'],
+  ['明石海峡大橋', 34.6167, 135.0214, 298, '神戸と淡路島を結ぶ世界最大級の吊り橋。中央の支間は 1,991 m、塔の高さは 298 m。'],
+  ['姫路城', 34.8394, 134.6939, 92, '白い壁から「白鷺城（しらさぎじょう）」とも呼ばれる世界遺産。天守は江戸時代のまま残っています。'],
+  ['金閣寺', 35.0394, 135.7292, 0, '正式名は鹿苑寺。金箔を張った舎利殿が池に映ります。'],
+  ['清水寺', 34.9949, 135.7850, 0, '崖にせり出した「清水の舞台」で有名な世界遺産。舞台は釘を使わない木組みです。'],
+  ['京都タワー', 34.9875, 135.7593, 131, '京都駅前の高さ 131 m の塔。灯台をイメージしたデザインです。'],
+  ['東大寺', 34.6890, 135.8398, 49, '奈良の大仏（盧舎那仏）を納める大仏殿は、世界最大級の木造建築です。'],
+  ['名古屋城', 35.1856, 136.8991, 55, '天守の屋根の上に金のしゃちほこが載る、徳川家の城です。'],
+  ['名古屋テレビ塔', 35.1723, 136.9085, 180, '1954 年完成の、日本で最初の集約電波塔。久屋大通公園の中に立っています。'],
+  ['伊勢神宮', 34.4551, 136.7253, 0, '内宮と外宮を中心とする神社。20 年ごとに社殿を建て替える「式年遷宮」が続いています。'],
+  ['兼六園', 36.5621, 136.6627, 0, '金沢にある日本三名園のひとつ。冬の雪吊りが有名です。'],
+  ['松本城', 36.2386, 137.9689, 30, '黒い壁の天守が残る国宝の城。北アルプスを背にして立っています。'],
+  ['善光寺', 36.6613, 138.1876, 0, '長野市の中心にある、1,400 年の歴史を持つといわれるお寺です。'],
+  ['原爆ドーム', 34.3955, 132.4536, 25, '1945 年 8 月 6 日の原爆に耐えて残った建物。平和を願う世界遺産です。'],
+  ['厳島神社', 34.2959, 132.3198, 0, '海の上に立つ朱色の大鳥居と社殿で有名な世界遺産です。'],
+  ['瀬戸大橋', 34.4050, 133.8130, 175, '岡山と香川を結ぶ 6 つの橋の総称。上を道路、下を鉄道が通ります。'],
+  ['松山城', 33.8456, 132.7656, 30, '勝山の山頂に立つ城。江戸時代から残る 12 の天守のひとつです。'],
+  ['福岡タワー', 33.5932, 130.3515, 234, '海浜タワーとしては日本一高い 234 m。外壁はハーフミラーで覆われています。'],
+  ['熊本城', 32.8063, 130.7058, 30, '加藤清正が築いた城。2016 年の地震で被害を受け、今も復旧が続いています。'],
+  ['阿蘇山', 32.8844, 131.1040, -1, '世界最大級のカルデラを持つ火山。中岳の火口からは今も噴煙が上がります。'],
+  ['桜島', 31.5806, 130.6571, -1, '鹿児島湾に浮かぶ活火山（標高 1,117 m）。1914 年の噴火で大隅半島と陸続きになりました。'],
+  ['首里城', 26.2170, 127.7195, 0, '琉球王国の王城。2019 年の火災で焼失し、再建が進められています。'],
+  ['美ら海水族館', 26.6943, 127.8778, 0, '巨大水槽「黒潮の海」でジンベエザメが泳ぐ、本部半島の水族館です。'],
+  ['札幌テレビ塔', 43.0610, 141.3564, 147, '大通公園の東の端に立つ塔。冬は雪まつりの会場を見下ろします。'],
+  ['函館山', 41.7590, 140.7042, -1, '標高 334 m。山頂から見る函館の夜景は日本三大夜景のひとつです。'],
+  ['松島', 38.3683, 141.0633, 0, '260 あまりの小島が浮かぶ湾。日本三景のひとつです。'],
+  ['五稜郭', 41.7969, 140.7570, 0, '星の形をした西洋式の城。戊辰戦争最後の戦いの舞台になりました。'],
+];
+function jwBuildTour(ap) {
+  // landmarks near the departure airport, visited in nearest-neighbour order
+  const near = LANDMARKS.map(l => ({ l, d: geoDist(ap.lat, ap.lon, l[1], l[2]) })).sort((a, b) => a.d - b.d);
+  let pick = near.filter(x => x.d < 90000).slice(0, 6);
+  if (pick.length < 3) pick = near.slice(0, 4);
+  const route = [];
+  let cur = [ap.lat, ap.lon];
+  while (pick.length) {
+    pick.sort((a, b) => geoDist(cur[0], cur[1], a.l[1], a.l[2]) - geoDist(cur[0], cur[1], b.l[1], b.l[2]));
+    const nx = pick.shift(); route.push(nx.l); cur = [nx.l[1], nx.l[2]];
+  }
+  const pts = [];
+  let prev = geoToWorld(ap.lat, ap.lon);
+  for (const l of route) {
+    const [x, z] = geoToWorld(l[1], l[2]);
+    const g = Math.max(jwHeightGeo(l[1], l[2]), 0);
+    // stand the ring a little before the landmark (on the side we come from) so it is in view
+    const dx = x - prev[0], dz = z - prev[1], dl = Math.hypot(dx, dz) || 1;
+    const back = l[3] < 0 ? 0 : l[3] > 60 ? 450 : 150;
+    const px = x - dx / dl * back, pz = z - dz / dl * back;
+    let top = 0;
+    for (let k = 0; k < 9; k++) { const a = k / 9 * Math.PI * 2, rr = k ? 300 : 0; top = Math.max(top, jwHeight(px + Math.cos(a) * rr, pz + Math.sin(a) * rr)); }
+    const y = l[3] < 0 ? g + 350 : Math.max(top + 180, g + Math.max(l[3], 0) * 0.6 + 120, 250);
+    pts.push({ p: [px, y, pz], n: vnorm([dx, 0, dz]), l });
+    prev = [x, z];
+  }
+  course.rings = pts.map(q => ({ p: q.p, n: q.n }));
+  course.tour = pts.map(q => q.l);
+  const c = geoToWorld(ap.lat, ap.lon); course.centre = [c[0], 0, c[1]]; course.centreGeo = [ap.lat, ap.lon];
+}
+function tourPassed(i) {
+  const l = course.tour && course.tour[i];
+  if (!l) return;
+  toast(`★ ${l[0]}：${l[4]}`, 7500);
+}
 
 // =====================================================================
 //  GAME: environment, camera, input, audio, particles, HUD, modes, loop
@@ -4219,6 +4885,10 @@ const TOD = {
   evening: {
     sunDir: vnorm([-0.86, 0.13, 0.34]), sunCol: [1.28, 0.74, 0.42], zenith: [0.15, 0.22, 0.44], horizon: [1.0, 0.64, 0.40],
     horizonAway: [0.46, 0.46, 0.60], ambSky: [0.26, 0.26, 0.37], ambGround: [0.17, 0.12, 0.10], fog: 5.6e-5,
+  },
+  night: {
+    sunDir: vnorm([-0.35, 0.42, -0.55]), sunCol: [0.15, 0.17, 0.25], zenith: [0.008, 0.013, 0.035], horizon: [0.05, 0.06, 0.10],
+    horizonAway: [0.03, 0.04, 0.075], ambSky: [0.05, 0.06, 0.10], ambGround: [0.02, 0.02, 0.03], fog: 3.2e-5, night: 1,
   },
 };
 let ENV = TOD.day;
@@ -4786,7 +5456,11 @@ function updateRings(prevPos) {
     if (radial <= course.radius) {
       game.ringIdx++;
       audio.ring();
-      if (game.ringIdx >= course.rings.length) {
+      if (game.tour) tourPassed(game.ringIdx - 1);
+      if (game.ringIdx >= course.rings.length && game.tour) {
+        game.ringDone = true;
+        setTimeout(() => showResult({ eyebrow: 'SIGHTSEEING', title: '観光フライト完了', rows: [['めぐった名所', '', course.tour.map(l => l[0]).join('・')], ['飛行時間', '', fmtTime(game.ringTime)]] }), 6500);
+      } else if (game.ringIdx >= course.rings.length) {
         game.ringDone = true;
         const t = game.ringTime, prev = game.best.rings;
         if (!prev || t < prev) { game.best.rings = t; saveBest(); }
@@ -4794,7 +5468,7 @@ function updateRings(prevPos) {
           eyebrow: 'RING CHALLENGE', title: 'コースクリア',
           rows: [['タイム', '', fmtTime(t), true], ['ベスト', '', fmtTime(Math.min(t, prev || t))], ['通過リング', '', course.rings.length + ' / ' + course.rings.length]],
         });
-      } else toast(`リング ${game.ringIdx} / ${course.rings.length} 通過`, 1500);
+      } else if (!game.tour) toast(`リング ${game.ringIdx} / ${course.rings.length} 通過`, 1500);
     }
   }
 }
@@ -4809,6 +5483,13 @@ function showMenu(paused) {
 }
 function startMode(mode) {
   audio.init();
+  game.tour = false;
+  if (JW.active && (mode === 'tour' || mode === 'rings')) {
+    if (mode === 'tour') jwBuildTour(JW.dep); else { jwBuildRings(JW.dep); course.tour = null; }
+    game.tour = mode === 'tour';
+    ensureRingMesh();
+  }
+  if (mode === 'tour') mode = 'rings';
   spawn(mode);
   game.state = 'flying';
   $('menu').hidden = true; $('result').hidden = true; $('touch').hidden = !game.touch;
@@ -4817,7 +5498,7 @@ function startMode(mode) {
   const hints = {
     runway: game.touch ? ['右のスライダーでスロットルを上げて加速', `速度 ${vr} kt を超えたらスティックを下に引いて離陸`] : ['R でスロットルを上げて滑走開始', `${vr} kt を超えたら ${up} で機首を上げて離陸`, ACFT.gear.fixed ? '困ったら L で水平飛行に戻せます' : '上昇したら G でギア（車輪）を上げましょう'],
     air: [game.touch ? '「？」ボタンで画面の見方や用語を確認できます' : 'C でカメラ切替、Esc でメニューとガイド', '操縦を離すと' + (game.assist ? '自動で水平飛行に戻ります' : '機体の傾きはそのまま残ります（L で水平に）')],
-    rings: ['紫の枠が次のリング。順番に通過しよう'],
+    rings: game.tour ? ['観光フライト：紫の枠が次の名所。リングを通ると説明が出ます', '★ の付いた名前が名所です。地図（M）でも位置を確認できます'] : ['紫の枠が次のリング。順番に通過しよう'],
     landing: ['PAPI（滑走路左の灯火）が赤2・白2なら正しい進入角', '接地したらスロットル 0、ブレーキ（B）で停止'],
   };
   (hints[mode] || []).forEach((h, i) => setTimeout(() => { if (game.state === 'flying' && game.mode === mode) toast(h, 3800); }, 600 + i * 4200));
@@ -4877,6 +5558,9 @@ function updateMenuTexts() {
     }
     $('sub-air').textContent = `${JW.dep.name}の近くを巡航中の状態から自由に飛ぶ`;
     $('sub-rings').firstChild.textContent = `${JW.dep.name}の周りの 10 個のリングを順番に通過 `;
+    { const near = LANDMARKS.map(l => [l[0], geoDist(JW.dep.lat, JW.dep.lon, l[1], l[2])]).sort((a, b) => a[1] - b[1]);
+      const pick = near.filter(x => x[1] < 90000).slice(0, 6); const list = (pick.length >= 3 ? pick : near.slice(0, 4)).map(x => x[0]);
+      $('sub-tour').textContent = `${list.join('・')} をめぐる`; }
   } else {
     $('map-desc').textContent = `${m.name}（${m.icao}）滑走路 ${RWY.idents.join('/')}・長さ ${len.toLocaleString()} m — ${MAP_INFO[m.id] || ''}`;
     $('net-desc').textContent = '';
@@ -4948,27 +5632,38 @@ function setupMenu() {
   $('callout-close').addEventListener('click', hideCallouts);
 }
 // reference numbers for steady flight, per aircraft (see TRIM)
+const TRIM_ROWS = [
+  ['巡航（ふつうの速さ・フラップ 0°）', [['c_level', '水平飛行'], ['c_c500', '上昇 500 fpm'], ['c_d500', '降下 500 fpm'], ['c_d1000', '降下 1,000 fpm']]],
+  ['上昇（上昇に向いた速さ・フラップ 0°）', [['y_c500', 'ゆっくり上昇 500 fpm'], ['y_c1000', '上昇 1,000 fpm'], ['y_full', 'スロットル全開で上昇']]],
+  ['低速（空港の周り・フラップ 1 段・ギア下げ）', [['s_level', '水平飛行'], ['s_c500', '上昇 500 fpm'], ['s_d500', '降下 500 fpm']]],
+  ['着陸の進入（着陸用フラップ・ギア下げ）', [['a_3deg', '3° の坂で降りる']]],
+];
 function renderNumbers(id) {
   const T = TRIM[id], A = AIRCRAFT.find(a => a.id === id);
   if (!T) return;
   $('num-acft').value = id;
   const fl = i => A.wing.flap ? FLAP_DEG[i] + '°' : '—';
   const sg = v => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v).toFixed(1) + '°';
-  const vs = v => Math.abs(v) < 30 ? '0（水平）' : (v > 0 ? '+' : '−') + Math.abs(v).toLocaleString();
-  const turn = r => r[5] > 0.2 ? `${Math.round(360 / r[5])} 秒` : '—';
-  const row = (label, r, extra = '') => `<tr><td>${label}${extra}</td><td>${r[0]} kt</td><td>${fl(r[6])}</td><td><b>${r[1]}%</b></td><td><b>${sg(r[2])}</b></td><td>${r[4] ? r[4] + '°' : '0°'}</td><td>${vs(r[3])}</td><td>${turn(r)}</td></tr>`;
-  const L = T.level, dThr = b => { const d = T['turn' + b][1] - L[1]; return (d >= 0 ? '+' : '−') + Math.abs(d) + '%'; }, dP = b => { const d = T['turn' + b][2] - L[2]; return (d >= 0 ? '+' : '−') + Math.abs(d).toFixed(1) + '°'; };
-  let h = `<div class="num-wrap"><table class="nt"><tr><th>状況</th><th>速度</th><th>フラップ</th><th>スロットル</th><th>ピッチ</th><th>バンク</th><th>昇降 fpm</th><th>1 周</th></tr>`;
-  h += `<tr class="grp"><td colspan="8">巡航（ふつうに飛ぶとき）</td></tr>`;
-  h += row('水平飛行', L);
-  for (const b of [15, 30, 45, 60]) h += row(`水平旋回 ${b}°`, T['turn' + b], `<br><small>水平飛行から スロットル ${dThr(b)}・ピッチ ${dP(b)}</small>`);
-  h += `<tr class="grp"><td colspan="8">低速（空港の周り・着陸の準備）ギアを下げた状態</td></tr>`;
-  h += row('水平飛行', T.slow);
-  for (const b of [15, 30]) h += row(`水平旋回 ${b}°`, T['slowturn' + b]);
-  h += `<tr class="grp"><td colspan="8">上昇・降下</td></tr>`;
-  h += row('上昇（スロットル全開）', T.climb);
-  h += row('ゆるやかな降下（約 500 fpm）', T.descent);
-  h += row('着陸の進入（3° の坂）', T.approach);
+  const vs = v => Math.abs(v) < 30 ? '0' : (v > 0 ? '+' : '−') + Math.abs(v).toLocaleString();
+  const cell = r => {
+    if (!r) return '<td>—</td>';
+    if (r[7] === 0) return `<td class="nx">無理<br><small>全開でも届かない</small></td>`;
+    const lap = r[5] > 0.2 ? `<small>1 周 ${Math.round(360 / r[5])} 秒</small>` : '<small>まっすぐ</small>';
+    const extra = r[7] === 2 ? '<br><small>加速し続ける</small>' : '';
+    return `<td><b>${r[1]}%</b> / <b>${sg(r[2])}</b><br>${lap}${extra}</td>`;
+  };
+  let h = `<div class="num-wrap"><table class="nt"><tr><th>状況</th><th>速度</th><th>フラップ</th><th>昇降 fpm</th><th>バンク 0°</th><th>バンク 10°</th><th>バンク 20°</th></tr>`;
+  for (const [grp, list] of TRIM_ROWS) {
+    h += `<tr class="grp"><td colspan="7">${grp}</td></tr>`;
+    for (const [k, label] of list) {
+      const r0 = T[k + '_0'];
+      if (!r0) continue;
+      h += `<tr><td>${label}</td><td>${r0[0]} kt</td><td>${fl(r0[6])}</td><td>${r0[7] === 0 ? '—' : vs(r0[3])}</td>${cell(r0)}${cell(T[k + '_10'])}${cell(T[k + '_20'])}</tr>`;
+    }
+  }
+  h += `</table></div><p class="keys-note">各マスは「<b>スロットル</b> / <b>ピッチ</b>」。バンクは左右どちらに傾けても同じ値です。</p>`;
+  h += `<h3>参考：深い旋回（巡航・水平）</h3><div class="num-wrap"><table class="nt"><tr><th>バンク</th><th>速度</th><th>スロットル / ピッチ</th><th>G</th></tr>`;
+  for (const b of [30, 45, 60]) { const r = T['c_level_' + b]; h += `<tr><td>${b}°</td><td>${r[0]} kt</td>${cell(r)}<td>${(1 / Math.cos(b * DEG)).toFixed(2)}</td></tr>`; }
   h += `</table></div>`;
   $('num-table').innerHTML = h;
 }
@@ -5099,6 +5794,8 @@ function setCommon(pr) {
   if (u.uNormalTex) gl.uniform1i(u.uNormalTex, 1);
   if (u.uNoise) gl.uniform1i(u.uNoise, 2);
   if (u.uCurv) gl.uniform1f(u.uCurv, JW.active ? 1 / (2 * R_EARTH) : 0);
+  if (u.uStars) gl.uniform1f(u.uStars, ENV.night ? 1 : 0);
+  if (u.uNightF) gl.uniform1f(u.uNightF, ENV.night ? 1 : 0);
 }
 function shadowUniforms(pr) {
   const s = sim, u = pr.u;
@@ -5146,6 +5843,7 @@ function render() {
   gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, dotTex);
   gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, runwayTex);
   R.nodes = 0;
+  if (JW.active) platUpdate(frustumPlanes(M4.mul(M4.persp(fovY, asp, 1, 650000), v)));
   for (const far of [true, false]) {
     const proj = far ? M4.persp(fovY, asp, DEPTH_SPLIT, JW.active ? 650000 : 60000) : M4.persp(fovY, asp, cam.near, DEPTH_SPLIT * 1.02);
     R.VP = M4.mul(proj, v);
@@ -5155,7 +5853,7 @@ function render() {
 }
 function drawScene(planes, far) {
   gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
-  if (JW.active) { drawJapanTerrain(planes); drawJapanRunways(); drawCity(planes); }
+  if (JW.active) { drawJapanTerrain(planes); drawJapanRunways(); drawCity(planes); drawPlateau(); }
   else {
   // terrain
   setCommon(progTerrain); shadowUniforms(progTerrain);
@@ -5219,6 +5917,7 @@ function drawScene(planes, far) {
   gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
   if (!far && showPlane) { setCommon(progMesh); drawPropDisc(pm, sim); }
   drawRings();
+  drawLights();
   drawClouds();
   drawParticles();
   drawPapi();
@@ -5639,15 +6338,31 @@ function drawStick(g, x0, y0, sc) {
     g.fillText(game.levelT > 0 ? '水平に戻しています…' : neutral ? 'アシスト：水平飛行を保持中' : 'アシスト：離すと水平に戻ります', x0, y0 - 18 * sc);
   }
 }
-// "targets" panel: throttle and pitch that keep level flight at the current bank and flap setting
+// "targets" panel: throttle and pitch for the phase of flight the aircraft is in (level, climb or descent) at the current bank
 function trimTarget() {
   const T = TRIM[ACFT.id]; if (!T) return null;
-  const s = sim, a = attitude(), b = Math.min(Math.abs(a.bank), 60);
+  const s = sim, a = attitude(), b = Math.abs(a.bank), fpm = s.vs * 196.85, kt = s.ias * 1.94384;
   const slow = s.flapIdx > 0 || (s.gearDown && !ACFT.gear.fixed);
-  const pts = slow ? [[0, T.slow], [15, T.slowturn15], [30, T.slowturn30]] : [[0, T.level], [15, T.turn15], [30, T.turn30], [45, T.turn45], [60, T.turn60]];
-  let i = 0; while (i < pts.length - 2 && b > pts[i + 1][0]) i++;
-  const [b0, r0] = pts[i], [b1, r1] = pts[i + 1], f = clamp((b - b0) / (b1 - b0), 0, 1);
-  return { v: r0[0], thr: lerp(r0[1], r1[1], f), pitch: lerp(r0[2], r1[2], f), bank: b, slow, over: slow && b > 32, pitchNow: a.pitch };
+  let key, label;
+  if (slow) {
+    if (s.flapIdx >= ACFT.v.apprFlaps && ACFT.v.apprFlaps > 0 && fpm < -200) { key = 'a_3deg'; label = '着陸の進入 3°'; }
+    else if (fpm > 250) { key = 's_c500'; label = '低速で上昇 500 fpm'; }
+    else if (fpm < -250) { key = 's_d500'; label = '低速で降下 500 fpm'; }
+    else { key = 's_level'; label = '低速の水平飛行'; }
+  } else {
+    const vMid = (T.c_level_0[0] + T.y_c500_0[0]) / 2;
+    if (fpm > 750) { key = T.y_c1000_0[7] ? 'y_c1000' : 'y_full'; label = key === 'y_full' ? '全開で上昇' : '上昇 1,000 fpm'; }
+    else if (fpm > 250) { key = kt > vMid && T.c_c500_0[7] ? 'c_c500' : 'y_c500'; label = '上昇 500 fpm'; }
+    else if (fpm < -750) { key = T.c_d1000_0[7] ? 'c_d1000' : 'c_d500'; label = key === 'c_d1000' ? '降下 1,000 fpm' : '降下 500 fpm'; }
+    else if (fpm < -250) { key = 'c_d500'; label = '降下 500 fpm'; }
+    else { key = 'c_level'; label = '水平飛行'; }
+  }
+  const banks = key === 'c_level' ? [0, 10, 20, 30, 45, 60] : [0, 10, 20];
+  const bb = Math.min(b, banks[banks.length - 1]);
+  let i = 0; while (i < banks.length - 2 && bb > banks[i + 1]) i++;
+  const r0 = T[key + '_' + banks[i]], r1 = T[key + '_' + banks[i + 1]], f = clamp((bb - banks[i]) / (banks[i + 1] - banks[i]), 0, 1);
+  return { key, label, v: r0[0], fpm: r0[3], thr: lerp(r0[1], r1[1], f), pitch: lerp(r0[2], r1[2], f), bank: b, slow,
+    over: (slow && b > 22) || (key !== 'c_level' && b > 22), pitchNow: a.pitch, full: key === 'y_full' };
 }
 function drawTargets(g, x0, y0, sc) {
   const s = sim;
@@ -5658,7 +6373,7 @@ function drawTargets(g, x0, y0, sc) {
   rr(g, 0, 0, W, Hh, 8); g.fillStyle = 'rgba(6,12,22,0.66)'; g.fill();
   g.textBaseline = 'top'; g.textAlign = 'left';
   g.font = `10px ${UI}`; g.fillStyle = COL.muted;
-  g.fillText(`目安：水平飛行（バンク ${Math.round(t.bank)}°${t.slow ? '・低速' : ''}）`, 10, 7);
+  g.fillText(`目安：${t.label}（バンク ${Math.round(t.bank)}°）`, 10, 7);
   const thrNow = s.thr * 100, dT = thrNow - t.thr, dP = t.pitchNow - t.pitch;
   const line = (y, label, want, now, ok, unit, sign) => {
     g.font = `11px ${UI}`; g.fillStyle = COL.muted; g.fillText(label, 10, y);
@@ -5669,16 +6384,17 @@ function drawTargets(g, x0, y0, sc) {
   };
   line(28, 'スロットル', t.thr, thrNow, Math.abs(dT) < 6, '%', false);
   line(52, 'ピッチ', t.pitch, t.pitchNow, Math.abs(dP) < 1.2, '°', true);
-  g.font = `11px ${UI}`; g.fillStyle = COL.muted; g.fillText(`速度 ${t.v} kt のときの値`, 10, 76);
+  g.font = `11px ${UI}`; g.fillStyle = COL.muted; g.fillText(`速度 ${t.v} kt${t.key.includes('level') ? '' : '・' + (t.fpm > 0 ? '+' : '') + t.fpm + ' fpm'} のときの値`, 10, 76);
   const vsFpm = s.vs * 196.85, spd = s.ias * 1.94384;
   let hint = '';
-  if (t.over) hint = '低速で深く傾けています。30° までに';
-  else if (vsFpm < -150) hint = game.assist ? '沈んでいます：スロットルを少し足す' : '沈んでいます：機首を 1° 上げる';
-  else if (vsFpm > 150) hint = game.assist ? '上昇中' : '上がっています：機首を 1° 下げる';
-  else if (spd < t.v - 8) hint = '遅くなっています：スロットルを 5% 足す';
-  else if (spd > t.v + 12) hint = '速くなっています：スロットルを 5% 絞る';
-  else hint = '水平飛行を保てています';
-  g.font = `700 11px ${UI}`; g.fillStyle = hint.startsWith('水平') ? COL.green : COL.amber;
+  const dv = vsFpm - t.fpm, tol = Math.max(150, Math.abs(t.fpm) * 0.25);
+  if (t.over) hint = t.slow ? '低速で深く傾けています。20° までに' : '上昇・降下中は 20° までが目安';
+  else if (!t.full && dv < -tol) hint = game.assist ? '沈みすぎ：スロットルを少し足す' : '沈みすぎ：機首を 1° 上げる';
+  else if (!t.full && dv > tol) hint = game.assist ? '上がりすぎ：スロットルを少し絞る' : '上がりすぎ：機首を 1° 下げる';
+  else if (spd < t.v - 8) hint = t.full ? '遅い：機首を少し下げる' : '遅くなっています：スロットルを 5% 足す';
+  else if (spd > t.v + 12) hint = t.full ? '速い：機首を少し上げる' : '速くなっています：スロットルを 5% 絞る';
+  else hint = t.key.includes('level') ? '水平飛行を保てています' : '安定しています';
+  g.font = `700 11px ${UI}`; g.fillStyle = hint.startsWith('水平') || hint.startsWith('安定') ? COL.green : COL.amber;
   g.fillText(hint, 10, 96);
   g.font = `10px ${UI}`; g.fillStyle = COL.muted; g.fillText('詳しくはガイド「数値の目安」', 10, 120);
   g.restore();
@@ -5746,7 +6462,7 @@ function drawInfo(g, W, H, touch, sc, touchY) {
     st.push(JW.online ? `航空写真 ${JW.inflight ? '読み込み中…' : 'ON'}` : '簡易地形（オフライン）');
     lines.push([st.join('　'), game.ap || game.timeScale > 1 ? COL.amber : COL.muted, `11px ${UI}`]);
   } else lines.push([`${MAP.name}・${ACFT.name}`, COL.muted, `11px ${UI}`]);
-  const modeName = { tutorial: 'チュートリアル', runway: 'フリーフライト', air: 'フリーフライト', rings: 'リングチャレンジ', landing: '着陸チャレンジ' }[game.mode];
+  const modeName = { tutorial: 'チュートリアル', runway: 'フリーフライト', air: 'フリーフライト', rings: game.tour ? '観光フライト' : 'リングチャレンジ', landing: '着陸チャレンジ' }[game.mode];
   lines.push([modeName, COL.cyan, `700 12px ${UI}`]);
   if (game.mode === 'rings') {
     lines.push([fmtTime(game.ringTime), COL.ink, `700 22px ${MONO}`]);
@@ -5952,6 +6668,13 @@ function drawPlaceLabels(g, W, H) {
     if (d > reach) continue;
     if (p.k === 'c' && d > 12000 && p.p < clamp(d * 4, 50000, 900000)) continue;
     items.push([p.k === 'm' ? '▲ ' + p.n : p.n, p.lat, p.lon, p.k === 'm' ? p.p : Math.max(coarseH(p.lat, p.lon) || 0, 0) + 30, p.k === 'm' ? '#f2dcb4' : '#ffffff', d]);
+  }
+  for (const l of LANDMARKS) {
+    if (Math.abs(l[1] - la) > 1.2 || Math.abs(l[2] - lo) > 1.5) continue;
+    const d = geoDist(la, lo, l[1], l[2]);
+    if (d > Math.max(reach, l[3] < 0 ? 90000 : 30000)) continue;
+    const top = l[3] < 0 ? Math.max(coarseH(l[1], l[2]) || 0, 0) + 60 : Math.max(rawHeightGeo(l[1], l[2]), 0) + l[3] + 25;
+    items.push(['★ ' + l[0], l[1], l[2], top, '#ffd66b', d * 0.35]);
   }
   for (const ap of JW.airports) {
     const d = geoDist(la, lo, ap.lat, ap.lon);

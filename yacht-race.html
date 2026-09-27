@@ -1,0 +1,1343 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>風の航跡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Zen+Kaku+Gothic+New:wght@400;700&family=Chivo+Mono:wght@400;600&display=swap">
+<style>
+/* single look: a race-committee palette over a live sea (not theme dependent) */
+:root{
+  --sea:#0a2233; --panel:rgba(7,24,36,.78); --panel-solid:#0c2638; --line:rgba(170,208,226,.2);
+  --ink:#eef4f6; --muted:#93b3c2; --sail:#f5f1e8;
+  --flag-red:#e03a3e; --flag-yellow:#f2c230; --flag-blue:#2a6bb8; --good:#5fd08a; --warn:#f2c230; --bad:#ff6a5c;
+  --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --jp:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --mono:"Chivo Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--sea);color:var(--ink);font:14px/1.6 var(--jp);overflow:hidden;-webkit-user-select:none;user-select:none}
+#app{position:fixed;inset:0}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+button{font:inherit;color:inherit}
+button:focus-visible,select:focus-visible{outline:2px solid var(--flag-yellow);outline-offset:2px}
+.screen{position:absolute;inset:0;display:flex;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));overflow-y:auto}
+/* ---------- menu ---------- */
+#menu{align-items:flex-end;background:linear-gradient(90deg,rgba(6,20,31,.9),rgba(6,20,31,.55) 46%,rgba(6,20,31,0) 78%)}
+.menu-card{width:min(470px,100%);display:grid;gap:18px;margin-block:auto}
+.flags{display:flex;gap:6px}
+.flag{width:26px;height:18px;border-radius:2px;position:relative;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.f-p{background:var(--flag-blue)} .f-p::after{content:"";position:absolute;inset:5px 8px;background:#fff}
+.f-y{background:repeating-linear-gradient(45deg,var(--flag-yellow) 0 4px,var(--flag-red) 4px 8px)}
+.f-x{background:#fff} .f-x::before,.f-x::after{content:"";position:absolute;background:var(--flag-blue)} .f-x::before{left:10px;top:0;bottom:0;width:6px} .f-x::after{top:6px;left:0;right:0;height:6px}
+.f-c{background:linear-gradient(var(--flag-blue) 0 20%,#fff 20% 40%,var(--flag-red) 40% 60%,#fff 60% 80%,var(--flag-blue) 80%)}
+.f-b{background:var(--flag-red)}
+h1{margin:0;font:900 clamp(56px,11vw,96px)/.86 var(--display);letter-spacing:.01em;text-wrap:balance}
+h1 small{display:block;font:600 15px/1.4 var(--display);letter-spacing:.32em;color:var(--flag-yellow);margin-top:10px}
+.lede{margin:0;color:var(--muted);max-width:40ch}
+.opts{display:grid;gap:10px}
+.opt{display:grid;grid-template-columns:7.5em 1fr;align-items:center;gap:10px}
+.opt>span{font-size:12px;letter-spacing:.12em;color:var(--muted)}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:rgba(7,24,36,.6)}
+.seg button{flex:1;background:transparent;border:0;padding:8px 6px;cursor:pointer;color:var(--muted);font-weight:700;font-size:13px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--sail);color:#0b2233}
+.row-btn{display:flex;gap:10px;flex-wrap:wrap}
+.go{flex:1 1 auto;background:var(--flag-red);border:0;border-radius:6px;padding:14px 20px;font:800 24px/1 var(--display);letter-spacing:.06em;cursor:pointer;color:#fff}
+.go:hover{filter:brightness(1.08)}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:6px;padding:12px 16px;cursor:pointer;font-weight:700}
+.ghost:hover{border-color:var(--sail)}
+.best{font:12px var(--mono);color:var(--muted)}
+/* ---------- HUD ---------- */
+#hud{position:absolute;inset:0;pointer-events:none}
+.hbox{position:absolute;background:var(--panel);border:1px solid var(--line);border-radius:8px;backdrop-filter:blur(4px)}
+#h-race{left:16px;top:max(16px,env(safe-area-inset-top));padding:8px 14px;display:grid;gap:2px;min-width:170px}
+#h-pos{font:900 40px/1 var(--display)} #h-pos small{font-size:20px;color:var(--muted)}
+#h-time{font:600 15px var(--mono);font-variant-numeric:tabular-nums}
+#h-leg{font-size:12px;color:var(--muted)}
+#h-start{left:50%;top:max(16px,env(safe-area-inset-top));transform:translateX(-50%);padding:6px 16px 8px;text-align:center}
+#h-count{font:900 46px/1 var(--display);font-variant-numeric:tabular-nums}
+#h-signal{display:flex;gap:6px;justify-content:center;margin-top:4px;min-height:18px}
+#h-signal-t{font-size:12px;color:var(--muted)}
+#h-mini{right:16px;top:max(16px,env(safe-area-inset-top));width:190px;height:230px;padding:0;overflow:hidden}
+#h-mini canvas{width:100%;height:100%;display:block}
+#h-inst{left:16px;bottom:max(16px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3,auto);gap:0;overflow:hidden}
+.cell{padding:6px 14px 8px;border-right:1px solid var(--line);border-top:1px solid var(--line);min-width:84px}
+.cell:nth-child(3n){border-right:0} .cell:nth-child(-n+3){border-top:0}
+.cell b{display:block;font:800 30px/1.05 var(--display);font-variant-numeric:tabular-nums}
+.cell span{font-size:10.5px;letter-spacing:.14em;color:var(--muted)}
+#h-wind{right:16px;bottom:max(16px,env(safe-area-inset-bottom));width:200px;padding:8px 10px 10px;display:grid;gap:4px}
+#h-wind canvas{width:180px;height:150px;display:block}
+#h-trim{font-weight:700;font-size:13px;text-align:center}
+#h-trimbar{position:relative;height:10px;border-radius:5px;background:rgba(255,255,255,.1);overflow:hidden}
+#h-trimbar i{position:absolute;top:0;bottom:0;background:rgba(95,208,138,.45)}
+#h-trimbar em{position:absolute;top:-2px;bottom:-2px;width:3px;background:var(--sail);border-radius:2px}
+#h-trimlab{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
+#h-msg{position:absolute;left:50%;top:32%;transform:translateX(-50%);font:800 30px/1.2 var(--display);letter-spacing:.04em;text-align:center;text-shadow:0 2px 10px rgba(0,0,0,.6);opacity:0;transition:opacity .25s;white-space:nowrap}
+#h-msg.on{opacity:1}
+#h-msg small{display:block;font:700 14px var(--jp);letter-spacing:0}
+#h-pen{left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);padding:6px 14px;color:var(--bad);font-weight:700}
+#h-keys{position:absolute;left:50%;bottom:max(10px,env(safe-area-inset-bottom));transform:translateX(-50%);font-size:11px;color:var(--muted);white-space:nowrap;text-shadow:0 1px 3px #000}
+/* ---------- help & results ---------- */
+.sheet{margin:auto;width:min(760px,100%);max-height:100%;background:var(--panel-solid);border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+.sheet header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+.sheet h2{margin:0;font:800 30px/1 var(--display);letter-spacing:.03em}
+.sheet .body{overflow-y:auto;padding:14px 20px 20px;touch-action:pan-y;-webkit-user-select:text;user-select:text}
+.sheet h3{margin:18px 0 6px;font:700 15px var(--jp);color:var(--flag-yellow)}
+.sheet h3:first-child{margin-top:0}
+.sheet p,.sheet li{max-width:68ch}
+.sheet ul{padding-left:1.2em;margin:4px 0}
+kbd{font:600 12px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;background:rgba(255,255,255,.06)}
+.ktab{border-collapse:collapse;width:100%} .ktab td{padding:5px 6px;border-top:1px solid var(--line);vertical-align:top} .ktab td:first-child{white-space:nowrap;width:1%}
+.polar{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.polar canvas{width:220px;height:220px;max-width:100%}
+.res{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.res th,.res td{padding:7px 8px;border-top:1px solid var(--line);text-align:left}
+.res th{font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:700}
+.res td:first-child{font:800 22px var(--display);width:2.5em}
+.res tr.me td{background:rgba(224,58,62,.18)}
+.res .sw{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:8px;vertical-align:-1px}
+.sheet footer{display:flex;gap:10px;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+/* ---------- touch ---------- */
+#touch{position:absolute;inset:0;pointer-events:none}
+#touch button{pointer-events:auto;position:absolute;background:rgba(7,24,36,.55);border:1px solid var(--line);border-radius:50%;font:800 22px var(--display);touch-action:none}
+#t-left{left:18px;bottom:130px;width:74px;height:74px} #t-right{left:104px;bottom:130px;width:74px;height:74px}
+#t-tack{right:18px;bottom:260px;width:70px;height:70px;font-size:16px!important}
+#t-cam{right:18px;bottom:340px;width:52px;height:52px;font-size:13px!important}
+#t-sheet{position:absolute;right:96px;bottom:250px;width:44px;height:150px;pointer-events:auto;border:1px solid var(--line);border-radius:22px;background:rgba(7,24,36,.55);touch-action:none}
+#t-sheet i{position:absolute;left:4px;right:4px;height:34px;border-radius:17px;background:var(--sail)}
+#t-sheet span{position:absolute;left:-2px;right:-2px;top:-20px;font-size:10px;text-align:center;color:var(--muted)}
+@media (max-width:760px){
+  #h-inst{grid-template-columns:repeat(3,auto)} .cell{min-width:64px;padding:4px 8px} .cell b{font-size:22px}
+  #h-mini{width:130px;height:160px} #h-wind{width:150px;bottom:auto;top:190px} #h-wind canvas{width:130px;height:108px}
+  #h-keys{display:none}
+}
+@media (prefers-reduced-motion:reduce){#h-msg{transition:none}}
+</style>
+
+<div id="app">
+  <canvas id="gl" tabindex="0" aria-label="ヨットレースの画面"></canvas>
+
+  <div id="hud" hidden>
+    <div class="hbox" id="h-race"><div id="h-pos">-<small> / 6</small></div><div id="h-time">0:00.0</div><div id="h-leg">スタート前</div></div>
+    <div class="hbox" id="h-start"><div id="h-count">1:00</div><div id="h-signal"></div><div id="h-signal-t">予告信号</div></div>
+    <div class="hbox" id="h-mini"><canvas id="mini" width="380" height="460"></canvas></div>
+    <div class="hbox" id="h-inst">
+      <div class="cell"><b id="i-bsp">0.0</b><span>艇速 KN</span></div>
+      <div class="cell"><b id="i-vmg">0.0</b><span>VMG KN</span></div>
+      <div class="cell"><b id="i-mark">–</b><span>マークまで M</span></div>
+      <div class="cell"><b id="i-twa">0°</b><span>真風角 TWA</span></div>
+      <div class="cell"><b id="i-tws">0.0</b><span>風速 KN</span></div>
+      <div class="cell"><b id="i-hdg">000</b><span>針路 HDG</span></div>
+    </div>
+    <div class="hbox" id="h-wind">
+      <canvas id="wind" width="360" height="300"></canvas>
+      <div id="h-trimbar"><i></i><em></em></div>
+      <div id="h-trimlab"><span>引く</span><span>セールトリム</span><span>出す</span></div>
+      <div id="h-trim">—</div>
+    </div>
+    <div class="hbox" id="h-pen" hidden>ペナルティ：その場で 1 回転（360°）してください</div>
+    <div id="h-msg"></div>
+    <div id="h-keys">A D 舵 ・ W S セール（引く／出す）・ Space 自動タック／ジャイブ ・ T オートトリム ・ C カメラ ・ H 遊び方 ・ Esc 一時停止</div>
+  </div>
+
+  <div id="touch" hidden>
+    <button type="button" id="t-left" aria-label="左に舵">◀</button>
+    <button type="button" id="t-right" aria-label="右に舵">▶</button>
+    <button type="button" id="t-tack">タック</button>
+    <button type="button" id="t-cam">視点</button>
+    <div id="t-sheet" aria-label="セールの出し入れ"><span>セール</span><i></i></div>
+  </div>
+
+  <div id="menu" class="screen">
+    <div class="menu-card">
+      <div class="flags" aria-hidden="true"><span class="flag f-c"></span><span class="flag f-p"></span><span class="flag f-y"></span><span class="flag f-x"></span></div>
+      <h1>風の航跡<small>REGATTA · WINDWARD / LEEWARD</small></h1>
+      <p class="lede">風上マークと風下マークを回る本格ヨットレース。風の角度とセールの出し入れで速さが変わります。ライバル 5 艇に勝って、一番でフィニッシュしよう。</p>
+      <div class="opts">
+        <div class="opt"><span>コース</span><div class="seg" data-opt="course"><button type="button" data-v="short">ショート（1 周）</button><button type="button" data-v="std">スタンダード（2 周）</button></div></div>
+        <div class="opt"><span>風</span><div class="seg" data-opt="wind"><button type="button" data-v="8">軽風 8 kn</button><button type="button" data-v="12">中風 12 kn</button><button type="button" data-v="18">強風 18 kn</button></div></div>
+        <div class="opt"><span>ライバル</span><div class="seg" data-opt="ai"><button type="button" data-v="easy">やさしい</button><button type="button" data-v="norm">ふつう</button><button type="button" data-v="hard">つよい</button></div></div>
+        <div class="opt"><span>時間帯</span><div class="seg" data-opt="tod"><button type="button" data-v="day">昼</button><button type="button" data-v="eve">夕方</button></div></div>
+        <div class="opt"><span>セール</span><div class="seg" data-opt="trim"><button type="button" data-v="auto">オートトリム</button><button type="button" data-v="manual">自分で操作</button></div></div>
+      </div>
+      <div class="row-btn"><button type="button" class="go" id="b-start">レーススタート</button><button type="button" class="ghost" id="b-help">遊び方・ヨットのしくみ</button></div>
+      <div class="row-btn" id="resume-row" hidden><button type="button" class="ghost" id="b-resume">レースに戻る（Esc）</button></div>
+      <div class="best" id="best"></div>
+    </div>
+  </div>
+
+  <div id="help" class="screen" hidden>
+    <div class="sheet" role="dialog" aria-labelledby="help-title">
+      <header><h2 id="help-title">遊び方・ヨットのしくみ</h2><button type="button" class="ghost" id="b-help-close">閉じる ✕</button></header>
+      <div class="body">
+        <h3>ヨットは風に向かってまっすぐ進めない</h3>
+        <div class="polar"><canvas id="polar" width="440" height="440" aria-label="風の角度と艇速の図"></canvas>
+          <div><p>図は風の来る方向（上）に対する艇の向きと速さです。風上から左右 <b>約 35°</b> の内側（赤い扇形）は<b>ノーゴーゾーン</b>。この向きでは帆が風をはらまず、止まってしまいます。</p>
+          <p>いちばん速いのは風を真横から少し後ろに受ける <b>90〜120°</b>。風上へ行くときは約 <b>45°</b> でジグザグに（タック）、風下へは真後ろより <b>150°</b> くらいでジグザグに（ジャイブ）進むのが一番早く着きます。</p></div></div>
+        <h3>コース</h3>
+        <ul>
+          <li><b>スタート</b>：本部船（大きい船）とピンブイ（オレンジ）を結んだ線。60 秒前から合図が始まり、0 秒になったら線を越えて風上へ。<b>0 秒より前に線を越えるとリコール</b>（X 旗）。線の下に戻ってやり直し。</li>
+          <li><b>風上マーク</b>（黄）→ <b>風下マーク</b>（オレンジ）の順に回り、最後はスタートと同じ線を風下向きに越えてフィニッシュ。</li>
+          <li>マークは<b>左側に見て</b>（左回りで）回ります。反対回りは回ったことになりません。</li>
+          <li>マークに触れるとペナルティ。その場で 1 回転（360°）すると消えます。回らずにフィニッシュすると +30 秒。</li>
+        </ul>
+        <h3>セールの出し入れ（トリム）</h3>
+        <p>風を前から受けるときはセールを<b>引き込み</b>、横や後ろから受けるときは<b>出し</b>ます。右下のメーターの緑の範囲にセールの位置（白い線）を合わせると最速です。出しすぎると帆がバタバタして（シバー）遅くなり、引きすぎると失速して艇が大きく傾きます。「オートトリム」なら自動で合わせてくれます。</p>
+        <h3>風を読む</h3>
+        <ul>
+          <li><b>水面の暗い帯＝強い風（ガスト）</b>。そこに入ると速くなります。</li>
+          <li>風向はゆっくり左右に振れます（シフト）。風が振れて、行きたい方向へ向けやすくなった側（リフト）はそのまま、向けにくくなったら（ヘッダー）タックすると得をします。</li>
+          <li>地図の点線は<b>レイライン</b>：この線に乗ったら、タックすればまっすぐ風上マークに届きます。行き過ぎると損です。</li>
+        </ul>
+        <h3>操作</h3>
+        <table class="ktab">
+          <tr><td><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd></td><td>舵（左に曲がる／右に曲がる）。速度がないと曲がりにくい</td></tr>
+          <tr><td><kbd>W</kbd> <kbd>S</kbd> / <kbd>↑</kbd> <kbd>↓</kbd></td><td>セールを引く／出す（押すとオートトリムは切れます）</td></tr>
+          <tr><td><kbd>Space</kbd></td><td>自動でタック（風上）またはジャイブ（風下）：反対側の同じ風の角度まで回る</td></tr>
+          <tr><td><kbd>T</kbd></td><td>オートトリムの ON / OFF</td></tr>
+          <tr><td><kbd>C</kbd></td><td>カメラ切替（後方・上空・デッキ）。マウスのドラッグで見回し、ホイールで距離</td></tr>
+          <tr><td><kbd>H</kbd> / <kbd>Esc</kbd></td><td>遊び方 ／ 一時停止</td></tr>
+        </table>
+        <p>スマホ：左下の ◀ ▶ で舵、右の縦のつまみでセール、「タック」ボタンで自動タック・ジャイブ。</p>
+        <h3>計器の見方</h3>
+        <ul>
+          <li><b>艇速</b>：水に対する速さ（ノット、1 kn ≒ 時速 1.85 km）</li>
+          <li><b>VMG</b>：目標のマークに近づく速さ。風上・風下ではこれを最大にするのがコツ</li>
+          <li><b>真風角 TWA</b>：風の来る方向と艇の向きの角度。＋は右から、−は左から風を受けている</li>
+          <li>右下の図：黄色い矢印が風の来る向き、白い線がセール（ブーム）の位置</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="result" class="screen" hidden>
+    <div class="sheet" role="dialog" aria-labelledby="res-title">
+      <header><h2 id="res-title">フィニッシュ</h2><span class="best" id="res-sub"></span></header>
+      <div class="body"><table class="res" id="res-table"></table></div>
+      <footer><button type="button" class="go" id="b-again">もう一度</button><button type="button" class="ghost" id="b-menu">メニューへ</button></footer>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.169.0/three.module.min.js';
+
+// =====================================================================
+//  helpers
+// =====================================================================
+const $ = id => document.getElementById(id);
+const DEG = Math.PI / 180, KN = 1.94384;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v, lerp = (a, b, t) => a + (b - a) * t;
+const wrap180 = a => { a = (a + 180) % 360; if (a < 0) a += 360; return a - 180; };
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const fmt = t => { const s = Math.max(t, 0), m = Math.floor(s / 60); return m + ':' + (s - m * 60).toFixed(1).padStart(4, '0'); };
+function makeNoise(seed) {
+  let s = seed; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const perm = [...Array(256).keys()]; for (let i = 255; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
+  const p = new Uint8Array(512); for (let i = 0; i < 512; i++) p[i] = perm[i & 255];
+  const g = new Float32Array(256); for (let i = 0; i < 256; i++) g[i] = r();
+  return (x, y) => {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+    const h = (i, j) => g[p[(p[(xi + i) & 255] + yi + j) & 255]];
+    return lerp(lerp(h(0, 0), h(1, 0), u), lerp(h(0, 1), h(1, 1), u), v);
+  };
+}
+const store = { get(k, d) { try { const v = localStorage.getItem('kaze-' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('kaze-' + k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } } };
+
+// =====================================================================
+//  settings
+// =====================================================================
+const opts = Object.assign({ course: 'std', wind: '12', ai: 'norm', tod: 'day', trim: 'auto' }, store.get('opts', {}));
+document.querySelectorAll('.seg[data-opt]').forEach(seg => {
+  const k = seg.dataset.opt;
+  const sync = () => seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === opts[k]));
+  seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { opts[k] = b.dataset.v; store.set('opts', opts); sync(); if (k === 'tod') applyTod(); showBest(); }));
+  sync();
+});
+
+// =====================================================================
+//  wind: slow oscillating shifts plus gust patches that drift downwind
+// =====================================================================
+const W = { dir0: 0, tws0: 12 / KN, drift: [0, 0], n1: makeNoise(7), shift: 9, gustAmp: 0.3, phase: 0 };
+function windAt(x, z, t) {
+  const px = x - W.drift[0], pz = z - W.drift[1];
+  const g = W.n1(px / 190 + 3.3, pz / 190 + 1.7) * 0.65 + W.n1(px / 72 + 11.2, pz / 72 + 5.9) * 0.35;
+  const gust = clamp((g - 0.5) * 2.4, -1, 1);
+  const dir = W.dir0 + W.shift * Math.sin(t / 43 + W.phase) + 3.5 * Math.sin(t / 17 + x / 380 + W.phase * 2) + gust * 3;
+  return { dir, tws: W.tws0 * (1 + W.gustAmp * gust), gust };
+}
+
+// =====================================================================
+//  boat performance: polar (speed / true wind angle) and sail trim
+// =====================================================================
+const PT = [0, 25, 32, 40, 45, 52, 60, 75, 90, 110, 120, 135, 150, 165, 180];
+const PR = [0, 0, 0.2, 0.5, 0.6, 0.68, 0.76, 0.86, 0.93, 0.98, 1.0, 0.98, 0.93, 0.83, 0.75];
+function polarRatio(twaAbs) {
+  let i = 0; while (i < PT.length - 2 && twaAbs > PT[i + 1]) i++;
+  return lerp(PR[i], PR[i + 1], clamp((twaAbs - PT[i]) / (PT[i + 1] - PT[i]), 0, 1));
+}
+const boatMax = tws => { const kn = tws * KN; return tws * 0.95 * (kn > 12 ? 1 - (kn - 12) * 0.016 : Math.pow(kn / 12, 0.08)); };
+const idealBoom = awaAbs => clamp(awaAbs * 0.62 - 12, 4, 85);
+
+// =====================================================================
+//  course: start line, windward mark (yellow), leeward mark (orange)
+// =====================================================================
+const COURSE = { com: { x: 70, z: 0 }, pin: { x: -70, z: 0 }, wm: { x: 0, z: -440 }, lm: { x: 0, z: 90 } };
+let legs = [];
+function buildLegs() {
+  legs = opts.course === 'short'
+    ? [{ t: 'start' }, { t: 'mark', m: COURSE.wm, name: '風上マーク' }, { t: 'finish' }]
+    : [{ t: 'start' }, { t: 'mark', m: COURSE.wm, name: '風上マーク' }, { t: 'mark', m: COURSE.lm, name: '風下マーク' }, { t: 'mark', m: COURSE.wm, name: '風上マーク' }, { t: 'finish' }];
+}
+const lineMid = () => ({ x: (COURSE.com.x + COURSE.pin.x) / 2, z: COURSE.com.z });
+
+// =====================================================================
+//  renderer, sky, sea
+// =====================================================================
+const canvas = $('gl');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(52, 1, 0.3, 9000);
+const TOD = {
+  day: { sun: new THREE.Vector3(0.45, 0.62, -0.64).normalize(), sunCol: new THREE.Color(1.0, 0.96, 0.88), top: new THREE.Color(0.16, 0.38, 0.72), hor: new THREE.Color(0.70, 0.82, 0.92), deep: new THREE.Color(0.01, 0.09, 0.15), shal: new THREE.Color(0.03, 0.22, 0.28), exp: 1.0, hemi: 0.9 },
+  eve: { sun: new THREE.Vector3(-0.72, 0.12, -0.68).normalize(), sunCol: new THREE.Color(1.25, 0.66, 0.36), top: new THREE.Color(0.14, 0.18, 0.40), hor: new THREE.Color(1.0, 0.62, 0.42), deep: new THREE.Color(0.02, 0.05, 0.10), shal: new THREE.Color(0.06, 0.10, 0.16), exp: 1.05, hemi: 0.55 },
+};
+let ENV = TOD.day;
+const SKY_GLSL = `
+uniform vec3 uSun; uniform vec3 uSunCol; uniform vec3 uTop; uniform vec3 uHor;
+vec3 skyColor(vec3 d){
+  float y = max(d.y, 0.0);
+  vec3 c = mix(uHor, uTop, pow(y, 0.45));
+  float sd = max(dot(d, uSun), 0.0);
+  c += uSunCol * (pow(sd, 8.0) * 0.18 + pow(sd, 64.0) * 0.35);
+  c = mix(c, uHor * 0.9, smoothstep(0.0, -0.08, d.y));
+  return c;
+}`;
+const skyUniforms = { uSun: { value: ENV.sun }, uSunCol: { value: ENV.sunCol }, uTop: { value: ENV.top }, uHor: { value: ENV.hor } };
+const sky = new THREE.Mesh(new THREE.SphereGeometry(8000, 32, 16), new THREE.ShaderMaterial({
+  uniforms: skyUniforms, side: THREE.BackSide, depthWrite: false,
+  vertexShader: `varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+  fragmentShader: SKY_GLSL + `
+    varying vec3 vDir;
+    float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+      return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y); }
+    void main(){
+      vec3 d = normalize(vDir);
+      vec3 c = skyColor(d);
+      float sd = max(dot(d, uSun), 0.0);
+      c += uSunCol * smoothstep(0.9993, 0.9997, sd) * 4.0;
+      if (d.y > 0.0) {                                 // soft fair-weather cumulus band
+        vec2 p = d.xz / (d.y + 0.12) * 2.2;
+        float n = vnoise(p) * 0.55 + vnoise(p * 2.3 + 3.1) * 0.3 + vnoise(p * 5.1) * 0.15;
+        float cl = smoothstep(0.58, 0.8, n) * smoothstep(0.02, 0.2, d.y) * (1.0 - smoothstep(0.35, 0.7, d.y));
+        vec3 cc = mix(uHor * 1.1, vec3(1.0), 0.6) + uSunCol * pow(sd, 4.0) * 0.3;
+        c = mix(c, cc, cl * 0.85);
+      }
+      gl_FragColor = vec4(c, 1.0);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }`,
+}));
+sky.renderOrder = -1; sky.frustumCulled = false;
+scene.add(sky);
+const hemi = new THREE.HemisphereLight(0xcfe6ff, 0x0d2a36, ENV.hemi); scene.add(hemi);
+const sunLight = new THREE.DirectionalLight(0xffffff, 2.2); scene.add(sunLight);
+
+// ---- tileable detail normal map for small ripples, built once ----
+function makeRippleTexture() {
+  const N = 256, h = new Float32Array(N * N);
+  let s = 12345; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const waves = []; for (let k = 0; k < 42; k++) { const kx = Math.round((r() - 0.5) * 24), ky = Math.round(r() * 14 + 1); waves.push([kx, ky, r() * 6.28, 1 / Math.hypot(kx, ky)]); }
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { let v = 0; for (const [kx, ky, ph, a] of waves) v += a * Math.sin(2 * Math.PI * (kx * i + ky * j) / N + ph); h[j * N + i] = v; }
+  const d = new Uint8Array(N * N * 4);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const dx = h[j * N + (i + 1) % N] - h[j * N + (i + N - 1) % N], dy = h[((j + 1) % N) * N + i] - h[((j + N - 1) % N) * N + i];
+    const k = (j * N + i) * 4; d[k] = clamp(128 + dx * 60, 0, 255); d[k + 1] = clamp(128 + dy * 60, 0, 255); d[k + 2] = 255; d[k + 3] = 255;
+  }
+  const t = new THREE.DataTexture(d, N, N); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter; t.needsUpdate = true;
+  return t;
+}
+// gust texture: the wind field around the camera, refreshed a few times a second
+const GUST_N = 64, GUST_SIZE = 1400;
+const gustData = new Uint8Array(GUST_N * GUST_N * 4);
+const gustTex = new THREE.DataTexture(gustData, GUST_N, GUST_N); gustTex.magFilter = THREE.LinearFilter; gustTex.minFilter = THREE.LinearFilter; gustTex.wrapS = gustTex.wrapT = THREE.ClampToEdgeWrapping;
+const gustOrigin = new THREE.Vector2();
+function updateGustTexture(cx, cz, t) {
+  gustOrigin.set(Math.round(cx / 20) * 20, Math.round(cz / 20) * 20);
+  for (let j = 0; j < GUST_N; j++) for (let i = 0; i < GUST_N; i++) {
+    const x = gustOrigin.x + (i / (GUST_N - 1) - 0.5) * GUST_SIZE, z = gustOrigin.y + (j / (GUST_N - 1) - 0.5) * GUST_SIZE;
+    const g = windAt(x, z, t).gust, k = (j * GUST_N + i) * 4;
+    gustData[k] = clamp(128 + g * 127, 0, 255); gustData[k + 3] = 255;
+  }
+  gustTex.needsUpdate = true;
+}
+// gerstner waves (direction x, direction z, steepness, wavelength); they run downwind
+const WAVES = [[0.15, 1, 0.06, 44], [-0.4, 1, 0.07, 23], [0.55, 1, 0.08, 12.5], [-0.15, 1, 0.07, 6.5]];
+let waveScale = 1;
+const waveU = WAVES.map(() => new THREE.Vector4());
+function setWaves(scale) {
+  waveScale = scale;
+  WAVES.forEach((w, i) => { const l = Math.hypot(w[0], w[1]); waveU[i].set(w[0] / l, w[1] / l, w[2] * scale, w[3]); });
+}
+function waveHeight(x, z, t) {
+  let y = 0, sx = 0, sz = 0;
+  for (const w of waveU) {
+    const k = 2 * Math.PI / w.w, c = Math.sqrt(9.8 / k), f = k * (w.x * x + w.y * z - c * t), a = w.z / k;
+    y += a * Math.sin(f); const d = a * k * Math.cos(f); sx += w.x * d; sz += w.y * d;
+  }
+  return [y, sx, sz];
+}
+const seaUniforms = Object.assign({
+  uTime: { value: 0 }, uWaves: { value: waveU }, uRipple: { value: makeRippleTexture() }, uGust: { value: gustTex },
+  uGustOrigin: { value: gustOrigin }, uGustSize: { value: GUST_SIZE }, uDeep: { value: ENV.deep }, uShal: { value: ENV.shal }, uFog: { value: 0.00032 },
+}, skyUniforms);
+const SEA_RES = 220, SEA_SIZE = 2600;
+const seaGeo = new THREE.PlaneGeometry(SEA_SIZE, SEA_SIZE, SEA_RES, SEA_RES); seaGeo.rotateX(-Math.PI / 2);
+// denser rings near the centre: pull vertices toward the middle
+{ const p = seaGeo.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i), r = Math.hypot(x, z) / (SEA_SIZE / 2); const k = r > 0 ? Math.pow(r, 1.9) / r : 0; p.setXYZ(i, x * k, 0, z * k); } }
+const sea = new THREE.Mesh(seaGeo, new THREE.ShaderMaterial({
+  uniforms: seaUniforms,
+  vertexShader: `
+    uniform float uTime; uniform vec4 uWaves[4];
+    varying vec3 vWorld; varying vec3 vN; varying float vCrest;
+    void main(){
+      vec4 wp = modelMatrix * vec4(position, 1.0);
+      vec2 p = wp.xz; vec3 disp = vec3(0.0); vec3 tng = vec3(1.0, 0.0, 0.0), bin = vec3(0.0, 0.0, 1.0);
+      float fade = 1.0 - smoothstep(600.0, 1300.0, length(position.xz));
+      float crest = 0.0;
+      for (int i = 0; i < 4; i++) {
+        vec4 w = uWaves[i]; float k = 6.2831853 / w.w; float c = sqrt(9.8 / k); vec2 d = w.xy;
+        float f = k * (dot(d, p) - c * uTime); float s = w.z * fade; float a = s / k;
+        disp += vec3(d.x * a * cos(f), a * sin(f), d.y * a * cos(f));
+        tng += vec3(-d.x * d.x * s * sin(f), d.x * s * cos(f), -d.x * d.y * s * sin(f));
+        bin += vec3(-d.x * d.y * s * sin(f), d.y * s * cos(f), -d.y * d.y * s * sin(f));
+        crest += s * sin(f);
+      }
+      wp.xyz += disp;
+      vWorld = wp.xyz; vN = normalize(cross(bin, tng)); vCrest = crest;
+      gl_Position = projectionMatrix * viewMatrix * wp;
+    }`,
+  fragmentShader: SKY_GLSL + `
+    uniform float uTime; uniform sampler2D uRipple; uniform sampler2D uGust; uniform vec2 uGustOrigin; uniform float uGustSize;
+    uniform vec3 uDeep; uniform vec3 uShal; uniform float uFog;
+    varying vec3 vWorld; varying vec3 vN; varying float vCrest;
+    void main(){
+      vec2 gUv = (vWorld.xz - uGustOrigin) / uGustSize + 0.5;
+      float gust = texture2D(uGust, gUv).r * 2.0 - 1.0;
+      float inG = step(0.0, gUv.x) * step(gUv.x, 1.0) * step(0.0, gUv.y) * step(gUv.y, 1.0);
+      gust *= inG;
+      vec2 r1 = texture2D(uRipple, vWorld.xz / 31.0 + vec2(0.013, 0.041) * uTime).xy * 2.0 - 1.0;
+      vec2 r2 = texture2D(uRipple, vWorld.xz / 9.5 + vec2(-0.03, 0.07) * uTime).xy * 2.0 - 1.0;
+      vec2 r3 = texture2D(uRipple, vWorld.xz / 3.1 + vec2(0.05, 0.11) * uTime).xy * 2.0 - 1.0;
+      float rough = 0.55 + 0.55 * max(gust, -0.6);
+      vec3 n = normalize(vN + vec3(r1.x * 0.5 + r2.x * 0.35 + r3.x * 0.25, 0.0, r1.y * 0.5 + r2.y * 0.35 + r3.y * 0.25) * 0.42 * rough);
+      vec3 V = normalize(cameraPosition - vWorld);
+      float dist = length(cameraPosition - vWorld);
+      float fres = 0.02 + 0.98 * pow(1.0 - max(dot(n, V), 0.0), 5.0);
+      vec3 R = reflect(-V, n); R.y = abs(R.y);
+      vec3 skyc = skyColor(R);
+      float sss = pow(max(dot(V, -uSun + vec3(0.0, 0.6, 0.0)), 0.0), 3.0) * max(vCrest, 0.0) * 1.4;
+      vec3 water = mix(uDeep, uShal, 0.35 + 0.3 * max(n.y - 0.9, 0.0) * 10.0) * (0.55 + 0.45 * max(dot(n, uSun), 0.0));
+      water += uShal * sss;
+      water *= 1.0 - 0.28 * max(gust, 0.0);                       // gusts look dark: more ripples, less sky
+      vec3 col = mix(water, skyc, fres * (1.0 - 0.35 * max(gust, 0.0)));
+      float sd = max(dot(R, uSun), 0.0);
+      col += uSunCol * (pow(sd, 700.0) * 9.0 + pow(sd, 60.0) * 0.18) * (1.0 - smoothstep(900.0, 2400.0, dist) * 0.7);
+      col += vec3(0.9) * smoothstep(0.55, 0.95, vCrest / max(0.001, 0.12)) * 0.0;
+      float fog = 1.0 - exp(-dist * uFog);
+      col = mix(col, skyColor(normalize(vec3(-V.x, 0.02, -V.z))), clamp(fog, 0.0, 1.0));
+      gl_FragColor = vec4(col, 1.0);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }`,
+}));
+sea.frustumCulled = false;
+scene.add(sea);
+scene.fog = new THREE.FogExp2(ENV.hor.clone(), 0.00032);
+
+function applyTod() {
+  ENV = TOD[opts.tod] || TOD.day;
+  skyUniforms.uSun.value = ENV.sun; skyUniforms.uSunCol.value = ENV.sunCol; skyUniforms.uTop.value = ENV.top; skyUniforms.uHor.value = ENV.hor;
+  seaUniforms.uDeep.value = ENV.deep; seaUniforms.uShal.value = ENV.shal;
+  sunLight.color.copy(ENV.sunCol); sunLight.position.copy(ENV.sun).multiplyScalar(100);
+  hemi.intensity = ENV.hemi; scene.fog.color.copy(ENV.hor);
+  renderer.toneMappingExposure = ENV.exp;
+}
+applyTod();
+
+// =====================================================================
+//  boats
+// =====================================================================
+const TEAMS = [
+  { code: 'JPN', num: 7, hull: 0xd8343a, deck: 0xe9e6de, kite: 0xd8343a, kite2: 0xffffff, name: 'あなた（JPN 7）' },
+  { code: 'AUS', num: 12, hull: 0xf2c230, deck: 0xe8e4d8, kite: 0x1f7a3a, kite2: 0xf2c230, name: 'AUS 12' },
+  { code: 'NZL', num: 3, hull: 0x16181c, deck: 0xd9d9d6, kite: 0x16181c, kite2: 0xffffff, name: 'NZL 3' },
+  { code: 'GBR', num: 21, hull: 0x1d3a6e, deck: 0xe9e6de, kite: 0xc8102e, kite2: 0x1d3a6e, name: 'GBR 21' },
+  { code: 'FRA', num: 5, hull: 0xf4f4f2, deck: 0xdcdcd8, kite: 0x2a5cc8, kite2: 0xef4135, name: 'FRA 5' },
+  { code: 'ITA', num: 9, hull: 0x138a52, deck: 0xe9e6de, kite: 0x138a52, kite2: 0xffffff, name: 'ITA 9' },
+];
+const HULL_L = 7.2, HULL_B = 2.5;
+function hullGeometry(color) {
+  const NS = 30, NA = 9, pos = [], col = [], idx = [];
+  const c = new THREE.Color(color), anti = new THREE.Color(0x6b1d1f), boot = new THREE.Color(0xf4f2ea);
+  const sec = [];
+  for (let i = 0; i <= NS; i++) {
+    const s = i / NS, z = -HULL_L / 2 + s * HULL_L;
+    const hw = HULL_B / 2 * Math.pow(Math.sin(Math.min(s * 1.7, 1) * Math.PI / 2), 0.75) * (1 - 0.14 * s) + 0.001;
+    const deck = 0.66 + 0.2 * Math.pow(1 - s, 3);
+    const bot = -(0.1 + 0.36 * Math.pow(Math.sin(Math.PI * Math.min(s * 1.05, 1)), 0.6)) * (s < 0.08 ? s / 0.08 * 0.7 + 0.3 : 1) - 0.02;
+    const ring = [];
+    for (let j = -NA; j <= NA; j++) {
+      const a = Math.abs(j) / NA * Math.PI / 2;
+      const x = Math.sign(j) * hw * Math.pow(Math.cos(a), 0.55), y = deck - (deck - bot) * Math.pow(Math.sin(a), 1.25);
+      ring.push(pos.length / 3); pos.push(x, y, z);
+      const cc = y < 0.03 ? anti : y < 0.1 ? boot : c; col.push(cc.r, cc.g, cc.b);
+    }
+    sec.push(ring);
+  }
+  for (let i = 0; i < NS; i++) for (let j = 0; j < 2 * NA; j++) { const a = sec[i][j], b = sec[i][j + 1], d = sec[i + 1][j], e = sec[i + 1][j + 1]; idx.push(a, d, b, b, d, e); }
+  // transom
+  const tr = sec[NS], cT = pos.length / 3; pos.push(0, 0.4, HULL_L / 2); col.push(c.r, c.g, c.b);
+  for (let j = 0; j < 2 * NA; j++) idx.push(cT, tr[j + 1], tr[j]);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx);
+  g.computeVertexNormals();
+  // deck
+  const dp = [], di = [];
+  for (let i = 0; i <= NS; i++) { const l = sec[i][0], r = sec[i][2 * NA]; dp.push(pos[l * 3], pos[l * 3 + 1] + 0.01, pos[l * 3 + 2], pos[r * 3], pos[r * 3 + 1] + 0.01, pos[r * 3 + 2]); }
+  for (let i = 0; i < NS; i++) { const a = i * 2, b = a + 1, c2 = a + 2, d = a + 3; di.push(a, b, c2, b, d, c2); }
+  const dg = new THREE.BufferGeometry(); dg.setAttribute('position', new THREE.Float32BufferAttribute(dp, 3)); dg.setIndex(di); dg.computeVertexNormals();
+  return [g, dg];
+}
+function sailTexture(team) {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 512;
+  const g = c.getContext('2d');
+  g.fillStyle = '#f6f3ec'; g.fillRect(0, 0, 256, 512);
+  g.strokeStyle = 'rgba(0,0,0,0.06)'; g.lineWidth = 2;
+  for (let y = 20; y < 512; y += 38) { g.beginPath(); g.moveTo(0, y); g.lineTo(256, y + 8); g.stroke(); }
+  g.fillStyle = '#' + new THREE.Color(team.hull).getHexString(); if (team.hull === 0xf4f4f2) g.fillStyle = '#2a5cc8';
+  g.font = '900 64px "Big Shoulders Display", Impact, sans-serif'; g.textAlign = 'center';
+  g.fillText(team.code, 118, 250); g.font = '900 96px "Big Shoulders Display", Impact, sans-serif'; g.fillText(String(team.num), 118, 340);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  return t;
+}
+// sails are rebuilt each frame from a small parametric grid (camber, twist, luffing)
+const SU = 7, SV = 11;
+function sailGeometry() {
+  const g = new THREE.BufferGeometry(), n = (SU + 1) * (SV + 1);
+  g.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(n * 3), 3));
+  const uv = [], idx = [];
+  for (let j = 0; j <= SV; j++) for (let i = 0; i <= SU; i++) uv.push(i / SU, j / SV);
+  for (let j = 0; j < SV; j++) for (let i = 0; i < SU; i++) { const a = j * (SU + 1) + i, b = a + 1, c = a + SU + 1, d = c + 1; idx.push(a, b, c, b, d, c); }
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+  return g;
+}
+// fill a sail grid: luff line from p0 (foot) to p1 (head), chord(v), angle (rad, 0 = aft), side (+1 starboard), camber
+function shapeSail(geo, p0, p1, chord, ang, twist, side, camber, flap, t) {
+  const P = geo.attributes.position.array;
+  for (let j = 0; j <= SV; j++) {
+    const v = j / SV, lx = lerp(p0[0], p1[0], v), ly = lerp(p0[1], p1[1], v), lz = lerp(p0[2], p1[2], v);
+    const c = chord(v), a = ang + side * twist * v;
+    const ax = Math.sin(a), az = Math.cos(a), px = Math.cos(a), pz = -Math.sin(a);
+    for (let i = 0; i <= SU; i++) {
+      const u = i / SU;
+      let cam = camber * c * Math.pow(u, 0.8) * Math.pow(1 - u, 1.1) * 2.6;
+      if (flap > 0) cam = lerp(cam, cam * 0.2 + Math.sin(t * 26 + v * 7 + u * 5) * 0.16 * c * u * (1 - u) * 3, flap);
+      const k = (j * (SU + 1) + i) * 3;
+      P[k] = lx + ax * u * c + px * cam * side; P[k + 1] = ly; P[k + 2] = lz + az * u * c + pz * cam * side;
+    }
+  }
+  geo.attributes.position.needsUpdate = true; geo.computeVertexNormals();
+}
+function crewMesh(color) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.5, 4, 8), new THREE.MeshStandardMaterial({ color, roughness: 0.7 }));
+  body.position.y = 0.55; body.rotation.z = 0.3; g.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 8), new THREE.MeshStandardMaterial({ color: 0xe0b48f, roughness: 0.8 })); head.position.set(0.18, 1.0, 0); g.add(head);
+  return g;
+}
+class Boat {
+  constructor(i, ai) {
+    this.i = i; this.team = TEAMS[i]; this.ai = ai;
+    this.x = 0; this.z = 0; this.hdg = 0; this.v = 0; this.sheet = 20; this.boomVis = 20; this.rudder = 0; this.heel = 0; this.pitch = 0; this.y = 0;
+    this.leg = 0; this.sweep = 0; this.prevAng = null; this.finished = false; this.finishT = 0; this.ocs = false; this.started = false;
+    this.pen = false; this.penTurn = 0; this.penTime = 0; this.luff = 0; this.stall = 0; this.kite = 0; this.autoTarget = null;
+    this.skill = 1; this.think = Math.random(); this.lastTack = -99; this.slot = 0.5; this.trail = [];
+    this.build();
+  }
+  build() {
+    const t = this.team, root = new THREE.Group(), body = new THREE.Group();
+    root.add(body); this.root = root; this.body = body;
+    const [hg, dg] = hullGeometry(t.hull);
+    body.add(new THREE.Mesh(hg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.35, metalness: 0.05 })));
+    body.add(new THREE.Mesh(dg, new THREE.MeshStandardMaterial({ color: t.deck, roughness: 0.9 })));
+    const dark = new THREE.MeshStandardMaterial({ color: 0x1b1d20, roughness: 0.6 });
+    const keel = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.5, 0.75), dark); keel.position.set(0, -1.0, 0.1); body.add(keel);
+    const bulb = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 1.0, 4, 10), dark); bulb.rotation.x = Math.PI / 2; bulb.position.set(0, -1.75, 0.2); body.add(bulb);
+    const rud = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.0, 0.4), dark); rud.position.set(0, -0.35, HULL_L / 2 - 0.35); body.add(rud); this.rud = rud;
+    const metal = new THREE.MeshStandardMaterial({ color: 0xc9ced3, roughness: 0.3, metalness: 0.8 });
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.075, 10.4, 8), metal); mast.position.set(0, 0.7 + 5.2, -0.6); body.add(mast);
+    this.boomPivot = new THREE.Group(); this.boomPivot.position.set(0, 1.55, -0.6); body.add(this.boomPivot);
+    const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 3.3, 6), metal); boom.rotation.x = Math.PI / 2; boom.position.z = 1.65; this.boomPivot.add(boom);
+    // rigging lines
+    const lm = new THREE.LineBasicMaterial({ color: 0x9aa3aa, transparent: true, opacity: 0.7 });
+    const lg = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0.95, -HULL_L / 2 + 0.05), new THREE.Vector3(0, 9.1, -0.6), new THREE.Vector3(-1.05, 0.72, 0.1), new THREE.Vector3(0, 9.9, -0.6), new THREE.Vector3(1.05, 0.72, 0.1)]);
+    body.add(new THREE.Line(lg, lm));
+    // sails
+    const sailMat = new THREE.MeshStandardMaterial({ map: sailTexture(t), side: THREE.DoubleSide, roughness: 0.85, transparent: false });
+    this.main = new THREE.Mesh(sailGeometry(), sailMat); body.add(this.main);
+    this.jib = new THREE.Mesh(sailGeometry(), new THREE.MeshStandardMaterial({ color: 0xf1eee6, side: THREE.DoubleSide, roughness: 0.85 })); body.add(this.jib);
+    const kc = document.createElement('canvas'); kc.width = 64; kc.height = 128; const kg = kc.getContext('2d');
+    kg.fillStyle = '#' + new THREE.Color(t.kite).getHexString(); kg.fillRect(0, 0, 64, 128);
+    kg.fillStyle = '#' + new THREE.Color(t.kite2).getHexString(); kg.fillRect(0, 50, 64, 26);
+    const kt = new THREE.CanvasTexture(kc); kt.colorSpace = THREE.SRGBColorSpace;
+    this.kiteMesh = new THREE.Mesh(sailGeometry(), new THREE.MeshStandardMaterial({ map: kt, side: THREE.DoubleSide, roughness: 0.7 })); body.add(this.kiteMesh);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.5, 6), metal); pole.rotation.x = Math.PI / 2; pole.position.set(0, 0.8, -HULL_L / 2 - 0.5); body.add(pole); this.pole = pole;
+    this.crew = [crewMesh(t.hull === 0x16181c ? 0x3a3f46 : 0x21303d), crewMesh(0x2b3a48)];
+    this.crew.forEach((c, k) => { c.position.set(0, 0.62, 0.9 + k * 1.0); body.add(c); });
+    // wake ribbon
+    this.wakeN = 70;
+    const wg = new THREE.BufferGeometry();
+    wg.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(this.wakeN * 2 * 3), 3));
+    wg.setAttribute('alpha', new THREE.Float32BufferAttribute(new Float32Array(this.wakeN * 2), 1));
+    wg.setAttribute('side', new THREE.Float32BufferAttribute(new Float32Array(this.wakeN * 2).map((_, k) => k % 2), 1));
+    const wi = []; for (let k = 0; k < this.wakeN - 1; k++) { const a = k * 2; wi.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } wg.setIndex(wi);
+    this.wake = new THREE.Mesh(wg, wakeMat); this.wake.frustumCulled = false; scene.add(this.wake);
+    scene.add(root);
+  }
+}
+const wakeMat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false, side: THREE.DoubleSide,
+  vertexShader: `attribute float alpha; attribute float side; varying float vA; varying float vS; varying vec2 vP; void main(){ vA = alpha; vS = side; vec4 wp = modelMatrix * vec4(position, 1.0); vP = wp.xz; gl_Position = projectionMatrix * viewMatrix * wp; }`,
+  fragmentShader: `varying float vA; varying float vS; varying vec2 vP;
+    float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+    float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
+    void main(){
+      float e = abs(vS - 0.5) * 2.0;
+      float edge = smoothstep(0.55, 0.92, e) * (1.0 - smoothstep(0.92, 1.0, e));
+      float mid = 1.0 - smoothstep(0.0, 0.7, e);
+      float n = vn(vP * 1.7) * 0.6 + vn(vP * 4.3) * 0.4;
+      float a = vA * (edge * 0.8 + mid * 0.3 * smoothstep(0.35, 0.7, n)) * smoothstep(0.2, 0.55, n + 0.2);
+      gl_FragColor = vec4(vec3(0.93, 0.97, 1.0), a);
+    }`,
+});
+
+// ---- marks, committee boat, pin ----
+function buoy(color, h) {
+  const g = new THREE.Group();
+  const m = new THREE.MeshStandardMaterial({ color, roughness: 0.55 });
+  const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.1, h, 20), m); cyl.position.y = h / 2 - 0.3; g.add(cyl);
+  const top = new THREE.Mesh(new THREE.SphereGeometry(0.95, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), m); top.position.y = h - 0.3; g.add(top);
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.25, 20), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 })); band.position.y = h * 0.55; g.add(band);
+  scene.add(g); return g;
+}
+const markW = buoy(0xf2c230, 2.4), markL = buoy(0xff6a1a, 2.4), pinBuoy = buoy(0xff6a1a, 1.8);
+const flagTex = document.createElement('canvas'); flagTex.width = 128; flagTex.height = 64;
+const flagT = new THREE.CanvasTexture(flagTex); flagT.colorSpace = THREE.SRGBColorSpace;
+function drawFlags(list) {
+  const g = flagTex.getContext('2d'); g.clearRect(0, 0, 128, 64);
+  list.forEach((f, i) => {
+    const x = i * 64;
+    if (f === 'P') { g.fillStyle = '#2a6bb8'; g.fillRect(x + 2, 4, 60, 56); g.fillStyle = '#fff'; g.fillRect(x + 20, 20, 24, 24); }
+    else if (f === 'C') { const cs = ['#2a6bb8', '#fff', '#e03a3e', '#fff', '#2a6bb8']; cs.forEach((c, k) => { g.fillStyle = c; g.fillRect(x + 2, 4 + k * 11.2, 60, 11.2); }); }
+    else if (f === 'X') { g.fillStyle = '#fff'; g.fillRect(x + 2, 4, 60, 56); g.fillStyle = '#2a6bb8'; g.fillRect(x + 26, 4, 12, 56); g.fillRect(x + 2, 26, 60, 12); }
+  });
+  flagT.needsUpdate = true;
+}
+const committee = new THREE.Group();
+{
+  const hm = new THREE.MeshStandardMaterial({ color: 0xf2f2ee, roughness: 0.4 });
+  const [hg, dg] = hullGeometry(0xf2f2ee); const h = new THREE.Mesh(hg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4 })); h.scale.set(1.6, 1.3, 1.7); committee.add(h);
+  const d = new THREE.Mesh(dg, new THREE.MeshStandardMaterial({ color: 0xcfd3d6 })); d.scale.set(1.6, 1.3, 1.7); committee.add(d);
+  const cab = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.6, 4), hm); cab.position.set(0, 1.9, 0.8); committee.add(cab);
+  const win = new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.5, 3.2), new THREE.MeshStandardMaterial({ color: 0x1e2e3a, roughness: 0.2 })); win.position.set(0, 2.2, 0.8); committee.add(win);
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 5, 6), new THREE.MeshStandardMaterial({ color: 0xcccccc })); mast.position.set(0, 4.8, 0); committee.add(mast);
+  const flag = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 1.6), new THREE.MeshBasicMaterial({ map: flagT, side: THREE.DoubleSide, transparent: true, fog: false })); flag.position.set(1.65, 6.4, 0); committee.add(flag);
+  committee.rotation.y = Math.PI / 2;
+  scene.add(committee);
+}
+// start line ribbon (only before the start)
+const lineMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, depthWrite: false }));
+lineMesh.rotation.x = -Math.PI / 2; scene.add(lineMesh);
+
+// =====================================================================
+//  game state
+// =====================================================================
+const G = { state: 'menu', t: 0, raceT: -60, boats: [], me: null, cam: 'chase', camYaw: 0, camDist: 18, camPitch: 0.24, msgT: 0, signals: '', gustT: 0, recall: false, pauseT: 0 };
+const keys = new Set();
+function newRace() {
+  for (const b of G.boats) { scene.remove(b.root); scene.remove(b.wake); }
+  buildLegs();
+  const tws = +opts.wind;
+  W.tws0 = tws / KN; W.gustAmp = tws >= 18 ? 0.24 : tws <= 8 ? 0.34 : 0.3; W.phase = Math.random() * 6.28; W.drift = [0, 0];
+  setWaves(tws >= 18 ? 1.5 : tws <= 8 ? 0.55 : 1);
+  seaUniforms.uFog.value = 0.00032;
+  const skill = { easy: [0.82, 0.9], norm: [0.9, 0.97], hard: [0.96, 1.01] }[opts.ai] || [0.9, 0.97];
+  G.boats = [];
+  const slots = [0.15, 0.3, 0.45, 0.6, 0.75, 0.9].sort(() => Math.random() - 0.5);
+  for (let i = 0; i < 6; i++) {
+    const b = new Boat(i, i > 0);
+    b.slot = slots[i];
+    b.skill = i === 0 ? 1 : lerp(skill[0], skill[1], Math.random());
+    b.aiUp = 44 + Math.random() * 4; b.aiDown = 148 + Math.random() * 6; b.aggr = Math.random();
+    const x = lerp(COURSE.pin.x - 40, COURSE.com.x + 40, (i + 0.5) / 6) + (Math.random() - 0.5) * 10, z = 110 + (i % 3) * 26 + Math.random() * 10;
+    b.x = x; b.z = z; b.hdg = Math.random() < 0.5 ? 90 : 270; b.v = 2.5; b.sheet = 40;
+    b.autoTrim = i === 0 ? opts.trim === 'auto' : true;
+    G.boats.push(b);
+  }
+  G.me = G.boats[0];
+  G.me.x = 10; G.me.z = 80; G.me.hdg = 270; G.me.v = 2;
+  G.raceT = -60; G.t = 0; G.signals = ''; G.recall = false; G.finishOrder = [];
+  G.camYaw = 0; G.camDist = 18; G.cam = 'chase';
+  for (const b of G.boats) { b.trail = []; }
+  markW.position.set(COURSE.wm.x, 0, COURSE.wm.z); markL.position.set(COURSE.lm.x, 0, COURSE.lm.z); markL.visible = opts.course !== 'short';
+  pinBuoy.position.set(COURSE.pin.x, 0, COURSE.pin.z); committee.position.set(COURSE.com.x + 4, 0, COURSE.com.z);
+  drawFlags(['C']);
+}
+
+// =====================================================================
+//  physics
+// =====================================================================
+function stepBoat(b, dt, t) {
+  const w = windAt(b.x, b.z, t);
+  b.w = w;
+  const twa = wrap180(w.dir - b.hdg);
+  const hx = Math.sin(b.hdg * DEG), hz = -Math.cos(b.hdg * DEG);
+  const wx = -Math.sin(w.dir * DEG) * w.tws, wz = Math.cos(w.dir * DEG) * w.tws;
+  const ax = wx - hx * b.v, az = wz - hz * b.v, aws = Math.hypot(ax, az);
+  const awa = wrap180(Math.atan2(-ax, az) / DEG - b.hdg);
+  b.twa = twa; b.awa = awa; b.aws = aws;
+  const ideal = idealBoom(Math.abs(awa));
+  b.ideal = ideal;
+  if (b.autoTrim) b.sheet += clamp(ideal - b.sheet, -35 * dt, 35 * dt);
+  b.sheet = clamp(b.sheet, 3, 88);
+  const d = b.sheet - ideal;
+  let eff = d >= 0 ? 1 - 0.9 * smooth(2.5, 17, d) : 1 - 0.5 * smooth(4, 30, -d);
+  b.luff = Math.max(smooth(6, 20, d), smooth(30, 18, Math.abs(awa)));
+  b.stall = smooth(8, 30, -d) * smooth(20, 40, Math.abs(awa));
+  b.eff = eff;
+  // gennaker on broad angles, dropped for manoeuvres
+  const kiteWant = Math.abs(twa) > 112 && Math.abs(b.rudder) < 0.9 ? 1 : 0;
+  b.kite += clamp(kiteWant - b.kite, -dt / 2.5, dt / 3);
+  let vt = polarRatio(Math.abs(twa)) * boatMax(w.tws) * eff * b.skill * (1 + 0.1 * b.kite * smooth(110, 140, Math.abs(twa)));
+  if (b.pen) vt *= 0.9;
+  // steering: rudder needs water flow
+  const flow = clamp(Math.abs(b.v) / 2.2, 0, 1);
+  const rate = 30 * b.rudder * (0.22 + 0.78 * flow) * (b.v < 0 ? -1 : 1);
+  const dh = rate * dt;
+  b.hdg = (b.hdg + dh + 360) % 360;
+  if (b.pen) { b.penTurn += dh; if (Math.abs(b.penTurn) >= 350) { b.pen = false; b.penTurn = 0; if (b === G.me) msg('ペナルティ消化', 'OK', 1.6); } }
+  const k = vt > b.v ? 0.22 : 0.3;
+  b.v += ((vt - b.v) * k - Math.abs(b.rudder) * 0.07 * Math.max(b.v, 0)) * dt;
+  if (Math.abs(twa) < 30) b.v -= 0.18 * dt * (1 - Math.abs(twa) / 30);
+  b.v = Math.max(b.v, -0.5);
+  const lee = -Math.sign(twa) * w.tws * 0.035 * (Math.abs(twa) < 100 ? 1 : 0.2) * (1 - flow * 0.5);
+  const sx = Math.cos(b.hdg * DEG), sz = Math.sin(b.hdg * DEG);
+  b.x += (hx * b.v + sx * lee) * dt; b.z += (hz * b.v + sz * lee) * dt;
+  // heel to leeward (+ = starboard down), pitch from waves
+  const hT = -Math.sign(awa) * clamp((aws / 7) * Math.sin(Math.abs(awa) * DEG) * (1 - 0.8 * b.luff) * (0.75 + 0.9 * b.stall) * 17 * (1 - 0.6 * b.kite * 0), 0, 34);
+  b.heel += (hT - b.heel) * Math.min(1, dt * 1.5);
+}
+function collide(dt) {
+  const bs = G.boats;
+  for (let i = 0; i < bs.length; i++) for (let j = i + 1; j < bs.length; j++) {
+    const a = bs[i], b = bs[j], dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz);
+    if (d < 6.2 && d > 0.01) {
+      const push = (6.2 - d) / 2, nx = dx / d, nz = dz / d;
+      a.x -= nx * push; a.z -= nz * push; b.x += nx * push; b.z += nz * push;
+      if (!a.hitT || G.t - a.hitT > 1.5) { a.v *= 0.6; b.v *= 0.6; a.hitT = b.hitT = G.t; if (a === G.me || b === G.me) { msg('接触！', 'ほかの艇にぶつかりました', 1.4); sfx.bump(); } }
+    }
+  }
+  const marks = [COURSE.wm, COURSE.pin, ...(opts.course === 'short' ? [] : [COURSE.lm])];
+  for (const b of bs) {
+    for (const m of marks) {
+      const dx = b.x - m.x, dz = b.z - m.z, d = Math.hypot(dx, dz);
+      if (d < 3.6) {
+        b.x = m.x + dx / d * 3.6; b.z = m.z + dz / d * 3.6; b.v *= 0.7;
+        if (!b.pen && G.raceT > 0) { b.pen = true; b.penTurn = 0; if (b === G.me) { msg('マークに接触', 'その場で 1 回転（360°）してください', 2.5); sfx.bump(); } }
+      }
+    }
+    const c = COURSE.com, dx = b.x - (c.x + 4), dz = b.z - c.z, d = Math.hypot(dx * 0.8, dz * 1.9);
+    if (d < 7) { const l = Math.hypot(dx, dz) || 1; b.x += dx / l * (7 - d) * 0.5; b.z += dz / l * (7 - d) * 0.5; b.v *= 0.9; }
+  }
+}
+// line crossing helper: segment p0->p1 vs line between pin and committee boat; returns +1 crossing northwards, -1 southwards
+function lineCross(x0, z0, x1, z1) {
+  const lz = COURSE.com.z;
+  if ((z0 - lz) * (z1 - lz) > 0 || z0 === z1) return 0;
+  const t = (lz - z0) / (z1 - z0), x = x0 + (x1 - x0) * t;
+  if (x < COURSE.pin.x || x > COURSE.com.x) return 0;
+  return z1 < z0 ? 1 : -1;
+}
+function courseProgress(b, px, pz) {
+  if (b.finished) return;
+  const L = legs[b.leg];
+  if (!L) return;
+  if (L.t === 'start') {
+    if (G.raceT < 0) return;
+    if (b.ocs) { if (b.z > COURSE.com.z + 2) { b.ocs = false; if (b === G.me) msg('リコール解除', 'もう一度ラインを越えてスタート', 2); } return; }
+    if (lineCross(px, pz, b.x, b.z) === 1) { b.leg++; b.started = true; if (b === G.me) { msg('スタート！', '風上マーク（黄色）へ', 1.8); } }
+  } else if (L.t === 'mark') {
+    const m = L.m, dx = b.x - m.x, dz = b.z - m.z, d = Math.hypot(dx, dz);
+    const ang = Math.atan2(-dz, dx);                                   // north-up angle; counter-clockwise = mark left to port
+    if (d < 75) {
+      if (b.prevAng !== null) { let da = ang - b.prevAng; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI; b.sweep += da; }
+      b.prevAng = ang;
+      if (b.sweep > Math.PI * 0.8) {
+        b.leg++; b.sweep = 0; b.prevAng = null;
+        if (b === G.me) { const nx = legs[b.leg]; msg(`${L.name} 回航`, nx.t === 'finish' ? 'フィニッシュラインへ（スタートと同じ線）' : `${nx.name}へ`, 2.2); sfx.bell(); }
+      }
+    } else { b.sweep = 0; b.prevAng = null; }
+  } else if (L.t === 'finish') {
+    if (lineCross(px, pz, b.x, b.z) !== 0) {
+      b.finished = true; b.finishT = G.raceT + (b.pen ? 30 : 0); b.penFinish = b.pen; b.pen = false;
+      G.finishOrder.push(b);
+      if (b === G.me) finishRace(); else if (G.finishOrder.length === 1) msg(`${b.team.name} がフィニッシュ`, '', 1.6);
+    }
+  }
+}
+// distance still to sail (for positions)
+function remaining(b) {
+  if (b.finished) return -1e6 + b.finishT;
+  let d = 0, px = b.x, pz = b.z;
+  for (let k = b.leg; k < legs.length; k++) {
+    const L = legs[k], p = L.t === 'mark' ? L.m : lineMid();
+    const dd = Math.hypot(p.x - px, p.z - pz);
+    d += L.t === 'mark' || L.t === 'finish' ? dd * (Math.abs(p.z - pz) > 50 ? 1.25 : 1) : dd;
+    px = p.x; pz = p.z;
+  }
+  return d;
+}
+function nextTarget(b) {
+  const L = legs[b.leg];
+  if (!L) return lineMid();
+  if (L.t === 'mark') return L.m;
+  if (L.t === 'finish') return lineMid();
+  return lineMid();
+}
+
+// =====================================================================
+//  AI crews
+// =====================================================================
+function aiThink(b, t) {
+  const w = b.w || windAt(b.x, b.z, t);
+  if (G.state === 'menu') { b.autoTrim = true; b.rudder = clamp(wrap180(w.dir + 100 - b.hdg) / 14, -1, 1); return; }
+  if (b.pen && G.raceT > 0) { b.rudder = 1; b.autoTrim = true; return; }        // serve the penalty turn at once
+  let tx, tz, want;
+  if (G.raceT < 0 || legs[b.leg].t === 'start') {
+    const lx = lerp(COURSE.pin.x + 8, COURSE.com.x - 8, b.slot), lz = COURSE.com.z;
+    const dist = Math.hypot(lx - b.x, lz - b.z), tl = -G.raceT;
+    const eta = dist / Math.max(3.0 * b.skill, 1) + 4 + (1 - b.aggr) * 4;
+    if (G.raceT < 0 && eta < tl - 6) {
+      // hold below the line, reaching back and forth
+      const hx = lx, hz = lz + 60 + b.slot * 20;
+      if (b.z < lz + 25) { tx = b.x; tz = b.z + 80; }
+      else if (Math.abs(b.x - hx) > 45) b.loiter = b.x > hx ? -1 : 1;
+      if (tx === undefined) { b.loiter = b.loiter || 1; tx = b.x + b.loiter * 80; tz = hz; }
+    } else if (b.ocs || (G.raceT >= 0 && b.z < lz - 1)) { tx = lx; tz = lz + 30; }    // back below the line, then start again
+    else if (b.z > lz + 6) { tx = lx; tz = lz - 3; }                                  // cross the line at our slot
+    else { tx = lx; tz = lz - 60; }
+    if (G.raceT < 0) {
+      // don't cross early: slow down when the line is closer than the time left allows
+      const toLine = b.z - lz;
+      b.brake = toLine < Math.max(b.v, 1) * tl * 0.9 && tl < 20 ? 1 : 0;
+    } else b.brake = 0;
+  } else {
+    const p = nextTarget(b); tx = p.x; tz = p.z;
+    b.brake = 0;
+    const L = legs[b.leg];
+    if (L.t === 'mark') {
+      // near the mark: circle it anticlockwise at ~16 m so it is left to port
+      const m = L.m, d = Math.hypot(b.x - m.x, b.z - m.z);
+      if (d < 38) { const ang = Math.atan2(-(b.z - m.z), b.x - m.x) + 70 * DEG; tx = m.x + 16 * Math.cos(ang); tz = m.z - 16 * Math.sin(ang); }
+      else tx += m === COURSE.wm ? 12 : -12;
+    }
+  }
+  const brg = (Math.atan2(tx - b.x, -(tz - b.z)) / DEG + 360) % 360;
+  const rel = wrap180(brg - w.dir);
+  const tack = Math.sign(wrap180(w.dir - b.hdg)) || 1;          // +1 starboard tack
+  const up = b.aiUp, dn = b.aiDown;
+  if (Math.abs(rel) < up + 2) {
+    // upwind: close-hauled on a tack, tack at the layline or on a big header
+    let cur = tack;
+    const onLay = cur > 0 ? rel >= up - 3 : rel <= -(up - 3);
+    if (onLay && t - b.lastTack > 7) { cur = -cur; b.lastTack = t; }
+    else if (t - b.lastTack > 25 && Math.random() < 0.004 * (1 + b.aggr)) { cur = -cur; b.lastTack = t; }
+    want = w.dir - cur * up;
+  } else if (Math.abs(rel) > dn - 2) {
+    const rel2 = wrap180(brg - (w.dir + 180));
+    let cur = tack;
+    const onLay = cur > 0 ? rel2 <= -(180 - dn - 3) : rel2 >= (180 - dn - 3);
+    if (onLay && t - b.lastTack > 7) { cur = -cur; b.lastTack = t; }
+    want = w.dir - cur * dn;
+  } else want = brg;
+  // keep clear of boats just ahead
+  for (const o of G.boats) {
+    if (o === b) continue;
+    const dx = o.x - b.x, dz = o.z - b.z, d = Math.hypot(dx, dz);
+    if (d > 16) continue;
+    const ob = Math.atan2(dx, -dz) / DEG, off = wrap180(ob - b.hdg);
+    if (Math.abs(off) < 35) want += off > 0 ? -18 : 18;
+  }
+  b.want = want;
+  b.rudder = clamp(wrap180(want - b.hdg) / 14, -1, 1);
+  if (b.brake) b.sheet = 88; else b.autoTrim = true;
+  if (b.brake) b.autoTrim = false;
+}
+
+// =====================================================================
+//  player input
+// =====================================================================
+function playerInput(dt) {
+  const b = G.me;
+  if (!b || b.finished) return;
+  let r = 0;
+  if (keys.has('a') || keys.has('arrowleft') || touch.left) r -= 1;
+  if (keys.has('d') || keys.has('arrowright') || touch.right) r += 1;
+  if (r !== 0) b.autoTarget = null;
+  if (b.autoTarget !== null) {
+    const e = wrap180(b.autoTarget - b.hdg);
+    r = clamp(e / 10, -1, 1);
+    if (Math.abs(e) < 2.5) b.autoTarget = null;
+  }
+  b.rudder += clamp(r - b.rudder, -dt * 4, dt * 4);
+  let s = 0;
+  if (keys.has('w') || keys.has('arrowup')) s -= 1;
+  if (keys.has('s') || keys.has('arrowdown')) s += 1;
+  if (s) { if (b.autoTrim) { b.autoTrim = false; msg('オートトリム OFF', 'W / S でセールを調整', 1.4); } b.sheet = clamp(b.sheet + s * 30 * dt, 3, 88); }
+  if (touch.sheet !== null) { b.autoTrim = false; b.sheet = lerp(3, 88, touch.sheet); }
+}
+function autoManeuver() {
+  const b = G.me; if (!b || G.state !== 'race') return;
+  const w = b.w || windAt(b.x, b.z, G.t), twa = wrap180(w.dir - b.hdg);
+  b.autoTarget = (w.dir + twa + 360) % 360;
+  msg(Math.abs(twa) < 90 ? 'タック' : 'ジャイブ', '', 1.0);
+}
+
+// =====================================================================
+//  HUD & messages
+// =====================================================================
+let msgTimer = 0;
+function msg(t, sub, dur) { const e = $('h-msg'); e.innerHTML = ''; e.append(t); if (sub) { const s = document.createElement('small'); s.textContent = sub; e.append(s); } e.classList.add('on'); msgTimer = dur || 1.6; }
+const miniCv = $('mini'), windCv = $('wind');
+function positions() { return [...G.boats].sort((a, b) => remaining(a) - remaining(b)); }
+function updateHud() {
+  const b = G.me, w = b.w || windAt(b.x, b.z, G.t);
+  const order = positions(), pos = order.indexOf(b) + 1;
+  $('h-pos').firstChild.nodeValue = G.raceT < 0 ? '-' : String(pos);
+  $('h-time').textContent = G.raceT < 0 ? 'スタートまで ' + fmt(-G.raceT) : fmt(G.raceT);
+  const L = legs[b.leg];
+  $('h-leg').textContent = b.finished ? 'フィニッシュ' : G.raceT < 0 ? 'スタート前：ラインの下で待機' : b.ocs ? 'リコール：ラインの下へ戻る' : L.t === 'start' ? 'スタートラインを越える' : L.t === 'mark' ? `レグ ${b.leg} / ${legs.length - 2}：${L.name}へ（左に見て回る）` : 'フィニッシュラインへ';
+  // start box
+  const sb = $('h-start');
+  if (G.raceT < 3) {
+    sb.hidden = false;
+    $('h-count').textContent = G.raceT < 0 ? fmt(-G.raceT).replace(/\.\d$/, '') : 'GO';
+    const sig = $('h-signal'); sig.textContent = '';
+    const fl = G.raceT < -45 ? ['c'] : G.raceT < -15 ? ['c', 'p'] : G.raceT < 0 ? ['c'] : G.recall ? ['x'] : [];
+    for (const f of fl) { const s = document.createElement('span'); s.className = 'flag f-' + f; sig.append(s); }
+    $('h-signal-t').textContent = G.raceT < -45 ? '予告信号（クラス旗）' : G.raceT < -15 ? '準備信号（P 旗）' : G.raceT < 0 ? '準備信号降下：まもなくスタート' : G.recall ? '個別リコール（X 旗）' : 'スタート';
+  } else sb.hidden = !G.recall || G.raceT > 30;
+  // instruments
+  const tgt = nextTarget(b), dxm = tgt.x - b.x, dzm = tgt.z - b.z, dm = Math.hypot(dxm, dzm);
+  const vmg = dm > 1 ? (Math.sin(b.hdg * DEG) * dxm - Math.cos(b.hdg * DEG) * dzm) / dm * b.v : 0;
+  $('i-bsp').textContent = (b.v * KN).toFixed(1);
+  $('i-vmg').textContent = (vmg * KN).toFixed(1);
+  $('i-mark').textContent = G.raceT < 0 ? Math.round(Math.abs(b.z - COURSE.com.z)) : Math.round(dm);
+  $('i-twa').textContent = (b.twa > 0 ? '+' : '') + Math.round(b.twa || 0) + '°';
+  $('i-tws').textContent = (w.tws * KN).toFixed(1);
+  $('i-hdg').textContent = String(Math.round(b.hdg) % 360).padStart(3, '0');
+  // trim bar
+  const tb = $('h-trimbar'), ideal = b.ideal || 20;
+  tb.querySelector('i').style.left = ((ideal - 3) / 85 * 100) + '%'; tb.querySelector('i').style.width = (7 / 85 * 100) + '%';
+  tb.querySelector('em').style.left = `calc(${((b.sheet - 3) / 85 * 100).toFixed(1)}% - 1px)`;
+  const tr = $('h-trim');
+  if (Math.abs(b.twa) < 32) { tr.textContent = 'ノーゴーゾーン：風上に向きすぎ'; tr.style.color = 'var(--bad)'; }
+  else if (b.luff > 0.35) { tr.textContent = '出しすぎ（シバー）：W で引く'; tr.style.color = 'var(--warn)'; }
+  else if (b.stall > 0.35) { tr.textContent = '引きすぎ（失速）：S で出す'; tr.style.color = 'var(--warn)'; }
+  else { tr.textContent = (b.autoTrim ? 'オートトリム・' : '') + 'ちょうどいい'; tr.style.color = 'var(--good)'; }
+  $('h-pen').hidden = !b.pen;
+  drawWindDial(b, w); drawMini(b, w);
+}
+function drawWindDial(b, w) {
+  const g = windCv.getContext('2d'), W2 = windCv.width, H2 = windCv.height, cx = W2 / 2, cy = H2 / 2 + 6, R = 120;
+  g.clearRect(0, 0, W2, H2);
+  g.save(); g.translate(cx, cy);
+  // no-go wedge relative to boat (boat points up)
+  const rel = wrap180(w.dir - b.hdg) * DEG;
+  g.fillStyle = 'rgba(255,106,92,0.18)'; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, R, rel - Math.PI / 2 - 32 * DEG, rel - Math.PI / 2 + 32 * DEG); g.fill();
+  g.strokeStyle = 'rgba(170,208,226,0.35)'; g.lineWidth = 2; g.beginPath(); g.arc(0, 0, R, 0, 7); g.stroke();
+  for (let a = 0; a < 360; a += 30) { const r0 = a % 90 ? R - 8 : R - 14; g.beginPath(); g.moveTo(Math.sin(a * DEG) * r0, -Math.cos(a * DEG) * r0); g.lineTo(Math.sin(a * DEG) * R, -Math.cos(a * DEG) * R); g.stroke(); }
+  // boat
+  g.fillStyle = '#f5f1e8'; g.beginPath(); g.moveTo(0, -46); g.bezierCurveTo(20, -20, 18, 30, 12, 44); g.lineTo(-12, 44); g.bezierCurveTo(-18, 30, -20, -20, 0, -46); g.fill();
+  // boom
+  const side = -Math.sign(b.awa || 1), ba = b.boomVis * DEG;
+  g.strokeStyle = '#0c2638'; g.lineWidth = 5; g.lineCap = 'round'; g.beginPath(); g.moveTo(0, -8); g.lineTo(Math.sin(ba) * 44, -8 + Math.cos(ba) * 44); g.stroke();
+  // ideal boom
+  const ia = side * (b.ideal || 20) * DEG;
+  g.strokeStyle = 'rgba(95,208,138,0.9)'; g.lineWidth = 2; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(0, -8); g.lineTo(Math.sin(ia) * 50, -8 + Math.cos(ia) * 50); g.stroke(); g.setLineDash([]);
+  // true wind arrow (from direction)
+  const arrow = (a, r0, r1, col, wdt) => { g.strokeStyle = col; g.fillStyle = col; g.lineWidth = wdt; const sx = Math.sin(a), sy = -Math.cos(a); g.beginPath(); g.moveTo(sx * r1, sy * r1); g.lineTo(sx * r0, sy * r0); g.stroke();
+    g.beginPath(); g.moveTo(sx * r0, sy * r0); g.lineTo(sx * (r0 + 14) + sy * 7, sy * (r0 + 14) - sx * 7); g.lineTo(sx * (r0 + 14) - sy * 7, sy * (r0 + 14) + sx * 7); g.fill(); };
+  arrow(rel, 60, R + 4, '#f2c230', 6);
+  arrow(wrap180(b.awa || 0) * DEG, 70, R - 4, 'rgba(147,179,194,0.9)', 3);
+  g.restore();
+  g.font = '600 20px "Chivo Mono", monospace'; g.fillStyle = '#f2c230'; g.fillText('真風', 8, 22); g.fillStyle = '#93b3c2'; g.fillText('見かけの風', 8, 46);
+}
+function drawMini(b, w) {
+  const g = miniCv.getContext('2d'), W2 = miniCv.width, H2 = miniCv.height;
+  g.clearRect(0, 0, W2, H2);
+  const x0 = -230, x1 = 230, z0 = COURSE.wm.z - 70, z1 = 190, s = Math.min(W2 / (x1 - x0), H2 / (z1 - z0));
+  const P = (x, z) => [W2 / 2 + (x - (x0 + x1) / 2) * s, H2 / 2 + (z - (z0 + z1) / 2) * s];
+  // laylines to the next windward/leeward mark
+  const L = legs[b.leg];
+  if (L && L.t === 'mark') {
+    const m = P(L.m.x, L.m.z), up = L.m === COURSE.wm;
+    g.strokeStyle = 'rgba(242,194,48,0.55)'; g.setLineDash([6, 6]); g.lineWidth = 2;
+    for (const sgn of [-1, 1]) { const a = (w.dir + (up ? 180 : 0) + sgn * (up ? 45 : 30)) * DEG; g.beginPath(); g.moveTo(m[0], m[1]); g.lineTo(m[0] + Math.sin(a) * 900 * s, m[1] - Math.cos(a) * 900 * s); g.stroke(); }
+    g.setLineDash([]);
+  }
+  // start line
+  const a = P(COURSE.pin.x, COURSE.pin.z), c = P(COURSE.com.x, COURSE.com.z);
+  g.strokeStyle = 'rgba(255,255,255,0.7)'; g.lineWidth = 2; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(c[0], c[1]); g.stroke();
+  const dot = (p, col, r) => { g.fillStyle = col; g.beginPath(); g.arc(p[0], p[1], r, 0, 7); g.fill(); };
+  dot(a, '#ff6a1a', 6); dot(c, '#ffffff', 7);
+  dot(P(COURSE.wm.x, COURSE.wm.z), '#f2c230', 8);
+  if (opts.course !== 'short') dot(P(COURSE.lm.x, COURSE.lm.z), '#ff6a1a', 8);
+  if (L && L.t === 'mark') { const m = P(L.m.x, L.m.z); g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.arc(m[0], m[1], 14, 0, 7); g.stroke(); }
+  for (const o of G.boats) {
+    const p = P(o.x, o.z), h = o.hdg * DEG;
+    g.save(); g.translate(p[0], p[1]); g.rotate(h);
+    g.fillStyle = '#' + new THREE.Color(o.team.hull).getHexString(); if (o.team.hull === 0x16181c) g.fillStyle = '#6a6f76';
+    g.strokeStyle = o === b ? '#fff' : 'rgba(0,0,0,0.5)'; g.lineWidth = o === b ? 3 : 1.5;
+    g.beginPath(); g.moveTo(0, -12); g.lineTo(7, 9); g.lineTo(-7, 9); g.closePath(); g.fill(); g.stroke();
+    g.restore();
+  }
+  // wind arrow
+  g.save(); g.translate(W2 - 34, 34); g.rotate((w.dir + 180) * DEG);
+  g.fillStyle = '#f2c230'; g.beginPath(); g.moveTo(0, 18); g.lineTo(9, -6); g.lineTo(3, -6); g.lineTo(3, -18); g.lineTo(-3, -18); g.lineTo(-3, -6); g.lineTo(-9, -6); g.closePath(); g.fill();
+  g.restore();
+  g.font = '600 18px "Chivo Mono", monospace'; g.fillStyle = '#f2c230'; g.textAlign = 'right'; g.fillText((w.tws * KN).toFixed(0) + ' kn', W2 - 60, 40); g.textAlign = 'left';
+}
+
+// =====================================================================
+//  sound (starts from a click)
+// =====================================================================
+const sfx = {
+  ctx: null, windG: null, waterG: null, flapG: null,
+  init() {
+    if (this.ctx) return;
+    try {
+      const C = this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const len = C.sampleRate * 2, buf = C.createBuffer(1, len, C.sampleRate), d = buf.getChannelData(0);
+      let last = 0; for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; last = last * 0.97 + w * 0.03; d[i] = w * 0.5 + last * 3; }
+      const src = (type, f, q) => { const s = C.createBufferSource(); s.buffer = buf; s.loop = true; const fl = C.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q; const g = C.createGain(); g.gain.value = 0; s.connect(fl); fl.connect(g); g.connect(C.destination); s.start(); return g; };
+      this.windG = src('bandpass', 700, 0.6); this.waterG = src('highpass', 1800, 0.7); this.flapG = src('lowpass', 300, 1.5);
+    } catch (e) { this.ctx = null; }
+  },
+  update(b) {
+    if (!this.ctx || !b) return;
+    const t = this.ctx.currentTime, on = G.state === 'race' ? 1 : 0.35;
+    this.windG.gain.setTargetAtTime(clamp((b.aws || 3) / 10, 0, 1) * 0.12 * on, t, 0.3);
+    this.waterG.gain.setTargetAtTime(clamp(b.v / 5, 0, 1) * 0.07 * on, t, 0.3);
+    this.flapG.gain.setTargetAtTime(b.luff * (0.5 + 0.5 * Math.sin(t * 40)) * 0.25 * on, t, 0.03);
+  },
+  horn(long) { if (!this.ctx) return; const C = this.ctx, o = C.createOscillator(), g = C.createGain(); o.type = 'sawtooth'; o.frequency.value = 196; const f = C.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900; o.connect(f); f.connect(g); g.connect(C.destination); const t = C.currentTime, d = long ? 1.4 : 0.45; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.18, t + 0.04); g.gain.setValueAtTime(0.18, t + d); g.gain.linearRampToValueAtTime(0, t + d + 0.1); o.start(t); o.stop(t + d + 0.2); },
+  bell() { if (!this.ctx) return; const C = this.ctx, o = C.createOscillator(), g = C.createGain(); o.type = 'sine'; o.frequency.value = 880; o.connect(g); g.connect(C.destination); const t = C.currentTime; g.gain.setValueAtTime(0.15, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.2); o.start(t); o.stop(t + 1.3); },
+  bump() { if (!this.ctx) return; const C = this.ctx, o = C.createOscillator(), g = C.createGain(); o.type = 'triangle'; o.frequency.value = 90; o.connect(g); g.connect(C.destination); const t = C.currentTime; g.gain.setValueAtTime(0.3, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3); o.start(t); o.stop(t + 0.35); },
+};
+
+// =====================================================================
+//  race flow
+// =====================================================================
+function signals() {
+  const t = G.raceT, s = t < -45 ? 'warn' : t < -15 ? 'prep' : t < 0 ? 'one' : 'go';
+  if (s === G.signals) return;
+  G.signals = s;
+  if (s === 'prep') { drawFlags(['C', 'P']); sfx.horn(false); msg('準備信号', 'P 旗が上がりました（あと 45 秒）', 1.8); }
+  else if (s === 'one') { drawFlags(['C']); sfx.horn(true); msg('あと 15 秒', 'P 旗が降りました。スタートラインを目指そう', 1.8); }
+  else if (s === 'go') {
+    sfx.horn(false); drawFlags([]);
+    // over the line early?
+    for (const b of G.boats) if (b.z < COURSE.com.z - 1 && b.x > COURSE.pin.x - 10 && b.x < COURSE.com.x + 10) { b.ocs = true; G.recall = true; }
+    if (G.recall) drawFlags(['X']);
+    if (G.me.ocs) msg('リコール！', 'フライング。ラインの下に戻ってやり直し', 2.6); else msg('スタート！', 'ラインを越えて風上マークへ', 1.8);
+  }
+}
+function finishRace() {
+  G.state = 'done';
+  setTimeout(showResult, 3500);
+  msg('フィニッシュ！', fmt(G.me.finishT), 3);
+}
+function showResult() {
+  const order = [...G.finishOrder];
+  const rest = G.boats.filter(b => !b.finished).sort((a, b) => remaining(a) - remaining(b));
+  const tbl = $('res-table'); tbl.textContent = '';
+  const hr = document.createElement('tr'); for (const h of ['順位', '艇', 'タイム', '']) { const th = document.createElement('th'); th.textContent = h; hr.append(th); } tbl.append(hr);
+  const lead = order[0] ? order[0].finishT : 0;
+  [...order, ...rest].forEach((b, i) => {
+    const tr = document.createElement('tr'); if (b === G.me) tr.className = 'me';
+    const c1 = document.createElement('td'); c1.textContent = i + 1;
+    const c2 = document.createElement('td'); const sw = document.createElement('span'); sw.className = 'sw'; sw.style.background = '#' + new THREE.Color(b.team.hull).getHexString(); c2.append(sw, b.team.name);
+    const c3 = document.createElement('td'); c3.textContent = b.finished ? fmt(b.finishT) + (b.penFinish ? '（+30 秒）' : '') : 'レース中';
+    const c4 = document.createElement('td'); c4.textContent = b.finished && i > 0 ? '+' + (b.finishT - lead).toFixed(1) + ' 秒' : '';
+    tr.append(c1, c2, c3, c4); tbl.append(tr);
+  });
+  const pos = order.indexOf(G.me) + 1;
+  $('res-title').textContent = pos === 1 ? '優勝！' : `${pos} 位でフィニッシュ`;
+  const key = `best-${opts.course}-${opts.wind}`, best = store.get(key, null);
+  if (!best || G.me.finishT < best) store.set(key, G.me.finishT);
+  $('res-sub').textContent = `タイム ${fmt(G.me.finishT)} ・ ベスト ${fmt(Math.min(best || 1e9, G.me.finishT))}`;
+  $('result').hidden = false; $('hud').hidden = true; $('touch').hidden = true;
+  G.state = 'result';
+}
+function showBest() {
+  const b = store.get(`best-${opts.course}-${opts.wind}`, null);
+  $('best').textContent = b ? `この設定のベストタイム ${fmt(b)}` : '';
+}
+
+// =====================================================================
+//  camera
+// =====================================================================
+const camPos = new THREE.Vector3(0, 20, 60), camLook = new THREE.Vector3();
+function updateCamera(dt) {
+  const b = G.me;
+  let target, look;
+  if (G.state === 'menu' || !b) {
+    // slow orbit around the fleet
+    const t = G.t * 0.05, c = G.boats[2] || G.boats[0];
+    const cx = c ? c.x : 0, cz = c ? c.z : 0;
+    target = new THREE.Vector3(cx + Math.sin(t) * 42, 9, cz + Math.cos(t) * 42); look = new THREE.Vector3(cx - 12, 4, cz - 10);
+  } else {
+    const h = b.hdg * DEG, fx = Math.sin(h), fz = -Math.cos(h);
+    if (G.cam === 'top') { target = new THREE.Vector3(b.x + 0.1, 170, b.z + 60); look = new THREE.Vector3(b.x, 0, b.z - 20); }
+    else if (G.cam === 'deck') {
+      target = new THREE.Vector3(b.x - fx * 1.8 + Math.cos(h) * (b.heel > 0 ? -0.9 : 0.9), b.y + 2.2, b.z - fz * 1.8 + Math.sin(h) * (b.heel > 0 ? -0.9 : 0.9));
+      const yaw = h + G.camYaw; look = new THREE.Vector3(target.x + Math.sin(yaw) * 20, b.y + 1.4, target.z - Math.cos(yaw) * 20);
+    } else {
+      const yaw = h + G.camYaw, d = G.camDist, p = G.camPitch;
+      target = new THREE.Vector3(b.x - Math.sin(yaw) * d * Math.cos(p), b.y + 2 + d * Math.sin(p), b.z + Math.cos(yaw) * d * Math.cos(p));
+      look = new THREE.Vector3(b.x + fx * 6, b.y + 3.2, b.z + fz * 6);
+    }
+  }
+  const k = G.cam === 'deck' && G.state !== 'menu' ? 1 : 1 - Math.exp(-dt * 4);
+  camPos.lerp(target, k); camLook.lerp(look, k);
+  camera.position.copy(camPos); camera.lookAt(camLook);
+  sky.position.copy(camera.position);
+  sea.position.set(Math.round(camera.position.x / 10) * 10, 0, Math.round(camera.position.z / 10) * 10);
+}
+
+// =====================================================================
+//  per-frame visuals of a boat
+// =====================================================================
+function updateBoatVisual(b, t, dt) {
+  const [wy, sx, sz] = waveHeight(b.x, b.z, t);
+  const [wyB] = waveHeight(b.x + Math.sin(b.hdg * DEG) * 3, b.z - Math.cos(b.hdg * DEG) * 3, t);
+  b.y += (wy - b.y) * Math.min(1, dt * 5);
+  const pitchT = Math.atan2(wyB - wy, 3) * 0.7 - b.v * 0.012;
+  b.pitch += (pitchT - b.pitch) * Math.min(1, dt * 4);
+  b.root.position.set(b.x, b.y, b.z); b.root.rotation.y = -b.hdg * DEG;
+  b.body.rotation.order = 'ZXY';
+  b.body.rotation.z = -b.heel * DEG; b.body.rotation.x = b.pitch;
+  // boom swings across quickly in a tack or gybe
+  const side = -Math.sign(b.awa || 1), boomT = side * Math.min(b.sheet, Math.max(Math.abs(b.awa || 0) - 4, 2));
+  const rate = Math.abs(b.awa) > 150 ? 400 : 160;
+  b.boomVis += clamp(boomT - b.boomVis, -rate * dt, rate * dt);
+  b.boomPivot.rotation.y = b.boomVis * DEG;
+  const bs = Math.sign(b.boomVis) || side, ang = b.boomVis * DEG;
+  const flap = clamp(b.luff * 1.2 + (Math.abs(b.boomVis - boomT) > 10 ? 0.6 : 0), 0, 1);
+  shapeSail(b.main.geometry, [0, 1.6, -0.62], [0, 10.6, -0.62], v => 3.25 * Math.pow(1 - v, 0.85) + 0.28 * Math.sin(Math.PI * v) * (1 - v), ang, 0.12 + 0.15 * (1 - b.stall), bs, 0.13 * (1 - b.luff * 0.3), flap, t + b.i);
+  // jib and gennaker
+  const k = b.kite;
+  b.jib.visible = k < 0.95; b.kiteMesh.visible = k > 0.05; b.pole.visible = k > 0.05;
+  const jibAng = bs * clamp(Math.abs(b.boomVis) * 0.8 + 6, 8, 38) * DEG;
+  shapeSail(b.jib.geometry, [0, 0.95, -HULL_L / 2 + 0.3], [0, 8.4, -0.75], v => 2.5 * Math.pow(1 - v, 1.05), jibAng, 0.1, bs, 0.11, flap * 0.7, t * 1.1 + b.i);
+  b.jib.scale.setScalar(1 - k * 0.95 + 0.001);
+  const kAng = bs * (40 + 50 * smooth(110, 170, Math.abs(b.twa || 0))) * DEG;
+  shapeSail(b.kiteMesh.geometry, [0, 1.0, -HULL_L / 2 - 1.2], [0, 10.0, -0.7], v => 5.4 * Math.pow(1 - v, 0.7) * (0.3 + 0.7 * k), kAng, 0.25, bs, 0.3, 0, t);
+  b.kiteMesh.scale.setScalar(0.2 + 0.8 * k);
+  // crew on the windward rail
+  const ws = side > 0 ? -1 : 1;
+  b.crew.forEach((c, j) => { c.position.x += (ws * 1.1 - c.position.x) * Math.min(1, dt * 1.5); c.rotation.z = -ws * 0.5; });
+  b.rud.rotation.y = -b.rudder * 0.5;
+  // wake: sample points behind the stern
+  b.trailT = (b.trailT || 0) - dt;
+  if (b.trailT <= 0) {
+    b.trailT = 0.18;
+    b.trail.unshift({ x: b.x + Math.sin(b.hdg * DEG) * HULL_L * 0.4, z: b.z - Math.cos(b.hdg * DEG) * HULL_L * 0.4, h: b.hdg, t, v: b.v });
+    if (b.trail.length > b.wakeN) b.trail.pop();
+  }
+  const P = b.wake.geometry.attributes.position.array, A = b.wake.geometry.attributes.alpha.array;
+  for (let i = 0; i < b.wakeN; i++) {
+    const p = b.trail[Math.min(i, b.trail.length - 1)];
+    if (!p) { A[i * 2] = A[i * 2 + 1] = 0; continue; }
+    const age = t - p.t, w = 0.6 + age * (0.18 + p.v * 0.05), sxv = Math.cos(p.h * DEG) * w, szv = Math.sin(p.h * DEG) * w;
+    const y = waveHeight(p.x, p.z, t)[0] + 0.08;
+    P[i * 6] = p.x - sxv; P[i * 6 + 1] = y; P[i * 6 + 2] = p.z - szv; P[i * 6 + 3] = p.x + sxv; P[i * 6 + 4] = y; P[i * 6 + 5] = p.z + szv;
+    const a = i < b.trail.length ? clamp(p.v / 4, 0, 1) * Math.max(0, 1 - age / 9) * (0.55 + 0.45 * Math.exp(-age / 2.5)) : 0;
+    A[i * 2] = A[i * 2 + 1] = a;
+  }
+  b.wake.geometry.attributes.position.needsUpdate = true; b.wake.geometry.attributes.alpha.needsUpdate = true;
+}
+
+// =====================================================================
+//  main loop
+// =====================================================================
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (G.state !== 'paused') G.t += dt;
+  const t = G.t;
+  W.drift[0] += -Math.sin(W.dir0 * DEG) * W.tws0 * dt * 0.8; W.drift[1] += Math.cos(W.dir0 * DEG) * W.tws0 * dt * 0.8;
+  if (G.state === 'race' || G.state === 'done' || G.state === 'menu') {
+    const steps = 3, h = dt / steps;
+    if (G.state !== 'menu') { G.raceT += dt; signals(); }
+    playerInput(dt);
+    G.think = (G.think || 0) - dt;
+    const think = G.think <= 0; if (think) G.think = 0.25;
+    for (const b of G.boats) {
+      if (b.finished && b !== G.me) { b.rudder = 0; b.sheet = 80; b.autoTrim = false; }
+      else if (b.ai || G.state === 'menu') { if (think) aiThink(b, t); }
+    }
+    for (let s = 0; s < steps; s++) for (const b of G.boats) {
+      const px = b.x, pz = b.z;
+      stepBoat(b, h, t);
+      if (G.state !== 'menu') courseProgress(b, px, pz);
+    }
+    if (G.state !== 'menu') collide(dt);
+  }
+  G.gustT -= dt;
+  if (G.gustT <= 0) { G.gustT = 0.2; updateGustTexture(camera.position.x, camera.position.z, t); }
+  seaUniforms.uTime.value = t;
+  for (const b of G.boats) updateBoatVisual(b, t, dt);
+  for (const [m, x, z] of [[markW, COURSE.wm.x, COURSE.wm.z], [markL, COURSE.lm.x, COURSE.lm.z], [pinBuoy, COURSE.pin.x, COURSE.pin.z]]) { const [y, sx, sz] = waveHeight(x, z, t); m.position.set(x, y, z); m.rotation.set(sz * 0.4, 0, -sx * 0.4); }
+  { const [y] = waveHeight(COURSE.com.x + 4, COURSE.com.z, t); committee.position.y = y * 0.6 - 0.15; }
+  const lw = COURSE.com.x - COURSE.pin.x; lineMesh.scale.set(lw, 0.35, 1); lineMesh.position.set((COURSE.com.x + COURSE.pin.x) / 2, 0.25, COURSE.com.z); lineMesh.visible = G.state === 'race' && G.raceT < 15;
+  updateCamera(dt);
+  if (G.state === 'race' || G.state === 'done') { G.hudT = (G.hudT || 0) - dt; if (G.hudT <= 0) { G.hudT = 0.1; updateHud(); } }
+  if (msgTimer > 0) { msgTimer -= dt; if (msgTimer <= 0) $('h-msg').classList.remove('on'); }
+  sfx.update(G.me);
+  resize();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== Math.round(w * renderer.getPixelRatio()) || canvas.height !== Math.round(h * renderer.getPixelRatio())) { renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+}
+
+// =====================================================================
+//  UI wiring
+// =====================================================================
+const touch = { left: false, right: false, sheet: null };
+const isTouch = matchMedia('(pointer: coarse)').matches;
+function startRace() {
+  sfx.init();
+  newRace();
+  G.state = 'race';
+  $('menu').hidden = true; $('result').hidden = true; $('hud').hidden = false; $('touch').hidden = !isTouch;
+  msg('スタート 60 秒前', '予告信号。スタートラインの下（手前）で待とう', 2.5);
+  sfx.horn(false);
+  canvas.focus();
+}
+function pause(on) {
+  if (on && G.state === 'race') { G.prevState = 'race'; G.state = 'paused'; $('menu').hidden = false; $('resume-row').hidden = false; $('hud').hidden = true; $('touch').hidden = true; }
+  else if (!on && G.state === 'paused') { G.state = 'race'; $('menu').hidden = true; $('hud').hidden = false; $('touch').hidden = !isTouch; canvas.focus(); }
+}
+$('b-start').addEventListener('click', startRace);
+$('b-resume').addEventListener('click', () => pause(false));
+$('b-again').addEventListener('click', startRace);
+$('b-menu').addEventListener('click', () => { $('result').hidden = true; $('menu').hidden = false; $('resume-row').hidden = true; G.state = 'menu'; showBest(); menuFleet(); });
+$('b-help').addEventListener('click', openHelp);
+$('b-help-close').addEventListener('click', () => { $('help').hidden = true; if (G.helpPaused) { G.helpPaused = false; pause(false); } });
+function openHelp() {
+  if (G.state === 'race') { pause(true); G.helpPaused = true; $('menu').hidden = true; }
+  $('help').hidden = false; drawPolar();
+}
+addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(k)) e.preventDefault();
+  if (k === 'escape') { if (!$('help').hidden) { $('b-help-close').click(); return; } if (G.state === 'race') pause(true); else if (G.state === 'paused') pause(false); return; }
+  if (k === 'h') { openHelp(); return; }
+  if (G.state !== 'race') return;
+  if (k === ' ' && !e.repeat) autoManeuver();
+  else if (k === 't' && !e.repeat) { G.me.autoTrim = !G.me.autoTrim; msg(G.me.autoTrim ? 'オートトリム ON' : 'オートトリム OFF', G.me.autoTrim ? 'セールは自動で調整されます' : 'W / S でセールを調整', 1.4); }
+  else if (k === 'c' && !e.repeat) { G.cam = { chase: 'top', top: 'deck', deck: 'chase' }[G.cam]; G.camYaw = 0; msg({ chase: '後方カメラ', top: '上空カメラ', deck: 'デッキカメラ' }[G.cam], '', 0.9); }
+  keys.add(k);
+});
+addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+addEventListener('blur', () => keys.clear());
+// mouse: drag to look around, wheel for distance
+let drag = null;
+canvas.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') { drag = [e.clientX, e.clientY]; canvas.setPointerCapture(e.pointerId); } });
+canvas.addEventListener('pointermove', e => { if (!drag) return; G.camYaw += (e.clientX - drag[0]) * 0.006; G.camPitch = clamp(G.camPitch - (e.clientY - drag[1]) * 0.004, 0.04, 1.2); drag = [e.clientX, e.clientY]; });
+canvas.addEventListener('pointerup', () => { drag = null; });
+canvas.addEventListener('dblclick', () => { G.camYaw = 0; G.camPitch = 0.24; });
+canvas.addEventListener('wheel', e => { e.preventDefault(); G.camDist = clamp(G.camDist * (e.deltaY > 0 ? 1.1 : 0.9), 9, 90); }, { passive: false });
+// touch controls
+const hold = (id, key) => { const el = $(id); el.addEventListener('pointerdown', e => { touch[key] = true; el.setPointerCapture(e.pointerId); }); for (const ev of ['pointerup', 'pointercancel']) el.addEventListener(ev, () => { touch[key] = false; }); };
+hold('t-left', 'left'); hold('t-right', 'right');
+$('t-tack').addEventListener('click', autoManeuver);
+$('t-cam').addEventListener('click', () => { G.cam = { chase: 'top', top: 'deck', deck: 'chase' }[G.cam]; });
+{
+  const el = $('t-sheet'), knob = el.querySelector('i');
+  const set = e => { const r = el.getBoundingClientRect(), f = clamp((e.clientY - r.top - 17) / (r.height - 34), 0, 1); touch.sheet = f; knob.style.top = (f * (r.height - 34)) + 'px'; };
+  el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); set(e); });
+  el.addEventListener('pointermove', e => { if (el.hasPointerCapture(e.pointerId)) set(e); });
+  el.addEventListener('pointerup', () => { touch.sheet = null; });
+}
+// polar diagram in the help sheet
+function drawPolar() {
+  const cv = $('polar'), g = cv.getContext('2d'), W2 = cv.width, cx = W2 / 2, cy = W2 / 2 + 10, R = 190;
+  g.clearRect(0, 0, W2, W2);
+  g.fillStyle = 'rgba(255,106,92,0.22)'; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, R, -Math.PI / 2 - 32 * DEG, -Math.PI / 2 + 32 * DEG); g.fill();
+  g.strokeStyle = 'rgba(170,208,226,0.3)'; g.lineWidth = 1;
+  for (const r of [0.25, 0.5, 0.75, 1]) { g.beginPath(); g.arc(cx, cy, R * r, 0, 7); g.stroke(); }
+  g.strokeStyle = '#f5f1e8'; g.lineWidth = 3; g.beginPath();
+  for (let a = -180; a <= 180; a += 2) { const r = polarRatio(Math.abs(a)) * R, x = cx + Math.sin(a * DEG) * r, y = cy - Math.cos(a * DEG) * r; a === -180 ? g.moveTo(x, y) : g.lineTo(x, y); }
+  g.stroke();
+  const mark = (a, col, label) => { const r = polarRatio(Math.abs(a)) * R, x = cx + Math.sin(a * DEG) * r, y = cy - Math.cos(a * DEG) * r; g.fillStyle = col; g.beginPath(); g.arc(x, y, 7, 0, 7); g.fill(); g.font = '700 20px "Zen Kaku Gothic New", sans-serif'; g.fillText(label, x + (a > 0 ? 12 : -12 - g.measureText(label).width), y + 6); };
+  mark(45, '#5fd08a', '風上 45°'); mark(-150, '#5fd08a', '風下 150°'); mark(105, '#f2c230', '最速');
+  g.fillStyle = '#f2c230'; g.font = '800 24px "Big Shoulders Display", sans-serif'; g.textAlign = 'center'; g.fillText('風 ↓', cx, 30); g.textAlign = 'left';
+  g.fillStyle = '#ff6a5c'; g.font = '700 18px "Zen Kaku Gothic New", sans-serif'; g.fillText('ノーゴー', cx - 34, cy - R * 0.55);
+}
+function menuFleet() {
+  newRace();
+  for (const b of G.boats) { b.x = (b.i - 2.5) * 22; b.z = 150 + (b.i % 2) * 18 - b.i * 6; b.hdg = 100; b.v = 5; b.autoTrim = true; }
+  G.raceT = 999;
+  // in the menu everyone just reaches along together
+  for (const b of G.boats) { b.ai = true; b.slot = 0.5; }
+}
+function fastForward(sec, meAI) {
+  const h = 1 / 30;
+  if (meAI) { G.me.ai = true; }
+  for (let n = 0; n < sec / h && G.state === 'race'; n++) {
+    G.t += h; G.raceT += h; signals();
+    W.drift[1] += W.tws0 * h * 0.8;
+    G.think = (G.think || 0) - h; const think = G.think <= 0; if (think) G.think = 0.25;
+    for (const b of G.boats) { if (b.finished && b !== G.me) { b.rudder = 0; b.sheet = 80; b.autoTrim = false; } else if (b.ai && think) aiThink(b, G.t); }
+    for (const b of G.boats) { const px = b.x, pz = b.z; stepBoat(b, h, G.t); courseProgress(b, px, pz); }
+    collide(h);
+  }
+  return G.boats.map(b => ({ n: b.team.code, leg: b.leg, fin: b.finished ? +b.finishT.toFixed(1) : null, x: Math.round(b.x), z: Math.round(b.z), v: +(b.v * KN).toFixed(1), ocs: b.ocs, pen: b.pen }));
+}
+window.KAZE = { G, W, COURSE, fastForward, get legs() { return legs; } };
+showBest();
+menuFleet();
+G.state = 'menu';
+requestAnimationFrame(frame);
+</script>
+
+</body>
+</html>

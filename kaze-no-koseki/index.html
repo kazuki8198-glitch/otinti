@@ -60,7 +60,13 @@ h1 small{display:block;font:600 15px/1.4 var(--display);letter-spacing:.32em;col
 /* class picker */
 .cls-kind{font:700 12px var(--jp);letter-spacing:.14em;color:var(--flag-yellow);text-shadow:0 1px 6px rgba(0,0,0,.6)}
 .cls-name{margin:0;font:900 clamp(54px,7.4vw,92px)/.84 var(--display);letter-spacing:.01em;text-shadow:0 2px 18px rgba(0,0,0,.35)}
+.cls-name.long{font-size:clamp(44px,5.4vw,72px)}
 .cls-desc{margin:4px 0 0;max-width:54ch;text-shadow:0 1px 8px rgba(0,0,0,.7)}
+.cls-top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end}
+.cls-head{flex:1 1 300px;min-width:0}
+.cls-polar{flex:0 0 auto;margin:0;display:grid;gap:4px;justify-items:start;padding:8px 10px 9px;background:var(--panel);border:1px solid var(--line);border-radius:8px;backdrop-filter:blur(4px)}
+.cls-polar canvas{width:160px;height:170px;display:block;cursor:crosshair;touch-action:none}
+.cls-polar figcaption{max-width:220px;font-size:11px;line-height:1.45;color:var(--muted);font-variant-numeric:tabular-nums;text-shadow:0 1px 6px rgba(0,0,0,.8)}
 .cls-row{display:flex;flex-wrap:wrap;gap:10px 32px;align-items:flex-end}
 .cls-spec{display:flex;gap:24px;margin:0}
 .cls-spec div{display:grid;gap:2px}
@@ -71,17 +77,15 @@ h1 small{display:block;font:600 15px/1.4 var(--display);letter-spacing:.32em;col
 .bar{display:flex;gap:3px}
 .bar i{width:16px;height:6px;border-radius:1px;background:rgba(170,208,226,.22)}
 .bar i.on{background:var(--sail)}
-.cls-pick{display:flex;gap:8px;flex-wrap:wrap}
-.cls-chip{display:grid;justify-items:center;gap:3px;width:94px;padding:6px 4px 8px;border:1px solid var(--line);border-radius:8px;background:rgba(7,24,36,.66);cursor:pointer;color:var(--ink)}
-.cls-chip canvas{width:84px;height:62px;display:block}
+.cls-pick{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.cls-chip{flex:0 0 auto;display:grid;justify-items:center;gap:3px;width:86px;padding:6px 3px 8px;border:1px solid var(--line);border-radius:8px;background:rgba(7,24,36,.66);cursor:pointer;color:var(--ink)}
+.cls-chip canvas{width:78px;height:58px;display:block}
 .cls-chip b{font:800 15px/1 var(--display);letter-spacing:.05em}
 .cls-chip:hover{border-color:var(--sail)}
 .cls-chip[aria-checked="true"]{background:var(--sail);color:var(--navy);border-color:var(--sail)}
 @media (max-width:980px){
   #menu{grid-template-columns:minmax(0,1fr);grid-template-rows:auto;grid-template-areas:"head" "fleet" "opts";align-content:start;background:rgba(6,20,31,.74)}
   .m-fleet{justify-self:stretch}
-  .cls-pick{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
-  .cls-chip{flex:0 0 auto}
 }
 /* ---------- HUD ---------- */
 #hud{position:absolute;inset:0;pointer-events:none}
@@ -104,6 +108,8 @@ h1 small{display:block;font:600 15px/1.4 var(--display);letter-spacing:.32em;col
 .cell:nth-child(3n){border-right:0} .cell:nth-child(-n+3){border-top:0}
 .cell b{display:block;font:800 30px/1.05 var(--display);font-variant-numeric:tabular-nums}
 .cell span{font-size:10.5px;letter-spacing:.14em;color:var(--muted)}
+.cell small{display:block;font:600 11px/1.3 var(--mono);color:var(--warn);font-variant-numeric:tabular-nums}
+.cell small.ok{color:var(--good)}
 #h-wind{right:16px;bottom:max(16px,env(safe-area-inset-bottom));width:200px;padding:8px 10px 10px;display:grid;gap:4px}
 #h-wind canvas{width:180px;height:150px;display:block}
 #h-trim{font-weight:700;font-size:13px;text-align:center}
@@ -111,10 +117,29 @@ h1 small{display:block;font:600 15px/1.4 var(--display);letter-spacing:.32em;col
 #h-trimbar i{position:absolute;top:0;bottom:0;background:rgba(95,208,138,.45)}
 #h-trimbar em{position:absolute;top:-2px;bottom:-2px;width:3px;background:var(--sail);border-radius:2px}
 #h-trimlab{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
+#h-angles{display:flex;justify-content:space-between;gap:6px;font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.lg::before{content:"";display:inline-block;width:10px;height:4px;border-radius:1px;margin-right:4px;vertical-align:2px}
+.lg.c::before{background:var(--good)} .lg.r::before{background:var(--sail)}
+#h-course{font-size:12px;font-weight:700;text-align:center;color:var(--warn);min-height:1.4em}
+#h-course.ok{color:var(--good)}
+/* spinnaker button (desktop) */
+#h-kite{right:16px;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 292px);width:200px;box-sizing:border-box;padding:7px 10px;display:grid;gap:1px;text-align:left;cursor:pointer;pointer-events:auto;color:var(--ink)}
+#h-kite b{font-size:14px}
+#h-kite span{font-size:11px;color:var(--muted)}
+#h-kite:hover{border-color:var(--sail)}
+#h-kite.up{border-color:rgba(245,241,232,.55)}
+#h-kite.want{border-color:var(--good);box-shadow:0 0 0 2px rgba(95,208,138,.35)}
+#h-kite.bad{border-color:var(--bad);box-shadow:0 0 0 2px rgba(255,106,92,.35)}
+/* right of way over nearby boats */
+.rule{position:absolute;left:0;top:0;display:grid;justify-items:center;padding:3px 9px 4px;border-radius:6px;white-space:nowrap;will-change:transform;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.rule b{font-size:13px;line-height:1.2}
+.rule span{font-size:10.5px;line-height:1.3}
+.rule.give{background:rgba(224,58,62,.92);color:#fff}
+.rule.stand{background:rgba(22,70,44,.9);color:#dff7e8;border:1px solid rgba(95,208,138,.6)}
 #h-msg{position:absolute;left:50%;top:30%;transform:translateX(-50%);font:800 30px/1.2 var(--display);letter-spacing:.04em;text-align:center;text-shadow:0 2px 10px rgba(0,0,0,.6);opacity:0;transition:opacity .25s;white-space:nowrap}
 #h-msg.on{opacity:1}
-#h-msg small{display:block;font:700 14px var(--jp);letter-spacing:0}
-#h-pen{left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);padding:6px 14px;color:var(--bad);font-weight:700}
+#h-msg small{display:block;font:700 14px/1.5 var(--jp);letter-spacing:0;white-space:normal;width:max-content;max-width:min(88vw,620px);margin:2px auto 0}
+#h-pen{left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);padding:6px 14px;color:var(--bad);font-weight:700;max-width:calc(100% - 32px);text-align:center}
 #h-keys{position:absolute;left:50%;bottom:max(10px,env(safe-area-inset-bottom));transform:translateX(-50%);font-size:11px;color:var(--muted);white-space:nowrap;text-shadow:0 1px 3px #000}
 /* next-mark pointer, projected from the 3D scene every frame */
 #h-target{position:absolute;left:0;top:0;display:grid;justify-items:center;text-shadow:0 1px 4px rgba(0,0,0,.85);white-space:nowrap;will-change:transform}
@@ -134,7 +159,8 @@ kbd{font:600 12px var(--mono);border:1px solid var(--line);border-bottom-width:2
 .ktab{border-collapse:collapse;width:100%} .ktab td,.ktab th{padding:5px 6px;border-top:1px solid var(--line);vertical-align:top;text-align:left} .ktab td:first-child{white-space:nowrap;width:1%}
 .ktab th{font-size:11px;letter-spacing:.1em;color:var(--muted);font-weight:700}
 .tbl-wrap{overflow-x:auto}
-#cls-table td:nth-child(2),#cls-table td:nth-child(3){white-space:nowrap;font-variant-numeric:tabular-nums}
+#cls-table td:nth-child(-n+5){white-space:nowrap;font-variant-numeric:tabular-nums}
+.res td.pen{font-size:12px;color:var(--muted)}
 .polar{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
 .polar canvas{width:220px;height:220px;max-width:100%}
 .res{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
@@ -149,6 +175,9 @@ kbd{font:600 12px var(--mono);border:1px solid var(--line);border-bottom-width:2
 #touch button{pointer-events:auto;position:absolute;background:rgba(7,24,36,.55);border:1px solid var(--line);border-radius:50%;font:800 22px var(--display);touch-action:none}
 #t-left{left:18px;bottom:130px;width:74px;height:74px} #t-right{left:104px;bottom:130px;width:74px;height:74px}
 #t-fix{left:18px;bottom:216px;width:120px;height:40px;border-radius:20px!important;font:700 13px var(--jp)!important}
+#t-kite{left:18px;bottom:264px;width:120px;height:40px;border-radius:20px!important;font:700 13px var(--jp)!important}
+#t-kite.want{border-color:var(--good)!important;box-shadow:0 0 0 2px rgba(95,208,138,.4)}
+#t-kite.bad{border-color:var(--bad)!important}
 #t-tack{right:18px;bottom:260px;width:70px;height:70px;font-size:16px!important}
 #t-cam{right:18px;bottom:340px;width:52px;height:52px;font-size:13px!important}
 #t-sheet{position:absolute;right:96px;bottom:250px;width:44px;height:150px;pointer-events:auto;border:1px solid var(--line);border-radius:22px;background:rgba(7,24,36,.55);touch-action:none}
@@ -174,26 +203,32 @@ kbd{font:600 12px var(--mono);border:1px solid var(--line);border-bottom-width:2
       <div class="cell"><b id="i-bsp">0.0</b><span>艇速 KN</span></div>
       <div class="cell"><b id="i-vmg">0.0</b><span>VMG KN</span></div>
       <div class="cell"><b id="i-mark">–</b><span>マークまで M</span></div>
-      <div class="cell"><b id="i-twa">0°</b><span>真風角 TWA</span></div>
+      <div class="cell"><b id="i-twa">0°</b><span>真風角 TWA</span><small id="i-twa-t">—</small></div>
       <div class="cell"><b id="i-tws">0.0</b><span>風速 KN</span></div>
       <div class="cell"><b id="i-hdg">000</b><span>針路 HDG</span></div>
     </div>
     <div class="hbox" id="h-wind">
-      <canvas id="wind" width="360" height="300"></canvas>
+      <canvas id="wind" width="360" height="300" aria-label="風と艇の向き。緑の目盛りがクローズ、白い目盛りがランニングの最適角度"></canvas>
+      <div id="h-angles"><span class="lg c" id="lg-c">クローズ</span><span class="lg r" id="lg-r">ランニング</span></div>
+      <div id="h-course">—</div>
       <div id="h-trimbar"><i></i><em></em></div>
       <div id="h-trimlab"><span>引く</span><span>セールトリム</span><span>出す</span></div>
       <div id="h-trim">—</div>
     </div>
-    <div class="hbox" id="h-pen" hidden>ペナルティ：その場で 1 回転（360°）してください</div>
+    <div class="hbox" id="h-pen" hidden>ペナルティ</div>
+    <button type="button" class="hbox" id="h-kite" hidden><b id="hk-t">ジェネカーを上げる</b><span id="hk-s">G キー</span></button>
+    <div class="rule" id="rl-0" hidden><b></b><span></span></div>
+    <div class="rule" id="rl-1" hidden><b></b><span></span></div>
     <div id="h-target" hidden><b id="ht-name">風上マーク</b><span id="ht-dist">0 m</span><i></i></div>
     <div id="h-msg"></div>
-    <div id="h-keys">A D 舵 ・ W S セール ・ Space タック／ジャイブ ・ R 立て直し ・ T オートトリム ・ C カメラ ・ H 遊び方 ・ Esc 一時停止</div>
+    <div id="h-keys">A D 舵 ・ W S セール ・ G スピン ・ Space タック／ジャイブ ・ R 立て直し ・ T オートトリム ・ C カメラ ・ H 遊び方 ・ Esc 一時停止</div>
   </div>
 
   <div id="touch" hidden>
     <button type="button" id="t-left" aria-label="左に舵">◀</button>
     <button type="button" id="t-right" aria-label="右に舵">▶</button>
     <button type="button" id="t-fix">立て直し</button>
+    <button type="button" id="t-kite" hidden>スピン▲</button>
     <button type="button" id="t-tack">タック</button>
     <button type="button" id="t-cam">視点</button>
     <div id="t-sheet" aria-label="セールの出し入れ"><span>セール</span><i></i></div>
@@ -206,10 +241,16 @@ kbd{font:600 12px var(--mono);border:1px solid var(--line);border-bottom-width:2
       <p class="lede">風上マークと風下マークを回る本格ヨットレース。1 人乗りのディンギーから、海面から浮き上がって飛ぶ AC75 まで 7 つの艇種から選んで、ライバル 5 艇と競おう。</p>
     </div>
     <section class="m-fleet" aria-label="艇種">
-      <div>
-        <div class="cls-kind" id="cls-kind"></div>
-        <h2 class="cls-name" id="cls-name"></h2>
-        <p class="cls-desc" id="cls-desc"></p>
+      <div class="cls-top">
+        <div class="cls-head">
+          <div class="cls-kind" id="cls-kind"></div>
+          <h2 class="cls-name" id="cls-name"></h2>
+          <p class="cls-desc" id="cls-desc"></p>
+        </div>
+        <figure class="cls-polar">
+          <canvas id="cls-polar" width="320" height="340"></canvas>
+          <figcaption id="cls-polar-cap"></figcaption>
+        </figure>
       </div>
       <div class="cls-row">
         <dl class="cls-spec" id="cls-spec"></dl>
@@ -224,6 +265,7 @@ kbd{font:600 12px var(--mono);border:1px solid var(--line);border-bottom-width:2
         <div class="opt"><span>ライバル</span><div class="seg" data-opt="ai"><button type="button" data-v="easy">やさしい</button><button type="button" data-v="norm">ふつう</button><button type="button" data-v="hard">つよい</button></div></div>
         <div class="opt"><span>時間帯</span><div class="seg" data-opt="tod"><button type="button" data-v="dawn">朝</button><button type="button" data-v="day">昼</button><button type="button" data-v="eve">夕方</button></div></div>
         <div class="opt"><span>セール</span><div class="seg" data-opt="trim"><button type="button" data-v="auto">オートトリム</button><button type="button" data-v="manual">自分で操作</button></div></div>
+        <div class="opt"><span>スピン</span><div class="seg" data-opt="kite"><button type="button" data-v="manual">ボタンで上げ下げ</button><button type="button" data-v="auto">自動</button></div></div>
         <div class="opt"><span>画質</span><div class="seg" data-opt="gfx"><button type="button" data-v="high">高画質（映り込みあり）</button><button type="button" data-v="low">軽量</button></div></div>
       </div>
       <div class="row-btn"><button type="button" class="go" id="b-start">レーススタート</button><button type="button" class="ghost" id="b-help">遊び方・ヨットのしくみ</button></div>
@@ -249,6 +291,7 @@ kbd{font:600 12px var(--mono);border:1px solid var(--line);border-bottom-width:2
           <li>マークや本部船にぶつかっても、滑るように離れられます。</li>
         </ul>
         <h3>艇種のちがい</h3>
+        <p>クローズ（クローズホールド）は風上へ最も効率よく上れる角度、ランニングは風下へ最も効率よく下れる角度です（真風角。速さは風速 12 kn のとき）。レース中は右下の図の緑と白の目盛りに艇首（上の三角）を合わせると、その角度で走れます。</p>
         <div class="tbl-wrap"><table class="ktab" id="cls-table"></table></div>
         <p>AC75 は艇速が約 <b>7.5 ノット</b>を超えると水中翼で船体が浮き上がり（フォイリング）、一気に加速します。遅くなると着水してしまうので、そのときは風を横から受けて加速し直しましょう。</p>
         <h3>コース</h3>
@@ -256,7 +299,23 @@ kbd{font:600 12px var(--mono);border:1px solid var(--line);border-bottom-width:2
           <li><b>スタート</b>：本部船（大きい船）とピンブイ（オレンジ）を結んだ線。60 秒前から合図が始まり、0 秒になったら線を越えて風上へ。<b>0 秒より前に線を越えるとリコール</b>（X 旗）。線の下に戻ってやり直し。</li>
           <li><b>風上マーク</b>（黄）→ <b>風下マーク</b>（オレンジ）の順に回り、最後はスタートと同じ線を風下向きに越えてフィニッシュ。画面の黄色い ▼ が次の目標です。</li>
           <li>マークは<b>左側に見て</b>（左回りで）回ります。反対回りは回ったことになりません。</li>
-          <li>マークに触れるとペナルティ。その場で 1 回転（360°）すると消えます。回らずにフィニッシュすると +30 秒。</li>
+          <li>マークに触れるとペナルティ（ルール31）。その場で 1 回転（360°）すると消えます。</li>
+          <li>ほかの艇とぶつかったら、<b>よける義務があった艇</b>が 2 回転（720°）のペナルティ（下の「レースのルール」）。回らずにフィニッシュすると 1 回転につき +30 秒。</li>
+        </ul>
+        <h3>スピネーカー・ジェネカー（G キー／「スピン」ボタン）</h3>
+        <p>470 はスピネーカー、49er・J/70・K-36・Nacra 17・TP52 はジェネカーという風下用の大きな帆を持っています。風下へ向かうレグ（風下マークとフィニッシュへ）で<b>上げる</b>と速くなり、風下マークの手前で<b>下ろして</b>から回ります。風上に向きすぎたまま上げていると帆がつぶれて遅くなり、艇が大きく傾きます。上げ下げには数秒かかるので早めに。メニューの「スピン」で自動にもできます。</p>
+        <h3>レースのルール（セーリング競技規則）</h3>
+        <p>艇どうしが出会ったとき、どちらがよけるかはルールで決まっています。近くの艇の上に「よけて！」（赤）か「あなたが優先」（緑）とルール番号が出ます。よける義務があるのにぶつかると <b>2 回転（720°）</b>のペナルティです。</p>
+        <ul>
+          <li><b>ルール10 反対タック</b>：左から風を受けている艇（ポートタック）が、右から風を受けている艇（スターボードタック）をよける。</li>
+          <li><b>ルール11 風上艇と風下艇</b>：同じタックで横に重なっていたら（オーバーラップ）、風上側の艇がよける。</li>
+          <li><b>ルール12 前後</b>：同じタックで重なっていなければ、後ろの艇（クリアアスターン）がよける。</li>
+          <li><b>ルール13 タック中</b>：風位を越えてからクローズホールドになるまでの艇は、ほかの艇をよける。</li>
+          <li><b>ルール15 優先権を得たとき</b>：タックやジャイブで急に優先権を得た艇は、相手がよけられる余地を与える。相手の目の前でタックしないこと。</li>
+          <li><b>ルール18 マークルーム</b>：マークのまわりのゾーン（艇長の 3 倍、地図の白い円）では、内側の艇にマークを回るスペースを与える（風上へ上っている反対タックどうしは除く）。</li>
+          <li><b>ルール22</b>：ペナルティを履行中の艇と、スタートをやり直す艇は、ほかの艇をよける。</li>
+          <li><b>ルール31 マークに接触</b>：準備信号のあと、スタートのマーク・そのレグのマーク・フィニッシュのマークに触れたら 1 回転。</li>
+          <li><b>ルール44 ペナルティの回転</b>：ペナルティはすぐ、ほかの艇から離れて回る。同じ向きに回った角度の合計で数えます。</li>
         </ul>
         <h3>セールの出し入れ（トリム）</h3>
         <p>風を前から受けるときはセールを<b>引き込み</b>、横や後ろから受けるときは<b>出し</b>ます。右下のメーターの緑の範囲にセールの位置（白い線）を合わせると最速です。出しすぎると帆がバタバタして（シバー）遅くなり、引きすぎると失速して艇が大きく傾きます。「オートトリム」なら自動で合わせてくれます。</p>
@@ -271,17 +330,18 @@ kbd{font:600 12px var(--mono);border:1px solid var(--line);border-bottom-width:2
           <tr><td><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd></td><td>舵（左に曲がる／右に曲がる）。速いほどよく曲がる</td></tr>
           <tr><td><kbd>W</kbd> <kbd>S</kbd> / <kbd>↑</kbd> <kbd>↓</kbd></td><td>セールを引く／出す（押すとオートトリムは切れます）</td></tr>
           <tr><td><kbd>Space</kbd></td><td>自動でタック（風上）またはジャイブ（風下）：反対側の同じ風の角度まで回る</td></tr>
+          <tr><td><kbd>G</kbd></td><td>スピネーカー／ジェネカーを上げる・下ろす（右下のボタンでも）</td></tr>
           <tr><td><kbd>R</kbd></td><td>立て直し：止まったときに走れる向きへ戻す</td></tr>
           <tr><td><kbd>T</kbd></td><td>オートトリムの ON / OFF</td></tr>
           <tr><td><kbd>C</kbd></td><td>カメラ切替（後方・上空・デッキ）。マウスのドラッグで見回し、ホイールで距離</td></tr>
           <tr><td><kbd>H</kbd> / <kbd>Esc</kbd></td><td>遊び方 ／ 一時停止</td></tr>
         </table>
-        <p>スマホ：左下の ◀ ▶ で舵、「立て直し」ボタン、右の縦のつまみでセール、「タック」ボタンで自動タック・ジャイブ。</p>
+        <p>スマホ：左下の ◀ ▶ で舵、「立て直し」「スピン」ボタン、右の縦のつまみでセール、「タック」ボタンで自動タック・ジャイブ。</p>
         <h3>計器の見方</h3>
         <ul>
           <li><b>艇速</b>：水に対する速さ（ノット、1 kn ≒ 時速 1.85 km）</li>
           <li><b>VMG</b>：目標のマークに近づく速さ。風上・風下ではこれを最大にするのがコツ</li>
-          <li><b>真風角 TWA</b>：風の来る方向と艇の向きの角度。＋は右から、−は左から風を受けている</li>
+          <li><b>真風角 TWA</b>：風の来る方向と艇の向きの角度。＋は右から、−は左から風を受けている。下の小さな数字がこの艇の最適角度</li>
           <li>右下の図：黄色い矢印が風の来る向き、白い線がセール（ブーム）の位置</li>
         </ul>
       </div>
@@ -346,7 +406,7 @@ const CLASSES = {
     desc: '舵取りとクルーの2人乗り。風下では丸いスピネーカーをポールで張り出す。クルーはトラピーズで艇の外にぶら下がって艇を起こす。',
     L: 4.7, B: 1.68, hulls: 1, crewMode: ['hike', 'trap'], alloy: true,
     hull: { free: 0.42, bowUp: 0.08, draft: 0.24, full: 0.25, tw: 0.75, vee: 0.4, anti: false },
-    fin: 'board', finD: 1.05, mastZ: -0.55, mastH: 6.8, boomH: 0.95, main: [2.3, 0.15, 0.32], jib: { foot: 1.6, h: 0.72 }, kite: { type: 'sym', w: 3.2, h: 0.86, pole: 1.7 }, sprit: 0, cloth: 'dacron',
+    fin: 'board', finD: 1.05, mastZ: -0.55, mastH: 6.8, boomH: 0.95, main: [2.3, 0.15, 0.32], jib: { foot: 1.6, h: 0.72 }, kite: { type: 'sym', w: 3.2, h: 0.86, pole: 1.7, t: 3, min: 95 }, sprit: 0, cloth: 'dacron',
     k: 0.66, dep: 0.016, turn: 55, minAuth: 0.5, vFlow: 1.3, acc: 0.5, dec: 0.42, rdrag: 0.09, fall: 9,
     polar: [0, 0, 0.2, 0.52, 0.62, 0.7, 0.78, 0.88, 0.95, 1.0, 0.99, 0.95, 0.9, 0.84, 0.8],
     kiteBoost: 0.14, kiteOn: 100, heel: [7, 16], rr: 10, cs: 0.68, cam: 0.66, spray: 0.5, stats: [2, 4, 2],
@@ -356,7 +416,7 @@ const CLASSES = {
     desc: '2人ともトラピーズに出る超高速ディンギー。張り出したウイングと巨大なジェネカーで、風下では風速より速く走る。',
     L: 4.99, B: 1.93, hulls: 1, wings: 0.5, crewMode: ['trap', 'trap'],
     hull: { free: 0.4, bowUp: 0.05, draft: 0.2, full: 0.15, tw: 0.92, vee: 0.3, anti: false },
-    fin: 'board', finD: 1.1, mastZ: -0.55, mastH: 8.1, boomH: 1.1, main: [2.35, 1.1, 0.45], jib: { foot: 1.55, h: 0.76 }, kite: { type: 'asym', c: 4.6, h: 0.97 }, sprit: 1.9, cloth: 'mylar',
+    fin: 'board', finD: 1.1, mastZ: -0.55, mastH: 8.1, boomH: 1.1, main: [2.35, 1.1, 0.45], jib: { foot: 1.55, h: 0.76 }, kite: { type: 'asym', c: 4.6, h: 0.97, t: 2.5, min: 70 }, sprit: 1.9, cloth: 'mylar',
     k: 0.95, dep: 0.012, turn: 46, minAuth: 0.45, vFlow: 1.6, acc: 0.45, dec: 0.38, rdrag: 0.09, fall: 8,
     polar: [0, 0, 0.18, 0.45, 0.56, 0.64, 0.72, 0.84, 0.92, 1.0, 1.0, 0.97, 0.88, 0.74, 0.62],
     kiteBoost: 0.3, kiteOn: 100, heel: [6, 14], rr: 15, cs: 1.0, cam: 0.72, spray: 0.9, stats: [4, 3, 4],
@@ -366,17 +426,29 @@ const CLASSES = {
     desc: '重いキールで倒れにくく、扱いやすいスポーツボート。風下ではジェネカーを張ってぐんと加速する。はじめての人におすすめ。',
     L: 7.2, B: 2.5, hulls: 1, crewMode: ['sit', 'sit', 'sit', 'sit'], alloy: true, furl: true,
     hull: { free: 0.66, bowUp: 0.2, draft: 0.46, full: 0.3, tw: 0.86, vee: 0.55, anti: true },
-    fin: 'keel', finD: 1.5, mastZ: -0.6, mastH: 10.4, boomH: 0.9, main: [3.25, 0.12, 0.3], jib: { foot: 2.5, h: 0.8 }, kite: { type: 'asym', c: 5.4, h: 0.9 }, sprit: 1.3, cloth: 'dacron',
+    fin: 'keel', finD: 1.5, mastZ: -0.6, mastH: 10.4, boomH: 0.9, main: [3.25, 0.12, 0.3], jib: { foot: 2.5, h: 0.8 }, kite: { type: 'asym', c: 5.4, h: 0.9, t: 3.5, min: 85 }, sprit: 1.3, cloth: 'dacron',
     k: 0.95, dep: 0.016, turn: 32, minAuth: 0.45, vFlow: 2.2, acc: 0.22, dec: 0.3, rdrag: 0.07, fall: 7,
     polar: [0, 0, 0.2, 0.5, 0.6, 0.68, 0.76, 0.86, 0.93, 0.98, 1.0, 0.98, 0.93, 0.83, 0.75],
     kiteBoost: 0.1, kiteOn: 112, heel: [17, 34], rr: 16, cs: 1.0, cam: 1.0, spray: 0.6, stats: [3, 3, 1],
+  },
+  k36: {
+    short: 'K36', name: 'K-36 Samurai', kind: 'HPR ワンデザインレーサー・6人乗り', sail: 'メイン・ジブ・ジェネカー',
+    desc: '日本発の 36 フィートのオールカーボン艇（設計 A.KANAI & SDK、建造 Pauger Carbon）。軽い船体と 145 m² の大きなジェネカーで、風下ではぐんぐん加速する。相模湾ではワンデザインのレースが行われている。',
+    L: 10.88, B: 3.59, hulls: 1, crewMode: ['sit', 'sit', 'sit', 'sit', 'sit', 'sit'], furl: true,
+    hull: { free: 0.9, bowUp: 0.22, draft: 0.55, full: 0.35, tw: 0.92, vee: 0.5, anti: true },
+    fin: 'keel', finD: 1.95, mastZ: -0.85, mastH: 16.5, boomH: 1.35, main: [4.85, 1.3, 0.6], jib: { foot: 4.3, h: 0.87 }, kite: { type: 'asym', c: 9.5, h: 0.95, t: 4.5, min: 80 }, sprit: 2.0, cloth: 'carbon',
+    k: 1.0, dep: 0.008, turn: 30, minAuth: 0.45, vFlow: 2.6, acc: 0.2, dec: 0.22, rdrag: 0.05, fall: 6,
+    polar: [0, 0, 0.2, 0.52, 0.62, 0.7, 0.78, 0.88, 0.95, 1.0, 1.0, 0.97, 0.9, 0.8, 0.72],
+    kiteBoost: 0.15, kiteOn: 100, heel: [15, 28], rr: 22, cs: 1.08, cam: 1.35, spray: 0.9, stats: [3, 3, 3],
+    // the boats that raced the 2021 K36 Samurai Regatta in Sagami Bay
+    fleet: ['GAIA', 'ENTERPRISE LILY', 'PAPILLON', 'SPANK', 'LUCKY LADY X'],
   },
   nacra: {
     short: 'Nacra 17', name: 'Nacra 17', kind: 'カタマラン（双胴艇）・2人乗り', sail: 'メイン・ジブ・ジェネカー',
     desc: '2つの船体をネットでつないだ双胴艇。横風では風上側の船体を浮かせて猛スピード。ただし向きを変えるのは苦手で、タックで失速しやすい。',
     L: 5.25, B: 2.59, hulls: 2, hullB: 0.46, crewMode: ['trap', 'trap'],
     hull: { free: 0.5, bowUp: 0.12, draft: 0.34, full: 0.05, tw: 0.6, vee: 0.9, anti: false },
-    fin: 'cat', finD: 1.1, mastZ: -0.4, mastH: 9.0, boomH: 0.45, main: [2.6, 1.0, 0.5], jib: { foot: 1.6, h: 0.72 }, kite: { type: 'asym', c: 4.4, h: 0.95 }, sprit: 1.4, cloth: 'carbon',
+    fin: 'cat', finD: 1.1, mastZ: -0.4, mastH: 9.0, boomH: 0.45, main: [2.6, 1.0, 0.5], jib: { foot: 1.6, h: 0.72 }, kite: { type: 'asym', c: 4.4, h: 0.95, t: 3, min: 70 }, sprit: 1.4, cloth: 'carbon',
     k: 1.4, dep: 0.008, turn: 30, minAuth: 0.45, vFlow: 2.4, acc: 0.34, dec: 0.42, rdrag: 0.09, fall: 6,
     polar: [0, 0, 0.14, 0.4, 0.5, 0.6, 0.7, 0.85, 0.95, 1.0, 0.98, 0.92, 0.8, 0.64, 0.52],
     kiteBoost: 0.18, kiteOn: 95, heel: [9, 14], rr: 20, cs: 1.35, cam: 0.86, spray: 1.0, stats: [4, 2, 4],
@@ -386,7 +458,7 @@ const CLASSES = {
     desc: '全長 16 m の大型レース艇。重くて向きはゆっくりしか変わらないが、一度走り出すと勢いが落ちにくい。早めの操作がカギ。',
     L: 15.8, B: 4.4, hulls: 1, crewMode: ['sit', 'sit', 'sit', 'sit', 'sit', 'sit', 'sit', 'sit', 'sit'], furl: true,
     hull: { free: 1.15, bowUp: 0.3, draft: 0.8, full: 0.35, tw: 0.9, vee: 0.55, anti: true },
-    fin: 'keel', finD: 3.2, mastZ: -1.6, mastH: 24, boomH: 2.0, main: [6.8, 1.6, 0.8], jib: { foot: 5.6, h: 0.86 }, kite: { type: 'asym', c: 12.5, h: 0.95 }, sprit: 2.4, cloth: 'carbon',
+    fin: 'keel', finD: 3.2, mastZ: -1.6, mastH: 24, boomH: 2.0, main: [6.8, 1.6, 0.8], jib: { foot: 5.6, h: 0.86 }, kite: { type: 'asym', c: 12.5, h: 0.95, t: 6, min: 85 }, sprit: 2.4, cloth: 'carbon',
     k: 0.9, dep: 0.006, turn: 22, minAuth: 0.45, vFlow: 3.0, acc: 0.13, dec: 0.13, rdrag: 0.04, fall: 5,
     polar: [0, 0, 0.22, 0.55, 0.64, 0.71, 0.78, 0.87, 0.93, 0.97, 0.98, 0.96, 0.92, 0.85, 0.79],
     kiteBoost: 0.15, kiteOn: 105, heel: [13, 26], rr: 34, cs: 1.0, cam: 1.9, spray: 1.1, stats: [3, 1, 3],
@@ -410,20 +482,25 @@ function polarRatio(C, a) {
   return lerp(P[i], P[i + 1], clamp((a - PT[i]) / (PT[i + 1] - PT[i]), 0, 1));
 }
 const kiteGain = (C, a) => C.kite ? C.kiteBoost * smooth(C.kiteOn - 10, C.kiteOn + 25, a) : 0;
+const kiteName = C => C && C.kite ? (C.kite.type === 'sym' ? 'スピネーカー' : 'ジェネカー') : '';
 function boatMax(C, tws, k) { const kn = tws * KN; return tws * k * (kn > 12 ? 1 - (kn - 12) * C.dep : Math.pow(kn / 12, 0.08)); }
-function targetSpeed(C, a, tws, foil) {
+// polar speed in m/s; kite = 1 with the spinnaker / gennaker set, 0 without
+function targetSpeed(C, a, tws, foil, kite = 1) {
   const k = C.foil ? lerp(C.foil.kHull, C.k, foil) : C.k;
-  return polarRatio(C, a) * boatMax(C, tws, k) * (1 + kiteGain(C, a));
+  return polarRatio(C, a) * boatMax(C, tws, k) * (1 + kite * kiteGain(C, a));
 }
-// best upwind / downwind angles (max VMG) for a class
+// best close-hauled and running angles (max VMG): running with and without the kite
 function optAngles(C) {
-  let bu = -1, ua = 45, bd = -1, da = 150;
+  let bu = -1, ua = 45, bd = -1, da = 150, bd0 = -1, da0 = 150;
   for (let a = 30; a <= 90; a += 0.5) { const v = targetSpeed(C, a, 6, 1) * Math.cos(a * DEG); if (v > bu) { bu = v; ua = a; } }
-  for (let a = 90; a <= 180; a += 0.5) { const v = -targetSpeed(C, a, 6, 1) * Math.cos(a * DEG); if (v > bd) { bd = v; da = a; } }
-  return [ua, da];
+  for (let a = 90; a <= 180; a += 0.5) {
+    const v = -targetSpeed(C, a, 6, 1) * Math.cos(a * DEG), v0 = -targetSpeed(C, a, 6, 1, 0) * Math.cos(a * DEG);
+    if (v > bd) { bd = v; da = a; } if (v0 > bd0) { bd0 = v0; da0 = a; }
+  }
+  return [ua, da, da0];
 }
 function topSpeedKn(C, twsKn) { let m = 0; for (let a = 30; a <= 180; a += 1) m = Math.max(m, targetSpeed(C, a, twsKn / KN, 1)); return m * KN; }
-for (const k of CLASS_KEYS) { const C = CLASSES[k]; C.key = k; [C.upA, C.dnA] = optAngles(C); C.crew = C.crewMode.length; }
+for (const k of CLASS_KEYS) { const C = CLASSES[k]; C.key = k; [C.upA, C.dnA, C.dnA0] = optAngles(C); C.crew = C.crewMode.length; }
 const deckAt = (C, z) => { const s = clamp((z + C.L / 2) / C.L, 0, 1); return C.hull.free + C.hull.bowUp * Math.pow(1 - s, 3); };
 const mainChord = C => v => lerp(C.main[0], C.main[1], v) + C.main[2] * Math.sin(Math.PI * v) * (1 - v * 0.5);
 
@@ -431,7 +508,7 @@ const mainChord = C => v => lerp(C.main[0], C.main[1], v) + C.main[2] * Math.sin
 //  settings
 // =====================================================================
 const coarse = matchMedia('(pointer: coarse)').matches;
-const opts = Object.assign({ cls: 'j70', course: 'std', wind: '12', ai: 'norm', tod: 'day', trim: 'auto', gfx: coarse ? 'low' : 'high' }, store.get('opts', {}));
+const opts = Object.assign({ cls: 'j70', course: 'std', wind: '12', ai: 'norm', tod: 'day', trim: 'auto', kite: 'manual', gfx: coarse ? 'low' : 'high' }, store.get('opts', {}));
 if (!CLASSES[opts.cls]) opts.cls = 'j70';
 document.querySelectorAll('.seg[data-opt]').forEach(seg => {
   const k = seg.dataset.opt;
@@ -907,7 +984,7 @@ const CLOTH = {
   carbon: { base: '#26292d', seam: 'rgba(255,255,255,0.09)', jib: 0x2b2e32, text: '#f5f1e8' },
 };
 // mainsail artwork drawn to scale: the uv u runs along the chord in metres / foot length, so lettering keeps its shape
-function sailTexture(team, C) {
+function sailTexture(team, C, label) {
   const cv = document.createElement('canvas'); cv.width = 256; cv.height = 512;
   const g = cv.getContext('2d'), cl = CLOTH[C.cloth], foot = C.main[0], luff = C.mastH - C.boomH, chord = mainChord(C);
   g.fillStyle = cl.base; g.fillRect(0, 0, 256, 512);
@@ -922,8 +999,21 @@ function sailTexture(team, C) {
   const ink = cl.text || teamInk(team), big = Math.min(foot * 0.24, 1.9) * 100;
   g.fillStyle = ink; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
   g.font = `800 ${big * 0.42}px "Big Shoulders Display", Impact, sans-serif`; g.fillText(C.short, at(0.78) * 0.46, yAt(0.78));
-  g.font = `900 ${big * 0.72}px "Big Shoulders Display", Impact, sans-serif`; g.fillText(team.code, at(0.6) * 0.45, yAt(0.6));
-  g.font = `900 ${big}px "Big Shoulders Display", Impact, sans-serif`; g.fillText(String(team.num), at(0.46) * 0.45, yAt(0.46));
+  if (label) {
+    // a boat name: one or two lines, shrunk to fit the chord
+    // long names break at the space nearest the middle
+    let cut = -1; for (let k = 0; k < label.length; k++) if (label[k] === ' ' && (cut < 0 || Math.abs(k - label.length / 2) < Math.abs(cut - label.length / 2))) cut = k;
+    const lines = label.length > 9 && cut > 0 ? [label.slice(0, cut), label.slice(cut + 1)] : [label];
+    lines.forEach((ln, k) => {
+      const v = 0.6 - k * 0.1, maxW = at(v) * 0.86;
+      let fs = big * 0.62; g.font = `900 ${fs}px "Big Shoulders Display", Impact, sans-serif`;
+      const wd = g.measureText(ln).width; if (wd > maxW) { fs *= maxW / wd; g.font = `900 ${fs}px "Big Shoulders Display", Impact, sans-serif`; }
+      g.fillText(ln, at(v) * 0.47, yAt(v));
+    });
+  } else {
+    g.font = `900 ${big * 0.72}px "Big Shoulders Display", Impact, sans-serif`; g.fillText(team.code, at(0.6) * 0.45, yAt(0.6));
+    g.font = `900 ${big}px "Big Shoulders Display", Impact, sans-serif`; g.fillText(String(team.num), at(0.46) * 0.45, yAt(0.46));
+  }
   g.restore();
   const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
   return t;
@@ -990,6 +1080,8 @@ class Boat {
     this.pen = false; this.penTurn = 0; this.luff = 0; this.stall = 0; this.kite = 0; this.autoTarget = null;
     this.skill = 1; this.lastTack = -99; this.slot = 0.5; this.trail = []; this.side = 1; this.ironsT = 0; this.assistT = 0;
     this.foil = 0; this.foilT = 0; this.power = 0; this.sprayAcc = 0; this.trailT = 0;
+    this.kiteUp = false; this.kiteBad = 0; this.penNeed = 0; this.log = []; this.tacking = false;
+    this.name = CL.fleet && i > 0 ? CL.fleet[i - 1] : this.team.name;
     this.build();
   }
   build() {
@@ -1051,7 +1143,7 @@ class Boat {
     }
     // sails
     this.mainChord = mainChord(C);
-    this.main = new THREE.Mesh(sailGeometry(this.mainChord), M({ map: sailTexture(t, C), side: THREE.DoubleSide, roughness: 0.8 })); geos.push(this.main.geometry); body.add(this.main);
+    this.main = new THREE.Mesh(sailGeometry(this.mainChord), M({ map: sailTexture(t, C, C.fleet && this.i > 0 ? this.name : null), side: THREE.DoubleSide, roughness: 0.8 })); geos.push(this.main.geometry); body.add(this.main);
     this.jib = null;
     if (C.jib) { this.jib = new THREE.Mesh(sailGeometry(), M({ color: CLOTH[C.cloth].jib, side: THREE.DoubleSide, roughness: 0.8 })); geos.push(this.jib.geometry); body.add(this.jib); }
     this.kiteMesh = null; this.pole = null;
@@ -1140,7 +1232,7 @@ reflHide.push(lineMesh, spray);
 // =====================================================================
 //  game state
 // =====================================================================
-const G = { state: 'menu', t: 0, raceT: -60, boats: [], me: null, cam: 'chase', camYaw: 0, camDist: 18, camPitch: 0.24, signals: '', gustT: 0, recall: false, think: 0, vApp: 3.5, ds: 1, track: [], trackT: 0, beepS: 0 };
+const G = { state: 'menu', t: 0, raceT: -60, boats: [], me: null, cam: 'chase', camYaw: 0, camDist: 18, camPitch: 0.24, signals: '', gustT: 0, recall: false, think: 0, vApp: 3.5, ds: 1, track: [], trackT: 0, beepS: 0, incT: {} };
 const keys = new Set();
 function newRace() {
   for (const b of G.boats) b.dispose();
@@ -1171,8 +1263,8 @@ function newRace() {
   }
   G.me = G.boats[0];
   G.me.x = 10 * ds; G.me.z = 80 * ds; G.me.hdg = 270; G.me.v = G.vApp * 0.6;
-  for (const b of G.boats) { b.side = b.hdg === 90 ? -1 : 1; if (CL.foil && b.v > CL.foil.vTake) b.foil = b.foilT = 1; b.wasFlying = b.foil > 0.5; }
-  G.raceT = -60; G.t = 0; G.signals = ''; G.recall = false; G.finishOrder = []; G.track = []; G.beepS = 0;
+  for (const b of G.boats) { b.side = b.lastSg = b.hdg === 90 ? -1 : 1; if (CL.foil && b.v > CL.foil.vTake) b.foil = b.foilT = 1; b.wasFlying = b.foil > 0.5; }
+  G.raceT = -60; G.t = 0; G.signals = ''; G.recall = false; G.finishOrder = []; G.track = []; G.beepS = 0; G.incT = {};
   G.camYaw = 0; G.camDist = 18 * CL.cam; G.camPitch = 0.24; G.cam = 'chase';
   for (const m of [markW, markL, pinBuoy]) m.scale.setScalar(COURSE.buoyS);
   markW.position.set(COURSE.wm.x, 0, COURSE.wm.z); markL.position.set(COURSE.lm.x, 0, COURSE.lm.z); markL.visible = opts.course !== 'short';
@@ -1189,6 +1281,11 @@ function stepBoat(b, dt, t) {
   b.w = w;
   const twa = wrap180(w.dir - b.hdg), atwa = Math.abs(twa);
   if (atwa > 3) b.side = Math.sign(twa);                         // +1: wind over the starboard side
+  // tacking (rule 13): from passing head to wind until close-hauled on the new tack; a gybe changes tack at dead downwind
+  const sg = Math.sign(twa) || b.lastSg || 1;
+  if (b.lastSg && sg !== b.lastSg) { if (atwa < 90) b.tacking = true; else b.rowAcqT = t; }
+  b.lastSg = sg;
+  if (b.tacking && atwa >= C.upA - 8) { b.tacking = false; b.rowAcqT = t; }
   const hr = b.hdg * DEG, hx = Math.sin(hr), hz = -Math.cos(hr);
   const wx = -Math.sin(w.dir * DEG) * w.tws, wz = Math.cos(w.dir * DEG) * w.tws;
   const ax = wx - hx * b.v, az = wz - hz * b.v, aws = Math.hypot(ax, az);
@@ -1203,15 +1300,19 @@ function stepBoat(b, dt, t) {
   b.luff = Math.max(smooth(6, 20, d), smooth(36, 24, atwa));      // pinching is judged on the true wind, so fast boats with the apparent wind far forward don't flap
   b.stall = smooth(8, 30, -d) * smooth(20, 40, Math.abs(awa));
   b.eff = eff;
-  // downwind sail on broad angles, dropped for manoeuvres
-  if (C.kite) { const want = atwa > C.kiteOn && Math.abs(b.rudder) < 0.9 && !b.pen ? 1 : 0; b.kite += clamp(want - b.kite, -dt / 2.5, dt / 3); }
+  // spinnaker / gennaker: hoisted and dropped on command (kiteUp); set too close to the wind it collapses and drags
+  if (C.kite) {
+    b.kite += clamp((b.kiteUp ? 1 : 0) - b.kite, -dt / (C.kite.t * 0.7), dt / C.kite.t);
+    b.kiteBad = b.kite * smooth(0, 20, C.kite.min - atwa);
+  }
   // hydrofoils: lift off above take-off speed, touch down below drop speed
   if (C.foil) {
     if (b.v > C.foil.vTake) b.foilT = 1; else if (b.v < C.foil.vDrop) b.foilT = 0;
     b.foil += clamp(b.foilT - b.foil, -dt / 1.2, dt / 1.8);
   }
   const kk = C.foil ? lerp(C.foil.kHull, C.k, smooth(0, 1, b.foil)) : C.k;
-  let vt = polarRatio(C, atwa) * boatMax(C, w.tws, kk) * eff * b.skill * (1 + (C.kite ? C.kiteBoost * b.kite * smooth(C.kiteOn - 10, C.kiteOn + 25, atwa) : 0));
+  let vt = polarRatio(C, atwa) * boatMax(C, w.tws, kk) * eff * b.skill;
+  if (C.kite) vt *= (1 + C.kiteBoost * b.kite * smooth(C.kiteOn - 10, C.kiteOn + 25, atwa)) * (1 - 0.45 * b.kiteBad);
   if (b.pen) vt *= 0.9;
   // steering. The rudder needs water flow, but a stopped boat still turns by backing its sails,
   // and the steering never reverses. Head to wind with the helm neutral, the bow blows off.
@@ -1224,7 +1325,11 @@ function stepBoat(b, dt, t) {
   const rate = C.turn * b.rudder * auth - b.side * C.fall * irons * luffing;
   const dh = rate * dt;
   b.hdg = (b.hdg + dh + 360) % 360;
-  if (b.pen) { b.penTurn += dh; if (Math.abs(b.penTurn) >= 350) { b.pen = false; b.penTurn = 0; if (b === G.me) msg('ペナルティ消化', 'OK', 1.6); } }
+  // penalty turns (rule 44.2): the turning has to add up in one direction
+  if (b.pen) {
+    b.penTurn += dh;
+    if (Math.abs(b.penTurn) >= b.penNeed - 10) { b.pen = false; b.penTurn = 0; b.penNeed = 0; b.rowAcqT = t; if (b === G.me) msg('ペナルティ履行', 'ルールどおり回り終えました。レースに戻ろう', 1.8); }
+  }
   const k = vt > b.v ? C.acc : C.dec;
   b.v += ((vt - b.v) * k - Math.abs(b.rudder) * C.rdrag * b.v) * dt;
   if (atwa < 30) b.v -= 0.18 * (C.dec / 0.3) * dt * (1 - atwa / 30);   // heavy boats carry their way through a tack
@@ -1236,11 +1341,109 @@ function stepBoat(b, dt, t) {
   b.x += (hx * (b.v - back) + sx * lee) * dt; b.z += (hz * (b.v - back) + sz * lee) * dt;
   b.ironsT = irons > 0.55 ? b.ironsT + dt : Math.max(0, b.ironsT - dt * 2);
   // heel to leeward (+ = starboard down); how hard the rig is pulling sends trapeze crews out
-  const raw = (aws / 7) * Math.sin(Math.abs(awa) * DEG) * (1 - 0.8 * b.luff) * (0.75 + 0.9 * b.stall);
+  const raw = (aws / 7) * Math.sin(Math.abs(awa) * DEG) * (1 - 0.8 * b.luff) * (0.75 + 0.9 * b.stall) * (1 + 0.6 * (b.kiteBad || 0));
   b.power = clamp(raw / 0.9, 0, 1);
   const hT = -Math.sign(awa) * clamp(raw * C.heel[0], 0, C.heel[1]) * (1 - 0.7 * fl);
   b.heel += (hT - b.heel) * Math.min(1, dt * 1.5);
 }
+
+// =====================================================================
+//  racing rules of sailing (Part 2 when boats meet, rule 31 for marks), simplified
+// =====================================================================
+const RULES = {
+  10: ['ルール10', '反対タック', '反対のタックでは、ポートタック（左から風）の艇がスターボードタックの艇をよける'],
+  11: ['ルール11', '風上艇と風下艇', '同じタックで重なって（オーバーラップして）いたら、風上側の艇がよける'],
+  12: ['ルール12', '前後の艇', '同じタックで重なっていなければ、後ろ（クリアアスターン）の艇がよける'],
+  13: ['ルール13', 'タック中', '風位を越えてからクローズホールドになるまでの艇は、ほかの艇をよける'],
+  15: ['ルール15', '優先権を得た直後', 'タックやジャイブで優先権を得たら、相手がよけられる余地を与える'],
+  18: ['ルール18', 'マークルーム', 'マークのゾーン（艇長の3倍）では、内側の艇にマークを回るスペースを与える'],
+  22: ['ルール22', 'ペナルティ中・スタートやり直し', 'ペナルティを履行中の艇と、スタートをやり直す艇は、ほかの艇をよける'],
+  31: ['ルール31', 'マークに接触', 'レース中はマークに触れてはいけない'],
+};
+const RULE_TAG = { 10: 'R10 ポート艇がよける', 11: 'R11 風上艇がよける', 12: 'R12 後ろの艇がよける', 13: 'R13 タック中の艇がよける', 18: 'R18 内側にマークルーム', 22: 'R22 ペナルティ・戻り艇がよける' };
+// +1 starboard tack (wind over the starboard side). Running by the lee, the side opposite the boom decides.
+const tackOf = b => Math.abs(b.twa || 0) > 170 ? -(Math.sign(b.boomVis) || 1) : (Math.sign(b.twa || 0) || b.side || 1);
+function hullEnds(b) { const h = CL.L / 2, fx = Math.sin(b.hdg * DEG), fz = -Math.cos(b.hdg * DEG); return [b.x + fx * h, b.z + fz * h, b.x - fx * h, b.z - fz * h, fx, fz]; }
+// b is clear astern of a when all of b is behind a line abeam from a's stern
+function clearAstern(b, a) { const A = hullEnds(a), B = hullEnds(b), ref = A[2] * A[4] + A[3] * A[5]; return Math.max(B[0] * A[4] + B[1] * A[5], B[2] * A[4] + B[3] * A[5]) < ref; }
+const overlapped = (a, b) => !clearAstern(a, b) && !clearAstern(b, a);
+function leewardOf(a, b) {
+  const w = windAt((a.x + b.x) / 2, (a.z + b.z) / 2, G.t), ux = -Math.sin(w.dir * DEG), uz = Math.cos(w.dir * DEG);
+  return a.x * ux + a.z * uz > b.x * ux + b.z * uz ? a : b;
+}
+const nextMarkOf = b => { const L = legs[b.leg]; return L && L.t === 'mark' ? L.m : null; };
+// who has to keep clear when a and b meet: [that boat, rule]
+function keepClear(a, b) {
+  const r22 = o => (o.ocs && G.raceT > 0) || (o.pen && Math.abs(o.penTurn) > 20);
+  if (r22(a) !== r22(b)) return [r22(a) ? a : b, 22];
+  const ta = tackOf(a), tb = tackOf(b), m = nextMarkOf(a);
+  // rule 18 at a mark both are rounding, except between boats on opposite tacks beating to windward
+  if (m && m === nextMarkOf(b) && !(ta !== tb && Math.abs(a.twa) < 90 && Math.abs(b.twa) < 90)) {
+    const za = Math.hypot(a.x - m.x, a.z - m.z), zb = Math.hypot(b.x - m.x, b.z - m.z), zone = CL.L * 3;
+    if (za < zone || zb < zone) return overlapped(a, b) ? [za < zb ? b : a, 18] : [clearAstern(a, b) ? a : b, 18];
+  }
+  if (!!a.tacking !== !!b.tacking) return [a.tacking ? a : b, 13];
+  if (ta !== tb) return [ta < 0 ? a : b, 10];
+  if (overlapped(a, b)) return [leewardOf(a, b) === a ? b : a, 11];
+  return [clearAstern(a, b) ? a : b, 12];
+}
+// closest approach within T seconds if b sails heading h at speed v and o holds her course: [distance, b passes ahead of o]
+function cpa(b, h, v, o, T) {
+  const ovx = Math.sin(o.hdg * DEG) * o.v, ovz = -Math.cos(o.hdg * DEG) * o.v;
+  const rx = o.x - b.x, rz = o.z - b.z, vx = ovx - Math.sin(h * DEG) * v, vz = ovz + Math.cos(h * DEG) * v, vv = vx * vx + vz * vz;
+  const tc = vv > 1e-6 ? clamp(-(rx * vx + rz * vz) / vv, 0, T) : 0, px = rx + vx * tc, pz = rz + vz * tc;
+  return [Math.hypot(px, pz), px * Math.sin(o.hdg * DEG) - pz * Math.cos(o.hdg * DEG) < 0];
+}
+// centre-to-centre distance two hulls need to pass: beam-to-beam when parallel, more when crossing
+const passSep = (h, o) => lerp(CL.B + 2.5, CL.L * 0.6 + CL.B * 0.5 + 2, Math.abs(Math.sin((h - o.hdg) * DEG)));
+function penalize(b, turns, rule, other, avoided) {
+  if (b.finished) return;
+  const was = b.pen;
+  b.penNeed = Math.min((was ? b.penNeed : 0) + turns * 360, 1440);
+  if (!was) b.penTurn = 0;
+  b.pen = true; b.penRule = rule; b.log.push(rule);
+  const R = RULES[rule], tx = turns === 1 ? '1 回転（360°）' : '2 回転（720°）';
+  if (b === G.me) { msg(`${R[0]} 違反：${R[1]}`, (avoided ? `${other.name} がぶつからないように針路を変えました。` : '') + `${R[2]}。${tx}のペナルティ`, 3.6); sfx.bump(); }
+  else if (other === G.me) msg(`${b.name} にペナルティ`, `${R[0]}：${R[2]}`, 2.8);
+}
+// boats touched: the one that had to keep clear takes a Two-Turns Penalty
+function incident(a, b) {
+  if (a.finished || b.finished || G.raceT < -45) return;             // the rules apply from the preparatory signal until finishing
+  const key = Math.min(a.i, b.i) + '-' + Math.max(a.i, b.i), last = G.incT[key] ?? -99;
+  G.incT[key] = G.t;                                                  // staying in contact is still the same incident
+  if (G.t - last < 6) return;
+  let [giver, rule] = keepClear(a, b);
+  const row = giver === a ? b : a;
+  // rule 15: a boat that has only just taken the right of way (tack, gybe) must give the other room to keep clear
+  if (rule !== 22 && rule !== 18 && G.t - (row.rowAcqT ?? -99) < 2.5) { giver = row; rule = 15; }
+  penalize(giver, 2, rule, giver === a ? b : a);
+}
+// the player made a right-of-way boat change course to avoid a collision: that is failing to keep clear too
+function forcedAvoid(giver, row) {
+  if (giver.finished || row.finished || G.raceT < -45) return;
+  const key = Math.min(giver.i, row.i) + '-' + Math.max(giver.i, row.i);
+  if (G.t - (G.incT[key] ?? -99) < 6) { G.incT[key] = G.t; return; }          // still the same incident
+  const rule = keepClear(giver, row)[1];
+  if (rule !== 22 && rule !== 18 && G.t - (row.rowAcqT ?? -99) < 2.5) return;   // she only just took the right of way (rule 15): no penalty
+  G.incT[key] = G.t;
+  penalize(giver, 2, rule, row, true);
+}
+// rule 31: the starting marks before starting, the marks that begin or end the leg, the finishing marks
+function mustNotTouch(b, m) {
+  const L = legs[b.leg];
+  if (!L || b.finished || G.raceT < -45) return false;
+  const start = m === COURSE.pin || m === 'com';
+  if (L.t === 'start') return start;
+  const prev = legs[b.leg - 1], prevM = prev && prev.t === 'mark' ? prev.m : null;
+  if (L.t === 'mark') return m === L.m || m === prevM || (b.leg === 1 && start);
+  return start || m === prevM;
+}
+function touchMark(b, m) {
+  const last = b.markPenT ?? -99;
+  b.markPenT = G.t;                                                   // staying against the mark is still the same touch
+  if (mustNotTouch(b, m) && G.t - last > 4) penalize(b, 1, 31);
+}
+
 // turn the bow along an obstacle so the boat slides off it instead of sticking
 function slideAround(b, nx, nz, dt) {
   const hx = Math.sin(b.hdg * DEG), hz = -Math.cos(b.hdg * DEG);
@@ -1274,8 +1477,10 @@ function collide(dt) {
     const close = (Math.sin(a.hdg * DEG) * a.v - Math.sin(b.hdg * DEG) * b.v) * nx + (-Math.cos(a.hdg * DEG) * a.v + Math.cos(b.hdg * DEG) * b.v) * nz;
     if (close > 0.6 && (!a.hitT || G.t - a.hitT > 1.5) && (!b.hitT || G.t - b.hitT > 1.5)) {
       a.v *= 0.65; b.v *= 0.65; a.hitT = b.hitT = G.t;
-      if (a === G.me || b === G.me) { msg('接触！', 'ほかの艇にぶつかりました', 1.4); sfx.bump(); }
+      if (a === G.me || b === G.me) sfx.bump();
     }
+    a.contactT = b.contactT = G.t; a.contactWith = b; b.contactWith = a;
+    incident(a, b);
   }
   const marks = [COURSE.wm, COURSE.pin, ...(opts.course === 'short' ? [] : [COURSE.lm])], mr = 1.05 * COURSE.buoyS + rad;
   const cS = [COURSE.com.x + 4 - 5.6, COURSE.com.z, COURSE.com.x + 4 + 5.6, COURSE.com.z], cr = 2.1 + rad;
@@ -1287,9 +1492,9 @@ function collide(dt) {
       if (d >= mr) continue;
       const nx = d > 1e-3 ? dx / d : 1, nz = d > 1e-3 ? dz / d : 0;
       b.x += nx * (mr - d); b.z += nz * (mr - d);
-      if (!b.markHitT || G.t - b.markHitT > 1.2) { b.v *= 0.75; b.markHitT = G.t; }
+      if (!b.markHitT || G.t - b.markHitT > 1.2) { b.v *= 0.75; b.markHitT = G.t; if (b === G.me) sfx.bump(); }
       slideAround(b, nx, nz, dt);
-      if (!b.pen && G.raceT > 0) { b.pen = true; b.penTurn = 0; if (b === G.me) { msg('マークに接触', 'その場で 1 回転（360°）してください', 2.5); sfx.bump(); } }
+      touchMark(b, m);
     }
     if (Math.abs(b.x - COURSE.com.x - 4) < CL.L + 10 && Math.abs(b.z - COURSE.com.z) < CL.L + 6) {
       const [px, pz, qx, qz] = closestSegSeg(cS[0], cS[1], cS[2], cS[3], S[0], S[1], S[2], S[3]);
@@ -1300,6 +1505,7 @@ function collide(dt) {
         b.x += nx * (cr - d); b.z += nz * (cr - d);
         if (!b.comHitT || G.t - b.comHitT > 1.2) { b.v *= 0.8; b.comHitT = G.t; if (b === G.me) sfx.bump(); }
         slideAround(b, nx, nz, dt);
+        touchMark(b, 'com');
       }
     }
   });
@@ -1333,9 +1539,11 @@ function courseProgress(b, px, pz) {
     } else { b.sweep = 0; b.prevAng = null; }
   } else if (L.t === 'finish') {
     if (lineCross(px, pz, b.x, b.z) !== 0) {
-      b.finished = true; b.finishT = G.raceT + (b.pen ? 30 : 0); b.penFinish = b.pen; b.pen = false;
+      // turns not taken before finishing cost 30 seconds each
+      const owed = b.pen ? Math.ceil((b.penNeed - Math.abs(b.penTurn)) / 360 - 0.03) : 0;
+      b.finished = true; b.finishT = G.raceT + owed * 30; b.penFinish = owed; b.pen = false; b.kiteUp = false;
       G.finishOrder.push(b);
-      if (b === G.me) finishRace(); else if (G.finishOrder.length === 1) msg(`${b.team.name} がフィニッシュ`, '', 1.6);
+      if (b === G.me) finishRace(); else if (G.finishOrder.length === 1) msg(`${b.name} がフィニッシュ`, '', 1.6);
     }
   }
 }
@@ -1355,18 +1563,31 @@ function nextTarget(b) {
   const L = legs[b.leg];
   return L && L.t === 'mark' ? L.m : lineMid();
 }
+// on a leg to the leeward mark or the finish: the spinnaker legs
+const downLeg = b => { const L = legs[b.leg]; return G.raceT > 0 && !!L && (L.t === 'finish' || (L.t === 'mark' && L.m === COURSE.lm)); };
+// distance from the leeward mark at which the kite has to come down
+const dropDist = b => CL.rr * 2.5 + CL.L * 3 + b.v * (CL.kite ? CL.kite.t : 0);
 
 // =====================================================================
 //  AI crews
 // =====================================================================
+// don't tack or gybe right next to a boat on the other tack (rules 13 and 15)
+function tackRoom(b) {
+  const tk = tackOf(b), r = CL.L * 2.5 + 8;
+  for (const o of G.boats) {
+    if (o === b || o.finished || tackOf(o) === tk) continue;
+    if (Math.abs(o.x - b.x) < r && Math.abs(o.z - b.z) < r && Math.hypot(o.x - b.x, o.z - b.z) < r) return false;
+  }
+  return true;
+}
 function aiThink(b, t) {
   const C = CL, w = b.w || windAt(b.x, b.z, t), ds = G.ds;
-  if (G.state === 'menu') { b.autoTrim = true; b.rudder = clamp(wrap180(w.dir + 100 - b.hdg) / 14, -1, 1); return; }
+  if (G.state === 'menu') { b.autoTrim = true; b.rudder = clamp(wrap180(w.dir + 100 - b.hdg) / 14, -1, 1); b.kiteUp = !!C.kite && Math.abs(b.twa || 0) > C.kiteOn - 10; return; }
   if (b.pen && G.raceT > 0) {
-    // sail clear of the mark first, then spin the penalty turn
-    b.autoTrim = true;
-    const m = [COURSE.wm, COURSE.lm, COURSE.pin].find(m => Math.hypot(b.x - m.x, b.z - m.z) < C.L * 1.6 + 8);
-    if (m && b.penTurn < 30) { const away = Math.atan2(b.x - m.x, -(b.z - m.z)) / DEG; b.rudder = clamp(wrap180(away - b.hdg) / 14, -1, 1); b.penTurn = 0; }
+    // get clear of marks and other boats first, then spin the penalty turns
+    b.autoTrim = true; b.kiteUp = false;
+    const near = [COURSE.wm, COURSE.lm, COURSE.pin].find(m => Math.hypot(b.x - m.x, b.z - m.z) < C.L * 1.6 + 8) || G.boats.find(o => o !== b && !o.finished && Math.hypot(o.x - b.x, o.z - b.z) < C.L * 2 + 6);
+    if (near && Math.abs(b.penTurn) < 30) { const away = Math.atan2(b.x - near.x, -(b.z - near.z)) / DEG; b.rudder = clamp(wrap180(away - b.hdg) / 14, -1, 1); b.penTurn = 0; }
     else b.rudder = 1;
     return;
   }
@@ -1404,6 +1625,11 @@ function aiThink(b, t) {
       else { tx = A[0]; tz = A[1]; }
     }
   }
+  // spinnaker: up on the run, down in good time before the leeward mark
+  if (C.kite) {
+    const tg = nextTarget(b), L = legs[b.leg], far = !L || L.t !== 'mark' || Math.hypot(tg.x - b.x, tg.z - b.z) > dropDist(b);
+    b.kiteUp = downLeg(b) && far && Math.abs(b.twa || 0) > C.kiteOn - 15;
+  }
   const brg = (Math.atan2(tx - b.x, -(tz - b.z)) / DEG + 360) % 360;
   const rel = wrap180(brg - w.dir);
   const tack = Math.sign(wrap180(w.dir - b.hdg)) || 1;          // +1 starboard tack
@@ -1412,27 +1638,52 @@ function aiThink(b, t) {
     // upwind: close-hauled on a tack, tack at the layline or now and then on a whim
     let cur = tack;
     const onLay = cur > 0 ? rel >= up - 3 : rel <= -(up - 3);
-    if (onLay && t - b.lastTack > 7) { cur = -cur; b.lastTack = t; }
-    else if (t - b.lastTack > 25 && Math.random() < 0.004 * (1 + b.aggr)) { cur = -cur; b.lastTack = t; }
+    if (onLay && t - b.lastTack > 7 && tackRoom(b)) { cur = -cur; b.lastTack = t; }
+    else if (t - b.lastTack > 25 && Math.random() < 0.004 * (1 + b.aggr) && tackRoom(b)) { cur = -cur; b.lastTack = t; }
     want = w.dir - cur * up;
   } else if (Math.abs(rel) > dn - 2) {
     const rel2 = wrap180(brg - (w.dir + 180));
     let cur = tack;
     const onLay = cur > 0 ? rel2 <= -(180 - dn - 3) : rel2 >= (180 - dn - 3);
-    if (onLay && t - b.lastTack > 7) { cur = -cur; b.lastTack = t; }
+    if (onLay && t - b.lastTack > 7 && tackRoom(b)) { cur = -cur; b.lastTack = t; }
     want = w.dir - cur * dn;
   } else want = brg;
   // a foiler that has come down: bear away onto a reach to get flying again
   if (C.foil && G.raceT > 0 && b.foil < 0.4 && b.v < C.foil.vTake) want = w.dir - (b.side || 1) * 80;
-  // keep clear of boats just ahead
-  const look = Math.max(16, C.L * 2.3);
+  // racing rules: when this boat has to keep clear, steer the course nearest `want` that passes clear (astern if it can).
+  // Rule 14: even with right of way, dodge at the last moment if the other boat is not keeping clear.
+  const threats = [], late = [], reach = C.L * 6 + 30, look = 8 + C.L / 3;
   for (const o of G.boats) {
-    if (o === b) continue;
-    const dx = o.x - b.x, dz = o.z - b.z, d = Math.hypot(dx, dz);
-    if (d > look) continue;
-    const ob = Math.atan2(dx, -dz) / DEG, off = wrap180(ob - b.hdg);
-    if (Math.abs(off) < 35) want += off > 0 ? -18 : 18;
+    if (o === b || o.finished || Math.abs(o.x - b.x) > reach || Math.abs(o.z - b.z) > reach) continue;
+    if (keepClear(b, o)[0] === b) threats.push(o);
+    else if (Math.hypot(o.x - b.x, o.z - b.z) < C.L * 2.5 + 15) late.push(o);
   }
+  b.yield = false;
+  if ((threats.length || late.length) && G.raceT > -45) {
+    const v = Math.max(b.v, 1), lateT = 2 + C.L / 6;
+    const cost = h => {
+      let c = 0;
+      for (const o of threats) { const [dd, ahead] = cpa(b, h, v, o, look), sep = passSep(h, o); if (dd < sep) c += (sep - dd) * 10 + (ahead ? 5 : 0); else if (ahead && dd < sep * 1.5) c += 1.5; }
+      for (const o of late) { const [dd] = cpa(b, h, v, o, lateT), sep = passSep(h, o) * 0.75; if (dd < sep) c += (sep - dd) * 6; }
+      return c;
+    };
+    let bc = cost(want);
+    // holding her course, this boat would have hit the player, who had to keep clear
+    if (bc > 0 && late.includes(G.me) && !G.me.ai && Math.abs(wrap180(want - b.hdg)) < 15 && cpa(b, want, v, G.me, lateT)[0] < passSep(want, G.me) * 0.6 && keepClear(G.me, b)[0] === G.me) forcedAvoid(G.me, b);
+    if (bc > 0) {
+      let best = want;
+      for (let k = 1; k <= 15; k++) for (const s of [1, -1]) {
+        const h = want + s * k * 6;
+        if (Math.abs(wrap180(w.dir - h)) < up - 3) continue;         // no room in the dead zone
+        const c = cost(h) + k * 0.6;
+        if (c < bc) { bc = c; best = h; }
+      }
+      want = best;
+      b.yield = bc > 3 && threats.length > 0;                          // no clean way past: slow down as well
+    }
+  }
+  // just touched another boat: get away from her first
+  if (b.contactT !== undefined && G.t - b.contactT < 1.2 && b.contactWith) want = Math.atan2(b.x - b.contactWith.x, -(b.z - b.contactWith.z)) / DEG;
   // don't sail into a mark: bend the course to pass it with room (the other way if that would mean pinching)
   for (const m of [COURSE.wm, COURSE.pin, ...(opts.course === 'short' ? [] : [COURSE.lm])]) {
     const dx = m.x - b.x, dz = m.z - b.z, d = Math.hypot(dx, dz);
@@ -1447,7 +1698,9 @@ function aiThink(b, t) {
   if (Math.abs(wt) < up - 3) want = w.dir - (Math.sign(wt) || tack) * (up - 3);
   b.want = want;
   b.rudder = clamp(wrap180(want - b.hdg) / 14, -1, 1);
-  if (b.brake) { b.sheet = 88; b.autoTrim = false; } else b.autoTrim = true;
+  if (b.brake) { b.sheet = 88; b.autoTrim = false; }
+  else if (b.yield) { b.sheet = Math.min(88, (b.ideal || 20) + 22); b.autoTrim = false; }
+  else b.autoTrim = true;
 }
 
 // =====================================================================
@@ -1476,12 +1729,30 @@ function playerInput(dt) {
   // sheets let right out and the boat stopped: point at the fix
   if (!b.autoTrim && b.v < 0.4 && b.luff > 0.6) { b.luffT = (b.luffT || 0) + dt; if (b.luffT > 4) { b.luffT = -6; msg('帆に風が入っていません', 'W でセールを引くか、T でオートトリム', 2.4); } }
   else if ((b.luffT || 0) > 0) b.luffT = 0;
+  if (CL.kite) {
+    const atwa = Math.abs(b.twa || 0), L = legs[b.leg], kn = kiteName(CL);
+    if (opts.kite === 'auto') b.kiteUp = atwa > CL.kiteOn && Math.abs(b.rudder) < 0.9 && !b.pen;
+    else if (G.raceT > 0 && L) {
+      const tg = nextTarget(b), dist = Math.hypot(tg.x - b.x, tg.z - b.z);
+      if (!b.kiteUp && downLeg(b) && atwa > CL.kiteOn + 5 && b.kiteHint !== b.leg && (L.t !== 'mark' || dist > dropDist(b))) { b.kiteHint = b.leg; msg(`${kn}を上げよう`, `G キー（スマホは「スピン」）で上げると風下が速くなります`, 2.6); }
+      if (b.kiteUp && L.t === 'mark' && L.m === COURSE.lm && dist < dropDist(b) && b.dropHint !== b.leg) { b.dropHint = b.leg; msg(`${kn}を下ろそう`, 'マークを回ったら風上へ。上げたままだと遅くなります（G キー）', 2.6); }
+    }
+  }
   if (CL.foil) {
     const fly = b.foil > 0.5;
     if (b.wasFlying && !fly && G.raceT > 0) msg('着水', '風を横から受けて加速すると、また浮き上がります', 2.2);
     else if (!b.wasFlying && fly) msg('フォイリング！', '船体が海面から浮き上がりました', 1.4);
     b.wasFlying = fly;
   }
+}
+function toggleKite() {
+  const b = G.me;
+  if (!b || !CL.kite || G.state !== 'race' || b.finished) return;
+  const kn = kiteName(CL);
+  if (opts.kite === 'auto') { msg(`${kn}は自動`, 'メニューの「スピン」を「ボタンで操作」にすると自分で上げ下げできます', 2.2); return; }
+  b.kiteUp = !b.kiteUp;
+  const low = Math.abs(b.twa || 0) < CL.kite.min;
+  msg(`${kn}を${b.kiteUp ? '上げる' : '下ろす'}`, b.kiteUp ? (low ? `風上に向きすぎ：真風角 ${CL.kite.min}° より後ろから風を受けると張れます` : '風下で速くなります') : '', 1.6);
 }
 function autoManeuver() {
   const b = G.me; if (!b || G.state !== 'race' || b.finished) return;
@@ -1542,10 +1813,34 @@ function updateHud() {
   const tr = $('h-trim');
   if (b.ironsT > 0.6) { tr.textContent = 'デッドゾーン：舵を切るか R で立て直し'; tr.style.color = 'var(--bad)'; }
   else if (Math.abs(b.twa) < 32) { tr.textContent = 'デッドゾーン：風上に向きすぎ'; tr.style.color = 'var(--bad)'; }
+  else if (b.kiteBad > 0.2) { tr.textContent = `${kiteName(CL)}がつぶれそう：落とすか下ろす`; tr.style.color = 'var(--bad)'; }
   else if (b.luff > 0.35) { tr.textContent = '出しすぎ（シバー）：W で引く'; tr.style.color = 'var(--warn)'; }
   else if (b.stall > 0.35) { tr.textContent = '引きすぎ（失速）：S で出す'; tr.style.color = 'var(--warn)'; }
   else { tr.textContent = (b.autoTrim ? 'オートトリム・' : '') + 'ちょうどいい'; tr.style.color = 'var(--good)'; }
-  $('h-pen').hidden = !b.pen;
+  // best angle for this leg: close-hauled to the windward mark, the running angle downwind
+  const atwa = Math.abs(b.twa || 0), upLeg = G.raceT >= 0 && L && (L.t === 'start' || (L.t === 'mark' && L.m === COURSE.wm)), dnLeg = downLeg(b);
+  const tA = upLeg ? CL.upA : CL.kite && b.kite > 0.5 ? CL.dnA : CL.dnA0, dA = atwa - tA, ok = Math.abs(dA) <= (upLeg ? 3 : 5);
+  const upKey = b.twa > 0 ? 'D' : 'A', dnKey = b.twa > 0 ? 'A' : 'D', tt = $('i-twa-t'), hc = $('h-course');
+  tt.textContent = upLeg || dnLeg ? `目標 ${Math.round(tA)}°` : '—'; tt.className = (upLeg || dnLeg) && ok ? 'ok' : '';
+  hc.className = ok ? 'ok' : '';
+  hc.textContent = b.finished || !(upLeg || dnLeg) ? 'スタート後に最適な角度を案内します'
+    : upLeg ? (ok ? `クローズ ${Math.round(tA)}°：いい角度` : dA > 0 ? `あと ${Math.round(dA)}° 上れる（${upKey}）` : `上りすぎ：${Math.round(-dA)}° 落とす（${dnKey}）`)
+    : (ok ? `ランニング ${Math.round(tA)}°：いい角度` : dA < 0 ? `あと ${Math.round(-dA)}° 落とせる（${dnKey}）` : `落としすぎ：${Math.round(dA)}° 上る（${upKey}）`);
+  $('lg-c').textContent = `クローズ ${Math.round(CL.upA)}°`; $('lg-r').textContent = `ランニング ${Math.round(CL.kite && b.kite > 0.5 ? CL.dnA : CL.dnA0)}°`;
+  // spinnaker / gennaker button
+  if (CL.kite) {
+    const kn = kiteName(CL), up = b.kiteUp, auto = opts.kite === 'auto';
+    const want = !auto && !up && dnLeg && atwa > CL.kiteOn, bad = up && b.kiteBad > 0.15;
+    const st = b.kite > 0.97 ? '展開中' : b.kite > 0.03 ? (up ? '上げています…' : '下ろしています…') : 'たたんである';
+    $('hk-t').textContent = auto ? `${kn}：自動` : `${kn}を${up ? '下ろす' : '上げる'}`;
+    $('hk-s').textContent = auto ? `${st} ・ メニューで手動にできます` : `${st} ・ G キー`;
+    const cls = (up ? ' up' : '') + (want ? ' want' : '') + (bad ? ' bad' : '');
+    $('h-kite').className = 'hbox' + cls; $('t-kite').className = cls.trim();
+    $('t-kite').textContent = auto ? 'スピン自動' : up ? 'スピン▼' : 'スピン▲';
+  }
+  const hp = $('h-pen');
+  hp.hidden = !b.pen;
+  if (b.pen) { const R = RULES[b.penRule] || RULES[31]; hp.textContent = `ペナルティ（${R[0]} ${R[1]}）：${Math.round(b.penNeed / 360)} 回転 ・ あと ${Math.max(0, Math.round(b.penNeed - Math.abs(b.penTurn)))}° その場で回る`; }
   drawWindDial(b, w); drawMini(b, w);
 }
 function drawWindDial(b, w) {
@@ -1557,6 +1852,11 @@ function drawWindDial(b, w) {
   g.fillStyle = 'rgba(255,106,92,0.18)'; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, R, rel - Math.PI / 2 - 32 * DEG, rel - Math.PI / 2 + 32 * DEG); g.fill();
   g.strokeStyle = 'rgba(170,208,226,0.35)'; g.lineWidth = 2; g.beginPath(); g.arc(0, 0, R, 0, 7); g.stroke();
   for (let a = 0; a < 360; a += 30) { const r0 = a % 90 ? R - 8 : R - 14; g.beginPath(); g.moveTo(Math.sin(a * DEG) * r0, -Math.cos(a * DEG) * r0); g.lineTo(Math.sin(a * DEG) * R, -Math.cos(a * DEG) * R); g.stroke(); }
+  // this boat's best angles on both tacks: green = close-hauled, cream = running. Steer until the bow (top) sits on one.
+  const tick = (a, col) => { g.strokeStyle = col; g.lineWidth = 8; g.beginPath(); g.arc(0, 0, R + 10, a - Math.PI / 2 - 0.06, a - Math.PI / 2 + 0.06); g.stroke(); };
+  const dnT = (CL.kite && b.kite > 0.5 ? CL.dnA : CL.dnA0) * DEG;
+  for (const s of [-1, 1]) { tick(rel + s * CL.upA * DEG, '#5fd08a'); tick(rel + s * dnT, '#f5f1e8'); }
+  g.fillStyle = '#f5f1e8'; g.beginPath(); g.moveTo(0, -R - 4); g.lineTo(-7, -R - 18); g.lineTo(7, -R - 18); g.closePath(); g.fill();   // bow marker
   // boat
   g.fillStyle = '#f5f1e8'; g.beginPath(); g.moveTo(0, -46); g.bezierCurveTo(20, -20, 18, 30, 12, 44); g.lineTo(-12, 44); g.bezierCurveTo(-18, 30, -20, -20, 0, -46); g.fill();
   // boom
@@ -1595,7 +1895,11 @@ function drawMini(b, w) {
   dot(a, '#ff6a1a', 6); dot(c, '#ffffff', 7);
   dot(P(COURSE.wm.x, COURSE.wm.z), '#f2c230', 8);
   if (opts.course !== 'short') dot(P(COURSE.lm.x, COURSE.lm.z), '#ff6a1a', 8);
-  if (L && L.t === 'mark') { const m = P(L.m.x, L.m.z); g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.arc(m[0], m[1], 14, 0, 7); g.stroke(); }
+  if (L && L.t === 'mark') {
+    const m = P(L.m.x, L.m.z), zr = CL.L * 3 * s;
+    g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.arc(m[0], m[1], 14, 0, 7); g.stroke();
+    if (zr > 18) { g.strokeStyle = 'rgba(245,241,232,0.3)'; g.lineWidth = 1.5; g.beginPath(); g.arc(m[0], m[1], zr, 0, 7); g.stroke(); }   // rule 18 zone
+  }
   for (const o of G.boats) {
     const p = P(o.x, o.z), h = o.hdg * DEG;
     g.save(); g.translate(p[0], p[1]); g.rotate(h);
@@ -1632,6 +1936,35 @@ function updateTargetMarker() {
   tgtArrow.style.transform = off ? `rotate(${(Math.atan2(-x, -y) / DEG).toFixed(0)}deg)` : '';
   const txt = name + '|' + Math.round(Math.hypot(p.x - b.x, p.z - b.z));
   if (txt !== tgtText) { tgtText = txt; const [n, d] = txt.split('|'); $('ht-name').textContent = n; $('ht-dist').textContent = d + ' m'; }
+}
+// who has to keep clear, shown over the boats you are about to meet
+const ruleEls = [$('rl-0'), $('rl-1')], ruleTxt = ['', ''];
+function updateRuleLabels() {
+  const me = G.me;
+  let n = 0;
+  if (me && G.state === 'race' && !me.finished && G.raceT > -45) {
+    const near = [];
+    for (const o of G.boats) {
+      if (o === me || o.finished) continue;
+      const d = Math.hypot(o.x - me.x, o.z - me.z);
+      if (d > CL.L * 6 + 25) continue;
+      if (d > CL.L * 2.5 + 8 && cpa(me, me.hdg, me.v, o, 8)[0] > passSep(me.hdg, o) * 1.8) continue;   // not about to meet
+      near.push([d, o]);
+    }
+    near.sort((a, b) => a[0] - b[0]);
+    const W2 = canvas.clientWidth, H2 = canvas.clientHeight;
+    for (const [, o] of near) {
+      if (n >= ruleEls.length) break;
+      tv.set(o.x, o.y + o.dM + CL.mastH + 1.5, o.z).project(camera);
+      if (tv.z > 1 || Math.abs(tv.x) > 1.05 || tv.y < -1.05) continue;
+      const [giver, rule] = keepClear(me, o), mine = giver === me, el = ruleEls[n];
+      const txt = (mine ? 'よけて！' : 'あなたが優先') + '|' + RULE_TAG[rule] + '|' + (mine ? 'give' : 'stand');
+      if (ruleTxt[n] !== txt) { ruleTxt[n] = txt; const [a, sub, c] = txt.split('|'); el.firstChild.textContent = a; el.lastChild.textContent = sub; el.className = 'rule ' + c; }
+      el.style.transform = `translate(${((tv.x * 0.5 + 0.5) * W2).toFixed(1)}px, ${Math.max(84, (-tv.y * 0.5 + 0.5) * H2).toFixed(1)}px) translate(-50%, -100%)`;
+      el.hidden = false; n++;
+    }
+  }
+  for (let k = n; k < ruleEls.length; k++) ruleEls[k].hidden = true;
 }
 
 // =====================================================================
@@ -1695,15 +2028,16 @@ function showResult() {
   const order = [...G.finishOrder];
   const rest = G.boats.filter(b => !b.finished).sort((a, b) => remaining(a) - remaining(b));
   const tbl = $('res-table'); tbl.textContent = '';
-  const hr = document.createElement('tr'); for (const h of ['順位', '艇', 'タイム', '']) { const th = document.createElement('th'); th.textContent = h; hr.append(th); } tbl.append(hr);
+  const hr = document.createElement('tr'); for (const h of ['順位', '艇', 'タイム', '差', 'ペナルティ']) { const th = document.createElement('th'); th.textContent = h; hr.append(th); } tbl.append(hr);
   const lead = order[0] ? order[0].finishT : 0;
   [...order, ...rest].forEach((b, i) => {
     const tr = document.createElement('tr'); if (b === G.me) tr.className = 'me';
     const c1 = document.createElement('td'); c1.textContent = i + 1;
-    const c2 = document.createElement('td'); const sw = document.createElement('span'); sw.className = 'sw'; sw.style.background = hex(b.team.hull); c2.append(sw, b.team.name);
-    const c3 = document.createElement('td'); c3.textContent = b.finished ? fmt(b.finishT) + (b.penFinish ? '（+30 秒）' : '') : 'レース中';
+    const c2 = document.createElement('td'); const sw = document.createElement('span'); sw.className = 'sw'; sw.style.background = hex(b.team.hull); c2.append(sw, b.name);
+    const c3 = document.createElement('td'); c3.textContent = b.finished ? fmt(b.finishT) : 'レース中';
     const c4 = document.createElement('td'); c4.textContent = b.finished && i > 0 ? '+' + (b.finishT - lead).toFixed(1) + ' 秒' : '';
-    tr.append(c1, c2, c3, c4); tbl.append(tr);
+    const c5 = document.createElement('td'); c5.className = 'pen'; c5.textContent = b.log.length ? b.log.map(r => 'R' + r).join('・') + (b.penFinish ? `（${b.penFinish} 回転ぶん未履行 +${b.penFinish * 30} 秒）` : '') : '—';
+    tr.append(c1, c2, c3, c4, c5); tbl.append(tr);
   });
   const pos = order.indexOf(G.me) + 1;
   $('res-title').textContent = pos === 1 ? '優勝！' : `${pos} 位でフィニッシュ`;
@@ -1742,7 +2076,7 @@ function updateCamera(dt) {
       _cl.set(b.x + fx * 6 * s, b.y + 3.2 * s, b.z + fz * 6 * s);
     }
   }
-  const k = (G.cam === 'deck' && G.state !== 'menu') || camPos.distanceTo(_ct) > 300 * s ? 1 : 1 - Math.exp(-dt * 4);
+  const k = (G.cam === 'deck' && G.state !== 'menu') || camPos.distanceTo(_ct) > 120 * s ? 1 : 1 - Math.exp(-dt * 4);
   camPos.lerp(_ct, k); camLook.lerp(_cl, k);
   camPos.y = Math.max(camPos.y, 1.2);
   camera.position.copy(camPos); camera.lookAt(camLook);
@@ -1911,6 +2245,7 @@ function frame(now) {
   const lw = COURSE.com.x - COURSE.pin.x; lineMesh.scale.set(lw, 0.35 * Math.max(1, CL.cs), 1); lineMesh.position.set((COURSE.com.x + COURSE.pin.x) / 2, 0.25, COURSE.com.z); lineMesh.visible = G.state === 'race' && G.raceT < 15;
   updateCamera(dt);
   updateTargetMarker();
+  updateRuleLabels();
   if (G.state === 'race' || G.state === 'done') { G.hudT = (G.hudT || 0) - dt; if (G.hudT <= 0) { G.hudT = 0.1; updateHud(); } }
   if (msgTimer > 0) { msgTimer -= dt; if (msgTimer <= 0) $('h-msg').classList.remove('on'); }
   sfx.update(G.me);
@@ -1946,6 +2281,7 @@ function startRace() {
   newRace();
   G.state = 'race';
   $('menu').hidden = true; $('result').hidden = true; $('help').hidden = true; $('hud').hidden = false; $('touch').hidden = !isTouch; $('cls-note').hidden = true;
+  $('h-kite').hidden = !CL.kite || isTouch; $('t-kite').hidden = !CL.kite;
   msg('スタート 60 秒前', '予告信号。スタートラインの下（手前）で待とう', 2.5);
   sfx.horn(false);
   canvas.focus();
@@ -1973,6 +2309,7 @@ addEventListener('keydown', e => {
   if (G.state !== 'race') return;
   if (k === ' ' && !e.repeat) autoManeuver();
   else if (k === 'r' && !e.repeat) recover(false);
+  else if (k === 'g' && !e.repeat) toggleKite();
   else if (k === 't' && !e.repeat) { G.me.autoTrim = !G.me.autoTrim; msg(G.me.autoTrim ? 'オートトリム ON' : 'オートトリム OFF', G.me.autoTrim ? 'セールは自動で調整されます' : 'W / S でセールを調整', 1.4); }
   else if (k === 'c' && !e.repeat) cycleCam();
   keys.add(k);
@@ -1991,6 +2328,8 @@ const hold = (id, key) => { const el = $(id); el.addEventListener('pointerdown',
 hold('t-left', 'left'); hold('t-right', 'right');
 $('t-tack').addEventListener('click', autoManeuver);
 $('t-fix').addEventListener('click', () => recover(false));
+$('t-kite').addEventListener('click', toggleKite);
+$('h-kite').addEventListener('click', () => { toggleKite(); canvas.focus(); });
 $('t-cam').addEventListener('click', cycleCam);
 {
   const el = $('t-sheet'), knob = el.querySelector('i');
@@ -2049,7 +2388,7 @@ function renderPicker() {
   }
   const C = CLASSES[opts.cls];
   $('cls-kind').textContent = C.kind + ' ・ ' + C.sail;
-  $('cls-name').textContent = C.name;
+  $('cls-name').textContent = C.name; $('cls-name').classList.toggle('long', C.name.length > 8);
   $('cls-desc').textContent = C.desc;
   const spec = $('cls-spec'); spec.textContent = '';
   for (const [dt, dd, unit] of [['全長', C.L.toFixed(C.L < 10 ? 2 : 1), 'm'], ['乗員', C.crew, '人'], ['最高速', topSpeedKn(C, +opts.wind).toFixed(0), `kn（風 ${opts.wind} kn）`]]) {
@@ -2063,6 +2402,43 @@ function renderPicker() {
     for (let k = 0; k < 5; k++) { const e = document.createElement('i'); if (k < C.stats[i]) e.className = 'on'; bar.append(e); }
     bars.append(l, bar);
   });
+  drawClassPolar(C); $('cls-polar-cap').textContent = polarCap(C);
+  $('cls-polar').setAttribute('aria-label', `${C.name} の速さと風の角度の図。` + polarCap(C));
+}
+// the menu's small polar: how fast this boat sails at each angle to the wind, with the two angles that matter
+const polarCap = C => { const tws = +opts.wind / KN; return `風 ${opts.wind} kn：クローズ ${Math.round(C.upA)}° で ${(targetSpeed(C, C.upA, tws, 1) * KN).toFixed(1)} kn ・ ランニング ${Math.round(C.dnA)}° で ${(targetSpeed(C, C.dnA, tws, 1) * KN).toFixed(1)} kn`; };
+function drawClassPolar(C, hover) {
+  const cv = $('cls-polar'), g = cv.getContext('2d'), W2 = cv.width, H2 = cv.height, cx = 34, cy = H2 / 2 + 6, R = Math.min(W2 - 150, H2 / 2 - 30), tws = +opts.wind / KN;
+  let top = 0; for (let a = 0; a <= 180; a += 2) top = Math.max(top, targetSpeed(C, a, tws, 1));
+  const rad = a => targetSpeed(C, a, tws, 1) / top * R, pt = (a, r) => [cx + Math.sin(a * DEG) * r, cy - Math.cos(a * DEG) * r];
+  g.clearRect(0, 0, W2, H2);
+  g.fillStyle = 'rgba(255,106,92,0.2)'; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + 32 * DEG); g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(170,208,226,0.22)'; g.lineWidth = 1.5;
+  for (const f of [0.5, 1]) { g.beginPath(); g.arc(cx, cy, R * f, -Math.PI / 2, Math.PI / 2); g.stroke(); }
+  g.beginPath(); g.moveTo(cx, cy - R); g.lineTo(cx, cy + R); g.stroke();
+  g.strokeStyle = '#f5f1e8'; g.lineWidth = 3; g.lineJoin = 'round'; g.beginPath();
+  for (let a = 0; a <= 180; a += 2) { const [x, y] = pt(a, rad(a)); a ? g.lineTo(x, y) : g.moveTo(x, y); }
+  g.stroke();
+  const key = (a, label) => {
+    const [x, y] = pt(a, rad(a));
+    g.strokeStyle = 'rgba(95,208,138,0.55)'; g.lineWidth = 2; g.beginPath(); g.moveTo(cx, cy); g.lineTo(x, y); g.stroke();
+    g.fillStyle = '#5fd08a'; g.beginPath(); g.arc(x, y, 7, 0, 7); g.fill();
+    g.fillStyle = '#eef4f6'; g.font = '700 22px "Zen Kaku Gothic New", sans-serif'; g.fillText(label, x + 13, y + 8);
+  };
+  key(C.upA, `クローズ ${Math.round(C.upA)}°`); key(C.dnA, `ランニング ${Math.round(C.dnA)}°`);
+  if (hover != null) { const [x, y] = pt(hover, rad(hover)); g.strokeStyle = 'rgba(242,194,48,0.75)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(cx, cy); g.lineTo(x, y); g.stroke(); g.fillStyle = '#f2c230'; g.beginPath(); g.arc(x, y, 6, 0, 7); g.fill(); }
+  g.fillStyle = '#f2c230'; g.font = '800 24px "Big Shoulders Display", sans-serif'; g.fillText('風 ↓', cx - 12, 24);
+}
+{
+  const cv = $('cls-polar'), cap = $('cls-polar-cap');
+  const show = e => {
+    const r = cv.getBoundingClientRect(), k = cv.width / r.width, x = (e.clientX - r.left) * k - 34, y = (e.clientY - r.top) * k - (cv.height / 2 + 6);
+    const a = Math.round(clamp(Math.atan2(x, -y) / DEG, 0, 180)), C = CLASSES[opts.cls];
+    drawClassPolar(C, a);
+    cap.textContent = `真風角 ${a}°：${(targetSpeed(C, a, +opts.wind / KN, 1) * KN).toFixed(1)} kn` + (a < 32 ? '（デッドゾーン：進めない）' : '');
+  };
+  cv.addEventListener('pointermove', show); cv.addEventListener('pointerdown', show);
+  cv.addEventListener('pointerleave', () => { const C = CLASSES[opts.cls]; drawClassPolar(C); cap.textContent = polarCap(C); });
 }
 function selectClass(key) {
   if (key === opts.cls) return;
@@ -2077,10 +2453,11 @@ pick.addEventListener('keydown', e => {
 });
 function buildClassTable() {
   const tb = $('cls-table'); tb.textContent = '';
-  const hr = document.createElement('tr'); for (const h of ['艇種', '全長', '乗員', '帆', '特徴']) { const th = document.createElement('th'); th.textContent = h; hr.append(th); } tb.append(hr);
+  const hr = document.createElement('tr'); for (const h of ['艇種', '全長', '乗員', 'クローズ', 'ランニング', '帆', '特徴']) { const th = document.createElement('th'); th.textContent = h; hr.append(th); } tb.append(hr);
+  const tws = 12 / KN, sp = (C, a) => (targetSpeed(C, a, tws, 1) * KN).toFixed(1);
   for (const k of CLASS_KEYS) {
     const C = CLASSES[k], tr = document.createElement('tr');
-    for (const v of [C.name, C.L.toFixed(1) + ' m', C.crew + ' 人', C.sail, C.kind]) { const td = document.createElement('td'); td.textContent = v; tr.append(td); }
+    for (const v of [C.name, C.L.toFixed(1) + ' m', C.crew + ' 人', `${Math.round(C.upA)}°・${sp(C, C.upA)} kn`, `${Math.round(C.dnA)}°・${sp(C, C.dnA)} kn`, C.sail, C.kind]) { const td = document.createElement('td'); td.textContent = v; tr.append(td); }
     tb.append(tr);
   }
 }
@@ -2123,7 +2500,7 @@ function fastForward(sec, meAI) {
   }
   return G.boats.map(b => ({ n: b.team.code, leg: b.leg, fin: b.finished ? +b.finishT.toFixed(1) : null, x: Math.round(b.x), z: Math.round(b.z), v: +(b.v * KN).toFixed(1), ocs: b.ocs, pen: b.pen, foil: +(b.foil || 0).toFixed(2) }));
 }
-window.KAZE = { G, W, COURSE, CLASSES, fastForward, recover, get legs() { return legs; }, get CL() { return CL; }, opts, newRace, startRace, stepBoat, windAt };
+window.KAZE = { G, W, COURSE, CLASSES, fastForward, recover, get legs() { return legs; }, get CL() { return CL; }, opts, newRace, startRace, stepBoat, windAt, keepClear, collide, toggleKite };
 // boot
 applyTod(); applyGfx(); buildClassTable(); renderPicker(); showBest();
 document.fonts?.ready.then(() => { renderPicker(); if (G.state === 'menu') menuFleet(); });

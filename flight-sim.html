@@ -354,10 +354,13 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
       <span>操作の感度</span>
       <div class="seg" role="group" aria-label="操作の感度"><button type="button" data-sens="low">低</button><button type="button" data-sens="mid">中</button><button type="button" data-sens="high">高</button></div>
       <label class="chk" title="ON にすると、キーを離したとき機体が自動で水平飛行に戻ります"><input type="checkbox" id="opt-assist"> 操縦アシスト</label>
+      <label class="chk" title="ON にすると、プロペラの左偏向や逆ヨーを自動でラダーが打ち消します（U キーで切替）。OFF にすると本物の飛行機と同じく、離陸・上昇で右ラダーが必要です"><input type="checkbox" id="opt-autorud"> 自動ラダー</label>
     </div>
     <div class="opts">
       <span>時間帯</span>
       <div class="seg" role="group" aria-label="時間帯"><button type="button" data-tod="day" class="on">昼</button><button type="button" data-tod="evening">夕方</button><button type="button" data-tod="night">夜</button></div>
+      <span>気温</span>
+      <div class="seg" role="group" aria-label="気温" title="暑い日は空気が薄く（密度高度が高く）なり、離陸距離が伸び上昇率が落ちます"><button type="button" data-oat="-15">寒い日 0℃</button><button type="button" data-oat="0" class="on">標準 15℃</button><button type="button" data-oat="20">暑い日 35℃</button></div>
       <label class="chk"><input type="checkbox" id="opt-invert"> ピッチ反転</label>
       <label class="chk"><input type="checkbox" id="opt-sound" checked> サウンド</label>
     </div>
@@ -2095,8 +2098,8 @@ const AIRCRAFT = [
     eye: [0, 0.6, -0.55], cam: [0, 3.2, 15],
     phys: {
       mass: 1050, S: 16.2, b: 11, c: 1.5, L: 7.5, CL0: 0.30, CLa: 4.9, aStall: 0.28, CD0: 0.031, K: 0.047, CDgear: 0,
-      Cm0: 0.02, Cma: -1.2, Cmde: 0.32, Cmq: -16, Clda: 0.055, Clp: -0.5, Clb: -0.1, Cnb: 0.1, Cndr: 0.03, Cnr: -0.14, CYb: -0.6,
-      flapCL: 0.75, flapStall: 0.045, engine: { type: 'prop', P: 92000, T0: 2600 }, maxG: 4.4, rollRate: 50, pitchRate: 12,
+      Cm0: 0.02, Cma: -1.2, Cmde: 0.36, Cmq: -16, Clda: 0.055, Clp: -0.5, Clb: -0.1, Cnb: 0.1, Cndr: 0.03, Cnr: -0.14, CYb: -0.6,
+      flapCL: 0.75, flapStall: 0.045, engine: { type: 'prop', P: 96000, T0: 2300 }, maxG: 4.4, rollRate: 50, pitchRate: 12,
     },
     v: { s0: 40, s1: 47, fe: 85, no: 128, ne: 160, rotate: 52, appr: 65, apprFlaps: 2, apprThr: 0.25, cruise: 105, cruiseThr: 0.62, toFlaps: 1 },
   },
@@ -2403,8 +2406,8 @@ function buildAircraftParts(A) {
 // steady-flight reference values measured from this flight model at about 4,000 ft
 // key = group_case_bank ; value = [speed kt, throttle %, pitch deg, vertical speed fpm, bank deg, turn rate deg/s, flap index, flag]
 // flag: 1 ok, 0 not reachable (throttle at its limit), 2 keeps accelerating even at full climb angle
-const TRIM = {"trainer":{"c_level_0":[105,79,0.6,0,0,0,0,1],"c_level_10":[105,79,0.7,0,10,1.6,0,1],"c_level_20":[105,78,1,0,20,3.3,0,1],"c_d500_0":[105,43,-2,-500,0,0,0,1],"c_d500_10":[105,43,-1.9,-500,10,1.6,0,1],"c_d500_20":[105,43,-1.6,-500,20,3.4,0,1],"c_d1000_0":[105,14,-4.4,-1000,0,0,0,1],"c_d1000_10":[105,14,-4.4,-1000,10,1.6,0,1],"c_d1000_20":[105,13,-4.1,-1000,20,3.3,0,1],"c_c500_0":[94,100,4.3,500,0,0,0,0],"c_c500_10":[94,100,4.5,500,10,1.8,0,0],"c_c500_20":[93,100,4.9,500,20,3.7,0,0],"y_c500_0":[73,77,8.5,500,0,0,0,1],"y_c500_10":[73,79,8.6,500,10,2.3,0,1],"y_c500_20":[73,79,8.9,490,20,4.7,0,1],"y_c1000_0":[50,100,20.3,650,0,0,0,0],"y_c1000_10":[51,100,20,650,10,3.2,0,0],"y_c1000_20":[52,100,18.8,590,21,6.5,0,0],"y_full_0":[73,100,10.3,780,0,0,0,1],"y_full_10":[73,100,10.3,760,10,2.3,0,1],"y_full_20":[73,100,10.5,750,20,4.7,0,1],"s_level_0":[78,54,1.1,0,0,0,1,1],"s_level_10":[78,56,1.2,0,10,2.2,1,1],"s_level_20":[78,57,1.7,0,20,4.5,1,1],"s_c500_0":[78,93,4.4,500,0,0,1,1],"s_c500_10":[78,94,4.5,500,10,2.1,1,1],"s_c500_20":[78,94,5,490,20,4.4,1,1],"s_d500_0":[78,19,-2.4,-500,0,0,1,1],"s_d500_10":[78,21,-2.2,-500,10,2.2,1,1],"s_d500_20":[78,22,-1.8,-490,19,4.6,1,1],"a_3deg_0":[65,28,-1.4,-340,0,0,2,1],"a_3deg_10":[65,30,-1.1,-340,10,2.6,2,1],"a_3deg_20":[65,30,-0.6,-350,19,5.4,2,1],"c_level_30":[105,80,1.4,0,30,5.3,0,1],"c_level_45":[105,88,2.2,0,45,9.2,0,1],"c_level_60":[97,100,4,0,60,17.1,0,0]},"sport":{"c_level_0":[115,62,0.8,0,0,0,0,1],"c_level_10":[115,62,0.8,0,10,1.5,0,1],"c_level_20":[115,63,1,0,20,3.1,0,1],"c_d500_0":[115,35,-1.6,-500,0,0,0,1],"c_d500_10":[115,35,-1.5,-500,10,1.5,0,1],"c_d500_20":[115,37,-1.3,-500,20,3.1,0,1],"c_d1000_0":[115,14,-3.9,-1000,0,0,0,1],"c_d1000_10":[115,13,-3.8,-1000,10,1.5,0,1],"c_d1000_20":[115,14,-3.6,-1000,20,3.1,0,1],"c_c500_0":[115,92,3,500,0,0,0,1],"c_c500_10":[115,92,3.1,500,10,1.5,0,1],"c_c500_20":[115,92,3.3,500,20,3,0,1],"y_c500_0":[79,58,8.2,500,0,0,0,1],"y_c500_10":[79,59,8.2,500,10,2.1,0,1],"y_c500_20":[79,58,8.5,490,20,4.4,0,1],"y_c1000_0":[79,89,11.1,1000,0,0,0,1],"y_c1000_10":[79,90,11.2,1000,10,2.1,0,1],"y_c1000_20":[79,91,11.5,990,20,4.3,0,1],"y_full_0":[79,100,12.1,1160,0,0,0,1],"y_full_10":[79,100,12,1140,10,2.1,0,1],"y_full_20":[79,100,12.1,1100,20,4.3,0,1],"s_level_0":[84,54,1.3,0,0,0,1,1],"s_level_10":[84,55,1.4,0,10,2,1,1],"s_level_20":[84,56,1.8,0,20,4.2,1,1],"s_c500_0":[84,83,4.3,500,0,0,1,1],"s_c500_10":[84,85,4.4,500,10,2,1,1],"s_c500_20":[84,86,4.8,500,20,4.1,1,1],"s_d500_0":[84,27,-2,-500,0,0,1,1],"s_d500_10":[84,28,-1.9,-500,10,2.1,1,1],"s_d500_20":[84,30,-1.4,-500,20,4.3,1,1],"a_3deg_0":[70,29,-1.3,-370,0,0,2,1],"a_3deg_10":[70,30,-1.1,-370,10,2.5,2,1],"a_3deg_20":[70,30,-0.5,-370,20,5.1,2,1],"c_level_30":[115,64,1.3,0,30,4.9,0,1],"c_level_45":[115,73,2,0,45,8.5,0,1],"c_level_60":[115,85,2.8,0,60,14.6,0,1]},"aero":{"c_level_0":[140,60,2.8,0,0,0,0,1],"c_level_10":[140,61,2.8,0,10,1.3,0,1],"c_level_20":[140,62,2.8,0,20,2.6,0,1],"c_d500_0":[140,43,0.9,-500,0,0,0,1],"c_d500_10":[140,43,0.9,-500,10,1.3,0,1],"c_d500_20":[140,44,0.9,-500,20,2.7,0,1],"c_d1000_0":[140,31,-1,-1000,0,0,0,1],"c_d1000_10":[140,32,-1,-1000,10,1.3,0,1],"c_d1000_20":[140,33,-0.9,-990,20,2.6,0,1],"c_c500_0":[140,79,4.6,500,0,0,0,1],"c_c500_10":[140,80,4.6,500,10,1.2,0,1],"c_c500_20":[140,82,4.7,500,20,2.5,0,1],"y_c500_0":[88,38,9.9,500,0,0,0,1],"y_c500_10":[88,39,10,500,10,1.9,0,1],"y_c500_20":[88,41,10.1,500,20,4,0,1],"y_c1000_0":[88,57,12.6,1000,0,0,0,1],"y_c1000_10":[88,57,12.7,1000,10,1.9,0,1],"y_c1000_20":[88,59,12.8,1010,20,3.9,0,1],"y_full_0":[89,100,21.4,2580,0,0,0,1],"y_full_10":[89,100,21.4,2560,10,1.9,0,1],"y_full_20":[89,100,21.2,2510,21,3.9,0,1],"s_level_0":[96,26,5.9,0,0,0,1,1],"s_level_10":[96,26,6,0,10,1.8,1,1],"s_level_20":[96,27,6,0,20,3.8,1,1],"s_c500_0":[96,43,8.6,500,0,0,1,1],"s_c500_10":[96,43,8.6,500,10,1.8,1,1],"s_c500_20":[96,44,8.7,500,20,3.7,1,1],"s_d500_0":[96,10,3.1,-500,0,0,1,1],"s_d500_10":[96,10,3.2,-500,10,1.9,1,1],"s_d500_20":[96,12,3.2,-500,20,3.8,1,1],"a_3deg_0":[80,6,5.7,-420,0,0,0,1],"a_3deg_10":[80,7,5.8,-420,10,2.2,0,1],"a_3deg_20":[80,8,5.9,-420,20,4.7,0,1],"c_level_30":[140,63,2.9,0,30,4.1,0,1],"c_level_45":[140,65,3,0,45,7.1,0,1],"c_level_60":[140,76,3.1,0,60,12.4,0,1]},"twin":{"c_level_0":[200,87,0.2,0,0,0,0,1],"c_level_10":[200,87,0.3,0,10,0.9,0,1],"c_level_20":[200,89,0.4,0,20,1.8,0,1],"c_d500_0":[200,66,-1.1,-500,0,0,0,1],"c_d500_10":[200,66,-1.1,-500,10,0.9,0,1],"c_d500_20":[200,68,-0.9,-500,20,1.8,0,1],"c_d1000_0":[200,53,-2.4,-1000,0,0,0,1],"c_d1000_10":[200,55,-2.4,-1000,10,0.9,0,1],"c_d1000_20":[200,55,-2.2,-1000,20,1.8,0,1],"c_c500_0":[191,100,1.9,500,0,0,0,0],"c_c500_10":[190,100,1.9,500,10,0.9,0,0],"c_c500_20":[190,100,2.2,500,20,1.8,0,0],"y_c500_0":[136,62,5.7,500,0,0,0,1],"y_c500_10":[136,61,5.7,500,10,1.2,0,1],"y_c500_20":[136,66,6,500,20,2.6,0,1],"y_c1000_0":[136,84,7.4,1000,0,0,0,1],"y_c1000_10":[136,84,7.5,1000,10,1.2,0,1],"y_c1000_20":[136,87,7.7,1000,20,2.5,0,1],"y_full_0":[136,100,8.4,1290,0,0,0,1],"y_full_10":[136,100,8.3,1260,10,1.2,0,1],"y_full_20":[136,100,8.5,1240,20,2.5,0,1],"s_level_0":[132,63,1.1,0,0,0,1,1],"s_level_10":[132,63,1.3,0,10,1.3,1,1],"s_level_20":[132,66,1.6,0,20,2.7,1,1],"s_c500_0":[132,86,3.1,500,0,0,1,1],"s_c500_10":[132,86,3.2,500,10,1.3,1,1],"s_c500_20":[132,89,3.6,500,20,2.6,1,1],"s_d500_0":[132,41,-0.9,-500,0,0,1,1],"s_d500_10":[132,42,-0.8,-500,10,1.3,1,1],"s_d500_20":[132,44,-0.4,-500,20,2.8,1,1],"a_3deg_0":[110,31,-1.7,-580,0,0,2,1],"a_3deg_10":[110,32,-1.5,-590,10,1.6,2,1],"a_3deg_20":[110,34,-1,-580,20,3.3,2,1],"c_level_30":[200,89,0.7,0,30,2.8,0,1],"c_level_45":[200,93,1.3,0,45,4.9,0,1],"c_level_60":[189,100,2.4,0,60,9,0,0]},"airliner":{"c_level_0":[272,23,2.2,0,0,0,0,1],"c_level_10":[273,23,2.2,0,10,0.6,0,1],"c_level_20":[272,35,2.4,0,20,1.3,0,1],"c_d500_0":[273,18,1.2,-500,0,0,0,1],"c_d500_10":[271,27,1.3,-500,10,0.7,0,1],"c_d500_20":[273,28,1.4,-500,20,1.3,0,1],"c_d1000_0":[279,0,0.1,-1000,0,0,0,0],"c_d1000_10":[278,0,0.1,-1000,10,0.6,0,0],"c_d1000_20":[277,0,0.3,-1000,20,1.3,0,0],"c_c500_0":[272,31,3.1,500,0,0,0,1],"c_c500_10":[271,32,3.2,500,10,0.6,0,1],"c_c500_20":[271,33,3.4,500,20,1.3,0,1],"y_c500_0":[212,39,6.2,500,0,0,0,1],"y_c500_10":[212,37,6.3,500,10,0.8,0,1],"y_c500_20":[212,31,6.4,500,20,1.7,0,1],"y_c1000_0":[209,47,7.6,1000,0,0,0,1],"y_c1000_10":[209,47,7.7,1000,10,0.8,0,1],"y_c1000_20":[209,49,7.8,1000,20,1.6,0,1],"y_full_0":[209,100,19.1,5950,0,0,0,1],"y_full_10":[209,100,19.1,5930,10,0.8,0,1],"y_full_20":[208,100,18.9,5780,20,1.6,0,1],"s_level_0":[197,42,1.8,0,0,0,1,1],"s_level_10":[197,41,1.9,0,10,0.9,1,1],"s_level_20":[197,43,2.3,0,20,1.8,1,1],"s_c500_0":[195,51,3.3,500,0,0,1,1],"s_c500_10":[195,50,3.4,500,10,0.9,1,1],"s_c500_20":[195,53,3.8,500,20,1.8,1,1],"s_d500_0":[199,36,0.3,-500,0,0,1,1],"s_d500_10":[200,35,0.3,-500,10,0.9,1,1],"s_d500_20":[200,31,0.7,-500,20,1.8,1,1],"a_3deg_0":[142,38,-2.2,-750,0,0,3,1],"a_3deg_10":[142,39,-1.8,-730,10,1.2,3,1],"a_3deg_20":[141,42,-0.8,-740,20,2.6,3,1],"c_level_30":[272,39,2.6,0,30,2.1,0,1],"c_level_45":[273,32,3,0,45,3.6,0,1],"c_level_60":[270,51,3.8,20,60,6.3,0,1]},"fighter":{"c_level_0":[354,28,3.1,0,0,0,0,1],"c_level_10":[353,28,3.1,0,10,0.5,0,1],"c_level_20":[353,28,3.1,0,20,1,0,1],"c_d500_0":[354,26,2.4,-500,0,0,0,1],"c_d500_10":[354,28,2.4,-500,10,0.5,0,1],"c_d500_20":[354,26,2.4,-500,20,1.1,0,1],"c_d1000_0":[353,22,1.6,-1000,0,0,0,1],"c_d1000_10":[353,26,1.6,-1000,10,0.5,0,1],"c_d1000_20":[353,25,1.6,-1000,20,1,0,1],"c_c500_0":[353,39,3.8,500,0,0,0,1],"c_c500_10":[353,37,3.8,500,10,0.5,0,1],"c_c500_20":[353,34,3.9,500,20,1,0,1],"y_c500_0":[199,28,11,500,0,0,0,1],"y_c500_10":[199,28,11.1,500,10,0.9,0,1],"y_c500_20":[197,32,11.3,500,20,1.8,0,1],"y_c1000_0":[199,33,12.2,1000,0,0,0,1],"y_c1000_10":[198,30,12.4,1000,10,0.8,0,1],"y_c1000_20":[196,33,12.6,1000,20,1.8,0,1],"y_full_0":[484,100,30.5,27190,0,0,0,2],"y_full_10":[487,100,30.2,27080,10,0.3,0,2],"y_full_20":[490,100,29.9,27020,20,0.7,0,2],"s_level_0":[189,28,9.1,0,0,0,1,1],"s_level_10":[188,31,9.2,0,10,0.9,1,1],"s_level_20":[186,39,9.5,0,20,1.9,1,1],"s_c500_0":[188,38,10.4,500,0,0,1,1],"s_c500_10":[188,37,10.5,500,10,0.9,1,1],"s_c500_20":[187,38,10.7,500,20,1.9,1,1],"s_d500_0":[190,27,7.5,-500,0,0,1,1],"s_d500_10":[190,27,7.6,-500,10,0.9,1,1],"s_d500_20":[188,38,7.9,-500,20,2,1,1],"a_3deg_0":[158,40,9,-830,0,0,2,1],"a_3deg_10":[159,36,8.9,-840,10,1.1,2,1],"a_3deg_20":[158,29,9.5,-810,20,2.4,2,1],"c_level_30":[352,31,3.2,0,30,1.6,0,1],"c_level_45":[353,30,3.2,0,45,2.8,0,1],"c_level_60":[350,43,3.3,0,60,5,0,1]}};
-for (const a of AIRCRAFT) if (TRIM[a.id]) a.v.cruiseThr = TRIM[a.id].c_level_0[1] / 100;
+const TRIM = {"trainer":{"c_level_0":[105,77,0.6,0,0,0,0,1],"c_level_10":[105,78,0.7,0,10,1.7,0,1],"c_level_20":[105,77,0.9,0,20,3.4,0,1],"c_d500_0":[105,43,-2,-500,0,0,0,1],"c_d500_10":[105,43,-1.9,-500,10,1.7,0,1],"c_d500_20":[105,42,-1.7,-500,20,3.5,0,1],"c_d1000_0":[105,13,-4.5,-1000,0,0,0,1],"c_d1000_10":[105,13,-4.5,-1000,10,1.7,0,1],"c_d1000_20":[105,12,-4.2,-1010,20,3.4,0,1],"c_c500_0":[94,100,4.5,500,0,0,0,0],"c_c500_10":[93,100,4.7,500,10,1.8,0,0],"c_c500_20":[91,100,5.1,500,20,3.9,0,0],"y_c500_0":[73,89,8.5,500,0,-0.1,0,1],"y_c500_10":[73,89,8.7,490,10,2.4,0,1],"y_c500_20":[73,89,8.9,500,20,4.9,0,1],"y_c1000_0":[50,100,18.3,440,0,-0.1,0,0],"y_c1000_10":[51,100,18,440,10,3.3,0,0],"y_c1000_20":[53,100,16.8,420,21,6.9,0,0],"y_full_0":[73,100,9.5,640,0,-0.1,0,1],"y_full_10":[73,100,9.4,620,10,2.3,0,1],"y_full_20":[73,100,9.6,620,20,4.9,0,1],"s_level_0":[78,59,1,0,0,0,1,1],"s_level_10":[78,62,1.2,0,10,2.2,1,1],"s_level_20":[78,62,1.6,0,20,4.7,1,1],"s_c500_0":[76,100,4.8,500,0,-0.1,1,1],"s_c500_10":[75,100,5.2,490,10,2.3,1,1],"s_c500_20":[60,100,11.3,500,20,6.1,1,0],"s_d500_0":[78,21,-2.4,-500,0,0,1,1],"s_d500_10":[78,24,-2.3,-500,10,2.3,1,1],"s_d500_20":[78,24,-1.8,-490,20,4.8,1,1],"a_3deg_0":[65,37,-1.4,-340,0,0,2,1],"a_3deg_10":[65,41,-1,-330,10,2.7,2,1],"a_3deg_20":[65,39,-0.5,-340,20,5.6,2,1],"c_level_30":[105,79,1.3,0,30,5.5,0,1],"c_level_45":[105,87,2,0,45,9.6,0,1],"c_level_60":[90,100,4.6,-10,61,19.7,0,0]},"sport":{"c_level_0":[115,63,0.8,0,0,0,0,1],"c_level_10":[115,63,0.8,0,10,1.5,0,1],"c_level_20":[115,64,1,0,20,3.2,0,1],"c_d500_0":[115,37,-1.6,-500,0,0,0,1],"c_d500_10":[115,36,-1.6,-500,10,1.5,0,1],"c_d500_20":[115,37,-1.4,-500,20,3.2,0,1],"c_d1000_0":[115,14,-3.9,-1000,0,0,0,1],"c_d1000_10":[115,13,-3.9,-1000,10,1.5,0,1],"c_d1000_20":[115,14,-3.7,-1000,20,3.2,0,1],"c_c500_0":[115,93,3,500,0,0,0,1],"c_c500_10":[115,93,3.1,500,10,1.5,0,1],"c_c500_20":[115,93,3.3,500,20,3.1,0,1],"y_c500_0":[79,69,8.2,500,0,-0.1,0,1],"y_c500_10":[79,72,8.2,500,10,2.1,0,1],"y_c500_20":[79,72,8.4,490,20,4.5,0,1],"y_c1000_0":[76,100,12,1000,-1,-0.1,0,1],"y_c1000_10":[75,100,12.3,990,10,2.2,0,1],"y_c1000_20":[72,100,13.8,980,20,4.9,0,0],"y_full_0":[79,100,11.1,970,-1,-0.1,0,1],"y_full_10":[79,100,11,950,10,2.1,0,1],"y_full_20":[79,100,11,920,20,4.4,0,1],"s_level_0":[84,62,1.2,0,0,-0.1,1,1],"s_level_10":[84,63,1.3,0,10,2,1,1],"s_level_20":[84,64,1.7,0,20,4.3,1,1],"s_c500_0":[84,94,4.4,500,0,-0.1,1,1],"s_c500_10":[84,96,4.5,500,10,2,1,1],"s_c500_20":[84,97,4.8,500,20,4.3,1,1],"s_d500_0":[84,31,-2,-500,0,-0.1,1,1],"s_d500_10":[84,32,-1.9,-500,10,2.1,1,1],"s_d500_20":[84,33,-1.5,-490,20,4.4,1,1],"a_3deg_0":[70,35,-1.3,-370,0,-0.1,2,1],"a_3deg_10":[70,38,-1.1,-360,10,2.5,2,1],"a_3deg_20":[70,37,-0.7,-370,20,5.2,2,1],"c_level_30":[115,65,1.3,0,30,5,0,1],"c_level_45":[115,73,1.9,0,45,8.8,0,1],"c_level_60":[115,93,2.6,0,60,15.3,0,1]},"aero":{"c_level_0":[140,61,2.8,0,-1,-0.1,0,1],"c_level_10":[140,63,2.8,0,9,1.2,0,1],"c_level_20":[140,64,2.8,0,20,2.6,0,1],"c_d500_0":[140,44,0.8,-500,-1,-0.1,0,1],"c_d500_10":[140,45,0.8,-500,9,1.2,0,1],"c_d500_20":[140,46,0.9,-500,20,2.6,0,1],"c_d1000_0":[140,32,-1,-1000,0,-0.1,0,1],"c_d1000_10":[140,32,-1,-1000,10,1.2,0,1],"c_d1000_20":[140,34,-1,-990,20,2.6,0,1],"c_c500_0":[140,80,4.6,500,-1,-0.1,0,1],"c_c500_10":[140,81,4.7,500,9,1.2,0,1],"c_c500_20":[140,83,4.7,500,19,2.5,0,1],"y_c500_0":[88,47,10,500,-1,-0.2,0,1],"y_c500_10":[88,47,10,500,9,1.8,0,1],"y_c500_20":[88,51,10.1,500,20,4,0,1],"y_c1000_0":[88,66,12.8,1000,-1,-0.2,0,1],"y_c1000_10":[88,66,12.8,1000,9,1.8,0,1],"y_c1000_20":[88,72,12.9,1010,20,3.9,0,1],"y_full_0":[88,100,16.6,1730,-2,-0.3,0,1],"y_full_10":[88,100,16.5,1710,9,1.7,0,1],"y_full_20":[88,100,16.1,1610,19,3.7,0,1],"s_level_0":[96,30,5.9,0,-1,-0.1,1,1],"s_level_10":[96,30,6,0,9,1.8,1,1],"s_level_20":[96,32,6,0,20,3.8,1,1],"s_c500_0":[96,49,8.7,500,-1,-0.2,1,1],"s_c500_10":[96,49,8.7,500,9,1.7,1,1],"s_c500_20":[96,53,8.7,510,20,3.6,1,1],"s_d500_0":[96,12,3.1,-500,0,-0.1,1,1],"s_d500_10":[96,12,3.1,-500,10,1.9,1,1],"s_d500_20":[96,14,3.1,-500,20,3.9,1,1],"a_3deg_0":[80,8,5.7,-420,0,-0.1,0,1],"a_3deg_10":[80,10,5.7,-420,10,2.2,0,1],"a_3deg_20":[80,11,5.8,-420,20,4.7,0,1],"c_level_30":[140,64,2.9,0,30,4.1,0,1],"c_level_45":[140,66,2.9,0,45,7.2,0,1],"c_level_60":[140,78,2.9,0,60,12.5,0,1]},"twin":{"c_level_0":[200,89,0.2,0,0,0,0,1],"c_level_10":[200,89,0.3,0,10,0.9,0,1],"c_level_20":[200,91,0.4,0,20,1.8,0,1],"c_d500_0":[200,68,-1.1,-500,0,0,0,1],"c_d500_10":[200,68,-1.1,-500,10,0.9,0,1],"c_d500_20":[200,70,-0.9,-500,20,1.9,0,1],"c_d1000_0":[200,54,-2.5,-1000,0,0,0,1],"c_d1000_10":[200,56,-2.4,-1000,10,0.9,0,1],"c_d1000_20":[200,56,-2.3,-1000,20,1.8,0,1],"c_c500_0":[188,100,2,500,0,0,0,0],"c_c500_10":[187,100,2.1,500,10,0.9,0,0],"c_c500_20":[186,100,2.3,500,20,1.9,0,0],"y_c500_0":[136,72,5.7,500,0,0,0,1],"y_c500_10":[136,71,5.7,500,10,1.3,0,1],"y_c500_20":[136,74,5.9,500,20,2.6,0,1],"y_c1000_0":[136,96,7.5,1000,0,0,0,1],"y_c1000_10":[136,97,7.6,1000,10,1.2,0,1],"y_c1000_20":[136,97,7.8,990,20,2.6,0,1],"y_full_0":[136,100,7.7,1070,0,0,0,1],"y_full_10":[136,100,7.7,1040,10,1.2,0,1],"y_full_20":[136,100,7.8,1020,20,2.6,0,1],"s_level_0":[132,74,1.1,0,0,0,1,1],"s_level_10":[132,73,1.3,0,10,1.3,1,1],"s_level_20":[132,77,1.6,0,20,2.8,1,1],"s_c500_0":[131,99,3.2,500,0,0,1,1],"s_c500_10":[131,100,3.3,500,10,1.3,1,1],"s_c500_20":[130,100,3.7,500,20,2.7,1,1],"s_d500_0":[132,50,-0.9,-500,0,0,1,1],"s_d500_10":[132,50,-0.8,-500,10,1.3,1,1],"s_d500_20":[132,54,-0.5,-500,20,2.8,1,1],"a_3deg_0":[110,40,-1.7,-580,0,0,2,1],"a_3deg_10":[110,40,-1.5,-590,10,1.6,2,1],"a_3deg_20":[110,42,-1.1,-590,20,3.4,2,1],"c_level_30":[200,90,0.7,0,30,2.9,0,1],"c_level_45":[200,95,1.2,0,45,5,0,1],"c_level_60":[182,100,2.6,0,60,9.6,0,0]},"airliner":{"c_level_0":[272,22,2.2,0,0,0,0,1],"c_level_10":[273,23,2.2,0,10,0.7,0,1],"c_level_20":[272,35,2.4,0,20,1.4,0,1],"c_d500_0":[272,20,1.2,-500,0,0,0,1],"c_d500_10":[272,29,1.2,-500,10,0.7,0,1],"c_d500_20":[273,29,1.3,-500,20,1.4,0,1],"c_d1000_0":[279,0,0.1,-1000,0,0,0,0],"c_d1000_10":[278,0,0.1,-1000,10,0.6,0,0],"c_d1000_20":[277,0,0.3,-1000,20,1.3,0,0],"c_c500_0":[272,31,3.2,500,0,0,0,1],"c_c500_10":[271,32,3.2,500,10,0.6,0,1],"c_c500_20":[271,34,3.4,500,20,1.3,0,1],"y_c500_0":[212,38,6.2,500,0,0,0,1],"y_c500_10":[212,36,6.3,500,10,0.8,0,1],"y_c500_20":[212,29,6.4,500,20,1.7,0,1],"y_c1000_0":[209,46,7.6,1000,0,0,0,1],"y_c1000_10":[209,46,7.7,1000,10,0.8,0,1],"y_c1000_20":[209,47,7.8,1000,20,1.7,0,1],"y_full_0":[209,100,19.6,6040,0,0,0,1],"y_full_10":[209,100,19.6,6010,10,0.8,0,1],"y_full_20":[209,100,19.4,5900,20,1.6,0,1],"s_level_0":[197,41,1.8,0,0,0,1,1],"s_level_10":[197,41,1.9,0,10,0.9,1,1],"s_level_20":[197,42,2.3,0,20,1.9,1,1],"s_c500_0":[195,51,3.3,500,0,0,1,1],"s_c500_10":[196,49,3.4,500,10,0.9,1,1],"s_c500_20":[195,53,3.8,500,20,1.8,1,1],"s_d500_0":[199,35,0.3,-500,0,0,1,1],"s_d500_10":[200,34,0.3,-500,10,0.9,1,1],"s_d500_20":[200,31,0.6,-500,20,1.9,1,0],"a_3deg_0":[142,36,-2.2,-730,0,0,3,1],"a_3deg_10":[142,37,-1.8,-730,10,1.2,3,1],"a_3deg_20":[141,41,-0.9,-730,20,2.6,3,1],"c_level_30":[272,38,2.6,0,30,2.1,0,1],"c_level_45":[273,32,3,0,45,3.7,0,1],"c_level_60":[268,56,3.7,20,60,6.5,0,1]},"fighter":{"c_level_0":[354,28,3.1,0,0,0,0,1],"c_level_10":[354,28,3.1,0,10,0.5,0,1],"c_level_20":[353,28,3.1,0,20,1,0,1],"c_d500_0":[354,27,2.3,-500,0,0,0,1],"c_d500_10":[354,26,2.3,-500,10,0.5,0,0],"c_d500_20":[354,26,2.4,-500,20,1.1,0,0],"c_d1000_0":[353,23,1.6,-1000,0,0,0,1],"c_d1000_10":[353,25,1.6,-1000,10,0.5,0,1],"c_d1000_20":[354,25,1.6,-1000,20,1.1,0,0],"c_c500_0":[353,39,3.9,500,0,0,0,1],"c_c500_10":[354,36,3.9,500,10,0.5,0,1],"c_c500_20":[354,33,3.9,500,20,1,0,1],"y_c500_0":[199,28,11,500,0,0,0,0],"y_c500_10":[199,28,11.1,500,10,0.9,0,1],"y_c500_20":[197,32,11.3,500,20,1.8,0,1],"y_c1000_0":[199,33,12.3,1000,0,0,0,1],"y_c1000_10":[198,30,12.4,1000,10,0.9,0,1],"y_c1000_20":[196,33,12.6,1000,20,1.8,0,1],"y_full_0":[502,100,30.5,27690,0,0,0,1],"y_full_10":[505,100,30.1,27540,10,0.3,0,1],"y_full_20":[509,100,29.8,27450,20,0.7,0,1],"s_level_0":[189,28,9.1,0,0,0,1,1],"s_level_10":[188,31,9.2,0,10,1,1,1],"s_level_20":[187,40,9.4,0,20,2,1,1],"s_c500_0":[188,36,10.4,500,0,0,1,1],"s_c500_10":[188,36,10.5,500,10,0.9,1,1],"s_c500_20":[188,37,10.7,490,20,1.9,1,1],"s_d500_0":[190,27,7.5,-500,0,0,1,0],"s_d500_10":[190,26,7.5,-500,10,1,1,0],"s_d500_20":[188,38,7.8,-500,20,2,1,1],"a_3deg_0":[158,40,8.9,-830,0,0,2,1],"a_3deg_10":[159,35,8.8,-840,10,1.1,2,0],"a_3deg_20":[158,29,9.4,-810,20,2.4,2,1],"c_level_30":[352,31,3.2,0,30,1.7,0,1],"c_level_45":[353,29,3.2,0,45,2.9,0,1],"c_level_60":[350,45,3.3,0,60,5.1,0,1]}};
+for (const a of AIRCRAFT) if (TRIM[a.id]) { a.v.cruiseThr = TRIM[a.id].c_level_0[1] / 100; if (TRIM[a.id].a_3deg_0[7]) a.v.apprThr = TRIM[a.id].a_3deg_0[1] / 100; }
 let ACFT = AIRCRAFT[0], AC = null, WHEELS = [], TAILSKID = null, HARDPTS = [], WHEEL_BOTTOM = -1.45;
 function deriveAircraft(A) {
   const P = A.phys, m = P.mass, g = 9.81;
@@ -2434,8 +2437,21 @@ function deriveAircraft(A) {
     if (e.type === 'wing') for (const s of [-1, 1]) hard.push({ off: [s * e.x, e.y - e.r, e.z], name: 'プロペラ' });
     if (e.type === 'pod') for (const s of [-1, 1]) hard.push({ off: [s * e.x, e.y - e.r, (e.z0 + e.z1) / 2], name: 'エンジン' });
   }
+  // propeller: design speed of the fixed-pitch prop, and the fin offset that cancels the
+  // left-turning tendencies at cruise (as real single-engine aircraft are rigged)
+  const E = P.engine, prop = E.type !== 'jet';
+  const pr = {};
+  if (prop) {
+    const Vc = A.v.cruise / 1.94384, qc = 0.5 * 1.225 * Vc * Vc, CLc = m * g / (qc * P.S), ac = (CLc - P.CL0) / P.CLa;
+    const Tc = (P.CD0 + (P.CDgear || 0) * (A.gear.fixed ? 1 : 0) + P.K * CLc * CLc) * qc * P.S;
+    pr.Vd = Vc * 1.2;                                   // prop efficiency peaks a little above cruise
+    pr.a0 = 0.012 * P.b; pr.a1 = 0.2 * P.b;             // slipstream / P-factor lever arms (m, m per rad)
+    pr.fin = Tc * (pr.a0 + pr.a1 * ac) / qc;            // fin offset yaw per unit dynamic pressure (N m / Pa)
+    pr.Ip = 2.5 * E.P / 92000;                          // propeller polar moment of inertia (kg m^2)
+  }
   return {
-    AC: { ...P, I }, WHEELS: wheels, WHEEL_BOTTOM: bottom, HARDPTS: hard,
+    AC: { ...P, I, prop: prop ? pr : null, // jets: yaw damper / fly-by-wire hides these couplings
+    Cnda: P.Cnda ?? (prop ? -0.1 * P.Clda : 0), Cnp: P.Cnp ?? (prop ? -0.04 : 0), Clr: P.Clr ?? (prop ? 0.1 : 0) }, WHEELS: wheels, WHEEL_BOTTOM: bottom, HARDPTS: hard,
     TAILSKID: { off: [0, tailSt[3] - tailSt[2], zTail - (zTail - F[0][0]) * 0.1], k: 30 * m, c: 4 * m },
   };
 }
@@ -2456,13 +2472,26 @@ const sim = {
   contacts: [], assistOn: false,
 };
 
+// ICAO standard atmosphere (troposphere + lower stratosphere); ISA.dev shifts the temperature
+const ISA = { dev: 0 };
+function atmos(h) {
+  h = Math.max(h, -500);
+  let Ts, p;
+  if (h < 11000) { Ts = 288.15 - 0.0065 * h; p = 101325 * Math.pow(Ts / 288.15, 5.25588); }
+  else { Ts = 216.65; p = 22632.1 * Math.exp(-(h - 11000) / 6341.62); }
+  const T = Ts + ISA.dev, rho = p / (287.05 * T);
+  return { T, p, rho, a: Math.sqrt(1.4 * 287.05 * T), sigma: rho / 1.225 };
+}
+// wind near the ground is slowed by friction: log profile referenced to the 10 m reported wind
+function windGradient(agl) { const h = clamp(agl, 1, 400); return clamp(Math.log(h / 0.03) / Math.log(10 / 0.03), 0.55, 1.35); }
+
 // wind blows from the active runway's heading (a headwind for takeoff and landing)
-function windAt(p, t) {
-  const gust = Math.min(1, Math.max(p[1], 0) / 300 + 0.4);
+function windAt(p, t, agl = p[1]) {
+  const gust = Math.min(1, Math.max(agl, 0) / 300 + 0.4), wg = windGradient(agl);
   const sw = typeof SCHOOL !== 'undefined' && SCHOOL.active && SCHOOL.wind;
   const w = sw || RWY.windDir || [-3, 0, 0];
-  if (sw) { const k = SCHOOL.gust; return [w[0] + perlin(t * 0.35, 1.7) * 1.6 * gust * k, perlin(t * 0.5, 4.4) * 0.5 * gust * k, w[2] + perlin(t * 0.31, 8.2) * 1.3 * gust * k]; }
-  return [w[0] + perlin(t * 0.35, 1.7) * 1.2 * gust, perlin(t * 0.5, 4.4) * 0.45 * gust, w[2] + perlin(t * 0.31, 8.2) * 0.9 * gust];
+  if (sw) { const k = SCHOOL.gust; return [w[0] * wg + perlin(t * 0.35, 1.7) * 1.6 * gust * k, perlin(t * 0.5, 4.4) * 0.5 * gust * k, w[2] * wg + perlin(t * 0.31, 8.2) * 1.3 * gust * k]; }
+  return [w[0] * wg + perlin(t * 0.35, 1.7) * 1.2 * gust, perlin(t * 0.5, 4.4) * 0.45 * gust, w[2] * wg + perlin(t * 0.31, 8.2) * 0.9 * gust];
 }
 // lift coefficient needed for a load factor, and the elevator that holds that angle of attack
 function trimFor(V, flapF, n = 1, rho = 1.225) {
@@ -2536,16 +2565,16 @@ function physicsStep(dt, t) {
   if (ACFT.gear.fixed) { s.gearDown = true; s.gearPos = 1; }
   else if (!(s.onGround && !s.gearDown)) s.gearPos = clamp(s.gearPos + (s.gearDown ? dt : -dt) / 4.5, 0, 1);
   const flapF = ACFT.wing.flap ? s.flapDeg / 30 : 0;
-  const rho = 1.225 * Math.exp(-Math.max(s.pos[1], 0) / 8500);
+  const atm = atmos(s.pos[1]), rho = atm.rho;
+  const ground = groundAt(s.pos[0], s.pos[2]);
+  const agl = s.pos[1] + WHEEL_BOTTOM - ground.h;
   const qi = qconj(s.q);
-  const vb = qrot(qi, vsub(s.vel, windAt(s.pos, t)));
+  const vb = qrot(qi, vsub(s.vel, windAt(s.pos, t, agl + 2)));
   const V = vlen(vb);
   const u = -vb[2];
   const alpha = Math.atan2(-vb[1], u);
   const beta = V > 0.5 ? Math.asin(clamp(vb[0] / V, -1, 1)) : 0;
   const qd = 0.5 * rho * V * V;
-  const ground = groundAt(s.pos[0], s.pos[2]);
-  const agl = s.pos[1] + WHEEL_BOTTOM - ground.h;
   const jet = AC.engine.type === 'jet';
   const qdc = qd + (jet ? 0 : 240 * s.thr * Math.sqrt(AC.mass / 1000));
   const aS = AC.aStall - AC.flapStall * flapF;
@@ -2556,13 +2585,14 @@ function physicsStep(dt, t) {
   const F = [0, 0, 0];
   const over = Math.max(alpha - aS, (-aS - 0.06) - alpha);
   const stallW = smoothstep(0, 0.07, over);
-  const clLin = cl0 + AC.CLa * alpha;
-  const CL = lerp(clLin, 1.15 * Math.sin(2 * alpha), stallW);
   const hx = Math.max(agl + 1.3, 0.3) / AC.b, ge = (16 * hx * hx) / (1 + 16 * hx * hx);
-  const mach = V / 340;
+  const clLin = cl0 + AC.CLa * alpha * (1 + 0.06 * (1 - ge));
+  const CL = lerp(clLin, 1.15 * Math.sin(2 * alpha), stallW);
+  const mach = V / atm.a;
   const CD = AC.CD0 + 0.02 * flapF + 0.05 * flapF * flapF + AC.CDgear * s.gearPos
     + AC.K * clLin * clLin * (1 - stallW) * ge + stallW * 1.25 * Math.sin(alpha) ** 2 + 0.6 * beta * beta
     + (AC.wave ? 0.035 : 0.08) * smoothstep(AC.wave ? 0.88 : 0.78, AC.wave ? 1.12 : 0.95, mach);
+  s.CL = CL; s.CD = CD; s.liftN = CL * qd * AC.S; s.dragN = CD * qd * AC.S; s.ge = ge;
   if (V > 0.3) {
     const iv = 1 / V, L = CL * qd * AC.S, D = CD * qd * AC.S;
     const ln = Math.hypot(vb[1], vb[2]) || 1;
@@ -2576,13 +2606,25 @@ function physicsStep(dt, t) {
     const E = AC.engine, dry = Math.min(s.thr / 0.95, 1);
     s.n1 += (dry - s.n1) * Math.min(1, dt / E.spool * (s.n1 < dry ? 1 : 1.6));
     const ab = E.ab && s.thr > 0.95 && s.n1 > 0.9 ? E.ab : 0;
-    T = (E.T * (0.06 + 0.94 * s.n1 * s.n1) + ab) * Math.pow(rho / 1.225, 0.7) * (1 - 0.25 * Math.min(mach, 1.2));
+    T = (E.T * (0.06 + 0.94 * s.n1 * s.n1) + ab) * Math.pow(atm.sigma, 0.7) * (1 - 0.25 * Math.min(mach, 1.2));
     s.ab = ab > 0;
   } else {
-    const E = AC.engine, thrEff = s.dead ? -0.035 : 0.04 + 0.96 * s.thr;
-    T = thrEff * Math.min(E.T0, E.P / Math.max(Math.abs(u), 1)) * (rho / 1.225) - (1 - s.thr) * 2.5 * Math.max(u, 0) * AC.mass / 1000;
+    // normally aspirated piston power falls faster than density (Gagg-Ferrar); a fixed-pitch prop
+    // is least efficient at low speed, and its static thrust falls off as the aircraft accelerates
+    const E = AC.engine, pw = Math.max(0, 1.132 * atm.sigma - 0.132), ua = Math.max(u, 0);
+    s.shaftP = s.dead ? 0 : (0.04 + 0.96 * s.thr) * pw * E.P / 0.85;
+    if (s.dead) T = -0.026 * qd * AC.S * (AC.mass / 1050) ** 0.3;                 // windmilling prop drag
+    else {
+      const eta = Math.pow(Math.min(1, Math.max(ua, 1) / AC.prop.Vd), 0.35);
+      const thrEff = 0.04 + 0.96 * s.thr;
+      T = thrEff * pw * Math.min(E.T0 * (1 - 0.25 * Math.min(ua / AC.prop.Vd, 1)), eta * E.P / Math.max(ua, 1)) - (1 - s.thr) * 2.5 * ua * AC.mass / 1000;
+    }
     s.ab = false;
   }
+  if (jet) s.shaftP = 0;
+  s.oat = atm.T - 273.15; s.thrust = T; s.rho = rho; s.nProp = 0;
+  // density altitude: the ISA altitude that has this air density
+  s.densAlt = (1 - Math.pow(Math.min(atm.sigma, 1.2), 0.234969)) * 44330.8;
   F[2] -= T;
   // --- moments (pilot convention: roll right, pitch up, yaw right) ---
   const p = -s.w[2], qq = s.w[0], r = -s.w[1];
@@ -2592,9 +2634,33 @@ function physicsStep(dt, t) {
     + qdc * AC.S * AC.c * AC.Cmde * elevEff + hv * AC.S * AC.c * AC.c * AC.Cmq * qq;
   // roll damping reverses in a stall (autorotation) but saturates, which gives a bounded spin
   const pAuto = p - 1.7 * stallW * 1.5 * Math.tanh(p / 1.5);
-  let Lr = qd * AC.S * AC.b * (AC.Clda * s.ail + AC.Clb * Math.sin(beta)) + hv * AC.S * AC.b * AC.b * AC.Clp * pAuto;
+  // dihedral effect grows in a stall: a slipping/skidding stall drops a wing (spin entry)
+  let Lr = qd * AC.S * AC.b * (AC.Clda * s.ail + AC.Clb * (1 + 3 * stallW) * Math.sin(beta)) + hv * AC.S * AC.b * AC.b * (AC.Clp * pAuto + AC.Clr * r);
   if (stallW > 0.15) Lr += qd * AC.S * AC.b * 0.03 * stallW * perlin(t * 0.8, 12.5);
-  const Nr = qd * AC.S * AC.b * AC.Cnb * Math.sin(beta) + qdc * AC.S * AC.b * AC.Cndr * s.rud + hv * AC.S * AC.b * AC.b * AC.Cnr * r;
+  // yaw: weathervane, adverse yaw (aileron drag and roll rate), and the propeller's left-turning
+  // tendencies (slipstream swirl + P-factor, minus the fin offset that cancels them at cruise)
+  let Nx = qd * AC.S * AC.b * AC.Cnda * s.ail + hv * AC.S * AC.b * AC.b * AC.Cnp * p, Rl = 0, Ng = 0;
+  if (AC.prop) {
+    const Pr = AC.prop, Tp = Math.max(T, 0);
+    s.nProp = -(Tp * (Pr.a0 + Pr.a1 * clamp(alpha, -0.1, 0.35))) + Pr.fin * qd;
+    Nx += s.nProp;
+    const om = Math.max(s.rpm, 300) * Math.PI / 30;
+    Rl = -(s.shaftP || 0) / om * 0.5;                                          // engine torque reaction (partly rigged out): rolls left
+    Ng = Pr.Ip * om * qq;                                                    // gyroscopic precession: pitch up -> yaw right
+  }
+  Lr += Rl;
+  // automatic rudder (ball kept centred) for the assist and for keyboard pilots who want it
+  const autoR = s.assistOn || (typeof game !== 'undefined' && game.autoRud);
+  const rAuth = Math.max(qdc * AC.S * AC.b * AC.Cndr, 1);
+  s.rudNeed = clamp(-(Nx + Ng) / rAuth, -1, 1);
+  let yd = 0;
+  if (autoR && !s.onGround && V > 10) {                                        // yaw damper: only the yaw rate a coordinated turn doesn't need
+    const rgt = qrot(s.q, [1, 0, 0]), upv = qrot(s.q, [0, 1, 0]), sb = -rgt[1] / Math.hypot(rgt[1], upv[1]);
+    yd = -0.8 * (r - 9.81 * sb / V);
+  }
+  s.rudAuto = autoR ? clamp(-(Nx + Ng) / rAuth + 1.5 * beta + yd, -1, 1) * (s.onGround && V < 8 ? V / 8 : 1) : 0;
+  const rudEff = clamp(s.rud + s.rudAuto, -1, 1);
+  const Nr = qd * AC.S * AC.b * AC.Cnb * Math.sin(beta) + qdc * AC.S * AC.b * AC.Cndr * rudEff + hv * AC.S * AC.b * AC.b * AC.Cnr * r + Nx + Ng;
   const Tb = [Mp, -Nr, -Lr];
 
   // --- ground contact (world frame) ---
@@ -2625,7 +2691,7 @@ function physicsStep(dt, t) {
     const lat = vnorm(vcross(g.n, fwd));
     const vl = vdot(vc, fwd), vt = vdot(vc, lat);
     const mu = kind === 'skid' ? 0.5 : g.paved ? 0.85 : 0.6;
-    const rr = kind === 'skid' ? 0.5 : (g.paved ? 0.015 : 0.05) + (s.brake && off !== noseOff ? 0.6 : 0);
+    const rr = kind === 'skid' ? 0.5 : (g.paved ? 0.02 : 0.05) + (s.brake && off !== noseOff ? 0.6 : 0);
     const Ft = clamp(-vt * 9 * AC.mass, -mu * Fn, mu * Fn);
     const Fl = clamp(-vl * 6 * AC.mass, -rr * Fn, rr * Fn);
     const Fc = vadd(vadd(vscale(g.n, Fn), vscale(fwd, Fl)), vscale(lat, Ft));
@@ -2669,7 +2735,7 @@ function physicsStep(dt, t) {
   s.onGround = s.contacts.some(c => c);
   if (s.mainContact && !wasMain && s.airTime > 1.5) onTouchdown();
   s.airTime = s.onGround ? 0 : s.airTime + dt;
-  s.alpha = alpha; s.beta = beta; s.tas = V; s.ias = V * Math.sqrt(rho / 1.225);
+  s.alpha = alpha; s.beta = beta; s.tas = V; s.ias = V * Math.sqrt(atm.sigma); s.mach = mach; s.rudEff = rudEff;
   s.stallW = stallW;
   s.stallWarn = !s.onGround && V > 8 && alpha > aS - 0.045;
   s.gLoad = lerp(s.gLoad, yLoad / (AC.mass * 9.81), 0.1);
@@ -6449,15 +6515,15 @@ const game = {
   state: 'loading', mode: 'runway', hud: true, invert: false, touch: false, sound: true,
   t: 0, ringIdx: 0, ringTime: 0, ringDone: false, firstTouch: null, landingDone: false,
   warnPull: false, warnGear: false, resultTimer: 0, best: {},
-  assist: true, sens: 'low', mapId: 'japan', acftId: 'trainer', levelT: 0,
+  assist: true, autoRud: true, sens: 'low', mapId: 'japan', acftId: 'trainer', levelT: 0,
   depIcao: 'RJTT', destIcao: '', timeScale: 1, ap: false, apAlt: 0, apHdg: 0, track: [], arrived: false,
 };
 try {
   const pr = JSON.parse(localStorage.getItem('sorajima-prefs') || '{}') || {};
-  for (const k of ['assist', 'sens', 'mapId', 'acftId', 'invert', 'sound', 'depIcao', 'destIcao']) if (pr[k] !== undefined) game[k] = pr[k];
+  for (const k of ['assist', 'autoRud', 'sens', 'mapId', 'acftId', 'invert', 'sound', 'depIcao', 'destIcao']) if (pr[k] !== undefined) game[k] = pr[k];
 } catch (e) { /* storage unavailable */ }
 function savePrefs() {
-  try { localStorage.setItem('sorajima-prefs', JSON.stringify({ assist: game.assist, sens: game.sens, mapId: game.mapId, acftId: game.acftId, invert: game.invert, sound: game.sound, depIcao: game.depIcao, destIcao: game.destIcao })); } catch (e) { /* ignore */ }
+  try { localStorage.setItem('sorajima-prefs', JSON.stringify({ assist: game.assist, autoRud: game.autoRud, sens: game.sens, mapId: game.mapId, acftId: game.acftId, invert: game.invert, sound: game.sound, depIcao: game.depIcao, destIcao: game.destIcao })); } catch (e) { /* ignore */ }
 }
 try { game.best = JSON.parse(localStorage.getItem('sorajima-best') || '{}') || {}; } catch (e) { game.best = {}; }
 function saveBest() { try { localStorage.setItem('sorajima-best', JSON.stringify(game.best)); } catch (e) { /* storage unavailable */ } }
@@ -6654,6 +6720,8 @@ addEventListener('keydown', e => {
   const map = { KeyG: 'gear', KeyV: 'flaps', KeyH: 'hud', KeyX: 'smoke', KeyL: 'level', KeyZ: 'time', KeyO: 'ap' };
   if (map[e.code]) doAction(map[e.code]);
   if (e.code === 'KeyT') doAction(e.shiftKey ? 'trimReset' : 'trim');
+  if (e.code === 'KeyJ' && (st === 'flying' || st === 'paused')) { game.physView = !game.physView; toast(game.physView ? '物理の見える化：揚力・抗力・推力・重力と、その数値を表示' : '物理の見える化を閉じました', 1600); }
+  if (e.code === 'KeyU' && st === 'flying') { game.autoRud = !game.autoRud; if ($('opt-autorud')) $('opt-autorud').checked = game.autoRud; savePrefs(); toast(game.autoRud ? '自動ラダー ON（ボールを自動で中央に）' : '自動ラダー OFF：Q / E でボールを中央に保ちます（離陸・上昇は右ラダー）', 2600); }
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
@@ -7086,6 +7154,10 @@ document.querySelectorAll('.mission').forEach(b => b.addEventListener('click', (
 $('resume').addEventListener('click', resumeGame);
 $('res-retry').addEventListener('click', () => startMode(game.mode));
 $('res-menu').addEventListener('click', () => { spawn('runway'); game.state = 'menu'; showMenu(false); });
+document.querySelectorAll('[data-oat]').forEach(b => b.addEventListener('click', () => {
+  ISA.dev = +b.dataset.oat;
+  document.querySelectorAll('[data-oat]').forEach(o => o.classList.toggle('on', o === b));
+}));
 document.querySelectorAll('[data-tod]').forEach(b => b.addEventListener('click', () => {
   ENV = TOD[b.dataset.tod];
   document.querySelectorAll('[data-tod]').forEach(o => o.classList.toggle('on', o === b));
@@ -7181,6 +7253,8 @@ function setupMenu() {
   syncSens();
   $('opt-assist').checked = game.assist;
   $('opt-assist').addEventListener('change', e => { game.assist = e.target.checked; savePrefs(); });
+  $('opt-autorud').checked = game.autoRud;
+  $('opt-autorud').addEventListener('change', e => { game.autoRud = e.target.checked; savePrefs(); });
   $('opt-invert').checked = game.invert;
   $('opt-sound').checked = game.sound;
   $('opt-invert').addEventListener('change', savePrefs);
@@ -7683,6 +7757,7 @@ function drawHUD() {
   if (game.mode === 'tutorial') tutHighlight(g);
   if (game.callouts) drawCallouts(g);
   if (JW.active && !SCHOOL.hood) drawPlaceLabels(g, W, H);
+  if (game.physView && !touch) drawPhysView(g, W, H, sc, att);
 }
 function drawRingTarget(g, W, H) {
   const ring = course.rings[game.ringIdx];
@@ -7981,6 +8056,54 @@ function drawStatusStrip(g, x, y, sc) {
     rr(g, cx, y, w, 20 * sc / 0.86, 4); g.fillStyle = 'rgba(6,12,22,0.66)'; g.fill();
     g.fillStyle = c; g.fillText(t, cx + 6, y + 4); cx += w + 6;
   }
+}
+// "physics made visible": the four forces on a side view plus the numbers behind them (J key)
+function drawPhysView(g, W, H, sc, att) {
+  const s = sim, k = Math.min(sc, 1.1), PW = 300, PH = 318;
+  g.save(); g.translate(W - 16 - PW * k, 206); g.scale(k, k);
+  rr(g, 0, 0, PW, PH, 8); g.fillStyle = 'rgba(8,14,24,0.84)'; g.fill(); g.strokeStyle = 'rgba(150,176,206,0.35)'; g.lineWidth = 1; g.stroke();
+  g.fillStyle = COL.cyan; g.font = `700 12px ${UI}`; g.textAlign = 'left'; g.textBaseline = 'middle';
+  g.fillText('物理の見える化（J で閉じる）', 12, 16);
+  // side view: relative wind comes along the flight path; lift is perpendicular to it
+  const cx = 150, cy = 108, W0 = AC.mass * 9.81, sL = 52 / W0, sD = sL * 3;
+  const th = att.pitch * DEG, gam = th - s.alpha;
+  const arrow = (ang, len, col, lab, lx = 0, ly = 0) => {
+    if (Math.abs(len) < 2) return;
+    const x1 = cx + Math.cos(ang) * len, y1 = cy - Math.sin(ang) * len;
+    g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 3; g.beginPath(); g.moveTo(cx, cy); g.lineTo(x1, y1); g.stroke();
+    const a2 = Math.atan2(y1 - cy, x1 - cx); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x1 - 8 * Math.cos(a2 - 0.4), y1 - 8 * Math.sin(a2 - 0.4)); g.lineTo(x1 - 8 * Math.cos(a2 + 0.4), y1 - 8 * Math.sin(a2 + 0.4)); g.fill();
+    g.font = `700 11px ${UI}`; g.textAlign = 'center'; g.fillText(lab, x1 + Math.cos(ang) * 16 + lx, y1 - Math.sin(ang) * 12 + ly);
+  };
+  // relative wind (dashed) and the aircraft's body line
+  g.setLineDash([4, 4]); g.strokeStyle = 'rgba(160,190,220,0.6)'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(cx - Math.cos(gam) * 110, cy + Math.sin(gam) * 110); g.lineTo(cx + Math.cos(gam) * 110, cy - Math.sin(gam) * 110); g.stroke(); g.setLineDash([]);
+  g.save(); g.translate(cx, cy); g.rotate(-th);
+  g.fillStyle = '#dfe6ee'; g.beginPath(); g.ellipse(0, 0, 44, 6, 0, 0, Math.PI * 2); g.fill();
+  g.fillRect(-44, -14, 8, 12); g.fillStyle = '#9fb3c8'; g.fillRect(-6, -2, 22, 3);
+  g.restore();
+  arrow(gam + Math.PI / 2, (s.liftN || 0) * sL, '#5fd46a', '揚力 L');
+  arrow(gam + Math.PI, (s.dragN || 0) * sD, '#ff6a5a', '抗力 D×3', 0, 10);
+  arrow(th, Math.max(s.thrust || 0, 0) * sD, '#ffb23e', '推力 T×3', 0, -10);
+  arrow(-Math.PI / 2, W0 * sL, '#c9d3de', '重力 W');
+  g.fillStyle = COL.muted; g.font = `10px ${UI}`; g.textAlign = 'left';
+  g.fillText('点線＝相対風（飛んでいく向き）', 10, 196);
+  // numbers
+  const aS = (AC.aStall - AC.flapStall * (ACFT.wing.flap ? s.flapDeg / 30 : 0)) / DEG, aoa = s.alpha / DEG;
+  const rows = [
+    ['迎え角 α', `${aoa.toFixed(1)}°`, `失速 ${aS.toFixed(0)}°`, aoa > aS - 3 ? COL.red : aoa > aS - 6 ? COL.amber : COL.ink],
+    ['揚力係数 CL', (s.CL || 0).toFixed(2), `揚抗比 L/D ${s.dragN > 1 ? (s.liftN / s.dragN).toFixed(1) : '—'}`, COL.ink],
+    ['荷重倍数 n', `${s.gLoad.toFixed(2)} G`, `失速速度 ×${Math.sqrt(Math.max(s.gLoad, 0.1)).toFixed(2)}`, s.gLoad > 2 ? COL.amber : COL.ink],
+    ['横滑り β', `${(s.beta / DEG).toFixed(1)}°`, AC.prop ? `左偏向：右ラダー ${Math.round(Math.max(0, s.rudNeed || 0) * 100)}% 必要` : 'ジェット：左偏向なし', Math.abs(s.beta / DEG) > 2 ? COL.amber : COL.ink],
+    ['外気温', `${(s.oat ?? 15).toFixed(0)}℃`, `密度高度 ${Math.round((s.densAlt || 0) * 3.28084).toLocaleString()} ft`, (s.densAlt || 0) > s.pos[1] + 300 ? COL.amber : COL.ink],
+    ['真対気速度', `${Math.round(s.tas * 1.94384)} kt`, `指示 ${Math.round(s.ias * 1.94384)} kt`, COL.ink],
+    ['地面効果', s.ge < 0.98 ? `誘導抗力 −${Math.round((1 - s.ge) * 100)}%` : 'なし', '翼幅より低いと効く', s.ge < 0.98 ? COL.green : COL.muted],
+  ];
+  rows.forEach(([a, b, c, col], i) => {
+    const y = 216 + i * 14.5;
+    g.textAlign = 'left'; g.fillStyle = COL.muted; g.font = `11px ${UI}`; g.fillText(a, 10, y);
+    g.fillStyle = col; g.font = `700 11px ${MONO}`; g.fillText(b, 92, y);
+    g.fillStyle = COL.muted; g.font = `10px ${UI}`; g.fillText(c, 158, y);
+  });
+  g.restore();
 }
 function drawMinimap(g, W, H, touch, att) {
   const S = touch ? 118 : 176, x = W - S - (touch ? 12 : 16), y = touch ? 12 : 16;

@@ -217,6 +217,52 @@ kbd{font:700 11.5px var(--mono);background:rgba(95,212,255,.12);border:1px solid
 .sd-t td:first-child{width:1.5em;font-weight:700} .sd-t tr.ok td:first-child{color:var(--green)} .sd-t tr.ng td:first-child{color:var(--red)} .sd-t tr.ng td{background:rgba(255,90,80,.06)}
 .sd-t td:last-child{color:var(--muted);white-space:nowrap}
 .sd-foot{display:flex;gap:10px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line)}
+#book{z-index:6;background:rgba(4,9,17,.94);padding:0}
+.bk-wrap{display:flex;flex-direction:column;width:100%;height:100%;max-width:1320px;margin:0 auto}
+.bk-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--line)}
+.bk-head h2{margin:0;font:700 18px var(--jp)}
+.bk-head input{flex:1;min-width:140px;max-width:320px;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:#0b1422;color:var(--ink);font:14px var(--jp)}
+#bk-prog{color:var(--muted);font:700 12px var(--jp)}
+#bk-close{margin-left:auto}
+.bk-body{flex:1;min-height:0;display:grid;grid-template-columns:290px minmax(0,1fr)}
+#bk-nav{overflow-y:auto;border-right:1px solid var(--line);padding:8px 10px 20px}
+#bk-nav h3{margin:12px 4px 4px;font:700 12px var(--jp);color:var(--cyan)}
+.bk-item{display:flex;gap:8px;width:100%;text-align:left;padding:6px 8px;border:0;border-radius:5px;background:transparent;color:var(--ink);font:13px/1.4 var(--jp);cursor:pointer}
+.bk-item:hover{background:rgba(95,212,255,.08)} .bk-item.sel{background:rgba(95,212,255,.16)}
+.bk-item .bk-num{color:var(--muted);min-width:2.6em;font-variant-numeric:tabular-nums}
+.bk-item.done .bk-num::after{content:" ✓";color:var(--green)}
+.bk-none{color:var(--muted);padding:8px}
+#bk-sel{display:none;margin:8px 12px;padding:8px;border-radius:6px;background:#0b1422;color:var(--ink);border:1px solid var(--line);font:14px var(--jp)}
+#bk-art{overflow-y:auto;padding:18px 28px 28px;font-size:15px;line-height:1.85}
+#bk-chap{color:var(--muted);font:700 12px var(--jp);letter-spacing:.04em}
+#bk-title{margin:4px 0 12px;font:700 22px var(--jp)}
+#bk-body{max-width:820px}
+#bk-body h3{margin:22px 0 6px;font:700 16px var(--jp);color:var(--cyan)}
+#bk-body p{margin:8px 0} #bk-body ul,#bk-body ol{margin:6px 0;padding-left:1.4em} #bk-body li{margin:3px 0}
+#bk-body b{color:#ffd28a}
+.bk-t{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px;line-height:1.6}
+.bk-t th,.bk-t td{border:1px solid rgba(150,176,206,.22);padding:5px 8px;vertical-align:top;text-align:left}
+.bk-t th{background:rgba(95,212,255,.08);color:var(--cyan)}
+.bk-t input{width:5.5em;padding:3px 5px;background:#0b1422;color:var(--ink);border:1px solid var(--line);border-radius:4px;font:13px var(--jp)}
+.bk-key{margin:14px 0;padding:10px 14px;border-left:4px solid var(--green);background:rgba(95,212,106,.07);border-radius:4px}
+.bk-key b{color:var(--green)} .bk-key ul{margin:4px 0 0}
+.bk-warn{margin:14px 0;padding:10px 14px;border-left:4px solid var(--amber);background:rgba(255,178,62,.08);border-radius:4px}
+.bk-q{margin:12px 0;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:rgba(197,140,255,.06)}
+.bk-q summary{cursor:pointer;font-weight:700;color:#d8b4ff} .bk-q div{margin-top:8px}
+.bk-sim{margin:16px 0;padding:10px 14px;border:1px dashed var(--cyan);border-radius:6px}
+.bk-sim b{color:var(--cyan)} .bk-sim p{margin:4px 0 8px} .bk-sim button,.bk-qz{margin:4px 6px 0 0}
+.bk-formula{margin:12px 0;padding:10px 14px;background:#0b1422;border:1px solid var(--line);border-radius:6px;font:600 14px/1.7 var(--mono,monospace);overflow-x:auto}
+.bk-fig{margin:14px 0;padding:10px;background:#0b1422;border:1px solid var(--line);border-radius:8px}
+.bk-fig svg{width:100%;height:auto;max-height:340px;display:block}
+.bk-fig figcaption{margin-top:6px;color:var(--muted);font-size:12.5px}
+.bk-calc{margin:12px 0;padding:10px 14px;background:rgba(95,212,255,.05);border:1px solid var(--line);border-radius:6px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13.5px}
+.bk-calc input{width:5.5em;padding:4px 6px;background:#0b1422;color:var(--ink);border:1px solid var(--line);border-radius:4px;font:14px var(--jp)}
+.bk-calc output{flex-basis:100%;color:var(--ink)} .bk-calc .bk-t{flex-basis:100%}
+.bk-link{border:0;background:none;color:var(--cyan);cursor:pointer;font:inherit;padding:0;text-decoration:underline}
+#bk-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;max-width:820px;margin-top:26px;padding-top:14px;border-top:1px solid var(--line)}
+#bk-foot span{color:var(--muted);font-size:12px} #bk-foot button:disabled{opacity:.35}
+@media (max-width:820px){.bk-body{grid-template-columns:1fr}#bk-nav{display:none}#bk-sel{display:block}#bk-art{padding:12px 16px 24px}.bk-head input{max-width:none}}
+.book-btn{padding:10px 14px;border-radius:6px;border:1px solid #ffd66b;background:rgba(255,214,107,.08);color:#ffd66b;font:700 14px var(--jp);cursor:pointer;text-align:left}
 #inst-tut,#read-quiz{align-items:center;justify-content:center;background:rgba(4,9,17,.8);z-index:6}
 .it-panel{width:min(1100px,100%);max-height:100%}
 .it-wrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;padding:14px 18px;overflow:auto}
@@ -364,8 +410,9 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
       <label class="chk"><input type="checkbox" id="opt-invert"> ピッチ反転</label>
       <label class="chk"><input type="checkbox" id="opt-sound" checked> サウンド</label>
     </div>
-    <button type="button" class="school-btn" id="open-school">✈ パイロット訓練（フライトスクール）<small>計器の読み方・地上学科から実地試験まで 36 課目・自動採点つき</small></button>
+    <button type="button" class="school-btn" id="open-school">✈ パイロット訓練（フライトスクール）<small>計器の読み方・地上学科（12 科目）から実地試験まで 40 課目・自動採点つき</small></button>
     <button type="button" class="guide-btn" id="open-map">🗺 日本地図を開いて空港を選ぶ（M）</button>
+    <button type="button" class="book-btn" id="open-book">📖 教科書：飛行の原理・機体・性能・気象・航法・通信・法規・人間・実技・緊急（全 13 章）</button>
     <button type="button" class="guide-btn" id="open-guide">？ ガイド：画面の見方・操作・用語・飛び方のコツ</button>
     <p class="credit">地形・航空写真・地図：国土地理院 地理院タイル（標高データは加工して使用）／ 海外：航空写真・地図 Esri, Maxar, Earthstar Geographics ／ 標高 AWS Terrain Tiles（Mapzen, SRTM ほか）／ 3D 都市モデル：国土交通省 PLATEAU ／ 建物・樹木：© OpenStreetMap contributors（OpenFreeMap）／ 空港：OurAirports ／ 地名：GeoNames</p>
    </div>
@@ -390,7 +437,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
     <header class="sch-head">
       <div><div class="eyebrow">FLIGHT SCHOOL · 操縦訓練課程</div><h2>パイロット訓練</h2></div>
       <div class="sch-log" id="sch-log"></div>
-      <div class="sch-actions"><label class="f-label" for="sch-ap">訓練空港</label><select id="sch-ap"></select><button type="button" id="sch-close">メニューへ戻る</button></div>
+      <div class="sch-actions"><label class="f-label" for="sch-ap">訓練空港</label><select id="sch-ap"></select><button type="button" id="sch-book">📖 教科書</button><button type="button" id="sch-close">メニューへ戻る</button></div>
     </header>
     <div class="sch-body">
       <nav class="sch-stages" id="sch-stages" aria-label="課程表"></nav>
@@ -402,6 +449,14 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
   <div class="guide-panel sq-panel" role="dialog" aria-labelledby="sq-title">
     <div class="guide-head"><h2 id="sq-title">地上学科</h2><button type="button" id="sq-close">課程表へ ✕</button></div>
     <div class="guide-body" id="sq-body"></div>
+  </div>
+</div>
+<div id="book" class="screen" hidden>
+  <div class="bk-wrap" role="dialog" aria-labelledby="bk-h">
+    <header class="bk-head"><h2 id="bk-h">📖 教科書</h2><input type="search" id="bk-q" placeholder="検索（例：失速、METAR、密度高度）" aria-label="教科書を検索"><span id="bk-prog"></span><button type="button" id="bk-close">閉じる ✕</button></header>
+    <select id="bk-sel" aria-label="節を選ぶ"></select>
+    <div class="bk-body"><nav id="bk-nav" aria-label="目次"></nav>
+      <article id="bk-art"><div id="bk-chap"></div><h2 id="bk-title"></h2><div id="bk-body"></div><div id="bk-foot"></div></article></div>
   </div>
 </div>
 <div id="inst-tut" class="screen" hidden>
@@ -446,6 +501,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
     <div class="guide-body">
       <section data-tab="screen">
         <button type="button" class="guide-demo" id="guide-demo">実際の画面に番号を付けて説明する</button>
+        <button type="button" class="guide-demo" id="guide-book">教科書（全 13 章）を開く：飛行の原理から法規・緊急操作まで</button>
         <button type="button" class="guide-demo" id="guide-inst">アナログ計器（6 計器）の読み方チュートリアルを開く</button>
         <dl class="gl">
           <dt>① 速度計（左の縦の目盛り）</dt><dd>空気に対する速さ。単位は kt（ノット）で、1 kt ≒ 時速 1.85 km。赤い帯より遅いと<b>失速</b>（翼が機体を支えられなくなる）の危険。白い帯はフラップを出してよい速さ、黄色は出しすぎ注意の速さです。</dd>
@@ -5332,8 +5388,48 @@ const QUIZ = {
     ['速度計の黄色の帯の意味は？', ['注意範囲：穏やかな大気でのみ使用（Vno〜Vne）', 'フラップ使用範囲', '失速範囲', '通常運用範囲'], 0, '赤い線は Vne（決して超えてはならない速度）。ヒバリは 160 kt。'],
     ['フラップを出してよい最大速度（Vfe）は、速度計のどこでわかる？', ['白い帯の上端', '緑の帯の上端', '赤い線', '黄色の帯の下端'], 0, 'ヒバリの Vfe は 85 kt。'],
   ],
+  g9: [
+    ['密度高度が高くなる組み合わせは？', ['標高が高く、気温が高く、湿度が高い', '標高が低く、気温が低い', '気圧が高く、乾燥している', '冬の海沿いの空港'], 0, '空気が薄いほど密度高度は高くなります。暑い・高い・低気圧・湿っている、の 4 つ。離陸距離が伸び、上昇率が落ちます。'],
+    ['標高 2,000 ft、QNH 1013 hPa、気温 31℃ の空港の密度高度はおよそ？', ['約 4,400 ft', '約 2,000 ft', '約 1,000 ft', '約 8,000 ft'], 0, '気圧高度 2,000 ft の標準気温は 15 − 4 ＝ 11℃。差 20℃ × 120 ft ＝ 2,400 ft を足して約 4,400 ft。'],
+    ['追い風で離陸すると離陸距離は？', ['大きく長くなる', '短くなる', '変わらない', '重量が軽ければ短くなる'], 0, '対地速度で浮揚速度まで加速しなければならないので、数 kt の追い風でも距離は大きく伸びます。'],
+    ['重心が前方限界に近いときの特徴は？', ['安定性が高く、失速速度が高く、フレアで機首を上げにくい', '安定性が低く、スピンから回復しにくい', '巡航速度が速くなる', '操縦桿が軽くなる'], 0, '重心が前だと尾翼の下向きの力が増え、翼の負担（実質の重量）が増えて失速速度が上がります。後ろすぎると安定性を失い危険です。'],
+    ['重量 2,000 lb、重心 40 in の機体に、アーム 70 in の位置へ 100 lb の荷物を積んだ。新しい重心は？', ['約 41.4 in', '約 40.0 in', '約 45.0 in', '約 38.6 in'], 0, 'モーメント：2,000 × 40 ＋ 100 × 70 ＝ 87,000。重量 2,100 lb。87,000 ÷ 2,100 ≒ 41.4 in。'],
+    ['最良上昇角速度 Vx を使う場面は？', ['離陸直後に前方の障害物を越えるとき', '通常の上昇', '巡航', '着陸進入'], 0, 'Vx は同じ水平距離で最も高く上がる速度。障害物を越えたら Vy（最良上昇率）に戻します。'],
+    ['風 300°／20 kt で滑走路 34 に着陸する。横風成分はおよそ？', ['約 13 kt', '約 20 kt', '約 5 kt', '約 17 kt'], 0, '角度は 40°。20 × sin 40° ≒ 13 kt。30° なら半分、45° なら 7 割、が暗算の目安。'],
+    ['同じ指示対気速度で高い高度を飛ぶと、真対気速度は？', ['大きくなる（1,000 ft で約 2％）', '小さくなる', '変わらない', '風によって決まる'], 0, '空気が薄いので、同じ動圧を得るにはより速く動く必要があります。失速速度は指示対気速度ではほぼ同じです。'],
+  ],
+  g10: [
+    ['有視界飛行方式で飛ぶには、天気が次のどれである必要がある？', ['有視界気象状態（VMC）', '計器気象状態（IMC）', '雲が一つもない', '風が 10 kt 以下'], 0, 'VMC を下回る状態（IMC）では、計器飛行証明を持ち計器飛行方式で飛ぶ必要があります。数値は施行規則で空域・高度ごとに決まっています。'],
+    ['最低安全高度：人や家屋の密集地域の上空では、水平距離 600 m の範囲の最も高い障害物の上端から何 m？', ['300 m', '150 m', '600 m', '1,000 m'], 0, 'それ以外の地域は地表・水面から 150 m など。いずれも、エンジンが止まっても安全に着陸できる高度であることが大前提です（施行規則第 174 条。最新の条文で確認）。'],
+    ['交差する進路で近づく 2 機（同じ種類）。進路を譲るのは？', ['相手を右に見る機体', '相手を左に見る機体', '高度の高い機体', '速い機体'], 0, '右側の機体が優先です。正面からなら互いに右へ、追い越すときは右側を通って避けます。'],
+    ['機長が出発前に確認しなければならないこと（出発前の確認）に含まれないものは？', ['同乗者の職業', '気象情報', '燃料の搭載量', '航空機と装備品の状態'], 0, '航空法第 73 条の 2。機体・装備、気象、燃料、積載物、航空情報などを確認してから出発します。'],
+    ['航空機に備え付けなければならない書類の組み合わせとして正しいものは？', ['航空機登録証明書・耐空証明書・航空日誌', '操縦士の履歴書・保険証券', '空港の使用許可書だけ', '飛行計画書の控えだけ'], 0, '航空法第 59 条。ほかに省令で定める書類（運用限界等指定書・飛行規程など）があります。'],
+    ['酒や薬の影響で正常な運航ができないおそれがある間の操縦は？', ['してはならない', '同乗者がいれば良い', '短時間なら良い', '有視界飛行なら良い'], 0, '航空法第 70 条。体内にアルコールが残る時間は人と量で大きく違います。基準値と規定は最新の法令・所属機関の基準で確認を。'],
+    ['事故や重大インシデントが起きたときに機長がしなければならないことは？', ['国土交通大臣への報告', '次の飛行までに整備するだけ', '保険会社に連絡するだけ', '何もしなくてよい'], 0, '事故（第 76 条）と重大インシデント（第 76 条の 2）の報告義務があります。'],
+    ['NOTAM とは？', ['航空情報（空港・施設・空域の臨時の変更など）', '気象の予報', '管制の周波数表', '機体の整備記録'], 0, '滑走路の閉鎖、無線施設の停止、臨時の制限空域などが載ります。出発前に必ず確認します。'],
+  ],
+  g11: [
+    ['エンジンの点火に使われ、バッテリーが上がってもエンジンを動かし続けられる装置は？', ['マグネトー', 'オルタネーター', 'スターター', 'キャブレター'], 0, 'マグネトーはエンジンの回転で自ら発電します。信頼性のため 2 系統あり、離陸前に片方ずつ確認します（マグチェック）。'],
+    ['固定ピッチプロペラの機体で、キャブレターアイスの最初の兆候は？', ['回転数（RPM）がじわじわ下がる', '油圧が急に上がる', '速度計が 0 になる', 'ボールが右に寄る'], 0, 'キャブレターヒーターを入れると、溶けた水で一時的にさらに荒れてから回復します。外気温 −7〜21℃ 前後・湿度が高いときに起きやすい。'],
+    ['高度を上げたとき、ミクスチャーを絞る（リーンにする）理由は？', ['空気が薄くなり、混合気が濃すぎになるから', 'エンジンを冷やすため', '燃料を増やすため', 'プロペラを速く回すため'], 0, '同じ燃料量に対して空気が減るので、燃料を絞って最適な混合比に戻します。'],
+    ['燃料 AVGAS 100LL の色は？', ['青', '赤', '無色', '緑'], 0, 'ジェット燃料（無色〜麦わら色）と取り違えないよう色で区別します。サンプリングで色・水・ごみを確認。'],
+    ['飛行中に電流計が放電を示し続けている。考えられることは？', ['発電機（オルタネーター）の故障', 'マグネトーの故障', '燃料切れ', 'ピトー管の詰まり'], 0, '不要な電気を切ってバッテリーを節約し、早めに着陸を計画します。エンジン（マグネトー）は止まりません。'],
+    ['静圧孔が詰まったときの代替静圧源（機内）を使うと、高度計と速度計は？', ['やや高めに表示される', 'やや低めに表示される', '0 になる', '変わらない'], 0, '機内の気圧は外よりわずかに低いため、高度計・速度計は高めに、昇降計は一時的に上昇を示します。'],
+    ['方位指示器（DG）を約 15 分ごとに磁気コンパスに合わせる理由は？', ['ジャイロの歳差（摩擦など）で少しずつずれるから', '磁気コンパスが止まるから', '電気を節約するため', '法律で決まっているから'], 0, '直線・水平・定速のときに、磁気コンパスの値に合わせ直します。'],
+    ['定速プロペラの機体で、出力を上げるときの順番は？', ['プロペラ（回転）→ スロットル', 'スロットル → プロペラ', 'どちらでもよい', 'ミクスチャー → スロットル → プロペラの順で必ず最後にプロペラ'], 0, '高いマニホールド圧と低い回転の組み合わせを避けるため、上げるときはプロペラが先、下げるときはスロットルが先です。'],
+  ],
+  g12: [
+    ['安定進入の条件を満たさないまま地上 300〜500 ft まで来たら？', ['ゴーアラウンドする', 'パワーを絞って急降下で合わせる', '接地後にブレーキで調整する', 'フラップを上げて伸ばす'], 0, '安定していない進入からの着陸は、滑走路逸脱やハードランディングの大きな原因です。'],
+    ['右前方からの風の中を前輪式の機体で地上走行する。操縦桿は？', ['右へ（風上側のエルロンを上げる）', '左へ', '前へいっぱいに押す', '中立のまま'], 0, '前方からの風には「風の方へ傾けて」、後方からの風には「風から逃げるように押す」が覚え方です。'],
+    ['大型機の後に着陸するとき、後方乱気流を避ける方法は？', ['大型機の進入経路より上を飛び、大型機の接地点より先に接地する', '大型機の経路より下を飛ぶ', '大型機の接地点の手前に接地する', '大型機の真後ろを近づいて飛ぶ'], 0, '翼端渦は下に沈み、接地点から先では弱まります。離陸では大型機の浮揚点より手前で浮き、上を飛びます。'],
+    ['ゴーアラウンドでフラップを上げるときの正しい方法は？', ['段階的に上げる', '一度に全部上げる', '上げない', '接地してから上げる'], 0, '一気に上げると揚力が急に減って沈みます。まず 20° 程度、上昇が確立してから残りを上げます。'],
+    ['離陸直後の低高度でエンジンが止まった。まずすることは？', ['機首を下げて滑空速度を保つ', '滑走路へ引き返すため急旋回する', '再始動をくり返す', '操縦桿を引いて高度を保つ'], 0, '上昇姿勢のままだと数秒で失速します。ほぼ正面の安全な場所へ。十分な高度がなければ引き返しません。'],
+    ['ウイングロー（サイドスリップ）法の横風着陸で、最初に接地するのは？', ['風上側の主輪', '風下側の主輪', '前輪', '両方の主輪と前輪を同時に'], 0, '風上の翼を下げ、反対のラダーで機首を滑走路に合わせるので、風上の主輪から接地します。'],
+    ['クロスカントリーで予定の時刻にチェックポイントが見えない。最初にすべきことは？', ['落ち着いて推測位置を出し、5C（上昇・連絡・正直に・従う・節約）を考える', '見つかるまで低空でぐるぐる回る', '燃料を気にせず速度を上げる', '無線は使わず黙って探す'], 0, '早めに認めて助けを求めるのが安全です。管制はレーダーで位置を教えてくれることがあります。'],
+    ['不意に雲に入ってしまった計器飛行の資格のない操縦士が、まずすべきことは？', ['姿勢指示器で翼を水平に保ち、ゆるいバンクで 180° 旋回して戻る', '急降下して雲の下に出る', '体の感覚を頼りに操縦する', '急旋回して早く出る'], 0, '体の感覚は外が見えないとだまされます。計器を信じ、小さな操作で。管制にも助けを求めます。'],
+  ],
 };
-const QUIZ_TITLE = { g1: '飛行の原理', g2: '計器のしくみ', g3: '気象と METAR', g4: '無線と管制用語', g5: '航法の基礎', g6: '緊急時の操作', g7: '人間の能力と安全', g8: 'ヒバリの性能（V スピード）' };
+const QUIZ_TITLE = { g1: '飛行の原理', g2: '計器のしくみ', g3: '気象と METAR', g4: '無線と管制用語', g5: '航法の基礎', g6: '緊急時の操作', g7: '人間の能力と安全', g8: 'ヒバリの性能（V スピード）', g9: '性能と重量・重心', g10: '航空法規', g11: '機体のシステム', g12: '飛行操作の要領' };
 
 // ---------------------------------------------------------------------
 //  syllabus
@@ -6491,6 +6587,1090 @@ function setupSchool() {
   }, true);
   setInterval(updateSchoolPanel, 120);
 }
+// =====================================================================
+//  TEXTBOOK: the ground-school subjects a student pilot studies, written
+//  for someone starting from zero. Figures are drawn from the simulator's
+//  own aircraft data so the book and the flight model agree.
+// =====================================================================
+const BOOK = [];
+const BK = { open: false, cur: null, back: null, prog: null };
+
+// ---------------------------------------------------------------------
+//  figures (inline SVG)
+// ---------------------------------------------------------------------
+const FIG = (() => {
+  const C = { ink: '#e8f0fa', mut: '#92a5be', grid: 'rgba(150,176,206,.18)', cy: '#5fd4ff', gr: '#5fd46a', rd: '#ff6a5a', am: '#ffb23e', vi: '#c58cff', bg: '#0b1422' };
+  const svg = (w, h, body, cap = '') => `<figure class="bk-fig"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${cap}">${body}</svg>${cap ? `<figcaption>${cap}</figcaption>` : ''}</figure>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" fill="${o.c || C.ink}" font-size="${o.fs || 12}" text-anchor="${o.a || 'middle'}" ${o.b ? 'font-weight="700"' : ''} ${o.rot ? `transform="rotate(${o.rot} ${x} ${y})"` : ''}>${s}</text>`;
+  const L = (x1, y1, x2, y2, c = C.ink, w = 1.5, dash = '') => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w}" ${dash ? `stroke-dasharray="${dash}"` : ''}/>`;
+  const A = (x1, y1, x2, y2, c, w = 3) => { const a = Math.atan2(y2 - y1, x2 - x1), h = 9; return L(x1, y1, x2, y2, c, w) + `<path d="M${x2} ${y2} L${x2 - h * Math.cos(a - 0.45)} ${y2 - h * Math.sin(a - 0.45)} L${x2 - h * Math.cos(a + 0.45)} ${y2 - h * Math.sin(a + 0.45)} Z" fill="${c}"/>`; };
+  const P = (pts, c, w = 2, fill = 'none', dash = '') => `<path d="${pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')}" stroke="${c}" stroke-width="${w}" fill="${fill}" ${dash ? `stroke-dasharray="${dash}"` : ''}/>`;
+  // simple chart frame: returns mapping functions
+  const frame = (w, h, x0, x1, y0, y1, xt, yt, xl, yl, m = { l: 46, r: 14, t: 14, b: 36 }) => {
+    const X = v => m.l + (v - x0) / (x1 - x0) * (w - m.l - m.r), Y = v => h - m.b - (v - y0) / (y1 - y0) * (h - m.t - m.b);
+    let s = '';
+    for (const v of xt) s += L(X(v), m.t, X(v), h - m.b, C.grid, 1) + T(X(v), h - m.b + 15, v, { c: C.mut, fs: 11 });
+    for (const v of yt) s += L(m.l, Y(v), w - m.r, Y(v), C.grid, 1) + T(m.l - 6, Y(v) + 4, v, { c: C.mut, fs: 11, a: 'end' });
+    s += T((m.l + w - m.r) / 2, h - 4, xl, { c: C.mut, fs: 11 }) + T(12, (m.t + h - m.b) / 2, yl, { c: C.mut, fs: 11, rot: -90 });
+    return { X, Y, s };
+  };
+  const trainer = () => AIRCRAFT.find(a => a.id === 'trainer');
+  return {
+    C, svg, T, L, A, P,
+    forces() {
+      let s = `<g transform="translate(170 110)">`;
+      s += `<ellipse cx="0" cy="0" rx="70" ry="10" fill="#dfe6ee"/><rect x="-66" y="-26" width="12" height="18" fill="#dfe6ee"/><rect x="-14" y="-4" width="40" height="5" fill="#9fb3c8"/>`;
+      s += A(0, 0, 0, -80, C.gr) + T(0, -88, '揚力（Lift）', { c: C.gr, b: 1 });
+      s += A(0, 0, 0, 80, C.mut) + T(0, 100, '重力（Weight）', { c: C.mut, b: 1 });
+      s += A(70, 0, 140, 0, C.am) + T(140, -10, '推力（Thrust）', { c: C.am, b: 1, a: 'end' });
+      s += A(-70, 0, -140, 0, C.rd) + T(-140, -10, '抗力（Drag）', { c: C.rd, b: 1, a: 'start' });
+      s += `</g>`;
+      return svg(340, 220, s, '図：水平飛行中の 4 つの力。速度も高度も一定なら、揚力＝重力、推力＝抗力でつり合っている');
+    },
+    aoa() {
+      let s = '';
+      s += `<g transform="translate(60 120) rotate(-12)"><path d="M0 0 C 30 -22, 120 -20, 200 0 C 120 8, 30 8, 0 0 Z" fill="#dfe6ee"/>${L(-30, 0, 240, 0, C.am, 1.5, '6 4')}${T(250, 4, '翼弦線', { c: C.am, a: 'start', fs: 11 })}</g>`;
+      s += A(20, 160, 290, 160, C.cy, 2) + T(150, 180, '相対風（飛行機が進む向きの反対から来る空気）', { c: C.cy, fs: 11 });
+      s += `<path d="M 260 160 A 200 200 0 0 0 256 118" stroke="${C.rd}" stroke-width="2" fill="none"/>` + T(282, 140, '迎え角 α', { c: C.rd, b: 1, a: 'start' });
+      return svg(380, 190, s, '図：迎え角は「翼弦線」と「相対風」の角度。機首の向き（ピッチ）とは別もの');
+    },
+    liftCurve() {
+      const A_ = trainer(), p = A_.phys, W = 420, H = 250;
+      const f = frame(W, H, -4, 22, -0.4, 2.4, [-4, 0, 4, 8, 12, 16, 20], [0, 0.5, 1, 1.5, 2], '迎え角 α（度）', '揚力係数 CL');
+      const cl = (a, flap) => { const r = a * DEG, cl0 = p.CL0 + p.flapCL * flap, aS = p.aStall - p.flapStall * flap, sw = smoothstep(0, 0.07, r - aS); return lerp(cl0 + p.CLa * r, 1.15 * Math.sin(2 * r), sw); };
+      const pts = fl => { const o = []; for (let a = -4; a <= 22; a += 0.25) o.push([f.X(a), f.Y(cl(a, fl))]); return o; };
+      let s = f.s + P(pts(0), C.cy, 2.5) + P(pts(1), C.am, 2.5, 'none', '6 4');
+      const aS = p.aStall / DEG, cmax = cl(aS + 1.2, 0);
+      s += L(f.X(aS + 1.2), f.Y(cmax) - 4, f.X(aS + 1.2), f.Y(-0.4), C.rd, 1, '3 3') + T(f.X(aS + 1.2) + 4, f.Y(cmax) - 10, `臨界迎え角 約 ${Math.round(aS + 1)}°`, { c: C.rd, fs: 11, a: 'start' });
+      s += T(f.X(3), f.Y(1.35), 'フラップ 30°', { c: C.am, fs: 11 }) + T(f.X(6.5), f.Y(0.45), 'フラップ 0°', { c: C.cy, fs: 11 });
+      return svg(W, H, s, '図：ヒバリ（このシミュレータの練習機）の揚力曲線。迎え角に比例して揚力が増え、臨界迎え角を超えると急に減る＝失速');
+    },
+    dragCurve() {
+      const A_ = trainer(), p = A_.phys, W = 420, H = 250, Wt = p.mass * 9.81;
+      const f = frame(W, H, 40, 140, 0, 3000, [40, 60, 80, 100, 120, 140], [0, 1000, 2000, 3000], '指示対気速度（kt）', '抗力（N）');
+      const ind = [], par = [], tot = [];
+      let best = null;
+      for (let v = 44; v <= 140; v += 1) {
+        const V = v / 1.94384, q = 0.5 * 1.225 * V * V, CL = Wt / (q * p.S), Dp = p.CD0 * q * p.S, Di = p.K * CL * CL * q * p.S;
+        par.push([f.X(v), f.Y(Dp)]); ind.push([f.X(v), f.Y(Math.min(Di, 3000))]); tot.push([f.X(v), f.Y(Math.min(Dp + Di, 3000))]);
+        if (!best || Dp + Di < best[1]) best = [v, Dp + Di];
+      }
+      let s = f.s + P(par, C.am, 2, 'none', '6 4') + P(ind, C.vi, 2, 'none', '6 4') + P(tot, C.cy, 2.8);
+      s += `<circle cx="${f.X(best[0])}" cy="${f.Y(best[1])}" r="5" fill="${C.gr}"/>` + T(f.X(best[0]), f.Y(best[1]) + 20, `最小抗力 ${best[0]} kt（最良滑空速度の目安）`, { c: C.gr, fs: 11 });
+      s += T(f.X(128), f.Y(2350), '有害抗力', { c: C.am, fs: 11 }) + T(f.X(52), f.Y(2500), '誘導抗力', { c: C.vi, fs: 11, a: 'start' }) + T(f.X(116), f.Y(1350), '全抗力', { c: C.cy, fs: 11, b: 1 });
+      return svg(W, H, s, '図：速度と抗力（ヒバリ・海面上）。遅いと誘導抗力、速いと有害抗力が増え、その間に抗力が最小になる速度がある');
+    },
+    vn() {
+      const A_ = trainer(), v = A_.v, W = 420, H = 260, nP = 3.8, nN = -1.52;
+      const f = frame(W, H, 0, 170, -2, 4.5, [0, 40, 80, 120, 160], [-2, -1, 0, 1, 2, 3, 4], '指示対気速度（kt）', '荷重倍数 n（G）');
+      const vs = 48, va = Math.round(vs * Math.sqrt(nP)), vsN = 60;
+      const up = [], dn = [];
+      for (let x = 0; x <= va; x += 1) up.push([f.X(x), f.Y(Math.min((x / vs) ** 2, nP))]);
+      for (let x = 0; x <= 170; x += 1) { const n = -((x / vsN) ** 2); if (n < nN) { dn.push([f.X(x), f.Y(nN)]); } else dn.push([f.X(x), f.Y(n)]); }
+      let s = f.s + L(f.X(0), f.Y(0), f.X(170), f.Y(0), C.mut, 1);
+      s += `<path d="M${f.X(0)} ${f.Y(0)} ${up.map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} L${f.X(v.ne)} ${f.Y(nP)} L${f.X(v.ne)} ${f.Y(nN)} L${f.X(Math.sqrt(-nN) * vsN)} ${f.Y(nN)} ${dn.filter(p => p[0] <= f.X(Math.sqrt(-nN) * vsN)).reverse().map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} Z" fill="rgba(95,212,255,.10)" stroke="${C.cy}" stroke-width="2"/>`;
+      s += L(f.X(v.no), f.Y(nP), f.X(v.no), f.Y(nN), C.am, 1.2, '4 3') + T(f.X(v.no), f.Y(4.2), `Vno ${v.no}`, { c: C.am, fs: 11 });
+      s += T(f.X(v.ne), f.Y(4.2), `Vne ${v.ne}`, { c: C.rd, fs: 11 });
+      s += L(f.X(va), f.Y(nP), f.X(va), f.Y(0), C.gr, 1.2, '4 3') + T(f.X(va), f.Y(4.2), `Va 約 ${va}`, { c: C.gr, fs: 11 });
+      s += T(f.X(30), f.Y(2.6), '失速', { c: C.mut, fs: 11 }) + T(f.X(30), f.Y(2.1), '（揚力が足りない）', { c: C.mut, fs: 10 });
+      s += T(f.X(100), f.Y(1.5), '飛べる範囲', { c: C.cy, b: 1 }) + T(f.X(145), f.Y(-1.2), '構造の限界', { c: C.rd, fs: 11 });
+      return svg(W, H, s, `図：V-n 線図（普通類 +${nP} G／${nN} G の例）。左の曲線より左は失速、上下の線を超えると構造が壊れるおそれ`);
+    },
+    turnTable() {
+      let h = '<table class="bk-t"><tr><th>バンク角</th><th>荷重倍数</th><th>失速速度の増加</th><th>100 kt での旋回率</th><th>100 kt での旋回半径</th></tr>';
+      for (const b of [10, 20, 30, 45, 60, 75]) {
+        const tn = Math.tan(b * DEG), n = 1 / Math.cos(b * DEG);
+        h += `<tr><td>${b}°</td><td>${n.toFixed(2)} G</td><td>×${Math.sqrt(n).toFixed(2)}（+${Math.round((Math.sqrt(n) - 1) * 100)}%）</td><td>${(1091 * tn / 100).toFixed(1)}°/秒</td><td>${Math.round(100 * 100 / (11.26 * tn)).toLocaleString()} ft（${Math.round(100 * 100 / (11.26 * tn) * 0.3048)} m）</td></tr>`;
+      }
+      return h + '</table>';
+    },
+    leftTurning() {
+      let s = '';
+      // top view: aircraft pointing up, prop turning clockwise seen from the cockpit
+      s += `<g transform="translate(170 150)"><rect x="-8" y="-70" width="16" height="130" rx="8" fill="#dfe6ee"/><rect x="-90" y="-20" width="180" height="22" rx="6" fill="#dfe6ee"/><rect x="-36" y="46" width="72" height="12" rx="4" fill="#dfe6ee"/><rect x="-3" y="36" width="6" height="26" fill="#9fb3c8"/>`;
+      s += L(-46, -76, 46, -76, C.mut, 4);
+      s += A(24, -70, 40, -60, C.am, 2) + A(-24, -82, -40, -92, C.am, 2);
+      s += T(50, -46, '下がるブレード（右）', { c: C.am, fs: 11, a: 'start' }) + T(-50, -100, '上がるブレード（左）', { c: C.am, fs: 11, a: 'end' });
+      s += A(40, -80, 40, -126, C.gr, 3) + A(-40, -80, -40, -100, C.gr, 2);
+      s += T(48, -118, '推力 大', { c: C.gr, fs: 11, a: 'start' }) + T(-34, -112, '推力 小', { c: C.gr, fs: 11, a: 'start' });
+      s += `<path d="M 60 70 A 70 70 0 0 1 -60 70" stroke="${C.rd}" stroke-width="2.5" fill="none"/>` + A(-50, 77, -62, 68, C.rd, 2.5) + T(0, 100, '機首は左へ振られる → 右ラダーで打ち消す', { c: C.rd, fs: 12, b: 1 });
+      s += `</g>`;
+      return svg(340, 270, s, '図：P ファクター（上から見た図）。機首上げ（大きな迎え角）で右側の下がるブレードの迎え角が大きくなり、右側の推力が大きくなって機首が左を向く');
+    },
+    pattern() {
+      // runway along the top, landing to the left; a left-hand pattern therefore lies below it
+      let s = `<rect x="130" y="34" width="220" height="16" fill="#3a4658" stroke="${C.mut}"/>` + T(240, 46, '滑走路（着陸・離陸とも右から左へ）', { c: C.ink, fs: 10 });
+      const pts = [[120, 42], [60, 42], [40, 75], [40, 165], [70, 190], [410, 190], [440, 165], [440, 75], [420, 42], [360, 42]];
+      s += P(pts, C.cy, 2.5, 'none');
+      s += A(372, 42, 356, 42, C.cy, 2.5) + A(70, 42, 54, 46, C.cy, 2);
+      s += T(90, 30, '離陸・上昇', { c: C.cy, fs: 11 }) + T(28, 120, 'クロスウインド', { c: C.cy, fs: 11, rot: -90 });
+      s += T(240, 208, 'ダウンウインド（場周高度・滑走路と平行）', { c: C.cy, fs: 11 }) + T(454, 120, 'ベース', { c: C.cy, fs: 11, rot: 90 }) + T(400, 30, 'ファイナル', { c: C.cy, fs: 11 });
+      s += `<circle cx="150" cy="190" r="5" fill="${C.am}"/>` + T(150, 176, '滑走路端の真横：パワーを絞り降下開始', { c: C.am, fs: 10 });
+      s += `<circle cx="440" cy="75" r="5" fill="${C.gr}"/>` + T(430, 92, '接地点から約 45° 後方でベースへ', { c: C.gr, fs: 10, a: 'end' });
+      s += T(240, 120, '旋回はすべて左（反時計回り）', { c: C.mut, fs: 11 });
+      return svg(480, 220, s, '図：標準的な左回りの場周経路（トラフィックパターン）。高度はその空港の決まり（一般に地上から約 1,000 ft）');
+    },
+    windTriangle() {
+      let s = '';
+      s += A(60, 220, 260, 40, C.cy, 3) + T(120, 110, '機首方位・真対気速度', { c: C.cy, fs: 11, rot: -42 });
+      s += A(260, 40, 330, 90, C.am, 3) + T(330, 60, '風', { c: C.am, fs: 12, b: 1, a: 'start' });
+      s += A(60, 220, 330, 90, C.gr, 3) + T(220, 190, '実際の航跡・対地速度', { c: C.gr, fs: 11, rot: -26 });
+      s += `<path d="M 118 168 A 80 80 0 0 1 130 184" stroke="${C.rd}" stroke-width="2" fill="none"/>` + T(144, 196, '偏流修正角（WCA）', { c: C.rd, fs: 11, a: 'start' });
+      return svg(380, 240, s, '図：風の三角形。「行きたい航跡」を飛ぶには、風上側に機首を向ける（偏流修正）');
+    },
+    holding() {
+      let s = '';
+      s += `<circle cx="120" cy="120" r="6" fill="${C.am}"/>` + T(120, 142, 'フィックス（VOR 等）', { c: C.am, fs: 11 });
+      const race = `M120 120 L320 120 A 45 45 0 0 1 320 210 L120 210 A 45 45 0 0 1 120 120`;
+      s += `<path d="${race}" stroke="${C.cy}" stroke-width="2.5" fill="none"/>`;
+      s += A(200, 120, 215, 120, C.cy) + A(240, 210, 225, 210, C.cy);
+      s += T(220, 110, 'アウトバウンド（1 分）', { c: C.cy, fs: 11 }) + T(220, 230, 'インバウンド（1 分）', { c: C.cy, fs: 11 });
+      s += L(120, 30, 120, 290, C.mut, 1, '5 4') + L(120, 120, 200, 30, C.mut, 1, '5 4');
+      s += T(70, 60, 'パラレル', { c: C.gr, fs: 12, b: 1 }) + T(70, 78, 'エントリー', { c: C.gr, fs: 11 });
+      s += T(175, 50, 'ティアドロップ', { c: C.vi, fs: 12, b: 1 }) + T(60, 250, 'ダイレクト', { c: C.rd, fs: 12, b: 1 }) + T(60, 268, 'エントリー', { c: C.rd, fs: 11 });
+      return svg(400, 300, s, '図：右回りの標準待機経路と 3 つの入り方（どの方向からフィックスに来たかで決まる）');
+    },
+    wb() {
+      const W = 420, H = 260;
+      const f = frame(W, H, 33, 49, 1500, 2600, [34, 37, 40, 43, 46, 49], [1600, 1900, 2200, 2500], '重心位置（基準線から in）', '重量（lb）');
+      const env = [[35, 1500], [35, 1950], [41, 2550], [47.3, 2550], [47.3, 1500]];
+      let s = f.s + `<path d="${env.map((p, i) => (i ? 'L' : 'M') + f.X(p[0]) + ' ' + f.Y(p[1])).join(' ')} Z" fill="rgba(95,212,255,.12)" stroke="${C.cy}" stroke-width="2"/>`;
+      s += `<circle cx="${f.X(42.88)}" cy="${f.Y(2420)}" r="6" fill="${C.gr}"/>` + T(f.X(42.88), f.Y(2420) - 12, '例題の機体（2,420 lb・42.9 in）', { c: C.gr, fs: 11 });
+      s += T(f.X(44), f.Y(1800), '許容範囲', { c: C.cy, b: 1 }) + T(f.X(36.5), f.Y(2450), '前すぎ', { c: C.rd, fs: 11 }) + T(f.X(48.2), f.Y(2000), '後ろすぎ', { c: C.rd, fs: 11, rot: -90 });
+      return svg(W, H, s, '図：重量・重心の許容範囲（エンベロープ）の例。数値は説明用の架空のもので、実機は必ずその機体の POH で');
+    },
+    clouds() {
+      let s = '';
+      const band = (y, h, lab, col) => `<rect x="60" y="${y}" width="400" height="${h}" fill="${col}"/>` + T(56, y + h / 2 + 4, lab, { c: C.mut, fs: 10, a: 'end' });
+      s += band(20, 80, '上層 5〜13 km', 'rgba(197,140,255,.07)') + band(100, 70, '中層 2〜7 km', 'rgba(95,212,255,.07)') + band(170, 90, '下層 地上〜2 km', 'rgba(95,212,110,.07)');
+      const c = (x, y, lab, sub) => T(x, y, lab, { c: C.ink, fs: 12, b: 1 }) + T(x, y + 14, sub, { c: C.mut, fs: 10 });
+      s += c(120, 50, '巻雲 Ci', 'すじ雲') + c(230, 50, '巻積雲 Cc', 'うろこ雲') + c(340, 50, '巻層雲 Cs', 'うす雲・暈');
+      s += c(140, 130, '高積雲 Ac', 'ひつじ雲') + c(290, 130, '高層雲 As', 'おぼろ雲');
+      s += c(110, 205, '層積雲 Sc', 'うね雲') + c(200, 205, '層雲 St', '霧雲') + c(290, 205, '積雲 Cu', 'わた雲') + c(380, 205, '乱層雲 Ns', '雨雲');
+      s += `<path d="M 430 255 L 430 60 Q 400 30 470 30" stroke="${C.rd}" stroke-width="2" fill="none"/>` + T(470, 70, '積乱雲 Cb', { c: C.rd, fs: 12, b: 1, a: 'end' }) + T(470, 84, '雷・乱気流・着氷', { c: C.rd, fs: 10, a: 'end' });
+      return svg(480, 270, s, '図：10 種雲形と高さの目安。操縦士が最も警戒するのは積乱雲（Cb）と、視界を奪う層雲・霧');
+    },
+    fronts() {
+      let s = '';
+      s += `<path d="M 20 200 L 200 200 L 260 80 Q 300 40 380 40" stroke="${C.cy}" stroke-width="2.5" fill="none"/>` + T(110, 190, '寒気（重い）', { c: C.cy, fs: 11 }) + T(330, 110, '暖気', { c: C.am, fs: 11 });
+      s += `<path d="M 225 150 Q 250 60 240 30 Q 280 10 300 40 Q 320 30 320 60 Q 300 80 280 150 Z" fill="rgba(223,230,238,.35)" stroke="${C.ink}"/>` + T(300, 26, '積乱雲・にわか雨・突風', { c: C.ink, fs: 10, a: 'start' });
+      s += T(200, 225, '寒冷前線：寒気が暖気の下にもぐりこみ、暖気を急に持ち上げる → 狭い範囲で激しい天気', { c: C.mut, fs: 10 });
+      return svg(420, 240, s, '図：寒冷前線の断面。通過後は気温が下がり、風向が変わり（日本付近では南寄り→北西）、視程がよくなることが多い');
+    },
+    atm() {
+      const W = 380, H = 240, f = frame(W, H, -60, 20, 0, 12, [-60, -40, -20, 0, 20], [0, 3, 6, 9, 12], '気温（℃）', '高度（km）');
+      let s = f.s + P([[f.X(15), f.Y(0)], [f.X(-56.5), f.Y(11)], [f.X(-56.5), f.Y(12)]], C.cy, 2.5);
+      s += T(f.X(-10), f.Y(4), '1,000 ft あたり −2℃', { c: C.cy, fs: 11, a: 'start' }) + T(f.X(-10), f.Y(3.2), '（100 m あたり −0.65℃）', { c: C.mut, fs: 10, a: 'start' });
+      s += L(f.X(-60), f.Y(11), f.X(20), f.Y(11), C.am, 1, '4 3') + T(f.X(-20), f.Y(11.4), '対流圏界面（ISA では 11 km）', { c: C.am, fs: 10 });
+      return svg(W, H, s, '図：国際標準大気（ISA）。海面 15℃・1013.25 hPa、上に行くほど気温も気圧も下がる');
+    },
+    vmc() {
+      return `<table class="bk-t"><tr><th>空域・高度</th><th>飛行視程</th><th>雲からの距離（上／下／水平）</th></tr>
+<tr><td>3,000 m 以上の高度</td><td>8,000 m 以上</td><td>300 m／300 m／1,500 m</td></tr>
+<tr><td>3,000 m 未満・管制区（管制圏を含む）</td><td>5,000 m 以上</td><td>150 m／300 m／600 m</td></tr>
+<tr><td>3,000 m 未満・管制区以外</td><td>1,500 m 以上</td><td>150 m／300 m／600 m（地表・水面から 300 m 以下では、雲から離れて地表を視認し続けられること等の特例あり）</td></tr>
+<tr><td>管制圏・情報圏での離着陸など</td><td colspan="2">上に加えて、地上視程と雲高の条件あり（例：地上視程 5,000 m 以上・雲高 300 m 以上）</td></tr></table>`;
+    },
+    xwind() {
+      let h = '<table class="bk-t"><tr><th>風と滑走路の角度</th><th>横風成分</th><th>向かい風成分</th><th>風 20 kt なら</th></tr>';
+      for (const a of [10, 20, 30, 45, 60, 90]) h += `<tr><td>${a}°</td><td>${Math.round(Math.sin(a * DEG) * 100)}%</td><td>${Math.round(Math.cos(a * DEG) * 100)}%</td><td>横 ${Math.round(20 * Math.sin(a * DEG))} kt・向かい ${Math.round(20 * Math.cos(a * DEG))} kt</td></tr>`;
+      return h + '</table>';
+    },
+    stability() {
+      let s = '';
+      const cup = (x, lab, sub, path, ball) => `<path d="${path}" stroke="${C.cy}" stroke-width="2.5" fill="none"/><circle cx="${ball[0]}" cy="${ball[1]}" r="9" fill="${C.am}"/>` + T(x, 150, lab, { c: C.ink, b: 1 }) + T(x, 166, sub, { c: C.mut, fs: 10 });
+      s += cup(70, '正の静安定', '元に戻ろうとする', 'M20 60 Q70 150 120 60', [70, 96]);
+      s += cup(210, '中立', 'その場にとどまる', 'M160 105 L260 105', [210, 96]);
+      s += cup(350, '負の静安定', 'ずれがどんどん大きくなる', 'M300 120 Q350 30 400 120', [350, 66]);
+      return svg(420, 180, s, '図：静安定のたとえ。飛行機は縦（ピッチ）と方向（ヨー）に正の静安定を持つよう設計されている');
+    },
+    stableApproach() {
+      return `<table class="bk-t"><tr><th>項目</th><th>安定進入の目安（ヒバリ・フラップ 20°）</th></tr>
+<tr><td>進入角</td><td>3°（PAPI 白 2・赤 2）</td></tr><tr><td>速度</td><td>65 kt（+10／−5 kt 以内）</td></tr><tr><td>降下率</td><td>約 350 fpm（1,000 fpm を超えない）</td></tr>
+<tr><td>形態</td><td>フラップ・脚・チェックリスト完了</td></tr><tr><td>コース</td><td>センターラインの延長上。大きな修正が要らない</td></tr><tr><td>判断</td><td>地上 300〜500 ft で満たさなければ<b>ゴーアラウンド</b></td></tr></table>`;
+    },
+  };
+})();
+
+// ---------------------------------------------------------------------
+//  UI
+// ---------------------------------------------------------------------
+function bookLoad() {
+  if (BK.prog) return BK.prog;
+  let p = null; try { p = JSON.parse(localStorage.getItem('sorajima-book') || 'null'); } catch (e) { p = null; }
+  BK.prog = Object.assign({ read: {}, last: null }, p || {});
+  return BK.prog;
+}
+function bookSave() { try { localStorage.setItem('sorajima-book', JSON.stringify(BK.prog)); } catch (e) { /* storage unavailable */ } }
+function bookAll() { const out = []; for (const ch of BOOK) for (const s of ch.secs) out.push([ch, s]); return out; }
+function bookHtml(s) { return typeof s.h === 'function' ? s.h() : s.h; }
+function bookText(s) { if (s._txt === undefined) { const d = document.createElement('div'); d.innerHTML = bookHtml(s); s._txt = (s.t + ' ' + d.textContent).toLowerCase(); } return s._txt; }
+function openBook(secId, back) {
+  bookLoad();
+  BK.open = true; BK.back = back || null;
+  for (const id of ['menu', 'school', 'guide']) { const e = $(id); if (e && !e.hidden) { if (!BK.back) BK.back = id; e.hidden = true; } }
+  $('book').hidden = false;
+  renderBookNav('');
+  showBookSec(secId || BK.prog.last || BOOK[0].secs[0].id);
+}
+function closeBook() {
+  BK.open = false; $('book').hidden = true;
+  const b = BK.back; BK.back = null;
+  if (b === 'school') { openSchool(); } else if (b === 'guide') { $('guide').hidden = false; } else if (game.state === 'paused') { $('menu').hidden = false; } else showMenu(false);
+}
+function renderBookNav(q) {
+  const nav = $('bk-nav'), P = bookLoad(); nav.textContent = '';
+  const all = bookAll(); q = (q || '').trim().toLowerCase();
+  let nRead = 0; for (const [, s] of all) if (P.read[s.id]) nRead++;
+  $('bk-prog').textContent = `既読 ${nRead} / ${all.length}`;
+  const sel = $('bk-sel'); sel.textContent = '';
+  for (const ch of BOOK) {
+    const hits = q ? ch.secs.filter(s => bookText(s).includes(q)) : ch.secs;
+    if (!hits.length) continue;
+    const sec = document.createElement('section'); const h = document.createElement('h3'); h.textContent = ch.t; sec.append(h);
+    const og = document.createElement('optgroup'); og.label = ch.t;
+    for (const s of hits) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'bk-item' + (P.read[s.id] ? ' done' : '') + (BK.cur === s.id ? ' sel' : ''); b.dataset.sec = s.id;
+      b.innerHTML = `<span class="bk-num">${s.n}</span><span>${s.t}</span>`;
+      b.addEventListener('click', () => showBookSec(s.id)); sec.append(b);
+      const o = document.createElement('option'); o.value = s.id; o.textContent = `${s.n} ${s.t}`; og.append(o);
+    }
+    nav.append(sec); sel.append(og);
+  }
+  if (q && !nav.children.length) { const p = document.createElement('p'); p.className = 'bk-none'; p.textContent = `「${q}」を含む節はありません`; nav.append(p); }
+  if (BK.cur) sel.value = BK.cur;
+}
+function showBookSec(id) {
+  const all = bookAll(), i = Math.max(0, all.findIndex(([, s]) => s.id === id)), [ch, s] = all[i], P = bookLoad();
+  BK.cur = s.id; P.last = s.id; P.read[s.id] = 1; bookSave();
+  const art = $('bk-art'); art.scrollTop = 0;
+  $('bk-chap').textContent = ch.t;
+  $('bk-title').textContent = `${s.n}　${s.t}`;
+  $('bk-body').innerHTML = bookHtml(s);
+  const foot = $('bk-foot'); foot.textContent = '';
+  const mk = (txt, cls, fn, dis) => { const b = document.createElement('button'); b.type = 'button'; b.className = cls; b.textContent = txt; b.disabled = !!dis; b.addEventListener('click', fn); foot.append(b); };
+  mk('← 前の節', 'sch-sub', () => showBookSec(all[i - 1][1].id), i === 0);
+  const sp = document.createElement('span'); sp.textContent = `${i + 1} / ${all.length}`; foot.append(sp);
+  mk(i === all.length - 1 ? '最後の節です' : '次の節 →', 'sch-go', () => showBookSec(all[i + 1][1].id), i === all.length - 1);
+  // live widgets inside the page
+  for (const b of $('bk-body').querySelectorAll('[data-lesson]')) b.addEventListener('click', () => { const id2 = b.dataset.lesson; BK.open = false; $('book').hidden = true; BK.back = null; openSchool(); startLesson(id2); });
+  for (const b of $('bk-body').querySelectorAll('[data-quiz]')) b.addEventListener('click', () => { const id2 = b.dataset.quiz; BK.open = false; $('book').hidden = true; BK.back = null; openSchool(); startLesson(id2); });
+  for (const b of $('bk-body').querySelectorAll('[data-sec]')) b.addEventListener('click', () => showBookSec(b.dataset.sec));
+  for (const b of $('bk-body').querySelectorAll('[data-calc]')) BOOK_CALC[b.dataset.calc] && BOOK_CALC[b.dataset.calc](b);
+  renderBookNav($('bk-q').value);
+  const cur = $('bk-nav').querySelector('.bk-item.sel'); if (cur) cur.scrollIntoView({ block: 'nearest' });
+}
+// small interactive calculators embedded in pages
+const BOOK_CALC = {
+  turn(el) {
+    el.innerHTML = '<label>速度 <input type="number" value="100" min="40" max="300"> kt</label><label>バンク <input type="number" value="30" min="5" max="75"> °</label><output></output>';
+    const [v, b] = el.querySelectorAll('input'), out = el.querySelector('output');
+    const f = () => { const V = +v.value, B = +b.value * DEG, tn = Math.tan(B); out.innerHTML = `荷重倍数 <b>${(1 / Math.cos(B)).toFixed(2)} G</b>・旋回率 <b>${(1091 * tn / V).toFixed(1)}°/秒</b>・360° に <b>${Math.round(360 / (1091 * tn / V))} 秒</b>・半径 <b>${Math.round(V * V / (11.26 * tn)).toLocaleString()} ft</b>・標準旋回のバンク <b>${Math.round(Math.atan(3 * V / 1091) / DEG)}°</b>`; };
+    v.addEventListener('input', f); b.addEventListener('input', f); f();
+  },
+  da(el) {
+    el.innerHTML = '<label>標高・高度 <input type="number" value="0" step="500"> ft</label><label>気温 <input type="number" value="30"> ℃</label><label>QNH <input type="number" value="1013" step="1"> hPa</label><output></output>';
+    const [h, t, q] = el.querySelectorAll('input'), out = el.querySelector('output');
+    const f = () => { const pa = +h.value + (1013.25 - +q.value) * 30, isa = 15 - 2 * pa / 1000, da = pa + 120 * (+t.value - isa); out.innerHTML = `気圧高度 <b>${Math.round(pa).toLocaleString()} ft</b>・その高度の ISA 気温 <b>${isa.toFixed(0)}℃</b>・密度高度 <b>${Math.round(da).toLocaleString()} ft</b>（性能は「この高さ」相当に落ちる）`; };
+    for (const e of [h, t, q]) e.addEventListener('input', f); f();
+  },
+  xwind(el) {
+    el.innerHTML = '<label>滑走路 <input type="number" value="34" min="1" max="36"> （番号）</label><label>風向 <input type="number" value="300" step="10"> °</label><label>風速 <input type="number" value="15"> kt</label><output></output>';
+    const [r, d, s] = el.querySelectorAll('input'), out = el.querySelector('output');
+    const f = () => { const a = ((+d.value - +r.value * 10) % 360 + 540) % 360 - 180, x = +s.value * Math.sin(a * DEG), hw = +s.value * Math.cos(a * DEG);
+      out.innerHTML = `角度 <b>${Math.abs(Math.round(a))}°</b>・横風 <b>${Math.abs(x).toFixed(0)} kt（${x >= 0 ? '右' : '左'}から）</b>・${hw >= 0 ? '向かい風' : '<span style="color:#ff6a5a">追い風</span>'} <b>${Math.abs(hw).toFixed(0)} kt</b>`; };
+    for (const e of [r, d, s]) e.addEventListener('input', f); f();
+  },
+  wca(el) {
+    el.innerHTML = '<label>真航路 <input type="number" value="090"> °</label><label>真対気速度 <input type="number" value="105"> kt</label><label>風向 <input type="number" value="030"> °</label><label>風速 <input type="number" value="20"> kt</label><output></output>';
+    const [c, v, wd, ws] = el.querySelectorAll('input'), out = el.querySelector('output');
+    const f = () => { const tc = +c.value * DEG, tas = +v.value, a = (+wd.value) * DEG - tc, w = +ws.value, xw = w * Math.sin(a), wca = Math.asin(clamp(xw / tas, -1, 1)), gs = tas * Math.cos(wca) - w * Math.cos(a);
+      out.innerHTML = `偏流修正角 <b>${xw >= 0 ? '右' : '左'}へ ${Math.abs(wca / DEG).toFixed(0)}°</b>・真針路 <b>${String(Math.round((((tc + wca) / DEG) % 360 + 360) % 360)).padStart(3, '0')}°</b>・対地速度 <b>${Math.round(gs)} kt</b>`; };
+    for (const e of [c, v, wd, ws]) e.addEventListener('input', f); f();
+  },
+  wb(el) {
+    const rows = [['空虚重量', 1640, 39.0], ['前席（操縦士・同乗者）', 340, 37.0], ['後席', 150, 73.0], ['燃料（40 gal × 6 lb）', 240, 48.0], ['手荷物', 50, 95.0]];
+    el.innerHTML = '<table class="bk-t"><tr><th>項目</th><th>重量 lb</th><th>アーム in</th><th>モーメント</th></tr>' + rows.map((r, i) => `<tr><td>${r[0]}</td><td><input type="number" value="${r[1]}" data-i="${i}"></td><td>${r[2]}</td><td class="m"></td></tr>`).join('') + '<tr><th>合計</th><th class="tw"></th><th class="cg"></th><th class="tm"></th></tr></table><output></output>';
+    const ins = el.querySelectorAll('input'), out = el.querySelector('output');
+    const f = () => { let tw = 0, tm = 0; ins.forEach((inp, i) => { const w = +inp.value, m = w * rows[i][2]; tw += w; tm += m; el.querySelectorAll('.m')[i].textContent = Math.round(m).toLocaleString(); });
+      const cg = tm / tw, fwd = tw <= 1950 ? 35 : 35 + (tw - 1950) / 600 * 6, ok = tw <= 2550 && cg >= fwd && cg <= 47.3;
+      el.querySelector('.tw').textContent = Math.round(tw).toLocaleString(); el.querySelector('.tm').textContent = Math.round(tm).toLocaleString(); el.querySelector('.cg').textContent = cg.toFixed(2);
+      out.innerHTML = ok ? `<span style="color:#5fd46a">範囲内</span>：重量 ${Math.round(tw)} lb（最大 2,550）・重心 ${cg.toFixed(1)} in（許容 ${fwd.toFixed(1)}〜47.3）` : `<span style="color:#ff6a5a">範囲外</span>：${tw > 2550 ? '重量超過' : cg < fwd ? '重心が前すぎ' : '重心が後ろすぎ'}（重量 ${Math.round(tw)} lb・重心 ${cg.toFixed(1)} in、許容 ${fwd.toFixed(1)}〜47.3）`; };
+    ins.forEach(i => i.addEventListener('input', f)); f();
+  },
+  fuel(el) {
+    el.innerHTML = '<label>距離 <input type="number" value="150"> NM</label><label>対地速度 <input type="number" value="100"> kt</label><label>燃料消費 <input type="number" value="8.5" step="0.1"> gal/h</label><label>予備 <input type="number" value="45"> 分</label><output></output>';
+    const [d, g, b, r] = el.querySelectorAll('input'), out = el.querySelector('output');
+    const f = () => { const t = +d.value / +g.value, need = (t + +r.value / 60) * +b.value; out.innerHTML = `飛行時間 <b>${Math.floor(t)} 時間 ${Math.round(t % 1 * 60)} 分</b>・必要燃料 <b>${need.toFixed(1)} gal</b>（うち予備 ${(+r.value / 60 * +b.value).toFixed(1)} gal）＋地上走行・上昇分を加える`; };
+    for (const e of [d, g, b, r]) e.addEventListener('input', f); f();
+  },
+};
+function setupBook() {
+  for (const id of ['open-book', 'sch-book', 'guide-book']) { const e = $(id); if (e) e.addEventListener('click', () => openBook(null)); }
+  $('bk-close').addEventListener('click', closeBook);
+  $('bk-q').addEventListener('input', e => renderBookNav(e.target.value));
+  $('bk-sel').addEventListener('change', e => showBookSec(e.target.value));
+  addEventListener('keydown', e => {
+    if (!BK.open || e.target.tagName === 'INPUT') return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); closeBook(); }
+    else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault(); e.stopImmediatePropagation();
+      const all = bookAll(), i = all.findIndex(([, s]) => s.id === BK.cur), j = i + (e.key === 'ArrowRight' ? 1 : -1);
+      if (j >= 0 && j < all.length) showBookSec(all[j][1].id);
+    }
+  }, true);
+  // number the sections
+  BOOK.forEach((ch, ci) => ch.secs.forEach((s, si) => { s.n = ch.n === 0 ? `序.${si + 1}` : `${ch.n}.${si + 1}`; }));
+}
+// shorthand used by the chapters
+const bk = {
+  key: (...xs) => `<div class="bk-key"><b>ポイント</b><ul>${xs.map(x => `<li>${x}</li>`).join('')}</ul></div>`,
+  warn: x => `<div class="bk-warn">${x}</div>`,
+  q: (q, a) => `<details class="bk-q"><summary>例題：${q}</summary><div>${a}</div></details>`,
+  sim: (txt, ...lessons) => `<div class="bk-sim"><b>シミュレータで体験</b><p>${txt}</p>${lessons.map(([id, t]) => `<button type="button" class="sch-sub" data-lesson="${id}">${t}</button>`).join('')}</div>`,
+  quiz: (id, t) => `<button type="button" class="sch-sub bk-qz" data-quiz="${id}">確認テスト：${t}</button>`,
+  calc: id => `<div class="bk-calc" data-calc="${id}"></div>`,
+  see: (id, t) => `<button type="button" class="bk-link" data-sec="${id}">→ ${t}</button>`,
+  f: x => `<div class="bk-formula">${x}</div>`,
+};
+// ---------------------------------------------------------------------
+//  textbook: introduction, principles of flight, aircraft systems
+// ---------------------------------------------------------------------
+BOOK.push({ n: 0, id: 'intro', t: '序章　この教科書の使い方', secs: [
+  { id: 'intro.use', t: '読み方と全体の地図', h: `
+<p>この教科書は、<b>飛行機のことをほとんど知らない人</b>が、自家用操縦士の学科試験と実地試験で必要になる知識を、ゼロから順番に身につけられるように書いています。専門用語は初めて出てくるところで必ず説明します。</p>
+<table class="bk-t"><tr><th>章</th><th>内容</th><th>学科試験の科目との対応</th></tr>
+<tr><td>1 飛行の原理</td><td>飛行機はなぜ飛ぶか、失速・旋回・安定性</td><td>航空工学</td></tr>
+<tr><td>2 機体と装備</td><td>エンジン・燃料・電気・計器のしくみ</td><td>航空工学</td></tr>
+<tr><td>3 性能と重量・重心</td><td>密度高度、離着陸距離、重心の計算</td><td>航空工学</td></tr>
+<tr><td>4 航空気象</td><td>大気、雲、前線、雷雨、METAR の読み方</td><td>航空気象</td></tr>
+<tr><td>5 空中航法</td><td>地図、方位、風の修正、VOR、燃料計算</td><td>空中航法</td></tr>
+<tr><td>6 航空通信</td><td>無線の話し方、管制機関、緊急通信</td><td>航空通信</td></tr>
+<tr><td>7 航空法規</td><td>免許、有視界飛行の条件、空域、規則</td><td>航空法規</td></tr>
+<tr><td>8 人間の能力と限界</td><td>低酸素、錯覚、判断、CRM</td><td>（各科目・実地試験の口述）</td></tr>
+<tr><td>9 飛行操作</td><td>点検、離着陸、場周経路、空中操作</td><td>実地試験</td></tr>
+<tr><td>10 緊急操作</td><td>エンジン故障、火災、迷ったとき</td><td>実地試験</td></tr>
+<tr><td>11 計器飛行の基礎</td><td>計器だけで飛ぶ考え方、ILS、待機</td><td>計器飛行証明の入口</td></tr>
+<tr><td>12 シミュレータの使い方</td><td>どの章をどの課目で練習するか</td><td>—</td></tr></table>
+${bk.key('1 章から順に読むのがおすすめです。わからない言葉は上の検索欄で探せます', '各節の最後に「シミュレータで体験」があり、ボタンを押すとその課目がすぐに始まります', '読んだ節には左の目次で ✓ が付きます（この端末に保存）')}
+${bk.warn('<b>大切な注意：</b>この教科書は学習の入口として書いた要約です。法令・試験基準・機体の数値は改正や機体ごとの違いがあります。実際の訓練・受験・飛行では、必ず<b>教官の指導</b>、<b>その機体の飛行規程（POH／AFM）</b>、最新の<b>航空法令・AIP（航空路誌）</b>・試験の公式情報を確認してください。')}` },
+  { id: 'intro.path', t: 'パイロットになるまでの道のり', h: `
+<p>日本で飛行機を操縦するには、国土交通大臣の<b>航空従事者技能証明</b>（いわゆるライセンス）と、<b>航空身体検査証明</b>が必要です。代表的な順番は次のとおりです。</p>
+<ol><li><b>自家用操縦士</b>：趣味や自分のための飛行。報酬を受けて飛ぶことはできません。</li>
+<li><b>事業用操縦士</b>：報酬を受けて操縦できる。プロの第一歩。</li>
+<li><b>計器飛行証明</b>：雲の中など、外が見えない状態で計器だけを頼りに飛ぶ資格。エアラインには必須。</li>
+<li><b>多発限定</b>・<b>型式限定</b>：エンジンが 2 つ以上の飛行機、大型機ごとの資格。</li>
+<li><b>定期運送用操縦士</b>：エアラインの機長に必要な最上位の資格。</li></ol>
+<p>それぞれに<b>学科試験</b>（筆記）と<b>実地試験</b>（口述＋実際の飛行）があります。自家用の学科は「航空工学・航空気象・空中航法・航空通信・航空法規」などの科目で構成されます（試験科目・受験資格・必要な飛行時間の最新の詳細は国土交通省の公式情報で確認してください）。</p>
+${bk.key('ライセンス（技能証明）と身体検査証明の両方が有効でないと飛べない', '学科で「なぜ」を理解し、実技で「どうやるか」を体に覚えさせる。この教科書は前者、シミュレータは後者の練習台')}
+` },
+] });
+
+BOOK.push({ n: 1, id: 'aero', t: '第 1 章　飛行の原理', secs: [
+  { id: 'aero.forces', t: '飛行機に働く 4 つの力', h: () => `
+<p>空を飛んでいる飛行機には、いつも次の 4 つの力が働いています。</p>
+${FIG.forces()}
+<ul><li><b>重力（Weight）</b>：地球が機体を下へ引く力。機体・燃料・人・荷物の重さの合計。</li>
+<li><b>揚力（Lift）</b>：翼が空気を押し下げることで生まれる、機体を持ち上げる力。</li>
+<li><b>推力（Thrust）</b>：プロペラやジェットエンジンが機体を前へ押す力。</li>
+<li><b>抗力（Drag）</b>：空気の抵抗。前進を邪魔する力。</li></ul>
+<p>高度も速度も変わらない<b>水平直線飛行</b>では、揚力＝重力、推力＝抗力で<b>つり合って</b>います。つり合いが崩れると、崩れた方向へ機体が加速します。たとえばパワーを上げて推力＞抗力にすると、速度が増えます。速度が増えると揚力も増えるので、何もしないと機体は上昇を始めます。</p>
+${bk.key('つり合っている＝「止まっている」ではなく「一定の速度・一定の方向で動き続けている」', '上昇中も、速度と上昇率が一定なら力はつり合っている（揚力は重力より少しだけ小さく、推力の一部が重力の一部を支えている）')}
+${bk.q('水平飛行中、高度を変えずに速度だけを上げたい。操作は？', 'パワーを上げる（推力＞抗力で加速）。同時に、速度が増えて揚力が増える分だけ<b>機首を少し下げて</b>迎え角を減らし、揚力を重力と同じに保つ。トリムも取り直す。')}
+${bk.sim('「物理の見える化」（飛行中に J キー）で、4 つの力の矢印をリアルタイムで見られます。', ['b1', '姿勢・出力・トリム'])}` },
+  { id: 'aero.lift', t: '揚力はどうやって生まれるか', h: () => `
+<p>翼は、前から来る空気を<b>下向きに曲げて</b>送り出す形と角度になっています。空気を下へ押せば、その反作用で翼は上へ押されます（ニュートンの第 3 法則）。このとき翼の上面では空気が速く流れて圧力が下がり、下面では圧力が上がります（ベルヌーイの定理）。「上が吸い、下が押す」圧力差の合計が揚力です。2 つの説明は矛盾せず、同じ現象を別の角度から見たものです。</p>
+<p>揚力の大きさは次の式で表されます。</p>
+${bk.f('L ＝ ½ × ρ × V² × S × C<sub>L</sub>')}
+<table class="bk-t"><tr><th>記号</th><th>意味</th><th>操縦士が変えられるか</th></tr>
+<tr><td>ρ（ロー）</td><td>空気の密度。高い所・暑い日ほど小さい</td><td>×（場所と天気で決まる）</td></tr>
+<tr><td>V</td><td>対気速度（空気に対する速さ）</td><td>○ パワーと姿勢</td></tr>
+<tr><td>S</td><td>翼の面積</td><td>△ フラップで少し増える</td></tr>
+<tr><td>C<sub>L</sub></td><td>揚力係数。主に<b>迎え角</b>で決まる</td><td>○ 操縦桿（エレベーター）</td></tr></table>
+<p>V は<b>2 乗</b>で効きます。速度が 2 倍なら揚力は 4 倍。だから遅く飛ぶときは、大きな迎え角（大きな C<sub>L</sub>）やフラップが必要になります。</p>
+${bk.q('ヒバリ（重さ 1,050 kg、翼面積 16.2 m²）が海面上を 100 kt（51.4 m/s）で水平飛行している。必要な C<sub>L</sub> は？', '揚力＝重力＝1,050 × 9.81 ≒ 10,300 N。½ρV²S ＝ 0.5 × 1.225 × 51.4² × 16.2 ≒ 26,200。C<sub>L</sub> ＝ 10,300 ÷ 26,200 ≒ <b>0.39</b>。速度が 70 kt なら 0.80 と約 2 倍必要になる（速度の 2 乗に反比例）。')}` },
+  { id: 'aero.aoa', t: '迎え角と揚力係数', h: () => `
+<p><b>迎え角（AOA：Angle of Attack）</b>は、翼の前縁と後縁を結んだ線（翼弦線）と、<b>相対風</b>（翼に当たる空気の流れ）との角度です。</p>
+${FIG.aoa()}
+<p>よく誤解されるのが「迎え角＝機首の上げ下げ（ピッチ角）」という思い込みです。<b>ピッチ角は地平線に対する角度、迎え角は空気の流れに対する角度</b>で、別物です。降下中は機首が水平線より下でも、迎え角はプラスで揚力を出しています。</p>
+${FIG.liftCurve()}
+<p>揚力係数は迎え角にほぼ比例して増えますが、ある角度（<b>臨界迎え角</b>、一般的な軽飛行機で約 15〜18°）を超えると、翼の上面から空気の流れがはがれて揚力が急に減ります。これが<b>失速</b>です。</p>
+${bk.key('操縦桿を引く＝迎え角を増やす。押す＝迎え角を減らす', '失速は「速度」ではなく「迎え角」で起きる。どんな速度・姿勢でも臨界迎え角を超えれば失速する', 'フラップを下げると同じ迎え角で揚力が増える（曲線が上へずれる）。臨界迎え角は少し小さくなる')}` },
+  { id: 'aero.drag', t: '抗力と揚抗比・最良滑空速度', h: () => `
+<p>抗力は大きく 2 種類に分けられます。</p>
+<ul><li><b>有害抗力</b>：機体の形・表面の摩擦・脚やアンテナなどの出っ張りによる抵抗。<b>速度の 2 乗に比例して増える</b>。</li>
+<li><b>誘導抗力</b>：揚力を作ることの「副作用」。翼端で下面から上面へ空気が回り込む渦（翼端渦）によって、揚力がわずかに後ろへ傾くために生まれる。<b>遅いほど（迎え角が大きいほど）大きい</b>。</li></ul>
+${FIG.dragCurve()}
+<p>2 つを足した<b>全抗力</b>は、ある速度で最小になります。ここで<b>揚力と抗力の比（揚抗比 L/D）</b>が最大になり、エンジンが止まったときに最も遠くまで滑空できます。これが<b>最良滑空速度</b>（ヒバリでは 65〜68 kt 付近）です。滑空比 9（L/D＝9）なら、高度 1,000 m から約 9 km 滑空できます。</p>
+${bk.key('最良滑空速度より遅くても速くても、滑空距離は短くなる。「遠くへ行きたいから機首を上げる」は逆効果', '重い機体は最良滑空速度が少し速くなるが、滑空比そのものはほとんど変わらない', '向かい風では最良滑空速度より少し速く、追い風では少し遅く飛ぶと、地面に対して遠くまで行ける')}
+${bk.sim('エンジンが止まる訓練で、最良滑空速度を保つ練習ができます。J キーの「揚抗比 L/D」も見てみましょう。', ['e3', '上空でのエンジン故障'])}` },
+  { id: 'aero.stall', t: '失速とスピン', h: () => `
+<p>失速は<b>臨界迎え角を超えたとき</b>に起きます。兆候は次のとおりです。</p>
+<ul><li>失速警報（ブザー・ホーン）が鳴る（臨界の 5〜10 kt 手前）</li><li>操縦桿の手ごたえが軽く、ふにゃっとする</li><li>機体がガタガタ震える（バフェット）</li><li>機首が下がる・片翼が落ちる</li></ul>
+<h3>失速からの回復（基本手順）</h3>
+<ol><li><b>操縦桿を前へ</b>：迎え角を減らす（最優先。これをしない限り回復しない）</li><li><b>翼を水平に</b>：ラダーも使って、落ちた翼を戻す。失速中にエルロンを大きく使うと、かえって片翼の失速を深めることがある</li><li><b>パワーを最大に</b></li><li>速度が回復したら、ゆるやかに引き起こして上昇へ（急に引くと<b>二次失速</b>）</li></ol>
+<h3>失速速度を変えるもの</h3>
+<table class="bk-t"><tr><th>条件</th><th>失速速度（指示対気速度）</th></tr><tr><td>重量が重い</td><td>上がる</td></tr><tr><td>旋回・引き起こし（荷重倍数が大きい）</td><td>上がる（√荷重倍数 倍）</td></tr><tr><td>フラップを下げる</td><td>下がる</td></tr><tr><td>重心が前</td><td>上がる（尾翼の下向きの力が増える）</td></tr><tr><td>高度が高い</td><td>指示対気速度ではほぼ変わらない（真対気速度は上がる）</td></tr><tr><td>翼に着氷・霜・汚れ</td><td>大きく上がる（離陸前に必ず除去）</td></tr></table>
+<h3>スピン</h3>
+<p>失速した状態で、<b>横滑り（ラダーの踏み過ぎ・踏み足らず）</b>があると、片方の翼だけが深く失速して機体が回転しながら落ちていく状態＝<b>スピン</b>に入ります。特に危ないのは、ファイナルへの旋回でオーバーシュートしそうになり、ラダーで無理に機首を回しながら操縦桿を引くケースです。</p>
+<p>一般的な回復手順（<b>PARE</b>）：<b>P</b>ower アイドル → <b>A</b>ilerons 中立 → <b>R</b>udder 回転と反対へいっぱい → <b>E</b>levator 前へ。回転が止まったらラダー中立、引き起こす。<b>実際の手順は機体の POH に従う</b>こと。</p>
+${bk.key('失速＝迎え角の問題。回復の第一歩は必ず「前へ」', 'スピンは「失速＋横滑り」。低高度の旋回ではボールを中央に、速度を十分に')}
+${bk.sim('パワーオフ失速（着陸形態）とパワーオン失速（離陸形態）を体験し、回復で失う高度を採点します。', ['b7', 'パワーオフ失速'], ['b8', 'パワーオン失速'])}` },
+  { id: 'aero.turn', t: '旋回の物理と荷重倍数', h: () => `
+<p>飛行機は、ラダーだけで向きを変えるのではなく、<b>機体を傾けて（バンク）揚力を横へ傾け</b>、その横向きの成分で曲がります。揚力の一部が横向きに使われるので、高度を保つには<b>揚力を増やす（操縦桿を少し引く）</b>必要があります。</p>
+${bk.f('荷重倍数 n ＝ 1 ÷ cos（バンク角）　　旋回中の失速速度 ＝ 通常の失速速度 × √n')}
+${FIG.turnTable()}
+<p>バンク 60° では 2 G。体重も機体の「重さ」も 2 倍になったのと同じで、失速速度は約 1.4 倍（ヒバリなら 48 kt → 68 kt）。急旋回が危ない理由です。</p>
+${bk.f('旋回率（°/秒）≒ 1,091 × tan（バンク）÷ 速度（kt）　　旋回半径（ft）≒ 速度² ÷（11.26 × tan（バンク））')}
+<p>計器飛行で基本となる<b>標準旋回（毎秒 3°、2 分で 360°）</b>に必要なバンクは、おおよそ「<b>速度（kt）÷ 10 ＋ 7</b>」度です。100 kt なら約 17°。</p>
+${bk.calc('turn')}
+<h3>旋回中の操作</h3>
+<ul><li>バンクを入れると同時に、<b>エルロンと同じ側のラダー</b>を少し踏む（逆ヨーの打ち消し）。ボールを中央に保つ＝<b>釣り合い旋回（コーディネーテッド・ターン）</b></li>
+<li>バンク 30° を超えると、機体はさらに傾こうとする（<b>オーバーバンキング傾向</b>）。外側の翼が速く動いて揚力が大きいため。少し反対側にエルロンを当てる</li>
+<li>ロールアウトは目標の針路の手前（バンク角の半分くらいの角度）から始める</li></ul>
+${bk.sim('中程度の旋回（30°）と急旋回（45°）で、高度とバンクの維持を練習します。', ['b4', '中程度の旋回'], ['b5', '急旋回'])}` },
+  { id: 'aero.stab', t: '安定性（縦・横・方向）', h: () => `
+${FIG.stability()}
+<p><b>静安定</b>は、何かでずれたときに「元に戻ろうとする力が働くか」。<b>動安定</b>は、戻る途中の揺れが時間とともに小さくなるか、です。</p>
+<table class="bk-t"><tr><th>軸</th><th>動き</th><th>主な操縦翼面</th><th>安定を生むもの</th></tr>
+<tr><td>縦軸まわり（ロール）</td><td>傾く</td><td>エルロン（補助翼）</td><td>上反角（翼が V 字）、高翼配置</td></tr>
+<tr><td>横軸まわり（ピッチ）</td><td>機首の上げ下げ</td><td>エレベーター（昇降舵）</td><td>重心が揚力の中心より前にあること＋水平尾翼</td></tr>
+<tr><td>垂直軸まわり（ヨー）</td><td>機首の左右</td><td>ラダー（方向舵）</td><td>垂直尾翼（風見鶏と同じ）</td></tr></table>
+<h3>縦の安定と重心</h3>
+<p>一般的な飛行機は<b>重心が主翼の揚力の中心より前</b>にあり、機首が下がろうとするのを、水平尾翼が下向きの力で支えています。機首が上がって速度が落ちると尾翼の力が弱まって機首が下がり、速度が戻る——この「速度を一定に保とうとする性質」があるので、<b>トリムを取った速度</b>で飛び続けます。重心が後ろすぎると、この安定が失われ、失速やスピンから回復できなくなることがあります。</p>
+<h3>知っておきたい固有の動き</h3>
+<ul><li><b>フゴイド</b>：速度と高度がゆっくり（数十秒周期）入れ替わる波。トリムが取れていれば自然に収まる</li>
+<li><b>ダッチロール</b>：横揺れと機首の左右振れが連動する揺れ。多くの機体では弱く減衰する（大型機はヨーダンパーで抑える）</li>
+<li><b>スパイラル不安定</b>：バンクが少しずつ深くなり、機首が下がって速度が増えながら螺旋を描いていく。雲の中で姿勢がわからなくなると陥る（<b>墓場のスパイラル</b>）</li></ul>
+${bk.key('重心位置は安定性そのもの。重量・重心の計算（第 3 章）は安全のため', '「トリムを取れば手を離しても飛ぶ」のは縦の静安定のおかげ')}` },
+  { id: 'aero.left', t: '左偏向傾向（右ラダーが必要な理由）と逆ヨー', h: () => `
+<p>操縦席から見て時計回りにプロペラが回る単発機（日本の練習機のほとんど）は、<b>高出力・低速・大迎え角</b>のとき機首が左へ向こうとします。原因は 4 つです。</p>
+<ol><li><b>後流（スリップストリーム）</b>：プロペラが送る空気がらせん状に機体を回り、垂直尾翼の左側に当たって機首を左へ押す。低速・高出力ほど強い（最大の要因）</li>
+<li><b>P ファクター</b>：機首上げ姿勢では右側の下がるブレードの迎え角が大きく推力が大きい。推力の中心が右にずれ、機首が左へ</li>
+<li><b>トルク</b>：プロペラを右へ回す反作用で機体が左へ傾こうとする。地上では左の車輪が強く押し付けられ左へ曲がる</li>
+<li><b>ジャイロ効果（歳差）</b>：回転するプロペラの向きを変えると、90° 先に力が現れる。機首上げで右へ、尾輪式で尾を上げると左へ振れる</li></ol>
+${FIG.leftTurning()}
+<p>多くの機体は、巡航で打ち消されるように垂直尾翼やエンジンの取り付けが少しずらしてあります。そのため<b>巡航ではほぼ打ち消され、離陸・上昇（高出力・低速）では右ラダー、アイドルで降下中はわずかに左ラダー</b>が必要になります。</p>
+<h3>逆ヨー（アドバース・ヨー）</h3>
+<p>右へ旋回しようと右エルロンを使うと、上がる左翼は揚力が増えて抗力（誘導抗力）も増えます。すると左翼が後ろへ引かれ、<b>機首は一瞬、曲がりたい方と反対（左）を向きます</b>。これを打ち消すため、バンクを入れるときは<b>エルロンと同じ側のラダーを一緒に踏みます</b>。</p>
+${bk.key('上昇中にボールが右に寄っていたら「ボールを踏む」＝右ラダー', '巡航でボールが中央でも、パワーを変えたらボールを見直す')}
+${bk.sim('このシミュレータはこれらの効果を計算しています。メニューの「自動ラダー」を OFF（または飛行中に U キー）にすると、離陸・上昇で右ラダー（E キー）が必要になり、旋回では逆ヨーが体験できます。J キーの「物理の見える化」に必要なラダー量が表示されます。', ['t1', '通常離陸'])}` },
+  { id: 'aero.ge', t: '地面効果とフラップ', h: () => `
+<h3>地面効果</h3>
+<p>翼が地面に近づく（おおむね<b>翼幅より低い</b>高さ）と、地面が翼端渦と吹き下ろしを邪魔するので、<b>誘導抗力が減り、揚力が少し増えます</b>。</p>
+<ul><li>着陸：フレアで機体が思ったより沈まず、長く浮いて滑走路を使い過ぎる（フロート）。速すぎる進入の典型的な結果</li>
+<li>離陸：地面効果の中では浮けても、地面から離れると抗力が増えて沈むことがある。十分な速度になるまで無理に上昇しない（特に短い・柔らかい滑走路）</li></ul>
+<h3>フラップ</h3>
+<p>主翼の後ろ側を下げて、翼の反りと面積を増やす装置です。</p>
+<table class="bk-t"><tr><th>角度</th><th>効果</th><th>主な使い道</th></tr><tr><td>10°前後</td><td>揚力が増え、抗力の増加は小さい</td><td>離陸（滑走距離を短く）</td></tr><tr><td>20°</td><td>揚力も抗力も増える</td><td>進入の途中</td></tr><tr><td>30°以上</td><td>抗力が大きく増える（降下角を深くできる）</td><td>着陸（遅い速度で、急な角度で降りる）</td></tr></table>
+${bk.key('フラップは白い帯（速度計）の上限速度（Vfe）以下でだけ使う', 'ゴーアラウンドではフラップを一度に全部上げない。段階的に上げる（一気に上げると揚力が抜けて沈む）')}
+${bk.sim('着陸と短距離着陸で、フラップを使った進入と、フレアでの浮き（地面効果）を体験します。', ['t3', '通常着陸'], ['t6', '短距離着陸'])}` },
+  { id: 'aero.vn', t: '速度の制限と V-n 線図', h: () => `
+<p>機体の強さには限界があり、<b>速度</b>と<b>荷重倍数（G）</b>の組み合わせで「飛んでよい範囲」が決まっています。</p>
+${FIG.vn()}
+<table class="bk-t"><tr><th>記号</th><th>名前</th><th>意味（ヒバリの値）</th></tr>
+<tr><td>Vs0</td><td>着陸形態の失速速度</td><td>白い帯の下端（40 kt）</td></tr><tr><td>Vs1</td><td>通常形態の失速速度</td><td>緑の帯の下端（47〜48 kt）</td></tr>
+<tr><td>Vfe</td><td>フラップ下げ最大速度</td><td>白い帯の上端（85 kt）</td></tr><tr><td>Va</td><td>設計運動速度</td><td>これ以下なら舵をいっぱいに使っても（1 回なら）構造は壊れない前に失速する。重量が軽いほど小さくなる</td></tr>
+<tr><td>Vno</td><td>最大構造巡航速度</td><td>緑の帯の上端（128 kt）。これ以上（黄色の帯）は穏やかな空気の中だけ</td></tr><tr><td>Vne</td><td>超過禁止速度</td><td>赤い線（160 kt）。絶対に超えない</td></tr></table>
+${bk.key('乱気流の中では Va（または POH の乱気流通過速度）以下に減速する', '荷重倍数の制限：普通類 ＋3.8／−1.52 G、実用類 ＋4.4／−1.76 G が一般的な例')}
+${bk.quiz('g1', '飛行の原理')} ${bk.quiz('g8', 'ヒバリの性能')}` },
+] });
+
+BOOK.push({ n: 2, id: 'sys', t: '第 2 章　機体と装備', secs: [
+  { id: 'sys.ctl', t: '機体の構造と操縦翼面・トリム', h: `
+<p>飛行機は<b>胴体・主翼・尾翼（水平・垂直）・降着装置（脚）・動力装置（エンジン）</b>でできています。</p>
+<table class="bk-t"><tr><th>操縦装置</th><th>動く翼面</th><th>機体の動き</th></tr>
+<tr><td>操縦桿を左右</td><td>エルロン（主翼の外側後ろ）。片方が上がり片方が下がる</td><td>ロール（傾く）</td></tr>
+<tr><td>操縦桿を前後</td><td>エレベーター（水平尾翼の後ろ）</td><td>ピッチ（機首上下）</td></tr>
+<tr><td>ラダーペダル</td><td>ラダー（垂直尾翼の後ろ）。地上では前輪の向きも変える</td><td>ヨー（機首左右）</td></tr></table>
+<h3>トリム</h3>
+<p>エレベーターの後ろの小さな翼（トリムタブ）を動かして、<b>操縦桿に力を加えなくてもその姿勢・速度を保てるように</b>する装置です。「姿勢を決める → パワーを決める → 落ち着いたらトリムで操縦桿の力を消す」が基本の順番です。トリムで機体を操縦しようとしないこと。</p>
+${bk.key('操縦桿の力が残っているとき＝トリムがずれている', '「姿勢＋パワー＝性能」。トリムはその状態を楽に保つ道具')}
+${bk.sim('トリムを使って、手を離しても水平飛行が続く状態を作ります（T キー）。', ['b1', '姿勢・出力・トリム'])}` },
+  { id: 'sys.engine', t: 'ピストンエンジンと点火系統', h: `
+<p>練習機の多くは、自動車に似た<b>4 ストロークの空冷水平対向ガソリンエンジン</b>です。吸入 → 圧縮 → 燃焼（膨張）→ 排気を繰り返してクランク軸を回し、プロペラを直接回します。</p>
+<h3>マグネトー（点火系統）</h3>
+<ul><li>点火はバッテリーではなく、エンジンの回転で発電する<b>マグネトー</b>で行う。バッテリーや発電機が壊れてもエンジンは止まらない</li>
+<li>信頼性のため<b>マグネトーが 2 系統</b>、各シリンダーに<b>点火プラグが 2 本</b>ある</li>
+<li>離陸前の<b>マグチェック</b>：片方ずつに切り替えて回転の落ち方を見る。落ち方が大きすぎる・左右の差が大きい・まったく落ちない（切り替わっていない＝配線不良で危険）なら飛ばない（許容値は POH による。例：落ち 150 rpm 以内、差 50 rpm 以内）</li></ul>
+<h3>異常燃焼</h3>
+<ul><li><b>デトネーション</b>：燃料が点火後に爆発的に燃える。原因は低オクタン燃料、高出力で混合気が薄すぎる、過熱。対策：濃くする、出力を下げる、冷却（上昇角を浅く）</li>
+<li><b>プレイグニッション</b>：点火プラグより前に高温部分で火がつく</li></ul>
+<h3>エンジン計器</h3>
+<p>回転計（RPM）、<b>油圧計</b>（始動後 30 秒以内に上がらなければ止める）、油温計、シリンダーヘッド温度計、排気温度計（EGT）、燃料流量計など。</p>
+${bk.key('油圧は最重要。始動後すぐに上がらない・飛行中に下がる → 最寄りに着陸を考える', 'マグネトーのスイッチはエンジン停止後も「生きている」ことがある。プロペラに近づく・回すときは常に始動するつもりで')}` },
+  { id: 'sys.fuel', t: '燃料系統・ミクスチャー・キャブレターアイス', h: `
+<h3>燃料</h3>
+<ul><li>航空用ガソリン（AVGAS）。100LL は<b>青く着色</b>。ジェット燃料（無色〜麦わら色）を入れると重大事故になる</li>
+<li>高翼機は重力で、低翼機は燃料ポンプでエンジンへ送る</li>
+<li>飛行前に<b>サンプリング</b>（タンク下部から少量抜く）：水（下に溜まる玉）・ごみ・色を確認</li>
+<li>残量は燃料計だけを信じない。<b>目視（タンクの中を見る）</b>と、飛行時間×消費率の計算の両方で</li></ul>
+<h3>ミクスチャー（混合比）</h3>
+<p>高度が上がると空気が薄くなるのに、燃料の量は同じなので混合気が<b>濃すぎ</b>になります。ミクスチャーレバーで燃料を絞る（<b>リーン</b>）と、出力・燃費が戻ります。一般的な手順：出力を決めてからゆっくり絞り、回転（または EGT）が最大になる点を探して、そこから少し濃い側へ戻す。離陸・着陸は通常フルリッチ（標高が高い空港では POH に従いリーン）。ミクスチャーをいっぱいに引くとエンジンが止まる（停止の操作）。</p>
+<h3>キャブレターアイス</h3>
+<p>キャブレター（気化器）の中では、燃料の気化と空気の膨張で温度が大きく下がり、<b>外気温が約 −7〜21℃（湿度が高ければ 30℃ 台でも）</b>で氷ができて空気の通り道をふさぎます。晴れていても起きます。</p>
+<ul><li>兆候（固定ピッチ）：<b>回転がじわじわ落ちる</b>、エンジンの荒れ</li>
+<li>対処：<b>キャブレターヒーターを入れる</b>。溶けた水を吸って一時的にさらに荒れ・回転が落ち、その後回復する</li>
+<li>予防：パワーを絞って降下するとき（エンジンが冷え、流路が狭い）は事前にヒーターを入れる（機体の手順に従う）</li></ul>
+${bk.key('燃料切れは「飛行機の故障」ではなく「計画と確認の失敗」。着陸時に規定の予備が残る計画を', '回転が理由なく下がったら、まずキャブレターアイスを疑う')}` },
+  { id: 'sys.prop', t: 'プロペラ', h: `
+<p>プロペラは回る翼です。各ブレードは根元ほど大きな角度でねじってあり、どの位置でも適切な迎え角になるようにしています。</p>
+<ul><li><b>固定ピッチ</b>（練習機）：角度が変えられない。スロットルで回転数（RPM）が決まり、速度によっても回転が変わる（降下で速度が増えると回転が上がる。<b>赤線（最大回転）を超えないよう注意</b>）。設計した速度（巡航付近）で効率が最もよく、離陸直後の低速では効率が悪い</li>
+<li><b>定速（コンスタントスピード）</b>：プロペラレバーで回転数を決めると、ガバナーが自動でブレード角を変えて回転を一定に保つ。<b>出力はマニホールド圧（MP）</b>で見る。上げるときは「プロペラ→スロットル」、下げるときは「スロットル→プロペラ」の順（MP が高いのに回転が低い状態を避ける）</li></ul>
+${bk.key('固定ピッチでは「回転計＝出力計」。定速では「MP＝出力、RPM＝プロペラの設定」', 'プロペラは止まっていても危険。回転範囲に絶対に入らない')}` },
+  { id: 'sys.elec', t: '電気系統', h: `
+<ul><li><b>オルタネーター（発電機）</b>：エンジンで回り、飛行中の電力をまかない、バッテリーを充電する</li>
+<li><b>バッテリー</b>：始動と、発電機が止まったときの非常用電源（残り時間は限られる）</li>
+<li><b>マスタースイッチ</b>：電気系統全体の入切。<b>エンジン（マグネトー）とは別</b></li>
+<li><b>電流計（アンメーター）</b>・電圧計：充電されているか。放電を示し続ける → 発電機の故障</li>
+<li><b>サーキットブレーカー</b>：過電流で飛び出す。一度だけ戻してよいとされることが多いが、再び飛んだら戻さない（火災のおそれ）</li></ul>
+<p>電気で動くもの：無線機、トランスポンダー、航法装置、灯火、フラップ（電動の機体）、失速警報（電気式の機体）、ピトーヒーター、旋回計（電気式）など。<b>エンジンの点火、ピトー静圧計器（速度計・高度計・昇降計）、真空式ジャイロは電気がなくても動く</b>。</p>
+${bk.key('発電機が故障したら、不要な電気を切ってバッテリーを節約し、早めに着陸を計画する（第 10 章）')}` },
+  { id: 'sys.pitot', t: 'ピトー静圧系統と 3 つの計器', h: `
+<p>速度計・高度計・昇降計は、空気の圧力だけで動く計器です。</p>
+<ul><li><b>ピトー管</b>：前向きの穴。進むことで押し込まれる空気の圧力（全圧）を取る</li><li><b>静圧孔</b>：機体の横の小さな穴。周りの空気の圧力（静圧）を取る</li></ul>
+<table class="bk-t"><tr><th>計器</th><th>使う圧力</th><th>しくみ</th></tr><tr><td>速度計</td><td>全圧と静圧</td><td>2 つの差（動圧）で速度を表示</td></tr><tr><td>高度計</td><td>静圧</td><td>気圧が下がる＝高い。基準の気圧（QNH）の設定が必要</td></tr><tr><td>昇降計</td><td>静圧</td><td>気圧の変化の速さ。数秒遅れる</td></tr></table>
+<h3>速度の種類</h3>
+<ul><li><b>指示対気速度（IAS）</b>：速度計が示す値。失速速度などの操縦上の基準は IAS</li><li><b>較正対気速度（CAS）</b>：取り付け誤差を直した値</li>
+<li><b>真対気速度（TAS）</b>：空気に対する本当の速さ。高いところでは IAS より大きい（1,000 ft ごとに約 2％）。航法の計算に使う</li><li><b>対地速度（GS）</b>：地面に対する速さ＝TAS に風を足し引きしたもの</li></ul>
+<h3>詰まったときの症状</h3>
+<table class="bk-t"><tr><th>故障</th><th>速度計</th><th>高度計・昇降計</th></tr>
+<tr><td>ピトー管だけ詰まり（ドレン穴は開いている）</td><td>0 へ下がっていく</td><td>正常</td></tr>
+<tr><td>ピトー管と排水穴の両方が詰まる</td><td><b>高度計のように動く</b>（上昇で速度が増えて見える）</td><td>正常</td></tr>
+<tr><td>静圧孔が詰まる</td><td>上昇で遅く、降下で速く表示</td><td>高度計は止まる、昇降計は 0</td></tr></table>
+<p>静圧孔が詰まったら<b>代替静圧</b>（機内の空気）に切り替えます。機内は外より気圧が少し低いので、高度計と速度計はやや高めに表示されます。着氷による詰まりは<b>ピトーヒーター</b>で防ぎます。</p>
+${bk.key('速度計の色：白＝フラップ使用範囲、緑＝通常、黄＝穏やかな空気でのみ、赤線＝超過禁止', '高度計は「高い所から低い所へ飛ぶと、実際より高く表示される」（気圧・気温とも）。<b>高→低、要注意</b>')}
+${bk.sim('計器の読み方チュートリアルで、各計器の目盛りと針の意味を動く絵で確認できます。', ['k1', '計器の読み方'], ['k2', '読み取り練習'])}` },
+  { id: 'sys.gyro', t: 'ジャイロ計器と磁気コンパス', h: `
+<p>高速で回るコマ（ジャイロ）には 2 つの性質があります。</p>
+<ul><li><b>剛性</b>：回転軸の向きを保とうとする → 姿勢指示器・方位指示器の基準になる</li><li><b>歳差</b>：力を加えると、90° 回転方向に進んだ位置に効果が現れる → 旋回計のしくみ。また摩擦で少しずつずれる原因</li></ul>
+<table class="bk-t"><tr><th>計器</th><th>一般的な動力</th><th>注意</th></tr><tr><td>姿勢指示器</td><td>真空（バキューム）ポンプ</td><td>真空計（サクション）が緑の範囲か確認</td></tr>
+<tr><td>方位指示器（DG）</td><td>真空</td><td>歳差で少しずつずれる。<b>約 15 分ごとに磁気コンパスに合わせる</b>（直線・定速のとき）</td></tr><tr><td>旋回計（ターンコーディネーター）</td><td>電気</td><td>真空系統が壊れても使える（部分パネルの主役）</td></tr></table>
+<h3>磁気コンパスの誤差</h3>
+<ul><li><b>偏差（Variation）</b>：地図の北（真北）と磁石の北（磁北）の違い。日本では磁北が真北より<b>約 5〜10° 西</b>にずれている（西偏）。場所で違い、年とともに少し変わる</li>
+<li><b>自差（Deviation）</b>：機体の金属・電気の影響。コンパスのそばの<b>自差カード</b>で補正する</li>
+<li><b>北旋誤差</b>（北半球）：北向きから旋回すると、最初は逆方向に振れて遅れる。南向きからの旋回では先回りする。北へ向けてロールアウトするときは手前で（<b>Undershoot North</b>）、南へは行き過ぎてから（<b>Overshoot South</b>）。目安は緯度くらいの角度（日本では約 30〜40°）</li>
+<li><b>加速誤差</b>（北半球）：東または西向きで加速すると北へ、減速すると南へ振れる（<b>ANDS</b>：Accelerate North, Decelerate South）</li></ul>
+${bk.key('磁気コンパスは「直線・水平・定速」のときだけ正しく読める', '姿勢指示器が怪しいときは、旋回計・昇降計・高度計・速度計と比べて、どれが仲間はずれかを探す')}
+${bk.sim('バキューム故障で姿勢指示器と方位指示器が止まる中を、旋回計と磁気コンパスで飛ぶ練習です。', ['e4', '計器故障（部分パネル）'])}
+${bk.quiz('g2', '計器のしくみ')}` },
+  { id: 'sys.gear', t: '降着装置・ブレーキ・灯火', h: `
+<ul><li><b>前輪式（三輪式）</b>：練習機の主流。地上で安定し、前が見やすい。前輪はラダーペダルと連動して向きが変わる</li>
+<li><b>尾輪式</b>：クラシック機・曲技機。着陸後に振られやすい（グラウンドループ）ので追加の訓練が必要</li>
+<li><b>引込脚</b>：抗力が減るが、<b>脚の下げ忘れ</b>に注意。着陸前チェックリストで「GEAR DOWN（緑 3 つ）」を必ず確認</li>
+<li><b>ブレーキ</b>：ラダーペダルの上部を踏む。左右別々に効くので、地上での急な方向転換にも使う。着陸滑走では機首を下ろしてから踏む</li></ul>
+<h3>灯火</h3>
+<p>航空灯（左翼端＝赤、右翼端＝緑、尾部＝白）、衝突防止灯（赤い回転灯・白いストロボ）、着陸灯、タキシング灯。<b>正面から来る機体の赤と緑の位置関係</b>で、相手の向きがわかります（赤が右に見えたら、相手はこちらを向いている）。</p>
+${bk.quiz('g11', '機体のシステム')}` },
+] });
+// ---------------------------------------------------------------------
+//  textbook: performance & weight/balance, meteorology, navigation
+// ---------------------------------------------------------------------
+BOOK.push({ n: 3, id: 'perf', t: '第 3 章　性能と重量・重心', secs: [
+  { id: 'perf.da', t: '標準大気と密度高度', h: () => `
+${FIG.atm()}
+<p>飛行機の性能は<b>空気の密度</b>で決まります。空気が薄いと、翼（揚力）、プロペラ（推力）、エンジン（出力）のすべてが弱くなります。空気の濃さを「標準大気でいうと何 ft の高さに相当するか」で表したものが<b>密度高度</b>です。</p>
+${bk.f('気圧高度 ≒ 標高 ＋（1013 − QNH〔hPa〕）× 30 ft　　密度高度 ≒ 気圧高度 ＋ 120 ×（外気温 − その高度の標準気温）ft')}
+<p>標準気温は海面で 15℃、1,000 ft 上がるごとに 2℃ 下がります。</p>
+${bk.calc('da')}
+<ul><li><b>暑い</b>・<b>高い（標高・高度）</b>・<b>低気圧</b>・<b>湿っている</b> → 密度高度が高い → 性能が悪い（湿気は空気を少し軽くする）</li>
+<li>夏の標高の高い空港（例：松本 標高約 2,200 ft）では、密度高度が 5,000 ft を超えることもある。離陸距離が大きく伸び、上昇率が落ちる</li></ul>
+${bk.key('指示対気速度で飛べば、失速速度などは密度に関係なく同じ数字でよい。変わるのは真対気速度・距離・上昇率', '暑い日は離陸距離と上昇性能を POH の表で必ず計算する')}
+${bk.sim('メニューの「気温」を「暑い日 35℃」にすると、同じ操作でも離陸滑走が伸び（計測で約 13％）、上昇率が落ちます（約 11％）。J キーで密度高度が見られます。', ['t1', '通常離陸'])}` },
+  { id: 'perf.to', t: '離陸・着陸の性能', h: () => `
+<p>離陸距離・着陸距離は POH の表やグラフで求めます。影響する要素を覚えておきましょう。</p>
+<table class="bk-t"><tr><th>要素</th><th>離陸距離</th><th>着陸距離</th></tr>
+<tr><td>重量が重い</td><td>長くなる</td><td>長くなる</td></tr><tr><td>密度高度が高い</td><td>長くなる（大きく）</td><td>長くなる</td></tr>
+<tr><td>向かい風</td><td>短くなる</td><td>短くなる</td></tr><tr><td>追い風</td><td><b>大きく長くなる</b>（数 kt でも 10〜20％以上）</td><td><b>大きく長くなる</b></td></tr>
+<tr><td>上り坂の滑走路</td><td>長くなる</td><td>短くなる</td></tr><tr><td>草地・ぬかるみ・雪</td><td>長くなる</td><td>ブレーキが効かず長くなることが多い</td></tr>
+<tr><td>濡れた舗装</td><td>ほぼ同じ</td><td>長くなる（ハイドロプレーニング）</td></tr></table>
+<p>風は滑走路に対する成分に分けて考えます。</p>
+${FIG.xwind()}
+${bk.calc('xwind')}
+<p>機体ごとに<b>実証された最大横風成分</b>（練習機で 15 kt 前後）が POH に書かれています。これは限界ではなく「試験で確かめた値」なので、訓練生はさらに余裕をもって判断します。</p>
+${bk.key('覚え方：角度 30° で横風は風速の半分、45° で 7 割、60° で 9 割', '計算した距離には安全のための余裕（例：1.5 倍）を足して、使える滑走路の長さと比べる')}` },
+  { id: 'perf.climb', t: '上昇・巡航・航続', h: () => `
+<table class="bk-t"><tr><th>速度</th><th>意味</th><th>使う場面</th><th>ヒバリ</th></tr>
+<tr><td>Vx</td><td>最良上昇角速度：短い距離で最も高く</td><td>離陸直後に障害物を越える</td><td>約 62 kt</td></tr>
+<tr><td>Vy</td><td>最良上昇率速度：短い時間で最も高く</td><td>通常の上昇</td><td>約 73 kt</td></tr>
+<tr><td>巡航上昇</td><td>Vy より速い</td><td>前が見やすく、エンジンも冷える</td><td>80〜85 kt</td></tr></table>
+<p>上昇率は「使えるパワー − 水平飛行に必要なパワー」の<b>余剰パワー</b>で決まります。高度が上がるとエンジンの出力が減るので余剰パワーが減り、ついには上昇できなくなります（<b>絶対上昇限度</b>。上昇率 100 fpm になる高度を<b>実用上昇限度</b>という）。</p>
+<h3>巡航と航続</h3>
+<ul><li><b>最大航続距離</b>（最も遠くへ）：揚抗比が最大の速度付近（プロペラ機）。無風で最良滑空速度に近い</li>
+<li><b>最大航続時間</b>（最も長く空中に）：必要パワーが最小の速度。最大航続の速度よりさらに遅い</li>
+<li>向かい風では少し速く飛ぶほうが、地面に対して燃料あたり遠くへ行ける</li></ul>
+${bk.key('ヒバリ（このシミュレータ）の計測値：海面で Vy 上昇 約 750 fpm、8,000 ft で約 500 fpm、エンジン停止時の滑空比 約 9', '上昇率は「高度と温度」で大きく変わる。夏は冬より上がらない')}
+${bk.sim('上昇と降下の課目で、Vy での上昇とレベルオフを練習します。', ['b3', '上昇と降下'])}` },
+  { id: 'perf.wb', t: '重量と重心の計算', h: () => `
+<p>機体には<b>最大離陸重量</b>と、<b>重心（CG）が入っていなければならない前後の範囲</b>が決まっています。人・燃料・荷物をどこにどれだけ載せるかで重心は動きます。</p>
+<h3>用語</h3>
+<ul><li><b>基準線（データム）</b>：前後位置を測る基準（例：防火壁）</li><li><b>アーム</b>：基準線から物までの距離</li><li><b>モーメント</b>：重量 × アーム（回そうとする力）</li></ul>
+${bk.f('重心位置 ＝ モーメントの合計 ÷ 重量の合計')}
+<p>下の表の数字を変えると、重心が計算されます（数値は説明用の架空の機体。実機は必ずその機体の重量重心表で）。</p>
+${bk.calc('wb')}
+${FIG.wb()}
+<h3>重量を移したとき</h3>
+${bk.f('重心の移動量 ＝（移した重量 × 移した距離）÷ 全体の重量')}
+${bk.q('全体 2,400 lb の機体で、50 lb の荷物を 40 in 後ろへ移した。重心はどれだけ動く？', '50 × 40 ÷ 2,400 ≒ <b>0.83 in 後ろ</b>へ。')}
+${bk.q('燃料は 1 gal あたり何 lb？（AVGAS）', '約 <b>6 lb</b>（約 0.72 kg/L）。40 gal で約 240 lb。燃料を使うと重量が減り、重心も動く（燃料タンクの位置による）。')}` },
+  { id: 'perf.cg', t: '重心位置が飛び方に与える影響', h: `
+<table class="bk-t"><tr><th></th><th>重心が前（前方限界に近い）</th><th>重心が後ろ（後方限界に近い）</th></tr>
+<tr><td>安定性</td><td>高い（ふらつかない）</td><td>低い。後方限界を超えると失速・スピンから回復できないおそれ</td></tr>
+<tr><td>失速速度</td><td>高い（尾翼の下向きの力が大きく、翼の負担が増える）</td><td>低い</td></tr>
+<tr><td>巡航速度</td><td>遅い（抗力が増える）</td><td>速い</td></tr>
+<tr><td>操縦</td><td>操縦桿が重い。着陸のフレアで引き切れないことがある</td><td>操縦桿が軽く、過敏。引きすぎやすい</td></tr></table>
+${bk.key('「少しくらいの超過」は許されない。重量超過は離陸距離・上昇性能・構造強度のすべてに効く', '4 人乗りでも、4 人と満タンの燃料と荷物を同時に積めない機体は多い')}
+${bk.quiz('g9', '性能と重量・重心')} ${bk.quiz('g8', 'ヒバリの性能（V スピード）')}` },
+] });
+
+BOOK.push({ n: 4, id: 'wx', t: '第 4 章　航空気象', secs: [
+  { id: 'wx.atm', t: '大気の構造と安定・不安定', h: () => `
+<p>雲や天気が起きるのは、地表から高さ約 10 km（日本付近、夏は高く冬は低い）までの<b>対流圏</b>です。ここでは上へ行くほど気温が下がります。</p>
+<h3>気温減率と大気の安定</h3>
+<ul><li>空気のかたまりが上昇すると、膨張して冷える。乾いた空気は 100 m で約 1℃（<b>乾燥断熱減率</b>）、雲の中（飽和）では約 0.5℃（<b>湿潤断熱減率</b>）</li>
+<li>周りの空気が上へ行くほど<b>急に冷えている</b>と、持ち上げられた空気は周りより暖かく軽いので、どんどん上昇する＝<b>不安定</b>。積雲・積乱雲、にわか雨、乱気流、良い視程</li>
+<li>周りがあまり冷えていない・上空が暖かい（<b>逆転層</b>）と、上昇が抑えられる＝<b>安定</b>。層状の雲、霧、もや、スモッグ、悪い視程、穏やかな空気</li></ul>
+<h3>気温と露点</h3>
+<p><b>露点</b>は、空気が冷えて水蒸気が水滴になり始める温度です。気温と露点の差（<b>湿数</b>）が小さいほど雲や霧ができやすく、差が 2〜3℃ 以下なら霧・低い雲に要注意です。雲の底の高さの目安は、<b>（気温 − 露点）× 約 400 ft</b>（125 m）。</p>
+${bk.key('不安定＝揺れるが見通しは良い、積雲系・にわか雨', '安定＝穏やかだが見通しが悪い、層雲系・霧・もや')}` },
+  { id: 'wx.alt', t: '気圧と高度計の規正', h: `
+<p>高度計は気圧計です。海面の気圧は日々変わるので、<b>その地域の海面気圧（QNH）</b>を高度計に設定して、海面からの高さを正しく表示させます。</p>
+<table class="bk-t"><tr><th>設定</th><th>意味</th><th>使う場面</th></tr><tr><td>QNH</td><td>その地点の気圧を海面に換算した値</td><td>通常の飛行。地上で空港の標高を示す</td></tr>
+<tr><td>QNE（1013.2 hPa／29.92 inHg）</td><td>標準大気の海面気圧</td><td>高高度（日本では 14,000 ft より上。フライトレベル「FL」で表す）</td></tr><tr><td>QFE</td><td>その空港の気圧</td><td>地上で 0 を示す（日本の一般の運航では普通は使わない）</td></tr></table>
+<ul><li>日本の管制では、高度計の設定値を<b>インチ（inHg）</b>で伝えることが多い（例：「QNH 2992」）。METAR にも A2992 のように載る</li>
+<li>1 hPa の違い ≒ 約 30 ft（1 inHg ≒ 1,000 ft）</li>
+<li><b>高気圧から低気圧へ、暖かい所から寒い所へ</b>飛ぶと、高度計は実際より<b>高く</b>表示する → 実際は低く飛んでいて地面に近い。設定をこまめに更新する</li></ul>
+${bk.q('QNH 1003 hPa の地域で、高度計を 1013 のまま飛んでいる。高度計が 3,000 ft を示すとき、実際の高度は？', '設定が 10 hPa 高すぎるので、約 300 ft 高く表示されている。実際は <b>約 2,700 ft</b>。')}` },
+  { id: 'wx.wind', t: '風のしくみと局地的な風', h: `
+<ul><li>風は気圧の高い所から低い所へ吹こうとするが、地球の自転（コリオリの力）で曲げられ、上空では<b>等圧線に沿って</b>吹く。北半球では低気圧のまわりを<b>反時計回り</b>、高気圧のまわりを<b>時計回り</b></li>
+<li>地表近くは地面の摩擦で風が弱まり、向きも低気圧側へ少しずれる。<b>高度を上げると風が強くなり、右へ回る</b>（北半球）。このシミュレータも地表付近で風が弱まる計算をしている</li>
+<li><b>海陸風</b>：昼は海から陸へ（海風）、夜は陸から海へ（陸風）</li>
+<li><b>山岳波・おろし風</b>：強い風が山を越えると、風下に大きな上下の波と乱気流ができる。山の風下側を低く飛ばない</li>
+<li><b>ウインドシア</b>：短い距離で風向・風速が急に変わること。進入中に向かい風が急に減ると速度が落ちて沈む。積乱雲の下の<b>マイクロバースト</b>は、小型機の上昇性能では抜けられないほど強いことがある</li></ul>
+${bk.key('風の表し方：「風が吹いてくる方向」（例：340° から 10 kt）。METAR・管制は真方位（METAR）／磁方位（管制塔の通報）の違いに注意', '突風（ガスト）があるときは、進入速度に突風成分の半分程度を加える（機体の指示に従う）')}` },
+  { id: 'wx.cloud', t: '雲と霧', h: () => `
+${FIG.clouds()}
+<h3>雲量の表し方</h3>
+<table class="bk-t"><tr><th>略号</th><th>読み</th><th>空を覆う割合（8 分の）</th></tr><tr><td>SKC／CLR</td><td>雲なし</td><td>0</td></tr><tr><td>FEW</td><td>少し</td><td>1〜2</td></tr><tr><td>SCT</td><td>散在</td><td>3〜4</td></tr><tr><td>BKN</td><td>多い</td><td>5〜7</td></tr><tr><td>OVC</td><td>全天</td><td>8</td></tr></table>
+<p><b>シーリング（雲高）</b>は、BKN または OVC の雲のうち最も低いものの高さです。</p>
+<h3>霧の種類</h3>
+<ul><li><b>放射霧</b>：晴れて風の弱い夜、地面が冷えてできる。朝方に多く、日が昇ると消える</li>
+<li><b>移流霧</b>：暖かく湿った空気が冷たい海面・地面の上に流れ込んでできる。風があっても消えにくい。日本では夏の北海道・三陸沖（海霧）が有名</li>
+<li><b>上昇霧（滑昇霧）</b>：湿った空気が山の斜面を上ってできる</li><li><b>前線霧・蒸気霧</b>：雨が蒸発してできる、冷たい空気が暖かい水面の上に来てできる</li></ul>
+${bk.key('夕方、気温と露点の差が小さく風が弱ければ、翌朝の霧を予想する')}` },
+  { id: 'wx.front', t: '気団・前線と日本の季節', h: () => `
+${FIG.fronts()}
+<table class="bk-t"><tr><th>前線</th><th>特徴</th><th>天気</th></tr>
+<tr><td>寒冷前線</td><td>寒気が暖気を押しのける。傾きが急</td><td>狭い範囲で積乱雲・強いにわか雨・突風・雷。通過後は気温が下がり北西風、視程が良くなる</td></tr>
+<tr><td>温暖前線</td><td>暖気が寒気の上をゆっくり登る。傾きがゆるい</td><td>広い範囲で層状の雲（巻雲 → 巻層雲 → 高層雲 → 乱層雲）、しとしと雨、低い雲と悪い視程が長く続く</td></tr>
+<tr><td>停滞前線</td><td>ほとんど動かない</td><td>梅雨前線・秋雨前線。雨と低い雲が何日も続く</td></tr><tr><td>閉塞前線</td><td>寒冷前線が温暖前線に追いつく</td><td>両方の性質が混じる</td></tr></table>
+<h3>日本の季節の特徴</h3>
+<ul><li><b>冬</b>：西高東低の気圧配置。日本海側は雪と低い雲・着氷、太平洋側は晴れて強い北西風（乱気流・横風）</li>
+<li><b>春・秋</b>：移動性高気圧と低気圧が交互に通る。数日ごとに天気が変わる。春は黄砂・もやで視程が落ちることも</li>
+<li><b>梅雨</b>（6〜7 月、沖縄は 5〜6 月）：停滞前線で雨・低い雲が続く</li>
+<li><b>夏</b>：太平洋高気圧。午後に内陸・山沿いで積乱雲（熱雷）。高温で密度高度が高い</li>
+<li><b>台風</b>（夏〜秋）：強い風と雨が広い範囲に。進路予報を必ず確認</li></ul>` },
+  { id: 'wx.hazard', t: '雷雨・乱気流・着氷', h: `
+<h3>積乱雲（雷雨）</h3>
+<p>できる条件：<b>湿った空気・不安定な大気・持ち上げるきっかけ</b>（日射、前線、山）。一生は 3 段階です。</p>
+<ol><li><b>積雲期</b>：上昇気流だけ。雲がもくもく成長する</li><li><b>成熟期</b>：上昇気流と下降気流が並ぶ。雨・雷・ひょう・激しい乱気流、地表では突風（ダウンバースト）。最も危険</li><li><b>消散期</b>：下降気流が中心になり衰える</li></ol>
+${bk.warn('積乱雲には<b>近づかない</b>。目安として少なくとも 20 NM（約 37 km）離れる。雲の下をくぐらない。雷雨の中の乱気流と下降気流は、小型機の性能をはるかに超える')}
+<h3>乱気流</h3>
+<ul><li>対流性（夏の午後、地表の加熱）、機械的（地形・建物・強風）、山岳波、前線、晴天乱気流（CAT、高高度のジェット気流付近）、<b>後方乱気流</b>（大型機の翼端渦、第 9 章）</li>
+<li>入ったら：Va（または乱気流通過速度）以下に減速、姿勢を保ち高度の多少の変化は許す、シートベルトを締める</li></ul>
+<h3>着氷</h3>
+<ul><li>0℃ 以下で<b>目に見える水分（雲・雨）</b>の中を飛ぶと、機体に氷が付く。特に<b>過冷却の水滴</b>（0℃以下でも液体）が危険。着氷性の雨（凍雨）は最悪</li>
+<li>翼の形が崩れて揚力が減り抗力と重量が増える。失速速度が大きく上がる</li>
+<li>多くの練習機は<b>着氷状態での飛行が認められていない</b>。気温 0℃ 付近の雲の中に入らない、入ったら直ちに暖かい方へ（多くは降下または引き返し）</li></ul>` },
+  { id: 'wx.metar', t: 'METAR・TAF の読み方', h: `
+<p><b>METAR</b> は空港の定時の観測（通常 30 分または 1 時間ごと）、<b>TAF</b> は空港の予報です。例を分解してみましょう。</p>
+<div class="bk-formula">METAR RJTT 270300Z 34008KT 9999 FEW030 SCT100 22/13 Q1016 NOSIG</div>
+<table class="bk-t"><tr><th>部分</th><th>意味</th></tr>
+<tr><td>RJTT</td><td>空港（ICAO 4 文字コード。RJTT＝東京国際・羽田）</td></tr><tr><td>270300Z</td><td>27 日 03:00 UTC（Z）。日本時間（JST）は +9 時間 → 12:00</td></tr>
+<tr><td>34008KT</td><td>風：340°（真方位）から 8 kt。VRB＝風向不定、34008G20KT＝最大瞬間 20 kt</td></tr>
+<tr><td>9999</td><td>卓越視程 10 km 以上（m 単位。0800 なら 800 m）</td></tr><tr><td>FEW030 SCT100</td><td>雲：3,000 ft に 1〜2/8、10,000 ft に 3〜4/8（高さは 100 ft 単位）</td></tr>
+<tr><td>22/13</td><td>気温 22℃・露点 13℃（M は マイナス）</td></tr><tr><td>Q1016</td><td>QNH 1016 hPa（日本の METAR には A3000 のように inHg も付く）</td></tr>
+<tr><td>NOSIG</td><td>2 時間以内に大きな変化なし</td></tr></table>
+<h3>よく出る略語</h3>
+<table class="bk-t"><tr><td>RA 雨</td><td>SN 雪</td><td>SH しゅう雨（にわか）</td><td>TS 雷電</td><td>FG 霧</td></tr><tr><td>BR もや</td><td>HZ 煙霧</td><td>DZ 霧雨</td><td>GR ひょう</td><td>FZ 着氷性</td></tr><tr><td>－ 弱い</td><td>＋ 強い</td><td>VC 付近</td><td>CAVOK 視程 10 km 以上・低い雲なし・悪天なし</td><td>CB 積乱雲</td></tr></table>
+<h3>TAF</h3>
+<div class="bk-formula">TAF RJTT 270505Z 2706/2812 34010KT 9999 FEW030 BECMG 2709/2711 18012KT TEMPO 2715/2718 4000 SHRA BKN015</div>
+<p>27 日 06Z から 28 日 12Z まで有効。はじめは 340° 10 kt、09Z〜11Z の間に 180° 12 kt に<b>変わっていく（BECMG）</b>、15Z〜18Z は<b>一時的に（TEMPO）</b>視程 4,000 m・しゅう雨・1,500 ft に 5〜7/8 の雲。</p>
+${bk.q('METAR RJSS 270000Z 00000KT 0400 FG VV001 12/12 Q1012 を読んで、有視界飛行ができるか答えよ', '無風、視程 400 m、霧、垂直視程 100 ft、気温＝露点（湿数 0）。<b>できない</b>。放射霧の典型。日が昇って気温が上がるまで待つ。')}
+${bk.quiz('g3', '気象と METAR')}` },
+  { id: 'wx.info', t: '気象情報の入手と飛行の判断', h: `
+<ul><li>出発前に、<b>出発地・経路・目的地・代替空港</b>の現況（METAR）と予報（TAF）、地上天気図、悪天の予想図、注意報（SIGMET 等）、NOTAM（航空情報）を確認する（第 7 章「出発前の確認」）</li>
+<li>日本では気象庁の航空気象情報や、国土交通省の航空情報提供サービス（AIS）などで入手できる。空港では <b>ATIS</b>（録音放送の空港情報）を聞く</li>
+<li>予報は外れることがある。<b>引き返す・降りる判断の基準（個人の最低気象条件）</b>を出発前に決めておく</li></ul>
+${bk.key('「行ける天気」ではなく「悪くなっても安全に戻れる・降りられる天気」で判断する', '計器飛行の資格がない操縦士が雲に入ってしまう事故（VFR into IMC）は、最も致命的な事故のひとつ（第 10 章）')}` },
+] });
+
+BOOK.push({ n: 5, id: 'nav', t: '第 5 章　空中航法', secs: [
+  { id: 'nav.earth', t: '地球・緯度経度・距離と時間', h: `
+<ul><li>位置は<b>緯度</b>（赤道から南北へ 0〜90°）と<b>経度</b>（グリニッジから東西へ 0〜180°）で表す。1° ＝ 60 分（′）</li>
+<li>緯度 1 分の南北の距離 ＝ <b>1 海里（NM）＝ 1,852 m</b>。航空ではこの海里と、1 時間に 1 NM 進む速さ<b>ノット（kt）</b>を使う</li>
+<li>経度 1 分の東西の距離は、赤道では 1 NM、緯度が上がるほど短い（cos 緯度 倍）</li>
+<li>地球上の 2 点を結ぶ最短の道は<b>大圏</b>（地球を真っ二つに切る円の一部）。長距離では地図上の直線と違う</li>
+<li>時刻は <b>UTC（協定世界時、Z）</b>を使う。日本時間は UTC ＋ 9 時間</li></ul>
+${bk.f('距離 ＝ 速度 × 時間　　（例：100 kt で 45 分 → 75 NM）')}
+${bk.key('1 NM ≒ 1.85 km、1 kt ≒ 1.85 km/h ≒ 0.51 m/s', '1 分に進む距離 ＝ 速度 ÷ 60。120 kt なら 1 分で 2 NM')}` },
+  { id: 'nav.dir', t: '方位：真方位・磁方位・偏差・自差', h: `
+<p>地図の線（真北基準）から、コンパスで飛ぶ針路（コンパスの北基準）へ、順に直していきます。</p>
+<div class="bk-formula">真航路 TC → ±偏流修正角 → 真針路 TH → ±偏差 → 磁針路 MH → ±自差 → コンパス針路 CH</div>
+<ul><li><b>偏差</b>：日本は磁北が真北の西にずれている（西偏、例：東京付近で約 8°W）。<b>西偏は足す、東偏は引く</b>（真→磁の方向。英語では "East is least, West is best"）</li>
+<li><b>自差</b>：機内の自差カードの値で直す</li>
+<li>管制の指示する針路、滑走路の番号、VOR のラジアルは<b>磁方位</b>。METAR の風は真方位、管制塔が伝える風は磁方位</li></ul>
+${bk.q('真航路 090°、偏流修正は右へ 5°、偏差 8°W、自差 −2°。コンパス針路は？', '真針路 ＝ 090 ＋ 5 ＝ 095°。磁針路 ＝ 095 ＋ 8 ＝ 103°。コンパス針路 ＝ 103 − 2 ＝ <b>101°</b>。')}
+${bk.key('滑走路 34 ＝ 磁方位 約 340° 向き。反対側は 16（160°）')}` },
+  { id: 'nav.chart', t: '航空図と地文航法', h: `
+<p>有視界飛行では、日本全国を分割した<b>区分航空図</b>（縮尺 50 万分の 1）などを使います。地形の高さ（色と等高線）、目立つ地物、空港、無線施設、空域の境界と高さ、障害物、制限空域などが載っています。</p>
+<h3>地文航法（パイロテージ）</h3>
+<ul><li>地図と地上の目標（川・海岸線・鉄道・高速道路・湖・山・町）を見比べて位置を確かめる</li>
+<li>計画の段階で、10〜15 分おきに見つけやすい<b>チェックポイント</b>を決めておく</li>
+<li>地図は進行方向を上にして持つと、見比べやすい</li>
+<li>大きな目標（海岸線、大河）を「手すり」にしてたどると迷いにくい</li></ul>
+${bk.key('地図を見る時間は短く。見張りと操縦が最優先', '「予想した時刻に予想した目標が見えない」ときが、位置を見失い始めたサイン（第 10 章「迷ったら」）')}` },
+  { id: 'nav.dr', t: '推測航法と風の修正', h: () => `
+<p><b>推測航法</b>は、針路・速度・時間・風から、今どこにいるかを計算で求める方法です。地上が見えなくても、無線施設がなくても使える基本です。</p>
+${FIG.windTriangle()}
+${bk.calc('wca')}
+<h3>1 in 60 の法則（暗算のコツ）</h3>
+<p>60 NM 進んで 1 NM ずれていたら、コースから 1° ずれている。</p>
+${bk.f('ずれの角度（°）≒ ずれた距離 × 60 ÷ 進んだ距離')}
+${bk.q('出発して 30 NM 進んだところで、コースの右に 2 NM ずれていた。残り 30 NM で目的地に着くには、針路を何度直す？', 'これまでのずれ：2 × 60 ÷ 30 ＝ 4°。目的地へ向かうのに必要な角度：2 × 60 ÷ 30 ＝ 4°。合わせて<b>左へ 8°</b>修正する。')}
+${bk.sim('指定の針路と時間で隣の空港へ向かい、途中で目的地が変わる訓練です（推測航法と目的地変更）。', ['n2', '推測航法と目的地変更'])}` },
+  { id: 'nav.radio', t: '無線航法：VOR・DME・ADF・GNSS', h: `
+<h3>VOR</h3>
+<p>地上局から 360 本の「放射状の道」（<b>ラジアル</b>：局から外へ向かう磁方位）を出している施設。機上の OBS（コースセレクター）で進みたいコースを選ぶと、CDI（縦の針）がコースとのずれを示します。</p>
+<ul><li><b>針の方へ飛ぶ</b>（針が右ならコースは右）。点 1 つが 2°、振り切れで 10° 以上</li><li><b>TO／FROM</b>：選んだコースで進むと局に近づくか（TO）、離れるか（FROM）。TO なのに局から離れる向きで飛ぶと、針が逆に動く（逆感応）</li>
+<li>局の真上では信号が不安定（コーンオブコンフュージョン）で TO/FROM が切り替わる</li><li>電波は見通し距離まで。低いと届かない</li></ul>
+<h3>DME</h3><p>局までの<b>斜め</b>の距離（NM）を表示する。局の真上では高度分の距離が残る。</p>
+<h3>NDB と ADF</h3><p>NDB は全方向に電波を出す無指向性の局。機上の ADF の針が局の方向を指す。雷や夜間の影響を受けやすい。</p>
+<h3>GNSS（GPS など）</h3><p>衛星からの電波で位置を求める。非常に正確で便利だが、<b>頼りきらない</b>。データベースの有効期限、衛星の受信状態（RAIM）、操作ミスに注意し、地図と推測航法で常にクロスチェックする。</p>
+${bk.sim('VOR のコースに乗って局まで追跡します（[ ] キーで OBS）。', ['n1', 'VOR の追跡'])}` },
+  { id: 'nav.plan', t: '飛行計画と燃料計算', h: () => `
+<p>野外飛行（クロスカントリー）の前には、航法ログ（ナブログ）を作ります。</p>
+<ol><li>地図にコースを引き、真航路と距離を測る。チェックポイントを決める</li><li>空域・制限空域・高い地形・障害物を確認し、巡航高度を決める（第 7 章の巡航高度のルールも）</li>
+<li>上空の風予報から、各区間の偏流修正角・対地速度・所要時間を計算する</li><li>燃料：全行程＋上昇分＋地上走行分＋<b>予備</b>を計算する</li><li>代替空港を決める</li><li>気象・NOTAM を確認し、<b>飛行計画を通報</b>する（第 7 章）</li></ol>
+${bk.calc('fuel')}
+<p>予備燃料について：アメリカの規則（FAR 91.151）では有視界飛行で昼 30 分・夜 45 分以上の巡航分が求められています。日本で求められる量は航空法施行規則で飛行方式などにより定められているので、<b>必ず最新の規則と所属先の基準で確認</b>してください。多くの訓練機関はそれより多い予備を求めています。</p>
+${bk.key('燃料は「足りる」ではなく「予定外（向かい風・迂回・待機）があっても予備に手をつけない」量で計画する')}
+${bk.quiz('g5', '航法の基礎')}` },
+] });
+// ---------------------------------------------------------------------
+//  textbook: communications, air law, human factors
+// ---------------------------------------------------------------------
+BOOK.push({ n: 6, id: 'com', t: '第 6 章　航空通信', secs: [
+  { id: 'com.basic', t: '無線交信の基本', h: `
+<p>管制との交信は、日本国内でも主に<b>英語</b>で、決まった言い回し（標準用語）を使います。基本の順番は次のとおりです。</p>
+<div class="bk-formula">① 相手（誰に）→ ② 自分（誰が）→ ③ 位置 → ④ 用件</div>
+<p>例：「<i>Chofu Tower, JA1234, 5 miles south, 1,500, inbound for landing with information Alpha.</i>」</p>
+<ul><li>話す前に<b>聞く</b>。他の交信を遮らない。送信ボタン（PTT）を押してから一呼吸おいて話す</li><li>短く、はっきり、標準用語で。わからなければ「<i>Say again</i>」</li>
+<li>管制の指示には<b>復唱（リードバック）</b>して、最後に自分のコールサインを付ける</li><li>従えない指示には「<i>Unable</i>」と言う。黙って従わないのは危険</li></ul>
+<h3>よく使う言葉</h3>
+<table class="bk-t"><tr><td>Roger</td><td>受信した（了解。許可・同意の意味はない）</td></tr><tr><td>Wilco</td><td>了解し、従う</td></tr><tr><td>Affirm／Negative</td><td>はい／いいえ</td></tr><tr><td>Say again</td><td>もう一度</td></tr><tr><td>Stand by</td><td>待て（呼ばれるまで待つ。許可ではない）</td></tr><tr><td>Correction</td><td>訂正</td></tr><tr><td>Cleared</td><td>許可する（この言葉がなければ許可ではない）</td></tr><tr><td>Hold short of ～</td><td>～の手前で止まれ</td></tr></table>` },
+  { id: 'com.alpha', t: 'フォネティックコードと数字', h: `
+<p>聞き間違いを防ぐため、文字と数字は決まった読み方をします。</p>
+<table class="bk-t"><tr><td>A Alfa</td><td>B Bravo</td><td>C Charlie</td><td>D Delta</td><td>E Echo</td><td>F Foxtrot</td><td>G Golf</td></tr><tr><td>H Hotel</td><td>I India</td><td>J Juliett</td><td>K Kilo</td><td>L Lima</td><td>M Mike</td><td>N November</td></tr><tr><td>O Oscar</td><td>P Papa</td><td>Q Quebec</td><td>R Romeo</td><td>S Sierra</td><td>T Tango</td><td>U Uniform</td></tr><tr><td>V Victor</td><td>W Whiskey</td><td>X X-ray</td><td>Y Yankee</td><td>Z Zulu</td><td colspan="2"></td></tr></table>
+<ul><li>数字は 1 桁ずつ：3 は "tree"、5 は "fife"、9 は "<b>niner</b>"（ドイツ語の nein と区別）</li><li>高度：3,500 ft →「tree tousand fife hundred」、FL150 →「flight level one fife zero」</li>
+<li>周波数：118.1 →「one one eight decimal one」</li><li>針路：「heading zero niner zero」（必ず 3 桁）</li><li>時刻：UTC で「one four three zero」</li></ul>
+<p>機体の登録記号 JA1234 →「<i>Juliett Alfa One Two Tree Four</i>」。</p>` },
+  { id: 'com.atc', t: '管制機関と周波数', h: `
+<table class="bk-t"><tr><th>呼び出し名（例）</th><th>役割</th></tr>
+<tr><td>ATIS（録音）</td><td>空港の風・視程・雲・気温・QNH・使用滑走路などを繰り返し放送。記号（Alpha, Bravo…）で更新がわかる。最初の交信で「with information ～」と伝える</td></tr>
+<tr><td>Delivery（デリバリー）</td><td>計器飛行の出発許可などを出す（大きな空港）</td></tr><tr><td>Ground（グランド）</td><td>地上の走行（タキシング）の指示</td></tr><tr><td>Tower（タワー）</td><td>飛行場管制。離着陸の許可と、管制圏内の交通</td></tr>
+<tr><td>Approach／Departure（アプローチ／ディパーチャー）</td><td>空港周辺の進入・出域の管制とレーダー</td></tr><tr><td>Control（コントロール）</td><td>航空路の管制（航空交通管制部）</td></tr>
+<tr><td>Information／Radio（インフォメーション／レディオ）</td><td>管制官のいない空港などで、飛行に必要な情報を提供する（飛行場情報、対空援助）。許可は出さない</td></tr></table>
+<ul><li><b>121.5 MHz</b>：国際緊急周波数（常時聴取されている）</li><li>空港・空域ごとの周波数、呼び出し名は AIP や航空図、空港の資料で確認する</li></ul>` },
+  { id: 'com.phr', t: '出発から到着までの交信例', h: `
+<p>管制塔のある空港での有視界飛行の例です（実際の言い回しは空港・状況で変わります。訓練機関の標準に従ってください）。</p>
+<table class="bk-t"><tr><th>場面</th><th>交信（英語）</th><th>意味</th></tr>
+<tr><td>地上走行の要求</td><td><i>Chofu Ground, JA1234, at south apron, VFR to training area, request taxi with information Bravo.</i></td><td>ATIS「Bravo」を聞いた上で、訓練空域へ向けて走行したい</td></tr>
+<tr><td>走行指示</td><td><i>JA1234, runway 17, taxi via Alfa, hold short of runway 17.</i><br>→ <i>Runway 17, taxi via Alfa, hold short of runway 17, JA1234.</i></td><td>滑走路と経路・停止位置を<b>必ず復唱</b></td></tr>
+<tr><td>離陸準備完了</td><td><i>Chofu Tower, JA1234, holding short runway 17, ready for departure.</i></td><td></td></tr>
+<tr><td>離陸許可</td><td><i>JA1234, wind 160 at 8, runway 17, cleared for take-off.</i><br>→ <i>Runway 17, cleared for take-off, JA1234.</i></td><td>「cleared for take-off」を聞いてから滑走路に入る</td></tr>
+<tr><td>帰投（入域）</td><td><i>Chofu Tower, JA1234, 10 miles north, 2,000, inbound for landing with information Charlie.</i></td><td>位置・高度・意図・ATIS</td></tr>
+<tr><td>場周の指示</td><td><i>JA1234, enter left downwind runway 17, report downwind.</i></td><td>左回りのダウンウインドに入り、そこで通報</td></tr>
+<tr><td>着陸許可</td><td><i>JA1234, runway 17, cleared to land, wind 150 at 6.</i></td><td>「cleared to land」を聞くまで着陸しない</td></tr>
+<tr><td>着陸後</td><td><i>JA1234, turn left Charlie, contact Ground 121.8.</i></td><td>滑走路を出て、グランドへ</td></tr></table>
+${bk.sim('場周経路や離陸の課目では、管制の指示を正しく復唱できるか 3 択で問われます（1〜3 キー）。', ['t1', '通常離陸'], ['t2', '場周経路'])}` },
+  { id: 'com.rb', t: '必ず復唱すること', h: `
+<p>次の指示は、安全上とくに大切なので、<b>必ず復唱</b>します。</p>
+<ul><li>滑走路に関すること：離陸・着陸の許可、滑走路への進入・横断・手前での停止（<b>hold short</b>）</li><li>高度の指示・高度計規正値（QNH）</li><li>針路・速度の指示</li><li>トランスポンダーのコード（スコーク）</li><li>周波数の変更</li><li>管制承認（クリアランス）の内容</li></ul>
+${bk.warn('滑走路誤進入（ランウェイ・インカージョン）は重大事故につながります。「hold short」の指示は必ず復唱し、停止線（黄色の二重線と破線）の手前で確実に止まる。わからなければ滑走路に入らず確認する')}
+${bk.quiz('g4', '無線と管制用語')}` },
+  { id: 'com.emg', t: '緊急通信・トランスポンダー・光線信号', h: `
+<h3>緊急の宣言</h3>
+<ul><li><b>MAYDAY, MAYDAY, MAYDAY</b>：遭難（重大で差し迫った危険、直ちに援助が必要）。エンジン停止、火災など</li><li><b>PAN-PAN, PAN-PAN, PAN-PAN</b>：緊急（安全に関わる心配があるが差し迫ってはいない）。体調不良、軽い故障、迷ったとき</li>
+<li>内容：相手・自分・状況・意図・位置・高度・機長の判断・搭乗者数・残燃料など。<b>使っている周波数でそのまま</b>。通じなければ 121.5 MHz</li><li>迷ったら早めに宣言する。宣言すれば管制は優先して援助してくれる</li></ul>
+<h3>トランスポンダーのコード</h3>
+<table class="bk-t"><tr><td><b>7700</b></td><td>緊急</td></tr><tr><td><b>7600</b></td><td>通信機故障</td></tr><tr><td><b>7500</b></td><td>不法妨害（ハイジャック）</td></tr><tr><td>1200</td><td>管制から指定がないときの有視界飛行のコードとして一般的（日本での運用は AIP で確認）</td></tr></table>
+<p>コードを変えるときは、途中で 7500・7600・7700 を通らないよう注意します。</p>
+<h3>通信が途絶えたとき</h3>
+<p>受信できるか確認（音量、周波数、ヘッドセット）、別の無線機、トランスポンダー 7600。有視界なら管制圏の外で状況を見て、場周に入り、管制塔の<b>光線信号</b>に従って着陸します（手順は AIP で確認）。</p>
+<table class="bk-t"><tr><th>光線信号</th><th>飛行中</th><th>地上</th></tr><tr><td>緑の連続光</td><td>着陸してよい</td><td>離陸してよい</td></tr><tr><td>緑の点滅</td><td>着陸のため戻れ（着陸許可は後で）</td><td>走行してよい</td></tr>
+<tr><td>赤の連続光</td><td>進路を譲り、旋回を続けよ</td><td>止まれ</td></tr><tr><td>赤の点滅</td><td>この飛行場に着陸するな</td><td>使用中の着陸区域から離れよ</td></tr><tr><td>白の点滅</td><td>この飛行場に着陸し、駐機場へ</td><td>出発点に戻れ</td></tr></table>
+${bk.sim('緊急時の操作の確認テストで、宣言やコードの問題が出ます。', ['g6', '緊急時の操作（テスト）'])}` },
+] });
+
+BOOK.push({ n: 7, id: 'law', t: '第 7 章　航空法規', secs: [
+  { id: 'law.sys', t: '法律の体系と調べ方', h: `
+${bk.warn('この章は学科試験で問われる主な内容を<b>わかりやすく要約</b>したものです。条文そのものではなく、改正もあります。受験・実際の飛行では、必ず<b>最新の航空法・航空法施行規則・告示・AIP</b>と、教官の説明で確認してください。')}
+<ul><li><b>航空法</b>（国会が定める法律）→ <b>航空法施行令</b>（政令）→ <b>航空法施行規則</b>（国土交通省令。数値などの細かい決まりの多くはここ）→ 告示・通達</li>
+<li>日本の航空法は、国際民間航空条約（シカゴ条約）とその附属書（ICAO の標準）に沿って作られている</li>
+<li><b>AIP（航空路誌）</b>：空港・空域・無線施設・手続きなど、飛ぶための公式の情報集。<b>NOTAM</b> はその臨時の変更（滑走路閉鎖、施設の停止、訓練・イベントなど）</li></ul>` },
+  { id: 'law.lic', t: '技能証明・身体検査・機長の資格', h: `
+<ul><li>操縦するには、<b>航空従事者技能証明</b>（資格：自家用・事業用・定期運送用操縦士など）と、飛行機の種類・等級（陸上単発など）の<b>限定</b>、そして有効な<b>航空身体検査証明</b>（自家用は一般に第 2 種）が必要</li>
+<li>身体検査証明には<b>有効期間</b>がある（年齢・種類で異なる）。切れていたら飛べない</li>
+<li>自家用操縦士の受験には、年齢（17 歳以上）と飛行経歴（総飛行時間 40 時間以上で、単独飛行・単独での野外飛行・夜間飛行などを含む）の要件がある。事業用は 18 歳以上・総飛行時間 200 時間以上など。<b>詳細な要件は最新の施行規則で確認</b></li>
+<li>訓練生が単独で飛ぶには、<b>航空機操縦練習許可書</b>（練習許可）と教官の監督が必要（航空法第 35 条関係）</li>
+<li>機長として一定期間飛んでいない場合の<b>最近の飛行経験</b>や、定期的な技能審査（特定操縦技能審査）の制度がある</li></ul>
+${bk.key('ライセンス・身体検査証明・練習許可書などは飛行中に携帯する')}` },
+  { id: 'law.aircraft', t: '航空機に必要な証明と書類・点検', h: `
+<ul><li>航空機は<b>登録</b>（国籍・登録記号 JA〜）され、<b>耐空証明</b>（安全に飛べる状態であることの証明）が有効でなければ飛べない</li>
+<li>機内に備え付ける書類（航空法第 59 条）：<b>航空機登録証明書、耐空証明書、航空日誌</b>など（運用限界等指定書、飛行規程など、省令で定めるもの）</li>
+<li>整備の記録は航空日誌に。定められた点検・整備と、それを確認した整備士の署名がないと飛べない</li>
+<li><b>出発前の確認</b>（第 73 条の 2）：機長は、航空機と装備の点検、気象情報、燃料、積載物の状態などを確認してからでないと出発してはならない</li></ul>
+${bk.key('飛行前点検（第 9 章）は、この法律上の義務でもある')}` },
+  { id: 'law.vfr', t: '有視界飛行と気象条件（VMC）', h: () => `
+<p>雲を避けながら外を見て飛ぶ<b>有視界飛行方式（VFR）</b>は、天気が一定以上よいとき（<b>有視界気象状態：VMC</b>）にしかできません。VMC の条件は施行規則（第 5 条）に空域と高度ごとに決められています。主な数値の目安は次のとおりです。</p>
+${FIG.vmc()}
+${bk.warn('表は学習用の要約です。例外・特例・条件の細部（空域の定義、夜間、特別有視界飛行など）は必ず最新の施行規則で確認してください')}
+<ul><li>VMC を下回る状態（<b>計器気象状態：IMC</b>）では、計器飛行証明を持ち、<b>計器飛行方式（IFR）</b>で飛ばなければならない</li>
+<li>雲の中に入らないため、雲の<b>下・横・上</b>それぞれに距離を空ける決まりがある。雲から急に他の機体が出てきても避けられるように</li>
+<li>管制圏などで天気が VMC を下回るとき、管制の許可を受けて特別に有視界で飛ぶ制度（<b>特別有視界飛行</b>）がある（条件・手続きは規則で確認）</li></ul>
+${bk.q('高度 1,500 m、管制区の中。視程 6 km、進行方向の雲の底が自分より 200 m 上にある。このまま飛べるか？', '視程 5,000 m 以上は満たすが、雲の<b>下方</b>に 300 m 空ける必要があるので、あと 100 m 以上降下するか、雲から離れる必要がある。')}` },
+  { id: 'law.alt', t: '最低安全高度・巡航高度', h: `
+<h3>最低安全高度（航空法第 81 条、施行規則第 174 条）</h3>
+<p>国土交通大臣の許可なく、次より低く飛んではいけません（離着陸を除く）。有視界飛行では、<b>エンジンが止まっても地上の人や物に危険を及ぼさずに着陸できる高度</b>と、次のうち高い方です。</p>
+<table class="bk-t"><tr><td>人や家屋が密集している地域の上空</td><td>機体から水平距離 600 m の範囲の、最も高い障害物の上端から <b>300 m</b></td></tr><tr><td>人や家屋のない地域・広い水面の上空</td><td>地上・水上の人や物件から <b>150 m</b> 以上の距離を保てる高度</td></tr><tr><td>それ以外の地域</td><td>地表・水面から <b>150 m</b></td></tr></table>
+<h3>巡航高度（半円方式）</h3>
+<p>対向する機体同士の高度をずらすため、一定の高さ以上を巡航する有視界飛行の機体は、<b>磁針路</b>によって高度を選びます（日本では、対地 3,000 ft 以上で、磁針路 000〜179° は<b>奇数</b>千 ft＋500 ft、180〜359° は<b>偶数</b>千 ft＋500 ft。例：東へ 5,500 ft、西へ 6,500 ft）。<b>適用条件の詳細は施行規則で確認</b>してください。</p>
+${bk.key('最低安全高度は「エンジンが止まっても降りられる高さ」が大前提', 'このシミュレータで街の上を低く飛べるのはゲームだから。実機では絶対にしない')}` },
+  { id: 'law.airspace', t: '空域の種類', h: `
+<table class="bk-t"><tr><th>空域</th><th>概要</th><th>有視界飛行の主な注意</th></tr>
+<tr><td>管制圏</td><td>管制塔のある空港の周り（おおむね半径 5〜9 km、高さ 3,000 ft 前後。空港ごとに決まる）</td><td>離着陸・通過には管制塔と交信し許可を得る</td></tr>
+<tr><td>情報圏</td><td>管制塔はないが飛行場情報などを提供している空港の周り</td><td>情報提供機関と交信して情報を得る</td></tr>
+<tr><td>進入管制区</td><td>大きな空港の周りの、進入・出発機を管制する空域</td><td>レーダーの情報・助言を受けられる。規則は AIP で確認</td></tr>
+<tr><td>特別管制空域</td><td>交通の多い空港の周りの特に管理された空域</td><td>有視界飛行でも管制の承認が必要（原則として飛べない区域もある）</td></tr>
+<tr><td>管制区</td><td>地表から一定の高さ以上の、航空路などの空域</td><td>有視界飛行もできるが、VMC の条件が厳しくなる</td></tr>
+<tr><td>訓練試験空域</td><td>訓練・試験のための空域</td><td>使用状況を確認し、使用中の機体に注意</td></tr>
+<tr><td>飛行禁止区域・制限空域</td><td>重要施設の上空、自衛隊・米軍の空域など</td><td>地図と NOTAM で確認し、入らない</td></tr></table>
+${bk.warn('空域の正確な範囲・高さ・ICAO の空域クラスとの対応、交信の要否は、AIP（ENR 章）と最新の航空図で確認してください')}` },
+  { id: 'law.rules', t: '飛行のルール（見張り・進路権・禁止事項）', h: `
+<h3>見張りと衝突回避</h3>
+<ul><li>操縦者は、他の航空機などと衝突しないよう<b>見張りをしなければならない</b>（航空法第 71 条の 2）。管制を受けていても、雲のない空では「見て避ける」が基本</li>
+<li><b>正面から近づく</b>：互いに<b>右へ</b>避ける</li><li><b>交差する</b>：相手を<b>右に見る</b>機体が避ける（右側の機体が優先）</li><li><b>追い越す</b>：追い越す側が、相手の<b>右側</b>を通って避ける</li>
+<li>動力の小さいものが優先：<b>気球 ＞ 滑空機 ＞ 飛行船 ＞ 飛行機・回転翼航空機</b>。困っている（遭難中の）機体が最優先</li><li>着陸しようとしている機体、より低い高度で進入している機体が優先</li></ul>
+<h3>主な禁止・制限（概要）</h3>
+<ul><li><b>酒・薬の影響下での操縦の禁止</b>（第 70 条）。飲酒後は十分に時間を空ける（所属機関の基準と法令の基準を確認）</li><li>飛行場以外での離着陸の制限（第 79 条）</li><li>物件の投下の制限（第 89 条）、曲技飛行の制限（第 91 条）、操縦練習飛行の制限（第 92 条）</li>
+<li>計器気象状態では計器飛行方式で（第 94 条関係）</li></ul>
+<h3>飛行計画</h3>
+<p>機長は、出発前に<b>飛行計画を通報</b>し（第 97 条。有視界飛行でも、多くの場合必要）、到着したら<b>到着の通知</b>をします（第 98 条）。飛行計画は、到着しない機体の捜索救難の出発点にもなります。</p>
+<h3>事故などの報告</h3>
+<p>事故（第 76 条）や、事故になりかけた<b>重大インシデント</b>（第 76 条の 2）が起きたら、機長は国土交通大臣に報告しなければなりません。</p>
+${bk.quiz('g10', '航空法規')}` },
+] });
+
+BOOK.push({ n: 8, id: 'hf', t: '第 8 章　人間の能力と限界', secs: [
+  { id: 'hf.phys', t: '航空生理：低酸素・耳・減圧・一酸化炭素', h: `
+<h3>低酸素症（ハイポキシア）</h3>
+<p>高い所では気圧が下がり、吸い込む酸素の量が減ります。<b>本人が気づきにくい</b>のが最大の危険です。</p>
+<ul><li>症状：判断力の低下、多幸感（気分がよくなる）、頭痛、眠気、視界が暗くなる（特に夜間視力は 5,000 ft 付近から落ちる）、唇や爪が青くなる</li>
+<li>一般に 10,000 ft を超えると影響が出始め、長く飛ぶと危険。高高度では、意識を保って有効な行動ができる時間（有効意識時間）が急に短くなる（例：25,000 ft で数分、35,000 ft で 1 分未満）</li><li>喫煙・飲酒・貧血・疲労で影響が大きくなる。対処は酸素、降下</li></ul>
+<h3>過呼吸（ハイパーベンチレーション）</h3><p>緊張で呼吸が速くなりすぎ、二酸化炭素が減る。手足のしびれ、めまい。<b>ゆっくり呼吸する・声に出して話す</b>。低酸素症と症状が似るので、高い所では酸素も考える。</p>
+<h3>耳・副鼻腔</h3><p>降下のとき耳が痛くなる。つばを飲む、あくび、鼻をつまんで軽く息を送る。<b>風邪で鼻が詰まっているときは飛ばない</b>（鼓膜を傷めることがある）。</p>
+<h3>減圧症（スキューバダイビングの後）</h3><p>ダイビング後すぐに飛ぶと、体内に溶けた窒素が泡になる。目安として、減圧停止の要らないダイビング後は 12 時間以上、減圧停止をしたダイビング後は 24 時間以上空ける（FAA の指針の例。最新の基準を確認）。</p>
+<h3>一酸化炭素</h3><p>冬に使うキャビンヒーターは排気管の熱を使うことが多く、排気管の亀裂で一酸化炭素が入ることがある。頭痛・眠気・吐き気 → <b>ヒーターを切り、外気を入れ、早く着陸</b>。一酸化炭素検知器があると安心。</p>` },
+  { id: 'hf.sd', t: '空間識失調と錯覚', h: `
+<p>人間の平衡感覚（内耳の三半規管と耳石）は、<b>ゆっくりした変化や、長く続く回転を感じられない</b>ので、外が見えないとだまされます。</p>
+<table class="bk-t"><tr><th>錯覚</th><th>起きる状況</th><th>感じ方と危険</th></tr>
+<tr><td>リーン（傾き）</td><td>ゆっくり傾いた後、急に水平に戻す</td><td>反対に傾いていると感じ、体を傾ける。戻そうとして再び傾ける</td></tr>
+<tr><td>墓場のスパイラル</td><td>長く旋回を続ける</td><td>旋回を感じなくなり、高度が下がるので操縦桿を引くと、旋回が締まって急降下の螺旋に</td></tr>
+<tr><td>コリオリ錯覚</td><td>旋回中に頭を大きく動かす（下の物を拾うなど）</td><td>激しいめまい・転がる感覚。最も強い錯覚のひとつ</td></tr>
+<tr><td>体性重力錯覚</td><td>急な加速（ゴーアラウンド・離陸）</td><td>機首が上がったように感じ、機首を下げすぎて地面へ。夜間・雲中で危険</td></tr>
+<tr><td>逆転錯覚</td><td>上昇から急に水平に移る</td><td>後ろに倒れる感覚で、機首を下げすぎる</td></tr></table>
+<h3>着陸時の目の錯覚</h3>
+<table class="bk-t"><tr><th>状況</th><th>見え方</th><th>結果</th></tr><tr><td>上り坂の滑走路・幅の狭い滑走路</td><td>高く見える</td><td>低く進入しすぎる</td></tr><tr><td>下り坂・幅の広い滑走路</td><td>低く見える</td><td>高く進入しすぎる</td></tr>
+<tr><td>もや・霧</td><td>遠く（高く）見える</td><td>低く進入しすぎる</td></tr><tr><td>風防に雨</td><td>高く見える</td><td>低く進入しすぎる</td></tr><tr><td>夜、周りに明かりのない滑走路（ブラックホール）</td><td>高く見える</td><td>低く進入し手前の地面に衝突</td></tr></table>
+${bk.key('外が見えないときは<b>体の感覚を捨てて計器を信じる</b>。これが計器飛行の第一原則', '進入では PAPI・VASI（進入角指示灯）と計器で確かめる')}
+${bk.sim('フードで外を見えなくし、計器だけで異常な姿勢から回復します。', ['i1', '基本計器飛行'], ['i2', '異常姿勢からの回復'])}` },
+  { id: 'hf.vision', t: '見張りの方法と目の特性', h: `
+<ul><li>目は動いているものより<b>止まっているもの</b>に気づきにくい。衝突コースの相手は、窓の中で<b>止まって見えて大きくなる</b>だけ（見つけにくい）</li>
+<li>空に何もないと、目は 1〜2 m 先に焦点が合ってしまう（空虚視野近視）。遠くの物（雲・地形・翼端）にときどき焦点を合わせる</li>
+<li>見張りは、視野を約 10° ごとに区切り、<b>各区画で 1 秒ほど止めて見る</b>方法が効果的。窓の柱や翼の陰も頭を動かして見る</li>
+<li>旋回の前に、曲がる方向と上下を確認（「クリア・レフト／ライト」）</li>
+<li>夜間：暗さに目が慣れるまで約 30 分。明るい光で台無しになる。暗い物は少し視線をずらすと見える（中心は色を感じる細胞だけで暗さに弱い）</li></ul>` },
+  { id: 'hf.fit', t: '体調管理（IMSAFE）と薬・アルコール', h: `
+<p>飛ぶ前に自分に問う 6 項目（<b>IMSAFE</b>）：</p>
+<table class="bk-t"><tr><td><b>I</b>llness</td><td>病気</td><td>風邪・発熱・下痢などはないか</td></tr><tr><td><b>M</b>edication</td><td>薬</td><td>眠くなる薬（抗ヒスタミン剤など）を飲んでいないか。市販薬でも注意。わからなければ航空身体検査医に相談</td></tr>
+<tr><td><b>S</b>tress</td><td>ストレス</td><td>仕事・家庭・お金の悩みで集中できない状態ではないか</td></tr><tr><td><b>A</b>lcohol</td><td>アルコール</td><td>体内に残っていないか。量が多い・体質によっては翌日まで残る</td></tr>
+<tr><td><b>F</b>atigue</td><td>疲労</td><td>寝不足・時差ぼけはないか</td></tr><tr><td><b>E</b>motion／<b>E</b>ating</td><td>感情・食事</td><td>怒り・悲しみ、空腹・脱水はないか</td></tr></table>
+${bk.key('「今日はやめておく」と言えることが、パイロットのいちばん大切な技能のひとつ')}` },
+  { id: 'hf.adm', t: '判断（ADM）と危険な態度', h: `
+<p>航空事故の多くは、機械の故障ではなく<b>人の判断</b>が関わっています。判断の型を身につけておきます。</p>
+<h3>PAVE（出発前のリスクの洗い出し）</h3>
+<table class="bk-t"><tr><td><b>P</b>ilot</td><td>自分（経験、最近の飛行、体調）</td></tr><tr><td><b>A</b>ircraft</td><td>機体（整備、性能、燃料、装備）</td></tr><tr><td>En<b>V</b>ironment</td><td>環境（天気、地形、空港、空域、夜間）</td></tr><tr><td><b>E</b>xternal pressures</td><td>外からのプレッシャー（予定、同乗者の期待、費用）</td></tr></table>
+<h3>DECIDE（飛行中の判断）</h3>
+<p><b>D</b>etect（変化に気づく）→ <b>E</b>stimate（対応の必要を見積もる）→ <b>C</b>hoose（望む結果を選ぶ）→ <b>I</b>dentify（取れる行動を挙げる）→ <b>D</b>o（実行）→ <b>E</b>valuate（結果を評価）</p>
+<h3>5 つの危険な態度と、その解毒剤</h3>
+<table class="bk-t"><tr><th>態度</th><th>心の声</th><th>自分に言い聞かせる言葉</th></tr>
+<tr><td>反権威</td><td>「指図するな」</td><td>規則には理由がある。従おう</td></tr><tr><td>衝動</td><td>「早く何かしなければ」</td><td>急ぐな。まず考えよう</td></tr><tr><td>不死身</td><td>「自分には起きない」</td><td>自分にも起こりうる</td></tr><tr><td>マッチョ（誇示）</td><td>「自分ならできる」</td><td>無理をするのは愚かだ</td></tr><tr><td>あきらめ</td><td>「どうせ無駄だ」</td><td>自分は無力ではない。できることがある</td></tr></table>
+${bk.key('「予定どおり行きたい」気持ち（get-there-itis）は、天候悪化の中への飛行や燃料切れの大きな原因', '判断の基準（最低気象条件、最大横風、燃料の予備）は、地上で落ち着いているときに決めておく')}` },
+  { id: 'hf.crm', t: 'CRM・TEM・チェックリスト', h: `
+<ul><li><b>CRM（クルー・リソース・マネジメント）</b>：使えるすべての資源（同乗者、管制官、整備士、情報、自動操縦、チェックリスト）を使って安全に飛ぶ考え方。1 人で飛ぶ単発機でも、管制に助けを求める・同乗者に見張りを頼むなどが CRM</li>
+<li><b>TEM（スレット・アンド・エラー・マネジメント）</b>：天気・混雑・不慣れな空港などの<b>スレット（脅威）</b>を前もって見つけ、<b>エラー（間違い）</b>は必ず起きる前提で、早く見つけて直し、<b>望ましくない状態</b>（速度が遅すぎる、コースを外れる）に陥る前に止める</li>
+<li><b>チェックリスト</b>：記憶に頼らないための道具。「読んで・確認して・声に出す（Read-Do または Do-Verify）」。緊急時の最初の数項目（メモリーアイテム）は暗記し、落ち着いたらチェックリストで確認する</li>
+<li><b>状況認識</b>：今どこで、何が起きていて、この先どうなるか。1 つの作業に没頭して他を忘れる（固着）と失われる</li></ul>
+${bk.sim('離着陸の課目では、チェックリストを 1 項目ずつ確認してから飛びます（Enter キー）。', ['t3', '通常着陸'])}
+${bk.quiz('g7', '人間の能力と安全')}` },
+] });
+// ---------------------------------------------------------------------
+//  textbook: flight operations, emergencies, instrument flying, sim guide
+// ---------------------------------------------------------------------
+BOOK.push({ n: 9, id: 'ops', t: '第 9 章　飛行操作（実技の要領）', secs: [
+  { id: 'ops.pre', t: '飛行前点検', h: `
+<p>飛行前点検は、機体の周りを<b>決まった順番で一周</b>して、目と手で確かめる作業です。順番は機体のチェックリストに従います。代表的な項目：</p>
+<ol><li><b>操縦席</b>：書類（登録・耐空証明・航空日誌など）、マグネトー OFF・ミクスチャー カットオフの確認、マスタースイッチ ON で燃料計・フラップ・灯火・ピトーヒーター、終わったらマスター OFF。<b>操縦桿のロック（ガストロック）を外す</b></li>
+<li><b>主翼</b>：表面の傷・へこみ・霜や氷、フラップとエルロンの取り付けと動き、燃料タンクの中を目で見る、タンクのキャップ、燃料サンプリング、翼端灯、失速警報、ピトー管（カバーを外す、詰まり）</li>
+<li><b>胴体・尾翼</b>：アンテナ、静圧孔、エレベーター・ラダー・トリムタブの取り付けと動き、係留ロープを外す</li>
+<li><b>機首・エンジン</b>：エンジンオイルの量、プロペラの傷（小さな傷が割れの原因）、スピナー、空気取り入れ口のゴミ・鳥の巣、排気管、前輪とタイヤ・ショック</li>
+<li><b>主脚</b>：タイヤの空気と摩耗、ブレーキの油漏れ</li></ol>
+${bk.key('「急いでいる日」ほど点検を省略しがち。チェックリストを必ず手に持って', 'ピトーカバー、ガストロック、係留ロープ、燃料キャップの外し忘れ・締め忘れは今でも事故の原因')}` },
+  { id: 'ops.taxi', t: 'エンジン始動と地上走行', h: `
+<ul><li>始動前：周囲の安全、「<b>プロペラ前よし（Clear prop）</b>」と声に出して確認</li><li>始動後：<b>油圧が上がるか</b>すぐ確認、不要な電気は後から ON</li>
+<li>走行速度は人が早歩きする程度。ブレーキは走り出してすぐ試す</li><li>風の中の走行（前輪式）：風で機体があおられないよう操縦桿を使う</li></ul>
+<table class="bk-t"><tr><th>風の方向</th><th>操縦桿の位置</th><th>覚え方</th></tr><tr><td>前方左から</td><td>左へ（左エルロン上げ）、前後は中立〜やや引く</td><td>風の方へ「傾けて向かう」</td></tr><tr><td>前方右から</td><td>右へ</td><td></td></tr>
+<tr><td>後方左から</td><td>右へ、前へ押す</td><td>風から「逃げるように、押す（ダイブ・アウェイ）」</td></tr><tr><td>後方右から</td><td>左へ、前へ押す</td><td></td></tr></table>
+<h3>離陸前点検（ランナップ）</h3>
+<p>風上に向けて止め、パワーを上げてマグネトー、キャブレターヒーター、エンジン計器、真空計、電流計を確認。操縦翼面が自由に正しく動くか、トリムの位置、フラップ、ドア・ベルト、燃料、計器の設定（高度計・方位指示器）、離陸後の手順（エンジン故障時の方針）を確認します。</p>
+${bk.sim('離陸前点検のチェックリストから始まる離陸の課目です。', ['t1', '通常離陸'])}` },
+  { id: 'ops.to', t: '離陸（通常・横風・短距離・軟弱地）', h: `
+<h3>通常離陸</h3>
+<ol><li>センターラインに合わせ、機首方位と滑走路番号が合っているか確認</li><li>スロットルを<b>なめらかに全開</b>。エンジン計器（回転・油圧）と速度計が上がるかを確認</li><li>加速とともに左へ向こうとするので<b>右ラダー</b>でセンターラインを保つ（第 1 章「左偏向傾向」）</li>
+<li>ローテーション速度（ヒバリ 52 kt）でゆっくり機首を上げ、浮いたら Vy（73 kt）で上昇</li><li>安全な高度でフラップを上げ、上昇を続ける</li></ol>
+<h3>横風離陸</h3><p>滑走開始時は<b>風上側へ操縦桿をいっぱいに</b>近く倒しておき（風上の翼を押さえる）、速度が増えるにつれて少しずつ戻す。浮揚後は風上へ少し機首を向けてコースを保つ（クラブ）。</p>
+<h3>短距離離陸（障害物越え）</h3><p>滑走路の端いっぱいから、ブレーキを踏んだまま全開にしてから離す。POH のフラップ設定で、浮いたら<b>Vx</b> で障害物を越え、越えたら Vy へ。</p>
+<h3>軟弱地離陸（草地・ぬかるみ）</h3><p>止まらずに走り続け、操縦桿を引いて前輪を早く浮かせ、主輪への負担を減らす。浮いたらすぐ地面効果の中で加速して、十分な速度になってから上昇。</p>
+${bk.key('離陸を中止する判断（どこまでに浮かなければやめるか）を、滑走前に決めておく')}
+${bk.sim('', ['t1', '通常離陸'], ['e1', '離陸中止'])}` },
+  { id: 'ops.pattern', t: '場周経路（トラフィックパターン）', h: () => `
+${FIG.pattern()}
+<ul><li><b>離陸・上昇</b>：滑走路の延長線上を上昇</li><li><b>クロスウインド</b>：場周高度の数百 ft 下で 90° 旋回</li><li><b>ダウンウインド</b>：場周高度（一般に地上 1,000 ft。空港の決まりに従う）で滑走路と平行に、滑走路から 1〜2 km 程度離れて飛ぶ。着陸前チェックリスト</li>
+<li><b>滑走路の着陸端の真横</b>でパワーを絞り、フラップ、降下開始</li><li><b>ベース</b>：接地点から約 45° 後ろに見えたら旋回。降下を続けながら高さを判断</li><li><b>ファイナル</b>：滑走路の延長線上。オーバーシュートしそうでも、<b>深いバンクや過大なラダーで無理に戻さない</b>（スピンの危険）。ゴーアラウンド</li></ul>
+${bk.key('風の中では、場周の地面に対する形を保つため、各辺で偏流修正する', '場周に入る・出る方法、場周の向き（左回り・右回り）は空港ごとに決まっている')}
+${bk.sim('ダウンウインドから場周経路を飛んで着陸します。', ['t2', '場周経路'], ['t7', '夜間の場周飛行'])}` },
+  { id: 'ops.land', t: '進入と着陸・横風着陸', h: () => `
+<h3>安定進入</h3>
+${FIG.stableApproach()}
+<h3>着陸</h3>
+<ol><li>ファイナルでは<b>姿勢で速度、パワーで降下率（進入角）</b>を主に調整する（両方は互いに影響するので組み合わせで）</li><li>接地点は窓の中で動かない点。上に動くなら低すぎ（届かない）、下に動くなら高すぎ</li>
+<li>滑走路の端を越えたらパワーをアイドルへ</li><li>地上 10〜20 ft で<b>フレア</b>（機首を少しずつ上げて降下を止める）。視線は滑走路の先の方へ</li><li>機体が沈むのに合わせて機首を上げ続け、<b>主輪から</b>やさしく接地。前輪はゆっくり下ろす</li><li>センターラインを保ち、減速してから滑走路を出る</li></ol>
+<h3>横風着陸</h3>
+<ul><li><b>クラブ法</b>：風上に機首を向けて進入し、接地直前にラダーで機首を滑走路にまっすぐに戻す</li><li><b>ウイングロー（サイドスリップ）法</b>：風上側の翼を下げ（エルロン）、反対のラダーで機首をまっすぐに保つ。<b>風上側の主輪から接地</b></li><li>接地後もエルロンを風上側いっぱいへ倒していく</li></ul>
+${bk.key('接地の瞬間に機体が横へ流れていると、脚に大きな横の力がかかり、転覆の原因にもなる', '高くなりすぎた・速すぎた・浮きすぎた → 迷わずゴーアラウンド')}
+${bk.sim('通常着陸・横風 10 kt・短距離着陸を、接地の降下率・位置・横流れまで採点します。', ['t3', '通常着陸'], ['t5', '横風着陸'], ['t6', '短距離着陸'])}` },
+  { id: 'ops.ga', t: 'ゴーアラウンド（着陸復行）', h: `
+<p>着陸をやめてもう一度やり直すことです。<b>失敗ではなく、正しい判断</b>です。</p>
+<ol><li><b>パワー全開</b>（キャブレターヒーターを切る）</li><li>機首を上げて上昇姿勢へ（急に上げすぎない。全開時は右ラダー）</li><li>フラップを<b>段階的に</b>上げる（まず 20° 程度へ。上昇が確立してから残りを）</li><li>正の上昇率を確認してから、残りのフラップ・場周へ</li><li>管制に通報（「Going around」）</li></ol>
+${bk.key('ゴーアラウンドの判断が遅れるほど危ない。「迷ったらゴーアラウンド」', '急な加速で機首が上がったと錯覚しやすい（体性重力錯覚）。姿勢指示器と外の景色で確かめる')}
+${bk.sim('', ['t4', 'ゴーアラウンド'])}` },
+  { id: 'ops.man', t: '空中操作（低速飛行・失速・急旋回・対地目標）', h: `
+<table class="bk-t"><tr><th>操作</th><th>目的</th><th>ポイント</th></tr>
+<tr><td>低速飛行</td><td>失速に近い速度での操縦の感覚</td><td>パワーで高度、姿勢で速度。舵の効きが悪いので大きく使う。右ラダーが多く必要</td></tr>
+<tr><td>パワーオフ失速</td><td>着陸時の失速の認識と回復</td><td>着陸形態で減速し失速、前へ・水平・全開・フラップ段階的</td></tr><tr><td>パワーオン失速</td><td>離陸・上昇中の失速</td><td>高出力で機首上げ。左へ回ろうとするので右ラダー</td></tr>
+<tr><td>急旋回（45° など）</td><td>最大性能の旋回と荷重の感覚</td><td>バンクを入れながらパワーを少し足し、操縦桿を引く。オーバーバンキングに注意。自分の後方乱気流に入れば正確</td></tr>
+<tr><td>対地目標操作</td><td>風の中で地面に対して決まった経路を飛ぶ</td><td>矩形経路・S 字・定点旋回。追い風側ではバンクを深く、向かい風側では浅く</td></tr></table>
+${bk.sim('', ['b6', '低速飛行'], ['b5', '急旋回'], ['b7', 'パワーオフ失速'], ['b8', 'パワーオン失速'])}` },
+  { id: 'ops.night', t: '夜間飛行', h: `
+<ul><li>地形・雲が見えにくい。雲の中に気づかず入ることがある。天気の余裕を昼より大きく</li><li>目を暗さに慣らす（約 30 分）。赤い光・弱い光で地図を見る。懐中電灯を 2 つ</li>
+<li>水平線が見えにくく、空と海・明かりの少ない地面の区別がつかない → 計器を併用</li><li>他機の向きは航空灯の色の組み合わせで判断する（第 2 章）</li><li>エンジン故障時の不時着場所が見えない → 滑空で届く空港を意識した経路と高度</li></ul>
+${bk.sim('夜の場周飛行で、滑走路灯と PAPI を頼りに着陸します。', ['t7', '夜間の場周飛行'])}` },
+  { id: 'ops.wake', t: '後方乱気流', h: `
+<p>揚力を出している翼の端からは、強い渦（<b>翼端渦</b>）が後ろへ流れます。<b>重い・遅い・きれいな形態（フラップ上げ）</b>の大型機ほど強く、小型機がひっくり返るほどのこともあります。</p>
+<ul><li>渦は下へ沈み（毎分数百 ft）、地面近くでは横へ広がる。横風が弱いと滑走路の上にしばらく残る</li><li>大型機の後に離陸するとき：大型機が<b>浮いた点より手前</b>で浮き、その上昇経路の<b>上</b>を飛ぶ</li>
+<li>大型機の後に着陸するとき：大型機の進入経路の<b>上</b>を飛び、大型機が<b>接地した点より先</b>に接地する</li><li>管制から間隔（時間）を空ける指示があれば従い、足りないと感じたら待つ</li></ul>
+${bk.quiz('g12', '飛行操作の要領')}` },
+] });
+
+BOOK.push({ n: 10, id: 'emg', t: '第 10 章　緊急操作', secs: [
+  { id: 'emg.prin', t: '緊急時の原則', h: `
+<p>どんな緊急でも、優先順位は変わりません。</p>
+<div class="bk-formula">① Aviate（飛ばす）→ ② Navigate（向かう）→ ③ Communicate（伝える）</div>
+<ul><li>まず<b>機体を操縦し続ける</b>。故障に気を取られて速度・姿勢を失う（失速）のが最悪の結果</li><li>次に、どこへ向かうか（空港、不時着場所）</li><li>余裕ができたら管制・周囲へ伝える（MAYDAY／PAN-PAN、7700）</li>
+<li>メモリーアイテム（暗記している最初の操作）→ 落ち着いたらチェックリストで確認</li></ul>
+${bk.key('緊急時は時間の流れが速く感じる。深呼吸して「まず飛ばす」')}` },
+  { id: 'emg.efato', t: '離陸中・離陸直後のエンジン故障', h: `
+<ul><li><b>滑走中</b>：パワーをアイドル、ブレーキ、まっすぐ止まる（離陸中止）</li><li><b>浮いた直後で滑走路が残っている</b>：そのまま滑走路に降りる</li>
+<li><b>上昇中の低い高度</b>：<b>すぐに機首を下げて滑空速度を保つ</b>（上昇姿勢のままだと数秒で失速する）。<b>ほぼ正面（左右 30° 程度以内）</b>の、できるだけ安全な場所に降りる。風防の中で見える場所を選ぶ</li>
+<li><b>滑走路へ引き返さない</b>（十分な高度がない限り）。旋回で高度を大きく失い、バンクで失速速度も上がり、低高度の失速・スピンになりやすい。引き返せる最低高度は機体・風・技量で違うので、教官と決めておく</li></ul>
+${bk.sim('離陸後、低高度でエンジンが止まります。5 秒以内に滑空姿勢へ移り、ほぼ正面へ降ります（海への着水も、穏やかなら生存可能と採点）。', ['e2', '離陸直後のエンジン故障'])}` },
+  { id: 'emg.eng', t: '上空でのエンジン故障と不時着', h: `
+<p>覚え方 <b>ABC</b>：</p>
+<ol><li><b>A</b>irspeed：最良滑空速度（ヒバリ 65 kt 前後）にしてトリムを取る</li><li><b>B</b>est field：降りる場所を決める（風上に向かって降りられる、広く平らで障害物のない場所。空港があれば最優先）。旋回しながら探すなら、その場所の近くで高度を処理する</li>
+<li><b>C</b>hecklist：再始動を試みる（燃料タンクの切り替え、燃料ポンプ、ミクスチャー フルリッチ、キャブレターヒーター、マグネトーの確認）。原因として燃料系統とキャブレターアイスが多い</li></ol>
+<p>再始動できなければ、不時着のチェックリスト：MAYDAY・7700、同乗者にベルトと姿勢の指示、ドアを少し開けておく（機体によって）、接地が確実になったら燃料・電気を切る。<b>失速させずに、できるだけ遅い速度で、機体をまっすぐに</b>接地させる。</p>
+<ul><li>場所の選び方：舗装道路（電線・車・標識に注意）、畑（作物の高さ・溝）、砂浜、水面（岸の近く）。<b>電線</b>は見えにくい最大の敵</li><li>滑空距離の目安：滑空比 9 なら、高度 1,000 ft ごとに約 1.5 NM（2.7 km）</li></ul>
+${bk.sim('上空でエンジンが止まり、最良滑空速度で空港まで戻って滑走路に着陸します。', ['e3', '上空でのエンジン故障'])}` },
+  { id: 'emg.fire', t: '火災・電気系統の故障', h: `
+<h3>エンジン火災（飛行中）</h3><p>一般的な手順：ミクスチャー カットオフ（燃料を断つ）、燃料セレクター OFF、マスター OFF、キャビンヒーター・通気口を閉じる、火が消えない場合は速度を増して吹き消すことを試み、直ちに不時着。<b>機体ごとの手順に従う</b>。</p>
+<h3>電気火災</h3><p>焦げたにおい・煙：マスター OFF、通気、必要なものだけ 1 つずつ戻して原因を探す（サーキットブレーカーが飛んだものは戻さない）。煙が多ければ直ちに着陸。</p>
+<h3>発電機の故障</h3><p>電流計が放電を示し続ける・警告灯 → 発電機のスイッチ・ブレーカーを確認（一度だけ）、不要な電気を切ってバッテリーを節約、早めに最寄りの空港へ。フラップや無線が使えなくなる前提で計画する。</p>` },
+  { id: 'emg.imc', t: '不意に雲に入ったとき', h: `
+<p>計器飛行の資格のない操縦士が雲に入ると、多くの人が<b>数分以内に姿勢がわからなくなり</b>、スパイラルに入ります。</p>
+<ol><li>体の感覚を無視し、<b>姿勢指示器で翼を水平</b>に保つ。操縦桿は小さく</li><li>高度と速度を保ち、パワーは巡航のまま</li><li><b>標準旋回以下のゆるいバンク</b>で <b>180° 旋回</b>して、来た道（天気のよかった方）へ戻る。方位指示器で確認</li><li>管制に助けを求める（PAN-PAN、レーダーで誘導してもらえる）</li></ol>
+${bk.key('最善の対処は「入らない」こと。雲底が下がってきたら、早めに引き返す')}
+${bk.sim('フードで外が見えない状態から、計器だけで回復する練習です。', ['i2', '異常姿勢からの回復'])}` },
+  { id: 'emg.lost', t: '位置がわからなくなったら', h: `
+<p>覚え方 <b>5C</b>：</p>
+<ol><li><b>Climb</b>：安全な範囲で上昇する（遠くまで見え、無線も届きやすい）</li><li><b>Communicate</b>：管制・情報機関に連絡する</li><li><b>Confess</b>：迷ったことを正直に伝える（PAN-PAN でよい）</li><li><b>Comply</b>：指示に従う</li><li><b>Conserve</b>：燃料を節約する（出力を下げる、ミクスチャー）</li></ol>
+<p>自分でも、最後に確認した位置から「針路 × 時間」で今の位置の範囲を推定し、大きな目標（海岸線・大河・高速道路）を探します。VOR 2 局のラジアルの交点や GNSS も使います。燃料が少なくなる前に、降りられる場所に降りる判断も大切です。</p>
+${bk.quiz('g6', '緊急時の操作')}` },
+] });
+
+BOOK.push({ n: 11, id: 'ifr', t: '第 11 章　計器飛行の基礎', secs: [
+  { id: 'ifr.cp', t: '計器飛行の考え方：姿勢 ＋ 出力 ＝ 性能', h: `
+<p>計器飛行でも、飛行機の操縦は変わりません。<b>外の景色の代わりに姿勢指示器を見る</b>だけです。</p>
+<ul><li><b>コントロール計器</b>：姿勢指示器（ピッチとバンク）と、回転計（出力）。ここで「姿勢」と「出力」を決める</li><li><b>パフォーマンス計器</b>：高度計・昇降計・速度計・方位指示器・旋回計。決めた姿勢と出力の<b>結果</b>を確かめる</li></ul>
+<div class="bk-formula">① 姿勢と出力を決める → ② トリムを取る → ③ 結果（高度・速度・針路）を確かめる → ④ 小さく直す</div>
+<p>たとえば高度が 50 ft 高いときは、ピッチを 1°ほど下げて 100〜200 fpm で降下して戻す。昇降計を追いかけて大きく操作しないこと。</p>
+${bk.sim('ガイドの「数値の目安」には、姿勢と出力の組み合わせで決まる性能の表があります。基本計器飛行の課目で実践します。', ['i1', '基本計器飛行'])}` },
+  { id: 'ifr.scan', t: 'クロスチェック（計器の見方の順番）', h: `
+<ul><li><b>放射状スキャン</b>：姿勢指示器を中心に、姿勢 → 高度計 → 姿勢 → 方位 → 姿勢 → 速度 → 姿勢 …と、他の計器を見るたびに姿勢指示器に戻る</li><li>今の操作で<b>最も大事な計器（プライマリー）</b>を多めに見る。例：水平飛行の高度は高度計、旋回の針路変化は方位指示器、上昇の速度は速度計</li></ul>
+<h3>3 つのよくある失敗</h3>
+<table class="bk-t"><tr><td><b>固着</b></td><td>1 つの計器を見つめ続け、他のずれに気づかない</td></tr><tr><td><b>省略</b></td><td>ある計器を見るのを忘れる（旋回中に高度計を見ないなど）</td></tr><tr><td><b>強調</b></td><td>慣れた計器だけを頼りにする</td></tr></table>
+${bk.sim('計器の読み方チュートリアルの「スキャン」のページで、目の動きを動く絵で見られます。', ['k1', '計器の読み方'])}` },
+  { id: 'ifr.basic', t: '基本計器操作と部分パネル', h: `
+<ul><li><b>標準旋回</b>：旋回計の翼を印に合わせる（毎秒 3°）。バンクは「速度 ÷ 10 ＋ 7」</li><li><b>時間旋回</b>：方位指示器が使えないとき、標準旋回で「曲げたい角度 ÷ 3」秒旋回する（90° なら 30 秒）</li>
+<li><b>上昇・降下</b>：ピッチを変えてから出力を合わせる。一定の速度・一定の昇降率での上昇降下と、目標高度の手前（昇降率の 10％ 程度）からのレベルオフ</li><li><b>部分パネル</b>：姿勢指示器と方位指示器が故障したとき。バンクは旋回計、ピッチは高度計・昇降計・速度計、針路は磁気コンパス（誤差に注意）と時間旋回で</li></ul>
+${bk.sim('', ['i1', '基本計器飛行'], ['e4', '計器故障（部分パネル）'])}` },
+  { id: 'ifr.app', t: 'ILS 進入と待機経路', h: () => `
+<h3>ILS（計器着陸装置）</h3>
+<ul><li><b>ローカライザー</b>：滑走路の延長線からの左右のずれ（縦の針）。VOR の約 4 倍敏感。<b>針の方へ小さく修正</b></li><li><b>グライドスロープ</b>：約 3° の降下経路からの上下のずれ（横の針）。針が下なら自分が高すぎる → 降下を増やす</li>
+<li>決められた<b>決心高度（DA）</b>までに滑走路（進入灯など）が見えなければ、<b>進入復行</b>（ゴーアラウンド）</li><li>3° の経路の降下率の目安：対地速度（kt）× 5 fpm（90 kt なら約 450 fpm）</li></ul>
+${FIG.holding()}
+<h3>待機経路（ホールディング）</h3><p>フィックス上空で、1 分の直線と標準旋回を繰り返すレーストラック。風に合わせて、アウトバウンドの時間と針路を調整し、インバウンドが 1 分になるようにします。入り方（エントリー）は、フィックスへ来た方向によって<b>ダイレクト・パラレル・ティアドロップ</b>の 3 種類があります。</p>
+${bk.sim('', ['i3', 'ILS 進入'], ['i4', '待機経路'])}` },
+] });
+
+BOOK.push({ n: 12, id: 'simg', t: '第 12 章　このシミュレータでの練習', secs: [
+  { id: 'simg.map', t: '章と課目の対応表', h: `
+<table class="bk-t"><tr><th>教科書</th><th>フライトスクールの課目</th></tr>
+<tr><td>第 1 章 飛行の原理</td><td>b1〜b8（基本操縦・旋回・低速飛行・失速）、確認テスト「飛行の原理」</td></tr><tr><td>第 2 章 機体と装備</td><td>k1・k2（計器の読み方）、e4（部分パネル）、テスト「計器のしくみ」「機体のシステム」</td></tr>
+<tr><td>第 3 章 性能</td><td>t1（離陸。メニューの気温を変えて比較）、テスト「性能と重量・重心」「ヒバリの性能」</td></tr><tr><td>第 4 章 気象</td><td>テスト「気象と METAR」、t5（横風）</td></tr><tr><td>第 5 章 航法</td><td>n1（VOR）、n2（推測航法）</td></tr><tr><td>第 6 章 通信</td><td>t1・t2 の管制の復唱、テスト「無線と管制用語」</td></tr>
+<tr><td>第 7・8 章 法規・人間</td><td>テスト「航空法規」「人間の能力と安全」</td></tr><tr><td>第 9 章 飛行操作</td><td>t1〜t7（離着陸・場周・夜間）、テスト「飛行操作の要領」</td></tr><tr><td>第 10 章 緊急</td><td>e1〜e4</td></tr><tr><td>第 11 章 計器飛行</td><td>i1〜i4、c1（模擬実地試験）</td></tr></table>` },
+  { id: 'simg.phys', t: 'このシミュレータが計算していること・いないこと', h: `
+<p>このシミュレータの物理計算は、練習機ヒバリ（セスナ 172 クラスを参考にした架空の機体）について、次の性能が実機の公表値に近くなるよう調整しています（計測値）：失速速度 49 kt（フラップ 30° で 40 kt）、海面の上昇率 約 750 fpm（Vy 73 kt）、滑空比 約 9、離陸滑走 約 680 ft（向かい風 6 kt）。</p>
+<h3>計算していること</h3>
+<ul><li>国際標準大気（気温・気圧・密度）と気温の設定、密度高度による翼・エンジン・プロペラの性能変化</li><li>迎え角による揚力と失速、地面効果、フラップ、荷重倍数</li>
+<li>有害抗力と誘導抗力、プロペラの効率（低速で悪い）、止まったプロペラの抗力</li><li>左偏向傾向（後流・P ファクター・トルク・ジャイロ効果）、逆ヨー、横滑り、上反角効果、失速時の片翼の落ち込みとスピン</li>
+<li>地表付近の風の弱まり（ウインドシア）と突風、横風、タイヤと地面の摩擦、ブレーキ</li><li>ピトー静圧・ジャイロ計器の故障（訓練課目）</li></ul>
+<h3>計算していない・簡略化していること</h3>
+<ul><li>燃料の消費による重量・重心の変化、重量重心の設定</li><li>エンジンの温度・混合比・キャブレターアイス・マグネトー</li><li>着氷、雷雨、山岳波、後方乱気流</li><li>計器の誤差（北旋誤差・高度計の気温誤差など）</li><li>操縦桿の力の感触（キーボード・ゲームパッドのため）</li></ul>
+${bk.warn('このシミュレータは、国の認定を受けた訓練装置（FTD）ではありません。訓練時間には数えられず、実機の手順・数値は必ずその機体の POH と教官の指導に従ってください。')}
+<h3>学習に役立つ機能</h3>
+<table class="bk-t"><tr><td>J キー</td><td>物理の見える化（4 つの力、迎え角、荷重倍数、密度高度、必要なラダー）</td></tr><tr><td>U キー</td><td>自動ラダーの ON／OFF（OFF で本物同様に右ラダーが必要）</td></tr><tr><td>I キー</td><td>アナログ 6 計器 ⇄ グラス計器</td></tr><tr><td>K キー</td><td>6 計器の下に「読み方」を表示</td></tr><tr><td>メニュー「気温」</td><td>寒い日・標準・暑い日で密度高度を変える</td></tr></table>` },
+] });
 
 // =====================================================================
 //  GAME: environment, camera, input, audio, particles, HUD, modes, loop
@@ -8583,6 +9763,7 @@ async function init() {
   initParticles();
   setupMenu();
   setupSchool();
+  setupBook();
   setSound(game.sound);
   await loadMap(game.mapId);
   lastT = performance.now();

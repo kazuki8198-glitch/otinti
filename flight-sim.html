@@ -166,6 +166,81 @@ kbd{font:700 11.5px var(--mono);background:rgba(95,212,255,.12);border:1px solid
 #tut-next{justify-self:start;background:var(--cyan);color:#04121f;border:0;border-radius:5px;padding:6px 14px;font:700 13px var(--jp);cursor:pointer}
 @media (max-height:520px){.setup{grid-template-columns:1fr 1fr}.f-desc{display:none}.lede{display:none}.credit{display:none}}
 
+
+/* ---------- flight school ---------- */
+#hood{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 30%,rgba(28,32,38,.97),rgba(12,14,17,.99));display:flex;justify-content:center;align-items:flex-start;padding-top:18vh}
+#hood span{font:700 13px var(--jp);color:#6d7680;letter-spacing:.1em}
+#school{background:rgba(5,11,20,.94);align-items:stretch;justify-content:center;z-index:5}
+.sch-wrap{width:min(1160px,100%);display:flex;flex-direction:column;gap:14px;min-height:0}
+.sch-head{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:flex-end;justify-content:space-between}
+.sch-head h2{margin:2px 0 0;font:700 30px var(--jp)}
+.sch-log{display:flex;gap:22px}
+.sch-log div{display:grid}
+.sch-log b{font:700 24px var(--mono);color:var(--cyan);font-variant-numeric:tabular-nums}
+.sch-log span{font-size:11px;color:var(--muted)}
+.sch-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sch-actions select{font:700 14px var(--jp);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 8px}
+.sch-actions button,.sch-sub{background:transparent;border:1px solid var(--line);border-radius:6px;padding:8px 12px;color:var(--ink);font:700 13px var(--jp);cursor:pointer}
+.sch-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;min-height:0;flex:1}
+.sch-stages{overflow-y:auto;display:grid;gap:14px;align-content:start;padding-right:4px;touch-action:pan-y;max-height:calc(100vh - 150px)}
+.sch-stages h3{margin:0;font:700 14px var(--jp);color:var(--amber)}
+.sch-stages p{margin:2px 0 6px;font-size:12px;color:var(--muted)}
+.sch-stages section{display:grid;gap:5px}
+.sch-item{display:grid;grid-template-columns:30px 1fr;grid-template-rows:auto auto;column-gap:10px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;cursor:pointer;color:var(--ink)}
+.sch-item:hover{border-color:var(--cyan)}
+.sch-item.sel{border-color:var(--cyan);background:rgba(95,212,255,.12)}
+.sch-item.done .sch-grade{background:var(--green);color:#04121f}
+.sch-grade{grid-row:1/3;align-self:center;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font:700 13px var(--mono)}
+.sch-t{font:700 14px var(--jp)} .sch-g{font-size:11.5px;color:var(--muted)}
+.sch-brief{overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 20px;touch-action:pan-y;max-height:calc(100vh - 150px)}
+.sch-brief h2{margin:0 0 4px;font:700 22px var(--jp)}
+.sch-brief h3{margin:14px 0 4px;font:700 14px var(--jp);color:var(--cyan)}
+.sch-brief li{margin:4px 0;line-height:1.65}
+.sch-goal{color:var(--amber);margin:0}
+.sch-std{font:600 13px var(--mono);background:rgba(95,212,255,.08);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.sch-note{font-size:11.5px;color:var(--muted)}
+.sch-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted)}
+.sch-go{background:var(--cyan);color:#04121f;border:0;border-radius:6px;padding:10px 18px;font:700 15px var(--jp);cursor:pointer}
+.sq-panel,.sd-panel{width:min(760px,100%)}
+.sq-q{font:700 17px/1.6 var(--jp)}
+.sq-opts{display:grid;gap:8px;margin:10px 0}
+.sq-opts button{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 12px;color:var(--ink);font:14px var(--jp);cursor:pointer}
+.sq-opts button:hover:not(:disabled){border-color:var(--cyan)}
+.sq-opts button.ok{border-color:var(--green);background:rgba(58,214,122,.15)} .sq-opts button.ng{border-color:var(--red);background:rgba(255,90,80,.15)}
+.sq-why{padding:10px 12px;border-radius:6px;border:1px solid var(--line)} .sq-why.ok{border-color:var(--green)} .sq-why.ng{border-color:var(--red)}
+.sq-result{font:700 18px var(--jp)} .sq-result.ok{color:var(--green)} .sq-result.ng{color:var(--red)}
+.sd-sub{margin:4px 0 0;font-size:13px;color:var(--muted)}
+.sd-grade{font:700 44px var(--mono);width:74px;height:74px;border-radius:50%;display:grid;place-items:center;border:3px solid var(--line)}
+.sd-grade.ok{color:var(--green);border-color:var(--green)} .sd-grade.ng{color:var(--red);border-color:var(--red)}
+.sd-t{width:100%;border-collapse:collapse;font-size:13px}
+.sd-t td{padding:5px 6px;border-top:1px solid rgba(150,176,206,.14)}
+.sd-t td:first-child{width:1.5em;font-weight:700} .sd-t tr.ok td:first-child{color:var(--green)} .sd-t tr.ng td:first-child{color:var(--red)} .sd-t tr.ng td{background:rgba(255,90,80,.06)}
+.sd-t td:last-child{color:var(--muted);white-space:nowrap}
+.sd-foot{display:flex;gap:10px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line)}
+#sch-debrief,#sch-quiz,#sch-pause{align-items:center;justify-content:center;background:rgba(4,9,17,.72);z-index:6}
+.sp-pause{width:min(520px,100%)}
+#sch-panel{position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);width:min(640px,calc(100% - 24px));background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 14px 10px;z-index:4;pointer-events:none;display:grid;gap:4px}
+#sp-step{font:700 11px var(--jp);color:var(--muted);letter-spacing:.04em}
+#sp-say{font:700 15px/1.5 var(--jp)}
+#sp-tgt{display:flex;flex-wrap:wrap;gap:6px}
+#sp-tgt span{font:600 12px var(--mono);padding:2px 8px;border-radius:4px;border:1px solid var(--line)}
+#sp-tgt span.ok{border-color:var(--green);color:var(--green)} #sp-tgt span.warn{border-color:var(--amber);color:var(--amber)} #sp-tgt span.ng{border-color:var(--red);color:var(--red)}
+.sp-row{display:flex;gap:12px;font-size:12.5px;justify-content:space-between;flex-wrap:wrap} #sp-prog{color:var(--muted);font-family:var(--mono)} #sp-hint{color:var(--amber);font-weight:700}
+#sch-check,#sch-atc{position:fixed;right:16px;top:50%;transform:translateY(-50%);width:min(380px,calc(100% - 32px));background:var(--panel-solid);border:1px solid var(--cyan);border-radius:8px;padding:12px 14px;z-index:5;display:grid;gap:8px}
+.sc-title{font:700 14px var(--jp);color:var(--cyan)}
+#sch-check ol{margin:0;padding-left:1.4em;display:grid;gap:4px}
+#sch-check li{font-size:13px;color:var(--muted)} #sch-check li b{color:var(--ink);margin-right:8px}
+#sch-check li.cur{color:var(--ink)} #sch-check li.cur b{color:var(--cyan)} #sch-check li.ok{opacity:.55;text-decoration:line-through} #sch-check li.ng{color:var(--red)}
+.sc-foot{font-size:11.5px;color:var(--muted)}
+.atc-msg{font:600 13.5px/1.6 var(--mono);background:rgba(95,212,255,.08);border-radius:6px;padding:8px 10px}
+.atc-msg.ok{border:1px solid var(--green)} .atc-msg.ng{border:1px solid var(--red)}
+.atc-q{font-size:12px;color:var(--muted)}
+#sch-atc button{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;color:var(--ink);font:13px var(--mono);cursor:pointer}
+#sch-atc button:hover{border-color:var(--cyan)}
+.school-btn{padding:14px 16px;border-radius:6px;border:0;background:linear-gradient(90deg,#f2b33a,#ffd66b);color:#1a1204;font:700 16px var(--jp);cursor:pointer;text-align:left;display:grid;gap:2px}
+.school-btn small{font:600 11.5px var(--jp);opacity:.8}
+@media (max-width:860px){.sch-body{grid-template-columns:1fr}.sch-stages,.sch-brief{max-height:none}#school{overflow-y:auto}}
+
 /* map screen */
 .row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
 .f-desc.net a{color:var(--cyan)}
@@ -224,6 +299,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
 </head>
 <body>
 <canvas id="gl" tabindex="0"></canvas>
+<div id="hood" hidden><span>フード装着中：計器だけで飛行します</span></div>
 <canvas id="hud"></canvas>
 <div id="toast" aria-live="polite"></div>
 
@@ -272,6 +348,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
       <label class="chk"><input type="checkbox" id="opt-invert"> ピッチ反転</label>
       <label class="chk"><input type="checkbox" id="opt-sound" checked> サウンド</label>
     </div>
+    <button type="button" class="school-btn" id="open-school">✈ パイロット訓練（フライトスクール）<small>地上学科から実地試験まで 34 課目・自動採点つき</small></button>
     <button type="button" class="guide-btn" id="open-map">🗺 日本地図を開いて空港を選ぶ（M）</button>
     <button type="button" class="guide-btn" id="open-guide">？ ガイド：画面の見方・操作・用語・飛び方のコツ</button>
     <p class="credit">地形・航空写真・地図：国土地理院 地理院タイル（標高データは加工して使用）／ 海外：航空写真・地図 Esri, Maxar, Earthstar Geographics ／ 標高 AWS Terrain Tiles（Mapzen, SRTM ほか）／ 3D 都市モデル：国土交通省 PLATEAU ／ 建物・樹木：© OpenStreetMap contributors（OpenFreeMap）／ 空港：OurAirports ／ 地名：GeoNames</p>
@@ -291,6 +368,42 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
   </div>
 </div>
 
+
+<div id="school" class="screen" hidden>
+  <div class="sch-wrap">
+    <header class="sch-head">
+      <div><div class="eyebrow">FLIGHT SCHOOL · 操縦訓練課程</div><h2>パイロット訓練</h2></div>
+      <div class="sch-log" id="sch-log"></div>
+      <div class="sch-actions"><label class="f-label" for="sch-ap">訓練空港</label><select id="sch-ap"></select><button type="button" id="sch-close">メニューへ戻る</button></div>
+    </header>
+    <div class="sch-body">
+      <nav class="sch-stages" id="sch-stages" aria-label="課程表"></nav>
+      <article class="sch-brief" id="sch-brief"></article>
+    </div>
+  </div>
+</div>
+<div id="sch-quiz" class="screen" hidden>
+  <div class="guide-panel sq-panel" role="dialog" aria-labelledby="sq-title">
+    <div class="guide-head"><h2 id="sq-title">地上学科</h2><button type="button" id="sq-close">課程表へ ✕</button></div>
+    <div class="guide-body" id="sq-body"></div>
+  </div>
+</div>
+<div id="sch-debrief" class="screen" hidden>
+  <div class="guide-panel sd-panel" role="dialog" aria-labelledby="sd-title">
+    <div class="guide-head"><div><div class="eyebrow">DEBRIEF · 講評</div><h2 id="sd-title">講評</h2><p id="sd-sub" class="sd-sub"></p></div><div id="sd-grade" class="sd-grade">A</div></div>
+    <div class="guide-body" id="sd-body"></div>
+    <div class="sd-foot"><button type="button" class="sch-go" id="sd-next">次の課目へ</button><button type="button" class="sch-sub" id="sd-retry">もう一度</button><button type="button" class="sch-sub" id="sd-menu">課程表へ</button></div>
+  </div>
+</div>
+<div id="sch-pause" class="screen" hidden>
+  <div class="guide-panel sp-pause"><div class="guide-head"><h2>一時停止</h2></div>
+    <div class="sd-foot"><button type="button" class="sch-go" id="sp-resume">訓練に戻る（Esc）</button><button type="button" class="sch-sub" id="sp-retry">最初からやり直す</button><button type="button" class="sch-sub" id="sp-quit">訓練をやめて課程表へ</button></div></div>
+</div>
+<div id="sch-panel" hidden>
+  <div id="sp-step"></div><div id="sp-say"></div><div id="sp-tgt"></div><div class="sp-row"><span id="sp-prog"></span><span id="sp-hint"></span></div>
+</div>
+<div id="sch-check" hidden></div>
+<div id="sch-atc" hidden></div>
 <div id="guide" class="screen" hidden>
   <div class="guide-panel" role="dialog" aria-labelledby="guide-title">
     <div class="guide-head"><h2 id="guide-title">ガイド</h2><button type="button" id="guide-close">閉じる ✕</button></div>
@@ -2319,7 +2432,9 @@ const sim = {
 // wind blows from the active runway's heading (a headwind for takeoff and landing)
 function windAt(p, t) {
   const gust = Math.min(1, Math.max(p[1], 0) / 300 + 0.4);
-  const w = RWY.windDir || [-3, 0, 0];
+  const sw = typeof SCHOOL !== 'undefined' && SCHOOL.active && SCHOOL.wind;
+  const w = sw || RWY.windDir || [-3, 0, 0];
+  if (sw) { const k = SCHOOL.gust; return [w[0] + perlin(t * 0.35, 1.7) * 1.6 * gust * k, perlin(t * 0.5, 4.4) * 0.5 * gust * k, w[2] + perlin(t * 0.31, 8.2) * 1.3 * gust * k]; }
   return [w[0] + perlin(t * 0.35, 1.7) * 1.2 * gust, perlin(t * 0.5, 4.4) * 0.45 * gust, w[2] + perlin(t * 0.31, 8.2) * 0.9 * gust];
 }
 // lift coefficient needed for a load factor, and the elevator that holds that angle of attack
@@ -2437,7 +2552,7 @@ function physicsStep(dt, t) {
     T = (E.T * (0.06 + 0.94 * s.n1 * s.n1) + ab) * Math.pow(rho / 1.225, 0.7) * (1 - 0.25 * Math.min(mach, 1.2));
     s.ab = ab > 0;
   } else {
-    const E = AC.engine, thrEff = 0.04 + 0.96 * s.thr;
+    const E = AC.engine, thrEff = s.dead ? -0.035 : 0.04 + 0.96 * s.thr;
     T = thrEff * Math.min(E.T0, E.P / Math.max(Math.abs(u), 1)) * (rho / 1.225) - (1 - s.thr) * 2.5 * Math.max(u, 0) * AC.mass / 1000;
     s.ab = false;
   }
@@ -5036,6 +5151,977 @@ function tourPassed(i) {
 }
 
 // =====================================================================
+//  FLIGHT SCHOOL: a structured training course from ground school to a
+//  mock flight test. Each flight lesson is a list of steps with targets
+//  and tolerances; the instructor watches the aircraft, calls out
+//  corrections and grades every item for the debrief.
+// =====================================================================
+const FT = 3.28084, KTS = 1.94384;
+const w180 = a => ((a % 360) + 540) % 360 - 180;
+const SCHOOL = { active: null, analog: false, wind: null, gust: 1, hood: false, fail: {}, nav: null, obs: 0, prog: null };
+function schoolLoad() {
+  if (SCHOOL.prog) return SCHOOL.prog;
+  let p = null;
+  try { p = JSON.parse(localStorage.getItem('sorajima-school') || 'null'); } catch (e) { p = null; }
+  SCHOOL.prog = Object.assign({ lessons: {}, time: 0, landings: 0, airport: 'RJFM' }, p || {});
+  return SCHOOL.prog;
+}
+function schoolSave() { try { localStorage.setItem('sorajima-school', JSON.stringify(SCHOOL.prog)); } catch (e) { /* storage unavailable */ } }
+
+// ---------------------------------------------------------------------
+//  ground school question banks
+// ---------------------------------------------------------------------
+const QUIZ = {
+  g1: [
+    ['飛行中の飛行機に働く 4 つの力の組み合わせは？', ['揚力・重力・推力・抗力', '揚力・浮力・推力・摩擦', '重力・遠心力・推力・抗力', '揚力・重力・トルク・抗力'], 0, '揚力は重力と、推力は抗力とつり合います。水平飛行で速度が一定なら 4 つの力はつり合っています。'],
+    ['翼が失速する直接の原因は？', ['臨界迎え角を超えたとき', '速度が失速速度より遅くなったとき', 'エンジン出力が足りないとき', '機首が水平線より上を向いたとき'], 0, '失速は「迎え角」で起きます。速度が速くても、急に引き起こせば迎え角が臨界を超えて失速します（加速失速）。'],
+    ['60° バンクの水平旋回で、荷重倍数と失速速度はおよそどうなる？', ['2 G、失速速度は約 1.4 倍', '1.5 G、失速速度は 1.5 倍', '2 G、失速速度は 2 倍', '変わらない'], 0, '荷重倍数 n = 1 / cos(バンク角)。60° で n = 2。失速速度は √n 倍なので約 1.41 倍になります。'],
+    ['フラップを下げると？', ['揚力と抗力が増え、失速速度が下がる', '揚力が減り、抗力も減る', '失速速度が上がる', '推力が増える'], 0, '低速でも必要な揚力を得られるので、進入速度を下げて短い距離で着陸できます。代わりに抗力が増えます。'],
+    ['地面効果（グラウンドエフェクト）の影響は？', ['翼幅くらいの高さ以下で誘導抗力が減り、機体が浮きやすくなる', '地面に吸い寄せられて沈みやすくなる', 'プロペラの推力が増える', '速度計が大きく狂う'], 0, '着陸でフレア中に「フロート」する原因です。離陸では、地面効果で浮いても上昇できる速度になるまで引き上げすぎないよう注意します。'],
+    ['単発プロペラ機の離陸で右ラダーが必要になる主な理由は？', ['P ファクター・プロペラ後流・トルクなどの左偏向傾向', '右の翼の方が重いから', '風が必ず左から吹くから', 'フラップが左右で違うから'], 0, '操縦席から見て時計回りのプロペラでは、高出力・大迎え角で機首が左へ振られます。右ラダーでボールを中央に保ちます。'],
+    ['Vx と Vy の違いは？', ['Vx は最良上昇「角」、Vy は最良上昇「率」の速度', 'Vx は巡航速度、Vy は着陸速度', 'Vx は最大速度、Vy は失速速度', '同じ意味'], 0, '障害物を越えるには Vx（短い距離で高く）、通常の上昇は Vy（短い時間で高く）を使います。ヒバリでは Vy は約 73 kt。'],
+  ],
+  g2: [
+    ['ピトー静圧系で動く計器の組み合わせは？', ['速度計・高度計・昇降計', '姿勢指示器・方位指示器・旋回計', '回転計・油圧計・燃料計', '磁気コンパス・時計'], 0, '速度計はピトー圧と静圧、高度計と昇降計は静圧だけを使います。'],
+    ['一般的な練習機でバキューム（真空）ポンプで動くジャイロ計器は？', ['姿勢指示器と方位指示器', '旋回計と速度計', '高度計と昇降計', '磁気コンパス'], 0, 'バキュームが故障すると姿勢指示器と方位指示器が使えなくなります。旋回計（電気式）・高度計・昇降計・磁気コンパスで飛ぶのが「部分パネル」です。'],
+    ['静圧孔が詰まった。高度計はどうなる？', ['詰まったときの高度を指したまま動かない', '0 を指す', '実際より 1,000 ft 高くなる', '正常に動く'], 0, '昇降計も 0 のままになります。速度計は、上昇すると遅く、降下すると速く表示されます。代替静圧源に切り替えます。'],
+    ['ピトー管の入口とドレン穴の両方が詰まったとき、速度計は？', ['高度計のように、上昇すると速度が増えて見える', '0 を指す', '正しく指す', '最大値を指したまま'], 0, 'ピトー管内の圧力が閉じ込められ、外の静圧だけが変わるためです。ピトーヒーターは氷による詰まりを防ぎます。'],
+    ['標準旋回率（Standard Rate Turn）は？', ['毎秒 3°（360° を 2 分）', '毎秒 1°', '毎秒 6°', 'バンク 30° の旋回'], 0, '計器飛行の基本です。必要なバンク角の目安は「速度(kt) ÷ 10 + 7」。100 kt なら約 17°。'],
+    ['旋回計のボールが旋回の内側に寄っている。直し方は？', ['ボールの側のラダーを踏む（ボールを踏む）', '反対側のラダーを踏む', 'バンクを深くする', 'パワーを下げる'], 0, 'ボールが内側＝スリップ（旋回に対して傾きすぎ・ラダー不足）。「ボールを踏む」で覚えます。'],
+    ['北半球で、北向きから右旋回を始めた直後の磁気コンパスの動きは？', ['一時的に反対（左）に振れる／遅れる', '正しく右に回る', '先回りして大きく右に回る', '止まる'], 0, '北旋誤差です。北向きからの旋回では遅れて（逆に）動き、南向きからの旋回では先回りします。'],
+    ['高度計に QNH を設定して滑走路上にいるとき、高度計が指すのは？', ['空港の標高', '0 ft', '気圧高度', '滑走路からの高さ'], 0, 'QNH は海面高度を指すように合わせた気圧設定です。日本の小型機では inHg（例：29.92）で設定します。'],
+  ],
+  g3: [
+    ['METAR「RJFM 120900Z 27012G22KT 9999 FEW020 BKN045 22/16 Q1011」の風は？', ['270° から 12 kt、最大瞬間 22 kt', '120° から 9 kt', '270° へ吹く 12 kt', '風速 22 kt で一定'], 0, 'METAR の風向は「吹いてくる方向（真方位）」。G は突風（ガスト）の最大値です。'],
+    ['同じ METAR でシーリング（雲底高度）はどれ？', ['4,500 ft（BKN045）', '2,000 ft（FEW020）', '9,999 m', 'シーリングなし'], 0, 'シーリングは BKN（5〜7/8）か OVC（8/8）の最も低い雲の高さです。FEW や SCT はシーリングになりません。'],
+    ['気温と露点温度の差が小さい（例：18/17）とき注意すべきは？', ['霧や低い雲が発生しやすい', '晴れて視程がよくなる', '乱気流が必ず起きる', '着氷しない'], 0, '空気が飽和に近く、少し冷えるだけで水滴になります。早朝の霧に注意。'],
+    ['積乱雲（CB）の近くで起きる危険は？', ['激しい乱気流・着氷・雹・雷・ダウンバースト', '視程が良くなる', '穏やかな上昇気流だけ', '危険はない'], 0, '小型機は CB に近づかないのが原則。20 NM 以上離れるのが目安とされます。'],
+    ['寒冷前線が通過した後の一般的な変化は？', ['気温が下がり、気圧が上がり、風向が変わり、視程が良くなる', '気温が上がり湿度も上がる', '気圧が下がり続ける', '何も変わらない'], 0, '通過時にはにわか雨や突風、乱気流があります。'],
+    ['機体に着氷しやすい条件は？', ['0°C 付近〜マイナス 15°C くらいで、雲や雨など目に見える水分があるとき', '30°C 以上の晴天', 'マイナス 40°C 以下の晴天', '夜間であればいつでも'], 0, '過冷却水滴が機体にぶつかって凍ります。練習機は着氷する気象条件で飛べません。'],
+    ['高度計を設定し直さずに、気圧の高い所から低い所へ飛ぶと？', ['高度計は実際より高い値を示す（実際の高度は低い）', '高度計は実際より低い値を示す', '影響はない', '高度計が止まる'], 0, '「高から低、足元注意（High to low, look out below）」。こまめに QNH を合わせます。'],
+  ],
+  g4: [
+    ['管制指示で必ず復唱（リードバック）すべきものは？', ['滑走路・高度・針路・トランスポンダコードなどの指示', '天気の挨拶', '他機の情報すべて', '復唱は不要'], 0, '誤解が事故に直結する項目です。最後に自機のコールサインを付けます。'],
+    ['「WILCO」の意味は？', ['了解した、指示に従う', '受信した（従うかは含まない）', 'もう一度言ってください', '通信終わり'], 0, '「ROGER」は受信しただけ。「WILCO（will comply）」は指示に従うことまで含みます。'],
+    ['トランスポンダ 7700 の意味は？', ['緊急（エマージェンシー）', '通信機の故障', 'ハイジャック', 'VFR の一般コード'], 0, '7600 は通信機故障、7500 はハイジャック。'],
+    ['遭難（最も重大な緊急）を宣言する最初の言葉は？', ['MAYDAY MAYDAY MAYDAY', 'PAN-PAN PAN-PAN PAN-PAN', 'HELP HELP HELP', 'EMERGENCY ONCE'], 0, 'PAN-PAN は、急を要するが差し迫った危険ではない場合です。'],
+    ['フォネティックコードで「B」と数字の「9」は？', ['BRAVO と NINER', 'BETA と NINE', 'BAKER と NEIN', 'BOSTON と NINER'], 0, '無線で聞き違いを防ぐための読み方です。'],
+    ['「JA4011, runway 27, cleared for takeoff」への正しい応答は？', ['Runway 27, cleared for takeoff, JA4011', 'Roger', 'Cleared', 'Wilco, JA4011'], 0, '離陸許可は滑走路番号とともに必ず復唱します。'],
+  ],
+  g5: [
+    ['「1 in 60 ルール」とは？', ['60 NM 進んで 1 NM ずれていれば、コースから約 1° ずれている', '60 kt で 1 分に 1 NM 進む', '60 秒で 1° 旋回する', '高度 60 ft ごとに 1 ° 上昇'], 0, '暗算でコース修正角を出すための近似です。'],
+    ['日本付近の磁気偏差（西偏）と磁方位の関係は？', ['磁方位 = 真方位 + 西偏差（約 7〜9°）', '磁方位 = 真方位 − 西偏差', '日本では偏差はない', '磁方位 = 真方位 × 2'], 0, '「East is least, West is best」。この訓練ではわかりやすさのため真方位で表示しています。'],
+    ['右から横風が吹いているとき、コースを保つには？', ['機首を少し右（風上）に向ける（偏流修正角）', '機首を左に向ける', 'バンクを取り続ける', '何もしない'], 0, '機首を風上に向けたまま、機体は斜めに進む「クラブ」の状態でまっすぐ飛びます。'],
+    ['対地速度 120 kt で 30 NM 飛ぶのにかかる時間は？', ['15 分', '25 分', '4 分', '60 分'], 0, '120 kt は毎分 2 NM。30 ÷ 2 = 15 分。'],
+    ['VOR の CDI で「TO」表示、OBS 090、針が右に振れている。どうする？', ['右へ修正してコースに乗る（針の方へ飛ぶ）', '左へ修正する', '反転して 270 で飛ぶ', '無視してよい'], 0, 'TO 表示で針と同じ向きの OBS で飛んでいるなら、「針の方へ飛ぶ」が基本です。'],
+    ['1 海里（NM）は？', ['約 1.852 km', '約 1.609 km', '1 km', '約 3 km'], 0, '緯度 1 分の長さです。ノット（kt）は 1 時間に 1 NM 進む速さ。'],
+  ],
+  g6: [
+    ['離陸直後の低い高度でエンジンが止まった。基本の対応は？', ['機首を下げて滑空速度を保ち、ほぼ正面の安全な場所に降りる', 'すぐに 180° 旋回して滑走路に戻る', '機首を上げて高度を保つ', 'フラップを全部上げて上昇する'], 0, '低高度での引き返しは失速・スピンの危険が大きく、多くの事故の原因です。'],
+    ['上空でエンジンが止まったとき、最初にすることは？', ['最良滑空速度に合わせ、飛行機を飛ばし続ける（Aviate）', 'すぐ無線で連絡する', '燃料計を確認する', 'シートベルトを締め直す'], 0, '「Aviate, Navigate, Communicate」の順。まず速度、次に降りる場所、それからチェックリストと通報。'],
+    ['失速からの回復の基本は？', ['迎え角を減らす（機首を下げる）、出力を加える、翼を水平にし、回復後に上昇へ', '操縦桿をさらに引く', 'エルロンで大きく傾ける', 'エンジンを止める'], 0, '失速中にエルロンを大きく使うと、片翼がさらに深く失速してスピンに入る恐れがあります。'],
+    ['一般的なスピン回復の手順（PARE）は？', ['Power アイドル → Aileron 中立 → Rudder 回転と反対 → Elevator 前へ', '全出力 → 操縦桿を引く', 'フラップを下げる → エルロンで止める', '何もしない'], 0, '機種の手順書（POH）が最優先です。練習機のスピン訓練は教官と一緒に行います。'],
+    ['着陸復行（ゴーアラウンド）の基本の順番は？', ['フルパワー → 機首を上昇姿勢 → フラップを段階的に上げる → 正の上昇を確認', 'フラップを一気に全部上げる → パワー', 'パワーはそのまま機首だけ上げる', '滑走路に一度接地してから上昇'], 0, 'フラップを一度に上げると沈みます。パワーと姿勢が先。'],
+    ['エンジン故障で不時着場を選ぶとき、良い場所は？', ['長く平らで、障害物が少なく、風に向かって降りられる場所', '市街地の道路', '林の中', '急な斜面'], 0, '風上に向かって降りると対地速度が小さくなります。電線にも注意。'],
+  ],
+  g7: [
+    ['雲の中で、ゆるい旋回を続けているのに水平に飛んでいると感じた。これは？', ['空間識失調（リーン）。計器を信じる', '正常な感覚なので従う', '気圧の変化', '燃料不足のサイン'], 0, '内耳は一定の旋回を「水平」と感じてしまいます。計器飛行の基本は「計器を信じる」。'],
+    ['低酸素症の初期症状として危ないのは？', ['判断力が落ち、気分が良くなる（多幸感）ので自覚しにくい', '必ず強い頭痛で気づく', '視力が良くなる', '眠くならない'], 0, '高い高度では酸素の使用規定があります。'],
+    ['飛行前の自己チェック「IMSAFE」の意味に含まれないものは？', ['Instrument（計器）', 'Illness（病気）', 'Medication（薬）', 'Fatigue（疲労）'], 0, 'IMSAFE = Illness, Medication, Stress, Alcohol, Fatigue, Emotion（または Eating）。飲酒に関する規定は法令と会社規程に従います。'],
+    ['見張り（See and avoid）で効果的な目の使い方は？', ['約 10° ずつ区切って、少し止めながら見る', '一点をじっと見続ける', '素早く横に流し見る', '計器だけを見る'], 0, '目は動いている間はよく見えません。区切って止めることで小さな機影に気づけます。'],
+    ['衝突コースにある他機の見え方の特徴は？', ['視野の中で動かず、だんだん大きくなる', '素早く横に動く', '小さくなっていく', '必ず点滅している'], 0, '相対位置が変わらない機体こそ危険です。'],
+  ],
+  g8: [
+    ['この練習機（ヒバリ）の失速速度（フラップなし、Vs1）は約？', ['47 kt', '65 kt', '90 kt', '30 kt'], 0, 'フラップ全開の Vs0 は約 40 kt。速度計の緑の帯の下端が Vs1、白の帯の下端が Vs0 です。'],
+    ['ヒバリの最良上昇率速度 Vy の目安は？', ['約 73 kt', '約 50 kt', '約 105 kt', '約 128 kt'], 0, 'この訓練で「上昇」と言われたら 73 kt が基本です。'],
+    ['ヒバリの着陸進入速度の目安（フラップ 20°）は？', ['約 65 kt', '約 90 kt', '約 45 kt', '約 110 kt'], 0, '着陸チャレンジや場周飛行でもこの速度を使います。'],
+    ['速度計の黄色の帯の意味は？', ['注意範囲：穏やかな大気でのみ使用（Vno〜Vne）', 'フラップ使用範囲', '失速範囲', '通常運用範囲'], 0, '赤い線は Vne（決して超えてはならない速度）。ヒバリは 160 kt。'],
+    ['フラップを出してよい最大速度（Vfe）は、速度計のどこでわかる？', ['白い帯の上端', '緑の帯の上端', '赤い線', '黄色の帯の下端'], 0, 'ヒバリの Vfe は 85 kt。'],
+  ],
+};
+const QUIZ_TITLE = { g1: '飛行の原理', g2: '計器のしくみ', g3: '気象と METAR', g4: '無線と管制用語', g5: '航法の基礎', g6: '緊急時の操作', g7: '人間の能力と安全', g8: 'ヒバリの性能（V スピード）' };
+
+// ---------------------------------------------------------------------
+//  syllabus
+// ---------------------------------------------------------------------
+// target helpers: [value (number or function of lesson state), tolerance]
+const T_ALT = (tol = 100) => [L => L.alt0, tol], T_HDG = (tol = 10) => [L => L.hdg0, tol], T_SPD = (kt, tol = 10) => [kt, tol];
+function stepSL(name, secs, kt = 100, extra = {}) {
+  return Object.assign({ name, say: `直線水平飛行：高度 ${'{alt0}'} ft・針路 {hdg0}°・${kt} kt を保つ（${secs} 秒）`, tgt: { alt: T_ALT(), hdg: T_HDG(), spd: T_SPD(kt) }, dur: secs, grade: true }, extra);
+}
+function stepTurn(dir, bank, name, extra = {}) {
+  const side = dir < 0 ? '左' : '右';
+  return [
+    Object.assign({ name, say: `${side}へバンク ${bank}° で 360° 旋回。高度を保つ（引き起こしとパワーで沈みを防ぐ）`, tgt: { alt: T_ALT(), abank: [bank, 5] }, gradeWhen: (c, L, st) => Math.abs(st.turned) > 25 && Math.abs(st.turned) < 330,
+      until: (c, L, st) => Math.abs(st.turned) >= 345, max: 150, grade: true, onStart: (L, c, st) => { st.dir = dir; },
+      check: (c, L, st) => { if (Math.sign(st.turned || dir) !== dir && Math.abs(st.turned) > 20) st.note = '旋回方向が逆です'; } }, extra),
+    { name: `${name}：ロールアウト`, say: `開始時の針路 {hdg0}° で翼を水平に戻す`, tgt: { hdg: T_HDG(), alt: T_ALT() }, until: (c, L, st) => Math.abs(c.bank) < 5 && st.t > 2, max: 15, grade: true, gradeFinal: true },
+  ];
+}
+const SYLLABUS = [
+  { id: 's0', title: '第 0 段階　地上学科', desc: '飛ぶ前に知っておくべき知識。各 80% 以上で合格。', lessons: Object.keys(QUIZ).map(k => ({ id: k, quiz: true, title: QUIZ_TITLE[k], goal: `${QUIZ[k].length} 問の確認テスト（解説つき）` })) },
+  { id: 's1', title: '第 1 段階　基本操縦', desc: '操縦アシストなしで、姿勢と出力で飛行機をコントロールする。', lessons: [
+    { id: 'b1', title: '姿勢・出力・トリム', goal: 'トリムを使い、操縦桿から手を離しても水平飛行が続く状態を作る',
+      brief: ['<b>姿勢＋出力＝性能</b>。機首の高さ（ピッチ）と出力を決めれば、速度と昇降率が決まります。', 'キーを押すと操縦桿が動き、離すと中立に戻ります。<b>トリム（T キー）</b>は「いま操縦桿を押さえている量」を覚えさせる装置。T を押すと、その状態が手放しで続くようになります。', '手順：①姿勢指示器で機首を水平線に合わせる ②昇降計が 0 付近になったら T でトリム ③操縦桿を離して 30 秒、高度が保たれるか確認。'],
+      std: '高度 ±150 ft を 30 秒', setup: { at: 'area', kt: 100 },
+      steps: [
+        { name: '姿勢の確認', say: '操縦桿を離して、姿勢指示器と昇降計を観察しよう（10 秒）', dur: 10 },
+        { name: 'トリムで手放し水平飛行', say: 'W/S で高度を保ち、昇降計が 0 付近で T キー（トリム）。手を離して高度 {alt0} ft を保つ', tgt: { alt: T_ALT(150) }, dur: 40, grade: true, gradeWhen: (c, L, st) => st.t > 10 },
+      ] },
+    { id: 'b2', title: '直線水平飛行', goal: '高度・針路・速度を同時に保つ', brief: ['視線は「外 8 割、計器 2 割」。姿勢の基準は窓の外の水平線、確認は計器。', '高度が 50 ft ずれたら 1〜2°、機首を上げ下げして戻す。速度はスロットル（R/F）で。', '計器の見方：姿勢 → 高度計 → 姿勢 → 方位 → 姿勢 → 速度…と、姿勢指示器を中心に目を動かします（クロスチェック）。'],
+      std: '高度 ±100 ft・針路 ±10°・速度 ±10 kt（60 秒）', setup: { at: 'area', kt: 100 },
+      steps: [stepSL('直線水平飛行', 60, 100)] },
+    { id: 'b3', title: '上昇と降下', goal: '一定の速度で上昇・降下し、目標高度で水平に戻す', brief: ['上昇：スロットル全開 → 機首を約 8〜10° 上げて <b>73 kt（Vy）</b> を保つ。', '水平への戻し（レベルオフ）は目標高度の <b>昇降率の 10%</b> 手前から始める（500 fpm なら 50 ft 手前）。機首を下げ、速度が付いたらパワーを巡航へ。', '降下：パワーを絞り、90 kt・約 500 fpm で降りる。'],
+      std: '上昇 73 ±10 kt、レベルオフ ±100 ft、降下 500 ±300 fpm', setup: { at: 'area', kt: 100 },
+      steps: [
+        { name: '上昇（Vy）', say: 'フルパワーで 73 kt を保って {alt1} ft まで上昇', tgt: { spd: T_SPD(73) }, gradeWhen: (c, L, st) => st.t > 8 && c.alt < L.alt0 + 900, until: c => c.alt >= SCHOOL.active.alt0 + 950, max: 180, grade: true },
+        { name: 'レベルオフ', say: '{alt1} ft で水平に戻し、パワーを巡航（約 75%）へ。10 秒保つ', tgt: { alt: [L => L.alt0 + 1000, 100] }, hold: 10, max: 60, grade: true, gradeWhen: (c, L, st) => st.t > 6 },
+        { name: '降下', say: 'パワーを絞って 90 kt・約 500 fpm で {alt0} ft まで降下', tgt: { spd: T_SPD(90), vs: [-500, 300] }, gradeWhen: (c, L, st) => st.t > 10 && c.alt > L.alt0 + 150, until: c => c.alt <= SCHOOL.active.alt0 + 60, max: 200, grade: true },
+        { name: 'レベルオフ（降下から）', say: '{alt0} ft で水平に戻し、パワーを戻す。10 秒保つ', tgt: { alt: T_ALT(100) }, hold: 10, max: 60, grade: true, gradeWhen: (c, L, st) => st.t > 6 },
+      ] },
+    { id: 'b4', title: '中程度の旋回（30°）', goal: 'バンク 30° で高度を保って 360° 旋回し、元の針路で止める', brief: ['バンクを取ると揚力の一部が横向きになり沈みます。<b>少し引く（機首 +1〜2°）</b>とパワーを少し足す（+5%）。', 'ロールアウトはバンク角の半分（30° なら約 15°）手前から始める。', 'ボール（旋回計の下の玉）を中央に。ずれたらボール側のラダー（Q/E）。'],
+      std: 'バンク 30 ±5°・高度 ±100 ft・ロールアウト ±10°', setup: { at: 'area', kt: 100 },
+      steps: [...stepTurn(-1, 30, '左 360° 旋回'), ...stepTurn(1, 30, '右 360° 旋回')] },
+    { id: 'b5', title: '急旋回（45°）', goal: '実地試験の定番。バンク 45° で高度と速度を保つ', brief: ['45° では荷重 1.4 G。<b>しっかり引いて機首 +3° 前後、パワー +10〜15%</b>。', '高度が下がり始めたら、バンクを少し浅くしてから引く（深いバンクのまま引くと旋回が締まるだけ）。', 'ロールアウトは 20° 手前から。'],
+      std: 'バンク 45 ±5°・高度 ±100 ft・速度 ±10 kt・ロールアウト ±10°', setup: { at: 'area', kt: 95 },
+      steps: [...stepTurn(-1, 45, '左急旋回', { tgt: { alt: T_ALT(), abank: [45, 5], spd: T_SPD(95) } }), ...stepTurn(1, 45, '右急旋回', { tgt: { alt: T_ALT(), abank: [45, 5], spd: T_SPD(95) } })] },
+    { id: 'b6', title: '低速飛行', goal: '失速警報を鳴らさずに、低い速度で操縦する', brief: ['パワーを絞り、速度が 85 kt 以下になったらフラップ 20°（V キー 2 回）。', '機首を上げて <b>55 kt</b> を保つ。<b>低速では「速度は機首、高度はパワー」</b>が逆転します（バックサイド）。', '舵の効きが鈍いので、大きめに・ゆっくり。'],
+      std: '速度 55 +10/−0 kt・高度 ±100 ft・針路 ±10°・失速警報なし', setup: { at: 'area', kt: 90 },
+      steps: [
+        { name: '減速と外形変更', say: 'パワーを絞り、85 kt 以下でフラップ 20°。高度 {alt0} ft を保ちながら 55 kt まで減速', tgt: { alt: T_ALT(150) }, until: c => c.kias < 60 && c.flaps >= 2, max: 90, grade: true },
+        { name: '低速飛行', say: '55 kt・高度 {alt0} ft・針路 {hdg0}° を 40 秒保つ（パワーは 50〜60%）', tgt: { alt: T_ALT(), hdg: T_HDG(), spd: [58, 5] }, dur: 40, grade: true, check: (c, L, st) => { if (c.stall) st.stallT = (st.stallT || 0) + c.dt; },
+          result: (L, st) => [{ name: '失速警報', val: st.stallT ? `${st.stallT.toFixed(1)} 秒` : 'なし', std: 'なし', pass: !st.stallT || st.stallT < 1 }] },
+      ] },
+    { id: 'b7', title: 'パワーオフ失速と回復', goal: '着陸形態での失速を体験し、高度の損失を少なく回復する', brief: ['フラップ 20°、パワーアイドル。高度を保つように機首をゆっくり上げ続けると失速します（警報と振動）。', '<b>回復：①機首を下げて迎え角を減らす ②フルパワー ③翼を水平 ④速度が付いたら上昇へ</b>。フラップは上昇を確認してから 10° に。', '回復中に引きすぎると 2 回目の失速（二次失速）になります。'],
+      std: '高度損失 300 ft 以内・二次失速なし・針路 ±20°', setup: { at: 'area', kt: 80, flaps: 2, thr: 0.25 },
+      steps: [
+        { name: '失速への進入', say: 'パワーをアイドル（F）、高度を保つように機首をゆっくり上げ続けて失速させる', until: c => c.stall && c.kias < 50, max: 90, check: (c, L, st) => { L.stallAlt = c.alt; } },
+        { name: '失速からの回復', say: '回復！ 機首を下げる → フルパワー（R）→ 翼水平 → 上昇へ', until: (c, L, st) => c.vs > 100 && c.kias > 62 && st.t > 2, max: 40, grade: true, tgt: { hdg: T_HDG(20) },
+          onStart: (L, c, st) => { st.min = c.alt; st.start = c.alt; }, check: (c, L, st) => { st.min = Math.min(st.min, c.alt); if (st.t > 4 && c.stall) st.second = true; },
+          result: (L, st) => [{ name: '高度損失', val: `${Math.round(st.start - st.min)} ft`, std: '300 ft 以内', pass: st.start - st.min <= 300 }, { name: '二次失速', val: st.second ? 'あり' : 'なし', std: 'なし', pass: !st.second }] },
+      ] },
+    { id: 'b8', title: 'パワーオン失速と回復', goal: '離陸・上昇中の失速を体験し回復する', brief: ['クリーン形態、フルパワーで機首を 15〜20° 上げ続けると失速します。高出力なので機首が左に振られやすい → 右ラダーでボールを中央に。', '回復は同じ：<b>迎え角を減らす → 出力（すでに全開）→ 翼水平 → 上昇</b>。'],
+      std: '高度損失 300 ft 以内・針路 ±20°', setup: { at: 'area', kt: 75, thr: 1 },
+      steps: [
+        { name: '失速への進入', say: 'フルパワーのまま機首を 15〜20° に上げ、失速するまで保つ', until: c => c.stall && c.kias < 52, max: 90 },
+        { name: '失速からの回復', say: '回復！ 機首を下げて翼を水平に、速度が付いたら上昇へ', until: (c, L, st) => c.vs > 100 && c.kias > 65 && st.t > 2, max: 40, grade: true, tgt: { hdg: T_HDG(20) },
+          onStart: (L, c, st) => { st.min = c.alt; st.start = c.alt; }, check: (c, L, st) => { st.min = Math.min(st.min, c.alt); },
+          result: (L, st) => [{ name: '高度損失', val: `${Math.round(st.start - st.min)} ft`, std: '300 ft 以内', pass: st.start - st.min <= 300 }] },
+      ] },
+  ] },
+  { id: 's2', title: '第 2 段階　離着陸と場周飛行', desc: '滑走路を使う訓練。無線の復唱とチェックリストも。', lessons: [
+    { id: 't1', title: '通常離陸', goal: 'センターラインを保って加速し、Vr で浮揚、Vy で上昇', brief: ['離陸前点検（チェックリスト）→ 管制の離陸許可を復唱。', 'フルパワー。<b>右ラダー（E）で機首をセンターラインに</b>（プロペラの左偏向）。', '<b>52 kt（Vr）</b>で機首を 8° 程度上げて浮揚。<b>73 kt（Vy）</b>で上昇、1,000 ft（地上から）まで。'],
+      std: 'センターライン ±8 m・浮揚 52 ±5 kt・上昇 73 ±10 kt・針路 ±10°', setup: { at: 'runway' },
+      steps: [
+        { name: '離陸前点検', checklist: 'before_takeoff' },
+        { name: '離陸許可の復唱', atc: 'takeoff' },
+        { name: '離陸滑走', say: 'フルパワー（R 長押し）。E/Q でセンターラインを保つ', until: c => !c.onGround && c.agl > 3, max: 90, grade: true, tgt: { cl: [0, 8] }, gradeWhen: c => c.onGround && c.kias > 15,
+          check: (c, L, st) => { if (c.onGround) st.lastKias = c.kias; }, result: (L, st) => [{ name: '浮揚速度', val: `${Math.round(st.lastKias || 0)} kt`, std: '52 ±5 kt', pass: Math.abs((st.lastKias || 0) - 52) <= 7 }] },
+        { name: '初期上昇', say: '73 kt で上昇、滑走路の方位 {rwyHdg}° を保つ。地上 1,000 ft まで', tgt: { spd: T_SPD(73), rhdg: [0, 10] }, gradeWhen: c => c.aglR > 150, until: c => c.aglR >= 1000, max: 180, grade: true },
+      ] },
+    { id: 't2', title: '場周経路（トラフィックパターン）', goal: 'ダウンウインドから基本の場周経路を飛び、着陸する', brief: ['左場周。<b>ダウンウインド</b>：地上 1,000 ft、90 kt、滑走路から約 1.5 km 離れて平行に。', '滑走路の端の真横（アビーム）で<b>パワーを絞り、フラップ 10°</b>、降下開始。', '端が斜め後ろ 45° に見えたら左旋回して<b>ベース</b>、フラップ 20°、75 kt。', '最終進入（<b>ファイナル</b>）はセンターラインに合わせて 65 kt。PAPI が赤 2 白 2 なら正しい角度。'],
+      std: 'ダウンウインド 高度 ±100 ft・速度 ±10 kt、ファイナル 65 ±5 kt、接地は下の着陸基準', setup: { at: 'downwind' },
+      steps: [
+        { name: '着陸許可の復唱', atc: 'landing' },
+        { name: 'ダウンウインド', say: 'ダウンウインド：地上 1,000 ft・90 kt・滑走路と平行（方位 {dwHdg}°）', tgt: { aglR: [1000, 100], spd: T_SPD(90), dwhdg: [0, 10] }, until: c => c.u < -c.L2, max: 150, grade: true },
+        { name: '降下開始（アビーム）', say: '滑走路の端の真横。パワーを 30% に絞り、フラップ 10°（V）', until: (c, L, st) => c.u < -c.L2 - 900, max: 90, check: (c, L, st) => { if (c.flaps >= 1) st.flap = true; },
+          result: (L, st) => [{ name: 'フラップ 10°', val: st.flap ? '操作した' : 'していない', std: 'アビームで', pass: !!st.flap }] },
+        { name: 'ベース', say: '左旋回してベースへ。フラップ 20°、75 kt で降下', until: c => Math.abs(c.v) < 400 && c.u < -c.L2 - 500 && Math.abs(w180(c.hdg - c.rwyHdg)) < 40, max: 120, tgt: { spd: T_SPD(75, 12) }, grade: true, gradeWhen: (c, L, st) => st.t > 8 },
+        ...landingSteps(65),
+      ] },
+    { id: 't3', title: '通常着陸', goal: '安定した進入から、接地帯にやさしく接地する', brief: ['ファイナル（約 5 km）から。<b>65 kt・3° の進入角</b>（PAPI 赤 2 白 2、昇降率 約 −350 fpm）。', '<b>地上 500 ft で安定</b>していなければゴーアラウンド。', '滑走路の端を越えたらパワーを絞り、地上 10〜15 ft で機首を少しずつ上げる（フレア）。主輪から接地。'],
+      std: 'ファイナル 65 ±5 kt・センターライン ±30 m、接地 300 fpm 以下・目標点の手前 100 m〜先 400 m・センターライン ±6 m', setup: { at: 'final', km: 5.5 },
+      steps: [{ name: '着陸前点検', checklist: 'before_landing' }, ...landingSteps(65)] },
+    { id: 't4', title: '着陸復行（ゴーアラウンド）', goal: '進入を中止して安全に上昇へ移る', brief: ['「ゴーアラウンド」と言われたら：<b>①フルパワー ②機首を上昇姿勢（+7°前後） ③フラップ 20°→10°→0° と段階的に ④正の上昇を確認</b>。', '沈み込まないことが最重要です。'],
+      std: '指示から 3 秒以内にフルパワー・高度損失 50 ft 以内・地上 800 ft まで上昇', setup: { at: 'final', km: 4 },
+      steps: [
+        { name: '進入', say: '65 kt・3° で進入を続ける', tgt: { spd: T_SPD(65, 8), cl: [0, 40] }, until: c => c.aglR < 300, max: 150, grade: true, gradeWhen: c => c.aglR < 900 },
+        { name: 'ゴーアラウンド', say: 'ゴーアラウンド！ フルパワー・機首上げ・フラップを段階的に上げる', until: c => c.aglR > 800, max: 120, grade: true, tgt: { spd: [70, 12] }, gradeWhen: (c, L, st) => st.t > 6,
+          onStart: (L, c, st) => { st.a0 = c.aglR; st.min = c.aglR; st.pwr = null; }, check: (c, L, st) => { st.min = Math.min(st.min, c.aglR); if (st.pwr === null && c.thr > 0.95) st.pwr = st.t; if (c.onGround) st.touched = true; },
+          result: (L, st) => [{ name: 'フルパワーまで', val: st.pwr === null ? '—' : `${st.pwr.toFixed(1)} 秒`, std: '3 秒以内', pass: st.pwr !== null && st.pwr <= 3 }, { name: '高度損失', val: `${Math.round(st.a0 - st.min)} ft`, std: '50 ft 以内', pass: st.a0 - st.min <= 50 && !st.touched }] },
+      ] },
+    { id: 't5', title: '横風着陸', goal: '横風 10 kt の中で、機体をまっすぐに接地させる', brief: ['進入中は<b>機首を風上に向けたクラブ</b>でセンターラインを保つ。', '接地直前に<b>風下側のラダーで機首を滑走路と平行</b>にし、<b>風上側の翼を少し下げて（エルロン）</b>流されないようにする（ウイングロー）。', '接地後もエルロンは風上側にいっぱいに。'],
+      std: '通常着陸の基準＋接地時の横流れ 1.5 m/s 以下・機首方向 ±5°', setup: { at: 'final', km: 5, wind: { rel: 60, kt: 12, gust: 1.3 } },
+      steps: [...landingSteps(65, true)] },
+    { id: 't6', title: '短距離着陸', goal: '目標点に正確に接地し、短い距離で止まる', brief: ['フラップ 30°（全開）、<b>60 kt</b> で正確に 3° の進入。', '目標点（滑走路端から 300 m）の前後 60 m 以内に接地。', '接地したらすぐにパワーアイドル、フラップを上げ、ブレーキ（B）。'],
+      std: '接地：目標点 ±60 m・接地後 450 m 以内に停止', setup: { at: 'final', km: 4.5, flaps: 3, kt: 60 },
+      steps: [...landingSteps(60, false, true)] },
+    { id: 't7', title: '夜間の場周飛行', goal: '滑走路灯火を頼りに、夜の場周経路を飛ぶ', brief: ['夜は地面の起伏や高さがわかりにくい（ブラックホール錯覚）。<b>計器と PAPI を必ず確認</b>。', '滑走路灯の列（白）、手前の緑（入口）、奥の赤（終わり）が目印。'],
+      std: '場周経路と同じ', setup: { at: 'downwind', night: true },
+      steps: [
+        { name: 'ダウンウインド', say: '夜のダウンウインド：地上 1,000 ft・90 kt。滑走路灯の列と平行に', tgt: { aglR: [1000, 100], spd: T_SPD(90), dwhdg: [0, 10] }, until: c => c.u < -c.L2, max: 150, grade: true },
+        { name: 'ベース', say: 'パワーを絞りフラップ 10°→20°。ベースに旋回して降下', until: c => Math.abs(c.v) < 400 && c.u < -c.L2 - 500 && Math.abs(w180(c.hdg - c.rwyHdg)) < 40, max: 150 },
+        ...landingSteps(65),
+      ] },
+  ] },
+  { id: 's3', title: '第 3 段階　緊急操作', desc: 'エンジン故障・離陸中止・計器故障への対応。', lessons: [
+    { id: 'e1', title: '離陸中止', goal: '離陸滑走中の異常で、安全に止まる', brief: ['「離陸中止（アボート）」と言われたら：<b>①スロットル アイドル（F）②ブレーキ（B）③センターラインを保つ</b>。', '判断は早く。迷ったら止める。'],
+      std: '指示から 2 秒以内にアイドル・センターライン ±8 m・滑走路内で停止', setup: { at: 'runway' },
+      steps: [
+        { name: '離陸滑走', say: 'フルパワーで離陸滑走を始める', until: c => c.kias > 38, max: 60 },
+        { name: '離陸中止', say: '離陸中止！ スロットル アイドル・ブレーキ・センターライン', until: c => c.onGround && c.gsK < 3, max: 60, grade: true, tgt: { cl: [0, 8] },
+          onStart: (L, c, st) => { st.idle = null; }, check: (c, L, st) => { if (st.idle === null && c.thr < 0.05) st.idle = st.t; if (!c.paved && c.onGround) st.off = true; },
+          result: (L, st) => [{ name: 'アイドルまで', val: st.idle === null ? '—' : `${st.idle.toFixed(1)} 秒`, std: '2 秒以内', pass: st.idle !== null && st.idle <= 2 }, { name: '停止位置', val: st.off ? '滑走路外' : '滑走路内', std: '滑走路内', pass: !st.off }] },
+      ] },
+    { id: 'e2', title: '離陸直後のエンジン故障', goal: '低高度のエンジン故障で、滑空速度を保ってほぼ正面に降りる', brief: ['<b>すぐに機首を下げて 65 kt（最良滑空速度）</b>。これが最優先。', '<b>引き返さない</b>。左右 30° 以内の、できるだけ平らな場所へ。', 'フラップは降りる場所が確実になってから。接地直前にフレア。'],
+      std: '5 秒以内に 75 kt 以下の滑空姿勢・滑空速度 65 ±10 kt・針路 ±30°・安全に接地', setup: { at: 'runway' },
+      steps: [
+        { name: '離陸', say: '通常どおり離陸して 73 kt で上昇', until: c => c.aglR > 400, max: 150 },
+        { name: 'エンジン故障：滑空', say: 'エンジン停止！ 機首を下げて 65 kt。ほぼ正面の安全な場所へ', fail: 'engine', until: c => c.onGround && c.gsK < 3, max: 180, grade: true, tgt: { spd: [65, 10], rhdg: [0, 30] }, gradeWhen: (c, L, st) => st.t > 5 && c.aglR > 30,
+          onStart: (L, c, st) => { st.cap = null; }, check: (c, L, st) => { if (st.cap === null && c.pitch < 2 && c.kias < 80) st.cap = st.t; },
+          result: (L, st) => [{ name: '滑空姿勢まで', val: st.cap === null ? '—' : `${st.cap.toFixed(1)} 秒`, std: '5 秒以内', pass: st.cap !== null && st.cap <= 5 }] },
+      ] },
+    { id: 'e3', title: '上空でのエンジン故障（空港へ滑空）', goal: '最良滑空速度で空港まで戻り、滑走路に着陸する', brief: ['<b>65 kt を保つ</b>のが滑空距離を最大にするコツ。速すぎても遅すぎても届きません。', '空港（地図 M、PAPI）を目指し、高すぎればS字や大きめの旋回で高度を捨てる。低いと判断したら最も近い平らな場所へ。', '滑走路が確実になってからフラップ。'],
+      std: '滑空速度 65 ±8 kt（平均）・滑走路に着陸（または安全な不時着）', setup: { at: 'away', km: 5, aglFt: 3000, toward: false },
+      steps: [
+        { name: '巡航', say: '空港から離れる方向へ水平飛行。まもなくエンジンが止まります', dur: 6 },
+        { name: 'エンジン故障：空港へ', say: 'エンジン停止！ 65 kt で空港へ滑空し、滑走路に着陸', fail: 'engine', until: c => c.onGround && c.gsK < 3, max: 420, grade: true, tgt: { spd: [65, 8] }, gradeWhen: (c, L, st) => st.t > 8 && c.aglR > 300,
+          check: (c, L, st) => { if (c.onGround && !st.td) { st.td = true; st.paved = c.paved; } },
+          result: (L, st) => [{ name: '着陸場所', val: st.paved ? '滑走路' : '滑走路外', std: '滑走路', pass: !!st.paved }] },
+      ] },
+    { id: 'e4', title: '計器故障（部分パネル）', goal: 'バキューム故障で姿勢指示器と方位指示器が使えない中で飛ぶ', brief: ['フードをかぶった状態（外が見えない）で、<b>姿勢指示器と方位指示器が故障</b>します（ゆっくり傾いていくので気づきにくい）。', '使えるのは <b>旋回計・高度計・昇降計・速度計・磁気コンパス</b>。翼の水平は旋回計、機首の上下は高度計と昇降計で判断。', '旋回は標準旋回率（旋回計の L/R の印）で、時間で止める（90° なら 30 秒）。'],
+      std: '高度 ±150 ft・針路 ±15°（60 秒）、時間旋回のロールアウト ±15°', setup: { at: 'area', kt: 95, hood: true },
+      steps: [
+        { name: '計器故障の中の水平飛行', say: '姿勢指示器と方位指示器が故障。旋回計・高度計・コンパスで {alt0} ft・{hdg0}° を保つ', fail: 'vacuum', tgt: { alt: T_ALT(150), hdg: T_HDG(15) }, dur: 60, grade: true, gradeWhen: (c, L, st) => st.t > 10 },
+        { name: '時間旋回（右 90°）', say: '標準旋回率（旋回計の R の印）で右へ 30 秒旋回し、止める', tgt: { alt: T_ALT(150) }, until: (c, L, st) => st.t > 25 && Math.abs(c.rate) < 1 && Math.abs(c.bank) < 6, max: 70, grade: true,
+          onStart: (L, c, st) => { st.h0 = c.hdg; }, result: (L, st) => { const d = Math.abs(w180(SCHOOL.last.hdg - (st.h0 + 90))); return [{ name: 'ロールアウト針路', val: `${Math.round(d)}° ずれ`, std: '±15°', pass: d <= 15 }]; } },
+      ] },
+  ] },
+  { id: 's4', title: '第 4 段階　航法', desc: 'VOR と推測航法で目的地へ。', lessons: [
+    { id: 'n1', title: 'VOR の追跡', goal: 'VOR 局に向かうコースに乗り、局通過まで追跡する', brief: ['右上の <b>NAV 計器（CDI）</b>：OBS（コースの目盛り）を <b>[ ]</b> キーで合わせる。', 'TO 表示で針が右なら右へ修正（針の方へ飛ぶ）。針が中央に戻り始めたら修正を戻す（ブラケッティング）。', '1 ドット＝2°。局に近づくほど針は敏感に。局上空で TO が FROM に変わります。'],
+      std: '追跡中 CDI ±1 ドット以内（90% 以上）・高度 ±150 ft', setup: { at: 'away', km: 18, aglFt: 3000, toward: true, offset: 25, nav: 'VOR' },
+      steps: [
+        { name: 'OBS の設定と会合', say: 'OBS を VOR 局への方位 {brgTo}° に合わせ（[ ] キー）、針が中央に来るよう会合する', until: c => Math.abs(c.cdi) < 1 && Math.abs(w180(SCHOOL.obs - SCHOOL.last.brgTo)) < 12, max: 240 },
+        { name: 'VOR 追跡', say: '針を中央に保って VOR 局へ（局上空で TO→FROM）', tgt: { cdi: [0, 1], alt: [L => L.alt0, 150] }, until: c => c.dme < 0.4, max: 600, grade: true, gradeWhen: c => c.dme > 1.2 },
+      ] },
+    { id: 'n2', title: '推測航法と目的地変更', goal: '指定の針路と時間で隣の空港へ。途中で目的地が変わる', brief: ['出発前に<b>針路・距離・所要時間</b>を計算（地図 M で確認できます）。', '予定時刻ごとに地上の目標と照合。', '途中で「目的地変更（ダイバート）」と言われたら、すぐ新しい方位へ向け、到着予定を見積もる。'],
+      std: '高度 ±200 ft・目的地の 3 km 以内に到達', setup: { at: 'away', km: 3, aglFt: 3500, toward: false, xc: true },
+      steps: [
+        { name: '第 1 目的地へ', say: '{xc1} 空港へ。方位 {xcBrg}°・距離 {xcDist} km・高度 {alt0} ft', tgt: { alt: [L => L.alt0, 200] }, until: (c, L) => geoDist(...planeGeo(), L.xc1.lat, L.xc1.lon) < L.xcDivertAt, max: 1500, grade: true },
+        { name: '目的地変更', say: '目的地変更！ {xc2} 空港へ向かう。新しい方位 {xc2Brg}°', tgt: { alt: [L => L.alt0, 200] }, until: (c, L) => geoDist(...planeGeo(), L.xc2.lat, L.xc2.lon) < 3000, max: 1800, grade: true,
+          onStart: (L, c, st) => { st.t0 = 0; JW.dest = L.xc2; }, check: (c, L, st) => { const b = geoBearing(...planeGeo(), L.xc2.lat, L.xc2.lon); if (!st.turned30 && Math.abs(w180(c.hdg - b)) < 20) st.turned30 = st.t; },
+          result: (L, st) => [{ name: '新しい方位へ向くまで', val: st.turned30 ? `${Math.round(st.turned30)} 秒` : '—', std: '45 秒以内', pass: !!st.turned30 && st.turned30 <= 45 }] },
+      ] },
+  ] },
+  { id: 's5', title: '第 5 段階　計器飛行', desc: 'フード（外が見えない状態）で、計器だけで飛ぶ。', lessons: [
+    { id: 'i1', title: '基本計器飛行', goal: '計器だけで水平・標準旋回・上昇降下', brief: ['外は見えません。<b>姿勢指示器を中心に、放射状に目を動かす</b>（姿勢→高度計→姿勢→方位→姿勢→速度）。', '標準旋回率：旋回計の L/R の印に合わせる（100 kt でバンク約 17°）。', '上昇・降下は 500 fpm。'],
+      std: '水平 ±100 ft ±10°、旋回率 3 ±1 °/秒、昇降率 500 ±150 fpm', setup: { at: 'area', kt: 100, hood: true },
+      steps: [
+        stepSL('計器による水平飛行', 45, 100),
+        { name: '標準旋回（左 90°）', say: '標準旋回率で左へ 90° 旋回し {hdgL}° で止める', tgt: { alt: T_ALT(), arate: [3, 1] }, gradeWhen: (c, L, st) => Math.abs(st.turned) > 15 && Math.abs(st.turned) < 75, until: (c, L, st) => Math.abs(st.turned) > 80 && Math.abs(c.bank) < 5, max: 70, grade: true,
+          result: (L, st) => { const d = Math.abs(w180(SCHOOL.last.hdg - (L.hdg0 - 90))); return [{ name: 'ロールアウト', val: `${Math.round(d)}° ずれ`, std: '±10°', pass: d <= 10 }]; } },
+        { name: '上昇 500 fpm', say: '500 fpm で {alt1} ft まで上昇（85 kt 前後）', tgt: { vs: [500, 150] }, gradeWhen: (c, L, st) => st.t > 6 && c.alt < L.alt0 + 900, until: c => c.alt > SCHOOL.active.alt0 + 950, max: 180, grade: true },
+        { name: '降下 500 fpm', say: '500 fpm で {alt0} ft まで降下し水平に', tgt: { vs: [-500, 150] }, gradeWhen: (c, L, st) => st.t > 6 && c.alt > L.alt0 + 100, until: c => c.alt < SCHOOL.active.alt0 + 50, max: 180, grade: true },
+      ] },
+    { id: 'i2', title: '異常姿勢からの回復', goal: '計器だけで、機首上げ・機首下げの異常姿勢から回復する', brief: ['<b>機首上げ・低速</b>：①フルパワー ②機首を下げる ③翼を水平。', '<b>機首下げ・高速（スパイラル）</b>：①パワー アイドル ②<b>先に翼を水平</b> ③それから機首を上げる（傾いたまま引くと旋回が締まるだけ）。', '速度計・姿勢指示器・高度計を素早く見て、どちらの状態か判断します。'],
+      std: '失速なし・Vne 超過なし・荷重 3.8 G 以下・12 秒以内に水平', setup: { at: 'area', kt: 100, hood: true },
+      steps: [
+        { name: '異常姿勢 1（機首上げ）', say: '操縦を渡します。回復して水平に！', upset: 'high', until: c => Math.abs(c.pitch) < 5 && Math.abs(c.bank) < 10 && c.kias > 65, max: 30, grade: true,
+          check: (c, L, st) => { if (c.stall) st.stall = true; }, result: (L, st) => [{ name: '回復時間', val: `${st.t.toFixed(1)} 秒`, std: '12 秒以内', pass: st.t <= 12 }, { name: '失速', val: st.stall ? 'あり' : 'なし', std: 'なし', pass: !st.stall }] },
+        { name: '水平飛行', say: 'いったん水平飛行（10 秒）', dur: 10 },
+        { name: '異常姿勢 2（機首下げ・スパイラル）', say: '操縦を渡します。回復して水平に！', upset: 'low', until: c => Math.abs(c.pitch) < 5 && Math.abs(c.bank) < 10 && c.vs > -300, max: 30, grade: true,
+          onStart: (L, c, st) => { st.order = null; }, check: (c, L, st) => { st.maxK = Math.max(st.maxK || 0, c.kias); st.maxG = Math.max(st.maxG || 0, c.g); if (st.order === null && c.pitch > -3) st.order = Math.abs(c.bank) < 20; if (st.idle === undefined && c.thr < 0.25) st.idle = st.t; },
+          result: (L, st) => [{ name: '回復時間', val: `${st.t.toFixed(1)} 秒`, std: '12 秒以内', pass: st.t <= 12 }, { name: '最大速度', val: `${Math.round(st.maxK)} kt`, std: `${ACFT.v.ne} kt 未満`, pass: st.maxK < ACFT.v.ne }, { name: '最大荷重', val: `${st.maxG.toFixed(1)} G`, std: '3.8 G 以下', pass: st.maxG <= 3.8 },
+            { name: '手順（翼を先に水平）', val: st.order ? 'できた' : 'できていない', std: '機首上げの前に翼水平', pass: !!st.order }, { name: 'パワー アイドル', val: st.idle !== undefined ? `${st.idle.toFixed(1)} 秒` : 'なし', std: '3 秒以内', pass: st.idle !== undefined && st.idle <= 3 }] },
+      ] },
+    { id: 'i3', title: 'ILS 進入', goal: 'ローカライザーとグライドスロープに乗って、決心高度まで計器で進入する', brief: ['NAV 計器が ILS モードになります。<b>縦の針＝ローカライザー（左右）、横の針＝グライドスロープ（上下）</b>。', '縦の針が動き始めたら滑走路の方位へ旋回して乗る。横の針が中央に下りてきたら、パワーを絞り 75 kt・約 −400 fpm で降下。', '<b>決心高度（地上 200 ft）</b>でフードが外れ、滑走路が見えたら着陸。見えなければゴーアラウンド。'],
+      std: 'ローカライザー・グライドスロープ ±1 ドット以内（地上 1,000〜200 ft の 85% 以上）＋着陸', setup: { at: 'ils', km: 14, aglFt: 2000, hood: true, nav: 'ILS' },
+      steps: [
+        { name: 'ローカライザー会合', say: '針路 {intHdg}° で会合。縦の針が中央に来たら滑走路方位 {rwyHdg}° へ', until: c => Math.abs(c.loc) < 1 && Math.abs(w180(c.hdg - c.rwyHdg)) < 15, max: 400 },
+        { name: 'ILS 追跡', say: 'グライドスロープに乗って降下。両方の針を中央に（決心高度 地上 200 ft）', tgt: { loc: [0, 1], gs: [0, 1] }, gradeWhen: c => c.aglR < 1000 && c.aglR > 200, until: c => c.aglR < 200, max: 500, grade: true },
+        { name: '決心高度：滑走路視認', say: '決心高度。滑走路が見えました。着陸', hoodOff: true, until: c => c.onGround && c.gsK < 3, max: 120, check: (c, L, st) => { if (c.onGround && !st.td) { st.td = true; st.fpm = -c.vs; st.paved = c.paved; } },
+          result: (L, st) => [{ name: '着陸', val: st.paved ? `滑走路（${Math.round(st.fpm || 0)} fpm）` : '滑走路外', std: '滑走路に安全に', pass: !!st.paved && (st.fpm || 0) < 600 }] },
+      ] },
+    { id: 'i4', title: '待機経路（ホールディング）', goal: 'VOR を基準に、1 分の直線と標準旋回でレーストラックを飛ぶ', brief: ['VOR 局を通過したら<b>右へ標準旋回</b>でアウトバウンド（インバウンドの逆方位）へ。', 'アウトバウンドは<b>1 分</b>（タイマーを見る）。', '右へ標準旋回してインバウンドのコースに乗り、局へ戻る。'],
+      std: '旋回率 3 ±1 °/秒・アウトバウンド 60 ±15 秒・高度 ±100 ft', setup: { at: 'away', km: 6, aglFt: 3000, toward: true, offset: 0, nav: 'VOR', obsTo: true },
+      steps: [
+        { name: '局へ向かう', say: 'インバウンドコース {obs}° で VOR 局へ', tgt: { cdi: [0, 1.5], alt: [L => L.alt0, 100] }, until: c => c.dme < 0.3, max: 400, grade: true, gradeWhen: c => c.dme > 1 },
+        { name: 'アウトバウンドへ旋回', say: '局通過。右へ標準旋回でアウトバウンド（{obsOut}°）へ', tgt: { arate: [3, 1], alt: [L => L.alt0, 100] }, gradeWhen: (c, L, st) => st.t > 4 && Math.abs(w180(c.hdg - (SCHOOL.obs + 180))) > 20, until: c => Math.abs(w180(c.hdg - (SCHOOL.obs + 180))) < 8 && Math.abs(c.bank) < 8, max: 90, grade: true },
+        { name: 'アウトバウンド 1 分', say: 'アウトバウンド。1 分数えて、右旋回を始める', tgt: { alt: [L => L.alt0, 100] }, until: (c, L, st) => st.t > 20 && Math.abs(c.bank) > 12, max: 120, grade: true,
+          result: (L, st) => [{ name: 'アウトバウンド時間', val: `${Math.round(st.t)} 秒`, std: '60 ±15 秒', pass: Math.abs(st.t - 60) <= 15 }] },
+        { name: 'インバウンドへ', say: '右へ標準旋回してインバウンドコースに乗り、局へ', tgt: { alt: [L => L.alt0, 100] }, until: c => Math.abs(c.cdi) < 1 && Math.abs(w180(c.hdg - SCHOOL.obs)) < 15, max: 180, grade: true },
+      ] },
+  ] },
+  { id: 's6', title: '第 6 段階　実地試験（模擬）', desc: 'これまでの項目をまとめて審査。すべて合格で修了。', lessons: [
+    { id: 'c1', title: '模擬実地試験', goal: '離陸・基本操縦・失速・エンジン故障・着陸を通しで審査', brief: ['試験官の指示に従って飛びます。<b>1 項目でも基準外なら不合格</b>。', '内容：離陸 → 直線水平 → 急旋回（左）→ パワーオフ失速 → 模擬エンジン故障（空港へ滑空・着陸）。', '落ち着いて、各項目の前に目標値を確認しましょう。'],
+      std: '各レッスンの基準と同じ', setup: { at: 'runway' },
+      steps: [
+        { name: '離陸前点検', checklist: 'before_takeoff' },
+        { name: '離陸許可の復唱', atc: 'takeoff' },
+        { name: '離陸', say: 'センターラインを保って離陸、73 kt で上昇', until: c => !c.onGround && c.agl > 3, max: 90, grade: true, tgt: { cl: [0, 8] }, gradeWhen: c => c.onGround && c.kias > 15 },
+        { name: '上昇', say: '73 kt で地上 2,000 ft まで上昇', tgt: { spd: T_SPD(73) }, gradeWhen: c => c.aglR > 200, until: c => c.aglR >= 2000, max: 300, grade: true, onEnd: (L, c) => { L.alt0 = Math.round(c.alt / 100) * 100 + 0; } },
+        { name: '水平へ', say: '水平飛行に移り 100 kt へ', until: (c, L, st) => st.t > 20, max: 25, onEnd: (L, c) => { L.alt0 = Math.round(c.alt / 50) * 50; L.hdg0 = Math.round(c.hdg); } },
+        stepSL('直線水平飛行', 40, 100),
+        ...stepTurn(-1, 45, '左急旋回', { tgt: { alt: T_ALT(), abank: [45, 5], spd: T_SPD(95) } }),
+        { name: '失速の準備', say: 'フラップ 20°・パワーアイドル。高度を保ちながら失速させる', until: c => c.stall && c.kias < 52, max: 120 },
+        { name: '失速からの回復', say: '回復！', until: (c, L, st) => c.vs > 100 && c.kias > 62 && st.t > 2, max: 40, grade: true, onStart: (L, c, st) => { st.min = c.alt; st.start = c.alt; }, check: (c, L, st) => { st.min = Math.min(st.min, c.alt); },
+          result: (L, st) => [{ name: '失速回復の高度損失', val: `${Math.round(st.start - st.min)} ft`, std: '300 ft 以内', pass: st.start - st.min <= 300 }] },
+        { name: '模擬エンジン故障', say: 'エンジン故障！ 65 kt で空港へ滑空し、滑走路に着陸', fail: 'engine', until: c => c.onGround && c.gsK < 3, max: 600, grade: true, tgt: { spd: [65, 8] }, gradeWhen: (c, L, st) => st.t > 8 && c.aglR > 300,
+          check: (c, L, st) => { if (c.onGround && !st.td) { st.td = true; st.paved = c.paved; st.fpm = -c.vs; } },
+          result: (L, st) => [{ name: '着陸', val: st.paved ? '滑走路' : '滑走路外', std: '滑走路', pass: !!st.paved }] },
+      ] },
+  ] },
+];
+// landing steps shared by several lessons
+function landingSteps(vref, xwind = false, short = false) {
+  return [
+    { name: 'ファイナル（安定進入）', say: `ファイナル：${vref} kt・3°（PAPI 赤 2 白 2）でセンターラインに乗る`, tgt: { spd: T_SPD(vref, 5), cl: [0, 30], gp: [3, 0.9] }, gradeWhen: c => c.aglR < 500 && c.aglR > 60 && c.u < -c.L2, until: c => c.aglR < 40 || c.onGround, max: 300, grade: true },
+    { name: short ? '短距離接地' : '接地', say: short ? '目標点に接地。すぐにアイドル・ブレーキ（B）' : '滑走路の端を越えたらアイドル、地上 10〜15 ft でフレアして接地', until: c => c.onGround && c.gsK < 3, max: 120,
+      check: (c, L, st) => {
+        if (c.onGround && !st.td) { st.td = true; st.fpm = -c.vs; st.u = c.u; st.v = c.v; st.paved = c.paved; st.lat = c.latV; st.crab = Math.abs(w180(c.hdg - c.rwyHdg)); st.tdU = c.u; SCHOOL.prog.landings++; }
+        if (c.onGround && st.td) st.stopU = c.u;
+      },
+      result: (L, st) => {
+        if (!st.td) return [{ name: '接地', val: 'していない', std: '—', pass: false }];
+        const aim = -RWY.len / 2 + 300, du = st.u - aim, rows = [
+          { name: '接地の昇降率', val: `${Math.round(st.fpm)} fpm`, std: '300 fpm 以下', pass: st.fpm <= 300 },
+          { name: '接地位置', val: `目標点から ${du >= 0 ? '+' : ''}${Math.round(du)} m`, std: short ? '±60 m' : '−100〜+400 m', pass: short ? Math.abs(du) <= 60 : du >= -100 && du <= 400 },
+          { name: 'センターライン', val: `${Math.abs(st.v).toFixed(1)} m`, std: '6 m 以内', pass: Math.abs(st.v) <= 6 && st.paved },
+        ];
+        if (xwind) rows.push({ name: '接地時の横流れ', val: `${Math.abs(st.lat).toFixed(1)} m/s`, std: '1.5 m/s 以下', pass: Math.abs(st.lat) <= 1.5 }, { name: '機首方向', val: `${st.crab.toFixed(0)}°`, std: '±5°', pass: st.crab <= 5 });
+        if (short) rows.push({ name: '停止距離', val: `${Math.round((st.stopU || st.tdU) - st.tdU)} m`, std: '450 m 以内', pass: (st.stopU || st.tdU) - st.tdU <= 450 });
+        return rows;
+      } },
+  ];
+}
+const CHECKLISTS = {
+  before_takeoff: { title: '離陸前点検（BEFORE TAKEOFF）', items: [
+    ['操縦舵面', '自由に正しく動く（W/S/A/D を動かして確認）'], ['計器', '速度 0・高度計＝空港標高・姿勢水平'], ['フラップ', '10°（V キー）', () => sim.flapIdx === 1],
+    ['トリム', '離陸位置'], ['スロットル', 'アイドル'], ['ドア・ベルト', '閉・着用'], ['離陸後の計画', 'Vr 52 kt・Vy 73 kt・故障時は正面へ'],
+  ] },
+  before_landing: { title: '着陸前点検（BEFORE LANDING）', items: [
+    ['着陸灯', 'ON'], ['ギア', '固定脚：確認'], ['フラップ', '20° 以上（V キー）', () => sim.flapIdx >= 2], ['進入速度', `${ACFT.v.appr} kt`], ['着陸許可', '受領済み'],
+  ] },
+};
+const ATC_Q = {
+  takeoff: L => ({ msg: `${L.apName} TOWER：「${L.call}, wind ${L.windStr}, runway ${RWY.idents[0]}, cleared for takeoff.」`,
+    opts: [`Runway ${RWY.idents[0]}, cleared for takeoff, ${L.call}.`, `Roger, ${L.call}.`, `Cleared for takeoff.`], ok: 0,
+    why: '離陸許可は「滑走路番号＋cleared for takeoff＋コールサイン」を復唱します。Roger だけでは不十分です。' }),
+  landing: L => ({ msg: `${L.apName} TOWER：「${L.call}, runway ${RWY.idents[0]}, wind ${L.windStr}, cleared to land.」`,
+    opts: [`Wilco.`, `Runway ${RWY.idents[0]}, cleared to land, ${L.call}.`, `Landing runway ${RWY.idents[1]}, ${L.call}.`], ok: 1,
+    why: '着陸許可も滑走路番号を含めて復唱します。滑走路番号を間違えるのは重大な誤りです。' }),
+};
+
+// ---------------------------------------------------------------------
+//  lesson runtime
+// ---------------------------------------------------------------------
+function findLesson(id) { for (const st of SYLLABUS) for (const l of st.lessons) if (l.id === id) return l; return null; }
+function lessonOrder() { const out = []; for (const st of SYLLABUS) for (const l of st.lessons) out.push(l.id); return out; }
+function schoolCtx(dt) {
+  const s = sim, a = attitude(), [u, v] = worldToRwy(s.pos[0], s.pos[2]);
+  const S = SCHOOL, prev = S.prevHdg === undefined ? a.hdg : S.prevHdg; S.prevHdg = a.hdg;
+  const rate = w180(a.hdg - prev) / Math.max(dt, 1e-3);
+  S.rateF = S.rateF === undefined ? rate : S.rateF + (rate - S.rateF) * Math.min(1, dt * 3);
+  const aglR = (s.pos[1] + WHEEL_BOTTOM - RWY.elev) * FT;
+  const rwyHdg = RWY.hdg, L2 = RWY.len / 2;
+  const latV = s.vel[0] * RWY.perp[0] + s.vel[2] * RWY.perp[2];
+  const aim = -L2 + 300, gp = u < aim - 50 ? Math.atan2(Math.max(aglR / FT, 0), aim - u) / DEG : 3;
+  const nav = navDeviation();
+  return { dt, alt: s.pos[1] * FT, agl: s.agl * FT, aglR, kias: s.ias * KTS, hdg: a.hdg, pitch: a.pitch, bank: a.bank, vs: s.vs * 196.85, rate: S.rateF, u, v, L2, rwyHdg,
+    gsK: Math.hypot(s.vel[0], s.vel[2]) * KTS, thr: s.thr, flaps: s.flapIdx, onGround: s.onGround, paved: onPaved(s.pos[0], s.pos[2]) === 'rwy', stall: s.stallWarn, g: s.gLoad, latV, gp, cl: v,
+    cdi: nav.cdi, loc: nav.loc, gsd: nav.gs, dme: nav.dme, brgTo: nav.brgTo };
+}
+// value of a target key in the current context (deviation is value - target)
+function tgtValue(k, c, L) {
+  switch (k) {
+    case 'alt': return c.alt; case 'spd': return c.kias; case 'vs': return c.vs; case 'aglR': return c.aglR; case 'gp': return c.gp; case 'cl': return c.cl;
+    case 'abank': return Math.abs(c.bank); case 'arate': return Math.abs(c.rate); case 'cdi': return c.cdi; case 'loc': return c.loc; case 'gs': return c.gsd;
+    default: return 0;
+  }
+}
+function tgtDev(k, c, L, tv) {
+  if (k === 'hdg') return w180(c.hdg - tv);
+  if (k === 'rhdg') return w180(c.hdg - c.rwyHdg);
+  if (k === 'dwhdg') return w180(c.hdg - (c.rwyHdg + 180));
+  return tgtValue(k, c, L) - tv;
+}
+const TGT_LABEL = { alt: ['高度', 'ft'], hdg: ['針路', '°'], rhdg: ['針路', '°'], dwhdg: ['針路', '°'], spd: ['速度', 'kt'], vs: ['昇降率', 'fpm'], aglR: ['対地高度', 'ft'], abank: ['バンク', '°'], arate: ['旋回率', '°/s'],
+  gp: ['進入角', '°'], cl: ['センターライン', 'm'], cdi: ['CDI', 'ドット'], loc: ['LOC', 'ドット'], gs: ['GS', 'ドット'] };
+function fillText(s, L) {
+  return s.replace(/\{(\w+)\}/g, (m, k) => {
+    const v = { alt0: L.alt0, alt1: L.alt0 + 1000, hdg0: L.hdg0, hdgL: (L.hdg0 + 270) % 360, rwyHdg: Math.round(RWY.hdg), dwHdg: Math.round((RWY.hdg + 180) % 360), brgTo: Math.round(SCHOOL.last ? SCHOOL.last.brgTo : 0),
+      obs: Math.round(SCHOOL.obs), obsOut: Math.round((SCHOOL.obs + 180) % 360), intHdg: Math.round(L.intHdg || 0), xc1: L.xc1 && L.xc1.name, xc2: L.xc2 && L.xc2.name,
+      xcBrg: L.xcBrg, xcDist: L.xcDist, xc2Brg: L.xc2 ? Math.round(geoBearing(...planeGeo(), L.xc2.lat, L.xc2.lon)) : '' }[k];
+    if (v === undefined) return m;
+    return typeof v === 'number' ? (k.startsWith('alt') ? Math.round(v).toLocaleString() : String(Math.round(v)).padStart(k.includes('dg') || k.includes('Hdg') || k.includes('brg') || k.includes('obs') ? 3 : 1, '0')) : v;
+  });
+}
+function placeAircraft(pos, hdg, kt, gammaDeg, flapIdx, thr) {
+  const s = sim, hasFlaps = !!ACFT.wing.flap;
+  s.flapIdx = hasFlaps ? flapIdx : 0; s.flapDeg = FLAP_DEG[s.flapIdx];
+  const v = kt / KTS, ff = hasFlaps ? s.flapDeg / 30 : 0, tr = trimFor(v, ff, Math.cos(gammaDeg * DEG));
+  s.trim = clamp(tr.elev, -0.6, 0.6);
+  s.pos = pos; s.q = qFromHPB(hdg, tr.alpha / DEG + gammaDeg, 0);
+  const dir = [Math.sin(hdg * DEG), 0, -Math.cos(hdg * DEG)];
+  s.vel = vadd(vscale(dir, v * Math.cos(gammaDeg * DEG)), [0, v * Math.sin(gammaDeg * DEG), 0]);
+  s.w = [0, 0, 0]; s.thr = thr; s.n1 = Math.min(thr / 0.95, 1); s.gearDown = true; s.gearPos = 1; s.airTime = 10; s.onGround = false; s.mainContact = false;
+  s.rpm = 700 + 1950 * thr + 9 * v;
+}
+async function startLesson(id) {
+  const Ls = findLesson(id);
+  if (!Ls) return;
+  if (Ls.quiz) { openQuiz(id); return; }
+  const P = schoolLoad();
+  // training aircraft, airport and settings
+  game.acftId = 'trainer'; setAircraft('trainer'); sim.dead = false;
+  game.assist = false; game.ap = false; game.timeScale = 1; game.destIcao = '';
+  if (game.depIcao !== P.airport || !JW.active || !JW.dep || JW.dep.icao !== P.airport) { game.depIcao = P.airport; await loadMap('japan'); }
+  JW.dest = null;
+  $('school').hidden = true; $('menu').hidden = true;
+  ENV = Ls.setup.night ? TOD.night : TOD.day;
+  document.querySelectorAll('[data-tod]').forEach(o => o.classList.toggle('on', o.dataset.tod === (Ls.setup.night ? 'night' : 'day')));
+  const L = { id, def: Ls, step: -1, results: [], t: 0, call: 'JA4' + String(100 + Math.floor(Math.random() * 899)).padStart(3, '0'), apName: apEnglish(JW.dep) };
+  SCHOOL.active = L; SCHOOL.fail = {}; SCHOOL.hood = !!Ls.setup.hood; SCHOOL.analog = true; SCHOOL.prevHdg = undefined; SCHOOL.rateF = 0;
+  // wind
+  const su = Ls.setup;
+  if (su.wind) { const from = RWY.hdg + su.wind.rel, sp = su.wind.kt / KTS; SCHOOL.wind = [-Math.sin(from * DEG) * sp, 0, Math.cos(from * DEG) * sp]; SCHOOL.gust = su.wind.gust || 1; L.windStr = `${String(Math.round(((from % 360) + 360) % 360 / 10) * 10).padStart(3, '0')} at ${su.wind.kt}`; }
+  else { SCHOOL.wind = null; SCHOOL.gust = 1; L.windStr = `${String(Math.round(RWY.hdg / 10) * 10).padStart(3, '0')} at 6`; }
+  // training area altitude: 2,000 ft above the highest ground nearby (at least 3,000 ft)
+  const [cx, , cz] = rwyToWorld(0, 0);
+  let top = 0; for (let a = 0; a < 16; a++) for (const r of [2000, 5000, 9000]) top = Math.max(top, terrainHeight(cx + Math.cos(a / 16 * 6.283) * r, cz + Math.sin(a / 16 * 6.283) * r));
+  L.alt0 = Math.max(3000, Math.ceil((top * FT + 2000) / 500) * 500);
+  // spawn
+  audio.init();
+  spawn(su.at === 'runway' ? 'runway' : 'air');
+  game.mode = su.at === 'runway' ? 'runway' : 'air'; game.state = 'flying'; game.t = 0; game.firstTouch = null; game.track = []; game.arrived = false;
+  const L2 = RWY.len / 2;
+  if (su.at === 'area') {
+    const hdg = Math.round(((RWY.hdg + 90) % 360) / 10) * 10, p = rwyToWorld(-1500, -9000, L.alt0 / FT);
+    placeAircraft(p, hdg, su.kt || 100, 0, su.flaps || 0, su.thr != null ? su.thr : ACFT.v.cruiseThr);
+    L.hdg0 = hdg;
+  } else if (su.at === 'downwind') {
+    const y = RWY.elev + 1000 / FT, p = rwyToWorld(L2 + 800, -1500, y);
+    placeAircraft(p, (RWY.hdg + 180) % 360, 90, 0, 0, 0.55); L.hdg0 = (RWY.hdg + 180) % 360; L.alt0 = y * FT;
+  } else if (su.at === 'final') {
+    const D = su.km * 1000, aim = -L2 + 300, p = rwyToWorld(aim - D, 0, RWY.elev + Math.tan(3 * DEG) * D - WHEEL_BOTTOM);
+    placeAircraft(p, RWY.hdg, su.kt || 68, -3, su.flaps != null ? su.flaps : 2, 0.3); L.hdg0 = RWY.hdg;
+  } else if (su.at === 'ils') {
+    const D = su.km * 1000, aim = -L2 + 300, intHdg = (RWY.hdg + 30) % 360, p = rwyToWorld(aim - D, -2600, RWY.elev + su.aglFt / FT);
+    placeAircraft(p, intHdg, 90, 0, 0, 0.55); L.hdg0 = intHdg; L.intHdg = intHdg; L.alt0 = RWY.elev * FT + su.aglFt;
+  } else if (su.at === 'away') {
+    const brg = (RWY.hdg + 90 + (su.offset || 0)) % 360, D = su.km * 1000;
+    const p = [cx + Math.sin(brg * DEG) * D, RWY.elev + su.aglFt / FT, cz - Math.cos(brg * DEG) * D];
+    p[1] = Math.max(p[1], terrainHeight(p[0], p[2]) + 600);
+    const hdg = su.toward ? (brg + 180 - (su.offset || 0) * 0.3 + 360) % 360 : brg;
+    placeAircraft(p, hdg, 100, 0, 0, ACFT.v.cruiseThr); L.hdg0 = Math.round(hdg); L.alt0 = Math.round(p[1] * FT / 100) * 100;
+  }
+  if (su.at === 'runway') { sim.flapIdx = 0; sim.flapDeg = 0; }
+  // navigation source
+  SCHOOL.nav = su.nav === 'VOR' ? { type: 'VOR', lat: JW.dep.lat, lon: JW.dep.lon, id: JW.dep.icao.slice(2) } : { type: 'ILS' };
+  if (su.nav === 'VOR') { const g = planeGeo(); SCHOOL.obs = Math.round(geoBearing(g[0], g[1], JW.dep.lat, JW.dep.lon) / 5) * 5 + (su.obsTo ? 0 : 0); if (su.at === 'away' && !su.obsTo) SCHOOL.obs = (SCHOOL.obs + 20) % 360; }
+  if (su.xc) setupCrossCountry(L);
+  $('hood').hidden = !SCHOOL.hood;
+  $('sch-panel').hidden = false; $('touch').hidden = !game.touch;
+  cam.mode = 'chase';
+  nextStep(schoolCtx(1 / 60));
+}
+function apEnglish(ap) {
+  const EN = { RJFM: 'MIYAZAKI', RJCB: 'OBIHIRO', RJSS: 'SENDAI', RJTT: 'TOKYO', RJBB: 'KANSAI', RJOO: 'OSAKA', RJCC: 'CHITOSE', ROAH: 'NAHA', RJFF: 'FUKUOKA', RJGG: 'CHUBU', RJNA: 'NAGOYA', RJOK: 'KOCHI', RJAF: 'MATSUMOTO', RJTF: 'CHOFU', RJNT: 'TOYAMA', RJFK: 'KAGOSHIMA', RJOM: 'MATSUYAMA', RJSN: 'NIIGATA' };
+  return EN[ap.icao] || ap.icao;
+}
+function setupCrossCountry(L) {
+  const g = [JW.dep.lat, JW.dep.lon];
+  const cands = JW.airports.filter(a => a !== JW.dep).map(a => ({ a, d: geoDist(g[0], g[1], a.lat, a.lon) })).filter(x => x.d > 35000 && x.d < 110000).sort((p, q) => p.d - q.d);
+  const c1 = cands[0] || { a: JW.airports.find(a => a !== JW.dep), d: 60000 };
+  const c2 = cands.filter(x => x.a !== c1.a).sort((p, q) => geoDist(c1.a.lat, c1.a.lon, p.a.lat, p.a.lon) - geoDist(c1.a.lat, c1.a.lon, q.a.lat, q.a.lon))[0] || c1;
+  L.xc1 = c1.a; L.xc2 = c2.a;
+  const p = planeGeo();
+  L.xcBrg = Math.round(geoBearing(p[0], p[1], c1.a.lat, c1.a.lon)); L.xcDist = Math.round(geoDist(p[0], p[1], c1.a.lat, c1.a.lon) / 1000);
+  L.xcDivertAt = geoDist(p[0], p[1], c1.a.lat, c1.a.lon) * 0.45;
+  JW.dest = c1.a;
+}
+function nextStep(c) {
+  const L = SCHOOL.active; if (!L) return;
+  L.step++;
+  const S = L.def.steps[L.step];
+  if (!S) { endLesson(true); return; }
+  L.st = { t: 0, turned: 0, stats: {}, holdT: 0 };
+  if (S.onStart) S.onStart(L, c, L.st);
+  if (S.fail) { SCHOOL.fail[S.fail] = R.time; if (S.fail === 'engine') { sim.dead = true; sim.thr = 0; } }
+  if (S.hoodOff) { SCHOOL.hood = false; $('hood').hidden = true; }
+  if (S.upset) setUpset(S.upset);
+  if (S.name && S.name.includes('ILS')) SCHOOL.nav = { type: 'ILS' };
+  if (S.checklist) openChecklist(S.checklist);
+  if (S.atc) openAtc(ATC_Q[S.atc](L));
+  L.sayText = S.say ? fillText(S.say, L) : S.checklist ? CHECKLISTS[S.checklist].title : S.atc ? '管制の指示に正しく応答する（1〜3 キー）' : '';
+  L.hint = '';
+  sfxChime();
+}
+function setUpset(kind) {
+  const s = sim, a = attitude();
+  if (kind === 'high') { s.q = qFromHPB(a.hdg, 28, -35); s.vel = vscale([Math.sin(a.hdg * DEG), 0.35, -Math.cos(a.hdg * DEG)], 30); s.thr = 0.4; }
+  else { s.q = qFromHPB(a.hdg, -22, 50); s.vel = vscale([Math.sin(a.hdg * DEG), -0.35, -Math.cos(a.hdg * DEG)], 62); s.thr = 0.9; }
+  s.w = [0, 0, 0];
+}
+function sfxChime() { try { if (audio.ctx) { const C = audio.ctx, o = C.createOscillator(), g = C.createGain(); o.frequency.value = 880; o.type = 'sine'; o.connect(g); g.connect(C.destination); const t = C.currentTime; g.gain.setValueAtTime(0.06, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35); o.start(t); o.stop(t + 0.4); } } catch (e) { /* no audio */ } }
+function schoolUpdate(dt) {
+  const L = SCHOOL.active; if (!L || game.state !== 'flying') return;
+  const c = schoolCtx(dt); SCHOOL.last = c;
+  L.t += dt; SCHOOL.prog.time += dt;
+  if (SCHOOL.fail.engine) { sim.thr = 0; sim.dead = true; }
+  const S = L.def.steps[L.step]; if (!S) return;
+  const st = L.st; st.t += dt;
+  st.turned += w180(c.hdg - (st.lastHdg === undefined ? c.hdg : st.lastHdg)); st.lastHdg = c.hdg;
+  if (S.checklist || S.atc) { if (st.done) nextStep(c); return; }
+  if (S.check) S.check(c, L, st);
+  // grading of targets
+  let allIn = true;
+  if (S.tgt) for (const [k, spec] of Object.entries(S.tgt)) {
+    const tv = typeof spec[0] === 'function' ? spec[0](L) : spec[0], tol = spec[1];
+    const d = tgtDev(k, c, L, tv), inside = Math.abs(d) <= tol;
+    if (!inside) allIn = false;
+    const gradeNow = S.grade && (!S.gradeWhen || S.gradeWhen(c, L, st));
+    const q = st.stats[k] || (st.stats[k] = { n: 0, inT: 0, max: 0, sum: 0, tol, tv });
+    q.tv = tv; q.d = d; q.tol = tol;
+    if (gradeNow) { q.n += dt; if (inside) q.inT += dt; q.max = Math.max(q.max, Math.abs(d)); q.sum += Math.abs(d) * dt; }
+  }
+  st.holdT = allIn ? st.holdT + dt : 0;
+  // instructor hints
+  L.hintT = (L.hintT || 0) - dt;
+  if (L.hintT <= 0) { L.hintT = 1.2; L.hint = instructorHint(S, st, c); }
+  let done = false, timeout = false;
+  if (S.dur && st.t >= S.dur) done = true;
+  if (S.hold && st.holdT >= S.hold) done = true;
+  if (S.until && S.until(c, L, st)) done = true;
+  if (S.max && st.t >= S.max && !done) { done = true; timeout = true; }
+  if (done) finishStep(S, st, c, timeout);
+}
+function instructorHint(S, st, c) {
+  if (!S.tgt) return '';
+  let worst = null;
+  for (const [k, q] of Object.entries(st.stats)) { const r = Math.abs(q.d) / q.tol; if (r > 0.6 && (!worst || r > worst[1])) worst = [k, r, q.d]; }
+  if (!worst) return '良い調子です';
+  const [k, , d] = worst, hi = d > 0;
+  const M = {
+    alt: hi ? `高度が ${Math.round(d)} ft 高い：機首を 1〜2° 下げる` : `高度が ${Math.round(-d)} ft 低い：機首を少し上げ、必要ならパワー`,
+    aglR: hi ? '高い：パワーを絞って降下率を増やす' : '低い：パワーを足して降下を浅く',
+    spd: hi ? `速度が ${Math.round(d)} kt 速い：パワーを絞る（上昇中は機首を上げる）` : `速度が ${Math.round(-d)} kt 遅い：パワーを足す（上昇中は機首を下げる）`,
+    hdg: hi ? `針路が右に ${Math.round(d)}° ずれ：左へ修正` : `針路が左に ${Math.round(-d)}° ずれ：右へ修正`,
+    rhdg: hi ? '滑走路の方位より右：左へ' : '滑走路の方位より左：右へ', dwhdg: hi ? '滑走路と平行に：左へ' : '滑走路と平行に：右へ',
+    abank: hi ? 'バンクが深い：少し浅く' : 'バンクが浅い：もう少し傾ける', arate: hi ? '旋回が速い：バンクを浅く' : '旋回が遅い：バンクを少し深く',
+    vs: hi ? '降下（上昇）率が違う：機首を少し下げる' : '機首を少し上げる', gp: hi ? '進入角が深い（高い）：パワーを足す' : '進入角が浅い（低い）：パワーを足して高度を保つ',
+    cl: hi ? 'センターラインの右：左へ（Q ラダー・A）' : 'センターラインの左：右へ（E ラダー・D）',
+    cdi: hi ? '針が右：右へ修正' : '針が左：左へ修正', loc: hi ? 'ローカライザーの針が右：右へ' : 'ローカライザーの針が左：左へ', gs: hi ? 'グライドスロープより低い：降下を浅く' : 'グライドスロープより高い：降下を増やす',
+  };
+  if (k === 'gp') return d > 0 ? '高すぎる（PAPI 白が多い）：パワーを絞る' : '低すぎる（PAPI 赤が多い）：パワーを足す';
+  if (k === 'cdi' || k === 'loc') return d > 0 ? '針が右：右へ修正（針の方へ）' : '針が左：左へ修正（針の方へ）';
+  if (k === 'gs') return d > 0 ? 'グライドスロープより高い（横の針が下）：降下率を増やす（パワー−）' : 'グライドスロープより低い（横の針が上）：降下を浅く（パワー＋）';
+  return M[k] || '';
+}
+function finishStep(S, st, c, timeout) {
+  const L = SCHOOL.active, rows = [];
+  if (S.grade && S.tgt && S.gradeFinal) for (const [k, q] of Object.entries(st.stats)) {
+    const lab = TGT_LABEL[k] || [k, ''], pass = Math.abs(q.d) <= q.tol;
+    rows.push({ name: lab[0] + '（終了時）', val: `${q.d >= 0 ? '+' : ''}${q.d.toFixed(0)} ${lab[1]}`, std: `±${q.tol} ${lab[1]}`, pass, score: pass ? 1 - Math.abs(q.d) / q.tol * 0.3 : 0 });
+  }
+  else if (S.grade && S.tgt) for (const [k, q] of Object.entries(st.stats)) {
+    if (q.n < 0.5) continue;
+    const pct = q.inT / q.n, lab = TGT_LABEL[k] || [k, ''];
+    const pass = pct >= 0.85 && q.max <= q.tol * 1.6;
+    rows.push({ name: lab[0], val: `${Math.round(pct * 100)}% が基準内（最大 ${q.max.toFixed(k === 'cdi' || k === 'loc' || k === 'gs' || k === 'gp' ? 1 : 0)} ${lab[1]}）`, std: `±${q.tol} ${lab[1]}`, pass, score: pct });
+  }
+  if (S.result) rows.push(...S.result(L, st));
+  if (timeout && S.grade) rows.push({ name: '制限時間', val: '時間切れ', std: `${S.max} 秒以内`, pass: false });
+  if (st.note) rows.push({ name: '注意', val: st.note, std: '', pass: false });
+  if (rows.length) L.results.push({ step: S.name, rows });
+  if (S.onEnd) S.onEnd(L, c);
+  nextStep(c);
+}
+function endLesson(complete, reason) {
+  const L = SCHOOL.active; if (!L) return;
+  SCHOOL.active = null; SCHOOL.fail = {}; SCHOOL.wind = null; SCHOOL.hood = false; sim.dead = false;
+  $('hood').hidden = true; $('sch-panel').hidden = true; $('sch-check').hidden = true; $('sch-atc').hidden = true;
+  const all = L.results.flatMap(r => r.rows);
+  const passed = complete && all.length > 0 && all.every(r => r.pass);
+  const scores = all.map(r => r.pass ? (r.score !== undefined ? 0.7 + 0.3 * r.score : 1) : 0.4 * (r.score || 0));
+  const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+  const grade = !complete ? '―' : passed ? (avg > 0.97 ? 'S' : avg > 0.92 ? 'A' : 'B') : 'C';
+  const P = SCHOOL.prog, rec = P.lessons[L.id] || { tries: 0 };
+  rec.tries++; if (passed) rec.pass = true;
+  const rank = { S: 4, A: 3, B: 2, C: 1, '―': 0 };
+  if (!rec.best || rank[grade] > rank[rec.best]) rec.best = grade;
+  P.lessons[L.id] = rec; schoolSave();
+  showDebrief(L, passed, grade, reason);
+}
+function schoolCrash(reason) {
+  const L = SCHOOL.active; if (!L) return;
+  const c = SCHOOL.last, S = L.def.steps[L.step] || {};
+  // a controlled, low-energy touchdown off the runway (or on water) after an engine failure is a survivable forced landing
+  const gentle = c && SCHOOL.fail.engine && c.vs > -700 && c.kias < 78 && Math.abs(c.bank) < 20;
+  if (gentle) {
+    const st = L.st; if (S.check) S.check(c, L, st);
+    L.results.push({ step: '不時着', rows: [{ name: '結果', val: `${/海|着水/.test(reason) ? '不時着水' : '不時着'}（機体は損傷・乗員は無事）`, std: '安全に接地', pass: true }] });
+    finishStepQuiet(S, st);
+    setTimeout(() => endLesson(true), 1800);
+    return;
+  }
+  L.results.push({ step: '事故', rows: [{ name: '結果', val: reason, std: '安全に飛行を終える', pass: false }] });
+  setTimeout(() => endLesson(false, reason), 1800);
+}
+function finishStepQuiet(S, st) {
+  const L = SCHOOL.active, save = L.def.steps.length;
+  const rows = [];
+  if (S.grade && S.tgt) for (const [k, q] of Object.entries(st.stats)) { if (q.n < 0.5) continue; const pct = q.inT / q.n, lab = TGT_LABEL[k] || [k, '']; rows.push({ name: lab[0], val: `${Math.round(pct * 100)}% が基準内（最大 ${q.max.toFixed(0)} ${lab[1]}）`, std: `±${q.tol} ${lab[1]}`, pass: pct >= 0.85 && q.max <= q.tol * 1.6, score: pct }); }
+  if (S.result) for (const r of S.result(L, st)) if (!/着陸場所|着陸$/.test(r.name)) rows.push(r);
+  if (rows.length) L.results.push({ step: S.name, rows });
+  L.step = save;
+}
+
+// ---------------------------------------------------------------------
+//  checklist and ATC dialogs
+// ---------------------------------------------------------------------
+function openChecklist(id) {
+  const C = CHECKLISTS[id], box = $('sch-check');
+  box.hidden = false; box.textContent = '';
+  const h = document.createElement('div'); h.className = 'sc-title'; h.textContent = C.title; box.append(h);
+  const ol = document.createElement('ol'); box.append(ol);
+  C.items.forEach((it, i) => { const li = document.createElement('li'); li.innerHTML = `<b>${it[0]}</b><span>${it[1]}</span>`; ol.append(li); });
+  const f = document.createElement('div'); f.className = 'sc-foot'; f.textContent = 'Enter（またはタップ）で 1 項目ずつ確認'; box.append(f);
+  SCHOOL.check = { id, i: 0 };
+  markChecklist();
+  box.onclick = () => checklistNext();
+}
+function markChecklist() {
+  const lis = $('sch-check').querySelectorAll('li');
+  lis.forEach((li, i) => { li.className = i < SCHOOL.check.i ? 'ok' : i === SCHOOL.check.i ? 'cur' : ''; });
+}
+function checklistNext() {
+  const K = SCHOOL.check, L = SCHOOL.active; if (!K || !L) return;
+  const it = CHECKLISTS[K.id].items[K.i];
+  if (it && it[2] && !it[2]()) { L.hint = `${it[0]}：${it[1]} にしてから確認`; const li = $('sch-check').querySelectorAll('li')[K.i]; li.classList.add('ng'); setTimeout(() => li.classList.remove('ng'), 600); return; }
+  K.i++; markChecklist();
+  if (K.i >= CHECKLISTS[K.id].items.length) { $('sch-check').hidden = true; SCHOOL.check = null; L.st.done = true; L.results.push({ step: CHECKLISTS[K.id].title, rows: [{ name: 'チェックリスト', val: '完了', std: '全項目', pass: true }] }); }
+}
+function openAtc(q) {
+  const box = $('sch-atc'); box.hidden = false; box.textContent = '';
+  const m = document.createElement('div'); m.className = 'atc-msg'; m.textContent = q.msg; box.append(m);
+  const p = document.createElement('div'); p.className = 'atc-q'; p.textContent = '正しい応答は？（1〜3 キー）'; box.append(p);
+  q.opts.forEach((o, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = `${i + 1}. ${o}`; b.addEventListener('click', () => answerAtc(i)); box.append(b); });
+  SCHOOL.atc = q;
+}
+function answerAtc(i) {
+  const q = SCHOOL.atc, L = SCHOOL.active; if (!q || !L) return;
+  const ok = i === q.ok, box = $('sch-atc');
+  L.results.push({ step: '無線（復唱）', rows: [{ name: '応答', val: ok ? '正しい' : `誤り（正解：${q.opts[q.ok]}）`, std: '正しく復唱', pass: ok }] });
+  box.textContent = ''; const m = document.createElement('div'); m.className = 'atc-msg ' + (ok ? 'ok' : 'ng'); m.textContent = (ok ? '正解。' : '不正解。') + q.why; box.append(m);
+  SCHOOL.atc = null;
+  setTimeout(() => { box.hidden = true; if (SCHOOL.active === L) L.st.done = true; }, ok ? 2200 : 4500);
+}
+function schoolKey(e) {
+  if (!SCHOOL.active || game.state !== 'flying') {
+    if (e.code === 'KeyI' && (game.state === 'flying' || game.state === 'paused')) { SCHOOL.analog = !SCHOOL.analog; toast(SCHOOL.analog ? 'アナログ計器（6 計器）' : 'グラス計器（PFD）', 1200); return true; }
+    if ((e.code === 'BracketLeft' || e.code === 'BracketRight') && game.state === 'flying') { SCHOOL.obs = (SCHOOL.obs + (e.code === 'BracketRight' ? 5 : -5) + 360) % 360; return true; }
+    return false;
+  }
+  if (SCHOOL.check && (e.code === 'Enter' || e.code === 'NumpadEnter')) { checklistNext(); return true; }
+  if (SCHOOL.atc && /^Digit[1-3]$/.test(e.code)) { answerAtc(+e.code.slice(5) - 1); return true; }
+  if (e.code === 'BracketLeft' || e.code === 'BracketRight') { SCHOOL.obs = (SCHOOL.obs + (e.code === 'BracketRight' ? 5 : -5) * (e.shiftKey ? 0.2 : 1) + 360) % 360; return true; }
+  if (e.code === 'KeyI') { SCHOOL.analog = !SCHOOL.analog; return true; }
+  if (e.code === 'KeyZ' || e.code === 'KeyO' || e.code === 'KeyL') { toast('訓練中は使えません（自分の操縦で）', 1400); return true; }
+  return false;
+}
+
+// ---------------------------------------------------------------------
+//  navigation receiver: VOR (station at the airport) and ILS (active runway)
+// ---------------------------------------------------------------------
+function navDeviation() {
+  const N = SCHOOL.nav || { type: 'ILS' }, s = sim;
+  if (!RWY.dir) return { cdi: 0, loc: 0, gs: 0, dme: 0, brgTo: 0, flag: 'OFF' };
+  if (N.type === 'VOR') {
+    const g = worldToGeo(s.pos[0], s.pos[2]), r = geoBearing(N.lat, N.lon, g[0], g[1]), b2s = (r + 180) % 360;
+    const dist = geoDist(g[0], g[1], N.lat, N.lon), fromDev = w180(r - SCHOOL.obs);
+    const to = Math.abs(fromDev) > 90;
+    const dev = to ? w180(b2s - SCHOOL.obs) : w180(SCHOOL.obs - r);
+    return { cdi: clamp(dev / 2, -5.5, 5.5), loc: 0, gs: 0, dme: dist / 1852, brgTo: b2s, flag: dist < 300 ? 'OFF' : to ? 'TO' : 'FR', type: 'VOR' };
+  }
+  const [u, v] = worldToRwy(s.pos[0], s.pos[2]), L2 = RWY.len / 2, ant = L2 + 300, aim = -L2 + 300;
+  const locDeg = Math.atan2(v, ant - u) / DEG;
+  const h = s.pos[1] + WHEEL_BOTTOM - RWY.elev, gsDeg = Math.atan2(h, Math.max(aim - u, 1)) / DEG - 3;
+  const inRange = u < ant && Math.abs(locDeg) < 35 && ant - u < 45000;
+  return { cdi: clamp(-locDeg / 0.5, -5.5, 5.5), loc: clamp(-locDeg / 0.5, -5.5, 5.5), gs: clamp(gsDeg / 0.35, -3, 3), dme: Math.hypot(u - aim, v) / 1852, brgTo: RWY.hdg, flag: inRange ? 'ILS' : 'OFF', type: 'ILS', gsValid: u < aim - 100 };
+}
+
+// ---------------------------------------------------------------------
+//  analog "six-pack" instrument panel
+// ---------------------------------------------------------------------
+function gaugeBezel(g, cx, cy, r, label) {
+  g.fillStyle = '#15191e'; g.beginPath(); g.arc(cx, cy, r + 6, 0, 7); g.fill();
+  g.fillStyle = '#0a0c0f'; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.fill();
+  if (label) { g.fillStyle = '#9aa4ad'; g.font = `600 9px ${UI}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(label, cx, cy + r * 0.42); }
+}
+function needle(g, cx, cy, ang, len, w, col) {
+  g.save(); g.translate(cx, cy); g.rotate(ang);
+  g.fillStyle = col || '#f2f2f2'; g.beginPath(); g.moveTo(-w, 0); g.lineTo(0, -len); g.lineTo(w, 0); g.lineTo(0, len * 0.16); g.closePath(); g.fill();
+  g.restore();
+  g.fillStyle = '#2a2f36'; g.beginPath(); g.arc(cx, cy, w * 1.6, 0, 7); g.fill();
+}
+function drawSixPack(g, x0, y0, sc, att) {
+  const s = sim, V = ACFT.v, r = 62, P = 150;
+  const fails = SCHOOL.fail, vac = fails.vacuum ? clamp((R.time - fails.vacuum) / 25, 0, 1) : 0;
+  g.save(); g.translate(x0, y0); g.scale(sc, sc);
+  // panel
+  rr(g, 0, 0, P * 4 + 20, P * 2 + 34, 10); g.fillStyle = 'rgba(38,42,48,0.94)'; g.fill(); g.strokeStyle = '#555c66'; g.lineWidth = 1.5; g.stroke();
+  const C = (i, j) => [10 + P * i + P / 2, 30 + P * j + P / 2];
+  // magnetic compass strip on top
+  { const hdg = att.hdg + Math.sin(R.time * 1.3) * Math.min(3, Math.abs(SCHOOL.rateF || 0) * 1.5), W = 180, x = P * 1.5 + 10 - W / 2 + P / 2;
+    rr(g, x, 4, W, 22, 4); g.fillStyle = '#0a0c0f'; g.fill();
+    g.save(); g.beginPath(); g.rect(x, 4, W, 22); g.clip();
+    g.fillStyle = '#e8e8e8'; g.font = `700 10px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let d = -60; d <= 60; d += 5) { const hh = Math.round(hdg / 5) * 5 + d, xx = x + W / 2 + (hh - hdg) * 2.4, n = ((hh % 360) + 360) % 360;
+      if (n % 30 === 0) g.fillText(n === 0 ? 'N' : n === 90 ? 'E' : n === 180 ? 'S' : n === 270 ? 'W' : String(n / 10), xx, 15); else g.fillRect(xx - 0.5, 20, 1, 5); }
+    g.restore(); g.fillStyle = '#ff8a3a'; g.fillRect(x + W / 2 - 1, 4, 2, 22);
+    g.fillStyle = '#9aa4ad'; g.font = `600 9px ${UI}`; g.textAlign = 'left'; g.fillText('磁気コンパス', x + W + 8, 15); }
+  // 1. airspeed
+  { const [cx, cy] = C(0, 0), vmax = Math.ceil(V.ne * 1.15 / 10) * 10, a = k => (-150 + clamp(k, 0, vmax) / vmax * 300) * DEG;
+    gaugeBezel(g, cx, cy, r, 'KNOTS');
+    const arc = (k0, k1, col, rad, w) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.arc(cx, cy, rad, a(k0) - Math.PI / 2, a(k1) - Math.PI / 2); g.stroke(); };
+    if (V.fe) arc(V.s0, V.fe, '#f4f4f4', r - 8, 5);
+    arc(V.s1, V.no, '#2fbf4f', r - 3, 5); arc(V.no, V.ne, '#f2c230', r - 3, 5);
+    g.strokeStyle = '#e03a3e'; g.lineWidth = 3; g.save(); g.translate(cx, cy); g.rotate(a(V.ne)); g.beginPath(); g.moveTo(0, -r + 1); g.lineTo(0, -r + 12); g.stroke(); g.restore();
+    g.fillStyle = '#eee'; g.font = `600 10px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let k = 0; k <= vmax; k += 10) { const an = a(k); g.save(); g.translate(cx, cy); g.rotate(an); g.fillRect(-0.7, -r + 2, 1.4, k % 20 ? 6 : 10); g.restore();
+      if (k % 20 === 0 && k >= 40) g.fillText(k, cx + Math.sin(an) * (r - 20), cy - Math.cos(an) * (r - 20)); }
+    const kias = fails.pitot ? (SCHOOL.pitotK || 0) : s.ias * KTS;
+    needle(g, cx, cy, a(kias), r - 6, 3); }
+  // 2. attitude
+  { const [cx, cy] = C(1, 0), bank = lerp(att.bank, 18 + 10 * Math.sin(R.time / 7), vac), pitch = lerp(att.pitch, 6, vac), ppd = 2.1;
+    gaugeBezel(g, cx, cy, r);
+    g.save(); g.beginPath(); g.arc(cx, cy, r - 1, 0, 7); g.clip();
+    g.translate(cx, cy); g.rotate(-bank * DEG);
+    const off = clamp(pitch, -30, 30) * ppd;
+    g.fillStyle = '#2f79c8'; g.fillRect(-r * 2, -r * 2 + off, r * 4, r * 2); g.fillStyle = '#7a4c24'; g.fillRect(-r * 2, off, r * 4, r * 2);
+    g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(-r * 2, off); g.lineTo(r * 2, off); g.stroke();
+    g.lineWidth = 1; for (const p of [-20, -10, 10, 20]) { const y = off - p * ppd, w = Math.abs(p) === 10 ? 14 : 22; g.beginPath(); g.moveTo(-w, y); g.lineTo(w, y); g.stroke(); }
+    // bank scale ticks
+    for (const b of [-60, -30, -20, -10, 10, 20, 30, 60]) { g.save(); g.rotate(b * DEG); g.fillStyle = '#fff'; g.fillRect(-1, -r + 2, 2, Math.abs(b) % 30 ? 5 : 9); g.restore(); }
+    g.fillStyle = '#fff'; g.beginPath(); g.moveTo(0, -r + 2); g.lineTo(-5, -r + 11); g.lineTo(5, -r + 11); g.fill();
+    g.restore();
+    g.fillStyle = '#f2a33a'; g.beginPath(); g.moveTo(cx, cy - r + 13); g.lineTo(cx - 5, cy - r + 21); g.lineTo(cx + 5, cy - r + 21); g.fill();
+    g.strokeStyle = '#f2a33a'; g.lineWidth = 3; g.beginPath(); g.moveTo(cx - 34, cy); g.lineTo(cx - 12, cy); g.lineTo(cx - 6, cy + 6); g.moveTo(cx + 34, cy); g.lineTo(cx + 12, cy); g.lineTo(cx + 6, cy + 6); g.stroke();
+    g.fillStyle = '#f2a33a'; g.beginPath(); g.arc(cx, cy, 2.5, 0, 7); g.fill(); }
+  // 3. altimeter
+  { const [cx, cy] = C(2, 0), alt = s.pos[1] * FT;
+    gaugeBezel(g, cx, cy, r, 'ALT  ×100 ft');
+    g.fillStyle = '#eee'; g.font = `700 12px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let i = 0; i < 50; i++) { const an = i / 50 * 2 * Math.PI; g.save(); g.translate(cx, cy); g.rotate(an); g.fillRect(-0.6, -r + 2, 1.2, i % 5 ? 5 : 10); g.restore(); if (i % 5 === 0) g.fillText(i / 5, cx + Math.sin(an) * (r - 19), cy - Math.cos(an) * (r - 19)); }
+    rr(g, cx + 14, cy - 8, 34, 16, 2); g.fillStyle = '#222'; g.fill(); g.fillStyle = '#ddd'; g.font = `600 10px ${MONO}`; g.fillText('29.92', cx + 31, cy);
+    needle(g, cx, cy, (alt % 10000) / 10000 * 2 * Math.PI, r * 0.5, 4.5);
+    needle(g, cx, cy, (alt % 1000) / 1000 * 2 * Math.PI, r - 8, 2.6);
+    g.fillStyle = '#fff'; g.save(); g.translate(cx, cy); g.rotate((alt % 100000) / 100000 * 2 * Math.PI); g.fillRect(-1, -r + 1, 2, 12); g.restore(); }
+  // 4. turn coordinator
+  { const [cx, cy] = C(0, 1), rate = SCHOOL.rateF || 0, tilt = clamp(rate / 3, -2, 2) * 20 * DEG;
+    gaugeBezel(g, cx, cy, r, '2 MIN TURN');
+    g.fillStyle = '#eee'; g.font = `700 11px ${UI}`; g.textAlign = 'center';
+    for (const sgn of [-1, 1]) { g.save(); g.translate(cx, cy); g.rotate(sgn * 20 * DEG); g.fillRect(-r + 8, -1.5, 14, 3); g.restore(); g.save(); g.translate(cx, cy); g.fillRect(-r + 8, -1.5, 14, 3); g.restore(); }
+    g.fillText('L', cx - r + 14, cy + 20); g.fillText('R', cx + r - 14, cy + 20);
+    g.save(); g.translate(cx, cy - 4); g.rotate(tilt); g.fillStyle = '#f4f4f4';
+    g.fillRect(-r + 14, -2, (r - 14) * 2, 4); g.beginPath(); g.arc(0, 0, 6, 0, 7); g.fill(); g.fillRect(-1.5, -12, 3, 10); g.restore();
+    // inclinometer (ball)
+    const bx = cx, by = cy + 30; rr(g, bx - 34, by - 8, 68, 16, 8); g.fillStyle = '#d9d4b8'; g.fill();
+    g.strokeStyle = '#111'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(bx - 9, by - 8); g.lineTo(bx - 9, by + 8); g.moveTo(bx + 9, by - 8); g.lineTo(bx + 9, by + 8); g.stroke();
+    const slip = clamp(-s.beta / DEG * 2.2, -26, 26); g.fillStyle = '#111'; g.beginPath(); g.arc(bx + slip, by, 6.5, 0, 7); g.fill(); }
+  // 5. heading indicator
+  { const [cx, cy] = C(1, 1), drift = vac * ((R.time - (fails.vacuum || 0)) * 1.4), hdg = att.hdg + drift;
+    gaugeBezel(g, cx, cy, r);
+    g.save(); g.translate(cx, cy); g.rotate(-hdg * DEG);
+    g.fillStyle = '#eee'; g.font = `700 11px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let d = 0; d < 360; d += 5) { g.save(); g.rotate(d * DEG); g.fillRect(-0.6, -r + 2, 1.2, d % 10 ? 4 : 8); if (d % 30 === 0) g.fillText(d === 0 ? 'N' : d === 90 ? 'E' : d === 180 ? 'S' : d === 270 ? 'W' : d / 10, 0, -r + 19); g.restore(); }
+    g.restore();
+    g.fillStyle = '#f2a33a'; g.beginPath(); g.moveTo(cx, cy - 24); g.lineTo(cx - 12, cy + 16); g.lineTo(cx, cy + 10); g.lineTo(cx + 12, cy + 16); g.closePath(); g.fill();
+    g.fillRect(cx - 1, cy - r + 2, 2, 12); }
+  // 6. VSI
+  { const [cx, cy] = C(2, 1), vs = s.vs * 196.85, a = clamp(vs, -2000, 2000) / 2000 * 170 * DEG - Math.PI / 2;
+    gaugeBezel(g, cx, cy, r, 'VERT SPEED ×100');
+    g.fillStyle = '#eee'; g.font = `700 11px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let k = -20; k <= 20; k += 5) { const an = k / 20 * 170 * DEG - Math.PI / 2; g.save(); g.translate(cx, cy); g.rotate(an); g.fillRect(-0.7, -r + 2, 1.4, k % 10 ? 6 : 10); g.restore(); if (k % 10 === 0) g.fillText(Math.abs(k / 10 * 10), cx + Math.sin(an) * (r - 20), cy - Math.cos(an) * (r - 20)); }
+    g.fillText('UP', cx - 18, cy - 22); g.fillText('DN', cx - 18, cy + 22);
+    needle(g, cx, cy, a, r - 6, 3); }
+  // 7. tachometer
+  { const [cx, cy] = C(3, 0), rpm = s.dead ? Math.min(s.rpm, 900) : s.rpm, a = k => (-130 + clamp(k, 0, 3500) / 3500 * 260) * DEG;
+    gaugeBezel(g, cx, cy, r, 'RPM ×100');
+    g.strokeStyle = '#2fbf4f'; g.lineWidth = 5; g.beginPath(); g.arc(cx, cy, r - 4, a(2100) - Math.PI / 2, a(2700) - Math.PI / 2); g.stroke();
+    g.fillStyle = '#eee'; g.font = `700 11px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let k = 0; k <= 3500; k += 500) { const an = a(k); g.save(); g.translate(cx, cy); g.rotate(an); g.fillRect(-0.7, -r + 2, 1.4, 9); g.restore(); if (k % 1000 === 0) g.fillText(k / 100, cx + Math.sin(an) * (r - 20), cy - Math.cos(an) * (r - 20)); }
+    needle(g, cx, cy, a(rpm), r - 8, 3);
+    g.fillStyle = s.dead ? '#e03a3e' : '#9aa4ad'; g.font = `700 10px ${UI}`; g.fillText(s.dead ? 'ENGINE OUT' : `THR ${Math.round(s.thr * 100)}%`, cx, cy + 34); }
+  // 8. NAV (CDI with OBS, VOR or ILS)
+  { const [cx, cy] = C(3, 1), N = navDeviation(), ils = N.type === 'ILS';
+    gaugeBezel(g, cx, cy, r);
+    const obs = ils ? RWY.hdg : SCHOOL.obs;
+    g.save(); g.translate(cx, cy); g.rotate(-obs * DEG);
+    g.fillStyle = '#ddd'; g.font = `700 10px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let d = 0; d < 360; d += 10) { g.save(); g.rotate(d * DEG); g.fillRect(-0.5, -r + 2, 1, d % 30 ? 4 : 7); if (d % 30 === 0) g.fillText(d / 10, 0, -r + 16); g.restore(); }
+    g.restore();
+    g.fillStyle = '#f2a33a'; g.beginPath(); g.moveTo(cx, cy - r + 1); g.lineTo(cx - 5, cy - r + 9); g.lineTo(cx + 5, cy - r + 9); g.fill();
+    g.fillStyle = '#ddd'; for (let k = -5; k <= 5; k++) if (k) { g.beginPath(); g.arc(cx + k * 7, cy, 1.8, 0, 7); g.fill(); }
+    const on = N.flag !== 'OFF';
+    g.strokeStyle = '#f4f4f4'; g.lineWidth = 3; const dx = (on ? clamp(N.cdi, -5, 5) : 0) * 7; g.beginPath(); g.moveTo(cx + dx, cy - 38); g.lineTo(cx + dx, cy + 38); g.stroke();
+    if (ils) { const dy = (on && N.gsValid ? clamp(N.gs, -2.5, 2.5) : 0) * 12; g.beginPath(); g.moveTo(cx - 36, cy + dy); g.lineTo(cx + 36, cy + dy); g.stroke(); }
+    g.font = `700 10px ${UI}`; g.fillStyle = on ? '#2fbf4f' : '#e03a3e';
+    g.fillText(ils ? (on ? 'ILS' : 'LOC OFF') : N.flag, cx + 28, cy - 22);
+    g.fillStyle = '#9aa4ad'; g.fillText(ils ? `LOC ${Math.round(RWY.hdg)}°` : `OBS ${String(Math.round(SCHOOL.obs)).padStart(3, '0')}`, cx, cy + 50);
+    g.fillText(`DME ${N.dme.toFixed(1)}`, cx - 28, cy - 22); }
+  // flaps & trim & labels
+  g.fillStyle = '#c9ced6'; g.font = `600 10px ${UI}`; g.textAlign = 'left';
+  g.fillText(`FLAPS ${FLAP_DEG[s.flapIdx]}°  TRIM ${(s.trim >= 0 ? '▲' : '▼') + Math.abs(Math.round(s.trim * 100))}  I：計器切替  [ ]：OBS`, 14, P * 2 + 26);
+  g.restore();
+}
+
+// ---------------------------------------------------------------------
+//  UI: school screen, quiz, debrief, pause, instructor panel
+// ---------------------------------------------------------------------
+function renderSchool(selId) {
+  const P = schoolLoad(), order = lessonOrder();
+  const passedN = order.filter(id => P.lessons[id] && P.lessons[id].pass).length;
+  $('sch-log').innerHTML = `<div><b>${passedN}</b> / ${order.length}<span>合格した課目</span></div><div><b>${(P.time / 3600).toFixed(1)}</b><span>訓練時間（時間）</span></div><div><b>${P.landings}</b><span>着陸回数</span></div>`;
+  const nav = $('sch-stages'); nav.textContent = '';
+  let firstOpen = null;
+  for (const st of SYLLABUS) {
+    const sec = document.createElement('section'); const h = document.createElement('h3'); h.textContent = st.title; sec.append(h);
+    const d = document.createElement('p'); d.textContent = st.desc; sec.append(d);
+    for (const l of st.lessons) {
+      const rec = P.lessons[l.id], b = document.createElement('button'); b.type = 'button'; b.className = 'sch-item' + (rec && rec.pass ? ' done' : '') + (l.id === selId ? ' sel' : '');
+      b.innerHTML = `<span class="sch-grade">${rec ? rec.best || '―' : ''}</span><span class="sch-t">${l.title}</span><span class="sch-g">${l.goal}</span>`;
+      b.addEventListener('click', () => renderSchool(l.id));
+      sec.append(b);
+      if (!firstOpen && !(rec && rec.pass)) firstOpen = l.id;
+    }
+    nav.append(sec);
+  }
+  const id = selId || firstOpen || order[0];
+  if (!selId) { const el = nav.querySelector('.sch-item:not(.done)'); if (el) el.classList.add('sel'); }
+  renderBrief(id);
+}
+function renderBrief(id) {
+  const l = findLesson(id), box = $('sch-brief'), P = schoolLoad(), rec = P.lessons[id];
+  box.textContent = '';
+  const h = document.createElement('h2'); h.textContent = l.title; box.append(h);
+  const g = document.createElement('p'); g.className = 'sch-goal'; g.textContent = '目的：' + l.goal; box.append(g);
+  if (l.quiz) {
+    const p = document.createElement('p'); p.textContent = `${QUIZ[id].length} 問の 4 択。答えるたびに解説が出ます。80% 以上で合格。`; box.append(p);
+  } else {
+    const h3 = document.createElement('h3'); h3.textContent = '知識と手順'; box.append(h3);
+    const ul = document.createElement('ul'); for (const t of l.brief) { const li = document.createElement('li'); li.innerHTML = t; ul.append(li); } box.append(ul);
+    const h4 = document.createElement('h3'); h4.textContent = '合格基準'; box.append(h4);
+    const s = document.createElement('p'); s.className = 'sch-std'; s.textContent = l.std; box.append(s);
+    const h5 = document.createElement('h3'); h5.textContent = '飛行の流れ'; box.append(h5);
+    const ol = document.createElement('ol'); for (const st of l.steps) { const li = document.createElement('li'); li.textContent = st.name; ol.append(li); } box.append(ol);
+    const n = document.createElement('p'); n.className = 'sch-note'; n.textContent = '訓練中は操縦アシストなし・アナログ計器（I で切替）・コックピット視点（C で切替）。トリムは T。基準は FAA の実地試験基準（ACS）などを参考にした練習用の目安です。実際の試験基準・手順は必ず教官と教本（POH・AIM-J）で確認してください。'; box.append(n);
+  }
+  const bar = document.createElement('div'); bar.className = 'sch-bar';
+  const go = document.createElement('button'); go.type = 'button'; go.className = 'sch-go'; go.textContent = l.quiz ? 'テストを始める' : '訓練を始める'; go.addEventListener('click', () => startLesson(id));
+  bar.append(go);
+  if (rec) { const r = document.createElement('span'); r.textContent = `挑戦 ${rec.tries} 回・最高評価 ${rec.best || '―'}${rec.pass ? '・合格済み' : ''}`; bar.append(r); }
+  box.append(bar);
+}
+function openSchool() {
+  schoolLoad();
+  $('menu').hidden = true; $('school').hidden = false; $('sch-debrief').hidden = true; $('sch-quiz').hidden = true;
+  const sel = $('sch-ap');
+  if (!sel.options.length) {
+    for (const [ic, nm] of [['RJFM', '宮崎（航空大学校 本校）'], ['RJCB', '帯広（航空大学校 帯広分校）'], ['RJSS', '仙台（航空大学校 仙台分校）'], ['RJTF', '調布'], ['RJAF', '松本'], ['RJOK', '高知'], ['ROAH', '那覇']]) {
+      if (!JW.airports.find(a => a.icao === ic)) continue;
+      const o = document.createElement('option'); o.value = ic; o.textContent = nm; sel.append(o);
+    }
+    sel.addEventListener('change', () => { SCHOOL.prog.airport = sel.value; schoolSave(); });
+  }
+  sel.value = SCHOOL.prog.airport;
+  renderSchool();
+}
+function showDebrief(L, passed, grade, reason) {
+  game.state = 'result';
+  const box = $('sch-debrief'), body = $('sd-body'); body.textContent = '';
+  $('sd-title').textContent = `${L.def.title}：${passed ? '合格' : reason ? '中止' : '不合格'}`;
+  $('sd-grade').textContent = grade; $('sd-grade').className = 'sd-grade ' + (passed ? 'ok' : 'ng');
+  $('sd-sub').textContent = reason ? `理由：${reason}` : passed ? 'すべての項目が基準内でした。' : '基準に届かなかった項目があります。下の講評を確認して、もう一度挑戦しましょう。';
+  for (const r of L.results) {
+    const h = document.createElement('h3'); h.textContent = r.step; body.append(h);
+    const t = document.createElement('table'); t.className = 'sd-t';
+    for (const row of r.rows) { const tr = document.createElement('tr'); tr.className = row.pass ? 'ok' : 'ng'; tr.innerHTML = `<td>${row.pass ? '○' : '×'}</td><td>${row.name}</td><td>${row.val}</td><td>${row.std}</td>`; t.append(tr); }
+    body.append(t);
+  }
+  if (!L.results.length) { const p = document.createElement('p'); p.textContent = '採点できる項目がありませんでした。'; body.append(p); }
+  const order = lessonOrder(), nextId = order[order.indexOf(L.id) + 1];
+  $('sd-next').hidden = !passed || !nextId;
+  $('sd-next').onclick = () => { box.hidden = true; startLesson(nextId); };
+  $('sd-retry').onclick = () => { box.hidden = true; startLesson(L.id); };
+  $('sd-menu').onclick = () => { box.hidden = true; openSchool(); renderSchool(L.id); };
+  box.hidden = false; $('touch').hidden = true;
+}
+// quiz
+function openQuiz(id) {
+  const qs = QUIZ[id].map(q => { const idx = q[1].map((_, i) => i).sort(() => Math.random() - 0.5); return { q: q[0], opts: idx.map(i => q[1][i]), ok: idx.indexOf(q[2]), why: q[3] }; });
+  SCHOOL.quiz = { id, qs, i: 0, right: 0 };
+  $('school').hidden = true; $('sch-quiz').hidden = false;
+  renderQuiz();
+}
+function renderQuiz() {
+  const Z = SCHOOL.quiz, box = $('sq-body'); box.textContent = '';
+  $('sq-title').textContent = `${QUIZ_TITLE[Z.id]}（${Math.min(Z.i + 1, Z.qs.length)} / ${Z.qs.length}）`;
+  if (Z.i >= Z.qs.length) {
+    const pct = Z.right / Z.qs.length, pass = pct >= 0.8;
+    const P = SCHOOL.prog, rec = P.lessons[Z.id] || { tries: 0 }; rec.tries++; if (pass) rec.pass = true;
+    const grade = pct === 1 ? 'S' : pct >= 0.9 ? 'A' : pass ? 'B' : 'C', rank = { S: 4, A: 3, B: 2, C: 1 };
+    if (!rec.best || rank[grade] > rank[rec.best]) rec.best = grade; P.lessons[Z.id] = rec; schoolSave();
+    const p = document.createElement('p'); p.className = 'sq-result ' + (pass ? 'ok' : 'ng'); p.textContent = `${Z.right} / ${Z.qs.length} 問正解（${Math.round(pct * 100)}%）… ${pass ? '合格' : '不合格（80% 以上で合格）'}`; box.append(p);
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'sch-go'; b.textContent = '課程表へ戻る'; b.addEventListener('click', () => { $('sch-quiz').hidden = true; openSchool(); renderSchool(Z.id); }); box.append(b);
+    const r = document.createElement('button'); r.type = 'button'; r.className = 'sch-sub'; r.textContent = 'もう一度'; r.addEventListener('click', () => openQuiz(Z.id)); box.append(r);
+    return;
+  }
+  const q = Z.qs[Z.i];
+  const p = document.createElement('p'); p.className = 'sq-q'; p.textContent = q.q; box.append(p);
+  const list = document.createElement('div'); list.className = 'sq-opts'; box.append(list);
+  q.opts.forEach((o, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = o;
+    b.addEventListener('click', () => {
+      if (Z.answered) return; Z.answered = true;
+      const ok = i === q.ok; if (ok) Z.right++;
+      list.querySelectorAll('button').forEach((x, j) => { x.classList.toggle('ok', j === q.ok); x.classList.toggle('ng', j === i && !ok); x.disabled = true; });
+      const e = document.createElement('p'); e.className = 'sq-why ' + (ok ? 'ok' : 'ng'); e.textContent = (ok ? '正解。' : '不正解。') + q.why; box.append(e);
+      const n = document.createElement('button'); n.type = 'button'; n.className = 'sch-go'; n.textContent = Z.i + 1 < Z.qs.length ? '次の問題' : '結果を見る';
+      n.addEventListener('click', () => { Z.i++; Z.answered = false; renderQuiz(); }); box.append(n); n.focus();
+    });
+    list.append(b);
+  });
+}
+function schoolPause(on) {
+  $('sch-pause').hidden = !on;
+}
+function updateSchoolPanel() {
+  const L = SCHOOL.active, box = $('sch-panel');
+  if (!L || game.state !== 'flying') return;
+  const S = L.def.steps[L.step]; if (!S) return;
+  const st = L.st;
+  $('sp-step').textContent = `${L.def.title}　項目 ${L.step + 1} / ${L.def.steps.length}：${S.name}`;
+  $('sp-say').textContent = L.sayText;
+  const chips = $('sp-tgt'); chips.textContent = '';
+  if (S.tgt) for (const [k, q] of Object.entries(st.stats)) {
+    const lab = TGT_LABEL[k] || [k, ''], r = Math.abs(q.d) / q.tol, sp = document.createElement('span');
+    sp.className = r <= 0.6 ? 'ok' : r <= 1 ? 'warn' : 'ng';
+    const dp = k === 'cdi' || k === 'loc' || k === 'gs' || k === 'gp' || k === 'arate' ? 1 : 0;
+    const tvS = k === 'hdg' || k === 'rhdg' || k === 'dwhdg' ? '' : ` ${Math.round(q.tv * 10 ** dp) / 10 ** dp}${lab[1]}`;
+    sp.textContent = `${lab[0]}${tvS}　${q.d >= 0 ? '+' : ''}${q.d.toFixed(dp)}`;
+    chips.append(sp);
+  }
+  let prog = '';
+  if (S.dur) prog = `残り ${Math.max(0, Math.ceil(S.dur - st.t))} 秒`;
+  else if (S.hold) prog = `基準内で ${st.holdT.toFixed(0)} / ${S.hold} 秒`;
+  else if (S.max) prog = `経過 ${Math.floor(st.t)} 秒`;
+  if (st.turned && S.until && Math.abs(st.turned) > 5 && (S.name.includes('旋回') || S.name.includes('急旋回'))) prog += `　旋回 ${Math.round(Math.abs(st.turned))}°`;
+  $('sp-prog').textContent = prog;
+  $('sp-hint').textContent = L.hint ? '教官：' + L.hint : '';
+}
+function setupSchool() {
+  $('open-school').addEventListener('click', openSchool);
+  $('sch-close').addEventListener('click', () => { $('school').hidden = true; showMenu(false); });
+  $('sq-close').addEventListener('click', () => { $('sch-quiz').hidden = true; openSchool(); });
+  $('sp-resume').addEventListener('click', () => { schoolPause(false); resumeGame(); });
+  $('sp-retry').addEventListener('click', () => { const id = SCHOOL.active && SCHOOL.active.id; schoolPause(false); SCHOOL.active = null; $('sch-panel').hidden = true; $('hood').hidden = true; sim.dead = false; if (id) startLesson(id); });
+  $('sp-quit').addEventListener('click', () => { schoolPause(false); if (SCHOOL.active) { SCHOOL.active = null; SCHOOL.fail = {}; SCHOOL.wind = null; SCHOOL.hood = false; sim.dead = false; } $('sch-panel').hidden = true; $('hood').hidden = true; $('sch-check').hidden = true; $('sch-atc').hidden = true; game.state = 'menu'; openSchool(); });
+  setInterval(updateSchoolPanel, 120);
+}
+
+// =====================================================================
 //  GAME: environment, camera, input, audio, particles, HUD, modes, loop
 // =====================================================================
 const TOD = {
@@ -5243,8 +6329,9 @@ function doAction(a) {
   }
 }
 addEventListener('keydown', e => {
-  if (e.target && e.target.tagName === 'INPUT') return;
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) return;
   keys[e.code] = true;
+  if (!e.repeat && schoolKey(e)) { e.preventDefault(); return; }
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'PageUp', 'PageDown'].includes(e.code)) e.preventDefault();
   if (e.repeat) return;
   const st = game.state;
@@ -5556,6 +6643,7 @@ function crash(reason) {
   game.pendingResult = {
     eyebrow: 'CRASH', title: '墜落しました', rows: [['原因', reason], ['飛行時間', fmtTime(game.t)]],
   };
+  if (SCHOOL.active) { game.pendingResult = null; schoolCrash(reason); }
 }
 function fmtTime(t) { const m = Math.floor(t / 60), s = t - m * 60; return m + ':' + s.toFixed(1).padStart(4, '0'); }
 function gameChecks(dt) {
@@ -5666,11 +6754,12 @@ function startMode(mode) {
 }
 function pauseGame() {
   if (game.state !== 'flying') return;
+  if (SCHOOL.active) { game.state = 'paused'; schoolPause(true); return; }
   game.state = 'paused'; showMenu(true);
 }
 function resumeGame() {
   if (game.state !== 'paused') return;
-  game.state = 'flying'; $('menu').hidden = true; $('touch').hidden = !game.touch; glCanvas.focus();
+  game.state = 'flying'; $('menu').hidden = true; $('touch').hidden = !game.touch; glCanvas.focus(); schoolPause(false);
   if (game.mode === 'tutorial') tutShow();
 }
 function showResult(r) {
@@ -6253,7 +7342,7 @@ function drawHUD() {
   const sc = clamp(Math.min(W / 1180, H / 700), 0.52, 1.05) * (touch ? 0.86 : 1);
   // flight path marker
   const spd = vlen(s.vel);
-  if (spd > 12 && !s.onGround) {
+  if (spd > 12 && !s.onGround && !SCHOOL.hood) {
     const pp = project(vmadd(s.pos, s.vel, 3000 / spd));
     if (pp.w > 0 && Math.abs(pp.nx) < 0.95 && Math.abs(pp.ny) < 0.95) {
       g.strokeStyle = COL.green; g.lineWidth = 2;
@@ -6265,10 +7354,13 @@ function drawHUD() {
   if (game.mode === 'rings' && !game.ringDone) drawRingTarget(g, W, H);
   // PFD & engine panel
   const pfdX = touch ? 12 : 16, pfdY = touch ? 12 : H - 16 - 252 * sc;
+  if (SCHOOL.analog) { const ss = touch ? sc * 0.8 : sc; drawSixPack(g, pfdX, H - 12 - 334 * ss, ss, att); if (!touch && !SCHOOL.active) drawTargets(g, pfdX + 640 * ss, H - 12 - 150 * ss, ss); }
+  else {
   drawPFD(g, pfdX, pfdY, sc, att);
-  if (!touch) { drawEngine(g, pfdX + 390 * sc, pfdY, sc); drawStick(g, pfdX + 598 * sc, pfdY + 108 * sc, sc); drawTargets(g, pfdX + 742 * sc, pfdY + 108 * sc, sc); }
+  if (!touch) { drawEngine(g, pfdX + 390 * sc, pfdY, sc); drawStick(g, pfdX + 598 * sc, pfdY + 108 * sc, sc); if (!SCHOOL.active) drawTargets(g, pfdX + 742 * sc, pfdY + 108 * sc, sc); }
   else drawStatusStrip(g, pfdX, pfdY + 258 * sc, sc);
-  drawMinimap(g, W, H, touch, att);
+  }
+  if (!SCHOOL.hood) drawMinimap(g, W, H, touch, att);
   drawInfo(g, W, H, touch, sc, pfdY + 258 * sc + 30);
   const ex = pfdX + 390 * sc, R_ = (x, y, w, h) => [x, y, w, h];
   hud.rects = {
@@ -6285,7 +7377,7 @@ function drawHUD() {
   { const spd = vlen(sim.vel); if (spd > 12) { const pp = project(vmadd(sim.pos, sim.vel, 3000 / spd)); hud.rects.fpm = pp.w > 0 ? R_(pp.x - 20, pp.y - 14, 40, 28) : null; } else hud.rects.fpm = null; }
   if (game.mode === 'tutorial') tutHighlight(g);
   if (game.callouts) drawCallouts(g);
-  if (JW.active) drawPlaceLabels(g, W, H);
+  if (JW.active && !SCHOOL.hood) drawPlaceLabels(g, W, H);
 }
 function drawRingTarget(g, W, H) {
   const ring = course.rings[game.ringIdx];
@@ -7028,6 +8120,7 @@ function frame(now) {
       if (JW.active) jwFrame(dt * ts);
       if (JW.active && game.state === 'flying') { const hit = cityCollide(); if (hit) crash(hit); }
       if (game.state === 'flying') gameChecks(dt);
+      if (SCHOOL.active && game.state === 'flying') schoolUpdate(dt * ts);
       if (game.state === 'flying' && game.mode === 'tutorial') tutUpdate(dt);
     } else acc = 0;
     if (game.state === 'crashed') {
@@ -7061,6 +8154,7 @@ async function init() {
   setAircraft(game.acftId);
   initParticles();
   setupMenu();
+  setupSchool();
   setSound(game.sound);
   await loadMap(game.mapId);
   lastT = performance.now();

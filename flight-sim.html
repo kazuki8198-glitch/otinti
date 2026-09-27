@@ -217,6 +217,19 @@ kbd{font:700 11.5px var(--mono);background:rgba(95,212,255,.12);border:1px solid
 .sd-t td:first-child{width:1.5em;font-weight:700} .sd-t tr.ok td:first-child{color:var(--green)} .sd-t tr.ng td:first-child{color:var(--red)} .sd-t tr.ng td{background:rgba(255,90,80,.06)}
 .sd-t td:last-child{color:var(--muted);white-space:nowrap}
 .sd-foot{display:flex;gap:10px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line)}
+#inst-tut,#read-quiz{align-items:center;justify-content:center;background:rgba(4,9,17,.8);z-index:6}
+.it-panel{width:min(1100px,100%);max-height:100%}
+.it-wrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;padding:14px 18px;overflow:auto}
+#it-cv{width:100%;aspect-ratio:4/3;background:#0b1422;border:1px solid var(--line);border-radius:8px;display:block}
+#it-text ul{margin:0;padding-left:1.2em;display:grid;gap:10px;font-size:15px;line-height:1.7}
+#it-text b{color:#ffd28a}
+#it-count{font:700 12px var(--jp);color:var(--muted)}
+.it-foot{display:flex;gap:10px;justify-content:space-between;align-items:center;padding:12px 18px;border-top:1px solid var(--line)}
+.it-foot button:disabled{opacity:.35}
+.rq-panel{width:min(760px,100%)}
+.rq-wrap{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;padding:14px 18px;overflow:auto;align-items:start}
+#rq-cv{width:260px;height:260px;background:#0b1422;border:1px solid var(--line);border-radius:8px}
+@media (max-width:720px){.it-wrap,.rq-wrap{grid-template-columns:1fr}#rq-cv{margin:0 auto}}
 #sch-debrief,#sch-quiz,#sch-pause{align-items:center;justify-content:center;background:rgba(4,9,17,.72);z-index:6}
 .sp-pause{width:min(520px,100%)}
 #sch-panel{position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);width:min(640px,calc(100% - 24px));background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 14px 10px;z-index:4;pointer-events:none;display:grid;gap:4px}
@@ -348,7 +361,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
       <label class="chk"><input type="checkbox" id="opt-invert"> ピッチ反転</label>
       <label class="chk"><input type="checkbox" id="opt-sound" checked> サウンド</label>
     </div>
-    <button type="button" class="school-btn" id="open-school">✈ パイロット訓練（フライトスクール）<small>地上学科から実地試験まで 34 課目・自動採点つき</small></button>
+    <button type="button" class="school-btn" id="open-school">✈ パイロット訓練（フライトスクール）<small>計器の読み方・地上学科から実地試験まで 36 課目・自動採点つき</small></button>
     <button type="button" class="guide-btn" id="open-map">🗺 日本地図を開いて空港を選ぶ（M）</button>
     <button type="button" class="guide-btn" id="open-guide">？ ガイド：画面の見方・操作・用語・飛び方のコツ</button>
     <p class="credit">地形・航空写真・地図：国土地理院 地理院タイル（標高データは加工して使用）／ 海外：航空写真・地図 Esri, Maxar, Earthstar Geographics ／ 標高 AWS Terrain Tiles（Mapzen, SRTM ほか）／ 3D 都市モデル：国土交通省 PLATEAU ／ 建物・樹木：© OpenStreetMap contributors（OpenFreeMap）／ 空港：OurAirports ／ 地名：GeoNames</p>
@@ -388,6 +401,19 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
     <div class="guide-body" id="sq-body"></div>
   </div>
 </div>
+<div id="inst-tut" class="screen" hidden>
+  <div class="guide-panel it-panel" role="dialog" aria-labelledby="it-title">
+    <div class="guide-head"><div><div class="eyebrow">INSTRUMENTS · 計器の読み方</div><h2 id="it-title">計器の読み方</h2></div><button type="button" id="it-close">閉じる ✕</button></div>
+    <div class="it-wrap"><canvas id="it-cv"></canvas><div id="it-text"></div></div>
+    <div class="it-foot"><button type="button" class="sch-sub" id="it-prev">← 前へ</button><span id="it-count"></span><button type="button" class="sch-go" id="it-next">次へ →</button></div>
+  </div>
+</div>
+<div id="read-quiz" class="screen" hidden>
+  <div class="guide-panel rq-panel" role="dialog" aria-labelledby="rq-title">
+    <div class="guide-head"><h2 id="rq-title">計器の読み取り練習</h2><button type="button" id="rq-close">課程表へ ✕</button></div>
+    <div class="rq-wrap"><canvas id="rq-cv" width="260" height="260"></canvas><div id="rq-body"></div></div>
+  </div>
+</div>
 <div id="sch-debrief" class="screen" hidden>
   <div class="guide-panel sd-panel" role="dialog" aria-labelledby="sd-title">
     <div class="guide-head"><div><div class="eyebrow">DEBRIEF · 講評</div><h2 id="sd-title">講評</h2><p id="sd-sub" class="sd-sub"></p></div><div id="sd-grade" class="sd-grade">A</div></div>
@@ -417,6 +443,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
     <div class="guide-body">
       <section data-tab="screen">
         <button type="button" class="guide-demo" id="guide-demo">実際の画面に番号を付けて説明する</button>
+        <button type="button" class="guide-demo" id="guide-inst">アナログ計器（6 計器）の読み方チュートリアルを開く</button>
         <dl class="gl">
           <dt>① 速度計（左の縦の目盛り）</dt><dd>空気に対する速さ。単位は kt（ノット）で、1 kt ≒ 時速 1.85 km。赤い帯より遅いと<b>失速</b>（翼が機体を支えられなくなる）の危険。白い帯はフラップを出してよい速さ、黄色は出しすぎ注意の速さです。</dd>
           <dt>② 姿勢指示器（中央の青と茶色）</dt><dd>機体の傾きを表します。青が空、茶色が地面。中央の黄色い記号が自分の機体です。記号が水平線に重なっていれば水平、線より上なら機首が上を向いています。上の目盛りは左右の傾き（バンク角）です。</dd>
@@ -5158,12 +5185,13 @@ function tourPassed(i) {
 // =====================================================================
 const FT = 3.28084, KTS = 1.94384;
 const w180 = a => ((a % 360) + 540) % 360 - 180;
-const SCHOOL = { active: null, analog: false, wind: null, gust: 1, hood: false, fail: {}, nav: null, obs: 0, prog: null };
+const SCHOOL = { active: null, analog: false, explain: true, wind: null, gust: 1, hood: false, fail: {}, nav: null, obs: 0, prog: null };
 function schoolLoad() {
   if (SCHOOL.prog) return SCHOOL.prog;
   let p = null;
   try { p = JSON.parse(localStorage.getItem('sorajima-school') || 'null'); } catch (e) { p = null; }
-  SCHOOL.prog = Object.assign({ lessons: {}, time: 0, landings: 0, airport: 'RJFM' }, p || {});
+  SCHOOL.prog = Object.assign({ lessons: {}, time: 0, landings: 0, airport: 'RJFM', explain: true }, p || {});
+  SCHOOL.explain = SCHOOL.prog.explain !== false;
   return SCHOOL.prog;
 }
 function schoolSave() { try { localStorage.setItem('sorajima-school', JSON.stringify(SCHOOL.prog)); } catch (e) { /* storage unavailable */ } }
@@ -5259,7 +5287,7 @@ function stepTurn(dir, bank, name, extra = {}) {
   ];
 }
 const SYLLABUS = [
-  { id: 's0', title: '第 0 段階　地上学科', desc: '飛ぶ前に知っておくべき知識。各 80% 以上で合格。', lessons: Object.keys(QUIZ).map(k => ({ id: k, quiz: true, title: QUIZ_TITLE[k], goal: `${QUIZ[k].length} 問の確認テスト（解説つき）` })) },
+  { id: 's0', title: '第 0 段階　地上学科', desc: '飛ぶ前に知っておくべき知識。各 80% 以上で合格。', lessons: [{ id: 'k1', inst: true, title: '計器の読み方（チュートリアル）', goal: '6 つの計器と航法計器の読み方を、動く絵で 1 つずつ' }, { id: 'k2', read: true, title: '計器の読み取り練習', goal: 'ランダムな計器の表示を読む 10 問・80% で合格' }].concat(Object.keys(QUIZ).map(k => ({ id: k, quiz: true, title: QUIZ_TITLE[k], goal: `${QUIZ[k].length} 問の確認テスト（解説つき）` }))) },
   { id: 's1', title: '第 1 段階　基本操縦', desc: '操縦アシストなしで、姿勢と出力で飛行機をコントロールする。', lessons: [
     { id: 'b1', title: '姿勢・出力・トリム', goal: 'トリムを使い、操縦桿から手を離しても水平飛行が続く状態を作る',
       brief: ['<b>姿勢＋出力＝性能</b>。機首の高さ（ピッチ）と出力を決めれば、速度と昇降率が決まります。', 'キーを押すと操縦桿が動き、離すと中立に戻ります。<b>トリム（T キー）</b>は「いま操縦桿を押さえている量」を覚えさせる装置。T を押すと、その状態が手放しで続くようになります。', '手順：①姿勢指示器で機首を水平線に合わせる ②昇降計が 0 付近になったら T でトリム ③操縦桿を離して 30 秒、高度が保たれるか確認。'],
@@ -5561,6 +5589,8 @@ async function startLesson(id) {
   const Ls = findLesson(id);
   if (!Ls) return;
   if (Ls.quiz) { openQuiz(id); return; }
+  if (Ls.inst) { INST.back = null; openInstTutorial(0); return; }
+  if (Ls.read) { openReadQuiz(); return; }
   const P = schoolLoad();
   // training aircraft, airport and settings
   game.acftId = 'trainer'; setAircraft('trainer'); sim.dead = false;
@@ -5808,6 +5838,7 @@ function answerAtc(i) {
   setTimeout(() => { box.hidden = true; if (SCHOOL.active === L) L.st.done = true; }, ok ? 2200 : 4500);
 }
 function schoolKey(e) {
+  if (e.code === 'KeyK' && SCHOOL.analog && (game.state === 'flying' || game.state === 'paused')) { SCHOOL.explain = !SCHOOL.explain; schoolLoad().explain = SCHOOL.explain; schoolSave(); toast(SCHOOL.explain ? '計器の読み方を表示' : '計器の読み方を非表示', 1200); return true; }
   if (!SCHOOL.active || game.state !== 'flying') {
     if (e.code === 'KeyI' && (game.state === 'flying' || game.state === 'paused')) { SCHOOL.analog = !SCHOOL.analog; toast(SCHOOL.analog ? 'アナログ計器（6 計器）' : 'グラス計器（PFD）', 1200); return true; }
     if ((e.code === 'BracketLeft' || e.code === 'BracketRight') && game.state === 'flying') { SCHOOL.obs = (SCHOOL.obs + (e.code === 'BracketRight' ? 5 : -5) + 360) % 360; return true; }
@@ -5844,10 +5875,12 @@ function navDeviation() {
 // ---------------------------------------------------------------------
 //  analog "six-pack" instrument panel
 // ---------------------------------------------------------------------
+// every gauge draws from a plain value object, so the same code serves the
+// cockpit panel, the instrument tutorial and the reading practice
 function gaugeBezel(g, cx, cy, r, label) {
-  g.fillStyle = '#15191e'; g.beginPath(); g.arc(cx, cy, r + 6, 0, 7); g.fill();
+  g.fillStyle = '#15191e'; g.beginPath(); g.arc(cx, cy, r * 1.1, 0, 7); g.fill();
   g.fillStyle = '#0a0c0f'; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.fill();
-  if (label) { g.fillStyle = '#9aa4ad'; g.font = `600 9px ${UI}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(label, cx, cy + r * 0.42); }
+  if (label) { g.fillStyle = '#9aa4ad'; g.font = `600 ${Math.round(r * 0.145)}px ${UI}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(label, cx, cy + r * 0.42); }
 }
 function needle(g, cx, cy, ang, len, w, col) {
   g.save(); g.translate(cx, cy); g.rotate(ang);
@@ -5855,116 +5888,374 @@ function needle(g, cx, cy, ang, len, w, col) {
   g.restore();
   g.fillStyle = '#2a2f36'; g.beginPath(); g.arc(cx, cy, w * 1.6, 0, 7); g.fill();
 }
-function drawSixPack(g, x0, y0, sc, att) {
-  const s = sim, V = ACFT.v, r = 62, P = 150;
-  const fails = SCHOOL.fail, vac = fails.vacuum ? clamp((R.time - fails.vacuum) / 25, 0, 1) : 0;
-  g.save(); g.translate(x0, y0); g.scale(sc, sc);
-  // panel
-  rr(g, 0, 0, P * 4 + 20, P * 2 + 34, 10); g.fillStyle = 'rgba(38,42,48,0.94)'; g.fill(); g.strokeStyle = '#555c66'; g.lineWidth = 1.5; g.stroke();
-  const C = (i, j) => [10 + P * i + P / 2, 30 + P * j + P / 2];
-  // magnetic compass strip on top
-  { const hdg = att.hdg + Math.sin(R.time * 1.3) * Math.min(3, Math.abs(SCHOOL.rateF || 0) * 1.5), W = 180, x = P * 1.5 + 10 - W / 2 + P / 2;
-    rr(g, x, 4, W, 22, 4); g.fillStyle = '#0a0c0f'; g.fill();
-    g.save(); g.beginPath(); g.rect(x, 4, W, 22); g.clip();
-    g.fillStyle = '#e8e8e8'; g.font = `700 10px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-    for (let d = -60; d <= 60; d += 5) { const hh = Math.round(hdg / 5) * 5 + d, xx = x + W / 2 + (hh - hdg) * 2.4, n = ((hh % 360) + 360) % 360;
-      if (n % 30 === 0) g.fillText(n === 0 ? 'N' : n === 90 ? 'E' : n === 180 ? 'S' : n === 270 ? 'W' : String(n / 10), xx, 15); else g.fillRect(xx - 0.5, 20, 1, 5); }
-    g.restore(); g.fillStyle = '#ff8a3a'; g.fillRect(x + W / 2 - 1, 4, 2, 22);
-    g.fillStyle = '#9aa4ad'; g.font = `600 9px ${UI}`; g.textAlign = 'left'; g.fillText('磁気コンパス', x + W + 8, 15); }
-  // 1. airspeed
-  { const [cx, cy] = C(0, 0), vmax = Math.ceil(V.ne * 1.15 / 10) * 10, a = k => (-150 + clamp(k, 0, vmax) / vmax * 300) * DEG;
+const gTick = (g, cx, cy, ang, r0, len, w) => { g.save(); g.translate(cx, cy); g.rotate(ang); g.fillRect(-w / 2, -r0, w, len); g.restore(); };
+const ASI_MAX = () => Math.ceil(ACFT.v.ne * 1.15 / 10) * 10;
+const asiAng = k => (-150 + clamp(k, 0, ASI_MAX()) / ASI_MAX() * 300) * DEG;
+const vsiAng = v => clamp(v, -2000, 2000) / 2000 * 170 * DEG - Math.PI / 2;
+const tachAng = k => (-130 + clamp(k, 0, 3500) / 3500 * 260) * DEG;
+const GAUGES = {
+  asi(g, cx, cy, r, v) {
+    const V = ACFT.v, f = r / 62;
     gaugeBezel(g, cx, cy, r, 'KNOTS');
-    const arc = (k0, k1, col, rad, w) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.arc(cx, cy, rad, a(k0) - Math.PI / 2, a(k1) - Math.PI / 2); g.stroke(); };
-    if (V.fe) arc(V.s0, V.fe, '#f4f4f4', r - 8, 5);
-    arc(V.s1, V.no, '#2fbf4f', r - 3, 5); arc(V.no, V.ne, '#f2c230', r - 3, 5);
-    g.strokeStyle = '#e03a3e'; g.lineWidth = 3; g.save(); g.translate(cx, cy); g.rotate(a(V.ne)); g.beginPath(); g.moveTo(0, -r + 1); g.lineTo(0, -r + 12); g.stroke(); g.restore();
-    g.fillStyle = '#eee'; g.font = `600 10px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-    for (let k = 0; k <= vmax; k += 10) { const an = a(k); g.save(); g.translate(cx, cy); g.rotate(an); g.fillRect(-0.7, -r + 2, 1.4, k % 20 ? 6 : 10); g.restore();
-      if (k % 20 === 0 && k >= 40) g.fillText(k, cx + Math.sin(an) * (r - 20), cy - Math.cos(an) * (r - 20)); }
-    const kias = fails.pitot ? (SCHOOL.pitotK || 0) : s.ias * KTS;
-    needle(g, cx, cy, a(kias), r - 6, 3); }
-  // 2. attitude
-  { const [cx, cy] = C(1, 0), bank = lerp(att.bank, 18 + 10 * Math.sin(R.time / 7), vac), pitch = lerp(att.pitch, 6, vac), ppd = 2.1;
+    const arc = (k0, k1, col, rad, w) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.arc(cx, cy, rad, asiAng(k0) - Math.PI / 2, asiAng(k1) - Math.PI / 2); g.stroke(); };
+    if (V.fe) arc(V.s0, V.fe, '#f4f4f4', r - 8 * f, 5 * f);
+    arc(V.s1, V.no, '#2fbf4f', r - 3 * f, 5 * f); arc(V.no, V.ne, '#f2c230', r - 3 * f, 5 * f);
+    g.fillStyle = '#e03a3e'; gTick(g, cx, cy, asiAng(V.ne), r - 1, 12 * f, 3 * f);
+    g.fillStyle = '#eee'; g.font = `600 ${Math.round(10 * f)}px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let k = 0; k <= ASI_MAX(); k += 10) { const an = asiAng(k); gTick(g, cx, cy, an, r - 2 * f, (k % 20 ? 6 : 10) * f, 1.4 * f);
+      if (k % 20 === 0 && k >= 40) g.fillText(k, cx + Math.sin(an) * (r - 20 * f), cy - Math.cos(an) * (r - 20 * f)); }
+    needle(g, cx, cy, asiAng(v.kias), r - 6 * f, 3 * f);
+  },
+  ai(g, cx, cy, r, v) {
+    const f = r / 62, ppd = 2.1 * f;
     gaugeBezel(g, cx, cy, r);
     g.save(); g.beginPath(); g.arc(cx, cy, r - 1, 0, 7); g.clip();
-    g.translate(cx, cy); g.rotate(-bank * DEG);
-    const off = clamp(pitch, -30, 30) * ppd;
+    g.translate(cx, cy); g.rotate(-v.bank * DEG);
+    const off = clamp(v.pitch, -30, 30) * ppd;
     g.fillStyle = '#2f79c8'; g.fillRect(-r * 2, -r * 2 + off, r * 4, r * 2); g.fillStyle = '#7a4c24'; g.fillRect(-r * 2, off, r * 4, r * 2);
-    g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(-r * 2, off); g.lineTo(r * 2, off); g.stroke();
-    g.lineWidth = 1; for (const p of [-20, -10, 10, 20]) { const y = off - p * ppd, w = Math.abs(p) === 10 ? 14 : 22; g.beginPath(); g.moveTo(-w, y); g.lineTo(w, y); g.stroke(); }
-    // bank scale ticks
-    for (const b of [-60, -30, -20, -10, 10, 20, 30, 60]) { g.save(); g.rotate(b * DEG); g.fillStyle = '#fff'; g.fillRect(-1, -r + 2, 2, Math.abs(b) % 30 ? 5 : 9); g.restore(); }
-    g.fillStyle = '#fff'; g.beginPath(); g.moveTo(0, -r + 2); g.lineTo(-5, -r + 11); g.lineTo(5, -r + 11); g.fill();
+    g.strokeStyle = '#fff'; g.lineWidth = 1.5 * f; g.beginPath(); g.moveTo(-r * 2, off); g.lineTo(r * 2, off); g.stroke();
+    g.lineWidth = f; for (const p of [-20, -10, 10, 20]) { const y = off - p * ppd, w = (Math.abs(p) === 10 ? 14 : 22) * f; g.beginPath(); g.moveTo(-w, y); g.lineTo(w, y); g.stroke(); }
+    g.fillStyle = '#fff';
+    for (const b of [-60, -30, -20, -10, 10, 20, 30, 60]) gTick(g, 0, 0, b * DEG, r - 2 * f, (Math.abs(b) % 30 ? 5 : 9) * f, 2 * f);
+    g.beginPath(); g.moveTo(0, -r + 2 * f); g.lineTo(-5 * f, -r + 11 * f); g.lineTo(5 * f, -r + 11 * f); g.fill();
     g.restore();
-    g.fillStyle = '#f2a33a'; g.beginPath(); g.moveTo(cx, cy - r + 13); g.lineTo(cx - 5, cy - r + 21); g.lineTo(cx + 5, cy - r + 21); g.fill();
-    g.strokeStyle = '#f2a33a'; g.lineWidth = 3; g.beginPath(); g.moveTo(cx - 34, cy); g.lineTo(cx - 12, cy); g.lineTo(cx - 6, cy + 6); g.moveTo(cx + 34, cy); g.lineTo(cx + 12, cy); g.lineTo(cx + 6, cy + 6); g.stroke();
-    g.fillStyle = '#f2a33a'; g.beginPath(); g.arc(cx, cy, 2.5, 0, 7); g.fill(); }
-  // 3. altimeter
-  { const [cx, cy] = C(2, 0), alt = s.pos[1] * FT;
+    g.fillStyle = '#f2a33a'; g.beginPath(); g.moveTo(cx, cy - r + 13 * f); g.lineTo(cx - 5 * f, cy - r + 21 * f); g.lineTo(cx + 5 * f, cy - r + 21 * f); g.fill();
+    g.strokeStyle = '#f2a33a'; g.lineWidth = 3 * f; g.beginPath(); g.moveTo(cx - 34 * f, cy); g.lineTo(cx - 12 * f, cy); g.lineTo(cx - 6 * f, cy + 6 * f); g.moveTo(cx + 34 * f, cy); g.lineTo(cx + 12 * f, cy); g.lineTo(cx + 6 * f, cy + 6 * f); g.stroke();
+    g.fillStyle = '#f2a33a'; g.beginPath(); g.arc(cx, cy, 2.5 * f, 0, 7); g.fill();
+  },
+  alt(g, cx, cy, r, v) {
+    const f = r / 62, alt = v.alt;
     gaugeBezel(g, cx, cy, r, 'ALT  ×100 ft');
-    g.fillStyle = '#eee'; g.font = `700 12px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-    for (let i = 0; i < 50; i++) { const an = i / 50 * 2 * Math.PI; g.save(); g.translate(cx, cy); g.rotate(an); g.fillRect(-0.6, -r + 2, 1.2, i % 5 ? 5 : 10); g.restore(); if (i % 5 === 0) g.fillText(i / 5, cx + Math.sin(an) * (r - 19), cy - Math.cos(an) * (r - 19)); }
-    rr(g, cx + 14, cy - 8, 34, 16, 2); g.fillStyle = '#222'; g.fill(); g.fillStyle = '#ddd'; g.font = `600 10px ${MONO}`; g.fillText('29.92', cx + 31, cy);
-    needle(g, cx, cy, (alt % 10000) / 10000 * 2 * Math.PI, r * 0.5, 4.5);
-    needle(g, cx, cy, (alt % 1000) / 1000 * 2 * Math.PI, r - 8, 2.6);
-    g.fillStyle = '#fff'; g.save(); g.translate(cx, cy); g.rotate((alt % 100000) / 100000 * 2 * Math.PI); g.fillRect(-1, -r + 1, 2, 12); g.restore(); }
-  // 4. turn coordinator
-  { const [cx, cy] = C(0, 1), rate = SCHOOL.rateF || 0, tilt = clamp(rate / 3, -2, 2) * 20 * DEG;
+    g.fillStyle = '#eee'; g.font = `700 ${Math.round(12 * f)}px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let i = 0; i < 50; i++) { const an = i / 50 * 2 * Math.PI; gTick(g, cx, cy, an, r - 2 * f, (i % 5 ? 5 : 10) * f, 1.2 * f); if (i % 5 === 0) g.fillText(i / 5, cx + Math.sin(an) * (r - 19 * f), cy - Math.cos(an) * (r - 19 * f)); }
+    rr(g, cx + 14 * f, cy - 8 * f, 34 * f, 16 * f, 2); g.fillStyle = '#222'; g.fill(); g.fillStyle = '#ddd'; g.font = `600 ${Math.round(10 * f)}px ${MONO}`; g.fillText('29.92', cx + 31 * f, cy);
+    needle(g, cx, cy, (alt % 10000) / 10000 * 2 * Math.PI, r * 0.5, 4.5 * f);
+    needle(g, cx, cy, (alt % 1000) / 1000 * 2 * Math.PI, r - 8 * f, 2.6 * f);
+    g.fillStyle = '#fff'; gTick(g, cx, cy, (alt % 100000) / 100000 * 2 * Math.PI, r - 1, 12 * f, 2 * f);
+  },
+  tc(g, cx, cy, r, v) {
+    const f = r / 62, tilt = clamp(v.rate / 3, -2, 2) * 20 * DEG;
     gaugeBezel(g, cx, cy, r, '2 MIN TURN');
-    g.fillStyle = '#eee'; g.font = `700 11px ${UI}`; g.textAlign = 'center';
-    for (const sgn of [-1, 1]) { g.save(); g.translate(cx, cy); g.rotate(sgn * 20 * DEG); g.fillRect(-r + 8, -1.5, 14, 3); g.restore(); g.save(); g.translate(cx, cy); g.fillRect(-r + 8, -1.5, 14, 3); g.restore(); }
-    g.fillText('L', cx - r + 14, cy + 20); g.fillText('R', cx + r - 14, cy + 20);
-    g.save(); g.translate(cx, cy - 4); g.rotate(tilt); g.fillStyle = '#f4f4f4';
-    g.fillRect(-r + 14, -2, (r - 14) * 2, 4); g.beginPath(); g.arc(0, 0, 6, 0, 7); g.fill(); g.fillRect(-1.5, -12, 3, 10); g.restore();
-    // inclinometer (ball)
-    const bx = cx, by = cy + 30; rr(g, bx - 34, by - 8, 68, 16, 8); g.fillStyle = '#d9d4b8'; g.fill();
-    g.strokeStyle = '#111'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(bx - 9, by - 8); g.lineTo(bx - 9, by + 8); g.moveTo(bx + 9, by - 8); g.lineTo(bx + 9, by + 8); g.stroke();
-    const slip = clamp(-s.beta / DEG * 2.2, -26, 26); g.fillStyle = '#111'; g.beginPath(); g.arc(bx + slip, by, 6.5, 0, 7); g.fill(); }
-  // 5. heading indicator
-  { const [cx, cy] = C(1, 1), drift = vac * ((R.time - (fails.vacuum || 0)) * 1.4), hdg = att.hdg + drift;
+    g.fillStyle = '#eee'; g.font = `700 ${Math.round(11 * f)}px ${UI}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (const a of [-20, 0, 20]) { g.save(); g.translate(cx, cy); g.rotate(a * DEG); g.fillRect(-r + 8 * f, -1.5 * f, 14 * f, 3 * f); g.fillRect(r - 22 * f, -1.5 * f, 14 * f, 3 * f); g.restore(); }
+    g.fillText('L', cx - r + 14 * f, cy + 22 * f); g.fillText('R', cx + r - 14 * f, cy + 22 * f);
+    g.save(); g.translate(cx, cy - 4 * f); g.rotate(tilt); g.fillStyle = '#f4f4f4';
+    g.fillRect(-r + 14 * f, -2 * f, (r - 14 * f) * 2, 4 * f); g.beginPath(); g.arc(0, 0, 6 * f, 0, 7); g.fill(); g.fillRect(-1.5 * f, -12 * f, 3 * f, 10 * f); g.restore();
+    const bx = cx, by = cy + 30 * f; rr(g, bx - 34 * f, by - 8 * f, 68 * f, 16 * f, 8 * f); g.fillStyle = '#d9d4b8'; g.fill();
+    g.strokeStyle = '#111'; g.lineWidth = 1.5 * f; g.beginPath(); g.moveTo(bx - 9 * f, by - 8 * f); g.lineTo(bx - 9 * f, by + 8 * f); g.moveTo(bx + 9 * f, by - 8 * f); g.lineTo(bx + 9 * f, by + 8 * f); g.stroke();
+    g.fillStyle = '#111'; g.beginPath(); g.arc(bx + clamp(v.slip, -26, 26) * f, by, 6.5 * f, 0, 7); g.fill();
+  },
+  hi(g, cx, cy, r, v) {
+    const f = r / 62;
     gaugeBezel(g, cx, cy, r);
-    g.save(); g.translate(cx, cy); g.rotate(-hdg * DEG);
-    g.fillStyle = '#eee'; g.font = `700 11px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-    for (let d = 0; d < 360; d += 5) { g.save(); g.rotate(d * DEG); g.fillRect(-0.6, -r + 2, 1.2, d % 10 ? 4 : 8); if (d % 30 === 0) g.fillText(d === 0 ? 'N' : d === 90 ? 'E' : d === 180 ? 'S' : d === 270 ? 'W' : d / 10, 0, -r + 19); g.restore(); }
+    g.save(); g.translate(cx, cy); g.rotate(-v.hdg * DEG);
+    g.fillStyle = '#eee'; g.font = `700 ${Math.round(11 * f)}px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let d = 0; d < 360; d += 5) { g.save(); g.rotate(d * DEG); g.fillRect(-0.6 * f, -r + 2 * f, 1.2 * f, (d % 10 ? 4 : 8) * f); if (d % 30 === 0) g.fillText(d === 0 ? 'N' : d === 90 ? 'E' : d === 180 ? 'S' : d === 270 ? 'W' : d / 10, 0, -r + 19 * f); g.restore(); }
     g.restore();
-    g.fillStyle = '#f2a33a'; g.beginPath(); g.moveTo(cx, cy - 24); g.lineTo(cx - 12, cy + 16); g.lineTo(cx, cy + 10); g.lineTo(cx + 12, cy + 16); g.closePath(); g.fill();
-    g.fillRect(cx - 1, cy - r + 2, 2, 12); }
-  // 6. VSI
-  { const [cx, cy] = C(2, 1), vs = s.vs * 196.85, a = clamp(vs, -2000, 2000) / 2000 * 170 * DEG - Math.PI / 2;
+    g.fillStyle = '#f2a33a'; g.beginPath(); g.moveTo(cx, cy - 24 * f); g.lineTo(cx - 12 * f, cy + 16 * f); g.lineTo(cx, cy + 10 * f); g.lineTo(cx + 12 * f, cy + 16 * f); g.closePath(); g.fill();
+    g.fillRect(cx - f, cy - r + 2 * f, 2 * f, 12 * f);
+  },
+  vsi(g, cx, cy, r, v) {
+    const f = r / 62;
     gaugeBezel(g, cx, cy, r, 'VERT SPEED ×100');
-    g.fillStyle = '#eee'; g.font = `700 11px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-    for (let k = -20; k <= 20; k += 5) { const an = k / 20 * 170 * DEG - Math.PI / 2; g.save(); g.translate(cx, cy); g.rotate(an); g.fillRect(-0.7, -r + 2, 1.4, k % 10 ? 6 : 10); g.restore(); if (k % 10 === 0) g.fillText(Math.abs(k / 10 * 10), cx + Math.sin(an) * (r - 20), cy - Math.cos(an) * (r - 20)); }
-    g.fillText('UP', cx - 18, cy - 22); g.fillText('DN', cx - 18, cy + 22);
-    needle(g, cx, cy, a, r - 6, 3); }
-  // 7. tachometer
-  { const [cx, cy] = C(3, 0), rpm = s.dead ? Math.min(s.rpm, 900) : s.rpm, a = k => (-130 + clamp(k, 0, 3500) / 3500 * 260) * DEG;
+    g.fillStyle = '#eee'; g.font = `700 ${Math.round(11 * f)}px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let k = -20; k <= 20; k += 5) { const an = vsiAng(k * 100); gTick(g, cx, cy, an, r - 2 * f, (k % 10 ? 6 : 10) * f, 1.4 * f); if (k % 10 === 0) g.fillText(Math.abs(k), cx + Math.sin(an) * (r - 20 * f), cy - Math.cos(an) * (r - 20 * f)); }
+    g.fillText('UP', cx - 18 * f, cy - 22 * f); g.fillText('DN', cx - 18 * f, cy + 22 * f);
+    needle(g, cx, cy, vsiAng(v.vs), r - 6 * f, 3 * f);
+  },
+  tach(g, cx, cy, r, v) {
+    const f = r / 62;
     gaugeBezel(g, cx, cy, r, 'RPM ×100');
-    g.strokeStyle = '#2fbf4f'; g.lineWidth = 5; g.beginPath(); g.arc(cx, cy, r - 4, a(2100) - Math.PI / 2, a(2700) - Math.PI / 2); g.stroke();
-    g.fillStyle = '#eee'; g.font = `700 11px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-    for (let k = 0; k <= 3500; k += 500) { const an = a(k); g.save(); g.translate(cx, cy); g.rotate(an); g.fillRect(-0.7, -r + 2, 1.4, 9); g.restore(); if (k % 1000 === 0) g.fillText(k / 100, cx + Math.sin(an) * (r - 20), cy - Math.cos(an) * (r - 20)); }
-    needle(g, cx, cy, a(rpm), r - 8, 3);
-    g.fillStyle = s.dead ? '#e03a3e' : '#9aa4ad'; g.font = `700 10px ${UI}`; g.fillText(s.dead ? 'ENGINE OUT' : `THR ${Math.round(s.thr * 100)}%`, cx, cy + 34); }
-  // 8. NAV (CDI with OBS, VOR or ILS)
-  { const [cx, cy] = C(3, 1), N = navDeviation(), ils = N.type === 'ILS';
+    g.strokeStyle = '#2fbf4f'; g.lineWidth = 5 * f; g.beginPath(); g.arc(cx, cy, r - 4 * f, tachAng(2100) - Math.PI / 2, tachAng(2700) - Math.PI / 2); g.stroke();
+    g.fillStyle = '#eee'; g.font = `700 ${Math.round(11 * f)}px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let k = 0; k <= 3500; k += 500) { const an = tachAng(k); gTick(g, cx, cy, an, r - 2 * f, 9 * f, 1.4 * f); if (k % 1000 === 0) g.fillText(k / 100, cx + Math.sin(an) * (r - 20 * f), cy - Math.cos(an) * (r - 20 * f)); }
+    needle(g, cx, cy, tachAng(v.rpm), r - 8 * f, 3 * f);
+    g.fillStyle = v.dead ? '#e03a3e' : '#9aa4ad'; g.font = `700 ${Math.round(10 * f)}px ${UI}`; g.fillText(v.dead ? 'ENGINE OUT' : `THR ${Math.round(v.thr * 100)}%`, cx, cy + 34 * f);
+  },
+  nav(g, cx, cy, r, v) {
+    const f = r / 62, N = v.nav, ils = N.type === 'ILS';
     gaugeBezel(g, cx, cy, r);
-    const obs = ils ? RWY.hdg : SCHOOL.obs;
-    g.save(); g.translate(cx, cy); g.rotate(-obs * DEG);
-    g.fillStyle = '#ddd'; g.font = `700 10px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-    for (let d = 0; d < 360; d += 10) { g.save(); g.rotate(d * DEG); g.fillRect(-0.5, -r + 2, 1, d % 30 ? 4 : 7); if (d % 30 === 0) g.fillText(d / 10, 0, -r + 16); g.restore(); }
+    g.save(); g.translate(cx, cy); g.rotate(-N.obs * DEG);
+    g.fillStyle = '#ddd'; g.font = `700 ${Math.round(10 * f)}px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let d = 0; d < 360; d += 10) { g.save(); g.rotate(d * DEG); g.fillRect(-0.5 * f, -r + 2 * f, f, (d % 30 ? 4 : 7) * f); if (d % 30 === 0) g.fillText(d / 10, 0, -r + 16 * f); g.restore(); }
     g.restore();
-    g.fillStyle = '#f2a33a'; g.beginPath(); g.moveTo(cx, cy - r + 1); g.lineTo(cx - 5, cy - r + 9); g.lineTo(cx + 5, cy - r + 9); g.fill();
-    g.fillStyle = '#ddd'; for (let k = -5; k <= 5; k++) if (k) { g.beginPath(); g.arc(cx + k * 7, cy, 1.8, 0, 7); g.fill(); }
+    g.fillStyle = '#f2a33a'; g.beginPath(); g.moveTo(cx, cy - r + f); g.lineTo(cx - 5 * f, cy - r + 9 * f); g.lineTo(cx + 5 * f, cy - r + 9 * f); g.fill();
+    g.fillStyle = '#ddd'; for (let k = -5; k <= 5; k++) if (k) { g.beginPath(); g.arc(cx + k * 7 * f, cy, 1.8 * f, 0, 7); g.fill(); }
     const on = N.flag !== 'OFF';
-    g.strokeStyle = '#f4f4f4'; g.lineWidth = 3; const dx = (on ? clamp(N.cdi, -5, 5) : 0) * 7; g.beginPath(); g.moveTo(cx + dx, cy - 38); g.lineTo(cx + dx, cy + 38); g.stroke();
-    if (ils) { const dy = (on && N.gsValid ? clamp(N.gs, -2.5, 2.5) : 0) * 12; g.beginPath(); g.moveTo(cx - 36, cy + dy); g.lineTo(cx + 36, cy + dy); g.stroke(); }
-    g.font = `700 10px ${UI}`; g.fillStyle = on ? '#2fbf4f' : '#e03a3e';
-    g.fillText(ils ? (on ? 'ILS' : 'LOC OFF') : N.flag, cx + 28, cy - 22);
-    g.fillStyle = '#9aa4ad'; g.fillText(ils ? `LOC ${Math.round(RWY.hdg)}°` : `OBS ${String(Math.round(SCHOOL.obs)).padStart(3, '0')}`, cx, cy + 50);
-    g.fillText(`DME ${N.dme.toFixed(1)}`, cx - 28, cy - 22); }
-  // flaps & trim & labels
+    g.strokeStyle = '#f4f4f4'; g.lineWidth = 3 * f; const dx = (on ? clamp(N.cdi, -5, 5) : 0) * 7 * f; g.beginPath(); g.moveTo(cx + dx, cy - 38 * f); g.lineTo(cx + dx, cy + 38 * f); g.stroke();
+    if (ils) { for (let k = -2; k <= 2; k++) if (k) { g.beginPath(); g.arc(cx, cy + k * 12 * f, 1.8 * f, 0, 7); g.fill(); }
+      const dy = (on && N.gsValid !== false ? clamp(N.gs, -2.5, 2.5) : 0) * 12 * f; g.beginPath(); g.moveTo(cx - 36 * f, cy + dy); g.lineTo(cx + 36 * f, cy + dy); g.stroke(); }
+    g.font = `700 ${Math.round(10 * f)}px ${UI}`; g.fillStyle = on ? '#2fbf4f' : '#e03a3e';
+    g.fillText(ils ? (on ? 'ILS' : 'LOC OFF') : N.flag, cx + 28 * f, cy - 22 * f);
+    g.fillStyle = '#9aa4ad'; g.fillText(ils ? `LOC ${Math.round(N.obs)}°` : `OBS ${String(Math.round(N.obs)).padStart(3, '0')}`, cx, cy + 50 * f);
+    g.fillText(`DME ${(N.dme || 0).toFixed(1)}`, cx - 28 * f, cy - 22 * f);
+  },
+  compass(g, cx, cy, r, v) {          // r = half width of the strip
+    const W = r * 2, H = r * 0.24, x = cx - r, y = cy - H / 2, k = W / 75;
+    rr(g, x, y, W, H, 4); g.fillStyle = '#0a0c0f'; g.fill();
+    g.save(); g.beginPath(); g.rect(x, y, W, H); g.clip();
+    g.fillStyle = '#e8e8e8'; g.font = `700 ${Math.round(H * 0.45)}px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let d = -60; d <= 60; d += 5) { const hh = Math.round(v.chdg / 5) * 5 + d, xx = cx + (hh - v.chdg) * k, n = ((hh % 360) + 360) % 360;
+      if (n % 30 === 0) g.fillText(n === 0 ? 'N' : n === 90 ? 'E' : n === 180 ? 'S' : n === 270 ? 'W' : String(n / 10), xx, cy - H * 0.05); else g.fillRect(xx - 0.5, y + H * 0.72, 1, H * 0.28); }
+    g.restore(); g.fillStyle = '#ff8a3a'; g.fillRect(cx - 1, y, 2, H);
+  },
+};
+// current aircraft values, including the effects of failures
+function sixVals(att) {
+  const s = sim, fails = SCHOOL.fail, vac = fails.vacuum ? clamp((R.time - fails.vacuum) / 25, 0, 1) : 0;
+  const N = navDeviation(), rate = SCHOOL.active ? SCHOOL.rateF || 0 : -qrot(s.q, s.w)[1] / DEG;
+  return {
+    kias: s.ias * KTS, alt: s.pos[1] * FT, vs: s.vs * 196.85, rate, slip: clamp(-s.beta / DEG * 2.2, -26, 26),
+    pitch: lerp(att.pitch, 6, vac), bank: lerp(att.bank, 18 + 10 * Math.sin(R.time / 7), vac), hdg: att.hdg + vac * (R.time - (fails.vacuum || 0)) * 1.4,
+    chdg: att.hdg + Math.sin(R.time * 1.3) * Math.min(3, Math.abs(rate) * 1.5),
+    rpm: s.dead ? Math.min(s.rpm, 900) : s.rpm, thr: s.thr, dead: !!s.dead,
+    nav: Object.assign({}, N, { obs: N.type === 'ILS' ? RWY.hdg : SCHOOL.obs }),
+  };
+}
+// plain-language readings shown under each gauge (K key)
+const LR = v => v > 0 ? '右' : '左';
+function gaugeCaption(k, v) {
+  const V = ACFT.v;
+  switch (k) {
+    case 'asi': { const z = v.kias < 30 ? '低速（地上・停止中）' : v.kias < V.s0 ? '失速域' : v.kias > V.ne ? '赤線超え！' : v.kias > V.no ? '黄＝注意' : v.kias <= V.fe && v.kias >= V.s0 ? (v.kias >= V.s1 ? '緑・白＝通常／フラップ可' : '白＝フラップで飛べる') : '緑＝通常'; return [`速度 ${Math.round(v.kias)} kt`, z]; }
+    case 'ai': { const p = Math.abs(v.pitch) < 1.5 ? '機首 水平' : `機首${v.pitch > 0 ? '上げ' : '下げ'} ${Math.abs(Math.round(v.pitch))}°`; const b = Math.abs(v.bank) < 2 ? '翼 水平' : `${LR(v.bank)}バンク ${Math.abs(Math.round(v.bank))}°`; return [p, b]; }
+    case 'alt': { const a = Math.round(v.alt / 10) * 10; return [`高度 ${a.toLocaleString()} ft`, `短針 ${Math.floor(a / 1000) % 10}・長針 ${Math.floor(a / 100) % 10}`]; }
+    case 'tc': { const r = Math.abs(v.rate), t = r < 0.6 ? 'まっすぐ' : `${LR(v.rate)}旋回 ${r.toFixed(1)}°/秒${Math.abs(r - 3) < 0.6 ? '（標準）' : ''}`; const b = Math.abs(v.slip) < 5 ? 'ボール中央：OK' : `ボール${LR(v.slip)}：${LR(v.slip)}ラダー`; return [t, b]; }
+    case 'hi': return [`針路 ${String(Math.round(((v.hdg % 360) + 360) % 360)).padStart(3, '0')}°`, '上の印の下の数字'];
+    case 'vsi': { const s = Math.round(v.vs / 50) * 50; return [Math.abs(s) < 100 ? '水平（昇降 0）' : `${s > 0 ? '上昇' : '降下'} ${Math.abs(s)} fpm`, '（1 分あたりの ft）']; }
+    case 'tach': return [`${Math.round(v.rpm / 10) * 10} rpm`, v.dead ? 'エンジン停止' : `スロットル ${Math.round(v.thr * 100)}%`];
+    case 'nav': { const N = v.nav; if (N.flag === 'OFF') return [N.type === 'ILS' ? 'ILS 圏外' : 'VOR 局上空', '針は無効']; const c = Math.abs(N.cdi) < 0.5 ? 'コース上' : `針${LR(N.cdi)}→${LR(N.cdi)}へ`;
+      if (N.type === 'ILS') { const gsT = N.gsValid === false ? '' : Math.abs(N.gs) < 0.4 ? '・パス上' : N.gs > 0 ? '・高い（下げる）' : '・低い（浅く）'; return [`LOC ${c}`, `GS${gsT || ' ―'}`]; }
+      return [`${N.flag}・OBS ${String(Math.round(N.obs)).padStart(3, '0')}`, c]; }
+  }
+  return ['', ''];
+}
+const SIX_LAYOUT = [['asi', 0, 0], ['ai', 1, 0], ['alt', 2, 0], ['tach', 3, 0], ['tc', 0, 1], ['hi', 1, 1], ['vsi', 2, 1], ['nav', 3, 1]];
+function sixPackSize() { const P = SCHOOL.explain ? 168 : 150; return [P * 4 + 20, P * 2 + 34 + (SCHOOL.explain ? 16 : 0)]; }
+function drawSixPack(g, x0, y0, sc, att) {
+  const v = sixVals(att), P = SCHOOL.explain ? 168 : 150, r = 62, [PW, PH] = sixPackSize();
+  g.save(); g.translate(x0, y0); g.scale(sc, sc);
+  rr(g, 0, 0, PW, PH, 10); g.fillStyle = 'rgba(38,42,48,0.94)'; g.fill(); g.strokeStyle = '#555c66'; g.lineWidth = 1.5; g.stroke();
+  GAUGES.compass(g, 10 + P * 1.5 + P / 2, 15, 90, v);
+  g.fillStyle = '#9aa4ad'; g.font = `600 9px ${UI}`; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText('磁気コンパス', 10 + P * 2 + 100, 15);
+  for (const [k, i, j] of SIX_LAYOUT) {
+    const cx = 10 + P * i + P / 2, cy = 30 + P * j + (SCHOOL.explain ? 72 : P / 2);
+    GAUGES[k](g, cx, cy, r, v);
+    if (SCHOOL.explain) {
+      const [a, b] = gaugeCaption(k, v);
+      rr(g, cx - P / 2 + 6, cy + r + 6, P - 12, 28, 4); g.fillStyle = 'rgba(6,12,22,0.9)'; g.fill();
+      g.textAlign = 'center'; g.fillStyle = '#f4f4f4'; g.font = `700 11px ${UI}`; g.fillText(a, cx, cy + r + 14);
+      g.fillStyle = '#8fd8ff'; g.font = `600 9.5px ${UI}`; g.fillText(b, cx, cy + r + 27);
+    }
+  }
+  const s = sim;
   g.fillStyle = '#c9ced6'; g.font = `600 10px ${UI}`; g.textAlign = 'left';
-  g.fillText(`FLAPS ${FLAP_DEG[s.flapIdx]}°  TRIM ${(s.trim >= 0 ? '▲' : '▼') + Math.abs(Math.round(s.trim * 100))}  I：計器切替  [ ]：OBS`, 14, P * 2 + 26);
+  g.fillText(`FLAPS ${FLAP_DEG[s.flapIdx]}°  TRIM ${(s.trim >= 0 ? '▲' : '▼') + Math.abs(Math.round(s.trim * 100))}   I：計器切替  K：読み方の表示 ${SCHOOL.explain ? 'ON' : 'OFF'}  [ ]：OBS`, 14, PH - 8);
   g.restore();
+}
+
+// ---------------------------------------------------------------------
+//  instrument tutorial: one gauge per page, animated, with labelled parts
+// ---------------------------------------------------------------------
+const V_ = () => ACFT.v;
+const baseVals = () => ({ kias: 95, alt: 3000, vs: 0, rate: 0, slip: 0, pitch: 0, bank: 0, hdg: 90, chdg: 90, rpm: 2400, thr: 0.7, dead: false, nav: { type: 'VOR', obs: 90, cdi: 0, gs: 0, flag: 'TO', dme: 12.4, gsValid: true } });
+const INST_PAGES = [
+  { t: '6 つの計器（ベーシック T）', g: 'panel', vals: t => Object.assign(baseVals(), { kias: 95, alt: 3450 + Math.sin(t / 3) * 60, vs: Math.sin(t / 3) * 400, bank: Math.sin(t / 4) * 15, pitch: 2, rate: Math.sin(t / 4) * 2, hdg: 90 + t * 2 }),
+    p: ['アナログの練習機では、この 6 つが<b>基本の 6 計器</b>。上の段が「速度・姿勢・高度」、下の段が「旋回・方位・昇降」です。', '中央上の<b>姿勢指示器</b>がいちばん大事。そこから他の計器へ目を往復させます（クロスチェック）。', '右の列は<b>回転計（エンジン）</b>と<b>航法計器（VOR/ILS）</b>。上の細い帯は<b>磁気コンパス</b>。', '次のページから 1 つずつ見ていきます。飛行中は <kbd>K</kbd> で各計器の下に「いまの読み」が文字で出ます。'] },
+  { t: '① 速度計（対気速度計）', g: 'asi', vals: t => Object.assign(baseVals(), { kias: 70 + Math.sin(t / 2) * 60 }),
+    notes: [[0, -0.75, 0.95, -1.05, '針：いまの速度（kt）'], [-0.6, 0.55, -1.3, 0.8, '白の帯：フラップを出せる範囲'], [0.35, -0.8, 1.25, -0.35, '緑の帯：ふつうに使う範囲'], [0.78, 0.35, 1.28, 0.5, '黄の帯：荒れた空気では禁止'], [0.62, 0.72, 0.9, 1.08, '赤線：絶対に超えない速度']],
+    p: [() => `針が指す数字がいまの速度。単位は <b>kt（ノット）</b>、1 kt ≒ 時速 1.85 km。`, () => `<b>白の帯</b>（${V_().s0}〜${V_().fe} kt）：フラップを出してよい範囲。下の端 ${V_().s0} kt がフラップ全開の失速速度（Vs0）。`, () => `<b>緑の帯</b>（${V_().s1}〜${V_().no} kt）：通常の範囲。下の端 ${V_().s1} kt がフラップなしの失速速度（Vs1）。`, () => `<b>黄色の帯</b>（${V_().no}〜${V_().ne} kt）：穏やかな空気でのみ。<b>赤い線</b> ${V_().ne} kt（Vne）は絶対に超えない。`, 'この速度計は「空気に対する速さ」。向かい風だと地面に対しては遅く進みます。'] },
+  { t: '② 姿勢指示器', g: 'ai', vals: t => Object.assign(baseVals(), { pitch: Math.sin(t / 2.2) * 12, bank: Math.sin(t / 3.1) * 35 }),
+    notes: [[0, 0.02, -1.35, 0.35, 'オレンジの記号＝自分の機体（動かない）'], [0, -0.55, -1.3, -0.75, '青＝空'], [0, 0.6, 1.3, 0.8, '茶色＝地面'], [0.28, -0.88, 1.2, -1.05, '上の目盛り：バンク角 10・20・30・60°'], [0.3, -0.35, 1.3, -0.3, '横線：機首の上下 10° ごと']],
+    p: ['窓の外の景色を小さくしたもの。<b>オレンジの記号が自分の飛行機</b>で、これは動きません。<b>後ろの空と地面</b>が動きます。', '<b>機首の上下</b>：記号が水平線より上なら機首上げ。横線 1 本が 10°。', '<b>傾き（バンク）</b>：上の白い三角が目盛りのどこにあるかで読む。短い線 10・20°、長い線 30°、その先 60°。', '<b>水平線が右下がり</b>に見えたら、機体は右に傾いています（窓の外と同じ）。', '雲の中ではこれが唯一の「外の景色」。操縦の中心の計器です。'] },
+  { t: '③ 高度計', g: 'alt', vals: t => Object.assign(baseVals(), { alt: 2600 + (t * 90) % 2400 }),
+    notes: [[0.55, -0.62, 1.3, -0.95, '長い針：100 ft の位'], [-0.2, -0.35, -1.35, -0.8, '太く短い針：1,000 ft の位'], [0.05, -0.93, -0.9, -1.12, '細い三角：10,000 ft の位'], [0.5, 0, 1.35, 0.25, '窓：気圧の設定（QNH）']],
+    p: ['<b>時計と同じ読み方</b>。短い針が「千の位」、長い針が「百の位」。', '例：短い針が 3 と 4 の間、長い針が 4 → <b>3,400 ft</b>（短い針は 3 を過ぎたところなので「3 千」）。', '細い三角は「1 万の位」。練習機の高度ではほぼ 0 の近く。', '小さな窓は<b>気圧の設定</b>（29.92 など）。管制から QNH をもらって合わせると、滑走路で空港の標高を指します。', 'よくある間違い：長い針と短い針を逆に読む。<b>まず短い針で千の位</b>を決めてから、長い針を読みます。'],
+    live: v => `いまの値：${Math.round(v.alt / 10) * 10 >= 0 ? (Math.round(v.alt / 10) * 10).toLocaleString() : 0} ft` },
+  { t: '④ 旋回計（ターンコーディネーター）とボール', g: 'tc', vals: t => Object.assign(baseVals(), { rate: Math.sin(t / 2.5) * 3.3, slip: Math.sin(t / 1.7) * 18 }),
+    notes: [[-0.7, 0.28, -1.35, 0.7, '下の印に翼を合わせる＝標準旋回'], [0, -0.1, 0.2, -1.2, '小さな飛行機：曲がる速さ'], [0.15, 0.48, 1.25, 0.95, 'ボール：滑り（ラダーの過不足）']],
+    p: ['飛行機の形の記号は<b>曲がる速さ（旋回率）</b>を示します。傾きそのものではありません。', '翼が <b>L または R の下の印</b>に合っていると<b>標準旋回</b>：毎秒 3°、360° を 2 分。計器飛行の基本の曲がり方です。', '下の<b>ボール</b>は横滑りの表示。<b>真ん中の 2 本線の間なら OK</b>。', 'ボールが右に寄ったら<b>右ラダー（E）</b>、左なら左ラダー（Q）。「<b>ボールを踏む</b>」と覚えます。'] },
+  { t: '⑤ 方位指示器（定針儀）', g: 'hi', vals: t => Object.assign(baseVals(), { hdg: (t * 12) % 360 }),
+    notes: [[0, -0.8, 1.2, -1.05, '上の印の下の数字＝いまの針路'], [0, 0, -1.35, 0.5, '機体の記号（常に上向き）']],
+    p: ['目盛り盤が回り、<b>上の印の下の数字</b>がいまの針路（機首の向き）。', '数字は <b>×10</b>：「12」は 120°、「3」は 030°。N＝0°（北）、E＝90°、S＝180°、W＝270°。', '行きたい方向の数字を印に持ってくるように旋回します。', '実機ではジャイロがずれていくので、15 分ごとに磁気コンパスと合わせます（この訓練ではずれません。計器故障の課目を除く）。'],
+    live: v => `いまの針路：${String(Math.round(v.hdg) % 360).padStart(3, '0')}°` },
+  { t: '⑥ 昇降計', g: 'vsi', vals: t => Object.assign(baseVals(), { vs: Math.sin(t / 2) * 1500 }),
+    notes: [[-0.9, 0, -1.35, -0.4, '左（9 時）が 0 ＝水平'], [0, -0.75, 1.2, -1.0, '上半分：上昇'], [0, 0.75, 1.2, 1.0, '下半分：降下']],
+    p: ['<b>1 分あたり何 ft 上昇・降下しているか</b>（fpm）。数字は ×100（「5」＝500 fpm）。', '針が<b>左（9 時の位置）なら水平</b>。上に振れたら上昇、下なら降下。', '数秒遅れて動くので、<b>姿勢指示器で姿勢を決め、昇降計は確認に使う</b>のがコツ。', '着陸進入（3°）では 65 kt で約 −350 fpm が目安。'],
+    live: v => `いまの値：${Math.abs(v.vs) < 50 ? '0' : (v.vs > 0 ? '+' : '−') + Math.round(Math.abs(v.vs) / 10) * 10} fpm` },
+  { t: '⑦ 回転計（タコメーター）と磁気コンパス', g: 'tach', vals: t => Object.assign(baseVals(), { rpm: 1600 + (Math.sin(t / 2) * 0.5 + 0.5) * 1100, thr: Math.sin(t / 2) * 0.5 + 0.5 }),
+    notes: [[0.5, -0.55, 1.3, -0.9, '緑の帯：巡航で使う範囲'], [0, 0.55, 1.2, 0.95, 'スロットルの位置']],
+    p: ['エンジンの回転数（×100 rpm）。<b>スロットル（R/F）で変わる</b>、エンジン出力の目安です。', '巡航はおよそ 2,300〜2,500 rpm（緑の帯）。', '上の細い帯は<b>磁気コンパス</b>：電気もジャイロもいらない最後の頼り。ただし旋回中や加速中は狂う（北旋誤差・加速誤差）ので、<b>まっすぐ一定速度のときに読む</b>。'] },
+  { t: '⑧ 航法計器：VOR', g: 'nav', vals: t => Object.assign(baseVals(), { nav: { type: 'VOR', obs: 90, cdi: Math.sin(t / 2) * 4.5, flag: 'TO', dme: 12.4 } }),
+    notes: [[0, -0.9, 1.2, -1.08, '上の三角：選んだコース（OBS）'], [0.35, 0, 1.3, 0.25, '縦の針：コースとのずれ'], [0.45, -0.35, 1.25, -0.5, 'TO / FR 表示'], [-0.45, -0.35, -1.3, -0.6, 'DME：局までの距離（NM）']],
+    p: ['VOR 局を基準にした「見えない道路」に乗るための計器。<b>[ ] キー</b>で目盛り盤を回して、進みたいコース（OBS）を上の三角に合わせます。', '<b>縦の針</b>はコースがどちらにあるか。<b>針が右ならコースは右</b>→右へ修正。「<b>針の方へ飛ぶ</b>」。', '点 1 つが 2°。針が真ん中ならコースの上。', '<b>TO</b>：局へ向かうコース、<b>FR</b>：局から離れるコース。局の真上で切り替わります。'] },
+  { t: '⑨ 航法計器：ILS', g: 'nav', vals: t => Object.assign(baseVals(), { nav: { type: 'ILS', obs: 90, cdi: Math.sin(t / 2.3) * 3, gs: Math.sin(t / 1.7) * 2, flag: 'ILS', dme: 4.1, gsValid: true } }),
+    notes: [[0.3, 0.1, 1.3, 0.45, '縦の針：左右のずれ（ローカライザー）'], [0, 0.35, -1.3, 0.75, '横の針：上下のずれ（グライドスロープ）']],
+    p: ['着陸のための電波の道。<b>縦の針が左右、横の針が上下</b>のずれ。', '<b>両方の針が真ん中で交わる十字</b>を保てば、滑走路に正しい角度で降りていきます。', '縦の針が右→右へ。<b>横の針が下→自分が高すぎる</b>ので降下を増やす（パワーを絞る）。横の針が上→低すぎるので降下を浅く。', '縦の針は VOR の 4 倍敏感。小さく修正します。'] },
+  { t: '⑩ 計器の見方の順番（スキャン）', g: 'panel', vals: t => Object.assign(baseVals(), { kias: 95, alt: 3000, pitch: 1, hdg: 90 }), scan: true,
+    p: ['目の動かし方の基本は<b>姿勢指示器を中心にした放射状</b>：姿勢 → 高度計 → 姿勢 → 方位 → 姿勢 → 速度 → 姿勢 …', '<b>機首の上下</b>を知るには：姿勢指示器・高度計・昇降計。', '<b>傾き・曲がり</b>を知るには：姿勢指示器・旋回計・方位指示器。', '<b>出力</b>を知るには：回転計・速度計。', '1 つの計器を見つめ続けない（固着）。数秒ごとに姿勢指示器に戻る。'] },
+  { t: '⑪ グラス計器（PFD）との対応', g: 'pfd', vals: t => baseVals(),
+    p: ['<kbd>I</kbd> キーで切り替わる<b>グラス計器（PFD）</b>は、6 計器を 1 枚にまとめたものです。', '<b>左の縦の帯＝速度計</b>、<b>中央＝姿勢指示器</b>、<b>右の縦の帯＝高度計</b>、<b>その右の細い帯＝昇降計</b>、<b>下の目盛り＝方位指示器</b>。', 'アナログは「針の角度」、グラスは「数字と帯」で読む違いだけ。中身は同じです。', '次は「計器の読み取り練習」で、ランダムな値を読んでみましょう。'] },
+];
+const INST = { open: false, i: 0, t0: 0, raf: 0 };
+function openInstTutorial(i = 0) {
+  INST.open = true; INST.i = i; INST.t0 = performance.now();
+  $('school').hidden = true; $('guide').hidden = true; $('inst-tut').hidden = false;
+  renderInstPage();
+  cancelAnimationFrame(INST.raf);
+  const loop = () => { if (!INST.open) return; drawInstCanvas(); INST.raf = requestAnimationFrame(loop); };
+  loop();
+}
+function instDone() { const P = schoolLoad(), rec = P.lessons.k1 || { tries: 0 }; rec.tries++; rec.pass = true; rec.best = 'S'; P.lessons.k1 = rec; schoolSave(); }
+function closeInstTutorial() { INST.open = false; $('inst-tut').hidden = true; if (INST.back === 'guide') { $('guide').hidden = false; INST.back = null; } else { openSchool(); renderSchool('k1'); } }
+function renderInstPage() {
+  const pg = INST_PAGES[INST.i];
+  $('it-title').textContent = pg.t; $('it-count').textContent = `${INST.i + 1} / ${INST_PAGES.length}`;
+  const box = $('it-text'); box.textContent = '';
+  const ul = document.createElement('ul'); for (const x of pg.p) { const li = document.createElement('li'); li.innerHTML = typeof x === 'function' ? x() : x; ul.append(li); } box.append(ul);
+  $('it-prev').disabled = INST.i === 0;
+  $('it-next').textContent = INST.i === INST_PAGES.length - 1 ? '読み取り練習へ' : '次へ';
+  INST.t0 = performance.now();
+}
+function drawInstCanvas() {
+  const cv = $('it-cv'), g = cv.getContext('2d'), dpr = Math.min(devicePixelRatio || 1, 2);
+  const W = cv.clientWidth, H = cv.clientHeight;
+  if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  const pg = INST_PAGES[INST.i], t = (performance.now() - INST.t0) / 1000, v = pg.vals(t);
+  if (pg.g === 'panel') {
+    const P = 150, sc = Math.min(W / (P * 4 + 20), H / (P * 2 + 60));
+    g.save(); g.translate((W - (P * 4 + 20) * sc) / 2, (H - (P * 2 + 34) * sc) / 2); g.scale(sc, sc);
+    rr(g, 0, 0, P * 4 + 20, P * 2 + 34, 10); g.fillStyle = '#262a30'; g.fill();
+    GAUGES.compass(g, 10 + P * 2, 15, 90, v);
+    const names = { asi: '①速度計', ai: '②姿勢指示器', alt: '③高度計', tc: '④旋回計', hi: '⑤方位指示器', vsi: '⑥昇降計', tach: '⑦回転計', nav: '⑧⑨航法計器' };
+    for (const [k, i, j] of SIX_LAYOUT) {
+      const cx = 10 + P * i + P / 2, cy = 30 + P * j + P / 2;
+      GAUGES[k](g, cx, cy, 62, v);
+      g.fillStyle = 'rgba(242,179,58,0.95)'; g.font = `700 13px ${UI}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+      const tw = g.measureText(names[k]).width + 12; rr(g, cx - tw / 2, cy - 76, tw, 18, 4); g.fill(); g.fillStyle = '#1a1204'; g.fillText(names[k], cx, cy - 67);
+    }
+    if (pg.scan) {
+      const [ax, ay] = [10 + P * 1.5, 30 + P / 2];
+      g.strokeStyle = 'rgba(95,212,255,0.85)'; g.lineWidth = 3; g.fillStyle = 'rgba(95,212,255,0.85)';
+      for (const [k, i, j] of SIX_LAYOUT) { if (k === 'ai' || k === 'tach' || k === 'nav') continue; const bx = 10 + P * i + P / 2, by = 30 + P * j + P / 2; const ph = (t * 0.6 + i * 0.3 + j * 0.5) % 1;
+        g.beginPath(); g.moveTo(ax, ay); g.lineTo(bx, by); g.globalAlpha = 0.35; g.stroke(); g.globalAlpha = 1;
+        g.beginPath(); g.arc(lerp(ax, bx, ph), lerp(ay, by, ph), 5, 0, 7); g.fill(); }
+    }
+    g.restore();
+  } else if (pg.g === 'pfd') {
+    const sc = Math.min(W / 400, H / 270);
+    g.save(); g.translate((W - 380 * sc) / 2, (H - 252 * sc) / 2);
+    drawPFD(g, 0, 0, sc, attitude());
+    const lab = (x, y, s) => { g.font = `700 ${Math.round(12)}px ${UI}`; const tw = g.measureText(s).width + 10; g.fillStyle = 'rgba(242,179,58,0.95)'; rr(g, x - tw / 2, y - 10, tw, 20, 4); g.fill(); g.fillStyle = '#1a1204'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(s, x, y); };
+    lab(32 * sc, -12, '速度'); lab(180 * sc, -12, '姿勢'); lab(328 * sc, -12, '高度'); lab(366 * sc, 262 * sc, '昇降'); lab(180 * sc, 264 * sc, '方位');
+    g.restore();
+  } else {
+    const R = Math.min(W, H) * 0.3, cx = W / 2, cy = H / 2 + 6;
+    if (pg.t.includes('磁気コンパス')) { GAUGES.compass(g, cx, 22, Math.min(W * 0.35, 200), Object.assign(v, { chdg: (t * 8) % 360 })); }
+    GAUGES[pg.g](g, cx, cy, R, v);
+    for (const [ax, ay, tx, ty, s] of pg.notes || []) {
+      const px = cx + ax * R, py = cy + ay * R, lx = cx + tx * R, ly = cy + ty * R;
+      g.strokeStyle = 'rgba(242,179,58,0.95)'; g.fillStyle = 'rgba(242,179,58,0.95)'; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(lx, ly); g.lineTo(px, py); g.stroke(); g.beginPath(); g.arc(px, py, 4, 0, 7); g.fill();
+      g.font = `700 13px ${UI}`; const tw = g.measureText(s).width + 12, bx = clamp(lx - tw / 2, 4, W - tw - 4), by = clamp(ly - 11, 4, H - 26);
+      rr(g, bx, by, tw, 22, 4); g.fill(); g.fillStyle = '#1a1204'; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText(s, bx + 6, by + 11);
+    }
+    if (pg.live) { g.font = `700 16px ${MONO}`; g.fillStyle = '#8fd8ff'; g.textAlign = 'center'; g.fillText(pg.live(v), cx, H - 16); }
+  }
+}
+// ---------------------------------------------------------------------
+//  reading practice: random instrument pictures, four answers
+// ---------------------------------------------------------------------
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick = a => a[Math.floor(Math.random() * a.length)];
+function readQuestion(kind) {
+  const v = baseVals(), fmtA = a => `${a.toLocaleString()} ft`, uniq = (ok, xs) => { const out = [ok]; for (const x of xs) if (!out.includes(x) && out.length < 4) out.push(x); return out; };
+  if (kind === 'alt') {
+    const th = 1 + Math.floor(Math.random() * 8), hu = Math.floor(Math.random() * 10), a = th * 1000 + hu * 100 + pick([0, 0, 50]); v.alt = a;
+    const swap = hu * 1000 + th * 100;
+    return { g: 'alt', v, q: '高度はいくつ？', opts: uniq(fmtA(a), [fmtA(swap), fmtA(a + 1000), fmtA(Math.max(a - 1000, 100)), fmtA(a + 500)]),
+      why: `短い太い針が ${th} と ${th + 1} の間 → ${th},000 ft 台。長い針が ${hu} → ${hu}00。合わせて ${a.toLocaleString()} ft。${swap !== a ? `長短を逆に読むと ${swap.toLocaleString()} ft と間違えます。` : ''}` };
+  }
+  if (kind === 'asi') {
+    const k = 45 + Math.floor(Math.random() * 11) * 10; v.kias = k;
+    const zone = k > ACFT.v.no ? '黄色の帯（注意範囲）' : k <= ACFT.v.fe ? '白と緑の帯が重なる範囲（フラップ可）' : '緑の帯（通常範囲）';
+    return { g: 'asi', v, q: '速度はいくつ？', opts: uniq(`${k} kt`, [`${k + 10} kt`, `${k - 10} kt`, `${k + 20} kt`, `${k - 20} kt`]), why: `針は ${k} を指しています。${zone}。` };
+  }
+  if (kind === 'vsi') {
+    const s = pick([-1500, -1000, -700, -500, -300, 300, 500, 800, 1000, 1500]); v.vs = s;
+    const f = x => x > 0 ? `上昇 ${x} fpm` : `降下 ${-x} fpm`;
+    return { g: 'vsi', v, q: '昇降率は？', opts: uniq(f(s), [f(-s), f(s + (s > 0 ? 500 : -500)), '水平（0 fpm）', f(Math.round(s / 2 / 100) * 100 || 200)]), why: `針が ${s > 0 ? '上（UP）' : '下（DN）'} 側の ${Math.abs(s) / 100} を指す → ${f(s)}。9 時の位置が 0。` };
+  }
+  if (kind === 'hi') {
+    const h = Math.floor(Math.random() * 72) * 5; v.hdg = h;
+    const f = x => `${String(((x % 360) + 360) % 360).padStart(3, '0')}°`;
+    return { g: 'hi', v, q: '針路はいくつ？', opts: uniq(f(h), [f(h + 180), f(h + 30), f(h - 30), f(360 - h)]), why: `上の印の真下の目盛りを読む。数字は ×10 なので、${f(h)}。反対側（下）の ${f(h + 180)} を読まないように。` };
+  }
+  if (kind === 'ai') {
+    const p = pick([-10, -5, 5, 10]), b = pick([-30, -20, 20, 30]); v.pitch = p; v.bank = b;
+    const f = (pp, bb) => `機首${pp > 0 ? '上げ' : '下げ'} ${Math.abs(pp)}°・${LR(bb)}バンク ${Math.abs(bb)}°`;
+    return { g: 'ai', v, q: '機体の姿勢は？', opts: uniq(f(p, b), [f(-p, b), f(p, -b), f(-p, -b)]), why: `オレンジの記号が水平線より${p > 0 ? '上' : '下'} → 機首${p > 0 ? '上げ' : '下げ'}。水平線が${b > 0 ? '右下がり（左上がり）' : '左下がり（右上がり）'}に見え、上の三角が ${Math.abs(b)}° の目盛り → ${LR(b)}に ${Math.abs(b)}° 傾いている。` };
+  }
+  if (kind === 'ball') {
+    const r = pick([-3, 3]), sl = pick([-16, 16]); v.rate = r; v.slip = sl;
+    return { g: 'tc', v, q: 'ボールを中央に戻すには？', opts: shuffle([`${LR(sl)}ラダーを踏む`, `${LR(-sl)}ラダーを踏む`, 'エルロンで反対に傾ける', 'そのままでよい']).slice(0, 4), ok: `${LR(sl)}ラダーを踏む`,
+      why: `ボールが${LR(sl)}に寄っている → ${LR(sl)}ラダー（${sl > 0 ? 'E' : 'Q'} キー）。「ボールを踏む」。翼は標準旋回の印（${LR(r)}）に合っています。` };
+  }
+  if (kind === 'vor') {
+    const obs = Math.floor(Math.random() * 36) * 10, d = pick([-3.5, -2, 2, 3.5]); v.nav = { type: 'VOR', obs, cdi: d, flag: 'TO', dme: 8 + Math.random() * 10 };
+    return { g: 'nav', v, q: `OBS ${String(obs).padStart(3, '0')}・TO で、コースに乗るには？`, opts: [`${LR(d)}へ修正する`, `${LR(-d)}へ修正する`, 'いまコースの上にいる', `${String((obs + 180) % 360).padStart(3, '0')} へ反転する`], ok: `${LR(d)}へ修正する`,
+      why: `縦の針が${LR(d)}に ${Math.abs(d)} 目盛り（約 ${Math.abs(d * 2)}°）。針の方へ飛ぶ → ${LR(d)}へ。` };
+  }
+  const lo = pick([-2.5, 0, 2.5]), gs = pick([-1.5, 1.5]); v.nav = { type: 'ILS', obs: 90, cdi: lo, gs, flag: 'ILS', dme: 5, gsValid: true };
+  const hl = gs > 0 ? '高すぎる → 降下を増やす' : '低すぎる → 降下を浅くする';
+  const ok = `${lo === 0 ? '左右はコース上' : LR(lo) + 'へ修正'}・${hl}`;
+  const all = [];
+  for (const la of ['左へ修正', '右へ修正', '左右はコース上']) for (const ve of ['高すぎる → 降下を増やす', '低すぎる → 降下を浅くする']) { const o = `${la}・${ve}`; if (o !== ok) all.push(o); }
+  return { g: 'nav', v, q: 'ILS 進入中。どう修正する？', opts: [ok, ...shuffle(all).slice(0, 2), 'そのまま（両方の針が中央）'], ok,
+    why: `縦の針${lo === 0 ? 'は中央' : `が${LR(lo)} → ${LR(lo)}へ`}。横の針が${gs > 0 ? '下' : '上'} → 自分は${gs > 0 ? '上（高すぎる）' : '下（低すぎる）'}。` };
+}
+function openReadQuiz() {
+  const kinds = shuffle(['alt', 'alt', 'asi', 'vsi', 'hi', 'ai', 'ai', 'ball', 'vor', 'ils']);
+  SCHOOL.rq = { qs: kinds.map(readQuestion), i: 0, right: 0 };
+  for (const q of SCHOOL.rq.qs) { const ok = q.ok || q.opts[0]; q.opts = shuffle(q.opts.slice(0, 4)); q.okI = q.opts.indexOf(ok); }
+  $('school').hidden = true; $('inst-tut').hidden = true; $('read-quiz').hidden = false;
+  renderReadQuiz();
+}
+function renderReadQuiz() {
+  const Z = SCHOOL.rq, box = $('rq-body'); box.textContent = '';
+  $('rq-title').textContent = `計器の読み取り練習（${Math.min(Z.i + 1, Z.qs.length)} / ${Z.qs.length}）`;
+  const cv = $('rq-cv');
+  if (Z.i >= Z.qs.length) {
+    cv.hidden = true;
+    const pct = Z.right / Z.qs.length, pass = pct >= 0.8, P = schoolLoad(), rec = P.lessons.k2 || { tries: 0 };
+    rec.tries++; if (pass) rec.pass = true; const grade = pct === 1 ? 'S' : pct >= 0.9 ? 'A' : pass ? 'B' : 'C', rank = { S: 4, A: 3, B: 2, C: 1 };
+    if (!rec.best || rank[grade] > rank[rec.best]) rec.best = grade; P.lessons.k2 = rec; schoolSave();
+    const p = document.createElement('p'); p.className = 'sq-result ' + (pass ? 'ok' : 'ng'); p.textContent = `${Z.right} / ${Z.qs.length} 問正解（${Math.round(pct * 100)}%）… ${pass ? '合格' : '不合格（80% 以上で合格）'}`; box.append(p);
+    for (const [t, f] of [['課程表へ戻る', () => { $('read-quiz').hidden = true; openSchool(); renderSchool('k2'); }], ['もう一度（問題は毎回変わります）', openReadQuiz], ['チュートリアルを見直す', () => { $('read-quiz').hidden = true; openInstTutorial(0); }]]) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = t.startsWith('課程') ? 'sch-go' : 'sch-sub'; b.textContent = t; b.addEventListener('click', f); box.append(b);
+    }
+    return;
+  }
+  cv.hidden = false;
+  const q = Z.qs[Z.i];
+  const g = cv.getContext('2d'), dpr = Math.min(devicePixelRatio || 1, 2), W = cv.clientWidth || 260, H = cv.clientHeight || 260;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  GAUGES[q.g](g, W / 2, H / 2, Math.min(W, H) * 0.42, q.v);
+  const p = document.createElement('p'); p.className = 'sq-q'; p.textContent = q.q; box.append(p);
+  const list = document.createElement('div'); list.className = 'sq-opts'; box.append(list);
+  q.opts.forEach((o, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = o;
+    b.addEventListener('click', () => {
+      if (Z.answered) return; Z.answered = true;
+      const ok = i === q.okI; if (ok) Z.right++;
+      list.querySelectorAll('button').forEach((x, j) => { x.classList.toggle('ok', j === q.okI); x.classList.toggle('ng', j === i && !ok); x.disabled = true; });
+      const e = document.createElement('p'); e.className = 'sq-why ' + (ok ? 'ok' : 'ng'); e.textContent = (ok ? '正解。' : '不正解。') + q.why; box.append(e);
+      const n = document.createElement('button'); n.type = 'button'; n.className = 'sch-go'; n.textContent = Z.i + 1 < Z.qs.length ? '次の問題' : '結果を見る';
+      n.addEventListener('click', () => { Z.i++; Z.answered = false; renderReadQuiz(); }); box.append(n); n.focus();
+    });
+    list.append(b);
+  });
 }
 
 // ---------------------------------------------------------------------
@@ -5999,6 +6290,12 @@ function renderBrief(id) {
   const g = document.createElement('p'); g.className = 'sch-goal'; g.textContent = '目的：' + l.goal; box.append(g);
   if (l.quiz) {
     const p = document.createElement('p'); p.textContent = `${QUIZ[id].length} 問の 4 択。答えるたびに解説が出ます。80% 以上で合格。`; box.append(p);
+  } else if (l.inst) {
+    const ul = document.createElement('ul');
+    for (const t of ['パネル全体 → 速度計 → 姿勢指示器 → 高度計 → 旋回計 → 方位指示器 → 昇降計 → 回転計・コンパス → VOR → ILS → スキャン → グラス計器（PFD）の順に 12 ページ', '計器は実際に動くので、針の動きと意味を見比べられます', 'オレンジの吹き出しが「どこを見るか」、本文が「どう読むか・どう操縦するか」', '最後まで見ると合格になり、そのまま読み取り練習に進めます', '飛行中も <kbd>K</kbd> キーで各計器の下に「いまの読み方」が表示されます（アナログ計器表示時）']) { const li = document.createElement('li'); li.innerHTML = t; ul.append(li); }
+    box.append(ul);
+  } else if (l.read) {
+    const p = document.createElement('p'); p.textContent = 'ランダムな値を示す計器を見て、読み取った値や修正の方向を 4 択で答えます。毎回問題が変わります。80% 以上で合格。'; box.append(p);
   } else {
     const h3 = document.createElement('h3'); h3.textContent = '知識と手順'; box.append(h3);
     const ul = document.createElement('ul'); for (const t of l.brief) { const li = document.createElement('li'); li.innerHTML = t; ul.append(li); } box.append(ul);
@@ -6009,7 +6306,7 @@ function renderBrief(id) {
     const n = document.createElement('p'); n.className = 'sch-note'; n.textContent = '訓練中は操縦アシストなし・アナログ計器（I で切替）・コックピット視点（C で切替）。トリムは T。基準は FAA の実地試験基準（ACS）などを参考にした練習用の目安です。実際の試験基準・手順は必ず教官と教本（POH・AIM-J）で確認してください。'; box.append(n);
   }
   const bar = document.createElement('div'); bar.className = 'sch-bar';
-  const go = document.createElement('button'); go.type = 'button'; go.className = 'sch-go'; go.textContent = l.quiz ? 'テストを始める' : '訓練を始める'; go.addEventListener('click', () => startLesson(id));
+  const go = document.createElement('button'); go.type = 'button'; go.className = 'sch-go'; go.textContent = l.quiz || l.read ? 'テストを始める' : l.inst ? 'チュートリアルを開く' : '訓練を始める'; go.addEventListener('click', () => startLesson(id));
   bar.append(go);
   if (rec) { const r = document.createElement('span'); r.textContent = `挑戦 ${rec.tries} 回・最高評価 ${rec.best || '―'}${rec.pass ? '・合格済み' : ''}`; bar.append(r); }
   box.append(bar);
@@ -6118,6 +6415,14 @@ function setupSchool() {
   $('sp-resume').addEventListener('click', () => { schoolPause(false); resumeGame(); });
   $('sp-retry').addEventListener('click', () => { const id = SCHOOL.active && SCHOOL.active.id; schoolPause(false); SCHOOL.active = null; $('sch-panel').hidden = true; $('hood').hidden = true; sim.dead = false; if (id) startLesson(id); });
   $('sp-quit').addEventListener('click', () => { schoolPause(false); if (SCHOOL.active) { SCHOOL.active = null; SCHOOL.fail = {}; SCHOOL.wind = null; SCHOOL.hood = false; sim.dead = false; } $('sch-panel').hidden = true; $('hood').hidden = true; $('sch-check').hidden = true; $('sch-atc').hidden = true; game.state = 'menu'; openSchool(); });
+  $('it-prev').addEventListener('click', () => { if (INST.i > 0) { INST.i--; renderInstPage(); } });
+  $('it-next').addEventListener('click', () => { if (INST.i < INST_PAGES.length - 1) { INST.i++; renderInstPage(); } else { instDone(); INST.open = false; $('inst-tut').hidden = true; INST.back = null; openReadQuiz(); } });
+  $('it-close').addEventListener('click', closeInstTutorial);
+  $('rq-close').addEventListener('click', () => { $('read-quiz').hidden = true; openSchool(); renderSchool('k2'); });
+  $('guide-inst').addEventListener('click', () => { INST.back = 'guide'; openInstTutorial(0); });
+  addEventListener('keydown', e => {
+    if (INST.open) { if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); $('it-next').click(); } else if (e.key === 'ArrowLeft') { e.preventDefault(); e.stopImmediatePropagation(); $('it-prev').click(); } else if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); closeInstTutorial(); } }
+  }, true);
   setInterval(updateSchoolPanel, 120);
 }
 
@@ -7354,7 +7659,7 @@ function drawHUD() {
   if (game.mode === 'rings' && !game.ringDone) drawRingTarget(g, W, H);
   // PFD & engine panel
   const pfdX = touch ? 12 : 16, pfdY = touch ? 12 : H - 16 - 252 * sc;
-  if (SCHOOL.analog) { const ss = touch ? sc * 0.8 : sc; drawSixPack(g, pfdX, H - 12 - 334 * ss, ss, att); if (!touch && !SCHOOL.active) drawTargets(g, pfdX + 640 * ss, H - 12 - 150 * ss, ss); }
+  if (SCHOOL.analog) { const [spW, spH] = sixPackSize(), ss = Math.min(touch ? sc * 0.8 : sc, (H * 0.5) / spH, (W - pfdX - 12) / spW); drawSixPack(g, pfdX, H - 12 - spH * ss, ss, att); if (!touch && !SCHOOL.active) drawTargets(g, pfdX + (spW + 10) * ss, H - 12 - 150 * ss, ss); }
   else {
   drawPFD(g, pfdX, pfdY, sc, att);
   if (!touch) { drawEngine(g, pfdX + 390 * sc, pfdY, sc); drawStick(g, pfdX + 598 * sc, pfdY + 108 * sc, sc); if (!SCHOOL.active) drawTargets(g, pfdX + 742 * sc, pfdY + 108 * sc, sc); }

@@ -2623,6 +2623,133 @@ function buildAircraftParts(A) {
 const TRIM = {"trainer":{"c_level_0":[105,77,0.6,0,0,0,0,1],"c_level_10":[105,78,0.7,0,10,1.7,0,1],"c_level_20":[105,77,0.9,0,20,3.4,0,1],"c_d500_0":[105,43,-2,-500,0,0,0,1],"c_d500_10":[105,43,-1.9,-500,10,1.7,0,1],"c_d500_20":[105,42,-1.7,-500,20,3.5,0,1],"c_d1000_0":[105,13,-4.5,-1000,0,0,0,1],"c_d1000_10":[105,13,-4.5,-1000,10,1.7,0,1],"c_d1000_20":[105,12,-4.2,-1010,20,3.4,0,1],"c_c500_0":[94,100,4.5,500,0,0,0,0],"c_c500_10":[93,100,4.7,500,10,1.8,0,0],"c_c500_20":[91,100,5.1,500,20,3.9,0,0],"y_c500_0":[73,89,8.5,500,0,-0.1,0,1],"y_c500_10":[73,89,8.7,490,10,2.4,0,1],"y_c500_20":[73,89,8.9,500,20,4.9,0,1],"y_c1000_0":[50,100,18.3,440,0,-0.1,0,0],"y_c1000_10":[51,100,18,440,10,3.3,0,0],"y_c1000_20":[53,100,16.8,420,21,6.9,0,0],"y_full_0":[73,100,9.5,640,0,-0.1,0,1],"y_full_10":[73,100,9.4,620,10,2.3,0,1],"y_full_20":[73,100,9.6,620,20,4.9,0,1],"s_level_0":[78,59,1,0,0,0,1,1],"s_level_10":[78,62,1.2,0,10,2.2,1,1],"s_level_20":[78,62,1.6,0,20,4.7,1,1],"s_c500_0":[76,100,4.8,500,0,-0.1,1,1],"s_c500_10":[75,100,5.2,490,10,2.3,1,1],"s_c500_20":[60,100,11.3,500,20,6.1,1,0],"s_d500_0":[78,21,-2.4,-500,0,0,1,1],"s_d500_10":[78,24,-2.3,-500,10,2.3,1,1],"s_d500_20":[78,24,-1.8,-490,20,4.8,1,1],"a_3deg_0":[65,37,-1.4,-340,0,0,2,1],"a_3deg_10":[65,41,-1,-330,10,2.7,2,1],"a_3deg_20":[65,39,-0.5,-340,20,5.6,2,1],"c_level_30":[105,79,1.3,0,30,5.5,0,1],"c_level_45":[105,87,2,0,45,9.6,0,1],"c_level_60":[90,100,4.6,-10,61,19.7,0,0]},"sport":{"c_level_0":[115,63,0.8,0,0,0,0,1],"c_level_10":[115,63,0.8,0,10,1.5,0,1],"c_level_20":[115,64,1,0,20,3.2,0,1],"c_d500_0":[115,37,-1.6,-500,0,0,0,1],"c_d500_10":[115,36,-1.6,-500,10,1.5,0,1],"c_d500_20":[115,37,-1.4,-500,20,3.2,0,1],"c_d1000_0":[115,14,-3.9,-1000,0,0,0,1],"c_d1000_10":[115,13,-3.9,-1000,10,1.5,0,1],"c_d1000_20":[115,14,-3.7,-1000,20,3.2,0,1],"c_c500_0":[115,93,3,500,0,0,0,1],"c_c500_10":[115,93,3.1,500,10,1.5,0,1],"c_c500_20":[115,93,3.3,500,20,3.1,0,1],"y_c500_0":[79,69,8.2,500,0,-0.1,0,1],"y_c500_10":[79,72,8.2,500,10,2.1,0,1],"y_c500_20":[79,72,8.4,490,20,4.5,0,1],"y_c1000_0":[76,100,12,1000,-1,-0.1,0,1],"y_c1000_10":[75,100,12.3,990,10,2.2,0,1],"y_c1000_20":[72,100,13.8,980,20,4.9,0,0],"y_full_0":[79,100,11.1,970,-1,-0.1,0,1],"y_full_10":[79,100,11,950,10,2.1,0,1],"y_full_20":[79,100,11,920,20,4.4,0,1],"s_level_0":[84,62,1.2,0,0,-0.1,1,1],"s_level_10":[84,63,1.3,0,10,2,1,1],"s_level_20":[84,64,1.7,0,20,4.3,1,1],"s_c500_0":[84,94,4.4,500,0,-0.1,1,1],"s_c500_10":[84,96,4.5,500,10,2,1,1],"s_c500_20":[84,97,4.8,500,20,4.3,1,1],"s_d500_0":[84,31,-2,-500,0,-0.1,1,1],"s_d500_10":[84,32,-1.9,-500,10,2.1,1,1],"s_d500_20":[84,33,-1.5,-490,20,4.4,1,1],"a_3deg_0":[70,35,-1.3,-370,0,-0.1,2,1],"a_3deg_10":[70,38,-1.1,-360,10,2.5,2,1],"a_3deg_20":[70,37,-0.7,-370,20,5.2,2,1],"c_level_30":[115,65,1.3,0,30,5,0,1],"c_level_45":[115,73,1.9,0,45,8.8,0,1],"c_level_60":[115,93,2.6,0,60,15.3,0,1]},"aero":{"c_level_0":[140,61,2.8,0,-1,-0.1,0,1],"c_level_10":[140,63,2.8,0,9,1.2,0,1],"c_level_20":[140,64,2.8,0,20,2.6,0,1],"c_d500_0":[140,44,0.8,-500,-1,-0.1,0,1],"c_d500_10":[140,45,0.8,-500,9,1.2,0,1],"c_d500_20":[140,46,0.9,-500,20,2.6,0,1],"c_d1000_0":[140,32,-1,-1000,0,-0.1,0,1],"c_d1000_10":[140,32,-1,-1000,10,1.2,0,1],"c_d1000_20":[140,34,-1,-990,20,2.6,0,1],"c_c500_0":[140,80,4.6,500,-1,-0.1,0,1],"c_c500_10":[140,81,4.7,500,9,1.2,0,1],"c_c500_20":[140,83,4.7,500,19,2.5,0,1],"y_c500_0":[88,47,10,500,-1,-0.2,0,1],"y_c500_10":[88,47,10,500,9,1.8,0,1],"y_c500_20":[88,51,10.1,500,20,4,0,1],"y_c1000_0":[88,66,12.8,1000,-1,-0.2,0,1],"y_c1000_10":[88,66,12.8,1000,9,1.8,0,1],"y_c1000_20":[88,72,12.9,1010,20,3.9,0,1],"y_full_0":[88,100,16.6,1730,-2,-0.3,0,1],"y_full_10":[88,100,16.5,1710,9,1.7,0,1],"y_full_20":[88,100,16.1,1610,19,3.7,0,1],"s_level_0":[96,30,5.9,0,-1,-0.1,1,1],"s_level_10":[96,30,6,0,9,1.8,1,1],"s_level_20":[96,32,6,0,20,3.8,1,1],"s_c500_0":[96,49,8.7,500,-1,-0.2,1,1],"s_c500_10":[96,49,8.7,500,9,1.7,1,1],"s_c500_20":[96,53,8.7,510,20,3.6,1,1],"s_d500_0":[96,12,3.1,-500,0,-0.1,1,1],"s_d500_10":[96,12,3.1,-500,10,1.9,1,1],"s_d500_20":[96,14,3.1,-500,20,3.9,1,1],"a_3deg_0":[80,8,5.7,-420,0,-0.1,0,1],"a_3deg_10":[80,10,5.7,-420,10,2.2,0,1],"a_3deg_20":[80,11,5.8,-420,20,4.7,0,1],"c_level_30":[140,64,2.9,0,30,4.1,0,1],"c_level_45":[140,66,2.9,0,45,7.2,0,1],"c_level_60":[140,78,2.9,0,60,12.5,0,1]},"twin":{"c_level_0":[200,89,0.2,0,0,0,0,1],"c_level_10":[200,89,0.3,0,10,0.9,0,1],"c_level_20":[200,91,0.4,0,20,1.8,0,1],"c_d500_0":[200,68,-1.1,-500,0,0,0,1],"c_d500_10":[200,68,-1.1,-500,10,0.9,0,1],"c_d500_20":[200,70,-0.9,-500,20,1.9,0,1],"c_d1000_0":[200,54,-2.5,-1000,0,0,0,1],"c_d1000_10":[200,56,-2.4,-1000,10,0.9,0,1],"c_d1000_20":[200,56,-2.3,-1000,20,1.8,0,1],"c_c500_0":[188,100,2,500,0,0,0,0],"c_c500_10":[187,100,2.1,500,10,0.9,0,0],"c_c500_20":[186,100,2.3,500,20,1.9,0,0],"y_c500_0":[136,72,5.7,500,0,0,0,1],"y_c500_10":[136,71,5.7,500,10,1.3,0,1],"y_c500_20":[136,74,5.9,500,20,2.6,0,1],"y_c1000_0":[136,96,7.5,1000,0,0,0,1],"y_c1000_10":[136,97,7.6,1000,10,1.2,0,1],"y_c1000_20":[136,97,7.8,990,20,2.6,0,1],"y_full_0":[136,100,7.7,1070,0,0,0,1],"y_full_10":[136,100,7.7,1040,10,1.2,0,1],"y_full_20":[136,100,7.8,1020,20,2.6,0,1],"s_level_0":[132,74,1.1,0,0,0,1,1],"s_level_10":[132,73,1.3,0,10,1.3,1,1],"s_level_20":[132,77,1.6,0,20,2.8,1,1],"s_c500_0":[131,99,3.2,500,0,0,1,1],"s_c500_10":[131,100,3.3,500,10,1.3,1,1],"s_c500_20":[130,100,3.7,500,20,2.7,1,1],"s_d500_0":[132,50,-0.9,-500,0,0,1,1],"s_d500_10":[132,50,-0.8,-500,10,1.3,1,1],"s_d500_20":[132,54,-0.5,-500,20,2.8,1,1],"a_3deg_0":[110,40,-1.7,-580,0,0,2,1],"a_3deg_10":[110,40,-1.5,-590,10,1.6,2,1],"a_3deg_20":[110,42,-1.1,-590,20,3.4,2,1],"c_level_30":[200,90,0.7,0,30,2.9,0,1],"c_level_45":[200,95,1.2,0,45,5,0,1],"c_level_60":[182,100,2.6,0,60,9.6,0,0]},"airliner":{"c_level_0":[272,22,2.2,0,0,0,0,1],"c_level_10":[273,23,2.2,0,10,0.7,0,1],"c_level_20":[272,35,2.4,0,20,1.4,0,1],"c_d500_0":[272,20,1.2,-500,0,0,0,1],"c_d500_10":[272,29,1.2,-500,10,0.7,0,1],"c_d500_20":[273,29,1.3,-500,20,1.4,0,1],"c_d1000_0":[279,0,0.1,-1000,0,0,0,0],"c_d1000_10":[278,0,0.1,-1000,10,0.6,0,0],"c_d1000_20":[277,0,0.3,-1000,20,1.3,0,0],"c_c500_0":[272,31,3.2,500,0,0,0,1],"c_c500_10":[271,32,3.2,500,10,0.6,0,1],"c_c500_20":[271,34,3.4,500,20,1.3,0,1],"y_c500_0":[212,38,6.2,500,0,0,0,1],"y_c500_10":[212,36,6.3,500,10,0.8,0,1],"y_c500_20":[212,29,6.4,500,20,1.7,0,1],"y_c1000_0":[209,46,7.6,1000,0,0,0,1],"y_c1000_10":[209,46,7.7,1000,10,0.8,0,1],"y_c1000_20":[209,47,7.8,1000,20,1.7,0,1],"y_full_0":[209,100,19.6,6040,0,0,0,1],"y_full_10":[209,100,19.6,6010,10,0.8,0,1],"y_full_20":[209,100,19.4,5900,20,1.6,0,1],"s_level_0":[197,41,1.8,0,0,0,1,1],"s_level_10":[197,41,1.9,0,10,0.9,1,1],"s_level_20":[197,42,2.3,0,20,1.9,1,1],"s_c500_0":[195,51,3.3,500,0,0,1,1],"s_c500_10":[196,49,3.4,500,10,0.9,1,1],"s_c500_20":[195,53,3.8,500,20,1.8,1,1],"s_d500_0":[199,35,0.3,-500,0,0,1,1],"s_d500_10":[200,34,0.3,-500,10,0.9,1,1],"s_d500_20":[200,31,0.6,-500,20,1.9,1,0],"a_3deg_0":[142,36,-2.2,-730,0,0,3,1],"a_3deg_10":[142,37,-1.8,-730,10,1.2,3,1],"a_3deg_20":[141,41,-0.9,-730,20,2.6,3,1],"c_level_30":[272,38,2.6,0,30,2.1,0,1],"c_level_45":[273,32,3,0,45,3.7,0,1],"c_level_60":[268,56,3.7,20,60,6.5,0,1]},"fighter":{"c_level_0":[354,28,3.1,0,0,0,0,1],"c_level_10":[354,28,3.1,0,10,0.5,0,1],"c_level_20":[353,28,3.1,0,20,1,0,1],"c_d500_0":[354,27,2.3,-500,0,0,0,1],"c_d500_10":[354,26,2.3,-500,10,0.5,0,0],"c_d500_20":[354,26,2.4,-500,20,1.1,0,0],"c_d1000_0":[353,23,1.6,-1000,0,0,0,1],"c_d1000_10":[353,25,1.6,-1000,10,0.5,0,1],"c_d1000_20":[354,25,1.6,-1000,20,1.1,0,0],"c_c500_0":[353,39,3.9,500,0,0,0,1],"c_c500_10":[354,36,3.9,500,10,0.5,0,1],"c_c500_20":[354,33,3.9,500,20,1,0,1],"y_c500_0":[199,28,11,500,0,0,0,0],"y_c500_10":[199,28,11.1,500,10,0.9,0,1],"y_c500_20":[197,32,11.3,500,20,1.8,0,1],"y_c1000_0":[199,33,12.3,1000,0,0,0,1],"y_c1000_10":[198,30,12.4,1000,10,0.9,0,1],"y_c1000_20":[196,33,12.6,1000,20,1.8,0,1],"y_full_0":[502,100,30.5,27690,0,0,0,1],"y_full_10":[505,100,30.1,27540,10,0.3,0,1],"y_full_20":[509,100,29.8,27450,20,0.7,0,1],"s_level_0":[189,28,9.1,0,0,0,1,1],"s_level_10":[188,31,9.2,0,10,1,1,1],"s_level_20":[187,40,9.4,0,20,2,1,1],"s_c500_0":[188,36,10.4,500,0,0,1,1],"s_c500_10":[188,36,10.5,500,10,0.9,1,1],"s_c500_20":[188,37,10.7,490,20,1.9,1,1],"s_d500_0":[190,27,7.5,-500,0,0,1,0],"s_d500_10":[190,26,7.5,-500,10,1,1,0],"s_d500_20":[188,38,7.8,-500,20,2,1,1],"a_3deg_0":[158,40,8.9,-830,0,0,2,1],"a_3deg_10":[159,35,8.8,-840,10,1.1,2,0],"a_3deg_20":[158,29,9.4,-810,20,2.4,2,1],"c_level_30":[352,31,3.2,0,30,1.7,0,1],"c_level_45":[353,29,3.2,0,45,2.9,0,1],"c_level_60":[350,45,3.3,0,60,5.1,0,1]}};
 for (const a of AIRCRAFT) if (TRIM[a.id]) { a.v.cruiseThr = TRIM[a.id].c_level_0[1] / 100; if (TRIM[a.id].a_3deg_0[7]) a.v.apprThr = TRIM[a.id].a_3deg_0[1] / 100; }
 let ACFT = AIRCRAFT[0], AC = null, WHEELS = [], TAILSKID = null, HARDPTS = [], WHEEL_BOTTOM = -1.45;
+// =====================================================================
+//  BLADE-ELEMENT AERODYNAMICS (the approach of X-Plane, and of MSFS's surface model)
+//  The wing is cut into spanwise strips, the tailplane and fin into a few pieces. Every piece sees
+//  its own airflow: the aircraft's motion plus its rotation (w x r), sideslip, the wing's downwash
+//  on the tail, the propeller slipstream, ground effect under that piece and the turbulence at that
+//  spot. It makes lift and drag from its own angle of attack and stalls on its own. The summed forces
+//  and moments move the aircraft.
+//  When an aircraft is loaded the pieces are tuned so that the small-angle behaviour (stability,
+//  control power, damping) equals the aircraft's reference data: trim, lessons and assists stay valid,
+//  and what the pieces add is everything beyond it (stall breaks, wing drop, spins, gust bumps...).
+// =====================================================================
+const EL_N = 8;
+function buildElements(A, P) {
+  const W = wingFns(A.wing), w = A.wing, hs = A.hstab, vs = A.vstab, pcs = [];
+  const G = w.dih * DEG, fwd = [0, 0, -1];
+  let area = 0, flapS = 0;
+  for (const side of [-1, 1]) for (let i = 0; i < EL_N; i++) {
+    const x0 = w.tipX * i / EL_N, x1 = w.tipX * (i + 1) / EL_N, xc = (x0 + x1) / 2, xa = Math.max(xc, w.rootX);
+    const c = W.c(xa), s = vnorm([1, side * Math.tan(G), 0]);
+    const p = { kind: 0, side, S: c * (x1 - x0), r: [side * xc, W.y(xa), W.le(xa) + 0.25 * c], s, n: vnorm(vcross(s, fwd)),
+      flap: !!(w.flap && xc >= w.flap[0] && xc <= w.flap[1]), ail: xc >= w.ail[0] - 0.2 && xc <= w.ail[1] ? side : 0, span01: xc / w.tipX };
+    pcs.push(p); area += p.S;
+  }
+  for (const p of pcs) { p.S *= P.S / area; if (p.flap) flapS += p.S; }
+  const hle = x => lerp(hs.rootLE, hs.tipLE, x / hs.span);
+  for (const side of [-1, 1]) for (let i = 0; i < 2; i++) {
+    const xc = hs.span * (i + 0.5) / 2, c = Math.max(hs.te - hle(xc), 0.2);
+    pcs.push({ kind: 1, side, S: c * hs.span / 2, r: [side * xc, hs.y, hle(xc) + 0.25 * c], s: [1, 0, 0], n: [0, 1, 0], wash: i ? 0.6 : 1 });
+  }
+  const fle = y => lerp(vs.rootLE, vs.topLE, (y - vs.y0) / (vs.y1 - vs.y0));
+  for (let i = 0; i < 2; i++) {
+    const dy = (vs.y1 - vs.y0) / 2, yc = vs.y0 + dy * (i + 0.5), c = Math.max(vs.te - fle(yc), 0.2);
+    pcs.push({ kind: 2, side: 0, S: c * dy, r: [0, yc, fle(yc) + 0.25 * c], s: [0, 1, 0], n: [-1, 0, 0], wash: i ? 0.5 : 1 });
+  }
+  const E = { pcs, flapK: flapS > 0 ? P.S / flapS : 0, dCmF: 0, at: 3.5, af: 3, it: 0, deps: 0.35, ke: 1, ka: 1, kr: 1, gdi: 0,
+    dCma: 0, dCmq: 0, dClp: 0, dClr: 0, dCnr: 0, dCnp: 0, dCnda: 0, dCY: 0 };
+  // ---- tune to the reference derivatives, at cruise speed in still air ----
+  const Vc = A.v.cruise / 1.94384, rho = 1.225, q = 0.5 * rho * Vc * Vc, hv = 0.25 * rho * Vc;
+  const a0 = (P.mass * 9.81 / (q * P.S) - P.CL0) / P.CLa;
+  const vAt = (a, b = 0) => [Vc * Math.sin(b), -Vc * Math.sin(a) * Math.cos(b), -Vc * Math.cos(a) * Math.cos(b)];
+  const run = (o = {}) => aeroElements(E, P, o.vb || vAt(o.a ?? a0, o.b || 0), o.w || [0, 0, 0], rho, { flapF: 0, elev: o.elev || 0, ail: o.ail || 0, rud: o.rud || 0, dq: 0 });
+  const d = (f, h) => (f(h) - f(-h)) / (2 * h);
+  const Mx = o => run(o).M[0], Lroll = o => -run(o).M[2], Nyaw = o => -run(o).M[1];
+  const qSc = q * P.S * P.c, qSb = q * P.S * P.b;
+  // pitch: tailplane effectiveness for the static stability, its incidence for zero moment at zero alpha
+  const slope = at => { E.at = at; return d(h => Mx({ a: a0 + h }), 0.01); };
+  const s0 = slope(0), s1 = slope(1);
+  let at = (P.Cma * Math.cos(a0) * qSc - s0) / (s1 - s0);
+  at = clamp(Number.isFinite(at) ? at : 3.5, 0.5, 14); E.at = at;
+  E.dCma = P.Cma - slope(at) / (qSc * Math.cos(a0));
+  E.it = 0; const m0 = Mx({ a: 0 }); E.it = 0.01; const m1 = Mx({ a: 0 }); E.it = -m0 * 0.01 / (m1 - m0);
+  E.ke = 1; E.ke = P.Cmde * qSc / d(h => Mx({ elev: h }), 0.05);
+  // flaps: the pieces make their own pitch change (flap lift ahead/behind the CG, more downwash); the
+  // reference data has none, so it is taken out again
+  E.dCmF = 0; { const m0 = run({}).M[0], m1 = aeroElements(E, P, vAt(a0), [0, 0, 0], rho, { flapF: 1, elev: 0, ail: 0, rud: 0, dq: 0 }).M[0]; E.dCmF = w.flap ? -(m1 - m0) / qSc : 0; }
+  E.dCmq = P.Cmq - d(h => Mx({ w: [h, 0, 0] }), 0.02) / (hv * P.S * P.c * P.c);
+  // roll: aileron power, damping, dihedral effect
+  E.ka = 1; E.ka = P.Clda * qSb / d(h => Lroll({ ail: h }), 0.05);
+  // fin: weathervane stability and rudder power
+  const nb = af => { E.af = af; return d(h => Nyaw({ b: h }), 0.01); };
+  const n0 = nb(0), n1 = nb(1); E.af = clamp((P.Cnb * qSb - n0) / (n1 - n0), 0.3, 14);
+  E.kr = 1; E.kr = P.Cndr * qSb / d(h => Nyaw({ rud: h }), 0.05);
+  const lb = gdi => { E.gdi = gdi; return d(h => Lroll({ b: h }), 0.01); };
+  const l0 = lb(0), l1 = lb(1); E.gdi = (P.Clb * qSb - l0) / (l1 - l0);
+  E.dClp = P.Clp - d(h => Lroll({ w: [0, 0, -h] }), 0.02) / (hv * P.S * P.b * P.b);
+  E.dClr = (P.Clr || 0) - d(h => Lroll({ w: [0, -h, 0] }), 0.02) / (hv * P.S * P.b * P.b);
+  E.dCnr = P.Cnr - d(h => Nyaw({ w: [0, -h, 0] }), 0.02) / (hv * P.S * P.b * P.b);
+  E.dCnp = (P.Cnp || 0) - d(h => Nyaw({ w: [0, 0, -h] }), 0.02) / (hv * P.S * P.b * P.b);
+  E.dCnda = (P.Cnda || 0) - d(h => Nyaw({ ail: h }), 0.05) / qSb;
+  E.dCY = P.CYb - d(h => run({ b: h }).F[0], 0.01) / (q * P.S);
+  return E;
+}
+// forces (body frame) and moments about the centre of gravity from every piece
+// o: flapF, elev, ail, rud (control positions), dq (slipstream dynamic pressure on the tail),
+//    hgt(p) (height of a piece above the ground, for ground effect), gust(p) (extra wind at a piece, body frame)
+const _v = [0, 0, 0];
+function aeroElements(E, P, vb, w, rho, o) {
+  const F = [0, 0, 0], M = [0, 0, 0];
+  const V = Math.hypot(vb[0], vb[1], vb[2]) || 1, sb = vb[0] / V;
+  let clw = 0, stw = 0, eps = 0;
+  const aS0 = P.aStall - P.flapStall * o.flapF;
+  for (let pass = 0; pass < 2; pass++) for (const p of E.pcs) {
+    if ((p.kind === 0) !== (pass === 0)) continue;              // wing first: its lift sets the downwash on the tail
+    const r = p.r;
+    let vx = vb[0] + w[1] * r[2] - w[2] * r[1], vy = vb[1] + w[2] * r[0] - w[0] * r[2], vz = vb[2] + w[0] * r[1] - w[1] * r[0];
+    if (o.gust) { const g = o.gust(p); vx -= g[0]; vy -= g[1]; vz -= g[2]; }
+    const s = p.s, n = p.n, vs = vx * s[0] + vy * s[1] + vz * s[2];
+    const px = vx - vs * s[0], py = vy - vs * s[1], pz = vz - vs * s[2], Vp = Math.hypot(px, py, pz);
+    if (Vp < 0.5) continue;
+    let a = Math.atan2(-(px * n[0] + py * n[1] + pz * n[2]), -pz);
+    let qd = 0.5 * rho * Vp * Vp, slope, cl0 = 0, dcl = 0, aS, cdi, ge = 1;
+    if (p.kind === 0) {
+      a += p.side * E.gdi * sb;                                   // effective dihedral (wing position, fuselage flow)
+      if (o.hgt) { const h = Math.max(o.hgt(p), 0.3) / P.b; ge = (16 * h * h) / (1 + 16 * h * h); }
+      slope = P.CLa * (1 + 0.06 * (1 - ge));
+      cl0 = P.CL0 + (p.flap ? P.flapCL * o.flapF * E.flapK : 0);
+      dcl = p.ail ? E.ka * o.ail * p.ail : 0;
+      aS = aS0 + 0.03 * p.span01;                                 // washout: the root stalls first, the ailerons keep working
+      cdi = P.K * ge;
+    } else if (p.kind === 1) {
+      a += E.it - eps; slope = E.at; dcl = E.ke * o.elev; aS = 0.32; cdi = 0.09;
+    } else {
+      slope = E.af; dcl = E.kr * o.rud; aS = 0.36; cdi = 0.09;
+    }
+    const over = Math.max(a - aS, -aS - 0.06 - a), st = smoothstep(0, 0.07, over);
+    const lin = cl0 + slope * a + dcl * (1 - 0.5 * st);
+    const CL = lerp(lin, 1.15 * Math.sin(2 * a), st), sa = Math.sin(a);
+    const CD = cdi * lin * lin * (1 - st) + st * 1.25 * sa * sa;
+    // lift is perpendicular to the flow and the span, drag along the flow
+    let lx = s[1] * pz - s[2] * py, ly = s[2] * px - s[0] * pz, lz = s[0] * py - s[1] * px;
+    const ll = Math.hypot(lx, ly, lz) || 1, k = qd * p.S;
+    // the propeller slipstream over the tail makes the elevator and rudder bite harder (taxiing, low speed)
+    const cx = p.kind ? o.dq * p.wash * p.S * dcl * (1 - 0.5 * st) : 0;
+    const fx = k * (CL * lx / ll - CD * px / Vp) + cx * lx / ll, fy = k * (CL * ly / ll - CD * py / Vp) + cx * ly / ll, fz = k * (CL * lz / ll - CD * pz / Vp) + cx * lz / ll;
+    // the aircraft's reference lift curve already includes the tailplane: its lift only turns the aircraft
+    if (p.kind === 1) { F[0] -= k * CD * px / Vp; F[1] -= k * CD * py / Vp; F[2] -= k * CD * pz / Vp; }
+    else { F[0] += fx; F[1] += fy; F[2] += fz; }
+    // pitch: the wing's force is taken at the height of the CG (the reference pitch data already holds the
+    // effect of a high or low wing); roll and yaw use the true position
+    M[0] += (p.kind === 0 ? 0 : r[1]) * fz - r[2] * fy; M[1] += r[2] * fx - r[0] * fz; M[2] += r[0] * fy - r[1] * fx;
+    p.cl = CL; p.st = st; p.a = a;                               // kept for the physics view
+    if (p.kind === 0) { clw += CL * p.S; stw += st * p.S; }
+    if (pass === 0) eps = E.deps * (clw / P.S) / P.CLa;
+  }
+  return { F, M, CLw: clw / P.S, stallW: stw / P.S };
+}
+
 function deriveAircraft(A) {
   const P = A.phys, m = P.mass, g = 9.81;
   const I = [m * (0.18 * P.L) ** 2, m * (0.19 * (P.L + P.b) / 2) ** 2, m * (0.12 * P.b) ** 2];
@@ -2667,9 +2794,11 @@ function deriveAircraft(A) {
     const thrC = TRIM[A.id] ? TRIM[A.id].c_level_0[1] / 100 : 0.65, omC = rpmFor(thrC, Vc) * Math.PI / 30;
     pr.rig = (0.04 + 0.96 * thrC) * E.P / 0.85 / omC * pr.tq / qc;
   }
+  const ac = { ...P, I, prop: prop ? pr : null, // jets: yaw damper / fly-by-wire hides these couplings
+    Cnda: P.Cnda ?? (prop ? -0.1 * P.Clda : 0), Cnp: P.Cnp ?? (prop ? -0.04 : 0), Clr: P.Clr ?? (prop ? 0.06 : 0) };
+  ac.el = buildElements(A, ac);
   return {
-    AC: { ...P, I, prop: prop ? pr : null, // jets: yaw damper / fly-by-wire hides these couplings
-    Cnda: P.Cnda ?? (prop ? -0.1 * P.Clda : 0), Cnp: P.Cnp ?? (prop ? -0.04 : 0), Clr: P.Clr ?? (prop ? 0.06 : 0) }, WHEELS: wheels, WHEEL_BOTTOM: bottom, HARDPTS: hard,
+    AC: ac, WHEELS: wheels, WHEEL_BOTTOM: bottom, HARDPTS: hard,
     TAILSKID: { off: [0, tailSt[3] - tailSt[2], zTail - (zTail - F[0][0]) * 0.1], k: 30 * m, c: 4 * m },
   };
 }
@@ -2817,25 +2946,8 @@ function physicsStep(dt, t) {
   const cl0 = AC.CL0 + AC.flapCL * flapF;
   applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0);
 
-  // --- aerodynamics (body frame) ---
   const F = [0, 0, 0];
-  const over = Math.max(alpha - aS, (-aS - 0.06) - alpha);
-  const stallW = smoothstep(0, 0.07, over);
-  const hx = Math.max(agl + 1.3, 0.3) / AC.b, ge = (16 * hx * hx) / (1 + 16 * hx * hx);
-  const clLin = cl0 + AC.CLa * alpha * (1 + 0.06 * (1 - ge));
-  const CL = lerp(clLin, 1.15 * Math.sin(2 * alpha), stallW);
-  const mach = V / atm.a;
-  const CD = AC.CD0 + 0.02 * flapF + 0.05 * flapF * flapF + AC.CDgear * s.gearPos
-    + AC.K * clLin * clLin * (1 - stallW) * ge + stallW * 1.25 * Math.sin(alpha) ** 2 + 0.6 * beta * beta
-    + (AC.wave ? 0.035 : 0.08) * smoothstep(AC.wave ? 0.88 : 0.78, AC.wave ? 1.12 : 0.95, mach);
-  s.CL = CL; s.CD = CD; s.liftN = CL * qd * AC.S; s.dragN = CD * qd * AC.S; s.ge = ge;
-  if (V > 0.3) {
-    const iv = 1 / V, L = CL * qd * AC.S, D = CD * qd * AC.S;
-    const ln = Math.hypot(vb[1], vb[2]) || 1;
-    F[0] += -vb[0] * iv * D + qd * AC.S * AC.CYb * beta;
-    F[1] += (-vb[2] / ln) * L - vb[1] * iv * D;
-    F[2] += (vb[1] / ln) * L - vb[2] * iv * D;
-  }
+  const mach = V / atm.a, EL = AC.el;
   // --- engines ---
   let T;
   if (jet) {
@@ -2862,20 +2974,13 @@ function physicsStep(dt, t) {
   // density altitude: the ISA altitude that has this air density
   s.densAlt = (1 - Math.pow(Math.min(atm.sigma, 1.2), 0.234969)) * 44330.8;
   F[2] -= T;
-  // --- moments (pilot convention: roll right, pitch up, yaw right) ---
+  // --- moments that are not from the lifting pieces (pilot convention: roll right, pitch up, yaw right) ---
   const p = -s.w[2], qq = s.w[0], r = -s.w[1];
   const hv = 0.25 * rho * V;
   const elevEff = clamp(s.elev + s.trim, -1, 1);
-  const Mp = qd * AC.S * AC.c * (AC.Cm0 + AC.Cma * Math.sin(alpha) - (AC.CmStall ?? 0.10) * stallW * Math.sign(alpha))
-    + qdc * AC.S * AC.c * AC.Cmde * elevEff + hv * AC.S * AC.c * AC.c * AC.Cmq * qq;
-  // roll damping reverses in a stall (autorotation) but saturates, which gives a bounded spin
-  const pAuto = p - 1.7 * stallW * 1.5 * Math.tanh(p / 1.5);
-  // dihedral effect grows in a stall: a slipping/skidding stall drops a wing (spin entry)
-  let Lr = qd * AC.S * AC.b * (AC.Clda * s.ail + AC.Clb * (1 + 3 * stallW) * Math.sin(beta)) + hv * AC.S * AC.b * AC.b * (AC.Clp * pAuto + AC.Clr * r);
-  if (stallW > 0.15) Lr += qd * AC.S * AC.b * 0.03 * stallW * perlin(t * 0.8, 12.5);
-  // yaw: weathervane, adverse yaw (aileron drag and roll rate), and the propeller's left-turning
-  // tendencies (slipstream swirl + P-factor, minus the fin offset that cancels them at cruise)
-  let Nx = qd * AC.S * AC.b * AC.Cnda * s.ail + hv * AC.S * AC.b * AC.b * AC.Cnp * p, Rl = 0, Ng = 0;
+  // yaw: the propeller's left-turning tendencies (slipstream swirl + P-factor, minus the fin offset that
+  // cancels them at cruise) and what the pieces don't produce of adverse yaw
+  let Nx = qd * AC.S * AC.b * EL.dCnda * s.ail + hv * AC.S * AC.b * AC.b * EL.dCnp * p, Rl = 0, Ng = 0;
   if (AC.prop) {
     const Pr = AC.prop, Tp = Math.max(T, 0);
     s.nProp = -(Tp * (Pr.a0 + Pr.a1 * clamp(alpha, -0.1, 0.35))) + Pr.fin * qd;
@@ -2884,7 +2989,6 @@ function physicsStep(dt, t) {
     Rl = -(s.shaftP || 0) / om * Pr.tq + Pr.rig * qd;                                          // engine torque reaction (partly rigged out): rolls left
     Ng = Pr.Ip * om * qq;                                                    // gyroscopic precession: pitch up -> yaw right
   }
-  Lr += Rl;
   // automatic rudder (ball kept centred) for the assist and for keyboard pilots who want it
   const autoR = s.assistOn || (typeof game !== 'undefined' && game.autoRud);
   const rAuth = Math.max(qdc * AC.S * AC.b * AC.Cndr, 1);
@@ -2896,7 +3000,31 @@ function physicsStep(dt, t) {
   }
   s.rudAuto = autoR ? clamp(-(Nx + Ng) / rAuth + 1.5 * beta + yd, -1, 1) * (s.onGround && V < 8 ? V / 8 : 1) : 0;
   const rudEff = clamp(s.rud + s.rudAuto, -1, 1);
-  const Nr = qd * AC.S * AC.b * AC.Cnb * Math.sin(beta) + qdc * AC.S * AC.b * AC.Cndr * rudEff + hv * AC.S * AC.b * AC.b * AC.Cnr * r + Nx + Ng;
+  // --- aerodynamics: the lifting pieces ---
+  const upB = qrot(qi, [0, 1, 0]), hCG = s.pos[1] - ground.h;
+  // turbulence varies across the span and along the fuselage: bumps that roll and pitch the aircraft
+  const gA = (typeof SCHOOL !== 'undefined' && SCHOOL.active && SCHOOL.wind ? SCHOOL.gust : 1) * Math.min(1, Math.max(agl, 0) / 300 + 0.4) * 0.9 * smoothstep(3, 40, agl);
+  const gW = perlin(t * 0.9, 23.1) * gA / (AC.b / 2), gT = perlin(t * 0.7, 41.9) * gA * 0.2;
+  const ae = aeroElements(EL, AC, vb, s.w, rho, {
+    flapF, elev: elevEff, ail: s.ail, rud: rudEff, dq: jet ? 0 : 240 * s.thr * Math.sqrt(AC.mass / 1000),
+    hgt: pc => hCG + pc.r[0] * upB[0] + pc.r[1] * upB[1] + pc.r[2] * upB[2],
+    gust: pc => { const g = pc.kind === 0 ? gW * pc.r[0] : pc.kind === 1 ? gT : 0; return [upB[0] * g, upB[1] * g, upB[2] * g]; },
+  });
+  const stallW = ae.stallW;
+  const hx = Math.max(agl + 1.3, 0.3) / AC.b, ge = (16 * hx * hx) / (1 + 16 * hx * hx);
+  // drag of everything that doesn't lift (fuselage, gear, flaps' profile drag, sideslip, compressibility)
+  const CDp = AC.CD0 + 0.02 * flapF + 0.05 * flapF * flapF + AC.CDgear * s.gearPos + 0.6 * beta * beta
+    + (AC.wave ? 0.035 : 0.08) * smoothstep(AC.wave ? 0.88 : 0.78, AC.wave ? 1.12 : 0.95, mach);
+  F[0] += ae.F[0] + qd * AC.S * EL.dCY * beta; F[1] += ae.F[1]; F[2] += ae.F[2];
+  if (V > 0.3) { const k = qd * AC.S * CDp / V; F[0] -= vb[0] * k; F[1] -= vb[1] * k; F[2] -= vb[2] * k; }
+  { const ln = Math.hypot(vb[1], vb[2]) || 1, qs = Math.max(qd * AC.S, 1e-6);
+    s.liftN = (ae.F[1] * -vb[2] + ae.F[2] * vb[1]) / ln; s.dragN = -(F[0] * vb[0] + F[1] * vb[1] + (F[2] + T) * vb[2]) / Math.max(V, 1e-3);
+    s.CL = ae.CLw; s.CD = s.dragN / qs; s.ge = ge; }
+  const Mp = ae.M[0] + qd * AC.S * AC.c * (AC.Cm0 + EL.dCma * Math.sin(alpha) + EL.dCmF * flapF)
+    + hv * AC.S * AC.c * AC.c * EL.dCmq * qq;
+  let Lr = -ae.M[2] + hv * AC.S * AC.b * AC.b * (EL.dClp * p + EL.dClr * r) + Rl;
+  if (stallW > 0.15) Lr += qd * AC.S * AC.b * 0.012 * stallW * perlin(t * 1.3, 12.5);          // buffet
+  const Nr = -ae.M[1] + hv * AC.S * AC.b * AC.b * EL.dCnr * r + Nx + Ng;
   const Tb = [Mp, -Nr, -Lr];
 
   // --- ground contact (world frame) ---
@@ -8756,14 +8884,15 @@ BOOK.push({ n: 12, id: 'simg', t: '第 12 章　このシミュレータでの�
   { id: 'simg.phys', t: 'このシミュレータが計算していること・いないこと', h: `
 <p>このシミュレータの物理計算は、練習機ヒバリ（セスナ 172 クラスを参考にした架空の機体）について、次の性能が実機の公表値に近くなるよう調整しています（計測値）：失速速度 49 kt（フラップ 30° で 40 kt）、海面の上昇率 約 750 fpm（Vy 73 kt）、滑空比 約 9、離陸滑走 約 680 ft（向かい風 6 kt）。</p>
 <h3>計算していること</h3>
-<ul><li>国際標準大気（気温・気圧・密度）と気温の設定、密度高度による翼・エンジン・プロペラの性能変化</li><li>迎え角による揚力と失速、地面効果、フラップ、荷重倍数</li>
-<li>有害抗力と誘導抗力、プロペラの効率（低速で悪い）、止まったプロペラの抗力</li><li>左偏向傾向（後流・P ファクター・トルク・ジャイロ効果）、逆ヨー、横滑り、上反角効果、失速時の片翼の落ち込み（スピンの入り口まで。完全に発達したスピンは再現できておらず、スパイラル降下になりやすい）</li>
-<li>地表付近の風の弱まり（ウインドシア）と突風、横風、タイヤと地面の摩擦、ブレーキ</li><li>ピトー静圧・ジャイロ計器の故障（訓練課目）</li></ul>
+<p><b>翼の計算方法（ブレードエレメント法）</b>：X-Plane や MSFS と同じ考え方で、主翼を左右 8 本ずつの細い帯、水平尾翼と垂直尾翼をいくつかの部分に分け、それぞれが受ける風（機体の動き・回転・横滑り・主翼の吹き下ろし・プロペラ後流・地面効果・その場所の乱気流）から、部分ごとに揚力・抗力・失速を計算して合計しています。<kbd>J</kbd> キーの図の下に、各部分の揚力が棒グラフで出ます（赤＝その部分が失速）。安定性や舵の効きの基本値は、機体ごとの基準データと一致するように自動調整しています。</p>
+<ul><li>国際標準大気（気温・気圧・密度）と気温の設定、密度高度による翼・エンジン・プロペラの性能変化</li><li>迎え角による揚力と失速（翼の付け根から先に失速し、補助翼は最後まで効く）、失速時に機首が下がる動き、地面効果（片翼ごと）、フラップ、荷重倍数</li>
+<li>有害抗力と誘導抗力、プロペラの効率（低速で悪い）、止まったプロペラの抗力</li><li>左偏向傾向（後流・P ファクター・トルク・ジャイロ効果）、逆ヨー、横滑り、上反角効果、回転による左右の翼の迎え角の差（ロールの減衰・自転）、失速時の片翼の落ち込み（スピンの入り口。曲技機ツバメでは回転が続きやすいが、練習機ではスパイラル降下になりやすい）</li>
+<li>地表付近の風の弱まり（ウインドシア）と突風（翼幅方向にも変わるので、突風で機体が揺れて傾く）、横風、タイヤと地面の摩擦、ブレーキ</li><li>電気系統・燃料の消費・ミクスチャー・マグネトー・エンジン始動（コックピットの計器盤）</li><li>ピトー静圧・ジャイロ計器の故障（訓練課目）</li></ul>
 <h3>計算していない・簡略化していること</h3>
-<ul><li>発達したスピン（回転を続ける状態）</li><li>燃料の消費による重量・重心の変化、重量重心の設定</li><li>エンジンの温度・混合比・キャブレターアイス・マグネトー</li><li>着氷、雷雨、山岳波、後方乱気流</li><li>計器の誤差（北旋誤差・高度計の気温誤差など）</li><li>操縦桿の力の感触（キーボード・ゲームパッドのため）</li></ul>
+<ul><li>練習機の完全に発達したスピン（回転を続ける状態）</li><li>燃料の消費による重量・重心の変化、重量重心の設定</li><li>エンジンの温度（シリンダー温度・油温）、キャブレターアイス</li><li>着氷、雷雨、山岳波、後方乱気流</li><li>計器の誤差（北旋誤差・高度計の気温誤差など）</li><li>操縦桿の力の感触（キーボード・ゲームパッドのため）</li></ul>
 ${bk.warn('このシミュレータは、国の認定を受けた訓練装置（FTD）ではありません。訓練時間には数えられず、実機の手順・数値は必ずその機体の POH と教官の指導に従ってください。')}
 <h3>学習に役立つ機能</h3>
-<table class="bk-t"><tr><td>J キー</td><td>物理の見える化（4 つの力、迎え角、荷重倍数、密度高度、必要なラダー）</td></tr><tr><td>U キー</td><td>自動ラダーの ON／OFF（OFF で本物同様に右ラダーが必要）</td></tr><tr><td>I キー</td><td>アナログ 6 計器 ⇄ グラス計器</td></tr><tr><td>K キー</td><td>6 計器の下に「読み方」を表示</td></tr><tr><td>メニュー「気温」</td><td>寒い日・標準・暑い日で密度高度を変える</td></tr><tr><td>PS5 コントローラー</td><td>左スティックが操縦桿、R2/L2 がスロットル、右スティックがラダーとトリム。一覧はガイドの「操作と中立」</td></tr><tr><td>Esc → 🤖 AI 教官</td><td>一時停止中や教科書を読んでいるときに質問できる（claude.ai 上で開いたとき。計器の値や読んでいる節をふまえて答える）</td></tr></table>` },
+<table class="bk-t"><tr><td>J キー</td><td>物理の見える化（4 つの力、迎え角、荷重倍数、密度高度、必要なラダー、翼の部分ごとの揚力と失速）</td></tr><tr><td>U キー</td><td>自動ラダーの ON／OFF（OFF で本物同様に右ラダーが必要）</td></tr><tr><td>I キー</td><td>アナログ 6 計器 ⇄ グラス計器</td></tr><tr><td>K キー</td><td>6 計器の下に「読み方」を表示</td></tr><tr><td>メニュー「気温」</td><td>寒い日・標準・暑い日で密度高度を変える</td></tr><tr><td>PS5 コントローラー</td><td>左スティックが操縦桿、R2/L2 がスロットル、右スティックがラダーとトリム。一覧はガイドの「操作と中立」</td></tr><tr><td>Esc → 🤖 AI 教官</td><td>一時停止中や教科書を読んでいるときに質問できる（claude.ai 上で開いたとき。計器の値や読んでいる節をふまえて答える）</td></tr></table>` },
 ] });
 // =====================================================================
 //  AI INSTRUCTOR: a question box available while reading the textbook
@@ -11200,7 +11329,7 @@ function drawStatusStrip(g, x, y, sc) {
 }
 // "physics made visible": the four forces on a side view plus the numbers behind them (J key)
 function drawPhysView(g, W, H, sc, att) {
-  const s = sim, k = Math.min(sc, 1.1), PW = 300, PH = 318;
+  const s = sim, k = Math.min(sc, 1.1), PW = 300, PH = 400;
   g.save(); g.translate(W - 16 - PW * k, 206); g.scale(k, k);
   rr(g, 0, 0, PW, PH, 8); g.fillStyle = 'rgba(8,14,24,0.84)'; g.fill(); g.strokeStyle = 'rgba(150,176,206,0.35)'; g.lineWidth = 1; g.stroke();
   g.fillStyle = COL.cyan; g.font = `700 12px ${UI}`; g.textAlign = 'left'; g.textBaseline = 'middle';
@@ -11244,6 +11373,18 @@ function drawPhysView(g, W, H, sc, att) {
     g.fillStyle = col; g.font = `700 11px ${MONO}`; g.fillText(b, 92, y);
     g.fillStyle = COL.muted; g.font = `10px ${UI}`; g.fillText(c, 158, y);
   });
+  // the wing seen from behind: lift of every strip (blade elements); red where that strip has stalled
+  const pcs = AC.el ? AC.el.pcs.filter(p => p.kind === 0) : [], y0 = 386, half = 124;
+  g.textAlign = 'left'; g.fillStyle = COL.muted; g.font = `10px ${UI}`;
+  g.fillText('翼の各部分の揚力（後ろから見た図・赤＝失速）', 10, 322);
+  g.strokeStyle = 'rgba(160,190,220,0.5)'; g.lineWidth = 1; g.beginPath(); g.moveTo(cx - half - 6, y0); g.lineTo(cx + half + 6, y0); g.stroke();
+  const tip = ACFT.wing.tipX, bw = half / EL_N * 0.8;
+  for (const p of pcs) {
+    const x = cx + p.r[0] / tip * half, h = clamp((p.cl || 0) * 36, -24, 56), st = p.st || 0;
+    g.fillStyle = st > 0.5 ? COL.red : st > 0.05 ? COL.amber : COL.green;
+    g.fillRect(x - bw / 2, h >= 0 ? y0 - h : y0, bw, Math.abs(h));
+  }
+  g.fillStyle = COL.muted; g.textAlign = 'center'; g.fillText('左翼', cx - half + 14, y0 + 9); g.fillText('右翼', cx + half - 14, y0 + 9);
   g.restore();
 }
 function drawMinimap(g, W, H, touch, att) {

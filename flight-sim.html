@@ -2501,13 +2501,17 @@ function deriveAircraft(A) {
     const Vc = A.v.cruise / 1.94384, qc = 0.5 * 1.225 * Vc * Vc, CLc = m * g / (qc * P.S), ac = (CLc - P.CL0) / P.CLa;
     const Tc = (P.CD0 + (P.CDgear || 0) * (A.gear.fixed ? 1 : 0) + P.K * CLc * CLc) * qc * P.S;
     pr.Vd = Vc * 1.2;                                   // prop efficiency peaks a little above cruise
-    pr.a0 = 0.012 * P.b; pr.a1 = 0.2 * P.b;             // slipstream / P-factor lever arms (m, m per rad)
+    pr.a0 = 0.012 * P.b; pr.a1 = 0.15 * P.b;            // slipstream / P-factor lever arms (m, m per rad)
     pr.fin = Tc * (pr.a0 + pr.a1 * ac) / qc;            // fin offset yaw per unit dynamic pressure (N m / Pa)
     pr.Ip = 2.5 * E.P / 92000;                          // propeller polar moment of inertia (kg m^2)
+    pr.tq = 0.12 * Math.min(1, 92000 / E.P);                                       // share of engine torque felt as a rolling moment
+    // wing/aileron rigging cancels the torque at cruise power; being aerodynamic it scales with dynamic pressure
+    const thrC = TRIM[A.id] ? TRIM[A.id].c_level_0[1] / 100 : 0.65, omC = Math.min(700 + 1950 * thrC + 9 * Vc, 2750) * Math.PI / 30;
+    pr.rig = (0.04 + 0.96 * thrC) * E.P / 0.85 / omC * pr.tq / qc;
   }
   return {
     AC: { ...P, I, prop: prop ? pr : null, // jets: yaw damper / fly-by-wire hides these couplings
-    Cnda: P.Cnda ?? (prop ? -0.1 * P.Clda : 0), Cnp: P.Cnp ?? (prop ? -0.04 : 0), Clr: P.Clr ?? (prop ? 0.1 : 0) }, WHEELS: wheels, WHEEL_BOTTOM: bottom, HARDPTS: hard,
+    Cnda: P.Cnda ?? (prop ? -0.1 * P.Clda : 0), Cnp: P.Cnp ?? (prop ? -0.04 : 0), Clr: P.Clr ?? (prop ? 0.06 : 0) }, WHEELS: wheels, WHEEL_BOTTOM: bottom, HARDPTS: hard,
     TAILSKID: { off: [0, tailSt[3] - tailSt[2], zTail - (zTail - F[0][0]) * 0.1], k: 30 * m, c: 4 * m },
   };
 }
@@ -2701,7 +2705,7 @@ function physicsStep(dt, t) {
     s.nProp = -(Tp * (Pr.a0 + Pr.a1 * clamp(alpha, -0.1, 0.35))) + Pr.fin * qd;
     Nx += s.nProp;
     const om = Math.max(s.rpm, 300) * Math.PI / 30;
-    Rl = -(s.shaftP || 0) / om * 0.5;                                          // engine torque reaction (partly rigged out): rolls left
+    Rl = -(s.shaftP || 0) / om * Pr.tq + Pr.rig * qd;                                          // engine torque reaction (partly rigged out): rolls left
     Ng = Pr.Ip * om * qq;                                                    // gyroscopic precession: pitch up -> yaw right
   }
   Lr += Rl;

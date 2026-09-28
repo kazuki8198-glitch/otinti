@@ -554,6 +554,25 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
         <p>キーを<b>押している間だけ</b>操縦桿（操縦かん）が動き、<b>離すと中央（中立）に戻ります</b>。スマホでは左下のスティックから指を離すと中立です。計器パネル右の「操縦桿の位置」で、点が中心で緑になっていれば中立です。</p>
         <p><b>操縦アシスト ON</b>（おすすめ）：中立にすると、機体は自動で翼を水平にし、上昇も降下もしない水平飛行に戻ります。傾けたいときは押し続け、戻したいときは離すだけ。</p>
         <p><b>操縦アシスト OFF</b>：本物の飛行機と同じで、中立にしても傾きや機首の向きは<b>そのまま残ります</b>。水平に戻すには反対方向のキーを少し押します。困ったら <kbd>L</kbd>（スマホは「水平」ボタン）で自動的に水平飛行に戻せます。</p>
+        <h3>PS5 コントローラー（DualSense）</h3>
+        <p>USB ケーブルか Bluetooth でパソコンにつなぎ、ボタンをどれか押すと認識されます（Chrome・Edge 推奨）。</p>
+        <table class="gt">
+          <tr><td>左スティック</td><td>操縦桿（手前に倒すと機首上げ、左右で傾ける）。中央付近は遊びがあり、倒すほど強く効く</td></tr>
+          <tr><td>右スティック 左右</td><td>ラダー（L1／R1 でも可）</td></tr>
+          <tr><td>右スティック 上下／方向キー ↑↓</td><td>トリム（上＝機首下げ、下＝機首上げ）。アシスト OFF のとき</td></tr>
+          <tr><td>R2 ／ L2</td><td>スロットルを上げる／下げる（深く押すほど速く動く）</td></tr>
+          <tr><td>×</td><td>ブレーキ（押している間）。チェックリストでは「次へ」</td></tr>
+          <tr><td>○ ／ □</td><td>フラップを 1 段下げる／上げる</td></tr>
+          <tr><td>△</td><td>カメラ切替</td></tr>
+          <tr><td>クリエイト</td><td>脚（ギア）の上げ下げ</td></tr>
+          <tr><td>オプション</td><td>一時停止／再開（一時停止メニューから AI 教官も開ける）</td></tr>
+          <tr><td>方向キー ← ／ →</td><td>地図／アナログ計器⇔グラス計器</td></tr>
+          <tr><td>L3（左スティック押し込み）</td><td>水平に戻す（アシスト）</td></tr>
+          <tr><td>R3（右スティック押し込み）</td><td>自動ラダー ON／OFF</td></tr>
+          <tr><td>タッチパッド</td><td>物理の見える化（チュートリアル中は「次へ」）</td></tr>
+          <tr><td>管制の復唱（訓練中）</td><td>□ ＝ 1 番、○ ＝ 2 番、△ ＝ 3 番の答え</td></tr>
+          <tr><td>メニュー・教科書・課程表</td><td>方向キー／左スティックで選ぶ、× で決定、○ で戻る</td></tr>
+        </table>
         <h3>キーボード</h3>
         <table class="gt">
           <tr><td><kbd>S</kbd> / <kbd>↓</kbd></td><td>機首を上げる（上昇）。操縦桿を手前に引くのと同じ</td></tr>
@@ -2602,10 +2621,12 @@ function trimFor(V, flapF, n = 1, rho = 1.225) {
 
 // Flight assist (fly-by-wire): stick left/right = bank angle, stick fore/aft = climb angle.
 // Letting go of the stick levels the wings and returns to level flight.
+// direct (no assist): pitch/roll = control deflection per unit of stick. Pitch is scaled up at low
+// airspeed so that the same stick input gives a similar pitch response at every speed.
 const SENS = {
-  low: { direct: 0.45, bank: 30, gamma: 8 },
-  mid: { direct: 0.7, bank: 45, gamma: 12 },
-  high: { direct: 1.0, bank: 60, gamma: 18 },
+  low: { direct: 0.45, pitch: 0.16, roll: 0.36, bank: 30, gamma: 8 },
+  mid: { direct: 0.7, pitch: 0.26, roll: 0.55, bank: 45, gamma: 12 },
+  high: { direct: 1.0, pitch: 0.42, roll: 0.85, bank: 60, gamma: 18 },
 };
 function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
   const sens = SENS[game.sens] || SENS.low;
@@ -2615,8 +2636,13 @@ function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
   s.assistOn = (game.assist || leveling || auto) && airborne && !s.crashed;
   if (!s.assistOn) {
     s.gI = 0;
-    const k = sens.direct;
-    s.elev = s.pIn * (s.onGround ? Math.max(k, 0.9) : k); s.ail = s.rIn * k;   // full elevator available for rotation
+    const vr = ACFT.v.cruise / 1.94384, spd = Math.max(V, 12);
+    const kp = sens.pitch * clamp(Math.pow(vr / spd, 1.5), 0.6, 5), kr = sens.roll * clamp(vr / spd, 0.7, 2.5);
+    // full elevator for rotation, blended out over the first seconds after lift-off
+    const kg = s.onGround ? 0.55 : s.airTime < 3 ? 0.55 * (1 - s.airTime / 3) : 0;
+    // gentle around the centre, but a full input still reaches full deflection (stalls, flare, spin recovery)
+    const shape = (x, k) => { k = Math.min(k, 1); return k * x + (1 - k) * Math.sign(x) * Math.pow(Math.abs(x), 5); };
+    s.elev = clamp(shape(s.pIn, Math.max(kp, kg)), -1, 1); s.ail = clamp(shape(s.rIn, kr), -1, 1);
     return;
   }
   const r = qrot(s.q, [1, 0, 0]), up = qrot(s.q, [0, 1, 0]);
@@ -7790,7 +7816,7 @@ BOOK.push({ n: 12, id: 'simg', t: '第 12 章　このシミュレータでの�
 <ul><li>発達したスピン（回転を続ける状態）</li><li>燃料の消費による重量・重心の変化、重量重心の設定</li><li>エンジンの温度・混合比・キャブレターアイス・マグネトー</li><li>着氷、雷雨、山岳波、後方乱気流</li><li>計器の誤差（北旋誤差・高度計の気温誤差など）</li><li>操縦桿の力の感触（キーボード・ゲームパッドのため）</li></ul>
 ${bk.warn('このシミュレータは、国の認定を受けた訓練装置（FTD）ではありません。訓練時間には数えられず、実機の手順・数値は必ずその機体の POH と教官の指導に従ってください。')}
 <h3>学習に役立つ機能</h3>
-<table class="bk-t"><tr><td>J キー</td><td>物理の見える化（4 つの力、迎え角、荷重倍数、密度高度、必要なラダー）</td></tr><tr><td>U キー</td><td>自動ラダーの ON／OFF（OFF で本物同様に右ラダーが必要）</td></tr><tr><td>I キー</td><td>アナログ 6 計器 ⇄ グラス計器</td></tr><tr><td>K キー</td><td>6 計器の下に「読み方」を表示</td></tr><tr><td>メニュー「気温」</td><td>寒い日・標準・暑い日で密度高度を変える</td></tr><tr><td>Esc → 🤖 AI 教官</td><td>一時停止中や教科書を読んでいるときに質問できる（claude.ai 上で開いたとき。計器の値や読んでいる節をふまえて答える）</td></tr></table>` },
+<table class="bk-t"><tr><td>J キー</td><td>物理の見える化（4 つの力、迎え角、荷重倍数、密度高度、必要なラダー）</td></tr><tr><td>U キー</td><td>自動ラダーの ON／OFF（OFF で本物同様に右ラダーが必要）</td></tr><tr><td>I キー</td><td>アナログ 6 計器 ⇄ グラス計器</td></tr><tr><td>K キー</td><td>6 計器の下に「読み方」を表示</td></tr><tr><td>メニュー「気温」</td><td>寒い日・標準・暑い日で密度高度を変える</td></tr><tr><td>PS5 コントローラー</td><td>左スティックが操縦桿、R2/L2 がスロットル、右スティックがラダーとトリム。一覧はガイドの「操作と中立」</td></tr><tr><td>Esc → 🤖 AI 教官</td><td>一時停止中や教科書を読んでいるときに質問できる（claude.ai 上で開いたとき。計器の値や読んでいる節をふまえて答える）</td></tr></table>` },
 ] });
 // =====================================================================
 //  AI INSTRUCTOR: a question box available while reading the textbook
@@ -8153,6 +8179,9 @@ function doAction(a) {
   } else if (a === 'flaps') {
     if (!ACFT.wing.flap) { toast('この機体にはフラップがありません', 1600); return; }
     s.flapIdx = (s.flapIdx + 1) % 4; toast('フラップ ' + FLAP_DEG[s.flapIdx] + '°', 1200); audio.blip(520, 0.06, 'square', 0.05);
+  } else if (a === 'flapsUp') {
+    if (!ACFT.wing.flap) return;
+    s.flapIdx = Math.max(0, s.flapIdx - 1); toast('フラップ ' + FLAP_DEG[s.flapIdx] + '°', 1200); audio.blip(440, 0.06, 'square', 0.05);
   } else if (a === 'cam') cycleCamera();
   else if (a === 'hud') { game.hud = !game.hud; }
   else if (a === 'smoke') { s.smoke = !s.smoke; toast(s.smoke ? 'スモーク ON' : 'スモーク OFF', 1200); }
@@ -8269,37 +8298,104 @@ function applyQuality() { props.treeR = game.touch ? 1600 : 2400; props.center =
   }
 })();
 
+// ---------- game controller (PS5 DualSense and other "standard" gamepads) ----------
+// flying: left stick = yoke, right stick X = rudder, right stick Y = trim, R2/L2 = throttle up/down,
+// L1/R1 = rudder, × brake, ○ flaps down, □ flaps up, △ camera, Create gear, Options pause,
+// D-pad ↑↓ trim, ← map, → analog/glass instruments, L3 level wings, R3 auto rudder, touch pad physics view.
+// menus: D-pad / left stick move between buttons, × press, ○ back (Esc).
+const PAD = { known: null, navT: 0, navDir: '', helpShown: false };
+const padVisible = e => !!e && !e.hidden && !e.closest('[hidden]') && e.getClientRects().length > 0;
+function padScreenRoot() {
+  for (const id of ['ai', 'book', 'inst-tut', 'read-quiz', 'sch-quiz', 'sch-debrief', 'sch-pause', 'sch-atc', 'sch-check', 'school', 'guide', 'map-screen', 'result', 'menu', 'tut']) { const e = $(id); if (padVisible(e)) return e; }
+  return null;
+}
+function padNav(dir) {
+  const root = padScreenRoot(); if (!root) return;
+  const els = [...root.querySelectorAll('button, select, input, textarea, [tabindex="0"], summary')].filter(e => !e.disabled && padVisible(e));
+  if (!els.length) return;
+  let i = els.indexOf(document.activeElement);
+  if (i < 0) i = dir > 0 ? -1 : els.length;
+  const n = els[clamp(i + dir, 0, els.length - 1)];
+  n.focus({ preventScroll: false }); n.scrollIntoView({ block: 'nearest' });
+}
+function padKey(code, key) { const t = document.activeElement && document.activeElement !== document.body ? document.activeElement : document.body; t.dispatchEvent(new KeyboardEvent('keydown', { code, key, bubbles: true })); }
+function padInput(dt) {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  const gp = Array.from(pads || []).find(p => p && p.connected);
+  if (!gp) { PAD.known = null; return null; }
+  if (PAD.known !== gp.id) {
+    PAD.known = gp.id;
+    const ps = /dualsense|054c|wireless controller|playstation/i.test(gp.id);
+    toast(`${ps ? 'PS5 コントローラー' : 'コントローラー'}を認識しました。Options で一時停止、操作はガイドの「操作と中立」に${gp.mapping === 'standard' ? '' : '（このブラウザでは配置が標準でないため、一部のボタンが違う場合があります）'}`, 4200);
+  }
+  const s = sim, flying = game.state === 'flying';
+  const dz = (v, z = 0.12) => Math.abs(v || 0) < z ? 0 : (v - Math.sign(v) * z) / (1 - z);
+  const ax = gp.axes, b = i => gp.buttons[i] ? gp.buttons[i].value : 0;
+  const edge = i => { const now = b(i) > 0.5, was = padPrev[i]; padPrev[i] = now; return now && !was; };
+  const out = { stick: false, tr: 0, tp: 0, ty: 0, brake: false };
+  const E = []; for (let i = 0; i < 18; i++) E[i] = edge(i);
+  // menus and dialogs: move focus, press, go back
+  const uiOpen = !flying || (SCHOOL.check || SCHOOL.atc) || (typeof AI !== 'undefined' && AI.open) || (typeof BK !== 'undefined' && BK.open);
+  if (uiOpen && !(flying && (SCHOOL.check || SCHOOL.atc))) {
+    const ly = dz(ax[1], 0.5), lx = dz(ax[0], 0.5);
+    let dir = E[12] || E[14] ? -1 : E[13] || E[15] ? 1 : 0;
+    const held = ly < 0 || lx < 0 ? 'u' : ly > 0 || lx > 0 ? 'd' : '';
+    PAD.navT -= dt;
+    if (held && (held !== PAD.navDir || PAD.navT <= 0)) { dir = held === 'u' ? -1 : 1; PAD.navT = held !== PAD.navDir ? 0.4 : 0.14; }
+    PAD.navDir = held;
+    if (dir) padNav(dir);
+    if (E[0]) { const a = document.activeElement; if (a && a !== document.body && a.click) a.click(); else padNav(1); }
+    if (E[1]) padKey('Escape', 'Escape');
+    if (E[9]) { if (game.state === 'paused') resumeGame(); }
+    if (typeof AI !== 'undefined' && AI.open) return out;
+  }
+  if (!flying) return out;
+  // school dialogs during flight: checklist (× = next) and ATC read-back (□ ○ △ = answers 1 2 3)
+  if (SCHOOL.check && E[0]) checklistNext();
+  if (SCHOOL.atc) { if (E[2]) answerAtc(0); else if (E[1]) answerAtc(1); else if (E[3]) answerAtc(2); }
+  // sticks
+  const lx = dz(ax[0]), ly = dz(ax[1]), rx = dz(ax[2]), ry = dz(ax[3], 0.2);
+  if (lx || ly) { out.stick = true; out.tr = lx; out.tp = ly; }
+  out.ty = clamp(rx + (b(5) - b(4)), -1, 1);
+  if (ry && !game.assist) s.trim = clamp(s.trim + ry * 0.12 * dt, -0.6, 0.6);
+  // throttle on the analogue triggers
+  s.thr = clamp(s.thr + (b(7) - b(6)) * 0.5 * dt, 0, 1);
+  if (b(0) > 0.5 && !SCHOOL.check) out.brake = true;
+  if (!SCHOOL.atc) { if (E[1]) doAction('flaps'); if (E[2]) doAction('flapsUp'); if (E[3]) doAction('cam'); }
+  if (E[8]) doAction('gear');
+  if (E[9]) { pauseGame(); return out; }
+  if (E[12] || E[13]) { if (game.assist) toast('アシスト ON のときはトリムは自動です', 1400); else { s.trim = clamp(s.trim + (E[13] ? 0.02 : -0.02), -0.6, 0.6); toast('トリム ' + (s.trim >= 0 ? '機首上げ ' : '機首下げ ') + Math.abs(Math.round(s.trim * 100)) + '%', 900); } }
+  if (E[14]) doAction('map');
+  if (E[15]) padKey('KeyI', 'i');
+  if (E[10]) doAction('level');
+  if (E[11]) padKey('KeyU', 'u');
+  if (E[17]) { if (game.mode === 'tutorial') tutNext(); else padKey('KeyJ', 'j'); }
+  return out;
+}
+
 function updateControls(dt) {
   const s = sim;
   let tp = (pressedAny('KeyS', 'ArrowDown') ? 1 : 0) - (pressedAny('KeyW', 'ArrowUp') ? 1 : 0);
   let tr = (pressedAny('KeyD', 'ArrowRight') ? 1 : 0) - (pressedAny('KeyA', 'ArrowLeft') ? 1 : 0);
   let ty = (keys.KeyE ? 1 : 0) - (keys.KeyQ ? 1 : 0);
   let analog = false, brake = pressedAny('KeyB', 'Space') || touchIn.brake;
-  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-  const gp = Array.from(pads || []).find(p => p && p.connected);
+  const gp = padInput(dt);
   if (gp) {
-    const dz = v => Math.abs(v) < 0.12 ? 0 : (v - Math.sign(v) * 0.12) / 0.88;
-    const ax = gp.axes;
-    if (Math.abs(dz(ax[0])) + Math.abs(dz(ax[1])) > 0) { tr = dz(ax[0]); tp = dz(ax[1]); analog = true; }
-    if (ax.length > 2 && dz(ax[2])) ty = dz(ax[2]);
-    const b = i => gp.buttons[i] ? gp.buttons[i].value : 0;
-    if (game.state === 'flying') s.thr = clamp(s.thr + (b(7) - b(6)) * 0.6 * dt, 0, 1);
-    const edge = i => { const now = b(i) > 0.5, was = padPrev[i]; padPrev[i] = now; return now && !was; };
-    if (edge(0)) doAction('gear');
-    if (edge(1)) doAction('flaps');
-    if (edge(3)) doAction('cam');
-    if (edge(4)) doAction('smoke');
-    if (edge(9)) { if (game.state === 'flying') pauseGame(); else if (game.state === 'paused') resumeGame(); }
-    if (b(2) > 0.5) brake = true;
+    if (gp.stick) { tr = gp.tr; tp = gp.tp; analog = true; }
+    if (gp.ty) ty = gp.ty;
+    if (gp.brake) brake = true;
   }
   if (touchIn.stickOn) { tr = touchIn.x; tp = touchIn.y; analog = true; }
   if (analog) { const ex = v => Math.sign(v) * Math.pow(Math.abs(v), 1.6); tr = ex(tr); tp = ex(tp); }   // gentle around the centre
   if (game.invert) tp = -tp;
   if (game.state !== 'flying') { tp = tr = ty = 0; }
   // keys move the stick gradually (about 0.7 s to full) and it springs back to the centre (neutral) when released
-  const k = (cur, tgt) => analog ? damp(cur, tgt, 12, dt) : cur + clamp(tgt - cur, -(tgt === 0 ? 3.5 : 1.4) * dt, (tgt === 0 ? 3.5 : 1.4) * dt);
+  // (about 1.5 s to full, with a curve so that short taps make small corrections)
+  const k = (cur, tgt) => analog ? damp(cur, tgt, 12, dt) : cur + clamp(tgt - cur, -(tgt === 0 ? 3.5 : 0.67) * dt, (tgt === 0 ? 3.5 : 0.67) * dt);
   if (game.ap && (tp || tr) && game.state === 'flying') { game.ap = false; toast('操縦したのでオートパイロットを解除しました', 1800); }
-  s.pIn = k(s.pIn, tp); s.rIn = k(s.rIn, tr);
+  const cv = v => Math.sign(v) * Math.pow(Math.abs(v), 1.3);
+  if (analog) { s.pKey = tp; s.rKey = tr; s.pIn = k(s.pIn, tp); s.rIn = k(s.rIn, tr); }
+  else { s.pKey = k(s.pKey || 0, tp); s.rKey = k(s.rKey || 0, tr); s.pIn = cv(s.pKey); s.rIn = cv(s.rKey); }
   if (game.levelT > 0) game.levelT -= dt;
   s.rud = s.rud + clamp(ty - s.rud, -3 * dt, 3 * dt);
   if (game.state === 'flying') {

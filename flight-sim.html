@@ -458,6 +458,10 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
       <label class="chk"><input type="checkbox" id="opt-invert"> ピッチ反転</label>
       <label class="chk"><input type="checkbox" id="opt-sound" checked> サウンド</label>
     </div>
+    <div class="opts">
+      <label class="chk" title="滑走路スタートを、エンジン・電源がすべて OFF の状態から始めます。コックピットの計器盤のスイッチで、本物と同じ手順で始動します（N キーでチェックリスト、Ctrl+E で自動始動）"><input type="checkbox" id="opt-cold"> エンジン停止から始める（始動手順）</label>
+      <label class="chk" title="OFF にすると、高度が上がるにつれてミクスチャー（燃料の濃さ）を自分で薄くする必要があります（ピストン機）"><input type="checkbox" id="opt-automix"> ミクスチャー自動</label>
+    </div>
     <button type="button" class="school-btn" id="open-school">✈ パイロット訓練（フライトスクール）<small>計器の読み方・地上学科（12 科目）から実地試験まで 40 課目・自動採点つき</small></button>
     <button type="button" class="guide-btn" id="open-map">🗺 日本地図を開いて空港を選ぶ（M）</button>
     <button type="button" class="book-btn" id="open-book">📖 教科書：飛行の原理・機体・性能・気象・航法・通信・法規・人間・実技・緊急（全 13 章）</button>
@@ -613,6 +617,10 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
           <tr><td><kbd>M</kbd></td><td>日本地図を開く／閉じる。空港をクリックして目的地や出発地に設定できます</td></tr>
           <tr><td><kbd>O</kbd></td><td>オートパイロット：今の高度を保ち、目的地（なければ今の方位）へ自動で飛ぶ。操縦すると解除</td></tr>
           <tr><td><kbd>Z</kbd></td><td>時間加速 ×1 → ×2 → ×4 → ×8 → ×16 → ×32 → ×64（上空のみ）。長い距離の移動に</td></tr>
+          <tr><td><kbd>N</kbd></td><td>チェックリスト（始動・離陸前・着陸前・停止）。項目が済むと自動で ✓</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>E</kbd></td><td>エンジン自動始動（スイッチを順番に操作します）</td></tr>
+          <tr><td><kbd>.</kbd></td><td>パーキングブレーキ</td></tr>
+          <tr><td>コックピット視点</td><td>計器盤のスイッチ・キー・レバーをクリック／ドラッグで操作。ドラッグで見回す、ホイールでズーム、ダブルクリックで正面。<kbd>Y</kbd> で操縦桿を隠す、<kbd>Shift</kbd>+<kbd>H</kbd> で画面の計器も表示</td></tr>
         </table>
         <h3>スマホ</h3>
         <p>左下のスティックで操縦（下に引くと機首が上がる）、右端の THR スライダーでスロットル、ボタンでギア・フラップ・ブレーキ・水平・カメラを操作します。</p>
@@ -2715,9 +2723,9 @@ function trimFor(V, flapF, n = 1, rho = 1.225) {
 // direct (no assist): pitch/roll = control deflection per unit of stick. Pitch is scaled up at low
 // airspeed so that the same stick input gives a similar pitch response at every speed.
 const SENS = {
-  low: { direct: 0.45, pitch: 0.16, roll: 0.36, bank: 30, gamma: 8 },
-  mid: { direct: 0.7, pitch: 0.26, roll: 0.55, bank: 45, gamma: 12 },
-  high: { direct: 1.0, pitch: 0.42, roll: 0.85, bank: 60, gamma: 18 },
+  low: { direct: 0.45, pitch: 0.16, roll: 0.36, pMax: 0.4, rMax: 0.6, bank: 30, gamma: 8 },
+  mid: { direct: 0.7, pitch: 0.26, roll: 0.55, pMax: 0.55, rMax: 0.8, bank: 45, gamma: 12 },
+  high: { direct: 1.0, pitch: 0.42, roll: 0.85, pMax: 0.75, rMax: 1, bank: 60, gamma: 18 },
 };
 function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
   const sens = SENS[game.sens] || SENS.low;
@@ -2728,12 +2736,17 @@ function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
   if (!s.assistOn) {
     s.gI = 0;
     const vr = ACFT.v.cruise / 1.94384, spd = Math.max(V, 12);
-    const kp = sens.pitch * clamp(Math.pow(vr / spd, 1.5), 0.6, 5), kr = sens.roll * clamp(vr / spd, 0.7, 2.5);
+    // the stick maps to deflection along one smooth, progressive curve (no sudden jump near full travel).
+    // Full stick gives sens.pMax of the elevator at cruise; slower flight allows more, so a flare or a
+    // stall is still possible at low speed.
+    const pMax = Math.min(1, sens.pMax * clamp(vr / spd, 1, 2.6)), rMax = Math.min(1, sens.rMax * clamp(vr / spd, 1, 2));
     // full elevator for rotation, blended out over the first seconds after lift-off
-    const kg = s.onGround ? 0.55 : s.airTime < 3 ? 0.55 * (1 - s.airTime / 3) : 0;
-    // gentle around the centre, but a full input still reaches full deflection (stalls, flare, spin recovery)
-    const shape = (x, k) => { k = Math.min(k, 1); return k * x + (1 - k) * Math.sign(x) * Math.pow(Math.abs(x), 5); };
-    s.elev = clamp(shape(s.pIn, Math.max(kp, kg)), -1, 1); s.ail = clamp(shape(s.rIn, kr), -1, 1);
+    const kg = s.onGround ? 1 : s.airTime < 3 ? 1 - s.airTime / 3 : 0;
+    // the curve is gentle around the centre at cruise, and closer to linear when slow (rotation, flare)
+    const lin = Math.max(clamp(0.45 + (vr / spd - 1) * 0.35, 0.45, 0.8), 0.45 + 0.35 * kg);
+    const shape = (x, a) => a * x + (1 - a) * x * x * x;
+    const kp = Math.max(pMax, kg), kr = rMax;
+    s.elev = clamp(kp * shape(clamp(s.pIn, -1, 1), lin), -1, 1); s.ail = clamp(kr * shape(clamp(s.rIn, -1, 1), 0.45), -1, 1);
     return;
   }
   const r = qrot(s.q, [1, 0, 0]), up = qrot(s.q, [0, 1, 0]);
@@ -2778,9 +2791,9 @@ function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
 
 function physicsStep(dt, t) {
   const s = sim;
-  s.flapDeg += clamp(FLAP_DEG[s.flapIdx] - s.flapDeg, -8 * dt, 8 * dt);
+  if (sysFlapsOK()) s.flapDeg += clamp(FLAP_DEG[s.flapIdx] - s.flapDeg, -8 * dt, 8 * dt);
   if (ACFT.gear.fixed) { s.gearDown = true; s.gearPos = 1; }
-  else if (!(s.onGround && !s.gearDown)) s.gearPos = clamp(s.gearPos + (s.gearDown ? dt : -dt) / 4.5, 0, 1);
+  else if (!(s.onGround && !s.gearDown) && sysGearOK()) s.gearPos = clamp(s.gearPos + (s.gearDown ? dt : -dt) / 4.5, 0, 1);
   const flapF = ACFT.wing.flap ? s.flapDeg / 30 : 0;
   const atm = atmos(s.pos[1]), rho = atm.rho;
   const ground = groundAt(s.pos[0], s.pos[2]);
@@ -2820,17 +2833,17 @@ function physicsStep(dt, t) {
   // --- engines ---
   let T;
   if (jet) {
-    const E = AC.engine, dry = Math.min(s.thr / 0.95, 1);
+    const E = AC.engine, dry = SYS.run ? Math.min(s.thr / 0.95, 1) : 0;
     s.n1 += (dry - s.n1) * Math.min(1, dt / E.spool * (s.n1 < dry ? 1 : 1.6));
     const ab = E.ab && s.thr > 0.95 && s.n1 > 0.9 ? E.ab : 0;
-    T = (E.T * (0.06 + 0.94 * s.n1 * s.n1) + ab) * Math.pow(atm.sigma, 0.7) * (1 - 0.25 * Math.min(mach, 1.2));
+    T = SYS.run ? (E.T * (0.06 + 0.94 * s.n1 * s.n1) + ab) * Math.pow(atm.sigma, 0.7) * (1 - 0.25 * Math.min(mach, 1.2)) : 0;
     s.ab = ab > 0;
   } else {
     // normally aspirated piston power falls faster than density (Gagg-Ferrar); a fixed-pitch prop
     // is least efficient at low speed, and its static thrust falls off as the aircraft accelerates
-    const E = AC.engine, pw = Math.max(0, 1.132 * atm.sigma - 0.132), ua = Math.max(u, 0);
-    s.shaftP = s.dead ? 0 : (0.04 + 0.96 * s.thr) * pw * E.P / 0.85;
-    if (s.dead) T = -0.026 * qd * AC.S * (AC.mass / 1050) ** 0.3;                 // windmilling prop drag
+    const E = AC.engine, pw = Math.max(0, 1.132 * atm.sigma - 0.132) * SYS.pf, ua = Math.max(u, 0), eDead = s.dead || !SYS.run;
+    s.shaftP = eDead ? 0 : (0.04 + 0.96 * s.thr) * pw * E.P / 0.85;
+    if (eDead) T = -0.026 * qd * AC.S * (AC.mass / 1050) ** 0.3;                 // windmilling prop drag
     else {
       const eta = Math.pow(Math.min(1, Math.max(ua, 1) / AC.prop.Vd), 0.35);
       const thrEff = 0.04 + 0.96 * s.thr;
@@ -2957,9 +2970,9 @@ function physicsStep(dt, t) {
   s.stallWarn = !s.onGround && V > 8 && alpha > aS - 0.045;
   s.gLoad = lerp(s.gLoad, yLoad / (AC.mass * 9.81), 0.1);
   s.agl = agl; s.groundH = ground.h; s.vs = s.vel[1];
-  if (jet) s.rpm = s.n1 * 100;
+  if (jet) s.rpm = SYS.run ? s.n1 * 100 : 0;
   else {
-    const rpmT = rpmFor(s.thr, u, Math.max(0, 1.132 * atm.sigma - 0.132), s.dead);
+    const rpmT = SYS.run || s.dead ? rpmFor(s.thr, u, Math.max(0, 1.132 * atm.sigma - 0.132) * SYS.pf, s.dead) * (s.dead ? 1 : SYS.rpmK || 1) : Math.max(sysCrankRpm(), rpmFor(0, u, 1, true));
     s.rpm += (rpmT - s.rpm) * Math.min(1, dt * 1.8);
   }
   s.propAng = (s.propAng + (jet ? 0 : s.rpm) / 60 * Math.PI * 2 * dt) % (Math.PI * 2);
@@ -3756,8 +3769,10 @@ function drawLights() {
   if (!(sim.crashed && game.state !== 'menu')) {
     const rt = qrot(sim.q, [1, 0, 0]), fw = qrot(sim.q, [0, 0, -1]), half = (AC.b || 10) / 2 - 0.2;
     const tip = s => vadd(sim.pos, vscale(rt, half * s)), strobe = (R.time % 1.2) < 0.08 ? 1 : 0;
-    const nav = [...tip(-1), 1, 0.12, 0.1, 0.5, ...tip(1), 0.1, 1, 0.3, 0.5, ...vadd(sim.pos, vscale(fw, -(ACFT.phys.L || 8) * 0.5)), 1, 1, 1, 0.4];
-    if (strobe) nav.push(...tip(-1), 1, 1, 1, 1.2, ...tip(1), 1, 1, 1, 1.2);
+    const up = qrot(sim.q, [0, 1, 0]), nav = SYS.nav ? [...tip(-1), 1, 0.12, 0.1, 0.5, ...tip(1), 0.1, 1, 0.3, 0.5, ...vadd(sim.pos, vscale(fw, -(ACFT.phys.L || 8) * 0.5)), 1, 1, 1, 0.4] : [];
+    if (SYS.beacon && (R.time % 1.1) < 0.12) nav.push(...vadd(vadd(sim.pos, vscale(fw, -(ACFT.phys.L || 8) * 0.42)), vscale(up, ACFT.vstab.y1 || 1.5)), 1, 0.1, 0.05, 1.0);
+    if (SYS.land) nav.push(...vadd(sim.pos, vscale(fw, (ACFT.phys.L || 8) * 0.45)), 1, 0.97, 0.9, 0.9);
+    if (strobe && SYS.strobe) nav.push(...tip(-1), 1, 1, 1, 1.2, ...tip(1), 1, 1, 1, 1.2);
     parts.push(new Float32Array(nav));
   }
   let n = 0; for (const p of parts) n += p.length;
@@ -5554,7 +5569,7 @@ function googUpdate(planes) {
   if (!PLAT.ready) { platInit(); if (!PLAT.ready) return; }
   const f = ++GOOG.frame, eye = R.eye;
   if (GOOG.off == null) { const [la, lo] = worldToGeo(eye[0], eye[2]); GOOG.off = googGuessOff(la, lo); }
-  const K = R.H / (2 * R.tanY), SSE = game.touch ? 28 : game.gfx === 'high' ? 12 : 18, MAXD = 60000 + Math.max(eye[1], 0) * 6;
+  const K = R.H / (2 * R.tanY), SSE = (game.touch ? 28 : game.gfx === 'high' ? 12 : 18) * (GOOG.lodK || 1), MAXD = 60000 + Math.max(eye[1], 0) * 6;
   const out = [], req = [];
   const dist = n => { if (n.planet) return 0; const c = googWorld(n); return Math.max(0, Math.hypot(c[0] - eye[0], c[1] - eye[1], c[2] - eye[2]) - n.r); };
   const vis = n => { if (n.planet) return true; const c = googWorld(n), r = n.r; return boxInFrustum(planes, c[0] - r, c[1] - r, c[2] - r, c[0] + r, c[1] + r, c[2] + r); };
@@ -5699,6 +5714,14 @@ function setupGoogle() {
   $('goog-clear').addEventListener('click', () => { googStop(); GOOG.key = ''; GOOG.on = false; googSave(); inp.value = ''; googStatus(); });
   googStatus();
 }
+// keep the frame rate usable: coarser tiles when frames are slow, finer again when there is headroom
+function googPerf(dt) {
+  if (!GOOG.covering || dt <= 0) return;
+  GOOG.ft = GOOG.ft ? GOOG.ft * 0.96 + dt * 0.04 : dt;
+  GOOG.lodK = GOOG.lodK || 1;
+  if (GOOG.ft > 1 / 26) GOOG.lodK = Math.min(3, GOOG.lodK * 1.008);
+  else if (GOOG.ft < 1 / 45) GOOG.lodK = Math.max(1, GOOG.lodK * 0.996);
+}
 // =====================================================================
 //  VOLUMETRIC CLOUDS: a cumulus layer ray-marched through its thickness.
 //  We draw the surface where the view ray enters the layer (its base
@@ -5806,7 +5829,7 @@ function initVolClouds() {
   }
   VCLOUD.vao = makeVAO([{ loc: 0, size: 2, data: new Float32Array(pts) }], new Uint32Array(idx));
 }
-function volCloudsActive() { return VCLOUD.on && game.gfx !== 'low' && game.clouds !== 'off' && (ENV.cloudCov ?? 0.38) > 0.01; }
+function volCloudsActive() { return VCLOUD.on && !GOOG.covering && game.gfx !== 'low' && game.clouds !== 'off' && (ENV.cloudCov ?? 0.38) > 0.01; }
 // drawn once per depth pass; each pass only keeps the part of the entry surface inside its depth range
 function drawVolClouds(far) {
   if (!volCloudsActive()) return;
@@ -8051,6 +8074,23 @@ ${bk.quiz('g2', '計器のしくみ')}` },
 <h3>灯火</h3>
 <p>航空灯（左翼端＝赤、右翼端＝緑、尾部＝白）、衝突防止灯（赤い回転灯・白いストロボ）、着陸灯、タキシング灯。<b>正面から来る機体の赤と緑の位置関係</b>で、相手の向きがわかります（赤が右に見えたら、相手はこちらを向いている）。</p>
 ${bk.quiz('g11', '機体のシステム')}` },
+  { id: 'sys.vc', t: 'このシミュレーターのコックピットと始動手順', h: `
+<p><kbd>C</kbd> でコックピット視点にすると、計器盤のスイッチ・キー・レバーを<b>マウスでクリック／ドラッグ</b>して操作できます（ドラッグで見回す、ホイールでズーム、ダブルクリックで正面）。メニューの「<b>エンジン停止から始める</b>」にチェックを入れると、電源もエンジンも OFF の状態から始まります。</p>
+<table class="bk-t"><tr><th>場所</th><th>部品</th><th>働き</th></tr>
+<tr><td>下段左の列</td><td>BAT・ALT（GEN）</td><td>主電源と発電機。BAT を入れないとスターターも計器も動かない。ALT を切ると電池だけで飛ぶことになり、やがて電圧が下がる</td></tr>
+<tr><td></td><td>AVIONICS・FUEL PUMP・灯火</td><td>無線・航法機器、電動燃料ポンプ、ビーコン・着陸灯・タキシー灯・航空灯・ストロボ</td></tr>
+<tr><td>左下</td><td>キー（マグネトー）と START</td><td>OFF→R→L→BOTH。START を押し続けるとスターターが回り、1〜2 秒でかかる</td></tr>
+<tr><td></td><td>燃料セレクター</td><td>BOTH／L／R／OFF。OFF や空のタンクを選ぶと、配管に残った分を使い切ったところで止まる</td></tr>
+<tr><td>右下</td><td>THROTTLE・MIXTURE</td><td>黒がスロットル、赤がミクスチャー（燃料の濃さ）。いちばん下（CUT）にするとエンジンが止まる＝正規の止め方</td></tr>
+<tr><td>右上</td><td>エンジン・燃料・電気の計器</td><td>燃料の量と流量、EGT（排気温度）、電圧、電流（＋なら充電中）、警告灯</td></tr></table>
+<h3>ピストン機の始動（ヒバリ・ハヤブサ・ツバメ）</h3>
+<ol><li>パーキングブレーキ SET、燃料セレクター BOTH</li><li>BAT ON、ビーコン ON（「これからプロペラを回す」合図）</li><li>ミクスチャー RICH、スロットルを少し（5〜20%）</li><li>キーを BOTH、START を押し続ける → かかったら離す</li><li>ALT ON（電流計が＋になる）、アビオニクス ON</li></ol>
+<p>離陸前にはキーを R・L に切り替えて<b>回転が少し（50〜150 rpm）下がる</b>ことを確かめます（マグネトー点検）。止まったり大きく下がったりしたら飛びません。</p>
+<h3>ミクスチャーの調整</h3>
+<p>高く上がると空気が薄くなるのに、燃料の量は同じなので混合気が<b>濃すぎ</b>になり、パワーが落ちます。メニューの「ミクスチャー自動」を外すと、自分でミクスチャーを少しずつ絞り、<b>回転（または EGT）がいちばん高くなる所</b>から少し濃い側に合わせる「リーニング」が必要になります。絞りすぎるとエンジンが止まります。降下・着陸前は RICH に戻します。</p>
+<h3>タービン機の始動（カモメ・オオワシ・ハヤテ）</h3>
+<ol><li>BAT ON、ビーコン ON、燃料ポンプ ON、スロットルはアイドル</li><li>ENG START ON：スターターが回転（N2）を上げる</li><li><b>N2 が 18% を超えたら</b>燃料レバーを RUN：点火して回転が上がり、60% で安定</li><li>GEN ON、アビオニクス ON</li></ol>
+<p>燃料を早く入れすぎると本物ではエンジンが過熱（ホットスタート）します。ここでは 18% 未満では点火しません。<kbd>N</kbd> でチェックリスト、<kbd>Ctrl</kbd>+<kbd>E</kbd> で自動始動、<kbd>.</kbd> でパーキングブレーキ。</p>` },
 ] });
 // ---------------------------------------------------------------------
 //  textbook: performance & weight/balance, meteorology, navigation
@@ -8737,6 +8777,589 @@ function setupAI() {
   if (cl && typeof cl.use === 'function') cl.use('sample').then(f => { AI.sample = f || null; if (AI.open) aiStatus(); }, () => { AI.sample = null; if (AI.open) aiStatus(); });
   else AI.sample = null;
 }
+// =====================================================================
+//  AIRCRAFT SYSTEMS (electrical, fuel, engine start) and the 3D VIRTUAL
+//  COCKPIT: an instrument panel you can read and click from the pilot's seat.
+// =====================================================================
+const SYS_KIND = { trainer: 'piston', sport: 'piston', aero: 'piston', twin: 'turbine', airliner: 'turbine', fighter: 'turbine' };
+const FUEL_CAP = { trainer: 145, sport: 200, aero: 110, twin: 1100, airliner: 18000, fighter: 3200 };   // usable fuel, kg
+const SYS = {
+  kind: 'piston', run: true, spin: 1, crank: false, startHeld: false,
+  bat: true, alt: true, avio: true, pump: false, beacon: true, nav: true, strobe: true, land: true, taxi: false,
+  mags: 3, mix: 1, fuelSel: 3, fuelOn: true, start: false, pbrake: false,
+  fuelL: 1, fuelR: 1, cap: 150, batQ: 1, volts: 28, amps: 0, bus: true, gen: true, flow: 0, egt: 0, pf: 1, starvT: 0, crankT: 0, auto: false, msgT: 0,
+};
+// cold: everything off, parked with the engine stopped (a real start procedure)
+function sysReset(cold) {
+  const id = ACFT.id, k = SYS_KIND[id] || 'piston', cap = FUEL_CAP[id] || 150, on = !cold;
+  Object.assign(SYS, {
+    kind: k, run: on, spin: on ? 1 : 0, crank: false, startHeld: false, start: false, auto: false,
+    bat: on, alt: on, avio: on, pump: on && k !== 'piston', beacon: on, nav: on, strobe: on, land: on, taxi: false,
+    mags: on ? 3 : 0, mix: on ? 1 : 0, fuelSel: 3, fuelOn: on, pbrake: cold,
+    cap, rpmK: 1, fuelL: cap * 0.45, fuelR: cap * 0.45, batQ: 0.95, starvT: 0, crankT: 0, pf: 1,
+  });
+  if (cold) { sim.rpm = 0; sim.thr = 0; sim.n1 = 0; } else if (CL.open) clToggle(false);
+  CL.html = ''; sysStep(0);
+}
+const sysPiston = () => SYS.kind === 'piston';
+// flaps are electric in the light aircraft and hydraulic (engine-driven pumps, battery backup) in the others
+function sysFlapsOK() { return SYS.bus || (!sysPiston() && SYS.run); }
+function sysGearOK() { return ACFT.id === 'sport' ? SYS.bus : SYS.run || SYS.bus; }
+// engine sound level: full when running, a slow chug while the starter turns it
+function sysSound() { return SYS.run ? 1 : sysPiston() ? clamp(sim.rpm / 900, 0, 0.6) : SYS.spin * 0.5; }
+// propeller rpm target while the engine is not running (starter, spooling turbine)
+function sysCrankRpm() { return sysPiston() ? (SYS.crank ? 260 : 0) : SYS.spin * 700; }
+function sysStop(why) {
+  if (!SYS.run) return;
+  SYS.run = false;
+  if (game.state === 'flying') toast('エンジン停止：' + why, 3200);
+}
+function sysMsg(t) { if (R.time - SYS.msgT > 2.5) { SYS.msgT = R.time; toast(t, 2600); } }
+function sysStep(dt) {
+  const s = sim, piston = sysPiston();
+  if (SYS.auto) sysAutoStep();
+  // ---- fuel reaching the engine ----
+  const sel = piston ? SYS.fuelSel : 3;
+  const avail = sel === 1 ? SYS.fuelL > 0.01 : sel === 2 ? SYS.fuelR > 0.01 : sel === 3 ? SYS.fuelL + SYS.fuelR > 0.02 : false;
+  SYS.starvT = avail ? 0 : SYS.starvT + dt;
+  const fuelOK = SYS.starvT < 6;                                     // what is left in the lines
+  // ---- electrical ----
+  const gen = SYS.run && SYS.alt && (piston ? s.rpm > 500 : SYS.spin > 0.9);
+  let load = 0;
+  if (SYS.bat || gen) {
+    load = 3 + (SYS.avio ? 7 : 0) + (SYS.beacon ? 2 : 0) + (SYS.nav ? 3 : 0) + (SYS.strobe ? 3 : 0) + (SYS.land ? 8 : 0) + (SYS.taxi ? 6 : 0) + (SYS.pump ? 4 : 0);
+    if (SYS.crank || (SYS.start && !SYS.run)) load += piston ? 140 : 220;
+  }
+  const capAs = (piston ? 35 : 42) * 3600;
+  if (SYS.bat && gen) { const ch = Math.min(30, (1 - SYS.batQ) * 60 + 1.5); SYS.batQ = Math.min(1, SYS.batQ + ch * dt / capAs); SYS.amps = ch; SYS.volts = 28.2; }
+  else if (SYS.bat) { SYS.batQ = Math.max(0, SYS.batQ - load * dt / capAs); SYS.amps = -load; SYS.volts = Math.max(0, 23 + 2 * SYS.batQ - load * 0.012) * (SYS.batQ > 0.03 ? 1 : 0.3); }
+  else { SYS.amps = 0; SYS.volts = 0; }
+  SYS.gen = gen;
+  SYS.bus = SYS.bat && SYS.volts > 18;
+  // ---- engine ----
+  if (piston) {
+    SYS.crank = SYS.startHeld && SYS.bus && SYS.volts > 19;
+    if (SYS.startHeld && !SYS.bus && dt > 0) sysMsg('スターターが回りません：バッテリー（BAT）を ON に');
+    const mixOK = SYS.mix > 0.1;
+    // mixture: the fuel/air ratio for a knob position grows as the air thins; best power is a little rich of peak EGT
+    const sigma = clamp((s.rho || 1.225) / 1.225, 0.3, 1.3);
+    if (game.autoMix && SYS.mix > 0.15) SYS.mix = clamp(Math.sqrt(sigma) * 1.02, 0.2, 1);
+    const r = SYS.mix / Math.sqrt(sigma);
+    let pf = r >= 1 ? 1 - 2.7 * (r - 1) ** 2 : 1 - 3.2 * (1 - r) ** 2;
+    const oneMag = SYS.mags === 1 || SYS.mags === 2;                    // one magneto: slower burn, the rpm drop you check at the run-up
+    if (oneMag) pf *= 0.965;
+    SYS.rpmK = oneMag ? 0.955 : 1;
+    SYS.pf = clamp(pf, 0.3, 1);
+    SYS.egt = SYS.run ? (1150 + 330 * Math.exp(-(((r - 0.93) / 0.2) ** 2))) * (0.62 + 0.38 * s.thr) : Math.max(0, SYS.egt - dt * 25);
+    if (SYS.run) {
+      if (SYS.mags === 0) sysStop('マグネトー（キー）が OFF');
+      else if (!mixOK) sysStop('ミクスチャーがカットオフ（燃料が止まった）');
+      else if (!fuelOK) sysStop('燃料が来ない（燃料セレクター・残量を確認）');
+      else if (r < 0.62) sysStop('混合気が薄すぎる（ミクスチャーを濃く）');
+    } else {
+      const ready = SYS.mags > 0 && mixOK && fuelOK && r > 0.66;
+      SYS.crankT = SYS.crank ? SYS.crankT + dt : 0;
+      if (ready && SYS.crank && SYS.crankT > 1.3) { SYS.run = true; SYS.spin = 1; if (game.state === 'flying') toast('エンジン始動！キーを離して BOTH に（始動ボタンを離す）', 2600); }
+      else if (ready && s.rpm > 700) SYS.run = true;                    // a windmilling propeller restarts it in flight
+      else if (SYS.crank && SYS.crankT > 4 && dt > 0) sysMsg(SYS.mags === 0 ? 'かかりません：キー（マグネトー）を BOTH に' : !mixOK ? 'かかりません：ミクスチャーを RICH（濃く）に' : !fuelOK ? 'かかりません：燃料セレクターを BOTH に' : 'かかりません');
+    }
+    SYS.flow = SYS.run ? (0.25 * (s.shaftP || 0) / 1000 * Math.max(1, r) + 2 * ACFT.phys.engine.P / 96000) : 0;   // kg/h
+  } else {
+    // turbine: the starter spins the core to ~25 %, fuel in above ~18 % lights it, then it accelerates to idle
+    const starter = SYS.start && SYS.bus && SYS.volts > 20;
+    if (SYS.start && !SYS.bus && dt > 0) sysMsg('スタートできません：バッテリー（BAT）を ON に');
+    if (SYS.run) {
+      if (!SYS.fuelOn) sysStop('燃料レバーが CUTOFF');
+      else if (!fuelOK) sysStop('燃料切れ');
+      SYS.spin = 1; if (SYS.start) SYS.start = false;
+    } else {
+      const lit = SYS.fuelOn && fuelOK && SYS.spin > 0.3 && (starter || SYS.spin > 0.45 || s.tas > 120);
+      if (lit) { SYS.spin = Math.min(1, SYS.spin + dt / 11); if (SYS.spin >= 1) { SYS.run = true; SYS.start = false; if (game.state === 'flying') toast('エンジン始動完了（回転が安定）', 2200); } }
+      else if (starter) SYS.spin = Math.min(0.42, SYS.spin + dt / 9);
+      else SYS.spin = Math.max(clamp(s.tas / 400, 0, 0.35), SYS.spin - dt / 14);
+    }
+    SYS.pf = 1;
+    const T = Math.max(sim.thrust || 0, 0);
+    SYS.flow = !SYS.run ? (SYS.fuelOn && SYS.spin > 0.3 ? 40 : 0) * (ACFT.id === 'airliner' ? 3 : 1)
+      : AC.engine.type === 'jet' ? T * (s.ab ? 0.2 : ACFT.id === 'fighter' ? 0.085 : 0.058) / 1 + 150 : 0.33 * ACFT.phys.engine.P / 1000 * (0.12 + 0.88 * s.thr) * 2;
+    SYS.egt = SYS.run ? 520 + 330 * s.thr : SYS.spin * 400;
+  }
+  // ---- burn ----
+  const burn = SYS.flow * dt / 3600;
+  if (burn > 0) {
+    if (sel === 1) SYS.fuelL = Math.max(0, SYS.fuelL - burn);
+    else if (sel === 2) SYS.fuelR = Math.max(0, SYS.fuelR - burn);
+    else { const l = SYS.fuelL > 0, rr_ = SYS.fuelR > 0, k = l && rr_ ? 0.5 : 1; if (l) SYS.fuelL = Math.max(0, SYS.fuelL - burn * k); if (rr_) SYS.fuelR = Math.max(0, SYS.fuelR - burn * k); }
+  }
+  if (SYS.pbrake && !s.onGround) SYS.pbrake = false;
+}
+// automatic start (Ctrl+E): flips the switches in order, like a pilot running the checklist
+function sysAutoStart() {
+  if (SYS.run) { toast('エンジンはもう回っています', 1400); return; }
+  SYS.auto = true; SYS.autoT = R.time; toast('自動始動：チェックリストの順にスイッチを操作します', 2200);
+}
+function sysAutoStep() {
+  const t = R.time - SYS.autoT, s = sim;
+  const seq = sysPiston()
+    ? [() => SYS.bat = true, () => SYS.beacon = true, () => { SYS.fuelSel = 3; if (ACFT.id !== 'trainer') SYS.pump = true; }, () => { SYS.mix = 1; s.thr = Math.max(s.thr, 0.1); }, () => SYS.mags = 3, () => SYS.startHeld = true]
+    : [() => SYS.bat = true, () => SYS.beacon = true, () => SYS.pump = true, () => s.thr = 0, () => SYS.start = true];
+  const i = Math.min(Math.floor(t / 0.6), seq.length - 1); for (let j = 0; j <= i; j++) seq[j]();
+  if (!sysPiston() && SYS.spin > 0.32) SYS.fuelOn = true;
+  if (SYS.run) {
+    SYS.startHeld = false; SYS.alt = true; SYS.avio = true; SYS.nav = true; SYS.auto = false;
+    if (sysPiston()) s.thr = Math.min(s.thr, 0.1);
+  } else if (t > 25) { SYS.auto = false; SYS.startHeld = false; toast('自動始動できませんでした（燃料・バッテリーを確認）', 2600); }
+}
+
+// ---------------------------------------------------------------------
+//  virtual cockpit geometry
+// ---------------------------------------------------------------------
+const CP_LAYOUT = {
+  trainer: { style: 'roof', glass: false, ctl: 'yoke', pw: 1.12, W: 0.58, dz: 0.74, dy: 0.44, roof: 0.36, sill: -0.2 },
+  sport: { style: 'canopy', glass: false, ctl: 'yoke', pw: 1.1, W: 0.6, dz: 0.76, dy: 0.44, roof: 0.34, sill: -0.24 },
+  aero: { style: 'canopy', glass: false, ctl: 'stick', pw: 0.9, W: 0.5, dz: 0.7, dy: 0.45, roof: 0.3, sill: -0.26 },
+  twin: { style: 'roof', glass: true, ctl: 'yoke', pw: 1.3, W: 0.7, dz: 0.86, dy: 0.47, roof: 0.4, sill: -0.18, post: true },
+  airliner: { style: 'roof', glass: true, ctl: 'yoke', pw: 1.5, W: 0.9, dz: 1.0, dy: 0.55, roof: 0.45, sill: -0.16, post: true, pedestal: true },
+  fighter: { style: 'bubble', glass: true, ctl: 'stick', pw: 0.74, W: 0.42, dz: 0.72, dy: 0.46, roof: 0.4, sill: -0.3 },
+};
+const CPIT = { prog: null, tex: null, cv: null, g: null, scale: 1, lastT: -1, dirty: true, hover: null, drag: null, hold: null, tip: '', yoke: true, fov: 70, hinted: false };
+const CP_W = 1024, CP_H = 512;
+const CPANEL_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec2 aUV;
+uniform mat4 uViewProj, uModel;
+out vec2 vUV;
+void main(){ vUV = aUV; gl_Position = uViewProj * uModel * vec4(aPos, 1.0); }`;
+const CPANEL_FS = GLSL_HEAD + `
+in vec2 vUV;
+uniform sampler2D uTex;
+uniform vec3 uLight;
+out vec4 outColor;
+void main(){ vec3 c = texture(uTex, vUV).rgb; outColor = vec4(pow(c, vec3(1.0)) * uLight, 1.0); }`;
+function cpLayout(A) {
+  const L = Object.assign({}, CP_LAYOUT[A.id] || CP_LAYOUT.trainer), e = A.eye;
+  L.ph = L.pw / 2; L.pz = e[2] - L.dz; L.py = e[1] - L.dy; L.top = L.py + L.ph / 2; L.bot = L.py - L.ph / 2;
+  return L;
+}
+function cpBuild(A) {
+  const L = cpLayout(A), e = A.eye, b = new MeshBuilder();
+  const dark = [0.12, 0.13, 0.14], wall = [0.28, 0.28, 0.27], black = [0.045, 0.045, 0.05], frame = [0.17, 0.18, 0.19];
+  const zF = L.pz, zb = e[2] + 1.0, zf = zF - 0.1, sill = e[1] + L.sill, floor = e[1] - 0.95;
+  b.box([0, L.py, zF - 0.135], [L.pw + 0.08, L.ph + 0.06, 0.26], dark);                       // panel housing
+  b.box([0, L.top + 0.03, zF - 0.1], [L.pw + 0.1, 0.05, 0.28], [0.07, 0.07, 0.075]);                    // glareshield
+  b.box([0, L.bot - 0.15, zF - 0.08], [L.pw + 0.08, 0.28, 0.3], dark);                      // lower panel
+  for (const s of [-1, 1]) {
+    b.box([s * L.W, (sill + floor) / 2, (zf + zb) / 2], [0.05, sill - floor, zb - zf], wall);
+    b.cylinder([s * (L.W - 0.02), sill, zf], [s * (L.W - 0.02), sill, zb], 0.035, 0.035, 8, frame);
+  }
+  b.box([0, floor, (zf + zb) / 2], [L.W * 2, 0.04, zb - zf], [0.16, 0.16, 0.17]);
+  if (L.style === 'roof') {
+    const ry = e[1] + L.roof, zr0 = e[2] - 0.3;
+    b.box([0, ry + 0.02, (zr0 + zb) / 2], [L.W * 2 + 0.05, 0.04, zb - zr0], [0.5, 0.5, 0.48]);   // headliner
+    for (const s of [-1, 1]) {
+      b.cylinder([s * (L.pw / 2 + 0.03), L.top + 0.05, zF - 0.28], [s * (L.W - 0.03), ry, zr0], 0.035, 0.035, 8, frame);   // windshield post
+      b.cylinder([s * (L.W - 0.02), sill, e[2] + 0.55], [s * (L.W - 0.02), ry, e[2] + 0.55], 0.04, 0.04, 8, frame);       // door post
+    }
+    b.cylinder([-(L.W - 0.03), ry, zr0], [L.W - 0.03, ry, zr0], 0.04, 0.04, 8, frame);
+    if (L.post) b.cylinder([0, L.top + 0.05, zF - 0.3], [0, ry, zr0], 0.03, 0.03, 8, frame);
+  } else if (L.style === 'canopy') {
+    const zT = e[2] - 0.28, ry = e[1] + L.roof;
+    for (const s of [-1, 1]) b.cylinder([s * (L.pw / 2 + 0.03), L.top + 0.05, zF - 0.3], [s * 0.2, ry, zT], 0.03, 0.03, 8, frame);
+    b.cylinder([-0.2, ry, zT], [0.2, ry, zT], 0.03, 0.03, 8, frame);
+  }
+  if (L.pedestal) {
+    b.box([0, e[1] - 0.62, e[2] - 0.45], [0.34, 0.26, 0.62], dark);
+    b.box([0, e[1] - 0.49, e[2] - 0.45], [0.3, 0.01, 0.56], [0.2, 0.21, 0.22]);
+  }
+  // moving controls
+  const y = new MeshBuilder();
+  if (L.ctl === 'yoke') {
+    y.cylinder([0, 0, -0.3], [0, 0, 0], 0.022, 0.022, 8, [0.55, 0.56, 0.58]);
+    y.cylinder([0, 0, -0.01], [0, 0, 0.03], 0.045, 0.045, 12, black);
+    y.box([0, -0.01, 0.01], [0.3, 0.035, 0.035], black);
+    for (const s of [-1, 1]) y.box([s * 0.16, 0.04, 0.01], [0.04, 0.13, 0.045], black);
+  } else {
+    y.cylinder([0, 0, 0], [0, 0.42, 0], 0.016, 0.014, 8, [0.2, 0.2, 0.22]);
+    y.box([0, 0.47, 0], [0.045, 0.11, 0.05], black);
+    y.cylinder([0, 0, 0], [0, 0.06, 0], 0.07, 0.03, 10, [0.1, 0.1, 0.1]);
+  }
+  const lever = new MeshBuilder();
+  lever.box([0, 0.06, 0], [0.018, 0.12, 0.018], [0.6, 0.6, 0.62]); lever.box([0, 0.13, 0], [0.05, 0.03, 0.03], black);
+  const quad = new Float32Array([-L.pw / 2, L.bot, zF + 0.001, L.pw / 2, L.bot, zF + 0.001, L.pw / 2, L.top, zF + 0.001, -L.pw / 2, L.bot, zF + 0.001, L.pw / 2, L.top, zF + 0.001, -L.pw / 2, L.top, zF + 0.001]);
+  const uv = new Float32Array([0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0]);
+  const pv = makeVAO([{ loc: 0, size: 3, data: quad }, { loc: 1, size: 2, data: uv }]); pv.count = 6;
+  return { L, vao: uploadMesh(b.build()), ctl: uploadMesh(y.build()), lever: uploadMesh(lever.build()), panel: pv };
+}
+function cpActive() { return cam.mode === 'cockpit' && (game.state === 'flying' || game.state === 'paused') && !(sim.crashed); }
+function cpShowOverlay() { return !cpActive() || game.mode === 'tutorial' || (typeof SCHOOL !== 'undefined' && SCHOOL.active) || game.cpHud; }
+function drawCockpit(base) {
+  if (!cpActive()) return;
+  const A = ACFT; if (!A.cp) A.cp = cpBuild(A);
+  const C = A.cp, L = C.L, u = progMesh.u, s = sim, e = A.eye;
+  setCommon(progMesh);
+  gl.uniform1i(u.uLivery, 0); gl.uniform3f(u.uEmissive, 0, 0, 0); gl.uniform1f(u.uAlpha, 1); gl.uniform1f(u.uSpec, 0.05);
+  gl.uniformMatrix4fv(u.uModel, false, base);
+  gl.bindVertexArray(C.vao.vao); gl.drawArrays(gl.TRIANGLES, 0, C.vao.count);
+  if (CPIT.yoke) {
+    let q, p;
+    if (L.ctl === 'yoke') { q = qaxis([0, 0, 1], -s.ail * 0.7); p = [0, L.py - L.ph * 0.12, L.pz + 0.3 + s.elev * 0.08]; }
+    else { q = qmul(qaxis([0, 0, 1], -s.ail * 0.3), qaxis([1, 0, 0], s.elev * 0.3)); p = [A.id === 'fighter' ? 0.3 : 0, e[1] - 0.95, e[2] - 0.38]; }
+    gl.uniformMatrix4fv(u.uModel, false, M4.mul(base, M4.fromQP(q, p)));
+    gl.bindVertexArray(C.ctl.vao); gl.drawArrays(gl.TRIANGLES, 0, C.ctl.count);
+  }
+  if (L.pedestal) for (const dx of [-0.05, 0.05]) {
+    gl.uniformMatrix4fv(u.uModel, false, M4.mul(base, M4.fromQP(qaxis([1, 0, 0], -0.5 + s.thr * 0.9), [dx, e[1] - 0.49, e[2] - 0.45])));
+    gl.bindVertexArray(C.lever.vao); gl.drawArrays(gl.TRIANGLES, 0, C.lever.count);
+  }
+  // instrument panel
+  cpUpdateTex();
+  if (!CPIT.prog) CPIT.prog = makeProgram(CPANEL_VS, CPANEL_FS);
+  const pr = CPIT.prog; setCommon(pr);
+  gl.uniformMatrix4fv(pr.u.uModel, false, base);
+  const day = clamp(ENV.sunDir[1] * 5, 0, 1), night = ENV.night ? 1 : 0;
+  const lv = night ? [0.66, 0.6, 0.55] : [0.5 + 0.42 * day, 0.5 + 0.42 * day, 0.52 + 0.4 * day];
+  gl.uniform3fv(pr.u.uLight, lv);
+  gl.activeTexture(gl.TEXTURE9); gl.bindTexture(gl.TEXTURE_2D, CPIT.tex); gl.uniform1i(pr.u.uTex, 9);
+  gl.bindVertexArray(C.panel.vao); gl.drawArrays(gl.TRIANGLES, 0, 6);
+  gl.activeTexture(gl.TEXTURE0);
+}
+function cpUpdateTex() {
+  const sc = game.gfx === 'high' ? 2 : 1.5;
+  if (!CPIT.cv || CPIT.scale !== sc) {
+    CPIT.scale = sc; CPIT.cv = CPIT.cv || document.createElement('canvas');
+    CPIT.cv.width = Math.round(CP_W * sc); CPIT.cv.height = Math.round(CP_H * sc); CPIT.g = CPIT.cv.getContext('2d');
+    if (!CPIT.tex) CPIT.tex = gl.createTexture();
+    CPIT.dirty = true;
+  }
+  if (!CPIT.dirty && R.time - CPIT.lastT < 1 / 20) return;
+  CPIT.lastT = R.time; CPIT.dirty = false;
+  const g = CPIT.g; g.setTransform(sc, 0, 0, sc, 0, 0);
+  cpDrawPanel(g);
+  gl.activeTexture(gl.TEXTURE9); gl.bindTexture(gl.TEXTURE_2D, CPIT.tex);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, CPIT.cv);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.activeTexture(gl.TEXTURE0);
+}
+
+// ---------------------------------------------------------------------
+//  panel drawing (Canvas 2D) and its clickable hot spots
+// ---------------------------------------------------------------------
+const HS = [];
+function hs(x, y, w, h, tip, o) { HS.push(Object.assign({ x, y, w, h, tip }, o)); }
+const onOff = v => v ? 'ON' : 'OFF';
+function cpText(g, t, x, y, size = 11, col = '#d8dde4', w = 700, align = 'center') { g.font = `${w} ${size}px ${UI}`; g.fillStyle = col; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(t, x, y); }
+function cpSwitch(g, x, y, label, on, tip, fn, red) {
+  rr(g, x - 15, y - 25, 30, 50, 4); g.fillStyle = '#0d0e10'; g.fill();
+  rr(g, x - 11, on ? y - 21 : y - 1, 22, 22, 3); g.fillStyle = on ? (red ? '#d9473f' : '#eceff2') : (red ? '#6e2724' : '#5d6168'); g.fill();
+  g.fillStyle = on ? '#9aa0a8' : '#2c2f33'; g.fillRect(x - 11, on ? y - 1 : y - 21, 22, 2);
+  cpText(g, label, x, y + 36, 10);
+  hs(x - 20, y - 30, 40, 78, () => `${tip}：${onOff(on)}（クリックで切替）`, { click: fn });
+}
+function cpButton(g, x, y, label, lit, tip, o, col = '#f2b33a') {
+  g.beginPath(); g.arc(x, y, 17, 0, 7); g.fillStyle = '#101113'; g.fill();
+  g.beginPath(); g.arc(x, y, 13, 0, 7); g.fillStyle = lit ? col : '#3a3d42'; g.fill();
+  cpText(g, label, x, y + 29, 10);
+  hs(x - 22, y - 22, 44, 62, tip, o);
+}
+function cpAnn(g, x, y, t, on, col = '#f2b33a') {
+  rr(g, x, y, 84, 20, 3); g.fillStyle = on && SYS.bus ? col : '#1a1c1f'; g.fill();
+  cpText(g, t, x + 42, y + 10, 9.5, on && SYS.bus ? '#1a1204' : '#4b4f55');
+}
+function cpBar(g, x, y, w, label, frac, txt, col = '#58e08c', zero = false) {
+  cpText(g, label, x, y, 10, '#9aa4ad', 700, 'left');
+  cpText(g, txt, x + w, y, 11, '#eef2f6', 700, 'right');
+  g.fillStyle = '#0b0c0e'; g.fillRect(x, y + 9, w, 7);
+  if (!SYS.bus && !zero) return;
+  g.fillStyle = col;
+  if (zero) { const c = x + w / 2, d = clamp(frac, -1, 1) * w / 2; g.fillRect(Math.min(c, c + d), y + 9, Math.abs(d), 7); g.fillStyle = '#9aa4ad'; g.fillRect(c - 0.5, y + 7, 1, 11); }
+  else g.fillRect(x, y + 9, w * clamp(frac, 0, 1), 7);
+}
+// vertical lever/knob in a slot: value 0..1, dragged up/down
+function cpSlider(g, x, label, val, col, tip, set, marks) {
+  const y0 = 352, y1 = 482, yy = y1 - (y1 - y0) * val;
+  g.fillStyle = '#0b0c0e'; rr(g, x - 5, y0 - 4, 10, y1 - y0 + 8, 5); g.fill();
+  if (marks) for (const [v, t] of marks) { const my = y1 - (y1 - y0) * v; g.fillStyle = '#6b7179'; g.fillRect(x + 8, my - 0.5, 6, 1); cpText(g, t, x + 16, my, 9, '#8d959e', 600, 'left'); }
+  g.beginPath(); g.arc(x, yy, 13, 0, 7); g.fillStyle = col; g.fill(); g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 1.5; g.stroke();
+  cpText(g, label, x, 498, 10);
+  hs(x - 22, y0 - 16, 44, y1 - y0 + 32, tip, { drag: dv => set(clamp(val - dv / (y1 - y0), 0, 1)), wheel: d => set(clamp(val + d * 0.05, 0, 1)), click: (px, py) => set(clamp((y1 - py) / (y1 - y0), 0, 1)) });
+}
+function cpDrawPanel(g) {
+  HS.length = 0;
+  const s = sim, L = (ACFT.cp || { L: cpLayout(ACFT) }).L, att = attitude(), piston = sysPiston();
+  // panel face
+  const grd = g.createLinearGradient(0, 0, 0, CP_H); grd.addColorStop(0, '#34383e'); grd.addColorStop(1, '#25282c');
+  g.fillStyle = grd; g.fillRect(0, 0, CP_W, CP_H);
+  g.fillStyle = 'rgba(255,255,255,0.04)'; g.fillRect(0, 318, CP_W, 2);
+  if (!L.glass) {
+    const v = sixVals(att);
+    if (!SYS.avio || !SYS.bus) v.nav = Object.assign({}, v.nav, { flag: 'OFF' });
+    GAUGES.compass(g, 240, 17, 90, v);
+    const cols = [92, 240, 388, 536], rows = [110, 258];
+    for (const [k, i, j] of SIX_LAYOUT) {
+      const cx = cols[i], cy = rows[j];
+      g.beginPath(); g.arc(cx, cy, 70, 0, 7); g.fillStyle = '#16181b'; g.fill();
+      GAUGES[k](g, cx, cy, 64, v);
+      if (k === 'tc' && !SYS.bus) { rr(g, cx - 24, cy + 22, 48, 16, 2); g.fillStyle = '#c9362f'; g.fill(); cpText(g, 'OFF', cx, cy + 30, 10, '#fff'); }
+    }
+    cpEngineBox(g, 616, 16, 392, 298);
+  } else {
+    if (SYS.bus) { drawPFD(g, 14, 16, 1.19, att); drawEngine(g, 472, 16, 1.19); }
+    else for (const [x, w] of [[14, 452], [472, 233]]) { rr(g, x, 16, w, 300, 8); g.fillStyle = '#050607'; g.fill(); g.fillStyle = 'rgba(255,255,255,0.05)'; g.beginPath(); g.moveTo(x + w * 0.2, 16); g.lineTo(x + w * 0.45, 16); g.lineTo(x + w * 0.1, 316); g.lineTo(x, 316); g.closePath(); g.fill(); }
+    cpEngineBox(g, 716, 16, 292, 298);
+  }
+  // ---- switch row ----
+  const sw = [['BAT', 'bat', 'バッテリー（主電源）', true], [piston ? 'ALT' : 'GEN', 'alt', piston ? 'オルタネーター（発電機）' : 'ジェネレーター（発電機）', true], ['AVIONICS', 'avio', 'アビオニクス（無線・航法機器）'], ['FUEL PUMP', 'pump', '電動燃料ポンプ'],
+    ['BEACON', 'beacon', 'ビーコン灯（エンジン作動中の合図）'], ['LAND', 'land', '着陸灯'], ['TAXI', 'taxi', 'タキシー灯'], ['NAV', 'nav', '航空灯（翼端の赤・緑）'], ['STROBE', 'strobe', 'ストロボ（衝突防止灯）']];
+  sw.forEach(([lab, key, tip, red], i) => cpSwitch(g, 34 + i * 58, 372, lab, SYS[key], tip, () => { SYS[key] = !SYS[key]; }, red));
+  // ---- engine start controls ----
+  const bx = 34;
+  if (piston) {
+    // ignition key: OFF / R / L / BOTH, and a START button to hold
+    const kx = bx + 8, ky = 462, pos = ['OFF', 'R', 'L', 'BOTH', 'START'], ang = [-2.2, -1.5, -0.8, -0.1, 0.6][SYS.mags];
+    g.beginPath(); g.arc(kx, ky, 20, 0, 7); g.fillStyle = '#101113'; g.fill();
+    pos.forEach((p, i) => { const a = [-2.2, -1.5, -0.8, -0.1, 0.6][i] - Math.PI / 2; cpText(g, p, kx + Math.cos(a) * 34, ky + Math.sin(a) * 26, 8.5, i === SYS.mags ? '#f2b33a' : '#8d959e'); });
+    g.save(); g.translate(kx, ky); g.rotate(ang); g.fillStyle = '#c9ced6'; rr(g, -4, -18, 8, 30, 3); g.fill(); g.restore();
+    hs(kx - 30, ky - 34, 56, 60, () => `マグネトー（キー）：${pos[SYS.mags]}（クリックで OFF→R→L→BOTH）`, { click: () => { SYS.mags = SYS.mags >= 3 ? 0 : SYS.mags + 1; } });
+    cpButton(g, bx + 64, 458, 'START', SYS.crank, '始動（押し続けるとスターターが回る。キーは START 位置）', { hold: true, down: () => { SYS.startHeld = true; }, up: () => { SYS.startHeld = false; } }, '#e0493f');
+    // fuel selector
+    const fx = bx + 124, fy = 456, fp = ['OFF', 'L', 'R', 'BOTH'], fa = [Math.PI / 2, Math.PI, 0, -Math.PI / 2][SYS.fuelSel];
+    g.beginPath(); g.arc(fx, fy, 18, 0, 7); g.fillStyle = '#101113'; g.fill();
+    g.save(); g.translate(fx, fy); g.rotate(fa + Math.PI / 2); g.fillStyle = '#b8bec6'; g.beginPath(); g.moveTo(0, -17); g.lineTo(5, 6); g.lineTo(-5, 6); g.fill(); g.restore();
+    cpText(g, 'FUEL ' + fp[SYS.fuelSel], fx, fy + 31, 9.5, SYS.fuelSel === 0 ? '#e0493f' : '#d8dde4');
+    hs(fx - 24, fy - 24, 48, 62, () => `燃料セレクター：${fp[SYS.fuelSel]}（クリックで BOTH→L→R→OFF）`, { click: () => { SYS.fuelSel = SYS.fuelSel === 3 ? 1 : SYS.fuelSel === 1 ? 2 : SYS.fuelSel === 2 ? 0 : 3; } });
+  } else {
+    cpButton(g, bx + 8, 458, 'ENG START', SYS.start, 'エンジン始動スイッチ（スターターで回転を上げる）', { click: () => { if (!SYS.run) SYS.start = !SYS.start; } }, '#f2b33a');
+    cpSwitch(g, bx + 78, 462, 'FUEL', SYS.fuelOn, '燃料レバー（RUN / CUTOFF）。回転 N2 が 18% を超えてから RUN', () => { SYS.fuelOn = !SYS.fuelOn; });
+    cpText(g, SYS.fuelOn ? 'RUN' : 'CUTOFF', bx + 78, 428, 8.5, SYS.fuelOn ? '#58e08c' : '#e0493f');
+  }
+  cpButton(g, bx + 190, 458, 'PARK BRK', SYS.pbrake, 'パーキングブレーキ（. キー）', { click: () => { SYS.pbrake = !SYS.pbrake; } }, '#e0493f');
+  cpButton(g, bx + 252, 458, 'AP', game.ap, 'オートパイロット（O キー）', { click: () => doAction('ap') }, '#58e08c');
+  cpButton(g, bx + 314, 458, 'CHECK', CL.open, 'チェックリスト（N キー）', { click: () => clToggle() }, '#5fd4ff');
+  cpButton(g, bx + 376, 458, 'AUTO', SYS.auto, '自動始動（Ctrl+E）', { click: () => sysAutoStart() }, '#5fd4ff');
+  cpButton(g, bx + 438, 458, 'VIEW', false, '視点を正面に戻す（ダブルクリックでも）', { click: () => { cam.lookYaw = cam.lookPitch = 0; CPIT.fov = 70; } }, '#5fd4ff');
+  // ---- levers ----
+  const x0 = L.glass ? 600 : 590;
+  cpSlider(g, x0, 'THROTTLE', s.thr, '#1b1c1f', () => `スロットル：${Math.round(s.thr * 100)}%（上下にドラッグ／ホイール）`, v => { s.thr = v; }, [[1, 'FULL'], [0, 'IDLE']]);
+  if (piston) cpSlider(g, x0 + 62, 'MIXTURE', SYS.mix, '#c9362f', () => `ミクスチャー：${Math.round(SYS.mix * 100)}%（${SYS.mix < 0.1 ? 'カットオフ' : SYS.mix > 0.95 ? 'RICH' : '調整中'}${game.autoMix ? '・自動' : ''}）`, v => { SYS.mix = v; }, [[1, 'RICH'], [0, 'CUT']]);
+  const tx = x0 + (piston ? 132 : 70);
+  cpSlider(g, tx, 'TRIM', clamp(0.5 + s.trim / 1.2, 0, 1), '#3a3d42', () => `トリム：${s.trim >= 0 ? '機首上げ' : '機首下げ'} ${Math.abs(Math.round(s.trim * 100))}%`, v => { if (!game.assist) s.trim = clamp((v - 0.5) * 1.2, -0.6, 0.6); else sysMsg('アシスト ON のときはトリムは自動です'); }, [[1, 'UP'], [0.5, '—'], [0, 'DN']]);
+  if (ACFT.wing.flap) {
+    const fx = tx + 76;
+    cpSlider(g, fx, 'FLAPS', s.flapIdx / 3, '#eceff2', () => `フラップ：${FLAP_DEG[s.flapIdx]}°（実際 ${Math.round(s.flapDeg)}°）${sysFlapsOK() ? '' : '・電源なしで動きません'}`, v => { const i = Math.round(v * 3); if (i !== s.flapIdx) { s.flapIdx = i; audio.blip(480, 0.05, 'square', 0.04); } }, [[1, '30'], [2 / 3, '20'], [1 / 3, '10'], [0, 'UP']]);
+    g.fillStyle = '#58e08c'; g.fillRect(fx - 24, 482 - 130 * s.flapDeg / 30 - 1, 8, 2);
+  }
+  const gx = 972;
+  if (!ACFT.gear.fixed) {
+    g.fillStyle = '#0b0c0e'; rr(g, gx - 6, 350, 12, 110, 6); g.fill();
+    const gy = s.gearDown ? 446 : 364;
+    g.beginPath(); g.arc(gx, gy, 14, 0, 7); g.fillStyle = '#eceff2'; g.fill(); g.strokeStyle = '#9aa0a8'; g.stroke();
+    for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(gx - 26, 380 + i * 24, 6, 0, 7); g.fillStyle = s.gearPos >= 1 ? '#58e08c' : s.gearPos > 0 ? '#e0493f' : '#1a1c1f'; g.fill(); }
+    cpText(g, 'GEAR', gx, 480, 10);
+    hs(gx - 36, 346, 60, 146, () => `ギア：${s.gearDown ? 'DOWN' : 'UP'}（クリックで切替）${sysGearOK() ? '' : '・油圧／電源なしで動きません'}`, { click: () => doAction('gear') });
+  } else cpText(g, 'FIXED GEAR', gx - 6, 420, 9, '#6b7179');
+}
+function cpEngineBox(g, x, y, w, h) {
+  const s = sim, piston = sysPiston(), cap = SYS.cap;
+  rr(g, x, y, w, h, 8); g.fillStyle = '#16181b'; g.fill();
+  const ix = x + 14, iw = w - 28;
+  const unit = piston ? 'GAL' : 'KG', k = piston ? 1 / 2.72 : 1;
+  const fq = v => (v * k).toFixed(piston ? 1 : 0);
+  let yy = y + 18;
+  if (!piston) { cpBar(g, ix, yy, iw, 'N2 回転', SYS.run ? 0.6 + 0.4 * s.n1 : SYS.spin * 0.6, (SYS.run ? 60 + 40 * s.n1 : SYS.spin * 60).toFixed(0) + '%', SYS.spin > 0.3 && !SYS.run ? '#f2b33a' : '#58e08c'); yy += 30; }
+  cpBar(g, ix, yy, iw, 'FUEL L 燃料 左', SYS.fuelL / cap * 2, fq(SYS.fuelL) + ' ' + unit, SYS.fuelL < cap * 0.08 ? '#f2b33a' : '#58e08c'); yy += 30;
+  cpBar(g, ix, yy, iw, 'FUEL R 燃料 右', SYS.fuelR / cap * 2, fq(SYS.fuelR) + ' ' + unit, SYS.fuelR < cap * 0.08 ? '#f2b33a' : '#58e08c'); yy += 30;
+  cpBar(g, ix, yy, iw, 'FUEL FLOW 流量', SYS.flow / (piston ? 40 * ACFT.phys.engine.P / 96000 : ACFT.id === 'airliner' ? 6000 : ACFT.id === 'fighter' ? 12000 : 400), piston ? (SYS.flow / 2.72).toFixed(1) + ' GPH' : Math.round(SYS.flow) + ' KG/H', '#5fd4ff'); yy += 30;
+  cpBar(g, ix, yy, iw, piston ? 'EGT 排気温度' : 'ITT タービン温度', piston ? (SYS.egt - 1000) / 600 : SYS.egt / 900, Math.round(SYS.egt) + (piston ? ' °F' : ' °C'), '#f2b33a'); yy += 30;
+  cpBar(g, ix, yy, iw, 'VOLTS 電圧', SYS.volts / 30, SYS.volts.toFixed(1) + ' V', SYS.volts < 25 ? '#f2b33a' : '#58e08c'); yy += 30;
+  cpBar(g, ix, yy, iw, 'AMPS 電流（＋充電／−放電）', SYS.amps / 40, (SYS.amps >= 0 ? '+' : '') + Math.round(SYS.amps) + ' A', SYS.amps >= 0 ? '#58e08c' : '#f2b33a', true); yy += 34;
+  // annunciators
+  const ann = [[piston ? 'OIL PRESS' : 'ENG OUT', !SYS.run, '#e0493f'], ['LOW VOLTS', SYS.volts < 25, '#f2b33a'], [piston ? 'ALT OFF' : 'GEN OFF', !SYS.gen, '#f2b33a'],
+    ['LOW FUEL', SYS.fuelL < cap * 0.08 || SYS.fuelR < cap * 0.08, '#f2b33a'], ['PARK BRK', SYS.pbrake, '#e0493f'], [piston ? 'STARTER' : 'START', SYS.crank || SYS.start, '#5fd4ff']];
+  ann.forEach(([t, on, c], i) => cpAnn(g, ix + (i % 3) * ((iw - 84) / 2), yy + Math.floor(i / 3) * 24, t, on, c));
+}
+
+// ---------------------------------------------------------------------
+//  mouse / touch on the panel
+// ---------------------------------------------------------------------
+function cpHit(clientX, clientY) {
+  if (!cpActive() || !ACFT.cp) return null;
+  const r = glCanvas.getBoundingClientRect(), nx = (clientX - r.left) / r.width * 2 - 1, ny = 1 - (clientY - r.top) / r.height * 2;
+  const d = vnorm(vadd(R.camF, vadd(vscale(R.camR, nx * R.tanX), vscale(R.camU, ny * R.tanY))));
+  const qi = qconj(sim.q), o = qrot(qi, vsub(cam.eye, sim.pos)), db = qrot(qi, d), L = ACFT.cp.L;
+  if (db[2] >= -1e-4) return null;
+  const t = (L.pz + 0.001 - o[2]) / db[2]; if (t <= 0) return null;
+  const px = o[0] + db[0] * t, py = o[1] + db[1] * t;
+  const u = (px + L.pw / 2) / L.pw, v = (L.top - py) / L.ph;
+  if (u < 0 || u > 1 || v < 0 || v > 1) return null;
+  const X = u * CP_W, Y = v * CP_H;
+  for (let i = HS.length - 1; i >= 0; i--) { const h = HS[i]; if (X >= h.x && X <= h.x + h.w && Y >= h.y && Y <= h.y + h.h) return { h, X, Y }; }
+  return { h: null, X, Y };
+}
+function cpPointerDown(e) {
+  const hit = cpHit(e.clientX, e.clientY);
+  if (!hit || !hit.h) return false;
+  const h = hit.h;
+  if (h.hold) { h.down(); CPIT.hold = { id: e.pointerId, h }; }
+  else if (h.drag) CPIT.drag = { id: e.pointerId, h, y: e.clientY, X: hit.X, Y: hit.Y, moved: false };
+  else if (h.click) { h.click(hit.X, hit.Y); audio.blip(700, 0.03, 'square', 0.03); }
+  CPIT.dirty = true;
+  try { glCanvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  return true;
+}
+function cpPointerMove(e) {
+  if (CPIT.drag && CPIT.drag.id === e.pointerId) {
+    const r = glCanvas.getBoundingClientRect(), dv = (e.clientY - CPIT.drag.y) * CP_H / r.height * 1.3;
+    if (Math.abs(dv) > 1) { CPIT.drag.moved = true; CPIT.drag.h.drag(dv); CPIT.drag.y = e.clientY; CPIT.dirty = true; cpUpdateTexNow(); }
+    return true;
+  }
+  if (CPIT.hold && CPIT.hold.id === e.pointerId) return true;
+  const hit = cpHit(e.clientX, e.clientY);
+  CPIT.hover = hit && hit.h ? hit.h : null; CPIT.mx = e.clientX; CPIT.my = e.clientY;
+  glCanvas.style.cursor = CPIT.hover ? (CPIT.hover.drag ? 'ns-resize' : 'pointer') : '';
+  return false;
+}
+function cpUpdateTexNow() { const h = CPIT.drag && CPIT.drag.h; cpUpdateTex(); if (h) { const n = HS.find(x => x.x === h.x && x.y === h.y); if (n) CPIT.drag.h = n; } }
+function cpPointerUp(e) {
+  let used = false;
+  if (CPIT.hold && CPIT.hold.id === e.pointerId) { CPIT.hold.h.up(); CPIT.hold = null; used = true; }
+  if (CPIT.drag && CPIT.drag.id === e.pointerId) { if (!CPIT.drag.moved && CPIT.drag.h.click) CPIT.drag.h.click(CPIT.drag.X, CPIT.drag.Y); CPIT.drag = null; used = true; }
+  if (used) CPIT.dirty = true;
+  return used;
+}
+function cpWheel(e) {
+  if (!cpActive()) return false;
+  const hit = cpHit(e.clientX, e.clientY);
+  if (hit && hit.h && hit.h.wheel) { hit.h.wheel(-Math.sign(e.deltaY)); CPIT.dirty = true; return true; }
+  CPIT.fov = clamp(CPIT.fov * (e.deltaY > 0 ? 1.08 : 0.93), 30, 90);
+  return true;
+}
+function cpHud(g) {
+  if (!cpActive()) { CPIT.hover = null; return; }
+  if (!CPIT.hinted) { CPIT.hinted = true; toast('コックピット：ドラッグで見回す・ホイールでズーム・スイッチやレバーはクリック／ドラッグ・N でチェックリスト', 5200); }
+  if (!CPIT.mx || CPIT.drag) return;
+  const hit = cpHit(CPIT.mx, CPIT.my), h = hit && hit.h;           // re-picked each frame so the text shows the live state
+  if (!h) return;
+  const r = glCanvas.getBoundingClientRect(), t = typeof h.tip === 'function' ? h.tip() : h.tip;
+  g.font = `700 13px ${UI}`;
+  const w = g.measureText(t).width + 18, x = clamp(CPIT.mx - r.left + 14, 6, hud.W - w - 6), y = clamp(CPIT.my - r.top - 34, 6, hud.H - 30);
+  rr(g, x, y, w, 26, 5); g.fillStyle = 'rgba(6,12,22,0.88)'; g.fill(); g.strokeStyle = 'rgba(95,212,255,0.6)'; g.lineWidth = 1; g.stroke();
+  g.fillStyle = '#eef2f6'; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText(t, x + 9, y + 13);
+}
+
+// ---------------------------------------------------------------------
+//  checklists (live: each item ticks itself when the condition is true)
+// ---------------------------------------------------------------------
+const CL = { open: false, tab: 0, el: null, t: 0 };
+function clLists() {
+  const s = sim, V = ACFT.v, piston = sysPiston(), ret = !ACFT.gear.fixed, hasFlaps = !!ACFT.wing.flap;
+  const start = piston ? [
+    ['パーキングブレーキ', 'SET（かける）', () => SYS.pbrake],
+    ['燃料セレクター', 'BOTH', () => SYS.fuelSel === 3],
+    ['BAT（バッテリー）', 'ON', () => SYS.bat],
+    ['ビーコン', 'ON（これから回すという合図）', () => SYS.beacon],
+    ...(ACFT.id !== 'trainer' ? [['燃料ポンプ', 'ON', () => SYS.pump]] : []),
+    ['ミクスチャー', 'RICH（いちばん上）', () => SYS.mix > 0.9 || (game.autoMix && SYS.mix > 0.15)],
+    ['スロットル', '少し開く（5〜20%）', () => s.thr > 0.04 && s.thr < 0.25],
+    ['キー（マグネトー）', 'BOTH', () => SYS.mags >= 3],
+    ['START ボタン', '押し続ける → エンジンがかかったら離す', () => SYS.run],
+    ['ALT（発電機）', 'ON', () => SYS.alt],
+    ['電流計（AMPS）', 'プラス（充電中）', () => SYS.amps > 0],
+    ['アビオニクス', 'ON', () => SYS.avio],
+  ] : [
+    ['パーキングブレーキ', 'SET', () => SYS.pbrake],
+    ['BAT（バッテリー）', 'ON', () => SYS.bat],
+    ['ビーコン', 'ON', () => SYS.beacon],
+    ['燃料ポンプ', 'ON', () => SYS.pump],
+    ['スロットル', 'アイドル', () => s.thr < 0.05],
+    ['ENG START', 'ON（スターターで回す）', () => SYS.start || SYS.run],
+    ['N2 が 18% を超えたら燃料レバー', 'RUN', () => SYS.fuelOn],
+    ['回転が安定（始動完了）', 'N2 60%・ENG OUT 消灯', () => SYS.run],
+    ['GEN（発電機）', 'ON', () => SYS.alt],
+    ['アビオニクス', 'ON', () => SYS.avio],
+  ];
+  const before = [
+    ['エンジン', '作動中', () => SYS.run],
+    ...(piston ? [['マグネトー点検（R・L で回転が少し下がる）', 'BOTH に戻す', () => SYS.mags === 3]] : []),
+    ...(hasFlaps ? [['フラップ', `離陸位置 ${FLAP_DEG[V.toFlaps || 0]}°`, () => s.flapIdx === (V.toFlaps || 0)]] : []),
+    ['トリム', '離陸位置（ほぼ中央）', () => Math.abs(s.trim) < 0.2],
+    ['航空灯・ストロボ・着陸灯', 'ON', () => SYS.nav && SYS.strobe && SYS.land],
+    ['燃料', '残量あり・セレクター BOTH', () => SYS.fuelL + SYS.fuelR > SYS.cap * 0.2 && (!piston || SYS.fuelSel === 3)],
+    ['パーキングブレーキ', '解除', () => !SYS.pbrake],
+  ];
+  const landing = [
+    ...(piston ? [['ミクスチャー', 'RICH', () => SYS.mix > 0.9 || game.autoMix]] : []),
+    ['燃料セレクター', 'BOTH', () => !piston || SYS.fuelSel === 3],
+    ...(ret ? [['ギア', 'DOWN（緑 3 つ）', () => s.gearPos >= 1]] : []),
+    ...(hasFlaps ? [['フラップ', '進入位置', () => s.flapIdx >= (V.apprFlaps || 1)]] : []),
+    ['着陸灯', 'ON', () => SYS.land],
+    ['オートパイロット', 'OFF', () => !game.ap],
+  ];
+  const shutdown = [
+    ['パーキングブレーキ', 'SET', () => SYS.pbrake],
+    ['スロットル', 'アイドル', () => s.thr < 0.05],
+    ['アビオニクス', 'OFF', () => !SYS.avio],
+    ...(piston ? [['ミクスチャー', 'カットオフ（いちばん下）→ 停止', () => SYS.mix < 0.1]] : [['燃料レバー', 'CUTOFF → 停止', () => !SYS.fuelOn]]),
+    ...(piston ? [['キー（マグネトー）', 'OFF', () => SYS.mags === 0]] : []),
+    ['灯火（ビーコン以外）', 'OFF', () => !SYS.land && !SYS.strobe && !SYS.taxi],
+    ['ビーコン', 'OFF（エンジンが止まってから）', () => !SYS.beacon && !SYS.run],
+    ['ALT/GEN・BAT', 'OFF', () => !SYS.alt && !SYS.bat],
+  ];
+  return [['エンジン始動', start], ['離陸前', before], ['着陸前', landing], ['停止', shutdown]];
+}
+function clBuild() {
+  if (CL.el) return;
+  const st = document.createElement('style');
+  st.textContent = `#cl{position:fixed;right:16px;top:208px;width:min(330px,calc(100vw - 32px));max-height:calc(100vh - 230px);overflow:auto;background:rgba(6,12,22,.92);border:1px solid rgba(95,212,255,.35);border-radius:10px;color:#e8f0fa;font:13px "B612","Zen Kaku Gothic New",system-ui,sans-serif;z-index:30;padding:10px 12px}
+#cl h3{margin:0 0 6px;font-size:14px;display:flex;justify-content:space-between;align-items:center}#cl h3 button{background:none;border:0;color:#92a5be;font-size:18px;cursor:pointer}
+#cl .tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}#cl .tabs button{background:#16202e;color:#c8d4e2;border:1px solid #2b3a4e;border-radius:6px;padding:3px 8px;font:inherit;font-size:12px;cursor:pointer}#cl .tabs button.on{background:#5fd4ff;color:#04121c;border-color:#5fd4ff}
+#cl ol{margin:0;padding-left:0;list-style:none}#cl li{display:grid;grid-template-columns:20px 1fr;gap:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)}#cl li b{font-weight:700}#cl li span{color:#92a5be;font-size:12px;display:block}
+#cl li i{font-style:normal;color:#58606b}#cl li.ok i{color:#58e08c}#cl li.ok b{color:#9fb0c2}#cl li.next{background:rgba(95,212,255,.08)}#cl .auto{margin-top:8px;width:100%;background:#1d2a3a;color:#e8f0fa;border:1px solid #3a4b61;border-radius:6px;padding:6px;font:inherit;cursor:pointer}#cl p{margin:6px 0 0;color:#92a5be;font-size:11.5px;line-height:1.5}`;
+  document.head.append(st);
+  const el = document.createElement('div'); el.id = 'cl'; el.hidden = true; document.body.append(el); CL.el = el;
+  el.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.tab) { CL.tab = +b.dataset.tab; clRender(true); }
+    else if (b.dataset.act === 'close') clToggle(false);
+    else if (b.dataset.act === 'auto') sysAutoStart();
+    else if (b.dataset.act === 'cockpit') { cam.mode = 'cockpit'; cam.lookYaw = cam.lookPitch = 0; }
+  });
+}
+function clToggle(v) {
+  clBuild(); CL.open = v === undefined ? !CL.open : v; CL.el.hidden = !CL.open; CPIT.dirty = true;
+  if (CL.open) { if (!SYS.run) CL.tab = 0; clRender(true); }
+}
+function clRender(force) {
+  if (!CL.open || !CL.el) return;
+  if (!force && R.time - CL.t < 0.4) return; CL.t = R.time;
+  const lists = clLists(), [name, items] = lists[CL.tab] || lists[0];
+  let next = items.findIndex(it => !it[2]());
+  const html = [`<h3>チェックリスト（${ACFT.name}）<button data-act="close" aria-label="閉じる">×</button></h3><div class="tabs">`,
+    ...lists.map(([n], i) => `<button data-tab="${i}" class="${i === CL.tab ? 'on' : ''}">${n}</button>`), '</div><ol>',
+    ...items.map(([a, b, f], i) => `<li class="${f() ? 'ok' : i === next ? 'next' : ''}"><i>${f() ? '✓' : i === next ? '▶' : '・'}</i><div><b>${a}</b><span>${b}</span></div></li>`), '</ol>',
+    CL.tab === 0 ? `<button class="auto" data-act="auto">自動で始動する（Ctrl+E）</button>` : '',
+    cam.mode !== 'cockpit' ? `<button class="auto" data-act="cockpit">コックピット視点にする（C）</button>` : '',
+    `<p>スイッチは計器盤の下の列、キーと START は左下、スロットルなどのレバーは右下です。上から順に、▶ の項目を操作すると ✓ が付きます。</p>`].join('');
+  if (html !== CL.html) { CL.el.innerHTML = html; CL.html = html; }
+}
+// per-frame work: systems, checklist, the cockpit field of view
+function cpFrame(dt) {
+  if (game.state === 'flying') sysStep(dt);
+  clRender();
+  if (cam.mode === 'cockpit' && game.state !== 'menu') cam.fov = CPIT.fov;
+}
+addEventListener('keydown', e => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA')) return;
+  if (e.repeat || (game.state !== 'flying' && game.state !== 'paused')) return;
+  if (e.code === 'KeyE' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); keys.KeyE = false; sysAutoStart(); }
+  else if (e.code === 'KeyN' && !e.ctrlKey) clToggle();
+  else if (e.code === 'Period') { SYS.pbrake = !SYS.pbrake; toast(SYS.pbrake ? 'パーキングブレーキ SET' : 'パーキングブレーキ 解除', 1300); }
+  else if (e.code === 'KeyY' && cam.mode === 'cockpit') { CPIT.yoke = !CPIT.yoke; toast(CPIT.yoke ? '操縦桿を表示' : '操縦桿を非表示', 1200); }
+  else if (e.code === 'KeyH' && cam.mode === 'cockpit') game.cpHud = !game.cpHud;
+});
 
 // =====================================================================
 //  GAME: environment, camera, input, audio, particles, HUD, modes, loop
@@ -8761,15 +9384,15 @@ const game = {
   state: 'loading', mode: 'runway', hud: true, invert: false, touch: false, sound: true,
   t: 0, ringIdx: 0, ringTime: 0, ringDone: false, firstTouch: null, landingDone: false,
   warnPull: false, warnGear: false, resultTimer: 0, best: {},
-  assist: true, autoRud: true, clouds: 'normal', gfx: '', sens: 'low', mapId: 'japan', acftId: 'trainer', levelT: 0,
+  cold: false, autoMix: true, cpHud: false, assist: true, autoRud: true, clouds: 'normal', gfx: '', sens: 'low', mapId: 'japan', acftId: 'trainer', levelT: 0,
   depIcao: 'RJTT', destIcao: '', timeScale: 1, ap: false, apAlt: 0, apHdg: 0, track: [], arrived: false,
 };
 try {
   const pr = JSON.parse(localStorage.getItem('sorajima-prefs') || '{}') || {};
-  for (const k of ['assist', 'autoRud', 'clouds', 'gfx', 'sens', 'mapId', 'acftId', 'invert', 'sound', 'depIcao', 'destIcao']) if (pr[k] !== undefined) game[k] = pr[k];
+  for (const k of ['cold', 'autoMix', 'assist', 'autoRud', 'clouds', 'gfx', 'sens', 'mapId', 'acftId', 'invert', 'sound', 'depIcao', 'destIcao']) if (pr[k] !== undefined) game[k] = pr[k];
 } catch (e) { /* storage unavailable */ }
 function savePrefs() {
-  try { localStorage.setItem('sorajima-prefs', JSON.stringify({ assist: game.assist, autoRud: game.autoRud, clouds: game.clouds, gfx: game.gfx, sens: game.sens, mapId: game.mapId, acftId: game.acftId, invert: game.invert, sound: game.sound, depIcao: game.depIcao, destIcao: game.destIcao })); } catch (e) { /* ignore */ }
+  try { localStorage.setItem('sorajima-prefs', JSON.stringify({ cold: game.cold, autoMix: game.autoMix, assist: game.assist, autoRud: game.autoRud, clouds: game.clouds, gfx: game.gfx, sens: game.sens, mapId: game.mapId, acftId: game.acftId, invert: game.invert, sound: game.sound, depIcao: game.depIcao, destIcao: game.destIcao })); } catch (e) { /* ignore */ }
 }
 try { game.best = JSON.parse(localStorage.getItem('sorajima-best') || '{}') || {}; } catch (e) { game.best = {}; }
 function saveBest() { try { localStorage.setItem('sorajima-best', JSON.stringify(game.best)); } catch (e) { /* storage unavailable */ } }
@@ -8831,6 +9454,9 @@ function spawn(mode) {
   s.gLoad = 1; s.agl = 100;
   game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.resultTimer = 0;
   game.ap = false; game.timeScale = 1; game.track = []; game.arrived = false; game.trackT = 0;
+  const cold = !!game.spawnCold && mode === 'runway' && !(typeof SCHOOL !== 'undefined' && SCHOOL.active); game.spawnCold = false;
+  sysReset(cold);
+  if (cold) { cam.mode = 'cockpit'; setTimeout(() => { if (game.state === 'flying' && !SYS.run) { toast('エンジン停止の状態から：N キーのチェックリストに沿って始動しましょう（Ctrl+E で自動始動）', 5000); clToggle(true); } }, 900); }
   if (mode === 'tutorial') tutStart(); else tutHide();
   cam.q = s.q.slice(); cam.flyPos = null; cam.lookYaw = cam.lookPitch = 0;
   cam.dist = Math.max(22, ACFT.cam[2] * 1.4);
@@ -8873,8 +9499,8 @@ function updateCamera(dt) {
   } else if (mode === 'cockpit') {
     const lq = qmul(s.q, qmul(qaxis([0, 1, 0], cam.lookYaw), qaxis([1, 0, 0], cam.lookPitch)));
     eye = vadd(s.pos, qrot(s.q, ACFT.eye));
-    target = vadd(eye, qrot(lq, [0, -0.6, -10]));
-    up = qrot(lq, [0, 1, 0]); fov = 70; near = 0.15;
+    target = vadd(eye, qrot(lq, [0, -1.1, -10]));
+    up = qrot(lq, [0, 1, 0]); fov = CPIT.fov; near = 0.12;
   } else if (mode === 'orbit') {
     const d = cam.dist, p = cam.orbitPitch;
     eye = vadd(s.pos, [Math.sin(cam.orbitYaw) * Math.cos(p) * d, Math.sin(p) * d, Math.cos(cam.orbitYaw) * Math.cos(p) * d]);
@@ -8967,7 +9593,7 @@ addEventListener('keydown', e => {
   if (mapv.open && e.code === 'Escape') { toggleMap(false); return; }
   if (e.code === 'KeyC' && (st === 'flying' || st === 'crashed')) { cycleCamera(); return; }
   const map = { KeyG: 'gear', KeyV: 'flaps', KeyH: 'hud', KeyX: 'smoke', KeyL: 'level', KeyZ: 'time', KeyO: 'ap' };
-  if (map[e.code]) doAction(map[e.code]);
+  if (map[e.code] && !(e.code === 'KeyH' && e.shiftKey)) doAction(map[e.code]);
   if (e.code === 'KeyT') doAction(e.shiftKey ? 'trimReset' : 'trim');
   if (e.code === 'KeyJ' && (st === 'flying' || st === 'paused')) { game.physView = !game.physView; toast(game.physView ? '物理の見える化：揚力・抗力・推力・重力と、その数値を表示' : '物理の見える化を閉じました', 1600); }
   if (e.code === 'KeyU' && st === 'flying') { game.autoRud = !game.autoRud; if ($('opt-autorud')) $('opt-autorud').checked = game.autoRud; savePrefs(); toast(game.autoRud ? '自動ラダー ON（ボールを自動で中央に）' : '自動ラダー OFF：Q / E でボールを中央に保ちます（離陸・上昇は右ラダー）', 2600); }
@@ -8979,11 +9605,13 @@ let dragPt = null;
 glCanvas.addEventListener('pointerdown', e => {
   if (e.pointerType === 'touch') enableTouch();
   if (game.callouts) { hideCallouts(); return; }
+  if (cpPointerDown(e)) return;
   dragPt = { id: e.pointerId, x: e.clientX, y: e.clientY };
   cam.dragging = true;
   try { glCanvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
 });
 glCanvas.addEventListener('pointermove', e => {
+  if (cpPointerMove(e)) return;
   if (!dragPt || dragPt.id !== e.pointerId) return;
   const dx = e.clientX - dragPt.x, dy = e.clientY - dragPt.y;
   dragPt.x = e.clientX; dragPt.y = e.clientY;
@@ -8994,11 +9622,13 @@ glCanvas.addEventListener('pointermove', e => {
     cam.lookPitch = clamp(cam.lookPitch - dy * 0.004, -1.2, 1.2);
   }
 });
-const endDrag = e => { if (dragPt && dragPt.id === e.pointerId) { dragPt = null; cam.dragging = false; } };
+const endDrag = e => { cpPointerUp(e); if (dragPt && dragPt.id === e.pointerId) { dragPt = null; cam.dragging = false; } };
 glCanvas.addEventListener('pointerup', endDrag);
 glCanvas.addEventListener('pointercancel', endDrag);
+glCanvas.addEventListener('dblclick', () => { if (cam.mode === 'cockpit') { cam.lookYaw = cam.lookPitch = 0; CPIT.fov = 70; } });
 glCanvas.addEventListener('wheel', e => {
   e.preventDefault();
+  if (cpWheel(e)) return;
   if (game.state === 'flying') sim.thr = clamp(sim.thr - Math.sign(e.deltaY) * 0.05, 0, 1);
   else if (cam.mode === 'orbit') cam.dist = clamp(cam.dist * (e.deltaY > 0 ? 1.1 : 0.9), 8, 120);
 }, { passive: false });
@@ -9128,7 +9758,7 @@ function updateControls(dt) {
     if (gp.brake) brake = true;
   }
   if (touchIn.stickOn) { tr = touchIn.x; tp = touchIn.y; analog = true; }
-  if (analog) { const ex = v => Math.sign(v) * Math.pow(Math.abs(v), 1.6); tr = ex(tr); tp = ex(tp); }   // gentle around the centre
+  if (analog) { const ex = v => Math.sign(v) * Math.pow(Math.abs(v), 1.2); tr = ex(tr); tp = ex(tp); }   // gentle around the centre
   if (game.invert) tp = -tp;
   if (game.state !== 'flying') { tp = tr = ty = 0; }
   // keys move the stick gradually (about 0.7 s to full) and it springs back to the centre (neutral) when released
@@ -9144,7 +9774,7 @@ function updateControls(dt) {
     if (pressedAny('KeyR', 'PageUp')) s.thr = clamp(s.thr + 0.45 * dt, 0, 1);
     if (pressedAny('KeyF', 'PageDown')) s.thr = clamp(s.thr - 0.45 * dt, 0, 1);
   }
-  s.brake = brake;
+  s.brake = brake || (SYS.pbrake && s.onGround);
   if (game.touch) $('thr-fill').style.height = (s.thr * 100).toFixed(1) + '%';
 }
 
@@ -9184,23 +9814,23 @@ const audio = {
     const f = Math.max(s.rpm, 1) / 60 * 2;
     let near = cam.mode === 'cockpit' ? 1.15 : cam.mode === 'flyby' ? clamp(60 / Math.max(vdist(cam.eye, s.pos), 1), 0.08, 1.2) : 0.85;
     if (game.state === 'menu') near = 0.45;
-    const on_ = live && !s.crashed;
+    const on_ = live && !s.crashed, ef = game.state === 'menu' ? 1 : sysSound();
     if (AC && AC.engine.type === 'jet') {
       const n = s.n1;
       this.o1.frequency.setTargetAtTime(35 + n * 30, t, 0.1); this.o2.frequency.setTargetAtTime(22 + n * 20, t, 0.1);
       this.eF.frequency.setTargetAtTime(200 + n * 300, t, 0.1);
-      this.eG.gain.setTargetAtTime(on_ ? (0.04 + n * 0.1) * near : 0, t, 0.1);
+      this.eG.gain.setTargetAtTime(on_ ? (0.04 + n * 0.1) * near * ef : 0, t, 0.1);
       this.pF.frequency.setTargetAtTime(420 + n * 1400 + (s.ab ? 300 : 0), t, 0.15);
-      this.pG.gain.setTargetAtTime(on_ ? (0.1 + n * 0.35 + (s.ab ? 0.25 : 0)) * near : 0, t, 0.1);
+      this.pG.gain.setTargetAtTime(on_ ? (0.1 + n * 0.35 + (s.ab ? 0.25 : 0)) * near * ef : 0, t, 0.1);
       this.whine.frequency.setTargetAtTime(1400 + n * 2600, t, 0.2);
-      this.jG.gain.setTargetAtTime(on_ ? (0.006 + n * 0.018) * near : 0, t, 0.1);
+      this.jG.gain.setTargetAtTime(on_ ? (0.006 + n * 0.018) * near * ef : 0, t, 0.1);
     } else {
-      const eng = on_ ? (0.07 + s.thr * 0.12) * near : 0;
+      const eng = on_ ? (0.07 + s.thr * 0.12) * near * ef : 0;
       this.o1.frequency.setTargetAtTime(f, t, 0.05); this.o2.frequency.setTargetAtTime(f * 0.5, t, 0.05);
       this.eF.frequency.setTargetAtTime(260 + s.thr * 800 + f * 3, t, 0.1);
       this.eG.gain.setTargetAtTime(eng, t, 0.08);
       this.pF.frequency.setTargetAtTime(80 + f * 2.2, t, 0.1);
-      this.pG.gain.setTargetAtTime(on_ ? (0.12 + s.thr * 0.3) * near : 0, t, 0.1);
+      this.pG.gain.setTargetAtTime(on_ ? (0.12 + s.thr * 0.3) * near * ef : 0, t, 0.1);
       this.jG.gain.setTargetAtTime(0, t, 0.1);
     }
     const v = game.state === 'flying' ? s.tas : 0;
@@ -9428,6 +10058,7 @@ function startMode(mode) {
     ensureRingMesh();
   }
   if (mode === 'tour') mode = 'rings';
+  game.spawnCold = game.cold && mode === 'runway';
   spawn(mode);
   game.state = 'flying';
   $('menu').hidden = true; $('result').hidden = true; $('touch').hidden = !game.touch;
@@ -9579,6 +10210,8 @@ function setupMenu() {
   $('opt-assist').checked = game.assist;
   $('opt-assist').addEventListener('change', e => { game.assist = e.target.checked; savePrefs(); });
   $('opt-autorud').checked = game.autoRud;
+  $('opt-cold').checked = game.cold; $('opt-cold').addEventListener('change', e => { game.cold = e.target.checked; savePrefs(); });
+  $('opt-automix').checked = game.autoMix; $('opt-automix').addEventListener('change', e => { game.autoMix = e.target.checked; savePrefs(); });
   $('opt-autorud').addEventListener('change', e => { game.autoRud = e.target.checked; savePrefs(); });
   $('opt-invert').checked = game.invert;
   $('opt-sound').checked = game.sound;
@@ -9783,7 +10416,7 @@ function shadowUniforms(pr) {
   gl.uniform2f(u.uShadowB, str, 0.12 + above * 0.004);
 }
 function resize() {
-  const dpr = Math.min(window.devicePixelRatio || 1, game.touch ? 1.5 : 1.75);
+  const dpr = Math.min(window.devicePixelRatio || 1, game.touch ? 1.5 : 1.75, GOOG.covering ? 1.25 : 9);
   const w = Math.max(1, Math.round(glCanvas.clientWidth * dpr)), h = Math.max(1, Math.round(glCanvas.clientHeight * dpr));
   if (glCanvas.width !== w || glCanvas.height !== h) { glCanvas.width = w; glCanvas.height = h; }
   const hd = Math.min(window.devicePixelRatio || 1, 2), hc = hud.cv;
@@ -9897,6 +10530,9 @@ function drawScene(planes, far) {
   drawParticles();
   drawPapi();
   gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
+  // the cockpit interior is always the nearest thing: drawn last over a cleared depth buffer, so the
+  // airframe's outer skin (which has no cut-out for the cockpit) can never hide the panel
+  if (!far && showPlane && cpActive()) { gl.clear(gl.DEPTH_BUFFER_BIT); drawCockpit(pm); }
 }
 function drawRings() {
   if (game.mode !== 'rings' || game.state === 'menu') return;
@@ -10055,7 +10691,8 @@ function drawHUD() {
   const sc = clamp(Math.min(W / 1180, H / 700), 0.52, 1.05) * (touch ? 0.86 : 1);
   // flight path marker
   const spd = vlen(s.vel);
-  if (spd > 12 && !s.onGround && !SCHOOL.hood) {
+  const ovl = cpShowOverlay();
+  if (spd > 12 && !s.onGround && !SCHOOL.hood && ovl) {
     const pp = project(vmadd(s.pos, s.vel, 3000 / spd));
     if (pp.w > 0 && Math.abs(pp.nx) < 0.95 && Math.abs(pp.ny) < 0.95) {
       g.strokeStyle = COL.green; g.lineWidth = 2;
@@ -10067,7 +10704,8 @@ function drawHUD() {
   if (game.mode === 'rings' && !game.ringDone) drawRingTarget(g, W, H);
   // PFD & engine panel
   const pfdX = touch ? 12 : 16, pfdY = touch ? 12 : H - 16 - 252 * sc;
-  if (SCHOOL.analog) { const [spW, spH] = sixPackSize(), ss = Math.min(touch ? sc * 0.8 : sc, (H * 0.5) / spH, (W - pfdX - 12) / spW); drawSixPack(g, pfdX, H - 12 - spH * ss, ss, att); if (!touch && !SCHOOL.active) drawTargets(g, pfdX + (spW + 10) * ss, H - 12 - 150 * ss, ss); }
+  if (!ovl) { /* the 3D panel shows the instruments */ }
+  else if (SCHOOL.analog) { const [spW, spH] = sixPackSize(), ss = Math.min(touch ? sc * 0.8 : sc, (H * 0.5) / spH, (W - pfdX - 12) / spW); drawSixPack(g, pfdX, H - 12 - spH * ss, ss, att); if (!touch && !SCHOOL.active) drawTargets(g, pfdX + (spW + 10) * ss, H - 12 - 150 * ss, ss); }
   else {
   drawPFD(g, pfdX, pfdY, sc, att);
   if (!touch) { drawEngine(g, pfdX + 390 * sc, pfdY, sc); drawStick(g, pfdX + 598 * sc, pfdY + 108 * sc, sc); if (!SCHOOL.active) drawTargets(g, pfdX + 742 * sc, pfdY + 108 * sc, sc); }
@@ -10092,6 +10730,7 @@ function drawHUD() {
   if (game.callouts) drawCallouts(g);
   if (JW.active && !SCHOOL.hood) drawPlaceLabels(g, W, H);
   if (game.physView && !touch) drawPhysView(g, W, H, sc, att);
+  cpHud(g);
 }
 function drawRingTarget(g, W, H) {
   const ring = course.rings[game.ringIdx];
@@ -10883,9 +11522,10 @@ function frame(now) {
       if (JW.active) jwFrame(dt * ts);
       if (JW.active && game.state === 'flying') { const hit = cityCollide(); if (hit) crash(hit); }
       if (game.state === 'flying') gameChecks(dt);
+      cpFrame(dt * ts);
       if (SCHOOL.active && game.state === 'flying') schoolUpdate(dt * ts);
       if (game.state === 'flying' && game.mode === 'tutorial') tutUpdate(dt);
-    } else acc = 0;
+    } else { acc = 0; cpFrame(0); }
     if (game.state === 'crashed') {
       game.resultTimer -= dt;
       if (game.resultTimer <= 0 && game.pendingResult) { const r = game.pendingResult; game.pendingResult = null; showResult(r); }
@@ -10894,6 +11534,7 @@ function frame(now) {
     updateCamera(dt);
     if (!JW.active) updateTrees(cam.eye); else { jwUpdateClouds(); cityUpdate(); }
     render();
+    googPerf(dt);
     drawHUD();
     if (mapv.open) drawMapView();
     audio.update(dt);

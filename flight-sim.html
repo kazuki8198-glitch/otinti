@@ -302,6 +302,9 @@ kbd{font:700 11.5px var(--mono);background:rgba(95,212,255,.12);border:1px solid
 #sch-panel{position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);width:min(640px,calc(100% - 24px));background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 14px 10px;z-index:4;pointer-events:none;display:grid;gap:4px}
 #sp-step{font:700 11px var(--jp);color:var(--muted);letter-spacing:.04em}
 #sp-say{font:700 15px/1.5 var(--jp)}
+#sp-guide{font:12.5px/1.55 var(--jp);color:#9fe3ff}
+#sp-guide:empty{display:none}
+.sch-guide{margin:2px 0 6px;color:var(--muted);font-size:12.5px;line-height:1.55}
 #sp-tgt{display:flex;flex-wrap:wrap;gap:6px}
 #sp-tgt span{font:600 12px var(--mono);padding:2px 8px;border-radius:4px;border:1px solid var(--line)}
 #sp-tgt span.ok{border-color:var(--green);color:var(--green)} #sp-tgt span.warn{border-color:var(--amber);color:var(--amber)} #sp-tgt span.ng{border-color:var(--red);color:var(--red)}
@@ -515,7 +518,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
     <div class="sd-foot"><button type="button" class="sch-go" id="sp-resume">訓練に戻る（Esc）</button><button type="button" class="ai-btn" id="sp-ai">🤖 AI 教官に質問</button><button type="button" class="sch-sub" id="sp-retry">最初からやり直す</button><button type="button" class="sch-sub" id="sp-quit">訓練をやめて課程表へ</button></div></div>
 </div>
 <div id="sch-panel" hidden>
-  <div id="sp-step"></div><div id="sp-say"></div><div id="sp-tgt"></div><div class="sp-row"><span id="sp-prog"></span><span id="sp-hint"></span></div>
+  <div id="sp-step"></div><div id="sp-say"></div><div id="sp-guide"></div><div id="sp-tgt"></div><div class="sp-row"><span id="sp-prog"></span><span id="sp-hint"></span></div>
 </div>
 <div id="sch-check" hidden></div>
 <div id="sch-atc" hidden></div>
@@ -5475,18 +5478,80 @@ const QUIZ_TITLE = { g1: '飛行の原理', g2: '計器のしくみ', g3: '気�
 // ---------------------------------------------------------------------
 //  syllabus
 // ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
+//  attitude + power guides. Real instructors give the target (airspeed,
+//  altitude, rate) plus an approximate starting attitude and power, then
+//  teach the student to correct by what the instruments show. The numbers
+//  here come from the flight model's own equations for the current
+//  aircraft, so they stay true when the physics changes.
+// ---------------------------------------------------------------------
+function steadyState(kt, fpm, o = {}) {
+  const P = AC, A = ACFT, atm = atmos((o.altFt ?? 3000) / 3.28084), W = P.mass * 9.81;
+  const flapF = A.wing.flap ? FLAP_DEG[o.flaps || 0] / 30 : 0, gear = A.gear.fixed ? 1 : (o.gear ? 1 : 0);
+  const V = kt / 1.94384 / Math.sqrt(atm.sigma), q = 0.5 * atm.rho * V * V, n = 1 / Math.cos((o.bank || 0) * DEG);
+  const cl0 = P.CL0 + P.flapCL * flapF;
+  const pw = Math.max(0, 1.132 * atm.sigma - 0.132);
+  const thrust = thr => {
+    if (thr === 'dead') return -0.026 * q * P.S * (P.mass / 1050) ** 0.3;
+    if (P.engine.type === 'jet') return P.engine.T * (0.06 + 0.94 * Math.min(thr / 0.95, 1) ** 2) * Math.pow(atm.sigma, 0.7);
+    const eta = Math.pow(Math.min(1, V / P.prop.Vd), 0.35);
+    return (0.04 + 0.96 * thr) * pw * Math.min(P.engine.T0 * (1 - 0.25 * Math.min(V / P.prop.Vd, 1)), eta * P.engine.P / V) - (1 - thr) * 2.5 * V * P.mass / 1000;
+  };
+  const forces = g => { const CL = n * W * Math.cos(g) / (q * P.S), a = (CL - cl0) / P.CLa, CD = P.CD0 + 0.02 * flapF + 0.05 * flapF * flapF + (P.CDgear || 0) * gear + P.K * CL * CL; return { a, D: CD * q * P.S, CL }; };
+  let g, thr = null;
+  if (o.pwr === 'full' || o.pwr === 'idle' || o.pwr === 'dead') {
+    const T = thrust(o.pwr === 'full' ? 1 : o.pwr === 'idle' ? 0 : 'dead');
+    g = 0; for (let i = 0; i < 30; i++) { const f = forces(g); g = Math.asin(clamp((T - f.D) / W, -0.9, 0.9)); }
+    thr = o.pwr === 'full' ? 1 : 0;
+  } else {
+    g = Math.asin(clamp(fpm / 196.85 / V, -0.9, 0.9));
+    const need = forces(g).D + W * Math.sin(g);
+    let lo = 0, hi = 1; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (thrust(m) < need) lo = m; else hi = m; }
+    thr = (lo + hi) / 2; if (thrust(1) < need) thr = 1.01;          // 1.01: not reachable
+  }
+  const f = forces(g), pitch = (g + f.a) / DEG * Math.cos((o.bank || 0) * DEG);
+  const dead = o.pwr === 'dead';
+  return { thr, pitch, fpm: Math.sin(g) * V * 196.85, aoa: f.a / DEG, rpm: P.engine.type === 'jet' ? null : rpmFor(dead ? 0 : Math.min(thr, 1), V, pw, dead), ok: thr <= 1 };
+}
+const r5 = x => Math.round(x / 5) * 5, r50 = x => Math.round(x / 50) * 50;
+const pitchTxt = p => { const v = Math.round(p); return v === 0 ? 'ほぼ水平（0°）' : `機首${v > 0 ? '上げ' : '下げ'} 約 ${Math.abs(v)}°`; };
+const aiRef = p => { const a = Math.abs(p); return a < 1.5 ? '姿勢指示器の小さな飛行機を水平線に合わせる' : `姿勢指示器で小さな飛行機が水平線の${p > 0 ? '上' : '下'}${a < 7 ? `、横線（10°）の半分${a < 4 ? 'より手前' : 'くらい'}` : a < 12 ? '、横線 1 本（10°）くらい' : '、横線 1 本より先'}`; };
+function pwrTxt(ss, o) {
+  if (o.pwr === 'dead') return 'エンジン停止（プロペラは風で回るだけ）';
+  if (o.pwr === 'full') return `スロットル全開${ss.rpm ? `（約 ${r50(ss.rpm).toLocaleString()} rpm）` : ''}`;
+  if (o.pwr === 'idle') return `スロットル アイドル${ss.rpm ? `（約 ${r50(ss.rpm).toLocaleString()} rpm）` : ''}`;
+  return `スロットル 約 ${r5(ss.thr * 100)}%${ss.rpm ? `（約 ${r50(ss.rpm).toLocaleString()} rpm）` : ''}`;
+}
+// o: {kt, fpm, pwr:'full'|'idle'|'dead', flaps, bank, how}. `how` picks the correction advice.
+function guideText(o, L) {
+  const ss = steadyState(o.kt, o.fpm || 0, Object.assign({ altFt: L && L.alt0 }, o));
+  if (!ss.ok) return `目安：この機体ではスロットル全開でも ${o.kt} kt・${o.fpm} fpm は出せません。速度を優先してください。`;
+  const how = {
+    climbFull: '速度が速ければ機首を 1〜2° 上げ、遅ければ下げる。出力は全開のまま（速度は機首で合わせる）',
+    level: '高度が 50 ft ずれたら機首を 1〜2° 動かして戻す。速度のずれはスロットル（R/F）で直し、落ち着いたらトリム（T）',
+    rate: '昇降率のずれは出力で、速度のずれは機首で直す。目標高度の 10% 手前からレベルオフ',
+    glide: '速度が速ければ機首を上げ、遅ければ下げる。出力で直せないので速度は機首だけで保つ',
+    turn: '高度が下がり始めたら機首を少し上げる。沈みが止まらなければバンクを少し浅くしてから引く',
+    approach: 'PAPI が白 3〜4（高い）ならパワーを少し絞り、赤 3〜4（低い）なら足す。速度のずれは機首で直す',
+    slow: '低速では速度は機首、高度はパワー。高度が下がればパワーを足し、速度が落ちれば機首を下げる',
+    pattern: 'このままでは低くなりそうならパワーを足し、高くなりそうなら絞る。速度のずれは機首で直す',
+    ils: '横の針が下（自分が高い）ならパワーを少し絞り、上（低い）なら足す。縦の針の方へ 2〜5° ずつ針路を直す。速度のずれは機首で',
+  }[o.how || 'level'];
+  const rate = o.pwr ? `（昇降率 約 ${o.pwr === 'full' ? '+' : ''}${r50(ss.fpm).toLocaleString()} fpm）` : '';
+  return `目安：${pwrTxt(ss, o)}・${pitchTxt(ss.pitch)}${rate}${o.bank ? `・バンク ${o.bank}°` : ''}${o.flaps ? `・フラップ ${FLAP_DEG[o.flaps]}°` : ''}。${aiRef(ss.pitch)}。直し方：${how}。`;
+}
 // target helpers: [value (number or function of lesson state), tolerance]
 const T_ALT = (tol = 100) => [L => L.alt0, tol], T_HDG = (tol = 10) => [L => L.hdg0, tol], T_SPD = (kt, tol = 10) => [kt, tol];
 function stepSL(name, secs, kt = 100, extra = {}) {
-  return Object.assign({ name, say: `直線水平飛行：高度 ${'{alt0}'} ft・針路 {hdg0}°・${kt} kt を保つ（${secs} 秒）`, tgt: { alt: T_ALT(), hdg: T_HDG(), spd: T_SPD(kt) }, dur: secs, grade: true }, extra);
+  return Object.assign({ name, g: { kt, how: 'level' }, say: `直線水平飛行：高度 ${'{alt0}'} ft・針路 {hdg0}°・${kt} kt を保つ（${secs} 秒）`, tgt: { alt: T_ALT(), hdg: T_HDG(), spd: T_SPD(kt) }, dur: secs, grade: true }, extra);
 }
 function stepTurn(dir, bank, name, extra = {}) {
-  const side = dir < 0 ? '左' : '右';
+  const side = dir < 0 ? '左' : '右', kt = extra.tgt && extra.tgt.spd ? extra.tgt.spd[0] : 100;
   return [
-    Object.assign({ name, say: `${side}へバンク ${bank}° で 360° 旋回。高度を保つ（引き起こしとパワーで沈みを防ぐ）`, tgt: { alt: T_ALT(), abank: [bank, 5] }, gradeWhen: (c, L, st) => Math.abs(st.turned) > 25 && Math.abs(st.turned) < 330,
+    Object.assign({ name, g: { kt, bank, how: 'turn' }, say: `${side}へバンク ${bank}° で 360° 旋回。高度を保つ（引き起こしとパワーで沈みを防ぐ）`, tgt: { alt: T_ALT(), abank: [bank, 5] }, gradeWhen: (c, L, st) => Math.abs(st.turned) > 25 && Math.abs(st.turned) < 330,
       until: (c, L, st) => Math.abs(st.turned) >= 345, max: 150, grade: true, onStart: (L, c, st) => { st.dir = dir; },
       check: (c, L, st) => { if (Math.sign(st.turned || dir) !== dir && Math.abs(st.turned) > 20) st.note = '旋回方向が逆です'; } }, extra),
-    { name: `${name}：ロールアウト`, say: `開始時の針路 {hdg0}° で翼を水平に戻す`, tgt: { hdg: T_HDG(), alt: T_ALT() }, until: (c, L, st) => Math.abs(c.bank) < 5 && st.t > 2, max: 15, grade: true, gradeFinal: true },
+    { name: `${name}：ロールアウト`, g: { kt, how: 'level' }, say: `開始時の針路 {hdg0}° で翼を水平に戻す`, tgt: { hdg: T_HDG(), alt: T_ALT() }, until: (c, L, st) => Math.abs(c.bank) < 5 && st.t > 2, max: 15, grade: true, gradeFinal: true },
   ];
 }
 const SYLLABUS = [
@@ -5497,45 +5562,45 @@ const SYLLABUS = [
       std: '高度 ±150 ft を 30 秒', setup: { at: 'area', kt: 100 },
       steps: [
         { name: '姿勢の確認', say: '操縦桿を離して、姿勢指示器と昇降計を観察しよう（10 秒）', dur: 10 },
-        { name: 'トリムで手放し水平飛行', say: 'W/S で高度を保ち、昇降計が 0 付近で T キー（トリム）。手を離して高度 {alt0} ft を保つ', tgt: { alt: T_ALT(150) }, dur: 40, grade: true, gradeWhen: (c, L, st) => st.t > 10 },
+        { name: 'トリムで手放し水平飛行', g: { kt: 100, how: 'level' }, say: 'W/S で高度を保ち、昇降計が 0 付近で T キー（トリム）。手を離して高度 {alt0} ft を保つ', tgt: { alt: T_ALT(150) }, dur: 40, grade: true, gradeWhen: (c, L, st) => st.t > 10 },
       ] },
     { id: 'b2', title: '直線水平飛行', goal: '高度・針路・速度を同時に保つ', brief: ['視線は「外 8 割、計器 2 割」。姿勢の基準は窓の外の水平線、確認は計器。', '高度が 50 ft ずれたら 1〜2°、機首を上げ下げして戻す。速度はスロットル（R/F）で。', '計器の見方：姿勢 → 高度計 → 姿勢 → 方位 → 姿勢 → 速度…と、姿勢指示器を中心に目を動かします（クロスチェック）。'],
       std: '高度 ±100 ft・針路 ±10°・速度 ±10 kt（60 秒）', setup: { at: 'area', kt: 100 },
       steps: [stepSL('直線水平飛行', 60, 100)] },
-    { id: 'b3', title: '上昇と降下', goal: '一定の速度で上昇・降下し、目標高度で水平に戻す', brief: ['上昇：スロットル全開 → 機首を約 8〜10° 上げて <b>73 kt（Vy）</b> を保つ。', '水平への戻し（レベルオフ）は目標高度の <b>昇降率の 10%</b> 手前から始める（500 fpm なら 50 ft 手前）。機首を下げ、速度が付いたらパワーを巡航へ。', '降下：パワーを絞り、90 kt・約 500 fpm で降りる。'],
+    { id: 'b3', title: '上昇と降下', goal: '一定の速度で上昇・降下し、目標高度で水平に戻す', brief: ['上昇：スロットル全開 → 機首を上昇姿勢に上げて <b>73 kt（Vy）</b> を保つ。姿勢の数字は最初の見当で、<b>最後は速度計で合わせる</b>。', '水平への戻し（レベルオフ）は目標高度の <b>昇降率の 10%</b> 手前から始める（500 fpm なら 50 ft 手前）。機首を下げ、速度が付いたらパワーを巡航へ。', '降下：パワーを絞り、90 kt・約 500 fpm で降りる。'],
       std: '上昇 73 ±10 kt、レベルオフ ±100 ft、降下 500 ±300 fpm', setup: { at: 'area', kt: 100 },
       steps: [
-        { name: '上昇（Vy）', say: 'フルパワーで 73 kt を保って {alt1} ft まで上昇', tgt: { spd: T_SPD(73) }, gradeWhen: (c, L, st) => st.t > 8 && c.alt < L.alt0 + 900, until: c => c.alt >= SCHOOL.active.alt0 + 950, max: 180, grade: true },
-        { name: 'レベルオフ', say: '{alt1} ft で水平に戻し、パワーを巡航（約 75%）へ。10 秒保つ', tgt: { alt: [L => L.alt0 + 1000, 100] }, hold: 10, max: 60, grade: true, gradeWhen: (c, L, st) => st.t > 6 },
-        { name: '降下', say: 'パワーを絞って 90 kt・約 500 fpm で {alt0} ft まで降下', tgt: { spd: T_SPD(90), vs: [-500, 300] }, gradeWhen: (c, L, st) => st.t > 10 && c.alt > L.alt0 + 150, until: c => c.alt <= SCHOOL.active.alt0 + 60, max: 200, grade: true },
-        { name: 'レベルオフ（降下から）', say: '{alt0} ft で水平に戻し、パワーを戻す。10 秒保つ', tgt: { alt: T_ALT(100) }, hold: 10, max: 60, grade: true, gradeWhen: (c, L, st) => st.t > 6 },
+        { name: '上昇（Vy）', g: { kt: 73, pwr: 'full', how: 'climbFull' }, say: 'フルパワーで 73 kt を保って {alt1} ft まで上昇', tgt: { spd: T_SPD(73) }, gradeWhen: (c, L, st) => st.t > 8 && c.alt < L.alt0 + 900, until: c => c.alt >= SCHOOL.active.alt0 + 950, max: 180, grade: true },
+        { name: 'レベルオフ', g: { kt: 105, how: 'level' }, say: '{alt1} ft で水平に戻し、速度が付いたらパワーを巡航へ。10 秒保つ', tgt: { alt: [L => L.alt0 + 1000, 100] }, hold: 10, max: 60, grade: true, gradeWhen: (c, L, st) => st.t > 6 },
+        { name: '降下', g: { kt: 90, fpm: -500, how: 'rate' }, say: 'パワーを絞って 90 kt・約 500 fpm で {alt0} ft まで降下', tgt: { spd: T_SPD(90), vs: [-500, 300] }, gradeWhen: (c, L, st) => st.t > 10 && c.alt > L.alt0 + 150, until: c => c.alt <= SCHOOL.active.alt0 + 60, max: 200, grade: true },
+        { name: 'レベルオフ（降下から）', g: { kt: 100, how: 'level' }, say: '{alt0} ft で水平に戻し、パワーを戻す。10 秒保つ', tgt: { alt: T_ALT(100) }, hold: 10, max: 60, grade: true, gradeWhen: (c, L, st) => st.t > 6 },
       ] },
-    { id: 'b4', title: '中程度の旋回（30°）', goal: 'バンク 30° で高度を保って 360° 旋回し、元の針路で止める', brief: ['バンクを取ると揚力の一部が横向きになり沈みます。<b>少し引く（機首 +1〜2°）</b>とパワーを少し足す（+5%）。', 'ロールアウトはバンク角の半分（30° なら約 15°）手前から始める。', 'ボール（旋回計の下の玉）を中央に。ずれたらボール側のラダー（Q/E）。'],
+    { id: 'b4', title: '中程度の旋回（30°）', goal: 'バンク 30° で高度を保って 360° 旋回し、元の針路で止める', brief: ['バンクを取ると揚力の一部が横向きになり沈みます。<b>少し引いて機首をわずかに上げ</b>、パワーを少し足す（数字は各項目の目安を見る）。', 'ロールアウトはバンク角の半分（30° なら約 15°）手前から始める。', 'ボール（旋回計の下の玉）を中央に。ずれたらボール側のラダー（Q/E）。'],
       std: 'バンク 30 ±5°・高度 ±100 ft・ロールアウト ±10°', setup: { at: 'area', kt: 100 },
       steps: [...stepTurn(-1, 30, '左 360° 旋回'), ...stepTurn(1, 30, '右 360° 旋回')] },
-    { id: 'b5', title: '急旋回（45°）', goal: '実地試験の定番。バンク 45° で高度と速度を保つ', brief: ['45° では荷重 1.4 G。<b>しっかり引いて機首 +3° 前後、パワー +10〜15%</b>。', '高度が下がり始めたら、バンクを少し浅くしてから引く（深いバンクのまま引くと旋回が締まるだけ）。', 'ロールアウトは 20° 手前から。'],
+    { id: 'b5', title: '急旋回（45°）', goal: '実地試験の定番。バンク 45° で高度と速度を保つ', brief: ['45° では荷重 1.4 G。<b>しっかり引いて機首を上げ、パワーを足す</b>（数字は各項目の目安を見る）。', '高度が下がり始めたら、バンクを少し浅くしてから引く（深いバンクのまま引くと旋回が締まるだけ）。', 'ロールアウトは 20° 手前から。'],
       std: 'バンク 45 ±5°・高度 ±100 ft・速度 ±10 kt・ロールアウト ±10°', setup: { at: 'area', kt: 95 },
       steps: [...stepTurn(-1, 45, '左急旋回', { tgt: { alt: T_ALT(), abank: [45, 5], spd: T_SPD(95) } }), ...stepTurn(1, 45, '右急旋回', { tgt: { alt: T_ALT(), abank: [45, 5], spd: T_SPD(95) } })] },
     { id: 'b6', title: '低速飛行', goal: '失速警報を鳴らさずに、低い速度で操縦する', brief: ['パワーを絞り、速度が 85 kt 以下になったらフラップ 20°（V キー 2 回）。', '機首を上げて <b>55 kt</b> を保つ。<b>低速では「速度は機首、高度はパワー」</b>が逆転します（バックサイド）。', '舵の効きが鈍いので、大きめに・ゆっくり。'],
       std: '速度 55 +10/−0 kt・高度 ±100 ft・針路 ±10°・失速警報なし', setup: { at: 'area', kt: 90 },
       steps: [
-        { name: '減速と外形変更', say: 'パワーを絞り、85 kt 以下でフラップ 20°。高度 {alt0} ft を保ちながら 55 kt まで減速', tgt: { alt: T_ALT(150) }, until: c => c.kias < 60 && c.flaps >= 2, max: 90, grade: true },
-        { name: '低速飛行', say: '55 kt・高度 {alt0} ft・針路 {hdg0}° を 40 秒保つ（パワーは 50〜60%）', tgt: { alt: T_ALT(), hdg: T_HDG(), spd: [58, 5] }, dur: 40, grade: true, check: (c, L, st) => { if (c.stall) st.stallT = (st.stallT || 0) + c.dt; },
+        { name: '減速と外形変更', g: '目安：スロットルを 1,700 rpm くらいまで絞り、速度が落ちるにつれて機首を少しずつ上げて高度を保つ。85 kt 以下でフラップ 20°（機首が上がろうとするので押さえる）', say: 'パワーを絞り、85 kt 以下でフラップ 20°。高度 {alt0} ft を保ちながら 55 kt まで減速', tgt: { alt: T_ALT(150) }, until: c => c.kias < 60 && c.flaps >= 2, max: 90, grade: true },
+        { name: '低速飛行', g: { kt: 57, flaps: 2, how: 'slow' }, say: '55 kt・高度 {alt0} ft・針路 {hdg0}° を 40 秒保つ', tgt: { alt: T_ALT(), hdg: T_HDG(), spd: [58, 5] }, dur: 40, grade: true, check: (c, L, st) => { if (c.stall) st.stallT = (st.stallT || 0) + c.dt; },
           result: (L, st) => [{ name: '失速警報', val: st.stallT ? `${st.stallT.toFixed(1)} 秒` : 'なし', std: 'なし', pass: !st.stallT || st.stallT < 1 }] },
       ] },
     { id: 'b7', title: 'パワーオフ失速と回復', goal: '着陸形態での失速を体験し、高度の損失を少なく回復する', brief: ['フラップ 20°、パワーアイドル。高度を保つように機首をゆっくり上げ続けると失速します（警報と振動）。', '<b>回復：①機首を下げて迎え角を減らす ②フルパワー ③翼を水平 ④速度が付いたら上昇へ</b>。フラップは上昇を確認してから 10° に。', '回復中に引きすぎると 2 回目の失速（二次失速）になります。'],
       std: '高度損失 300 ft 以内・二次失速なし・針路 ±20°', setup: { at: 'area', kt: 80, flaps: 2, thr: 0.25 },
       steps: [
-        { name: '失速への進入', say: 'パワーをアイドル（F）、高度を保つように機首をゆっくり上げ続けて失速させる', until: c => c.stall && c.kias < 50, max: 90, check: (c, L, st) => { L.stallAlt = c.alt; } },
-        { name: '失速からの回復', say: '回復！ 機首を下げる → フルパワー（R）→ 翼水平 → 上昇へ', until: (c, L, st) => c.vs > 100 && c.kias > 62 && st.t > 2, max: 40, grade: true, tgt: { hdg: T_HDG(20) },
+        { name: '失速への進入', g: '目安：スロットル アイドル。高度を保つように、1 秒に 1° くらいのペースで機首を上げ続ける。失速警報 → 振動（バフェット）→ 機首や片翼が落ちる、の順に来る', say: 'パワーをアイドル（F）、高度を保つように機首をゆっくり上げ続けて失速させる', until: c => c.stall && c.kias < 50, max: 90, check: (c, L, st) => { L.stallAlt = c.alt; } },
+        { name: '失速からの回復', g: '目安：機首を水平線付近（0〜+5°）まで下げる → 全開 → 翼を水平。60 kt を超えたら上昇姿勢（約 +10°）へ。直し方：失速警報がまた鳴ったら引きすぎ。少し戻す', say: '回復！ 機首を下げる → フルパワー（R）→ 翼水平 → 上昇へ', until: (c, L, st) => c.vs > 100 && c.kias > 62 && st.t > 2, max: 40, grade: true, tgt: { hdg: T_HDG(20) },
           onStart: (L, c, st) => { st.min = c.alt; st.start = c.alt; }, check: (c, L, st) => { st.min = Math.min(st.min, c.alt); if (st.t > 4 && c.stall) st.second = true; },
           result: (L, st) => [{ name: '高度損失', val: `${Math.round(st.start - st.min)} ft`, std: '300 ft 以内', pass: st.start - st.min <= 300 }, { name: '二次失速', val: st.second ? 'あり' : 'なし', std: 'なし', pass: !st.second }] },
       ] },
     { id: 'b8', title: 'パワーオン失速と回復', goal: '離陸・上昇中の失速を体験し回復する', brief: ['クリーン形態、フルパワーで機首を 15〜20° 上げ続けると失速します。高出力なので機首が左に振られやすい → 右ラダーでボールを中央に。', '回復は同じ：<b>迎え角を減らす → 出力（すでに全開）→ 翼水平 → 上昇</b>。'],
       std: '高度損失 300 ft 以内・針路 ±20°', setup: { at: 'area', kt: 75, thr: 1 },
       steps: [
-        { name: '失速への進入', say: 'フルパワーのまま機首を 15〜20° に上げ、失速するまで保つ', until: c => c.stall && c.kias < 52, max: 90 },
-        { name: '失速からの回復', say: '回復！ 機首を下げて翼を水平に、速度が付いたら上昇へ', until: (c, L, st) => c.vs > 100 && c.kias > 65 && st.t > 2, max: 40, grade: true, tgt: { hdg: T_HDG(20) },
+        { name: '失速への進入', g: '目安：全開のまま、機首上げ 約 15〜20°（姿勢指示器の横線 1 本半〜2 本）で保つ。ボールが右に寄ったら右ラダー（E）', say: 'フルパワーのまま機首を 15〜20° に上げ、失速するまで保つ', until: c => c.stall && c.kias < 52, max: 90 },
+        { name: '失速からの回復', g: '目安：機首を水平線付近（0〜+5°）まで下げる → 全開 → 翼を水平。60 kt を超えたら上昇姿勢（約 +10°）へ。直し方：失速警報がまた鳴ったら引きすぎ。少し戻す', say: '回復！ 機首を下げて翼を水平に、速度が付いたら上昇へ', until: (c, L, st) => c.vs > 100 && c.kias > 65 && st.t > 2, max: 40, grade: true, tgt: { hdg: T_HDG(20) },
           onStart: (L, c, st) => { st.min = c.alt; st.start = c.alt; }, check: (c, L, st) => { st.min = Math.min(st.min, c.alt); },
           result: (L, st) => [{ name: '高度損失', val: `${Math.round(st.start - st.min)} ft`, std: '300 ft 以内', pass: st.start - st.min <= 300 }] },
       ] },
@@ -5546,28 +5611,28 @@ const SYLLABUS = [
       steps: [
         { name: '離陸前点検', checklist: 'before_takeoff' },
         { name: '離陸許可の復唱', atc: 'takeoff' },
-        { name: '離陸滑走', say: 'フルパワー（R 長押し）。E/Q でセンターラインを保つ', until: c => !c.onGround && c.agl > 3, max: 90, grade: true, tgt: { cl: [0, 8] }, gradeWhen: c => c.onGround && c.kias > 15,
+        { name: '離陸滑走', g: '目安：スロットル全開（回転が約 2,300 rpm まで上がるのを確認）。52 kt で機首上げ 約 8〜10°（姿勢指示器の横線 1 本弱）にしてローテーション。直し方：左に振られたら右ラダー（E）でセンターラインへ', say: 'フルパワー（R 長押し）。E/Q でセンターラインを保つ', until: c => !c.onGround && c.agl > 3, max: 90, grade: true, tgt: { cl: [0, 8] }, gradeWhen: c => c.onGround && c.kias > 15,
           check: (c, L, st) => { if (c.onGround) st.lastKias = c.kias; }, result: (L, st) => [{ name: '浮揚速度', val: `${Math.round(st.lastKias || 0)} kt`, std: '52 ±5 kt', pass: Math.abs((st.lastKias || 0) - 52) <= 7 }] },
-        { name: '初期上昇', say: '73 kt で上昇、滑走路の方位 {rwyHdg}° を保つ。地上 1,000 ft まで', tgt: { spd: T_SPD(73), rhdg: [0, 10] }, gradeWhen: c => c.aglR > 150, until: c => c.aglR >= 1000, max: 180, grade: true },
+        { name: '初期上昇', g: { kt: 73, pwr: 'full', flaps: 1, how: 'climbFull' }, say: '73 kt で上昇、滑走路の方位 {rwyHdg}° を保つ。地上 1,000 ft まで', tgt: { spd: T_SPD(73), rhdg: [0, 10] }, gradeWhen: c => c.aglR > 150, until: c => c.aglR >= 1000, max: 180, grade: true },
       ] },
     { id: 't2', title: '場周経路（トラフィックパターン）', goal: 'ダウンウインドから基本の場周経路を飛び、着陸する', brief: ['左場周。<b>ダウンウインド</b>：地上 1,000 ft、90 kt、滑走路から約 1.5 km 離れて平行に。', '滑走路の端の真横（アビーム）で<b>パワーを絞り、フラップ 10°</b>、降下開始。', '端が斜め後ろ 45° に見えたら左旋回して<b>ベース</b>、フラップ 20°、75 kt。', '最終進入（<b>ファイナル</b>）はセンターラインに合わせて 65 kt。PAPI が赤 2 白 2 なら正しい角度。'],
       std: 'ダウンウインド 高度 ±100 ft・速度 ±10 kt、ファイナル 65 ±5 kt、接地は下の着陸基準', setup: { at: 'downwind' },
       steps: [
         { name: '着陸許可の復唱', atc: 'landing' },
-        { name: 'ダウンウインド', say: 'ダウンウインド：地上 1,000 ft・90 kt・滑走路と平行（方位 {dwHdg}°）', tgt: { aglR: [1000, 100], spd: T_SPD(90), dwhdg: [0, 10] }, until: c => c.u < -c.L2, max: 150, grade: true },
-        { name: '降下開始（アビーム）', say: '滑走路の端の真横。パワーを 30% に絞り、フラップ 10°（V）', until: (c, L, st) => c.u < -c.L2 - 900, max: 90, check: (c, L, st) => { if (c.flaps >= 1) st.flap = true; },
+        { name: 'ダウンウインド', g: { kt: 90, how: 'level' }, say: 'ダウンウインド：地上 1,000 ft・90 kt・滑走路と平行（方位 {dwHdg}°）', tgt: { aglR: [1000, 100], spd: T_SPD(90), dwhdg: [0, 10] }, until: c => c.u < -c.L2, max: 150, grade: true },
+        { name: '降下開始（アビーム）', g: { kt: 80, fpm: -500, flaps: 1, how: 'pattern' }, say: '滑走路の端の真横。パワーを絞り、フラップ 10°（V）。80 kt で降下開始', until: (c, L, st) => c.u < -c.L2 - 900, max: 90, check: (c, L, st) => { if (c.flaps >= 1) st.flap = true; },
           result: (L, st) => [{ name: 'フラップ 10°', val: st.flap ? '操作した' : 'していない', std: 'アビームで', pass: !!st.flap }] },
-        { name: 'ベース', say: '左旋回してベースへ。フラップ 20°、75 kt で降下', until: c => Math.abs(c.v) < 400 && c.u < -c.L2 - 500 && Math.abs(w180(c.hdg - c.rwyHdg)) < 40, max: 120, tgt: { spd: T_SPD(75, 12) }, grade: true, gradeWhen: (c, L, st) => st.t > 8 },
+        { name: 'ベース', g: { kt: 75, fpm: -500, flaps: 2, how: 'pattern' }, say: '左旋回してベースへ。フラップ 20°、75 kt で降下', until: c => Math.abs(c.v) < 400 && c.u < -c.L2 - 500 && Math.abs(w180(c.hdg - c.rwyHdg)) < 40, max: 120, tgt: { spd: T_SPD(75, 12) }, grade: true, gradeWhen: (c, L, st) => st.t > 8 },
         ...landingSteps(65),
       ] },
     { id: 't3', title: '通常着陸', goal: '安定した進入から、接地帯にやさしく接地する', brief: ['ファイナル（約 5 km）から。<b>65 kt・3° の進入角</b>（PAPI 赤 2 白 2、昇降率 約 −350 fpm）。', '<b>地上 500 ft で安定</b>していなければゴーアラウンド。', '滑走路の端を越えたらパワーを絞り、地上 10〜15 ft で機首を少しずつ上げる（フレア）。主輪から接地。'],
       std: 'ファイナル 65 ±5 kt・センターライン ±30 m、接地 300 fpm 以下・目標点の手前 100 m〜先 400 m・センターライン ±6 m', setup: { at: 'final', km: 5.5 },
       steps: [{ name: '着陸前点検', checklist: 'before_landing' }, ...landingSteps(65)] },
-    { id: 't4', title: '着陸復行（ゴーアラウンド）', goal: '進入を中止して安全に上昇へ移る', brief: ['「ゴーアラウンド」と言われたら：<b>①フルパワー ②機首を上昇姿勢（+7°前後） ③フラップ 20°→10°→0° と段階的に ④正の上昇を確認</b>。', '沈み込まないことが最重要です。'],
+    { id: 't4', title: '着陸復行（ゴーアラウンド）', goal: '進入を中止して安全に上昇へ移る', brief: ['「ゴーアラウンド」と言われたら：<b>①フルパワー ②機首を上昇姿勢へ ③フラップ 20°→10°→0° と段階的に ④正の上昇を確認</b>。', '沈み込まないことが最重要です。'],
       std: '指示から 3 秒以内にフルパワー・高度損失 50 ft 以内・地上 800 ft まで上昇', setup: { at: 'final', km: 4 },
       steps: [
-        { name: '進入', say: '65 kt・3° で進入を続ける', tgt: { spd: T_SPD(65, 8), cl: [0, 40] }, until: c => c.aglR < 300, max: 150, grade: true, gradeWhen: c => c.aglR < 900 },
-        { name: 'ゴーアラウンド', say: 'ゴーアラウンド！ フルパワー・機首上げ・フラップを段階的に上げる', until: c => c.aglR > 800, max: 120, grade: true, tgt: { spd: [70, 12] }, gradeWhen: (c, L, st) => st.t > 6,
+        { name: '進入', g: { kt: 65, fpm: -345, flaps: 2, how: 'approach' }, say: '65 kt・3° で進入を続ける', tgt: { spd: T_SPD(65, 8), cl: [0, 40] }, until: c => c.aglR < 300, max: 150, grade: true, gradeWhen: c => c.aglR < 900 },
+        { name: 'ゴーアラウンド', g: { kt: 70, pwr: 'full', flaps: 1, how: 'climbFull' }, say: 'ゴーアラウンド！ フルパワー・機首上げ・フラップを段階的に上げる', until: c => c.aglR > 800, max: 120, grade: true, tgt: { spd: [70, 12] }, gradeWhen: (c, L, st) => st.t > 6,
           onStart: (L, c, st) => { st.a0 = c.aglR; st.min = c.aglR; st.pwr = null; }, check: (c, L, st) => { st.min = Math.min(st.min, c.aglR); if (st.pwr === null && c.thr > 0.95) st.pwr = st.t; if (c.onGround) st.touched = true; },
           result: (L, st) => [{ name: 'フルパワーまで', val: st.pwr === null ? '—' : `${st.pwr.toFixed(1)} 秒`, std: '3 秒以内', pass: st.pwr !== null && st.pwr <= 3 }, { name: '高度損失', val: `${Math.round(st.a0 - st.min)} ft`, std: '50 ft 以内', pass: st.a0 - st.min <= 50 && !st.touched }] },
       ] },
@@ -5580,8 +5645,8 @@ const SYLLABUS = [
     { id: 't7', title: '夜間の場周飛行', goal: '滑走路灯火を頼りに、夜の場周経路を飛ぶ', brief: ['夜は地面の起伏や高さがわかりにくい（ブラックホール錯覚）。<b>計器と PAPI を必ず確認</b>。', '滑走路灯の列（白）、手前の緑（入口）、奥の赤（終わり）が目印。'],
       std: '場周経路と同じ', setup: { at: 'downwind', night: true },
       steps: [
-        { name: 'ダウンウインド', say: '夜のダウンウインド：地上 1,000 ft・90 kt。滑走路灯の列と平行に', tgt: { aglR: [1000, 100], spd: T_SPD(90), dwhdg: [0, 10] }, until: c => c.u < -c.L2, max: 150, grade: true },
-        { name: 'ベース', say: 'パワーを絞りフラップ 10°→20°。ベースに旋回して降下', until: c => Math.abs(c.v) < 400 && c.u < -c.L2 - 500 && Math.abs(w180(c.hdg - c.rwyHdg)) < 40, max: 150 },
+        { name: 'ダウンウインド', g: { kt: 90, how: 'level' }, say: '夜のダウンウインド：地上 1,000 ft・90 kt。滑走路灯の列と平行に', tgt: { aglR: [1000, 100], spd: T_SPD(90), dwhdg: [0, 10] }, until: c => c.u < -c.L2, max: 150, grade: true },
+        { name: 'ベース', g: { kt: 75, fpm: -500, flaps: 2, how: 'pattern' }, say: 'パワーを絞りフラップ 10°→20°。ベースに旋回して降下', until: c => Math.abs(c.v) < 400 && c.u < -c.L2 - 500 && Math.abs(w180(c.hdg - c.rwyHdg)) < 40, max: 150 },
         ...landingSteps(65),
       ] },
   ] },
@@ -5589,32 +5654,32 @@ const SYLLABUS = [
     { id: 'e1', title: '離陸中止', goal: '離陸滑走中の異常で、安全に止まる', brief: ['「離陸中止（アボート）」と言われたら：<b>①スロットル アイドル（F）②ブレーキ（B）③センターラインを保つ</b>。', '判断は早く。迷ったら止める。'],
       std: '指示から 2 秒以内にアイドル・センターライン ±8 m・滑走路内で停止', setup: { at: 'runway' },
       steps: [
-        { name: '離陸滑走', say: 'フルパワーで離陸滑走を始める', until: c => c.kias > 38, max: 60 },
-        { name: '離陸中止', say: '離陸中止！ スロットル アイドル・ブレーキ・センターライン', until: c => c.onGround && c.gsK < 3, max: 60, grade: true, tgt: { cl: [0, 8] },
+        { name: '離陸滑走', g: '目安：スロットル全開。異常の指示が来たら迷わず止める', say: 'フルパワーで離陸滑走を始める', until: c => c.kias > 38, max: 60 },
+        { name: '離陸中止', g: '目安：スロットルを一気にアイドル（F）→ ブレーキ（B）。前輪を接地させたまま、ラダー（Q/E）でまっすぐ', say: '離陸中止！ スロットル アイドル・ブレーキ・センターライン', until: c => c.onGround && c.gsK < 3, max: 60, grade: true, tgt: { cl: [0, 8] },
           onStart: (L, c, st) => { st.idle = null; }, check: (c, L, st) => { if (st.idle === null && c.thr < 0.05) st.idle = st.t; if (!c.paved && c.onGround) st.off = true; },
           result: (L, st) => [{ name: 'アイドルまで', val: st.idle === null ? '—' : `${st.idle.toFixed(1)} 秒`, std: '2 秒以内', pass: st.idle !== null && st.idle <= 2 }, { name: '停止位置', val: st.off ? '滑走路外' : '滑走路内', std: '滑走路内', pass: !st.off }] },
       ] },
     { id: 'e2', title: '離陸直後のエンジン故障', goal: '低高度のエンジン故障で、滑空速度を保ってほぼ正面に降りる', brief: ['<b>すぐに機首を下げて 65 kt（最良滑空速度）</b>。これが最優先。', '<b>引き返さない</b>。左右 30° 以内の、できるだけ平らな場所へ。', 'フラップは降りる場所が確実になってから。接地直前にフレア。'],
       std: '5 秒以内に 75 kt 以下の滑空姿勢・滑空速度 65 ±10 kt・針路 ±30°・安全に接地', setup: { at: 'runway' },
       steps: [
-        { name: '離陸', say: '通常どおり離陸して 73 kt で上昇', until: c => c.aglR > 400, max: 150 },
-        { name: 'エンジン故障：滑空', say: 'エンジン停止！ 機首を下げて 65 kt。ほぼ正面の安全な場所へ', fail: 'engine', until: c => c.onGround && c.gsK < 3, max: 180, grade: true, tgt: { spd: [65, 10], rhdg: [0, 30] }, gradeWhen: (c, L, st) => st.t > 5 && c.aglR > 30,
+        { name: '離陸', g: { kt: 73, pwr: 'full', flaps: 1, how: 'climbFull' }, say: '通常どおり離陸して 73 kt で上昇', until: c => c.aglR > 400, max: 150 },
+        { name: 'エンジン故障：滑空', g: { kt: 65, pwr: 'dead', how: 'glide' }, say: 'エンジン停止！ 機首を下げて 65 kt。ほぼ正面の安全な場所へ', fail: 'engine', until: c => c.onGround && c.gsK < 3, max: 180, grade: true, tgt: { spd: [65, 10], rhdg: [0, 30] }, gradeWhen: (c, L, st) => st.t > 5 && c.aglR > 30,
           onStart: (L, c, st) => { st.cap = null; }, check: (c, L, st) => { if (st.cap === null && c.pitch < 2 && c.kias < 80) st.cap = st.t; },
           result: (L, st) => [{ name: '滑空姿勢まで', val: st.cap === null ? '—' : `${st.cap.toFixed(1)} 秒`, std: '5 秒以内', pass: st.cap !== null && st.cap <= 5 }] },
       ] },
     { id: 'e3', title: '上空でのエンジン故障（空港へ滑空）', goal: '最良滑空速度で空港まで戻り、滑走路に着陸する', brief: ['<b>65 kt を保つ</b>のが滑空距離を最大にするコツ。速すぎても遅すぎても届きません。', '空港（地図 M、PAPI）を目指し、高すぎればS字や大きめの旋回で高度を捨てる。低いと判断したら最も近い平らな場所へ。', '滑走路が確実になってからフラップ。'],
       std: '滑空速度 65 ±8 kt（平均）・滑走路に着陸（または安全な不時着）', setup: { at: 'away', km: 5, aglFt: 3000, toward: false },
       steps: [
-        { name: '巡航', say: '空港から離れる方向へ水平飛行。まもなくエンジンが止まります', dur: 6 },
-        { name: 'エンジン故障：空港へ', say: 'エンジン停止！ 65 kt で空港へ滑空し、滑走路に着陸', fail: 'engine', until: c => c.onGround && c.gsK < 3, max: 420, grade: true, tgt: { spd: [65, 8] }, gradeWhen: (c, L, st) => st.t > 8 && c.aglR > 300,
+        { name: '巡航', g: { kt: 100, how: 'level' }, say: '空港から離れる方向へ水平飛行。まもなくエンジンが止まります', dur: 6 },
+        { name: 'エンジン故障：空港へ', g: { kt: 65, pwr: 'dead', how: 'glide' }, say: 'エンジン停止！ 65 kt で空港へ滑空し、滑走路に着陸', fail: 'engine', until: c => c.onGround && c.gsK < 3, max: 420, grade: true, tgt: { spd: [65, 8] }, gradeWhen: (c, L, st) => st.t > 8 && c.aglR > 300,
           check: (c, L, st) => { if (c.onGround && !st.td) { st.td = true; st.paved = c.paved; } },
           result: (L, st) => [{ name: '着陸場所', val: st.paved ? '滑走路' : '滑走路外', std: '滑走路', pass: !!st.paved }] },
       ] },
     { id: 'e4', title: '計器故障（部分パネル）', goal: 'バキューム故障で姿勢指示器と方位指示器が使えない中で飛ぶ', brief: ['フードをかぶった状態（外が見えない）で、<b>姿勢指示器と方位指示器が故障</b>します（ゆっくり傾いていくので気づきにくい）。', '使えるのは <b>旋回計・高度計・昇降計・速度計・磁気コンパス</b>。翼の水平は旋回計、機首の上下は高度計と昇降計で判断。', '旋回は標準旋回率（旋回計の L/R の印）で、時間で止める（90° なら 30 秒）。'],
       std: '高度 ±150 ft・針路 ±15°（60 秒）、時間旋回のロールアウト ±15°', setup: { at: 'area', kt: 95, hood: true },
       steps: [
-        { name: '計器故障の中の水平飛行', say: '姿勢指示器と方位指示器が故障。旋回計・高度計・コンパスで {alt0} ft・{hdg0}° を保つ', fail: 'vacuum', tgt: { alt: T_ALT(150), hdg: T_HDG(15) }, dur: 60, grade: true, gradeWhen: (c, L, st) => st.t > 10 },
-        { name: '時間旋回（右 90°）', say: '標準旋回率（旋回計の R の印）で右へ 30 秒旋回し、止める', tgt: { alt: T_ALT(150) }, until: (c, L, st) => st.t > 25 && Math.abs(c.rate) < 1 && Math.abs(c.bank) < 6, max: 70, grade: true,
+        { name: '計器故障の中の水平飛行', g: { kt: 95, how: 'level', pp: true }, say: '姿勢指示器と方位指示器が故障。旋回計・高度計・コンパスで {alt0} ft・{hdg0}° を保つ', fail: 'vacuum', tgt: { alt: T_ALT(150), hdg: T_HDG(15) }, dur: 60, grade: true, gradeWhen: (c, L, st) => st.t > 10 },
+        { name: '時間旋回（右 90°）', g: { kt: 95, bank: 15, how: 'turn', pp: true }, say: '標準旋回率（旋回計の R の印）で右へ 30 秒旋回し、止める', tgt: { alt: T_ALT(150) }, until: (c, L, st) => st.t > 25 && Math.abs(c.rate) < 1 && Math.abs(c.bank) < 6, max: 70, grade: true,
           onStart: (L, c, st) => { st.h0 = c.hdg; }, result: (L, st) => { const d = Math.abs(w180(SCHOOL.last.hdg - (st.h0 + 90))); return [{ name: 'ロールアウト針路', val: `${Math.round(d)}° ずれ`, std: '±15°', pass: d <= 15 }]; } },
       ] },
   ] },
@@ -5622,14 +5687,14 @@ const SYLLABUS = [
     { id: 'n1', title: 'VOR の追跡', goal: 'VOR 局に向かうコースに乗り、局通過まで追跡する', brief: ['右上の <b>NAV 計器（CDI）</b>：OBS（コースの目盛り）を <b>[ ]</b> キーで合わせる。', 'TO 表示で針が右なら右へ修正（針の方へ飛ぶ）。針が中央に戻り始めたら修正を戻す（ブラケッティング）。', '1 ドット＝2°。局に近づくほど針は敏感に。局上空で TO が FROM に変わります。'],
       std: '追跡中 CDI ±1 ドット以内（90% 以上）・高度 ±150 ft', setup: { at: 'away', km: 18, aglFt: 3000, toward: true, offset: 25, nav: 'VOR' },
       steps: [
-        { name: 'OBS の設定と会合', say: 'OBS を VOR 局への方位 {brgTo}° に合わせ（[ ] キー）、針が中央に来るよう会合する', until: c => Math.abs(c.cdi) < 1 && Math.abs(w180(SCHOOL.obs - SCHOOL.last.brgTo)) < 12, max: 240 },
-        { name: 'VOR 追跡', say: '針を中央に保って VOR 局へ（局上空で TO→FROM）', tgt: { cdi: [0, 1], alt: [L => L.alt0, 150] }, until: c => c.dme < 0.4, max: 600, grade: true, gradeWhen: c => c.dme > 1.2 },
+        { name: 'OBS の設定と会合', g: { kt: 100, how: 'level' }, say: 'OBS を VOR 局への方位 {brgTo}° に合わせ（[ ] キー）、針が中央に来るよう会合する', until: c => Math.abs(c.cdi) < 1 && Math.abs(w180(SCHOOL.obs - SCHOOL.last.brgTo)) < 12, max: 240 },
+        { name: 'VOR 追跡', g: { kt: 100, how: 'level' }, say: '針を中央に保って VOR 局へ（局上空で TO→FROM）', tgt: { cdi: [0, 1], alt: [L => L.alt0, 150] }, until: c => c.dme < 0.4, max: 600, grade: true, gradeWhen: c => c.dme > 1.2 },
       ] },
     { id: 'n2', title: '推測航法と目的地変更', goal: '指定の針路と時間で隣の空港へ。途中で目的地が変わる', brief: ['出発前に<b>針路・距離・所要時間</b>を計算（地図 M で確認できます）。', '予定時刻ごとに地上の目標と照合。', '途中で「目的地変更（ダイバート）」と言われたら、すぐ新しい方位へ向け、到着予定を見積もる。'],
       std: '高度 ±200 ft・目的地の 3 km 以内に到達', setup: { at: 'away', km: 3, aglFt: 3500, toward: false, xc: true },
       steps: [
-        { name: '第 1 目的地へ', say: '{xc1} 空港へ。方位 {xcBrg}°・距離 {xcDist} km・高度 {alt0} ft', tgt: { alt: [L => L.alt0, 200] }, until: (c, L) => geoDist(...planeGeo(), L.xc1.lat, L.xc1.lon) < L.xcDivertAt, max: 1500, grade: true },
-        { name: '目的地変更', say: '目的地変更！ {xc2} 空港へ向かう。新しい方位 {xc2Brg}°', tgt: { alt: [L => L.alt0, 200] }, until: (c, L) => geoDist(...planeGeo(), L.xc2.lat, L.xc2.lon) < 3000, max: 1800, grade: true,
+        { name: '第 1 目的地へ', g: { kt: 105, how: 'level' }, say: '{xc1} 空港へ。方位 {xcBrg}°・距離 {xcDist} km・高度 {alt0} ft', tgt: { alt: [L => L.alt0, 200] }, until: (c, L) => geoDist(...planeGeo(), L.xc1.lat, L.xc1.lon) < L.xcDivertAt, max: 1500, grade: true },
+        { name: '目的地変更', g: { kt: 105, how: 'level' }, say: '目的地変更！ {xc2} 空港へ向かう。新しい方位 {xc2Brg}°', tgt: { alt: [L => L.alt0, 200] }, until: (c, L) => geoDist(...planeGeo(), L.xc2.lat, L.xc2.lon) < 3000, max: 1800, grade: true,
           onStart: (L, c, st) => { st.t0 = 0; JW.dest = L.xc2; }, check: (c, L, st) => { const b = geoBearing(...planeGeo(), L.xc2.lat, L.xc2.lon); if (!st.turned30 && Math.abs(w180(c.hdg - b)) < 20) st.turned30 = st.t; },
           result: (L, st) => [{ name: '新しい方位へ向くまで', val: st.turned30 ? `${Math.round(st.turned30)} 秒` : '—', std: '45 秒以内', pass: !!st.turned30 && st.turned30 <= 45 }] },
       ] },
@@ -5639,18 +5704,18 @@ const SYLLABUS = [
       std: '水平 ±100 ft ±10°、旋回率 3 ±1 °/秒、昇降率 500 ±150 fpm', setup: { at: 'area', kt: 100, hood: true },
       steps: [
         stepSL('計器による水平飛行', 45, 100),
-        { name: '標準旋回（左 90°）', say: '標準旋回率で左へ 90° 旋回し {hdgL}° で止める', tgt: { alt: T_ALT(), arate: [3, 1] }, gradeWhen: (c, L, st) => Math.abs(st.turned) > 15 && Math.abs(st.turned) < 75, until: (c, L, st) => Math.abs(st.turned) > 80 && Math.abs(c.bank) < 5, max: 70, grade: true,
+        { name: '標準旋回（左 90°）', g: { kt: 100, bank: 17, how: 'turn' }, say: '標準旋回率で左へ 90° 旋回し {hdgL}° で止める', tgt: { alt: T_ALT(), arate: [3, 1] }, gradeWhen: (c, L, st) => Math.abs(st.turned) > 15 && Math.abs(st.turned) < 75, until: (c, L, st) => Math.abs(st.turned) > 80 && Math.abs(c.bank) < 5, max: 70, grade: true,
           result: (L, st) => { const d = Math.abs(w180(SCHOOL.last.hdg - (L.hdg0 - 90))); return [{ name: 'ロールアウト', val: `${Math.round(d)}° ずれ`, std: '±10°', pass: d <= 10 }]; } },
-        { name: '上昇 500 fpm', say: '500 fpm で {alt1} ft まで上昇（85 kt 前後）', tgt: { vs: [500, 150] }, gradeWhen: (c, L, st) => st.t > 6 && c.alt < L.alt0 + 900, until: c => c.alt > SCHOOL.active.alt0 + 950, max: 180, grade: true },
-        { name: '降下 500 fpm', say: '500 fpm で {alt0} ft まで降下し水平に', tgt: { vs: [-500, 150] }, gradeWhen: (c, L, st) => st.t > 6 && c.alt > L.alt0 + 100, until: c => c.alt < SCHOOL.active.alt0 + 50, max: 180, grade: true },
+        { name: '上昇 500 fpm', g: { kt: 85, fpm: 500, how: 'rate' }, say: '500 fpm で {alt1} ft まで上昇（85 kt 前後）', tgt: { vs: [500, 150] }, gradeWhen: (c, L, st) => st.t > 6 && c.alt < L.alt0 + 900, until: c => c.alt > SCHOOL.active.alt0 + 950, max: 180, grade: true },
+        { name: '降下 500 fpm', g: { kt: 100, fpm: -500, how: 'rate' }, say: '100 kt・500 fpm で {alt0} ft まで降下し水平に', tgt: { vs: [-500, 150] }, gradeWhen: (c, L, st) => st.t > 6 && c.alt > L.alt0 + 100, until: c => c.alt < SCHOOL.active.alt0 + 50, max: 180, grade: true },
       ] },
     { id: 'i2', title: '異常姿勢からの回復', goal: '計器だけで、機首上げ・機首下げの異常姿勢から回復する', brief: ['<b>機首上げ・低速</b>：①フルパワー ②機首を下げる ③翼を水平。', '<b>機首下げ・高速（スパイラル）</b>：①パワー アイドル ②<b>先に翼を水平</b> ③それから機首を上げる（傾いたまま引くと旋回が締まるだけ）。', '速度計・姿勢指示器・高度計を素早く見て、どちらの状態か判断します。'],
       std: '失速なし・Vne 超過なし・荷重 3.8 G 以下・12 秒以内に水平', setup: { at: 'area', kt: 100, hood: true },
       steps: [
-        { name: '異常姿勢 1（機首上げ）', say: '操縦を渡します。回復して水平に！', upset: 'high', until: c => Math.abs(c.pitch) < 5 && Math.abs(c.bank) < 10 && c.kias > 65, max: 30, grade: true,
+        { name: '異常姿勢 1（機首上げ）', g: '目安：①全開 ②機首を下げて小さな飛行機を水平線へ ③翼を水平。速度が 65 kt を超えたら水平飛行の姿勢（ほぼ 0°）へ', say: '操縦を渡します。回復して水平に！', upset: 'high', until: c => Math.abs(c.pitch) < 5 && Math.abs(c.bank) < 10 && c.kias > 65, max: 30, grade: true,
           check: (c, L, st) => { if (c.stall) st.stall = true; }, result: (L, st) => [{ name: '回復時間', val: `${st.t.toFixed(1)} 秒`, std: '12 秒以内', pass: st.t <= 12 }, { name: '失速', val: st.stall ? 'あり' : 'なし', std: 'なし', pass: !st.stall }] },
-        { name: '水平飛行', say: 'いったん水平飛行（10 秒）', dur: 10 },
-        { name: '異常姿勢 2（機首下げ・スパイラル）', say: '操縦を渡します。回復して水平に！', upset: 'low', until: c => Math.abs(c.pitch) < 5 && Math.abs(c.bank) < 10 && c.vs > -300, max: 30, grade: true,
+        { name: '水平飛行', g: { kt: 100, how: 'level' }, say: 'いったん水平飛行（10 秒）', dur: 10 },
+        { name: '異常姿勢 2（機首下げ・スパイラル）', g: '目安：①アイドル ②先に翼を水平（バンク 0） ③それから機首をゆっくり水平線まで上げる（荷重 3.8 G 以内、速度計が赤線に近ければ特にゆっくり）', say: '操縦を渡します。回復して水平に！', upset: 'low', until: c => Math.abs(c.pitch) < 5 && Math.abs(c.bank) < 10 && c.vs > -300, max: 30, grade: true,
           onStart: (L, c, st) => { st.order = null; }, check: (c, L, st) => { st.maxK = Math.max(st.maxK || 0, c.kias); st.maxG = Math.max(st.maxG || 0, c.g); if (st.order === null && c.pitch > -3) st.order = Math.abs(c.bank) < 20; if (st.idle === undefined && c.thr < 0.25) st.idle = st.t; },
           result: (L, st) => [{ name: '回復時間', val: `${st.t.toFixed(1)} 秒`, std: '12 秒以内', pass: st.t <= 12 }, { name: '最大速度', val: `${Math.round(st.maxK)} kt`, std: `${ACFT.v.ne} kt 未満`, pass: st.maxK < ACFT.v.ne }, { name: '最大荷重', val: `${st.maxG.toFixed(1)} G`, std: '3.8 G 以下', pass: st.maxG <= 3.8 },
             { name: '手順（翼を先に水平）', val: st.order ? 'できた' : 'できていない', std: '機首上げの前に翼水平', pass: !!st.order }, { name: 'パワー アイドル', val: st.idle !== undefined ? `${st.idle.toFixed(1)} 秒` : 'なし', std: '3 秒以内', pass: st.idle !== undefined && st.idle <= 3 }] },
@@ -5658,19 +5723,19 @@ const SYLLABUS = [
     { id: 'i3', title: 'ILS 進入', goal: 'ローカライザーとグライドスロープに乗って、決心高度まで計器で進入する', brief: ['NAV 計器が ILS モードになります。<b>縦の針＝ローカライザー（左右）、横の針＝グライドスロープ（上下）</b>。', '縦の針が動き始めたら滑走路の方位へ旋回して乗る。横の針が中央に下りてきたら、パワーを絞り 75 kt・約 −400 fpm で降下。', '<b>決心高度（地上 200 ft）</b>でフードが外れ、滑走路が見えたら着陸。見えなければゴーアラウンド。'],
       std: 'ローカライザー・グライドスロープ ±1 ドット以内（地上 1,000〜200 ft の 85% 以上）＋着陸', setup: { at: 'ils', km: 14, aglFt: 2000, hood: true, nav: 'ILS' },
       steps: [
-        { name: 'ローカライザー会合', say: '針路 {intHdg}° で会合。縦の針が中央に来たら滑走路方位 {rwyHdg}° へ', until: c => Math.abs(c.loc) < 1 && Math.abs(w180(c.hdg - c.rwyHdg)) < 15, max: 400 },
-        { name: 'ILS 追跡', say: 'グライドスロープに乗って降下。両方の針を中央に（決心高度 地上 200 ft）', tgt: { loc: [0, 1], gs: [0, 1] }, gradeWhen: c => c.aglR < 1000 && c.aglR > 200, until: c => c.aglR < 200, max: 500, grade: true },
-        { name: '決心高度：滑走路視認', say: '決心高度。滑走路が見えました。着陸', hoodOff: true, until: c => c.onGround && c.gsK < 3, max: 120, check: (c, L, st) => { if (c.onGround && !st.td) { st.td = true; st.fpm = -c.vs; st.paved = c.paved; } },
+        { name: 'ローカライザー会合', g: { kt: 90, how: 'level' }, say: '針路 {intHdg}° で会合。縦の針が中央に来たら滑走路方位 {rwyHdg}° へ', until: c => Math.abs(c.loc) < 1 && Math.abs(w180(c.hdg - c.rwyHdg)) < 15, max: 400 },
+        { name: 'ILS 追跡', g: { kt: 75, fpm: -400, flaps: 1, how: 'ils' }, say: 'グライドスロープに乗って降下。両方の針を中央に（決心高度 地上 200 ft）', tgt: { loc: [0, 1], gs: [0, 1] }, gradeWhen: c => c.aglR < 1000 && c.aglR > 200, until: c => c.aglR < 200, max: 500, grade: true },
+        { name: '決心高度：滑走路視認', g: '目安：滑走路の端を越えたらアイドル。地上 10〜15 ft から滑走路の先を見ながら機首を少しずつ上げ、最後は機首上げ 約 5〜8°。直し方：浮き上がったら引くのを止めて待つ、沈みが速ければ少し強く引く', say: '決心高度。滑走路が見えました。着陸', hoodOff: true, until: c => c.onGround && c.gsK < 3, max: 120, check: (c, L, st) => { if (c.onGround && !st.td) { st.td = true; st.fpm = -c.vs; st.paved = c.paved; } },
           result: (L, st) => [{ name: '着陸', val: st.paved ? `滑走路（${Math.round(st.fpm || 0)} fpm）` : '滑走路外', std: '滑走路に安全に', pass: !!st.paved && (st.fpm || 0) < 600 }] },
       ] },
     { id: 'i4', title: '待機経路（ホールディング）', goal: 'VOR を基準に、1 分の直線と標準旋回でレーストラックを飛ぶ', brief: ['VOR 局を通過したら<b>右へ標準旋回</b>でアウトバウンド（インバウンドの逆方位）へ。', 'アウトバウンドは<b>1 分</b>（タイマーを見る）。', '右へ標準旋回してインバウンドのコースに乗り、局へ戻る。'],
       std: '旋回率 3 ±1 °/秒・アウトバウンド 60 ±15 秒・高度 ±100 ft', setup: { at: 'away', km: 6, aglFt: 3000, toward: true, offset: 0, nav: 'VOR', obsTo: true },
       steps: [
-        { name: '局へ向かう', say: 'インバウンドコース {obs}° で VOR 局へ', tgt: { cdi: [0, 1.5], alt: [L => L.alt0, 100] }, until: c => c.dme < 0.3, max: 400, grade: true, gradeWhen: c => c.dme > 1 },
-        { name: 'アウトバウンドへ旋回', say: '局通過。右へ標準旋回でアウトバウンド（{obsOut}°）へ', tgt: { arate: [3, 1], alt: [L => L.alt0, 100] }, gradeWhen: (c, L, st) => st.t > 4 && Math.abs(w180(c.hdg - (SCHOOL.obs + 180))) > 20, until: c => Math.abs(w180(c.hdg - (SCHOOL.obs + 180))) < 8 && Math.abs(c.bank) < 8, max: 90, grade: true },
-        { name: 'アウトバウンド 1 分', say: 'アウトバウンド。1 分数えて、右旋回を始める', tgt: { alt: [L => L.alt0, 100] }, until: (c, L, st) => st.t > 20 && Math.abs(c.bank) > 12, max: 120, grade: true,
+        { name: '局へ向かう', g: { kt: 100, how: 'level' }, say: 'インバウンドコース {obs}° で VOR 局へ', tgt: { cdi: [0, 1.5], alt: [L => L.alt0, 100] }, until: c => c.dme < 0.3, max: 400, grade: true, gradeWhen: c => c.dme > 1 },
+        { name: 'アウトバウンドへ旋回', g: { kt: 100, bank: 17, how: 'turn' }, say: '局通過。右へ標準旋回でアウトバウンド（{obsOut}°）へ', tgt: { arate: [3, 1], alt: [L => L.alt0, 100] }, gradeWhen: (c, L, st) => st.t > 4 && Math.abs(w180(c.hdg - (SCHOOL.obs + 180))) > 20, until: c => Math.abs(w180(c.hdg - (SCHOOL.obs + 180))) < 8 && Math.abs(c.bank) < 8, max: 90, grade: true },
+        { name: 'アウトバウンド 1 分', g: { kt: 100, how: 'level' }, say: 'アウトバウンド。1 分数えて、右旋回を始める', tgt: { alt: [L => L.alt0, 100] }, until: (c, L, st) => st.t > 20 && Math.abs(c.bank) > 12, max: 120, grade: true,
           result: (L, st) => [{ name: 'アウトバウンド時間', val: `${Math.round(st.t)} 秒`, std: '60 ±15 秒', pass: Math.abs(st.t - 60) <= 15 }] },
-        { name: 'インバウンドへ', say: '右へ標準旋回してインバウンドコースに乗り、局へ', tgt: { alt: [L => L.alt0, 100] }, until: c => Math.abs(c.cdi) < 1 && Math.abs(w180(c.hdg - SCHOOL.obs)) < 15, max: 180, grade: true },
+        { name: 'インバウンドへ', g: { kt: 100, bank: 17, how: 'turn' }, say: '右へ標準旋回してインバウンドコースに乗り、局へ', tgt: { alt: [L => L.alt0, 100] }, until: c => Math.abs(c.cdi) < 1 && Math.abs(w180(c.hdg - SCHOOL.obs)) < 15, max: 180, grade: true },
       ] },
   ] },
   { id: 's6', title: '第 6 段階　実地試験（模擬）', desc: 'これまでの項目をまとめて審査。すべて合格で修了。', lessons: [
@@ -5679,15 +5744,15 @@ const SYLLABUS = [
       steps: [
         { name: '離陸前点検', checklist: 'before_takeoff' },
         { name: '離陸許可の復唱', atc: 'takeoff' },
-        { name: '離陸', say: 'センターラインを保って離陸、73 kt で上昇', until: c => !c.onGround && c.agl > 3, max: 90, grade: true, tgt: { cl: [0, 8] }, gradeWhen: c => c.onGround && c.kias > 15 },
-        { name: '上昇', say: '73 kt で地上 2,000 ft まで上昇', tgt: { spd: T_SPD(73) }, gradeWhen: c => c.aglR > 200, until: c => c.aglR >= 2000, max: 300, grade: true, onEnd: (L, c) => { L.alt0 = Math.round(c.alt / 100) * 100 + 0; } },
-        { name: '水平へ', say: '水平飛行に移り 100 kt へ', until: (c, L, st) => st.t > 20, max: 25, onEnd: (L, c) => { L.alt0 = Math.round(c.alt / 50) * 50; L.hdg0 = Math.round(c.hdg); } },
+        { name: '離陸', g: '目安：スロットル全開（回転が約 2,300 rpm まで上がるのを確認）。52 kt で機首上げ 約 8〜10°（姿勢指示器の横線 1 本弱）にしてローテーション。直し方：左に振られたら右ラダー（E）でセンターラインへ', say: 'センターラインを保って離陸、73 kt で上昇', until: c => !c.onGround && c.agl > 3, max: 90, grade: true, tgt: { cl: [0, 8] }, gradeWhen: c => c.onGround && c.kias > 15 },
+        { name: '上昇', g: { kt: 73, pwr: 'full', how: 'climbFull' }, say: '73 kt で地上 2,000 ft まで上昇', tgt: { spd: T_SPD(73) }, gradeWhen: c => c.aglR > 200, until: c => c.aglR >= 2000, max: 300, grade: true, onEnd: (L, c) => { L.alt0 = Math.round(c.alt / 100) * 100 + 0; } },
+        { name: '水平へ', g: { kt: 100, how: 'level' }, say: '水平飛行に移り 100 kt へ', until: (c, L, st) => st.t > 20, max: 25, onEnd: (L, c) => { L.alt0 = Math.round(c.alt / 50) * 50; L.hdg0 = Math.round(c.hdg); } },
         stepSL('直線水平飛行', 40, 100),
         ...stepTurn(-1, 45, '左急旋回', { tgt: { alt: T_ALT(), abank: [45, 5], spd: T_SPD(95) } }),
-        { name: '失速の準備', say: 'フラップ 20°・パワーアイドル。高度を保ちながら失速させる', until: c => c.stall && c.kias < 52, max: 120 },
-        { name: '失速からの回復', say: '回復！', until: (c, L, st) => c.vs > 100 && c.kias > 62 && st.t > 2, max: 40, grade: true, onStart: (L, c, st) => { st.min = c.alt; st.start = c.alt; }, check: (c, L, st) => { st.min = Math.min(st.min, c.alt); },
+        { name: '失速の準備', g: '目安：スロットル アイドル。高度を保つように、1 秒に 1° くらいのペースで機首を上げ続ける。失速警報 → 振動（バフェット）→ 機首や片翼が落ちる、の順に来る', say: 'フラップ 20°・パワーアイドル。高度を保ちながら失速させる', until: c => c.stall && c.kias < 52, max: 120 },
+        { name: '失速からの回復', g: '目安：機首を水平線付近（0〜+5°）まで下げる → 全開 → 翼を水平。60 kt を超えたら上昇姿勢（約 +10°）へ。直し方：失速警報がまた鳴ったら引きすぎ。少し戻す', say: '回復！ 機首を下げる → フルパワー → 翼水平 → 上昇へ', until: (c, L, st) => c.vs > 100 && c.kias > 62 && st.t > 2, max: 40, grade: true, onStart: (L, c, st) => { st.min = c.alt; st.start = c.alt; }, check: (c, L, st) => { st.min = Math.min(st.min, c.alt); },
           result: (L, st) => [{ name: '失速回復の高度損失', val: `${Math.round(st.start - st.min)} ft`, std: '300 ft 以内', pass: st.start - st.min <= 300 }] },
-        { name: '模擬エンジン故障', say: 'エンジン故障！ 65 kt で空港へ滑空し、滑走路に着陸', fail: 'engine', until: c => c.onGround && c.gsK < 3, max: 600, grade: true, tgt: { spd: [65, 8] }, gradeWhen: (c, L, st) => st.t > 8 && c.aglR > 300,
+        { name: '模擬エンジン故障', g: { kt: 65, pwr: 'dead', how: 'glide' }, say: 'エンジン故障！ 65 kt で空港へ滑空し、滑走路に着陸', fail: 'engine', until: c => c.onGround && c.gsK < 3, max: 600, grade: true, tgt: { spd: [65, 8] }, gradeWhen: (c, L, st) => st.t > 8 && c.aglR > 300,
           check: (c, L, st) => { if (c.onGround && !st.td) { st.td = true; st.paved = c.paved; st.fpm = -c.vs; } },
           result: (L, st) => [{ name: '着陸', val: st.paved ? '滑走路' : '滑走路外', std: '滑走路', pass: !!st.paved }] },
       ] },
@@ -5696,8 +5761,8 @@ const SYLLABUS = [
 // landing steps shared by several lessons
 function landingSteps(vref, xwind = false, short = false) {
   return [
-    { name: 'ファイナル（安定進入）', say: `ファイナル：${vref} kt・3°（PAPI 赤 2 白 2）でセンターラインに乗る`, tgt: { spd: T_SPD(vref, 5), cl: [0, 30], gp: [3, 0.9] }, gradeWhen: c => c.aglR < 500 && c.aglR > 60 && c.u < -c.L2, until: c => c.aglR < 40 || c.onGround, max: 300, grade: true },
-    { name: short ? '短距離接地' : '接地', say: short ? '目標点に接地。すぐにアイドル・ブレーキ（B）' : '滑走路の端を越えたらアイドル、地上 10〜15 ft でフレアして接地', until: c => c.onGround && c.gsK < 3, max: 120,
+    { name: 'ファイナル（安定進入）', g: { kt: vref, fpm: -Math.round(vref * 5.3), flaps: short ? 3 : 2, how: 'approach' }, say: `ファイナル：${vref} kt・3°（PAPI 赤 2 白 2）でセンターラインに乗る`, tgt: { spd: T_SPD(vref, 5), cl: [0, 30], gp: [3, 0.9] }, gradeWhen: c => c.aglR < 500 && c.aglR > 60 && c.u < -c.L2, until: c => c.aglR < 40 || c.onGround, max: 300, grade: true },
+    { name: short ? '短距離接地' : '接地', g: '目安：滑走路の端を越えたらアイドル。地上 10〜15 ft から滑走路の先を見ながら機首を少しずつ上げ、最後は機首上げ 約 5〜8°。直し方：浮き上がったら引くのを止めて待つ、沈みが速ければ少し強く引く', say: short ? '目標点に接地。すぐにアイドル・ブレーキ（B）' : '滑走路の端を越えたらアイドル、地上 10〜15 ft でフレアして接地', until: c => c.onGround && c.gsK < 3, max: 120,
       check: (c, L, st) => {
         if (c.onGround && !st.td) { st.td = true; st.fpm = -c.vs; st.u = c.u; st.v = c.v; st.paved = c.paved; st.lat = c.latV; st.crab = Math.abs(w180(c.hdg - c.rwyHdg)); st.tdU = c.u; SCHOOL.prog.landings++; }
         if (c.onGround && st.td) st.stopU = c.u;
@@ -5736,6 +5801,14 @@ const ATC_Q = {
 // ---------------------------------------------------------------------
 //  lesson runtime
 // ---------------------------------------------------------------------
+function stepGuide(S, L) {
+  if (!S || !S.g) return '';
+  const g = typeof S.g === 'function' ? S.g(L) : S.g;
+  if (typeof g === 'string') return g;
+  let t = guideText(g, L);
+  if (g.pp) t = t.replace(/。姿勢指示器で[^。]*。/, '。姿勢指示器は故障中：機首の上下は高度計と昇降計、傾きは旋回計で判断。');
+  return t;
+}
 function findLesson(id) { for (const st of SYLLABUS) for (const l of st.lessons) if (l.id === id) return l; return null; }
 function lessonOrder() { const out = []; for (const st of SYLLABUS) for (const l of st.lessons) out.push(l.id); return out; }
 function schoolCtx(dt) {
@@ -5876,6 +5949,7 @@ function nextStep(c) {
   if (S.name && S.name.includes('ILS')) SCHOOL.nav = { type: 'ILS' };
   if (S.checklist) openChecklist(S.checklist);
   if (S.atc) openAtc(ATC_Q[S.atc](L));
+  L.guideText = stepGuide(S, L);
   L.sayText = S.say ? fillText(S.say, L) : S.checklist ? CHECKLISTS[S.checklist].title : S.atc ? '管制の指示に正しく応答する（1〜3 キー）' : '';
   L.hint = '';
   sfxChime();
@@ -5925,14 +5999,18 @@ function instructorHint(S, st, c) {
   for (const [k, q] of Object.entries(st.stats)) { const r = Math.abs(q.d) / q.tol; if (r > 0.6 && (!worst || r > worst[1])) worst = [k, r, q.d]; }
   if (!worst) return '良い調子です';
   const [k, , d] = worst, hi = d > 0;
+  // which control fixes airspeed depends on the phase, as a real instructor would say it:
+  // power is fixed in climbs, glides and constant-rate descents, so the nose sets the speed
+  const g = S.g && typeof S.g === 'object' ? S.g : null, pitchForSpeed = !!g && (!!g.pwr || ['rate', 'approach', 'ils', 'pattern', 'slow', 'glide', 'climbFull'].includes(g.how)), slow = g && g.how === 'slow';
   const M = {
-    alt: hi ? `高度が ${Math.round(d)} ft 高い：機首を 1〜2° 下げる` : `高度が ${Math.round(-d)} ft 低い：機首を少し上げ、必要ならパワー`,
+    alt: slow ? (hi ? `高度が ${Math.round(d)} ft 高い：パワーを少し絞る` : `高度が ${Math.round(-d)} ft 低い：パワーを足す（低速では高度はパワー）`) : hi ? `高度が ${Math.round(d)} ft 高い：機首を 1〜2° 下げる` : `高度が ${Math.round(-d)} ft 低い：機首を 1〜2° 上げ、速度が落ちるならパワーも`,
     aglR: hi ? '高い：パワーを絞って降下率を増やす' : '低い：パワーを足して降下を浅く',
-    spd: hi ? `速度が ${Math.round(d)} kt 速い：パワーを絞る（上昇中は機首を上げる）` : `速度が ${Math.round(-d)} kt 遅い：パワーを足す（上昇中は機首を下げる）`,
+    spd: pitchForSpeed ? (hi ? `速度が ${Math.round(d)} kt 速い：機首を 1〜2° 上げる${g.pwr ? '（出力はそのまま）' : ''}` : `速度が ${Math.round(-d)} kt 遅い：機首を 1〜2° 下げる${g.pwr ? '（出力はそのまま）' : ''}`)
+      : hi ? `速度が ${Math.round(d)} kt 速い：パワーを少し絞る（約 100 rpm で 5 kt）` : `速度が ${Math.round(-d)} kt 遅い：パワーを少し足す（約 100 rpm で 5 kt）`,
     hdg: hi ? `針路が右に ${Math.round(d)}° ずれ：左へ修正` : `針路が左に ${Math.round(-d)}° ずれ：右へ修正`,
     rhdg: hi ? '滑走路の方位より右：左へ' : '滑走路の方位より左：右へ', dwhdg: hi ? '滑走路と平行に：左へ' : '滑走路と平行に：右へ',
     abank: hi ? 'バンクが深い：少し浅く' : 'バンクが浅い：もう少し傾ける', arate: hi ? '旋回が速い：バンクを浅く' : '旋回が遅い：バンクを少し深く',
-    vs: hi ? '降下（上昇）率が違う：機首を少し下げる' : '機首を少し上げる', gp: hi ? '進入角が深い（高い）：パワーを足す' : '進入角が浅い（低い）：パワーを足して高度を保つ',
+    vs: hi ? (g && g.fpm < 0 ? '降下が浅い：パワーを少し絞る' : '上昇が速すぎる：パワーを少し絞る') : (g && g.fpm < 0 ? '降下が速すぎる：パワーを少し足す' : '上昇が遅い：パワーを少し足す'), gp: hi ? '進入角が深い（高い）：パワーを足す' : '進入角が浅い（低い）：パワーを足して高度を保つ',
     cl: hi ? 'センターラインの右：左へ（Q ラダー・A）' : 'センターラインの左：右へ（E ラダー・D）',
     cdi: hi ? '針が右：右へ修正' : '針が左：左へ修正', loc: hi ? 'ローカライザーの針が右：右へ' : 'ローカライザーの針が左：左へ', gs: hi ? 'グライドスロープより低い：降下を浅く' : 'グライドスロープより高い：降下を増やす',
   };
@@ -6505,7 +6583,8 @@ function renderBrief(id) {
     const h4 = document.createElement('h3'); h4.textContent = '合格基準'; box.append(h4);
     const s = document.createElement('p'); s.className = 'sch-std'; s.textContent = l.std; box.append(s);
     const h5 = document.createElement('h3'); h5.textContent = '飛行の流れ'; box.append(h5);
-    const ol = document.createElement('ol'); for (const st of l.steps) { const li = document.createElement('li'); li.textContent = st.name; ol.append(li); } box.append(ol);
+    const ol = document.createElement('ol'); for (const st of l.steps) { const li = document.createElement('li'); li.textContent = st.name; const gt = stepGuide(st, { alt0: 3000 }); if (gt) { const sm = document.createElement('div'); sm.className = 'sch-guide'; sm.textContent = gt; li.append(sm); } ol.append(li); } box.append(ol);
+    const gn = document.createElement('p'); gn.className = 'sch-note'; gn.textContent = '指示の出し方は実際の訓練と同じです：教官は「目標（速度・高度・昇降率）」を言い、最初の姿勢と出力は「目安」として示します。目安の数字はこの機体の計算値で、座席の位置や重さ・風で変わる最初の見当です。姿勢を決めたら、速度計・高度計・昇降計の結果を見て 1〜2° ずつ直し、落ち着いたらトリムを取ります。'; box.append(gn);
     const n = document.createElement('p'); n.className = 'sch-note'; n.textContent = '訓練中は操縦アシストなし・アナログ計器（I で切替）・コックピット視点（C で切替）。トリムは T。基準は FAA の実地試験基準（ACS）などを参考にした練習用の目安です。実際の試験基準・手順は必ず教官と教本（POH・AIM-J）で確認してください。'; box.append(n);
   }
   const bar = document.createElement('div'); bar.className = 'sch-bar';
@@ -6594,6 +6673,7 @@ function updateSchoolPanel() {
   const st = L.st;
   $('sp-step').textContent = `${L.def.title}　項目 ${L.step + 1} / ${L.def.steps.length}：${S.name}`;
   $('sp-say').textContent = L.sayText;
+  $('sp-guide').textContent = L.guideText || '';
   const chips = $('sp-tgt'); chips.textContent = '';
   if (S.tgt) for (const [k, q] of Object.entries(st.stats)) {
     const lab = TGT_LABEL[k] || [k, ''], r = Math.abs(q.d) / q.tol, sp = document.createElement('span');
@@ -7727,6 +7807,7 @@ const AI_RULES = `あなたはフライトシミュレータ「そらじま」�
 - 日本語で、やさしく、具体的に。専門用語は初めて使うときに短く説明する。
 - まず結論を 1〜2 文で。次に理由、必要なら具体的な操作（どのキーを・どれくらい・何を見て）を箇条書きで。長くても 12 行程度に収める。
 - 下に渡す「いまの状況」（飛行中の計器の値や、読んでいる教科書のページ）を使って、その場面に合わせて答える。値を読み取って「いま速度が〜なので」のように具体的に。
+- 操作を教えるときは、実際の教官と同じく「目標（速度・高度・昇降率）」＋「最初の姿勢と出力の目安（ピッチ約◯°・約◯ rpm）」＋「何を見てどう直すか」の形で。目安の数字は最初の見当で、最後は計器の結果で合わせることを伝える。上昇・滑空・一定の降下率では速度は機首で、水平飛行では速度はパワーで直す。
 - 教科書の関連する節があれば「（教科書 1.6）」のように節番号を添える。
 - 法規・試験基準・医学的なこと・機体固有の数値は一般的な説明にとどめ、「最新の航空法令・AIP・その機体の POH・教官で確認を」と一言添える。わからないことや推測は、そうと明示する。
 - このシミュレータは国の認定を受けた訓練装置ではない。実機の手順と違う点があれば実機を優先するよう伝える。

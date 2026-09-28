@@ -1118,6 +1118,12 @@ vec3 applyFog(vec3 col, vec3 p){
   fog = 1.0 - exp(-max(fog, 0.0));
   return mix(col, skyColor(dir), clamp(fog, 0.0, 1.0));
 }
+// city lights: 0 by day, rising through dusk to 1 at night
+uniform float uNightK;
+// an emitted light seen through the air: it dims with distance but is not replaced by the haze colour,
+// so a city at night stays a field of lights far away
+vec3 airLight(vec3 e, vec3 p){ return e * exp(-length(p - uCamPos) / 32000.0); }
+float nHash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 vec3 tonemap(vec3 c){
   return c / (1.0 + max(c - 0.85, 0.0) * 0.9);
 }
@@ -3590,19 +3596,20 @@ out vec4 outColor;
 void main(){
   vec3 n = normalize(vN);
   float diff = max(dot(n, uSunDir), 0.0) * planeShadow(vWorld.xz);
-  vec3 col;
+  vec3 col, tEm = vec3(0.0);
   if (uHasPhoto == 1) {
     vec3 ph = texture(uPhoto, vUv).rgb;
     float lum = dot(ph, vec3(0.3, 0.55, 0.15));
     ph = mix(vec3(lum), ph, 1.18);                                   // aerial photos are slightly hazy: restore colour
     ph = pow(max(ph, 0.0), vec3(1.12));
     col = ph * (uAmbSky * 0.55 + uSunCol * (0.46 + 0.36 * diff));
-    if (uNightF > 0.0) {
+    if (uNightK > 0.0) {
       float sat = max(ph.r, max(ph.g, ph.b)) - min(ph.r, min(ph.g, ph.b));
-      float urban = smoothstep(0.17, 0.07, sat) * smoothstep(0.22, 0.42, lum) * (1.0 - smoothstep(0.0, 0.25, 1.0 - n.y));
+      float urban = smoothstep(0.17, 0.07, sat) * smoothstep(0.2, 0.42, lum) * (1.0 - smoothstep(0.0, 0.25, 1.0 - n.y));
       float sp = texture(uNoise, vWorld.xz / 31.0).b, sp2 = texture(uNoise, vWorld.xz / 3.7).b, sp3 = texture(uNoise, vWorld.xz / 610.0).a;
-      vec3 lights = mix(vec3(1.0, 0.66, 0.32), vec3(0.95, 0.95, 1.0), step(0.6, sp)) * urban * (smoothstep(0.58, 0.82, sp2) * 1.6 + 0.10) * (0.5 + sp3);
-      col = col * 0.6 + lights * 1.2;
+      vec3 lights = mix(vec3(1.0, 0.62, 0.28), vec3(0.95, 0.95, 1.0), step(0.6, sp)) * urban * (mix(0.09, smoothstep(0.64, 0.86, sp2) * 2.4, clamp(1.0 - max(fwidth(vWorld.x), fwidth(vWorld.z)) / 3.7 * 0.7, 0.0, 1.0)) + 0.015) * (0.5 + sp3);
+      col *= mix(1.0, 0.6, uNightK);
+      tEm = lights * 1.3 * uNightK;
     }
   } else {
     float d1 = texture(uNoise, vWorld.xz / 61.0).b, d2 = texture(uNoise, vWorld.xz / 9.0).b, d3 = texture(uNoise, vWorld.xz / 2300.0).a, d4 = texture(uNoise, vWorld.xz / 700.0).b;
@@ -3622,7 +3629,7 @@ void main(){
     vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
     col = c * (uSunCol * diff + amb);
   }
-  outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
+  outColor = vec4(tonemap(applyFog(col, vWorld) + airLight(tEm, vWorld)), 1.0);
 }`;
 const JW_WATER_VS = GLSL_HEAD + `
 layout(location=0) in vec2 aXZ;
@@ -4796,7 +4803,7 @@ void main(){
   float dist = length(uCamPos - vWorld);
   float diff = max(dot(n, uSunDir), 0.0);
   vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5) * 1.15;
-  vec3 col;
+  vec3 col, bEm = vec3(0.0);
   float gloss = 0.0;
   bool tower = H > 45.0, house = H < 11.0;
   if (vRoof > 0.5) {
@@ -4856,15 +4863,19 @@ void main(){
     float fres = 0.12 + 0.75 * pow(1.0 - max(dot(n, V), 0.0), 4.0);
     vec3 glass = mix(vec3(0.05, 0.06, 0.08), skyColor(r) * 0.9, fres + (tower ? 0.25 : 0.0));
     glass += uSunCol * pow(max(dot(r, uSunDir), 0.0), 120.0) * 2.0;
-    float lit = step(0.62, h2(cell * 1.7 + vSeed)) * uNight;
-    glass = mix(glass, vec3(1.0, 0.82, 0.55) * 0.95, lit * mix(1.0, aa, 0.5) );
+    float share = tower ? 0.55 : house ? 0.45 : 0.4;
+    // far away the windows blur into their average: keep that dim and warm, so walls stay dark with a glow
+    float lit = mix(share * 0.09, step(1.0 - share, h2(cell * 1.7 + vSeed)), aa * aa) * uNight;
+    vec3 wcol = mix(vec3(1.0, 0.72, 0.42), mix(vec3(1.0, 0.78, 0.5), vec3(0.84, 0.9, 1.0), step(tower ? 0.45 : 0.75, h2(cell * 2.3 + vSeed))), aa);
+    glass = mix(glass, glass * 0.3, uNight);
+    bEm = wcol * lit * win * 1.5;
     vec3 wallLit = wc * (uSunCol * diff * 0.9 + amb);
     col = mix(wallLit, glass, win);
     // ground-floor shade and contact darkening
     col *= mix(0.62, 1.0, smoothstep(0.0, 7.0, vM.z));
-    if (!house && vM.z < 3.6 && vM.z > 0.3 && s2 > 0.4) col = mix(col, glass * 0.8, 0.5 * aa);   // shop fronts
+    if (!house && vM.z < 3.6 && vM.z > 0.3 && s2 > 0.4) { col = mix(col, glass * 0.8, 0.5 * aa); bEm += vec3(1.0, 0.86, 0.62) * 0.9 * uNight * aa; }   // shop fronts
   }
-  outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
+  outColor = vec4(tonemap(applyFog(col, vWorld) + airLight(bEm, vWorld)), 1.0);
 }`;
 const TREE_VS = GLSL_HEAD + `
 layout(location=0) in vec3 aC;       // card corner x, y, card index (2 = horizontal)
@@ -5454,7 +5465,37 @@ uniform sampler2D uTex;
 uniform int uHasTex;
 uniform float uNightF;
 uniform int uFlatN;      // 1: the mesh has no normals (Google photogrammetry): use the face normal
+uniform sampler2D uNoise;
 out vec4 outColor;
+// Google photogrammetry has no windows or lamps, so night lights are made from the geometry and the photo:
+// walls get storeys of windows (some lit), paved grey ground gets street lighting, green (trees) gets none
+vec3 googNight(vec3 ph, vec3 n){
+  float lum = dot(ph, vec3(0.3, 0.55, 0.15)), sat = max(ph.r, max(ph.g, ph.b)) - min(ph.r, min(ph.g, ph.b));
+  float green = smoothstep(0.015, 0.07, ph.g - max(ph.r, ph.b));
+  float blk = nHash(floor(vWorld.xz / 45.0));                       // each block has its own mood
+  vec3 e = vec3(0.0);
+  if (abs(n.y) < 0.35) {
+    vec2 t2 = normalize(vec2(-n.z, n.x) + 1e-5);
+    vec2 g = vec2(dot(vWorld.xz, t2) / 2.9, (vWorld.y + 0.6) / 3.6);
+    vec2 cell = floor(g), f = fract(g), fw = fwidth(g);
+    float aa = clamp(1.0 - max(fw.x, fw.y) * 1.1, 0.0, 1.0);
+    float frame = step(0.16, f.x) * step(f.x, 0.84) * step(0.26, f.y) * step(f.y, 0.86);
+    float share = mix(0.3, 0.68, blk);                               // offices glow, some blocks are dark
+    float on = step(1.0 - share, nHash(cell + blk * 31.7));
+    float lit = mix(share * 0.08, frame * on, aa * aa);
+    vec3 wc = mix(vec3(1.0, 0.7, 0.4), mix(vec3(1.0, 0.76, 0.46), vec3(0.82, 0.9, 1.0), step(0.68, nHash(cell * 1.37 + 2.1))), aa);
+    e = wc * lit * 2.3 * (1.0 - green) * smoothstep(0.25, 0.35, 1.0 - abs(n.y));
+  } else {
+    float urban = smoothstep(0.2, 0.07, sat) * smoothstep(0.1, 0.32, lum) * (1.0 - green);
+    float sp = texture(uNoise, vWorld.xz / 29.0).b, sp2 = texture(uNoise, vWorld.xz / 3.3).b, sp3 = texture(uNoise, vWorld.xz / 700.0).a;
+    vec3 lamp = mix(vec3(1.0, 0.6, 0.26), vec3(0.95, 0.95, 1.0), step(0.5, sp));
+    // single lamps are smaller than a pixel far away (and the noise texture averages out): blend to their mean glow
+    vec2 fwl = fwidth(vWorld.xz / 3.3); float aal = clamp(1.0 - max(fwl.x, fwl.y) * 0.7, 0.0, 1.0);
+    float spark = mix(0.09, smoothstep(0.66, 0.88, sp2) * 2.4, aal);
+    e = lamp * urban * (spark + 0.015) * (0.45 + sp3) * (n.y > 0.9 ? 1.0 : 0.5);
+  }
+  return e;
+}
 void main(){
   vec3 n = normalize(vN);
   if (uFlatN == 1) { n = normalize(cross(dFdx(vWorld), dFdy(vWorld))); if (dot(n, uCamPos - vWorld) < 0.0) n = -n; }
@@ -5465,15 +5506,21 @@ void main(){
   float diff = max(dot(n, uSunDir), 0.0);
   vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
   vec3 col = base * (uSunCol * (0.30 + 0.62 * diff) + amb * 0.9);
-  if (uNightF > 0.0 && uHasTex == 1 && vUv.x >= 0.0) {
-    vec2 g = vUv * vec2(260.0, 180.0), cell = floor(g), f = fract(g);
-    float h = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
-    float box = step(0.2, f.x) * step(f.x, 0.8) * step(0.25, f.y) * step(f.y, 0.75);
-    float aa = clamp(1.0 - max(fwidth(g.x), fwidth(g.y)) * 0.8, 0.0, 1.0);
-    float lit = step(0.86, h) * mix(0.36, box, aa);
-    col = col * 0.8 + vec3(1.0, 0.8, 0.52) * lit * (1.0 - abs(n.y)) * 0.75;
+  vec3 em = vec3(0.0);
+  if (uNightK > 0.0) {
+    if (uFlatN == 1) em = googNight(base, n);
+    else if (uHasTex == 1 && vUv.x >= 0.0) {
+      vec2 g = vUv * vec2(260.0, 180.0), cell = floor(g), f = fract(g);
+      float h = nHash(cell);
+      float box = step(0.2, f.x) * step(f.x, 0.8) * step(0.25, f.y) * step(f.y, 0.75);
+      float aa = clamp(1.0 - max(fwidth(g.x), fwidth(g.y)) * 0.8, 0.0, 1.0);
+      float lit = step(0.7, h) * mix(0.36, box, aa);
+      vec3 wc = mix(vec3(1.0, 0.78, 0.5), vec3(0.85, 0.9, 1.0), step(0.75, nHash(cell * 1.3 + 4.0)));
+      em = wc * lit * (1.0 - abs(n.y)) * 1.4;
+    }
+    em *= uNightK;
   }
-  outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
+  outColor = vec4(tonemap(applyFog(col, vWorld) + airLight(em, vWorld)), 1.0);
 }`;
 // =====================================================================
 //  GOOGLE PHOTOREALISTIC 3D TILES (optional, the player's own API key)
@@ -5771,7 +5818,6 @@ function drawGoogle() {
   if (!GOOG.covering || !PLAT.ready) return;
   const pr = PLAT.prog, u = pr.u;
   setCommon(pr);
-  gl.uniform1f(u.uNightF, 0);
   gl.uniform1i(u.uTex, 8);
   gl.uniform1f(u.uYOff, GOOG.off || 0);
   gl.uniform1i(u.uFlatN, 1);
@@ -10494,6 +10540,7 @@ async function loadJapan() {
 
 // ---------- rendering ----------
 const R = { VP: null, eye: [0, 0, 0], time: 0, W: 1, H: 1, camR: [1, 0, 0], camU: [0, 1, 0], camF: [0, 0, -1], tanX: 1, tanY: 1 };
+function nightK() { return ENV.night ? 1 : clamp((0.3 - ENV.sunDir[1]) * 4, 0, 1); }
 function setCommon(pr) {
   const u = pr.u;
   gl.useProgram(pr.p);
@@ -10519,6 +10566,7 @@ function setCommon(pr) {
   if (u.uCurv) gl.uniform1f(u.uCurv, JW.active ? 1 / (2 * R_EARTH) : 0);
   if (u.uStars) gl.uniform1f(u.uStars, ENV.night ? 1 : 0);
   if (u.uNightF) gl.uniform1f(u.uNightF, ENV.night ? 1 : 0);
+  if (u.uNightK) gl.uniform1f(u.uNightK, nightK());
 }
 function shadowUniforms(pr) {
   const s = sim, u = pr.u;

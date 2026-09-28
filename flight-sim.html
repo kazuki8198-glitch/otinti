@@ -5237,7 +5237,8 @@ function platInit() {
   if (PLAT.ready || PLAT.failed) return;
   try {
     const wurl = URL.createObjectURL(new Blob(['(' + platWorkerMain.toString() + ')()'], { type: 'text/javascript' }));
-    for (let i = 0; i < (game.touch ? 1 : 3); i++) { const w = new Worker(wurl); w.busy = 0; w.onmessage = e => platReceive(e.data); PLAT.workers.push(w); }
+    const nW = game.touch ? 2 : clamp((navigator.hardwareConcurrency || 4) - 2, 3, 6);    // decoding (Draco, images) runs here
+    for (let i = 0; i < nW; i++) { const w = new Worker(wurl); w.busy = 0; w.onmessage = e => platReceive(e.data); PLAT.workers.push(w); }
   } catch (e) { PLAT.failed = true; return; }
   PLAT.prog = makeProgram(PLAT_VS, PLAT_FS);
   PLAT.ready = true;
@@ -5484,7 +5485,7 @@ void main(){
 // =====================================================================
 const GOOG = {
   key: '', on: false, state: 'off', msg: '', root: null, session: '', nextKey: 1, nodes: 0,
-  active: [], covering: false, off: null, diffs: [], credits: '', creditT: 0, bytes: 0, loaded: 0, frame: 0,
+  active: [], covering: false, off: null, diffs: [], samp: [], upq: [], credits: '', creditT: 0, bytes: 0, loaded: 0, frame: 0,
 };
 try { GOOG.key = localStorage.getItem('sorajima-gkey') || ''; GOOG.on = !!GOOG.key && localStorage.getItem('sorajima-gon') !== '0'; } catch (e) { /* storage unavailable */ }
 function googSave() { try { if (GOOG.key) localStorage.setItem('sorajima-gkey', GOOG.key); else localStorage.removeItem('sorajima-gkey'); localStorage.setItem('sorajima-gon', GOOG.on ? '1' : '0'); } catch (e) { /* ignore */ } }
@@ -5555,6 +5556,7 @@ function googStart() {
 function googStop() {
   const free = n => { if (n.mesh) googFree(n); for (const c of n.children) free(c); };
   if (GOOG.root) free(GOOG.root);
+  for (const [, r] of GOOG.upq) r.bitmaps.forEach(b => b.close()); GOOG.upq.length = 0;
   GOOG.root = null; GOOG.state = 'off'; GOOG.active = []; GOOG.covering = false; GOOG.session = ''; googStatus();
 }
 function googWorld(n) {
@@ -5611,10 +5613,11 @@ function googUpdate(planes) {
   req.sort((a, b) => a[1] - b[1]);
   let busy = 0; for (const w of PLAT.workers) busy += w.busy;
   for (const [n] of req) {
-    if (busy >= PLAT.workers.length * 3) break;
+    if (busy >= PLAT.workers.length * 4 || GOOG.upq.length > 12) break;
     if (n.state !== 0) continue;
     googDispatch(n); busy++;
   }
+  googUploadStep(); googOffStep();
   if (f % 30 === 0) googEvict(f);
   if (R.time > GOOG.creditT) { GOOG.creditT = R.time + 1; googCredits(); }
 }
@@ -5639,25 +5642,34 @@ function googReceive(job, r) {
     else setTimeout(() => { if (n.state === 3) n.state = 0; }, 15000);
     return;
   }
-  n.state = 2; n.copyright = r.copyright;
-  if (!r.nv) { n.mesh = { empty: true, groups: [] }; return; }
+  n.copyright = r.copyright;
+  if (!r.nv) { n.state = 2; n.mesh = { empty: true, groups: [] }; return; }
+  n.state = 4;                                          // decoded, waiting for its turn to go to the GPU
   // diagnostics: where the decoded vertices ended up compared with the tile's bounding volume
-  { const sm0 = new Float32Array(r.samples); let la = 0, lo = 0, k = 0; for (; k < sm0.length; k += 3) { la += sm0[k]; lo += sm0[k + 1]; }
+  const sm = new Float32Array(r.samples);
+  { let la = 0, lo = 0, k = 0; for (; k < sm.length; k += 3) { la += sm[k]; lo += sm[k + 1]; }
     const c = k / 3; if (c && !n.planet) { n.dLat = la / c; n.dLon = lo / c; n.miss = geoDist(n.lat, n.lon, n.dLat, n.dLon); }
     n.hmin = r.hmin; n.hmax = r.hmax; GOOG.nDecoded = (GOOG.nDecoded || 0) + 1; }
-  // measure the geoid: the tile's ground points against the sim's own terrain heights
-  const sm = new Float32Array(r.samples);
-  for (let k = 0; k < sm.length; k += 3) { const gh = rawHeightGeo(sm[k], sm[k + 1]); if (gh > 2 && Number.isFinite(gh)) GOOG.diffs.push(sm[k + 2] - gh); }
-  if (GOOG.diffs.length > 600) GOOG.diffs.splice(0, GOOG.diffs.length - 600);
-  // most sampled vertices in a city lie on roofs and walls, so only the lowest ones are ground: take a
-  // low percentile, and keep it within the geoid's real range (Japan: about 25-45 m) so a bad estimate
-  // can never sink the buildings into the terrain
-  if (GOOG.diffs.length > 40) {
-    const s = [...GOOG.diffs].sort((a, b) => a - b), v = s[Math.floor(s.length * 0.06)];
-    const [la, lo] = worldToGeo(R.eye[0], R.eye[2]), jp = googGuessOff(la, lo) > 0;
-    GOOG.off = jp ? clamp(v, 25, 45) : clamp(v, -110, 90);
-    GOOG.rawOff = v;
+  // height datum samples: Google's height minus the sim's own ground (the one the wheels roll on)
+  for (let k = 0; k < sm.length; k += 3) {
+    const w = geoToWorld(sm[k], sm[k + 1]), gh = terrainHeight(w[0], w[1]);
+    if (gh > 1 && Number.isFinite(gh)) GOOG.samp.push([sm[k], sm[k + 1], sm[k + 2] - gh]);
   }
+  if (GOOG.samp.length > 3000) GOOG.samp.splice(0, GOOG.samp.length - 3000);
+  GOOG.upq.push([n, r]);
+}
+// GPU uploads are spread over frames (a few milliseconds each) so that tiles arriving together
+// don't freeze the picture
+function googUploadStep() {
+  const t0 = performance.now();
+  while (GOOG.upq.length && performance.now() - t0 < 5) {
+    const [n, r] = GOOG.upq.shift();
+    if (n.state !== 4) { r.bitmaps.forEach(b => b.close()); continue; }
+    googUpload(n, r);
+  }
+}
+function googUpload(n, r) {
+  n.state = 2;
   const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
   const mk = (data, loc, size, type, norm) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, type, norm, 0, 0); return b; };
   const bufs = [mk(r.pos, 0, 3, gl.FLOAT, false), mk(r.nrm, 1, 3, gl.BYTE, true), mk(r.uv, 2, 2, gl.FLOAT, false), mk(r.col, 3, 4, gl.UNSIGNED_BYTE, true)];
@@ -5675,6 +5687,27 @@ function googReceive(job, r) {
   });
   n.mesh = { vao, bufs, texs, groups: r.groups, bytes };
   GOOG.bytes += bytes; GOOG.loaded++;
+}
+// height datum (ellipsoid - the sim's ground). Ground points cluster tightly at the true value while
+// roofs spread above it and rivers/underpasses below, so take the peak of a histogram of the samples
+// near the aircraft, and move towards it smoothly
+function googOffStep(dt) {
+  if (R.time < (GOOG.offT || 0)) return; GOOG.offT = R.time + 0.5;
+  const [la, lo] = worldToGeo(sim.pos[0], sim.pos[2]), jp = googGuessOff(la, lo) > 0;
+  let pts = GOOG.samp.filter(q => Math.abs(q[0] - la) < 0.03 && Math.abs(q[1] - lo) < 0.036);
+  if (pts.length < 25) pts = GOOG.samp;
+  if (pts.length < 25) return;
+  const B = 0.5, lo0 = jp ? 15 : -120, nb = Math.round((jp ? 60 : 220) / B), h = new Float32Array(nb);
+  for (const q of pts) { const i = Math.floor((q[2] - lo0) / B); if (i >= 0 && i < nb) h[i]++; }
+  let best = -1, bv = 0;
+  for (let i = 1; i < nb - 1; i++) { const v = h[i - 1] + h[i] * 2 + h[i + 1]; if (v > bv) { bv = v; best = i; } }
+  if (best < 0) return;
+  const pk = lo0 + (best + 0.5) * B; let sum = 0, c = 0;
+  for (const q of pts) if (Math.abs(q[2] - pk) < 1.5) { sum += q[2]; c++; }
+  const v = c ? sum / c : pk;
+  GOOG.rawOff = v;
+  const target = (jp ? clamp(v, 25, 45) : clamp(v, -110, 90)) + 0.3;     // a hair low: wheels touch, never sink
+  GOOG.off = GOOG.off == null ? target : GOOG.off + clamp(target - GOOG.off, -3, 3);
 }
 function googFree(n) {
   if (n.mesh && !n.mesh.empty) {
@@ -5751,8 +5784,10 @@ function googPerf(dt) {
   if (!GOOG.covering || dt <= 0) return;
   GOOG.ft = GOOG.ft ? GOOG.ft * 0.96 + dt * 0.04 : dt;
   GOOG.lodK = GOOG.lodK || 1;
-  if (GOOG.ft > 1 / 26) GOOG.lodK = Math.min(2, GOOG.lodK * 1.008);
-  else if (GOOG.ft < 1 / 45) GOOG.lodK = Math.max(1, GOOG.lodK * 0.996);
+  // adjust in coarse steps every few seconds: a level that changes every frame makes tiles pop back and forth
+  if (R.time < (GOOG.lodT || 0)) return; GOOG.lodT = R.time + 4;
+  if (GOOG.ft > 1 / 24) GOOG.lodK = Math.min(2, GOOG.lodK + 0.25);
+  else if (GOOG.ft < 1 / 50) GOOG.lodK = Math.max(1, GOOG.lodK - 0.25);
 }
 
 // one line of numbers that tells what the Google layer is actually doing (shown under the status line)

@@ -5569,7 +5569,11 @@ function googUpdate(planes) {
   if (!PLAT.ready) { platInit(); if (!PLAT.ready) return; }
   const f = ++GOOG.frame, eye = R.eye;
   if (GOOG.off == null) { const [la, lo] = worldToGeo(eye[0], eye[2]); GOOG.off = googGuessOff(la, lo); }
-  const K = R.H / (2 * R.tanY), SSE = (game.touch ? 28 : game.gfx === 'high' ? 12 : 18) * (GOOG.lodK || 1), MAXD = 60000 + Math.max(eye[1], 0) * 6;
+  // detail is chosen for the full display resolution (not the reduced render size), and the frame-rate
+  // saving only coarsens distant tiles: buildings within ~3 km always keep their full shape
+  const K = glCanvas.clientHeight * Math.min(window.devicePixelRatio || 1, game.touch ? 1.5 : 1.75) / (2 * R.tanY);
+  const SSE0 = game.touch ? 28 : game.gfx === 'high' ? 12 : 18, MAXD = 60000 + Math.max(eye[1], 0) * 6;
+  const sseAt = d => SSE0 * (1 + ((GOOG.lodK || 1) - 1) * smoothstep(3000, 8000, d));
   const out = [], req = [];
   const dist = n => { if (n.planet) return 0; const c = googWorld(n); return Math.max(0, Math.hypot(c[0] - eye[0], c[1] - eye[1], c[2] - eye[2]) - n.r); };
   const vis = n => { if (n.planet) return true; const c = googWorld(n), r = n.r; return boxInFrustum(planes, c[0] - r, c[1] - r, c[2] - r, c[0] + r, c[1] + r, c[2] + r); };
@@ -5580,7 +5584,7 @@ function googUpdate(planes) {
     n.used = f;
     if (n.ext) { if (!n.extState) googLoadExt(n); return; }
     const sse = n.ge * K / Math.max(d, 1);
-    const refine = n.children.length && (n.planet || !n.uri || sse > SSE);
+    const refine = n.children.length && (n.planet || !n.uri || sse > sseAt(d));
     if (!refine) { if (n.uri) { if (n.mesh) out.push(n); else req.push([n, d]); } return; }
     const kidsReady = n.children.every(c => dist(c) > MAXD || !vis(c) || ready(c));
     if (kidsReady || !n.uri) { for (const c of n.children) visit(c); if (!kidsReady && n.uri && !n.mesh) req.push([n, d]); }
@@ -5719,7 +5723,7 @@ function googPerf(dt) {
   if (!GOOG.covering || dt <= 0) return;
   GOOG.ft = GOOG.ft ? GOOG.ft * 0.96 + dt * 0.04 : dt;
   GOOG.lodK = GOOG.lodK || 1;
-  if (GOOG.ft > 1 / 26) GOOG.lodK = Math.min(3, GOOG.lodK * 1.008);
+  if (GOOG.ft > 1 / 26) GOOG.lodK = Math.min(2, GOOG.lodK * 1.008);
   else if (GOOG.ft < 1 / 45) GOOG.lodK = Math.max(1, GOOG.lodK * 0.996);
 }
 // =====================================================================

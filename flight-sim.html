@@ -285,6 +285,17 @@ kbd{font:700 11.5px var(--mono);background:rgba(95,212,255,.12);border:1px solid
 #ai-in{flex:1;min-height:44px;max-height:140px;resize:vertical;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:#0b1422;color:var(--ink);font:14px/1.5 var(--jp)}
 #ai-state{padding:0 14px 10px;color:var(--muted);font-size:11.5px;line-height:1.5}
 .ai-btn{padding:10px 14px;border-radius:6px;border:1px solid #b58cff;background:rgba(181,140,255,.12);color:#d8c2ff;font:700 14px var(--jp);cursor:pointer;text-align:left}
+details.goog{margin:4px 0 2px;font-size:12.5px;color:var(--muted)}
+details.goog summary{cursor:pointer;color:var(--cyan);font-weight:700}
+details.goog p{margin:6px 0;line-height:1.55}
+.goog-row{display:flex;gap:6px;margin:6px 0;flex-wrap:wrap}
+.goog-row input{flex:1;min-width:160px;padding:6px 8px;border-radius:5px;border:1px solid var(--line);background:#0b1422;color:var(--ink);font:13px var(--mono)}
+.goog-row button{padding:6px 10px;border-radius:5px;border:1px solid var(--line);background:rgba(95,212,255,.1);color:var(--ink);font:700 12px var(--jp);cursor:pointer}
+.goog-st.ok{color:var(--green)} .goog-st.ng{color:var(--amber)}
+#goog-credit{position:fixed;left:50%;bottom:4px;transform:translateX(-50%);z-index:3;pointer-events:none;font:11px/1.3 Roboto,Arial,sans-serif;color:#fff;text-shadow:0 0 3px #000,0 0 2px #000;display:flex;gap:8px;align-items:center;max-width:70vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#goog-credit b{font:700 15px/1 'Product Sans',Roboto,Arial,sans-serif;letter-spacing:-.2px}
+#goog-credit b i:nth-child(1),#goog-credit b i:nth-child(4){color:#4285f4}#goog-credit b i:nth-child(2),#goog-credit b i:nth-child(6){color:#ea4335}#goog-credit b i:nth-child(3){color:#fbbc05}#goog-credit b i:nth-child(5){color:#34a853}
+#goog-credit i{font-style:normal}
 #inst-tut,#read-quiz{align-items:center;justify-content:center;background:rgba(4,9,17,.8);z-index:6}
 .it-panel{width:min(1100px,100%);max-height:100%}
 .it-wrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;padding:14px 18px;overflow:auto}
@@ -415,6 +426,12 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
       </div>
       <span class="f-desc" id="map-desc"></span>
       <span class="f-desc net" id="net-desc"></span>
+      <details class="goog"><summary>Google の 3D 地図（写真から作った立体の街・自分の API キーが必要）</summary>
+        <p>MSFS と同じ種類の写真測量データで、建物や木まで立体になります。オンライン版でのみ使えます。キーはこの端末のブラウザにだけ保存され、Google（tile.googleapis.com）以外には送りません。起動ごとに 1 回（約 3 時間有効）課金対象の取得が発生します（毎月 1,000 回まで無料）。</p>
+        <div class="goog-row"><input type="password" id="goog-key" placeholder="API キー（AIza…）" autocomplete="off" spellcheck="false"><button type="button" id="goog-save">保存して接続</button></div>
+        <div class="goog-row"><button type="button" id="goog-toggle">使う</button><button type="button" id="goog-clear">キーを削除</button></div>
+        <p id="goog-status" class="goog-st"></p>
+      </details>
       <div class="field">
         <label class="f-label" for="sel-acft">機体</label>
         <select id="sel-acft"></select>
@@ -491,6 +508,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
       <article id="bk-art"><div id="bk-chap"></div><h2 id="bk-title"></h2><div id="bk-body"></div><div id="bk-foot"></div></article></div>
   </div>
 </div>
+<div id="goog-credit" hidden><b><i>G</i><i>o</i><i>o</i><i>g</i><i>l</i><i>e</i></b><span></span></div>
 <aside id="ai" hidden aria-labelledby="ai-h">
   <div class="ai-head"><h2 id="ai-h">🤖 AI 教官</h2><button type="button" id="ai-clear" class="sch-sub">会話をリセット</button><button type="button" id="ai-close">閉じる ✕</button></div>
   <div id="ai-ctx"></div>
@@ -3539,10 +3557,11 @@ uniform vec3 uCamPos;
 uniform vec3 uTileOrigin;
 uniform float uCurv;
 uniform vec4 uUvX;
+uniform float uSink;
 out vec3 vWorld; out vec3 vN; out vec2 vUv; out float vH;
 void main(){
   vec3 w = aPos + uTileOrigin;
-  vH = w.y;
+  vH = w.y; w.y -= uSink;
   vec2 d = w.xz - uCamPos.xz;
   w.y -= dot(d, d) * uCurv;
   vWorld = w; vN = aNormal; vUv = aUv * uUvX.x + uUvX.yz;
@@ -3597,9 +3616,10 @@ layout(location=0) in vec2 aXZ;
 uniform mat4 uViewProj;
 uniform vec3 uCamPos;
 uniform float uCurv;
+uniform float uSink;
 out vec3 vPos;
 void main(){
-  vPos = vec3(uCamPos.x + aXZ.x, 0.0, uCamPos.z + aXZ.y);
+  vPos = vec3(uCamPos.x + aXZ.x, -uSink, uCamPos.z + aXZ.y);
   vec3 w = vPos; w.y -= dot(aXZ, aXZ) * uCurv;
   vPos = w;
   gl_Position = uViewProj * vec4(w, 1.0);
@@ -5065,8 +5085,129 @@ function platWorkerMain() {
     }
     return { id: m.id, nv, ni, pos: pos.buffer, nrm: nrm.buffer, uv: uv.buffer, col: col.buffer, idx: idx.buffer, samples: new Float32Array(samples).buffer, bitmap, hmin, hmax };
   }
+  // ---- Google Photorealistic 3D Tiles: node hierarchy, several textures per tile, tile transform ----
+  const mat4 = (a, b) => { const o = new Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k]; o[c * 4 + r] = s; } return o; };
+  const trs = n => {
+    if (n.matrix) return n.matrix;
+    const t = n.translation || [0, 0, 0], q = n.rotation || [0, 0, 0, 1], s = n.scale || [1, 1, 1];
+    const [x, y, z, w] = q;
+    return [(1 - 2 * (y * y + z * z)) * s[0], 2 * (x * y + z * w) * s[0], 2 * (x * z - y * w) * s[0], 0,
+      2 * (x * y - z * w) * s[1], (1 - 2 * (x * x + z * z)) * s[1], 2 * (y * z + x * w) * s[1], 0,
+      2 * (x * z + y * w) * s[2], 2 * (y * z - x * w) * s[2], (1 - 2 * (x * x + y * y)) * s[2], 0, t[0], t[1], t[2], 1];
+  };
+  async function decodeGoog(m) {
+    const r0 = await fetch(m.url, { mode: 'cors' });
+    if (!r0.ok) throw new Error('HTTP ' + r0.status);
+    const buf = await r0.arrayBuffer(), dv = new DataView(buf), u8 = new Uint8Array(buf);
+    if (td.decode(u8.subarray(0, 4)) !== 'glTF') throw new Error('not glb');
+    const jl = dv.getUint32(12, true), gj = JSON.parse(td.decode(u8.subarray(20, 20 + jl))), bin = 20 + jl + 8;
+    const view = i => { const v = gj.bufferViews[i]; return u8.subarray(bin + (v.byteOffset || 0), bin + (v.byteOffset || 0) + v.byteLength); };
+    const accessor = i => {
+      const a = gj.accessors[i], C = TYPES[a.componentType], nc = COMPS[a.type], v = gj.bufferViews[a.bufferView];
+      const off = bin + (v.byteOffset || 0) + (a.byteOffset || 0), es = C.BYTES_PER_ELEMENT, stride = v.byteStride || nc * es;
+      const out = new Float32Array(a.count * nc), dvv = new DataView(buf);
+      const sc = a.normalized ? (C === Uint8Array ? 1 / 255 : C === Uint16Array ? 1 / 65535 : C === Int8Array ? 1 / 127 : C === Int16Array ? 1 / 32767 : 1) : 1;
+      for (let k = 0; k < a.count; k++) for (let c = 0; c < nc; c++) {
+        const o = off + k * stride + c * es;
+        out[k * nc + c] = (C === Float32Array ? dvv.getFloat32(o, true) : C === Uint16Array ? dvv.getUint16(o, true) : C === Uint32Array ? dvv.getUint32(o, true) : C === Uint8Array ? dvv.getUint8(o) : C === Int16Array ? dvv.getInt16(o, true) : dvv.getInt8(o)) * sc;
+      }
+      return { data: out, nc };
+    };
+    const idxAcc = i => { const a = accessor(i); return Uint32Array.from(a.data); };
+    // world matrix of every node (scene graph), then the 3D Tiles y-up -> z-up convention and the tile transform
+    const world = new Map(), I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+    const walk = (ni, P) => { const n = gj.nodes[ni], M = mat4(P, trs(n)); world.set(ni, M); for (const c of n.children || []) walk(c, M); };
+    const scene = gj.scenes ? gj.scenes[gj.scene || 0] : null;
+    for (const ni of scene ? scene.nodes : (gj.nodes || []).map((_, i) => i)) walk(ni, I);
+    const TF = m.tf || I;
+    const parts = [];
+    for (const [ni, M] of world) {
+      const nd = gj.nodes[ni]; if (nd.mesh == null) continue;
+      for (const p of gj.meshes[nd.mesh].primitives) {
+        if (p.mode != null && p.mode !== 4) continue;
+        let P, UV = null, IDX;
+        const dext = p.extensions && p.extensions.KHR_draco_mesh_compression;
+        if (dext) {
+          const draco = (await getDraco()).m, bytes = view(dext.bufferView);
+          const dbuf = new draco.DecoderBuffer(); dbuf.Init(new Int8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength), bytes.byteLength);
+          const dec = new draco.Decoder(), mesh = new draco.Mesh();
+          const st = dec.DecodeBufferToMesh(dbuf, mesh);
+          if (!st.ok() || mesh.ptr === 0) { draco.destroy(mesh); draco.destroy(dec); draco.destroy(dbuf); continue; }
+          const np = mesh.num_points();
+          const get = id => { const at = dec.GetAttributeByUniqueId(mesh, id), nc = at.num_components(), nv = np * nc, bl = nv * 4, ptr = draco._malloc(bl); dec.GetAttributeDataArrayForAllPoints(mesh, at, draco.DT_FLOAT32, bl, ptr); const arr = new Float32Array(draco.HEAPF32.buffer, ptr, nv).slice(); draco._free(ptr); return { data: arr, nc }; };
+          P = get(dext.attributes.POSITION);
+          if (dext.attributes.TEXCOORD_0 != null) UV = get(dext.attributes.TEXCOORD_0);
+          const nf = mesh.num_faces(), nI = nf * 3, bl = nI * 4, ptr = draco._malloc(bl);
+          dec.GetTrianglesUInt32Array(mesh, bl, ptr); IDX = new Uint32Array(draco.HEAPF32.buffer, ptr, nI).slice(); draco._free(ptr);
+          draco.destroy(mesh); draco.destroy(dec); draco.destroy(dbuf);
+        } else {
+          P = accessor(p.attributes.POSITION);
+          if (p.attributes.TEXCOORD_0 != null) UV = accessor(p.attributes.TEXCOORD_0);
+          IDX = p.indices != null ? idxAcc(p.indices) : Uint32Array.from({ length: P.data.length / 3 }, (_, k) => k);
+        }
+        const mat = gj.materials && p.material != null ? gj.materials[p.material] : null, pbr = (mat && mat.pbrMetallicRoughness) || {};
+        const bt = pbr.baseColorTexture, tt = bt && bt.extensions && bt.extensions.KHR_texture_transform;
+        let src = -1;
+        if (bt) { const t = gj.textures[bt.index]; src = t.source != null ? t.source : (t.extensions && (t.extensions.EXT_texture_webp || t.extensions.KHR_texture_basisu) ? (t.extensions.EXT_texture_webp || {}).source ?? -1 : -1); }
+        parts.push({ P, UV, IDX, M, src, tt, factor: pbr.baseColorFactor || [1, 1, 1, 1] });
+      }
+    }
+    parts.sort((a, b) => a.src - b.src);
+    let nv = 0, nI = 0; for (const q of parts) { nv += q.P.data.length / 3; nI += q.IDX.length; }
+    const pos = new Float32Array(nv * 3), nrm = new Int8Array(nv * 4), uv = new Float32Array(nv * 2), col = new Uint8Array(nv * 4), idx = new Uint32Array(nI);
+    const refLat = m.refLat, refLon = m.refLon, kx = 111320 * Math.cos(refLat * Math.PI / 180), g = [0, 0, 0];
+    const groups = [], samples = [];
+    let v0 = 0, i0 = 0, hmin = 1e9, hmax = -1e9;
+    const step = Math.max(1, Math.floor(nv / 60));
+    for (const q of parts) {
+      const n = q.P.data.length / 3, M = q.M;
+      for (let k = 0; k < n; k++) {
+        const x0 = q.P.data[k * 3], y0 = q.P.data[k * 3 + 1], z0 = q.P.data[k * 3 + 2];
+        const x = M[0] * x0 + M[4] * y0 + M[8] * z0 + M[12], y = M[1] * x0 + M[5] * y0 + M[9] * z0 + M[13], z = M[2] * x0 + M[6] * y0 + M[10] * z0 + M[14];
+        const X = x, Y = -z, Z = y;                                                    // glTF y-up -> z-up
+        const ex = TF[0] * X + TF[4] * Y + TF[8] * Z + TF[12], ey = TF[1] * X + TF[5] * Y + TF[9] * Z + TF[13], ez = TF[2] * X + TF[6] * Y + TF[10] * Z + TF[14];
+        geo(ex, ey, ez, g);
+        const o = v0 + k;
+        pos[o * 3] = (g[1] - refLon) * kx; pos[o * 3 + 1] = g[2]; pos[o * 3 + 2] = -(g[0] - refLat) * KZ;
+        hmin = Math.min(hmin, g[2]); hmax = Math.max(hmax, g[2]);
+        if (o % step === 0 && samples.length < 180) samples.push(g[0], g[1], g[2]);
+        nrm[o * 4 + 1] = 127;
+        if (q.UV) {
+          let u = q.UV.data[k * 2], w = q.UV.data[k * 2 + 1];
+          if (q.tt) { const sc = q.tt.scale || [1, 1], of = q.tt.offset || [0, 0]; u = u * sc[0] + of[0]; w = w * sc[1] + of[1]; }
+          uv[o * 2] = u; uv[o * 2 + 1] = w;
+        } else { uv[o * 2] = -1; uv[o * 2 + 1] = -1; }
+        col[o * 4] = Math.min(255, q.factor[0] * 255); col[o * 4 + 1] = Math.min(255, q.factor[1] * 255); col[o * 4 + 2] = Math.min(255, q.factor[2] * 255); col[o * 4 + 3] = 255;
+      }
+      for (let k = 0; k < q.IDX.length; k++) idx[i0 + k] = q.IDX[k] + v0;
+      const last = groups[groups.length - 1];
+      if (last && last.src === q.src) last.count += q.IDX.length; else groups.push({ src: q.src, start: i0, count: q.IDX.length });
+      v0 += n; i0 += q.IDX.length;
+    }
+    // decode the images the groups use
+    const bitmaps = [], imgOf = new Map();
+    for (const gr of groups) {
+      gr.img = -1;
+      if (gr.src < 0) continue;
+      if (imgOf.has(gr.src)) { gr.img = imgOf.get(gr.src); continue; }
+      const im = gj.images[gr.src];
+      if (im.bufferView == null) continue;
+      try {
+        let bmp = await createImageBitmap(new Blob([view(im.bufferView).slice()], { type: im.mimeType || 'image/jpeg' }));
+        const mx = m.maxTex || 1024;
+        if (bmp.width > mx || bmp.height > mx) { const k = mx / Math.max(bmp.width, bmp.height); const sm = await createImageBitmap(bmp, { resizeWidth: Math.max(1, Math.round(bmp.width * k)), resizeHeight: Math.max(1, Math.round(bmp.height * k)), resizeQuality: 'high' }); bmp.close(); bmp = sm; }
+        gr.img = bitmaps.length; imgOf.set(gr.src, gr.img); bitmaps.push(bmp);
+      } catch (e) { /* undecodable image: draw untextured */ }
+    }
+    return { id: m.id, goog: true, nv, ni: nI, pos: pos.buffer, nrm: nrm.buffer, uv: uv.buffer, col: col.buffer, idx: idx.buffer, samples: new Float32Array(samples).buffer, groups, bitmaps, copyright: (gj.asset && gj.asset.copyright) || '', hmin, hmax };
+  }
   onmessage = async e => {
     const m = e.data;
+    if (m.goog) {
+      try { const r = await decodeGoog(m); postMessage(r, [r.pos, r.nrm, r.uv, r.col, r.idx, r.samples, ...r.bitmaps]); }
+      catch (err) { postMessage({ id: m.id, goog: true, error: String((err && err.message) || err) }); }
+      return;
+    }
     try {
       const r = await decode(m);
       const tr = [r.pos, r.nrm, r.uv, r.col, r.idx, r.samples];
@@ -5192,6 +5333,7 @@ function platDispatch(n, d) {
 function platReceive(r) {
   const job = PLAT.jobs.get(r.id); if (!job) return;
   PLAT.jobs.delete(r.id); job.w.busy--;
+  if (job.goog) { googReceive(job, r); return; }
   const n = job.n;
   if (n.job !== r.id) { if (r.bitmap) r.bitmap.close(); return; }
   if (r.error) { n.state = 3; if (r.error !== '404') setTimeout(() => { if (n.state === 3) n.state = 0; }, 20000); return; }
@@ -5315,6 +5457,248 @@ void main(){
   }
   outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
 }`;
+// =====================================================================
+//  GOOGLE PHOTOREALISTIC 3D TILES (optional, the player's own API key)
+//  The same kind of photogrammetry data large flight simulators use:
+//  terrain, buildings and trees in one textured mesh. Tiles are chosen by
+//  screen-space error around the camera and decoded in the PLATEAU
+//  workers. The key stays in this browser (localStorage) and is only sent
+//  to tile.googleapis.com. Google's attribution is shown while tiles draw.
+// =====================================================================
+const GOOG = {
+  key: '', on: false, state: 'off', msg: '', root: null, session: '', nextKey: 1, nodes: 0,
+  active: [], covering: false, off: null, diffs: [], credits: '', creditT: 0, bytes: 0, loaded: 0, frame: 0,
+};
+try { GOOG.key = localStorage.getItem('sorajima-gkey') || ''; GOOG.on = !!GOOG.key && localStorage.getItem('sorajima-gon') !== '0'; } catch (e) { /* storage unavailable */ }
+function googSave() { try { if (GOOG.key) localStorage.setItem('sorajima-gkey', GOOG.key); else localStorage.removeItem('sorajima-gkey'); localStorage.setItem('sorajima-gon', GOOG.on ? '1' : '0'); } catch (e) { /* ignore */ } }
+const GA = 6378137, GE2 = (1 / 298.257223563) * (2 - 1 / 298.257223563);
+function ecefGeo(x, y, z) {
+  const p = Math.hypot(x, y); let lat = Math.atan2(z, p * (1 - GE2)), h = 0;
+  for (let i = 0; i < 4; i++) { const s = Math.sin(lat), N = GA / Math.sqrt(1 - GE2 * s * s); h = p / Math.cos(lat) - N; lat = Math.atan2(z, p * (1 - GE2 * N / (N + h))); }
+  return [lat / DEG, Math.atan2(y, x) / DEG, h];
+}
+function googUrl(uri) {
+  const u = new URL(uri, 'https://tile.googleapis.com/v1/3dtiles/root.json');
+  const ses = u.searchParams.get('session');
+  if (ses) GOOG.session = ses; else if (GOOG.session) u.searchParams.set('session', GOOG.session);
+  u.searchParams.set('key', GOOG.key);
+  return u.href;
+}
+// rough geoid height (ellipsoid - sea level) until measured from the data itself
+function googGuessOff(lat, lon) { return (lat > 24 && lat < 46 && lon > 122 && lon < 147) ? 36 : 0; }
+// double-precision 4x4 (column-major) helpers: ECEF values are too large for Float32
+function gMul(a, b) { const o = new Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) o[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3]; return o; }
+function gXf(m, p) { return [m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]]; }
+function googConv(n, parent, tf) {
+  const T = n.transform ? (tf ? gMul(tf, n.transform) : [...n.transform]) : tf;
+  const node = { parent, ge: n.geometricError ?? (parent ? parent.ge / 2 : 1e5), children: [], mesh: null, state: 0, used: 0, tf: T || null, key: GOOG.nextKey++ };
+  const bv = n.boundingVolume || {};
+  if (bv.box) {
+    const b = bv.box, c = T ? gXf(T, [b[0], b[1], b[2]]) : [b[0], b[1], b[2]];
+    node.r = Math.sqrt(b[3] ** 2 + b[4] ** 2 + b[5] ** 2 + b[6] ** 2 + b[7] ** 2 + b[8] ** 2 + b[9] ** 2 + b[10] ** 2 + b[11] ** 2);
+    if (Math.hypot(c[0], c[1], c[2]) > 1e6) { const g = ecefGeo(c[0], c[1], c[2]); node.lat = g[0]; node.lon = g[1]; node.h = g[2]; }
+    else node.planet = true;
+  } else if (bv.region) {
+    const rg = bv.region; node.lat = (rg[1] + rg[3]) / 2 / DEG; node.lon = (rg[0] + rg[2]) / 2 / DEG; node.h = (rg[4] + rg[5]) / 2;
+    node.r = Math.hypot((rg[3] - rg[1]) * GA, (rg[2] - rg[0]) * GA * Math.cos(node.lat * DEG), rg[5] - rg[4]) / 2;
+  } else node.planet = true;
+  if (node.r > 2e6) node.planet = true;
+  const c = n.content && (n.content.uri || n.content.url);
+  if (c) { if (/\.json(\?|$)/.test(c)) node.ext = c; else node.uri = c; }
+  GOOG.nodes++;
+  for (const ch of n.children || []) node.children.push(googConv(ch, node, T));
+  return node;
+}
+async function googFetchJson(uri) {
+  const r = await fetch(googUrl(uri), { mode: 'cors' });
+  if (!r.ok) {
+    let detail = ''; try { const j = await r.json(); detail = (j.error && j.error.message) || ''; } catch (e) { /* no body */ }
+    const err = new Error(detail || 'HTTP ' + r.status); err.status = r.status; throw err;
+  }
+  return r.json();
+}
+function googStart() {
+  if (!GOOG.key || GOOG.state === 'loading') return;
+  GOOG.state = 'loading'; GOOG.msg = '接続中…'; googStatus();
+  googFetchJson('https://tile.googleapis.com/v1/3dtiles/root.json').then(j => {
+    GOOG.root = googConv(j.root, null, null);
+    GOOG.state = 'ok'; GOOG.msg = '接続しました'; googStatus();
+  }).catch(e => {
+    GOOG.state = 'error';
+    const st = e.status, m = e.message || '';
+    GOOG.msg = st === 403 ? `拒否されました（403）：キーが無効、Map Tiles API が有効になっていない、請求先が未設定、またはキーの「ウェブサイトの制限」にこのページのアドレスが入っていない可能性があります。Google の応答：${m}`
+      : st === 429 ? '使用回数の上限に達しました（429）。しばらく待つか、割り当てを確認してください。'
+      : /API key not valid/i.test(m) ? 'キーが無効です（打ち間違い、または削除・未作成のキー）。Google Cloud の「認証情報」でキーを確認してください。'
+      : st === 400 ? `リクエストが不正です（400）：${m}`
+      : /Failed to fetch|NetworkError|Load failed/i.test(m) ? 'Google に接続できません。オフライン版（claude.ai 上）では外部に接続できないため使えません。オンライン版で開いてください。'
+      : `接続できませんでした：${m}`;
+    googStatus();
+  });
+}
+function googStop() {
+  const free = n => { if (n.mesh) googFree(n); for (const c of n.children) free(c); };
+  if (GOOG.root) free(GOOG.root);
+  GOOG.root = null; GOOG.state = 'off'; GOOG.active = []; GOOG.covering = false; GOOG.session = ''; googStatus();
+}
+function googWorld(n) {
+  if (n.ov === JW.ov && n.offU === GOOG.off) return n.wc;
+  const [x, z] = geoToWorld(n.lat, n.lon);
+  n.wc = [x, n.h - (GOOG.off ?? googGuessOff(n.lat, n.lon)), z]; n.ov = JW.ov; n.offU = GOOG.off;
+  return n.wc;
+}
+function googUpdate(planes) {
+  GOOG.active = []; GOOG.covering = false;
+  if (!JW.active || !GOOG.on || !GOOG.key) return;
+  if (GOOG.state === 'off') { googStart(); return; }
+  if (GOOG.state !== 'ok' || !GOOG.root) return;
+  if (!PLAT.ready) { platInit(); if (!PLAT.ready) return; }
+  const f = ++GOOG.frame, eye = R.eye;
+  if (GOOG.off == null) { const [la, lo] = worldToGeo(eye[0], eye[2]); GOOG.off = googGuessOff(la, lo); }
+  const K = R.H / (2 * R.tanY), SSE = game.touch ? 28 : game.gfx === 'high' ? 12 : 18, MAXD = 60000 + Math.max(eye[1], 0) * 6;
+  const out = [], req = [];
+  const dist = n => { if (n.planet) return 0; const c = googWorld(n); return Math.max(0, Math.hypot(c[0] - eye[0], c[1] - eye[1], c[2] - eye[2]) - n.r); };
+  const vis = n => { if (n.planet) return true; const c = googWorld(n), r = n.r; return boxInFrustum(planes, c[0] - r, c[1] - r, c[2] - r, c[0] + r, c[1] + r, c[2] + r); };
+  const ready = (n, depth = 0) => n.uri ? !!n.mesh : (n.ext || depth > 6) ? false : n.children.length > 0 && n.children.every(c => dist(c) > MAXD || !vis(c) || ready(c, depth + 1));
+  const visit = n => {
+    const d = dist(n);
+    if (d > MAXD || !vis(n)) return;
+    n.used = f;
+    if (n.ext) { if (!n.extState) googLoadExt(n); return; }
+    const sse = n.ge * K / Math.max(d, 1);
+    const refine = n.children.length && (n.planet || !n.uri || sse > SSE);
+    if (!refine) { if (n.uri) { if (n.mesh) out.push(n); else req.push([n, d]); } return; }
+    const kidsReady = n.children.every(c => dist(c) > MAXD || !vis(c) || ready(c));
+    if (kidsReady || !n.uri) { for (const c of n.children) visit(c); if (!kidsReady && n.uri && !n.mesh) req.push([n, d]); }
+    else {
+      if (n.mesh) out.push(n); else req.push([n, d]);
+      for (const c of n.children) { const dc = dist(c); if (dc <= MAXD && vis(c)) { c.used = f; if (c.ext && !c.extState) googLoadExt(c); else if (c.uri && !c.mesh) req.push([c, dc + 50]); } }
+    }
+  };
+  visit(GOOG.root);
+  GOOG.active = out;
+  GOOG.covering = out.length > 0;
+  req.sort((a, b) => a[1] - b[1]);
+  let busy = 0; for (const w of PLAT.workers) busy += w.busy;
+  for (const [n] of req) {
+    if (busy >= PLAT.workers.length * 3) break;
+    if (n.state !== 0) continue;
+    googDispatch(n); busy++;
+  }
+  if (f % 30 === 0) googEvict(f);
+  if (R.time > GOOG.creditT) { GOOG.creditT = R.time + 1; googCredits(); }
+}
+function googLoadExt(n) {
+  n.extState = 1;
+  googFetchJson(n.ext).then(j => { n.children.push(googConv(j.root, n, n.tf)); n.ext = null; n.extState = 2; })
+    .catch(e => { n.extState = e.status === 404 ? 3 : 0; if (e.status === 403 || e.status === 429) { GOOG.state = 'error'; GOOG.msg = `タイルの取得が拒否されました（${e.status}）：${e.message}`; googStatus(); } });
+}
+function googDispatch(n) {
+  const w = PLAT.workers.reduce((a, b) => (b.busy < a.busy ? b : a)), id = PLAT.nextId++;
+  n.state = 1; n.job = id; w.busy++;
+  n.refLat = n.planet ? 0 : n.lat; n.refLon = n.planet ? 0 : n.lon; n.kx = kxAt(n.refLat);
+  PLAT.jobs.set(id, { n, w, goog: true });
+  w.postMessage({ goog: true, id, url: googUrl(n.uri), refLat: n.refLat, refLon: n.refLon, tf: n.tf, maxTex: game.touch ? 512 : 1024 });
+}
+function googReceive(job, r) {
+  const n = job.n;
+  if (n.job !== r.id) { if (r.bitmaps) r.bitmaps.forEach(b => b.close()); return; }
+  if (r.error) {
+    n.state = 3;
+    if (/HTTP 40[13]/.test(r.error)) { GOOG.state = 'error'; GOOG.msg = 'タイルの取得が拒否されました（' + r.error + '）'; googStatus(); }
+    else setTimeout(() => { if (n.state === 3) n.state = 0; }, 15000);
+    return;
+  }
+  n.state = 2; n.copyright = r.copyright;
+  if (!r.nv) { n.mesh = { empty: true, groups: [] }; return; }
+  // measure the geoid: the tile's ground points against the sim's own terrain heights
+  const sm = new Float32Array(r.samples);
+  for (let k = 0; k < sm.length; k += 3) { const gh = rawHeightGeo(sm[k], sm[k + 1]); if (gh > 2 && Number.isFinite(gh)) GOOG.diffs.push(sm[k + 2] - gh); }
+  if (GOOG.diffs.length > 600) GOOG.diffs.splice(0, GOOG.diffs.length - 600);
+  if (GOOG.diffs.length > 40) { const s = [...GOOG.diffs].sort((a, b) => a - b); GOOG.off = clamp(s[Math.floor(s.length * 0.3)], -110, 90); }
+  const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+  const mk = (data, loc, size, type, norm) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, type, norm, 0, 0); return b; };
+  const bufs = [mk(r.pos, 0, 3, gl.FLOAT, false), mk(r.nrm, 1, 3, gl.BYTE, true), mk(r.uv, 2, 2, gl.FLOAT, false), mk(r.col, 3, 4, gl.UNSIGNED_BYTE, true)];
+  const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, r.idx, gl.STATIC_DRAW); bufs.push(ib);
+  gl.bindVertexArray(null);
+  let bytes = r.nv * 32 + r.ni * 4;
+  const texs = r.bitmaps.map(bmp => {
+    const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bmp);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, 4);
+    bytes += bmp.width * bmp.height * 4 * 1.33; bmp.close(); return t;
+  });
+  n.mesh = { vao, bufs, texs, groups: r.groups, bytes };
+  GOOG.bytes += bytes; GOOG.loaded++;
+}
+function googFree(n) {
+  if (n.mesh && !n.mesh.empty) {
+    gl.deleteVertexArray(n.mesh.vao); for (const b of n.mesh.bufs) gl.deleteBuffer(b); for (const t of n.mesh.texs) gl.deleteTexture(t);
+    GOOG.bytes -= n.mesh.bytes; GOOG.loaded--;
+  }
+  n.mesh = null; n.state = 0; n.job = 0;
+}
+function googEvict(f) {
+  const all = [];
+  (function walk(n) { if (n.mesh) all.push(n); for (const c of n.children) walk(c); })(GOOG.root);
+  for (const n of all) if (n.used < f - 300) googFree(n);
+  const budget = game.touch ? 300e6 : 900e6;
+  if (GOOG.bytes > budget) all.filter(n => n.mesh).sort((a, b) => a.used - b.used).slice(0, 30).forEach(googFree);
+}
+function googCredits() {
+  const cnt = new Map();
+  for (const n of GOOG.active) for (const c of (n.copyright || '').split(';')) { const t = c.trim(); if (t) cnt.set(t, (cnt.get(t) || 0) + 1); }
+  GOOG.credits = [...cnt.entries()].sort((a, b) => b[1] - a[1]).map(e => e[0]).join('・');
+  const el = $('goog-credit');
+  if (el) { el.hidden = !GOOG.covering; el.querySelector('span').textContent = GOOG.credits ? 'データ：' + GOOG.credits : ''; }
+}
+function drawGoogle() {
+  if (!GOOG.covering || !PLAT.ready) return;
+  const pr = PLAT.prog, u = pr.u;
+  setCommon(pr);
+  gl.uniform1f(u.uNightF, 0);
+  gl.uniform1i(u.uTex, 8);
+  gl.uniform1f(u.uYOff, GOOG.off || 0);
+  gl.disable(gl.CULL_FACE);
+  gl.activeTexture(gl.TEXTURE8);
+  for (const n of GOOG.active) {
+    const m = n.mesh; if (!m || m.empty) continue;
+    gl.uniform4f(u.uTileA, n.refLon - JW.lon0, n.refLat - JW.lat0, n.refLat, n.kx);
+    gl.bindVertexArray(m.vao);
+    for (const g of m.groups) {
+      if (g.img >= 0 && m.texs[g.img]) { gl.bindTexture(gl.TEXTURE_2D, m.texs[g.img]); gl.uniform1i(u.uHasTex, 1); } else gl.uniform1i(u.uHasTex, 0);
+      gl.drawElements(gl.TRIANGLES, g.count, gl.UNSIGNED_INT, g.start * 4);
+    }
+  }
+  gl.activeTexture(gl.TEXTURE0);
+  gl.enable(gl.CULL_FACE);
+}
+// how far the sim's own terrain and sea are lowered under the Google mesh so they never show through it
+function googSink() { return GOOG.covering ? 4 : 0; }
+function googStatus() {
+  const el = $('goog-status'); if (!el) return;
+  el.textContent = GOOG.state === 'error' && GOOG.msg ? GOOG.msg : !GOOG.key ? 'キー未設定' : !GOOG.on ? '使わない設定です' : GOOG.state === 'ok' ? '接続しました。飛行中、近くの景色が Google の 3D に置き換わります' : GOOG.msg || '';
+  el.className = 'goog-st ' + (GOOG.state === 'error' ? 'ng' : GOOG.state === 'ok' ? 'ok' : '');
+  const b = $('goog-toggle'); if (b) b.textContent = GOOG.on ? '使わない' : '使う';
+}
+function setupGoogle() {
+  const inp = $('goog-key'); if (!inp) return;
+  inp.value = GOOG.key ? '●'.repeat(8) + GOOG.key.slice(-4) : '';
+  inp.addEventListener('focus', () => { if (inp.value.startsWith('●')) inp.value = ''; });
+  $('goog-save').addEventListener('click', () => {
+    const v = inp.value.trim();
+    if (!v || v.startsWith('●')) return;
+    if (!/^AIza[0-9A-Za-z_\-]{30,}$/.test(v)) { GOOG.msg = 'キーの形式が違うようです（AIza で始まる 39 文字）'; GOOG.state = 'error'; googStatus(); return; }
+    googStop(); GOOG.key = v; GOOG.on = true; GOOG.state = 'off'; googSave();
+    inp.value = '●'.repeat(8) + v.slice(-4);
+    googStart();
+  });
+  $('goog-toggle').addEventListener('click', () => { GOOG.on = !GOOG.on; googSave(); if (!GOOG.on) googStop(); else { GOOG.state = 'off'; googStart(); } googStatus(); });
+  $('goog-clear').addEventListener('click', () => { googStop(); GOOG.key = ''; GOOG.on = false; googSave(); inp.value = ''; googStatus(); });
+  googStatus();
+}
 // =====================================================================
 //  VOLUMETRIC CLOUDS: a cumulus layer ray-marched through its thickness.
 //  We draw the surface where the view ray enters the layer (its base
@@ -9371,6 +9755,7 @@ function setCommon(pr) {
   if (u.uSunI) gl.uniform1f(u.uSunI, game.atmo === false ? 0 : ENV.sunI || 0);
   if (u.uHaze) gl.uniform1f(u.uHaze, ENV.haze || 1.5);
   if (u.uFlatCl) gl.uniform1f(u.uFlatCl, volCloudsActive() ? 0 : 1);
+  if (u.uSink) gl.uniform1f(u.uSink, googSink());
   if (u.uCamPos) gl.uniform3fv(u.uCamPos, R.eye);
   if (u.uTime) gl.uniform1f(u.uTime, R.time);
   if (u.uViewProj) gl.uniformMatrix4fv(u.uViewProj, false, R.VP);
@@ -9428,7 +9813,7 @@ function render() {
   gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, dotTex);
   gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, runwayTex);
   R.nodes = 0;
-  if (JW.active) platUpdate(frustumPlanes(M4.mul(M4.persp(fovY, asp, 1, 650000), v)));
+  if (JW.active) { const pl = frustumPlanes(M4.mul(M4.persp(fovY, asp, 1, 650000), v)); platUpdate(pl); googUpdate(pl); }
   for (const far of [true, false]) {
     const proj = far ? M4.persp(fovY, asp, DEPTH_SPLIT, JW.active ? 650000 : 60000) : M4.persp(fovY, asp, cam.near, DEPTH_SPLIT * 1.02);
     R.VP = M4.mul(proj, v);
@@ -9438,7 +9823,11 @@ function render() {
 }
 function drawScene(planes, far) {
   gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
-  if (JW.active) { drawJapanTerrain(planes); drawJapanRunways(); drawCity(planes); drawPlateau(); drawJwTrees(); }
+  if (JW.active) {
+    drawJapanTerrain(planes);
+    if (GOOG.covering) drawGoogle();                     // photogrammetry replaces runways, buildings and trees
+    else { drawJapanRunways(); drawCity(planes); drawPlateau(); drawJwTrees(); }
+  }
   else {
   // terrain
   setCommon(progTerrain); shadowUniforms(progTerrain);
@@ -10098,6 +10487,7 @@ function drawInfo(g, W, H, touch, sc, touchY) {
     if (game.ap) st.push('A/P');
     if (game.timeScale > 1) st.push('時間 ×' + game.timeScale);
     st.push(JW.online ? `航空写真 ${JW.inflight ? '読み込み中…' : 'ON'}` : '簡易地形（オフライン）');
+    if (GOOG.on && GOOG.key) st.push(GOOG.state === 'ok' ? `Google 3D ${GOOG.covering ? 'ON' : '読み込み中…'}` : GOOG.state === 'error' ? 'Google 3D エラー（メニューで確認）' : 'Google 3D 接続中…');
     lines.push([st.join('　'), game.ap || game.timeScale > 1 ? COL.amber : COL.muted, `11px ${UI}`]);
   } else lines.push([`${MAP.name}・${ACFT.name}`, COL.muted, `11px ${UI}`]);
   const modeName = { tutorial: 'チュートリアル', runway: 'フリーフライト', air: 'フリーフライト', rings: game.tour ? '観光フライト' : 'リングチャレンジ', landing: '着陸チャレンジ' }[game.mode];
@@ -10529,6 +10919,7 @@ async function init() {
   setupMenu();
   setupSchool();
   setupAI();
+  setupGoogle();
   setupBook();
   setSound(game.sound);
   await loadMap(game.mapId);

@@ -436,6 +436,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
         <label class="f-label" for="sel-acft">機体</label>
         <select id="sel-acft"></select>
         <span class="f-desc" id="acft-desc"></span>
+        <button type="button" class="guide-btn" id="open-custom" style="margin-top:6px">🎨 機体のカスタマイズ（塗装・燃料・重さ・計器）</button>
       </div>
     </div>
     <div class="opts">
@@ -2295,6 +2296,8 @@ function makeMinimap() {
 //  points and the physics are all derived from that description.
 // =====================================================================
 const FLAP_DEG = [0, 10, 20, 30];
+// the name of a flap position as that aircraft's lever is marked (Airbus CONF, Boeing detents)
+const flapName = (i, A = ACFT) => A.flapLabels ? A.flapLabels[i] : FLAP_DEG[i] + '°';
 
 const AIRCRAFT = [
   {
@@ -2388,7 +2391,7 @@ const AIRCRAFT = [
     engines: [{ type: 'pod', x: 5.9, y: -2.05, z0: -3.4, z1: 0.6, r: 1.0 }],
     gear: { fixed: false, wheelR: 0.57, nose: [0, -2.85, -13.8], mains: [[2.9, -2.85, 1.2]], len: 1.3 },
     windows: { mode: 2, z0: -15.3, z1: 12, y0: 0.35, y1: 0.75, pitch: 1.0, cz0: -17.3, cz1: -15.9, cy: 0.1 },
-    livery: { base: [0.95, 0.95, 0.96], a: [0.06, 0.33, 0.72], b: [0.04, 0.12, 0.35], fw: 2.1, y0: -0.4, slope: 0, bands: [-0.3, -0.1, -0.02, 0.12], tip: 99, fin: [0.3, 1.9, 12, 2.0], nose: -99, glare: 0 },
+    livery: { base: [0.95, 0.95, 0.96], a: [0.06, 0.33, 0.72], b: [0.04, 0.12, 0.35], fw: 2.1, y0: -0.4, slope: 0, bands: [-0.3, -0.1, -0.02, 0.12], tip: 99, fin: [0.3, 1.9, 12, 2.0], nose: -99, glare: -99 },
     eye: [0, 0.7, -16.3], cam: [0, 11, 62],
     phys: {
       mass: 60000, S: 122.6, b: 34, c: 4.2, L: 37.6, CL0: 0.20, CLa: 5.2, aStall: 0.25, CD0: 0.022, K: 0.045, CDgear: 0.018,
@@ -2416,6 +2419,75 @@ const AIRCRAFT = [
       flapCL: 0.35, flapStall: 0, engine: { type: 'jet', T: 76000, ab: 50000, spool: 2.0 }, maxG: 9, rollRate: 180, pitchRate: 20, wave: true,
     },
     v: { s0: 120, s1: 126, fe: 250, no: 700, ne: 800, rotate: 150, appr: 155, apprFlaps: 2, apprThr: 0.55, cruise: 350, cruiseThr: 0.6, toFlaps: 1 },
+  },
+  // ---------------- real aircraft (dimensions and performance from the published data) ----------------
+  {
+    id: 'c172', name: 'セスナ 172S スカイホーク', kind: '実機・高翼の単発機', stars: 1, real: true,
+    desc: '世界でいちばん多く作られた飛行機。多くの訓練生が最初に乗る 4 人乗りの単発機です。180 馬力（ライカミング IO-360）、巡航 約 120 kt。計器はアナログ 6 計器と、ガーミン G1000 風のグラスをカスタマイズで選べます。',
+    fuse: [[-2.45, 0.30, 0.30, -0.05], [-2.2, 0.45, 0.43, -0.05], [-1.55, 0.55, 0.57, 0.02], [-0.8, 0.57, 0.71, 0.12], [0.4, 0.56, 0.71, 0.12],
+      [1.4, 0.45, 0.57, 0.14], [2.6, 0.28, 0.39, 0.22], [3.9, 0.15, 0.27, 0.32], [5.0, 0.08, 0.20, 0.37], [5.3, 0.03, 0.08, 0.39]], fuseE: 3.0,
+    wing: { y: 0.86, dih: 1.7, rootX: 0.45, tipX: 5.5, rootLE: -0.75, rootC: 1.63, tipLE: -0.62, tipC: 1.12, t0: 0.14, t1: 0.12, hinge: 0.73, flap: [0.6, 2.7], ail: [2.85, 5.3], struts: true },
+    hstab: { y: 0.42, span: 1.7, rootLE: 4.05, tipLE: 4.45, te: 5.1, hinge: 4.65, t: 0.09 },
+    vstab: { y0: 0.42, y1: 1.85, rootLE: 3.35, topLE: 4.65, te: 5.25, hinge: 4.85, t: 0.1 },
+    engines: [{ type: 'nose', z: -2.55, y: -0.05, r: 0.95, blades: 2 }],
+    gear: { fixed: true, wheelR: 0.24, nose: [0, -1.08, -1.95], mains: [[1.25, -1.08, 0.35]], len: 0.5, pants: true },
+    windows: { mode: 1, z0: -1.55, z1: 0.65, y0: 0.28, y1: 0.76 },
+    livery: { base: [0.96, 0.96, 0.97], a: [0.10, 0.20, 0.48], b: [0.80, 0.62, 0.20], fw: 0.7, y0: -0.05, slope: 0.03, bands: [-0.1, 0.0, 0.05, 0.1], tip: 5.1, fin: [0.12, 0.45, 3.3, 1.55], nose: -2.4, glare: 0 },
+    eye: [0, 0.6, -0.55], cam: [0, 3.2, 15],
+    flapLabels: ['UP', '10°', '20°', '30°'],
+    oew: 767, load: { max: 400, def: 180, fuelDef: 0.9 },
+    phys: {
+      mass: 1080, S: 16.2, b: 11, c: 1.49, L: 8.28, CL0: 0.30, CLa: 4.9, aStall: 0.28, CD0: 0.031, K: 0.047, CDgear: 0,
+      Cm0: 0.02, Cma: -1.2, Cmde: 0.36, Cmq: -16, Clda: 0.055, Clp: -0.5, Clb: -0.1, Cnb: 0.1, Cndr: 0.03, Cnr: -0.14, CYb: -0.6,
+      flapCL: 0.78, flapStall: 0.045, flapCD: 0.55, engine: { type: 'prop', P: 110000, T0: 2550 }, maxG: 4.4, rollRate: 50, pitchRate: 12,
+    },
+    v: { s0: 40, s1: 48, fe: 85, no: 129, ne: 163, rotate: 55, appr: 65, apprFlaps: 3, apprThr: 0.3, cruise: 110, cruiseThr: 0.7, toFlaps: 0 },
+  },
+  {
+    id: 'a320', name: 'エアバス A320neo', kind: '実機・ジェット旅客機', stars: 4, real: true,
+    desc: '最も売れている旅客機のひとつ。操縦桿のかわりに横の「サイドスティック」で操縦し、コンピューターが姿勢を守るフライ・バイ・ワイヤ機。翼端のシャークレットが特徴。全長 37.6 m、翼幅 35.8 m、エンジン 2 基（各 約 120 kN）。',
+    fuse: [[-18.0, 0.15, 0.15, -0.25], [-17.55, 0.95, 0.9, -0.22], [-16.4, 1.62, 1.6, -0.1], [-14.3, 1.97, 1.98, 0], [8.0, 1.97, 1.98, 0],
+      [12.0, 1.78, 1.82, 0.2], [15.5, 1.22, 1.32, 0.62], [18.0, 0.6, 0.72, 1.12], [19.6, 0.18, 0.3, 1.36]], fuseE: 2.0, fuseN: 28,
+    wing: { y: -1.25, dih: 5.1, rootX: 1.95, tipX: 17.05, rootLE: -3.7, rootC: 6.3, tipLE: 3.45, tipC: 1.55, t0: 0.14, t1: 0.10, hinge: 0.72, flap: [2.2, 10.5], ail: [11.2, 16.4],
+      winglet: { h: 2.4, cant: 0.2, sweep: 0.9, blend: true } },
+    hstab: { y: 1.4, span: 6.3, rootLE: 14.2, tipLE: 17.3, te: 18.8, hinge: 17.9, t: 0.1 },
+    vstab: { y0: 1.7, y1: 8.1, rootLE: 12.4, topLE: 17.0, te: 19.0, hinge: 18.1, t: 0.12 },
+    engines: [{ type: 'pod', x: 5.75, y: -2.15, z0: -4.3, z1: 0.3, r: 1.08 }],
+    gear: { fixed: false, wheelR: 0.58, nose: [0, -2.95, -11.5], mains: [[3.8, -2.95, 1.15]], len: 1.35 },
+    windows: { mode: 2, z0: -15.3, z1: 12, y0: 0.35, y1: 0.75, pitch: 1.0, cz0: -17.3, cz1: -15.9, cy: 0.1 },
+    livery: { base: [0.96, 0.96, 0.97], a: [0.08, 0.22, 0.52], b: [0.72, 0.12, 0.18], fw: 2.1, y0: -0.45, slope: 0, bands: [-0.34, -0.26, -0.18, -0.02], tip: 99, fin: [0.3, 1.9, 12, 2.2], nose: -99, glare: -99 },
+    eye: [0, 0.72, -16.2], cam: [0, 11, 62],
+    flapLabels: ['0', '1+F', '3', 'FULL'], cockpitStyle: 'airbus',
+    oew: 44300, load: { max: 20000, def: 12000, fuelDef: 0.5 },
+    phys: {
+      mass: 64000, S: 122.6, b: 35.8, c: 4.29, L: 37.6, CL0: 0.20, CLa: 5.3, aStall: 0.25, CD0: 0.021, K: 0.042, CDgear: 0.018,
+      Cm0: 0.0, Cma: -1.3, Cmde: 0.35, Cmq: -30, Clda: 0.04, Clp: -0.5, Clb: -0.1, Cnb: 0.12, Cndr: 0.03, Cnr: -0.15, CYb: -0.8,
+      flapCL: 0.95, flapStall: 0.03, engine: { type: 'jet', T: 241000, ab: 0, spool: 3.2 }, maxG: 2.5, rollRate: 20, pitchRate: 4,
+    },
+    v: { s0: 113, s1: 136, fe: 177, no: 340, ne: 350, rotate: 143, appr: 137, apprFlaps: 3, apprThr: 0.3, cruise: 280, cruiseThr: 0.6, toFlaps: 1 },
+  },
+  {
+    id: 'b738', name: 'ボーイング 737-800', kind: '実機・ジェット旅客機', stars: 4, real: true,
+    desc: '日本の空でもおなじみの双発旅客機。昔ながらの操縦輪（ヨーク）で操縦します。エンジン下面が平たい「ハムスターポーチ」と、跳ね上がったウイングレットが特徴。全長 39.5 m、翼幅 35.8 m、エンジン 2 基（各 約 117 kN）。',
+    fuse: [[-19.0, 0.12, 0.12, -0.35], [-18.45, 0.85, 0.8, -0.28], [-17.2, 1.55, 1.5, -0.12], [-15.0, 1.88, 1.9, 0], [9.0, 1.88, 1.9, 0],
+      [13.0, 1.7, 1.75, 0.2], [16.6, 1.15, 1.25, 0.66], [19.2, 0.55, 0.66, 1.2], [20.5, 0.16, 0.28, 1.45]], fuseE: 2.0, fuseN: 28,
+    wing: { y: -1.2, dih: 6, rootX: 1.9, tipX: 17.15, rootLE: -3.9, rootC: 6.6, tipLE: 3.7, tipC: 1.3, t0: 0.14, t1: 0.10, hinge: 0.72, flap: [2.1, 10.8], ail: [11.4, 16.5],
+      winglet: { h: 2.5, cant: 0.25, sweep: 1.3, blend: true } },
+    hstab: { y: 1.5, span: 6.6, rootLE: 15.3, tipLE: 18.6, te: 20.0, hinge: 19.1, t: 0.1 },
+    vstab: { y0: 1.7, y1: 8.7, rootLE: 13.0, topLE: 18.2, te: 20.2, hinge: 19.3, t: 0.12 },
+    engines: [{ type: 'pod', x: 4.9, y: -1.72, z0: -4.4, z1: -0.4, r: 0.98, flat: 0.8 }],
+    gear: { fixed: false, wheelR: 0.56, nose: [0, -2.6, -14.2], mains: [[2.86, -2.6, 1.55]], len: 1.05 },
+    windows: { mode: 2, z0: -16.2, z1: 13.5, y0: 0.35, y1: 0.75, pitch: 1.0, cz0: -18.3, cz1: -16.8, cy: 0.1 },
+    livery: { base: [0.96, 0.96, 0.97], a: [0.05, 0.35, 0.68], b: [0.95, 0.60, 0.12], fw: 2.0, y0: -0.3, slope: 0, bands: [-0.22, -0.14, -0.1, 0.06], tip: 99, fin: [0.3, 1.9, 13, 2.2], nose: -99, glare: -99 },
+    eye: [0, 0.72, -17.2], cam: [0, 11, 64],
+    flapLabels: ['UP', '5', '15', '30'], cockpitStyle: 'boeing',
+    oew: 41400, load: { max: 20500, def: 13000, fuelDef: 0.5 },
+    phys: {
+      mass: 65000, S: 124.6, b: 35.8, c: 3.96, L: 39.5, CL0: 0.20, CLa: 5.3, aStall: 0.25, CD0: 0.022, K: 0.043, CDgear: 0.018,
+      Cm0: 0.0, Cma: -1.25, Cmde: 0.34, Cmq: -32, Clda: 0.04, Clp: -0.5, Clb: -0.1, Cnb: 0.12, Cndr: 0.03, Cnr: -0.15, CYb: -0.8,
+      flapCL: 0.9, flapStall: 0.03, engine: { type: 'jet', T: 234000, ab: 0, spool: 3.4 }, maxG: 2.5, rollRate: 20, pitchRate: 4,
+    },
+    v: { s0: 117, s1: 140, fe: 175, no: 340, ne: 340, rotate: 147, appr: 144, apprFlaps: 3, apprThr: 0.32, cruise: 280, cruiseThr: 0.6, toFlaps: 1 },
   },
 ];
 
@@ -2472,6 +2544,12 @@ function buildAircraftParts(A) {
   for (const s of [1, -1]) {
     const xs = [A.wing.rootX, (A.wing.rootX + A.wing.tipX) / 2, A.wing.tipX];
     b.loft(xs.map(ax => foil(s * ax, W.y(ax), W.le(ax), W.c(ax), W.t(ax), 0, A.wing.hinge - 0.005)), WHITE, { capStart: true, capEnd: true });
+    if (A.wing.winglet) {                                  // winglet / sharklet: a small fin at the tip, canted out and swept
+      const wl = A.wing.winglet, tx = A.wing.tipX, y0 = W.y(tx), le0 = W.le(tx), c0 = W.c(tx);
+      const ring = u => { const c = lerp(c0, c0 * 0.42, u), le = le0 + wl.sweep * u + (c0 - c) * 0.6, x = s * (tx + wl.cant * wl.h * u * u), y = y0 + wl.h * u;
+        return foil(0, 0, le, c, 0.1, 0, 1, true).map(p => [x + p[0], y, p[2]]); };
+      b.loft([0, 0.35, 0.7, 1].map(ring), WHITE, { capEnd: true });
+    }
     if (A.wing.struts) {
       const f = fuseAt(A.fuse, W.le(2.6) + W.c(2.6) * 0.35);
       b.cylinder([s * f[1] * 0.9, f[3] - f[2] * 0.55, W.le(2.6) + W.c(2.6) * 0.35], [s * 2.6, W.y(2.6) - 0.05, W.le(2.6) + W.c(2.6) * 0.35], 0.04, 0.035, 6, [0.85, 0.86, 0.88]);
@@ -2503,7 +2581,7 @@ function buildAircraftParts(A) {
     } else if (e.type === 'pod') {
       for (const s of [1, -1]) {
         const x = s * e.x, L = e.z1 - e.z0;
-        b.loft([[e.z0, e.r * 0.92], [e.z0 + 0.3, e.r], [e.z0 + L * 0.6, e.r * 0.95], [e.z1, e.r * 0.6]].map(([z, rr]) => superRing(z, rr, rr, e.y, 18, 2).map(p => [p[0] + x, p[1], p[2]])),
+        b.loft([[e.z0, e.r * 0.92], [e.z0 + 0.3, e.r], [e.z0 + L * 0.6, e.r * 0.95], [e.z1, e.r * 0.6]].map(([z, rr]) => superRing(z, rr, rr * (e.flat || 1), e.y + rr * (1 - (e.flat || 1)) * 0.5, 18, 2).map(p => [p[0] + x, p[1], p[2]])),
           [0.82, 0.83, 0.86], { capEnd: true });
         b.cylinder([x, e.y, e.z0 + 0.02], [x, e.y, e.z0 + 0.25], e.r * 0.82, e.r * 0.8, 16, [0.12, 0.12, 0.14]);
         const wy = W.y(e.x);
@@ -2621,6 +2699,8 @@ function buildAircraftParts(A) {
 // key = group_case_bank ; value = [speed kt, throttle %, pitch deg, vertical speed fpm, bank deg, turn rate deg/s, flap index, flag]
 // flag: 1 ok, 0 not reachable (throttle at its limit), 2 keeps accelerating even at full climb angle
 const TRIM = {"trainer":{"c_level_0":[105,77,0.6,0,0,0,0,1],"c_level_10":[105,78,0.7,0,10,1.7,0,1],"c_level_20":[105,77,0.9,0,20,3.4,0,1],"c_d500_0":[105,43,-2,-500,0,0,0,1],"c_d500_10":[105,43,-1.9,-500,10,1.7,0,1],"c_d500_20":[105,42,-1.7,-500,20,3.5,0,1],"c_d1000_0":[105,13,-4.5,-1000,0,0,0,1],"c_d1000_10":[105,13,-4.5,-1000,10,1.7,0,1],"c_d1000_20":[105,12,-4.2,-1010,20,3.4,0,1],"c_c500_0":[94,100,4.5,500,0,0,0,0],"c_c500_10":[93,100,4.7,500,10,1.8,0,0],"c_c500_20":[91,100,5.1,500,20,3.9,0,0],"y_c500_0":[73,89,8.5,500,0,-0.1,0,1],"y_c500_10":[73,89,8.7,490,10,2.4,0,1],"y_c500_20":[73,89,8.9,500,20,4.9,0,1],"y_c1000_0":[50,100,18.3,440,0,-0.1,0,0],"y_c1000_10":[51,100,18,440,10,3.3,0,0],"y_c1000_20":[53,100,16.8,420,21,6.9,0,0],"y_full_0":[73,100,9.5,640,0,-0.1,0,1],"y_full_10":[73,100,9.4,620,10,2.3,0,1],"y_full_20":[73,100,9.6,620,20,4.9,0,1],"s_level_0":[78,59,1,0,0,0,1,1],"s_level_10":[78,62,1.2,0,10,2.2,1,1],"s_level_20":[78,62,1.6,0,20,4.7,1,1],"s_c500_0":[76,100,4.8,500,0,-0.1,1,1],"s_c500_10":[75,100,5.2,490,10,2.3,1,1],"s_c500_20":[60,100,11.3,500,20,6.1,1,0],"s_d500_0":[78,21,-2.4,-500,0,0,1,1],"s_d500_10":[78,24,-2.3,-500,10,2.3,1,1],"s_d500_20":[78,24,-1.8,-490,20,4.8,1,1],"a_3deg_0":[65,37,-1.4,-340,0,0,2,1],"a_3deg_10":[65,41,-1,-330,10,2.7,2,1],"a_3deg_20":[65,39,-0.5,-340,20,5.6,2,1],"c_level_30":[105,79,1.3,0,30,5.5,0,1],"c_level_45":[105,87,2,0,45,9.6,0,1],"c_level_60":[90,100,4.6,-10,61,19.7,0,0]},"sport":{"c_level_0":[115,63,0.8,0,0,0,0,1],"c_level_10":[115,63,0.8,0,10,1.5,0,1],"c_level_20":[115,64,1,0,20,3.2,0,1],"c_d500_0":[115,37,-1.6,-500,0,0,0,1],"c_d500_10":[115,36,-1.6,-500,10,1.5,0,1],"c_d500_20":[115,37,-1.4,-500,20,3.2,0,1],"c_d1000_0":[115,14,-3.9,-1000,0,0,0,1],"c_d1000_10":[115,13,-3.9,-1000,10,1.5,0,1],"c_d1000_20":[115,14,-3.7,-1000,20,3.2,0,1],"c_c500_0":[115,93,3,500,0,0,0,1],"c_c500_10":[115,93,3.1,500,10,1.5,0,1],"c_c500_20":[115,93,3.3,500,20,3.1,0,1],"y_c500_0":[79,69,8.2,500,0,-0.1,0,1],"y_c500_10":[79,72,8.2,500,10,2.1,0,1],"y_c500_20":[79,72,8.4,490,20,4.5,0,1],"y_c1000_0":[76,100,12,1000,-1,-0.1,0,1],"y_c1000_10":[75,100,12.3,990,10,2.2,0,1],"y_c1000_20":[72,100,13.8,980,20,4.9,0,0],"y_full_0":[79,100,11.1,970,-1,-0.1,0,1],"y_full_10":[79,100,11,950,10,2.1,0,1],"y_full_20":[79,100,11,920,20,4.4,0,1],"s_level_0":[84,62,1.2,0,0,-0.1,1,1],"s_level_10":[84,63,1.3,0,10,2,1,1],"s_level_20":[84,64,1.7,0,20,4.3,1,1],"s_c500_0":[84,94,4.4,500,0,-0.1,1,1],"s_c500_10":[84,96,4.5,500,10,2,1,1],"s_c500_20":[84,97,4.8,500,20,4.3,1,1],"s_d500_0":[84,31,-2,-500,0,-0.1,1,1],"s_d500_10":[84,32,-1.9,-500,10,2.1,1,1],"s_d500_20":[84,33,-1.5,-490,20,4.4,1,1],"a_3deg_0":[70,35,-1.3,-370,0,-0.1,2,1],"a_3deg_10":[70,38,-1.1,-360,10,2.5,2,1],"a_3deg_20":[70,37,-0.7,-370,20,5.2,2,1],"c_level_30":[115,65,1.3,0,30,5,0,1],"c_level_45":[115,73,1.9,0,45,8.8,0,1],"c_level_60":[115,93,2.6,0,60,15.3,0,1]},"aero":{"c_level_0":[140,61,2.8,0,-1,-0.1,0,1],"c_level_10":[140,63,2.8,0,9,1.2,0,1],"c_level_20":[140,64,2.8,0,20,2.6,0,1],"c_d500_0":[140,44,0.8,-500,-1,-0.1,0,1],"c_d500_10":[140,45,0.8,-500,9,1.2,0,1],"c_d500_20":[140,46,0.9,-500,20,2.6,0,1],"c_d1000_0":[140,32,-1,-1000,0,-0.1,0,1],"c_d1000_10":[140,32,-1,-1000,10,1.2,0,1],"c_d1000_20":[140,34,-1,-990,20,2.6,0,1],"c_c500_0":[140,80,4.6,500,-1,-0.1,0,1],"c_c500_10":[140,81,4.7,500,9,1.2,0,1],"c_c500_20":[140,83,4.7,500,19,2.5,0,1],"y_c500_0":[88,47,10,500,-1,-0.2,0,1],"y_c500_10":[88,47,10,500,9,1.8,0,1],"y_c500_20":[88,51,10.1,500,20,4,0,1],"y_c1000_0":[88,66,12.8,1000,-1,-0.2,0,1],"y_c1000_10":[88,66,12.8,1000,9,1.8,0,1],"y_c1000_20":[88,72,12.9,1010,20,3.9,0,1],"y_full_0":[88,100,16.6,1730,-2,-0.3,0,1],"y_full_10":[88,100,16.5,1710,9,1.7,0,1],"y_full_20":[88,100,16.1,1610,19,3.7,0,1],"s_level_0":[96,30,5.9,0,-1,-0.1,1,1],"s_level_10":[96,30,6,0,9,1.8,1,1],"s_level_20":[96,32,6,0,20,3.8,1,1],"s_c500_0":[96,49,8.7,500,-1,-0.2,1,1],"s_c500_10":[96,49,8.7,500,9,1.7,1,1],"s_c500_20":[96,53,8.7,510,20,3.6,1,1],"s_d500_0":[96,12,3.1,-500,0,-0.1,1,1],"s_d500_10":[96,12,3.1,-500,10,1.9,1,1],"s_d500_20":[96,14,3.1,-500,20,3.9,1,1],"a_3deg_0":[80,8,5.7,-420,0,-0.1,0,1],"a_3deg_10":[80,10,5.7,-420,10,2.2,0,1],"a_3deg_20":[80,11,5.8,-420,20,4.7,0,1],"c_level_30":[140,64,2.9,0,30,4.1,0,1],"c_level_45":[140,66,2.9,0,45,7.2,0,1],"c_level_60":[140,78,2.9,0,60,12.5,0,1]},"twin":{"c_level_0":[200,89,0.2,0,0,0,0,1],"c_level_10":[200,89,0.3,0,10,0.9,0,1],"c_level_20":[200,91,0.4,0,20,1.8,0,1],"c_d500_0":[200,68,-1.1,-500,0,0,0,1],"c_d500_10":[200,68,-1.1,-500,10,0.9,0,1],"c_d500_20":[200,70,-0.9,-500,20,1.9,0,1],"c_d1000_0":[200,54,-2.5,-1000,0,0,0,1],"c_d1000_10":[200,56,-2.4,-1000,10,0.9,0,1],"c_d1000_20":[200,56,-2.3,-1000,20,1.8,0,1],"c_c500_0":[188,100,2,500,0,0,0,0],"c_c500_10":[187,100,2.1,500,10,0.9,0,0],"c_c500_20":[186,100,2.3,500,20,1.9,0,0],"y_c500_0":[136,72,5.7,500,0,0,0,1],"y_c500_10":[136,71,5.7,500,10,1.3,0,1],"y_c500_20":[136,74,5.9,500,20,2.6,0,1],"y_c1000_0":[136,96,7.5,1000,0,0,0,1],"y_c1000_10":[136,97,7.6,1000,10,1.2,0,1],"y_c1000_20":[136,97,7.8,990,20,2.6,0,1],"y_full_0":[136,100,7.7,1070,0,0,0,1],"y_full_10":[136,100,7.7,1040,10,1.2,0,1],"y_full_20":[136,100,7.8,1020,20,2.6,0,1],"s_level_0":[132,74,1.1,0,0,0,1,1],"s_level_10":[132,73,1.3,0,10,1.3,1,1],"s_level_20":[132,77,1.6,0,20,2.8,1,1],"s_c500_0":[131,99,3.2,500,0,0,1,1],"s_c500_10":[131,100,3.3,500,10,1.3,1,1],"s_c500_20":[130,100,3.7,500,20,2.7,1,1],"s_d500_0":[132,50,-0.9,-500,0,0,1,1],"s_d500_10":[132,50,-0.8,-500,10,1.3,1,1],"s_d500_20":[132,54,-0.5,-500,20,2.8,1,1],"a_3deg_0":[110,40,-1.7,-580,0,0,2,1],"a_3deg_10":[110,40,-1.5,-590,10,1.6,2,1],"a_3deg_20":[110,42,-1.1,-590,20,3.4,2,1],"c_level_30":[200,90,0.7,0,30,2.9,0,1],"c_level_45":[200,95,1.2,0,45,5,0,1],"c_level_60":[182,100,2.6,0,60,9.6,0,0]},"airliner":{"c_level_0":[272,22,2.2,0,0,0,0,1],"c_level_10":[273,23,2.2,0,10,0.7,0,1],"c_level_20":[272,35,2.4,0,20,1.4,0,1],"c_d500_0":[272,20,1.2,-500,0,0,0,1],"c_d500_10":[272,29,1.2,-500,10,0.7,0,1],"c_d500_20":[273,29,1.3,-500,20,1.4,0,1],"c_d1000_0":[279,0,0.1,-1000,0,0,0,0],"c_d1000_10":[278,0,0.1,-1000,10,0.6,0,0],"c_d1000_20":[277,0,0.3,-1000,20,1.3,0,0],"c_c500_0":[272,31,3.2,500,0,0,0,1],"c_c500_10":[271,32,3.2,500,10,0.6,0,1],"c_c500_20":[271,34,3.4,500,20,1.3,0,1],"y_c500_0":[212,38,6.2,500,0,0,0,1],"y_c500_10":[212,36,6.3,500,10,0.8,0,1],"y_c500_20":[212,29,6.4,500,20,1.7,0,1],"y_c1000_0":[209,46,7.6,1000,0,0,0,1],"y_c1000_10":[209,46,7.7,1000,10,0.8,0,1],"y_c1000_20":[209,47,7.8,1000,20,1.7,0,1],"y_full_0":[209,100,19.6,6040,0,0,0,1],"y_full_10":[209,100,19.6,6010,10,0.8,0,1],"y_full_20":[209,100,19.4,5900,20,1.6,0,1],"s_level_0":[197,41,1.8,0,0,0,1,1],"s_level_10":[197,41,1.9,0,10,0.9,1,1],"s_level_20":[197,42,2.3,0,20,1.9,1,1],"s_c500_0":[195,51,3.3,500,0,0,1,1],"s_c500_10":[196,49,3.4,500,10,0.9,1,1],"s_c500_20":[195,53,3.8,500,20,1.8,1,1],"s_d500_0":[199,35,0.3,-500,0,0,1,1],"s_d500_10":[200,34,0.3,-500,10,0.9,1,1],"s_d500_20":[200,31,0.6,-500,20,1.9,1,0],"a_3deg_0":[142,36,-2.2,-730,0,0,3,1],"a_3deg_10":[142,37,-1.8,-730,10,1.2,3,1],"a_3deg_20":[141,41,-0.9,-730,20,2.6,3,1],"c_level_30":[272,38,2.6,0,30,2.1,0,1],"c_level_45":[273,32,3,0,45,3.7,0,1],"c_level_60":[268,56,3.7,20,60,6.5,0,1]},"fighter":{"c_level_0":[354,28,3.1,0,0,0,0,1],"c_level_10":[354,28,3.1,0,10,0.5,0,1],"c_level_20":[353,28,3.1,0,20,1,0,1],"c_d500_0":[354,27,2.3,-500,0,0,0,1],"c_d500_10":[354,26,2.3,-500,10,0.5,0,0],"c_d500_20":[354,26,2.4,-500,20,1.1,0,0],"c_d1000_0":[353,23,1.6,-1000,0,0,0,1],"c_d1000_10":[353,25,1.6,-1000,10,0.5,0,1],"c_d1000_20":[354,25,1.6,-1000,20,1.1,0,0],"c_c500_0":[353,39,3.9,500,0,0,0,1],"c_c500_10":[354,36,3.9,500,10,0.5,0,1],"c_c500_20":[354,33,3.9,500,20,1,0,1],"y_c500_0":[199,28,11,500,0,0,0,0],"y_c500_10":[199,28,11.1,500,10,0.9,0,1],"y_c500_20":[197,32,11.3,500,20,1.8,0,1],"y_c1000_0":[199,33,12.3,1000,0,0,0,1],"y_c1000_10":[198,30,12.4,1000,10,0.9,0,1],"y_c1000_20":[196,33,12.6,1000,20,1.8,0,1],"y_full_0":[502,100,30.5,27690,0,0,0,1],"y_full_10":[505,100,30.1,27540,10,0.3,0,1],"y_full_20":[509,100,29.8,27450,20,0.7,0,1],"s_level_0":[189,28,9.1,0,0,0,1,1],"s_level_10":[188,31,9.2,0,10,1,1,1],"s_level_20":[187,40,9.4,0,20,2,1,1],"s_c500_0":[188,36,10.4,500,0,0,1,1],"s_c500_10":[188,36,10.5,500,10,0.9,1,1],"s_c500_20":[188,37,10.7,490,20,1.9,1,1],"s_d500_0":[190,27,7.5,-500,0,0,1,0],"s_d500_10":[190,26,7.5,-500,10,1,1,0],"s_d500_20":[188,38,7.8,-500,20,2,1,1],"a_3deg_0":[158,40,8.9,-830,0,0,2,1],"a_3deg_10":[159,35,8.8,-840,10,1.1,2,0],"a_3deg_20":[158,29,9.4,-810,20,2.4,2,1],"c_level_30":[352,31,3.2,0,30,1.7,0,1],"c_level_45":[353,29,3.2,0,45,2.9,0,1],"c_level_60":[350,45,3.3,0,60,5.1,0,1]}};
+// the real aircraft, measured the same way
+Object.assign(TRIM, {"c172":{"c_level_0":[110,77,0.4,0,0,0,0,1],"c_level_10":[110,77,0.4,0,10,1.6,0,1],"c_level_20":[110,77,0.7,0,20,3.3,0,1],"c_d500_0":[110,45,-2.1,-500,0,0,0,1],"c_d500_10":[110,45,-2.1,-500,10,1.6,0,1],"c_d500_20":[110,45,-1.8,-500,20,3.4,0,1],"c_d1000_0":[110,19,-4.5,-1000,0,0,0,1],"c_d1000_10":[110,19,-4.5,-1000,10,1.6,0,1],"c_d1000_20":[110,18,-4.2,-1000,20,3.3,0,1],"c_c500_0":[102,100,3.6,500,0,0,0,0],"c_c500_10":[101,100,3.8,500,10,1.7,0,0],"c_c500_20":[99,100,4.2,510,20,3.6,0,0],"y_c500_0":[74,83,8.5,500,0,-0.1,0,1],"y_c500_10":[74,84,8.6,500,10,2.3,0,1],"y_c500_20":[74,84,8.8,490,20,4.8,0,1],"y_c1000_0":[52,100,18.2,500,-1,-0.7,0,0],"y_c1000_10":[52,100,17.6,470,10,2.9,0,0],"y_c1000_20":[54,100,16.3,430,21,6.4,0,0],"y_full_0":[74,100,9.9,720,0,-0.2,0,1],"y_full_10":[74,100,9.9,700,10,2.2,0,1],"y_full_20":[74,100,10,690,20,4.8,0,1],"s_level_0":[78,53,1.2,0,0,0,1,1],"s_level_10":[78,57,1.3,0,10,2.2,1,1],"s_level_20":[78,56,1.8,0,20,4.7,1,1],"s_c500_0":[78,91,4.5,500,0,-0.1,1,1],"s_c500_10":[78,92,4.7,500,10,2.2,1,1],"s_c500_20":[78,93,5,490,20,4.6,1,1],"s_d500_0":[78,18,-2.4,-500,0,0,1,1],"s_d500_10":[78,22,-2.2,-490,10,2.3,1,1],"s_d500_20":[78,22,-1.7,-490,20,4.8,1,1],"a_3deg_0":[65,59,-4.4,-340,0,0,3,1],"a_3deg_10":[65,62,-4,-330,10,2.7,3,1],"a_3deg_20":[65,62,-3.4,-350,20,5.6,3,1],"c_level_30":[110,79,1,0,30,5.3,0,1],"c_level_45":[110,87,1.8,0,45,9.2,0,1],"c_level_60":[87,100,5.2,-10,62,21.1,0,0]},"a320":{"c_level_0":[283,21,2.2,0,0,0,0,1],"c_level_10":[283,21,2.3,0,10,0.6,0,1],"c_level_20":[281,30,2.5,0,20,1.3,0,1],"c_d500_0":[284,17,1.2,-500,0,0,0,1],"c_d500_10":[281,22,1.4,-500,10,0.6,0,1],"c_d500_20":[282,19,1.5,-500,20,1.3,0,1],"c_d1000_0":[289,0,0.2,-1000,0,0,0,0],"c_d1000_10":[289,0,0.2,-1000,10,0.6,0,0],"c_d1000_20":[287,1,0.4,-1000,20,1.3,0,0],"c_c500_0":[282,31,3.2,500,0,0,0,1],"c_c500_10":[282,31,3.2,500,10,0.6,0,1],"c_c500_20":[282,31,3.3,500,20,1.3,0,1],"y_c500_0":[216,41,6.5,500,0,0,0,1],"y_c500_10":[217,39,6.5,500,10,0.8,0,1],"y_c500_20":[217,35,6.7,500,20,1.7,0,1],"y_c1000_0":[213,44,7.9,1000,0,0,0,1],"y_c1000_10":[213,46,8,1000,10,0.8,0,1],"y_c1000_20":[213,49,8.2,1000,20,1.7,0,1],"y_full_0":[214,100,18.6,5660,0,0,0,1],"y_full_10":[214,100,18.5,5610,10,0.8,0,1],"y_full_20":[214,100,18.4,5510,20,1.6,0,1],"s_level_0":[200,45,3.2,0,0,0,1,1],"s_level_10":[201,45,3.3,0,10,0.9,1,1],"s_level_20":[200,46,3.6,0,20,1.8,1,1],"s_c500_0":[199,53,4.6,500,0,0,1,1],"s_c500_10":[199,53,4.7,500,10,0.9,1,1],"s_c500_20":[199,56,5,500,20,1.8,1,1],"s_d500_0":[203,37,1.6,-500,0,0,1,1],"s_d500_10":[203,36,1.7,-500,10,0.9,1,1],"s_d500_20":[204,31,2,-500,20,1.9,1,1],"a_3deg_0":[140,45,2.5,-710,0,0,3,1],"a_3deg_10":[140,44,3,-730,10,1.3,3,1],"a_3deg_20":[140,47,3.7,-730,20,2.7,3,1],"c_level_30":[281,40,2.7,0,30,2.1,0,1],"c_level_45":[283,38,3,0,45,3.6,0,1],"c_level_60":[280,54,3.6,-100,60,6.4,0,0]},"b738":{"c_level_0":[281,27,2.2,0,0,0,0,1],"c_level_10":[281,33,2.2,0,10,0.6,0,1],"c_level_20":[281,41,2.3,0,20,1.3,0,1],"c_d500_0":[283,20,1.1,-500,0,0,0,1],"c_d500_10":[282,26,1.2,-500,10,0.6,0,1],"c_d500_20":[282,30,1.3,-500,20,1.3,0,1],"c_d1000_0":[287,0,0.1,-1000,0,0,0,0],"c_d1000_10":[287,1,0.2,-1000,10,0.6,0,0],"c_d1000_20":[286,3,0.3,-1000,20,1.3,0,0],"c_c500_0":[282,34,3.1,500,0,0,0,1],"c_c500_10":[282,34,3.1,500,10,0.6,0,1],"c_c500_20":[282,33,3.2,500,20,1.3,0,1],"y_c500_0":[219,42,6.2,500,0,0,0,1],"y_c500_10":[220,40,6.2,510,10,0.8,0,1],"y_c500_20":[220,37,6.3,500,20,1.6,0,1],"y_c1000_0":[216,44,7.6,1020,0,0,0,1],"y_c1000_10":[216,44,7.6,1000,10,0.8,0,1],"y_c1000_20":[216,47,7.6,990,20,1.6,0,1],"y_full_0":[217,100,17.8,5540,0,0,0,1],"y_full_10":[218,100,17.7,5500,10,0.8,0,1],"y_full_20":[217,100,17.5,5340,20,1.6,0,1],"s_level_0":[203,48,3,10,0,0,1,1],"s_level_10":[203,48,2.9,0,10,0.9,1,1],"s_level_20":[203,50,3.3,0,20,1.8,1,1],"s_c500_0":[201,59,4.3,480,0,0,1,1],"s_c500_10":[201,57,4.5,520,10,0.8,1,1],"s_c500_20":[201,60,4.7,500,20,1.8,1,1],"s_d500_0":[206,29,1.2,-520,0,0,1,1],"s_d500_10":[206,32,1.5,-490,10,0.9,1,1],"s_d500_20":[206,30,1.7,-500,20,1.8,1,1],"a_3deg_0":[145,46,1.4,-810,0,0,3,1],"a_3deg_10":[145,49,1.6,-810,10,1.3,3,1],"a_3deg_20":[144,50,2.5,-750,20,2.5,3,1],"c_level_30":[282,43,2.5,0,30,2.1,0,1],"c_level_45":[282,38,3,0,45,3.6,0,1],"c_level_60":[280,53,3.4,-90,60,6.3,0,0]}});
 for (const a of AIRCRAFT) if (TRIM[a.id]) { a.v.cruiseThr = TRIM[a.id].c_level_0[1] / 100; if (TRIM[a.id].a_3deg_0[7]) a.v.apprThr = TRIM[a.id].a_3deg_0[1] / 100; }
 let ACFT = AIRCRAFT[0], AC = null, WHEELS = [], TAILSKID = null, HARDPTS = [], WHEEL_BOTTOM = -1.45;
 // =====================================================================
@@ -2751,7 +2831,7 @@ function aeroElements(E, P, vb, w, rho, o) {
 }
 
 function deriveAircraft(A) {
-  const P = A.phys, m = P.mass, g = 9.81;
+  const P = { ...A.phys, mass: A.massNow || A.phys.mass }, m = P.mass, g = 9.81;
   const I = [m * (0.18 * P.L) ** 2, m * (0.19 * (P.L + P.b) / 2) ** 2, m * (0.12 * P.b) ** 2];
   const wr = A.gear.wheelR, bottom = A.gear.nose[1] - wr;
   const zn = A.gear.nose[2], zm = A.gear.mains[0][2];
@@ -2776,7 +2856,7 @@ function deriveAircraft(A) {
   for (const e of A.engines) {
     if (e.type === 'nose') hard.push({ off: [0, e.y - e.r, e.z], name: 'プロペラ' });
     if (e.type === 'wing') for (const s of [-1, 1]) hard.push({ off: [s * e.x, e.y - e.r, e.z], name: 'プロペラ' });
-    if (e.type === 'pod') for (const s of [-1, 1]) hard.push({ off: [s * e.x, e.y - e.r, (e.z0 + e.z1) / 2], name: 'エンジン' });
+    if (e.type === 'pod') for (const s of [-1, 1]) { const fl = e.flat || 1; hard.push({ off: [s * e.x, e.y + e.r * (1 - fl) * 0.5 - e.r * fl, (e.z0 + e.z1) / 2], name: 'エンジン' }); }
   }
   // propeller: design speed of the fixed-pitch prop, and the fin offset that cancels the
   // left-turning tendencies at cruise (as real single-engine aircraft are rigged)
@@ -2802,8 +2882,14 @@ function deriveAircraft(A) {
     TAILSKID: { off: [0, tailSt[3] - tailSt[2], zTail - (zTail - F[0][0]) * 0.1], k: 30 * m, c: 4 * m },
   };
 }
-function setAircraft(id) {
+function setAircraft(id, custom = true) {
   ACFT = AIRCRAFT.find(a => a.id === id) || AIRCRAFT[0];
+  const A = ACFT;
+  // weight from the load (fuel, people, cargo); the speeds that depend on it scale with the square root
+  A.custom = custom; A.massNow = typeof acMass === 'function' ? acMass(A, custom) : A.phys.mass;
+  if (!A.v0) A.v0 = { ...A.v };
+  const k = Math.sqrt(A.massNow / A.phys.mass);
+  A.v = { ...A.v0 }; for (const key of ['s0', 's1', 'rotate', 'appr']) A.v[key] = Math.round(A.v0[key] * k);
   const d = deriveAircraft(ACFT);
   AC = d.AC; WHEELS = d.WHEELS; WHEEL_BOTTOM = d.WHEEL_BOTTOM; HARDPTS = d.HARDPTS; TAILSKID = d.TAILSKID;
   sim.contacts = WHEELS.map(() => false);
@@ -2869,7 +2955,7 @@ function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
   const auto = game.ap && airborne && !s.crashed;
   s.assistOn = (game.assist || leveling || auto) && airborne && !s.crashed;
   if (!s.assistOn) {
-    s.gI = 0;
+    s.gI = 0; s.bI = 0;
     const vr = ACFT.v.cruise / 1.94384, spd = Math.max(V, 12);
     // the stick maps to deflection along one smooth, progressive curve (no sudden jump near full travel).
     // Full stick gives sens.pMax of the elevator at cruise; slower flight allows more, so a flare or a
@@ -2882,6 +2968,16 @@ function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
     const shape = (x, a) => a * x + (1 - a) * x * x * x;
     const kp = Math.max(pMax, kg), kr = rMax;
     s.elev = clamp(kp * shape(clamp(s.pIn, -1, 1), lin), -1, 1); s.ail = clamp(kr * shape(clamp(s.rIn, -1, 1), 0.45), -1, 1);
+    // with the assist on, the takeoff rotation is guided: back stick asks for a pitch attitude (up to about
+    // 10 degrees) instead of full elevator, so holding the key can't over-rotate and stall at lift-off
+    if (game.assist && !s.crashed && V > 12 && s.pIn > 0.05 && (s.onGround || s.airTime < 3)) {
+      const f = qrot(s.q, [0, 0, -1]), th = Math.asin(clamp(f[1], -1, 1));
+      const thMax = (AC.maxG > 6 ? 13 : ACFT.v.cruise > 200 ? 11 : 10) * DEG;
+      let thCmd = Math.min(1, s.pIn * 1.8) * thMax;               // half stick already asks for most of the rotation
+      if (alpha > aS - 0.06) thCmd = Math.min(thCmd, th - (alpha - (aS - 0.06)) * 2);   // never into the stall
+      const e = clamp((thCmd - th) * 10 - s.w[0] * 2.5, -1, 1);
+      s.elev = clamp(Math.min(e, 1) - s.trim, -1, 1);
+    }
     return;
   }
   const r = qrot(s.q, [1, 0, 0]), up = qrot(s.q, [0, 1, 0]);
@@ -2902,10 +2998,19 @@ function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
     const look = vmadd(s.pos, s.vel, 45), terr = Math.max(terrainHeight(look[0], look[2]), terrainHeight(s.pos[0], s.pos[2]), 0);
     if (alt < terr + 300) alt = terr + 300;                              // terrain safety
     pIn = clamp(clamp((alt - s.pos[1]) * 0.02, -4, 5) * DEG / gMax0, -1, 1);
+    // autothrottle (turbine aircraft, as on real airliners): holds the speed the autopilot was engaged at
+    if (ACFT.v.cruise > 150 && game.apSpd) {
+      const kt = V * Math.sqrt(s.rho ? s.rho / 1.225 : 1) * 1.94384;
+      s.thr = clamp(s.thr + clamp((game.apSpd - kt) * 0.004 - (s.vs || 0) * 0.0006, -0.004, 0.004), 0.02, 0.95);
+    }
   }
   const bankCmd = rIn * bankMax;
   const pMax = AC.rollRate * DEG * (game.sens === 'high' ? 1 : game.sens === 'mid' ? 0.75 : 0.55);
-  const pCmd = clamp((bankCmd - bank) * 1.6, -pMax, pMax);
+  // integral term: a steady rolling moment (engine torque at climb power, fuel imbalance) can't leave the wings a little low
+  const bErr = bankCmd - bank;
+  const hold = Math.abs(bankCmd) < 2 * DEG && Math.abs(bErr) < 3 * DEG;            // only while holding the wings level
+  s.bI = hold ? clamp((s.bI || 0) + bErr * (1 / 120) * 1.5 * Math.min(1, AC.rollRate / 50), -0.08, 0.08) : (s.bI || 0) * 0.98;
+  const pCmd = clamp(bErr * 1.6 + s.bI, -pMax, pMax);
   const kAil = Math.abs(AC.Clp) * AC.b / (2 * Math.max(V, 10) * AC.Clda);
   s.ail = clamp((pCmd + 0.9 * (pCmd - p)) * kAil, -1, 1);
   // --- pitch: flight-path-angle command, turns are flown level automatically ---
@@ -3013,7 +3118,7 @@ function physicsStep(dt, t) {
   const stallW = ae.stallW;
   const hx = Math.max(agl + 1.3, 0.3) / AC.b, ge = (16 * hx * hx) / (1 + 16 * hx * hx);
   // drag of everything that doesn't lift (fuselage, gear, flaps' profile drag, sideslip, compressibility)
-  const CDp = AC.CD0 + 0.02 * flapF + 0.05 * flapF * flapF + AC.CDgear * s.gearPos + 0.6 * beta * beta
+  const CDp = AC.CD0 + (0.02 * flapF + 0.05 * flapF * flapF) * (AC.flapCD ?? 1) + AC.CDgear * s.gearPos + 0.6 * beta * beta
     + (AC.wave ? 0.035 : 0.08) * smoothstep(AC.wave ? 0.88 : 0.78, AC.wave ? 1.12 : 0.95, mach);
   F[0] += ae.F[0] + qd * AC.S * EL.dCY * beta; F[1] += ae.F[1]; F[2] += ae.F[2];
   if (V > 0.3) { const k = qd * AC.S * CDp / V; F[0] -= vb[0] * k; F[1] -= vb[1] * k; F[2] -= vb[2] * k; }
@@ -3115,7 +3220,7 @@ function physicsStep(dt, t) {
 // ---------- drawing ----------
 function planeMatrix(pos, q) { return M4.fromQP(q, pos); }
 function setLivery(A, paint) {
-  const u = progMesh.u, L = A.livery, Wn = A.windows || { mode: 0 };
+  const u = progMesh.u, cp = !paint && A === ACFT && typeof acPaint === 'function' ? acPaint(A) : null, L = cp ? { ...A.livery, base: cp[0], a: cp[1], b: cp[2] } : A.livery, Wn = A.windows || { mode: 0 };
   gl.uniform1i(u.uLivery, 1);
   gl.uniform3fv(u.uLivBase, L.base);
   gl.uniform3fv(u.uLivA, paint || L.a);
@@ -6581,7 +6686,7 @@ function steadyState(kt, fpm, o = {}) {
     const eta = Math.pow(Math.min(1, V / P.prop.Vd), 0.35);
     return (0.04 + 0.96 * thr) * pw * Math.min(P.engine.T0 * (1 - 0.25 * Math.min(V / P.prop.Vd, 1)), eta * P.engine.P / V) - (1 - thr) * 2.5 * V * P.mass / 1000;
   };
-  const forces = g => { const CL = n * W * Math.cos(g) / (q * P.S), a = (CL - cl0) / P.CLa, CD = P.CD0 + 0.02 * flapF + 0.05 * flapF * flapF + (P.CDgear || 0) * gear + P.K * CL * CL; return { a, D: CD * q * P.S, CL }; };
+  const forces = g => { const CL = n * W * Math.cos(g) / (q * P.S), a = (CL - cl0) / P.CLa, CD = P.CD0 + (0.02 * flapF + 0.05 * flapF * flapF) * (P.flapCD ?? 1) + (P.CDgear || 0) * gear + P.K * CL * CL; return { a, D: CD * q * P.S, CL }; };
   let g, thr = null;
   if (o.pwr === 'full' || o.pwr === 'idle' || o.pwr === 'dead') {
     const T = thrust(o.pwr === 'full' ? 1 : o.pwr === 'idle' ? 0 : 'dead');
@@ -6622,7 +6727,7 @@ function guideText(o, L) {
     ils: '横の針が下（自分が高い）ならパワーを少し絞り、上（低い）なら足す。縦の針の方へ 2〜5° ずつ針路を直す。速度のずれは機首で',
   }[o.how || 'level'];
   const rate = o.pwr ? `（昇降率 約 ${o.pwr === 'full' ? '+' : ''}${r50(ss.fpm).toLocaleString()} fpm）` : '';
-  return `目安：${pwrTxt(ss, o)}・${pitchTxt(ss.pitch)}${rate}${o.bank ? `・バンク ${o.bank}°` : ''}${o.flaps ? `・フラップ ${FLAP_DEG[o.flaps]}°` : ''}。${aiRef(ss.pitch)}。直し方：${how}。`;
+  return `目安：${pwrTxt(ss, o)}・${pitchTxt(ss.pitch)}${rate}${o.bank ? `・バンク ${o.bank}°` : ''}${o.flaps ? `・フラップ ${flapName(o.flaps)}` : ''}。${aiRef(ss.pitch)}。直し方：${how}。`;
 }
 // target helpers: [value (number or function of lesson state), tolerance]
 const T_ALT = (tol = 100) => [L => L.alt0, tol], T_HDG = (tol = 10) => [L => L.hdg0, tol], T_SPD = (kt, tol = 10) => [kt, tol];
@@ -6953,7 +7058,7 @@ async function startLesson(id) {
   if (Ls.read) { openReadQuiz(); return; }
   const P = schoolLoad();
   // training aircraft, airport and settings
-  game.acftId = 'trainer'; setAircraft('trainer'); sim.dead = false;
+  game.acftId = 'trainer'; setAircraft('trainer', false); sim.dead = false;
   game.assist = false; game.ap = false; game.timeScale = 1; game.destIcao = '';
   if (game.depIcao !== P.airport || !JW.active || !JW.dep || JW.dep.icao !== P.airport) { game.depIcao = P.airport; await loadMap('japan'); }
   JW.dest = null;
@@ -7415,7 +7520,7 @@ function drawSixPack(g, x0, y0, sc, att) {
   }
   const s = sim;
   g.fillStyle = '#c9ced6'; g.font = `600 10px ${UI}`; g.textAlign = 'left';
-  g.fillText(`FLAPS ${FLAP_DEG[s.flapIdx]}°  TRIM ${(s.trim >= 0 ? '▲' : '▼') + Math.abs(Math.round(s.trim * 100))}   I：計器切替  K：読み方の表示 ${SCHOOL.explain ? 'ON' : 'OFF'}  [ ]：OBS`, 14, PH - 8);
+  g.fillText(`FLAPS ${flapName(s.flapIdx)}  TRIM ${(s.trim >= 0 ? '▲' : '▼') + Math.abs(Math.round(s.trim * 100))}   I：計器切替  K：読み方の表示 ${SCHOOL.explain ? 'ON' : 'OFF'}  [ ]：OBS`, 14, PH - 8);
   g.restore();
 }
 
@@ -8901,7 +9006,45 @@ ${bk.warn('このシミュレータは、国の認定を受けた訓練装置（
 //  textbook page or flight state as context. Anywhere else it falls back
 //  to pointing at the textbook sections that match the question.
 // =====================================================================
-const AI = { open: false, sample: undefined, turns: [], ctl: null, busy: false, from: null, hits: [] };
+const AI = { open: false, sample: undefined, turns: [], ctl: null, busy: false, from: null, hits: [], key: '' };
+// outside claude.ai (the online copy) the trainee can use their own Anthropic API key instead; it stays
+// in this browser and is sent only to api.anthropic.com
+try { AI.key = localStorage.getItem('sorajima-akey') || ''; } catch (e) { /* storage unavailable */ }
+const AI_SDK = 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/+esm', AI_MODEL = 'claude-opus-5';
+// one question to Claude through the viewer's own API key (official SDK, streamed)
+async function aiAskWithKey(turns, { onText, signal }) {
+  let Anthropic;
+  // a failed module load is remembered per URL, so a retry asks for a slightly different one
+  for (let i = 0; i < 3 && !Anthropic; i++) {
+    try { Anthropic = (await import(AI_SDK + (i ? '?retry=' + i : ''))).default; }
+    catch (e) { if (i === 2) throw { code: 'sdk_load', message: String(e && e.message || e) }; await new Promise(r => setTimeout(r, 900)); }
+  }
+  const client = new Anthropic({ apiKey: AI.key, dangerouslyAllowBrowser: true, maxRetries: 1 });
+  const run = async fallback => {
+    const params = { model: AI_MODEL, max_tokens: 16000, messages: turns };
+    if (fallback) { params.betas = ['server-side-fallback-2026-07-01']; params.fallbacks = 'default'; }   // a declined request is re-run on another model
+    const stream = client.beta.messages.stream(params, { signal });
+    stream.on('text', (delta, snapshot) => onText({ text: snapshot }));
+    return stream.finalMessage();
+  };
+  let msg;
+  try {
+    try { msg = await run(true); }
+    catch (e) { if (e instanceof Anthropic.BadRequestError && /fallback/i.test(e.message || '')) msg = await run(false); else throw e; }
+  } catch (e) {
+    if (e instanceof Anthropic.APIUserAbortError || (signal && signal.aborted)) throw { code: 'cancelled' };
+    if (e instanceof Anthropic.AuthenticationError) throw { code: 'bad_key', message: e.message };
+    if (e instanceof Anthropic.PermissionDeniedError) throw { code: 'key_denied', message: e.message };
+    if (e instanceof Anthropic.RateLimitError) throw { code: 'rate_limited', message: e.message };
+    if (e instanceof Anthropic.APIConnectionError) throw { code: 'network', message: e.message };
+    if (e instanceof Anthropic.APIError && e.status === 529) throw { code: 'overloaded', message: e.message };
+    if (e instanceof Anthropic.BadRequestError && /credit|balance|billing/i.test(e.message || '')) throw { code: 'no_credit', message: e.message };
+    throw { code: 'api_error', message: (e && e.message) || String(e) };
+  }
+  if (msg.stop_reason === 'refusal') throw { code: 'refused' };
+  const text = msg.content.filter(b => b.type === 'text').map(b => b.text).join('');
+  return { text, truncated: msg.stop_reason === 'max_tokens' };
+}
 
 const AI_RULES = `あなたはフライトシミュレータ「そらじま」に組み込まれた飛行教官 AI です。相手は自家用操縦士を目指す訓練生で、飛行機の知識はまだ少ない初心者です。
 
@@ -9006,7 +9149,28 @@ function aiStatus() {
   const st = $('ai-state');
   if (AI.sample === undefined) st.textContent = 'AI に接続中…';
   else if (AI.sample) st.textContent = 'Claude が回答します（あなたの Claude アカウントの使用量を使います。最初の質問で許可を求められます）';
-  else st.textContent = 'この画面では AI に接続できません（claude.ai 上で開くと使えます）。代わりに、質問に関係する教科書の節を探します。';
+  else if (AI.key) {
+    st.innerHTML = '';
+    const t = document.createElement('span'); t.textContent = 'あなたの Anthropic API キーで Claude が回答します（API の料金がかかります）。 ';
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'sch-sub'; b.textContent = 'キーを削除';
+    b.addEventListener('click', () => { AI.key = ''; try { localStorage.removeItem('sorajima-akey'); } catch (e) { /* ignore */ } aiStatus(); });
+    st.append(t, b);
+  } else {
+    st.innerHTML = '';
+    const p = document.createElement('div');
+    p.textContent = 'この画面（claude.ai の外）では、claude.ai のアカウントでは AI を使えません。claude.ai 上で開くか、ご自分の Anthropic API キーを入れてください（console.anthropic.com で作成・利用料は自分の API 残高から）。キーはこのブラウザだけに保存され、api.anthropic.com にだけ送られます。入れない場合は教科書の節を探します。';
+    const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:6px;margin-top:6px';
+    const inp = document.createElement('input'); inp.type = 'password'; inp.placeholder = 'sk-ant-…'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.style.cssText = 'flex:1;min-width:0;padding:5px 8px;background:#0c1422;color:#e8f0fa;border:1px solid #2b3a4e;border-radius:6px;font:inherit';
+    const save = document.createElement('button'); save.type = 'button'; save.className = 'sch-go'; save.textContent = '保存';
+    const msg = document.createElement('div'); msg.style.cssText = 'color:#ffb547;margin-top:4px';
+    save.addEventListener('click', () => {
+      const k = inp.value.trim();
+      if (!/^sk-ant-[A-Za-z0-9_\-]{20,}$/.test(k)) { msg.textContent = 'キーの形式が違うようです（sk-ant- で始まります）'; return; }
+      AI.key = k; try { localStorage.setItem('sorajima-akey', k); } catch (e) { /* ignore */ } aiStatus();
+    });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); save.click(); } });
+    row.append(inp, save); st.append(p, row, msg);
+  }
 }
 
 // --- ask ----------------------------------------------------------------------
@@ -9016,7 +9180,7 @@ async function aiSend() {
   box.value = '';
   aiBubble('user', `<p>${aiEsc(q)}</p>`);
   const hits = aiSearch(q, 3);
-  if (!AI.sample) {
+  if (!AI.sample && !AI.key) {
     const d = aiBubble('ai', hits.length ? `<p>AI に接続できないため、教科書から関係のありそうな節を探しました。</p>${aiRefs(hits)}` : '<p>AI に接続できず、教科書にも近い節が見つかりませんでした。言い方を変えるか、教科書の検索欄を試してください。</p>');
     aiWireRefs(d); return;
   }
@@ -9034,8 +9198,10 @@ async function aiSend() {
   const d = aiBubble('ai', '<p class="ai-think">考えています…</p>');
   AI.busy = true; AI.ctl = new AbortController(); $('ai-stop').hidden = false; $('ai-send').disabled = true;
   try {
-    const { text, truncated } = await AI.sample([{ role: 'user', content: AI_RULES }, ...turns], {
-      cache: false, signal: AI.ctl.signal,
+    const input = turns.map((t, i) => i === 0 ? { role: 'user', content: AI_RULES + '\n\n' + t.content } : t);
+    const ask = AI.sample ? (inp, o) => AI.sample(inp, Object.assign({ cache: false }, o)) : aiAskWithKey;
+    const { text, truncated } = await ask(input, {
+      signal: AI.ctl.signal,
       onText: ({ text }) => { d.innerHTML = aiMarkdown(text); $('ai-log').scrollTop = $('ai-log').scrollHeight; },
     });
     AI.turns.push({ role: 'assistant', content: text });
@@ -9043,9 +9209,10 @@ async function aiSend() {
   } catch (e) {
     AI.turns.pop();
     const keep = e && e.text ? aiMarkdown(e.text) : '';
-    const why = { cancelled: '止めました。', not_granted: 'AI の利用が許可されませんでした。この画面では教科書の検索だけ使えます。', sampling_disabled: 'このアカウントでは AI を使えません。', rate_limited: '質問が多すぎるか、使用量の上限に達しました。少し時間をおいてください。', session_expired: 'ログインし直してください。', refused: 'この質問には答えられませんでした。言い方を変えてみてください。', prompt_too_large: '質問が長すぎました。短くしてください。' }[e && e.code] || '回答の途中で問題が起きました。もう一度送ってください。';
+    const why = { cancelled: '止めました。', not_granted: 'AI の利用が許可されませんでした。この画面では教科書の検索だけ使えます。', sampling_disabled: 'このアカウントでは AI を使えません。', rate_limited: '質問が多すぎるか、使用量の上限に達しました。少し時間をおいてください。', bad_key: 'API キーが無効です（打ち間違い・削除済み）。キーを削除して入れ直してください。', key_denied: 'この API キーではこのモデルを使えません。', no_credit: 'API の残高（クレジット）が足りません。console.anthropic.com で確認してください。', network: 'api.anthropic.com に接続できませんでした（ネットワーク・広告ブロッカー等を確認）。', overloaded: 'いま混み合っています。少し待ってからもう一度。', sdk_load: 'AI の部品（SDK）を読み込めませんでした。ネットワークを確認してください。', api_error: 'AI からエラーが返りました。', session_expired: 'ログインし直してください。', refused: 'この質問には答えられませんでした。言い方を変えてみてください。', prompt_too_large: '質問が長すぎました。短くしてください。' }[e && e.code] || '回答の途中で問題が起きました。もう一度送ってください。';
     if (e && ['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(e.code)) { AI.sample = null; aiStatus(); }
-    d.innerHTML = (e && e.code === 'refused' ? '' : keep) + `<p class="ai-note">${why}</p>` + aiRefs(hits);
+    const det = e && e.code === 'api_error' && e.message ? `（${aiEsc(String(e.message).slice(0, 160))}）` : '';
+    d.innerHTML = (e && e.code === 'refused' ? '' : keep) + `<p class="ai-note">${why}${det}</p>` + aiRefs(hits);
   } finally {
     AI.busy = false; AI.ctl = null; $('ai-stop').hidden = true; $('ai-send').disabled = false;
     aiWireRefs(d); $('ai-log').scrollTop = $('ai-log').scrollHeight;
@@ -9072,11 +9239,94 @@ function setupAI() {
   else AI.sample = null;
 }
 // =====================================================================
+//  AIRCRAFT CUSTOMIZATION: paint, fuel and payload (the aircraft's weight),
+//  and the avionics fit. Kept per aircraft in this browser.
+// =====================================================================
+const CUSTOM = (() => { try { return JSON.parse(localStorage.getItem('sorajima-custom') || '{}') || {}; } catch (e) { return {}; } })();
+function acCustom(id) { return CUSTOM[id] || {}; }
+function saveCustom() { try { localStorage.setItem('sorajima-custom', JSON.stringify(CUSTOM)); } catch (e) { /* storage unavailable */ } }
+// payload limits (people, bags, cargo) and the usual fuel load, for the aircraft that don't list them
+const LOAD_DEF = { trainer: { max: 300, def: 160, fuelDef: 0.9 }, sport: { max: 350, def: 170, fuelDef: 0.9 }, aero: { max: 100, def: 80, fuelDef: 0.9 },
+  twin: { max: 1200, def: 500, fuelDef: 0.9 }, airliner: { max: 18000, def: 12000, fuelDef: 0.5 }, fighter: { max: 3000, def: 0, fuelDef: 0.9 } };
+const MTOW = { trainer: 1157, sport: 1310, aero: 870, twin: 5700, airliner: 79000, fighter: 19000, c172: 1157, a320: 79000, b738: 79000 };
+function acLoadDef(A) { return A.load || LOAD_DEF[A.id] || { max: 300, def: 0, fuelDef: 0.9 }; }
+// the aircraft's empty weight: from the data, or back-computed so the default load gives its reference weight
+function acOEW(A) { const L = acLoadDef(A); return A.oew || A.phys.mass - L.def - L.fuelDef * (FUEL_CAP[A.id] || 150); }
+function acLoad(A, custom = true) {
+  const L = acLoadDef(A), c = custom ? acCustom(A.id) : {};
+  return { payload: clamp(c.payload ?? L.def, 0, L.max), fuel: clamp(c.fuel ?? L.fuelDef, 0.05, 1) };
+}
+function acMass(A, custom = true) { const l = acLoad(A, custom); return acOEW(A) + l.payload + l.fuel * (FUEL_CAP[A.id] || 150); }
+// paint presets (fuselage, main stripe, second stripe); null = the aircraft's own scheme
+const PAINTS = [['標準', null], ['白×紺', [[0.96, 0.96, 0.97], [0.06, 0.16, 0.42], [0.55, 0.62, 0.72]]], ['白×赤', [[0.96, 0.96, 0.97], [0.78, 0.08, 0.12], [0.2, 0.2, 0.22]]],
+  ['白×緑', [[0.96, 0.96, 0.97], [0.05, 0.45, 0.28], [0.85, 0.72, 0.2]]], ['白×空色', [[0.96, 0.96, 0.97], [0.18, 0.55, 0.85], [0.95, 0.55, 0.15]]],
+  ['銀×紺', [[0.72, 0.74, 0.77], [0.08, 0.14, 0.34], [0.78, 0.1, 0.14]]], ['黄色', [[0.98, 0.82, 0.16], [0.12, 0.12, 0.14], [0.9, 0.9, 0.9]]], ['黒×金', [[0.1, 0.1, 0.12], [0.82, 0.66, 0.26], [0.5, 0.5, 0.52]]]];
+function acPaint(A) { const c = acCustom(A.id); return c.paint || null; }
+const hex = c => '#' + c.map(v => Math.round(clamp(v, 0, 1) * 255).toString(16).padStart(2, '0')).join('');
+const unhex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+function openCustom() {
+  const A = ACFT, id = A.id, L = acLoadDef(A), cap = FUEL_CAP[id] || 150, piston = SYS_KIND[id] === 'piston';
+  let el = $('custom'); if (!el) { el = document.createElement('div'); el.id = 'custom'; document.body.append(el); }
+  const c = CUSTOM[id] = CUSTOM[id] || {};
+  const cur = () => acLoad(A), paint = acPaint(A) || [A.livery.base, A.livery.a, A.livery.b];
+  el.hidden = false;
+  el.innerHTML = `<div class="cu-box" role="dialog" aria-label="機体のカスタマイズ">
+    <h3>機体のカスタマイズ：${A.name}<button type="button" data-act="close" aria-label="閉じる">×</button></h3>
+    <h4>塗装</h4><div class="cu-sw">${PAINTS.map(([n, p], i) => `<button type="button" data-paint="${i}" title="${n}" style="background:${p ? `linear-gradient(135deg, ${hex(p[0])} 55%, ${hex(p[1])} 55% 78%, ${hex(p[2])} 78%)` : `linear-gradient(135deg, ${hex(A.livery.base)} 55%, ${hex(A.livery.a)} 55% 78%, ${hex(A.livery.b)} 78%)`}"><span>${n}</span></button>`).join('')}</div>
+    <div class="cu-col"><label>胴体 <input type="color" data-col="0" value="${hex(paint[0])}"></label><label>ライン 1 <input type="color" data-col="1" value="${hex(paint[1])}"></label><label>ライン 2 <input type="color" data-col="2" value="${hex(paint[2])}"></label></div>
+    <h4>燃料と搭載量（重さ）</h4>
+    <label class="cu-r">燃料 <input type="range" data-k="fuel" min="5" max="100" value="${Math.round(cur().fuel * 100)}"> <b data-v="fuel"></b></label>
+    <label class="cu-r">${L.max > 3000 ? '乗客・貨物' : '人・荷物'} <input type="range" data-k="payload" min="0" max="${L.max}" step="${L.max > 3000 ? 100 : 5}" value="${cur().payload}"> <b data-v="payload"></b></label>
+    <p class="cu-w" data-v="mass"></p>
+    ${id === 'c172' ? `<h4>計器</h4><div class="cu-seg"><button type="button" data-av="analog" class="${c.avionics !== 'g1000' ? 'on' : ''}">アナログ 6 計器</button><button type="button" data-av="g1000" class="${c.avionics === 'g1000' ? 'on' : ''}">グラス（G1000 風）</button></div>` : ''}
+    <p class="cu-n">重いほど失速速度・離陸距離が伸び、上昇が鈍くなります（物理計算に反映。燃料は飛行中に減っていきます）。訓練課目では標準の重さで飛びます。</p>
+    <div class="cu-b"><button type="button" data-act="reset">この機体を標準に戻す</button><button type="button" data-act="close" class="sch-go">決定</button></div></div>`;
+  const upd = () => {
+    const l = cur(), m = acMass(A), mt = MTOW[id];
+    el.querySelector('[data-v="fuel"]').textContent = piston ? `${Math.round(l.fuel * 100)}%（${(l.fuel * cap / 2.72).toFixed(0)} ガロン）` : `${Math.round(l.fuel * 100)}%（${Math.round(l.fuel * cap).toLocaleString()} kg）`;
+    el.querySelector('[data-v="payload"]').textContent = L.max > 3000 ? `${Math.round(l.payload).toLocaleString()} kg（約 ${Math.round(l.payload / 95)} 人分）` : `${Math.round(l.payload)} kg`;
+    const over = mt && m > mt;
+    el.querySelector('[data-v="mass"]').innerHTML = `総重量 <b>${Math.round(m).toLocaleString()} kg</b>${mt ? `（最大離陸重量 ${mt.toLocaleString()} kg）` : ''}${over ? '　<span class="warn">最大離陸重量を超えています（実機では飛べません）</span>' : ''}`;
+  };
+  upd();
+  const apply = () => { saveCustom(); setAircraft(id); if (game.state === 'menu') { spawn('runway'); game.state = 'menu'; } if (typeof updateMenuTexts === 'function') updateMenuTexts(); CPIT.dirty = true; };
+  el.oninput = e => {
+    const t = e.target;
+    if (t.dataset.k) { c[t.dataset.k] = t.dataset.k === 'fuel' ? t.value / 100 : +t.value; upd(); }
+    if (t.dataset.col) { const p = (acPaint(A) || [A.livery.base, A.livery.a, A.livery.b]).map(v => v.slice()); p[+t.dataset.col] = unhex(t.value); c.paint = p; saveCustom(); }
+  };
+  el.onchange = e => { if (e.target.dataset.k) apply(); };
+  el.onclick = e => {
+    const b = e.target.closest('button'); if (!b) { if (e.target === el) { el.hidden = true; } return; }
+    if (b.dataset.paint) { const p = PAINTS[+b.dataset.paint][1]; if (p) c.paint = p.map(v => v.slice()); else delete c.paint; saveCustom(); openCustom(); }
+    else if (b.dataset.av) { c.avionics = b.dataset.av; saveCustom(); CPIT.dirty = true; openCustom(); }
+    else if (b.dataset.act === 'reset') { delete CUSTOM[id]; saveCustom(); apply(); openCustom(); }
+    else if (b.dataset.act === 'close') { apply(); el.hidden = true; }
+  };
+}
+function setupCustom() {
+  const st = document.createElement('style');
+  st.textContent = `#custom{position:fixed;inset:0;background:rgba(2,6,12,.55);display:flex;align-items:center;justify-content:center;z-index:60}#custom[hidden]{display:none}
+.cu-box{width:min(460px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow:auto;background:#0a1320;border:1px solid #2b3a4e;border-radius:12px;padding:14px 16px;color:#e8f0fa;font:13px "B612","Zen Kaku Gothic New",system-ui,sans-serif}
+.cu-box h3{margin:0 0 8px;font-size:15px;display:flex;justify-content:space-between;gap:8px}.cu-box h3 button{background:none;border:0;color:#92a5be;font-size:20px;cursor:pointer}
+.cu-box h4{margin:12px 0 6px;font-size:12px;color:#5fd4ff}.cu-sw{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.cu-sw button{height:44px;border-radius:8px;border:1px solid #2b3a4e;cursor:pointer;position:relative}
+.cu-sw span{position:absolute;left:3px;bottom:3px;font-size:10px;color:#fff;background:rgba(0,0,0,.55);padding:0 4px;border-radius:3px}.cu-col{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap}.cu-col input{width:36px;height:24px;border:0;background:none;vertical-align:middle}
+.cu-r{display:grid;grid-template-columns:78px 1fr;gap:6px;align-items:center;margin:6px 0}.cu-r b{grid-column:2;font-weight:700;color:#cfe3f6}.cu-w{margin:6px 0;color:#cfe3f6}.cu-w .warn{color:#ffb547}
+.cu-seg{display:flex;gap:6px}.cu-seg button{flex:1;padding:6px;border-radius:6px;border:1px solid #2b3a4e;background:#16202e;color:#c8d4e2;cursor:pointer;font:inherit}.cu-seg button.on{background:#5fd4ff;color:#04121c}
+.cu-n{color:#92a5be;font-size:11.5px;line-height:1.5;margin:8px 0}.cu-b{display:flex;justify-content:space-between;gap:8px}.cu-b button{padding:7px 12px;border-radius:6px;border:1px solid #3a4b61;background:#1d2a3a;color:#e8f0fa;cursor:pointer;font:inherit}`;
+  document.head.append(st);
+  const b = $('open-custom'); if (b) b.addEventListener('click', openCustom);
+  addEventListener('keydown', e => { const el = $('custom'); if (el && !el.hidden && e.key === 'Escape') { el.hidden = true; e.stopImmediatePropagation(); } }, true);
+}
+// =====================================================================
 //  AIRCRAFT SYSTEMS (electrical, fuel, engine start) and the 3D VIRTUAL
 //  COCKPIT: an instrument panel you can read and click from the pilot's seat.
 // =====================================================================
-const SYS_KIND = { trainer: 'piston', sport: 'piston', aero: 'piston', twin: 'turbine', airliner: 'turbine', fighter: 'turbine' };
-const FUEL_CAP = { trainer: 145, sport: 200, aero: 110, twin: 1100, airliner: 18000, fighter: 3200 };   // usable fuel, kg
+const SYS_KIND = { trainer: 'piston', sport: 'piston', aero: 'piston', twin: 'turbine', airliner: 'turbine', fighter: 'turbine', c172: 'piston', a320: 'turbine', b738: 'turbine' };
+const FUEL_CAP = { trainer: 145, sport: 200, aero: 110, twin: 1100, airliner: 18000, fighter: 3200, c172: 144, a320: 18700, b738: 20900 };   // usable fuel, kg
+// specific fuel consumption of the jets, kg per newton of thrust per hour (the new-generation A320neo engines burn less)
+const TSFC = { airliner: 0.058, a320: 0.051, b738: 0.058, fighter: 0.085 };
+const isAirliner = () => ['airliner', 'a320', 'b738'].includes(ACFT.id);
 const SYS = {
   kind: 'piston', run: true, spin: 1, crank: false, startHeld: false,
   bat: true, alt: true, avio: true, pump: false, beacon: true, nav: true, strobe: true, land: true, taxi: false,
@@ -9090,7 +9340,7 @@ function sysReset(cold) {
     kind: k, run: on, spin: on ? 1 : 0, crank: false, startHeld: false, start: false, auto: false,
     bat: on, alt: on, avio: on, pump: on && k !== 'piston', beacon: on, nav: on, strobe: on, land: on, taxi: false,
     mags: on ? 3 : 0, mix: on ? 1 : 0, fuelSel: 3, fuelOn: on, pbrake: cold,
-    cap, rpmK: 1, fuelL: cap * 0.45, fuelR: cap * 0.45, batQ: 0.95, starvT: 0, crankT: 0, pf: 1,
+    cap, rpmK: 1, fuelL: cap * acLoad(ACFT, ACFT.custom !== false).fuel / 2, fuelR: cap * acLoad(ACFT, ACFT.custom !== false).fuel / 2, batQ: 0.95, starvT: 0, crankT: 0, pf: 1,
   });
   if (cold) { sim.rpm = 0; sim.thr = 0; sim.n1 = 0; } else if (CL.open) clToggle(false);
   CL.html = ''; sysStep(0);
@@ -9174,8 +9424,8 @@ function sysStep(dt) {
     }
     SYS.pf = 1;
     const T = Math.max(sim.thrust || 0, 0);
-    SYS.flow = !SYS.run ? (SYS.fuelOn && SYS.spin > 0.3 ? 40 : 0) * (ACFT.id === 'airliner' ? 3 : 1)
-      : AC.engine.type === 'jet' ? T * (s.ab ? 0.2 : ACFT.id === 'fighter' ? 0.085 : 0.058) / 1 + 150 : 0.33 * ACFT.phys.engine.P / 1000 * (0.12 + 0.88 * s.thr) * 2;
+    SYS.flow = !SYS.run ? (SYS.fuelOn && SYS.spin > 0.3 ? 40 : 0) * (isAirliner() ? 3 : 1)
+      : AC.engine.type === 'jet' ? T * (s.ab ? 0.2 : TSFC[ACFT.id] || 0.058) + 150 : 0.33 * ACFT.phys.engine.P / 1000 * (0.12 + 0.88 * s.thr) * 2;
     SYS.egt = SYS.run ? 520 + 330 * s.thr : SYS.spin * 400;
   }
   // ---- burn ----
@@ -9186,6 +9436,8 @@ function sysStep(dt) {
     else { const l = SYS.fuelL > 0, rr_ = SYS.fuelR > 0, k = l && rr_ ? 0.5 : 1; if (l) SYS.fuelL = Math.max(0, SYS.fuelL - burn * k); if (rr_) SYS.fuelR = Math.max(0, SYS.fuelR - burn * k); }
   }
   if (SYS.pbrake && !s.onGround) SYS.pbrake = false;
+  // the aircraft gets lighter as it burns fuel
+  if (AC && ACFT.massNow) AC.mass = acOEW(ACFT) + acLoad(ACFT, ACFT.custom !== false).payload + SYS.fuelL + SYS.fuelR;
 }
 // automatic start (Ctrl+E): flips the switches in order, like a pilot running the checklist
 function sysAutoStart() {
@@ -9215,6 +9467,9 @@ const CP_LAYOUT = {
   twin: { style: 'roof', glass: true, ctl: 'yoke', pw: 1.3, W: 0.7, dz: 0.86, dy: 0.47, roof: 0.4, sill: -0.18, post: true },
   airliner: { style: 'roof', glass: true, ctl: 'yoke', pw: 1.5, W: 0.9, dz: 1.0, dy: 0.55, roof: 0.45, sill: -0.16, post: true, pedestal: true },
   fighter: { style: 'bubble', glass: true, ctl: 'stick', pw: 0.74, W: 0.42, dz: 0.72, dy: 0.46, roof: 0.4, sill: -0.3 },
+  c172: { style: 'roof', glass: false, ctl: 'yoke', pw: 1.12, W: 0.58, dz: 0.74, dy: 0.44, roof: 0.36, sill: -0.2 },
+  a320: { style: 'roof', glass: true, ctl: 'side', pw: 1.5, W: 0.92, dz: 1.0, dy: 0.55, roof: 0.45, sill: -0.16, post: true, pedestal: true },
+  b738: { style: 'roof', glass: true, ctl: 'yoke', pw: 1.5, W: 0.9, dz: 1.0, dy: 0.55, roof: 0.45, sill: -0.16, post: true, pedestal: true },
 };
 const CPIT = { prog: null, tex: null, cv: null, g: null, scale: 1, lastT: -1, dirty: true, hover: null, drag: null, hold: null, tip: '', yoke: true, fov: 70, hinted: false };
 const CP_W = 1024, CP_H = 512;
@@ -9272,6 +9527,10 @@ function cpBuild(A) {
     y.cylinder([0, 0, -0.01], [0, 0, 0.03], 0.045, 0.045, 12, black);
     y.box([0, -0.01, 0.01], [0.3, 0.035, 0.035], black);
     for (const s of [-1, 1]) y.box([s * 0.16, 0.04, 0.01], [0.04, 0.13, 0.045], black);
+  } else if (L.ctl === 'side') {                              // Airbus sidestick on the left console
+    y.cylinder([0, 0, 0], [0, 0.13, 0], 0.014, 0.012, 8, [0.2, 0.2, 0.22]);
+    y.box([0, 0.17, 0.005], [0.04, 0.09, 0.05], black);
+    y.cylinder([0, -0.01, 0], [0, 0.02, 0], 0.05, 0.03, 10, [0.1, 0.1, 0.1]);
   } else {
     y.cylinder([0, 0, 0], [0, 0.42, 0], 0.016, 0.014, 8, [0.2, 0.2, 0.22]);
     y.box([0, 0.47, 0], [0.045, 0.11, 0.05], black);
@@ -9297,6 +9556,7 @@ function drawCockpit(base) {
   if (CPIT.yoke) {
     let q, p;
     if (L.ctl === 'yoke') { q = qaxis([0, 0, 1], -s.ail * 0.7); p = [0, L.py - L.ph * 0.12, L.pz + 0.3 + s.elev * 0.08]; }
+    else if (L.ctl === 'side') { q = qmul(qaxis([0, 0, 1], -s.ail * 0.35), qaxis([1, 0, 0], s.elev * 0.35)); p = [-0.55, e[1] - 0.55, e[2] - 0.12]; }
     else { q = qmul(qaxis([0, 0, 1], -s.ail * 0.3), qaxis([1, 0, 0], s.elev * 0.3)); p = [A.id === 'fighter' ? 0.3 : 0, e[1] - 0.95, e[2] - 0.38]; }
     gl.uniformMatrix4fv(u.uModel, false, M4.mul(base, M4.fromQP(q, p)));
     gl.bindVertexArray(C.ctl.vao); gl.drawArrays(gl.TRIANGLES, 0, C.ctl.count);
@@ -9388,7 +9648,12 @@ function cpDrawPanel(g) {
   const grd = g.createLinearGradient(0, 0, 0, CP_H); grd.addColorStop(0, '#34383e'); grd.addColorStop(1, '#25282c');
   g.fillStyle = grd; g.fillRect(0, 0, CP_W, CP_H);
   g.fillStyle = 'rgba(255,255,255,0.04)'; g.fillRect(0, 318, CP_W, 2);
-  if (!L.glass) {
+  const style = ACFT.cockpitStyle || (L.glass ? 'glass' : acCustom(ACFT.id).avionics === 'g1000' ? 'g1000' : 'analog');
+  if (style === 'airbus' || style === 'boeing') cpDrawAirlinerTop(g, style, att);
+  else if (style === 'g1000') {
+    if (cpScreen(g, 14, 16, 452, 296)) drawPFD(g, 14, 18, 1.19, att);
+    if (cpScreen(g, 480, 16, 530, 296)) { drawND(g, 610, 16, 400, 296, 'g1000'); cpG1000Engine(g, 480, 16, 128, 296); }
+  } else if (style === 'analog') {
     const v = sixVals(att);
     if (!SYS.avio || !SYS.bus) v.nav = Object.assign({}, v.nav, { flag: 'OFF' });
     GAUGES.compass(g, 240, 17, 90, v);
@@ -9400,7 +9665,7 @@ function cpDrawPanel(g) {
       if (k === 'tc' && !SYS.bus) { rr(g, cx - 24, cy + 22, 48, 16, 2); g.fillStyle = '#c9362f'; g.fill(); cpText(g, 'OFF', cx, cy + 30, 10, '#fff'); }
     }
     cpEngineBox(g, 616, 16, 392, 298);
-  } else {
+  } else {   // generic glass (turboprop, fighter)
     if (SYS.bus) { drawPFD(g, 14, 16, 1.19, att); drawEngine(g, 472, 16, 1.19); }
     else for (const [x, w] of [[14, 452], [472, 233]]) { rr(g, x, 16, w, 300, 8); g.fillStyle = '#050607'; g.fill(); g.fillStyle = 'rgba(255,255,255,0.05)'; g.beginPath(); g.moveTo(x + w * 0.2, 16); g.lineTo(x + w * 0.45, 16); g.lineTo(x + w * 0.1, 316); g.lineTo(x, 316); g.closePath(); g.fill(); }
     cpEngineBox(g, 716, 16, 292, 298);
@@ -9426,9 +9691,10 @@ function cpDrawPanel(g) {
     cpText(g, 'FUEL ' + fp[SYS.fuelSel], fx, fy + 31, 9.5, SYS.fuelSel === 0 ? '#e0493f' : '#d8dde4');
     hs(fx - 24, fy - 24, 48, 62, () => `燃料セレクター：${fp[SYS.fuelSel]}（クリックで BOTH→L→R→OFF）`, { click: () => { SYS.fuelSel = SYS.fuelSel === 3 ? 1 : SYS.fuelSel === 1 ? 2 : SYS.fuelSel === 2 ? 0 : 3; } });
   } else {
-    cpButton(g, bx + 8, 458, 'ENG START', SYS.start, 'エンジン始動スイッチ（スターターで回転を上げる）', { click: () => { if (!SYS.run) SYS.start = !SYS.start; } }, '#f2b33a');
-    cpSwitch(g, bx + 78, 462, 'FUEL', SYS.fuelOn, '燃料レバー（RUN / CUTOFF）。回転 N2 が 18% を超えてから RUN', () => { SYS.fuelOn = !SYS.fuelOn; });
-    cpText(g, SYS.fuelOn ? 'RUN' : 'CUTOFF', bx + 78, 428, 8.5, SYS.fuelOn ? '#58e08c' : '#e0493f');
+    const ab = style === 'airbus', bo = style === 'boeing';
+    cpButton(g, bx + 8, 458, ab ? 'MODE IGN' : bo ? 'START GRD' : 'ENG START', SYS.start, ab ? 'エンジン モード：IGN/START（スターターで回転を上げる）' : bo ? 'エンジン スタートスイッチ：GRD（スターターで回転を上げる）' : 'エンジン始動スイッチ（スターターで回転を上げる）', { click: () => { if (!SYS.run) SYS.start = !SYS.start; } }, '#f2b33a');
+    cpSwitch(g, bx + 78, 462, ab ? 'ENG MASTER' : bo ? 'START LVR' : 'FUEL', SYS.fuelOn, ab ? 'エンジン マスター（ON / OFF）。N2 が 18% を超えてから ON（本物の A320 では自動で待つ）' : bo ? 'スタートレバー（IDLE / CUTOFF）。N2 が 25%（ここでは 18%）を超えたら IDLE' : '燃料レバー（RUN / CUTOFF）。回転 N2 が 18% を超えてから RUN', () => { SYS.fuelOn = !SYS.fuelOn; });
+    cpText(g, SYS.fuelOn ? (ab ? 'ON' : bo ? 'IDLE' : 'RUN') : (ab ? 'OFF' : 'CUTOFF'), bx + 78, 428, 8.5, SYS.fuelOn ? '#58e08c' : '#e0493f');
   }
   cpButton(g, bx + 190, 458, 'PARK BRK', SYS.pbrake, 'パーキングブレーキ（. キー）', { click: () => { SYS.pbrake = !SYS.pbrake; } }, '#e0493f');
   cpButton(g, bx + 252, 458, 'AP', game.ap, 'オートパイロット（O キー）', { click: () => doAction('ap') }, '#58e08c');
@@ -9437,13 +9703,14 @@ function cpDrawPanel(g) {
   cpButton(g, bx + 438, 458, 'VIEW', false, '視点を正面に戻す（ダブルクリックでも）', { click: () => { cam.lookYaw = cam.lookPitch = 0; CPIT.fov = 70; } }, '#5fd4ff');
   // ---- levers ----
   const x0 = L.glass ? 600 : 590;
-  cpSlider(g, x0, 'THROTTLE', s.thr, '#1b1c1f', () => `スロットル：${Math.round(s.thr * 100)}%（上下にドラッグ／ホイール）`, v => { s.thr = v; }, [[1, 'FULL'], [0, 'IDLE']]);
+  const thrMarks = style === 'airbus' ? [[1, 'TOGA'], [0.86, 'FLX'], [0.7, 'CL'], [0, 'IDLE']] : style === 'boeing' ? [[1, 'TO/GA'], [0.7, 'CLB'], [0, 'IDLE']] : [[1, 'FULL'], [0, 'IDLE']];
+  cpSlider(g, x0, style === 'airbus' ? 'THR LVR' : 'THROTTLE', s.thr, '#1b1c1f', () => `スロットル（推力レバー）：${Math.round(s.thr * 100)}%（上下にドラッグ／ホイール）`, v => { s.thr = v; }, thrMarks);
   if (piston) cpSlider(g, x0 + 62, 'MIXTURE', SYS.mix, '#c9362f', () => `ミクスチャー：${Math.round(SYS.mix * 100)}%（${SYS.mix < 0.1 ? 'カットオフ' : SYS.mix > 0.95 ? 'RICH' : '調整中'}${game.autoMix ? '・自動' : ''}）`, v => { SYS.mix = v; }, [[1, 'RICH'], [0, 'CUT']]);
   const tx = x0 + (piston ? 132 : 70);
   cpSlider(g, tx, 'TRIM', clamp(0.5 + s.trim / 1.2, 0, 1), '#3a3d42', () => `トリム：${s.trim >= 0 ? '機首上げ' : '機首下げ'} ${Math.abs(Math.round(s.trim * 100))}%`, v => { if (!game.assist) s.trim = clamp((v - 0.5) * 1.2, -0.6, 0.6); else sysMsg('アシスト ON のときはトリムは自動です'); }, [[1, 'UP'], [0.5, '—'], [0, 'DN']]);
   if (ACFT.wing.flap) {
     const fx = tx + 76;
-    cpSlider(g, fx, 'FLAPS', s.flapIdx / 3, '#eceff2', () => `フラップ：${FLAP_DEG[s.flapIdx]}°（実際 ${Math.round(s.flapDeg)}°）${sysFlapsOK() ? '' : '・電源なしで動きません'}`, v => { const i = Math.round(v * 3); if (i !== s.flapIdx) { s.flapIdx = i; audio.blip(480, 0.05, 'square', 0.04); } }, [[1, '30'], [2 / 3, '20'], [1 / 3, '10'], [0, 'UP']]);
+    cpSlider(g, fx, 'FLAPS', s.flapIdx / 3, '#eceff2', () => `フラップ：${flapName(s.flapIdx)}（実際 ${Math.round(s.flapDeg)}°）${sysFlapsOK() ? '' : '・電源なしで動きません'}`, v => { const i = Math.round(v * 3); if (i !== s.flapIdx) { s.flapIdx = i; audio.blip(480, 0.05, 'square', 0.04); } }, [3, 2, 1, 0].map(i => [i / 3, i ? String(flapName(i)).replace('°', '') : 'UP']));
     g.fillStyle = '#58e08c'; g.fillRect(fx - 24, 482 - 130 * s.flapDeg / 30 - 1, 8, 2);
   }
   const gx = 972;
@@ -9456,6 +9723,114 @@ function cpDrawPanel(g) {
     hs(gx - 36, 346, 60, 146, () => `ギア：${s.gearDown ? 'DOWN' : 'UP'}（クリックで切替）${sysGearOK() ? '' : '・油圧／電源なしで動きません'}`, { click: () => doAction('gear') });
   } else cpText(g, 'FIXED GEAR', gx - 6, 420, 9, '#6b7179');
 }
+// a display screen frame; returns whether it has power (dark glass otherwise)
+function cpScreen(g, x, y, w, h) {
+  rr(g, x - 4, y - 4, w + 8, h + 8, 6); g.fillStyle = '#0c0d0f'; g.fill();
+  rr(g, x, y, w, h, 3); g.fillStyle = '#040608'; g.fill();
+  if (!SYS.bus) { g.fillStyle = 'rgba(255,255,255,0.05)'; g.beginPath(); g.moveTo(x + w * 0.2, y); g.lineTo(x + w * 0.45, y); g.lineTo(x + w * 0.1, y + h); g.lineTo(x, y + h); g.closePath(); g.fill(); }
+  return SYS.bus;
+}
+// Airbus (PFD / ND / E-WD, FCU above) and Boeing (PFD / ND / EICAS, MCP above) main panels
+function cpDrawAirlinerTop(g, style, att) {
+  const ab = style === 'airbus', s = sim;
+  // glareshield control unit: the autopilot's targets and engage buttons
+  rr(g, 170, 2, 684, 40, 5); g.fillStyle = ab ? '#232833' : '#2b2d30'; g.fill();
+  const alt = game.ap ? game.apAlt * 3.28084 : s.pos[1] * 3.28084;
+  const win = (x, lab, val, w = 86) => { cpText(g, lab, x + w / 2, 11, 8.5, '#aeb6c0'); rr(g, x, 17, w, 20, 2); g.fillStyle = '#07090b'; g.fill(); cpText(g, val, x + w / 2, 27, 12, ab ? '#ffb547' : '#f4f4f4', 700); };
+  win(186, ab ? 'SPD' : 'IAS/MACH', game.ap && game.apSpd ? String(Math.round(game.apSpd)) : ab ? '---' : String(Math.round(s.ias * 1.94384)));
+  win(290, ab ? 'HDG' : 'HEADING', String(Math.round(game.ap ? game.apHdg : att.hdg) % 360).padStart(3, '0'));
+  win(394, ab ? 'ALT' : 'ALTITUDE', String(Math.round(alt / 100) * 100), 96);
+  const btn = (x, lab, on, tip, fn) => { rr(g, x, 12, 64, 26, 3); g.fillStyle = '#3a3e45'; g.fill(); g.fillStyle = on ? '#58e08c' : '#1b1e22'; g.fillRect(x + 20, 15, 24, 3); cpText(g, lab, x + 32, 28, 10, '#e8ecf0'); hs(x, 10, 64, 30, tip, { click: fn }); };
+  btn(512, ab ? 'AP1' : 'CMD A', game.ap, 'オートパイロット（O キー）', () => doAction('ap'));
+  btn(584, ab ? 'A/THR' : 'A/T', game.ap && !!game.apSpd, 'オートスロットル（オートパイロットと一緒に入ります）', () => doAction('ap'));
+  cpText(g, ab ? 'FCU' : 'MCP', 690, 26, 11, '#7c848e');
+  // three screens
+  if (cpScreen(g, 14, 50, 330, 270)) drawPFD(g, 14, 58, 330 / 380, att);
+  if (cpScreen(g, 352, 50, 320, 270)) drawND(g, 352, 50, 320, 270, style);
+  if (cpScreen(g, 680, 50, 330, 270)) drawEngDisp(g, 680, 50, 330, 270, style);
+}
+// navigation display: heading-up arc with the route to the destination (Airbus ARC / Boeing MAP / G1000 map)
+function drawND(g, x, y, w, h, style) {
+  const s = sim, att = attitude(), ab = style === 'airbus', gm = style === 'g1000';
+  const cx = x + w / 2, cy = y + h * 0.84, R = h * 0.72, hdg = att.hdg;
+  const trk = Math.atan2(s.vel[0], -s.vel[2]) / DEG, gs = Math.hypot(s.vel[0], s.vel[2]) * 1.94384;
+  g.save(); rr(g, x, y, w, h, 3); g.clip();
+  const range = gm ? 10 : 40;                                      // NM at the arc
+  // compass arc
+  g.strokeStyle = '#e8ecf0'; g.lineWidth = 1.5; g.beginPath(); g.arc(cx, cy, R, Math.PI + 0.25, -0.25); g.stroke();
+  for (let d = -70; d <= 70; d += 5) {
+    const hd = Math.round(hdg / 5) * 5 + d, a = (hd - hdg) * DEG; if (Math.abs(a) > 1.3) continue;
+    const px = cx + Math.sin(a) * R, py = cy - Math.cos(a) * R, L = hd % 10 === 0 ? 10 : 5;
+    g.beginPath(); g.moveTo(px, py); g.lineTo(cx + Math.sin(a) * (R - L), cy - Math.cos(a) * (R - L)); g.stroke();
+    if (((hd % 30) + 360) % 30 === 0) cpText(g, String(((hd / 10) % 36 + 36) % 36), cx + Math.sin(a) * (R - 20), cy - Math.cos(a) * (R - 20), 11, '#e8ecf0');
+  }
+  g.setLineDash([3, 5]); g.strokeStyle = 'rgba(232,236,240,0.35)'; g.beginPath(); g.arc(cx, cy, R / 2, Math.PI + 0.25, -0.25); g.stroke(); g.setLineDash([]);
+  cpText(g, String(range / 2), cx - R / 2 * 0.92 - 8, cy - R / 2 * 0.4, 9, '#5fd4ff');
+  // heading pointer and track line
+  g.fillStyle = ab ? '#ffe14a' : '#f4f4f4'; g.beginPath(); g.moveTo(cx, cy - R - 2); g.lineTo(cx - 6, cy - R - 12); g.lineTo(cx + 6, cy - R - 12); g.fill();
+  const ta = (trk - hdg) * DEG; g.strokeStyle = '#58e08c'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.sin(ta) * R, cy - Math.cos(ta) * R); g.stroke();
+  // destination (magenta route)
+  let dtxt = '';
+  if (typeof JW !== 'undefined' && JW.active && JW.dest) {
+    const [la, lo] = planeGeo(), brg = geoBearing(la, lo, JW.dest.lat, JW.dest.lon), dist = geoDist(la, lo, JW.dest.lat, JW.dest.lon) / 1852;
+    const a = (brg - hdg) * DEG, rr_ = Math.min(dist / range, 1.05) * R;
+    g.strokeStyle = '#e36bdc'; g.lineWidth = 2; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.sin(a) * rr_, cy - Math.cos(a) * rr_); g.stroke();
+    if (dist <= range) { g.fillStyle = '#e36bdc'; g.beginPath(); g.arc(cx + Math.sin(a) * rr_, cy - Math.cos(a) * rr_, 5, 0, 7); g.fill(); }
+    dtxt = `${JW.dest.icao || JW.dest.name}  ${dist.toFixed(dist < 100 ? 1 : 0)} NM`;
+  }
+  // own aircraft
+  g.strokeStyle = ab ? '#ffe14a' : '#f4f4f4'; g.lineWidth = 3; g.beginPath(); g.moveTo(cx - 14, cy); g.lineTo(cx + 14, cy); g.moveTo(cx, cy - 10); g.lineTo(cx, cy + 12); g.moveTo(cx - 5, cy + 10); g.lineTo(cx + 5, cy + 10); g.stroke();
+  // readouts
+  cpText(g, `GS ${Math.round(gs)}  TAS ${Math.round(s.tas * 1.94384)}`, x + 8, y + 14, 11, '#e8ecf0', 700, 'left');
+  const wv = windAt(s.pos, game.t, s.agl), ws = Math.hypot(wv[0], wv[2]) * 1.94384, wd = (Math.atan2(-wv[0], wv[2]) / DEG + 360) % 360;
+  cpText(g, `${String(Math.round(wd)).padStart(3, '0')}°/${Math.round(ws)}`, x + 8, y + 30, 11, '#5fd4ff', 700, 'left');
+  if (dtxt) cpText(g, dtxt, x + w - 8, y + 14, 11, '#e36bdc', 700, 'right');
+  cpText(g, gm ? 'MAP' : ab ? 'ARC' : 'MAP', x + w - 8, y + h - 12, 10, '#58e08c', 700, 'right');
+  g.restore();
+}
+// engine display: Airbus E/WD (green) or Boeing EICAS (white), two engines
+function drawEngDisp(g, x, y, w, h, style) {
+  const s = sim, ab = style === 'airbus';
+  const n1 = SYS.run ? 20 + 78 * s.n1 : SYS.spin * 19, egt = SYS.egt;
+  const col = ab ? '#58e08c' : '#f4f4f4';
+  const dial = (cx, cy, r, v, max, lab, txt, red) => {
+    g.strokeStyle = '#8b939c'; g.lineWidth = 2; g.beginPath(); g.arc(cx, cy, r, Math.PI * 0.75, Math.PI * 2.25); g.stroke();
+    g.strokeStyle = '#e0493f'; g.beginPath(); g.arc(cx, cy, r, Math.PI * 0.75 + Math.PI * 1.5 * red, Math.PI * 2.25); g.stroke();
+    const a = Math.PI * 0.75 + Math.PI * 1.5 * clamp(v / max, 0, 1);
+    g.strokeStyle = col; g.lineWidth = 3; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); g.stroke();
+    rr(g, cx + 4, cy + 4, 50, 18, 2); g.fillStyle = '#000'; g.fill(); g.strokeStyle = '#555'; g.lineWidth = 1; g.stroke();
+    cpText(g, txt, cx + 50, cy + 13, 12, col, 700, 'right');
+    cpText(g, lab, cx - r, cy - r - 2, 9, '#5fd4ff', 700, 'left');
+  };
+  for (const [i, ex] of [[1, x + 82], [2, x + 248]]) {
+    dial(ex, y + 64, 40, n1, 110, `N1 ${i}`, n1.toFixed(1), 1.0 / 1.1);
+    dial(ex, y + 158, 34, egt, 1100, `EGT ${i}`, String(Math.round(egt)), 0.95);
+  }
+  const fob = SYS.fuelL + SYS.fuelR, ff = SYS.flow / 2;
+  cpText(g, `FF ${Math.round(ff)} / ${Math.round(ff)} KG/H`, x + 12, y + 212, 11, col, 700, 'left');
+  cpText(g, `FOB ${Math.round(fob).toLocaleString()} KG`, x + 12, y + 230, 11, col, 700, 'left');
+  // flaps and gear
+  const fl = flapName(s.flapIdx), moving = Math.abs(s.flapDeg - FLAP_DEG[s.flapIdx]) > 0.5;
+  cpText(g, ab ? 'FLAP' : 'FLAPS', x + 200, y + 212, 10, '#aeb6c0', 700, 'left');
+  cpText(g, fl, x + 250, y + 212, 13, moving ? '#5fd4ff' : col, 700, 'left');
+  g.fillStyle = '#1b1e22'; g.fillRect(x + 200, y + 222, 110, 6); g.fillStyle = moving ? '#5fd4ff' : col; g.fillRect(x + 200, y + 222, 110 * s.flapDeg / 30, 6);
+  cpText(g, 'GEAR', x + 200, y + 246, 10, '#aeb6c0', 700, 'left');
+  for (let i = 0; i < 3; i++) { g.fillStyle = s.gearPos >= 1 ? '#58e08c' : s.gearPos > 0 ? '#e0493f' : '#1b1e22'; g.beginPath(); g.moveTo(x + 250 + i * 18, y + 240); g.lineTo(x + 262 + i * 18, y + 240); g.lineTo(x + 256 + i * 18, y + 250); g.fill(); }
+  cpText(g, ab ? 'E/WD' : 'EICAS', x + w - 8, y + h - 12, 10, '#7c848e', 700, 'right');
+}
+// G1000 MFD engine strip
+function cpG1000Engine(g, x, y, w, h) {
+  const s = sim; g.fillStyle = '#0b0f14'; g.fillRect(x, y, w, h);
+  const bar = (yy, lab, v, txt, colr) => { cpText(g, lab, x + 6, yy, 9, '#aeb6c0', 700, 'left'); cpText(g, txt, x + w - 6, yy, 10, '#f4f4f4', 700, 'right'); g.fillStyle = '#1b1e22'; g.fillRect(x + 6, yy + 7, w - 12, 5); g.fillStyle = colr; g.fillRect(x + 6, yy + 7, (w - 12) * clamp(v, 0, 1), 5); };
+  cpText(g, 'RPM', x + w / 2, y + 16, 10, '#aeb6c0'); cpText(g, String(Math.round(s.rpm / 10) * 10), x + w / 2, y + 36, 18, s.rpm > 2700 ? '#e0493f' : '#58e08c', 700);
+  bar(y + 62, 'FFLOW GPH', SYS.flow / 40, (SYS.flow / 2.72).toFixed(1), '#58e08c');
+  bar(y + 92, 'OIL PRES', SYS.run ? 0.6 : 0, SYS.run ? '62' : '0', SYS.run ? '#58e08c' : '#e0493f');
+  bar(y + 122, 'EGT °F', (SYS.egt - 1000) / 600, String(Math.round(SYS.egt)), '#58e08c');
+  bar(y + 152, 'FUEL L GAL', SYS.fuelL / SYS.cap * 2, (SYS.fuelL / 2.72).toFixed(1), '#58e08c');
+  bar(y + 182, 'FUEL R GAL', SYS.fuelR / SYS.cap * 2, (SYS.fuelR / 2.72).toFixed(1), '#58e08c');
+  bar(y + 212, 'VOLTS', SYS.volts / 30, SYS.volts.toFixed(1), SYS.volts < 25 ? '#ffb547' : '#58e08c');
+  bar(y + 242, 'AMPS', 0.5 + SYS.amps / 60, (SYS.amps >= 0 ? '+' : '') + Math.round(SYS.amps), '#58e08c');
+}
 function cpEngineBox(g, x, y, w, h) {
   const s = sim, piston = sysPiston(), cap = SYS.cap;
   rr(g, x, y, w, h, 8); g.fillStyle = '#16181b'; g.fill();
@@ -9466,7 +9841,7 @@ function cpEngineBox(g, x, y, w, h) {
   if (!piston) { cpBar(g, ix, yy, iw, 'N2 回転', SYS.run ? 0.6 + 0.4 * s.n1 : SYS.spin * 0.6, (SYS.run ? 60 + 40 * s.n1 : SYS.spin * 60).toFixed(0) + '%', SYS.spin > 0.3 && !SYS.run ? '#f2b33a' : '#58e08c'); yy += 30; }
   cpBar(g, ix, yy, iw, 'FUEL L 燃料 左', SYS.fuelL / cap * 2, fq(SYS.fuelL) + ' ' + unit, SYS.fuelL < cap * 0.08 ? '#f2b33a' : '#58e08c'); yy += 30;
   cpBar(g, ix, yy, iw, 'FUEL R 燃料 右', SYS.fuelR / cap * 2, fq(SYS.fuelR) + ' ' + unit, SYS.fuelR < cap * 0.08 ? '#f2b33a' : '#58e08c'); yy += 30;
-  cpBar(g, ix, yy, iw, 'FUEL FLOW 流量', SYS.flow / (piston ? 40 * ACFT.phys.engine.P / 96000 : ACFT.id === 'airliner' ? 6000 : ACFT.id === 'fighter' ? 12000 : 400), piston ? (SYS.flow / 2.72).toFixed(1) + ' GPH' : Math.round(SYS.flow) + ' KG/H', '#5fd4ff'); yy += 30;
+  cpBar(g, ix, yy, iw, 'FUEL FLOW 流量', SYS.flow / (piston ? 40 * ACFT.phys.engine.P / 96000 : isAirliner() ? 6000 : ACFT.id === 'fighter' ? 12000 : 400), piston ? (SYS.flow / 2.72).toFixed(1) + ' GPH' : Math.round(SYS.flow) + ' KG/H', '#5fd4ff'); yy += 30;
   cpBar(g, ix, yy, iw, piston ? 'EGT 排気温度' : 'ITT タービン温度', piston ? (SYS.egt - 1000) / 600 : SYS.egt / 900, Math.round(SYS.egt) + (piston ? ' °F' : ' °C'), '#f2b33a'); yy += 30;
   cpBar(g, ix, yy, iw, 'VOLTS 電圧', SYS.volts / 30, SYS.volts.toFixed(1) + ' V', SYS.volts < 25 ? '#f2b33a' : '#58e08c'); yy += 30;
   cpBar(g, ix, yy, iw, 'AMPS 電流（＋充電／−放電）', SYS.amps / 40, (SYS.amps >= 0 ? '+' : '') + Math.round(SYS.amps) + ' A', SYS.amps >= 0 ? '#58e08c' : '#f2b33a', true); yy += 34;
@@ -9578,7 +9953,7 @@ function clLists() {
   const before = [
     ['エンジン', '作動中', () => SYS.run],
     ...(piston ? [['マグネトー点検（R・L で回転が少し下がる）', 'BOTH に戻す', () => SYS.mags === 3]] : []),
-    ...(hasFlaps ? [['フラップ', `離陸位置 ${FLAP_DEG[V.toFlaps || 0]}°`, () => s.flapIdx === (V.toFlaps || 0)]] : []),
+    ...(hasFlaps ? [['フラップ', `離陸位置 ${flapName(V.toFlaps || 0)}`, () => s.flapIdx === (V.toFlaps || 0)]] : []),
     ['トリム', '離陸位置（ほぼ中央）', () => Math.abs(s.trim) < 0.2],
     ['航空灯・ストロボ・着陸灯', 'ON', () => SYS.nav && SYS.strobe && SYS.land],
     ['燃料', '残量あり・セレクター BOTH', () => SYS.fuelL + SYS.fuelR > SYS.cap * 0.2 && (!piston || SYS.fuelSel === 3)],
@@ -9841,10 +10216,10 @@ function doAction(a) {
     s.gearDown = !s.gearDown; toast(s.gearDown ? 'ギア ダウン' : 'ギア アップ', 1300); audio.blip(s.gearDown ? 330 : 440, 0.12, 'square', 0.06);
   } else if (a === 'flaps') {
     if (!ACFT.wing.flap) { toast('この機体にはフラップがありません', 1600); return; }
-    s.flapIdx = (s.flapIdx + 1) % 4; toast('フラップ ' + FLAP_DEG[s.flapIdx] + '°', 1200); audio.blip(520, 0.06, 'square', 0.05);
+    s.flapIdx = (s.flapIdx + 1) % 4; toast('フラップ ' + flapName(s.flapIdx), 1200); audio.blip(520, 0.06, 'square', 0.05);
   } else if (a === 'flapsUp') {
     if (!ACFT.wing.flap) return;
-    s.flapIdx = Math.max(0, s.flapIdx - 1); toast('フラップ ' + FLAP_DEG[s.flapIdx] + '°', 1200); audio.blip(440, 0.06, 'square', 0.05);
+    s.flapIdx = Math.max(0, s.flapIdx - 1); toast('フラップ ' + flapName(s.flapIdx), 1200); audio.blip(440, 0.06, 'square', 0.05);
   } else if (a === 'cam') cycleCamera();
   else if (a === 'hud') { game.hud = !game.hud; }
   else if (a === 'smoke') { s.smoke = !s.smoke; toast(s.smoke ? 'スモーク ON' : 'スモーク OFF', 1200); }
@@ -9865,7 +10240,8 @@ function doAction(a) {
     game.ap = !game.ap;
     if (game.ap) {
       game.apAlt = s.pos[1]; game.apHdg = attitude().hdg;
-      toast(JW.active && JW.dest ? `オートパイロット ON：${JW.dest.name}へ向かい、高度 ${Math.round(s.pos[1] * 3.28084).toLocaleString()} ft を保ちます` : `オートパイロット ON：方位 ${Math.round(game.apHdg)}°・高度を保ちます`, 3000);
+      game.apSpd = ACFT.v.cruise > 150 ? clamp(s.ias * 1.94384, ACFT.v.appr + 25, ACFT.v.cruise) : 0;
+      toast((JW.active && JW.dest ? `オートパイロット ON：${JW.dest.name}へ向かい、高度 ${Math.round(s.pos[1] * 3.28084).toLocaleString()} ft を保ちます` : `オートパイロット ON：方位 ${Math.round(game.apHdg)}°・高度を保ちます`) + (game.apSpd ? `（オートスロットル ${Math.round(game.apSpd)} kt）` : ''), 3000);
     } else toast('オートパイロット OFF', 1300);
   }
 }
@@ -10449,7 +10825,7 @@ function updateMenuTexts() {
   d.textContent = '';
   const st = document.createElement('span'); st.className = 'stars'; st.textContent = '難しさ ' + stars(A.stars) + '　';
   d.append(st, `${A.kind}。${A.desc}`);
-  if (A.id === 'airliner' && RWY.len < 2000) {
+  if (['airliner', 'a320', 'b738'].includes(A.id) && RWY.len < 2000) {
     const w = document.createElement('span'); w.className = 'warn';
     w.textContent = `　注意：この空港の滑走路（${len.toLocaleString()} m）は旅客機には短めです。`;
     d.append(w);
@@ -10492,7 +10868,11 @@ function setupMenu() {
   });
   $('open-map').addEventListener('click', () => toggleMap(true));
   setupMapView();
-  for (const a of AIRCRAFT) { const o = document.createElement('option'); o.value = a.id; o.textContent = `${a.name} — ${a.kind}`; sa.append(o); }
+  for (const [lab, real] of [['実在の機体', true], ['オリジナルの機体', false]]) {
+    const og = document.createElement('optgroup'); og.label = lab;
+    for (const a of AIRCRAFT.filter(a => !!a.real === real)) { const o = document.createElement('option'); o.value = a.id; o.textContent = `${a.name} — ${a.kind}`; og.append(o); }
+    sa.append(og);
+  }
   sm.value = game.mapId; sa.value = game.acftId;
   sm.addEventListener('change', () => loadMap(sm.value));
   sa.addEventListener('change', () => {
@@ -10536,7 +10916,7 @@ function renderNumbers(id) {
   const T = TRIM[id], A = AIRCRAFT.find(a => a.id === id);
   if (!T) return;
   $('num-acft').value = id;
-  const fl = i => A.wing.flap ? FLAP_DEG[i] + '°' : '—';
+  const fl = i => A.wing.flap ? flapName(i, A) : '—';
   const sg = v => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v).toFixed(1) + '°';
   const vs = v => Math.abs(v) < 30 ? '0' : (v > 0 ? '+' : '−') + Math.abs(v).toLocaleString();
   const cell = r => {
@@ -11209,7 +11589,7 @@ function drawEngine(g, x0, y0, sc) {
   };
   const jet = AC.engine.type === 'jet';
   row(jet ? 'N1 回転' : 'RPM 回転', jet ? (s.ab ? 'A/B' : Math.round(s.n1 * 100) + '%') : String(Math.round(s.rpm / 10) * 10), 26, s.ab ? COL.amber : COL.ink);
-  row('FLAPS フラップ', ACFT.wing.flap ? FLAP_DEG[s.flapIdx] + '°' : 'なし', 50, s.flapIdx ? COL.cyan : COL.ink);
+  row('FLAPS フラップ', ACFT.wing.flap ? flapName(s.flapIdx) : 'なし', 50, s.flapIdx ? COL.cyan : COL.ink);
   const gearTxt = ACFT.gear.fixed ? '固定' : s.gearPos >= 1 ? 'DOWN' : s.gearPos <= 0 ? 'UP' : '動作中';
   row('GEAR 車輪', gearTxt, 74, s.gearPos >= 1 ? COL.green : s.gearPos <= 0 ? COL.ink : COL.amber);
   // gear lights
@@ -11316,7 +11696,7 @@ function drawTargets(g, x0, y0, sc) {
 }
 function drawStatusStrip(g, x, y, sc) {
   const s = sim;
-  const items = [[`THR ${Math.round(s.thr * 100)}%`, COL.green], [`FLAPS ${FLAP_DEG[s.flapIdx]}°`, s.flapIdx ? COL.cyan : COL.ink],
+  const items = [[`THR ${Math.round(s.thr * 100)}%`, COL.green], [`FLAPS ${flapName(s.flapIdx)}`, s.flapIdx ? COL.cyan : COL.ink],
   [`GEAR ${s.gearPos >= 1 ? 'DN' : s.gearPos <= 0 ? 'UP' : '··'}`, s.gearPos >= 1 ? COL.green : COL.amber]];
   if (s.brake) items.push(['BRK', COL.amber]);
   g.font = `700 ${Math.round(12 * sc / 0.86)}px ${MONO}`; g.textBaseline = 'top'; g.textAlign = 'left';
@@ -11870,6 +12250,7 @@ async function init() {
   setupMenu();
   setupSchool();
   setupAI();
+  setupCustom();
   setupGoogle();
   setupBook();
   setSound(game.sound);

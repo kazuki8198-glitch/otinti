@@ -5658,63 +5658,100 @@ function googReceive(job, r) {
   if (GOOG.samp.length > 3000) GOOG.samp.splice(0, GOOG.samp.length - 3000);
   GOOG.upq.push([n, r]);
 }
-// GPU uploads are spread over frames (a few milliseconds each) so that tiles arriving together
-// don't freeze the picture
+// GPU uploads are spread over frames, one piece (the geometry, or one texture) at a time within a few
+// milliseconds per frame, so that tiles arriving together never freeze the picture
 function googUploadStep() {
   const t0 = performance.now();
-  while (GOOG.upq.length && performance.now() - t0 < 5) {
-    const [n, r] = GOOG.upq.shift();
-    if (n.state !== 4) { r.bitmaps.forEach(b => b.close()); continue; }
-    googUpload(n, r);
+  while (GOOG.upq.length && performance.now() - t0 < 4) {
+    const job = GOOG.upq[0], [n, r] = job;
+    if (n.state !== 4) { r.bitmaps.forEach(b => b.close()); GOOG.upq.shift(); continue; }
+    if (!job.vao) {
+      const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+      const mk = (data, loc, size, type, norm) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, type, norm, 0, 0); return b; };
+      job.bufs = [mk(r.pos, 0, 3, gl.FLOAT, false), mk(r.nrm, 1, 3, gl.BYTE, true), mk(r.uv, 2, 2, gl.FLOAT, false), mk(r.col, 3, 4, gl.UNSIGNED_BYTE, true)];
+      const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, r.idx, gl.STATIC_DRAW); job.bufs.push(ib);
+      gl.bindVertexArray(null);
+      job.vao = vao; job.texs = []; job.bytes = r.nv * 32 + r.ni * 4;
+      continue;
+    }
+    if (job.texs.length < r.bitmaps.length) {
+      const bmp = r.bitmaps[job.texs.length], t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bmp);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, 4);
+      job.bytes += bmp.width * bmp.height * 4 * 1.33; bmp.close(); job.texs.push(t);
+      continue;
+    }
+    GOOG.upq.shift();
+    n.state = 2;
+    n.mesh = { vao: job.vao, bufs: job.bufs, texs: job.texs, groups: r.groups, bytes: job.bytes };
+    // detailed tiles keep their geometry on the CPU as well, to find the ground under the aircraft
+    if (!n.planet && n.ge < 60) n.cpu = { pos: new Float32Array(r.pos), idx: new Uint32Array(r.idx) };
+    GOOG.bytes += job.bytes; GOOG.loaded++;
   }
 }
-function googUpload(n, r) {
-  n.state = 2;
-  const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
-  const mk = (data, loc, size, type, norm) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, type, norm, 0, 0); return b; };
-  const bufs = [mk(r.pos, 0, 3, gl.FLOAT, false), mk(r.nrm, 1, 3, gl.BYTE, true), mk(r.uv, 2, 2, gl.FLOAT, false), mk(r.col, 3, 4, gl.UNSIGNED_BYTE, true)];
-  const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, r.idx, gl.STATIC_DRAW); bufs.push(ib);
-  gl.bindVertexArray(null);
-  let bytes = r.nv * 32 + r.ni * 4;
-  const texs = r.bitmaps.map(bmp => {
-    const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bmp);
-    gl.generateMipmap(gl.TEXTURE_2D);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, 4);
-    bytes += bmp.width * bmp.height * 4 * 1.33; bmp.close(); return t;
-  });
-  n.mesh = { vao, bufs, texs, groups: r.groups, bytes };
-  GOOG.bytes += bytes; GOOG.loaded++;
+// Google's ground (ellipsoid height) straight below a point: the highest triangle under it that is
+// not above maxH, in the most detailed tiles now on screen
+function googGroundAt(la, lo, maxH) {
+  let best = -1e9, ge = 1e9;
+  for (const n of GOOG.active) {
+    const c = n.cpu; if (!c || n.ge > ge || geoDist(n.lat, n.lon, la, lo) > n.r) continue;
+    const x = (lo - n.refLon) * n.kx, z = -(la - n.refLat) * KZ, P = c.pos, I = c.idx;
+    let h = -1e9;
+    for (let i = 0; i < I.length; i += 3) {
+      const a = I[i] * 3, b = I[i + 1] * 3, d = I[i + 2] * 3;
+      const ax = P[a], az = P[a + 2], bx = P[b], bz = P[b + 2], dx = P[d], dz = P[d + 2];
+      if ((x < ax && x < bx && x < dx) || (x > ax && x > bx && x > dx) || (z < az && z < bz && z < dz) || (z > az && z > bz && z > dz)) continue;
+      const det = (bz - dz) * (ax - dx) + (dx - bx) * (az - dz); if (Math.abs(det) < 1e-9) continue;
+      const w0 = ((bz - dz) * (x - dx) + (dx - bx) * (z - dz)) / det, w1 = ((dz - az) * (x - dx) + (ax - dx) * (z - dz)) / det, w2 = 1 - w0 - w1;
+      if (w0 < -1e-4 || w1 < -1e-4 || w2 < -1e-4) continue;
+      const y = w0 * P[a + 1] + w1 * P[b + 1] + w2 * P[d + 1];
+      if (y <= maxH && y > h) h = y;
+    }
+    if (h > -1e8) { if (n.ge < ge) { ge = n.ge; best = h; } }
+  }
+  return best > -1e8 ? best : null;
 }
-// height datum (ellipsoid - the sim's ground). Ground points cluster tightly at the true value while
-// roofs spread above it and rivers/underpasses below, so take the peak of a histogram of the samples
-// near the aircraft, and move towards it smoothly
-function googOffStep(dt) {
-  if (R.time < (GOOG.offT || 0)) return; GOOG.offT = R.time + 0.5;
+// height datum (ellipsoid - the sim's ground). Near the ground it is measured right under the aircraft,
+// so Google's runway and the one the wheels roll on are at the same height. Higher up, the peak of a
+// histogram of samples (ground points cluster, roofs spread above) is enough. It only ever moves slowly.
+function googOffStep() {
+  if (R.time < (GOOG.offT || 0)) return; GOOG.offT = R.time + 0.25;
   const [la, lo] = worldToGeo(sim.pos[0], sim.pos[2]), jp = googGuessOff(la, lo) > 0;
-  let pts = GOOG.samp.filter(q => Math.abs(q[0] - la) < 0.03 && Math.abs(q[1] - lo) < 0.036);
-  if (pts.length < 25) pts = GOOG.samp;
-  if (pts.length < 25) return;
-  const B = 0.5, lo0 = jp ? 15 : -120, nb = Math.round((jp ? 60 : 220) / B), h = new Float32Array(nb);
-  for (const q of pts) { const i = Math.floor((q[2] - lo0) / B); if (i >= 0 && i < nb) h[i]++; }
-  let best = -1, bv = 0;
-  for (let i = 1; i < nb - 1; i++) { const v = h[i - 1] + h[i] * 2 + h[i + 1]; if (v > bv) { bv = v; best = i; } }
-  if (best < 0) return;
-  const pk = lo0 + (best + 0.5) * B; let sum = 0, c = 0;
-  for (const q of pts) if (Math.abs(q[2] - pk) < 1.5) { sum += q[2]; c++; }
-  const v = c ? sum / c : pk;
-  GOOG.rawOff = v;
-  const target = (jp ? clamp(v, 25, 45) : clamp(v, -110, 90)) + 0.3;     // a hair low: wheels touch, never sink
-  GOOG.off = GOOG.off == null ? target : GOOG.off + clamp(target - GOOG.off, -3, 3);
+  const lim = v => jp ? clamp(v, 25, 45) : clamp(v, -110, 90);
+  const ourG = groundAt(sim.pos[0], sim.pos[2]).h, agl = sim.pos[1] - ourG;             // the ground the wheels use
+  let target = null, local = false;
+  if (agl < 200 && GOOG.off != null) {
+    const gh = googGroundAt(la, lo, sim.pos[1] + GOOG.off + 3);
+    if (gh != null && Math.abs(gh - ourG - GOOG.off) < 15) { target = lim(gh - ourG) + 0.08; local = true; }
+  }
+  if (target == null) {
+    let pts = GOOG.samp.filter(q => Math.abs(q[0] - la) < 0.03 && Math.abs(q[1] - lo) < 0.036);
+    if (pts.length < 25) pts = GOOG.samp;
+    if (pts.length < 25) return;
+    const B = 0.5, lo0 = jp ? 15 : -120, nb = Math.round((jp ? 60 : 220) / B), h = new Float32Array(nb);
+    for (const q of pts) { const i = Math.floor((q[2] - lo0) / B); if (i >= 0 && i < nb) h[i]++; }
+    let best = -1, bv = 0;
+    for (let i = 1; i < nb - 1; i++) { const v = h[i - 1] + h[i] * 2 + h[i + 1]; if (v > bv) { bv = v; best = i; } }
+    if (best < 0) return;
+    const pk = lo0 + (best + 0.5) * B; let sum = 0, c = 0;
+    for (const q of pts) if (Math.abs(q[2] - pk) < 1.5) { sum += q[2]; c++; }
+    target = lim(c ? sum / c : pk) + 0.3;
+  }
+  GOOG.rawOff = target; GOOG.offLocal = local;
+  if (GOOG.off == null || (local && !GOOG.lockedLocal)) { GOOG.off = target; GOOG.lockedLocal = local; return; }
+  const d = target - GOOG.off;
+  if (Math.abs(d) < 0.15) return;                                              // dead band: no creeping
+  GOOG.off += clamp(d, -(local ? 0.3 : 0.1), local ? 0.3 : 0.1);               // at most 1.2 m/s near the ground
 }
 function googFree(n) {
   if (n.mesh && !n.mesh.empty) {
     gl.deleteVertexArray(n.mesh.vao); for (const b of n.mesh.bufs) gl.deleteBuffer(b); for (const t of n.mesh.texs) gl.deleteTexture(t);
     GOOG.bytes -= n.mesh.bytes; GOOG.loaded--;
   }
-  n.mesh = null; n.state = 0; n.job = 0;
+  n.mesh = null; n.cpu = null; n.state = 0; n.job = 0;
 }
 function googEvict(f) {
   const all = [];
@@ -9538,6 +9575,7 @@ function spawn(mode) {
   game.ap = false; game.timeScale = 1; game.track = []; game.arrived = false; game.trackT = 0;
   const cold = !!game.spawnCold && mode === 'runway' && !(typeof SCHOOL !== 'undefined' && SCHOOL.active); game.spawnCold = false;
   sysReset(cold);
+  GOOG.lockedLocal = false;                             // measure Google's ground under the new position afresh
   if (cold) { cam.mode = 'cockpit'; setTimeout(() => { if (game.state === 'flying' && !SYS.run) { toast('エンジン停止の状態から：N キーのチェックリストに沿って始動しましょう（Ctrl+E で自動始動）', 5000); clToggle(true); } }, 900); }
   if (mode === 'tutorial') tutStart(); else tutHide();
   cam.q = s.q.slice(); cam.flyPos = null; cam.lookYaw = cam.lookPitch = 0;

@@ -5634,13 +5634,17 @@ function googReceive(job, r) {
   const n = job.n;
   if (n.job !== r.id) { if (r.bitmaps) r.bitmaps.forEach(b => b.close()); return; }
   if (r.error) {
-    n.state = 3;
+    n.state = 3; GOOG.nErr = (GOOG.nErr || 0) + 1; GOOG.lastErr = String(r.error).slice(0, 60);
     if (/HTTP 40[13]/.test(r.error)) { GOOG.state = 'error'; GOOG.msg = 'タイルの取得が拒否されました（' + r.error + '）'; googStatus(); }
     else setTimeout(() => { if (n.state === 3) n.state = 0; }, 15000);
     return;
   }
   n.state = 2; n.copyright = r.copyright;
   if (!r.nv) { n.mesh = { empty: true, groups: [] }; return; }
+  // diagnostics: where the decoded vertices ended up compared with the tile's bounding volume
+  { const sm0 = new Float32Array(r.samples); let la = 0, lo = 0, k = 0; for (; k < sm0.length; k += 3) { la += sm0[k]; lo += sm0[k + 1]; }
+    const c = k / 3; if (c && !n.planet) { n.dLat = la / c; n.dLon = lo / c; n.miss = geoDist(n.lat, n.lon, n.dLat, n.dLon); }
+    n.hmin = r.hmin; n.hmax = r.hmax; GOOG.nDecoded = (GOOG.nDecoded || 0) + 1; }
   // measure the geoid: the tile's ground points against the sim's own terrain heights
   const sm = new Float32Array(r.samples);
   for (let k = 0; k < sm.length; k += 3) { const gh = rawHeightGeo(sm[k], sm[k + 1]); if (gh > 2 && Number.isFinite(gh)) GOOG.diffs.push(sm[k + 2] - gh); }
@@ -5652,6 +5656,7 @@ function googReceive(job, r) {
     const s = [...GOOG.diffs].sort((a, b) => a - b), v = s[Math.floor(s.length * 0.06)];
     const [la, lo] = worldToGeo(R.eye[0], R.eye[2]), jp = googGuessOff(la, lo) > 0;
     GOOG.off = jp ? clamp(v, 25, 45) : clamp(v, -110, 90);
+    GOOG.rawOff = v;
   }
   const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
   const mk = (data, loc, size, type, norm) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, type, norm, 0, 0); return b; };
@@ -5701,17 +5706,19 @@ function drawGoogle() {
   gl.uniform1f(u.uYOff, GOOG.off || 0);
   gl.uniform1i(u.uFlatN, 1);
   gl.disable(gl.CULL_FACE);
+  if (GOOG.debug) gl.disable(gl.DEPTH_TEST);
   gl.activeTexture(gl.TEXTURE8);
   for (const n of GOOG.active) {
     const m = n.mesh; if (!m || m.empty) continue;
     gl.uniform4f(u.uTileA, n.refLon - JW.lon0, n.refLat - JW.lat0, n.refLat, n.kx);
     gl.bindVertexArray(m.vao);
     for (const g of m.groups) {
-      if (g.img >= 0 && m.texs[g.img]) { gl.bindTexture(gl.TEXTURE_2D, m.texs[g.img]); gl.uniform1i(u.uHasTex, 1); } else gl.uniform1i(u.uHasTex, 0);
+      if (g.img >= 0 && m.texs[g.img] && !GOOG.debug) { gl.bindTexture(gl.TEXTURE_2D, m.texs[g.img]); gl.uniform1i(u.uHasTex, 1); } else gl.uniform1i(u.uHasTex, 0);
       gl.drawElements(gl.TRIANGLES, g.count, gl.UNSIGNED_INT, g.start * 4);
     }
   }
   gl.uniform1i(u.uFlatN, 0);
+  gl.enable(gl.DEPTH_TEST);
   gl.activeTexture(gl.TEXTURE0);
   gl.enable(gl.CULL_FACE);
 }
@@ -5747,6 +5754,21 @@ function googPerf(dt) {
   if (GOOG.ft > 1 / 26) GOOG.lodK = Math.min(2, GOOG.lodK * 1.008);
   else if (GOOG.ft < 1 / 45) GOOG.lodK = Math.max(1, GOOG.lodK * 0.996);
 }
+
+// one line of numbers that tells what the Google layer is actually doing (shown under the status line)
+function googDiag() {
+  if (!GOOG.root) return '';
+  let hmin = 1e9, hmax = -1e9, miss = 0, near = 1e9, depth = 0, geMin = 1e9;
+  for (const n of GOOG.active) {
+    if (n.hmin != null) { hmin = Math.min(hmin, n.hmin); hmax = Math.max(hmax, n.hmax); }
+    if (n.miss != null) miss = Math.max(miss, n.miss);
+    if (!n.planet) { const c = googWorld(n); near = Math.min(near, Math.hypot(c[0] - R.eye[0], c[1] - R.eye[1], c[2] - R.eye[2])); }
+    let d = 0; for (let p = n.parent; p; p = p.parent) d++; depth = Math.max(depth, d); geMin = Math.min(geMin, n.ge);
+  }
+  const f = v => Math.abs(v) >= 1e4 ? (v / 1000).toFixed(0) + 'k' : Math.round(v);
+  return `診断：深さ ${depth}・誤差 ${f(geMin)} m・高さ ${f(hmin)}〜${f(hmax)} m・位置ずれ ${f(miss)} m・最寄り ${f(near)} m・生の基準 ${GOOG.rawOff == null ? '―' : f(GOOG.rawOff)}・読込 ${GOOG.nDecoded || 0}・失敗 ${GOOG.nErr || 0}${GOOG.lastErr ? '（' + GOOG.lastErr + '）' : ''}`;
+}
+addEventListener('keydown', e => { if (e.code === 'F8') { e.preventDefault(); GOOG.debug = !GOOG.debug; toast(GOOG.debug ? 'Google タイルを灰色で最前面に表示（F8 で戻す）' : 'Google タイルの表示を元に戻しました', 2400); } });
 // =====================================================================
 //  VOLUMETRIC CLOUDS: a cumulus layer ray-marched through its thickness.
 //  We draw the surface where the view ray enters the layer (its base
@@ -11153,6 +11175,7 @@ function drawInfo(g, W, H, touch, sc, touchY) {
     st.push(JW.online ? `航空写真 ${JW.inflight ? '読み込み中…' : 'ON'}` : '簡易地形（オフライン）');
     if (GOOG.on && GOOG.key) st.push(GOOG.state === 'ok' ? `Google 3D ${GOOG.covering ? `ON（高さ基準 ${Math.round(GOOG.off ?? 0)} m・${GOOG.active.length} 枚・細かさ ×${(GOOG.lodK || 1).toFixed(1)}）` : '読み込み中…'}` : GOOG.state === 'error' ? 'Google 3D エラー（メニューで確認）' : 'Google 3D 接続中…');
     lines.push([st.join('　'), game.ap || game.timeScale > 1 ? COL.amber : COL.muted, `11px ${UI}`]);
+    if (GOOG.on && GOOG.key && GOOG.state === 'ok') lines.push([googDiag() + '　F8：タイルを灰色で表示', COL.muted, `11px ${UI}`]);
   } else lines.push([`${MAP.name}・${ACFT.name}`, COL.muted, `11px ${UI}`]);
   const modeName = { tutorial: 'チュートリアル', runway: 'フリーフライト', air: 'フリーフライト', rings: game.tour ? '観光フライト' : 'リングチャレンジ', landing: '着陸チャレンジ' }[game.mode];
   lines.push([modeName, COL.cyan, `700 12px ${UI}`]);

@@ -5452,10 +5452,12 @@ in vec3 vWorld; in vec3 vN; in vec2 vUv; in vec3 vCol;
 uniform sampler2D uTex;
 uniform int uHasTex;
 uniform float uNightF;
+uniform int uFlatN;      // 1: the mesh has no normals (Google photogrammetry): use the face normal
 out vec4 outColor;
 void main(){
   vec3 n = normalize(vN);
-  if (!gl_FrontFacing) n = -n;
+  if (uFlatN == 1) { n = normalize(cross(dFdx(vWorld), dFdy(vWorld))); if (dot(n, uCamPos - vWorld) < 0.0) n = -n; }
+  else if (!gl_FrontFacing) n = -n;
   vec3 base = vCol;
   if (uHasTex == 1 && vUv.x >= 0.0) base *= texture(uTex, vUv).rgb * 1.05;
   else base *= 0.82;
@@ -5633,7 +5635,14 @@ function googReceive(job, r) {
   const sm = new Float32Array(r.samples);
   for (let k = 0; k < sm.length; k += 3) { const gh = rawHeightGeo(sm[k], sm[k + 1]); if (gh > 2 && Number.isFinite(gh)) GOOG.diffs.push(sm[k + 2] - gh); }
   if (GOOG.diffs.length > 600) GOOG.diffs.splice(0, GOOG.diffs.length - 600);
-  if (GOOG.diffs.length > 40) { const s = [...GOOG.diffs].sort((a, b) => a - b); GOOG.off = clamp(s[Math.floor(s.length * 0.3)], -110, 90); }
+  // most sampled vertices in a city lie on roofs and walls, so only the lowest ones are ground: take a
+  // low percentile, and keep it within the geoid's real range (Japan: about 25-45 m) so a bad estimate
+  // can never sink the buildings into the terrain
+  if (GOOG.diffs.length > 40) {
+    const s = [...GOOG.diffs].sort((a, b) => a - b), v = s[Math.floor(s.length * 0.06)];
+    const [la, lo] = worldToGeo(R.eye[0], R.eye[2]), jp = googGuessOff(la, lo) > 0;
+    GOOG.off = jp ? clamp(v, 25, 45) : clamp(v, -110, 90);
+  }
   const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
   const mk = (data, loc, size, type, norm) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, type, norm, 0, 0); return b; };
   const bufs = [mk(r.pos, 0, 3, gl.FLOAT, false), mk(r.nrm, 1, 3, gl.BYTE, true), mk(r.uv, 2, 2, gl.FLOAT, false), mk(r.col, 3, 4, gl.UNSIGNED_BYTE, true)];
@@ -5680,6 +5689,7 @@ function drawGoogle() {
   gl.uniform1f(u.uNightF, 0);
   gl.uniform1i(u.uTex, 8);
   gl.uniform1f(u.uYOff, GOOG.off || 0);
+  gl.uniform1i(u.uFlatN, 1);
   gl.disable(gl.CULL_FACE);
   gl.activeTexture(gl.TEXTURE8);
   for (const n of GOOG.active) {
@@ -5691,11 +5701,12 @@ function drawGoogle() {
       gl.drawElements(gl.TRIANGLES, g.count, gl.UNSIGNED_INT, g.start * 4);
     }
   }
+  gl.uniform1i(u.uFlatN, 0);
   gl.activeTexture(gl.TEXTURE0);
   gl.enable(gl.CULL_FACE);
 }
 // how far the sim's own terrain and sea are lowered under the Google mesh so they never show through it
-function googSink() { return GOOG.covering ? 4 : 0; }
+function googSink() { return GOOG.covering ? 12 : 0; }
 function googStatus() {
   const el = $('goog-status'); if (!el) return;
   el.textContent = GOOG.state === 'error' && GOOG.msg ? GOOG.msg : !GOOG.key ? 'キー未設定' : !GOOG.on ? '使わない設定です' : GOOG.state === 'ok' ? '接続しました。飛行中、近くの景色が Google の 3D に置き換わります' : GOOG.msg || '';
@@ -11130,7 +11141,7 @@ function drawInfo(g, W, H, touch, sc, touchY) {
     if (game.ap) st.push('A/P');
     if (game.timeScale > 1) st.push('時間 ×' + game.timeScale);
     st.push(JW.online ? `航空写真 ${JW.inflight ? '読み込み中…' : 'ON'}` : '簡易地形（オフライン）');
-    if (GOOG.on && GOOG.key) st.push(GOOG.state === 'ok' ? `Google 3D ${GOOG.covering ? 'ON' : '読み込み中…'}` : GOOG.state === 'error' ? 'Google 3D エラー（メニューで確認）' : 'Google 3D 接続中…');
+    if (GOOG.on && GOOG.key) st.push(GOOG.state === 'ok' ? `Google 3D ${GOOG.covering ? `ON（高さ基準 ${Math.round(GOOG.off ?? 0)} m・${GOOG.active.length} 枚・細かさ ×${(GOOG.lodK || 1).toFixed(1)}）` : '読み込み中…'}` : GOOG.state === 'error' ? 'Google 3D エラー（メニューで確認）' : 'Google 3D 接続中…');
     lines.push([st.join('　'), game.ap || game.timeScale > 1 ? COL.amber : COL.muted, `11px ${UI}`]);
   } else lines.push([`${MAP.name}・${ACFT.name}`, COL.muted, `11px ${UI}`]);
   const modeName = { tutorial: 'チュートリアル', runway: 'フリーフライト', air: 'フリーフライト', rings: game.tour ? '観光フライト' : 'リングチャレンジ', landing: '着陸チャレンジ' }[game.mode];

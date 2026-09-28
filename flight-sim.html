@@ -263,6 +263,27 @@ kbd{font:700 11.5px var(--mono);background:rgba(95,212,255,.12);border:1px solid
 #bk-foot span{color:var(--muted);font-size:12px} #bk-foot button:disabled{opacity:.35}
 @media (max-width:820px){.bk-body{grid-template-columns:1fr}#bk-nav{display:none}#bk-sel{display:block}#bk-art{padding:12px 16px 24px}.bk-head input{max-width:none}}
 .book-btn{padding:10px 14px;border-radius:6px;border:1px solid #ffd66b;background:rgba(255,214,107,.08);color:#ffd66b;font:700 14px var(--jp);cursor:pointer;text-align:left}
+#ai{position:fixed;inset:0 0 0 auto;width:min(460px,100%);z-index:9;display:flex;flex-direction:column;background:var(--panel-solid);border-left:1px solid var(--line);box-shadow:-10px 0 30px rgba(0,0,0,.4)}
+#ai[hidden]{display:none!important}
+.ai-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.ai-head h2{margin:0;font:700 16px var(--jp);flex:1}
+.ai-head button{padding:6px 10px}
+#ai-ctx{padding:6px 14px;color:var(--cyan);font:700 12px var(--jp);border-bottom:1px solid var(--line)}
+#ai-log{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.ai-msg{padding:8px 12px;border-radius:8px;font-size:14px;line-height:1.75;max-width:94%}
+.ai-msg p{margin:4px 0} .ai-msg ul,.ai-msg ol{margin:4px 0;padding-left:1.3em} .ai-msg b{color:#ffd28a} .ai-msg code{background:#0b1422;padding:0 4px;border-radius:3px}
+.ai-msg.user{align-self:flex-end;background:rgba(95,212,255,.14);border:1px solid rgba(95,212,255,.3)}
+.ai-msg.ai{align-self:flex-start;background:#0f1d31;border:1px solid var(--line)}
+.ai-msg.sys{align-self:center;color:var(--muted);font-size:13px}
+.ai-think{color:var(--muted);animation:aip 1.2s ease-in-out infinite}@keyframes aip{50%{opacity:.4}}
+.ai-note{color:var(--amber);font-size:12.5px}
+.ai-refs{margin-top:6px;font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px}
+#ai-sug{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 0}
+#ai-sug button{padding:5px 9px;border-radius:14px;border:1px solid var(--line);background:transparent;color:var(--ink);font:12.5px var(--jp);cursor:pointer}
+.ai-form{display:flex;gap:8px;padding:10px 14px;align-items:flex-end}
+#ai-in{flex:1;min-height:44px;max-height:140px;resize:vertical;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:#0b1422;color:var(--ink);font:14px/1.5 var(--jp)}
+#ai-state{padding:0 14px 10px;color:var(--muted);font-size:11.5px;line-height:1.5}
+.ai-btn{padding:10px 14px;border-radius:6px;border:1px solid #b58cff;background:rgba(181,140,255,.12);color:#d8c2ff;font:700 14px var(--jp);cursor:pointer;text-align:left}
 #inst-tut,#read-quiz{align-items:center;justify-content:center;background:rgba(4,9,17,.8);z-index:6}
 .it-panel{width:min(1100px,100%);max-height:100%}
 .it-wrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;padding:14px 18px;overflow:auto}
@@ -427,6 +448,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
       <button class="mission" data-mode="landing"><span class="code">LDG</span><span class="m-title">着陸チャレンジ</span><span class="m-sub" id="sub-landing">3° の進入経路から着陸 <span class="best" id="best-landing"></span></span></button>
     </div>
     <button id="resume" class="resume" hidden>飛行を再開する（Esc）</button>
+    <button type="button" id="menu-ai" class="ai-btn" hidden>🤖 AI 教官に質問する（いまの計器の値をふまえて答えます）</button>
    </div>
   </div>
 </div>
@@ -453,12 +475,21 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
 </div>
 <div id="book" class="screen" hidden>
   <div class="bk-wrap" role="dialog" aria-labelledby="bk-h">
-    <header class="bk-head"><h2 id="bk-h">📖 教科書</h2><input type="search" id="bk-q" placeholder="検索（例：失速、METAR、密度高度）" aria-label="教科書を検索"><span id="bk-prog"></span><button type="button" id="bk-close">閉じる ✕</button></header>
+    <header class="bk-head"><h2 id="bk-h">📖 教科書</h2><input type="search" id="bk-q" placeholder="検索（例：失速、METAR、密度高度）" aria-label="教科書を検索"><span id="bk-prog"></span><button type="button" id="bk-ai" class="ai-btn">🤖 AI 教官に質問</button><button type="button" id="bk-close">閉じる ✕</button></header>
     <select id="bk-sel" aria-label="節を選ぶ"></select>
     <div class="bk-body"><nav id="bk-nav" aria-label="目次"></nav>
       <article id="bk-art"><div id="bk-chap"></div><h2 id="bk-title"></h2><div id="bk-body"></div><div id="bk-foot"></div></article></div>
   </div>
 </div>
+<aside id="ai" hidden aria-labelledby="ai-h">
+  <div class="ai-head"><h2 id="ai-h">🤖 AI 教官</h2><button type="button" id="ai-clear" class="sch-sub">会話をリセット</button><button type="button" id="ai-close">閉じる ✕</button></div>
+  <div id="ai-ctx"></div>
+  <div id="ai-log" aria-live="polite"></div>
+  <div id="ai-sug"></div>
+  <div class="ai-form"><textarea id="ai-in" rows="2" placeholder="例：いま何に気をつければいい？（Enter で送信、Shift+Enter で改行）" aria-label="質問"></textarea><button type="button" id="ai-send" class="sch-go">送信</button><button type="button" id="ai-stop" class="sch-sub" hidden>止める</button></div>
+  <div id="ai-state"></div>
+  <div id="ai-state2" style="padding:0 14px 12px;color:var(--muted);font-size:11px">AI の回答は間違うことがあります。法規・手順・数値は教官と公式資料（POH・航空法令・AIP）で確認してください。</div>
+</aside>
 <div id="inst-tut" class="screen" hidden>
   <div class="guide-panel it-panel" role="dialog" aria-labelledby="it-title">
     <div class="guide-head"><div><div class="eyebrow">INSTRUMENTS · 計器の読み方</div><h2 id="it-title">計器の読み方</h2></div><button type="button" id="it-close">閉じる ✕</button></div>
@@ -481,7 +512,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
 </div>
 <div id="sch-pause" class="screen" hidden>
   <div class="guide-panel sp-pause"><div class="guide-head"><h2>一時停止</h2></div>
-    <div class="sd-foot"><button type="button" class="sch-go" id="sp-resume">訓練に戻る（Esc）</button><button type="button" class="sch-sub" id="sp-retry">最初からやり直す</button><button type="button" class="sch-sub" id="sp-quit">訓練をやめて課程表へ</button></div></div>
+    <div class="sd-foot"><button type="button" class="sch-go" id="sp-resume">訓練に戻る（Esc）</button><button type="button" class="ai-btn" id="sp-ai">🤖 AI 教官に質問</button><button type="button" class="sch-sub" id="sp-retry">最初からやり直す</button><button type="button" class="sch-sub" id="sp-quit">訓練をやめて課程表へ</button></div></div>
 </div>
 <div id="sch-panel" hidden>
   <div id="sp-step"></div><div id="sp-say"></div><div id="sp-tgt"></div><div class="sp-row"><span id="sp-prog"></span><span id="sp-hint"></span></div>
@@ -2506,7 +2537,7 @@ function deriveAircraft(A) {
     pr.Ip = 2.5 * E.P / 92000;                          // propeller polar moment of inertia (kg m^2)
     pr.tq = 0.12 * Math.min(1, 92000 / E.P);                                       // share of engine torque felt as a rolling moment
     // wing/aileron rigging cancels the torque at cruise power; being aerodynamic it scales with dynamic pressure
-    const thrC = TRIM[A.id] ? TRIM[A.id].c_level_0[1] / 100 : 0.65, omC = Math.min(700 + 1950 * thrC + 9 * Vc, 2750) * Math.PI / 30;
+    const thrC = TRIM[A.id] ? TRIM[A.id].c_level_0[1] / 100 : 0.65, omC = rpmFor(thrC, Vc) * Math.PI / 30;
     pr.rig = (0.04 + 0.96 * thrC) * E.P / 0.85 / omC * pr.tq / qc;
   }
   return {
@@ -2532,6 +2563,12 @@ const sim = {
   contacts: [], assistOn: false,
 };
 
+// fixed-pitch propeller rpm: grows with power and with airspeed (the prop is driven by the air);
+// about 2,300 static at full throttle, 2,500 in a Vy climb, 2,400 at cruise, redline near 2,700 in a dive
+function rpmFor(thr, u, pw = 1, dead = false) {
+  if (dead) return clamp(14 * u, 0, 1300);
+  return Math.min(650 + 1650 * Math.sqrt(Math.max(thr, 0)) * Math.pow(Math.max(pw, 0.1), 0.3) + 6 * Math.max(u, 0), 2850);
+}
 // ICAO standard atmosphere (troposphere + lower stratosphere); ISA.dev shifts the temperature
 const ISA = { dev: 0 };
 function atmos(h) {
@@ -2690,7 +2727,7 @@ function physicsStep(dt, t) {
   const p = -s.w[2], qq = s.w[0], r = -s.w[1];
   const hv = 0.25 * rho * V;
   const elevEff = clamp(s.elev + s.trim, -1, 1);
-  const Mp = qd * AC.S * AC.c * (AC.Cm0 + AC.Cma * Math.sin(alpha) - 0.10 * stallW * Math.sign(alpha))
+  const Mp = qd * AC.S * AC.c * (AC.Cm0 + AC.Cma * Math.sin(alpha) - (AC.CmStall ?? 0.10) * stallW * Math.sign(alpha))
     + qdc * AC.S * AC.c * AC.Cmde * elevEff + hv * AC.S * AC.c * AC.c * AC.Cmq * qq;
   // roll damping reverses in a stall (autorotation) but saturates, which gives a bounded spin
   const pAuto = p - 1.7 * stallW * 1.5 * Math.tanh(p / 1.5);
@@ -2751,7 +2788,7 @@ function physicsStep(dt, t) {
     const lat = vnorm(vcross(g.n, fwd));
     const vl = vdot(vc, fwd), vt = vdot(vc, lat);
     const mu = kind === 'skid' ? 0.5 : g.paved ? 0.85 : 0.6;
-    const rr = kind === 'skid' ? 0.5 : (g.paved ? 0.02 : 0.05) + (s.brake && off !== noseOff ? 0.6 : 0);
+    const rr = kind === 'skid' ? 0.5 : (g.paved ? 0.02 : 0.05) + (s.brake && off !== noseOff ? (g.paved ? 0.42 : 0.3) : 0);
     const Ft = clamp(-vt * 9 * AC.mass, -mu * Fn, mu * Fn);
     const Fl = clamp(-vl * 6 * AC.mass, -rr * Fn, rr * Fn);
     const Fc = vadd(vadd(vscale(g.n, Fn), vscale(fwd, Fl)), vscale(lat, Ft));
@@ -2802,8 +2839,8 @@ function physicsStep(dt, t) {
   s.agl = agl; s.groundH = ground.h; s.vs = s.vel[1];
   if (jet) s.rpm = s.n1 * 100;
   else {
-    const rpmT = s.thr > 0 || V > 5 ? 700 + 1950 * s.thr + 9 * Math.max(u, 0) : 700;
-    s.rpm += (Math.min(rpmT, 2750) - s.rpm) * Math.min(1, dt * 1.8);
+    const rpmT = rpmFor(s.thr, u, Math.max(0, 1.132 * atm.sigma - 0.132), s.dead);
+    s.rpm += (rpmT - s.rpm) * Math.min(1, dt * 1.8);
   }
   s.propAng = (s.propAng + (jet ? 0 : s.rpm) / 60 * Math.PI * 2 * dt) % (Math.PI * 2);
 }
@@ -5749,7 +5786,7 @@ function placeAircraft(pos, hdg, kt, gammaDeg, flapIdx, thr) {
   const dir = [Math.sin(hdg * DEG), 0, -Math.cos(hdg * DEG)];
   s.vel = vadd(vscale(dir, v * Math.cos(gammaDeg * DEG)), [0, v * Math.sin(gammaDeg * DEG), 0]);
   s.w = [0, 0, 0]; s.thr = thr; s.n1 = Math.min(thr / 0.95, 1); s.gearDown = true; s.gearPos = 1; s.airTime = 10; s.onGround = false; s.mainContact = false;
-  s.rpm = 700 + 1950 * thr + 9 * v;
+  s.rpm = rpmFor(thr, v);
 }
 async function startLesson(id) {
   const Ls = findLesson(id);
@@ -6915,7 +6952,7 @@ function setupBook() {
   $('bk-q').addEventListener('input', e => renderBookNav(e.target.value));
   $('bk-sel').addEventListener('change', e => showBookSec(e.target.value));
   addEventListener('keydown', e => {
-    if (!BK.open || e.target.tagName === 'INPUT') return;
+    if (!BK.open || AI.open || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); closeBook(); }
     else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
       e.preventDefault(); e.stopImmediatePropagation();
@@ -7667,14 +7704,190 @@ BOOK.push({ n: 12, id: 'simg', t: '第 12 章　このシミュレータでの�
 <p>このシミュレータの物理計算は、練習機ヒバリ（セスナ 172 クラスを参考にした架空の機体）について、次の性能が実機の公表値に近くなるよう調整しています（計測値）：失速速度 49 kt（フラップ 30° で 40 kt）、海面の上昇率 約 750 fpm（Vy 73 kt）、滑空比 約 9、離陸滑走 約 680 ft（向かい風 6 kt）。</p>
 <h3>計算していること</h3>
 <ul><li>国際標準大気（気温・気圧・密度）と気温の設定、密度高度による翼・エンジン・プロペラの性能変化</li><li>迎え角による揚力と失速、地面効果、フラップ、荷重倍数</li>
-<li>有害抗力と誘導抗力、プロペラの効率（低速で悪い）、止まったプロペラの抗力</li><li>左偏向傾向（後流・P ファクター・トルク・ジャイロ効果）、逆ヨー、横滑り、上反角効果、失速時の片翼の落ち込みとスピン</li>
+<li>有害抗力と誘導抗力、プロペラの効率（低速で悪い）、止まったプロペラの抗力</li><li>左偏向傾向（後流・P ファクター・トルク・ジャイロ効果）、逆ヨー、横滑り、上反角効果、失速時の片翼の落ち込み（スピンの入り口まで。完全に発達したスピンは再現できておらず、スパイラル降下になりやすい）</li>
 <li>地表付近の風の弱まり（ウインドシア）と突風、横風、タイヤと地面の摩擦、ブレーキ</li><li>ピトー静圧・ジャイロ計器の故障（訓練課目）</li></ul>
 <h3>計算していない・簡略化していること</h3>
-<ul><li>燃料の消費による重量・重心の変化、重量重心の設定</li><li>エンジンの温度・混合比・キャブレターアイス・マグネトー</li><li>着氷、雷雨、山岳波、後方乱気流</li><li>計器の誤差（北旋誤差・高度計の気温誤差など）</li><li>操縦桿の力の感触（キーボード・ゲームパッドのため）</li></ul>
+<ul><li>発達したスピン（回転を続ける状態）</li><li>燃料の消費による重量・重心の変化、重量重心の設定</li><li>エンジンの温度・混合比・キャブレターアイス・マグネトー</li><li>着氷、雷雨、山岳波、後方乱気流</li><li>計器の誤差（北旋誤差・高度計の気温誤差など）</li><li>操縦桿の力の感触（キーボード・ゲームパッドのため）</li></ul>
 ${bk.warn('このシミュレータは、国の認定を受けた訓練装置（FTD）ではありません。訓練時間には数えられず、実機の手順・数値は必ずその機体の POH と教官の指導に従ってください。')}
 <h3>学習に役立つ機能</h3>
-<table class="bk-t"><tr><td>J キー</td><td>物理の見える化（4 つの力、迎え角、荷重倍数、密度高度、必要なラダー）</td></tr><tr><td>U キー</td><td>自動ラダーの ON／OFF（OFF で本物同様に右ラダーが必要）</td></tr><tr><td>I キー</td><td>アナログ 6 計器 ⇄ グラス計器</td></tr><tr><td>K キー</td><td>6 計器の下に「読み方」を表示</td></tr><tr><td>メニュー「気温」</td><td>寒い日・標準・暑い日で密度高度を変える</td></tr></table>` },
+<table class="bk-t"><tr><td>J キー</td><td>物理の見える化（4 つの力、迎え角、荷重倍数、密度高度、必要なラダー）</td></tr><tr><td>U キー</td><td>自動ラダーの ON／OFF（OFF で本物同様に右ラダーが必要）</td></tr><tr><td>I キー</td><td>アナログ 6 計器 ⇄ グラス計器</td></tr><tr><td>K キー</td><td>6 計器の下に「読み方」を表示</td></tr><tr><td>メニュー「気温」</td><td>寒い日・標準・暑い日で密度高度を変える</td></tr><tr><td>Esc → 🤖 AI 教官</td><td>一時停止中や教科書を読んでいるときに質問できる（claude.ai 上で開いたとき。計器の値や読んでいる節をふまえて答える）</td></tr></table>` },
 ] });
+// =====================================================================
+//  AI INSTRUCTOR: a question box available while reading the textbook
+//  or with the game paused. On claude.ai it asks Claude (the viewer's
+//  own account, via the artifact "sample" capability) with the current
+//  textbook page or flight state as context. Anywhere else it falls back
+//  to pointing at the textbook sections that match the question.
+// =====================================================================
+const AI = { open: false, sample: undefined, turns: [], ctl: null, busy: false, from: null, hits: [] };
+
+const AI_RULES = `あなたはフライトシミュレータ「そらじま」に組み込まれた飛行教官 AI です。相手は自家用操縦士を目指す訓練生で、飛行機の知識はまだ少ない初心者です。
+
+回答のルール：
+- 日本語で、やさしく、具体的に。専門用語は初めて使うときに短く説明する。
+- まず結論を 1〜2 文で。次に理由、必要なら具体的な操作（どのキーを・どれくらい・何を見て）を箇条書きで。長くても 12 行程度に収める。
+- 下に渡す「いまの状況」（飛行中の計器の値や、読んでいる教科書のページ）を使って、その場面に合わせて答える。値を読み取って「いま速度が〜なので」のように具体的に。
+- 教科書の関連する節があれば「（教科書 1.6）」のように節番号を添える。
+- 法規・試験基準・医学的なこと・機体固有の数値は一般的な説明にとどめ、「最新の航空法令・AIP・その機体の POH・教官で確認を」と一言添える。わからないことや推測は、そうと明示する。
+- このシミュレータは国の認定を受けた訓練装置ではない。実機の手順と違う点があれば実機を優先するよう伝える。
+- 書式は、**太字** と「- 」の箇条書きと「1. 」の番号付きだけを使う（表・見出し・絵文字は使わない）。
+
+シミュレータの操作（キーボード）：
+W/S または ↑↓ 操縦桿の前後（機首下げ/上げ）、A/D または ←→ 左右（バンク）、Q/E ラダー左/右、R/F スロットル上げ/下げ、V フラップ、G 脚、B/Space ブレーキ、T トリム（Shift+T でリセット）、L 水平に戻す（アシスト）、O オートパイロット、C カメラ、M 地図、H 表示切替、I アナログ計器⇔グラス計器、K 計器の読み方表示、J 物理の見える化、U 自動ラダー、[ ] VOR の OBS、Esc 一時停止。
+機体「ヒバリ」（セスナ 172 クラスを参考にした架空の練習機）の目安：失速 48 kt（フラップ 30° で 40 kt）、ローテーション 52 kt、Vy 73 kt、最良滑空 約 65〜68 kt、進入 65 kt（フラップ 20°）、巡航 105 kt、Vfe 85 kt、Vno 128 kt、Vne 160 kt。`;
+
+// --- context -----------------------------------------------------------
+function aiFlightState() {
+  if (typeof sim === 'undefined' || !ACFT) return '';
+  const s = sim, a = attitude(), KT = 1.94384, FT = 3.28084, L = SCHOOL.active;
+  const w = windAt(s.pos, game.t || 0, s.agl), ws = Math.hypot(w[0], w[2]) * KT, wd = (Math.atan2(-w[0], w[2]) / DEG + 360) % 360;
+  const aS = (AC.aStall - AC.flapStall * (ACFT.wing.flap ? s.flapDeg / 30 : 0)) / DEG;
+  const lines = [
+    `機体：${ACFT.name}（${ACFT.kind}）　状態：${{ flying: '飛行中', paused: '一時停止中', crashed: '墜落/事故', result: '結果画面' }[game.state] || game.state}${s.onGround ? '（地上）' : ''}`,
+    L ? `訓練課目：${L.def.title}　項目 ${L.step + 1}/${L.def.steps.length}「${(L.def.steps[L.step] || {}).name || ''}」　教官の指示：${L.sayText || ''}${L.hint ? '　直近の注意：' + L.hint : ''}` : `モード：${game.mode}`,
+    `指示対気速度 ${Math.round(s.ias * KT)} kt（真対気速度 ${Math.round(s.tas * KT)} kt）　高度 ${Math.round(s.pos[1] * FT)} ft（対地 ${Math.round(Math.max(0, s.agl) * FT)} ft）　昇降率 ${Math.round(s.vs * 196.85)} fpm`,
+    `ピッチ ${a.pitch.toFixed(1)}°　バンク ${a.bank > 0 ? '右' : '左'} ${Math.abs(a.bank).toFixed(0)}°　機首方位 ${Math.round(a.hdg)}°　迎え角 ${(s.alpha / DEG).toFixed(1)}°（失速 約 ${aS.toFixed(0)}°）　荷重 ${s.gLoad.toFixed(2)} G　横滑り ${(s.beta / DEG).toFixed(1)}°${s.stallWarn ? '　失速警報 鳴っている' : ''}`,
+    `スロットル ${Math.round(s.thr * 100)}%　回転 ${Math.round(s.rpm)} rpm　フラップ ${FLAP_DEG[s.flapIdx]}°　脚 ${ACFT.gear.fixed ? '固定' : s.gearDown ? '下げ' : '上げ'}　トリム ${Math.round(s.trim * 100)}${s.dead ? '　エンジン停止中' : ''}`,
+    `風 ${Math.round(wd)}° から ${Math.round(ws)} kt　外気温 ${Math.round(s.oat ?? 15)}℃　密度高度 ${Math.round((s.densAlt || 0) * FT)} ft　操縦アシスト ${game.assist ? 'ON' : 'OFF'}　自動ラダー ${game.autoRud ? 'ON' : 'OFF'}　計器 ${SCHOOL.analog ? 'アナログ 6 計器' : 'グラス（PFD）'}`,
+  ];
+  if (s.crashed || game.state === 'crashed') lines.push(`事故の内容：${s.crashReason || ''}`);
+  return lines.join('\n');
+}
+// cheap Japanese-friendly retrieval: character bigram overlap against each textbook section
+function aiSearch(q, n = 3) {
+  const grams = t => { const g = new Set(); t = t.toLowerCase().replace(/\s+/g, ''); for (let i = 0; i < t.length - 1; i++) g.add(t.slice(i, i + 2)); return g; };
+  const qg = grams(q); if (!qg.size) return [];
+  const scored = [];
+  for (const [ch, s] of bookAll()) {
+    const txt = bookText(s), tg = grams(s.t);
+    let sc = 0; for (const g of qg) { if (txt.includes(g)) sc += 1; if (tg.has(g)) sc += 2; }
+    scored.push([sc / Math.sqrt(qg.size), ch, s]);
+  }
+  return scored.sort((a, b) => b[0] - a[0]).filter(x => x[0] > 0.9).slice(0, n);
+}
+function aiSectionText(s, max) { const d = document.createElement('div'); d.innerHTML = bookHtml(s); for (const f of d.querySelectorAll('figure svg')) f.remove(); const t = d.textContent.replace(/\n{3,}/g, '\n\n').trim(); return t.length > max ? t.slice(0, max) + '…' : t; }
+
+// --- rendering ----------------------------------------------------------
+function aiEsc(t) { return t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function aiMarkdown(t) {
+  const out = []; let list = null;
+  const inline = x => aiEsc(x).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>');
+  for (const raw of t.split('\n')) {
+    const line = raw.trimEnd(), ul = line.match(/^\s*[-・*]\s+(.*)/), ol = line.match(/^\s*(\d+)[.)]\s+(.*)/);
+    if (ul || ol) { const tag = ul ? 'ul' : 'ol'; if (!list || list !== tag) { if (list) out.push(`</${list}>`); out.push(`<${tag}>`); list = tag; } out.push(`<li>${inline(ul ? ul[1] : ol[2])}</li>`); continue; }
+    if (list) { out.push(`</${list}>`); list = null; }
+    const h = line.match(/^#+\s*(.*)/);
+    if (h) out.push(`<p><b>${inline(h[1])}</b></p>`); else if (line.trim()) out.push(`<p>${inline(line)}</p>`);
+  }
+  if (list) out.push(`</${list}>`);
+  return out.join('');
+}
+function aiBubble(role, html) {
+  const d = document.createElement('div'); d.className = 'ai-msg ' + role; d.innerHTML = html;
+  $('ai-log').append(d); $('ai-log').scrollTop = $('ai-log').scrollHeight; return d;
+}
+function aiRefs(hits) {
+  if (!hits.length) return '';
+  return `<div class="ai-refs">関連する教科書の節：${hits.map(([, ch, s]) => `<button type="button" class="bk-link" data-sec="${s.id}">${s.n} ${aiEsc(s.t)}</button>`).join('')}</div>`;
+}
+function aiWireRefs(el) { for (const b of el.querySelectorAll('[data-sec]')) b.addEventListener('click', () => { closeAI(); openBook(b.dataset.sec, AI.from === 'book' ? BK.back : null); }); }
+
+// --- open / close ---------------------------------------------------------
+function aiContextLabel() {
+  if (AI.from === 'book' && BK.cur) { const hit = bookAll().find(([, s]) => s.id === BK.cur); return hit ? `読んでいる節：${hit[1].n} ${hit[1].t}` : '教科書'; }
+  if (SCHOOL.active) return `訓練中：${SCHOOL.active.def.title}（一時停止中の計器の値を参照します）`;
+  return `飛行中（一時停止中の計器の値を参照します）・${ACFT.name}`;
+}
+function aiSuggestions() {
+  if (AI.from === 'book' && BK.cur) {
+    const hit = bookAll().find(([, s]) => s.id === BK.cur);
+    return ['この節をもっとやさしく説明して', 'この節の大事なポイントを 3 つ', `「${hit ? hit[1].t : ''}」で試験によく出ることは？`];
+  }
+  const L = SCHOOL.active, out = ['いまの飛び方で直すところは？', 'いまの計器の読み方を教えて'];
+  if (L) out.push(`「${(L.def.steps[L.step] || {}).name || L.def.title}」のコツは？`);
+  if (sim.crashed || game.state === 'crashed') out.unshift('なぜ墜落したの？どうすればよかった？');
+  if (sim.stallWarn) out.unshift('失速警報が鳴っている。どうすればいい？');
+  return out.slice(0, 4);
+}
+function openAI(from) {
+  AI.open = true; AI.from = from; $('ai').hidden = false;
+  $('ai-ctx').textContent = aiContextLabel();
+  const sug = $('ai-sug'); sug.textContent = '';
+  for (const q of aiSuggestions()) { const b = document.createElement('button'); b.type = 'button'; b.textContent = q; b.addEventListener('click', () => { $('ai-in').value = q; aiSend(); }); sug.append(b); }
+  if (!$('ai-log').children.length) aiBubble('sys', `<p>質問をどうぞ。${from === 'book' ? '読んでいるページ' : 'いまの計器の値や訓練の状況'}をふまえて答えます。</p>`);
+  aiStatus();
+  setTimeout(() => $('ai-in').focus(), 30);
+}
+function closeAI() { if (AI.ctl) AI.ctl.abort(); AI.open = false; $('ai').hidden = true; }
+function aiStatus() {
+  const st = $('ai-state');
+  if (AI.sample === undefined) st.textContent = 'AI に接続中…';
+  else if (AI.sample) st.textContent = 'Claude が回答します（あなたの Claude アカウントの使用量を使います。最初の質問で許可を求められます）';
+  else st.textContent = 'この画面では AI に接続できません（claude.ai 上で開くと使えます）。代わりに、質問に関係する教科書の節を探します。';
+}
+
+// --- ask ----------------------------------------------------------------------
+async function aiSend() {
+  const box = $('ai-in'), q = box.value.trim();
+  if (!q || AI.busy) return;
+  box.value = '';
+  aiBubble('user', `<p>${aiEsc(q)}</p>`);
+  const hits = aiSearch(q, 3);
+  if (!AI.sample) {
+    const d = aiBubble('ai', hits.length ? `<p>AI に接続できないため、教科書から関係のありそうな節を探しました。</p>${aiRefs(hits)}` : '<p>AI に接続できず、教科書にも近い節が見つかりませんでした。言い方を変えるか、教科書の検索欄を試してください。</p>');
+    aiWireRefs(d); return;
+  }
+  // context: the page being read, or the live flight state, plus the best-matching sections
+  let ctx = '';
+  if (AI.from === 'book' && BK.cur) { const cur = bookAll().find(([, s]) => s.id === BK.cur); if (cur) ctx += `【いま読んでいる教科書の節 ${cur[1].n}「${cur[1].t}」】\n${aiSectionText(cur[1], 5000)}\n\n`; }
+  else ctx += `【いまの状況（一時停止中のシミュレータの値）】\n${aiFlightState()}\n\n`;
+  for (const [, , s] of hits) if (s.id !== BK.cur || AI.from !== 'book') ctx += `【参考：教科書 ${s.n}「${s.t}」】\n${aiSectionText(s, 2200)}\n\n`;
+  const userTurn = `${ctx}【訓練生の質問】\n${q}`;
+  AI.turns.push({ role: 'user', content: userTurn });
+  while (AI.turns.length > 9) AI.turns.shift();
+  // older turns keep only the question itself, so the context of the latest turn dominates
+  const turns = AI.turns.map((t, i) => (t.role === 'user' && i < AI.turns.length - 1) ? { role: 'user', content: t.content.replace(/^[\s\S]*【訓練生の質問】\n/, '') } : t);
+  while (turns.length && turns[0].role !== 'user') turns.shift();
+  const d = aiBubble('ai', '<p class="ai-think">考えています…</p>');
+  AI.busy = true; AI.ctl = new AbortController(); $('ai-stop').hidden = false; $('ai-send').disabled = true;
+  try {
+    const { text, truncated } = await AI.sample([{ role: 'user', content: AI_RULES }, ...turns], {
+      cache: false, signal: AI.ctl.signal,
+      onText: ({ text }) => { d.innerHTML = aiMarkdown(text); $('ai-log').scrollTop = $('ai-log').scrollHeight; },
+    });
+    AI.turns.push({ role: 'assistant', content: text });
+    d.innerHTML = aiMarkdown(text) + (truncated ? '<p class="ai-note">（長くなったので途中で切れました。質問を分けてください）</p>' : '') + aiRefs(hits);
+  } catch (e) {
+    AI.turns.pop();
+    const keep = e && e.text ? aiMarkdown(e.text) : '';
+    const why = { cancelled: '止めました。', not_granted: 'AI の利用が許可されませんでした。この画面では教科書の検索だけ使えます。', sampling_disabled: 'このアカウントでは AI を使えません。', rate_limited: '質問が多すぎるか、使用量の上限に達しました。少し時間をおいてください。', session_expired: 'ログインし直してください。', refused: 'この質問には答えられませんでした。言い方を変えてみてください。', prompt_too_large: '質問が長すぎました。短くしてください。' }[e && e.code] || '回答の途中で問題が起きました。もう一度送ってください。';
+    if (e && ['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(e.code)) { AI.sample = null; aiStatus(); }
+    d.innerHTML = (e && e.code === 'refused' ? '' : keep) + `<p class="ai-note">${why}</p>` + aiRefs(hits);
+  } finally {
+    AI.busy = false; AI.ctl = null; $('ai-stop').hidden = true; $('ai-send').disabled = false;
+    aiWireRefs(d); $('ai-log').scrollTop = $('ai-log').scrollHeight;
+  }
+}
+
+function setupAI() {
+  for (const [id, from] of [['bk-ai', 'book'], ['menu-ai', 'flight'], ['sp-ai', 'flight']]) { const e = $(id); if (e) e.addEventListener('click', () => openAI(from)); }
+  $('ai-close').addEventListener('click', closeAI);
+  $('ai-send').addEventListener('click', aiSend);
+  $('ai-stop').addEventListener('click', () => AI.ctl && AI.ctl.abort());
+  $('ai-clear').addEventListener('click', () => { if (AI.busy) return; AI.turns = []; $('ai-log').textContent = ''; openAI(AI.from); });
+  $('ai-in').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); aiSend(); } });
+  // while the panel is open, keys belong to it (Esc closes it) and never reach the aircraft
+  addEventListener('keydown', e => {
+    if (!AI.open) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); closeAI(); return; }
+    if (e.target instanceof Node && $('ai').contains(e.target)) e.stopImmediatePropagation();
+  }, true);
+  // the capability arrives asynchronously (or never, outside claude.ai)
+  AI.sample = undefined;
+  const cl = window.claude;
+  if (cl && typeof cl.use === 'function') cl.use('sample').then(f => { AI.sample = f || null; if (AI.open) aiStatus(); }, () => { AI.sample = null; if (AI.open) aiStatus(); });
+  else AI.sample = null;
+}
 
 // =====================================================================
 //  GAME: environment, camera, input, audio, particles, HUD, modes, loop
@@ -7740,7 +7953,7 @@ function spawn(mode) {
     s.pos = pos; s.q = qFromHPB(hdg, tr.alpha / DEG + gammaDeg, 0);
     const dir = [Math.sin(hdg * DEG), 0, -Math.cos(hdg * DEG)];
     s.vel = vadd(vscale(dir, v * Math.cos(gammaDeg * DEG)), [0, v * Math.sin(gammaDeg * DEG), 0]);
-    setThr(thr); s.gearDown = fixed || gear; s.gearPos = s.gearDown ? 1 : 0; s.airTime = 10;
+    setThr(thr); s.rpm = rpmFor(thr, kt / 1.94384); s.gearDown = fixed || gear; s.gearPos = s.gearDown ? 1 : 0; s.airTime = 10;
   };
   if (mode === 'runway' || mode === 'tutorial') {
     s.pos = rwyToWorld(-L + 45 + ACFT.phys.L * 0.3, 0, RWY.elev + 0.12 - WHEEL_BOTTOM - ACFT.gear.wheelR * 0.3);
@@ -7884,7 +8097,7 @@ function doAction(a) {
   }
 }
 addEventListener('keydown', e => {
-  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) return;
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA')) return;
   keys[e.code] = true;
   if (!e.repeat && schoolKey(e)) { e.preventDefault(); return; }
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'PageUp', 'PageDown'].includes(e.code)) e.preventDefault();
@@ -8283,7 +8496,7 @@ function updateRings(prevPos) {
 function showMenu(paused) {
   tutHide();
   if (typeof updateMenuTexts === 'function' && RWY.idents) updateMenuTexts();
-  $('menu').hidden = false; $('resume').hidden = !paused; $('touch').hidden = true; $('result').hidden = true;
+  $('menu').hidden = false; $('resume').hidden = !paused; $('menu-ai').hidden = !paused; $('touch').hidden = true; $('result').hidden = true;
   $('best-rings').textContent = game.best.rings ? '· ベスト ' + fmtTime(game.best.rings) : '';
   $('best-landing').textContent = game.best.landing ? '· ベスト ' + game.best.landing + ' 点' : '';
 }
@@ -9767,6 +9980,7 @@ async function init() {
   initParticles();
   setupMenu();
   setupSchool();
+  setupAI();
   setupBook();
   setSound(game.sound);
   await loadMap(game.mapId);

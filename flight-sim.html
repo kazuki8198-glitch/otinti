@@ -59,6 +59,7 @@ h1{margin:6px 0 0;font:700 clamp(34px,6vw,52px)/1.05 var(--jp);letter-spacing:.0
 .mission .m-sub{grid-column:2;font:12px/1.5 var(--jp);color:var(--muted)}
 .mission .best{color:var(--amber);font-family:var(--mono)}
 .opts{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;font-size:13px;color:var(--muted)}
+.opt-grid{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;justify-items:start}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
 .seg button{background:transparent;border:0;padding:6px 12px;cursor:pointer;color:var(--muted)}
 .seg button.on{background:var(--cyan);color:#04121f;font-weight:700}
@@ -426,11 +427,17 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
       <label class="chk" title="ON にすると、キーを離したとき機体が自動で水平飛行に戻ります"><input type="checkbox" id="opt-assist"> 操縦アシスト</label>
       <label class="chk" title="ON にすると、プロペラの左偏向や逆ヨーを自動でラダーが打ち消します（U キーで切替）。OFF にすると本物の飛行機と同じく、離陸・上昇で右ラダーが必要です"><input type="checkbox" id="opt-autorud"> 自動ラダー</label>
     </div>
-    <div class="opts">
+    <div class="opts opt-grid">
       <span>時間帯</span>
       <div class="seg" role="group" aria-label="時間帯"><button type="button" data-tod="day" class="on">昼</button><button type="button" data-tod="evening">夕方</button><button type="button" data-tod="night">夜</button></div>
+      <span>画質</span>
+      <div class="seg" role="group" aria-label="画質" title="高：立体の雲をきめ細かく、木を 2 km 先まで。重いと感じたら標準か軽量に"><button type="button" data-gfx="low">軽量</button><button type="button" data-gfx="mid">標準</button><button type="button" data-gfx="high">高</button></div>
+      <span>雲</span>
+      <div class="seg" role="group" aria-label="雲の量"><button type="button" data-cloud="off">なし</button><button type="button" data-cloud="few">少し</button><button type="button" data-cloud="normal" class="on">ふつう</button><button type="button" data-cloud="many">多め</button></div>
       <span>気温</span>
       <div class="seg" role="group" aria-label="気温" title="暑い日は空気が薄く（密度高度が高く）なり、離陸距離が伸び上昇率が落ちます"><button type="button" data-oat="-15">寒い日 0℃</button><button type="button" data-oat="0" class="on">標準 15℃</button><button type="button" data-oat="20">暑い日 35℃</button></div>
+    </div>
+    <div class="opts">
       <label class="chk"><input type="checkbox" id="opt-invert"> ピッチ反転</label>
       <label class="chk"><input type="checkbox" id="opt-sound" checked> サウンド</label>
     </div>
@@ -993,7 +1000,53 @@ uniform vec3 uAmbGround;
 uniform vec3 uCamPos;
 uniform float uFogDens;
 uniform float uTime;
+uniform float uSunI;        // sun radiance scale (0 = old artist sky)
+uniform float uHaze;        // aerosol (Mie) amount: 1 clear, 2-3 hazy
+// ---- physically based atmosphere: Rayleigh + Mie single scattering (Earth values, metres) ----
+const vec3 BR = vec3(5.8e-6, 13.5e-6, 33.1e-6);
+const float BMS = 2.0e-5, HR = 8000.0, HM = 1200.0, PI = 3.14159265;
+float phaseR(float mu){ return 3.0 / (16.0 * PI) * (1.0 + mu * mu); }
+float phaseM(float mu){ const float g = 0.76; float g2 = g * g; return 3.0 / (8.0 * PI) * ((1.0 - g2) * (1.0 + mu * mu)) / ((2.0 + g2) * pow(1.0 + g2 - 2.0 * g * mu, 1.5)); }
+// relative air mass toward a direction with vertical component y (Kasten-Young), large near the horizon
+float airMass(float y){ float z = degrees(acos(clamp(y, -1.0, 1.0))); return y < -0.08 ? 60.0 : 1.0 / (max(y, 0.0) + 0.50572 * pow(max(96.07995 - z, 0.5), -1.6364)); }
+vec3 sunTrans(float h){
+  float m = airMass(uSunDir.y);
+  return exp(-(BR * HR * exp(-h / HR) + BMS * 1.1 * uHaze * HM * exp(-h / HM)) * m);
+}
+vec3 atmoSky(vec3 d){
+  float h0 = max(uCamPos.y, 0.0);
+  // ray length: to the top of the atmosphere, or to the ground below the horizon
+  // on a curved Earth (R = 6371 km): a slightly downward ray may still miss the ground and leave the atmosphere
+  const float RE = 6.371e6, HTOP = 6.0e4;
+  float disc = d.y * d.y - 2.0 * h0 / RE;
+  float tMax = (d.y < 0.0 && disc > 0.0) ? RE * (-d.y - sqrt(disc)) : RE * (-d.y + sqrt(d.y * d.y + 2.0 * (HTOP - h0) / RE));
+  tMax = min(tMax, 4.0e5);
+  const int N = 12;
+  float mu = dot(d, uSunDir), odR = 0.0, odM = 0.0;
+  vec3 sR = vec3(0.0), sM = vec3(0.0);
+  float tPrev = 0.0;
+  for (int i = 1; i <= N; i++) {
+    float f = float(i) / float(N), t = tMax * f * f, ds = t - tPrev; tPrev = t;
+    float h = max(h0 + d.y * (t - ds * 0.5) + (t * t) / (2.0 * 6.371e6), 0.0);
+    float r = exp(-h / HR) * ds, m = exp(-h / HM) * ds;
+    odR += r; odM += m;
+    vec3 att = exp(-(BR * odR + BMS * 1.1 * uHaze * odM)) * sunTrans(h);
+    sR += r * att; sM += m * att;
+  }
+  vec3 L = uSunI * (BR * phaseR(mu) * sR + BMS * uHaze * phaseM(mu) * sM);
+  // multiple scattering / skylight fill so the shadowed side of the sky is not black
+  L += uSunI * 0.012 * BR * 2.0e4 * (0.35 + 0.65 * max(uSunDir.y + 0.1, 0.0)) * exp(-h0 / 9000.0) * (1.0 - exp(-(odR * 1.5e-5)));
+  // multiple scattering whitens the low sky: pull toward the luminance near the horizon
+  float lum = dot(L, vec3(0.2126, 0.7152, 0.0722));
+  L = mix(L, vec3(lum) * vec3(0.96, 1.0, 1.08), 0.35 * exp(-abs(d.y) * 7.0) * smoothstep(-0.05, 0.25, uSunDir.y));
+  return L;
+}
 vec3 skyColor(vec3 d){
+  if (uSunI > 0.0) {
+    vec3 c = atmoSky(d);
+    if (d.y < 0.0) c = mix(c, c * 0.8 + uAmbGround * 0.15, smoothstep(0.0, -0.25, d.y));
+    return c;
+  }
   float y = d.y;
   vec2 hz = normalize(d.xz + vec2(1e-5));
   vec2 sz = normalize(uSunDir.xz + vec2(1e-5));
@@ -1008,10 +1061,28 @@ vec3 skyColor(vec3 d){
   c += uSunCol * (pow(sd, 5.0) * 0.10 + pow(sd, 60.0) * 0.30);
   return c;
 }
+// optical depth of an exponential layer (scale height H) along a straight segment
+float odExp(float h0, float dy, float L, float H){
+  float e0 = exp(-max(h0, -200.0) / H);
+  return abs(dy * L) > 1e-3 ? e0 * H * (1.0 - exp(-dy * L / H)) / dy : e0 * L;
+}
 vec3 applyFog(vec3 col, vec3 p){
   vec3 dv = p - uCamPos;
   float dist = length(dv);
   vec3 dir = dv / max(dist, 1e-3);
+  if (uSunI > 0.0) {
+    // aerial perspective: extinction plus in-scattered sun and sky light along the view segment
+    float h0 = uCamPos.y, odR = odExp(h0, dir.y, dist, HR), odM = odExp(h0, dir.y, dist, HM) * uHaze;
+    vec3 ext = BR * odR + BMS * 1.1 * odM, T = exp(-ext);
+    float mu = dot(dir, uSunDir);
+    vec3 sc = BR * phaseR(mu) * odR + BMS * phaseM(mu) * odM;
+    vec3 sun = uSunI * sunTrans(max(min(h0, p.y) + 0.5 * abs(p.y - h0), 0.0));
+    vec3 ins = sun * sc / max(ext, vec3(1e-9)) * (1.0 - T);
+    vec3 hz = atmoSky(normalize(vec3(dir.x, max(dir.y, 0.02), dir.z)));
+    ins += hz * (1.0 - T) * 0.55;                                     // skylight scattered into the view ray
+    // far away the view ray ends in haze: converge on the sky colour of that direction so ground meets sky seamlessly
+    return mix(col * T + ins * 0.62, skyColor(dir), smoothstep(0.55, 0.97, 1.0 - T.g) * 0.95);
+  }
   const float b = 0.00042;
   float cy = max(uCamPos.y, 0.0);
   float dy = dir.y;
@@ -1496,7 +1567,8 @@ void main(){
   vec3 n = normalize(vec3(w.x * 0.32 * fade, 1.0, w.y * 0.32 * fade));
   vec3 V = normalize(uCamPos - vPos);
   float fres = 0.02 + 0.98 * pow(1.0 - max(dot(n, V), 0.0), 5.0);
-  vec3 refl = skyColor(reflect(-V, n));
+  vec3 rv = reflect(-V, n); rv.y = max(rv.y, 0.02);           // wave-tilted reflections still see the sky
+  vec3 refl = skyColor(normalize(rv));
   vec3 deep = vec3(0.02, 0.13, 0.25), shallow = vec3(0.09, 0.50, 0.53);
   vec3 wcol = mix(shallow, deep, smoothstep(0.0, 32.0, depth));
   vec3 col = wcol * (uSunCol * 0.45 * (max(dot(n, uSunDir), 0.0) * 0.5 + 0.5) + uAmbSky * 0.7);
@@ -1520,6 +1592,7 @@ uniform vec3 uCamF, uCamR, uCamU;
 uniform vec2 uTan;
 uniform sampler2D uNoise;
 uniform float uStars;
+uniform float uFlatCl;
 out vec4 outColor;
 void main(){
   vec3 d = normalize(uCamF + vNdc.x * uTan.x * uCamR + vNdc.y * uTan.y * uCamU);
@@ -1538,7 +1611,7 @@ void main(){
     float t = (6500.0 - uCamPos.y) / max(d.y, 0.02);
     vec2 p = uCamPos.xz + d.xz * t;
     float cl = texture(uNoise, p / 11000.0 + vec2(uTime * 0.0004, 0.0)).b * 0.65 + texture(uNoise, p / 2900.0).b * 0.35;
-    cl = smoothstep(0.63, 0.86, cl) * smoothstep(0.03, 0.3, d.y) * 0.32 * (1.0 - uStars * 0.8);
+    cl = smoothstep(0.63, 0.86, cl) * smoothstep(0.03, 0.3, d.y) * 0.32 * (1.0 - uStars * 0.8) * uFlatCl;
     vec3 ccol = mix(vec3(1.0), uSunCol, 0.35) * 0.95 + uSunCol * pow(max(sd, 0.0), 6.0) * 0.4;
     c = mix(c, ccol, cl);
   }
@@ -3506,8 +3579,8 @@ void main(){
     vec3 forest = mix(vec3(0.13, 0.24, 0.10), vec3(0.18, 0.30, 0.12), d2);
     vec3 fields = mix(vec3(0.48, 0.52, 0.28), vec3(0.58, 0.55, 0.36), d4);
     vec3 town = vec3(0.55, 0.54, 0.52) * (0.8 + 0.4 * d2);
-    vec3 c = mix(grass, forest, smoothstep(0.02, 0.18, slope) * 0.8 + smoothstep(120.0, 400.0, h) * 0.6);
-    float low = 1.0 - smoothstep(30.0, 140.0, h);
+    vec3 c = mix(grass, forest, smoothstep(0.02, 0.18, slope) * 0.8 + smoothstep(120.0, 400.0, h) * 0.6 * smoothstep(0.015, 0.06, slope));
+    float low = 1.0 - smoothstep(30.0, 140.0, h) * smoothstep(0.015, 0.06, slope);   // flat land (coastal plains and inland basins) is farmed
     c = mix(c, fields, low * smoothstep(0.45, 0.6, d3) * (1.0 - smoothstep(0.05, 0.12, slope)));
     c = mix(c, town, low * smoothstep(0.62, 0.72, d3 + d4 * 0.15) * (1.0 - smoothstep(0.05, 0.12, slope)));
     c = mix(c, mix(vec3(0.42, 0.39, 0.35), vec3(0.56, 0.53, 0.48), d1), smoothstep(0.42, 0.6, slope) + smoothstep(1600.0, 2300.0, h) * 0.8);
@@ -5242,6 +5315,291 @@ void main(){
   }
   outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
 }`;
+// =====================================================================
+//  VOLUMETRIC CLOUDS: a cumulus layer ray-marched through its thickness.
+//  We draw the surface where the view ray enters the layer (its base
+//  seen from below, its top from above, or a full-screen pass when the
+//  camera is inside), so terrain in front still hides the clouds.
+// =====================================================================
+const VCLOUD_VS = GLSL_HEAD + `
+layout(location=0) in vec2 aXZ;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uPlaneY, uCurv;
+uniform int uFull;
+out vec3 vWorld; out vec2 vNdc;
+void main(){
+  if (uFull == 1) { vNdc = aXZ; vWorld = vec3(0.0); gl_Position = vec4(aXZ, 0.0, 1.0); return; }
+  vec3 w = vec3(uCamPos.x + aXZ.x, uPlaneY, uCamPos.z + aXZ.y);
+  w.y -= dot(aXZ, aXZ) * uCurv;
+  vWorld = w; vNdc = vec2(0.0);
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+const VCLOUD_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec3 vWorld; in vec2 vNdc;
+uniform sampler2D uNoise;
+uniform vec4 uCloud;     // base, top, coverage, steps
+uniform vec2 uWind;
+uniform int uFull;
+uniform vec3 uCamF, uCamR, uCamU;
+uniform vec2 uTan;
+out vec4 outColor;
+float cloudDens(vec3 p, bool detail){
+  float y01 = (p.y - uCloud.x) / (uCloud.y - uCloud.x);
+  if (y01 < 0.0 || y01 > 1.0) return 0.0;
+  vec2 q = p.xz + uWind * uTime;
+  // clusters (a few km) and individual cumulus cells (several hundred metres)
+  float w1 = texture(uNoise, q / 70000.0).a, w2 = texture(uNoise, q / 26000.0 + 0.37).b, w3 = texture(uNoise, q / 8000.0 + 0.71).b;
+  float base = w2 * 0.6 + w1 * 0.25 + w3 * 0.15;
+  float thr = mix(0.70, 0.46, uCloud.z);
+  float c = smoothstep(thr, thr + 0.3, base);
+  // dome: the cloud reaches higher where it is denser, giving rounded tops and a flat base
+  float yy = pow(y01, 0.75) * 0.95;
+  float d = clamp((c - yy) / max(1.0 - yy, 0.05), 0.0, 1.0) * smoothstep(0.0, 0.06, y01);
+  d = d * d * (3.0 - 2.0 * d);
+  if (detail && d > 0.0) {
+    float e = texture(uNoise, q / 2600.0 + vec2(p.y / 1500.0, p.y / 2300.0)).b * 0.7 + texture(uNoise, q / 700.0 + vec2(-p.y / 600.0, p.y / 900.0)).b * 0.3;
+    d = clamp(d - (1.0 - d) * (e - 0.3) * 1.1, 0.0, 1.0);
+  }
+  return d;
+}
+float hg(float mu, float g){ float g2 = g * g; return (1.0 - g2) / (4.0 * PI * pow(1.0 + g2 - 2.0 * g * mu, 1.5)); }
+void main(){
+  vec3 dir = uFull == 1 ? normalize(uCamF + vNdc.x * uTan.x * uCamR + vNdc.y * uTan.y * uCamU) : normalize(vWorld - uCamPos);
+  float cy = uCamPos.y, dy = dir.y;
+  float t0, t1;
+  if (cy < uCloud.x) { if (dy <= 0.0) discard; t0 = (uCloud.x - cy) / dy; t1 = (uCloud.y - cy) / dy; }
+  else if (cy > uCloud.y) { if (dy >= 0.0) discard; t0 = (uCloud.y - cy) / dy; t1 = (uCloud.x - cy) / dy; }
+  else { t0 = 0.0; t1 = dy > 0.0 ? (uCloud.y - cy) / dy : dy < 0.0 ? (uCloud.x - cy) / dy : 20000.0; }
+  if (t0 > 90000.0) discard;
+  t1 = min(t1, t0 + 7000.0);
+  int N = int(uCloud.w);
+  float ds = (t1 - t0) / float(N);
+  float jit = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));   // interleaved gradient noise
+  float mu = dot(dir, uSunDir);
+  float ph = mix(hg(mu, 0.55), hg(mu, -0.2), 0.35) * 4.0 * PI;
+  vec3 sunC = uSunI > 0.0 ? uSunCol * 1.25 : uSunCol * 0.25;               // night: faint moonlight
+  vec3 amb = (uAmbSky * 1.7 + uAmbGround * 0.6) * (uSunI > 0.0 ? 1.0 : 0.45);
+  float T = 1.0; vec3 L = vec3(0.0); float tHit = -1.0;
+  const float SIG = 0.045;                        // extinction per metre at full density
+  for (int i = 0; i < 64; i++) {
+    if (i >= N || T < 0.02) break;
+    float t = t0 + (float(i) + jit) * ds;
+    vec3 p = uCamPos + dir * t;
+    if (cloudDens(p, false) <= 0.001) continue;      // empty sky: skip detail and lighting
+    float d = cloudDens(p, true);
+    if (d <= 0.001) continue;
+    if (tHit < 0.0) tHit = t;
+    // light toward the sun (cheap, no detail)
+    float od = 0.0;
+    od += cloudDens(p + uSunDir * 60.0, false) * 60.0;
+    od += cloudDens(p + uSunDir * 180.0, false) * 120.0;
+    od += cloudDens(p + uSunDir * 420.0, false) * 240.0;
+    float y01 = (p.y - uCloud.x) / (uCloud.y - uCloud.x);
+    float beer = exp(-od * SIG * 0.9), powder = 1.0 - exp(-d * ds * SIG * 2.0);
+    vec3 S = sunC * beer * ph * mix(1.0, powder * 2.0, 0.5) + amb * (0.62 + 0.38 * y01);
+    float a = 1.0 - exp(-d * SIG * ds);
+    L += T * a * S; T *= 1.0 - a;
+  }
+  float alpha = 1.0 - T;
+  if (alpha < 0.004) discard;
+  vec3 col = L / alpha;
+  vec3 P = uCamPos + dir * (tHit > 0.0 ? tHit : t0);
+  col = applyFog(col, P);
+  alpha *= 1.0 - smoothstep(60000.0, 90000.0, t0);
+  outColor = vec4(tonemap(col) * alpha, alpha);
+}`;
+const VCLOUD = { prog: null, vao: null, on: true };
+function initVolClouds() {
+  if (VCLOUD.prog) return;
+  VCLOUD.prog = makeProgram(VCLOUD_VS, VCLOUD_FS);
+  const rings = [0], seg = 72, pts = [], idx = [];
+  for (let r = 60; r < 95000; r *= 1.18) rings.push(r);
+  for (let i = 0; i < rings.length; i++) for (let s = 0; s < seg; s++) { const a = s / seg * Math.PI * 2; pts.push(Math.cos(a) * rings[i], Math.sin(a) * rings[i]); }
+  for (let i = 0; i < rings.length - 1; i++) for (let s = 0; s < seg; s++) {
+    const a = i * seg + s, b = i * seg + (s + 1) % seg, c = (i + 1) * seg + s, d = (i + 1) * seg + (s + 1) % seg;
+    idx.push(a, b, c, b, d, c);
+  }
+  VCLOUD.vao = makeVAO([{ loc: 0, size: 2, data: new Float32Array(pts) }], new Uint32Array(idx));
+}
+function volCloudsActive() { return VCLOUD.on && game.gfx !== 'low' && game.clouds !== 'off' && (ENV.cloudCov ?? 0.38) > 0.01; }
+// drawn once per depth pass; each pass only keeps the part of the entry surface inside its depth range
+function drawVolClouds(far) {
+  if (!volCloudsActive()) return;
+  initVolClouds();
+  const pr = VCLOUD.prog, u = pr.u, cy = R.eye[1];
+  const base = ENV.cloudBase ?? 1500, top = base + (ENV.cloudDepth ?? 900), cov = game.clouds === 'many' ? 0.62 : game.clouds === 'few' ? 0.28 : (ENV.cloudCov ?? 0.38);
+  const inside = cy >= base && cy <= top;
+  if (inside && far) return;                              // full-screen pass only once
+  setCommon(pr);
+  gl.uniform4f(u.uCloud, base, top, cov, game.gfx === 'high' ? 48 : 30);
+  gl.uniform2f(u.uWind, 1.2, 0.5);
+  gl.uniform1i(u.uNoise, 2);
+  gl.uniform3fv(u.uCamF, R.camF); gl.uniform3fv(u.uCamR, R.camR); gl.uniform3fv(u.uCamU, R.camU);
+  gl.uniform2f(u.uTan, R.tanX, R.tanY);
+  gl.uniform1f(u.uCurv, JW.active ? 1 / (2 * R_EARTH) : 0);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); gl.disable(gl.CULL_FACE);
+  if (inside) {
+    gl.disable(gl.DEPTH_TEST);
+    gl.uniform1i(u.uFull, 1);
+    gl.bindVertexArray(quadVAO.vao); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.enable(gl.DEPTH_TEST);
+  } else {
+    gl.uniform1i(u.uFull, 0);
+    gl.uniform1f(u.uPlaneY, cy < base ? base : top);
+    gl.bindVertexArray(VCLOUD.vao.vao); gl.drawElements(gl.TRIANGLES, VCLOUD.vao.count, gl.UNSIGNED_INT, 0);
+  }
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+}
+// =====================================================================
+//  3D JWTREES over the Japan/world terrain. Cells follow the zoom-16 map
+//  tile grid around the camera; each cell holds a few hundred instanced
+//  trees whose ground height comes from the terrain. Whether a tree is
+//  shown is decided on the GPU: from the aerial photo's colour (dark
+//  green = forest) when a photo is loaded, otherwise with the same rule
+//  the offline terrain shader uses to paint forest.
+// =====================================================================
+const JWTREE_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNrm;
+layout(location=2) in vec4 iP;     // position relative to the cell origin, random 0..1
+layout(location=3) in vec3 iU;     // photo uv inside the cell, ground normal y
+uniform mat4 uViewProj;
+uniform vec3 uCamPos, uOrigin;
+uniform float uCurv, uFade;
+uniform int uHasPhoto;
+uniform vec4 uUvX;
+uniform sampler2D uPhoto, uNoise;
+out vec3 vWorld; out vec3 vN; out vec3 vCol;
+void main(){
+  vec3 base = uOrigin + iP.xyz;
+  float dist = distance(base, uCamPos), r = iP.w;
+  float mask; vec3 col;
+  if (uHasPhoto == 1) {
+    vec3 c = textureLod(uPhoto, iU.xy * uUvX.x + uUvX.yz, 0.0).rgb;
+    float lum = dot(c, vec3(0.3, 0.55, 0.15)), gdom = c.g - max(c.r * 0.97, c.b);
+    mask = smoothstep(0.0, 0.035, gdom) * (1.0 - smoothstep(0.30, 0.40, lum)) * smoothstep(0.035, 0.07, lum);
+    col = c * vec3(0.92, 1.0, 0.9);
+  } else {
+    float slope = 1.0 - iU.z, h = base.y;
+    float d3 = texture(uNoise, base.xz / 2300.0).a, d2 = texture(uNoise, base.xz / 170.0).b;
+    float fw = smoothstep(0.02, 0.18, slope) * 0.8 + smoothstep(120.0, 400.0, h) * 0.6 * smoothstep(0.015, 0.06, slope);
+    mask = smoothstep(0.42, 0.55, fw + (d2 - 0.5) * 0.35) * step(3.0, h) * (1.0 - smoothstep(1500.0, 2200.0, h + d3 * 300.0)) * (1.0 - smoothstep(0.55, 0.7, slope));
+    col = mix(vec3(0.13, 0.24, 0.10), vec3(0.20, 0.31, 0.12), d2);
+  }
+  mask *= 1.0 - smoothstep(uFade * 0.65, uFade, dist);
+  if (mask < 0.25 || fract(r * 7.13) > mask) { gl_Position = vec4(0.0, 0.0, -2.0, 1.0); return; }
+  float hgt = mix(8.0, 19.0, fract(r * 3.7)), wid = hgt * mix(0.34, 0.5, fract(r * 11.3));
+  float a = r * 6.2831;
+  mat2 rot = mat2(cos(a), -sin(a), sin(a), cos(a));
+  vec3 lp = vec3(aPos.x * wid, aPos.y * hgt, aPos.z * wid); lp.xz = rot * lp.xz;
+  vec3 w = base + lp;
+  vec2 d = w.xz - uCamPos.xz; w.y -= dot(d, d) * uCurv;
+  vec2 rn = rot * aNrm.xz;
+  vWorld = w; vN = normalize(vec3(rn.x, aNrm.y, rn.y));
+  vCol = aPos.y < 0.18 ? vec3(0.22, 0.17, 0.12) : col * (0.8 + 0.4 * fract(r * 19.1));
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+const JWTREE_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec3 vN; in vec3 vCol;
+out vec4 outColor;
+void main(){
+  vec3 n = normalize(vN);
+  float diff = max(dot(n, uSunDir) * 0.75 + 0.25, 0.0) * planeShadow(vWorld.xz);
+  vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
+  vec3 c = vCol * (uSunCol * diff * 0.85 + amb * 0.9);
+  outColor = vec4(tonemap(applyFog(c, vWorld)), 1.0);
+}`;
+const JWTREES = { prog: null, mesh: null, cells: new Map(), ov: -1, perCell: 0 };
+// a rounded crown on a short trunk, unit height
+function makeJwTreeMesh() {
+  const P = [], N = [], seg = 6, rings = [[0.2, 0.62], [0.45, 1.0], [0.75, 0.75], [1.0, 0.0]];
+  const ring = (y, r) => { const o = []; for (let s = 0; s < seg; s++) { const a = s / seg * Math.PI * 2; o.push([Math.cos(a) * r * 0.5, y, Math.sin(a) * r * 0.5]); } return o; };
+  const tri = (a, b, c) => { const n = vnorm(vcross(vsub(b, a), vsub(c, a))); for (const p of [a, b, c]) { P.push(...p); const rn = vnorm([p[0], 0.35, p[2]]); N.push(...vnorm(vadd(n, rn))); } };
+  let prev = ring(rings[0][0], rings[0][1]);
+  for (let i = 1; i < rings.length; i++) {
+    const cur = ring(rings[i][0], rings[i][1]);
+    for (let s = 0; s < seg; s++) { const s1 = (s + 1) % seg; tri(prev[s], cur[s], prev[s1]); if (rings[i][1] > 0) tri(prev[s1], cur[s], cur[s1]); }
+    prev = cur;
+  }
+  const bottom = ring(rings[0][0], rings[0][1]), c0 = [0, rings[0][0], 0];
+  for (let s = 0; s < seg; s++) tri(bottom[(s + 1) % seg], c0, bottom[s]);
+  const tw = 0.05;
+  for (const [x0, z0, x1, z1] of [[-tw, -tw, tw, -tw], [tw, -tw, tw, tw], [tw, tw, -tw, tw], [-tw, tw, -tw, -tw]]) { tri([x0, 0, z0], [x1, 0, z1], [x1, 0.2, z1]); tri([x0, 0, z0], [x1, 0.2, z1], [x0, 0.2, z0]); }
+  return { P: new Float32Array(P), N: new Float32Array(N), count: P.length / 3 };
+}
+function initJwTrees() {
+  if (JWTREES.prog) return;
+  JWTREES.prog = makeProgram(JWTREE_VS, JWTREE_FS);
+  const m = makeJwTreeMesh();
+  JWTREES.mesh = m;
+  JWTREES.perCell = 520;
+}
+function jwTreeCellKey(x, y) { return x + '/' + y; }
+function buildJwTreeCell(x, y) {
+  const Z = 16, n = 2 ** Z, K = JWTREES.perCell;
+  const lonW = x / n * 360 - 180, lonE = (x + 1) / n * 360 - 180, latN = latFromMerc(y / n), latS = latFromMerc((y + 1) / n);
+  const [ox, oz] = geoToWorld((latN + latS) / 2, (lonW + lonE) / 2);
+  let seed = (x * 73856093) ^ (y * 19349663);
+  const rnd = () => { seed = (seed * 1664525 + 1013904223) | 0; return ((seed >>> 8) & 0xffffff) / 0x1000000; };
+  const data = new Float32Array(K * 7);
+  let oy = 0, k = 0;
+  for (let i = 0; i < K; i++) {
+    const u = rnd(), v = rnd();
+    const lat = latFromMerc((y + v) / n), lon = lonW + (lonE - lonW) * u;
+    const [wx, wz] = geoToWorld(lat, lon);
+    if (jwRunwayAt(wx, wz)) continue;
+    const h = jwHeightGeo(lat, lon);
+    if (!(h > 1.5)) continue;
+    const e = 6, hx = jwHeight(wx + e, wz) - jwHeight(wx - e, wz), hz = jwHeight(wx, wz + e) - jwHeight(wx, wz - e);
+    const ny = 2 * e / Math.hypot(hx, hz, 2 * e);
+    data.set([wx - ox, h, wz - oz, rnd(), u, v, ny], k * 7); k++;
+  }
+  const inst = data.subarray(0, k * 7);
+  const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+  const pb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, pb); gl.bufferData(gl.ARRAY_BUFFER, JWTREES.mesh.P, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+  const nb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, nb); gl.bufferData(gl.ARRAY_BUFFER, JWTREES.mesh.N, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+  const ib = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, ib); gl.bufferData(gl.ARRAY_BUFFER, inst, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 4, gl.FLOAT, false, 28, 0); gl.vertexAttribDivisor(2, 1);
+  gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 3, gl.FLOAT, false, 28, 16); gl.vertexAttribDivisor(3, 1);
+  gl.bindVertexArray(null);
+  return { x, y, ox, oz, n: k, vao, bufs: [pb, nb, ib], used: 0 };
+}
+function freeJwTreeCell(c) { gl.deleteVertexArray(c.vao); for (const b of c.bufs) gl.deleteBuffer(b); }
+function drawJwTrees() {
+  if (!JW.active || game.gfx === 'low') return;
+  const eye = R.eye, agl = eye[1] - Math.max(jwHeight(eye[0], eye[2]), 0);
+  if (agl > 2600) return;                                   // too small to matter from high up
+  initJwTrees();
+  if (JWTREES.ov !== JW.ov) { for (const c of JWTREES.cells.values()) freeJwTreeCell(c); JWTREES.cells.clear(); JWTREES.ov = JW.ov; }
+  const [lat, lon] = worldToGeo(eye[0], eye[2]), n = 2 ** 16;
+  const cx = Math.floor((lon + 180) / 360 * n), cy = Math.floor(mercY(lat) * n);
+  const fade = game.gfx === 'high' ? 2000 : 1300, cellM = 40075016 * Math.cos(lat * DEG) / n, rc = Math.ceil(fade / cellM) + 1;
+  let built = 0;
+  const pr = JWTREES.prog, u = pr.u;
+  setCommon(pr); shadowUniforms(pr);
+  gl.uniform1f(u.uFade, fade); gl.uniform1i(u.uPhoto, 6); gl.uniform1i(u.uNoise, 2);
+  gl.activeTexture(gl.TEXTURE6);
+  for (let dy = -rc; dy <= rc; dy++) for (let dx = -rc; dx <= rc; dx++) {
+    if ((dx * dx + dy * dy) * cellM * cellM > (fade + cellM) ** 2) continue;
+    const x = cx + dx, y = cy + dy, key = jwTreeCellKey(x, y);
+    let c = JWTREES.cells.get(key);
+    if (!c) { if (built >= 3) continue; c = buildJwTreeCell(x, y); JWTREES.cells.set(key, c); built++; }
+    c.used = JW.frame;
+    if (!c.n) continue;
+    const ph = JW.online ? photoFor({ z: 16, x, y, tex: (JW.tiles.get('16/' + x + '/' + y) || {}).tex }) : null;
+    if (ph) { gl.bindTexture(gl.TEXTURE_2D, ph[0]); gl.uniform4f(u.uUvX, ph[1], ph[2], ph[3], 0); gl.uniform1i(u.uHasPhoto, 1); }
+    else gl.uniform1i(u.uHasPhoto, 0);
+    gl.uniform3f(u.uOrigin, c.ox, 0, c.oz);
+    gl.bindVertexArray(c.vao);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, JWTREES.mesh.count, c.n);
+  }
+  gl.activeTexture(gl.TEXTURE0);
+  // forget cells that have been out of range for a while
+  if (JWTREES.cells.size > 260) for (const [k, c] of JWTREES.cells) if (JW.frame - c.used > 300) { freeJwTreeCell(c); JWTREES.cells.delete(k); }
+}
 
 // =====================================================================
 //  SIGHTSEEING FLIGHT: rings placed beside famous landmarks near the
@@ -8002,11 +8360,11 @@ function setupAI() {
 const TOD = {
   day: {
     sunDir: vnorm([0.5, 0.62, 0.55]), sunCol: [1.05, 1.0, 0.92], zenith: [0.19, 0.41, 0.76], horizon: [0.72, 0.83, 0.93],
-    horizonAway: [0.64, 0.77, 0.92], ambSky: [0.32, 0.40, 0.52], ambGround: [0.20, 0.19, 0.15], fog: 4.2e-5,
+    horizonAway: [0.64, 0.77, 0.92], ambSky: [0.32, 0.40, 0.52], ambGround: [0.20, 0.19, 0.15], fog: 4.2e-5, sunI: 22, haze: 2.4,
   },
   evening: {
     sunDir: vnorm([-0.86, 0.13, 0.34]), sunCol: [1.28, 0.74, 0.42], zenith: [0.15, 0.22, 0.44], horizon: [1.0, 0.64, 0.40],
-    horizonAway: [0.46, 0.46, 0.60], ambSky: [0.26, 0.26, 0.37], ambGround: [0.17, 0.12, 0.10], fog: 5.6e-5,
+    horizonAway: [0.46, 0.46, 0.60], ambSky: [0.26, 0.26, 0.37], ambGround: [0.17, 0.12, 0.10], fog: 5.6e-5, sunI: 22, haze: 2.0,
   },
   night: {
     sunDir: vnorm([-0.35, 0.42, -0.55]), sunCol: [0.15, 0.17, 0.25], zenith: [0.008, 0.013, 0.035], horizon: [0.05, 0.06, 0.10],
@@ -8019,15 +8377,15 @@ const game = {
   state: 'loading', mode: 'runway', hud: true, invert: false, touch: false, sound: true,
   t: 0, ringIdx: 0, ringTime: 0, ringDone: false, firstTouch: null, landingDone: false,
   warnPull: false, warnGear: false, resultTimer: 0, best: {},
-  assist: true, autoRud: true, sens: 'low', mapId: 'japan', acftId: 'trainer', levelT: 0,
+  assist: true, autoRud: true, clouds: 'normal', gfx: '', sens: 'low', mapId: 'japan', acftId: 'trainer', levelT: 0,
   depIcao: 'RJTT', destIcao: '', timeScale: 1, ap: false, apAlt: 0, apHdg: 0, track: [], arrived: false,
 };
 try {
   const pr = JSON.parse(localStorage.getItem('sorajima-prefs') || '{}') || {};
-  for (const k of ['assist', 'autoRud', 'sens', 'mapId', 'acftId', 'invert', 'sound', 'depIcao', 'destIcao']) if (pr[k] !== undefined) game[k] = pr[k];
+  for (const k of ['assist', 'autoRud', 'clouds', 'gfx', 'sens', 'mapId', 'acftId', 'invert', 'sound', 'depIcao', 'destIcao']) if (pr[k] !== undefined) game[k] = pr[k];
 } catch (e) { /* storage unavailable */ }
 function savePrefs() {
-  try { localStorage.setItem('sorajima-prefs', JSON.stringify({ assist: game.assist, autoRud: game.autoRud, sens: game.sens, mapId: game.mapId, acftId: game.acftId, invert: game.invert, sound: game.sound, depIcao: game.depIcao, destIcao: game.destIcao })); } catch (e) { /* ignore */ }
+  try { localStorage.setItem('sorajima-prefs', JSON.stringify({ assist: game.assist, autoRud: game.autoRud, clouds: game.clouds, gfx: game.gfx, sens: game.sens, mapId: game.mapId, acftId: game.acftId, invert: game.invert, sound: game.sound, depIcao: game.depIcao, destIcao: game.destIcao })); } catch (e) { /* ignore */ }
 }
 try { game.best = JSON.parse(localStorage.getItem('sorajima-best') || '{}') || {}; } catch (e) { game.best = {}; }
 function saveBest() { try { localStorage.setItem('sorajima-best', JSON.stringify(game.best)); } catch (e) { /* storage unavailable */ } }
@@ -8728,6 +9086,15 @@ document.querySelectorAll('.mission').forEach(b => b.addEventListener('click', (
 $('resume').addEventListener('click', resumeGame);
 $('res-retry').addEventListener('click', () => startMode(game.mode));
 $('res-menu').addEventListener('click', () => { spawn('runway'); game.state = 'menu'; showMenu(false); });
+if (!game.gfx) game.gfx = matchMedia('(pointer: coarse)').matches ? 'mid' : 'high';
+document.querySelectorAll('[data-gfx]').forEach(b => { b.classList.toggle('on', b.dataset.gfx === game.gfx); b.addEventListener('click', () => {
+  game.gfx = b.dataset.gfx; savePrefs();
+  document.querySelectorAll('[data-gfx]').forEach(o => o.classList.toggle('on', o === b));
+}); });
+document.querySelectorAll('[data-cloud]').forEach(b => { b.classList.toggle('on', b.dataset.cloud === game.clouds); b.addEventListener('click', () => {
+  game.clouds = b.dataset.cloud; savePrefs();
+  document.querySelectorAll('[data-cloud]').forEach(o => o.classList.toggle('on', o === b));
+}); });
 document.querySelectorAll('[data-oat]').forEach(b => b.addEventListener('click', () => {
   ISA.dev = +b.dataset.oat;
   document.querySelectorAll('[data-oat]').forEach(o => o.classList.toggle('on', o === b));
@@ -9001,6 +9368,9 @@ function setCommon(pr) {
   if (u.uAmbSky) gl.uniform3fv(u.uAmbSky, ENV.ambSky);
   if (u.uAmbGround) gl.uniform3fv(u.uAmbGround, ENV.ambGround);
   if (u.uFogDens) gl.uniform1f(u.uFogDens, ENV.fog);
+  if (u.uSunI) gl.uniform1f(u.uSunI, game.atmo === false ? 0 : ENV.sunI || 0);
+  if (u.uHaze) gl.uniform1f(u.uHaze, ENV.haze || 1.5);
+  if (u.uFlatCl) gl.uniform1f(u.uFlatCl, volCloudsActive() ? 0 : 1);
   if (u.uCamPos) gl.uniform3fv(u.uCamPos, R.eye);
   if (u.uTime) gl.uniform1f(u.uTime, R.time);
   if (u.uViewProj) gl.uniformMatrix4fv(u.uViewProj, false, R.VP);
@@ -9068,7 +9438,7 @@ function render() {
 }
 function drawScene(planes, far) {
   gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
-  if (JW.active) { drawJapanTerrain(planes); drawJapanRunways(); drawCity(planes); drawPlateau(); }
+  if (JW.active) { drawJapanTerrain(planes); drawJapanRunways(); drawCity(planes); drawPlateau(); drawJwTrees(); }
   else {
   // terrain
   setCommon(progTerrain); shadowUniforms(progTerrain);
@@ -9133,7 +9503,8 @@ function drawScene(planes, far) {
   if (!far && showPlane) { setCommon(progMesh); drawPropDisc(pm, sim); }
   drawRings();
   drawLights();
-  drawClouds();
+  if (volCloudsActive()) drawVolClouds(far); else drawClouds();
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
   drawParticles();
   drawPapi();
   gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);

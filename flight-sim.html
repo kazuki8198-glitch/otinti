@@ -5579,7 +5579,7 @@ function googUpdate(planes) {
   const out = [], req = [];
   const dist = n => { if (n.planet) return 0; const c = googWorld(n); return Math.max(0, Math.hypot(c[0] - eye[0], c[1] - eye[1], c[2] - eye[2]) - n.r); };
   const vis = n => { if (n.planet) return true; const c = googWorld(n), r = n.r; return boxInFrustum(planes, c[0] - r, c[1] - r, c[2] - r, c[0] + r, c[1] + r, c[2] + r); };
-  const ready = (n, depth = 0) => n.uri ? !!n.mesh : (n.ext || depth > 6) ? false : n.children.length > 0 && n.children.every(c => dist(c) > MAXD || !vis(c) || ready(c, depth + 1));
+  const ready = (n, depth = 0) => n.uri ? !!n.mesh : n.ext ? n.extState === 3 : depth > 6 ? false : n.children.length > 0 && n.children.every(c => dist(c) > MAXD || !vis(c) || ready(c, depth + 1));
   const visit = n => {
     const d = dist(n);
     if (d > MAXD || !vis(n)) return;
@@ -5592,7 +5592,17 @@ function googUpdate(planes) {
     if (kidsReady || !n.uri) { for (const c of n.children) visit(c); if (!kidsReady && n.uri && !n.mesh) req.push([n, d]); }
     else {
       if (n.mesh) out.push(n); else req.push([n, d]);
-      for (const c of n.children) { const dc = dist(c); if (dc <= MAXD && vis(c)) { c.used = f; if (c.ext && !c.extState) googLoadExt(c); else if (c.uri && !c.mesh) req.push([c, dc + 50]); } }
+      // request what the children need to become ready, looking through content-less nodes (a loaded
+      // external tileset leaves one): otherwise a tile below such a node is never asked for, and the
+      // coarse parent stays on screen for ever
+      const want = (c, depth) => {
+        const dc = dist(c); if (dc > MAXD || !vis(c)) return;
+        c.used = f;
+        if (c.ext) { if (!c.extState) googLoadExt(c); }
+        else if (c.uri) { if (!c.mesh && c.state === 0) req.push([c, dc + 50]); }
+        else if (depth < 6) for (const k of c.children) want(k, depth + 1);
+      };
+      for (const c of n.children) want(c, 0);
     }
   };
   visit(GOOG.root);

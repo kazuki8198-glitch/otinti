@@ -10910,6 +10910,10 @@ const CP_REAL = {
     url: 'models/cockpits/boeing_787_dreamliner_cockpit.glb', eye: [-0.5, 1.33, -1.05], s: 1, rot: 0, keep: 3.5,
     drop: [[-0.66, 1.12, -1.68, -0.26, 1.56, -1.44], [0.26, 1.12, -1.68, 0.66, 1.56, -1.44]], glass: ['787_Glass'],      // the HUD glasses (drawn opaque in the file)
     screens: [{ c: [-0.5745, 0.6895, -2.063], w: 0.295, h: 0.215, src: 'pfdL' }, { c: [-0.2285, 0.6895, -2.063], w: 0.295, h: 0.215, src: 'ndL' }, { c: [0.226, 0.6895, -2.063], w: 0.295, h: 0.215, src: 'ndR' }, { c: [0.5715, 0.6895, -2.063], w: 0.295, h: 0.215, src: 'pfdR' }],
+    // the mode control panel, the gear lever, the throttle quadrant (rays cast from renders)
+    hot: [['spdKnob', [-0.1224, 0.8783, -2.0054], 0.025], ['hdgKnob', [-0.0137, 0.8798, -2.0057], 0.025], ['altKnob', [0.1112, 0.8731, -2.0164], 0.025], ['ap', [-0.065, 0.9086, -2.0259], 0.02],
+      ['baro', [-0.3397, 0.9116, -2.0267], 0.02], ['gear', [-0.0346, 0.6833, -2.0566], 0.03], ['throttle', [-0.0273, 0.6725, -1.5553], 0.05], ['flaps', [0.0805, 0.5661, -1.4969], 0.035],
+      ['fuelLever', [-0.0291, 0.5231, -1.4817], 0.02], ['fuelLever', [0.0219, 0.5237, -1.4856], 0.02], ['pbrake', [-0.1718, 0.479, -1.514], 0.03]].map(([a, p, r]) => ({ a, p, r })),
     credit: '3D コックピット：“Boeing 787 Dreamliner Cockpit” by ElijahPD7000（Sketchfab）CC BY 4.0',
   },
   a320: {
@@ -10918,6 +10922,14 @@ const CP_REAL = {
     screens: [{ c: [-0.1355, 0.0714, 0.4063], w: 0.044, h: 0.043, tilt: 0.285, src: 'pfdL' }, { c: [-0.0821, 0.0714, 0.4062], w: 0.044, h: 0.043, tilt: 0.285, src: 'ndL' },
       { c: [0.013, 0.0725, 0.4059], w: 0.046, h: 0.045, tilt: 0.285, src: 'eicas' }, { c: [0.0134, 0.037, 0.4300], w: 0.046, h: 0.045, tilt: -0.28, src: 'sd' },
       { c: [0.1045, 0.0712, 0.4059], w: 0.044, h: 0.043, tilt: 0.285, src: 'ndR' }, { c: [0.1576, 0.0712, 0.4059], w: 0.044, h: 0.043, tilt: 0.285, src: 'pfdR' }],
+    // the FCU on the glareshield, the gear lever, the pedestal (rays cast from renders)
+    hot: [['ap', [0.0019, 0.1434, 0.476], 0.0035], ['nav', [-0.0005, 0.1387, 0.4776], 0.003], ['apr', [0.0105, 0.1382, 0.478], 0.003], ['spdKnob', [-0.0229, 0.145, 0.4771], 0.004],
+      ['hdgKnob', [-0.0141, 0.1458, 0.4804], 0.004], ['altKnob', [0.0088, 0.1453, 0.4779], 0.004], ['vs', [0.0221, 0.1453, 0.4777], 0.004], ['baro', [-0.0619, 0.1449, 0.4827], 0.004],
+      ['gear', [0.0381, 0.0551, 0.4389], 0.006], ['throttle', [-0.0031, 0.0134, 0.5419], 0.008], ['fuelLever', [-0.0061, 0.0021, 0.5606], 0.004], ['fuelLever', [0.0049, -0.0028, 0.5617], 0.004],
+      ['engStart', [0.0027, 0.0006, 0.5934], 0.004], ['flaps', [0.0208, -0.0031, 0.5849], 0.006], ['pbrake', [0.006, 0.0028, 0.6158], 0.005],
+      // the exterior lights and electrics at the front of the overhead panel
+      ['strobe', [-0.0241, 0.245, 0.5204], 0.003], ['beacon', [-0.0171, 0.245, 0.5204], 0.003], ['navl', [-0.0101, 0.245, 0.5205], 0.003], ['land', [0.0092, 0.245, 0.5205], 0.003],
+      ['taxi', [0.0147, 0.245, 0.5204], 0.003], ['bat', [-0.0297, 0.252, 0.5388], 0.003], ['altn', [-0.0194, 0.252, 0.5388], 0.003]].map(([a, p, r]) => ({ a, p, r })),
     credit: '3D コックピット：“A320 Cockpit 2” by davidmarton1987（Sketchfab）CC BY 4.0',
   },
   b738: {
@@ -10925,6 +10937,12 @@ const CP_REAL = {
     yokes: [[0.16, 1.58, 1.18, 0.42, 2.13, 1.38], [-0.42, 1.58, 1.18, -0.16, 2.13, 1.38]],
     screens: [{ c: [0.303, 1.905, 1.452], w: 0.1, h: 0.1, src: 'pfdL' }, { c: [0.182, 1.905, 1.452], w: 0.1, h: 0.1, src: 'ndL' }, { c: [-0.018, 1.905, 1.452], w: 0.1, h: 0.1, src: 'eicas' },
       { c: [-0.176, 1.905, 1.452], w: 0.1, h: 0.1, src: 'ndR' }, { c: [-0.306, 1.905, 1.452], w: 0.1, h: 0.1, src: 'pfdR' }],
+    // the mode control panel, the gear lever, the throttle quadrant, the battery switch (rays cast from renders)
+    hot: [['baro', [0.1557, 2.0544, 1.4248], 0.012], ['fd', [0.1313, 2.0497, 1.4232], 0.01], ['spdKnob', [0.0721, 2.0472, 1.4242], 0.012], ['flc', [0.0573, 2.0346, 1.4315], 0.008],
+      ['hdgKnob', [0.0353, 2.0495, 1.4199], 0.012], ['hdg', [0.0332, 2.035, 1.4304], 0.008], ['apr', [0.0119, 2.035, 1.4304], 0.008], ['altKnob', [-0.0049, 2.0491, 1.4215], 0.012],
+      ['alt', [-0.0228, 2.035, 1.4304], 0.008], ['vs', [-0.0394, 2.0427, 1.424], 0.012], ['ap', [-0.075, 2.04, 1.426], 0.012],
+      ['gear', [-0.0699, 1.8653, 1.409], 0.02], ['throttle', [-0.0038, 1.8686, 1.1872], 0.03], ['flaps', [-0.0429, 1.8579, 1.3035], 0.02], ['pbrake', [0.0636, 1.7725, 1.1718], 0.015],
+      ['fuelLever', [-0.0289, 1.7727, 1.1712], 0.01], ['fuelLever', [-0.0364, 1.7786, 1.1642], 0.01], ['extinguisher', [0.0035, 1.7637, 1.1239], 0.02], ['bat', [0.099, 2.3251, 1.1493], 0.015]].map(([a, p, r]) => ({ a, p, r })),
     credit: '3D コックピット：“Boeing 737-800 Cockpit” by hakai315（Sketchfab）CC BY 4.0',
   },
 };
@@ -12054,6 +12072,8 @@ function cpHotAct(a) {
     flc: { tip: () => `FLC：選んだ高度 ${cpFt(game.apAlt ?? s.pos[1]).toLocaleString()} ft へ一定の率で上昇・降下${game.ap && game.apVert === 'flc' ? '（使用中）' : ''}`, click: () => { if (!apNeed()) return; game.apVert = 'flc'; toast(`FLC：${cpFt(game.apAlt).toLocaleString()} ft へ`, 1500); } },
     fd: { tip: () => `FD：飛行情報の表示 ${cpOn(game.cpHud)}（H キーと同じ）`, click: () => { game.cpHud = !game.cpHud; } },
     hdgKnob: { tip: () => `HDG ノブ：${String(Math.round(game.apHdg ?? cpHdgNow())).padStart(3, '0')}°（ホイールで回す・クリックで今の方位に合わせる）`, wheel: wheelHdg, click: () => { game.apHdg = cpHdgNow(); toast(`方位バグを ${String(game.apHdg).padStart(3, '0')}° に合わせました`, 1300); } },
+    spdKnob: { tip: () => `SPD ノブ：オートスロットル ${game.apSpd ? Math.round(game.apSpd) + ' kt' : 'OFF'}（ホイールで ±5 kt・クリックで今の速度）`, wheel: d => { game.apSpd = clamp((game.apSpd || s.ias * 1.94384) + d * 5, ACFT.v.appr || 60, ACFT.v.cruise * 1.1 || 300); },
+      click: () => { game.apSpd = Math.round(s.ias * 1.94384); toast(`速度 ${game.apSpd} kt を保ちます（AP 使用中のとき）`, 1500); } },
     altKnob: { tip: () => `ALT ノブ：選択高度 ${cpFt(game.apAlt ?? s.pos[1]).toLocaleString()} ft（ホイールで ±100 ft・クリックで今の高度）`, wheel: wheelAlt, click: () => { game.apAlt = s.pos[1]; } },
     // --- radios, the altimeter setting, the map keys ---
     com: { tip: () => `COM：${R_.com.toFixed(3)}  予備 ${R_.comS.toFixed(3)}（ホイールで予備の周波数・クリックで入れ替え）`, wheel: d => { R_.comS = Math.round(clamp(R_.comS + d * 0.025, 118, 136.975) * 1000) / 1000; }, click: () => { [R_.com, R_.comS] = [R_.comS, R_.com]; toast(`COM ${R_.com.toFixed(3)}`, 1100); } },

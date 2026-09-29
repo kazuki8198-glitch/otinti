@@ -10872,6 +10872,7 @@ const CP_REAL = {
     // the model has no colours of its own: paint it like a C172's cabin (by material name)
     tint: { material_0: [0.15, 0.155, 0.16], Material: [0.09, 0.09, 0.1], mat008: [0.12, 0.12, 0.13], 'mat001.001': [0.44, 0.42, 0.39], YOKE: [0.1, 0.1, 0.11],
       G1000_RH: [0.08, 0.08, 0.09], 'Material.001': [0.01, 0.01, 0.012], AIRSPEED: [0.05, 0.05, 0.05], ALTIMETER: [0.05, 0.05, 0.05], HORIZON: [0.05, 0.05, 0.05], '*': [0.06, 0.06, 0.065] },
+    still: ['flaps'],                                               // (a painted panel spot, not a lever)
     credit: '3D コックピット：“Cessna 172 G1000 Cockpit” by davidpineda021199（Sketchfab）CC BY 4.0',
     // the G1000's keys and knobs, by the model's own part names
     hot: [['AP_Key_LH', 'ap'], ['FD_Key_LH', 'fd'], ['HDG_Key_LH', 'hdg'], ['ALT_Key', 'alt'], ['NAV_Key_LH', 'nav'], ['APR_Key_LH', 'apr'], ['VS_Key_LH', 'vs'], ['FLC_Key_LH', 'flc'],
@@ -10893,18 +10894,13 @@ const CP_REAL = {
   c172a: {
     url: 'models/c172_g1000_cockpit.glb', key: 'analog', split: ['YOKE'], eye: [-0.2575, 0.56, -0.02], s: 1, rot: 0,
     drop: [[-0.62, 0.05, -1.0, 0.62, 0.47, -0.52]],
-    extra: { url: 'models/cockpits/cessna_skyhawk_cockpit.glb', s: 0.18, rot: -Math.PI / 2, at: [0, 1.42, 1.375], to: [-0.2575, 0.29, -0.665] },
-    // the photo's dials, in the panel model's own coordinates -> the canvas gauges (column, row of SIX_LAYOUT)
-    dials: { r: 0.25, at: { asi: [0.005, 1.73, 1.95], ai: [0.005, 1.7508, 1.3875], alt: [0.005, 1.726, 0.8017], tach: [0.005, 1.7097, 0.252], tc: [0.005, 1.1119, 1.9546], hi: [0.005, 1.1196, 1.3853], vsi: [0.005, 1.1124, 0.8044], nav: [0.005, 1.1196, 0.2486] } },
+    // in the cabin, the sim's own instrument panel (sharp at any size, every switch and lever live), where the
+    // model's glass panel was: centre and width in the model's coordinates (it keeps the canvas's shape)
+    panel: { c: [0, 0.262, -0.668], w: 1.2 },
+    // the floor and pedestal controls (rays cast from a render onto the cabin)
+    hot: [['trim', [-0.0644, -0.0947, -0.6565], 0.045], ['fuelSel', [-0.0384, -0.3473, -0.6073], 0.05]].map(([a, p, r]) => ({ a, p, r })),
     tint: null,
-    // the photo panel's switch row, key, knobs and the pedestal (rays cast from a render onto the cabin)
-    hot: [['master', [-0.4305, 0.0367, -0.6793]], ['pump', [-0.4075, 0.0197, -0.6745]], ['beacon', [-0.3853, 0.0197, -0.6745]], ['land', [-0.3637, 0.0197, -0.6745]],
-      ['taxi', [-0.3422, 0.0197, -0.6745]], ['navl', [-0.3206, 0.0197, -0.6745]], ['strobe', [-0.2991, 0.0197, -0.6745]], ['avio', [-0.2783, 0.0197, -0.6745]],
-      ['key', [-0.483, 0.0417, -0.6707], 0.022], ['pbrake', [-0.2763, -0.026, -0.6495], 0.03], ['flaps', [-0.0765, 0.0143, -0.6636], 0.03],
-      ['throttle', [-0.0272, 0.0614, -0.6271], 0.03], ['mixture', [0.0528, 0.0604, -0.6177], 0.03], ['trim', [-0.0644, -0.0947, -0.6565], 0.045], ['fuelSel', [-0.0384, -0.3473, -0.6073], 0.05],
-      ['baro', [-0.1877, 0.303, -0.6812], 0.02], ['hdgKnob', [-0.2162, 0.1859, -0.6844], 0.02], ['direct', [0.1686, 0.3693, -0.6813], 0.03],
-      ['com', [0.1814, 0.2729, -0.6813], 0.025], ['nav1', [0.1872, 0.2221, -0.6782], 0.025], ['vol', [0.1875, 0.1517, -0.6844], 0.025], ['ap', [0.1878, 0.0706, -0.6792], 0.025]].map(([a, p, r]) => ({ a, p, r: r || 0.011 })),
-    credit: '3D コックピット：“Cessna 172 G1000 Cockpit” by davidpineda021199・“cessna skyhawk Cockpit” by Shady Tex（Sketchfab）CC BY 4.0',
+    credit: '3D コックピット：“Cessna 172 G1000 Cockpit” by davidpineda021199（Sketchfab）CC BY 4.0（計器盤はシム内で描画）',
   },
   b789: {
     url: 'models/cockpits/boeing_787_dreamliner_cockpit.glb', eye: [-0.5, 1.33, -1.05], s: 1, rot: 0, keep: 3.5,
@@ -10913,7 +10909,11 @@ const CP_REAL = {
     // the mode control panel, the gear lever, the throttle quadrant (rays cast from renders)
     hot: [['spdKnob', [-0.1224, 0.8783, -2.0054], 0.025], ['hdgKnob', [-0.0137, 0.8798, -2.0057], 0.025], ['altKnob', [0.1112, 0.8731, -2.0164], 0.025], ['ap', [-0.065, 0.9086, -2.0259], 0.02],
       ['baro', [-0.3397, 0.9116, -2.0267], 0.02], ['gear', [-0.0346, 0.6833, -2.0566], 0.03], ['throttle', [-0.0273, 0.6725, -1.5553], 0.05], ['flaps', [0.0805, 0.5661, -1.4969], 0.035],
-      ['fuelLever', [-0.0291, 0.5231, -1.4817], 0.02], ['fuelLever', [0.0219, 0.5237, -1.4856], 0.02], ['pbrake', [-0.1718, 0.479, -1.514], 0.03]].map(([a, p, r]) => ({ a, p, r })),
+      ['fuelLever', [-0.0291, 0.5231, -1.4817], 0.02], ['fuelLever', [0.0219, 0.5237, -1.4856], 0.02], ['pbrake', [-0.1718, 0.479, -1.514], 0.03],
+      // the overhead panel's buttons (the model's plain keys: each given one of the switches)
+      ['bat', [-0.4115, 1.4107, -1.0629], 0.03], ['beacon', [-0.3034, 1.4421, -1.1362], 0.025], ['strobe', [-0.2504, 1.4414, -1.1393], 0.025], ['navl', [-0.3039, 1.4244, -1.2046], 0.025],
+      ['land', [-0.1089, 1.4233, -1.2097], 0.02], ['taxi', [-0.1627, 1.4399, -1.1414], 0.02], ['pump', [-0.1741, 1.4083, -1.2753], 0.018],
+      ['engStart', [-0.246, 1.4137, -1.2205], 0.018], ['engStart', [-0.1298, 1.3945, -1.31], 0.016]].map(([a, p, r]) => ({ a, p, r })),
     credit: '3D コックピット：“Boeing 787 Dreamliner Cockpit” by ElijahPD7000（Sketchfab）CC BY 4.0',
   },
   a320: {
@@ -10922,6 +10922,7 @@ const CP_REAL = {
     screens: [{ c: [-0.1355, 0.0714, 0.4063], w: 0.044, h: 0.043, tilt: 0.285, src: 'pfdL' }, { c: [-0.0821, 0.0714, 0.4062], w: 0.044, h: 0.043, tilt: 0.285, src: 'ndL' },
       { c: [0.013, 0.0725, 0.4059], w: 0.046, h: 0.045, tilt: 0.285, src: 'eicas' }, { c: [0.0134, 0.037, 0.4300], w: 0.046, h: 0.045, tilt: -0.28, src: 'sd' },
       { c: [0.1045, 0.0712, 0.4059], w: 0.044, h: 0.043, tilt: 0.285, src: 'ndR' }, { c: [0.1576, 0.0712, 0.4059], w: 0.044, h: 0.043, tilt: 0.285, src: 'pfdR' }],
+    still: ['throttle'],                                            // (no separate lever grips in the model)
     // the FCU on the glareshield, the gear lever, the pedestal (rays cast from renders)
     hot: [['ap', [0.0019, 0.1434, 0.476], 0.0035], ['nav', [-0.0005, 0.1387, 0.4776], 0.003], ['apr', [0.0105, 0.1382, 0.478], 0.003], ['spdKnob', [-0.0229, 0.145, 0.4771], 0.004],
       ['hdgKnob', [-0.0141, 0.1458, 0.4804], 0.004], ['altKnob', [0.0088, 0.1453, 0.4779], 0.004], ['vs', [0.0221, 0.1453, 0.4777], 0.004], ['baro', [-0.0619, 0.1449, 0.4827], 0.004],
@@ -10942,7 +10943,13 @@ const CP_REAL = {
       ['hdgKnob', [0.0353, 2.0495, 1.4199], 0.012], ['hdg', [0.0332, 2.035, 1.4304], 0.008], ['apr', [0.0119, 2.035, 1.4304], 0.008], ['altKnob', [-0.0049, 2.0491, 1.4215], 0.012],
       ['alt', [-0.0228, 2.035, 1.4304], 0.008], ['vs', [-0.0394, 2.0427, 1.424], 0.012], ['ap', [-0.075, 2.04, 1.426], 0.012],
       ['gear', [-0.0699, 1.8653, 1.409], 0.02], ['throttle', [-0.0038, 1.8686, 1.1872], 0.03], ['flaps', [-0.0429, 1.8579, 1.3035], 0.02], ['pbrake', [0.0636, 1.7725, 1.1718], 0.015],
-      ['fuelLever', [-0.0289, 1.7727, 1.1712], 0.01], ['fuelLever', [-0.0364, 1.7786, 1.1642], 0.01], ['extinguisher', [0.0035, 1.7637, 1.1239], 0.02], ['bat', [0.099, 2.3251, 1.1493], 0.015]].map(([a, p, r]) => ({ a, p, r })),
+      ['fuelLever', [-0.0289, 1.7727, 1.1712], 0.01], ['fuelLever', [-0.0364, 1.7786, 1.1642], 0.01], ['extinguisher', [0.0035, 1.7637, 1.1239], 0.02], ['bat', [0.099, 2.3251, 1.1493], 0.015],
+      // the forward overhead: landing / turnoff / taxi lights, fuel pumps, engine start switches, exterior lights
+      ['land', [0.1669, 2.2464, 1.3084]], ['land', [0.1531, 2.2467, 1.3089]], ['land', [0.1343, 2.2472, 1.3095]], ['land', [0.1207, 2.2466, 1.3087]],
+      ['land', [0.1024, 2.2473, 1.3109]], ['land', [0.0848, 2.2462, 1.3112]], ['taxi', [0.0671, 2.2458, 1.3115]],
+      ['pump', [0.1954, 2.2634, 1.27]], ['pump', [0.179, 2.2629, 1.2702]], ['pump', [0.1546, 2.2625, 1.2703]], ['pump', [0.1396, 2.2634, 1.2719]],
+      ['engStart', [0.0245, 2.2458, 1.3147], 0.014], ['engStart', [-0.0456, 2.2437, 1.3116], 0.014],
+      ['navl', [-0.0932, 2.2457, 1.3124]], ['strobe', [-0.1152, 2.2461, 1.3121]], ['beacon', [-0.1382, 2.2462, 1.313]], ['navl', [-0.1555, 2.2455, 1.3103]]].map(([a, p, r]) => ({ a, p, r: r || 0.008 })),
     credit: '3D コックピット：“Boeing 737-800 Cockpit” by hakai315（Sketchfab）CC BY 4.0',
   },
 };
@@ -10998,8 +11005,15 @@ function cpRealGet(D) {
     const mx = e[0] + (c * x + n * z) / s, my = e[1] + y / s, mz = e[2] + (-n * x + c * z) / s;
     return L.some(b => mx > b[0] && my > b[1] && mz > b[2] && mx < b[3] && my < b[4] && mz < b[5]);
   };
+  // each live control is cut out as its own moving part ('h:<index into D.hot>'): by the model's part name,
+  // or the triangles within a little of its centre
+  const hs = (D.hot || []).map((H, i) => ({ i, n: H.n, c: H.p ? cpRealPt(D, H.p) : null, r2: ((H.r || 0.011) * (D.s || 1) * (H.a === 'fuelSel' ? 0.45 : 0.85)) ** 2, a: H.a })).filter(h => !(D.still || []).includes(h.a));
+  const hot = (x, y, z, nm) => {
+    for (const h of hs) if (h.n ? nm === h.n : (x - h.c[0]) ** 2 + (y - h.c[1]) ** 2 + (z - h.c[2]) ** 2 < h.r2) return 'h:' + h.i;
+    return 0;
+  };
   return glbGet(D.url, { key: D.key, split: D.split, xf: cpRealXf(D), pivot: () => [0, 0, 0],
-    part: k || D.drop || D.yokes ? (x, y, z, mat) => ((k && (Math.abs(x) > k || Math.abs(y) > k || z > k || z < -k * 1.4)) || (inBox(D.drop, x, y, z) && !(D.split && D.split.includes(mat))) ? -1 : inBox(D.yokes, x, y, z) ? 1 : 0) : null });
+    part: (x, y, z, mat, nm) => ((k && (Math.abs(x) > k || Math.abs(y) > k || z > k || z < -k * 1.4)) || (inBox(D.drop, x, y, z) && !(D.split && D.split.includes(mat))) ? -1 : inBox(D.yokes, x, y, z) ? 1 : D.split && D.split.includes(mat) ? 0 : hot(x, y, z, nm)) });
 }
 function cpRealToggle() {
   if (!cpRealDef(ACFT)) { toast('この機体には 3D モデルのコックピットがありません', 1800); return; }
@@ -11041,6 +11055,15 @@ function cpLayout(A) {
   }
   // the pilot's position on the main panel canvas (the primary instruments go in front of it)
   L.px = L.seat ? (L.seat + L.pw / 2) / L.pw * CP_REG.main[0] : (L.deck === 'light' ? 760 : 1024);
+  // a 3D cabin with the sim's own panel in it: the panel surface where the model says, the pilot's place on it
+  const RD = real && cpRealDef(A);
+  L.realPanel = !!(RD && RD.panel);
+  if (L.realPanel) {
+    const P = RD.panel, w = P.w, h = w * CP_REG.main[1] / CP_REG.main[0], c = vadd(cpRealPt(RD, P.c), L.E);
+    L.pw = w; L.ph = h;
+    S.main = { o: [c[0] - w / 2, c[1] + h / 2, c[2]], u: [w, 0, 0], v: [0, -h, 0], shade: 0 };
+    L.px = (L.E[0] - S.main.o[0]) / w * CP_REG.main[0];
+  }
   A.cpL = L;
   return L;
 }
@@ -11218,6 +11241,12 @@ function cpBuild(A) {
       const uv = new Float32Array([u0, v0, u1, v0, u1, v1, u0, v0, u1, v1, u0, v1]);
       const v = makeVAO([{ loc: 0, size: 3, data: pos }, { loc: 1, size: 2, data: uv }]); v.count = 6; rquads.push(v);
     }
+    // the sim's own panel in the cabin: the whole canvas on its surface
+    if (L.realPanel) {
+      const S2 = L.S.main, p = [S2.o, vadd(S2.o, S2.u), vadd(vadd(S2.o, S2.u), S2.v), vadd(S2.o, S2.v)];
+      const v = makeVAO([{ loc: 0, size: 3, data: new Float32Array([...p[0], ...p[1], ...p[2], ...p[0], ...p[2], ...p[3]]) }, { loc: 1, size: 2, data: new Float32Array([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1]) }]);
+      v.count = 6; rquads.push(v);
+    }
     // round live instruments over a photographed panel's dials (the canvas's six-pack, drawn by mainLight)
     if (D.dials) {
       const X = cpExtraM(D.extra), cols = [L.px - 170, L.px, L.px + 170, L.px + 340], rows = [168, 344], R = D.dials.r * D.extra.s;
@@ -11329,9 +11358,10 @@ function cpDrawReal(A, L, C, real, base) {
   // the yokes turn with the ailerons and slide in and out with the elevator
   const s = sim, yoke = d => {
     if (typeof d.part === 'number') return M4.ident();                  // (a column cut out by a box: shown or hidden, not moved)
+    if (d.part.startsWith('h:')) return cpHotMove(+d.part.slice(2), L);  // a switch, knob or lever
     const c = d.center; return M4.mul(M4.fromQP(qaxis([0, 0, 1], -s.ail * 0.75), [c[0], c[1], c[2] + s.elev * 0.07]), M4.fromQP([0, 0, 0, 1], vscale(c, -1)));
   };
-  glbDraw(real.m, M, [1.1, night ? 2.4 : 1.8, 1], CPIT.yoke ? yoke : () => new Float32Array(16));                 // (Y hides them: a zero matrix)
+  glbDraw(real.m, M, [1.1, night ? 2.4 : 1.8, 1], d => d.part && typeof d.part === 'string' && d.part.startsWith('h:') ? yoke(d) : CPIT.yoke ? yoke(d) : new Float32Array(16));   // (Y hides the yokes: a zero matrix)
   if (real.x) glbDraw(real.x, M, [1.1, night ? 2.4 : 1.8, 1]);
   if (!CPIT.prog) CPIT.prog = makeProgram(CPANEL_VS, CPANEL_FS);
   const pr = CPIT.prog; setCommon(pr);
@@ -11985,12 +12015,16 @@ function ovhPanel(g, L, T) {
 // ---------------------------------------------------------------------
 function cpHit(clientX, clientY) {
   if (!cpActive() || !ACFT.cp) return null;
-  if (ACFT.cp.L.real) return typeof cpHotHit === 'function' ? cpHotHit(clientX, clientY) : null;   // (the 3D model's own controls)
+  if (ACFT.cp.L.real) {                                             // (the 3D model's own controls)
+    const hot = typeof cpHotHit === 'function' ? cpHotHit(clientX, clientY) : null;
+    if ((hot && hot.h) || !ACFT.cp.L.realPanel) return hot;
+  }
   const r = glCanvas.getBoundingClientRect(), nx = (clientX - r.left) / r.width * 2 - 1, ny = 1 - (clientY - r.top) / r.height * 2;
   const d = vnorm(vadd(R.camF, vadd(vscale(R.camR, nx * R.tanX), vscale(R.camU, ny * R.tanY))));
   const qi = qconj(sim.q), o = qrot(qi, vsub(cam.eye, sim.pos)), db = qrot(qi, d), L = ACFT.cp.L;
   let best = null;
   for (const k in L.S) {
+    if (L.realPanel && k !== 'main') continue;                      // (only the panel is drawn in the 3D cabin)
     const S = L.S[k], n = vcross(S.u, S.v), den = vdot(db, n);
     if (Math.abs(den) < 1e-6) continue;
     const t = vdot(vsub(S.o, o), n) / den; if (t <= 0 || (best && t >= best.t)) continue;
@@ -12121,7 +12155,9 @@ function cpHotList() {
   const D = real.D, key = ACFT.id + (D.key || '') + L.E.join(',');
   if (CPHOT.key === key && CPHOT.list) return CPHOT.list;
   const out = [], xf = cpRealXf(D), xx = D.extra ? cpExtraXf(D) : null;
-  for (const H of D.hot || []) {
+  CPHOT.byIdx = {};
+  for (let hi = 0; hi < (D.hot || []).length; hi++) {
+    const H = D.hot[hi];
     let c, r = H.r || 0.022;
     if (H.n) {
       const B = real.m.boxes && real.m.boxes[H.n]; if (!B) continue;
@@ -12131,7 +12167,11 @@ function cpHotList() {
     if (H.r && H.x) r = H.r * (D.extra.s || 1);
     else if (H.r && !H.n) r = H.r * (D.s || 1);
     const h = cpHotAct(H.a); if (!h) continue;
-    out.push({ c: vadd(L.E, c), r, a: H.a, h: Object.assign({ key: 'hot:' + H.a + out.length }, h) });
+    // (each use is remembered, for the part's press / turn animation)
+    const o = { c: vadd(L.E, c), e: c, r, a: H.a, i: hi, t: -9, turn: 0, h: Object.assign({ key: 'hot:' + H.a + out.length }, h) };
+    const mark = (f, dt) => f && ((...a) => { o.t = R.time; if (dt) o.turn += dt(...a); return f(...a); });
+    o.h.click = mark(h.click, () => 1); o.h.down = mark(h.down); o.h.wheel = mark(h.wheel, d => d); o.h.drag = mark(h.drag, dv => -dv / 40);
+    out.push(o); CPHOT.byIdx[hi] = o;
   }
   CPHOT.key = key; CPHOT.list = out;
   CPIT.reg.real = { hs: out.map(o => o.h) };
@@ -12171,6 +12211,31 @@ function cpHotDraw(g) {
   if (!CPIT.mx) return;
   const hit = cpHotHit(CPIT.mx, CPIT.my); if (!hit || !hit.H) return;
   cpHotRing(g, hit.H, 'rgba(95,212,255,0.95)');
+}
+
+// how a control's part moves (in the cockpit's frame, metres): buttons and switches press in when used and
+// toggles sit up when ON, knobs turn, levers slide with what they set, the key and selectors rotate
+const CP_KNOBS = new Set(['hdgKnob', 'altKnob', 'spdKnob', 'baro', 'com', 'nav1', 'vol', 'vs']);
+const CP_TOGGLE = { bat: () => SYS.bat, altn: () => SYS.alt, avio: () => SYS.avio, pump: () => SYS.pump, beacon: () => SYS.beacon, land: () => SYS.land,
+  taxi: () => SYS.taxi, navl: () => SYS.nav, strobe: () => SYS.strobe, master: () => SYS.bat && SYS.alt, fuelLever: () => SYS.fuelOn, engStart: () => SYS.start };
+function cpHotMove(i, L) {
+  cpHotList();
+  const o = CPHOT.byIdx && CPHOT.byIdx[i]; if (!o) return M4.ident();
+  const c = o.e, a = o.a, s = sim, dl = vlen(c) || 1, toward = [c[0] / dl, c[1] / dl, c[2] / dl];   // (from the eye to it)
+  const pulse = clamp(1 - (R.time - o.t) / 0.22, 0, 1), lever = (ACFT.cp && ACFT.cp.L.deck === 'airliner');
+  const T = v => M4.fromQP([0, 0, 0, 1], v);
+  const rot = (axis, ang) => M4.mul(M4.fromQP(qaxis(axis, ang), c), T([-c[0], -c[1], -c[2]]));
+  if (CP_KNOBS.has(a)) return M4.mul(T(vscale(toward, 0.002 * pulse)), rot(toward, o.turn * 0.35));
+  if (a === 'key') return rot(toward, (SYS.mags + (SYS.startHeld ? 0.6 : 0)) * 0.55);
+  if (a === 'fuelSel') return rot([0, 1, 0], (SYS.fuelSel - 3) * Math.PI / 4);        // (BOTH as modelled)
+  if (a === 'trim') return rot([1, 0, 0], s.trim * 6);
+  if (a === 'throttle') return T(lever ? [0, 0.01 * s.thr, -0.09 * s.thr] : [0, 0, -0.06 * (1 - s.thr) * -1 - 0.0]);
+  if (a === 'mixture') return T([0, 0, 0.05 * (1 - SYS.mix)]);
+  if (a === 'flaps') { const st = flapStops(), f = st.indexOf(s.flapIdx) / Math.max(st.length - 1, 1); return T(lever ? [0, -0.01 * f, 0.07 * f] : [0, -0.03 * f, 0]); }
+  if (a === 'gear') return T([0, s.gearDown ? -0.012 : 0.012, 0]);
+  if (a === 'pbrake') return T(vscale(toward, SYS.pbrake ? -0.02 : 0));
+  if (CP_TOGGLE[a]) return T([0, CP_TOGGLE[a]() ? 0.0035 : -0.002, 0].map((v, k) => v + toward[k] * 0.003 * pulse));
+  return T(vscale(toward, 0.0035 * pulse));                          // a push button
 }
 // =====================================================================
 //  ENGINE START GUIDE: one step at a time, in the cockpit. Each step
@@ -12507,7 +12572,7 @@ async function glbLoad(buf, opt = {}) {
       for (let t = 0; t < I.length; t += 3) {
         const i0 = I[t], i1 = I[t + 1], i2 = I[t + 2];
         let part = 0;
-        if (opt.part) part = opt.part((W[i0 * 3] + W[i1 * 3] + W[i2 * 3]) / 3, (W[i0 * 3 + 1] + W[i1 * 3 + 1] + W[i2 * 3 + 1]) / 3, (W[i0 * 3 + 2] + W[i1 * 3 + 2] + W[i2 * 3 + 2]) / 3, mname);
+        if (opt.part) part = opt.part((W[i0 * 3] + W[i1 * 3] + W[i2 * 3]) / 3, (W[i0 * 3 + 1] + W[i1 * 3 + 1] + W[i2 * 3 + 1]) / 3, (W[i0 * 3 + 2] + W[i1 * 3 + 2] + W[i2 * 3 + 2]) / 3, mname, nm);
         if (part < 0) continue;                                          // (dropped: stray parts)
         const gk = mi + '/' + (sep ? 'n' + ni : part);
         let g = groups.get(gk); if (!g) { g = { mi, part, sep, pos: [], nrm: [], uv: [], idx: [], map: new Map() }; groups.set(gk, g); }

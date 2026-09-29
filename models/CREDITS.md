@@ -1,7 +1,23 @@
 # 3D model credits
 
-- `c172_g1000_cockpit.glb` — "Cessna 172 G1000 Cockpit" by davidpineda021199
-  (https://sketchfab.com/davidpineda021199), from
-  https://sketchfab.com/3d-models/cessna-172-g1000-cockpit-a010952309d1455cab22fea77f947f42 ,
-  licensed under CC BY 4.0 (http://creativecommons.org/licenses/by/4.0/).
-  Used unmodified as a file; the simulator colours its materials and shows its live displays on the screens.
+All models are from Sketchfab and licensed under CC BY 4.0
+(http://creativecommons.org/licenses/by/4.0/). They were reduced for the simulator
+(fewer triangles, WebP textures, unused data removed, the A320 cropped to its flight
+deck); the simulator also recolours some materials and shows its own live displays on
+the cockpit screens.
+
+## Cockpits
+- `c172_g1000_cockpit.glb` — "Cessna 172 G1000 Cockpit" by davidpineda021199 — https://sketchfab.com/3d-models/cessna-172-g1000-cockpit-a010952309d1455cab22fea77f947f42
+- `cockpits/a320_cockpit_2.glb` — "A320 Cockpit 2" by davidmarton1987 — https://sketchfab.com/davidmarton1987
+- `cockpits/boeing_737-800_cockpit.glb` — "Boeing 737-800 Cockpit" by hakai315 — https://sketchfab.com/hakai315
+- `cockpits/boeing_787_dreamliner_cockpit.glb` — "Boeing 787 Dreamliner Cockpit" by ElijahPD7000 — https://sketchfab.com/Eli-jah.Prince.Davies
+
+## Cars (each also as a lighter `_lo` version for the traffic)
+- `cars/toyota_gr_supra.glb` — "Toyota GR Supra" by thelightning — https://sketchfab.com/thelightning
+- `cars/nissan_skyline_gtr_r35.glb` — "Nissan Skyline GTR r35" by Black Snow — https://sketchfab.com/BlackSnow02
+- `cars/honda_civic_type_r_-98_free_asset.glb` — "Honda Civic Type R -98 (Free Asset)" by tiedtke — https://sketchfab.com/tiedtke
+- `cars/mazda_miata_mx-5.glb` — "Mazda Miata mx-5" by Black Snow — https://sketchfab.com/BlackSnow02
+- `cars/nissan_s15_drift_free.glb` — "Nissan S15 Drift [FREE]" by autoNgraphic — https://sketchfab.com/autoNgraphic
+- `cars/toyota_ae86_black_limited_kouki.glb` — "Toyota AE86 Black Limited Kouki" by Martin Trafas — https://sketchfab.com/Bexxie
+- `cars/nissan_skyline_gt-r_c110_kenmeri_73.glb` — "Nissan Skyline GT-R C110 Kenmeri '73" by Martin Trafas — https://sketchfab.com/Bexxie
+- `cars/lexus_lc-500.glb` — "Lexus LC-500" by Socksthecat — https://sketchfab.com/Socksthecat

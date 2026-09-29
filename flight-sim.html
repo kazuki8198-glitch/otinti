@@ -10373,17 +10373,40 @@ void main(){ vec3 c = texture(uTex, vUV).rgb; float sh = mix(1.0, smoothstep(0.0
 // ---------------------------------------------------------------------
 // ---------------------------------------------------------------------
 //  a ready-made 3D cockpit model (GLB) where there is one: it replaces the built interior, and the live
-//  displays are shown on its screens. `eye` is the pilot's eye in the model's own coordinates (y up,
-//  forward -z, metres); the screens are rectangles in those coordinates mapped to parts of the panel canvas
+//  displays are shown on its screens. `eye` is the pilot's eye in the model's own coordinates; s scales the
+//  model to metres and rot turns it (by that angle about y) so its nose points to -z; keep: parts further
+//  than this from the eye are left out (an aircraft's outside, which the sim draws itself); the screens are
+//  rectangles in the model's coordinates (facing the pilot) that show parts of the panel canvas
 // ---------------------------------------------------------------------
 const CP_REAL = {
   c172: {
-    url: 'models/c172_g1000_cockpit.glb', split: ['YOKE'], eye: [-0.2575, 0.56, -0.02],
+    url: 'models/c172_g1000_cockpit.glb', split: ['YOKE'], eye: [-0.2575, 0.56, -0.02], s: 1, rot: 0,
     screens: [{ c: [-0.2575, 0.324, -0.679], w: 0.229, h: 0.172, src: 'pfd' }, { c: [0.1135, 0.324, -0.679], w: 0.229, h: 0.172, src: 'mfd' }],
     // the model has no colours of its own: paint it like a C172's cabin (by material name)
     tint: { material_0: [0.15, 0.155, 0.16], Material: [0.09, 0.09, 0.1], mat008: [0.12, 0.12, 0.13], 'mat001.001': [0.44, 0.42, 0.39], YOKE: [0.1, 0.1, 0.11],
       G1000_RH: [0.08, 0.08, 0.09], 'Material.001': [0.01, 0.01, 0.012], AIRSPEED: [0.05, 0.05, 0.05], ALTIMETER: [0.05, 0.05, 0.05], HORIZON: [0.05, 0.05, 0.05], '*': [0.06, 0.06, 0.065] },
     credit: '3D コックピット：“Cessna 172 G1000 Cockpit” by davidpineda021199（Sketchfab）CC BY 4.0',
+  },
+  b789: {
+    url: 'models/cockpits/boeing_787_dreamliner_cockpit.glb', eye: [-0.5, 1.33, -1.05], s: 1, rot: 0, keep: 3.5,
+    drop: [[-0.66, 1.12, -1.68, -0.26, 1.56, -1.44], [0.26, 1.12, -1.68, 0.66, 1.56, -1.44]], glass: ['787_Glass'],      // the HUD glasses (drawn opaque in the file)
+    screens: [{ c: [-0.5745, 0.6895, -2.063], w: 0.295, h: 0.215, src: 'pfdL' }, { c: [-0.2285, 0.6895, -2.063], w: 0.295, h: 0.215, src: 'ndL' }, { c: [0.226, 0.6895, -2.063], w: 0.295, h: 0.215, src: 'ndR' }, { c: [0.5715, 0.6895, -2.063], w: 0.295, h: 0.215, src: 'pfdR' }],
+    credit: '3D コックピット：“Boeing 787 Dreamliner Cockpit” by ElijahPD7000（Sketchfab）CC BY 4.0',
+  },
+  a320: {
+    url: 'models/cockpits/a320_cockpit_2.glb', eye: [-0.125, 0.225, 0.69], s: 4.3, rot: 0, keep: 3.2, glass: ['m0mat_007'],
+    // (positions found by casting rays from the eye onto the model through the screens seen in a render)
+    screens: [{ c: [-0.1355, 0.0714, 0.4063], w: 0.044, h: 0.043, tilt: 0.285, src: 'pfdL' }, { c: [-0.0821, 0.0714, 0.4062], w: 0.044, h: 0.043, tilt: 0.285, src: 'ndL' },
+      { c: [0.013, 0.0725, 0.4059], w: 0.046, h: 0.045, tilt: 0.285, src: 'eicas' }, { c: [0.0134, 0.037, 0.4300], w: 0.046, h: 0.045, tilt: -0.28, src: 'sd' },
+      { c: [0.1045, 0.0712, 0.4059], w: 0.044, h: 0.043, tilt: 0.285, src: 'ndR' }, { c: [0.1576, 0.0712, 0.4059], w: 0.044, h: 0.043, tilt: 0.285, src: 'pfdR' }],
+    credit: '3D コックピット：“A320 Cockpit 2” by davidmarton1987（Sketchfab）CC BY 4.0',
+  },
+  b738: {
+    url: 'models/cockpits/boeing_737-800_cockpit.glb', eye: [0.28, 2.15, 1.06], s: 2.1, rot: Math.PI, keep: 4,
+    yokes: [[0.16, 1.58, 1.18, 0.42, 2.13, 1.38], [-0.42, 1.58, 1.18, -0.16, 2.13, 1.38]],
+    screens: [{ c: [0.303, 1.905, 1.452], w: 0.1, h: 0.1, src: 'pfdL' }, { c: [0.182, 1.905, 1.452], w: 0.1, h: 0.1, src: 'ndL' }, { c: [-0.018, 1.905, 1.452], w: 0.1, h: 0.1, src: 'eicas' },
+      { c: [-0.176, 1.905, 1.452], w: 0.1, h: 0.1, src: 'ndR' }, { c: [-0.306, 1.905, 1.452], w: 0.1, h: 0.1, src: 'pfdR' }],
+    credit: '3D コックピット：“Boeing 737-800 Cockpit” by hakai315（Sketchfab）CC BY 4.0',
   },
 };
 try { CPIT.real = localStorage.getItem('sorajima-cpreal') !== '0'; } catch (e) { CPIT.real = true; }
@@ -10391,19 +10414,42 @@ try { CPIT.real = localStorage.getItem('sorajima-cpreal') !== '0'; } catch (e) {
 function cpReal(A) {
   const D = CP_REAL[A.id];
   if (!D || !CPIT.real || (typeof EG !== 'undefined' && EG.on) || typeof glbGet !== 'function') return null;
-  const g = glbGet(D.url, { split: D.split });
+  const g = cpRealGet(D);
   if (g.state !== 'ok') return null;
-  if (D.tint && !g.model.tinted) {
+  if ((D.tint || D.glass) && !g.model.tinted) {
     g.model.tinted = true;
-    for (const d of g.model.draws) if (!d.mat.tex) { const c = D.tint[d.mat.name] || D.tint['*']; if (c) d.mat.color = [...c, 1]; d.mat.rough = d.mat.name === 'Material.001' ? 0.1 : 0.75; d.mat.metal = 0; }
+    if (D.tint) for (const d of g.model.draws) if (!d.mat.tex) { const c = D.tint[d.mat.name] || D.tint['*']; if (c) d.mat.color = [...c, 1]; d.mat.rough = d.mat.name === 'Material.001' ? 0.1 : 0.75; d.mat.metal = 0; }
+    // window glass that the file has as an opaque colour: made clear, with a faint tint
+    if (D.glass) for (const d of g.model.draws) if (D.glass.includes(d.mat.name)) { d.mat.color = [0.55, 0.62, 0.66, 0.1]; d.mat.blend = true; d.mat.rough = 0.05; d.mat.metal = 0; }
+    g.model.draws.sort((a, b) => a.mat.blend - b.mat.blend);
   }
   return { D, m: g.model };
 }
+// model -> the cockpit's frame with the eye at the origin
+function cpRealXf(D) {
+  const s = D.s || 1, c = Math.cos(D.rot || 0), n = Math.sin(D.rot || 0), e = D.eye;
+  const R = [c * s, 0, -n * s, 0, 0, s, 0, 0, n * s, 0, c * s, 0, 0, 0, 0, 1];
+  return M4.mul(R, M4.fromQP([0, 0, 0, 1], [-e[0], -e[1], -e[2]]));
+}
+const cpRealPt = (D, p) => { const m = cpRealXf(D); return [m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]]; };
+function cpRealGet(D) {
+  const k = D.keep, s = D.s || 1, c = Math.cos(D.rot || 0), n = Math.sin(D.rot || 0), e = D.eye;
+  // drop: boxes in the model's own coordinates ([x0, y0, z0, x1, y1, z1]) whose parts are left out (an opaque
+  // HUD glass in front of the eye)
+  // yokes: boxes (the same way) around the control columns, which Y hides
+  const inBox = (L, x, y, z) => {
+    if (!L) return false;
+    const mx = e[0] + (c * x + n * z) / s, my = e[1] + y / s, mz = e[2] + (-n * x + c * z) / s;
+    return L.some(b => mx > b[0] && my > b[1] && mz > b[2] && mx < b[3] && my < b[4] && mz < b[5]);
+  };
+  return glbGet(D.url, { split: D.split, xf: cpRealXf(D), pivot: () => [0, 0, 0],
+    part: k || D.drop || D.yokes ? (x, y, z) => ((k && (Math.abs(x) > k || Math.abs(y) > k || z > k || z < -k * 1.4)) || inBox(D.drop, x, y, z) ? -1 : inBox(D.yokes, x, y, z) ? 1 : 0) : null });
+}
 function cpRealToggle() {
-  if (!CP_REAL[ACFT.id]) { toast('この機体には 3D モデルのコックピットがありません（C172 のみ）', 1800); return; }
+  if (!CP_REAL[ACFT.id]) { toast('この機体には 3D モデルのコックピットがありません', 1800); return; }
   CPIT.real = !CPIT.real; CPIT.dirty = true;
   try { localStorage.setItem('sorajima-cpreal', CPIT.real ? '1' : '0'); } catch (e) { /* ignore */ }
-  const g = CPIT.real ? glbGet(CP_REAL[ACFT.id].url, { split: CP_REAL[ACFT.id].split }) : null;
+  const g = CPIT.real ? cpRealGet(CP_REAL[ACFT.id]) : null;
   toast(!CPIT.real ? '操作できるパネルのコックピット（スイッチをクリックで操作）' : g.state === 'error' ? '3D モデルを読み込めませんでした（オンラインで開いたときに使えます）' : '3D モデルのコックピット（Shift+Y で操作できるパネルに切替）', 2400);
 }
 function cpLayout(A) {
@@ -10599,12 +10645,19 @@ function cpBuild(A) {
   // the 3D model's screens: quads just in front of them, showing the PFD / MFD parts of the panel canvas
   const rquads = [];
   if (L.real) {
-    const D = CP_REAL[A.id], off = vsub(L.E, D.eye), [CW, CH] = CP_REG.main;
-    const src = { pfd: [L.px - 215, 26, 430, 300], mfd: [L.px + 303, 26, 540, 300] };
+    const D = CP_REAL[A.id], [CW, CH] = CP_REG.main, S = 300, lx = Math.max(24, L.px - 310), fo = 2048 - lx - S;
+    // where each display is drawn on the panel canvas (see mainGlassGA and mainAirliner)
+    const src = { pfd: [L.px - 215, 26, 430, 300], mfd: [L.px + 303, 26, 540, 300],
+      pfdL: [lx, 62, S, S], ndL: [lx + S + 20, 62, S, S], eicas: [1024 - S / 2, 56, S, S], sd: [1024 - S / 2, 368, S, 200], ndR: [fo - S - 20, 62, S, S], pfdR: [fo, 62, S, S] };
     for (const sc of D.screens) {
-      const c = vadd(sc.c, off), hw = sc.w / 2, hh = sc.h / 2, zc = c[2] + 0.003;
-      const p = [[c[0] - hw, c[1] + hh, zc], [c[0] + hw, c[1] + hh, zc], [c[0] + hw, c[1] - hh, zc], [c[0] - hw, c[1] - hh, zc]];
-      const [sx, sy, sw, sh] = src[sc.src], u0 = sx / CW, u1 = (sx + sw) / CW, v0 = sy / CH, v1 = (sy + sh) / CH;
+      // tilt: the screen leans back by this angle (its top further from the pilot)
+      const c = vadd(cpRealPt(D, sc.c), L.E), hw = sc.w * (D.s || 1) / 2, hh = sc.h * (D.s || 1) / 2, zc = c[2] + 0.003;
+      const ty = hh * Math.cos(sc.tilt || 0), tz = hh * Math.sin(sc.tilt || 0);
+      const p = [[c[0] - hw, c[1] + ty, zc - tz], [c[0] + hw, c[1] + ty, zc - tz], [c[0] + hw, c[1] - ty, zc + tz], [c[0] - hw, c[1] - ty, zc + tz]];
+      // the part of the canvas cut to the screen's shape (not stretched): the middle of it
+      let [sx, sy, sw, sh] = src[sc.src]; const want = sc.w / sc.h;
+      if (sw / sh > want) { const nw = sh * want; sx += (sw - nw) / 2; sw = nw; } else { const nh = sw / want; sy += (sh - nh) / 2; sh = nh; }
+      const u0 = sx / CW, u1 = (sx + sw) / CW, v0 = sy / CH, v1 = (sy + sh) / CH;
       const pos = new Float32Array([...p[0], ...p[1], ...p[2], ...p[0], ...p[2], ...p[3]]);
       const uv = new Float32Array([u0, v0, u1, v0, u1, v1, u0, v0, u1, v1, u0, v1]);
       const v = makeVAO([{ loc: 0, size: 3, data: pos }, { loc: 1, size: 2, data: uv }]); v.count = 6; rquads.push(v);
@@ -10701,10 +10754,13 @@ function drawCockpit(base) {
 }
 // the 3D model cockpit: the model, then the live screens on it
 function cpDrawReal(A, L, C, real, base) {
-  const M = M4.mul(base, M4.fromQP([0, 0, 0, 1], vsub(L.E, real.D.eye)));
+  const M = M4.mul(base, M4.fromQP([0, 0, 0, 1], L.E));
   const night = ENV.night ? 1 : 0, day = clamp(ENV.sunDir[1] * 5, 0, 1);
   // the yokes turn with the ailerons and slide in and out with the elevator
-  const s = sim, yoke = d => { const c = d.center; return M4.mul(M4.fromQP(qaxis([0, 0, 1], -s.ail * 0.75), [c[0], c[1], c[2] + s.elev * 0.07]), M4.fromQP([0, 0, 0, 1], vscale(c, -1))); };
+  const s = sim, yoke = d => {
+    if (typeof d.part === 'number') return M4.ident();                  // (a column cut out by a box: shown or hidden, not moved)
+    const c = d.center; return M4.mul(M4.fromQP(qaxis([0, 0, 1], -s.ail * 0.75), [c[0], c[1], c[2] + s.elev * 0.07]), M4.fromQP([0, 0, 0, 1], vscale(c, -1)));
+  };
   glbDraw(real.m, M, [1.1, night ? 2.4 : 1.8, 1], CPIT.yoke ? yoke : () => new Float32Array(16));                 // (Y hides them: a zero matrix)
   if (!CPIT.prog) CPIT.prog = makeProgram(CPANEL_VS, CPANEL_FS);
   const pr = CPIT.prog; setCommon(pr);
@@ -10723,7 +10779,7 @@ function cpDrawReal(A, L, C, real, base) {
 // the model's author and licence, shown while it is on screen (CC BY asks for it)
 function cpCredit(t) {
   let el = document.getElementById('cp-credit');
-  if (!el) { el = document.createElement('div'); el.id = 'cp-credit'; el.style.cssText = 'position:fixed;right:8px;bottom:4px;z-index:15;font:500 10px system-ui,sans-serif;color:rgba(235,240,245,.72);text-shadow:0 1px 2px #000;pointer-events:none'; document.body.append(el); }
+  if (!el) { el = document.createElement('div'); el.id = 'cp-credit'; el.style.cssText = 'position:fixed;right:8px;bottom:4px;z-index:15;max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:500 10px system-ui,sans-serif;color:rgba(235,240,245,.72);text-shadow:0 1px 2px #000;pointer-events:none'; document.body.append(el); }
   if (el.textContent !== t) el.textContent = t;
   el.hidden = false; CPIT.creditT = R.time;
 }
@@ -11572,8 +11628,11 @@ function egHud(g) {
 }
 // =====================================================================
 //  GLB (binary glTF 2.0) models: a small loader for ready-made 3D models
-//  (the cockpit interiors). Node transforms are baked into the vertices,
-//  primitives are grouped by material, textures come from the file.
+//  (cockpit interiors and cars). Node transforms are baked into the
+//  vertices; primitives are grouped by material (and by moving part: a
+//  wheel, a yoke) into indexed buffers. PBR materials are approximated:
+//  base colour, metal/roughness, clearcoat (car paint), glass, emission,
+//  with the sky reflected in shiny surfaces.
 // =====================================================================
 const GLB = { prog: null, cache: new Map() };
 const GLB_VS = GLSL_HEAD + `
@@ -11581,30 +11640,56 @@ layout(location=0) in vec3 aPos;
 layout(location=1) in vec3 aNrm;
 layout(location=2) in vec2 aUV;
 uniform mat4 uViewProj, uModel;
+uniform vec3 uCamPos;
+uniform float uCurv;
 out vec3 vWorld; out vec3 vN; out vec2 vUV;
-void main(){ vec4 w = uModel * vec4(aPos, 1.0); vWorld = w.xyz; vN = mat3(uModel) * aNrm; vUV = aUV; gl_Position = uViewProj * w; }`;
-const GLB_FS = GLSL_HEAD + GLSL_COMMON + `
+void main(){
+  vec4 w = uModel * vec4(aPos, 1.0); vWorld = w.xyz; vN = mat3(uModel) * aNrm; vUV = aUV;
+  vec2 d = w.xz - uCamPos.xz; w.y -= dot(d, d) * uCurv;
+  gl_Position = uViewProj * w;
+}`;
+const GLB_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
 in vec3 vWorld; in vec3 vN; in vec2 vUV;
-uniform sampler2D uTex, uEmTex;
-uniform int uHasTex, uHasEm;
+uniform sampler2D uTex, uEmTex, uMRTex;
+uniform int uHasTex, uHasEm, uHasMR;
 uniform vec4 uColor;
-uniform vec3 uEmis, uLightK;
-uniform float uCut, uRough, uMetal;
+uniform vec3 uEmis, uLightK;           // sun, ambient, emission multipliers
+uniform float uCut, uRough, uMetal, uCoat, uEnv, uFog, uShadow;
 out vec4 outColor;
 void main(){
   vec4 c = uColor; if (uHasTex == 1) c *= texture(uTex, vUV);
   if (c.a < uCut) discard;
+  float rough = uRough, metal = uMetal;
+  if (uHasMR == 1) { vec4 mr = texture(uMRTex, vUV); rough *= mr.g; metal *= mr.b; }
+  rough = clamp(rough, 0.04, 1.0);
   vec3 n = normalize(vN); if (!gl_FrontFacing) n = -n;
   vec3 V = normalize(uCamPos - vWorld);
-  // inside a cabin: the sun through the windows plus the sky's light, and a little sheen on smooth parts
-  float diff = max(dot(n, uSunDir), 0.0);
+  float NV = max(dot(n, V), 0.0);
+  float sh = uShadow > 0.5 ? planeShadow(vWorld.xz) : 1.0;
+  float diff = max(dot(n, uSunDir), 0.0) * sh;
   vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
-  vec3 col = c.rgb * (uSunCol * diff * 0.55 * uLightK.x + amb * 0.95 * uLightK.y);
+  vec3 base = c.rgb;
+  vec3 col = base * (1.0 - metal) * (uSunCol * diff * 0.8 * uLightK.x + amb * 0.95 * uLightK.y);
+  // specular: the sun, and the sky (or the ground below the horizon) reflected, more on smooth parts
+  vec3 F0 = mix(vec3(0.04), base, metal);
+  vec3 F = F0 + (1.0 - F0) * pow(1.0 - NV, 5.0) * (1.0 - rough);
   vec3 H = normalize(V + uSunDir);
-  float sp = pow(max(dot(n, H), 0.0), mix(80.0, 8.0, uRough)) * (1.0 - uRough) * 0.5;
-  col += uSunCol * sp * mix(vec3(0.04), c.rgb, uMetal) * uLightK.x;
+  float shin = 2.0 / (rough * rough * rough * rough) + 2.0;
+  float sp = pow(max(dot(n, H), 0.0), min(shin, 4000.0)) * (shin + 8.0) / 25.0 * diff;
+  col += uSunCol * sp * F * uLightK.x * 0.35;
+  vec3 R = reflect(-V, n);
+  vec3 env = R.y > 0.0 ? skyColor(R) : mix(skyColor(vec3(R.x, 0.02, R.z)), uAmbGround * 0.6 + vec3(0.03), smoothstep(0.0, -0.12, R.y));
+  env = mix(env, amb * 1.2, rough);                                   // rough surfaces see a blurred sky
+  col += env * F * uEnv * mix(1.0, 0.25, rough) * (metal > 0.5 ? 1.0 : 0.8);
+  // clearcoat (car paint): a thin glossy layer over it all
+  if (uCoat > 0.0) {
+    float Fc = (0.04 + 0.96 * pow(1.0 - NV, 5.0)) * uCoat;
+    float spc = pow(max(dot(n, H), 0.0), 900.0) * 18.0 * diff;
+    col = col * (1.0 - Fc) + (env * uEnv + uSunCol * spc * uLightK.x) * Fc;
+  }
   vec3 em = uEmis; if (uHasEm == 1) em *= texture(uEmTex, vUV).rgb;
   col += em * uLightK.z;
+  if (uFog > 0.5) col = applyFog(col, vWorld);
   outColor = vec4(tonemap(col), c.a);
 }`;
 function glbParse(buf) {
@@ -11621,12 +11706,13 @@ function glbParse(buf) {
 }
 // an accessor as a plain array of floats (normalised integers converted), respecting the stride
 function glbRead(j, bin, ai) {
-  const a = j.accessors[ai], bv = j.bufferViews[a.bufferView];
-  const nc = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 }[a.type];
+  const a = j.accessors[ai], nc = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 }[a.type];
+  const out = new Float32Array(a.count * nc);
+  if (a.bufferView === undefined) return out;                         // (all zeros, as the spec says)
+  const bv = j.bufferViews[a.bufferView];
   const size = { 5126: 4, 5125: 4, 5123: 2, 5122: 2, 5121: 1, 5120: 1 }[a.componentType];
   const stride = bv.byteStride || nc * size, base = (bv.byteOffset || 0) + (a.byteOffset || 0);
   const dv = new DataView(bin.buffer, bin.byteOffset + base);
-  const out = new Float32Array(a.count * nc);
   const rd = { 5126: o => dv.getFloat32(o, true), 5125: o => dv.getUint32(o, true), 5123: o => dv.getUint16(o, true), 5122: o => dv.getInt16(o, true), 5121: o => dv.getUint8(o), 5120: o => dv.getInt8(o) }[a.componentType];
   const norm = a.normalized ? { 5123: 65535, 5122: 32767, 5121: 255, 5120: 127 }[a.componentType] : 0;
   for (let i = 0; i < a.count; i++) for (let k = 0; k < nc; k++) { let v = rd(i * stride + k * size); if (norm) v = Math.max(v / norm, -1); out[i * nc + k] = v; }
@@ -11639,100 +11725,146 @@ function glbNodeMatrix(n) {
   for (let c = 0; c < 3; c++) for (let k = 0; k < 3; k++) m[c * 4 + k] *= s[c];
   return m;
 }
-// load a GLB (ArrayBuffer) into GPU buffers grouped by material
+// load a GLB (ArrayBuffer) into GPU buffers. Options:
+//   xf:    a matrix applied after the file's own (to put the model in the sim's frame)
+//   split: material names whose parts stay separate per node (moved as a whole: the yokes)
+//   part:  (x, y, z) of a triangle's centre in the final frame -> a part number (0: the body), and
+//   pivot: part number -> its pivot point (the wheels)
 async function glbLoad(buf, opt = {}) {
   const { json: j, bin } = glbParse(buf);
-  // textures
   const imgs = await Promise.all((j.images || []).map(async im => {
     if (im.bufferView === undefined) return null;
     const bv = j.bufferViews[im.bufferView];
     const blob = new Blob([new Uint8Array(bin.buffer, bin.byteOffset + (bv.byteOffset || 0), bv.byteLength)], { type: im.mimeType || 'image/png' });
-    try { return await createImageBitmap(blob, { imageOrientation: 'none' }); } catch (e) { return null; }
+    try { return await createImageBitmap(blob, { imageOrientation: 'none', premultiplyAlpha: 'none' }); } catch (e) { return null; }
   }));
   const texCache = new Map();
-  const tex = ti => {
-    if (ti === undefined || !j.textures || !j.textures[ti]) return null;
-    const src = j.textures[ti].source; if (texCache.has(src)) return texCache.get(src);
+  const tex = info => {
+    if (!info || !j.textures || !j.textures[info.index]) return null;
+    const T = j.textures[info.index], src = T.source ?? (T.extensions && T.extensions.EXT_texture_webp && T.extensions.EXT_texture_webp.source);
+    const smp = (j.samplers || [])[T.sampler] || {}, key = src + '/' + (smp.wrapS || 0) + '/' + (smp.wrapT || 0);
+    if (texCache.has(key)) return texCache.get(key);
     const bmp = imgs[src]; if (!bmp) return null;
     const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bmp);
     gl.generateMipmap(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, smp.wrapS || gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, smp.wrapT || gl.REPEAT);
     if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
-    texCache.set(src, t); return t;
+    texCache.set(key, t); return t;
   };
   const mats = (j.materials || []).map(m => {
-    const p = m.pbrMetallicRoughness || {};
+    const p = m.pbrMetallicRoughness || {}, X = m.extensions || {};
+    const tr = X.KHR_materials_transmission ? X.KHR_materials_transmission.transmissionFactor ?? 0 : 0;
+    const color = (p.baseColorFactor || [1, 1, 1, 1]).slice();
+    const blend = m.alphaMode === 'BLEND' || tr > 0.05;
+    if (tr > 0.05) color[3] = Math.min(color[3], 0.1 + 0.35 * (1 - tr));             // glass: see-through, still tinted
+    const es = X.KHR_materials_emissive_strength ? X.KHR_materials_emissive_strength.emissiveStrength ?? 1 : 1;
     return {
-      name: m.name || '', color: p.baseColorFactor || [1, 1, 1, 1], tex: tex(p.baseColorTexture && p.baseColorTexture.index),
-      em: m.emissiveFactor || [0, 0, 0], emTex: tex(m.emissiveTexture && m.emissiveTexture.index),
-      rough: p.roughnessFactor ?? 1, metal: p.metallicFactor ?? 1, blend: m.alphaMode === 'BLEND', cut: m.alphaMode === 'MASK' ? (m.alphaCutoff ?? 0.5) : 0,
+      name: m.name || '', color, tex: tex(p.baseColorTexture), mr: tex(p.metallicRoughnessTexture),
+      em: (m.emissiveFactor || [0, 0, 0]).map(v => v * Math.min(es, 4)), emTex: tex(m.emissiveTexture),
+      rough: tr > 0.05 ? Math.min(p.roughnessFactor ?? 1, 0.1) : p.roughnessFactor ?? 1, metal: p.metallicFactor ?? 1,
+      coat: X.KHR_materials_clearcoat ? X.KHR_materials_clearcoat.clearcoatFactor ?? 0 : 0,
+      blend, cut: m.alphaMode === 'MASK' ? (m.alphaCutoff ?? 0.5) : 0, glass: tr > 0.05,
     };
   });
-  // walk the scene, baking each node's transform into its vertices, and gather per material
+  // walk the scene, baking each node's transform, and gather triangles per material (and moving part)
   const groups = new Map(), lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
   const walk = (ni, parent) => {
     const n = j.nodes[ni], m = M4.mul(parent, glbNodeMatrix(n));
     if (n.mesh !== undefined) for (const p of j.meshes[n.mesh].primitives) {
       if (p.mode !== undefined && p.mode !== 4) continue;
-      const P = glbRead(j, bin, p.attributes.POSITION), N = p.attributes.NORMAL !== undefined ? glbRead(j, bin, p.attributes.NORMAL) : null;
+      const P = glbRead(j, bin, p.attributes.POSITION), nv = P.length / 3;
+      const N = p.attributes.NORMAL !== undefined ? glbRead(j, bin, p.attributes.NORMAL) : null;
       const U = p.attributes.TEXCOORD_0 !== undefined ? glbRead(j, bin, p.attributes.TEXCOORD_0) : null;
-      const I = p.indices !== undefined ? glbRead(j, bin, p.indices) : Float32Array.from({ length: P.length / 3 }, (_, i) => i);
-      // parts whose material is listed in opt.split stay separate (to move them: the yokes)
-      const mi = p.material ?? -1, sep = opt.split && j.materials && j.materials[mi] && opt.split.includes(j.materials[mi].name), gk = sep ? mi + '/' + ni : mi;
-      let g = groups.get(gk); if (!g) { g = { mi, pos: [], nrm: [], uv: [], sep }; groups.set(gk, g); }
-      // normal matrix = the upper 3x3 (scales in these models are uniform)
-      for (let k = 0; k < I.length; k++) {
-        const v = I[k] * 3, x = P[v], y = P[v + 1], z = P[v + 2];
-        const wx = m[0] * x + m[4] * y + m[8] * z + m[12], wy = m[1] * x + m[5] * y + m[9] * z + m[13], wz = m[2] * x + m[6] * y + m[10] * z + m[14];
-        g.pos.push(wx, wy, wz);
-        lo[0] = Math.min(lo[0], wx); lo[1] = Math.min(lo[1], wy); lo[2] = Math.min(lo[2], wz); hi[0] = Math.max(hi[0], wx); hi[1] = Math.max(hi[1], wy); hi[2] = Math.max(hi[2], wz);
-        if (N) { const a = N[v], b = N[v + 1], c = N[v + 2]; const nx = m[0] * a + m[4] * b + m[8] * c, ny = m[1] * a + m[5] * b + m[9] * c, nz = m[2] * a + m[6] * b + m[10] * c, l = Math.hypot(nx, ny, nz) || 1; g.nrm.push(nx / l, ny / l, nz / l); }
-        else g.nrm.push(0, 1, 0);
-        if (U) g.uv.push(U[I[k] * 2], U[I[k] * 2 + 1]); else g.uv.push(0, 0);
+      const I = p.indices !== undefined ? glbRead(j, bin, p.indices) : Float32Array.from({ length: nv }, (_, i) => i);
+      const mi = p.material ?? -1, mname = j.materials && j.materials[mi] ? j.materials[mi].name : '';
+      const sep = opt.split && opt.split.includes(mname);
+      // positions and normals in the final frame (normals by the inverse transpose, so mirrored or
+      // unevenly scaled nodes still shade right)
+      const W = new Float32Array(nv * 3), Nw = new Float32Array(nv * 3);
+      const a = m, c00 = a[5] * a[10] - a[6] * a[9], c01 = a[6] * a[8] - a[4] * a[10], c02 = a[4] * a[9] - a[5] * a[8];
+      const c10 = a[2] * a[9] - a[1] * a[10], c11 = a[0] * a[10] - a[2] * a[8], c12 = a[1] * a[8] - a[0] * a[9];
+      const c20 = a[1] * a[6] - a[2] * a[5], c21 = a[2] * a[4] - a[0] * a[6], c22 = a[0] * a[5] - a[1] * a[4];
+      for (let v = 0; v < nv; v++) {
+        const x = P[v * 3], y = P[v * 3 + 1], z = P[v * 3 + 2];
+        W[v * 3] = a[0] * x + a[4] * y + a[8] * z + a[12]; W[v * 3 + 1] = a[1] * x + a[5] * y + a[9] * z + a[13]; W[v * 3 + 2] = a[2] * x + a[6] * y + a[10] * z + a[14];
+        if (N) { const nx = N[v * 3], ny = N[v * 3 + 1], nz = N[v * 3 + 2]; const X = c00 * nx + c01 * ny + c02 * nz, Y = c10 * nx + c11 * ny + c12 * nz, Z = c20 * nx + c21 * ny + c22 * nz, l = Math.hypot(X, Y, Z) || 1; Nw[v * 3] = X / l; Nw[v * 3 + 1] = Y / l; Nw[v * 3 + 2] = Z / l; }
       }
+      if (!N) for (let t = 0; t < I.length; t += 3) {                     // no normals in the file: face normals, summed
+        const i0 = I[t] * 3, i1 = I[t + 1] * 3, i2 = I[t + 2] * 3;
+        const ux = W[i1] - W[i0], uy = W[i1 + 1] - W[i0 + 1], uz = W[i1 + 2] - W[i0 + 2], vx = W[i2] - W[i0], vy = W[i2 + 1] - W[i0 + 1], vz = W[i2 + 2] - W[i0 + 2];
+        const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+        for (const k of [i0, i1, i2]) { Nw[k] += nx; Nw[k + 1] += ny; Nw[k + 2] += nz; }
+      }
+      for (let t = 0; t < I.length; t += 3) {
+        const i0 = I[t], i1 = I[t + 1], i2 = I[t + 2];
+        let part = 0;
+        if (opt.part) part = opt.part((W[i0 * 3] + W[i1 * 3] + W[i2 * 3]) / 3, (W[i0 * 3 + 1] + W[i1 * 3 + 1] + W[i2 * 3 + 1]) / 3, (W[i0 * 3 + 2] + W[i1 * 3 + 2] + W[i2 * 3 + 2]) / 3);
+        if (part < 0) continue;                                          // (dropped: stray parts)
+        const gk = mi + '/' + (sep ? 'n' + ni : part);
+        let g = groups.get(gk); if (!g) { g = { mi, part, sep, pos: [], nrm: [], uv: [], idx: [], map: new Map() }; groups.set(gk, g); }
+        for (const v of [i0, i1, i2]) {
+          let k = g.map.get(v);
+          if (k === undefined) {
+            k = g.pos.length / 3; g.map.set(v, k);
+            const x = W[v * 3], y = W[v * 3 + 1], z = W[v * 3 + 2];
+            g.pos.push(x, y, z); g.nrm.push(Nw[v * 3], Nw[v * 3 + 1], Nw[v * 3 + 2]); g.uv.push(U ? U[v * 2] : 0, U ? U[v * 2 + 1] : 0);
+            if (x < lo[0]) lo[0] = x; if (y < lo[1]) lo[1] = y; if (z < lo[2]) lo[2] = z; if (x > hi[0]) hi[0] = x; if (y > hi[1]) hi[1] = y; if (z > hi[2]) hi[2] = z;
+          }
+          g.idx.push(k);
+        }
+      }
+      for (const g of groups.values()) g.map.clear();                    // (vertex numbers are per primitive)
     }
     for (const c of n.children || []) walk(c, m);
   };
   const scene = j.scenes[j.scene || 0];
-  for (const ni of scene.nodes) walk(ni, M4.ident());
-  const draws = [];
+  for (const ni of scene.nodes) walk(ni, opt.xf || M4.ident());
+  const draws = []; let tris = 0;
   for (const g of groups.values()) {
-    const mi = g.mi;
-    const vao = makeVAO([{ loc: 0, size: 3, data: new Float32Array(g.pos) }, { loc: 1, size: 3, data: new Float32Array(g.nrm) }, { loc: 2, size: 2, data: new Float32Array(g.uv) }]);
-    const mat = mats[mi] || { name: '', color: [0.8, 0.8, 0.8, 1], tex: null, em: [0, 0, 0], emTex: null, rough: 1, metal: 0, blend: false, cut: 0 };
-    let c = null;
-    if (g.sep) { const a = [1e9, 1e9, 1e9], b = [-1e9, -1e9, -1e9]; for (let i = 0; i < g.pos.length; i++) { a[i % 3] = Math.min(a[i % 3], g.pos[i]); b[i % 3] = Math.max(b[i % 3], g.pos[i]); } c = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2]; }
-    draws.push({ vao, count: g.pos.length / 3, mat, center: c, part: g.sep ? mat.name : null });
+    if (!g.idx.length) continue;
+    const vao = makeVAO([{ loc: 0, size: 3, data: new Float32Array(g.pos) }, { loc: 1, size: 3, data: new Float32Array(g.nrm) }, { loc: 2, size: 2, data: new Float32Array(g.uv) }], new Uint32Array(g.idx));
+    const mat = mats[g.mi] || { name: '', color: [0.8, 0.8, 0.8, 1], tex: null, mr: null, em: [0, 0, 0], emTex: null, rough: 1, metal: 0, coat: 0, blend: false, cut: 0 };
+    let center = null;
+    if (g.sep) { const a = [1e9, 1e9, 1e9], b = [-1e9, -1e9, -1e9]; for (let i = 0; i < g.pos.length; i++) { a[i % 3] = Math.min(a[i % 3], g.pos[i]); b[i % 3] = Math.max(b[i % 3], g.pos[i]); } center = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2]; }
+    else if (g.part && opt.pivot) center = opt.pivot(g.part);
+    draws.push({ vao, count: g.idx.length, mat, center, part: g.sep ? mat.name : g.part || null });
+    tris += g.idx.length / 3;
   }
   draws.sort((a, b) => a.mat.blend - b.mat.blend);                     // glass last
   const extras = j.asset && j.asset.extras || {};
-  return { draws, lo, hi, credit: extras, names: mats.map(m => m.name) };
+  return { draws, lo, hi, tris, credit: extras, names: mats.map(m => m.name) };
 }
-// draw a loaded model with a model matrix (light: sun, ambient, emissive multipliers)
-function glbDraw(model, M, lightK = [1, 1, 1], partM = null) {
+// draw a loaded model with a model matrix. light: sun, ambient, emission multipliers; partM(draw) gives the
+// extra matrix of a moving part; o: { env: sky reflection 0..1, fog, shadow (the aircraft's), paint: [r,g,b]
+// for materials that paint() says are the body colour }
+function glbDraw(model, M, lightK = [1, 1, 1], partM = null, o = {}) {
   if (!GLB.prog) GLB.prog = makeProgram(GLB_VS, GLB_FS);
   const pr = GLB.prog, u = pr.u;
   setCommon(pr);
-  gl.uniformMatrix4fv(u.uModel, false, M);
+  if (o.shadow && typeof shadowUniforms === 'function') shadowUniforms(pr);
   gl.uniform3fv(u.uLightK, lightK);
-  gl.uniform1i(u.uTex, 0); gl.uniform1i(u.uEmTex, 1);
+  gl.uniform1f(u.uEnv, o.env ?? 0.3); gl.uniform1f(u.uFog, o.fog ? 1 : 0); gl.uniform1f(u.uShadow, o.shadow ? 1 : 0);
+  gl.uniform1i(u.uTex, 0); gl.uniform1i(u.uEmTex, 1); gl.uniform1i(u.uMRTex, 3);
   let blending = false;
   gl.disable(gl.CULL_FACE);
   for (const d of model.draws) {
     const m = d.mat;
     if (m.blend && !blending) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); blending = true; }
     gl.uniformMatrix4fv(u.uModel, false, d.part && partM ? M4.mul(M, partM(d)) : M);
-    gl.uniform4fv(u.uColor, m.color); gl.uniform3fv(u.uEmis, m.em); gl.uniform1f(u.uCut, m.cut);
-    gl.uniform1f(u.uRough, m.rough); gl.uniform1f(u.uMetal, m.metal);
+    const col = o.paint && m.paint ? [o.paint[0], o.paint[1], o.paint[2], m.color[3]] : m.color;
+    gl.uniform4fv(u.uColor, col); gl.uniform3fv(u.uEmis, o.lamps && m.lamp ? o.lamps(m) : m.em); gl.uniform1f(u.uCut, m.cut);
+    gl.uniform1f(u.uRough, m.rough); gl.uniform1f(u.uMetal, m.metal); gl.uniform1f(u.uCoat, m.coat || 0);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, m.tex); gl.uniform1i(u.uHasTex, m.tex ? 1 : 0);
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, m.emTex); gl.uniform1i(u.uHasEm, m.emTex ? 1 : 0);
-    gl.bindVertexArray(d.vao.vao || d.vao); gl.drawArrays(gl.TRIANGLES, 0, d.count);
+    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, m.mr); gl.uniform1i(u.uHasMR, m.mr ? 1 : 0);
+    gl.bindVertexArray(d.vao.vao); gl.drawElements(gl.TRIANGLES, d.count, gl.UNSIGNED_INT, 0);
   }
   if (blending) { gl.disable(gl.BLEND); gl.depthMask(true); }
   gl.enable(gl.CULL_FACE);
+  gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, puffTex);   // (unit 3 is the cloud texture elsewhere)
   gl.activeTexture(gl.TEXTURE0);
 }
 // fetch a model file next to the page (cached); resolves to null when it can't be had. Where .glb files
@@ -11746,7 +11878,7 @@ async function glbFetch(url) {
 }
 function glbGet(url, opt) {
   if (!GLB.cache.has(url)) GLB.cache.set(url, { state: 'loading', model: null, p: glbFetch(url).then(b => glbLoad(b, opt))
-    .then(m => { const e = GLB.cache.get(url); e.state = 'ok'; e.model = m; return m; }).catch(err => { const e = GLB.cache.get(url); e.state = 'error'; e.err = String(err); console.warn('GLB', url, err); return null; }) });
+    .then(m => { const e = GLB.cache.get(url); e.state = 'ok'; e.model = m; if (opt && opt.ready) opt.ready(m); return m; }).catch(err => { const e = GLB.cache.get(url); e.state = 'error'; e.err = String(err); console.warn('GLB', url, err); return null; }) });
   return GLB.cache.get(url);
 }
 // =====================================================================
@@ -11774,6 +11906,44 @@ const CAR_MODELS = [
     cabin: [[0.15, 0.9, 0.9, 0.94], [0.26, 0.86, 0.94, 1.7], [0.9, 0.86, 0.98, 1.76], [0.99, 0.87, 0.98, 1.72], [1.0, 0.88, 0.98, 1.0]], pillars: [0.17, 0.52, 0.97], glass: [0.13, 0.16, 0.2], rim: 'silver' },
 ];
 const CAR_PAINTS = [[0.62, 0.05, 0.07], [0.92, 0.92, 0.9], [0.06, 0.06, 0.07], [0.52, 0.54, 0.57], [0.08, 0.2, 0.45], [0.75, 0.76, 0.78], [0.14, 0.3, 0.2], [0.85, 0.55, 0.1], [0.35, 0.05, 0.08]];
+// ready-made models (Sketchfab, CC BY 4.0), reduced for the sim. g: where things are in the file's own
+// units - s: scale to metres (from the real wheelbase), gy: the ground, af/ar: front and rear axle along
+// the file's z, bw: half the track, cx: the centre line, front: +1 when the nose points to the file's +z
+const CAR_GLB_DIR = 'models/cars/';
+const CAR_GLB = [
+  { id: 'supra', name: 'トヨタ GR スープラ', L: 4.38, W: 1.86, wb: 2.47, r: 0.34, mass: 1520, power: 250000, sporty: 1, file: 'toyota_gr_supra', g: { s: 0.8381, gy: 0, af: 1.6435, ar: -1.3035, bw: 0.94, cx: 0, front: 1 }, by: 'thelightning' },
+  { id: 'r35', name: '日産 GT-R（R35）', L: 4.71, W: 1.9, wb: 2.78, r: 0.356, mass: 1750, power: 419000, sporty: 1, file: 'nissan_skyline_gtr_r35', g: { s: 0.995, gy: 0.04, af: 1.397, ar: -1.397, bw: 0.857, cx: 0, front: 1 }, eye: [-0.37, 1.11, 0.26], by: 'Black Snow' },
+  { id: 'ek9', name: 'ホンダ シビック タイプR（EK9）', L: 4.18, W: 1.7, wb: 2.62, r: 0.3, mass: 1070, power: 136000, file: 'honda_civic_type_r_-98_free_asset', g: { s: 1.0575, gy: 0.01, af: 1.2405, ar: -1.237, bw: 0.705, cx: 0, front: 1 }, by: 'tiedtke' },
+  { id: 'na', name: 'マツダ ロードスター（NA）', L: 3.97, W: 1.68, wb: 2.265, r: 0.29, mass: 950, power: 88000, sporty: 1, file: 'mazda_miata_mx-5', g: { s: 1.0022, gy: 0.12, af: 1.242, ar: -1.018, bw: 0.71, cx: 0, front: 1 }, eye: [-0.36, 0.96, 0.35], by: 'Black Snow' },
+  { id: 's15', name: '日産 シルビア（S15）', L: 4.45, W: 1.7, wb: 2.525, r: 0.31, mass: 1250, power: 184000, sporty: 1, file: 'nissan_s15_drift_free', g: { s: 0.888, gy: -0.54, af: -1.3065, ar: 1.5365, bw: 0.87, cx: 0, front: -1 }, eye: [0.355, 0.93, 0.19], by: 'autoNgraphic' },
+  { id: 'ae86', name: 'トヨタ AE86', L: 4.18, W: 1.63, wb: 2.4, r: 0.295, mass: 940, power: 96000, file: 'toyota_ae86_black_limited_kouki', g: { s: 0.010046, gy: 5, af: 141.7, ar: -97.2, bw: 71.9, cx: 0, front: 1 }, eye: [0.37, 1.05, 0.1], by: 'Martin Trafas' },
+  { id: 'kenmeri', name: '日産 スカイライン GT-R（ケンメリ）', L: 4.46, W: 1.7, wb: 2.61, r: 0.3, mass: 1145, power: 118000, file: 'nissan_skyline_gt-r_c110_kenmeri_73', g: { s: 0.0022558, gy: 23, af: 509.4, ar: -647.6, bw: 333.1, cx: 0, front: 1 }, by: 'Martin Trafas' },
+  { id: 'lc500', name: 'レクサス LC500', L: 4.77, W: 1.92, wb: 2.87, r: 0.35, mass: 1940, power: 351000, sporty: 1, file: 'lexus_lc-500', g: { s: 0.003134, gy: 7.2, af: 552.3, ar: -363.5, bw: 300, cx: -36.3, front: 1 }, by: 'Socksthecat' },
+];
+for (const c of CAR_GLB) CAR_MODELS.push(Object.assign({ glb: true, fr: 0.2 }, c));
+// eye: the driver's eye in the car's frame (x right, y up, z back), where the model's steering wheel is
+// the frame of a ready-made model: nose to -z, ground at y = 0, the middle of the axles at the origin, and
+// the four wheels (front left, front right, rear left, rear right) cut out as parts that turn
+function carGlbFrame(M) {
+  const g = M.g, s = g.s, f = g.front, zc = (g.af + g.ar) / 2;
+  const xf = [-f * s, 0, 0, 0, 0, s, 0, 0, 0, 0, -f * s, 0, f * s * g.cx, -s * g.gy, f * s * zc, 1];
+  const zF = -f * s * (g.af - zc), zR = -f * s * (g.ar - zc), xw = g.bw * s, r = M.r;
+  const wheels = [[-xw, r, zF, 1], [xw, r, zF, 1], [-xw, r, zR, 0], [xw, r, zR, 0]];
+  const part = (x, y, z) => {
+    if (Math.abs(x) > M.W * 0.75 || y < -0.3 || y > 2.6 || Math.abs(z) > M.L * 0.62 + 0.3) return -1;   // stray bits in the file
+    for (let i = 0; i < 4; i++) { const w = wheels[i]; if (Math.abs(x - w[0]) < 0.17 && (y - r) ** 2 + (z - w[2]) ** 2 < (r * 1.05) ** 2) return i + 1; }
+    return 0;
+  };
+  return { xf, wheels, part, pivot: k => wheels[k - 1].slice(0, 3) };
+}
+// the model for a car (lo: the light version for the traffic), loaded on first use
+function carGlbGet(M, lo) {
+  const F = M.frame || (M.frame = carGlbFrame(M));
+  return glbGet(CAR_GLB_DIR + M.file + (lo ? '_lo' : '') + '.glb', { xf: F.xf, part: F.part, pivot: F.pivot, ready: m => {
+    // which materials are lamps, to light them (by their names in the file)
+    for (const d of m.draws) { const n = d.mat.name; d.mat.lamp = /tail|brake|stop|lampred|redlight|rear.?light|taillight/i.test(n) ? 'rear' : /head|hl\d|hlmat|lampwhite|highbeam|halo/i.test(n) ? 'front' : null; }
+  } });
+}
 // smooth interpolation of the stations (Catmull-Rom on each value)
 function carStation(st, t) {
   let i = 0; while (i < st.length - 2 && t > st[i + 1][0]) i++;
@@ -11867,13 +12037,50 @@ function buildCarModel(M, paint) {
 }
 // built meshes by model and paint (shared by the player's car and the traffic)
 const CARMESH = new Map();
-function carMesh(mi, pi) {
+function carMesh(mi, pi, lo = false) {
+  const M = CAR_MODELS[mi];
+  if (M.glb) {
+    // a ready-made model; until it has loaded (or if it can't be), a built car of a similar size stands in
+    const e = carGlbGet(M, lo), fb = carMesh(M.sporty ? 3 : M.L > 4.6 ? 0 : 1, pi);
+    return e.state === 'ok' ? { glb: e.model, M, F: M.frame, shadowMesh: carShadowMesh(M.L, M.W) } : fb;
+  }
   const key = mi + '/' + pi;
-  if (!CARMESH.has(key)) CARMESH.set(key, buildCarModel(CAR_MODELS[mi], CAR_PAINTS[pi]));
+  if (!CARMESH.has(key)) CARMESH.set(key, buildCarModel(M, CAR_PAINTS[pi]));
   return CARMESH.get(key);
+}
+// soft contact shadow: concentric ellipses, darker inside
+const CARSHADOW = new Map();
+function carShadowMesh(L, W) {
+  const key = L.toFixed(2) + 'x' + W.toFixed(2);
+  if (CARSHADOW.has(key)) return CARSHADOW.get(key);
+  const sh = new MeshBuilder();
+  for (let i = 0; i < 5; i++) {
+    const k = 1 - i * 0.12, ring = Array.from({ length: 28 }, (_, j) => { const a = j / 28 * Math.PI * 2; return [Math.cos(a) * (W / 2 + 0.2) * k, 0.03 + i * 0.002, Math.sin(a) * (L / 2 + 0.2) * k]; });
+    sh.loft([ring, ring.map(p => [p[0], p[1] + 0.001, p[2]])], [0, 0, 0], { capStart: true, capEnd: true });
+  }
+  const m = uploadMesh(sh.build()); CARSHADOW.set(key, m); return m;
+}
+// a ready-made car: shadow, then the model with its wheels turning and the lamps lit
+function drawCarGlb(Mm, base, spin, steer, brake, shadow) {
+  const u = progMesh.u;
+  if (shadow) {
+    setCommon(progMesh); gl.uniform1i(u.uLivery, 0);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+    gl.uniform1f(u.uAlpha, 0.13); gl.uniformMatrix4fv(u.uModel, false, base); gl.bindVertexArray(Mm.shadowMesh.vao); gl.drawArrays(gl.TRIANGLES, 0, Mm.shadowMesh.count); gl.uniform1f(u.uAlpha, 1);
+    gl.depthMask(true); gl.disable(gl.BLEND);
+  }
+  const W = Mm.F.wheels, night = ENV.night || ENV.sunDir[1] < 0.08;
+  const partM = d => {
+    const w = W[d.part - 1]; if (!w) return M4.ident();
+    const q = qmul(w[3] ? qaxis([0, 1, 0], -steer) : [0, 0, 0, 1], qaxis([1, 0, 0], -spin));
+    return M4.mul(M4.fromQP(q, [w[0], w[1], w[2]]), M4.fromQP([0, 0, 0, 1], [-w[0], -w[1], -w[2]]));
+  };
+  const lamps = m => m.lamp === 'rear' ? [brake ? 1.6 : night ? 0.6 : 0, 0.02, 0.02] : night ? [1.4, 1.35, 1.2] : [0, 0, 0];
+  glbDraw(Mm.glb, base, [1, 1, 1], partM, { env: 1, fog: true, shadow: false, lamps });
 }
 // draw one car: model matrix, wheel spin and steer, lamps
 function drawCarMesh(Mm, base, spin, steer, brake, shadow = true) {
+  if (Mm.glb) { drawCarGlb(Mm, base, spin, steer, brake, shadow); setCommon(progMesh); return; }
   const u = progMesh.u;
   const draw = (vao, m) => { gl.uniformMatrix4fv(u.uModel, false, m); gl.bindVertexArray(vao.vao); gl.drawArrays(gl.TRIANGLES, 0, vao.count); };
   if (shadow) {
@@ -12102,6 +12309,7 @@ function carNextModel() {
   toast(`車種：${carModel().name}（V で切替・Shift+V で色）`, 1800);
 }
 function carNextPaint() {
+  if (carModel().glb) { toast('この車種は元の色のままです（色は組み立て式の車種で変えられます）', 1800); return; }
   CAR.paint = ((CAR.paint || 0) + 1) % CAR_PAINTS.length;
   try { localStorage.setItem('sorajima-car', JSON.stringify({ model: CAR.model, paint: CAR.paint })); } catch (e) { /* ignore */ }
   toast(`ボディの色：${['レッド', 'ホワイト', 'ブラック', 'ガンメタ', 'ブルー', 'シルバー', 'グリーン', 'オレンジ', 'ワインレッド'][CAR.paint] || CAR.paint + 1}`, 1400);
@@ -12114,6 +12322,10 @@ function drawCar() {
   gl.uniform1i(u.uLivery, 0); gl.uniform1f(u.uAlpha, 1);
   drawCarMesh(carMesh(CAR.model || 0, CAR.paint || 0), M4.fromQP(CAR.q, CAR.pos), CAR.spin, CAR.steer, CAR.brake > 0 || CAR.hand, !CAR.air);
   drawTraffic();
+  // the models' authors (CC BY asks for it): the car you drive, and the others on the road
+  const M = carModel();
+  if (M.glb || TRAFFIC.cars.some(t => CAR_MODELS[t.model].glb) && typeof cpCredit === 'function')
+    cpCredit((M.glb ? `車：${M.name} / ${M.by}（CC BY 4.0）　` : '') + 'ほかの車：Sketchfab 各作者（CC BY 4.0）');
 }
 
 // ---------------------------------------------------------------------
@@ -12193,7 +12405,7 @@ function trafficStep(dt) {
 function drawTraffic() {
   for (const c of TRAFFIC.cars) {
     if (vdist(c.pos, R.eye) > 700) continue;
-    drawCarMesh(carMesh(c.model, c.paint), M4.fromQP(c.q, c.pos), c.spin, 0, c.brake, vdist(c.pos, R.eye) < 200);
+    drawCarMesh(carMesh(c.model, c.paint, true), M4.fromQP(c.q, c.pos), c.spin, 0, c.brake, vdist(c.pos, R.eye) < 200);
   }
 }
 // bumping into a traffic car stops you
@@ -12209,7 +12421,7 @@ function carCamera(dt) {
   CAR.camYaw += d * Math.min(1, dt * 3);
   if (cam.mode === 'carcab') {
     const lq = qmul(CAR.q, qmul(qaxis([0, 1, 0], cam.lookYaw), qaxis([1, 0, 0], cam.lookPitch)));
-    const M = carModel(), eye = vadd(CAR.pos, qrot(CAR.q, [M.W * 0.19, M.id === 'sports' ? 1.1 : M.id === 'suv' || M.id === 'kei' ? 1.48 : 1.3, M.L * -0.02]));   // right-hand drive (Japan)
+    const M = carModel(), eye = vadd(CAR.pos, qrot(CAR.q, M.eye || [M.W * 0.19, M.glb ? (M.sporty ? 1.02 : 1.12) : M.id === 'sports' ? 1.1 : M.id === 'suv' || M.id === 'kei' ? 1.48 : 1.3, M.L * -0.02]));   // right-hand drive (Japan)
     return { eye, target: vadd(eye, qrot(lq, [0, -0.35, -10])), up: qrot(CAR.q, [0, 1, 0]), fov: 62, near: 0.1 };
   }
   const yaw = CAR.camYaw + cam.lookYaw, f = carFwd(yaw), dist = 7.2, hgt = 2.3 + cam.lookPitch * 3;

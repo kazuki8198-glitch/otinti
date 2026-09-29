@@ -8,6 +8,7 @@ the cockpit screens.
 
 ## Cockpits
 - `c172_g1000_cockpit.glb` — "Cessna 172 G1000 Cockpit" by davidpineda021199 — https://sketchfab.com/3d-models/cessna-172-g1000-cockpit-a010952309d1455cab22fea77f947f42
+- `cockpits/cessna_skyhawk_cockpit.glb` — "cessna skyhawk Cockpit" by Shady Tex — https://sketchfab.com/3d-models/cessna-skyhawk-cockpit-94737a2ea27c4b97a17b5f3c2d53ef07 (its instrument panel is shown in the analog C172)
 - `cockpits/a320_cockpit_2.glb` — "A320 Cockpit 2" by davidmarton1987 — https://sketchfab.com/davidmarton1987
 - `cockpits/boeing_737-800_cockpit.glb` — "Boeing 737-800 Cockpit" by hakai315 — https://sketchfab.com/hakai315
 - `cockpits/boeing_787_dreamliner_cockpit.glb` — "Boeing 787 Dreamliner Cockpit" by ElijahPD7000 — https://sketchfab.com/Eli-jah.Prince.Davies

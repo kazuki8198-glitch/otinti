@@ -1019,6 +1019,17 @@ precision highp int;
 precision highp sampler2D;
 `;
 const GLSL_COMMON = `
+// the near zone around the car (x, z, inner and outer radius; w = 0: none). The far layer (Google's
+// photogrammetry) is dissolved away inside it and the near layer (the sim's own roads, buildings and trees)
+// only drawn inside it, with the same dither pattern across the band so the two meet without a seam
+uniform vec4 uZone;
+uniform float uZoneSide;       // 1: far layer, -1: near layer, 0: not affected
+bool zoneCut(vec3 w){
+  if (uZoneSide == 0.0 || uZone.w <= 0.0) return false;
+  float t = smoothstep(uZone.z, uZone.w, length(w.xz - uZone.xy));
+  float d = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+  return uZoneSide > 0.0 ? t < d : t >= d;
+}
 uniform vec3 uSunDir;
 uniform vec3 uSunCol;
 uniform vec3 uZenith;
@@ -3971,10 +3982,12 @@ uniform vec3 uTileOrigin;
 uniform float uCurv;
 uniform vec4 uUvX;
 uniform float uSink;
+uniform vec4 uZone;
 out vec3 vWorld; out vec3 vN; out vec2 vUv; out float vH;
 void main(){
   vec3 w = aPos + uTileOrigin;
-  vH = w.y; w.y -= uSink;
+  // (lowered under the Google mesh, except in the near zone round the car where it is the ground itself)
+  vH = w.y; w.y -= uSink * (uZone.w > 0.0 ? smoothstep(uZone.z, uZone.w, length(w.xz - uZone.xy)) : 1.0);
   vec2 d = w.xz - uCamPos.xz;
   w.y -= dot(d, d) * uCurv;
   vWorld = w; vN = aNormal; vUv = aUv * uUvX.x + uUvX.yz;
@@ -4049,9 +4062,11 @@ uniform mat4 uViewProj;
 uniform vec3 uCamPos;
 uniform float uCurv;
 uniform float uSink;
+uniform vec4 uZone;
 out vec3 vPos;
 void main(){
-  vPos = vec3(uCamPos.x + aXZ.x, -uSink, uCamPos.z + aXZ.y);
+  vPos = vec3(uCamPos.x + aXZ.x, 0.0, uCamPos.z + aXZ.y);
+  vPos.y = -uSink * (uZone.w > 0.0 ? smoothstep(uZone.z, uZone.w, length(vPos.xz - uZone.xy)) : 1.0);
   vec3 w = vPos; w.y -= dot(aXZ, aXZ) * uCurv;
   vPos = w;
   gl_Position = uViewProj * vec4(w, 1.0);
@@ -4959,42 +4974,68 @@ function cityWorkerMain() {
     const RC = { motorway: 1, trunk: 2, primary: 3, secondary: 4, tertiary: 5, minor: 6, service: 7, track: 8, busway: 5, raceway: 2 };
     const rv0 = [], ri = [], rPts = [], rOff = [0], rCls = [], rWid = [];
     const rput = (x, z, y, u, cls, w, acr) => { const k = rv0.length / 7; rv0.push(x, z, y, u, cls, w, acr); return k; };
+    // 1) every road as a run of points (metres, split into short pieces so the ribbon follows the ground),
+    //    keeping only what lies in this tile (the tile buffer would be drawn twice)
+    const lines = [];
     if (L.transportation) for (const fe of L.transportation.feats) {
       const f = readFeature(L.transportation, fe), cl = f.props.class;
       if (f.type !== 2 || !f.geom || !RW[cl] || f.props.brunnel === 'tunnel' || f.props.indoor === 1) continue;
-      const w = RW[cl] * (cl === 'motorway' && f.props.oneway === 1 ? 0.8 : 1), c = RC[cl];
+      const w = RW[cl] * (cl === 'motorway' && f.props.oneway === 1 ? 0.8 : 1), c = RC[cl], bridge = f.props.brunnel === 'bridge';
       for (const ln of decodeLines(f.geom)) {
-        // metres, split into short pieces so the ribbon follows the ground
         const pts = [];
         for (let i = 0; i < ln.length; i += 2) {
           const x = lx(ln[i]), z = lz(ln[i + 1]);
           if (pts.length) { const [px, pz] = pts[pts.length - 1], d = Math.hypot(x - px, z - pz), ns = Math.floor(d / 9); for (let s = 1; s <= ns; s++) pts.push([px + (x - px) * s / (ns + 1), pz + (z - pz) * s / (ns + 1), ln[i - 2] + (ln[i] - ln[i - 2]) * s / (ns + 1), ln[i - 1] + (ln[i + 1] - ln[i - 1]) * s / (ns + 1)]); }
           pts.push([x, z, ln[i], ln[i + 1]]);
         }
-        if (pts.length < 2) continue;
-        // keep only what lies in this tile (the tile buffer would be drawn twice)
         const inT = p => p[2] >= -8 && p[2] <= E + 8 && p[3] >= -8 && p[3] <= E + 8;
         let run = [];
-        const flush = () => {
-          if (run.length >= 2) {
-            let u = 0, prev = -1;
-            for (let i = 0; i < run.length; i++) {
-              const a = run[Math.max(i - 1, 0)], b = run[Math.min(i + 1, run.length - 1)], tx = b[0] - a[0], tz = b[1] - a[1], tl = Math.hypot(tx, tz) || 1;
-              const nx = -tz / tl, nz = tx / tl, p = run[i], g = ground(p[2], p[3]) + (f.props.brunnel === 'bridge' ? 0.4 : 0.08);
-              if (i) u += Math.hypot(p[0] - run[i - 1][0], p[1] - run[i - 1][1]);
-              const l = rput(p[0] + nx * w / 2, p[1] + nz * w / 2, g, u, c, w, -1), r = rput(p[0] - nx * w / 2, p[1] - nz * w / 2, g, u, c, w, 1);
-              if (prev >= 0) { ri.push(prev, l, prev + 1, prev + 1, l, r); }
-              prev = l;
-              rPts.push(p[0], p[1], g);
-            }
-            rOff.push(rPts.length / 3); rCls.push(c); rWid.push(w);
-          }
-          run = [];
-        };
-        for (const p of pts) { if (inT(p)) run.push(p); else flush(); }
-        flush();
+        for (const p of pts) { if (inT(p)) run.push(p); else { if (run.length >= 2) lines.push({ run, w, c, bridge }); run = []; } }
+        if (run.length >= 2) lines.push({ run, w, c, bridge });
       }
     }
+    // 2) where roads meet or cross: a grid of all the segments, so each point can find the other roads near it
+    const JG = 16, jcell = new Map(), jkey = (i, j) => i * 65536 + j;
+    lines.forEach((ln, li) => {
+      for (let k = 0; k + 1 < ln.run.length; k++) {
+        const a = ln.run[k], b = ln.run[k + 1], m = ln.w / 2 + 12;
+        for (let i = Math.floor((Math.min(a[0], b[0]) - m) / JG); i <= Math.floor((Math.max(a[0], b[0]) + m) / JG); i++)
+          for (let j = Math.floor((Math.min(a[1], b[1]) - m) / JG); j <= Math.floor((Math.max(a[1], b[1]) + m) / JG); j++) {
+            const key = jkey(i + 1000, j + 1000); let c = jcell.get(key); if (!c) jcell.set(key, c = []); c.push(li, k);
+          }
+      }
+    });
+    // how much a point is in a junction (0..1): 1 where another road's surface is, fading over 6 m
+    const junction = (li, x, z, w) => {
+      const c = jcell.get(jkey(Math.floor(x / JG) + 1000, Math.floor(z / JG) + 1000)); if (!c) return 0;
+      let best = 0;
+      for (let n = 0; n < c.length; n += 2) {
+        const lj = c[n]; if (lj === li) continue;
+        const o = lines[lj], a = o.run[c[n + 1]], b = o.run[c[n + 1] + 1];
+        if (o.bridge !== lines[li].bridge) continue;                 // a bridge over a road is not a junction
+        const dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1, t = clamp(((x - a[0]) * dx + (z - a[1]) * dz) / L2, 0, 1);
+        const d = Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t), r = (w + o.w) / 2 + 1;
+        best = Math.max(best, clamp(1 - (d - r) / 6, 0, 1));
+      }
+      return best;
+    };
+    // 3) the ribbons. Bigger roads sit a few centimetres higher, so where roads overlap the main road is
+    //    the one seen (no flicker); junction areas lose their markings (a plain asphalt crossing)
+    lines.forEach((ln, li) => {
+      const { run, w, c, bridge } = ln;
+      let u = 0, prev = -1;
+      for (let i = 0; i < run.length; i++) {
+        const a = run[Math.max(i - 1, 0)], b = run[Math.min(i + 1, run.length - 1)], tx = b[0] - a[0], tz = b[1] - a[1], tl = Math.hypot(tx, tz) || 1;
+        const nx = -tz / tl, nz = tx / tl, p = run[i], g = ground(p[2], p[3]) + (bridge ? 0.4 : 0.06 + (9 - c) * 0.012);
+        if (i) u += Math.hypot(p[0] - run[i - 1][0], p[1] - run[i - 1][1]);
+        const j = Math.round(junction(li, p[0], p[1], w) * 7), cj = c + 16 * j;
+        const l = rput(p[0] + nx * w / 2, p[1] + nz * w / 2, g, u, cj, w, -1), r = rput(p[0] - nx * w / 2, p[1] - nz * w / 2, g, u, cj, w, 1);
+        if (prev >= 0) { ri.push(prev, l, prev + 1, prev + 1, l, r); }
+        prev = l;
+        rPts.push(p[0], p[1], g);
+      }
+      rOff.push(rPts.length / 3); rCls.push(c); rWid.push(w);
+    });
     // packed like the buildings (x, z in dm, y, up normal, u in dm, class + 512, width dm, across)
     const nrv = rv0.length / 7 | 0;
     const rvb = new ArrayBuffer(Math.max(nrv, 1) * 20), r16 = new Int16Array(rvb), r32 = new Float32Array(rvb), r8 = new Int8Array(rvb);
@@ -5420,6 +5461,7 @@ out vec4 outColor;
 float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
 float h2(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 void main(){
+  if (zoneCut(vWorld)) discard;
   vec3 n = normalize(vN);
   float H = vM.y, s1 = h1(vSeed + 0.13), s2 = h1(vSeed + 5.71), s3 = h1(vSeed + 9.3);
   vec3 V = normalize(uCamPos - vWorld);
@@ -5515,21 +5557,23 @@ uniform mat4 uViewProj;
 uniform vec3 uCamPos;
 uniform float uCurv;
 ` + CITY_POS_GLSL + `
-out vec3 vWorld; out vec3 vR; flat out float vCls;
+out vec3 vWorld; out vec3 vR; flat out float vCls; out float vJ;
 void main(){
   vec3 w = cityWorld(aXZ * 0.1, aY);
   vec2 d = w.xz - uCamPos.xz;
   vWorld = w; w.y -= dot(d, d) * uCurv;
   vR = vec3(aM.x * 0.1, aM.z * 0.1, aM.w * 0.001);
-  vCls = aM.y - 512.0;
+  float k = aM.y - 512.0;
+  vCls = mod(k, 16.0); vJ = floor(k / 16.0 + 0.001) / 7.0;         // class, and how much this is a junction
   gl_Position = uViewProj * vec4(w, 1.0);
 }`;
 const ROAD_FS = GLSL_HEAD + GLSL_COMMON + `
-in vec3 vWorld; in vec3 vR; flat in float vCls;
+in vec3 vWorld; in vec3 vR; flat in float vCls; in float vJ;
 uniform sampler2D uNoise;
 out vec4 outColor;
 float stripe(float x, float c, float hw, float aa){ return 1.0 - smoothstep(hw - aa, hw + aa, abs(x - c)); }
 void main(){
+  if (zoneCut(vWorld)) discard;
   float u = vR.x, w = vR.y, m = vR.z * w * 0.5;               // along, width, metres from the centre line
   float dist = length(uCamPos - vWorld), aa = max(fwidth(m), 0.02);
   float n1 = texture(uNoise, vWorld.xz / 0.45).b, n2 = texture(uNoise, vWorld.xz / 6.0).a, n3 = texture(uNoise, vWorld.xz / 37.0).b;
@@ -5548,9 +5592,9 @@ void main(){
     float dash = step(fract(u / 10.0), 0.5);                                       // 5 m line, 5 m gap
     if (vCls < 1.5) paint += dash * stripe(m, 0.0, 0.075, aa);                    // motorway lane line
     else if (vCls < 3.5) paint += stripe(abs(m), 0.12, 0.07, aa);                  // main roads: solid double centre
-    else paint += dash * stripe(m, 0.0, 0.075, aa);                               // dashed centre line
+    else if (vCls < 5.5) paint += dash * stripe(m, 0.0, 0.075, aa);              // dashed centre line (narrow streets have none)
   }
-  paint *= 0.85 * (0.8 + 0.2 * n1) * (1.0 - smoothstep(600.0, 2500.0, dist));
+  paint *= 0.85 * (0.8 + 0.2 * n1) * (1.0 - smoothstep(600.0, 2500.0, dist)) * (1.0 - smoothstep(0.15, 0.6, vJ));
   c = mix(c, vec3(0.86, 0.86, 0.84), clamp(paint, 0.0, 1.0));
   float diff = max(uSunDir.y, 0.0);
   vec3 col = c * (uSunCol * diff * 0.95 + uAmbSky * 0.85);
@@ -5601,6 +5645,7 @@ in vec2 vUv; in float vY; in float vSeed; in float vFade; in vec3 vWorld; flat i
 uniform sampler2D uTreeTex;
 out vec4 outColor;
 void main(){
+  if (zoneCut(vWorld)) discard;
   vec4 t = texture(uTreeTex, vUv);
   float dith = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
   if (t.a < 0.5 || dith > vFade) discard;
@@ -6011,11 +6056,14 @@ function platUpdate(planes) {
     platDispatch(n, d); busy++;
   }
   platEvict(f);
-  // hide OSM buildings under loaded PLATEAU nodes (throttled)
+  // hide OSM buildings under loaded PLATEAU nodes (throttled). Not while Google's 3D is on: PLATEAU isn't
+  // drawn then, and the OSM buildings are the ones shown round the car (and where Google is flat)
+  const goog = typeof GOOG !== 'undefined' && GOOG.covering;
+  if (goog !== PLAT.rectsGoog) { PLAT.rectsGoog = goog; PLAT.rectsDirty = true; PLAT.rectsT = 0; }
   if (PLAT.rectsDirty && R.time > (PLAT.rectsT || 0)) {
     PLAT.rectsDirty = false; PLAT.rectsT = R.time + 0.7;
     const rects = [];
-    for (const S of PLAT.list) if (S.root) (function walk(n) { if (n.mesh && !n.mesh.empty && n.size <= 1400) rects.push([n.s, n.w, n.n, n.e, n.key]); for (const c of n.children) walk(c); })(S.root);
+    if (!goog) for (const S of PLAT.list) if (S.root) (function walk(n) { if (n.mesh && !n.mesh.empty && n.size <= 1400) rects.push([n.s, n.w, n.n, n.e, n.key]); for (const c of n.children) walk(c); })(S.root);
     PLAT.rects = rects;
     PLAT.hideQueue = [...CITY.tiles.values()];
   }
@@ -6203,6 +6251,7 @@ vec3 googNight(vec3 ph, vec3 n){
   return e;
 }
 void main(){
+  if (zoneCut(vWorld)) discard;
   vec3 n = normalize(vN);
   if (uFlatN == 1) { n = normalize(cross(dFdx(vWorld), dFdy(vWorld))); if (dot(n, uCamPos - vWorld) < 0.0) n = -n; }
   else if (!gl_FrontFacing) n = -n;
@@ -6848,6 +6897,7 @@ in vec3 vWorld; in vec3 vN; in vec3 vCol; in float vT;
 uniform sampler2D uNoise;
 out vec4 outColor;
 void main(){
+  if (zoneCut(vWorld)) discard;
   vec3 n = normalize(vN);
   float diff = max(dot(n, uSunDir) * 0.75 + 0.25, 0.0) * planeShadow(vWorld.xz);
   vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
@@ -11861,7 +11911,7 @@ function carReset() { if (CAR.on) { CAR.on = false; CAR.plane = null; } carButto
 function carGround(x, z, yRef) {
   const g = groundAt(x, z);
   let h = g.h, water = g.water, google = false;
-  if (typeof GOOG !== 'undefined' && GOOG.covering && GOOG.off != null) {
+  if (typeof GOOG !== 'undefined' && GOOG.covering && GOOG.off != null && !(typeof ZONE !== 'undefined' && ZONE.on)) {   // (in the near zone the sim's own ground is shown)
     const [la, lo] = worldToGeo(x, z), gh = googGroundAt(la, lo, yRef + GOOG.off);
     if (gh != null) { h = gh - GOOG.off; google = true; water = water && h < 0.5; }
   }
@@ -12159,7 +12209,7 @@ function carCamera(dt) {
   CAR.camYaw += d * Math.min(1, dt * 3);
   if (cam.mode === 'carcab') {
     const lq = qmul(CAR.q, qmul(qaxis([0, 1, 0], cam.lookYaw), qaxis([1, 0, 0], cam.lookPitch)));
-    const eye = vadd(CAR.pos, qrot(CAR.q, [-0.36, 1.26, 0.05]));
+    const M = carModel(), eye = vadd(CAR.pos, qrot(CAR.q, [M.W * 0.19, M.id === 'sports' ? 1.1 : M.id === 'suv' || M.id === 'kei' ? 1.48 : 1.3, M.L * -0.02]));   // right-hand drive (Japan)
     return { eye, target: vadd(eye, qrot(lq, [0, -0.35, -10])), up: qrot(CAR.q, [0, 1, 0]), fov: 62, near: 0.1 };
   }
   const yaw = CAR.camYaw + cam.lookYaw, f = carFwd(yaw), dist = 7.2, hgt = 2.3 + cam.lookPitch * 3;
@@ -13244,6 +13294,14 @@ async function loadJapan() {
 
 // ---------- rendering ----------
 const R = { VP: null, eye: [0, 0, 0], time: 0, W: 1, H: 1, camR: [1, 0, 0], camU: [0, 1, 0], camF: [0, 0, -1], tanX: 1, tanY: 1 };
+// the near zone: while driving over Google's 3D tiles, the ground, streets and buildings within a few hundred
+// metres of the car are the sim's own (a photogrammetry mesh is a melted blanket at street level)
+const ZONE = { on: false, v: [0, 0, 0, 0], side: 0, r0: 240, r1: 340 };
+function zoneUpdate() {
+  ZONE.on = !!(CAR.on && GOOG.covering && JW.online && typeof CITY !== 'undefined' && CITY.ready && ZONE.enabled !== false);
+  ZONE.v = ZONE.on ? [sim.pos[0], sim.pos[2], ZONE.r0, ZONE.r1] : [0, 0, 0, 0];
+  ZONE.side = 0;
+}
 function nightK() { return ENV.night ? 1 : clamp((0.3 - ENV.sunDir[1]) * 4, 0, 1); }
 function setCommon(pr) {
   const u = pr.u;
@@ -13260,6 +13318,8 @@ function setCommon(pr) {
   if (u.uHaze) gl.uniform1f(u.uHaze, ENV.haze || 1.5);
   if (u.uFlatCl) gl.uniform1f(u.uFlatCl, volCloudsActive() ? 0 : 1);
   if (u.uSink) gl.uniform1f(u.uSink, googSink());
+  if (u.uZone) gl.uniform4fv(u.uZone, ZONE.v);
+  if (u.uZoneSide) gl.uniform1f(u.uZoneSide, ZONE.side);
   if (u.uCamPos) gl.uniform3fv(u.uCamPos, R.eye);
   if (u.uTime) gl.uniform1f(u.uTime, R.time);
   if (u.uViewProj) gl.uniformMatrix4fv(u.uViewProj, false, R.VP);
@@ -13331,6 +13391,7 @@ function render() {
   gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, runwayTex);
   R.nodes = 0;
   if (JW.active) { const pl = frustumPlanes(M4.mul(M4.persp(fovY, asp, 1, 650000), v)); platUpdate(pl); googUpdate(pl); }
+  zoneUpdate();
   for (const far of [true, false]) {
     const proj = far ? M4.persp(fovY, asp, DEPTH_SPLIT, JW.active ? 650000 : 60000) : M4.persp(fovY, asp, cam.near, DEPTH_SPLIT * 1.02);
     R.VP = M4.mul(proj, v);
@@ -13343,8 +13404,11 @@ function drawScene(planes, far) {
   if (JW.active) {
     drawJapanTerrain(planes);
     if (GOOG.covering) {                                  // photogrammetry replaces runways, buildings and trees
-      drawGoogle(); googFlatCheck();
-      if (GOOG.flat) { drawRoads(planes); drawCity(planes); drawJwTrees(planes, far); } // ...except where Google has no 3D: the map's own buildings stand in
+      ZONE.side = 1; drawGoogle(); googFlatCheck();
+      // ...except where Google has no 3D (the map's own buildings stand in everywhere), and around the car,
+      // where the photogrammetry's melted ground and walls give way to the sim's own streets
+      if (GOOG.flat || ZONE.on) { ZONE.side = GOOG.flat ? 0 : -1; drawRoads(planes); drawCity(planes); drawJwTrees(planes, far); }
+      ZONE.side = 0;
     }
     else { drawJapanRunways(); drawRoads(planes); drawCity(planes); drawPlateau(); drawJwTrees(planes, far); }
   }

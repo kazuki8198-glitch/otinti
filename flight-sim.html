@@ -954,6 +954,7 @@ function makeProgram(vs, fs) {
     const info = gl.getActiveUniform(p, i);
     u[info.name.replace(/\[0\]$/, '')] = gl.getUniformLocation(p, info.name);
   }
+  if (u.uSunShadow) { gl.useProgram(p); gl.uniform1i(u.uSunShadow, 11); }      // its own unit (a shadow sampler can't share one)
   return { p, u };
 }
 // vertex buffers: attribs = [{loc, size, data, divisor?, dynamic?}] ; interleaved = {loc: [size, offset]}
@@ -1541,6 +1542,20 @@ float planeShadow(vec2 p){
   float wing = smoothstep(1.0 + s, 1.0 - s * 0.5, length(vec2((a + 0.1) / 0.75, b / 4.8)));
   float tail = smoothstep(1.0 + s, 1.0 - s * 0.5, length(vec2((a + 3.4) / 0.4, b / 1.7)));
   return 1.0 - max(fus, max(wing, tail)) * uShadowB.x;
+}
+// the sun's shadow map round the car (p_sunshadow.js): 1 lit, down to 1 - strength in shadow
+uniform highp sampler2DShadow uSunShadow;
+uniform mat4 uSunVP;
+uniform vec4 uSunSh;     // strength, texel size
+float sunShadow(vec3 w, vec3 n){
+  if (uSunSh.x <= 0.0) return 1.0;
+  vec3 c = (uSunVP * vec4(w + n * 0.12, 1.0)).xyz * 0.5 + 0.5;
+  vec2 e = abs(c.xy - 0.5) * 2.0;
+  float edge = smoothstep(0.82, 0.98, max(e.x, e.y));
+  if (edge >= 1.0 || c.z >= 1.0) return 1.0;
+  float s = 0.0, t = uSunSh.y * 1.25;
+  for (int i = -1; i <= 1; i++) for (int j = -1; j <= 1; j++) s += texture(uSunShadow, vec3(c.xy + vec2(float(i), float(j)) * t, c.z - 0.00012));
+  return 1.0 - (1.0 - s / 9.0) * (1.0 - edge) * uSunSh.x;
 }
 `;
 const TERRAIN_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
@@ -4019,7 +4034,7 @@ uniform float uNightF;
 out vec4 outColor;
 void main(){
   vec3 n = normalize(vN);
-  float diff = max(dot(n, uSunDir), 0.0) * planeShadow(vWorld.xz);
+  float diff = max(dot(n, uSunDir), 0.0) * planeShadow(vWorld.xz) * sunShadow(vWorld, n);
   vec3 col, tEm = vec3(0.0);
   if (uHasPhoto == 1) {
     vec3 ph = texture(uPhoto, vUv).rgb;
@@ -4824,10 +4839,11 @@ function cityWorkerMain() {
     let nv = 0, ni = 0;
     for (const p of bpolys) for (let r = 0; r < p.rings.length; r++) { const k = p.rings[r].length / 2; nv += k * 4 + (r === 0 || true ? k : 0) + 80; ni += k * 6; }
     ni += nv;                                                         // generous room for roof triangles (and pitched roofs / roof boxes)
-    const vb = new ArrayBuffer(nv * 20), i16 = new Int16Array(vb), f32 = new Float32Array(vb), i8 = new Int8Array(vb);
+    let vb = new ArrayBuffer(nv * 20), i16 = new Int16Array(vb), f32 = new Float32Array(vb), i8 = new Int8Array(vb);
     let idx = new Uint32Array(ni);
     let v = 0, q = 0;
     const put = (x, z, y, nx, ny, nz, u, st, h, yr) => {
+      if (v >= nv) { nv *= 2; const g = new ArrayBuffer(nv * 20); new Uint8Array(g).set(new Uint8Array(vb)); vb = g; i16 = new Int16Array(vb); f32 = new Float32Array(vb); i8 = new Int8Array(vb); }
       const s = v * 10;
       i16[s] = Math.round(x * 10); i16[s + 1] = Math.round(z * 10); f32[v * 5 + 1] = y;
       i8[v * 20 + 8] = nx; i8[v * 20 + 9] = ny; i8[v * 20 + 10] = nz;
@@ -4846,6 +4862,31 @@ function cityWorkerMain() {
       tri(a, b, c);
     };
     const nrm3 = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+    // a flat quad a b c d (in order round it) facing along n, with its own height value per corner
+    const quad = (P, yr, n, st, H) => {
+      const nb = [Math.round(n[0] * 127), Math.round(n[1] * 127), Math.round(n[2] * 127)], along = p => (p[0] * -n[2] + p[2] * n[0]);
+      const i = P.map((p, k) => put(p[0], p[2], p[1], nb[0], nb[1], nb[2], along(p), st, H, yr[k]));
+      const ex = P[1][0] - P[0][0], ey = P[1][1] - P[0][1], ez = P[1][2] - P[0][2], fx = P[2][0] - P[0][0], fy = P[2][1] - P[0][1], fz = P[2][2] - P[0][2];
+      if ((ey * fz - ez * fy) * n[0] + (ez * fx - ex * fz) * n[1] + (ex * fy - ey * fx) * n[2] >= 0) { tri(i[0], i[1], i[2]); tri(i[0], i[2], i[3]); }
+      else { tri(i[0], i[2], i[1]); tri(i[0], i[3], i[2]); }
+    };
+    // balconies along a flat wall (a mansion's south side): a slab on every floor from the second up, its
+    // parapet panel, the end panels; st kinds 6 (slab) and 7 (panel)
+    const K_SLAB = 6 * 1024, K_PANEL = 7 * 1024;
+    function balconies(x0, z0, x1, z1, base, H, seed) {
+      const len = Math.hypot(x1 - x0, z1 - z0), ux = (x1 - x0) / len, uz = (z1 - z0) / len, nx = uz, nz = -ux, D = 1.15, fh = 2.9;
+      const e = 0.25, ax = x0 + ux * e, az = z0 + uz * e, bx = x1 - ux * e, bz = z1 - uz * e;
+      const cx = ax + nx * D, cz = az + nz * D, dx = bx + nx * D, dz = bz + nz * D;
+      const sd = seed | K_PANEL, ss = seed | K_SLAB;
+      for (let y = base + fh; y + 1.9 < base + H; y += fh) {
+        const y0 = y - 0.18, y1 = y + 1.05;
+        quad([[ax, y, az], [bx, y, bz], [dx, y, dz], [cx, y, cz]], [0, 0, 0, 0], [0, 1, 0], ss, H);
+        quad([[ax, y0, az], [bx, y0, bz], [dx, y0, dz], [cx, y0, cz]], [0, 0, 0, 0], [0, -1, 0], ss, H);
+        quad([[cx, y0, cz], [dx, y0, dz], [dx, y1, dz], [cx, y1, cz]], [-0.18, -0.18, 1.05, 1.05], [nx, 0, nz], sd, H);
+        quad([[ax, y0, az], [cx, y0, cz], [cx, y1, cz], [ax, y1, az]], [-0.18, -0.18, 1.05, 1.05], [-ux, 0, -uz], sd, H);
+        quad([[bx, y0, bz], [dx, y0, dz], [dx, y1, dz], [bx, y1, bz]], [-0.18, -0.18, 1.05, 1.05], [ux, 0, uz], sd, H);
+      }
+    }
     // the smallest rectangle around a footprint (tested along each edge's direction)
     function obb(f) {
       let best = null; const k = f.length / 2;
@@ -4901,74 +4942,6 @@ function cityWorkerMain() {
         face([C[0][0], y1, C[0][1]], [C[2][0], y1, C[2][1]], [C[3][0], y1, C[3][1]], [0, 1, 0], seed + 256, H, H);
       }
     }
-    const boxes = [], ringXZ = [], ringOff = [0], bRange = [], bCen = [];
-    let maxTop = -1e9, minG = 1e9;
-    for (let bi = 0; bi < bpolys.length; bi++) {
-      const poly = bpolys[bi], pr = poly.props, ext = poly.rings[0];
-      let h = +pr.render_height || 0, mh = +pr.render_min_height || 0;
-      if (h < 2.5) h = 3;
-      if (mh >= h - 0.5) continue;
-      // ground: lowest point under the footprint so no corner floats
-      let gmin = 1e9, gmax = -1e9, cx = 0, cy = 0;
-      const nk = ext.length / 2, stp = Math.max(1, Math.floor(nk / 12));
-      for (let i = 0; i < ext.length; i += 2) { cx += ext[i]; cy += ext[i + 1]; }
-      cx /= nk; cy /= nk;
-      for (let i = 0; i < ext.length; i += 2 * stp) { const g = ground(ext[i], ext[i + 1]); gmin = Math.min(gmin, g); gmax = Math.max(gmax, g); }
-      const gc = ground(cx, cy); gmin = Math.min(gmin, gc); gmax = Math.max(gmax, gc);
-      const base = gmin, top = (gmin + gmax) / 2 + h, bot = mh > 0 ? (gmin + gmax) / 2 + mh : base - 2.5;
-      const H = top - base, seed = hash(ext[0] + bi * 7, ext[1]) & 255;
-      const iStart = q;
-      maxTop = Math.max(maxTop, top); minG = Math.min(minG, bot);
-      // footprint in metres, its oriented rectangle, and what kind of roof it gets
-      const flat = [], holes = [];
-      for (let r = 0; r < poly.rings.length; r++) { if (r) holes.push(flat.length / 2); const rr = poly.rings[r]; for (let i = 0; i < rr.length; i += 2) flat.push(lx(rr[i]), lz(rr[i + 1])); }
-      const area = Math.abs(ringArea(flat));
-      const ob = poly.rings.length === 1 && h < 13 && area < 420 ? obb(flat) : null;
-      const pitched = !!(ob && ob.fill > 0.82 && ob.l < 40 && ob.w > 3);
-      const parapet = !pitched && h >= 7 ? 0.9 : 0;
-      // walls
-      for (const r of poly.rings) {
-        const k = r.length / 2;
-        for (let i = 0; i < k; i++) {
-          const j = (i + 1) % k, ax = r[i * 2], ay = r[i * 2 + 1], bx = r[j * 2], by = r[j * 2 + 1];
-          if ((ax === 0 && bx === 0) || (ax === E && bx === E) || (ay === 0 && by === 0) || (ay === E && by === E)) continue;
-          const x0 = lx(ax), z0 = lz(ay), x1 = lx(bx), z1 = lz(by), dx = x1 - x0, dz = z1 - z0, len = Math.hypot(dx, dz);
-          if (len < 0.05) continue;
-          const nx = Math.round(dz / len * 127), nz = Math.round(-dx / len * 127);
-          const a0 = put(x0, z0, bot, nx, 0, nz, 0, seed, H, bot - base), b0 = put(x1, z1, bot, nx, 0, nz, len, seed, H, bot - base);
-          const b1 = put(x1, z1, top + parapet, nx, 0, nz, len, seed, H, H + parapet), a1 = put(x0, z0, top + parapet, nx, 0, nz, 0, seed, H, H + parapet);
-          tri(a0, b1, b0); tri(a0, a1, b1);
-        }
-      }
-      // roof: small, nearly rectangular houses get a pitched (gable or hipped) roof over their oriented
-      // rectangle; bigger flat roofs get a parapet band and some rooftop plant, so nothing reads as a plain box
-      const ridgeUp = pitched ? pitchedRoof(ob, top, seed, H, (seed & 7) < 5) : 0;
-      const t = ridgeUp ? [] : earcut(flat, holes);
-      if (!ridgeUp && h >= 7 && area > 250 && poly.rings.length === 1) roofPlant(flat, top, seed, H, area);
-      if (ridgeUp) maxTop = Math.max(maxTop, top + ridgeUp);
-      if (t.length) {
-        const v0 = v;
-        for (let i = 0; i < flat.length; i += 2) put(flat[i], flat[i + 1], top, 0, 127, 0, 0, seed + 256, H, H);
-        for (let i = 0; i < t.length; i += 3) {
-          const a = t[i], b = t[i + 1], c = t[i + 2];
-          const e1x = flat[b * 2] - flat[a * 2], e1z = flat[b * 2 + 1] - flat[a * 2 + 1], e2x = flat[c * 2] - flat[a * 2], e2z = flat[c * 2 + 1] - flat[a * 2 + 1];
-          if (e1z * e2x - e1x * e2z >= 0) tri(v0 + a, v0 + b, v0 + c); else tri(v0 + a, v0 + c, v0 + b);
-        }
-      }
-      bRange.push(iStart, q - iStart); bCen.push(lx(cx), lz(cy));
-      // collision footprint (outer ring, local metres)
-      let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
-      for (let i = 0; i < ext.length; i += 2) { const X = lx(ext[i]), Z = lz(ext[i + 1]); ringXZ.push(X, Z); x0 = Math.min(x0, X); x1 = Math.max(x1, X); z0 = Math.min(z0, Z); z1 = Math.max(z1, Z); }
-      ringOff.push(ringXZ.length);
-      boxes.push(x0, z0, x1, z1, top + ridgeUp);
-    }
-    // collision grid 32 x 32
-    const G = 32, nb = boxes.length / 5, cellCount = new Uint32Array(G * G + 1);
-    const cellOf = (X, sz) => clamp(Math.floor(X / sz * G), 0, G - 1);
-    for (let b = 0; b < nb; b++) for (let cz = cellOf(boxes[b * 5 + 1], Hm); cz <= cellOf(boxes[b * 5 + 3], Hm); cz++) for (let cx = cellOf(boxes[b * 5], W); cx <= cellOf(boxes[b * 5 + 2], W); cx++) cellCount[cz * G + cx + 1]++;
-    for (let i = 1; i <= G * G; i++) cellCount[i] += cellCount[i - 1];
-    const fill = cellCount.slice(), items = new Uint32Array(cellCount[G * G]);
-    for (let b = 0; b < nb; b++) for (let cz = cellOf(boxes[b * 5 + 1], Hm); cz <= cellOf(boxes[b * 5 + 3], Hm); cz++) for (let cx = cellOf(boxes[b * 5], W); cx <= cellOf(boxes[b * 5 + 2], W); cx++) items[fill[cz * G + cx]++] = b;
     // ---------- roads: ribbons draped on the ground, plus the centre lines for placing and routing cars ----------
     const RW = { motorway: 10.5, trunk: 9, primary: 8.5, secondary: 7.5, tertiary: 6.5, minor: 5.2, service: 3.6, track: 3, busway: 6.5, raceway: 10 };
     const RC = { motorway: 1, trunk: 2, primary: 3, secondary: 4, tertiary: 5, minor: 6, service: 7, track: 8, busway: 5, raceway: 2 };
@@ -5008,33 +4981,192 @@ function cityWorkerMain() {
     // how much a point is in a junction (0..1): 1 where another road's surface is, fading over 6 m
     const junction = (li, x, z, w) => {
       const c = jcell.get(jkey(Math.floor(x / JG) + 1000, Math.floor(z / JG) + 1000)); if (!c) return 0;
-      let best = 0;
+      let best = 0; junction.other = 99;
       for (let n = 0; n < c.length; n += 2) {
         const lj = c[n]; if (lj === li) continue;
         const o = lines[lj], a = o.run[c[n + 1]], b = o.run[c[n + 1] + 1];
         if (o.bridge !== lines[li].bridge) continue;                 // a bridge over a road is not a junction
         const dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1, t = clamp(((x - a[0]) * dx + (z - a[1]) * dz) / L2, 0, 1);
         const d = Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t), r = (w + o.w) / 2 + 1;
-        best = Math.max(best, clamp(1 - (d - r) / 6, 0, 1));
+        const k = clamp(1 - (d - r) / 6, 0, 1);
+        best = Math.max(best, k); if (k > 0.5) junction.other = Math.min(junction.other, o.c);   // (the biggest road met)
       }
       return best;
     };
+    // how far a point is from the edge of the nearest road (of class <= maxC), and that road's class
+    const roadNear = (x, z, maxC) => {
+      roadNear.c = 99;
+      const c = jcell.get(jkey(Math.floor(x / JG) + 1000, Math.floor(z / JG) + 1000)); if (!c) return 1e9;
+      let best = 1e9;
+      for (let n = 0; n < c.length; n += 2) {
+        const o = lines[c[n]]; if (o.c > maxC || o.bridge) continue;
+        const a = o.run[c[n + 1]], b = o.run[c[n + 1] + 1], dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1, t = clamp(((x - a[0]) * dx + (z - a[1]) * dz) / L2, 0, 1);
+        const d = Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t) - o.w / 2;
+        if (d < best) { best = d; roadNear.c = o.c; }
+      }
+      return best;
+    };
+    const boxes = [], ringXZ = [], ringOff = [0], bRange = [], bCen = [];
+    let maxTop = -1e9, minG = 1e9;
+    for (let bi = 0; bi < bpolys.length; bi++) {
+      const poly = bpolys[bi], pr = poly.props, ext = poly.rings[0];
+      let h = +pr.render_height || 0, mh = +pr.render_min_height || 0;
+      if (h < 2.5) h = 3;
+      if (mh >= h - 0.5) continue;
+      // ground: lowest point under the footprint so no corner floats
+      let gmin = 1e9, gmax = -1e9, cx = 0, cy = 0;
+      const nk = ext.length / 2, stp = Math.max(1, Math.floor(nk / 12));
+      for (let i = 0; i < ext.length; i += 2) { cx += ext[i]; cy += ext[i + 1]; }
+      cx /= nk; cy /= nk;
+      for (let i = 0; i < ext.length; i += 2 * stp) { const g = ground(ext[i], ext[i + 1]); gmin = Math.min(gmin, g); gmax = Math.max(gmax, g); }
+      const gc = ground(cx, cy); gmin = Math.min(gmin, gc); gmax = Math.max(gmax, gc);
+      const base = gmin, top = (gmin + gmax) / 2 + h, bot = mh > 0 ? (gmin + gmax) / 2 + mh : base - 2.5;
+      const H = top - base, seed = hash(ext[0] + bi * 7, ext[1]) & 255;
+      const iStart = q;
+      maxTop = Math.max(maxTop, top); minG = Math.min(minG, bot);
+      // footprint in metres, its oriented rectangle, and what kind of roof it gets
+      const flat = [], holes = [];
+      for (let r = 0; r < poly.rings.length; r++) { if (r) holes.push(flat.length / 2); const rr = poly.rings[r]; for (let i = 0; i < rr.length; i += 2) flat.push(lx(rr[i]), lz(rr[i + 1])); }
+      const area = Math.abs(ringArea(flat));
+      const ob = poly.rings.length === 1 && h < 13 && area < 420 ? obb(flat) : null;
+      const pitched = !!(ob && ob.fill > 0.82 && ob.l < 40 && ob.w > 3);
+      const parapet = !pitched && h >= 7 ? 0.9 : 0;
+      // what the building is, for its facade (st bits: seed, 256 roof, 512 a feature wall, 1024 * kind):
+      // 0 offices and mixed blocks, 1 houses, 2 apartment blocks (マンション, balconies on the sunny long side),
+      // 3 towers. Walls facing a busy street get shop fronts at street level (a feature wall of kind 0 or 1).
+      const ob2 = ob || (poly.rings.length === 1 && area < 8000 && h >= 11 ? obb(flat) : null);
+      const hs = hash(seed * 13 + bi, 91);
+      const kind = h > 45 ? 3 : h < 11 && area < 420 ? 1 : h >= 11 && ob2 && ob2.fill > 0.8 && ob2.l > 1.6 * ob2.w && ob2.w < 24 && (hs & 3) ? 2 : 0;
+      const walls = [];
+      for (let r = 0; r < poly.rings.length; r++) {
+        const rr = poly.rings[r], k = rr.length / 2;
+        for (let i = 0; i < k; i++) {
+          const j = (i + 1) % k, ax = rr[i * 2], ay = rr[i * 2 + 1], bx = rr[j * 2], by = rr[j * 2 + 1];
+          if ((ax === 0 && bx === 0) || (ax === E && bx === E) || (ay === 0 && by === 0) || (ay === E && by === E)) continue;
+          const x0 = lx(ax), z0 = lz(ay), x1 = lx(bx), z1 = lz(by), dx = x1 - x0, dz = z1 - z0, len = Math.hypot(dx, dz);
+          if (len < 0.05) continue;
+          walls.push([x0, z0, x1, z1, len, dz / len, -dx / len, r === 0, 0]);
+        }
+      }
+      if (kind < 2 && h < 30) {                                         // shop fronts on the street
+        let best = 99;
+        for (const w of walls) if (w[7] && w[4] > 3) {
+          const mx = (w[0] + w[2]) / 2 + w[5] * 1.2, mz = (w[1] + w[3]) / 2 + w[6] * 1.2, d = roadNear(mx, mz, 6);
+          if (d < 7 && roadNear(mx + w[5] * 3, mz + w[6] * 3, 6) < d) { w[8] = 1; best = Math.min(best, roadNear.c); }
+        }
+        const chance = best <= 4 ? 0.85 : best <= 5 ? 0.6 : best <= 6 ? (kind === 1 ? 0.12 : 0.35) : 0;
+        if ((hs >>> 8 & 255) >= chance * 256) for (const w of walls) w[8] = 0;
+      } else if (kind === 2) {                                          // balconies: the long walls facing most to the sun
+        let bestS = -2;
+        for (const w of walls) if (w[7] && w[4] > 6) bestS = Math.max(bestS, w[6]);
+        for (const w of walls) if (w[7] && w[4] > 6 && w[6] > Math.max(bestS - 0.35, -0.3)) w[8] = 1;
+      }
+      const st0 = seed + 1024 * kind;
+      for (const [x0, z0, x1, z1, len, fnx, fnz, , feat] of walls) {
+        const nx = Math.round(fnx * 127), nz = Math.round(fnz * 127), st = st0 + 512 * feat;
+        const a0 = put(x0, z0, bot, nx, 0, nz, 0, st, H, bot - base), b0 = put(x1, z1, bot, nx, 0, nz, len, st, H, bot - base);
+        const b1 = put(x1, z1, top + parapet, nx, 0, nz, len, st, H, H + parapet), a1 = put(x0, z0, top + parapet, nx, 0, nz, 0, st, H, H + parapet);
+        tri(a0, b1, b0); tri(a0, a1, b1);
+        if (feat && kind === 2) balconies(x0, z0, x1, z1, base, H, seed);
+      }
+      // roof: small, nearly rectangular houses get a pitched (gable or hipped) roof over their oriented
+      // rectangle; bigger flat roofs get a parapet band and some rooftop plant, so nothing reads as a plain box
+      const ridgeUp = pitched ? pitchedRoof(ob, top, st0, H, (seed & 7) < 5) : 0;
+      const t = ridgeUp ? [] : earcut(flat, holes);
+      if (!ridgeUp && h >= 7 && area > 250 && poly.rings.length === 1) roofPlant(flat, top, st0, H, area);
+      if (ridgeUp) maxTop = Math.max(maxTop, top + ridgeUp);
+      if (t.length) {
+        const v0 = v;
+        for (let i = 0; i < flat.length; i += 2) put(flat[i], flat[i + 1], top, 0, 127, 0, 0, st0 + 256, H, H);
+        for (let i = 0; i < t.length; i += 3) {
+          const a = t[i], b = t[i + 1], c = t[i + 2];
+          const e1x = flat[b * 2] - flat[a * 2], e1z = flat[b * 2 + 1] - flat[a * 2 + 1], e2x = flat[c * 2] - flat[a * 2], e2z = flat[c * 2 + 1] - flat[a * 2 + 1];
+          if (e1z * e2x - e1x * e2z >= 0) tri(v0 + a, v0 + b, v0 + c); else tri(v0 + a, v0 + c, v0 + b);
+        }
+      }
+      bRange.push(iStart, q - iStart); bCen.push(lx(cx), lz(cy));
+      // collision footprint (outer ring, local metres)
+      let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+      for (let i = 0; i < ext.length; i += 2) { const X = lx(ext[i]), Z = lz(ext[i + 1]); ringXZ.push(X, Z); x0 = Math.min(x0, X); x1 = Math.max(x1, X); z0 = Math.min(z0, Z); z1 = Math.max(z1, Z); }
+      ringOff.push(ringXZ.length);
+      boxes.push(x0, z0, x1, z1, top + ridgeUp);
+    }
+    // collision grid 32 x 32
+    const G = 32, nb = boxes.length / 5, cellCount = new Uint32Array(G * G + 1);
+    const cellOf = (X, sz) => clamp(Math.floor(X / sz * G), 0, G - 1);
+    for (let b = 0; b < nb; b++) for (let cz = cellOf(boxes[b * 5 + 1], Hm); cz <= cellOf(boxes[b * 5 + 3], Hm); cz++) for (let cx = cellOf(boxes[b * 5], W); cx <= cellOf(boxes[b * 5 + 2], W); cx++) cellCount[cz * G + cx + 1]++;
+    for (let i = 1; i <= G * G; i++) cellCount[i] += cellCount[i - 1];
+    const fill = cellCount.slice(), items = new Uint32Array(cellCount[G * G]);
+    for (let b = 0; b < nb; b++) for (let cz = cellOf(boxes[b * 5 + 1], Hm); cz <= cellOf(boxes[b * 5 + 3], Hm); cz++) for (let cx = cellOf(boxes[b * 5], W); cx <= cellOf(boxes[b * 5 + 2], W); cx++) items[fill[cz * G + cx]++] = b;
     // 3) the ribbons. Bigger roads sit a few centimetres higher, so where roads overlap the main road is
     //    the one seen (no flicker); junction areas lose their markings (a plain asphalt crossing)
+    // street furniture: [x, z, y, yaw, type] (types: PROP_* on the main thread). yaw turns the prop's +x
+    const props = [];
+    const prop = (x, z, y, yaw, type) => { if (x > -2 && z > -2 && x < W + 2 && z < Hm + 2) props.push(x, z, y, yaw, type); };
     lines.forEach((ln, li) => {
       const { run, w, c, bridge } = ln;
       let u = 0, prev = -1;
+      const V = [];                                                   // per point: x, z, road height, normal, along, junction
       for (let i = 0; i < run.length; i++) {
         const a = run[Math.max(i - 1, 0)], b = run[Math.min(i + 1, run.length - 1)], tx = b[0] - a[0], tz = b[1] - a[1], tl = Math.hypot(tx, tz) || 1;
         const nx = -tz / tl, nz = tx / tl, p = run[i], g = ground(p[2], p[3]) + (bridge ? 0.4 : 0.06 + (9 - c) * 0.012);
         if (i) u += Math.hypot(p[0] - run[i - 1][0], p[1] - run[i - 1][1]);
-        const j = Math.round(junction(li, p[0], p[1], w) * 7), cj = c + 16 * j;
+        const j = Math.round(junction(li, p[0], p[1], w) * 7), cj = c + 16 * j, oc = junction.other;
         const l = rput(p[0] + nx * w / 2, p[1] + nz * w / 2, g, u, cj, w, -1), r = rput(p[0] - nx * w / 2, p[1] - nz * w / 2, g, u, cj, w, 1);
         if (prev >= 0) { ri.push(prev, l, prev + 1, prev + 1, l, r); }
         prev = l;
         rPts.push(p[0], p[1], g);
+        V.push([p[0], p[1], g, nx, nz, u, j, oc]);
       }
       rOff.push(rPts.length / 3); rCls.push(c); rWid.push(w);
+      if (bridge) return;
+      // pavements with kerbs along the main roads (trunk .. tertiary), open where roads meet: the kerb face,
+      // the paving (across 0 at the kerb .. 1 at the back) and a short face down at the back
+      if (c >= 2 && c <= 5) {
+        const sw = c <= 3 ? 3.2 : 2.3, kh = 0.15;
+        for (const sd of [1, -1]) {
+          let pv = -1;
+          for (let i = 0; i < V.length; i++) {
+            const [x, z, g, nx, nz, uu, j] = V[i], ox = nx * sd, oz = nz * sd, ri0 = w / 2, ro = w / 2 + sw;
+            const a0 = rput(x + ox * ri0, z + oz * ri0, g - 0.02, uu, 257, sw, 0), a1 = rput(x + ox * ri0, z + oz * ri0, g + kh, uu, 257, sw, 1);
+            const b0 = rput(x + ox * ri0, z + oz * ri0, g + kh, uu, 256, sw, 0), b1 = rput(x + ox * ro, z + oz * ro, g + kh, uu, 256, sw, 1);
+            const c0 = rput(x + ox * ro, z + oz * ro, g + kh, uu, 257, sw, 1), c1 = rput(x + ox * ro, z + oz * ro, g - 0.3, uu, 257, sw, 0);
+            if (pv >= 0 && j <= 2 && V[i - 1][6] <= 2) {
+              ri.push(pv, a0, pv + 1, pv + 1, a0, a1);                 // kerb face
+              ri.push(pv + 2, b0, pv + 3, pv + 3, b0, b1);             // paving
+              ri.push(pv + 4, c0, pv + 5, pv + 5, c0, c1);             // back
+            }
+            pv = a0;
+          }
+        }
+      }
+      // street furniture along the road, from its start, never inside a junction
+      const at = (dist, off, sd, fn) => {
+        for (let i = 1; i < V.length; i++) if (V[i][5] >= dist) {
+          const A = V[i - 1], B = V[i], f = clamp((dist - A[5]) / Math.max(B[5] - A[5], 1e-3), 0, 1);
+          if (Math.max(A[6], B[6]) > 1) return;
+          const x = A[0] + (B[0] - A[0]) * f, z = A[1] + (B[1] - A[1]) * f, g = A[2] + (B[2] - A[2]) * f, nx = A[3], nz = A[4];
+          fn(x + nx * sd * off, z + nz * sd * off, g, nx * sd, nz * sd); return;
+        }
+      };
+      const len = V.length ? V[V.length - 1][5] : 0, hs = (hash(li * 131 + 7, c) & 255) / 255;
+      if (c >= 2 && c <= 5) {
+        const sw = c <= 3 ? 3.2 : 2.3;
+        for (let d = 10 + hs * 20; d < len - 5; d += 32) for (const sd of [1, -1])       // street lamps near the kerb, arm over the road
+          at(d + (sd < 0 ? 16 : 0), w / 2 + 0.55, sd, (x, z, g, ox, oz) => prop(x, z, g + 0.15, Math.atan2(-oz, -ox), 0));
+        if (c <= 4) for (let d = 5 + hs * 8; d < len - 4; d += 11) for (const sd of [1, -1])   // roadside trees in the paving
+          at(d + (sd < 0 ? 5.5 : 0), w / 2 + sw * 0.62, sd, (x, z, g) => prop(x, z, g + 0.15, hash(x * 10 | 0, z * 10 | 0) / 40, 3));
+      } else if (c >= 6 && c <= 7) {
+        for (let d = 8 + hs * 20; d < len - 4; d += 30)                // concrete utility poles on one side of the narrow streets
+          at(d, w / 2 + 0.35, 1, (x, z, g, ox, oz) => prop(x, z, g, Math.atan2(oz, ox), 1));
+      }
+      // traffic signals where main roads meet: at the left kerb before the junction (Japan drives on the left),
+      // the arm over the road, the lights facing the traffic that comes in
+      if (c <= 5) for (let i = 1; i < V.length; i++) {
+        const A = V[i - 1], B = V[i];
+        if (A[6] <= 2 && B[6] >= 5 && B[7] <= 5) { const [x, z, g, nx, nz] = A; prop(x - nx * (w / 2 + 0.6), z - nz * (w / 2 + 0.6), g, Math.atan2(nz, nx), 2); }
+        if (A[6] >= 5 && B[6] <= 2 && A[7] <= 5) { const [x, z, g, nx, nz] = B; prop(x + nx * (w / 2 + 0.6), z + nz * (w / 2 + 0.6), g, Math.atan2(-nz, -nx), 2); }
+      }
     });
     // packed like the buildings (x, z in dm, y, up normal, u in dm, class + 512, width dm, across)
     const nrv = rv0.length / 7 | 0;
@@ -5085,7 +5217,7 @@ function cityWorkerMain() {
       id: m.id, nv: v, ni: q, vb: vbuf, ib: ib.buffer, trees: tr.buffer, nTrees: tr.length / 4,
       boxes: new Float32Array(boxes).buffer, ringXZ: new Float32Array(ringXZ).buffer, ringOff: new Uint32Array(ringOff).buffer,
       cells: cellCount.buffer, items: items.buffer, bRange: new Uint32Array(bRange).buffer, bCen: new Float32Array(bCen).buffer, maxTop: nb ? maxTop : -1e9, minG: nb ? minG : 0, nBuild: nb, W, Hm,
-      nrv, nri: ri.length, rvb, rib: new Uint32Array(ri).buffer, rPts: new Float32Array(rPts).buffer, rOff: new Uint32Array(rOff).buffer, rCls: new Uint8Array(rCls).buffer, rWid: new Float32Array(rWid).buffer,
+      nrv, nri: ri.length, rvb, rib: new Uint32Array(ri).buffer, rPts: new Float32Array(rPts).buffer, rOff: new Uint32Array(rOff).buffer, rCls: new Uint8Array(rCls).buffer, rWid: new Float32Array(rWid).buffer, props: new Float32Array(props).buffer,
     };
     return res;
   }
@@ -5104,7 +5236,7 @@ function cityWorkerMain() {
       if (r.status === 404 || r.status === 204) { postMessage({ id: m.id, empty: true }); return; }
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const res = build(new Uint8Array(await r.arrayBuffer()), m);
-      postMessage(res, [res.vb, res.ib, res.trees, res.boxes, res.ringXZ, res.ringOff, res.cells, res.items, res.bRange, res.bCen, res.rvb, res.rib, res.rPts, res.rOff, res.rCls, res.rWid]);
+      postMessage(res, [res.vb, res.ib, res.trees, res.boxes, res.ringXZ, res.ringOff, res.cells, res.items, res.bRange, res.bCen, res.rvb, res.rib, res.rPts, res.rOff, res.rCls, res.rWid, res.props]);
     } catch (err) { postMessage({ id: m.id, error: String((err && err.message) || err) }); }
   };
 }
@@ -5215,6 +5347,7 @@ function cityReceive(r) {
     const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, t.ibCpu, gl.STATIC_DRAW);
     gl.bindVertexArray(null);
     t.vao = vao; t.vb = vb; t.ib = ib;
+    cityOrderIndex(t, null);
     CITY.verts += r.nv;
   }
   if (r.nTrees) {
@@ -5239,8 +5372,55 @@ function cityReceive(r) {
   }
   // road centre lines (tile-local metres) for putting the car on a road and for traffic
   if (r.rPts) t.roads = { pts: new Float32Array(r.rPts), off: new Uint32Array(r.rOff), cls: new Uint8Array(r.rCls), wid: new Float32Array(r.rWid) };
+  if (typeof streetReceive === 'function') streetReceive(t, r.props);
+  cityRoadGrid(t);
+  // trees placed before this tile's roads and buildings were known are placed again (none on a road or in a house)
+  if (typeof JWTREES !== 'undefined' && JWTREES.cells) for (const [k, c] of JWTREES.cells) {
+    const [la, lo] = worldToGeo(c.ox, c.oz);
+    if (la <= t.latN && la >= t.latS && lo >= t.lonW && lo <= t.lonE) { freeJwTreeCell(c); JWTREES.cells.delete(k); }
+  }
   t.ov = -1;
   if (typeof PLAT !== 'undefined' && PLAT.rects.length) cityApplyHidden(t, PLAT.rects);
+}
+// a grid over a tile's road segments (12 m cells), to ask quickly whether a point is on a road
+function cityRoadGrid(t) {
+  const R_ = t.roads; t.rgrid = null; if (!R_ || !R_.pts.length) return;
+  const G = 12, nx = Math.ceil((t.W || 2500) / G) + 2, nz = Math.ceil((t.Hm || 2500) / G) + 2, cells = new Map(), P = R_.pts;
+  for (let l = 0; l < R_.cls.length; l++) for (let k = R_.off[l]; k < R_.off[l + 1] - 1; k++) {
+    const m = R_.wid[l] / 2 + 1;
+    const x0 = Math.floor((Math.min(P[k * 3], P[k * 3 + 3]) - m) / G), x1 = Math.floor((Math.max(P[k * 3], P[k * 3 + 3]) + m) / G);
+    const z0 = Math.floor((Math.min(P[k * 3 + 1], P[k * 3 + 4]) - m) / G), z1 = Math.floor((Math.max(P[k * 3 + 1], P[k * 3 + 4]) + m) / G);
+    for (let i = x0; i <= x1; i++) for (let j = z0; j <= z1; j++) { const key = (j + 1) * nx + i + 1; let c = cells.get(key); if (!c) cells.set(key, c = []); c.push(l, k); }
+  }
+  t.rgrid = { G, nx, nz, cells };
+}
+// is a world point on a mapped road or inside a mapped building? (the Japan city layer)
+function cityBlocked(wx, wz) {
+  if (!CITY.ready || !JW.online) return false;
+  const [la, lo] = worldToGeo(wx, wz), n = 2 ** 14, x = Math.floor((lo + 180) / 360 * n), y = Math.floor(mercY(la) * n);
+  const t = CITY.tiles.get(x + '/' + y); if (!t || t.state !== 2) return false;
+  const X = (lo - t.lonW) * t.kxN, Z = -(la - t.latN) * KZ;
+  if (t.rgrid) {
+    const g = t.rgrid, c = g.cells.get((Math.floor(Z / g.G) + 1) * g.nx + Math.floor(X / g.G) + 1), R_ = t.roads, P = R_.pts;
+    if (c) for (let i = 0; i < c.length; i += 2) {
+      const l = c[i], k = c[i + 1], ax = P[k * 3], az = P[k * 3 + 1], dx = P[k * 3 + 3] - ax, dz = P[k * 3 + 4] - az, L2 = dx * dx + dz * dz || 1;
+      const s = clamp(((X - ax) * dx + (Z - az) * dz) / L2, 0, 1);
+      if (Math.hypot(X - ax - dx * s, Z - az - dz * s) < R_.wid[l] / 2 + (R_.cls[l] <= 5 ? 2.5 : 0.8)) return true;   // (main roads: and the pavement)
+    }
+  }
+  const col = t.col; if (!col) return false;
+  const G = 32, cx = clamp(Math.floor(X / t.W * G), 0, G - 1), cz = clamp(Math.floor(Z / t.Hm * G), 0, G - 1);
+  for (let k = col.cells[cz * G + cx]; k < col.cells[cz * G + cx + 1]; k++) {
+    const b = col.items[k], B = col.boxes;
+    if (X < B[b * 5] || X > B[b * 5 + 2] || Z < B[b * 5 + 1] || Z > B[b * 5 + 3]) continue;
+    let inside = false;
+    for (let i = col.ringOff[b], j = col.ringOff[b + 1] - 2; i < col.ringOff[b + 1]; j = i, i += 2) {
+      const zi = col.ringXZ[i + 1], zj = col.ringXZ[j + 1];
+      if ((zi > Z) !== (zj > Z) && X < (col.ringXZ[j] - col.ringXZ[i]) * (Z - zi) / (zj - zi) + col.ringXZ[i]) inside = !inside;
+    }
+    if (inside) return true;
+  }
+  return false;
 }
 // nearest point on a road to a world position (within maxD m): position, the road's direction there, width, class
 function roadNearest(wx, wz, maxD = 400, minCls = 0) {
@@ -5288,33 +5468,54 @@ function drawRoads(planes) {
 function cityApplyHidden(t, rects) {
   if (!t.vao || !t.bRange) return;
   const hit = rects.filter(r => r[0] < t.latN && r[2] > t.latS && r[1] < t.lonE && r[3] > t.lonW);
-  const key = hit.map(r => r[4]).join(',');
+  let K = typeof PLAT !== 'undefined' && hit.length ? PLAT.keep : null;
+  if (K && (K.lat - K.rLat > t.latN || K.lat + K.rLat < t.latS || K.lon - K.rLon > t.lonE || K.lon + K.rLon < t.lonW)) K = null;
+  const key = hit.map(r => r[4]).join(',') + (K ? '|' + K.key : '');
   if (key === t.hideKey) return false;
   t.hideKey = key;
-  let out;
-  if (!hit.length) out = t.ibCpu;
-  else {
-    out = new Uint32Array(t.ibCpu.length); let n = 0;
-    const nb = t.bRange.length / 2;
-    for (let b = 0; b < nb; b++) {
-      const lat = t.latN - t.bCen[b * 2 + 1] / KZ, lon = t.lonW + t.bCen[b * 2] / t.kxN;
-      let hidden = false;
-      for (const r of hit) if (lat > r[0] && lat < r[2] && lon > r[1] && lon < r[3]) { hidden = true; break; }
-      if (hidden) continue;
-      const s0 = t.bRange[b * 2], c = t.bRange[b * 2 + 1];
-      out.set(t.ibCpu.subarray(s0, s0 + c), n); n += c;
-    }
-    out = out.subarray(0, n);
-  }
-  gl.bindVertexArray(null);
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, t.ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, out, gl.STATIC_DRAW);
-  t.ni = out.length;
+  cityOrderIndex(t, !hit.length ? null : b => {
+    const lat = t.latN - t.bCen[b * 2 + 1] / KZ, lon = t.lonW + t.bCen[b * 2] / t.kxN;
+    let hidden = false;
+    for (const r of hit) if (lat > r[0] && lat < r[2] && lon > r[1] && lon < r[3]) { hidden = true; break; }
+    if (hidden && K) { const a = (lat - K.lat) / K.rLat, o = (lon - K.lon) / K.rLon; if (a * a + o * o < 1) hidden = false; }
+    return !hidden;
+  });
   return true;
+}
+// a tile's building triangles, ordered by a 16 x 16 grid of cells (so the sun's shadow pass can draw just
+// the cells near the car), leaving out the buildings keep() says no to; uploaded, with where each cell starts
+const CITY_SHG = 16;
+function cityOrderIndex(t, keep) {
+  const G = CITY_SHG, nb = t.bRange.length / 2;
+  if (!t.bOrder) {
+    const cell = new Uint16Array(nb), cnt = new Uint32Array(G * G + 1), W = t.W || 2500, Hm = t.Hm || 2500;
+    for (let b = 0; b < nb; b++) {
+      const cx = clamp(Math.floor(t.bCen[b * 2] / W * G), 0, G - 1), cz = clamp(Math.floor(t.bCen[b * 2 + 1] / Hm * G), 0, G - 1);
+      cell[b] = cz * G + cx; cnt[cell[b] + 1]++;
+    }
+    for (let c = 0; c < G * G; c++) cnt[c + 1] += cnt[c];
+    const order = new Uint32Array(nb), at = cnt.slice();
+    for (let b = 0; b < nb; b++) order[at[cell[b]]++] = b;
+    t.bOrder = order; t.bCell = cell;
+  }
+  const out = new Uint32Array(t.ibCpu.length), off = new Uint32Array(G * G + 1);
+  let n = 0, cur = 0;
+  for (const b of t.bOrder) {
+    const c = t.bCell[b]; while (cur <= c) off[cur++] = n;
+    if (keep && !keep(b)) continue;
+    const s0 = t.bRange[b * 2], k = t.bRange[b * 2 + 1];
+    out.set(t.ibCpu.subarray(s0, s0 + k), n); n += k;
+  }
+  while (cur <= G * G) off[cur++] = n;
+  gl.bindVertexArray(null);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, t.ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, out.subarray(0, n), gl.STATIC_DRAW);
+  t.ni = n; t.cellOff = off;
 }
 function cityDispose(t) {
   if (t.vao) { gl.deleteVertexArray(t.vao); gl.deleteBuffer(t.vb); gl.deleteBuffer(t.ib); CITY.verts -= t.nv; }
   if (t.tvao) { gl.deleteVertexArray(t.tvao); gl.deleteBuffer(t.tb); CITY.trees -= t.nTrees; }
   if (t.rvao) { gl.deleteVertexArray(t.rvao); gl.deleteBuffer(t.rvb); gl.deleteBuffer(t.rib); }
+  if (typeof streetDispose === 'function') streetDispose(t);
   t.vao = t.tvao = t.rvao = null; t.col = null; t.roads = null;
   CITY.tiles.delete(t.key);
 }
@@ -5436,12 +5637,12 @@ const BLDG_VS = GLSL_HEAD + `
 layout(location=0) in vec2 aXZ;
 layout(location=1) in float aY;
 layout(location=2) in vec3 aN;
-layout(location=3) in vec4 aM;       // u (dm), seed + 256*roof, height (dm), height above ground (dm)
+layout(location=3) in vec4 aM;       // u (dm), seed + 256*roof + 512*feature wall + 1024*kind, height (dm), height above ground (dm)
 uniform mat4 uViewProj;
 uniform vec3 uCamPos;
 uniform float uCurv;
 ` + CITY_POS_GLSL + `
-out vec3 vWorld; out vec3 vN; out vec3 vM; flat out float vSeed; flat out float vRoof;
+out vec3 vWorld; out vec3 vN; out vec3 vM; flat out float vSeed; flat out float vRoof; flat out float vFeat; flat out float vKind;
 void main(){
   vec3 w = cityWorld(aXZ * 0.1, aY);
   vec2 d = w.xz - uCamPos.xz;
@@ -5449,12 +5650,14 @@ void main(){
   w.y -= dot(d, d) * uCurv;
   vN = aN;
   vM = vec3(aM.x * 0.1, aM.z * 0.1, aM.w * 0.1);
-  vRoof = aM.y >= 256.0 ? 1.0 : 0.0;
+  vRoof = mod(floor(aM.y / 256.0 + 0.001), 2.0);
+  vFeat = mod(floor(aM.y / 512.0 + 0.001), 2.0);
+  vKind = floor(aM.y / 1024.0 + 0.001);
   vSeed = mod(aM.y, 256.0);
   gl_Position = uViewProj * vec4(w, 1.0);
 }`;
-const BLDG_FS = GLSL_HEAD + GLSL_COMMON + `
-in vec3 vWorld; in vec3 vN; in vec3 vM; flat in float vSeed; flat in float vRoof;
+const BLDG_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec3 vN; in vec3 vM; flat in float vSeed; flat in float vRoof; flat in float vFeat; flat in float vKind;
 uniform sampler2D uNoise;
 uniform float uNight;
 out vec4 outColor;
@@ -5466,12 +5669,31 @@ void main(){
   float H = vM.y, s1 = h1(vSeed + 0.13), s2 = h1(vSeed + 5.71), s3 = h1(vSeed + 9.3);
   vec3 V = normalize(uCamPos - vWorld);
   float dist = length(uCamPos - vWorld);
-  float diff = max(dot(n, uSunDir), 0.0);
+  float diff = max(dot(n, uSunDir), 0.0) * sunShadow(vWorld, n);
   vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5) * 1.15;
   vec3 col, bEm = vec3(0.0);
   float gloss = 0.0;
-  bool tower = H > 45.0, house = H < 11.0;
-  if (vRoof > 0.5) {
+  bool tower = vKind > 2.5 && vKind < 3.5 || H > 45.0, house = vKind > 0.5 && vKind < 1.5, mansion = vKind > 1.5 && vKind < 2.5;
+  if (vKind > 5.5) {
+    // balconies: a concrete slab, and a parapet of frosted glass, a painted panel or open metal bars
+    vec3 cc = mix(vec3(0.74, 0.73, 0.70), vec3(0.86, 0.85, 0.81), s1);
+    vec3 c = cc; float y = vM.z;
+    if (vKind > 6.5 && y > 0.04) {
+      float aaB = clamp(1.0 - fwidth(vM.x / 0.11) * 1.5, 0.0, 1.0);
+      if (y > 0.98) c = vec3(0.55, 0.56, 0.56);                                  // the hand rail
+      else if (s3 < 0.35) {                                                      // open bars: see the rooms through them
+        float bar = step(0.72, fract(vM.x / 0.11));
+        if (y < 0.9 && y > 0.1 && bar < 0.5 && aaB > 0.3) discard;
+        c = vec3(0.5, 0.51, 0.5);
+      } else if (s3 < 0.7) {                                                     // frosted glass
+        vec3 r = reflect(-V, n);
+        c = mix(vec3(0.46, 0.52, 0.55), skyColor(r) * 0.7, 0.25 + 0.5 * pow(1.0 - max(dot(n, V), 0.0), 3.0));
+        c = mix(c, vec3(0.5), step(0.96, fract(vM.x / 1.8)) * aaB);               // posts
+      } else c = cc * (0.96 + 0.04 * step(0.5, fract(vM.x / 0.9)));             // painted panel
+    }
+    if (vKind < 6.5 && n.y < -0.5) c *= 0.8;                                      // the slab's underside
+    col = c * (uSunCol * diff * 0.9 + amb);
+  } else if (vRoof > 0.5) {
     vec3 rc;
     if (house) {
       int k = int(s1 * 7.0);
@@ -5499,35 +5721,63 @@ void main(){
     } else {
       wc = mix(vec3(0.55, 0.60, 0.66), vec3(0.70, 0.72, 0.72), s1);
     }
-    float fh = house ? 2.9 : tower ? 4.0 : 3.3;
-    float ws = house ? 3.4 : tower ? 1.8 : mix(2.6, 3.8, s2);
-    vec2 g = vec2(vM.x / ws, vM.z / fh);
+    bool shop = vFeat > 0.5 && !mansion, veranda = vFeat > 0.5 && mansion;
+    float fh = house || mansion ? 2.9 : tower ? 4.0 : 3.3;
+    float ws = house ? 3.4 : tower ? 1.8 : veranda ? 3.6 : mix(2.6, 3.8, s2);
+    float z0 = shop ? 4.3 : 0.0;                                                 // storeys over a shop start above its sign
+    vec2 g = vec2(vM.x / ws, (vM.z - z0) / fh + (shop ? 1.0 : 0.0));
     vec2 cell = floor(g), fp = fract(g);
     vec2 fw = fwidth(g);
     float aa = clamp(1.0 - max(fw.x, fw.y) * 1.2, 0.0, 1.0);
-    float win;
+    float win, frame = 0.0;
     float cov;
+    // the wall's own finish: lap siding on houses, small tiles on some mansions, rain streaks under windows
+    float nz = texture(uNoise, vWorld.xz / 5.0 + vWorld.y / 9.0).b;
+    float fin = 1.0;
+    float aaF = clamp(1.0 - fwidth(vM.z / 0.24) * 2.0, 0.0, 1.0);
+    if (house && s3 < 0.6) fin = 1.0 - 0.09 * smoothstep(0.8, 0.95, fract(vM.z / 0.24)) * aaF;
+    else if ((mansion && s3 > 0.35) || (!house && !tower && s3 > 0.8)) {
+      vec2 tp = vec2(vM.x / 0.23 + step(0.5, fract(vM.z / 0.12)) * 0.5, vM.z / 0.06);
+      float aaT = clamp(1.0 - max(fwidth(tp.x), fwidth(tp.y)) * 1.5, 0.0, 1.0);
+      vec2 tf = abs(fract(tp) - 0.5);
+      fin = (1.0 - 0.1 * smoothstep(0.38, 0.5, max(tf.x * 0.25, tf.y)) * aaT) * (0.95 + 0.1 * nHash(floor(tp)) * aaT);
+    } else fin = 0.93 + 0.14 * nz;
     if (tower) {
       float band = smoothstep(0.10, 0.16, fp.y) * (1.0 - smoothstep(0.86, 0.92, fp.y));
       float mull = smoothstep(0.03, 0.08, fp.x) * (1.0 - smoothstep(0.92, 0.97, fp.x));
       win = band * mull; cov = 0.66;
       if (s3 > 0.5) { win = band; cov = 0.76; }                        // ribbon glazing
+    } else if (veranda) {
+      // behind the balconies: sliding doors, two panes in an aluminium frame
+      float x0 = 0.1, x1 = 0.9, y0 = 0.03, y1 = 0.8;
+      float wx = smoothstep(x0 - 0.01, x0 + 0.01, fp.x) * (1.0 - smoothstep(x1 - 0.01, x1 + 0.01, fp.x));
+      float wy = smoothstep(y0 - 0.01, y0 + 0.01, fp.y) * (1.0 - smoothstep(y1 - 0.01, y1 + 0.01, fp.y));
+      win = wx * wy; cov = 0.6;
+      float fx = min(fp.x - x0, x1 - fp.x) * ws, fy = min(fp.y - y0, y1 - fp.y) * fh, fm = abs(fp.x - 0.5) * ws;
+      frame = win * max(step(min(fx, fy), 0.05), step(fm, 0.035));
     } else {
-      float wx = smoothstep(0.18, 0.22, fp.x) * (1.0 - smoothstep(0.78, 0.82, fp.x));
-      float wy = smoothstep(0.30, 0.34, fp.y) * (1.0 - smoothstep(house ? 0.78 : 0.84, house ? 0.82 : 0.88, fp.y));
+      float x0 = 0.2, x1 = 0.8, y0 = 0.32, y1 = house ? 0.8 : 0.86;
+      float wx = smoothstep(x0 - 0.02, x0 + 0.02, fp.x) * (1.0 - smoothstep(x1 - 0.02, x1 + 0.02, fp.x));
+      float wy = smoothstep(y0 - 0.02, y0 + 0.02, fp.y) * (1.0 - smoothstep(y1 - 0.02, y1 + 0.02, fp.y));
       win = wx * wy;
       float skipW = house ? 0.45 : 0.12;
       if (h2(cell + vSeed) < skipW) win = 0.0;
       cov = 0.36 * (1.0 - skipW);
-      if (!house && s3 > 0.6) { win = wy * smoothstep(0.02, 0.06, fp.x) * (1.0 - smoothstep(0.94, 0.98, fp.x)); cov = 0.5; }   // balcony bands
+      float fx = min(fp.x - x0, x1 - fp.x) * ws, fy = min(fp.y - y0, y1 - fp.y) * fh;
+      frame = win * max(step(min(fx, fy), 0.055), house ? step(abs(fp.x - 0.5) * ws, 0.03) : 0.0);
+      if (!house && s3 > 0.6) { win = wy * smoothstep(0.02, 0.06, fp.x) * (1.0 - smoothstep(0.94, 0.98, fp.x)); cov = 0.5; frame = win * step(fract(g.x * 2.0) * ws * 0.5, 0.05); }   // strip windows
+      // rain streaks run down from the sills
+      if (!house) fin *= 1.0 - 0.13 * wx * (1.0 - smoothstep(0.0, 0.3, fp.y)) * texture(uNoise, vec2(vM.x * 1.7, vM.z * 0.08)).a * aa;
     }
-    if (vM.z < 0.3 || vM.z > H - 0.9) win = 0.0;                      // plinth and parapet
+    if (vM.z < 0.3 || vM.z > H - 0.9 || (shop && vM.z < z0)) win = 0.0;  // plinth, parapet, the shop storey
+    frame *= step(0.001, win) * aa;
     win = mix(cov, win, aa);
     // glass: sky reflection with Fresnel, dark interior
     vec3 r = reflect(-V, n);
     float fres = 0.12 + 0.75 * pow(1.0 - max(dot(n, V), 0.0), 4.0);
     vec3 glass = mix(vec3(0.05, 0.06, 0.08), skyColor(r) * 0.9, fres + (tower ? 0.25 : 0.0));
     glass += uSunCol * pow(max(dot(r, uSunDir), 0.0), 120.0) * 2.0;
+    if (house || veranda) glass = mix(glass, vec3(0.62, 0.6, 0.55) * (uSunCol * 0.3 + amb), 0.35 * step(0.5, h2(cell * 5.1 + vSeed)));   // curtains drawn
     // only some rooms are lit (rooms span 2-3 windows), some buildings are nearly dark, brightness varies
     float bmood = h2(vec2(vSeed * 3.1, 1.7));
     float share = (tower ? 0.28 : house ? 0.2 : 0.22) * (bmood < 0.2 ? 0.15 : 0.6 + 0.8 * bmood);
@@ -5538,12 +5788,41 @@ void main(){
     float lit = mix(share * 0.07, on, aa * aa) * uNight;
     vec3 wcol = mix(vec3(1.0, 0.72, 0.42), mix(vec3(1.0, 0.78, 0.5), vec3(0.84, 0.9, 1.0), step(tower ? 0.45 : 0.75, h2(cell * 2.3 + vSeed))), aa);
     glass = mix(glass, glass * 0.3, uNight);
-    bEm = wcol * lit * win * 1.5;
-    vec3 wallLit = wc * (uSunCol * diff * 0.9 + amb);
-    col = mix(wallLit, glass, win);
+    bEm = wcol * lit * win * (1.0 - frame) * 1.5;
+    vec3 wallLit = wc * fin * (uSunCol * diff * 0.9 + amb);
+    vec3 alu = (s2 > 0.5 && house ? vec3(0.3, 0.26, 0.22) : vec3(0.66, 0.67, 0.66)) * (uSunCol * diff * 0.9 + amb);
+    col = mix(mix(wallLit, glass, win), alu, frame);
     // ground-floor shade and contact darkening
     col *= mix(0.62, 1.0, smoothstep(0.0, 7.0, vM.z));
-    if (!house && vM.z < 3.6 && vM.z > 0.3 && s2 > 0.4) { col = mix(col, glass * 0.8, 0.5 * aa); bEm += vec3(1.0, 0.86, 0.62) * 0.9 * uNight * aa; }   // shop fronts
+    if (shop && vM.z < z0) {
+      // a shop front: glazing or a roller shutter, pillars between the shops, and a sign band that lights up
+      float unit = floor(vM.x / 6.5), ux = fract(vM.x / 6.5), sh = h2(vec2(unit, vSeed));
+      float aaS = clamp(1.0 - fwidth(vM.x / 6.5) * 8.0, 0.0, 1.0);
+      vec3 hue = 0.5 + 0.5 * cos(6.2832 * (sh * 3.7 + vec3(0.0, 0.33, 0.67)));
+      vec3 lit0 = uSunCol * diff * 0.9 + amb;
+      if (vM.z > 3.35) {
+        vec3 sign = mix(vec3(0.92), hue, 0.75);
+        float letters = step(0.5, h2(floor(vec2(vM.x / 0.55, (vM.z - 3.35) / 0.3)) + sh)) * step(0.15, abs(ux - 0.5)) * step(abs(ux - 0.5), 0.42) * step(3.5, vM.z) * step(vM.z, 4.1);
+        sign = mix(sign, mix(vec3(0.1), vec3(0.95), step(0.5, fract(sh * 7.0))), letters * 0.8 * aaS);
+        col = sign * lit0 * 0.9;
+        bEm += sign * (0.25 + 1.3 * uNight) * aaS;
+        if (vM.z > 4.2) col = wc * lit0 * 0.85;
+      } else {
+        float pil = 1.0 - step(0.035, ux) * step(ux, 0.965);
+        if (sh < 0.22 || (uNight > 0.5 && sh < 0.55)) {                         // closed: a ribbed steel shutter
+          float rib = 0.85 + 0.15 * smoothstep(0.3, 0.5, abs(fract(vM.z / 0.09) - 0.5)) * aa;
+          col = vec3(0.6, 0.61, 0.6) * rib * lit0 * (vM.z > 3.0 ? 0.75 : 1.0);
+        } else {
+          vec3 shopIn = mix(vec3(0.95, 0.92, 0.82), hue, 0.25);
+          float door = step(0.4, ux) * step(ux, 0.6) * step(vM.z, 2.2);
+          float mul = step(0.01, abs(fract(vM.x / 1.6) - 0.5) - 0.48);
+          col = mix(glass * 0.8 + shopIn * 0.18, shopIn * 0.5 * lit0, 0.35);
+          col = mix(col, alu, max(mul, step(vM.z, 0.35)) * aaS);
+          bEm += shopIn * (0.35 + 1.1 * uNight) * (1.0 - mul) * step(0.35, vM.z) * (1.0 - door * 0.5) * aaS;
+        }
+        col = mix(col, wc * lit0 * 0.9, pil * aaS);
+      }
+    } else if (!house && !mansion && !tower && vFeat < 0.5 && vM.z < 3.6 && vM.z > 0.3 && s2 > 0.7) { col = mix(col, glass * 0.8, 0.5 * aa); bEm += vec3(1.0, 0.86, 0.62) * 0.9 * uNight * aa; }   // glazed lobbies
   }
   outColor = vec4(tonemap(applyFog(col, vWorld) + airLight(bEm, vWorld)), 1.0);
 }`;
@@ -5557,7 +5836,7 @@ uniform mat4 uViewProj;
 uniform vec3 uCamPos;
 uniform float uCurv;
 ` + CITY_POS_GLSL + `
-out vec3 vWorld; out vec3 vR; flat out float vCls; out float vJ;
+out vec3 vWorld; out vec3 vR; flat out float vCls; out float vJ; flat out float vSide;
 void main(){
   vec3 w = cityWorld(aXZ * 0.1, aY);
   vec2 d = w.xz - uCamPos.xz;
@@ -5565,10 +5844,11 @@ void main(){
   vR = vec3(aM.x * 0.1, aM.z * 0.1, aM.w * 0.001);
   float k = aM.y - 512.0;
   vCls = mod(k, 16.0); vJ = floor(k / 16.0 + 0.001) / 7.0;         // class, and how much this is a junction
+  vSide = k > 255.5 ? k - 255.0 : 0.0;                              // pavements: 1 the paving, 2 the kerb and back faces
   gl_Position = uViewProj * vec4(w, 1.0);
 }`;
-const ROAD_FS = GLSL_HEAD + GLSL_COMMON + `
-in vec3 vWorld; in vec3 vR; flat in float vCls; in float vJ;
+const ROAD_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec3 vR; flat in float vCls; in float vJ; flat in float vSide;
 uniform sampler2D uNoise;
 out vec4 outColor;
 float stripe(float x, float c, float hw, float aa){ return 1.0 - smoothstep(hw - aa, hw + aa, abs(x - c)); }
@@ -5577,6 +5857,26 @@ void main(){
   float u = vR.x, w = vR.y, m = vR.z * w * 0.5;               // along, width, metres from the centre line
   float dist = length(uCamPos - vWorld), aa = max(fwidth(m), 0.02);
   float n1 = texture(uNoise, vWorld.xz / 0.45).b, n2 = texture(uNoise, vWorld.xz / 6.0).a, n3 = texture(uNoise, vWorld.xz / 37.0).b;
+  if (vSide > 0.5) {
+    // the pavement: 30 cm slabs, a kerb-stone edge, the yellow tactile strip for the blind (点字ブロック)
+    float n2p = texture(uNoise, vWorld.xz / 6.0).a;
+    vec3 base;
+    if (vSide > 1.5) base = vec3(0.6, 0.59, 0.56) * (0.88 + 0.12 * n2p);
+    else {
+      float am = vR.z * vR.y;                                     // metres from the kerb
+      vec2 pv = vec2(u, am) / 0.3, f = abs(fract(pv) - 0.5);
+      float joint = smoothstep(0.44, 0.5, max(f.x, f.y)) * (1.0 - smoothstep(8.0, 50.0, dist));
+      base = mix(vec3(0.54, 0.53, 0.5), vec3(0.63, 0.61, 0.57), nHash(floor(pv))) * (0.9 + 0.12 * n2p);
+      base *= 1.0 - joint * 0.22;
+      if (am < 0.18) base = vec3(0.66, 0.65, 0.62) * (0.92 + 0.08 * n2p);
+      float tb = step(0.5, am) * step(am, 0.8) * step(0.5, fract(u / 23.0)) ;
+      base = mix(base, vec3(0.8, 0.63, 0.12) * (0.9 + 0.1 * n2p), tb);
+    }
+    float dp = vSide > 1.5 ? 0.55 : max(uSunDir.y, 0.0);
+    vec3 cp = base * (uSunCol * dp * 0.95 + uAmbSky * 0.85);
+    outColor = vec4(tonemap(applyFog(cp, vWorld)), 1.0);
+    return;
+  }
   bool track = vCls > 7.5;
   vec3 c = track ? mix(vec3(0.42, 0.37, 0.30), vec3(0.50, 0.45, 0.37), n2) : mix(vec3(0.17, 0.175, 0.18), vec3(0.25, 0.25, 0.255), n2 * 0.6 + n3 * 0.4);
   if (vCls < 1.5) c *= 0.9;                                    // motorway: darker, newer surface
@@ -5596,7 +5896,7 @@ void main(){
   }
   paint *= 0.85 * (0.8 + 0.2 * n1) * (1.0 - smoothstep(600.0, 2500.0, dist)) * (1.0 - smoothstep(0.15, 0.6, vJ));
   c = mix(c, vec3(0.86, 0.86, 0.84), clamp(paint, 0.0, 1.0));
-  float diff = max(uSunDir.y, 0.0);
+  float diff = max(uSunDir.y, 0.0) * sunShadow(vWorld, vec3(0.0, 1.0, 0.0));
   vec3 col = c * (uSunCol * diff * 0.95 + uAmbSky * 0.85);
   // soft shoulders: the ribbon's edge fades into the photo so it doesn't look pasted on
   float edge = smoothstep(w * 0.5, w * 0.5 - 0.5, abs(m));
@@ -6065,6 +6365,15 @@ function platUpdate(planes) {
     const rects = [];
     if (!goog) for (const S of PLAT.list) if (S.root) (function walk(n) { if (n.mesh && !n.mesh.empty && n.size <= 1400) rects.push([n.s, n.w, n.n, n.e, n.key]); for (const c of n.children) walk(c); })(S.root);
     PLAT.rects = rects;
+    PLAT.hideQueue = [...CITY.tiles.values()];
+  }
+  // driving: the map's buildings under PLATEAU come back within the near zone round the car (kept by their
+  // centres, a little past the zone's outer edge; moved on every 60 m)
+  const zp = typeof ZONE !== 'undefined' && ZONE.plat;
+  if (!zp ? PLAT.keep : !PLAT.keep || Math.hypot(sim.pos[0] - PLAT.keep.x, sim.pos[2] - PLAT.keep.z) > 60) {
+    if (zp) { const [la, lo] = worldToGeo(sim.pos[0], sim.pos[2]), r = ZONE.r1 + 70;
+      PLAT.keep = { x: sim.pos[0], z: sim.pos[2], lat: la, lon: lo, r, rLat: r / 111320, rLon: r / (111320 * Math.cos(la * Math.PI / 180)), key: 'k' + Math.round(sim.pos[0]) + ',' + Math.round(sim.pos[2]) }; }
+    else PLAT.keep = null;
     PLAT.hideQueue = [...CITY.tiles.values()];
   }
   if (PLAT.hideQueue && PLAT.hideQueue.length) {
@@ -6899,7 +7208,7 @@ out vec4 outColor;
 void main(){
   if (zoneCut(vWorld)) discard;
   vec3 n = normalize(vN);
-  float diff = max(dot(n, uSunDir) * 0.75 + 0.25, 0.0) * planeShadow(vWorld.xz);
+  float diff = max(dot(n, uSunDir) * 0.75 + 0.25, 0.0) * planeShadow(vWorld.xz) * sunShadow(vWorld, n);
   vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
   vec3 c = vCol * (uSunCol * diff * 0.85 + amb * 0.9);
   if (vT >= 0.0) {
@@ -6946,6 +7255,7 @@ function buildJwTreeCell(x, y) {
     const lat = latFromMerc((y + v) / n), lon = lonW + (lonE - lonW) * u;
     const [wx, wz] = geoToWorld(lat, lon);
     if (jwRunwayAt(wx, wz)) continue;
+    if (typeof cityBlocked === 'function' && cityBlocked(wx, wz)) continue;         // not on a road, not in a house
     const h = jwHeightGeo(lat, lon);
     if (!(h > 1.5)) continue;
     const e = 6, hx = jwHeight(wx + e, wz) - jwHeight(wx - e, wz), hz = jwHeight(wx, wz + e) - jwHeight(wx, wz - e);
@@ -7006,6 +7316,145 @@ function drawJwTrees(planes, far) {
   gl.activeTexture(gl.TEXTURE0);
   // forget cells that have been out of range for a while
   if (JWTREES.cells.size > 260) for (const [k, c] of JWTREES.cells) if (JW.frame - c.used > 300) { freeJwTreeCell(c); JWTREES.cells.delete(k); }
+}
+// =====================================================================
+//  STREET FURNITURE: street lamps, concrete utility poles, traffic
+//  signals (the horizontal Japanese kind, cycling green / yellow / red)
+//  and roadside trees, placed by the city worker along the mapped roads
+//  and drawn instanced per tile. Lamps and signals light up at night.
+// =====================================================================
+const PROP_LAMP = 0, PROP_POLE = 1, PROP_SIGNAL = 2, PROP_TREE = 3;
+const STREET = { meshes: null, prog: null, far: [650, 650, 700, 800] };
+// colours that mark lit parts (the shader lights them): the lamp's glass, the three signal lights
+const LIT_LAMP = [1, 1, 0.99], LIT_GREEN = [0, 1, 0.01], LIT_YELLOW = [1, 1, 0.01], LIT_RED = [1, 0.01, 0.01];
+function streetMeshes() {
+  if (STREET.meshes) return STREET.meshes;
+  const grey = [0.46, 0.48, 0.5], dark = [0.12, 0.12, 0.13], conc = [0.6, 0.59, 0.56];
+  // street lamp: a tapered pole, an arm out over the road (+x), the lamp head
+  const L = new MeshBuilder();
+  L.cylinder([0, 0, 0], [0, 7.6, 0], 0.1, 0.07, 10, grey);
+  L.cylinder([0, 7.5, 0], [1.3, 8.05, 0], 0.05, 0.045, 8, grey);
+  L.cylinder([1.25, 8.05, 0], [1.9, 8.1, 0], 0.045, 0.045, 8, grey);
+  L.box([1.95, 8.1, 0], [0.7, 0.14, 0.3], dark);
+  L.box([1.95, 8.02, 0], [0.56, 0.03, 0.22], LIT_LAMP);
+  L.cylinder([0, 0, 0], [0, 0.5, 0], 0.16, 0.13, 10, grey);                          // base
+  // utility pole (電柱): concrete, tapered, a crossarm along the street with insulators, a transformer, step bolts
+  const P = new MeshBuilder();
+  P.cylinder([0, 0, 0], [0, 11.5, 0], 0.19, 0.12, 10, conc);
+  P.box([0, 10.9, 0], [0.1, 0.1, 1.8], grey);
+  for (const z of [-0.8, -0.3, 0.3, 0.8]) P.cylinder([0, 10.95, z], [0, 11.12, z], 0.035, 0.03, 6, [0.85, 0.85, 0.82]);
+  P.box([0, 9.9, 0], [0.08, 0.08, 1.2], grey);
+  P.cylinder([-0.38, 7.6, 0], [-0.38, 8.5, 0], 0.22, 0.22, 10, [0.52, 0.54, 0.55]);     // transformer
+  P.box([-0.2, 8.05, 0], [0.18, 0.08, 0.08], grey);
+  for (let y = 2; y < 9; y += 0.45) P.box([0.14, y, (y * 7 % 2) > 1 ? 0.04 : -0.04], [0.12, 0.02, 0.02], grey);
+  P.box([0.2, 2.6, 0], [0.02, 0.9, 0.34], [0.95, 0.93, 0.85]);                        // the address plate
+  // traffic signal: pole, arm over the road (+x), a horizontal head with green / yellow / red facing +z,
+  // and a pedestrian signal on the pole
+  const S = new MeshBuilder();
+  S.cylinder([0, 0, 0], [0, 5.6, 0], 0.11, 0.09, 10, grey);
+  S.cylinder([0, 5.35, 0], [4.6, 5.45, 0], 0.07, 0.06, 8, grey);
+  S.box([3.9, 5.4, 0], [1.35, 0.42, 0.3], [0.2, 0.21, 0.22]);
+  S.box([3.9, 5.64, 0.05], [1.45, 0.05, 0.42], [0.2, 0.21, 0.22]);                    // the visor above
+  S.box([3.45, 5.4, 0.16], [0.3, 0.3, 0.02], LIT_GREEN);
+  S.box([3.9, 5.4, 0.16], [0.3, 0.3, 0.02], LIT_YELLOW);
+  S.box([4.35, 5.4, 0.16], [0.3, 0.3, 0.02], LIT_RED);
+  S.box([0.25, 2.7, 0.1], [0.32, 0.62, 0.24], [0.2, 0.21, 0.22]);
+  S.box([0.25, 2.85, 0.23], [0.24, 0.22, 0.02], LIT_RED);
+  S.box([0.25, 2.57, 0.23], [0.24, 0.22, 0.02], LIT_GREEN);
+  // roadside tree: trunk and a few overlapping rounded masses of leaves
+  const T = new MeshBuilder();
+  T.cylinder([0, 0, 0], [0, 2.6, 0], 0.16, 0.11, 8, [0.3, 0.23, 0.17]);
+  T.cylinder([0, 2.4, 0], [0.5, 3.6, 0.2], 0.08, 0.05, 6, [0.3, 0.23, 0.17]);
+  const blob = (c, r, col) => {
+    const rings = [];
+    for (let i = 0; i <= 7; i++) { const t = i / 7 * Math.PI, rr = Math.sin(t) * r[0] + 0.001, y = c[1] + Math.cos(t) * r[1];
+      rings.push(Array.from({ length: 12 }, (_, k) => { const a = k / 12 * Math.PI * 2; return [c[0] + Math.cos(a) * rr * (1 + 0.12 * Math.sin(a * 3 + i)), y, c[2] + Math.sin(a) * rr]; })); }
+    T.loft(rings, col, { smooth: true });
+  };
+  blob([0, 4.3, 0], [1.9, 1.5], [0.2, 0.34, 0.14]); blob([0.8, 4.9, 0.4], [1.3, 1.1], [0.23, 0.38, 0.15]); blob([-0.7, 4.8, -0.5], [1.2, 1.1], [0.18, 0.31, 0.12]);
+  STREET.meshes = [L, P, S, T].map(b => b.build());
+  return STREET.meshes;
+}
+const STREET_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNrm;
+layout(location=2) in vec3 aCol;
+layout(location=3) in vec4 aI;        // tile-local x, z, ground y, yaw
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv, uFar;
+` + CITY_POS_GLSL + `
+out vec3 vWorld; out vec3 vN; out vec3 vCol; flat out float vPhase;
+void main(){
+  float c = cos(aI.w), s = sin(aI.w);
+  vec2 l = vec2(aPos.x * c - aPos.z * s, aPos.x * s + aPos.z * c) + aI.xy;
+  vec3 w = cityWorld(l, aI.z + aPos.y);
+  vec3 base = cityWorld(aI.xy, aI.z);
+  if (distance(base, uCamPos) > uFar) { gl_Position = vec4(0.0, 0.0, -2.0, 1.0); return; }
+  vWorld = w; vCol = aCol;
+  vN = vec3(aNrm.x * c - aNrm.z * s, aNrm.y, aNrm.x * s + aNrm.z * c);
+  vPhase = fract(sin(dot(aI.xy, vec2(12.9898, 78.233))) * 43758.5453);
+  vec2 d = w.xz - uCamPos.xz; w.y -= dot(d, d) * uCurv;
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+const STREET_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec3 vN; in vec3 vCol; flat in float vPhase;
+uniform float uNight;
+out vec4 outColor;
+bool near3(vec3 a, vec3 b){ return all(lessThan(abs(a - b), vec3(0.004))); }
+void main(){
+  if (zoneCut(vWorld)) discard;
+  vec3 n = normalize(vN); if (!gl_FrontFacing) n = -n;
+  vec3 c = vCol, em = vec3(0.0);
+  // signals: a 60 s cycle (green 27 s, yellow 3 s, red 30 s), each junction in its own phase
+  float t = mod(uTime + vPhase * 60.0, 60.0);
+  if (near3(vCol, vec3(0.0, 1.0, 0.01))) { c = vec3(0.05, 0.12, 0.1); if (t < 27.0) em = vec3(0.1, 1.3, 0.8); }
+  else if (near3(vCol, vec3(1.0, 1.0, 0.01))) { c = vec3(0.14, 0.12, 0.05); if (t >= 27.0 && t < 30.0) em = vec3(1.4, 0.95, 0.1); }
+  else if (near3(vCol, vec3(1.0, 0.01, 0.01))) { c = vec3(0.14, 0.05, 0.05); if (t >= 30.0) em = vec3(1.5, 0.12, 0.08); }
+  else if (near3(vCol, vec3(1.0, 1.0, 0.99))) { c = vec3(0.7, 0.7, 0.66); em = vec3(1.4, 1.3, 1.05) * uNight; }
+  float diff = max(dot(n, uSunDir), 0.0) * sunShadow(vWorld, n);
+  vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
+  vec3 col = c * (uSunCol * diff * 0.9 + amb * 0.9) + em;
+  outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
+}`;
+// the instances of a tile, from the worker's list [x, z, y, yaw, type]
+function streetReceive(t, buf) {
+  streetDispose(t);
+  if (!buf || !buf.byteLength) return;
+  const P = new Float32Array(buf), M = streetMeshes(), per = [[], [], [], []];
+  for (let i = 0; i < P.length; i += 5) { const k = P[i + 4] | 0; if (per[k]) per[k].push(P[i], P[i + 1], P[i + 2], P[i + 3]); }
+  t.street = per.map((a, k) => {
+    if (!a.length) return null;
+    const m = M[k], vao = makeVAO([{ loc: 0, size: 3, data: m.pos }, { loc: 1, size: 3, data: m.nrm }, { loc: 2, size: 3, data: m.col },
+      { data: new Float32Array(a), stride: 4, layout: [[3, 4, 0]], divisor: 1 }]);
+    return { vao, count: m.count, n: a.length / 4 };
+  });
+}
+function streetDispose(t) {
+  if (!t.street) return;
+  for (const s of t.street) if (s) { gl.deleteVertexArray(s.vao.vao); for (const b of s.vao.bufs) gl.deleteBuffer(b); }
+  t.street = null;
+}
+function drawStreet(planes) {
+  if (typeof CITY === 'undefined' || !CITY.ready || !JW.online) return;
+  if (R.eye[1] - Math.max(jwHeight(R.eye[0], R.eye[2]), 0) > 900) return;   // too small to see from high up
+  if (!STREET.prog) STREET.prog = makeProgram(STREET_VS, STREET_FS);
+  const pr = STREET.prog, u = pr.u;
+  setCommon(pr);
+  gl.uniform1f(u.uNight, nightK());
+  gl.disable(gl.CULL_FACE);
+  for (const t of CITY.tiles.values()) {
+    if (!t.street || t.dist > 1800) continue;
+    const b = cityBox(t);
+    if (!boxInFrustum(planes, b[0], t.minG - 20, b[1], b[2], t.minG + 400, b[3])) continue;
+    citySetTile(u, t);
+    for (let k = 0; k < 4; k++) {
+      const s = t.street[k]; if (!s) continue;
+      gl.uniform1f(u.uFar, STREET.far[k]);
+      gl.bindVertexArray(s.vao.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, s.count, s.n);
+    }
+  }
+  gl.enable(gl.CULL_FACE);
 }
 
 // =====================================================================
@@ -10356,17 +10805,25 @@ let HS = [];
 const CPANEL_VS = GLSL_HEAD + `
 layout(location=0) in vec3 aPos;
 layout(location=1) in vec2 aUV;
+layout(location=2) in vec2 aLoc;       // (round dials: -1..1 across the quad)
 uniform mat4 uViewProj, uModel;
-out vec2 vUV;
-void main(){ vUV = aUV; gl_Position = uViewProj * uModel * vec4(aPos, 1.0); }`;
+out vec2 vUV; out vec2 vLoc;
+void main(){ vUV = aUV; vLoc = aLoc; gl_Position = uViewProj * uModel * vec4(aPos, 1.0); }`;
 const CPANEL_FS = GLSL_HEAD + `
-in vec2 vUV;
+in vec2 vUV; in vec2 vLoc;
 uniform sampler2D uTex;
 uniform vec3 uLight;
-uniform float uShade;
+uniform float uShade, uRound;
 out vec4 outColor;
-// a little shadow towards the edges that sit under the glareshield / in the recesses
-void main(){ vec3 c = texture(uTex, vUV).rgb; float sh = mix(1.0, smoothstep(0.0, 0.35, vUV.y) * 0.4 + 0.6, uShade); outColor = vec4(c * uLight * sh, 1.0); }`;
+// a little shadow towards the edges that sit under the glareshield / in the recesses; round dials are cut
+// to a circle, with the instrument's glass a little darker at its rim
+void main(){
+  float r = length(vLoc);
+  if (uRound > 0.5 && r > 1.0) discard;
+  vec3 c = texture(uTex, vUV).rgb; float sh = mix(1.0, smoothstep(0.0, 0.35, vUV.y) * 0.4 + 0.6, uShade);
+  if (uRound > 0.5) sh *= mix(1.0, 0.55, smoothstep(0.8, 1.0, r));
+  outColor = vec4(c * uLight * sh, 1.0);
+}`;
 
 // ---------------------------------------------------------------------
 //  layout: eye point and the panel surfaces (origin, u = canvas x, v = canvas y)
@@ -10386,6 +10843,17 @@ const CP_REAL = {
     tint: { material_0: [0.15, 0.155, 0.16], Material: [0.09, 0.09, 0.1], mat008: [0.12, 0.12, 0.13], 'mat001.001': [0.44, 0.42, 0.39], YOKE: [0.1, 0.1, 0.11],
       G1000_RH: [0.08, 0.08, 0.09], 'Material.001': [0.01, 0.01, 0.012], AIRSPEED: [0.05, 0.05, 0.05], ALTIMETER: [0.05, 0.05, 0.05], HORIZON: [0.05, 0.05, 0.05], '*': [0.06, 0.06, 0.065] },
     credit: '3D コックピット：“Cessna 172 G1000 Cockpit” by davidpineda021199（Sketchfab）CC BY 4.0',
+  },
+  // the C172 with analog instruments: the same cabin, its upper panel replaced by a photographed Skyhawk
+  // panel ("cessna skyhawk Cockpit"), with the live instruments drawn over the photo's dials
+  c172a: {
+    url: 'models/c172_g1000_cockpit.glb', key: 'analog', split: ['YOKE'], eye: [-0.2575, 0.56, -0.02], s: 1, rot: 0,
+    drop: [[-0.62, 0.05, -1.0, 0.62, 0.47, -0.52]],
+    extra: { url: 'models/cockpits/cessna_skyhawk_cockpit.glb', s: 0.18, rot: -Math.PI / 2, at: [0, 1.42, 1.375], to: [-0.2575, 0.29, -0.665] },
+    // the photo's dials, in the panel model's own coordinates -> the canvas gauges (column, row of SIX_LAYOUT)
+    dials: { r: 0.25, at: { asi: [0.005, 1.73, 1.95], ai: [0.005, 1.7508, 1.3875], alt: [0.005, 1.726, 0.8017], tach: [0.005, 1.7097, 0.252], tc: [0.005, 1.1119, 1.9546], hi: [0.005, 1.1196, 1.3853], vsi: [0.005, 1.1124, 0.8044], nav: [0.005, 1.1196, 0.2486] } },
+    tint: null,
+    credit: '3D コックピット：“Cessna 172 G1000 Cockpit” by davidpineda021199・“cessna skyhawk Cockpit” by Shady Tex（Sketchfab）CC BY 4.0',
   },
   b789: {
     url: 'models/cockpits/boeing_787_dreamliner_cockpit.glb', eye: [-0.5, 1.33, -1.05], s: 1, rot: 0, keep: 3.5,
@@ -10409,13 +10877,25 @@ const CP_REAL = {
     credit: '3D コックピット：“Boeing 737-800 Cockpit” by hakai315（Sketchfab）CC BY 4.0',
   },
 };
+CP_REAL.c172a.tint = CP_REAL.c172.tint;
 try { CPIT.real = localStorage.getItem('sorajima-cpreal') !== '0'; } catch (e) { CPIT.real = true; }
 // the loaded model for this aircraft, or null (none, switched off, still loading, or it could not be fetched)
+// which 3D cockpit an aircraft uses (the C172 has one for each avionics choice)
+function cpRealDef(A) {
+  if (A.id === 'c172' && typeof acCustom === 'function' && acCustom('c172').avionics !== 'g1000') return CP_REAL.c172a;
+  return CP_REAL[A.id];
+}
 function cpReal(A) {
-  const D = CP_REAL[A.id];
+  const D = cpRealDef(A);
   if (!D || !CPIT.real || (typeof EG !== 'undefined' && EG.on) || typeof glbGet !== 'function') return null;
   const g = cpRealGet(D);
   if (g.state !== 'ok') return null;
+  let x = null;
+  if (D.extra) {
+    x = glbGet(D.extra.url, { xf: cpExtraXf(D) }); if (x.state !== 'ok') return null;
+    // its untextured parts (backing and trim, white in the file) painted a dark panel grey
+    if (!x.model.tinted) { x.model.tinted = true; for (const d of x.model.draws) if (d.mat.name === 'Material.012') d.mat.cut = 0.5; else if (!d.mat.tex && !d.mat.blend) { d.mat.em = [0, 0, 0]; d.mat.color = [0.07, 0.07, 0.075, 1]; d.mat.metal = 0; d.mat.rough = 0.8; } }
+  }
   if ((D.tint || D.glass) && !g.model.tinted) {
     g.model.tinted = true;
     if (D.tint) for (const d of g.model.draws) if (!d.mat.tex) { const c = D.tint[d.mat.name] || D.tint['*']; if (c) d.mat.color = [...c, 1]; d.mat.rough = d.mat.name === 'Material.001' ? 0.1 : 0.75; d.mat.metal = 0; }
@@ -10423,7 +10903,7 @@ function cpReal(A) {
     if (D.glass) for (const d of g.model.draws) if (D.glass.includes(d.mat.name)) { d.mat.color = [0.55, 0.62, 0.66, 0.1]; d.mat.blend = true; d.mat.rough = 0.05; d.mat.metal = 0; }
     g.model.draws.sort((a, b) => a.mat.blend - b.mat.blend);
   }
-  return { D, m: g.model };
+  return { D, m: g.model, x: x && x.model };
 }
 // model -> the cockpit's frame with the eye at the origin
 function cpRealXf(D) {
@@ -10431,6 +10911,13 @@ function cpRealXf(D) {
   const R = [c * s, 0, -n * s, 0, 0, s, 0, 0, n * s, 0, c * s, 0, 0, 0, 0, 1];
   return M4.mul(R, M4.fromQP([0, 0, 0, 1], [-e[0], -e[1], -e[2]]));
 }
+// the added model (extra): its own coordinates -> the main model's -> the cockpit's
+function cpExtraM(E) {
+  const c = Math.cos(E.rot || 0), n = Math.sin(E.rot || 0), s = E.s || 1;
+  return M4.mul(M4.fromQP([0, 0, 0, 1], E.to), M4.mul([c * s, 0, -n * s, 0, 0, s, 0, 0, n * s, 0, c * s, 0, 0, 0, 0, 1], M4.fromQP([0, 0, 0, 1], E.at.map(v => -v))));
+}
+const cpExtraXf = D => M4.mul(cpRealXf(D), cpExtraM(D.extra));
+const cpXfPt = (m, p) => [m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]];
 const cpRealPt = (D, p) => { const m = cpRealXf(D); return [m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]]; };
 function cpRealGet(D) {
   const k = D.keep, s = D.s || 1, c = Math.cos(D.rot || 0), n = Math.sin(D.rot || 0), e = D.eye;
@@ -10442,14 +10929,14 @@ function cpRealGet(D) {
     const mx = e[0] + (c * x + n * z) / s, my = e[1] + y / s, mz = e[2] + (-n * x + c * z) / s;
     return L.some(b => mx > b[0] && my > b[1] && mz > b[2] && mx < b[3] && my < b[4] && mz < b[5]);
   };
-  return glbGet(D.url, { split: D.split, xf: cpRealXf(D), pivot: () => [0, 0, 0],
-    part: k || D.drop || D.yokes ? (x, y, z) => ((k && (Math.abs(x) > k || Math.abs(y) > k || z > k || z < -k * 1.4)) || inBox(D.drop, x, y, z) ? -1 : inBox(D.yokes, x, y, z) ? 1 : 0) : null });
+  return glbGet(D.url, { key: D.key, split: D.split, xf: cpRealXf(D), pivot: () => [0, 0, 0],
+    part: k || D.drop || D.yokes ? (x, y, z, mat) => ((k && (Math.abs(x) > k || Math.abs(y) > k || z > k || z < -k * 1.4)) || (inBox(D.drop, x, y, z) && !(D.split && D.split.includes(mat))) ? -1 : inBox(D.yokes, x, y, z) ? 1 : 0) : null });
 }
 function cpRealToggle() {
-  if (!CP_REAL[ACFT.id]) { toast('この機体には 3D モデルのコックピットがありません', 1800); return; }
+  if (!cpRealDef(ACFT)) { toast('この機体には 3D モデルのコックピットがありません', 1800); return; }
   CPIT.real = !CPIT.real; CPIT.dirty = true;
   try { localStorage.setItem('sorajima-cpreal', CPIT.real ? '1' : '0'); } catch (e) { /* ignore */ }
-  const g = CPIT.real ? cpRealGet(CP_REAL[ACFT.id]) : null;
+  const g = CPIT.real ? cpRealGet(cpRealDef(ACFT)) : null;
   toast(!CPIT.real ? '操作できるパネルのコックピット（スイッチをクリックで操作）' : g.state === 'error' ? '3D モデルを読み込めませんでした（オンラインで開いたときに使えます）' : '3D モデルのコックピット（Shift+Y で操作できるパネルに切替）', 2400);
 }
 function cpLayout(A) {
@@ -10457,7 +10944,7 @@ function cpLayout(A) {
   if (A.cpL && A.cpL.real === real && A.cpL.av === (typeof acCustom === 'function' ? acCustom(A.id).avionics : '')) return A.cpL;
   const L = Object.assign({}, CP_LAYOUT[A.id] || CP_LAYOUT.trainer), e = A.eye;
   L.av = typeof acCustom === 'function' ? acCustom(A.id).avionics : ''; L.real = real;
-  if (L.deck === 'light' && (L.av === 'g1000' || real) && ['c172', 'pa28'].includes(A.id)) L.deck = 'glassga';
+  if (L.deck === 'light' && (L.av === 'g1000' || (real && cpRealDef(A) === CP_REAL[A.id])) && ['c172', 'pa28'].includes(A.id)) L.deck = 'glassga';
   L.T = CP_THEME[L.theme] || CP_THEME.cessna;
   L.E = [L.seat, e[1], e[2]];
   L.floor = e[1] - 0.95;
@@ -10645,11 +11132,11 @@ function cpBuild(A) {
   // the 3D model's screens: quads just in front of them, showing the PFD / MFD parts of the panel canvas
   const rquads = [];
   if (L.real) {
-    const D = CP_REAL[A.id], [CW, CH] = CP_REG.main, S = 300, lx = Math.max(24, L.px - 310), fo = 2048 - lx - S;
+    const D = cpRealDef(A), [CW, CH] = CP_REG.main, S = 300, lx = Math.max(24, L.px - 310), fo = 2048 - lx - S;
     // where each display is drawn on the panel canvas (see mainGlassGA and mainAirliner)
     const src = { pfd: [L.px - 215, 26, 430, 300], mfd: [L.px + 303, 26, 540, 300],
       pfdL: [lx, 62, S, S], ndL: [lx + S + 20, 62, S, S], eicas: [1024 - S / 2, 56, S, S], sd: [1024 - S / 2, 368, S, 200], ndR: [fo - S - 20, 62, S, S], pfdR: [fo, 62, S, S] };
-    for (const sc of D.screens) {
+    for (const sc of D.screens || []) {
       // tilt: the screen leans back by this angle (its top further from the pilot)
       const c = vadd(cpRealPt(D, sc.c), L.E), hw = sc.w * (D.s || 1) / 2, hh = sc.h * (D.s || 1) / 2, zc = c[2] + 0.003;
       const ty = hh * Math.cos(sc.tilt || 0), tz = hh * Math.sin(sc.tilt || 0);
@@ -10661,6 +11148,20 @@ function cpBuild(A) {
       const pos = new Float32Array([...p[0], ...p[1], ...p[2], ...p[0], ...p[2], ...p[3]]);
       const uv = new Float32Array([u0, v0, u1, v0, u1, v1, u0, v0, u1, v1, u0, v1]);
       const v = makeVAO([{ loc: 0, size: 3, data: pos }, { loc: 1, size: 2, data: uv }]); v.count = 6; rquads.push(v);
+    }
+    // round live instruments over a photographed panel's dials (the canvas's six-pack, drawn by mainLight)
+    if (D.dials) {
+      const X = cpExtraM(D.extra), cols = [L.px - 170, L.px, L.px + 170, L.px + 340], rows = [168, 344], R = D.dials.r * D.extra.s;
+      for (const [k, i, j] of SIX_LAYOUT) {
+        const at = D.dials.at[k]; if (!at) continue;
+        const c = vadd(cpRealPt(D, cpXfPt(X, at)), L.E), zc = c[2] + 0.002;
+        const p = [[c[0] - R, c[1] + R, zc], [c[0] + R, c[1] + R, zc], [c[0] + R, c[1] - R, zc], [c[0] - R, c[1] - R, zc]];
+        const u0 = (cols[i] - 76) / CW, u1 = (cols[i] + 76) / CW, v0 = (rows[j] - 76) / CH, v1 = (rows[j] + 76) / CH;
+        const v = makeVAO([{ loc: 0, size: 3, data: new Float32Array([...p[0], ...p[1], ...p[2], ...p[0], ...p[2], ...p[3]]) },
+          { loc: 1, size: 2, data: new Float32Array([u0, v0, u1, v0, u1, v1, u0, v0, u1, v1, u0, v1]) },
+          { loc: 2, size: 2, data: new Float32Array([-1, 1, 1, 1, 1, -1, -1, 1, 1, -1, -1, -1]) }]);
+        v.count = 6; v.round = true; rquads.push(v);
+      }
     }
   }
   cpBakeAO(b, L, e);
@@ -10762,6 +11263,7 @@ function cpDrawReal(A, L, C, real, base) {
     const c = d.center; return M4.mul(M4.fromQP(qaxis([0, 0, 1], -s.ail * 0.75), [c[0], c[1], c[2] + s.elev * 0.07]), M4.fromQP([0, 0, 0, 1], vscale(c, -1)));
   };
   glbDraw(real.m, M, [1.1, night ? 2.4 : 1.8, 1], CPIT.yoke ? yoke : () => new Float32Array(16));                 // (Y hides them: a zero matrix)
+  if (real.x) glbDraw(real.x, M, [1.1, night ? 2.4 : 1.8, 1]);
   if (!CPIT.prog) CPIT.prog = makeProgram(CPANEL_VS, CPANEL_FS);
   const pr = CPIT.prog; setCommon(pr);
   gl.uniformMatrix4fv(pr.u.uModel, false, base);
@@ -10771,7 +11273,8 @@ function cpDrawReal(A, L, C, real, base) {
   gl.disable(gl.CULL_FACE);
   gl.activeTexture(gl.TEXTURE9); gl.uniform1i(pr.u.uTex, 9);
   gl.bindTexture(gl.TEXTURE_2D, cpRegion('main', L).tex);
-  for (const q of C.rquads) { gl.bindVertexArray(q.vao); gl.drawArrays(gl.TRIANGLES, 0, 6); }
+  for (const q of C.rquads) { gl.uniform1f(pr.u.uRound, q.round ? 1 : 0); gl.bindVertexArray(q.vao); gl.drawArrays(gl.TRIANGLES, 0, 6); }
+  gl.uniform1f(pr.u.uRound, 0);
   gl.enable(gl.CULL_FACE);
   gl.activeTexture(gl.TEXTURE0);
   cpCredit(real.D.credit);
@@ -11666,7 +12169,7 @@ void main(){
   vec3 V = normalize(uCamPos - vWorld);
   float NV = max(dot(n, V), 0.0);
   float sh = uShadow > 0.5 ? planeShadow(vWorld.xz) : 1.0;
-  float diff = max(dot(n, uSunDir), 0.0) * sh;
+  float diff = max(dot(n, uSunDir), 0.0) * sh * sunShadow(vWorld, n);
   vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
   vec3 base = c.rgb;
   vec3 col = base * (1.0 - metal) * (uSunCol * diff * 0.8 * uLightK.x + amb * 0.95 * uLightK.y);
@@ -11801,7 +12304,7 @@ async function glbLoad(buf, opt = {}) {
       for (let t = 0; t < I.length; t += 3) {
         const i0 = I[t], i1 = I[t + 1], i2 = I[t + 2];
         let part = 0;
-        if (opt.part) part = opt.part((W[i0 * 3] + W[i1 * 3] + W[i2 * 3]) / 3, (W[i0 * 3 + 1] + W[i1 * 3 + 1] + W[i2 * 3 + 1]) / 3, (W[i0 * 3 + 2] + W[i1 * 3 + 2] + W[i2 * 3 + 2]) / 3);
+        if (opt.part) part = opt.part((W[i0 * 3] + W[i1 * 3] + W[i2 * 3]) / 3, (W[i0 * 3 + 1] + W[i1 * 3 + 1] + W[i2 * 3 + 1]) / 3, (W[i0 * 3 + 2] + W[i1 * 3 + 2] + W[i2 * 3 + 2]) / 3, mname);
         if (part < 0) continue;                                          // (dropped: stray parts)
         const gk = mi + '/' + (sep ? 'n' + ni : part);
         let g = groups.get(gk); if (!g) { g = { mi, part, sep, pos: [], nrm: [], uv: [], idx: [], map: new Map() }; groups.set(gk, g); }
@@ -11876,10 +12379,12 @@ async function glbFetch(url) {
   for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
   return u8.buffer;
 }
+// (opt.key: the same file loaded with different options is kept separately)
 function glbGet(url, opt) {
-  if (!GLB.cache.has(url)) GLB.cache.set(url, { state: 'loading', model: null, p: glbFetch(url).then(b => glbLoad(b, opt))
-    .then(m => { const e = GLB.cache.get(url); e.state = 'ok'; e.model = m; if (opt && opt.ready) opt.ready(m); return m; }).catch(err => { const e = GLB.cache.get(url); e.state = 'error'; e.err = String(err); console.warn('GLB', url, err); return null; }) });
-  return GLB.cache.get(url);
+  const key = url + (opt && opt.key ? '#' + opt.key : '');
+  if (!GLB.cache.has(key)) GLB.cache.set(key, { state: 'loading', model: null, p: glbFetch(url).then(b => glbLoad(b, opt))
+    .then(m => { const e = GLB.cache.get(key); e.state = 'ok'; e.model = m; if (opt && opt.ready) opt.ready(m); return m; }).catch(err => { const e = GLB.cache.get(key); e.state = 'error'; e.err = String(err); console.warn('GLB', url, err); return null; }) });
+  return GLB.cache.get(key);
 }
 // =====================================================================
 //  CAR MODELS: smooth bodies built from cross-sections (a lower body and
@@ -12178,9 +12683,9 @@ function carEnter() {
 }
 // move the car onto the nearest road, in the left-hand lane (Japan drives on the left), facing the way it
 // was facing as far as the road allows. Returns the distance moved, or 0
-function carToRoad(maxD = 3000, quiet = false) {
+function carToRoad(maxD = 3000, quiet = false, minCls = 0) {
   if (typeof roadNearest !== 'function' || typeof CITY === 'undefined' || !CITY.ready) { if (!quiet) toast('道路のデータがありません（オンラインの地図でのみ使えます）', 2200); return 0; }
-  const r = roadNearest(CAR.pos[0], CAR.pos[2], maxD);
+  const r = roadNearest(CAR.pos[0], CAR.pos[2], maxD, minCls);
   if (!r) { if (!quiet) toast(`${maxD >= 1000 ? (maxD / 1000) + ' km' : maxD + ' m'} 以内に道路が見つかりません`, 2200); return 0; }
   if (r.d < r.w * 0.5 + 0.5) return 0;                               // already on it
   let h = Math.atan2(r.dir[0], -r.dir[1]);
@@ -12466,6 +12971,157 @@ function carButton() {
   const show = game.state === 'flying' && (CAR.on || carCanUse());
   b.hidden = !show;
   b.textContent = CAR.on ? '✈ 飛行機に戻る（K）' : '🚗 車に乗り換える（K）';
+}
+// =====================================================================
+//  SUN SHADOWS near the car: a shadow map of the few hundred metres
+//  round the view, rendered from the sun each frame. Buildings, street
+//  furniture, trees and cars cast; the ground, roads, walls, trees and
+//  cars receive (sunShadow() in GLSL_SHADOW). Only while driving, by day.
+// =====================================================================
+const SUNSH = { on: false, size: 2048, half: 130, depth: 400, VP: new Float32Array(16), v: [0, 0, 0, 0], fbo: null, tex: null, dummy: null, progs: null };
+const SUNSH_FS = GLSL_HEAD + `
+out vec4 outColor;
+void main(){ outColor = vec4(1.0); }`;
+function sunShadowInit() {
+  if (SUNSH.tex) return;
+  const mk = n => {
+    const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT24, n, n);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
+    return t;
+  };
+  gl.activeTexture(gl.TEXTURE11);
+  SUNSH.size = game.touch ? 1024 : 2048;
+  SUNSH.tex = mk(SUNSH.size); SUNSH.dummy = mk(1);
+  SUNSH.fbo = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, SUNSH.fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, SUNSH.tex, 0);
+  gl.drawBuffers([gl.NONE]); gl.readBuffer(gl.NONE);
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) SUNSH.broken = true;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.bindTexture(gl.TEXTURE_2D, SUNSH.dummy);
+  gl.activeTexture(gl.TEXTURE0);
+}
+// the programs that draw the casters: each model's own vertex shader, writing depth only
+function sunShadowProgs() {
+  if (SUNSH.progs) return SUNSH.progs;
+  const P = {};
+  try { P.bldg = makeProgram(BLDG_VS, SUNSH_FS); } catch (e) { console.warn('shadow bldg', e); }
+  try { P.street = makeProgram(STREET_VS, SUNSH_FS); } catch (e) { console.warn('shadow street', e); }
+  try { if (typeof JWTREE_VS !== 'undefined') P.tree = makeProgram(JWTREE_VS, SUNSH_FS); } catch (e) { console.warn('shadow trees', e); }
+  try { P.glb = makeProgram(GLB_VS, SUNSH_FS); } catch (e) { console.warn('shadow cars', e); }
+  return SUNSH.progs = P;
+}
+function sunShadowWanted() {
+  if (SUNSH.enabled === false || SUNSH.broken || !CAR.on || !JW.active || !JW.online || typeof CITY === 'undefined' || !CITY.ready) return false;
+  if (ENV.night || ENV.sunDir[1] < 0.06 || game.gfx === 'low' || (game.touch && SUNSH.enabled !== true)) return false;   // (phones: off unless asked for)
+  return R.eye[1] - Math.max(jwHeight(R.eye[0], R.eye[2]), 0) < 300;
+}
+function sunShadowPass() {
+  sunShadowInit();
+  const on = sunShadowWanted();
+  SUNSH.on = on; SUNSH.v = [0, 0, 0, 0];
+  gl.activeTexture(gl.TEXTURE11); gl.bindTexture(gl.TEXTURE_2D, on ? SUNSH.tex : SUNSH.dummy); gl.activeTexture(gl.TEXTURE0);
+  if (!on) return;
+  // the square it covers: centred a little ahead of the camera, facing the sun; its centre snapped to whole
+  // texels so the shadows' edges don't crawl as the car moves
+  const H = SUNSH.half, D = SUNSH.depth, L = ENV.sunDir, f = R.camF, fl = Math.hypot(f[0], f[2]) || 1;
+  const C = [R.eye[0] + f[0] / fl * H * 0.5, CAR.pos[1], R.eye[2] + f[2] / fl * H * 0.5];
+  const up = Math.abs(L[1]) > 0.98 ? [0, 0, 1] : [0, 1, 0];
+  let X = [up[1] * L[2] - up[2] * L[1], up[2] * L[0] - up[0] * L[2], up[0] * L[1] - up[1] * L[0]];
+  const xl = Math.hypot(X[0], X[1], X[2]); X = X.map(v => v / xl);
+  const Y = [L[1] * X[2] - L[2] * X[1], L[2] * X[0] - L[0] * X[2], L[0] * X[1] - L[1] * X[0]];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], ts = 2 * H / SUNSH.size;
+  const sx = Math.round(dot(X, C) / ts) * ts, sy = Math.round(dot(Y, C) / ts) * ts, sz = dot(L, C);
+  const M = SUNSH.VP;
+  M[0] = X[0] / H; M[4] = X[1] / H; M[8] = X[2] / H; M[12] = -sx / H;
+  M[1] = Y[0] / H; M[5] = Y[1] / H; M[9] = Y[2] / H; M[13] = -sy / H;
+  M[2] = -L[0] / D; M[6] = -L[1] / D; M[10] = -L[2] / D; M[14] = sz / D;
+  M[3] = 0; M[7] = 0; M[11] = 0; M[15] = 1;
+  // strength: full in clear sun, less when it is low and red or hazy
+  SUNSH.v = [clamp((L[1] - 0.06) * 8, 0, 1) * 0.82, 1 / SUNSH.size, 0, 0];
+  const P = sunShadowProgs();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, SUNSH.fbo);
+  gl.viewport(0, 0, SUNSH.size, SUNSH.size);
+  gl.clear(gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
+  gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(1.5, 3);
+  const common = (pr) => {
+    const u = pr.u; gl.useProgram(pr.p);
+    if (u.uViewProj) gl.uniformMatrix4fv(u.uViewProj, false, M);
+    if (u.uCamPos) gl.uniform3fv(u.uCamPos, R.eye);
+    if (u.uCurv) gl.uniform1f(u.uCurv, 0);
+    return u;
+  };
+  const near = (x0, z0, x1, z1, m) => C[0] > x0 - m && C[0] < x1 + m && C[2] > z0 - m && C[2] < z1 + m;
+  // buildings
+  if (P.bldg) {
+    const u = common(P.bldg);
+    for (const t of CITY.tiles.values()) {
+      if (!t.vao || !t.ni) continue;
+      const b = cityBox(t); if (!near(b[0], b[1], b[2], b[3], H * 2.5)) continue;
+      citySetTile(u, t); gl.bindVertexArray(t.vao);
+      if (!t.cellOff) { gl.drawElements(gl.TRIANGLES, t.ni, gl.UNSIGNED_INT, 0); continue; }
+      // only the grid cells within reach: rows of cells, each one contiguous run of triangles
+      const [la, lo] = worldToGeo(C[0], C[2]), X = (lo - t.lonW) * t.kxN, Z = -(la - t.latN) * KZ, G = CITY_SHG, r = H * 2;
+      const cw = (t.W || 2500) / G, ch = (t.Hm || 2500) / G;
+      const x0 = clamp(Math.floor((X - r) / cw), 0, G - 1), x1 = clamp(Math.floor((X + r) / cw), 0, G - 1);
+      const z0 = clamp(Math.floor((Z - r) / ch), 0, G - 1), z1 = clamp(Math.floor((Z + r) / ch), 0, G - 1);
+      if (X + r < 0 || X - r > G * cw || Z + r < 0 || Z - r > G * ch) continue;
+      for (let cz = z0; cz <= z1; cz++) {
+        const a = t.cellOff[cz * G + x0], e = t.cellOff[cz * G + x1 + 1];
+        if (e > a) gl.drawElements(gl.TRIANGLES, e - a, gl.UNSIGNED_INT, a * 4);
+      }
+    }
+  }
+  // street lamps, poles, signals, roadside trees
+  if (P.street && STREET.meshes) {
+    const u = common(P.street);
+    for (const t of CITY.tiles.values()) {
+      if (!t.street) continue;
+      const b = cityBox(t); if (!near(b[0], b[1], b[2], b[3], H * 1.5)) continue;
+      citySetTile(u, t);
+      for (let k = 0; k < 4; k++) { const s = t.street[k]; if (!s) continue; gl.uniform1f(u.uFar, 260); gl.bindVertexArray(s.vao.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, s.count, s.n); }
+    }
+  }
+  // the trees from the map's photos
+  if (P.tree && typeof JWTREES !== 'undefined' && JWTREES.cells && game.gfx !== 'low') {
+    const u = common(P.tree);
+    gl.uniform1f(u.uFade, 5000); gl.uniform1i(u.uPhoto, 6); gl.uniform1i(u.uNoise, 2);
+    gl.activeTexture(gl.TEXTURE6);
+    for (const c of JWTREES.cells.values()) {
+      if (!c.n || !near(c.ox - c.half, c.oz - c.half, c.ox + c.half, c.oz + c.half, H * 1.3)) continue;
+      const tile = JW.tiles.get('16/' + c.x + '/' + c.y), ph = JW.online && c.x !== undefined ? photoFor({ z: 16, x: c.x, y: c.y, tex: (tile || {}).tex }) : null;
+      if (ph) { gl.bindTexture(gl.TEXTURE_2D, ph[0]); gl.uniform4f(u.uUvX, ph[1], ph[2], ph[3], 0); gl.uniform1i(u.uHasPhoto, 1); }
+      else gl.uniform1i(u.uHasPhoto, 0);
+      gl.uniform3f(u.uOrigin, c.ox, 0, c.oz);
+      gl.bindVertexArray(c.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, JWTREES.mesh.count, c.n);
+    }
+    gl.activeTexture(gl.TEXTURE0);
+  }
+  // the cars (their 3D models; glass left out)
+  if (P.glb) {
+    const u = common(P.glb);
+    const one = (Mm, base, spin, steer) => {
+      if (!Mm || !Mm.glb) return;
+      const W = Mm.F.wheels;
+      for (const d of Mm.glb.draws) {
+        if (d.mat.blend) continue;
+        let m = base;
+        if (d.part && W[d.part - 1]) { const w = W[d.part - 1], q = qmul(w[3] ? qaxis([0, 1, 0], -steer) : [0, 0, 0, 1], qaxis([1, 0, 0], -spin));
+          m = M4.mul(base, M4.mul(M4.fromQP(q, [w[0], w[1], w[2]]), M4.fromQP([0, 0, 0, 1], [-w[0], -w[1], -w[2]]))); }
+        gl.uniformMatrix4fv(u.uModel, false, m);
+        gl.bindVertexArray(d.vao.vao); gl.drawElements(gl.TRIANGLES, d.count, gl.UNSIGNED_INT, 0);
+      }
+    };
+    one(carMesh(CAR.model || 0, CAR.paint || 0), M4.fromQP(CAR.q, CAR.pos), CAR.spin, CAR.steer);
+    for (const c of TRAFFIC.cars) if (Math.hypot(c.pos[0] - C[0], c.pos[2] - C[2]) < H * 1.4) one(carMesh(c.model, c.paint, true), M4.fromQP(c.q, c.pos), c.spin, 0);
+  }
+  gl.bindVertexArray(null);
+  gl.disable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(0, 0);
+  gl.enable(gl.CULL_FACE);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 }
 
 // =====================================================================
@@ -13511,7 +14167,11 @@ const R = { VP: null, eye: [0, 0, 0], time: 0, W: 1, H: 1, camR: [1, 0, 0], camU
 const ZONE = { on: false, v: [0, 0, 0, 0], side: 0, r0: 240, r1: 340 };
 function zoneUpdate() {
   ZONE.on = !!(CAR.on && GOOG.covering && JW.online && typeof CITY !== 'undefined' && CITY.ready && ZONE.enabled !== false);
-  ZONE.v = ZONE.on ? [sim.pos[0], sim.pos[2], ZONE.r0, ZONE.r1] : [0, 0, 0, 0];
+  // the same near zone over PLATEAU's city models: their photo textures are a blur at street level, so round
+  // the car the map's own buildings (with their modelled windows, shops and balconies) stand in
+  ZONE.plat = !!(!ZONE.on && CAR.on && !GOOG.covering && JW.online && typeof CITY !== 'undefined' && CITY.ready &&
+    typeof PLAT !== 'undefined' && PLAT.active.length && ZONE.enabled !== false);
+  ZONE.v = ZONE.on || ZONE.plat ? [sim.pos[0], sim.pos[2], ZONE.r0, ZONE.r1] : [0, 0, 0, 0];
   ZONE.side = 0;
 }
 function nightK() { return ENV.night ? 1 : clamp((0.3 - ENV.sunDir[1]) * 4, 0, 1); }
@@ -13531,6 +14191,7 @@ function setCommon(pr) {
   if (u.uFlatCl) gl.uniform1f(u.uFlatCl, volCloudsActive() ? 0 : 1);
   if (u.uSink) gl.uniform1f(u.uSink, googSink());
   if (u.uZone) gl.uniform4fv(u.uZone, ZONE.v);
+  if (u.uSunVP) { gl.uniformMatrix4fv(u.uSunVP, false, SUNSH.VP); gl.uniform4fv(u.uSunSh, SUNSH.v); }
   if (u.uZoneSide) gl.uniform1f(u.uZoneSide, ZONE.side);
   if (u.uCamPos) gl.uniform3fv(u.uCamPos, R.eye);
   if (u.uTime) gl.uniform1f(u.uTime, R.time);
@@ -13604,6 +14265,7 @@ function render() {
   R.nodes = 0;
   if (JW.active) { const pl = frustumPlanes(M4.mul(M4.persp(fovY, asp, 1, 650000), v)); platUpdate(pl); googUpdate(pl); }
   zoneUpdate();
+  sunShadowPass(); gl.viewport(0, 0, W, H);
   for (const far of [true, false]) {
     const proj = far ? M4.persp(fovY, asp, DEPTH_SPLIT, JW.active ? 650000 : 60000) : M4.persp(fovY, asp, cam.near, DEPTH_SPLIT * 1.02);
     R.VP = M4.mul(proj, v);
@@ -13619,10 +14281,10 @@ function drawScene(planes, far) {
       ZONE.side = 1; drawGoogle(); googFlatCheck();
       // ...except where Google has no 3D (the map's own buildings stand in everywhere), and around the car,
       // where the photogrammetry's melted ground and walls give way to the sim's own streets
-      if (GOOG.flat || ZONE.on) { ZONE.side = GOOG.flat ? 0 : -1; drawRoads(planes); drawCity(planes); drawJwTrees(planes, far); }
+      if (GOOG.flat || ZONE.on) { ZONE.side = GOOG.flat ? 0 : -1; drawRoads(planes); drawCity(planes); drawStreet(planes); drawJwTrees(planes, far); }
       ZONE.side = 0;
     }
-    else { drawJapanRunways(); drawRoads(planes); drawCity(planes); drawPlateau(); drawJwTrees(planes, far); }
+    else { drawJapanRunways(); drawRoads(planes); drawCity(planes); drawStreet(planes); ZONE.side = ZONE.plat ? 1 : 0; drawPlateau(); ZONE.side = 0; drawJwTrees(planes, far); }
   }
   else {
   // terrain

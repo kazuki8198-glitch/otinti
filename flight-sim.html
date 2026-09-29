@@ -3892,7 +3892,7 @@ function jwSelect(planes, eye) {
   const f = ++JW.frame, out = [], wantMesh = [], want = [];
   // driving: one zoom level finer (about 0.6 m per pixel) and refined sooner, since the ground is right there
   const drive = typeof CAR !== 'undefined' && CAR.on;
-  const zmax = JW.online ? (game.touch ? 16 : drive ? 18 : 17) : 12, K = game.touch ? 0.9 : drive ? 2.2 : 1.25;
+  const zmax = JW.online ? (game.touch ? 16 : drive ? 18 : 17) : 12, K = game.touch ? 0.9 : drive ? 1.8 : 1.25;
   const [eLat, eLon] = worldToGeo(eye[0], eye[2]);
   const reach = 700000 + Math.max(eye[1], 0) * 30;
   const geoFar = t => {
@@ -6600,19 +6600,21 @@ void main(){
 }`;
 const JWTREES = { prog: null, mesh: null, cells: new Map(), ov: -1, perCell: 0 };
 // a rounded crown on a short trunk, unit height
-function makeJwTreeMesh() {
-  const P = [], N = [], seg = 12, ys = [0.0, 0.19, 0.16, 0.24, 0.33, 0.43, 0.53, 0.63, 0.73, 0.82, 0.9, 0.96, 1.0];
+// a unit cylinder of rings; the crown outline (dome or tiered cone) is shaped in the vertex shader.
+// Two levels of detail: smooth for the trees next to you, light for the thousands further away
+function makeJwTreeMesh(seg, ys) {
+  const P = [], N = [];
   const ring = y => { const o = []; for (let s = 0; s < seg; s++) { const a = s / seg * Math.PI * 2; o.push([Math.cos(a), y, Math.sin(a)]); } return o; };
   const quad = (a, b) => { for (let s = 0; s < seg; s++) { const s1 = (s + 1) % seg; for (const p of [a[s], b[s], a[s1], a[s1], b[s], b[s1]]) { P.push(...p); N.push(p[0], 0, p[2]); } } };
   quad(ring(0.0), ring(0.19));                                           // trunk (y below 0.19)
-  for (let i = 2; i < ys.length - 1; i++) quad(ring(ys[i]), ring(ys[i + 1]));   // crown
+  for (let i = 0; i < ys.length - 1; i++) quad(ring(ys[i]), ring(ys[i + 1]));   // crown
   return { P: new Float32Array(P), N: new Float32Array(N), count: P.length / 3 };
 }
 function initJwTrees() {
   if (JWTREES.prog) return;
   JWTREES.prog = makeProgram(JWTREE_VS, JWTREE_FS);
-  const m = makeJwTreeMesh();
-  JWTREES.mesh = m;
+  JWTREES.mesh = makeJwTreeMesh(12, [0.16, 0.24, 0.33, 0.43, 0.53, 0.63, 0.73, 0.82, 0.9, 0.96, 1.0]);
+  JWTREES.meshLo = makeJwTreeMesh(6, [0.16, 0.4, 0.7, 0.9, 1.0]);
   JWTREES.perCell = 520;
 }
 function jwTreeCellKey(x, y) { return x + '/' + y; }
@@ -6636,19 +6638,24 @@ function buildJwTreeCell(x, y) {
     data.set([wx - ox, h, wz - oz, rnd(), u, v, ny], k * 7); k++;
   }
   const inst = data.subarray(0, k * 7);
-  const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
-  const pb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, pb); gl.bufferData(gl.ARRAY_BUFFER, JWTREES.mesh.P, gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-  const nb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, nb); gl.bufferData(gl.ARRAY_BUFFER, JWTREES.mesh.N, gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
   const ib = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, ib); gl.bufferData(gl.ARRAY_BUFFER, inst, gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 4, gl.FLOAT, false, 28, 0); gl.vertexAttribDivisor(2, 1);
-  gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 3, gl.FLOAT, false, 28, 16); gl.vertexAttribDivisor(3, 1);
-  gl.bindVertexArray(null);
-  return { x, y, ox, oz, n: k, vao, bufs: [pb, nb, ib], used: 0 };
+  const mk = m => {
+    if (!m.pb) { m.pb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, m.pb); gl.bufferData(gl.ARRAY_BUFFER, m.P, gl.STATIC_DRAW); m.nb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, m.nb); gl.bufferData(gl.ARRAY_BUFFER, m.N, gl.STATIC_DRAW); }
+    const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, m.pb); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, m.nb); gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, ib);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 4, gl.FLOAT, false, 28, 0); gl.vertexAttribDivisor(2, 1);
+    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 3, gl.FLOAT, false, 28, 16); gl.vertexAttribDivisor(3, 1);
+    gl.bindVertexArray(null); return vao;
+  };
+  const vao = mk(JWTREES.mesh), vaoLo = mk(JWTREES.meshLo);
+  let hmin = 1e9, hmax = -1e9; for (let q = 0; q < k; q++) { hmin = Math.min(hmin, inst[q * 7 + 1]); hmax = Math.max(hmax, inst[q * 7 + 1]); }
+  const half = 40075016 * Math.cos((latN + latS) / 2 * DEG) / n / 2 + 1;
+  return { x, y, ox, oz, n: k, vao, vaoLo, bufs: [ib], used: 0, half, hmin, hmax };
 }
-function freeJwTreeCell(c) { gl.deleteVertexArray(c.vao); for (const b of c.bufs) gl.deleteBuffer(b); }
-function drawJwTrees() {
+function freeJwTreeCell(c) { gl.deleteVertexArray(c.vao); if (c.vaoLo) gl.deleteVertexArray(c.vaoLo); for (const b of c.bufs) gl.deleteBuffer(b); }
+function drawJwTrees(planes, far) {
   if (!JW.active || game.gfx === 'low') return;
   const eye = R.eye, agl = eye[1] - Math.max(jwHeight(eye[0], eye[2]), 0);
   if (agl > 2600) return;                                   // too small to matter from high up
@@ -6669,12 +6676,17 @@ function drawJwTrees() {
     if (!c) { if (built >= 3) continue; c = buildJwTreeCell(x, y); JWTREES.cells.set(key, c); built++; }
     c.used = JW.frame;
     if (!c.n) continue;
+    // each depth pass draws only its own distance band, and cells outside the view are skipped
+    const dxz = Math.max(Math.hypot(c.ox - eye[0], c.oz - eye[2]) - c.half * 1.42, 0);
+    if (far !== undefined && (far ? dxz + 30 < DEPTH_SPLIT * 0.9 : dxz > DEPTH_SPLIT * 1.05)) continue;
+    if (planes && !boxInFrustum(planes, c.ox - c.half, c.hmin - 2, c.oz - c.half, c.ox + c.half, c.hmax + 22, c.oz + c.half)) continue;
+    const lo = dxz > 220;
     const ph = JW.online ? photoFor({ z: 16, x, y, tex: (JW.tiles.get('16/' + x + '/' + y) || {}).tex }) : null;
     if (ph) { gl.bindTexture(gl.TEXTURE_2D, ph[0]); gl.uniform4f(u.uUvX, ph[1], ph[2], ph[3], 0); gl.uniform1i(u.uHasPhoto, 1); }
     else gl.uniform1i(u.uHasPhoto, 0);
     gl.uniform3f(u.uOrigin, c.ox, 0, c.oz);
-    gl.bindVertexArray(c.vao);
-    gl.drawArraysInstanced(gl.TRIANGLES, 0, JWTREES.mesh.count, c.n);
+    gl.bindVertexArray(lo ? c.vaoLo : c.vao);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, lo ? JWTREES.meshLo.count : JWTREES.mesh.count, c.n);
   }
   gl.activeTexture(gl.TEXTURE0);
   // forget cells that have been out of range for a while
@@ -10305,8 +10317,12 @@ function drawCockpit(base) {
   gl.uniform3fv(pr.u.uLight, night ? [0.7, 0.64, 0.58] : [0.52 + 0.42 * day, 0.52 + 0.42 * day, 0.54 + 0.4 * day]);
   gl.disable(gl.CULL_FACE);
   gl.activeTexture(gl.TEXTURE9); gl.uniform1i(pr.u.uTex, 9);
+  const Ci = qconj(sim.q), eb = qrot(Ci, vsub(cam.eye, sim.pos)), fb = qrot(Ci, R.camF), cosV = Math.cos(Math.min(1.4, CPIT.fov * DEG * 0.95));
   for (const k in C.quads) {
-    const R = cpRegion(k, L);
+    // a surface out of view keeps its last picture instead of being redrawn and uploaded
+    const S = L.S[k], mid = cpPt(S, 0.5, 0.5), dv = vnorm(vsub(mid, eb)), half = Math.hypot(vlen(S.u), vlen(S.v)) / 2 / Math.max(vdist(mid, eb), 0.1);
+    const seen = vdot(dv, fb) > cosV - half;
+    const R = seen || !CPIT.reg[k] ? cpRegion(k, L) : CPIT.reg[k];
     gl.bindTexture(gl.TEXTURE_2D, R.tex);
     gl.uniform1f(pr.u.uShade, L.S[k].shade);
     gl.bindVertexArray(C.quads[k].vao); gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -12518,8 +12534,20 @@ function shadowUniforms(pr) {
   gl.uniform4f(u.uShadowA, c[0], c[1], f[0] / fl, f[2] / fl);
   gl.uniform2f(u.uShadowB, str, 0.12 + above * 0.004);
 }
+// dynamic resolution: when frames take too long the 3D view is drawn at a lower resolution (the HUD stays
+// sharp), and it creeps back up when there is time to spare
+const DYN = { k: 1, acc: 0, n: 0, t: 0 };
+function dynRes(dt) {
+  if (!(dt > 0) || dt > 0.2) return;
+  DYN.acc += dt; DYN.n++; DYN.t += dt;
+  if (DYN.t < 1.5) return;
+  const ft = DYN.acc / DYN.n; DYN.acc = 0; DYN.n = 0; DYN.t = 0;
+  if (game.state !== 'flying') return;
+  if (ft > 1 / 40) DYN.k = Math.max(0.55, DYN.k - (ft > 1 / 25 ? 0.12 : 0.06));
+  else if (ft < 1 / 56) DYN.k = Math.min(1, DYN.k + 0.04);
+}
 function resize() {
-  const dpr = Math.min(window.devicePixelRatio || 1, game.touch ? 1.5 : CAR.on ? 2 : 1.75, GOOG.covering && !CAR.on ? 1.25 : 9);
+  const dpr = Math.min(window.devicePixelRatio || 1, game.touch ? 1.5 : CAR.on ? 2 : 1.75, GOOG.covering && !CAR.on ? 1.25 : 9) * DYN.k;
   const w = Math.max(1, Math.round(glCanvas.clientWidth * dpr)), h = Math.max(1, Math.round(glCanvas.clientHeight * dpr));
   if (glCanvas.width !== w || glCanvas.height !== h) { glCanvas.width = w; glCanvas.height = h; }
   const hd = Math.min(window.devicePixelRatio || 1, 2), hc = hud.cv;
@@ -12563,9 +12591,9 @@ function drawScene(planes, far) {
     drawJapanTerrain(planes);
     if (GOOG.covering) {                                  // photogrammetry replaces runways, buildings and trees
       drawGoogle(); googFlatCheck();
-      if (GOOG.flat) { drawCity(planes); drawJwTrees(); } // ...except where Google has no 3D: the map's own buildings stand in
+      if (GOOG.flat) { drawCity(planes); drawJwTrees(planes, far); } // ...except where Google has no 3D: the map's own buildings stand in
     }
-    else { drawJapanRunways(); drawCity(planes); drawPlateau(); drawJwTrees(); }
+    else { drawJapanRunways(); drawCity(planes); drawPlateau(); drawJwTrees(planes, far); }
   }
   else {
   // terrain
@@ -13623,7 +13651,7 @@ function setupMapView() {
 let lastT = performance.now(), acc = 0;
 const STEP = 1 / 120;
 function frame(now) {
-  const dt = Math.min(0.1, Math.max(0, (now - lastT) / 1000)); lastT = now;
+  const dt = Math.min(0.1, Math.max(0, (now - lastT) / 1000)); lastT = now; dynRes(dt);
   R.time += dt;
   if (game.state === 'loading') { requestAnimationFrame(frame); return; }
   try {

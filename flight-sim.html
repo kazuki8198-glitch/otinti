@@ -616,6 +616,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
           <tr><td><kbd>B</kbd> / <kbd>Space</kbd></td><td>ブレーキ（地上で止まるとき）</td></tr>
           <tr><td><kbd>L</kbd></td><td>水平飛行に戻す（数秒間、自動操縦）</td></tr>
           <tr><td><kbd>C</kbd></td><td>カメラ切替。マウスでドラッグすると見回せます</td></tr>
+          <tr><td><kbd>K</kbd></td><td>車に乗り換える／飛行機に戻る。車は飛行機の真下の地面に出ます（W/S アクセル・ブレーキ、A/D ハンドル、Space サイドブレーキ、C 視点）</td></tr>
           <tr><td><kbd>M</kbd></td><td>日本地図を開く／閉じる。空港をクリックして目的地や出発地に設定できます</td></tr>
           <tr><td><kbd>O</kbd></td><td>オートパイロット：今の高度を保ち、目的地（なければ今の方位）へ自動で飛ぶ。操縦すると解除</td></tr>
           <tr><td><kbd>Z</kbd></td><td>時間加速 ×1 → ×2 → ×4 → ×8 → ×16 → ×32 → ×64（上空のみ）。長い距離の移動に</td></tr>
@@ -3656,7 +3657,7 @@ function jwRecenter(force) {
   if (!force && Math.hypot(sim.pos[0], sim.pos[2]) < 60000) return;
   const conv = p => { const [lat, lon] = worldToGeo(p[0], p[2]); return lat + ',' + lon; };
   const oldGeo = p => worldToGeo(p[0], p[2]);
-  const moved = [sim.pos, ...particles.map(q => q.p), ...(course.rings || []).map(r => r.p)].map(p => [p, oldGeo(p)]);
+  const moved = [sim.pos, ...(typeof CAR !== 'undefined' && CAR.on && CAR.plane ? [CAR.plane.pos] : []), ...particles.map(q => q.p), ...(course.rings || []).map(r => r.p)].map(p => [p, oldGeo(p)]);
   const camGeo = oldGeo(cam.eye);
   const [lat, lon] = worldToGeo(sim.pos[0], sim.pos[2]);
   JW.lat0 = lat; JW.lon0 = lon; JW.ov++;
@@ -10981,6 +10982,278 @@ function egHud(g) {
   }
   g.restore();
 }
+// =====================================================================
+//  CAR: get out of the aeroplane and drive. The car appears on the
+//  ground straight below the aircraft; the aircraft waits exactly as it
+//  was (in the air it is held where it is) until you get back in.
+//  While driving, `sim.pos` follows the car so the terrain, the Google
+//  3D tiles, the city and the map all load around the car.
+// =====================================================================
+const CAR = {
+  on: false, pos: [0, 0, 0], hdg: 0, v: 0, vy: 0, steer: 0, air: false, q: [0, 0, 0, 1], n: [0, 1, 0],
+  spin: 0, thr: 0, brake: 0, hand: false, rev: false, plane: null, prevCam: 'chase', camYaw: 0, bumpT: 0, mesh: null, msgT: 0,
+};
+const CAR_SPEC = { mass: 1400, power: 110000, fMax: 7200, brake: 11000, wb: 2.7, cd: 0.7, wheelR: 0.34 };
+const carFwd = h => [Math.sin(h), 0, -Math.cos(h)];
+function carReset() { if (CAR.on) { CAR.on = false; CAR.plane = null; } carButton(); }
+// the ground the car drives on: Google's 3D surface where it is shown (roads, bridges, roofs), else the terrain
+function carGround(x, z, yRef) {
+  const g = groundAt(x, z);
+  let h = g.h, water = g.water, google = false;
+  if (typeof GOOG !== 'undefined' && GOOG.covering && GOOG.off != null) {
+    const [la, lo] = worldToGeo(x, z), gh = googGroundAt(la, lo, yRef + GOOG.off);
+    if (gh != null) { h = gh - GOOG.off; google = true; water = water && h < 0.5; }
+  }
+  return { h, water, n: g.n || [0, 1, 0], paved: g.paved, google };
+}
+// is there a (map) building at this point? (OSM buildings of the Japan city layer)
+function carInBuilding(p) {
+  if (typeof CITY === 'undefined' || !CITY.ready || !JW.active || !JW.online) return false;
+  const [la, lo] = worldToGeo(p[0], p[2]);
+  const n = 2 ** 14, x = Math.floor((lo + 180) / 360 * n), y = Math.floor(mercY(la) * n);
+  const t = CITY.tiles.get(x + '/' + y);
+  if (!t || !t.col || p[1] > t.maxTop + 2) return false;
+  const X = (lo - t.lonW) * t.kxN, Z = -(la - t.latN) * KZ;
+  const G = 32, cx = clamp(Math.floor(X / t.W * G), 0, G - 1), cz = clamp(Math.floor(Z / t.Hm * G), 0, G - 1), c = t.col;
+  for (let k = c.cells[cz * G + cx]; k < c.cells[cz * G + cx + 1]; k++) {
+    const b = c.items[k], B = c.boxes;
+    if (p[1] > B[b * 5 + 4] || X < B[b * 5] || X > B[b * 5 + 2] || Z < B[b * 5 + 1] || Z > B[b * 5 + 3]) continue;
+    let inside = false;
+    for (let i = c.ringOff[b], j = c.ringOff[b + 1] - 2; i < c.ringOff[b + 1]; j = i, i += 2) {
+      const zi = c.ringXZ[i + 1], zj = c.ringXZ[j + 1];
+      if ((zi > Z) !== (zj > Z) && X < (c.ringXZ[j] - c.ringXZ[i]) * (Z - zi) / (zj - zi) + c.ringXZ[i]) inside = !inside;
+    }
+    if (inside) return true;
+  }
+  return false;
+}
+function carMsg(t, d = 1800) { if (R.time - CAR.msgT > 2) { CAR.msgT = R.time; toast(t, d); } }
+
+// ---------------------------------------------------------------------
+//  getting in and out
+// ---------------------------------------------------------------------
+function carCanUse() { return game.state === 'flying' && !sim.crashed && !(typeof SCHOOL !== 'undefined' && SCHOOL.active) && game.mode !== 'tutorial'; }
+function carToggle() { if (CAR.on) carExit(); else carEnter(); }
+function carEnter() {
+  if (!carCanUse()) { toast('いまは車に乗り換えられません（飛行中のモードで使えます）', 1800); return; }
+  const s = sim, x = s.pos[0], z = s.pos[2];
+  const g = carGround(x, z, s.pos[1] + 1);
+  if (g.water) { toast('真下が海（水の上）なので車を出せません。陸の上で乗り換えてください', 2600); return; }
+  // keep everything about the aircraft, to put it back exactly as it was
+  const snap = {};
+  for (const k in s) snap[k] = Array.isArray(s[k]) ? s[k].slice() : s[k];
+  CAR.plane = snap;
+  const f = qrot(s.q, [0, 0, -1]);
+  CAR.hdg = Math.atan2(f[0], -f[2]); CAR.camYaw = CAR.hdg;
+  CAR.pos = [x, g.h, z]; CAR.v = 0; CAR.vy = 0; CAR.steer = 0; CAR.air = false; CAR.spin = 0; CAR.n = g.n.slice();
+  CAR.on = true; CAR.prevCam = cam.mode; cam.mode = 'car'; cam.lookYaw = cam.lookPitch = 0;
+  if (game.ap) game.ap = false;
+  if (typeof EG !== 'undefined' && EG.on) egStop();
+  if (typeof CL !== 'undefined' && CL.open) clToggle(false);
+  carSync();
+  const above = s.onGround ? '' : `（飛行機は高度 ${Math.round((snap.pos[1] - g.h) * 3.28084).toLocaleString()} ft でそのまま待っています）`;
+  toast(`車に乗り換えました${above}。W/↑ アクセル・S/↓ ブレーキとバック・A/D ハンドル・Space サイドブレーキ・C 視点・K で飛行機に戻る`, 5200);
+  carButton();
+}
+function carExit() {
+  if (!CAR.on) return;
+  const snap = CAR.plane;
+  // the world may have been re-centred while driving: move the aircraft with it (by its geographic position)
+  for (const k in snap) sim[k] = Array.isArray(snap[k]) ? snap[k].slice() : snap[k];
+  CAR.on = false; CAR.plane = null;
+  cam.mode = CAR.prevCam === 'car' || CAR.prevCam === 'carcab' ? 'chase' : CAR.prevCam; cam.lookYaw = cam.lookPitch = 0; cam.flyPos = null;
+  toast(sim.onGround ? '飛行機に戻りました' : '飛行機に戻りました。乗り換えたときの状態から飛行を再開します', 2400);
+  carButton();
+}
+// the aircraft's state follows the car while driving (streaming, map and labels use sim.pos)
+function carSync() {
+  const s = sim, f = carFwd(CAR.hdg);
+  s.pos = CAR.pos; s.q = CAR.q; s.vel = [f[0] * CAR.v, CAR.vy, f[2] * CAR.v];
+  s.w = [0, 0, 0]; s.onGround = !CAR.air; s.agl = 0; s.tas = Math.abs(CAR.v); s.ias = s.tas; s.vs = CAR.vy; s.stallWarn = false;
+  s.rpm = 800 + Math.min(5200, Math.abs(CAR.v) * 110) * (0.4 + 0.6 * CAR.thr); s.thr = CAR.thr; s.n1 = 0;
+}
+
+// ---------------------------------------------------------------------
+//  driving
+// ---------------------------------------------------------------------
+function carControls(dt) {
+  let up = pressedAny('KeyW', 'ArrowUp') ? 1 : 0, dn = pressedAny('KeyS', 'ArrowDown') ? 1 : 0;
+  let st = (pressedAny('KeyD', 'ArrowRight') ? 1 : 0) - (pressedAny('KeyA', 'ArrowLeft') ? 1 : 0);
+  if (touchIn.stickOn) { st = touchIn.x; const y = -touchIn.y * (game.invert ? -1 : 1); up = Math.max(0, y); dn = Math.max(0, -y); }
+  CAR.hand = pressedAny('Space', 'KeyB') || !!touchIn.brake;
+  // S: brake while rolling forward, then reverse; W while rolling back brakes first
+  if (CAR.v > 0.6) { CAR.thr = up; CAR.brake = dn; CAR.rev = false; }
+  else if (CAR.v < -0.6) { CAR.thr = dn; CAR.brake = up; CAR.rev = true; }
+  else { CAR.rev = dn > up; CAR.thr = Math.max(up, dn); CAR.brake = 0; }
+  const maxSt = 0.62 / (1 + (Math.abs(CAR.v) / 9) ** 1.3);
+  CAR.steer += clamp(st * maxSt - CAR.steer, -2.2 * dt, 2.2 * dt);
+}
+function carStep(dt) {
+  const n = Math.ceil(dt / (1 / 120));
+  for (let i = 0; i < n; i++) carPhys(dt / n);
+  CAR.spin = (CAR.spin + CAR.v / CAR_SPEC.wheelR * dt) % (Math.PI * 2);
+  CAR.bumpT -= dt;
+  carSync();
+}
+function carPhys(dt) {
+  const C = CAR_SPEC, g = 9.81, f = carFwd(CAR.hdg), p = CAR.pos, v = CAR.v;
+  // slope along the car, from the ground under the front and rear wheels
+  const hf = carGround(p[0] + f[0] * C.wb / 2, p[2] + f[2] * C.wb / 2, p[1] + 1.2).h, hb = carGround(p[0] - f[0] * C.wb / 2, p[2] - f[2] * C.wb / 2, p[1] + 1.2).h;
+  const slope = clamp((hf - hb) / C.wb, -0.6, 0.6);
+  const here = carGround(p[0], p[2], p[1] + 1.2);
+  // forces along the car
+  const dir = CAR.rev ? -1 : 1, sp = Math.abs(v);
+  let F = CAR.thr * dir * Math.min(C.fMax, C.power / Math.max(sp, 3)) * (CAR.rev ? 0.45 : 1);
+  if (CAR.rev && v < -8) F = 0;
+  const rough = here.paved || here.google ? 1 : 2.5;                  // grass and fields roll harder
+  const res = 0.5 * 1.2 * C.cd * v * sp + (sp > 0.05 ? Math.sign(v) * (0.013 * rough) * C.mass * g : 0);
+  let brakeF = CAR.brake * C.brake + (CAR.hand ? 5500 : 0);
+  let a = CAR.air ? 0 : (F - res) / C.mass - g * slope / Math.sqrt(1 + slope * slope);
+  let nv = v + a * dt;
+  if (brakeF > 0 && !CAR.air) { const dv = brakeF / C.mass * dt; nv = Math.abs(nv) <= dv ? 0 : nv - Math.sign(nv) * dv; }
+  // steering (a bicycle model); the handbrake lets the tail come round
+  let yaw = nv * Math.tan(CAR.steer) / C.wb;
+  // the tyres can only give so much sideways grip (about 0.9 g); beyond it the car runs wide and scrubs speed
+  const grip = (CAR.hand ? 0.6 : here.paved || here.google ? 0.9 : 0.6) * g / Math.max(Math.abs(nv), 1);
+  if (Math.abs(yaw) > grip) { nv *= 1 - 0.25 * dt; yaw = Math.sign(yaw) * grip; }
+  if (CAR.hand && Math.abs(nv) > 6) yaw *= 1.45;
+  if (!CAR.air) CAR.hdg += yaw * dt;
+  // move, unless something is in the way
+  const nf = carFwd(CAR.hdg), step = nv * dt;
+  const nx = p[0] + nf[0] * step, nz = p[2] + nf[2] * step;
+  const ahead = [p[0] + nf[0] * Math.sign(step) * 2.3, p[1] + 0.8, p[2] + nf[2] * Math.sign(step) * 2.3];
+  const gN = carGround(nx, nz, p[1] + 1.2), gA = carGround(ahead[0], ahead[2], p[1] + 1.2);
+  let blocked = null;
+  if (Math.abs(step) > 1e-4) {
+    if (gA.water || gN.water) blocked = 'この先は海（水）です';
+    else if (!CAR.air && gA.h - p[1] > 1.2 && gA.google) blocked = '建物や壁にぶつかりました';
+    else if (carInBuilding(ahead)) blocked = '建物にぶつかりました';
+  }
+  if (blocked) {
+    if (Math.abs(nv) > 3 && CAR.bumpT <= 0) { audio.blip(90, 0.25, 'sawtooth', 0.12); CAR.bumpT = 0.6; }
+    carMsg(blocked); nv = -nv * 0.15;
+  } else { p[0] = nx; p[2] = nz; }
+  CAR.v = nv;
+  // vertical: follow the ground, or fly off a crest / a roof edge and land again
+  const gh = blocked ? here.h : gN.h;
+  if (CAR.air) {
+    CAR.vy -= g * dt; p[1] += CAR.vy * dt;
+    if (p[1] <= gh) { if (CAR.vy < -7) { carMsg('ドスン！', 1000); audio.blip(70, 0.3, 'square', 0.12); } p[1] = gh; CAR.vy = 0; CAR.air = false; }
+  } else if (gh < p[1] - 0.35 && Math.abs(nv) > 2 || gh < p[1] - 1.2) {
+    CAR.air = true; CAR.vy = nv * slope * 0.9;
+  } else {
+    const prev = p[1]; p[1] += (gh - p[1]) * Math.min(1, dt * 25); CAR.vy = (p[1] - prev) / dt;
+  }
+  // attitude: yaw, then tilt to the ground under the car
+  const up = CAR.air ? CAR.n : vnorm([-(slope) * 0 + here.n[0], here.n[1], here.n[2]]);
+  const fwdTilt = vnorm([nf[0], slope, nf[2]]), rgt = vnorm(vcross(fwdTilt, [0, 1, 0]));
+  const upv = vnorm(vcross(rgt, fwdTilt));
+  const nn = CAR.air ? CAR.n : vnorm(vadd(vscale(upv, 0.6), vscale(up, 0.4)));
+  CAR.n = vnorm(vadd(vscale(CAR.n, 0.85), vscale(nn, 0.15)));
+  CAR.q = qmul(quatFromTo([0, 1, 0], CAR.n), qaxis([0, 1, 0], -CAR.hdg));
+}
+
+// ---------------------------------------------------------------------
+//  model and drawing
+// ---------------------------------------------------------------------
+function carBuild() {
+  const b = new MeshBuilder(), w = new MeshBuilder(), lt = new MeshBuilder();
+  const paint = (ACFT.livery && ACFT.livery.a) || [0.7, 0.1, 0.12], black = [0.05, 0.05, 0.055], glass = [0.08, 0.1, 0.13], chrome = [0.7, 0.72, 0.75];
+  b.box([0, 0.58, 0.05], [1.78, 0.52, 4.3], paint);                               // body
+  b.box([0, 0.86, -1.45], [1.72, 0.1, 1.3], paint);                               // bonnet
+  b.box([0, 0.86, 1.72], [1.72, 0.1, 0.8], paint);                                // boot
+  const ring = (z, hw, y0, y1) => [[-hw, y0, z], [hw, y0, z], [hw * 0.92, y1, z], [-hw * 0.92, y1, z]];
+  b.loft([ring(-0.85, 0.82, 0.84, 0.86), ring(-0.3, 0.8, 0.84, 1.38), ring(0.85, 0.8, 0.84, 1.4), ring(1.45, 0.8, 0.84, 0.95)], glass, { capStart: true, capEnd: true, smooth: false });
+  b.box([0, 1.41, 0.28], [1.42, 0.05, 1.15], paint);                              // roof
+  for (const s of [-1, 1]) {
+    b.box([s * 0.74, 1.12, 0.28], [0.06, 0.52, 0.12], paint);                     // B pillar
+    b.box([s * 0.97, 1.0, -0.62], [0.16, 0.09, 0.07], paint);                     // mirrors
+    b.box([s * 0.9, 0.35, -1.35], [0.04, 0.3, 0.8], black); b.box([s * 0.9, 0.35, 1.3], [0.04, 0.3, 0.8], black);   // wheel arches
+  }
+  b.box([0, 0.42, -2.22], [1.8, 0.24, 0.12], black); b.box([0, 0.42, 2.22], [1.8, 0.24, 0.12], black);   // bumpers
+  b.box([0, 0.62, -2.21], [0.7, 0.14, 0.04], [0.1, 0.1, 0.11]);                   // grille
+  b.box([0, 0.5, 2.29], [0.5, 0.12, 0.02], [0.92, 0.92, 0.9]);                   // number plate
+  for (const s of [-1, 1]) {
+    lt.box([s * 0.62, 0.7, -2.18], [0.36, 0.12, 0.05], [0.95, 0.95, 0.88]);
+    lt.box([s * 0.64, 0.72, 2.2], [0.34, 0.12, 0.05], [0.75, 0.06, 0.06]);
+  }
+  w.cylinder([-0.12, 0, 0], [0.12, 0, 0], 0.34, 0.34, 16, [0.07, 0.07, 0.075]);
+  w.cylinder([-0.125, 0, 0], [0.125, 0, 0], 0.21, 0.21, 10, chrome);
+  w.box([0, 0.12, 0], [0.26, 0.05, 0.05], [0.35, 0.36, 0.38]);                   // a spoke so the wheel is seen to turn
+  CAR.mesh = { body: uploadMesh(b.build()), wheel: uploadMesh(w.build()), lights: uploadMesh(lt.build()), id: ACFT.id };
+}
+function drawCar() {
+  if (!CAR.on) return;
+  if (!CAR.mesh || CAR.mesh.id !== ACFT.id) carBuild();
+  const M = CAR.mesh, u = progMesh.u, base = M4.fromQP(CAR.q, CAR.pos);
+  setCommon(progMesh);
+  gl.uniform1i(u.uLivery, 0); gl.uniform1f(u.uAlpha, 1); gl.uniform1f(u.uSpec, 0.6); gl.uniform3f(u.uEmissive, 0, 0, 0);
+  const draw = (vao, m) => { gl.uniformMatrix4fv(u.uModel, false, m); gl.bindVertexArray(vao.vao); gl.drawArrays(gl.TRIANGLES, 0, vao.count); };
+  draw(M.body, base);
+  gl.uniform1f(u.uSpec, 0.1);
+  for (const [x, z, front] of [[-0.8, -1.35, 1], [0.8, -1.35, 1], [-0.8, 1.3, 0], [0.8, 1.3, 0]]) {
+    const q = qmul(front ? qaxis([0, 1, 0], -CAR.steer) : [0, 0, 0, 1], qaxis([1, 0, 0], -CAR.spin));
+    draw(M.wheel, M4.mul(base, M4.fromQP(q, [x, 0.34, z])));
+  }
+  const night = ENV.night || ENV.sunDir[1] < 0.08, lit = night ? 1 : 0.15, brake = CAR.brake > 0 || CAR.hand;
+  gl.uniform3f(u.uEmissive, lit + (brake ? 0.6 : 0), lit * 0.9, lit * 0.8);
+  draw(M.lights, base);
+  gl.uniform3f(u.uEmissive, 0, 0, 0);
+}
+// camera: behind the car (it swings round smoothly), or from the driver's seat
+function carCamera(dt) {
+  const f0 = carFwd(CAR.hdg);
+  let d = ((CAR.hdg - CAR.camYaw + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+  if (CAR.v < -1) d = ((CAR.hdg + Math.PI - CAR.camYaw + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+  CAR.camYaw += d * Math.min(1, dt * 3);
+  if (cam.mode === 'carcab') {
+    const lq = qmul(CAR.q, qmul(qaxis([0, 1, 0], cam.lookYaw), qaxis([1, 0, 0], cam.lookPitch)));
+    const eye = vadd(CAR.pos, qrot(CAR.q, [-0.36, 1.26, 0.05]));
+    return { eye, target: vadd(eye, qrot(lq, [0, -0.35, -10])), up: qrot(CAR.q, [0, 1, 0]), fov: 62, near: 0.1 };
+  }
+  const yaw = CAR.camYaw + cam.lookYaw, f = carFwd(yaw), dist = 7.2, hgt = 2.3 + cam.lookPitch * 3;
+  let eye = [CAR.pos[0] - f[0] * dist, CAR.pos[1] + hgt, CAR.pos[2] - f[2] * dist];
+  const gh = carGround(eye[0], eye[2], eye[1] + 5).h + 0.6; if (eye[1] < gh) eye[1] = gh;
+  void f0;
+  return { eye, target: [CAR.pos[0] + f[0] * 3, CAR.pos[1] + 1.1, CAR.pos[2] + f[2] * 3], up: [0, 1, 0], fov: 60, near: 0.2 };
+}
+// HUD while driving: speedometer and the keys
+function carHud(g, W, H) {
+  const kmh = Math.abs(CAR.v) * 3.6, cx = W - 110, cy = H - 110, r = 78;
+  g.save();
+  g.beginPath(); g.arc(cx, cy, r + 8, 0, 7); g.fillStyle = 'rgba(6,12,22,0.72)'; g.fill();
+  g.strokeStyle = 'rgba(232,240,250,0.8)'; g.lineWidth = 2;
+  for (let k = 0; k <= 220; k += 20) { const a = Math.PI * 0.75 + k / 220 * Math.PI * 1.5; g.beginPath(); g.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); g.lineTo(cx + Math.cos(a) * (r - (k % 40 ? 6 : 11)), cy + Math.sin(a) * (r - (k % 40 ? 6 : 11))); g.stroke();
+    if (k % 40 === 0) { g.font = `600 11px ${UI}`; g.fillStyle = '#cdd8e6'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(k, cx + Math.cos(a) * (r - 22), cy + Math.sin(a) * (r - 22)); } }
+  const a = Math.PI * 0.75 + clamp(kmh / 220, 0, 1) * Math.PI * 1.5;
+  g.strokeStyle = '#ff7a3a'; g.lineWidth = 3.5; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a) * (r - 8), cy + Math.sin(a) * (r - 8)); g.stroke();
+  g.font = `700 26px ${UI}`; g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText(Math.round(kmh), cx, cy + 34);
+  g.font = `600 11px ${UI}`; g.fillStyle = '#9fb0c2'; g.fillText('km/h', cx, cy + 52);
+  g.font = `700 16px ${UI}`; g.fillStyle = CAR.rev ? '#ffb547' : '#58e08c'; g.fillText(CAR.rev ? 'R' : Math.abs(CAR.v) < 0.3 && !CAR.thr ? 'N' : 'D', cx, cy - 30);
+  // where you are and the keys
+  const [la, lo] = worldToGeo(CAR.pos[0], CAR.pos[2]);
+  const lines = ['🚗 運転中', `W/↑ アクセル　S/↓ ブレーキ・バック　A/D ハンドル　Space サイドブレーキ`, `C 視点（後ろ／運転席）　K 飛行機に戻る　M 地図`];
+  g.textAlign = 'left'; g.textBaseline = 'middle';
+  lines.forEach((t, i) => { g.font = `${i ? 600 : 700} ${i ? 12 : 15}px ${UI}`; const w = g.measureText(t).width; g.fillStyle = 'rgba(6,12,22,0.62)'; g.fillRect(12, H - 96 + i * 26 - 11, w + 16, 22); g.fillStyle = i ? '#dfe7f0' : '#ffd66b'; g.fillText(t, 20, H - 96 + i * 26); });
+  const top = [];
+  if (JW.active) top.push([`${la.toFixed(4)}°N ${lo.toFixed(4)}°E　標高 ${Math.round(CAR.pos[1])} m`, '#dfe7f0']);
+  if (CAR.plane) { const d = Math.hypot(CAR.plane.pos[0] - CAR.pos[0], CAR.plane.pos[2] - CAR.pos[2]); top.push([`✈ 飛行機まで ${d < 1000 ? Math.round(d) + ' m' : (d / 1000).toFixed(1) + ' km'}`, '#9fe0ff']); }
+  top.forEach(([t, c], i) => { g.font = `600 12px ${UI}`; const w = g.measureText(t).width; g.fillStyle = 'rgba(6,12,22,0.62)'; g.fillRect(12, 14 + i * 24, w + 16, 20); g.fillStyle = c; g.fillText(t, 20, 24 + i * 24); });
+  g.restore();
+}
+// a button to change over (for the mouse and for phones)
+function carButton() {
+  let b = document.getElementById('car-btn');
+  if (!b) {
+    b = document.createElement('button'); b.id = 'car-btn'; b.type = 'button';
+    b.style.cssText = 'position:fixed;left:12px;top:42%;z-index:20;padding:8px 12px;border-radius:9px;border:1px solid rgba(95,212,255,.5);background:rgba(6,12,22,.82);color:#e8f0fa;font:700 13px "Zen Kaku Gothic New",system-ui,sans-serif;cursor:pointer';
+    b.addEventListener('click', e => { e.stopPropagation(); carToggle(); b.blur(); glCanvas.focus(); });
+    document.body.append(b);
+  }
+  const show = game.state === 'flying' && (CAR.on || carCanUse());
+  b.hidden = !show;
+  b.textContent = CAR.on ? '✈ 飛行機に戻る（K）' : '🚗 車に乗り換える（K）';
+}
 
 // =====================================================================
 //  GAME: environment, camera, input, audio, particles, HUD, modes, loop
@@ -11029,6 +11302,7 @@ function toast(msg, ms = 2400) {
 // ---------- spawning ----------
 const parked = [];
 function spawn(mode) {
+  carReset();
   const s = sim, V = ACFT.v;
   Object.assign(s, {
     w: [0, 0, 0], elev: 0, ail: 0, rud: 0, trim: 0, brake: false, smoke: false, crashed: false, crashReason: '', pIn: 0, rIn: 0,
@@ -11141,13 +11415,15 @@ function updateCamera(dt) {
     eye = cam.flyPos; target = s.pos;
     fov = clamp(2 * Math.atan((4 + ACFT.phys.b * 0.5) / Math.max(vdist(eye, target), 1)) / DEG, 8, 60);
   }
+  if (CAR.on && game.state !== 'menu') { const c = carCamera(dt); eye = c.eye; target = c.target; up = c.up; fov = c.fov; near = c.near; }
   const gh = Math.max(terrainHeight(eye[0], eye[2]), 0) + 1.0;
-  if (eye[1] < gh) eye[1] = gh;
+  if (eye[1] < gh && !CAR.on) eye[1] = gh;
   if (Math.abs(vdot(vnorm(vsub(target, eye)), vnorm(up))) > 0.999) up = [0, 0, 1];
   cam.eye = eye; cam.fov = fov; cam.near = near;
   cam.view = M4.lookAt(eye, target, up);
 }
 function cycleCamera() {
+  if (CAR.on) { cam.mode = cam.mode === 'car' ? 'carcab' : 'car'; cam.lookYaw = cam.lookPitch = 0; toast(cam.mode === 'car' ? '後ろから見る' : '運転席から見る', 1200); return; }
   const i = CAM_MODES.indexOf(cam.mode);
   cam.mode = CAM_MODES[(i + 1) % CAM_MODES.length];
   cam.lookYaw = cam.lookPitch = 0; cam.flyPos = null; cam.autoOrbit = false;
@@ -11214,7 +11490,9 @@ addEventListener('keydown', e => {
   if (e.code === 'Enter' && (st === 'result' || st === 'crashed') && game.resultTimer <= 0) { e.preventDefault(); startMode(game.mode); return; }
   if (e.code === 'KeyM') { toggleMap(); return; }
   if (mapv.open && e.code === 'Escape') { toggleMap(false); return; }
+  if (e.code === 'KeyK' && st === 'flying' && !(SCHOOL.active)) { carToggle(); return; }
   if (e.code === 'KeyC' && (st === 'flying' || st === 'crashed')) { cycleCamera(); return; }
+  if (CAR.on) return;                                               // aircraft keys do nothing while driving
   const map = { KeyG: 'gear', KeyV: 'flaps', KeyH: 'hud', KeyX: 'smoke', KeyL: 'level', KeyZ: 'time', KeyO: 'ap' };
   if (map[e.code] && !(e.code === 'KeyH' && e.shiftKey)) doAction(map[e.code]);
   if (e.code === 'KeyT') doAction(e.shiftKey ? 'trimReset' : 'trim');
@@ -11369,6 +11647,7 @@ function padInput(dt) {
 }
 
 function updateControls(dt) {
+  if (CAR.on) { if (game.state === 'flying') carControls(dt); return; }
   const s = sim;
   let tp = (pressedAny('KeyS', 'ArrowDown') ? 1 : 0) - (pressedAny('KeyW', 'ArrowUp') ? 1 : 0);
   let tr = (pressedAny('KeyD', 'ArrowRight') ? 1 : 0) - (pressedAny('KeyA', 'ArrowLeft') ? 1 : 0);
@@ -11437,8 +11716,8 @@ const audio = {
     const f = Math.max(s.rpm, 1) / 60 * 2;
     let near = cam.mode === 'cockpit' ? 1.15 : cam.mode === 'flyby' ? clamp(60 / Math.max(vdist(cam.eye, s.pos), 1), 0.08, 1.2) : 0.85;
     if (game.state === 'menu') near = 0.45;
-    const on_ = live && !s.crashed, ef = game.state === 'menu' ? 1 : sysSound();
-    if (AC && AC.engine.type === 'jet') {
+    const on_ = live && !s.crashed, ef = game.state === 'menu' || CAR.on ? 1 : sysSound();
+    if (AC && AC.engine.type === 'jet' && !CAR.on) {
       const n = s.n1;
       this.o1.frequency.setTargetAtTime(35 + n * 30, t, 0.1); this.o2.frequency.setTargetAtTime(22 + n * 20, t, 0.1);
       this.eF.frequency.setTargetAtTime(200 + n * 300, t, 0.1);
@@ -12119,10 +12398,12 @@ function drawScene(planes, far) {
   gl.disable(gl.POLYGON_OFFSET_FILL);
   }
   // aircraft
-  const pm = planeMatrix(sim.pos, sim.q);
+  const PS = CAR.on && CAR.plane ? CAR.plane : sim;                  // while driving, the aircraft waits where it was left
+  const pm = planeMatrix(PS.pos, PS.q);
   const showPlane = !(sim.crashed && game.state !== 'menu');
   if (JW.active) setCommon(progMesh);
-  if (showPlane) drawPlane(pm, sim, { cockpit: cam.mode === 'cockpit' && game.state !== 'menu' });
+  if (showPlane) drawPlane(pm, PS, { cockpit: cam.mode === 'cockpit' && game.state !== 'menu' });
+  if (CAR.on) { drawCar(); if (JW.active) setCommon(progMesh); }
   if (!JW.active) for (const pk of parked) if (vdist(R.eye, [pk.m[12], pk.m[13], pk.m[14]]) < 6000) drawPlane(pk.m, parkedState, { paint: pk.col, acft: pk.acft });
   if (JW.active) drawJapanWater();
   else {
@@ -12153,7 +12434,7 @@ function drawScene(planes, far) {
   }
   // ---- transparent ----
   gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
-  if (!far && showPlane) { setCommon(progMesh); drawPropDisc(pm, sim); }
+  if (!far && showPlane) { setCommon(progMesh); drawPropDisc(pm, PS); }
   drawRings();
   drawLights();
   if (volCloudsActive()) drawVolClouds(far); else drawClouds();
@@ -12317,6 +12598,7 @@ function drawHUD() {
     rr(g, x, y, w, 28, 4); g.fillStyle = 'rgba(6,12,22,0.7)'; g.fill(); g.strokeStyle = col; g.lineWidth = 2; g.stroke();
     g.fillStyle = col; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, W / 2, y + 14);
   });
+  if (CAR.on) { if (game.hud) carHud(g, W, H); return; }
   if (!game.hud) { cpHud(g); return; }
   const touch = game.touch;
   const sc = clamp(Math.min(W / 1180, H / 700), 0.52, 1.05) * (touch ? 0.86 : 1);
@@ -13150,7 +13432,8 @@ function frame(now) {
   if (game.state === 'loading') { requestAnimationFrame(frame); return; }
   try {
     updateControls(dt);
-    if (game.state === 'flying') {
+    if (game.state === 'flying' && CAR.on) { carStep(dt); if (JW.active) jwFrame(dt); }
+    else if (game.state === 'flying') {
       const ts = game.timeScale || 1;
       acc += dt * ts; let n = 0;
       while (acc >= STEP && n < 14 * ts) {
@@ -13182,6 +13465,7 @@ function frame(now) {
     drawHUD();
     if (mapv.open) drawMapView();
     audio.update(dt);
+    if ((R.frame & 15) === 0) carButton();
   } catch (err) {
     console.error(err);
     $('load-text').textContent = 'エラーが発生しました: ' + err.message;

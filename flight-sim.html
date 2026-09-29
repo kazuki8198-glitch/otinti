@@ -11685,9 +11685,17 @@ function glbDraw(model, M, lightK = [1, 1, 1], partM = null) {
   gl.enable(gl.CULL_FACE);
   gl.activeTexture(gl.TEXTURE0);
 }
-// fetch a model file next to the page (cached); resolves to null when it can't be had
+// fetch a model file next to the page (cached); resolves to null when it can't be had. Where .glb files
+// aren't served, the same file as base64 in `<name>.glb.json` ({ "glb": "..." }) is used instead
+async function glbFetch(url) {
+  try { const r = await fetch(url); if (r.ok) return await r.arrayBuffer(); } catch (e) { /* try the JSON copy */ }
+  const r = await fetch(url + '.json'); if (!r.ok) throw new Error('HTTP ' + r.status);
+  const bin = atob((await r.json()).glb), u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return u8.buffer;
+}
 function glbGet(url, opt) {
-  if (!GLB.cache.has(url)) GLB.cache.set(url, { state: 'loading', model: null, p: fetch(url).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }).then(b => glbLoad(b, opt))
+  if (!GLB.cache.has(url)) GLB.cache.set(url, { state: 'loading', model: null, p: glbFetch(url).then(b => glbLoad(b, opt))
     .then(m => { const e = GLB.cache.get(url); e.state = 'ok'; e.model = m; return m; }).catch(err => { const e = GLB.cache.get(url); e.state = 'error'; e.err = String(err); console.warn('GLB', url, err); return null; }) });
   return GLB.cache.get(url);
 }

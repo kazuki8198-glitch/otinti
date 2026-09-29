@@ -6127,19 +6127,63 @@ function googUploadStep() {
     n.state = 2;
     n.mesh = { vao: job.vao, bufs: job.bufs, texs: job.texs, groups: r.groups, bytes: job.bytes };
     // detailed tiles keep their geometry on the CPU as well, to find the ground under the aircraft
-    if (!n.planet && n.ge < 60) n.cpu = { pos: new Float32Array(r.pos), idx: new Uint32Array(r.idx) };
+    if (!n.planet && n.ge < 60) { n.cpu = { pos: new Float32Array(r.pos), idx: new Uint32Array(r.idx) }; n.steep = googSteep(n.cpu); }
     GOOG.bytes += job.bytes; GOOG.loaded++;
   }
 }
 // Google's ground (ellipsoid height) straight below a point: the highest triangle under it that is
 // not above maxH, in the most detailed tiles now on screen
+// how much of a tile is wall (near-vertical surface, by area). Where Google has 3D photogrammetry the
+// buildings make it several per cent; where it only has terrain and an aerial photo it is almost nothing
+function googSteep(c) {
+  const P = c.pos, I = c.idx; let all = 0, steep = 0;
+  for (let i = 0; i < I.length; i += 3) {
+    const a = I[i] * 3, b = I[i + 1] * 3, d = I[i + 2] * 3;
+    const ux = P[b] - P[a], uy = P[b + 1] - P[a + 1], uz = P[b + 2] - P[a + 2], vx = P[d] - P[a], vy = P[d + 1] - P[a + 1], vz = P[d + 2] - P[a + 2];
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, ar = Math.hypot(nx, ny, nz);
+    all += ar; if (Math.abs(ny) < 0.45 * ar) steep += ar;
+  }
+  return all > 0 ? steep / all : 0;
+}
+// is the Google scenery around the camera flat (no 3D photogrammetry here)? then the map's own buildings
+// and trees are shown on top of it
+function googFlatCheck() {
+  if (R.time < (GOOG.flatT || 0)) return; GOOG.flatT = R.time + 1;
+  let s = 0, c = 0;
+  for (const n of GOOG.active) {
+    if (n.steep == null || vdist(n.wc || [0, 0, 0], R.eye) > 4000) continue;
+    s += n.steep; c++;
+  }
+  if (c < 3) return;
+  const m = s / c;
+  if (GOOG.flat && m > 0.05) GOOG.flat = false; else if (!GOOG.flat && m < 0.025) GOOG.flat = true;
+  GOOG.steepAvg = m;
+}
+// a coarse grid over each tile's triangles (built once, on the first query), so a height lookup
+// only tests the few triangles in its cell
+function googGrid(c) {
+  if (c.grid) return c.grid;
+  const P = c.pos, I = c.idx, G = 48;
+  let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+  for (let i = 0; i < P.length; i += 3) { x0 = Math.min(x0, P[i]); x1 = Math.max(x1, P[i]); z0 = Math.min(z0, P[i + 2]); z1 = Math.max(z1, P[i + 2]); }
+  const sx = G / Math.max(x1 - x0, 1e-3), sz = G / Math.max(z1 - z0, 1e-3), cells = Array.from({ length: G * G }, () => []);
+  for (let i = 0; i < I.length; i += 3) {
+    const a = I[i] * 3, b = I[i + 1] * 3, d = I[i + 2] * 3;
+    const ia = clamp(Math.floor((Math.min(P[a], P[b], P[d]) - x0) * sx), 0, G - 1), ib = clamp(Math.floor((Math.max(P[a], P[b], P[d]) - x0) * sx), 0, G - 1);
+    const ja = clamp(Math.floor((Math.min(P[a + 2], P[b + 2], P[d + 2]) - z0) * sz), 0, G - 1), jb = clamp(Math.floor((Math.max(P[a + 2], P[b + 2], P[d + 2]) - z0) * sz), 0, G - 1);
+    for (let j = ja; j <= jb; j++) for (let k = ia; k <= ib; k++) cells[j * G + k].push(i);
+  }
+  return (c.grid = { x0, z0, sx, sz, G, cells });
+}
 function googGroundAt(la, lo, maxH) {
   let best = -1e9, ge = 1e9;
   for (const n of GOOG.active) {
     const c = n.cpu; if (!c || n.ge > ge || geoDist(n.lat, n.lon, la, lo) > n.r) continue;
-    const x = (lo - n.refLon) * n.kx, z = -(la - n.refLat) * KZ, P = c.pos, I = c.idx;
+    const x = (lo - n.refLon) * n.kx, z = -(la - n.refLat) * KZ, P = c.pos, I = c.idx, gr = googGrid(c);
+    const ci = Math.floor((x - gr.x0) * gr.sx), cj = Math.floor((z - gr.z0) * gr.sz);
+    if (ci < 0 || cj < 0 || ci >= gr.G || cj >= gr.G) continue;
     let h = -1e9;
-    for (let i = 0; i < I.length; i += 3) {
+    for (const i of gr.cells[cj * gr.G + ci]) {
       const a = I[i] * 3, b = I[i + 1] * 3, d = I[i + 2] * 3;
       const ax = P[a], az = P[a + 2], bx = P[b], bz = P[b + 2], dx = P[d], dz = P[d + 2];
       if ((x < ax && x < bx && x < dx) || (x > ax && x > bx && x > dx) || (z < az && z < bz && z < dz) || (z > az && z > bz && z > dz)) continue;
@@ -6163,8 +6207,17 @@ function googOffStep() {
   const ourG = groundAt(sim.pos[0], sim.pos[2]).h, agl = sim.pos[1] - ourG;             // the ground the wheels use
   let target = null, local = false;
   if (agl < 200 && GOOG.off != null) {
-    const gh = googGroundAt(la, lo, sim.pos[1] + GOOG.off + 3);
-    if (gh != null && Math.abs(gh - ourG - GOOG.off) < 15) { target = lim(gh - ourG) + 0.08; local = true; }
+    // measured on a small grid around the aircraft, and the median taken: a parked aircraft, a truck or a
+    // jet bridge caught in the photos under one point can't lift the datum (and bury the wheels)
+    const gate = GOOG.lockedLocal ? 15 : 70;                       // just after a spawn the old datum may be far off
+    const f = qrot(sim.q, [0, 0, -1]), r = [-f[2], 0, f[0]], d = [];
+    for (const [a, b] of [[0, 0], [12, 0], [-12, 0], [0, 12], [0, -12], [25, 0], [-25, 0], [12, 12], [-12, -12]]) {
+      const x = sim.pos[0] + f[0] * a + r[0] * b, z = sim.pos[2] + f[2] * a + r[2] * b;
+      const [la2, lo2] = worldToGeo(x, z), g0 = groundAt(x, z).h;
+      const gh = googGroundAt(la2, lo2, Math.max(sim.pos[1], g0 + 4) + GOOG.off + 3);
+      if (gh != null && Math.abs(gh - g0 - GOOG.off) < gate) d.push(gh - g0);
+    }
+    if (d.length >= 3) { d.sort((a, b) => a - b); target = lim(d[Math.floor(d.length / 2)]) + 0.05; local = true; }
   }
   if (target == null) {
     let pts = GOOG.samp.filter(q => Math.abs(q[0] - la) < 0.03 && Math.abs(q[1] - lo) < 0.036);
@@ -6183,7 +6236,8 @@ function googOffStep() {
   if (GOOG.off == null || (local && !GOOG.lockedLocal)) { GOOG.off = target; GOOG.lockedLocal = local; return; }
   const d = target - GOOG.off;
   if (Math.abs(d) < 0.15) return;                                              // dead band: no creeping
-  GOOG.off += clamp(d, -(local ? 0.3 : 0.1), local ? 0.3 : 0.1);               // at most 1.2 m/s near the ground
+  const big = local && Math.abs(d) > 2.5 && sim.onGround;                      // on the ground a clear error is fixed at once
+  GOOG.off += big ? d : clamp(d, -(local ? 0.3 : 0.1), local ? 0.3 : 0.1);     // otherwise at most 1.2 m/s near the ground
 }
 function googFree(n) {
   if (n.mesh && !n.mesh.empty) {
@@ -9622,6 +9676,7 @@ function sysAutoStep() {
 function cpScreen(g, x, y, w, h) {
   rr(g, x - 4, y - 4, w + 8, h + 8, 6); g.fillStyle = '#0c0d0f'; g.fill();
   rr(g, x, y, w, h, 3); g.fillStyle = '#040608'; g.fill();
+  if (typeof CPIT !== 'undefined' && CPIT.sheen) CPIT.sheen.push([x, y, w, h]);
   if (!SYS.bus) { g.fillStyle = 'rgba(255,255,255,0.05)'; g.beginPath(); g.moveTo(x + w * 0.2, y); g.lineTo(x + w * 0.45, y); g.lineTo(x + w * 0.1, y + h); g.lineTo(x, y + h); g.closePath(); g.fill(); }
   return SYS.bus;
 }
@@ -9971,20 +10026,26 @@ const cpAutoAvio = () => { const L = cpLayout(ACFT); return !!(L.ovh || L.deck =
 // ---------------------------------------------------------------------
 function cpBuild(A) {
   const L = cpLayout(A), T = L.T, e = A.eye, b = new MeshBuilder();
-  const dark = vscale(T.trim, 0.55), wall = T.int, frame = vscale(T.trim, 0.8), black = [0.04, 0.04, 0.045];
+  const dark = vscale(T.trim, 0.55), wall = T.int, frame = vscale(T.int, 0.7), black = [0.04, 0.04, 0.045];
   const zb = e[2] + 1.05, zf = L.zTop - 0.2, sill = e[1] + L.sill, floor = L.floor;
   // panel housing and the lower (knee) panel
   b.box([0, (L.top + L.bot) / 2, L.zTop - 0.165], [L.pw + 0.06, L.top - L.bot + 0.04, 0.3], dark);   // (its face sits just behind the tilted panel)
   b.box([0, (L.bot + floor + 0.25) / 2, L.zBot - 0.04], [L.pw + 0.04, L.bot - floor - 0.25, 0.1], vscale(T.trim, 0.7));
   // glareshield: a slab over the panel with a rounded, padded lip
   const gTop = L.top + L.gh;
-  b.box([0, L.top + L.gh / 2, L.zg - (L.gd + 0.3) / 2], [L.pw + 0.08, L.gh, L.gd + 0.3], T.glare);
-  b.cylinder([-(L.pw / 2 + 0.04), gTop - 0.012, L.zg - 0.006], [L.pw / 2 + 0.04, gTop - 0.012, L.zg - 0.006], 0.02, 0.02, 10, vscale(T.glare, 0.8));
+  // glareshield: a padded cowl with a rounded lip, drawn as one smooth section swept across the panel
+  {
+    const zf = L.zTop - 0.32, R = Math.min(0.03, L.gh * 0.45), prof = [[L.top - 0.004, zf], [gTop, zf]];
+    for (let i = 0; i <= 6; i++) { const a = Math.PI / 2 * i / 6; prof.push([gTop - R + Math.cos(a) * R, L.zg - R + Math.sin(a) * R]); }
+    prof.push([gTop - R * 2, L.zg + 0.002], [L.top + 0.004, L.zg - 0.004], [L.top - 0.004, L.zg - 0.02]);
+    const hw = L.pw / 2 + 0.04, ring = x => prof.map(([y, z]) => [x, y, z]);
+    b.loft([ring(-hw), ring(-hw * 0.5), ring(0), ring(hw * 0.5), ring(hw)], T.glare, { capStart: true, capEnd: true, smooth: false });
+  }
   // side walls, sills with arm rests, floor, the bulkhead behind the seats
   for (const s of [-1, 1]) {
     b.box([s * L.W, (sill + floor) / 2, (zf + zb) / 2], [0.05, sill - floor, zb - zf], wall);
     b.box([s * (L.W - 0.06), sill - 0.02, e[2] + 0.2], [0.1, 0.05, 0.7], vscale(T.int, 0.8));
-    b.cylinder([s * (L.W - 0.02), sill, zf], [s * (L.W - 0.02), sill, zb], 0.022, 0.022, 8, vscale(frame, 0.7));
+    b.box([s * (L.W - 0.035), sill + 0.01, (zf + zb) / 2], [0.07, 0.025, zb - zf], vscale(T.int, 0.9));
   }
   b.box([0, floor, (zf + zb) / 2], [L.W * 2, 0.04, zb - zf], vscale(T.int, 0.45));
   b.box([0, (floor + e[1] + L.roof) / 2, zb], [L.W * 2, e[1] + L.roof - floor, 0.04], vscale(T.int, 0.85));
@@ -9996,17 +10057,17 @@ function cpBuild(A) {
     for (const s of [-1, 1]) {
       if (big) {
         // two front panes, then the side windows (the second one slides on the real aircraft)
-        b.cylinder([s * L.pw * 0.32, gTop, L.zTop - 0.2], [s * L.W * 0.52, ry, zr0], 0.035, 0.035, 8, frame);
-        b.cylinder([s * (L.pw / 2 + 0.02), gTop, L.zTop - 0.05], [s * (L.W - 0.04), ry, zr0 + 0.08], 0.03, 0.03, 8, frame);
+        b.cylinder([s * L.pw * 0.32, gTop, L.zTop - 0.2], [s * L.W * 0.52, ry, zr0], 0.024, 0.024, 8, frame);
+        b.cylinder([s * (L.pw / 2 + 0.02), gTop, L.zTop - 0.05], [s * (L.W - 0.04), ry, zr0 + 0.08], 0.022, 0.022, 8, frame);
         b.cylinder([s * (L.W - 0.02), sill, e[2] - 0.08], [s * (L.W - 0.04), ry, e[2] - 0.08], 0.035, 0.035, 8, frame);
         b.cylinder([s * (L.W - 0.02), sill, e[2] + 0.5], [s * (L.W - 0.04), ry, e[2] + 0.5], 0.05, 0.05, 8, frame);
       } else {
-        b.cylinder([s * (L.pw / 2 + 0.03), gTop, L.zTop - 0.1], [s * (L.W - 0.03), ry, zr0], 0.032, 0.032, 8, frame);   // A-pillar
+        b.cylinder([s * (L.pw / 2 + 0.03), gTop, L.zTop - 0.1], [s * (L.W - 0.03), ry, zr0], 0.024, 0.024, 8, frame);   // A-pillar
         b.cylinder([s * (L.W - 0.02), sill, e[2] + 0.55], [s * (L.W - 0.02), ry, e[2] + 0.55], 0.04, 0.04, 8, frame);  // door post
         b.cylinder([s * (L.W - 0.02), ry - 0.02, zr0], [s * (L.W - 0.02), ry - 0.02, e[2] + 0.55], 0.03, 0.03, 8, frame); // door top
       }
     }
-    if (L.post) b.cylinder([0, gTop, L.zTop - 0.3], [0, ry, zr0], 0.03, 0.03, 8, frame);
+    if (L.post) b.cylinder([0, gTop, L.zTop - 0.3], [0, ry, zr0], 0.02, 0.02, 8, frame);
     if (!big) {                                                        // magnetic compass on the windshield centre
       b.box([0, ry - 0.07, zr0 + 0.02], [0.08, 0.07, 0.07], black);
       b.cylinder([0, ry - 0.02, zr0 + 0.02], [0, ry + 0.01, zr0 + 0.02], 0.012, 0.012, 6, black);
@@ -10018,7 +10079,7 @@ function cpBuild(A) {
     b.cylinder([-L.W, sill + 0.02, e[2] + 0.45], [L.W, sill + 0.02, e[2] + 0.45], 0.035, 0.035, 8, frame);
   } else {                                                             // fighter: bubble canopy bow and a HUD combiner
     const zT = e[2] - 0.32, ry = e[1] + L.roof;
-    for (const s of [-1, 1]) b.cylinder([s * (L.pw / 2 + 0.02), gTop, L.zTop - 0.05], [s * 0.16, ry, zT], 0.03, 0.03, 8, frame);
+    for (const s of [-1, 1]) b.cylinder([s * (L.pw / 2 + 0.02), gTop, L.zTop - 0.05], [s * 0.16, ry, zT], 0.022, 0.022, 8, frame);
     b.cylinder([-0.16, ry, zT], [0.16, ry, zT], 0.03, 0.03, 8, frame);
     b.box([0, gTop + 0.07, L.zg - 0.1], [0.16, 0.012, 0.01], [0.3, 0.42, 0.34]);
   }
@@ -10026,9 +10087,12 @@ function cpBuild(A) {
   const seats = L.seat ? [L.seat, -L.seat] : [0];
   for (const x of seats) {
     const sy = e[1] - 0.82, sz = e[2] + 0.2, c = T.seat;
-    b.box([x, sy, sz], [0.46, 0.1, 0.5], c);
-    b.box([x, sy + 0.4, sz + 0.3], [0.46, 0.72, 0.1], c);
-    b.box([x, e[1] + 0.02, sz + 0.33], [0.26, 0.18, 0.1], vscale(c, 0.9));
+    // cushions as rounded (super-elliptic) slabs; the back leans a little
+    const se = (cx, y, cz, hw, hd, lean = 0) => Array.from({ length: 20 }, (_, i) => { const a = i / 20 * Math.PI * 2, co = Math.cos(a), si = Math.sin(a);
+      return [cx + hw * Math.sign(co) * Math.abs(co) ** 0.4, y, cz + lean + hd * Math.sign(si) * Math.abs(si) ** 0.4]; });
+    b.loft([se(x, sy - 0.05, sz, 0.23, 0.25), se(x, sy + 0.04, sz, 0.235, 0.255), se(x, sy + 0.08, sz, 0.21, 0.23)], c, { capStart: true, capEnd: true });
+    b.loft([se(x, sy + 0.06, sz + 0.3, 0.23, 0.065), se(x, sy + 0.4, sz + 0.33, 0.225, 0.07), se(x, sy + 0.74, sz + 0.37, 0.2, 0.06)], c, { capStart: true, capEnd: true });
+    b.loft([se(x, e[1] - 0.06, sz + 0.38, 0.14, 0.055), se(x, e[1] + 0.06, sz + 0.39, 0.15, 0.06), se(x, e[1] + 0.13, sz + 0.39, 0.12, 0.05)], vscale(c, 0.9), { capStart: true, capEnd: true });
     for (const s of [-1, 1]) b.box([x + s * 0.25, sy + 0.16, sz + 0.05], [0.05, 0.05, 0.36], vscale(c, 0.7));   // arm rests
     b.box([x, (sy + floor) / 2, sz], [0.3, sy - floor, 0.3], dark);
   }
@@ -10061,12 +10125,12 @@ function cpBuild(A) {
   // rudder pedals are drawn per frame (they move); the moving controls:
   const y = new MeshBuilder(), wh = new MeshBuilder(), grip = [0.08, 0.08, 0.085], metal = [0.55, 0.56, 0.58];
   if (L.ctl === 'yoke') {                                              // ram's horn from the panel
-    y.cylinder([0, 0, -0.34], [0, 0, 0], 0.011, 0.011, 8, vscale(metal, 0.6));
+    y.cylinder([0, 0, -0.26], [0, 0, 0], 0.011, 0.011, 8, vscale(metal, 0.6));
     y.cylinder([0, 0, -0.02], [0, 0, 0.035], 0.04, 0.036, 12, grip);
     y.box([0, -0.012, 0.012], [0.26, 0.04, 0.03], grip);
     for (const s of [-1, 1]) {
       y.cylinder([s * 0.13, -0.012, 0.012], [s * 0.165, 0.05, 0.014], 0.019, 0.019, 8, grip);
-      y.cylinder([s * 0.165, 0.05, 0.014], [s * 0.16, 0.1, 0.012], 0.018, 0.015, 8, grip);
+      y.cylinder([s * 0.165, 0.05, 0.014], [s * 0.16, 0.14, 0.012], 0.018, 0.015, 8, grip);
     }
     y.box([0, 0.02, 0.03], [0.07, 0.035, 0.012], [0.7, 0.7, 0.72]);   // the brand badge on the hub
   } else if (L.ctl === 'column') {                                     // floor column with a W-shaped wheel (origin at the pivot)
@@ -10077,7 +10141,6 @@ function cpBuild(A) {
     wh.cylinder([0, 0, -0.01], [0, 0, 0.02], 0.05, 0.05, 12, grip);     // the wheel (turns on the column)
     wh.box([0, 0.015, 0.01], [0.3, 0.045, 0.03], grip);
     for (const s of [-1, 1]) wh.cylinder([s * 0.15, 0.015, 0.01], [s * 0.19, 0.13, 0.01], 0.022, 0.018, 8, grip);
-    wh.box([0, 0.045, 0.022], [0.09, 0.05, 0.006], [0.42, 0.42, 0.4]);   // checklist clip
   } else if (L.ctl === 'side') {
     y.cylinder([0, 0, 0], [0, 0.11, 0.01], 0.013, 0.012, 8, [0.2, 0.2, 0.22]);
     y.box([0, 0.16, 0.012], [0.04, 0.1, 0.055], grip);
@@ -10107,7 +10170,23 @@ function cpBuild(A) {
     const uv = new Float32Array([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1]);
     const v = makeVAO([{ loc: 0, size: 3, data: pos }, { loc: 1, size: 2, data: uv }]); v.count = 6; quads[k] = v;
   }
+  cpBakeAO(b, L, e);
   return { L, vao: uploadMesh(b.build()), ctl: uploadMesh(y.build()), wheel: L.ctl === 'column' ? uploadMesh(wh.build()) : null, lever: uploadMesh(lever.build()), flap: uploadMesh(flap.build()), pedal: uploadMesh(pedal.build()), quads };
+}
+// baked ambient light: corners, the footwell and the space under the glareshield get less light, and a
+// faint per-vertex variation breaks up the flat colours (a real interior is never evenly lit)
+function cpBakeAO(b, L, e) {
+  const P = b.pos, Cl = b.col, sm = (a, c, x) => { const t = clamp((x - a) / (c - a), 0, 1); return t * t * (3 - 2 * t); };
+  for (let i = 0; i < P.length; i += 3) {
+    const x = P[i], y = P[i + 1], z = P[i + 2];
+    let k = 0.5 + 0.5 * sm(L.floor, L.floor + 0.75, y);                              // dark footwell
+    if (z < L.zg + 0.05 && y < L.top + 0.01 && y > L.bot - 0.3) k *= 0.8;            // under the glareshield / in the panel
+    k *= 1 - 0.28 * sm(L.W - 0.3, L.W, Math.abs(x)) * (y < e[1] + L.sill + 0.05 ? 1 : 0.4);   // against the walls
+    k *= 1 - 0.2 * sm(e[1] + L.roof - 0.25, e[1] + L.roof + 0.1, y);                 // the ceiling
+    const n = Math.sin(x * 91.7 + y * 47.3 + z * 13.1) * 0.5 + 0.5;
+    k *= 0.96 + 0.08 * n;
+    Cl[i] *= k; Cl[i + 1] *= k; Cl[i + 2] *= k;
+  }
 }
 function cpActive() { return cam.mode === 'cockpit' && (game.state === 'flying' || game.state === 'paused') && !(sim.crashed); }
 function cpShowOverlay() { return !cpActive() || game.mode === 'tutorial' || (typeof SCHOOL !== 'undefined' && SCHOOL.active) || game.cpHud; }
@@ -10137,7 +10216,7 @@ function drawCockpit(base) {
   const put = (vao, q, p) => { gl.uniformMatrix4fv(u.uModel, false, M4.mul(base, M4.fromQP(q, p))); gl.bindVertexArray(vao.vao); gl.drawArrays(gl.TRIANGLES, 0, vao.count); };
   const seats = L.seat ? [L.seat, -L.seat] : [0];
   if (CPIT.yoke) for (const x of seats) {
-    if (L.ctl === 'yoke') put(C.ctl, qaxis([0, 0, 1], -s.ail * 0.75), [x, L.bot + 0.12, L.zBot + 0.24 + s.elev * 0.07]);
+    if (L.ctl === 'yoke') put(C.ctl, qaxis([0, 0, 1], -s.ail * 0.75), [x, L.bot + 0.02, L.zBot + 0.2 + s.elev * 0.07]);
     else if (L.ctl === 'column') put(C.ctl, qaxis([1, 0, 0], s.elev * 0.16), [x, L.floor + 0.02, e[2] - 0.5]);
     else if (L.ctl === 'side') { const sx = x + Math.sign(x) * 0.36; put(C.ctl, qmul(qaxis([0, 0, 1], -s.ail * 0.3), qaxis([1, 0, 0], s.elev * 0.3)), [sx, e[1] - 0.6, e[2] - 0.2]); }
     else if (L.ctl === 'sideyoke') { const sx = x + Math.sign(x) * 0.2; put(C.ctl, qaxis([0, 0, 1], -s.ail * 0.6), [sx, e[1] - 0.42, L.zBot + 0.22 + s.elev * 0.06]); }
@@ -10281,6 +10360,10 @@ function cpSlider(g, x, y0, y1, label, val, col, tip, set, marks, o = {}) {
   hs(x - 24, y0 - 16, 48, y1 - y0 + 32, tip, { slider: true, drag: dv => set(clamp(val - dv / (y1 - y0), 0, 1)), wheel: d => set(clamp(val + d * 0.05, 0, 1)), click: (px, py) => set(clamp((y1 - py) / (y1 - y0), 0, 1)) });
 }
 function cpDial(g, cx, cy, r) {
+  if (CPIT.dials) CPIT.dials.push([cx, cy, r - 5]);
+  // the instrument sits in a hole in the panel: a soft shadow around it
+  const sh = g.createRadialGradient(cx, cy + 3, r - 2, cx, cy + 3, r + 12); sh.addColorStop(0, 'rgba(0,0,0,0.5)'); sh.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = sh; g.beginPath(); g.arc(cx, cy + 3, r + 12, 0, 7); g.fill();
   g.beginPath(); g.arc(cx, cy, r, 0, 7); g.fillStyle = '#0d0e10'; g.fill();
   g.beginPath(); g.arc(cx, cy, r - 3, 0, 7); g.strokeStyle = '#3c4046'; g.lineWidth = 2; g.stroke();
   for (const a of [0.8, 2.35, 3.9, 5.5]) cpScrew(g, cx + Math.cos(a) * (r + 7), cy + Math.sin(a) * (r + 7));
@@ -10325,13 +10408,40 @@ function cpFace(R, k, w, h, T) {
   g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 2; g.strokeRect(1, 1, w - 2, h - 2);
   R.bg = c; return c;
 }
+// the glass over a round instrument: a soft reflection of the windows at the top and a shadow under the bezel
+function cpGlass(g, cx, cy, r) {
+  g.save(); g.beginPath(); g.arc(cx, cy, r, 0, 7); g.clip();
+  const sh = g.createRadialGradient(cx, cy, r * 0.72, cx, cy, r); sh.addColorStop(0, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,0.45)');
+  g.fillStyle = sh; g.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+  const hl = g.createLinearGradient(cx - r, cy - r, cx + r * 0.2, cy + r * 0.2); hl.addColorStop(0, 'rgba(255,255,255,0.16)'); hl.addColorStop(0.45, 'rgba(255,255,255,0.03)'); hl.addColorStop(0.46, 'rgba(255,255,255,0)');
+  g.fillStyle = hl; g.beginPath(); g.ellipse(cx - r * 0.25, cy - r * 0.35, r * 0.95, r * 0.6, -0.5, 0, 7); g.fill();
+  g.restore();
+  // a machined bezel ring with a highlight on the top edge
+  g.lineWidth = 3; const bz = g.createLinearGradient(cx, cy - r, cx, cy + r); bz.addColorStop(0, '#6d7277'); bz.addColorStop(0.5, '#2a2d31'); bz.addColorStop(1, '#141517');
+  g.strokeStyle = bz; g.beginPath(); g.arc(cx, cy, r + 1.5, 0, 7); g.stroke();
+}
+// the glass of a display: a faint diagonal reflection and a darker edge
+function cpScreenGlass(g, x, y, w, h) {
+  g.save(); rr(g, x, y, w, h, 3); g.clip();
+  const r = g.createLinearGradient(x, y, x + w * 0.6, y + h); r.addColorStop(0, 'rgba(255,255,255,0.07)'); r.addColorStop(0.35, 'rgba(255,255,255,0.015)'); r.addColorStop(0.36, 'rgba(255,255,255,0)');
+  g.fillStyle = r; g.fillRect(x, y, w, h);
+  g.strokeStyle = 'rgba(0,0,0,0.55)'; g.lineWidth = 6; g.strokeRect(x, y, w, h);
+  g.restore();
+  // the bezel's bevel
+  g.lineWidth = 2; g.strokeStyle = 'rgba(255,255,255,0.12)'; g.beginPath(); g.moveTo(x - 4, y + h + 4); g.lineTo(x - 4, y - 4); g.lineTo(x + w + 4, y - 4); g.stroke();
+  g.strokeStyle = 'rgba(0,0,0,0.5)'; g.beginPath(); g.moveTo(x + w + 4, y - 4); g.lineTo(x + w + 4, y + h + 4); g.lineTo(x - 4, y + h + 4); g.stroke();
+}
 function cpDrawRegion(k, g, L, R) {
   const [w, h] = CP_REG[k], T = L.T;
+  CPIT.sheen = []; CPIT.dials = [];
   g.drawImage(cpFace(R, k, w, h, T), 0, 0, w, h);
   if (k === 'main') ({ light: mainLight, glassga: mainGlassGA, turboprop: mainTurboprop, airliner: mainAirliner, jet: mainJet }[L.deck] || mainLight)(g, L, T);
   else if (k === 'glr') glrPanel(g, L, T);
   else if (k === 'ped') (L.ped === 'stand' ? pedStand : pedConsole)(g, L, T);
   else if (k === 'ovh') ovhPanel(g, L, T);
+  for (const [x, y, sw, sh] of CPIT.sheen) cpScreenGlass(g, x, y, sw, sh);
+  for (const [x, y, r] of CPIT.dials) cpGlass(g, x, y, r);
+  CPIT.sheen = null; CPIT.dials = null;
 }
 
 // ---------------------------------------------------------------------
@@ -11394,7 +11504,12 @@ function updateCamera(dt) {
     up = qrot(cam.q, [0, 1, 0]);
   } else if (mode === 'cockpit') {
     const lq = qmul(s.q, qmul(qaxis([0, 1, 0], cam.lookYaw), qaxis([1, 0, 0], cam.lookPitch)));
-    eye = vadd(s.pos, qrot(s.q, cpEye(ACFT)));
+    // the pilot's head: pushed back by acceleration, bounced by bumps and the runway, then eased back
+    const acc = s.lastVel ? qrot(qconj(s.q), vscale(vsub(s.vel, s.lastVel), 1 / Math.max(dt, 1e-3))) : [0, 0, 0]; s.lastVel = s.vel.slice();
+    const rough = s.onGround ? clamp(Math.hypot(s.vel[0], s.vel[2]) / 40, 0, 1) * (Math.sin(R.time * 37) * 0.6 + Math.sin(R.time * 23.3) * 0.4) * 0.006 : 0;
+    const want = [clamp(-acc[0] * 0.0025, -0.04, 0.04), clamp(-acc[1] * 0.0025, -0.05, 0.05) + rough, clamp(-acc[2] * 0.002, -0.04, 0.04)];
+    cam.head = (cam.head || [0, 0, 0]).map((v, i) => v + (want[i] - v) * Math.min(1, dt * 6));
+    eye = vadd(s.pos, qrot(s.q, vadd(cpEye(ACFT), cam.head)));
     target = vadd(eye, qrot(lq, [0, -1.1, -10]));
     up = qrot(lq, [0, 1, 0]); fov = CPIT.fov; near = 0.12;
   } else if (mode === 'orbit') {
@@ -12368,7 +12483,10 @@ function drawScene(planes, far) {
   gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
   if (JW.active) {
     drawJapanTerrain(planes);
-    if (GOOG.covering) drawGoogle();                     // photogrammetry replaces runways, buildings and trees
+    if (GOOG.covering) {                                  // photogrammetry replaces runways, buildings and trees
+      drawGoogle(); googFlatCheck();
+      if (GOOG.flat) { drawCity(planes); drawJwTrees(); } // ...except where Google has no 3D: the map's own buildings stand in
+    }
     else { drawJapanRunways(); drawCity(planes); drawPlateau(); drawJwTrees(); }
   }
   else {
@@ -13051,7 +13169,7 @@ function drawInfo(g, W, H, touch, sc, touchY) {
     if (game.ap) st.push('A/P');
     if (game.timeScale > 1) st.push('時間 ×' + game.timeScale);
     st.push(JW.online ? `航空写真 ${JW.inflight ? '読み込み中…' : 'ON'}` : '簡易地形（オフライン）');
-    if (GOOG.on && GOOG.key) st.push(GOOG.state === 'ok' ? `Google 3D ${GOOG.covering ? `ON（高さ基準 ${Math.round(GOOG.off ?? 0)} m・${GOOG.active.length} 枚・細かさ ×${(GOOG.lodK || 1).toFixed(1)}）` : '読み込み中…'}` : GOOG.state === 'error' ? 'Google 3D エラー（メニューで確認）' : 'Google 3D 接続中…');
+    if (GOOG.on && GOOG.key) st.push(GOOG.state === 'ok' ? `Google 3D ${GOOG.covering ? `ON${GOOG.flat ? '・この付近は立体データなし（地図の建物で代用）' : ''}（高さ基準 ${Math.round(GOOG.off ?? 0)} m・${GOOG.active.length} 枚・細かさ ×${(GOOG.lodK || 1).toFixed(1)}）` : '読み込み中…'}` : GOOG.state === 'error' ? 'Google 3D エラー（メニューで確認）' : 'Google 3D 接続中…');
     lines.push([st.join('　'), game.ap || game.timeScale > 1 ? COL.amber : COL.muted, `11px ${UI}`]);
     if (GOOG.on && GOOG.key && GOOG.state === 'ok') lines.push([googDiag() + '　F8：タイルを灰色で表示', COL.muted, `11px ${UI}`]);
   } else lines.push([`${MAP.name}・${ACFT.name}`, COL.muted, `11px ${UI}`]);

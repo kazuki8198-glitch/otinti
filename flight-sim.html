@@ -3074,6 +3074,15 @@ function windAt(p, t, agl = p[1]) {
   if (sw) { const k = SCHOOL.gust; return [w[0] * wg + perlin(t * 0.35, 1.7) * 1.6 * gust * k, perlin(t * 0.5, 4.4) * 0.5 * gust * k, w[2] * wg + perlin(t * 0.31, 8.2) * 1.3 * gust * k]; }
   return [w[0] * wg + perlin(t * 0.35, 1.7) * 1.2 * gust, perlin(t * 0.5, 4.4) * 0.45 * gust, w[2] * wg + perlin(t * 0.31, 8.2) * 0.9 * gust];
 }
+// the trim range (fraction of elevator travel): enough to fly hands-off from the approach to cruise
+const TRIM_MAX = 0.45;
+// T key: the trim that holds 1 g at the present speed with the stick let go. It starts from the elevator in
+// use now and corrects it for the angle of attack being off the 1 g value (a pull-up is not trimmed in)
+function trimLevel() {
+  const s = sim, flapF = ACFT.wing.flap ? s.flapDeg / 30 : 0, rho = s.rho || atmos(s.pos[1]).rho;
+  const a1 = trimFor(Math.max(s.tas || 0, 20), flapF, 1, rho).alpha;
+  return clamp(s.elev + s.trim + AC.Cma / AC.Cmde * (s.alpha - a1), -TRIM_MAX, TRIM_MAX);
+}
 // lift coefficient needed for a load factor, and the elevator that holds that angle of attack
 function trimFor(V, flapF, n = 1, rho = 1.225) {
   const qd = 0.5 * rho * V * V, cl0 = AC.CL0 + AC.flapCL * flapF;
@@ -3109,7 +3118,10 @@ function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
     const lin = Math.max(clamp(0.45 + (vr / spd - 1) * 0.35, 0.45, 0.8), 0.45 + 0.35 * kg);
     const shape = (x, a) => a * x + (1 - a) * x * x * x;
     const kp = Math.max(pMax, kg), kr = rMax;
-    s.elev = clamp(kp * shape(clamp(s.pIn, -1, 1), lin), -1, 1); s.ail = clamp(kr * shape(clamp(s.rIn, -1, 1), 0.45), -1, 1);
+    let el = kp * shape(clamp(s.pIn, -1, 1), lin);
+    // just after trimming (T) the stick is still held: the part of it now in the trim is not applied twice
+    if (s.trimHold) { if (Math.abs(s.pIn) < 0.04 || Math.sign(el) !== Math.sign(s.trimHold)) s.trimHold = 0; else el -= Math.sign(el) * Math.min(Math.abs(el), Math.abs(s.trimHold)); }
+    s.elev = clamp(el, -1, 1); s.ail = clamp(kr * shape(clamp(s.rIn, -1, 1), 0.45), -1, 1);
     // with the assist on, the takeoff rotation is guided: back stick asks for a pitch attitude (up to about
     // 10 degrees) instead of full elevator, so holding the key can't over-rotate and stall at lift-off
     if (game.assist && !s.crashed && V > 12 && s.pIn > 0.05 && (s.onGround || s.airTime < 3)) {
@@ -3843,7 +3855,7 @@ async function loadPhoto(t) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, 4);
+    if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, game.touch ? 4 : Math.min(16, gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
     bmp.close && bmp.close();
     t.tex = tex; t.photoState = 2; JW.texCount++; JW.loadedPhotos++;
   } catch (e) { t.photoState = 3; if (JW.loadedPhotos === 0 && JW.loadedDems === 0) jwNetFail(); }
@@ -3878,7 +3890,9 @@ async function jwCheckOnline() {
 // ---------- tile selection ----------
 function jwSelect(planes, eye) {
   const f = ++JW.frame, out = [], wantMesh = [], want = [];
-  const zmax = JW.online ? (game.touch ? 16 : 17) : 12, K = game.touch ? 0.9 : 1.25;
+  // driving: one zoom level finer (about 0.6 m per pixel) and refined sooner, since the ground is right there
+  const drive = typeof CAR !== 'undefined' && CAR.on;
+  const zmax = JW.online ? (game.touch ? 16 : drive ? 18 : 17) : 12, K = game.touch ? 0.9 : drive ? 2.2 : 1.25;
   const [eLat, eLon] = worldToGeo(eye[0], eye[2]);
   const reach = 700000 + Math.max(eye[1], 0) * 30;
   const geoFar = t => {
@@ -3970,6 +3984,23 @@ const TILE_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
 in vec3 vWorld; in vec3 vN; in vec2 vUv; in float vH;
 uniform sampler2D uPhoto;
 uniform sampler2D uNoise;
+// close-up detail: an aerial photo is about a metre per pixel, so near the camera (driving) a fine grain is
+// laid over it - tarmac gets a speckled aggregate, grass and fields a tufted, patchy texture
+vec3 groundDetail(vec3 ph, vec3 w, sampler2D nz){
+  float dist = length(w - uCamPos), near = 1.0 - smoothstep(25.0, 260.0, dist);
+  if (near <= 0.0) return ph;
+  float lum = dot(ph, vec3(0.3, 0.55, 0.15)), sat = max(ph.r, max(ph.g, ph.b)) - min(ph.r, min(ph.g, ph.b));
+  float green = smoothstep(0.0, 0.06, ph.g - max(ph.r, ph.b) + 0.02);
+  float tar = (1.0 - green) * smoothstep(0.14, 0.05, sat);
+  float f1 = texture(nz, w.xz / 0.37).b, f2 = texture(nz, w.xz / 1.3).a, f3 = texture(nz, w.xz / 5.3).b, f4 = texture(nz, w.xz / 0.11).a;
+  float fine = clamp(1.0 - max(fwidth(w.x), fwidth(w.z)) * 3.0, 0.0, 1.0);   // no shimmer where a pixel covers the grain
+  float grain = mix(1.0, 0.8 + 0.28 * f1 + 0.12 * (f4 - 0.5), fine);
+  float tuft = mix(1.0, 0.72 + 0.34 * f2 + 0.18 * f1, fine) * (0.9 + 0.2 * f3);
+  vec3 g = ph * mix(tuft, grain, tar);
+  g = mix(g, g * vec3(0.95, 1.04, 0.9), green * f3 * 0.6 * fine);       // a little colour variation in the grass
+  return mix(ph, g, near);
+}
+
 uniform int uHasPhoto;
 uniform float uNightF;
 out vec4 outColor;
@@ -3982,6 +4013,7 @@ void main(){
     float lum = dot(ph, vec3(0.3, 0.55, 0.15));
     ph = mix(vec3(lum), ph, 1.18);                                   // aerial photos are slightly hazy: restore colour
     ph = pow(max(ph, 0.0), vec3(1.12));
+    ph = groundDetail(ph, vWorld, uNoise);
     col = ph * (uAmbSky * 0.55 + uSunCol * (0.46 + 0.36 * diff));
     if (uNightK > 0.0) {
       float sat = max(ph.r, max(ph.g, ph.b)) - min(ph.r, min(ph.g, ph.b));
@@ -5776,7 +5808,7 @@ function platReceive(r) {
     gl.generateMipmap(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, 4);
+    if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, game.touch ? 4 : Math.min(16, gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
     PLAT.bytes += r.bitmap.width * r.bitmap.height * 4 * 1.33; n.tw = r.bitmap.width + "x" + r.bitmap.height;
     n.texBytes = r.bitmap.width * r.bitmap.height * 4 * 1.33;
     r.bitmap.close();
@@ -5851,6 +5883,23 @@ uniform int uHasTex;
 uniform float uNightF;
 uniform int uFlatN;      // 1: the mesh has no normals (Google photogrammetry): use the face normal
 uniform sampler2D uNoise;
+// close-up detail: an aerial photo is about a metre per pixel, so near the camera (driving) a fine grain is
+// laid over it - tarmac gets a speckled aggregate, grass and fields a tufted, patchy texture
+vec3 groundDetail(vec3 ph, vec3 w, sampler2D nz){
+  float dist = length(w - uCamPos), near = 1.0 - smoothstep(25.0, 260.0, dist);
+  if (near <= 0.0) return ph;
+  float lum = dot(ph, vec3(0.3, 0.55, 0.15)), sat = max(ph.r, max(ph.g, ph.b)) - min(ph.r, min(ph.g, ph.b));
+  float green = smoothstep(0.0, 0.06, ph.g - max(ph.r, ph.b) + 0.02);
+  float tar = (1.0 - green) * smoothstep(0.14, 0.05, sat);
+  float f1 = texture(nz, w.xz / 0.37).b, f2 = texture(nz, w.xz / 1.3).a, f3 = texture(nz, w.xz / 5.3).b, f4 = texture(nz, w.xz / 0.11).a;
+  float fine = clamp(1.0 - max(fwidth(w.x), fwidth(w.z)) * 3.0, 0.0, 1.0);   // no shimmer where a pixel covers the grain
+  float grain = mix(1.0, 0.8 + 0.28 * f1 + 0.12 * (f4 - 0.5), fine);
+  float tuft = mix(1.0, 0.72 + 0.34 * f2 + 0.18 * f1, fine) * (0.9 + 0.2 * f3);
+  vec3 g = ph * mix(tuft, grain, tar);
+  g = mix(g, g * vec3(0.95, 1.04, 0.9), green * f3 * 0.6 * fine);       // a little colour variation in the grass
+  return mix(ph, g, near);
+}
+
 out vec4 outColor;
 // Google photogrammetry has no windows or lamps, so night lights are made from the geometry and the photo:
 // walls get storeys of windows (some lit), paved grey ground gets street lighting, green (trees) gets none
@@ -5893,7 +5942,7 @@ void main(){
   if (uFlatN == 1) { n = normalize(cross(dFdx(vWorld), dFdy(vWorld))); if (dot(n, uCamPos - vWorld) < 0.0) n = -n; }
   else if (!gl_FrontFacing) n = -n;
   vec3 base = vCol;
-  if (uHasTex == 1 && vUv.x >= 0.0) base *= texture(uTex, vUv).rgb * 1.05;
+  if (uHasTex == 1 && vUv.x >= 0.0) { base *= texture(uTex, vUv).rgb * 1.05; if (uFlatN == 1 && n.y > 0.85) base = groundDetail(base, vWorld, uNoise); }
   else base *= 0.82;
   float diff = max(dot(n, uSunDir), 0.0);
   vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
@@ -6015,7 +6064,7 @@ function googUpdate(planes) {
   // detail is chosen for the full display resolution (not the reduced render size), and the frame-rate
   // saving only coarsens distant tiles: buildings within ~3 km always keep their full shape
   const K = glCanvas.clientHeight * Math.min(window.devicePixelRatio || 1, game.touch ? 1.5 : 1.75) / (2 * R.tanY);
-  const SSE0 = game.touch ? 28 : game.gfx === 'high' ? 12 : 18, MAXD = 60000 + Math.max(eye[1], 0) * 6;
+  const SSE0 = game.touch ? 28 : (typeof CAR !== 'undefined' && CAR.on ? 9 : game.gfx === 'high' ? 12 : 18), MAXD = 60000 + Math.max(eye[1], 0) * 6;
   const sseAt = d => SSE0 * (1 + ((GOOG.lodK || 1) - 1) * smoothstep(3000, 8000, d));
   const out = [], req = [];
   const dist = n => { if (n.planet) return 0; const c = googWorld(n); return Math.max(0, Math.hypot(c[0] - eye[0], c[1] - eye[1], c[2] - eye[2]) - n.r); };
@@ -6119,7 +6168,7 @@ function googUploadStep() {
       gl.generateMipmap(gl.TEXTURE_2D);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, 4);
+      if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, game.touch ? 4 : Math.min(16, gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
       job.bytes += bmp.width * bmp.height * 4 * 1.33; bmp.close(); job.texs.push(t);
       continue;
     }
@@ -6488,7 +6537,7 @@ uniform float uCurv, uFade;
 uniform int uHasPhoto;
 uniform vec4 uUvX;
 uniform sampler2D uPhoto, uNoise;
-out vec3 vWorld; out vec3 vN; out vec3 vCol;
+out vec3 vWorld; out vec3 vN; out vec3 vCol; out float vT;
 void main(){
   vec3 base = uOrigin + iP.xyz;
   float dist = distance(base, uCamPos), r = iP.w;
@@ -6510,40 +6559,53 @@ void main(){
   float hgt = mix(8.0, 19.0, fract(r * 3.7)), wid = hgt * mix(0.34, 0.5, fract(r * 11.3));
   float a = r * 6.2831;
   mat2 rot = mat2(cos(a), -sin(a), sin(a), cos(a));
-  vec3 lp = vec3(aPos.x * wid, aPos.y * hgt, aPos.z * wid); lp.xz = rot * lp.xz;
+  // the crown's outline is shaped here: a broadleaf dome or a conifer's tiered cone, with lumps so no two
+  // trees are alike (the mesh is a unit cylinder of rings)
+  float conifer = step(0.62, fract(r * 5.3)), trunk = step(aPos.y, 0.19);
+  float t = clamp((aPos.y - 0.16) / 0.84, 0.0, 1.0), ang = atan(aPos.z, aPos.x);
+  float broad = pow(max(1.0 - pow(2.0 * t - 1.0, 2.0), 0.0), 0.62) * 0.52 * (1.0 + 0.18 * t);
+  float coni = (1.0 - t) * 0.44 * (0.86 + 0.14 * sin(t * 25.0 + r * 9.0));
+  float lump = 1.0 + 0.17 * sin(ang * 3.0 + r * 21.0) * sin(t * 7.0 + r * 13.0) + 0.09 * sin(ang * 5.0 + t * 11.0 + r * 5.0);
+  float rad = trunk > 0.5 ? 0.05 : mix(broad, coni, conifer) * lump;
+  float hy = trunk > 0.5 ? aPos.y : mix(0.16, 1.0, t) * mix(1.0, 1.15, conifer);
+  vec3 lp = vec3(aPos.x * rad * 2.0 * wid, hy * hgt, aPos.z * rad * 2.0 * wid); lp.xz = rot * lp.xz;
   vec3 w = base + lp;
   vec2 d = w.xz - uCamPos.xz; w.y -= dot(d, d) * uCurv;
-  vec2 rn = rot * aNrm.xz;
-  vWorld = w; vN = normalize(vec3(rn.x, aNrm.y, rn.y));
-  vCol = aPos.y < 0.18 ? vec3(0.22, 0.17, 0.12) : col * (0.8 + 0.4 * fract(r * 19.1));
+  vec2 rn = rot * aPos.xz;
+  float up = trunk > 0.5 ? 0.0 : mix(mix(-0.4, 0.95, t), mix(0.25, 0.7, t), conifer);
+  vWorld = w; vN = normalize(vec3(rn.x, up, rn.y)); vT = trunk > 0.5 ? -1.0 : t;
+  vec3 leaf = conifer > 0.5 ? col * vec3(0.78, 0.92, 0.85) : col * vec3(1.05, 1.02, 0.9);
+  vCol = trunk > 0.5 ? vec3(0.22, 0.17, 0.12) : leaf * (0.8 + 0.4 * fract(r * 19.1));
   gl_Position = uViewProj * vec4(w, 1.0);
 }`;
 const JWTREE_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
-in vec3 vWorld; in vec3 vN; in vec3 vCol;
+in vec3 vWorld; in vec3 vN; in vec3 vCol; in float vT;
+uniform sampler2D uNoise;
 out vec4 outColor;
 void main(){
   vec3 n = normalize(vN);
   float diff = max(dot(n, uSunDir) * 0.75 + 0.25, 0.0) * planeShadow(vWorld.xz);
   vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
   vec3 c = vCol * (uSunCol * diff * 0.85 + amb * 0.9);
+  if (vT >= 0.0) {
+    // leaf clusters: dappled light and dark, darker deep in the lower crown, and leaves glowing when backlit
+    float dist = length(vWorld - uCamPos), fine = 1.0 - smoothstep(60.0, 400.0, dist);
+    float l1 = texture(uNoise, vWorld.xz * 0.55 + vWorld.y * 0.31).b, l2 = texture(uNoise, vWorld.xz * 1.9 - vWorld.y * 0.73).a;
+    c *= mix(1.0, 0.62 + 0.55 * l1 + 0.2 * (l2 - 0.5), fine);
+    c *= mix(0.62, 1.08, smoothstep(0.0, 0.8, vT));
+    vec3 V = normalize(uCamPos - vWorld);
+    c += vCol * uSunCol * pow(max(dot(-V, uSunDir), 0.0), 5.0) * 0.45 * (0.5 + l1);
+  }
   outColor = vec4(tonemap(applyFog(c, vWorld)), 1.0);
 }`;
 const JWTREES = { prog: null, mesh: null, cells: new Map(), ov: -1, perCell: 0 };
 // a rounded crown on a short trunk, unit height
 function makeJwTreeMesh() {
-  const P = [], N = [], seg = 6, rings = [[0.2, 0.62], [0.45, 1.0], [0.75, 0.75], [1.0, 0.0]];
-  const ring = (y, r) => { const o = []; for (let s = 0; s < seg; s++) { const a = s / seg * Math.PI * 2; o.push([Math.cos(a) * r * 0.5, y, Math.sin(a) * r * 0.5]); } return o; };
-  const tri = (a, b, c) => { const n = vnorm(vcross(vsub(b, a), vsub(c, a))); for (const p of [a, b, c]) { P.push(...p); const rn = vnorm([p[0], 0.35, p[2]]); N.push(...vnorm(vadd(n, rn))); } };
-  let prev = ring(rings[0][0], rings[0][1]);
-  for (let i = 1; i < rings.length; i++) {
-    const cur = ring(rings[i][0], rings[i][1]);
-    for (let s = 0; s < seg; s++) { const s1 = (s + 1) % seg; tri(prev[s], cur[s], prev[s1]); if (rings[i][1] > 0) tri(prev[s1], cur[s], cur[s1]); }
-    prev = cur;
-  }
-  const bottom = ring(rings[0][0], rings[0][1]), c0 = [0, rings[0][0], 0];
-  for (let s = 0; s < seg; s++) tri(bottom[(s + 1) % seg], c0, bottom[s]);
-  const tw = 0.05;
-  for (const [x0, z0, x1, z1] of [[-tw, -tw, tw, -tw], [tw, -tw, tw, tw], [tw, tw, -tw, tw], [-tw, tw, -tw, -tw]]) { tri([x0, 0, z0], [x1, 0, z1], [x1, 0.2, z1]); tri([x0, 0, z0], [x1, 0.2, z1], [x0, 0.2, z0]); }
+  const P = [], N = [], seg = 12, ys = [0.0, 0.19, 0.16, 0.24, 0.33, 0.43, 0.53, 0.63, 0.73, 0.82, 0.9, 0.96, 1.0];
+  const ring = y => { const o = []; for (let s = 0; s < seg; s++) { const a = s / seg * Math.PI * 2; o.push([Math.cos(a), y, Math.sin(a)]); } return o; };
+  const quad = (a, b) => { for (let s = 0; s < seg; s++) { const s1 = (s + 1) % seg; for (const p of [a[s], b[s], a[s1], a[s1], b[s], b[s1]]) { P.push(...p); N.push(p[0], 0, p[2]); } } };
+  quad(ring(0.0), ring(0.19));                                           // trunk (y below 0.19)
+  for (let i = 2; i < ys.length - 1; i++) quad(ring(ys[i]), ring(ys[i + 1]));   // crown
   return { P: new Float32Array(P), N: new Float32Array(N), count: P.length / 3 };
 }
 function initJwTrees() {
@@ -7256,7 +7318,7 @@ function placeAircraft(pos, hdg, kt, gammaDeg, flapIdx, thr) {
   const s = sim, hasFlaps = !!ACFT.wing.flap;
   s.flapIdx = hasFlaps ? flapIdx : 0; s.flapDeg = FLAP_DEG[s.flapIdx];
   const v = kt / KTS, ff = hasFlaps ? s.flapDeg / 30 : 0, tr = trimFor(v, ff, Math.cos(gammaDeg * DEG));
-  s.trim = clamp(tr.elev, -0.6, 0.6);
+  s.trim = clamp(tr.elev, -TRIM_MAX, TRIM_MAX); s.trimHold = 0;
   s.pos = pos; s.q = qFromHPB(hdg, tr.alpha / DEG + gammaDeg, 0);
   const dir = [Math.sin(hdg * DEG), 0, -Math.cos(hdg * DEG)];
   s.vel = vadd(vscale(dir, v * Math.cos(gammaDeg * DEG)), [0, v * Math.sin(gammaDeg * DEG), 0]);
@@ -10377,8 +10439,10 @@ function cpFlapMarks() { return [3, 2, 1, 0].filter(i => flapStops().includes(i)
 function cpSetFlap(v) { let i = Math.round(v * 3); const st = flapStops(); i = st.reduce((a, b) => Math.abs(b - i) < Math.abs(a - i) ? b : a); if (i !== sim.flapIdx) { sim.flapIdx = i; audio.blip(480, 0.05, 'square', 0.04); } }
 const cpFlapTip = () => `フラップ：${flapName(sim.flapIdx)}（実際 ${Math.round(sim.flapDeg)}°）${sysFlapsOK() ? '' : '・電源なしで動きません'}`;
 const cpThrTip = () => `スロットル（推力レバー）：${Math.round(sim.thr * 100)}%（上下にドラッグ／ホイール）`;
-const cpTrimTip = () => `トリム：${sim.trim >= 0 ? '機首上げ' : '機首下げ'} ${Math.abs(Math.round(sim.trim * 100))}%`;
-const cpSetTrim = v => { if (!game.assist) sim.trim = clamp((v - 0.5) * 1.2, -0.6, 0.6); else sysMsg('アシスト ON のときはトリムは自動です'); };
+const cpTrimTip = () => `トリム：${sim.trim >= 0 ? '機首上げ' : '機首下げ'} ${Math.abs(Math.round(sim.trim / TRIM_MAX * 100))}%（上下にドラッグ／ホイールで少しずつ）`;
+const cpTrimVal = () => clamp(0.5 + sim.trim / (2 * TRIM_MAX), 0, 1);
+// the trim wheel turns a little at a time: a click or a drag moves it gradually toward where you point
+const cpSetTrim = v => { if (game.assist) { sysMsg('アシスト ON のときはトリムは自動です'); return; } const t = (v - 0.5) * 2 * TRIM_MAX; sim.trim = clamp(sim.trim + clamp(t - sim.trim, -0.03, 0.03), -TRIM_MAX, TRIM_MAX); };
 function cpUtil(g, x, y, ink) {
   cpButton(g, x, y, 'CHECK', CL.open, 'チェックリスト（N キー）', { click: () => clToggle() }, '#5fd4ff', ink);
   cpButton(g, x + 62, y, 'AUTO', SYS.auto, '自動始動（Ctrl+E）', { click: () => sysAutoStart() }, '#5fd4ff', ink);
@@ -10545,7 +10609,7 @@ function mainLight(g, L, T) {
   cpSlider(g, cx, 430, 540, 'THROTTLE', s.thr, '#16181b', cpThrTip, v => { s.thr = v; }, [[1, 'FULL'], [0, 'IDLE']], { push: true, ink: T.ink });
   if (piston) cpSlider(g, cx + 90, 430, 540, 'MIXTURE', SYS.mix, '#c9362f', () => `ミクスチャー：${Math.round(SYS.mix * 100)}%（${SYS.mix < 0.1 ? 'カットオフ' : SYS.mix > 0.95 ? 'RICH' : '調整中'}${game.autoMix ? '・自動' : ''}）`, v => { SYS.mix = v; }, [[1, 'RICH'], [0, 'CUT']], { push: true, ink: T.ink });
   if (ACFT.wing.flap) cpSlider(g, cx + 190, 430, 540, 'FLAPS', 1 - s.flapIdx / 3, '#eceff2', cpFlapTip, v => cpSetFlap(1 - v), cpFlapMarks().map(([v, t]) => [1 - v, t]), { ink: T.ink });
-  if (!L.S.ped) cpSlider(g, cx + 270, 430, 540, 'TRIM', clamp(0.5 + s.trim / 1.2, 0, 1), '#3a3d42', cpTrimTip, cpSetTrim, [[1, 'UP'], [0.5, '—'], [0, 'DN']], { ink: T.ink });
+  if (!L.S.ped) cpSlider(g, cx + 270, 430, 540, 'TRIM', cpTrimVal(), '#3a3d42', cpTrimTip, cpSetTrim, [[1, 'UP'], [0.5, '—'], [0, 'DN']], { ink: T.ink });
   if (!ACFT.gear.fixed) cpGearLever(g, cx + 360, 400, 540, T.ink);
   cpUtil(g, 1780, 540, T.ink);
 }
@@ -10690,7 +10754,7 @@ function mainJet(g, L, T) {
   cpButton(g, px + 480, 500, 'PARK BRK', SYS.pbrake, 'パーキングブレーキ（. キー）', { click: () => { SYS.pbrake = !SYS.pbrake; } }, '#e0493f', T.ink);
   cpButton(g, px + 550, 500, 'AP', game.ap, 'オートパイロット（O キー）', { click: () => doAction('ap') }, '#58e08c', T.ink);
   cpSlider(g, 120, 360, 540, 'THROTTLE', s.thr, '#1b1c1f', cpThrTip, v => { s.thr = v; }, [[1, 'A/B'], [0.95, 'MIL'], [0, 'IDLE']], { ink: T.ink });
-  cpSlider(g, 220, 360, 540, 'TRIM', clamp(0.5 + s.trim / 1.2, 0, 1), '#3a3d42', cpTrimTip, cpSetTrim, [[1, 'UP'], [0.5, '—'], [0, 'DN']], { ink: T.ink });
+  cpSlider(g, 220, 360, 540, 'TRIM', cpTrimVal(), '#3a3d42', cpTrimTip, cpSetTrim, [[1, 'UP'], [0.5, '—'], [0, 'DN']], { ink: T.ink });
   if (ACFT.wing.flap) cpSlider(g, 1700, 360, 540, 'FLAPS', 1 - s.flapIdx / 3, '#eceff2', cpFlapTip, v => cpSetFlap(1 - v), cpFlapMarks().map(([v, t]) => [1 - v, t]), { ink: T.ink });
   cpGearLever(g, 1850, 360, 540, T.ink);
   cpUtil(g, 1300, 540, T.ink);
@@ -10778,7 +10842,7 @@ function pedStand(g, L, T) {
     cpText(g, 'SPD BRK', 70, y1 - 96, 10, T.ink);
   }
   if (ACFT.wing.flap) { const fx = tp ? 390 : 360; cpSlider(g, fx, y0, y1, '', 1 - s.flapIdx / 3, '#eceff2', cpFlapTip, v => cpSetFlap(1 - v), cpFlapMarks().map(([v, t]) => [1 - v, t]), { knob: false, left: true }); cpText(g, 'FLAPS', fx, y1 + 24, 10, T.ink); }
-  cpSlider(g, tp ? 40 : 30, y1 - 100, y1, '', clamp(0.5 + s.trim / 1.2, 0, 1), '#3a3d42', cpTrimTip, cpSetTrim, [[1, 'NU'], [0, 'ND']], { knob: true, ink: T.ink });
+  cpSlider(g, tp ? 40 : 30, y1 - 100, y1, '', cpTrimVal(), '#3a3d42', cpTrimTip, cpSetTrim, [[1, 'NU'], [0, 'ND']], { knob: true, ink: T.ink });
   cpText(g, 'TRIM', tp ? 40 : 30, y1 + 24, 9, T.ink);
   // engine start and parking brake at the back
   const by = 628;
@@ -10804,7 +10868,7 @@ function pedConsole(g, L, T) {
     cpSlider(g, 320, 60, 330, 'FLAPS', 1 - s.flapIdx / 3, '#eceff2', cpFlapTip, v => cpSetFlap(1 - v), cpFlapMarks().map(([v, t]) => [1 - v, t]), { ink: T.ink });
   } else {
     // pitch trim wheel with its indicator
-    const x = 130, y0 = 60, y1 = 360, t = clamp(0.5 + s.trim / 1.2, 0, 1);
+    const x = 130, y0 = 60, y1 = 360, t = cpTrimVal();
     rr(g, x - 40, y0, 80, y1 - y0, 10); g.fillStyle = '#16181b'; g.fill();
     rr(g, x - 26, y0 + 10, 52, y1 - y0 - 20, 20); g.fillStyle = '#2b2d31'; g.fill();
     const ph = (s.trim * 400) % 22;
@@ -11290,7 +11354,12 @@ function carBuild() {
   w.cylinder([-0.12, 0, 0], [0.12, 0, 0], 0.34, 0.34, 16, [0.07, 0.07, 0.075]);
   w.cylinder([-0.125, 0, 0], [0.125, 0, 0], 0.21, 0.21, 10, chrome);
   w.box([0, 0.12, 0], [0.26, 0.05, 0.05], [0.35, 0.36, 0.38]);                   // a spoke so the wheel is seen to turn
-  CAR.mesh = { body: uploadMesh(b.build()), wheel: uploadMesh(w.build()), lights: uploadMesh(lt.build()), id: ACFT.id };
+  const sh = new MeshBuilder();                                              // soft contact shadow: concentric ellipses, darker inside
+  for (let i = 0; i < 5; i++) {
+    const k = 1 - i * 0.12, ring = Array.from({ length: 28 }, (_, j) => { const a = j / 28 * Math.PI * 2; return [Math.cos(a) * 1.2 * k, 0.03 + i * 0.002, Math.sin(a) * 2.5 * k]; });
+    sh.loft([ring, ring.map(p => [p[0], p[1] + 0.001, p[2]])], [0, 0, 0], { capStart: true, capEnd: true });
+  }
+  CAR.mesh = { body: uploadMesh(b.build()), wheel: uploadMesh(w.build()), lights: uploadMesh(lt.build()), shadow: uploadMesh(sh.build()), id: ACFT.id };
 }
 function drawCar() {
   if (!CAR.on) return;
@@ -11299,6 +11368,11 @@ function drawCar() {
   setCommon(progMesh);
   gl.uniform1i(u.uLivery, 0); gl.uniform1f(u.uAlpha, 1); gl.uniform1f(u.uSpec, 0.6); gl.uniform3f(u.uEmissive, 0, 0, 0);
   const draw = (vao, m) => { gl.uniformMatrix4fv(u.uModel, false, m); gl.bindVertexArray(vao.vao); gl.drawArrays(gl.TRIANGLES, 0, vao.count); };
+  if (!CAR.air) {
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+    gl.uniform1f(u.uAlpha, 0.13); draw(M.shadow, base); gl.uniform1f(u.uAlpha, 1);
+    gl.depthMask(true); gl.disable(gl.BLEND);
+  }
   draw(M.body, base);
   gl.uniform1f(u.uSpec, 0.1);
   for (const [x, z, front] of [[-0.8, -1.35, 1], [0.8, -1.35, 1], [-0.8, 1.3, 0], [0.8, 1.3, 0]]) {
@@ -11426,7 +11500,7 @@ function spawn(mode) {
     setFlaps(flapIdx);
     const v = kt / 1.94384, ff = hasFlaps ? s.flapDeg / 30 : 0;
     const tr = trimFor(v, ff, Math.cos(gammaDeg * DEG));
-    s.trim = clamp(tr.elev, -0.6, 0.6);
+    s.trim = clamp(tr.elev, -TRIM_MAX, TRIM_MAX); s.trimHold = 0;
     s.pos = pos; s.q = qFromHPB(hdg, tr.alpha / DEG + gammaDeg, 0);
     const dir = [Math.sin(hdg * DEG), 0, -Math.cos(hdg * DEG)];
     s.vel = vadd(vscale(dir, v * Math.cos(gammaDeg * DEG)), [0, v * Math.sin(gammaDeg * DEG), 0]);
@@ -11568,8 +11642,12 @@ function doAction(a) {
   else if (a === 'smoke') { s.smoke = !s.smoke; toast(s.smoke ? 'スモーク ON' : 'スモーク OFF', 1200); }
   else if (a === 'level') { game.levelT = 4; toast('水平飛行に戻します（アシスト）', 1600); }
   else if (a === 'trim' && game.assist) { toast('アシスト ON のときはトリムは自動です', 1600); }
-  else if (a === 'trim') { s.trim = clamp(s.trim + s.elev, -0.6, 0.6); toast('トリム ' + (s.trim >= 0 ? '機首上げ ' : '機首下げ ') + Math.abs(Math.round(s.trim * 100)) + '%', 1300); }
-  else if (a === 'trimReset') { s.trim = 0; toast('トリム リセット', 1200); }
+  else if (a === 'trim') {
+    if (s.onGround) { s.trim = 0; s.trimHold = 0; toast('地上ではトリムを中立（離陸位置）にしました', 1500); return; }
+    s.trimHold = s.elev; s.trim = trimLevel();
+    toast('トリム ' + (s.trim >= 0 ? '機首上げ ' : '機首下げ ') + Math.abs(Math.round(s.trim / TRIM_MAX * 100)) + '%（いまの速度で水平に飛ぶように合わせました。操縦桿を離すとそのまま保ちます）', 2600);
+  }
+  else if (a === 'trimReset') { s.trim = 0; s.trimHold = 0; toast('トリム リセット', 1200); }
   else if (a === 'pause') pauseGame();
   else if (a === 'guide') openGuide();
   else if (a === 'map') toggleMap();
@@ -11745,14 +11823,14 @@ function padInput(dt) {
   const lx = dz(ax[0]), ly = dz(ax[1]), rx = dz(ax[2]), ry = dz(ax[3], 0.2);
   if (lx || ly) { out.stick = true; out.tr = lx; out.tp = ly; }
   out.ty = clamp(rx + (b(5) - b(4)), -1, 1);
-  if (ry && !game.assist) s.trim = clamp(s.trim + ry * 0.12 * dt, -0.6, 0.6);
+  if (ry && !game.assist) s.trim = clamp(s.trim + ry * 0.12 * dt, -TRIM_MAX, TRIM_MAX);
   // throttle on the analogue triggers
   s.thr = clamp(s.thr + (b(7) - b(6)) * 0.5 * dt, 0, 1);
   if (b(0) > 0.5 && !SCHOOL.check) out.brake = true;
   if (!SCHOOL.atc) { if (E[1]) doAction('flaps'); if (E[2]) doAction('flapsUp'); if (E[3]) doAction('cam'); }
   if (E[8]) doAction('gear');
   if (E[9]) { pauseGame(); return out; }
-  if (E[12] || E[13]) { if (game.assist) toast('アシスト ON のときはトリムは自動です', 1400); else { s.trim = clamp(s.trim + (E[13] ? 0.02 : -0.02), -0.6, 0.6); toast('トリム ' + (s.trim >= 0 ? '機首上げ ' : '機首下げ ') + Math.abs(Math.round(s.trim * 100)) + '%', 900); } }
+  if (E[12] || E[13]) { if (game.assist) toast('アシスト ON のときはトリムは自動です', 1400); else { s.trim = clamp(s.trim + (E[13] ? 0.02 : -0.02), -TRIM_MAX, TRIM_MAX); toast('トリム ' + (s.trim >= 0 ? '機首上げ ' : '機首下げ ') + Math.abs(Math.round(s.trim * 100)) + '%', 900); } }
   if (E[14]) doAction('map');
   if (E[15]) padKey('KeyI', 'i');
   if (E[10]) doAction('level');
@@ -12441,7 +12519,7 @@ function shadowUniforms(pr) {
   gl.uniform2f(u.uShadowB, str, 0.12 + above * 0.004);
 }
 function resize() {
-  const dpr = Math.min(window.devicePixelRatio || 1, game.touch ? 1.5 : 1.75, GOOG.covering ? 1.25 : 9);
+  const dpr = Math.min(window.devicePixelRatio || 1, game.touch ? 1.5 : CAR.on ? 2 : 1.75, GOOG.covering && !CAR.on ? 1.25 : 9);
   const w = Math.max(1, Math.round(glCanvas.clientWidth * dpr)), h = Math.max(1, Math.round(glCanvas.clientHeight * dpr));
   if (glCanvas.width !== w || glCanvas.height !== h) { glCanvas.width = w; glCanvas.height = h; }
   const hd = Math.min(window.devicePixelRatio || 1, 2), hc = hud.cv;
@@ -12954,7 +13032,7 @@ function drawEngine(g, x0, y0, sc) {
     else if (s.gearPos > 0) { g.fillStyle = COL.amber; g.fill(); }
     else { g.strokeStyle = COL.muted; g.lineWidth = 1; g.stroke(); }
   }
-  row('TRIM トリム', game.assist ? '自動' : (s.trim >= 0 ? '▲' : '▼') + Math.abs(Math.round(s.trim * 100)), 118);
+  row('TRIM トリム', game.assist ? '自動' : (s.trim >= 0 ? '▲' : '▼') + Math.abs(Math.round(s.trim / TRIM_MAX * 100)), 118);
   row('BRAKE ブレーキ', s.brake ? 'ON' : 'OFF', 142, s.brake ? COL.amber : COL.muted);
   row('G 荷重', s.gLoad.toFixed(1), 166, s.gLoad > AC.maxG * 0.8 || s.gLoad < -1.5 ? COL.amber : COL.ink);
   row('AOA 迎え角', (s.alpha / DEG).toFixed(1) + '°', 190, s.stallWarn ? COL.red : COL.ink);

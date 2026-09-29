@@ -4557,6 +4557,21 @@ function cityWorkerMain() {
     if (cur && cur.length >= 6) out.push(cur);
     return out;
   }
+  // line strings (roads): a MoveTo starts a new line
+  function decodeLines(geom) {
+    const out = []; let x = 0, y = 0, i = 0, cur = null;
+    while (i < geom.length) {
+      const c = geom[i++], cmd = c & 7, cnt = c >> 3;
+      if (cmd === 7) continue;
+      for (let j = 0; j < cnt; j++) {
+        const dx = geom[i++], dy = geom[i++];
+        x += (dx >>> 1) ^ -(dx & 1); y += (dy >>> 1) ^ -(dy & 1);
+        if (cmd === 1) { if (cur && cur.length >= 4) out.push(cur); cur = [x, y]; } else if (cur) cur.push(x, y);
+      }
+    }
+    if (cur && cur.length >= 4) out.push(cur);
+    return out;
+  }
   // Sutherland-Hodgman against the tile square; points on the border are snapped exactly
   function clipRing(r, E) {
     let pts = r;
@@ -4761,7 +4776,7 @@ function cityWorkerMain() {
   // ---- tile build ----
   const hash = (a, b) => { let h = (Math.imul(a | 0, 73856093) ^ Math.imul(b | 0, 19349663)) >>> 0; h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0; return (h ^ (h >>> 16)) >>> 0; };
   function build(buf, m) {
-    const L = readLayers(buf, ['building', 'landcover']);
+    const L = readLayers(buf, ['building', 'landcover', 'transportation']);
     const E = (L.building || L.landcover || { extent: 4096 }).extent;
     const n = 2 ** m.z, dLon = m.lonE - m.lonW, kxN = 111320 * Math.cos(m.latN * DEG);
     const W = dLon * kxN, Hm = (m.latN - m.latS) * KZ;
@@ -4769,7 +4784,20 @@ function cityWorkerMain() {
     const lz = py => { let v = latCache.get(py); if (v === undefined) { v = -(latFromMerc((m.y + py / E) / n) - m.latN) * KZ; if (latCache.size < 20000) latCache.set(py, v); } return v; };
     const lx = px => px / E * dLon * kxN;
     const dem = m.dem;
-    const ground = (px, py) => {
+    // the sim levels the ground around runways (runwayFlatten): the same here, so roads and buildings sit on it
+    const rws = m.rws || [], latAt = py => m.latN + (m.latS - m.latN) * py / E, lonAt = px => m.lonW + (m.lonE - m.lonW) * px / E;
+    const flatten = (px, py, h) => {
+      if (!rws.length) return h;
+      const lat = latAt(py), lon = lonAt(px);
+      for (const r of rws) {
+        const dx = (lon - r.lon) * r.kx, dz = -(lat - r.lat) * KZ, u = dx * r.sin - dz * r.cos, v = dx * r.cos + dz * r.sin;
+        const e = Math.hypot(Math.max(Math.abs(u) - r.len / 2 - 90, 0), Math.max(Math.abs(v) - r.wid / 2 - 60, 0));
+        if (e < 220) { const t = clamp(e / 220, 0, 1), k = t * t * (3 - 2 * t); h = r.elev + (h - r.elev) * k; }
+      }
+      return h;
+    };
+    const ground = (px, py) => flatten(px, py, groundRaw(px, py));
+    const groundRaw = (px, py) => {
       if (!dem) return m.g0;
       const fx = clamp(px / E * 256 - 0.5, 0, 254.999), fy = clamp(py / E * 256 - 0.5, 0, 254.999);
       const ix = fx | 0, iy = fy | 0, tx = fx - ix, ty = fy - iy, k = iy * 256 + ix;
@@ -4779,8 +4807,8 @@ function cityWorkerMain() {
     // ---------- buildings ----------
     const bpolys = polygons(L.building, E, p => !p.hide_3d);
     let nv = 0, ni = 0;
-    for (const p of bpolys) for (let r = 0; r < p.rings.length; r++) { const k = p.rings[r].length / 2; nv += k * 4 + (r === 0 || true ? k : 0); ni += k * 6; }
-    ni += nv;                                                         // generous room for roof triangles
+    for (const p of bpolys) for (let r = 0; r < p.rings.length; r++) { const k = p.rings[r].length / 2; nv += k * 4 + (r === 0 || true ? k : 0) + 80; ni += k * 6; }
+    ni += nv;                                                         // generous room for roof triangles (and pitched roofs / roof boxes)
     const vb = new ArrayBuffer(nv * 20), i16 = new Int16Array(vb), f32 = new Float32Array(vb), i8 = new Int8Array(vb);
     let idx = new Uint32Array(ni);
     let v = 0, q = 0;
@@ -4792,6 +4820,72 @@ function cityWorkerMain() {
       return v++;
     };
     const tri = (a, b, c) => { if (q + 3 > idx.length) { const g = new Uint32Array(idx.length * 2); g.set(idx); idx = g; } idx[q++] = a; idx[q++] = b; idx[q++] = c; };
+    // a flat-shaded triangle facing along n (points [x, y, z] in local metres); st/yr as for walls or roofs
+    const face = (p1, p2, p3, n, st, H, yr) => {
+      const ex = p2[0] - p1[0], ey = p2[1] - p1[1], ez = p2[2] - p1[2], fx = p3[0] - p1[0], fy = p3[1] - p1[1], fz = p3[2] - p1[2];
+      const cx = ey * fz - ez * fy, cy = ez * fx - ex * fz, cz = ex * fy - ey * fx;
+      if (cx * n[0] + cy * n[1] + cz * n[2] < 0) { const t = p2; p2 = p3; p3 = t; }
+      const nb = [Math.round(n[0] * 127), Math.round(n[1] * 127), Math.round(n[2] * 127)];
+      const along = p => (p[0] * -n[2] + p[2] * n[0]);
+      const a = put(p1[0], p1[2], p1[1], nb[0], nb[1], nb[2], along(p1), st, H, yr), b = put(p2[0], p2[2], p2[1], nb[0], nb[1], nb[2], along(p2), st, H, yr), c = put(p3[0], p3[2], p3[1], nb[0], nb[1], nb[2], along(p3), st, H, yr);
+      tri(a, b, c);
+    };
+    const nrm3 = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+    // the smallest rectangle around a footprint (tested along each edge's direction)
+    function obb(f) {
+      let best = null; const k = f.length / 2;
+      for (let i = 0; i < k; i++) {
+        const j = (i + 1) % k, dx = f[j * 2] - f[i * 2], dz = f[j * 2 + 1] - f[i * 2 + 1], L = Math.hypot(dx, dz); if (L < 0.5) continue;
+        const ux = dx / L, uz = dz / L; let a0 = 1e9, a1 = -1e9, b0 = 1e9, b1 = -1e9;
+        for (let m = 0; m < k; m++) { const x = f[m * 2], z = f[m * 2 + 1], a = x * ux + z * uz, b = -x * uz + z * ux; a0 = Math.min(a0, a); a1 = Math.max(a1, a); b0 = Math.min(b0, b); b1 = Math.max(b1, b); }
+        const ar = (a1 - a0) * (b1 - b0);
+        if (!best || ar < best.ar) best = { ar, ux, uz, a0, a1, b0, b1 };
+      }
+      if (!best) return null;
+      let { ux, uz, a0, a1, b0, b1 } = best;
+      if (b1 - b0 > a1 - a0) { const t = ux; ux = -uz; uz = t; [a0, a1, b0, b1] = [b0, b1, -a1, -a0]; }   // u along the long side
+      const ca = (a0 + a1) / 2, cb = (b0 + b1) / 2;
+      return { cx: ca * ux - cb * uz, cz: ca * uz + cb * ux, ux, uz, l: a1 - a0, w: b1 - b0, fill: Math.abs(ringArea(f)) / Math.max(best.ar, 1e-6) };
+    }
+    // pitched roof over the rectangle: gable (two slopes and two triangular end walls) or hipped (four slopes)
+    function pitchedRoof(o, top, seed, H, gable) {
+      const ov = 0.35, L2 = o.l / 2 + ov, W2 = o.w / 2 + ov, rh = clamp(o.w * 0.3, 1.2, 3.2), R = top + rh;
+      const P = (a, b, y) => [o.cx + o.ux * a - o.uz * b, y, o.cz + o.uz * a + o.ux * b];
+      const U = [o.ux, 0, o.uz], Vd = [-o.uz, 0, o.ux], rs = seed + 256, eave = top - 0.12;
+      const side = s => nrm3([Vd[0] * s * rh, W2, Vd[2] * s * rh]);
+      const rl = gable ? L2 : Math.max(L2 - W2, 0);
+      for (const s of [-1, 1]) {
+        const n = side(s), a = P(-L2, s * W2, eave), b = P(L2, s * W2, eave), c = P(rl, 0, R), d = P(-rl, 0, R);
+        face(a, b, c, n, rs, H, H); if (rl > 0) face(a, c, d, n, rs, H, H);
+        if (gable) {                                                  // the triangular end wall under the roof
+          const e = s * o.l / 2, wn = [U[0] * s, 0, U[2] * s];
+          face(P(e, -o.w / 2, top), P(e, o.w / 2, top), P(e, 0, R - 0.25), wn, seed, H, H + 2);
+        } else {
+          const en = nrm3([U[0] * s * rh, W2, U[2] * s * rh]);
+          face(P(s * L2, -W2, eave), P(s * L2, W2, eave), P(s * rl, 0, R), en, rs, H, H);
+        }
+      }
+      return rh;
+    }
+    // stair housings and air-conditioning plant on a big flat roof
+    function roofPlant(f, top, seed, H, area) {
+      const k = f.length / 2; let cx = 0, cz = 0; for (let i = 0; i < k; i++) { cx += f[i * 2]; cz += f[i * 2 + 1]; } cx /= k; cz /= k;
+      const inside = (x, z) => { let c = false; for (let i = 0, j = k - 1; i < k; j = i++) { const zi = f[i * 2 + 1], zj = f[j * 2 + 1]; if ((zi > z) !== (zj > z) && x < (f[j * 2] - f[i * 2]) * (z - zi) / (zj - zi) + f[i * 2]) c = !c; } return c; };
+      const n = 1 + (area > 900) + (area > 2500), R = Math.sqrt(area);
+      for (let i = 0; i < n; i++) {
+        const hs = hash(seed * 31 + i, i * 7 + 3), s = clamp(R * (0.08 + (hs & 15) / 150), 2.2, 9), bh = 1.6 + ((hs >>> 4) & 7) * 0.3;
+        const x = cx + (((hs >>> 8) & 255) / 255 - 0.5) * R * 0.45, z = cz + (((hs >>> 16) & 255) / 255 - 0.5) * R * 0.45, s2 = s / 2;
+        if (!inside(x - s2, z - s2) || !inside(x + s2, z - s2) || !inside(x + s2, z + s2) || !inside(x - s2, z + s2)) continue;
+        const y0 = top, y1 = top + bh, C = [[x - s2, z - s2], [x + s2, z - s2], [x + s2, z + s2], [x - s2, z + s2]];
+        for (let e = 0; e < 4; e++) {
+          const [ax, az] = C[e], [bx, bz] = C[(e + 1) % 4], ln = Math.hypot(bx - ax, bz - az), wn = [(bz - az) / ln, 0, -(bx - ax) / ln];
+          const mx = (ax + bx) / 2 - x, mz = (az + bz) / 2 - z, wo = wn[0] * mx + wn[2] * mz < 0 ? [-wn[0], 0, -wn[2]] : wn;
+          face([ax, y0, az], [bx, y0, bz], [bx, y1, bz], wo, seed, H, H + 2); face([ax, y0, az], [bx, y1, bz], [ax, y1, az], wo, seed, H, H + 2);
+        }
+        face([C[0][0], y1, C[0][1]], [C[1][0], y1, C[1][1]], [C[2][0], y1, C[2][1]], [0, 1, 0], seed + 256, H, H);
+        face([C[0][0], y1, C[0][1]], [C[2][0], y1, C[2][1]], [C[3][0], y1, C[3][1]], [0, 1, 0], seed + 256, H, H);
+      }
+    }
     const boxes = [], ringXZ = [], ringOff = [0], bRange = [], bCen = [];
     let maxTop = -1e9, minG = 1e9;
     for (let bi = 0; bi < bpolys.length; bi++) {
@@ -4810,6 +4904,13 @@ function cityWorkerMain() {
       const H = top - base, seed = hash(ext[0] + bi * 7, ext[1]) & 255;
       const iStart = q;
       maxTop = Math.max(maxTop, top); minG = Math.min(minG, bot);
+      // footprint in metres, its oriented rectangle, and what kind of roof it gets
+      const flat = [], holes = [];
+      for (let r = 0; r < poly.rings.length; r++) { if (r) holes.push(flat.length / 2); const rr = poly.rings[r]; for (let i = 0; i < rr.length; i += 2) flat.push(lx(rr[i]), lz(rr[i + 1])); }
+      const area = Math.abs(ringArea(flat));
+      const ob = poly.rings.length === 1 && h < 13 && area < 420 ? obb(flat) : null;
+      const pitched = !!(ob && ob.fill > 0.82 && ob.l < 40 && ob.w > 3);
+      const parapet = !pitched && h >= 7 ? 0.9 : 0;
       // walls
       for (const r of poly.rings) {
         const k = r.length / 2;
@@ -4820,14 +4921,16 @@ function cityWorkerMain() {
           if (len < 0.05) continue;
           const nx = Math.round(dz / len * 127), nz = Math.round(-dx / len * 127);
           const a0 = put(x0, z0, bot, nx, 0, nz, 0, seed, H, bot - base), b0 = put(x1, z1, bot, nx, 0, nz, len, seed, H, bot - base);
-          const b1 = put(x1, z1, top, nx, 0, nz, len, seed, H, H), a1 = put(x0, z0, top, nx, 0, nz, 0, seed, H, H);
+          const b1 = put(x1, z1, top + parapet, nx, 0, nz, len, seed, H, H + parapet), a1 = put(x0, z0, top + parapet, nx, 0, nz, 0, seed, H, H + parapet);
           tri(a0, b1, b0); tri(a0, a1, b1);
         }
       }
-      // roof
-      const flat = [], holes = [];
-      for (let r = 0; r < poly.rings.length; r++) { if (r) holes.push(flat.length / 2); const rr = poly.rings[r]; for (let i = 0; i < rr.length; i += 2) flat.push(lx(rr[i]), lz(rr[i + 1])); }
-      const t = earcut(flat, holes);
+      // roof: small, nearly rectangular houses get a pitched (gable or hipped) roof over their oriented
+      // rectangle; bigger flat roofs get a parapet band and some rooftop plant, so nothing reads as a plain box
+      const ridgeUp = pitched ? pitchedRoof(ob, top, seed, H, (seed & 7) < 5) : 0;
+      const t = ridgeUp ? [] : earcut(flat, holes);
+      if (!ridgeUp && h >= 7 && area > 250 && poly.rings.length === 1) roofPlant(flat, top, seed, H, area);
+      if (ridgeUp) maxTop = Math.max(maxTop, top + ridgeUp);
       if (t.length) {
         const v0 = v;
         for (let i = 0; i < flat.length; i += 2) put(flat[i], flat[i + 1], top, 0, 127, 0, 0, seed + 256, H, H);
@@ -4842,7 +4945,7 @@ function cityWorkerMain() {
       let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
       for (let i = 0; i < ext.length; i += 2) { const X = lx(ext[i]), Z = lz(ext[i + 1]); ringXZ.push(X, Z); x0 = Math.min(x0, X); x1 = Math.max(x1, X); z0 = Math.min(z0, Z); z1 = Math.max(z1, Z); }
       ringOff.push(ringXZ.length);
-      boxes.push(x0, z0, x1, z1, top);
+      boxes.push(x0, z0, x1, z1, top + ridgeUp);
     }
     // collision grid 32 x 32
     const G = 32, nb = boxes.length / 5, cellCount = new Uint32Array(G * G + 1);
@@ -4851,6 +4954,56 @@ function cityWorkerMain() {
     for (let i = 1; i <= G * G; i++) cellCount[i] += cellCount[i - 1];
     const fill = cellCount.slice(), items = new Uint32Array(cellCount[G * G]);
     for (let b = 0; b < nb; b++) for (let cz = cellOf(boxes[b * 5 + 1], Hm); cz <= cellOf(boxes[b * 5 + 3], Hm); cz++) for (let cx = cellOf(boxes[b * 5], W); cx <= cellOf(boxes[b * 5 + 2], W); cx++) items[fill[cz * G + cx]++] = b;
+    // ---------- roads: ribbons draped on the ground, plus the centre lines for placing and routing cars ----------
+    const RW = { motorway: 10.5, trunk: 9, primary: 8.5, secondary: 7.5, tertiary: 6.5, minor: 5.2, service: 3.6, track: 3, busway: 6.5, raceway: 10 };
+    const RC = { motorway: 1, trunk: 2, primary: 3, secondary: 4, tertiary: 5, minor: 6, service: 7, track: 8, busway: 5, raceway: 2 };
+    const rv0 = [], ri = [], rPts = [], rOff = [0], rCls = [], rWid = [];
+    const rput = (x, z, y, u, cls, w, acr) => { const k = rv0.length / 7; rv0.push(x, z, y, u, cls, w, acr); return k; };
+    if (L.transportation) for (const fe of L.transportation.feats) {
+      const f = readFeature(L.transportation, fe), cl = f.props.class;
+      if (f.type !== 2 || !f.geom || !RW[cl] || f.props.brunnel === 'tunnel' || f.props.indoor === 1) continue;
+      const w = RW[cl] * (cl === 'motorway' && f.props.oneway === 1 ? 0.8 : 1), c = RC[cl];
+      for (const ln of decodeLines(f.geom)) {
+        // metres, split into short pieces so the ribbon follows the ground
+        const pts = [];
+        for (let i = 0; i < ln.length; i += 2) {
+          const x = lx(ln[i]), z = lz(ln[i + 1]);
+          if (pts.length) { const [px, pz] = pts[pts.length - 1], d = Math.hypot(x - px, z - pz), ns = Math.floor(d / 9); for (let s = 1; s <= ns; s++) pts.push([px + (x - px) * s / (ns + 1), pz + (z - pz) * s / (ns + 1), ln[i - 2] + (ln[i] - ln[i - 2]) * s / (ns + 1), ln[i - 1] + (ln[i + 1] - ln[i - 1]) * s / (ns + 1)]); }
+          pts.push([x, z, ln[i], ln[i + 1]]);
+        }
+        if (pts.length < 2) continue;
+        // keep only what lies in this tile (the tile buffer would be drawn twice)
+        const inT = p => p[2] >= -8 && p[2] <= E + 8 && p[3] >= -8 && p[3] <= E + 8;
+        let run = [];
+        const flush = () => {
+          if (run.length >= 2) {
+            let u = 0, prev = -1;
+            for (let i = 0; i < run.length; i++) {
+              const a = run[Math.max(i - 1, 0)], b = run[Math.min(i + 1, run.length - 1)], tx = b[0] - a[0], tz = b[1] - a[1], tl = Math.hypot(tx, tz) || 1;
+              const nx = -tz / tl, nz = tx / tl, p = run[i], g = ground(p[2], p[3]) + (f.props.brunnel === 'bridge' ? 0.4 : 0.08);
+              if (i) u += Math.hypot(p[0] - run[i - 1][0], p[1] - run[i - 1][1]);
+              const l = rput(p[0] + nx * w / 2, p[1] + nz * w / 2, g, u, c, w, -1), r = rput(p[0] - nx * w / 2, p[1] - nz * w / 2, g, u, c, w, 1);
+              if (prev >= 0) { ri.push(prev, l, prev + 1, prev + 1, l, r); }
+              prev = l;
+              rPts.push(p[0], p[1], g);
+            }
+            rOff.push(rPts.length / 3); rCls.push(c); rWid.push(w);
+          }
+          run = [];
+        };
+        for (const p of pts) { if (inT(p)) run.push(p); else flush(); }
+        flush();
+      }
+    }
+    // packed like the buildings (x, z in dm, y, up normal, u in dm, class + 512, width dm, across)
+    const nrv = rv0.length / 7 | 0;
+    const rvb = new ArrayBuffer(Math.max(nrv, 1) * 20), r16 = new Int16Array(rvb), r32 = new Float32Array(rvb), r8 = new Int8Array(rvb);
+    for (let k = 0; k < nrv; k++) {
+      const s = k * 10, o = k * 7;
+      r16[s] = Math.round(rv0[o] * 10); r16[s + 1] = Math.round(rv0[o + 1] * 10); r32[k * 5 + 1] = rv0[o + 2];
+      r8[k * 20 + 8] = 0; r8[k * 20 + 9] = 127; r8[k * 20 + 10] = 0;
+      r16[s + 6] = clamp(Math.round((rv0[o + 3] % 3000) * 10), -32767, 32767); r16[s + 7] = 512 + rv0[o + 4]; r16[s + 8] = Math.round(rv0[o + 5] * 10); r16[s + 9] = rv0[o + 6] * 1000;
+    }
     // ---------- trees over woods and parks ----------
     const tpolys = polygons(L.landcover, E, p => p.class === 'wood' || (p.class === 'grass' && (p.subclass === 'park' || p.subclass === 'garden')));
     let totalA = 0;
@@ -4891,6 +5044,7 @@ function cityWorkerMain() {
       id: m.id, nv: v, ni: q, vb: vbuf, ib: ib.buffer, trees: tr.buffer, nTrees: tr.length / 4,
       boxes: new Float32Array(boxes).buffer, ringXZ: new Float32Array(ringXZ).buffer, ringOff: new Uint32Array(ringOff).buffer,
       cells: cellCount.buffer, items: items.buffer, bRange: new Uint32Array(bRange).buffer, bCen: new Float32Array(bCen).buffer, maxTop: nb ? maxTop : -1e9, minG: nb ? minG : 0, nBuild: nb, W, Hm,
+      nrv, nri: ri.length, rvb, rib: new Uint32Array(ri).buffer, rPts: new Float32Array(rPts).buffer, rOff: new Uint32Array(rOff).buffer, rCls: new Uint8Array(rCls).buffer, rWid: new Float32Array(rWid).buffer,
     };
     return res;
   }
@@ -4909,7 +5063,7 @@ function cityWorkerMain() {
       if (r.status === 404 || r.status === 204) { postMessage({ id: m.id, empty: true }); return; }
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const res = build(new Uint8Array(await r.arrayBuffer()), m);
-      postMessage(res, [res.vb, res.ib, res.trees, res.boxes, res.ringXZ, res.ringOff, res.cells, res.items, res.bRange, res.bCen]);
+      postMessage(res, [res.vb, res.ib, res.trees, res.boxes, res.ringXZ, res.ringOff, res.cells, res.items, res.bRange, res.bCen, res.rvb, res.rib, res.rPts, res.rOff, res.rCls, res.rWid]);
     } catch (err) { postMessage({ id: m.id, error: String((err && err.message) || err) }); }
   };
 }
@@ -4995,6 +5149,7 @@ function cityDispatch(t) {
     id, url: CITY.url.replace('{z}', 14).replace('{x}', t.x).replace('{y}', t.y), z: 14, x: t.x, y: t.y,
     latN: t.latN, latS: t.latS, lonW: t.lonW, lonE: t.lonE, dem: dt.dem ? dt.dem.slice() : null, g0: Math.max(rawHeightGeo(la, lo), 0),
     maxTrees: game.touch ? 15000 : 45000,
+    rws: rwNear(la, lo).filter(r => Math.abs(r.lat - la) < 0.06 && Math.abs(r.lon - lo) < 0.07).map(r => ({ lat: r.lat, lon: r.lon, kx: r.kx, sin: r.sin, cos: r.cos, len: r.len, wid: r.wid, elev: r.elev })),
   });
 }
 function cityReceive(r) {
@@ -5030,8 +5185,63 @@ function cityReceive(r) {
     t.tvao = vao; t.tb = tb;
     CITY.trees += r.nTrees;
   }
+  if (r.nri) {
+    const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, r.rvb, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.SHORT, false, 20, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 20, 4);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.BYTE, true, 20, 8);
+    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.SHORT, false, 20, 12);
+    const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(r.rib), gl.STATIC_DRAW);
+    gl.bindVertexArray(null);
+    t.rvao = vao; t.rvb = vb; t.rib = ib; t.rni = r.nri;
+  }
+  // road centre lines (tile-local metres) for putting the car on a road and for traffic
+  if (r.rPts) t.roads = { pts: new Float32Array(r.rPts), off: new Uint32Array(r.rOff), cls: new Uint8Array(r.rCls), wid: new Float32Array(r.rWid) };
   t.ov = -1;
   if (typeof PLAT !== 'undefined' && PLAT.rects.length) cityApplyHidden(t, PLAT.rects);
+}
+// nearest point on a road to a world position (within maxD m): position, the road's direction there, width, class
+function roadNearest(wx, wz, maxD = 400, minCls = 0) {
+  const [la, lo] = worldToGeo(wx, wz);
+  let best = null;
+  for (const t of CITY.tiles.values()) {
+    const R_ = t.roads; if (!R_ || !R_.pts.length) continue;
+    const X = (lo - t.lonW) * t.kxN, Z = -(la - t.latN) * KZ;
+    if (X < -maxD || Z < -maxD || X > (t.W || 2500) + maxD || Z > (t.Hm || 2500) + maxD) continue;
+    const P = R_.pts;
+    for (let l = 0; l < R_.cls.length; l++) {
+      if (R_.cls[l] >= 8 || (minCls && R_.cls[l] > minCls)) continue;           // no tracks
+      for (let k = R_.off[l]; k < R_.off[l + 1] - 1; k++) {
+        const ax = P[k * 3], az = P[k * 3 + 1], bx = P[k * 3 + 3], bz = P[k * 3 + 4], dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz;
+        if (L2 < 1e-4) continue;
+        const s = clamp(((X - ax) * dx + (Z - az) * dz) / L2, 0, 1), px = ax + dx * s, pz = az + dz * s, d = Math.hypot(X - px, Z - pz);
+        if (d < maxD && (!best || d < best.d)) best = { d, t, X: px, Z: pz, y: P[k * 3 + 2] + (P[k * 3 + 5] - P[k * 3 + 2]) * s, dx, dz, w: R_.wid[l], cls: R_.cls[l], line: l, seg: k };
+      }
+    }
+  }
+  if (!best) return null;
+  const w = geoToWorld(best.t.latN - best.Z / KZ, best.t.lonW + best.X / best.t.kxN), L = Math.hypot(best.dx, best.dz);
+  return { d: best.d, x: w[0], z: w[1], y: best.y, dir: [best.dx / L, best.dz / L], w: best.w, cls: best.cls, tile: best.t, line: best.line, seg: best.seg };
+}
+function drawRoads(planes) {
+  if (!CITY.ready || !JW.online) return;
+  if (!CITY.roadProg) CITY.roadProg = makeProgram(ROAD_VS, ROAD_FS);
+  const pr = CITY.roadProg, u = pr.u;
+  setCommon(pr);
+  gl.uniform1i(u.uNoise, 2);
+  gl.disable(gl.CULL_FACE);
+  gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-2, -6);
+  for (const t of CITY.tiles.values()) {
+    if (!t.rvao) continue;
+    const b = cityBox(t);
+    if (!boxInFrustum(planes, b[0], t.minG - 60, b[1], b[2], (t.maxTop > -1e8 ? t.maxTop : t.minG + 500) + 5, b[3])) continue;
+    citySetTile(u, t);
+    gl.bindVertexArray(t.rvao);
+    gl.drawElements(gl.TRIANGLES, t.rni, gl.UNSIGNED_INT, 0);
+  }
+  gl.disable(gl.POLYGON_OFFSET_FILL);
+  gl.enable(gl.CULL_FACE);
 }
 // hide OSM buildings that a loaded PLATEAU model already shows (rects: [south, west, north, east] in degrees)
 function cityApplyHidden(t, rects) {
@@ -5063,7 +5273,8 @@ function cityApplyHidden(t, rects) {
 function cityDispose(t) {
   if (t.vao) { gl.deleteVertexArray(t.vao); gl.deleteBuffer(t.vb); gl.deleteBuffer(t.ib); CITY.verts -= t.nv; }
   if (t.tvao) { gl.deleteVertexArray(t.tvao); gl.deleteBuffer(t.tb); CITY.trees -= t.nTrees; }
-  t.vao = t.tvao = null; t.col = null;
+  if (t.rvao) { gl.deleteVertexArray(t.rvao); gl.deleteBuffer(t.rvb); gl.deleteBuffer(t.rib); }
+  t.vao = t.tvao = t.rvao = null; t.col = null; t.roads = null;
   CITY.tiles.delete(t.key);
 }
 // world-space bounding box, refreshed when the floating origin moves
@@ -5293,6 +5504,60 @@ void main(){
     if (!house && vM.z < 3.6 && vM.z > 0.3 && s2 > 0.4) { col = mix(col, glass * 0.8, 0.5 * aa); bEm += vec3(1.0, 0.86, 0.62) * 0.9 * uNight * aa; }   // shop fronts
   }
   outColor = vec4(tonemap(applyFog(col, vWorld) + airLight(bEm, vWorld)), 1.0);
+}`;
+// roads: asphalt with Japanese markings (white edge lines, a dashed or solid centre line, lane lines on
+// motorways), a fine aggregate grain near the camera, darker wheel tracks
+const ROAD_VS = GLSL_HEAD + `
+layout(location=0) in vec2 aXZ;
+layout(location=1) in float aY;
+layout(location=3) in vec4 aM;       // u (dm), class + 512, width (dm), across (-1000..1000)
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv;
+` + CITY_POS_GLSL + `
+out vec3 vWorld; out vec3 vR; flat out float vCls;
+void main(){
+  vec3 w = cityWorld(aXZ * 0.1, aY);
+  vec2 d = w.xz - uCamPos.xz;
+  vWorld = w; w.y -= dot(d, d) * uCurv;
+  vR = vec3(aM.x * 0.1, aM.z * 0.1, aM.w * 0.001);
+  vCls = aM.y - 512.0;
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+const ROAD_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec3 vWorld; in vec3 vR; flat in float vCls;
+uniform sampler2D uNoise;
+out vec4 outColor;
+float stripe(float x, float c, float hw, float aa){ return 1.0 - smoothstep(hw - aa, hw + aa, abs(x - c)); }
+void main(){
+  float u = vR.x, w = vR.y, m = vR.z * w * 0.5;               // along, width, metres from the centre line
+  float dist = length(uCamPos - vWorld), aa = max(fwidth(m), 0.02);
+  float n1 = texture(uNoise, vWorld.xz / 0.45).b, n2 = texture(uNoise, vWorld.xz / 6.0).a, n3 = texture(uNoise, vWorld.xz / 37.0).b;
+  bool track = vCls > 7.5;
+  vec3 c = track ? mix(vec3(0.42, 0.37, 0.30), vec3(0.50, 0.45, 0.37), n2) : mix(vec3(0.17, 0.175, 0.18), vec3(0.25, 0.25, 0.255), n2 * 0.6 + n3 * 0.4);
+  if (vCls < 1.5) c *= 0.9;                                    // motorway: darker, newer surface
+  float grain = mix(1.0, 0.86 + 0.28 * n1, 1.0 - smoothstep(20.0, 160.0, dist));
+  c *= grain;
+  // wheel tracks: slightly darker and smoother where the tyres run
+  float lane = w > 6.0 ? w * 0.25 : w * 0.5;
+  c *= 1.0 - 0.06 * (stripe(abs(m), lane - 0.9, 0.35, 0.3) + stripe(abs(m), lane + 0.9, 0.35, 0.3));
+  // markings
+  float paint = 0.0;
+  if (!track && vCls < 6.5) {
+    paint += stripe(abs(m), w * 0.5 - 0.35, 0.075, aa);                          // edge lines
+    float dash = step(fract(u / 10.0), 0.5);                                       // 5 m line, 5 m gap
+    if (vCls < 1.5) paint += dash * stripe(m, 0.0, 0.075, aa);                    // motorway lane line
+    else if (vCls < 3.5) paint += stripe(abs(m), 0.12, 0.07, aa);                  // main roads: solid double centre
+    else paint += dash * stripe(m, 0.0, 0.075, aa);                               // dashed centre line
+  }
+  paint *= 0.85 * (0.8 + 0.2 * n1) * (1.0 - smoothstep(600.0, 2500.0, dist));
+  c = mix(c, vec3(0.86, 0.86, 0.84), clamp(paint, 0.0, 1.0));
+  float diff = max(uSunDir.y, 0.0);
+  vec3 col = c * (uSunCol * diff * 0.95 + uAmbSky * 0.85);
+  // soft shoulders: the ribbon's edge fades into the photo so it doesn't look pasted on
+  float edge = smoothstep(w * 0.5, w * 0.5 - 0.5, abs(m));
+  if (edge < 0.02) discard;
+  outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
 }`;
 const TREE_VS = GLSL_HEAD + `
 layout(location=0) in vec3 aC;       // card corner x, y, card index (2 = horizontal)
@@ -6064,7 +6329,7 @@ function googUpdate(planes) {
   // detail is chosen for the full display resolution (not the reduced render size), and the frame-rate
   // saving only coarsens distant tiles: buildings within ~3 km always keep their full shape
   const K = glCanvas.clientHeight * Math.min(window.devicePixelRatio || 1, game.touch ? 1.5 : 1.75) / (2 * R.tanY);
-  const SSE0 = game.touch ? 28 : (typeof CAR !== 'undefined' && CAR.on ? 9 : game.gfx === 'high' ? 12 : 18), MAXD = 60000 + Math.max(eye[1], 0) * 6;
+  const SSE0 = typeof CAR !== 'undefined' && CAR.on ? (game.touch ? 16 : 6) : game.touch ? 28 : game.gfx === 'high' ? 12 : 18, MAXD = 60000 + Math.max(eye[1], 0) * 6;
   const sseAt = d => SSE0 * (1 + ((GOOG.lodK || 1) - 1) * smoothstep(3000, 8000, d));
   const out = [], req = [];
   const dist = n => { if (n.planet) return 0; const c = googWorld(n); return Math.max(0, Math.hypot(c[0] - eye[0], c[1] - eye[1], c[2] - eye[2]) - n.r); };
@@ -9989,6 +10254,7 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyE' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); keys.KeyE = false; sysAutoStart(); }
   else if (e.code === 'KeyN' && !e.ctrlKey) clToggle();
   else if (e.code === 'Period') { SYS.pbrake = !SYS.pbrake; toast(SYS.pbrake ? 'パーキングブレーキ SET' : 'パーキングブレーキ 解除', 1300); }
+  else if (e.code === 'KeyY' && e.shiftKey && cam.mode === 'cockpit') cpRealToggle();
   else if (e.code === 'KeyY' && cam.mode === 'cockpit') { CPIT.yoke = !CPIT.yoke; toast(CPIT.yoke ? '操縦桿を表示' : '操縦桿を非表示', 1200); }
   else if (e.code === 'KeyH' && cam.mode === 'cockpit') game.cpHud = !game.cpHud;
 });
@@ -10055,11 +10321,47 @@ void main(){ vec3 c = texture(uTex, vUV).rgb; float sh = mix(1.0, smoothstep(0.0
 // ---------------------------------------------------------------------
 //  layout: eye point and the panel surfaces (origin, u = canvas x, v = canvas y)
 // ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
+//  a ready-made 3D cockpit model (GLB) where there is one: it replaces the built interior, and the live
+//  displays are shown on its screens. `eye` is the pilot's eye in the model's own coordinates (y up,
+//  forward -z, metres); the screens are rectangles in those coordinates mapped to parts of the panel canvas
+// ---------------------------------------------------------------------
+const CP_REAL = {
+  c172: {
+    url: 'models/c172_g1000_cockpit.glb', split: ['YOKE'], eye: [-0.2575, 0.56, -0.02],
+    screens: [{ c: [-0.2575, 0.324, -0.679], w: 0.229, h: 0.172, src: 'pfd' }, { c: [0.1135, 0.324, -0.679], w: 0.229, h: 0.172, src: 'mfd' }],
+    // the model has no colours of its own: paint it like a C172's cabin (by material name)
+    tint: { material_0: [0.15, 0.155, 0.16], Material: [0.09, 0.09, 0.1], mat008: [0.12, 0.12, 0.13], 'mat001.001': [0.44, 0.42, 0.39], YOKE: [0.1, 0.1, 0.11],
+      G1000_RH: [0.08, 0.08, 0.09], 'Material.001': [0.01, 0.01, 0.012], AIRSPEED: [0.05, 0.05, 0.05], ALTIMETER: [0.05, 0.05, 0.05], HORIZON: [0.05, 0.05, 0.05], '*': [0.06, 0.06, 0.065] },
+    credit: '3D コックピット：“Cessna 172 G1000 Cockpit” by davidpineda021199（Sketchfab）CC BY 4.0',
+  },
+};
+try { CPIT.real = localStorage.getItem('sorajima-cpreal') !== '0'; } catch (e) { CPIT.real = true; }
+// the loaded model for this aircraft, or null (none, switched off, still loading, or it could not be fetched)
+function cpReal(A) {
+  const D = CP_REAL[A.id];
+  if (!D || !CPIT.real || (typeof EG !== 'undefined' && EG.on) || typeof glbGet !== 'function') return null;
+  const g = glbGet(D.url, { split: D.split });
+  if (g.state !== 'ok') return null;
+  if (D.tint && !g.model.tinted) {
+    g.model.tinted = true;
+    for (const d of g.model.draws) if (!d.mat.tex) { const c = D.tint[d.mat.name] || D.tint['*']; if (c) d.mat.color = [...c, 1]; d.mat.rough = d.mat.name === 'Material.001' ? 0.1 : 0.75; d.mat.metal = 0; }
+  }
+  return { D, m: g.model };
+}
+function cpRealToggle() {
+  if (!CP_REAL[ACFT.id]) { toast('この機体には 3D モデルのコックピットがありません（C172 のみ）', 1800); return; }
+  CPIT.real = !CPIT.real; CPIT.dirty = true;
+  try { localStorage.setItem('sorajima-cpreal', CPIT.real ? '1' : '0'); } catch (e) { /* ignore */ }
+  const g = CPIT.real ? glbGet(CP_REAL[ACFT.id].url, { split: CP_REAL[ACFT.id].split }) : null;
+  toast(!CPIT.real ? '操作できるパネルのコックピット（スイッチをクリックで操作）' : g.state === 'error' ? '3D モデルを読み込めませんでした（オンラインで開いたときに使えます）' : '3D モデルのコックピット（Shift+Y で操作できるパネルに切替）', 2400);
+}
 function cpLayout(A) {
-  if (A.cpL && A.cpL.av === (typeof acCustom === 'function' ? acCustom(A.id).avionics : '')) return A.cpL;
+  const real = !!cpReal(A);
+  if (A.cpL && A.cpL.real === real && A.cpL.av === (typeof acCustom === 'function' ? acCustom(A.id).avionics : '')) return A.cpL;
   const L = Object.assign({}, CP_LAYOUT[A.id] || CP_LAYOUT.trainer), e = A.eye;
-  L.av = typeof acCustom === 'function' ? acCustom(A.id).avionics : '';
-  if (L.deck === 'light' && L.av === 'g1000' && ['c172', 'pa28'].includes(A.id)) L.deck = 'glassga';
+  L.av = typeof acCustom === 'function' ? acCustom(A.id).avionics : ''; L.real = real;
+  if (L.deck === 'light' && (L.av === 'g1000' || real) && ['c172', 'pa28'].includes(A.id)) L.deck = 'glassga';
   L.T = CP_THEME[L.theme] || CP_THEME.cessna;
   L.E = [L.seat, e[1], e[2]];
   L.floor = e[1] - 0.95;
@@ -10244,8 +10546,22 @@ function cpBuild(A) {
     const uv = new Float32Array([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1]);
     const v = makeVAO([{ loc: 0, size: 3, data: pos }, { loc: 1, size: 2, data: uv }]); v.count = 6; quads[k] = v;
   }
+  // the 3D model's screens: quads just in front of them, showing the PFD / MFD parts of the panel canvas
+  const rquads = [];
+  if (L.real) {
+    const D = CP_REAL[A.id], off = vsub(L.E, D.eye), [CW, CH] = CP_REG.main;
+    const src = { pfd: [L.px - 215, 26, 430, 300], mfd: [L.px + 303, 26, 540, 300] };
+    for (const sc of D.screens) {
+      const c = vadd(sc.c, off), hw = sc.w / 2, hh = sc.h / 2, zc = c[2] + 0.003;
+      const p = [[c[0] - hw, c[1] + hh, zc], [c[0] + hw, c[1] + hh, zc], [c[0] + hw, c[1] - hh, zc], [c[0] - hw, c[1] - hh, zc]];
+      const [sx, sy, sw, sh] = src[sc.src], u0 = sx / CW, u1 = (sx + sw) / CW, v0 = sy / CH, v1 = (sy + sh) / CH;
+      const pos = new Float32Array([...p[0], ...p[1], ...p[2], ...p[0], ...p[2], ...p[3]]);
+      const uv = new Float32Array([u0, v0, u1, v0, u1, v1, u0, v0, u1, v1, u0, v1]);
+      const v = makeVAO([{ loc: 0, size: 3, data: pos }, { loc: 1, size: 2, data: uv }]); v.count = 6; rquads.push(v);
+    }
+  }
   cpBakeAO(b, L, e);
-  return { L, vao: uploadMesh(b.build()), ctl: uploadMesh(y.build()), wheel: L.ctl === 'column' ? uploadMesh(wh.build()) : null, lever: uploadMesh(lever.build()), flap: uploadMesh(flap.build()), pedal: uploadMesh(pedal.build()), quads };
+  return { L, rquads, vao: uploadMesh(b.build()), ctl: uploadMesh(y.build()), wheel: L.ctl === 'column' ? uploadMesh(wh.build()) : null, lever: uploadMesh(lever.build()), flap: uploadMesh(flap.build()), pedal: uploadMesh(pedal.build()), quads };
 }
 // baked ambient light: corners, the footwell and the space under the glareshield get less light, and a
 // faint per-vertex variation breaks up the flat colours (a real interior is never evenly lit)
@@ -10278,11 +10594,14 @@ function cpLevers(L) {
   return out;
 }
 function drawCockpit(base) {
+  cpCreditHide();
   if (!cpActive()) return;
   const A = ACFT, L = cpLayout(A);
   if (!A.cp || A.cp.L !== L) A.cp = cpBuild(A);
   if (CPIT.dirty) { for (const k in CPIT.reg) CPIT.reg[k].force = true; CPIT.dirty = false; }
   const C = A.cp, u = progMesh.u, s = sim, e = A.eye;
+  const real = L.real && cpReal(A);
+  if (real) { cpDrawReal(A, L, C, real, base); return; }
   setCommon(progMesh);
   gl.uniform1i(u.uLivery, 0); gl.uniform3f(u.uEmissive, 0, 0, 0); gl.uniform1f(u.uAlpha, 1); gl.uniform1f(u.uSpec, 0.05);
   gl.uniformMatrix4fv(u.uModel, false, base);
@@ -10330,6 +10649,35 @@ function drawCockpit(base) {
   gl.enable(gl.CULL_FACE);
   gl.activeTexture(gl.TEXTURE0);
 }
+// the 3D model cockpit: the model, then the live screens on it
+function cpDrawReal(A, L, C, real, base) {
+  const M = M4.mul(base, M4.fromQP([0, 0, 0, 1], vsub(L.E, real.D.eye)));
+  const night = ENV.night ? 1 : 0, day = clamp(ENV.sunDir[1] * 5, 0, 1);
+  // the yokes turn with the ailerons and slide in and out with the elevator
+  const s = sim, yoke = d => { const c = d.center; return M4.mul(M4.fromQP(qaxis([0, 0, 1], -s.ail * 0.75), [c[0], c[1], c[2] + s.elev * 0.07]), M4.fromQP([0, 0, 0, 1], vscale(c, -1))); };
+  glbDraw(real.m, M, [1.1, night ? 2.4 : 1.8, 1], CPIT.yoke ? yoke : () => new Float32Array(16));                 // (Y hides them: a zero matrix)
+  if (!CPIT.prog) CPIT.prog = makeProgram(CPANEL_VS, CPANEL_FS);
+  const pr = CPIT.prog; setCommon(pr);
+  gl.uniformMatrix4fv(pr.u.uModel, false, base);
+  // the displays are lit from inside: nearly the same by day and by night
+  gl.uniform3fv(pr.u.uLight, night ? [0.8, 0.8, 0.8] : [0.9 + 0.1 * day, 0.9 + 0.1 * day, 0.92 + 0.08 * day]);
+  gl.uniform1f(pr.u.uShade, 0);
+  gl.disable(gl.CULL_FACE);
+  gl.activeTexture(gl.TEXTURE9); gl.uniform1i(pr.u.uTex, 9);
+  gl.bindTexture(gl.TEXTURE_2D, cpRegion('main', L).tex);
+  for (const q of C.rquads) { gl.bindVertexArray(q.vao); gl.drawArrays(gl.TRIANGLES, 0, 6); }
+  gl.enable(gl.CULL_FACE);
+  gl.activeTexture(gl.TEXTURE0);
+  cpCredit(real.D.credit);
+}
+// the model's author and licence, shown while it is on screen (CC BY asks for it)
+function cpCredit(t) {
+  let el = document.getElementById('cp-credit');
+  if (!el) { el = document.createElement('div'); el.id = 'cp-credit'; el.style.cssText = 'position:fixed;right:8px;bottom:4px;z-index:15;font:500 10px system-ui,sans-serif;color:rgba(235,240,245,.72);text-shadow:0 1px 2px #000;pointer-events:none'; document.body.append(el); }
+  if (el.textContent !== t) el.textContent = t;
+  el.hidden = false; CPIT.creditT = R.time;
+}
+function cpCreditHide() { const el = document.getElementById('cp-credit'); if (el && !el.hidden && R.time - (CPIT.creditT || 0) > 0.3) el.hidden = true; }
 // ---------------------------------------------------------------------
 //  panel textures: one canvas per surface, redrawn at its own rate
 // ---------------------------------------------------------------------
@@ -10958,7 +11306,7 @@ function ovhPanel(g, L, T) {
 //  mouse / touch: the ray from the eye is intersected with every surface
 // ---------------------------------------------------------------------
 function cpHit(clientX, clientY) {
-  if (!cpActive() || !ACFT.cp) return null;
+  if (!cpActive() || !ACFT.cp || ACFT.cp.L.real) return null;       // (the 3D model's switches are not live: Shift+Y for the panel)
   const r = glCanvas.getBoundingClientRect(), nx = (clientX - r.left) / r.width * 2 - 1, ny = 1 - (clientY - r.top) / r.height * 2;
   const d = vnorm(vadd(R.camF, vadd(vscale(R.camR, nx * R.tanX), vscale(R.camU, ny * R.tanY))));
   const qi = qconj(sim.q), o = qrot(qi, vsub(cam.eye, sim.pos)), db = qrot(qi, d), L = ACFT.cp.L;
@@ -11173,6 +11521,321 @@ function egHud(g) {
   g.restore();
 }
 // =====================================================================
+//  GLB (binary glTF 2.0) models: a small loader for ready-made 3D models
+//  (the cockpit interiors). Node transforms are baked into the vertices,
+//  primitives are grouped by material, textures come from the file.
+// =====================================================================
+const GLB = { prog: null, cache: new Map() };
+const GLB_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNrm;
+layout(location=2) in vec2 aUV;
+uniform mat4 uViewProj, uModel;
+out vec3 vWorld; out vec3 vN; out vec2 vUV;
+void main(){ vec4 w = uModel * vec4(aPos, 1.0); vWorld = w.xyz; vN = mat3(uModel) * aNrm; vUV = aUV; gl_Position = uViewProj * w; }`;
+const GLB_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec3 vWorld; in vec3 vN; in vec2 vUV;
+uniform sampler2D uTex, uEmTex;
+uniform int uHasTex, uHasEm;
+uniform vec4 uColor;
+uniform vec3 uEmis, uLightK;
+uniform float uCut, uRough, uMetal;
+out vec4 outColor;
+void main(){
+  vec4 c = uColor; if (uHasTex == 1) c *= texture(uTex, vUV);
+  if (c.a < uCut) discard;
+  vec3 n = normalize(vN); if (!gl_FrontFacing) n = -n;
+  vec3 V = normalize(uCamPos - vWorld);
+  // inside a cabin: the sun through the windows plus the sky's light, and a little sheen on smooth parts
+  float diff = max(dot(n, uSunDir), 0.0);
+  vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
+  vec3 col = c.rgb * (uSunCol * diff * 0.55 * uLightK.x + amb * 0.95 * uLightK.y);
+  vec3 H = normalize(V + uSunDir);
+  float sp = pow(max(dot(n, H), 0.0), mix(80.0, 8.0, uRough)) * (1.0 - uRough) * 0.5;
+  col += uSunCol * sp * mix(vec3(0.04), c.rgb, uMetal) * uLightK.x;
+  vec3 em = uEmis; if (uHasEm == 1) em *= texture(uEmTex, vUV).rgb;
+  col += em * uLightK.z;
+  outColor = vec4(tonemap(col), c.a);
+}`;
+function glbParse(buf) {
+  const dv = new DataView(buf);
+  if (dv.getUint32(0, true) !== 0x46546c67) throw new Error('GLB ではありません');
+  let off = 12, json = null, bin = null;
+  while (off < buf.byteLength) {
+    const len = dv.getUint32(off, true), type = dv.getUint32(off + 4, true);
+    if (type === 0x4e4f534a) json = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, off + 8, len)));
+    else if (type === 0x004e4942) bin = new Uint8Array(buf, off + 8, len);
+    off += 8 + len;
+  }
+  return { json, bin };
+}
+// an accessor as a plain array of floats (normalised integers converted), respecting the stride
+function glbRead(j, bin, ai) {
+  const a = j.accessors[ai], bv = j.bufferViews[a.bufferView];
+  const nc = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 }[a.type];
+  const size = { 5126: 4, 5125: 4, 5123: 2, 5122: 2, 5121: 1, 5120: 1 }[a.componentType];
+  const stride = bv.byteStride || nc * size, base = (bv.byteOffset || 0) + (a.byteOffset || 0);
+  const dv = new DataView(bin.buffer, bin.byteOffset + base);
+  const out = new Float32Array(a.count * nc);
+  const rd = { 5126: o => dv.getFloat32(o, true), 5125: o => dv.getUint32(o, true), 5123: o => dv.getUint16(o, true), 5122: o => dv.getInt16(o, true), 5121: o => dv.getUint8(o), 5120: o => dv.getInt8(o) }[a.componentType];
+  const norm = a.normalized ? { 5123: 65535, 5122: 32767, 5121: 255, 5120: 127 }[a.componentType] : 0;
+  for (let i = 0; i < a.count; i++) for (let k = 0; k < nc; k++) { let v = rd(i * stride + k * size); if (norm) v = Math.max(v / norm, -1); out[i * nc + k] = v; }
+  return out;
+}
+function glbNodeMatrix(n) {
+  if (n.matrix) return n.matrix.slice();
+  const t = n.translation || [0, 0, 0], r = n.rotation || [0, 0, 0, 1], s = n.scale || [1, 1, 1];
+  const m = M4.fromQP(r, t);
+  for (let c = 0; c < 3; c++) for (let k = 0; k < 3; k++) m[c * 4 + k] *= s[c];
+  return m;
+}
+// load a GLB (ArrayBuffer) into GPU buffers grouped by material
+async function glbLoad(buf, opt = {}) {
+  const { json: j, bin } = glbParse(buf);
+  // textures
+  const imgs = await Promise.all((j.images || []).map(async im => {
+    if (im.bufferView === undefined) return null;
+    const bv = j.bufferViews[im.bufferView];
+    const blob = new Blob([new Uint8Array(bin.buffer, bin.byteOffset + (bv.byteOffset || 0), bv.byteLength)], { type: im.mimeType || 'image/png' });
+    try { return await createImageBitmap(blob, { imageOrientation: 'none' }); } catch (e) { return null; }
+  }));
+  const texCache = new Map();
+  const tex = ti => {
+    if (ti === undefined || !j.textures || !j.textures[ti]) return null;
+    const src = j.textures[ti].source; if (texCache.has(src)) return texCache.get(src);
+    const bmp = imgs[src]; if (!bmp) return null;
+    const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bmp);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+    texCache.set(src, t); return t;
+  };
+  const mats = (j.materials || []).map(m => {
+    const p = m.pbrMetallicRoughness || {};
+    return {
+      name: m.name || '', color: p.baseColorFactor || [1, 1, 1, 1], tex: tex(p.baseColorTexture && p.baseColorTexture.index),
+      em: m.emissiveFactor || [0, 0, 0], emTex: tex(m.emissiveTexture && m.emissiveTexture.index),
+      rough: p.roughnessFactor ?? 1, metal: p.metallicFactor ?? 1, blend: m.alphaMode === 'BLEND', cut: m.alphaMode === 'MASK' ? (m.alphaCutoff ?? 0.5) : 0,
+    };
+  });
+  // walk the scene, baking each node's transform into its vertices, and gather per material
+  const groups = new Map(), lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+  const walk = (ni, parent) => {
+    const n = j.nodes[ni], m = M4.mul(parent, glbNodeMatrix(n));
+    if (n.mesh !== undefined) for (const p of j.meshes[n.mesh].primitives) {
+      if (p.mode !== undefined && p.mode !== 4) continue;
+      const P = glbRead(j, bin, p.attributes.POSITION), N = p.attributes.NORMAL !== undefined ? glbRead(j, bin, p.attributes.NORMAL) : null;
+      const U = p.attributes.TEXCOORD_0 !== undefined ? glbRead(j, bin, p.attributes.TEXCOORD_0) : null;
+      const I = p.indices !== undefined ? glbRead(j, bin, p.indices) : Float32Array.from({ length: P.length / 3 }, (_, i) => i);
+      // parts whose material is listed in opt.split stay separate (to move them: the yokes)
+      const mi = p.material ?? -1, sep = opt.split && j.materials && j.materials[mi] && opt.split.includes(j.materials[mi].name), gk = sep ? mi + '/' + ni : mi;
+      let g = groups.get(gk); if (!g) { g = { mi, pos: [], nrm: [], uv: [], sep }; groups.set(gk, g); }
+      // normal matrix = the upper 3x3 (scales in these models are uniform)
+      for (let k = 0; k < I.length; k++) {
+        const v = I[k] * 3, x = P[v], y = P[v + 1], z = P[v + 2];
+        const wx = m[0] * x + m[4] * y + m[8] * z + m[12], wy = m[1] * x + m[5] * y + m[9] * z + m[13], wz = m[2] * x + m[6] * y + m[10] * z + m[14];
+        g.pos.push(wx, wy, wz);
+        lo[0] = Math.min(lo[0], wx); lo[1] = Math.min(lo[1], wy); lo[2] = Math.min(lo[2], wz); hi[0] = Math.max(hi[0], wx); hi[1] = Math.max(hi[1], wy); hi[2] = Math.max(hi[2], wz);
+        if (N) { const a = N[v], b = N[v + 1], c = N[v + 2]; const nx = m[0] * a + m[4] * b + m[8] * c, ny = m[1] * a + m[5] * b + m[9] * c, nz = m[2] * a + m[6] * b + m[10] * c, l = Math.hypot(nx, ny, nz) || 1; g.nrm.push(nx / l, ny / l, nz / l); }
+        else g.nrm.push(0, 1, 0);
+        if (U) g.uv.push(U[I[k] * 2], U[I[k] * 2 + 1]); else g.uv.push(0, 0);
+      }
+    }
+    for (const c of n.children || []) walk(c, m);
+  };
+  const scene = j.scenes[j.scene || 0];
+  for (const ni of scene.nodes) walk(ni, M4.ident());
+  const draws = [];
+  for (const g of groups.values()) {
+    const mi = g.mi;
+    const vao = makeVAO([{ loc: 0, size: 3, data: new Float32Array(g.pos) }, { loc: 1, size: 3, data: new Float32Array(g.nrm) }, { loc: 2, size: 2, data: new Float32Array(g.uv) }]);
+    const mat = mats[mi] || { name: '', color: [0.8, 0.8, 0.8, 1], tex: null, em: [0, 0, 0], emTex: null, rough: 1, metal: 0, blend: false, cut: 0 };
+    let c = null;
+    if (g.sep) { const a = [1e9, 1e9, 1e9], b = [-1e9, -1e9, -1e9]; for (let i = 0; i < g.pos.length; i++) { a[i % 3] = Math.min(a[i % 3], g.pos[i]); b[i % 3] = Math.max(b[i % 3], g.pos[i]); } c = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2]; }
+    draws.push({ vao, count: g.pos.length / 3, mat, center: c, part: g.sep ? mat.name : null });
+  }
+  draws.sort((a, b) => a.mat.blend - b.mat.blend);                     // glass last
+  const extras = j.asset && j.asset.extras || {};
+  return { draws, lo, hi, credit: extras, names: mats.map(m => m.name) };
+}
+// draw a loaded model with a model matrix (light: sun, ambient, emissive multipliers)
+function glbDraw(model, M, lightK = [1, 1, 1], partM = null) {
+  if (!GLB.prog) GLB.prog = makeProgram(GLB_VS, GLB_FS);
+  const pr = GLB.prog, u = pr.u;
+  setCommon(pr);
+  gl.uniformMatrix4fv(u.uModel, false, M);
+  gl.uniform3fv(u.uLightK, lightK);
+  gl.uniform1i(u.uTex, 0); gl.uniform1i(u.uEmTex, 1);
+  let blending = false;
+  gl.disable(gl.CULL_FACE);
+  for (const d of model.draws) {
+    const m = d.mat;
+    if (m.blend && !blending) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); blending = true; }
+    gl.uniformMatrix4fv(u.uModel, false, d.part && partM ? M4.mul(M, partM(d)) : M);
+    gl.uniform4fv(u.uColor, m.color); gl.uniform3fv(u.uEmis, m.em); gl.uniform1f(u.uCut, m.cut);
+    gl.uniform1f(u.uRough, m.rough); gl.uniform1f(u.uMetal, m.metal);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, m.tex); gl.uniform1i(u.uHasTex, m.tex ? 1 : 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, m.emTex); gl.uniform1i(u.uHasEm, m.emTex ? 1 : 0);
+    gl.bindVertexArray(d.vao.vao || d.vao); gl.drawArrays(gl.TRIANGLES, 0, d.count);
+  }
+  if (blending) { gl.disable(gl.BLEND); gl.depthMask(true); }
+  gl.enable(gl.CULL_FACE);
+  gl.activeTexture(gl.TEXTURE0);
+}
+// fetch a model file next to the page (cached); resolves to null when it can't be had
+function glbGet(url, opt) {
+  if (!GLB.cache.has(url)) GLB.cache.set(url, { state: 'loading', model: null, p: fetch(url).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }).then(b => glbLoad(b, opt))
+    .then(m => { const e = GLB.cache.get(url); e.state = 'ok'; e.model = m; return m; }).catch(err => { const e = GLB.cache.get(url); e.state = 'error'; e.err = String(err); console.warn('GLB', url, err); return null; }) });
+  return GLB.cache.get(url);
+}
+// =====================================================================
+//  CAR MODELS: smooth bodies built from cross-sections (a lower body and
+//  a glasshouse, each a rounded section swept from nose to tail through
+//  a few key stations), with pillars, door seams, lamps, mirrors and
+//  multi-spoke wheels. Five kinds; also used for the traffic.
+// =====================================================================
+// stations: [position 0 (nose) .. 1 (tail), half width (fraction of W/2), bottom y, top y]
+const CAR_MODELS = [
+  { id: 'sedan', name: 'セダン', L: 4.85, W: 1.82, wb: 2.85, r: 0.33, track: 0.79, fr: 0.27, mass: 1550, power: 150000,
+    body: [[0, 0.72, 0.36, 0.64], [0.03, 0.9, 0.3, 0.76], [0.12, 0.98, 0.27, 0.82], [0.3, 1, 0.26, 0.9], [0.62, 1, 0.26, 0.92], [0.82, 0.98, 0.28, 0.94], [0.95, 0.9, 0.32, 0.92], [1, 0.74, 0.4, 0.82]],
+    cabin: [[0.29, 0.86, 0.88, 0.9], [0.4, 0.8, 0.9, 1.4], [0.64, 0.79, 0.92, 1.44], [0.78, 0.8, 0.93, 1.3], [0.86, 0.84, 0.94, 0.95]], pillars: [0.3, 0.52, 0.8], glass: [0.13, 0.16, 0.2], rim: 'silver' },
+  { id: 'hatch', name: 'ハッチバック', L: 4.0, W: 1.7, wb: 2.53, r: 0.31, track: 0.76, fr: 0.26, mass: 1150, power: 90000,
+    body: [[0, 0.74, 0.34, 0.62], [0.04, 0.92, 0.28, 0.74], [0.15, 0.99, 0.26, 0.84], [0.4, 1, 0.26, 0.92], [0.78, 1, 0.27, 0.95], [0.94, 0.96, 0.3, 0.98], [1, 0.9, 0.36, 0.96]],
+    cabin: [[0.25, 0.85, 0.83, 0.86], [0.36, 0.8, 0.88, 1.45], [0.8, 0.78, 0.94, 1.52], [0.95, 0.78, 0.96, 1.44], [0.99, 0.8, 0.96, 1.0]], pillars: [0.27, 0.56, 0.93], glass: [0.13, 0.16, 0.2], rim: 'silver' },
+  { id: 'suv', name: 'SUV', L: 4.6, W: 1.86, wb: 2.69, r: 0.37, track: 0.8, fr: 0.25, mass: 1650, power: 140000,
+    body: [[0, 0.78, 0.45, 0.8], [0.04, 0.94, 0.4, 0.94], [0.14, 1, 0.38, 1.0], [0.4, 1, 0.38, 1.04], [0.8, 1, 0.39, 1.06], [0.95, 0.97, 0.42, 1.06], [1, 0.88, 0.5, 1.02]],
+    cabin: [[0.27, 0.87, 0.99, 1.02], [0.37, 0.82, 1.03, 1.6], [0.8, 0.8, 1.05, 1.66], [0.94, 0.8, 1.06, 1.6], [0.99, 0.82, 1.06, 1.1]], pillars: [0.28, 0.55, 0.92], glass: [0.1, 0.12, 0.15], rim: 'dark' },
+  { id: 'sports', name: 'スポーツカー', L: 4.4, W: 1.84, wb: 2.57, r: 0.33, track: 0.8, fr: 0.3, mass: 1300, power: 220000,
+    body: [[0, 0.7, 0.26, 0.52], [0.04, 0.9, 0.2, 0.62], [0.2, 0.99, 0.19, 0.74], [0.42, 1, 0.19, 0.82], [0.72, 1, 0.2, 0.86], [0.9, 0.97, 0.23, 0.86], [1, 0.8, 0.3, 0.78]],
+    cabin: [[0.4, 0.84, 0.78, 0.8], [0.5, 0.76, 0.82, 1.22], [0.66, 0.72, 0.84, 1.26], [0.84, 0.74, 0.86, 1.0], [0.95, 0.8, 0.86, 0.87]], pillars: [0.41, 0.68], glass: [0.09, 0.1, 0.12], rim: 'dark' },
+  { id: 'kei', name: '軽ハイトワゴン', L: 3.39, W: 1.47, wb: 2.52, r: 0.28, track: 0.73, fr: 0.2, mass: 950, power: 47000,
+    body: [[0, 0.8, 0.34, 0.66], [0.05, 0.95, 0.28, 0.82], [0.14, 1, 0.26, 0.92], [0.5, 1, 0.26, 0.96], [0.9, 1, 0.27, 0.98], [1, 0.95, 0.3, 0.96]],
+    cabin: [[0.15, 0.9, 0.9, 0.94], [0.26, 0.86, 0.94, 1.7], [0.9, 0.86, 0.98, 1.76], [0.99, 0.87, 0.98, 1.72], [1.0, 0.88, 0.98, 1.0]], pillars: [0.17, 0.52, 0.97], glass: [0.13, 0.16, 0.2], rim: 'silver' },
+];
+const CAR_PAINTS = [[0.62, 0.05, 0.07], [0.92, 0.92, 0.9], [0.06, 0.06, 0.07], [0.52, 0.54, 0.57], [0.08, 0.2, 0.45], [0.75, 0.76, 0.78], [0.14, 0.3, 0.2], [0.85, 0.55, 0.1], [0.35, 0.05, 0.08]];
+// smooth interpolation of the stations (Catmull-Rom on each value)
+function carStation(st, t) {
+  let i = 0; while (i < st.length - 2 && t > st[i + 1][0]) i++;
+  const a = st[Math.max(i - 1, 0)], b = st[i], c = st[i + 1], d = st[Math.min(i + 2, st.length - 1)];
+  const u = clamp((t - b[0]) / Math.max(c[0] - b[0], 1e-6), 0, 1), u2 = u * u, u3 = u2 * u;
+  return b.map((_, k) => k ? 0.5 * (2 * b[k] + (-a[k] + c[k]) * u + (2 * a[k] - 5 * b[k] + 4 * c[k] - d[k]) * u2 + (-a[k] + 3 * b[k] - 3 * c[k] + d[k]) * u3) : t);
+}
+// a rounded section: super-ellipse, with the top narrower than the bottom (tumblehome) when taper < 1
+function carRing(z, hw, y0, y1, e, taper = 1, n = 22) {
+  const out = [], yc = (y0 + y1) / 2, hh = (y1 - y0) / 2;
+  for (let i = 0; i < n; i++) {
+    const a = i / n * Math.PI * 2, c = Math.cos(a), s = Math.sin(a);
+    const y = yc + hh * Math.sign(s) * Math.abs(s) ** (2 / e), k = taper === 1 ? 1 : 1 - (1 - taper) * clamp((y - y0) / (y1 - y0), 0, 1);
+    out.push([hw * k * Math.sign(c) * Math.abs(c) ** (2 / e), y, z]);
+  }
+  return out;
+}
+function buildCarModel(M, paint) {
+  const b = new MeshBuilder(), w = new MeshBuilder(), lt = new MeshBuilder();
+  const L = M.L, W2 = M.W / 2, z0 = -L / 2, black = [0.03, 0.03, 0.035], trim = [0.07, 0.07, 0.08], chrome = [0.72, 0.74, 0.77];
+  const zAt = t => z0 + t * L;
+  // wheel openings: the lower edge of the body rises over each wheel
+  const axF = zAt(M.fr), axR = axF + M.wb, arch = z => { let k = 0; for (const a of [axF, axR]) k = Math.max(k, 1 - clamp(Math.abs(z - a) / (M.r * 1.45), 0, 1) ** 2); return k; };
+  // lower body
+  const rings = [], N = 30;
+  for (let i = 0; i <= N; i++) {
+    const t = i / N, s = carStation(M.body, t), z = zAt(t);
+    const yb = Math.max(s[2], s[2] + (M.r * 2.05 - s[2]) * arch(z) * 0.92);
+    rings.push(carRing(z, s[1] * W2, yb, s[3], 3.2, 0.96));
+  }
+  const seams = M.pillars.slice(1).map(zAt);
+  b.loft(rings, p => {
+    const side = Math.abs(p[0]) > W2 * 0.8 && p[1] < rings[0][0][1] + 1.5;
+    if (p[1] < 0.42 && Math.abs(p[0]) < W2 * 0.93) return black;                    // underside
+    if (side && seams.some(sz => Math.abs(p[2] - sz) < 0.012) && p[1] > 0.35) return vscale(paint, 0.35);   // door seams
+    if (p[1] < 0.36 + (M.id === 'suv' ? 0.12 : 0)) return vscale(paint, M.id === 'suv' ? 0.2 : 0.75);       // sill / cladding
+    return paint;
+  }, { capStart: true, capEnd: true });
+  // glasshouse: glass with body-coloured pillars and roof
+  const cr = [], NC = 16, c0 = M.cabin[0][0], c1 = M.cabin[M.cabin.length - 1][0];
+  for (let i = 0; i <= NC; i++) {
+    const t = c0 + (c1 - c0) * i / NC, s = carStation(M.cabin, t);
+    cr.push(carRing(zAt(t), s[1] * W2, s[2], Math.max(s[3], s[2] + 0.02), 3.6, 0.8));
+  }
+  const pz = M.pillars.map(zAt), roofY = Math.max(...M.cabin.map(s => s[3]));
+  b.loft(cr, p => {
+    if (p[1] > roofY - 0.07 || p[1] < M.cabin[1][2] + 0.03) return paint;
+    if (pz.some((z, i) => Math.abs(p[2] - z) < (i === pz.length - 1 ? 0.1 : 0.05))) return M.id === 'sports' ? black : paint;
+    return M.glass;
+  }, { capStart: true, capEnd: true });
+  // front: grille, bumper lip, number plate; rear: plate, diffuser
+  const fs = carStation(M.body, 0.02), rs = carStation(M.body, 0.985);
+  b.box([0, (fs[2] + fs[3]) * 0.45, z0 + 0.05], [M.W * 0.42, (fs[3] - fs[2]) * 0.35, 0.06], trim);
+  b.box([0, fs[2] + 0.05, z0 + 0.1], [M.W * 0.7, 0.07, 0.1], black);
+  b.box([0, fs[2] + 0.2, z0 + 0.01], [0.33, 0.11, 0.02], [0.92, 0.92, 0.88]);
+  b.box([0, rs[2] + 0.28, -z0 - 0.02], [0.33, 0.11, 0.02], [0.92, 0.92, 0.88]);
+  b.box([0, rs[2] + 0.06, -z0 - 0.08], [M.W * 0.7, 0.08, 0.1], black);
+  // mirrors and door handles
+  const ms = carStation(M.cabin, c0 + 0.02);
+  for (const s of [-1, 1]) {
+    b.box([s * (ms[1] * W2 + 0.1), ms[2] + 0.08, zAt(c0 + 0.03)], [0.14, 0.09, 0.2], M.id === 'sports' ? black : paint);
+    for (const sz of seams) b.box([s * (W2 * 0.99), carStation(M.body, (sz - z0) / L)[3] - 0.1, sz + 0.25], [0.02, 0.025, 0.16], chrome);
+  }
+  // lamps (drawn with their own emission): headlamps wrap the front corners, tail lamps across the back
+  // (kept inside the body's width where they sit, which narrows towards the nose and the tail)
+  const fl = carStation(M.body, 0.035), rl = carStation(M.body, 0.975), fw = Math.min(M.W * 0.12, fl[1] * W2 * 0.4), rw = Math.min(M.W * 0.11, rl[1] * W2 * 0.4);
+  for (const s of [-1, 1]) {
+    lt.box([s * (fl[1] * W2 * 0.96 - fw), fs[3] - 0.08, zAt(0.035) - 0.02], [fw * 2, 0.07, 0.1], [0.96, 0.97, 1.0]);
+    lt.box([s * (rl[1] * W2 * 0.96 - rw), rs[3] - 0.1, zAt(0.975) + 0.04], [rw * 2, 0.08, 0.08], [0.8, 0.05, 0.06]);
+  }
+  if (M.id === 'sedan' || M.id === 'sports') lt.box([0, rs[3] - 0.1, zAt(0.975) + 0.05], [rl[1] * W2 * 0.9 - rw * 2, 0.03, 0.06], [0.6, 0.04, 0.05]);
+  // wheel: rounded tyre, rim with five (or ten) spokes, brake disc
+  const R = M.r, tw = 0.22, rimC = M.rim === 'dark' ? [0.12, 0.12, 0.13] : [0.72, 0.73, 0.75];
+  const tyre = []; for (const [x, rr] of [[-tw / 2, R * 0.72], [-tw / 2 - 0.01, R * 0.9], [-tw / 2 + 0.02, R], [tw / 2 - 0.02, R], [tw / 2 + 0.01, R * 0.9], [tw / 2, R * 0.72]]) tyre.push(Array.from({ length: 24 }, (_, i) => { const a = i / 24 * Math.PI * 2; return [x, Math.cos(a) * rr, Math.sin(a) * rr]; }));
+  w.loft(tyre, [0.05, 0.05, 0.055], { smooth: true });
+  w.cylinder([tw / 2 - 0.06, 0, 0], [tw / 2 - 0.02, 0, 0], R * 0.72, R * 0.72, 20, vscale(rimC, 0.7));
+  w.cylinder([tw / 2 - 0.1, 0, 0], [tw / 2 - 0.06, 0, 0], R * 0.55, R * 0.55, 16, [0.32, 0.3, 0.29]);            // brake disc
+  const nsp = M.id === 'suv' ? 6 : M.id === 'sports' ? 10 : 5;
+  for (let i = 0; i < nsp; i++) { const a = i / nsp * Math.PI * 2; w.cylinder([tw / 2 - 0.02, 0, 0], [tw / 2 - 0.035, Math.cos(a) * R * 0.7, Math.sin(a) * R * 0.7], M.id === 'sports' ? 0.012 : 0.022, M.id === 'sports' ? 0.01 : 0.017, 6, rimC); }
+  w.cylinder([tw / 2 - 0.05, 0, 0], [tw / 2 - 0.03, 0, 0], R * 0.74, R * 0.74, 24, rimC);                  // rim lip
+  w.cylinder([tw / 2 - 0.02, 0, 0], [tw / 2 + 0.005, 0, 0], R * 0.14, R * 0.12, 12, vscale(rimC, 1.1));
+  const sh = new MeshBuilder();
+  for (let i = 0; i < 5; i++) {
+    const k = 1 - i * 0.12, ring = Array.from({ length: 28 }, (_, j) => { const a = j / 28 * Math.PI * 2; return [Math.cos(a) * (W2 + 0.2) * k, 0.03 + i * 0.002, Math.sin(a) * (L / 2 + 0.2) * k]; });
+    sh.loft([ring, ring.map(p => [p[0], p[1] + 0.001, p[2]])], [0, 0, 0], { capStart: true, capEnd: true });
+  }
+  return {
+    body: uploadMesh(b.build()), wheel: uploadMesh(w.build()), lights: uploadMesh(lt.build()), shadow: uploadMesh(sh.build()),
+    wheels: [[-(W2 - 0.14), R, axF, 1], [W2 - 0.14, R, axF, 1], [-(W2 - 0.14), R, axR, 0], [W2 - 0.14, R, axR, 0]],
+  };
+}
+// built meshes by model and paint (shared by the player's car and the traffic)
+const CARMESH = new Map();
+function carMesh(mi, pi) {
+  const key = mi + '/' + pi;
+  if (!CARMESH.has(key)) CARMESH.set(key, buildCarModel(CAR_MODELS[mi], CAR_PAINTS[pi]));
+  return CARMESH.get(key);
+}
+// draw one car: model matrix, wheel spin and steer, lamps
+function drawCarMesh(Mm, base, spin, steer, brake, shadow = true) {
+  const u = progMesh.u;
+  const draw = (vao, m) => { gl.uniformMatrix4fv(u.uModel, false, m); gl.bindVertexArray(vao.vao); gl.drawArrays(gl.TRIANGLES, 0, vao.count); };
+  if (shadow) {
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+    gl.uniform1f(u.uAlpha, 0.13); draw(Mm.shadow, base); gl.uniform1f(u.uAlpha, 1);
+    gl.depthMask(true); gl.disable(gl.BLEND);
+  }
+  gl.uniform3f(u.uEmissive, 0, 0, 0); gl.uniform1f(u.uSpec, 0.7);
+  draw(Mm.body, base);
+  gl.uniform1f(u.uSpec, 0.15);
+  for (const [x, y, z, front] of Mm.wheels) {
+    const q = qmul(front ? qaxis([0, 1, 0], -steer) : [0, 0, 0, 1], qmul(qaxis([1, 0, 0], -spin), x < 0 ? qaxis([0, 1, 0], Math.PI) : [0, 0, 0, 1]));
+    draw(Mm.wheel, M4.mul(base, M4.fromQP(q, [x, y, z])));
+  }
+  const night = ENV.night || ENV.sunDir[1] < 0.08, lit = night ? 1 : 0.12;
+  gl.uniform3f(u.uEmissive, lit + (brake ? 0.7 : 0), lit * 0.9, lit * 0.8);
+  draw(Mm.lights, base);
+  gl.uniform3f(u.uEmissive, 0, 0, 0);
+}
+// =====================================================================
 //  CAR: get out of the aeroplane and drive. The car appears on the
 //  ground straight below the aircraft; the aircraft waits exactly as it
 //  was (in the air it is held where it is) until you get back in.
@@ -11236,14 +11899,34 @@ function carEnter() {
   const f = qrot(s.q, [0, 0, -1]);
   CAR.hdg = Math.atan2(f[0], -f[2]); CAR.camYaw = CAR.hdg;
   CAR.pos = [x, g.h, z]; CAR.v = 0; CAR.vy = 0; CAR.steer = 0; CAR.air = false; CAR.spin = 0; CAR.n = g.n.slice();
+  carApplyModel(); TRAFFIC.cars.length = 0;
   CAR.on = true; CAR.prevCam = cam.mode; cam.mode = 'car'; cam.lookYaw = cam.lookPitch = 0;
   if (game.ap) game.ap = false;
   if (typeof EG !== 'undefined' && EG.on) egStop();
   if (typeof CL !== 'undefined' && CL.open) clToggle(false);
   carSync();
   const above = s.onGround ? '' : `（飛行機は高度 ${Math.round((snap.pos[1] - g.h) * 3.28084).toLocaleString()} ft でそのまま待っています）`;
-  toast(`車に乗り換えました${above}。W/↑ アクセル・S/↓ ブレーキとバック・A/D ハンドル・Space サイドブレーキ・C 視点・K で飛行機に戻る`, 5200);
+  // not on a road (a field, a roof, the airfield)? put the car on the nearest one
+  const moved = carToRoad(600, true);
+  toast(`車に乗り換えました${moved ? `（真下が道路ではないので、${moved} m 先の道路に出しました）` : ''}${above}。W/↑ アクセル・S/↓ ブレーキとバック・A/D ハンドル・Space サイドブレーキ・R 近くの道路へ・C 視点・K で飛行機に戻る`, 6000);
   carButton();
+}
+// move the car onto the nearest road, in the left-hand lane (Japan drives on the left), facing the way it
+// was facing as far as the road allows. Returns the distance moved, or 0
+function carToRoad(maxD = 3000, quiet = false) {
+  if (typeof roadNearest !== 'function' || typeof CITY === 'undefined' || !CITY.ready) { if (!quiet) toast('道路のデータがありません（オンラインの地図でのみ使えます）', 2200); return 0; }
+  const r = roadNearest(CAR.pos[0], CAR.pos[2], maxD);
+  if (!r) { if (!quiet) toast(`${maxD >= 1000 ? (maxD / 1000) + ' km' : maxD + ' m'} 以内に道路が見つかりません`, 2200); return 0; }
+  if (r.d < r.w * 0.5 + 0.5) return 0;                               // already on it
+  let h = Math.atan2(r.dir[0], -r.dir[1]);
+  if (Math.cos(h - CAR.hdg) < 0) h += Math.PI;
+  const lane = r.cls <= 1 ? 0 : r.w * 0.25, rt = [Math.cos(h), 0, Math.sin(h)];
+  const x = r.x - rt[0] * lane, z = r.z - rt[2] * lane, g = carGround(x, z, r.y + 3);
+  const d = Math.round(Math.hypot(x - CAR.pos[0], z - CAR.pos[2]));
+  CAR.pos = [x, g.h, z]; CAR.hdg = h; CAR.camYaw = h; CAR.v = 0; CAR.vy = 0; CAR.air = false; CAR.steer = 0;
+  carSync();
+  if (!quiet) toast(`${d} m 先の道路に移動しました`, 1800);
+  return d;
 }
 function carExit() {
   if (!CAR.on) return;
@@ -11281,6 +11964,7 @@ function carControls(dt) {
 function carStep(dt) {
   const n = Math.ceil(dt / (1 / 120));
   for (let i = 0; i < n; i++) carPhys(dt / n);
+  trafficStep(dt);
   CAR.spin = (CAR.spin + CAR.v / CAR_SPEC.wheelR * dt) % (Math.PI * 2);
   CAR.bumpT -= dt;
   carSync();
@@ -11318,6 +12002,7 @@ function carPhys(dt) {
     if (gA.water || gN.water) blocked = 'この先は海（水）です';
     else if (!CAR.air && gA.h - p[1] > 1.2 && gA.google) blocked = '建物や壁にぶつかりました';
     else if (carInBuilding(ahead)) blocked = '建物にぶつかりました';
+    else if (trafficHit(p[0] + nf[0] * Math.sign(step) * 1.6, p[2] + nf[2] * Math.sign(step) * 1.6)) blocked = 'ほかの車にぶつかりました';
   }
   if (blocked) {
     if (Math.abs(nv) > 3 && CAR.bumpT <= 0) { audio.blip(90, 0.25, 'sawtooth', 0.12); CAR.bumpT = 0.6; }
@@ -11346,59 +12031,117 @@ function carPhys(dt) {
 // ---------------------------------------------------------------------
 //  model and drawing
 // ---------------------------------------------------------------------
-function carBuild() {
-  const b = new MeshBuilder(), w = new MeshBuilder(), lt = new MeshBuilder();
-  const paint = (ACFT.livery && ACFT.livery.a) || [0.7, 0.1, 0.12], black = [0.05, 0.05, 0.055], glass = [0.08, 0.1, 0.13], chrome = [0.7, 0.72, 0.75];
-  b.box([0, 0.58, 0.05], [1.78, 0.52, 4.3], paint);                               // body
-  b.box([0, 0.86, -1.45], [1.72, 0.1, 1.3], paint);                               // bonnet
-  b.box([0, 0.86, 1.72], [1.72, 0.1, 0.8], paint);                                // boot
-  const ring = (z, hw, y0, y1) => [[-hw, y0, z], [hw, y0, z], [hw * 0.92, y1, z], [-hw * 0.92, y1, z]];
-  b.loft([ring(-0.85, 0.82, 0.84, 0.86), ring(-0.3, 0.8, 0.84, 1.38), ring(0.85, 0.8, 0.84, 1.4), ring(1.45, 0.8, 0.84, 0.95)], glass, { capStart: true, capEnd: true, smooth: false });
-  b.box([0, 1.41, 0.28], [1.42, 0.05, 1.15], paint);                              // roof
-  for (const s of [-1, 1]) {
-    b.box([s * 0.74, 1.12, 0.28], [0.06, 0.52, 0.12], paint);                     // B pillar
-    b.box([s * 0.97, 1.0, -0.62], [0.16, 0.09, 0.07], paint);                     // mirrors
-    b.box([s * 0.9, 0.35, -1.35], [0.04, 0.3, 0.8], black); b.box([s * 0.9, 0.35, 1.3], [0.04, 0.3, 0.8], black);   // wheel arches
-  }
-  b.box([0, 0.42, -2.22], [1.8, 0.24, 0.12], black); b.box([0, 0.42, 2.22], [1.8, 0.24, 0.12], black);   // bumpers
-  b.box([0, 0.62, -2.21], [0.7, 0.14, 0.04], [0.1, 0.1, 0.11]);                   // grille
-  b.box([0, 0.5, 2.29], [0.5, 0.12, 0.02], [0.92, 0.92, 0.9]);                   // number plate
-  for (const s of [-1, 1]) {
-    lt.box([s * 0.62, 0.7, -2.18], [0.36, 0.12, 0.05], [0.95, 0.95, 0.88]);
-    lt.box([s * 0.64, 0.72, 2.2], [0.34, 0.12, 0.05], [0.75, 0.06, 0.06]);
-  }
-  w.cylinder([-0.12, 0, 0], [0.12, 0, 0], 0.34, 0.34, 16, [0.07, 0.07, 0.075]);
-  w.cylinder([-0.125, 0, 0], [0.125, 0, 0], 0.21, 0.21, 10, chrome);
-  w.box([0, 0.12, 0], [0.26, 0.05, 0.05], [0.35, 0.36, 0.38]);                   // a spoke so the wheel is seen to turn
-  const sh = new MeshBuilder();                                              // soft contact shadow: concentric ellipses, darker inside
-  for (let i = 0; i < 5; i++) {
-    const k = 1 - i * 0.12, ring = Array.from({ length: 28 }, (_, j) => { const a = j / 28 * Math.PI * 2; return [Math.cos(a) * 1.2 * k, 0.03 + i * 0.002, Math.sin(a) * 2.5 * k]; });
-    sh.loft([ring, ring.map(p => [p[0], p[1] + 0.001, p[2]])], [0, 0, 0], { capStart: true, capEnd: true });
-  }
-  CAR.mesh = { body: uploadMesh(b.build()), wheel: uploadMesh(w.build()), lights: uploadMesh(lt.build()), shadow: uploadMesh(sh.build()), id: ACFT.id };
+// the car you drive: one of the models (V changes it); its size, weight and power go into the driving
+function carModel() { return CAR_MODELS[CAR.model || 0]; }
+function carApplyModel() {
+  const M = carModel();
+  Object.assign(CAR_SPEC, { mass: M.mass, power: M.power, fMax: M.power / 14, wb: M.wb, wheelR: M.r, cd: M.id === 'sports' ? 0.6 : M.id === 'suv' || M.id === 'kei' ? 0.9 : 0.7 });
 }
+function carNextModel() {
+  CAR.model = ((CAR.model || 0) + 1) % CAR_MODELS.length; CAR.paint = (CAR.paint ?? 0);
+  carApplyModel();
+  try { localStorage.setItem('sorajima-car', JSON.stringify({ model: CAR.model, paint: CAR.paint })); } catch (e) { /* ignore */ }
+  toast(`車種：${carModel().name}（V で切替・Shift+V で色）`, 1800);
+}
+function carNextPaint() {
+  CAR.paint = ((CAR.paint || 0) + 1) % CAR_PAINTS.length;
+  try { localStorage.setItem('sorajima-car', JSON.stringify({ model: CAR.model, paint: CAR.paint })); } catch (e) { /* ignore */ }
+  toast(`ボディの色：${['レッド', 'ホワイト', 'ブラック', 'ガンメタ', 'ブルー', 'シルバー', 'グリーン', 'オレンジ', 'ワインレッド'][CAR.paint] || CAR.paint + 1}`, 1400);
+}
+try { const c = JSON.parse(localStorage.getItem('sorajima-car') || 'null'); if (c) { CAR.model = c.model | 0; CAR.paint = c.paint | 0; } } catch (e) { /* ignore */ }
 function drawCar() {
   if (!CAR.on) return;
-  if (!CAR.mesh || CAR.mesh.id !== ACFT.id) carBuild();
-  const M = CAR.mesh, u = progMesh.u, base = M4.fromQP(CAR.q, CAR.pos);
+  const u = progMesh.u;
   setCommon(progMesh);
-  gl.uniform1i(u.uLivery, 0); gl.uniform1f(u.uAlpha, 1); gl.uniform1f(u.uSpec, 0.6); gl.uniform3f(u.uEmissive, 0, 0, 0);
-  const draw = (vao, m) => { gl.uniformMatrix4fv(u.uModel, false, m); gl.bindVertexArray(vao.vao); gl.drawArrays(gl.TRIANGLES, 0, vao.count); };
-  if (!CAR.air) {
-    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
-    gl.uniform1f(u.uAlpha, 0.13); draw(M.shadow, base); gl.uniform1f(u.uAlpha, 1);
-    gl.depthMask(true); gl.disable(gl.BLEND);
+  gl.uniform1i(u.uLivery, 0); gl.uniform1f(u.uAlpha, 1);
+  drawCarMesh(carMesh(CAR.model || 0, CAR.paint || 0), M4.fromQP(CAR.q, CAR.pos), CAR.spin, CAR.steer, CAR.brake > 0 || CAR.hand, !CAR.air);
+  drawTraffic();
+}
+
+// ---------------------------------------------------------------------
+//  traffic: cars driving along the mapped roads around you, in the left lane, at a speed that suits the
+//  road, keeping their distance and stopping for you; they turn at the ends of roads onto a connecting one
+// ---------------------------------------------------------------------
+const TRAFFIC = { cars: [], t: 0 };
+const ROAD_SPEED = [0, 27, 22, 16, 14, 12, 9, 6, 4];                     // m/s by road class
+function trafficRoadPoint(car) {
+  const R_ = car.tile.roads, P = R_.pts, k = car.seg;
+  const ax = P[k * 3], az = P[k * 3 + 1], bx = P[k * 3 + 3], bz = P[k * 3 + 4], ay = P[k * 3 + 2], by = P[k * 3 + 5];
+  const L = Math.hypot(bx - ax, bz - az) || 1, s = clamp(car.s / L, 0, 1);
+  let dx = (bx - ax) / L, dz = (bz - az) / L; if (car.dir < 0) { dx = -dx; dz = -dz; }
+  const X = ax + (bx - ax) * s, Z = az + (bz - az) * s, lane = car.cls <= 1 ? 0 : R_.wid[car.line] * 0.25;
+  const w = geoToWorld(car.tile.latN - (Z - dx * lane) / KZ, car.tile.lonW + (X + dz * lane) / car.tile.kxN);   // left of travel
+  return { x: w[0], z: w[1], y: ay + (by - ay) * s, h: Math.atan2(dx, -dz), L };
+}
+function trafficSpawn() {
+  // a random point on a road some way from the camera, not in view if possible
+  const ang = Math.random() * Math.PI * 2, d = 120 + Math.random() * 380;
+  const r = roadNearest(CAR.pos[0] + Math.cos(ang) * d, CAR.pos[2] + Math.sin(ang) * d, 150, 7);
+  if (!r) return null;
+  return { tile: r.tile, line: r.line, seg: r.seg, s: 0, dir: Math.random() < 0.5 ? 1 : -1, cls: r.cls, v: ROAD_SPEED[r.cls] * (0.8 + Math.random() * 0.3), model: Math.floor(Math.random() * CAR_MODELS.length), paint: Math.floor(Math.random() * CAR_PAINTS.length), spin: 0, pos: [r.x, r.y, r.z], hdg: 0, q: [0, 0, 0, 1], brake: false };
+}
+function trafficStep(dt) {
+  if (!CAR.on || typeof CITY === 'undefined' || !CITY.ready) { TRAFFIC.cars.length = 0; return; }
+  const want = game.touch ? 8 : 16;
+  TRAFFIC.t -= dt;
+  if (TRAFFIC.cars.length < want && TRAFFIC.t <= 0) { TRAFFIC.t = 0.3; const c = trafficSpawn(); if (c) TRAFFIC.cars.push(c); }
+  for (let i = TRAFFIC.cars.length - 1; i >= 0; i--) {
+    const c = TRAFFIC.cars[i];
+    if (!c.tile.roads) { TRAFFIC.cars.splice(i, 1); continue; }
+    // slow for a car ahead (the player's included), otherwise go at the road's speed
+    const f = [Math.sin(c.hdg), -Math.cos(c.hdg)];
+    let gap = 1e9;
+    for (const o of [...TRAFFIC.cars, { pos: CAR.pos }]) {
+      if (o === c) continue;
+      const dx = o.pos[0] - c.pos[0], dz = o.pos[2] - c.pos[2], ah = dx * f[0] + dz * f[1], side = Math.abs(dx * f[1] - dz * f[0]);
+      if (ah > 0 && side < 2.2) gap = Math.min(gap, ah);
+    }
+    const target = gap < 7 ? 0 : gap < 25 ? ROAD_SPEED[c.cls] * (gap - 7) / 18 : ROAD_SPEED[c.cls];
+    c.brake = target < c.v - 0.5;
+    c.v += clamp(target - c.v, -6 * dt, 2.5 * dt);
+    // along the segment; at its end go to the next one, or at the end of the road find one joining it
+    const R_ = c.tile.roads;
+    let p = trafficRoadPoint(c);
+    c.s += c.v * dt;
+    while (c.s > p.L) {
+      c.s -= p.L;
+      const first = R_.off[c.line], last = R_.off[c.line + 1] - 2;
+      c.seg += c.dir;
+      if (c.seg < first || c.seg > last) {
+        // the end of this road: a road starting within 4 m of here, else turn round
+        const endK = c.dir > 0 ? last + 1 : first, ex = R_.pts[endK * 3], ez = R_.pts[endK * 3 + 1];
+        let found = null;
+        for (let l = 0; l < R_.cls.length && !found; l++) {
+          if (l === c.line || R_.cls[l] >= 8) continue;
+          for (const [k, dir] of [[R_.off[l], 1], [R_.off[l + 1] - 1, -1]]) if (Math.hypot(R_.pts[k * 3] - ex, R_.pts[k * 3 + 1] - ez) < 4) { found = { l, k, dir }; break; }
+        }
+        if (found) { c.line = found.l; c.dir = found.dir; c.seg = found.dir > 0 ? found.k : found.k - 1; c.cls = R_.cls[found.l]; }
+        else { c.dir = -c.dir; c.seg = clamp(c.seg - c.dir, first, last); }
+      }
+      p = trafficRoadPoint(c);
+    }
+    const s = c.dir > 0 ? c.s : p.L - c.s;
+    const q = trafficRoadPoint(Object.assign({}, c, { s }));
+    // the height: the ground the player's car uses (Google's surface where shown), checked a few times a second
+    c.gT = (c.gT || 0) - dt;
+    if (c.gT <= 0 || c.gy == null) { c.gT = 0.25; c.gy = carGround(q.x, q.z, (c.gy ?? q.y) + 3).h; }
+    c.pos = [q.x, c.gy, q.z];
+    let dh = ((q.h - c.hdg + Math.PI * 3) % (Math.PI * 2)) - Math.PI; c.hdg += dh * Math.min(1, dt * 6);
+    c.q = qaxis([0, 1, 0], -c.hdg);
+    c.spin = (c.spin + c.v / 0.33 * dt) % (Math.PI * 2);
+    if (Math.hypot(c.pos[0] - CAR.pos[0], c.pos[2] - CAR.pos[2]) > 900) TRAFFIC.cars.splice(i, 1);
   }
-  draw(M.body, base);
-  gl.uniform1f(u.uSpec, 0.1);
-  for (const [x, z, front] of [[-0.8, -1.35, 1], [0.8, -1.35, 1], [-0.8, 1.3, 0], [0.8, 1.3, 0]]) {
-    const q = qmul(front ? qaxis([0, 1, 0], -CAR.steer) : [0, 0, 0, 1], qaxis([1, 0, 0], -CAR.spin));
-    draw(M.wheel, M4.mul(base, M4.fromQP(q, [x, 0.34, z])));
+}
+function drawTraffic() {
+  for (const c of TRAFFIC.cars) {
+    if (vdist(c.pos, R.eye) > 700) continue;
+    drawCarMesh(carMesh(c.model, c.paint), M4.fromQP(c.q, c.pos), c.spin, 0, c.brake, vdist(c.pos, R.eye) < 200);
   }
-  const night = ENV.night || ENV.sunDir[1] < 0.08, lit = night ? 1 : 0.15, brake = CAR.brake > 0 || CAR.hand;
-  gl.uniform3f(u.uEmissive, lit + (brake ? 0.6 : 0), lit * 0.9, lit * 0.8);
-  draw(M.lights, base);
-  gl.uniform3f(u.uEmissive, 0, 0, 0);
+}
+// bumping into a traffic car stops you
+function trafficHit(nx, nz) {
+  for (const c of TRAFFIC.cars) { const dx = c.pos[0] - nx, dz = c.pos[2] - nz; if (dx * dx + dz * dz < 5.5) return true; }
+  return false;
 }
 // camera: behind the car (it swings round smoothly), or from the driver's seat
 function carCamera(dt) {
@@ -11432,7 +12175,7 @@ function carHud(g, W, H) {
   g.font = `700 16px ${UI}`; g.fillStyle = CAR.rev ? '#ffb547' : '#58e08c'; g.fillText(CAR.rev ? 'R' : Math.abs(CAR.v) < 0.3 && !CAR.thr ? 'N' : 'D', cx, cy - 30);
   // where you are and the keys
   const [la, lo] = worldToGeo(CAR.pos[0], CAR.pos[2]);
-  const lines = ['🚗 運転中', `W/↑ アクセル　S/↓ ブレーキ・バック　A/D ハンドル　Space サイドブレーキ`, `C 視点（後ろ／運転席）　K 飛行機に戻る　M 地図`];
+  const lines = ['🚗 運転中', `W/↑ アクセル　S/↓ ブレーキ・バック　A/D ハンドル　Space サイドブレーキ`, `R 近くの道路へ　V 車種・Shift+V 色　C 視点（後ろ／運転席）　K 飛行機に戻る　M 地図`];
   g.textAlign = 'left'; g.textBaseline = 'middle';
   lines.forEach((t, i) => { g.font = `${i ? 600 : 700} ${i ? 12 : 15}px ${UI}`; const w = g.measureText(t).width; g.fillStyle = 'rgba(6,12,22,0.62)'; g.fillRect(12, H - 96 + i * 26 - 11, w + 16, 22); g.fillStyle = i ? '#dfe7f0' : '#ffd66b'; g.fillText(t, 20, H - 96 + i * 26); });
   const top = [];
@@ -11701,6 +12444,8 @@ addEventListener('keydown', e => {
   if (mapv.open && e.code === 'Escape') { toggleMap(false); return; }
   if (e.code === 'KeyK' && st === 'flying' && !(SCHOOL.active)) { carToggle(); return; }
   if (e.code === 'KeyC' && (st === 'flying' || st === 'crashed')) { cycleCamera(); return; }
+  if (CAR.on && e.code === 'KeyR' && st === 'flying') { carToRoad(3000); return; }
+  if (CAR.on && e.code === 'KeyV' && st === 'flying') { if (e.shiftKey) carNextPaint(); else carNextModel(); return; }
   if (CAR.on) return;                                               // aircraft keys do nothing while driving
   const map = { KeyG: 'gear', KeyV: 'flaps', KeyH: 'hud', KeyX: 'smoke', KeyL: 'level', KeyZ: 'time', KeyO: 'ap' };
   if (map[e.code] && !(e.code === 'KeyH' && e.shiftKey)) doAction(map[e.code]);
@@ -12591,9 +13336,9 @@ function drawScene(planes, far) {
     drawJapanTerrain(planes);
     if (GOOG.covering) {                                  // photogrammetry replaces runways, buildings and trees
       drawGoogle(); googFlatCheck();
-      if (GOOG.flat) { drawCity(planes); drawJwTrees(planes, far); } // ...except where Google has no 3D: the map's own buildings stand in
+      if (GOOG.flat) { drawRoads(planes); drawCity(planes); drawJwTrees(planes, far); } // ...except where Google has no 3D: the map's own buildings stand in
     }
-    else { drawJapanRunways(); drawCity(planes); drawPlateau(); drawJwTrees(planes, far); }
+    else { drawJapanRunways(); drawRoads(planes); drawCity(planes); drawPlateau(); drawJwTrees(planes, far); }
   }
   else {
   // terrain

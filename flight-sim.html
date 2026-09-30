@@ -5413,8 +5413,37 @@ function cityWorkerMain() {
         for (const w of walls) if (w[7] && w[4] > 6 && w[6] > Math.max(bestS - 0.35, -0.3)) w[8] = 1;
       }
       const st0 = seed + 1024 * kind;
+      // a tall block over a nearly rectangular footprint: a podium (the shops and lobbies) over the whole of it,
+      // the tower set back above, its top storeys set back again: the steps of a real skyline
+      let wallTop = top, splitTop = false;
+      if (kind === 3 && poly.rings.length === 1 && area > 700) {
+        const o3 = obb(flat);
+        if (o3 && o3.fill > 0.82 && o3.w > 18) {
+          const ph = clamp(h * 0.16, 9, 16), ins = clamp(o3.w * 0.12, 2.5, 7), vx = -o3.uz, vz = o3.ux;
+          const tbox = (hl, hw, y0, y1) => {
+            const C = (i, j) => [o3.cx + o3.ux * hl * i + vx * hw * j, o3.cz + o3.uz * hl * i + vz * hw * j], cs = [C(-1, -1), C(1, -1), C(1, 1), C(-1, 1)];
+            for (let k = 0; k < 4; k++) {
+              const a = cs[k], b = cs[(k + 1) % 4], dx = b[0] - a[0], dz = b[1] - a[1], len = Math.hypot(dx, dz) || 1;
+              let nx = dz / len, nz = -dx / len; if (nx * ((a[0] + b[0]) / 2 - o3.cx) + nz * ((a[1] + b[1]) / 2 - o3.cz) < 0) { nx = -nx; nz = -nz; }
+              quad([[a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], y1, b[1]], [a[0], y1, a[1]]], [y0 - base, y0 - base, y1 - base, y1 - base], [nx, 0, nz], st0, H, [0, len, len, 0]);
+            }
+            quad(cs.map(c => [c[0], y1, c[1]]), [H, H, H, H], [0, 1, 0], st0 + 256, H);
+          };
+          const tl = o3.l / 2 - ins, tw = o3.w / 2 - ins;
+          tbox(tl, tw, base + ph, top - 4.5);
+          tbox(tl - 1.6, tw - 1.6, top - 4.5, top);
+          wallTop = base + ph; splitTop = true;
+        }
+      }
       if (h < 60 && !air) for (const w of walls) if (w[7] && w[4] > 2.2) shopWalls.push(w[0], w[1], w[2], w[3], w[5], w[6], base);
-      if (air === 1) for (const w of walls) if (w[7] && w[4] > 3) termWalls.push([w[0], w[1], w[2], w[3], w[5], w[6], base]);
+      if (air === 1) {                                                   // (each wall's normal made to face out of the terminal, whichever way the map wound it)
+        const inB = (x, z) => { let ins = false; for (const rr of poly.rings) for (let i = 0, j = rr.length - 2; i < rr.length; j = i, i += 2) { const zi = lz(rr[i + 1]), zj = lz(rr[j + 1]); if ((zi > z) !== (zj > z) && x < (lx(rr[j]) - lx(rr[i])) * (z - zi) / (zj - zi) + lx(rr[i])) ins = !ins; } return ins; };
+        for (const w of walls) if (w[7] && w[4] > 3) {
+          const mx = (w[0] + w[2]) / 2, mz = (w[1] + w[3]) / 2, s = inB(mx + w[5] * 1.5, mz + w[6] * 1.5) ? -1 : 1;
+          if (s < 0 && inB(mx - w[5] * 1.5, mz - w[6] * 1.5)) continue;         // (inside both ways: a sliver, no gate on it)
+          termWalls.push([w[0], w[1], w[2], w[3], w[5] * s, w[6] * s, base]);
+        }
+      }
       // contact shadow on the ground round the building (drawn last over the roads and pavements, darkening)
       if (mh < 1 && (h >= 7 || area > 150)) for (const w of walls) if (w[7] && w[4] > 3.5) {
         const [x0, z0, x1, z1, len, nx, nz] = w, D = Math.min(1.2 + h * 0.08, 3.2), y = base + 0.2;
@@ -5428,7 +5457,7 @@ function cityWorkerMain() {
       for (const [x0, z0, x1, z1, len, fnx, fnz, isOuter, feat] of walls) {
         const nx = Math.round(fnx * 127), nz = Math.round(fnz * 127), st = st0 + 512 * feat;
         const a0 = put(x0, z0, bot, nx, 0, nz, 0, st, H, bot - base), b0 = put(x1, z1, bot, nx, 0, nz, len, st, H, bot - base);
-        const b1 = put(x1, z1, top + parapet, nx, 0, nz, len, st, H, H + parapet), a1 = put(x0, z0, top + parapet, nx, 0, nz, 0, st, H, H + parapet);
+        const b1 = put(x1, z1, wallTop + parapet, nx, 0, nz, len, st, H, wallTop - base + parapet), a1 = put(x0, z0, wallTop + parapet, nx, 0, nz, 0, st, H, wallTop - base + parapet);
         tri(a0, b1, b0); tri(a0, a1, b1);
         if (feat && kind === 2) balconies(x0, z0, x1, z1, base, H, seed);
         if (kind === 1 && isOuter && len > 1.8) houseWall(x0, z0, x1, z1, len, fnx, fnz, !feat && fronts.has(wi), base, top, seed, wi, !!feat);
@@ -5438,11 +5467,11 @@ function cityWorkerMain() {
       // rectangle; bigger flat roofs get a parapet band and some rooftop plant, so nothing reads as a plain box
       const ridgeUp = pitched ? pitchedRoof(ob, top, st0, H, (seed & 7) < 5) : 0;
       const t = ridgeUp ? [] : earcut(flat, holes);
-      if (!ridgeUp && h >= 7 && area > 250 && poly.rings.length === 1) roofPlant(flat, top, st0, H, area);
+      if (!ridgeUp && !splitTop && h >= 7 && area > 250 && poly.rings.length === 1) roofPlant(flat, top, st0, H, area);
       if (ridgeUp) maxTop = Math.max(maxTop, top + ridgeUp);
       if (t.length) {
         const v0 = v;
-        for (let i = 0; i < flat.length; i += 2) put(flat[i], flat[i + 1], top, 0, 127, 0, 0, st0 + 256, H, H);
+        for (let i = 0; i < flat.length; i += 2) put(flat[i], flat[i + 1], wallTop, 0, 127, 0, 0, st0 + 256, H, wallTop - base);
         for (let i = 0; i < t.length; i += 3) {
           const a = t[i], b = t[i + 1], c = t[i + 2];
           const e1x = flat[b * 2] - flat[a * 2], e1z = flat[b * 2 + 1] - flat[a * 2 + 1], e2x = flat[c * 2] - flat[a * 2], e2z = flat[c * 2 + 1] - flat[a * 2 + 1];
@@ -5859,7 +5888,8 @@ function cityWorkerMain() {
         for (const [x0, z0, x1, z1, nx, nz, base] of termWalls) {
           const dx = x1 - x0, dz = z1 - z0, L2 = dx * dx + dz * dz || 1, t = clamp(((gx - x0) * dx + (gz - z0) * dz) / L2, 0.05, 0.95);
           const px = x0 + dx * t, pz = z0 + dz * t, d = Math.hypot(gx - px, gz - pz);
-          if (d < 60 && (!best || d < best.d) && onApron(px + nx * 30, pz + nz * 30)) best = { d, px, pz, nx, nz };
+          const L = Math.sqrt(L2), sc = d + (L < 30 ? 40 : L < 60 ? 12 : 0);           // (the facade, not a little jog in it)
+          if (d < 60 && (!best || sc < best.sc) && onApron(px + nx * 30, pz + nz * 30)) best = { d, sc, px, pz, nx, nz };
         }
         if (!best || best.px < 0 || best.pz < 0 || best.px > W || best.pz > Hm) continue;
         const g = gL(best.px + best.nx * 25, best.pz + best.nz * 25);
@@ -6396,8 +6426,8 @@ function cityUpdate() {
     if (t.state === 2 && t.demOk === false && getTile(14, t.x, t.y).demState === 2) { cityDispose(t); continue; }   // (its fine elevation came after all)
     if (t.state !== 0) continue;
     const dt = getTile(14, t.x, t.y);
-    if (dt.demState === 0) { loadDem(dt); continue; }
-    if (dt.demState === 1) continue;
+    if (dt.demState === 0) { loadDem(dt); dt.demT = R.time; continue; }
+    if (dt.demState === 1 && R.time - (dt.demT ?? R.time) < 8) { if (dt.demT == null) dt.demT = R.time; continue; }   // (a slow elevation tile: after 8 s the city goes ahead on the coarse one, rebuilt when it comes)
     cityDispatch(t); busy++;
   }
   // drop tiles that fell well outside the radius
@@ -15566,7 +15596,7 @@ function trafficRoadPoint(car) {
   const ax = P[k * 3], az = P[k * 3 + 1], bx = P[k * 3 + 3], bz = P[k * 3 + 4], ay = P[k * 3 + 2], by = P[k * 3 + 5];
   const L = Math.hypot(bx - ax, bz - az) || 1, s = clamp(car.s / L, 0, 1);
   let dx = (bx - ax) / L, dz = (bz - az) / L; if (car.dir < 0) { dx = -dx; dz = -dz; }
-  const X = ax + (bx - ax) * s, Z = az + (bz - az) * s, lane = car.cls <= 1 ? 0 : R_.wid[car.line] * 0.25;
+  const X = ax + (bx - ax) * s, Z = az + (bz - az) * s, lane = car.cls <= 1 ? 0 : R_.wid[car.line] * (car.cls >= 6 ? 0.06 : 0.25);   // (the narrow streets: down the middle, past the parked cars)
   const w = geoToWorld(car.tile.latN - (Z - dx * lane) / KZ, car.tile.lonW + (X + dz * lane) / car.tile.kxN);   // left of travel
   return { x: w[0], z: w[1], y: ay + (by - ay) * s, h: Math.atan2(dx, -dz), L };
 }
@@ -15630,6 +15660,7 @@ function trafficStep(dt) {
   }
 }
 function drawTraffic() {
+  if (typeof drawParked === 'function') drawParked();
   for (const c of TRAFFIC.cars) {
     if (vdist(c.pos, R.eye) > 700) continue;
     // (over Google's 3D, cars up on an elevated road that isn't drawn round you (p6_city.js) aren't either)
@@ -15640,7 +15671,7 @@ function drawTraffic() {
 // bumping into a traffic car stops you
 function trafficHit(nx, nz) {
   for (const c of TRAFFIC.cars) { const dx = c.pos[0] - nx, dz = c.pos[2] - nz; if (dx * dx + dz * dz < 5.5) return true; }
-  return false;
+  return typeof parkedHit === 'function' && parkedHit(nx, nz);
 }
 // camera: behind the car (it swings round smoothly), or from the driver's seat
 function carCamera(dt) {
@@ -15699,6 +15730,51 @@ function carButton() {
   const show = game.state === 'flying' && (CAR.on || carCanUse());
   b.hidden = !show;
   b.textContent = CAR.on ? '✈ 飛行機に戻る（K）' : '🚗 車に乗り換える（K）';
+}
+// =====================================================================
+//  PARKED CARS along the narrow streets round the car (the left side, as
+//  in Japan), every so often, in all the models and colours the traffic
+//  has; the nearest few dozen drawn. You bump into them as into traffic.
+// =====================================================================
+const PARKED = { list: [], at: null, ov: null };
+function parkedUpdate() {
+  if (typeof CITY === 'undefined' || !CITY.ready) return;
+  const eye = CAR.pos, RAD = game.touch ? 150 : 260, MAX = game.touch ? 20 : 60;
+  if (PARKED.at && Math.hypot(eye[0] - PARKED.at[0], eye[2] - PARKED.at[1]) < 40 && PARKED.ov === JW.ov) return;
+  PARKED.at = [eye[0], eye[2]]; PARKED.ov = JW.ov;
+  const [la, lo] = worldToGeo(eye[0], eye[2]), out = [];
+  for (const t of CITY.tiles.values()) {
+    const R_ = t.roads; if (!R_ || t.dist > RAD + 1200) continue;
+    const X = (lo - t.lonW) * t.kxN, Z = -(la - t.latN) * KZ, P = R_.pts;
+    for (let l = 0; l < R_.cls.length; l++) {
+      if (R_.cls[l] < 6 || R_.cls[l] > 7 || (R_.br && R_.br[l])) continue;
+      const w = R_.wid[l]; if (w < 4.5) continue;
+      for (let k = R_.off[l]; k < R_.off[l + 1] - 1; k++) {
+        const ax = P[k * 3], az = P[k * 3 + 1], bx = P[k * 3 + 3], bz = P[k * 3 + 4];
+        if (Math.hypot(ax - X, az - Z) > RAD) continue;
+        const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz); if (L < 6) continue;
+        // (a hash of the place decides: about one car in three slots, never right at the ends of the street)
+        const hsh = Math.abs(Math.sin(ax * 12.9898 + az * 78.233) * 43758.5453) % 1;
+        if (hsh > 0.33 || k === R_.off[l] || k === R_.off[l + 1] - 2) continue;
+        const f = 0.3 + 0.4 * ((hsh * 7) % 1), ux = dx / L, uz = dz / L, off = w / 2 - 1.05;
+        const px = ax + dx * f + uz * off, pz = az + dz * f - ux * off, y = P[k * 3 + 2] + (P[k * 3 + 5] - P[k * 3 + 2]) * f;
+        const wpt = geoToWorld(t.latN - pz / KZ, t.lonW + px / t.kxN), d = Math.hypot(wpt[0] - eye[0], wpt[1] - eye[2]);
+        const hdg = Math.atan2(ux, -uz) + (hsh * 13 % 1 < 0.5 ? 0 : Math.PI);
+        out.push({ d, pos: [wpt[0], y, wpt[1]], q: qaxis([0, 1, 0], -hdg), model: Math.floor(hsh * 997) % CAR_MODELS.length, paint: Math.floor(hsh * 3571) % CAR_PAINTS.length });
+      }
+    }
+  }
+  out.sort((a, b) => a.d - b.d);
+  PARKED.list = out.slice(0, MAX);
+}
+function drawParked() {
+  if (!JW.active || !JW.online) { PARKED.list = []; return; }
+  parkedUpdate();
+  for (const c of PARKED.list) drawCarMesh(carMesh(c.model, c.paint, true), M4.fromQP(c.q, c.pos), 0, 0, false, c.d < 120);
+}
+function parkedHit(x, z) {
+  for (const c of PARKED.list) { const dx = c.pos[0] - x, dz = c.pos[2] - z; if (dx * dx + dz * dz < 5.0) return true; }
+  return false;
 }
 // =====================================================================
 //  SUN SHADOWS near the car: a shadow map of the few hundred metres

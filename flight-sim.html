@@ -5452,7 +5452,26 @@ function cityWorkerMain() {
       }
       // a house's street side (for its front door): the outer wall nearest a road
       const fronts = new Set();
-      if (kind === 1) { let bd = 1e9, bw = -1; walls.forEach((w, i) => { if (!w[7] || w[4] < 2) return; const d = roadNear((w[0] + w[2]) / 2 + w[5] * 1.5, (w[1] + w[3]) / 2 + w[6] * 1.5, 7); if (d < bd) { bd = d; bw = i; } }); if (bw >= 0 && bd < 12) fronts.add(bw); }
+      if (kind === 1) {
+        let bd = 1e9, bw = -1; walls.forEach((w, i) => { if (!w[7] || w[4] < 2) return; const d = roadNear((w[0] + w[2]) / 2 + w[5] * 1.5, (w[1] + w[3]) / 2 + w[6] * 1.5, 7); if (d < bd) { bd = d; bw = i; } }); if (bw >= 0 && bd < 12) fronts.add(bw);
+        // the block wall (ブロック塀) along the front of the plot, just in from the street, with its gap for the
+        // gate by the front door (or a car's width where there is room to park in front)
+        if (bw >= 0 && bd + 1.5 > 1.4 && bd + 1.5 < 8) {
+          const [x0, z0, x1, z1, len, fnx, fnz] = walls[bw], ux = (x1 - x0) / len, uz = (z1 - z0) / len, o = Math.min(bd + 1.5 - 0.3, 6);
+          const hb = hash(seed, 913), bh = 1.0 + (hb & 3) * 0.12, T = 0.15;
+          const P = (u, y, d) => [x0 + ux * u + fnx * d, y, z0 + uz * u + fnz * d];
+          const ua = -0.6, ub = len + 0.6, nwin = Math.max(1, Math.floor((len - 0.8) / 2.9)), uc = len / nwin * 0.5, gw = bd + 1.5 > 4.5 ? 3.0 : 1.1;
+          const ok = u => roadNear(...P(u, 0, o + 0.2).filter((v, k) => k !== 1), 7) > -0.1;
+          if (ok(ua) && ok(ub) && len > 3) for (const [u0, u1] of [[ua, uc - gw / 2], [uc + gw / 2, ub]]) {
+            if (u1 - u0 < 0.5) continue;
+            const Kb = 12 * 1024 | (seed & 255), w = u1 - u0, y0 = base - 0.3, y1 = base + bh;
+            quad([P(u0, y0, o), P(u1, y0, o), P(u1, y1, o), P(u0, y1, o)], [-0.3, -0.3, bh, bh], [fnx, 0, fnz], Kb, w, [u0, u1, u1, u0]);
+            quad([P(u1, y0, o - T), P(u0, y0, o - T), P(u0, y1, o - T), P(u1, y1, o - T)], [-0.3, -0.3, bh, bh], [-fnx, 0, -fnz], Kb, w, [u1, u0, u0, u1]);
+            quad([P(u0, y1, o - T), P(u1, y1, o - T), P(u1, y1, o), P(u0, y1, o)], [bh + 1, bh + 1, bh + 1, bh + 1], [0, 1, 0], Kb, w, [u0, u1, u1, u0]);
+            for (const [u, s] of [[u0, -1], [u1, 1]]) quad([P(u, y0, o), P(u, y0, o - T), P(u, y1, o - T), P(u, y1, o)], [-0.3, -0.3, bh, bh], [ux * s, 0, uz * s], Kb, T, [0, T, T, 0]);
+          }
+        }
+      }
       let wi = 0;
       for (const [x0, z0, x1, z1, len, fnx, fnz, isOuter, feat] of walls) {
         const nx = Math.round(fnx * 127), nz = Math.round(fnz * 127), st = st0 + 512 * feat;
@@ -5747,7 +5766,7 @@ function cityWorkerMain() {
     const gL = (x, z) => ground(x / W * E, z / Hm * E);
     // ---------- the ground itself, as a driving game's city has it: the built-up blocks paved (concrete and paving
     // slabs, the dirt of use), parks and lawns in real grass; drawn under the roads, over the terrain's photo ----------
-    const fillPoly = (rings, dy, cls, maxE) => {
+    const fillPoly = (rings, dy, cls, maxE, skip) => {
       const flat = [], holes = [];
       for (const r of rings) { if (flat.length) holes.push(flat.length / 2); for (const v of r) flat.push(v); }
       const tris = earcut(flat, holes);
@@ -5760,6 +5779,7 @@ function cityWorkerMain() {
           else { const m2 = M(c, a); tri(a, b, m2, d + 1); tri(m2, b, c, d + 1); }
           return;
         }
+        if (skip && skip((a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3)) return;
         const k = rput(a[0], a[1], gL(a[0], a[1]) + dy, 0, cls, 0, 0);
         rput(b[0], b[1], gL(b[0], b[1]) + dy, 0, cls, 0, 0); rput(c[0], c[1], gL(c[0], c[1]) + dy, 0, cls, 0, 0);
         ri.push(k, k + 1, k + 2);
@@ -5792,7 +5812,12 @@ function cityWorkerMain() {
         ri.push(a, a + 1, a + 2, a, a + 2, a + 3);
       }
     }
-    if (L.landcover) for (const poly of polygons(L.landcover, E, p => p.class === 'grass' && p.subclass !== 'golf_course' || p.subclass === 'park')) fillPoly(localRings(poly), 0.04, 266, 45);
+    // grass where the map has it, but not in among the houses (the map's grass is drawn loosely over whole hillsides
+    // of them; the plots are gravel and concrete): none in a 20 m cell with houses round it
+    const BG = 20, bnx = Math.ceil(W / BG), bnz = Math.ceil(Hm / BG), bcnt = new Uint8Array(bnx * bnz);
+    for (let b = 0; b < bCen.length / 2; b++) { const i = Math.floor(bCen[b * 2] / BG), j = Math.floor(bCen[b * 2 + 1] / BG); if (i >= 0 && j >= 0 && i < bnx && j < bnz && bcnt[j * bnx + i] < 250) bcnt[j * bnx + i]++; }
+    const housed = (x, z) => { const i0 = Math.floor(x / BG), j0 = Math.floor(z / BG); let n = 0; for (let j = j0 - 1; j <= j0 + 1; j++) for (let i = i0 - 1; i <= i0 + 1; i++) if (i >= 0 && j >= 0 && i < bnx && j < bnz) n += bcnt[j * bnx + i] * (i === i0 && j === j0 ? 3 : 1); return n >= 4; };
+    if (L.landcover) for (const poly of polygons(L.landcover, E, p => p.class === 'grass' && p.subclass !== 'golf_course' || p.subclass === 'park')) fillPoly(localRings(poly), 0.04, 266, 30, housed);
     // ---------- railways: ballasted track with its sleepers and two rails (each track is its own line on the
     // map), on bridges up on a viaduct; the monorail's concrete beam up on its T-shaped piers ----------
     const rails = [];
@@ -6541,10 +6566,23 @@ void main(){
   vec3 V = normalize(uCamPos - vWorld);
   float dist = length(uCamPos - vWorld);
   float diff = max(dot(n, uSunDir), 0.0) * sunShadow(vWorld, n);
-  vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5) * 1.15;
+  // sky light, and the sunlit street's light thrown back up onto the walls (what keeps a wall in shade from going black)
+  vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5) * 1.25 + uSunCol * max(uSunDir.y, 0.0) * 0.3 * clamp(0.5 - n.y * 0.5, 0.0, 1.0);
   vec3 col, bEm = vec3(0.0);
   float gloss = 0.0;
   bool tower = vKind > 2.5 && vKind < 3.5 || H > 45.0, house = vKind > 0.5 && vKind < 1.5, mansion = vKind > 1.5 && vKind < 2.5;
+  if (vKind > 11.5 && vRoof < 0.5) {
+    // a block wall: concrete blocks 39 x 19 cm in stretcher bond, the mortar joints, a cap along the top,
+    // weathered darker at the foot
+    float u = vM.x, y = vM.z;
+    vec2 g = vec2(u / 0.4 + step(0.5, fract(y / 0.4)) * 0.5, y / 0.2), f = fract(g), fw = max(fwidth(g), vec2(1e-4));
+    float joint = max(1.0 - smoothstep(fw.x, fw.x + 0.04, min(f.x, 1.0 - f.x)), 1.0 - smoothstep(fw.y, fw.y + 0.07, min(f.y, 1.0 - f.y)));
+    vec3 c = mix(vec3(0.6, 0.6, 0.58), vec3(0.7, 0.69, 0.66), s1) * (0.94 + 0.06 * h2(floor(g) + vSeed));
+    c *= 1.0 - 0.18 * joint;
+    if (n.y > 0.5) c = vec3(0.55, 0.55, 0.53);
+    c *= mix(0.75, 1.0, smoothstep(0.0, 0.6, y)) * (0.9 + 0.2 * texture(uNoise, vWorld.xz / 3.0 + vWorld.y / 2.0).b);
+    col = c * (uSunCol * diff * 0.9 + amb);
+  } else
   if (vKind > 9.5 && vRoof < 0.5) {
     // the airport's own buildings: a terminal's (or the tower cab's) glass curtain wall, a hangar's ribbed metal
     // cladding and its great door
@@ -6862,9 +6900,12 @@ void main(){
     } else {
       base = uMatOn > 0.5 ? matC(19.0, vWorld.xz / 3.0) : vec3(0.28, 0.4, 0.16);
       base *= (0.82 + 0.3 * g1) * mix(vec3(1.0), vec3(1.08, 1.02, 0.85), g2 * 0.6);
+      // (a Japanese lawn in summer is a dusty, patchy green: worn to earth in places, never a golf course's)
+      float wear = smoothstep(0.55, 0.8, texture(uNoise, vWorld.xz / 17.0).a * 0.7 + g3 * 0.3);
+      base = mix(mix(base, vec3(dot(base, vec3(0.33))), 0.25), vec3(0.4, 0.36, 0.28) * (0.85 + 0.3 * g3), wear * 0.7);
     }
     float sh3 = sunShadow(vWorld, vec3(0.0, 1.0, 0.0)) * planeShadow(vWorld.xz);
-    vec3 cg = base * (uSunCol * max(uSunDir.y, 0.0) * 0.95 * sh3 + uAmbSky * 0.85);
+    vec3 cg = base * (uSunCol * max(uSunDir.y, 0.0) * 0.95 * sh3 + mix(uAmbSky, vec3(dot(uAmbSky, vec3(0.333))), 0.45) * 0.95);   // (shade a little blue, not a blue carpet)
     outColor = vec4(tonemap(applyFog(cg, vWorld)), 1.0);
     return;
   }

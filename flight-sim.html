@@ -465,6 +465,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
     </div>
     <div class="opts">
       <label class="chk"><input type="checkbox" id="opt-invert"> ピッチ反転</label>
+      <label class="chk" title="試験的：運転中、車のまわりの道路の白線・横断歩道・路面の明るさを実際の航空写真（Esri／国土地理院）から取ります。写真に写った車などが白い点として出ることがあります"><input type="checkbox" id="opt-realroad"> 道路の白線を航空写真から取る（試験的）</label>
     </div>
     <div class="opts">
       <label class="chk" title="滑走路スタートを、エンジン・電源がすべて OFF の状態から始めます。コックピットの計器盤のスイッチで、本物と同じ手順で始動します（N キーでチェックリスト、Ctrl+E で自動始動）"><input type="checkbox" id="opt-cold"> エンジン停止から始める（始動手順）</label>
@@ -475,7 +476,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
     <button type="button" class="guide-btn" id="open-map">🗺 日本地図を開いて空港を選ぶ（M）</button>
     <button type="button" class="book-btn" id="open-book">📖 教科書：飛行の原理・機体・性能・気象・航法・通信・法規・人間・実技・緊急（全 13 章）</button>
     <button type="button" class="guide-btn" id="open-guide">？ ガイド：画面の見方・操作・用語・飛び方のコツ</button>
-    <p class="credit">地形・航空写真・地図：国土地理院 地理院タイル（標高データは加工して使用）／ 海外：航空写真・地図 Esri, Maxar, Earthstar Geographics ／ 標高 AWS Terrain Tiles（Mapzen, SRTM ほか）／ 3D 都市モデル：国土交通省 PLATEAU ／ 建物・樹木：© OpenStreetMap contributors（OpenFreeMap）／ 空港：OurAirports ／ 地名：GeoNames</p>
+    <p class="credit">地形・航空写真・地図：国土地理院 地理院タイル（標高データは加工して使用）／ 海外（および運転中の道路の写真）：航空写真・地図 Esri, Maxar, Earthstar Geographics ／ 標高 AWS Terrain Tiles（Mapzen, SRTM ほか）／ 3D 都市モデル：国土交通省 PLATEAU ／ 建物・樹木：© OpenStreetMap contributors（OpenFreeMap）／ 空港：OurAirports ／ 地名：GeoNames</p>
    </div>
    <div class="col-b">
     <div class="eyebrow mission-head">MISSION ・ 遊び方を選ぶ</div>
@@ -964,6 +965,7 @@ function makeProgram(vs, fs) {
     u[info.name.replace(/\[0\]$/, '')] = gl.getUniformLocation(p, info.name);
   }
   if (u.uSunShadow) { gl.useProgram(p); gl.uniform1i(u.uSunShadow, 11); }      // its own unit (a shadow sampler can't share one)
+  if (u.uNP) { gl.useProgram(p); gl.uniform1i(u.uNP, 13); }                      // the aerial photo round the car
   return { p, u };
 }
 // vertex buffers: attribs = [{loc, size, data, divisor?, dynamic?}] ; interleaved = {loc: [size, offset]}
@@ -1562,6 +1564,33 @@ float planeShadow(vec2 p){
   float wing = smoothstep(1.0 + s, 1.0 - s * 0.5, length(vec2((a + 0.1) / 0.75, b / 4.8)));
   float tail = smoothstep(1.0 + s, 1.0 - s * 0.5, length(vec2((a + 3.4) / 0.4, b / 1.7)));
   return 1.0 - max(fus, max(wing, tail)) * uShadowB.x;
+}
+// the sharp aerial photo round the car (p_nearphoto.js): its colour, and how much it applies (0 outside)
+uniform sampler2D uNP;
+uniform vec4 uNPRect;    // world x, z of its north-west corner, its width and depth
+uniform vec4 uNPFade;    // the car's x, z; full within, none beyond
+vec4 nearPhoto(vec3 w){
+  if (uNPRect.z <= 0.0) return vec4(0.0);
+  vec2 uv = (w.xz - uNPRect.xy) / uNPRect.zw;
+  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return vec4(0.0);
+  vec2 e = min(uv, 1.0 - uv);
+  float k = (1.0 - smoothstep(uNPFade.z, uNPFade.w, length(w.xz - uNPFade.xy))) * smoothstep(0.0, 0.03, min(e.x, e.y));
+  vec4 t = texture(uNP, uv);                                        // (alpha 0 where a tile hasn't come)
+  return vec4(t.rgb / max(t.a, 0.01), k * smoothstep(0.5, 0.95, t.a));
+}
+// the painted markings in that photo, as a crisp mask (lines, crossings, arrows: paint brighter than the
+// road round it), and the road's own colour smoothed over a couple of metres
+vec4 nearPaint(vec3 w){
+  if (uNPRect.z <= 0.0) return vec4(0.0);
+  vec2 uv = (w.xz - uNPRect.xy) / uNPRect.zw;
+  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return vec4(0.0);
+  vec4 t = texture(uNP, uv), b = texture(uNP, uv, 3.0);
+  if (t.a < 0.9 || b.a < 0.9) return vec4(0.0);
+  float l = dot(t.rgb, vec3(0.3, 0.55, 0.15)), lb = dot(b.rgb, vec3(0.3, 0.55, 0.15));
+  float sat = max(t.r, max(t.g, t.b)) - min(t.r, min(t.g, t.b));
+  float white = smoothstep(0.07, 0.15, l - lb) * (1.0 - smoothstep(0.12, 0.22, sat));
+  float yellow = smoothstep(0.05, 0.12, l - lb) * smoothstep(0.15, 0.25, t.r - t.b) * step(t.b, t.g);
+  return vec4(b.rgb, max(white, yellow * 2.0) * (yellow > white ? -1.0 : 1.0));
 }
 // the sun's shadow map round the car (p_sunshadow.js): 1 lit, down to 1 - strength in shadow
 uniform highp sampler2DShadow uSunShadow;
@@ -5996,6 +6025,9 @@ void main(){
       base = mix(base, vec3(0.8, 0.63, 0.12) * (0.9 + 0.1 * n2p), tb);
     }
     float dp = vSide > 1.5 ? 0.55 : max(uSunDir.y, 0.0);
+    // the real pavement's colour from the aerial photo, under the slab pattern
+    vec4 npv = nearPhoto(vWorld);
+    if (npv.a > 0.0 && vSide < 1.5) base *= mix(1.0, clamp(dot(npv.rgb, vec3(0.3, 0.55, 0.15)) / 0.4, 0.8, 1.2), 0.5 * npv.a);   // (lighter or darker, as the real one)
     vec3 cp = base * (uSunCol * dp * 0.95 + uAmbSky * 0.85);
     outColor = vec4(tonemap(applyFog(cp, vWorld)), 1.0);
     return;
@@ -6018,7 +6050,23 @@ void main(){
     else if (vCls < 5.5) paint += dash * stripe(m, 0.0, 0.075, aa);              // dashed centre line (narrow streets have none)
   }
   paint *= 0.85 * (0.8 + 0.2 * n1) * (1.0 - smoothstep(600.0, 2500.0, dist)) * (1.0 - smoothstep(0.15, 0.6, vJ));
-  c = mix(c, vec3(0.86, 0.86, 0.84), clamp(paint, 0.0, 1.0));
+  // round the car the road is the real one: its colour and painted markings from the aerial photo, with the
+  // fine grain over it (so it stays sharp close up), and none of the made-up markings
+  // round the car: the real markings, taken from the aerial photo as crisp paint on the sim's clean road, and
+  // the real road's colour as a tint (the photo itself, cars and shadows and all, smears at eye level)
+  vec4 np = nearPhoto(vWorld);
+  vec3 paintCol = vec3(0.86, 0.86, 0.84);
+  if (np.a > 0.0) {
+    vec4 rp = nearPaint(vWorld);
+    paint *= 1.0 - np.a;
+    float realPaint = abs(rp.a) * np.a;
+    if (rp.a < 0.0) paintCol = mix(paintCol, vec3(0.85, 0.62, 0.12), step(0.01, realPaint));
+    paint = max(paint, clamp(realPaint * 1.4, 0.0, 1.0));
+    float lt = dot(rp.rgb, vec3(0.3, 0.55, 0.15));
+    c *= mix(1.0, clamp(lt / 0.32, 0.75, 1.3), 0.6 * np.a);            // lighter or darker surface, as the real one
+    c = mix(c, c * normalize(rp.rgb + 0.05) * 1.73, 0.25 * np.a);        // and a hint of its colour
+  }
+  c = mix(c, paintCol, clamp(paint, 0.0, 1.0));
   float diff = max(uSunDir.y, 0.0) * sunShadow(vWorld, vec3(0.0, 1.0, 0.0));
   vec3 col = c * (uSunCol * diff * 0.95 + uAmbSky * 0.85);
   // soft shoulders: the ribbon's edge fades into the photo so it doesn't look pasted on
@@ -7579,6 +7627,114 @@ function drawStreet(planes) {
   }
   gl.enable(gl.CULL_FACE);
 }
+// =====================================================================
+//  THE REAL GROUND round the car: a sharp aerial photo (Esri World
+//  Imagery at about 25 cm a pixel; GSI's in Japan where Esri has none)
+//  laid on the roads, pavements and ground within a few hundred metres,
+//  so the lanes, markings, crossings and road colours are the real ones.
+//  A mosaic of tiles in one texture, rebuilt as the car moves on.
+// =====================================================================
+const NP = { on: false, tex: null, dummy: null, rect: [0, 0, 0, 0], fade: [0, 0, 0, 0], z: 0, n: 0, cx: null, cy: null, busy: false, cache: new Map(), used: 0, ok: 0 };
+// (off unless chosen: tried, the photo's cars, shadows and trees smear at eye level; an experiment to try)
+try { NP.on = localStorage.getItem('sorajima-realroad') === '1'; } catch (e) { /* storage unavailable */ }
+const npInJapan = (la, lo) => la > 24 && la < 46 && lo > 122.5 && lo < 146.5;
+function npBind() {
+  gl.activeTexture(gl.TEXTURE13);
+  if (!NP.dummy) { NP.dummy = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, NP.dummy); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([90, 90, 90, 255])); }
+  gl.bindTexture(gl.TEXTURE_2D, NP.tex && NP.rect[2] > 0 ? NP.tex : NP.dummy);
+  gl.activeTexture(gl.TEXTURE0);
+}
+// once a frame, before drawing: keep the mosaic centred near the car
+function npUpdate() {
+  const want = NP.on && typeof CAR !== 'undefined' && CAR.on && JW.active && JW.online;
+  if (!want) { NP.rect = [0, 0, 0, 0]; npBind(); return; }
+  const z = game.touch ? 18 : 19, n = game.touch ? 8 : 12;
+  const [la, lo] = worldToGeo(CAR.pos[0], CAR.pos[2]), N = 2 ** z;
+  const cx = Math.floor((lo + 180) / 360 * N), cy = Math.floor(mercY(la) * N);
+  const moved = NP.cx === null || NP.z !== z || Math.abs(cx - NP.cx) > n / 4 || Math.abs(cy - NP.cy) > n / 4;
+  if (moved && (!NP.busy || R.time - NP.buildT > 20)) npBuild(z, n, cx, cy);
+  else if (!NP.busy && NP.missing > 0 && R.time - NP.buildT > 10) npBuild(NP.z, NP.n, NP.cx, NP.cy);   // (fill in the tiles that failed)
+  npUpload();
+  const ext = NP.ext || 600;
+  NP.fade = [CAR.pos[0], CAR.pos[2], ext * 0.3, ext * 0.46];
+  npBind();
+}
+// one tile: Esri's, or (in Japan, where Esri has none at this zoom) the quarter of GSI's tile one zoom out
+async function npTile(z, x, y) {
+  const key = z + '/' + x + '/' + y;
+  if (NP.cache.has(key)) { const e = NP.cache.get(key); e.t = ++NP.used; return e; }
+  let e = null;
+  try {
+    const b = await fetchBitmap(`${ESRI}World_Imagery/MapServer/tile/${z}/${y}/${x}?blankTile=false`);
+    if (b && b !== 404) e = { b, s: null };
+  } catch (err) { /* try the other source */ }
+  if (!e) {
+    const N = 2 ** z, lo = (x + 0.5) / N * 360 - 180, la = latFromMerc((y + 0.5) / N);
+    if (npInJapan(la, lo)) try {
+      const b = await fetchBitmap(`${GSI}seamlessphoto/${z - 1}/${x >> 1}/${y >> 1}.jpg`);
+      if (b && b !== 404) e = { b, s: [(x & 1) * 128, (y & 1) * 128, 128, 128] };
+    } catch (err) { /* none */ }
+  }
+  if (!e) return null;
+  e.t = ++NP.used; NP.cache.set(key, e);
+  if (NP.cache.size > 420) {                                        // forget the tiles used longest ago
+    const old = [...NP.cache.entries()].sort((a, b) => a[1].t - b[1].t).slice(0, 60);
+    for (const [k, v] of old) { try { v.b.close(); } catch (err) { /* ignore */ } NP.cache.delete(k); }
+  }
+  return e;
+}
+// the mosaic: a transparent canvas the tiles are drawn into as they arrive (uploaded a couple of times a
+// second while it fills), so the real road appears piece by piece and a missing tile just leaves the sim's
+// own road; tiles that failed are asked for again a little later
+function npBuild(z, n, cx, cy) {
+  NP.busy = true; NP.gen = (NP.gen || 0) + 1; const gen = NP.gen;
+  const x0 = cx - (n >> 1), y0 = cy - (n >> 1), S = 256;
+  const cv = NP.cv || (NP.cv = document.createElement('canvas'));
+  if (cv.width !== n * S) { cv.width = cv.height = n * S; }
+  const g = NP.g = cv.getContext('2d');
+  g.clearRect(0, 0, cv.width, cv.height);
+  const N = 2 ** z, lonW = x0 / N * 360 - 180, lonE = (x0 + n) / N * 360 - 180, latN = latFromMerc(y0 / N), latS = latFromMerc((y0 + n) / N);
+  const a = geoToWorld(latN, lonW), b = geoToWorld(latS, lonE);
+  NP.next = { rect: [a[0], a[1], b[0] - a[0], b[1] - a[1]], ext: Math.min(b[0] - a[0], b[1] - a[1]) };
+  NP.cx = cx; NP.cy = cy; NP.z = z; NP.n = n; NP.x0 = x0; NP.y0 = y0; NP.missing = 0; NP.buildT = R.time;
+  let left = n * n;
+  // nearest tiles first
+  const order = [];
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) order.push([i, j, (i - n / 2 + 0.5) ** 2 + (j - n / 2 + 0.5) ** 2]);
+  order.sort((p, q) => p[2] - q[2]);
+  // a few at a time (a queue of 144 requests at once would time out on a slow connection)
+  let next = 0;
+  const one = () => {
+    if (gen !== NP.gen) return;
+    if (next >= order.length) return;
+    const [i, j] = order[next++];
+    npTile(z, x0 + i, y0 + j).then(e => {
+      if (gen !== NP.gen) return;
+      if (e) { if (e.s) g.drawImage(e.b, e.s[0], e.s[1], e.s[2], e.s[3], i * S, j * S, S, S); else g.drawImage(e.b, i * S, j * S, S, S); NP.dirty = true; }
+      else NP.missing++;
+    }).catch(() => { if (gen === NP.gen) NP.missing++; }).finally(() => { if (gen !== NP.gen) return; if (--left === 0) NP.busy = false; else one(); });
+  };
+  for (let k = 0; k < 6; k++) one();
+}
+function npUpload() {
+  if (!NP.dirty || R.time - (NP.upT || 0) < 0.6) return;
+  NP.dirty = false; NP.upT = R.time;
+  if (!NP.tex) NP.tex = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE13); gl.bindTexture(gl.TEXTURE_2D, NP.tex);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, NP.cv);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(game.touch ? 4 : 16, gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+  gl.activeTexture(gl.TEXTURE0);
+  if (NP.next) { NP.rect = NP.next.rect; NP.ext = NP.next.ext; NP.next = null; }
+  NP.ok++;
+}
+function npToggle(v) {
+  NP.on = v; try { localStorage.setItem('sorajima-realroad', v ? '1' : '0'); } catch (e) { /* ignore */ }
+}
+(() => { const el = document.getElementById('opt-realroad'); if (el) { el.checked = NP.on; el.addEventListener('change', () => npToggle(el.checked)); } })();
 
 // =====================================================================
 //  SIGHTSEEING FLIGHT: rings placed beside famous landmarks near the
@@ -13218,8 +13374,9 @@ function drawCar() {
   drawTraffic();
   // the models' authors (CC BY asks for it): the car you drive, and the others on the road
   const M = carModel();
-  if (M.glb || TRAFFIC.cars.some(t => CAR_MODELS[t.model].glb) && typeof cpCredit === 'function')
-    cpCredit((M.glb ? `車：${M.name} / ${M.by}（CC BY 4.0）　` : '') + 'ほかの車：Sketchfab 各作者（CC BY 4.0）');
+  const ph = typeof NP !== 'undefined' && NP.rect[2] > 0 ? '　道路の写真：Esri, Maxar, Earthstar Geographics／国土地理院' : '';
+  if ((M.glb || TRAFFIC.cars.some(t => CAR_MODELS[t.model].glb) || ph) && typeof cpCredit === 'function')
+    cpCredit((M.glb ? `車：${M.name} / ${M.by}（CC BY 4.0）　` : '') + 'ほかの車：Sketchfab 各作者（CC BY 4.0）' + ph);
 }
 
 // ---------------------------------------------------------------------
@@ -14630,6 +14787,7 @@ function setCommon(pr) {
   if (u.uZoneG) gl.uniform4fv(u.uZoneG, ZONE.g);
   if (u.uZoneG2) gl.uniform4fv(u.uZoneG2, ZONE.g2 || [0, 0, 0, 0]);
   if (u.uSunVP) { gl.uniformMatrix4fv(u.uSunVP, false, SUNSH.VP); gl.uniform4fv(u.uSunSh, SUNSH.v); }
+  if (u.uNPRect) { gl.uniform4fv(u.uNPRect, NP.rect); gl.uniform4fv(u.uNPFade, NP.fade); }
   if (u.uZoneSide) gl.uniform1f(u.uZoneSide, ZONE.side);
   if (u.uCamPos) gl.uniform3fv(u.uCamPos, R.eye);
   if (u.uTime) gl.uniform1f(u.uTime, R.time);
@@ -14704,6 +14862,7 @@ function render() {
   if (JW.active) { const pl = frustumPlanes(M4.mul(M4.persp(fovY, asp, 1, 650000), v)); platUpdate(pl); googUpdate(pl); }
   zoneUpdate();
   sunShadowPass(); gl.viewport(0, 0, W, H);
+  npUpdate();
   for (const far of [true, false]) {
     const proj = far ? M4.persp(fovY, asp, DEPTH_SPLIT, JW.active ? 650000 : 60000) : M4.persp(fovY, asp, cam.near, DEPTH_SPLIT * 1.02);
     R.VP = M4.mul(proj, v);

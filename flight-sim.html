@@ -5740,6 +5740,29 @@ function cityWorkerMain() {
     const localRings = poly => poly.rings.map(r => { const o = []; for (let i = 0; i < r.length; i += 2) o.push(lx(r[i]), lz(r[i + 1])); return o; });
     const PAVED = new Set(['residential', 'commercial', 'industrial', 'retail', 'railway', 'school', 'hospital', 'university', 'college', 'kindergarten', 'library', 'bus_station', 'garages', 'quarter', 'neighbourhood', 'military', 'stadium', 'theme_park', 'zoo']);
     if (L.landuse) for (const poly of polygons(L.landuse, E, p => PAVED.has(p.class))) fillPoly(localRings(poly), 0.025, 265, 45);
+    // between the buildings where the map has no land use drawn: the ground round every building paved too (yards,
+    // drives, the little lots), in 20 m cells, a little under the land-use paving, not on the parks
+    {
+      const CG = 20, nx = Math.ceil(W / CG), nz = Math.ceil(Hm / CG), cell = new Uint8Array(nx * nz);
+      for (let b = 0; b < bCen.length / 2; b++) {
+        const bx = bCen[b * 2], bz = bCen[b * 2 + 1], i0 = Math.floor(bx / CG), j0 = Math.floor(bz / CG);
+        for (let j = j0 - 1; j <= j0 + 1; j++) for (let i = i0 - 1; i <= i0 + 1; i++) if (i >= 0 && j >= 0 && i < nx && j < nz) cell[j * nx + i] = 1;
+      }
+      const park = [];
+      if (L.landcover) for (const poly of polygons(L.landcover, E, p => p.class === 'grass' || p.class === 'wood' || p.class === 'wetland' || p.class === 'sand')) {
+        const rings = localRings(poly); let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+        for (const r of rings) for (let i = 0; i < r.length; i += 2) { x0 = Math.min(x0, r[i]); x1 = Math.max(x1, r[i]); z0 = Math.min(z0, r[i + 1]); z1 = Math.max(z1, r[i + 1]); }
+        park.push({ rings, x0, z0, x1, z1 });
+      }
+      for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+        if (!cell[j * nx + i]) continue;
+        const x0 = i * CG, z0 = j * CG, x1 = Math.min(x0 + CG, W), z1 = Math.min(z0 + CG, Hm);
+        if (inRings(park, (x0 + x1) / 2, (z0 + z1) / 2) || inRings(aeroRings, (x0 + x1) / 2, (z0 + z1) / 2)) continue;
+        const a = rput(x0, z0, gL(x0, z0) + 0.018, 0, 265, 0, 0); rput(x1, z0, gL(x1, z0) + 0.018, 0, 265, 0, 0);
+        rput(x1, z1, gL(x1, z1) + 0.018, 0, 265, 0, 0); rput(x0, z1, gL(x0, z1) + 0.018, 0, 265, 0, 0);
+        ri.push(a, a + 1, a + 2, a, a + 2, a + 3);
+      }
+    }
     if (L.landcover) for (const poly of polygons(L.landcover, E, p => p.class === 'grass' && p.subclass !== 'golf_course' || p.subclass === 'park')) fillPoly(localRings(poly), 0.04, 266, 45);
     // ---------- railways: ballasted track with its sleepers and two rails (each track is its own line on the
     // map), on bridges up on a viaduct; the monorail's concrete beam up on its T-shaped piers ----------
@@ -6956,6 +6979,16 @@ void main(){
   c = mix(c, paintCol, clamp(paint, 0.0, 1.0));
   float diff = max(uSunDir.y, 0.0) * sunShadow(vWorld, vec3(0.0, 1.0, 0.0));
   vec3 col = c * (uSunCol * diff * 0.95 + uAmbSky * 0.85);
+  // at night the pools of light under the street lamps (every 32 m each side of the main roads, staggered;
+  // the odd lamp on a pole down the side streets)
+  if (uNightK > 0.01 && !track) {
+    float pool = 0.0;
+    if (vCls > 1.5 && vCls < 5.5) {
+      float u1 = u - 32.0 * floor(u / 32.0 + 0.5), u2 = (u - 16.0) - 32.0 * floor((u - 16.0) / 32.0 + 0.5);
+      pool = exp(-(u1 * u1 + (m - w * 0.3) * (m - w * 0.3)) / 70.0) + exp(-(u2 * u2 + (m + w * 0.3) * (m + w * 0.3)) / 70.0);
+    }
+    col += c * vec3(1.0, 0.86, 0.66) * pool * 1.6 * uNightK + vec3(0.004, 0.0035, 0.003) * uNightK;
+  }
   // soft shoulders: the ribbon's edge fades into the photo so it doesn't look pasted on
   float edge = smoothstep(w * 0.5, w * 0.5 - 0.5, abs(m));
   if (edge < 0.02) discard;
@@ -9667,6 +9700,7 @@ function standUpdate() {
     // local (aircraft) point to world: x right, z back
     const W = (x, y, z) => [cx + x * c.nz + z * c.nx, cy + y, cz - x * c.nx + z * c.nz];
     standBridge(B, [c.x + c.nx * 2.5, c.g, c.z + c.nz * 2.5], W(-(rad + 1.9), 0.25, nose + 5.2), W(-(rad + 0.15), 0.25, nose + 5.2), c);
+    standService(B, W, cy, c.g, rad, nose, A, c.n);
     return { m, A, paint, x: cx, z: cz };
   });
   if (STANDS.bridge) { gl.deleteVertexArray(STANDS.bridge.vao); for (const b of STANDS.bridge.bufs) gl.deleteBuffer(b); }
@@ -9691,6 +9725,29 @@ function standBridge(B, w0, cab, door, c) {
   // the cab, square to the aircraft, its bellows against the door
   B.box([cab[0], cab[1] + 0.1, cab[2]], [3.2, 3.1, 3.2], grey, Math.atan2(c.nx, c.nz));
   beam(B, [cab[0], cab[1] + 0.1, cab[2]], [door[0], door[1] + 0.1, door[2]], 2.4, 2.6, dark, dark);
+}
+// round an aircraft at its gate: the baggage tractor with its train of carts by the rear hold, the belt loader
+// up to the hold door, a catering truck at the right rear door, a fuel truck under the wing, cones at the
+// wingtips and the nose (W: aircraft-local to world; boxes turned with the aircraft)
+function standService(B, W, cy, g, rad, nose, A, n) {
+  const yaw = Math.atan2(W(0, 0, 1)[0] - W(0, 0, 0)[0], W(0, 0, 1)[2] - W(0, 0, 0)[2]), gy = g;
+  const box = (x, z, sx, sy, sz, col, y0 = 0) => { const p = W(x, 0, z); B.box([p[0], gy + y0 + sy / 2, p[2]], [sx, sy, sz], col, yaw); };
+  const tail = A.fuse[A.fuse.length - 1][0], h = (n * 7919) % 97;
+  // baggage train: tractor and three carts on the right side, level with the rear hold
+  const zb = tail * 0.45, xb = rad + 6;
+  box(xb, zb - 2.5, 1.6, 1.3, 2.6, [0.95, 0.75, 0.1]); box(xb, zb - 2.2, 1.4, 0.7, 1.0, [0.15, 0.15, 0.17], 1.3);
+  for (let k = 0; k < 3; k++) { box(xb, zb + 1.2 + k * 3.2, 1.6, 0.35, 2.6, [0.3, 0.32, 0.35], 0.35); box(xb, zb + 1.2 + k * 3.2, 1.5, 1.2, 2.4, h % 2 ? [0.25, 0.4, 0.7] : [0.55, 0.57, 0.6], 0.7); }
+  // belt loader, sloping up to the hold
+  const p0 = W(rad + 2.2, 0, zb - 6), p1 = W(rad * 0.7, 0, zb - 6.5);
+  box(rad + 3.2, zb - 6, 2.0, 1.0, 4.0, [0.9, 0.9, 0.9]);
+  B.cylinder([p0[0], gy + 1.0, p0[2]], [p1[0], cy - 1.2, p1[2]], 0.45, 0.45, 6, [0.12, 0.12, 0.13]);
+  // catering truck: its box raised on scissors to the right rear door
+  box(rad + 3.6, tail * 0.62, 2.4, 1.2, 6.5, [0.95, 0.95, 0.95]); box(rad + 3.6, tail * 0.62 + 0.5, 2.4, 2.4, 5.0, [0.92, 0.93, 0.95], cy - gy - 1.5);
+  // fuel truck under the right wing
+  if (h % 3 === 0) { box(rad + 9, -2, 2.5, 2.8, 9.0, [0.85, 0.85, 0.82]); box(rad + 9, -6.8, 2.5, 2.2, 2.2, [0.8, 0.1, 0.1]); }
+  // cones: the nose and each wingtip
+  const span = A.phys.b / 2;
+  for (const [x, z] of [[0, nose - 2], [span + 1, 2], [-span - 1, 2]]) { const p = W(x, 0, z); B.cylinder([p[0], gy, p[2]], [p[0], gy + 0.75, p[2]], 0.2, 0.04, 6, [0.95, 0.4, 0.05]); }
 }
 // a box from a to b (its cross-section w x h, level), windows along its sides
 function beam(B, a, b, w, h, col, glass) {

@@ -4091,6 +4091,12 @@ vec3 groundDetail(vec3 ph, vec3 w, sampler2D nz){
   float grain = mix(1.0, 0.8 + 0.28 * f1 + 0.12 * (f4 - 0.5), fine);
   float tuft = mix(1.0, 0.72 + 0.34 * f2 + 0.18 * f1, fine) * (0.9 + 0.2 * f3);
   vec3 g = ph * mix(tuft, grain, tar);
+  // near the ground: photographed grass and asphalt grain (p_citymat.js), coloured by the aerial photo
+  if (uMatOn > 0.5) {
+    vec3 gd = clamp(matC(19.0, w.xz / 3.0) / max(matAvg(19.0), vec3(0.05)), 0.4, 1.8);
+    float ad = dot(clamp(matC(13.0, w.xz / 4.0) / max(matAvg(13.0), vec3(0.05)), 0.5, 1.6), vec3(0.333));
+    g = ph * mix(mix(vec3(1.0), gd, fine), vec3(mix(1.0, ad, fine)), tar);
+  }
   g = mix(g, g * vec3(0.95, 1.04, 0.9), green * f3 * 0.6 * fine);       // a little colour variation in the grass
   return mix(ph, g, near);
 }
@@ -5980,6 +5986,18 @@ void main(){
       vec3 rr = reflect(-V, n);
       vec3 day = ft * (uSunCol * (0.35 + 0.5 * diff) + amb * 0.8) * 1.05;
       day += (skyColor(rr) * (0.1 + 0.55 * pow(1.0 - max(dot(n, V), 0.0), 4.0)) + uSunCol * pow(max(dot(rr, uSunDir), 0.0), 200.0) * 1.5) * gm * (1.0 - uNight * 0.8);
+      // no two buildings alike: a tint, rain streaks down the wall, grime near the street
+      day *= mix(vec3(0.86), vec3(1.12), vec3(h1(vSeed + 1.1), h1(vSeed + 1.1) * 0.6 + h1(vSeed + 2.7) * 0.4, h1(vSeed + 3.9) * 0.5 + h1(vSeed + 1.1) * 0.5));
+      float stk = texture(uNoise, vec2(vM.x * 0.31 + vSeed, vM.z * 0.017)).a;
+      day *= 1.0 - 0.16 * smoothstep(0.45, 0.8, stk) * (1.0 - gm) - 0.12 * (1.0 - smoothstep(0.0, 6.0, vM.z));
+      // street level: a glazed lobby with its entrance, or a darker stone plinth
+      if (vM.z < 4.0 && !shop) {
+        float bay = fract(vM.x / 6.0), lob = step(0.5, h1(vSeed + 7.7));
+        vec3 stone = vec3(0.42, 0.41, 0.4) * (0.9 + 0.2 * texture(uNoise, vec2(vM.x, vM.z) * 0.3).b) * (uSunCol * (0.35 + 0.5 * diff) + amb * 0.8);
+        vec3 lobby = (vec3(0.05, 0.06, 0.07) + skyColor(rr) * (0.15 + 0.6 * pow(1.0 - max(dot(n, V), 0.0), 4.0))) * mix(1.0, 0.35, step(abs(bay - 0.5), 0.02));
+        day = mix(stone, lobby, lob * step(0.35, vM.z) * step(vM.z, 3.6) * step(0.06, bay) * step(bay, 0.94));
+        gm = lob;
+      }
       col = mix(day, day * 0.18, uNight);
       vec3 nt = matC(20.0 + step(0.5, s3), vec2(vM.x + vSeed * 11.0, vM.z) / 30.0);
       bEm = nt * nt * 2.4 * uNight * (0.4 + 0.6 * gm) * (bmood < 0.2 ? 0.3 : 1.0);
@@ -7515,14 +7533,15 @@ function drawJwTrees(planes, far) {
   if (JWTREES.ov !== JW.ov) { for (const c of JWTREES.cells.values()) freeJwTreeCell(c); JWTREES.cells.clear(); JWTREES.ov = JW.ov; }
   const [lat, lon] = worldToGeo(eye[0], eye[2]), n = 2 ** 16;
   const cx = Math.floor((lon + 180) / 360 * n), cy = Math.floor(mercY(lat) * n);
-  const fade = game.gfx === 'high' ? 2000 : 1300, cellM = 40075016 * Math.cos(lat * DEG) / n, rc = Math.ceil(fade / cellM) + 1;
+  // (driving, the trees further than a few hundred metres are hidden by the streets anyway: fewer on phones)
+  const low = CAR.on && agl < 60, fade = low ? (game.touch ? 450 : 900) : game.gfx === 'high' ? 2000 : 1300, cellM = 40075016 * Math.cos(lat * DEG) / n, rc = Math.ceil(fade / cellM) + 1;
   let built = 0;
   // near the ground, photo tree cards (p_treecards.js) instead of the drawn crowns
   const card = tcardUse();
   if (card && !TCARD.prog) TCARD.prog = makeProgram(tcardJwVS(), TCARD_FS);
   const pr = card ? TCARD.prog : JWTREES.prog, u = pr.u;
   setCommon(pr); shadowUniforms(pr);
-  if (card) { gl.uniform1f(u.uCardN, TCARD.n); gl.disable(gl.CULL_FACE); gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE); }
+  if (card) { gl.uniform1f(u.uCardN, TCARD.n); gl.disable(gl.CULL_FACE); if (!game.touch) gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE); }
   gl.uniform1f(u.uFade, fade); gl.uniform1i(u.uPhoto, 6); gl.uniform1i(u.uNoise, 2);
   gl.activeTexture(gl.TEXTURE6);
   for (let dy = -rc; dy <= rc; dy++) for (let dx = -rc; dx <= rc; dx++) {
@@ -7688,7 +7707,7 @@ function drawStreet(planes) {
       const s = t.street[k]; if (!s) continue;
       if (k === PROP_TREE && typeof ZONE !== 'undefined' && ZONE.on && ZONE.g[3] > 0) continue;   // (Google's photo has the real trees)
       if (k === PROP_TREE && cards && t.streetCard) { cardTiles.push(t); continue; }
-      gl.uniform1f(u.uFar, STREET.far[k]);
+      gl.uniform1f(u.uFar, STREET.far[k] * (game.touch ? 0.55 : 1));
       gl.bindVertexArray(s.vao.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, s.count, s.n);
     }
   }
@@ -7697,8 +7716,8 @@ function drawStreet(planes) {
   if (cardTiles.length) {
     if (!TCARD.sprog) TCARD.sprog = makeProgram(TCARD_STREET_VS, TCARD_FS);
     const sp = TCARD.sprog, su = sp.u;
-    setCommon(sp); gl.uniform1f(su.uCardN, TCARD.n); gl.uniform1f(su.uFar, STREET.far[PROP_TREE]);
-    gl.disable(gl.CULL_FACE); gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
+    setCommon(sp); gl.uniform1f(su.uCardN, TCARD.n); gl.uniform1f(su.uFar, STREET.far[PROP_TREE] * (game.touch ? 0.55 : 1));
+    gl.disable(gl.CULL_FACE); if (!game.touch) gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
     for (const t of cardTiles) { citySetTile(su, t); gl.bindVertexArray(t.streetCard.vao.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, 12, t.streetCard.n); }
     gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE); gl.enable(gl.CULL_FACE);
   }
@@ -13724,7 +13743,7 @@ function carHud(g, W, H) {
   const y0 = H - 44 - (lines.length - 1) * 26;
   lines.forEach((t, i) => { g.font = `${i ? 600 : 700} ${i ? 12 : 14}px ${UI}`; const w = g.measureText(t).width; g.fillStyle = 'rgba(6,12,22,0.62)'; g.fillRect(12, y0 + i * 26 - 11, w + 16, 22); g.fillStyle = i ? '#dfe7f0' : '#ffd66b'; g.fillText(t, 20, y0 + i * 26); });
   const top = [];
-  if (JW.active) top.push([`${la.toFixed(4)}°N ${lo.toFixed(4)}°E　標高 ${Math.round(CAR.pos[1])} m`, '#dfe7f0']);
+  if (JW.active) top.push([`${la.toFixed(4)}°N ${lo.toFixed(4)}°E　標高 ${Math.round(CAR.pos[1])} m　${DYN.fps || '–'} fps（画質 ${Math.round(DYN.k * 100)}%）`, '#dfe7f0']);
   if (CAR.plane) { const d = Math.hypot(CAR.plane.pos[0] - CAR.pos[0], CAR.plane.pos[2] - CAR.pos[2]); top.push([`✈ 飛行機まで ${d < 1000 ? Math.round(d) + ' m' : (d / 1000).toFixed(1) + ' km'}`, '#9fe0ff']); }
   top.forEach(([t, c], i) => { g.font = `600 12px ${UI}`; const w = g.measureText(t).width; g.fillStyle = 'rgba(6,12,22,0.62)'; g.fillRect(12, 14 + i * 24, w + 16, 20); g.fillStyle = c; g.fillText(t, 20, 24 + i * 24); });
   g.restore();
@@ -15045,12 +15064,14 @@ function dynRes(dt) {
   DYN.acc += dt; DYN.n++; DYN.t += dt;
   if (DYN.t < 1.5) return;
   const ft = DYN.acc / DYN.n; DYN.acc = 0; DYN.n = 0; DYN.t = 0;
+  DYN.fps = Math.round(1 / ft);
   if (game.state !== 'flying') return;
-  if (ft > 1 / 40) DYN.k = Math.max(0.55, DYN.k - (ft > 1 / 25 ? 0.12 : 0.06));
+  // (phones may drop further: a sharp half-resolution picture beats a stuttering one)
+  if (ft > 1 / 40) DYN.k = Math.max(game.touch ? 0.45 : 0.55, DYN.k - (ft > 1 / 25 ? 0.12 : 0.06));
   else if (ft < 1 / 56) DYN.k = Math.min(1, DYN.k + 0.04);
 }
 function resize() {
-  const dpr = Math.min(window.devicePixelRatio || 1, game.touch ? 1.5 : CAR.on ? 2 : 1.75, GOOG.covering && !CAR.on ? 1.25 : 9) * DYN.k;
+  const dpr = Math.min(window.devicePixelRatio || 1, game.touch ? (CAR.on ? 1.25 : 1.5) : CAR.on ? 2 : 1.75, GOOG.covering && !CAR.on ? 1.25 : 9) * DYN.k;
   const w = Math.max(1, Math.round(glCanvas.clientWidth * dpr)), h = Math.max(1, Math.round(glCanvas.clientHeight * dpr));
   if (glCanvas.width !== w || glCanvas.height !== h) { glCanvas.width = w; glCanvas.height = h; }
   const hd = Math.min(window.devicePixelRatio || 1, 2), hc = hud.cv;

@@ -966,6 +966,8 @@ function makeProgram(vs, fs) {
   }
   if (u.uSunShadow) { gl.useProgram(p); gl.uniform1i(u.uSunShadow, 11); }      // its own unit (a shadow sampler can't share one)
   if (u.uNP) { gl.useProgram(p); gl.uniform1i(u.uNP, 13); }                      // the aerial photo round the car
+  if (u.uMat) { gl.useProgram(p); gl.uniform1i(u.uMat, 14); }                    // the city's photo materials
+  if (u.uCards) { gl.useProgram(p); gl.uniform1i(u.uCards, 15); }                // the photo tree cards
   return { p, u };
 }
 // vertex buffers: attribs = [{loc, size, data, divisor?, dynamic?}] ; interleaved = {loc: [size, offset]}
@@ -1592,6 +1594,11 @@ vec4 nearPaint(vec3 w){
   float yellow = smoothstep(0.05, 0.12, l - lb) * smoothstep(0.15, 0.25, t.r - t.b) * step(t.b, t.g);
   return vec4(b.rgb, max(white, yellow * 2.0) * (yellow > white ? -1.0 : 1.0));
 }
+// the photographed city materials (p_citymat.js): layer, uv in repeats of the photo
+uniform highp sampler2DArray uMat;
+uniform float uMatOn;
+vec3 matC(float layer, vec2 uv){ return texture(uMat, vec3(uv, layer)).rgb; }
+vec3 matAvg(float layer){ return textureLod(uMat, vec3(0.5, 0.5, layer), 12.0).rgb; }
 // the sun's shadow map round the car (p_sunshadow.js): 1 lit, down to 1 - strength in shadow
 uniform highp sampler2DShadow uSunShadow;
 uniform mat4 uSunVP;
@@ -5859,6 +5866,13 @@ void main(){
       rc *= mix(1.0, (0.78 + 0.22 * course) * (1.0 - 0.18 * (1.0 - smoothstep(0.0, 0.06, 0.5 - joint))), aaR);
       rc *= mix(1.0, 0.93 + 0.14 * h2(vec2(floor(vM.x / 0.3 + floor(ty) * 0.5), floor(ty)) + vSeed), aaR);
     }
+    // photographed roofing: tiles on pitched roofs, weathered concrete on flat ones, in the roof's own colour
+    if (uMatOn > 0.5) {
+      bool pitch = n.y < 0.97 && n.y > 0.2;
+      float L = pitch ? (s1 < 0.55 ? 16.0 : 17.0) : 18.0, S = pitch ? 2.5 : 4.0;
+      vec2 ruv = pitch ? vec2(vM.x, vWorld.y * 1.6) / S : vWorld.xz / S;
+      rc *= clamp(matC(L, ruv) / max(matAvg(L), vec3(0.05)), 0.3, 2.0);
+    }
     // rooftop equipment / edge band on larger flat roofs
     col = rc * (uSunCol * diff * 0.95 + amb);
   } else {
@@ -5943,9 +5957,33 @@ void main(){
     vec3 wcol = mix(vec3(1.0, 0.72, 0.42), mix(vec3(1.0, 0.78, 0.5), vec3(0.84, 0.9, 1.0), step(tower ? 0.45 : 0.75, h2(cell * 2.3 + vSeed))), aa);
     glass = mix(glass, glass * 0.3, uNight);
     bEm = wcol * lit * win * (1.0 - frame) * 1.5;
+    // the photographed wall finish (tiles, concrete, plaster, siding) in the building's own colour
+    if (uMatOn > 0.5 && !tower) {
+      float L = house ? (s3 < 0.5 ? 12.0 : 11.0) : mansion ? (s3 > 0.35 ? 9.0 : 10.0) : (s3 > 0.5 ? 10.0 : 11.0);
+      float S = L == 9.0 ? 1.2 : L == 12.0 ? 2.4 : 3.0;
+      vec3 wt = matC(L, vec2(vM.x, vM.z) / S) / max(matAvg(L), vec3(0.05));
+      fin = mix(1.0, fin, 0.3) * 1.0;
+      wc *= clamp(wt, 0.4, 1.8);
+    }
     vec3 wallLit = wc * fin * (uSunCol * diff * 0.9 + amb);
     vec3 alu = (s2 > 0.5 && house ? vec3(0.3, 0.26, 0.22) : vec3(0.66, 0.67, 0.66)) * (uSunCol * diff * 0.9 + amb);
     col = mix(mix(wallLit, glass, win), alu, frame);
+    // offices and towers: a photographed facade, its real windows and panels (and lit windows from night
+    // photos), the storeys matched to the building's height
+    if (uMatOn > 0.5 && (tower || (!house && !mansion && H >= 11.0 && s2 > 0.15))) {
+      float L, S;
+      if (tower) { int k = int(s1 * 4.0); L = k == 0 ? 5.0 : k == 1 ? 6.0 : k == 2 ? 1.0 : 0.0; S = k == 0 ? 38.0 : k == 1 ? 42.9 : k == 2 ? 21.0 : 28.8; if (H > 120.0 && s3 > 0.5) { L = 8.0; S = 112.0; } }
+      else { int k = int(s1 * 5.0); L = float(k); S = k == 0 ? 28.8 : k == 1 ? 21.0 : k == 2 ? 14.4 : 19.2; }
+      vec2 uv = vec2(vM.x + vSeed * 7.3, vM.z) / S;
+      vec3 ft = matC(L, uv);
+      float lf = dot(ft, vec3(0.3, 0.55, 0.15)), gm = smoothstep(0.4, 0.16, lf);
+      vec3 rr = reflect(-V, n);
+      vec3 day = ft * (uSunCol * (0.35 + 0.5 * diff) + amb * 0.8) * 1.05;
+      day += (skyColor(rr) * (0.1 + 0.55 * pow(1.0 - max(dot(n, V), 0.0), 4.0)) + uSunCol * pow(max(dot(rr, uSunDir), 0.0), 200.0) * 1.5) * gm * (1.0 - uNight * 0.8);
+      col = mix(day, day * 0.18, uNight);
+      vec3 nt = matC(20.0 + step(0.5, s3), vec2(vM.x + vSeed * 11.0, vM.z) / 30.0);
+      bEm = nt * nt * 2.4 * uNight * (0.4 + 0.6 * gm) * (bmood < 0.2 ? 0.3 : 1.0);
+    }
     // ground-floor shade and contact darkening
     col *= mix(0.62, 1.0, smoothstep(0.0, 7.0, vM.z));
     if (shop && vM.z < z0) {
@@ -6011,6 +6049,11 @@ void main(){
   float u = vR.x, w = vR.y, m = vR.z * w * 0.5;               // along, width, metres from the centre line
   float dist = length(uCamPos - vWorld), aa = max(fwidth(m), 0.02);
   float n1 = texture(uNoise, vWorld.xz / 0.45).b, n2 = texture(uNoise, vWorld.xz / 6.0).a, n3 = texture(uNoise, vWorld.xz / 37.0).b;
+  // seen from below (an elevated road over you): its concrete underside, not the surface
+  if (uCamPos.y < vWorld.y - 1.0) {
+    vec3 cu = vec3(0.42, 0.42, 0.41) * (0.85 + 0.2 * n2) * (uAmbSky * 0.9 + uSunCol * 0.12);
+    outColor = vec4(tonemap(applyFog(cu, vWorld)), 1.0); return;
+  }
   if (vSide > 0.5) {
     // the pavement: 30 cm slabs, a kerb-stone edge, the yellow tactile strip for the blind (点字ブロック)
     float n2p = texture(uNoise, vWorld.xz / 6.0).a;
@@ -6022,9 +6065,10 @@ void main(){
       float joint = smoothstep(0.44, 0.5, max(f.x, f.y)) * (1.0 - smoothstep(8.0, 50.0, dist));
       base = mix(vec3(0.54, 0.53, 0.5), vec3(0.63, 0.61, 0.57), nHash(floor(pv))) * (0.9 + 0.12 * n2p);
       base *= 1.0 - joint * 0.22;
+      if (uMatOn > 0.5) base = matC(14.0, vec2(u, am) / 1.2) * (0.85 + 0.15 * n2p);            // photographed paving blocks
       if (am < 0.18) base = vec3(0.66, 0.65, 0.62) * (0.92 + 0.08 * n2p);
       float tb = step(0.5, am) * step(am, 0.8) * step(0.5, fract(u / 23.0)) ;
-      base = mix(base, vec3(0.8, 0.63, 0.12) * (0.9 + 0.1 * n2p), tb);
+      base = mix(base, uMatOn > 0.5 ? matC(15.0, vec2(u, am - 0.5) / 1.2) : vec3(0.8, 0.63, 0.12) * (0.9 + 0.1 * n2p), tb);
     }
     float dp = vSide > 1.5 ? 0.55 : max(uSunDir.y, 0.0);
     // the real pavement's colour from the aerial photo, under the slab pattern
@@ -6038,6 +6082,10 @@ void main(){
   vec3 c = track ? mix(vec3(0.42, 0.37, 0.30), vec3(0.50, 0.45, 0.37), n2) : mix(vec3(0.17, 0.175, 0.18), vec3(0.25, 0.25, 0.255), n2 * 0.6 + n3 * 0.4);
   if (vCls < 1.5) c *= 0.9;                                    // motorway: darker, newer surface
   float grain = mix(1.0, 0.86 + 0.28 * n1, 1.0 - smoothstep(20.0, 160.0, dist));
+  if (uMatOn > 0.5 && !track) {                                        // photographed asphalt, darkened to Japanese tarmac
+    vec3 at = matC(13.0, vWorld.xz / 4.0) / max(matAvg(13.0), vec3(0.05));
+    c *= mix(vec3(1.0), clamp(at, 0.5, 1.6), 1.0 - smoothstep(60.0, 400.0, dist)); grain = 1.0;
+  }
   c *= grain;
   // wheel tracks: slightly darker and smoother where the tyres run
   float lane = w > 6.0 ? w * 0.25 : w * 0.5;
@@ -7452,12 +7500,13 @@ function buildJwTreeCell(x, y) {
     gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 3, gl.FLOAT, false, 28, 16); gl.vertexAttribDivisor(3, 1);
     gl.bindVertexArray(null); return vao;
   };
-  const vao = mk(JWTREES.mesh), vaoLo = mk(JWTREES.meshLo);
+  if (!JWTREES.card) { const m = tcardMesh(); JWTREES.card = { P: m.pos, N: new Float32Array(m.pos.length), count: m.count }; }
+  const vao = mk(JWTREES.mesh), vaoLo = mk(JWTREES.meshLo), vaoCard = mk(JWTREES.card);
   let hmin = 1e9, hmax = -1e9; for (let q = 0; q < k; q++) { hmin = Math.min(hmin, inst[q * 7 + 1]); hmax = Math.max(hmax, inst[q * 7 + 1]); }
   const half = 40075016 * Math.cos((latN + latS) / 2 * DEG) / n / 2 + 1;
-  return { x, y, ox, oz, n: k, vao, vaoLo, bufs: [ib], used: 0, half, hmin, hmax };
+  return { x, y, ox, oz, n: k, vao, vaoLo, vaoCard, bufs: [ib], used: 0, half, hmin, hmax };
 }
-function freeJwTreeCell(c) { gl.deleteVertexArray(c.vao); if (c.vaoLo) gl.deleteVertexArray(c.vaoLo); for (const b of c.bufs) gl.deleteBuffer(b); }
+function freeJwTreeCell(c) { gl.deleteVertexArray(c.vao); if (c.vaoLo) gl.deleteVertexArray(c.vaoLo); if (c.vaoCard) gl.deleteVertexArray(c.vaoCard); for (const b of c.bufs) gl.deleteBuffer(b); }
 function drawJwTrees(planes, far) {
   if (!JW.active || game.gfx === 'low') return;
   const eye = R.eye, agl = eye[1] - Math.max(jwHeight(eye[0], eye[2]), 0);
@@ -7468,8 +7517,12 @@ function drawJwTrees(planes, far) {
   const cx = Math.floor((lon + 180) / 360 * n), cy = Math.floor(mercY(lat) * n);
   const fade = game.gfx === 'high' ? 2000 : 1300, cellM = 40075016 * Math.cos(lat * DEG) / n, rc = Math.ceil(fade / cellM) + 1;
   let built = 0;
-  const pr = JWTREES.prog, u = pr.u;
+  // near the ground, photo tree cards (p_treecards.js) instead of the drawn crowns
+  const card = tcardUse();
+  if (card && !TCARD.prog) TCARD.prog = makeProgram(tcardJwVS(), TCARD_FS);
+  const pr = card ? TCARD.prog : JWTREES.prog, u = pr.u;
   setCommon(pr); shadowUniforms(pr);
+  if (card) { gl.uniform1f(u.uCardN, TCARD.n); gl.disable(gl.CULL_FACE); gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE); }
   gl.uniform1f(u.uFade, fade); gl.uniform1i(u.uPhoto, 6); gl.uniform1i(u.uNoise, 2);
   gl.activeTexture(gl.TEXTURE6);
   for (let dy = -rc; dy <= rc; dy++) for (let dx = -rc; dx <= rc; dx++) {
@@ -7488,9 +7541,11 @@ function drawJwTrees(planes, far) {
     if (ph) { gl.bindTexture(gl.TEXTURE_2D, ph[0]); gl.uniform4f(u.uUvX, ph[1], ph[2], ph[3], 0); gl.uniform1i(u.uHasPhoto, 1); }
     else gl.uniform1i(u.uHasPhoto, 0);
     gl.uniform3f(u.uOrigin, c.ox, 0, c.oz);
+    if (card && c.vaoCard) { gl.bindVertexArray(c.vaoCard); gl.drawArraysInstanced(gl.TRIANGLES, 0, JWTREES.card.count, c.n); continue; }
     gl.bindVertexArray(lo ? c.vaoLo : c.vao);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, lo ? JWTREES.meshLo.count : JWTREES.mesh.count, c.n);
   }
+  if (card) { gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE); gl.enable(gl.CULL_FACE); }
   gl.activeTexture(gl.TEXTURE0);
   // forget cells that have been out of range for a while
   if (JWTREES.cells.size > 260) for (const [k, c] of JWTREES.cells) if (JW.frame - c.used > 300) { freeJwTreeCell(c); JWTREES.cells.delete(k); }
@@ -7607,17 +7662,20 @@ function streetReceive(t, buf) {
       { data: new Float32Array(a), stride: 4, layout: [[3, 4, 0]], divisor: 1 }]);
     return { vao, count: m.count, n: a.length / 4 };
   });
+  // the roadside trees also as photo cards (p_treecards.js), used near the ground
+  if (per[PROP_TREE].length) t.streetCard = { vao: makeVAO([{ loc: 0, size: 3, data: tcardMesh().pos }, { data: new Float32Array(per[PROP_TREE]), stride: 4, layout: [[3, 4, 0]], divisor: 1 }]), n: per[PROP_TREE].length / 4 };
 }
 function streetDispose(t) {
   if (!t.street) return;
   for (const s of t.street) if (s) { gl.deleteVertexArray(s.vao.vao); for (const b of s.vao.bufs) gl.deleteBuffer(b); }
+  if (t.streetCard) { gl.deleteVertexArray(t.streetCard.vao.vao); for (const b of t.streetCard.vao.bufs) gl.deleteBuffer(b); t.streetCard = null; }
   t.street = null;
 }
 function drawStreet(planes) {
   if (typeof CITY === 'undefined' || !CITY.ready || !JW.online) return;
   if (R.eye[1] - Math.max(jwHeight(R.eye[0], R.eye[2]), 0) > 900) return;   // too small to see from high up
   if (!STREET.prog) STREET.prog = makeProgram(STREET_VS, STREET_FS);
-  const pr = STREET.prog, u = pr.u;
+  const pr = STREET.prog, u = pr.u, cards = typeof tcardUse === 'function' && tcardUse(), cardTiles = [];
   setCommon(pr);
   gl.uniform1f(u.uNight, nightK());
   gl.disable(gl.CULL_FACE);
@@ -7629,11 +7687,21 @@ function drawStreet(planes) {
     for (let k = 0; k < 4; k++) {
       const s = t.street[k]; if (!s) continue;
       if (k === PROP_TREE && typeof ZONE !== 'undefined' && ZONE.on && ZONE.g[3] > 0) continue;   // (Google's photo has the real trees)
+      if (k === PROP_TREE && cards && t.streetCard) { cardTiles.push(t); continue; }
       gl.uniform1f(u.uFar, STREET.far[k]);
       gl.bindVertexArray(s.vao.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, s.count, s.n);
     }
   }
   gl.enable(gl.CULL_FACE);
+  // the roadside trees as photo cards
+  if (cardTiles.length) {
+    if (!TCARD.sprog) TCARD.sprog = makeProgram(TCARD_STREET_VS, TCARD_FS);
+    const sp = TCARD.sprog, su = sp.u;
+    setCommon(sp); gl.uniform1f(su.uCardN, TCARD.n); gl.uniform1f(su.uFar, STREET.far[PROP_TREE]);
+    gl.disable(gl.CULL_FACE); gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
+    for (const t of cardTiles) { citySetTile(su, t); gl.bindVertexArray(t.streetCard.vao.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, 12, t.streetCard.n); }
+    gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE); gl.enable(gl.CULL_FACE);
+  }
 }
 // =====================================================================
 //  THE REAL GROUND round the car: a sharp aerial photo (Esri World
@@ -7743,6 +7811,150 @@ function npToggle(v) {
   NP.on = v; try { localStorage.setItem('sorajima-realroad', v ? '1' : '0'); } catch (e) { /* ignore */ }
 }
 (() => { const el = document.getElementById('opt-realroad'); if (el) { el.checked = NP.on; el.addEventListener('change', () => npToggle(el.checked)); } })();
+// =====================================================================
+//  CITY MATERIALS: photographed surfaces (ambientCG, CC0) for the sim's
+//  own city: office and tower facades with their real windows, wall
+//  tiles, concrete, plaster and siding, asphalt, paving slabs, the
+//  yellow tactile blocks, roof tiles, grass, and night facades for the
+//  lit windows. One texture array; until it has loaded, the drawn
+//  (procedural) look stands in.
+// =====================================================================
+const CMAT = { tex: null, ready: false, started: false, n: 22, size: 0, left: 0, failed: 0 };
+async function cmatFetch(url) {
+  try { const r = await fetch(url); if (r.ok) return await r.blob(); } catch (e) { /* try the JSON copy */ }
+  const r = await fetch(url + '.json'); if (!r.ok) throw new Error('HTTP ' + r.status);
+  const b64 = (await r.json()).data, bin = atob(b64), u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return new Blob([u8], { type: 'image/jpeg' });
+}
+function cmatInit() {
+  if (CMAT.started) return;
+  CMAT.started = true;
+  const S = CMAT.size = game.touch ? 512 : 1024, n = CMAT.n, levels = Math.log2(S) + 1;
+  const tex = CMAT.tex = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE14); gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
+  gl.texStorage3D(gl.TEXTURE_2D_ARRAY, levels, gl.RGBA8, S, S, n);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  if (anisoExt) gl.texParameterf(gl.TEXTURE_2D_ARRAY, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(game.touch ? 4 : 8, gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+  gl.activeTexture(gl.TEXTURE0);
+  CMAT.left = n;
+  for (let i = 0; i < n; i++) {
+    cmatFetch(`models/tex/cm${String(i).padStart(2, '0')}.jpg`)
+      .then(b => createImageBitmap(b, { resizeWidth: S, resizeHeight: S, resizeQuality: 'high', imageOrientation: 'flipY', premultiplyAlpha: 'none', colorSpaceConversion: 'none' }))
+      .then(bm => {
+        gl.activeTexture(gl.TEXTURE14); gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+        gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, S, S, 1, gl.RGBA, gl.UNSIGNED_BYTE, bm);
+        gl.activeTexture(gl.TEXTURE0); bm.close();
+      })
+      .catch(e => { CMAT.failed++; console.warn('city material', i, e); })
+      .finally(() => {
+        if (--CMAT.left > 0) return;
+        if (CMAT.failed) return;                                        // (any missing: keep the drawn look)
+        gl.activeTexture(gl.TEXTURE14); gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
+        gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+        gl.activeTexture(gl.TEXTURE0);
+        CMAT.ready = true;
+      });
+  }
+}
+// =====================================================================
+//  PHOTO TREES near the ground: each tree two crossed cards cut from
+//  renders of photo-scanned tree models (Poly Haven, CC0), in place of
+//  the drawn crowns wherever you're low down (driving, taxiing). Two
+//  species, four sides each; they sway a little in the wind.
+// =====================================================================
+const TCARD = { tex: null, ready: false, started: false, n: 8, prog: null, sprog: null, mesh: null };
+function tcardInit() {
+  if (TCARD.started) return;
+  TCARD.started = true;
+  cmatFetch('models/tex/trees.webp').then(b => createImageBitmap(b, { imageOrientation: 'flipY', premultiplyAlpha: 'none', colorSpaceConversion: 'none' })).then(bm => {
+    const S = bm.width, n = Math.round(bm.height / S);
+    const tex = TCARD.tex = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE15); gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA8, S, S, n, 0, gl.RGBA, gl.UNSIGNED_BYTE, bm);
+    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.activeTexture(gl.TEXTURE0); bm.close();
+    TCARD.n = n; TCARD.ready = true;
+  }).catch(e => console.warn('tree cards', e));
+}
+// two crossed quads: x across (-0.5..0.5), y up (0..1), z which card
+function tcardMesh() {
+  if (TCARD.mesh) return TCARD.mesh;
+  const P = [];
+  for (const k of [0, 1]) for (const [x, y] of [[-0.5, 0], [0.5, 0], [0.5, 1], [-0.5, 0], [0.5, 1], [-0.5, 1]]) P.push(x, y, k);
+  return TCARD.mesh = { pos: new Float32Array(P), count: 12 };
+}
+const TCARD_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec2 vUv2; flat in float vLayer; in float vTop; flat in vec3 vTint;
+uniform highp sampler2DArray uCards;
+out vec4 outColor;
+void main(){
+  if (zoneCut(vWorld)) discard;
+  vec4 t = texture(uCards, vec3(vUv2, vLayer));
+  if (t.a < 0.3) discard;
+  float sh = planeShadow(vWorld.xz) * sunShadow(vWorld, vec3(0.0, 1.0, 0.0));
+  vec3 amb = mix(uAmbGround, uAmbSky, 0.35 + 0.5 * vTop);
+  vec3 c = t.rgb * vTint * (uSunCol * (0.28 + 0.62 * sh) * (0.75 + 0.35 * vTop) + amb * 0.95) * 1.1;
+  outColor = vec4(tonemap(applyFog(c, vWorld)), smoothstep(0.3, 0.6, t.a));   // (soft cut edges with alpha to coverage)
+}`;
+// the map's trees (p_trees.js): the same placing and photo-mask as the drawn ones, a card instead of a crown
+function tcardJwVS() {
+  const cut = JWTREE_VS.indexOf('  float hgt =');
+  return JWTREE_VS.slice(0, cut).replace('out float vT;', 'out float vT; out vec2 vUv2; flat out float vLayer; out float vTop; flat out vec3 vTint;')
+    .replace('uniform float uCurv, uFade;', 'uniform float uCurv, uFade, uTime, uCardN;') + `
+  float hgt = mix(7.0, 14.0, fract(r * 3.7));
+  float ang = r * 6.2831 + aPos.z * 1.5708;
+  vec2 dir = vec2(cos(ang), sin(ang));
+  float sway = aPos.y * aPos.y * 0.25 * sin(uTime * 1.1 + r * 40.0);
+  vec3 w = base + vec3(dir.x * aPos.x * hgt + sway * dir.y, aPos.y * hgt - 0.25, dir.y * aPos.x * hgt - sway * dir.x);
+  vec2 d = w.xz - uCamPos.xz; w.y -= dot(d, d) * uCurv;
+  vWorld = w; vN = vec3(0.0, 1.0, 0.0); vT = aPos.y; vCol = col; vTop = aPos.y;
+  float flip = step(0.5, fract(r * 13.1));
+  vUv2 = vec2(mix(aPos.x + 0.5, 0.5 - aPos.x, flip), aPos.y);
+  vLayer = floor(fract(r * 5.3) * uCardN);
+  vTint = mix(vec3(1.0), clamp(col / max(dot(col, vec3(0.33)), 0.05) * 0.33, 0.6, 1.4), 0.35);
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+}
+// the roadside trees the city worker places (p_street.js)
+const TCARD_STREET_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=3) in vec4 aI;        // tile-local x, z, ground y, yaw
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv, uFar, uTime, uCardN;
+` + CITY_POS_GLSL + `
+out vec3 vWorld; out vec2 vUv2; flat out float vLayer; out float vTop; flat out vec3 vTint;
+void main(){
+  float r = fract(sin(dot(aI.xy, vec2(12.9898, 78.233))) * 43758.5453);
+  float hgt = mix(6.5, 10.0, fract(r * 3.7));
+  float ang = aI.w + r * 3.0 + aPos.z * 1.5708;
+  vec2 dir = vec2(cos(ang), sin(ang));
+  float sway = aPos.y * aPos.y * 0.2 * sin(uTime * 1.2 + r * 40.0);
+  vec2 l = aI.xy + vec2(dir.x * aPos.x * hgt + sway * dir.y, dir.y * aPos.x * hgt - sway * dir.x);
+  vec3 w = cityWorld(l, aI.z + aPos.y * hgt - 0.15);
+  vec3 base = cityWorld(aI.xy, aI.z);
+  if (distance(base, uCamPos) > uFar) { gl_Position = vec4(0.0, 0.0, -2.0, 1.0); return; }
+  vWorld = w; vTop = aPos.y;
+  float flip = step(0.5, fract(r * 13.1));
+  vUv2 = vec2(mix(aPos.x + 0.5, 0.5 - aPos.x, flip), aPos.y);
+  vLayer = floor(fract(r * 5.3) * uCardN);
+  vTint = vec3(1.0);
+  vec2 d = w.xz - uCamPos.xz; w.y -= dot(d, d) * uCurv;
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+// cards are used close to the ground (from high up the drawn crowns read better)
+function tcardUse() {
+  if (!TCARD.started && JW.active && JW.online) tcardInit();
+  if (!TCARD.ready || TCARD.on === false) return false;
+  return R.eye[1] - Math.max(jwHeight(R.eye[0], R.eye[2]), 0) < 120;
+}
 
 // =====================================================================
 //  SIGHTSEEING FLIGHT: rings placed beside famous landmarks near the
@@ -14796,6 +15008,7 @@ function setCommon(pr) {
   if (u.uZoneG2) gl.uniform4fv(u.uZoneG2, ZONE.g2 || [0, 0, 0, 0]);
   if (u.uSunVP) { gl.uniformMatrix4fv(u.uSunVP, false, SUNSH.VP); gl.uniform4fv(u.uSunSh, SUNSH.v); }
   if (u.uNPRect) { gl.uniform4fv(u.uNPRect, NP.rect); gl.uniform4fv(u.uNPFade, NP.fade); }
+  if (u.uMatOn) { if (!CMAT.started && JW.active && JW.online) cmatInit(); gl.uniform1f(u.uMatOn, CMAT.ready && CMAT.on !== false ? 1 : 0); }
   if (u.uZoneSide) gl.uniform1f(u.uZoneSide, ZONE.side);
   if (u.uCamPos) gl.uniform3fv(u.uCamPos, R.eye);
   if (u.uTime) gl.uniform1f(u.uTime, R.time);

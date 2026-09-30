@@ -22,3 +22,7 @@ the cockpit screens.
 - `cars/toyota_ae86_black_limited_kouki.glb` — "Toyota AE86 Black Limited Kouki" by Martin Trafas — https://sketchfab.com/Bexxie
 - `cars/nissan_skyline_gt-r_c110_kenmeri_73.glb` — "Nissan Skyline GT-R C110 Kenmeri '73" by Martin Trafas — https://sketchfab.com/Bexxie
 - `cars/lexus_lc-500.glb` — "Lexus LC-500" by Socksthecat — https://sketchfab.com/Socksthecat
+
+## City materials and trees (`tex/`)
+- `tex/cm00.jpg` … `tex/cm21.jpg` — photographed facades, wall tiles, concrete, plaster, siding, asphalt, paving, tactile paving, roofing, grass and night facades from ambientCG (https://ambientcg.com), CC0 1.0. Assets: Facade006, Facade019A, Facade017, Facade018A, Facade020A, Facade001, Facade005, Facade003, Facade015, Tiles040, Concrete048, PaintedPlaster017, WoodSiding013, Asphalt031, PavingStones128, TactilePaving001, RoofingTiles013A, RoofingTiles012A, Concrete031, Grass004, Facade009, Facade007 (reduced to 1024 px).
+- `tex/trees.webp` — tree cards rendered from Poly Haven's "Island Tree 02" and "Tree Small 02" models (https://polyhaven.com), CC0 1.0.

@@ -6745,6 +6745,9 @@ void main(){
   float diff = max(dot(n, uSunDir), 0.0);
   vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
   vec3 col = base * (uSunCol * (0.30 + 0.62 * diff) + amb * 0.9);
+  // Google's photogrammetry has the real sunlight in its photos already: lit again per triangle it turns
+  // faceted and washed out, so it gets one even exposure (a touch of shading only for the time of day)
+  if (uFlatN == 1) col = base * (uAmbSky * 0.5 + uSunCol * (0.5 + 0.08 * diff)) * 0.95;
   vec3 em = vec3(0.0);
   if (uNightK > 0.0) {
     if (uFlatN == 1) em = googNight(base, n);
@@ -6917,7 +6920,7 @@ function googDispatch(n) {
   n.state = 1; n.job = id; w.busy++;
   n.refLat = n.planet ? 0 : n.lat; n.refLon = n.planet ? 0 : n.lon; n.kx = kxAt(n.refLat);
   PLAT.jobs.set(id, { n, w, goog: true });
-  w.postMessage({ goog: true, id, url: googUrl(n.uri), refLat: n.refLat, refLon: n.refLon, tf: n.tf, maxTex: game.touch ? 512 : 1024 });
+  w.postMessage({ goog: true, id, url: googUrl(n.uri), refLat: n.refLat, refLon: n.refLon, tf: n.tf, maxTex: game.touch ? 1024 : 2048 });
 }
 function googReceive(job, r) {
   const n = job.n;
@@ -7625,6 +7628,7 @@ function drawStreet(planes) {
     citySetTile(u, t);
     for (let k = 0; k < 4; k++) {
       const s = t.street[k]; if (!s) continue;
+      if (k === PROP_TREE && typeof ZONE !== 'undefined' && ZONE.on && ZONE.g[3] > 0) continue;   // (Google's photo has the real trees)
       gl.uniform1f(u.uFar, STREET.far[k]);
       gl.bindVertexArray(s.vao.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, s.count, s.n);
     }
@@ -14721,7 +14725,7 @@ async function loadJapan() {
 const R = { VP: null, eye: [0, 0, 0], time: 0, W: 1, H: 1, camR: [1, 0, 0], camU: [0, 1, 0], camF: [0, 0, -1], tanX: 1, tanY: 1 };
 // the near zone: while driving over Google's 3D tiles, the ground, streets and buildings within a few hundred
 // metres of the car are the sim's own (a photogrammetry mesh is a melted blanket at street level)
-const ZONE = { on: false, v: [0, 0, 0, 0], side: 0, r0: 240, r1: 340, g: [0, 0, 0, 0], clip: 3.3, gAt: null };
+const ZONE = { on: false, v: [0, 0, 0, 0], side: 0, r0: 240, r1: 340, g: [0, 0, 0, 0], clip: 2.2, gAt: null };
 // the ground round the car as a curved surface (h = a + bx + cz + dx² + exz + fz², least squares over rings of
 // the map's heights), so the cut under Google's mesh follows valleys and hillsides
 function zoneGroundFit() {
@@ -14882,7 +14886,7 @@ function drawScene(planes, far) {
       ZONE.side = 1; drawGoogle(); googFlatCheck();
       // ...except where Google has no 3D (the map's own buildings stand in everywhere), and around the car,
       // where the photogrammetry's melted ground and walls give way to the sim's own streets
-      if (GOOG.flat || ZONE.on) { ZONE.side = GOOG.flat ? 0 : -1; drawRoads(planes); drawCity(planes); drawStreet(planes); drawJwTrees(planes, far); }
+      if (GOOG.flat || ZONE.on) { ZONE.side = GOOG.flat ? 0 : -1; drawRoads(planes); drawCity(planes); drawStreet(planes); if (!(ZONE.on && ZONE.g[3] > 0)) drawJwTrees(planes, far); }   // (the real trees stand in Google's mesh)
       ZONE.side = 0;
     }
     else { drawJapanRunways(); drawRoads(planes); drawCity(planes); drawStreet(planes); ZONE.side = ZONE.plat ? 1 : 0; drawPlateau(); ZONE.side = 0; drawJwTrees(planes, far); }

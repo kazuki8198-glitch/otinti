@@ -5585,9 +5585,11 @@ function cityApplyHidden(t, rects) {
   t.hideKey = key;
   cityOrderIndex(t, !hit.length ? null : b => {
     const lat = t.latN - t.bCen[b * 2 + 1] / KZ, lon = t.lonW + t.bCen[b * 2] / t.kxN;
-    let hidden = false;
-    for (const r of hit) if (lat > r[0] && lat < r[2] && lon > r[1] && lon < r[3]) { hidden = true; break; }
-    if (hidden && K) { const a = (lat - K.lat) / K.rLat, o = (lon - K.lon) / K.rLon; if (a * a + o * o < 1) hidden = false; }
+    let hidden = false, byPhoto = false, best = 1e9;
+    // (PLATEAU's blocks nest, coarse over fine: whether it has a photo is the finest block's)
+    for (const r of hit) if (lat > r[0] && lat < r[2] && lon > r[1] && lon < r[3]) { hidden = true; const a = (r[2] - r[0]) * (r[3] - r[1]); if (a < best) { best = a; byPhoto = !!r[5]; } }
+    // near the car the map's own building comes back where PLATEAU has only a plain box (not a photo-textured one)
+    if (hidden && K && !byPhoto) { const a = (lat - K.lat) / K.rLat, o = (lon - K.lon) / K.rLon; if (a * a + o * o < 1) hidden = false; }
     return !hidden;
   });
   return true;
@@ -6534,7 +6536,7 @@ function platUpdate(planes) {
   if (PLAT.rectsDirty && R.time > (PLAT.rectsT || 0)) {
     PLAT.rectsDirty = false; PLAT.rectsT = R.time + 0.7;
     const rects = [];
-    if (!goog) for (const S of PLAT.list) if (S.root) (function walk(n) { if (n.mesh && !n.mesh.empty && n.size <= 1400) rects.push([n.s, n.w, n.n, n.e, n.key]); for (const c of n.children) walk(c); })(S.root);
+    if (!goog) for (const S of PLAT.list) if (S.root) (function walk(n) { if (n.mesh && !n.mesh.empty && n.size <= 1400) rects.push([n.s, n.w, n.n, n.e, n.key, n.mesh.tex ? 1 : 0]); for (const c of n.children) walk(c); })(S.root);
     PLAT.rects = rects;
     PLAT.hideQueue = [...CITY.tiles.values()];
   }
@@ -6642,6 +6644,8 @@ function drawPlateau() {
     gl.uniform4f(u.uTileA, n.refLon - JW.lon0, n.refLat - JW.lat0, n.refLat, n.kx);
     gl.uniform1f(u.uYOff, n.set.off || 37);
     if (n.mesh.tex) { gl.bindTexture(gl.TEXTURE_2D, n.mesh.tex); gl.uniform1i(u.uHasTex, 1); } else gl.uniform1i(u.uHasTex, 0);
+    // driving: plain boxes (no photo) give way near the car to the sim's own buildings; photo-textured ones stay
+    if (ZONE.plat) gl.uniform1f(u.uZoneSide, n.mesh.tex ? 0 : 1);
     gl.bindVertexArray(n.mesh.vao);
     gl.drawElements(gl.TRIANGLES, n.mesh.count, gl.UNSIGNED_INT, 0);
   }
@@ -14752,7 +14756,7 @@ function platPlainNear() {
     if (n.n < la - dLa || n.s > la + dLa || n.e < lo - dLo || n.w > lo + dLo) continue;
     if (n.mesh.tex) tex += n.mesh.count; else plain += n.mesh.count;
   }
-  ZONE.plainT = R.time; ZONE.plain = plain > 0 && plain > tex;
+  ZONE.plainT = R.time; ZONE.plain = plain > 0;            // (any plain boxes near: those are swapped, block by block)
   return ZONE.plain;
 }
 function zoneUpdate() {

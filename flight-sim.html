@@ -1035,7 +1035,8 @@ const GLSL_COMMON = `
 uniform vec4 uZone;
 uniform float uZoneSide;       // 1: far layer, -1: near layer, 0: not affected
 uniform vec4 uZoneG;           // the ground round the car as a plane (height, slope x, slope z) and the cut height
-float zoneGround(vec3 w){ return uZoneG.x + uZoneG.y * (w.x - uZone.x) + uZoneG.z * (w.z - uZone.y); }
+uniform vec4 uZoneG2;          // (its curvature: x², xz, z²)
+float zoneGround(vec3 w){ vec2 d = w.xz - uZone.xy; return uZoneG.x + uZoneG.y * d.x + uZoneG.z * d.y + uZoneG2.x * d.x * d.x + uZoneG2.y * d.x * d.y + uZoneG2.z * d.y * d.y; }
 bool zoneCut(vec3 w){
   if (uZoneSide == 0.0 || uZone.w <= 0.0) return false;
   float t = smoothstep(uZone.z, uZone.w, length(w.xz - uZone.xy));
@@ -4892,9 +4893,9 @@ function cityWorkerMain() {
     };
     const nrm3 = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
     // a flat quad a b c d (in order round it) facing along n, with its own height value per corner
-    const quad = (P, yr, n, st, H) => {
+    const quad = (P, yr, n, st, H, us) => {
       const nb = [Math.round(n[0] * 127), Math.round(n[1] * 127), Math.round(n[2] * 127)], along = p => (p[0] * -n[2] + p[2] * n[0]);
-      const i = P.map((p, k) => put(p[0], p[2], p[1], nb[0], nb[1], nb[2], along(p), st, H, yr[k]));
+      const i = P.map((p, k) => put(p[0], p[2], p[1], nb[0], nb[1], nb[2], us ? us[k] : along(p), st, H, yr[k]));
       const ex = P[1][0] - P[0][0], ey = P[1][1] - P[0][1], ez = P[1][2] - P[0][2], fx = P[2][0] - P[0][0], fy = P[2][1] - P[0][1], fz = P[2][2] - P[0][2];
       if ((ey * fz - ez * fy) * n[0] + (ez * fx - ex * fz) * n[1] + (ex * fy - ey * fx) * n[2] >= 0) { tri(i[0], i[1], i[2]); tri(i[0], i[2], i[3]); }
       else { tri(i[0], i[2], i[1]); tri(i[0], i[3], i[2]); }
@@ -5022,6 +5023,51 @@ function cityWorkerMain() {
       }
       return best;
     };
+    // a house's walls made real: framed windows standing off the wall (tall sliding doors on the ground floor
+    // of the garden side), the front door under a little canopy on the street side, canopies over some
+    // upper windows, an air-conditioner's outdoor unit, a downpipe at the corner. st kinds: 5 window,
+    // 8 tall window, 9 door, 4 fittings; u / yr are the metres across / up the opening, H its width
+    const K_WIN = 5 * 1024, K_TALL = 8 * 1024, K_DOOR = 9 * 1024, K_FIT = 4 * 1024;
+    function houseWall(x0, z0, x1, z1, len, nx, nz, front, base, top, seed, wi, shop) {
+      const ux = (x1 - x0) / len, uz = (z1 - z0) / len, o = 0.03;
+      const P = (u, y, d) => [x0 + ux * u + nx * d, y, z0 + uz * u + nz * d];
+      const opening = (u0, w, y0, h, k, st) => quad([P(u0, y0, o), P(u0 + w, y0, o), P(u0 + w, y0 + h, o), P(u0, y0 + h, o)], [0, 0, h, h], [nx, 0, nz], (seed | st), w, [0, w, w, 0]);
+      const canopy = (u0, w, y, d) => {                               // a thin sloping slab over an opening
+        quad([P(u0 - 0.1, y + 0.08, 0), P(u0 + w + 0.1, y + 0.08, 0), P(u0 + w + 0.1, y, d), P(u0 - 0.1, y, d)], [0, 0, 0, 0], nrm3([nx * 0.3, 1, nz * 0.3]), seed | K_FIT, 0);
+        quad([P(u0 - 0.1, y - 0.04, d), P(u0 + w + 0.1, y - 0.04, d), P(u0 + w + 0.1, y, d), P(u0 - 0.1, y, d)], [0, 0, 0, 0], [nx, 0, nz], seed | K_FIT, 0);
+      };
+      const fl = 2.8, nf = Math.max(1, Math.floor((top - base - 0.4) / fl));
+      const n = Math.max(1, Math.floor((len - 0.8) / 2.9)), step = len / n;
+      for (let f = shop ? 1 : 0; f < nf; f++) {                     // (a shop's ground floor is its shop front)
+        const yb = base + f * fl;
+        for (let k = 0; k < n; k++) {
+          const hsh = hash(seed * 7 + wi * 131 + k, f * 17 + 3), uc = (k + 0.5) * step;
+          if (f === 0 && front && k === 0) {                          // the front door, and its canopy
+            const w = 0.95; opening(uc - w / 2, w, yb + 0.15, 2.05, 0, K_DOOR); canopy(uc - w / 2 - 0.2, w + 0.4, yb + 2.45, 0.7); continue;
+          }
+          if ((hsh & 7) < 2) continue;                                // (a blank stretch of wall)
+          if (f === 0 && !front && (hsh >> 3 & 3) === 0 && step > 2.4) {   // a garden-side sliding door
+            const w = 1.7; opening(uc - w / 2, w, yb + 0.35, 1.85, 0, K_TALL); continue;
+          }
+          const w = (hsh >> 5 & 1) ? 1.25 : 0.8, h = f === 0 ? 1.1 : 1.05, y0 = yb + 0.95;
+          opening(uc - w / 2, w, y0, h, 0, K_WIN);
+          if (f > 0 && (hsh >> 6 & 3) === 0) canopy(uc - w / 2, w, y0 + h + 0.12, 0.35);
+        }
+      }
+      // one air-conditioner's outdoor unit on a side (not the street), and a downpipe at the far corner
+      const hs2 = hash(seed * 3 + wi, 71);
+      if (!front && (hs2 & 3) === 0 && len > 2.5) {
+        const u0 = len * 0.3 + (hs2 >> 2 & 7) * 0.1, d0 = 0.05, d1 = 0.35, y0 = base + 0.05, y1 = base + 0.65, w = 0.8;
+        quad([P(u0, y0, d1), P(u0 + w, y0, d1), P(u0 + w, y1, d1), P(u0, y1, d1)], [0, 0, 0.6, 0.6], [nx, 0, nz], seed | K_FIT | 512, w, [0, w, w, 0]);
+        quad([P(u0, y1, d0), P(u0 + w, y1, d0), P(u0 + w, y1, d1), P(u0, y1, d1)], [0, 0, 0, 0], [0, 1, 0], seed | K_FIT, 0);
+        quad([P(u0, y0, d0), P(u0, y0, d1), P(u0, y1, d1), P(u0, y1, d0)], [0, 0, 0, 0], [-ux, 0, -uz], seed | K_FIT, 0);
+        quad([P(u0 + w, y0, d1), P(u0 + w, y0, d0), P(u0 + w, y1, d0), P(u0 + w, y1, d1)], [0, 0, 0, 0], [ux, 0, uz], seed | K_FIT, 0);
+      }
+      if ((hs2 >> 5 & 1) && len > 2) {
+        const u = len - 0.12, t = 0.045;
+        quad([P(u - t, base, 0.08), P(u + t, base, 0.08), P(u + t, top - 0.1, 0.08), P(u - t, top - 0.1, 0.08)], [0, 0, 0, 0], [nx, 0, nz], seed | K_FIT, 0);
+      }
+    }
     // how far a point is from the edge of the nearest road (of class <= maxC), and that road's class
     const roadNear = (x, z, maxC) => {
       roadNear.c = 99;
@@ -5091,12 +5137,18 @@ function cityWorkerMain() {
         for (const w of walls) if (w[7] && w[4] > 6 && w[6] > Math.max(bestS - 0.35, -0.3)) w[8] = 1;
       }
       const st0 = seed + 1024 * kind;
-      for (const [x0, z0, x1, z1, len, fnx, fnz, , feat] of walls) {
+      // a house's street side (for its front door): the outer wall nearest a road
+      const fronts = new Set();
+      if (kind === 1) { let bd = 1e9, bw = -1; walls.forEach((w, i) => { if (!w[7] || w[4] < 2) return; const d = roadNear((w[0] + w[2]) / 2 + w[5] * 1.5, (w[1] + w[3]) / 2 + w[6] * 1.5, 7); if (d < bd) { bd = d; bw = i; } }); if (bw >= 0 && bd < 12) fronts.add(bw); }
+      let wi = 0;
+      for (const [x0, z0, x1, z1, len, fnx, fnz, isOuter, feat] of walls) {
         const nx = Math.round(fnx * 127), nz = Math.round(fnz * 127), st = st0 + 512 * feat;
         const a0 = put(x0, z0, bot, nx, 0, nz, 0, st, H, bot - base), b0 = put(x1, z1, bot, nx, 0, nz, len, st, H, bot - base);
         const b1 = put(x1, z1, top + parapet, nx, 0, nz, len, st, H, H + parapet), a1 = put(x0, z0, top + parapet, nx, 0, nz, 0, st, H, H + parapet);
         tri(a0, b1, b0); tri(a0, a1, b1);
         if (feat && kind === 2) balconies(x0, z0, x1, z1, base, H, seed);
+        if (kind === 1 && isOuter && len > 1.8) houseWall(x0, z0, x1, z1, len, fnx, fnz, !feat && fronts.has(wi), base, top, seed, wi, !!feat);
+        wi++;
       }
       // roof: small, nearly rectangular houses get a pitched (gable or hipped) roof over their oriented
       // rectangle; bigger flat roofs get a parapet band and some rooftop plant, so nothing reads as a plain box
@@ -5703,7 +5755,42 @@ void main(){
   vec3 col, bEm = vec3(0.0);
   float gloss = 0.0;
   bool tower = vKind > 2.5 && vKind < 3.5 || H > 45.0, house = vKind > 0.5 && vKind < 1.5, mansion = vKind > 1.5 && vKind < 2.5;
-  if (vKind > 5.5) {
+  if (vKind > 3.5 && vKind < 5.5 || vKind > 7.5) {
+    // a house's openings and fittings (real geometry): windows and sliding doors in aluminium frames, the
+    // front door, canopies, the air-conditioner unit, downpipes
+    float u = vM.x, y = vM.z, w = max(H, 0.3);
+    vec3 alu = (s2 > 0.5 ? vec3(0.28, 0.25, 0.22) : vec3(0.68, 0.69, 0.68));
+    vec3 lit0 = uSunCol * diff * 0.9 + amb;
+    if (vKind < 4.5) {                                                   // fittings
+      vec3 c = mix(vec3(0.72, 0.72, 0.7), vec3(0.85, 0.84, 0.8), s1);
+      if (vFeat > 0.5) {                                                 // the AC unit's front: a round fan grille
+        float r = length(vec2(u - w * 0.38, y - 0.3)) / 0.21;
+        c *= r < 1.0 ? 0.35 + 0.25 * step(0.5, fract(r * 6.0)) : 1.0;
+        c *= 1.0 - 0.15 * step(0.5, fract((u - w * 0.72) / 0.03)) * step(w * 0.7, u) * step(u, w * 0.95) * step(0.1, y) * step(y, 0.5);
+      }
+      col = c * lit0;
+    } else if (vKind > 8.5) {                                            // the front door
+      float edge = min(min(u, w - u), min(y, 2.05 - y));
+      vec3 wood = mix(vec3(0.36, 0.25, 0.16), vec3(0.55, 0.5, 0.44), step(0.5, s3));
+      vec3 c = edge < 0.05 ? alu : wood * (0.92 + 0.08 * step(0.5, fract(y / 0.25)));
+      if (abs(u - w * 0.82) < 0.02 && abs(y - 1.0) < 0.12) c = vec3(0.75);   // the handle
+      if (y > 1.6 && edge > 0.05) c = mix(c, vec3(0.1, 0.12, 0.15), 0.7);    // a pane above
+      col = c * lit0;
+      bEm = vec3(1.0, 0.8, 0.55) * uNight * step(1.6, y) * step(0.05, edge) * 0.8;
+    } else {                                                             // windows and sliding doors
+      float h = vKind > 7.5 ? 1.85 : 1.1;
+      float edge = min(min(u, w - u), min(y, h - y)), mid = abs(u - w * 0.5);
+      float frame = step(edge, 0.045) + step(mid, 0.022);
+      vec3 r = reflect(-V, n);
+      float fres = 0.15 + 0.7 * pow(1.0 - max(dot(n, V), 0.0), 4.0);
+      vec3 glz = mix(vec3(0.05, 0.06, 0.07), skyColor(r) * 0.85, fres) + uSunCol * pow(max(dot(r, uSunDir), 0.0), 150.0) * 2.0;
+      float cur = step(0.55, h2(vec2(floor(vWorld.x * 0.3), vSeed)));
+      glz = mix(glz, vec3(0.7, 0.66, 0.58) * lit0 * 0.5, cur * 0.45 * step(mid, w * 0.5 - 0.1));      // curtains
+      float on = step(0.72, h2(vec2(floor(vWorld.x * 0.4 + vWorld.z * 0.4), vSeed + 3.0)));
+      col = mix(glz * mix(1.0, 0.35, uNight), alu * lit0, min(frame, 1.0));
+      bEm = vec3(1.0, 0.78, 0.5) * on * uNight * (1.0 - min(frame, 1.0)) * 1.2;
+    }
+  } else if (vKind > 5.5) {
     // balconies: a concrete slab, and a parapet of frosted glass, a painted panel or open metal bars
     vec3 cc = mix(vec3(0.74, 0.73, 0.70), vec3(0.86, 0.85, 0.81), s1);
     vec3 c = cc; float y = vM.z;
@@ -5734,6 +5821,13 @@ void main(){
     }
     float nz = texture(uNoise, vWorld.xz / 7.0).b * 0.5 + texture(uNoise, vWorld.xz / 1.3).b * 0.5;
     rc *= 0.86 + nz * 0.28;
+    // pitched roofs: courses of tiles (a shadow line under each course, the joints staggered)
+    if (n.y < 0.97 && n.y > 0.2) {
+      float ty = vWorld.y / 0.095, aaR = clamp(1.0 - fwidth(ty) * 1.5, 0.0, 1.0);
+      float course = smoothstep(0.0, 0.3, fract(ty)), joint = abs(fract(vM.x / 0.3 + floor(ty) * 0.5) - 0.5);
+      rc *= mix(1.0, (0.78 + 0.22 * course) * (1.0 - 0.18 * (1.0 - smoothstep(0.0, 0.06, 0.5 - joint))), aaR);
+      rc *= mix(1.0, 0.93 + 0.14 * h2(vec2(floor(vM.x / 0.3 + floor(ty) * 0.5), floor(ty)) + vSeed), aaR);
+    }
     // rooftop equipment / edge band on larger flat roofs
     col = rc * (uSunCol * diff * 0.95 + amb);
   } else {
@@ -5798,7 +5892,7 @@ void main(){
       // rain streaks run down from the sills
       if (!house) fin *= 1.0 - 0.13 * wx * (1.0 - smoothstep(0.0, 0.3, fp.y)) * texture(uNoise, vec2(vM.x * 1.7, vM.z * 0.08)).a * aa;
     }
-    if (vM.z < 0.3 || vM.z > H - 0.9 || (shop && vM.z < z0)) win = 0.0;  // plinth, parapet, the shop storey
+    if (vM.z < 0.3 || vM.z > H - 0.9 || (shop && vM.z < z0) || house) win = 0.0;   // (houses have real windows)  // plinth, parapet, the shop storey
     frame *= step(0.001, win) * aa;
     win = mix(cov, win, aa);
     // glass: sky reflection with Fresnel, dark interior
@@ -13048,6 +13142,8 @@ function carPhys(dt) {
   let a = CAR.air ? 0 : (F - res) / C.mass - g * slope / Math.sqrt(1 + slope * slope);
   let nv = v + a * dt;
   if (brakeF > 0 && !CAR.air) { const dv = brakeF / C.mass * dt; nv = Math.abs(nv) <= dv ? 0 : nv - Math.sign(nv) * dv; }
+  // standing still with no pedal pressed, the car stays put (as an automatic's hold does), even on a hill
+  if (!CAR.air && !CAR.thr && Math.abs(v) < 0.4 && Math.abs(nv) < 0.6) nv = 0;
   // steering (a bicycle model); the handbrake lets the tail come round
   let yaw = nv * Math.tan(CAR.steer) / C.wb;
   // the tyres can only give so much sideways grip (about 0.9 g); beyond it the car runs wide and scrubs speed
@@ -14465,29 +14561,52 @@ const R = { VP: null, eye: [0, 0, 0], time: 0, W: 1, H: 1, camR: [1, 0, 0], camU
 // the near zone: while driving over Google's 3D tiles, the ground, streets and buildings within a few hundred
 // metres of the car are the sim's own (a photogrammetry mesh is a melted blanket at street level)
 const ZONE = { on: false, v: [0, 0, 0, 0], side: 0, r0: 240, r1: 340, g: [0, 0, 0, 0], clip: 3.3, gAt: null };
-// the ground round the car as a plane fitted to the map's heights (least squares over a ring of points)
+// the ground round the car as a curved surface (h = a + bx + cz + dx² + exz + fz², least squares over rings of
+// the map's heights), so the cut under Google's mesh follows valleys and hillsides
 function zoneGroundFit() {
   const cx = sim.pos[0], cz = sim.pos[2];
-  if (ZONE.gAt && Math.hypot(cx - ZONE.gAt[0], cz - ZONE.gAt[1]) < 15 && R.time - ZONE.gAt[2] < 2) return;
-  let n = 0, sx = 0, sz = 0, sy = 0, sxx = 0, szz = 0, sxz = 0, sxy = 0, szy = 0;
-  for (const r of [0, 60, 130, 220]) for (let k = 0; k < (r ? 12 : 1); k++) {
-    const a = k / 12 * Math.PI * 2, x = Math.cos(a) * r, z = Math.sin(a) * r, y = Math.max(jwHeight(cx + x, cz + z), 0);
-    n++; sx += x; sz += z; sy += y; sxx += x * x; szz += z * z; sxz += x * z; sxy += x * y; szy += z * y;
+  if (ZONE.gAt && Math.hypot(cx - ZONE.gAt[0], cz - ZONE.gAt[1]) < 10 && R.time - ZONE.gAt[2] < 2) return;
+  const A = Array.from({ length: 6 }, () => new Float64Array(7));
+  for (const r of [0, 25, 55, 95, 145, 205, 270]) for (let k = 0; k < (r ? 16 : 1); k++) {
+    const a = k / 16 * Math.PI * 2, x = Math.cos(a) * r, z = Math.sin(a) * r, y = Math.max(jwHeight(cx + x, cz + z), 0);
+    const X = x / 100, Z = z / 100, f = [1, X, Z, X * X, X * Z, Z * Z], w = r < 150 ? 1 : 0.5;   // (the near ground counts most)
+    for (let i = 0; i < 6; i++) { for (let j = 0; j < 6; j++) A[i][j] += w * f[i] * f[j]; A[i][6] += w * f[i] * y; }
   }
-  // (the ring is symmetric: the slopes separate)
-  const gx = sxx > 0 ? (sxy - sx * sy / n) / (sxx - sx * sx / n) : 0, gz = szz > 0 ? (szy - sz * sy / n) / (szz - sz * sz / n) : 0;
-  ZONE.g = [sy / n - gx * sx / n - gz * sz / n, clamp(gx, -0.15, 0.15), clamp(gz, -0.15, 0.15), ZONE.clip];
+  for (let i = 0; i < 6; i++) {                                     // Gauss-Jordan
+    let p = i; for (let r = i + 1; r < 6; r++) if (Math.abs(A[r][i]) > Math.abs(A[p][i])) p = r;
+    [A[i], A[p]] = [A[p], A[i]]; const d = A[i][i] || 1e-9;
+    for (let j = i; j < 7; j++) A[i][j] /= d;
+    for (let r = 0; r < 6; r++) if (r !== i) { const m = A[r][i]; for (let j = i; j < 7; j++) A[r][j] -= m * A[i][j]; }
+  }
+  const c = A.map(r => r[6]);
+  ZONE.g = [c[0], c[1] / 100, c[2] / 100, ZONE.clip];
+  ZONE.g2 = [c[3] / 1e4, c[4] / 1e4, c[5] / 1e4, 0];
   ZONE.gAt = [cx, cz, R.time];
+}
+// is PLATEAU round the car just plain boxes (no photo textures: LOD1)? Then the sim's own buildings, with
+// their windows, doors and roofs, look better at street level (checked once a second)
+function platPlainNear() {
+  if (typeof PLAT === 'undefined' || !PLAT.active || !PLAT.active.length || !CAR.on) return false;
+  if (ZONE.plainT && R.time - ZONE.plainT < 1) return ZONE.plain;
+  const [la, lo] = worldToGeo(sim.pos[0], sim.pos[2]), dLa = 400 / 111320, dLo = 400 / (111320 * Math.cos(la * DEG));
+  let tex = 0, plain = 0;
+  for (const it of PLAT.active) {
+    const n = it && it.mesh ? it : it && it[0]; if (!n || !n.mesh || n.mesh.empty || n.s === undefined) continue;
+    if (n.n < la - dLa || n.s > la + dLa || n.e < lo - dLo || n.w > lo + dLo) continue;
+    if (n.mesh.tex) tex += n.mesh.count; else plain += n.mesh.count;
+  }
+  ZONE.plainT = R.time; ZONE.plain = plain > 0 && plain > tex;
+  return ZONE.plain;
 }
 function zoneUpdate() {
   ZONE.on = !!(CAR.on && GOOG.covering && JW.online && typeof CITY !== 'undefined' && CITY.ready && ZONE.enabled !== false);
   // the same near zone over PLATEAU's city models: their photo textures are a blur at street level, so round
   // the car the map's own buildings (with their modelled windows, shops and balconies) stand in
   // (off by default: PLATEAU's own buildings are real ones, better than the sim's even at street level)
-  ZONE.plat = !!(ZONE.platEnabled === true && !ZONE.on && CAR.on && !GOOG.covering && JW.online && typeof CITY !== 'undefined' && CITY.ready &&
+  ZONE.plat = !!((ZONE.platEnabled === true || platPlainNear()) && !ZONE.on && CAR.on && !GOOG.covering && JW.online && typeof CITY !== 'undefined' && CITY.ready &&
     typeof PLAT !== 'undefined' && PLAT.active.length && ZONE.enabled !== false);
   // over Google's 3D the real buildings stay: only the melted street level round the car is replaced
-  if (ZONE.on && ZONE.hybrid !== false) zoneGroundFit(); else ZONE.g = [0, 0, 0, 0];
+  if (ZONE.on && ZONE.hybrid !== false) zoneGroundFit(); else { ZONE.g = [0, 0, 0, 0]; ZONE.g2 = [0, 0, 0, 0]; }
   ZONE.v = ZONE.on || ZONE.plat ? [sim.pos[0], sim.pos[2], ZONE.r0, ZONE.r1] : [0, 0, 0, 0];
   ZONE.side = 0;
 }
@@ -14509,6 +14628,7 @@ function setCommon(pr) {
   if (u.uSink) gl.uniform1f(u.uSink, googSink());
   if (u.uZone) gl.uniform4fv(u.uZone, ZONE.v);
   if (u.uZoneG) gl.uniform4fv(u.uZoneG, ZONE.g);
+  if (u.uZoneG2) gl.uniform4fv(u.uZoneG2, ZONE.g2 || [0, 0, 0, 0]);
   if (u.uSunVP) { gl.uniformMatrix4fv(u.uSunVP, false, SUNSH.VP); gl.uniform4fv(u.uSunSh, SUNSH.v); }
   if (u.uZoneSide) gl.uniform1f(u.uZoneSide, ZONE.side);
   if (u.uCamPos) gl.uniform3fv(u.uCamPos, R.eye);

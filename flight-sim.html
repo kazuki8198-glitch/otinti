@@ -1041,18 +1041,25 @@ uniform float uZoneSide;       // 1: far layer, -1: near layer, 0: not affected
 uniform vec4 uZoneG;           // the ground round the car as a plane (height, slope x, slope z) and the cut height
 uniform vec4 uZoneG2;          // (its curvature: x², xz, z²)
 float zoneGround(vec3 w){ vec2 d = w.xz - uZone.xy; return uZoneG.x + uZoneG.y * d.x + uZoneG.z * d.y + uZoneG2.x * d.x * d.x + uZoneG2.y * d.x * d.y + uZoneG2.z * d.y * d.y; }
+// the built-up area (x, z, inner and outer radius; w = 0: none: p_auth.js): a place made by hand in the sim's
+// own world, all of it, where Google's photogrammetry gives way entirely (1 inside)
+uniform vec4 uAuth;
+float authK(vec3 w){ return uAuth.w > 0.0 ? 1.0 - smoothstep(uAuth.z, uAuth.w, length(w.xz - uAuth.xy)) : 0.0; }
 bool zoneCut(vec3 w){
-  if (uZoneSide == 0.0 || uZone.w <= 0.0) return false;
+  if (uZoneSide == 0.0) return false;
+  float d = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+  float a = authK(w);
+  if (a > 0.0) { if (uZoneSide > 0.0) { if (a > d) return true; } else if (a > d) return false; }
+  if (uZone.w <= 0.0) return uZoneSide < 0.0;
   float t = smoothstep(uZone.z, uZone.w, length(w.xz - uZone.xy));
   // the photo-real layer keeps everything above the cut height (the real buildings), losing only its melted
   // street level, which gives way further out
   if (uZoneSide > 0.0 && uZoneG.w > 0.0) return w.y < zoneGround(w) + mix(uZoneG.w, -40.0, t * t);
-  float d = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
   return uZoneSide > 0.0 ? t < d : t >= d;
 }
 // the sim's own buildings, where the real ones stand over them: only their street-level storey
 bool zoneAbove(vec3 w){
-  if (uZoneSide >= 0.0 || uZone.w <= 0.0 || uZoneG.w <= 0.0) return false;
+  if (uZoneSide >= 0.0 || uZone.w <= 0.0 || uZoneG.w <= 0.0 || authK(w) > 0.5) return false;
   return w.y > zoneGround(w) + uZoneG.w + 0.35 && length(w.xz - uZone.xy) < uZone.w;
 }
 // where a landmark tower is drawn (p_landmarks.js), the map's block standing for it is cut away above the
@@ -4069,12 +4076,13 @@ uniform vec3 uTileOrigin;
 uniform float uCurv;
 uniform vec4 uUvX;
 uniform float uSink;
-uniform vec4 uZone;
+uniform vec4 uZone, uAuth;
 out vec3 vWorld; out vec3 vN; out vec2 vUv; out float vH;
 void main(){
   vec3 w = aPos + uTileOrigin;
-  // (lowered under the Google mesh, except in the near zone round the car where it is the ground itself)
-  vH = w.y; w.y -= uSink * (uZone.w > 0.0 ? smoothstep(uZone.z, uZone.w, length(w.xz - uZone.xy)) : 1.0);
+  // (lowered under the Google mesh, except in the near zone round the car and in a built-up area, where it is
+  // the ground itself)
+  vH = w.y; w.y -= uSink * (uZone.w > 0.0 ? smoothstep(uZone.z, uZone.w, length(w.xz - uZone.xy)) : 1.0) * (uAuth.w > 0.0 ? smoothstep(uAuth.z, uAuth.w, length(w.xz - uAuth.xy)) : 1.0);
   vec2 d = w.xz - uCamPos.xz;
   w.y -= dot(d, d) * uCurv;
   vWorld = w; vN = aNormal; vUv = aUv * uUvX.x + uUvX.yz;
@@ -4155,11 +4163,11 @@ uniform mat4 uViewProj;
 uniform vec3 uCamPos;
 uniform float uCurv;
 uniform float uSink;
-uniform vec4 uZone;
+uniform vec4 uZone, uAuth;
 out vec3 vPos;
 void main(){
   vPos = vec3(uCamPos.x + aXZ.x, 0.0, uCamPos.z + aXZ.y);
-  vPos.y = -uSink * (uZone.w > 0.0 ? smoothstep(uZone.z, uZone.w, length(vPos.xz - uZone.xy)) : 1.0);
+  vPos.y = -uSink * (uZone.w > 0.0 ? smoothstep(uZone.z, uZone.w, length(vPos.xz - uZone.xy)) : 1.0) * (uAuth.w > 0.0 ? smoothstep(uAuth.z, uAuth.w, length(vPos.xz - uAuth.xy)) : 1.0);
   vec3 w = vPos; w.y -= dot(aXZ, aXZ) * uCurv;
   vPos = w;
   gl_Position = uViewProj * vec4(w, 1.0);
@@ -4589,6 +4597,35 @@ function drawMapTo(g, x, y, w, h, lat, lon, zoom, opt = {}) {
   }
   g.restore();
 }
+// =====================================================================
+//  BUILT-UP AREAS: places made by hand, all in the sim's own world, the
+//  way a driving game's city is — clean surfaces, modelled buildings,
+//  aircraft at the gates, markings and lights — instead of the
+//  photogrammetry, which melts at ground level. Inside the circle Google's
+//  3D gives way entirely (and PLATEAU's too); the map's own buildings,
+//  roads and trees stand there; outside, everything is as it was.
+//  First: Haneda and round it.
+// =====================================================================
+const AUTH_AREAS = [
+  { id: 'haneda', lat: 35.5494, lon: 139.7798, r0: 3500, r1: 4000, near: 9000 },
+];
+const AUTH = { on: false, v: [0, 0, 0, 0], area: null, off: false };
+function authUpdate() {
+  AUTH.on = false; AUTH.v = [0, 0, 0, 0]; AUTH.area = null;
+  if (typeof JW === 'undefined' || !JW.active || !JW.online || AUTH.off) return;
+  for (const A of AUTH_AREAS) {
+    const w = geoToWorld(A.lat, A.lon), d = Math.hypot(w[0] - R.eye[0], w[1] - R.eye[2]);
+    A.x = w[0]; A.z = w[1];
+    if (d > A.near) continue;
+    AUTH.on = true; AUTH.area = A; AUTH.v = [w[0], w[1], A.r0, A.r1];
+    break;
+  }
+}
+// is a place inside the built-up area in use (lat, lon)? (the map's own buildings aren't hidden under PLATEAU there)
+function authHas(lat, lon) {
+  const A = AUTH.area; if (!A) return false;
+  return geoDist(lat, lon, A.lat, A.lon) < A.r0;
+}
 
 // =====================================================================
 //  CITY: real 3D buildings and trees from OpenStreetMap (OpenFreeMap
@@ -4892,7 +4929,7 @@ function cityWorkerMain() {
   // ---- tile build ----
   const hash = (a, b) => { let h = (Math.imul(a | 0, 73856093) ^ Math.imul(b | 0, 19349663)) >>> 0; h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0; return (h ^ (h >>> 16)) >>> 0; };
   function build(buf, m) {
-    const L = readLayers(buf, ['building', 'landcover', 'transportation', 'poi']);
+    const L = readLayers(buf, ['building', 'landcover', 'transportation', 'poi', 'aeroway']);
     const E = (L.building || L.landcover || { extent: 4096 }).extent;
     const n = 2 ** m.z, dLon = m.lonE - m.lonW, kxN = 111320 * Math.cos(m.latN * DEG);
     const W = dLon * kxN, Hm = (m.latN - m.latS) * KZ;
@@ -4971,6 +5008,34 @@ function cityWorkerMain() {
         quad([[cx, y0, cz], [dx, y0, dz], [dx, y1, dz], [cx, y1, cz]], [-0.18, -0.18, 1.05, 1.05], [nx, 0, nz], sd, H);
         quad([[ax, y0, az], [cx, y0, cz], [cx, y1, cz], [ax, y1, az]], [-0.18, -0.18, 1.05, 1.05], [-ux, 0, -uz], sd, H);
         quad([[bx, y0, bz], [dx, y0, dz], [dx, y1, dz], [bx, y1, bz]], [-0.18, -0.18, 1.05, 1.05], [ux, 0, uz], sd, H);
+      }
+    }
+    // an airport's control tower: a slim shaft that flares out under the glass cab, the cab's windows leaning
+    // out, the roof and the antenna mast (st kinds: 11 the shaft's white cladding, 10 the cab's glass)
+    function controlTower(cxm, czm, base, top, seed) {
+      const H = top - base, N = 16, rs = 3.4, rc = 8.5, yS = base + H * 0.74, yC0 = yS + 4, yC1 = yC0 + 6.5, yR = yC1 + 1.6;
+      const K_SH = seed + 1024 * 11, K_GL = seed + 1024 * 10;
+      const sec = [[base, rs * 1.35, K_SH], [base + 6, rs, K_SH], [yS - 3, rs, K_SH], [yS + 1.5, rc * 0.8, K_SH], [yC0, rc, K_SH], [yC0, rc, K_GL], [yC1, rc * 1.08, K_GL], [yC1, rc * 1.12, K_SH], [yR, rc * 0.95, K_SH]];
+      for (let k = 0; k + 1 < sec.length; k++) {
+        const [y0, r0, st] = sec[k], [y1, r1, st1] = sec[k + 1];
+        if (st !== st1 || y1 - y0 < 0.01) continue;
+        for (let i = 0; i < N; i++) {
+          const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2, am = (a0 + a1) / 2;
+          const P = (a, r, y) => [cxm + Math.cos(a) * r, y, czm + Math.sin(a) * r];
+          const nn = nrm3([Math.cos(am) * (y1 - y0), r0 - r1, Math.sin(am) * (y1 - y0)]);
+          const u0 = a0 * rc, u1 = a1 * rc;
+          quad([P(a0, r0, y0), P(a1, r0, y0), P(a1, r1, y1), P(a0, r1, y1)], [y0 - base, y0 - base, y1 - base, y1 - base], nn, st, H, [u0, u1, u1, u0]);
+        }
+      }
+      // the roof, and the mast on it
+      for (let i = 0; i < N; i++) {
+        const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2, r = rc * 0.95;
+        face([cxm, yR, czm], [cxm + Math.cos(a0) * r, yR, czm + Math.sin(a0) * r], [cxm + Math.cos(a1) * r, yR, czm + Math.sin(a1) * r], [0, 1, 0], K_SH + 256, H, H);
+      }
+      const m = 0.35;
+      for (const [dx, dz, nx, nz] of [[1, 0, 1, 0], [-1, 0, -1, 0], [0, 1, 0, 1], [0, -1, 0, -1]]) {
+        const ux = -dz, uz = dx;
+        quad([[cxm + dx * m + ux * m, yR, czm + dz * m + uz * m], [cxm + dx * m - ux * m, yR, czm + dz * m - uz * m], [cxm + dx * m - ux * m, top, czm + dz * m - uz * m], [cxm + dx * m + ux * m, top, czm + dz * m + uz * m]], [yR - base, yR - base, H, H], [nx, 0, nz], K_SH, H, [0, 0.7, 0.7, 0]);
       }
     }
     // the smallest rectangle around a footprint (tested along each edge's direction)
@@ -5201,6 +5266,32 @@ function cityWorkerMain() {
       }
       return best;
     };
+    // the airport, read before the buildings (which of them are terminals, hangars, a control tower): the
+    // aerodrome's outline, the aprons, the gates (local metres)
+    const aeroRings = [], apRings = [], aeroGates = [], termWalls = [], stands = [];
+    const inRings = (list, x, z) => {
+      for (const A of list) {
+        if (x < A.x0 || x > A.x1 || z < A.z0 || z > A.z1) continue;
+        let inside = false;
+        for (const r of A.rings) for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+          if ((r[i + 1] > z) !== (r[j + 1] > z) && x < (r[j] - r[i]) * (z - r[i + 1]) / (r[j + 1] - r[i + 1]) + r[i]) inside = !inside;
+        }
+        if (inside) return true;
+      }
+      return false;
+    };
+    const onApron = (x, z) => inRings(apRings, x, z), inAero = (x, z) => inRings(aeroRings, x, z);
+    if (L.aeroway) {
+      for (const [cls, list] of [['aerodrome', aeroRings], ['apron', apRings]]) for (const poly of polygons(L.aeroway, E, p => p.class === cls)) {
+        const rings = []; let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+        for (const r of poly.rings) { const o = []; for (let i = 0; i < r.length; i += 2) { const X = lx(r[i]), Z = lz(r[i + 1]); o.push(X, Z); x0 = Math.min(x0, X); x1 = Math.max(x1, X); z0 = Math.min(z0, Z); z1 = Math.max(z1, Z); } rings.push(o); }
+        list.push({ rings, x0, z0, x1, z1, poly });
+      }
+      for (const fe of L.aeroway.feats) {
+        const f = readFeature(L.aeroway, fe); if (f.type !== 1 || f.props.class !== 'gate' || !f.geom) continue;
+        const pt = decodePoints(f.geom); if (pt.length) aeroGates.push([lx(pt[0]), lz(pt[1]), String(f.props.ref || '')]);
+      }
+    }
     const boxes = [], ringXZ = [], ringOff = [0], bRange = [], bCen = [];
     const shopWalls = [];                                             // outer walls at street level: x0 z0 x1 z1 nx nz base
     let maxTop = -1e9, minG = 1e9;
@@ -5209,6 +5300,27 @@ function cityWorkerMain() {
       let h = +pr.render_height || 0, mh = +pr.render_min_height || 0;
       if (h < 2.5) h = 3;
       if (mh >= h - 0.5) continue;
+      // at an airport: the terminals (gates along them), hangars (big and plain, the map has no height for most:
+      // a hangar's), the control tower (tall and slim)
+      let air = 0;
+      if (aeroRings.length && mh < 1) {
+        let ax = 0, az = 0; const k0 = ext.length / 2;
+        for (let i = 0; i < ext.length; i += 2) { ax += ext[i]; az += ext[i + 1]; }
+        if (inAero(lx(ax / k0), lz(az / k0))) {
+          const fl = []; for (let i = 0; i < ext.length; i += 2) fl.push(lx(ext[i]), lz(ext[i + 1]));
+          const ar = Math.abs(ringArea(fl));
+          const nearGate = aeroGates.some(([gx, gz]) => {
+            for (let i = 0; i < fl.length; i += 2) {
+              const j = (i + 2) % fl.length, dx = fl[j] - fl[i], dz = fl[j + 1] - fl[i + 1], L2 = dx * dx + dz * dz || 1, t = clamp(((gx - fl[i]) * dx + (gz - fl[i + 1]) * dz) / L2, 0, 1);
+              if (Math.hypot(gx - fl[i] - dx * t, gz - fl[i + 1] - dz * t) < 45) return true;
+            }
+            return false;
+          });
+          if (h > 55 && ar < 1200) air = 3;
+          else if (nearGate && ar > 1500) { air = 1; if (h < 15) h = 22; }
+          else if (ar > 4000 && h < 40) { air = 2; if (h <= 8) h = 21 + (hash(ext[0], ext[1]) & 7) * 1.5; }
+        }
+      }
       // ground: lowest point under the footprint so no corner floats
       let gmin = 1e9, gmax = -1e9, cx = 0, cy = 0;
       const nk = ext.length / 2, stp = Math.max(1, Math.floor(nk / 12));
@@ -5232,7 +5344,14 @@ function cityWorkerMain() {
       // 3 towers. Walls facing a busy street get shop fronts at street level (a feature wall of kind 0 or 1).
       const ob2 = ob || (poly.rings.length === 1 && area < 8000 && h >= 11 ? obb(flat) : null);
       const hs = hash(seed * 13 + bi, 91);
-      const kind = h > 45 ? 3 : h < 11 && area < 420 ? 1 : h >= 11 && ob2 && ob2.fill > 0.8 && ob2.l > 1.6 * ob2.w && ob2.w < 24 && (hs & 3) ? 2 : 0;
+      const kind = air === 1 || air === 3 ? 10 : air === 2 ? 11 : h > 45 ? 3 : h < 11 && area < 420 ? 1 : h >= 11 && ob2 && ob2.fill > 0.8 && ob2.l > 1.6 * ob2.w && ob2.w < 24 && (hs & 3) ? 2 : 0;
+      if (air === 3) {
+        controlTower(lx(cx), lz(cy), base, top, seed);
+        bRange.push(iStart, q - iStart); bCen.push(lx(cx), lz(cy));
+        const rr0 = 6; ringXZ.push(lx(cx) - rr0, lz(cy) - rr0, lx(cx) + rr0, lz(cy) - rr0, lx(cx) + rr0, lz(cy) + rr0, lx(cx) - rr0, lz(cy) + rr0); ringOff.push(ringXZ.length);
+        boxes.push(lx(cx) - rr0, lz(cy) - rr0, lx(cx) + rr0, lz(cy) + rr0, top);
+        continue;
+      }
       const walls = [];
       for (let r = 0; r < poly.rings.length; r++) {
         const rr = poly.rings[r], k = rr.length / 2;
@@ -5252,13 +5371,18 @@ function cityWorkerMain() {
         }
         const chance = best <= 4 ? 0.85 : best <= 5 ? 0.6 : best <= 6 ? (kind === 1 ? 0.12 : 0.35) : 0;
         if ((hs >>> 8 & 255) >= chance * 256) for (const w of walls) w[8] = 0;
+      } else if (kind === 11) {                                         // a hangar's door: its long side that opens onto an apron
+        let bl = 0, bw = null;
+        for (const w of walls) if (w[7] && w[4] > 25 && w[4] > bl && onApron((w[0] + w[2]) / 2 + w[5] * 40, (w[1] + w[3]) / 2 + w[6] * 40)) { bl = w[4]; bw = w; }
+        if (bw) bw[8] = 1;
       } else if (kind === 2) {                                          // balconies: the long walls facing most to the sun
         let bestS = -2;
         for (const w of walls) if (w[7] && w[4] > 6) bestS = Math.max(bestS, w[6]);
         for (const w of walls) if (w[7] && w[4] > 6 && w[6] > Math.max(bestS - 0.35, -0.3)) w[8] = 1;
       }
       const st0 = seed + 1024 * kind;
-      if (h < 60) for (const w of walls) if (w[7] && w[4] > 2.2) shopWalls.push(w[0], w[1], w[2], w[3], w[5], w[6], base);
+      if (h < 60 && !air) for (const w of walls) if (w[7] && w[4] > 2.2) shopWalls.push(w[0], w[1], w[2], w[3], w[5], w[6], base);
+      if (air === 1) for (const w of walls) if (w[7] && w[4] > 3) termWalls.push([w[0], w[1], w[2], w[3], w[5], w[6], base]);
       // a house's street side (for its front door): the outer wall nearest a road
       const fronts = new Set();
       if (kind === 1) { let bd = 1e9, bw = -1; walls.forEach((w, i) => { if (!w[7] || w[4] < 2) return; const d = roadNear((w[0] + w[2]) / 2 + w[5] * 1.5, (w[1] + w[3]) / 2 + w[6] * 1.5, 7); if (d < bd) { bd = d; bw = i; } }); if (bw >= 0 && bd < 12) fronts.add(bw); }
@@ -5435,7 +5559,7 @@ function cityWorkerMain() {
         for (let d = 10 + hs * 20; d < len - 5; d += 32) for (const sd of [1, -1])       // street lamps near the kerb, arm over the road
           at(d + (sd < 0 ? 16 : 0), w / 2 + 0.55, sd, (x, z, g, ox, oz) => prop(x, z, g + 0.15, Math.atan2(-oz, -ox), 0));
         if (c <= 4) for (let d = 5 + hs * 8; d < len - 4; d += 11) for (const sd of [1, -1])   // roadside trees in the paving
-          at(d + (sd < 0 ? 5.5 : 0), w / 2 + sw * 0.62, sd, (x, z, g) => prop(x, z, g + 0.15, hash(x * 10 | 0, z * 10 | 0) / 40, 3));
+          at(d + (sd < 0 ? 5.5 : 0), w / 2 + sw * 0.62, sd, (x, z, g) => { if (!inAero(x, z)) prop(x, z, g + 0.15, hash(x * 10 | 0, z * 10 | 0) / 40, 3); });
       } else if (c >= 6 && c <= 7) {
         let pp = null;                                                 // concrete utility poles on one side of the narrow streets,
         for (let d = 8 + hs * 20; d < len - 4; d += 30)                // the wires strung from one to the next and into the houses
@@ -5548,6 +5672,184 @@ function cityWorkerMain() {
         }
       });
     }
+    const gL = (x, z) => ground(x / W * E, z / Hm * E);
+    // ---------- railways: ballasted track with its sleepers and two rails (each track is its own line on the
+    // map), on bridges up on a viaduct; the monorail's concrete beam up on its T-shaped piers ----------
+    const rails = [];
+    if (L.transportation) for (const fe of L.transportation.feats) {
+      const f = readFeature(L.transportation, fe), pr = f.props;
+      if (f.type !== 2 || !f.geom || (pr.class !== 'rail' && pr.class !== 'transit') || pr.brunnel === 'tunnel' || (pr.layer | 0) < 0) continue;
+      if (pr.service === 'yard' || pr.service === 'siding' || pr.subclass === 'subway') continue;
+      const mono = pr.subclass === 'monorail', br = pr.brunnel === 'bridge' || mono;
+      const lay = clamp(Math.round(+pr.layer || 1), 1, 4);
+      for (const ln of decodeLines(f.geom)) {
+        const pts = [];
+        for (let i = 0; i < ln.length; i += 2) {
+          const x = lx(ln[i]), z = lz(ln[i + 1]);
+          if (pts.length) { const [qx, qz] = pts[pts.length - 1], d = Math.hypot(x - qx, z - qz), ns = Math.floor(d / 10); for (let k = 1; k <= ns; k++) pts.push([qx + (x - qx) * k / (ns + 1), qz + (z - qz) * k / (ns + 1)]); }
+          pts.push([x, z]);
+        }
+        let run = []; const flush = () => { if (run.length >= 2) rails.push({ run, mono, br, lay }); run = []; };
+        for (const p of pts) { if (p[0] > -6 && p[1] > -6 && p[0] < W + 6 && p[1] < Hm + 6) run.push(p); else flush(); }
+        flush();
+      }
+    }
+    for (const rl of rails) {
+      const run = rl.run, n = run.length, U = [0];
+      for (let i = 1; i < n; i++) U.push(U[i - 1] + Math.hypot(run[i][0] - run[i - 1][0], run[i][1] - run[i - 1][1]));
+      // viaduct height: a storey or so up by its layer (a monorail's beam a little higher), coming down 3 % to
+      // the ground where the line ends on the ground (not at the tile's edge, where it goes on)
+      const H = rl.mono ? 7 + 4 * (rl.lay - 1) : rl.br ? 6.5 + 5.5 * (rl.lay - 1) : 0;
+      const edge = p => p[0] < 2 || p[1] < 2 || p[0] > W - 2 || p[1] > Hm - 2;
+      const e0 = rl.mono || edge(run[0]) ? 1e9 : 0, e1 = rl.mono || edge(run[n - 1]) ? 1e9 : 0;
+      const Y = run.map((p, i) => gL(p[0], p[1]) + Math.min(H, Math.min(e0 + U[i], e1 + U[n - 1] - U[i]) * 0.03));
+      let pv = -1;
+      for (let i = 0; i < n; i++) {
+        const a = run[Math.max(i - 1, 0)], b = run[Math.min(i + 1, n - 1)], tl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nx = -(b[1] - a[1]) / tl, nz = (b[0] - a[0]) / tl;
+        const [x, z] = run[i], hw = rl.mono ? 0.45 : 1.9, y = Y[i] + (rl.mono ? 0 : 0.12);
+        if (rl.mono) {
+          // the beam: its top (the running surface), both sides down 1.5 m
+          const t0 = rput(x + nx * hw, z + nz * hw, y, U[i], 257, 1, 0), t1 = rput(x - nx * hw, z - nz * hw, y, U[i], 257, 1, 1);
+          const s0 = rput(x + nx * hw, z + nz * hw, y - 1.5, U[i], 257, 1, 0), s1 = rput(x - nx * hw, z - nz * hw, y - 1.5, U[i], 257, 1, 1);
+          if (pv >= 0) ri.push(pv, t0, pv + 1, pv + 1, t0, t1, pv + 2, s0, pv, pv, s0, t0, pv + 1, t1, pv + 3, pv + 3, t1, s1);
+          pv = t0;
+        } else {
+          const l = rput(x + nx * hw, z + nz * hw, y, U[i], 263, hw * 2, -1), r = rput(x - nx * hw, z - nz * hw, y, U[i], 263, hw * 2, 1);
+          if (pv >= 0) ri.push(pv, l, pv + 1, pv + 1, l, r);
+          pv = l;
+        }
+      }
+      // piers where it stands high: a column and a crosshead (a monorail's is a slim T)
+      if (H > 0) for (let d = 10; d < U[n - 1] - 5; d += rl.mono ? 25 : 30) {
+        let k = 1; while (k < n - 1 && U[k] < d) k++;
+        const A = run[k - 1], B = run[k], f = clamp((d - U[k - 1]) / Math.max(U[k] - U[k - 1], 1e-3), 0, 1);
+        const x = A[0] + (B[0] - A[0]) * f, z = A[1] + (B[1] - A[1]) * f, y = Y[k - 1] + (Y[k] - Y[k - 1]) * f, gy = gL(x, z);
+        if (y - gy < 3) continue;
+        const tx = B[0] - A[0], tz = B[1] - A[1], tl = Math.hypot(tx, tz) || 1, ax = tx / tl, az = tz / tl, qx = -az, qz = ax;
+        const box = (hx, hz, y0, y1) => {
+          const P = (i, j) => [x + qx * hx * i + ax * hz * j, z + qz * hx * i + az * hz * j];
+          for (const [p, q] of [[P(-1, -1), P(1, -1)], [P(1, -1), P(1, 1)], [P(1, 1), P(-1, 1)], [P(-1, 1), P(-1, -1)]]) {
+            const a0 = rput(p[0], p[1], y0, 0, 257, 1, 0), a1 = rput(p[0], p[1], y1, 0, 257, 1, 1), b0 = rput(q[0], q[1], y0, 0, 257, 1, 0), b1 = rput(q[0], q[1], y1, 0, 257, 1, 1);
+            ri.push(a0, b0, a1, a1, b0, b1);
+          }
+        };
+        if (rl.mono) { box(0.6, 0.6, gy - 0.3, y - 2.6); box(1.6, 0.6, y - 2.6, y - 1.5); }
+        else { box(0.8, 0.8, gy - 0.3, y - 1.4); box(3.0, 0.9, y - 1.4, y - 0.1); }
+      }
+    }
+    // ---------- the airport: aprons in concrete panels, taxiways (pavement, shoulders, the yellow lines and the
+    // lights along them), where a taxiway comes up to a runway its holding position and the red sign, the
+    // taxiway's name on the black-and-yellow signs ----------
+    if (L.aeroway) {
+      for (const A of apRings) {
+        const flat = [], holes = [];
+        for (const r of A.rings) { if (flat.length) holes.push(flat.length / 2); for (const v of r) flat.push(v); }
+        const tris = earcut(flat, holes);
+        // cut into triangles no side longer than 28 m, so the slab follows the ground
+        const tri = (a, b, c, d) => {
+          const ab = Math.hypot(a[0] - b[0], a[1] - b[1]), bc = Math.hypot(b[0] - c[0], b[1] - c[1]), ca = Math.hypot(c[0] - a[0], c[1] - a[1]), mx = Math.max(ab, bc, ca);
+          if (mx > 28 && d < 12) {
+            const M = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+            if (mx === ab) { const m = M(a, b); tri(a, m, c, d + 1); tri(m, b, c, d + 1); }
+            else if (mx === bc) { const m = M(b, c); tri(a, b, m, d + 1); tri(a, m, c, d + 1); }
+            else { const m = M(c, a); tri(a, b, m, d + 1); tri(m, b, c, d + 1); }
+            return;
+          }
+          const k = rput(a[0], a[1], gL(a[0], a[1]) + 0.03, 0, 258, 0, 0);
+          rput(b[0], b[1], gL(b[0], b[1]) + 0.03, 0, 258, 0, 0); rput(c[0], c[1], gL(c[0], c[1]) + 0.03, 0, 258, 0, 0);
+          ri.push(k, k + 1, k + 2);
+        };
+        for (let i = 0; i < tris.length; i += 3) tri([flat[tris[i] * 2], flat[tris[i] * 2 + 1]], [flat[tris[i + 1] * 2], flat[tris[i + 1] * 2 + 1]], [flat[tris[i + 2] * 2], flat[tris[i + 2] * 2 + 1]], 0);
+      }
+      // the stands: each gate on a terminal's wall, an aircraft parked nose-in in front of it (the main thread
+      // puts it there with its jet bridge): [x z nx nz ground gate], and the yellow lead-in line out to the apron
+      for (const [gx, gz, ref] of aeroGates) {
+        let best = null;
+        for (const [x0, z0, x1, z1, nx, nz, base] of termWalls) {
+          const dx = x1 - x0, dz = z1 - z0, L2 = dx * dx + dz * dz || 1, t = clamp(((gx - x0) * dx + (gz - z0) * dz) / L2, 0.05, 0.95);
+          const px = x0 + dx * t, pz = z0 + dz * t, d = Math.hypot(gx - px, gz - pz);
+          if (d < 60 && (!best || d < best.d) && onApron(px + nx * 30, pz + nz * 30)) best = { d, px, pz, nx, nz };
+        }
+        if (!best || best.px < 0 || best.pz < 0 || best.px > W || best.pz > Hm) continue;
+        const g = gL(best.px + best.nx * 25, best.pz + best.nz * 25);
+        stands.push(best.px, best.pz, best.nx, best.nz, g, parseInt(ref) || 0);
+        const a = rput(best.px + best.nx * 4 - best.nz * 2, best.pz + best.nz * 4 + best.nx * 2, g + 0.1, 0, 261, 4, -1), b = rput(best.px + best.nx * 4 + best.nz * 2, best.pz + best.nz * 4 - best.nx * 2, g + 0.1, 0, 261, 4, 1);
+        const c = rput(best.px + best.nx * 80 - best.nz * 2, best.pz + best.nz * 80 + best.nx * 2, gL(best.px + best.nx * 80, best.pz + best.nz * 80) + 0.1, 76, 261, 4, -1), d2 = rput(best.px + best.nx * 80 + best.nz * 2, best.pz + best.nz * 80 - best.nx * 2, gL(best.px + best.nx * 80, best.pz + best.nz * 80) + 0.1, 76, 261, 4, 1);
+        ri.push(a, c, b, b, c, d2);
+      }
+      // the runways (from the airport list the sim has), in local metres: centre, direction, half length
+      const RWY = rws.map(r => { const cx = (r.lon - m.lonW) * kxN, cz = -(r.lat - m.latN) * KZ; return { cx, cz, dx: r.sin, dz: -r.cos, hl: r.len / 2, hw: r.wid / 2, ids: r.ids || '' }; });
+      const rwDist = (x, z) => { let best = 1e9, bi = -1; RWY.forEach((r, i) => { const t = clamp((x - r.cx) * r.dx + (z - r.cz) * r.dz, -r.hl, r.hl), d = Math.hypot(x - r.cx - r.dx * t, z - r.cz - r.dz * t); if (d < best) { best = d; bi = i; } }); rwDist.i = bi; return best; };
+      const TWW = 23, TWS = 7.5, HOLD = 90;
+      const signAt = new Map();                                      // (the same sign not again within 180 m)
+      const twSign = (x, z, fx, fz, txt, cls) => {                 // a sign on the left of the way (fx, fz) the aircraft comes, facing it
+        const lx2 = fz, lz2 = -fx, o = TWW / 2 + TWS + 7, sx = x + lx2 * o, sz = z + lz2 * o;
+        if (sx < 0 || sz < 0 || sx > W || sz > Hm) return;
+        const seen = signAt.get(txt) || []; if (seen.some(([a, b]) => Math.hypot(a - sx, b - sz) < 180)) return;
+        seen.push([sx, sz]); signAt.set(txt, seen);
+        signs.push(sx, sz, gL(sx, sz) + 0.75, Math.atan2(-fz, -fx), 4.0, 0.75); signNames.push(txt + '\u0001' + cls + '\u0001');
+      };
+      let twi = 0;
+      for (const fe of L.aeroway.feats) {
+        const f = readFeature(L.aeroway, fe); if (f.type !== 2 || f.props.class !== 'taxiway' || !f.geom) continue;
+        const ref = String(f.props.ref || '').slice(0, 8);
+        for (const ln of decodeLines(f.geom)) {
+          const pts = [];
+          for (let i = 0; i < ln.length; i += 2) {
+            const x = lx(ln[i]), z = lz(ln[i + 1]);
+            if (pts.length) { const [qx, qz] = pts[pts.length - 1], d = Math.hypot(x - qx, z - qz), ns = Math.floor(d / 12); for (let s2 = 1; s2 <= ns; s2++) pts.push([qx + (x - qx) * s2 / (ns + 1), qz + (z - qz) * s2 / (ns + 1)]); }
+            pts.push([x, z]);
+          }
+          if (pts.length < 2) continue;
+          twi++;
+          const V = []; let u = 0;
+          for (let i = 0; i < pts.length; i++) {
+            const a = pts[Math.max(i - 1, 0)], b = pts[Math.min(i + 1, pts.length - 1)], tl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+            if (i) u += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+            const [x, z] = pts[i];
+            V.push([x, z, gL(x, z), -(b[1] - a[1]) / tl, (b[0] - a[0]) / tl, u, onApron(x, z), rwDist(x, z)]);
+          }
+          // the pavement with its shoulders (not where the taxiway runs across an apron: there it's only the paint),
+          // then the paint over it all (centre line; the edge lines only off the aprons)
+          const hw = TWW / 2 + TWS;
+          let pv = -1;
+          for (let i = 0; i < V.length; i++) {
+            const [x, z, g, nx, nz, uu, apr, dr] = V[i], y = g + 0.05 + (twi % 7) * 0.004;
+            const l = rput(x + nx * hw, z + nz * hw, y, uu, 259, hw * 2, -1), r = rput(x - nx * hw, z - nz * hw, y, uu, 259, hw * 2, 1);
+            if (pv >= 0 && !apr && !V[i - 1][6] && !(dr < 32 && V[i - 1][7] < 32)) ri.push(pv, l, pv + 1, pv + 1, l, r);   // (not on the runway)
+            pv = l;
+          }
+          pv = -1;
+          for (let i = 0; i < V.length; i++) {
+            const [x, z, g, nx, nz, uu, apr, dr] = V[i], y = g + 0.1;
+            const inRw = dr < 32;                                        // (no taxiway paint out on the runway itself)
+            const l = rput(x + nx * hw, z + nz * hw, y, uu, apr ? 261 : 260, hw * 2, -1), r = rput(x - nx * hw, z - nz * hw, y, uu, apr ? 261 : 260, hw * 2, 1);
+            if (pv >= 0 && !inRw && !(V[i - 1][7] < 32)) ri.push(pv, l, pv + 1, pv + 1, l, r);
+            pv = l;
+          }
+          // holding positions: where the taxiway crosses 90 m from a runway's centre line on its way in
+          for (let i = 1; i < V.length; i++) {
+            const A = V[i - 1], B = V[i];
+            for (const [P, Q] of [[A, B], [B, A]]) {
+              if (!(P[7] >= HOLD && Q[7] < HOLD)) continue;
+              const f = (P[7] - HOLD) / Math.max(P[7] - Q[7], 1e-3), x = P[0] + (Q[0] - P[0]) * f, z = P[1] + (Q[1] - P[1]) * f;
+              const dl = Math.hypot(Q[0] - P[0], Q[1] - P[1]) || 1, fx = (Q[0] - P[0]) / dl, fz = (Q[1] - P[1]) / dl, nx = -fz, nz = fx, g = gL(x, z) + 0.12;
+              const a0 = rput(x + nx * TWW / 2, z + nz * TWW / 2, g, 0, 262, TWW, -1), a1 = rput(x - nx * TWW / 2, z - nz * TWW / 2, g, 0, 262, TWW, 1);
+              const b0 = rput(x + nx * TWW / 2 + fx * 1.2, z + nz * TWW / 2 + fz * 1.2, g, 1.2, 262, TWW, -1), b1 = rput(x - nx * TWW / 2 + fx * 1.2, z - nz * TWW / 2 + fz * 1.2, g, 1.2, 262, TWW, 1);
+              ri.push(a0, b0, a1, a1, b0, b1);
+              rwDist(x, z); const R0 = RWY[rwDist.i];
+              if (R0 && R0.ids) twSign(x - fx * 3, z - fz * 3, fx, fz, R0.ids, 'rwyhold');
+            }
+          }
+          // the taxiway's name at each end, for the aircraft coming onto it there
+          if (ref && V.length > 3 && V[V.length - 1][5] > 60) {
+            const s0 = V[Math.min(3, V.length - 1)], s1 = V[Math.max(V.length - 4, 0)];
+            if (!s0[6] && s0[7] > HOLD + 20) twSign(s0[0], s0[1], s0[4], -s0[3], ref, 'twsign');
+            if (!s1[6] && s1[7] > HOLD + 20) twSign(s1[0], s1[1], -s1[4], s1[3], ref, 'twsign');
+          }
+        }
+      }
+    }
     // packed like the buildings (x, z in dm, y, up normal, u in dm, class + 512, width dm, across)
     const nrv = rv0.length / 7 | 0;
     const rvb = new ArrayBuffer(Math.max(nrv, 1) * 20), r16 = new Int16Array(rvb), r32 = new Float32Array(rvb), r8 = new Int8Array(rvb);
@@ -5597,7 +5899,7 @@ function cityWorkerMain() {
       id: m.id, nv: v, ni: q, vb: vbuf, ib: ib.buffer, trees: tr.buffer, nTrees: tr.length / 4,
       boxes: new Float32Array(boxes).buffer, ringXZ: new Float32Array(ringXZ).buffer, ringOff: new Uint32Array(ringOff).buffer,
       cells: cellCount.buffer, items: items.buffer, bRange: new Uint32Array(bRange).buffer, bCen: new Float32Array(bCen).buffer, maxTop: nb ? maxTop : -1e9, minG: nb ? minG : 0, nBuild: nb, W, Hm,
-      nrv, nri: ri.length, rvb, rib: new Uint32Array(ri).buffer, rPts: new Float32Array(rPts).buffer, rOff: new Uint32Array(rOff).buffer, rCls: new Uint8Array(rCls).buffer, rWid: new Float32Array(rWid).buffer, rBr: new Uint8Array(rBr).buffer, props: new Float32Array(props).buffer, wires: new Float32Array(wires).buffer, fences: new Float32Array(fences).buffer, marks: new Float32Array(marks).buffer, signs: new Float32Array(signs).buffer, signNames,
+      nrv, nri: ri.length, rvb, rib: new Uint32Array(ri).buffer, rPts: new Float32Array(rPts).buffer, rOff: new Uint32Array(rOff).buffer, rCls: new Uint8Array(rCls).buffer, rWid: new Float32Array(rWid).buffer, rBr: new Uint8Array(rBr).buffer, props: new Float32Array(props).buffer, wires: new Float32Array(wires).buffer, fences: new Float32Array(fences).buffer, marks: new Float32Array(marks).buffer, stands: new Float32Array(stands).buffer, aero: new Float32Array(aeroRings.flatMap(A => A.rings.flatMap(r => [r.length / 2, ...r]))).buffer, signs: new Float32Array(signs).buffer, signNames,
     };
     return res;
   }
@@ -5616,7 +5918,7 @@ function cityWorkerMain() {
       if (r.status === 404 || r.status === 204) { postMessage({ id: m.id, empty: true }); return; }
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const res = build(new Uint8Array(await r.arrayBuffer()), m);
-      postMessage(res, [res.vb, res.ib, res.trees, res.boxes, res.ringXZ, res.ringOff, res.cells, res.items, res.bRange, res.bCen, res.rvb, res.rib, res.rPts, res.rOff, res.rCls, res.rWid, res.rBr, res.props, res.wires, res.fences, res.marks, res.signs]);
+      postMessage(res, [res.vb, res.ib, res.trees, res.boxes, res.ringXZ, res.ringOff, res.cells, res.items, res.bRange, res.bCen, res.rvb, res.rib, res.rPts, res.rOff, res.rCls, res.rWid, res.rBr, res.props, res.wires, res.fences, res.marks, res.stands, res.signs]);
     } catch (err) { postMessage({ id: m.id, error: String((err && err.message) || err) }); }
   };
 }
@@ -5715,7 +6017,7 @@ function cityDispatch(t) {
     id, url: CITY.url.replace('{z}', 14).replace('{x}', t.x).replace('{y}', t.y), z: 14, x: t.x, y: t.y,
     latN: t.latN, latS: t.latS, lonW: t.lonW, lonE: t.lonE, dem, g0: Math.max(rawHeightGeo(la, lo), 0),
     maxTrees: game.touch ? 15000 : 45000,
-    rws: rwNear(la, lo).filter(r => Math.abs(r.lat - la) < 0.06 && Math.abs(r.lon - lo) < 0.07).map(r => ({ lat: r.lat, lon: r.lon, kx: r.kx, sin: r.sin, cos: r.cos, len: r.len, wid: r.wid, elev: r.elev })),
+    rws: rwNear(la, lo).filter(r => Math.abs(r.lat - la) < 0.06 && Math.abs(r.lon - lo) < 0.07).map(r => ({ lat: r.lat, lon: r.lon, kx: r.kx, sin: r.sin, cos: r.cos, len: r.len, wid: r.wid, elev: r.elev, ids: Array.isArray(r.ids) ? r.ids.join('-') : '' })),
   });
 }
 function cityReceive(r) {
@@ -5769,6 +6071,10 @@ function cityReceive(r) {
   if (typeof signReceive === 'function') signReceive(t, r.signs, r.signNames);
   if (typeof wireReceive === 'function') wireReceive(t, r.wires, r.fences);
   if (typeof markReceive === 'function') markReceive(t, r.marks);
+  // the aerodrome's outline (no trees on an airfield): rings of local metres
+  t.aero = null;
+  if (r.aero && r.aero.byteLength) { const F = new Float32Array(r.aero), rings = []; for (let i = 0; i < F.length;) { const n = F[i]; rings.push(F.subarray(i + 1, i + 1 + n * 2)); i += 1 + n * 2; } t.aero = rings; }
+  t.stands = r.stands && r.stands.byteLength ? new Float32Array(r.stands) : null; if (typeof STANDS !== 'undefined') STANDS.key = '';
   cityRoadGrid(t);
   // trees placed before this tile's roads and buildings were known are placed again (none on a road or in a house)
   if (typeof JWTREES !== 'undefined' && JWTREES.cells) for (const [k, c] of JWTREES.cells) {
@@ -5803,6 +6109,11 @@ function cityBlocked(wx, wz) {
       const s = clamp(((X - ax) * dx + (Z - az) * dz) / L2, 0, 1);
       if (Math.hypot(X - ax - dx * s, Z - az - dz * s) < R_.wid[l] / 2 + (R_.cls[l] <= 5 ? 2.5 : 0.8)) return true;   // (main roads: and the pavement)
     }
+  }
+  if (t.aero) {
+    let inside = false;
+    for (const r of t.aero) for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) if ((r[i + 1] > Z) !== (r[j + 1] > Z) && X < (r[j] - r[i]) * (Z - r[i + 1]) / (r[j + 1] - r[i + 1]) + r[i]) inside = !inside;
+    if (inside) return true;
   }
   const col = t.col; if (!col) return false;
   const G = 32, cx = clamp(Math.floor(X / t.W * G), 0, G - 1), cz = clamp(Math.floor(Z / t.Hm * G), 0, G - 1);
@@ -5889,7 +6200,8 @@ function cityApplyHidden(t, rects) {
   const hit = rects.filter(r => r[0] < t.latN && r[2] > t.latS && r[1] < t.lonE && r[3] > t.lonW);
   let K = typeof PLAT !== 'undefined' && hit.length ? PLAT.keep : null;
   if (K && (K.lat - K.rLat > t.latN || K.lat + K.rLat < t.latS || K.lon - K.rLon > t.lonE || K.lon + K.rLon < t.lonW)) K = null;
-  const key = hit.map(r => r[4]).join(',') + (K ? '|' + K.key : '');
+  const A = hit.length && AUTH.area && geoDist((t.latN + t.latS) / 2, (t.lonW + t.lonE) / 2, AUTH.area.lat, AUTH.area.lon) < AUTH.area.r0 + 3000;
+  const key = hit.map(r => r[4]).join(',') + (K ? '|' + K.key : '') + (A ? '|A' : '');
   if (key === t.hideKey) return false;
   t.hideKey = key;
   cityOrderIndex(t, !hit.length ? null : b => {
@@ -5899,6 +6211,7 @@ function cityApplyHidden(t, rects) {
     for (const r of hit) if (lat > r[0] && lat < r[2] && lon > r[1] && lon < r[3]) { hidden = true; const a = (r[2] - r[0]) * (r[3] - r[1]); if (a < best) { best = a; byPhoto = !!r[5]; } }
     // near the car the map's own building comes back where PLATEAU has only a plain box (not a photo-textured one)
     if (hidden && K && !byPhoto) { const a = (lat - K.lat) / K.rLat, o = (lon - K.lon) / K.rLon; if (a * a + o * o < 1) hidden = false; }
+    if (hidden && A && authHas(lat, lon)) hidden = false;          // (a built-up area is the sim's own)
     return !hidden;
   });
   return true;
@@ -5968,6 +6281,16 @@ function cityUpdate() {
     if (d > radius) continue;
     const t = cityTile(x, y); t.used = f; t.dist = d;
     want.push(t);
+  }
+  // a built-up area (p_auth.js) is loaded whole while it's in use
+  if (typeof AUTH !== 'undefined' && AUTH.on) {
+    const A = AUTH.area, dLa = A.r1 / 111320, dLo = A.r1 / (111320 * Math.cos(A.lat * DEG));
+    for (let x = Math.floor((A.lon - dLo + 180) / 360 * n); x <= Math.floor((A.lon + dLo + 180) / 360 * n); x++)
+      for (let y = Math.floor(mercY(A.lat + dLa) * n); y <= Math.floor(mercY(A.lat - dLa) * n); y++) {
+        const t = cityTile(x, y); if (t.used === f) continue;
+        t.used = f; t.dist = Math.max(Math.hypot((x + 0.5 - fx) * tw, (y + 0.5 - fy) * tw) - tw * 0.7, 0);
+        want.push(t);
+      }
   }
   want.sort((a, b) => a.dist - b.dist);
   const vBudget = game.touch ? 1.5e6 : 5e6;
@@ -6098,6 +6421,36 @@ void main(){
   vec3 col, bEm = vec3(0.0);
   float gloss = 0.0;
   bool tower = vKind > 2.5 && vKind < 3.5 || H > 45.0, house = vKind > 0.5 && vKind < 1.5, mansion = vKind > 1.5 && vKind < 2.5;
+  if (vKind > 9.5 && vRoof < 0.5) {
+    // the airport's own buildings: a terminal's (or the tower cab's) glass curtain wall, a hangar's ribbed metal
+    // cladding and its great door
+    float u = vM.x, y = vM.z;
+    vec3 lit0 = uSunCol * diff * 0.9 + amb;
+    if (vKind < 10.5) {
+      vec2 g = vec2(u / 1.5, y / 4.5), f = fract(g), fw = max(fwidth(g), vec2(1e-4));
+      float mul = 1.0 - smoothstep(fw.x * 1.2, fw.x * 1.2 + 0.03, min(f.x, 1.0 - f.x));
+      float slab = 1.0 - smoothstep(0.1, 0.1 + fw.y * 1.5, f.y);
+      float top = step(H - 1.6, y), bot = step(y, 0.35);
+      vec3 R = reflect(-V, n), sky = mix(uHorizon, uZenith, clamp(R.y * 1.5, 0.0, 1.0));
+      float fr = 0.35 + 0.5 * pow(1.0 - max(dot(n, V), 0.0), 3.0);
+      vec3 glass = mix(vec3(0.07, 0.11, 0.14) * lit0, sky, fr) + uSunCol * pow(max(dot(R, uSunDir), 0.0), 120.0) * 0.8;
+      float solid = max(max(mul * 0.9, slab), max(top, bot));
+      col = mix(glass, vec3(0.74, 0.76, 0.78) * lit0, solid);
+      bEm = vec3(1.0, 0.92, 0.78) * 0.6 * uNight * (1.0 - solid);
+    } else {
+      float rib = 0.9 + 0.1 * smoothstep(0.35, 0.5, abs(fract(u / 0.3) - 0.5)) * clamp(1.0 - fwidth(u / 0.3) * 1.5, 0.0, 1.0);
+      vec3 c = mix(vec3(0.8, 0.81, 0.82), vec3(0.88, 0.88, 0.87), s1) * rib;
+      if (y < 1.2) c = vec3(0.36, 0.37, 0.38);
+      if (vFeat > 0.5 && y < H * 0.78 && y > 0.05) {
+        // the door: leaves 7 m wide with dark seams, horizontal ribs; the header band above in the airline's colour
+        float leaf = fract(u / 7.0), seam = 1.0 - smoothstep(0.0, 0.01 + fwidth(u / 7.0), min(leaf, 1.0 - leaf));
+        c = vec3(0.7, 0.72, 0.74) * (0.9 + 0.1 * step(0.5, fract(y / 0.6))) * (1.0 - 0.6 * seam);
+      } else if (vFeat > 0.5 && y < H * 0.9) c = s1 < 0.5 ? vec3(0.75, 0.08, 0.1) : vec3(0.05, 0.2, 0.55);
+      col = c * lit0;
+      bEm = vec3(1.0, 0.95, 0.85) * 0.25 * uNight * step(y, H * 0.78) * vFeat;
+    }
+    col *= 0.93 + 0.1 * texture(uNoise, vWorld.xz / 23.0 + vWorld.y / 31.0).b;
+  } else
   if (vKind > 3.5 && vKind < 5.5 || vKind > 7.5) {
     // a house's openings and fittings (real geometry): windows and sliding doors in aluminium frames, the
     // front door, canopies, the air-conditioner unit, downpipes
@@ -6371,6 +6724,59 @@ void main(){
   if (uCamPos.y < vWorld.y - 1.0) {
     vec3 cu = vec3(0.42, 0.42, 0.41) * (0.85 + 0.2 * n2) * (uAmbSky * 0.9 + uSunCol * 0.12);
     outColor = vec4(tonemap(applyFog(cu, vWorld)), 1.0); return;
+  }
+  if (vSide > 2.5) {
+    // the airport (the worker's aeroway layer): aprons, taxiways, their paint and lights
+    float n2a = texture(uNoise, vWorld.xz / 6.0).a, n3a = texture(uNoise, vWorld.xz / 41.0).b;
+    vec3 base, em = vec3(0.0);
+    if (vSide > 7.5) {
+      // railway track: grey ballast, concrete sleepers every 0.6 m, two steel rails 1.067 m apart (narrow gauge)
+      float au = max(fwidth(u), 1e-3), am = max(fwidth(m), 1e-3), far = 1.0 - smoothstep(60.0, 300.0, dist);
+      vec3 bal = mix(vec3(0.42, 0.4, 0.37), vec3(0.52, 0.5, 0.46), texture(uNoise, vWorld.xz / 0.35).b) * (0.9 + 0.15 * n2a);
+      float sl = (1.0 - smoothstep(0.1, 0.1 + au * 1.5, abs(fract(u / 0.6) - 0.5) * 0.6)) * step(abs(m), 1.0) * far;
+      base = mix(bal, vec3(0.6, 0.59, 0.56), max(sl, (1.0 - far) * 0.25 * step(abs(m), 1.0)));
+      float rl = max(stripe(m, 0.534, 0.035, am), stripe(m, -0.534, 0.035, am));
+      base = mix(base, vec3(0.62, 0.6, 0.58) + uSunCol * 0.25, rl);
+      base = mix(base, vec3(0.3, 0.27, 0.24), smoothstep(1.4, 1.9, abs(m)) * 0.6);
+    } else if (vSide < 3.5) {
+      // apron: concrete slabs 7.5 m square with their joints, one a shade off the next, tyre marks and oil
+      vec2 q = vWorld.xz / 7.5, f = abs(fract(q) - 0.5), fq = max(fwidth(q), vec2(1e-4));
+      float jt = max(1.0 - smoothstep(0.0, fq.x * 1.5 + 0.004, 0.5 - f.x), 1.0 - smoothstep(0.0, fq.y * 1.5 + 0.004, 0.5 - f.y)) * (1.0 - smoothstep(40.0, 260.0, dist));
+      base = mix(vec3(0.6, 0.59, 0.56), vec3(0.69, 0.68, 0.64), nHash(floor(q))) * (0.9 + 0.14 * n2a) * (0.93 + 0.1 * n3a);
+      if (uMatOn > 0.5) base *= mix(vec3(1.0), clamp(matC(18.0, vWorld.xz / 4.0) / max(matAvg(18.0), vec3(0.05)), 0.7, 1.3), 1.0 - smoothstep(80.0, 500.0, dist));
+      base *= 1.0 - jt * 0.35;
+      base *= 1.0 - 0.2 * smoothstep(0.58, 0.82, texture(uNoise, vWorld.xz / 17.0).b) * smoothstep(0.4, 0.7, n3a);
+    } else if (vSide < 4.5) {
+      // taxiway: grey asphalt, the shoulders lighter and rougher
+      float sh = smoothstep(11.4, 11.6, abs(m));
+      base = mix(vec3(0.33, 0.33, 0.335), vec3(0.45, 0.45, 0.44), sh) * (0.88 + 0.2 * n2a) * (0.95 + 0.08 * n3a);
+      if (uMatOn > 0.5) base *= mix(vec3(1.0), clamp(matC(13.0, vWorld.xz / 4.0) / max(matAvg(13.0), vec3(0.05)), 0.6, 1.5), 1.0 - smoothstep(80.0, 500.0, dist));
+    } else {
+      // paint over it: the yellow centre line and (off the aprons) the double edge lines; at the holding position
+      // two solid and two dashed lines across; the green centre-line lights and blue edge lights
+      float aa2 = max(fwidth(m), 0.006), p = 0.0;
+      if (vSide < 6.5) {
+        p = stripe(m, 0.0, 0.075, aa2);
+      } else {
+        float au = max(fwidth(u), 0.004), dash = step(0.5, fract(m / 1.8));
+        p = max(max(stripe(u, 0.225, 0.075, au), stripe(u, 0.525, 0.075, au)), max(stripe(u, 0.825, 0.075, au), stripe(u, 1.125, 0.075, au)) * dash) * step(abs(m), w * 0.5);
+      }
+      p *= 0.9 * (0.82 + 0.18 * n2a) * (1.0 - smoothstep(900.0, 3000.0, dist));
+      float lr = max(0.1, max(fwidth(u), fwidth(m)) * 1.3), lit = 0.0, blu = 0.0;
+      if (vSide < 6.5) {
+        float lu = u - 15.0 * floor(u / 15.0 + 0.5); lit = 1.0 - smoothstep(lr * 0.5, lr, length(vec2(lu, m)));
+        if (vSide < 5.5) { float lu2 = u - 30.0 * floor(u / 30.0 + 0.5); blu = 1.0 - smoothstep(lr * 0.5, lr, length(vec2(lu2, abs(m) - 12.3))); }
+      }
+      float night = 0.12 + 1.8 * uNightK;
+      em = (vec3(0.15, 1.0, 0.45) * lit + vec3(0.25, 0.4, 1.3) * blu) * night;
+      float a = max(p, max(lit, blu) * step(0.2, uNightK + 0.25));
+      if (a < 0.04) discard;
+      base = mix(vec3(0.25), vec3(0.86, 0.64, 0.1), p / max(a, 1e-3));
+    }
+    float sh2 = sunShadow(vWorld, vec3(0.0, 1.0, 0.0)) * planeShadow(vWorld.xz);
+    vec3 ca = base * (uSunCol * max(uSunDir.y, 0.0) * 0.95 * sh2 + uAmbSky * 0.85) + em;
+    outColor = vec4(tonemap(applyFog(ca, vWorld)), 1.0);
+    return;
   }
   if (vSide > 0.5) {
     // the pavement: 30 cm slabs, a kerb-stone edge, the yellow tactile strip for the blind (点字ブロック)
@@ -6933,6 +7339,9 @@ function platUpdate(planes) {
     else PLAT.keep = null;
     PLAT.hideQueue = [...CITY.tiles.values()];
   }
+  // (a built-up area coming into use or going: its buildings are the sim's own, p_auth.js)
+  const aid = typeof AUTH !== 'undefined' && AUTH.area ? AUTH.area.id : '';
+  if (aid !== (PLAT.authId || '')) { PLAT.authId = aid; PLAT.hideQueue = [...CITY.tiles.values()]; }
   if (PLAT.hideQueue && PLAT.hideQueue.length) {
     let n = 0;
     while (PLAT.hideQueue.length && n < 2) { const t = PLAT.hideQueue.shift(); if (cityApplyHidden(t, PLAT.rects)) n++; }
@@ -7029,7 +7438,7 @@ function drawPlateau() {
     gl.uniform1f(u.uYOff, n.set.off || 37);
     if (n.mesh.tex) { gl.bindTexture(gl.TEXTURE_2D, n.mesh.tex); gl.uniform1i(u.uHasTex, 1); } else gl.uniform1i(u.uHasTex, 0);
     // driving: plain boxes (no photo) give way near the car to the sim's own buildings; photo-textured ones stay
-    if (ZONE.plat) gl.uniform1f(u.uZoneSide, n.mesh.tex ? 0 : 1);
+    if (ZONE.plat) gl.uniform1f(u.uZoneSide, n.mesh.tex && !AUTH.on ? 0 : 1);
     gl.bindVertexArray(n.mesh.vao);
     gl.drawElements(gl.TRIANGLES, n.mesh.count, gl.UNSIGNED_INT, 0);
   }
@@ -8079,7 +8488,7 @@ function drawStreet(planes) {
     citySetTile(u, t);
     for (let k = 0; k < PROP_N; k++) {
       const s = t.street[k]; if (!s) continue;
-      if (k === PROP_TREE && typeof ZONE !== 'undefined' && ZONE.on && ZONE.g[3] > 0) continue;   // (Google's photo has the real trees)
+      if (k === PROP_TREE && typeof ZONE !== 'undefined' && ZONE.on && ZONE.g[3] > 0 && !AUTH.on) continue;   // (Google's photo has the real trees)
       if (k === PROP_TREE && cards && t.streetCard) { cardTiles.push(t); continue; }
       gl.uniform1f(u.uFar, STREET.far[k] * (game.touch ? 0.55 : 1));
       gl.bindVertexArray(s.vao.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, s.count, s.n);
@@ -8667,6 +9076,9 @@ const SIGN_BRANDS = [
   [/郵便局|日本郵便/, { bg: '#ffffff', fg: '#e60012', stripes: [['#e60012', 0.85, 1.0]] }],
 ];
 function signStyle(name, cls, sub) {
+  // airport signs: a taxiway's name in yellow on black, framed in yellow; a runway's holding point in white on red
+  if (cls === 'twsign') return { bg: '#141414', fg: '#ffd21a', frame: '#ffd21a' };
+  if (cls === 'rwyhold') return { bg: '#c8102e', fg: '#ffffff' };
   for (const [re, st] of SIGN_BRANDS) if (re.test(name)) return st;
   // the rest: a sign in one of the usual street colours, picked from the name
   let h = 0; for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
@@ -8682,6 +9094,7 @@ function signDraw(g, x, y, w, h, name, cls, sub) {
   let fs = h * 0.62; g.font = `700 ${fs}px "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif`;
   const tw = g.measureText(text).width; if (tw > w * 0.9) { fs *= w * 0.9 / tw; g.font = `700 ${fs}px "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif`; }
   g.fillText(text, x + w / 2, y + h * (st.y || 0.55));
+  if (st.frame) { g.strokeStyle = st.frame; g.lineWidth = 3; const tw2 = Math.min(g.measureText(text).width + h * 0.5, w - 6); g.strokeRect(x + (w - tw2) / 2, y + 4, tw2, h - 8); }
   g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(x, y + h - 2, w, 2);   // (the board's lower edge)
 }
 // a tile's signs from the worker: tile-local x, z, y, facing, width, height; and their names
@@ -8996,6 +9409,101 @@ function drawLandmarks() {
     gl.cullFace(gl.BACK); gl.drawArrays(gl.TRIANGLES, 0, L.n);
   }
   gl.disable(gl.BLEND);
+}
+// =====================================================================
+//  AT THE GATES: an airliner parked nose-in at each gate the map has on a
+//  terminal's wall, in its airline's colours (at Haneda: JAL red at the
+//  first terminal, ANA blue at the second, the long-haul twins at the
+//  international one), and the jet bridge out from the terminal to its
+//  front door — rotunda, telescoping tunnel on its wheeled leg, the cab.
+//  The stands come from the city worker (p6_city.js); the nearest few
+//  dozen round the camera are drawn.
+// =====================================================================
+const STANDS = { key: '', list: [], bridge: null, at: null };
+const PAINT_JAL = [0.82, 0.08, 0.12], PAINT_ANA = [0.04, 0.2, 0.55];
+// the aircraft and colours at a gate (by its number, Haneda's scheme; elsewhere a mix)
+function standPick(n) {
+  const id = n >= 100 ? (n % 3 ? 'b789' : 'a359') : n % 4 === 0 ? 'b789' : n % 4 === 1 ? 'b738' : n < 46 ? 'b738' : 'a320';
+  const paint = n >= 100 ? (n % 2 ? PAINT_ANA : PAINT_JAL) : n < 46 ? PAINT_JAL : PAINT_ANA;
+  return { A: AIRCRAFT.find(a => a.id === id) || AIRCRAFT.find(a => a.airliner), paint };
+}
+function standUpdate() {
+  if (typeof CITY === 'undefined' || !CITY.ready) return;
+  const eye = R.eye, RAD = game.touch ? 1000 : 1800, MAX = game.touch ? 14 : 40;
+  if (STANDS.at && Math.hypot(eye[0] - STANDS.at[0], eye[2] - STANDS.at[1]) < 50 && STANDS.key && STANDS.ov === JW.ov) return;
+  STANDS.at = [eye[0], eye[2]]; STANDS.ov = JW.ov;
+  const cand = [];
+  for (const t of CITY.tiles.values()) {
+    if (!t.stands || t.dist > RAD + 1500) continue;
+    const P = t.stands;
+    for (let i = 0; i < P.length; i += 6) {
+      const w = geoToWorld(t.latN - P[i + 1] / KZ, t.lonW + P[i] / t.kxN), d = Math.hypot(w[0] - eye[0], w[1] - eye[2]);
+      if (d < RAD) cand.push({ d, x: w[0], z: w[1], nx: P[i + 2], nz: P[i + 3], g: P[i + 4], n: P[i + 5], key: t.key + ':' + i });
+    }
+  }
+  cand.sort((a, b) => a.d - b.d);
+  const list = cand.slice(0, MAX), key = list.map(c => c.key).join(',') + '|' + JW.ov;
+  if (key === STANDS.key) return;
+  STANDS.key = key;
+  const B = new MeshBuilder();
+  STANDS.list = list.map(c => {
+    const { A, paint } = standPick(c.n);
+    const nose = A.fuse[0][0], rad = Math.max(...A.fuse.map(f => f[1])), th = Math.atan2(c.nx, c.nz);
+    const back = 7 - nose, cx = c.x + c.nx * back, cz = c.z + c.nz * back, cy = c.g - A.gear.nose[1] + A.gear.wheelR;
+    const m = planeMatrix([cx, cy, cz], qaxis([0, 1, 0], th));
+    // local (aircraft) point to world: x right, z back
+    const W = (x, y, z) => [cx + x * c.nz + z * c.nx, cy + y, cz - x * c.nx + z * c.nz];
+    standBridge(B, [c.x + c.nx * 2.5, c.g, c.z + c.nz * 2.5], W(-(rad + 1.9), 0.25, nose + 5.2), W(-(rad + 0.15), 0.25, nose + 5.2), c);
+    return { m, A, paint, x: cx, z: cz };
+  });
+  if (STANDS.bridge) { gl.deleteVertexArray(STANDS.bridge.vao); for (const b of STANDS.bridge.bufs) gl.deleteBuffer(b); }
+  STANDS.bridge = list.length ? uploadMesh(B.build()) : null;
+}
+// a jet bridge from the terminal (wall foot w0) to the aircraft's door: the cab's outer face at cab, touching door
+function standBridge(B, w0, cab, door, c) {
+  const grey = [0.74, 0.76, 0.78], dark = [0.2, 0.22, 0.25], glass = [0.16, 0.22, 0.28];
+  const h = cab[1] - w0[1];                                           // (the door's height over the apron)
+  // rotunda on its column, just out from the wall
+  const r0 = [w0[0] + c.nx * 3, w0[1], w0[2] + c.nz * 3];
+  B.cylinder([r0[0], w0[1], r0[2]], [r0[0], w0[1] + h - 1.6, r0[2]], 0.5, 0.5, 10, grey);
+  B.cylinder([r0[0], w0[1] + h - 1.8, r0[2]], [r0[0], w0[1] + h + 1.6, r0[2]], 2.2, 2.2, 14, grey);
+  B.box([w0[0] + c.nx * 1.4, w0[1] + h, w0[2] + c.nz * 1.4], [2.6, 3.0, 2.6], grey, Math.atan2(c.nx, c.nz));
+  // the tunnel from the rotunda to the cab, a little lower at the cab
+  const a = [r0[0], w0[1] + h + 0.1, r0[2]], b = [cab[0], cab[1] + 0.1, cab[2]];
+  beam(B, a, b, 2.7, 2.9, grey, glass);
+  // the leg with its wheels, two-thirds of the way out
+  const f = 0.68, lp = [a[0] + (b[0] - a[0]) * f, 0, a[2] + (b[2] - a[2]) * f], ly = a[1] + (b[1] - a[1]) * f - 1.45;
+  for (const s of [-1, 1]) { const px = -(b[2] - a[2]), pz = b[0] - a[0], pl = Math.hypot(px, pz) || 1; B.cylinder([lp[0] + px / pl * s, w0[1] + 0.6, lp[2] + pz / pl * s], [lp[0] + px / pl * s, ly, lp[2] + pz / pl * s], 0.18, 0.18, 8, grey); }
+  B.box([lp[0], w0[1] + 0.55, lp[2]], [2.8, 0.7, 1.4], dark, Math.atan2(b[0] - a[0], b[2] - a[2]));
+  // the cab, square to the aircraft, its bellows against the door
+  B.box([cab[0], cab[1] + 0.1, cab[2]], [3.2, 3.1, 3.2], grey, Math.atan2(c.nx, c.nz));
+  beam(B, [cab[0], cab[1] + 0.1, cab[2]], [door[0], door[1] + 0.1, door[2]], 2.4, 2.6, dark, dark);
+}
+// a box from a to b (its cross-section w x h, level), windows along its sides
+function beam(B, a, b, w, h, col, glass) {
+  const dx = b[0] - a[0], dz = b[2] - a[2], L = Math.hypot(dx, dz) || 1, px = -dz / L * w / 2, pz = dx / L * w / 2;
+  const P = (p, s, t) => [p[0] + px * s, p[1] + t * h / 2, p[2] + pz * s], mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+  B.quad(P(a, -1, 1), P(b, -1, 1), P(b, 1, 1), P(a, 1, 1), col, mid);
+  B.quad(P(a, -1, -1), P(b, -1, -1), P(b, 1, -1), P(a, 1, -1), col, mid);
+  for (const s of [-1, 1]) {
+    B.quad(P(a, s, -1), P(b, s, -1), P(b, s, -0.1), P(a, s, -0.1), col, mid);
+    B.quad(P(a, s, -0.1), P(b, s, -0.1), P(b, s, 0.6), P(a, s, 0.6), glass, mid);
+    B.quad(P(a, s, 0.6), P(b, s, 0.6), P(b, s, 1), P(a, s, 1), col, mid);
+  }
+}
+function drawStands() {
+  if (!JW.active || !JW.online || (GOOG.covering && !AUTH.on)) return;
+  if (R.eye[1] - Math.max(jwHeight(R.eye[0], R.eye[2]), 0) > 3000) return;
+  standUpdate();
+  if (!STANDS.list.length) return;
+  setCommon(progMesh);
+  const u = progMesh.u;
+  for (const s of STANDS.list) drawPlane(s.m, parkedState, { paint: s.paint, acft: s.A });
+  if (STANDS.bridge) {
+    gl.uniform1i(u.uLivery, 0); gl.uniform3f(u.uEmissive, 0, 0, 0); gl.uniform1f(u.uAlpha, 1); gl.uniform1f(u.uSpec, 0.25);
+    gl.uniformMatrix4fv(u.uModel, false, M4.ident());
+    gl.bindVertexArray(STANDS.bridge.vao); gl.drawArrays(gl.TRIANGLES, 0, STANDS.bridge.count);
+  }
 }
 
 // =====================================================================
@@ -15451,7 +15959,7 @@ const audio = {
     this.wF.frequency.setTargetAtTime(220 + v * 16, t, 0.1);
     this.wG.gain.setTargetAtTime(Math.min(0.45, (v / 70) ** 2 * 0.2), t, 0.15);
     this.hG.gain.setTargetAtTime(game.state === 'flying' && s.stallWarn ? 0.06 : 0, t, 0.02);
-    const on = game.state === 'flying' && game.warnPull && (t * 3.2 % 1) < 0.5;
+    const on = game.state === 'flying' && game.warnPull && !CAR.on && (t * 3.2 % 1) < 0.5;
     this.bG.gain.setTargetAtTime(on ? 0.07 : 0, t, 0.01);
   },
   setMaster(v) { if (this.ctx) this.master.gain.setTargetAtTime(v, this.ctx.currentTime, 0.05); },
@@ -16071,6 +16579,7 @@ function setCommon(pr) {
   if (u.uNPRect) { gl.uniform4fv(u.uNPRect, NP.rect); gl.uniform4fv(u.uNPFade, NP.fade); }
   if (u.uMatOn) { if (!CMAT.started && JW.active && JW.online) cmatInit(); gl.uniform1f(u.uMatOn, CMAT.ready && CMAT.on !== false ? 1 : 0); }
   if (u.uZoneSide) gl.uniform1f(u.uZoneSide, ZONE.side);
+  if (u.uAuth) gl.uniform4fv(u.uAuth, AUTH.v);
   if (u.uLmCut0) { gl.uniform4fv(u.uLmCut0, LM.cut[0]); gl.uniform4fv(u.uLmCut1, LM.cut[1]); }
   if (u.uCamPos) gl.uniform3fv(u.uCamPos, R.eye);
   if (u.uTime) gl.uniform1f(u.uTime, R.time);
@@ -16159,16 +16668,17 @@ function drawScene(planes, far) {
   gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
   WIRES.side = null;
   if (JW.active) {
-    lmUpdate();
+    lmUpdate(); authUpdate();
     drawJapanTerrain(planes);
     if (GOOG.covering) {                                  // photogrammetry replaces runways, buildings and trees
       ZONE.side = 1; drawGoogle(); googFlatCheck();
       // ...except where Google has no 3D (the map's own buildings stand in everywhere), and around the car,
       // where the photogrammetry's melted ground and walls give way to the sim's own streets
-      if (GOOG.flat || ZONE.on) { ZONE.side = GOOG.flat ? 0 : -1; drawRoads(planes); drawCity(planes); drawStreet(planes); if (!(ZONE.on && ZONE.g[3] > 0)) drawJwTrees(planes, far); WIRES.side = ZONE.side; }   // (the real trees stand in Google's mesh)
+      // (and in a built-up area, p_auth.js, the sim's own world entirely)
+      if (GOOG.flat || ZONE.on || AUTH.on) { ZONE.side = GOOG.flat ? 0 : -1; if (AUTH.on) drawJapanRunways(); drawRoads(planes); drawCity(planes); drawStreet(planes); if (!(ZONE.on && ZONE.g[3] > 0) || AUTH.on) drawJwTrees(planes, far); WIRES.side = ZONE.side; }   // (the real trees stand in Google's mesh)
       ZONE.side = 0;
     }
-    else { drawJapanRunways(); drawRoads(planes); drawCity(planes); drawStreet(planes); ZONE.side = ZONE.plat ? 1 : 0; drawPlateau(); ZONE.side = 0; drawJwTrees(planes, far); WIRES.side = 0; }
+    else { drawJapanRunways(); drawRoads(planes); drawCity(planes); drawStreet(planes); ZONE.side = ZONE.plat || AUTH.on ? 1 : 0; drawPlateau(); ZONE.side = 0; drawJwTrees(planes, far); WIRES.side = 0; }
   }
   else {
   // terrain
@@ -16202,6 +16712,7 @@ function drawScene(planes, far) {
   const showPlane = !(sim.crashed && game.state !== 'menu');
   if (JW.active) setCommon(progMesh);
   if (showPlane) drawPlane(pm, PS, { cockpit: cam.mode === 'cockpit' && game.state !== 'menu' });
+  if (JW.active) { drawStands(); setCommon(progMesh); }             // (airliners at the gates, p_apron.js)
   if (CAR.on) { drawCar(); if (JW.active) setCommon(progMesh); }
   if (!JW.active) for (const pk of parked) if (vdist(R.eye, [pk.m[12], pk.m[13], pk.m[14]]) < 6000) drawPlane(pk.m, parkedState, { paint: pk.col, acft: pk.acft });
   if (JW.active) drawJapanWater();
@@ -16387,10 +16898,11 @@ function drawHUD() {
     g.fillStyle = grd; g.fillRect(0, 0, W, H);
   }
   const warn = [];
-  if (s.stallWarn) warn.push(['STALL 失速', COL.red]);
+  if (CAR.on) { game.warnPull = false; game.warnGear = false; }      // (driving: the aircraft's warnings wait with it)
+  else if (s.stallWarn) warn.push(['STALL 失速', COL.red]);
   if (game.warnPull) warn.push(['PULL UP 機首上げ', COL.red]);
   if (game.warnGear) warn.push(['GEAR ギアが上がっています', COL.amber]);
-  if (s.ias * 1.94384 > ACFT.v.ne) warn.push(['OVERSPEED 速度超過', COL.amber]);
+  if (!CAR.on && s.ias * 1.94384 > ACFT.v.ne) warn.push(['OVERSPEED 速度超過', COL.amber]);
   const blink = (R.time * 2.5 % 1) < 0.7;
   warn.forEach(([txt, col], i) => {
     if (!blink && col === COL.red) return;

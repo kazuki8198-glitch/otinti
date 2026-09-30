@@ -1055,6 +1055,12 @@ bool zoneAbove(vec3 w){
   if (uZoneSide >= 0.0 || uZone.w <= 0.0 || uZoneG.w <= 0.0) return false;
   return w.y > zoneGround(w) + uZoneG.w + 0.35 && length(w.xz - uZone.xy) < uZone.w;
 }
+// where a landmark tower is drawn (p_landmarks.js), the map's block standing for it is cut away above the
+// buildings at its foot: x, z, radius, height
+uniform vec4 uLmCut0, uLmCut1;
+bool lmCut(vec3 w){
+  return (uLmCut0.z > 0.0 && w.y > uLmCut0.w && distance(w.xz, uLmCut0.xy) < uLmCut0.z) || (uLmCut1.z > 0.0 && w.y > uLmCut1.w && distance(w.xz, uLmCut1.xy) < uLmCut1.z);
+}
 uniform vec3 uSunDir;
 uniform vec3 uSunCol;
 uniform vec3 uZenith;
@@ -4660,6 +4666,14 @@ function cityWorkerMain() {
     return out;
   }
   // line strings (roads): a MoveTo starts a new line
+  function decodePoints(geom) {
+    const out = []; let x = 0, y = 0, i = 0;
+    while (i < geom.length) {
+      const c = geom[i++], cnt = c >> 3;
+      for (let j = 0; j < cnt; j++) { const dx = geom[i++], dy = geom[i++]; x += (dx >>> 1) ^ -(dx & 1); y += (dy >>> 1) ^ -(dy & 1); out.push(x, y); }
+    }
+    return out;
+  }
   function decodeLines(geom) {
     const out = []; let x = 0, y = 0, i = 0, cur = null;
     while (i < geom.length) {
@@ -4878,7 +4892,7 @@ function cityWorkerMain() {
   // ---- tile build ----
   const hash = (a, b) => { let h = (Math.imul(a | 0, 73856093) ^ Math.imul(b | 0, 19349663)) >>> 0; h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0; return (h ^ (h >>> 16)) >>> 0; };
   function build(buf, m) {
-    const L = readLayers(buf, ['building', 'landcover', 'transportation']);
+    const L = readLayers(buf, ['building', 'landcover', 'transportation', 'poi']);
     const E = (L.building || L.landcover || { extent: 4096 }).extent;
     const n = 2 ** m.z, dLon = m.lonE - m.lonW, kxN = 111320 * Math.cos(m.latN * DEG);
     const W = dLon * kxN, Hm = (m.latN - m.latS) * KZ;
@@ -5017,7 +5031,7 @@ function cityWorkerMain() {
     // ---------- roads: ribbons draped on the ground, plus the centre lines for placing and routing cars ----------
     const RW = { motorway: 10.5, trunk: 9, primary: 8.5, secondary: 7.5, tertiary: 6.5, minor: 5.2, service: 3.6, track: 3, busway: 6.5, raceway: 10 };
     const RC = { motorway: 1, trunk: 2, primary: 3, secondary: 4, tertiary: 5, minor: 6, service: 7, track: 8, busway: 5, raceway: 2 };
-    const rv0 = [], ri = [], rPts = [], rOff = [0], rCls = [], rWid = [];
+    const rv0 = [], ri = [], rPts = [], rOff = [0], rCls = [], rWid = [], rBr = [];
     const rput = (x, z, y, u, cls, w, acr) => { const k = rv0.length / 7; rv0.push(x, z, y, u, cls, w, acr); return k; };
     // 1) every road as a run of points (metres, split into short pieces so the ribbon follows the ground),
     //    keeping only what lies in this tile (the tile buffer would be drawn twice)
@@ -5025,7 +5039,7 @@ function cityWorkerMain() {
     if (L.transportation) for (const fe of L.transportation.feats) {
       const f = readFeature(L.transportation, fe), cl = f.props.class;
       if (f.type !== 2 || !f.geom || !RW[cl] || f.props.brunnel === 'tunnel' || f.props.indoor === 1) continue;
-      const w = RW[cl] * (cl === 'motorway' && f.props.oneway === 1 ? 0.8 : 1), c = RC[cl], bridge = f.props.brunnel === 'bridge';
+      const w = RW[cl] * (cl === 'motorway' && f.props.oneway === 1 ? 0.8 : 1), c = RC[cl], bridge = f.props.brunnel === 'bridge', layer = clamp(Math.round(+f.props.layer || 1), 1, 4);
       for (const ln of decodeLines(f.geom)) {
         const pts = [];
         for (let i = 0; i < ln.length; i += 2) {
@@ -5035,8 +5049,8 @@ function cityWorkerMain() {
         }
         const inT = p => p[2] >= -8 && p[2] <= E + 8 && p[3] >= -8 && p[3] <= E + 8;
         let run = [];
-        for (const p of pts) { if (inT(p)) run.push(p); else { if (run.length >= 2) lines.push({ run, w, c, bridge }); run = []; } }
-        if (run.length >= 2) lines.push({ run, w, c, bridge });
+        for (const p of pts) { if (inT(p)) run.push(p); else { if (run.length >= 2) lines.push({ run, w, c, bridge, layer }); run = []; } }
+        if (run.length >= 2) lines.push({ run, w, c, bridge, layer });
       }
     }
     // 2) where roads meet or cross: a grid of all the segments, so each point can find the other roads near it
@@ -5065,6 +5079,43 @@ function cityWorkerMain() {
       }
       return best;
     };
+    // bridges at their real height. Each end is joined to a road on the ground (the deck comes down to it), to
+    // another bridge (the elevated road goes on, a storey or more up by its layer: the expressways), or cut by
+    // the tile's edge. The deck never dips below the straight line between its ends (a river or a road under
+    // it), climbs from a grounded end like a ramp (6 %), and is smoothed along its length
+    const deckH = ln => (ln.c <= 2 ? 8.5 : 6.5) + 5.5 * (ln.layer - 1);
+    const endKind = (li, p) => {
+      if (p[2] < -4 || p[2] > E + 4 || p[3] < -4 || p[3] > E + 4) return 2;
+      const c = jcell.get(jkey(Math.floor(p[0] / JG) + 1000, Math.floor(p[1] / JG) + 1000)); if (!c) return 0;
+      for (let n = 0; n < c.length; n += 2) {
+        const lj = c[n]; if (lj === li) continue;
+        const o = lines[lj]; if (!o.bridge || Math.abs(o.layer - lines[li].layer) > 1) continue;
+        const a = o.run[c[n + 1]], b = o.run[c[n + 1] + 1], dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1, t = clamp(((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / L2, 0, 1);
+        if (Math.hypot(p[0] - a[0] - dx * t, p[1] - a[1] - dz * t) < 1.5) return 1;
+      }
+      return 0;
+    };
+    lines.forEach((ln, li) => {
+      if (!ln.bridge) return;
+      const run = ln.run, n = run.length, H = deckH(ln), U = [0];
+      for (let i = 1; i < n; i++) U.push(U[i - 1] + Math.hypot(run[i][0] - run[i - 1][0], run[i][1] - run[i - 1][1]));
+      const len = Math.max(U[n - 1], 1e-3), G = run.map(p => ground(p[2], p[3]));
+      const k0 = endKind(li, run[0]), k1 = endKind(li, run[n - 1]);
+      const rel = k => k === 0 ? 0.06 : k === 1 || ln.c <= 2 ? H : null;
+      let y0 = rel(k0), y1 = rel(k1);
+      if (y0 != null) y0 += G[0]; if (y1 != null) y1 += G[n - 1];
+      if (y0 == null && y1 == null) y0 = y1 = Math.max(...G) + 0.5; else if (y0 == null) y0 = y1; else if (y1 == null) y1 = y0;
+      const d0 = k0 === 0 ? 0 : 1e9, d1 = k1 === 0 ? 0 : 1e9;
+      const D = run.map((p, i) => Math.max(y0 + (y1 - y0) * U[i] / len, G[i] + Math.min(H, Math.min(d0 + U[i], d1 + len - U[i]) * 0.06)));
+      ln.deck = D.map((y, i) => {
+        if (i === 0 || i === n - 1) return y;
+        let s = 0, ws = 0;
+        for (let j = 0; j < n; j++) { const e = 1 - Math.abs(U[j] - U[i]) / 35; if (e > 0) { s += D[j] * e; ws += e; } }
+        const sm = s / ws, edge = Math.min(U[i], len - U[i]);
+        return y + (sm - y) * clamp(edge / 20, 0, 1);                 // (the ends stay where they join)
+      });
+      ln.G = G; ln.U = U;
+    });
     // a house's walls made real: framed windows standing off the wall (tall sliding doors on the ground floor
     // of the garden side), the front door under a little canopy on the street side, canopies over some
     // upper windows, an air-conditioner's outdoor unit, a downpipe at the corner. st kinds: 5 window,
@@ -5123,7 +5174,35 @@ function cityWorkerMain() {
       }
       return best;
     };
+    // how far a point is from the edge of any other (ground) road than line li
+    const edgeDist = (li, x, z) => {
+      const c = jcell.get(jkey(Math.floor(x / JG) + 1000, Math.floor(z / JG) + 1000)); if (!c) return 1e9;
+      let best = 1e9;
+      for (let n = 0; n < c.length; n += 2) {
+        if (c[n] === li) continue;
+        const o = lines[c[n]]; if (o.bridge || o.c > 7) continue;
+        const a = o.run[c[n + 1]], b = o.run[c[n + 1] + 1], dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1, t = clamp(((x - a[0]) * dx + (z - a[1]) * dz) / L2, 0, 1);
+        best = Math.min(best, Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t) - o.w / 2);
+      }
+      return best;
+    };
+    // the nearest road's edge point (of class <= maxC): where, which way is out from the road, and the road
+    const roadEdge = (x, z, maxC) => {
+      const c = jcell.get(jkey(Math.floor(x / JG) + 1000, Math.floor(z / JG) + 1000)); if (!c) return null;
+      let best = null;
+      for (let n = 0; n < c.length; n += 2) {
+        const o = lines[c[n]]; if (o.c > maxC || o.bridge) continue;
+        const a = o.run[c[n + 1]], b = o.run[c[n + 1] + 1], dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1, t = clamp(((x - a[0]) * dx + (z - a[1]) * dz) / L2, 0, 1);
+        const px = a[0] + dx * t, pz = a[1] + dz * t, d = Math.hypot(x - px, z - pz);
+        if (!best || d - o.w / 2 < best.d) {
+          const l = Math.sqrt(L2); let nx = -dz / l, nz = dx / l; if ((x - px) * nx + (z - pz) * nz < 0) { nx = -nx; nz = -nz; }
+          best = { d: d - o.w / 2, x: px + nx * o.w / 2, z: pz + nz * o.w / 2, nx, nz, c: o.c, w: o.w };
+        }
+      }
+      return best;
+    };
     const boxes = [], ringXZ = [], ringOff = [0], bRange = [], bCen = [];
+    const shopWalls = [];                                             // outer walls at street level: x0 z0 x1 z1 nx nz base
     let maxTop = -1e9, minG = 1e9;
     for (let bi = 0; bi < bpolys.length; bi++) {
       const poly = bpolys[bi], pr = poly.props, ext = poly.rings[0];
@@ -5179,6 +5258,7 @@ function cityWorkerMain() {
         for (const w of walls) if (w[7] && w[4] > 6 && w[6] > Math.max(bestS - 0.35, -0.3)) w[8] = 1;
       }
       const st0 = seed + 1024 * kind;
+      if (h < 60) for (const w of walls) if (w[7] && w[4] > 2.2) shopWalls.push(w[0], w[1], w[2], w[3], w[5], w[6], base);
       // a house's street side (for its front door): the outer wall nearest a road
       const fronts = new Set();
       if (kind === 1) { let bd = 1e9, bw = -1; walls.forEach((w, i) => { if (!w[7] || w[4] < 2) return; const d = roadNear((w[0] + w[2]) / 2 + w[5] * 1.5, (w[1] + w[3]) / 2 + w[6] * 1.5, 7); if (d < bd) { bd = d; bw = i; } }); if (bw >= 0 && bd < 12) fronts.add(bw); }
@@ -5224,15 +5304,41 @@ function cityWorkerMain() {
     // 3) the ribbons. Bigger roads sit a few centimetres higher, so where roads overlap the main road is
     //    the one seen (no flicker); junction areas lose their markings (a plain asphalt crossing)
     // street furniture: [x, z, y, yaw, type] (types: PROP_* on the main thread). yaw turns the prop's +x
+    // street-level walls in a 16 m grid (shop signs, the wires into the houses)
+    const WG = 16, wgrid = new Map();
+    for (let k = 0; k < shopWalls.length; k += 7) {
+      const x0 = shopWalls[k], z0 = shopWalls[k + 1], x1 = shopWalls[k + 2], z1 = shopWalls[k + 3];
+      for (let i = Math.floor(Math.min(x0, x1) / WG); i <= Math.floor(Math.max(x0, x1) / WG); i++) for (let j = Math.floor(Math.min(z0, z1) / WG); j <= Math.floor(Math.max(z0, z1) / WG); j++) {
+        const key = jkey(i + 1000, j + 1000); let c = wgrid.get(key); if (!c) wgrid.set(key, c = []); c.push(k);
+      }
+    }
+    // overhead wires: pole to pole along the street [x0 z0 y0 yaw0 x1 z1 y1 yaw1 kind] (kind 0: a span between
+    // two poles, y the ground at each; 1: the service drop from a pole to a house, y1 where it meets the wall)
+    const wires = [], poles = [], fences = [], marks = [];             // (marks: road markings [x z y yaw roadWidth type])
+    const dropTo = (x, z, g, ox, oz, yaw) => {
+      // the walls each side of the street that look towards the pole: the nearest one on each side gets a line
+      const best = [null, null];
+      for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) {
+        const c = wgrid.get(jkey(Math.floor(x / WG) + i + 1000, Math.floor(z / WG) + j + 1000)); if (!c) continue;
+        for (const k of c) {
+          const x0 = shopWalls[k], z0 = shopWalls[k + 1], dx = shopWalls[k + 2] - x0, dz = shopWalls[k + 3] - z0, L2 = dx * dx + dz * dz;
+          const t = clamp(((x - x0) * dx + (z - z0) * dz) / L2, 0.1, 0.9), qx = x0 + dx * t, qz = z0 + dz * t, d = Math.hypot(x - qx, z - qz);
+          if (d < 2.5 || d > 16 || (x - qx) * shopWalls[k + 4] + (z - qz) * shopWalls[k + 5] < d * 0.5) continue;
+          const sd = (qx - x) * ox + (qz - z) * oz > 0 ? 0 : 1;
+          if (!best[sd] || d < best[sd].d) best[sd] = { d, qx, qz, y: shopWalls[k + 6] };
+        }
+      }
+      for (const b of best) if (b && (hash(b.qx * 7 | 0, b.qz * 7 | 0) & 3)) wires.push(x, z, g, yaw, b.qx, b.qz, b.y + 5.2 + (hash(b.qx | 0, b.qz | 0) & 3) * 0.3, yaw, 1);
+    };
     const props = [];
-    const prop = (x, z, y, yaw, type) => { if (x > -2 && z > -2 && x < W + 2 && z < Hm + 2) props.push(x, z, y, yaw, type); };
+    const prop = (x, z, y, yaw, type) => { if (x > -2 && z > -2 && x < W + 2 && z < Hm + 2) { props.push(x, z, y, yaw, type); return true; } return false; };
     lines.forEach((ln, li) => {
       const { run, w, c, bridge } = ln;
       let u = 0, prev = -1;
       const V = [];                                                   // per point: x, z, road height, normal, along, junction
       for (let i = 0; i < run.length; i++) {
         const a = run[Math.max(i - 1, 0)], b = run[Math.min(i + 1, run.length - 1)], tx = b[0] - a[0], tz = b[1] - a[1], tl = Math.hypot(tx, tz) || 1;
-        const nx = -tz / tl, nz = tx / tl, p = run[i], g = ground(p[2], p[3]) + (bridge ? 0.4 : 0.06 + (9 - c) * 0.012);
+        const nx = -tz / tl, nz = tx / tl, p = run[i], g = ln.deck ? ln.deck[i] + 0.05 : ground(p[2], p[3]) + 0.06 + (9 - c) * 0.012;
         if (i) u += Math.hypot(p[0] - run[i - 1][0], p[1] - run[i - 1][1]);
         const j = Math.round(junction(li, p[0], p[1], w) * 7), cj = c + 16 * j, oc = junction.other;
         const l = rput(p[0] + nx * w / 2, p[1] + nz * w / 2, g, u, cj, w, -1), r = rput(p[0] - nx * w / 2, p[1] - nz * w / 2, g, u, cj, w, 1);
@@ -5241,8 +5347,46 @@ function cityWorkerMain() {
         rPts.push(p[0], p[1], g);
         V.push([p[0], p[1], g, nx, nz, u, j, oc]);
       }
-      rOff.push(rPts.length / 3); rCls.push(c); rWid.push(w);
-      if (bridge) return;
+      rOff.push(rPts.length / 3); rCls.push(c); rWid.push(w); rBr.push(bridge ? 1 : 0);
+      if (bridge) {
+        // the bridge itself, in concrete: the parapets each side, the slab's edge under them, and where it
+        // stands high the piers (a column and a crosshead under the deck every 30 m or so)
+        const q = (ax, az, ay0, ay1, bx, bz, by0, by1) => { const a0 = rput(ax, az, ay0, 0, 257, 1, 0), a1 = rput(ax, az, ay1, 0, 257, 1, 1), b0 = rput(bx, bz, by0, 0, 257, 1, 0), b1 = rput(bx, bz, by1, 0, 257, 1, 1); ri.push(a0, b0, a1, a1, b0, b1); };
+        const ph = c <= 2 ? 1.1 : 0.95;
+        for (let i = 1; i < V.length; i++) {
+          const A = V[i - 1], B = V[i], hA = A[2] - ln.G[i - 1], hB = B[2] - ln.G[i], slab = Math.min(1.8, Math.max(hA, hB) * 0.3 + 0.35);
+          for (const sd of [1, -1]) {
+            const oa = w / 2 * sd, ob = (w / 2 - 0.28) * sd;
+            const ax = A[0] + A[3] * oa, az = A[1] + A[4] * oa, bx = B[0] + B[3] * oa, bz = B[1] + B[4] * oa;
+            const ax2 = A[0] + A[3] * ob, az2 = A[1] + A[4] * ob, bx2 = B[0] + B[3] * ob, bz2 = B[1] + B[4] * ob;
+            q(ax, az, A[2] - slab, A[2] + ph, bx, bz, B[2] - slab, B[2] + ph);          // the outer face
+            q(ax2, az2, A[2], A[2] + ph, bx2, bz2, B[2], B[2] + ph);                    // the parapet's inner face
+            const t0 = rput(ax, az, A[2] + ph, 0, 257, 1, 0), t1 = rput(ax2, az2, A[2] + ph, 0, 257, 1, 1), t2 = rput(bx, bz, B[2] + ph, 0, 257, 1, 0), t3 = rput(bx2, bz2, B[2] + ph, 0, 257, 1, 1);
+            ri.push(t0, t2, t1, t1, t2, t3);
+          }
+          // the underside of the slab (the ribbon is the running surface)
+          const l0 = rput(A[0] + A[3] * w / 2, A[1] + A[4] * w / 2, A[2] - slab, 0, 257, 1, 0), r0 = rput(A[0] - A[3] * w / 2, A[1] - A[4] * w / 2, A[2] - slab, 0, 257, 1, 1);
+          const l1 = rput(B[0] + B[3] * w / 2, B[1] + B[4] * w / 2, B[2] - slab, 0, 257, 1, 0), r1 = rput(B[0] - B[3] * w / 2, B[1] - B[4] * w / 2, B[2] - slab, 0, 257, 1, 1);
+          ri.push(l0, l1, r0, r0, l1, r1);
+        }
+        const len = V[V.length - 1][5];
+        for (let d = 12 + (hash(li, 77) & 15); d < len - 6; d += 32) {
+          let k = 1; while (k < V.length - 1 && V[k][5] < d) k++;
+          const A = V[k - 1], B = V[k], f = clamp((d - A[5]) / Math.max(B[5] - A[5], 1e-3), 0, 1);
+          const x = A[0] + (B[0] - A[0]) * f, z = A[1] + (B[1] - A[1]) * f, y = A[2] + (B[2] - A[2]) * f, gy = ln.G[k - 1] + (ln.G[k] - ln.G[k - 1]) * f;
+          const top = y - Math.min(1.8, (y - gy) * 0.3 + 0.35);
+          if (top - gy < 3.2 || junction(li, x, z, w) > 0.3) continue;
+          const tx = B[0] - A[0], tz = B[1] - A[1], tl = Math.hypot(tx, tz) || 1, ax = tx / tl, az = tz / tl, nx = -az, nz = ax;
+          const box = (cx, cz, hx, hz, y0, y1) => {                    // (hx across the road, hz along it)
+            const P = (i, j) => [cx + nx * hx * i + ax * hz * j, cz + nz * hx * i + az * hz * j];
+            for (const [a, b] of [[P(-1, -1), P(1, -1)], [P(1, -1), P(1, 1)], [P(1, 1), P(-1, 1)], [P(-1, 1), P(-1, -1)]]) q(a[0], a[1], y0, y1, b[0], b[1], y0, y1);
+          };
+          const cw = w > 14 ? 1.1 : 0.9;
+          box(x, z, cw, cw, gy - 0.3, top - 1.1);                       // the column
+          box(x, z, w / 2 - 0.2, 0.9, top - 1.2, top);                   // the crosshead
+        }
+        return;
+      }
       // pavements with kerbs along the main roads (trunk .. tertiary), open where roads meet: the kerb face,
       // the paving (across 0 at the kerb .. 1 at the back) and a short face down at the back
       if (c >= 2 && c <= 5) {
@@ -5258,6 +5402,19 @@ function cityWorkerMain() {
               ri.push(pv, a0, pv + 1, pv + 1, a0, a1);                 // kerb face
               ri.push(pv + 2, b0, pv + 3, pv + 3, b0, b1);             // paving
               ri.push(pv + 4, c0, pv + 5, pv + 5, c0, c1);             // back
+              // white guard pipes (ガードパイプ) along the kerb on some stretches, open every so often for a crossing
+              // or a driveway: [x0 z0 y0 u0 x1 z1 y1 u1 nx nz] (n: out from the road)
+              const A = V[i - 1], ua = A[5], cut = [ua, uu];
+              for (let k = Math.ceil(ua / 36) * 36; k < uu + 36; k += 36) { if (k > ua && k < uu) cut.push(k); if (k + 4.5 > ua && k + 4.5 < uu) cut.push(k + 4.5); }
+              cut.sort((p, q) => p - q);
+              for (let k = 1; k < cut.length; k++) {
+                const um = (cut[k - 1] + cut[k]) / 2;
+                if (cut[k] - cut[k - 1] < 0.3 || um % 36 < 4.5 || (hash(li * 13 + (sd > 0 ? 1 : 0), Math.floor(um / 36)) & 255) > 130) continue;
+                const pt = u => { const f = clamp((u - ua) / Math.max(uu - ua, 1e-3), 0, 1), fx = (A[3] + (nx - A[3]) * f) * sd, fz = (A[4] + (nz - A[4]) * f) * sd, o = w / 2 + 0.3;
+                  return [A[0] + (x - A[0]) * f + fx * o, A[1] + (z - A[1]) * f + fz * o, A[2] + (g - A[2]) * f + kh, u, fx, fz]; };
+                const P0 = pt(cut[k - 1]), P1 = pt(cut[k]);
+                fences.push(P0[0], P0[1], P0[2], P0[3], P1[0], P1[1], P1[2], P1[3], (P0[4] + P1[4]) / 2, (P0[5] + P1[5]) / 2);
+              }
             }
             pv = a0;
           }
@@ -5280,8 +5437,16 @@ function cityWorkerMain() {
         if (c <= 4) for (let d = 5 + hs * 8; d < len - 4; d += 11) for (const sd of [1, -1])   // roadside trees in the paving
           at(d + (sd < 0 ? 5.5 : 0), w / 2 + sw * 0.62, sd, (x, z, g) => prop(x, z, g + 0.15, hash(x * 10 | 0, z * 10 | 0) / 40, 3));
       } else if (c >= 6 && c <= 7) {
-        for (let d = 8 + hs * 20; d < len - 4; d += 30)                // concrete utility poles on one side of the narrow streets
-          at(d, w / 2 + 0.35, 1, (x, z, g, ox, oz) => prop(x, z, g, Math.atan2(oz, ox), 1));
+        let pp = null;                                                 // concrete utility poles on one side of the narrow streets,
+        for (let d = 8 + hs * 20; d < len - 4; d += 30)                // the wires strung from one to the next and into the houses
+          at(d, w / 2 + 0.35, 1, (x, z, g, ox, oz) => {
+            const yaw = Math.atan2(oz, ox);
+            if (!prop(x, z, g, yaw, 1)) return;
+            const me = [x, z, g, yaw, li, 0];
+            if (pp && Math.hypot(x - pp[0], z - pp[1]) < 70) { wires.push(pp[0], pp[1], pp[2], pp[3], x, z, g, yaw, 0); pp[5]++; me[5]++; }
+            poles.push(pp = me);
+            dropTo(x, z, g, ox, oz, yaw);
+          });
       }
       // traffic signals where main roads meet: at the left kerb before the junction (Japan drives on the left),
       // the arm over the road, the lights facing the traffic that comes in
@@ -5290,7 +5455,99 @@ function cityWorkerMain() {
         if (A[6] <= 2 && B[6] >= 5 && B[7] <= 5) { const [x, z, g, nx, nz] = A; prop(x - nx * (w / 2 + 0.6), z - nz * (w / 2 + 0.6), g, Math.atan2(nz, nx), 2); }
         if (A[6] >= 5 && B[6] <= 2 && A[7] <= 5) { const [x, z, g, nx, nz] = B; prop(x + nx * (w / 2 + 0.6), z + nz * (w / 2 + 0.6), g, Math.atan2(-nz, -nx), 2); }
       }
+      // at the corners of the side streets: the 止まれ sign where one comes out onto a main road (on the left,
+      // facing the traffic coming up), a curve mirror at some of the corners where they meet each other
+      if (c >= 6 && c <= 7) for (let i = 1; i < V.length; i++) for (const [P, Q] of [[V[i - 1], V[i]], [V[i], V[i - 1]]]) {
+        if (!(P[6] <= 2 && Q[6] >= 5)) continue;
+        const tl = Math.hypot(Q[0] - P[0], Q[1] - P[1]) || 1, ux = (Q[0] - P[0]) / tl, uz = (Q[1] - P[1]) / tl, lx = uz, lz = -ux, face = Math.atan2(ux, -uz);
+        if (Q[7] <= 5) {
+          prop(P[0] + lx * (w / 2 + 0.35), P[1] + lz * (w / 2 + 0.35), P[2], face, 9);
+          // and on the road: the stop line just short of the main road's edge, 止まれ in front of it
+          for (let d = 0; d < tl + 14; d += 0.5) {
+            const x = P[0] + ux * d, z = P[1] + uz * d;
+            if (edgeDist(li, x, z) > 1.3) continue;
+            if (d > 5.5) marks.push(x - ux * 0.3, z - uz * 0.3, P[2] + (Q[2] - P[2]) * clamp(d / tl, 0, 1), Math.atan2(uz, ux), w, 0);
+            break;
+          }
+        }
+        else if ((hash(P[0] * 10 | 0, P[1] * 10 | 0) & 3) === 0) prop(Q[0] + lx * (w / 2 + 0.45), Q[1] + lz * (w / 2 + 0.45), Q[2], face - 0.35, 8);
+      }
     });
+    // the ends of each street's run of poles joined to the nearest pole of the next street (the wires go on
+    // round corners and across the junctions)
+    {
+      const PG = 40, pg = new Map();
+      poles.forEach((p, k) => { const key = jkey(Math.floor(p[0] / PG) + 1000, Math.floor(p[1] / PG) + 1000); let c = pg.get(key); if (!c) pg.set(key, c = []); c.push(k); });
+      const joined = new Set();
+      poles.forEach((p, pk) => {
+        if (p[5] >= 2) return;
+        let best = null, bd = 42, bk = -1;
+        for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) for (const k of pg.get(jkey(Math.floor(p[0] / PG) + i + 1000, Math.floor(p[1] / PG) + j + 1000)) || []) {
+          const q = poles[k]; if (q[4] === p[4] || q[5] >= 3) continue;
+          const d = Math.hypot(q[0] - p[0], q[1] - p[1]); if (d > 6 && d < bd && !joined.has(k * 65536 + pk)) { bd = d; best = q; bk = k; }
+        }
+        if (best) { wires.push(p[0], p[1], p[2], p[3], best[0], best[1], best[2], best[3], 0); p[5]++; best[5]++; joined.add(pk * 65536 + bk); }
+      });
+    }
+    // ---------- the map's points of interest: real shops get their signboards, bus stops, post boxes,
+    // vending machines, subway entrances stand where they are ----------
+    const signs = [], signNames = [];
+    if (L.poi) {
+      const usedWall = new Map();                                    // (wall -> the stretch of it already signed)
+      const SHOPS = new Set(['shop', 'restaurant', 'cafe', 'fast_food', 'bar', 'beer', 'grocery', 'bakery', 'pharmacy', 'clothing_store', 'hairdresser', 'bank', 'laundry', 'ice_cream', 'books', 'library', 'music', 'mobile_phone', 'optician', 'jewelry', 'furniture', 'hardware', 'car', 'bicycle', 'shoes', 'florist', 'alcohol_shop', 'office', 'lodging', 'dentist', 'doctors', 'veterinary', 'post', 'fuel', 'cinema', 'theatre']);
+      let vend = 0;
+      for (const fe of L.poi.feats) {
+        const f = readFeature(L.poi, fe); if (f.type !== 1 || !f.geom) continue;
+        const pts = decodePoints(f.geom); if (!pts.length) continue;
+        const px = pts[0], py = pts[1]; if (px < 0 || py < 0 || px > E || py > E) continue;
+        const x = lx(px), z = lz(py), cls = f.props.class, sub = f.props.subclass;
+        const name = String(f.props['name:ja'] || f.props.name || '').trim();
+        const g = ground(px, py);
+        if (sub === 'bus_stop' || cls === 'bus') {
+          const r = roadEdge(x, z, 7); if (r && r.d < 14) prop(r.x + r.nx * 0.7, r.z + r.nz * 0.7, g + 0.15, Math.atan2(-r.nz, -r.nx), 4);
+        } else if (sub === 'post_box') {
+          const r = roadEdge(x, z, 7); if (r && r.d < 10) prop(r.x + r.nx * 0.9, r.z + r.nz * 0.9, g + 0.15, Math.atan2(-r.nz, -r.nx), 5); else prop(x, z, g, 0, 5);
+        } else if (sub === 'vending_machine') {
+          prop(x, z, g, hash(px, py) / 683, 6);
+        } else if (sub === 'subway_entrance' || sub === 'train_station_entrance') {
+          const r = roadEdge(x, z, 7); if (r && r.d < 12) prop(r.x + r.nx * 1.6, r.z + r.nz * 1.6, g + 0.15, Math.atan2(-r.nz, -r.nx), 7); else prop(x, z, g, 0, 7);
+        } else if (name && SHOPS.has(cls) && sub !== 'parcel_locker' && sub !== 'atm') {
+          // the wall this shop faces the street with: the nearest one whose outside looks towards a road
+          const c = wgrid.get(jkey(Math.floor(x / WG) + 1000, Math.floor(z / WG) + 1000)); if (!c) continue;
+          let best = null;
+          for (const k of c) {
+            const x0 = shopWalls[k], z0 = shopWalls[k + 1], x1 = shopWalls[k + 2], z1 = shopWalls[k + 3], nx = shopWalls[k + 4], nz = shopWalls[k + 5];
+            const dx = x1 - x0, dz = z1 - z0, L2 = dx * dx + dz * dz, t = clamp(((x - x0) * dx + (z - z0) * dz) / L2, 0, 1);
+            const qx = x0 + dx * t, qz = z0 + dz * t, d = Math.hypot(x - qx, z - qz);
+            if (d > 18) continue;
+            const rd = roadNear(qx + nx * 2, qz + nz * 2, 7); if (rd > 9) continue;
+            if (!best || d + rd * 0.5 < best.s) best = { s: d + rd * 0.5, k, t, L: Math.sqrt(L2), qx, qz, nx, nz };
+          }
+          if (!best) continue;
+          const sw = clamp(1.6 + name.length * 0.55, 2.4, Math.min(best.L - 0.3, 11)), used = usedWall.get(best.k) || [];
+          let u = best.t * best.L; u = clamp(u, sw / 2 + 0.15, best.L - sw / 2 - 0.15);
+          if (used.some(v => Math.abs(v - u) < sw * 0.9)) continue;
+          used.push(u); usedWall.set(best.k, used);
+          const k = best.k, ux = (shopWalls[k + 2] - shopWalls[k]) / best.L, uz = (shopWalls[k + 3] - shopWalls[k + 1]) / best.L;
+          const cx = shopWalls[k] + ux * u + best.nx * 0.12, cz = shopWalls[k + 1] + uz * u + best.nz * 0.12;
+          signs.push(cx, cz, shopWalls[k + 6] + 3.35, Math.atan2(best.nz, best.nx), sw, 0.75);
+          signNames.push(name.slice(0, 18) + '\u0001' + cls + '\u0001' + (sub || ''));
+          // a convenience store has its vending machines outside
+          if (sub === 'convenience' && vend < 60) { vend++; prop(cx + best.nx * 0.45 + ux * (sw / 2 + 0.7), cz + best.nz * 0.45 + uz * (sw / 2 + 0.7), shopWalls[k + 6], Math.atan2(best.nz, best.nx), 6); }
+        }
+      }
+      // vending machines along the residential streets too (Japan has one every few blocks)
+      lines.forEach((ln, li) => {
+        if (ln.c < 5 || ln.c > 7 || ln.bridge) return;
+        for (let i = 3; i < ln.run.length - 1; i += 9) {
+          if ((hash(li * 17 + i, 91) & 7) !== 0) continue;
+          const a = ln.run[i], b = ln.run[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l, sd = (i & 1) ? 1 : -1;
+          const x = a[0] + nx * sd * (ln.w / 2 + 0.6), z = a[1] + nz * sd * (ln.w / 2 + 0.6);
+          if (junction(li, a[0], a[1], ln.w) > 0.2) continue;
+          prop(x, z, ground(a[2], a[3]), Math.atan2(-nz * sd, -nx * sd), 6);
+        }
+      });
+    }
     // packed like the buildings (x, z in dm, y, up normal, u in dm, class + 512, width dm, across)
     const nrv = rv0.length / 7 | 0;
     const rvb = new ArrayBuffer(Math.max(nrv, 1) * 20), r16 = new Int16Array(rvb), r32 = new Float32Array(rvb), r8 = new Int8Array(rvb);
@@ -5340,7 +5597,7 @@ function cityWorkerMain() {
       id: m.id, nv: v, ni: q, vb: vbuf, ib: ib.buffer, trees: tr.buffer, nTrees: tr.length / 4,
       boxes: new Float32Array(boxes).buffer, ringXZ: new Float32Array(ringXZ).buffer, ringOff: new Uint32Array(ringOff).buffer,
       cells: cellCount.buffer, items: items.buffer, bRange: new Uint32Array(bRange).buffer, bCen: new Float32Array(bCen).buffer, maxTop: nb ? maxTop : -1e9, minG: nb ? minG : 0, nBuild: nb, W, Hm,
-      nrv, nri: ri.length, rvb, rib: new Uint32Array(ri).buffer, rPts: new Float32Array(rPts).buffer, rOff: new Uint32Array(rOff).buffer, rCls: new Uint8Array(rCls).buffer, rWid: new Float32Array(rWid).buffer, props: new Float32Array(props).buffer,
+      nrv, nri: ri.length, rvb, rib: new Uint32Array(ri).buffer, rPts: new Float32Array(rPts).buffer, rOff: new Uint32Array(rOff).buffer, rCls: new Uint8Array(rCls).buffer, rWid: new Float32Array(rWid).buffer, rBr: new Uint8Array(rBr).buffer, props: new Float32Array(props).buffer, wires: new Float32Array(wires).buffer, fences: new Float32Array(fences).buffer, marks: new Float32Array(marks).buffer, signs: new Float32Array(signs).buffer, signNames,
     };
     return res;
   }
@@ -5359,7 +5616,7 @@ function cityWorkerMain() {
       if (r.status === 404 || r.status === 204) { postMessage({ id: m.id, empty: true }); return; }
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const res = build(new Uint8Array(await r.arrayBuffer()), m);
-      postMessage(res, [res.vb, res.ib, res.trees, res.boxes, res.ringXZ, res.ringOff, res.cells, res.items, res.bRange, res.bCen, res.rvb, res.rib, res.rPts, res.rOff, res.rCls, res.rWid, res.props]);
+      postMessage(res, [res.vb, res.ib, res.trees, res.boxes, res.ringXZ, res.ringOff, res.cells, res.items, res.bRange, res.bCen, res.rvb, res.rib, res.rPts, res.rOff, res.rCls, res.rWid, res.rBr, res.props, res.wires, res.fences, res.marks, res.signs]);
     } catch (err) { postMessage({ id: m.id, error: String((err && err.message) || err) }); }
   };
 }
@@ -5441,9 +5698,22 @@ function cityDispatch(t) {
   t.state = 1; t.job = id; w.busy++;
   CITY.jobs.set(id, { t, w });
   const [la, lo] = [(t.latN + t.latS) / 2, (t.lonW + t.lonE) / 2];
+  // no fine elevation for this tile (not there, or it failed to load): the heights the terrain is drawn with,
+  // on a coarse grid, so the roads and buildings sit on the ground that's shown (rebuilt if the fine one comes)
+  let dem = dt.dem ? dt.dem.slice() : null;
+  t.demOk = !!dem;
+  if (!dem) {
+    const G = 33, S = new Float32Array(G * G), n = 2 ** 14;
+    for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) S[j * G + i] = rawHeightGeo(latFromMerc((t.y + j / (G - 1)) / n), t.lonW + (t.lonE - t.lonW) * i / (G - 1));
+    dem = new Float32Array(65536);
+    for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) {
+      const fx = (x + 0.5) / 256 * (G - 1), fy = (y + 0.5) / 256 * (G - 1), ix = Math.min(fx | 0, G - 2), iy = Math.min(fy | 0, G - 2), tx = fx - ix, ty = fy - iy;
+      dem[y * 256 + x] = (S[iy * G + ix] * (1 - tx) + S[iy * G + ix + 1] * tx) * (1 - ty) + (S[(iy + 1) * G + ix] * (1 - tx) + S[(iy + 1) * G + ix + 1] * tx) * ty;
+    }
+  }
   w.postMessage({
     id, url: CITY.url.replace('{z}', 14).replace('{x}', t.x).replace('{y}', t.y), z: 14, x: t.x, y: t.y,
-    latN: t.latN, latS: t.latS, lonW: t.lonW, lonE: t.lonE, dem: dt.dem ? dt.dem.slice() : null, g0: Math.max(rawHeightGeo(la, lo), 0),
+    latN: t.latN, latS: t.latS, lonW: t.lonW, lonE: t.lonE, dem, g0: Math.max(rawHeightGeo(la, lo), 0),
     maxTrees: game.touch ? 15000 : 45000,
     rws: rwNear(la, lo).filter(r => Math.abs(r.lat - la) < 0.06 && Math.abs(r.lon - lo) < 0.07).map(r => ({ lat: r.lat, lon: r.lon, kx: r.kx, sin: r.sin, cos: r.cos, len: r.len, wid: r.wid, elev: r.elev })),
   });
@@ -5494,8 +5764,11 @@ function cityReceive(r) {
     t.rvao = vao; t.rvb = vb; t.rib = ib; t.rni = r.nri;
   }
   // road centre lines (tile-local metres) for putting the car on a road and for traffic
-  if (r.rPts) t.roads = { pts: new Float32Array(r.rPts), off: new Uint32Array(r.rOff), cls: new Uint8Array(r.rCls), wid: new Float32Array(r.rWid) };
+  if (r.rPts) t.roads = { pts: new Float32Array(r.rPts), off: new Uint32Array(r.rOff), cls: new Uint8Array(r.rCls), wid: new Float32Array(r.rWid), br: r.rBr ? new Uint8Array(r.rBr) : null };
   if (typeof streetReceive === 'function') streetReceive(t, r.props);
+  if (typeof signReceive === 'function') signReceive(t, r.signs, r.signNames);
+  if (typeof wireReceive === 'function') wireReceive(t, r.wires, r.fences);
+  if (typeof markReceive === 'function') markReceive(t, r.marks);
   cityRoadGrid(t);
   // trees placed before this tile's roads and buildings were known are placed again (none on a road or in a house)
   if (typeof JWTREES !== 'undefined' && JWTREES.cells) for (const [k, c] of JWTREES.cells) {
@@ -5545,6 +5818,28 @@ function cityBlocked(wx, wz) {
   }
   return false;
 }
+// the deck of a bridge or an elevated road under a world point, if there is one near the height yRef (you're on
+// it, or just above it): its height, else null. Under an elevated road you're on the street below. (any: a deck
+// here at whatever height)
+function cityDeckAt(wx, wz, yRef, any = false) {
+  if (!CITY.ready || !JW.online) return null;
+  const [la, lo] = worldToGeo(wx, wz), n = 2 ** 14, x = Math.floor((lo + 180) / 360 * n), y = Math.floor(mercY(la) * n);
+  const t = CITY.tiles.get(x + '/' + y); if (!t || t.state !== 2 || !t.rgrid || !t.roads.br) return null;
+  const X = (lo - t.lonW) * t.kxN, Z = -(la - t.latN) * KZ;
+  const g = t.rgrid, c = g.cells.get((Math.floor(Z / g.G) + 1) * g.nx + Math.floor(X / g.G) + 1), R_ = t.roads, P = R_.pts;
+  if (!c) return null;
+  let best = null;
+  for (let i = 0; i < c.length; i += 2) {
+    const l = c[i], k = c[i + 1]; if (!R_.br[l]) continue;
+    const ax = P[k * 3], az = P[k * 3 + 1], dx = P[k * 3 + 3] - ax, dz = P[k * 3 + 4] - az, L2 = dx * dx + dz * dz || 1;
+    const s = clamp(((X - ax) * dx + (Z - az) * dz) / L2, 0, 1);
+    if (Math.hypot(X - ax - dx * s, Z - az - dz * s) > R_.wid[l] / 2 - 0.2) continue;
+    const h = P[k * 3 + 2] + (P[k * 3 + 5] - P[k * 3 + 2]) * s - 0.05;
+    if (!any && (h > yRef + 0.4 || h < yRef - 5)) continue;
+    if (best == null || h > best) best = h;
+  }
+  return best;
+}
 // nearest point on a road to a world position (within maxD m): position, the road's direction there, width, class
 function roadNearest(wx, wz, maxD = 400, minCls = 0) {
   const [la, lo] = worldToGeo(wx, wz);
@@ -5584,6 +5879,7 @@ function drawRoads(planes) {
     gl.bindVertexArray(t.rvao);
     gl.drawElements(gl.TRIANGLES, t.rni, gl.UNSIGNED_INT, 0);
   }
+  if (typeof drawMarks === 'function') drawMarks(planes);           // (止まれ and the stop lines, p_marks.js)
   gl.disable(gl.POLYGON_OFFSET_FILL);
   gl.enable(gl.CULL_FACE);
 }
@@ -5641,6 +5937,8 @@ function cityDispose(t) {
   if (t.tvao) { gl.deleteVertexArray(t.tvao); gl.deleteBuffer(t.tb); CITY.trees -= t.nTrees; }
   if (t.rvao) { gl.deleteVertexArray(t.rvao); gl.deleteBuffer(t.rvb); gl.deleteBuffer(t.rib); }
   if (typeof streetDispose === 'function') streetDispose(t);
+  if (typeof fenceDispose === 'function') fenceDispose(t);
+  if (typeof markDispose === 'function') markDispose(t);
   t.vao = t.tvao = t.rvao = null; t.col = null; t.roads = null;
   CITY.tiles.delete(t.key);
 }
@@ -5678,6 +5976,7 @@ function cityUpdate() {
     if (busy >= CITY.workers.length * 2) break;
     if (CITY.verts > vBudget && t.dist > 1500) break;
     if (t.state === 3 && R.time > t.retry && CITY.failed < 40) t.state = 0;
+    if (t.state === 2 && t.demOk === false && getTile(14, t.x, t.y).demState === 2) { cityDispose(t); continue; }   // (its fine elevation came after all)
     if (t.state !== 0) continue;
     const dt = getTile(14, t.x, t.y);
     if (dt.demState === 0) { loadDem(dt); continue; }
@@ -5789,7 +6088,7 @@ out vec4 outColor;
 float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
 float h2(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 void main(){
-  if (zoneCut(vWorld) || zoneAbove(vWorld)) discard;
+  if (zoneCut(vWorld) || zoneAbove(vWorld) || lmCut(vWorld)) discard;
   vec3 n = normalize(vN);
   float H = vM.y, s1 = h1(vSeed + 0.13), s2 = h1(vSeed + 5.71), s3 = h1(vSeed + 9.3);
   vec3 V = normalize(uCamPos - vWorld);
@@ -6064,6 +6363,7 @@ out vec4 outColor;
 float stripe(float x, float c, float hw, float aa){ return 1.0 - smoothstep(hw - aa, hw + aa, abs(x - c)); }
 void main(){
   if (zoneCut(vWorld)) discard;
+  if (zoneAbove(vWorld)) discard;       // (over Google's 3D, its real elevated roads stay overhead until you drive up onto one)
   float u = vR.x, w = vR.y, m = vR.z * w * 0.5;               // along, width, metres from the centre line
   float dist = length(uCamPos - vWorld), aa = max(fwidth(m), 0.02);
   float n1 = texture(uNoise, vWorld.xz / 0.45).b, n2 = texture(uNoise, vWorld.xz / 6.0).a, n3 = texture(uNoise, vWorld.xz / 37.0).b;
@@ -6108,6 +6408,17 @@ void main(){
   // wheel tracks: slightly darker and smoother where the tyres run
   float lane = w > 6.0 ? w * 0.25 : w * 0.5;
   c *= 1.0 - 0.06 * (stripe(abs(m), lane - 0.9, 0.35, 0.3) + stripe(abs(m), lane + 0.9, 0.35, 0.3));
+  // manhole covers (the sewer under the street): a cast-iron disc every twenty-odd metres, its pattern in relief
+  if (!track && dist < 90.0 && vJ < 0.1) {
+    float cell = floor(u / 23.0), hh = fract(sin(cell * 12.9898 + w * 3.1) * 43758.5453);
+    vec2 mc = vec2(cell * 23.0 + 4.0 + hh * 15.0, (fract(hh * 7.13) - 0.5) * max(w - 2.0, 0.0) * 0.5);
+    vec2 q = vec2(u, m) - mc; float dm = length(q);
+    if (dm < 0.34) {
+      float ring = smoothstep(0.3, 0.31, dm), rib = step(0.5, fract(dm * 16.0)) * step(0.5, fract(atan(q.y, q.x) * 3.8197));
+      vec3 iron = vec3(0.2, 0.19, 0.18) * (0.8 + 0.4 * n1) * (1.0 + 0.35 * rib) * (1.0 - 0.3 * ring);
+      c = mix(c, iron, 1.0 - smoothstep(0.32, 0.34, dm));
+    }
+  }
   // markings
   float paint = 0.0;
   if (!track && vCls < 6.5) {
@@ -6118,6 +6429,13 @@ void main(){
     else if (vCls < 5.5) paint += dash * stripe(m, 0.0, 0.075, aa);              // dashed centre line (narrow streets have none)
   }
   paint *= 0.85 * (0.8 + 0.2 * n1) * (1.0 - smoothstep(600.0, 2500.0, dist)) * (1.0 - smoothstep(0.15, 0.6, vJ));
+  // zebra crossings where the road comes into a junction: bars 45 cm wide along the road, 45 cm apart
+  if (!track && vCls < 5.5 && vCls > 1.5) {
+    float band = smoothstep(0.16, 0.2, vJ) * (1.0 - smoothstep(0.42, 0.46, vJ));
+    float fb = fract((m + w * 0.5) / 0.9), bars = smoothstep(0.0, 0.05, fb) * (1.0 - smoothstep(0.45, 0.5, fb));
+    bars *= step(abs(m), w * 0.5 - 0.5);
+    paint = max(paint, band * bars * 0.9 * (1.0 - smoothstep(300.0, 900.0, dist)));
+  }
   // round the car the road is the real one: its colour and painted markings from the aerial photo, with the
   // fine grain over it (so it stays sharp close up), and none of the made-up markings
   // round the car: the real markings, taken from the aerial photo as crisp paint on the sim's clean road, and
@@ -6801,7 +7119,7 @@ vec3 googNight(vec3 ph, vec3 n){
   return e;
 }
 void main(){
-  if (zoneCut(vWorld)) discard;
+  if (zoneCut(vWorld) || lmCut(vWorld)) discard;
   vec3 n = normalize(vN);
   if (uFlatN == 1) { n = normalize(cross(dFdx(vWorld), dFdy(vWorld))); if (dot(n, uCamPos - vWorld) < 0.0) n = -n; }
   else if (!gl_FrontFacing) n = -n;
@@ -7575,10 +7893,10 @@ function drawJwTrees(planes, far) {
 //  and roadside trees, placed by the city worker along the mapped roads
 //  and drawn instanced per tile. Lamps and signals light up at night.
 // =====================================================================
-const PROP_LAMP = 0, PROP_POLE = 1, PROP_SIGNAL = 2, PROP_TREE = 3;
-const STREET = { meshes: null, prog: null, far: [650, 650, 700, 800] };
+const PROP_LAMP = 0, PROP_POLE = 1, PROP_SIGNAL = 2, PROP_TREE = 3, PROP_BUS = 4, PROP_POST = 5, PROP_VEND = 6, PROP_METRO = 7, PROP_MIRROR = 8, PROP_STOP = 9, PROP_N = 10;
+const STREET = { meshes: null, prog: null, far: [650, 650, 700, 800, 300, 220, 260, 400, 260, 260] };
 // colours that mark lit parts (the shader lights them): the lamp's glass, the three signal lights
-const LIT_LAMP = [1, 1, 0.99], LIT_GREEN = [0, 1, 0.01], LIT_YELLOW = [1, 1, 0.01], LIT_RED = [1, 0.01, 0.01];
+const LIT_LAMP = [1, 1, 0.99], LIT_GREEN = [0, 1, 0.01], LIT_YELLOW = [1, 1, 0.01], LIT_RED = [1, 0.01, 0.01], LIT_VEND = [0.99, 1, 1], LIT_BLUE = [0.01, 0.01, 1], LIT_MIRROR = [0.02, 0.98, 0.98];
 function streetMeshes() {
   if (STREET.meshes) return STREET.meshes;
   const grey = [0.46, 0.48, 0.5], dark = [0.12, 0.12, 0.13], conc = [0.6, 0.59, 0.56];
@@ -7593,11 +7911,14 @@ function streetMeshes() {
   // utility pole (電柱): concrete, tapered, a crossarm along the street with insulators, a transformer, step bolts
   const P = new MeshBuilder();
   P.cylinder([0, 0, 0], [0, 11.5, 0], 0.19, 0.12, 10, conc);
-  P.box([0, 10.9, 0], [0.1, 0.1, 1.8], grey);
-  for (const z of [-0.8, -0.3, 0.3, 0.8]) P.cylinder([0, 10.95, z], [0, 11.12, z], 0.035, 0.03, 6, [0.85, 0.85, 0.82]);
-  P.box([0, 9.9, 0], [0.08, 0.08, 1.2], grey);
-  P.cylinder([-0.38, 7.6, 0], [-0.38, 8.5, 0], 0.22, 0.22, 10, [0.52, 0.54, 0.55]);     // transformer
-  P.box([-0.2, 8.05, 0], [0.18, 0.08, 0.08], grey);
+  // (the crossarms run across the street, the wires (p_wires.js) along it, from these insulators)
+  P.box([-0.2, 10.9, 0], [1.7, 0.1, 0.1], grey);
+  for (const x of [-0.9, -0.35, 0.45]) P.cylinder([x, 10.95, 0], [x, 11.12, 0], 0.035, 0.03, 6, [0.85, 0.85, 0.82]);
+  P.box([-0.05, 9.9, 0], [1.2, 0.08, 0.08], grey);
+  for (const x of [-0.5, 0, 0.4]) P.cylinder([x, 9.94, 0], [x, 10.02, 0], 0.03, 0.025, 6, [0.85, 0.85, 0.82]);
+  P.cylinder([0, 7.6, -0.38], [0, 8.5, -0.38], 0.22, 0.22, 10, [0.52, 0.54, 0.55]);     // transformer
+  P.box([0, 8.05, -0.2], [0.08, 0.08, 0.18], grey);
+  for (const y of [6.3, 5.7]) P.box([0.17, y, 0], [0.28, 0.05, 0.05], [0.2, 0.2, 0.2]);  // the telephone / cable-TV brackets
   for (let y = 2; y < 9; y += 0.45) P.box([0.14, y, (y * 7 % 2) > 1 ? 0.04 : -0.04], [0.12, 0.02, 0.02], grey);
   P.box([0.2, 2.6, 0], [0.02, 0.9, 0.34], [0.95, 0.93, 0.85]);                        // the address plate
   // traffic signal: pole, arm over the road (+x), a horizontal head with green / yellow / red facing +z,
@@ -7624,7 +7945,49 @@ function streetMeshes() {
     T.loft(rings, col, { smooth: true });
   };
   blob([0, 4.3, 0], [1.9, 1.5], [0.2, 0.34, 0.14]); blob([0.8, 4.9, 0.4], [1.3, 1.1], [0.23, 0.38, 0.15]); blob([-0.7, 4.8, -0.5], [1.2, 1.1], [0.18, 0.31, 0.12]);
-  STREET.meshes = [L, P, S, T].map(b => b.build());
+  // bus stop (都営 / 市営 style): a pole with the round sign on top and the timetable box
+  const B = new MeshBuilder();
+  B.cylinder([0, 0, 0], [0, 2.5, 0], 0.045, 0.045, 8, grey);
+  B.cylinder([0, 2.45, -0.03], [0, 2.45, 0.03], 0.3, 0.3, 16, [0.95, 0.95, 0.93]);
+  B.cylinder([0, 2.45, 0.031], [0, 2.45, 0.036], 0.26, 0.26, 16, [0.1, 0.45, 0.25]);
+  B.box([0, 1.45, 0.06], [0.42, 0.62, 0.08], [0.92, 0.92, 0.9]);
+  B.box([0, 0.05, 0], [0.5, 0.1, 0.5], conc);
+  // post box (郵便ポスト): red, rounded top, the slot
+  const PB = new MeshBuilder();
+  PB.box([0, 0.55, 0], [0.42, 1.0, 0.36], [0.72, 0.05, 0.05]);
+  PB.cylinder([-0.21, 1.05, 0], [0.21, 1.05, 0], 0.18, 0.18, 12, [0.72, 0.05, 0.05]);
+  PB.box([0, 0.86, 0.185], [0.26, 0.03, 0.01], [0.1, 0.1, 0.1]);
+  PB.box([0, 0.03, 0], [0.46, 0.06, 0.4], [0.2, 0.2, 0.2]);
+  // vending machine (自販機): the lit display of drinks behind glass, the coin panel, the slot at the bottom
+  const V = new MeshBuilder();
+  const vc = [[0.85, 0.1, 0.1], [0.12, 0.35, 0.75], [0.92, 0.92, 0.9], [0.1, 0.5, 0.3]];
+  V.box([0, 0.92, 0], [1.0, 1.84, 0.75], [0.85, 0.12, 0.1]);
+  V.box([-0.1, 1.33, 0.378], [0.72, 0.78, 0.01], LIT_VEND);
+  V.box([0.36, 1.0, 0.38], [0.18, 0.5, 0.02], [0.2, 0.2, 0.22]);
+  V.box([-0.1, 0.33, 0.38], [0.66, 0.18, 0.02], [0.08, 0.08, 0.09]);
+  V.box([-0.1, 0.8, 0.38], [0.72, 0.1, 0.012], [0.25, 0.25, 0.27]);
+  // subway entrance: a glass canopy on posts over the stairs, the station sign on a post
+  const M = new MeshBuilder();
+  for (const [x, z] of [[-0.9, -1.5], [0.9, -1.5], [-0.9, 1.5], [0.9, 1.5]]) M.cylinder([x, 0, z], [x, 2.6, z], 0.05, 0.05, 8, grey);
+  M.box([0, 2.65, 0], [2.0, 0.08, 3.2], [0.55, 0.6, 0.62]);
+  M.box([-1.0, 1.4, 0], [0.02, 2.4, 3.0], [0.5, 0.55, 0.58]); M.box([1.0, 1.4, 0], [0.02, 2.4, 3.0], [0.5, 0.55, 0.58]);
+  M.cylinder([1.3, 0, 1.8], [1.3, 2.4, 1.8], 0.05, 0.05, 8, grey);
+  M.box([1.3, 2.6, 1.8], [0.62, 0.5, 0.12], LIT_BLUE);
+  // curve mirror (カーブミラー) at the corner of a side street: an orange pole, the round convex mirror in its
+  // orange hood facing the traffic that comes up to the corner
+  const CM = new MeshBuilder(), orange = [0.93, 0.4, 0.08];
+  CM.cylinder([0, 0, 0], [0, 3.05, 0], 0.038, 0.038, 8, orange);
+  CM.box([0, 2.75, 0.06], [0.08, 0.1, 0.14], orange);
+  CM.cylinder([0, 2.75, 0.1], [0, 2.75, 0.19], 0.43, 0.41, 18, orange);
+  CM.cylinder([0, 2.75, 0.19], [0, 2.75, 0.2], 0.38, 0.38, 18, LIT_MIRROR);
+  // the 止まれ sign where a side street comes out onto a main road: a red inverted triangle with its white rim
+  const SP = new MeshBuilder(), white = [0.93, 0.93, 0.91], red = [0.78, 0.07, 0.07];
+  SP.cylinder([0, 0, 0], [0, 2.15, 0], 0.03, 0.03, 8, grey);
+  const tri = (sz, z, col, nz) => { const a = [-sz / 2, 2.25, z], b = [sz / 2, 2.25, z], c = [0, 2.25 - sz * 0.866, z], n = [0, 0, nz];
+    if (nz > 0) SP.tri(a, c, b, n, n, n, col, col, col); else SP.tri(a, b, c, n, n, n, col, col, col); };
+  tri(0.84, 0.04, white, 1); tri(0.7, 0.045, red, 1); tri(0.84, 0.035, grey, -1);
+  SP.box([0, 2.02, 0.047], [0.34, 0.09, 0.004], white);                          // (the lettering, as it reads from a way off)
+  STREET.meshes = [L, P, S, T, B, PB, V, M, CM, SP].map(b => b.build());
   return STREET.meshes;
 }
 const STREET_VS = GLSL_HEAD + `
@@ -7664,6 +8027,17 @@ void main(){
   else if (near3(vCol, vec3(1.0, 1.0, 0.01))) { c = vec3(0.14, 0.12, 0.05); if (t >= 27.0 && t < 30.0) em = vec3(1.4, 0.95, 0.1); }
   else if (near3(vCol, vec3(1.0, 0.01, 0.01))) { c = vec3(0.14, 0.05, 0.05); if (t >= 30.0) em = vec3(1.5, 0.12, 0.08); }
   else if (near3(vCol, vec3(1.0, 1.0, 0.99))) { c = vec3(0.7, 0.7, 0.66); em = vec3(1.4, 1.3, 1.05) * uNight; }
+  else if (near3(vCol, vec3(0.99, 1.0, 1.0))) {                    // a vending machine's display: rows of bottles, lit day and night
+    vec2 q = vec2(dot(vWorld.xz, vec2(0.7071)) * 9.0, vWorld.y * 6.0), f = fract(q);
+    vec3 bt = mix(vec3(0.9, 0.3, 0.2), mix(vec3(0.2, 0.5, 0.9), vec3(0.95, 0.85, 0.3), step(0.5, fract(sin(floor(q.x) * 7.1 + floor(q.y) * 3.3) * 43758.5))), step(0.33, fract(sin(floor(q.x) * 1.7 + floor(q.y)) * 9631.3)));
+    c = mix(vec3(0.9), bt, step(0.2, f.x) * step(f.x, 0.8) * step(0.1, f.y) * step(f.y, 0.75));
+    em = c * (0.35 + 1.1 * uNight);
+  }
+  else if (near3(vCol, vec3(0.02, 0.98, 0.98))) {                   // a curve mirror: the sky and the street, shrunk and bright
+    vec3 r = reflect(normalize(vWorld - uCamPos), n);
+    c = mix(vec3(0.3, 0.31, 0.3), mix(uHorizon, uZenith, clamp(r.y * 1.5, 0.0, 1.0)), smoothstep(-0.1, 0.15, r.y)); em = c * 0.35;
+  }
+  else if (near3(vCol, vec3(0.01, 0.01, 1.0))) { c = vec3(0.05, 0.3, 0.75); em = vec3(0.1, 0.45, 1.0) * (0.3 + 1.2 * uNight); }   // the station sign
   float diff = max(dot(n, uSunDir), 0.0) * sunShadow(vWorld, n);
   vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
   vec3 col = c * (uSunCol * diff * 0.9 + amb * 0.9) + em;
@@ -7673,7 +8047,7 @@ void main(){
 function streetReceive(t, buf) {
   streetDispose(t);
   if (!buf || !buf.byteLength) return;
-  const P = new Float32Array(buf), M = streetMeshes(), per = [[], [], [], []];
+  const P = new Float32Array(buf), M = streetMeshes(), per = Array.from({ length: PROP_N }, () => []);
   for (let i = 0; i < P.length; i += 5) { const k = P[i + 4] | 0; if (per[k]) per[k].push(P[i], P[i + 1], P[i + 2], P[i + 3]); }
   t.street = per.map((a, k) => {
     if (!a.length) return null;
@@ -7703,7 +8077,7 @@ function drawStreet(planes) {
     const b = cityBox(t);
     if (!boxInFrustum(planes, b[0], t.minG - 20, b[1], b[2], t.minG + 400, b[3])) continue;
     citySetTile(u, t);
-    for (let k = 0; k < 4; k++) {
+    for (let k = 0; k < PROP_N; k++) {
       const s = t.street[k]; if (!s) continue;
       if (k === PROP_TREE && typeof ZONE !== 'undefined' && ZONE.on && ZONE.g[3] > 0) continue;   // (Google's photo has the real trees)
       if (k === PROP_TREE && cards && t.streetCard) { cardTiles.push(t); continue; }
@@ -7712,6 +8086,7 @@ function drawStreet(planes) {
     }
   }
   gl.enable(gl.CULL_FACE);
+  if (typeof drawSigns === 'function') drawSigns();                  // (the shops' signboards, p_signs.js)
   // the roadside trees as photo cards
   if (cardTiles.length) {
     if (!TCARD.sprog) TCARD.sprog = makeProgram(TCARD_STREET_VS, TCARD_FS);
@@ -7721,6 +8096,287 @@ function drawStreet(planes) {
     for (const t of cardTiles) { citySetTile(su, t); gl.bindVertexArray(t.streetCard.vao.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, 12, t.streetCard.n); }
     gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE); gl.enable(gl.CULL_FACE);
   }
+}
+// =====================================================================
+//  OVERHEAD WIRES (電線): the tangle over every Japanese side street. The
+//  city worker strings the poles it puts up (p_street.js) together and
+//  runs a service drop from each to a house or two; round the camera the
+//  spans become thin sagging cables — three high-voltage lines on the top
+//  crossarm, the low-voltage ones under them, the thick black telephone
+//  and cable-TV bundles lower down — kept at least a pixel wide and faded
+//  by how much of that pixel they really cover, so they don't shimmer.
+// =====================================================================
+const WIRES = { at: null, key: '', vao: null, n: 0, prog: null, side: null }, FENCE = { prog: null };
+// per span: the pole's own x across the street (+ away from the road), height, radius, sag per metre of span, shade
+const WIRE_SET = [
+  [-0.9, 11.12, 0.008, 0.012, 0.32], [-0.35, 11.12, 0.008, 0.012, 0.32], [0.45, 11.12, 0.008, 0.012, 0.32],
+  [-0.5, 9.95, 0.01, 0.016, 0.12], [0.0, 9.95, 0.01, 0.016, 0.12], [0.4, 9.95, 0.01, 0.016, 0.12],
+  [0.3, 6.3, 0.022, 0.022, 0.08], [0.3, 5.7, 0.034, 0.026, 0.06],
+];
+function wireReceive(t, buf, fbuf) {
+  t.wires = buf && buf.byteLength ? new Float32Array(buf) : null;
+  WIRES.key = '';
+  // the guard pipes along the kerbs: an upright strip per stretch, the pipes and posts drawn into it
+  fenceDispose(t);
+  if (!fbuf || !fbuf.byteLength) return;
+  const F = new Float32Array(fbuf), n = F.length / 10, V = new Float32Array(n * 4 * 7), I = new Uint32Array(n * 6);
+  for (let k = 0; k < n; k++) {
+    const f = k * 10;
+    for (let e = 0; e < 4; e++) {
+      const b = e & 1 ? f + 4 : f, o = (k * 4 + e) * 7;
+      V[o] = F[b]; V[o + 1] = F[b + 1]; V[o + 2] = F[b + 2]; V[o + 3] = F[b + 3]; V[o + 4] = e >> 1; V[o + 5] = F[f + 8]; V[o + 6] = F[f + 9];
+    }
+    I.set([k * 4, k * 4 + 1, k * 4 + 3, k * 4, k * 4 + 3, k * 4 + 2], k * 6);
+  }
+  t.fence = { vao: makeVAO([{ data: V, stride: 7, layout: [[0, 3, 0], [1, 2, 3], [2, 2, 5]] }], I), n: I.length };
+}
+function fenceDispose(t) {
+  if (!t.fence) return;
+  gl.deleteVertexArray(t.fence.vao.vao); for (const b of t.fence.vao.bufs) gl.deleteBuffer(b); gl.deleteBuffer(t.fence.vao.ib);
+  t.fence = null;
+}
+const FENCE_H = 0.82;
+const FENCE_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;       // tile-local x, z, the pavement's height
+layout(location=1) in vec2 aUH;        // metres along the road, 0 bottom / 1 top
+layout(location=2) in vec2 aN;         // out from the road
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv;
+` + CITY_POS_GLSL + `
+out vec3 vWorld; out vec2 vUH; out vec3 vN;
+void main(){
+  vec3 w = cityWorld(aPos.xy, aPos.z + aUH.y * ${FENCE_H});
+  vWorld = w; vUH = vec2(aUH.x, aUH.y * ${FENCE_H}); vN = vec3(aN.x, 0.0, aN.y);
+  if (distance(w, uCamPos) > 420.0) { gl_Position = vec4(0.0, 0.0, -2.0, 1.0); return; }
+  vec2 d = w.xz - uCamPos.xz; w.y -= dot(d, d) * uCurv;
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+const FENCE_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec2 vUH; in vec3 vN;
+out vec4 outColor;
+// a pipe of radius r centred at c across coordinate x (px: a pixel in metres): how much of the pixel it covers,
+// and where across it (-1 .. 1) for the round shading
+vec2 pipe(float x, float c, float r, float px){
+  float wd = max(r, px * 0.6), d = abs(x - c);
+  return vec2(r / wd * (1.0 - smoothstep(wd - px * 0.5, wd + px * 0.5, d)), clamp((x - c) / wd, -1.0, 1.0));
+}
+void main(){
+  if (zoneCut(vWorld)) discard;
+  float h = vUH.y, py = max(fwidth(h), 1e-4), pu = max(fwidth(vUH.x), 1e-4);
+  vec2 a = pipe(h, 0.795, 0.025, py), b = pipe(h, 0.53, 0.02, py), c = pipe(h, 0.27, 0.02, py);
+  float u = mod(vUH.x, 2.0);
+  vec2 p = pipe(u, 1.0, 0.03, pu); p.x *= step(h, 0.8);
+  vec2 best = a; if (b.x > best.x) best = b; if (c.x > best.x) best = c;
+  float cov = max(max(a.x, b.x), max(c.x, p.x));
+  if (cov < 0.02) discard;
+  vec3 V = normalize(uCamPos - vWorld), n = normalize(vN); if (dot(n, V) < 0.0) n = -n;
+  n = p.x > best.x ? normalize(n + cross(vec3(0.0, 1.0, 0.0), n) * p.y) : normalize(n + vec3(0.0, best.y, 0.0));
+  float diff = max(dot(n, uSunDir), 0.0) * sunShadow(vWorld, n);
+  vec3 col = vec3(0.86, 0.87, 0.85) * (uSunCol * diff * 0.85 + mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5) * 0.9);
+  col += uSunCol * pow(max(dot(reflect(-V, n), uSunDir), 0.0), 40.0) * 0.3 * diff;
+  outColor = vec4(tonemap(applyFog(col, vWorld)), clamp(cov, 0.0, 1.0));
+}`;
+function drawFences() {
+  if (!FENCE.prog) FENCE.prog = makeProgram(FENCE_VS, FENCE_FS);
+  const pr = FENCE.prog, u = pr.u;
+  setCommon(pr);
+  for (const t of CITY.tiles.values()) {
+    if (!t.fence || t.dist > 900) continue;
+    citySetTile(u, t);
+    gl.bindVertexArray(t.fence.vao.vao); gl.drawElements(gl.TRIANGLES, t.fence.n, gl.UNSIGNED_INT, 0);
+  }
+}
+function wireUpdate() {
+  if (typeof CITY === 'undefined' || !CITY.ready) return;
+  const eye = R.eye, RAD = game.touch ? 200 : 320;
+  if (WIRES.at && Math.hypot(eye[0] - WIRES.at[0], eye[2] - WIRES.at[1]) < 40 && WIRES.key) return;
+  WIRES.at = [eye[0], eye[2]];
+  const keys = [];
+  for (const t of CITY.tiles.values()) if (t.wires && t.dist < RAD + 1200) keys.push(t.key);
+  const key = keys.join(',') + '|' + Math.round(eye[0] / 40) + ',' + Math.round(eye[2] / 40);
+  if (key === WIRES.key) return;
+  WIRES.key = key;
+  const V = [], I = [];
+  // a cable from a to b (world), sagging, as a ribbon of N pieces the vertex shader turns to face the camera
+  const cable = (a, b, rad, sag, shade, N) => {
+    const v0 = V.length / 8, dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
+    for (let i = 0; i <= N; i++) {
+      const s = i / N, y = a[1] + dy * s - sag * 4 * s * (1 - s), ty = dy - sag * 4 * (1 - 2 * s);
+      for (const sd of [-1, 1]) V.push(a[0] + dx * s, y, a[2] + dz * s, dx, ty, dz, sd * rad, shade);
+      if (i) { const k = v0 + (i - 1) * 2; I.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
+    }
+  };
+  for (const t of CITY.tiles.values()) {
+    if (!t.wires || t.dist > RAD + 1200) continue;
+    const P = t.wires, W = (x, z) => geoToWorld(t.latN - z / KZ, t.lonW + x / t.kxN);
+    for (let i = 0; i < P.length; i += 9) {
+      const A = W(P[i], P[i + 1]);
+      if (Math.hypot(A[0] - eye[0], A[1] - eye[2]) > RAD) continue;
+      const B = W(P[i + 4], P[i + 5]), ca = Math.cos(P[i + 3]), sa = Math.sin(P[i + 3]), cb = Math.cos(P[i + 7]), sb = Math.sin(P[i + 7]);
+      const span = Math.hypot(B[0] - A[0], B[1] - A[1]);
+      if (P[i + 8] === 0) {
+        for (const [x, y, r, sg, sh] of WIRE_SET)
+          cable([A[0] + ca * x, P[i + 2] + y, A[1] + sa * x], [B[0] + cb * x, P[i + 6] + y, B[1] + sb * x], r, sg * span, sh, span > 20 ? 8 : 5);
+      } else {
+        // the drop: from the low-voltage arm down to the house's wall, a little slack
+        const x = (B[0] - A[0]) * ca + (B[1] - A[1]) * sa > 0 ? 0.4 : -0.5;
+        cable([A[0] + ca * x, P[i + 2] + 9.9, A[1] + sa * x], [B[0], P[i + 6], B[1]], 0.007, 0.02 * span + 0.1, 0.1, 5);
+      }
+    }
+  }
+  if (WIRES.vao) { gl.deleteVertexArray(WIRES.vao.vao); for (const b of WIRES.vao.bufs) gl.deleteBuffer(b); gl.deleteBuffer(WIRES.vao.ib); WIRES.vao = null; }
+  WIRES.n = I.length;
+  if (I.length) WIRES.vao = makeVAO([{ data: new Float32Array(V), stride: 8, layout: [[0, 3, 0], [1, 3, 3], [2, 2, 6]] }], new Uint32Array(I));
+}
+const WIRE_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aTan;
+layout(location=2) in vec2 aRS;         // side * radius, shade
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv, uPix;
+out vec3 vWorld; out float vA; out float vShade; out vec3 vN;
+void main(){
+  vec3 w = aPos, v = w - uCamPos, T = normalize(aTan);
+  float dist = length(v), r = abs(aRS.x), rr = max(r, dist * uPix * 0.75);
+  vec3 sv = cross(T, v); vec3 side = dot(sv, sv) > 1e-8 ? normalize(sv) : vec3(0.0, 1.0, 0.0);
+  w += side * sign(aRS.x) * rr;
+  vA = r / rr * (1.0 - smoothstep(180.0, 320.0, dist)); vShade = aRS.y;
+  vN = normalize(cross(side, T)); if (dot(vN, v) > 0.0) vN = -vN;
+  vWorld = w;
+  vec2 d = w.xz - uCamPos.xz; w.y -= dot(d, d) * uCurv;
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+const WIRE_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in float vA; in float vShade; in vec3 vN;
+out vec4 outColor;
+void main(){
+  if (zoneCut(vWorld)) discard;
+  vec3 n = normalize(vN), V = normalize(uCamPos - vWorld);
+  float diff = max(dot(n, uSunDir), 0.0) * 0.6 + 0.4;
+  vec3 c = vec3(vShade) * (uSunCol * diff * 0.7 + uAmbSky * 0.8);
+  c += uSunCol * pow(max(dot(reflect(-V, n), uSunDir), 0.0), 30.0) * 0.12;   // (a glint along the sheath)
+  outColor = vec4(tonemap(applyFog(c, vWorld)), clamp(vA, 0.0, 1.0));
+}`;
+// after everything solid (the wires and the guard pipes are blended, a pixel or less wide)
+function drawWires() {
+  if (typeof CITY === 'undefined' || !CITY.ready || !JW.active || !JW.online) return;
+  if (R.eye[1] - Math.max(jwHeight(R.eye[0], R.eye[2]), 0) > 250) return;
+  wireUpdate();
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); gl.disable(gl.CULL_FACE);
+  drawFences();
+  if (WIRES.vao && WIRES.n) {
+    if (!WIRES.prog) WIRES.prog = makeProgram(WIRE_VS, WIRE_FS);
+    const pr = WIRES.prog, u = pr.u;
+    setCommon(pr);
+    gl.uniform1f(u.uPix, 2 * R.tanY / Math.max(R.H, 1));
+    gl.bindVertexArray(WIRES.vao.vao); gl.drawElements(gl.TRIANGLES, WIRES.n, gl.UNSIGNED_INT, 0);
+  }
+  gl.disable(gl.BLEND); gl.depthMask(true); gl.enable(gl.CULL_FACE);
+}
+// =====================================================================
+//  ROAD MARKINGS the city worker places: where a side street comes out
+//  onto a main road, the white stop line across it and 止まれ painted in
+//  front of it, the three characters side by side and drawn out long (as
+//  they are, so a driver reads them upright) — from one small canvas.
+// =====================================================================
+const MARKS = { tex: null, prog: null };
+const MARK_H = 544, MARK_STRIP = 32;                                 // (the canvas: 止まれ over a white strip)
+function markTexture() {
+  if (MARKS.tex) return MARKS.tex;
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = MARK_H;
+  const g = cv.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, MARK_H - MARK_STRIP, 512, MARK_STRIP);
+  g.save(); g.scale(1, 3.0);
+  g.font = 'bold 158px "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  ['止', 'ま', 'れ'].forEach((ch, i) => g.fillText(ch, 86 + i * 170, (MARK_H - MARK_STRIP) / 2 / 3.0));
+  g.restore();
+  const t = MARKS.tex = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE10); gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+  gl.activeTexture(gl.TEXTURE0);
+  return t;
+}
+// the tile's markings, from the worker's list [x z y yaw roadWidth type] (tile-local metres; yaw: the way
+// the traffic comes, the stop line at the point)
+function markReceive(t, buf) {
+  markDispose(t);
+  if (!buf || !buf.byteLength) return;
+  const M = t.markData = new Float32Array(buf), V = [];
+  const v0 = MARK_STRIP / MARK_H;
+  for (let i = 0; i < M.length; i += 6) {
+    const x = M[i], z = M[i + 1], y = M[i + 2] + 0.035, ux = Math.cos(M[i + 3]), uz = Math.sin(M[i + 3]), rx = -uz, rz = ux, w = M[i + 4];
+    // a quad from s0 to s1 along the road, across -h .. h (left to right as the driver sees it)
+    const quad = (s0, s1, h, ua, ub, va, vb) => {
+      const P = (s, a) => [x + ux * s + rx * a, z + uz * s + rz * a];
+      const A = P(s0, -h), B = P(s0, h), C = P(s1, h), D = P(s1, -h);
+      V.push(A[0], y, A[1], ua, va, B[0], y, B[1], ub, va, C[0], y, C[1], ub, vb, A[0], y, A[1], ua, va, C[0], y, C[1], ub, vb, D[0], y, D[1], ua, vb);
+    };
+    quad(-0.45, 0, w / 2 - 0.25, 0.1, 0.9, v0 * 0.2, v0 * 0.8);                         // the stop line
+    const tw = Math.min(w - 1.0, 2.6), tlen = tw * 1.1;
+    if (tw > 1.2) quad(-2.2 - tlen, -2.2, tw / 2, 0, 1, v0, 1);                         // 止まれ
+  }
+  if (V.length) t.marks = { vao: makeVAO([{ data: new Float32Array(V), stride: 5, layout: [[0, 3, 0], [1, 2, 3]] }]), n: V.length / 5 };
+}
+function markDispose(t) {
+  if (!t.marks) return;
+  gl.deleteVertexArray(t.marks.vao.vao); for (const b of t.marks.vao.bufs) gl.deleteBuffer(b);
+  t.marks = null;
+}
+const MARK_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec2 aUv;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv;
+` + CITY_POS_GLSL + `
+out vec3 vWorld; out vec2 vUv;
+void main(){
+  vec3 w = cityWorld(aPos.xz, aPos.y);
+  vWorld = w; vUv = aUv;
+  vec2 d = w.xz - uCamPos.xz; w.y -= dot(d, d) * uCurv;
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+const MARK_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec2 vUv;
+uniform sampler2D uMarks, uNoise;
+out vec4 outColor;
+void main(){
+  if (zoneCut(vWorld)) discard;
+  float a = texture(uMarks, vUv).a;
+  float wear = texture(uNoise, vWorld.xz / 0.7).b * 0.6 + texture(uNoise, vWorld.xz / 3.1).a * 0.4;
+  if (a * (0.75 + 0.5 * wear) < 0.5) discard;                       // (worn paint, the asphalt showing through)
+  float sh = sunShadow(vWorld, vec3(0.0, 1.0, 0.0)) * planeShadow(vWorld.xz);
+  vec3 c = vec3(0.8, 0.8, 0.78) * (0.9 + 0.1 * wear) * (uSunCol * max(uSunDir.y, 0.0) * 0.95 * sh + uAmbSky * 0.85);
+  outColor = vec4(tonemap(applyFog(c, vWorld)), 1.0);
+}`;
+function drawMarks(planes) {
+  if (R.eye[1] - Math.max(jwHeight(R.eye[0], R.eye[2]), 0) > 400) return;
+  let any = false;
+  for (const t of CITY.tiles.values()) if (t.marks && t.dist < 900) { any = true; break; }
+  if (!any) return;
+  if (!MARKS.prog) MARKS.prog = makeProgram(MARK_VS, MARK_FS);
+  const pr = MARKS.prog, u = pr.u;
+  setCommon(pr);
+  gl.activeTexture(gl.TEXTURE10); gl.bindTexture(gl.TEXTURE_2D, markTexture()); gl.uniform1i(u.uMarks, 10); gl.activeTexture(gl.TEXTURE0);
+  gl.uniform1i(u.uNoise, 2);
+  gl.polygonOffset(-3, -8);
+  for (const t of CITY.tiles.values()) {
+    if (!t.marks || t.dist > 900) continue;
+    const b = cityBox(t);
+    if (!boxInFrustum(planes, b[0], t.minG - 60, b[1], b[2], t.minG + 200, b[3])) continue;
+    citySetTile(u, t);
+    gl.bindVertexArray(t.marks.vao.vao); gl.drawArrays(gl.TRIANGLES, 0, t.marks.n);
+  }
+  gl.polygonOffset(-2, -6);
 }
 // =====================================================================
 //  THE REAL GROUND round the car: a sharp aerial photo (Esri World
@@ -7973,6 +8629,373 @@ function tcardUse() {
   if (!TCARD.started && JW.active && JW.online) tcardInit();
   if (!TCARD.ready || TCARD.on === false) return false;
   return R.eye[1] - Math.max(jwHeight(R.eye[0], R.eye[2]), 0) < 120;
+}
+// =====================================================================
+//  SHOP SIGNS: the real shops of the map (their names from OpenStreetMap)
+//  get a signboard over their street-front, in the colours of the chain
+//  where it's a known one (the konbini, the fast-food and gyudon chains,
+//  the banks...), lit at night. The nearest ones round the camera share
+//  one texture, redrawn as you move on.
+// =====================================================================
+const SIGNS = { max: 160, cols: 4, cw: 256, ch: 48, cv: null, tex: null, vao: null, n: 0, key: '', prog: null, at: null, busy: false };
+// known chains: background, text colour, stripes [colour, from, to] (fractions of the height), text shown
+const SIGN_BRANDS = [
+  [/セブン.?イレブン|7-?eleven/i, { bg: '#ffffff', fg: '#e35b1b', stripes: [['#f07c00', 0.0, 0.14], ['#00925a', 0.14, 0.26], ['#e60012', 0.26, 0.36]], text: 'セブン‐イレブン', y: 0.68 }],
+  [/ファミリーマート|familymart/i, { bg: '#ffffff', fg: '#0068b7', stripes: [['#00a040', 0.0, 0.22], ['#0068b7', 0.78, 1.0]], text: 'FamilyMart' }],
+  [/ナチュラルローソン/, { bg: '#7a3b1e', fg: '#ffffff', text: 'NATURAL LAWSON' }],
+  [/ローソン|lawson/i, { bg: '#0a5ebd', fg: '#ffffff', text: 'LAWSON' }],
+  [/ミニストップ/, { bg: '#ffffff', fg: '#004ea2', stripes: [['#ffd400', 0.0, 0.3]], text: 'MINISTOP' }],
+  [/デイリーヤマザキ/, { bg: '#e60012', fg: '#ffffff', text: 'デイリーヤマザキ' }],
+  [/ニューデイズ|NewDays/i, { bg: '#ffffff', fg: '#008c3c', stripes: [['#008c3c', 0.84, 1.0]], text: 'NewDays' }],
+  [/マクドナルド|mcdonald/i, { bg: '#da291c', fg: '#ffc72c', text: 'M  マクドナルド' }],
+  [/モスバーガー/, { bg: '#ffffff', fg: '#d6000f', stripes: [['#006f3c', 0.84, 1.0]], text: 'MOS BURGER' }],
+  [/ケンタッキー|KFC/i, { bg: '#e4002b', fg: '#ffffff', text: 'KFC' }],
+  [/スターバックス|starbucks/i, { bg: '#00704a', fg: '#ffffff', text: 'STARBUCKS COFFEE' }],
+  [/ドトール/, { bg: '#f2e8d0', fg: '#3d2314', stripes: [['#f0b400', 0.0, 0.16]], text: 'DOUTOR' }],
+  [/タリーズ/, { bg: '#0a1f44', fg: '#ffffff', text: "TULLY'S COFFEE" }],
+  [/コメダ/, { bg: '#5b3a1c', fg: '#ffffff', text: 'コメダ珈琲店' }],
+  [/吉野家/, { bg: '#f08300', fg: '#ffffff', text: '吉野家' }],
+  [/松屋/, { bg: '#ffd400', fg: '#1a3f93', text: '松屋' }],
+  [/すき家/, { bg: '#e60012', fg: '#ffffff', text: 'すき家' }],
+  [/なか卯/, { bg: '#e60012', fg: '#ffffff', text: 'なか卯' }],
+  [/サイゼリヤ/, { bg: '#006b3f', fg: '#ffffff', text: 'サイゼリヤ' }],
+  [/ガスト/, { bg: '#e60012', fg: '#ffffff', text: 'ガスト' }],
+  [/ココイチ|CoCo壱番屋/, { bg: '#fbd000', fg: '#6b3a0f', text: 'CoCo壱番屋' }],
+  [/日高屋/, { bg: '#d7000f', fg: '#ffffff', text: '日高屋' }],
+  [/ツルハ|マツモトキヨシ|マツキヨ|ウエルシア|スギ薬局|サンドラッグ|ココカラ/, { bg: '#ffe100', fg: '#1a3f93' }],
+  [/銀行|信用金庫|バンク/, { bg: '#1f4e9c', fg: '#ffffff' }],
+  [/郵便局|日本郵便/, { bg: '#ffffff', fg: '#e60012', stripes: [['#e60012', 0.85, 1.0]] }],
+];
+function signStyle(name, cls, sub) {
+  for (const [re, st] of SIGN_BRANDS) if (re.test(name)) return st;
+  // the rest: a sign in one of the usual street colours, picked from the name
+  let h = 0; for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const pal = [['#ffffff', '#222222'], ['#1d1d1f', '#ffffff'], ['#b8121c', '#ffffff'], ['#f4efe2', '#5a2d0c'], ['#123c7a', '#ffffff'], ['#f3c300', '#222222'], ['#2c5f2d', '#ffffff'], ['#faf7f0', '#b8121c']];
+  const [bg, fg] = pal[h % pal.length];
+  return { bg, fg, stripes: (h >> 5) % 3 === 0 ? [[fg, 0.88, 1.0]] : null };
+}
+function signDraw(g, x, y, w, h, name, cls, sub) {
+  const st = signStyle(name, cls, sub), text = st.text || name;
+  g.fillStyle = st.bg; g.fillRect(x, y, w, h);
+  if (st.stripes) for (const [c, a, b] of st.stripes) { g.fillStyle = c; g.fillRect(x, y + h * a, w, h * (b - a)); }
+  g.fillStyle = st.fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+  let fs = h * 0.62; g.font = `700 ${fs}px "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif`;
+  const tw = g.measureText(text).width; if (tw > w * 0.9) { fs *= w * 0.9 / tw; g.font = `700 ${fs}px "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif`; }
+  g.fillText(text, x + w / 2, y + h * (st.y || 0.55));
+  g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(x, y + h - 2, w, 2);   // (the board's lower edge)
+}
+// a tile's signs from the worker: tile-local x, z, y, facing, width, height; and their names
+function signReceive(t, buf, names) {
+  t.signs = buf && buf.byteLength ? { P: new Float32Array(buf), names: names || [] } : null;
+  SIGNS.key = '';                                                    // (rebuild the nearest set)
+}
+// every so often: the nearest signs round the camera into the shared texture and one vertex buffer
+function signUpdate() {
+  if (typeof CITY === 'undefined' || !CITY.ready) return;
+  const eye = R.eye;
+  if (SIGNS.at && Math.hypot(eye[0] - SIGNS.at[0], eye[2] - SIGNS.at[1]) < 60 && SIGNS.key) return;
+  const cand = [];
+  for (const t of CITY.tiles.values()) {
+    if (!t.signs || t.dist > 1500) continue;
+    const P = t.signs.P;
+    for (let i = 0; i < P.length; i += 6) {
+      const la = t.latN - P[i + 1] / KZ, lo = t.lonW + P[i] / t.kxN, w = geoToWorld(la, lo);
+      const d = Math.hypot(w[0] - eye[0], w[1] - eye[2]); if (d > 450) continue;
+      cand.push([d, t, i, w]);
+    }
+  }
+  cand.sort((a, b) => a[0] - b[0]);
+  const list = cand.slice(0, SIGNS.max), key = list.map(c => c[1].key + ':' + c[2]).join(',');
+  SIGNS.at = [eye[0], eye[2]];
+  if (key === SIGNS.key) return;
+  SIGNS.key = key;
+  const S = SIGNS, W = S.cols * S.cw, H = Math.ceil(S.max / S.cols) * S.ch;
+  if (!S.cv) { S.cv = document.createElement('canvas'); S.cv.width = W; S.cv.height = H; }
+  const g = S.cv.getContext('2d'); g.clearRect(0, 0, W, H);
+  const V = [];
+  list.forEach(([, t, i, w], k) => {
+    const P = t.signs.P, [name, cls, sub] = (t.signs.names[i / 6] || '').split('\u0001');
+    const col = k % S.cols, row = Math.floor(k / S.cols), cx = col * S.cw, cy = row * S.ch;
+    signDraw(g, cx + 2, cy + 2, S.cw - 4, S.ch - 4, name || '', cls, sub);
+    const yaw = P[i + 3], nx = Math.cos(yaw), nz = Math.sin(yaw), sw = P[i + 4], sh = P[i + 5];
+    // tile-local z grows southward like world z; the board faces out along (nx, nz), its text reading left to right
+    const rx = nz, rz = -nx, y0 = P[i + 2] - sh / 2, y1 = P[i + 2] + sh / 2, X = w[0], Z = w[1];
+    const u0 = (cx + 2) / W, u1 = (cx + S.cw - 2) / W, v0 = 1 - (cy + S.ch - 2) / H, v1 = 1 - (cy + 2) / H;
+    // a box standing out from the wall (map walls and PLATEAU's don't quite line up): the lettered face, and
+    // sides, top and bottom in the board's own colour
+    const D = 0.55, fx = X + nx * D, fz = Z + nz * D;
+    const a = [fx - rx * sw / 2, fz - rz * sw / 2], b = [fx + rx * sw / 2, fz + rz * sw / 2];
+    const ab = [X - rx * sw / 2, Z - rz * sw / 2], bb = [X + rx * sw / 2, Z + rz * sw / 2];
+    const q = (p, y, u, v, n0, n1) => V.push(p[0], y, p[1], u, v, n0, n1);
+    const face = (p0, p1, p2, p3, ya, yb, uu, vv, n0, n1) => { q(p0, ya, uu[0], vv[0], n0, n1); q(p1, ya, uu[1], vv[0], n0, n1); q(p2, yb, uu[1], vv[1], n0, n1); q(p0, ya, uu[0], vv[0], n0, n1); q(p2, yb, uu[1], vv[1], n0, n1); q(p3, yb, uu[0], vv[1], n0, n1); };
+    face(a, b, b, a, y0, y1, [u0, u1], [v0, v1], nx, nz);
+    const eu = [u0 + 1 / W, u0 + 2 / W], ev = [v1 - 2 / H, v1 - 1 / H];                           // (a pixel of the board's edge)
+    face(ab, a, a, ab, y0, y1, eu, ev, -rx, -rz); face(b, bb, bb, b, y0, y1, eu, ev, rx, rz);
+    face(ab, bb, b, a, y1, y1, eu, ev, 0, 0); face(ab, bb, b, a, y0, y0, eu, ev, 0, 0);
+  });
+  if (!S.tex) S.tex = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE12); gl.bindTexture(gl.TEXTURE_2D, S.tex);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, S.cv);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+  gl.activeTexture(gl.TEXTURE0);
+  if (S.vao) { gl.deleteVertexArray(S.vao.vao); for (const b of S.vao.bufs) gl.deleteBuffer(b); }
+  const data = new Float32Array(V);
+  S.vao = V.length ? makeVAO([{ data, stride: 7, layout: [[0, 3, 0], [1, 2, 3], [2, 2, 5]] }]) : null;
+  S.n = V.length / 7;
+}
+const SIGN_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec2 aUv;
+layout(location=2) in vec2 aN;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv;
+out vec3 vWorld; out vec2 vUv; out vec3 vN;
+void main(){
+  vec3 w = aPos; vWorld = w; vUv = aUv; vN = vec3(aN.x, 0.0, aN.y);
+  vec2 d = w.xz - uCamPos.xz; w.y -= dot(d, d) * uCurv;
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+const SIGN_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec2 vUv; in vec3 vN;
+uniform sampler2D uSigns;
+uniform float uNight;
+out vec4 outColor;
+void main(){
+  if (zoneCut(vWorld)) discard;
+  vec3 n = normalize(vN), V = normalize(uCamPos - vWorld);
+  vec3 c = texture(uSigns, vUv).rgb;
+  float diff = max(dot(n, uSunDir), 0.0) * sunShadow(vWorld, n);
+  vec3 col = c * (uSunCol * diff * 0.8 + uAmbSky * 0.9) + c * (0.15 + 1.2 * uNight);   // (backlit boards glow)
+  col += uSunCol * pow(max(dot(reflect(-V, n), uSunDir), 0.0), 60.0) * 0.25;
+  outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
+}`;
+function drawSigns() {
+  if (!JW.active || !JW.online || R.eye[1] - Math.max(jwHeight(R.eye[0], R.eye[2]), 0) > 300) return;
+  signUpdate();
+  if (!SIGNS.vao || !SIGNS.n) return;
+  if (!SIGNS.prog) SIGNS.prog = makeProgram(SIGN_VS, SIGN_FS);
+  const pr = SIGNS.prog, u = pr.u;
+  setCommon(pr);
+  gl.uniform1f(u.uNight, nightK());
+  gl.activeTexture(gl.TEXTURE12); gl.bindTexture(gl.TEXTURE_2D, SIGNS.tex); gl.uniform1i(u.uSigns, 12); gl.activeTexture(gl.TEXTURE0);
+  gl.disable(gl.CULL_FACE);
+  gl.bindVertexArray(SIGNS.vao.vao); gl.drawArrays(gl.TRIANGLES, 0, SIGNS.n);
+  gl.enable(gl.CULL_FACE);
+}
+// =====================================================================
+//  LM_TOWERS: Tokyo Tower and Tokyo Skytree as the steel lattices they
+//  are. On the map they are only outlines with a height, which the city
+//  would put up as a solid block 333 m / 634 m tall; here the block is cut
+//  away (above the buildings at their feet) and the tower drawn instead:
+//  every face a truss of legs, horizontals and cross-bracing that thins to
+//  a haze of steel far off, as a real lattice does. The decks with their
+//  windows, the orange-and-white bands of Tokyo Tower, the pale Skytree
+//  over its concrete core; lit up at night; red obstruction lights on top.
+//  (Over Google's 3D the real towers are in the photogrammetry.)
+// =====================================================================
+const LM_TOWERS = [
+  { id: 'tokyotower', lat: 35.65858, lon: 139.74543, cut: 62, cutY: 22 },
+  { id: 'skytree', lat: 35.71006, lon: 139.81070, cut: 48, cutY: 35 },
+];
+const LM = { prog: null, on: false, cut: [[0, 0, 0, 0], [0, 0, 0, 0]] };
+// geometry: pos, normal, colour, uv, kind (0 solid, 1 Tokyo Tower truss, 2 windows, 3 Skytree lattice,
+// 4 Tokyo Tower antenna bands, 5 obstruction light)
+function lmBuilder() {
+  const V = [];
+  const vtx = (p, n, c, uv, k) => V.push(p[0], p[1], p[2], n[0], n[1], n[2], c[0], c[1], c[2], uv[0], uv[1], k);
+  // a quad a-b-c-d (counter-clockwise seen from outside)
+  const quad = (a, b, c, d, col, uv, k, cols) => {
+    const n = vnorm(vcross(vsub(b, a), vsub(d, a)));
+    const C = cols || [col, col, col, col];
+    vtx(a, n, C[0], uv[0], k); vtx(b, n, C[1], uv[1], k); vtx(c, n, C[2], uv[2], k);
+    vtx(a, n, C[0], uv[0], k); vtx(c, n, C[2], uv[2], k); vtx(d, n, C[3], uv[3], k);
+  };
+  // a ring of N points per section, lofted: sections [y, radiusFn(theta)], outward faces
+  const loft = (secs, N, col, k, uScale) => {
+    for (let s = 0; s + 1 < secs.length; s++) {
+      const [y0, r0] = secs[s], [y1, r1] = secs[s + 1];
+      for (let i = 0; i < N; i++) {
+        const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2;
+        const P = (a, y, r) => [Math.cos(a) * r(a), y, Math.sin(a) * r(a)];
+        const u0 = a0 * uScale, u1 = a1 * uScale;
+        quad(P(a0, y0, r0), P(a0, y1, r1), P(a1, y1, r1), P(a1, y0, r0), col, [[u0, y0], [u0, y1], [u1, y1], [u1, y0]], k);
+      }
+    }
+  };
+  // a flat annulus (a deck's floor or roof), facing up (up = 1) or down
+  const disc = (y, ri, ro, N, col, up) => {
+    for (let i = 0; i < N; i++) {
+      const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2, c0 = Math.cos(a0), s0 = Math.sin(a0), c1 = Math.cos(a1), s1 = Math.sin(a1);
+      const A = [c0 * ri, y, s0 * ri], B = [c0 * ro, y, s0 * ro], C = [c1 * ro, y, s1 * ro], D = [c1 * ri, y, s1 * ri];
+      if (up) quad(A, D, C, B, col, [[0, 0], [0, 0], [0, 0], [0, 0]], 0); else quad(A, B, C, D, col, [[0, 0], [0, 0], [0, 0], [0, 0]], 0);
+    }
+  };
+  // a square box (x, z half sizes) from y0 to y1: sides of kind k (windows), top and bottom solid
+  const box = (hx, hz, y0, y1, col, k, capCol) => {
+    const P = (x, y, z) => [x, y, z];
+    quad(P(-hx, y0, hz), P(hx, y0, hz), P(hx, y1, hz), P(-hx, y1, hz), col, [[-hx, y0], [hx, y0], [hx, y1], [-hx, y1]], k);
+    quad(P(hx, y0, -hz), P(-hx, y0, -hz), P(-hx, y1, -hz), P(hx, y1, -hz), col, [[-hx, y0], [hx, y0], [hx, y1], [-hx, y1]], k);
+    quad(P(hx, y0, hz), P(hx, y0, -hz), P(hx, y1, -hz), P(hx, y1, hz), col, [[-hz, y0], [hz, y0], [hz, y1], [-hz, y1]], k);
+    quad(P(-hx, y0, -hz), P(-hx, y0, hz), P(-hx, y1, hz), P(-hx, y1, -hz), col, [[-hz, y0], [hz, y0], [hz, y1], [-hz, y1]], k);
+    const z4 = [[0, 0], [0, 0], [0, 0], [0, 0]], cc = capCol || col;
+    quad(P(-hx, y1, hz), P(hx, y1, hz), P(hx, y1, -hz), P(-hx, y1, -hz), cc, z4, 0);
+    quad(P(-hx, y0, -hz), P(hx, y0, -hz), P(hx, y0, hz), P(-hx, y0, hz), cc, z4, 0);
+  };
+  return { V, vtx, quad, loft, disc, box };
+}
+function lmTokyoTower() {
+  const B = lmBuilder(), { quad } = B;
+  // the four trussed faces, section by section: [height, half width]
+  const S = [[0, 44], [20, 35.5], [60, 22.5], [100, 15.4], [145, 11], [157, 10.1], [200, 7.5], [247, 5.2], [256, 4.4]];
+  for (let s = 0; s + 1 < S.length; s++) {
+    const [y0, h0] = S[s], [y1, h1] = S[s + 1], hc = (h, x, z) => [h, 0, 0];
+    // (colour slot carries the face's half width at the vertex, for the truss pattern)
+    const F = [
+      [(h, y, t) => [t * h, y, h]], [(h, y, t) => [-t * h, y, -h]], [(h, y, t) => [h, y, -t * h]], [(h, y, t) => [-h, y, t * h]],
+    ];
+    for (const [f] of F) quad(f(h0, y0, -1), f(h0, y0, 1), f(h1, y1, 1), f(h1, y1, -1), null, [[-h0, y0], [h0, y0], [h1, y1], [-h1, y1]], 1, [hc(h0), hc(h0), hc(h1), hc(h1)]);
+  }
+  const white = [0.92, 0.92, 0.9], frame = [0.86, 0.86, 0.84];
+  // the main deck (150 m, two floors of windows all round) and the top deck (250 m)
+  B.box(12.5, 12.5, 144, 150.5, frame, 2, white); B.box(12.8, 12.8, 150.5, 151.3, white, 0); B.box(12, 12, 151.3, 157.5, frame, 2, white);
+  B.box(6, 6, 246, 253, frame, 2, white);
+  // the antenna mast above the trusses, painted in bands
+  const N = 10, secs = [[256, () => 3.2], [270, () => 1.9], [292, () => 1.3], [315, () => 0.8], [333, () => 0.25]];
+  B.loft(secs, N, white, 4, 1);
+  B.box(0.35, 0.35, 332.4, 333.2, [1, 0.1, 0.1], 5); B.box(0.5, 0.5, 256.5, 257.5, [1, 0.1, 0.1], 5);
+  return B.V;
+}
+function lmSkytree() {
+  const B = lmBuilder();
+  // the plan turns from an equilateral triangle at the foot (68 m a side) into a circle at 300 m
+  const tri = (a, rin) => rin / Math.cos(((a - Math.PI / 2) % (Math.PI * 2 / 3) + Math.PI * 2 / 3) % (Math.PI * 2 / 3) - Math.PI / 3);
+  const sec = (y, rin, rc, f) => [y, a => rc * f + tri(a, rin) * (1 - f)];
+  const white = [0.86, 0.9, 0.95], core = [0.62, 0.62, 0.63], frame = [0.8, 0.83, 0.86];
+  const N = 36;
+  B.loft([sec(0, 19.6, 26, 0), sec(60, 17.5, 23.5, 0.25), sec(130, 16.5, 21.5, 0.5), sec(210, 16, 20, 0.78), sec(300, 18.5, 18.6, 1), sec(338, 18, 18, 1)], N, white, 3, 20);
+  // the Tembo Deck (350 m): three floors in a glass drum wider than the shaft
+  B.disc(338, 4.5, 26.5, N, white, false); B.loft([[338, () => 26.5], [339.2, () => 26.5]], N, white, 0, 20);
+  B.loft([[339.2, () => 26.5], [351.5, () => 26.8]], N, frame, 2, 26.5); B.disc(351.5, 13, 26.8, N, white, true);
+  B.loft([[351.5, () => 16], [440, () => 13]], N, white, 3, 15);
+  // the Tembo Galleria (450 m): a sloping glass tube round the shaft
+  B.disc(440, 4, 17.5, N, white, false); B.loft([[440, () => 17.5], [452, () => 17]], N, frame, 2, 17.5); B.disc(452, 9.5, 17, N, white, true);
+  B.loft([[452, () => 9.5], [497, () => 7.6]], N, white, 3, 9);
+  // the gain tower with the broadcasting antennas, and the rod on top
+  B.loft([[497, () => 7.6], [625, () => 4.6]], 18, [0.8, 0.82, 0.84], 3, 6);
+  B.loft([[625, () => 1.2], [634, () => 0.35]], 8, [0.78, 0.8, 0.82], 0, 1);
+  // the concrete core (心柱) up the middle, seen through the lattice
+  B.loft([[0, () => 4.5], [375, () => 4.5]], 16, core, 0, 4.5);
+  for (const y of [633, 497.5, 452.5]) B.box(0.5, 0.5, y, y + 0.9, [1, 0.1, 0.1], 5);
+  return B.V;
+}
+const LM_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNrm;
+layout(location=2) in vec3 aCol;
+layout(location=3) in vec3 aUvK;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos, uOrigin;
+uniform float uCurv;
+out vec3 vWorld; out vec3 vN; out vec3 vCol; out vec2 vUv; flat out float vKind; out float vY;
+void main(){
+  vec3 w = aPos + uOrigin;
+  vWorld = w; vN = aNrm; vCol = aCol; vUv = aUvK.xy; vKind = aUvK.z; vY = aPos.y;
+  vec2 d = w.xz - uCamPos.xz; w.y -= dot(d, d) * uCurv;
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+const LM_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec3 vN; in vec3 vCol; in vec2 vUv; flat in float vKind; in float vY;
+uniform float uNight, uTT;
+out vec4 outColor;
+// how much of a pixel (px metres) a member of width wd centred at distance d covers: thin ones far off become
+// a faint haze of steel, not a flicker
+float mem(float d, float wd, float px){ float we = max(wd, px); return clamp((we * 0.5 + px * 0.5 - abs(d)) / px, 0.0, 1.0) * (wd / we); }
+void main(){
+  vec3 n = normalize(vN), V = normalize(uCamPos - vWorld); if (dot(n, V) < 0.0) n = -n;
+  vec3 c = vCol, em = vec3(0.0); float a = 1.0;
+  if (vKind > 0.5 && vKind < 1.5) {
+    // Tokyo Tower: legs at the edges, horizontals, X-bracing in each bay, a finer bracing between; arches at the foot
+    float x = vUv.x, y = vUv.y, hw = vCol.r, px = max(max(fwidth(x), fwidth(y)), 1e-3);
+    float leg = mix(2.8, 0.9, clamp(y / 256.0, 0.0, 1.0)), B = y < 145.0 ? 9.6 : 6.4, yb = mod(y, B), t = yb / B;
+    float k = B / sqrt(B * B + 4.0 * hw * hw);
+    float cl = clamp((leg - (hw - abs(x))) / px + 0.5, 0.0, 1.0);
+    float ch = mem(min(yb, B - yb), 0.8, px);
+    float cd = max(mem((x - (-hw + 2.0 * hw * t)) * k, 0.55, px), mem((x - (hw - 2.0 * hw * t)) * k, 0.55, px));
+    float b2 = B * 0.5, yb2 = mod(y, b2), t2 = yb2 / b2, k2 = b2 / sqrt(b2 * b2 + hw * hw);
+    float cf = max(mem((x - (-hw + hw * t2)) * k2, 0.22, px), mem((x - (hw * t2)) * k2, 0.22, px));
+    float lat = 1.0 - (1.0 - ch) * (1.0 - cd) * (1.0 - cf * 0.8);
+    float ai = hw - leg * 1.6, arch = 38.0 * sqrt(max(1.0 - (x * x) / max(ai * ai, 1.0), 0.0));
+    if (y < arch && abs(x) < ai) lat = 0.0;
+    a = 1.0 - (1.0 - cl) * (1.0 - lat);
+    c = mod(floor(y / (333.0 / 11.0)), 2.0) < 0.5 ? vec3(0.9, 0.3, 0.08) : vec3(0.93, 0.93, 0.9);
+    em = c * vec3(1.0, 0.75, 0.45) * 0.75 * uNight;                // (the warm floodlighting at night)
+  } else if (vKind > 2.5 && vKind < 3.5) {
+    // Skytree: a diagrid of steel pipes with rings, the core showing through
+    float u = vUv.x, y = vUv.y, px = max(max(fwidth(u), fwidth(y)), 1e-3), D = 10.5;
+    float d1 = mod(u + y * 0.85, D), d2 = mod(u - y * 0.85, D), yr = mod(y, D);
+    float kk = 1.0 / sqrt(1.0 + 0.85 * 0.85);
+    float cov = 1.0 - (1.0 - mem(min(d1, D - d1) * kk, 1.6, px)) * (1.0 - mem(min(d2, D - d2) * kk, 1.6, px)) * (1.0 - mem(min(yr, D - yr), 1.2, px));
+    a = 1.0 - (1.0 - cov) * 0.7;                                   // (the bracing, stairs and core inside fill it in)
+    em = vec3(0.3, 0.6, 1.0) * 0.6 * uNight;                        // (粋: the pale blue lighting)
+  } else if (vKind > 1.5 && vKind < 2.5) {
+    // a deck's windows: glass between mullions, the sky in it by day, lit from inside at night
+    float u = vUv.x, px = max(fwidth(u), 1e-3), mu = mem(abs(fract(u / 2.2 + 0.5) - 0.5) * 2.2, 0.18, px);
+    vec3 R = reflect(-V, n);
+    vec3 glass = mix(vec3(0.1, 0.13, 0.16), mix(uHorizon, uZenith, clamp(R.y, 0.0, 1.0)) * 0.6, 0.55);
+    c = mix(glass, vCol, mu);
+    em = mix(vec3(1.0, 0.86, 0.62) * 0.9, vec3(0.0), mu) * uNight;
+  } else if (vKind > 3.5 && vKind < 4.5) {
+    c = mod(floor((vY - 256.0) / 11.0), 2.0) < 0.5 ? vec3(0.93, 0.93, 0.9) : vec3(0.9, 0.3, 0.08);
+    em = c * vec3(1.0, 0.75, 0.45) * 0.6 * uNight;
+  } else if (vKind > 4.5) {
+    em = vec3(1.4, 0.1, 0.05) * (0.3 + 0.7 * step(0.5, fract(uTime * 0.7))) * (0.4 + 0.8 * uNight);
+    c = vec3(0.3, 0.05, 0.05);
+  }
+  if (a < 0.02) discard;
+  float diff = max(dot(n, uSunDir), 0.0) * sunShadow(vWorld, n);
+  vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
+  vec3 col = c * (uSunCol * diff * 0.85 + amb * 0.85) + em;
+  outColor = vec4(tonemap(applyFog(col, vWorld)), a);
+}`;
+// where each tower stands (world), and which ones are near enough to draw; the city's blocks there are cut
+function lmUpdate() {
+  LM.on = typeof JW !== 'undefined' && JW.active && JW.online && !(typeof GOOG !== 'undefined' && GOOG.covering);
+  LM.cut = [[0, 0, 0, 0], [0, 0, 0, 0]];
+  if (!LM.on) return;
+  LM_TOWERS.forEach((L, i) => {
+    const w = geoToWorld(L.lat, L.lon);
+    L.x = w[0]; L.z = w[1]; L.d = Math.hypot(w[0] - R.eye[0], w[1] - R.eye[2]);
+    if (L.d < 80000) { if (L.g == null || L.gT == null || R.time - L.gT > 5) { L.g = Math.max(jwHeight(w[0], w[1]), 0); L.gT = R.time; } }
+    if (i < 2) LM.cut[i] = [L.x, L.z, L.cut, L.g + L.cutY];
+  });
+}
+function drawLandmarks() {
+  if (!LM.on) return;
+  if (!LM.prog) {
+    LM.prog = makeProgram(LM_VS, LM_FS);
+    for (const L of LM_TOWERS) {
+      const V = new Float32Array(L.id === 'tokyotower' ? lmTokyoTower() : lmSkytree());
+      L.vao = makeVAO([{ data: V, stride: 12, layout: [[0, 3, 0], [1, 3, 3], [2, 3, 6], [3, 3, 9]] }]); L.n = V.length / 12;
+    }
+  }
+  const pr = LM.prog, u = pr.u;
+  setCommon(pr);
+  gl.uniform1f(u.uNight, nightK());
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.enable(gl.CULL_FACE);
+  for (const L of LM_TOWERS) {
+    if (!L.vao || L.d == null || L.d > 80000) continue;
+    gl.uniform3f(u.uOrigin, L.x, L.g, L.z);
+    gl.bindVertexArray(L.vao.vao);
+    // the far side first, then the near, so the lattice shows the other side through it
+    gl.cullFace(gl.FRONT); gl.drawArrays(gl.TRIANGLES, 0, L.n);
+    gl.cullFace(gl.BACK); gl.drawArrays(gl.TRIANGLES, 0, L.n);
+  }
+  gl.disable(gl.BLEND);
 }
 
 // =====================================================================
@@ -13377,13 +14400,28 @@ const CAR_SPEC = { mass: 1400, power: 110000, fMax: 7200, brake: 11000, wb: 2.7,
 const carFwd = h => [Math.sin(h), 0, -Math.cos(h)];
 function carReset() { if (CAR.on) { CAR.on = false; CAR.plane = null; } carButton(); }
 // the ground the car drives on: Google's 3D surface where it is shown (roads, bridges, roofs), else the terrain
-function carGround(x, z, yRef) {
+function carGround(x, z, yRef, deckRef = yRef) {
   const g = groundAt(x, z);
   let h = g.h, water = g.water, google = false;
   if (typeof GOOG !== 'undefined' && GOOG.covering && GOOG.off != null && !(typeof ZONE !== 'undefined' && ZONE.on)) {   // (in the near zone the sim's own ground is shown)
     const [la, lo] = worldToGeo(x, z), gh = googGroundAt(la, lo, yRef + GOOG.off);
     if (gh != null) { h = gh - GOOG.off; google = true; water = water && h < 0.5; }
   }
+  // on a bridge or an elevated road: its deck (p6_city.js)
+  if (typeof cityDeckAt !== 'function') return { h, water, n: g.n || [0, 1, 0], paved: g.paved, google };
+  const dk = cityDeckAt(x, z, deckRef);
+  // over Google's 3D, once up off the street, the photogrammetry's own deck is the road: the real height of the
+  // real bridge (the sim's own deck is only a guess from the map, and isn't drawn up there). Looked for from a
+  // little above (a real ramp may climb sooner than the guess), the middle of three samples (a car melted into
+  // the deck isn't a bump)
+  if (typeof ZONE !== 'undefined' && ZONE.on && ZONE.g[3] > 0 && GOOG.off != null && (dk != null ? dk - h > 2 : deckRef - 1.2 > h + 1.5) && cityDeckAt(x, z, 0, true) != null) {
+    const top = deckRef + 2.0 + GOOG.off, S = [[0, 0], [1.2, 0], [0, 1.2]].map(([a, b]) => { const [la, lo] = worldToGeo(x + a, z + b); return googGroundAt(la, lo, top); });
+    if (S.every(v => v != null)) {
+      const m = S.sort((a, b) => a - b)[1] - GOOG.off;
+      if (m > h + 1.5) return { h: m, water: false, n: [0, 1, 0], paved: true, google: true, deck: true };
+    }
+  }
+  if (dk != null && dk > h - 0.3) return { h: dk, water: false, n: [0, 1, 0], paved: true, google: false, deck: true };
   return { h, water, n: g.n || [0, 1, 0], paved: g.paved, google };
 }
 // is there a (map) building at this point? (OSM buildings of the Japan city layer)
@@ -13527,6 +14565,7 @@ function carPhys(dt) {
   const hf = carGround(p[0] + f[0] * C.wb / 2, p[2] + f[2] * C.wb / 2, p[1] + 1.2).h, hb = carGround(p[0] - f[0] * C.wb / 2, p[2] - f[2] * C.wb / 2, p[1] + 1.2).h;
   const slope = clamp((hf - hb) / C.wb, -0.6, 0.6);
   const here = carGround(p[0], p[2], p[1] + 1.2);
+  CAR.deck = !!here.deck;
   // forces along the car
   const dir = CAR.rev ? -1 : 1, sp = Math.abs(v);
   let F = CAR.thr * dir * Math.min(C.fMax, C.power / Math.max(sp, 3)) * (CAR.rev ? 0.45 : 1);
@@ -13555,6 +14594,7 @@ function carPhys(dt) {
   if (Math.abs(step) > 1e-4) {
     if (gA.water || gN.water) blocked = 'この先は海（水）です';
     else if (!CAR.air && gA.h - p[1] > 1.2 && gA.google) blocked = '建物や壁にぶつかりました';
+    else if (!CAR.air && here.deck && !gA.deck && here.h - gA.h > 1.5) blocked = '橋の欄干にぶつかりました';   // (the parapet keeps you on the deck)
     else if (carInBuilding(ahead)) blocked = '建物にぶつかりました';
     else if (trafficHit(p[0] + nf[0] * Math.sign(step) * 1.6, p[2] + nf[2] * Math.sign(step) * 1.6)) blocked = 'ほかの車にぶつかりました';
   }
@@ -13695,6 +14735,8 @@ function trafficStep(dt) {
 function drawTraffic() {
   for (const c of TRAFFIC.cars) {
     if (vdist(c.pos, R.eye) > 700) continue;
+    // (over Google's 3D, cars up on an elevated road that isn't drawn round you (p6_city.js) aren't either)
+    if (ZONE.on && ZONE.g[3] > 0 && c.pos[1] > Math.max(jwHeight(c.pos[0], c.pos[2]), 0) + ZONE.g[3] + 1 && Math.hypot(c.pos[0] - ZONE.v[0], c.pos[2] - ZONE.v[1]) < ZONE.r1) continue;
     drawCarMesh(carMesh(c.model, c.paint, true), M4.fromQP(c.q, c.pos), c.spin, 0, c.brake, vdist(c.pos, R.eye) < 200);
   }
 }
@@ -13716,7 +14758,7 @@ function carCamera(dt) {
   }
   const yaw = CAR.camYaw + cam.lookYaw, f = carFwd(yaw), dist = 7.2, hgt = 2.3 + cam.lookPitch * 3;
   let eye = [CAR.pos[0] - f[0] * dist, CAR.pos[1] + hgt, CAR.pos[2] - f[2] * dist];
-  const gh = carGround(eye[0], eye[2], eye[1] + 5).h + 0.6; if (eye[1] < gh) eye[1] = gh;
+  const gh = carGround(eye[0], eye[2], eye[1] + 5, CAR.pos[1] + 1.2).h + 0.6; if (eye[1] < gh) eye[1] = gh;   // (under a bridge: the street, not its deck)
   void f0;
   return { eye, target: [CAR.pos[0] + f[0] * 3, CAR.pos[1] + 1.1, CAR.pos[2] + f[2] * 3], up: [0, 1, 0], fov: 60, near: 0.2 };
 }
@@ -13871,7 +14913,7 @@ function sunShadowPass() {
       if (!t.street) continue;
       const b = cityBox(t); if (!near(b[0], b[1], b[2], b[3], H * 1.5)) continue;
       citySetTile(u, t);
-      for (let k = 0; k < 4; k++) { const s = t.street[k]; if (!s) continue; gl.uniform1f(u.uFar, 260); gl.bindVertexArray(s.vao.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, s.count, s.n); }
+      for (let k = 0; k < PROP_N; k++) { const s = t.street[k]; if (!s) continue; gl.uniform1f(u.uFar, 260); gl.bindVertexArray(s.vao.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, s.count, s.n); }
     }
   }
   // the trees from the map's photos
@@ -15029,6 +16071,7 @@ function setCommon(pr) {
   if (u.uNPRect) { gl.uniform4fv(u.uNPRect, NP.rect); gl.uniform4fv(u.uNPFade, NP.fade); }
   if (u.uMatOn) { if (!CMAT.started && JW.active && JW.online) cmatInit(); gl.uniform1f(u.uMatOn, CMAT.ready && CMAT.on !== false ? 1 : 0); }
   if (u.uZoneSide) gl.uniform1f(u.uZoneSide, ZONE.side);
+  if (u.uLmCut0) { gl.uniform4fv(u.uLmCut0, LM.cut[0]); gl.uniform4fv(u.uLmCut1, LM.cut[1]); }
   if (u.uCamPos) gl.uniform3fv(u.uCamPos, R.eye);
   if (u.uTime) gl.uniform1f(u.uTime, R.time);
   if (u.uViewProj) gl.uniformMatrix4fv(u.uViewProj, false, R.VP);
@@ -15114,16 +16157,18 @@ function render() {
 }
 function drawScene(planes, far) {
   gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
+  WIRES.side = null;
   if (JW.active) {
+    lmUpdate();
     drawJapanTerrain(planes);
     if (GOOG.covering) {                                  // photogrammetry replaces runways, buildings and trees
       ZONE.side = 1; drawGoogle(); googFlatCheck();
       // ...except where Google has no 3D (the map's own buildings stand in everywhere), and around the car,
       // where the photogrammetry's melted ground and walls give way to the sim's own streets
-      if (GOOG.flat || ZONE.on) { ZONE.side = GOOG.flat ? 0 : -1; drawRoads(planes); drawCity(planes); drawStreet(planes); if (!(ZONE.on && ZONE.g[3] > 0)) drawJwTrees(planes, far); }   // (the real trees stand in Google's mesh)
+      if (GOOG.flat || ZONE.on) { ZONE.side = GOOG.flat ? 0 : -1; drawRoads(planes); drawCity(planes); drawStreet(planes); if (!(ZONE.on && ZONE.g[3] > 0)) drawJwTrees(planes, far); WIRES.side = ZONE.side; }   // (the real trees stand in Google's mesh)
       ZONE.side = 0;
     }
-    else { drawJapanRunways(); drawRoads(planes); drawCity(planes); drawStreet(planes); ZONE.side = ZONE.plat ? 1 : 0; drawPlateau(); ZONE.side = 0; drawJwTrees(planes, far); }
+    else { drawJapanRunways(); drawRoads(planes); drawCity(planes); drawStreet(planes); ZONE.side = ZONE.plat ? 1 : 0; drawPlateau(); ZONE.side = 0; drawJwTrees(planes, far); WIRES.side = 0; }
   }
   else {
   // terrain
@@ -15160,6 +16205,8 @@ function drawScene(planes, far) {
   if (CAR.on) { drawCar(); if (JW.active) setCommon(progMesh); }
   if (!JW.active) for (const pk of parked) if (vdist(R.eye, [pk.m[12], pk.m[13], pk.m[14]]) < 6000) drawPlane(pk.m, parkedState, { paint: pk.col, acft: pk.acft });
   if (JW.active) drawJapanWater();
+  if (JW.active && WIRES.side !== null) { ZONE.side = WIRES.side; drawWires(); ZONE.side = 0; }   // (overhead wires, blended over all the rest)
+  if (JW.active) drawLandmarks();                                     // (Tokyo Tower, Skytree: lattices, blended)
   else {
   // trees & houses
   setCommon(progInst);

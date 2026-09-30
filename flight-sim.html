@@ -4601,30 +4601,45 @@ function drawMapTo(g, x, y, w, h, lat, lon, zoom, opt = {}) {
 //  BUILT-UP AREAS: places made by hand, all in the sim's own world, the
 //  way a driving game's city is — clean surfaces, modelled buildings,
 //  aircraft at the gates, markings and lights — instead of the
-//  photogrammetry, which melts at ground level. Inside the circle Google's
-//  3D gives way entirely (and PLATEAU's too); the map's own buildings,
-//  roads and trees stand there; outside, everything is as it was.
-//  First: Haneda and round it.
+//  photogrammetry, which melts at ground level. Inside a region, round the
+//  camera as far as the city is loaded, Google's 3D gives way entirely
+//  (and PLATEAU's too); the map's own buildings, roads and trees stand
+//  there; outside, everything is as it was.
+//  The Tokyo Bay shore from Haneda through Kawasaki to Yokohama.
 // =====================================================================
 const AUTH_AREAS = [
-  { id: 'haneda', lat: 35.5494, lon: 139.7798, r0: 3500, r1: 4000, near: 9000 },
+  // [lat, lon] outline (roughly: Haneda and Ota ward's south, Kawasaki, Yokohama city)
+  { id: 'bayshore', poly: [[35.60, 139.70], [35.60, 139.83], [35.50, 139.83], [35.40, 139.72], [35.30, 139.68], [35.30, 139.47], [35.43, 139.45], [35.55, 139.55]] },
 ];
-const AUTH = { on: false, v: [0, 0, 0, 0], area: null, off: false };
+const AUTH = { on: false, v: [0, 0, 0, 0], area: null, off: false, r: 0 };
+function authInPoly(poly, lat, lon) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [ai, bi] = poly[i], [aj, bj] = poly[j];
+    if ((ai > lat) !== (aj > lat) && lon < (bj - bi) * (lat - ai) / (aj - ai) + bi) inside = !inside;
+  }
+  return inside;
+}
 function authUpdate() {
   AUTH.on = false; AUTH.v = [0, 0, 0, 0]; AUTH.area = null;
   if (typeof JW === 'undefined' || !JW.active || !JW.online || AUTH.off) return;
+  const [la, lo] = worldToGeo(R.eye[0], R.eye[2]);
+  const agl = R.eye[1] - Math.max(rawHeightGeo(la, lo), 0);
+  if (agl > 2500) return;                                             // (from high up the photogrammetry reads better)
   for (const A of AUTH_AREAS) {
-    const w = geoToWorld(A.lat, A.lon), d = Math.hypot(w[0] - R.eye[0], w[1] - R.eye[2]);
-    A.x = w[0]; A.z = w[1];
-    if (d > A.near) continue;
-    AUTH.on = true; AUTH.area = A; AUTH.v = [w[0], w[1], A.r0, A.r1];
+    if (!authInPoly(A.poly, la, lo)) continue;
+    // the circle round the camera that the city loads (p6_city.js cityUpdate), a little inside it
+    const r = game.touch ? clamp(1800 + agl * 1.5, 1800, 3500) : clamp(2800 + agl * 2.2, 2800, 7000);
+    AUTH.on = true; AUTH.area = A; AUTH.r = r;
+    AUTH.v = [R.eye[0], R.eye[2], r * 0.72, r * 0.9];
+    A.lat = la; A.lon = lo; A.r0 = r * 0.72; A.r1 = r * 0.9;
     break;
   }
 }
-// is a place inside the built-up area in use (lat, lon)? (the map's own buildings aren't hidden under PLATEAU there)
+// is a place inside the built-up circle in use (lat, lon)? (the map's own buildings aren't hidden under PLATEAU there)
 function authHas(lat, lon) {
   const A = AUTH.area; if (!A) return false;
-  return geoDist(lat, lon, A.lat, A.lon) < A.r0;
+  return geoDist(lat, lon, A.lat, A.lon) < A.r1;
 }
 
 // =====================================================================
@@ -4929,7 +4944,7 @@ function cityWorkerMain() {
   // ---- tile build ----
   const hash = (a, b) => { let h = (Math.imul(a | 0, 73856093) ^ Math.imul(b | 0, 19349663)) >>> 0; h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0; return (h ^ (h >>> 16)) >>> 0; };
   function build(buf, m) {
-    const L = readLayers(buf, ['building', 'landcover', 'transportation', 'poi', 'aeroway']);
+    const L = readLayers(buf, ['building', 'landcover', 'landuse', 'transportation', 'poi', 'aeroway']);
     const E = (L.building || L.landcover || { extent: 4096 }).extent;
     const n = 2 ** m.z, dLon = m.lonE - m.lonW, kxN = 111320 * Math.cos(m.latN * DEG);
     const W = dLon * kxN, Hm = (m.latN - m.latS) * KZ;
@@ -5148,6 +5163,7 @@ function cityWorkerMain() {
     // another bridge (the elevated road goes on, a storey or more up by its layer: the expressways), or cut by
     // the tile's edge. The deck never dips below the straight line between its ends (a river or a road under
     // it), climbs from a grounded end like a ramp (6 %), and is smoothed along its length
+    const btowers = [];                                             // (towers of the great bridges: x z deckY dirx dirz span)
     const deckH = ln => (ln.c <= 2 ? 8.5 : 6.5) + 5.5 * (ln.layer - 1);
     const endKind = (li, p) => {
       if (p[2] < -4 || p[2] > E + 4 || p[3] < -4 || p[3] > E + 4) return 2;
@@ -5172,6 +5188,20 @@ function cityWorkerMain() {
       if (y0 == null && y1 == null) y0 = y1 = Math.max(...G) + 0.5; else if (y0 == null) y0 = y1; else if (y1 == null) y1 = y0;
       const d0 = k0 === 0 ? 0 : 1e9, d1 = k1 === 0 ? 0 : 1e9;
       const D = run.map((p, i) => Math.max(y0 + (y1 - y0) * U[i] / len, G[i] + Math.min(H, Math.min(d0 + U[i], d1 + len - U[i]) * 0.06)));
+      // a great bridge over the sea (the map's sea level under it for a long way): up to a ship's height over the
+      // middle, climbing 6 % from the shores; its towers (the cable-stayed kind) a quarter of the way in from each shore
+      let wa = -1, wb = -1, ca = -1;
+      for (let i = 0; i < n; i++) { if (G[i] < 0.6) { if (ca < 0) ca = i; if (U[i] - U[ca] > (wb >= 0 ? U[wb] - U[wa] : -1)) { wa = ca; wb = i; } } else ca = -1; }
+      const Lw = wa >= 0 ? U[wb] - U[wa] : 0;
+      if (Lw > 300 && ln.c <= 3) {
+        const hmax = clamp(Lw * 0.065, 20, 55), um = (U[wa] + U[wb]) / 2;
+        for (let i = 0; i < n; i++) D[i] = Math.max(D[i], Math.min(hmax, 12 + (Lw / 2 - Math.abs(U[i] - um)) * 0.06));
+        if (Lw > 750) for (const f of [0.27, 0.73]) {
+          const ut = U[wa] + Lw * f; let k = 1; while (k < n - 1 && U[k] < ut) k++;
+          const A = run[k - 1], B = run[k], tf = clamp((ut - U[k - 1]) / Math.max(U[k] - U[k - 1], 1e-3), 0, 1), tl = Math.hypot(B[0] - A[0], B[1] - A[1]) || 1;
+          btowers.push(A[0] + (B[0] - A[0]) * tf, A[1] + (B[1] - A[1]) * tf, Math.min(hmax, 12 + (Lw / 2 - Math.abs(ut - um)) * 0.06), (B[0] - A[0]) / tl, (B[1] - A[1]) / tl, Lw);
+        }
+      }
       ln.deck = D.map((y, i) => {
         if (i === 0 || i === n - 1) return y;
         let s = 0, ws = 0;
@@ -5269,6 +5299,8 @@ function cityWorkerMain() {
     // the airport, read before the buildings (which of them are terminals, hangars, a control tower): the
     // aerodrome's outline, the aprons, the gates (local metres)
     const aeroRings = [], apRings = [], aeroGates = [], termWalls = [], stands = [];
+    const walks = [];                                                // (pavements to walk: [n, x z y ...] per run)
+    const skirt = [];                                                // (the buildings' contact shadows: indices, drawn after all else)
     const inRings = (list, x, z) => {
       for (const A of list) {
         if (x < A.x0 || x > A.x1 || z < A.z0 || z > A.z1) continue;
@@ -5383,6 +5415,12 @@ function cityWorkerMain() {
       const st0 = seed + 1024 * kind;
       if (h < 60 && !air) for (const w of walls) if (w[7] && w[4] > 2.2) shopWalls.push(w[0], w[1], w[2], w[3], w[5], w[6], base);
       if (air === 1) for (const w of walls) if (w[7] && w[4] > 3) termWalls.push([w[0], w[1], w[2], w[3], w[5], w[6], base]);
+      // contact shadow on the ground round the building (drawn last over the roads and pavements, darkening)
+      if (mh < 1 && (h >= 7 || area > 150)) for (const w of walls) if (w[7] && w[4] > 3.5) {
+        const [x0, z0, x1, z1, len, nx, nz] = w, D = Math.min(1.2 + h * 0.08, 3.2), y = base + 0.2;
+        const a0 = rput(x0, z0, y, 0, 264, D, -1), a1 = rput(x1, z1, y, len, 264, D, -1), b0 = rput(x0 + nx * D, z0 + nz * D, y, 0, 264, D, 1), b1 = rput(x1 + nx * D, z1 + nz * D, y, len, 264, D, 1);
+        skirt.push(a0, b0, a1, a1, b0, b1);
+      }
       // a house's street side (for its front door): the outer wall nearest a road
       const fronts = new Set();
       if (kind === 1) { let bd = 1e9, bw = -1; walls.forEach((w, i) => { if (!w[7] || w[4] < 2) return; const d = roadNear((w[0] + w[2]) / 2 + w[5] * 1.5, (w[1] + w[3]) / 2 + w[6] * 1.5, 7); if (d < bd) { bd = d; bw = i; } }); if (bw >= 0 && bd < 12) fronts.add(bw); }
@@ -5516,7 +5554,8 @@ function cityWorkerMain() {
       if (c >= 2 && c <= 5) {
         const sw = c <= 3 ? 3.2 : 2.3, kh = 0.15;
         for (const sd of [1, -1]) {
-          let pv = -1;
+          let pv = -1, wk = [];                                         // (wk: the middle of the pavement, for people walking)
+          const wkEnd = () => { if (wk.length >= 6) walks.push(wk.length / 3, ...wk); wk = []; };
           for (let i = 0; i < V.length; i++) {
             const [x, z, g, nx, nz, uu, j] = V[i], ox = nx * sd, oz = nz * sd, ri0 = w / 2, ro = w / 2 + sw;
             const a0 = rput(x + ox * ri0, z + oz * ri0, g - 0.02, uu, 257, sw, 0), a1 = rput(x + ox * ri0, z + oz * ri0, g + kh, uu, 257, sw, 1);
@@ -5526,6 +5565,8 @@ function cityWorkerMain() {
               ri.push(pv, a0, pv + 1, pv + 1, a0, a1);                 // kerb face
               ri.push(pv + 2, b0, pv + 3, pv + 3, b0, b1);             // paving
               ri.push(pv + 4, c0, pv + 5, pv + 5, c0, c1);             // back
+              if (!wk.length) wk.push(V[i - 1][0] + V[i - 1][3] * sd * (w / 2 + sw * 0.55), V[i - 1][1] + V[i - 1][4] * sd * (w / 2 + sw * 0.55), V[i - 1][2] + kh);
+              wk.push(x + ox * (w / 2 + sw * 0.55), z + oz * (w / 2 + sw * 0.55), g + kh);
               // white guard pipes (ガードパイプ) along the kerb on some stretches, open every so often for a crossing
               // or a driveway: [x0 z0 y0 u0 x1 z1 y1 u1 nx nz] (n: out from the road)
               const A = V[i - 1], ua = A[5], cut = [ua, uu];
@@ -5540,8 +5581,10 @@ function cityWorkerMain() {
                 fences.push(P0[0], P0[1], P0[2], P0[3], P1[0], P1[1], P1[2], P1[3], (P0[4] + P1[4]) / 2, (P0[5] + P1[5]) / 2);
               }
             }
+            if (!(j <= 2)) wkEnd();
             pv = a0;
           }
+          wkEnd();
         }
       }
       // street furniture along the road, from its start, never inside a junction
@@ -5673,6 +5716,31 @@ function cityWorkerMain() {
       });
     }
     const gL = (x, z) => ground(x / W * E, z / Hm * E);
+    // ---------- the ground itself, as a driving game's city has it: the built-up blocks paved (concrete and paving
+    // slabs, the dirt of use), parks and lawns in real grass; drawn under the roads, over the terrain's photo ----------
+    const fillPoly = (rings, dy, cls, maxE) => {
+      const flat = [], holes = [];
+      for (const r of rings) { if (flat.length) holes.push(flat.length / 2); for (const v of r) flat.push(v); }
+      const tris = earcut(flat, holes);
+      const tri = (a, b, c, d) => {
+        const ab = Math.hypot(a[0] - b[0], a[1] - b[1]), bc = Math.hypot(b[0] - c[0], b[1] - c[1]), ca = Math.hypot(c[0] - a[0], c[1] - a[1]), mx = Math.max(ab, bc, ca);
+        if (mx > maxE && d < 12) {
+          const M = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+          if (mx === ab) { const m2 = M(a, b); tri(a, m2, c, d + 1); tri(m2, b, c, d + 1); }
+          else if (mx === bc) { const m2 = M(b, c); tri(a, b, m2, d + 1); tri(a, m2, c, d + 1); }
+          else { const m2 = M(c, a); tri(a, b, m2, d + 1); tri(m2, b, c, d + 1); }
+          return;
+        }
+        const k = rput(a[0], a[1], gL(a[0], a[1]) + dy, 0, cls, 0, 0);
+        rput(b[0], b[1], gL(b[0], b[1]) + dy, 0, cls, 0, 0); rput(c[0], c[1], gL(c[0], c[1]) + dy, 0, cls, 0, 0);
+        ri.push(k, k + 1, k + 2);
+      };
+      for (let i = 0; i < tris.length; i += 3) tri([flat[tris[i] * 2], flat[tris[i] * 2 + 1]], [flat[tris[i + 1] * 2], flat[tris[i + 1] * 2 + 1]], [flat[tris[i + 2] * 2], flat[tris[i + 2] * 2 + 1]], 0);
+    };
+    const localRings = poly => poly.rings.map(r => { const o = []; for (let i = 0; i < r.length; i += 2) o.push(lx(r[i]), lz(r[i + 1])); return o; });
+    const PAVED = new Set(['residential', 'commercial', 'industrial', 'retail', 'railway', 'school', 'hospital', 'university', 'college', 'kindergarten', 'library', 'bus_station', 'garages', 'quarter', 'neighbourhood', 'military', 'stadium', 'theme_park', 'zoo']);
+    if (L.landuse) for (const poly of polygons(L.landuse, E, p => PAVED.has(p.class))) fillPoly(localRings(poly), 0.025, 265, 45);
+    if (L.landcover) for (const poly of polygons(L.landcover, E, p => p.class === 'grass' && p.subclass !== 'golf_course' || p.subclass === 'park')) fillPoly(localRings(poly), 0.04, 266, 45);
     // ---------- railways: ballasted track with its sleepers and two rails (each track is its own line on the
     // map), on bridges up on a viaduct; the monorail's concrete beam up on its T-shaped piers ----------
     const rails = [];
@@ -5850,6 +5918,7 @@ function cityWorkerMain() {
         }
       }
     }
+    for (const k of skirt) ri.push(k);
     // packed like the buildings (x, z in dm, y, up normal, u in dm, class + 512, width dm, across)
     const nrv = rv0.length / 7 | 0;
     const rvb = new ArrayBuffer(Math.max(nrv, 1) * 20), r16 = new Int16Array(rvb), r32 = new Float32Array(rvb), r8 = new Int8Array(rvb);
@@ -5899,7 +5968,7 @@ function cityWorkerMain() {
       id: m.id, nv: v, ni: q, vb: vbuf, ib: ib.buffer, trees: tr.buffer, nTrees: tr.length / 4,
       boxes: new Float32Array(boxes).buffer, ringXZ: new Float32Array(ringXZ).buffer, ringOff: new Uint32Array(ringOff).buffer,
       cells: cellCount.buffer, items: items.buffer, bRange: new Uint32Array(bRange).buffer, bCen: new Float32Array(bCen).buffer, maxTop: nb ? maxTop : -1e9, minG: nb ? minG : 0, nBuild: nb, W, Hm,
-      nrv, nri: ri.length, rvb, rib: new Uint32Array(ri).buffer, rPts: new Float32Array(rPts).buffer, rOff: new Uint32Array(rOff).buffer, rCls: new Uint8Array(rCls).buffer, rWid: new Float32Array(rWid).buffer, rBr: new Uint8Array(rBr).buffer, props: new Float32Array(props).buffer, wires: new Float32Array(wires).buffer, fences: new Float32Array(fences).buffer, marks: new Float32Array(marks).buffer, stands: new Float32Array(stands).buffer, aero: new Float32Array(aeroRings.flatMap(A => A.rings.flatMap(r => [r.length / 2, ...r]))).buffer, signs: new Float32Array(signs).buffer, signNames,
+      nrv, nri: ri.length, rvb, rib: new Uint32Array(ri).buffer, rPts: new Float32Array(rPts).buffer, rOff: new Uint32Array(rOff).buffer, rCls: new Uint8Array(rCls).buffer, rWid: new Float32Array(rWid).buffer, rBr: new Uint8Array(rBr).buffer, props: new Float32Array(props).buffer, wires: new Float32Array(wires).buffer, fences: new Float32Array(fences).buffer, marks: new Float32Array(marks).buffer, stands: new Float32Array(stands).buffer, walks: new Float32Array(walks).buffer, btowers: new Float32Array(btowers).buffer, aero: new Float32Array(aeroRings.flatMap(A => A.rings.flatMap(r => [r.length / 2, ...r]))).buffer, signs: new Float32Array(signs).buffer, signNames,
     };
     return res;
   }
@@ -6074,7 +6143,7 @@ function cityReceive(r) {
   // the aerodrome's outline (no trees on an airfield): rings of local metres
   t.aero = null;
   if (r.aero && r.aero.byteLength) { const F = new Float32Array(r.aero), rings = []; for (let i = 0; i < F.length;) { const n = F[i]; rings.push(F.subarray(i + 1, i + 1 + n * 2)); i += 1 + n * 2; } t.aero = rings; }
-  t.stands = r.stands && r.stands.byteLength ? new Float32Array(r.stands) : null; if (typeof STANDS !== 'undefined') STANDS.key = '';
+  t.stands = r.stands && r.stands.byteLength ? new Float32Array(r.stands) : null; t.walks = r.walks && r.walks.byteLength ? new Float32Array(r.walks) : null; t.btowers = r.btowers && r.btowers.byteLength ? new Float32Array(r.btowers) : null; if (typeof BIGBR !== 'undefined') BIGBR.key = ''; if (typeof STANDS !== 'undefined') STANDS.key = '';
   cityRoadGrid(t);
   // trees placed before this tile's roads and buildings were known are placed again (none on a road or in a house)
   if (typeof JWTREES !== 'undefined' && JWTREES.cells) for (const [k, c] of JWTREES.cells) {
@@ -6182,6 +6251,7 @@ function drawRoads(planes) {
   gl.uniform1i(u.uNoise, 2);
   gl.disable(gl.CULL_FACE);
   gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-2, -6);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);   // (for the contact shadows, drawn last)
   for (const t of CITY.tiles.values()) {
     if (!t.rvao) continue;
     const b = cityBox(t);
@@ -6190,6 +6260,7 @@ function drawRoads(planes) {
     gl.bindVertexArray(t.rvao);
     gl.drawElements(gl.TRIANGLES, t.rni, gl.UNSIGNED_INT, 0);
   }
+  gl.disable(gl.BLEND);
   if (typeof drawMarks === 'function') drawMarks(planes);           // (止まれ and the stop lines, p_marks.js)
   gl.disable(gl.POLYGON_OFFSET_FILL);
   gl.enable(gl.CULL_FACE);
@@ -6200,8 +6271,8 @@ function cityApplyHidden(t, rects) {
   const hit = rects.filter(r => r[0] < t.latN && r[2] > t.latS && r[1] < t.lonE && r[3] > t.lonW);
   let K = typeof PLAT !== 'undefined' && hit.length ? PLAT.keep : null;
   if (K && (K.lat - K.rLat > t.latN || K.lat + K.rLat < t.latS || K.lon - K.rLon > t.lonE || K.lon + K.rLon < t.lonW)) K = null;
-  const A = hit.length && AUTH.area && geoDist((t.latN + t.latS) / 2, (t.lonW + t.lonE) / 2, AUTH.area.lat, AUTH.area.lon) < AUTH.area.r0 + 3000;
-  const key = hit.map(r => r[4]).join(',') + (K ? '|' + K.key : '') + (A ? '|A' : '');
+  const A = hit.length && AUTH.area && geoDist((t.latN + t.latS) / 2, (t.lonW + t.lonE) / 2, AUTH.area.lat, AUTH.area.lon) < AUTH.area.r1 + 3000;
+  const key = hit.map(r => r[4]).join(',') + (K ? '|' + K.key : '') + (A ? '|A' + Math.round(AUTH.area.lat * 250) + ',' + Math.round(AUTH.area.lon * 250) : '');
   if (key === t.hideKey) return false;
   t.hideKey = key;
   cityOrderIndex(t, !hit.length ? null : b => {
@@ -6686,6 +6757,7 @@ void main(){
       }
     } else if (!house && !mansion && !tower && vFeat < 0.5 && vM.z < 3.6 && vM.z > 0.3 && s2 > 0.7) { col = mix(col, glass * 0.8, 0.5 * aa); bEm += vec3(1.0, 0.86, 0.62) * 0.9 * uNight * aa; }   // glazed lobbies
   }
+  if (vRoof < 0.5 && abs(n.y) < 0.5) col *= mix(0.7, 1.0, smoothstep(0.0, 3.2, vM.z));   // (darker where the wall meets the ground)
   outColor = vec4(tonemap(applyFog(col, vWorld) + airLight(bEm, vWorld)), 1.0);
 }`;
 // roads: asphalt with Japanese markings (white edge lines, a dashed or solid centre line, lane lines on
@@ -6725,6 +6797,29 @@ void main(){
     vec3 cu = vec3(0.42, 0.42, 0.41) * (0.85 + 0.2 * n2) * (uAmbSky * 0.9 + uSunCol * 0.12);
     outColor = vec4(tonemap(applyFog(cu, vWorld)), 1.0); return;
   }
+  if (vSide > 9.5) {
+    // the city's ground: paved blocks (slabs of concrete and paving, stained by use) or grass
+    float g1 = texture(uNoise, vWorld.xz / 9.0).a, g2 = texture(uNoise, vWorld.xz / 53.0).b, g3 = texture(uNoise, vWorld.xz / 1.7).b;
+    vec3 base;
+    if (vSide < 10.5) {
+      float blk = nHash(floor(vWorld.xz / 23.0));                         // (each lot its own kind of paving)
+      if (uMatOn > 0.5) base = blk < 0.45 ? matC(10.0, vWorld.xz / 3.0) : blk < 0.8 ? matC(14.0, vWorld.xz / 1.2) : matC(13.0, vWorld.xz / 4.0) * 1.25;
+      else base = mix(vec3(0.5, 0.49, 0.46), vec3(0.62, 0.6, 0.56), g3);
+      base *= (0.86 + 0.22 * g1) * (0.9 + 0.15 * g2) * mix(vec3(1.0), vec3(1.03, 1.0, 0.95), blk);
+    } else {
+      base = uMatOn > 0.5 ? matC(19.0, vWorld.xz / 3.0) : vec3(0.28, 0.4, 0.16);
+      base *= (0.82 + 0.3 * g1) * mix(vec3(1.0), vec3(1.08, 1.02, 0.85), g2 * 0.6);
+    }
+    float sh3 = sunShadow(vWorld, vec3(0.0, 1.0, 0.0)) * planeShadow(vWorld.xz);
+    vec3 cg = base * (uSunCol * max(uSunDir.y, 0.0) * 0.95 * sh3 + uAmbSky * 0.85);
+    outColor = vec4(tonemap(applyFog(cg, vWorld)), 1.0);
+    return;
+  }
+  if (vSide > 8.5) {
+    // a building's contact shadow on the ground at its foot
+    float k = 1.0 - (vR.z * 0.5 + 0.5); k = k * k * (1.0 - smoothstep(200.0, 700.0, dist));
+    outColor = vec4(0.0, 0.0, 0.0, 0.42 * k); return;
+  }
   if (vSide > 2.5) {
     // the airport (the worker's aeroway layer): aprons, taxiways, their paint and lights
     float n2a = texture(uNoise, vWorld.xz / 6.0).a, n3a = texture(uNoise, vWorld.xz / 41.0).b;
@@ -6741,10 +6836,10 @@ void main(){
     } else if (vSide < 3.5) {
       // apron: concrete slabs 7.5 m square with their joints, one a shade off the next, tyre marks and oil
       vec2 q = vWorld.xz / 7.5, f = abs(fract(q) - 0.5), fq = max(fwidth(q), vec2(1e-4));
-      float jt = max(1.0 - smoothstep(0.0, fq.x * 1.5 + 0.004, 0.5 - f.x), 1.0 - smoothstep(0.0, fq.y * 1.5 + 0.004, 0.5 - f.y)) * (1.0 - smoothstep(40.0, 260.0, dist));
+      float jt = max(1.0 - smoothstep(0.0, fq.x * 1.5 + 0.004, 0.5 - f.x), 1.0 - smoothstep(0.0, fq.y * 1.5 + 0.004, 0.5 - f.y)) * (1.0 - smoothstep(25.0, 140.0, dist));
       base = mix(vec3(0.6, 0.59, 0.56), vec3(0.69, 0.68, 0.64), nHash(floor(q))) * (0.9 + 0.14 * n2a) * (0.93 + 0.1 * n3a);
       if (uMatOn > 0.5) base *= mix(vec3(1.0), clamp(matC(18.0, vWorld.xz / 4.0) / max(matAvg(18.0), vec3(0.05)), 0.7, 1.3), 1.0 - smoothstep(80.0, 500.0, dist));
-      base *= 1.0 - jt * 0.35;
+      base *= 1.0 - jt * 0.16;
       base *= 1.0 - 0.2 * smoothstep(0.58, 0.82, texture(uNoise, vWorld.xz / 17.0).b) * smoothstep(0.4, 0.7, n3a);
     } else if (vSide < 4.5) {
       // taxiway: grey asphalt, the shoulders lighter and rougher
@@ -6768,7 +6863,7 @@ void main(){
         if (vSide < 5.5) { float lu2 = u - 30.0 * floor(u / 30.0 + 0.5); blu = 1.0 - smoothstep(lr * 0.5, lr, length(vec2(lu2, abs(m) - 12.3))); }
       }
       float night = 0.12 + 1.8 * uNightK;
-      em = (vec3(0.15, 1.0, 0.45) * lit + vec3(0.25, 0.4, 1.3) * blu) * night;
+      em = (vec3(0.15, 1.0, 0.45) * lit + vec3(0.25, 0.4, 1.3) * blu) * night * clamp(0.25 / lr, 0.12, 1.0);   // (far off a point of light, not a blot)
       float a = max(p, max(lit, blu) * step(0.2, uNightK + 0.25));
       if (a < 0.04) discard;
       base = mix(vec3(0.25), vec3(0.86, 0.64, 0.1), p / max(a, 1e-3));
@@ -7340,7 +7435,7 @@ function platUpdate(planes) {
     PLAT.hideQueue = [...CITY.tiles.values()];
   }
   // (a built-up area coming into use or going: its buildings are the sim's own, p_auth.js)
-  const aid = typeof AUTH !== 'undefined' && AUTH.area ? AUTH.area.id : '';
+  const aid = typeof AUTH !== 'undefined' && AUTH.area ? AUTH.area.id + ':' + Math.round(AUTH.area.lat * 250) + ',' + Math.round(AUTH.area.lon * 250) : '';
   if (aid !== (PLAT.authId || '')) { PLAT.authId = aid; PLAT.hideQueue = [...CITY.tiles.values()]; }
   if (PLAT.hideQueue && PLAT.hideQueue.length) {
     let n = 0;
@@ -9214,6 +9309,9 @@ function drawSigns() {
 const LM_TOWERS = [
   { id: 'tokyotower', lat: 35.65858, lon: 139.74543, cut: 62, cutY: 22 },
   { id: 'skytree', lat: 35.71006, lon: 139.81070, cut: 48, cutY: 35 },
+  // Yokohama: the Cosmo Clock 21 wheel at Minato Mirai, the Marine Tower at Yamashita Park
+  { id: 'cosmo', lat: 35.45530, lon: 139.63740, cut: 0, cutY: 0 },
+  { id: 'marine', lat: 35.44390, lon: 139.65075, cut: 16, cutY: 6 },
 ];
 const LM = { prog: null, on: false, cut: [[0, 0, 0, 0], [0, 0, 0, 0]] };
 // geometry: pos, normal, colour, uv, kind (0 solid, 1 Tokyo Tower truss, 2 windows, 3 Skytree lattice,
@@ -9306,6 +9404,55 @@ function lmSkytree() {
   for (const y of [633, 497.5, 452.5]) B.box(0.5, 0.5, y, y + 0.9, [1, 0.1, 0.1], 5);
   return B.V;
 }
+// Cosmo Clock 21: a wheel 100 m across, its hub 62 m up on two A-frames, 60 gondolas round the rim, the clock
+// in the middle; at night its spokes run through the colours (kind 6)
+function lmCosmo() {
+  const B = lmBuilder(), { quad } = B, R0 = 50, C = 62.5, N = 60, white = [0.9, 0.91, 0.92];
+  const P = (a, r, x) => [x, C + Math.sin(a) * r, Math.cos(a) * r];               // (the wheel turns in the y-z plane)
+  // two rims (a flat band each side), the spokes as thin plates (lit: kind 6), the gondolas
+  for (const x of [-3.5, 3.5]) for (let i = 0; i < N; i++) {
+    const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2;
+    quad(P(a0, R0, x - 0.5), P(a1, R0, x - 0.5), P(a1, R0, x + 0.5), P(a0, R0, x + 0.5), white, [[0, 0], [0, 0], [0, 0], [0, 0]], 0);
+    quad(P(a0, R0 - 1.2, x + 0.5), P(a1, R0 - 1.2, x + 0.5), P(a1, R0 - 1.2, x - 0.5), P(a0, R0 - 1.2, x - 0.5), white, [[0, 0], [0, 0], [0, 0], [0, 0]], 0);
+    quad(P(a0, R0 - 1.2, x + 0.5), P(a1, R0 - 1.2, x + 0.5), P(a1, R0, x + 0.5), P(a0, R0, x + 0.5), white, [[0, 0], [0, 0], [0, 0], [0, 0]], 0);
+    quad(P(a1, R0 - 1.2, x - 0.5), P(a0, R0 - 1.2, x - 0.5), P(a0, R0, x - 0.5), P(a1, R0, x - 0.5), white, [[0, 0], [0, 0], [0, 0], [0, 0]], 0);
+  }
+  for (let i = 0; i < N; i++) {
+    const a = i / N * Math.PI * 2, d = 0.25;
+    for (const x of [-3.5, 3.5]) quad(P(a - 0.004, 3, x), P(a + 0.004, 3, x), P(a + 0.002, R0 - 1, x), P(a - 0.002, R0 - 1, x), white, [[a, 0], [a, 0], [a, 1], [a, 1]], 6);
+    // a gondola hanging under the rim at this spoke
+    const g = P(a, R0 + 1.2, 0), gc = [[0.95, 0.2, 0.3], [0.2, 0.5, 0.9], [0.95, 0.75, 0.2], [0.3, 0.75, 0.4]][i % 4];
+    const gx = 1.4, gy = 1.6, gz = 1.4, y0 = g[1] - 2.6;
+    for (const [a1, b1, c1, d1] of [[[-gx, 0, -gz], [gx, 0, -gz], [gx, gy * 2, -gz], [-gx, gy * 2, -gz]], [[gx, 0, gz], [-gx, 0, gz], [-gx, gy * 2, gz], [gx, gy * 2, gz]], [[gx, 0, -gz], [gx, 0, gz], [gx, gy * 2, gz], [gx, gy * 2, -gz]], [[-gx, 0, gz], [-gx, 0, -gz], [-gx, gy * 2, -gz], [-gx, gy * 2, gz]], [[-gx, gy * 2, -gz], [gx, gy * 2, -gz], [gx, gy * 2, gz], [-gx, gy * 2, gz]]]) {
+      const T = v => [g[0] + v[0], y0 + v[1], g[2] + v[2]];
+      quad(T(a1), T(b1), T(c1), T(d1), gc, [[0, 0], [0, 0], [0, 0], [0, 0]], 2);
+    }
+    void d;
+  }
+  // the hub with the clock's face each side, and the A-frames down to the ground
+  for (const x of [-4.6, 4.6]) for (let i = 0; i < 24; i++) {
+    const a0 = i / 24 * Math.PI * 2, a1 = (i + 1) / 24 * Math.PI * 2;
+    const c = [x, C, 0], p0 = P(a0, 7, x), p1 = P(a1, 7, x);
+    if (x > 0) quad(c, c, p1, p0, [0.1, 0.1, 0.12], [[0, 0], [0, 0], [0, 1], [0, 1]], 7); else quad(c, c, p0, p1, [0.1, 0.1, 0.12], [[0, 0], [0, 0], [0, 1], [0, 1]], 7);
+  }
+  for (const x of [-6, 6]) for (const z of [-22, 22]) {
+    const top = [x * 0.9, C, 0], bot = [x * 1.6, 0, z], w = 1.2, px = [0, 0, w], py = [w, 0, 0];
+    quad([bot[0] - py[0], bot[1], bot[2] - px[2]], [bot[0] + py[0], bot[1], bot[2] + px[2]], [top[0] + py[0], top[1], top[2] + px[2]], [top[0] - py[0], top[1], top[2] - px[2]], white, [[0, 0], [0, 0], [0, 0], [0, 0]], 0);
+    quad([bot[0] - py[0], bot[1], bot[2] + px[2]], [bot[0] + py[0], bot[1], bot[2] - px[2]], [top[0] + py[0], top[1], top[2] - px[2]], [top[0] - py[0], top[1], top[2] + px[2]], white, [[0, 0], [0, 0], [0, 0], [0, 0]], 0);
+  }
+  return B.V;
+}
+// Yokohama Marine Tower: a slim ten-sided lattice, 106 m, flaring at the foot, the round deck near the top
+function lmMarine() {
+  const B = lmBuilder(), white = [0.88, 0.89, 0.9];
+  const N = 10;
+  B.loft([[0, () => 11], [20, () => 7.5], [50, () => 4.6], [85, () => 4.0], [92, () => 4.4]], N, white, 3, 3);
+  B.disc(92, 2, 9, 20, white, false); B.loft([[92, () => 9], [100, () => 9.3]], 20, [0.8, 0.82, 0.84], 2, 9); B.disc(100, 2, 9.3, 20, white, true);
+  B.loft([[100, () => 3], [106, () => 1.2]], 10, white, 3, 3);
+  B.loft([[0, () => 2.6], [92, () => 2.2]], 10, [0.7, 0.7, 0.72], 0, 2.5);
+  B.box(0.4, 0.4, 105.6, 106.4, [1, 0.1, 0.1], 5);
+  return B.V;
+}
 const LM_VS = GLSL_HEAD + `
 layout(location=0) in vec3 aPos;
 layout(location=1) in vec3 aNrm;
@@ -9365,6 +9512,13 @@ void main(){
   } else if (vKind > 3.5 && vKind < 4.5) {
     c = mod(floor((vY - 256.0) / 11.0), 2.0) < 0.5 ? vec3(0.93, 0.93, 0.9) : vec3(0.9, 0.3, 0.08);
     em = c * vec3(1.0, 0.75, 0.45) * 0.6 * uNight;
+  } else if (vKind > 6.5) {
+    // the clock's face: a ring of light, bright numerals of the hour at night
+    c = vec3(0.1, 0.1, 0.12); em = vec3(0.3, 0.9, 1.0) * step(0.85, vUv.y) * (0.2 + 1.2 * uNight);
+  } else if (vKind > 5.5) {
+    // the wheel's spokes: white by day, at night running through the colours
+    float h = fract(vUv.x / 6.2832 + uTime * 0.05);
+    em = clamp(abs(fract(h + vec3(0.0, 0.667, 0.333)) * 6.0 - 3.0) - 1.0, 0.0, 1.0) * 1.3 * uNight;
   } else if (vKind > 4.5) {
     em = vec3(1.4, 0.1, 0.05) * (0.3 + 0.7 * step(0.5, fract(uTime * 0.7))) * (0.4 + 0.8 * uNight);
     c = vec3(0.3, 0.05, 0.05);
@@ -9377,22 +9531,24 @@ void main(){
 }`;
 // where each tower stands (world), and which ones are near enough to draw; the city's blocks there are cut
 function lmUpdate() {
-  LM.on = typeof JW !== 'undefined' && JW.active && JW.online && !(typeof GOOG !== 'undefined' && GOOG.covering);
+  LM.google = typeof GOOG !== 'undefined' && GOOG.covering;
+  LM.on = typeof JW !== 'undefined' && JW.active && JW.online && (!LM.google || AUTH.on);
   LM.cut = [[0, 0, 0, 0], [0, 0, 0, 0]];
   if (!LM.on) return;
   LM_TOWERS.forEach((L, i) => {
     const w = geoToWorld(L.lat, L.lon);
     L.x = w[0]; L.z = w[1]; L.d = Math.hypot(w[0] - R.eye[0], w[1] - R.eye[2]);
     if (L.d < 80000) { if (L.g == null || L.gT == null || R.time - L.gT > 5) { L.g = Math.max(jwHeight(w[0], w[1]), 0); L.gT = R.time; } }
-    if (i < 2) LM.cut[i] = [L.x, L.z, L.cut, L.g + L.cutY];
   });
+  // the two nearest towers that stand in for a map block cut it away
+  LM_TOWERS.filter(L => L.cut && L.d != null && !(LM.google && L.d > AUTH.r)).sort((a, b) => a.d - b.d).slice(0, 2).forEach((L, i) => { LM.cut[i] = [L.x, L.z, L.cut, L.g + L.cutY]; });
 }
 function drawLandmarks() {
   if (!LM.on) return;
   if (!LM.prog) {
     LM.prog = makeProgram(LM_VS, LM_FS);
     for (const L of LM_TOWERS) {
-      const V = new Float32Array(L.id === 'tokyotower' ? lmTokyoTower() : lmSkytree());
+      const V = new Float32Array(L.id === 'tokyotower' ? lmTokyoTower() : L.id === 'skytree' ? lmSkytree() : L.id === 'cosmo' ? lmCosmo() : lmMarine());
       L.vao = makeVAO([{ data: V, stride: 12, layout: [[0, 3, 0], [1, 3, 3], [2, 3, 6], [3, 3, 9]] }]); L.n = V.length / 12;
     }
   }
@@ -9401,14 +9557,71 @@ function drawLandmarks() {
   gl.uniform1f(u.uNight, nightK());
   gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.enable(gl.CULL_FACE);
   for (const L of LM_TOWERS) {
-    if (!L.vao || L.d == null || L.d > 80000) continue;
+    if (!L.vao || L.d == null || L.d > 80000 || (LM.google && L.d > AUTH.r)) continue;   // (over Google's 3D only inside the built-up circle)
     gl.uniform3f(u.uOrigin, L.x, L.g, L.z);
     gl.bindVertexArray(L.vao.vao);
     // the far side first, then the near, so the lattice shows the other side through it
     gl.cullFace(gl.FRONT); gl.drawArrays(gl.TRIANGLES, 0, L.n);
     gl.cullFace(gl.BACK); gl.drawArrays(gl.TRIANGLES, 0, L.n);
   }
+  // the great bridges' towers and cables (solid, but the cables thin: blended like the lattices)
+  if (typeof CITY !== 'undefined' && CITY.ready) {
+    bigbrUpdate();
+    if (BIGBR.vao) { gl.uniform3f(u.uOrigin, 0, 0, 0); gl.disable(gl.CULL_FACE); gl.bindVertexArray(BIGBR.vao.vao); gl.drawArrays(gl.TRIANGLES, 0, BIGBR.n); gl.enable(gl.CULL_FACE); }
+  }
   gl.disable(gl.BLEND);
+}
+// ---- the great bridges over the sea (the city worker finds them: p6_city.js): their H-shaped towers rising
+// from the water through the deck, and the fans of stay cables down to it
+const BIGBR = { key: '', vao: null, n: 0 };
+function bigbrUpdate() {
+  const key = [...CITY.tiles.values()].filter(t => t.btowers).map(t => t.key).join(',') + '|' + JW.ov;
+  if (key === BIGBR.key) return;
+  BIGBR.key = key;
+  // towers in world metres, the same tower seen from its two carriageways (and neighbouring tiles) merged
+  const T = [];
+  for (const t of CITY.tiles.values()) {
+    if (!t.btowers) continue;
+    const P = t.btowers;
+    for (let i = 0; i < P.length; i += 6) {
+      const w = geoToWorld(t.latN - P[i + 1] / KZ, t.lonW + P[i] / t.kxN);
+      const o = T.find(q => Math.hypot(q.x - w[0], q.z - w[1]) < 90);
+      if (o) { o.x = (o.x * o.k + w[0]) / (o.k + 1); o.z = (o.z * o.k + w[1]) / (o.k + 1); o.k++; o.y = Math.max(o.y, P[i + 2]); }
+      else T.push({ x: w[0], z: w[1], y: P[i + 2], dx: P[i + 3], dz: P[i + 4], span: P[i + 5], k: 1 });
+    }
+  }
+  const V = [], white = [0.9, 0.9, 0.88];
+  const vtx = (p, n) => V.push(p[0], p[1], p[2], n[0], n[1], n[2], white[0], white[1], white[2], 0, 0, 0);
+  // a box between two points (a column or a beam) of width w, depth d
+  const post = (a, b, w, d) => {
+    const ax = b[0] - a[0], ay = b[1] - a[1], az = b[2] - a[2], L = Math.hypot(ax, ay, az) || 1, u = [ax / L, ay / L, az / L];
+    let s = vnorm(vcross(u, Math.abs(u[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0])), t = vcross(s, u);
+    const C = (p, i, j) => [p[0] + s[0] * w * i + t[0] * d * j, p[1] + s[1] * w * i + t[1] * d * j, p[2] + s[2] * w * i + t[2] * d * j];
+    for (const [i0, j0, i1, j1, n] of [[-1, -1, 1, -1, vscale(t, -1)], [1, -1, 1, 1, s], [1, 1, -1, 1, t], [-1, 1, -1, -1, vscale(s, -1)]]) {
+      const p0 = C(a, i0, j0), p1 = C(a, i1, j1), p2 = C(b, i1, j1), p3 = C(b, i0, j0);
+      vtx(p0, n); vtx(p1, n); vtx(p2, n); vtx(p0, n); vtx(p2, n); vtx(p3, n);
+    }
+  };
+  for (const q of T) {
+    const px = -q.dz, pz = q.dx, top = q.y + 120, half = 21;
+    const leg = s => [q.x + px * half * s, q.z + pz * half * s];
+    for (const s of [-1, 1]) {
+      const [lx, lz] = leg(s), [tx, tz] = [q.x + px * (half - 6) * s, q.z + pz * (half - 6) * s];
+      post([lx, -8, lz], [lx, q.y - 2, lz], 2.6, 3.4);                      // (below the deck, straight)
+      post([lx, q.y - 2, lz], [tx, top, tz], 2.2, 3.0);                     // (above, leaning in)
+      // the stay cables: a fan each way along the span from high on the leg down to the deck's edge
+      for (const dir of [-1, 1]) for (let k = 1; k <= 11; k++) {
+        const d = k * q.span * 0.022, hy = top - 4 - k * 2.2;
+        post([tx, hy, tz], [q.x + q.dx * d * dir + px * (half - 3) * s, q.y + 0.5 - d * 0.02, q.z + q.dz * d * dir + pz * (half - 3) * s], 0.18, 0.18);
+      }
+    }
+    const [a0, a1] = [leg(-1), leg(1)];
+    post([a0[0], q.y - 3, a0[1]], [a1[0], q.y - 3, a1[1]], 2.0, 2.0);        // cross beams: under the deck, and at the top
+    post([q.x - px * (half - 6), top - 3, q.z - pz * (half - 6)], [q.x + px * (half - 6), top - 3, q.z + pz * (half - 6)], 1.8, 2.4);
+  }
+  if (BIGBR.vao) { gl.deleteVertexArray(BIGBR.vao.vao); for (const b of BIGBR.vao.bufs) gl.deleteBuffer(b); }
+  BIGBR.n = V.length / 12;
+  BIGBR.vao = BIGBR.n ? makeVAO([{ data: new Float32Array(V), stride: 12, layout: [[0, 3, 0], [1, 3, 3], [2, 3, 6], [3, 3, 9]] }]) : null;
 }
 // =====================================================================
 //  AT THE GATES: an airliner parked nose-in at each gate the map has on a
@@ -9504,6 +9717,125 @@ function drawStands() {
     gl.uniformMatrix4fv(u.uModel, false, M4.ident());
     gl.bindVertexArray(STANDS.bridge.vao); gl.drawArrays(gl.TRIANGLES, 0, STANDS.bridge.count);
   }
+}
+// =====================================================================
+//  PEOPLE on the pavements of the main streets round the camera, walking
+//  their way along and turning back at the end of it: a simple figure
+//  (legs, body, arms, head) whose legs and arms swing as it walks, each in
+//  its own clothes. The pavements come from the city worker (p6_city.js).
+// =====================================================================
+const PEDS = { list: [], vao: null, inst: null, prog: null, mesh: null, t: 0 };
+// the figure: parts marked in the colour's red channel (0 body, 1 left leg, 2 right leg, 3 left arm, 4 right arm,
+// 5 head, 6 hair), its colours chosen per person in the shader
+function pedMesh() {
+  if (PEDS.mesh) return PEDS.mesh;
+  const B = new MeshBuilder(), id = k => [k / 10, 0, 0];
+  B.box([-0.1, 0.44, 0], [0.13, 0.88, 0.16], id(1)); B.box([0.1, 0.44, 0], [0.13, 0.88, 0.16], id(2));
+  B.box([0, 1.16, 0], [0.4, 0.58, 0.23], id(0));
+  B.box([-0.26, 1.13, 0], [0.1, 0.6, 0.12], id(3)); B.box([0.26, 1.13, 0], [0.1, 0.6, 0.12], id(4));
+  B.box([0, 1.58, 0], [0.19, 0.24, 0.21], id(5)); B.box([0, 1.7, 0.02], [0.2, 0.08, 0.22], id(6));
+  return PEDS.mesh = B.build();
+}
+const PED_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNrm;
+layout(location=2) in vec3 aCol;
+layout(location=3) in vec4 aI;        // world x, y, z, heading
+layout(location=4) in vec2 aJ;        // stride phase, who (0..1)
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv;
+out vec3 vWorld; out vec3 vN; flat out float vPart; flat out float vWho;
+vec3 rx(vec3 p, float a){ float c = cos(a), s = sin(a); return vec3(p.x, p.y * c - p.z * s, p.y * s + p.z * c); }
+void main(){
+  float part = floor(aCol.r * 10.0 + 0.5), sw = sin(aJ.x);
+  vec3 p = aPos, n = aNrm;
+  float tall = 0.92 + 0.16 * fract(aJ.y * 7.3);
+  if (part > 0.5 && part < 2.5) { float a = (part < 1.5 ? sw : -sw) * 0.45; p = rx(p - vec3(0.0, 0.88, 0.0), a) + vec3(0.0, 0.88, 0.0); n = rx(n, a); }
+  if (part > 2.5 && part < 4.5) { float a = (part < 3.5 ? -sw : sw) * 0.35; p = rx(p - vec3(0.0, 1.42, 0.0), a) + vec3(0.0, 1.42, 0.0); n = rx(n, a); }
+  p *= tall; p.y += abs(cos(aJ.x)) * 0.03;
+  float c = cos(aI.w), s = sin(aI.w);
+  vec3 w = aI.xyz + vec3(p.x * c + p.z * s, p.y, -p.x * s + p.z * c);
+  vN = vec3(n.x * c + n.z * s, n.y, -n.x * s + n.z * c);
+  vWorld = w; vPart = part; vWho = aJ.y;
+  vec2 d = w.xz - uCamPos.xz; w.y -= dot(d, d) * uCurv;
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+const PED_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec3 vN; flat in float vPart; flat in float vWho;
+out vec4 outColor;
+vec3 pick(float k, vec3 a, vec3 b, vec3 c, vec3 d){ return k < 0.25 ? a : k < 0.5 ? b : k < 0.75 ? c : d; }
+void main(){
+  if (zoneCut(vWorld)) discard;
+  float h1 = fract(vWho * 13.7), h2 = fract(vWho * 29.3), h3 = fract(vWho * 51.1);
+  vec3 shirt = pick(h1, vec3(0.85, 0.85, 0.83), vec3(0.12, 0.14, 0.2), vec3(0.55, 0.12, 0.12), vec3(0.3, 0.42, 0.55));
+  vec3 pants = pick(h2, vec3(0.1, 0.1, 0.12), vec3(0.2, 0.25, 0.38), vec3(0.45, 0.4, 0.33), vec3(0.18, 0.18, 0.18));
+  vec3 skin = mix(vec3(0.86, 0.7, 0.58), vec3(0.72, 0.55, 0.42), h3), hair = h3 > 0.8 ? vec3(0.45, 0.32, 0.2) : vec3(0.06, 0.05, 0.05);
+  vec3 c = vPart < 0.5 ? shirt : vPart < 2.5 ? pants : vPart < 4.5 ? (h2 > 0.5 ? shirt : skin) : vPart < 5.5 ? skin : hair;
+  vec3 n = normalize(vN);
+  float diff = max(dot(n, uSunDir), 0.0) * sunShadow(vWorld, n);
+  vec3 col = c * (uSunCol * diff * 0.9 + mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5) * 0.9);
+  outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
+}`;
+// people round the camera: new ones placed on the nearest pavements, those left behind dropped
+function pedUpdate(dt) {
+  const eye = R.eye, MAX = game.touch ? 40 : 120, RAD = game.touch ? 160 : 260;
+  PEDS.list = PEDS.list.filter(p => Math.hypot(p.x - eye[0], p.z - eye[2]) < RAD * 1.2);
+  if (PEDS.list.length < MAX && (!PEDS.spawnT || R.time > PEDS.spawnT)) {
+    PEDS.spawnT = R.time + 0.3;
+    const cand = [];
+    for (const t of CITY.tiles.values()) {
+      if (!t.walks || t.dist > RAD + 300) continue;
+      if (!t.walkW) {                                                 // (the tile's walks in world metres, once)
+        const F = t.walks, out = [];
+        for (let i = 0; i < F.length;) { const n = F[i], P = []; for (let k = 0; k < n; k++) { const x = F[i + 1 + k * 3], z = F[i + 2 + k * 3], w = geoToWorld(t.latN - z / KZ, t.lonW + x / t.kxN); P.push([w[0], F[i + 3 + k * 3], w[1]]); } out.push(P); i += 1 + n * 3; }
+        t.walkW = out; t.walkOv = JW.ov;
+      }
+      if (t.walkOv !== JW.ov) { t.walkW = null; continue; }
+      for (const P of t.walkW) { const m = P[P.length >> 1]; if (Math.hypot(m[0] - eye[0], m[2] - eye[2]) < RAD) cand.push(P); }
+    }
+    for (let k = 0; k < 8 && cand.length && PEDS.list.length < MAX; k++) {
+      const P = cand[Math.random() * cand.length | 0], i = Math.random() * (P.length - 1) | 0;
+      const f = Math.random(), a = P[i], b = P[i + 1];
+      const x = a[0] + (b[0] - a[0]) * f, z = a[2] + (b[2] - a[2]) * f;
+      if (Math.hypot(x - eye[0], z - eye[2]) > RAD) continue;
+      PEDS.list.push({ P, i, f, dir: Math.random() < 0.5 ? 1 : -1, x, y: a[1], z, h: 0, ph: Math.random() * 6.28, who: Math.random(), v: 1.1 + Math.random() * 0.5, side: (Math.random() - 0.5) * 1.4 });
+    }
+  }
+  // walking: along the pavement at their own pace, a little to one side, turning back at its end
+  for (const p of PEDS.list) {
+    let a = p.P[p.i], b = p.P[p.i + 1], L = Math.hypot(b[0] - a[0], b[2] - a[2]) || 1;
+    p.f += p.dir * p.v * dt / L;
+    while (p.f > 1 || p.f < 0) {
+      if (p.f > 1) { if (p.i + 2 < p.P.length) { p.i++; p.f -= 1; } else { p.f = 1; p.dir = -1; break; } }
+      else { if (p.i > 0) { p.i--; p.f += 1; } else { p.f = 0; p.dir = 1; break; } }
+      a = p.P[p.i]; b = p.P[p.i + 1]; L = Math.hypot(b[0] - a[0], b[2] - a[2]) || 1;
+    }
+    const ux = (b[0] - a[0]) / L * p.dir, uz = (b[2] - a[2]) / L * p.dir;
+    p.x = a[0] + (b[0] - a[0]) * p.f - uz * p.side; p.z = a[2] + (b[2] - a[2]) * p.f + ux * p.side; p.y = a[1] + (b[1] - a[1]) * p.f;
+    p.h = Math.atan2(ux, uz); p.ph += dt * p.v * 5.2;
+  }
+}
+function drawPeds() {
+  const dt = Math.min(0.1, Math.max(0, R.time - (PEDS.last || R.time))); PEDS.last = R.time;
+  if (typeof CITY === 'undefined' || !CITY.ready || !JW.active || !JW.online) return;
+  if (R.eye[1] - Math.max(jwHeight(R.eye[0], R.eye[2]), 0) > 150) { PEDS.list = []; return; }
+  pedUpdate(dt);
+  if (!PEDS.list.length) return;
+  if (!PEDS.prog) {
+    PEDS.prog = makeProgram(PED_VS, PED_FS);
+    const m = pedMesh();
+    PEDS.inst = new Float32Array(200 * 6);
+    PEDS.vao = makeVAO([{ loc: 0, size: 3, data: m.pos }, { loc: 1, size: 3, data: m.nrm }, { loc: 2, size: 3, data: m.col },
+      { data: PEDS.inst, stride: 6, layout: [[3, 4, 0], [4, 2, 4]], divisor: 1, dynamic: true }]);
+    PEDS.count = m.count;
+  }
+  const I = PEDS.inst, n = Math.min(PEDS.list.length, 200);
+  for (let k = 0; k < n; k++) { const p = PEDS.list[k]; I.set([p.x, p.y, p.z, p.h, p.ph, p.who], k * 6); }
+  const pr = PEDS.prog;
+  setCommon(pr);
+  gl.bindBuffer(gl.ARRAY_BUFFER, PEDS.vao.bufs[3]); gl.bufferSubData(gl.ARRAY_BUFFER, 0, I.subarray(0, n * 6));
+  gl.bindVertexArray(PEDS.vao.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, PEDS.count, n);
 }
 
 // =====================================================================
@@ -16712,7 +17044,7 @@ function drawScene(planes, far) {
   const showPlane = !(sim.crashed && game.state !== 'menu');
   if (JW.active) setCommon(progMesh);
   if (showPlane) drawPlane(pm, PS, { cockpit: cam.mode === 'cockpit' && game.state !== 'menu' });
-  if (JW.active) { drawStands(); setCommon(progMesh); }             // (airliners at the gates, p_apron.js)
+  if (JW.active) { drawStands(); if (WIRES.side !== null) { ZONE.side = WIRES.side; drawPeds(); ZONE.side = 0; } setCommon(progMesh); }   // (and the people on the pavements, p_peds.js)             // (airliners at the gates, p_apron.js)
   if (CAR.on) { drawCar(); if (JW.active) setCommon(progMesh); }
   if (!JW.active) for (const pk of parked) if (vdist(R.eye, [pk.m[12], pk.m[13], pk.m[14]]) < 6000) drawPlane(pk.m, parkedState, { paint: pk.col, acft: pk.acft });
   if (JW.active) drawJapanWater();

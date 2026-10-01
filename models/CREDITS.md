@@ -25,4 +25,5 @@ the cockpit screens.
 
 ## City materials and trees (`tex/`)
 - `tex/cm00.jpg` … `tex/cm21.jpg` — photographed facades, wall tiles, concrete, plaster, siding, asphalt, paving, tactile paving, roofing, grass and night facades from ambientCG (https://ambientcg.com), CC0 1.0. Assets: Facade006, Facade019A, Facade017, Facade018A, Facade020A, Facade001, Facade005, Facade003, Facade015, Tiles040, Concrete048, PaintedPlaster017, WoodSiding013, Asphalt031, PavingStones128, TactilePaving001, RoofingTiles013A, RoofingTiles012A, Concrete031, Grass004, Facade009, Facade007 (reduced to 1024 px).
+- `tex/cn00.jpg` … `tex/cn21.jpg` — the same 22 ambientCG assets' normal maps (NormalGL: x, y in red and green) and roughness maps (in blue), packed into one picture each and reduced to 512 px, for the surfaces' relief and gloss; CC0 1.0.
 - `tex/trees.webp` — tree cards rendered from Poly Haven's "Island Tree 02" and "Tree Small 02" models (https://polyhaven.com), CC0 1.0.

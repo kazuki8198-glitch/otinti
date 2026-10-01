@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>関内 three.js 試作</title>
+<style>
+:root{--bg:#0b1220;--ink:#e8f0fa;--line:rgba(95,212,255,.45)}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:13px/1.45 system-ui,"Zen Kaku Gothic New",sans-serif;overflow:hidden}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:fixed;left:max(10px,env(safe-area-inset-left));top:10px;padding:6px 10px;border-radius:8px;background:rgba(6,12,22,.72);font:12px ui-monospace,Menlo,monospace;white-space:pre;pointer-events:none}
+#panel{position:fixed;right:max(10px,env(safe-area-inset-right));top:10px;display:flex;flex-wrap:wrap;gap:6px;max-width:min(420px,calc(100% - 20px));justify-content:flex-end}
+#panel button{padding:6px 10px;border-radius:7px;border:1px solid var(--line);background:rgba(20,34,54,.92);color:var(--ink);font:600 12px system-ui,sans-serif;cursor:pointer}
+#panel button.on{border-color:#ffd66b}
+#out{position:fixed;left:10px;right:10px;bottom:10px;height:34%;display:none;background:rgba(6,12,22,.94);color:#dfe7f0;border:1px solid var(--line);border-radius:8px;padding:8px;font:11px/1.4 ui-monospace,Menlo,monospace}
+#pad{position:fixed;left:max(14px,env(safe-area-inset-left));bottom:max(14px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3,54px);gap:6px}
+#pad button{height:46px;border-radius:10px;border:1px solid rgba(232,240,250,.35);background:rgba(8,17,31,.5);color:var(--ink);font:700 16px system-ui;touch-action:none}
+#credit{position:fixed;right:10px;bottom:6px;font-size:10px;opacity:.75;pointer-events:none}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
+  "3d-tiles-renderer": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer@0.5.3/build/index.js",
+  "3d-tiles-renderer/plugins": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer@0.5.3/build/index.plugins.js"
+} }
+</script>
+</head>
+<body>
+<div id="hud">読み込み中…</div>
+<div id="panel">
+  <button data-b="lod2">LOD2</button><button data-b="lod3" class="on">LOD3</button>
+  <button data-t="roads">道路 LOD3</button><button data-t="shadow" class="on">影</button>
+  <button data-a="bench">計測（10 秒）</button><button data-a="copy">結果をコピー</button>
+</div>
+<textarea id="out" readonly></textarea>
+<div id="pad"><span></span><button data-k="up">▲</button><span></span><button data-k="left">◀</button><button data-k="down">▼</button><button data-k="right">▶</button></div>
+<div id="credit">建物・道路: 国土交通省 Project PLATEAU（CC BY 4.0）　車: Sketchfab thelightning（CC BY 4.0）</div>
+<script type="module">
+// The Kannai test block in three.js, to set against the sim's own WebGL engine (flight-sim.html, the developer
+// panel's comparison): PLATEAU's 3D Tiles through 3DTilesRendererJS (its own distance LOD by screen-space error),
+// three's standard PBR materials, a sky that also lights and reflects (PMREM), the sun's shadow map, ACES tone
+// mapping in a linear, sRGB-encoded pipeline; the same spot and chase camera, and the same kind of measurement.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { Sky } from 'three/addons/objects/Sky.js';
+import { TilesRenderer } from '3d-tiles-renderer';
+import { GLTFExtensionsPlugin, ReorientationPlugin, LoadRegionPlugin, SphereRegion } from '3d-tiles-renderer/plugins';
+
+const BASE = 'https://assets.cms.plateau.reearth.io/assets/';
+const SETS = {
+  lod2: BASE + '94/a960a4-7e19-439f-8249-b743e939102a/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14104_naka-ku_lod2/tileset.json',
+  lod3: BASE + '98/34e4f3-a849-4f12-8bd2-50826a53fa62/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14104_naka-ku_lod3/tileset.json',
+  roads: BASE + '51/8e3f96-c5d3-4d89-9397-0aa810b096f7/14100_yokohama-shi_city_2024_citygml_2_op_tran_3dtiles_lod3/tileset.json',
+};
+const SPOT = { lat: 35.446899, lon: 139.641167, h: 39.3, dx: 0.54, dz: -0.841 };   // (h: the street's ellipsoidal height there)
+const touch = matchMedia('(pointer: coarse)').matches;
+const qs = new URLSearchParams(location.search);
+
+const renderer = new THREE.WebGLRenderer({ antialias: !touch, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, touch ? 1.25 : 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.9;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xc8d6e6, 600, 2000);
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.2, 2000);   // (street level: 2 km of the city; beyond it the fog)
+
+// sky, and the light it gives (an environment map made from it, for the ambient light and reflections)
+const sky = new Sky(); sky.scale.setScalar(1800); scene.add(sky);
+const sunDir = new THREE.Vector3(0.5, 0.62, 0.55).normalize();          // (the sim's 'day': the same sun)
+Object.assign(sky.material.uniforms, {}); sky.material.uniforms.turbidity.value = 4; sky.material.uniforms.rayleigh.value = 1.2;
+sky.material.uniforms.sunPosition.value.copy(sunDir);
+const pmrem = new THREE.PMREMGenerator(renderer);
+const envScene = new THREE.Scene(); const sky2 = new Sky(); sky2.scale.setScalar(10000); sky2.material.uniforms.sunPosition.value.copy(sunDir); sky2.material.uniforms.turbidity.value = 4; envScene.add(sky2);
+scene.environment = pmrem.fromScene(envScene, 0.02).texture; scene.environmentIntensity = 0.7;
+const sun = new THREE.DirectionalLight(0xfff3e0, 2.6);
+sun.castShadow = true; sun.shadow.mapSize.set(touch ? 1024 : 2048, touch ? 1024 : 2048);
+Object.assign(sun.shadow.camera, { left: -130, right: 130, top: 130, bottom: -130, near: 1, far: 800 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.08;
+scene.add(sun, sun.target);
+// the ground under it all (where PLATEAU has no road surface)
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.MeshStandardMaterial({ color: 0x3a3b3d, roughness: 0.9 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -0.25; ground.receiveShadow = true; scene.add(ground);
+
+// PLATEAU's photos come at up to 8192 x 8192 a tile (LOD3: some 256 MB each once decoded): taken down to 2048 (a
+// phone 1024) as they are decoded, as the sim's own engine does
+const MAXTEX = touch ? 1024 : 2048;
+THREE.ImageBitmapLoader.prototype.load = function (url, onLoad, onProgress, onError) {
+  const o = this.options || {}, mgr = this.manager; mgr.itemStart(url);
+  fetch(url).then(r => r.blob()).then(b => createImageBitmap(b, { imageOrientation: o.imageOrientation || 'none', premultiplyAlpha: o.premultiplyAlpha || 'default', colorSpaceConversion: 'none' }))
+    .then(async bm => {
+      const m = Math.max(bm.width, bm.height);
+      if (m > MAXTEX) { const k = MAXTEX / m, sm = await createImageBitmap(bm, { resizeWidth: Math.round(bm.width * k), resizeHeight: Math.round(bm.height * k), resizeQuality: 'high' }); bm.close(); bm = sm; }
+      if (onLoad) onLoad(bm); mgr.itemEnd(url);
+    })
+    .catch(e => { if (onError) onError(e); mgr.itemError(url); mgr.itemEnd(url); });
+  return {};
+};
+// PLATEAU's tiles, turned so the spot is the origin, y up
+const draco = new DRACOLoader().setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/draco/gltf/');
+const D2R = Math.PI / 180, sets = {};
+function makeTiles(name) {
+  const t = new TilesRenderer(SETS[name]);
+  t.registerPlugin(new GLTFExtensionsPlugin({ dracoLoader: draco, autoDispose: false }));
+  t.registerPlugin(new ReorientationPlugin({ lat: SPOT.lat * D2R, lon: SPOT.lon * D2R, height: SPOT.h, up: '+y', recenter: true }));
+  t.errorTarget = touch ? 20 : 12;
+  // only round the car (400 m: the street and the blocks either side; the rest of the ward isn't fetched)
+  t.region = new SphereRegion({ sphere: new THREE.Sphere(new THREE.Vector3(), 400), errorTarget: t.errorTarget, mask: true });
+  t.registerPlugin(new LoadRegionPlugin({ regions: [t.region] }));
+  if ('maxBytesSize' in t.lruCache && !touch) { t.lruCache.minBytesSize = 0.6e9; t.lruCache.maxBytesSize = 1.2e9; }
+  if (touch && 'maxBytesSize' in t.lruCache) { t.lruCache.minBytesSize = 0.15e9; t.lruCache.maxBytesSize = 0.3e9; }   // (a phone keeps less in memory)
+  t.addEventListener('load-model', ({ scene: s }) => s.traverse(o => {
+    if (!o.isMesh) return;
+    o.castShadow = name !== 'roads'; o.receiveShadow = true;
+    const ms = Array.isArray(o.material) ? o.material : [o.material];
+    for (const m of ms) {
+      if (name === 'roads') { o.material = new THREE.MeshStandardMaterial({ color: 0x55575a, roughness: 0.85 }); o.position.y -= 0.0; continue; }
+      if (m.map) m.map.anisotropy = touch ? 4 : 8;
+      if ('roughness' in m) { m.roughness = 0.85; m.metalness = 0; }
+    }
+  }));
+  t.setCamera(camera); t.setResolutionFromRenderer(camera, renderer);
+  scene.add(t.group);
+  return t;
+}
+let bmode = qs.get('lod') === '2' ? 'lod2' : 'lod3';
+sets[bmode] = makeTiles(bmode);
+function setMode(m) {
+  if (m === bmode) return;
+  sets[bmode].group.visible = false;
+  bmode = m; if (!sets[m]) sets[m] = makeTiles(m); sets[m].group.visible = true;
+}
+
+// the car: a ready-made model, driven along the street (a simple bicycle model, on level ground)
+const car = new THREE.Group(); scene.add(car);
+// (the model next to the page; where .glb files aren't served, its base64 copy in .glb.json)
+async function fetchGlb(u) { try { const r = await fetch(u); if (r.ok) return await r.arrayBuffer(); } catch (e) { /* the JSON copy */ } const j = await (await fetch(u + '.json')).json(), b = atob(j.glb), a = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a.buffer; }
+const carLoad = (url, ok, _p, ng) => fetchGlb(url).then(buf => new GLTFLoader().parse(buf, '', ok, ng)).catch(ng);
+carLoad('models/cars/toyota_gr_supra_lo.glb', g => {
+  const m = g.scene; m.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } });
+  const box = new THREE.Box3().setFromObject(m), s = 4.38 / (box.max.z - box.min.z || 1);
+  m.scale.setScalar(s); m.position.y = -box.min.y * s;
+  const b2 = new THREE.Box3().setFromObject(m); m.position.x -= (b2.max.x + b2.min.x) / 2; m.position.z -= (b2.max.z + b2.min.z) / 2;
+  car.add(m);
+}, undefined, () => { const b = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.3, 4.4), new THREE.MeshStandardMaterial({ color: 0xa01010, roughness: 0.3 })); b.position.y = 0.65; b.castShadow = true; car.add(b); });
+const L = Math.hypot(SPOT.dx, SPOT.dz);
+const C = { x: -SPOT.dz / L * -1.6, z: SPOT.dx / L * -1.6, hdg: Math.atan2(SPOT.dx, SPOT.dz), v: 0, steer: 0, camYaw: 0 };
+C.camYaw = C.hdg;
+const keys = {};
+addEventListener('keydown', e => { keys[e.code] = true; }); addEventListener('keyup', e => { keys[e.code] = false; });
+for (const b of document.querySelectorAll('#pad button')) {
+  const k = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' }[b.dataset.k];
+  b.addEventListener('pointerdown', e => { keys[k] = true; b.setPointerCapture(e.pointerId); });
+  for (const ev of ['pointerup', 'pointercancel']) b.addEventListener(ev, () => { keys[k] = false; });
+}
+// the street's direction and the lane in this frame, from PLATEAU's own globe (once its tiles are placed): the spot,
+// and points a metre east and a metre south of it
+let placed = false;
+function place() {
+  const t = sets[bmode]; if (!t || !t.ellipsoid || !t.root || Math.abs(t.group.matrixWorld.elements[13]) < 1) return;   // (once the tileset is in and turned)
+  t.group.updateMatrixWorld();
+  const w = (dn, de) => t.ellipsoid.getCartographicToPosition((SPOT.lat - dn / 111000) * D2R, (SPOT.lon + de / 90700) * D2R, SPOT.h, new THREE.Vector3()).applyMatrix4(t.group.matrixWorld);
+  const o = w(0, 0), e = w(0, 1).sub(o).normalize(), sth = w(1, 0).sub(o).normalize();
+  const f = e.clone().multiplyScalar(SPOT.dx / L).addScaledVector(sth, SPOT.dz / L).normalize(), side = e.clone().multiplyScalar(-SPOT.dz / L).addScaledVector(sth, SPOT.dx / L);   // (side: to the right of the way)
+  C.x = o.x - side.x * 1.6; C.z = o.z - side.z * 1.6; C.hdg = C.camYaw = Math.atan2(f.x, f.z);
+  placed = true;
+}
+function drive(dt) {
+  if (!placed) place();
+  const up = keys.ArrowUp || keys.KeyW, dn = keys.ArrowDown || keys.KeyS, st = (keys.ArrowRight || keys.KeyD ? 1 : 0) - (keys.ArrowLeft || keys.KeyA ? 1 : 0);
+  C.v += ((up ? 6 : 0) - (dn ? (C.v > 0.5 ? 9 : 3) : 0) - C.v * 0.05) * dt;
+  if (!up && !dn) C.v *= 1 - 0.6 * dt;
+  C.v = Math.max(-6, Math.min(40, C.v));
+  C.steer += (st * 0.5 / (1 + Math.abs(C.v) / 9) - C.steer) * Math.min(1, dt * 6);
+  C.hdg -= C.v * Math.tan(C.steer) / 2.47 * dt;
+  C.x += Math.sin(C.hdg) * C.v * dt; C.z += Math.cos(C.hdg) * C.v * dt;
+  car.position.set(C.x, 0, C.z); car.rotation.y = C.hdg;
+  let d = ((C.hdg - C.camYaw + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI; C.camYaw += d * Math.min(1, dt * 3);
+  const fx = Math.sin(C.camYaw), fz = Math.cos(C.camYaw);
+  camera.position.set(C.x - fx * 7.2, 2.3, C.z - fz * 7.2);
+  camera.lookAt(C.x + fx * 3, 1.1, C.z + fz * 3);
+  sun.position.set(C.x + sunDir.x * 300, sunDir.y * 300, C.z + sunDir.z * 300); sun.target.position.set(C.x + fx * 60, 0, C.z + fz * 60);
+}
+
+// frame timing and the measurement
+const _inv = new THREE.Matrix4();
+const fr = []; let last = performance.now(), bench = null;
+const hud = document.getElementById('hud'), out = document.getElementById('out');
+function stats(a) { const s = a.slice().sort((x, y) => x - y), sum = a.reduce((x, y) => x + y, 0); return { fps: 1000 * a.length / sum, p50: s[s.length >> 1], p95: s[Math.floor(s.length * 0.95)] || s[s.length - 1], max: s[s.length - 1] }; }
+function gpuName() { const gl = renderer.getContext(), d = gl.getExtension('WEBGL_debug_renderer_info'); return d ? gl.getParameter(d.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); }
+function report(b) {
+  const s = stats(b.fr), f1 = v => v.toFixed(1), info = renderer.info;
+  return [`【計測 three.js 試作】${new Date().toLocaleString('ja-JP')}　関内 ${SPOT.lat}, ${SPOT.lon}（昼・後方視点）`,
+    `端末: ${navigator.userAgent}`, `GPU: ${gpuName()}　CPU ${navigator.hardwareConcurrency || '?'} コア　画面 ${innerWidth}×${innerHeight}（dpr ${devicePixelRatio}）`,
+    `建物: PLATEAU ${bmode.toUpperCase()}　道路: ${sets.roads && sets.roads.group.visible ? 'PLATEAU LOD3' : 'なし'}　影: ${renderer.shadowMap.enabled ? 'あり' : 'なし'}　描画解像度 ${renderer.domElement.width}×${renderer.domElement.height}`,
+    `実フレームレート ${f1(s.fps)} fps（1フレーム 中央値 ${f1(s.p50)} ms / 95% ${f1(s.p95)} ms / 最大 ${f1(s.max)} ms、${b.fr.length} フレーム）`,
+    `1フレームの JS ${f1(b.js / b.fr.length)} ms　描画呼出 ${info.render.calls}　三角形 ${(info.render.triangles / 1000).toFixed(0)} 千　テクスチャ ${info.memory.textures}　ジオメトリ ${info.memory.geometries}`].join('\n');
+}
+function loop(now) {
+  const dt = Math.min(0.1, (now - last) / 1000), real = now - last; last = now;
+  fr.push(real); if (fr.length > 240) fr.shift();
+  const t0 = performance.now();
+  drive(dt);
+  for (const k in sets) if (sets[k].group.visible) { const t = sets[k]; t.group.updateMatrixWorld(); t.region.sphere.center.copy(car.position).applyMatrix4(_inv.copy(t.group.matrixWorld).invert()); t.setResolutionFromRenderer(camera, renderer); t.update(); }
+  renderer.render(scene, camera);
+  const js = performance.now() - t0;
+  if (bench) { bench.fr.push(real); bench.js += js; if (now - bench.t0 > 10000) { out.value = report(bench); out.style.display = 'block'; bench = null; window.__benchDone = out.value; } }
+  if ((fr.length & 15) === 0) {
+    const s = stats(fr.slice(-60)), i = renderer.info.render, tl = sets[bmode];
+    hud.textContent = `実 ${s.fps.toFixed(1)} fps　中央値 ${s.p50.toFixed(1)} ms\n描画呼出 ${i.calls}　三角形 ${(i.triangles / 1000).toFixed(0)} 千\nPLATEAU ${bmode.toUpperCase()}: 読込中 ${tl.stats ? tl.stats.downloading + tl.stats.parsing : '?'}　表示 ${tl.visibleTiles ? tl.visibleTiles.size : '?'} タイル\n${(C.v * 3.6).toFixed(0)} km/h`;
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+document.getElementById('panel').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.b) { setMode(b.dataset.b); for (const o of document.querySelectorAll('[data-b]')) o.classList.toggle('on', o.dataset.b === bmode); }
+  if (b.dataset.t === 'roads') { if (!sets.roads) sets.roads = makeTiles('roads'); else sets.roads.group.visible = !sets.roads.group.visible; b.classList.toggle('on', sets.roads.group.visible); ground.visible = !sets.roads.group.visible || true; }
+  if (b.dataset.t === 'shadow') { renderer.shadowMap.enabled = !renderer.shadowMap.enabled; scene.traverse(o => { if (o.material) for (const m of [].concat(o.material)) m.needsUpdate = true; }); b.classList.toggle('on', renderer.shadowMap.enabled); }
+  if (b.dataset.a === 'bench') { bench = { t0: performance.now(), fr: [], js: 0 }; out.style.display = 'block'; out.value = '計測中（10 秒、操作しないでください）…'; }
+  if (b.dataset.a === 'copy') { out.select(); navigator.clipboard && navigator.clipboard.writeText(out.value).catch(() => document.execCommand('copy')); }
+});
+addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+window.__three = { scene, camera, renderer, sets, C, setMode };
+</script>
+</body>
+</html>

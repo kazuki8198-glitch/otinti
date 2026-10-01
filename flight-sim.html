@@ -7190,7 +7190,7 @@ out vec4 outColor;
 float stripe(float x, float c, float hw, float aa){ return 1.0 - smoothstep(hw - aa, hw + aa, abs(x - c)); }
 void main(){
   if (zoneCut(vWorld)) discard;
-  if (uTranRect.z > 0.0 && abs(vSide - 9.0) > 0.5) {                             // (all but the buildings' contact shadows)
+  if (uTranRect.z > 0.0) {                                             // (the buildings' contact shadows too: the hidden ones' stayed behind)
     vec2 tu = (vWorld.xz - uTranRect.xy) / uTranRect.zw;
     if (tu.x > 0.0 && tu.y > 0.0 && tu.x < 1.0 && tu.y < 1.0 && texture(uTranMask, tu).r > 0.5) discard;
   }
@@ -8208,7 +8208,9 @@ function platCmpUpdate(planes, f) {
     if (n.state === 0) req.push([n, d + (kind === 'bldg' ? 0 : 30), kind]);
   };
   const sets = platCmpSets(la, lo, dLat, dLon).map(S => [S, 'bldg']);
-  if (PLAT.cmpNear !== false) for (const S of PLAT.nearList) if (!(S.n < la - dLat || S.s > la + dLat || S.e < lo - dLon || S.w > lo + dLon)) sets.push([S, S.kind]);
+  // (the trees by default; the roads only when asked: their surface fits the sim's ground only where the 10 m
+  // elevation has come, and where it hasn't they stand off it by a metre or more)
+  if (PLAT.cmpNear !== false) for (const S of PLAT.nearList) if ((S.kind !== 'tran' || PLAT.cmpRoads) && !(S.n < la - dLat || S.s > la + dLat || S.e < lo - dLon || S.w > lo + dLon)) sets.push([S, S.kind]);
   for (const [S, kind] of sets) {
     if (S.state === 0 || (S.state === 3 && R.time > S.retry)) { platLoadSet(S); want++; continue; }
     if (S.state !== 2) { want++; continue; }
@@ -9883,9 +9885,12 @@ void main(){
 const MARK_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
 in vec3 vWorld; in vec2 vUv;
 uniform sampler2D uMarks, uNoise;
+uniform sampler2D uTranMask;
+uniform vec4 uTranRect;     // (where PLATEAU's roads are drawn instead: the sim's painted words aren't)
 out vec4 outColor;
 void main(){
   if (zoneCut(vWorld)) discard;
+  if (uTranRect.z > 0.0) { vec2 tu = (vWorld.xz - uTranRect.xy) / uTranRect.zw; if (tu.x > 0.0 && tu.y > 0.0 && tu.x < 1.0 && tu.y < 1.0 && texture(uTranMask, tu).r > 0.5) discard; }
   float a = texture(uMarks, vUv).a;
   float wear = texture(uNoise, vWorld.xz / 0.7).b * 0.6 + texture(uNoise, vWorld.xz / 3.1).a * 0.4;
   if (a * (0.75 + 0.5 * wear) < 0.5) discard;                       // (worn paint, the asphalt showing through)
@@ -17360,7 +17365,7 @@ function devBuild() {
   el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font:700 13px system-ui,sans-serif">開発用パネル</b><button data-a="close">閉じる</button></div>
 <div data-k="live" style="margin:6px 0;white-space:pre-wrap"></div>
 <div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0"><span style="font:600 12px system-ui,sans-serif;align-self:center">建物:</span><button data-src="0">自前</button><button data-src="1">PLATEAU LOD2</button><button data-src="2">PLATEAU LOD3</button></div>
-<div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0"><span style="font:600 12px system-ui,sans-serif;align-self:center">PLATEAU の範囲:</span><button data-rad="150">150 m</button><button data-rad="300">300 m</button><button data-rad="600">600 m</button><button data-a="near">道路・樹木も</button></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0"><span style="font:600 12px system-ui,sans-serif;align-self:center">PLATEAU の範囲:</span><button data-rad="150">150 m</button><button data-rad="300">300 m</button><button data-rad="600">600 m</button><button data-a="near">樹木</button><button data-a="roads">道路（試験的）</button></div>
 <div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0"><button data-a="prof">段階ごとの計測</button><button data-a="sync">GPU: タイマー</button><button data-a="spot">試験区画へ移動</button></div>
 <div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0"><button data-a="bench">ベンチマーク（今の建物）</button><button data-a="bench3">3方式を比較計測</button></div>
 <div data-k="status" style="margin:6px 0;color:#ffd66b;font-family:system-ui,sans-serif"></div>
@@ -17379,6 +17384,7 @@ function devBuild() {
     else if (a === 'sync') { const on = DEV.prof; devProf(false); DEV.sync = !DEV.sync || (DEV.ext === null && !DEV.sync); if (on) devProf(true); devRender(); }
     else if (a === 'spot') { if (JW.active) { if (!CAR.on) carEnter(); devPlace(); } }
     else if (a === 'near') { PLAT.cmpNear = PLAT.cmpNear === false; devRender(); }
+    else if (a === 'roads') { PLAT.cmpRoads = !PLAT.cmpRoads; devRender(); }
     else if (a === 'bench') devBench(null);
     else if (a === 'bench3') devBench([0, 1, 2]);
     else if (a === 'copy') { const t = el.querySelector('[data-k=out]'); t.select(); try { navigator.clipboard.writeText(t.value).then(() => toast('コピーしました', 1200), () => document.execCommand('copy')); } catch (err) { document.execCommand('copy'); } }
@@ -17397,7 +17403,8 @@ function devRender() {
   for (const b of el.querySelectorAll('[data-src]')) b.style.borderColor = +b.dataset.src === (PLAT.cmp || 0) ? '#ffd66b' : 'rgba(95,212,255,.5)';
   for (const b of el.querySelectorAll('[data-rad]')) b.style.borderColor = +b.dataset.rad === (PLAT.cmpR || 300) ? '#ffd66b' : 'rgba(95,212,255,.5)';
   el.querySelector('[data-a=prof]').textContent = DEV.prof ? '段階ごとの計測: ON' : '段階ごとの計測: OFF';
-  el.querySelector('[data-a=near]').textContent = PLAT.cmpNear !== false ? '道路・樹木も: ON' : '道路・樹木も: OFF';
+  el.querySelector('[data-a=near]').textContent = PLAT.cmpNear !== false ? '樹木: ON' : '樹木: OFF';
+  el.querySelector('[data-a=roads]').textContent = PLAT.cmpRoads ? '道路（試験的）: ON' : '道路（試験的）: OFF';
   el.querySelector('[data-a=sync]').textContent = DEV.ext && !DEV.sync ? 'GPU: タイマー' : 'GPU: gl.finish 同期';
   el.querySelector('[data-k=status]').textContent = DEV.status;
   let tb = '';

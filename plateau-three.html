@@ -112,7 +112,7 @@ composer.addPass(new OutputPass());                                    // (ACES 
 composer.setSize(innerWidth, innerHeight);
 
 // fetched next to the page; where a file type isn't served, its base64 copy in <name>.json
-async function fetchBin(u) { try { const r = await fetch(u); if (r.ok) return await r.arrayBuffer(); } catch (e) { /* the JSON copy */ } const j = await (await fetch(u + '.json')).json(), b = atob(j.glb || j.data), a = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a.buffer; }
+async function fetchBin(u) { try { const r = await fetch(u); if (r.ok && !/html/.test(r.headers.get('content-type') || '')) return await r.arrayBuffer(); } catch (e) { /* the JSON copy */ } const j = await (await fetch(u + '.json')).json(), b = atob(j.glb || j.data), a = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a.buffer; }
 
 // ---- the sky: Poly Haven's "Kloofendal 48d Partly Cloudy (Pure Sky)". Seen: the 4k photo, its linear radiance
 // stored at a quarter (so the clouds fit 8 bits; only the sun's disc is clipped). Lighting: the 1k HDR with its sun

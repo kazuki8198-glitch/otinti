@@ -1139,6 +1139,42 @@ vec3 skyColor(vec3 d){
   c += uSunCol * (pow(sd, 5.0) * 0.10 + pow(sd, 60.0) * 0.30);
   return c;
 }
+// the sky as a shiny surface mirrors it (cheap: the horizon's colour up to the zenith's, the sun's glow)
+vec3 skyEnv(vec3 d){
+  vec2 hz = normalize(d.xz + vec2(1e-5)), sz = normalize(uSunDir.xz + vec2(1e-5));
+  float t = dot(hz, sz) * 0.5 + 0.5;
+  vec3 c = mix(mix(uHorizonAway, uHorizon, t * t), uZenith, pow(clamp(d.y, 0.0, 1.0), 0.5));
+  float sd = max(dot(d, uSunDir), 0.0);
+  return c + uSunCol * (pow(sd, 6.0) * 0.12 + pow(sd, 80.0) * 0.5);
+}
+// the light a surface facing n gets from the sky dome, and from the sunlit ground below thrown back up
+vec3 skyIrr(vec3 n){
+  return mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5) * 1.15 + uSunCol * max(uSunDir.y, 0.0) * 0.28 * clamp(0.5 - n.y * 0.5, 0.0, 1.0);
+}
+// what a glossy surface mirrors in a street (uUrban 1): the sky above the roofline, the buildings across the
+// street (a wall each ten degrees round, its rows of windows mirroring the sky behind you), the road below;
+// a rough surface sees all of it blurred
+uniform float uUrban;
+vec3 envRefl(vec3 R, float rough){
+  if (rough >= 0.5) return skyIrr(R) * 0.9;
+  vec3 c = skyEnv(normalize(vec3(R.x, max(R.y, 0.0), R.z)));
+  if (uUrban > 0.0) {
+    float az = atan(R.z, R.x) * 3.58, k = floor(az), hb = fract(sin(k * 12.9898) * 43758.5453);   // (a building every 16 degrees round)
+    float roof = (0.05 + 0.2 * hb) * uUrban, fw = max(fwidth(R.y), 0.004);
+    float inB = 1.0 - smoothstep(roof - fw, roof + fw, R.y);
+    if (inB > 0.0) {
+      vec3 Rh = normalize(vec3(-R.x, 0.0, -R.z));
+      vec3 wall = mix(vec3(0.55, 0.54, 0.52), vec3(0.8, 0.78, 0.74), fract(hb * 7.31));
+      wall *= skyIrr(Rh) * 1.1 + uSunCol * (max(dot(Rh, uSunDir), 0.0) * 0.8 + 0.12);   // (walls in the sun, or lit by the street and the sky)
+      float fr = (16.0 + 14.0 * fract(hb * 3.7)) * R.y, rw = fwidth(fr) + 0.05;
+      float row = smoothstep(0.4 - rw, 0.4 + rw, fract(fr)) * (1.0 - smoothstep(0.9 - rw, 0.9 + rw, fract(fr)));
+      c = mix(c, mix(wall, skyEnv(normalize(vec3(-R.x, 0.35, -R.z))) * 0.6, row * 0.28), inB);
+    }
+  }
+  if (R.y < 0.0) c = mix(c, vec3(0.19, 0.19, 0.2) * (uSunCol * max(uSunDir.y, 0.0) * 0.9 + uAmbSky), smoothstep(0.0, -0.05, R.y));
+  return mix(c, skyIrr(R) * 0.9, smoothstep(0.08, 0.5, rough));      // (a rough surface: only the blurred light of it all)
+}
+float fresnelS(float NV, float f0){ return f0 + (1.0 - f0) * pow(1.0 - NV, 5.0); }
 // optical depth of an exponential layer (scale height H) along a straight segment
 float odExp(float h0, float dy, float L, float H){
   float e0 = exp(-max(h0, -200.0) / H);
@@ -4091,6 +4127,7 @@ void main(){
   // (lowered under the Google mesh, except in the near zone round the car and in a built-up area, where it is
   // the ground itself)
   vH = w.y; w.y -= uSink * (uZone.w > 0.0 ? smoothstep(uZone.z, uZone.w, length(w.xz - uZone.xy)) : 1.0) * (uAuth.w > 0.0 ? smoothstep(uAuth.z, uAuth.w, length(w.xz - uAuth.xy)) : 1.0);
+  w.y -= 0.18 * (uAuth.w > 0.0 ? 1.0 - smoothstep(uAuth.z, uAuth.w, length(w.xz - uAuth.xy)) : 0.0);   // (in the sim's own built-up area the terrain sits a hand under the city's paving and lawns, so on a slope it never shows through them)
   vec2 d = w.xz - uCamPos.xz;
   w.y -= dot(d, d) * uCurv;
   vWorld = w; vN = aNormal; vUv = aUv * uUvX.x + uUvX.yz;
@@ -5620,14 +5657,19 @@ function cityWorkerMain() {
           let pv = -1, wk = [];                                         // (wk: the middle of the pavement, for people walking)
           const wkEnd = () => { if (wk.length >= 6) walks.push(wk.length / 3, ...wk); wk = []; };
           for (let i = 0; i < V.length; i++) {
-            const [x, z, g, nx, nz, uu, j] = V[i], ox = nx * sd, oz = nz * sd, ri0 = w / 2, ro = w / 2 + sw;
-            const a0 = rput(x + ox * ri0, z + oz * ri0, g - 0.02, uu, 257, sw, 0), a1 = rput(x + ox * ri0, z + oz * ri0, g + kh, uu, 257, sw, 1);
-            const b0 = rput(x + ox * ri0, z + oz * ri0, g + kh, uu, 256, sw, 0), b1 = rput(x + ox * ro, z + oz * ro, g + kh, uu, 256, sw, 1);
-            const c0 = rput(x + ox * ro, z + oz * ro, g + kh, uu, 257, sw, 1), c1 = rput(x + ox * ro, z + oz * ro, g - 0.3, uu, 257, sw, 0);
+            const [x, z, g, nx, nz, uu, j] = V[i], ox = nx * sd, oz = nz * sd, ri0 = w / 2, ro = w / 2 + sw, P = d => [x + ox * d, z + oz * d];
+            // (the concrete gutter of the L-shaped kerb unit along the road's edge (L型側溝), a hair over the asphalt;
+            // the kerb stone's face, its top edge chamfered; the paving; the face down at the back)
+            const e0 = rput(...P(ri0 - 0.45), g + 0.015, uu, 267, 0.45, 0), e1 = rput(...P(ri0), g + 0.015, uu, 267, 0.45, 1);
+            const a0 = rput(...P(ri0), g - 0.02, uu, 257, sw, 0), a1 = rput(...P(ri0), g + kh - 0.025, uu, 257, sw, 0.85), a2 = rput(...P(ri0 + 0.025), g + kh, uu, 257, sw, 1);
+            const b0 = rput(...P(ri0 + 0.025), g + kh, uu, 256, sw, 0), b1 = rput(...P(ro), g + kh, uu, 256, sw, 1);
+            const c0 = rput(...P(ro), g + kh, uu, 257, sw, 1), c1 = rput(...P(ro), g - 0.3, uu, 257, sw, 0);
             if (pv >= 0 && j <= 2 && V[i - 1][6] <= 2) {
-              ri.push(pv, a0, pv + 1, pv + 1, a0, a1);                 // kerb face
-              ri.push(pv + 2, b0, pv + 3, pv + 3, b0, b1);             // paving
-              ri.push(pv + 4, c0, pv + 5, pv + 5, c0, c1);             // back
+              ri.push(pv, e0, pv + 1, pv + 1, e0, e1);                 // gutter
+              ri.push(pv + 2, a0, pv + 3, pv + 3, a0, a1);             // kerb face
+              ri.push(pv + 3, a1, pv + 4, pv + 4, a1, a2);             // its chamfer
+              ri.push(pv + 5, b0, pv + 6, pv + 6, b0, b1);             // paving
+              ri.push(pv + 7, c0, pv + 8, pv + 8, c0, c1);             // back
               if (!wk.length) wk.push(V[i - 1][0] + V[i - 1][3] * sd * (w / 2 + sw * 0.55), V[i - 1][1] + V[i - 1][4] * sd * (w / 2 + sw * 0.55), V[i - 1][2] + kh);
               wk.push(x + ox * (w / 2 + sw * 0.55), z + oz * (w / 2 + sw * 0.55), g + kh);
               // white guard pipes (ガードパイプ) along the kerb on some stretches, open every so often for a crossing
@@ -5645,7 +5687,7 @@ function cityWorkerMain() {
               }
             }
             if (!(j <= 2)) wkEnd();
-            pv = a0;
+            pv = e0;
           }
           wkEnd();
         }
@@ -6563,7 +6605,7 @@ function drawCity(planes) {
   // cell by cell (16 x 16 to a tile): only the cells in view, and a building's details (windows, doors,
   // fittings, balconies, block walls: most of a house's triangles) only in the cells near the camera
   const DR = game.touch ? 280 : 480, eye = R.eye;
-  gl.uniform1f(u.uDetR, DR);
+  gl.uniform1f(u.uDetR, DR); gl.uniform1f(u.uRelief, !game.touch || (SUNSH.auto && SUNSH.auto.on) ? 1 : 0);   // (the facades' relief: on a phone with the sun's shadows, while there is the frame time)
   for (const t of CITY.tiles.values()) {
     if (!t.vao) continue;
     const b = cityBox(t), y0 = t.minG - 60, y1 = t.maxTop + 5;
@@ -6670,7 +6712,7 @@ const BLDG_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
 in vec3 vWorld; in vec3 vN; in vec3 vM; flat in float vSeed; flat in float vRoof; flat in float vFeat; flat in float vKind;
 uniform sampler2D uNoise;
 uniform float uNight;
-uniform float uDetR;
+uniform float uDetR, uRelief;
 out vec4 outColor;
 float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
 float h2(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
@@ -6685,6 +6727,10 @@ void main(){
   vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5) * 1.25 + uSunCol * max(uSunDir.y, 0.0) * 0.3 * clamp(0.5 - n.y * 0.5, 0.0, 1.0);
   vec3 col, bEm = vec3(0.0);
   float gloss = 0.0;
+  // the wall's frame: T along it (the way u runs), up, n out of it; the view and the sun in that frame
+  vec3 T = normalize(vec3(-n.z, 0.0, n.x) + vec3(1e-5, 0.0, 0.0));
+  if (dFdx(vM.x) * dot(dFdx(vWorld), T) + dFdy(vM.x) * dot(dFdy(vWorld), T) < 0.0) T = -T;
+  vec3 Vt = vec3(dot(V, T), V.y, max(dot(V, n), 0.06)), Lt = vec3(dot(uSunDir, T), uSunDir.y, dot(uSunDir, n));
   bool tower = vKind > 2.5 && vKind < 3.5 || H > 45.0, house = vKind > 0.5 && vKind < 1.5, mansion = vKind > 1.5 && vKind < 2.5;
   if (vKind > 11.5 && vRoof < 0.5) {
     // a block wall: concrete blocks 39 x 19 cm in stretcher bond, the mortar joints, a cap along the top,
@@ -6753,10 +6799,26 @@ void main(){
     } else {                                                             // windows and sliding doors
       float h = vKind > 7.5 ? 1.85 : 1.1;
       float edge = min(min(u, w - u), min(y, h - y)), mid = abs(u - w * 0.5);
-      float frame = step(edge, 0.045) + step(mid, 0.022);
+      // the glass set 5 cm back in its aluminium frame: the frame's inner sides seen at an angle (lit as they
+      // face), the glass and the middle bar shifted, the glass in the frame's shadow when the sun is behind it
+      float rvW = 0.0, shW = 1.0; vec3 nW = n;
+      if (edge > 0.045 && dist < 140.0) {
+        vec2 pm = vec2(u, y), lo = vec2(0.045), hi = vec2(w - 0.045, h - 0.045), dq = -Vt.xy / Vt.z;
+        float tx = dq.x > 1e-4 ? (hi.x - pm.x) / dq.x : dq.x < -1e-4 ? (lo.x - pm.x) / dq.x : 1e9;
+        float ty = dq.y > 1e-4 ? (hi.y - pm.y) / dq.y : dq.y < -1e-4 ? (lo.y - pm.y) / dq.y : 1e9;
+        if (min(tx, ty) < 0.05) { rvW = 1.0; nW = tx < ty ? (dq.x > 0.0 ? -T : T) : vec3(0.0, dq.y > 0.0 ? -1.0 : 1.0, 0.0); }
+        else {
+          vec2 q = pm + dq * 0.05, so = q + Lt.xy / max(Lt.z, 0.05) * 0.05;
+          mid = abs(q.x - w * 0.5);
+          shW = Lt.z > 0.0 && so.x > lo.x && so.x < hi.x && so.y > lo.y && so.y < hi.y ? 1.0 : 0.0;
+        }
+      }
+      float frame = step(edge, 0.045) + step(mid, 0.022) + rvW;
       vec3 r = reflect(-V, n);
       float fres = 0.15 + 0.7 * pow(1.0 - max(dot(n, V), 0.0), 4.0);
-      vec3 glz = mix(vec3(0.05, 0.06, 0.07), skyColor(r) * 0.85, fres) + uSunCol * pow(max(dot(r, uSunDir), 0.0), 150.0) * 2.0;
+      vec3 glz = mix(vec3(0.05, 0.06, 0.07), envRefl(r, 0.02) * 0.85, fres) + uSunCol * pow(max(dot(r, uSunDir), 0.0), 150.0) * 2.0 * shW;
+      glz *= mix(0.75, 1.0, shW * diff + (1.0 - diff));
+      if (rvW > 0.5) lit0 = uSunCol * max(dot(nW, uSunDir), 0.0) * 0.9 * step(0.001, diff) + skyIrr(nW) * 0.7;
       float cur = step(0.55, h2(vec2(floor(vWorld.x * 0.3), vSeed)));
       glz = mix(glz, vec3(0.7, 0.66, 0.58) * lit0 * 0.5, cur * 0.45 * step(mid, w * 0.5 - 0.1));      // curtains
       float on = step(0.72, h2(vec2(floor(vWorld.x * 0.4 + vWorld.z * 0.4), vSeed + 3.0)));
@@ -6834,6 +6896,7 @@ void main(){
     float aa = clamp(1.0 - max(fw.x, fw.y) * 1.2, 0.0, 1.0);
     float win, frame = 0.0;
     float cov;
+    float rv = 0.0, glassSh = 1.0; vec3 rvN = n;                      // (the window's recess: a reveal seen, its normal; the glass in its shade)
     // the wall's own finish: lap siding on houses, small tiles on some mansions, rain streaks under windows
     float nz = texture(uNoise, vWorld.xz / 5.0 + vWorld.y / 9.0).b;
     float fin = 1.0;
@@ -6868,18 +6931,35 @@ void main(){
       cov = 0.36 * (1.0 - skipW);
       float fx = min(fp.x - x0, x1 - fp.x) * ws, fy = min(fp.y - y0, y1 - fp.y) * fh;
       frame = win * max(step(min(fx, fy), 0.055), house ? step(abs(fp.x - 0.5) * ws, 0.03) : 0.0);
+      // the window set back in the wall: the view ray, going in, meets a side of the opening (a reveal: the
+      // jambs, the sill, the head) before the glass, and that side is what is seen, lit by its own facing;
+      // otherwise the glass and its frame, shifted, and in the head's or a jamb's shadow when the sun is behind it
+      float RD = house ? 0.07 : mansion ? 0.13 : 0.2;
+      if (win > 0.5 && aa > 0.5 && dist < 260.0) {
+        vec2 pm = fp * vec2(ws, fh), lo = vec2(x0 * ws, y0 * fh), hi = vec2(x1 * ws, y1 * fh), dq = -Vt.xy / Vt.z;
+        float tx = dq.x > 1e-4 ? (hi.x - pm.x) / dq.x : dq.x < -1e-4 ? (lo.x - pm.x) / dq.x : 1e9;
+        float ty = dq.y > 1e-4 ? (hi.y - pm.y) / dq.y : dq.y < -1e-4 ? (lo.y - pm.y) / dq.y : 1e9;
+        if (min(tx, ty) < RD) { rv = 1.0; rvN = tx < ty ? (dq.x > 0.0 ? -T : T) : vec3(0.0, dq.y > 0.0 ? -1.0 : 1.0, 0.0); }
+        else {
+          vec2 q = pm + dq * RD, so = q + Lt.xy / max(Lt.z, 0.05) * RD;
+          float fx2 = min(q.x - lo.x, hi.x - q.x), fy2 = min(q.y - lo.y, hi.y - q.y);
+          frame = max(step(min(fx2, fy2), 0.05), house ? step(abs(q.x - (lo.x + hi.x) * 0.5), 0.03) : 0.0);
+          glassSh = Lt.z > 0.0 && so.x > lo.x && so.x < hi.x && so.y > lo.y && so.y < hi.y ? 1.0 : 0.0;
+        }
+      }
       if (!house && s3 > 0.6) { win = wy * smoothstep(0.02, 0.06, fp.x) * (1.0 - smoothstep(0.94, 0.98, fp.x)); cov = 0.5; frame = win * step(fract(g.x * 2.0) * ws * 0.5, 0.05); }   // strip windows
       // rain streaks run down from the sills
       if (!house) fin *= 1.0 - 0.13 * wx * (1.0 - smoothstep(0.0, 0.3, fp.y)) * texture(uNoise, vec2(vM.x * 1.7, vM.z * 0.08)).a * aa;
     }
-    if (vM.z < 0.3 || vM.z > H - 0.9 || (shop && vM.z < z0) || (house && dist < uDetR)) win = 0.0;   // (houses near by have real windows; far off, where those aren't drawn, painted ones)  // plinth, parapet, the shop storey
+    if (vM.z < 0.3 || vM.z > H - 0.9 || (shop && vM.z < z0) || (house && dist < uDetR)) { win = 0.0; rv = 0.0; frame = 0.0; }   // (houses near by have real windows; far off, where those aren't drawn, painted ones)  // plinth, parapet, the shop storey
     frame *= step(0.001, win) * aa;
     win = mix(cov, win, aa);
     // glass: sky reflection with Fresnel, dark interior
     vec3 r = reflect(-V, n);
     float fres = 0.12 + 0.75 * pow(1.0 - max(dot(n, V), 0.0), 4.0);
-    vec3 glass = mix(vec3(0.05, 0.06, 0.08), skyColor(r) * 0.9, fres + (tower ? 0.25 : 0.0));
-    glass += uSunCol * pow(max(dot(r, uSunDir), 0.0), 120.0) * 2.0;
+    vec3 glass = mix(vec3(0.07, 0.08, 0.1), envRefl(r, 0.02) * 0.9, fres + (tower ? 0.25 : 0.0));
+    glass += uSunCol * pow(max(dot(r, uSunDir), 0.0), 120.0) * 2.0 * glassSh;
+    glass *= mix(0.72, 1.0, glassSh * diff + (1.0 - diff));               // (the head's shadow across the glass)
     if (house || veranda) glass = mix(glass, vec3(0.62, 0.6, 0.55) * (uSunCol * 0.3 + amb), 0.35 * step(0.5, h2(cell * 5.1 + vSeed)));   // curtains drawn
     // only some rooms are lit (rooms span 2-3 windows), some buildings are nearly dark, brightness varies
     float bmood = h2(vec2(vSeed * 3.1, 1.7));
@@ -6904,8 +6984,10 @@ void main(){
       wc *= clamp(wt, 0.4, 1.8);
     }
     vec3 wallLit = wc * fin * (uSunCol * diff * 0.9 + amb);
-    vec3 alu = (s2 > 0.5 && house ? vec3(0.3, 0.26, 0.22) : vec3(0.66, 0.67, 0.66)) * (uSunCol * diff * 0.9 + amb);
+    vec3 alu = (s2 > 0.5 && house ? vec3(0.3, 0.26, 0.22) : vec3(0.66, 0.67, 0.66)) * (uSunCol * diff * 0.9 * mix(0.35, 1.0, glassSh) + amb);
     col = mix(mix(wallLit, glass, win), alu, frame);
+    // a reveal: the wall's own stuff, lit as it faces (the sill up to the sun, the head down in its shade)
+    if (rv > 0.5) col = wc * fin * (uSunCol * max(dot(rvN, uSunDir), 0.0) * 0.9 * step(0.001, diff) + skyIrr(rvN) * 0.62);
     // offices and towers: a photographed facade, its real windows and panels (and lit windows from night
     // photos), the storeys matched to the building's height
     if (uMatOn > 0.5 && (tower || (!house && !mansion && H >= 11.0 && s2 > 0.15))) {
@@ -6913,11 +6995,38 @@ void main(){
       if (tower) { int k = int(s1 * 4.0); L = k == 0 ? 5.0 : k == 1 ? 6.0 : k == 2 ? 1.0 : 0.0; S = k == 0 ? 38.0 : k == 1 ? 42.9 : k == 2 ? 21.0 : 28.8; if (H > 120.0 && s3 > 0.5) { L = 8.0; S = 112.0; } }
       else { int k = int(s1 * 5.0); L = float(k); S = k == 0 ? 28.8 : k == 1 ? 21.0 : k == 2 ? 14.4 : 19.2; }
       vec2 uv = vec2(vM.x + vSeed * 7.3, vM.z) / S;
+      // the facade in relief: the glass (dark in the photo) set back behind the wall's face. The view ray is
+      // marched in; where it reaches the depth of what is there, that is what is seen: the glass at the back,
+      // shifted, or the side of an opening (a reveal) on the way. Then the sun's way out from it: in the
+      // shadow of the head or a jamb, or not
+      float RD2 = tower ? 0.08 : 0.2, relief = 0.0, shR = 1.0;
+      vec3 nR = n;
+      if (uRelief > 0.5 && dist < 170.0) {
+        relief = 1.0 - smoothstep(110.0, 170.0, dist);
+        vec2 du = -Vt.xy / max(Vt.z, 0.3) * RD2 * relief / S;        // (fading out far off, so it never pops; not running away at a glancing angle)
+        float dh = 0.0, hit = 0.0;
+        for (int i = 0; i <= 6; i++) {
+          float dd = float(i) / 6.0;
+          vec2 uvi = uv + du * dd;
+          vec3 ci = matC(L, uvi);
+          dh = smoothstep(0.3, 0.12, dot(ci, vec3(0.3, 0.55, 0.15))) * (1.0 - smoothstep(0.03, 0.1, ci.r - ci.b));   // (glass: dark and not reddish; brick and stone stay at the face)
+          hit = dd;
+          if (dd >= dh) break;
+        }
+        uv += du * hit;
+        if (hit > 0.01 && dh < 0.5) nR = normalize(-(T * du.x + vec3(0.0, du.y, 0.0)) * relief + n * (1.0 - relief) + n * 0.05);   // (a reveal faces back the way the ray came)
+        vec2 us = uv + Lt.xy / max(Lt.z, 0.05) * RD2 * hit / S;
+        vec3 cs = matC(L, us);
+        if (hit > 0.5 && smoothstep(0.3, 0.12, dot(cs, vec3(0.3, 0.55, 0.15))) * (1.0 - smoothstep(0.03, 0.1, cs.r - cs.b)) < 0.5) shR = mix(1.0, 0.35, relief);
+      }
       vec3 ft = matC(L, uv);
       float lf = dot(ft, vec3(0.3, 0.55, 0.15)), gm = smoothstep(0.4, 0.16, lf);
       vec3 rr = reflect(-V, n);
-      vec3 day = ft * (uSunCol * (0.35 + 0.5 * diff) + amb * 0.8) * 1.05;
-      day += (skyColor(rr) * (0.1 + 0.55 * pow(1.0 - max(dot(n, V), 0.0), 4.0)) + uSunCol * pow(max(dot(rr, uSunDir), 0.0), 200.0) * 1.5) * gm * (1.0 - uNight * 0.8);
+      // (the photo has its own light in it: a face keeps the old balance; a reveal is lit as it faces, the
+      // glass in the shadow of its opening loses the sun)
+      float isRev = step(0.5, 1.0 - dot(nR, n)), diffR = max(dot(nR, uSunDir), 0.0) * step(0.001, diff);
+      vec3 day = ft * (uSunCol * mix(0.35 + 0.5 * diff * shR, 0.3 + 0.6 * diffR, isRev) + mix(amb * 0.8, skyIrr(nR) * 0.7, isRev)) * 1.05;
+      day += (envRefl(rr, 0.03) * (0.1 + 0.55 * pow(1.0 - max(dot(n, V), 0.0), 4.0)) + uSunCol * pow(max(dot(rr, uSunDir), 0.0), 200.0) * 1.5) * gm * (1.0 - uNight * 0.8);
       // no two buildings alike: a tint, rain streaks down the wall, grime near the street
       day *= mix(vec3(0.86), vec3(1.12), vec3(h1(vSeed + 1.1), h1(vSeed + 1.1) * 0.6 + h1(vSeed + 2.7) * 0.4, h1(vSeed + 3.9) * 0.5 + h1(vSeed + 1.1) * 0.5));
       float stk = texture(uNoise, vec2(vM.x * 0.31 + vSeed, vM.z * 0.017)).a;
@@ -6926,7 +7035,7 @@ void main(){
       if (vM.z < 4.0 && !shop) {
         float bay = fract(vM.x / 6.0), lob = step(0.5, h1(vSeed + 7.7));
         vec3 stone = vec3(0.42, 0.41, 0.4) * (0.9 + 0.2 * texture(uNoise, vec2(vM.x, vM.z) * 0.3).b) * (uSunCol * (0.35 + 0.5 * diff) + amb * 0.8);
-        vec3 lobby = (vec3(0.05, 0.06, 0.07) + skyColor(rr) * (0.15 + 0.6 * pow(1.0 - max(dot(n, V), 0.0), 4.0))) * mix(1.0, 0.35, step(abs(bay - 0.5), 0.02));
+        vec3 lobby = (vec3(0.17, 0.16, 0.14) * (uSunCol * 0.25 + amb) + envRefl(rr, 0.03) * (0.15 + 0.6 * pow(1.0 - max(dot(n, V), 0.0), 4.0))) * mix(1.0, 0.35, step(abs(bay - 0.5), 0.02));
         day = mix(stone, lobby, lob * step(0.35, vM.z) * step(vM.z, 3.6) * step(0.06, bay) * step(bay, 0.94));
         gm = lob;
       }
@@ -6958,7 +7067,7 @@ void main(){
           vec3 shopIn = mix(vec3(0.95, 0.92, 0.82), hue, 0.25);
           float door = step(0.4, ux) * step(ux, 0.6) * step(vM.z, 2.2);
           float mul = step(0.01, abs(fract(vM.x / 1.6) - 0.5) - 0.48);
-          col = mix(glass * 0.8 + shopIn * 0.18, shopIn * 0.5 * lit0, 0.35);
+          col = mix(glass * 0.7 + shopIn * 0.32, shopIn * 0.55 * lit0, 0.35);
           col = mix(col, alu, max(mul, step(vM.z, 0.35)) * aaS);
           bEm += shopIn * (0.35 + 1.1 * uNight) * (1.0 - mul) * step(0.35, vM.z) * (1.0 - door * 0.5) * aaS;
         }
@@ -6979,11 +7088,11 @@ uniform mat4 uViewProj;
 uniform vec3 uCamPos;
 uniform float uCurv;
 ` + CITY_POS_GLSL + `
-out vec3 vWorld; out vec3 vR; flat out float vCls; out float vJ; flat out float vSide;
+out vec3 vWorld; out vec3 vR; flat out float vCls; out float vJ; flat out float vSide; out vec3 vRel;
 void main(){
   vec3 w = cityWorld(aXZ * 0.1, aY);
   vec2 d = w.xz - uCamPos.xz;
-  vWorld = w; w.y -= dot(d, d) * uCurv;
+  vWorld = w; vRel = w - uCamPos; w.y -= dot(d, d) * uCurv;   // (vRel: small numbers, so a face's own normal from their derivatives is clean far from the origin)
   vR = vec3(aM.x * 0.1, aM.z * 0.1, aM.w * 0.001);
   float k = aM.y - 512.0;
   vCls = mod(k, 16.0); vJ = floor(k / 16.0 + 0.001) / 7.0;         // class, and how much this is a junction
@@ -6991,7 +7100,7 @@ void main(){
   gl_Position = uViewProj * vec4(w, 1.0);
 }`;
 const ROAD_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
-in vec3 vWorld; in vec3 vR; flat in float vCls; in float vJ; flat in float vSide;
+in vec3 vWorld; in vec3 vR; flat in float vCls; in float vJ; flat in float vSide; in vec3 vRel;
 uniform sampler2D uNoise;
 out vec4 outColor;
 float stripe(float x, float c, float hw, float aa){ return 1.0 - smoothstep(hw - aa, hw + aa, abs(x - c)); }
@@ -7005,6 +7114,17 @@ void main(){
   if (uCamPos.y < vWorld.y - 1.0) {
     vec3 cu = vec3(0.42, 0.42, 0.41) * (0.85 + 0.2 * n2) * (uAmbSky * 0.9 + uSunCol * 0.12);
     outColor = vec4(tonemap(applyFog(cu, vWorld)), 1.0); return;
+  }
+  if (vSide > 11.5) {
+    // the gutter of the L-shaped kerb unit (L型側溝): smooth concrete in 60 cm lengths, a shade lighter than the
+    // asphalt; grime and the kerb's shade along its foot, the joint with the asphalt dark
+    float au = max(fwidth(u), 1e-3), jt = 1.0 - smoothstep(0.0, au * 1.5 + 0.004, abs(fract(u / 0.6) - 0.5) * 0.6);
+    float n2g = texture(uNoise, vWorld.xz / 3.0).a, n1g = texture(uNoise, vWorld.xz / 0.5).b;
+    vec3 base = vec3(0.55, 0.54, 0.51) * (0.86 + 0.14 * n2g) * (0.93 + 0.1 * n1g) * (1.0 - 0.3 * jt * (1.0 - smoothstep(10.0, 40.0, dist)));
+    base *= mix(0.6, 1.0, smoothstep(1.0, 0.72, vR.z)) * (1.0 - 0.15 * smoothstep(0.12, 0.0, vR.z));
+    float shg = sunShadow(vWorld, vec3(0.0, 1.0, 0.0)) * planeShadow(vWorld.xz);
+    vec3 cgu = base * (uSunCol * max(uSunDir.y, 0.0) * 0.95 * shg + skyIrr(vec3(0.0, 1.0, 0.0)) * 0.8 * mix(0.65, 1.0, smoothstep(1.0, 0.6, vR.z)));
+    outColor = vec4(tonemap(applyFog(cgu, vWorld)), 1.0); return;
   }
   if (vSide > 9.5) {
     // the city's ground: paved blocks (slabs of concrete and paving, stained by use) or grass
@@ -7086,10 +7206,22 @@ void main(){
     return;
   }
   if (vSide > 0.5) {
-    // the pavement: 30 cm slabs, a kerb-stone edge, the yellow tactile strip for the blind (点字ブロック)
+    // the pavement: 30 cm slabs, a kerb-stone edge, the yellow tactile strip for the blind (点字ブロック); and the
+    // upright faces (the kerb, a bridge's parapets and piers) lit by their own normal
     float n2p = texture(uNoise, vWorld.xz / 6.0).a;
-    vec3 base;
-    if (vSide > 1.5) base = vec3(0.6, 0.59, 0.56) * (0.88 + 0.12 * n2p);
+    vec3 fn = normalize(cross(dFdx(vRel), dFdy(vRel)));
+    if (dot(fn, -vRel) < 0.0) fn = -fn;
+    vec3 base; float aoP = 1.0;
+    if (vSide > 1.5) {
+      base = vec3(0.6, 0.59, 0.56) * (0.88 + 0.12 * n2p);
+      if (vR.y > 2.0) {
+        // the kerb stone's face: precast concrete in 60 cm lengths, the chamfer on its top edge catching the light,
+        // grimy and in the gutter's shade at its foot
+        float au = max(fwidth(u), 1e-3), jt = 1.0 - smoothstep(0.0, au * 1.5 + 0.004, abs(fract(u / 0.6 + 0.25) - 0.5) * 0.6);
+        base = vec3(0.7, 0.69, 0.66) * (0.9 + 0.1 * n2p) * (1.0 - 0.35 * jt * (1.0 - smoothstep(10.0, 40.0, dist)));
+        aoP = mix(0.5, 1.0, smoothstep(0.0, 0.7, vR.z));
+      }
+    }
     else {
       float am = vR.z * vR.y;                                     // metres from the kerb
       vec2 pv = vec2(u, am) / 0.3, f = abs(fract(pv) - 0.5);
@@ -7097,15 +7229,19 @@ void main(){
       base = mix(vec3(0.54, 0.53, 0.5), vec3(0.63, 0.61, 0.57), nHash(floor(pv))) * (0.9 + 0.12 * n2p);
       base *= 1.0 - joint * 0.22;
       if (uMatOn > 0.5) base = matC(14.0, vec2(u, am) / 1.2) * (0.85 + 0.15 * n2p);            // photographed paving blocks
-      if (am < 0.18) base = vec3(0.66, 0.65, 0.62) * (0.92 + 0.08 * n2p);
+      if (am < 0.18) {                                            // the kerb stone's top, in its 60 cm lengths
+        float au = max(fwidth(u), 1e-3), jt = 1.0 - smoothstep(0.0, au * 1.5 + 0.004, abs(fract(u / 0.6 + 0.25) - 0.5) * 0.6);
+        base = vec3(0.7, 0.69, 0.66) * (0.92 + 0.08 * n2p) * (1.0 - 0.3 * jt * (1.0 - smoothstep(10.0, 40.0, dist)));
+      }
       float tb = step(0.5, am) * step(am, 0.8) * step(0.5, fract(u / 23.0)) ;
       base = mix(base, uMatOn > 0.5 ? matC(15.0, vec2(u, am - 0.5) / 1.2) : vec3(0.8, 0.63, 0.12) * (0.9 + 0.1 * n2p), tb);
     }
-    float dp = vSide > 1.5 ? 0.55 : max(uSunDir.y, 0.0);
+    vec3 nP = vSide > 1.5 ? fn : vec3(0.0, 1.0, 0.0);
+    float dp = max(dot(nP, uSunDir), 0.0) * sunShadow(vWorld, nP) * planeShadow(vWorld.xz);
     // the real pavement's colour from the aerial photo, under the slab pattern
     vec4 npv = nearPhoto(vWorld);
     if (npv.a > 0.0 && vSide < 1.5) base *= mix(1.0, clamp(dot(npv.rgb, vec3(0.3, 0.55, 0.15)) / 0.4, 0.8, 1.2), 0.5 * npv.a);   // (lighter or darker, as the real one)
-    vec3 cp = base * (uSunCol * dp * 0.95 + uAmbSky * 0.85);
+    vec3 cp = base * (uSunCol * dp * 0.95 + skyIrr(nP) * 0.78 * aoP);
     outColor = vec4(tonemap(applyFog(cp, vWorld)), 1.0);
     return;
   }
@@ -7135,7 +7271,7 @@ void main(){
   // markings
   float paint = 0.0;
   if (!track && vCls < 6.5) {
-    paint += stripe(abs(m), w * 0.5 - 0.35, 0.075, aa);                          // edge lines
+    paint += stripe(abs(m), w * 0.5 - (vCls > 1.5 && vCls < 5.5 ? 0.75 : 0.35), 0.075, aa);   // edge lines (inside the gutter where there are kerbs)
     float dash = step(fract(u / 10.0), 0.5);                                       // 5 m line, 5 m gap
     if (vCls < 1.5) paint += dash * stripe(m, 0.0, 0.075, aa);                    // motorway lane line
     else if (vCls < 3.5) paint += stripe(abs(m), 0.12, 0.07, aa);                  // main roads: solid double centre
@@ -7165,9 +7301,18 @@ void main(){
     c *= mix(1.0, clamp(lt / 0.32, 0.75, 1.3), 0.6 * np.a);            // lighter or darker surface, as the real one
     c = mix(c, c * normalize(rp.rgb + 0.05) * 1.73, 0.25 * np.a);        // and a hint of its colour
   }
+  if (!track && vCls > 1.5 && vCls < 5.5) c *= 1.0 - 0.1 * smoothstep(w * 0.5 - 1.2, w * 0.5 - 0.45, abs(m));   // (grime along the gutter)
   c = mix(c, paintCol, clamp(paint, 0.0, 1.0));
   float diff = max(uSunDir.y, 0.0) * sunShadow(vWorld, vec3(0.0, 1.0, 0.0));
-  vec3 col = c * (uSunCol * diff * 0.95 + uAmbSky * 0.85);
+  vec3 col = c * (uSunCol * diff * 0.95 + skyIrr(vec3(0.0, 1.0, 0.0)) * 0.74);
+  // dry asphalt's gloss: rough, but bright towards the sun and mirroring a little of the sky at a glancing angle
+  // (the paint smoother than the stone)
+  if (!track) {
+    vec3 Vr = normalize(uCamPos - vWorld), Hr = normalize(Vr + uSunDir);
+    float ro = mix(0.6, 0.42, clamp(paint, 0.0, 1.0)), a2 = ro * ro * ro * ro, ex = 2.0 / a2 - 2.0;
+    float Fr = fresnelS(max(Vr.y, 1e-3), 0.04);
+    col += uSunCol * pow(max(Hr.y, 0.0), ex) * (ex + 8.0) / 25.0 * Fr * diff * 0.8 + envRefl(reflect(-Vr, vec3(0.0, 1.0, 0.0)), ro) * Fr * 0.3 * (0.85 + 0.3 * n1);
+  }
   // at night the pools of light under the street lamps (every 32 m each side of the main roads, staggered;
   // the odd lamp on a pole down the side streets)
   if (uNightK > 0.01 && !track) {
@@ -15058,6 +15203,7 @@ uniform int uHasTex, uHasEm, uHasMR;
 uniform vec4 uColor;
 uniform vec3 uEmis, uLightK;           // sun, ambient, emission multipliers
 uniform float uCut, uRough, uMetal, uCoat, uEnv, uFog, uShadow;
+uniform vec2 uAOy;          // a car's: the road's height under it, 1 (the sky shut out low down round its underside)
 out vec4 outColor;
 void main(){
   vec4 c = uColor; if (uHasTex == 1) c *= texture(uTex, vUV);
@@ -15070,7 +15216,8 @@ void main(){
   float NV = max(dot(n, V), 0.0);
   float sh = uShadow > 0.5 ? planeShadow(vWorld.xz) : 1.0;
   float diff = max(dot(n, uSunDir), 0.0) * sh * sunShadow(vWorld, n);
-  vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
+  float ao = uAOy.y > 0.5 ? mix(0.42, 1.0, smoothstep(0.12, 0.72, vWorld.y - uAOy.x)) : 1.0;
+  vec3 amb = uAOy.y > 0.5 ? skyIrr(n) * ao : mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
   vec3 base = c.rgb;
   vec3 col = base * (1.0 - metal) * (uSunCol * diff * 0.8 * uLightK.x + amb * 0.95 * uLightK.y);
   // specular: the sun, and the sky (or the ground below the horizon) reflected, more on smooth parts
@@ -15083,12 +15230,14 @@ void main(){
   vec3 R = reflect(-V, n);
   vec3 env = R.y > 0.0 ? skyColor(R) : mix(skyColor(vec3(R.x, 0.02, R.z)), uAmbGround * 0.6 + vec3(0.03), smoothstep(0.0, -0.12, R.y));
   env = mix(env, amb * 1.2, rough);                                   // rough surfaces see a blurred sky
+  if (uUrban > 0.0 && uAOy.y > 0.5) env = envRefl(R, rough) * mix(ao, 1.0, 0.4);   // (a car in a street mirrors the street)
   col += env * F * uEnv * mix(1.0, 0.25, rough) * (metal > 0.5 ? 1.0 : 0.8);
   // clearcoat (car paint): a thin glossy layer over it all
   if (uCoat > 0.0) {
     float Fc = (0.04 + 0.96 * pow(1.0 - NV, 5.0)) * uCoat;
     float spc = pow(max(dot(n, H), 0.0), 900.0) * 18.0 * diff;
-    col = col * (1.0 - Fc) + (env * uEnv + uSunCol * spc * uLightK.x) * Fc;
+    vec3 envC = uUrban > 0.0 && uAOy.y > 0.5 ? envRefl(R, 0.05) * mix(ao, 1.0, 0.6) : env;
+    col = col * (1.0 - Fc) + (envC * uEnv + uSunCol * spc * uLightK.x) * Fc;
   }
   vec3 em = uEmis; if (uHasEm == 1) em *= texture(uEmTex, vUV).rgb;
   col += em * uLightK.z;
@@ -15254,6 +15403,7 @@ function glbDraw(model, M, lightK = [1, 1, 1], partM = null, o = {}) {
   if (o.shadow && typeof shadowUniforms === 'function') shadowUniforms(pr);
   gl.uniform3fv(u.uLightK, lightK);
   gl.uniform1f(u.uEnv, o.env ?? 0.3); gl.uniform1f(u.uFog, o.fog ? 1 : 0); gl.uniform1f(u.uShadow, o.shadow ? 1 : 0);
+  gl.uniform2f(u.uAOy, o.aoY ?? 0, o.aoY != null ? 1 : 0);
   gl.uniform1i(u.uTex, 0); gl.uniform1i(u.uEmTex, 1); gl.uniform1i(u.uMRTex, 3);
   let blending = false;
   gl.disable(gl.CULL_FACE);
@@ -15434,14 +15584,14 @@ function buildCarModel(M, paint) {
   for (let i = 0; i < nsp; i++) { const a = i / nsp * Math.PI * 2; w.cylinder([tw / 2 - 0.02, 0, 0], [tw / 2 - 0.035, Math.cos(a) * R * 0.7, Math.sin(a) * R * 0.7], M.id === 'sports' ? 0.012 : 0.022, M.id === 'sports' ? 0.01 : 0.017, 6, rimC); }
   w.cylinder([tw / 2 - 0.05, 0, 0], [tw / 2 - 0.03, 0, 0], R * 0.74, R * 0.74, 24, rimC);                  // rim lip
   w.cylinder([tw / 2 - 0.02, 0, 0], [tw / 2 + 0.005, 0, 0], R * 0.14, R * 0.12, 12, vscale(rimC, 1.1));
-  const sh = new MeshBuilder();
-  for (let i = 0; i < 5; i++) {
-    const k = 1 - i * 0.12, ring = Array.from({ length: 28 }, (_, j) => { const a = j / 28 * Math.PI * 2; return [Math.cos(a) * (W2 + 0.2) * k, 0.03 + i * 0.002, Math.sin(a) * (L / 2 + 0.2) * k]; });
-    sh.loft([ring, ring.map(p => [p[0], p[1] + 0.001, p[2]])], [0, 0, 0], { capStart: true, capEnd: true });
-  }
+  // each part's material, known by the colour it was given: 0 the paint, 1 glass, 2 rubber and black plastic,
+  // 3 metal (chrome, the rims, the brake discs), 4 the number plates, 5 the lamps' lenses
+  const bm = b.build(), wm = w.build(), lm = lt.build();
+  const bodyMat = carMatOf(bm, [[M.glass, 1], [black, 2], [trim, 2], [chrome, 3], [[0.92, 0.92, 0.88], 4], [vscale(paint, 0.2), M.id === 'suv' ? 2 : 0]], 0);
   return {
-    body: uploadMesh(b.build()), wheel: uploadMesh(w.build()), lights: uploadMesh(lt.build()), shadow: uploadMesh(sh.build()),
+    body: uploadCarMesh(bm, bodyMat), wheel: uploadCarMesh(wm, carMatOf(wm, [[[0.05, 0.05, 0.055], 2]], 3)), lights: uploadCarMesh(lm, new Float32Array(lm.count).fill(5)),
     wheels: [[-(W2 - 0.14), R, axF, 1], [W2 - 0.14, R, axF, 1], [-(W2 - 0.14), R, axR, 0], [W2 - 0.14, R, axR, 0]],
+    dims: [W2, L / 2, axF, axR, W2 - 0.14],
   };
 }
 // built meshes by model and paint (shared by the player's car and the traffic)
@@ -15451,33 +15601,120 @@ function carMesh(mi, pi, lo = false) {
   if (M.glb) {
     // a ready-made model; until it has loaded (or if it can't be), a built car of a similar size stands in
     const e = carGlbGet(M, lo), fb = carMesh(M.sporty ? 3 : M.L > 4.6 ? 0 : 1, pi);
-    return e.state === 'ok' ? { glb: e.model, M, F: M.frame, shadowMesh: carShadowMesh(M.L, M.W) } : fb;
+    return e.state === 'ok' ? { glb: e.model, M, F: M.frame, dims: [M.W / 2, M.L / 2, M.frame.wheels[0][2], M.frame.wheels[2][2], Math.abs(M.frame.wheels[0][0])] } : fb;
   }
   const key = mi + '/' + pi;
   if (!CARMESH.has(key)) CARMESH.set(key, buildCarModel(M, CAR_PAINTS[pi]));
   return CARMESH.get(key);
 }
-// soft contact shadow: concentric ellipses, darker inside
-const CARSHADOW = new Map();
-function carShadowMesh(L, W) {
-  const key = L.toFixed(2) + 'x' + W.toFixed(2);
-  if (CARSHADOW.has(key)) return CARSHADOW.get(key);
-  const sh = new MeshBuilder();
-  for (let i = 0; i < 5; i++) {
-    const k = 1 - i * 0.12, ring = Array.from({ length: 28 }, (_, j) => { const a = j / 28 * Math.PI * 2; return [Math.cos(a) * (W / 2 + 0.2) * k, 0.03 + i * 0.002, Math.sin(a) * (L / 2 + 0.2) * k]; });
-    sh.loft([ring, ring.map(p => [p[0], p[1] + 0.001, p[2]])], [0, 0, 0], { capStart: true, capEnd: true });
+// the car's materials: each vertex's by its colour (list: [colour, material]; anything else def)
+function carMatOf(m, list, def) {
+  const out = new Float32Array(m.count);
+  for (let i = 0; i < m.count; i++) {
+    const r = m.col[i * 3], g = m.col[i * 3 + 1], bb = m.col[i * 3 + 2]; let id = def;
+    for (const [c, k] of list) if (Math.abs(c[0] - r) + Math.abs(c[1] - g) + Math.abs(c[2] - bb) < 0.004) { id = k; break; }
+    out[i] = id;
   }
-  const m = uploadMesh(sh.build()); CARSHADOW.set(key, m); return m;
+  return out;
+}
+function uploadCarMesh(m, mat) {
+  const v = makeVAO([{ loc: 0, size: 3, data: m.pos }, { loc: 1, size: 3, data: m.nrm }, { loc: 2, size: 3, data: m.col }, { loc: 3, size: 1, data: mat }]);
+  v.count = m.count; return v;
+}
+// the built cars' shading: the paint under a clear coat, tinted glass, rubber, chrome and the rims, each with
+// its own gloss; what is mirrored in them is the street (envRefl: the sky over the roofline, the buildings
+// across the road, the road itself); the sky's light is shut out low down round the car's own underside
+const CAR_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNormal;
+layout(location=2) in vec3 aColor;
+layout(location=3) in float aMat;
+uniform mat4 uViewProj;
+uniform mat4 uModel;
+uniform vec3 uCamPos;
+uniform float uCurv;
+out vec3 vWorld; out vec3 vN; out vec3 vCol; out vec3 vLocal; flat out float vMat;
+void main(){
+  vec4 wp = uModel * vec4(aPos, 1.0);
+  vec2 cd = wp.xz - uCamPos.xz; wp.y -= dot(cd, cd) * uCurv;
+  vWorld = wp.xyz; vN = mat3(uModel) * aNormal; vCol = aColor; vLocal = aPos; vMat = aMat;
+  gl_Position = uViewProj * wp;
+}`;
+const CAR_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec3 vN; in vec3 vCol; in vec3 vLocal; flat in float vMat;
+uniform vec3 uEmissive;
+uniform float uAlpha, uWheel;
+out vec4 outColor;
+void main(){
+  int mat = int(vMat + 0.5);
+  vec3 base = vCol, n = normalize(vN); if (!gl_FrontFacing) n = -n;
+  vec3 V = normalize(uCamPos - vWorld);
+  float NV = max(dot(n, V), 1e-3);
+  float rough = mat == 0 ? 0.3 : mat == 1 ? 0.03 : mat == 2 ? 0.75 : mat == 3 ? 0.32 : mat == 4 ? 0.45 : 0.06;
+  float metal = mat == 3 ? 1.0 : 0.0;
+  // ambient occlusion: low down the sky is shut out by the car itself and the road (the wheels sit in the arches)
+  float ao = uWheel > 0.5 ? 0.85 : mix(0.5, 1.0, smoothstep(0.1, 0.6, vLocal.y));
+  float diff = max(dot(n, uSunDir), 0.0) * sunShadow(vWorld, n);
+  vec3 irr = skyIrr(n) * ao, R = reflect(-V, n), H = normalize(V + uSunDir);
+  float NH = max(dot(n, H), 0.0);
+  vec3 col;
+  if (mat == 1 || mat == 5) {
+    // glass: the dim cabin through it, the street mirrored in it (more so at a glancing angle), the sun a spark
+    float F = clamp(fresnelS(NV, 0.04) * 1.1 + 0.07, 0.0, 1.0);
+    col = mix(base * 0.35 * irr, envRefl(R, 0.02) * mix(ao, 1.0, 0.5), F) + uSunCol * pow(NH, 900.0) * 9.0 * diff;
+  } else {
+    float a2 = rough * rough * rough * rough, ex = clamp(2.0 / max(a2, 1e-4) - 2.0, 1.0, 3000.0);
+    float sp = pow(NH, ex) * (ex + 8.0) / 25.0;
+    vec3 F0 = mix(vec3(0.04), base, metal), F = F0 + (1.0 - F0) * pow(1.0 - NV, 5.0) * (1.0 - rough);
+    col = base * (mat == 0 ? 1.12 : 1.0) * (1.0 - metal) * (uSunCol * diff * 0.95 + irr);   // (car paint a shade richer than its swatch)
+    col += uSunCol * sp * F * diff * 0.5 + envRefl(R, rough) * F * ao * (metal > 0.5 ? 1.0 : 0.7);
+    if (mat == 0) {
+      // the clear coat over the paint: a thin glossy layer mirroring the street, the sun a hard point in it
+      float Fc = fresnelS(NV, 0.04);
+      col = col * (1.0 - Fc) + (envRefl(R, 0.05) * mix(ao, 1.0, 0.6) + uSunCol * pow(NH, 1800.0) * 70.0 * diff) * Fc;
+    }
+  }
+  col += uEmissive * (mat == 5 ? 1.0 : 0.0);
+  outColor = vec4(tonemap(applyFog(col, vWorld)), uAlpha);
+}`;
+// the shadow a car casts on the road under it whatever the light (the sky shut out): dark under the floor,
+// soft beyond its edges, darkest where the tyres touch the road
+const CARCS_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec3 vWorld; in vec3 vN; in vec3 vCol; in vec3 vLocal;
+uniform vec4 uCS;      // half width, half length, front axle z, rear axle z
+uniform vec2 uCW;      // the wheels' x, strength
+out vec4 outColor;
+float sdRound(vec2 p, vec2 b, float r){ vec2 q = abs(p) - b + r; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r; }
+void main(){
+  vec2 p = vLocal.xz;
+  float d = sdRound(p, vec2(uCS.x - 0.06, uCS.y - 0.12), 0.55);
+  float body = 1.0 - smoothstep(-0.3, 0.6, d), core = 1.0 - smoothstep(-0.9, -0.15, d), wh = 0.0;
+  for (int i = 0; i < 4; i++) { vec2 w = vec2(i == 0 || i == 2 ? -uCW.x : uCW.x, i < 2 ? uCS.z : uCS.w), q = (p - w) / vec2(0.16, 0.34); wh = max(wh, exp(-dot(q, q))); }
+  outColor = vec4(0.0, 0.0, 0.0, clamp(body * 0.3 + core * 0.28 + wh * 0.42, 0.0, 0.82) * uCW.y);
+}`;
+const CARPROG = { car: null, cs: null, quad: null };
+function carProgs() {
+  if (!CARPROG.car) {
+    CARPROG.car = makeProgram(CAR_VS, CAR_FS); CARPROG.cs = makeProgram(MESH_VS, CARCS_FS);
+    const q = new MeshBuilder(); q.quad([-1, 0.02, -1], [1, 0.02, -1], [1, 0.02, 1], [-1, 0.02, 1], [0, 0, 0], [0, -1, 0]); CARPROG.quad = uploadMesh(q.build());
+  }
+  return CARPROG;
+}
+// the contact shadow under a car (dims: half width, half length, front and rear axle z, the wheels' x)
+function carContactShadow(dims, base, k) {
+  const P = carProgs(), pr = P.cs, u = pr.u, [hw, hl, zf, zr, wx] = dims;
+  setCommon(pr);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+  gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-4, -8);
+  gl.uniform4f(u.uCS, hw, hl, zf, zr); gl.uniform2f(u.uCW, wx, k);
+  const S = new Float32Array(16); S[0] = hw + 0.7; S[5] = 1; S[10] = hl + 0.7; S[15] = 1;   // (the unit quad stretched to the car and a margin)
+  gl.uniformMatrix4fv(u.uModel, false, M4.mul(base, S));
+  gl.bindVertexArray(P.quad.vao); gl.drawArrays(gl.TRIANGLES, 0, P.quad.count);
+  gl.disable(gl.POLYGON_OFFSET_FILL); gl.depthMask(true); gl.disable(gl.BLEND);
 }
 // a ready-made car: shadow, then the model with its wheels turning and the lamps lit
 function drawCarGlb(Mm, base, spin, steer, brake, shadow) {
-  const u = progMesh.u;
-  if (shadow) {
-    setCommon(progMesh); gl.uniform1i(u.uLivery, 0);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
-    gl.uniform1f(u.uAlpha, 0.13); gl.uniformMatrix4fv(u.uModel, false, base); gl.bindVertexArray(Mm.shadowMesh.vao); gl.drawArrays(gl.TRIANGLES, 0, Mm.shadowMesh.count); gl.uniform1f(u.uAlpha, 1);
-    gl.depthMask(true); gl.disable(gl.BLEND);
-  }
+  if (shadow) carContactShadow(Mm.dims, base, 1);
   const W = Mm.F.wheels, night = ENV.night || ENV.sunDir[1] < 0.08;
   const partM = d => {
     const w = W[d.part - 1]; if (!w) return M4.ident();
@@ -15485,29 +15722,28 @@ function drawCarGlb(Mm, base, spin, steer, brake, shadow) {
     return M4.mul(M4.fromQP(q, [w[0], w[1], w[2]]), M4.fromQP([0, 0, 0, 1], [-w[0], -w[1], -w[2]]));
   };
   const lamps = m => m.lamp === 'rear' ? [brake ? 1.6 : night ? 0.6 : 0, 0.02, 0.02] : night ? [1.4, 1.35, 1.2] : [0, 0, 0];
-  glbDraw(Mm.glb, base, [1, 1, 1], partM, { env: 1, fog: true, shadow: false, lamps });
+  glbDraw(Mm.glb, base, [1, 1, 1], partM, { env: 1, fog: true, shadow: false, lamps, aoY: base[13] });
 }
 // draw one car: model matrix, wheel spin and steer, lamps
 function drawCarMesh(Mm, base, spin, steer, brake, shadow = true) {
   if (Mm.glb) { drawCarGlb(Mm, base, spin, steer, brake, shadow); setCommon(progMesh); return; }
-  const u = progMesh.u;
+  if (shadow) carContactShadow(Mm.dims, base, 1);
+  const pr = carProgs().car, u = pr.u;
+  setCommon(pr);
   const draw = (vao, m) => { gl.uniformMatrix4fv(u.uModel, false, m); gl.bindVertexArray(vao.vao); gl.drawArrays(gl.TRIANGLES, 0, vao.count); };
-  if (shadow) {
-    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
-    gl.uniform1f(u.uAlpha, 0.13); draw(Mm.shadow, base); gl.uniform1f(u.uAlpha, 1);
-    gl.depthMask(true); gl.disable(gl.BLEND);
-  }
-  gl.uniform3f(u.uEmissive, 0, 0, 0); gl.uniform1f(u.uSpec, 0.7);
+  gl.uniform1f(u.uAlpha, 1); gl.uniform3f(u.uEmissive, 0, 0, 0); gl.uniform1f(u.uWheel, 0);
   draw(Mm.body, base);
-  gl.uniform1f(u.uSpec, 0.15);
+  gl.uniform1f(u.uWheel, 1);
   for (const [x, y, z, front] of Mm.wheels) {
     const q = qmul(front ? qaxis([0, 1, 0], -steer) : [0, 0, 0, 1], qmul(qaxis([1, 0, 0], -spin), x < 0 ? qaxis([0, 1, 0], Math.PI) : [0, 0, 0, 1]));
     draw(Mm.wheel, M4.mul(base, M4.fromQP(q, [x, y, z])));
   }
+  gl.uniform1f(u.uWheel, 0);
   const night = ENV.night || ENV.sunDir[1] < 0.08, lit = night ? 1 : 0.12;
   gl.uniform3f(u.uEmissive, lit + (brake ? 0.7 : 0), lit * 0.9, lit * 0.8);
   draw(Mm.lights, base);
   gl.uniform3f(u.uEmissive, 0, 0, 0);
+  setCommon(progMesh);
 }
 // =====================================================================
 //  CAR: get out of the aeroplane and drive. The car appears on the
@@ -16013,6 +16249,7 @@ function sunShadowProgs() {
   try { P.street = makeProgram(STREET_VS, SUNSH_FS); } catch (e) { console.warn('shadow street', e); }
   try { if (typeof JWTREE_VS !== 'undefined') P.tree = makeProgram(JWTREE_VS, SUNSH_FS); } catch (e) { console.warn('shadow trees', e); }
   try { P.glb = makeProgram(GLB_VS, SUNSH_FS); } catch (e) { console.warn('shadow cars', e); }
+  try { P.mesh = makeProgram(MESH_VS, SUNSH_FS); } catch (e) { console.warn('shadow built cars', e); }
   return SUNSH.progs = P;
 }
 function sunShadowWanted() {
@@ -16118,6 +16355,12 @@ function sunShadowPass() {
   if (P.glb) {
     const u = common(P.glb);
     const one = (Mm, base, spin, steer) => {
+      if (Mm && !Mm.glb && Mm.body && P.mesh) {                     // (a built car: its body and wheels)
+        const um = common(P.mesh), dr = (vao, m) => { gl.uniformMatrix4fv(um.uModel, false, m); gl.bindVertexArray(vao.vao); gl.drawArrays(gl.TRIANGLES, 0, vao.count); };
+        dr(Mm.body, base);
+        for (const [x, y, z, front] of Mm.wheels) dr(Mm.wheel, M4.mul(base, M4.fromQP(qmul(front ? qaxis([0, 1, 0], -steer) : [0, 0, 0, 1], x < 0 ? qaxis([0, 1, 0], Math.PI) : [0, 0, 0, 1]), [x, y, z])));
+        common(P.glb); return;
+      }
       if (!Mm || !Mm.glb) return;
       const W = Mm.F.wheels;
       for (const d of Mm.glb.draws) {
@@ -17255,6 +17498,7 @@ function setCommon(pr) {
   if (u.uMatOn) { if (!CMAT.started && JW.active && JW.online) cmatInit(); gl.uniform1f(u.uMatOn, CMAT.ready && CMAT.on !== false ? 1 : 0); }
   if (u.uZoneSide) gl.uniform1f(u.uZoneSide, ZONE.side);
   if (u.uAuth) gl.uniform4fv(u.uAuth, AUTH.v);
+  if (u.uUrban) gl.uniform1f(u.uUrban, JW.active && CAR.on && !ENV.night ? 1 : 0);   // (reflections of a street's buildings, while driving)
   if (u.uLmCut0) { gl.uniform4fv(u.uLmCut0, LM.cut[0]); gl.uniform4fv(u.uLmCut1, LM.cut[1]); }
   if (u.uCamPos) gl.uniform3fv(u.uCamPos, R.eye);
   if (u.uTime) gl.uniform1f(u.uTime, R.time);

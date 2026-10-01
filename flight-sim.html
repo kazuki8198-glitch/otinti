@@ -1177,7 +1177,15 @@ uniform float uNightK;
 vec3 airLight(vec3 e, vec3 p){ return e * exp(-length(p - uCamPos) / 32000.0); }
 float nHash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 vec3 tonemap(vec3 c){
-  return c / (1.0 + max(c - 0.85, 0.0) * 0.9);
+  // a film's shoulder for the highlights, then the grade of a sunny open-world game: a little more colour,
+  // a gentle S-curve for contrast, sunlit tones a shade warm and the shade a shade cool
+  c = max(c, 0.0);
+  c = c / (1.0 + max(c - 0.8, 0.0) * 1.0);
+  float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  c = max(mix(vec3(l), c, 1.14), 0.0);
+  vec3 cc = min(c, 1.0);
+  c = mix(c, cc * cc * (3.0 - 2.0 * cc) + (c - cc), 0.2);
+  return c * mix(vec3(0.975, 0.99, 1.035), vec3(1.035, 1.0, 0.955), smoothstep(0.15, 0.75, l));
 }
 `;
 
@@ -4641,6 +4649,13 @@ function authHas(lat, lon) {
   const A = AUTH.area; if (!A) return false;
   return geoDist(lat, lon, A.lat, A.lon) < A.r1;
 }
+// whether the sim's own world wholly replaces what lies in this box (x0 z0 x1 z1, world metres): inside the
+// inner circle Google's and PLATEAU's meshes are all cut, so those tiles needn't be loaded or drawn at all
+function authHides(x0, z0, x1, z1) {
+  if (!AUTH.on) return false;
+  const [cx, cz, r0] = AUTH.v, dx = Math.max(Math.abs(x0 - cx), Math.abs(x1 - cx)), dz = Math.max(Math.abs(z0 - cz), Math.abs(z1 - cz));
+  return dx * dx + dz * dz < r0 * r0 * 0.96;
+}
 
 // =====================================================================
 //  CITY: real 3D buildings and trees from OpenStreetMap (OpenFreeMap
@@ -5788,7 +5803,8 @@ function cityWorkerMain() {
     };
     const localRings = poly => poly.rings.map(r => { const o = []; for (let i = 0; i < r.length; i += 2) o.push(lx(r[i]), lz(r[i + 1])); return o; });
     const PAVED = new Set(['residential', 'commercial', 'industrial', 'retail', 'railway', 'school', 'hospital', 'university', 'college', 'kindergarten', 'library', 'bus_station', 'garages', 'quarter', 'neighbourhood', 'military', 'stadium', 'theme_park', 'zoo']);
-    if (L.landuse) for (const poly of polygons(L.landuse, E, p => PAVED.has(p.class))) fillPoly(localRings(poly), 0.025, 265, 45);
+    const riG0 = ri.length;                                          // (where the ground's own triangles start in ri, and end: riG1)
+    if (L.landuse) for (const poly of polygons(L.landuse, E, p => PAVED.has(p.class))) fillPoly(localRings(poly), 0.025, 265, 45, onApron);   // (not over an apron: it has its own concrete, a hair higher)
     // between the buildings where the map has no land use drawn: the ground round every building paved too (yards,
     // drives, the little lots), in 20 m cells, a little under the land-use paving, not on the parks
     {
@@ -5817,7 +5833,8 @@ function cityWorkerMain() {
     const BG = 20, bnx = Math.ceil(W / BG), bnz = Math.ceil(Hm / BG), bcnt = new Uint8Array(bnx * bnz);
     for (let b = 0; b < bCen.length / 2; b++) { const i = Math.floor(bCen[b * 2] / BG), j = Math.floor(bCen[b * 2 + 1] / BG); if (i >= 0 && j >= 0 && i < bnx && j < bnz && bcnt[j * bnx + i] < 250) bcnt[j * bnx + i]++; }
     const housed = (x, z) => { const i0 = Math.floor(x / BG), j0 = Math.floor(z / BG); let n = 0; for (let j = j0 - 1; j <= j0 + 1; j++) for (let i = i0 - 1; i <= i0 + 1; i++) if (i >= 0 && j >= 0 && i < bnx && j < bnz) n += bcnt[j * bnx + i] * (i === i0 && j === j0 ? 3 : 1); return n >= 4; };
-    if (L.landcover) for (const poly of polygons(L.landcover, E, p => p.class === 'grass' && p.subclass !== 'golf_course' || p.subclass === 'park')) fillPoly(localRings(poly), 0.04, 266, 30, housed);
+    if (L.landcover) for (const poly of polygons(L.landcover, E, p => p.class === 'grass' && p.subclass !== 'golf_course' || p.subclass === 'park')) fillPoly(localRings(poly), 0.04, 266, 30, (x, z) => housed(x, z) || onApron(x, z));
+    const riG1 = ri.length;
     // ---------- railways: ballasted track with its sleepers and two rails (each track is its own line on the
     // map), on bridges up on a viaduct; the monorail's concrete beam up on its T-shaped piers ----------
     const rails = [];
@@ -5997,6 +6014,31 @@ function cityWorkerMain() {
       }
     }
     for (const k of skirt) ri.push(k);
+    // the triangles sorted into a 16 x 16 grid of cells (by their middle), the ground and roads first, then the
+    // contact shadows (blended, drawn last): rCell holds where each cell starts in each, so the main thread
+    // draws only the cells in view
+    // (by sections, each sorted on its own, so what was drawn over what stays so: the roads, then the ground
+    // round them, then the rest, then the contact shadows)
+    const RG = 16, rCell = new Uint32Array(4 * (RG * RG + 1)), rCellB = new Float32Array(RG * RG * 6);   // (rCellB: each cell's reach, x0 z0 x1 z1 y0 y1)
+    for (let c = 0; c < RG * RG; c++) rCellB.set([1e9, 1e9, -1e9, -1e9, 1e9, -1e9], c * 6);
+    {
+      const sk0 = ri.length - skirt.length, out = new Uint32Array(ri.length);
+      for (const [a0, a1, o] of [[0, riG0, 0], [riG0, riG1, RG * RG + 1], [riG1, sk0, 2 * (RG * RG + 1)], [sk0, ri.length, 3 * (RG * RG + 1)]]) {
+        const nt = (a1 - a0) / 3, cell = new Uint16Array(nt), cnt = new Uint32Array(RG * RG + 1);
+        for (let i = 0; i < nt; i++) {
+          const p = a0 + i * 3, A = ri[p] * 7, B = ri[p + 1] * 7, C = ri[p + 2] * 7;
+          const x = (rv0[A] + rv0[B] + rv0[C]) / 3, z = (rv0[A + 1] + rv0[B + 1] + rv0[C + 1]) / 3;
+          const c = clamp(Math.floor(z / Hm * RG), 0, RG - 1) * RG + clamp(Math.floor(x / W * RG), 0, RG - 1);
+          cell[i] = c; cnt[c + 1]++;
+          for (const V of [A, B, C]) { const e = c * 6; if (rv0[V] < rCellB[e]) rCellB[e] = rv0[V]; if (rv0[V + 1] < rCellB[e + 1]) rCellB[e + 1] = rv0[V + 1]; if (rv0[V] > rCellB[e + 2]) rCellB[e + 2] = rv0[V]; if (rv0[V + 1] > rCellB[e + 3]) rCellB[e + 3] = rv0[V + 1]; if (rv0[V + 2] < rCellB[e + 4]) rCellB[e + 4] = rv0[V + 2]; if (rv0[V + 2] > rCellB[e + 5]) rCellB[e + 5] = rv0[V + 2]; }
+        }
+        for (let c = 0; c < RG * RG; c++) cnt[c + 1] += cnt[c];
+        for (let c = 0; c <= RG * RG; c++) rCell[o + c] = a0 + cnt[c] * 3;
+        const at = cnt.slice(0, RG * RG);
+        for (let i = 0; i < nt; i++) { const k = a0 + at[cell[i]]++ * 3, p = a0 + i * 3; out[k] = ri[p]; out[k + 1] = ri[p + 1]; out[k + 2] = ri[p + 2]; }
+      }
+      for (let i = 0; i < ri.length; i++) ri[i] = out[i];
+    }
     // packed like the buildings (x, z in dm, y, up normal, u in dm, class + 512, width dm, across)
     const nrv = rv0.length / 7 | 0;
     const rvb = new ArrayBuffer(Math.max(nrv, 1) * 20), r16 = new Int16Array(rvb), r32 = new Float32Array(rvb), r8 = new Int8Array(rvb);
@@ -6040,13 +6082,25 @@ function cityWorkerMain() {
       }
     }
     const tr = new Float32Array(trees);
+    // each building's triangles: its body first (walls, roofs), then its details (windows, doors, fittings,
+    // balconies, the block wall), so the main thread can leave the details out beyond a few hundred metres
+    const bBase = new Uint32Array(bRange.length / 2), DET = k => (k >= 4 && k <= 9) || k === 12, tmp = [];
+    for (let b = 0; b < bBase.length; b++) {
+      const s0 = bRange[b * 2], k = bRange[b * 2 + 1]; let nb0 = 0; tmp.length = 0;
+      for (let i = s0; i < s0 + k; i += 3) {
+        if (DET(i16[idx[i] * 10 + 7] >> 10)) tmp.push(idx[i], idx[i + 1], idx[i + 2]);
+        else { idx[s0 + nb0] = idx[i]; idx[s0 + nb0 + 1] = idx[i + 1]; idx[s0 + nb0 + 2] = idx[i + 2]; nb0 += 3; }
+      }
+      for (let j = 0; j < tmp.length; j++) idx[s0 + nb0 + j] = tmp[j];
+      bBase[b] = nb0;
+    }
     const vbuf = v === nv ? vb : vb.slice(0, v * 20);
     const ib = idx.slice(0, q);
     const res = {
       id: m.id, nv: v, ni: q, vb: vbuf, ib: ib.buffer, trees: tr.buffer, nTrees: tr.length / 4,
       boxes: new Float32Array(boxes).buffer, ringXZ: new Float32Array(ringXZ).buffer, ringOff: new Uint32Array(ringOff).buffer,
-      cells: cellCount.buffer, items: items.buffer, bRange: new Uint32Array(bRange).buffer, bCen: new Float32Array(bCen).buffer, maxTop: nb ? maxTop : -1e9, minG: nb ? minG : 0, nBuild: nb, W, Hm,
-      nrv, nri: ri.length, rvb, rib: new Uint32Array(ri).buffer, rPts: new Float32Array(rPts).buffer, rOff: new Uint32Array(rOff).buffer, rCls: new Uint8Array(rCls).buffer, rWid: new Float32Array(rWid).buffer, rBr: new Uint8Array(rBr).buffer, props: new Float32Array(props).buffer, wires: new Float32Array(wires).buffer, fences: new Float32Array(fences).buffer, marks: new Float32Array(marks).buffer, stands: new Float32Array(stands).buffer, walks: new Float32Array(walks).buffer, btowers: new Float32Array(btowers).buffer, aero: new Float32Array(aeroRings.flatMap(A => A.rings.flatMap(r => [r.length / 2, ...r]))).buffer, signs: new Float32Array(signs).buffer, signNames,
+      cells: cellCount.buffer, items: items.buffer, bRange: new Uint32Array(bRange).buffer, bBase: bBase.buffer, bCen: new Float32Array(bCen).buffer, maxTop: nb ? maxTop : -1e9, minG: nb ? minG : 0, nBuild: nb, W, Hm,
+      nrv, nri: ri.length, rvb, rib: new Uint32Array(ri).buffer, rCell: rCell.buffer, rCellB: rCellB.buffer, rPts: new Float32Array(rPts).buffer, rOff: new Uint32Array(rOff).buffer, rCls: new Uint8Array(rCls).buffer, rWid: new Float32Array(rWid).buffer, rBr: new Uint8Array(rBr).buffer, props: new Float32Array(props).buffer, wires: new Float32Array(wires).buffer, fences: new Float32Array(fences).buffer, marks: new Float32Array(marks).buffer, stands: new Float32Array(stands).buffer, walks: new Float32Array(walks).buffer, btowers: new Float32Array(btowers).buffer, aero: new Float32Array(aeroRings.flatMap(A => A.rings.flatMap(r => [r.length / 2, ...r]))).buffer, signs: new Float32Array(signs).buffer, signNames,
     };
     return res;
   }
@@ -6065,7 +6119,7 @@ function cityWorkerMain() {
       if (r.status === 404 || r.status === 204) { postMessage({ id: m.id, empty: true }); return; }
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const res = build(new Uint8Array(await r.arrayBuffer()), m);
-      postMessage(res, [res.vb, res.ib, res.trees, res.boxes, res.ringXZ, res.ringOff, res.cells, res.items, res.bRange, res.bCen, res.rvb, res.rib, res.rPts, res.rOff, res.rCls, res.rWid, res.rBr, res.props, res.wires, res.fences, res.marks, res.stands, res.signs]);
+      postMessage(res, [res.vb, res.ib, res.trees, res.boxes, res.ringXZ, res.ringOff, res.cells, res.items, res.bRange, res.bBase, res.bCen, res.rvb, res.rib, res.rPts, res.rOff, res.rCls, res.rWid, res.rBr, res.props, res.wires, res.fences, res.marks, res.stands, res.signs]);
     } catch (err) { postMessage({ id: m.id, error: String((err && err.message) || err) }); }
   };
 }
@@ -6185,7 +6239,7 @@ function cityReceive(r) {
     gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 20, 4);
     gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.BYTE, true, 20, 8);
     gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.SHORT, false, 20, 12);
-    t.ibCpu = new Uint32Array(r.ib); t.bRange = new Uint32Array(r.bRange); t.bCen = new Float32Array(r.bCen); t.hideKey = '';
+    t.ibCpu = new Uint32Array(r.ib); t.bRange = new Uint32Array(r.bRange); t.bBase = r.bBase ? new Uint32Array(r.bBase) : null; t.bCen = new Float32Array(r.bCen); t.hideKey = '';
     const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, t.ibCpu, gl.STATIC_DRAW);
     gl.bindVertexArray(null);
     t.vao = vao; t.vb = vb; t.ib = ib;
@@ -6210,7 +6264,7 @@ function cityReceive(r) {
     gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.SHORT, false, 20, 12);
     const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(r.rib), gl.STATIC_DRAW);
     gl.bindVertexArray(null);
-    t.rvao = vao; t.rvb = vb; t.rib = ib; t.rni = r.nri;
+    t.rvao = vao; t.rvb = vb; t.rib = ib; t.rni = r.nri; t.rCell = r.rCell ? new Uint32Array(r.rCell) : null; t.rCellB = r.rCellB ? new Float32Array(r.rCellB) : null;
   }
   // road centre lines (tile-local metres) for putting the car on a road and for traffic
   if (r.rPts) t.roads = { pts: new Float32Array(r.rPts), off: new Uint32Array(r.rOff), cls: new Uint8Array(r.rCls), wid: new Float32Array(r.rWid), br: r.rBr ? new Uint8Array(r.rBr) : null };
@@ -6321,6 +6375,7 @@ function roadNearest(wx, wz, maxD = 400, minCls = 0) {
   const w = geoToWorld(best.t.latN - best.Z / KZ, best.t.lonW + best.X / best.t.kxN), L = Math.hypot(best.dx, best.dz);
   return { d: best.d, x: w[0], z: w[1], y: best.y, dir: [best.dx / L, best.dz / L], w: best.w, cls: best.cls, tile: best.t, line: best.line, seg: best.seg };
 }
+let cityRoadVis = null;
 function drawRoads(planes) {
   if (!CITY.ready || !JW.online) return;
   if (!CITY.roadProg) CITY.roadProg = makeProgram(ROAD_VS, ROAD_FS);
@@ -6336,7 +6391,26 @@ function drawRoads(planes) {
     if (!boxInFrustum(planes, b[0], t.minG - 60, b[1], b[2], (t.maxTop > -1e8 ? t.maxTop : t.minG + 500) + 5, b[3])) continue;
     citySetTile(u, t);
     gl.bindVertexArray(t.rvao);
-    gl.drawElements(gl.TRIANGLES, t.rni, gl.UNSIGNED_INT, 0);
+    if (!t.rCell || !t.rCellB) { gl.drawElements(gl.TRIANGLES, t.rni, gl.UNSIGNED_INT, 0); continue; }
+    // only the cells in view (the ground's pieces are at most some 45 m across: that much margin)
+    // (each cell by the reach of its own triangles: some of the ground's pieces, an apron's, are big)
+    const G = 16, B = t.rCellB, sx = (b[2] - b[0]) / (t.W || 2500), sz = (b[3] - b[1]) / (t.Hm || 2500), M = 2;
+    const vis = cityRoadVis || (cityRoadVis = new Uint8Array(G * G));
+    for (let i = 0; i < G * G; i++) {
+      const e = i * 6; if (B[e] > B[e + 2]) { vis[i] = 0; continue; }
+      vis[i] = boxInFrustum(planes, b[0] + B[e] * sx - M, B[e + 4] - 1, b[1] + B[e + 1] * sz - M, b[0] + B[e + 2] * sx + M, B[e + 5] + 2, b[1] + B[e + 3] * sz + M) ? 1 : 0;
+    }
+    for (let o = 0; o < t.rCell.length; o += G * G + 1) {
+      let a = -1, e = -1;
+      for (let i = 0; i < G * G; i++) {
+        const s0 = t.rCell[o + i], s1 = t.rCell[o + i + 1];
+        if (s1 === s0 || !vis[i]) continue;
+        if (s0 === e) { e = s1; continue; }
+        if (e > a && a >= 0) gl.drawElements(gl.TRIANGLES, e - a, gl.UNSIGNED_INT, a * 4);
+        a = s0; e = s1;
+      }
+      if (e > a && a >= 0) gl.drawElements(gl.TRIANGLES, e - a, gl.UNSIGNED_INT, a * 4);
+    }
   }
   gl.disable(gl.BLEND);
   if (typeof drawMarks === 'function') drawMarks(planes);           // (止まれ and the stop lines, p_marks.js)
@@ -6380,19 +6454,34 @@ function cityOrderIndex(t, keep) {
     const order = new Uint32Array(nb), at = cnt.slice();
     for (let b = 0; b < nb; b++) order[at[cell[b]]++] = b;
     t.bOrder = order; t.bCell = cell;
+    // each cell's reach: how far its buildings stand out over its edges (tile metres, 8 m more for the block
+    // walls and canopies outside the footprints) and its highest roof
+    const B = t.col && t.col.boxes, E = new Float32Array(G * G * 5);
+    for (let c = 0; c < G * G; c++) { const cx = c % G, cz = (c - cx) / G; E.set([cx * W / G, cz * Hm / G, (cx + 1) * W / G, (cz + 1) * Hm / G, -1e9], c * 5); }
+    if (B && B.length / 5 === nb) for (let b = 0; b < nb; b++) {
+      const c = cell[b] * 5;
+      E[c] = Math.min(E[c], B[b * 5] - 8); E[c + 1] = Math.min(E[c + 1], B[b * 5 + 1] - 8);
+      E[c + 2] = Math.max(E[c + 2], B[b * 5 + 2] + 8); E[c + 3] = Math.max(E[c + 3], B[b * 5 + 3] + 8); E[c + 4] = Math.max(E[c + 4], B[b * 5 + 4] + 2);
+    } else for (let c = 0; c < G * G; c++) { E[c * 5] -= 60; E[c * 5 + 1] -= 60; E[c * 5 + 2] += 60; E[c * 5 + 3] += 60; E[c * 5 + 4] = t.maxTop + 5; }
+    t.cellB = E;
   }
-  const out = new Uint32Array(t.ibCpu.length), off = new Uint32Array(G * G + 1);
-  let n = 0, cur = 0;
-  for (const b of t.bOrder) {
-    const c = t.bCell[b]; while (cur <= c) off[cur++] = n;
-    if (keep && !keep(b)) continue;
-    const s0 = t.bRange[b * 2], k = t.bRange[b * 2 + 1];
-    out.set(t.ibCpu.subarray(s0, s0 + k), n); n += k;
+  // the bodies of the buildings cell by cell, then their details cell by cell (cellOff, cellOffD: where each starts)
+  const out = new Uint32Array(t.ibCpu.length), off = new Uint32Array(G * G + 1), offD = new Uint32Array(G * G + 1), bb = t.bBase;
+  let n = 0;
+  for (const det of [false, true]) {
+    const o = det ? offD : off; let cur = 0;
+    for (const b of t.bOrder) {
+      const c = t.bCell[b]; while (cur <= c) o[cur++] = n;
+      if (keep && !keep(b)) continue;
+      const s0 = t.bRange[b * 2], k = t.bRange[b * 2 + 1], kb = bb ? bb[b] : k;
+      const a0 = det ? s0 + kb : s0, a1 = det ? s0 + k : s0 + kb;
+      if (a1 > a0) { out.set(t.ibCpu.subarray(a0, a1), n); n += a1 - a0; }
+    }
+    while (cur <= G * G) o[cur++] = n;
   }
-  while (cur <= G * G) off[cur++] = n;
   gl.bindVertexArray(null);
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, t.ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, out.subarray(0, n), gl.STATIC_DRAW);
-  t.ni = n; t.cellOff = off;
+  t.ni = n; t.cellOff = off; t.cellOffD = offD;
 }
 function cityDispose(t) {
   if (t.vao) { gl.deleteVertexArray(t.vao); gl.deleteBuffer(t.vb); gl.deleteBuffer(t.ib); CITY.verts -= t.nv; }
@@ -6463,6 +6552,7 @@ function cityUpdate() {
 function citySetTile(u, t) {
   gl.uniform4f(u.uTileA, t.lonW - JW.lon0, t.latN - JW.lat0, t.latN, t.kxN);
 }
+let cityCellVis = null;
 function drawCity(planes) {
   if (!CITY.ready || !JW.online) return;
   const pr = CITY.prog, u = pr.u;
@@ -6470,13 +6560,37 @@ function drawCity(planes) {
   gl.uniform1i(u.uNoise, 2);
   gl.uniform1f(u.uNight, ENV.night ? 1 : clamp((0.3 - ENV.sunDir[1]) * 4, 0, 1));
   gl.enable(gl.CULL_FACE);
+  // cell by cell (16 x 16 to a tile): only the cells in view, and a building's details (windows, doors,
+  // fittings, balconies, block walls: most of a house's triangles) only in the cells near the camera
+  const DR = game.touch ? 280 : 480, eye = R.eye;
+  gl.uniform1f(u.uDetR, DR);
   for (const t of CITY.tiles.values()) {
     if (!t.vao) continue;
-    const b = cityBox(t);
-    if (!boxInFrustum(planes, b[0], t.minG - 60, b[1], b[2], t.maxTop + 5, b[3])) continue;
+    const b = cityBox(t), y0 = t.minG - 60, y1 = t.maxTop + 5;
+    if (!boxInFrustum(planes, b[0], y0, b[1], b[2], y1, b[3])) continue;
     citySetTile(u, t);
     gl.bindVertexArray(t.vao);
-    gl.drawElements(gl.TRIANGLES, t.ni, gl.UNSIGNED_INT, 0);
+    if (!t.cellOff) { gl.drawElements(gl.TRIANGLES, t.ni, gl.UNSIGNED_INT, 0); continue; }
+    const G = CITY_SHG, E = t.cellB, sx = (b[2] - b[0]) / (t.W || 2500), sz = (b[3] - b[1]) / (t.Hm || 2500);   // (tile metres to the world box)
+    const vis = cityCellVis || (cityCellVis = new Uint8Array(G * G));
+    for (let i = 0; i < G * G; i++) {
+      if (t.cellOff[i + 1] === t.cellOff[i] && t.cellOffD[i + 1] === t.cellOffD[i]) { vis[i] = 0; continue; }
+      const x0 = b[0] + E[i * 5] * sx, z0 = b[1] + E[i * 5 + 1] * sz, x1 = b[0] + E[i * 5 + 2] * sx, z1 = b[1] + E[i * 5 + 3] * sz;
+      if (!boxInFrustum(planes, x0, y0, z0, x1, Math.min(y1, E[i * 5 + 4]), z1)) { vis[i] = 0; continue; }
+      const dx = Math.max(x0 - eye[0], eye[0] - x1, 0), dz = Math.max(z0 - eye[2], eye[2] - z1, 0);
+      vis[i] = dx * dx + dz * dz < DR * DR ? 2 : 1;
+    }
+    // runs of consecutive visible cells, each one draw
+    for (const [off, need] of [[t.cellOff, 1], [t.cellOffD, 2]]) {
+      let a = -1, e = -1;
+      for (let i = 0; i < G * G; i++) {
+        if (vis[i] < need || off[i + 1] === off[i]) continue;
+        if (off[i] === e) { e = off[i + 1]; continue; }
+        if (e > a && a >= 0) gl.drawElements(gl.TRIANGLES, e - a, gl.UNSIGNED_INT, a * 4);
+        a = off[i]; e = off[i + 1];
+      }
+      if (e > a && a >= 0) gl.drawElements(gl.TRIANGLES, e - a, gl.UNSIGNED_INT, a * 4);
+    }
   }
   // trees
   const tp = CITY.treeProg, tu = tp.u;
@@ -6556,6 +6670,7 @@ const BLDG_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
 in vec3 vWorld; in vec3 vN; in vec3 vM; flat in float vSeed; flat in float vRoof; flat in float vFeat; flat in float vKind;
 uniform sampler2D uNoise;
 uniform float uNight;
+uniform float uDetR;
 out vec4 outColor;
 float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
 float h2(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
@@ -6700,8 +6815,8 @@ void main(){
     vec3 wc;
     if (house) {
       int k = int(s1 * 6.0);
-      wc = k == 0 ? vec3(0.86, 0.84, 0.79) : k == 1 ? vec3(0.80, 0.74, 0.64) : k == 2 ? vec3(0.70, 0.70, 0.69) :
-           k == 3 ? vec3(0.55, 0.46, 0.37) : k == 4 ? vec3(0.88, 0.87, 0.84) : vec3(0.62, 0.64, 0.66);
+      wc = k == 0 ? vec3(0.88, 0.86, 0.81) : k == 1 ? vec3(0.83, 0.77, 0.67) : k == 2 ? vec3(0.76, 0.76, 0.74) :
+           k == 3 ? vec3(0.64, 0.55, 0.45) : k == 4 ? vec3(0.9, 0.89, 0.86) : vec3(0.68, 0.7, 0.72);
     } else if (!tower) {
       int k = int(s1 * 6.0);
       wc = k == 0 ? vec3(0.78, 0.76, 0.72) : k == 1 ? vec3(0.62, 0.52, 0.44) : k == 2 ? vec3(0.66, 0.66, 0.65) :
@@ -6757,7 +6872,7 @@ void main(){
       // rain streaks run down from the sills
       if (!house) fin *= 1.0 - 0.13 * wx * (1.0 - smoothstep(0.0, 0.3, fp.y)) * texture(uNoise, vec2(vM.x * 1.7, vM.z * 0.08)).a * aa;
     }
-    if (vM.z < 0.3 || vM.z > H - 0.9 || (shop && vM.z < z0) || house) win = 0.0;   // (houses have real windows)  // plinth, parapet, the shop storey
+    if (vM.z < 0.3 || vM.z > H - 0.9 || (shop && vM.z < z0) || (house && dist < uDetR)) win = 0.0;   // (houses near by have real windows; far off, where those aren't drawn, painted ones)  // plinth, parapet, the shop storey
     frame *= step(0.001, win) * aa;
     win = mix(cov, win, aa);
     // glass: sky reflection with Fresnel, dark interior
@@ -6779,10 +6894,13 @@ void main(){
     bEm = wcol * lit * win * (1.0 - frame) * 1.5;
     // the photographed wall finish (tiles, concrete, plaster, siding) in the building's own colour
     if (uMatOn > 0.5 && !tower) {
-      float L = house ? (s3 < 0.5 ? 12.0 : 11.0) : mansion ? (s3 > 0.35 ? 9.0 : 10.0) : (s3 > 0.5 ? 10.0 : 11.0);
-      float S = L == 9.0 ? 1.2 : L == 12.0 ? 2.4 : 3.0;
+      // (a Japanese house is clad in clean factory-made siding or plaster: the photographed plaster's grain, and
+      // the siding's own lines drawn over it; not the mossy boards of a barn)
+      float L = house ? 11.0 : mansion ? (s3 > 0.35 ? 9.0 : 10.0) : (s3 > 0.5 ? 10.0 : 11.0);
+      float S = L == 9.0 ? 1.2 : 3.0;
       vec3 wt = matC(L, vec2(vM.x, vM.z) / S) / max(matAvg(L), vec3(0.05));
-      fin = mix(1.0, fin, 0.3) * 1.0;
+      wt = house ? mix(vec3(1.0), wt, 0.6) : wt;
+      fin = mix(1.0, fin, house ? 0.85 : 0.3);
       wc *= clamp(wt, 0.4, 1.8);
     }
     vec3 wallLit = wc * fin * (uSunCol * diff * 0.9 + amb);
@@ -7485,7 +7603,7 @@ function platUpdate(planes) {
   const dLat = radius / KZ, dLon = radius / kxAt(la);
   const out = [], req = [];
   const K = R.H / (2 * R.tanY), SSE = game.touch ? 24 : 14;
-  const dist = n => { const b = platBox(n), off = n.set.off || 37; return Math.hypot(Math.max(b[0] - eye[0], 0, eye[0] - b[2]), Math.max(n.h0 - off - eye[1], 0, eye[1] - (n.h1 - off)), Math.max(b[1] - eye[2], 0, eye[2] - b[3])); };
+  const dist = n => { const b = platBox(n), off = n.set.off || 37; if (authHides(b[0], b[1], b[2], b[3])) return 1e9; return Math.hypot(Math.max(b[0] - eye[0], 0, eye[0] - b[2]), Math.max(n.h0 - off - eye[1], 0, eye[1] - (n.h1 - off)), Math.max(b[1] - eye[2], 0, eye[2] - b[3])); };
   const ready = n => n.uri ? !!n.mesh : n.ext ? false : n.children.length > 0 && n.children.every(c => dist(c) > radius || ready(c));
   const visit = n => {
     const d = dist(n);
@@ -7860,7 +7978,7 @@ function googUpdate(planes) {
   const SSE0 = typeof CAR !== 'undefined' && CAR.on ? (game.touch ? 16 : 6) : game.touch ? 28 : game.gfx === 'high' ? 12 : 18, MAXD = 60000 + Math.max(eye[1], 0) * 6;
   const sseAt = d => SSE0 * (1 + ((GOOG.lodK || 1) - 1) * smoothstep(3000, 8000, d));
   const out = [], req = [];
-  const dist = n => { if (n.planet) return 0; const c = googWorld(n); return Math.max(0, Math.hypot(c[0] - eye[0], c[1] - eye[1], c[2] - eye[2]) - n.r); };
+  const dist = n => { if (n.planet) return 0; const c = googWorld(n); if (authHides(c[0] - n.r, c[2] - n.r, c[0] + n.r, c[2] + n.r)) return 1e9; return Math.max(0, Math.hypot(c[0] - eye[0], c[1] - eye[1], c[2] - eye[2]) - n.r); };   // (wholly inside the sim's own built-up area: as good as out of range)
   const vis = n => { if (n.planet) return true; const c = googWorld(n), r = n.r; return boxInFrustum(planes, c[0] - r, c[1] - r, c[2] - r, c[0] + r, c[1] + r, c[2] + r); };
   const ready = (n, depth = 0) => n.uri ? !!n.mesh : n.ext ? n.extState === 3 : depth > 6 ? false : n.children.length > 0 && n.children.every(c => dist(c) > MAXD || !vis(c) || ready(c, depth + 1));
   const visit = n => {
@@ -8652,19 +8770,55 @@ void main(){
   outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
 }`;
 // the instances of a tile, from the worker's list [x, z, y, yaw, type]
+// a tile's instances [x z y yaw] (tile metres) sorted into a 16 x 16 grid of cells, with where each cell starts:
+// only the cells in view and near enough are drawn (a lamp 2 km off was costing as much as the one in front)
+const STG = 16;
+function instByCell(a, W, Hm) {
+  const n = a.length / 4, cell = new Uint16Array(n), off = new Uint32Array(STG * STG + 1), d = new Float32Array(a.length);
+  for (let i = 0; i < n; i++) { const c = clamp(Math.floor(a[i * 4 + 1] / Hm * STG), 0, STG - 1) * STG + clamp(Math.floor(a[i * 4] / W * STG), 0, STG - 1); cell[i] = c; off[c + 1]++; }
+  for (let c = 0; c < STG * STG; c++) off[c + 1] += off[c];
+  const at = off.slice(0, STG * STG);
+  for (let i = 0; i < n; i++) { const k = at[cell[i]]++; for (let j = 0; j < 4; j++) d[k * 4 + j] = a[i * 4 + j]; }
+  return { data: d, off };
+}
+// each cell's distance from the camera (or from a point), Infinity where it is out of view
+const STREET_CD = new Float32Array(STG * STG);
+function instCellDist(t, planes, px, pz, m) {
+  const b = cityBox(t), cw = (b[2] - b[0]) / STG, ch = (b[3] - b[1]) / STG, y0 = t.minG - 20, y1 = t.minG + 400;
+  for (let cz = 0; cz < STG; cz++) for (let cx = 0; cx < STG; cx++) {
+    const x0 = b[0] + cx * cw - m, z0 = b[1] + cz * ch - m, x1 = x0 + cw + 2 * m, z1 = z0 + ch + 2 * m;
+    if (planes && !boxInFrustum(planes, x0, y0, z0, x1, y1, z1)) { STREET_CD[cz * STG + cx] = Infinity; continue; }
+    const dx = Math.max(x0 - px, px - x1, 0), dz = Math.max(z0 - pz, pz - z1, 0);
+    STREET_CD[cz * STG + cx] = Math.sqrt(dx * dx + dz * dz);
+  }
+  return STREET_CD;
+}
+// draw the runs of consecutive cells nearer than far (the instance attribute pointed at each run's start)
+function instDraw(vao, ibuf, loc, off, cd, far, count) {
+  gl.bindVertexArray(vao); gl.bindBuffer(gl.ARRAY_BUFFER, ibuf);
+  let a = -1, e = -1;
+  const flush = () => { if (a >= 0 && e > a) { gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, 16, a * 16); gl.drawArraysInstanced(gl.TRIANGLES, 0, count, e - a); } };
+  for (let i = 0; i < STG * STG; i++) {
+    if (off[i + 1] === off[i] || !(cd[i] < far)) continue;
+    if (off[i] === e) { e = off[i + 1]; continue; }
+    flush(); a = off[i]; e = off[i + 1];
+  }
+  flush();
+}
 function streetReceive(t, buf) {
   streetDispose(t);
   if (!buf || !buf.byteLength) return;
   const P = new Float32Array(buf), M = streetMeshes(), per = Array.from({ length: PROP_N }, () => []);
   for (let i = 0; i < P.length; i += 5) { const k = P[i + 4] | 0; if (per[k]) per[k].push(P[i], P[i + 1], P[i + 2], P[i + 3]); }
+  const W = t.W || 2500, Hm = t.Hm || 2500;
   t.street = per.map((a, k) => {
     if (!a.length) return null;
-    const m = M[k], vao = makeVAO([{ loc: 0, size: 3, data: m.pos }, { loc: 1, size: 3, data: m.nrm }, { loc: 2, size: 3, data: m.col },
-      { data: new Float32Array(a), stride: 4, layout: [[3, 4, 0]], divisor: 1 }]);
-    return { vao, count: m.count, n: a.length / 4 };
+    const m = M[k], sorted = instByCell(a, W, Hm), vao = makeVAO([{ loc: 0, size: 3, data: m.pos }, { loc: 1, size: 3, data: m.nrm }, { loc: 2, size: 3, data: m.col },
+      { data: sorted.data, stride: 4, layout: [[3, 4, 0]], divisor: 1 }]);
+    return { vao, count: m.count, n: a.length / 4, off: sorted.off };
   });
   // the roadside trees also as photo cards (p_treecards.js), used near the ground
-  if (per[PROP_TREE].length) t.streetCard = { vao: makeVAO([{ loc: 0, size: 3, data: tcardMesh().pos }, { data: new Float32Array(per[PROP_TREE]), stride: 4, layout: [[3, 4, 0]], divisor: 1 }]), n: per[PROP_TREE].length / 4 };
+  if (per[PROP_TREE].length) { const sorted = instByCell(per[PROP_TREE], W, Hm); t.streetCard = { vao: makeVAO([{ loc: 0, size: 3, data: tcardMesh().pos }, { data: sorted.data, stride: 4, layout: [[3, 4, 0]], divisor: 1 }]), n: per[PROP_TREE].length / 4, off: sorted.off }; }
 }
 function streetDispose(t) {
   if (!t.street) return;
@@ -8685,12 +8839,14 @@ function drawStreet(planes) {
     const b = cityBox(t);
     if (!boxInFrustum(planes, b[0], t.minG - 20, b[1], b[2], t.minG + 400, b[3])) continue;
     citySetTile(u, t);
+    const cd = instCellDist(t, planes, R.eye[0], R.eye[2], 12);
     for (let k = 0; k < PROP_N; k++) {
       const s = t.street[k]; if (!s) continue;
       if (k === PROP_TREE && typeof ZONE !== 'undefined' && ZONE.on && ZONE.g[3] > 0 && !AUTH.on) continue;   // (Google's photo has the real trees)
-      if (k === PROP_TREE && cards && t.streetCard) { cardTiles.push(t); continue; }
-      gl.uniform1f(u.uFar, STREET.far[k] * (game.touch ? 0.55 : 1));
-      gl.bindVertexArray(s.vao.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, s.count, s.n);
+      if (k === PROP_TREE && cards && t.streetCard) { cardTiles.push([t, cd.slice()]); continue; }
+      const far = STREET.far[k] * (game.touch ? 0.55 : 1);
+      gl.uniform1f(u.uFar, far);
+      instDraw(s.vao.vao, s.vao.bufs[3], 3, s.off, cd, far, s.count);
     }
   }
   gl.enable(gl.CULL_FACE);
@@ -8701,7 +8857,7 @@ function drawStreet(planes) {
     const sp = TCARD.sprog, su = sp.u;
     setCommon(sp); gl.uniform1f(su.uCardN, TCARD.n); gl.uniform1f(su.uFar, STREET.far[PROP_TREE] * (game.touch ? 0.55 : 1));
     gl.disable(gl.CULL_FACE); if (!game.touch) gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
-    for (const t of cardTiles) { citySetTile(su, t); gl.bindVertexArray(t.streetCard.vao.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, 12, t.streetCard.n); }
+    for (const [t, cd] of cardTiles) { citySetTile(su, t); instDraw(t.streetCard.vao.vao, t.streetCard.vao.bufs[1], 3, t.streetCard.off, cd, STREET.far[PROP_TREE] * (game.touch ? 0.55 : 1), 12); }
     gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE); gl.enable(gl.CULL_FACE);
   }
 }
@@ -15650,7 +15806,7 @@ function trafficSpawn() {
 }
 function trafficStep(dt) {
   if (!CAR.on || typeof CITY === 'undefined' || !CITY.ready) { TRAFFIC.cars.length = 0; return; }
-  const want = game.touch ? 8 : 16;
+  const want = game.touch ? 12 : 24;                               // (only those in view are drawn: p4_game.js passes the frustum)
   TRAFFIC.t -= dt;
   if (TRAFFIC.cars.length < want && TRAFFIC.t <= 0) { TRAFFIC.t = 0.3; const c = trafficSpawn(); if (c) TRAFFIC.cars.push(c); }
   for (let i = TRAFFIC.cars.length - 1; i >= 0; i--) {
@@ -15703,7 +15859,8 @@ function trafficStep(dt) {
 function drawTraffic() {
   if (typeof drawParked === 'function') drawParked();
   for (const c of TRAFFIC.cars) {
-    if (vdist(c.pos, R.eye) > 700) continue;
+    if (vdist(c.pos, R.eye) > (game.touch ? 450 : 700)) continue;
+    if (R.planes && !boxInFrustum(R.planes, c.pos[0] - 3, c.pos[1] - 1, c.pos[2] - 3, c.pos[0] + 3, c.pos[1] + 3, c.pos[2] + 3)) continue;   // (not in this pass's view)
     // (over Google's 3D, cars up on an elevated road that isn't drawn round you (p6_city.js) aren't either)
     if (ZONE.on && ZONE.g[3] > 0 && c.pos[1] > Math.max(jwHeight(c.pos[0], c.pos[2]), 0) + ZONE.g[3] + 1 && Math.hypot(c.pos[0] - ZONE.v[0], c.pos[2] - ZONE.v[1]) < ZONE.r1) continue;
     drawCarMesh(carMesh(c.model, c.paint, true), M4.fromQP(c.q, c.pos), c.spin, 0, c.brake, vdist(c.pos, R.eye) < 200);
@@ -15811,7 +15968,7 @@ function parkedUpdate() {
 function drawParked() {
   if (!JW.active || !JW.online) { PARKED.list = []; return; }
   parkedUpdate();
-  for (const c of PARKED.list) drawCarMesh(carMesh(c.model, c.paint, true), M4.fromQP(c.q, c.pos), 0, 0, false, c.d < 120);
+  for (const c of PARKED.list) if (!R.planes || boxInFrustum(R.planes, c.pos[0] - 3, c.pos[1] - 1, c.pos[2] - 3, c.pos[0] + 3, c.pos[1] + 3, c.pos[2] + 3)) drawCarMesh(carMesh(c.model, c.paint, true), M4.fromQP(c.q, c.pos), 0, 0, false, c.d < 120);
 }
 function parkedHit(x, z) {
   for (const c of PARKED.list) { const dx = c.pos[0] - x, dz = c.pos[2] - z; if (dx * dx + dz * dz < 5.0) return true; }
@@ -15860,8 +16017,19 @@ function sunShadowProgs() {
 }
 function sunShadowWanted() {
   if (SUNSH.enabled === false || SUNSH.broken || !CAR.on || !JW.active || !JW.online || typeof CITY === 'undefined' || !CITY.ready) return false;
-  if (ENV.night || ENV.sunDir[1] < 0.06 || game.gfx === 'low' || (game.touch && SUNSH.enabled !== true)) return false;   // (phones: off unless asked for)
+  if (ENV.night || ENV.sunDir[1] < 0.06 || game.gfx === 'low') return false;
+  if (game.touch && SUNSH.enabled !== true && !sunShadowPhoneOk()) return false;   // (phones: while there is the frame time for it)
   return R.eye[1] - Math.max(jwHeight(R.eye[0], R.eye[2]), 0) < 300;
+}
+// on a phone the shadows come on once the picture has run smoothly for a few seconds without them, and go off
+// again (for two minutes) if they drag it under 22 frames a second
+function sunShadowPhoneOk() {
+  const A = SUNSH.auto || (SUNSH.auto = { on: false, t: 0, hold: 0 }), fps = DYN.fps || 0;
+  if (R.time < A.hold) return false;
+  if (A.on) { if (fps && fps < 22 && R.time - A.t > 4) { A.on = false; A.hold = R.time + 120; A.t = R.time; } }
+  else if (fps >= 30 && DYN.k >= 0.8) { if (!A.good) A.good = R.time; if (R.time - A.good > 5) { A.on = true; A.t = R.time; A.good = 0; } }
+  else A.good = 0;
+  return A.on;
 }
 function sunShadowPass() {
   sunShadowInit();
@@ -15927,7 +16095,8 @@ function sunShadowPass() {
       if (!t.street) continue;
       const b = cityBox(t); if (!near(b[0], b[1], b[2], b[3], H * 1.5)) continue;
       citySetTile(u, t);
-      for (let k = 0; k < PROP_N; k++) { const s = t.street[k]; if (!s) continue; gl.uniform1f(u.uFar, 260); gl.bindVertexArray(s.vao.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, s.count, s.n); }
+      const cd = instCellDist(t, null, C[0], C[2], 12);
+      for (let k = 0; k < PROP_N; k++) { const s = t.street[k]; if (!s) continue; gl.uniform1f(u.uFar, 260); instDraw(s.vao.vao, s.vao.bufs[3], 3, s.off, cd, H * 1.5, s.count); }
     }
   }
   // the trees from the map's photos
@@ -17171,6 +17340,7 @@ function render() {
   }
 }
 function drawScene(planes, far) {
+  R.planes = planes;                                                  // (for the draws that aren't handed them: cars, people)
   gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
   WIRES.side = null;
   if (JW.active) {

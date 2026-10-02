@@ -62,7 +62,16 @@ for w in deck_ways:
     t = np.gradient(w['xy'], axis=0); t /= np.linalg.norm(t, axis=1)[:, None] + 1e-9; w['t'] = t; w['l'] = np.column_stack([-t[:, 1], t[:, 0]])
 hashd = collections.defaultdict(list)
 from shapely.strtree import STRtree
-DP = [w['poly'] for w in deck_ways]; DT = STRtree(DP); n_pier = n_pier_skip = n_wall_cut = 0
+DP = [w['poly'] for w in deck_ways]; DT = STRtree(DP); n_pier = n_pier_skip = n_wall_cut = n_skirt_cut = 0
+def deck_near_below(c, h0, self_w):
+    """another deck within 1.5 m of this point, 0.3 to 4.5 m lower: a skirt hanging there would stand in its way"""
+    sq = Point(*c).buffer(1.5)
+    for j in DT.query(sq):
+        w2 = deck_ways[j]
+        if w2 is self_w or not DP[j].intersects(sq): continue
+        k = int(np.argmin(np.hypot(*(w2['xy'] - c).T)))
+        if h0 - 4.5 < w2['h'][k] < h0 - 0.3: return True
+    return False
 def deck_below(c, top, self_w, r):
     """another deck under this point, lower than the pier's top by a metre or more, within r of it"""
     sq = Point(*c).buffer(r, cap_style=3)
@@ -102,10 +111,32 @@ def dense(p, side):
                 if np.hypot(*d_) < 35 and d_ @ side > 3: n_ += 1
     return n_ >= 2
 snd_n = 0
-est_samples = 0; deck_samples = 0
+def side_limits(wi, w):
+    """each sample's half-width to the left and to the right: where another deck runs parallel close by, under 4.5 m
+    above or below (side by side, not one over the other), the two meet between their centrelines instead of overlapping
+    (their widths are estimates: 2 lanes and shoulders, 9 m, for a carriageway that may be narrower)"""
+    xy, h, t, l = w['xy'], w['h'], w['t'], w['l']; n = len(xy); half = w['W'] / 2
+    hl = np.full(n, half); hr = np.full(n, half)
+    for i in range(n):
+        P = xy[i]
+        for di in (-1, 0, 1):
+            for dj in (-1, 0, 1):
+                for wj, j in hashd.get((int(P[0] // 16) + di, int(P[1] // 16) + dj), ()):
+                    if wj == wi: continue
+                    w2 = deck_ways[wj]
+                    if abs(t[i] @ w2['t'][j]) < 0.9 or abs(h[i] - w2['h'][j]) > 4.5: continue
+                    d = w2['xy'][j] - P; along = d @ t[i]; lat = d @ l[i]
+                    if abs(along) > 4 or abs(lat) < 1.0: continue          # (a merge's nose: both on one line)
+                    lim = max(1.6, abs(lat) * half / (half + w2['W'] / 2) + 0.05)
+                    if lat > 0: hl[i] = min(hl[i], lim)
+                    else: hr[i] = min(hr[i], lim)
+    return hl, hr
+est_samples = 0; deck_samples = 0; n_trim = 0
 for wi, w in enumerate(deck_ways):
     xy, h, t, l = w['xy'], w['h'], w['t'], w['l']; n = len(xy); half = w['W'] / 2
     if n < 2: continue
+    HL, HR = side_limits(wi, w); n_trim += int(np.sum((HL < half - 0.01) | (HR < half - 0.01)))
+    hs = lambda k, sgn: HL[k] if sgn > 0 else HR[k]
     mot = w['hw'] in ('motorway', 'motorway_link'); tun = w['kind'] == 'tunnel'; brg = w['kind'] == 'bridge'
     g = roadh(xy[:, 0], xy[:, 1]); deck_samples += n; est_samples += int(np.sum(w['est']))
     side_w = 0.0 if mot else 2.0                                         # (ordinary bridges keep their pavements)
@@ -115,13 +146,13 @@ for wi, w in enumerate(deck_ways):
         k = ck(*((xy[i] + xy[i + 1]) / 2)); ch = C(k)
         surf = []; conc = []; sidep = []
         a0 = -0.6 if i == 0 else 0.0; a1 = 0.6 if i + 1 == n - 1 else 0.0       # (the ends overlap the next way's: no seam to fall through)
-        quad_out(surf, P3(i, half, 0, a0), P3(i, -half, 0, a0), P3(i + 1, -half, 0, a1), P3(i + 1, half, 0, a1), U_)
+        quad_out(surf, P3(i, HL[i], 0, a0), P3(i, -HR[i], 0, a0), P3(i + 1, -HR[i + 1], 0, a1), P3(i + 1, HL[i + 1], 0, a1), U_)
         for sgn in (1, -1):
-            o0 = sgn * half; o1 = sgn * (half + side_w); o2 = sgn * (half + side_w + 0.25)
+            hv = min(hs(i, sgn), hs(i + 1, sgn)); o0 = sgn * hv; o1 = sgn * (hv + side_w); o2 = sgn * (hv + side_w + 0.25)
             if side_w:
                 quad_out(sidep, P3(i, o0, 0.15, a0), P3(i, o1, 0.15, a0), P3(i + 1, o1, 0.15, a1), P3(i + 1, o0, 0.15, a1), U_)
                 quad_out(conc, P3(i, o0, 0), P3(i, o0, 0.15), P3(i + 1, o0, 0.15), P3(i + 1, o0, 0), np.array([*(-sgn * l[i]), 0]))
-            mid = (xy[i] + xy[i + 1]) / 2 + l[i] * sgn * (half + side_w + 0.8)
+            mid = (xy[i] + xy[i + 1]) / 2 + l[i] * sgn * (hv + side_w + 0.8)
             wall = not alongside(wi, mid, (h[i] + h[i + 1]) / 2)
             dh_ = (h[i] + h[i + 1]) / 2 - (g[i] + g[i + 1]) / 2
             if wall and mot and not tun and -1.0 < dh_ < 2.5 and min(w['s'][i], w['s'][-1] - w['s'][i + 1]) < 40 and pcarr.contains(Point(*((xy[i] + xy[i + 1]) / 2 + l[i] * sgn * (half + side_w)))):
@@ -133,14 +164,16 @@ for wi, w in enumerate(deck_ways):
                 base = 0.15 if side_w else 0.0
                 quad_out(conc, P3(i, o1, base), P3(i, o1, ht), P3(i + 1, o1, ht), P3(i + 1, o1, base), np.array([*(-sgn * l[i]), 0]))
                 quad_out(conc, P3(i, o1, ht), P3(i, o2, ht), P3(i + 1, o2, ht), P3(i + 1, o1, ht), U_)
-                quad_out(conc, P3(i, o2, ht), P3(i, o2, -1.8 if mot and brg else -1.0 if brg else 0), P3(i + 1, o2, -1.8 if mot and brg else -1.0 if brg else 0), P3(i + 1, o2, ht), np.array([*(sgn * l[i]), 0]))
+                sk = -1.8 if mot and brg else -1.0 if brg else 0
+                if sk and deck_near_below((xy[i] + xy[i + 1]) / 2 + l[i] * o2, (h[i] + h[i + 1]) / 2, w): sk = 0; n_skirt_cut += 1   # (another deck just under the edge: no skirt in its way)
+                quad_out(conc, P3(i, o2, ht), P3(i, o2, sk), P3(i + 1, o2, sk), P3(i + 1, o2, ht), np.array([*(sgn * l[i]), 0]))
                 if mot and brg and not tun and dense((xy[i] + xy[i + 1]) / 2 + l[i] * sgn * half, l[i] * sgn):
                     snd = []; quad_out(snd, P3(i, o1 + sgn * 0.05, ht), P3(i, o1 + sgn * 0.05, 3.0), P3(i + 1, o1 + sgn * 0.05, 3.0), P3(i + 1, o1 + sgn * 0.05, ht), np.array([*(-sgn * l[i]), 0]))
                     quad_out(snd, P3(i, o1 + sgn * 0.05, ht), P3(i, o1 + sgn * 0.05, 3.0), P3(i + 1, o1 + sgn * 0.05, 3.0), P3(i + 1, o1 + sgn * 0.05, ht), np.array([*(sgn * l[i]), 0]))
                     ch['snd'].append(np.array(snd)); snd_n += 1
         if brg:                                                           # (the deck's underside)
-            D = 1.8 if mot else 1.0; o = half + side_w + 0.25
-            if h[i] - D - g[i] > 0.4: quad_out(conc, P3(i, o, -D), P3(i, -o, -D), P3(i + 1, -o, -D), P3(i + 1, o, -D), -U_)
+            D = 1.8 if mot else 1.0; e_ = side_w + 0.25
+            if h[i] - D - g[i] > 0.4: quad_out(conc, P3(i, HL[i] + e_, -D), P3(i, -HR[i] - e_, -D), P3(i + 1, -HR[i + 1] - e_, -D), P3(i + 1, HL[i + 1] + e_, -D), -U_)
         if tun and g[i] - h[i] > 5.8:                                     # (the roof, where it is under the ground)
             o = half + 0.25; quad_out(conc, P3(i, o, 5.5), P3(i, -o, 5.5), P3(i + 1, -o, 5.5), P3(i + 1, o, 5.5), -U_)
         ch['deck'].append(np.array(surf)); 
@@ -163,13 +196,13 @@ for wi, w in enumerate(deck_ways):
     # paint on the deck: lane lines dashed, edge lines solid, a two-way bridge's middle line solid
     lanes = w['lanes'] or (2 if w['hw'] == 'motorway' else 1 if (mot or w['oneway']) else 2)
     sl = 1.25 if mot else 0.5; sr = 0.75 if mot else 0.5
-    left = half - sl; right = -(half - sr); lw = (left - right) / lanes
+    left = HL - sl; right = -(HR - sr); lw = (left - right) / lanes                   # (per sample: narrowed beside another deck)
     offs = [(left, False), (right, False)] + [(left - k * lw, True) for k in range(1, lanes)]
     if not w['oneway'] and not mot: offs = [(left, False), (right, False), ((left + right) / 2, False)] + [(left - k * lw, True) for k in range(1, lanes) if k != lanes // 2]
     for off, dash in offs:
         pts = np.column_stack([xy[:, 0] + l[:, 0] * off, xy[:, 1] + l[:, 1] * off, h + 0.02])
         C(ck(*xy[n // 2]))['paint'].append((pts, dash))
-tick(f'decks {len(deck_ways)} (samples {deck_samples}, estimated heights {est_samples}); sound wall segments {snd_n} (estimated); piers {n_pier}, left out for a road or a lower deck below {n_pier_skip}; low walls left off a street {n_wall_cut} segments')
+tick(f'decks {len(deck_ways)} (samples {deck_samples}, estimated heights {est_samples}); sound wall segments {snd_n} (estimated); decks narrowed beside another {n_trim} samples; piers {n_pier}, left out for a road or a lower deck below {n_pier_skip}; low walls left off a street {n_wall_cut} segments; skirts left off over a lower deck {n_skirt_cut}')
 # ---- the ground roads' own surface, as a 1 m height raster made from their triangles (the paint is laid on it, so it
 # neither floats nor sinks where the triangles cut across the DEM) ----
 RS = 1.0; HX = int((E1 - E0) / RS) + 2; HY = int((N1 - N0) / RS) + 2; HR = np.full((HY, HX), np.nan, np.float32)

@@ -484,16 +484,25 @@ facadeMat.customProgramCacheKey = () => 'facade-v3';
 const bldMat = new THREE.MeshStandardMaterial({ roughness: 0.85, metalness: 0 });
 bldMat.onBeforeCompile = sh => {
   Object.assign(sh.uniforms, { tAlb: FTEX.alb, tNR: FTEX.nr, uSize: FTEX.size });
-  sh.vertexShader = 'attribute float aLayer; attribute vec3 aTint; attribute vec2 aUv;\nflat varying float vLayer; varying vec3 vTint; varying vec2 vUvM; varying vec3 vWN;\n' + sh.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>
-    vLayer = aLayer; vTint = aTint; vUvM = aUv; vWN = normalize(mat3(modelMatrix) * objectNormal);`);
-  sh.fragmentShader = `flat varying float vLayer; varying vec3 vTint; varying vec2 vUvM; varying vec3 vWN; vec4 sNR = vec4(0.5, 0.5, 0.8, 0.0);
+  sh.vertexShader = 'attribute float aLayer; attribute vec3 aTint; attribute vec2 aUv; attribute vec2 aBT;\nflat varying float vLayer; varying vec3 vTint; varying vec2 vUvM; varying vec3 vWN; varying vec3 vBH;\n' + sh.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>
+    vLayer = aLayer; vTint = aTint; vUvM = aUv; vWN = normalize(mat3(modelMatrix) * objectNormal); vBH = vec3(aBT, (modelMatrix * vec4(transformed, 1.0)).y);`);
+  sh.fragmentShader = `flat varying float vLayer; varying vec3 vTint; varying vec2 vUvM; varying vec3 vWN; varying vec3 vBH; vec4 sNR = vec4(0.5, 0.5, 0.8, 0.0);
+float wN(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); float a = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5), b = fract(sin(dot(i + vec2(1, 0), vec2(127.1, 311.7))) * 43758.5), c = fract(sin(dot(i + vec2(0, 1), vec2(127.1, 311.7))) * 43758.5), d = fract(sin(dot(i + vec2(1, 1), vec2(127.1, 311.7))) * 43758.5); return mix(mix(a, b, f.x), mix(c, d, f.x), f.y); }
 ${GLSL_SURF}
 ` + sh.fragmentShader
-    .replace('#include <map_fragment>', `{ vec4 S = surfS(vLayer, vUvM); diffuseColor.rgb = vTint * texture(tAlb, S.xyz).rgb; sNR = texture(tNR, S.xyz); }`)
+    .replace('#include <map_fragment>', `{ vec4 S = surfS(vLayer, vUvM); diffuseColor.rgb = vTint * texture(tAlb, S.xyz).rgb; sNR = texture(tNR, S.xyz);
+      // weathering on the walls: a broad unevenness, the splash grime at the foot, streaks run down from the roof's edge
+      if (abs(vWN.y) < 0.5 && vBH.y > vBH.x) {
+        float hb = vBH.z - vBH.x, ht = vBH.y - vBH.z, un = wN(vUvM * vec2(0.35, 0.5)) * 0.6 + wN(vUvM * 1.7) * 0.4;
+        diffuseColor.rgb *= 0.9 + 0.16 * un;
+        float foot = 1.0 - smoothstep(0.05, 0.7 + 0.3 * un, hb); diffuseColor.rgb *= mix(vec3(1.0), vec3(0.72, 0.69, 0.64), foot);
+        float st = (1.0 - smoothstep(0.0, 2.5 + 3.0 * wN(vec2(vUvM.x * 0.7, 3.1)), ht)) * smoothstep(0.55, 0.9, wN(vec2(vUvM.x * 2.3, vUvM.y * 0.08)));
+        diffuseColor.rgb *= 1.0 - 0.22 * st;
+      } }`)
     .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n roughnessFactor = sNR.z;')
     .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n' + surfNormal);
 };
-bldMat.customProgramCacheKey = () => 'bld-near-v1';
+bldMat.customProgramCacheKey = () => 'bld-near-v2';
 
 // ---- the context (models/area/ctx.bin, from OSM: tools/bld/ctx.py): building outlines with tags, shop / food /
 // amenity / office points, landuse, road centrelines with class and width. In east/north metres, 50 m cells ----
@@ -648,7 +657,7 @@ function bldDecide(r) {
       layer: R(6) < 0.55 ? LY.siding : LY.render, tint: pick(R(7), TINTS.house), parapet: 0, frame: pick(R(8), [[0.62, 0.63, 0.64], [0.30, 0.27, 0.24], [0.9, 0.9, 0.88]]) });
     // the roof: gable or hip on the outline's box, its ridge at the measured height (PLATEAU's LOD1 height is the highest point)
     const ob = obbOf(r);
-    if (ob && ob.rect >= 0.8 && H >= 4.8 && A <= 320 && ob.la >= 3.5 && ob.lb >= 3.0) {
+    if (ob && !r.noRoof && ob.rect >= 0.8 && H >= 4.8 && A <= 320 && ob.la >= 3.5 && ob.lb >= 3.0) {
       const half = Math.min(ob.la, ob.lb) / 2, pitch = 0.4 + R(9) * 0.15; let rise = half * pitch;
       const minEave = H >= 7.0 ? 5.3 : 2.7; rise = Math.min(rise, H - minEave);
       if (rise >= 0.8) { L.roof = R(10) < 0.6 ? 'gable' : 'hip'; L.rise = rise; L.ob = ob; L.roofL = R(11) < 0.6 ? LY.slate : LY.kawara; }
@@ -689,6 +698,10 @@ function bldDecide(r) {
   // walls: the street front gets the entrance, the shop front or the loading doors; apartments' balconies on the front
   // (or the longest open wall), an open corridor on the side opposite
   L.front = front;
+  if (type === BT.HOUSE && L.nUp >= 1 && R(30) < 0.65) {   // (a house's balcony upstairs, on its sunniest open wall; estimated)
+    const cand = open.filter(w => w.len >= 4 && !w.party).map(w => { const [, nn] = dirENU(w.nx, w.nz); return [w, -nn + (w.street ? 0.3 : 0)]; }).sort((a, b) => b[1] - a[1]);
+    if (cand.length) { L.balc = cand[0][0]; L.balcW = L.bayW; L.bdW = 1.7; }
+  }
   if (type === BT.APT) {
     L.balc = front && front.len >= 6 ? front : open.slice().sort((a, b) => b.len - a.len)[0];
     if (L.balc) L.corr = open.filter(w => w !== L.balc && w.nx * L.balc.nx + w.nz * L.balc.nz < -0.9 && w.len >= 5).sort((a, b) => b.len - a.len)[0];
@@ -768,10 +781,11 @@ class GB {
     else { this.push(a, N, ua, L, T); this.push(b, N, ub, L, T); this.push(c, N, uc, L, T); }
   }
   quad(a, b, c, d, N, ua, ub, uc, ud, L, T) { this.tri(a, b, c, N, ua, ub, uc, L, T); this.tri(a, c, d, N, ua, uc, ud, L, T); }
-  build() {
+  build(base = 0, top = 0) {   // (base, top: the building's foot and roof, for its weathering)
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3));
     g.setAttribute('aUv', new THREE.Float32BufferAttribute(this.uv, 2)); g.setAttribute('aLayer', new THREE.Float32BufferAttribute(this.l, 1)); g.setAttribute('aTint', new THREE.Float32BufferAttribute(this.c, 3));
+    const bt = new Float32Array(this.p.length / 3 * 2); for (let i = 0; i < bt.length; i += 2) { bt[i] = base; bt[i + 1] = top; } g.setAttribute('aBT', new THREE.BufferAttribute(bt, 2));
     return g;
   }
 }
@@ -814,15 +828,16 @@ function gbWall(gb, F, u0, u1, y0, y1, ops, L, T) {
 // ---- the kit: parts made once per size and shared (instanced): sashes and glass, doors, shop fronts, shutters,
 // balcony rails and partitions, air conditioners, pipes, gutters, canopies, awnings, signs, rooftop plant ----
 const partMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.1 });
+const vendLitMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4, metalness: 0, emissive: 0xffffff, emissiveIntensity: 0.35 });   // (a drinks machine's lit samples)
 const frameMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.32, metalness: 0.65 });
-const glassMat = new THREE.MeshStandardMaterial({ color: 0x141b22, roughness: 0.05, metalness: 0.25, envMapIntensity: 1.6 });   // (dark: a room behind; the sky in it)
+const glassMat = new THREE.MeshStandardMaterial({ color: 0x3c4650, roughness: 0.07, metalness: 0.15, envMapIntensity: 1.5 });   // (a room behind, the sky and the street in it: grey, not black)
 const shopGlassMat = new THREE.MeshStandardMaterial({ color: 0x6f6c66, roughness: 0.06, metalness: 0.0, envMapIntensity: 1.0 });   // (a lit shop behind)
 const curtainMat = new THREE.MeshStandardMaterial({ color: 0xb0b0ac, roughness: 0.12, metalness: 0, envMapIntensity: 1.0 });   // (seen through the pane: in front of the glass plane, with its reflection)
 // the window kits stretch: one kit per style, each instance's scale (x, y) its opening's size over the kit's own, and
 // each vertex moved with the edge it belongs to (aEdge: which edge, times the kit's half size), so frames keep their
 // thickness and mullions their spacing (one draw for every window of a style, not one per size). Glass and curtains
 // also vary: no two panes alike, each instance tips its pane's normal a little (another bit of sky) and shades the room
-function kitShader(m, key, vary) {
+function kitShader(m, key, vary, own) {   // (own: the material's colour only, not the instance's: panes in any frame)
   m.onBeforeCompile = sh => {
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 aEdge;\nvarying vec3 vGh;').replace('#include <begin_vertex>', `#include <begin_vertex>
 #ifdef USE_INSTANCING
@@ -835,11 +850,11 @@ function kitShader(m, key, vary) {
   vGh = fract(sin(vec3(dot(ip, vec3(12.9898, 78.233, 37.719)), dot(ip, vec3(39.346, 11.135, 83.155)), dot(ip, vec3(73.156, 52.235, 9.151)))) * 43758.5453);`);
     if (vary) sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vGh;')
       .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n  normal = normalize(normal + vec3(vGh.x - 0.5, vGh.y - 0.5, 0.) * 0.16);')
-      .replace('#include <color_fragment>', '#include <color_fragment>\n  diffuseColor.rgb *= 0.6 + 0.8 * vGh.z;');
+      .replace('#include <color_fragment>', own ? '#include <color_fragment>\n  diffuseColor.rgb = diffuse * (0.6 + 0.8 * vGh.z);' : '#include <color_fragment>\n  diffuseColor.rgb *= 0.6 + 0.8 * vGh.z;');
   };
   m.customProgramCacheKey = () => key;
 }
-kitShader(frameMat, 'kit-frame', false); kitShader(glassMat, 'kit-glass', true); kitShader(shopGlassMat, 'kit-shopglass', false); kitShader(curtainMat, 'kit-curtain', true);
+kitShader(frameMat, 'kit-frame', false); kitShader(glassMat, 'kit-glass', true, true); kitShader(shopGlassMat, 'kit-shopglass', false); kitShader(curtainMat, 'kit-curtain', true);
 function geoBoxes(boxes, hw, hh) {   // boxes: [x0, x1, y0, y1, z0, z1, r, g, b(, ax, ay)]: one geometry, vertex colours;
   // with hw, hh (a stretching kit's half size): each vertex's edge (aEdge), by its side of the middle or the box's ax, ay
   const P = [], N = [], C = [], E = [];
@@ -890,15 +905,24 @@ function kitShutter() {   // 1 x 1, ribbed (a slat every 7 cm), its box above: s
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
   return [[g, partMat]];
 }
+// small parts whose shadows do not show from the street (pipes, gutters, laundry poles, air conditioners, what stands
+// on flat roofs): drawn, but left out of the shadow map
+const NOSHADOW_KITS = new Set(['pipe', 'gutter', 'hang', 'ac', 'mast', 'vent', 'tank', 'elev', 'part', 'pot']);
 const KIT = new Map(), KITF = {
   w: (a) => kitWindow(a[1], +a[2], +a[3]), d: (a) => kitDoor(+a[1], +a[2]), shut: () => kitShutter(),
   cur: () => { const g = new THREE.PlaneGeometry(1, 1); g.setAttribute('aEdge', new THREE.Float32BufferAttribute(new Float32Array(8), 2)); return [[g, curtainMat]]; },   // (scaled whole: no edge moves)
   rail: () => [[geoBoxes([[-0.5, 0.5, 0.05, 1.05, -0.03, 0.0, 0.86, 0.87, 0.88], [-0.5, 0.5, 1.05, 1.1, -0.04, 0.03, 0.55, 0.56, 0.57]]), partMat]],
+  hang: () => [[geoBoxes([[-0.5, 0.5, 1.62, 1.655, -0.018, 0.018, 1, 1, 1], [-0.47, -0.45, 1.62, 2.35, -0.35, 0.02, 0.6, 0.6, 0.6], [0.45, 0.47, 1.62, 2.35, -0.35, 0.02, 0.6, 0.6, 0.6]]), partMat]],   // (unit wide: scaled along the balcony)
   part: () => [[geoBoxes([[-0.03, 0.03, 0.0, 1.8, -1.0, 0.0, 0.58, 0.60, 0.62]]), partMat]],
   ac: () => [[geoBoxes([[-0.4, 0.4, 0, 0.6, -0.14, 0.14, 0.72, 0.72, 0.70], [-0.25, 0.25, 0.08, 0.52, 0.14, 0.15, 0.25, 0.26, 0.27], [-0.42, 0.42, -0.08, 0, -0.1, 0.1, 0.4, 0.4, 0.4]]), partMat]],
   pipe: () => [[geoBoxes([[-0.045, 0.045, 0, 1, -0.045, 0.045, 1, 1, 1]]), partMat]],
   gutter: () => [[geoBoxes([[-0.5, 0.5, -0.06, 0.0, -0.06, 0.06, 1, 1, 1]]), partMat]],
   canopy: () => [[geoBoxes([[-0.5, 0.5, 0, 1, 0, 1, 1, 1, 1]]), partMat]],
+  // a drinks machine against the wall (1.0 x 1.83 x 0.72): its body (the instance's colour), the lit front: a row of
+  // samples behind glass, the buttons, the slot; and a potted plant (a pot, a rounded shrub of leaf boxes)
+  vend: () => [[geoBoxes([[-0.5, 0.5, 0, 1.83, 0, 0.72, 1, 1, 1], [-0.42, 0.42, 1.12, 1.68, 0.72, 0.725, 0.95, 0.95, 0.92], [-0.42, 0.42, 0.95, 1.08, 0.72, 0.73, 0.3, 0.3, 0.32], [-0.42, 0.42, 0.12, 0.36, 0.72, 0.74, 0.12, 0.12, 0.13]]), partMat],
+    [geoBoxes([...Array(12)].map((_, k) => { const x = -0.38 + (k % 6) * 0.13, y = k < 6 ? 1.46 : 1.2; return [x, x + 0.08, y, y + 0.17, 0.722, 0.73, ...[[0.85, 0.2, 0.15], [0.2, 0.45, 0.8], [0.9, 0.75, 0.2], [0.25, 0.6, 0.3], [0.9, 0.9, 0.9], [0.55, 0.3, 0.15]][(k * 5) % 6]]; })), vendLitMat]],
+  pot: () => [[geoBoxes([[-0.2, 0.2, 0, 0.35, -0.2, 0.2, 0.55, 0.36, 0.25], [-0.28, 0.28, 0.35, 0.75, -0.28, 0.28, 0.22, 0.38, 0.16], [-0.18, 0.2, 0.7, 0.98, -0.2, 0.17, 0.25, 0.42, 0.18]]), partMat]],
   awn: () => { const g = new THREE.BufferGeometry(), P = [-0.5, 0.6, 0, 0.5, 0.6, 0, 0.5, 0, 1, -0.5, 0.6, 0, 0.5, 0, 1, -0.5, 0, 1, -0.5, 0, 1, 0.5, 0, 1, 0.5, -0.25, 1, -0.5, 0, 1, 0.5, -0.25, 1, -0.5, -0.25, 1];
     const n1 = [0, 0.86, 0.51], n2 = [0, 0, 1], N = [...Array(6)].flatMap(() => n1).concat([...Array(6)].flatMap(() => n2)); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(new Array(36).fill(1), 3)); return [[g, partMat]]; },
   sign: () => [[geoBoxes([[-0.5, 0.5, 0, 1, 0, 1, 1, 1, 1], [-0.47, 0.47, 0.12, 0.88, 1, 1.02, 1.25, 1.25, 1.25]]), partMat]],
@@ -930,7 +954,7 @@ function bldFillParts() {
     if (!ent || ent.cap < n) {
       if (ent) for (const im of ent.ims) { BLD.group.remove(im); im.dispose(); }
       const cap = Math.max(16, 2 ** Math.ceil(Math.log2(n)));
-      ent = { cap, ims: kitGet(key).map(([g, m]) => { const im = new THREE.InstancedMesh(g, m, cap); im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3); im.frustumCulled = false; im.castShadow = m !== curtainMat;   /* (the panes too: the rebuilt building is hollow, so without them the sun shone through its windows onto the street) */ im.receiveShadow = true; BLD.group.add(im); return im; }) };
+      ent = { cap, ims: kitGet(key).map(([g, m]) => { const im = new THREE.InstancedMesh(g, m, cap); im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3); im.frustumCulled = false; im.castShadow = m !== curtainMat && !NOSHADOW_KITS.has(key.split(':')[0]);   /* (the panes too: the rebuilt building is hollow, so without them the sun shone through its windows onto the street) */ im.receiveShadow = true; BLD.group.add(im); return im; }) };
       BLDI.set(key, ent);
     }
     let at = 0;
@@ -1010,7 +1034,7 @@ function* bldMeshSetup(o, ids) {
   ng.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); ng.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
   ng.setAttribute('_batchid', new THREE.Float32BufferAttribute(Bb, 1)); ng.setAttribute('aRef', new THREE.Float32BufferAttribute(Rf, 1)); ng.setAttribute('aWall', new THREE.Float32BufferAttribute(Wl, 1));
   const I = new Uint32Array(P.length / 3); for (let i = 0; i < I.length; i++) I[i] = i; ng.setIndex(new THREE.BufferAttribute(I, 1));
-  const old = o.geometry; o.geometry = ng; old.dispose(); o.material = facadeMat; bvhQueue.push(ng);
+  const old = o.geometry; o.geometry = ng; old.dispose(); o.material = facadeMat; ng.userData.owner = o; bvhQueue.push(ng);
   const tb = new Uint32Array(TK.length); for (let t = 0; t < tb.length; t++) tb[t] = Bb[t * 3];
   BTEX.flush(); WTEX.flush();
   for (const r of recs.values()) { const prev = BLD.recs.get(r.id); if (prev && prev !== r) bldForget(prev); BLD.recs.set(r.id, r); }
@@ -1050,7 +1074,7 @@ function l2Filter(o) {
     out[k++] = d.I[t * 3]; out[k++] = d.I[t * 3 + 1]; out[k++] = d.I[t * 3 + 2];
   }
   const g = o.geometry; g.setIndex(new THREE.BufferAttribute(out.slice(0, k), 1));
-  if (g.boundsTree) { g.disposeBoundsTree(); bvhQueue.push(g); }
+  if (g.boundsTree) { g.disposeBoundsTree(); g.userData.owner = o; bvhQueue.push(g); }
 }
 function bldRefilter(id) { for (const o of BLD.idMeshes.get(id) || []) if (o.userData.l2) l2Filter(o); }
 
@@ -1081,11 +1105,19 @@ function bldMake(r) {
       if (o.kind === 'win' || o.kind === 'small' || o.kind === 'bdoor') {
         const style = o.kind === 'bdoor' ? 'slide2' : L.type === BT.OFFICE ? 'grid' : ww >= 1.15 ? 'slide' : 'fix';
         { const [k, sx, sy] = winKey(style, ww, hh, o.depth); put(k, pm(F, uc, yc, 0, sx, sy, 1), L.frame); }
-        if (R(o.i * 31 + o.f, w.i) < 0.45 && L.type !== BT.WARE) { const cw = ww * (0.4 + 0.6 * R(o.i, o.f + 70)); put('cur', pm(F, uc - (ww - cw) / 2 * (R(o.i, o.f + 71) < 0.5 ? 1 : -1), yc, -o.depth + 0.062, cw, hh, 1), pick(R(o.i, o.f + 72), [[0.85, 0.83, 0.76], [0.7, 0.72, 0.74], [0.82, 0.78, 0.66], [0.6, 0.66, 0.7]])); }
+        // behind the pane: lace or curtains drawn part way (homes: most windows), blinds let down part way (offices)
+        const pc = [0, 0.7, 0.6, 0.5, 0.3, 0][L.type], rc = R(o.i * 31 + o.f, w.i);
+        if (rc < pc && L.type === BT.OFFICE) { const bh = hh * (0.25 + 0.75 * R(o.i, o.f + 73)); put('cur', pm(F, uc, yc + (hh - bh) / 2, -o.depth + 0.062, ww, bh, 1), pick(R(w.i, 74), [[0.80, 0.80, 0.78], [0.70, 0.72, 0.74], [0.86, 0.84, 0.78]])); }
+        else if (rc < pc) { const cw = ww * (0.4 + 0.6 * R(o.i, o.f + 70)); put('cur', pm(F, uc - (ww - cw) / 2 * (R(o.i, o.f + 71) < 0.5 ? 1 : -1), yc, -o.depth + 0.062, cw, hh, 1), pick(R(o.i, o.f + 72), [[0.88, 0.87, 0.82], [0.85, 0.83, 0.76], [0.7, 0.72, 0.74], [0.82, 0.78, 0.66], [0.6, 0.66, 0.7]])); }
       } else if (o.kind === 'door') {
         if (L.type === BT.HOUSE || L.type === BT.SHOP || L.type === BT.WARE) put(`d:${ww}:${hh}`, pm(F, uc, yc, 0), pick(R(3, w.i), [[0.42, 0.30, 0.20], [0.30, 0.30, 0.32], [0.86, 0.86, 0.84], [0.55, 0.42, 0.30]]));
         else { const [k, sx, sy] = winKey('door', ww, hh, o.depth); put(k, pm(F, uc, yc, 0, sx, sy, 1), L.frame); }
         put('step', pm(F, uc, base + 0.15, 0, ww + 0.6, 1, 0.45));
+        if (w.street && (L.type === BT.SHOP || L.type === BT.APT) && R(w.i, 320) < 0.45) {   // (a drinks machine or two beside the entrance, if the wall has room; estimated)
+          const side = R(w.i, 321) < 0.5 ? -1 : 1, x0 = uc + side * (ww / 2 + 0.9), n = R(w.i, 322) < 0.4 ? 2 : 1;
+          for (let k = 0; k < n; k++) { const x = x0 + side * k * 1.05; if (x - 0.55 > w.u0 && x + 0.55 < w.u1 && !ops.some(q => q.y0 < base + 1.9 && q.u1 > x - 0.6 && q.u0 < x + 0.6)) put('vend', pm(F, x, base, 0), pick(R(w.i, 323 + k), [[0.78, 0.1, 0.1], [0.12, 0.3, 0.65], [0.9, 0.9, 0.9], [0.1, 0.45, 0.3]])); }
+        }
+        if (L.type === BT.HOUSE && R(w.i, 330) < 0.6) for (const sd of [-1, 1]) if (R(w.i, 331 + sd) < 0.7) put('pot', pm(F, uc + sd * (ww / 2 + 0.45), base, 0.35, 1, 0.8 + 0.5 * R(w.i, 333 + sd), 1));
         if (L.type !== BT.WARE) put('canopy', pm(F, uc, o.y1 + 0.12, 0, ww + (L.type === BT.HOUSE ? 0.6 : 1.4), 0.14, L.type === BT.HOUSE ? 0.8 : 1.6), [0.6, 0.6, 0.58]);
       } else if (o.kind === 'shop') {
         if (L.shutter && L.type === BT.SHOP) { put('shut', pm(F, uc, yc, 0, ww, hh, 1)); put('canopy', pm(F, uc, o.y1, -0.05, ww, 0.35, 0.35), [0.7, 0.7, 0.7]); }
@@ -1098,13 +1130,14 @@ function bldMake(r) {
     }
     // balconies (a slab per floor along the bays, rails, partitions, an air conditioner on some)
     if (w.flags & 4) for (let f = 1; f <= L.nUp; f++) {
-      const y = base + L.gH + (f - 1) * L.fH, a = w.bayStart - 0.05, b = w.bayStart + w.nb * w.bayW + 0.05, dp = 1.05;
+      const house = L.type === BT.HOUSE, y = base + L.gH + (f - 1) * L.fH, a = w.bayStart - 0.05, b = w.bayStart + w.nb * w.bayW + 0.05, dp = house ? 0.9 : 1.05;
       gbBox(gb, F, a, b, y - 0.18, y, 0, dp, LY.concrete, [0.62, 0.62, 0.60], true);
       for (let i = 0; i < w.nb; i++) {
         const uc = w.bayStart + (i + 0.5) * w.bayW; put('rail', pm(F, uc, y, dp, w.bayW - 0.04, 1, 1), pick(R(5, 0), [[0.66, 0.67, 0.68], [0.58, 0.62, 0.66], [0.44, 0.44, 0.46], [0.72, 0.70, 0.64]]));
-        if (i > 0) put('part', pm(F, w.bayStart + i * w.bayW, y, dp - 0.02));
-        if (R(i, f + 200) < 0.55) put('ac', pm(F, uc + w.bayW / 2 - 0.6, y + 0.08, 0.35));
+        if (i > 0 && !house) put('part', pm(F, w.bayStart + i * w.bayW, y, dp - 0.02));
+        if (R(i, f + 200) < (house ? 0.3 : 0.55)) put('ac', pm(F, uc + w.bayW / 2 - 0.6, y + 0.08, 0.35));
       }
+      if (R(f, 210) < (house ? 0.75 : 0.45)) put('hang', pm(F, (a + b) / 2, y, dp * 0.55, b - a - 0.4, 1, 1), [0.75, 0.76, 0.78]);   // (a laundry pole and its brackets)
     }
     // an open corridor (apartments' other side): its slab and solid parapet on every floor
     if (w.flags & 64) for (let f = 1; f <= L.nUp; f++) {
@@ -1136,7 +1169,7 @@ function bldMake(r) {
     const Ah = ob.la / 2, Bh = ob.lb / 2, ov = 0.45, e2 = L.eave - ov * L.rise / Bh, F = { tx: ob.ax, tz: ob.az, nx: ob.bx, nz: ob.bz, d: 0, P: (u, y, z) => [ob.cx + ob.ax * u + ob.bx * z, y, ob.cz + ob.az * u + ob.bz * z] };
     for (const sb of [1, -1]) put('gutter', [ob.ax * (ob.la + 0.6), 0, ob.az * (ob.la + 0.6), 0, 0, 1, 0, 0, ob.bx, 0, ob.bz, 0, ...F.P(0, e2 - 0.18, sb * (Bh + ov - 0.02))].concat([0, 0, 0, 1].slice(3)), [0.75, 0.75, 0.73]);
   }
-  const geo = gb.build(); geo.computeBoundingSphere();
+  const geo = gb.build(L.base, r.top); geo.computeBoundingSphere();
   const mesh = new THREE.Mesh(geo, bldMat); mesh.castShadow = mesh.receiveShadow = true; mesh.matrixAutoUpdate = false;
   // what the car and the camera run into: the walls as the data has them (not the rebuilt walls' foot sunk 0.6 m below
   // the building, nor its parts): a car in a cutting beside a house on the bank passes as it did before
@@ -1183,8 +1216,62 @@ function bldWork() {
 function facadeSetup(s) {
   if (!FRAME || !BLD.ctx) return false;
   const ids = idsOf(s); s.updateWorldMatrix(true, true);
-  s.traverse(o => { if (!o.isMesh || !o.userData.facade || o.userData.facadeDone || !o.geometry.attributes._batchid) return; o.userData.facadeDone = true; o.updateWorldMatrix(true, false); BLD.jobs.push({ g: bldMeshSetup(o, ids), o }); });
+  s.traverse(o => {
+    if (!o.isMesh || o.userData.facadeDone || !o.geometry.attributes._batchid) return;
+    if (o.userData.facade) { o.userData.facadeDone = true; o.updateWorldMatrix(true, false); BLD.jobs.push({ g: bldMeshSetup(o, ids), o }); }
+    else if (o.userData.photo && o.userData.l2 && o.geometry.attributes.uv) { o.userData.facadeDone = true; o.updateWorldMatrix(true, false); BLD.jobs.push({ g: bldPhotoSetup(o, ids), o }); }
+  });
   return true;
+}
+// ---- photo-textured buildings (LOD2): PLATEAU's photos are aerial, 3-13 texels per metre of wall at their full size
+// (photodensity.js: median ~8; 1 m of wall is 100+ px on screen at 10 m), so near the car they smear. A building whose
+// walls have under PHOTO_SHARP texels per metre is rebuilt near like the photo-less ones, its wall colour (and the
+// ground floor's) taken from its photo (estimated: the photo's mean, aerial light in it); a sharper one keeps its photo.
+// Far off the photo stays. Pitched roofs and buildings of many small walls (LOD3-like) keep their photo too ----
+const PHOTO_SHARP = 25;
+function* bldPhotoSetup(o, ids) {
+  const A = yield* bldAnalyse(o, ids); if (!A || !o.parent || !o.userData.l2) return;
+  const tex = [].concat(o.material).map(m => m.map).find(Boolean), e = tex && TEXREG.get(tex); if (!e) return;
+  let px = null;   // (a 256 px copy of the photo, for its colours)
+  createImageBitmap(e.src.blob, { ...e.src.opts, resizeWidth: 256, resizeHeight: 256 }).then(bm => { const c = new OffscreenCanvas(256, 256), x = c.getContext('2d'); x.drawImage(bm, 0, 0); bm.close(); px = x.getImageData(0, 0, 256, 256).data; }).catch(() => { px = false; });
+  while (px === null) { yield; if (!o.parent) return; }
+  if (!px) return;
+  const g = o.geometry, U = g.attributes.uv, I = g.index ? g.index.array : null, W = e.src.W, H = e.src.H, Wp = A.W;
+  const st = new Map(); let dl = performance.now() + 4;
+  for (let t = 0; t < A.triB.length; t++) {
+    if ((t & 511) === 0 && performance.now() > dl) { yield; if (!o.parent) return; dl = performance.now() + 4; }
+    if (A.triK[t] !== 0) continue;
+    const ii = [0, 1, 2].map(j => I ? I[t * 3 + j] : t * 3 + j), P = ii.map(i => [Wp[i * 3], Wp[i * 3 + 1], Wp[i * 3 + 2]]);
+    const ax = P[1][0] - P[0][0], ay = P[1][1] - P[0][1], az = P[1][2] - P[0][2], bx = P[2][0] - P[0][0], by = P[2][1] - P[0][1], bz = P[2][2] - P[0][2];
+    const area = Math.hypot(ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx) / 2; if (area < 0.05) continue;
+    const u = ii.map(i => U.getX(i)), v = ii.map(i => U.getY(i)), uvA = Math.abs((u[1] - u[0]) * (v[2] - v[0]) - (u[2] - u[0]) * (v[1] - v[0])) / 2;
+    const b = A.triB[t]; let q = st.get(b); if (!q) st.set(b, q = { area: 0, tx: 0, up: [0, 0, 0, 0], low: [0, 0, 0, 0] });
+    q.area += area; q.tx += uvA * W * H;
+    const yc = (P[0][1] + P[1][1] + P[2][1]) / 3, k = Math.min(255, Math.max(0, Math.floor((u[0] + u[1] + u[2]) / 3 * 256))) + 256 * Math.min(255, Math.max(0, Math.floor((v[0] + v[1] + v[2]) / 3 * 256)));
+    q.yc = yc; const acc = q[(yc - A.recs.get(b).base) < 3.5 ? 'low' : 'up']; acc[0] += px[k * 4] * area; acc[1] += px[k * 4 + 1] * area; acc[2] += px[k * 4 + 2] * area; acc[3] += area;
+  }
+  const keep = [];
+  for (const r of A.recs.values()) {
+    if (performance.now() > dl) { yield; if (!o.parent) return; dl = performance.now() + 4; }
+    const q = st.get(r.b); if (!q || q.area < 20) continue;
+    r.ppm = Math.sqrt(q.tx / q.area);
+    if (r.ppm >= PHOTO_SHARP || r.walls.length > 40 || r.top - r.base < 2.5 || r.steep > 0.3 * r.area || L3.has(r.id)) continue;   // (sharp, pitched or intricate: the photo stays)
+    const col = a => a[3] > 0 ? [a[0], a[1], a[2]].map(c => c / a[3] / 255) : null, up = col(q.up) || col(q.low), low = col(q.low) || up;
+    r.noRoof = true; r.photo = true; r.L = bldDecide(r); r.mesh = o;
+    const L = r.L, lum = 0.3 * up[0] + 0.59 * up[1] + 0.11 * up[2], warm = up[0] - up[2];
+    // the photo's hue (its saturation eased), its brightness mapped onto real walls' range (the aerial photo is in shade
+    // and haze: its walls read 0.1-0.4); lighter in the photo stays lighter
+    const tl = Math.min(0.82, Math.max(0.4, 0.42 + 1.1 * (lum - 0.18))), rel = up.map(c => 1 + (c / Math.max(lum, 0.04) - 1) * 0.75);
+    L.tint = rel.map(c => Math.min(0.92, Math.max(0.12, c * tl)));
+    if (L.type !== BT.WARE) L.layer = warm > 0.09 && lum < 0.5 ? (ih(r.seed, 9, 1, 0) < 0.5 ? LY.brick : LY.tile) : lum > 0.62 ? (ih(r.seed, 9, 2, 0) < 0.5 ? LY.render : LY.tile) : (ih(r.seed, 9, 3, 0) < 0.5 ? LY.concrete : LY.tile);
+    if (L.sign && Math.abs(low[0] - up[0]) + Math.abs(low[1] - up[1]) + Math.abs(low[2] - up[2]) > 0.25) { const ll = 0.3 * low[0] + 0.59 * low[1] + 0.11 * low[2]; L.sign = low.map(c => Math.min(0.9, c / Math.max(ll, 0.04) * 0.45)); }
+    L.src += '・外壁の色は写真から（推定）'; keep.push(r);
+  }
+  // the walls hide when the building is near (roofs stay: its photo); its records live as long as the tile
+  o.userData.l2.tk = A.triK; o.userData.l2.hidden = null; l2Filter(o);
+  o.userData.bld = keep;
+  for (const r of keep) { const prev = BLD.recs.get(r.id); if (prev && prev !== r) bldForget(prev); BLD.recs.set(r.id, r); }
+  BLD.photoMade = (BLD.photoMade || 0) + keep.length; BLD.photoKept = (BLD.photoKept || 0) + A.recs.size - keep.length;
 }
 // the tiles' set-up, the nearest tile first: 5 ms a frame on the move, 12 ms while the car stands (a test drawing at
 // 0.3 fps sets more)
@@ -1216,23 +1303,24 @@ function makeTiles(name, rad, err) {
   if ('maxBytesSize' in t.lruCache) { t.lruCache.minBytesSize = Q.bytes / 2; t.lruCache.maxBytesSize = Q.bytes; }
   const bldg = name !== 'roads' && name !== 'trees';
   t.addEventListener('load-model', ({ scene: s }) => {
-    let plain = false;
+    let plain = false, photo = false;
     s.traverse(o => {
       if (!o.isMesh) return;
       if (name === 'trees') { o.visible = false; return; }              // (only where each tree stands is kept: a photo card stands there)
       o.castShadow = name !== 'roads'; o.receiveShadow = true;
       if (name === 'roads') return;
-      bvhQueue.push(o.geometry);                                          // (for the car's rays, a few each frame)
+      o.geometry.userData.owner = o; bvhQueue.push(o.geometry);          // (for the car's rays, a few each frame, near ones only)
       const ms = [].concat(o.material);
       for (const m of ms) {
         if (m.map) { m.map.anisotropy = Math.min(maxAniso, QN === 'low' ? 4 : 16); if (m.map.image && m.map.image.__src) { TEXREG.set(m.map, { tex: m.map, src: m.map.image.__src, mesh: o }); texAfterUpload(m.map); } }
         if ('roughness' in m) { m.roughness = 0.88; m.metalness = 0; }
       }
       if (!ms.some(m => m.map)) { o.userData.facade = true; plain = true; }   // (no photo at all: its walls are drawn)
+      else if (PHOTO_SETS.has(name)) { o.userData.photo = true; photo = true; }
     });
     if (name === 'roads' || name === 'trees') { s.userData.kind = name; pending.push(s); }
-    if (bldg && plain) facadePending.push(s);
-    if (name === 'lod2') l2Register(s);
+    if (bldg && (plain || photo)) facadePending.push(s);
+    if (name === 'lod2' || (photo && PHOTO_SETS.has(name))) l2Register(s);
   });
   t.addEventListener('dispose-model', ({ scene: s }) => s.traverse(o => {
     if (o.geometry) { o.geometry.userData.gone = true; if (o.userData.own) o.geometry.dispose(); }
@@ -1251,6 +1339,7 @@ function makeTiles(name, rad, err) {
 }
 // the buildings: Naka ward (Kannai) and Nishi ward (Minato Mirai, Yokohama Station) at LOD3, Kanagawa ward (north of the
 // station) at LOD2; or all at LOD2. Each loads only round the car; one memory budget for them all
+const PHOTO_SETS = new Set(['lod2', 'nishi2', 'kana2']);   // (LOD2 with photos: their smeared walls rebuilt near, see bldPhotoSetup)
 const MODES = { lod3: ['lod2', 'lod3', 'nishi2', 'kana2', 'minami1'], lod2: ['lod2', 'nishi2', 'kana2', 'minami1'] };   // (Nishi's LOD3 set is the same as its LOD2: same buildings, pictures, bytes)
 let bmode = qs.get('lod') === '2' ? 'lod2' : 'lod3', sharedLru = null;
 const bsets = () => MODES[bmode].map(k => sets[k]).filter(Boolean);
@@ -2080,6 +2169,9 @@ const ray = new THREE.Raycaster(); ray.firstHitOnly = true;
 const DOWN = new THREE.Vector3(0, -1, 0), _o = new THREE.Vector3(), _d = new THREE.Vector3();
 // what the rays may hit: this frame's tiles that have their BVH (the others' turn comes in a frame or two)
 const hitRoads = [], hitBldg = [];
+// (only meshes whose BVH is there: one whose BVH is being rebuilt, after its triangles were hidden or shown, would be
+// tested triangle by triangle: 100 ms and more for a big tile)
+const withBVH = a => a.filter(o => o.geometry.boundsTree);
 function gatherHits() {
   hitRoads.length = hitBldg.length = 0;
   if (sets.roads.group.visible) sets.roads.group.traverse(o => { if (o.isMesh && o.geometry.boundsTree) hitRoads.push(o); });
@@ -2091,7 +2183,7 @@ function gatherHits() {
 // the ground under a point: PLATEAU's road surface (a pavement, a kerb's top), else the ground between the roads
 function groundAt(x, z, yRef) {
   ray.set(_o.set(x, yRef + 1.5, z), DOWN); ray.far = 60; ray.firstHitOnly = false;
-  const all = hitRoads.length ? ray.intersectObjects(hitRoads, false) : []; ray.firstHitOnly = true;
+  const all = hitRoads.length ? ray.intersectObjects(withBVH(hitRoads), false) : []; ray.firstHitOnly = true;
   // the surface the wheel is on: the highest no more than 0.5 m above it (a kerb's step up), not a deck alongside a
   // little higher (a ramp leaving the mainline, their decks overlapping at the split); only if every surface is higher, the nearest
   let hit = all.find(k => k.point.y <= yRef + 0.5) || all[all.length - 1];
@@ -2101,7 +2193,7 @@ function groundAt(x, z, yRef) {
     // above is never reached)
     for (const [ox, oz] of [[0.07, 0.05], [-0.06, -0.07]]) {
       ray.set(_o.set(x + ox, yRef + 1.5, z + oz), DOWN); ray.far = 2.7; ray.firstHitOnly = false;
-      const h2 = ray.intersectObjects(hitRoads, false); ray.firstHitOnly = true;
+      const h2 = ray.intersectObjects(withBVH(hitRoads), false); ray.firstHitOnly = true;
       const k = h2.find(q => q.point.y <= yRef + 0.5); if (k) return k.point.y;   // (the same rule as above: never a surface above the wheel's step)
     }
   }
@@ -2110,7 +2202,7 @@ function groundAt(x, z, yRef) {
 // the nearest wall (a building's) along a level ray, or Infinity
 function wallDist(x, y, z, dx, dz, d) {
   ray.set(_o.set(x, y, z), _d.set(dx, 0, dz).normalize()); ray.far = d;
-  const h = hitBldg.length ? ray.intersectObjects(hitBldg, false) : [];
+  const h = hitBldg.length ? ray.intersectObjects(withBVH(hitBldg), false) : [];
   if (h.length) { const o = h[0].object; wallDist.last = { what: o.material === concMat ? '床版の壁・橋脚' : o.material === sndMat ? '遮音壁' : o.material === bldMat ? '近景の建物' : '建物', x: +h[0].point.x.toFixed(1), y: +h[0].point.y.toFixed(1), z: +h[0].point.z.toFixed(1) }; }
   return h.length ? h[0].distance : Infinity;
 }
@@ -2173,7 +2265,7 @@ function drive(dt) {
     _c.set(C.x, C.y + 1.6, C.z); _t.set(C.x - cx * D, C.y + H, C.z - cz * D);
     _d.subVectors(_t, _c); const len = _d.length(); _d.normalize();
     ray.set(_c, _d); ray.far = len + 0.4;
-    const h = hitBldg.length ? ray.intersectObjects(hitBldg, false) : [];
+    const h = hitBldg.length ? ray.intersectObjects(withBVH(hitBldg), false) : [];
     if (h.length) _t.copy(_c).addScaledVector(_d, Math.max(0.8, h[0].distance - 0.4));
     for (let s = 0.15; s <= 1.0001; s += 0.05) if (furnHit(_c.x + (_t.x - _c.x) * s, _c.z + (_t.z - _c.z) * s, 0.3, true, _c.y + (_t.y - _c.y) * s - 1.6)) { _t.lerpVectors(_c, _t, Math.max(0.12, s - 0.08)); break; }   // (not inside a pole)
     _t.y = Math.max(_t.y, groundAt(_t.x, _t.z, _t.y) + 0.5);
@@ -2241,7 +2333,11 @@ function loop(now) {
   // the newly shown road and tree tiles; a few of the buildings' BVHs; the ground, now and then, as the roads come in
   for (let i = pending.length - 1; i >= 0; i--) { const s = pending[i]; if (!s.parent) continue; pending.splice(i, 1); if (s.userData.kind === 'roads') processRoads(s); else processTrees(s); }
   mk('道路・樹木タイル処理');
-  for (const tEnd = performance.now() + 6; bvhQueue.length && performance.now() < tEnd;) { const g = bvhQueue.shift(); if (!g.boundsTree && !g.userData.gone && g.attributes.position) g.computeBoundsTree(); }
+  for (let k = Math.min(bvhQueue.length, 24), tEnd = performance.now() + 6; k-- > 0 && performance.now() < tEnd;) {   // (a tile over 250 m off waits: the car's rays never reach it; 24 looked at a frame)
+    const g = bvhQueue.shift(); if (g.boundsTree || g.userData.gone || !g.attributes.position) continue;
+    const o = g.userData.owner; if (o) { if (!g.boundingSphere) g.computeBoundingSphere(); _bs.copy(g.boundingSphere).applyMatrix4(o.matrixWorld); if (Math.hypot(_bs.center.x - C.x, _bs.center.z - C.z) - _bs.radius > 250) { bvhQueue.push(g); continue; } }
+    g.computeBoundsTree();
+  }
   mk('衝突用 BVH');
   if (AREA.grid) groundFollow(); else if (GH.dirty && now - GH.at > 1500) { GH.dirty = false; GH.at = now; groundRebuild(); }
   if (FRAME && AREA.buf && !AREA.built) buildArea();
@@ -2327,7 +2423,7 @@ setEl.addEventListener('change', e => {
 });
 showSettings();
 addEventListener('visibilitychange', () => { if (document.hidden && bench) bench.hidden = true; });
-window.__three = { enuToWorld: (e, n, u) => FRAME && enuToWorld(e, n, u), areaNear, gatherHits, get areaBuilt() { return AREA.built; }, AREA, get L3n() { return L3.size; }, get facades() { return FACADE.made.size; }, FURN, BLD, BTNAME, furnLamps, signalState, PF, frames: () => fr.slice(), surfacesAt: (x, z, y) => { ray.set(_o.set(x, y + 40, z), DOWN); ray.far = 90; ray.firstHitOnly = false; const h = hitRoads.length ? ray.intersectObjects(hitRoads, false) : []; ray.firstHitOnly = true; return h.map(k => +k.point.y.toFixed(2)); }, bvhQueueLen: () => bvhQueue.length, FRAME_ENU: { pos: (x, z) => toENU(x, z), dir: (x, z) => dirENU(x, z) }, texMB: () => texBytes() / 1e6, texMem, S, scene, camera, renderer, sets, C, setMode, composer, ao, bloom, GH, gridH, groundAt, wallDist, treeSpots, keys, THREE, reset: () => start && reset() };
+window.__three = { enuToWorld: (e, n, u) => FRAME && enuToWorld(e, n, u), areaNear, gatherHits, get areaBuilt() { return AREA.built; }, AREA, get L3n() { return L3.size; }, get facades() { return FACADE.made.size; }, FURN, BLD, BTNAME, furnLamps, signalState, PF, frames: () => fr.slice(), surfacesAt: (x, z, y) => { ray.set(_o.set(x, y + 40, z), DOWN); ray.far = 90; ray.firstHitOnly = false; const h = hitRoads.length ? ray.intersectObjects(withBVH(hitRoads), false) : []; ray.firstHitOnly = true; return h.map(k => +k.point.y.toFixed(2)); }, bvhQueueLen: () => bvhQueue.length, FRAME_ENU: { pos: (x, z) => toENU(x, z), dir: (x, z) => dirENU(x, z) }, texMB: () => texBytes() / 1e6, texMem, S, scene, camera, renderer, sets, C, setMode, composer, ao, bloom, GH, gridH, groundAt, wallDist, treeSpots, keys, THREE, reset: () => start && reset() };
 </script>
 </body>
 </html>

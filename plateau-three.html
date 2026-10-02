@@ -33,7 +33,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 <div id="panel">
   <button data-b="lod2">LOD2</button><button data-b="lod3" class="on">LOD3</button>
   <button data-t="roads" class="on">道路</button><button data-t="trees" class="on">樹木</button><button data-t="shadow" class="on">影</button><button data-t="ao" class="on">AO</button><button data-t="bloom" class="on">光のにじみ</button>
-  <button data-a="cam">視点</button><button data-a="bench">計測（10 秒）</button><button data-a="copy">結果をコピー</button>
+  <button data-a="q">画質</button><button data-a="cam">視点</button><button data-a="bench">計測（10 秒）</button><button data-a="copy">結果をコピー</button>
 </div>
 <textarea id="out" readonly></textarea>
 <div id="help">W/↑ アクセル　S/↓ ブレーキ・バック　A/D ハンドル　Space サイドブレーキ　C 視点　R 出発地点へ　H 表示を隠す</div>
@@ -79,10 +79,17 @@ const SETS = {
 const SPOT = { lat: 35.446899, lon: 139.641167, h: 39.3, dx: 0.54, dz: -0.841 };   // (h: the street's ellipsoidal height there; dx, dz: the way it runs, east and south)
 const touch = matchMedia('(pointer: coarse)').matches;
 const qs = new URLSearchParams(location.search), NORENDER = qs.has('norender');   // (norender: the world and the driving without drawing, for tests)
-// a PC by default; a phone (or ?q=low) without the extra passes, with a smaller shadow map and less of the city
-const Q = (qs.get('q') || (touch ? 'low' : 'high')) === 'low'
-  ? { dpr: 1.25, msaa: 0, ao: false, bloom: false, shadow: 2048, maxTex: 1024, err: 16, rad: 350, bytes: 0.4e9 }
-  : { dpr: 1.5, msaa: 4, ao: true, bloom: true, shadow: 4096, maxTex: 2048, err: 8, rad: 520, bytes: 1.5e9 };
+// three settings, picked by the GPU (or ?q=high / mid / low): a PC with its own graphics card; a PC's built-in graphics
+// (Intel Iris Xe / UHD, AMD's integrated Radeon, Apple M: AO at half resolution with fewer samples, 2x MSAA, a 2048
+// shadow map); a phone (no AO, no bloom, no MSAA, less of the city)
+const GPU = (() => { try { const gl = document.createElement('canvas').getContext('webgl2'), d = gl && gl.getExtension('WEBGL_debug_renderer_info'); return d ? String(gl.getParameter(d.UNMASKED_RENDERER_WEBGL)) : ''; } catch (e) { return ''; } })();
+const QN = ['high', 'mid', 'low'].includes(qs.get('q')) ? qs.get('q') : touch ? 'low' : /Intel|Iris|UHD|Radeon\(TM\) Graphics|Radeon Graphics|Vega \d+ Graphics|Apple M/i.test(GPU) ? 'mid' : 'high';
+const Q = {
+  high: { dpr: 1.5, msaa: 4, ao: true, aoScale: 1, aoSamples: 12, bloom: true, shadow: 4096, maxTex: 2048, err: 8, rad: 520, bytes: 1.5e9 },
+  mid: { dpr: 1.0, msaa: 2, ao: true, aoScale: 0.5, aoSamples: 8, bloom: true, shadow: 2048, maxTex: 2048, err: 10, rad: 450, bytes: 1.0e9 },
+  low: { dpr: 1.25, msaa: 0, ao: false, aoScale: 0.5, aoSamples: 8, bloom: false, shadow: 2048, maxTex: 1024, err: 16, rad: 350, bytes: 0.4e9 },
+}[QN];
+const QLABEL = { high: '高（専用 GPU 向け）', mid: '中（内蔵 GPU 向け）', low: '軽量' }[QN];
 
 // ---- the renderer, and the passes after it ----
 const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
@@ -103,13 +110,26 @@ composer.addPass(new RenderPass(scene, camera));
 // solid squares) and doesn't redraw the sun's shadow map
 composer.addPass(new Hook(() => { camera.layers.disable(1); renderer.shadowMap.autoUpdate = false; }));
 const ao = new GTAOPass(scene, camera, 1, 1);
-ao.updateGtaoMaterial({ radius: 0.8, distanceExponent: 1.4, thickness: 1.2, scale: 1.0, samples: 12 });
+ao.updateGtaoMaterial({ radius: 0.8, distanceExponent: 1.4, thickness: 1.2, scale: 1.0, samples: Q.aoSamples });
+{ const set = ao.setSize.bind(ao); ao.setSize = (w, h) => set(Math.max(1, Math.round(w * Q.aoScale)), Math.max(1, Math.round(h * Q.aoScale))); }   // (AO is soft: worked out at a lower resolution, spread over the frame)
 ao.blendIntensity = 0.85; ao.enabled = Q.ao; composer.addPass(ao);
 composer.addPass(new Hook(() => { camera.layers.enable(1); renderer.shadowMap.autoUpdate = true; }));
 const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.16, 0.35, 2.2);   // (only what is brighter than white: the sun on chrome and glass)
 bloom.enabled = Q.bloom; composer.addPass(bloom);
 composer.addPass(new OutputPass());                                    // (ACES and the sRGB encoding, once, at the end)
 composer.setSize(innerWidth, innerHeight);
+// the resolution drawn at, kept where the frame rate holds 60 (or near it): down to 60 % of the screen's when the frames
+// take too long, back up when there is room; the passes after it fill the screen from it (?fixed: always 100 %)
+let rscale = 1, rsAt = 0;
+const RMIN = QN === 'low' || qs.has('fixed') ? 1 : 0.6;
+function adaptScale(now) {
+  if (bench || NORENDER || now - rsAt < 1500 || fr.length < 60) return;
+  rsAt = now;
+  const s = stats(fr.slice(-60));
+  let n = rscale;
+  if (s.p50 > 19) n = Math.max(RMIN, rscale * 0.88); else if (s.p50 < 17.5 && s.p95 < 19.5) n = Math.min(1, rscale * 1.06);
+  if (Math.abs(n - rscale) > 0.005) { rscale = n; composer.setPixelRatio(renderer.getPixelRatio() * rscale); }
+}
 
 // fetched next to the page; where a file type isn't served, its base64 copy in <name>.json
 async function fetchBin(u) { try { const r = await fetch(u); if (r.ok && !/html/.test(r.headers.get('content-type') || '')) return await r.arrayBuffer(); } catch (e) { /* the JSON copy */ } const j = await (await fetch(u + '.json')).json(), b = atob(j.glb || j.data), a = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a.buffer; }
@@ -707,8 +727,8 @@ function gpuName() { const gl = renderer.getContext(), d = gl.getExtension('WEBG
 function report(b) {
   const s = stats(b.fr), f1 = v => v.toFixed(1), on = k => sets[k] && sets[k].group.visible ? 'あり' : 'なし';
   return [`【計測 three.js 試作】${new Date().toLocaleString('ja-JP')}　関内 ${SPOT.lat}, ${SPOT.lon}（昼・${['後方', '運転席', '高い後方'][C.cam]}視点）`,
-    `端末: ${navigator.userAgent}`, `GPU: ${gpuName()}　CPU ${navigator.hardwareConcurrency || '?'} コア　画面 ${innerWidth}×${innerHeight}（dpr ${devicePixelRatio}）　画質 ${Q.ao ? 'PC' : '軽量'}`,
-    `建物: PLATEAU ${bmode.toUpperCase()}　道路: ${on('roads')}　樹木: ${on('trees')}　影: ${renderer.shadowMap.enabled ? 'あり' : 'なし'}　AO: ${ao.enabled ? 'あり' : 'なし'}　光のにじみ: ${bloom.enabled ? 'あり' : 'なし'}　MSAA ${Q.msaa}　描画解像度 ${renderer.domElement.width}×${renderer.domElement.height}`,
+    `端末: ${navigator.userAgent}`, `GPU: ${gpuName()}　CPU ${navigator.hardwareConcurrency || '?'} コア　画面 ${innerWidth}×${innerHeight}（dpr ${devicePixelRatio}）　画質 ${QLABEL}`,
+    `建物: PLATEAU ${bmode.toUpperCase()}　道路: ${on('roads')}　樹木: ${on('trees')}　影: ${renderer.shadowMap.enabled ? 'あり' : 'なし'}　AO: ${ao.enabled ? 'あり' : 'なし'}　光のにじみ: ${bloom.enabled ? 'あり' : 'なし'}　MSAA ${Q.msaa}　影 ${Q.shadow}　AO 解像度 ${Math.round(Q.aoScale * 100)}%　描画解像度 ${Math.round(renderer.domElement.width * rscale)}×${Math.round(renderer.domElement.height * rscale)}（画面の ${Math.round(rscale * 100)}%）`,
     `実フレームレート ${f1(s.fps)} fps（1フレーム 中央値 ${f1(s.p50)} ms / 95% ${f1(s.p95)} ms / 最大 ${f1(s.max)} ms、${b.fr.length} フレーム）`,
     `1フレームの JS ${f1(b.js / b.fr.length)} ms　描画呼出 ${Math.round(b.calls / b.fr.length)}　三角形 ${Math.round(b.tris / b.fr.length / 1000)} 千　テクスチャ ${renderer.info.memory.textures}　ジオメトリ ${renderer.info.memory.geometries}`].join('\n');
 }
@@ -731,11 +751,12 @@ function loop(now) {
     t.setResolutionFromRenderer(camera, renderer); t.update();
   }
   if (!NORENDER) composer.render(dt);
+  adaptScale(now);
   const js = performance.now() - t0, inf = renderer.info.render;
   if (bench) { bench.fr.push(real); bench.js += js; bench.calls += inf.calls; bench.tris += inf.triangles; if (now - bench.t0 > 10000) { out.value = report(bench); out.style.display = 'block'; bench = null; window.__benchDone = out.value; } }
   if ((fr.length & 15) === 0) {
     const s = stats(fr.slice(-60)), tl = sets[bmode], ld = Object.values(sets).reduce((a, t) => a + (t.stats ? t.stats.downloading + t.stats.parsing : 0), 0);
-    hud.textContent = `実 ${s.fps.toFixed(1)} fps　中央値 ${s.p50.toFixed(1)} ms\n描画呼出 ${inf.calls}　三角形 ${(inf.triangles / 1000).toFixed(0)} 千\nPLATEAU ${bmode.toUpperCase()} 表示 ${tl.visibleTiles ? tl.visibleTiles.size : '?'} タイル　読込中 ${ld}\n${Math.round(Math.abs(C.v) * 3.6)} km/h${C.hand ? '　サイドブレーキ' : ''}`;
+    hud.textContent = `実 ${s.fps.toFixed(1)} fps　中央値 ${s.p50.toFixed(1)} ms　画質 ${QN === 'high' ? '高' : QN === 'mid' ? '中' : '軽量'} ${Math.round(rscale * 100)}%\n描画呼出 ${inf.calls}　三角形 ${(inf.triangles / 1000).toFixed(0)} 千\nPLATEAU ${bmode.toUpperCase()} 表示 ${tl.visibleTiles ? tl.visibleTiles.size : '?'} タイル　読込中 ${ld}\n${Math.round(Math.abs(C.v) * 3.6)} km/h${C.hand ? '　サイドブレーキ' : ''}`;
   }
   requestAnimationFrame(loop);
 }
@@ -750,6 +771,7 @@ document.getElementById('panel').addEventListener('click', e => {
   if (t === 'ao') { ao.enabled = !ao.enabled; b.classList.toggle('on', ao.enabled); }
   if (t === 'bloom') { bloom.enabled = !bloom.enabled; b.classList.toggle('on', bloom.enabled); }
   if (b.dataset.a === 'cam') C.cam = (C.cam + 1) % 3;
+  if (b.dataset.a === 'q') { const u = new URL(location.href); u.searchParams.set('q', { high: 'mid', mid: 'low', low: 'high' }[QN]); location.href = u.href; }   // (MSAA and the shadow map are set at the start: reloads)
   if (b.dataset.a === 'bench') { bench = { t0: performance.now(), fr: [], js: 0, calls: 0, tris: 0 }; out.style.display = 'block'; out.value = '計測中（10 秒、操作しないでください）…'; }
   if (b.dataset.a === 'copy') { out.select(); navigator.clipboard && navigator.clipboard.writeText(out.value).catch(() => document.execCommand('copy')); }
   b.blur();

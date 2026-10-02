@@ -1,0 +1,11 @@
+{
+  "name": "TubeTan — YouTube で英単語",
+  "short_name": "TubeTan",
+  "description": "YouTube の字幕から英単語を集めて覚える単語帳アプリ",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f5f7",
+  "theme_color": "#1d6fd0",
+  "lang": "ja",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

@@ -1,0 +1,605 @@
+# EJDict にない語・意味が古い語の訳（このアプリ用の自作データ）。
+# 形式: 単語<TAB>意味   意味の区切りは " / "、同義の言い換えは "、"
+# 意味の先頭が "+" の場合は EJDict の意味の前に追加する（置き換えない）
+# --- インターネット・IT ---
+website	ウェブサイト
+webpage	ウェブページ
+homepage	ホームページ、トップページ
+internet	インターネット
+online	オンラインの、インターネット上の / オンラインで
+offline	オフラインの、ネットにつながっていない / 直接会って、対面で
+app	アプリ、アプリケーション
+email	電子メール、メール / メールを送る
+inbox	受信箱、受信トレイ
+spam	+迷惑メール、スパム
+username	ユーザー名
+login	ログイン、ログインする
+logout	ログアウト
+password	パスワード、合言葉
+download	ダウンロード / ダウンロードする
+upload	アップロード / アップロードする
+reboot	再起動する / 再起動
+restart	再開する、再起動する / 再開、再起動
+update	更新する、アップデートする / 最新情報、更新
+browser	ブラウザ、閲覧ソフト
+url	URL、ウェブアドレス
+wifi	Wi-Fi、無線LAN
+bluetooth	Bluetooth（近距離無線通信）
+router	ルーター（ネットワーク機器）
+server	サーバー（ネットワーク上のコンピューター） / 給仕する人、（球技の）サーバー
+database	データベース
+cloud	雲 / クラウド（ネット上のデータ保管・処理サービス）
+smartphone	スマートフォン、スマホ
+cellphone	携帯電話
+laptop	ノートパソコン
+desktop	デスクトップ、デスクトップパソコン / 卓上の
+tablet	タブレット端末 / 錠剤、銘板
+screenshot	スクリーンショット、画面の画像 / スクショを撮る
+keyboard	キーボード、鍵盤
+software	ソフトウェア
+hardware	ハードウェア、機器 / 金物
+interface	インターフェース、接点、境界面
+ui	UI、ユーザーインターフェース
+api	API（ソフト同士をつなぐ仕組み）
+ai	AI、人工知能
+algorithm	アルゴリズム、計算手順、（SNSなどの）表示の仕組み
+bot	ボット、自動プログラム
+hacker	ハッカー、不正侵入者
+hack	+（コンピューターに）不正侵入する / 裏技、ライフハック
+cyber	サイバーの、コンピューター・ネットワークに関する
+cybersecurity	サイバーセキュリティ
+encryption	暗号化
+bandwidth	帯域幅、通信容量 / （人の）余力、キャパ
+connectivity	接続性、つながり
+functionality	機能、機能性
+optimization	最適化
+optimize	最適化する
+default	+初期設定、デフォルト
+settings	設定（setting の複数形）
+feature	+（製品の）機能、特徴
+upgrade	アップグレードする、性能を上げる / アップグレード
+gadget	ガジェット、小型の機械・道具
+digital	デジタルの
+virtual	+仮想の、バーチャルの
+vr	VR、仮想現実
+ar	AR、拡張現実
+robotic	ロボットの、ロボットのような
+robotics	ロボット工学
+javascript	JavaScript（プログラミング言語）
+html	HTML（ウェブページを書く言語）
+pdf	PDF（ファイル形式）
+usb	USB
+gps	GPS、全地球測位システム
+wiki	ウィキ（共同編集できるウェブサイト）
+blockchain	ブロックチェーン
+crypto	暗号資産、仮想通貨 / 暗号の
+cryptocurrency	暗号資産、仮想通貨
+bitcoin	ビットコイン
+nft	NFT、非代替性トークン
+startup	スタートアップ、新興企業 / 起動
+fintech	フィンテック（金融とITの融合）
+analytics	分析、アナリティクス
+dataset	データセット
+workflow	ワークフロー、作業の流れ
+workplace	職場
+workload	仕事量、作業量
+multitask	同時に複数の作業をする
+multitasking	マルチタスク、同時に複数の作業をすること
+timeline	タイムライン、年表、予定表
+deadline	締め切り、期限
+feedback	フィードバック、意見、反応
+# --- SNS・動画 ---
+youtube	YouTube（動画共有サイト）
+youtuber	ユーチューバー、YouTubeの動画投稿者
+vlog	Vlog、動画ブログ
+vlogger	Vlogger、動画ブロガー
+blog	ブログ / ブログを書く
+blogger	ブロガー
+blogging	ブログを書くこと
+podcast	ポッドキャスト（ネット配信の音声番組）
+livestream	ライブ配信 / ライブ配信する
+streaming	ストリーミング、（動画・音楽の）ネット配信
+stream	+（ネットで）配信する、ストリーミング / 小川、流れ
+streamer	配信者、ストリーマー
+influencer	インフルエンサー、影響力のある人
+subscribe	（チャンネルに）登録する、定期購読する / 申し込む、寄付する / (…に)同意する
+subscriber	（チャンネル）登録者、定期購読者、加入者
+subscription	定期購読、サブスクリプション、会員登録
+channel	チャンネル、（テレビの）局 / 海峡、水路 / 経路、ルート
+playlist	プレイリスト、再生リスト
+thumbnail	サムネイル、縮小画像 / 親指の爪
+selfie	自撮り、セルフィー
+emoji	絵文字
+meme	ミーム（ネットで広まるネタ・画像）
+hashtag	ハッシュタグ
+tweet	（Xなどに）投稿する、ツイート / さえずり、さえずる
+viral	（ネットで）爆発的に広まる、バズった / ウイルス（性）の
+trending	話題になっている、トレンド入りした
+troll	（ネットの）荒らし / 荒らす / トロール（北欧伝説の怪物）
+hater	アンチ、嫌う人
+follower	フォロワー、信奉者、追随者
+repost	再投稿する、リポスト / 再投稿
+clickbait	釣りタイトル、クリックベイト
+content	+（ネット上の）コンテンツ、内容 / 満足して
+creator	+（動画などの）制作者、クリエイター
+gameplay	ゲームプレイ、ゲームの遊び方・内容
+gamer	ゲーマー、ゲームをする人
+multiplayer	マルチプレイヤー、多人数参加型（の）
+esports	eスポーツ
+remix	リミックス / リミックスする
+intro	イントロ、導入部分、紹介
+outro	アウトロ、締めくくりの部分
+promo	宣伝、プロモーション
+demo	デモ、実演、試作品
+tutorial	チュートリアル、手引き、個別指導
+anime	アニメ（日本のアニメーション）
+manga	マンガ
+indie	インディーズの、独立系の
+bestseller	ベストセラー
+filmmaker	映画製作者、映像作家
+songwriter	作詞作曲家、シンガーソングライター
+storytelling	ストーリーテリング、物語ること
+cinematic	映画の、映画のような
+artwork	アートワーク、芸術作品、挿絵
+ebook	電子書籍
+# --- 口語・くだけた表現 ---
+ok	OK、大丈夫、よろしい / オーケーする、承認する
+okay	OK、大丈夫、よろしい / オーケーする、承認する
+tv	テレビ
+wanna	〜したい（want to の口語）
+gonna	〜するつもり、〜しそう（going to の口語）
+gotta	〜しなければならない（have got to の口語）
+kinda	ちょっと、なんか（kind of の口語）
+sorta	ちょっと、なんとなく（sort of の口語）
+outta	〜から外へ（out of の口語）
+lotta	たくさんの（lot of の口語）
+dunno	知らない、わからない（don't know の口語）
+gimme	ちょうだい（give me の口語）
+lemme	〜させて（let me の口語）
+cuz	なぜなら（because の口語）
+anyways	とにかく、いずれにせよ（anyway の口語）
+alot	たくさん（a lot の誤記）
+yeah	うん、はい（yes の口語）
+yep	うん、そう（yes の口語）
+yup	うん、そう（yes の口語）
+nope	いや、違う（no の口語）
+nah	いや、いいや（no の口語）
+hey	やあ、ねえ、おい
+wow	わあ、すごい
+oops	おっと、しまった
+yay	やった！、わーい
+bro	兄弟、（呼びかけで）おい、相棒
+dude	やつ、男 / （呼びかけで）おい、お前
+guy	+男、やつ / 《複数形 guys で》みんな
+vibe	雰囲気、ノリ、感じ
+vibes	雰囲気、ノリ（vibe の複数形）
+cool	+かっこいい、いいね / 涼しい、冷静な
+awesome	すごい、最高の / 畏敬の念を起こさせる
+legit	本物の、ちゃんとした、合法の
+epic	+すごい、壮大な / 叙事詩
+nerd	オタク、ガリ勉
+geek	オタク、マニア
+fam	家族、仲間
+stuff	+もの、こと / 詰める、詰め込む
+binge	+一気見する、ドカ食いする / どんちゃん騒ぎ
+# --- 社会・ビジネス・科学 ---
+healthcare	医療、ヘルスケア
+wellness	健康、ウェルネス
+wellbeing	幸福、健康
+mindset	考え方、マインドセット
+mindfulness	マインドフルネス、今に意識を向けること
+lifestyle	ライフスタイル、生き方
+stakeholder	利害関係者、ステークホルダー
+entrepreneurship	起業家精神、起業
+fundraising	資金集め、募金活動
+fundraiser	資金集めのイベント、募金活動
+accountability	説明責任、責任
+sustainability	持続可能性、サステナビリティ
+sustainable	持続可能な、環境に配慮した
+renewable	再生可能な / 更新可能な
+affordable	手頃な価格の、購入しやすい
+implementation	実装、実行、実施
+methodology	方法論、手法
+profitability	収益性
+empowerment	権限を与えること、エンパワーメント
+differentiation	差別化、区別、（数学の）微分
+accreditation	認定、認可
+demographics	人口統計、（顧客などの）層
+demographic	人口統計の / （ある年齢層などの）集団
+millennial	ミレニアル世代の人 / 千年間の
+gen	世代（generation の略）
+regulatory	規制の、取り締まりの
+investigative	調査の、捜査の
+collaborative	協力的な、共同の
+interactive	双方向の、対話型の
+innovative	革新的な、斬新な
+iconic	象徴的な、アイコン的な、有名な
+quirky	風変わりな、くせのある
+retro	レトロな、懐古調の
+themed	〜をテーマにした
+societal	社会の、社会的な
+computational	計算の、コンピューターを使った
+telecom	電気通信
+substrate	基質、基板、土台
+testosterone	テストステロン（男性ホルモン）
+covid	新型コロナウイルス感染症
+pandemic	パンデミック、（病気の）世界的流行 / 世界的に流行する
+lockdown	ロックダウン、都市封鎖、外出制限
+vaccine	ワクチン
+vaccinated	ワクチンを接種した
+quarantine	+隔離する / 隔離、検疫
+spokesperson	広報担当者、スポークスパーソン
+attacker	攻撃者、（サッカーなどの）攻撃選手
+midfielder	（サッカーの）ミッドフィールダー
+superhero	スーパーヒーロー
+transgender	トランスジェンダー（の）
+homophobic	同性愛嫌悪の
+delusional	妄想的な、思い込みの激しい
+stressful	ストレスの多い
+downside	欠点、マイナス面
+upside	利点、良い面 / 上側
+tactic	戦術、作戦
+rehab	リハビリ、更生施設 / 更生させる
+diy	DIY、日曜大工、自分で作ること
+eco	環境に優しい、エコの
+fest	祭り、フェスティバル
+mic	マイク
+abs	腹筋
+calorie	カロリー
+tattoo	入れ墨、タトゥー / 入れ墨をする
+jeans	ジーンズ
+euro	ユーロ（通貨）
+phd	博士号
+bio	経歴、プロフィール（biography の略）
+stat	統計値、数値（statistic の略）
+pic	写真、画像（picture の略）
+admin	管理者、管理（administrator / administration の略）
+etc	〜など（et cetera）
+approx	約、およそ（approximately の略）
+hd	HD、高画質
+dvd	DVD
+# --- 気持ちを表す形容詞 ---
+scared	怖がった、おびえた
+bored	退屈した、うんざりした
+shocked	ショックを受けた、衝撃を受けた
+stressed	ストレスを感じている、ストレスがたまった
+relaxed	くつろいだ、リラックスした、ゆったりした
+embarrassed	恥ずかしい、きまりが悪い、気まずい
+annoyed	いらいらした、腹を立てた
+frightened	おびえた、怖がった
+biased	偏った、偏見のある
+tangled	もつれた、からまった、複雑な
+glasses	メガネ
+savings	貯金、預金、節約額
+congratulations	おめでとう、祝いの言葉
+premises	敷地、構内、建物 / 前提（premise の複数形）
+# --- 副詞 ---
+anymore	もはや（〜ない）、今はもう
+eventually	最終的に、結局、いずれは
+effectively	効果的に、事実上
+initially	最初は、初めのうちは
+genuinely	心から、本当に
+desperately	必死に、ひどく、どうしても
+financially	財政的に、経済的に
+politically	政治的に
+explicitly	はっきりと、明確に
+randomly	無作為に、ランダムに、でたらめに
+continuously	絶えず、連続して
+internationally	国際的に
+critically	批判的に、決定的に、危篤状態で
+extensively	広範囲に、徹底的に
+illegally	違法に、不法に
+intentionally	意図的に、わざと
+globally	世界的に、全体的に
+efficiently	効率よく、能率的に
+thankfully	ありがたいことに、幸いにも
+arguably	おそらく、ほぼ間違いなく
+alternatively	あるいは、代わりに
+remotely	遠隔で、リモートで / 《否定文で》少しも
+internally	内部で、内面的に
+routinely	日常的に、決まって
+manually	手動で、手作業で
+visually	視覚的に、見た目に
+statistically	統計的に
+genetically	遺伝的に、遺伝子的に
+hugely	非常に、大いに
+amazingly	驚くほど、驚いたことに
+culturally	文化的に
+aggressively	積極的に、攻撃的に
+evidently	明らかに
+inherently	本質的に、本来
+periodically	定期的に、周期的に
+ridiculously	ばかばかしいほど、ものすごく
+uniquely	独特に、唯一
+falsely	誤って、偽って
+formally	正式に、形式的に
+sexually	性的に
+basically	基本的に、要するに
+literally	文字通り、《話》本当に、まじで
+actually	実際に、実は、本当に
+totally	完全に、まったく、《話》すごく
+seriously	真剣に、深刻に、《話》マジで
+obviously	明らかに、言うまでもなく
+definitely	間違いなく、確実に、絶対に
+honestly	正直に、正直言って
+hopefully	うまくいけば、願わくは
+apparently	どうやら〜らしい、見たところ
+absolutely	完全に、まったく、《返事で》もちろん
+essentially	本質的に、要するに
+# --- 追加（頻出なのに EJDict にない語）---
+apologise	謝る、わびる（apologize の英国式つづり）
+civilisation	文明（civilization の英国式つづり）
+unacceptable	受け入れられない、容認できない
+underway	進行中で、始まって
+effectiveness	有効性、効果
+mega	すごい、巨大な / 100万倍の
+unavailable	利用できない、入手できない、手が離せない
+firearm	銃、火器
+genome	ゲノム、全遺伝情報
+ninja	忍者
+guitarist	ギタリスト
+unauthorized	無許可の、権限のない
+homeowner	住宅所有者、持ち家に住む人
+attendee	出席者、参加者
+entitlement	権利、受給資格 / 特権意識
+impairment	障害、機能低下
+meltdown	（原子炉の）炉心溶融 / 崩壊、（感情の）爆発
+onboard	搭載された、船内の・機内の / （新人を）受け入れる
+onboarding	オンボーディング、新人の受け入れ・研修
+neurological	神経の、神経学の
+pediatric	小児科の
+bombing	爆撃、爆破
+dumpster	大型ゴミ収集容器
+malware	マルウェア、悪意のあるソフト
+negativity	否定的な態度、ネガティブさ
+positivity	前向きさ、ポジティブさ
+pixel	画素、ピクセル
+webcam	ウェブカメラ
+unstoppable	止められない、手に負えない
+motivational	やる気を起こさせる、動機づけの
+biodiversity	生物多様性
+biomedical	生物医学の
+makeover	（見た目の）大改造、イメージチェンジ
+paranormal	超常的な、科学では説明できない
+veggie	野菜 / ベジタリアン（の）
+globalization	グローバル化、国際化
+competitiveness	競争力
+neuroscience	神経科学
+redevelopment	再開発
+rematch	再試合
+undocumented	証明書を持たない、不法滞在の / 記録に残っていない
+homelessness	ホームレス状態、住む家がないこと
+karaoke	カラオケ
+offseason	シーズンオフ（の）
+cosplay	コスプレ
+encrypted	暗号化された
+headquartered	本社を置いている
+insightful	洞察力のある、鋭い
+proactive	先を見越した、積極的な
+redesign	デザインを変える、設計し直す / 再設計
+archived	保存された、アーカイブされた
+childcare	育児、保育
+entrepreneurial	起業家の、起業家精神のある
+hoodie	パーカー、フード付きスウェット
+matchup	（スポーツの）対戦、組み合わせ
+modem	モデム
+openness	開放性、率直さ
+standalone	単独の、それだけで機能する
+vpn	VPN（仮想プライベートネットワーク）
+wetland	湿地帯
+multicultural	多文化の
+comedic	喜劇の、コメディの
+handheld	手で持てる、携帯型の
+metadata	メタデータ（データについての情報）
+outsourcing	外部委託、アウトソーシング
+outsource	外部に委託する
+payout	支払い、配当金
+revisit	再訪する、見直す
+dysfunctional	機能不全の、うまく機能しない
+unattractive	魅力のない
+wastewater	廃水、下水
+lifespan	寿命
+predictive	予測の、予言的な
+identifiable	識別できる、見分けられる
+dopamine	ドーパミン（神経伝達物質）
+serotonin	セロトニン（神経伝達物質）
+acidic	酸性の、酸っぱい
+marginalized	社会の隅に追いやられた、疎外された
+socioeconomic	社会経済的な
+holistic	全体的な、包括的な
+relatable	共感できる、身近に感じる
+playback	再生
+usefulness	有用性、役立つこと
+crowdfunding	クラウドファンディング
+skincare	スキンケア
+voicemail	留守番電話（のメッセージ）
+preparedness	準備ができていること、備え
+spreadsheet	表計算ソフト、スプレッドシート
+prioritize	優先する、優先順位をつける
+prioritise	優先する（prioritize の英国式つづり）
+unethical	非倫理的な
+unanswered	答えのない、未解決の
+ecommerce	電子商取引、ネット通販
+fanbase	ファン層
+paramedic	救急救命士
+typo	誤字、タイプミス
+unresolved	未解決の
+detox	デトックス、解毒 / 依存症の治療
+responder	応答者 / 初動対応者（救急隊など）
+sunscreen	日焼け止め
+playbook	作戦集、戦略
+payback	仕返し、報い / 回収
+generational	世代の、世代間の
+minimalist	ミニマリスト、最小限主義の（人）
+plugin	プラグイン、拡張機能
+worldview	世界観
+wannabe	〜志望者、なりたがり屋
+caregiver	介護者、世話をする人
+customization	カスタマイズ、個別対応
+customize	カスタマイズする、好みに合わせて変える
+immersive	没入型の、没入感のある
+interconnected	相互に結びついた
+webinar	ウェビナー、オンラインセミナー
+firewall	ファイアウォール、防火壁
+filmmaking	映画製作
+firmware	ファームウェア
+remastered	リマスターされた
+unreleased	未発表の、未公開の
+cryptic	謎めいた、不可解な
+everytime	毎回（every time の誤記）
+eachother	お互い（each other の誤記）
+atleast	少なくとも（at least の誤記）
+fanboy	熱狂的なファン
+lifehack	ライフハック、生活の知恵
+snack	+おやつ、軽食
+binge-watch	一気見する
+smartwatch	スマートウォッチ
+earbuds	イヤホン
+microplastics	マイクロプラスチック
+geopolitical	地政学的な
+
+a	（不定冠詞）1つの、ある、〜につき / 英語アルファベットの第1字
+an	（母音の前の不定冠詞）1つの、ある、〜につき
+comprehensive	+包括的な、総合的な
+# --- EJDict の最初の意味が一般的でない語の修正（よく使う意味を先頭へ）---
+just	+ちょうど、ただ…だけ、ちょっと、たった今 / 正しい、公正な
+well	+よく、上手に、十分に / ええと、さて / 健康な / 井戸、泉
+even	+…でさえ、…すら、さらに / 平らな、偶数の
+still	+まだ、今でも、それでも / 静止した、静かな
+lot	+（a lot / lots で）たくさん、大いに / 区画、くじ
+base	+基礎、土台、基地 / …に基づかせる / 卑しい
+miss	+…がいなくて寂しい、…を逃す、…し損なう / …嬢、…さん
+company	+会社、仲間、同席 / 来客
+kid	+子ども、若者 / からかう、冗談を言う / 子ヤギ
+post	+（SNSなどに）投稿する、投稿 / 郵便、地位 / 柱
+check	+…を確認する、調べる、点検 / 小切手、勘定書 / 阻止
+bank	+銀行 / 土手、岸
+fine	+元気な、すばらしい、細かい / 罰金、…に罰金を科す
+match	+試合、好敵手 / …に匹敵する、…と合う / マッチ
+issue	+問題（点）、論点 / 発行、（雑誌の）号 / …を発行する
+state	+状態、州、国家 / …を述べる
+deal	+取引、契約、（a great deal で）大量 / （deal with で）…を扱う、対処する
+media	メディア、マスコミ、媒体（medium の複数形）
+data	+データ / 資料、事実
+video	+動画、ビデオ / テレビの映像
+amount	+量、額、総計 / （amount to で）…に達する、結局…になる
+community	地域社会、共同体、（共通の関心をもつ）集団、コミュニティー
+political	+政治の、政治的な / 国家の、政府の
+relationship	+関係、つながり、交際、恋愛関係 / 血縁関係
+current	+現在の、最新の、流通している / 流れ、電流
+focus	+焦点、中心 / …に集中する、焦点を合わせる
+link	+つながり、関連、リンク / …をつなぐ / 輪、鎖の輪
+cross	+…を横切る、渡る、交差する / 十字架、十字形 / 不機嫌な
+comment	+コメント、意見、論評 / 論評する、意見を述べる
+share	+…を共有する、分け合う、シェアする / 分け前、株
+drive	+（車を）運転する、…を車で送る / …を駆り立てる、…させる / ドライブ
+fan	+ファン、熱心な愛好者 / うちわ、扇風機
+let	…させる、…するのを許す / （let's で）…しよう / （let me で）…させてください
+put	…を置く、載せる、入れる / …を（ある状態に）する / …を言い表す
+hold	+…を持つ、抱く、…を保つ / （会などを）開く、催す / 持ちこたえる
+add	…を加える、足す、付け加える / 言い足す
+minute	分、ちょっとの間、瞬間 / 議事録 / 細かい、ごく小さい
+car	自動車、車 / （鉄道の）車両、客車
+leader	指導者、リーダー、先導者 / 首位
+son	息子、（男の）子孫
+sister	姉、妹、姉妹 / 修道女、シスター
+mail	+郵便、郵便物、メール / …を郵送する / 鎖かたびら
+screen	+画面、スクリーン、映画 / 仕切り、網戸 / …を選別する、検査する
+click	+クリックする / カチッという音（を立てる） / （急に）分かる、気が合う
+staff	+スタッフ、職員、部員 / つえ、棒
+host	+主催者、司会者、ホスト / …を主催する / 大勢
+coach	+コーチ、指導者 / …を指導する / 長距離バス、客車
+tip	+ヒント、助言、コツ / チップ、心づけ / 先、先端
+switch	+スイッチ / …を切り替える、交換する / 小枝
+file	+ファイル、書類綴じ / …を整理保存する、提出する / やすり
+volume	+音量、量、体積 / （本の）巻、冊
+profile	+プロフィール、人物紹介 / 横顔、輪郭 / 注目度
+japan	日本 / 漆、漆器
+august	8月 / 威厳のある、堂々とした
+march	+行進する / 行進 / 3月
+twitter	+ツイッター（現X、SNS） / さえずる、ぺちゃくちゃしゃべる
+weird	奇妙な、変な、不気味な
+northern	北の、北部の、北からの
+male	男性の、雄の / 男性、雄
+fair	+公平な、公正な、かなりの / 見本市、品評会
+super	+すごい、最高の、とても / 管理人
+spring	+春 / ばね、泉 / 跳ぶ、跳ねる
+fall	+落ちる、倒れる、下がる / 秋（米）
+bear	+クマ / …に耐える、…を運ぶ、（子を）産む
+train	+列車、電車 / …を訓練する、トレーニングする
+plant	+植物、工場、プラント / …を植える
+version	版、バージョン、…版 / 翻訳 / （ある立場からの）説明
+message	+メッセージ、伝言、伝えたいこと / 伝書
+cell	+細胞 / 携帯電話（cell phone） / 独房、小部屋
+capital	+首都、資本、大文字 / 主要な
+critical	+重大な、決定的な、批判的な / 評論の
+anyway	+とにかく、いずれにせよ / どうしても
+smart	+頭のいい、賢い、おしゃれな / 機敏な
+rush	+急ぐ、突進する、殺到する / 急ぎ、殺到 / イグサ
+layer	層、重なり / …を層にする
+monitor	+モニター、画面 / …を監視する、観察する / 監視員
+seal	+封印、印 / …に封をする、密閉する / アザラシ
+pitch	+（野球の）投球、売り込み、音の高さ / …を投げる、売り込む / ピッチ、競技場
+perspective	+観点、見方、視点 / 遠近法
+recover	+回復する、…を取り戻す / …を再びおおう
+appropriate	+適切な、ふさわしい / …を私物化する、充当する
+attorney	+弁護士（米） / 代理人
+rent	+家賃、賃貸料 / …を賃借りする、賃貸しする / 裂け目
+id	ID、身分証明書 / イド（精神分析）
+fantastic	+すばらしい、最高の / 空想的な、風変わりな
+diet	+ダイエット、食事制限、日常の食事 / 議会、国会
+objective	+目的、目標 / 客観的な
+panel	+委員会、討論者団、パネル / 羽目板
+draft	+下書き、草案、徴兵、ドラフト / すきま風
+aspect	+側面、局面、観点 / 様子、外観
+log	+記録、ログ / …を記録する / 丸太
+chip	+（ポテト）チップ、半導体チップ / 破片、欠けたあと
+relevant	関連のある、適切な、妥当な
+shower	+シャワー / にわか雨
+sponsor	+スポンサー、広告主、後援者 / …を後援する
+gallery	+美術館、画廊、ギャラリー / 回廊
+battery	+電池、バッテリー / 砲兵中隊 / 暴行
+dinner	+夕食、ディナー / 正餐
+chest	+胸 / 大箱、たんす
+depression	+うつ病、憂うつ、不況 / くぼみ
+matt	つや消しの（matte）
+math	数学（mathematics の略）
+trigger	+引き金 / …のきっかけとなる、…を引き起こす
+boost	+…を押し上げる、高める、増やす / 後押し、増加
+gross	+総計の、全体の / 気持ち悪い（口語）、ひどい
+resort	+リゾート、行楽地 / （resort to で）…に訴える、頼る
+script	+台本、脚本、スクリプト / 手書き、筆記体
+virus	ウイルス / コンピューターウイルス
+formula	+公式、式、方式 / 決まり文句
+alright	大丈夫、よろしい、オーケー（all right の口語）
+tho	…だけれども（though の略）
+rep	代表者、営業担当（representative の略） / （筋トレの）回数
+bye	さようなら、バイバイ / 不戦勝
+mum	お母さん、ママ（英） / 黙っている
+android	+アンドロイド（OS・人型ロボット） / 人造人間
+premium	+高級な、上質の、プレミアム / 保険料、割増金
+behalf	（on behalf of で）…の代わりに、…を代表して、…のために
+buck	+ドル（口語） / 雄ジカ、雄
+peer	+同僚、仲間、同等の人 / じっと見る
+chill	+くつろぐ、落ち着く（口語） / 寒気、冷たさ / …を冷やす
+terminal	+ターミナル、終着駅、端末 / 末期の
+trailer	+予告編、トレーラー / 移動住宅
+fancy	+しゃれた、高級な / 空想 / …を好む
+clinic	+診療所、クリニック / 臨床講義
+ranking	+ランキング、順位 / 上位の
+spare	+予備の、余分の / （時間などを）割く、…を容赦する
+presentation	+プレゼン、発表 / 贈呈、紹介
+mouse	+（パソコンの）マウス / ハツカネズミ / 臆病者
+gym	ジム、体育館 / 体操
+regardless	+（regardless of で）…にかかわらず / むとんちゃくな
+stroke	+脳卒中 / 一打ち、一撃、（水泳の）ひとかき / …をなでる
+molecule	分子 / ごく少量
+tyre	タイヤ（tire の英国式つづり）
+stride	大またで歩く / 大また、歩幅、進歩
+centimeter	センチメートル
+avatar	+アバター（ネット上の分身） / 化身
+drone	+ドローン、無人機 / 雄バチ / ブーンという音
+console	+（ゲーム機などの）本体、操作盤、コンソール / …を慰める
+coke	コーラ（Coca-Cola の略） / コークス / コカイン（俗）
+font	+フォント、書体 / 洗礼盤、泉
+biopsy	生検、生体組織検査

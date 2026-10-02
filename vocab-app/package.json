@@ -1,0 +1,17 @@
+{
+  "name": "tubetan",
+  "version": "1.0.0",
+  "description": "YouTube の字幕から英単語を集めて覚える単語帳アプリ",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js --open",
+    "start:lan": "node server.js --lan",
+    "test": "node --test",
+    "build:dict": "node tools/build-dict.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

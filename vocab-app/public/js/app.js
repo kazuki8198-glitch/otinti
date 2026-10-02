@@ -15,6 +15,10 @@
   const UI = window.TubeTanUI;
   const { esc, icon, num } = UI;
   const $view = document.getElementById('view');
+  // プレビュー版（claude.ai の Artifact など、外部への通信や埋め込みができない環境）
+  const PREVIEW = !!(window.TUBETAN_CONFIG && window.TUBETAN_CONFIG.preview);
+  // YouTube プレーヤーを埋め込めるか（file:// やプレビュー版では YouTube へのリンクにする）
+  const CAN_EMBED = location.protocol !== 'file:' && !PREVIEW;
 
   let dict = null;
   let actions = {};
@@ -119,7 +123,7 @@
   }
 
   function checkServer() {
-    if (location.protocol === 'file:' && !apiBase()) {
+    if (PREVIEW || (location.protocol === 'file:' && !apiBase())) {
       state.server = false;
       refreshServerStatus();
       return Promise.resolve(false);
@@ -149,6 +153,12 @@
   let detailsPromise = null;
   function ensureDetails() {
     if (dict.hasDetails) return Promise.resolve(true);
+    if (window.TUBETAN_DICT_DETAIL) {
+      // ページに同梱されている場合（プレビュー版）
+      dict.attachDetails(window.TUBETAN_DICT_DETAIL);
+      window.TUBETAN_DICT_DETAIL = null;
+      return Promise.resolve(true);
+    }
     if (!detailsPromise) {
       detailsPromise = UI.loadScript('data/dict-detail.js', 30000)
         .then(() => {
@@ -412,7 +422,7 @@
   }
 
   function historyItemHtml(h) {
-    const thumb = h.videoId
+    const thumb = h.videoId && !PREVIEW
       ? `<div class="thumb" style="background-image:url('${esc(UI.thumbUrl(h.videoId))}')"></div>`
       : `<div class="thumb">${icon('text')}</div>`;
     const meta = [UI.fmtDate(h.date), h.total ? '異なり語 ' + num(h.total) : '', h.level95 ? '難易度 Lv' + h.level95 : ''].filter(Boolean).join(' ・ ');
@@ -453,7 +463,16 @@
     </form>`;
   }
 
+  function previewNoticeHtml() {
+    return `<div class="notice info">${icon('info')}<div>
+      <b>このプレビュー版では、YouTube の字幕の自動取得は使えません。</b>
+      <p>パソコンでアプリ（vocab-app の <code>node server.js</code>）を起動すると、URL を貼るだけで字幕から単語を集められます。ここでは、YouTube の「文字起こし」や英文を貼り付ける方法・サンプル・レベル別の単語で試せます。</p>
+      <div class="row" style="margin-top:8px"><button type="button" class="btn sm" data-act="tab" data-tab="text">${icon('text')}英文・字幕を貼る</button><button type="button" class="btn sm ghost" data-act="sample">サンプルで試す</button></div>
+    </div></div>`;
+  }
+
   function serverStatusHtml() {
+    if (PREVIEW) return previewNoticeHtml();
     if (state.server === null) return '<div class="row small muted"><div class="spinner" style="width:16px;height:16px;border-width:2px"></div>字幕サーバーを確認しています…</div>';
     if (state.server && state.server.ok) {
       return `<div class="small muted">${icon('check')} 字幕の自動取得が使えます${state.server.ytDlp ? '（yt-dlp ' + esc(state.server.ytDlp) + ' も利用できます）' : ''}。英語の字幕（自動生成を含む）がある動画に対応しています。</div>`;
@@ -644,6 +663,11 @@
     const box = document.getElementById('results');
     if (!box) return;
     state.lastUrl = input;
+    if (PREVIEW) {
+      state.draft.url = input;
+      box.innerHTML = '<div style="margin-top:16px">' + previewNoticeHtml() + '</div>';
+      return;
+    }
     const id = core.parseVideoId(input);
     if (!id) {
       box.innerHTML = `<div class="notice error" style="margin-top:16px">${icon('alert')}<div><b>YouTube の URL を読み取れませんでした。</b><br>https://www.youtube.com/watch?v=… や https://youtu.be/… の形の URL を貼り付けてください。</div></div>`;
@@ -829,7 +853,7 @@
       ${unknownHtml(res)}`;
 
     box.innerHTML = `<div class="results${hasVideo ? ' has-video' : ''}"><div class="side">${side}</div><div class="main-col">${main}</div></div>`;
-    if (hasVideo) state.player = new UI.VideoPlayer(document.getElementById('player-slot'), res.videoId, res.start || 0);
+    if (hasVideo) state.player = new UI.VideoPlayer(document.getElementById('player-slot'), res.videoId, res.start || 0, { embed: CAN_EMBED, thumb: !PREVIEW });
     renderWordList();
     if (keepScroll) window.scrollTo(0, scrollY);
   }
@@ -885,9 +909,9 @@
     if (!ctx || !ctx.text) return '';
     let ts = '';
     if (ctx.t != null) {
-      ts = res && res.videoId
-        ? `<button type="button" class="ts" data-act="seek" data-t="${esc(ctx.t)}" title="この場面を再生">${icon('play')}${core.formatTime(ctx.t)}</button>`
-        : `<span class="ts" style="cursor:default">${core.formatTime(ctx.t)}</span>`;
+      if (res && res.videoId && CAN_EMBED) ts = `<button type="button" class="ts" data-act="seek" data-t="${esc(ctx.t)}" title="この場面を再生">${icon('play')}${core.formatTime(ctx.t)}</button>`;
+      else if (res && res.videoId) ts = `<a class="ts" href="${esc(UI.watchUrl(res.videoId, ctx.t))}" target="_blank" rel="noopener noreferrer" title="YouTube でこの場面を開く">${icon('play')}${core.formatTime(ctx.t)}</a>`;
+      else ts = `<span class="ts" style="cursor:default">${core.formatTime(ctx.t)}</span>`;
     }
     return `<div class="ctx">${ts}<span class="en">${UI.highlight(ctx.text, ctx.hl)}</span></div>`;
   }
@@ -1116,8 +1140,8 @@
       <div class="def-block" id="long-def"><span class="muted small">詳しい意味を読み込んでいます…</span></div>
       ${forms.length ? `<div class="section-title">この${src.videoId ? '動画' : '英文'}での形</div><p class="en">${esc(forms.join(', '))}</p>` : ''}
       ${(it.contexts || []).length ? `<div class="section-title">例文</div>${it.contexts.map((c) => `<div class="ex-item">${ctxHtmlSheet(c, src)}</div>`).join('')}` : ''}
-      <div class="section-title">英英辞典</div>
-      <div id="en-def"><button type="button" class="btn sm" data-act="enDef">${icon('search')}英英辞典で調べる（Free Dictionary）</button></div>
+      ${PREVIEW ? '' : `<div class="section-title">英英辞典</div>
+      <div id="en-def"><button type="button" class="btn sm" data-act="enDef">${icon('search')}英英辞典で調べる（Free Dictionary）</button></div>`}
       <div class="section-title">ほかの辞書で調べる</div>
       ${UI.dictLinks(e.d)}`;
     const sh = UI.sheet({
@@ -1731,7 +1755,7 @@
       <div id="wlist" class="list" style="margin-top:12px"></div>
       <div class="row spread" style="margin-top:16px">
         <button type="button" class="btn ghost sm" data-act="knownList">${icon('known')}「知ってる」単語（${num(Store.known.size)}語）</button>
-        <button type="button" class="btn ghost sm" data-act="csv">${icon('download')}CSV で書き出し（Anki 等）</button>
+        ${PREVIEW ? '' : `<button type="button" class="btn ghost sm" data-act="csv">${icon('download')}CSV で書き出し（Anki 等）</button>`}
       </div>`;
     setView(html, commonActions({
       addWord: () => openAddSheet({}),
@@ -1991,18 +2015,18 @@
       </div>
       <div class="card"><h2>データ</h2>
         <p class="small muted">学習データはこのブラウザの中だけに保存されています。別の端末へ移すときや、念のためにバックアップを保存してください。</p>
-        <div class="setting"><div><div class="t">バックアップ</div><div class="d">単語帳・学習記録・設定を JSON ファイルに保存</div></div><button type="button" class="btn" data-act="backup">${icon('download')}保存</button></div>
+        ${PREVIEW ? '<p class="small muted">プレビュー版ではファイルの保存（バックアップ・CSV）はできません。</p>' : `<div class="setting"><div><div class="t">バックアップ</div><div class="d">単語帳・学習記録・設定を JSON ファイルに保存</div></div><button type="button" class="btn" data-act="backup">${icon('download')}保存</button></div>
+        <div class="setting"><div><div class="t">CSV で書き出し</div><div class="d">Anki やスプレッドシート用</div></div><button type="button" class="btn" data-act="csv">${icon('download')}CSV</button></div>`}
         <div class="setting"><div><div class="t">復元</div><div class="d">バックアップファイルから読み込む（今のデータと統合）</div></div><button type="button" class="btn" data-act="restore">${icon('upload')}読み込む</button></div>
-        <div class="setting"><div><div class="t">CSV で書き出し</div><div class="d">Anki やスプレッドシート用</div></div><button type="button" class="btn" data-act="csv">${icon('download')}CSV</button></div>
         <div class="setting"><div><div class="t">すべて削除</div><div class="d">単語帳と学習記録をすべて消します</div></div><button type="button" class="btn danger" data-act="wipe">${icon('trash')}削除</button></div>
       </div>
-      <div class="card"><h2>字幕サーバー</h2>
+      ${PREVIEW ? '' : `<div class="card"><h2>字幕サーバー</h2>
         <div class="setting"><div><div class="t">状態</div><div class="d">YouTube の字幕を自動で取得するためのサーバー（server.js）</div></div><div class="row">${server}<button type="button" class="btn sm ghost" data-act="recheck">${icon('undo')}再確認</button></div></div>
         <details style="margin-top:8px"><summary class="small muted" style="cursor:pointer">詳細設定（別の場所でサーバーを動かしている場合）</summary>
           <form data-submit="saveApi" class="input-row" style="margin-top:8px"><input class="input" name="api" placeholder="例: http://192.168.0.10:3000（空欄＝このページと同じ）" value="${esc(s.apiBase)}" spellcheck="false" autocapitalize="off"><button class="btn" type="submit">保存</button></form>
           <p class="small muted">別のサーバーを使う場合は、そのサーバーを <code>ALLOW_ORIGIN=このページのURL</code> を付けて起動してください。</p>
         </details>
-      </div>
+      </div>`}
       <div class="card"><h2>このアプリについて</h2>
         <p class="small">TubeTan は、YouTube の字幕から英単語を集めて覚えるための単語帳アプリです。</p>
         <ul class="small" style="padding-left:1.2em;margin:6px 0">

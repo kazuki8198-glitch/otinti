@@ -315,7 +315,7 @@
    * 動画プレーヤー。画面外にスクロールして再生中なら右下に小さく浮かせる。
    * file:// で開いた場合や読み込みに失敗した場合は、YouTube を開くリンクにする。
    */
-  function VideoPlayer(slot, videoId, start) {
+  function VideoPlayer(slot, videoId, start, opts) {
     this.slot = slot;
     this.videoId = videoId;
     this.player = null;
@@ -329,7 +329,8 @@
     this.box.appendChild(target);
     slot.appendChild(this.box);
     var self = this;
-    if (root.location.protocol === 'file:') {
+    this.thumb = !(opts && opts.thumb === false);
+    if (root.location.protocol === 'file:' || (opts && opts.embed === false)) {
       this.showFallback();
       return;
     }
@@ -360,7 +361,8 @@
   VideoPlayer.prototype.showFallback = function () {
     this.fallback = true;
     this.box.classList.remove('floating');
-    this.box.innerHTML = '<a class="player-fallback" target="_blank" rel="noopener noreferrer" href="' + esc(watchUrl(this.videoId)) + '" style="background-image:url(\'' + esc(thumbUrl(this.videoId)) + '\')"><span>' + icon('play') + 'YouTube で開く</span></a>';
+    var bg = this.thumb ? ' style="background-image:url(\'' + esc(thumbUrl(this.videoId)) + '\')"' : '';
+    this.box.innerHTML = '<a class="player-fallback" target="_blank" rel="noopener noreferrer" href="' + esc(watchUrl(this.videoId)) + '"' + bg + '><span>' + icon('play') + 'YouTube で開く</span></a>';
   };
 
   VideoPlayer.prototype.state = function () {

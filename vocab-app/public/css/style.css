@@ -140,7 +140,7 @@ mark, .hl { background: var(--hl); color: var(--hl-ink); border-radius: 3px; pad
 
 /* ---------- ヘッダー・ナビ ---------- */
 .topbar {
-  position: sticky; top: 0; z-index: 30;
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30;
   height: var(--header-h);
   display: flex; align-items: center; gap: 12px;
   padding: 0 max(16px, env(safe-area-inset-left));
@@ -321,7 +321,7 @@ label.field > span { display: block; font-size: 0.85rem; font-weight: 650; color
 .notice.ok { background: var(--good-soft); border-color: color-mix(in srgb, var(--good) 35%, transparent); }
 .notice.ok > .icon { color: var(--good); }
 .notice > div { min-width: 0; }
-.notice code, code.k { background: var(--surface-3); padding: 1px 6px; border-radius: 5px; font-size: 0.86em; word-break: break-all; }
+.notice code, code.k { background: var(--surface-3); padding: 1px 6px; border-radius: 5px; font-size: 0.86em; word-break: keep-all; overflow-wrap: anywhere; }
 .notice ol, .notice ul { margin: 6px 0 0; padding-left: 1.3em; }
 
 /* ---------- ホーム ---------- */

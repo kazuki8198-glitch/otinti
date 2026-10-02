@@ -1,0 +1,62 @@
+{
+ "datasets": {
+  "kana1": "https://assets.cms.plateau.reearth.io/assets/fa/12701b-a5ed-454a-9693-a7b5263596b4/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14102_kanagawa-ku_lod1/tileset.json",
+  "kana2": "https://assets.cms.plateau.reearth.io/assets/67/51cc26-b148-4296-892d-807ba6798fa8/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14102_kanagawa-ku_lod2/tileset.json",
+  "nishi1": "https://assets.cms.plateau.reearth.io/assets/ad/5fd83a-161b-4a01-a666-a3e8c1c23759/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14103_nishi-ku_lod1/tileset.json",
+  "nishi2": "https://assets.cms.plateau.reearth.io/assets/4a/84f474-71c4-4b33-a328-0c5798b79f2f/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14103_nishi-ku_lod2/tileset.json",
+  "nishi3": "https://assets.cms.plateau.reearth.io/assets/57/4b4e13-9239-4570-b4c3-18f695ef7035/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14103_nishi-ku_lod3/tileset.json",
+  "naka1": "https://assets.cms.plateau.reearth.io/assets/48/507079-4d87-45fb-8941-253f3bd1c51e/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14104_naka-ku_lod1/tileset.json",
+  "naka2": "https://assets.cms.plateau.reearth.io/assets/94/a960a4-7e19-439f-8249-b743e939102a/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14104_naka-ku_lod2/tileset.json",
+  "naka3": "https://assets.cms.plateau.reearth.io/assets/98/34e4f3-a849-4f12-8bd2-50826a53fa62/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14104_naka-ku_lod3/tileset.json"
+ },
+ "points": {
+  "kannai": [
+   35.4469,
+   139.6412
+  ],
+  "sakuragicho": [
+   35.4507,
+   139.6312
+  ],
+  "mm_center": [
+   35.4572,
+   139.6318
+  ],
+  "mm_north": [
+   35.462,
+   139.629
+  ],
+  "yokohama_east": [
+   35.4653,
+   139.6245
+  ],
+  "yokohama_west": [
+   35.466,
+   139.62
+  ],
+  "yokohama_north": [
+   35.47,
+   139.623
+  ],
+  "akarenga": [
+   35.4527,
+   139.643
+  ],
+  "chinatown": [
+   35.443,
+   139.646
+  ],
+  "bashamichi": [
+   35.45,
+   139.637
+  ],
+  "noge": [
+   35.447,
+   139.629
+  ],
+  "tobe": [
+   35.456,
+   139.623
+  ]
+ }
+}

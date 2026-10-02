@@ -269,7 +269,8 @@ for dy in range(-6, 7, 2):
 GU = np.where(np.isfinite(lo), np.minimum(GU, lo - 0.35), GU)
 head = {'v': 2, 'geoid': GEOID, 'chunk': CH, 'e0': E0, 'n0': N0, 'grid': {'e0': E0, 'n0': N0, 'step': G, 'nx': int(GU.shape[1]), 'ny': int(GU.shape[0]), 'b': addbuf(np.round(GU * 100).astype(np.int16))},
         'water': float(np.median(U0) + GEOID), 'trees': addbuf(TR.astype(np.float32)), 'chunks': [],
-        'stats': {'deckWays': len(deck_ways), 'deckSamples': deck_samples, 'estimatedSamples': est_samples}}
+        'stats': {'deckWays': len(deck_ways), 'deckSamples': deck_samples, 'estimatedSamples': est_samples},
+        'deckEnds': [[round(float(v), 1) for v in w['xy'][k]] for w in deck_ways for k in (0, -1)]}   # (where decks meet the ground: for the tests)
 def q(P, o): return np.round((np.asarray(P) - o) * 100).astype(np.int16)
 stats = collections.Counter()
 for (ci, cj), c in sorted(chunks.items()):

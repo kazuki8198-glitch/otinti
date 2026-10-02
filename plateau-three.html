@@ -91,6 +91,7 @@ const SETS = {
   nishi2: BASE + '4a/84f474-71c4-4b33-a328-0c5798b79f2f/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14103_nishi-ku_lod2/tileset.json',
   nishi3: BASE + '57/4b4e13-9239-4570-b4c3-18f695ef7035/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14103_nishi-ku_lod3/tileset.json',
   kana2: BASE + '67/51cc26-b148-4296-892d-807ba6798fa8/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14102_kanagawa-ku_lod2/tileset.json',
+  minami1: BASE + '1b/fc666f-c035-4af6-afa0-ffe0e8861643/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14105_minami-ku_lod1/tileset.json',   // (Minami: LOD1 only in 2024; facades generated)
   trees: BASE + '83/75c1ef-9ab7-4e3a-87be-ba98230726d0/14100_yokohama-shi_city_2024_citygml_2_op_veg_SolitaryVegetationObject_3dtiles_lod3/tileset.json',
 };
 const SPOT = { lat: 35.446899, lon: 139.641167, h: 39.3, dx: 0.54, dz: -0.841 };   // (h: the street's ellipsoidal height there; dx, dz: the way it runs, east and south)
@@ -472,7 +473,7 @@ function makeTiles(name, rad, err) {
 }
 // the buildings: Naka ward (Kannai) and Nishi ward (Minato Mirai, Yokohama Station) at LOD3, Kanagawa ward (north of the
 // station) at LOD2; or all at LOD2. Each loads only round the car; one memory budget for them all
-const MODES = { lod3: ['lod2', 'lod3', 'nishi2', 'kana2'], lod2: ['lod2', 'nishi2', 'kana2'] };   // (Nishi's LOD3 set is the same as its LOD2: same buildings, pictures, bytes)
+const MODES = { lod3: ['lod2', 'lod3', 'nishi2', 'kana2', 'minami1'], lod2: ['lod2', 'nishi2', 'kana2', 'minami1'] };   // (Nishi's LOD3 set is the same as its LOD2: same buildings, pictures, bytes)
 let bmode = qs.get('lod') === '2' ? 'lod2' : 'lod3', sharedLru = null;
 const bsets = () => MODES[bmode].map(k => sets[k]).filter(Boolean);
 function makeB(k) {
@@ -1171,7 +1172,8 @@ let placed = false, start = null;
 // the street's direction and the lane in this frame, from PLATEAU's own globe, once its tiles are placed
 // where to start: Kannai (PLATEAU's own lanes), Minato Mirai (みなとみらい大通り), Yokohama Station (国道1号); the last two
 // in east/north metres from the Kannai spot, with the way the lane runs
-const SPAWNS = [['関内', null], ['みなとみらい', { e: -1040.61, n: 940.33, de: 0.5676, dn: -0.8233 }], ['横浜駅', { e: -1551.69, n: 1739.85, de: 0.0044, dn: -1.0 }]];
+const SPAWNS = [['関内', null], ['みなとみらい', { e: -1040.61, n: 940.33, de: 0.5676, dn: -0.8233 }], ['横浜駅', { e: -1551.69, n: 1739.85, de: 0.0044, dn: -1.0 }],
+  ['山下町', { e: 750.15, n: -169.93, de: 0.8028, dn: -0.5962 }], ['元町', { e: 693.4, n: -734.46, de: -0.8573, dn: -0.5149 }], ['東神奈川', { e: -761.63, n: 3467.74, de: -0.6059, dn: -0.7956 }]];
 let spawnAt = Math.max(0, SPAWNS.findIndex(s => s[0] === qs.get('spawn'))), FRAME = null;
 function place() {
   const t = Object.values(sets).find(t => t.ellipsoid && t.root && Math.abs(t.group.matrixWorld.elements[13]) >= 1); if (!t) return;
@@ -1205,8 +1207,12 @@ function gatherHits() {
 }
 // the ground under a point: PLATEAU's road surface (a pavement, a kerb's top), else the ground between the roads
 function groundAt(x, z, yRef) {
-  ray.set(_o.set(x, yRef + 1.5, z), DOWN); ray.far = 60;
-  const h = hitRoads.length ? ray.intersectObjects(hitRoads, false) : [];
+  ray.set(_o.set(x, yRef + 1.5, z), DOWN); ray.far = 60; ray.firstHitOnly = false;
+  const all = hitRoads.length ? ray.intersectObjects(hitRoads, false) : []; ray.firstHitOnly = true;
+  // the surface the wheel is on: the highest no more than 0.5 m above it (a kerb's step up), not a deck alongside a
+  // little higher (a ramp leaving the mainline, their decks overlapping at the split); only if every surface is higher, the nearest
+  let hit = all.find(k => k.point.y <= yRef + 0.5) || all[all.length - 1];
+  const h = hit ? [hit] : [];
   if (hitRoads.length && (!h.length || h[0].point.y < yRef - 1.2)) {
     // nothing near under the wheel: a seam between two pieces of road? Look again a few cm aside (from no higher, so a deck
     // above is never reached)
@@ -1321,7 +1327,7 @@ function report(b) {
   const s = stats(b.fr), f1 = v => v.toFixed(1), on = k => sets[k] && sets[k].group.visible ? 'あり' : 'なし';
   return [`【計測 three.js 試作】${new Date().toLocaleString('ja-JP')}　関内 ${SPOT.lat}, ${SPOT.lon}（昼・${['後方', '運転席', '高い後方'][C.cam]}視点）`,
     `端末: ${navigator.userAgent}`, `GPU: ${gpuName()}　CPU ${navigator.hardwareConcurrency || '?'} コア　画面 ${innerWidth}×${innerHeight}（dpr ${devicePixelRatio}）　画質 ${QLABEL}　${sizeText()}　MSAA ${Q.msaa}　影 ${S.shadow || 'なし'}　AO ${S.ao ? 'あり' : 'なし'}　近くの建物写真 ${S.tex}　描画距離 ${S.dist} m`,
-    `出発地点: ${SPAWNS[spawnAt][0]}　範囲 A の道路: ${AREA.state || 'あり'}　建物: PLATEAU ${bmode.toUpperCase()}（中区・西区・神奈川区）　道路: ${on('roads')}　樹木: ${on('trees')}　影: ${renderer.shadowMap.enabled ? 'あり' : 'なし'}　AO: ${ao.enabled ? 'あり' : 'なし'}　光のにじみ: ${bloom.enabled ? 'あり' : 'なし'}　MSAA ${Q.msaa}　影 ${Q.shadow}　AO 解像度 ${Math.round(Q.aoScale * 100)}%　描画解像度 ${Math.round(renderer.domElement.width * rscale)}×${Math.round(renderer.domElement.height * rscale)}（画面の ${Math.round(rscale * 100)}%）`,
+    `出発地点: ${SPAWNS[spawnAt][0]}　範囲 A の道路: ${AREA.state || 'あり'}　建物: PLATEAU ${bmode.toUpperCase()}（中区・西区・神奈川区。南区は LOD1 のみ）　道路: ${on('roads')}　樹木: ${on('trees')}　影: ${renderer.shadowMap.enabled ? 'あり' : 'なし'}　AO: ${ao.enabled ? 'あり' : 'なし'}　光のにじみ: ${bloom.enabled ? 'あり' : 'なし'}　MSAA ${Q.msaa}　影 ${Q.shadow}　AO 解像度 ${Math.round(Q.aoScale * 100)}%　描画解像度 ${Math.round(renderer.domElement.width * rscale)}×${Math.round(renderer.domElement.height * rscale)}（画面の ${Math.round(rscale * 100)}%）`,
     `実フレームレート ${f1(s.fps)} fps（1フレーム 中央値 ${f1(s.p50)} ms / 95% ${f1(s.p95)} ms / 最大 ${f1(s.max)} ms、${b.fr.length} フレーム）`,
     `ひっかかり（100 ms 超）${b.fr.filter(x => x > 100).length} 回、うち 1 秒超 ${b.fr.filter(x => x > 1000).length} 回　1 秒超を除いた実フレームレート ${f1(stats(b.fr.filter(x => x <= 1000).length ? b.fr.filter(x => x <= 1000) : b.fr).fps)} fps　計測中にタブが裏に回った: ${b.hidden ? 'あり' : 'なし'}　読み込み中のタイル（計測開始時）${b.busy}`,
     `1フレームの JS ${f1(b.js / b.fr.length)} ms　描画呼出 ${Math.round(b.calls / b.fr.length)}　三角形 ${Math.round(b.tris / b.fr.length / 1000)} 千　テクスチャ ${renderer.info.memory.textures} 個（建物写真の推定 ${(texBytes() / 1e6).toFixed(0)} MB）　ジオメトリ ${renderer.info.memory.geometries} 個`,

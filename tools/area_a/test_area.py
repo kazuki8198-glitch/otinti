@@ -2,7 +2,8 @@
 #  1. paint sits on its road: on ground roads within 1-6 cm above the triangle under it; on decks within 1-5 cm
 #  2. no road surface dips into a pit: on the flat core (east of x = -1300: Kannai, Sakuragicho, MM, the bay) under 2 % of the
 #     ground-road area is steeper than 25 %; the hills to the west (Nishi-ku, Noge-yama, Tobe) are only reported, their streets are steep
-#  3. stacked roads stay apart: a deck is never within 2.5 m over a ground road (the car would hit its underside);
+#  3. stacked roads stay apart: a deck is never within 2.5 m over a ground road (the car would hit its underside), away
+#     from the deck's ends (within 30 m of them it meets the ground: counted apart);
 #     2.5-4.5 m (low riverside roads under bridges, or ramp ends) is reported
 #  4. decks climb no more than 16 % anywhere (expressway mainline: see ways)
 #  5. every chunk's data reads and is the size its header says
@@ -58,14 +59,17 @@ fc = area[core & steep].sum() / area[core].sum(); fh = area[~core & steep].sum()
 print(f'2. ground-road area steeper than 25 %: core {fc * 100:.2f} %, western hills {fh * 100:.2f} % ({np.sum(steep)} of {len(TG)} triangles)')
 check(fc < 0.02, 'steep ground roads on the flat core (pits or humps)')
 if len(TD):
-    cen = TD.mean(1); close = 0; low = 0; stacked = 0
+    cen = TD.mean(1); close = 0; low = 0; stacked = 0; atend = 0
+    ends = np.array(H.get('deckEnds', [[1e9, 1e9]]))
     for p in cen[::7]:
+        if np.min(np.hypot(ends[:, 0] - p[0], ends[:, 1] - p[1])) < 30:      # (a ramp's or bridge's end, where it meets the ground)
+            atend += sum(1 for h in heights_at(TG, IG, p) if 0.5 < p[2] - h < 2.5); continue
         hs = heights_at(TG, IG, p)
         for h in hs:
             if p[2] - h > 0.5: stacked += 1
             if 0.5 < p[2] - h < 2.5: close += 1
             elif 2.5 <= p[2] - h < 4.5: low += 1
-    print(f'3. deck triangles over a ground road: {stacked}; within 2.5 m: {close}; 2.5-4.5 m: {low}')
+    print(f'3. deck triangles over a ground road: {stacked}; within 2.5 m: {close} (and {atend} within 30 m of a deck\'s end, where it meets the ground); 2.5-4.5 m: {low}')
     check(close <= max(3, stacked * 0.05), 'decks too close over ground roads')
     dn = np.cross(TD[:, 1] - TD[:, 0], TD[:, 2] - TD[:, 0]); ds = np.hypot(dn[:, 0], dn[:, 1]) / np.maximum(np.abs(dn[:, 2]), 1e-9)
     print(f'4. deck triangles steeper than 16 %: {np.sum(ds > 0.16)} of {len(TD)}'); check(np.sum(ds > 0.16) < len(TD) * 0.01, 'decks too steep')

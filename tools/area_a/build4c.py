@@ -40,7 +40,15 @@ def raster(g):
         dr.polygon(tp(p.exterior.coords), fill=1)
         for h in p.interiors: dr.polygon(tp(h.coords), fill=0)
     return np.asarray(im, dtype=bool)
-MC = raster(carriage); MS = raster(side)
+# in PLATEAU's LOD3 block (Kannai: its own roads, left out of area A) the carriageway is estimated from OSM's centrelines
+# (lanes x 3.25 m + 2, at least 6 m) and the rest of the block's road area taken as pavement: for placing things only
+from shapely.geometry import LineString
+from shapely.ops import unary_union
+DRIVE0 = {'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'trunk_link', 'primary_link', 'secondary_link', 'tertiary_link', 'living_street'}
+F3 = pickle.load(open('F3.pkl', 'rb'))
+def width_of(w): n = w['lanes'] or (1 if w['oneway'] else 2); return max(6.0, n * 3.25 + 2.0)
+wb = unary_union([LineString(w['xy']).buffer(width_of(w) / 2) for w in ground_ways if w['hw'] in DRIVE0 and w['L'] > 4])
+MC = raster(carriage.union(F3.intersection(wb))); MS = raster(side.union(F3.difference(wb.buffer(0.3))))
 # the decks' footprints (bridges, viaducts, the expressway in its cutting; not tunnels): nothing of the ground roads' goes there
 from shapely.ops import unary_union
 MD = raster(unary_union([w['poly'].buffer(0.6) for w in S1['deck_ways'] if w['kind'] != 'tunnel'])); tick('rasters')
@@ -266,6 +274,7 @@ for w in deck_ways:
         if w['kind'] != 'tunnel':
             for s0 in np.arange(20 + hsh(w['id'] % 991, 3) * 20, w['s'][-1] - 5, 40.0):
                 i = at_s(w, s0); e, n = xy[i] + l[i] * (half + 0.12)
+                if at(MD, *(xy[i] + l[i] * (half + 1.4))): continue   # (another deck alongside: a merge, no parapet there)
                 raw('hwlight', e, n, h[i] + 1.1, math.atan2(-l[i, 1], -l[i, 0]))
         # exits: a sign 200 m before the node where the ramp leaves (on this way, if it is long enough)
         for k, nid in enumerate(w['nodes']):

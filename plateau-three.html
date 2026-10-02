@@ -13,6 +13,10 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 #panel{position:fixed;right:max(10px,env(safe-area-inset-right));top:10px;display:flex;flex-wrap:wrap;gap:6px;max-width:min(560px,calc(100% - 20px));justify-content:flex-end}
 #panel button{padding:6px 10px;border-radius:7px;border:1px solid var(--line);background:rgba(20,34,54,.92);color:var(--ink);font:600 12px system-ui,sans-serif;cursor:pointer}
 #panel button.on{border-color:#ffd66b}
+#settings{position:fixed;right:max(10px,env(safe-area-inset-right));top:96px;display:none;width:300px;padding:10px 12px;border-radius:10px;background:rgba(6,12,22,.92);border:1px solid var(--line);font-size:12px}
+#settings label{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:5px 0}
+#settings select{background:#14223a;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:2px 4px;font:12px system-ui}
+#settings .note{opacity:.75;margin-top:6px;line-height:1.4}
 #out{position:fixed;left:10px;right:10px;bottom:44px;height:30%;display:none;background:rgba(6,12,22,.94);color:#dfe7f0;border:1px solid var(--line);border-radius:8px;padding:8px;font:11px/1.4 ui-monospace,Menlo,monospace}
 #pad{position:fixed;left:max(14px,env(safe-area-inset-left));bottom:max(14px,env(safe-area-inset-bottom));display:none;grid-template-columns:repeat(3,54px);gap:6px}
 #pad button{height:46px;border-radius:10px;border:1px solid rgba(232,240,250,.35);background:rgba(8,17,31,.5);color:var(--ink);font:700 16px system-ui;touch-action:none}
@@ -33,7 +37,17 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 <div id="panel">
   <button data-b="lod2">LOD2</button><button data-b="lod3" class="on">LOD3</button>
   <button data-t="roads" class="on">道路</button><button data-t="trees" class="on">樹木</button><button data-t="shadow" class="on">影</button><button data-t="ao" class="on">AO</button><button data-t="bloom" class="on">光のにじみ</button>
-  <button data-a="spawn">出発地点</button><button data-a="q">画質</button><button data-a="cam">視点</button><button data-a="bench">計測（10 秒）</button><button data-a="copy">結果をコピー</button>
+  <button data-a="spawn">出発地点</button><button data-a="settings">設定</button><button data-a="cam">視点</button><button data-a="bench">計測（10 秒）</button><button data-a="copy">結果をコピー</button>
+</div>
+<div id="settings">
+  <label>画質プリセット <select data-s="preset"><option value="high">高画質固定</option><option value="balance">バランス</option><option value="low">軽量</option></select></label>
+  <label>解像度（画面に対して） <select data-s="scale"><option value="1">100%</option><option value="0.9">90%</option><option value="0.8">80%</option><option value="0.7">70%</option><option value="0.6">60%</option></select></label>
+  <label>自動解像度（重い時に下げる） <input type="checkbox" data-s="auto"></label>
+  <label>近くの建物写真 <select data-s="tex"><option value="2048">2048</option><option value="4096">4096</option><option value="8192">8192</option></select></label>
+  <label>影 <select data-s="shadow"><option value="0">なし</option><option value="2048">2048</option><option value="4096">4096</option></select></label>
+  <label>AO（隙間の陰） <input type="checkbox" data-s="ao"></label>
+  <label>建物の描画距離 <select data-s="dist"><option value="350">350 m</option><option value="480">480 m</option><option value="600">600 m</option><option value="800">800 m</option></select></label>
+  <div class="note" id="setnote"></div>
 </div>
 <textarea id="out" readonly></textarea>
 <div id="help">W/↑ アクセル　S/↓ ブレーキ・バック　A/D ハンドル　Space サイドブレーキ　C 視点　R 出発地点へ　H 表示を隠す</div>
@@ -82,17 +96,24 @@ const SETS = {
 const SPOT = { lat: 35.446899, lon: 139.641167, h: 39.3, dx: 0.54, dz: -0.841 };   // (h: the street's ellipsoidal height there; dx, dz: the way it runs, east and south)
 const touch = matchMedia('(pointer: coarse)').matches;
 const qs = new URLSearchParams(location.search), NORENDER = qs.has('norender');   // (norender: the world and the driving without drawing, for tests)
-// three settings, picked by the GPU (or ?q=high / mid / low): a PC with its own graphics card; a PC's built-in graphics
-// (Intel Iris Xe / UHD, AMD's integrated Radeon, Apple M: AO at half resolution with fewer samples, 2x MSAA, a 2048
-// shadow map); a phone (no AO, no bloom, no MSAA, less of the city)
+// the picture: three presets, each a starting point for the settings below (kept in this browser). 高画質固定 draws at
+// 100 % of the screen and doesn't change it; バランス lets the resolution drop to 60 % when frames run long and come
+// back; 軽量 is for weak GPUs. Chosen by the GPU the first time (?q=high / balance / low to pick one)
 const GPU = (() => { try { const gl = document.createElement('canvas').getContext('webgl2'), d = gl && gl.getExtension('WEBGL_debug_renderer_info'); return d ? String(gl.getParameter(d.UNMASKED_RENDERER_WEBGL)) : ''; } catch (e) { return ''; } })();
-const QN = ['high', 'mid', 'low'].includes(qs.get('q')) ? qs.get('q') : touch ? 'low' : /Intel|Iris|UHD|Radeon\(TM\) Graphics|Radeon Graphics|Vega \d+ Graphics|Apple M/i.test(GPU) ? 'mid' : 'high';
-const Q = {
-  high: { dpr: 1.5, msaa: 4, ao: true, aoScale: 1, aoSamples: 12, bloom: true, shadow: 4096, maxTex: 2048, err: 8, rad: 520, bytes: 2.4e9 },
-  mid: { dpr: 1.0, msaa: 2, ao: true, aoScale: 0.5, aoSamples: 8, bloom: true, shadow: 2048, maxTex: 2048, err: 10, rad: 450, bytes: 2.0e9 },
-  low: { dpr: 1.25, msaa: 0, ao: false, aoScale: 0.5, aoSamples: 8, bloom: false, shadow: 2048, maxTex: 1024, err: 16, rad: 350, bytes: 0.4e9 },
-}[QN];
-const QLABEL = { high: '高（専用 GPU 向け）', mid: '中（内蔵 GPU 向け）', low: '軽量' }[QN];
+const PRESETS = {
+  high: { label: '高画質固定', msaa: 4, aoScale: 1, aoSamples: 12, bloom: true, err: 8, bytes: 2.6e9, s: { auto: false, scale: 1, tex: 4096, shadow: 4096, ao: true, dist: 600 } },
+  balance: { label: 'バランス', msaa: 2, aoScale: 0.5, aoSamples: 8, bloom: true, err: 10, bytes: 2.0e9, s: { auto: true, scale: 1, tex: 4096, shadow: 2048, ao: true, dist: 480 } },
+  low: { label: '軽量', msaa: 0, aoScale: 0.5, aoSamples: 8, bloom: false, err: 16, bytes: 0.6e9, s: { auto: true, scale: 1, tex: 2048, shadow: 2048, ao: false, dist: 350 } },
+};
+const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* (no storage: settings last for this visit) */ } } };
+const qPick = { high: 'high', balance: 'balance', mid: 'balance', low: 'low' }[qs.get('q')];
+const saved = store.get('ydrive-settings');
+const QN = qPick || (saved && PRESETS[saved.preset] ? saved.preset : touch ? 'low' : /Intel|Iris|UHD|Radeon\(TM\) Graphics|Radeon Graphics|Vega \d+ Graphics|Apple M/i.test(GPU) ? 'balance' : 'high');
+const P = PRESETS[QN];
+const S = { ...P.s, ...(saved && saved.preset === QN && !qPick ? saved.s : {}) };   // (the settings, as changed in the panel)
+const Q = { dpr: 1, msaa: P.msaa, ao: S.ao, aoScale: P.aoScale, aoSamples: P.aoSamples, bloom: P.bloom, shadow: S.shadow || 2048, maxTex: QN === 'low' ? 1024 : 2048, err: P.err, rad: S.dist, bytes: P.bytes };
+const QLABEL = P.label;
+const saveSettings = () => store.set('ydrive-settings', { preset: QN, s: S });
 
 // ---- the renderer, and the passes after it ----
 const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
@@ -100,7 +121,7 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, Q.dpr));
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.85;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.shadowMap.enabled = S.shadow > 0; renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.info.autoReset = false;
 document.body.prepend(renderer.domElement);
 const scene = new THREE.Scene();
@@ -121,18 +142,19 @@ const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.16, 0.35, 2.2);   /
 bloom.enabled = Q.bloom; composer.addPass(bloom);
 composer.addPass(new OutputPass());                                    // (ACES and the sRGB encoding, once, at the end)
 composer.setSize(innerWidth, innerHeight);
-// the resolution drawn at, kept where the frame rate holds 60 (or near it): down to 60 % of the screen's when the frames
-// take too long, back up when there is room; the passes after it fill the screen from it (?fixed: always 100 %)
-let rscale = 1, rsAt = 0;
-const RMIN = QN === 'low' || qs.has('fixed') ? 1 : 0.6;
+// the resolution drawn at: S.scale of the screen's when fixed; with 自動解像度 on, between 60 % and S.scale, lowered
+// when frames run long and raised when there is room (the panel and the HUD show what it is now and the screen's size)
+let rscale = S.auto ? S.scale : S.scale, rsAt = 0, rsLast = '';
+function setScale(v) { rscale = v; composer.setPixelRatio(renderer.getPixelRatio() * rscale); }
 function adaptScale(now) {
-  if (bench || NORENDER || now - rsAt < 1500 || fr.length < 60) return;
+  if (!S.auto || bench || NORENDER || now - rsAt < 1500 || fr.length < 60) return;
   rsAt = now;
   const s = stats(fr.slice(-60));
   let n = rscale;
-  if (s.p50 > 19) n = Math.max(RMIN, rscale * 0.88); else if (s.p50 < 17.5 && s.p95 < 19.5) n = Math.min(1, rscale * 1.06);
-  if (Math.abs(n - rscale) > 0.005) { rscale = n; composer.setPixelRatio(renderer.getPixelRatio() * rscale); }
+  if (s.p50 > 19) n = Math.max(0.6, rscale * 0.9); else if (s.p50 < 17.5 && s.p95 < 19.5) n = Math.min(S.scale, rscale * 1.05);
+  if (Math.abs(n - rscale) > 0.005) { rsLast = n < rscale ? '↓' : '↑'; setScale(n); }
 }
+setScale(rscale);
 
 // fetched next to the page; where a file type isn't served, its base64 copy in <name>.json
 async function fetchBin(u) { try { const r = await fetch(u); if (r.ok && !/html/.test(r.headers.get('content-type') || '')) return await r.arrayBuffer(); } catch (e) { /* the JSON copy */ } const j = await (await fetch(u + '.json')).json(), b = atob(j.glb || j.data), a = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a.buffer; }
@@ -259,18 +281,149 @@ function gridH(x, z) {
   return u >= v ? h00 + u * (h10 - h00) + v * (h11 - h10) : h00 + v * (h01 - h00) + u * (h11 - h01);
 }
 
-// PLATEAU's photos come at up to 8192 x 8192 a tile (LOD3: some 256 MB each once decoded): taken down as they decode
+// PLATEAU's photos: one picture a tile, up to 8192 x 8192, with the walls of up to 130 buildings in it. Decoded at 2048
+// (1024 on 軽量) to start with; the file itself is kept, and the pictures of the tiles nearest the car are decoded again
+// at S.tex (4096; 8192 for the two nearest on 高画質固定), and taken back down when the car has gone (texManage)
+const TEXREG = new Map();   // texture -> { src, mesh, size }
 THREE.ImageBitmapLoader.prototype.load = function (url, onLoad, onProgress, onError) {
   const o = this.options || {}, mgr = this.manager; mgr.itemStart(url);
-  fetch(url).then(r => r.blob()).then(b => createImageBitmap(b, { imageOrientation: o.imageOrientation || 'none', premultiplyAlpha: o.premultiplyAlpha || 'default', colorSpaceConversion: 'none' }))
-    .then(async bm => {
-      const m = Math.max(bm.width, bm.height);
-      if (m > Q.maxTex) { const k = Q.maxTex / m, sm = await createImageBitmap(bm, { resizeWidth: Math.round(bm.width * k), resizeHeight: Math.round(bm.height * k), resizeQuality: 'high' }); bm.close(); bm = sm; }
-      if (onLoad) onLoad(bm); mgr.itemEnd(url);
-    })
-    .catch(e => { if (onError) onError(e); mgr.itemError(url); mgr.itemEnd(url); });
+  const opts = { imageOrientation: o.imageOrientation || 'none', premultiplyAlpha: o.premultiplyAlpha || 'default', colorSpaceConversion: 'none' };
+  fetch(url).then(r => r.blob()).then(async blob => {
+    let bm = await createImageBitmap(blob, opts); const W = bm.width, H = bm.height, m = Math.max(W, H);
+    if (m > Q.maxTex) { const k = Q.maxTex / m, sm = await createImageBitmap(bm, { resizeWidth: Math.round(W * k), resizeHeight: Math.round(H * k), resizeQuality: 'high' }); bm.close(); bm = sm; }
+    bm.__src = { blob, opts, W, H };
+    if (onLoad) onLoad(bm); mgr.itemEnd(url);
+  }).catch(e => { if (onError) onError(e); mgr.itemError(url); mgr.itemEnd(url); });
   return {};
 };
+let texBusy = false, texAt = 0;
+const _bs = new THREE.Sphere();
+function texSize(e) { const im = e.tex.image; return im ? Math.max(im.width, im.height) : 0; }
+function texManage(now) {
+  if (texBusy || now - texAt < 150 || NORENDER) return; texAt = now;
+  const L = [];
+  for (const [tex, e] of TEXREG) {
+    if (!e.mesh.parent) continue;
+    const g = e.mesh.geometry; if (!g.boundingSphere) g.computeBoundingSphere();
+    _bs.copy(g.boundingSphere).applyMatrix4(e.mesh.matrixWorld);
+    L.push([Math.max(0, Math.hypot(_bs.center.x - C.x, _bs.center.z - C.z) - _bs.radius), e]);
+  }
+  L.sort((a, b) => a[0] - b[0]);
+  // the nearest tiles' pictures at S.tex (the two nearest at 8192 on 高画質固定), the rest of what is within 400 m at
+  // 2048, further at 1024 (half that on 軽量); going down only once the car is well away (no back and forth)
+  let near = 0;
+  for (const [d, e] of L) {
+    const full = Math.max(e.src.W, e.src.H), cur = texSize(e);
+    let want = d < 400 ? Q.maxTex : Q.maxTex / 2;
+    if (d < 260 && near < 8) { want = Math.max(want, S.tex); if (QN === 'high' && near < 2 && d < 90) want = 8192; near++; }
+    want = Math.min(want, full);
+    if (want > cur || (want < cur && d > (cur > Q.maxTex ? 320 : 460))) { texUpgrade(e, want); return; }   // (one at a time: no long stall)
+  }
+}
+function texUpgrade(e, want) {
+  texBusy = true;
+  const k = want / Math.max(e.src.W, e.src.H);
+  createImageBitmap(e.src.blob, { ...e.src.opts, resizeWidth: Math.round(e.src.W * k), resizeHeight: Math.round(e.src.H * k), resizeQuality: 'high' }).then(bm => {
+    bm.__src = e.src; const old = e.tex.image; e.tex.image = bm; e.tex.needsUpdate = true; if (old && old.close) setTimeout(() => old.close(), 2000);
+  }).catch(() => { /* (keeps the picture it has) */ }).finally(() => { texBusy = false; });
+}
+function texBytes() { let b = 0; for (const e of TEXREG.values()) { const im = e.tex.image; if (im) b += im.width * im.height * 4 * 1.33; } return b; }
+
+// ---- buildings without a photo (PLATEAU has none for them: much of Nishi ward outside Minato Mirai, two thirds of
+// Kanagawa ward's): their walls drawn from their own shape and size. Floor height, window size and spacing, a ground
+// floor of shops or not, and the wall's material are picked from the building's own gml_id, so it looks the same each
+// time; windows reflect the sky. Marked as made up, not seen (FACADE.made counts them) ----
+const FACADE = { made: new Set() };
+const facadeMat = new THREE.MeshStandardMaterial({ roughness: 0.85, metalness: 0 });
+facadeMat.onBeforeCompile = sh => {
+  sh.vertexShader = 'attribute float aSeed; attribute float aBase;\nflat varying float vSeed; flat varying float vBase; varying vec3 vW; varying vec3 vWN;\n' + sh.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>
+    vW = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal); vSeed = aSeed; vBase = aBase;`);
+  sh.fragmentShader = 'flat varying float vSeed; flat varying float vBase; varying vec3 vW; varying vec3 vWN;   // (flat: the seed is per building; interpolated, the hash would turn its rounding into noise)\nfloat fWin = 0.0;\nfloat hs(float n) { return fract(sin(n) * 43758.5453); }\n' + sh.fragmentShader
+    .replace('#include <map_fragment>', `
+    {
+      float s = vSeed; vec3 n = normalize(vWN);
+      // the wall's material: plastered concrete, tiles in beige or brown, white paint, grey concrete, dark panels
+      // (albedos as the real materials': concrete and tile reflect 0.3-0.5, not near-white)
+      vec3 cols[6]; cols[0] = vec3(0.42, 0.40, 0.37); cols[1] = vec3(0.46, 0.39, 0.30); cols[2] = vec3(0.33, 0.23, 0.18);
+      cols[3] = vec3(0.52, 0.51, 0.48); cols[4] = vec3(0.36, 0.37, 0.38); cols[5] = vec3(0.22, 0.23, 0.25);
+      int ci = int(floor(hs(s * 1.3) * 5.99)); vec3 wall = cols[0];
+      for (int i = 0; i < 6; i++) if (i == ci) wall = cols[i];
+      wall *= 0.9 + 0.2 * hs(s * 17.1);
+      vec3 col = wall;
+      if (abs(n.y) < 0.45) {
+        vec2 t = normalize(vec2(-n.z, n.x)); float u = dot(vW.xz, t), v = vW.y - vBase;
+        float fh = mix(2.9, 3.7, hs(s * 2.1)), gf = mix(3.6, 4.6, hs(s * 9.1));
+        float ww = mix(0.9, 2.4, hs(s * 3.7)), sp = ww + mix(0.7, 2.6, hs(s * 5.3)), wh = fh * mix(0.42, 0.68, hs(s * 7.9));
+        float shop = step(hs(s * 11.7), 0.55);
+        float fu = fract(u / sp + hs(s * 13.3)), du = fwidth(u / sp) * 1.5;
+        float win = 0.0, frame = 0.0;
+        if (v < gf && shop > 0.5) {       // a ground floor of shop fronts: wide glass between piers, a fascia above
+          float fu2 = fract(u / (sp * 2.0) + 0.37);
+          win = step(0.12, fu2) * step(fu2, 0.92) * step(0.15, v) * step(v, gf - 0.9);
+          frame = step(gf - 0.9, v) * step(v, gf - 0.3);
+        } else if (v > 0.0) {
+          float fv = fract((v - (shop > 0.5 ? gf : 0.0)) / fh), wv0 = 0.28, wv1 = 0.28 + wh / fh;
+          float inu = smoothstep(0.0, du, fu) * (1.0 - smoothstep(ww / sp - du, ww / sp, fu));   // (smoothstep's edges in order: reversed, GLSL leaves it undefined)
+          win = inu * step(wv0, fv) * step(fv, wv1);
+          float edge = (1.0 - smoothstep(0.0, 0.06, min(abs(fu - 0.0), abs(fu - ww / sp)) * sp)) * step(wv0, fv) * step(fv, wv1);
+          frame = max(edge * 0.8, (1.0 - smoothstep(0.0, 0.08, abs(fv - wv0) * fh)) * inu);
+          col *= 1.0 - 0.18 * (1.0 - smoothstep(0.0, 0.15, abs(fv - 0.02) * fh));   // (the floor slab's line)
+        }
+        vec3 glass = mix(vec3(0.05, 0.07, 0.09), vec3(0.10, 0.12, 0.14), hs(floor(u / sp) * 3.1 + floor(v / fh) * 7.7 + s));
+        col = mix(col, glass, win); col = mix(col, vec3(0.32, 0.33, 0.34), frame * (1.0 - win) * 0.85);
+        fWin = win;
+      } else {
+        col = mix(vec3(0.42, 0.42, 0.41), vec3(0.52, 0.51, 0.49), hs(floor(vW.x * 0.5) + floor(vW.z * 0.5) * 7.0 + s));   // (a roof: concrete, its panels)
+      }
+      diffuseColor.rgb = col;
+    }`)
+    .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n roughnessFactor = mix(roughnessFactor, 0.06, fWin);');
+};
+facadeMat.customProgramCacheKey = () => 'facade-v2';
+function hashStr(t) { let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296 * 1000; }
+// set up once the tile is in place (its world matrix known): each building's foot (lowest point) and its seed
+function facadeSetup(s) {
+  const ids = s.batchTable && s.batchTable.getPropertyArray ? s.batchTable.getPropertyArray('gml_id') : null;
+  s.updateWorldMatrix(true, true);
+  s.traverse(o => {
+    if (!o.isMesh || !o.userData.facade || o.userData.facadeDone) return;
+    o.userData.facadeDone = true;
+    const g = o.geometry, P = g.attributes.position, B = g.attributes._batchid, n = P.count;
+    if (!B) return;
+    const base = new Map(), seed = new Float32Array(n), foot = new Float32Array(n);
+    for (let v = 0; v < n; v++) { _v.fromBufferAttribute(P, v).applyMatrix4(o.matrixWorld); const b = B.getX(v); const m = base.get(b); if (m === undefined || _v.y < m) base.set(b, _v.y); }
+    for (let v = 0; v < n; v++) { const b = B.getX(v), id = ids && ids[b] ? String(ids[b]) : 'b' + b; seed[v] = hashStr(id); foot[v] = base.get(b); FACADE.made.add(id); }
+    g.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1)); g.setAttribute('aBase', new THREE.BufferAttribute(foot, 1));
+    if (!g.attributes.normal) g.computeVertexNormals();
+    o.material = facadeMat;
+  });
+}
+const facadePending = [];
+
+// ---- Naka ward: LOD2 for every building (its LOD3 set leaves many out: Chinatown 20 of 106, Noge 18 of 51), each
+// building shown at LOD3 instead wherever a LOD3 tile with it is on screen; never both (the LOD2 copy's triangles are
+// taken out of its tile while the LOD3 one is shown, and put back when it goes) ----
+const L3 = new Map(), L2MESH = new Set(); let dedupeDirty = false, dedupeAt = 0;
+const idsOf = sc => (sc && sc.batchTable && sc.batchTable.getPropertyArray && sc.batchTable.getPropertyArray('gml_id')) || [];
+function l2Register(s) {
+  const ids = idsOf(s);
+  s.traverse(o => {
+    if (!o.isMesh || !o.geometry.attributes._batchid) return;
+    const g = o.geometry, B = g.attributes._batchid, I = g.index ? g.index.array.slice() : Uint32Array.from({ length: g.attributes.position.count }, (_, i) => i);
+    const tb = new Uint32Array(I.length / 3); for (let t = 0; t < tb.length; t++) tb[t] = B.getX(I[t * 3]);
+    o.userData.l2 = { I, tb, ids, hidden: null }; L2MESH.add(o); l2Filter(o);
+  });
+}
+function l2Filter(o) {
+  const d = o.userData.l2, nb = d.ids.length || 1, hid = new Uint8Array(nb); let any = 0;
+  for (let b = 0; b < d.ids.length; b++) if (L3.has(d.ids[b])) { hid[b] = 1; any++; }
+  const key = any ? hid.join('') : '';
+  if (key === d.hidden) return; d.hidden = key;
+  const out = new Uint32Array(d.I.length); let k = 0;
+  for (let t = 0; t < d.tb.length; t++) if (!hid[d.tb[t]]) { out[k++] = d.I[t * 3]; out[k++] = d.I[t * 3 + 1]; out[k++] = d.I[t * 3 + 2]; }
+  const g = o.geometry; g.setIndex(new THREE.BufferAttribute(out.slice(0, k), 1));
+  if (g.boundsTree) { g.disposeBoundsTree(); bvhQueue.push(g); }
+}
 
 // ---- PLATEAU's tiles, turned so the spot is the origin, y up; loaded only round the car ----
 const draco = new DRACOLoader().setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/draco/gltf/');
@@ -284,27 +437,42 @@ function makeTiles(name, rad, err) {
   t.region = new SphereRegion({ sphere: new THREE.Sphere(new THREE.Vector3(), rad), errorTarget: err, mask: true });
   t.registerPlugin(new LoadRegionPlugin({ regions: [t.region] }));
   if ('maxBytesSize' in t.lruCache) { t.lruCache.minBytesSize = Q.bytes / 2; t.lruCache.maxBytesSize = Q.bytes; }
+  const bldg = name !== 'roads' && name !== 'trees';
   t.addEventListener('load-model', ({ scene: s }) => {
+    let plain = false;
     s.traverse(o => {
       if (!o.isMesh) return;
       if (name === 'trees') { o.visible = false; return; }              // (only where each tree stands is kept: a photo card stands there)
       o.castShadow = name !== 'roads'; o.receiveShadow = true;
       if (name === 'roads') return;
       bvhQueue.push(o.geometry);                                          // (for the car's rays, a few each frame)
-      for (const m of [].concat(o.material)) { if (m.map) m.map.anisotropy = Math.min(maxAniso, 8); if ('roughness' in m) { m.roughness = 0.88; m.metalness = 0; } }
+      const ms = [].concat(o.material);
+      for (const m of ms) {
+        if (m.map) { m.map.anisotropy = Math.min(maxAniso, QN === 'low' ? 4 : 16); if (m.map.image && m.map.image.__src) TEXREG.set(m.map, { tex: m.map, src: m.map.image.__src, mesh: o }); }
+        if ('roughness' in m) { m.roughness = 0.88; m.metalness = 0; }
+      }
+      if (!ms.some(m => m.map)) { o.userData.facade = true; plain = true; }   // (no photo at all: its walls are drawn)
     });
     if (name === 'roads' || name === 'trees') { s.userData.kind = name; pending.push(s); }
+    if (bldg && plain) facadePending.push(s);
+    if (name === 'lod2') l2Register(s);
   });
   t.addEventListener('dispose-model', ({ scene: s }) => s.traverse(o => {
     if (o.geometry) { o.geometry.userData.gone = true; if (o.userData.own) o.geometry.dispose(); }
+    if (o.material) for (const m of [].concat(o.material)) if (m.map) TEXREG.delete(m.map);
+    L2MESH.delete(o);
   }));
+  if (name === 'lod3') t.addEventListener('tile-visibility-change', ({ scene: sc, visible }) => {
+    for (const id of idsOf(sc)) { const c = (L3.get(id) || 0) + (visible ? 1 : -1); if (c > 0) L3.set(id, c); else L3.delete(id); }
+    dedupeDirty = true;
+  });
   t.setCamera(camera); t.setResolutionFromRenderer(camera, renderer);
   scene.add(t.group);
   return t;
 }
 // the buildings: Naka ward (Kannai) and Nishi ward (Minato Mirai, Yokohama Station) at LOD3, Kanagawa ward (north of the
 // station) at LOD2; or all at LOD2. Each loads only round the car; one memory budget for them all
-const MODES = { lod3: ['lod3', 'nishi3', 'kana2'], lod2: ['lod2', 'nishi2', 'kana2'] };
+const MODES = { lod3: ['lod2', 'lod3', 'nishi2', 'kana2'], lod2: ['lod2', 'nishi2', 'kana2'] };   // (Nishi's LOD3 set is the same as its LOD2: same buildings, pictures, bytes)
 let bmode = qs.get('lod') === '2' ? 'lod2' : 'lod3', sharedLru = null;
 const bsets = () => MODES[bmode].map(k => sets[k]).filter(Boolean);
 function makeB(k) {
@@ -318,6 +486,7 @@ function setMode(m) {
   if (m === bmode) return;
   for (const t of bsets()) t.group.visible = false;
   bmode = m; for (const k of MODES[m]) makeB(k).group.visible = true;
+  if (sets.lod3 && m === 'lod2') { L3.clear(); dedupeDirty = true; }
 }
 
 // road surfaces: their triangles sorted by use (each its own material); the open edges dropped 0.45 m as faces (the
@@ -619,7 +788,8 @@ function processTrees(s) {
 // or wider), on the GSI 5 m DEM; kerb faces; paint from OpenStreetMap's centrelines measured against the carriageway
 // (lanes, one-way, the middle line, edge lines), zebra crossings and stop lines at its crossings; its trees; and the
 // ground (and where the sea is). In east/north/up metres from the Kannai spot, put in place with PLATEAU's own globe ----
-const AREA = { buf: null, built: false, grid: null, chunks: [], near: [], state: '読込中' };
+const AREA = { buf: null, built: false, grid: null, chunks: [], near: [], walls: [], state: '読込中' };
+const concMat = worldMat(CONCRETE, 2.0, { color: new THREE.Color(0.86, 0.85, 0.82) });   // (parapets, girders, piers, tunnel walls)
 fetchBin('models/area/area_a.bin').then(b => { AREA.buf = b; }).catch(e => { AREA.state = '読めず'; console.warn('area A', e); });
 const water = new THREE.Mesh(new THREE.PlaneGeometry(9000, 9000), new THREE.MeshStandardMaterial({ color: new THREE.Color(0.03, 0.07, 0.08), roughness: 0.07, metalness: 0 }));
 water.rotation.x = -Math.PI / 2; water.receiveShadow = true; water.visible = false; scene.add(water);
@@ -647,6 +817,17 @@ function buildArea() {
     const grp = new THREE.Group(), o = c.o, meshes = [];
     for (const part of c.carr || []) { const m = surf(part, o, roadMats[0]); grp.add(m); meshes.push(m); }
     for (const part of c.side || []) { const m = surf(part, o, roadMats[1]); grp.add(m); meshes.push(m); }
+    // decks (bridges, viaducts, the expressway, tunnels): their road, pavements, and the concrete round them
+    const soup = (rec, mat) => {
+      const q = arr(Int16Array, rec), P = new Float32Array(q.length);
+      for (let i = 0; i < q.length; i += 3) { P[i] = q[i] * 0.01 + o[0]; P[i + 1] = q[i + 1] * 0.01 + o[1]; P[i + 2] = q[i + 2] * 0.01 + o[2]; }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.computeVertexNormals();
+      const m = new THREE.Mesh(g, mat); m.receiveShadow = true; grp.add(m); return m;
+    };
+    const walls = [];
+    if (c.deck) meshes.push(soup(c.deck, roadMats[0]));
+    if (c.dside) meshes.push(soup(c.dside, roadMats[1]));
+    if (c.conc) { const m = soup(c.conc, concMat); m.castShadow = true; walls.push(m); }
     const lines = (rec, fn) => {
       const q = arr(Int16Array, rec.p), n = arr(Uint32Array, rec.n), k = new Uint8Array(buf.slice(base + rec.k[0], base + rec.k[0] + rec.k[1]));
       let at = 0;
@@ -689,7 +870,7 @@ function buildArea() {
       const m = new THREE.Mesh(g, PAINT); m.receiveShadow = true; grp.add(m);
     }
     root.add(grp);
-    AREA.chunks.push({ grp, meshes, e: o[0], n: o[1] });
+    AREA.chunks.push({ grp, meshes, walls, e: o[0], n: o[1] });
   }
   // trees (OpenStreetMap's, outside PLATEAU's own block): photo cards, as in Kannai
   const T = arr(Float32Array, H.trees), nT = T.length / 4;
@@ -711,11 +892,14 @@ const _ce = new THREE.Vector3();
 function areaNear() {
   if (!FRAME) return;
   _ce.set(C.x - FRAME.o.x, 0, C.z - FRAME.o.z); const e = _ce.dot(FRAME.E), n = _ce.dot(FRAME.N);
-  AREA.near.length = 0;
+  AREA.near.length = 0; AREA.walls.length = 0;
   for (const c of AREA.chunks) {
     const d = Math.hypot(c.e - e, c.n - n);
     c.grp.visible = d < 1300;
-    if (d < 480) for (const m of c.meshes) { if (!m.geometry.boundsTree) m.geometry.computeBoundsTree(); AREA.near.push(m); }
+    if (d < 480) {
+      for (const m of c.meshes) { if (!m.geometry.boundsTree) m.geometry.computeBoundsTree(); AREA.near.push(m); }
+      for (const m of c.walls) { if (!m.geometry.boundsTree) m.geometry.computeBoundsTree(); AREA.walls.push(m); }
+    }
   }
 }
 // the ground mesh, 1.8 km across round the car, its heights from the DEM grid (moved when the car is 300 m off its middle)
@@ -782,6 +966,7 @@ function gatherHits() {
   if (sets.roads.group.visible) sets.roads.group.traverse(o => { if (o.isMesh && o.geometry.boundsTree) hitRoads.push(o); });
   for (const t of bsets()) if (t.group.visible) t.group.traverse(o => { if (o.isMesh && o.geometry.boundsTree) hitBldg.push(o); });
   for (const m of AREA.near) hitRoads.push(m);
+  for (const m of AREA.walls) hitBldg.push(m);                           // (parapets, tunnel walls, piers: walls to the car and the camera)
 }
 // the ground under a point: PLATEAU's road surface (a pavement, a kerb's top), else the ground between the roads
 function groundAt(x, z, yRef) {
@@ -872,14 +1057,20 @@ const hud = document.getElementById('hud'), out = document.getElementById('out')
 const _inv = new THREE.Matrix4();
 function stats(a) { const s = a.slice().sort((x, y) => x - y), sum = a.reduce((x, y) => x + y, 0); return { fps: 1000 * a.length / sum, p50: s[s.length >> 1], p95: s[Math.floor(s.length * 0.95)] || s[s.length - 1], max: s[s.length - 1] }; }
 function gpuName() { const gl = renderer.getContext(), d = gl.getExtension('WEBGL_debug_renderer_info'); return d ? gl.getParameter(d.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); }
+function sizeText() {
+  const W = renderer.domElement.width, H = renderer.domElement.height;
+  return `内部 ${Math.round(W * rscale)}×${Math.round(H * rscale)}（基準 ${W}×${H} の ${Math.round(rscale * 100)}%${S.auto ? '、自動' + rsLast : '、固定'}）`;
+}
+const heapMB = () => performance.memory ? (performance.memory.usedJSHeapSize / 1e6).toFixed(0) + ' MB' : '取得不可';
 function report(b) {
   const s = stats(b.fr), f1 = v => v.toFixed(1), on = k => sets[k] && sets[k].group.visible ? 'あり' : 'なし';
   return [`【計測 three.js 試作】${new Date().toLocaleString('ja-JP')}　関内 ${SPOT.lat}, ${SPOT.lon}（昼・${['後方', '運転席', '高い後方'][C.cam]}視点）`,
-    `端末: ${navigator.userAgent}`, `GPU: ${gpuName()}　CPU ${navigator.hardwareConcurrency || '?'} コア　画面 ${innerWidth}×${innerHeight}（dpr ${devicePixelRatio}）　画質 ${QLABEL}`,
+    `端末: ${navigator.userAgent}`, `GPU: ${gpuName()}　CPU ${navigator.hardwareConcurrency || '?'} コア　画面 ${innerWidth}×${innerHeight}（dpr ${devicePixelRatio}）　画質 ${QLABEL}　${sizeText()}　MSAA ${Q.msaa}　影 ${S.shadow || 'なし'}　AO ${S.ao ? 'あり' : 'なし'}　近くの建物写真 ${S.tex}　描画距離 ${S.dist} m`,
     `出発地点: ${SPAWNS[spawnAt][0]}　範囲 A の道路: ${AREA.state || 'あり'}　建物: PLATEAU ${bmode.toUpperCase()}（中区・西区・神奈川区）　道路: ${on('roads')}　樹木: ${on('trees')}　影: ${renderer.shadowMap.enabled ? 'あり' : 'なし'}　AO: ${ao.enabled ? 'あり' : 'なし'}　光のにじみ: ${bloom.enabled ? 'あり' : 'なし'}　MSAA ${Q.msaa}　影 ${Q.shadow}　AO 解像度 ${Math.round(Q.aoScale * 100)}%　描画解像度 ${Math.round(renderer.domElement.width * rscale)}×${Math.round(renderer.domElement.height * rscale)}（画面の ${Math.round(rscale * 100)}%）`,
     `実フレームレート ${f1(s.fps)} fps（1フレーム 中央値 ${f1(s.p50)} ms / 95% ${f1(s.p95)} ms / 最大 ${f1(s.max)} ms、${b.fr.length} フレーム）`,
     `ひっかかり（100 ms 超）${b.fr.filter(x => x > 100).length} 回、うち 1 秒超 ${b.fr.filter(x => x > 1000).length} 回　1 秒超を除いた実フレームレート ${f1(stats(b.fr.filter(x => x <= 1000).length ? b.fr.filter(x => x <= 1000) : b.fr).fps)} fps　計測中にタブが裏に回った: ${b.hidden ? 'あり' : 'なし'}　読み込み中のタイル（計測開始時）${b.busy}`,
-    `1フレームの JS ${f1(b.js / b.fr.length)} ms　描画呼出 ${Math.round(b.calls / b.fr.length)}　三角形 ${Math.round(b.tris / b.fr.length / 1000)} 千　テクスチャ ${renderer.info.memory.textures}　ジオメトリ ${renderer.info.memory.geometries}`].join('\n');
+    `1フレームの JS ${f1(b.js / b.fr.length)} ms　描画呼出 ${Math.round(b.calls / b.fr.length)}　三角形 ${Math.round(b.tris / b.fr.length / 1000)} 千　テクスチャ ${renderer.info.memory.textures} 個（建物写真の推定 ${(texBytes() / 1e6).toFixed(0)} MB）　ジオメトリ ${renderer.info.memory.geometries} 個`,
+    `表示中の建物タイル ${bsets().reduce((a, t) => a + (t.visibleTiles ? t.visibleTiles.size : 0), 0)}　範囲 A のチャンク ${AREA.chunks.filter(c => c.grp.visible).length}/${AREA.chunks.length}　LOD3 に置き換えた建物 ${L3.size}　外壁を生成した建物 ${FACADE.made.size}　JS ヒープ ${heapMB()}（計測開始時 ${b.heap}）　GPU 時間: 未計測`].join('\n');
 }
 function loop(now) {
   const real = now - last, dt = Math.min(0.05, real / 1000); last = now;
@@ -893,6 +1084,9 @@ function loop(now) {
   if (FRAME && AREA.buf && !AREA.built) buildArea();
   if (AREA.built && (fr.length % 20) === 0) areaNear();
   if (water.visible) water.position.set(C.x, water.position.y, C.z);
+  for (let i = facadePending.length - 1; i >= 0; i--) { const sc = facadePending[i]; if (!sc.parent) continue; facadePending.splice(i, 1); facadeSetup(sc); }
+  if (dedupeDirty && now - dedupeAt > 400) { dedupeDirty = false; dedupeAt = now; for (const o of L2MESH) l2Filter(o); }
+  texManage(now);
   gatherHits();
   if (!placed) place();
   if (placed) drive(dt);
@@ -909,7 +1103,7 @@ function loop(now) {
   if ((fr.length & 15) === 0) {
     const s = stats(fr.slice(-60)), ld = Object.values(sets).reduce((a, t) => a + (t.stats ? t.stats.downloading + t.stats.parsing : 0), 0);
     if (!placed && now > 20000) { hud.textContent = 'PLATEAU の街のデータ（assets.cms.plateau.reearth.io）を読み込めません。\nこのページの置き場所によっては外部データへの接続が制限されます。\nGitHub 版で開いてください:\nhttps://raw.githack.com/kazuki8198-glitch/otinti/claude/what-is-this-db5aue/plateau-three.html'; hud.style.pointerEvents = 'auto'; hud.style.userSelect = 'text'; }
-    else hud.textContent = `実 ${s.fps.toFixed(1)} fps　中央値 ${s.p50.toFixed(1)} ms　画質 ${QN === 'high' ? '高' : QN === 'mid' ? '中' : '軽量'} ${Math.round(rscale * 100)}%\n描画呼出 ${inf.calls}　三角形 ${(inf.triangles / 1000).toFixed(0)} 千\nPLATEAU ${bmode.toUpperCase()} 表示 ${bsets().reduce((a, t) => a + (t.visibleTiles ? t.visibleTiles.size : 0), 0)} タイル　読込中 ${ld}　${SPAWNS[spawnAt][0]}${AREA.state ? '　' + AREA.state : ''}\n${Math.round(Math.abs(C.v) * 3.6)} km/h${C.hand ? '　サイドブレーキ' : ''}`;
+    else hud.textContent = `実 ${s.fps.toFixed(1)} fps　中央値 ${s.p50.toFixed(1)} ms　${QLABEL}\n${sizeText()}\n描画呼出 ${inf.calls}　三角形 ${(inf.triangles / 1000).toFixed(0)} 千　建物写真 ${(texBytes() / 1e6).toFixed(0)} MB\nPLATEAU 表示 ${bsets().reduce((a, t) => a + (t.visibleTiles ? t.visibleTiles.size : 0), 0)} タイル　読込中 ${ld}　${SPAWNS[spawnAt][0]}${AREA.state ? '　' + AREA.state : ''}\n${Math.round(Math.abs(C.v) * 3.6)} km/h${C.hand ? '　サイドブレーキ' : ''}`;
   }
   requestAnimationFrame(loop);
 }
@@ -920,21 +1114,43 @@ document.getElementById('panel').addEventListener('click', e => {
   if (b.dataset.b) { setMode(b.dataset.b); for (const o of document.querySelectorAll('[data-b]')) o.classList.toggle('on', o.dataset.b === bmode); }
   const t = b.dataset.t;
   if (t === 'roads' || t === 'trees') { sets[t].group.visible = !sets[t].group.visible; b.classList.toggle('on', sets[t].group.visible); }
-  if (t === 'shadow') { renderer.shadowMap.enabled = !renderer.shadowMap.enabled; scene.traverse(o => { if (o.material) for (const m of [].concat(o.material)) m.needsUpdate = true; }); b.classList.toggle('on', renderer.shadowMap.enabled); }
-  if (t === 'ao') { ao.enabled = !ao.enabled; b.classList.toggle('on', ao.enabled); }
+  if (t === 'shadow') { S.shadow = renderer.shadowMap.enabled ? 0 : (Q.shadow || 2048); saveSettings(); renderer.shadowMap.enabled = !renderer.shadowMap.enabled; scene.traverse(o => { if (o.material) for (const m of [].concat(o.material)) m.needsUpdate = true; }); b.classList.toggle('on', renderer.shadowMap.enabled); }
+  if (t === 'ao') { ao.enabled = !ao.enabled; S.ao = ao.enabled; saveSettings(); b.classList.toggle('on', ao.enabled); }
   if (t === 'bloom') { bloom.enabled = !bloom.enabled; b.classList.toggle('on', bloom.enabled); }
   if (b.dataset.a === 'cam') C.cam = (C.cam + 1) % 3;
   if (b.dataset.a === 'spawn' && FRAME) setSpawn((spawnAt + 1) % SPAWNS.length);
-  if (b.dataset.a === 'q') { const u = new URL(location.href); u.searchParams.set('q', { high: 'mid', mid: 'low', low: 'high' }[QN]); location.href = u.href; }   // (MSAA and the shadow map are set at the start: reloads)
-  if (b.dataset.a === 'bench') { bench = { hidden: document.hidden, busy: Object.values(sets).reduce((a, t) => a + (t.stats ? t.stats.downloading + t.stats.parsing : 0), 0), t0: performance.now(), fr: [], js: 0, calls: 0, tris: 0 }; out.style.display = 'block'; out.value = '計測中（10 秒、操作しないでください）…'; }
+  if (b.dataset.a === 'settings') { setEl.style.display = setEl.style.display === 'block' ? 'none' : 'block'; showSettings(); }
+  if (false) { const u = new URL(location.href); u.searchParams.set('q', { high: 'mid', mid: 'low', low: 'high' }[QN]); location.href = u.href; }   // (MSAA and the shadow map are set at the start: reloads)
+  if (b.dataset.a === 'bench') { bench = { heap: heapMB(), hidden: document.hidden, busy: Object.values(sets).reduce((a, t) => a + (t.stats ? t.stats.downloading + t.stats.parsing : 0), 0), t0: performance.now(), fr: [], js: 0, calls: 0, tris: 0 }; out.style.display = 'block'; out.value = '計測中（10 秒、操作しないでください）…'; }
   if (b.dataset.a === 'copy') { out.select(); navigator.clipboard && navigator.clipboard.writeText(out.value).catch(() => document.execCommand('copy')); }
   b.blur();
 });
 for (const id of ['lod2', 'lod3']) document.querySelector(`[data-b=${id}]`).classList.toggle('on', id === bmode);
 for (const [t, on] of [['ao', ao.enabled], ['bloom', bloom.enabled]]) document.querySelector(`[data-t=${t}]`).classList.toggle('on', on);
 addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+// the panel's settings, applied as they change (the preset reloads the page: its MSAA is set at the start)
+function applySettings() {
+  setScale(S.auto ? Math.min(rscale, S.scale) : S.scale);
+  const sh = +S.shadow;
+  if ((sh > 0) !== renderer.shadowMap.enabled) { renderer.shadowMap.enabled = sh > 0; scene.traverse(o => { if (o.material) for (const m of [].concat(o.material)) m.needsUpdate = true; }); }
+  if (sh > 0 && sh !== sun.shadow.mapSize.x) { sun.shadow.mapSize.set(sh, sh); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } Q.shadow = sh; }
+  ao.enabled = !!S.ao;
+  for (const k in sets) if (sets[k].region) sets[k].region.sphere.radius = k === 'trees' ? S.dist * 0.8 : S.dist;
+  document.querySelector('[data-t=shadow]').classList.toggle('on', renderer.shadowMap.enabled); document.querySelector('[data-t=ao]').classList.toggle('on', ao.enabled);
+  saveSettings();
+}
+const setEl = document.getElementById('settings');
+function showSettings() {
+  for (const el of setEl.querySelectorAll('[data-s]')) { const k = el.dataset.s, v = k === 'preset' ? QN : S[k]; if (el.type === 'checkbox') el.checked = !!v; else el.value = String(v); }
+}
+setEl.addEventListener('change', e => {
+  const el = e.target, k = el.dataset.s; if (!k) return;
+  if (k === 'preset') { store.set('ydrive-settings', { preset: el.value, s: PRESETS[el.value].s }); const u = new URL(location.href); u.searchParams.delete('q'); location.href = u.href; return; }
+  S[k] = el.type === 'checkbox' ? el.checked : +el.value; applySettings();
+});
+showSettings();
 addEventListener('visibilitychange', () => { if (document.hidden && bench) bench.hidden = true; });
-window.__three = { scene, camera, renderer, sets, C, setMode, composer, ao, bloom, GH, gridH, groundAt, wallDist, treeSpots, keys, THREE, reset: () => start && reset() };
+window.__three = { enuToWorld: (e, n, u) => FRAME && enuToWorld(e, n, u), get L3n() { return L3.size; }, get facades() { return FACADE.made.size; }, texMB: () => texBytes() / 1e6, S, scene, camera, renderer, sets, C, setMode, composer, ao, bloom, GH, gridH, groundAt, wallDist, treeSpots, keys, THREE, reset: () => start && reset() };
 </script>
 </body>
 </html>

@@ -124,4 +124,39 @@ def load(H, osm='osm_ways.json', brid=None):
                 for i in range(1, len(hs)): hs[i] = min(max(hs[i], hs[i - 1] - gm * ds[i - 1]), hs[i - 1] + gm * ds[i - 1])
                 for i in range(len(hs) - 2, -1, -1): hs[i] = min(max(hs[i], hs[i + 1] - gm * ds[i]), hs[i + 1] + gm * ds[i])
         w['h'] = hs
+    # the last word on heights. A ramp lying on the mainline it merges with or leaves (their decks overlapping sideways)
+    # takes the mainline's height there. Then every way meets the ways it shares a node with at one height (the grade
+    # limit and the smoothing above move ends apart), each end eased in over up to 60 m; a node on a ground road keeps
+    # the ground road's height
+    lw = lambda w: (w['lanes'] or 2) * 3.5 + 2.0 if w['hw'] == 'motorway' else (w['lanes'] or 1) * 3.5 + 2.5
+    hm = collections.defaultdict(list); mains = [w for w in ways if w['hw'] == 'motorway' and w['h'] is not None and len(w['s']) > 1]
+    for mi, w in enumerate(mains):
+        w['tn'] = np.gradient(w['xy'], axis=0); w['tn'] /= np.linalg.norm(w['tn'], axis=1)[:, None] + 1e-9
+        for j, (x, y) in enumerate(w['xy']): hm[(int(x // 16), int(y // 16))].append((mi, j))
+    for w in ways:
+        if w['hw'] != 'motorway_link' or w['h'] is None or len(w['s']) < 3: continue
+        h = w['h'].copy(); hit = np.zeros(len(h), bool)
+        for i, (x, y) in enumerate(w['xy']):
+            best = None
+            for di in (-1, 0, 1):
+                for dj in (-1, 0, 1):
+                    for mi, j in hm.get((int(x // 16) + di, int(y // 16) + dj), ()):
+                        m = mains[mi]; d = np.array([x, y]) - m['xy'][j]; t = m['tn'][j]
+                        if abs(d @ t) < 2.2 and abs(d[0] * -t[1] + d[1] * t[0]) < (lw(w) + lw(m)) / 2 - 0.5 and abs(m['h'][j] - h[i]) < 3.0:
+                            if best is None or abs(m['h'][j] - h[i]) < abs(best - h[i]): best = m['h'][j]
+            if best is not None: h[i] = best; hit[i] = True
+        if hit.any():                                                     # (eased in and out over 60 m: no step)
+            hi = np.where(hit)[0]; dlt = h[hi] - w['h'][hi]; s_ = w['s']
+            near = np.abs(s_[:, None] - s_[hi][None, :]); k = near.argmin(1)
+            w['h'] = w['h'] + dlt[k] * np.clip(1 - near[np.arange(len(s_)), k] / 60.0, 0, 1); w['merged'] = int(hit.sum())
+    for it in range(4):
+        nh = collections.defaultdict(list)
+        for w in ways:
+            if w['h'] is None or w['L'] < 0.5: continue
+            nh[w['nodes'][0]].append(w['h'][0]); nh[w['nodes'][-1]].append(w['h'][-1])
+        for w in ways:
+            if w['h'] is None or w['L'] < 0.5 or (w['kind'] == 'ground' and w['hw'] not in ('motorway', 'motorway_link')): continue
+            s = w['s']; D = min(60.0, s[-1] / 2)
+            a = fixed.get(w['nodes'][0], np.mean(nh[w['nodes'][0]])); b = fixed.get(w['nodes'][-1], np.mean(nh[w['nodes'][-1]]))
+            w['h'] = w['h'] + (a - w['h'][0]) * np.clip(1 - s / max(D, 1e-6), 0, 1) + (b - w['h'][-1]) * np.clip(1 - (s[-1] - s) / max(D, 1e-6), 0, 1)
     return ways, fixed, ground, curve

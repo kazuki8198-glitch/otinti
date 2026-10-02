@@ -37,6 +37,12 @@ remove = unary_union([w['poly'] for w in deck_ways if w['kind'] != 'tunnel']).di
 tick('footprints')
 # ---- ground roads: PLATEAU's areas minus the decks' own footprints; carriageway and pavements as before ----
 U = pickle.load(open('U.pkl', 'rb')).buffer(0); F3 = pickle.load(open('F3.pkl', 'rb'))
+# where PLATEAU has no road area under an OSM road (the edges of its data, gaps), a strip along the centreline (an
+# estimate: residential 5 m, tertiary 7 m, larger by their lanes); slivers along PLATEAU's own edges are dropped
+FILLW = {'residential': 5.0, 'unclassified': 5.0, 'living_street': 4.0, 'tertiary': 7.0, 'tertiary_link': 6.0}
+fill = unary_union([LineString(w['xy']).buffer(FILLW.get(w['hw'], width_of(w)) / 2) for w in ground_ways if w['hw'] in FILLW or w['hw'] in ('trunk', 'primary', 'secondary', 'trunk_link', 'primary_link', 'secondary_link')])
+fill = fill.difference(U).buffer(-1.0).buffer(1.0); U = U.union(fill).buffer(0)
+pickle.dump(fill, open('fill.pkl', 'wb')); tick(f'road areas filled from OSM (estimated): {fill.area:.0f} m2')
 U = U.difference(remove).buffer(-0.05).buffer(0.05).intersection(box(E0 + 10, N0 + 10, E1 - 10, N1 - 10))   # (inside the DEM's grid only)
 wide = U.buffer(-6.0, quad_segs=6).buffer(6.0, quad_segs=6).intersection(U)
 narrow = U.difference(wide).buffer(-0.05).buffer(0.05)

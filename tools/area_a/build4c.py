@@ -61,7 +61,7 @@ NOWIRE = prep(Polygon([(-900, 450), (-300, 600), (60, 1100), (-200, 1750), (-130
     Polygon([(-720, 200), (-520, -520), (300, -640), (950, -220), (520, 560), (-320, 720)])).union(                       # the Kannai core
     Point(-1551, 1740).buffer(420)))                                                                                       # round Yokohama Station
 # ---- the pieces ----
-KIND = dict(pole=0, light=1, lamp=2, vsig=3, psig=4, stop=5, xsign=6, speed=7, bus=8, bollard=9, pipe=10, hedge=11, manhole=12, drain=13)
+KIND = dict(pole=0, light=1, lamp=2, vsig=3, psig=4, stop=5, xsign=6, speed=7, bus=8, bollard=9, pipe=10, hedge=11, manhole=12, drain=13, hwlight=14, hwsign=15, etc=16)
 items = []   # (kind, e, n, z, yaw (facing / along, radians from east, counter-clockwise), param, group)
 wires = []   # polylines (n x 3)
 occ = collections.defaultdict(list)
@@ -242,6 +242,43 @@ for nd in Nd:
         ok = put('bus', e, n, yaw, param=1 if pw > 3.2 else 0, r=2.5)
     cnt[hw] += ok
 tick(f'nodes {dict(cnt)}')
+# ---- the expressway (K1 and its ramps): lights on the parapet every 40 m, signs before each exit (and every ~1.2 km one
+# for the direction), an ETC gate on each on-ramp. Placed by rule on OSM's ways: estimated, not surveyed ----
+deck_ways = S1['deck_ways']; motnodes = set()
+for w in deck_ways:
+    if w['hw'] == 'motorway': motnodes.update(w['nodes'])
+def frame(w):
+    t = np.gradient(w['xy'], axis=0); t /= np.linalg.norm(t, axis=1)[:, None] + 1e-9; return t, np.column_stack([-t[:, 1], t[:, 0]])
+def at_s(w, s0): return int(np.clip(np.searchsorted(w['s'], s0), 0, len(w['s']) - 1))
+def raw(kind, e, n, z, yaw, param=0):
+    items.append((KIND[kind], e, n, z, yaw, param, 0)); occ[(int(e // 4), int(n // 4))].append((e, n)); cnt[kind] += 1
+exits = collections.defaultdict(list)                                   # (mainline node -> its exits)
+for w in deck_ways:
+    if w['hw'] == 'motorway_link' and w['nodes'][0] in motnodes and w['nodes'][-1] not in motnodes: exits[w['nodes'][0]].append(w)
+for w in deck_ways:
+    if w['hw'] not in ('motorway', 'motorway_link') or len(w['s']) < 3: continue
+    t, l = frame(w); half = w['W'] / 2; xy, h = w['xy'], w['h']
+    if w['hw'] == 'motorway':
+        if w['kind'] != 'tunnel':
+            for s0 in np.arange(20 + hsh(w['id'] % 991, 3) * 20, w['s'][-1] - 5, 40.0):
+                i = at_s(w, s0); e, n = xy[i] + l[i] * (half + 0.12)
+                raw('hwlight', e, n, h[i] + 1.1, math.atan2(-l[i, 1], -l[i, 0]))
+        # exits: a sign 200 m before the node where the ramp leaves (on this way, if it is long enough)
+        for k, nid in enumerate(w['nodes']):
+            if nid not in exits: continue
+            sn = w['s'][int(np.argmin(np.hypot(*(xy - w['p'][k]).T)))]
+            for back, var in ((200.0, 0), (60.0, 0)):
+                if sn - back < 2: continue
+                i = at_s(w, sn - back); e, n = xy[i] + l[i] * (half - 0.4)
+                raw('hwsign', e, n, h[i], math.atan2(-t[i, 1], -t[i, 0]), param=var)
+        if w['kind'] != 'tunnel' and w['s'][-1] > 600:                  # (the direction: north- or southbound)
+            for s0 in np.arange(500, w['s'][-1] - 100, 1200.0):
+                i = at_s(w, s0); e, n = xy[i] + l[i] * (half - 0.4)
+                raw('hwsign', e, n, h[i], math.atan2(-t[i, 1], -t[i, 0]), param=1 if t[i, 1] > 0 else 2)
+    elif w['nodes'][0] not in motnodes and w['nodes'][-1] in motnodes and w['s'][-1] > 70 and w['kind'] != 'tunnel':
+        i = at_s(w, 45.0); e, n = xy[i]                                  # (an on-ramp: its ETC gate, 45 m in)
+        raw('etc', e, n, h[i], math.atan2(-t[i, 1], -t[i, 0]), param=int(min(w['W'], 9) * 10))
+tick(f'expressway {dict((k, cnt[k]) for k in ("hwlight", "hwsign", "etc"))}')
 # ---- wires: three, sagging between poles (the top two at the crossarm's ends, the lowest a telephone cable) ----
 WIRE = []
 for chain in wires:

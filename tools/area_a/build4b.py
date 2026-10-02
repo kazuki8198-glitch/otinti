@@ -75,16 +75,17 @@ for wi, w in enumerate(deck_ways):
     mot = w['hw'] in ('motorway', 'motorway_link'); tun = w['kind'] == 'tunnel'; brg = w['kind'] == 'bridge'
     g = roadh(xy[:, 0], xy[:, 1]); deck_samples += n; est_samples += int(np.sum(w['est']))
     side_w = 0.0 if mot else 2.0                                         # (ordinary bridges keep their pavements)
-    P3 = lambda i, off, dh: np.array([xy[i, 0] + l[i, 0] * off, xy[i, 1] + l[i, 1] * off, h[i] + dh])
+    P3 = lambda i, off, dh, a=0.0: np.array([xy[i, 0] + l[i, 0] * off + t[i, 0] * a, xy[i, 1] + l[i, 1] * off + t[i, 1] * a, h[i] + dh])
     U_ = np.array([0, 0, 1.0])
     for i in range(n - 1):
         k = ck(*((xy[i] + xy[i + 1]) / 2)); ch = C(k)
         surf = []; conc = []; sidep = []
-        quad_out(surf, P3(i, half, 0), P3(i, -half, 0), P3(i + 1, -half, 0), P3(i + 1, half, 0), U_)
+        a0 = -0.6 if i == 0 else 0.0; a1 = 0.6 if i + 1 == n - 1 else 0.0       # (the ends overlap the next way's: no seam to fall through)
+        quad_out(surf, P3(i, half, 0, a0), P3(i, -half, 0, a0), P3(i + 1, -half, 0, a1), P3(i + 1, half, 0, a1), U_)
         for sgn in (1, -1):
             o0 = sgn * half; o1 = sgn * (half + side_w); o2 = sgn * (half + side_w + 0.25)
             if side_w:
-                quad_out(sidep, P3(i, o0, 0.15), P3(i, o1, 0.15), P3(i + 1, o1, 0.15), P3(i + 1, o0, 0.15), U_)
+                quad_out(sidep, P3(i, o0, 0.15, a0), P3(i, o1, 0.15, a0), P3(i + 1, o1, 0.15, a1), P3(i + 1, o0, 0.15, a1), U_)
                 quad_out(conc, P3(i, o0, 0), P3(i, o0, 0.15), P3(i + 1, o0, 0.15), P3(i + 1, o0, 0), np.array([*(-sgn * l[i]), 0]))
             mid = (xy[i] + xy[i + 1]) / 2 + l[i] * sgn * (half + side_w + 0.8)
             wall = not alongside(wi, mid, (h[i] + h[i + 1]) / 2)

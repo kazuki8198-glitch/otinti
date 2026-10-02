@@ -1,5 +1,6 @@
 // Screenshots at fixed places and views, for before/after comparisons. SHOTS=file.json: [{ name, e, n, hdg, cam } |
-// { name, e, n, cam: 'free', at: [e, n, up above ground], look: [e, n, up above ground], fov }] (east/north metres from
+// { name, e, n, cam: 'free', at: [e, n, up above ground], look: [e, n, up above ground], fov }, each with an optional
+// pre: a function body run in the page first, T = window.__three] (east/north metres from
 // the Kannai spot; hdg in degrees from north, clockwise; cam 0 behind the car, 1 the driver's seat, 2 high behind).
 // OUT=dir, W/H the viewport (the page's internal size at 100 %), Q=?q=high, ROOT=the checkout to serve (another commit's
 // worktree for "before"). Each shot: the page settled (tiles loaded), then a frame; its HUD line logged with it
@@ -16,7 +17,9 @@ const fs = require('fs'), path = require('path');
   page.on('pageerror', e => console.log('PAGEERROR: ' + e.message));
   page.on('console', m => { if (m.type() === 'error') console.log('CONSOLE: ' + m.text().slice(0, 200)); });
   await page.goto('http://127.0.0.1:8765/plateau-three.html' + (process.env.Q || '?q=high'), { waitUntil: 'load' });
-  const busy = () => page.evaluate(() => { const T = window.__three; if (!T || !T.enuToWorld(0, 0, 0)) return 99; return Object.values(T.sets).reduce((a, t) => a + t.stats.downloading + t.stats.parsing, 0) + (T.BLD ? T.BLD.queue.length : 0); });
+  // (drawing here takes seconds a frame: the buildings' set-up, 5 ms a frame in the page, gets 400 ms; the old page has none)
+  await page.waitForFunction(() => window.__three, null, { timeout: 120000 }).catch(() => {}); await page.evaluate(() => { if (window.__three.BLD) window.__three.BLD.jobMs = 400; });
+  const busy = () => page.evaluate(() => { const T = window.__three; if (!T || !T.enuToWorld(0, 0, 0)) return 99; return Object.values(T.sets).reduce((a, t) => a + t.stats.downloading + t.stats.parsing, 0) + (T.BLD ? T.BLD.queue.length + (T.BLD.jobs ? T.BLD.jobs.length : 0) : 0); });
   const settle = async (min) => { let calm = 0; for (let i = 0; i < min * 6; i++) { await page.waitForTimeout(10000); calm = (await busy()) === 0 ? calm + 1 : 0; if (calm >= 2) return true; } return false; };
   await settle(+(process.env.MAXMIN || 8));
   let last = null;
@@ -26,6 +29,7 @@ const fs = require('fs'), path = require('path');
       C.x = p.x; C.z = p.z; C.hdg = C.camYaw = Math.atan2(q.x - p.x, q.z - p.z); C.v = 0; C.cam = s.cam === 'free' ? 0 : s.cam || 0; C.y = T.groundAt(C.x, C.z, T.gridH ? T.gridH(C.x, C.z) + 1.5 : 30);
       if (s.cam === 'free') { const a = T.enuToWorld(s.at[0], s.at[1], 0), b = T.enuToWorld(s.look[0], s.look[1], 0); const ga = T.groundAt(a.x, a.z, C.y + 3), gb = T.groundAt(b.x, b.z, C.y + 3); window.__camAt = [a.x, ga + s.at[2], a.z, b.x, gb + s.look[2], b.z, s.fov || 55]; }
       else window.__camAt = null;
+      if (s.pre) new Function('T', s.pre)(T);
       T.areaNear();
     }, s);
     const moved = !last || Math.hypot(s.e - last.e, s.n - last.n) > 60;

@@ -61,6 +61,17 @@ def quad_out(L, a, b, c, d, want): tri_out(L, a, b, c, want); tri_out(L, a, c, d
 for w in deck_ways:
     t = np.gradient(w['xy'], axis=0); t /= np.linalg.norm(t, axis=1)[:, None] + 1e-9; w['t'] = t; w['l'] = np.column_stack([-t[:, 1], t[:, 0]])
 hashd = collections.defaultdict(list)
+from shapely.strtree import STRtree
+DP = [w['poly'] for w in deck_ways]; DT = STRtree(DP); n_pier = n_pier_skip = n_wall_cut = 0
+def deck_below(c, top, self_w, r):
+    """another deck under this point, lower than the pier's top by a metre or more, within r of it"""
+    sq = Point(*c).buffer(r, cap_style=3)
+    for j in DT.query(sq):
+        w2 = deck_ways[j]
+        if w2 is self_w or not DP[j].intersects(sq): continue
+        k = int(np.argmin(np.hypot(*(w2['xy'] - c).T)))
+        if w2['h'][k] < top - 1.0: return True
+    return False
 for wi, w in enumerate(deck_ways):
     for j, (x, y) in enumerate(w['xy']): hashd[(int(x // 16), int(y // 16))].append((wi, j))
 def alongside(wi, P, h):
@@ -112,6 +123,9 @@ for wi, w in enumerate(deck_ways):
                 quad_out(conc, P3(i, o0, 0), P3(i, o0, 0.15), P3(i + 1, o0, 0.15), P3(i + 1, o0, 0), np.array([*(-sgn * l[i]), 0]))
             mid = (xy[i] + xy[i + 1]) / 2 + l[i] * sgn * (half + side_w + 0.8)
             wall = not alongside(wi, mid, (h[i] + h[i + 1]) / 2)
+            dh_ = (h[i] + h[i + 1]) / 2 - (g[i] + g[i + 1]) / 2
+            if wall and mot and not tun and -1.0 < dh_ < 2.5 and min(w['s'][i], w['s'][-1] - w['s'][i + 1]) < 40 and pcarr.contains(Point(*((xy[i] + xy[i + 1]) / 2 + l[i] * sgn * (half + side_w)))):
+                wall = False; n_wall_cut += 1                             # (where an expressway ramp comes down to meet a street, its wall would stand on the street's carriageway)
             ht = 5.5 if tun else 1.1 if mot else 1.0
             if tun:                                                       # (in a tunnel: up to the roof, or to the ground in an open cut)
                 gi = g[i]; ht = min(5.5, max(1.1, gi - h[i] + 0.3))
@@ -132,13 +146,16 @@ for wi, w in enumerate(deck_ways):
         ch['deck'].append(np.array(surf)); 
         if sidep: ch['dside'].append(np.array(sidep))
         if conc: ch['conc'].append(np.array(conc))
-    # piers under the expressway's viaducts, every 30 m, where there is room and no road below
+    # piers under the expressway's viaducts, every 30 m, where there is room and no road below: neither a ground road's
+    # carriageway nor another deck passing lower (a ramp looping under the viaduct) within the pier's footing
     if mot and brg:
         for s0 in np.arange(15, w['s'][-1], 30.0):
             i = int(np.searchsorted(w['s'], s0)); i = min(i, n - 1)
             top = h[i] - 1.8; bot = g[i] - 0.5
-            if top - g[i] < 2.5 or pcarr.contains(Point(*xy[i])): continue
             c = np.array([xy[i, 0], xy[i, 1]]); a = 1.1; conc = []
+            if top - g[i] < 2.5: continue
+            if pcarr.intersects(Point(*c).buffer(a + 0.3, cap_style=3)) or deck_below(c, top, w, a + 0.8): n_pier_skip += 1; continue
+            n_pier += 1
             for dx, dy in ((t[i], l[i]), (l[i], -t[i]), (-t[i], -l[i]), (-l[i], t[i])):
                 p0 = c + dx * a + dy * a; p1 = c + dx * a - dy * a
                 quad_out(conc, [*p0, bot], [*p1, bot], [*p1, top], [*p0, top], np.array([*dx, 0]))
@@ -152,7 +169,7 @@ for wi, w in enumerate(deck_ways):
     for off, dash in offs:
         pts = np.column_stack([xy[:, 0] + l[:, 0] * off, xy[:, 1] + l[:, 1] * off, h + 0.02])
         C(ck(*xy[n // 2]))['paint'].append((pts, dash))
-tick(f'decks {len(deck_ways)} (samples {deck_samples}, estimated heights {est_samples}); sound wall segments {snd_n} (estimated)')
+tick(f'decks {len(deck_ways)} (samples {deck_samples}, estimated heights {est_samples}); sound wall segments {snd_n} (estimated); piers {n_pier}, left out for a road or a lower deck below {n_pier_skip}; low walls left off a street {n_wall_cut} segments')
 # ---- the ground roads' own surface, as a 1 m height raster made from their triangles (the paint is laid on it, so it
 # neither floats nor sinks where the triangles cut across the DEM) ----
 RS = 1.0; HX = int((E1 - E0) / RS) + 2; HY = int((N1 - N0) / RS) + 2; HR = np.full((HY, HX), np.nan, np.float32)
@@ -274,6 +291,52 @@ for w in ground_ways:
         signals.append((q, T, dl, dr_, w['oneway'], w['id']))
 pickle.dump(signals, open('signals_seed.pkl', 'wb'))
 tick(f'crossings {nc} stop lines {ns}')
+# ---- channelizing zones (導流帯), estimated from OSM's geometry, not surveyed: where a two-way road splits into a divided
+# pair (one one-way way leaving the node, one arriving, under 60° apart), the gore between the pair's lanes is hatched
+# (its outline and 0.45 m stripes at 45°, 2 m apart), out to 45 m or where a raised island (no carriageway) takes over ----
+from shapely.geometry import Polygon, LineString
+ends_at = collections.defaultdict(list)
+for w in ground_ways:
+    if w['hw'] in DRIVE and len(w['p']) >= 2: ends_at[w['nodes'][0]].append((w, 0)); ends_at[w['nodes'][-1]].append((w, -1))
+def run_from(w, end, maxd=45.0):
+    p = w['p'] if end == 0 else w['p'][::-1]; out = [p[0]]; d = 0.0
+    for a, b in zip(p[:-1], p[1:]):
+        l = float(np.hypot(*(b - a)))
+        if l < 1e-6: continue
+        if d + l >= maxd: out.append(a + (b - a) * (maxd - d) / l); break
+        out.append(b); d += l
+    return np.array(out)
+def unit(v): return v / max(float(np.hypot(*v)), 1e-9)
+nz = nzs = 0; zat = []
+for nid, lst in ends_at.items():
+    one = [(w, e) for w, e in lst if w['oneway']]; two = [(w, e) for w, e in lst if not w['oneway']]
+    if len(one) != 2 or not two or (one[0][1] == 0) == (one[1][1] == 0): continue
+    (wa, ea), (wb, eb) = one; A = run_from(wa, ea); B = run_from(wb, eb)
+    if len(A) < 3 or len(B) < 3: continue
+    ua, ub = unit(A[2] - A[0]), unit(B[2] - B[0])
+    if float(ua @ ub) < 0.5: continue
+    gore = Polygon(np.vstack([A, B[::-1]])).buffer(0)
+    for w_, P_ in ((wa, A), (wb, B)): gore = gore.difference(LineString(P_).buffer((w_['lanes'] or 1) * 3.1 / 2, cap_style=2))
+    gore = gore.intersection(carriage)
+    q = Point(*A[0]); bis = unit(ua + ub); sd = unit(bis + np.array([-bis[1], bis[0]])); nn = np.array([-sd[1], sd[0]])
+    for poly in geoms(gore):
+        if poly.area < 4.0 or poly.distance(q) > 12.0 or poly.buffer(-0.5).is_empty: continue
+        ring = np.asarray(poly.exterior.coords)[:, :2]; ring = np.vstack([ring, ring[:1]]) if np.hypot(*(ring[0] - ring[-1])) > 0.01 else ring
+        pts = []
+        for a, b in zip(ring[:-1], ring[1:]):
+            k = max(1, int(np.hypot(*(b - a)) / 1.0)); pts += [a + (b - a) * t / k for t in range(k)]
+        pts.append(ring[-1]); pts = np.array(pts)
+        C(ck(*pts.mean(0)))['paint'].append((np.column_stack([pts, surfh(pts[:, 0], pts[:, 1]) + 0.025]), False))
+        inner = poly.buffer(-0.3); c0 = np.array(poly.centroid.coords[0]); rr = float(np.hypot(*(np.array(poly.bounds[2:]) - poly.bounds[:2])))
+        for o in np.arange(-rr, rr, 2.0):
+            ln = LineString([c0 + nn * o - sd * rr, c0 + nn * o + sd * rr]).intersection(inner)
+            for seg in ([ln] if ln.geom_type == 'LineString' else list(getattr(ln, 'geoms', []))):
+                if seg.is_empty or seg.length < 0.6: continue
+                a, b = np.asarray(seg.coords)[0], np.asarray(seg.coords)[-1]
+                rect(a - nn * 0.225, b - a, nn * 0.45); nzs += 1
+        nz += 1; zat.append([round(float(c0[0]), 1), round(float(c0[1]), 1)])
+json.dump(zat, open('zebra_at.json', 'w'))                              # (where they are, for looking at them)
+tick(f'channelizing zones {nz} ({nzs} stripes, estimated)')
 def runs1(mask):
     i = 0; n = len(mask)
     while i < n:

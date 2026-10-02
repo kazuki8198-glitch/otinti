@@ -84,8 +84,56 @@ def surfaces(geom, layer, lift, cell=24.0):
                     if len(tri) == 0: continue
                     cx, cy = q.representative_point().coords[0]
                     C(ck(cx, cy))[layer].append((np.column_stack([V, roadh(V[:, 0], V[:, 1]) + lift]), tri))
-surfaces(carriage, 'carr', 0.0); surfaces(side, 'side', 0.15); tick('surfaces')
-pside = prep(side); pcarr = prep(carriage)
+# ---- kerb cuts (estimated from OSM's marked crossings, not surveyed): at each end of a crossing on a ground road the
+# pavement comes down to 2 cm above the carriageway over 1.2 m, as wide as the crossing (3.6 m); its sides a step ----
+DRIVE = {'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'trunk_link', 'primary_link', 'secondary_link', 'tertiary_link'}
+Nd = json.load(open('osm_nodes.json'))['elements']
+xn = {nd['id'] for nd in Nd if nd['type'] == 'node' and (nd.get('tags', {}).get('highway') == 'crossing' or 'crossing' in nd.get('tags', {})) and nd.get('tags', {}).get('crossing') not in ('unmarked', 'no', 'informal')}
+pc0 = prep(carriage)
+def edge(q, v):                                                          # (where the carriageway ends from q along v)
+    if not pc0.contains(Point(*q)): return None
+    t0 = 0.0
+    for t in np.arange(0.5, 25.0, 0.5):
+        if not pc0.contains(Point(*(q + v * t))):
+            t1 = t
+            for _ in range(5):
+                m = (t0 + t1) / 2
+                if pc0.contains(Point(*(q + v * m))): t0 = m
+                else: t1 = m
+            return q + v * t1
+        t0 = t
+    return None
+ramps = []; taken = None
+for w in ground_ways:
+    if w['hw'] not in DRIVE: continue
+    p = w['p']
+    for k, nid in enumerate(w['nodes']):
+        if nid not in xn: continue
+        q = p[k]; a = p[max(0, k - 1)]; b = p[min(len(p) - 1, k + 1)]; d = b - a; L = np.hypot(*d)
+        if L < 1e-3: continue
+        T = d / L
+        for s_ in (np.array([-T[1], T[0]]), np.array([T[1], -T[0]])):
+            e = edge(q, s_)
+            if e is None: continue
+            g = Polygon([e - T * 1.8 - s_ * 0.3, e + T * 1.8 - s_ * 0.3, e + T * 1.8 + s_ * 1.2, e - T * 1.8 + s_ * 1.2]).intersection(side)
+            if taken is not None: g = g.difference(taken)
+            if g.area < 0.6 * 3.6 * 1.2: continue                        # (little pavement there)
+            ramps.append((g, e, s_)); taken = g if taken is None else taken.union(g)
+side_cut = side.difference(taken).buffer(0) if taken is not None else side
+surfaces(carriage, 'carr', 0.0); surfaces(side_cut, 'side', 0.15)
+for g, e, s_ in ramps:                                                   # (the ramps: from 2 cm at the kerb to the pavement's 15 cm)
+    for poly in geoms(g):
+        if poly.area < 0.05: continue
+        rings = [densify(poly.exterior.coords, 0.6)] + [densify(h.coords, 0.6) for h in poly.interiors]; rings = [r for r in rings if len(r) >= 3]
+        if not rings: continue
+        V = np.concatenate(rings); ends = np.cumsum([len(r) for r in rings]).astype(np.uint32)
+        try: tri = np.asarray(earcut.triangulate_float64(V, ends), np.uint32)
+        except Exception: continue
+        if len(tri) == 0: continue
+        f = np.clip((V - e) @ s_ / 1.2, 0, 1); cx, cy = poly.representative_point().coords[0]
+        C(ck(cx, cy))['side'].append((np.column_stack([V, roadh(V[:, 0], V[:, 1]) + 0.02 + 0.13 * f]), tri))
+tick(f'surfaces; kerb cuts {len(ramps)} (estimated)')
+pside = prep(side_cut); pcarr = prep(carriage)
 def lines_of(g):
     if g.is_empty: return []
     if g.geom_type in ('LineString', 'LinearRing'): return [g]
@@ -100,8 +148,12 @@ def faces(lines, surf, kind):
         ks = [ck(*((P[i, :2] + P[i + 1, :2]) / 2)) for i in range(len(P) - 1)]; s = 0
         for i in range(1, len(ks) + 1):
             if i == len(ks) or ks[i] != ks[s]: C(ks[s])['kerb'].append((P[s:i + 1], kind)); s = i
-faces([l for p in geoms(side) for l in [p.exterior] + list(p.interiors)], pside, 0)
+faces([l for p in geoms(side_cut) for l in [p.exterior] + list(p.interiors)], pside, 0)
 cb = unary_union([LineString(r.coords) for p in geoms(carriage) for r in [p.exterior] + list(p.interiors)]).difference(side.buffer(0.25))
-faces(lines_of(cb), pcarr, 1); tick('kerbs')
+faces(lines_of(cb), pcarr, 1)
+cbuf = carriage.buffer(0.3)
+for g, e, s_ in ramps:                                                   # (a ramp's front: a 2 cm kerb, kind 2)
+    for poly in geoms(g): faces(lines_of(poly.exterior.intersection(cbuf)), prep(poly), 2)
+tick('kerbs')
 pickle.dump(dict(chunks=dict(chunks), WL=WL, deck_ways=deck_ways, ground_ways=ground_ways), open('b4_stage1.pkl', 'wb'))
 tick('saved stage 1')

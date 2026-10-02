@@ -325,10 +325,15 @@ function texUpgrade(e, want) {
   texBusy = true;
   const k = want / Math.max(e.src.W, e.src.H);
   createImageBitmap(e.src.blob, { ...e.src.opts, resizeWidth: Math.round(e.src.W * k), resizeHeight: Math.round(e.src.H * k), resizeQuality: 'high' }).then(bm => {
-    bm.__src = e.src; const old = e.tex.image; e.tex.image = bm; e.tex.needsUpdate = true; if (old && old.close) setTimeout(() => old.close(), 2000);
+    if (!TEXREG.has(e.tex)) { bm.close(); return; }                    // (its tile went meanwhile)
+    const old = e.tex.image; e.tex.image = bm; e.tex.needsUpdate = true; if (old && old.close) old.close();
   }).catch(() => { /* (keeps the picture it has) */ }).finally(() => { texBusy = false; });
 }
-function texBytes() { let b = 0; for (const e of TEXREG.values()) { const im = e.tex.image; if (im) b += im.width * im.height * 4 * 1.33; } return b; }
+function texBytes() { let b = 0; for (const e of TEXREG.values()) { const im = e.tex.image; if (im) b += im.width * im.height * 4 * 1.33; } return b; }   // (the GPU's copies, estimated: RGBA with mipmaps)
+// the photos' memory, apart: the files kept (to decode again at another size), decoded pictures still held (only until
+// they are on the GPU: then closed), the GPU's copies (estimated above)
+function texMem() { let blob = 0, dec = 0; for (const e of TEXREG.values()) { blob += e.src.blob.size; const im = e.tex.image; if (im && im.close && !im.stub) dec += im.width * im.height * 4; } return { blob, dec }; }
+function texAfterUpload(tex) { tex.onUpdate = () => { const im = tex.image; if (im && im.close) { tex.image = { width: im.width, height: im.height, stub: true }; im.close(); } }; }
 
 // ---- buildings without a photo (PLATEAU has none for them: much of Nishi ward outside Minato Mirai, two thirds of
 // Kanagawa ward's, Minami ward's LOD1): game buildings on their own outline and height. Each is looked at once when its
@@ -492,7 +497,7 @@ bldMat.customProgramCacheKey = () => 'bld-near-v1';
 
 // ---- the context (models/area/ctx.bin, from OSM: tools/bld/ctx.py): building outlines with tags, shop / food /
 // amenity / office points, landuse, road centrelines with class and width. In east/north metres, 50 m cells ----
-const BLD = { recs: new Map(), ctx: null, near: new Set(), queue: [], group: new THREE.Group(), hit: [], made: 0, rep: new Map(), idMeshes: new Map(), at: 0, dirtyParts: false, ent: [], entV: 0 };
+const BLD = { recs: new Map(), ctx: null, near: new Set(), queue: [], jobs: [], group: new THREE.Group(), hit: [], made: 0, rep: new Map(), idMeshes: new Map(), at: 0, dirtyParts: false, ent: [], entV: 0, lim: { rad: 110, keep: 140, max: 160 }, jobMs: 5 };
 scene.add(BLD.group);
 fetchBin('models/area/ctx.bin').then(buf => {
   const dv = new DataView(buf), hl = dv.getUint32(4, true), H = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 8, hl))), base = 8 + hl;
@@ -543,12 +548,15 @@ const toENU = (x, z) => { const dx = x - FRAME.o.x, dz = z - FRAME.o.z; return [
 const dirENU = (x, z) => [x * FRAME.E.x + z * FRAME.E.z, x * FRAME.N.x + z * FRAME.N.z];
 
 // ---- one tile's photo-less buildings: their walls (planes, merged spans), tops, party walls (within the tile) ----
-function bldAnalyse(o, ids) {
+// (a generator too: it yields when it has had 4 ms, so a big tile's analysis is spread over frames)
+function* bldAnalyse(o, ids) {
+  let dl = performance.now() + 4;
   const g = o.geometry, P = g.attributes.position, B = g.attributes._batchid, I = g.index ? g.index.array : null, nt = I ? I.length / 3 : P.count / 3;
   const W = new Float32Array(P.count * 3), m = o.matrixWorld.elements;
   for (let v = 0; v < P.count; v++) { const x = P.getX(v), y = P.getY(v), z = P.getZ(v); W[v * 3] = m[0] * x + m[4] * y + m[8] * z + m[12]; W[v * 3 + 1] = m[1] * x + m[5] * y + m[9] * z + m[13]; W[v * 3 + 2] = m[2] * x + m[6] * y + m[10] * z + m[14]; }
   const recs = new Map(), triB = new Uint32Array(nt), triK = new Uint8Array(nt), triW = new Int32Array(nt).fill(-1);
   for (let t = 0; t < nt; t++) {
+    if ((t & 511) === 0 && performance.now() > dl) { yield; if (!o.parent) return null; dl = performance.now() + 4; }
     const i0 = I ? I[t * 3] : t * 3, i1 = I ? I[t * 3 + 1] : t * 3 + 1, i2 = I ? I[t * 3 + 2] : t * 3 + 2, b = B.getX(i0);
     const ax = W[i0 * 3], ay = W[i0 * 3 + 1], az = W[i0 * 3 + 2], bx = W[i1 * 3] - ax, by = W[i1 * 3 + 1] - ay, bz = W[i1 * 3 + 2] - az, cx = W[i2 * 3] - ax, cy = W[i2 * 3 + 1] - ay, cz = W[i2 * 3 + 2] - az;
     let nx = by * cz - bz * cy, ny = bz * cx - bx * cz, nz = bx * cy - by * cx; const nl = Math.hypot(nx, ny, nz) || 1; nx /= nl; ny /= nl; nz /= nl;
@@ -559,23 +567,24 @@ function bldAnalyse(o, ids) {
     else if (ny > 0.15) { const a = nl / 2 * ny; r.area += a; r.cx += (ax + W[i1 * 3] + W[i2 * 3]) / 3 * a; r.cz += (az + W[i1 * 3 + 2] + W[i2 * 3 + 2]) / 3 * a; if (ny < 0.985) r.steep += a; }
   }
   for (const r of recs.values()) {
+    if (performance.now() > dl) { yield; if (!o.parent) return null; dl = performance.now() + 4; }
     r.id = ids && ids[r.b] ? String(ids[r.b]) : o.uuid + ':' + r.b; r.seed = seedOf(r.id);
     if (r.area > 0) { r.cx /= r.area; r.cz /= r.area; }
     // walls: triangles on one plane (normal, offset), their spans along it merged (a gap of more than 0.3 m: two walls)
     const planes = new Map();
     for (let k = 0; k < r.wt.length; k += 3) {
       const t = r.wt[k], nx = r.wt[k + 1], nz = r.wt[k + 2], tx = nz, tz = -nx;
-      let u0 = 1e9, u1 = -1e9, y1 = -1e9, d = 0;
-      for (let j = 0; j < 3; j++) { const i = I ? I[t * 3 + j] : t * 3 + j, x = W[i * 3], y = W[i * 3 + 1], z = W[i * 3 + 2]; const u = x * tx + z * tz; u0 = Math.min(u0, u); u1 = Math.max(u1, u); y1 = Math.max(y1, y); d += (x * nx + z * nz) / 3; }
+      let u0 = 1e9, u1 = -1e9, y0 = 1e9, y1 = -1e9, d = 0;
+      for (let j = 0; j < 3; j++) { const i = I ? I[t * 3 + j] : t * 3 + j, x = W[i * 3], y = W[i * 3 + 1], z = W[i * 3 + 2]; const u = x * tx + z * tz; u0 = Math.min(u0, u); u1 = Math.max(u1, u); y0 = Math.min(y0, y); y1 = Math.max(y1, y); d += (x * nx + z * nz) / 3; }
       const key = Math.round(Math.atan2(nz, nx) * 60) + ':' + Math.round(d * 3);
       let p = planes.get(key); if (!p) planes.set(key, p = { nx, nz, d, sp: [] });
-      p.sp.push([u0, u1, y1, t]);
+      p.sp.push([u0, u1, y1, t, y0]);
     }
     r.walls = [];
     for (const p of planes.values()) {
       p.sp.sort((a, b) => a[0] - b[0]); let cur = null;
-      const push = () => r.walls.push({ nx: p.nx, nz: p.nz, d: p.d, u0: cur[0], u1: cur[1], y1: cur[2], tris: cur[3] });
-      for (const s of p.sp) { if (cur && s[0] <= cur[1] + 0.3) { cur[1] = Math.max(cur[1], s[1]); cur[2] = Math.max(cur[2], s[2]); cur[3].push(s[3]); } else { if (cur) push(); cur = [s[0], s[1], s[2], [s[3]]]; } }
+      const push = () => r.walls.push({ nx: p.nx, nz: p.nz, d: p.d, u0: cur[0], u1: cur[1], y0: cur[4], y1: cur[2], tris: cur[3] });
+      for (const s of p.sp) { if (cur && s[0] <= cur[1] + 0.3) { cur[1] = Math.max(cur[1], s[1]); cur[2] = Math.max(cur[2], s[2]); cur[3].push(s[3]); cur[4] = Math.min(cur[4], s[4]); } else { if (cur) push(); cur = [s[0], s[1], s[2], [s[3]], s[4]]; } }
       if (cur) push();
     }
     r.walls = r.walls.filter(w => w.u1 - w.u0 > 0.3);
@@ -586,6 +595,7 @@ function bldAnalyse(o, ids) {
   const hashW = new Map(), key = (x, z) => Math.floor(x / 10) * 100003 + Math.floor(z / 10);
   for (const r of recs.values()) for (const w of r.walls) { const um = (w.u0 + w.u1) / 2, x = w.nz * um + w.nx * w.d, z = -w.nx * um + w.nz * w.d; w.mx = x; w.mz = z; (hashW.get(key(x, z)) || hashW.set(key(x, z), []).get(key(x, z))).push([r, w]); }
   for (const r of recs.values()) for (const w of r.walls) {
+    if (performance.now() > dl) { yield; if (!o.parent) return null; dl = performance.now() + 4; }
     for (let i = -2; i <= 2 && !w.party; i++) for (let j = -2; j <= 2 && !w.party; j++) for (const [r2, w2] of hashW.get(key(w.mx + i * 10, w.mz + j * 10)) || []) {
       if (r2 === r || w.nx * w2.nx + w.nz * w2.nz > -0.97 || Math.abs(w.d + w2.d) > 0.6) continue;
       const a0 = -w2.u1, a1 = -w2.u0, ov = Math.min(w.u1, a1) - Math.max(w.u0, a0);
@@ -805,31 +815,67 @@ function gbWall(gb, F, u0, u1, y0, y1, ops, L, T) {
 // balcony rails and partitions, air conditioners, pipes, gutters, canopies, awnings, signs, rooftop plant ----
 const partMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.1 });
 const frameMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.32, metalness: 0.65 });
-const glassMat = new THREE.MeshStandardMaterial({ color: 0x0b1014, roughness: 0.05, metalness: 0.0, envMapIntensity: 1.3 });   // (dark: a room behind; the sky in it by Fresnel)
+const glassMat = new THREE.MeshStandardMaterial({ color: 0x141b22, roughness: 0.05, metalness: 0.25, envMapIntensity: 1.6 });   // (dark: a room behind; the sky in it)
 const shopGlassMat = new THREE.MeshStandardMaterial({ color: 0x6f6c66, roughness: 0.06, metalness: 0.0, envMapIntensity: 1.0 });   // (a lit shop behind)
-const curtainMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95, metalness: 0 });
-function geoBoxes(boxes) {   // boxes: [x0, x1, y0, y1, z0, z1, r, g, b]: one geometry, vertex colours
-  const P = [], N = [], C = [];
-  const q = (a, b, c, d, n, col) => { for (const v of [a, b, c, a, c, d]) { P.push(...v); N.push(...n); C.push(...col); } };
-  for (const [x0, x1, y0, y1, z0, z1, r, g, b] of boxes) {
-    const c = [r, g, b];
+const curtainMat = new THREE.MeshStandardMaterial({ color: 0xb0b0ac, roughness: 0.12, metalness: 0, envMapIntensity: 1.0 });   // (seen through the pane: in front of the glass plane, with its reflection)
+// the window kits stretch: one kit per style, each instance's scale (x, y) its opening's size over the kit's own, and
+// each vertex moved with the edge it belongs to (aEdge: which edge, times the kit's half size), so frames keep their
+// thickness and mullions their spacing (one draw for every window of a style, not one per size). Glass and curtains
+// also vary: no two panes alike, each instance tips its pane's normal a little (another bit of sky) and shades the room
+function kitShader(m, key, vary) {
+  m.onBeforeCompile = sh => {
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 aEdge;\nvarying vec3 vGh;').replace('#include <begin_vertex>', `#include <begin_vertex>
+#ifdef USE_INSTANCING
+  vec2 isc = vec2(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz));
+  transformed.xy = (transformed.xy + aEdge * (isc - 1.0)) / isc;
+  vec3 ip = mod(instanceMatrix[3].xyz, 997.);
+#else
+  vec3 ip = vec3(0.);
+#endif
+  vGh = fract(sin(vec3(dot(ip, vec3(12.9898, 78.233, 37.719)), dot(ip, vec3(39.346, 11.135, 83.155)), dot(ip, vec3(73.156, 52.235, 9.151)))) * 43758.5453);`);
+    if (vary) sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vGh;')
+      .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n  normal = normalize(normal + vec3(vGh.x - 0.5, vGh.y - 0.5, 0.) * 0.16);')
+      .replace('#include <color_fragment>', '#include <color_fragment>\n  diffuseColor.rgb *= 0.6 + 0.8 * vGh.z;');
+  };
+  m.customProgramCacheKey = () => key;
+}
+kitShader(frameMat, 'kit-frame', false); kitShader(glassMat, 'kit-glass', true); kitShader(shopGlassMat, 'kit-shopglass', false); kitShader(curtainMat, 'kit-curtain', true);
+function geoBoxes(boxes, hw, hh) {   // boxes: [x0, x1, y0, y1, z0, z1, r, g, b(, ax, ay)]: one geometry, vertex colours;
+  // with hw, hh (a stretching kit's half size): each vertex's edge (aEdge), by its side of the middle or the box's ax, ay
+  const P = [], N = [], C = [], E = [];
+  const q = (a, b, c, d, n, col) => { for (const v of [a, b, c, a, c, d]) { P.push(...v); N.push(...n); C.push(...col); if (hw) E.push(edge(v[0], hw, ax), edge(v[1], hh, ay)); } };
+  const edge = (v, h, a) => (a !== undefined ? a : Math.abs(v) > 0.2 * h ? Math.sign(v) : 0) * h;
+  let ax, ay;
+  for (const [x0, x1, y0, y1, z0, z1, r, g, b, bx, by] of boxes) {
+    const c = [r, g, b]; ax = bx; ay = by;
     q([x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1], [0, 0, 1], c); q([x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0], [0, 0, -1], c);
     q([x0, y1, z1], [x1, y1, z1], [x1, y1, z0], [x0, y1, z0], [0, 1, 0], c); q([x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1], [0, -1, 0], c);
     q([x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [1, 0, 0], c); q([x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0], [-1, 0, 0], c);
   }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); return g;
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
+  if (hw) g.setAttribute('aEdge', new THREE.Float32BufferAttribute(E, 2));
+  return g;
 }
 const W1 = [1, 1, 1];
-function kitWindow(w, h, style, depth) {
+// the kits' own sizes (a window of another size: the kit stretched, see kitShader); a grid (offices) has a mullion every
+// 0.9 m from its left, so one kit per mullion count, its width the middle of that count's range
+const WREF = { fix: [0.9, 1.1], slide: [1.65, 1.1], slide2: [1.7, 2.0], door: [1.6, 2.2], shop: [1.6, 2.4], grid: [0, 1.6] };
+const gridN = (w) => Math.max(0, Math.ceil((w - 0.3) / 0.9) - 1);
+function winKey(style, w, h, depth) { const n = style === 'grid' ? gridN(w) : 0, R = WREF[style]; return [`w:${style}:${depth}:${n}`, w / (style === 'grid' ? 0.3 + 0.9 * (n + 0.5) : R[0]), h / R[1]]; }
+function kitWindow(style, depth, n) {
+  const w = style === 'grid' ? 0.3 + 0.9 * (n + 0.5) : WREF[style][0], h = WREF[style][1];
   const t = 0.045, z0 = -depth + 0.005, z1 = -depth + 0.075, hw = w / 2, hh = h / 2, B = [];
   B.push([-hw, hw, hh - t, hh, z0, z1, ...W1], [-hw, hw, -hh, -hh + t, z0, z1, ...W1], [-hw, -hw + t, -hh, hh, z0, z1, ...W1], [hw - t, hw, -hh, hh, z0, z1, ...W1]);
   if (style === 'slide' || style === 'slide2' || style === 'door') B.push([-0.03, 0.03, -hh, hh, z0, z1 + 0.01, ...W1]);
-  if (style === 'grid') { for (let x = -hw + 0.9; x < hw - 0.3; x += 0.9) B.push([x - 0.025, x + 0.025, -hh, hh, z0, z1, ...W1]); B.push([-hw, hw, hh - h * 0.3 - 0.025, hh - h * 0.3 + 0.025, z0, z1, ...W1]); }
-  if (style === 'door') B.push([-hw, hw, -hh, -hh + 0.22, z0, z1, ...W1], [-hw + 0.1, hw - 0.1, -hh + 1.0, -hh + 1.04, z1, z1 + 0.04, ...W1]);
-  if (style === 'shop') B.push([-hw, hw, -hh, -hh + 0.15, z0, z1, ...W1]);
-  if (style !== 'door' && style !== 'shop' && style !== 'slide2') B.push([-hw - 0.05, hw + 0.05, -hh - 0.035, -hh, -0.02, 0.07, ...W1]);   // (the sill, outside)
-  const gz = -depth + 0.04, glass = new THREE.PlaneGeometry(w - 2 * t, h - 2 * t).translate(0, 0, gz);
-  return [[geoBoxes(B), frameMat], [glass, style === 'shop' ? shopGlassMat : glassMat]];
+  if (style === 'grid') { for (let k = 1; k <= n; k++) { const x = -hw + 0.9 * k; B.push([x - 0.025, x + 0.025, -hh, hh, z0, z1, ...W1, -1]); } B.push([-hw, hw, hh - h * 0.3 - 0.025, hh - h * 0.3 + 0.025, z0, z1, ...W1, undefined, 1]); }
+  if (style === 'door') B.push([-hw, hw, -hh, -hh + 0.22, z0, z1, ...W1, undefined, -1], [-hw + 0.1, hw - 0.1, -hh + 1.0, -hh + 1.04, z1, z1 + 0.04, ...W1, undefined, -1]);
+  if (style === 'shop') B.push([-hw, hw, -hh, -hh + 0.15, z0, z1, ...W1, undefined, -1]);
+  if (style !== 'door' && style !== 'shop' && style !== 'slide2') B.push([-hw - 0.05, hw + 0.05, -hh - 0.035, -hh, -0.02, 0.07, ...W1, undefined, -1]);   // (the sill, outside)
+  const gz = -depth + 0.04, a = hw - t, b = hh - t, glass = new THREE.BufferGeometry();
+  glass.setAttribute('position', new THREE.Float32BufferAttribute([-a, -b, gz, a, -b, gz, a, b, gz, -a, -b, gz, a, b, gz, -a, b, gz], 3));
+  glass.setAttribute('normal', new THREE.Float32BufferAttribute([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1], 3));
+  glass.setAttribute('aEdge', new THREE.Float32BufferAttribute([-hw, -hh, hw, -hh, hw, hh, -hw, -hh, hw, hh, -hw, hh], 2));
+  return [[geoBoxes(B, hw, hh), frameMat], [glass, style === 'shop' ? shopGlassMat : glassMat]];
 }
 function kitDoor(w, h) {
   const t = 0.05, hw = w / 2, hh = h / 2, z = -0.12;
@@ -845,8 +891,8 @@ function kitShutter() {   // 1 x 1, ribbed (a slat every 7 cm), its box above: s
   return [[g, partMat]];
 }
 const KIT = new Map(), KITF = {
-  w: (a) => kitWindow(+a[1], +a[2], a[3], +a[4]), d: (a) => kitDoor(+a[1], +a[2]), shut: () => kitShutter(),
-  cur: () => [[new THREE.PlaneGeometry(1, 1), curtainMat]],
+  w: (a) => kitWindow(a[1], +a[2], +a[3]), d: (a) => kitDoor(+a[1], +a[2]), shut: () => kitShutter(),
+  cur: () => { const g = new THREE.PlaneGeometry(1, 1); g.setAttribute('aEdge', new THREE.Float32BufferAttribute(new Float32Array(8), 2)); return [[g, curtainMat]]; },   // (scaled whole: no edge moves)
   rail: () => [[geoBoxes([[-0.5, 0.5, 0.05, 1.05, -0.03, 0.0, 0.86, 0.87, 0.88], [-0.5, 0.5, 1.05, 1.1, -0.04, 0.03, 0.55, 0.56, 0.57]]), partMat]],
   part: () => [[geoBoxes([[-0.03, 0.03, 0.0, 1.8, -1.0, 0.0, 0.58, 0.60, 0.62]]), partMat]],
   ac: () => [[geoBoxes([[-0.4, 0.4, 0, 0.6, -0.14, 0.14, 0.72, 0.72, 0.70], [-0.25, 0.25, 0.08, 0.52, 0.14, 0.15, 0.25, 0.26, 0.27], [-0.42, 0.42, -0.08, 0, -0.1, 0.1, 0.4, 0.4, 0.4]]), partMat]],
@@ -878,34 +924,42 @@ function bldFillParts() {
   BLD.dirtyParts = false;
   const count = new Map();
   for (const r of BLD.near) for (const [key, list] of r.nearParts) count.set(key, (count.get(key) || 0) + list.length / 19);
-  for (const [key, ent] of BLDI) if (!count.has(key)) for (const im of ent.ims) im.count = 0;
+  for (const [key, ent] of BLDI) if (!count.has(key)) for (const im of ent.ims) { im.count = 0; im.visible = false; }
   for (const [key, n] of count) {
     let ent = BLDI.get(key);
     if (!ent || ent.cap < n) {
       if (ent) for (const im of ent.ims) { BLD.group.remove(im); im.dispose(); }
       const cap = Math.max(16, 2 ** Math.ceil(Math.log2(n)));
-      ent = { cap, ims: kitGet(key).map(([g, m]) => { const im = new THREE.InstancedMesh(g, m, cap); im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3); im.frustumCulled = false; im.castShadow = m !== glassMat && m !== shopGlassMat && m !== curtainMat && m !== frameMat; im.receiveShadow = true; BLD.group.add(im); return im; }) };
+      ent = { cap, ims: kitGet(key).map(([g, m]) => { const im = new THREE.InstancedMesh(g, m, cap); im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3); im.frustumCulled = false; im.castShadow = m !== curtainMat;   /* (the panes too: the rebuilt building is hollow, so without them the sun shone through its windows onto the street) */ im.receiveShadow = true; BLD.group.add(im); return im; }) };
       BLDI.set(key, ent);
     }
     let at = 0;
     for (const r of BLD.near) { const list = r.nearParts.get(key); if (!list) continue;
       for (let k = 0; k < list.length; k += 19, at++) for (const im of ent.ims) { im.instanceMatrix.array.set(list.subarray(k, k + 16), at * 16); im.instanceColor.array.set(list.subarray(k + 16, k + 19), at * 3); } }
-    for (const im of ent.ims) { im.count = at; im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true; }
+    for (const im of ent.ims) { im.count = at; im.visible = at > 0; im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true; }
   }
 }
 
 // ---- one tile's photo-less mesh made over: houses' walls cut at the eave and their roofs added; each vertex told its
 // building's and wall's slot (the far shader's parameters); the triangles' kinds kept for hiding the walls when near ----
-function bldMeshSetup(o, ids) {
-  if (!FRAME || !BLD.ctx) return false;
+// (a generator: it yields every 25 buildings, so a tile of 800 is set up over several frames, a few ms each; if its tile
+// goes meanwhile it stops, nothing kept)
+function* bldMeshSetup(o, ids) {
   o.updateWorldMatrix(true, false);
-  const A = bldAnalyse(o, ids), recs = A.recs, Wp = A.W, g = o.geometry, Iold = g.index ? g.index.array : null;
+  const A = yield* bldAnalyse(o, ids); if (!A || !o.parent) return;
+  const recs = A.recs, Wp = A.W, g = o.geometry, Iold = g.index ? g.index.array : null;
+  yield;
+  let dl = performance.now() + 4;
+  for (const r of recs.values()) { r.L = bldDecide(r); r.mesh = o; if (performance.now() > dl) { yield; if (!o.parent) return; dl = performance.now() + 4; } }
+  if (!o.parent) return;
+  o.updateWorldMatrix(true, false);
   const inv = new THREE.Matrix4().copy(o.matrixWorld).invert(), ie = inv.elements;
   for (const r of recs.values()) {
-    r.L = bldDecide(r); r.mesh = o; r.slot = BTEX.alloc(); BTEX.set(r.slot, bldParams(r.L));
+    r.slot = BTEX.alloc(); BTEX.set(r.slot, bldParams(r.L));
     for (const w of r.walls) { w.slot = WTEX.alloc(); WTEX.set(w.slot, wallParams(w)); if (r.L.roof !== 'flat') w.y1 = Math.min(w.y1, r.L.eave); }
     FACADE.made.add(r.id);
   }
+  o.userData.bld = [...recs.values()];                               // (from here the tile's disposal frees the slots)
   const P = [], N = [], Bb = [], Rf = [], Wl = [], TK = [];
   const out = (x, y, z, nx, ny, nz, b, ref, wall, k) => {
     P.push(ie[0] * x + ie[4] * y + ie[8] * z + ie[12], ie[1] * x + ie[5] * y + ie[9] * z + ie[13], ie[2] * x + ie[6] * y + ie[10] * z + ie[14]);
@@ -919,8 +973,9 @@ function bldMeshSetup(o, ids) {
     for (const v of [a, b, c]) out(v[0], v[1], v[2], nx, ny, nz, rb, ref, wall, k); TK.push(k);
   };
   const byB = new Map(); for (const r of recs.values()) byB.set(r.b, r);
-  const nt = A.triB.length;
+  const nt = A.triB.length; dl = performance.now() + 4;
   for (let t = 0; t < nt; t++) {
+    if ((t & 511) === 0 && performance.now() > dl) { yield; if (!o.parent) return; dl = performance.now() + 4; }
     const r = byB.get(A.triB[t]), k = A.triK[t], L = r.L, pitched = L.roof !== 'flat';
     if (pitched && k === 1) continue;                               // (the box's flat top: a roof instead)
     const vs = [0, 1, 2].map(j => { const i = Iold ? Iold[t * 3 + j] : t * 3 + j; return [Wp[i * 3], pitched ? Math.min(Wp[i * 3 + 1], L.eave) : Wp[i * 3 + 1], Wp[i * 3 + 2]]; });
@@ -958,10 +1013,8 @@ function bldMeshSetup(o, ids) {
   const old = o.geometry; o.geometry = ng; old.dispose(); o.material = facadeMat; bvhQueue.push(ng);
   const tb = new Uint32Array(TK.length); for (let t = 0; t < tb.length; t++) tb[t] = Bb[t * 3];
   BTEX.flush(); WTEX.flush();
-  o.userData.bld = [...recs.values()];
   for (const r of recs.values()) { const prev = BLD.recs.get(r.id); if (prev && prev !== r) bldForget(prev); BLD.recs.set(r.id, r); }
   filtRegister(o, ids, I, tb, Uint8Array.from(TK));
-  return true;
 }
 function bldForget(r) {
   if (r.near) bldDrop(r);
@@ -988,12 +1041,12 @@ function l2Register(s) {
 }
 function l2Filter(o) {
   const d = o.userData.l2, nb = d.ids.length || 1, lv = new Uint8Array(nb); let any = 0;
-  for (let b = 0; b < d.ids.length; b++) { const id = String(d.ids[b]); if (L3.has(id)) { lv[b] = 2; any++; } else if (d.tk && BLD.rep.has(id)) { lv[b] = 1; any++; } }
+  for (let b = 0; b < d.ids.length; b++) { const id = String(d.ids[b]); if (L3.has(id)) { lv[b] = 2; any++; } else if (d.tk && BLD.rep.has(id)) { lv[b] = BLD.rep.get(id) === 2 ? 3 : 1; any++; } }
   const key = any ? lv.join('') : '';
   if (key === d.hidden) return; d.hidden = key;
   const out = new Uint32Array(d.I.length); let k = 0;
   for (let t = 0; t < d.tb.length; t++) {
-    const l = lv[d.tb[t]]; if (l === 2 || (l === 1 && d.tk[t] !== 1)) continue;
+    const l = lv[d.tb[t]]; if (l === 2 || (l === 1 && d.tk[t] !== 1) || (l === 3 && d.tk[t] === 0)) continue;
     out[k++] = d.I[t * 3]; out[k++] = d.I[t * 3 + 1]; out[k++] = d.I[t * 3 + 2];
   }
   const g = o.geometry; g.setIndex(new THREE.BufferAttribute(out.slice(0, k), 1));
@@ -1010,14 +1063,14 @@ function bldMake(r) {
   const front = L.front;
   for (const w of r.walls) {
     if (w.u1 - w.u0 < 0.3) continue;
-    const F = wf(w), top = w.y1, ops = wallOpenings(L, w), blank = w.flags & 2, base = L.base;
+    const F = wf(w), top = w.y1, base = L.base, high = w.y0 > base + 1.5, bot = high ? w.y0 : base - 0.6, ops = wallOpenings(L, w).filter(o => !high || o.y0 > bot + 0.3), blank = w.flags & 2;
     for (const o of ops) o.depth = o.kind === 'win' || o.kind === 'small' ? L.depth : o.kind === 'shop' ? 0.28 : o.kind === 'load' ? 0.3 : o.kind === 'door' && L.type !== BT.HOUSE ? 0.22 : 0.12;
-    gbWall(gb, F, w.u0, w.u1, base - 0.6, top, ops, lay, tint);
+    gbWall(gb, F, w.u0, w.u1, bot, top, ops, lay, tint);
     if (w.gable) gb.tri(w.gable.a, w.gable.b, w.gable.c, F.N(1), [w.u0, top], [w.u1, top], [(w.u0 + w.u1) / 2, r.top], lay, tint);
     if (blank) continue;
     // plinth: a band at the foot, broken by doors and shop fronts
     const gaps = ops.filter(o => o.y0 < base + 0.5).map(o => [o.u0, o.u1]).sort((a, b) => a[0] - b[0]); let u = w.u0;
-    for (const [a, b] of [...gaps, [w.u1, w.u1]]) { if (a - u > 0.05) gbBox(gb, F, u, a, base - 0.6, base + 0.42, 0, 0.035, LY.concrete, dark); u = Math.max(u, b); }
+    if (!high) for (const [a, b] of [...gaps, [w.u1, w.u1]]) { if (a - u > 0.05) gbBox(gb, F, u, a, base - 0.6, base + 0.42, 0, 0.035, LY.concrete, dark); u = Math.max(u, b); }
     // the parapet's coping, floor bands (RC buildings, not the balcony side)
     if (L.roof === 'flat') gbBox(gb, F, w.u0 - 0.06, w.u1 + 0.06, top - 0.06, top + 0.14, -0.3, 0.07, L.type === BT.WARE ? LY.metal : LY.concrete, L.type === BT.WARE ? [0.6, 0.6, 0.6] : [0.6, 0.6, 0.59]);
     if ((L.type === BT.APT || L.type === BT.OFFICE || L.type === BT.SHOP) && !(w.flags & 4) && !(w.flags & 64))
@@ -1027,16 +1080,16 @@ function bldMake(r) {
       const uc = (o.u0 + o.u1) / 2, yc = (o.y0 + o.y1) / 2, ww = +(o.u1 - o.u0).toFixed(2), hh = +(o.y1 - o.y0).toFixed(2);
       if (o.kind === 'win' || o.kind === 'small' || o.kind === 'bdoor') {
         const style = o.kind === 'bdoor' ? 'slide2' : L.type === BT.OFFICE ? 'grid' : ww >= 1.15 ? 'slide' : 'fix';
-        put(`w:${ww}:${hh}:${style}:${o.depth}`, pm(F, uc, yc, 0), L.frame);
-        if (R(o.i * 31 + o.f, w.i) < 0.45 && L.type !== BT.WARE) { const cw = ww * (0.4 + 0.6 * R(o.i, o.f + 70)); put('cur', pm(F, uc - (ww - cw) / 2 * (R(o.i, o.f + 71) < 0.5 ? 1 : -1), yc, -o.depth - 0.03, cw, hh, 1), pick(R(o.i, o.f + 72), [[0.85, 0.83, 0.76], [0.7, 0.72, 0.74], [0.82, 0.78, 0.66], [0.6, 0.66, 0.7]])); }
+        { const [k, sx, sy] = winKey(style, ww, hh, o.depth); put(k, pm(F, uc, yc, 0, sx, sy, 1), L.frame); }
+        if (R(o.i * 31 + o.f, w.i) < 0.45 && L.type !== BT.WARE) { const cw = ww * (0.4 + 0.6 * R(o.i, o.f + 70)); put('cur', pm(F, uc - (ww - cw) / 2 * (R(o.i, o.f + 71) < 0.5 ? 1 : -1), yc, -o.depth + 0.062, cw, hh, 1), pick(R(o.i, o.f + 72), [[0.85, 0.83, 0.76], [0.7, 0.72, 0.74], [0.82, 0.78, 0.66], [0.6, 0.66, 0.7]])); }
       } else if (o.kind === 'door') {
         if (L.type === BT.HOUSE || L.type === BT.SHOP || L.type === BT.WARE) put(`d:${ww}:${hh}`, pm(F, uc, yc, 0), pick(R(3, w.i), [[0.42, 0.30, 0.20], [0.30, 0.30, 0.32], [0.86, 0.86, 0.84], [0.55, 0.42, 0.30]]));
-        else put(`w:${ww}:${hh}:door:${o.depth}`, pm(F, uc, yc, 0), L.frame);
+        else { const [k, sx, sy] = winKey('door', ww, hh, o.depth); put(k, pm(F, uc, yc, 0, sx, sy, 1), L.frame); }
         put('step', pm(F, uc, base + 0.15, 0, ww + 0.6, 1, 0.45));
         if (L.type !== BT.WARE) put('canopy', pm(F, uc, o.y1 + 0.12, 0, ww + (L.type === BT.HOUSE ? 0.6 : 1.4), 0.14, L.type === BT.HOUSE ? 0.8 : 1.6), [0.6, 0.6, 0.58]);
       } else if (o.kind === 'shop') {
         if (L.shutter && L.type === BT.SHOP) { put('shut', pm(F, uc, yc, 0, ww, hh, 1)); put('canopy', pm(F, uc, o.y1, -0.05, ww, 0.35, 0.35), [0.7, 0.7, 0.7]); }
-        else { const n = Math.max(1, Math.round(ww / 1.6)), mw = ww / n; for (let k = 0; k < n; k++) put(`w:1.6:${hh}:shop:0.28`, pm(F, o.u0 + (k + 0.5) * mw, yc, 0, mw / 1.6, 1, 1), [0.95, 0.9, 0.8]); }
+        else { const n = Math.max(1, Math.round(ww / 1.6)), mw = ww / n; const [kk, sx, sy] = winKey('shop', mw, hh, 0.28); for (let k = 0; k < n; k++) put(kk, pm(F, o.u0 + (k + 0.5) * mw, yc, 0, sx, sy, 1), [0.95, 0.9, 0.8]); }
         put('sign', pm(F, uc, base + L.gH - 0.85, 0.02, ww + 0.3, 0.6, 0.14), L.sign);
         if (L.awning && L.type === BT.SHOP) put('awn', pm(F, uc, o.y1 + 0.05, 0.02, ww, 1, 0.9), L.sign.map(v => Math.min(1, v * 1.1)));
       } else if (o.kind === 'load') {
@@ -1085,19 +1138,28 @@ function bldMake(r) {
   }
   const geo = gb.build(); geo.computeBoundingSphere();
   const mesh = new THREE.Mesh(geo, bldMat); mesh.castShadow = mesh.receiveShadow = true; mesh.matrixAutoUpdate = false;
-  geo.computeBoundsTree();
+  // what the car and the camera run into: the walls as the data has them (not the rebuilt walls' foot sunk 0.6 m below
+  // the building, nor its parts): a car in a cutting beside a house on the bank passes as it did before
+  const HP = [];
+  for (const w of r.walls) {
+    const tx = w.nz, tz = -w.nx, ax = tx * w.u0 + w.nx * w.d, az = tz * w.u0 + w.nz * w.d, bx = tx * w.u1 + w.nx * w.d, bz = tz * w.u1 + w.nz * w.d;
+    HP.push(ax, w.y0, az, bx, w.y0, bz, bx, w.y1, bz, ax, w.y0, az, bx, w.y1, bz, ax, w.y1, az);
+  }
+  const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.Float32BufferAttribute(HP, 3)); hg.computeBoundsTree();
+  r.hitMesh = new THREE.Mesh(hg, bldMat); r.hitMesh.updateMatrixWorld();
   for (const [k, a] of parts) parts.set(k, new Float32Array(a));
   r.ents = [];
-  for (const w of r.walls) if (w.street && !(w.flags & 2)) for (const o of wallOpenings(L, w)) if (o.kind === 'door' || o.kind === 'shop' || o.kind === 'load') {
+  for (const w of r.walls) if (w.street && !(w.flags & 2) && !(w.y0 > L.base + 1.5)) for (const o of wallOpenings(L, w)) if (o.kind === 'door' || o.kind === 'shop' || o.kind === 'load') {
     const um = (o.u0 + o.u1) / 2, [ee, en] = toENU(w.nz * um + w.nx * w.d, -w.nx * um + w.nz * w.d), [ne, nn] = dirENU(w.nx, w.nz); r.ents.push([ee, en, ne, nn, (o.u1 - o.u0) / 2]);
   }
   if (r.ents.length) { BLD.ent.push(...r.ents); BLD.entV++; }
   r.near = mesh; r.nearParts = parts; BLD.group.add(mesh); BLD.near.add(r); BLD.made++;
-  BLD.rep.set(r.id, 1); bldRefilter(r.id); BLD.dirtyParts = true;
+  BLD.rep.set(r.id, r.walls.some(w => w.y0 > r.L.base + 1.5) ? 2 : 1); bldRefilter(r.id); BLD.dirtyParts = true;
 }
 function bldDrop(r) {
   if (!r.near) return;
-  BLD.group.remove(r.near); r.near.geometry.disposeBoundsTree(); r.near.geometry.dispose(); r.near = null; r.nearParts = null;
+  BLD.group.remove(r.near); r.near.geometry.dispose(); r.near = null; r.nearParts = null;
+  if (r.hitMesh) { r.hitMesh.geometry.disposeBoundsTree(); r.hitMesh.geometry.dispose(); r.hitMesh = null; }
   BLD.near.delete(r); BLD.rep.delete(r.id); bldRefilter(r.id); BLD.dirtyParts = true;
   if (r.ents && r.ents.length) { BLD.ent = BLD.ent.filter(t => !r.ents.includes(t)); BLD.entV++; } r.ents = null;
 }
@@ -1105,8 +1167,8 @@ function bldDrop(r) {
 function bldNear(now) {
   if (!FRAME || now - BLD.at < 300) return; BLD.at = now;
   const cand = [];
-  for (const r of BLD.recs.values()) { if (!r.mesh || !r.mesh.parent) continue; r.dist = Math.hypot(r.cx - C.x, r.cz - C.z) - Math.sqrt(r.area) / 2; if (r.dist < (r.near ? 140 : 110)) cand.push(r); }
-  cand.sort((a, b) => a.dist - b.dist); const keep = new Set(cand.slice(0, 160));
+  for (const r of BLD.recs.values()) { if (!r.mesh || !r.mesh.parent) continue; r.dist = Math.hypot(r.cx - C.x, r.cz - C.z) - Math.sqrt(r.area) / 2; if (r.dist < (r.near ? BLD.lim.keep : BLD.lim.rad)) cand.push(r); }
+  cand.sort((a, b) => a.dist - b.dist); const keep = new Set(cand.slice(0, BLD.lim.max));
   for (const r of [...BLD.near]) if (!keep.has(r)) bldDrop(r);
   BLD.queue = cand.filter(r => !r.near && keep.has(r));
 }
@@ -1121,8 +1183,22 @@ function bldWork() {
 function facadeSetup(s) {
   if (!FRAME || !BLD.ctx) return false;
   const ids = idsOf(s); s.updateWorldMatrix(true, true);
-  s.traverse(o => { if (!o.isMesh || !o.userData.facade || o.userData.facadeDone || !o.geometry.attributes._batchid) return; o.userData.facadeDone = true; bldMeshSetup(o, ids); });
+  s.traverse(o => { if (!o.isMesh || !o.userData.facade || o.userData.facadeDone || !o.geometry.attributes._batchid) return; o.userData.facadeDone = true; o.updateWorldMatrix(true, false); BLD.jobs.push({ g: bldMeshSetup(o, ids), o }); });
   return true;
+}
+// the tiles' set-up, the nearest tile first: 5 ms a frame on the move, 12 ms while the car stands (a test drawing at
+// 0.3 fps sets more)
+function bldJobs() {
+  const tEnd = performance.now() + (Math.abs(C.v) < 1 ? Math.max(12, BLD.jobMs) : BLD.jobMs);
+  while (BLD.jobs.length && performance.now() < tEnd) {
+    if (!BLD.jobs[0].on) {
+      BLD.jobs = BLD.jobs.filter(j => j.o.parent); if (!BLD.jobs.length) break;   // (a tile gone before its turn)
+      let bi = 0, bd = Infinity;
+      BLD.jobs.forEach((j, i) => { if (!j.c) { const g = j.o.geometry; if (!g.boundingSphere) g.computeBoundingSphere(); j.c = g.boundingSphere.center.clone().applyMatrix4(j.o.matrixWorld); } const d = Math.hypot(j.c.x - C.x, j.c.z - C.z); if (d < bd) { bd = d; bi = i; } });
+      const j = BLD.jobs.splice(bi, 1)[0]; j.on = true; BLD.jobs.unshift(j);
+    }
+    if (BLD.jobs[0].g.next().done) BLD.jobs.shift();
+  }
 }
 const facadePending = [];
 
@@ -1149,7 +1225,7 @@ function makeTiles(name, rad, err) {
       bvhQueue.push(o.geometry);                                          // (for the car's rays, a few each frame)
       const ms = [].concat(o.material);
       for (const m of ms) {
-        if (m.map) { m.map.anisotropy = Math.min(maxAniso, QN === 'low' ? 4 : 16); if (m.map.image && m.map.image.__src) TEXREG.set(m.map, { tex: m.map, src: m.map.image.__src, mesh: o }); }
+        if (m.map) { m.map.anisotropy = Math.min(maxAniso, QN === 'low' ? 4 : 16); if (m.map.image && m.map.image.__src) { TEXREG.set(m.map, { tex: m.map, src: m.map.image.__src, mesh: o }); texAfterUpload(m.map); } }
         if ('roughness' in m) { m.roughness = 0.88; m.metalness = 0; }
       }
       if (!ms.some(m => m.map)) { o.userData.facade = true; plain = true; }   // (no photo at all: its walls are drawn)
@@ -1160,7 +1236,7 @@ function makeTiles(name, rad, err) {
   });
   t.addEventListener('dispose-model', ({ scene: s }) => s.traverse(o => {
     if (o.geometry) { o.geometry.userData.gone = true; if (o.userData.own) o.geometry.dispose(); }
-    if (o.material) for (const m of [].concat(o.material)) if (m.map) TEXREG.delete(m.map);
+    if (o.material) for (const m of [].concat(o.material)) if (m.map) { TEXREG.delete(m.map); if (m.map.image && m.map.image.close) m.map.image.close(); }
     if (o.userData.bld) { for (const r of o.userData.bld) bldForget(r); o.userData.bld = null; }
     if (o.userData.l2) for (const id of o.userData.l2.ids) { const set = BLD.idMeshes.get(String(id)); if (set) { set.delete(o); if (!set.size) BLD.idMeshes.delete(String(id)); } }
     L2MESH.delete(o);
@@ -1605,10 +1681,10 @@ function chunkMake(ch, H, arr, surf, root) {
       let at = 0;
       for (let l = 0; l < n.length; l++) { const pts = []; for (let i = 0; i < n[l]; i++, at++) pts.push(q[at * 3] * 0.01 + o[0], q[at * 3 + 1] * 0.01 + o[1], q[at * 3 + 2] * 0.01 + o[2]); fn(pts, k[l]); }
     };
-    if (c.kerb) {   // faces down from each edge, the surface on its left: pavements 0.15 up and 0.45 down, carriageway edges 0.45 down
+    if (c.kerb) {   // faces down from each edge, the surface on its left: pavements 0.15 up and 0.45 down, carriageway edges 0.45 down, a kerb cut's front 0.02 up
       const P = [];
       lines(c.kerb, (pts, kind) => {
-        const top = kind === 0 ? 0.15 : 0, bot = -0.45;
+        const top = kind === 0 ? 0.15 : kind === 2 ? 0.02 : 0, bot = -0.45;
         for (let i = 0; i + 5 < pts.length; i += 3) {
           const ax = pts[i], ay = pts[i + 1], az = pts[i + 2], bx = pts[i + 3], by = pts[i + 4], bz = pts[i + 5];
           P.push(ax, ay, az + top, bx, by, bz + bot, bx, by, bz + top, ax, ay, az + top, ax, ay, az + bot, bx, by, bz + bot);
@@ -1896,8 +1972,13 @@ function furnColliders(now) {
 }
 // the near buildings' entrances (doors, shop fronts, loading doors on a street wall), east/north: the pipes and hedges
 // in front of them are left out (and their colliders)
+const ENTH = { v: -1, m: new Map() };   // (the entrances by 16 m cell: a pipe looks at the 9 cells round it, not at every entrance)
 function entBlocks(e, n) {
-  for (const t of BLD.ent) { const dx = e - t[0], dn = n - t[1], al = dx * t[2] + dn * t[3], la = Math.abs(dx * -t[3] + dn * t[2]); if (al > -0.5 && al < 12 && la < t[4] + 0.9) return true; }
+  if (ENTH.v !== BLD.entV) { ENTH.v = BLD.entV; ENTH.m.clear(); for (const t of BLD.ent) { const k = Math.floor(t[0] / 16) + ',' + Math.floor(t[1] / 16); (ENTH.m.get(k) || ENTH.m.set(k, []).get(k)).push(t); } }
+  const ci = Math.floor(e / 16), cj = Math.floor(n / 16);
+  for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) for (const t of ENTH.m.get((ci + i) + ',' + (cj + j)) || []) {
+    const dx = e - t[0], dn = n - t[1], al = dx * t[2] + dn * t[3], la = Math.abs(dx * -t[3] + dn * t[2]); if (al > -0.5 && al < 12 && la < t[4] + 0.9) return true;
+  }
   return false;
 }
 function segDist(px, pz, ax, az, bx2, bz) { const dx = bx2 - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / l2)); return Math.hypot(px - ax - dx * t, pz - az - dz * t); }
@@ -1992,7 +2073,9 @@ function setSpawn(i) {
   car.position.set(start.x, 0, start.z); reset();
 }
 function enuToWorld(e, n, u) { return new THREE.Vector3(e, n, u).applyMatrix4(FRAME.M); }
-function reset() { Object.assign(C, { x: start.x, z: start.z, hdg: start.hdg, camYaw: start.hdg, v: 0, vy: 0, steer: 0 }); C.y = groundAt(C.x, C.z, 30); }
+function reset() { Object.assign(C, { x: start.x, z: start.z, hdg: start.hdg, camYaw: start.hdg, v: 0, vy: 0, steer: 0 }); C.y = groundAt(C.x, C.z, groundRef(C.x, C.z) + 1.0); }   // (from the ground up: a viaduct over the start is not where the car goes)
+// the DEM's ground under a point (world y): where a search for the road surface starts from, for a start or a reset
+function groundRef(x, z) { if (!AREA.grid || !FRAME) return 30; const dx = x - FRAME.o.x, dz = z - FRAME.o.z, e = dx * FRAME.E.x + dz * FRAME.E.z, n = dx * FRAME.N.x + dz * FRAME.N.z; return enuToWorld(e, n, gridU(e, n)).y; }
 const ray = new THREE.Raycaster(); ray.firstHitOnly = true;
 const DOWN = new THREE.Vector3(0, -1, 0), _o = new THREE.Vector3(), _d = new THREE.Vector3();
 // what the rays may hit: this frame's tiles that have their BVH (the others' turn comes in a frame or two)
@@ -2003,7 +2086,7 @@ function gatherHits() {
   for (const t of bsets()) if (t.group.visible) t.group.traverse(o => { if (o.isMesh && o.geometry.boundsTree) hitBldg.push(o); });
   for (const m of AREA.near) hitRoads.push(m);
   for (const m of AREA.walls) hitBldg.push(m);
-  for (const r of BLD.near) if (r.near.geometry.boundsTree) hitBldg.push(r.near);   // (the near buildings' rebuilt walls)                           // (parapets, tunnel walls, piers: walls to the car and the camera)
+  for (const r of BLD.near) if (r.hitMesh) hitBldg.push(r.hitMesh);   // (the near buildings' walls, as the data has them)                           // (parapets, tunnel walls, piers: walls to the car and the camera)
 }
 // the ground under a point: PLATEAU's road surface (a pavement, a kerb's top), else the ground between the roads
 function groundAt(x, z, yRef) {
@@ -2017,8 +2100,9 @@ function groundAt(x, z, yRef) {
     // nothing near under the wheel: a seam between two pieces of road? Look again a few cm aside (from no higher, so a deck
     // above is never reached)
     for (const [ox, oz] of [[0.07, 0.05], [-0.06, -0.07]]) {
-      ray.set(_o.set(x + ox, yRef + 1.5, z + oz), DOWN); ray.far = 2.7;
-      const h2 = ray.intersectObjects(hitRoads, false); if (h2.length) return h2[0].point.y;
+      ray.set(_o.set(x + ox, yRef + 1.5, z + oz), DOWN); ray.far = 2.7; ray.firstHitOnly = false;
+      const h2 = ray.intersectObjects(hitRoads, false); ray.firstHitOnly = true;
+      const k = h2.find(q => q.point.y <= yRef + 0.5); if (k) return k.point.y;   // (the same rule as above: never a surface above the wheel's step)
     }
   }
   return h.length ? h[0].point.y : gridH(x, z);
@@ -2143,44 +2227,55 @@ function report(b) {
     `出発地点: ${SPAWNS[spawnAt][0]}　範囲 A の道路: ${AREA.state || 'あり'}　建物: PLATEAU ${bmode.toUpperCase()}（中区・西区・神奈川区。南区は LOD1 のみ）　道路: ${on('roads')}　樹木: ${on('trees')}　影: ${renderer.shadowMap.enabled ? 'あり' : 'なし'}　AO: ${ao.enabled ? 'あり' : 'なし'}　光のにじみ: ${bloom.enabled ? 'あり' : 'なし'}　MSAA ${Q.msaa}　影 ${Q.shadow}　AO 解像度 ${Math.round(Q.aoScale * 100)}%　描画解像度 ${Math.round(renderer.domElement.width * rscale)}×${Math.round(renderer.domElement.height * rscale)}（画面の ${Math.round(rscale * 100)}%）`,
     `実フレームレート ${f1(s.fps)} fps（1フレーム 中央値 ${f1(s.p50)} ms / 95% ${f1(s.p95)} ms / 最大 ${f1(s.max)} ms、${b.fr.length} フレーム）`,
     `ひっかかり（100 ms 超）${b.fr.filter(x => x > 100).length} 回、うち 1 秒超 ${b.fr.filter(x => x > 1000).length} 回　1 秒超を除いた実フレームレート ${f1(stats(b.fr.filter(x => x <= 1000).length ? b.fr.filter(x => x <= 1000) : b.fr).fps)} fps　計測中にタブが裏に回った: ${b.hidden ? 'あり' : 'なし'}　読み込み中のタイル（計測開始時）${b.busy}`,
-    `1フレームの JS ${f1(b.js / b.fr.length)} ms　描画呼出 ${Math.round(b.calls / b.fr.length)}　三角形 ${Math.round(b.tris / b.fr.length / 1000)} 千　テクスチャ ${renderer.info.memory.textures} 個（建物写真の推定 ${(texBytes() / 1e6).toFixed(0)} MB）　ジオメトリ ${renderer.info.memory.geometries} 個`,
+    `1フレームの JS ${f1(b.js / b.fr.length)} ms　描画呼出 ${Math.round(b.calls / b.fr.length)}　三角形 ${Math.round(b.tris / b.fr.length / 1000)} 千　テクスチャ ${renderer.info.memory.textures} 個（建物写真: GPU 推定 ${(texBytes() / 1e6).toFixed(0)} MB、元ファイル ${(texMem().blob / 1e6).toFixed(0)} MB、展開したまま ${(texMem().dec / 1e6).toFixed(0)} MB）　ジオメトリ ${renderer.info.memory.geometries} 個`,
     `表示中の建物タイル ${bsets().reduce((a, t) => a + (t.visibleTiles ? t.visibleTiles.size : 0), 0)}　範囲 A の道路 ${AREA.chunks.filter(c => c.grp).length}/${AREA.chunks.length} 区画 ${(AREA.bytes / 1e6).toFixed(0)} MB（計測開始時 ${(b.area0 / 1e6).toFixed(0)} MB）　街路設備 ${FURN.made}（描画中 ${Object.values(FURN.models).reduce((a, ims) => a + ims[0].count, 0)}）　LOD3 に置き換えた建物 ${L3.size}　外壁を生成した建物 ${FACADE.made.size}（近景モデル ${BLD.near.size} 棟: ${[1, 2, 3, 4, 5].map(t => BTNAME[t] + ' ' + [...BLD.near].filter(r => r.L.type === t).length).join('・')}）　JS ヒープ ${heapMB()}（計測開始時 ${b.heap}）`,
     `GPU 時間: ${b.gpu.length ? `中央値 ${f1(stats(b.gpu).p50)} ms / 95% ${f1(stats(b.gpu).p95)} ms（実測: EXT_disjoint_timer_query_webgl2、${b.gpu.length} フレーム）　内訳（中央値）: ${Object.entries(b.pass).map(([k, v]) => `${k} ${f1(stats(v).p50)} ms`).join('　')}` : TQ ? '測定値なし（GPU タイマーの結果が返らなかった）' : '未計測（この環境では GPU タイマー拡張が使えない。CPU 側の時間と fps のみ）'}`].join('\n');
 }
+const PF = { stalls: [], sum: {}, frames: 0 };   // (the frame's JS time by part, and the frames over 50 ms)
 function loop(now) {
   const real = now - last, dt = Math.min(0.05, real / 1000); last = now;
   fr.push(real); if (fr.length > 240) fr.shift();
   const t0 = performance.now();
   renderer.info.reset();
+  const sec = {}; let tp = t0; const mk = k => { const n = performance.now(); sec[k] = (sec[k] || 0) + n - tp; tp = n; };   // (where the frame's time went: kept for frames over 50 ms)
   // the newly shown road and tree tiles; a few of the buildings' BVHs; the ground, now and then, as the roads come in
   for (let i = pending.length - 1; i >= 0; i--) { const s = pending[i]; if (!s.parent) continue; pending.splice(i, 1); if (s.userData.kind === 'roads') processRoads(s); else processTrees(s); }
+  mk('道路・樹木タイル処理');
   for (const tEnd = performance.now() + 6; bvhQueue.length && performance.now() < tEnd;) { const g = bvhQueue.shift(); if (!g.boundsTree && !g.userData.gone && g.attributes.position) g.computeBoundsTree(); }
+  mk('衝突用 BVH');
   if (AREA.grid) groundFollow(); else if (GH.dirty && now - GH.at > 1500) { GH.dirty = false; GH.at = now; groundRebuild(); }
   if (FRAME && AREA.buf && !AREA.built) buildArea();
   if (AREA.built && (fr.length % 20) === 0) areaNear();
   for (const tEnd = performance.now() + 4; AREA.queue.length && performance.now() < tEnd;) { const [, c] = AREA.queue.shift(); if (!c.grp) AREA.make(c); }   // (the chunks ahead, a few ms a frame)
+  mk('地面・道路チャンク');
   if (water.visible) water.position.set(C.x, water.position.y, C.z);
   for (let i = facadePending.length - 1; i >= 0; i--) { const sc = facadePending[i]; if (!sc.parent) continue; if (facadeSetup(sc)) facadePending.splice(i, 1); }
-  if (placed) bldNear(now); bldWork(); BTEX.flush(); WTEX.flush(); if (placed) treeNear(now);
+  bldJobs(); mk('建物の解析（タイル到着）');
+  if (placed) bldNear(now); bldWork(); BTEX.flush(); WTEX.flush(); mk('近景建物の生成'); if (placed) treeNear(now); mk('近くの樹木');
   if (dedupeDirty && now - dedupeAt > 400) { dedupeDirty = false; dedupeAt = now; for (const o of L2MESH) l2Filter(o); }
-  texManage(now);
+  mk('重複除去'); texManage(now); mk('写真の解像度');
   furnLamps(now); if (placed) furnColliders(now);
-  gatherHits();
+  gatherHits(); mk('信号・衝突の準備');
   if (!placed) place();
   if (placed && window.__autodrive) window.__autodrive(dt);   // (tests only: a route-following driver pressing the keys)
   if (placed) drive(dt);
+  mk('運転');
   for (const k in sets) {
     const t = sets[k]; if (!t.group.visible) continue;
     t.group.updateMatrixWorld();
     t.region.sphere.center.copy(car.position).applyMatrix4(_inv.copy(t.group.matrixWorld).invert());
     t.setResolutionFromRenderer(camera, renderer); t.update();
   }
+  mk('PLATEAU タイル更新');
   gpuPoll();
   const gq = gpuBegin();
   if (!NORENDER) composer.render(dt);
   gpuEnd(gq);
+  mk('描画（CPU 側）');
   adaptScale(now);
   const js = performance.now() - t0, inf = renderer.info.render;
+  if (js > 50 && PF.stalls.length < 300) PF.stalls.push({ t: +(now / 1000).toFixed(1), js: +js.toFixed(0), at: [Math.round(C.x), Math.round(C.z)], v: +(C.v * 3.6).toFixed(0), sec: Object.fromEntries(Object.entries(sec).filter(([, v]) => v > 5).map(([k, v]) => [k, +v.toFixed(0)])) });
+  for (const k in sec) PF.sum[k] = (PF.sum[k] || 0) + sec[k]; PF.frames++;
   if (bench) { bench.fr.push(real); bench.js += js; bench.calls += inf.calls; bench.tris += inf.triangles; if (now - bench.t0 > 10000) { out.value = report(bench); out.style.display = 'block'; bench = null; window.__benchDone = out.value; } }
   if ((fr.length & 15) === 0) {
     const s = stats(fr.slice(-60)), ld = Object.values(sets).reduce((a, t) => a + (t.stats ? t.stats.downloading + t.stats.parsing : 0), 0);
@@ -2232,7 +2327,7 @@ setEl.addEventListener('change', e => {
 });
 showSettings();
 addEventListener('visibilitychange', () => { if (document.hidden && bench) bench.hidden = true; });
-window.__three = { enuToWorld: (e, n, u) => FRAME && enuToWorld(e, n, u), areaNear, gatherHits, get areaBuilt() { return AREA.built; }, AREA, get L3n() { return L3.size; }, get facades() { return FACADE.made.size; }, FURN, BLD, BTNAME, furnLamps, signalState, surfacesAt: (x, z, y) => { ray.set(_o.set(x, y + 40, z), DOWN); ray.far = 90; ray.firstHitOnly = false; const h = hitRoads.length ? ray.intersectObjects(hitRoads, false) : []; ray.firstHitOnly = true; return h.map(k => +k.point.y.toFixed(2)); }, bvhQueueLen: () => bvhQueue.length, FRAME_ENU: { pos: (x, z) => toENU(x, z), dir: (x, z) => dirENU(x, z) }, texMB: () => texBytes() / 1e6, S, scene, camera, renderer, sets, C, setMode, composer, ao, bloom, GH, gridH, groundAt, wallDist, treeSpots, keys, THREE, reset: () => start && reset() };
+window.__three = { enuToWorld: (e, n, u) => FRAME && enuToWorld(e, n, u), areaNear, gatherHits, get areaBuilt() { return AREA.built; }, AREA, get L3n() { return L3.size; }, get facades() { return FACADE.made.size; }, FURN, BLD, BTNAME, furnLamps, signalState, PF, frames: () => fr.slice(), surfacesAt: (x, z, y) => { ray.set(_o.set(x, y + 40, z), DOWN); ray.far = 90; ray.firstHitOnly = false; const h = hitRoads.length ? ray.intersectObjects(hitRoads, false) : []; ray.firstHitOnly = true; return h.map(k => +k.point.y.toFixed(2)); }, bvhQueueLen: () => bvhQueue.length, FRAME_ENU: { pos: (x, z) => toENU(x, z), dir: (x, z) => dirENU(x, z) }, texMB: () => texBytes() / 1e6, texMem, S, scene, camera, renderer, sets, C, setMode, composer, ao, bloom, GH, gridH, groundAt, wallDist, treeSpots, keys, THREE, reset: () => start && reset() };
 </script>
 </body>
 </html>

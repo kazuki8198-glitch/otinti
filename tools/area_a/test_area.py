@@ -73,6 +73,40 @@ if len(TD):
     check(close <= max(3, stacked * 0.05), 'decks too close over ground roads')
     dn = np.cross(TD[:, 1] - TD[:, 0], TD[:, 2] - TD[:, 0]); ds = np.hypot(dn[:, 0], dn[:, 1]) / np.maximum(np.abs(dn[:, 2]), 1e-9)
     print(f'4. deck triangles steeper than 16 %: {np.sum(ds > 0.16)} of {len(TD)}'); check(np.sum(ds > 0.16) < len(TD) * 0.01, 'decks too steep')
+# 6. furniture: nothing standing on a carriageway at its level, nor on a crossing (a road's own marks - manholes, drains,
+#    arrows, patches - and the expressway's own pieces, on its decks, apart)
+if 'furnKinds' in H:
+    KN = {v: k for k, v in H['furnKinds'].items()}; ONROAD = {'manhole', 'drain', 'arrow', 'patch'}; DECK = {'hwlight', 'hwsign', 'etc', 'tlamp', 'booth'}
+    RQ = []
+    for c in H['chunks']:
+        if 'rect' in c: RQ.append(arr(np.int16, c['rect']).reshape(-1, 4, 3) * 0.01 + np.array(c['o']))
+    RQ = np.concatenate(RQ) if RQ else np.zeros((0, 4, 3)); RC = RQ.mean(1)
+    rh = collections.defaultdict(list)
+    for k_, p_ in enumerate(RC): rh[(int(p_[0] // 8), int(p_[1] // 8))].append(k_)
+    def on_rect(p):
+        for di in (-1, 0, 1):
+            for dj in (-1, 0, 1):
+                for k_ in rh.get((int(p[0] // 8) + di, int(p[1] // 8) + dj), ()):
+                    q = RQ[k_][:, :2]; inside = True
+                    for i in range(4):
+                        a_, b_ = q[i], q[(i + 1) % 4]; cr = (b_[0] - a_[0]) * (p[1] - a_[1]) - (b_[1] - a_[1]) * (p[0] - a_[0])
+                        if i == 0: sgn = np.sign(cr)
+                        elif np.sign(cr) != sgn and cr != 0: inside = False; break
+                    if inside and abs(RQ[k_][:, 2].mean() - p[2]) < 1.0: return True
+        return False
+    bad_road = []; bad_x = []; n_st = 0
+    for c in H['chunks']:
+        if 'furn' not in c: continue
+        o = np.array(c['o']); P = arr(np.int16, c['furn']['p']).reshape(-1, 3) * 0.01 + o; K = arr(np.uint8, c['furn']['k'])
+        for p, k in zip(P, K):
+            name = KN[int(k)]
+            if name in ONROAD or name in DECK: continue
+            n_st += 1
+            if any(abs(h - p[2]) < 0.6 for h in heights_at(TG, IG, p)): bad_road.append((name, np.round(p, 1).tolist()))
+            if on_rect(p): bad_x.append((name, np.round(p, 1).tolist()))
+    print(f'6. standing furniture {n_st}: on a carriageway {len(bad_road)}, on a crossing {len(bad_x)}', bad_road[:5], bad_x[:5])
+    check(len(bad_road) <= n_st * 0.002, 'furniture standing on a carriageway')
+    check(len(bad_x) == 0, 'furniture on a crossing')
 print('stats', H.get('stats'))
 print('FAILED: ' + '; '.join(f'{k} ({v})' for k, v in fails.items()) if fails else 'all checks passed')
 sys.exit(1 if fails else 0)

@@ -27,11 +27,15 @@ def geoms(g):
     return [x for h in getattr(g, 'geoms', []) for x in geoms(h)]
 # ---- the carriageway raster (0.5 m), for measuring across ground roads ----
 R = 0.5; W_ = int((E1 - E0) / R) + 1; H_ = int((N1 - N0) / R) + 1
-im = Image.new('1', (W_, H_), 0); dr = ImageDraw.Draw(im); tp = lambda c: [((x - E0) / R, (N1 - y) / R) for x, y in c]
+M = np.zeros((H_, W_), bool)                                            # (each polygon on its own, its holes from it only)
 for p in geoms(carriage):
+    x0, y0, x1, y1 = p.bounds; i0 = max(0, int((x0 - E0) / R) - 1); i1 = min(W_, int((x1 - E0) / R) + 2); j0 = max(0, int((N1 - y1) / R) - 1); j1 = min(H_, int((N1 - y0) / R) + 2)
+    if i1 <= i0 or j1 <= j0: continue
+    im = Image.new('1', (i1 - i0, j1 - j0), 0); dr = ImageDraw.Draw(im); tp = lambda c: [((x - E0) / R - i0, (N1 - y) / R - j0) for x, y in c]
     dr.polygon(tp(p.exterior.coords), fill=1)
     for h in p.interiors: dr.polygon(tp(h.coords), fill=0)
-M = np.asarray(im, dtype=bool); tick('raster')
+    M[j0:j1, i0:i1] |= np.asarray(im, dtype=bool)
+tick('raster')
 def inside(e, n):
     i = np.round((np.asarray(e) - E0) / R).astype(int); j = np.round((N1 - np.asarray(n)) / R).astype(int)
     ok = (i >= 0) & (j >= 0) & (i < W_) & (j < H_); out = np.zeros(np.shape(i), bool); out[ok] = M[j[ok], i[ok]]; return out
@@ -68,6 +72,25 @@ def alongside(wi, P, h):
                 if abs(d @ w2['t'][j]) <= 1.3 and abs(d @ w2['l'][j]) < w2['W'] / 2 + 0.3 and abs(h - w2['h'][j]) < 1.8: return True
     return False
 pcarr = prep(carriage)
+# sound walls (estimated): where OSM shows 2 or more buildings within 35 m of an expressway viaduct's side, its parapet
+# carries panels up to 3 m (osm_bldg.json beside the inputs, if there)
+BC = np.zeros((0, 2)); bhash = collections.defaultdict(list)
+if os.path.exists('osm_bldg.json'):
+    _c = []
+    for e_ in json.load(open('osm_bldg.json'))['elements']:
+        if e_['type'] == 'way' and 'building' in e_.get('tags', {}) and e_.get('geometry'):
+            a_ = np.array([[q_['lat'], q_['lon']] for q_ in e_['geometry']]); _c.append(geo.enu(a_[:, 0], a_[:, 1], np.zeros(len(a_)) + 40)[:, :2].mean(0))
+    BC = np.array(_c)
+    for k_, p_ in enumerate(BC): bhash[(int(p_[0] // 40), int(p_[1] // 40))].append(k_)
+def dense(p, side):
+    n_ = 0
+    for di in (-1, 0, 1):
+        for dj in (-1, 0, 1):
+            for k_ in bhash.get((int(p[0] // 40) + di, int(p[1] // 40) + dj), ()):
+                d_ = BC[k_] - p
+                if np.hypot(*d_) < 35 and d_ @ side > 3: n_ += 1
+    return n_ >= 2
+snd_n = 0
 est_samples = 0; deck_samples = 0
 for wi, w in enumerate(deck_ways):
     xy, h, t, l = w['xy'], w['h'], w['t'], w['l']; n = len(xy); half = w['W'] / 2
@@ -97,6 +120,10 @@ for wi, w in enumerate(deck_ways):
                 quad_out(conc, P3(i, o1, base), P3(i, o1, ht), P3(i + 1, o1, ht), P3(i + 1, o1, base), np.array([*(-sgn * l[i]), 0]))
                 quad_out(conc, P3(i, o1, ht), P3(i, o2, ht), P3(i + 1, o2, ht), P3(i + 1, o1, ht), U_)
                 quad_out(conc, P3(i, o2, ht), P3(i, o2, -1.8 if mot and brg else -1.0 if brg else 0), P3(i + 1, o2, -1.8 if mot and brg else -1.0 if brg else 0), P3(i + 1, o2, ht), np.array([*(sgn * l[i]), 0]))
+                if mot and brg and not tun and dense((xy[i] + xy[i + 1]) / 2 + l[i] * sgn * half, l[i] * sgn):
+                    snd = []; quad_out(snd, P3(i, o1 + sgn * 0.05, ht), P3(i, o1 + sgn * 0.05, 3.0), P3(i + 1, o1 + sgn * 0.05, 3.0), P3(i + 1, o1 + sgn * 0.05, ht), np.array([*(-sgn * l[i]), 0]))
+                    quad_out(snd, P3(i, o1 + sgn * 0.05, ht), P3(i, o1 + sgn * 0.05, 3.0), P3(i + 1, o1 + sgn * 0.05, 3.0), P3(i + 1, o1 + sgn * 0.05, ht), np.array([*(sgn * l[i]), 0]))
+                    ch['snd'].append(np.array(snd)); snd_n += 1
         if brg:                                                           # (the deck's underside)
             D = 1.8 if mot else 1.0; o = half + side_w + 0.25
             if h[i] - D - g[i] > 0.4: quad_out(conc, P3(i, o, -D), P3(i, -o, -D), P3(i + 1, -o, -D), P3(i + 1, o, -D), -U_)
@@ -125,7 +152,7 @@ for wi, w in enumerate(deck_ways):
     for off, dash in offs:
         pts = np.column_stack([xy[:, 0] + l[:, 0] * off, xy[:, 1] + l[:, 1] * off, h + 0.02])
         C(ck(*xy[n // 2]))['paint'].append((pts, dash))
-tick(f'decks {len(deck_ways)} (samples {deck_samples}, estimated heights {est_samples})')
+tick(f'decks {len(deck_ways)} (samples {deck_samples}, estimated heights {est_samples}); sound wall segments {snd_n} (estimated)')
 # ---- the ground roads' own surface, as a 1 m height raster made from their triangles (the paint is laid on it, so it
 # neither floats nor sinks where the triangles cut across the DEM) ----
 RS = 1.0; HX = int((E1 - E0) / RS) + 2; HY = int((N1 - N0) / RS) + 2; HR = np.full((HY, HX), np.nan, np.float32)
@@ -223,16 +250,50 @@ for w in ground_ways:
         dl = reach(np.array([q[0]]), np.array([q[1]]), Lv[0], Lv[1])[0]; dr_ = reach(np.array([q[0]]), np.array([q[1]]), -Lv[0], -Lv[1])[0]; wt = dl + dr_
         if wt < 5.5 or wt > 45 or not inside(np.array([q[0]]), np.array([q[1]]))[0]: continue
         cnt = int((wt - 1.0) // 0.9); o0 = -dr_ + (wt - (cnt * 0.9 - 0.45)) / 2
-        for i in range(cnt): rect(q + Lv * (o0 + i * 0.9) - T * 2.0, Lv * 0.45, T * 4.0)
+        for i in range(cnt):                                              # (each stripe kept on the carriageway: shortened at a corner, else left out)
+            c0 = q + Lv * (o0 + i * 0.9)
+            for half_l in (2.0, 1.5, 1.0):
+                ends = [c0 + Lv * 0.225 + T * s_ * half_l for s_ in (-1, 1)] + [c0 + Lv * 0.225 - T * 0 * half_l]
+                if all(pcarr.contains(Point(*p_)) for p_ in [c0 - T * half_l, c0 + T * half_l, c0 + Lv * 0.45 - T * half_l, c0 + Lv * 0.45 + T * half_l]):
+                    rect(c0 - T * half_l, Lv * 0.45, T * (2 * half_l)); break
         nc += 1
         sg = cross[nid].get('tags', {}).get('crossing') == 'traffic_signals' or (len(sig) and np.min(np.hypot(*(sig - q).T)) < 30)
         if not sg: continue
         mid = dl - wt / 2
-        if w['oneway']: rect(q - T * 4.45 + Lv * (-dr_ + 0.3), Lv * (wt - 0.6), T * 0.45); ns += 1
-        else: rect(q - T * 4.45 + Lv * mid, Lv * (dl - 0.3 - mid), T * 0.45); rect(q + T * 4.0 + Lv * (-dr_ + 0.3), Lv * (mid + dr_ - 0.3), T * 0.45); ns += 2
+        # stop lines: measured across the road where they lie (4.45 m before the crossing), not at the crossing: the road
+        # may be narrower there (else a line runs onto the pavement)
+        def across(c):
+            a_ = reach(np.array([c[0]]), np.array([c[1]]), Lv[0], Lv[1])[0]; b_ = reach(np.array([c[0]]), np.array([c[1]]), -Lv[0], -Lv[1])[0]; return a_, b_
+        c1 = q - T * 4.65; l1, r1 = across(c1)
+        if w['oneway']:
+            if l1 + r1 > 2: rect(c1 + Lv * (-r1 + 0.3), Lv * (l1 + r1 - 0.6), T * 0.45); ns += 1
+        else:
+            c2 = q + T * 4.2; l2, r2 = across(c2); m1 = (l1 - r1) / 2 + mid - (dl - dr_) / 2; m2 = (l2 - r2) / 2 + mid - (dl - dr_) / 2
+            if l1 - 0.3 - m1 > 1: rect(c1 + Lv * m1, Lv * (l1 - 0.3 - m1), T * 0.45); ns += 1
+            if m2 + r2 - 0.3 > 1: rect(c2 + Lv * (-r2 + 0.3), Lv * (m2 + r2 - 0.3), T * 0.45); ns += 1
         signals.append((q, T, dl, dr_, w['oneway'], w['id']))
 pickle.dump(signals, open('signals_seed.pkl', 'wb'))
 tick(f'crossings {nc} stop lines {ns}')
+def runs1(mask):
+    i = 0; n = len(mask)
+    while i < n:
+        if not mask[i]: i += 1; continue
+        j = i
+        while j < n and mask[j]: j += 1
+        yield i, j
+        i = j
+# ---- gutters: a 0.4 m concrete strip along the carriageway's edge (beside a kerb or a pavement's edge), on the road's
+# surface; only where the carriageway is on the kerb line's right ----
+ng = 0
+for k_, c_ in list(chunks.items()):
+    for P, kind in list(c_.get('kerb', [])):
+        if len(P) < 2: continue
+        d = np.diff(P[:, :2], axis=0); L_ = np.hypot(*d.T) + 1e-9; t_ = d / L_[:, None]; r_ = np.column_stack([t_[:, 1], -t_[:, 0]]); mid = (P[:-1, :2] + P[1:, :2]) / 2
+        okr = inside(mid[:, 0] + r_[:, 0] * 0.6, mid[:, 1] + r_[:, 1] * 0.6)
+        for i0, i1 in ((a_, b_) for a_, b_ in runs1(okr)):
+            seg = P[i0:i1 + 1, :2]; rr = np.vstack([r_[i0:i1], r_[i1 - 1:i1]]); g_ = seg + rr * 0.22
+            c_['gut'].append((np.column_stack([g_, surfh(g_[:, 0], g_[:, 1]) + 0.012]), False)); ng += 1
+tick(f'gutters {ng}')
 # ---- trees (as before: OpenStreetMap's, outside PLATEAU's own block), on the new heights ----
 # OSM's trees and tree rows (in PLATEAU's own vegetation block, VEG3, PLATEAU's are used instead); heights from the tags or 6.5-11.5 m
 VEG3 = (35.4424, 35.4505, 139.6329, 139.6431); tl = []
@@ -283,10 +344,10 @@ for (ci, cj), c in sorted(chunks.items()):
             V.append(P); I.append(tri + nv); nv += len(P); stats[L] += len(tri) // 3
         if V: parts.append({'v': addbuf(q(np.concatenate(V), o)), 'i': addbuf(np.concatenate(I).astype(np.uint16))})
         if parts: rec[L] = parts
-    for L in ('deck', 'dside', 'conc'):                                   # (triangle soups: 3 corners each)
+    for L in ('deck', 'dside', 'conc', 'snd'):                            # (triangle soups: 3 corners each)
         if c.get(L):
             T = np.concatenate([a.reshape(-1, 3) for a in c[L]]); rec[L] = addbuf(q(T, o)); stats[L] += len(T) // 3
-    for L in ('kerb', 'paint'):
+    for L in ('kerb', 'paint', 'gut'):
         if not c.get(L): continue
         P = np.concatenate([p for p, _ in c[L]]); n = np.array([len(p) for p, _ in c[L]], np.uint32); k = np.array([int(f) for _, f in c[L]], np.uint8)
         rec[L] = {'p': addbuf(q(P, o)), 'n': addbuf(n), 'k': addbuf(k)}; stats[L + 'Pts'] += len(P)

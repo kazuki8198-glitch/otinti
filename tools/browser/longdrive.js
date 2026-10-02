@@ -1,6 +1,9 @@
-// a long drive with the page's own driving (keys pressed by a route follower): ROUTES=a.json,b.json (looped), MIN=minutes.
-// Logs each 30 s: where, speed, off the route, the car's height against the way's profile, chunks held / MB, JS heap,
-// frame times. NORENDER=1 skips drawing (the CPU side only); without it the frames are drawn (SwiftShader here: slow)
+// A long drive with the page's own physics and collisions; a route follower presses the keys (pure pursuit, its
+// speed planned from the route's curvature ahead, backing up when it is stuck). ROUTES=a.json,b.json (looped), MIN=minutes,
+// TELEPORT=1 lets it put the car back on the route after 25 s stuck (counted apart: a drive "without help" has none).
+// Logged: each stop (under 0.5 m/s for 2 s) and each height off the way's profile by more than 1 m, with where (east,
+// north, route point, way id and kind), the car's height, every surface under it, what it hit, what was still loading,
+// the keys and the steering. NORENDER=0 draws the frames (SwiftShader here: slow)
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 (async () => {
@@ -13,37 +16,57 @@ const fs = require('fs'), path = require('path');
   await page.goto('http://127.0.0.1:8765/plateau-three.html' + (process.env.NORENDER === '0' ? '?q=high' : '?norender=1'), { waitUntil: 'load' });
   for (let i = 0; i < 90; i++) { await page.waitForTimeout(5000); if (await page.evaluate(() => __three.areaBuilt)) break; }
   const pts = process.env.ROUTES.split(',').flatMap(f => JSON.parse(fs.readFileSync(f, 'utf8')));
-  await page.evaluate(pts => {
+  // start: put at the route's start and let the tiles round it load
+  await page.evaluate(([pts, teleport]) => {
     const T = __three, C = T.C, W = pts.map(([e, n, h]) => { const p = T.enuToWorld(e, n, h); return [p.x, p.y, p.z]; });
     const p0 = W[0], p1 = W[3]; C.x = p0[0]; C.z = p0[2]; C.hdg = C.camYaw = Math.atan2(p1[0] - p0[0], p1[2] - p0[2]); C.v = 0; T.areaNear(); T.gatherHits(); C.y = T.groundAt(C.x, C.z, p0[1] + 1);
-    const A = window.__auto = { i: 0, laps: 0, stuck: 0, teleports: 0, maxOff: 0, maxDy: 0, lastI: 0, lastT: performance.now(), log: [] };
-    window.__autodrive = () => {
-      const K = T.keys; let best = A.i, bd = 1e9;
-      for (let k = A.i; k < Math.min(W.length, A.i + 40); k++) { const d = Math.hypot(W[k][0] - C.x, W[k][2] - C.z); if (d < bd) { bd = d; best = k; } }
-      A.i = best; if (A.i >= W.length - 4) { A.i = 0; A.laps++; }
-      let j = A.i, run = 0; while (j < W.length - 1 && run < 12) { run += Math.hypot(W[j + 1][0] - W[j][0], W[j + 1][2] - W[j][2]); j++; }
-      const want = Math.atan2(W[j][0] - C.x, W[j][2] - C.z); let err = ((want - C.hdg + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
-      K.ArrowLeft = err > 0.04; K.ArrowRight = err < -0.04;
-      const target = Math.abs(err) > 0.3 ? 6 : 13; K.ArrowUp = C.v < target; K.ArrowDown = C.v > target + 3;
-      A.maxOff = Math.max(A.maxOff, bd); A.maxDy = Math.max(A.maxDy, Math.abs(C.y - W[A.i][1]));
-      const now = performance.now();
-      if (A.i !== A.lastI) { A.lastI = A.i; A.lastT = now; }
-      else if (now - A.lastT > 15000) {                                  // (stuck 15 s: put back on the route further on, counted)
-        const k = Math.min(W.length - 2, A.i + 10); C.x = W[k][0]; C.z = W[k][2]; C.y = W[k][1]; C.vy = 0; C.v = 0; C.hdg = Math.atan2(W[k + 1][0] - W[k][0], W[k + 1][2] - W[k][2]);
-        A.i = k; A.teleports++; A.lastT = now;
-      }
+    const A = window.__auto = { W, pts, i: 0, laps: 0, dist: 0, lastX: C.x, lastZ: C.z, slowT: 0, backUntil: 0, stops: [], dy: [], recov: 0, teleports: 0, stuckSince: 0, hold: true, maxOff: 0 };
+    const busy = () => Object.values(T.sets).reduce((a, t) => a + t.stats.downloading + t.stats.parsing, 0);
+    const snap = (why, now) => {
+      const k = Math.min(A.i, W.length - 1), q = A.pts[k];
+      return { why, t: +(now / 1000).toFixed(1), i: k, e: +q[0].toFixed(1), n: +q[1].toFixed(1), way: q[3], hw: q[4], kind: q[5], carY: +C.y.toFixed(2), wayY: +W[k][1].toFixed(2), off: +Math.hypot(W[k][0] - C.x, W[k][2] - C.z).toFixed(2),
+        surfaces: T.surfacesAt(C.x, C.z, C.y), hit: C.hitAt && now - C.hitAt < 3000 ? C.hitBy : null, busy: busy(), bvhQueue: T.bvhQueueLen(),
+        keys: ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].filter(x => T.keys[x]).join('+'), steer: +C.steer.toFixed(2), v: +C.v.toFixed(2), err: +A.err.toFixed(2), target: +A.target.toFixed(1) };
     };
-  }, pts);
+    A.err = 0; A.target = 0;
+    window.__autodrive = () => {
+      const now = performance.now(), K = T.keys;
+      if (A.hold) { K.ArrowUp = K.ArrowDown = K.ArrowLeft = K.ArrowRight = false; return; }
+      let best = A.i, bd = 1e9;
+      for (let k = A.i; k < Math.min(W.length, A.i + 40); k++) { const d = Math.hypot(W[k][0] - C.x, W[k][2] - C.z); if (d < bd) { bd = d; best = k; } }
+      A.i = best; A.maxOff = Math.max(A.maxOff, bd); if (A.i >= W.length - 4) { A.i = 0; A.laps++; }
+      A.dist += Math.hypot(C.x - A.lastX, C.z - A.lastZ); A.lastX = C.x; A.lastZ = C.z;
+      const ld = Math.min(14, Math.max(5, 4 + 0.6 * Math.abs(C.v)));
+      let j = A.i, run = 0; while (j < W.length - 1 && run < ld) { run += Math.hypot(W[j + 1][0] - W[j][0], W[j + 1][2] - W[j][2]); j++; }
+      const want = Math.atan2(W[j][0] - C.x, W[j][2] - C.z); const err = ((want - C.hdg + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI; A.err = err;
+      // the speed: from the turning over the next 30 m (3 m/s² sideways at most), 13 m/s at most; slow while far off the heading
+      let turn = 0, d0 = 0, h0 = null;
+      for (let k = A.i; k < Math.min(W.length - 1, A.i + 40) && d0 < 30; k++) { const h = Math.atan2(W[k + 1][0] - W[k][0], W[k + 1][2] - W[k][2]); if (h0 !== null) turn = Math.max(turn, Math.abs(((h - h0 + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI) / Math.max(d0, 4)); else h0 = h; d0 += Math.hypot(W[k + 1][0] - W[k][0], W[k + 1][2] - W[k][2]); }
+      A.target = Math.min(13, Math.sqrt(3 / Math.max(turn, 1e-3)), Math.abs(err) > 0.5 ? 3 : 13);
+      if (now < A.backUntil) { K.ArrowUp = false; K.ArrowDown = true; K.ArrowLeft = err < 0; K.ArrowRight = err > 0; return; }
+      K.ArrowLeft = err > 0.03; K.ArrowRight = err < -0.03; K.ArrowUp = C.v < A.target; K.ArrowDown = C.v > A.target + 2;
+      // stuck: back up 1.5 s (steering the other way), counted; after 25 s still stuck, put on the route if allowed
+      if (Math.abs(C.v) < 0.5) { if (!A.slowT) A.slowT = now; if (!A.stuckSince) A.stuckSince = now; } else { A.slowT = 0; if (Math.abs(C.v) > 2) A.stuckSince = 0; }
+      if (A.slowT && now - A.slowT > 2000) { A.stops.push(snap('止まった', now)); A.recov++; A.backUntil = now + 1500; A.slowT = 0; }
+      if (teleport && A.stuckSince && now - A.stuckSince > 25000) { const k = Math.min(W.length - 2, A.i + 10); A.stops.push(snap('位置を戻した', now)); C.x = W[k][0]; C.z = W[k][2]; C.y = W[k][1]; C.vy = 0; C.v = 0; C.hdg = Math.atan2(W[k + 1][0] - W[k][0], W[k + 1][2] - W[k][2]); A.i = k; A.teleports++; A.stuckSince = 0; }
+      const dy = C.y - W[A.i][1];
+      if (Math.abs(dy) > 1.0 && bd < 3 && (!A.dyLast || now - A.dyLast > 3000)) { A.dyLast = now; A.dy.push(snap('高さのずれ ' + dy.toFixed(2) + ' m', now)); }
+    };
+  }, [pts, process.env.TELEPORT === '1']);
+  for (let i = 0; i < 20; i++) { await page.waitForTimeout(3000); if (await page.evaluate(() => Object.values(__three.sets).reduce((a, t) => a + t.stats.downloading + t.stats.parsing, 0)) === 0) break; }
+  await page.evaluate(() => { window.__auto.hold = false; });
   const t0 = Date.now(), MIN = +(process.env.MIN || 10);
   while (Date.now() - t0 < MIN * 60000) {
     await page.waitForTimeout(30000);
-    const s = await page.evaluate(() => {
-      const T = __three, A = window.__auto, AR = T.AREA, fr = []; const C = T.C;
-      return { t: Math.round(performance.now() / 1000), i: A.i, laps: A.laps, kmh: Math.round(Math.abs(C.v) * 3.6), maxOff: +A.maxOff.toFixed(1), maxDy: +A.maxDy.toFixed(2), teleports: A.teleports,
-        chunks: AR.chunks.filter(c => c.grp).length, made: AR.made, freed: AR.freed, areaMB: +(AR.bytes / 1e6).toFixed(1), heapMB: performance.memory ? +(performance.memory.usedJSHeapSize / 1e6).toFixed(0) : null, hud: document.getElementById('hud').textContent.split('\n')[0] };
-    });
+    const s = await page.evaluate(() => { const A = window.__auto, AR = __three.AREA, C = __three.C;
+      return { i: A.i, laps: A.laps, km: +(A.dist / 1000).toFixed(2), kmh: Math.round(Math.abs(C.v) * 3.6), stops: A.stops.length, backups: A.recov, teleports: A.teleports, heightEvents: A.dy.length, maxOff: +A.maxOff.toFixed(1),
+        chunks: AR.chunks.filter(c => c.grp).length, areaMB: +(AR.bytes / 1e6).toFixed(1), heapMB: performance.memory ? +(performance.memory.usedJSHeapSize / 1e6).toFixed(0) : null, fps: document.getElementById('hud').textContent.split('\n')[0] }; });
     console.log('T+' + Math.round((Date.now() - t0) / 1000) + 's ' + JSON.stringify(s));
-    await page.evaluate(() => { window.__auto.maxOff = 0; window.__auto.maxDy = 0; });
+    await page.evaluate(() => { window.__auto.maxOff = 0; });
   }
+  const fin = await page.evaluate(() => ({ stops: window.__auto.stops, dy: window.__auto.dy, km: window.__auto.dist / 1000, teleports: window.__auto.teleports, backups: window.__auto.recov }));
+  console.log(`SUMMARY km ${fin.km.toFixed(2)}, stops ${fin.stops.length} (backed up ${fin.backups}), put back on the route ${fin.teleports}, height events ${fin.dy.length}`);
+  for (const e of fin.stops) console.log('STOP ' + JSON.stringify(e));
+  for (const e of fin.dy) console.log('HEIGHT ' + JSON.stringify(e));
   await browser.close();
 })();

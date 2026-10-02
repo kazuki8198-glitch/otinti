@@ -27,9 +27,12 @@ def _load():
         v=a[...,0]*65536+a[...,1]*256+a[...,2]; h=np.where(v<2**23,v*0.01,(v-2**24)*0.01); h=np.where(v==2**23,np.nan,h)
         M[(y-ys[0])*256:(y-ys[0]+1)*256,(x-xs[0])*256:(x-xs[0]+1)*256]=h
     return M,xs[0],ys[0]
-DEM,DX0,DY0=_load()
+DEM=DX0=DY0=None
+def _ensure():
+    global DEM,DX0,DY0
+    if DEM is None: DEM,DX0,DY0=_load()
 def dem(lat,lon):
-    lat=np.asarray(lat,float); lon=np.asarray(lon,float); n=2**Z
+    _ensure(); lat=np.asarray(lat,float); lon=np.asarray(lon,float); n=2**Z
     px=((lon+180)/360*n-DX0)*256-0.5; py=((1-np.arcsinh(np.tan(np.radians(lat)))/np.pi)/2*n-DY0)*256-0.5
     i=np.clip(np.floor(px).astype(int),0,DEM.shape[1]-2); j=np.clip(np.floor(py).astype(int),0,DEM.shape[0]-2); u=px-i; v=py-j
     a,b,c,d=DEM[j,i],DEM[j,i+1],DEM[j+1,i],DEM[j+1,i+1]

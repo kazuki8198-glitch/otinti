@@ -35,11 +35,17 @@ def geoms(g):
     return [x for h in getattr(g, 'geoms', []) for x in geoms(h)]
 R = 0.5; W_ = int((E1 - E0) / R) + 1; H_ = int((N1 - N0) / R) + 1
 def raster(g):
-    im = Image.new('1', (W_, H_), 0); dr = ImageDraw.Draw(im); tp = lambda c: [((x - E0) / R, (N1 - y) / R) for x, y in c]
+    # each polygon on its own (its holes cut from it only), then added: a hole drawn over the whole image would wipe out
+    # another polygon lying inside it (an island in a junction, a road inside a block)
+    M = np.zeros((H_, W_), bool)
     for p in geoms(g):
+        x0, y0, x1, y1 = p.bounds; i0 = max(0, int((x0 - E0) / R) - 1); i1 = min(W_, int((x1 - E0) / R) + 2); j0 = max(0, int((N1 - y1) / R) - 1); j1 = min(H_, int((N1 - y0) / R) + 2)
+        if i1 <= i0 or j1 <= j0: continue
+        im = Image.new('1', (i1 - i0, j1 - j0), 0); dr = ImageDraw.Draw(im); tp = lambda c: [((x - E0) / R - i0, (N1 - y) / R - j0) for x, y in c]
         dr.polygon(tp(p.exterior.coords), fill=1)
         for h in p.interiors: dr.polygon(tp(h.coords), fill=0)
-    return np.asarray(im, dtype=bool)
+        M[j0:j1, i0:i1] |= np.asarray(im, dtype=bool)
+    return M
 # in PLATEAU's LOD3 block (Kannai: its own roads, left out of area A) the carriageway is estimated from OSM's centrelines
 # (lanes x 3.25 m + 2, at least 6 m) and the rest of the block's road area taken as pavement: for placing things only
 from shapely.geometry import LineString
@@ -49,6 +55,8 @@ F3 = pickle.load(open('F3.pkl', 'rb'))
 def width_of(w): n = w['lanes'] or (1 if w['oneway'] else 2); return max(6.0, n * 3.25 + 2.0)
 wb = unary_union([LineString(w['xy']).buffer(width_of(w) / 2) for w in ground_ways if w['hw'] in DRIVE0 and w['L'] > 4])
 MC = raster(carriage.union(F3.intersection(wb))); MS = raster(side.union(F3.difference(wb.buffer(0.3))))
+from shapely.geometry import Point
+from shapely.prepared import prep
 # the decks' footprints (bridges, viaducts, the expressway in its cutting; not tunnels): nothing of the ground roads' goes there
 from shapely.ops import unary_union
 MD = raster(unary_union([w['poly'].buffer(0.6) for w in S1['deck_ways'] if w['kind'] != 'tunnel'])); tick('rasters')
@@ -72,7 +80,7 @@ NOWIRE = prep(Polygon([(-900, 450), (-300, 600), (60, 1100), (-200, 1750), (-130
     Polygon([(-720, 200), (-520, -520), (300, -640), (950, -220), (520, 560), (-320, 720)])).union(                       # the Kannai core
     Point(-1551, 1740).buffer(420)))                                                                                       # round Yokohama Station
 # ---- the pieces ----
-KIND = dict(pole=0, light=1, lamp=2, vsig=3, psig=4, stop=5, xsign=6, speed=7, bus=8, bollard=9, pipe=10, hedge=11, manhole=12, drain=13, hwlight=14, hwsign=15, etc=16)
+KIND = dict(pole=0, light=1, lamp=2, vsig=3, psig=4, stop=5, xsign=6, speed=7, bus=8, bollard=9, pipe=10, hedge=11, manhole=12, drain=13, hwlight=14, hwsign=15, etc=16, arrow=17, patch=18, tlamp=19, booth=20)
 items = []   # (kind, e, n, z, yaw (facing / along, radians from east, counter-clockwise), param, group)
 wires = []   # polylines (n x 3)
 occ = collections.defaultdict(list)
@@ -97,8 +105,14 @@ def near_crossing(e, n, d):
             for q in chash.get((int(e // 20) + di, int(n // 20) + dj), ()):
                 if (q[0] - e) ** 2 + (q[1] - n) ** 2 < d * d: return True
     return False
+PCAR = prep(carriage.union(F3.intersection(wb)).buffer(0.25))             # (the true carriageway, 0.25 m to spare: the rasters are 0.5 m)
+RING = [(math.cos(a) * d, math.sin(a) * d) for d in (0.3, 0.6, 0.9) for a in np.linspace(0, 2 * np.pi, 12, endpoint=False)]
 def put(kind, e, n, yaw, param=0, group=0, r=1.2, onroad=False, z=None, clear=0.45):
     if at(MD, e, n): return False
+    if not onroad and PCAR.contains(Point(e, n)):                          # (on the carriageway's edge: moved off it, the nearest way)
+        for dx, dy in RING:
+            if not PCAR.contains(Point(e + dx, n + dy)) and not at(MD, e + dx, n + dy): e += dx; n += dy; break
+        else: return False
     if not onroad and (not clear_of_road(e, n, clear) or not free(e, n, r)): return False
     if onroad and not free(e, n, 0.8): return False
     pav = bool(at(MS, e, n))
@@ -131,6 +145,21 @@ for q, T, dl, dr, oneway, wid_ in SIG:
             c2 = q + Lv * sgn * (half + 0.4) + T * b * 2.3
             if put('bollard', c2[0], c2[1], 0.0, r=0.6): cnt['bollard'] += 1
 tick(f'signals: {len(groups)} junctions {dict(cnt)}')
+# ---- arrows on the approaches to signalled crossings with two lanes or more each way (left lane: straight or left;
+# right lane: straight or right; between: straight), 12 m and 30 m before the stop line ----
+for q, T, dl, dr, oneway, wid_ in SIG:
+    Lv = np.array([-T[1], T[0]])
+    for d, half, sgn in ((T, dl, 1), (-T, dr, -1)):
+        if oneway and sgn < 0: continue
+        w_ = half if not oneway else dl + dr; nl = int(round(w_ / 3.2))
+        if nl < 2: continue
+        lw = w_ / nl; edge = q + Lv * sgn * (half if not oneway else dl)
+        for back in (12.0, 30.0):
+            for k in range(nl):
+                o = (k + 0.5) * lw; c = edge - Lv * sgn * o - d * (4.45 + back)
+                shape = (3 if hsh(*c) < 0.5 else 1) if k == 0 else (4 if hsh(*c) < 0.5 else 2) if k == nl - 1 else 0
+                if put('arrow', c[0], c[1], math.atan2(d[1], d[0]), param=shape, onroad=True): cnt['arrow'] += 1
+tick(f'arrows {cnt["arrow"]}')
 # ---- along each ground road ----
 DRIVE = {'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'trunk_link', 'primary_link', 'secondary_link', 'tertiary_link', 'living_street'}
 MAJOR = {'trunk', 'primary', 'secondary', 'trunk_link', 'primary_link', 'secondary_link'}
@@ -215,6 +244,13 @@ for w in ground_ways:
         if not ok_at(i) or jd[i] < 8: continue
         o = (hsh(w['id'] % 997, i) - 0.5) * min(dl[i] + dr[i] - 2, 4); e = x[i] + lx[i] * ((dl[i] - dr[i]) / 2 + o); n = y[i] + ly[i] * ((dl[i] - dr[i]) / 2 + o)
         if at(MC, e, n) and not near_crossing(e, n, 4) and put('manhole', e, n, hsh(e, n) * 6.28, onroad=True): cnt['manhole'] += 1
+    # patches: a repaired rectangle now and then, a long trench repair on some roads (estimated)
+    for s0 in np.arange(20 + seed * 40, L[-1] - 5, 55.0 + 40 * seed):
+        i = int(s0)
+        if not ok_at(i) or jd[i] < 5: continue
+        o = (hsh(w['id'] % 991, i, 5) - 0.5) * max(dl[i] + dr[i] - 3, 0); e = x[i] + lx[i] * ((dl[i] - dr[i]) / 2 + o); n = y[i] + ly[i] * ((dl[i] - dr[i]) / 2 + o)
+        long = hsh(w['id'] % 991, i, 6) < 0.25
+        if at(MC, e, n) and not near_crossing(e, n, 5) and put('patch', e, n, math.atan2(ty[i], tx[i]), param=(1 if long else 0) + 2 * int(hsh(e, n, 7) * 8), onroad=True): cnt['patch'] += 1
     if wid > 5:
         for sg in (1, -1):
             for s0 in np.arange(6 + seed * 10, L[-1] - 3, 15.0):
@@ -291,7 +327,15 @@ for w in deck_ways:
     elif w['nodes'][0] not in motnodes and w['nodes'][-1] in motnodes and w['s'][-1] > 70 and w['kind'] != 'tunnel':
         i = at_s(w, 45.0); e, n = xy[i]                                  # (an on-ramp: its ETC gate, 45 m in)
         raw('etc', e, n, h[i], math.atan2(-t[i, 1], -t[i, 0]), param=int(min(w['W'], 9) * 10))
-tick(f'expressway {dict((k, cnt[k]) for k in ("hwlight", "hwsign", "etc"))}')
+    # tunnels: a lamp on each wall every 9 m, 4.2 m up
+    if w['kind'] == 'tunnel' and w['hw'] in ('motorway', 'motorway_link'):
+        for s0 in np.arange(4.5, w['s'][-1], 9.0):
+            i = at_s(w, s0)
+            for sg in (1, -1): e, n = xy[i] + l[i] * sg * (half + 0.1); raw('tlamp', e, n, h[i] + 4.2, math.atan2(-l[i, 1] * sg, -l[i, 0] * sg))
+    # an on-ramp's toll booth on an island by its left edge, under the ETC gate (estimated)
+    if w['hw'] == 'motorway_link' and w['nodes'][0] not in motnodes and w['nodes'][-1] in motnodes and w['s'][-1] > 70 and w['kind'] != 'tunnel':
+        i = at_s(w, 45.0); e, n = xy[i] + l[i] * (half - 0.7); raw('booth', e, n, h[i], math.atan2(-t[i, 1], -t[i, 0]))
+tick(f'expressway {dict((k, cnt[k]) for k in ("hwlight", "hwsign", "etc", "tlamp", "booth"))}')
 # ---- wires: three, sagging between poles (the top two at the crossarm's ends, the lowest a telephone cable) ----
 WIRE = []
 for chain in wires:

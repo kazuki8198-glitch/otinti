@@ -1,0 +1,65 @@
+{
+ "layers": [
+  {
+   "name": "render",
+   "source": "https://polyhaven.com/a/white_stucco",
+   "size": 2.0,
+   "tinted": true
+  },
+  {
+   "name": "tile",
+   "source": "https://polyhaven.com/a/rectangular_facade_tiles",
+   "size": 2.0,
+   "tinted": true
+  },
+  {
+   "name": "mosaic",
+   "source": "https://polyhaven.com/a/rounded_square_tiled_wall",
+   "size": 2.0,
+   "tinted": true
+  },
+  {
+   "name": "concrete",
+   "source": "https://polyhaven.com/a/concrete_wall_004",
+   "size": 2.0,
+   "tinted": true
+  },
+  {
+   "name": "siding",
+   "source": "https://polyhaven.com/a/exterior_wall_cladding_03",
+   "size": 1.96,
+   "tinted": true
+  },
+  {
+   "name": "brick",
+   "source": "https://polyhaven.com/a/exterior_wall_cladding_02",
+   "size": 1.99,
+   "tinted": false
+  },
+  {
+   "name": "metal",
+   "source": "https://polyhaven.com/a/box_profile_metal_sheet",
+   "size": 2.0,
+   "tinted": true
+  },
+  {
+   "name": "shutter",
+   "source": "https://polyhaven.com/a/painted_metal_shutter",
+   "size": 2.0,
+   "tinted": true
+  },
+  {
+   "name": "slate",
+   "source": "https://polyhaven.com/a/roof_slates_03",
+   "size": 3.0,
+   "tinted": false
+  },
+  {
+   "name": "kawara",
+   "source": "https://polyhaven.com/a/grey_roof_tiles",
+   "size": 3.0,
+   "tinted": false
+  }
+ ],
+ "license": "CC0 (Poly Haven)"
+}

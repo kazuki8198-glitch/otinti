@@ -34,6 +34,7 @@ const fs = require('fs'), path = require('path');
     all.forEach(([err, dy], i) => { const [e, n, h, id, hw, kind] = pts[i]; if (Math.abs(err) > 1.5) bad.push([i, +e.toFixed(1), +n.toFixed(1), +h.toFixed(1), +err.toFixed(2), hw, kind, id]); if (Math.abs(dy) > 0.8) jumps.push([i, +e.toFixed(1), +n.toFixed(1), +dy.toFixed(2), hw, kind]); });
     const firstBad = bad.length ? bad[0][0] : -1, around = firstBad < 0 ? [] : all.slice(Math.max(0, firstBad - 6), firstBad + 4).map((a, k) => [Math.max(0, firstBad - 6) + k, +pts[Math.max(0, firstBad - 6) + k][2].toFixed(2), +a[0].toFixed(2)]);
     const r = { n: N, p50: errs[N >> 1], p95: errs[Math.floor(N * 0.95)], max: errs[N - 1], bad: bad.length, badFirst: bad.slice(0, 8), around, jumps: jumps.length, jumpFirst: jumps.slice(0, 8) };
+    r.area = await page.evaluate(() => { const A = __three.AREA; return { chunksMade: A.made, chunksFreed: A.freed, chunksHeld: A.chunks.filter(c => c.grp).length, of: A.chunks.length, MB: +(A.bytes / 1e6).toFixed(1), heapMB: performance.memory ? +(performance.memory.usedJSHeapSize / 1e6).toFixed(0) : null }; });
     console.log('ROUTE ' + file + ' ' + JSON.stringify(r));
   }
   await browser.close();

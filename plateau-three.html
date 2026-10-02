@@ -788,7 +788,7 @@ function processTrees(s) {
 // or wider), on the GSI 5 m DEM; kerb faces; paint from OpenStreetMap's centrelines measured against the carriageway
 // (lanes, one-way, the middle line, edge lines), zebra crossings and stop lines at its crossings; its trees; and the
 // ground (and where the sea is). In east/north/up metres from the Kannai spot, put in place with PLATEAU's own globe ----
-const AREA = { buf: null, built: false, grid: null, chunks: [], near: [], walls: [], state: '読込中' };
+const AREA = { buf: null, built: false, grid: null, chunks: [], near: [], walls: [], queue: [], bytes: 0, made: 0, freed: 0, state: '読込中' };
 const concMat = worldMat(CONCRETE, 2.0, { color: new THREE.Color(0.86, 0.85, 0.82) });   // (parapets, girders, piers, tunnel walls)
 fetchBin('models/area/area_a.bin').then(b => { AREA.buf = b; }).catch(e => { AREA.state = '読めず'; console.warn('area A', e); });
 const water = new THREE.Mesh(new THREE.PlaneGeometry(9000, 9000), new THREE.MeshStandardMaterial({ color: new THREE.Color(0.03, 0.07, 0.08), roughness: 0.07, metalness: 0 }));
@@ -813,8 +813,14 @@ function buildArea() {
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setIndex(new THREE.BufferAttribute(I, 1)); g.computeVertexNormals();
     const m = new THREE.Mesh(g, mat); m.receiveShadow = true; return m;
   };
-  for (const c of H.chunks) {
-    const grp = new THREE.Group(), o = c.o, meshes = [];
+  AREA.base = base; AREA.make = (ch) => chunkMake(ch, H, arr, surf, root);
+  for (const c of H.chunks) { AREA.chunks.push({ c, e: c.o[0], n: c.o[1], grp: null, meshes: [], walls: [], bytes: 0 }); furnChunk(c, c.o, arr, buf, base); }
+  treesAndRest(H, arr, root);
+}
+// one chunk's meshes: its roads, pavements, decks, kerbs, paint (and its wires)
+function chunkMake(ch, H, arr, surf, root) {
+  const c = ch.c, grp = new THREE.Group(), o = c.o, meshes = [], buf = AREA.buf, base = AREA.base;
+
     for (const part of c.carr || []) { const m = surf(part, o, roadMats[0]); grp.add(m); meshes.push(m); }
     for (const part of c.side || []) { const m = surf(part, o, roadMats[1]); grp.add(m); meshes.push(m); }
     // decks (bridges, viaducts, the expressway, tunnels): their road, pavements, and the concrete round them
@@ -869,10 +875,20 @@ function buildArea() {
       g.setAttribute('normal', new THREE.Float32BufferAttribute(P.map((_, i) => i % 3 === 2 ? 1 : 0), 3)); g.setAttribute('aDash', new THREE.Float32BufferAttribute(D, 1));
       const m = new THREE.Mesh(g, PAINT); m.receiveShadow = true; grp.add(m);
     }
-    root.add(grp);
-    AREA.chunks.push({ grp, meshes, walls, e: o[0], n: o[1] });
-    furnChunk(c, o, grp, arr, buf, base);
-  }
+    const fc = FURN.chunks[AREA.chunks.indexOf(ch)];
+    if (fc && fc.wireV) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(fc.wireV, 3)); fc.wire = new THREE.LineSegments(g, wireMat); grp.add(fc.wire); }
+    root.add(grp); grp.updateMatrixWorld(true);
+    let bytes = 0; grp.traverse(m => { if (m.geometry) for (const k in m.geometry.attributes) bytes += m.geometry.attributes[k].array.byteLength; });
+    Object.assign(ch, { grp, meshes, walls, bytes }); AREA.bytes += bytes; AREA.made++;
+}
+// a chunk's meshes freed (and their BVHs): the memory given back, made again when the car comes near
+function chunkFree(ch) {
+  ch.grp.traverse(m => { if (m.geometry) { if (m.geometry.boundsTree) m.geometry.disposeBoundsTree(); m.geometry.dispose(); } });
+  AREA.root.remove(ch.grp); AREA.bytes -= ch.bytes; AREA.freed++;
+  const fc = FURN.chunks[AREA.chunks.indexOf(ch)]; if (fc) fc.wire = null;
+  Object.assign(ch, { grp: null, meshes: [], walls: [], bytes: 0 });
+}
+function treesAndRest(H, arr, root) {
   // trees (OpenStreetMap's, outside PLATEAU's own block): photo cards, as in Kannai
   const T = arr(Float32Array, H.trees), nT = T.length / 4;
   if (nT) {
@@ -887,7 +903,7 @@ function buildArea() {
   }
   furnMeshes(root);
   root.updateMatrixWorld(true);                                         // (now: the rays may come before the first frame drawn)
-  AREA.buf = null; AREA.state = ''; areaNear();
+  AREA.state = ''; areaNear();
 }
 // ---- street furniture (area A): placed by tools/area_a/build4c.py by rule from OpenStreetMap's roads, crossings, signals,
 // stops and bus stops (an estimate, not a survey). One instanced mesh per model, filled from the chunks near the car;
@@ -980,7 +996,7 @@ const armOf = m => ARM.reduce((a, L) => Math.abs(L - m / 10) < Math.abs(a - m / 
 function furnKey(k, m) { const n = FK[k]; return n === 'pole' ? 'pole' + (m & 1) : n === 'vsig' ? 'vsig' + armOf(m) : n === 'speed' ? 'speed' + (m >= 50 ? 50 : 40) : n === 'bus' ? 'bus' + (m & 1) : n === 'hwsign' ? 'hwsign' + Math.min(m, 2) : n; }
 const COLR = { pole: 0.2, light: 0.12, lamp: 0.08, vsig: 0.15, psig: 0.1, stop: 0.06, xsign: 0.06, speed: 0.06, bus: 0.08, bollard: 0.08, hwsign: 0.22 };
 // one chunk's pieces: their matrices by model, the signal lamps, the colliders (in east/north/up)
-function furnChunk(c, o, grp, arr, buf, base) {
+function furnChunk(c, o, arr, buf, base) {
   const out = { e: o[0], n: o[1], by: {}, lamps: [], col: [] };
   if (c.furn) {
     const P = arr(Int16Array, c.furn.p), A = arr(Int16Array, c.furn.a), K = new Uint8Array(buf.slice(base + c.furn.k[0], base + c.furn.k[0] + c.furn.k[1])),
@@ -1004,11 +1020,10 @@ function furnChunk(c, o, grp, arr, buf, base) {
     for (const k in out.by) out.by[k] = new Float32Array(out.by[k]);
     out.lamps = new Float32Array(out.lamps); out.col = new Float32Array(out.col);
   }
-  if (c.wire) {   // the wires between the poles, as lines
+  if (c.wire) {   // the wires between the poles, as lines (made into a mesh with the chunk's roads)
     const q = arr(Int16Array, c.wire.p), nn = arr(Uint32Array, c.wire.n), V = []; let at = 0;
     for (let l = 0; l < nn.length; l++) { for (let i = 0; i + 1 < nn[l]; i++) { const a = (at + i) * 3, b = a + 3; V.push(q[a] * 0.01 + o[0], q[a + 1] * 0.01 + o[1], q[a + 2] * 0.01 + o[2], q[b] * 0.01 + o[0], q[b + 1] * 0.01 + o[1], q[b + 2] * 0.01 + o[2]); } at += nn[l]; }
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(V, 3));
-    out.wire = new THREE.LineSegments(g, wireMat); grp.add(out.wire);
+    out.wireV = new Float32Array(V);
   }
   FURN.chunks.push(out);
 }
@@ -1097,18 +1112,27 @@ function furnHit(x, z, r, tallOnly) {
 }
 // chunks shown within 1.3 km of the car; their surfaces for the car's rays within 450 m (their BVHs made on first need)
 const _ce = new THREE.Vector3();
+// chunks made within 1.3 km of the car or of where it will be in 6 s (ahead, by its speed), freed past 1.7 km; the near
+// ones (the car's rays) at once, the rest one a frame (areaWork)
 function areaNear() {
   if (!FRAME) return;
   _ce.set(C.x - FRAME.o.x, 0, C.z - FRAME.o.z); const e = _ce.dot(FRAME.E), n = _ce.dot(FRAME.N);
-  AREA.near.length = 0; AREA.walls.length = 0;
+  const fx = Math.sin(C.hdg) * Math.sign(C.v || 1), fz = Math.cos(C.hdg) * Math.sign(C.v || 1), ahead = Math.min(Math.abs(C.v) * 6, 300);
+  const ae = e + (fx * FRAME.E.x + fz * FRAME.E.z) * ahead, an = n + (fx * FRAME.N.x + fz * FRAME.N.z) * ahead, R = 1300;
+  AREA.near.length = 0; AREA.walls.length = 0; AREA.queue.length = 0;
   for (const c of AREA.chunks) {
-    const d = Math.hypot(c.e - e, c.n - n);
-    c.grp.visible = d < 1300;
+    const d = Math.hypot(c.e - e, c.n - n), dm = Math.min(d, Math.hypot(c.e - ae, c.n - an));
+    if (!c.grp && d < 480) AREA.make(c);
+    else if (!c.grp && dm < R) AREA.queue.push([dm, c]);
+    else if (c.grp && dm > R + 400) chunkFree(c);
+    if (!c.grp) continue;
+    c.grp.visible = d < R;
     if (d < 480) {
       for (const m of c.meshes) { if (!m.geometry.boundsTree) m.geometry.computeBoundsTree(); AREA.near.push(m); }
       for (const m of c.walls) { if (!m.geometry.boundsTree) m.geometry.computeBoundsTree(); AREA.walls.push(m); }
     }
   }
+  AREA.queue.sort((a, b) => a[0] - b[0]);
   for (const c of FURN.chunks) if (c.wire) c.wire.visible = Math.hypot(c.e - e, c.n - n) < 560;   // (wires: 1 px lines, near only)
   furnNear(e, n);
 }
@@ -1303,6 +1327,7 @@ function loop(now) {
   if (AREA.grid) groundFollow(); else if (GH.dirty && now - GH.at > 1500) { GH.dirty = false; GH.at = now; groundRebuild(); }
   if (FRAME && AREA.buf && !AREA.built) buildArea();
   if (AREA.built && (fr.length % 20) === 0) areaNear();
+  for (const tEnd = performance.now() + 4; AREA.queue.length && performance.now() < tEnd;) { const [, c] = AREA.queue.shift(); if (!c.grp) AREA.make(c); }   // (the chunks ahead, a few ms a frame)
   if (water.visible) water.position.set(C.x, water.position.y, C.z);
   for (let i = facadePending.length - 1; i >= 0; i--) { const sc = facadePending[i]; if (!sc.parent) continue; facadePending.splice(i, 1); facadeSetup(sc); }
   if (dedupeDirty && now - dedupeAt > 400) { dedupeDirty = false; dedupeAt = now; for (const o of L2MESH) l2Filter(o); }
@@ -1324,7 +1349,7 @@ function loop(now) {
   if ((fr.length & 15) === 0) {
     const s = stats(fr.slice(-60)), ld = Object.values(sets).reduce((a, t) => a + (t.stats ? t.stats.downloading + t.stats.parsing : 0), 0);
     if (!placed && now > 20000) { hud.textContent = 'PLATEAU の街のデータ（assets.cms.plateau.reearth.io）を読み込めません。\nこのページの置き場所によっては外部データへの接続が制限されます。\nGitHub 版で開いてください:\nhttps://raw.githack.com/kazuki8198-glitch/otinti/claude/what-is-this-db5aue/plateau-three.html'; hud.style.pointerEvents = 'auto'; hud.style.userSelect = 'text'; }
-    else hud.textContent = `実 ${s.fps.toFixed(1)} fps　中央値 ${s.p50.toFixed(1)} ms　${QLABEL}\n${sizeText()}\n描画呼出 ${inf.calls}　三角形 ${(inf.triangles / 1000).toFixed(0)} 千　建物写真 ${(texBytes() / 1e6).toFixed(0)} MB\nPLATEAU 表示 ${bsets().reduce((a, t) => a + (t.visibleTiles ? t.visibleTiles.size : 0), 0)} タイル　読込中 ${ld}　${SPAWNS[spawnAt][0]}${AREA.state ? '　' + AREA.state : ''}\n${Math.round(Math.abs(C.v) * 3.6)} km/h${C.hand ? '　サイドブレーキ' : ''}`;
+    else hud.textContent = `実 ${s.fps.toFixed(1)} fps　中央値 ${s.p50.toFixed(1)} ms　${QLABEL}\n${sizeText()}\n描画呼出 ${inf.calls}　三角形 ${(inf.triangles / 1000).toFixed(0)} 千　建物写真 ${(texBytes() / 1e6).toFixed(0)} MB\nPLATEAU 表示 ${bsets().reduce((a, t) => a + (t.visibleTiles ? t.visibleTiles.size : 0), 0)} タイル　読込中 ${ld}　道路 ${AREA.chunks.filter(c => c.grp).length}/${AREA.chunks.length} 区画 ${(AREA.bytes / 1e6).toFixed(0)} MB　${SPAWNS[spawnAt][0]}${AREA.state ? '　' + AREA.state : ''}\n${Math.round(Math.abs(C.v) * 3.6)} km/h${C.hand ? '　サイドブレーキ' : ''}`;
   }
   requestAnimationFrame(loop);
 }
@@ -1371,7 +1396,7 @@ setEl.addEventListener('change', e => {
 });
 showSettings();
 addEventListener('visibilitychange', () => { if (document.hidden && bench) bench.hidden = true; });
-window.__three = { enuToWorld: (e, n, u) => FRAME && enuToWorld(e, n, u), areaNear, gatherHits, get areaBuilt() { return AREA.built; }, get L3n() { return L3.size; }, get facades() { return FACADE.made.size; }, FURN, texMB: () => texBytes() / 1e6, S, scene, camera, renderer, sets, C, setMode, composer, ao, bloom, GH, gridH, groundAt, wallDist, treeSpots, keys, THREE, reset: () => start && reset() };
+window.__three = { enuToWorld: (e, n, u) => FRAME && enuToWorld(e, n, u), areaNear, gatherHits, get areaBuilt() { return AREA.built; }, AREA, get L3n() { return L3.size; }, get facades() { return FACADE.made.size; }, FURN, texMB: () => texBytes() / 1e6, S, scene, camera, renderer, sets, C, setMode, composer, ao, bloom, GH, gridH, groundAt, wallDist, treeSpots, keys, THREE, reset: () => start && reset() };
 </script>
 </body>
 </html>

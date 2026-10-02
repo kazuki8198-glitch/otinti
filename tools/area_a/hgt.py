@@ -1,5 +1,6 @@
 import pickle, numpy as np, geo
-GEOID=36.28; E0,E1,N0,N1,G=-2700.,1000.,-1000.,3050.,5.0
+import sys
+GEOID=36.28; E0,E1,N0,N1,G=(*map(float,sys.argv[1:5]),5.0) if len(sys.argv)>4 else (-2700.,1000.,-1000.,3050.,5.0)   # (east/north metres from the Kannai spot)
 ge=np.arange(E0,E1+G/2,G); gn=np.arange(N0,N1+G/2,G); EE,NN=np.meshgrid(ge,gn)
 P=geo.O+EE[...,None]*geo.Ev+NN[...,None]*geo.Nv; lat,lon,_=geo.geodetic(P)
 D=geo.dem(lat,lon); water=np.isnan(D)

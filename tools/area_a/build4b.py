@@ -234,7 +234,25 @@ for w in ground_ways:
 pickle.dump(signals, open('signals_seed.pkl', 'wb'))
 tick(f'crossings {nc} stop lines {ns}')
 # ---- trees (as before: OpenStreetMap's, outside PLATEAU's own block), on the new heights ----
-TR = pickle.load(open('paint.pkl', 'rb'))['TREES'].astype(float); ps = prep(side.buffer(0.5))
+# OSM's trees and tree rows (in PLATEAU's own vegetation block, VEG3, PLATEAU's are used instead); heights from the tags or 6.5-11.5 m
+VEG3 = (35.4424, 35.4505, 139.6329, 139.6431); tl = []
+Wy = json.load(open('osm_ways.json'))['elements']
+for nd in Nd:
+    t = nd.get('tags', {})
+    if nd['type'] == 'node' and t.get('natural') == 'tree' and not (VEG3[0] <= nd['lat'] <= VEG3[1] and VEG3[2] <= nd['lon'] <= VEG3[3]):
+        try: hh = float(str(t.get('height', '')).replace('m', '').strip())
+        except Exception: hh = 0
+        tl.append((*geo.enu(np.array([nd['lat']]), np.array([nd['lon']]), np.array([40.0]))[0, :2], hh))
+for wy in Wy:
+    if wy.get('tags', {}).get('natural') != 'tree_row' or not wy.get('geometry'): continue
+    a = np.array([[q['lat'], q['lon']] for q in wy['geometry']]); pp = geo.enu(a[:, 0], a[:, 1], np.zeros(len(a)) + 40)[:, :2]
+    L = np.concatenate([[0], np.cumsum(np.hypot(*np.diff(pp, axis=0).T))])
+    for s_ in np.arange(4, L[-1], 9.0):
+        lat0, lon0, _ = geo.geodetic(geo.O + np.interp(s_, L, pp[:, 0]) * geo.Ev + np.interp(s_, L, pp[:, 1]) * geo.Nv)
+        if not (VEG3[0] <= lat0 <= VEG3[1] and VEG3[2] <= lon0 <= VEG3[3]): tl.append((np.interp(s_, L, pp[:, 0]), np.interp(s_, L, pp[:, 1]), 0))
+TR = np.array(tl, float); TR = TR[(TR[:, 0] > E0) & (TR[:, 0] < E1) & (TR[:, 1] > N0) & (TR[:, 1] < N1) & ~inside(TR[:, 0], TR[:, 1])]
+TR[:, 2] = np.where(TR[:, 2] > 2, TR[:, 2], np.random.default_rng(7).uniform(6.5, 11.5, len(TR))); TR = np.column_stack([TR[:, :2], np.zeros(len(TR)), TR[:, 2]])
+ps = prep(side.buffer(0.5))
 on = np.array([ps.contains(Point(a, b)) for a, b in TR[:, :2]]); TR[:, 2] = roadh(TR[:, 0], TR[:, 1]) + np.where(on, 0.15, -0.2)
 # ---- pack (ARA2) ----
 bufs = []; off = [0]

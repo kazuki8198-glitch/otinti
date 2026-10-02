@@ -22,6 +22,7 @@ def _load():
     fs=glob.glob(os.path.join(os.path.dirname(__file__),'dem/15_*.png')); xs=sorted({int(f.split('_')[-2]) for f in fs}); ys=sorted({int(f.split('_')[-1][:-4]) for f in fs})
     M=np.full((len(ys)*256,len(xs)*256),np.nan)
     for f in fs:
+        if os.path.getsize(f)==0: continue   # (no tile: the sea)
         x=int(f.split('_')[-2]); y=int(f.split('_')[-1][:-4]); a=np.asarray(Image.open(f).convert('RGB')).astype(np.int64)
         v=a[...,0]*65536+a[...,1]*256+a[...,2]; h=np.where(v<2**23,v*0.01,(v-2**24)*0.01); h=np.where(v==2**23,np.nan,h)
         M[(y-ys[0])*256:(y-ys[0]+1)*256,(x-xs[0])*256:(x-xs[0]+1)*256]=h

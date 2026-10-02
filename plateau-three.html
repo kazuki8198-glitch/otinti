@@ -777,7 +777,7 @@ function processTrees(s) {
     M.compose(_v.set(x, t[1] - 0.1, z), q, sc.set(w, h, w));
     im.setMatrixAt(i, M.premultiply(inv));
     layer[i] = Math.floor((r * 7.3) % 1 * treeN);
-    treeSpots.push(x, z);
+    treeSpots.push(x, t[1], z);
   });
   geo.setAttribute('aLayer', new THREE.InstancedBufferAttribute(layer, 1));
   s.add(im); im.updateMatrixWorld(true);                                  // (set now: the tiles' world matrices aren't redone each frame)
@@ -897,7 +897,7 @@ function treesAndRest(H, arr, root) {
     for (let i = 0; i < nT; i++) {
       const p = enuToWorld(T[i * 4], T[i * 4 + 1], T[i * 4 + 2]), h = T[i * 4 + 3], r = Math.abs(Math.sin(p.x * 12.9898 + p.z * 78.233) * 43758.5453) % 1, w = h * (0.75 + 0.3 * r);
       q.setFromAxisAngle(Y, r * 6.283); M.compose(p, q, sc.set(w, h, w)); im.setMatrixAt(i, M);
-      layer[i] = Math.floor((r * 7.3) % 1 * treeN); treeSpots.push(p.x, p.z);
+      layer[i] = Math.floor((r * 7.3) % 1 * treeN); treeSpots.push(p.x, p.y, p.z);
     }
     geo.setAttribute('aLayer', new THREE.InstancedBufferAttribute(layer, 1)); scene.add(im); AREA.trees = im;
   }
@@ -1011,10 +1011,10 @@ function furnChunk(c, o, arr, buf, base) {
       if (name === 'vsig') { const L = armOf(Mm[i]); lamp(L - 0.42, 5.4, 0.16, 0); lamp(L, 5.4, 0.16, 1); lamp(L + 0.42, 5.4, 0.16, 2); }
       if (name === 'psig') { lamp(0, 3.1, 0.14, 3); lamp(0, 2.7, 0.14, 4); }
       // colliders: posts (circles), pipes and hedges (2 m along their facing), a shelter's back
-      if (COLR[name] !== undefined) out.col.push(0, e, n, COLR[name], 0, 0);
-      if (name === 'pipe' || name === 'hedge') out.col.push(1, e - cs, n - sn, name === 'hedge' ? 0.32 : 0.05, e + cs, n + sn);
-      if (name === 'etc') for (const sx of [4.3, -4.3]) out.col.push(0, e - sn * sx, n + cs * sx, 0.45, 0, 0);
-      if (key === 'bus1') out.col.push(1, e - sn * 1.7 - cs * 1.3, n + cs * 1.7 - sn * 1.3, 0.1, e + sn * 1.7 - cs * 1.3, n - cs * 1.7 - sn * 1.3);
+      if (COLR[name] !== undefined) out.col.push(0, e, n, COLR[name], 0, 0, u);
+      if (name === 'pipe' || name === 'hedge') out.col.push(1, e - cs, n - sn, name === 'hedge' ? 0.32 : 0.05, e + cs, n + sn, u);
+      if (name === 'etc') for (const sx of [4.3, -4.3]) out.col.push(0, e - sn * sx, n + cs * sx, 0.45, 0, 0, u);
+      if (key === 'bus1') out.col.push(1, e - sn * 1.7 - cs * 1.3, n + cs * 1.7 - sn * 1.3, 0.1, e + sn * 1.7 - cs * 1.3, n - cs * 1.7 - sn * 1.3, u);
       FURN.made++;
     }
     for (const k in out.by) out.by[k] = new Float32Array(out.by[k]);
@@ -1093,18 +1093,19 @@ function furnColliders(now) {
   if (!FURN.colAll || (now - FURN.colAt < 500 && Math.hypot(C.x - FURN.colX, C.z - FURN.colZ) < 10)) return;
   FURN.colAt = now; FURN.colX = C.x; FURN.colZ = C.z; FURN.col.length = 0;
   const p = new THREE.Vector3(), q = new THREE.Vector3();
-  for (const A of FURN.colAll) for (let i = 0; i < A.length; i += 6) {
-    p.set(A[i + 1], A[i + 2], 0).applyMatrix4(FRAME.M);
+  for (const A of FURN.colAll) for (let i = 0; i < A.length; i += 7) {
+    p.set(A[i + 1], A[i + 2], A[i + 6]).applyMatrix4(FRAME.M);
     if (Math.hypot(p.x - C.x, p.z - C.z) > 32) continue;
-    if (A[i] === 0) FURN.col.push(0, p.x, p.z, A[i + 3], 0, 0);
-    else { q.set(A[i + 4], A[i + 5], 0).applyMatrix4(FRAME.M); FURN.col.push(1, p.x, p.z, A[i + 3], q.x, q.z); }
+    if (A[i] === 0) FURN.col.push(0, p.x, p.z, A[i + 3], 0, 0, p.y);
+    else { q.set(A[i + 4], A[i + 5], A[i + 6]).applyMatrix4(FRAME.M); FURN.col.push(1, p.x, p.z, A[i + 3], q.x, q.z, p.y); }
   }
 }
 function segDist(px, pz, ax, az, bx2, bz) { const dx = bx2 - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / l2)); return Math.hypot(px - ax - dx * t, pz - az - dz * t); }
-// is a point within r of a piece? (tall: posts only, for the camera)
-function furnHit(x, z, r, tallOnly) {
+// is a point within r of a piece standing at about the level y (from 1.5 m below its foot to 6 m above)? (tall: posts only, for the camera)
+function furnHit(x, z, r, tallOnly, y) {
   const A = FURN.col;
-  for (let i = 0; i < A.length; i += 6) {
+  for (let i = 0; i < A.length; i += 7) {
+    if (y - A[i + 6] < -1.5 || y - A[i + 6] > 6) continue;
     if (A[i] === 0) { if (Math.hypot(x - A[i + 1], z - A[i + 2]) < r + A[i + 3]) return true; }
     else if (!tallOnly && segDist(x, z, A[i + 1], A[i + 2], A[i + 4], A[i + 5]) < r + A[i + 3]) return true;
   }
@@ -1259,8 +1260,8 @@ function drive(dt) {
     let hit = false;
     for (const off of [0, -0.8, 0.8]) if (wallDist(C.x + fz * off, C.y + 0.6, C.z - fx * off, fx * sg, fz * sg, reach) < reach) { hit = true; break; }
     const nx = C.x + fx * sg * 2.1, nz = C.z + fz * sg * 2.1;
-    for (let i = 0; i < treeSpots.length && !hit; i += 2) if (Math.hypot(treeSpots[i] - nx, treeSpots[i + 1] - nz) < 0.9) hit = true;
-    for (const off of [0, -0.8, 0.8]) if (!hit && furnHit(nx + fz * off, nz - fx * off, 0.2)) hit = true;   // (poles, posts, pipes, hedges)
+    for (let i = 0; i < treeSpots.length && !hit; i += 3) if (Math.abs(treeSpots[i + 1] - C.y) < 3 && Math.hypot(treeSpots[i] - nx, treeSpots[i + 2] - nz) < 0.9) hit = true;   // (a trunk at the car's level)
+    for (const off of [0, -0.8, 0.8]) if (!hit && furnHit(nx + fz * off, nz - fx * off, 0.2, false, C.y)) hit = true;   // (poles, posts, pipes, hedges at its level)
     if (hit) nv = -nv * 0.15; else { C.x += fx * step; C.z += fz * step; }
   }
   C.v = nv;
@@ -1282,7 +1283,7 @@ function drive(dt) {
     ray.set(_c, _d); ray.far = len + 0.4;
     const h = hitBldg.length ? ray.intersectObjects(hitBldg, false) : [];
     if (h.length) _t.copy(_c).addScaledVector(_d, Math.max(0.8, h[0].distance - 0.4));
-    for (let s = 0.15; s <= 1.0001; s += 0.05) if (furnHit(_c.x + (_t.x - _c.x) * s, _c.z + (_t.z - _c.z) * s, 0.3, true)) { _t.lerpVectors(_c, _t, Math.max(0.12, s - 0.08)); break; }   // (not inside a pole)
+    for (let s = 0.15; s <= 1.0001; s += 0.05) if (furnHit(_c.x + (_t.x - _c.x) * s, _c.z + (_t.z - _c.z) * s, 0.3, true, _c.y + (_t.y - _c.y) * s - 1.6)) { _t.lerpVectors(_c, _t, Math.max(0.12, s - 0.08)); break; }   // (not inside a pole)
     _t.y = Math.max(_t.y, groundAt(_t.x, _t.z, _t.y) + 0.5);
     camera.position.copy(_t); camera.lookAt(C.x + cx * 3, C.y + 1.1, C.z + cz * 3); camera.fov = 60;
   }
@@ -1306,6 +1307,16 @@ function sizeText() {
   return `内部 ${Math.round(W * rscale)}×${Math.round(H * rscale)}（基準 ${W}×${H} の ${Math.round(rscale * 100)}%${S.auto ? '、自動' + rsLast : '、固定'}）`;
 }
 const heapMB = () => performance.memory ? (performance.memory.usedJSHeapSize / 1e6).toFixed(0) + ' MB' : '取得不可';
+// the GPU's own time per frame, where the browser gives its timer (EXT_disjoint_timer_query_webgl2): measured, not estimated
+const glx = renderer.getContext(), TQ = glx.getExtension('EXT_disjoint_timer_query_webgl2'), gpuQ = [];
+function gpuBegin() { if (!TQ || !bench || NORENDER || gpuQ.length > 8) return null; const q = glx.createQuery(); glx.beginQuery(TQ.TIME_ELAPSED_EXT, q); return q; }
+function gpuEnd(q) { if (q) { glx.endQuery(TQ.TIME_ELAPSED_EXT); gpuQ.push(q); } }
+function gpuPoll() {
+  while (gpuQ.length && glx.getQueryParameter(gpuQ[0], glx.QUERY_RESULT_AVAILABLE)) {
+    const q = gpuQ.shift(), ns = glx.getQueryParameter(q, glx.QUERY_RESULT), bad = glx.getParameter(TQ.GPU_DISJOINT_EXT); glx.deleteQuery(q);
+    if (!bad && bench) bench.gpu.push(ns / 1e6);
+  }
+}
 function report(b) {
   const s = stats(b.fr), f1 = v => v.toFixed(1), on = k => sets[k] && sets[k].group.visible ? 'あり' : 'なし';
   return [`【計測 three.js 試作】${new Date().toLocaleString('ja-JP')}　関内 ${SPOT.lat}, ${SPOT.lon}（昼・${['後方', '運転席', '高い後方'][C.cam]}視点）`,
@@ -1314,7 +1325,8 @@ function report(b) {
     `実フレームレート ${f1(s.fps)} fps（1フレーム 中央値 ${f1(s.p50)} ms / 95% ${f1(s.p95)} ms / 最大 ${f1(s.max)} ms、${b.fr.length} フレーム）`,
     `ひっかかり（100 ms 超）${b.fr.filter(x => x > 100).length} 回、うち 1 秒超 ${b.fr.filter(x => x > 1000).length} 回　1 秒超を除いた実フレームレート ${f1(stats(b.fr.filter(x => x <= 1000).length ? b.fr.filter(x => x <= 1000) : b.fr).fps)} fps　計測中にタブが裏に回った: ${b.hidden ? 'あり' : 'なし'}　読み込み中のタイル（計測開始時）${b.busy}`,
     `1フレームの JS ${f1(b.js / b.fr.length)} ms　描画呼出 ${Math.round(b.calls / b.fr.length)}　三角形 ${Math.round(b.tris / b.fr.length / 1000)} 千　テクスチャ ${renderer.info.memory.textures} 個（建物写真の推定 ${(texBytes() / 1e6).toFixed(0)} MB）　ジオメトリ ${renderer.info.memory.geometries} 個`,
-    `表示中の建物タイル ${bsets().reduce((a, t) => a + (t.visibleTiles ? t.visibleTiles.size : 0), 0)}　範囲 A のチャンク ${AREA.chunks.filter(c => c.grp.visible).length}/${AREA.chunks.length}　LOD3 に置き換えた建物 ${L3.size}　外壁を生成した建物 ${FACADE.made.size}　JS ヒープ ${heapMB()}（計測開始時 ${b.heap}）　GPU 時間: 未計測`].join('\n');
+    `表示中の建物タイル ${bsets().reduce((a, t) => a + (t.visibleTiles ? t.visibleTiles.size : 0), 0)}　範囲 A の道路 ${AREA.chunks.filter(c => c.grp).length}/${AREA.chunks.length} 区画 ${(AREA.bytes / 1e6).toFixed(0)} MB（計測開始時 ${(b.area0 / 1e6).toFixed(0)} MB）　街路設備 ${FURN.made}（描画中 ${Object.values(FURN.models).reduce((a, ims) => a + ims[0].count, 0)}）　LOD3 に置き換えた建物 ${L3.size}　外壁を生成した建物 ${FACADE.made.size}　JS ヒープ ${heapMB()}（計測開始時 ${b.heap}）`,
+    `GPU 時間: ${b.gpu.length ? `中央値 ${f1(stats(b.gpu).p50)} ms / 95% ${f1(stats(b.gpu).p95)} ms（実測: EXT_disjoint_timer_query_webgl2、${b.gpu.length} フレーム）` : TQ ? '測定値なし（GPU タイマーの結果が返らなかった）' : '未計測（この環境では GPU タイマー拡張が使えない。CPU 側の時間と fps のみ）'}`].join('\n');
 }
 function loop(now) {
   const real = now - last, dt = Math.min(0.05, real / 1000); last = now;
@@ -1335,6 +1347,7 @@ function loop(now) {
   furnLamps(now); if (placed) furnColliders(now);
   gatherHits();
   if (!placed) place();
+  if (placed && window.__autodrive) window.__autodrive(dt);   // (tests only: a route-following driver pressing the keys)
   if (placed) drive(dt);
   for (const k in sets) {
     const t = sets[k]; if (!t.group.visible) continue;
@@ -1342,7 +1355,10 @@ function loop(now) {
     t.region.sphere.center.copy(car.position).applyMatrix4(_inv.copy(t.group.matrixWorld).invert());
     t.setResolutionFromRenderer(camera, renderer); t.update();
   }
+  gpuPoll();
+  const gq = gpuBegin();
   if (!NORENDER) composer.render(dt);
+  gpuEnd(gq);
   adaptScale(now);
   const js = performance.now() - t0, inf = renderer.info.render;
   if (bench) { bench.fr.push(real); bench.js += js; bench.calls += inf.calls; bench.tris += inf.triangles; if (now - bench.t0 > 10000) { out.value = report(bench); out.style.display = 'block'; bench = null; window.__benchDone = out.value; } }
@@ -1367,7 +1383,7 @@ document.getElementById('panel').addEventListener('click', e => {
   if (b.dataset.a === 'spawn' && FRAME) setSpawn((spawnAt + 1) % SPAWNS.length);
   if (b.dataset.a === 'settings') { setEl.style.display = setEl.style.display === 'block' ? 'none' : 'block'; showSettings(); }
   if (false) { const u = new URL(location.href); u.searchParams.set('q', { high: 'mid', mid: 'low', low: 'high' }[QN]); location.href = u.href; }   // (MSAA and the shadow map are set at the start: reloads)
-  if (b.dataset.a === 'bench') { bench = { heap: heapMB(), hidden: document.hidden, busy: Object.values(sets).reduce((a, t) => a + (t.stats ? t.stats.downloading + t.stats.parsing : 0), 0), t0: performance.now(), fr: [], js: 0, calls: 0, tris: 0 }; out.style.display = 'block'; out.value = '計測中（10 秒、操作しないでください）…'; }
+  if (b.dataset.a === 'bench') { bench = { heap: heapMB(), hidden: document.hidden, busy: Object.values(sets).reduce((a, t) => a + (t.stats ? t.stats.downloading + t.stats.parsing : 0), 0), t0: performance.now(), fr: [], js: 0, calls: 0, tris: 0, gpu: [], area0: AREA.bytes }; out.style.display = 'block'; out.value = '計測中（10 秒、操作しないでください）…'; }
   if (b.dataset.a === 'copy') { out.select(); navigator.clipboard && navigator.clipboard.writeText(out.value).catch(() => document.execCommand('copy')); }
   b.blur();
 });

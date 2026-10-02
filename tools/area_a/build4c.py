@@ -40,7 +40,10 @@ def raster(g):
         dr.polygon(tp(p.exterior.coords), fill=1)
         for h in p.interiors: dr.polygon(tp(h.coords), fill=0)
     return np.asarray(im, dtype=bool)
-MC = raster(carriage); MS = raster(side); tick('rasters')
+MC = raster(carriage); MS = raster(side)
+# the decks' footprints (bridges, viaducts, the expressway in its cutting; not tunnels): nothing of the ground roads' goes there
+from shapely.ops import unary_union
+MD = raster(unary_union([w['poly'].buffer(0.6) for w in S1['deck_ways'] if w['kind'] != 'tunnel'])); tick('rasters')
 def at(M, e, n):
     i = np.round((np.asarray(e, float) - E0) / R).astype(int); j = np.round((N1 - np.asarray(n, float)) / R).astype(int)
     ok = (i >= 0) & (j >= 0) & (i < W_) & (j < H_); out = np.zeros(np.shape(i), bool); out[ok] = M[j[ok], i[ok]]; return out
@@ -87,6 +90,7 @@ def near_crossing(e, n, d):
                 if (q[0] - e) ** 2 + (q[1] - n) ** 2 < d * d: return True
     return False
 def put(kind, e, n, yaw, param=0, group=0, r=1.2, onroad=False, z=None, clear=0.45):
+    if at(MD, e, n): return False
     if not onroad and (not clear_of_road(e, n, clear) or not free(e, n, r)): return False
     if onroad and not free(e, n, 0.8): return False
     pav = bool(at(MS, e, n))

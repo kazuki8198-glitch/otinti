@@ -85,8 +85,8 @@ const qs = new URLSearchParams(location.search), NORENDER = qs.has('norender'); 
 const GPU = (() => { try { const gl = document.createElement('canvas').getContext('webgl2'), d = gl && gl.getExtension('WEBGL_debug_renderer_info'); return d ? String(gl.getParameter(d.UNMASKED_RENDERER_WEBGL)) : ''; } catch (e) { return ''; } })();
 const QN = ['high', 'mid', 'low'].includes(qs.get('q')) ? qs.get('q') : touch ? 'low' : /Intel|Iris|UHD|Radeon\(TM\) Graphics|Radeon Graphics|Vega \d+ Graphics|Apple M/i.test(GPU) ? 'mid' : 'high';
 const Q = {
-  high: { dpr: 1.5, msaa: 4, ao: true, aoScale: 1, aoSamples: 12, bloom: true, shadow: 4096, maxTex: 2048, err: 8, rad: 520, bytes: 1.5e9 },
-  mid: { dpr: 1.0, msaa: 2, ao: true, aoScale: 0.5, aoSamples: 8, bloom: true, shadow: 2048, maxTex: 2048, err: 10, rad: 450, bytes: 1.0e9 },
+  high: { dpr: 1.5, msaa: 4, ao: true, aoScale: 1, aoSamples: 12, bloom: true, shadow: 4096, maxTex: 2048, err: 8, rad: 520, bytes: 2.4e9 },
+  mid: { dpr: 1.0, msaa: 2, ao: true, aoScale: 0.5, aoSamples: 8, bloom: true, shadow: 2048, maxTex: 2048, err: 10, rad: 450, bytes: 2.0e9 },
   low: { dpr: 1.25, msaa: 0, ao: false, aoScale: 0.5, aoSamples: 8, bloom: false, shadow: 2048, maxTex: 1024, err: 16, rad: 350, bytes: 0.4e9 },
 }[QN];
 const QLABEL = { high: '高（専用 GPU 向け）', mid: '中（内蔵 GPU 向け）', low: '軽量' }[QN];

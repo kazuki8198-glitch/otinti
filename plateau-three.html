@@ -756,7 +756,8 @@ function loop(now) {
   if (bench) { bench.fr.push(real); bench.js += js; bench.calls += inf.calls; bench.tris += inf.triangles; if (now - bench.t0 > 10000) { out.value = report(bench); out.style.display = 'block'; bench = null; window.__benchDone = out.value; } }
   if ((fr.length & 15) === 0) {
     const s = stats(fr.slice(-60)), tl = sets[bmode], ld = Object.values(sets).reduce((a, t) => a + (t.stats ? t.stats.downloading + t.stats.parsing : 0), 0);
-    hud.textContent = `実 ${s.fps.toFixed(1)} fps　中央値 ${s.p50.toFixed(1)} ms　画質 ${QN === 'high' ? '高' : QN === 'mid' ? '中' : '軽量'} ${Math.round(rscale * 100)}%\n描画呼出 ${inf.calls}　三角形 ${(inf.triangles / 1000).toFixed(0)} 千\nPLATEAU ${bmode.toUpperCase()} 表示 ${tl.visibleTiles ? tl.visibleTiles.size : '?'} タイル　読込中 ${ld}\n${Math.round(Math.abs(C.v) * 3.6)} km/h${C.hand ? '　サイドブレーキ' : ''}`;
+    if (!placed && now > 20000) { hud.textContent = 'PLATEAU の街のデータ（assets.cms.plateau.reearth.io）を読み込めません。\nこのページの置き場所によっては外部データへの接続が制限されます。\nGitHub 版で開いてください:\nhttps://raw.githack.com/kazuki8198-glitch/otinti/claude/what-is-this-db5aue/plateau-three.html'; hud.style.pointerEvents = 'auto'; hud.style.userSelect = 'text'; }
+    else hud.textContent = `実 ${s.fps.toFixed(1)} fps　中央値 ${s.p50.toFixed(1)} ms　画質 ${QN === 'high' ? '高' : QN === 'mid' ? '中' : '軽量'} ${Math.round(rscale * 100)}%\n描画呼出 ${inf.calls}　三角形 ${(inf.triangles / 1000).toFixed(0)} 千\nPLATEAU ${bmode.toUpperCase()} 表示 ${tl.visibleTiles ? tl.visibleTiles.size : '?'} タイル　読込中 ${ld}\n${Math.round(Math.abs(C.v) * 3.6)} km/h${C.hand ? '　サイドブレーキ' : ''}`;
   }
   requestAnimationFrame(loop);
 }

@@ -33,7 +33,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 <div id="panel">
   <button data-b="lod2">LOD2</button><button data-b="lod3" class="on">LOD3</button>
   <button data-t="roads" class="on">道路</button><button data-t="trees" class="on">樹木</button><button data-t="shadow" class="on">影</button><button data-t="ao" class="on">AO</button><button data-t="bloom" class="on">光のにじみ</button>
-  <button data-a="q">画質</button><button data-a="cam">視点</button><button data-a="bench">計測（10 秒）</button><button data-a="copy">結果をコピー</button>
+  <button data-a="spawn">出発地点</button><button data-a="q">画質</button><button data-a="cam">視点</button><button data-a="bench">計測（10 秒）</button><button data-a="copy">結果をコピー</button>
 </div>
 <textarea id="out" readonly></textarea>
 <div id="help">W/↑ アクセル　S/↓ ブレーキ・バック　A/D ハンドル　Space サイドブレーキ　C 視点　R 出発地点へ　H 表示を隠す</div>
@@ -74,6 +74,9 @@ const SETS = {
   lod2: BASE + '94/a960a4-7e19-439f-8249-b743e939102a/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14104_naka-ku_lod2/tileset.json',
   lod3: BASE + '98/34e4f3-a849-4f12-8bd2-50826a53fa62/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14104_naka-ku_lod3/tileset.json',
   roads: BASE + '51/8e3f96-c5d3-4d89-9397-0aa810b096f7/14100_yokohama-shi_city_2024_citygml_2_op_tran_3dtiles_lod3/tileset.json',
+  nishi2: BASE + '4a/84f474-71c4-4b33-a328-0c5798b79f2f/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14103_nishi-ku_lod2/tileset.json',
+  nishi3: BASE + '57/4b4e13-9239-4570-b4c3-18f695ef7035/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14103_nishi-ku_lod3/tileset.json',
+  kana2: BASE + '67/51cc26-b148-4296-892d-807ba6798fa8/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14102_kanagawa-ku_lod2/tileset.json',
   trees: BASE + '83/75c1ef-9ab7-4e3a-87be-ba98230726d0/14100_yokohama-shi_city_2024_citygml_2_op_veg_SolitaryVegetationObject_3dtiles_lod3/tileset.json',
 };
 const SPOT = { lat: 35.446899, lon: 139.641167, h: 39.3, dx: 0.54, dz: -0.841 };   // (h: the street's ellipsoidal height there; dx, dz: the way it runs, east and south)
@@ -299,14 +302,22 @@ function makeTiles(name, rad, err) {
   scene.add(t.group);
   return t;
 }
-let bmode = qs.get('lod') === '2' ? 'lod2' : 'lod3';
-sets[bmode] = makeTiles(bmode, Q.rad, Q.err);
+// the buildings: Naka ward (Kannai) and Nishi ward (Minato Mirai, Yokohama Station) at LOD3, Kanagawa ward (north of the
+// station) at LOD2; or all at LOD2. Each loads only round the car; one memory budget for them all
+const MODES = { lod3: ['lod3', 'nishi3', 'kana2'], lod2: ['lod2', 'nishi2', 'kana2'] };
+let bmode = qs.get('lod') === '2' ? 'lod2' : 'lod3', sharedLru = null;
+const bsets = () => MODES[bmode].map(k => sets[k]).filter(Boolean);
+function makeB(k) {
+  if (!sets[k]) { sets[k] = makeTiles(k, Q.rad, Q.err); if (sharedLru) sets[k].lruCache = sharedLru; else sharedLru = sets[k].lruCache; }
+  return sets[k];
+}
+MODES[bmode].forEach(makeB);
 sets.roads = makeTiles('roads', Q.rad, Q.err);
 sets.trees = makeTiles('trees', Q.rad * 0.8, 20);
 function setMode(m) {
   if (m === bmode) return;
-  sets[bmode].group.visible = false;
-  bmode = m; if (!sets[m]) sets[m] = makeTiles(m, Q.rad, Q.err); sets[m].group.visible = true;
+  for (const t of bsets()) t.group.visible = false;
+  bmode = m; for (const k of MODES[m]) makeB(k).group.visible = true;
 }
 
 // road surfaces: their triangles sorted by use (each its own material); the open edges dropped 0.45 m as faces (the
@@ -603,6 +614,129 @@ function processTrees(s) {
   s.add(im); im.updateMatrixWorld(true);                                  // (set now: the tiles' world matrices aren't redone each frame)
 }
 
+// ---- area A: Kannai to Minato Mirai and Yokohama Station. Outside PLATEAU's LOD3 block the roads are made beforehand
+// (models/area/area_a.bin): PLATEAU's LOD1 road areas cut into carriageway and pavement (3.25 m, where the road is 12 m
+// or wider), on the GSI 5 m DEM; kerb faces; paint from OpenStreetMap's centrelines measured against the carriageway
+// (lanes, one-way, the middle line, edge lines), zebra crossings and stop lines at its crossings; its trees; and the
+// ground (and where the sea is). In east/north/up metres from the Kannai spot, put in place with PLATEAU's own globe ----
+const AREA = { buf: null, built: false, grid: null, chunks: [], near: [], state: '読込中' };
+fetchBin('models/area/area_a.bin').then(b => { AREA.buf = b; }).catch(e => { AREA.state = '読めず'; console.warn('area A', e); });
+const water = new THREE.Mesh(new THREE.PlaneGeometry(9000, 9000), new THREE.MeshStandardMaterial({ color: new THREE.Color(0.03, 0.07, 0.08), roughness: 0.07, metalness: 0 }));
+water.rotation.x = -Math.PI / 2; water.receiveShadow = true; water.visible = false; scene.add(water);
+function buildArea() {
+  AREA.built = true;
+  const buf = AREA.buf, dv = new DataView(buf), hl = dv.getUint32(4, true), H = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 8, hl))), base = 8 + hl;
+  const arr = (T, [o, n]) => new T(buf.slice(base + o, base + o + n));
+  const root = new THREE.Group(); root.matrixAutoUpdate = false; root.matrix.copy(FRAME.M); scene.add(root); AREA.root = root;
+  // the ground: 'up' in cm on a 5 m grid of east/north
+  AREA.grid = { ...H.grid, u: arr(Int16Array, H.grid.b) };
+  // the sea: a plane at its level (the ground under it is 3 m lower)
+  water.position.y = enuToWorld(0, 0, H.water).y; water.visible = true;
+  GH.at = -1e9; groundFollow(true);
+  const surf = (part, o, mat) => {
+    const q = arr(Int16Array, part.v), I = arr(Uint16Array, part.i), P = new Float32Array(q.length);
+    for (let i = 0; i < q.length; i += 3) { P[i] = q[i] * 0.01 + o[0]; P[i + 1] = q[i + 1] * 0.01 + o[1]; P[i + 2] = q[i + 2] * 0.01 + o[2]; }
+    for (let t = 0; t < I.length; t += 3) {                        // (all facing up)
+      const a = I[t] * 3, b = I[t + 1] * 3, c = I[t + 2] * 3;
+      if ((P[b] - P[a]) * (P[c + 1] - P[a + 1]) - (P[b + 1] - P[a + 1]) * (P[c] - P[a]) < 0) { const x = I[t + 1]; I[t + 1] = I[t + 2]; I[t + 2] = x; }
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setIndex(new THREE.BufferAttribute(I, 1)); g.computeVertexNormals();
+    const m = new THREE.Mesh(g, mat); m.receiveShadow = true; return m;
+  };
+  for (const c of H.chunks) {
+    const grp = new THREE.Group(), o = c.o, meshes = [];
+    for (const part of c.carr || []) { const m = surf(part, o, roadMats[0]); grp.add(m); meshes.push(m); }
+    for (const part of c.side || []) { const m = surf(part, o, roadMats[1]); grp.add(m); meshes.push(m); }
+    const lines = (rec, fn) => {
+      const q = arr(Int16Array, rec.p), n = arr(Uint32Array, rec.n), k = new Uint8Array(buf.slice(base + rec.k[0], base + rec.k[0] + rec.k[1]));
+      let at = 0;
+      for (let l = 0; l < n.length; l++) { const pts = []; for (let i = 0; i < n[l]; i++, at++) pts.push(q[at * 3] * 0.01 + o[0], q[at * 3 + 1] * 0.01 + o[1], q[at * 3 + 2] * 0.01 + o[2]); fn(pts, k[l]); }
+    };
+    if (c.kerb) {   // faces down from each edge, the surface on its left: pavements 0.15 up and 0.45 down, carriageway edges 0.45 down
+      const P = [];
+      lines(c.kerb, (pts, kind) => {
+        const top = kind === 0 ? 0.15 : 0, bot = -0.45;
+        for (let i = 0; i + 5 < pts.length; i += 3) {
+          const ax = pts[i], ay = pts[i + 1], az = pts[i + 2], bx = pts[i + 3], by = pts[i + 4], bz = pts[i + 5];
+          P.push(ax, ay, az + top, bx, by, bz + bot, bx, by, bz + top, ax, ay, az + top, ax, ay, az + bot, bx, by, bz + bot);
+        }
+      });
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.computeVertexNormals();
+      const m = new THREE.Mesh(g, kerbMat); m.receiveShadow = true; grp.add(m);
+    }
+    if (c.paint || c.rect) {
+      const P = [], D = [];
+      const quad = (a, b, d0, d1) => { P.push(...a[0], ...a[1], ...b[1], ...a[0], ...b[1], ...b[0]); D.push(d0, d0, d1, d0, d1, d1); };
+      if (c.paint) lines(c.paint, (pts, dash) => {
+        let s0 = 0;
+        for (let i = 0; i + 5 < pts.length; i += 3) {
+          const ax = pts[i], ay = pts[i + 1], bx = pts[i + 3], by = pts[i + 4], l = Math.hypot(bx - ax, by - ay); if (l < 1e-3) continue;
+          const nx = -(by - ay) / l * 0.075, ny = (bx - ax) / l * 0.075, za = pts[i + 2], zb = pts[i + 5];
+          quad([[ax + nx, ay + ny, za], [ax - nx, ay - ny, za]], [[bx + nx, by + ny, zb], [bx - nx, by - ny, zb]], dash ? s0 : -1, dash ? s0 + l : -1); s0 += l;
+        }
+      });
+      if (c.rect) {
+        const q = arr(Int16Array, c.rect);
+        for (let r = 0; r < q.length; r += 12) {
+          const v = i => [q[r + i * 3] * 0.01 + o[0], q[r + i * 3 + 1] * 0.01 + o[1], q[r + i * 3 + 2] * 0.01 + o[2]];
+          const A = v(0), B = v(1), Cc = v(2), Dd = v(3), up = (B[0] - A[0]) * (Dd[1] - A[1]) - (B[1] - A[1]) * (Dd[0] - A[0]) > 0;
+          if (up) P.push(...A, ...B, ...Cc, ...A, ...Cc, ...Dd); else P.push(...A, ...Cc, ...B, ...A, ...Dd, ...Cc);
+          D.push(-1, -1, -1, -1, -1, -1);
+        }
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+      g.setAttribute('normal', new THREE.Float32BufferAttribute(P.map((_, i) => i % 3 === 2 ? 1 : 0), 3)); g.setAttribute('aDash', new THREE.Float32BufferAttribute(D, 1));
+      const m = new THREE.Mesh(g, PAINT); m.receiveShadow = true; grp.add(m);
+    }
+    root.add(grp);
+    AREA.chunks.push({ grp, meshes, e: o[0], n: o[1] });
+  }
+  // trees (OpenStreetMap's, outside PLATEAU's own block): photo cards, as in Kannai
+  const T = arr(Float32Array, H.trees), nT = T.length / 4;
+  if (nT) {
+    const geo = cardGeo.clone(), layer = new Float32Array(nT), im = new THREE.InstancedMesh(geo, treeMat, nT), M = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0);
+    im.customDepthMaterial = treeDepth; im.castShadow = true; im.receiveShadow = true; im.layers.set(1); im.frustumCulled = false;
+    for (let i = 0; i < nT; i++) {
+      const p = enuToWorld(T[i * 4], T[i * 4 + 1], T[i * 4 + 2]), h = T[i * 4 + 3], r = Math.abs(Math.sin(p.x * 12.9898 + p.z * 78.233) * 43758.5453) % 1, w = h * (0.75 + 0.3 * r);
+      q.setFromAxisAngle(Y, r * 6.283); M.compose(p, q, sc.set(w, h, w)); im.setMatrixAt(i, M);
+      layer[i] = Math.floor((r * 7.3) % 1 * treeN); treeSpots.push(p.x, p.z);
+    }
+    geo.setAttribute('aLayer', new THREE.InstancedBufferAttribute(layer, 1)); scene.add(im); AREA.trees = im;
+  }
+  root.updateMatrixWorld(true);                                         // (now: the rays may come before the first frame drawn)
+  AREA.buf = null; AREA.state = ''; areaNear();
+}
+// chunks shown within 1.3 km of the car; their surfaces for the car's rays within 450 m (their BVHs made on first need)
+const _ce = new THREE.Vector3();
+function areaNear() {
+  if (!FRAME) return;
+  _ce.set(C.x - FRAME.o.x, 0, C.z - FRAME.o.z); const e = _ce.dot(FRAME.E), n = _ce.dot(FRAME.N);
+  AREA.near.length = 0;
+  for (const c of AREA.chunks) {
+    const d = Math.hypot(c.e - e, c.n - n);
+    c.grp.visible = d < 1300;
+    if (d < 480) for (const m of c.meshes) { if (!m.geometry.boundsTree) m.geometry.computeBoundsTree(); AREA.near.push(m); }
+  }
+}
+// the ground mesh, 1.8 km across round the car, its heights from the DEM grid (moved when the car is 300 m off its middle)
+function gridU(e, n) {
+  const G = AREA.grid, fi = Math.min(Math.max((e - G.e0) / G.step, 0), G.nx - 1.001), fj = Math.min(Math.max((n - G.n0) / G.step, 0), G.ny - 1.001);
+  const i = Math.floor(fi), j = Math.floor(fj), u = fi - i, v = fj - j, k = j * G.nx + i, A = G.u;
+  return ((A[k] * (1 - u) + A[k + 1] * u) * (1 - v) + (A[k + G.nx] * (1 - u) + A[k + G.nx + 1] * u) * v) * 0.01;
+}
+function groundFollow(force) {
+  const half = (GH.n - 1) * GH.cs / 2, cx = GH.x0 + half, cz = GH.z0 + half;
+  if (!force && Math.hypot(C.x - cx, C.z - cz) < 300) return;
+  GH.x0 = Math.round(C.x / GH.cs) * GH.cs - half; GH.z0 = Math.round(C.z / GH.cs) * GH.cs - half;
+  const n = GH.n, Pp = groundGeo.attributes.position.array, o = FRAME.o, E = FRAME.E, N = FRAME.N, U = FRAME.U;
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const k = j * n + i, x = GH.x0 + i * GH.cs, z = GH.z0 + j * GH.cs, dx = x - o.x, dz = z - o.z, e = dx * E.x + dz * E.z, nn = dx * N.x + dz * N.z;
+    const y = o.y + e * E.y + nn * N.y + gridU(e, nn) * U.y;
+    Pp[k * 3] = x; Pp[k * 3 + 1] = y; Pp[k * 3 + 2] = z; GH.h[k] = y;
+  }
+  groundGeo.attributes.position.needsUpdate = true; groundGeo.computeVertexNormals(); groundGeo.computeBoundingSphere(); GH.ready = true;
+}
+
 // ---- the car: the sim's GR Supra, driven on PLATEAU's road surface ----
 const car = new THREE.Group(); scene.add(car);
 fetchBin('models/cars/toyota_gr_supra.glb').then(buf => new GLTFLoader().parse(buf, '', g => {
@@ -616,15 +750,28 @@ const C = { x: 0, y: 0, z: 0, hdg: 0, v: 0, vy: 0, steer: 0, camYaw: 0, pitch: 0
 const L = Math.hypot(SPOT.dx, SPOT.dz);
 let placed = false, start = null;
 // the street's direction and the lane in this frame, from PLATEAU's own globe, once its tiles are placed
+// where to start: Kannai (PLATEAU's own lanes), Minato Mirai (みなとみらい大通り), Yokohama Station (国道1号); the last two
+// in east/north metres from the Kannai spot, with the way the lane runs
+const SPAWNS = [['関内', null], ['みなとみらい', { e: -1040.61, n: 940.33, de: 0.5676, dn: -0.8233 }], ['横浜駅', { e: -1551.69, n: 1739.85, de: 0.0044, dn: -1.0 }]];
+let spawnAt = Math.max(0, SPAWNS.findIndex(s => s[0] === qs.get('spawn'))), FRAME = null;
 function place() {
-  const t = sets[bmode]; if (!t || !t.ellipsoid || !t.root || Math.abs(t.group.matrixWorld.elements[13]) < 1) return;
+  const t = Object.values(sets).find(t => t.ellipsoid && t.root && Math.abs(t.group.matrixWorld.elements[13]) >= 1); if (!t) return;
   t.group.updateMatrixWorld();
   const w = (dn, de) => t.ellipsoid.getCartographicToPosition((SPOT.lat - dn / 111000) * D2R, (SPOT.lon + de / 90700) * D2R, SPOT.h, new THREE.Vector3()).applyMatrix4(t.group.matrixWorld);
   const o = w(0, 0), e = w(0, 1).sub(o).normalize(), sth = w(1, 0).sub(o).normalize();
   const f = e.clone().multiplyScalar(SPOT.dx / L).addScaledVector(sth, SPOT.dz / L).normalize(), side = e.clone().multiplyScalar(-SPOT.dz / L).addScaledVector(sth, SPOT.dx / L);
-  start = { x: o.x - side.x * 1.6, z: o.z - side.z * 1.6, hdg: Math.atan2(f.x, f.z) };
-  reset(); placed = true;
+  const N = sth.clone().negate(), U = new THREE.Vector3().crossVectors(e, N).normalize();
+  FRAME = { o, E: e, N, U, M: new THREE.Matrix4().makeBasis(e, N, U).setPosition(o) };
+  SPAWNS[0][1] = { x: o.x - side.x * 1.6, z: o.z - side.z * 1.6, hdg: Math.atan2(f.x, f.z) };
+  setSpawn(spawnAt); placed = true;
 }
+function setSpawn(i) {
+  spawnAt = i; const s = SPAWNS[i][1];
+  if (s.x !== undefined) start = s;
+  else { const p = enuToWorld(s.e, s.n, 0), d = FRAME.E.clone().multiplyScalar(s.de).addScaledVector(FRAME.N, s.dn); start = { x: p.x, z: p.z, hdg: Math.atan2(d.x, d.z) }; }
+  car.position.set(start.x, 0, start.z); reset();
+}
+function enuToWorld(e, n, u) { return new THREE.Vector3(e, n, u).applyMatrix4(FRAME.M); }
 function reset() { Object.assign(C, { x: start.x, z: start.z, hdg: start.hdg, camYaw: start.hdg, v: 0, vy: 0, steer: 0 }); C.y = groundAt(C.x, C.z, 30); }
 const ray = new THREE.Raycaster(); ray.firstHitOnly = true;
 const DOWN = new THREE.Vector3(0, -1, 0), _o = new THREE.Vector3(), _d = new THREE.Vector3();
@@ -633,7 +780,8 @@ const hitRoads = [], hitBldg = [];
 function gatherHits() {
   hitRoads.length = hitBldg.length = 0;
   if (sets.roads.group.visible) sets.roads.group.traverse(o => { if (o.isMesh && o.geometry.boundsTree) hitRoads.push(o); });
-  sets[bmode].group.traverse(o => { if (o.isMesh && o.geometry.boundsTree) hitBldg.push(o); });
+  for (const t of bsets()) if (t.group.visible) t.group.traverse(o => { if (o.isMesh && o.geometry.boundsTree) hitBldg.push(o); });
+  for (const m of AREA.near) hitRoads.push(m);
 }
 // the ground under a point: PLATEAU's road surface (a pavement, a kerb's top), else the ground between the roads
 function groundAt(x, z, yRef) {
@@ -728,7 +876,7 @@ function report(b) {
   const s = stats(b.fr), f1 = v => v.toFixed(1), on = k => sets[k] && sets[k].group.visible ? 'あり' : 'なし';
   return [`【計測 three.js 試作】${new Date().toLocaleString('ja-JP')}　関内 ${SPOT.lat}, ${SPOT.lon}（昼・${['後方', '運転席', '高い後方'][C.cam]}視点）`,
     `端末: ${navigator.userAgent}`, `GPU: ${gpuName()}　CPU ${navigator.hardwareConcurrency || '?'} コア　画面 ${innerWidth}×${innerHeight}（dpr ${devicePixelRatio}）　画質 ${QLABEL}`,
-    `建物: PLATEAU ${bmode.toUpperCase()}　道路: ${on('roads')}　樹木: ${on('trees')}　影: ${renderer.shadowMap.enabled ? 'あり' : 'なし'}　AO: ${ao.enabled ? 'あり' : 'なし'}　光のにじみ: ${bloom.enabled ? 'あり' : 'なし'}　MSAA ${Q.msaa}　影 ${Q.shadow}　AO 解像度 ${Math.round(Q.aoScale * 100)}%　描画解像度 ${Math.round(renderer.domElement.width * rscale)}×${Math.round(renderer.domElement.height * rscale)}（画面の ${Math.round(rscale * 100)}%）`,
+    `出発地点: ${SPAWNS[spawnAt][0]}　範囲 A の道路: ${AREA.state || 'あり'}　建物: PLATEAU ${bmode.toUpperCase()}（中区・西区・神奈川区）　道路: ${on('roads')}　樹木: ${on('trees')}　影: ${renderer.shadowMap.enabled ? 'あり' : 'なし'}　AO: ${ao.enabled ? 'あり' : 'なし'}　光のにじみ: ${bloom.enabled ? 'あり' : 'なし'}　MSAA ${Q.msaa}　影 ${Q.shadow}　AO 解像度 ${Math.round(Q.aoScale * 100)}%　描画解像度 ${Math.round(renderer.domElement.width * rscale)}×${Math.round(renderer.domElement.height * rscale)}（画面の ${Math.round(rscale * 100)}%）`,
     `実フレームレート ${f1(s.fps)} fps（1フレーム 中央値 ${f1(s.p50)} ms / 95% ${f1(s.p95)} ms / 最大 ${f1(s.max)} ms、${b.fr.length} フレーム）`,
     `ひっかかり（100 ms 超）${b.fr.filter(x => x > 100).length} 回、うち 1 秒超 ${b.fr.filter(x => x > 1000).length} 回　1 秒超を除いた実フレームレート ${f1(stats(b.fr.filter(x => x <= 1000).length ? b.fr.filter(x => x <= 1000) : b.fr).fps)} fps　計測中にタブが裏に回った: ${b.hidden ? 'あり' : 'なし'}　読み込み中のタイル（計測開始時）${b.busy}`,
     `1フレームの JS ${f1(b.js / b.fr.length)} ms　描画呼出 ${Math.round(b.calls / b.fr.length)}　三角形 ${Math.round(b.tris / b.fr.length / 1000)} 千　テクスチャ ${renderer.info.memory.textures}　ジオメトリ ${renderer.info.memory.geometries}`].join('\n');
@@ -741,7 +889,10 @@ function loop(now) {
   // the newly shown road and tree tiles; a few of the buildings' BVHs; the ground, now and then, as the roads come in
   for (let i = pending.length - 1; i >= 0; i--) { const s = pending[i]; if (!s.parent) continue; pending.splice(i, 1); if (s.userData.kind === 'roads') processRoads(s); else processTrees(s); }
   for (const tEnd = performance.now() + 6; bvhQueue.length && performance.now() < tEnd;) { const g = bvhQueue.shift(); if (!g.boundsTree && !g.userData.gone && g.attributes.position) g.computeBoundsTree(); }
-  if (GH.dirty && now - GH.at > 1500) { GH.dirty = false; GH.at = now; groundRebuild(); }
+  if (AREA.grid) groundFollow(); else if (GH.dirty && now - GH.at > 1500) { GH.dirty = false; GH.at = now; groundRebuild(); }
+  if (FRAME && AREA.buf && !AREA.built) buildArea();
+  if (AREA.built && (fr.length % 20) === 0) areaNear();
+  if (water.visible) water.position.set(C.x, water.position.y, C.z);
   gatherHits();
   if (!placed) place();
   if (placed) drive(dt);
@@ -756,9 +907,9 @@ function loop(now) {
   const js = performance.now() - t0, inf = renderer.info.render;
   if (bench) { bench.fr.push(real); bench.js += js; bench.calls += inf.calls; bench.tris += inf.triangles; if (now - bench.t0 > 10000) { out.value = report(bench); out.style.display = 'block'; bench = null; window.__benchDone = out.value; } }
   if ((fr.length & 15) === 0) {
-    const s = stats(fr.slice(-60)), tl = sets[bmode], ld = Object.values(sets).reduce((a, t) => a + (t.stats ? t.stats.downloading + t.stats.parsing : 0), 0);
+    const s = stats(fr.slice(-60)), ld = Object.values(sets).reduce((a, t) => a + (t.stats ? t.stats.downloading + t.stats.parsing : 0), 0);
     if (!placed && now > 20000) { hud.textContent = 'PLATEAU の街のデータ（assets.cms.plateau.reearth.io）を読み込めません。\nこのページの置き場所によっては外部データへの接続が制限されます。\nGitHub 版で開いてください:\nhttps://raw.githack.com/kazuki8198-glitch/otinti/claude/what-is-this-db5aue/plateau-three.html'; hud.style.pointerEvents = 'auto'; hud.style.userSelect = 'text'; }
-    else hud.textContent = `実 ${s.fps.toFixed(1)} fps　中央値 ${s.p50.toFixed(1)} ms　画質 ${QN === 'high' ? '高' : QN === 'mid' ? '中' : '軽量'} ${Math.round(rscale * 100)}%\n描画呼出 ${inf.calls}　三角形 ${(inf.triangles / 1000).toFixed(0)} 千\nPLATEAU ${bmode.toUpperCase()} 表示 ${tl.visibleTiles ? tl.visibleTiles.size : '?'} タイル　読込中 ${ld}\n${Math.round(Math.abs(C.v) * 3.6)} km/h${C.hand ? '　サイドブレーキ' : ''}`;
+    else hud.textContent = `実 ${s.fps.toFixed(1)} fps　中央値 ${s.p50.toFixed(1)} ms　画質 ${QN === 'high' ? '高' : QN === 'mid' ? '中' : '軽量'} ${Math.round(rscale * 100)}%\n描画呼出 ${inf.calls}　三角形 ${(inf.triangles / 1000).toFixed(0)} 千\nPLATEAU ${bmode.toUpperCase()} 表示 ${bsets().reduce((a, t) => a + (t.visibleTiles ? t.visibleTiles.size : 0), 0)} タイル　読込中 ${ld}　${SPAWNS[spawnAt][0]}${AREA.state ? '　' + AREA.state : ''}\n${Math.round(Math.abs(C.v) * 3.6)} km/h${C.hand ? '　サイドブレーキ' : ''}`;
   }
   requestAnimationFrame(loop);
 }
@@ -773,6 +924,7 @@ document.getElementById('panel').addEventListener('click', e => {
   if (t === 'ao') { ao.enabled = !ao.enabled; b.classList.toggle('on', ao.enabled); }
   if (t === 'bloom') { bloom.enabled = !bloom.enabled; b.classList.toggle('on', bloom.enabled); }
   if (b.dataset.a === 'cam') C.cam = (C.cam + 1) % 3;
+  if (b.dataset.a === 'spawn' && FRAME) setSpawn((spawnAt + 1) % SPAWNS.length);
   if (b.dataset.a === 'q') { const u = new URL(location.href); u.searchParams.set('q', { high: 'mid', mid: 'low', low: 'high' }[QN]); location.href = u.href; }   // (MSAA and the shadow map are set at the start: reloads)
   if (b.dataset.a === 'bench') { bench = { hidden: document.hidden, busy: Object.values(sets).reduce((a, t) => a + (t.stats ? t.stats.downloading + t.stats.parsing : 0), 0), t0: performance.now(), fr: [], js: 0, calls: 0, tris: 0 }; out.style.display = 'block'; out.value = '計測中（10 秒、操作しないでください）…'; }
   if (b.dataset.a === 'copy') { out.select(); navigator.clipboard && navigator.clipboard.writeText(out.value).catch(() => document.execCommand('copy')); }

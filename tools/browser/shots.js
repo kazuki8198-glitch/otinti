@@ -18,7 +18,7 @@ const fs = require('fs'), path = require('path');
   page.on('console', m => { if (m.type() === 'error') console.log('CONSOLE: ' + m.text().slice(0, 200)); });
   await page.goto('http://127.0.0.1:8765/plateau-three.html' + (process.env.Q || '?q=high'), { waitUntil: 'load' });
   // (drawing here takes seconds a frame: the buildings' set-up, 5 ms a frame in the page, gets 400 ms; the old page has none)
-  await page.waitForFunction(() => window.__three, null, { timeout: 120000 }).catch(() => {}); await page.evaluate(() => { if (window.__three.BLD) window.__three.BLD.jobMs = 400; });
+  await page.waitForFunction(() => window.__three, null, { timeout: 120000 }).catch(() => {}); await page.evaluate(() => { if (window.__three.BLD) window.__three.BLD.jobMs = 3000; });
   const busy = () => page.evaluate(() => { const T = window.__three; if (!T || !T.enuToWorld(0, 0, 0)) return 99; return Object.values(T.sets).reduce((a, t) => a + t.stats.downloading + t.stats.parsing, 0) + (T.BLD ? T.BLD.queue.length + (T.BLD.jobs ? T.BLD.jobs.length : 0) : 0); });
   const settle = async (min) => { let calm = 0; for (let i = 0; i < min * 6; i++) { await page.waitForTimeout(10000); calm = (await busy()) === 0 ? calm + 1 : 0; if (calm >= 2) return true; } return false; };
   await settle(+(process.env.MAXMIN || 8));

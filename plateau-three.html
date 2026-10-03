@@ -411,6 +411,7 @@ vec4 fT(highp sampler2D t, int k) { return texelFetch(t, ivec2(k % 1024, k / 102
     if (aWall >= 0.0) { int rw = int(aWall + 0.5) * 2; vW0 = fT(tWall, rw); vW1 = fT(tWall, rw + 1); } else { vW0 = vec4(0.0, 1.0, 0.0, 2.0); vW1 = vec4(1.0, 0.0, 0.0, 0.0); }`);
   sh.fragmentShader = `flat varying vec4 vB0, vB1, vB2, vB3, vB4, vW0, vW1; varying vec3 vW; varying vec3 vWN;
 float fGlass = 0.0; vec4 sNR = vec4(0.5, 0.5, 0.8, 0.0);
+float wN(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); float a = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5), b = fract(sin(dot(i + vec2(1, 0), vec2(127.1, 311.7))) * 43758.5), c = fract(sin(dot(i + vec2(0, 1), vec2(127.1, 311.7))) * 43758.5), d = fract(sin(dot(i + vec2(1, 1), vec2(127.1, 311.7))) * 43758.5); return mix(mix(a, b, f.x), mix(c, d, f.x), f.y); }
 ${GLSL_IH}
 ${GLSL_SURF}
 ` + sh.fragmentShader
@@ -423,6 +424,7 @@ ${GLSL_SURF}
       if (abs(N0.y) < 0.15) {
         vec2 t = vW1.xy; float u = dot(vW.xz, t), rel = vW.y - base;
         vec4 S = surfS(layer, vec2(u, vW.y)); col = tint * texture(tAlb, S.xyz).rgb; sNR = texture(tNR, S.xyz); rough = sNR.z;
+        col *= 0.9 + 0.16 * (wN(vec2(u, vW.y) * vec2(0.35, 0.5)) * 0.6 + wN(vec2(u, vW.y) * 1.7) * 0.4);   // (the same unevenness as near: no change at the hand-over)
         int fl = int(vW0.w + 0.5); int flags = fl % 256; uint wi = uint(fl / 256);
         float bayStart = vW0.x, bayW = vW0.y, g0 = vW1.z, g1 = vW1.w;
         float glass = 0.0, frame = 0.0, dark = 0.0, light = 0.0;
@@ -479,7 +481,7 @@ ${GLSL_SURF}
     .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n roughnessFactor = sNR.z;')
     .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n if (fGlass < 0.5) ' + surfNormal);
 };
-facadeMat.customProgramCacheKey = () => 'facade-v3';
+facadeMat.customProgramCacheKey = () => 'facade-v4';
 // ---- the near walls (and their parapets, plinths, bands): the same arrays, their uv in metres, layer and tint per vertex ----
 const bldMat = new THREE.MeshStandardMaterial({ roughness: 0.85, metalness: 0 });
 bldMat.onBeforeCompile = sh => {
@@ -595,6 +597,14 @@ function* bldAnalyse(o, ids) {
       const push = () => r.walls.push({ nx: p.nx, nz: p.nz, d: p.d, u0: cur[0], u1: cur[1], y0: cur[4], y1: cur[2], tris: cur[3] });
       for (const s of p.sp) { if (cur && s[0] <= cur[1] + 0.3) { cur[1] = Math.max(cur[1], s[1]); cur[2] = Math.max(cur[2], s[2]); cur[3].push(s[3]); cur[4] = Math.min(cur[4], s[4]); } else { if (cur) push(); cur = [s[0], s[1], s[2], [s[3]], s[4]]; } }
       if (cur) push();
+    }
+    // one wall split in two by the planes' rounding (d at a bin's edge): the same facing, within 0.3 m, overlapping or
+    // touching along the wall: merged, else each would be rebuilt with its own openings over the other's
+    for (let i = 0; i < r.walls.length; i++) for (let j = r.walls.length - 1; j > i; j--) {
+      const a = r.walls[i], b = r.walls[j];
+      if (a.nx * b.nx + a.nz * b.nz < 0.995 || Math.abs(a.d - b.d) > 0.3 || Math.min(a.u1, b.u1) - Math.max(a.u0, b.u0) < -0.3) continue;
+      const la = a.u1 - a.u0, lb = b.u1 - b.u0; a.d = (a.d * la + b.d * lb) / (la + lb || 1);
+      a.u0 = Math.min(a.u0, b.u0); a.u1 = Math.max(a.u1, b.u1); a.y0 = Math.min(a.y0, b.y0); a.y1 = Math.max(a.y1, b.y1); a.tris.push(...b.tris); r.walls.splice(j, 1);
     }
     r.walls = r.walls.filter(w => w.u1 - w.u0 > 0.3);
     r.walls.forEach((w, i) => { for (const t of w.tris) triW[t] = i; w.tris = null; });

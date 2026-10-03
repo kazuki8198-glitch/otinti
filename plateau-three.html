@@ -1009,6 +1009,7 @@ const KIT = new Map(), KITF = {
   mast: () => [[geoBoxes([[-0.04, 0.04, 0, 3.5, -0.04, 0.04, 0.6, 0.6, 0.6], [-0.6, 0.6, 3.0, 3.04, -0.02, 0.02, 0.6, 0.6, 0.6], [-0.4, 0.4, 2.5, 2.54, -0.02, 0.02, 0.6, 0.6, 0.6]]), partMat]],
   fence: () => [[geoBoxes([[-0.5, 0.5, 0, 1, -0.06, 0.06, 1, 1, 1]]), blockMat], [geoBoxes([[-0.5, 0.5, 1, 1.06, -0.08, 0.08, 0.9, 0.9, 0.9]]), partMat]],
   step: () => [[geoBoxes([[-0.5, 0.5, -0.2, 0.0, 0, 1, 0.62, 0.62, 0.6]]), partMat]],
+  pad: () => [[geoBoxes([[-0.5, 0.5, -0.1, 0.03, 0, 1, 1, 1, 1], [-0.32, -0.18, 0.03, 0.13, 0.12, 0.18, 0.85, 0.85, 0.83], [0.18, 0.32, 0.03, 0.13, 0.12, 0.18, 0.85, 0.85, 0.83]]), partMat]],
 };
 function kitGet(key) {
   let k = KIT.get(key); if (k) return k;
@@ -1228,7 +1229,16 @@ function bldMake(r) {
     // a house's front: a block wall along the street with a gate gap at the door (where there is room before the road)
     if (L.type === BT.HOUSE && w === front && w.street && w.street.gap >= 1.4 && w.street.c >= 3) {
       const z = Math.min(w.street.gap - 0.4, 3), door = ops.find(o => o.kind === 'door'), g0 = door ? door.u0 - 0.3 : 1e9, g1 = door ? door.u1 + 0.3 : -1e9;
-      for (let x = w.u0 + 0.5; x < w.u1; x += 1) if (x + 0.5 < g0 || x - 0.5 > g1) put('fence', pm(F, x, base, z, 1, 0.9 + R(9, 0) * 0.4, 1), pick(R(10, 0), [[0.72, 0.72, 0.7], [0.82, 0.8, 0.76], [0.55, 0.55, 0.55]]));
+      // a parking space (estimated: most detached houses here have one where the front is deep enough): the wall's end away
+      // from the door, 2.6 m of it open to the street, a concrete pad with its wheel stops
+      let p0 = 1e9, p1 = -1e9;
+      if (w.street.gap >= 2.4 && w.u1 - w.u0 >= 5.5 && R(12, 0) < 0.7) {
+        const far = door ? (door.u0 + door.u1) / 2 < (w.u0 + w.u1) / 2 : R(13, 0) < 0.5;
+        p0 = far ? w.u1 - 2.9 : w.u0 + 0.3; p1 = p0 + 2.6;
+        if (!door || p1 < door.u0 - 0.2 || p0 > door.u1 + 0.2) put('pad', pm(F, (p0 + p1) / 2, base, 0, 2.6, 1, z + 0.06), [0.66, 0.65, 0.62]);
+        else p0 = 1e9, p1 = -1e9;
+      }
+      for (let x = w.u0 + 0.5; x < w.u1; x += 1) if ((x + 0.5 < g0 || x - 0.5 > g1) && (x + 0.5 < p0 || x - 0.5 > p1)) put('fence', pm(F, x, base, z, 1, 0.9 + R(9, 0) * 0.4, 1), pick(R(10, 0), [[0.72, 0.72, 0.7], [0.82, 0.8, 0.76], [0.55, 0.55, 0.55]]));
     }
   }
   // the roof: plant on flat roofs, gutters on houses

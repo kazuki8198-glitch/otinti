@@ -968,7 +968,7 @@ function bldFillParts() {
     if (!ent || ent.cap < n) {
       if (ent) for (const im of ent.ims) { BLD.group.remove(im); im.dispose(); }
       const cap = Math.max(16, 2 ** Math.ceil(Math.log2(n)));
-      ent = { cap, ims: kitGet(key).map(([g, m]) => { const im = new THREE.InstancedMesh(g, m, cap); im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3); im.frustumCulled = false; im.castShadow = m !== curtainMat && !NOSHADOW_KITS.has(key.split(':')[0]);   /* (the panes too: the rebuilt building is hollow, so without them the sun shone through its windows onto the street) */ im.receiveShadow = true; BLD.group.add(im); return im; }) };
+      ent = { cap, ims: kitGet(key).map(([g, m]) => { const im = new THREE.InstancedMesh(g, m, cap); im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3); im.frustumCulled = false; im.castShadow = m !== curtainMat && m !== frameMat && !NOSHADOW_KITS.has(key.split(':')[0]); im.layers.set(1);   /* (frames: the panes cast the window's shadow; layer 1: left out of the AO's own redraw of the scene, where these small parts cost a third of its draws) */   /* (the panes too: the rebuilt building is hollow, so without them the sun shone through its windows onto the street) */ im.receiveShadow = true; BLD.group.add(im); return im; }) };
       BLDI.set(key, ent);
     }
     let at = 0;

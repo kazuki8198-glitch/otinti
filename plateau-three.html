@@ -403,6 +403,34 @@ vec4 surfS(float L, vec2 m) { return vec4(m.x / uSize[int(L)], -m.y / uSize[int(
 const surfNormal = `{ vec3 N0 = normalize(vWN), T0 = surfT(N0), B0 = cross(N0, T0); vec3 tn = vec3(sNR.xy * 2.0 - 1.0, 0.0); tn.xy *= 0.8; tn.z = sqrt(max(0.0, 1.0 - dot(tn.xy, tn.xy)));
   normal = normalize((viewMatrix * vec4(normalize(T0 * tn.x + B0 * tn.y + N0 * tn.z), 0.0)).xyz); }`;
 
+// ---- PLATEAU's photo-textured buildings up close: the aerial photo is 3-13 texels a metre (a smear at 10 m), so near the
+// car its walls get a real surface under the photo (the concrete layer's relief and grain, at its real size, fading out
+// by 80 m) and its dark patches (windows, in the photo) turn to glass: smooth, a little metallic, the sky in them. The
+// photo's colours, signs and the modelled openings (LOD3) stay as they are ----
+function photoDetail(m) {
+  m.onBeforeCompile = sh => {
+    Object.assign(sh.uniforms, { tAlb: FTEX.alb, tNR: FTEX.nr, uSize: FTEX.size });
+    sh.vertexShader = 'varying vec3 vW; varying vec3 vWN;\n' + sh.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>
+    vW = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal);`);
+    sh.fragmentShader = `varying vec3 vW; varying vec3 vWN; vec4 sNR = vec4(0.5, 0.5, 0.8, 0.0); float pWin = 0.0, pFd = 0.0;
+${GLSL_SURF}
+` + sh.fragmentShader
+      .replace('#include <map_fragment>', `#include <map_fragment>
+    { vec3 N0 = normalize(vWN); float wall = step(abs(N0.y), 0.3); pFd = wall * (1.0 - smoothstep(25.0, 80.0, length(vW - cameraPosition)));
+      if (pFd > 0.0) {
+        vec3 T0 = surfT(N0); vec4 S = surfS(3.0, vec2(dot(vW, T0), vW.y)); sNR = texture(tNR, S.xyz);
+        float lum = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)); pWin = pFd * smoothstep(0.075, 0.025, lum);
+        diffuseColor.rgb *= mix(1.0, 0.82 + 0.36 * texture(tAlb, S.xyz).r, 0.6 * pFd * (1.0 - pWin));
+      } }`)
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = mix(mix(roughnessFactor, sNR.z, 0.5 * pFd), 0.1, pWin);')
+      .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\n  metalnessFactor = mix(metalnessFactor, 0.3, pWin);')
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+    if (pFd > 0.0) { vec3 N0 = normalize(vWN), T0 = surfT(N0), B0 = cross(N0, T0); vec3 tn = vec3((sNR.xy * 2.0 - 1.0) * 0.8 * pFd * (1.0 - pWin), 0.0); tn.z = sqrt(max(0.0, 1.0 - dot(tn.xy, tn.xy)));
+      normal = normalize((viewMatrix * vec4(normalize(T0 * tn.x + B0 * tn.y + N0 * tn.z), 0.0)).xyz); }`);
+  };
+  m.customProgramCacheKey = () => 'photo-detail-v1';
+}
+
 // ---- the far shader: PLATEAU's walls with the layout painted, the roofs (flat: concrete; houses: slate or kawara) ----
 const facadeMat = new THREE.MeshStandardMaterial({ roughness: 0.85, metalness: 0 });
 facadeMat.onBeforeCompile = sh => {
@@ -1345,6 +1373,7 @@ function makeTiles(name, rad, err) {
       for (const m of ms) {
         if (m.map) { m.map.anisotropy = Math.min(maxAniso, QN === 'low' ? 4 : 16); if (m.map.image && m.map.image.__src) { TEXREG.set(m.map, { tex: m.map, src: m.map.image.__src, mesh: o }); texAfterUpload(m.map); } }
         if ('roughness' in m) { m.roughness = 0.88; m.metalness = 0; }
+        if (m.map && !m.userData.detail) { m.userData.detail = true; photoDetail(m); }
       }
       if (!ms.some(m => m.map)) { o.userData.facade = true; plain = true; }   // (no photo at all: its walls are drawn)
       else if (PHOTO_SETS.has(name)) { o.userData.photo = true; o.userData.lod3 = name === 'lod3'; photo = true; }
@@ -1370,7 +1399,8 @@ function makeTiles(name, rad, err) {
 }
 // the buildings: Naka ward (Kannai) and Nishi ward (Minato Mirai, Yokohama Station) at LOD3, Kanagawa ward (north of the
 // station) at LOD2; or all at LOD2. Each loads only round the car; one memory budget for them all
-const PHOTO_SETS = new Set(['lod2', 'lod3', 'nishi2', 'kana2']);   // (LOD2 and Naka's LOD3 with photos: their smeared walls rebuilt near, see bldPhotoSetup)
+const PHOTO_SETS = new Set(['lod2', 'nishi2', 'kana2']);   // (LOD2 with photos: their smeared walls rebuilt near, see bldPhotoSetup. Naka's LOD3 keeps its
+// modelled openings and details, the real ones: rebuilt it lost them, so it gets photoDetail only)
 const MODES = { lod3: ['lod2', 'lod3', 'nishi2', 'kana2', 'minami1'], lod2: ['lod2', 'nishi2', 'kana2', 'minami1'] };   // (Nishi's LOD3 set is the same as its LOD2: same buildings, pictures, bytes)
 let bmode = qs.get('lod') === '2' ? 'lod2' : 'lod3', sharedLru = null;
 const bsets = () => MODES[bmode].map(k => sets[k]).filter(Boolean);

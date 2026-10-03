@@ -2,14 +2,25 @@
 # DataArrayTexture): albedo.jpg (1024 x 1024 per layer) and nr.jpg (512 x 512 per layer: R, G = the normal's x, y
 # (OpenGL convention), B = roughness). Sources: Poly Haven (CC0, https://polyhaven.com/license), 1k JPG sets, in SRC.
 # Materials a building's colour tints are made grey with their mean brightness at 0.78 (the pattern kept); the others
-# keep their colour. Each layer's real size (metres per image) is in LAYERS: the page tiles them at that size.
+# keep their colour. Sources fetched with `--fetch` (1k JPG from dl.polyhaven.org into SRC). Each layer's real size (metres per image) is in LAYERS: the page tiles them at that size.
 import sys, os, json, numpy as np
 from PIL import Image
-SRC = sys.argv[1] if len(sys.argv) > 1 else '.'; OUT = sys.argv[2] if len(sys.argv) > 2 else '../../models/tex/facade'
+args = [a for a in sys.argv[1:] if not a.startswith('--')]
+SRC = args[0] if len(args) > 0 else '.'; OUT = args[1] if len(args) > 1 else '../../models/tex/facade'
 LAYERS = [  # (name, Poly Haven id, metres per image, tinted)
     ('render', 'white_stucco', 2.0, True), ('tile', 'rectangular_facade_tiles', 2.0, True), ('mosaic', 'rounded_square_tiled_wall', 2.0, True),
     ('concrete', 'concrete_wall_004', 2.0, True), ('siding', 'exterior_wall_cladding_03', 1.96, True), ('brick', 'exterior_wall_cladding_02', 1.99, False),
-    ('metal', 'box_profile_metal_sheet', 2.0, True), ('shutter', 'painted_metal_shutter', 2.0, True), ('slate', 'roof_slates_03', 3.0, False), ('kawara', 'grey_roof_tiles', 3.0, False)]
+    ('metal', 'box_profile_metal_sheet', 2.0, True), ('shutter', 'painted_metal_shutter', 2.0, True), ('slate', 'roof_slates_03', 3.0, False), ('kawara', 'grey_roof_tiles', 3.0, False),
+    # (added: fair-faced concrete panels, tiled facades, a beige render, corrugated slate (factories, warehouses), concrete blocks)
+    ('rcpanel', 'concrete_panels', 8.0, True), ('ctile', 'concrete_tile_facade', 2.09, True), ('beige', 'beige_wall_001', 3.0, False),
+    ('slatewave', 'asbestos_sheet', 2.0, True), ('block', 'concrete_block_wall', 2.0, True)]
+if '--fetch' in sys.argv:
+    import urllib.request
+    os.makedirs(SRC, exist_ok=True)
+    for _, pid, _, _ in LAYERS:
+        for k in ('diff', 'nor_gl', 'rough'):
+            f = f'{SRC}/{pid}_{k}_1k.jpg'
+            if not os.path.exists(f): urllib.request.urlretrieve(f'https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/{pid}/{pid}_{k}_1k.jpg', f)
 A = []; N = []
 for name, pid, size, tint in LAYERS:
     a = np.asarray(Image.open(f'{SRC}/{pid}_diff_1k.jpg').convert('RGB').resize((1024, 1024), Image.LANCZOS)).astype(np.float32) / 255

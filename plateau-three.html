@@ -352,8 +352,8 @@ function texAfterUpload(tex) { tex.onUpdate = () => { const im = tex.image; if (
 // shared, instanced kit. Everything is chosen from the gml_id, so a building looks the same each time ----
 const FACADE = { made: new Set() };
 const BT = { HOUSE: 1, APT: 2, OFFICE: 3, SHOP: 4, WARE: 5 }, BTNAME = ['', '戸建て', '集合住宅', '事務所', '店舗付き小ビル', '倉庫・工場'];
-const LY = { render: 0, tile: 1, mosaic: 2, concrete: 3, siding: 4, brick: 5, metal: 6, shutter: 7, slate: 8, kawara: 9 };
-const LSIZE = [2.0, 2.0, 2.0, 2.0, 1.96, 1.99, 2.0, 2.0, 3.0, 3.0];       // (metres per image: models/tex/facade/layers.json)
+const LY = { render: 0, tile: 1, mosaic: 2, concrete: 3, siding: 4, brick: 5, metal: 6, shutter: 7, slate: 8, kawara: 9, rcpanel: 10, ctile: 11, beige: 12, slatewave: 13, block: 14 };
+const LSIZE = [2.0, 2.0, 2.0, 2.0, 1.96, 1.99, 2.0, 2.0, 3.0, 3.0, 8.0, 2.09, 3.0, 2.0, 2.0];       // (metres per image: models/tex/facade/layers.json)
 // an integer hash, the same here and in the shaders (so a window drawn far off is where its sash is near)
 function ih(a, b, c, d) {
   let h = Math.imul((a | 0) ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul((b | 0) + 0x632be5ab, 0xc2b2ae35) ^ Math.imul((c | 0) + 0x27d4eb2f, 0x165667b1) ^ Math.imul((d | 0) + 0x7f4a7c15, 0x2c1b3c6d);
@@ -381,7 +381,7 @@ class SlotTex {
 const BTEX = new SlotTex(5), WTEX = new SlotTex(2);
 // the materials: stacked images made into texture arrays (albedo; normal x, y + roughness)
 function arrayTex(w, n, srgb) { const t = new THREE.DataArrayTexture(new Uint8Array(w * w * n * 4).fill(160), w, w, n); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter; t.generateMipmaps = true; if (srgb) t.colorSpace = THREE.SRGBColorSpace; t.needsUpdate = true; return t; }
-const FTEX = { alb: { value: arrayTex(4, 10, true) }, nr: { value: arrayTex(4, 10, false) }, size: { value: LSIZE } };
+const FTEX = { alb: { value: arrayTex(4, 15, true) }, nr: { value: arrayTex(4, 15, false) }, size: { value: LSIZE } };
 FTEX.nr.value.image.data.fill(128);
 function loadArray(url, w, n, srgb, uni) {
   const im = new Image(); im.crossOrigin = 'anonymous';
@@ -394,10 +394,10 @@ function loadArray(url, w, n, srgb, uni) {
   };
   im.src = url;
 }
-loadArray('models/tex/facade/albedo.jpg', 1024, 10, true, FTEX.alb); loadArray('models/tex/facade/nr.jpg', 512, 10, false, FTEX.nr);
+loadArray('models/tex/facade/albedo.jpg', 1024, 15, true, FTEX.alb); loadArray('models/tex/facade/nr.jpg', 512, 15, false, FTEX.nr);
 // the shared part of the materials' shaders: a surface's colour, normal and roughness from the arrays, at real size,
 // its frame from its own normal (walls: along them and up; roofs: along the ridge and up the slope; flat: x, z)
-const GLSL_SURF = `uniform highp sampler2DArray tAlb; uniform highp sampler2DArray tNR; uniform float uSize[10];
+const GLSL_SURF = `uniform highp sampler2DArray tAlb; uniform highp sampler2DArray tNR; uniform float uSize[15];
 vec3 surfT(vec3 N) { return abs(N.y) < 0.985 ? normalize(vec3(N.z, 0.0, -N.x)) : vec3(1.0, 0.0, 0.0); }
 vec4 surfS(float L, vec2 m) { return vec4(m.x / uSize[int(L)], -m.y / uSize[int(L)], L, 0.0); }`;
 const surfNormal = `{ vec3 N0 = normalize(vWN), T0 = surfT(N0), B0 = cross(N0, T0); vec3 tn = vec3(sNR.xy * 2.0 - 1.0, 0.0); tn.xy *= 0.8; tn.z = sqrt(max(0.0, 1.0 - dot(tn.xy, tn.xy)));
@@ -709,7 +709,7 @@ function bldDecide(r) {
   L.shopGround = (type === BT.APT || type === BT.OFFICE) && streetW.length && (shops > 0 || (cls <= 3 && R(3) < 0.35));
   if (type === BT.HOUSE) {
     Object.assign(L, { gH: 2.85, fH: 2.85, winW: pick(R(4), [1.65, 1.65, 1.2]), winH: 1.1, sill: 0.9, bayW: 2.7 + R(5) * 0.8, pCol: 0.22, pCell: 0.15, depth: 0.1,
-      layer: R(6) < 0.55 ? LY.siding : LY.render, tint: pick(R(7), TINTS.house), parapet: 0, frame: pick(R(8), [[0.62, 0.63, 0.64], [0.30, 0.27, 0.24], [0.9, 0.9, 0.88]]) });
+      layer: R(6) < 0.45 ? LY.siding : R(6) < 0.75 ? LY.render : LY.beige, tint: pick(R(7), TINTS.house), parapet: 0, frame: pick(R(8), [[0.62, 0.63, 0.64], [0.30, 0.27, 0.24], [0.9, 0.9, 0.88]]) });
     // the roof: gable or hip on the outline's box, its ridge at the measured height (PLATEAU's LOD1 height is the highest point)
     const ob = obbOf(r);
     if (ob && !r.noRoof && ob.rect >= 0.8 && H >= 4.8 && A <= 320 && ob.la >= 3.5 && ob.lb >= 3.0) {
@@ -720,20 +720,22 @@ function bldDecide(r) {
   } else if (type === BT.APT) {
     const bw = 3.6 + R(4) * 0.9;
     Object.assign(L, { gH: L.shopGround ? 3.8 : 3.0, fH: 2.85 + R(5) * 0.2, winW: pick(R(6), [0.8, 1.2, 1.65]), winH: 1.1, sill: 1.0, bayW: 2.6 + R(12) * 0.6, balcW: bw, bdW: Math.min(bw - 1.4, 1.7 + R(13) * 0.9),
-      pCol: 0.35, pCell: 0.06, depth: 0.15, layer: pick(R(7), [LY.tile, LY.tile, LY.render, LY.render, LY.mosaic, LY.brick, LY.tile]), tint: pick(R(8), TINTS.rc), parapet: 0.8,
+      pCol: 0.35, pCell: 0.06, depth: 0.15, layer: pick(R(7), [LY.tile, LY.ctile, LY.render, LY.beige, LY.mosaic, LY.brick, LY.tile, LY.ctile]), tint: pick(R(8), TINTS.rc), parapet: 0.8,
       frame: pick(R(9), [[0.62, 0.63, 0.64], [0.32, 0.30, 0.28], [0.62, 0.63, 0.64]]) });
   } else if (type === BT.OFFICE) {
     const ribbon = R(4) < 0.35;
     Object.assign(L, { gH: 4.0 + R(5) * 0.6, fH: 3.5 + R(6) * 0.4, winW: ribbon ? 1.55 : 1.8, winH: 1.6, sill: 0.8, bayW: ribbon ? 1.8 : 3.0 + R(12) * 0.6, pCol: ribbon ? 0 : 0.04, pCell: 0.02, depth: 0.2,
-      layer: pick(R(7), [LY.tile, LY.tile, LY.mosaic, LY.concrete, LY.render]), tint: pick(R(8), TINTS.rc), parapet: 0.9, frame: pick(R(9), [[0.62, 0.63, 0.64], [0.25, 0.25, 0.26], [0.75, 0.75, 0.74]]) });
+      layer: pick(R(7), [LY.tile, LY.ctile, LY.mosaic, LY.concrete, LY.render, LY.rcpanel]), tint: pick(R(8), TINTS.rc), parapet: 0.9, frame: pick(R(9), [[0.62, 0.63, 0.64], [0.25, 0.25, 0.26], [0.75, 0.75, 0.74]]) });
   } else if (type === BT.SHOP) {
     Object.assign(L, { gH: 3.6 + R(5) * 0.6, fH: 3.0 + R(6) * 0.3, winW: pick(R(4), [1.2, 1.2, 1.65]), winH: 1.4, sill: 0.8, bayW: 2.4 + R(12) * 0.6, pCol: 0.1, pCell: 0.08, depth: 0.15,
-      layer: pick(R(7), [LY.tile, LY.render, LY.mosaic, LY.tile, LY.brick]), tint: pick(R(8), TINTS.rc), parapet: 0.7, frame: pick(R(9), [[0.62, 0.63, 0.64], [0.3, 0.28, 0.26]]),
+      layer: pick(R(7), [LY.tile, LY.render, LY.mosaic, LY.ctile, LY.brick, LY.beige]), tint: pick(R(8), TINTS.rc), parapet: 0.7, frame: pick(R(9), [[0.62, 0.63, 0.64], [0.3, 0.28, 0.26]]),
       shutter: R(14) < 0.25, awning: R(15) < 0.5, sign: pick(R(16), [[0.62, 0.12, 0.10], [0.10, 0.26, 0.52], [0.80, 0.62, 0.15], [0.12, 0.38, 0.20], [0.78, 0.78, 0.76], [0.15, 0.15, 0.16]]) });
   } else {
     Object.assign(L, { gH: Math.max(3, H - 0.6), fH: 4, winW: 1.8, winH: 0.9, sill: Math.max(2.2, Math.min(H - 2.0, 4.8)), bayW: 4.5 + R(5) * 1.5, pCol: 0.3, pCell: 0, depth: 0.1,
-      layer: R(7) < 0.75 ? LY.metal : LY.concrete, tint: pick(R(8), TINTS.ware), parapet: 0.3, frame: [0.7, 0.7, 0.7] });
+      layer: R(7) < 0.5 ? LY.metal : R(7) < 0.75 ? LY.slatewave : LY.concrete, tint: pick(R(8), TINTS.ware), parapet: 0.3, frame: [0.7, 0.7, 0.7] });
   }
+  // the materials that carry their own colour (brick, the beige plaster): a light, near-neutral tint, not a second colour on top
+  if (L.layer === LY.brick || L.layer === LY.beige) L.tint = pick(R(17), [[0.80, 0.78, 0.75], [0.74, 0.72, 0.70], [0.86, 0.84, 0.80]]);
   if (type === BT.SHOP && !L.sign) L.sign = [0.9, 0.9, 0.88];
   if (L.shopGround) L.sign = pick(R(16), [[0.62, 0.12, 0.10], [0.10, 0.26, 0.52], [0.80, 0.62, 0.15], [0.12, 0.38, 0.20], [0.78, 0.78, 0.76]]);
   // storeys: up to the eave (houses) or below the parapet; OSM's levels where tagged
@@ -909,6 +911,25 @@ function kitShader(m, key, vary, own) {   // (own: the material's colour only, n
   };
   m.customProgramCacheKey = () => key;
 }
+// block walls: the concrete-block layer at its real size (blocks 0.39 x 0.19 m), in world position, so no two fences repeat in step
+const blockMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0 });
+blockMat.onBeforeCompile = sh => {
+  sh.uniforms.tAlb = FTEX.alb; sh.uniforms.uSize = FTEX.size;
+  sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vBW; varying vec3 vBN;').replace('#include <project_vertex>', `#include <project_vertex>
+  vec4 bw = vec4(transformed, 1.0);
+#ifdef USE_INSTANCING
+  bw = instanceMatrix * bw;
+  vBN = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * objectNormal);
+#else
+  vBN = normalize(mat3(modelMatrix) * objectNormal);
+#endif
+  vBW = (modelMatrix * bw).xyz;`);
+  sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform highp sampler2DArray tAlb; uniform float uSize[15]; varying vec3 vBW; varying vec3 vBN;')
+    .replace('#include <color_fragment>', `#include <color_fragment>
+  vec2 bu = abs(vBN.y) > 0.7 ? vBW.xz : vec2(abs(vBN.x) > abs(vBN.z) ? vBW.z : vBW.x, vBW.y);
+  diffuseColor.rgb *= texture(tAlb, vec3(bu / uSize[14], 14.0)).rgb * 1.25;`);
+};
+blockMat.customProgramCacheKey = () => 'kit-block';
 kitShader(frameMat, 'kit-frame', false); kitShader(glassMat, 'kit-glass', true, true); kitShader(shopGlassMat, 'kit-shopglass', false); kitShader(curtainMat, 'kit-curtain', true);
 function geoBoxes(boxes, hw, hh) {   // boxes: [x0, x1, y0, y1, z0, z1, r, g, b(, ax, ay)]: one geometry, vertex colours;
   // with hw, hh (a stretching kit's half size): each vertex's edge (aEdge), by its side of the middle or the box's ax, ay
@@ -986,7 +1007,7 @@ const KIT = new Map(), KITF = {
   tank: () => [[geoBoxes([[-1.1, 1.1, 0.9, 2.5, -0.9, 0.9, 0.85, 0.86, 0.88], ...[[-1, -0.8], [0.8, 1]].flatMap(([x0, x1]) => [[-0.8, -0.6], [0.6, 0.8]].map(([z0, z1]) => [x0, x1, 0, 0.9, z0, z1, 0.4, 0.4, 0.4]))]), partMat]],
   vent: () => [[geoBoxes([[-0.25, 0.25, 0, 0.5, -0.25, 0.25, 0.7, 0.71, 0.72], [-0.3, 0.3, 0.5, 0.8, -0.3, 0.3, 0.8, 0.81, 0.82]]), partMat]],
   mast: () => [[geoBoxes([[-0.04, 0.04, 0, 3.5, -0.04, 0.04, 0.6, 0.6, 0.6], [-0.6, 0.6, 3.0, 3.04, -0.02, 0.02, 0.6, 0.6, 0.6], [-0.4, 0.4, 2.5, 2.54, -0.02, 0.02, 0.6, 0.6, 0.6]]), partMat]],
-  fence: () => [[geoBoxes([[-0.5, 0.5, 0, 1, -0.06, 0.06, 1, 1, 1], [-0.5, 0.5, 1, 1.06, -0.08, 0.08, 0.9, 0.9, 0.9]]), partMat]],
+  fence: () => [[geoBoxes([[-0.5, 0.5, 0, 1, -0.06, 0.06, 1, 1, 1]]), blockMat], [geoBoxes([[-0.5, 0.5, 1, 1.06, -0.08, 0.08, 0.9, 0.9, 0.9]]), partMat]],
   step: () => [[geoBoxes([[-0.5, 0.5, -0.2, 0.0, 0, 1, 0.62, 0.62, 0.6]]), partMat]],
 };
 function kitGet(key) {
@@ -1322,7 +1343,7 @@ function* bldPhotoSetup(o, ids) {
     // and haze: its walls read 0.1-0.4); lighter in the photo stays lighter
     const tl = Math.min(0.82, Math.max(0.4, 0.42 + 1.1 * (lum - 0.18))), rel = up.map(c => 1 + (c / Math.max(lum, 0.04) - 1) * 0.75);
     L.tint = rel.map(c => Math.min(0.92, Math.max(0.12, c * tl)));
-    if (L.type !== BT.WARE) L.layer = warm > 0.09 && lum < 0.5 ? (ih(r.seed, 9, 1, 0) < 0.5 ? LY.brick : LY.tile) : lum > 0.62 ? (ih(r.seed, 9, 2, 0) < 0.5 ? LY.render : LY.tile) : (ih(r.seed, 9, 3, 0) < 0.5 ? LY.concrete : LY.tile);
+    if (L.type !== BT.WARE) L.layer = warm > 0.09 && lum < 0.5 ? (ih(r.seed, 9, 1, 0) < 0.5 ? LY.brick : LY.tile) : lum > 0.62 ? (ih(r.seed, 9, 2, 0) < 0.5 ? LY.render : LY.ctile) : (ih(r.seed, 9, 3, 0) < 0.4 ? LY.concrete : ih(r.seed, 9, 3, 0) < 0.6 ? LY.rcpanel : LY.tile);
     if (L.sign && Math.abs(low[0] - up[0]) + Math.abs(low[1] - up[1]) + Math.abs(low[2] - up[2]) > 0.25) { const ll = 0.3 * low[0] + 0.59 * low[1] + 0.11 * low[2]; L.sign = low.map(c => Math.min(0.9, c / Math.max(ll, 0.04) * 0.45)); }
     L.src += '・外壁の色は写真から（推定）'; keep.push(r);
   }

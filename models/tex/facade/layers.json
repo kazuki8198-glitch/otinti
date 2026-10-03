@@ -59,6 +59,36 @@
    "source": "https://polyhaven.com/a/grey_roof_tiles",
    "size": 3.0,
    "tinted": false
+  },
+  {
+   "name": "rcpanel",
+   "source": "https://polyhaven.com/a/concrete_panels",
+   "size": 8.0,
+   "tinted": true
+  },
+  {
+   "name": "ctile",
+   "source": "https://polyhaven.com/a/concrete_tile_facade",
+   "size": 2.09,
+   "tinted": true
+  },
+  {
+   "name": "beige",
+   "source": "https://polyhaven.com/a/beige_wall_001",
+   "size": 3.0,
+   "tinted": false
+  },
+  {
+   "name": "slatewave",
+   "source": "https://polyhaven.com/a/asbestos_sheet",
+   "size": 2.0,
+   "tinted": true
+  },
+  {
+   "name": "block",
+   "source": "https://polyhaven.com/a/concrete_block_wall",
+   "size": 2.0,
+   "tinted": true
   }
  ],
  "license": "CC0 (Poly Haven)"

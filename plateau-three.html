@@ -605,8 +605,12 @@ function* bldAnalyse(o, ids) {
   for (const r of recs.values()) for (const w of r.walls) { const um = (w.u0 + w.u1) / 2, x = w.nz * um + w.nx * w.d, z = -w.nx * um + w.nz * w.d; w.mx = x; w.mz = z; (hashW.get(key(x, z)) || hashW.set(key(x, z), []).get(key(x, z))).push([r, w]); }
   for (const r of recs.values()) for (const w of r.walls) {
     if (performance.now() > dl) { yield; if (!o.parent) return null; dl = performance.now() + 4; }
-    for (let i = -2; i <= 2 && !w.party; i++) for (let j = -2; j <= 2 && !w.party; j++) for (const [r2, w2] of hashW.get(key(w.mx + i * 10, w.mz + j * 10)) || []) {
-      if (r2 === r || w.nx * w2.nx + w.nz * w2.nz > -0.97 || Math.abs(w.d + w2.d) > 0.6) continue;
+    for (let i = -2; i <= 2 && !w.party && !w.dup; i++) for (let j = -2; j <= 2 && !w.party && !w.dup; j++) for (const [r2, w2] of hashW.get(key(w.mx + i * 10, w.mz + j * 10)) || []) {
+      if (r2 === r) continue;
+      // two buildings over one another (overlapping outlines in the data): the same facing, the same plane within 0.4 m;
+      // the wall behind is left out, else it shows through the front one's windows
+      if (w.nx * w2.nx + w.nz * w2.nz > 0.97 && w.d < w2.d && w2.d - w.d < 0.4 && Math.min(w.u1, w2.u1) - Math.max(w.u0, w2.u0) > 0.5 * (w.u1 - w.u0)) { w.dup = true; continue; }
+      if (w.nx * w2.nx + w.nz * w2.nz > -0.97 || Math.abs(w.d + w2.d) > 0.6) continue;
       const a0 = -w2.u1, a1 = -w2.u0, ov = Math.min(w.u1, a1) - Math.max(w.u0, a0);
       if (ov > 0.5 * (w.u1 - w.u0)) { w.party = true; break; }
     }
@@ -708,7 +712,7 @@ function bldDecide(r) {
   }
   r.walls.forEach((w, wi) => {
     w.i = wi; let f = 0;
-    if (w.party || w.len < 1.2 || w.y1 - r.base < 2.2) f |= 2;
+    if (w.party || w.dup || w.len < 1.2 || w.y1 - r.base < 2.2) f |= 2;
     if (w.street) f |= 1;
     let bw = L.bayW;
     if (w === L.balc && !(f & 2)) { f |= 4; bw = L.balcW; }
@@ -1089,6 +1093,7 @@ function bldMake(r) {
     if (w.u1 - w.u0 < 0.3) continue;
     const F = wf(w), top = w.y1, base = L.base, high = w.y0 > base + 1.5, bot = high ? w.y0 : base - 0.6, ops = wallOpenings(L, w).filter(o => !high || o.y0 > bot + 0.3), blank = w.flags & 2;
     for (const o of ops) o.depth = o.kind === 'win' || o.kind === 'small' ? L.depth : o.kind === 'shop' ? 0.28 : o.kind === 'load' ? 0.3 : o.kind === 'door' && L.type !== BT.HOUSE ? 0.22 : 0.12;
+    if (w.dup) continue;                                               // (behind another building's wall: not drawn)
     gbWall(gb, F, w.u0, w.u1, bot, top, ops, lay, tint);
     if (w.gable) gb.tri(w.gable.a, w.gable.b, w.gable.c, F.N(1), [w.u0, top], [w.u1, top], [(w.u0 + w.u1) / 2, r.top], lay, tint);
     if (blank) continue;

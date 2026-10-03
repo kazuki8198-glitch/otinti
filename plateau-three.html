@@ -1689,6 +1689,9 @@ const leafTex = (() => { const c = document.createElement('canvas'); c.width = c
   for (let i = 0; i < 520; i++) { const a = rnd() * 6.283, r = Math.sqrt(rnd()) * 112, x = 128 + Math.cos(a) * r, y = 128 + Math.sin(a) * r * 0.9, l = 22 + rnd() * 30;
     g.save(); g.translate(x, y); g.rotate(rnd() * 6.283); g.fillStyle = `hsl(${95 + rnd() * 30}, ${35 + rnd() * 25}%, ${l}%)`; g.beginPath(); g.ellipse(0, 0, 9 + rnd() * 6, 4 + rnd() * 3, 0, 0, 6.283); g.fill(); g.restore(); }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(maxAniso, 8); return t; })();
+// the leaves: a cluster of real fronds (models/tex/tree/leaf_cluster.png, made from Poly Haven's jacaranda_tree leaves,
+// CC0, darker inside and below), the drawn ellipses above only until it comes
+texLoader.load('models/tex/tree/leaf_cluster.png', t => { leafTex.image = t.image; leafTex.needsUpdate = true; });
 const leafMat = new THREE.MeshStandardMaterial({ map: leafTex, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.85, metalness: 0 });
 const leafDepth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: leafTex, alphaTest: 0.5 });
 const tree3Geo = (() => {   // (unit height; a crown about 0.6 wide)

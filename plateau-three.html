@@ -181,6 +181,11 @@ sun.castShadow = true; sun.shadow.mapSize.set(Q.shadow, Q.shadow);
 Object.assign(sun.shadow.camera, { left: -120, right: 120, top: 120, bottom: -120, near: 1, far: 900 });
 sun.shadow.bias = -0.0002; sun.shadow.normalBias = 0.04;
 scene.add(sun, sun.target);
+// the shade's light: in a street the shaded side sees the sunlit road, pavement and the walls opposite as much as the
+// sky, so its light is a warm grey, not the pure sky's blue (with the sky alone the shaded walls read grey-violet):
+// a bounce from below (sunlit asphalt and concrete) and a paler sky above, the sky picture's own light turned down a little
+const bounce = new THREE.HemisphereLight(new THREE.Color(0.80, 0.84, 0.90), new THREE.Color(0.62, 0.56, 0.47), 0.75);
+scene.add(bounce); scene.environmentIntensity = 0.78;
 scene.fog = new THREE.FogExp2(new THREE.Color(0.433, 0.466, 0.564), 0.00042);   // (the horizon's own colour)
 
 // ---- materials: ambientCG's photographed surfaces (colour, normal, roughness), laid by world position (from above
@@ -297,7 +302,7 @@ THREE.ImageBitmapLoader.prototype.load = function (url, onLoad, onProgress, onEr
   }).catch(e => { if (onError) onError(e); mgr.itemError(url); mgr.itemEnd(url); });
   return {};
 };
-let texBusy = false, texAt = 0;
+let texBusy = false, texAt = 0; const PRED = { x: 0, z: 0 }, _pv = new THREE.Vector3();   // (PRED: where the car will be in ~3 s)
 const _bs = new THREE.Sphere();
 function texSize(e) { const im = e.tex.image; return im ? Math.max(im.width, im.height) : 0; }
 function texManage(now) {
@@ -307,7 +312,7 @@ function texManage(now) {
     if (!e.mesh.parent) continue;
     const g = e.mesh.geometry; if (!g.boundingSphere) g.computeBoundingSphere();
     _bs.copy(g.boundingSphere).applyMatrix4(e.mesh.matrixWorld);
-    L.push([Math.max(0, Math.hypot(_bs.center.x - C.x, _bs.center.z - C.z) - _bs.radius), e]);
+    L.push([Math.max(0, Math.min(Math.hypot(_bs.center.x - C.x, _bs.center.z - C.z), Math.hypot(_bs.center.x - PRED.x, _bs.center.z - PRED.z)) - _bs.radius), e]);   // (here or where the car is heading)
   }
   L.sort((a, b) => a[0] - b[0]);
   // the nearest tiles' pictures at S.tex (the two nearest at 8192 on 高画質固定), the rest of what is within 400 m at
@@ -607,7 +612,15 @@ function* bldAnalyse(o, ids) {
       a.u0 = Math.min(a.u0, b.u0); a.u1 = Math.max(a.u1, b.u1); a.y0 = Math.min(a.y0, b.y0); a.y1 = Math.max(a.y1, b.y1); a.tris.push(...b.tris); r.walls.splice(j, 1);
     }
     r.walls = r.walls.filter(w => w.u1 - w.u0 > 0.3);
-    r.walls.forEach((w, i) => { for (const t of w.tris) triW[t] = i; w.tris = null; });
+    r.walls.forEach((w, i) => {
+      // its top at the two ends and where it peaks: a gable (or a mono-pitch wall) rises above its ends
+      let e0 = -1e9, e1 = -1e9, ya = -1e9, ua = (w.u0 + w.u1) / 2; const tx = w.nz, tz = -w.nx;
+      for (const t of w.tris) {
+        triW[t] = i;
+        for (let j = 0; j < 3; j++) { const v = I ? I[t * 3 + j] : t * 3 + j, u = W[v * 3] * tx + W[v * 3 + 2] * tz, y = W[v * 3 + 1]; if (u - w.u0 < 0.3) e0 = Math.max(e0, y); if (w.u1 - u < 0.3) e1 = Math.max(e1, y); if (y > ya) { ya = y; ua = u; } }
+      }
+      w.yEnd = Math.min(e0 > -1e8 ? e0 : w.y1, e1 > -1e8 ? e1 : w.y1); w.uApex = ua; w.tris = null;
+    });
     r.wt = null;
   }
   // party walls: a wall of another building facing it within 0.6 m, along half its length or more
@@ -1079,7 +1092,7 @@ function l2Register(s) {
 }
 function l2Filter(o) {
   const d = o.userData.l2, nb = d.ids.length || 1, lv = new Uint8Array(nb); let any = 0;
-  for (let b = 0; b < d.ids.length; b++) { const id = String(d.ids[b]); if (L3.has(id)) { lv[b] = 2; any++; } else if (d.tk && BLD.rep.has(id)) { lv[b] = BLD.rep.get(id) === 2 ? 3 : 1; any++; } }
+  for (let b = 0; b < d.ids.length; b++) { const id = String(d.ids[b]); if (L3.has(id) && !o.userData.lod3) { lv[b] = 2; any++; } else if (d.tk && BLD.rep.has(id)) { lv[b] = BLD.rep.get(id) === 2 ? 3 : 1; any++; } }
   const key = any ? lv.join('') : '';
   if (key === d.hidden) return; d.hidden = key;
   const out = new Uint32Array(d.I.length); let k = 0;
@@ -1105,7 +1118,7 @@ function bldMake(r) {
     for (const o of ops) o.depth = o.kind === 'win' || o.kind === 'small' ? L.depth : o.kind === 'shop' ? 0.28 : o.kind === 'load' ? 0.3 : o.kind === 'door' && L.type !== BT.HOUSE ? 0.22 : 0.12;
     if (w.dup) continue;                                               // (behind another building's wall: not drawn)
     gbWall(gb, F, w.u0, w.u1, bot, top, ops, lay, tint);
-    if (w.gable) gb.tri(w.gable.a, w.gable.b, w.gable.c, F.N(1), [w.u0, top], [w.u1, top], [(w.u0 + w.u1) / 2, r.top], lay, tint);
+    if (w.gable) gb.tri(w.gable.a, w.gable.b, w.gable.c, F.N(1), [w.u0, top], [w.u1, top], [w.gable.apex ?? (w.u0 + w.u1) / 2, w.gable.top ?? r.top], lay, tint);
     if (blank) continue;
     // plinth: a band at the foot, broken by doors and shop fronts
     const gaps = ops.filter(o => o.y0 < base + 0.5).map(o => [o.u0, o.u1]).sort((a, b) => a[0] - b[0]); let u = w.u0;
@@ -1270,7 +1283,10 @@ function* bldPhotoSetup(o, ids) {
     if (performance.now() > dl) { yield; if (!o.parent) return; dl = performance.now() + 4; }
     const q = st.get(r.b); if (!q || q.area < 20) continue;
     r.ppm = Math.sqrt(q.tx / q.area);
-    if (r.ppm >= PHOTO_SHARP || r.walls.length > 40 || r.top - r.base < 2.5 || r.steep > 0.3 * r.area || L3.has(r.id)) continue;   // (sharp, pitched or intricate: the photo stays)
+    if (r.ppm >= PHOTO_SHARP || r.walls.length > 400 || r.top - r.base < 2.5 || (!o.userData.lod3 && L3.has(r.id))) continue;   // (a sharp photo stays; a LOD2 copy of a LOD3 building is left to the LOD3 one)
+    for (const w of r.walls) if (w.y1 - w.yEnd > 0.8) {   // (a gable or mono-pitch wall: up to its ends, then the triangle to its peak, as the data has it)
+      const F = wf(w); w.gable = { a: F.P(w.u0, w.yEnd, 0), b: F.P(w.u1, w.yEnd, 0), c: F.P(w.uApex, w.y1, 0), apex: w.uApex, top: w.y1 }; w.y1 = w.yEnd;
+    }
     const col = a => a[3] > 0 ? [a[0], a[1], a[2]].map(c => c / a[3] / 255) : null, up = col(q.up) || col(q.low), low = col(q.low) || up;
     r.noRoof = true; r.photo = true; r.L = bldDecide(r); r.mesh = o;
     const L = r.L, lum = 0.3 * up[0] + 0.59 * up[1] + 0.11 * up[2], warm = up[0] - up[2];
@@ -1331,7 +1347,7 @@ function makeTiles(name, rad, err) {
         if ('roughness' in m) { m.roughness = 0.88; m.metalness = 0; }
       }
       if (!ms.some(m => m.map)) { o.userData.facade = true; plain = true; }   // (no photo at all: its walls are drawn)
-      else if (PHOTO_SETS.has(name)) { o.userData.photo = true; photo = true; }
+      else if (PHOTO_SETS.has(name)) { o.userData.photo = true; o.userData.lod3 = name === 'lod3'; photo = true; }
     });
     if (name === 'roads' || name === 'trees') { s.userData.kind = name; pending.push(s); }
     if (bldg && (plain || photo)) facadePending.push(s);
@@ -1354,7 +1370,7 @@ function makeTiles(name, rad, err) {
 }
 // the buildings: Naka ward (Kannai) and Nishi ward (Minato Mirai, Yokohama Station) at LOD3, Kanagawa ward (north of the
 // station) at LOD2; or all at LOD2. Each loads only round the car; one memory budget for them all
-const PHOTO_SETS = new Set(['lod2', 'nishi2', 'kana2']);   // (LOD2 with photos: their smeared walls rebuilt near, see bldPhotoSetup)
+const PHOTO_SETS = new Set(['lod2', 'lod3', 'nishi2', 'kana2']);   // (LOD2 and Naka's LOD3 with photos: their smeared walls rebuilt near, see bldPhotoSetup)
 const MODES = { lod3: ['lod2', 'lod3', 'nishi2', 'kana2', 'minami1'], lod2: ['lod2', 'nishi2', 'kana2', 'minami1'] };   // (Nishi's LOD3 set is the same as its LOD2: same buildings, pictures, bytes)
 let bmode = qs.get('lod') === '2' ? 'lod2' : 'lod3', sharedLru = null;
 const bsets = () => MODES[bmode].map(k => sets[k]).filter(Boolean);
@@ -2371,10 +2387,15 @@ function loop(now) {
   if (placed && window.__autodrive) window.__autodrive(dt);   // (tests only: a route-following driver pressing the keys)
   if (placed) drive(dt);
   mk('運転');
+  // read ahead: the tiles' region (and the photos' sharpening) centred a few seconds down the road, grown to keep the
+  // car's own surroundings: at speed the next blocks come in before the car is there, not as it arrives
+  const ah = Math.min(Math.abs(C.v) * 3, 120) * Math.sign(C.v || 1); PRED.x = C.x + Math.sin(C.hdg) * ah; PRED.z = C.z + Math.cos(C.hdg) * ah;
   for (const k in sets) {
     const t = sets[k]; if (!t.group.visible) continue;
     t.group.updateMatrixWorld();
-    t.region.sphere.center.copy(car.position).applyMatrix4(_inv.copy(t.group.matrixWorld).invert());
+    _pv.set(PRED.x - (PRED.x - car.position.x) * 0.4, car.position.y, PRED.z - (PRED.z - car.position.z) * 0.4);
+    t.region.sphere.center.copy(_pv).applyMatrix4(_inv.copy(t.group.matrixWorld).invert());
+    t.region.sphere.radius = (k === 'trees' ? S.dist * 0.8 : S.dist) + Math.abs(ah) * 0.6;
     t.setResolutionFromRenderer(camera, renderer); t.update();
   }
   mk('PLATEAU タイル更新');

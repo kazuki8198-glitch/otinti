@@ -34,6 +34,11 @@ const fs = require('fs'), path = require('path');
     }, s);
     const moved = !last || Math.hypot(s.e - last.e, s.n - last.n) > 60;
     const ok = await settle(moved ? +(process.env.MAXMIN2 || 5) : 1);
+    // the ground again, now the place's roads and DEM are in (measured before they came, a far move put the camera under it)
+    await page.evaluate(s => {
+      const T = window.__three, C = T.C; C.y = T.groundAt(C.x, C.z, T.gridH ? T.gridH(C.x, C.z) + 1.5 : 30);
+      if (s.cam === 'free') { const a = T.enuToWorld(s.at[0], s.at[1], 0), b = T.enuToWorld(s.look[0], s.look[1], 0); const ga = T.groundAt(a.x, a.z, T.gridH(a.x, a.z) + 3), gb = T.groundAt(b.x, b.z, T.gridH(b.x, b.z) + 3); window.__camAt = [a.x, ga + s.at[2], a.z, b.x, gb + s.look[2], b.z, s.fov || 55]; }
+    }, s);
     await page.waitForTimeout(8000);
     await page.screenshot({ path: path.join(out, s.name + '.png'), timeout: 600000 });
     const info = await page.evaluate(() => ({ hud: document.getElementById('hud').textContent.replace(/\n/g, ' | '), near: window.__three.BLD ? window.__three.BLD.near.size : null }));

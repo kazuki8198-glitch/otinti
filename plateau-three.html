@@ -474,7 +474,7 @@ ${GLSL_SURF}
               int ii = int(bi); uint i = uint(ii); float uc = bayStart + (bi + 0.5) * bayW; bool done = false;
               if (f == 0 && ii == door) {
                 float dw = typ == 1 ? 0.9 : typ == 2 ? 1.6 : typ == 3 ? 1.8 : typ == 4 ? 0.85 : 0.9, dh = typ == 1 ? 2.05 : typ == 2 ? 2.2 : typ == 3 ? 2.4 : typ == 4 ? 2.0 : 2.1;
-                if (abs(u - uc) < dw * 0.5 && rel < dh) { if (typ == 1 || typ >= 4) dark = 1.0; else { glass = 1.0; frame = step(dw * 0.5 - 0.06, abs(u - uc)) + step(abs(u - uc), 0.03); } }
+                float lift = typ == 2 ? 0.45 : 0.0; if (abs(u - uc) < dw * 0.5 && rel > lift && rel < dh + lift) { if (typ == 1 || typ >= 4) dark = 1.0; else { glass = 1.0; frame = step(dw * 0.5 - 0.06, abs(u - uc)) + step(abs(u - uc), 0.03); } }
                 done = true;
               }
               if (!done && f == 0 && (flags & 8) != 0 && uc > g0 - 0.3 && uc < g1 + 0.3) done = true;
@@ -819,7 +819,7 @@ function wallOpenings(L, w) {
     const fy = L.base + (f === 0 ? 0 : L.gH + (f - 1) * L.fH);
     for (let i = 0; i < w.nb; i++) {
       const uc = w.bayStart + (i + 0.5) * w.bayW;
-      if (f === 0 && i === w.door) { out.push({ u0: uc - L.doorW / 2, u1: uc + L.doorW / 2, y0: fy, y1: fy + L.doorH, kind: 'door', f, i }); continue; }
+      if (f === 0 && i === w.door) { const lift = L.type === BT.APT ? 0.45 : 0; out.push({ u0: uc - L.doorW / 2, u1: uc + L.doorW / 2, y0: fy + lift, y1: fy + lift + L.doorH, kind: 'door', f, i }); continue; }   // (an apartment block's hall: three steps up)
       if (f === 0 && (w.flags & 8) && uc > w.g0 - 0.3 && uc < w.g1 + 0.3) continue;
       if (f === 0 && (w.flags & 32) && i % 2 === 0) { const dw = Math.min(4.0, w.bayW - 0.6); out.push({ u0: uc - dw / 2, u1: uc + dw / 2, y0: fy, y1: fy + Math.min(4.2, L.gH - 1.6), kind: 'load', f, i }); continue; }
       if (i !== keep && (ih(s, wi, i, 999) < L.pCol || ih(s, wi, i, f) < L.pCell)) continue;   // (the shader's rule: one bay per wall never left blank, so no floor of a wall goes without a window)
@@ -1087,6 +1087,11 @@ const KIT = new Map(), KITF = {
   mast: () => [[geoBoxes([[-0.04, 0.04, 0, 3.5, -0.04, 0.04, 0.6, 0.6, 0.6], [-0.6, 0.6, 3.0, 3.04, -0.02, 0.02, 0.6, 0.6, 0.6], [-0.4, 0.4, 2.5, 2.54, -0.02, 0.02, 0.6, 0.6, 0.6]]), partMat]],
   fence: () => [[geoBoxes([[-0.5, 0.5, 0, 1, -0.06, 0.06, 1, 1, 1]]), blockMat], [geoBoxes([[-0.5, 0.5, 1, 1.06, -0.08, 0.08, 0.9, 0.9, 0.9]]), partMat]],
   step: () => [[geoBoxes([[-0.5, 0.5, -0.2, 0.0, 0, 1, 0.62, 0.62, 0.6]]), partMat]],
+  stairs: () => [[geoBoxes([[-0.5, 0.5, -0.1, 0.45, 0, 0.3, 0.62, 0.6, 0.57], [-0.5, 0.5, -0.1, 0.3, 0.3, 0.6, 0.62, 0.6, 0.57], [-0.5, 0.5, -0.1, 0.15, 0.6, 0.9, 0.62, 0.6, 0.57],
+    [-0.47, -0.45, 0.15, 1.3, 0.05, 0.07, 0.75, 0.75, 0.76], [0.45, 0.47, 0.15, 1.3, 0.05, 0.07, 0.75, 0.75, 0.76], [-0.47, -0.45, 0.1, 1.0, 0.85, 0.87, 0.75, 0.75, 0.76], [0.45, 0.47, 0.1, 1.0, 0.85, 0.87, 0.75, 0.75, 0.76],
+    [-0.475, -0.445, 0.98, 1.02, 0.05, 0.87, 0.75, 0.75, 0.76], [0.445, 0.475, 0.98, 1.02, 0.05, 0.87, 0.75, 0.75, 0.76]]), partMat]],   // (three steps out from the door, handrails both sides; scaled to the door's width)
+  planter: () => [[geoBoxes([[-0.55, 0.55, 0, 0.45, -0.25, 0.25, 0.86, 0.86, 0.84]]), partMat], ...KITF.shrub().map(([g, m]) => { const h = g.clone(); h.scale(1.1, 0.7, 0.55); h.translate(0, 0.42, 0); return [h, m]; })],
+  heater: () => [[geoBoxes([[-0.18, 0.18, 0, 0.55, 0, 0.2, 0.9, 0.9, 0.88], [-0.12, 0.12, 0.3, 0.42, 0.2, 0.205, 0.6, 0.6, 0.6], [-0.1, -0.08, -0.45, 0, 0.05, 0.07, 0.8, 0.8, 0.8], [-0.02, 0.0, -0.45, 0, 0.05, 0.07, 0.8, 0.8, 0.8], [0.06, 0.08, -0.45, 0, 0.05, 0.07, 0.8, 0.8, 0.8]]), partMat]],   // (a gas water heater on the wall, its pipes below)
   path: () => [[geoBoxes([[-0.5, 0.5, -0.1, 0.035, 0, 1, 1, 1, 1]]), partMat]],
   pad: () => [[geoBoxes([[-0.5, 0.5, -0.1, 0.03, 0, 1, 1, 1, 1], [-0.32, -0.18, 0.03, 0.13, 0.12, 0.18, 0.85, 0.85, 0.83], [0.18, 0.32, 0.03, 0.13, 0.12, 0.18, 0.85, 0.85, 0.83]]), partMat]],
 };
@@ -1278,13 +1283,19 @@ function bldMake(r) {
       } else if (o.kind === 'door') {
         if (L.type === BT.HOUSE || L.type === BT.SHOP || L.type === BT.WARE) put(`d:${ww}:${hh}`, pm(F, uc, yc, 0), pick(R(3, w.i), [[0.42, 0.30, 0.20], [0.30, 0.30, 0.32], [0.86, 0.86, 0.84], [0.55, 0.42, 0.30]]));
         else { const [k, sx, sy] = winKey('door', ww, hh, o.depth); put(k, pm(F, uc, yc, 0, sx, sy, 1), L.frame); }
-        put('step', pm(F, uc, base + 0.15, 0, ww + 0.6, 1, 0.45));
+        // the way up to the door: one step at a house, a flight of three with handrails and a planter at an apartment
+        // block's entrance (as the blocks here are built: the hall floor raised over the street)
+        if (L.type === BT.APT && !(w.flags & 8)) { put('stairs', pm(F, uc, base, 0, ww + 0.8, 1, 1)); if (R(w.i, 334) < 0.7) put('planter', pm(F, uc + (R(w.i, 335) < 0.5 ? -1 : 1) * (ww / 2 + 1.1), base, 1.0)); }
+        else put('step', pm(F, uc, base + 0.15, 0, ww + 0.6, 1, 0.45));
         if (w.street && (L.type === BT.SHOP || L.type === BT.APT) && R(w.i, 320) < 0.45) {   // (a drinks machine or two beside the entrance, if the wall has room; estimated)
           const side = R(w.i, 321) < 0.5 ? -1 : 1, x0 = uc + side * (ww / 2 + 0.9), n = R(w.i, 322) < 0.4 ? 2 : 1;
           for (let k = 0; k < n; k++) { const x = x0 + side * k * 1.05; if (x - 0.55 > w.u0 && x + 0.55 < w.u1 && !ops.some(q => q.y0 < base + 1.9 && q.u1 > x - 0.6 && q.u0 < x + 0.6)) put('vend', pm(F, x, base, 0), pick(R(w.i, 323 + k), [[0.78, 0.1, 0.1], [0.12, 0.3, 0.65], [0.9, 0.9, 0.9], [0.1, 0.45, 0.3]])); }
         }
         if (L.type === BT.HOUSE && R(w.i, 330) < 0.6) for (const sd of [-1, 1]) if (R(w.i, 331 + sd) < 0.7) put('pot', pm(F, uc + sd * (ww / 2 + 0.45), base, 0.35, 1, 0.8 + 0.5 * R(w.i, 333 + sd), 1));
         if (L.type !== BT.WARE) put('canopy', pm(F, uc, o.y1 + 0.12, 0, ww + (L.type === BT.HOUSE ? 0.6 : 1.4), 0.14, L.type === BT.HOUSE ? 0.8 : 1.6), [0.6, 0.6, 0.58]);
+      } else if (o.kind === 'cdoor') {   // (a flat's front door off the open corridor, its water heater beside it)
+        put(`d:${ww}:${hh}`, pm(F, uc, yc, 0), pick(R(6, w.i), [[0.55, 0.50, 0.44], [0.36, 0.36, 0.38], [0.72, 0.70, 0.66]]));
+        if (R(o.i, o.f + 340) < 0.8) put('heater', pm(F, uc + ww / 2 + 0.45, o.y0 + 1.1, 0));
       } else if (o.kind === 'shop') {
         if (L.shutter && L.type === BT.SHOP) { put('shut', pm(F, uc, yc, 0, ww, hh, 1)); put('canopy', pm(F, uc, o.y1, -0.05, ww, 0.35, 0.35), [0.7, 0.7, 0.7]); }
         else { const n = Math.max(1, Math.round(ww / 1.6)), mw = ww / n; const [kk, sx, sy] = winKey('shop', mw, hh, 0.28); for (let k = 0; k < n; k++) put(kk, pm(F, o.u0 + (k + 0.5) * mw, yc, 0, sx, sy, 1), [0.95, 0.9, 0.8]); }
@@ -1313,11 +1324,12 @@ function bldMake(r) {
     // down pipes at a wall's end (houses, apartments); an air conditioner by a house's side wall
     if ((L.type === BT.HOUSE || L.type === BT.APT) && w.len > 3 && R(w.i, 300) < 0.6) put('pipe', pm(F, R(w.i, 301) < 0.5 ? w.u0 + 0.25 : w.u1 - 0.25, base, 0.09, 1, top - base, 1), [0.82, 0.82, 0.8]);
     if (L.type === BT.HOUSE && w !== front && w.len > 2.5 && R(w.i, 302) < 0.5) put('ac', pm(F, w.u0 + 0.8 + R(w.i, 303) * (w.len - 1.6), base + 0.08, 0.32));
+    if (L.type === BT.HOUSE && w !== front && !blank && w.len > 3 && R(w.i, 305) < 0.4) { const x = w.u0 + 0.5 + R(w.i, 306) * (w.len - 1.0); if (!ops.some(q => q.u1 > x - 0.3 && q.u0 < x + 0.3 && q.y0 < base + 1.8)) put('heater', pm(F, x, base + 0.9, 0)); }   // (the gas water heater, on a side wall)
     if (L.type === BT.SHOP && w === front && L.nUp >= 1 && R(w.i, 304) < 0.6) put('psign', pm(F, w.u1 - 0.15, base + L.gH + 0.4, 0, 1, 1, 1), L.sign);
     // an apartment block's front: paving from the entrance to the pavement, bicycles parked along the wall beside it (estimated)
     if ((L.type === BT.APT || (L.type === BT.SHOP && R(22, 0) < 0.4)) && w === front && w.street && w.street.gap >= 1.2) {
       const door = ops.find(o => o.kind === 'door'), zs = w.street.gap - 0.25;
-      if (door && L.type === BT.APT) put('path', pm(F, (door.u0 + door.u1) / 2, base, 0.45, door.u1 - door.u0 + 1.0, 1, zs - 0.45), [0.6, 0.58, 0.55]);
+      if (door && L.type === BT.APT && zs > 1.0) put('path', pm(F, (door.u0 + door.u1) / 2, base, 0.9, door.u1 - door.u0 + 1.0, 1, zs - 0.9), [0.6, 0.58, 0.55]);
       if (w.street.gap >= 2.2 && R(23, 0) < 0.75) {
         const n = 2 + Math.floor(R(24, 0) * 7), left = door ? (door.u0 + door.u1) / 2 > (w.u0 + w.u1) / 2 : true, x0 = left ? w.u0 + 0.6 : w.u1 - 0.6;
         for (let k = 0; k < n; k++) { const x = x0 + (left ? 1 : -1) * k * 0.62; if (door && x > door.u0 - 0.8 && x < door.u1 + 0.8) break; if (x < w.u0 + 0.3 || x > w.u1 - 0.3) break;

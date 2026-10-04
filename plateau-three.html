@@ -479,7 +479,7 @@ ${GLSL_SURF}
                 float dw = min(4.0, bayW - 0.6); if (abs(u - uc) < dw * 0.5 && rel < min(4.2, gH - 1.6)) col = vec3(0.70, 0.71, 0.70) * (0.85 + 0.15 * step(0.5, fract(rel * 14.0)));
                 done = true;
               }
-              if (!done && (ih(seed, wi, i, 999u) < pCol || ih(seed, wi, i, uint(f)) < pCell)) done = true;
+              if (!done && ii != min(int(nbb) - 1, int(ih(seed, wi, 777u, 0u) * nbb)) && (ih(seed, wi, i, 999u) < pCol || ih(seed, wi, i, uint(f)) < pCell)) done = true;   // (one bay per wall never left blank)
               if (!done) {
                 float w = f == 0 ? gW : winW, h = f == 0 ? gWH : winH, s = f == 0 ? gSill : sill;
                 if ((flags & 4) != 0 && f >= 1) { w = bdW; h = 2.0; s = 0.1; }
@@ -808,7 +808,7 @@ function wallParams(w) { return [w.bayStart, w.bayW, w.nb + 256 * (w.door + 1), 
 // loading doors. The same rules as the far shader's
 function wallOpenings(L, w) {
   const out = []; if (w.flags & 2) return out;
-  const wi = w.i, s = L.seed;
+  const wi = w.i, s = L.seed, keep = Math.min(w.nb - 1, Math.floor(ih(s, wi, 777, 0) * w.nb));
   for (let f = 0; f <= L.nUp; f++) {
     const fy = L.base + (f === 0 ? 0 : L.gH + (f - 1) * L.fH);
     for (let i = 0; i < w.nb; i++) {
@@ -816,7 +816,7 @@ function wallOpenings(L, w) {
       if (f === 0 && i === w.door) { out.push({ u0: uc - L.doorW / 2, u1: uc + L.doorW / 2, y0: fy, y1: fy + L.doorH, kind: 'door', f, i }); continue; }
       if (f === 0 && (w.flags & 8) && uc > w.g0 - 0.3 && uc < w.g1 + 0.3) continue;
       if (f === 0 && (w.flags & 32) && i % 2 === 0) { const dw = Math.min(4.0, w.bayW - 0.6); out.push({ u0: uc - dw / 2, u1: uc + dw / 2, y0: fy, y1: fy + Math.min(4.2, L.gH - 1.6), kind: 'load', f, i }); continue; }
-      if (ih(s, wi, i, 999) < L.pCol || ih(s, wi, i, f) < L.pCell) continue;
+      if (i !== keep && (ih(s, wi, i, 999) < L.pCol || ih(s, wi, i, f) < L.pCell)) continue;   // (the shader's rule: one bay per wall never left blank, so no floor of a wall goes without a window)
       let ww = f === 0 ? L.gW : L.winW, h = f === 0 ? L.gWH : L.winH, sl = f === 0 ? L.gSill : L.sill, kind = 'win';
       if ((w.flags & 4) && f >= 1) { ww = L.bdW; h = 2.0; sl = 0.1; kind = 'bdoor'; }
       else if ((w.flags & 64) && f >= 1) { ww = 0.85; h = 2.0; sl = 0.1; kind = 'cdoor'; }

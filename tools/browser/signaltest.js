@@ -8,7 +8,7 @@ const { chromium } = require('playwright'); const fs = require('fs'), path = req
   const page = await browser.newPage({ viewport: { width: 640, height: 360 } }); const root = process.env.ROOT || path.resolve(__dirname, '../..');
   await page.route(/^http:\/\/127\.0\.0\.1:8765\//, route => { const p = path.join(root, decodeURIComponent(new URL(route.request().url()).pathname)); try { route.fulfill({ status: 200, body: fs.readFileSync(p), contentType: p.endsWith('.html') ? 'text/html' : 'application/octet-stream' }); } catch (e) { route.fulfill({ status: 404, body: '' }); } });
   await page.route(/^https:/, async route => { for (let i = 0; i < 5; i++) { try { const r = await route.fetch({ timeout: 60000 }); return route.fulfill({ response: r }); } catch (e) { await new Promise(r => setTimeout(r, 800)); } } return route.abort(); });
-  page.on('pageerror', e => console.log('PAGEERROR: ' + e.message));
+  page.on('pageerror', e => console.log('PAGEERROR: ' + e.message + ' | ' + String(e.stack || '').split('\n').slice(1, 4).join(' < ')));
   await page.goto('http://127.0.0.1:8765/plateau-three.html?norender=1', { waitUntil: 'load' });
   for (let i = 0; i < 60; i++) { await page.waitForTimeout(5000); if (await page.evaluate(() => __three.areaBuilt && __three.FURN.lamps && __three.FURN.lamps.n > 0)) break; }
   const r = await page.evaluate(() => {

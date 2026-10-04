@@ -8,7 +8,7 @@ const fs = require('fs'), path = require('path');
   const root = process.env.ROOT || path.resolve(__dirname, '../..');
   await page.route(/^http:\/\/127\.0\.0\.1:8765\//, route => { const p = path.join(root, decodeURIComponent(new URL(route.request().url()).pathname)); try { route.fulfill({ status: 200, body: fs.readFileSync(p), contentType: p.endsWith('.html') ? 'text/html' : p.endsWith('.js') ? 'text/javascript' : p.endsWith('.jpg') ? 'image/jpeg' : 'application/octet-stream' }); } catch (e) { route.fulfill({ status: 404, body: '' }); } });
   await page.route(/^https:/, async route => { for (let i = 0; i < 5; i++) { try { const r = await route.fetch({ timeout: 60000 }); return route.fulfill({ response: r }); } catch (e) { await new Promise(r => setTimeout(r, 800 * (i + 1))); } } return route.abort(); });
-  page.on('pageerror', e => console.log('PAGEERROR: ' + e.message));
+  page.on('pageerror', e => console.log('PAGEERROR: ' + e.message + ' | ' + String(e.stack || '').split('\n').slice(1, 4).join(' < ')));
   await page.goto('http://127.0.0.1:8765/plateau-three.html' + (process.env.NORENDER === '0' ? '?q=high' : '?norender=1'), { waitUntil: 'load' });
   const busy = () => page.evaluate(() => { const T = window.__three; if (!T || !T.enuToWorld(0, 0, 0)) return 99; return Object.values(T.sets).reduce((a, t) => a + t.stats.downloading + t.stats.parsing, 0) + T.BLD.queue.length + T.BLD.jobs.length; });
   const settle = async (min) => { let calm = 0; for (let i = 0; i < min * 12; i++) { await page.waitForTimeout(5000); calm = (await busy()) === 0 ? calm + 1 : 0; if (calm >= 2) return true; } return false; };

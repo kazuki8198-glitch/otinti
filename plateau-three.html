@@ -988,7 +988,7 @@ vec3 roomCol(out float fres) {
   else c = wallC * 0.85;
   // the daylight from the window falls off inside; the ceiling gets the floor's bounce
   float depth = -q.z / D, light = mix(1.0, 0.35, depth) * (t == ty && d.y > 0.0 ? 0.75 : 1.0);
-  vec3 col = c * light * 0.16;
+  vec3 col = c * light * 0.3;
   // a ceiling light on (one room in six): a bright panel
   if (k1 > 0.83 && t == ty && d.y > 0.0 && abs(q.x - xc) < 0.5 && abs(q.z + D * 0.45) < 0.3) col = vec3(1.4, 1.38, 1.3);
   else if (k1 > 0.83) col *= 1.6;

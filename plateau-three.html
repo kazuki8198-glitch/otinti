@@ -302,7 +302,7 @@ THREE.ImageBitmapLoader.prototype.load = function (url, onLoad, onProgress, onEr
   }).catch(e => { if (onError) onError(e); mgr.itemError(url); mgr.itemEnd(url); });
   return {};
 };
-let texBusy = false, texAt = 0; const PRED = { x: 0, z: 0 }, _pv = new THREE.Vector3();   // (PRED: where the car will be in ~3 s)
+let texBusy = false, texAt = 0, texLeft = 0; const PRED = { x: 0, z: 0 }, _pv = new THREE.Vector3();   // (PRED: where the car will be in ~3 s)
 const _bs = new THREE.Sphere();
 function texSize(e) { const im = e.tex.image; return im ? Math.max(im.width, im.height) : 0; }
 function texManage(now) {
@@ -317,14 +317,17 @@ function texManage(now) {
   L.sort((a, b) => a[0] - b[0]);
   // the nearest tiles' pictures at S.tex (the two nearest at 8192 on 高画質固定), the rest of what is within 400 m at
   // 2048, further at 1024 (half that on 軽量); going down only once the car is well away (no back and forth)
-  let near = 0;
+  let near = 0, up = 0, job = null;
   for (const [d, e] of L) {
     const full = Math.max(e.src.W, e.src.H), cur = texSize(e);
     let want = d < 400 ? Q.maxTex : Q.maxTex / 2;
     if (d < 260 && near < 8) { want = Math.max(want, S.tex); if (QN === 'high' && near < 2 && d < 90) want = 8192; near++; }
     want = Math.min(want, full);
-    if (want > cur || (want < cur && d > (cur > Q.maxTex ? 320 : 460))) { texUpgrade(e, want); return; }   // (one at a time: no long stall)
+    if (want > cur) up++;
+    if (!job && (want > cur || (want < cur && d > (cur > Q.maxTex ? 320 : 460)))) job = [e, want];
   }
+  texLeft = up;   // (pictures still to sharpen: a test waits for none)
+  if (job) texUpgrade(job[0], job[1]);   // (one at a time: no long stall)
 }
 function texUpgrade(e, want) {
   texBusy = true;
@@ -533,11 +536,14 @@ ${GLSL_SURF}
         float foot = 1.0 - smoothstep(0.05, 0.7 + 0.3 * un, hb); diffuseColor.rgb *= mix(vec3(1.0), vec3(0.72, 0.69, 0.64), foot);
         float st = (1.0 - smoothstep(0.0, 2.5 + 3.0 * wN(vec2(vUvM.x * 0.7, 3.1)), ht)) * smoothstep(0.55, 0.9, wN(vec2(vUvM.x * 2.3, vUvM.y * 0.08)));
         diffuseColor.rgb *= 1.0 - 0.22 * st;
+        // joints: siding boards end every 3.03 m (a caulked vertical line), tiled walls have a movement joint every 3.6 m
+        float jl = vLayer > 3.5 && vLayer < 4.5 ? 3.03 : (vLayer > 0.5 && vLayer < 2.5) || (vLayer > 10.5 && vLayer < 11.5) ? 3.6 : 0.0;
+        if (jl > 0.0) { float ju = abs(fract(vUvM.x / jl + 0.5) - 0.5) * jl; diffuseColor.rgb *= mix(0.62, 1.0, smoothstep(0.004, 0.012, ju)); }
       } }`)
     .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n roughnessFactor = sNR.z;')
     .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n' + surfNormal);
 };
-bldMat.customProgramCacheKey = () => 'bld-near-v2';
+bldMat.customProgramCacheKey = () => 'bld-near-v3';
 
 // ---- the context (models/area/ctx.bin, from OSM: tools/bld/ctx.py): building outlines with tags, shop / food /
 // amenity / office points, landuse, road centrelines with class and width. In east/north metres, 50 m cells ----
@@ -885,9 +891,10 @@ function gbWall(gb, F, u0, u1, y0, y1, ops, L, T) {
 // ---- the kit: parts made once per size and shared (instanced): sashes and glass, doors, shop fronts, shutters,
 // balcony rails and partitions, air conditioners, pipes, gutters, canopies, awnings, signs, rooftop plant ----
 const partMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.1 });
+const shrubMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0, flatShading: true });   // (garden shrubs: the instance colour times a light-to-dark green)
 const vendLitMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4, metalness: 0, emissive: 0xffffff, emissiveIntensity: 0.35 });   // (a drinks machine's lit samples)
 const frameMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.32, metalness: 0.65 });
-const glassMat = new THREE.MeshStandardMaterial({ color: 0x5a646e, roughness: 0.07, metalness: 0.15, envMapIntensity: 1.7 });   // (a room behind, the sky and the street in it: grey, not black)
+const glassMat = new THREE.MeshStandardMaterial({ color: 0x050607, roughness: 0.04, metalness: 0.0, envMapIntensity: 1.25 });   // (clear glass: little of its own, the sky by Fresnel; the room behind drawn in its shader)
 const shopGlassMat = new THREE.MeshStandardMaterial({ color: 0x6f6c66, roughness: 0.06, metalness: 0.0, envMapIntensity: 1.0 });   // (a lit shop behind)
 const curtainMat = new THREE.MeshStandardMaterial({ color: 0xb0b0ac, roughness: 0.12, metalness: 0, envMapIntensity: 1.0 });   // (seen through the pane: in front of the glass plane, with its reflection)
 // the window kits stretch: one kit per style, each instance's scale (x, y) its opening's size over the kit's own, and
@@ -930,7 +937,69 @@ blockMat.onBeforeCompile = sh => {
   diffuseColor.rgb *= texture(tAlb, vec3(bu / uSize[14], 14.0)).rgb * 1.25;`);
 };
 blockMat.customProgramCacheKey = () => 'kit-block';
-kitShader(frameMat, 'kit-frame', false); kitShader(glassMat, 'kit-glass', true, true); kitShader(shopGlassMat, 'kit-shopglass', false); kitShader(curtainMat, 'kit-curtain', true);
+// the panes: a room behind each (interior mapping: the view ray carried through the pane into a box of a room, its back
+// wall, side walls, floor and ceiling; every window its own room by a hash of its position: width, depth, the colours,
+// a cupboard or a sofa against the back wall, now and then a ceiling light on), dimmer than the day outside and darker
+// further in; the sky and the street on the glass by Fresnel (strong when seen at a slant, as from the street up)
+function glassShader(m) {
+  m.onBeforeCompile = sh => {
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 aEdge; attribute vec2 aHalf;\nvarying vec3 vGh; varying vec2 vPane; varying vec2 vHalf; varying vec3 vRT; varying vec3 vRU; varying vec3 vRN; varying vec3 vRW;').replace('#include <begin_vertex>', `#include <begin_vertex>
+#ifdef USE_INSTANCING
+  vec2 isc = vec2(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz));
+  vPane = transformed.xy + aEdge * (isc - 1.0); vHalf = aHalf * isc;
+  transformed.xy = (transformed.xy + aEdge * (isc - 1.0)) / isc;
+  vec3 ip = mod(instanceMatrix[3].xyz, 997.);
+  vRT = normalize(mat3(modelMatrix) * instanceMatrix[0].xyz); vRU = normalize(mat3(modelMatrix) * instanceMatrix[1].xyz); vRN = normalize(mat3(modelMatrix) * instanceMatrix[2].xyz);
+#else
+  vPane = transformed.xy; vHalf = aHalf; vec3 ip = vec3(0.);
+  vRT = vec3(1., 0., 0.); vRU = vec3(0., 1., 0.); vRN = vec3(0., 0., 1.);
+#endif
+  vGh = fract(sin(vec3(dot(ip, vec3(12.9898, 78.233, 37.719)), dot(ip, vec3(39.346, 11.135, 83.155)), dot(ip, vec3(73.156, 52.235, 9.151)))) * 43758.5453);`).replace('#include <project_vertex>', `#include <project_vertex>
+  vec4 rw = vec4(transformed, 1.0);
+#ifdef USE_INSTANCING
+  rw = instanceMatrix * rw;
+#endif
+  vRW = (modelMatrix * rw).xyz;`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+varying vec3 vGh; varying vec2 vPane; varying vec2 vHalf; varying vec3 vRT; varying vec3 vRU; varying vec3 vRN; varying vec3 vRW;
+float rh(float a, float b) { return fract(sin(a * 91.345 + b * 47.853) * 43758.5453); }
+vec3 roomCol(out float fres) {
+  vec3 V = normalize(vRW - cameraPosition), d = vec3(dot(V, vRT), dot(V, vRU), dot(V, vRN));
+  fres = 0.04 + 0.96 * pow(1.0 - clamp(-d.z, 0.0, 1.0), 5.0);
+  d.z = min(d.z, -1e-3);
+  float k1 = vGh.x, k2 = vGh.y, k3 = vGh.z, k4 = rh(k1, k2), k5 = rh(k2, k3), k6 = rh(k3, k1);
+  // the room: as wide as the window and more (shifted a little), 2.5 m high, its floor under the sill, 3-5.5 m deep
+  float W = max(vHalf.x * 2.0 + 0.6, 2.6 + k1 * 1.6), xc = (k2 - 0.5) * 0.6, yF = -(vHalf.y > 0.85 ? vHalf.y + 0.1 : vHalf.y + 0.9), H = 2.5, D = 3.0 + k3 * 2.5;
+  vec3 p = vec3(vPane, 0.0);
+  float tx = ((d.x > 0.0 ? xc + W * 0.5 : xc - W * 0.5) - p.x) / (abs(d.x) < 1e-4 ? 1e-4 * sign(d.x + 1e-9) : d.x);
+  float ty = ((d.y > 0.0 ? yF + H : yF) - p.y) / (abs(d.y) < 1e-4 ? 1e-4 * sign(d.y + 1e-9) : d.y);
+  float tz = -D / d.z, t = min(min(tx, ty), tz); vec3 q = p + d * t;
+  vec3 wallC = k4 < 0.5 ? vec3(0.78, 0.76, 0.71) : k4 < 0.8 ? vec3(0.72, 0.73, 0.74) : vec3(0.70, 0.62, 0.52);
+  vec3 floorC = k5 < 0.55 ? vec3(0.36, 0.25, 0.16) : k5 < 0.8 ? vec3(0.30, 0.30, 0.31) : vec3(0.52, 0.47, 0.36);
+  vec3 c;
+  if (t == tz) {
+    c = wallC;
+    // against the back wall: a cupboard, a sofa or shelves (one in three rooms has nothing)
+    float fx = q.x - xc - (k6 - 0.5) * W * 0.4, fy = q.y - yF;
+    if (k6 < 0.33 && abs(fx) < 0.45 && fy < 1.8) c = vec3(0.42, 0.33, 0.24) * (0.9 + 0.1 * step(0.5, fract(fy * 2.5)));
+    else if (k6 < 0.66 && abs(fx) < 0.9 && fy < 0.8) c = k5 < 0.5 ? vec3(0.30, 0.31, 0.34) : vec3(0.55, 0.50, 0.44);
+  }
+  else if (t == ty) c = d.y > 0.0 ? vec3(0.80, 0.80, 0.78) : floorC;
+  else c = wallC * 0.85;
+  // the daylight from the window falls off inside; the ceiling gets the floor's bounce
+  float depth = -q.z / D, light = mix(1.0, 0.35, depth) * (t == ty && d.y > 0.0 ? 0.75 : 1.0);
+  vec3 col = c * light * 0.16;
+  // a ceiling light on (one room in six): a bright panel
+  if (k1 > 0.83 && t == ty && d.y > 0.0 && abs(q.x - xc) < 0.5 && abs(q.z + D * 0.45) < 0.3) col = vec3(1.4, 1.38, 1.3);
+  else if (k1 > 0.83) col *= 1.6;
+  return col;
+}`).replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n  normal = normalize(normal + vec3(vGh.x - 0.5, vGh.y - 0.5, 0.) * 0.06);')
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n  float fres; vec3 room = roomCol(fres); totalEmissiveRadiance += room * (1.0 - fres) * vec3(0.86, 0.92, 0.90);');
+  };
+  m.customProgramCacheKey = () => 'kit-glass-room';
+}
+glassShader(glassMat);
+kitShader(frameMat, 'kit-frame', false); kitShader(shopGlassMat, 'kit-shopglass', false); kitShader(curtainMat, 'kit-curtain', true);
 function geoBoxes(boxes, hw, hh) {   // boxes: [x0, x1, y0, y1, z0, z1, r, g, b(, ax, ay)]: one geometry, vertex colours;
   // with hw, hh (a stretching kit's half size): each vertex's edge (aEdge), by its side of the middle or the box's ax, ay
   const P = [], N = [], C = [], E = [];
@@ -966,6 +1035,7 @@ function kitWindow(style, depth, n) {
   glass.setAttribute('position', new THREE.Float32BufferAttribute([-a, -b, gz, a, -b, gz, a, b, gz, -a, -b, gz, a, b, gz, -a, b, gz], 3));
   glass.setAttribute('normal', new THREE.Float32BufferAttribute([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1], 3));
   glass.setAttribute('aEdge', new THREE.Float32BufferAttribute([-hw, -hh, hw, -hh, hw, hh, -hw, -hh, hw, hh, -hw, hh], 2));
+  glass.setAttribute('aHalf', new THREE.Float32BufferAttribute(new Array(6).fill([hw, hh]).flat(), 2));
   return [[geoBoxes(B, hw, hh), frameMat], [glass, style === 'shop' ? shopGlassMat : glassMat]];
 }
 function kitDoor(w, h) {
@@ -983,7 +1053,7 @@ function kitShutter() {   // 1 x 1, ribbed (a slat every 7 cm), its box above: s
 }
 // small parts whose shadows do not show from the street (pipes, gutters, laundry poles, air conditioners, what stands
 // on flat roofs): drawn, but left out of the shadow map
-const NOSHADOW_KITS = new Set(['pipe', 'gutter', 'hang', 'ac', 'mast', 'vent', 'tank', 'elev', 'part', 'pot']);
+const NOSHADOW_KITS = new Set(['pipe', 'gutter', 'hang', 'ac', 'mast', 'vent', 'tank', 'elev', 'part', 'pot', 'path', 'pad', 'grille', 'gpost']);
 const KIT = new Map(), KITF = {
   w: (a) => kitWindow(a[1], +a[2], +a[3]), d: (a) => kitDoor(+a[1], +a[2]), shut: () => kitShutter(),
   cur: () => { const g = new THREE.PlaneGeometry(1, 1); g.setAttribute('aEdge', new THREE.Float32BufferAttribute(new Float32Array(8), 2)); return [[g, curtainMat]]; },   // (scaled whole: no edge moves)
@@ -994,6 +1064,14 @@ const KIT = new Map(), KITF = {
   pipe: () => [[geoBoxes([[-0.045, 0.045, 0, 1, -0.045, 0.045, 1, 1, 1]]), partMat]],
   gutter: () => [[geoBoxes([[-0.5, 0.5, -0.06, 0.0, -0.06, 0.06, 1, 1, 1]]), partMat]],
   canopy: () => [[geoBoxes([[-0.5, 0.5, 0, 1, 0, 1, 1, 1, 1]]), partMat]],
+  sbox: () => [[geoBoxes([[-0.5, 0.5, 0.0, 0.27, -0.02, 0.17, 1, 1, 1], [-0.5, 0.5, 0.0, 0.015, 0.0, 0.17, 0.5, 0.5, 0.5]]), partMat]],   // (a roller shutter's box over a window, the slot under it)
+  grille: () => [[geoBoxes([[-0.5, 0.5, 0.47, 0.5, -0.02, 0.02, 1, 1, 1], [-0.5, 0.5, -0.5, -0.47, -0.02, 0.02, 1, 1, 1], ...[...Array(7)].map((_, k) => { const x = -0.42 + k * 0.14; return [x - 0.012, x + 0.012, -0.5, 0.5, -0.015, 0.015, 1, 1, 1]; })]), partMat]],   // (bars over a small window)
+  gpost: () => [[geoBoxes([[-0.18, 0.18, 0, 1.25, -0.12, 0.12, 1, 1, 1], [-0.12, 0.12, 0.9, 1.05, 0.12, 0.135, 0.85, 0.80, 0.70], [-0.05, 0.05, 0.68, 0.8, 0.12, 0.14, 0.25, 0.25, 0.27], [-0.1, 0.1, 0.45, 0.6, 0.12, 0.16, 0.55, 0.36, 0.22]]), partMat]],   // (a gate post: the name plate, the intercom, the letter box)
+  shrub: () => { const g = new THREE.IcosahedronGeometry(0.5, 1), n = g.attributes.position.count, c = new Float32Array(n * 3); const p = g.attributes.position; for (let i = 0; i < n; i++) { const y = p.getY(i), k = 0.75 + 0.25 * (y + 0.5) + 0.12 * Math.sin(i * 12.9898); p.setXYZ(i, p.getX(i) * (1 + 0.12 * Math.sin(i * 3.1)), Math.max(-0.35, y) + 0.35, p.getZ(i) * (1 + 0.12 * Math.cos(i * 2.3))); c[i * 3] = 0.22 * k; c[i * 3 + 1] = 0.36 * k; c[i * 3 + 2] = 0.16 * k; } g.setAttribute('color', new THREE.BufferAttribute(c, 3)); g.computeVertexNormals(); return [[g, shrubMat]]; },
+  bike: () => { const ring = (x) => { const t = new THREE.TorusGeometry(0.31, 0.02, 4, 14); t.rotateY(Math.PI / 2); t.translate(0, 0.33, x); return t; }; const parts = [ring(-0.5), ring(0.5)], fr = geoBoxes([[-0.015, 0.015, 0.33, 0.37, -0.5, 0.45, 0.25, 0.25, 0.27], [-0.015, 0.015, 0.33, 0.9, 0.12, 0.16, 0.25, 0.25, 0.27], [-0.09, 0.09, 0.88, 0.92, 0.05, 0.25, 0.1, 0.1, 0.1], [-0.27, 0.27, 0.95, 0.98, -0.45, -0.42, 0.3, 0.3, 0.3], [-0.015, 0.015, 0.33, 0.97, -0.45, -0.42, 0.3, 0.3, 0.3], [-0.16, 0.16, 0.75, 0.95, -0.72, -0.5, 0.35, 0.35, 0.36]]);
+    const P = [], N = [], C = []; for (const t of parts) { const q = t.toNonIndexed(); P.push(...q.attributes.position.array); N.push(...q.attributes.normal.array); for (let i = 0; i < q.attributes.position.count; i++) C.push(0.12, 0.12, 0.13); }
+    P.push(...fr.attributes.position.array); N.push(...fr.attributes.normal.array); C.push(...fr.attributes.color.array);
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); return [[g, partMat]]; },   // (a bicycle, side on along its z)
   // a drinks machine against the wall (1.0 x 1.83 x 0.72): its body (the instance's colour), the lit front: a row of
   // samples behind glass, the buttons, the slot; and a potted plant (a pot, a rounded shrub of leaf boxes)
   vend: () => [[geoBoxes([[-0.5, 0.5, 0, 1.83, 0, 0.72, 1, 1, 1], [-0.42, 0.42, 1.12, 1.68, 0.72, 0.725, 0.95, 0.95, 0.92], [-0.42, 0.42, 0.95, 1.08, 0.72, 0.73, 0.3, 0.3, 0.32], [-0.42, 0.42, 0.12, 0.36, 0.72, 0.74, 0.12, 0.12, 0.13]]), partMat],
@@ -1009,6 +1087,7 @@ const KIT = new Map(), KITF = {
   mast: () => [[geoBoxes([[-0.04, 0.04, 0, 3.5, -0.04, 0.04, 0.6, 0.6, 0.6], [-0.6, 0.6, 3.0, 3.04, -0.02, 0.02, 0.6, 0.6, 0.6], [-0.4, 0.4, 2.5, 2.54, -0.02, 0.02, 0.6, 0.6, 0.6]]), partMat]],
   fence: () => [[geoBoxes([[-0.5, 0.5, 0, 1, -0.06, 0.06, 1, 1, 1]]), blockMat], [geoBoxes([[-0.5, 0.5, 1, 1.06, -0.08, 0.08, 0.9, 0.9, 0.9]]), partMat]],
   step: () => [[geoBoxes([[-0.5, 0.5, -0.2, 0.0, 0, 1, 0.62, 0.62, 0.6]]), partMat]],
+  path: () => [[geoBoxes([[-0.5, 0.5, -0.1, 0.035, 0, 1, 1, 1, 1]]), partMat]],
   pad: () => [[geoBoxes([[-0.5, 0.5, -0.1, 0.03, 0, 1, 1, 1, 1], [-0.32, -0.18, 0.03, 0.13, 0.12, 0.18, 0.85, 0.85, 0.83], [0.18, 0.32, 0.03, 0.13, 0.12, 0.18, 0.85, 0.85, 0.83]]), partMat]],
 };
 function kitGet(key) {
@@ -1183,6 +1262,15 @@ function bldMake(r) {
       if (o.kind === 'win' || o.kind === 'small' || o.kind === 'bdoor') {
         const style = o.kind === 'bdoor' ? 'slide2' : L.type === BT.OFFICE ? 'grid' : ww >= 1.15 ? 'slide' : 'fix';
         { const [k, sx, sy] = winKey(style, ww, hh, o.depth); put(k, pm(F, uc, yc, 0, sx, sy, 1), L.frame); }
+        // houses (estimated, as the streets here have them): a small hood over most windows, a box for the roller shutter
+        // over the big ground-floor windows, a grille over the small ones (bathroom, toilet); apartments' small windows too
+        if (L.type === BT.HOUSE && o.kind !== 'bdoor') {
+          const hood = R(o.i * 7 + o.f, w.i + 400) < 0.6, sbox = o.kind === 'win' && ww >= 1.15 && R(o.i * 7 + o.f, w.i + 401) < (o.f === 0 ? 0.55 : 0.3);
+          if (sbox) put('sbox', pm(F, uc, o.y1, 0, ww + 0.12, 1, 1), L.frame.map(v => v * 0.95));
+          else if (hood) put('canopy', pm(F, uc, o.y1 + 0.07, 0, ww + 0.24, 0.05, 0.34), pick(R(w.i, 402), [[0.55, 0.55, 0.53], [0.30, 0.29, 0.28], [0.80, 0.80, 0.78]]));
+        }
+        if (o.kind === 'small' && (L.type === BT.HOUSE || L.type === BT.APT) && R(o.i * 7 + o.f, w.i + 403) < 0.75) put('grille', pm(F, uc, yc, 0.02, ww + 0.06, hh + 0.06, 1), L.frame);
+        if (o.kind === 'bdoor' && L.type === BT.HOUSE && !(w.flags & 4) && R(o.i * 7 + o.f, w.i + 404) < 0.5) put('sbox', pm(F, uc, o.y1, 0, ww + 0.12, 1, 1), L.frame.map(v => v * 0.95));
         // behind the pane: lace or curtains drawn part way (homes: most windows), blinds let down part way (offices)
         const pc = [0, 0.7, 0.6, 0.5, 0.3, 0][L.type], rc = R(o.i * 31 + o.f, w.i);
         if (rc < pc && L.type === BT.OFFICE) { const bh = hh * (0.25 + 0.75 * R(o.i, o.f + 73)); put('cur', pm(F, uc, yc + (hh - bh) / 2, -o.depth + 0.062, ww, bh, 1), pick(R(w.i, 74), [[0.80, 0.80, 0.78], [0.70, 0.72, 0.74], [0.86, 0.84, 0.78]])); }
@@ -1226,6 +1314,16 @@ function bldMake(r) {
     if ((L.type === BT.HOUSE || L.type === BT.APT) && w.len > 3 && R(w.i, 300) < 0.6) put('pipe', pm(F, R(w.i, 301) < 0.5 ? w.u0 + 0.25 : w.u1 - 0.25, base, 0.09, 1, top - base, 1), [0.82, 0.82, 0.8]);
     if (L.type === BT.HOUSE && w !== front && w.len > 2.5 && R(w.i, 302) < 0.5) put('ac', pm(F, w.u0 + 0.8 + R(w.i, 303) * (w.len - 1.6), base + 0.08, 0.32));
     if (L.type === BT.SHOP && w === front && L.nUp >= 1 && R(w.i, 304) < 0.6) put('psign', pm(F, w.u1 - 0.15, base + L.gH + 0.4, 0, 1, 1, 1), L.sign);
+    // an apartment block's front: paving from the entrance to the pavement, bicycles parked along the wall beside it (estimated)
+    if ((L.type === BT.APT || (L.type === BT.SHOP && R(22, 0) < 0.4)) && w === front && w.street && w.street.gap >= 1.2) {
+      const door = ops.find(o => o.kind === 'door'), zs = w.street.gap - 0.25;
+      if (door && L.type === BT.APT) put('path', pm(F, (door.u0 + door.u1) / 2, base, 0.45, door.u1 - door.u0 + 1.0, 1, zs - 0.45), [0.6, 0.58, 0.55]);
+      if (w.street.gap >= 2.2 && R(23, 0) < 0.75) {
+        const n = 2 + Math.floor(R(24, 0) * 7), left = door ? (door.u0 + door.u1) / 2 > (w.u0 + w.u1) / 2 : true, x0 = left ? w.u0 + 0.6 : w.u1 - 0.6;
+        for (let k = 0; k < n; k++) { const x = x0 + (left ? 1 : -1) * k * 0.62; if (door && x > door.u0 - 0.8 && x < door.u1 + 0.8) break; if (x < w.u0 + 0.3 || x > w.u1 - 0.3) break;
+          put('bike', pm(F, x, base, 1.0, 1, 1, 1), pick(R(25, k), [[1, 1, 1], [0.6, 0.1, 0.1], [0.15, 0.25, 0.5], [0.85, 0.85, 0.85], [0.2, 0.2, 0.2]])); }
+      }
+    }
     // a house's front: a block wall along the street with a gate gap at the door (where there is room before the road)
     if (L.type === BT.HOUSE && w === front && w.street && w.street.gap >= 1.4 && w.street.c >= 3) {
       const z = Math.min(w.street.gap - 0.4, 3), door = ops.find(o => o.kind === 'door'), g0 = door ? door.u0 - 0.3 : 1e9, g1 = door ? door.u1 + 0.3 : -1e9;
@@ -1237,6 +1335,16 @@ function bldMake(r) {
         p0 = far ? w.u1 - 2.9 : w.u0 + 0.3; p1 = p0 + 2.6;
         if (!door || p1 < door.u0 - 0.2 || p0 > door.u1 + 0.2) put('pad', pm(F, (p0 + p1) / 2, base, 0, 2.6, 1, z + 0.06), [0.66, 0.65, 0.62]);
         else p0 = 1e9, p1 = -1e9;
+      }
+      // the way in: paving from the door to the gate, a gate post with its name plate, intercom and letter box; shrubs in
+      // the rest of the front garden (estimated)
+      if (door) {
+        put('path', pm(F, (door.u0 + door.u1) / 2, base, 0.4, door.u1 - door.u0 + 0.5, 1, z - 0.34), pick(R(14, 0), [[0.62, 0.58, 0.52], [0.55, 0.55, 0.54], [0.66, 0.50, 0.40]]));
+        put('gpost', pm(F, R(15, 0) < 0.5 ? g0 - 0.2 : g1 + 0.2, base, z - 0.05), pick(R(16, 0), [[0.70, 0.68, 0.64], [0.45, 0.42, 0.40], [0.80, 0.76, 0.66]]));
+      }
+      if (z >= 1.0) for (let k = 0, x = w.u0 + 0.7; k < 4 && x < w.u1 - 0.5; x += 1.3 + R(17, x | 0) * 1.4) {
+        if ((x + 0.6 > g0 && x - 0.6 < g1) || (x + 0.6 > p0 && x - 0.6 < p1)) continue;
+        const sc = 0.7 + R(18, k) * 0.7; put('shrub', pm(F, x, base, Math.min(z - 0.45, 0.5 + R(19, k) * (z - 1.0)), sc, sc * (0.8 + R(20, k) * 0.6), sc), pick(R(21, k), [[1, 1, 1], [0.85, 0.95, 0.8], [1.1, 1.05, 0.9]])); k++;
       }
       for (let x = w.u0 + 0.5; x < w.u1; x += 1) if ((x + 0.5 < g0 || x - 0.5 > g1) && (x + 0.5 < p0 || x - 0.5 > p1)) put('fence', pm(F, x, base, z, 1, 0.9 + R(9, 0) * 0.4, 1), pick(R(10, 0), [[0.72, 0.72, 0.7], [0.82, 0.8, 0.76], [0.55, 0.55, 0.55]]));
     }
@@ -2230,7 +2338,7 @@ fetchBin('models/cars/toyota_gr_supra.glb').then(buf => new GLTFLoader().parse(b
   const b2 = new THREE.Box3().setFromObject(m); m.position.x -= (b2.max.x + b2.min.x) / 2; m.position.z -= (b2.max.z + b2.min.z) / 2;
   car.add(m);
 })).catch(() => { const b = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.3, 4.4), new THREE.MeshStandardMaterial({ color: 0xa01010, roughness: 0.3 })); b.position.y = 0.65; b.castShadow = true; car.add(b); });
-const C = { x: 0, y: 0, z: 0, hdg: 0, v: 0, vy: 0, steer: 0, camYaw: 0, pitch: 0, roll: 0, cam: 0, hand: false };
+const C = { x: 0, y: 0, z: 0, hdg: 0, v: 0, vy: 0, steer: 0, camYaw: 0, pitch: 0, roll: 0, cam: 0, hand: false, eye: [-0.37, 1.1, -0.25, 0.35, 62] };   // (eye: the driver's eye in the car (x, y up, z ahead), how far it looks down over 10 m, the vertical field of view)
 const L = Math.hypot(SPOT.dx, SPOT.dz);
 let placed = false, start = null;
 // the street's direction and the lane in this frame, from PLATEAU's own globe, once its tiles are placed
@@ -2354,7 +2462,7 @@ function drive(dt) {
   const d = ((C.hdg - C.camYaw + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI; C.camYaw += d * Math.min(1, dt * 3);
   const cx = Math.sin(C.camYaw), cz = Math.cos(C.camYaw);
   if (window.__camAt) { const c = window.__camAt; camera.position.set(c[0], c[1], c[2]); camera.lookAt(c[3], c[4], c[5]); camera.fov = c[6] || 55; }   // (tests: a camera put where asked)
-  else if (C.cam === 1) { const e = new THREE.Vector3(-0.37, 1.1, -0.25).applyMatrix4(car.matrixWorld); camera.position.copy(e); camera.lookAt(e.x + fx * 10, e.y - 0.35, e.z + fz * 10); camera.fov = 62; }
+  else if (C.cam === 1) { const E = C.eye, e = new THREE.Vector3(E[0], E[1], E[2]).applyMatrix4(car.matrixWorld); camera.position.copy(e); camera.lookAt(e.x + fx * 10, e.y - E[3], e.z + fz * 10); camera.fov = E[4]; }
   else {
     const far = C.cam === 2, D = far ? 14 : 7.2, H = far ? 6 : 2.3;
     _c.set(C.x, C.y + 1.6, C.z); _t.set(C.x - cx * D, C.y + H, C.z - cz * D);
@@ -2523,7 +2631,7 @@ setEl.addEventListener('change', e => {
 });
 showSettings();
 addEventListener('visibilitychange', () => { if (document.hidden && bench) bench.hidden = true; });
-window.__three = { enuToWorld: (e, n, u) => FRAME && enuToWorld(e, n, u), areaNear, gatherHits, get areaBuilt() { return AREA.built; }, AREA, get L3n() { return L3.size; }, get facades() { return FACADE.made.size; }, FURN, BLD, BTNAME, furnLamps, signalState, PF, frames: () => fr.slice(), surfacesAt: (x, z, y) => { ray.set(_o.set(x, y + 40, z), DOWN); ray.far = 90; ray.firstHitOnly = false; const h = hitRoads.length ? ray.intersectObjects(withBVH(hitRoads), false) : []; ray.firstHitOnly = true; return h.map(k => +k.point.y.toFixed(2)); }, bvhQueueLen: () => bvhQueue.length, FRAME_ENU: { pos: (x, z) => toENU(x, z), dir: (x, z) => dirENU(x, z) }, texMB: () => texBytes() / 1e6, texMem, S, scene, camera, renderer, sets, C, setMode, composer, ao, bloom, GH, gridH, groundAt, wallDist, treeSpots, keys, THREE, reset: () => start && reset() };
+window.__three = { enuToWorld: (e, n, u) => FRAME && enuToWorld(e, n, u), pending: () => ({ tiles: Object.values(sets).reduce((a, t) => a + (t.stats ? t.stats.downloading + t.stats.parsing : 0), 0), bld: BLD.queue.length + BLD.jobs.length + (BLD.dirtyParts ? 1 : 0), chunks: AREA.queue.length, photos: texLeft + (texBusy ? 1 : 0) }), areaNear, gatherHits, get areaBuilt() { return AREA.built; }, AREA, get L3n() { return L3.size; }, get facades() { return FACADE.made.size; }, FURN, BLD, BTNAME, furnLamps, signalState, PF, frames: () => fr.slice(), surfacesAt: (x, z, y) => { ray.set(_o.set(x, y + 40, z), DOWN); ray.far = 90; ray.firstHitOnly = false; const h = hitRoads.length ? ray.intersectObjects(withBVH(hitRoads), false) : []; ray.firstHitOnly = true; return h.map(k => +k.point.y.toFixed(2)); }, bvhQueueLen: () => bvhQueue.length, FRAME_ENU: { pos: (x, z) => toENU(x, z), dir: (x, z) => dirENU(x, z) }, texMB: () => texBytes() / 1e6, texMem, S, scene, camera, renderer, sets, C, setMode, composer, ao, bloom, GH, gridH, groundAt, wallDist, treeSpots, keys, THREE, reset: () => start && reset() };
 </script>
 </body>
 </html>

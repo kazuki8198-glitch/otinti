@@ -620,13 +620,15 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
           <tr><td><kbd>W</kbd> / <kbd>↑</kbd></td><td>機首を下げる（降下）</td></tr>
           <tr><td><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd></td><td>左右に傾ける。傾くとその方向へ曲がる（旋回）。地上ではハンドル</td></tr>
           <tr><td><kbd>Q</kbd> <kbd>E</kbd></td><td>ラダー：機首を左右に振る（普段は使わなくて OK）</td></tr>
-          <tr><td><kbd>R</kbd> <kbd>F</kbd></td><td>スロットル（エンジン出力）を上げる／下げる</td></tr>
+          <tr><td><kbd>R</kbd> <kbd>F</kbd></td><td>スロットル（エンジン出力）を上げる／下げる。<kbd>Shift</kbd>+ホイールでも（どの視点でも）</td></tr>
           <tr><td><kbd>V</kbd></td><td>フラップ切替（離着陸でゆっくり飛ぶための翼の板）</td></tr>
           <tr><td><kbd>G</kbd></td><td>ギア（車輪）の上げ下げ。着陸前には必ず下げる</td></tr>
           <tr><td><kbd>B</kbd> / <kbd>Space</kbd></td><td>ブレーキ（地上で止まるとき）</td></tr>
           <tr><td><kbd>L</kbd></td><td>水平飛行に戻す（数秒間、自動操縦）</td></tr>
           <tr><td><kbd>C</kbd></td><td>カメラ切替。マウスでドラッグすると見回せます</td></tr>
           <tr><td><kbd>K</kbd></td><td>車に乗り換える／飛行機に戻る。車は飛行機の真下の地面に出ます（W/S アクセル・ブレーキ、A/D ハンドル、Space サイドブレーキ、C 視点）</td></tr>
+          <tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>アナログ計器の読み方の表示／非表示</td></tr>
+          <tr><td>ホイール</td><td>後ろからの視点：スロットル。回り込み視点：カメラの距離。コックピット：ズーム（スイッチの上ではそのスイッチ）</td></tr>
           <tr><td><kbd>M</kbd></td><td>日本地図を開く／閉じる。空港をクリックして目的地や出発地に設定できます</td></tr>
           <tr><td><kbd>O</kbd></td><td>オートパイロット：今の高度を保ち、目的地（なければ今の方位）へ自動で飛ぶ。操縦すると解除</td></tr>
           <tr><td><kbd>Z</kbd></td><td>時間加速 ×1 → ×2 → ×4 → ×8 → ×16 → ×32 → ×64（上空のみ）。長い距離の移動に</td></tr>
@@ -11862,7 +11864,8 @@ function answerAtc(i) {
   setTimeout(() => { box.hidden = true; if (SCHOOL.active === L) L.st.done = true; }, ok ? 2200 : 4500);
 }
 function schoolKey(e) {
-  if (e.code === 'KeyK' && SCHOOL.analog && (game.state === 'flying' || game.state === 'paused')) { SCHOOL.explain = !SCHOOL.explain; schoolLoad().explain = SCHOOL.explain; schoolSave(); toast(SCHOOL.explain ? '計器の読み方を表示' : '計器の読み方を非表示', 1200); return true; }
+  if (e.code === 'KeyK' && e.shiftKey && SCHOOL.analog && (game.state === 'flying' || game.state === 'paused')) {   // (Shift+K: K alone is the car)
+    SCHOOL.explain = !SCHOOL.explain; schoolLoad().explain = SCHOOL.explain; schoolSave(); toast(SCHOOL.explain ? '計器の読み方を表示（Shift+K で切替）' : '計器の読み方を非表示（Shift+K で切替）', 1200); return true; }
   if (!SCHOOL.active || game.state !== 'flying') {
     if (e.code === 'KeyI' && (game.state === 'flying' || game.state === 'paused')) { SCHOOL.analog = !SCHOOL.analog; toast(SCHOOL.analog ? 'アナログ計器（6 計器）' : 'グラス計器（PFD）', 1200); return true; }
     if ((e.code === 'BracketLeft' || e.code === 'BracketRight') && game.state === 'flying') { SCHOOL.obs = (SCHOOL.obs + (e.code === 'BracketRight' ? 5 : -5) + 360) % 360; return true; }
@@ -17733,14 +17736,14 @@ addEventListener('keydown', e => {
   if (e.code === 'Enter' && (st === 'result' || st === 'crashed') && game.resultTimer <= 0) { e.preventDefault(); startMode(game.mode); return; }
   if (e.code === 'KeyM') { toggleMap(); return; }
   if (mapv.open && e.code === 'Escape') { toggleMap(false); return; }
-  if (e.code === 'KeyK' && st === 'flying' && !(SCHOOL.active)) { carToggle(); return; }
+  if (e.code === 'KeyK' && !e.shiftKey && st === 'flying' && !(SCHOOL.active)) { carToggle(); return; }
   if (e.code === 'KeyC' && (st === 'flying' || st === 'crashed')) { cycleCamera(); return; }
   if (CAR.on && e.code === 'KeyR' && st === 'flying') { carToRoad(3000); return; }
   if (CAR.on && e.code === 'Slash' && st === 'flying') { CAR.help = !(CAR.help || R.time - (CAR.enterT ?? R.time) < 14); CAR.enterT = -1e9; return; }
   if (CAR.on && e.code === 'KeyV' && st === 'flying') { if (e.shiftKey) carNextPaint(); else carNextModel(); return; }
   if (CAR.on) return;                                               // aircraft keys do nothing while driving
   const map = { KeyG: 'gear', KeyV: 'flaps', KeyH: 'hud', KeyX: 'smoke', KeyL: 'level', KeyZ: 'time', KeyO: 'ap' };
-  if (map[e.code] && !(e.code === 'KeyH' && e.shiftKey)) doAction(map[e.code]);
+  if (map[e.code] && !(e.code === 'KeyH' && (e.shiftKey || cam.mode === 'cockpit'))) doAction(map[e.code]);   // (H in the cockpit: the cockpit's own display, its handler)
   if (e.code === 'KeyT') doAction(e.shiftKey ? 'trimReset' : 'trim');
   if (e.code === 'KeyJ' && (st === 'flying' || st === 'paused')) { game.physView = !game.physView; toast(game.physView ? '物理の見える化：揚力・抗力・推力・重力と、その数値を表示' : '物理の見える化を閉じました', 1600); }
   if (e.code === 'KeyU' && st === 'flying') { game.autoRud = !game.autoRud; if ($('opt-autorud')) $('opt-autorud').checked = game.autoRud; savePrefs(); toast(game.autoRud ? '自動ラダー ON（ボールを自動で中央に）' : '自動ラダー OFF：Q / E でボールを中央に保ちます（離陸・上昇は右ラダー）', 2600); }
@@ -17775,9 +17778,12 @@ glCanvas.addEventListener('pointercancel', endDrag);
 glCanvas.addEventListener('dblclick', () => { if (cam.mode === 'cockpit') { cam.lookYaw = cam.lookPitch = 0; CPIT.fov = 55; } });
 glCanvas.addEventListener('wheel', e => {
   e.preventDefault();
+  // the wheel: Shift+wheel is the throttle in every view; without Shift, the cockpit's knobs or zoom, the orbit
+  // view's distance, and the throttle in the view behind (as before)
+  if (e.shiftKey && game.state === 'flying' && !CAR.on) { sim.thr = clamp(sim.thr - Math.sign(e.deltaY || e.deltaX) * 0.05, 0, 1); return; }
   if (cpWheel(e)) return;
-  if (game.state === 'flying') sim.thr = clamp(sim.thr - Math.sign(e.deltaY) * 0.05, 0, 1);
-  else if (cam.mode === 'orbit') cam.dist = clamp(cam.dist * (e.deltaY > 0 ? 1.1 : 0.9), 8, 120);
+  if (cam.mode === 'orbit' || game.state !== 'flying') cam.dist = clamp(cam.dist * (e.deltaY > 0 ? 1.1 : 0.9), 8, 120);
+  else if (!CAR.on) sim.thr = clamp(sim.thr - Math.sign(e.deltaY) * 0.05, 0, 1);
 }, { passive: false });
 
 // touch controls

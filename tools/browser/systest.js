@@ -67,6 +67,26 @@ const fs = require('fs'), path = require('path');
   r = await step(3, 'SYS.bat = true; SYS.fuelOn = false');
   check('737 fuel lever to CUTOFF: the engine stops', !r.run, r);
 
+  // ---- 737-800: one engine out ----
+  r = await step(30, 'SYS.fuelOn = true; SYS.eng.forEach(E => E.fuel = true); SYS.start = true');
+  const eng = () => page.evaluate(() => SYS.eng.map(E => E.run));
+  check('737 both engines running', (await eng()).every(x => x) && r.run, await eng());
+  r = await step(3, 'SYS.eng[0].fuel = false');
+  check('737 No. 1 fuel lever to CUTOFF: No. 1 stops, No. 2 keeps running', JSON.stringify(await eng()) === '[false,true]' && r.run, await eng());
+  r = await step(35, 'SYS.eng[0].fuel = true; SYS.start = true');
+  check('737 No. 1 lever back to RUN with the starter: No. 1 relights', (await eng()).every(x => x), await eng());
+  // in the air, hands off: both engines, then No. 1 out (the nose swings toward the dead engine)
+  const yaw = async (cut) => {
+    await page.evaluate(() => window.__ft.setup({ ac: 'b738', mode: 'air', place: { lat: 35.55, lon: 139.95, agl: 1500, hdg: 90, kt: 200 } }));
+    return page.evaluate(([cut]) => {
+      if (cut) SYS.eng[0].fail = true;
+      const h0 = attitude().hdg, out = window.__ft.run(8, (s) => { s.ovr = { elev: 0, ail: 0, rud: 0 }; s.thr = 0.8; }, 0, { systems: true });
+      return { dh: +(((attitude().hdg - h0 + 540) % 360) - 180).toFixed(1), beta: +(sim.beta / DEG).toFixed(1), eng: SYS.eng.map(E => E.run), crashed: out.crashed };
+    }, [cut]);
+  };
+  const both = await yaw(false), one = await yaw(true);
+  check('737 in the air, No. 1 failed: the nose yaws left (toward it), more than with both running', !one.eng[0] && one.eng[1] && one.dh < both.dh - 2, { both, one });
+
   console.log(`${results.filter(x => x).length}/${results.length} passed`);
   await browser.close();
   process.exit(results.every(x => x) ? 0 : 1);

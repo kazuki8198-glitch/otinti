@@ -3419,6 +3419,13 @@ function physicsStep(dt, t) {
     s.ab = false;
   }
   if (jet) s.shaftP = 0;
+  // a twin with one engine out: the thrust of one, on one side; the yaw toward the dead engine is the pilot's to hold
+  // with rudder (eng[0] is No. 1, the left)
+  let Tasym = 0;
+  if (sysTwin() && SYS.run && SYS.eng) {
+    const nL = SYS.eng[0].run ? 1 : 0, nR = SYS.eng[1].run ? 1 : 0;
+    if (nL + nR === 1) { T /= 2; Tasym = (nR - nL) * Math.max(T, 0) * Math.abs(ACFT.engines[0].x || 3); }
+  }
   s.oat = atm.T - 273.15; s.thrust = T; s.rho = rho; s.nProp = 0;
   // density altitude: the ISA altitude that has this air density
   s.densAlt = (1 - Math.pow(Math.min(atm.sigma, 1.2), 0.234969)) * 44330.8;
@@ -3429,7 +3436,7 @@ function physicsStep(dt, t) {
   const elevEff = clamp(s.elev + s.trim, -1, 1);
   // yaw: the propeller's left-turning tendencies (slipstream swirl + P-factor, minus the fin offset that
   // cancels them at cruise) and what the pieces don't produce of adverse yaw
-  let Nx = qd * AC.S * AC.b * EL.dCnda * s.ail + hv * AC.S * AC.b * AC.b * EL.dCnp * p, Rl = 0, Ng = 0;
+  let Nx = qd * AC.S * AC.b * EL.dCnda * s.ail + hv * AC.S * AC.b * AC.b * EL.dCnp * p - Tasym, Rl = 0, Ng = 0;
   if (AC.prop) {
     const Pr = AC.prop, Tp = Math.max(T, 0);
     s.nProp = -(Tp * (Pr.a0 + Pr.a1 * clamp(alpha, -0.1, 0.35))) + Pr.fin * qd;
@@ -13904,10 +13911,15 @@ function sysReset(cold) {
     mags: on ? 3 : 0, mix: on ? 1 : 0, fuelSel: 3, fuelOn: on, pbrake: cold,
     cap, rpmK: 1, fuelL: cap * acLoad(ACFT, ACFT.custom !== false).fuel / 2, fuelR: cap * acLoad(ACFT, ACFT.custom !== false).fuel / 2, batQ: 0.95, starvT: 0, crankT: 0, pf: 1,
   });
+  SYS.eng = [0, 1].map(() => ({ fuel: on, run: on, fail: false, relight: 0 })); SYS.fuelOnWas = on;
   if (cold) { sim.rpm = 0; sim.thr = 0; sim.n1 = 0; } else if (CL.open) clToggle(false);
   CL.html = ''; sysStep(0);
 }
 const sysPiston = () => SYS.kind === 'piston';
+// two engines, one on each wing (the 737, the A320, the King Air, the Q400...): each its own fuel lever, its own
+// running state and its own share of the thrust; SYS.run stays "an engine is running", SYS.fuelOn "a lever is in RUN"
+const sysTwin = () => !sysPiston() && !!(ACFT.engines && ACFT.engines[0] && ['pod', 'wing'].includes(ACFT.engines[0].type));
+const sysEngRun = i => sysTwin() ? !!(SYS.eng && SYS.eng[i] && SYS.eng[i].run) : SYS.run;
 // flaps are electric in the light aircraft and hydraulic (engine-driven pumps, battery backup) in the others
 function sysFlapsOK() { return SYS.bus || (!sysPiston() && SYS.run); }
 function sysGearOK() { return ACFT.id === 'sport' ? SYS.bus : SYS.run || SYS.bus; }
@@ -13917,7 +13929,7 @@ function sysSound() { return SYS.run ? 1 : sysPiston() ? clamp(sim.rpm / 900, 0,
 function sysCrankRpm() { return sysPiston() ? (SYS.crank ? 260 : 0) : SYS.spin * 700; }
 function sysStop(why) {
   if (!SYS.run) return;
-  SYS.run = false;
+  SYS.run = false; if (SYS.eng) SYS.eng.forEach(E => { E.run = false; E.relight = 0; });
   if (game.state === 'flying') toast('エンジン停止：' + why, 3200);
 }
 function sysMsg(t) { if (R.time - SYS.msgT > 2.5) { SYS.msgT = R.time; toast(t, 2600); } }
@@ -13978,13 +13990,28 @@ function sysStep(dt) {
     // turbine: the starter spins the core to ~25 %, fuel in above ~18 % lights it, then it accelerates to idle
     const starter = SYS.start && SYS.bus && SYS.volts > 20;
     if (SYS.start && !SYS.bus && dt > 0) sysMsg('スタートできません：バッテリー（BAT）を ON に');
+    // (SYS.fuelOn set as one lever, by the automatic start, the 2D panel or a key: both engines' levers follow)
+    if (sysTwin() && SYS.eng && SYS.fuelOn !== SYS.fuelOnWas) SYS.eng.forEach(E => E.fuel = SYS.fuelOn);
+    if (sysTwin() && SYS.eng) {
+      // each engine: its lever, the fuel, a failure; one stopping leaves the other running (and the thrust lopsided)
+      for (let i = 0; i < 2; i++) {
+        const E = SYS.eng[i];
+        if (SYS.run && E.run && (!E.fuel || !fuelOK || E.fail)) { E.run = false; E.relight = 0; if (game.state === 'flying') toast(`第 ${i + 1} エンジン停止（${E.fail ? '故障' : !E.fuel ? '燃料レバーが CUTOFF' : '燃料切れ'}）`, 2600); }
+        // a stopped engine on a running aircraft: lever in RUN, the starter (or the airflow) turning it, about 25 s to idle
+        if (SYS.run && !E.run && E.fuel && fuelOK && !E.fail && (starter || s.tas > 160)) { E.relight += dt; if (E.relight > 25) { E.run = true; E.relight = 0; SYS.start = false; if (game.state === 'flying') toast(`第 ${i + 1} エンジン再始動`, 2000); } }
+        else if (!E.run) E.relight = 0;
+      }
+      SYS.fuelOn = SYS.fuelOnWas = SYS.eng[0].fuel || SYS.eng[1].fuel;
+      if (SYS.run && !SYS.eng[0].run && !SYS.eng[1].run) sysStop(SYS.fuelOn ? '両エンジン停止' : '燃料レバーが CUTOFF');
+    }
     if (SYS.run) {
       if (!SYS.fuelOn) sysStop('燃料レバーが CUTOFF');
       else if (!fuelOK) sysStop('燃料切れ');
-      SYS.spin = 1; if (SYS.start) SYS.start = false;
+      SYS.spin = 1; if (SYS.start && !(sysTwin() && SYS.eng && SYS.eng.some(E => !E.run && E.fuel))) SYS.start = false;
     } else {
+      if (sysTwin() && SYS.eng) SYS.fuelOn = SYS.fuelOnWas = SYS.eng[0].fuel || SYS.eng[1].fuel;
       const lit = SYS.fuelOn && fuelOK && SYS.spin > 0.3 && (starter || SYS.spin > 0.45 || s.tas > 120);
-      if (lit) { SYS.spin = Math.min(1, SYS.spin + dt / 11); if (SYS.spin >= 1) { SYS.run = true; SYS.start = false; if (game.state === 'flying') toast('エンジン始動完了（回転が安定）', 2200); } }
+      if (lit) { SYS.spin = Math.min(1, SYS.spin + dt / 11); if (SYS.spin >= 1) { SYS.run = true; SYS.start = false; if (SYS.eng) SYS.eng.forEach(E => { E.run = E.fuel && !E.fail; E.relight = 0; }); if (game.state === 'flying') toast('エンジン始動完了（回転が安定）', 2200); } }
       else if (starter) SYS.spin = Math.min(0.42, SYS.spin + dt / 9);
       else SYS.spin = Math.max(clamp(s.tas / 400, 0, 0.35), SYS.spin - dt / 14);
     }
@@ -14085,8 +14112,9 @@ function drawEngDisp(g, x, y, w, h, style) {
     cpText(g, lab, cx - r, cy - r - 2, 9, '#5fd4ff', 700, 'left');
   };
   for (const [i, ex] of [[1, x + 82], [2, x + 248]]) {
-    dial(ex, y + 64, 40, n1, 110, `N1 ${i}`, n1.toFixed(1), 1.0 / 1.1);
-    dial(ex, y + 158, 34, egt, 1100, `EGT ${i}`, String(Math.round(egt)), 0.95);
+    const on = sysEngRun(i - 1), n1e = on ? n1 : Math.min(n1, clamp(s.tas * KTS / 25, 0, 9)), egte = on ? egt : Math.max(0, egt * 0.15);   // (a stopped engine: windmilling, cold)
+    dial(ex, y + 64, 40, n1e, 110, `N1 ${i}`, n1e.toFixed(1), 1.0 / 1.1);
+    dial(ex, y + 158, 34, egte, 1100, `EGT ${i}`, String(Math.round(egte)), 0.95);
   }
   const fob = SYS.fuelL + SYS.fuelR, ff = SYS.flow / 2;
   cpText(g, `FF ${Math.round(ff)} / ${Math.round(ff)} KG/H`, x + 12, y + 212, 11, col, 700, 'left');
@@ -15572,7 +15600,7 @@ const cpOn = v => v ? 'ON' : 'OFF';
 const cpFt = m => Math.round(m * 3.28084 / 100) * 100;
 function cpHdgNow() { return Math.round(attitude().hdg) % 360; }
 // the controls, by what they do: tip (text or a function), and click / wheel / drag / hold (down, up)
-function cpHotAct(a) {
+function cpHotAct(a, nth = 0) {   // (nth: which of the controls of this kind: a twin's first fuel lever is No. 1's)
   const s = sim, R_ = CPHOT.radio, apNeed = () => { if (!game.ap) { doAction('ap'); } return game.ap; };
   const wheelHdg = d => { game.apHdg = ((game.apHdg ?? cpHdgNow()) + d * (Math.abs(d) > 1 ? 1 : 1) + 360) % 360; game.apLat = 'hdg'; };
   const wheelAlt = d => { game.apAlt = Math.max(150, (game.apAlt ?? s.pos[1]) + d * 30.48); };
@@ -15612,8 +15640,8 @@ function cpHotAct(a) {
       down: () => { if (SYS.mags < 3) { SYS.mags++; toast('キー ' + ['OFF', 'R', 'L', 'BOTH'][SYS.mags], 900); } else SYS.startHeld = true; },
       up: () => { SYS.startHeld = false; }, wheel: d => { SYS.mags = clamp(SYS.mags + (d > 0 ? 1 : -1), 0, 3); toast('キー ' + ['OFF', 'R', 'L', 'BOTH'][SYS.mags], 900); } },
     start: { tip: () => `START（押している間スターターが回る）${SYS.run ? '・エンジン作動中' : ''}`, hold: true, down: () => { SYS.startHeld = true; }, up: () => { SYS.startHeld = false; } },
-    engStart: { tip: () => `ENG START：${cpOn(SYS.start)}（スターターで回転を上げる）`, click: () => { if (!SYS.run) SYS.start = !SYS.start; } },
-    fuelLever: { tip: () => `燃料レバー：${SYS.fuelOn ? 'RUN' : 'CUTOFF'}（クリックで切替）`, click: () => { SYS.fuelOn = !SYS.fuelOn; toast('燃料レバー ' + (SYS.fuelOn ? 'RUN' : 'CUTOFF'), 1200); } },
+    engStart: { tip: () => `ENG START${sysTwin() ? ' ' + (nth + 1) : ''}：${cpOn(SYS.start)}（スターターで回転を上げる）`, click: () => { if (!SYS.run || (sysTwin() && SYS.eng && !SYS.eng[nth % 2].run)) SYS.start = !SYS.start; } },
+    fuelLever: sysTwin() && SYS.eng ? { tip: () => `燃料レバー ${nth % 2 + 1}：${SYS.eng[nth % 2].fuel ? 'RUN' : 'CUTOFF'}（クリックで切替）`, click: () => { const E = SYS.eng[nth % 2]; E.fuel = !E.fuel; toast(`燃料レバー ${nth % 2 + 1} ` + (E.fuel ? 'RUN' : 'CUTOFF'), 1200); } } : { tip: () => `燃料レバー：${SYS.fuelOn ? 'RUN' : 'CUTOFF'}（クリックで切替）`, click: () => { SYS.fuelOn = !SYS.fuelOn; toast('燃料レバー ' + (SYS.fuelOn ? 'RUN' : 'CUTOFF'), 1200); } },
     fuelSel: { tip: () => `燃料セレクター：${['OFF', 'LEFT', 'RIGHT', 'BOTH'][SYS.fuelSel]}（クリックで回す）`, click: () => { SYS.fuelSel = (SYS.fuelSel + 1) % 4; toast('燃料セレクター ' + ['OFF', 'LEFT', 'RIGHT', 'BOTH'][SYS.fuelSel], 1200); } },
     pbrake: { tip: () => `パーキングブレーキ：${SYS.pbrake ? 'SET' : '解除'}（クリックで切替・. キー）`, click: () => { SYS.pbrake = !SYS.pbrake; toast(SYS.pbrake ? 'パーキングブレーキ SET' : 'パーキングブレーキ 解除', 1200); } },
     // --- levers: drag up / down (or scroll) ---
@@ -15638,7 +15666,7 @@ function cpHotList() {
   const D = real.D, key = ACFT.id + (D.key || '') + L.E.join(',');
   if (CPHOT.key === key && CPHOT.list) return CPHOT.list;
   const out = [], xf = cpRealXf(D), xx = D.extra ? cpExtraXf(D) : null;
-  CPHOT.byIdx = {};
+  CPHOT.byIdx = {}; const cnt = {};
   for (let hi = 0; hi < (D.hot || []).length; hi++) {
     const H = D.hot[hi];
     let c, r = H.r || 0.022;
@@ -15649,7 +15677,8 @@ function cpHotList() {
     } else c = cpXfPt(H.x ? xx : xf, H.p);
     if (H.r && H.x) r = H.r * (D.extra.s || 1);
     else if (H.r && !H.n) r = H.r * (D.s || 1);
-    const h = cpHotAct(H.a); if (!h) continue;
+    cnt[H.a] = (cnt[H.a] || 0) + 1;
+    const h = cpHotAct(H.a, cnt[H.a] - 1); if (!h) continue;
     // (each use is remembered, for the part's press / turn animation)
     const o = { c: vadd(L.E, c), e: c, r, a: H.a, i: hi, t: -9, turn: 0, h: Object.assign({ key: 'hot:' + H.a + out.length }, h) };
     const mark = (f, dt) => f && ((...a) => { o.t = R.time; if (dt) o.turn += dt(...a); return f(...a); });

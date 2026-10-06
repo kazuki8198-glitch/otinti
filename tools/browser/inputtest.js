@@ -35,6 +35,16 @@ const fs = require('fs'), path = require('path');
   await page.evaluate(() => { cam.mode = 'chase'; sim.thr = 0.5; });
   a = await st(); await page.mouse.wheel(0, -300); await page.waitForTimeout(400); b = await st();
   check('the wheel in the view behind: the throttle (as before)', b.thr > a.thr, a, b);
+  // the cockpit's views: 2 eases the view down to the panel; Shift+3 keeps the present view as 3
+  await page.evaluate(() => { cam.mode = 'cockpit'; cam.lookYaw = 0; cam.lookPitch = 0; try { localStorage.removeItem('sorajima-views-' + ACFT.id); } catch (e) {} });
+  a = await page.evaluate(() => ({ p: +cam.lookPitch.toFixed(2) })); await page.keyboard.press('Digit2');
+  await page.waitForFunction(() => !cam.lookTo, null, { timeout: 60000, polling: 250 }).catch(() => {});   // (until the view has eased there: frames are slow here)
+  b = await page.evaluate(() => ({ p: +cam.lookPitch.toFixed(2) }));
+  check('2 in the cockpit: the view eases down to the panel', b.p < a.p - 0.2, a, b);
+  await page.evaluate(() => { cam.lookTo = null; cam.lookYaw = 0.4; cam.lookPitch = 0.1; });
+  await page.keyboard.press('Shift+Digit3'); await page.waitForTimeout(300);
+  b = await page.evaluate(() => JSON.parse(localStorage.getItem('sorajima-views-' + ACFT.id) || '{}'));
+  check('Shift+3 in the cockpit: the present view kept as 3', b[3] && Math.abs(b[3][0] - 0.4) < 0.01, a, b);
   console.log(`${results.filter(x => x).length}/${results.length} passed`);
   await browser.close();
   process.exit(results.every(x => x) ? 0 : 1);

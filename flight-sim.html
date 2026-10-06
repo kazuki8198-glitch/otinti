@@ -635,6 +635,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
           <tr><td><kbd>N</kbd></td><td>チェックリスト（始動・離陸前・着陸前・停止）。項目が済むと自動で ✓</td></tr>
           <tr><td><kbd>Ctrl</kbd>+<kbd>E</kbd></td><td>エンジン自動始動（スイッチを順番に操作します）</td></tr>
           <tr><td><kbd>.</kbd></td><td>パーキングブレーキ</td></tr>
+          <tr><td><kbd>1</kbd>〜<kbd>4</kbd>（コックピット）</td><td>視点：1 正面・2 計器盤・3 頭上パネル（小型機はスイッチ）・4 ペデスタルと無線機。<kbd>Shift</kbd>+数字で今の向きをその番号に保存</td></tr>
           <tr><td>コックピット視点</td><td>計器盤のスイッチ・キー・レバーをクリック／ドラッグで操作。ドラッグで見回す、ホイールでズーム、ダブルクリックで正面。<kbd>Y</kbd> で操縦桿を隠す、<kbd>Shift</kbd>+<kbd>H</kbd> で画面の計器も表示</td></tr>
         </table>
         <h3>スマホ</h3>
@@ -14281,6 +14282,23 @@ function cpWhere() {
   if (ACFT.id === 'sr22') return 'スイッチは画面の下の列、キーと START は左下、パワーレバー・ミクスチャー・フラップと燃料セレクターは右側のセンターコンソールです。';
   return 'スイッチは計器盤の下の列、キーと START は左下、スロットル・ミクスチャー・フラップは中央下、トリムと燃料セレクターは座席の間の床です。';
 }
+// the cockpit's views: 1 ahead, 2 the instrument panel, 3 the overhead panel (airliners) or the switches (light
+// aircraft), 4 the pedestal and radios; Shift+the number keeps the present view under it (per aircraft, saved).
+// The view eases there (cam.lookTo), dragging takes over
+const CP_VIEWS = { light: [[0, 0, 55], [0, -0.32, 45], [0.35, -0.5, 50], [-0.05, -0.62, 50]], air: [[0, 0, 55], [-0.05, -0.12, 45], [0, 0.85, 60], [-0.35, -0.75, 55]] };   // ([yaw, pitch, fov]; chosen from renders)
+const CP_VIEW_NAMES = ['正面', '計器盤', '頭上パネル／スイッチ', 'ペデスタル・無線機'];
+function cpView(n, keep) {
+  let mine = {}; try { mine = JSON.parse(localStorage.getItem('sorajima-views-' + ACFT.id) || '{}') || {}; } catch (e) { /* ignore */ }
+  if (keep) {
+    mine[n] = [+cam.lookYaw.toFixed(3), +cam.lookPitch.toFixed(3), Math.round(CPIT.fov)];
+    try { localStorage.setItem('sorajima-views-' + ACFT.id, JSON.stringify(mine)); } catch (e) { /* ignore */ }
+    toast(`視点 ${n} に今の向きを保存しました`, 1400); return;
+  }
+  const set = (ACFT.cp && ACFT.cp.L && ACFT.cp.L.deck === 'airliner') || isAirliner() ? CP_VIEWS.air : CP_VIEWS.light;
+  const v = mine[n] || set[n - 1];
+  cam.lookTo = v.slice();
+  toast(`視点 ${n}：${mine[n] ? '保存した向き' : CP_VIEW_NAMES[n - 1]}（Shift+${n} で今の向きを保存）`, 1300);
+}
 // per-frame work: systems, checklist, the cockpit field of view
 function cpFrame(dt) {
   if (game.state === 'flying') sysStep(dt);
@@ -14297,6 +14315,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyY' && e.shiftKey && cam.mode === 'cockpit') cpRealToggle();
   else if (e.code === 'KeyY' && cam.mode === 'cockpit') { CPIT.yoke = !CPIT.yoke; toast(CPIT.yoke ? '操縦桿を表示' : '操縦桿を非表示', 1200); }
   else if (e.code === 'KeyH' && cam.mode === 'cockpit') game.cpHud = !game.cpHud;
+  else if (/^Digit[1-4]$/.test(e.code) && cam.mode === 'cockpit' && !(typeof SCHOOL !== 'undefined' && SCHOOL.atc)) cpView(+e.code.slice(5), e.shiftKey);
 });
 // =====================================================================
 //  VIRTUAL COCKPIT: the flight deck is laid out like the real aircraft.
@@ -15698,7 +15717,9 @@ function cpHotHit(clientX, clientY) {
   let best = null, bestT = 1e9;
   for (const H of list) {
     const oc = vsub(H.c, o), t = vdot(oc, db); if (t <= 0) continue;
-    const m2 = vdot(oc, oc) - t * t; if (m2 > H.r * H.r) continue;
+    // (never smaller than 11 px on the screen: a small switch seen from the seat, or with the view zoomed out)
+    const rr_ = Math.max(H.r, t * R.tanY * 11 / Math.max(r.height / 2, 1));
+    const m2 = vdot(oc, oc) - t * t; if (m2 > rr_ * rr_) continue;
     // (a little in favour of the one nearest the ray's centre when two overlap)
     const score = t + Math.sqrt(m2) * 2;
     if (score < bestT) { bestT = score; best = H; }
@@ -17653,6 +17674,10 @@ function updateCamera(dt) {
   let eye, target, up = [0, 1, 0], fov = 58, near = 0.35;
   const mode = game.state === 'menu' ? 'attract' : cam.mode;
   if (!cam.dragging && mode !== 'cockpit') { cam.lookYaw = damp(cam.lookYaw, 0, 1.6, dt); cam.lookPitch = damp(cam.lookPitch, 0, 1.6, dt); }
+  if (cam.lookTo && mode === 'cockpit') {
+    if (cam.dragging) cam.lookTo = null;
+    else { const [y, p, f] = cam.lookTo; cam.lookYaw = damp(cam.lookYaw, y, 8, dt); cam.lookPitch = damp(cam.lookPitch, p, 8, dt); CPIT.fov = damp(CPIT.fov, f, 8, dt); if (Math.abs(cam.lookYaw - y) + Math.abs(cam.lookPitch - p) + Math.abs(CPIT.fov - f) / 50 < 0.002) cam.lookTo = null; }
+  }
   if (mode === 'attract') {
     if (!cam.dragging) cam.orbitYaw += dt * 0.07;
     const d = ACFT.cam[2] * 2, p = 0.16 + cam.orbitPitch * 0.3;
@@ -18006,7 +18031,9 @@ const audio = {
     const f = Math.max(s.rpm, 1) / 60 * 2;
     let near = cam.mode === 'cockpit' ? 1.15 : cam.mode === 'flyby' ? clamp(60 / Math.max(vdist(cam.eye, s.pos), 1), 0.08, 1.2) : 0.85;
     if (game.state === 'menu') near = 0.45;
-    const on_ = live && !s.crashed, ef = game.state === 'menu' || CAR.on ? 1 : sysSound();
+    // (a twin with an engine out sounds like one engine: the running share of them)
+    const share = !CAR.on && sysTwin() && SYS.eng && SYS.run ? (SYS.eng[0].run + SYS.eng[1].run) / 2 : 1;
+    const on_ = live && !s.crashed, ef = (game.state === 'menu' || CAR.on ? 1 : sysSound()) * share;
     if (AC && AC.engine.type === 'jet' && !CAR.on) {
       const n = s.n1;
       this.o1.frequency.setTargetAtTime(35 + n * 30, t, 0.1); this.o2.frequency.setTargetAtTime(22 + n * 20, t, 0.1);

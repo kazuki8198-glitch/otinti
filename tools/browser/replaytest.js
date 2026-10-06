@@ -41,7 +41,7 @@ const fs = require('fs'), path = require('path');
   // the page's own frames play it; the keys
   await page.evaluate(() => { REPLAY.t = REC.list[0].t; REPLAY.pause = false; });
   const t0 = await page.evaluate(() => REPLAY.t); await page.waitForTimeout(3000); const t1 = await page.evaluate(() => REPLAY.t);
-  check('the frames play the replay', t1 > t0 + 0.1, { t0, t1 }   // (frames are slow here: a fraction of a second in 3 s));
+  check('the frames play the replay', t1 > t0 + 0.1, { t0, t1 });   // (frames are slow here: a fraction of a second in 3 s)
   await page.keyboard.press('ArrowRight'); await page.keyboard.press('ArrowRight');
   a = await page.evaluate(() => REPLAY.speed);
   check('→ twice: ×4', a === 4, a);

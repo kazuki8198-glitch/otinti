@@ -4276,9 +4276,10 @@ function jwSelect(planes, eye) {
     }
   }
   // evict tiles that have not been used for a while
-  if (JW.tiles.size > 1500 || JW.texCount > 380) {
+  // (each tile's heights are 256 KB of JS memory: 800 tiles is about 200 MB; more only made the garbage collector's pauses longer)
+  if (JW.tiles.size > 800 || JW.texCount > 380) {
     const old = [...JW.tiles.values()].filter(t => t.used < f - 90 && t.z > 5).sort((a, b) => a.used - b.used);
-    for (const t of old.slice(0, Math.max(JW.tiles.size - 1200, JW.texCount - 300, 60))) { disposeTile(t); JW.tiles.delete(t.key); }
+    for (const t of old.slice(0, Math.max(JW.tiles.size - 600, JW.texCount - 300, 60))) { disposeTile(t); JW.tiles.delete(t.key); }
   }
   JW.drawn = out.length;
   return out;
@@ -9346,7 +9347,7 @@ function drawVolClouds(far) {
   const inside = cy >= base && cy <= top;
   if (inside && far) return;                              // full-screen pass only once
   setCommon(pr);
-  gl.uniform4f(u.uCloud, base, top, cov, game.gfx === 'high' ? 48 : 30);
+  gl.uniform4f(u.uCloud, base, top, cov, game.gfx === 'high' ? 36 : 30);   // (the march's steps: the clouds were the biggest GPU cost)
   gl.uniform2f(u.uWind, 1.2, 0.5);
   gl.uniform1i(u.uNoise, 2);
   gl.uniform3fv(u.uCamF, R.camF); gl.uniform3fv(u.uCamR, R.camR); gl.uniform3fv(u.uCamU, R.camU);
@@ -9515,7 +9516,7 @@ function drawJwTrees(planes, far) {
   const cx = Math.floor((lon + 180) / 360 * n), cy = Math.floor(mercY(lat) * n);
   // (driving, the trees further than a few hundred metres are hidden by the streets anyway: fewer on phones)
   const low = CAR.on && agl < 60, fade = low ? (game.touch ? 450 : 900) : game.gfx === 'high' ? 2000 : 1300, cellM = 40075016 * Math.cos(lat * DEG) / n, rc = Math.ceil(fade / cellM) + 1;
-  let built = 0;
+  let built = 0; const tb0 = performance.now();
   // near the ground, photo tree cards (p_treecards.js) instead of the drawn crowns
   const card = tcardUse();
   if (card && !TCARD.prog) TCARD.prog = makeProgram(tcardJwVS(), TCARD_FS);
@@ -9528,7 +9529,7 @@ function drawJwTrees(planes, far) {
     if ((dx * dx + dy * dy) * cellM * cellM > (fade + cellM) ** 2) continue;
     const x = cx + dx, y = cy + dy, key = jwTreeCellKey(x, y);
     let c = JWTREES.cells.get(key);
-    if (!c) { if (built >= 3) continue; c = buildJwTreeCell(x, y); JWTREES.cells.set(key, c); built++; }
+    if (!c) { if (built >= 3 || (built && performance.now() - tb0 > 1.5)) continue; c = buildJwTreeCell(x, y); JWTREES.cells.set(key, c); built++; }   // (new cells: a little time each frame, not a stutter)
     c.used = JW.frame;
     if (!c.n) continue;
     // each depth pass draws only its own distance band, and cells outside the view are skipped
@@ -14641,7 +14642,7 @@ function cpReal(A) {
     if (D.tint) for (const d of g.model.draws) if (!d.mat.tex) { const c = D.tint[d.mat.name] || D.tint['*']; if (c) d.mat.color = [...c, 1]; d.mat.rough = d.mat.name === 'Material.001' ? 0.1 : 0.75; d.mat.metal = 0; }
     // window glass that the file has as an opaque colour: made clear, with a faint tint
     if (D.glass) for (const d of g.model.draws) if (D.glass.includes(d.mat.name)) { d.mat.color = [0.55, 0.62, 0.66, 0.1]; d.mat.blend = true; d.mat.rough = 0.05; d.mat.metal = 0; }
-    g.model.draws.sort((a, b) => a.mat.blend - b.mat.blend);
+    g.model.draws.sort((a, b) => a.mat.blend - b.mat.blend); g.model.sorted = null;
   }
   return { D, m: g.model, x: x && x.model };
 }
@@ -15059,7 +15060,7 @@ function cpCreditHide() { const el = document.getElementById('cp-credit'); if (e
 // ---------------------------------------------------------------------
 //  panel textures: one canvas per surface, redrawn at its own rate
 // ---------------------------------------------------------------------
-const CP_RATE = { main: 1 / 20, glr: 1 / 6, ped: 1 / 8, ovh: 1 / 4 };
+const CP_RATE = { main: 1 / 15, glr: 1 / 6, ped: 1 / 8, ovh: 1 / 4 };   // (the main panel's screens: 15 a second is smooth enough to read, and each update is a big upload)
 function cpRegion(k, L) {
   const sc = game.gfx === 'high' ? 1 : game.gfx === 'low' ? 0.6 : 0.8;
   let R = CPIT.reg[k];
@@ -15076,7 +15077,9 @@ function cpRegion(k, L) {
   cpDrawRegion(k, g, L, R);
   gl.bindTexture(gl.TEXTURE_2D, R.tex);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, R.cv);
+  // (the same size as last time: written into the texture in place, not a new one allocated each update)
+  if (R.texW === R.cv.width && R.texH === R.cv.height) gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, R.cv);
+  else { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, R.cv); R.texW = R.cv.width; R.texH = R.cv.height; }
   gl.generateMipmap(gl.TEXTURE_2D);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -16313,10 +16316,21 @@ function glbDraw(model, M, lightK = [1, 1, 1], partM = null, o = {}) {
   gl.uniform1i(u.uTex, 0); gl.uniform1i(u.uEmTex, 1); gl.uniform1i(u.uMRTex, 3); gl.uniform1i(u.uNrmTex, 9); gl.uniform1i(u.uOccTex, 10);
   let blending = false;
   gl.disable(gl.CULL_FACE);
-  for (const d of model.draws) {
+  // the draws grouped by material once (the see-through ones last, in their own order), and a material's uniforms and
+  // textures set only when it changes: a cockpit of a few hundred parts in a few dozen materials
+  if (!model.sorted) {
+    const mats = new Map(), id = m => (mats.has(m) || mats.set(m, mats.size), mats.get(m));
+    const solid = model.draws.filter(d => !d.mat.blend).map((d, i) => [id(d.mat), i, d]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(x => x[2]);
+    model.sorted = solid.concat(model.draws.filter(d => d.mat.blend));
+  }
+  let lastM = null, plainM = false;
+  for (const d of model.sorted) {
     const m = d.mat;
     if (m.blend && !blending) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); blending = true; }
-    gl.uniformMatrix4fv(u.uModel, false, d.part && partM ? M4.mul(M, partM(d)) : M);
+    if (d.part && partM) { gl.uniformMatrix4fv(u.uModel, false, M4.mul(M, partM(d))); plainM = false; }
+    else if (!plainM) { gl.uniformMatrix4fv(u.uModel, false, M); plainM = true; }
+    if (m === lastM && !(o.lamps && m.lamp)) { gl.bindVertexArray(d.vao.vao); gl.drawElements(gl.TRIANGLES, d.count, gl.UNSIGNED_INT, 0); continue; }
+    lastM = m;
     const col = o.paint && m.paint ? [o.paint[0], o.paint[1], o.paint[2], m.color[3]] : m.color;
     gl.uniform4fv(u.uColor, col); gl.uniform3fv(u.uEmis, o.lamps && m.lamp ? o.lamps(m) : m.em); gl.uniform1f(u.uCut, m.cut);
     gl.uniform1f(u.uRough, m.rough); gl.uniform1f(u.uMetal, m.metal); gl.uniform1f(u.uCoat, m.coat || 0);
@@ -17358,15 +17372,15 @@ const DEV = {
 const DEV_SPOT = { lat: 35.446899, lon: 139.641167, dx: 0.54, dz: -0.841, lane: -1.6, name: '関内（横浜市中区）' };
 // the stages: CPU only, and drawing passes (timed on the GPU as well)
 const DEV_CPU = ['updateControls', 'carStep', 'carPhys', 'trafficStep', 'physicsStep', 'jwFrame', 'cityUpdate', 'jwUpdateClouds', 'updateCamera', 'rxRun',
-  'platUpdate', 'googUpdate', 'zoneUpdate', 'npUpdate', 'lmUpdate', 'authUpdate', 'cityReceive', 'platReceive', 'cityApplyHidden', 'drawHUD'];
+  'platUpdate', 'googUpdate', 'zoneUpdate', 'npUpdate', 'lmUpdate', 'authUpdate', 'cityReceive', 'platReceive', 'cityApplyHidden', 'drawHUD', 'cpFrame', 'flightState', 'trafStep', 'atcStep', 'recStep', 'sysStep'];
 const DEV_GPU = ['render', 'sunShadowPass', 'drawJapanTerrain', 'drawGoogle', 'drawJapanRunways', 'drawRoads', 'drawCity', 'drawStreet', 'drawPlateau',
   'drawJwTrees', 'drawPlane', 'drawStands', 'drawPeds', 'drawCar', 'drawTraffic', 'drawParked', 'drawJapanWater', 'drawWires', 'drawLandmarks',
-  'drawVolClouds', 'drawClouds', 'drawSigns', 'drawMarks', 'drawParticles', 'drawLights', 'drawCockpit', 'drawPlateauCmp', 'drawPlateauTran', 'drawPlateauTrees'];
+  'drawVolClouds', 'drawClouds', 'drawSigns', 'drawMarks', 'drawParticles', 'drawLights', 'drawCockpit', 'drawPlateauCmp', 'drawPlateauTran', 'drawPlateauTrees', 'drawAirTraffic'];
 const DEV_JA = {
   frame: 'フレーム全体（JS）', other: 'その他', render: '描画の準備・空・消去', updateControls: '入力', carStep: '車の物理（まとめ）', carPhys: '車の物理',
   trafficStep: '他の車の動き', physicsStep: '飛行機の物理', jwFrame: '地図の更新', cityUpdate: '街タイルの管理', jwUpdateClouds: '雲の更新', updateCamera: 'カメラ',
   platUpdate: 'PLATEAU の選択', googUpdate: 'Google 3D の選択', zoneUpdate: '近くの区域', npUpdate: '近くの写真', lmUpdate: 'ランドマーク', authUpdate: '市街地区域',
-  cityReceive: '街タイルの受け取り', platReceive: 'PLATEAU の受け取り', cityApplyHidden: '建物の隠し替え', drawHUD: 'HUD（2D）',
+  cityReceive: '街タイルの受け取り', platReceive: 'PLATEAU の受け取り', cityApplyHidden: '建物の隠し替え', drawHUD: 'HUD（2D）', cpFrame: '操縦席の画面（2D の計器）', flightState: '飛行の状態', trafStep: '他機の動き', atcStep: '管制', recStep: '飛行の記録', sysStep: '機体システム', drawAirTraffic: '他機',
   sunShadowPass: '太陽の影', drawJapanTerrain: '地形', drawGoogle: 'Google 3D', drawJapanRunways: '滑走路', drawRoads: '道路・歩道', drawCity: '建物（自前）',
   drawStreet: '街路の小物', drawPlateau: '建物（PLATEAU）', drawJwTrees: '樹木', drawPlane: '飛行機', drawStands: '駐機場', drawPeds: '歩行者', drawCar: '自車',
   drawTraffic: '他の車', drawParked: '路上駐車', drawJapanWater: '水面', drawWires: '電線', drawLandmarks: 'ランドマーク', drawVolClouds: '雲', drawClouds: '雲',
@@ -17576,10 +17590,16 @@ async function flightBench(ms = 10000, settle = 8000) {
     const f0 = DEV.frN, h0 = mem(); await new Promise(r => setTimeout(r, ms));
     const n = Math.min(DEV.frN - f0, DEV.fr.length), a = []; for (let k = DEV.frN - n; k < DEV.frN; k++) a.push(DEV.fr[k % DEV.fr.length]);
     const st = devFrameStats(f0);
-    out.push({ scene: sc.name, fps: st ? +st.fps.toFixed(1) : null, p95: st ? +st.p95.toFixed(1) : null, worst: st ? +st.max.toFixed(1) : null, over50: a.filter(x => x > 50).length, frames: n, heapMB: mem(), heapGrowMB: h0 != null ? mem() - h0 : null, crashed: sim.crashed, readyS: +((performance.now() - ts - ms) / 1000).toFixed(1) });
+    // then a few seconds with the profiler on: which stages take the frame (CPU, and GPU where the browser times it)
+    let stages = null;
+    try { devProf(true); await new Promise(r => setTimeout(r, 4000)); const T = devStageTable(); devProf(false);
+      stages = { cpu: +T.cpuFrame.toFixed(1), gpu: T.gpuFrame != null ? +T.gpuFrame.toFixed(1) : null, top: T.rows.slice(0, 6).map(r => ({ n: DEV_JA[r.n] || r.n, cpu: +r.cpu.toFixed(1), gpu: r.gpu != null ? +r.gpu.toFixed(1) : null, calls: Math.round(r.calls) })) };
+    } catch (e) { devProf(false); }
+    out.push({ scene: sc.name, fps: st ? +st.fps.toFixed(1) : null, p95: st ? +st.p95.toFixed(1) : null, worst: st ? +st.max.toFixed(1) : null, over50: a.filter(x => x > 50).length, frames: n, heapMB: mem(), heapGrowMB: h0 != null ? mem() - h0 : null, crashed: sim.crashed, readyS: +((performance.now() - ts - ms - (stages ? 4000 : 0)) / 1000).toFixed(1), stages });
   }
   const env = devEnv(), txt = ['空島フライト 場面別ベンチマーク ' + new Date().toLocaleString(), `GPU: ${env.gpu || '?'}　画面: ${glCanvas.width}×${glCanvas.height}　所要 ${Math.round((performance.now() - t0) / 1000)} 秒`, '',
-    ...out.map(o => `${o.scene}\n  平均 ${o.fps} fps・遅い 5% ${o.p95} ms・最悪 ${o.worst} ms・50 ms 超 ${o.over50}/${o.frames} フレーム・JS ${o.heapMB ?? '?'} MB（${o.heapGrowMB >= 0 ? '+' : ''}${o.heapGrowMB ?? '?'}）${o.crashed ? '・墜落' : ''}`)].join('\n');
+    ...out.map(o => `${o.scene}\n  平均 ${o.fps} fps・遅い 5% ${o.p95} ms・最悪 ${o.worst} ms・50 ms 超 ${o.over50}/${o.frames} フレーム・JS ${o.heapMB ?? '?'} MB（${o.heapGrowMB >= 0 ? '+' : ''}${o.heapGrowMB ?? '?'}）${o.crashed ? '・墜落' : ''}` +
+      (o.stages ? `\n  1 フレームの内訳：JS ${o.stages.cpu} ms${o.stages.gpu != null ? `・GPU ${o.stages.gpu} ms` : '（GPU の時間はこのブラウザでは測れません）'}\n` + o.stages.top.map(r => `    ${r.n}：JS ${r.cpu} ms${r.gpu != null ? `・GPU ${r.gpu} ms` : ''}・描画 ${r.calls} 回`).join('\n') : ''))].join('\n');
   window.__flightBench = { env, runs: out }; say(txt);
   return window.__flightBench;
 }
@@ -19060,7 +19080,7 @@ function drawScene(planes, far) {
   const showPlane = !(sim.crashed && game.state !== 'menu');
   if (JW.active) setCommon(progMesh);
   if (showPlane) drawPlane(pm, PS, { cockpit: cam.mode === 'cockpit' && game.state !== 'menu' });
-  if (JW.active) { drawStands(); drawTraffic(); if (WIRES.side !== null) { ZONE.side = WIRES.side; drawPeds(); ZONE.side = 0; } setCommon(progMesh); }   // (and the people on the pavements, p_peds.js)             // (airliners at the gates, p_apron.js)
+  if (JW.active) { drawStands(); drawAirTraffic(); if (WIRES.side !== null) { ZONE.side = WIRES.side; drawPeds(); ZONE.side = 0; } setCommon(progMesh); }   // (and the people on the pavements, p_peds.js)             // (airliners at the gates, p_apron.js)
   if (CAR.on) { drawCar(); if (JW.active) setCommon(progMesh); }
   if (!JW.active) for (const pk of parked) if (vdist(R.eye, [pk.m[12], pk.m[13], pk.m[14]]) < 6000) drawPlane(pk.m, parkedState, { paint: pk.col, acft: pk.acft });
   if (JW.active) drawJapanWater();
@@ -20344,7 +20364,7 @@ function trafStep(dt) {
   }
   for (let i = TRAF.list.length - 1; i >= 0; i--) if (TRAF.list[i].gone || TRAF.list[i].d > 40000) TRAF.list.splice(i, 1);
 }
-function drawTraffic() {
+function drawAirTraffic() {
   if (!TRAF.list.length) return;
   setCommon(progMesh);
   for (const T of TRAF.list) {

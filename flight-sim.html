@@ -752,6 +752,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
     <dl id="res-list"></dl>
     <div class="res-actions">
       <button id="res-retry" class="primary" type="button">もう一度</button>
+      <button id="res-continue" type="button" hidden>続ける</button>
       <button id="res-replay" type="button">リプレイ（R）</button>
       <button id="res-menu" type="button">メニューへ</button>
     </div>
@@ -3372,6 +3373,10 @@ function apAprGuide(s) {
   const out = { trk: (trk + 360) % 360, vs: null, spd: 0 };
   const hT = Math.tan(3 * DEG) * (aim - u), gsErr = h - hT;               // (m above the glide path)
   if (!A.gs && u < aim - 300 && gsErr > -Math.max(15, (aim - u) * 0.004) && gsErr < 60) { A.gs = true; toast('APR：グライドスロープを捕捉（3° で降下）', 1800); }
+  // high on the localizer (above the glide path): down at 1,500 ft/min to meet it from above (a help to the player:
+  // a real autopilot waits below it), while there is room for it before the runway
+  if (!A.gs && gsErr >= 60 && u < aim - 4000) { if (!A.high) { A.high = true; toast('APR：降下路より高いので、1,500 ft/min で降下してグライドスロープを捕捉します', 2600); } out.vs = -1500 * 0.00508; }
+  if (!A.gs && A.high && gsErr < 30 && gsErr > -30 && u < aim - 300) { A.gs = true; toast('APR：グライドスロープを捕捉（3° で降下）', 1800); }
   if (A.gs) {
     out.vs = -vu * Math.tan(3 * DEG) - clamp(gsErr, -40, 40) * 0.12;
     out.spd = (ACFT.v.appr || 0) + 5;
@@ -17761,7 +17766,7 @@ function spawn(mode) {
     fly(pos, RWY.hdg, kt - 5, -3, V.apprFlaps, V.apprThr, true);
   }
   s.gLoad = 1; s.agl = 100;
-  game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.resultTimer = 0; game.colPrev = null; sim.tdLast = null; if (!(typeof SCHOOL !== 'undefined' && SCHOOL.active)) wxApply(); flightStateReset(); atcReset(); trafReset(); recReset(); failReset();
+  game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.wasAir = false; game.parkTip = false; game.fuel0 = null; game.resultTimer = 0; game.colPrev = null; sim.tdLast = null; if (!(typeof SCHOOL !== 'undefined' && SCHOOL.active)) wxApply(); flightStateReset(); atcReset(); trafReset(); recReset(); failReset();
   game.ap = false; game.timeScale = 1; game.track = []; game.arrived = false; game.trackT = 0;
   const cold = !!game.spawnCold && mode === 'runway' && !(typeof SCHOOL !== 'undefined' && SCHOOL.active); game.spawnCold = false;
   sysReset(cold);
@@ -18356,13 +18361,21 @@ function gameChecks(dt) {
   game.warnGear = !s.gearDown && s.agl < 150 && s.ias * 1.94384 < ACFT.v.appr * 1.15 && s.vs < -1;
   // landing challenge: finished when stopped
   if (s.tailTouch && game.firstTouch && !game.landingDone) game.firstTouch.tail = true;
+  // free flight: the flight is complete once landed and parked (the parking brake set, or the engine stopped)
+  if (game.fuel0 == null && typeof SYS !== 'undefined') game.fuel0 = SYS.fuelL + SYS.fuelR;
+  if (!s.onGround && s.airTime > 5) { game.wasAir = true; if (game.landingDone && game.mode !== 'landing') game.landingDone = false; }
+  if ((game.mode === 'runway' || game.mode === 'air') && !SCHOOL.active && game.wasAir && s.tdLast && !game.landingDone && s.onGround) {
+    const slow = Math.hypot(s.vel[0], s.vel[2]) < 0.5;
+    if (slow && Math.hypot(s.vel[0], s.vel[2]) < 0.5 && game.t - s.tdLast.t > 5 && !game.parkTip) { game.parkTip = true; toast('駐機したら、パーキングブレーキ（. キー）でフライト完了', 3000); }
+    if (slow && (SYS.pbrake || !SYS.run) && game.t - s.tdLast.t > 5) { game.landingDone = true; game.wasAir = false; finishLanding(s.tdLast); }
+  }
   if (game.mode === 'landing' && game.firstTouch && !game.landingDone && s.onGround && Math.hypot(s.vel[0], s.vel[2]) < 1.0) {
     game.landingDone = true;
     finishLanding();
   }
 }
-function finishLanding() {
-  const ft = game.firstTouch, s = sim;
+function finishLanding(ftIn) {
+  const ft = ftIn || game.firstTouch, s = sim, free = game.mode !== 'landing';
   const aimU = -RWY.len / 2 + 300;
   const d = ft.u - aimU;
   const sink = Math.round(40 * (1 - smoothstep(100, 650, ft.fpm)));
@@ -18390,7 +18403,7 @@ function finishLanding() {
   const prev = game.best.landing || 0;
   if (total > prev) { game.best.landing = total; saveBest(); }
   showResult({
-    eyebrow: 'LANDING CHALLENGE', title: `着陸 評価 ${grade}`,
+    eyebrow: free ? 'FLIGHT COMPLETE' : 'LANDING CHALLENGE', title: free ? `フライト完了　着陸 評価 ${grade}` : `着陸 評価 ${grade}`, cont: free,
     rows: [
       ['接地時の降下率', ft.fpm + ' fpm', sink + ' / 40'],
       ['接地点（目標からの距離）', (ft.u < -RWY.len / 2 ? '滑走路手前' : (d >= 0 ? '+' : '') + Math.round(d) + ' m'), zone + ' / 30'],
@@ -18403,8 +18416,23 @@ function finishLanding() {
       ['合計', '', total + ' 点', true],
       ['ベスト', '', Math.max(total, prev) + ' 点'],
       ...why.map((w, i) => [i ? '' : '改善点', w]),
+      ...(free ? flightSummary() : []),
     ],
   });
+}
+// the whole flight in a few lines (free flight's debrief, under the landing): from the record and the systems
+function flightSummary() {
+  const L = REC.list, rows = [];
+  if (L.length > 1) {
+    const air = L.filter(x => !x.gnd), t0 = (L.find(x => !x.gnd) || L[0]).t, t1 = (air[air.length - 1] || L[L.length - 1]).t;
+    let dist = 0; for (let i = 1; i < L.length; i++) dist += geoDist(L[i - 1].la, L[i - 1].lo, L[i].la, L[i].lo);
+    const top = Math.max(...L.map(x => x.y)) * FT, m = Math.round((t1 - t0) / 60);
+    rows.push(['フライトの記録', '', ''], ['飛行時間（離陸〜接地）', '', m >= 1 ? `${m} 分` : `${Math.round(t1 - t0)} 秒`], ['飛んだ距離', '', `${(dist / 1852).toFixed(1)} nm（${(dist / 1000).toFixed(1)} km）`], ['最高高度', '', `${Math.round(top / 100) * 100} ft`]);
+  }
+  if (game.fuel0 != null) { const used = game.fuel0 - (SYS.fuelL + SYS.fuelR); rows.push(['使った燃料', '', sysPiston() ? `${used.toFixed(1)} gal（${(used * 3.785).toFixed(0)} L）` : `${Math.round(used).toLocaleString()} kg`]); }
+  if (ATC.on) rows.push(['管制', '', ATC.notes.length ? ATC.notes.join('／') : `交信 ${ATC.log.filter(l => l.who === 'me').length} 回・指摘なし`]);
+  if (WX.vec || WX.fogD) rows.push(['天気', '', `${WX.vec ? `風 ${String(Math.round(WX.from / 10) * 10 || 360).padStart(3, '0')}° ${WX.kt} kt` : '風 穏やか'}${WX.fogD ? `・視程 ${game.vis === 'fog' ? '1.5' : '5'} km` : ''}`]);
+  return rows;
 }
 function updateRings(prevPos) {
   const ring = course.rings[game.ringIdx];
@@ -18490,6 +18518,7 @@ function showResult(r) {
     if (total) dd.className = 'total';
     dl.append(dt, dd);
   }
+  $('res-continue').hidden = !r.cont;
   $('result').hidden = false;
   $('res-retry').focus();
 }
@@ -18497,6 +18526,7 @@ document.querySelectorAll('.mission').forEach(b => b.addEventListener('click', (
 $('resume').addEventListener('click', resumeGame);
 $('res-retry').addEventListener('click', () => startMode(game.mode));
 $('res-replay').addEventListener('click', () => replayStart());
+$('res-continue').addEventListener('click', () => { $('result').hidden = true; game.state = 'flying'; glCanvas.focus(); });   // (free flight: on from where it stopped)
 addEventListener('keydown', e => { if (REPLAY.on) { if (replayKey(e)) e.stopImmediatePropagation(); } else if (e.code === 'KeyR' && game.state === 'result' && !e.repeat) { e.stopImmediatePropagation(); replayStart(); } }, true);   // (the replay's keys first)
 $('res-menu').addEventListener('click', () => { spawn('runway'); game.state = 'menu'; showMenu(false); });
 if (!game.gfx) game.gfx = matchMedia('(pointer: coarse)').matches ? 'mid' : 'high';
@@ -20060,7 +20090,7 @@ function flightState(dt) {
     else if (F.onRunway && F.thr > 0.6 && F.gs > 5) want = '離陸滑走';
     else if (F.gs > 2) want = '地上走行';
     else want = '駐機';
-  } else if ((F.phase === '離陸滑走' || F.phase === '上昇') && F.vs > -300 && F.aglR < 3000) want = '上昇';   // (just off the runway: climbing out, not landing)
+  } else if ((F.phase === '離陸滑走' || F.phase === '上昇') && F.vs > -300 && F.aglR < 3000 && (F.vs > 200 || Math.hypot(F.rwyU - RWY.len / 2, F.rwyV) < 4000)) want = '上昇';   // (just off the runway: climbing out, not landing; levelled off: the rules below)
   else if (F.aligned && F.aglR < 100 && F.toThreshold < 1500 && u < L2 && (F.phase === '進入' || F.phase === '着陸' || F.vs < -100)) want = '着陸';
   else if (F.aligned && F.aglR < 2500 && F.toThreshold > -200 && F.toThreshold < 18000 && F.vs < 300) want = '進入';
   else if (F.vs > 300) want = '上昇';

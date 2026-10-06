@@ -631,6 +631,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
           <tr><td>ホイール</td><td>後ろからの視点：スロットル。回り込み視点：カメラの距離。コックピット：ズーム（スイッチの上ではそのスイッチ）</td></tr>
           <tr><td><kbd>M</kbd></td><td>日本地図を開く／閉じる。空港をクリックして目的地や出発地に設定できます</td></tr>
           <tr><td><kbd>O</kbd></td><td>オートパイロット：今の高度を保ち、目的地（なければ今の方位）へ自動で飛ぶ。操縦すると解除</td></tr>
+          <tr><td><kbd>R</kbd>（結果画面）</td><td>リプレイ：飛行を最初から再生（直近 20 分）。<kbd>Space</kbd> 一時停止、<kbd>←</kbd><kbd>→</kbd> 速度、<kbd>↑</kbd><kbd>↓</kbd> 10 秒移動、<kbd>C</kbd> カメラ、<kbd>Esc</kbd> 結果に戻る</td></tr>
           <tr><td><kbd>Q</kbd></td><td>管制（ATC）との無線：最初に押すと交信開始。次の呼びかけ（地上走行・離陸準備完了・進入・着陸）と、管制の指示の復唱を Q で。許可なしの離陸・着陸や復唱忘れは着陸の評価に出ます。<kbd>Shift</kbd>+<kbd>Q</kbd> で管制の音声 ON/OFF</td></tr>
           <tr><td><kbd>Shift</kbd>+<kbd>O</kbd></td><td>進入モード（APR）：ILS のローカライザー（滑走路の中心線）とグライドスロープ（3° の降下路）に自動で乗って降りる。100 ft で解除されるので、そこから手で着陸。ローカライザーへは HDG ノブの方位で向かう</td></tr>
           <tr><td><kbd>Z</kbd></td><td>時間加速 ×1 → ×2 → ×4 → ×8 → ×16 → ×32 → ×64（上空のみ）。長い距離の移動に</td></tr>
@@ -745,6 +746,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
     <dl id="res-list"></dl>
     <div class="res-actions">
       <button id="res-retry" class="primary" type="button">もう一度</button>
+      <button id="res-replay" type="button">リプレイ（R）</button>
       <button id="res-menu" type="button">メニューへ</button>
     </div>
   </div>
@@ -17684,7 +17686,7 @@ function spawn(mode) {
     fly(pos, RWY.hdg, kt - 5, -3, V.apprFlaps, V.apprThr, true);
   }
   s.gLoad = 1; s.agl = 100;
-  game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.resultTimer = 0; game.colPrev = null; sim.tdLast = null; flightStateReset(); atcReset(); trafReset();
+  game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.resultTimer = 0; game.colPrev = null; sim.tdLast = null; flightStateReset(); atcReset(); trafReset(); recReset();
   game.ap = false; game.timeScale = 1; game.track = []; game.arrived = false; game.trackT = 0;
   const cold = !!game.spawnCold && mode === 'runway' && !(typeof SCHOOL !== 'undefined' && SCHOOL.active); game.spawnCold = false;
   sysReset(cold);
@@ -18398,7 +18400,7 @@ function resumeGame() {
   if (game.mode === 'tutorial') tutShow();
 }
 function showResult(r) {
-  game.state = 'result';
+  game.state = 'result'; game.lastResult = r;
   tutHide();
   $('touch').hidden = true;
   $('res-eyebrow').textContent = r.eyebrow; $('res-title').textContent = r.title;
@@ -18415,6 +18417,8 @@ function showResult(r) {
 document.querySelectorAll('.mission').forEach(b => b.addEventListener('click', () => startMode(b.dataset.mode)));
 $('resume').addEventListener('click', resumeGame);
 $('res-retry').addEventListener('click', () => startMode(game.mode));
+$('res-replay').addEventListener('click', () => replayStart());
+addEventListener('keydown', e => { if (REPLAY.on) { if (replayKey(e)) e.stopImmediatePropagation(); } else if (e.code === 'KeyR' && game.state === 'result' && !e.repeat) { e.stopImmediatePropagation(); replayStart(); } }, true);   // (the replay's keys first)
 $('res-menu').addEventListener('click', () => { spawn('runway'); game.state = 'menu'; showMenu(false); });
 if (!game.gfx) game.gfx = matchMedia('(pointer: coarse)').matches ? 'mid' : 'high';
 document.querySelectorAll('[data-gfx]').forEach(b => { b.classList.toggle('on', b.dataset.gfx === game.gfx); b.addEventListener('click', () => {
@@ -20201,6 +20205,88 @@ function drawTraffic() {
   }
 }
 
+// ---------- the flight recorder and the replay ----------
+// The flight is recorded ten times a second (where: as latitude and longitude, so the floating origin moving does
+// not matter; the attitude, gear, flaps, throttle and the control surfaces; speed and height for the display), the
+// last 20 minutes kept. From the result screen (or R there), the replay plays it back through the same cameras
+// (C to change): Space pauses, ← → change the speed, ↑ ↓ jump 10 s, Esc returns to the result.
+const REC = { list: [], acc: 0, max: 12000 };
+const REPLAY = { on: false, t: 0, speed: 1, pause: false, save: null, el: null };
+function recReset() { REC.list = []; REC.acc = 0; }
+function recStep(dt) {
+  REC.acc += dt; if (REC.acc < 0.1 && REC.list.length) return; REC.acc = 0;
+  const s = sim, g = JW.active ? worldToGeo(s.pos[0], s.pos[2]) : [s.pos[0], s.pos[2]];
+  REC.list.push({ t: game.t, la: g[0], lo: g[1], y: s.pos[1], q: s.q.slice(), g: s.gearPos, f: s.flapDeg, th: s.thr, r: s.rpm || 0, e: s.elev || 0, a: s.ail || 0, ru: s.rud || 0, kt: s.ias * KTS, ft: s.agl * FT, gnd: s.onGround });
+  if (REC.list.length > REC.max) REC.list.splice(0, REC.list.length - REC.max);
+}
+function recPos(S) { if (!JW.active) return [S.la, S.y, S.lo]; const w = geoToWorld(S.la, S.lo); return [w[0], S.y, w[1]]; }
+function replayStart() {
+  if (REC.list.length < 20) { toast('リプレイできる記録がありません', 1500); return; }
+  const s = sim;
+  REPLAY.save = { geo: JW.active ? worldToGeo(s.pos[0], s.pos[2]) : null, pos: s.pos.slice(), y: s.pos[1], q: s.q.slice(), vel: s.vel.slice(), crashed: s.crashed, gear: s.gearPos, flap: s.flapDeg, thr: s.thr, state: game.state, cam: cam.mode };
+  Object.assign(REPLAY, { on: true, t: REC.list[0].t, speed: 1, pause: false });
+  game.state = 'replay'; $('result').hidden = true; $('touch').hidden = true;
+  s.crashed = false; if (cam.mode === 'cockpit') cam.mode = 'chase';
+  replayApply(0);
+  toast('リプレイ：Space 一時停止・← → 速度・↑ ↓ 10 秒移動・C カメラ・Esc 終了', 3000);
+}
+function replayStop() {
+  if (!REPLAY.on) return;
+  const S = REPLAY.save, s = sim;
+  REPLAY.on = false;
+  if (S) {
+    if (S.geo) { const w = geoToWorld(S.geo[0], S.geo[1]); s.pos = [w[0], S.y, w[1]]; } else s.pos = S.pos;
+    s.q = S.q; s.vel = S.vel; s.crashed = S.crashed; s.gearPos = S.gear; s.flapDeg = S.flap; s.thr = S.thr; cam.mode = S.cam; cam.flyPos = null;
+  }
+  if (game.lastResult) showResult(game.lastResult); else game.state = 'result';
+  if (REPLAY.el) REPLAY.el.hidden = true;
+}
+// put the aircraft where the record has it at REPLAY.t (between two samples: blended)
+function replayApply(dt) {
+  const L = REC.list, s = sim;
+  if (!REPLAY.pause) REPLAY.t += dt * REPLAY.speed;
+  const t0 = L[0].t, t1 = L[L.length - 1].t;
+  if (REPLAY.t >= t1) { REPLAY.t = t1; REPLAY.pause = true; }
+  if (REPLAY.t < t0) REPLAY.t = t0;
+  let lo = 0, hi = L.length - 1;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (L[m].t <= REPLAY.t) lo = m; else hi = m; }
+  const A = L[lo], B = L[hi], k = B.t > A.t ? clamp((REPLAY.t - A.t) / (B.t - A.t), 0, 1) : 0;
+  const pa = recPos(A), pb = recPos(B), mix = (a, b) => a + (b - a) * k;
+  const prev = s.pos.slice();
+  s.pos = [mix(pa[0], pb[0]), mix(pa[1], pb[1]), mix(pa[2], pb[2])];
+  const dq = A.q[0] * B.q[0] + A.q[1] * B.q[1] + A.q[2] * B.q[2] + A.q[3] * B.q[3], sg = dq < 0 ? -1 : 1;
+  s.q = qnorm([mix(A.q[0], B.q[0] * sg), mix(A.q[1], B.q[1] * sg), mix(A.q[2], B.q[2] * sg), mix(A.q[3], B.q[3] * sg)]);
+  s.gearPos = mix(A.g, B.g); s.flapDeg = mix(A.f, B.f); s.thr = mix(A.th, B.th); s.rpm = mix(A.r, B.r);
+  s.elev = mix(A.e, B.e); s.ail = mix(A.a, B.a); s.rud = mix(A.ru, B.ru);
+  const dtw = (B.t - A.t) || 0.1; s.vel = [(pb[0] - pa[0]) / dtw, (pb[1] - pa[1]) / dtw, (pb[2] - pa[2]) / dtw];
+  REPLAY.cur = { kt: mix(A.kt, B.kt), ft: mix(A.ft, B.ft) };
+  void prev;
+}
+function replayFrame(dt) { replayApply(dt); if (JW.active) jwFrame(dt); replayDraw(); }
+function replayKey(e) {
+  if (!REPLAY.on) return false;
+  const L = REC.list;
+  if (e.code === 'Escape' || e.code === 'KeyR') replayStop();
+  else if (e.code === 'Space') { if (REPLAY.t >= L[L.length - 1].t) REPLAY.t = L[0].t; REPLAY.pause = !REPLAY.pause; }
+  else if (e.code === 'ArrowRight') REPLAY.speed = Math.min(8, REPLAY.speed * 2);
+  else if (e.code === 'ArrowLeft') REPLAY.speed = Math.max(0.25, REPLAY.speed / 2);
+  else if (e.code === 'ArrowUp') REPLAY.t = Math.min(L[L.length - 1].t, REPLAY.t + 10);
+  else if (e.code === 'ArrowDown') { REPLAY.t = Math.max(L[0].t, REPLAY.t - 10); REPLAY.pause = false; }
+  else if (e.code === 'KeyC') cycleCamera();
+  else return true;
+  e.preventDefault(); return true;
+}
+function replayDraw() {
+  let el = REPLAY.el;
+  if (!el) { el = REPLAY.el = document.createElement('div'); el.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(8,14,22,.8);border:1px solid rgba(255,214,107,.35);border-radius:8px;padding:8px 14px;font:13px/1.5 var(--jp);color:#e6edf3;z-index:7;pointer-events:none;text-align:center;max-width:calc(100vw - 32px)'; document.body.append(el); }
+  el.hidden = !REPLAY.on; if (!REPLAY.on) return;
+  const L = REC.list, t0 = L[0].t, t1 = L[L.length - 1].t, mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`, c = REPLAY.cur || {};
+  const w = Math.round((REPLAY.t - t0) / Math.max(t1 - t0, 1) * 100);
+  el.innerHTML = `<b style="color:#ffd66b">● リプレイ</b>　${mmss(REPLAY.t - t0)} / ${mmss(t1 - t0)}　×${REPLAY.speed}${REPLAY.pause ? '　（一時停止）' : ''}　${Math.round(c.kt || 0)} kt・${Math.round(c.ft || 0).toLocaleString()} ft
+    <div style="margin:5px 0 3px;height:4px;background:#2a3440;border-radius:2px"><div style="width:${w}%;height:4px;background:#ffd66b;border-radius:2px"></div></div>
+    <span style="font-size:11px;color:#a9b6c2">Space 一時停止・← → 速度・↑ ↓ 10 秒・C カメラ（${CAM_NAMES[cam.mode] || cam.mode}）・Esc 終了</span>`;
+}
+
 // the radio box: the last lines, and what Q does now
 function atcDraw() {
   if (typeof document === 'undefined') return;
@@ -20251,7 +20337,7 @@ window.__ft = {
         const c = { t: game.t, u, v, hdg: a.hdg, pitch: a.pitch, bank: a.bank, kias: s.ias * KTS, vs: s.vs * 196.85, aglR: (s.pos[1] + WHEEL_BOTTOM - RWY.elev) * FT, agl: s.agl * FT,
           rwyHdg: RWY.hdg, len: RWY.len, onGround: s.onGround, latV: s.vel[0] * RWY.perp[0] + s.vel[2] * RWY.perp[2], gs: Math.hypot(s.vel[0], s.vel[2]) * KTS };
         if (pilot) pilot(s, c, STEP);
-        game.t += STEP; physicsStep(STEP, game.t); flightState(STEP); if (o.traffic) trafStep(STEP); atcStep(STEP); if (o.systems) sysStep(STEP);
+        game.t += STEP; physicsStep(STEP, game.t); flightState(STEP); if (o.traffic) trafStep(STEP); atcStep(STEP); recStep(STEP); if (o.systems) sysStep(STEP);
         if (game.state === 'flying') gameChecks(STEP);
         if (fps && i % Math.round(120 / fps) === 0 && game.state === 'flying') { const hit = cityCollide(game.colPrev); game.colPrev = s.pos.slice(); if (hit) { res.hit = { part: hit, t: +game.t.toFixed(2) }; crash(hit + 'が建物に衝突しました'); } }   // (the frame loop's building check, at a frame rate a test chooses)
         if (i % (c.aglR < 60 ? 12 : 60) === 0) log.push([+c.t.toFixed(1), Math.round(c.u), +c.v.toFixed(1), Math.round(c.aglR), Math.round(c.kias), Math.round(c.vs), +c.pitch.toFixed(1), +c.bank.toFixed(1), +s.thr.toFixed(2), s.onGround ? 1 : 0, +s.elev.toFixed(2), +(s.trim || 0).toFixed(2), +(s.alpha / DEG).toFixed(1), FLT.phase]);
@@ -20290,7 +20376,7 @@ function frame(now) {
         acc -= STEP; n++;
       }
       if (n >= 14 * ts) acc = 0;
-      flightState(dt * ts); trafStep(dt * ts); atcStep(dt * ts);
+      flightState(dt * ts); trafStep(dt * ts); atcStep(dt * ts); recStep(dt * ts);
       if (JW.active) jwFrame(dt * ts);
       if (JW.active && game.state === 'flying') {
         const hit = cityCollide(game.colPrev); game.colPrev = sim.pos.slice();
@@ -20302,7 +20388,8 @@ function frame(now) {
       cpFrame(dt * ts);
       if (SCHOOL.active && game.state === 'flying') schoolUpdate(dt * ts);
       if (game.state === 'flying' && game.mode === 'tutorial') tutUpdate(dt);
-    } else { acc = 0; cpFrame(0); }
+    } else if (game.state === 'replay') { acc = 0; replayFrame(dt); cpFrame(0); }
+    else { acc = 0; cpFrame(0); }
     if (game.state === 'crashed') {
       game.resultTimer -= dt;
       if (game.resultTimer <= 0 && game.pendingResult) { const r = game.pendingResult; game.pendingResult = null; showResult(r); }

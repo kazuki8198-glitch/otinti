@@ -17684,7 +17684,7 @@ function spawn(mode) {
     fly(pos, RWY.hdg, kt - 5, -3, V.apprFlaps, V.apprThr, true);
   }
   s.gLoad = 1; s.agl = 100;
-  game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.resultTimer = 0; game.colPrev = null; sim.tdLast = null; flightStateReset(); atcReset();
+  game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.resultTimer = 0; game.colPrev = null; sim.tdLast = null; flightStateReset(); atcReset(); trafReset();
   game.ap = false; game.timeScale = 1; game.track = []; game.arrived = false; game.trackT = 0;
   const cold = !!game.spawnCold && mode === 'runway' && !(typeof SCHOOL !== 'undefined' && SCHOOL.active); game.spawnCold = false;
   sysReset(cold);
@@ -18907,7 +18907,7 @@ function drawScene(planes, far) {
   const showPlane = !(sim.crashed && game.state !== 'menu');
   if (JW.active) setCommon(progMesh);
   if (showPlane) drawPlane(pm, PS, { cockpit: cam.mode === 'cockpit' && game.state !== 'menu' });
-  if (JW.active) { drawStands(); if (WIRES.side !== null) { ZONE.side = WIRES.side; drawPeds(); ZONE.side = 0; } setCommon(progMesh); }   // (and the people on the pavements, p_peds.js)             // (airliners at the gates, p_apron.js)
+  if (JW.active) { drawStands(); drawTraffic(); if (WIRES.side !== null) { ZONE.side = WIRES.side; drawPeds(); ZONE.side = 0; } setCommon(progMesh); }   // (and the people on the pavements, p_peds.js)             // (airliners at the gates, p_apron.js)
   if (CAR.on) { drawCar(); if (JW.active) setCommon(progMesh); }
   if (!JW.active) for (const pk of parked) if (vdist(R.eye, [pk.m[12], pk.m[13], pk.m[14]]) < 6000) drawPlane(pk.m, parkedState, { paint: pk.col, acft: pk.acft });
   if (JW.active) drawJapanWater();
@@ -19996,7 +19996,7 @@ function flightStateReset() { FLT.phase = sim.onGround ? '駐機' : '巡航'; FL
 const ATC = { on: false, st: 'idle', need: null, needT: 0, nag: false, call: null, log: [], notes: [], clrTO: false, clrLand: false, el: null, t0: 0, voice: true, k: 0 };
 try { ATC.voice = localStorage.getItem('sorajima-atcvoice') !== '0'; } catch (e) {}
 const ATC_FREQ = { ground: '121.7', tower: '118.1', departure: '126.0', approach: '119.1' };
-function atcReset() { Object.assign(ATC, { on: false, st: 'idle', need: null, needT: 0, nag: false, call: null, log: [], notes: [], clrTO: false, clrLand: false, k: ATC.k + 1 }); atcDraw(); }
+function atcReset() { Object.assign(ATC, { on: false, st: 'idle', need: null, needT: 0, nag: false, call: null, log: [], notes: [], clrTO: false, clrLand: false, warnTO: false, warnLand: false, warnHold: false, gaSaid: false, freeT: 0, k: ATC.k + 1 }); atcDraw(); }
 function atcCallsign() { return ACFT.v.appr > 100 ? 'Sorajima 101' : 'JA' + ({ c172: '4172', sport: '01SP' }[ACFT.id] || '3801'); }
 // the airport's name as its controllers say it on the radio (English; the ICAO code where the map has only Japanese)
 const ATC_NAMES = { RJTT: 'Tokyo', RJAA: 'Narita', RJBB: 'Kansai', RJOO: 'Osaka', RJBE: 'Kobe', RJGG: 'Chubu', RJCC: 'Chitose', RJFF: 'Fukuoka', ROAH: 'Naha', RJTO: 'Oshima', RJTH: 'Hachijojima', RJFC: 'Yakushima', RJER: 'Rishiri', RJSS: 'Sendai', RJCH: 'Hakodate', RJOA: 'Hiroshima', RJFK: 'Kagoshima', RJNK: 'Komatsu', RJSN: 'Niigata' };
@@ -20011,7 +20011,7 @@ function atcAltStr(ft) { return ft >= 14000 ? 'flight level ' + Math.round(ft / 
 // a line on the radio: who ('atc' or 'me'), the unit, the words (and their meaning in Japanese)
 function atcSay(who, unit, en, ja) {
   ATC.log.push({ who, unit, en, ja, t: R.time }); if (ATC.log.length > 6) ATC.log.shift();
-  if (who === 'atc' && ATC.voice && typeof speechSynthesis !== 'undefined') { try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(en); u.lang = 'en-US'; u.rate = 1.12; speechSynthesis.speak(u); } catch (e) {} }
+  if (who !== 'me' && ATC.voice && typeof speechSynthesis !== 'undefined') { try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(en); u.lang = 'en-US'; u.rate = 1.12; speechSynthesis.speak(u); } catch (e) {} }
   if (who === 'atc') audio.blip && audio.blip(1050, 0.05, 'sine', 0.05);
   atcDraw();
 }
@@ -20050,8 +20050,15 @@ function atcStep(dt) {
     case 'taxi':
       if (s.onGround && nearRwy && F.gs < 20) call = { h: `タワー（${ATC_FREQ.tower}）に離陸準備完了を通報`, go: () => {
         atcSay('me', 'tower', `${ap} tower, ${cs}, holding point runway ${rw}, ready for departure.`);
+        if (trafRunwayBusy()) { atcClr('tower', `${cs}, ${ap} tower, hold short of runway ${rw}, ${TRAF.list.some(T => T.kind === 'arr') ? 'landing traffic' : 'departing traffic'}.`, `滑走路 ${rw} の手前で待機してください。${TRAF.list.some(T => T.kind === 'arr') ? '着陸する他機があります' : '離陸する他機があります'}`, `Holding short runway ${rw}, ${cs}.`, () => { ATC.st = 'holdShort'; ATC.freeT = 0; }); return; }
         atcClr('tower', `${cs}, ${ap} tower, wind ${atcWind()}, runway ${rw}, cleared for takeoff.`, `風 ${atcWind()}、滑走路 ${rw} からの離陸を許可します`, `Runway ${rw}, cleared for takeoff, ${cs}.`, () => { ATC.clrTO = true; ATC.st = 'takeoff'; }); } };
       else hint = '滑走路の手前（停止線）まで地上走行したら Q';
+      break;
+    case 'holdShort':                                               // the tower calls when the runway is free again
+      ATC.freeT = trafRunwayBusy() ? 0 : (ATC.freeT || 0) + dt;
+      if (F.onRunway && !ATC.warnHold && trafRunwayBusy()) { ATC.warnHold = true; atcNote('待機の指示に反して滑走路に入った'); }
+      if (ATC.freeT > 4 && !ATC.need) atcClr('tower', `${cs}, wind ${atcWind()}, runway ${rw}, cleared for takeoff.`, `風 ${atcWind()}、滑走路 ${rw} からの離陸を許可します`, `Runway ${rw}, cleared for takeoff, ${cs}.`, () => { ATC.clrTO = true; ATC.st = 'takeoff'; });
+      else hint = '他機が滑走路を出るまで、停止線の手前で待機';
       break;
     case 'takeoff':
       if (!s.onGround && F.aglR > (big ? 1500 : 700)) { ATC.st = 'handoff';
@@ -20082,7 +20089,13 @@ function atcStep(dt) {
     case 'tower':
       if (!s.onGround) call = { h: `タワー（${ATC_FREQ.tower}）に進入中を通報`, go: () => {
         atcSay('me', 'tower', `${ap} tower, ${cs}, ILS runway ${rw}, ${Math.max(1, Math.round(Math.max(F.toThreshold, 0) / 1852))} miles final.`);
+        if (trafRunwayBusy()) { atcClr('tower', `${cs}, ${ap} tower, continue approach, number 2, traffic on the runway.`, `進入を続けてください。2 番目です（他機が滑走路を使用中）`, `Continue approach, ${cs}.`, () => { ATC.st = 'landWait'; ATC.freeT = 0; }); return; }
         atcClr('tower', `${cs}, ${ap} tower, runway ${rw}, wind ${atcWind()}, cleared to land.`, `滑走路 ${rw}、風 ${atcWind()}、着陸を許可します`, `Runway ${rw}, cleared to land, ${cs}.`, () => { ATC.clrLand = true; ATC.st = 'landing'; }); } };
+      break;
+    case 'landWait':                                                // the landing clearance once the runway is free
+      ATC.freeT = trafRunwayBusy() ? 0 : (ATC.freeT || 0) + dt;
+      if (ATC.freeT > 2 && !ATC.need) atcClr('tower', `${cs}, runway ${rw}, wind ${atcWind()}, cleared to land.`, `滑走路 ${rw}、風 ${atcWind()}、着陸を許可します`, `Runway ${rw}, cleared to land, ${cs}.`, () => { ATC.clrLand = true; ATC.st = 'landing'; });
+      else if (F.toThreshold < 1500 && !s.onGround && !ATC.need && !ATC.gaSaid) { ATC.gaSaid = true; atcSay('atc', 'tower', `${cs}, go around, runway occupied.`, '着陸復行してください（滑走路が使用中）'); }
       break;
     case 'landing':
       if (s.onGround && F.gs < (big ? 60 : 35)) { ATC.st = 'vacate';
@@ -20099,6 +20112,95 @@ function atcStep(dt) {
   ATC.call = ATC.need ? null : call; ATC.hint = hint;
   atcDraw();
 }
+// ---------- other traffic: airliners landing on and taking off from the active runway ----------
+// One at a time, every minute or two while the player is within 30 km of the runway: an arrival flown down the
+// 3° glide path, its landing and rollout and turn off; or a departure lined up, its takeoff roll and climb out.
+// They are flown along set paths (no physics), use the runway as the tower says: an arrival on final goes around if
+// the player is on the runway, the player is held short while the runway is busy. Too close to one: a collision.
+const TRAF = { list: [], next: 40, n: 0, off: false };
+function trafReset() { TRAF.list = []; TRAF.next = 30 + Math.random() * 30; }
+// the runway is in use by the traffic (for the tower: hold short, number 2)
+function trafRunwayBusy() {
+  const aim = -RWY.len / 2 + 300;
+  return TRAF.list.some(T => T.st === 'roll' || T.st === 'lineup' || T.st === 'takeoff' || T.st === 'land' || (T.st === 'final' && T.u > aim - 9000) || (T.st === 'climb' && T.h < 150));
+}
+function trafSpawn(kind) {
+  const ids = ['b738', 'a320', 'b738'], A = AIRCRAFT.find(a => a.id === ids[TRAF.n % 3]) || AIRCRAFT.find(a => a.airliner);
+  const L2 = RWY.len / 2, aim = -L2 + 300, cs = 'Sorajima ' + (201 + (TRAF.n * 37) % 700);
+  TRAF.n++;
+  const T = kind === 'arr' ? { st: 'final', u: aim - 14000, v: 0, h: Math.tan(3 * DEG) * 14000, spd: 72, hdg: RWY.hdg, pitch: 2.5 }
+    : { st: 'lineup', u: -L2 + 70, v: 0, h: 0, spd: 0, hdg: RWY.hdg, pitch: 0, wait: 18 };
+  Object.assign(T, { A, cs, kind, paint: TRAF.n % 2 ? PAINT_JAL : PAINT_ANA, gear: 1, t: 0, said: false, fade: 1 });
+  TRAF.list.push(T);
+  if (ATC.on) {
+    if (kind === 'arr') atcSay('other', 'tower', `${cs}, runway ${RWY.idents[0]}, cleared to land.`, `他機（${cs}）への着陸許可`);
+    else atcSay('other', 'tower', `${cs}, runway ${RWY.idents[0]}, line up and wait.`, `他機（${cs}）が滑走路に入って待機`);
+  }
+}
+function trafStep(dt) {
+  if (TRAF.off || !JW.active || !RWY.dir || game.state !== 'flying' || (typeof SCHOOL !== 'undefined' && SCHOOL.active) || game.mode === 'rings') { TRAF.list.length = 0; return; }
+  const s = sim, L2 = RWY.len / 2, aim = -L2 + 300, [pu, pv] = worldToRwy(s.pos[0], s.pos[2]);
+  const ph = s.pos[1] + WHEEL_BOTTOM - RWY.elev, near = Math.hypot(pu, pv) < 30000;
+  const playerOnRwy = s.onGround && Math.abs(pv) < RWY.wid / 2 + 15 && Math.abs(pu) < L2 + 50;
+  const playerFinal = !s.onGround && FLT.aligned && FLT.toThreshold > -200 && FLT.toThreshold < 12000 && ph < 1200;
+  // a new one now and then, when the runway is free for it
+  TRAF.next -= dt;
+  if (!TRAF.list.length && near && TRAF.next <= 0) {
+    TRAF.next = 70 + Math.random() * 60;
+    const kind = TRAF.n % 2 ? 'dep' : 'arr';
+    if (!(playerOnRwy || playerFinal) && !(kind === 'arr' && ph < 1500 && Math.abs(pv) < 3000 && pu < aim && pu > aim - 16000 && !s.onGround)) trafSpawn(kind);
+    else TRAF.next = 20;
+  }
+  const side = -(RWY.side || 1);                                     // (the turn off: toward the terminal)
+  for (const T of TRAF.list) {
+    T.t += dt;
+    switch (T.st) {
+      case 'final': {                                                // down the glide path at the approach speed
+        T.u += T.spd * dt; T.h = Math.max(0, Math.tan(3 * DEG) * (aim - T.u)); T.pitch = 2.5;
+        if (T.u > aim - 3000 && (playerOnRwy || (s.onGround === false && Math.abs(pu - T.u) < 2500 && Math.abs(pv) < 200 && Math.abs(ph - T.h) < 120))) {
+          T.st = 'goaround'; if (ATC.on) atcSay('other', 'tower', `${T.cs}, go around, runway occupied.`, `他機（${T.cs}）に着陸復行の指示：滑走路が使用中`);
+        }
+        if (T.h < 15) T.st = 'flare';
+        break;
+      }
+      case 'flare': T.u += T.spd * dt; T.h = Math.max(0, T.h - 1.0 * dt); T.pitch = Math.min(5, T.pitch + dt * 2); if (T.u >= aim || T.h <= 0) { T.h = 0; T.st = 'land'; } break;
+      case 'land': T.spd = Math.max(13, T.spd - 2.2 * dt); T.u += T.spd * dt; T.pitch = Math.max(0, T.pitch - dt * 2);
+        if (T.spd <= 13.5 || T.u > L2 - 400) { T.st = 'exit'; T.turn = 0; } break;
+      case 'exit': {                                                 // a quarter circle off the runway, then on along the taxiway
+        const r = 70, w = T.spd / r, a = Math.min(T.turn + w * dt, Math.PI / 2), da = a - T.turn; T.turn = a;
+        T.u += Math.cos(a) * T.spd * dt; T.v += side * Math.sin(a) * T.spd * dt; T.hdg = RWY.hdg + side * a / DEG;
+        if (da === 0) { T.fade -= dt / 4; T.spd = 8; }
+        if (Math.abs(T.v) > 220 || T.fade <= 0) T.gone = true;
+        break;
+      }
+      case 'lineup': T.wait -= dt; if (T.wait <= 0 && !playerFinal) { T.st = 'roll'; if (ATC.on) atcSay('other', 'tower', `${T.cs}, wind ${atcWind()}, runway ${RWY.idents[0]}, cleared for takeoff.`, `他機（${T.cs}）への離陸許可`); } break;
+      case 'roll': T.spd += 2.1 * dt; T.u += T.spd * dt; if (T.spd > 78) { T.st = 'takeoff'; } break;
+      case 'takeoff': T.spd += 1.2 * dt; T.u += T.spd * dt; T.pitch = Math.min(14, T.pitch + 3 * dt); if (T.pitch > 8) T.h += T.spd * Math.sin((T.pitch - 8) * DEG * 1.4) * dt; if (T.h > 10) T.st = 'climb'; break;
+      case 'goaround': case 'climb':
+        T.spd = Math.min(100, T.spd + 1.0 * dt); T.pitch += ((T.st === 'goaround' ? 9 : 13) - T.pitch) * Math.min(1, dt); T.u += T.spd * Math.cos(7 * DEG) * dt; T.h += T.spd * Math.sin(7 * DEG) * dt;
+        if (T.h > 120) T.gear = Math.max(0, T.gear - dt / 6);
+        if (T.u > L2 + 16000 || T.h > 1500) T.gone = true;
+        break;
+    }
+    // the player: too close is a collision
+    const p = rwyToWorld(T.u, T.v, RWY.elev + T.h);
+    const d = Math.hypot(p[0] - s.pos[0], p[1] - (s.pos[1] + WHEEL_BOTTOM), p[2] - s.pos[2]);
+    if (d < 22 && !s.crashed) { crash(`他の機体（${T.cs}）と衝突しました`); }
+    T.d = d;
+  }
+  for (let i = TRAF.list.length - 1; i >= 0; i--) if (TRAF.list[i].gone || TRAF.list[i].d > 40000) TRAF.list.splice(i, 1);
+}
+function drawTraffic() {
+  if (!TRAF.list.length) return;
+  setCommon(progMesh);
+  for (const T of TRAF.list) {
+    if (T.d > 25000) continue;
+    const A = T.A, lift = -A.gear.nose[1] + A.gear.wheelR;
+    const p = rwyToWorld(T.u, T.v, RWY.elev + T.h + lift);
+    drawPlane(planeMatrix(p, qFromHPB(T.hdg, T.pitch, 0)), { ...parkedState, gearPos: T.gear, flapDeg: T.st === 'climb' || T.st === 'goaround' ? 5 : 15, rpm: 3000 }, { paint: T.paint, acft: A });
+  }
+}
+
 // the radio box: the last lines, and what Q does now
 function atcDraw() {
   if (typeof document === 'undefined') return;
@@ -20113,7 +20215,7 @@ function atcDraw() {
   const key = ATC.log.length + '|' + (ATC.need ? 1 : 0) + '|' + (ATC.call ? ATC.call.h : '') + '|' + ATC.hint + '|' + ATC.voice;
   if (el.dataset.k === key) return; el.dataset.k = key;
   const esc = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
-  const lines = ATC.log.slice(-4).map(l => `<div style="margin-top:3px;${l.who === 'me' ? 'color:#9fe0a8' : ''}"><b style="color:${l.who === 'me' ? '#7fd08a' : '#7cc8ff'}">${l.who === 'me' ? '自機' : l.unit.toUpperCase() + ' ' + ATC_FREQ[l.unit]}</b> ${esc(l.en)}${l.ja ? `<div style="color:#a9b6c2;font-size:11px">（${esc(l.ja)}）</div>` : ''}</div>`).join('');
+  const lines = ATC.log.slice(-4).map(l => `<div style="margin-top:3px;${l.who === 'me' ? 'color:#9fe0a8' : ''}"><b style="color:${l.who === 'me' ? '#7fd08a' : l.who === 'other' ? '#8a97a3' : '#7cc8ff'}">${l.who === 'me' ? '自機' : l.unit.toUpperCase() + ' ' + ATC_FREQ[l.unit]}</b> ${esc(l.en)}${l.ja ? `<div style="color:#a9b6c2;font-size:11px">（${esc(l.ja)}）</div>` : ''}</div>`).join('');
   const q = ATC.need ? `<b>Q</b>：復唱する「${esc(ATC.need.rb)}」` : ATC.call ? `<b>Q</b>：${esc(ATC.call.h)}` : ATC.hint ? esc(ATC.hint) : '';
   el.innerHTML = `<div style="font:700 10px var(--ui);letter-spacing:.18em;color:#7cc8ff">ATC 無線${ATC.voice ? '' : '（音声 OFF）'}</div>${lines}${q ? `<div style="margin-top:6px;padding-top:5px;border-top:1px solid rgba(255,255,255,.12);color:#ffd66b">${q}</div>` : ''}`;
 }
@@ -20149,7 +20251,7 @@ window.__ft = {
         const c = { t: game.t, u, v, hdg: a.hdg, pitch: a.pitch, bank: a.bank, kias: s.ias * KTS, vs: s.vs * 196.85, aglR: (s.pos[1] + WHEEL_BOTTOM - RWY.elev) * FT, agl: s.agl * FT,
           rwyHdg: RWY.hdg, len: RWY.len, onGround: s.onGround, latV: s.vel[0] * RWY.perp[0] + s.vel[2] * RWY.perp[2], gs: Math.hypot(s.vel[0], s.vel[2]) * KTS };
         if (pilot) pilot(s, c, STEP);
-        game.t += STEP; physicsStep(STEP, game.t); flightState(STEP); atcStep(STEP); if (o.systems) sysStep(STEP);
+        game.t += STEP; physicsStep(STEP, game.t); flightState(STEP); if (o.traffic) trafStep(STEP); atcStep(STEP); if (o.systems) sysStep(STEP);
         if (game.state === 'flying') gameChecks(STEP);
         if (fps && i % Math.round(120 / fps) === 0 && game.state === 'flying') { const hit = cityCollide(game.colPrev); game.colPrev = s.pos.slice(); if (hit) { res.hit = { part: hit, t: +game.t.toFixed(2) }; crash(hit + 'が建物に衝突しました'); } }   // (the frame loop's building check, at a frame rate a test chooses)
         if (i % (c.aglR < 60 ? 12 : 60) === 0) log.push([+c.t.toFixed(1), Math.round(c.u), +c.v.toFixed(1), Math.round(c.aglR), Math.round(c.kias), Math.round(c.vs), +c.pitch.toFixed(1), +c.bank.toFixed(1), +s.thr.toFixed(2), s.onGround ? 1 : 0, +s.elev.toFixed(2), +(s.trim || 0).toFixed(2), +(s.alpha / DEG).toFixed(1), FLT.phase]);
@@ -20188,7 +20290,7 @@ function frame(now) {
         acc -= STEP; n++;
       }
       if (n >= 14 * ts) acc = 0;
-      flightState(dt * ts); atcStep(dt * ts);
+      flightState(dt * ts); trafStep(dt * ts); atcStep(dt * ts);
       if (JW.active) jwFrame(dt * ts);
       if (JW.active && game.state === 'flying') {
         const hit = cityCollide(game.colPrev); game.colPrev = sim.pos.slice();

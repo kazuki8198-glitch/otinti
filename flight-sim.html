@@ -6721,26 +6721,40 @@ function drawCity(planes) {
   gl.enable(gl.CULL_FACE);
 }
 // collision: aircraft centre and wing tips against building footprints
-function cityCollide() {
-  if (!CITY.ready || !JW.online || sim.crashed || sim.onGround) return null;
-  const r = qrot(sim.q, [1, 0, 0]), half = (AC.b || 10) * 0.45;
-  for (const s of [0, -1, 1]) {
-    const p = [sim.pos[0] + r[0] * half * s, sim.pos[1] + r[1] * half * s, sim.pos[2] + r[2] * half * s];
-    const [la, lo] = worldToGeo(p[0], p[2]);
-    const n = 2 ** 14, x = Math.floor((lo + 180) / 360 * n), y = Math.floor(mercY(la) * n);
-    const t = CITY.tiles.get(x + '/' + y);
-    if (!t || !t.col || p[1] > t.maxTop + 2) continue;
-    const X = (lo - t.lonW) * t.kxN, Z = -(la - t.latN) * KZ;
-    const G = 32, cx = clamp(Math.floor(X / t.W * G), 0, G - 1), cz = clamp(Math.floor(Z / t.Hm * G), 0, G - 1), c = t.col;
-    for (let k = c.cells[cz * G + cx]; k < c.cells[cz * G + cx + 1]; k++) {
-      const b = c.items[k], B = c.boxes;
-      if (p[1] > B[b * 5 + 4] || X < B[b * 5] || X > B[b * 5 + 2] || Z < B[b * 5 + 1] || Z > B[b * 5 + 3]) continue;
-      let inside = false;
-      for (let i = c.ringOff[b], j = c.ringOff[b + 1] - 2; i < c.ringOff[b + 1]; j = i, i += 2) {
-        const zi = c.ringXZ[i + 1], zj = c.ringXZ[j + 1];
-        if ((zi > Z) !== (zj > Z) && X < (c.ringXZ[j] - c.ringXZ[i]) * (Z - zi) / (zj - zi) + c.ringXZ[i]) inside = !inside;
-      }
-      if (inside) return s === 0 ? '建物に衝突しました' : '翼が建物に接触しました';
+// buildings: the nose, the tail, the middle and both wing tips, each swept from where it was at the last check to
+// where it is now in steps of at most 2 m (a frame can carry a fast aircraft past a thin building), in the air and
+// on the ground alike (taxiing into a hangar). Returns the part that hit, or null
+function cityPointIn(p) {
+  const [la, lo] = worldToGeo(p[0], p[2]);
+  const n = 2 ** 14, x = Math.floor((lo + 180) / 360 * n), y = Math.floor(mercY(la) * n);
+  const t = CITY.tiles.get(x + '/' + y);
+  if (!t || !t.col || p[1] > t.maxTop + 2) return false;
+  const X = (lo - t.lonW) * t.kxN, Z = -(la - t.latN) * KZ;
+  const G = 32, cx = clamp(Math.floor(X / t.W * G), 0, G - 1), cz = clamp(Math.floor(Z / t.Hm * G), 0, G - 1), c = t.col;
+  for (let k = c.cells[cz * G + cx]; k < c.cells[cz * G + cx + 1]; k++) {
+    const b = c.items[k], B = c.boxes;
+    if (p[1] > B[b * 5 + 4] || X < B[b * 5] || X > B[b * 5 + 2] || Z < B[b * 5 + 1] || Z > B[b * 5 + 3]) continue;
+    let inside = false;
+    for (let i = c.ringOff[b], j = c.ringOff[b + 1] - 2; i < c.ringOff[b + 1]; j = i, i += 2) {
+      const zi = c.ringXZ[i + 1], zj = c.ringXZ[j + 1];
+      if ((zi > Z) !== (zj > Z) && X < (c.ringXZ[j] - c.ringXZ[i]) * (Z - zi) / (zj - zi) + c.ringXZ[i]) inside = true !== inside;
+    }
+    if (inside) return true;
+  }
+  return false;
+}
+function cityCollide(prev) {
+  if (!CITY.ready || !JW.online || sim.crashed) return null;
+  if (sim.onGround && onPaved(sim.pos[0], sim.pos[2]) === 'rwy') return null;   // (on the runway: nothing to hit; a building mapped over it is a map error)
+  if (prev && vlen(vsub(sim.pos, prev)) > 300) prev = null;                   // (a jump, not a flight: the new place only)
+  const r = qrot(sim.q, [1, 0, 0]), f = qrot(sim.q, [0, 0, -1]), half = (AC.b || 10) * 0.45, len = ((ACFT.phys && ACFT.phys.L) || 8) * 0.45;
+  const parts = [['機首', f, len], ['機体', f, 0], ['尾部', f, -len], ['左の翼', r, -half], ['右の翼', r, half]];
+  const d = prev ? vsub(sim.pos, prev) : [0, 0, 0], steps = Math.min(40, Math.ceil(vlen(d) / 2));
+  for (let k = steps; k >= 0; k--) {
+    const o = steps ? vscale(d, -k / steps) : [0, 0, 0];
+    for (const [name, ax, m] of parts) {
+      const p = [sim.pos[0] + o[0] + ax[0] * m, sim.pos[1] + o[1] + ax[1] * m + (sim.onGround ? 0.8 : 0), sim.pos[2] + o[2] + ax[2] * m];
+      if (cityPointIn(p)) return name;
     }
   }
   return null;
@@ -17535,7 +17549,7 @@ function spawn(mode) {
     fly(pos, RWY.hdg, kt - 5, -3, V.apprFlaps, V.apprThr, true);
   }
   s.gLoad = 1; s.agl = 100;
-  game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.resultTimer = 0;
+  game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.resultTimer = 0; game.colPrev = null; sim.tdLast = null;
   game.ap = false; game.timeScale = 1; game.track = []; game.arrived = false; game.trackT = 0;
   const cold = !!game.spawnCold && mode === 'runway' && !(typeof SCHOOL !== 'undefined' && SCHOOL.active); game.spawnCold = false;
   sysReset(cold);
@@ -19780,10 +19794,16 @@ window.__ft = {
     setAircraft(ac);
     startMode(mode);
     if (wind) RWY.windDir = [wind[0], 0, -wind[1]];
+    if (o.place) {   // (anywhere: { lat, lon, agl (m), hdg, kt }: level flight, gear up)
+      const P = o.place, [x, z] = geoToWorld(P.lat, P.lon), v = P.kt / KTS;
+      sim.pos = [x, terrainHeight(x, z) + P.agl - WHEEL_BOTTOM, z]; sim.q = qFromHPB(P.hdg, 2, 0);
+      sim.vel = [Math.sin(P.hdg * DEG) * v, 0, -Math.cos(P.hdg * DEG) * v]; sim.w = [0, 0, 0]; sim.gearDown = false; sim.gearPos = 0; sim.flapIdx = 0; sim.flapDeg = 0;
+      cam.eye = sim.pos.slice(); game.colPrev = null;
+    }
     game.extStep = true; game.assist = false; game.ap = false; sim.ovr = { elev: 0, ail: 0, rud: 0 };
     return { ac: ACFT.id, ap: JW.dep && JW.dep.icao, rwy: RWY.idents && RWY.idents[0], hdg: RWY.hdg, elev: RWY.elev, len: RWY.len, vref: ACFT.v.appr, flaps: sim.flapIdx };
   },
-  run(sec, pilot) {
+  run(sec, pilot, fps = 0) {
     const s = sim, log = [], n = Math.round(sec / STEP), res = { result: null };
     const show = showResult; showResult = r => { res.result = r.rows.map(x => x.filter(v => v !== undefined && v !== '').join(' ')); };
     try {
@@ -19794,14 +19814,16 @@ window.__ft = {
         if (pilot) pilot(s, c, STEP);
         game.t += STEP; physicsStep(STEP, game.t);
         if (game.state === 'flying') gameChecks(STEP);
+        if (fps && i % Math.round(120 / fps) === 0 && game.state === 'flying') { const hit = cityCollide(game.colPrev); game.colPrev = s.pos.slice(); if (hit) { res.hit = { part: hit, t: +game.t.toFixed(2) }; crash(hit + 'が建物に衝突しました'); } }   // (the frame loop's building check, at a frame rate a test chooses)
         if (i % (c.aglR < 60 ? 12 : 60) === 0) log.push([+c.t.toFixed(1), Math.round(c.u), +c.v.toFixed(1), Math.round(c.aglR), Math.round(c.kias), Math.round(c.vs), +c.pitch.toFixed(1), +c.bank.toFixed(1), +s.thr.toFixed(2), s.onGround ? 1 : 0, +s.elev.toFixed(2), +(s.trim || 0).toFixed(2), +(s.alpha / DEG).toFixed(1)]);
         if (game.landingDone || game.state === 'result') break;
       }
     } finally { showResult = show; }
-    return { t: +game.t.toFixed(2), td: s.tdLast || null, first: game.firstTouch, crashed: s.crashed, reason: s.crashReason, result: res.result, stopped: game.landingDone,
+    return { t: +game.t.toFixed(2), hit: res.hit || null, td: s.tdLast || null, first: game.firstTouch, crashed: s.crashed, reason: s.crashReason, result: res.result, stopped: game.landingDone,
       pos: worldToRwy(s.pos[0], s.pos[2]).map(x => +x.toFixed(1)), log, cols: ['t', 'u', 'v', 'aglR', 'kias', 'fpm', 'pitch', 'bank', 'thr', 'gnd', 'elev', 'trim', 'alpha'] };
   },
   end() { game.extStep = false; sim.ovr = null; },
+  cityReady: (lat, lon) => { if (!CITY.ready) return false; const n = 2 ** 14, x = Math.floor((lon + 180) / 360 * n), y = Math.floor(mercY(lat) * n), t = CITY.tiles.get(x + '/' + y); return !!(t && t.col); },
 };
 
 // ---------- main loop ----------
@@ -19829,7 +19851,12 @@ function frame(now) {
       }
       if (n >= 14 * ts) acc = 0;
       if (JW.active) jwFrame(dt * ts);
-      if (JW.active && game.state === 'flying') { const hit = cityCollide(); if (hit) crash(hit); }
+      if (JW.active && game.state === 'flying') {
+        const hit = cityCollide(game.colPrev); game.colPrev = sim.pos.slice();
+        // in the air, or fast on the ground: a crash; taxiing slowly into a building: stopped against it
+        if (hit && (!sim.onGround || Math.hypot(sim.vel[0], sim.vel[2]) > 8)) crash(hit + 'が建物に衝突しました');
+        else if (hit) { sim.vel = [0, 0, 0]; sim.thr = 0; if (!game.bumpT || game.t - game.bumpT > 3) { game.bumpT = game.t; toast(hit + 'が建物に当たって止まりました。向きを変えて離れてください', 2600); } }
+      }
       if (game.state === 'flying') gameChecks(dt);
       cpFrame(dt * ts);
       if (SCHOOL.active && game.state === 'flying') schoolUpdate(dt * ts);

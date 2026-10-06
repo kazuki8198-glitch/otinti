@@ -454,6 +454,10 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
       <div class="seg" role="group" aria-label="画質" title="高：立体の雲をきめ細かく、木を 2 km 先まで。重いと感じたら標準か軽量に"><button type="button" data-gfx="low">軽量</button><button type="button" data-gfx="mid">標準</button><button type="button" data-gfx="high">高</button></div>
       <span>雲</span>
       <div class="seg" role="group" aria-label="雲の量"><button type="button" data-cloud="off">なし</button><button type="button" data-cloud="few">少し</button><button type="button" data-cloud="normal" class="on">ふつう</button><button type="button" data-cloud="many">多め</button></div>
+      <span>風</span>
+      <div class="seg" role="group" aria-label="風" title="離陸する滑走路に対しての風。ATC（Q）の無線でも風向と風速を伝えます"><button type="button" data-wind="calm">穏やか</button><button type="button" data-wind="cross">横風</button><button type="button" data-wind="gusty">強風・突風</button><button type="button" data-wind="random">ランダム</button></div>
+      <span>視程</span>
+      <div class="seg" role="group" aria-label="視程"><button type="button" data-vis="clear">良好</button><button type="button" data-vis="haze">もや 5 km</button><button type="button" data-vis="fog">霧 1.5 km</button></div>
     </div>
     <div class="opts">
       <label class="chk"><input type="checkbox" id="opt-sound" checked> サウンド</label>
@@ -1087,6 +1091,7 @@ uniform vec3 uAmbSky;
 uniform vec3 uAmbGround;
 uniform vec3 uCamPos;
 uniform float uFogDens;
+uniform float uFogX;                    // (the weather's fog: applyFog, skyColor)
 uniform float uTime;
 uniform float uSunI;        // sun radiance scale (0 = old artist sky)
 uniform float uHaze;        // aerosol (Mie) amount: 1 clear, 2-3 hazy
@@ -1129,7 +1134,15 @@ vec3 atmoSky(vec3 d){
   L = mix(L, vec3(lum) * vec3(0.96, 1.0, 1.08), 0.35 * exp(-abs(d.y) * 7.0) * smoothstep(-0.05, 0.25, uSunDir.y));
   return L;
 }
+vec3 skyColor0(vec3 d);
+// in fog or mist the sky is grey too, most toward the horizon and down low (above the layer it clears)
 vec3 skyColor(vec3 d){
+  vec3 c = skyColor0(d);
+  if (uFogX <= 0.0) return c;
+  float k = clamp(uFogX * 420.0, 0.0, 0.92) * (1.0 - 0.55 * smoothstep(-0.05, 0.6, d.y)) * exp(-max(uCamPos.y, 0.0) / 900.0);
+  return mix(c, vec3(dot(c, vec3(0.3, 0.55, 0.15))) * 1.04, k);
+}
+vec3 skyColor0(vec3 d){
   if (uSunI > 0.0) {
     vec3 c = atmoSky(d);
     if (d.y < 0.0) c = mix(c, c * 0.8 + uAmbGround * 0.15, smoothstep(0.0, -0.25, d.y));
@@ -1190,7 +1203,7 @@ float odExp(float h0, float dy, float L, float H){
   float e0 = exp(-max(h0, -200.0) / H);
   return abs(dy * L) > 1e-3 ? e0 * H * (1.0 - exp(-dy * L / H)) / dy : e0 * L;
 }
-vec3 applyFog(vec3 col, vec3 p){
+vec3 applyFog0(vec3 col, vec3 p){
   vec3 dv = p - uCamPos;
   float dist = length(dv);
   vec3 dir = dv / max(dist, 1e-3);
@@ -1215,6 +1228,16 @@ vec3 applyFog(vec3 col, vec3 p){
     : uFogDens * exp(-cy * b) * dist;
   fog = 1.0 - exp(-max(fog, 0.0));
   return mix(col, skyColor(dir), clamp(fog, 0.0, 1.0));
+}
+// the weather's fog or mist (uFogX: its density, 0 when clear) over the air's own haze: thickest near the ground,
+// fading through the first few hundred metres, the grey of the horizon's light
+vec3 applyFog(vec3 col, vec3 p){
+  vec3 c = applyFog0(col, p);
+  if (uFogX <= 0.0) return c;
+  vec3 dv = p - uCamPos;
+  float d = length(dv), hk = exp(-max(min(uCamPos.y, p.y), 0.0) / 500.0);
+  vec3 fc = skyColor(normalize(vec3(dv.x, 0.04 * d + 1e-3, dv.z))) * 0.92;
+  return mix(c, mix(vec3(dot(fc, vec3(0.3, 0.55, 0.15))), fc, 0.35), 1.0 - exp(-uFogX * d * hk));
 }
 // city lights: 0 by day, rising through dusk to 1 at night
 uniform float uNightK;
@@ -3247,10 +3270,24 @@ function atmos(h) {
 function windGradient(agl) { const h = clamp(agl, 1, 400); return clamp(Math.log(h / 0.03) / Math.log(10 / 0.03), 0.55, 1.35); }
 
 // wind blows from the active runway's heading (a headwind for takeoff and landing)
+// the weather of a free flight, set in the menu: the wind (calm: the light breeze down the runway as before; a
+// crosswind; strong and gusty; random), set against the departure runway at the start, and the visibility (fog)
+const WX = { vec: null, gust: 1, from: 0, kt: 0, fogD: 0 };
+function wxApply() {
+  const w = game.wind || 'calm', sg = Math.random() < 0.5 ? -1 : 1;
+  WX.vec = null; WX.gust = 1; WX.kt = 0;
+  if (w !== 'calm' && RWY.dir) {
+    const [rel, kt, gust] = w === 'cross' ? [60 * sg, 12, 1.3] : w === 'gusty' ? [30 * sg, 18, 5] : [Math.round(Math.random() * 90) * sg, 3 + Math.round(Math.random() * 17), 1 + Math.random() * 2.5];
+    const from = (RWY.hdg + rel + 360) % 360, sp = kt / KTS;
+    Object.assign(WX, { vec: [-Math.sin(from * DEG) * sp, 0, Math.cos(from * DEG) * sp], gust, from, kt });
+  }
+  WX.fogD = { haze: 6e-4, fog: 2e-3 }[game.vis] || 0;
+  if (WX.vec || WX.fogD) setTimeout(() => toast(`天気：${WX.vec ? `風 ${String(Math.round(WX.from / 10) * 10 || 360).padStart(3, '0')}° ${WX.kt} kt${WX.gust > 2 ? '（突風あり）' : ''}` : '風 穏やか'}${WX.fogD ? `・視程 ${game.vis === 'fog' ? '1.5' : '5'} km` : ''}`, 2600), 1600);
+}
 function windAt(p, t, agl = p[1]) {
-  const gust = Math.min(1, Math.max(agl, 0) / 300 + 0.4), wg = windGradient(agl);
+  const gust = Math.min(1, Math.max(agl, 0) / 300 + 0.4) * (WX.vec ? WX.gust : 1), wg = windGradient(agl);
   const sw = typeof SCHOOL !== 'undefined' && SCHOOL.active && SCHOOL.wind;
-  const w = sw || RWY.windDir || [-3, 0, 0];
+  const w = sw || WX.vec || RWY.windDir || [-3, 0, 0];
   if (sw) { const k = SCHOOL.gust; return [w[0] * wg + perlin(t * 0.35, 1.7) * 1.6 * gust * k, perlin(t * 0.5, 4.4) * 0.5 * gust * k, w[2] * wg + perlin(t * 0.31, 8.2) * 1.3 * gust * k]; }
   return [w[0] * wg + perlin(t * 0.35, 1.7) * 1.2 * gust, perlin(t * 0.5, 4.4) * 0.45 * gust, w[2] * wg + perlin(t * 0.31, 8.2) * 0.9 * gust];
 }
@@ -17622,10 +17659,10 @@ const game = {
 };
 try {
   const pr = JSON.parse(localStorage.getItem('sorajima-prefs') || '{}') || {};
-  for (const k of ['cold', 'autoMix', 'assist', 'autoRud', 'clouds', 'gfx', 'sens', 'mapId', 'acftId', 'invert', 'sound', 'depIcao', 'destIcao']) if (pr[k] !== undefined) game[k] = pr[k];
+  for (const k of ['cold', 'autoMix', 'assist', 'autoRud', 'clouds', 'wind', 'vis', 'gfx', 'sens', 'mapId', 'acftId', 'invert', 'sound', 'depIcao', 'destIcao']) if (pr[k] !== undefined) game[k] = pr[k];
 } catch (e) { /* storage unavailable */ }
 function savePrefs() {
-  try { localStorage.setItem('sorajima-prefs', JSON.stringify({ cold: game.cold, autoMix: game.autoMix, assist: game.assist, autoRud: game.autoRud, clouds: game.clouds, gfx: game.gfx, sens: game.sens, mapId: game.mapId, acftId: game.acftId, invert: game.invert, sound: game.sound, depIcao: game.depIcao, destIcao: game.destIcao })); } catch (e) { /* ignore */ }
+  try { localStorage.setItem('sorajima-prefs', JSON.stringify({ cold: game.cold, autoMix: game.autoMix, assist: game.assist, autoRud: game.autoRud, clouds: game.clouds, wind: game.wind, vis: game.vis, gfx: game.gfx, sens: game.sens, mapId: game.mapId, acftId: game.acftId, invert: game.invert, sound: game.sound, depIcao: game.depIcao, destIcao: game.destIcao })); } catch (e) { /* ignore */ }
 }
 try { game.best = JSON.parse(localStorage.getItem('sorajima-best') || '{}') || {}; } catch (e) { game.best = {}; }
 function saveBest() { try { localStorage.setItem('sorajima-best', JSON.stringify(game.best)); } catch (e) { /* storage unavailable */ } }
@@ -17686,7 +17723,7 @@ function spawn(mode) {
     fly(pos, RWY.hdg, kt - 5, -3, V.apprFlaps, V.apprThr, true);
   }
   s.gLoad = 1; s.agl = 100;
-  game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.resultTimer = 0; game.colPrev = null; sim.tdLast = null; flightStateReset(); atcReset(); trafReset(); recReset();
+  game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.resultTimer = 0; game.colPrev = null; sim.tdLast = null; if (!(typeof SCHOOL !== 'undefined' && SCHOOL.active)) wxApply(); flightStateReset(); atcReset(); trafReset(); recReset();
   game.ap = false; game.timeScale = 1; game.track = []; game.arrived = false; game.trackT = 0;
   const cold = !!game.spawnCold && mode === 'runway' && !(typeof SCHOOL !== 'undefined' && SCHOOL.active); game.spawnCold = false;
   sysReset(cold);
@@ -18429,6 +18466,10 @@ document.querySelectorAll('[data-cloud]').forEach(b => { b.classList.toggle('on'
   game.clouds = b.dataset.cloud; savePrefs();
   document.querySelectorAll('[data-cloud]').forEach(o => o.classList.toggle('on', o === b));
 }); });
+for (const [attr, key, def] of [['wind', 'wind', 'calm'], ['vis', 'vis', 'clear']]) document.querySelectorAll(`[data-${attr}]`).forEach(b => { b.classList.toggle('on', b.dataset[attr] === (game[key] || def)); b.addEventListener('click', () => {
+  game[key] = b.dataset[attr]; savePrefs();
+  document.querySelectorAll(`[data-${attr}]`).forEach(o => o.classList.toggle('on', o === b));
+}); });
 document.querySelectorAll('[data-oat]').forEach(b => b.addEventListener('click', () => {
   ISA.dev = +b.dataset.oat;
   document.querySelectorAll('[data-oat]').forEach(o => o.classList.toggle('on', o === b));
@@ -18761,6 +18802,7 @@ function setCommon(pr) {
   if (u.uAmbSky) gl.uniform3fv(u.uAmbSky, ENV.ambSky);
   if (u.uAmbGround) gl.uniform3fv(u.uAmbGround, ENV.ambGround);
   if (u.uFogDens) gl.uniform1f(u.uFogDens, ENV.fog);
+  if (u.uFogX) gl.uniform1f(u.uFogX, WX.fogD || 0);
   if (u.uSunI) gl.uniform1f(u.uSunI, game.atmo === false ? 0 : ENV.sunI || 0);
   if (u.uHaze) gl.uniform1f(u.uHaze, ENV.haze || 1.5);
   if (u.uFlatCl) gl.uniform1f(u.uFlatCl, volCloudsActive() ? 0 : 1);
@@ -20318,6 +20360,7 @@ window.__ft = {
     if (!JW.active || !JW.dep || JW.dep.icao !== ap) await loadMap('japan');
     setAircraft(ac);
     startMode(mode);
+    WX.vec = null; WX.fogD = 0;   // (the tests' own wind, not the menu's weather)
     if (wind) RWY.windDir = [wind[0], 0, -wind[1]];
     if (o.place) {   // (anywhere: { lat, lon, agl (m), hdg, kt }: level flight, gear up)
       const P = o.place, [x, z] = geoToWorld(P.lat, P.lon), v = P.kt / KTS;

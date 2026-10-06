@@ -17349,6 +17349,38 @@ async function devBench(modes, ms = 5000, label = '') {
   window.__devBenchResult = { env: env0, runs: out };
   devRender();
 }
+// the flight scenes' benchmark (?bench=flight in the address, or window.flightBench()): four fixed scenes one after
+// another, each left 8 s to load what it needs, then measured for 10 s: the frame rate, the slow frames (95 % and
+// the worst, the stutter a pilot feels), the frames over 50 ms, the JS heap. The result is shown to copy and kept in
+// window.__flightBench. On the player's own PC: the numbers are what matter there
+async function flightBench(ms = 10000, settle = 8000) {
+  const scenes = [
+    { name: '羽田 16L 滑走路上（C172、操縦席）', ac: 'c172', mode: 'runway', cam: 'cockpit' },
+    { name: '羽田 16L ファイナル（737-800、操縦席）', ac: 'b738', mode: 'landing', cam: 'cockpit' },
+    { name: '新宿上空 1,500 ft（737-800、外から）', ac: 'b738', mode: 'air', place: { lat: 35.69, lon: 139.73, agl: 460, hdg: 270, kt: 220 }, cam: 'chase' },
+    { name: '東京湾 10,000 ft 巡航（737-800、操縦席）', ac: 'b738', mode: 'air', place: { lat: 35.55, lon: 139.95, agl: 3050, hdg: 240, kt: 280 }, cam: 'cockpit' },
+  ];
+  const out = [], t0 = performance.now(), mem = () => performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1e6) : null;
+  const say = t => { let el = document.getElementById('fbench'); if (!el) { el = document.createElement('textarea'); el.id = 'fbench'; el.readOnly = true; el.style.cssText = 'position:fixed;left:12px;top:12px;width:min(640px,90vw);height:46vh;z-index:99;font:12px monospace;background:#111d;color:#eee;border:1px solid #888;padding:8px'; document.body.append(el); } el.value = t; };
+  for (const sc of scenes) {
+    say(`計測中：${sc.name}（${out.length + 1}/${scenes.length}）…`);
+    const ts = performance.now();
+    await window.__ft.setup({ ac: sc.ac, mode: sc.mode, place: sc.place });
+    window.__ft.end(); game.assist = true;                                   // (the game's own loop flies it: the assist holds it level)
+    if (sc.place) { game.ap = true; game.apAlt = sim.pos[1]; game.apHdg = sc.place.hdg; game.apLat = 'hdg'; game.apVert = 'alt'; game.apVs = 0; game.apSpd = sc.place.kt; }
+    cam.mode = sc.cam;
+    await new Promise(r => setTimeout(r, settle));
+    const f0 = DEV.frN, h0 = mem(); await new Promise(r => setTimeout(r, ms));
+    const n = Math.min(DEV.frN - f0, DEV.fr.length), a = []; for (let k = DEV.frN - n; k < DEV.frN; k++) a.push(DEV.fr[k % DEV.fr.length]);
+    const st = devFrameStats(f0);
+    out.push({ scene: sc.name, fps: st ? +st.fps.toFixed(1) : null, p95: st ? +st.p95.toFixed(1) : null, worst: st ? +st.max.toFixed(1) : null, over50: a.filter(x => x > 50).length, frames: n, heapMB: mem(), heapGrowMB: h0 != null ? mem() - h0 : null, crashed: sim.crashed, readyS: +((performance.now() - ts - ms) / 1000).toFixed(1) });
+  }
+  const env = devEnv(), txt = ['空島フライト 場面別ベンチマーク ' + new Date().toLocaleString(), `GPU: ${env.gpu || '?'}　画面: ${glCanvas.width}×${glCanvas.height}　所要 ${Math.round((performance.now() - t0) / 1000)} 秒`, '',
+    ...out.map(o => `${o.scene}\n  平均 ${o.fps} fps・遅い 5% ${o.p95} ms・最悪 ${o.worst} ms・50 ms 超 ${o.over50}/${o.frames} フレーム・JS ${o.heapMB ?? '?'} MB（${o.heapGrowMB >= 0 ? '+' : ''}${o.heapGrowMB ?? '?'}）${o.crashed ? '・墜落' : ''}`)].join('\n');
+  window.__flightBench = { env, runs: out }; say(txt);
+  return window.__flightBench;
+}
+if (/[?&]bench=flight\b/.test(location.search)) addEventListener('load', () => { const go = () => (window.__ft && game.state === 'menu' ? flightBench() : setTimeout(go, 1000)); setTimeout(go, 2000); });
 function devReport(e, date, runs) {
   const f1 = v => v == null ? '–' : v.toFixed(1), f2 = v => v == null ? '–' : v.toFixed(2);
   const L = [];

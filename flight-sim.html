@@ -446,6 +446,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
       <div class="seg" role="group" aria-label="操作の感度"><button type="button" data-sens="low">低</button><button type="button" data-sens="mid">中</button><button type="button" data-sens="high">高</button></div>
       <label class="chk" title="ON にすると、キーを離したとき機体が自動で水平飛行に戻ります"><input type="checkbox" id="opt-assist"> 操縦アシスト</label>
       <label class="chk" title="ON にすると、プロペラの左偏向や逆ヨーを自動でラダーが打ち消します（U キーで切替）。OFF にすると本物の飛行機と同じく、離陸・上昇で右ラダーが必要です"><input type="checkbox" id="opt-autorud"> 自動ラダー</label>
+      <label class="chk" title="ON：W/S で機首の角度を動かし、離すとその角度を保つ（着陸の引き起こしがしやすい）。OFF：離すと操縦桿が中立に戻る（以前の操作）"><input type="checkbox" id="opt-keyhold"> キー操作で機首の角度を保つ</label>
     </div>
     <div class="opts opt-grid">
       <span>時間帯</span>
@@ -455,7 +456,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
       <span>雲</span>
       <div class="seg" role="group" aria-label="雲の量"><button type="button" data-cloud="off">なし</button><button type="button" data-cloud="few">少し</button><button type="button" data-cloud="normal" class="on">ふつう</button><button type="button" data-cloud="many">多め</button></div>
       <span>風</span>
-      <div class="seg" role="group" aria-label="風" title="離陸する滑走路に対しての風。ATC（Q）の無線でも風向と風速を伝えます"><button type="button" data-wind="calm">穏やか</button><button type="button" data-wind="cross">横風</button><button type="button" data-wind="gusty">強風・突風</button><button type="button" data-wind="random">ランダム</button></div>
+      <div class="seg" role="group" aria-label="風" title="離陸する滑走路に対しての風。ATC（Enter）の無線でも風向と風速を伝えます"><button type="button" data-wind="calm">穏やか</button><button type="button" data-wind="cross">横風</button><button type="button" data-wind="gusty">強風・突風</button><button type="button" data-wind="random">ランダム</button></div>
       <span>故障</span>
       <div class="seg" role="group" aria-label="故障" title="自由飛行で、飛行中に 1 つ故障が起きる。種類は機体による（エンジン・発電機・真空ポンプ・脚・フラップ）"><button type="button" data-fail="none">なし</button><button type="button" data-fail="random">ランダム</button><button type="button" data-fail="soon">練習（離陸後すぐ）</button></div>
       <span>視程</span>
@@ -622,8 +623,8 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
         </table>
         <h3>キーボード</h3>
         <table class="gt">
-          <tr><td><kbd>S</kbd> / <kbd>↓</kbd></td><td>機首を上げる（上昇）。操縦桿を手前に引くのと同じ</td></tr>
-          <tr><td><kbd>W</kbd> / <kbd>↑</kbd></td><td>機首を下げる（降下）</td></tr>
+          <tr><td><kbd>S</kbd> / <kbd>↓</kbd></td><td>機首を上げる（上昇）。押している間だけ機首の角度が上がり、離すとその角度を保つ（短く押すと少しだけ。着陸の引き起こしに）。詳細設定で「離すと中立に戻る」操作にもできる</td></tr>
+          <tr><td><kbd>W</kbd> / <kbd>↑</kbd></td><td>機首を下げる（降下）。離すとその角度を保つ</td></tr>
           <tr><td><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd></td><td>左右に傾ける。傾くとその方向へ曲がる（旋回）。地上ではハンドル</td></tr>
           <tr><td><kbd>Q</kbd> <kbd>E</kbd></td><td>ラダー：機首を左右に振る（普段は使わなくて OK）</td></tr>
           <tr><td><kbd>R</kbd> <kbd>F</kbd></td><td>スロットル（エンジン出力）を上げる／下げる。<kbd>Shift</kbd>+ホイールでも（どの視点でも）</td></tr>
@@ -638,7 +639,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
           <tr><td><kbd>M</kbd></td><td>日本地図を開く／閉じる。空港をクリックして目的地や出発地に設定できます</td></tr>
           <tr><td><kbd>O</kbd></td><td>オートパイロット：今の高度を保ち、目的地（なければ今の方位）へ自動で飛ぶ。操縦すると解除</td></tr>
           <tr><td><kbd>R</kbd>（結果画面）</td><td>リプレイ：飛行を最初から再生（直近 20 分）。<kbd>Space</kbd> 一時停止、<kbd>←</kbd><kbd>→</kbd> 速度、<kbd>↑</kbd><kbd>↓</kbd> 10 秒移動、<kbd>C</kbd> カメラ、<kbd>Esc</kbd> 結果に戻る</td></tr>
-          <tr><td><kbd>Q</kbd></td><td>管制（ATC）との無線：最初に押すと交信開始。次の呼びかけ（地上走行・離陸準備完了・進入・着陸）と、管制の指示の復唱を Q で。許可なしの離陸・着陸や復唱忘れは着陸の評価に出ます。<kbd>Shift</kbd>+<kbd>Q</kbd> で管制の音声 ON/OFF</td></tr>
+          <tr><td><kbd>Enter</kbd></td><td>管制（ATC）との無線：最初に押すと交信開始。次の呼びかけ（地上走行・離陸準備完了・進入・着陸）と、管制の指示の復唱を Enter で。許可なしの離陸・着陸や復唱忘れは着陸の評価に出ます。<kbd>Shift</kbd>+<kbd>Enter</kbd> で管制の音声 ON/OFF</td></tr>
           <tr><td><kbd>Shift</kbd>+<kbd>O</kbd></td><td>進入モード（APR）：ILS のローカライザー（滑走路の中心線）とグライドスロープ（3° の降下路）に自動で乗って降りる。100 ft で解除されるので、そこから手で着陸。ローカライザーへは HDG ノブの方位で向かう</td></tr>
           <tr><td><kbd>Z</kbd></td><td>時間加速 ×1 → ×2 → ×4 → ×8 → ×16 → ×32 → ×64（上空のみ）。長い距離の移動に</td></tr>
           <tr><td><kbd>N</kbd></td><td>チェックリスト（始動・離陸前・着陸前・停止）。項目が済むと自動で ✓</td></tr>
@@ -3384,12 +3385,27 @@ function apAprGuide(s) {
   }
   return out;
 }
+// the keyboard's pitch hold (W/S move a target nose attitude; released, the attitude stays): the elevator for the
+// target, from the aircraft's own moment balance (the elevator a steady angle of attack needs) and a pitch-rate loop
+// sized by its elevator power and inertia (as the assist's), a slow integral for what the model leaves; the wing
+// kept off the stall
+function pitchHold(s, alpha, qd, qdc, aS) {
+  const f = qrot(s.q, [0, 0, -1]), th = Math.asin(clamp(f[1], -1, 1));
+  let thT = (s.pTgt || 0) * DEG;
+  if (!s.onGround && alpha > aS - 0.05) thT = Math.min(thT, th - (alpha - (aS - 0.05)) * 2);
+  const ratio = qd / Math.max(qdc, 1), e0 = (-AC.Cma * Math.sin(alpha) - AC.Cm0) / AC.Cmde * ratio;
+  const Mde = Math.max(qdc * AC.S * AC.c * AC.Cmde / AC.I[0], 0.02), qCmd = clamp((thT - th) * 1.6 + (s.pRate || 0) * DEG, -0.2, 0.2);   // (and the target's own movement, so the nose keeps up with it and stops with it)
+  s.pHI = s.onGround ? 0 : clamp((s.pHI || 0) + (thT - th) * (1 / 120) * 0.8, -0.3, 0.3);
+  s.elev = clamp(e0 + clamp(2.5 / Mde, 0.1, 30) * (qCmd - s.w[0]) + s.pHI - s.trim, -1, 1);
+}
 function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
   const sens = SENS[game.sens] || SENS.low;
   const airborne = !s.onGround && s.airTime > 0.6 && V > 12;
   const leveling = game.levelT > 0;
   const auto = game.ap && airborne && !s.crashed;
   s.assistOn = (game.assist || leveling || auto) && airborne && !s.crashed;
+  const holdP = s.keyHold && !auto && !leveling && !s.crashed && V > 12 && !s.ovr;   // (the keyboard's pitch hold flies the elevator)
+  if (!holdP) s.pHI = 0;                                              // (its slow term starts afresh when it takes over)
   if (!s.assistOn) {
     s.gI = 0; s.bI = 0;
     const vr = ACFT.v.cruise / 1.94384, spd = Math.max(V, 12);
@@ -3417,6 +3433,7 @@ function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
       const e = clamp((thCmd - th) * 10 - s.w[0] * 2.5, -1, 1);
       s.elev = clamp(Math.min(e, 1) - s.trim, -1, 1);
     }
+    if (holdP) pitchHold(s, alpha, qd, qdc, aS);
     return;
   }
   const r = qrot(s.q, [1, 0, 0]), up = qrot(s.q, [0, 1, 0]);
@@ -3485,6 +3502,7 @@ function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
   const qCmd = 9.81 / spd * (nCmd - Math.cos(gamma) * Math.cos(bank)) + 2.0 * (aReq - alpha);
   e += 1.2 * (aReq - alpha) + clamp(2.5 / Mde, 0.1, 30) * (qCmd - s.w[0]);
   s.elev = clamp(e - s.trim, -1, 1);
+  if (holdP) pitchHold(s, alpha, qd, qdc, aS);
 }
 
 function physicsStep(dt, t) {
@@ -17702,10 +17720,10 @@ const game = {
 };
 try {
   const pr = JSON.parse(localStorage.getItem('sorajima-prefs') || '{}') || {};
-  for (const k of ['cold', 'autoMix', 'assist', 'autoRud', 'clouds', 'wind', 'vis', 'fail', 'gfx', 'sens', 'mapId', 'acftId', 'invert', 'sound', 'depIcao', 'destIcao']) if (pr[k] !== undefined) game[k] = pr[k];
+  for (const k of ['cold', 'autoMix', 'assist', 'autoRud', 'keyHold', 'clouds', 'wind', 'vis', 'fail', 'gfx', 'sens', 'mapId', 'acftId', 'invert', 'sound', 'depIcao', 'destIcao']) if (pr[k] !== undefined) game[k] = pr[k];
 } catch (e) { /* storage unavailable */ }
 function savePrefs() {
-  try { localStorage.setItem('sorajima-prefs', JSON.stringify({ cold: game.cold, autoMix: game.autoMix, assist: game.assist, autoRud: game.autoRud, clouds: game.clouds, wind: game.wind, vis: game.vis, fail: game.fail, gfx: game.gfx, sens: game.sens, mapId: game.mapId, acftId: game.acftId, invert: game.invert, sound: game.sound, depIcao: game.depIcao, destIcao: game.destIcao })); } catch (e) { /* ignore */ }
+  try { localStorage.setItem('sorajima-prefs', JSON.stringify({ cold: game.cold, autoMix: game.autoMix, assist: game.assist, autoRud: game.autoRud, keyHold: game.keyHold, clouds: game.clouds, wind: game.wind, vis: game.vis, fail: game.fail, gfx: game.gfx, sens: game.sens, mapId: game.mapId, acftId: game.acftId, invert: game.invert, sound: game.sound, depIcao: game.depIcao, destIcao: game.destIcao })); } catch (e) { /* ignore */ }
 }
 try { game.best = JSON.parse(localStorage.getItem('sorajima-best') || '{}') || {}; } catch (e) { game.best = {}; }
 function saveBest() { try { localStorage.setItem('sorajima-best', JSON.stringify(game.best)); } catch (e) { /* storage unavailable */ } }
@@ -17766,7 +17784,7 @@ function spawn(mode) {
     fly(pos, RWY.hdg, kt - 5, -3, V.apprFlaps, V.apprThr, true);
   }
   s.gLoad = 1; s.agl = 100;
-  game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.wasAir = false; game.parkTip = false; game.fuel0 = null; game.resultTimer = 0; game.colPrev = null; sim.tdLast = null; if (!(typeof SCHOOL !== 'undefined' && SCHOOL.active)) wxApply(); flightStateReset(); atcReset(); trafReset(); recReset(); failReset();
+  game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.wasAir = false; game.parkTip = false; game.fuel0 = null; game.resultTimer = 0; game.colPrev = null; sim.tdLast = null; sim.pTgt = null; sim.pHI = 0; if (!(typeof SCHOOL !== 'undefined' && SCHOOL.active)) wxApply(); flightStateReset(); atcReset(); trafReset(); recReset(); failReset();
   game.ap = false; game.timeScale = 1; game.track = []; game.arrived = false; game.trackT = 0;
   const cold = !!game.spawnCold && mode === 'runway' && !(typeof SCHOOL !== 'undefined' && SCHOOL.active); game.spawnCold = false;
   sysReset(cold);
@@ -17954,7 +17972,8 @@ addEventListener('keydown', e => {
   if (map[e.code] && !(e.code === 'KeyO' && e.shiftKey) && !(e.code === 'KeyH' && (e.shiftKey || cam.mode === 'cockpit')) && !(e.code === 'KeyL' && e.shiftKey && cam.mode === 'cockpit')) doAction(map[e.code]);   // (H in the cockpit: the cockpit's own display, its handler)
   if (e.code === 'KeyT') doAction(e.shiftKey ? 'trimReset' : 'trim');
   if (e.code === 'KeyO' && e.shiftKey && (st === 'flying')) doAction('apr');
-  if (e.code === 'KeyQ' && st === 'flying' && !SCHOOL.active) { if (e.shiftKey) { ATC.voice = !ATC.voice; try { localStorage.setItem('sorajima-atcvoice', ATC.voice ? '1' : '0'); } catch (er) {} toast('管制の音声 ' + (ATC.voice ? 'ON' : 'OFF'), 1200); atcDraw(); } else atcKey(); }
+  if ((e.code === 'Enter' || e.code === 'NumpadEnter') && st === 'flying' && !SCHOOL.active && game.mode !== 'tutorial') {   // (the radio: Enter; Q is the rudder)
+    if (e.shiftKey) { ATC.voice = !ATC.voice; try { localStorage.setItem('sorajima-atcvoice', ATC.voice ? '1' : '0'); } catch (er) {} toast('管制の音声 ' + (ATC.voice ? 'ON' : 'OFF'), 1200); atcDraw(); } else atcKey(); }
   if (e.code === 'KeyJ' && (st === 'flying' || st === 'paused')) { game.physView = !game.physView; toast(game.physView ? '物理の見える化：揚力・抗力・推力・重力と、その数値を表示' : '物理の見える化を閉じました', 1600); }
   if (e.code === 'KeyU' && st === 'flying') { game.autoRud = !game.autoRud; if ($('opt-autorud')) $('opt-autorud').checked = game.autoRud; savePrefs(); toast(game.autoRud ? '自動ラダー ON（ボールを自動で中央に）' : '自動ラダー OFF：Q / E でボールを中央に保ちます（離陸・上昇は右ラダー）', 2600); }
 });
@@ -18132,6 +18151,20 @@ function updateControls(dt) {
   const cv = v => Math.sign(v) * Math.pow(Math.abs(v), 1.3);
   if (analog) { s.pKey = tp; s.rKey = tr; s.pIn = k(s.pIn, tp); s.rIn = k(s.rIn, tr); }
   else { s.pKey = k(s.pKey || 0, tp); s.rKey = k(s.rKey || 0, tr); s.pIn = cv(s.pKey); s.rIn = cv(s.rKey); }
+  // keyboard pitch hold (the default with keys): W/S move the nose attitude to hold, released it stays there.
+  // A tap moves it a little (a flare), held it moves faster; on the ground it follows the nose until S lifts it
+  s.keyHold = !analog && game.keyHold !== false && game.state === 'flying';
+  const thNow = attitude().pitch;
+  if (!s.keyHold || game.ap || game.levelT > 0 || s.pTgt == null || (s.onGround && tp <= 0)) { s.pTgt = thNow; s.pHeld = 0; }
+  if (s.keyHold && tp && !game.ap) {
+    s.pHeld = (s.pHeld || 0) + dt;
+    const p0 = s.pTgt;
+    s.pTgt = clamp(s.pTgt + tp * (s.pHeld < 0.5 ? 1.5 : 3) * dt, -20, ACFT.v.appr > 100 ? 18 : 22);
+    if (s.onGround) s.pTgt = Math.min(s.pTgt, thNow + 4);           // (before the wheels leave, not far ahead of the nose)
+    s.pRate = dt > 0 ? (s.pTgt - p0) / dt : 0;
+    s.pIn = 0;
+  } else { s.pHeld = 0; s.pRate = 0; }
+  if (s.keyHold) s.pIn = 0;                                           // (the elevator is the hold's; the assist keeps the wings)
   if (game.levelT > 0) game.levelT -= dt;
   s.rud = s.rud + clamp(ty - s.rud, -3 * dt, 3 * dt);
   if (game.state === 'flying') {
@@ -18646,6 +18679,8 @@ function setupMenu() {
   $('opt-assist').checked = game.assist;
   $('opt-assist').addEventListener('change', e => { game.assist = e.target.checked; savePrefs(); });
   $('opt-autorud').checked = game.autoRud;
+  $('opt-keyhold').checked = game.keyHold !== false;
+  $('opt-keyhold').addEventListener('change', e => { game.keyHold = e.target.checked; savePrefs(); });
   $('opt-cold').checked = game.cold; $('opt-cold').addEventListener('change', e => { game.cold = e.target.checked; savePrefs(); });
   $('opt-automix').checked = game.autoMix; $('opt-automix').addEventListener('change', e => { game.autoMix = e.target.checked; savePrefs(); });
   $('opt-autorud').addEventListener('change', e => { game.autoRud = e.target.checked; savePrefs(); });
@@ -19675,6 +19710,7 @@ function drawInfo(g, W, H, touch, sc, touchY) {
     }
     const st = [];
     if (game.ap) st.push('A/P');
+    else if (sim.keyHold && !sim.onGround) st.push(`機首 ${sim.pTgt >= 0 ? '+' : ''}${(sim.pTgt || 0).toFixed(1)}° を保持`);
     if (game.timeScale > 1) st.push('時間 ×' + game.timeScale);
     st.push(JW.online ? `航空写真 ${JW.inflight ? '読み込み中…' : 'ON'}` : '簡易地形（オフライン）');
     if (GOOG.on && GOOG.key) st.push(GOOG.state === 'ok' ? `Google 3D ${GOOG.covering ? `ON${GOOG.flat ? '・この付近は立体データなし（地図の建物で代用）' : ''}（高さ基準 ${Math.round(GOOG.off ?? 0)} m・${GOOG.active.length} 枚・細かさ ×${(GOOG.lodK || 1).toFixed(1)}）` : '読み込み中…'}` : GOOG.state === 'error' ? 'Google 3D エラー（メニューで確認）' : 'Google 3D 接続中…');
@@ -19735,7 +19771,7 @@ const TUT_STEPS = [
   { title: '方位計と昇降計', hl: 'heading', next: true,
     key: () => '下の目盛りは機首の方角（N=北、E=東、S=南、W=西）。右端の細い目盛り（昇降計）は、矢印が上なら上昇中、下なら降下中です。' },
   { title: '操縦桿と「中立」', hl: 'stick', next: true,
-    key: () => `W / S / A / D（または矢印キー）を押している間だけ操縦桿が動き、離すと中央＝「中立」に戻ります。右下の「操縦桿の位置」で点が中心・緑なら中立です。${game.assist ? '操縦アシストが ON なので、中立にすると機体は自動で水平飛行に戻ります。' : '操縦アシストが OFF なので、中立にしても傾きはそのまま残ります。困ったら L キーで水平に戻せます。'}`,
+    key: () => `${game.keyHold !== false ? 'W / S は機首の角度を動かし、離すとその角度を保ちます（短く押すと少しだけ）。A / D は' : 'W / S / A / D（または矢印キー）は'}押している間だけ操縦桿が動き、離すと中央＝「中立」に戻ります。右下の「操縦桿の位置」で点が中心・緑なら中立です。${game.assist ? '操縦アシストが ON なので、中立にすると機体は自動で水平飛行に戻ります。' : '操縦アシストが OFF なので、中立にしても傾きはそのまま残ります。困ったら L キーで水平に戻せます。'}`,
     touch: () => `左下のスティックを動かしている間だけ操縦し、指を離すと中央＝「中立」に戻ります。${game.assist ? '操縦アシストが ON なので、中立にすると機体は自動で水平飛行に戻ります。' : '中立にしても傾きはそのまま残ります。困ったら「水平」ボタンで水平に戻せます。'}` },
   { title: 'スロットルを全開にする', hl: 'thr',
     key: () => 'スロットル＝エンジンの出力（車のアクセル）です。R キーを押し続けて 100% まで上げましょう。F キーで下げられます。',
@@ -20109,7 +20145,7 @@ function flightStateReset() { FLT.phase = sim.onGround ? '駐機' : '巡航'; FL
 // Off until the pilot first presses Q (the radio). Then each step of the flight has its call: the taxi request, ready
 // for departure, the handoff to departure, the approach check-in, the tower and the landing clearance, vacating the
 // runway. Q makes the next call, or reads back what the controller just said. The controller's lines are English,
-// as Japan's ATC really is, each with its meaning in Japanese under it (and spoken, Shift+Q turns the voice off).
+// as Japan's ATC really is, each with its meaning in Japanese under it (and spoken, Shift+Enter turns the voice off).
 // Taking off or landing without the clearance, or not reading back, is noted and shown after the flight.
 const ATC = { on: false, st: 'idle', need: null, needT: 0, nag: false, call: null, log: [], notes: [], clrTO: false, clrLand: false, el: null, t0: 0, voice: true, k: 0 };
 try { ATC.voice = localStorage.getItem('sorajima-atcvoice') !== '0'; } catch (e) {}
@@ -20138,7 +20174,7 @@ function atcClr(unit, en, ja, rb, then) { atcSay('atc', unit, en, ja); ATC.need 
 function atcNote(t) { if (!ATC.notes.includes(t)) ATC.notes.push(t); }
 // Q: the next call, or the readback
 function atcKey() {
-  if (!ATC.on) { ATC.on = true; ATC.st = 'idle'; toast('管制との交信を始めます（Q で呼びかけ・復唱）', 1800); }
+  if (!ATC.on) { ATC.on = true; ATC.st = 'idle'; toast('管制との交信を始めます（Enter で呼びかけ・復唱）', 1800); }
   if (ATC.need) { const n = ATC.need; ATC.need = null; atcSay('me', n.unit, n.rb); if (n.then) n.then(); return; }
   if (ATC.call) { const c = ATC.call; ATC.call = null; c.go(); return; }
   toast(ATC.hint || '今は交信することがありません', 1600);
@@ -20170,7 +20206,7 @@ function atcStep(dt) {
         atcSay('me', 'tower', `${ap} tower, ${cs}, holding point runway ${rw}, ready for departure.`);
         if (trafRunwayBusy()) { atcClr('tower', `${cs}, ${ap} tower, hold short of runway ${rw}, ${TRAF.list.some(T => T.kind === 'arr') ? 'landing traffic' : 'departing traffic'}.`, `滑走路 ${rw} の手前で待機してください。${TRAF.list.some(T => T.kind === 'arr') ? '着陸する他機があります' : '離陸する他機があります'}`, `Holding short runway ${rw}, ${cs}.`, () => { ATC.st = 'holdShort'; ATC.freeT = 0; }); return; }
         atcClr('tower', `${cs}, ${ap} tower, wind ${atcWind()}, runway ${rw}, cleared for takeoff.`, `風 ${atcWind()}、滑走路 ${rw} からの離陸を許可します`, `Runway ${rw}, cleared for takeoff, ${cs}.`, () => { ATC.clrTO = true; ATC.st = 'takeoff'; }); } };
-      else hint = '滑走路の手前（停止線）まで地上走行したら Q';
+      else hint = '滑走路の手前（停止線）まで地上走行したら Enter';
       break;
     case 'holdShort':                                               // the tower calls when the runway is free again
       ATC.freeT = trafRunwayBusy() ? 0 : (ATC.freeT || 0) + dt;
@@ -20196,7 +20232,7 @@ function atcStep(dt) {
         atcSay('me', 'approach', `${ap} approach, ${cs}, ${atcAltStr(Math.round(F.alt / 100) * 100)}, inbound for landing.`);
         atcClr('approach', `${cs}, ${ap} approach, radar contact. Cleared ILS runway ${rw} approach. Descend and maintain ${atcAltStr(big ? 3000 : 2000)}.`, `ILS 滑走路 ${rw} 進入を許可します。${(big ? 3000 : 2000).toLocaleString()} ft まで降下してください（Shift+O の APR で ILS に乗れます）`,
           `Cleared ILS runway ${rw} approach, descend and maintain ${atcAltStr(big ? 3000 : 2000)}, ${cs}.`, () => { ATC.st = 'approach'; }); } };
-      else hint = '空港の 40 km 以内で降下を始めたら Q で進入管制へ';
+      else hint = '空港の 40 km 以内で降下を始めたら Enter で進入管制へ';
       break;
     }
     case 'approach':
@@ -20224,7 +20260,7 @@ function atcStep(dt) {
         atcSay('me', 'ground', `${ap} ground, ${cs}, runway vacated.`);
         atcSay('atc', 'ground', `${cs}, taxi to the apron. Welcome to ${ap}.`, 'エプロンまで地上走行してください。おつかれさまでした');
         ATC.st = 'done'; toast(ATC.notes.length ? '管制：' + ATC.notes.join('／') : '管制：交信はすべて正しくできました', 4000); } };
-      else hint = '滑走路から出たら Q';
+      else hint = '滑走路から出たら Enter';
       break;
   }
   ATC.call = ATC.need ? null : call; ATC.hint = hint;
@@ -20416,7 +20452,7 @@ function atcDraw() {
   if (el.dataset.k === key) return; el.dataset.k = key;
   const esc = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
   const lines = ATC.log.slice(-4).map(l => `<div style="margin-top:3px;${l.who === 'me' ? 'color:#9fe0a8' : ''}"><b style="color:${l.who === 'me' ? '#7fd08a' : l.who === 'other' ? '#8a97a3' : '#7cc8ff'}">${l.who === 'me' ? '自機' : l.unit.toUpperCase() + ' ' + ATC_FREQ[l.unit]}</b> ${esc(l.en)}${l.ja ? `<div style="color:#a9b6c2;font-size:11px">（${esc(l.ja)}）</div>` : ''}</div>`).join('');
-  const q = ATC.need ? `<b>Q</b>：復唱する「${esc(ATC.need.rb)}」` : ATC.call ? `<b>Q</b>：${esc(ATC.call.h)}` : ATC.hint ? esc(ATC.hint) : '';
+  const q = ATC.need ? `<b>Enter</b>：復唱する「${esc(ATC.need.rb)}」` : ATC.call ? `<b>Enter</b>：${esc(ATC.call.h)}` : ATC.hint ? esc(ATC.hint) : '';
   el.innerHTML = `<div style="font:700 10px var(--ui);letter-spacing:.18em;color:#7cc8ff">ATC 無線${ATC.voice ? '' : '（音声 OFF）'}</div>${lines}${q ? `<div style="margin-top:6px;padding-top:5px;border-top:1px solid rgba(255,255,255,.12);color:#ffd66b">${q}</div>` : ''}`;
 }
 

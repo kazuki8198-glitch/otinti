@@ -1,0 +1,2034 @@
+# flight-sim.html の 8/8 部分（元の 17783〜19813 行目、データは省略）
+# 全体の説明は 00_overview.md
+
+  n.focus({ preventScroll: false }); n.scrollIntoView({ block: 'nearest' });
+}
+function padKey(code, key) { const t = document.activeElement && document.activeElement !== document.body ? document.activeElement : document.body; t.dispatchEvent(new KeyboardEvent('keydown', { code, key, bubbles: true })); }
+function padInput(dt) {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  const gp = Array.from(pads || []).find(p => p && p.connected);
+  if (!gp) { PAD.known = null; return null; }
+  if (PAD.known !== gp.id) {
+    PAD.known = gp.id;
+    const ps = /dualsense|054c|wireless controller|playstation/i.test(gp.id);
+    toast(`${ps ? 'PS5 コントローラー' : 'コントローラー'}を認識しました。Options で一時停止、操作はガイドの「操作と中立」に${gp.mapping === 'standard' ? '' : '（このブラウザでは配置が標準でないため、一部のボタンが違う場合があります）'}`, 4200);
+  }
+  const s = sim, flying = game.state === 'flying';
+  const dz = (v, z = 0.12) => Math.abs(v || 0) < z ? 0 : (v - Math.sign(v) * z) / (1 - z);
+  const ax = gp.axes, b = i => gp.buttons[i] ? gp.buttons[i].value : 0;
+  const edge = i => { const now = b(i) > 0.5, was = padPrev[i]; padPrev[i] = now; return now && !was; };
+  const out = { stick: false, tr: 0, tp: 0, ty: 0, brake: false };
+  const E = []; for (let i = 0; i < 18; i++) E[i] = edge(i);
+  // menus and dialogs: move focus, press, go back
+  const uiOpen = !flying || (SCHOOL.check || SCHOOL.atc) || (typeof AI !== 'undefined' && AI.open) || (typeof BK !== 'undefined' && BK.open);
+  if (uiOpen && !(flying && (SCHOOL.check || SCHOOL.atc))) {
+    const ly = dz(ax[1], 0.5), lx = dz(ax[0], 0.5);
+    let dir = E[12] || E[14] ? -1 : E[13] || E[15] ? 1 : 0;
+    const held = ly < 0 || lx < 0 ? 'u' : ly > 0 || lx > 0 ? 'd' : '';
+    PAD.navT -= dt;
+    if (held && (held !== PAD.navDir || PAD.navT <= 0)) { dir = held === 'u' ? -1 : 1; PAD.navT = held !== PAD.navDir ? 0.4 : 0.14; }
+    PAD.navDir = held;
+    if (dir) padNav(dir);
+    if (E[0]) { const a = document.activeElement; if (a && a !== document.body && a.click) a.click(); else padNav(1); }
+    if (E[1]) padKey('Escape', 'Escape');
+    if (E[9]) { if (game.state === 'paused') resumeGame(); }
+    if (typeof AI !== 'undefined' && AI.open) return out;
+  }
+  if (!flying) return out;
+  // school dialogs during flight: checklist (× = next) and ATC read-back (□ ○ △ = answers 1 2 3)
+  if (SCHOOL.check && E[0]) checklistNext();
+  if (SCHOOL.atc) { if (E[2]) answerAtc(0); else if (E[1]) answerAtc(1); else if (E[3]) answerAtc(2); }
+  // sticks
+  const lx = dz(ax[0]), ly = dz(ax[1]), rx = dz(ax[2]), ry = dz(ax[3], 0.2);
+  if (lx || ly) { out.stick = true; out.tr = lx; out.tp = ly; }
+  out.ty = clamp(rx + (b(5) - b(4)), -1, 1);
+  if (ry && !game.assist) s.trim = clamp(s.trim + ry * 0.12 * dt, -TRIM_MAX, TRIM_MAX);
+  // throttle on the analogue triggers
+  s.thr = clamp(s.thr + (b(7) - b(6)) * 0.5 * dt, 0, 1);
+  if (b(0) > 0.5 && !SCHOOL.check) out.brake = true;
+  if (!SCHOOL.atc) { if (E[1]) doAction('flaps'); if (E[2]) doAction('flapsUp'); if (E[3]) doAction('cam'); }
+  if (E[8]) doAction('gear');
+  if (E[9]) { pauseGame(); return out; }
+  if (E[12] || E[13]) { if (game.assist) toast('アシスト ON のときはトリムは自動です', 1400); else { s.trim = clamp(s.trim + (E[13] ? 0.02 : -0.02), -TRIM_MAX, TRIM_MAX); toast('トリム ' + (s.trim >= 0 ? '機首上げ ' : '機首下げ ') + Math.abs(Math.round(s.trim * 100)) + '%', 900); } }
+  if (E[14]) doAction('map');
+  if (E[15]) padKey('KeyI', 'i');
+  if (E[10]) doAction('level');
+  if (E[11]) padKey('KeyU', 'u');
+  if (E[17]) { if (game.mode === 'tutorial') tutNext(); else padKey('KeyJ', 'j'); }
+  return out;
+}
+
+function updateControls(dt) {
+  if (CAR.on) { if (game.state === 'flying') carControls(dt); return; }
+  const s = sim;
+  let tp = (pressedAny('KeyS', 'ArrowDown') ? 1 : 0) - (pressedAny('KeyW', 'ArrowUp') ? 1 : 0);
+  let tr = (pressedAny('KeyD', 'ArrowRight') ? 1 : 0) - (pressedAny('KeyA', 'ArrowLeft') ? 1 : 0);
+  let ty = (keys.KeyE ? 1 : 0) - (keys.KeyQ ? 1 : 0);
+  let analog = false, brake = pressedAny('KeyB', 'Space') || touchIn.brake;
+  const gp = padInput(dt);
+  if (gp) {
+    if (gp.stick) { tr = gp.tr; tp = gp.tp; analog = true; }
+    if (gp.ty) ty = gp.ty;
+    if (gp.brake) brake = true;
+  }
+  if (touchIn.stickOn) { tr = touchIn.x; tp = touchIn.y; analog = true; }
+  if (analog) { const ex = v => Math.sign(v) * Math.pow(Math.abs(v), 1.2); tr = ex(tr); tp = ex(tp); }   // gentle around the centre
+  if (game.invert) tp = -tp;
+  if (game.state !== 'flying') { tp = tr = ty = 0; }
+  // keys move the stick gradually (about 0.7 s to full) and it springs back to the centre (neutral) when released
+  // (about 1.5 s to full, with a curve so that short taps make small corrections)
+  const k = (cur, tgt) => analog ? damp(cur, tgt, 12, dt) : cur + clamp(tgt - cur, -(tgt === 0 ? 3.5 : 0.67) * dt, (tgt === 0 ? 3.5 : 0.67) * dt);
+  if (game.ap && (tp || tr) && game.state === 'flying') { game.ap = false; toast('操縦したのでオートパイロットを解除しました', 1800); }
+  const cv = v => Math.sign(v) * Math.pow(Math.abs(v), 1.3);
+  if (analog) { s.pKey = tp; s.rKey = tr; s.pIn = k(s.pIn, tp); s.rIn = k(s.rIn, tr); }
+  else { s.pKey = k(s.pKey || 0, tp); s.rKey = k(s.rKey || 0, tr); s.pIn = cv(s.pKey); s.rIn = cv(s.rKey); }
+  if (game.levelT > 0) game.levelT -= dt;
+  s.rud = s.rud + clamp(ty - s.rud, -3 * dt, 3 * dt);
+  if (game.state === 'flying') {
+    if (pressedAny('KeyR', 'PageUp')) s.thr = clamp(s.thr + 0.45 * dt, 0, 1);
+    if (pressedAny('KeyF', 'PageDown')) s.thr = clamp(s.thr - 0.45 * dt, 0, 1);
+  }
+  s.brake = brake || (SYS.pbrake && s.onGround);
+  if (game.touch) $('thr-fill').style.height = (s.thr * 100).toFixed(1) + '%';
+}
+
+// ---------- audio ----------
+const audio = {
+  ctx: null,
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    const AC_ = window.AudioContext || window.webkitAudioContext;
+    if (!AC_) return;
+    const ctx = this.ctx = new AC_();
+    const master = this.master = ctx.createGain(); master.gain.value = game.sound ? 0.55 : 0; master.connect(ctx.destination);
+    const nb = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), d = nb.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    this.noiseBuf = nb;
+    const noise = () => { const n = ctx.createBufferSource(); n.buffer = nb; n.loop = true; n.start(); return n; };
+    const gain = v => { const g = ctx.createGain(); g.gain.value = v; return g; };
+    const filt = (type, f, Q = 1) => { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = Q; return b; };
+    this.o1 = ctx.createOscillator(); this.o1.type = 'sawtooth';
+    this.o2 = ctx.createOscillator(); this.o2.type = 'square';
+    this.eF = filt('lowpass', 500, 2.5); this.eG = gain(0);
+    this.o1.connect(this.eF); this.o2.connect(gain(0.45)).connect(this.eF); this.eF.connect(this.eG).connect(master);
+    this.o1.start(); this.o2.start();
+    this.pF = filt('bandpass', 160, 1.4); this.pG = gain(0); noise().connect(this.pF).connect(this.pG).connect(master);
+    this.wF = filt('lowpass', 400, 0.7); this.wG = gain(0); noise().connect(this.wF).connect(this.wG).connect(master);
+    const horn = ctx.createOscillator(); horn.type = 'square'; horn.frequency.value = 410;
+    this.hG = gain(0); horn.connect(filt('lowpass', 1300)).connect(this.hG).connect(master); horn.start();
+    const beep = ctx.createOscillator(); beep.type = 'sine'; beep.frequency.value = 900;
+    this.bG = gain(0); beep.connect(this.bG).connect(master); beep.start();
+    const whine = ctx.createOscillator(); whine.type = 'sine'; whine.frequency.value = 2000;
+    this.jG = gain(0); whine.connect(this.jG).connect(master); whine.start(); this.whine = whine;
+  },
+  update() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime, s = sim;
+    const live = game.state === 'flying' || game.state === 'menu';
+    const f = Math.max(s.rpm, 1) / 60 * 2;
+    let near = cam.mode === 'cockpit' ? 1.15 : cam.mode === 'flyby' ? clamp(60 / Math.max(vdist(cam.eye, s.pos), 1), 0.08, 1.2) : 0.85;
+    if (game.state === 'menu') near = 0.45;
+    const on_ = live && !s.crashed, ef = game.state === 'menu' || CAR.on ? 1 : sysSound();
+    if (AC && AC.engine.type === 'jet' && !CAR.on) {
+      const n = s.n1;
+      this.o1.frequency.setTargetAtTime(35 + n * 30, t, 0.1); this.o2.frequency.setTargetAtTime(22 + n * 20, t, 0.1);
+      this.eF.frequency.setTargetAtTime(200 + n * 300, t, 0.1);
+      this.eG.gain.setTargetAtTime(on_ ? (0.04 + n * 0.1) * near * ef : 0, t, 0.1);
+      this.pF.frequency.setTargetAtTime(420 + n * 1400 + (s.ab ? 300 : 0), t, 0.15);
+      this.pG.gain.setTargetAtTime(on_ ? (0.1 + n * 0.35 + (s.ab ? 0.25 : 0)) * near * ef : 0, t, 0.1);
+      this.whine.frequency.setTargetAtTime(1400 + n * 2600, t, 0.2);
+      this.jG.gain.setTargetAtTime(on_ ? (0.006 + n * 0.018) * near * ef : 0, t, 0.1);
+    } else {
+      const eng = on_ ? (0.07 + s.thr * 0.12) * near * ef : 0;
+      this.o1.frequency.setTargetAtTime(f, t, 0.05); this.o2.frequency.setTargetAtTime(f * 0.5, t, 0.05);
+      this.eF.frequency.setTargetAtTime(260 + s.thr * 800 + f * 3, t, 0.1);
+      this.eG.gain.setTargetAtTime(eng, t, 0.08);
+      this.pF.frequency.setTargetAtTime(80 + f * 2.2, t, 0.1);
+      this.pG.gain.setTargetAtTime(on_ ? (0.12 + s.thr * 0.3) * near * ef : 0, t, 0.1);
+      this.jG.gain.setTargetAtTime(0, t, 0.1);
+    }
+    const v = game.state === 'flying' ? s.tas : 0;
+    this.wF.frequency.setTargetAtTime(220 + v * 16, t, 0.1);
+    this.wG.gain.setTargetAtTime(Math.min(0.45, (v / 70) ** 2 * 0.2), t, 0.15);
+    this.hG.gain.setTargetAtTime(game.state === 'flying' && s.stallWarn ? 0.06 : 0, t, 0.02);
+    const on = game.state === 'flying' && game.warnPull && !CAR.on && (t * 3.2 % 1) < 0.5;
+    this.bG.gain.setTargetAtTime(on ? 0.07 : 0, t, 0.01);
+  },
+  setMaster(v) { if (this.ctx) this.master.gain.setTargetAtTime(v, this.ctx.currentTime, 0.05); },
+  blip(freq, dur = 0.08, type = 'sine', vol = 0.12, at = 0) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime + at, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = type; o.frequency.value = freq; g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+    o.connect(g).connect(this.master); o.start(t); o.stop(t + dur + 0.05);
+  },
+  burst(dur, f0, f1, vol, type = 'bandpass') {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime, src = this.ctx.createBufferSource(), f = this.ctx.createBiquadFilter(), g = this.ctx.createGain();
+    src.buffer = this.noiseBuf; src.loop = true; f.type = type; f.Q.value = 0.8;
+    f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+    src.connect(f).connect(g).connect(this.master); src.start(t); src.stop(t + dur + 0.05);
+  },
+  crash() {
+    this.burst(2.6, 2200, 90, 0.9, 'lowpass');
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.frequency.setValueAtTime(90, t); o.frequency.exponentialRampToValueAtTime(30, t + 1.2);
+    g.gain.setValueAtTime(0.6, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.4);
+    o.connect(g).connect(this.master); o.start(t); o.stop(t + 1.5);
+  },
+  ring() { this.blip(880, 0.18, 'sine', 0.14); this.blip(1318, 0.3, 'sine', 0.12, 0.09); },
+};
+function setSound(v) {
+  game.sound = v; $('opt-sound').checked = v;
+  audio.setMaster(v ? 0.55 : 0);
+}
+
+// ---------- particles ----------
+const particles = [];
+const PMAX = 2500;
+let pData, pVAO;
+function initParticles() {
+  pData = new Float32Array(PMAX * 9);
+  pVAO = makeVAO([{ loc: 0, size: 2, data: new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]) },
+  { data: pData, stride: 9, layout: [[4, 4, 0], [5, 4, 4], [6, 1, 8]], divisor: 1, dynamic: true }]);
+  pVAO.papiData = new Float32Array(8 * 9);
+  pVAO.papi = makeVAO([{ loc: 0, size: 2, data: new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]) },
+  { data: pVAO.papiData, stride: 9, layout: [[4, 4, 0], [5, 4, 4], [6, 1, 8]], divisor: 1, dynamic: true }]);
+}
+function emit(p, v, o) {
+  if (particles.length >= PMAX) particles.shift();
+  particles.push({ p: p.slice(), v: v.slice(), age: 0, life: o.life, size: o.size, grow: o.grow || 0, col: o.col, a: o.a, add: !!o.add, drag: o.drag || 0.5, rise: o.rise || 0, rot: Math.random() * 6.28 });
+}
+let smokeAcc = 0;
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const q = particles[i];
+    q.age += dt;
+    if (q.age >= q.life) { particles.splice(i, 1); continue; }
+    const k = Math.exp(-q.drag * dt);
+    q.v = [q.v[0] * k, q.v[1] * k + q.rise * dt, q.v[2] * k];
+    q.p = vmadd(q.p, q.v, dt);
+    q.size += q.grow * dt;
+  }
+  const s = sim;
+  if (game.state === 'flying' && s.smoke && s.tas > 10) {
+    smokeAcc += dt;
+    while (smokeAcc > 0.025) {
+      smokeAcc -= 0.025;
+      const tail = vadd(s.pos, qrot(s.q, [0, 0.1, 4.1]));
+      emit(tail, vadd(vscale(s.vel, 0.05), [(Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.6]),
+        { life: 9, size: 1.3, grow: 2.2, col: [0.96, 0.96, 0.97], a: 0.6, drag: 0.35 });
+    }
+  }
+  if (s.crashed && game.state !== 'menu' && Math.random() < dt * 25) {
+    const wreck = s.pos;
+    emit(vadd(wreck, [(Math.random() - 0.5) * 3, 1, (Math.random() - 0.5) * 3]), [(Math.random() - 0.5) * 2, 4 + Math.random() * 3, (Math.random() - 0.5) * 2],
+      { life: 9, size: 3, grow: 4, col: [0.18, 0.17, 0.17], a: 0.55, drag: 0.4, rise: 0.5 });
+    if (Math.random() < 0.5) emit(vadd(wreck, [(Math.random() - 0.5) * 2, 0.8, (Math.random() - 0.5) * 2]), [0, 3, 0],
+      { life: 0.8, size: 2.2, grow: 2, col: [1.0, 0.5, 0.12], a: 0.3, add: true });
+  }
+}
+function explode(p, water) {
+  for (let i = 0; i < 70; i++) {
+    const d = vnorm([Math.random() - 0.5, Math.random() * 0.8, Math.random() - 0.5]), sp = 6 + Math.random() * 22;
+    if (water) emit(p, vscale(d, sp * 0.8), { life: 2 + Math.random() * 2, size: 2, grow: 5, col: [0.92, 0.95, 0.97], a: 0.8, drag: 1.2, rise: -6 });
+    else {
+      if (i % 2) emit(p, vscale(d, sp), { life: 0.7 + Math.random() * 0.6, size: 2.5, grow: 7, col: [1.0, 0.42 + Math.random() * 0.25, 0.08], a: 0.28, add: true, drag: 2.5 });
+      emit(p, vscale(d, sp * 0.5), { life: 5 + Math.random() * 4, size: 3, grow: 5, col: [0.16, 0.15, 0.15], a: 0.6, drag: 1.2, rise: 1.5 });
+    }
+  }
+}
+function tyreSmoke() {
+  const s = sim;
+  for (const wh of [WHEELS[1], WHEELS[2]]) {
+    const p = vadd(s.pos, qrot(s.q, wh.off));
+    for (let i = 0; i < 6; i++) emit(p, [(Math.random() - 0.5) * 2, 0.5 + Math.random(), (Math.random() - 0.5) * 2],
+      { life: 1.6, size: 0.6, grow: 2.2, col: [0.85, 0.85, 0.85], a: 0.45, drag: 1.5 });
+  }
+}
+
+// ---------- flight events ----------
+function onTouchdown() {
+  const s = sim, fpm = Math.round(-s.vel[1] * 196.85);
+  const [u, v] = worldToRwy(s.pos[0], s.pos[2]);
+  const paved = onPaved(s.pos[0], s.pos[2]) === 'rwy';
+  audio.burst(0.3, 1500, 800, clamp(fpm / 600, 0.1, 0.5));
+  tyreSmoke();
+  const rating = fpm < 150 ? 'とてもスムーズ' : fpm < 350 ? '良好' : fpm < 650 ? '硬め' : 'ハードランディング';
+  if (!game.firstTouch) game.firstTouch = { fpm, u, v, paved };
+  if (game.mode !== 'landing') toast(`接地 ${fpm} fpm ― ${rating}`, 2600);
+}
+function crash(reason) {
+  const s = sim;
+  if (s.crashed) return;
+  s.crashed = true; s.crashReason = reason;
+  s.vel = [0, 0, 0]; s.w = [0, 0, 0];
+  const water = terrainHeight(s.pos[0], s.pos[2]) < 0;
+  if (water) s.pos[1] = 0.5;
+  explode(s.pos, water);
+  audio.crash();
+  game.state = 'crashed';
+  cam.prevMode = cam.mode; cam.mode = 'orbit'; cam.autoOrbit = true; cam.dist = 45; cam.orbitPitch = 0.35;
+  cam.orbitYaw = Math.atan2(cam.eye[0] - s.pos[0], cam.eye[2] - s.pos[2]);
+  game.resultTimer = 2.2;
+  game.pendingResult = {
+    eyebrow: 'CRASH', title: '墜落しました', rows: [['原因', reason], ['飛行時間', fmtTime(game.t)]],
+  };
+  if (SCHOOL.active) { game.pendingResult = null; schoolCrash(reason); }
+}
+function fmtTime(t) { const m = Math.floor(t / 60), s = t - m * 60; return m + ':' + s.toFixed(1).padStart(4, '0'); }
+function gameChecks(dt) {
+  const s = sim;
+  // warnings
+  const p5 = vmadd(s.pos, s.vel, 6);
+  const ahead = Math.max(terrainHeight(p5[0], p5[2]), 0);
+  const [ru, rv] = worldToRwy(s.pos[0], s.pos[2]);
+  const approach = s.gearDown && s.flapIdx > 0 && ru < RWY.len / 2 && ru > -RWY.len / 2 - 5000 && Math.abs(rv) < 400;
+  game.warnPull = !s.onGround && s.airTime > 2 && !approach && (p5[1] + WHEEL_BOTTOM < ahead + 25 || (s.vs < -8 && s.agl < -s.vs * 5));
+ if (game.timeScale > 1 && (s.agl < 250 || game.warnPull || s.stallWarn || s.onGround)) { game.timeScale = 1; toast('低い高度なので時間加速を解除しました', 2000); }
+  if (JW.active && JW.dest && !game.arrived && s.onGround && Math.hypot(s.vel[0], s.vel[2]) < 1.0) {
+    const r = jwRunwayAt(s.pos[0], s.pos[2]);
+    if (r && r.ap === JW.dest && game.t > 30) {
+      game.arrived = true;
+      const d = geoDist(JW.dep.lat, JW.dep.lon, JW.dest.lat, JW.dest.lon);
+      showResult({ eyebrow: 'ARRIVAL', title: `${JW.dest.name}に到着しました`, rows: [['出発', '', JW.dep.name], ['到着', '', JW.dest.name], ['直線距離', '', Math.round(d / 1000).toLocaleString() + ' km'], ['飛行時間（ゲーム内）', '', fmtTime(game.t)]] });
+      return;
+    }
+  }
+  game.warnGear = !s.gearDown && s.agl < 150 && s.ias * 1.94384 < ACFT.v.appr * 1.15 && s.vs < -1;
+  // landing challenge: finished when stopped
+  if (game.mode === 'landing' && game.firstTouch && !game.landingDone && s.onGround && Math.hypot(s.vel[0], s.vel[2]) < 1.0) {
+    game.landingDone = true;
+    finishLanding();
+  }
+}
+function finishLanding() {
+  const ft = game.firstTouch, s = sim;
+  const aimU = -RWY.len / 2 + 300;
+  const d = ft.u - aimU;
+  const sink = Math.round(40 * (1 - smoothstep(100, 650, ft.fpm)));
+  const zone = ft.u < -RWY.len / 2 ? 0 : Math.round(30 * (1 - smoothstep(30, 420, Math.abs(d))));
+  const centre = Math.round(20 * (1 - smoothstep(1, 12, Math.abs(ft.v))));
+  const stopOk = onPaved(s.pos[0], s.pos[2]) === 'rwy' ? 10 : 0;
+  const total = ft.paved ? sink + zone + centre + stopOk : Math.round((sink + centre) * 0.3);
+  const grade = total >= 90 ? 'S' : total >= 75 ? 'A' : total >= 55 ? 'B' : 'C';
+  const prev = game.best.landing || 0;
+  if (total > prev) { game.best.landing = total; saveBest(); }
+  showResult({
+    eyebrow: 'LANDING CHALLENGE', title: `着陸 評価 ${grade}`,
+    rows: [
+      ['接地時の降下率', ft.fpm + ' fpm', sink + ' / 40'],
+      ['接地点（目標からの距離）', (ft.u < -RWY.len / 2 ? '滑走路手前' : (d >= 0 ? '+' : '') + Math.round(d) + ' m'), zone + ' / 30'],
+      ['センターラインからのずれ', Math.abs(ft.v).toFixed(1) + ' m', centre + ' / 20'],
+      ['滑走路上で停止', stopOk ? 'はい' : 'いいえ', stopOk + ' / 10'],
+      ['合計', '', total + ' 点', true],
+      ['ベスト', '', Math.max(total, prev) + ' 点'],
+    ],
+  });
+}
+function updateRings(prevPos) {
+  const ring = course.rings[game.ringIdx];
+  if (!ring || game.ringDone) return;
+  const a = vdot(vsub(prevPos, ring.p), ring.n), b = vdot(vsub(sim.pos, ring.p), ring.n);
+  if ((a < 0 && b >= 0) || (a > 0 && b <= 0)) {   // either direction counts
+    const hit = vlerp(prevPos, sim.pos, a / (a - b));
+    const off = vsub(hit, ring.p), radial = vlen(vsub(off, vscale(ring.n, vdot(off, ring.n))));
+    if (radial <= course.radius) {
+      game.ringIdx++;
+      audio.ring();
+      if (game.tour) tourPassed(game.ringIdx - 1);
+      if (game.ringIdx >= course.rings.length && game.tour) {
+        game.ringDone = true;
+        setTimeout(() => showResult({ eyebrow: 'SIGHTSEEING', title: '観光フライト完了', rows: [['めぐった名所', '', course.tour.map(l => l[0]).join('・')], ['飛行時間', '', fmtTime(game.ringTime)]] }), 6500);
+      } else if (game.ringIdx >= course.rings.length) {
+        game.ringDone = true;
+        const t = game.ringTime, prev = game.best.rings;
+        if (!prev || t < prev) { game.best.rings = t; saveBest(); }
+        showResult({
+          eyebrow: 'RING CHALLENGE', title: 'コースクリア',
+          rows: [['タイム', '', fmtTime(t), true], ['ベスト', '', fmtTime(Math.min(t, prev || t))], ['通過リング', '', course.rings.length + ' / ' + course.rings.length]],
+        });
+      } else if (!game.tour) toast(`リング ${game.ringIdx} / ${course.rings.length} 通過`, 1500);
+    }
+  }
+}
+
+// ---------- screens ----------
+function showMenu(paused) {
+  tutHide();
+  if (typeof updateMenuTexts === 'function' && RWY.idents) updateMenuTexts();
+  $('menu').hidden = false; $('resume').hidden = !paused; $('menu-ai').hidden = !paused; $('touch').hidden = true; $('result').hidden = true;
+  $('best-rings').textContent = game.best.rings ? '· ベスト ' + fmtTime(game.best.rings) : '';
+  $('best-landing').textContent = game.best.landing ? '· ベスト ' + game.best.landing + ' 点' : '';
+}
+function startMode(mode) {
+  audio.init();
+  game.tour = false;
+  if (JW.active && (mode === 'tour' || mode === 'rings')) {
+    if (mode === 'tour') jwBuildTour(JW.dep); else { jwBuildRings(JW.dep); course.tour = null; }
+    game.tour = mode === 'tour';
+    ensureRingMesh();
+  }
+  if (mode === 'tour') mode = 'rings';
+  const guide = mode === 'startup'; if (guide) mode = 'runway';
+  const drive = mode === 'drive'; if (drive) mode = 'runway';     // (a drive starts at the airport, in a car on the nearest road)
+  game.spawnCold = (game.cold || guide) && mode === 'runway';
+  spawn(mode);
+  game.state = 'flying';
+  $('menu').hidden = true; $('result').hidden = true; $('touch').hidden = !game.touch;
+  glCanvas.focus();
+  const vr = ACFT.v.rotate, up = game.invert ? 'W（↑）' : 'S（↓）';
+  const hints = {
+    runway: game.touch ? ['右のスライダーでスロットルを上げて加速', `速度 ${vr} kt を超えたらスティックを下に引いて離陸`] : ['R でスロットルを上げて滑走開始', `${vr} kt を超えたら ${up} で機首を上げて離陸`, ACFT.gear.fixed ? '困ったら L で水平飛行に戻せます' : '上昇したら G でギア（車輪）を上げましょう'],
+    air: [game.touch ? '「？」ボタンで画面の見方や用語を確認できます' : 'C でカメラ切替、Esc でメニューとガイド', '操縦を離すと' + (game.assist ? '自動で水平飛行に戻ります' : '機体の傾きはそのまま残ります（L で水平に）')],
+    rings: game.tour ? ['観光フライト：紫の枠が次の名所。リングを通ると説明が出ます', '★ の付いた名前が名所です。地図（M）でも位置を確認できます'] : ['紫の枠が次のリング。順番に通過しよう'],
+    landing: ['PAPI（滑走路左の灯火）が赤2・白2なら正しい進入角', '接地したらスロットル 0、ブレーキ（B）で停止'],
+  };
+  if (guide) { egStart(); return; }
+  if (drive) { driveStart(); return; }
+  (hints[mode] || []).forEach((h, i) => setTimeout(() => { if (game.state === 'flying' && game.mode === mode) toast(h, 3800); }, 600 + i * 4200));
+}
+function pauseGame() {
+  if (game.state !== 'flying') return;
+  if (SCHOOL.active) { game.state = 'paused'; schoolPause(true); return; }
+  game.state = 'paused'; showMenu(true);
+}
+function resumeGame() {
+  if (game.state !== 'paused') return;
+  game.state = 'flying'; $('menu').hidden = true; $('touch').hidden = !game.touch; glCanvas.focus(); schoolPause(false);
+  if (game.mode === 'tutorial') tutShow();
+}
+function showResult(r) {
+  game.state = 'result';
+  tutHide();
+  $('touch').hidden = true;
+  $('res-eyebrow').textContent = r.eyebrow; $('res-title').textContent = r.title;
+  const dl = $('res-list'); dl.textContent = '';
+  for (const [k, a, b, total] of r.rows) {
+    const dt = document.createElement('dt'), dd = document.createElement('dd');
+    dt.textContent = k; dd.textContent = b !== undefined ? (a ? a + '　' + b : b) : a;
+    if (total) dd.className = 'total';
+    dl.append(dt, dd);
+  }
+  $('result').hidden = false;
+  $('res-retry').focus();
+}
+document.querySelectorAll('.mission').forEach(b => b.addEventListener('click', () => startMode(b.dataset.mode)));
+$('resume').addEventListener('click', resumeGame);
+$('res-retry').addEventListener('click', () => startMode(game.mode));
+$('res-menu').addEventListener('click', () => { spawn('runway'); game.state = 'menu'; showMenu(false); });
+if (!game.gfx) game.gfx = matchMedia('(pointer: coarse)').matches ? 'mid' : 'high';
+document.querySelectorAll('[data-gfx]').forEach(b => { b.classList.toggle('on', b.dataset.gfx === game.gfx); b.addEventListener('click', () => {
+  game.gfx = b.dataset.gfx; savePrefs();
+  document.querySelectorAll('[data-gfx]').forEach(o => o.classList.toggle('on', o === b));
+}); });
+document.querySelectorAll('[data-cloud]').forEach(b => { b.classList.toggle('on', b.dataset.cloud === game.clouds); b.addEventListener('click', () => {
+  game.clouds = b.dataset.cloud; savePrefs();
+  document.querySelectorAll('[data-cloud]').forEach(o => o.classList.toggle('on', o === b));
+}); });
+document.querySelectorAll('[data-oat]').forEach(b => b.addEventListener('click', () => {
+  ISA.dev = +b.dataset.oat;
+  document.querySelectorAll('[data-oat]').forEach(o => o.classList.toggle('on', o === b));
+}));
+document.querySelectorAll('[data-tod]').forEach(b => b.addEventListener('click', () => {
+  ENV = TOD[b.dataset.tod];
+  document.querySelectorAll('[data-tod]').forEach(o => o.classList.toggle('on', o === b));
+}));
+$('opt-invert').addEventListener('change', e => { game.invert = e.target.checked; });
+$('opt-sound').addEventListener('change', e => setSound(e.target.checked));
+document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
+
+// ---------- menu: map & aircraft selection, options ----------
+function stars(n) { return '★'.repeat(n) + '☆'.repeat(5 - n); }
+const FULL_URL = 'https://raw.githack.com/kazuki8198-glitch/otinti/claude/what-is-this-db5aue/flight-sim.html';
+function updateMenuTexts() {
+  const m = MAPS.find(x => x.id === game.mapId) || MAPS[0];
+  const len = Math.round(RWY.len);
+  if (JW.active) {
+    let t = `出発：${JW.dep.name}（${JW.dep.icao}）滑走路 ${RWY.idents.join('/')}・${len.toLocaleString()} m。`;
+    if (JW.dest) t += `目的地：${JW.dest.name}まで ${Math.round(geoDist(JW.dep.lat, JW.dep.lon, JW.dest.lat, JW.dest.lon) / 1000).toLocaleString()} km。`;
+    $('map-desc').textContent = t;
+    $('net-desc').textContent = JW.online
+      ? '詳細地図：オンライン。航空写真・標高（日本は国土地理院、海外は Esri と AWS）、建物（OpenStreetMap／都市部は PLATEAU）を読み込みながら飛びます。'
+      : '';
+    if (!JW.online) {
+      const a = document.createElement('a'); a.href = FULL_URL; a.target = '_blank'; a.rel = 'noopener'; a.textContent = '航空写真と 3D の街並み付きの詳細版を開く';
+      $('net-desc').append('詳細地図：オフライン（内蔵の簡易地形で表示中）。', a);
+    }
+    $('sub-air').textContent = `${JW.dep.name}の近くを巡航中の状態から自由に飛ぶ`;
+    $('sub-rings').firstChild.textContent = `${JW.dep.name}の周りの 10 個のリングを順番に通過 `;
+    { const near = LANDMARKS.map(l => [l[0], geoDist(JW.dep.lat, JW.dep.lon, l[1], l[2])]).sort((a, b) => a[1] - b[1]);
+      const pick = near.filter(x => x[1] < 90000).slice(0, 6); const list = (pick.length >= 3 ? pick : near.slice(0, 4)).map(x => x[0]);
+      $('sub-tour').textContent = `${list.join('・')} をめぐる`; }
+  } else {
+    $('map-desc').textContent = `${m.name}（${m.icao}）滑走路 ${RWY.idents.join('/')}・長さ ${len.toLocaleString()} m — ${MAP_INFO[m.id] || ''}`;
+    $('net-desc').textContent = '';
+    $('sub-air').textContent = '島の沖合を巡航中の状態から自由に飛ぶ';
+    $('sub-rings').firstChild.textContent = '島を一周する 10 個のリングを順番に通過 ';
+  }
+  const A = ACFT, d = $('acft-desc');
+  d.textContent = '';
+  const st = document.createElement('span'); st.className = 'stars'; st.textContent = '難しさ ' + stars(A.stars) + '　';
+  d.append(st, `${A.kind}。${A.desc}`);
+  if (A.minRwy && RWY.len < A.minRwy) {
+    const w = document.createElement('span'); w.className = 'warn';
+    w.textContent = `　注意：この空港の滑走路（${len.toLocaleString()} m）はこの機体には短めです（目安 ${A.minRwy.toLocaleString()} m 以上）。`;
+    d.append(w);
+  }
+  $('sub-runway').textContent = `RWY ${RWY.idents[0]} に停止中。スロットルを上げて離陸（離陸速度 約 ${A.v.rotate} kt）`;
+  $('sub-landing').firstChild.textContent = `3° の進入経路から RWY ${RWY.idents[0]} に着陸 `;
+}
+function setupMenu() {
+  const sm = $('sel-map'), sa = $('sel-acft');
+  for (const [v, t] of [['japan', '世界（実在の地形・世界中の空港）'], ['sorajima', '空島（架空の島）']]) { const o = document.createElement('option'); o.value = v; o.textContent = t; sm.append(o); }
+  const region = ap => ap.icao.startsWith('RO') ? '沖縄' : ({ C: '北海道', E: '北海道', S: '東北', T: '関東・伊豆諸島', A: '関東・伊豆諸島', N: '中部・北陸', B: '近畿・中国・四国', O: '近畿・中国・四国', F: '九州・奄美', D: '九州・奄美', K: '九州・奄美' })[ap.icao[2]] || 'その他';
+  const fill = (sel, withNone) => {
+    if (withNone) { const o = document.createElement('option'); o.value = ''; o.textContent = 'なし（自由に飛ぶ）'; sel.append(o); }
+    const groups = {};
+    for (const ap of [...JP_AIRPORTS].sort((a, b) => b.lat - a.lat)) (groups[region(ap)] = groups[region(ap)] || []).push(ap);
+    for (const r of ['北海道', '東北', '関東・伊豆諸島', '中部・北陸', '近畿・中国・四国', '九州・奄美', '沖縄', 'その他']) {
+      if (!groups[r]) continue;
+      const og = document.createElement('optgroup'); og.label = r;
+      for (const ap of groups[r]) { const o = document.createElement('option'); o.value = ap.icao; o.textContent = `${ap.name}（${ap.icao}）`; og.append(o); }
+      sel.append(og);
+    }
+  };
+  const CONT = { AS: 'アジア', EU: 'ヨーロッパ', NA: '北アメリカ・ハワイ', SA: '南アメリカ', OC: 'オセアニア・太平洋', AF: 'アフリカ' };
+  const fillWorld = sel => {
+    const big = WORLD_AIRPORTS.filter(a => a.big), groups = {};
+    for (const a of big) { const c = COUNTRY_CONT[a.cc] || 'AS'; (groups[c] = groups[c] || []).push(a); }
+    for (const c of ['AS', 'OC', 'NA', 'EU', 'SA', 'AF']) {
+      if (!groups[c]) continue;
+      const og = document.createElement('optgroup'); og.label = '世界：' + CONT[c];
+      groups[c].sort((a, b) => (COUNTRY_JA[a.cc] || a.cc).localeCompare(COUNTRY_JA[b.cc] || b.cc, 'ja') || a.name.localeCompare(b.name, 'ja'));
+      for (const a of groups[c]) { const o = document.createElement('option'); o.value = a.icao; o.textContent = `${COUNTRY_JA[a.cc] || a.cc}・${a.name}（${a.iata || a.icao}）`; og.append(o); }
+      sel.append(og);
+    }
+  };
+  fill($('sel-dep'), false); fill($('sel-dest'), true); fillWorld($('sel-dep')); fillWorld($('sel-dest'));
+  $('sel-dep').addEventListener('change', e => { game.depIcao = e.target.value; savePrefs(); loadMap('japan'); });
+  $('sel-dest').addEventListener('change', e => {
+    game.destIcao = e.target.value; savePrefs(); game.nearDestToast = false;
+    JW.dest = JW.airports.find(a => a.icao === game.destIcao) || null; updateMenuTexts();
+  });
+  $('open-map').addEventListener('click', () => toggleMap(true));
+  setupMapView();
+  for (const [lab, real] of [['実在の機体', true], ['オリジナルの機体', false]]) {
+    const og = document.createElement('optgroup'); og.label = lab;
+    for (const a of AIRCRAFT.filter(a => !!a.real === real)) { const o = document.createElement('option'); o.value = a.id; o.textContent = `${a.name} — ${a.kind}`; og.append(o); }
+    sa.append(og);
+  }
+  sm.value = game.mapId; sa.value = game.acftId;
+  sm.addEventListener('change', () => loadMap(sm.value));
+  sa.addEventListener('change', () => {
+    game.acftId = sa.value; savePrefs(); setAircraft(game.acftId);
+    spawn('runway'); game.state = 'menu'; showMenu(false);
+  });
+  const syncSens = () => document.querySelectorAll('[data-sens]').forEach(o => o.classList.toggle('on', o.dataset.sens === game.sens));
+  document.querySelectorAll('[data-sens]').forEach(b => b.addEventListener('click', () => { game.sens = b.dataset.sens; syncSens(); savePrefs(); }));
+  syncSens();
+  $('opt-assist').checked = game.assist;
+  $('opt-assist').addEventListener('change', e => { game.assist = e.target.checked; savePrefs(); });
+  $('opt-autorud').checked = game.autoRud;
+  $('opt-cold').checked = game.cold; $('opt-cold').addEventListener('change', e => { game.cold = e.target.checked; savePrefs(); });
+  $('opt-automix').checked = game.autoMix; $('opt-automix').addEventListener('change', e => { game.autoMix = e.target.checked; savePrefs(); });
+  $('opt-autorud').addEventListener('change', e => { game.autoRud = e.target.checked; savePrefs(); });
+  $('opt-invert').checked = game.invert;
+  $('opt-sound').checked = game.sound;
+  $('opt-invert').addEventListener('change', savePrefs);
+  $('opt-sound').addEventListener('change', savePrefs);
+  // guide
+  $('open-guide').addEventListener('click', () => openGuide());
+  $('guide-close').addEventListener('click', closeGuide);
+  document.querySelectorAll('.tabs [data-tab]').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.tabs [data-tab]').forEach(o => o.classList.toggle('on', o === b));
+    document.querySelectorAll('.guide-body section').forEach(sec => { sec.hidden = sec.dataset.tab !== b.dataset.tab; });
+  }));
+  $('guide-demo').addEventListener('click', showCallouts);
+  const na = $('num-acft');
+  for (const a of AIRCRAFT) { const o = document.createElement('option'); o.value = a.id; o.textContent = `${a.name} — ${a.kind}`; na.append(o); }
+  na.addEventListener('change', () => renderNumbers(na.value));
+  $('callout-close').addEventListener('click', hideCallouts);
+}
+// reference numbers for steady flight, per aircraft (see TRIM)
+const TRIM_ROWS = [
+  ['巡航（ふつうの速さ・フラップ 0°）', [['c_level', '水平飛行'], ['c_c500', '上昇 500 fpm'], ['c_d500', '降下 500 fpm'], ['c_d1000', '降下 1,000 fpm']]],
+  ['上昇（上昇に向いた速さ・フラップ 0°）', [['y_c500', 'ゆっくり上昇 500 fpm'], ['y_c1000', '上昇 1,000 fpm'], ['y_full', 'スロットル全開で上昇']]],
+  ['低速（空港の周り・フラップ 1 段・ギア下げ）', [['s_level', '水平飛行'], ['s_c500', '上昇 500 fpm'], ['s_d500', '降下 500 fpm']]],
+  ['着陸の進入（着陸用フラップ・ギア下げ）', [['a_3deg', '3° の坂で降りる']]],
+];
+function renderNumbers(id) {
+  const T = TRIM[id], A = AIRCRAFT.find(a => a.id === id);
+  if (!T) return;
+  $('num-acft').value = id;
+  const fl = i => A.wing.flap ? flapName(i, A) : '—';
+  const sg = v => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v).toFixed(1) + '°';
+  const vs = v => Math.abs(v) < 30 ? '0' : (v > 0 ? '+' : '−') + Math.abs(v).toLocaleString();
+  const cell = r => {
+    if (!r) return '<td>—</td>';
+    if (r[7] === 0) return `<td class="nx">無理<br><small>全開でも届かない</small></td>`;
+    const lap = r[5] > 0.2 ? `<small>1 周 ${Math.round(360 / r[5])} 秒</small>` : '<small>まっすぐ</small>';
+    const extra = r[7] === 2 ? '<br><small>加速し続ける</small>' : '';
+    return `<td><b>${r[1]}%</b> / <b>${sg(r[2])}</b><br>${lap}${extra}</td>`;
+  };
+  let h = `<div class="num-wrap"><table class="nt"><tr><th>状況</th><th>速度</th><th>フラップ</th><th>昇降 fpm</th><th>バンク 0°</th><th>バンク 10°</th><th>バンク 20°</th></tr>`;
+  for (const [grp, list] of TRIM_ROWS) {
+    h += `<tr class="grp"><td colspan="7">${grp}</td></tr>`;
+    for (const [k, label] of list) {
+      const r0 = T[k + '_0'];
+      if (!r0) continue;
+      h += `<tr><td>${label}</td><td>${r0[0]} kt</td><td>${fl(r0[6])}</td><td>${r0[7] === 0 ? '—' : vs(r0[3])}</td>${cell(r0)}${cell(T[k + '_10'])}${cell(T[k + '_20'])}</tr>`;
+    }
+  }
+  h += `</table></div><p class="keys-note">各マスは「<b>スロットル</b> / <b>ピッチ</b>」。バンクは左右どちらに傾けても同じ値です。</p>`;
+  h += `<h3>参考：深い旋回（巡航・水平）</h3><div class="num-wrap"><table class="nt"><tr><th>バンク</th><th>速度</th><th>スロットル / ピッチ</th><th>G</th></tr>`;
+  for (const b of [30, 45, 60]) { const r = T['c_level_' + b]; h += `<tr><td>${b}°</td><td>${r[0]} kt</td>${cell(r)}<td>${(1 / Math.cos(b * DEG)).toFixed(2)}</td></tr>`; }
+  h += `</table></div>`;
+  $('num-table').innerHTML = h;
+}
+function openGuide(tab) {
+  renderNumbers(game.acftId);
+  if (game.state === 'flying') pauseGame();
+  $('guide').hidden = false;
+  if (tab) document.querySelector(`.tabs [data-tab="${tab}"]`).click();
+  $('guide-close').focus();
+}
+function closeGuide() { $('guide').hidden = true; }
+
+// "screen explained": numbered markers on the live instruments plus a legend
+const CALLOUTS = [
+  ['speed', '速度計', '空気に対する速さ（kt）。赤い帯より遅いと失速の危険'],
+  ['attitude', '姿勢指示器', '機体の傾き。青=空、茶=地面、黄色い記号=自分の機体'],
+  ['alt', '高度計', '海面からの高さ（ft）。RA は真下の地面からの高さ'],
+  ['vsi', '昇降計', '矢印が上なら上昇中、下なら降下中'],
+  ['heading', '方位計', '機首の向き（N=北 E=東）。紫の印は目的地の方向'],
+  ['engine', 'エンジン・機体の状態', 'THR=出力、FLAPS=フラップ、GEAR=車輪、AOA=迎え角'],
+  ['stick', '操縦桿の位置', '点が中心で緑なら中立（何も操作していない）'],
+  ['map', '地図', '上が北。黄色い矢印が自分、白い線が滑走路'],
+  ['fpm', '飛行経路マーカー', '緑の丸。機体が実際に進んでいる方向'],
+];
+function showCallouts() {
+  closeGuide();
+  if (game.state === 'menu' || game.state === 'result') startMode('air');
+  game.state = 'paused';
+  $('menu').hidden = true; $('touch').hidden = true;
+  game.callouts = true;
+  const ol = $('callout-list'); ol.textContent = '';
+  for (const [key, t, d] of CALLOUTS) {
+    if (game.touch && (key === 'engine' || key === 'stick')) continue;
+    const li = document.createElement('li'), b = document.createElement('b');
+    b.textContent = t + '：'; li.append(b, d); ol.append(li);
+  }
+  if (game.touch) { const li = document.createElement('li'); li.textContent = '左下のスティックで操縦、右端の THR でスロットル。指を離すと中立です'; ol.append(li); }
+  $('callout').hidden = false;
+}
+function hideCallouts() {
+  if (!game.callouts) return;
+  game.callouts = false; $('callout').hidden = true;
+  resumeGame();
+}
+function drawCallouts(g) {
+  let n = 0;
+  for (const [key] of CALLOUTS) {
+    if (game.touch && (key === 'engine' || key === 'stick')) continue;
+    n++;
+    const r = hud.rects && hud.rects[key];
+    if (!r) continue;
+    g.save();
+    g.strokeStyle = COL.cyan; g.lineWidth = 2; rr(g, r[0] - 3, r[1] - 3, r[2] + 6, r[3] + 6, 6); g.stroke();
+    const x = r[0] + 2, y = r[1] + 2;
+    g.fillStyle = COL.cyan; g.beginPath(); g.arc(x + 11, y + 11, 11, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#04121f'; g.font = `700 13px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(n), x + 11, y + 11.5);
+    g.restore();
+  }
+}
+
+// ---------- loading a map ----------
+function setLoad(p, t) { $('load-bar').style.width = Math.round(p * 100) + '%'; if (t) $('load-text').textContent = t; }
+async function loadMap(id) {
+  if (id === 'japan') return loadJapan();
+  useJapanWorld(false);
+  const map = MAPS.find(m => m.id === id) || MAPS[0];
+  game.state = 'loading';
+  $('loading').hidden = false; $('menu').hidden = true; $('result').hidden = true; $('touch').hidden = true;
+  setLoad(0.02, map.procedural ? '島の地形を生成しています…' : `${map.name} の地形（国土地理院の標高データ）を読み込んでいます…`);
+  await tick();
+  await generateWorld(map, p => setLoad(p));
+  setLoad(0.93, '空港と街を準備しています…'); await tick();
+  uploadWorldTextures(); initAirport(); initProps(); initClouds(); buildRingCourse(); initParked();
+  hud.minimap = makeMinimap(); applyQuality();
+  game.mapId = map.id; savePrefs();
+  $('sel-map').value = map.id;
+  document.body.classList.remove('jw');
+  spawn('runway');
+  game.state = 'menu';
+  $('loading').hidden = true;
+  showMenu(false);
+}
+
+async function loadJapan() {
+  game.state = 'loading';
+  $('loading').hidden = false; $('menu').hidden = true; $('result').hidden = true; $('touch').hidden = true;
+  setLoad(0.05, '世界の地形データを展開しています…'); await tick();
+  await jwInitData();
+  initJapanGL();
+  if (!noiseTex) { noiseTex = makeNoiseTexture(); puffTex = makePuffTexture(); dotTex = makeDotTexture(); }
+  ensureRingMesh();
+  setLoad(0.6, '国土地理院の詳細地図（航空写真・標高）に接続しています…'); await tick();
+  await jwCheckOnline();
+  setLoad(0.85, '空港を準備しています…'); await tick();
+  useJapanWorld(true);
+  const ap = JW.airports.find(a => a.icao === game.depIcao) || JW.airports.find(a => a.icao === 'RJTT');
+  game.depIcao = ap.icao;
+  jwSetDeparture(ap);
+  JW.dest = JW.airports.find(a => a.icao === game.destIcao && a !== ap) || null;
+  if (!JW.dest) game.destIcao = '';
+  game.mapId = 'japan'; savePrefs();
+  $('sel-map').value = 'japan'; $('sel-dep').value = ap.icao; $('sel-dest').value = game.destIcao;
+  document.body.classList.add('jw');
+  spawn('runway');
+  game.state = 'menu';
+  $('loading').hidden = true;
+  showMenu(false);
+}
+
+// ---------- rendering ----------
+const R = { VP: null, eye: [0, 0, 0], time: 0, W: 1, H: 1, camR: [1, 0, 0], camU: [0, 1, 0], camF: [0, 0, -1], tanX: 1, tanY: 1 };
+// the near zone: while driving over Google's 3D tiles, the ground, streets and buildings within a few hundred
+// metres of the car are the sim's own (a photogrammetry mesh is a melted blanket at street level)
+const ZONE = { on: false, v: [0, 0, 0, 0], side: 0, r0: 240, r1: 340, g: [0, 0, 0, 0], clip: 2.2, gAt: null };
+// the ground round the car as a curved surface (h = a + bx + cz + dx² + exz + fz², least squares over rings of
+// the map's heights), so the cut under Google's mesh follows valleys and hillsides
+function zoneGroundFit() {
+  const cx = sim.pos[0], cz = sim.pos[2];
+  if (ZONE.gAt && Math.hypot(cx - ZONE.gAt[0], cz - ZONE.gAt[1]) < 10 && R.time - ZONE.gAt[2] < 2) return;
+  const A = Array.from({ length: 6 }, () => new Float64Array(7));
+  for (const r of [0, 25, 55, 95, 145, 205, 270]) for (let k = 0; k < (r ? 16 : 1); k++) {
+    const a = k / 16 * Math.PI * 2, x = Math.cos(a) * r, z = Math.sin(a) * r, y = Math.max(jwHeight(cx + x, cz + z), 0);
+    const X = x / 100, Z = z / 100, f = [1, X, Z, X * X, X * Z, Z * Z], w = r < 150 ? 1 : 0.5;   // (the near ground counts most)
+    for (let i = 0; i < 6; i++) { for (let j = 0; j < 6; j++) A[i][j] += w * f[i] * f[j]; A[i][6] += w * f[i] * y; }
+  }
+  for (let i = 0; i < 6; i++) {                                     // Gauss-Jordan
+    let p = i; for (let r = i + 1; r < 6; r++) if (Math.abs(A[r][i]) > Math.abs(A[p][i])) p = r;
+    [A[i], A[p]] = [A[p], A[i]]; const d = A[i][i] || 1e-9;
+    for (let j = i; j < 7; j++) A[i][j] /= d;
+    for (let r = 0; r < 6; r++) if (r !== i) { const m = A[r][i]; for (let j = i; j < 7; j++) A[r][j] -= m * A[i][j]; }
+  }
+  const c = A.map(r => r[6]);
+  ZONE.g = [c[0], c[1] / 100, c[2] / 100, ZONE.clip];
+  ZONE.g2 = [c[3] / 1e4, c[4] / 1e4, c[5] / 1e4, 0];
+  ZONE.gAt = [cx, cz, R.time];
+}
+// is PLATEAU round the car just plain boxes (no photo textures: LOD1)? Then the sim's own buildings, with
+// their windows, doors and roofs, look better at street level (checked once a second)
+function platPlainNear() {
+  if (typeof PLAT === 'undefined' || !PLAT.active || !PLAT.active.length || !CAR.on) return false;
+  if (ZONE.plainT && R.time - ZONE.plainT < 1) return ZONE.plain;
+  const [la, lo] = worldToGeo(sim.pos[0], sim.pos[2]), dLa = 400 / 111320, dLo = 400 / (111320 * Math.cos(la * DEG));
+  let tex = 0, plain = 0;
+  for (const it of PLAT.active) {
+    const n = it && it.mesh ? it : it && it[0]; if (!n || !n.mesh || n.mesh.empty || n.s === undefined) continue;
+    if (n.n < la - dLa || n.s > la + dLa || n.e < lo - dLo || n.w > lo + dLo) continue;
+    if (n.mesh.tex) tex += n.mesh.count; else plain += n.mesh.count;
+  }
+  ZONE.plainT = R.time; ZONE.plain = plain > 0;            // (any plain boxes near: those are swapped, block by block)
+  return ZONE.plain;
+}
+function zoneUpdate() {
+  ZONE.on = !!(CAR.on && GOOG.covering && JW.online && typeof CITY !== 'undefined' && CITY.ready && ZONE.enabled !== false);
+  // the same near zone over PLATEAU's city models: their photo textures are a blur at street level, so round
+  // the car the map's own buildings (with their modelled windows, shops and balconies) stand in
+  // (off by default: PLATEAU's own buildings are real ones, better than the sim's even at street level)
+  ZONE.plat = !!((ZONE.platEnabled === true || platPlainNear()) && !ZONE.on && CAR.on && !GOOG.covering && JW.online && typeof CITY !== 'undefined' && CITY.ready &&
+    typeof PLAT !== 'undefined' && PLAT.active.length && ZONE.enabled !== false);
+  // over Google's 3D the real buildings stay: only the melted street level round the car is replaced
+  if (ZONE.on && ZONE.hybrid !== false) zoneGroundFit(); else { ZONE.g = [0, 0, 0, 0]; ZONE.g2 = [0, 0, 0, 0]; }
+  ZONE.v = ZONE.on || ZONE.plat ? [sim.pos[0], sim.pos[2], ZONE.r0, ZONE.r1] : [0, 0, 0, 0];
+  ZONE.side = 0;
+}
+function nightK() { return ENV.night ? 1 : clamp((0.3 - ENV.sunDir[1]) * 4, 0, 1); }
+function setCommon(pr) {
+  const u = pr.u;
+  gl.useProgram(pr.p);
+  if (u.uSunDir) gl.uniform3fv(u.uSunDir, ENV.sunDir);
+  if (u.uSunCol) gl.uniform3fv(u.uSunCol, ENV.sunCol);
+  if (u.uZenith) gl.uniform3fv(u.uZenith, ENV.zenith);
+  if (u.uHorizon) gl.uniform3fv(u.uHorizon, ENV.horizon);
+  if (u.uHorizonAway) gl.uniform3fv(u.uHorizonAway, ENV.horizonAway);
+  if (u.uAmbSky) gl.uniform3fv(u.uAmbSky, ENV.ambSky);
+  if (u.uAmbGround) gl.uniform3fv(u.uAmbGround, ENV.ambGround);
+  if (u.uFogDens) gl.uniform1f(u.uFogDens, ENV.fog);
+  if (u.uSunI) gl.uniform1f(u.uSunI, game.atmo === false ? 0 : ENV.sunI || 0);
+  if (u.uHaze) gl.uniform1f(u.uHaze, ENV.haze || 1.5);
+  if (u.uFlatCl) gl.uniform1f(u.uFlatCl, volCloudsActive() ? 0 : 1);
+  if (u.uSink) gl.uniform1f(u.uSink, googSink());
+  if (u.uZone) gl.uniform4fv(u.uZone, ZONE.v);
+  if (u.uZoneG) gl.uniform4fv(u.uZoneG, ZONE.g);
+  if (u.uZoneG2) gl.uniform4fv(u.uZoneG2, ZONE.g2 || [0, 0, 0, 0]);
+  if (u.uSunVP) { gl.uniformMatrix4fv(u.uSunVP, false, SUNSH.VP); gl.uniform4fv(u.uSunSh, SUNSH.v); }
+  if (u.uNPRect) { gl.uniform4fv(u.uNPRect, NP.rect); gl.uniform4fv(u.uNPFade, NP.fade); }
+  if (u.uMatOn) { if (!CMAT.started && JW.active && JW.online) cmatInit(); gl.uniform1f(u.uMatOn, CMAT.ready && CMAT.on !== false ? 1 : 0); }
+  if (u.uMatNOn) gl.uniform1f(u.uMatNOn, CMAT.ready && CMAT.nready && CMAT.on !== false && CMAT.relief !== false ? 1 : 0);
+  if (u.uZoneSide) gl.uniform1f(u.uZoneSide, ZONE.side);
+  if (u.uAuth) gl.uniform4fv(u.uAuth, AUTH.v);
+  if (u.uTranRect) gl.uniform4fv(u.uTranRect, PLAT.cmp ? PLAT.tranRect : [0, 0, 0, 0]);   // (PLATEAU's roads in place of the sim's, p7_plateau.js)
+  if (u.uNoTree) gl.uniform4fv(u.uNoTree, PLAT.cmp ? PLAT.noTree : [0, 0, 0, 0]);
+  if (u.uUrban) gl.uniform1f(u.uUrban, JW.active && CAR.on && !ENV.night ? 1 : 0);   // (reflections of a street's buildings, while driving)
+  if (u.uLmCut0) { gl.uniform4fv(u.uLmCut0, LM.cut[0]); gl.uniform4fv(u.uLmCut1, LM.cut[1]); }
+  if (u.uCamPos) gl.uniform3fv(u.uCamPos, R.eye);
+  if (u.uTime) gl.uniform1f(u.uTime, R.time);
+  if (u.uViewProj) gl.uniformMatrix4fv(u.uViewProj, false, R.VP);
+  if (u.uHM) gl.uniform3f(u.uHM, HM_HALF, HM_CELL, HM_N);
+  if (u.uHeight) gl.uniform1i(u.uHeight, 0);
+  if (u.uNormalTex) gl.uniform1i(u.uNormalTex, 1);
+  if (u.uNoise) gl.uniform1i(u.uNoise, 2);
+  if (u.uCurv) gl.uniform1f(u.uCurv, JW.active ? 1 / (2 * R_EARTH) : 0);
+  if (u.uStars) gl.uniform1f(u.uStars, ENV.night ? 1 : 0);
+  if (u.uNightF) gl.uniform1f(u.uNightF, ENV.night ? 1 : 0);
+  if (u.uNightK) gl.uniform1f(u.uNightK, nightK());
+}
+function shadowUniforms(pr) {
+  const s = sim, u = pr.u;
+  let h = Math.max(terrainHeight(s.pos[0], s.pos[2]), 0), c = [s.pos[0], s.pos[2]];
+  for (let i = 0; i < 2; i++) {
+    const t = (s.pos[1] - h) / ENV.sunDir[1];
+    c = [s.pos[0] - ENV.sunDir[0] * t, s.pos[2] - ENV.sunDir[2] * t];
+    h = Math.max(terrainHeight(c[0], c[1]), 0);
+    const pv = onPaved(c[0], c[1]); if (pv) h = RWY.elev;
+  }
+  const above = s.pos[1] - h;
+  const f = qrot(s.q, [0, 0, -1]); const fl = Math.hypot(f[0], f[2]) || 1;
+  const str = s.crashed ? 0 : 0.6 * (1 - smoothstep(20, 260, above)) * clamp(ENV.sunDir[1] * 3, 0, 1);
+  gl.uniform4f(u.uShadowA, c[0], c[1], f[0] / fl, f[2] / fl);
+  gl.uniform2f(u.uShadowB, str, 0.12 + above * 0.004);
+}
+// dynamic resolution: when frames take too long the 3D view is drawn at a lower resolution (the HUD stays
+// sharp), and it creeps back up when there is time to spare
+const DYN = { k: 1, acc: 0, n: 0, t: 0 };
+function dynRes(dt) {
+  if (!(dt > 0) || dt > 3) return;                                    // (longer: a pause, not a frame)
+  DYN.acc += dt; DYN.n++; DYN.t += dt;
+  if (DYN.t < 1.5) return;
+  const ft = DYN.acc / DYN.n; DYN.acc = 0; DYN.n = 0; DYN.t = 0;
+  DYN.fps = ft > 0.1 ? Math.round(10 / ft) / 10 : Math.round(1 / ft);   // (under 10: to a tenth)
+  if (game.state !== 'flying') return;
+  if (DYN.lock) { DYN.k = DYN.lock; return; }                         // (held for a benchmark, p_dev.js)
+  // (phones may drop further: a sharp half-resolution picture beats a stuttering one)
+  if (ft > 1 / 40) DYN.k = Math.max(game.touch ? 0.45 : 0.55, DYN.k - (ft > 1 / 25 ? 0.12 : 0.06));
+  else if (ft < 1 / 56) DYN.k = Math.min(1, DYN.k + 0.04);
+}
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, game.touch ? (CAR.on ? 1.25 : 1.5) : CAR.on ? 2 : 1.75, GOOG.covering && !CAR.on ? 1.25 : 9) * DYN.k;
+  const w = Math.max(1, Math.round(glCanvas.clientWidth * dpr)), h = Math.max(1, Math.round(glCanvas.clientHeight * dpr));
+  if (glCanvas.width !== w || glCanvas.height !== h) { glCanvas.width = w; glCanvas.height = h; }
+  const hd = Math.min(window.devicePixelRatio || 1, 2), hc = hud.cv;
+  const hw = Math.round(hc.clientWidth * hd), hh = Math.round(hc.clientHeight * hd);
+  if (hc.width !== hw || hc.height !== hh) { hc.width = hw; hc.height = hh; }
+  hud.dpr = hd; hud.W = hc.clientWidth; hud.H = hc.clientHeight;
+}
+// The scene is drawn in two depth ranges (far: 600 m .. 60 km, near: camera .. 600 m) so that a
+// 24-bit depth buffer keeps full precision for both the cockpit and distant coastlines.
+const DEPTH_SPLIT = 600;
+function render() {
+  resize();
+  const W = glCanvas.width, H = glCanvas.height, asp = W / H;
+  gl.viewport(0, 0, W, H);
+  gl.clearColor(ENV.horizon[0], ENV.horizon[1], ENV.horizon[2], 1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  let fovY = cam.fov * DEG;
+  if (asp < 1.2) fovY = 2 * Math.atan(Math.tan(fovY / 2) * 1.2 / asp);   // keep horizontal view on tall screens
+  const v = cam.view;
+  R.eye = cam.eye; R.W = W; R.H = H; R.frame = (R.frame || 0) + 1;
+  R.camR = [v[0], v[4], v[8]]; R.camU = [v[1], v[5], v[9]]; R.camF = [-v[2], -v[6], -v[10]];
+  R.tanY = Math.tan(fovY / 2); R.tanX = R.tanY * asp;
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, heightTex);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, normalTex);
+  gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, noiseTex);
+  gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, puffTex);
+  gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, dotTex);
+  gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, runwayTex);
+  R.nodes = 0;
+  if (JW.active) { const pl = frustumPlanes(M4.mul(M4.persp(fovY, asp, 1, 650000), v)); platUpdate(pl); googUpdate(pl); }
+  zoneUpdate();
+  sunShadowPass(); gl.viewport(0, 0, W, H);
+  npUpdate();
+  for (const far of [true, false]) {
+    const proj = far ? M4.persp(fovY, asp, DEPTH_SPLIT, JW.active ? 650000 : 60000) : M4.persp(fovY, asp, cam.near, DEPTH_SPLIT * 1.02);
+    R.VP = M4.mul(proj, v);
+    if (!far) gl.clear(gl.DEPTH_BUFFER_BIT);
+    drawScene(frustumPlanes(R.VP), far);
+  }
+}
+function drawScene(planes, far) {
+  R.planes = planes;                                                  // (for the draws that aren't handed them: cars, people)
+  gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
+  WIRES.side = null;
+  if (JW.active) {
+    lmUpdate(); authUpdate();
+    drawJapanTerrain(planes);
+    if (GOOG.covering) {                                  // photogrammetry replaces runways, buildings and trees
+      ZONE.side = 1; drawGoogle(); googFlatCheck();
+      // ...except where Google has no 3D (the map's own buildings stand in everywhere), and around the car,
+      // where the photogrammetry's melted ground and walls give way to the sim's own streets
+      // (and in a built-up area, p_auth.js, the sim's own world entirely)
+      if (GOOG.flat || ZONE.on || AUTH.on) { ZONE.side = GOOG.flat ? 0 : -1; if (AUTH.on) drawJapanRunways(); drawRoads(planes); drawPlateauTran(); drawCity(planes); drawPlateauCmp(); drawStreet(planes); if (!(ZONE.on && ZONE.g[3] > 0) || AUTH.on) drawJwTrees(planes, far); WIRES.side = ZONE.side; }   // (the real trees stand in Google's mesh)
+      ZONE.side = 0;
+    }
+    else { drawJapanRunways(); drawRoads(planes); drawPlateauTran(); drawCity(planes); drawPlateauCmp(); drawStreet(planes); ZONE.side = ZONE.plat || AUTH.on ? 1 : 0; drawPlateau(); ZONE.side = 0; drawJwTrees(planes, far); WIRES.side = 0; }
+  }
+  else {
+  // terrain
+  setCommon(progTerrain); shadowUniforms(progTerrain);
+  gl.uniform3f(progTerrain.u.uLand, ({ yakushima: 1850, rishiri: 1350 })[MAP.id] || 1080, MAP.procedural ? 7 : 2.6, URBAN[MAP.id] ? 1 : MAP.procedural ? 0 : 0.35);
+  const nodes = selectTerrain(R.eye, planes);
+  let lastG = 0;
+  for (const [x0, z0, size, L, G] of nodes) {
+    if (G !== lastG) { gl.bindVertexArray(G === 32 ? grid32.vao : grid16.vao); lastG = G; }
+    const prev = L > 0 ? LOD_RANGE[L - 1] : 0, end = LOD_RANGE[L] * 0.96;
+    gl.uniform4f(progTerrain.u.uNode, x0, z0, size, G);
+    gl.uniform2f(progTerrain.u.uMorph, lerp(prev, end, 0.66), end);
+    gl.drawElements(gl.TRIANGLES, G === 32 ? grid32.count : grid16.count, gl.UNSIGNED_SHORT, 0);
+  }
+  R.nodes += nodes.length;
+  // runway
+  gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-2, -4);
+  setCommon(progRunway); shadowUniforms(progRunway); gl.uniform1i(progRunway.u.uTex, 5);
+  gl.bindVertexArray(runwayMesh.vao); gl.drawArrays(gl.TRIANGLES, 0, 6);
+  // airport buildings / aprons
+  setCommon(progMesh);
+  gl.uniform1i(progMesh.u.uLivery, 0); gl.uniform3f(progMesh.u.uEmissive, 0, 0, 0); gl.uniform1f(progMesh.u.uAlpha, 1);
+  gl.uniform1f(progMesh.u.uSpec, 0.15);
+  gl.uniformMatrix4fv(progMesh.u.uModel, false, M4.ident());
+  gl.bindVertexArray(airportMesh.vao); gl.drawArrays(gl.TRIANGLES, 0, airportMesh.count);
+  gl.disable(gl.POLYGON_OFFSET_FILL);
+  }
+  // aircraft
+  const PS = CAR.on && CAR.plane ? CAR.plane : sim;                  // while driving, the aircraft waits where it was left
+  const pm = planeMatrix(PS.pos, PS.q);
+  const showPlane = !(sim.crashed && game.state !== 'menu');
+  if (JW.active) setCommon(progMesh);
+  if (showPlane) drawPlane(pm, PS, { cockpit: cam.mode === 'cockpit' && game.state !== 'menu' });
+  if (JW.active) { drawStands(); if (WIRES.side !== null) { ZONE.side = WIRES.side; drawPeds(); ZONE.side = 0; } setCommon(progMesh); }   // (and the people on the pavements, p_peds.js)             // (airliners at the gates, p_apron.js)
+  if (CAR.on) { drawCar(); if (JW.active) setCommon(progMesh); }
+  if (!JW.active) for (const pk of parked) if (vdist(R.eye, [pk.m[12], pk.m[13], pk.m[14]]) < 6000) drawPlane(pk.m, parkedState, { paint: pk.col, acft: pk.acft });
+  if (JW.active) drawJapanWater();
+  if (JW.active && WIRES.side !== null) { ZONE.side = WIRES.side; drawWires(); ZONE.side = 0; }   // (overhead wires, blended over all the rest)
+  if (JW.active) drawLandmarks();                                     // (Tokyo Tower, Skytree: lattices, blended)
+  else {
+  // trees & houses
+  setCommon(progInst);
+  gl.uniform1f(progInst.u.uFadeDist, props.treeR);
+  for (const [m, n] of [[props.conifer, props.nConifer], [props.broad, props.nBroad]]) {
+    if (!n) continue; gl.bindVertexArray(m.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, m.count, n);
+  }
+  gl.uniform1f(progInst.u.uFadeDist, 9000);
+  if (props.nHouse) { gl.bindVertexArray(props.house.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, props.house.count, props.nHouse); }
+  gl.uniform1f(progInst.u.uFadeDist, 30000);
+  if (props.nTower) { gl.bindVertexArray(props.tower.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, props.tower.count, props.nTower); }
+  // water
+  gl.disable(gl.CULL_FACE);
+  setCommon(progWater);
+  gl.bindVertexArray(quadVAO.vao); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+  // sky (far pass only: it fills whatever is still at the far plane)
+  if (far) {
+    gl.depthFunc(gl.LEQUAL); gl.depthMask(false);
+    gl.bindVertexArray(quadVAO.vao);
+    setCommon(progSky);
+    gl.uniform3fv(progSky.u.uCamF, R.camF); gl.uniform3fv(progSky.u.uCamR, R.camR); gl.uniform3fv(progSky.u.uCamU, R.camU);
+    gl.uniform2f(progSky.u.uTan, R.tanX, R.tanY);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.depthFunc(gl.LESS);
+  }
+  // ---- transparent ----
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+  if (!far && showPlane) { setCommon(progMesh); drawPropDisc(pm, PS); }
+  drawRings();
+  drawLights();
+  if (volCloudsActive()) drawVolClouds(far); else drawClouds();
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+  drawParticles();
+  drawPapi();
+  gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
+  // the cockpit interior is always the nearest thing: drawn last over a cleared depth buffer, so the
+  // airframe's outer skin (which has no cut-out for the cockpit) can never hide the panel
+  if (!far && showPlane && cpActive()) { gl.clear(gl.DEPTH_BUFFER_BIT); drawCockpit(pm); }
+}
+function drawRings() {
+  if (game.mode !== 'rings' || game.state === 'menu') return;
+  setCommon(progMesh);
+  const u = progMesh.u;
+  gl.uniform1i(u.uLivery, 0); gl.uniform1f(u.uSpec, 0.4);
+  for (let i = game.ringIdx; i < course.rings.length; i++) {
+    const r = course.rings[i], next = i === game.ringIdx;
+    const q = quatFromTo([0, 0, 1], r.n);
+    const pulse = next ? 0.75 + 0.25 * Math.sin(R.time * 5) : 0;
+    gl.uniformMatrix4fv(u.uModel, false, M4.fromQP(q, r.p, course.radius));
+    gl.uniform3fv(u.uEmissive, next ? [0.85 * pulse + 0.2, 0.25, 0.8 * pulse + 0.2] : [0.35, 0.45, 0.6]);
+    gl.uniform1f(u.uAlpha, next ? 0.95 : 0.35);
+    gl.bindVertexArray(course.mesh.vao); gl.drawArrays(gl.TRIANGLES, 0, course.mesh.count);
+  }
+}
+function quatFromTo(a, b) {
+  const d = vdot(a, b);
+  if (d < -0.9999) return qaxis([0, 1, 0], Math.PI);
+  const c = vcross(a, b);
+  return qnorm([c[0], c[1], c[2], 1 + d]);
+}
+function drawClouds() {
+  const P = clouds.puffs, n = P.length, eye = R.eye;
+  if (clouds.frame !== R.frame) {
+  clouds.frame = R.frame;
+  const order = clouds.order || (clouds.order = P.map((_, i) => i));
+  const d2 = clouds.d2 || (clouds.d2 = new Float32Array(n));
+  for (let i = 0; i < n; i++) { const p = P[i].p; d2[i] = (p[0] - eye[0]) ** 2 + (p[1] - eye[1]) ** 2 + (p[2] - eye[2]) ** 2; }
+  order.sort((a, b) => d2[b] - d2[a]);
+  const lit = vadd(vscale(ENV.sunCol, 0.78), vscale(ENV.ambSky, 0.55)), dark = vadd(vscale(ENV.ambSky, 1.05), vscale(ENV.sunCol, 0.18));
+  const D = clouds.data;
+  for (let k = 0; k < n; k++) {
+    const pf = P[order[k]], o = k * 9, sh = pf.shade;
+    D[o] = pf.p[0]; D[o + 1] = pf.p[1]; D[o + 2] = pf.p[2]; D[o + 3] = pf.size;
+    D[o + 4] = lerp(dark[0], lit[0], sh); D[o + 5] = lerp(dark[1], lit[1], sh); D[o + 6] = lerp(dark[2], lit[2], sh); D[o + 7] = 0.85;
+    D[o + 8] = pf.rot;
+  }
+  gl.bindBuffer(gl.ARRAY_BUFFER, clouds.vao.bufs[1]); gl.bufferData(gl.ARRAY_BUFFER, D, gl.DYNAMIC_DRAW);
+  }
+  setCommon(progSprite);
+  const u = progSprite.u;
+  gl.uniform3fv(u.uCamR, R.camR); gl.uniform3fv(u.uCamU, R.camU);
+  gl.uniform1f(u.uNearFade, 1.3); gl.uniform1f(u.uFar, JW.active ? 90000 : 32000); gl.uniform1f(u.uMinPix, 0);
+  gl.uniform1i(u.uTex, 3); gl.uniform1f(u.uSilver, 0.45); gl.uniform1i(u.uFog, 1);
+  gl.depthMask(false);
+  gl.bindVertexArray(clouds.vao.vao); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, n);
+}
+function drawParticles() {
+  if (!particles.length) return;
+  const eye = R.eye;
+  const alphaP = particles.filter(p => !p.add).sort((a, b) => vdist(b.p, eye) - vdist(a.p, eye));
+  const addP = particles.filter(p => p.add);
+  setCommon(progSprite);
+  const u = progSprite.u;
+  gl.uniform3fv(u.uCamR, R.camR); gl.uniform3fv(u.uCamU, R.camU);
+  gl.uniform1f(u.uNearFade, 0); gl.uniform1f(u.uFar, 20000); gl.uniform1f(u.uMinPix, 0);
+  gl.uniform1i(u.uTex, 3); gl.uniform1f(u.uSilver, 0);
+  const lightK = vadd(vscale(ENV.sunCol, 0.7), vscale(ENV.ambSky, 0.6));
+  const pass = (list, additive) => {
+    if (!list.length) return;
+    let k = 0;
+    for (const q of list) {
+      const o = k * 9, f = q.age / q.life, fade = additive ? (1 - f) : (1 - f) * smoothstep(0, 0.08, f);
+      pData[o] = q.p[0]; pData[o + 1] = q.p[1]; pData[o + 2] = q.p[2]; pData[o + 3] = q.size;
+      const lk = additive ? [1.1, 1.1, 1.1] : lightK;
+      pData[o + 4] = q.col[0] * lk[0]; pData[o + 5] = q.col[1] * lk[1]; pData[o + 6] = q.col[2] * lk[2]; pData[o + 7] = q.a * fade;
+      pData[o + 8] = q.rot; k++;
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, pVAO.bufs[1]); gl.bufferData(gl.ARRAY_BUFFER, pData.subarray(0, k * 9), gl.DYNAMIC_DRAW);
+    gl.uniform1i(u.uFog, additive ? 0 : 1);
+    gl.blendFunc(gl.SRC_ALPHA, additive ? gl.ONE : gl.ONE_MINUS_SRC_ALPHA);
+    gl.bindVertexArray(pVAO.vao); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, k);
+  };
+  gl.depthMask(false);
+  pass(alphaP, false); pass(addP, true);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+}
+function drawPapi() {
+  const lights = papiLights(), eye = R.eye, D = pVAO.papiData;
+  let k = 0;
+  for (const l of lights) {
+    const [lu] = worldToRwy(l.p[0], l.p[2]), [eu] = worldToRwy(eye[0], eye[2]);
+    const facing = l.end ? eu > lu : eu < lu;
+    if (!facing) continue;
+    const hd = Math.hypot(eye[0] - l.p[0], eye[2] - l.p[2]);
+    if (hd > 9000) continue;
+    const ang = Math.atan2(eye[1] - l.p[1], hd) / DEG;
+    const white = ang > l.ang, o = k * 9;
+    D[o] = l.p[0]; D[o + 1] = l.p[1]; D[o + 2] = l.p[2]; D[o + 3] = -0.9;
+    D[o + 4] = white ? 1.6 : 1.8; D[o + 5] = white ? 1.6 : 0.15; D[o + 6] = white ? 1.5 : 0.1; D[o + 7] = 1;
+    D[o + 8] = 0; k++;
+  }
+  if (!k) return;
+  gl.bindBuffer(gl.ARRAY_BUFFER, pVAO.papi.bufs[1]); gl.bufferData(gl.ARRAY_BUFFER, D, gl.DYNAMIC_DRAW);
+  setCommon(progSprite);
+  const u = progSprite.u;
+  gl.uniform3fv(u.uCamR, R.camR); gl.uniform3fv(u.uCamU, R.camU);
+  gl.uniform1f(u.uNearFade, 0); gl.uniform1f(u.uFar, 12000); gl.uniform1f(u.uMinPix, 2.2 * R.tanY / R.H * 2);
+  gl.uniform1i(u.uTex, 4); gl.uniform1f(u.uSilver, 0); gl.uniform1i(u.uFog, 0);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE); gl.depthMask(false);
+  gl.bindVertexArray(pVAO.papi.vao); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, k);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+}
+
+// ---------- HUD (glass-cockpit style, drawn with Canvas 2D) ----------
+const hud = { cv: $('hud'), ctx: null, dpr: 1, W: 1, H: 1, minimap: null };
+hud.ctx = hud.cv.getContext('2d');
+const MONO = '"B612 Mono", ui-monospace, Menlo, monospace';
+const UI = '"B612", "Zen Kaku Gothic New", system-ui, sans-serif';
+const COL = { cyan: '#5fd4ff', magenta: '#e36bdc', amber: '#ffb547', red: '#ff5a4f', green: '#58e08c', ink: '#e8f0fa', muted: '#92a5be' };
+function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function project(p) {
+  if (JW.active) { const dx = p[0] - R.eye[0], dz = p[2] - R.eye[2]; p = [p[0], p[1] - (dx * dx + dz * dz) / (2 * R_EARTH), p[2]]; }
+  const m = R.VP, x = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], y = m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13];
+  const w = m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15];
+  return { x: (x / w * 0.5 + 0.5) * hud.W, y: (1 - (y / w * 0.5 + 0.5)) * hud.H, w, nx: x / w, ny: y / w };
+}
+function attitude() {
+  const f = qrot(sim.q, [0, 0, -1]), r = qrot(sim.q, [1, 0, 0]), up = qrot(sim.q, [0, 1, 0]);
+  return {
+    pitch: Math.asin(clamp(f[1], -1, 1)) / DEG,
+    bank: Math.atan2(-r[1], up[1]) / DEG,
+    hdg: (Math.atan2(f[0], -f[2]) / DEG + 360) % 360,
+  };
+}
+function drawHUD() {
+  const g = hud.ctx;
+  g.setTransform(hud.dpr, 0, 0, hud.dpr, 0, 0);
+  g.clearRect(0, 0, hud.W, hud.H);
+  const st = game.state;
+  if (st !== 'flying' && st !== 'paused') return;
+  const W = hud.W, H = hud.H, s = sim, att = attitude();
+  // G-force vignette
+  if (s.gLoad > 4.5 || s.gLoad < -2) {
+    const neg = s.gLoad < 0, k = neg ? clamp((-s.gLoad - 2) / 2.5, 0, 0.7) : clamp((s.gLoad - 4.5) / 3.5, 0, 0.85);
+    const grd = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.25, W / 2, H / 2, Math.max(W, H) * 0.75);
+    grd.addColorStop(0, 'rgba(0,0,0,0)'); grd.addColorStop(1, neg ? `rgba(140,0,0,${k})` : `rgba(0,0,0,${k})`);
+    g.fillStyle = grd; g.fillRect(0, 0, W, H);
+  }
+  const warn = [];
+  if (CAR.on) { game.warnPull = false; game.warnGear = false; }      // (driving: the aircraft's warnings wait with it)
+  else if (s.stallWarn) warn.push(['STALL 失速', COL.red]);
+  if (game.warnPull) warn.push(['PULL UP 機首上げ', COL.red]);
+  if (game.warnGear) warn.push(['GEAR ギアが上がっています', COL.amber]);
+  if (!CAR.on && s.ias * 1.94384 > ACFT.v.ne) warn.push(['OVERSPEED 速度超過', COL.amber]);
+  const blink = (R.time * 2.5 % 1) < 0.7;
+  warn.forEach(([txt, col], i) => {
+    if (!blink && col === COL.red) return;
+    g.font = `700 16px ${UI}`;
+    const w = g.measureText(txt).width + 26, x = W / 2 - w / 2, y = H * 0.17 + i * 34;
+    rr(g, x, y, w, 28, 4); g.fillStyle = 'rgba(6,12,22,0.7)'; g.fill(); g.strokeStyle = col; g.lineWidth = 2; g.stroke();
+    g.fillStyle = col; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, W / 2, y + 14);
+  });
+  if (CAR.on) { if (game.hud) carHud(g, W, H); return; }
+  if (!game.hud) { cpHud(g); return; }
+  const touch = game.touch;
+  const sc = clamp(Math.min(W / 1180, H / 700), 0.52, 1.05) * (touch ? 0.86 : 1);
+  // flight path marker
+  const spd = vlen(s.vel);
+  const ovl = cpShowOverlay();
+  if (spd > 12 && !s.onGround && !SCHOOL.hood && ovl) {
+    const pp = project(vmadd(s.pos, s.vel, 3000 / spd));
+    if (pp.w > 0 && Math.abs(pp.nx) < 0.95 && Math.abs(pp.ny) < 0.95) {
+      g.strokeStyle = COL.green; g.lineWidth = 2;
+      g.beginPath(); g.arc(pp.x, pp.y, 7, 0, Math.PI * 2);
+      g.moveTo(pp.x - 7, pp.y); g.lineTo(pp.x - 18, pp.y); g.moveTo(pp.x + 7, pp.y); g.lineTo(pp.x + 18, pp.y);
+      g.moveTo(pp.x, pp.y - 7); g.lineTo(pp.x, pp.y - 13); g.stroke();
+    }
+  }
+  if (game.mode === 'rings' && !game.ringDone) drawRingTarget(g, W, H);
+  // PFD & engine panel
+  const pfdX = touch ? 12 : 16, pfdY = touch ? 12 : H - 16 - 252 * sc;
+  if (!ovl) { /* the 3D panel shows the instruments */ }
+  else if (SCHOOL.analog) { const [spW, spH] = sixPackSize(), ss = Math.min(touch ? sc * 0.8 : sc, (H * 0.5) / spH, (W - pfdX - 12) / spW); drawSixPack(g, pfdX, H - 12 - spH * ss, ss, att); if (!touch && !SCHOOL.active) drawTargets(g, pfdX + (spW + 10) * ss, H - 12 - 150 * ss, ss); }
+  else {
+  drawPFD(g, pfdX, pfdY, sc, att);
+  if (!touch) { drawEngine(g, pfdX + 390 * sc, pfdY, sc); drawStick(g, pfdX + 598 * sc, pfdY + 108 * sc, sc); if (!SCHOOL.active) drawTargets(g, pfdX + 742 * sc, pfdY + 108 * sc, sc); }
+  else drawStatusStrip(g, pfdX, pfdY + 258 * sc, sc);
+  }
+  if (!SCHOOL.hood) drawMinimap(g, W, H, touch, att);
+  drawInfo(g, W, H, touch, sc, pfdY + 258 * sc + 30);
+  const ex = pfdX + 390 * sc, R_ = (x, y, w, h) => [x, y, w, h];
+  hud.rects = {
+    attitude: R_(pfdX + 62 * sc, pfdY + 12 * sc, 236 * sc, 200 * sc), speed: R_(pfdX + 4 * sc, pfdY + 10 * sc, 56 * sc, 204 * sc),
+    alt: R_(pfdX + 298 * sc, pfdY + 10 * sc, 58 * sc, 204 * sc), vsi: R_(pfdX + 355 * sc, pfdY + 10 * sc, 22 * sc, 204 * sc),
+    heading: R_(pfdX + 60 * sc, pfdY + 200 * sc, 240 * sc, 48 * sc),
+    thr: touch ? null : R_(ex + 8 * sc, pfdY + 8 * sc, 34 * sc, 228 * sc),
+    flaps: touch ? null : R_(ex + 46 * sc, pfdY + 36 * sc, 146 * sc, 22 * sc),
+    gear: touch ? null : R_(ex + 46 * sc, pfdY + 60 * sc, 146 * sc, 40 * sc),
+  };
+  hud.rects.engine = touch ? null : R_(ex, pfdY, 196 * sc, 252 * sc);
+  hud.rects.stick = touch ? null : R_(pfdX + 598 * sc, pfdY + 108 * sc, 134 * sc, 144 * sc);
+  { const S = touch ? 118 : 176; hud.rects.map = R_(W - S - (touch ? 12 : 16), touch ? 12 : 16, S, S); }
+  { const spd = vlen(sim.vel); if (spd > 12) { const pp = project(vmadd(sim.pos, sim.vel, 3000 / spd)); hud.rects.fpm = pp.w > 0 ? R_(pp.x - 20, pp.y - 14, 40, 28) : null; } else hud.rects.fpm = null; }
+  if (game.mode === 'tutorial') tutHighlight(g);
+  if (game.callouts) drawCallouts(g);
+  if (JW.active && !SCHOOL.hood) drawPlaceLabels(g, W, H);
+  if (game.physView && !touch) drawPhysView(g, W, H, sc, att);
+  cpHud(g);
+}
+function drawRingTarget(g, W, H) {
+  const ring = course.rings[game.ringIdx];
+  if (!ring) return;
+  const p = project(ring.p), dist = vdist(sim.pos, ring.p);
+  const on = p.w > 0 && Math.abs(p.nx) < 0.92 && Math.abs(p.ny) < 0.88;
+  g.strokeStyle = COL.magenta; g.fillStyle = COL.magenta; g.lineWidth = 2.5;
+  if (on) {
+    const e = project(vadd(ring.p, vscale(R.camU, course.radius)));
+    const r = clamp(Math.abs(e.y - p.y), 14, 400), c = r * 0.35;
+    g.beginPath();
+    for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      g.moveTo(p.x + sx * r, p.y + sy * (r - c)); g.lineTo(p.x + sx * r, p.y + sy * r); g.lineTo(p.x + sx * (r - c), p.y + sy * r);
+    }
+    g.stroke();
+    g.font = `700 13px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'top';
+    const lbl = `${game.ringIdx + 1}/${course.rings.length}  ${(dist / 1000).toFixed(2)} km`;
+    g.fillStyle = 'rgba(6,12,22,0.75)'; const tw = g.measureText(lbl).width + 10; g.fillRect(p.x - tw / 2, p.y + r + 4, tw, 18);
+    g.fillStyle = COL.magenta; g.fillText(lbl, p.x, p.y + r + 6);
+  } else {
+    let dx = p.nx, dy = -p.ny;
+    if (p.w <= 0) { dx = -dx; dy = -dy; }
+    const a = Math.atan2(dy, dx), cx = W / 2, cy = H / 2, rad = Math.min(W, H) * 0.36;
+    const x = cx + Math.cos(a) * rad, y = cy + Math.sin(a) * rad;
+    g.save(); g.translate(x, y); g.rotate(a);
+    g.beginPath(); g.moveTo(16, 0); g.lineTo(-8, -11); g.lineTo(-3, 0); g.lineTo(-8, 11); g.closePath(); g.fill();
+    g.restore();
+    g.font = `700 12px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(`${(dist / 1000).toFixed(1)} km`, x - Math.cos(a) * 30, y - Math.sin(a) * 26);
+  }
+}
+function drawPFD(g, x0, y0, sc, att) {
+  const s = sim;
+  g.save(); g.translate(x0, y0); g.scale(sc, sc);
+  rr(g, 0, 0, 380, 252, 8); g.fillStyle = 'rgba(6,12,22,0.66)'; g.fill();
+  g.strokeStyle = 'rgba(150,176,206,0.25)'; g.lineWidth = 1; g.stroke();
+  const ax = 62, ay = 12, aw = 236, ah = 200, cx = ax + aw / 2, cy = ay + ah / 2, ppd = 4.4;
+  // --- attitude ---
+  g.save(); rr(g, ax, ay, aw, ah, 6); g.clip();
+  g.translate(cx, cy); g.rotate(-att.bank * DEG);
+  g.save(); g.translate(0, att.pitch * ppd);
+  let grd = g.createLinearGradient(0, -420, 0, 0); grd.addColorStop(0, '#1d4f96'); grd.addColorStop(1, '#4f8fd0');
+  g.fillStyle = grd; g.fillRect(-500, -900, 1000, 900);
+  grd = g.createLinearGradient(0, 0, 0, 420); grd.addColorStop(0, '#8a6038'); grd.addColorStop(1, '#4e3520');
+  g.fillStyle = grd; g.fillRect(-500, 0, 1000, 900);
+  g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.moveTo(-500, 0); g.lineTo(500, 0); g.stroke();
+  g.lineWidth = 1.5; g.font = `12px ${MONO}`; g.fillStyle = '#fff'; g.textBaseline = 'middle';
+  for (let d = -90; d <= 90; d += 2.5) {
+    if (d === 0) continue;
+    const y = -d * ppd;
+    if (Math.abs(y + att.pitch * ppd) > 125) continue;
+    const w = d % 10 === 0 ? 36 : d % 5 === 0 ? 18 : 7;
+    g.beginPath(); g.moveTo(-w, y); g.lineTo(w, y); g.stroke();
+    if (d % 10 === 0) { g.textAlign = 'right'; g.fillText(Math.abs(d), -w - 5, y); g.textAlign = 'left'; g.fillText(Math.abs(d), w + 5, y); }
+  }
+  g.restore();
+  // bank scale rotates with horizon (sky pointer)
+  g.strokeStyle = '#fff'; g.lineWidth = 1.5;
+  g.beginPath(); g.arc(0, 0, 90, (-90 - 60) * DEG, (-90 + 60) * DEG); g.stroke();
+  for (const a of [-60, -45, -30, -20, -10, 10, 20, 30, 45, 60]) {
+    const r0 = 90, r1 = Math.abs(a) % 30 === 0 ? 102 : 96, t = (a - 90) * DEG;
+    g.beginPath(); g.moveTo(Math.cos(t) * r0, Math.sin(t) * r0); g.lineTo(Math.cos(t) * r1, Math.sin(t) * r1); g.stroke();
+  }
+  g.fillStyle = '#fff'; g.beginPath(); g.moveTo(0, -90); g.lineTo(-6, -100); g.lineTo(6, -100); g.closePath(); g.fill();
+  g.restore();
+  // fixed roll pointer + slip
+  g.fillStyle = '#ffd24a';
+  g.beginPath(); g.moveTo(cx, cy - 88); g.lineTo(cx - 8, cy - 76); g.lineTo(cx + 8, cy - 76); g.closePath(); g.fill();
+  const slip = clamp(-s.beta / DEG * 1.6, -14, 14);
+  g.fillRect(cx - 8 + slip, cy - 73, 16, 4);
+  // aircraft symbol
+  g.fillStyle = '#ffd24a'; g.strokeStyle = '#111'; g.lineWidth = 1;
+  for (const sg of [-1, 1]) { g.beginPath(); g.rect(cx + sg * 22 - (sg > 0 ? 0 : 38), cy - 2.5, 38, 5); g.fill(); g.stroke(); }
+  g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx - 16, cy + 9); g.lineTo(cx, cy + 4); g.lineTo(cx + 16, cy + 9); g.closePath(); g.fill(); g.stroke();
+  // --- speed tape ---
+  const kt = s.ias * 1.94384, VV = ACFT.v, big = VV.ne > 300;
+  tape(g, 6, ay, 52, ah, kt, big ? 1.2 : 3.0, big ? 20 : 10, big ? 10 : 5, v => v >= 0 ? String(v) : '', [
+    [0, VV.s1 * 0.95, COL.red], ...(VV.fe ? [[VV.s0, VV.fe, '#ffffff']] : []), [VV.s1, VV.no, COL.green], [VV.no, VV.ne, COL.amber], [VV.ne, 3000, COL.red]], 'left');
+  // --- altitude tape ---
+  const ft = (s.pos[1] + WHEEL_BOTTOM) * 3.28084;
+  tape(g, 300, ay, 54, ah, ft, 0.26, 200, 100, v => String(v), null, 'right', s.groundH * 3.28084);
+  // VSI
+  const fpm = s.vs * 196.85, vy = clamp(Math.sign(fpm) * Math.sqrt(Math.abs(fpm) / 2000) * 88, -92, 92);
+  g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(357, ay + 8, 18, ah - 16);
+  g.strokeStyle = COL.muted; g.lineWidth = 1;
+  for (const v of [-2000, -1000, -500, 0, 500, 1000, 2000]) {
+    const y = cy - Math.sign(v) * Math.sqrt(Math.abs(v) / 2000) * 88;
+    g.beginPath(); g.moveTo(357, y); g.lineTo(v === 0 ? 369 : 363, y); g.stroke();
+  }
+  g.fillStyle = COL.cyan; g.beginPath(); g.moveTo(358, cy - vy); g.lineTo(374, cy - vy - 6); g.lineTo(374, cy - vy + 6); g.closePath(); g.fill();
+  g.font = `11px ${MONO}`; g.textAlign = 'center'; g.fillStyle = COL.ink; g.textBaseline = 'alphabetic';
+  if (Math.abs(fpm) > 90) g.fillText(Math.round(fpm / 10) * 10, 330, ay - 1 + (fpm > 0 ? 0 : ah + 12));
+  // --- heading tape ---
+  const hy = 218, hx = ax, hw = aw;
+  g.save(); rr(g, hx, hy, hw, 28, 4); g.fillStyle = 'rgba(0,0,0,0.4)'; g.fill(); g.clip();
+  const ppdH = 2.6, hc = hx + hw / 2;
+  g.strokeStyle = '#fff'; g.fillStyle = '#fff'; g.lineWidth = 1.2; g.font = `12px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  const names = { 0: 'N', 90: 'E', 180: 'S', 270: 'W' };
+  for (let d = Math.floor((att.hdg - 50) / 5) * 5; d <= att.hdg + 50; d += 5) {
+    const x = hc + (d - att.hdg) * ppdH, dn = ((d % 360) + 360) % 360;
+    g.beginPath(); g.moveTo(x, hy); g.lineTo(x, hy + (dn % 10 === 0 ? 8 : 4)); g.stroke();
+    if (dn % 30 === 0) g.fillText(names[dn] || String(dn / 10), x, hy + 18);
+  }
+  const brg = targetBearing();
+  if (brg !== null) {
+    let dd = ((brg - att.hdg + 540) % 360) - 180; dd = clamp(dd, -44, 44);
+    const x = hc + dd * ppdH;
+    g.fillStyle = COL.magenta; g.fillRect(x - 5, hy, 10, 5); g.fillRect(x - 1.5, hy, 3, 10);
+  }
+  g.restore();
+  g.fillStyle = '#000'; g.strokeStyle = '#fff'; g.lineWidth = 1.2;
+  rr(g, hc - 22, hy - 16, 44, 17, 3); g.fill(); g.stroke();
+  g.fillStyle = '#fff'; g.font = `700 13px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(String(Math.round(att.hdg) % 360).padStart(3, '0') + '°', hc, hy - 7.5);
+  // labels
+  g.font = `10px ${UI}`; g.fillStyle = COL.muted; g.textAlign = 'center';
+  g.fillText('速度 KT', 32, 238); g.fillText('高度 FT', 327, 238);
+  g.fillText('昇降', 366, 238); g.textAlign = 'left'; g.fillText('方位', 64, 214); g.fillText('姿勢（傾き）', 66, 24);
+  if (s.agl < 760) { g.fillStyle = COL.ink; g.font = `700 11px ${MONO}`; g.fillText('RA ' + Math.max(0, Math.round(s.agl * 3.28084)), 327, 226); }
+  g.restore();
+}
+function tape(g, x, y, w, h, val, ppu, labelStep, tickStep, fmt, bands, side, groundVal) {
+  const cy = y + h / 2;
+  g.save(); rr(g, x, y, w, h, 4); g.fillStyle = 'rgba(0,0,0,0.42)'; g.fill(); g.clip();
+  if (groundVal !== undefined) {
+    const gy = cy - (groundVal - val) * ppu;
+    if (gy < y + h) { g.fillStyle = 'rgba(138,96,56,0.55)'; g.fillRect(x, gy, w, y + h - gy); }
+  }
+  if (bands) for (const [a, b, c] of bands) {
+    const ya = cy - (a - val) * ppu, yb = cy - (b - val) * ppu;
+    g.fillStyle = c; g.fillRect(x + w - (c === '#ffffff' ? 9 : 5), yb, c === '#ffffff' ? 3 : 5, ya - yb);
+  }
+  g.strokeStyle = '#fff'; g.fillStyle = '#fff'; g.lineWidth = 1.2; g.font = `12px ${MONO}`; g.textBaseline = 'middle';
+  const range = h / 2 / ppu + tickStep;
+  for (let v = Math.floor((val - range) / tickStep) * tickStep; v <= val + range; v += tickStep) {
+    const ty = cy - (v - val) * ppu;
+    const major = v % labelStep === 0;
+    if (side === 'left') {
+      g.beginPath(); g.moveTo(x + w, ty); g.lineTo(x + w - (major ? 10 : 6), ty); g.stroke();
+      if (major) { g.textAlign = 'right'; g.fillText(fmt(v), x + w - 13, ty); }
+    } else {
+      g.beginPath(); g.moveTo(x, ty); g.lineTo(x + (major ? 10 : 6), ty); g.stroke();
+      if (major) { g.textAlign = 'left'; g.fillText(fmt(v), x + 13, ty); }
+    }
+  }
+  g.restore();
+  g.fillStyle = '#000'; g.strokeStyle = '#fff'; g.lineWidth = 1.3;
+  const bw = w + 2, bx = side === 'left' ? x - 1 : x - 1;
+  g.beginPath();
+  if (side === 'left') { g.moveTo(bx, cy - 12); g.lineTo(bx + bw - 6, cy - 12); g.lineTo(bx + bw + 2, cy); g.lineTo(bx + bw - 6, cy + 12); g.lineTo(bx, cy + 12); }
+  else { g.moveTo(bx + bw, cy - 12); g.lineTo(bx + 6, cy - 12); g.lineTo(bx - 2, cy); g.lineTo(bx + 6, cy + 12); g.lineTo(bx + bw, cy + 12); }
+  g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#fff'; g.font = `700 14px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(String(Math.round(val)), x + w / 2 + (side === 'left' ? -2 : 3), cy + 0.5);
+}
+function targetBearing() {
+  if (JW.active && JW.dest && game.mode !== 'rings' && game.mode !== 'landing') { const g = planeGeo(); return geoBearing(g[0], g[1], JW.dest.lat, JW.dest.lon); }
+  let t = null;
+  if (game.mode === 'rings' && course.rings[game.ringIdx]) t = course.rings[game.ringIdx].p;
+  else if (game.mode === 'landing') t = rwyToWorld(-RWY.len / 2, 0);
+  if (!t) return null;
+  return (Math.atan2(t[0] - sim.pos[0], -(t[2] - sim.pos[2])) / DEG + 360) % 360;
+}
+function drawEngine(g, x0, y0, sc) {
+  const s = sim;
+  g.save(); g.translate(x0, y0); g.scale(sc, sc);
+  rr(g, 0, 0, 196, 252, 8); g.fillStyle = 'rgba(6,12,22,0.66)'; g.fill();
+  g.strokeStyle = 'rgba(150,176,206,0.25)'; g.lineWidth = 1; g.stroke();
+  g.textBaseline = 'alphabetic';
+  // throttle bar
+  g.fillStyle = 'rgba(0,0,0,0.4)'; g.fillRect(14, 28, 22, 180);
+  g.fillStyle = COL.green; g.fillRect(14, 28 + 180 * (1 - s.thr), 22, 180 * s.thr);
+  g.font = `10px ${UI}`; g.fillStyle = COL.muted; g.textAlign = 'center'; g.fillText('THR', 25, 20);
+  g.font = `700 12px ${MONO}`; g.fillStyle = COL.ink; g.fillText(Math.round(s.thr * 100) + '%', 25, 226);
+  // readouts
+  const row = (label, value, y, col = COL.ink) => {
+    g.textAlign = 'left'; g.font = `10px ${UI}`; g.fillStyle = COL.muted; g.fillText(label, 50, y);
+    g.textAlign = 'right'; g.font = `700 14px ${MONO}`; g.fillStyle = col; g.fillText(value, 184, y);
+  };
+  const jet = AC.engine.type === 'jet';
+  row(jet ? 'N1 回転' : 'RPM 回転', jet ? (s.ab ? 'A/B' : Math.round(s.n1 * 100) + '%') : String(Math.round(s.rpm / 10) * 10), 26, s.ab ? COL.amber : COL.ink);
+  row('FLAPS フラップ', ACFT.wing.flap ? flapName(s.flapIdx) : 'なし', 50, s.flapIdx ? COL.cyan : COL.ink);
+  const gearTxt = ACFT.gear.fixed ? '固定' : s.gearPos >= 1 ? 'DOWN' : s.gearPos <= 0 ? 'UP' : '動作中';
+  row('GEAR 車輪', gearTxt, 74, s.gearPos >= 1 ? COL.green : s.gearPos <= 0 ? COL.ink : COL.amber);
+  // gear lights
+  for (let i = 0; i < 3; i++) {
+    const x = 90 + i * 26, y = 90;
+    g.beginPath(); g.arc(x, y, 6, 0, Math.PI * 2);
+    if (s.gearPos >= 1) { g.fillStyle = COL.green; g.fill(); }
+    else if (s.gearPos > 0) { g.fillStyle = COL.amber; g.fill(); }
+    else { g.strokeStyle = COL.muted; g.lineWidth = 1; g.stroke(); }
+  }
+  row('TRIM トリム', game.assist ? '自動' : (s.trim >= 0 ? '▲' : '▼') + Math.abs(Math.round(s.trim / TRIM_MAX * 100)), 118);
+  row('BRAKE ブレーキ', s.brake ? 'ON' : 'OFF', 142, s.brake ? COL.amber : COL.muted);
+  row('G 荷重', s.gLoad.toFixed(1), 166, s.gLoad > AC.maxG * 0.8 || s.gLoad < -1.5 ? COL.amber : COL.ink);
+  row('AOA 迎え角', (s.alpha / DEG).toFixed(1) + '°', 190, s.stallWarn ? COL.red : COL.ink);
+  row('ASSIST アシスト', game.assist ? 'ON' : 'OFF', 214, game.assist ? COL.green : COL.muted);
+  row('GS 対地速度', Math.round(Math.hypot(s.vel[0], s.vel[2]) * 1.94384) + ' kt', 238);
+  g.restore();
+}
+// stick position: the centre of the cross is neutral (no input)
+function drawStick(g, x0, y0, sc) {
+  const s = sim, S = 118;
+  g.save(); g.translate(x0, y0); g.scale(sc, sc);
+  rr(g, 0, 0, S + 16, S + 26, 8); g.fillStyle = 'rgba(6,12,22,0.66)'; g.fill();
+  g.font = `10px ${UI}`; g.fillStyle = COL.muted; g.textAlign = 'center'; g.textBaseline = 'top';
+  g.fillText('操縦桿の位置', 8 + S / 2, 6);
+  const cx = 8 + S / 2, cy = 20 + S / 2, R = S / 2 - 6;
+  g.strokeStyle = 'rgba(150,176,206,0.35)'; g.lineWidth = 1;
+  g.strokeRect(cx - R, cy - R, R * 2, R * 2);
+  g.beginPath(); g.moveTo(cx - R, cy); g.lineTo(cx + R, cy); g.moveTo(cx, cy - R); g.lineTo(cx, cy + R); g.stroke();
+  const neutral = Math.abs(s.pIn) < 0.04 && Math.abs(s.rIn) < 0.04;
+  g.fillStyle = neutral ? COL.green : COL.cyan;
+  g.beginPath(); g.arc(cx + s.rIn * R, cy + (game.invert ? -s.pIn : s.pIn) * R, 6, 0, Math.PI * 2); g.fill();
+  g.font = `9px ${UI}`; g.fillStyle = COL.muted;
+  g.fillText('機首↑', cx, cy + R + 1 - (game.invert ? 2 * R + 11 : 0));
+  g.textBaseline = 'middle';
+  g.fillStyle = neutral ? COL.green : COL.muted;
+  g.fillText(neutral ? '中立' : '', cx + 18, cy - 9);
+  g.restore();
+  if (s.assistOn || game.levelT > 0) {
+    g.font = `11px ${UI}`; g.fillStyle = 'rgba(88,224,140,0.9)'; g.textAlign = 'left'; g.textBaseline = 'top';
+    g.fillText(game.levelT > 0 ? '水平に戻しています…' : neutral ? 'アシスト：水平飛行を保持中' : 'アシスト：離すと水平に戻ります', x0, y0 - 18 * sc);
+  }
+}
+// "targets" panel: throttle and pitch for the phase of flight the aircraft is in (level, climb or descent) at the current bank
+function trimTarget() {
+  const T = TRIM[ACFT.id]; if (!T) return null;
+  const s = sim, a = attitude(), b = Math.abs(a.bank), fpm = s.vs * 196.85, kt = s.ias * 1.94384;
+  const slow = s.flapIdx > 0 || (s.gearDown && !ACFT.gear.fixed);
+  let key, label;
+  if (slow) {
+    if (s.flapIdx >= ACFT.v.apprFlaps && ACFT.v.apprFlaps > 0 && fpm < -200) { key = 'a_3deg'; label = '着陸の進入 3°'; }
+    else if (fpm > 250) { key = 's_c500'; label = '低速で上昇 500 fpm'; }
+    else if (fpm < -250) { key = 's_d500'; label = '低速で降下 500 fpm'; }
+    else { key = 's_level'; label = '低速の水平飛行'; }
+  } else {
+    const vMid = (T.c_level_0[0] + T.y_c500_0[0]) / 2;
+    if (fpm > 750) { key = T.y_c1000_0[7] ? 'y_c1000' : 'y_full'; label = key === 'y_full' ? '全開で上昇' : '上昇 1,000 fpm'; }
+    else if (fpm > 250) { key = kt > vMid && T.c_c500_0[7] ? 'c_c500' : 'y_c500'; label = '上昇 500 fpm'; }
+    else if (fpm < -750) { key = T.c_d1000_0[7] ? 'c_d1000' : 'c_d500'; label = key === 'c_d1000' ? '降下 1,000 fpm' : '降下 500 fpm'; }
+    else if (fpm < -250) { key = 'c_d500'; label = '降下 500 fpm'; }
+    else { key = 'c_level'; label = '水平飛行'; }
+  }
+  const banks = key === 'c_level' ? [0, 10, 20, 30, 45, 60] : [0, 10, 20];
+  const bb = Math.min(b, banks[banks.length - 1]);
+  let i = 0; while (i < banks.length - 2 && bb > banks[i + 1]) i++;
+  const r0 = T[key + '_' + banks[i]], r1 = T[key + '_' + banks[i + 1]], f = clamp((bb - banks[i]) / (banks[i + 1] - banks[i]), 0, 1);
+  return { key, label, v: r0[0], fpm: r0[3], thr: lerp(r0[1], r1[1], f), pitch: lerp(r0[2], r1[2], f), bank: b, slow,
+    over: (slow && b > 22) || (key !== 'c_level' && b > 22), pitchNow: a.pitch, full: key === 'y_full' };
+}
+function drawTargets(g, x0, y0, sc) {
+  const s = sim;
+  if (s.onGround || game.state !== 'flying' || s.agl < 30) return;
+  const t = trimTarget(); if (!t) return;
+  const W = 214, Hh = 144;
+  g.save(); g.translate(x0, y0); g.scale(sc, sc);
+  rr(g, 0, 0, W, Hh, 8); g.fillStyle = 'rgba(6,12,22,0.66)'; g.fill();
+  g.textBaseline = 'top'; g.textAlign = 'left';
+  g.font = `10px ${UI}`; g.fillStyle = COL.muted;
+  g.fillText(`目安：${t.label}（バンク ${Math.round(t.bank)}°）`, 10, 7);
+  const thrNow = s.thr * 100, dT = thrNow - t.thr, dP = t.pitchNow - t.pitch;
+  const line = (y, label, want, now, ok, unit, sign) => {
+    g.font = `11px ${UI}`; g.fillStyle = COL.muted; g.fillText(label, 10, y);
+    g.font = `700 15px ${MONO}`; g.fillStyle = COL.ink;
+    const fmt = v => (sign && v > 0 ? '+' : '') + v.toFixed(sign ? 1 : 0) + unit;
+    g.fillText(fmt(want), 76, y - 2);
+    g.font = `11px ${MONO}`; g.fillStyle = ok ? COL.green : COL.amber; g.fillText('今 ' + fmt(now), 146, y);
+  };
+  line(28, 'スロットル', t.thr, thrNow, Math.abs(dT) < 6, '%', false);
+  line(52, 'ピッチ', t.pitch, t.pitchNow, Math.abs(dP) < 1.2, '°', true);
+  g.font = `11px ${UI}`; g.fillStyle = COL.muted; g.fillText(`速度 ${t.v} kt${t.key.includes('level') ? '' : '・' + (t.fpm > 0 ? '+' : '') + t.fpm + ' fpm'} のときの値`, 10, 76);
+  const vsFpm = s.vs * 196.85, spd = s.ias * 1.94384;
+  let hint = '';
+  const dv = vsFpm - t.fpm, tol = Math.max(150, Math.abs(t.fpm) * 0.25);
+  if (t.over) hint = t.slow ? '低速で深く傾けています。20° までに' : '上昇・降下中は 20° までが目安';
+  else if (!t.full && dv < -tol) hint = game.assist ? '沈みすぎ：スロットルを少し足す' : '沈みすぎ：機首を 1° 上げる';
+  else if (!t.full && dv > tol) hint = game.assist ? '上がりすぎ：スロットルを少し絞る' : '上がりすぎ：機首を 1° 下げる';
+  else if (spd < t.v - 8) hint = t.full ? '遅い：機首を少し下げる' : '遅くなっています：スロットルを 5% 足す';
+  else if (spd > t.v + 12) hint = t.full ? '速い：機首を少し上げる' : '速くなっています：スロットルを 5% 絞る';
+  else hint = t.key.includes('level') ? '水平飛行を保てています' : '安定しています';
+  g.font = `700 11px ${UI}`; g.fillStyle = hint.startsWith('水平') || hint.startsWith('安定') ? COL.green : COL.amber;
+  g.fillText(hint, 10, 96);
+  g.font = `10px ${UI}`; g.fillStyle = COL.muted; g.fillText('詳しくはガイド「数値の目安」', 10, 120);
+  g.restore();
+}
+function drawStatusStrip(g, x, y, sc) {
+  const s = sim;
+  const items = [[`THR ${Math.round(s.thr * 100)}%`, COL.green], [`FLAPS ${flapName(s.flapIdx)}`, s.flapIdx ? COL.cyan : COL.ink],
+  [`GEAR ${s.gearPos >= 1 ? 'DN' : s.gearPos <= 0 ? 'UP' : '··'}`, s.gearPos >= 1 ? COL.green : COL.amber]];
+  if (s.brake) items.push(['BRK', COL.amber]);
+  g.font = `700 ${Math.round(12 * sc / 0.86)}px ${MONO}`; g.textBaseline = 'top'; g.textAlign = 'left';
+  let cx = x;
+  for (const [t, c] of items) {
+    const w = g.measureText(t).width + 12;
+    rr(g, cx, y, w, 20 * sc / 0.86, 4); g.fillStyle = 'rgba(6,12,22,0.66)'; g.fill();
+    g.fillStyle = c; g.fillText(t, cx + 6, y + 4); cx += w + 6;
+  }
+}
+// "physics made visible": the four forces on a side view plus the numbers behind them (J key)
+function drawPhysView(g, W, H, sc, att) {
+  const s = sim, k = Math.min(sc, 1.1), PW = 300, PH = 400;
+  g.save(); g.translate(W - 16 - PW * k, 206); g.scale(k, k);
+  rr(g, 0, 0, PW, PH, 8); g.fillStyle = 'rgba(8,14,24,0.84)'; g.fill(); g.strokeStyle = 'rgba(150,176,206,0.35)'; g.lineWidth = 1; g.stroke();
+  g.fillStyle = COL.cyan; g.font = `700 12px ${UI}`; g.textAlign = 'left'; g.textBaseline = 'middle';
+  g.fillText('物理の見える化（J で閉じる）', 12, 16);
+  // side view: relative wind comes along the flight path; lift is perpendicular to it
+  const cx = 150, cy = 108, W0 = AC.mass * 9.81, sL = 52 / W0, sD = sL * 3;
+  const th = att.pitch * DEG, gam = th - s.alpha;
+  const arrow = (ang, len, col, lab, lx = 0, ly = 0) => {
+    if (Math.abs(len) < 2) return;
+    const x1 = cx + Math.cos(ang) * len, y1 = cy - Math.sin(ang) * len;
+    g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 3; g.beginPath(); g.moveTo(cx, cy); g.lineTo(x1, y1); g.stroke();
+    const a2 = Math.atan2(y1 - cy, x1 - cx); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x1 - 8 * Math.cos(a2 - 0.4), y1 - 8 * Math.sin(a2 - 0.4)); g.lineTo(x1 - 8 * Math.cos(a2 + 0.4), y1 - 8 * Math.sin(a2 + 0.4)); g.fill();
+    g.font = `700 11px ${UI}`; g.textAlign = 'center'; g.fillText(lab, x1 + Math.cos(ang) * 16 + lx, y1 - Math.sin(ang) * 12 + ly);
+  };
+  // relative wind (dashed) and the aircraft's body line
+  g.setLineDash([4, 4]); g.strokeStyle = 'rgba(160,190,220,0.6)'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(cx - Math.cos(gam) * 110, cy + Math.sin(gam) * 110); g.lineTo(cx + Math.cos(gam) * 110, cy - Math.sin(gam) * 110); g.stroke(); g.setLineDash([]);
+  g.save(); g.translate(cx, cy); g.rotate(-th);
+  g.fillStyle = '#dfe6ee'; g.beginPath(); g.ellipse(0, 0, 44, 6, 0, 0, Math.PI * 2); g.fill();
+  g.fillRect(-44, -14, 8, 12); g.fillStyle = '#9fb3c8'; g.fillRect(-6, -2, 22, 3);
+  g.restore();
+  arrow(gam + Math.PI / 2, (s.liftN || 0) * sL, '#5fd46a', '揚力 L');
+  arrow(gam + Math.PI, (s.dragN || 0) * sD, '#ff6a5a', '抗力 D×3', 0, 10);
+  arrow(th, Math.max(s.thrust || 0, 0) * sD, '#ffb23e', '推力 T×3', 0, -10);
+  arrow(-Math.PI / 2, W0 * sL, '#c9d3de', '重力 W');
+  g.fillStyle = COL.muted; g.font = `10px ${UI}`; g.textAlign = 'left';
+  g.fillText('点線＝相対風（飛んでいく向き）', 10, 196);
+  // numbers
+  const aS = (AC.aStall - AC.flapStall * (ACFT.wing.flap ? s.flapDeg / 30 : 0)) / DEG, aoa = s.alpha / DEG;
+  const rows = [
+    ['迎え角 α', `${aoa.toFixed(1)}°`, `失速 ${aS.toFixed(0)}°`, aoa > aS - 3 ? COL.red : aoa > aS - 6 ? COL.amber : COL.ink],
+    ['揚力係数 CL', (s.CL || 0).toFixed(2), `揚抗比 L/D ${s.dragN > 1 ? (s.liftN / s.dragN).toFixed(1) : '—'}`, COL.ink],
+    ['荷重倍数 n', `${s.gLoad.toFixed(2)} G`, `失速速度 ×${Math.sqrt(Math.max(s.gLoad, 0.1)).toFixed(2)}`, s.gLoad > 2 ? COL.amber : COL.ink],
+    ['横滑り β', `${(s.beta / DEG).toFixed(1)}°`, AC.prop ? `左偏向：右ラダー ${Math.round(Math.max(0, s.rudNeed || 0) * 100)}% 必要` : 'ジェット：左偏向なし', Math.abs(s.beta / DEG) > 2 ? COL.amber : COL.ink],
+    ['外気温', `${(s.oat ?? 15).toFixed(0)}℃`, `密度高度 ${Math.round((s.densAlt || 0) * 3.28084).toLocaleString()} ft`, (s.densAlt || 0) > s.pos[1] + 300 ? COL.amber : COL.ink],
+    ['真対気速度', `${Math.round(s.tas * 1.94384)} kt`, `指示 ${Math.round(s.ias * 1.94384)} kt`, COL.ink],
+    ['地面効果', s.ge < 0.98 ? `誘導抗力 −${Math.round((1 - s.ge) * 100)}%` : 'なし', '翼幅より低いと効く', s.ge < 0.98 ? COL.green : COL.muted],
+  ];
+  rows.forEach(([a, b, c, col], i) => {
+    const y = 216 + i * 14.5;
+    g.textAlign = 'left'; g.fillStyle = COL.muted; g.font = `11px ${UI}`; g.fillText(a, 10, y);
+    g.fillStyle = col; g.font = `700 11px ${MONO}`; g.fillText(b, 92, y);
+    g.fillStyle = COL.muted; g.font = `10px ${UI}`; g.fillText(c, 158, y);
+  });
+  // the wing seen from behind: lift of every strip (blade elements); red where that strip has stalled
+  const pcs = AC.el ? AC.el.pcs.filter(p => p.kind === 0) : [], y0 = 386, half = 124;
+  g.textAlign = 'left'; g.fillStyle = COL.muted; g.font = `10px ${UI}`;
+  g.fillText('翼の各部分の揚力（後ろから見た図・赤＝失速）', 10, 322);
+  g.strokeStyle = 'rgba(160,190,220,0.5)'; g.lineWidth = 1; g.beginPath(); g.moveTo(cx - half - 6, y0); g.lineTo(cx + half + 6, y0); g.stroke();
+  const tip = ACFT.wing.tipX, bw = half / EL_N * 0.8;
+  for (const p of pcs) {
+    const x = cx + p.r[0] / tip * half, h = clamp((p.cl || 0) * 36, -24, 56), st = p.st || 0;
+    g.fillStyle = st > 0.5 ? COL.red : st > 0.05 ? COL.amber : COL.green;
+    g.fillRect(x - bw / 2, h >= 0 ? y0 - h : y0, bw, Math.abs(h));
+  }
+  g.fillStyle = COL.muted; g.textAlign = 'center'; g.fillText('左翼', cx - half + 14, y0 + 9); g.fillText('右翼', cx + half - 14, y0 + 9);
+  g.restore();
+}
+function drawMinimap(g, W, H, touch, att) {
+  const S = touch ? 118 : 176, x = W - S - (touch ? 12 : 16), y = touch ? 12 : 16;
+  g.save();
+  rr(g, x - 4, y - 4, S + 8, S + 8, 8); g.fillStyle = 'rgba(6,12,22,0.66)'; g.fill();
+  rr(g, x, y, S, S, 5); g.clip();
+  if (JW.active) {
+    const [la, lo] = planeGeo(), spd = vlen(sim.vel);
+    drawMapTo(g, x, y, S, S, la, lo, spd > 140 ? 8.3 : spd > 80 ? 9 : 10, {});
+    g.restore();
+    g.font = `700 11px ${MONO}`; g.fillStyle = '#10243d'; g.textAlign = 'center'; g.textBaseline = 'top';
+    g.fillText('N', x + S / 2, y + 3);
+    g.font = `10px ${UI}`; g.textAlign = 'right'; g.textBaseline = 'bottom'; g.fillText('M で地図', x + S - 4, y + S - 3);
+    return;
+  }
+  g.drawImage(hud.minimap, x, y, S, S);
+  const map = (wx, wz) => [x + (wx + HM_HALF) / (HM_HALF * 2) * S, y + (wz + HM_HALF) / (HM_HALF * 2) * S];
+  // runway
+  const a = map(...[rwyToWorld(-RWY.len / 2, 0)].map(p => [p[0], p[2]])[0]), b = map(...[rwyToWorld(RWY.len / 2, 0)].map(p => [p[0], p[2]])[0]);
+  g.strokeStyle = '#fff'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
+  if (game.mode === 'rings') {
+    for (let i = game.ringIdx; i < course.rings.length; i++) {
+      const r = course.rings[i], m = map(r.p[0], r.p[2]);
+      g.beginPath(); g.arc(m[0], m[1], i === game.ringIdx ? 4 : 2.5, 0, Math.PI * 2);
+      g.fillStyle = i === game.ringIdx ? COL.magenta : 'rgba(227,107,220,0.55)'; g.fill();
+    }
+  }
+  const pm = map(sim.pos[0], sim.pos[2]);
+  g.translate(pm[0], pm[1]); g.rotate(att.hdg * DEG);
+  g.fillStyle = '#ffd24a'; g.strokeStyle = '#000'; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(0, -8); g.lineTo(5.5, 6); g.lineTo(0, 3); g.lineTo(-5.5, 6); g.closePath(); g.fill(); g.stroke();
+  g.restore();
+  g.font = `700 11px ${MONO}`; g.fillStyle = COL.ink; g.textAlign = 'center'; g.textBaseline = 'top';
+  g.fillText('N', x + S / 2, y + 3);
+}
+function drawInfo(g, W, H, touch, sc, touchY) {
+  const lines = [];
+  if (JW.active) {
+    const [la, lo] = planeGeo(), pl = nearestPlace(la, lo, 40000);
+    lines.push([(pl ? pl.n + ' 付近' : '海上') + '・' + ACFT.name, COL.ink, `700 12px ${UI}`]);
+    if (JW.dest) {
+      const d = geoDist(la, lo, JW.dest.lat, JW.dest.lon), gs = Math.hypot(sim.vel[0], sim.vel[2]);
+      const eta = gs > 20 ? d / gs : 0, hh = Math.floor(eta / 3600), mm = Math.floor(eta % 3600 / 60);
+      lines.push([`目的地 ${JW.dest.name}  ${(d / 1000).toFixed(d < 10000 ? 1 : 0)} km  ${Math.round(geoBearing(la, lo, JW.dest.lat, JW.dest.lon))}°` + (eta ? `  到着まで ${hh}:${String(mm).padStart(2, '0')}` : ''), COL.magenta, `700 12px ${UI}`]);
+    }
+    const st = [];
+    if (game.ap) st.push('A/P');
+    if (game.timeScale > 1) st.push('時間 ×' + game.timeScale);
+    st.push(JW.online ? `航空写真 ${JW.inflight ? '読み込み中…' : 'ON'}` : '簡易地形（オフライン）');
+    if (GOOG.on && GOOG.key) st.push(GOOG.state === 'ok' ? `Google 3D ${GOOG.covering ? `ON${GOOG.flat ? '・この付近は立体データなし（地図の建物で代用）' : ''}（高さ基準 ${Math.round(GOOG.off ?? 0)} m・${GOOG.active.length} 枚・細かさ ×${(GOOG.lodK || 1).toFixed(1)}）` : '読み込み中…'}` : GOOG.state === 'error' ? 'Google 3D エラー（メニューで確認）' : 'Google 3D 接続中…');
+    lines.push([st.join('　'), game.ap || game.timeScale > 1 ? COL.amber : COL.muted, `11px ${UI}`]);
+    if (GOOG.on && GOOG.key && GOOG.state === 'ok') lines.push([googDiag() + '　F8：タイルを灰色で表示', COL.muted, `11px ${UI}`]);
+  } else lines.push([`${MAP.name}・${ACFT.name}`, COL.muted, `11px ${UI}`]);
+  const modeName = { tutorial: 'チュートリアル', runway: 'フリーフライト', air: 'フリーフライト', rings: game.tour ? '観光フライト' : 'リングチャレンジ', landing: '着陸チャレンジ' }[game.mode];
+  lines.push([modeName, COL.cyan, `700 12px ${UI}`]);
+  if (game.mode === 'rings') {
+    lines.push([fmtTime(game.ringTime), COL.ink, `700 22px ${MONO}`]);
+    lines.push([`リング ${Math.min(game.ringIdx + 1, course.rings.length)} / ${course.rings.length}`, COL.muted, `12px ${UI}`]);
+  } else if (game.mode === 'landing') {
+    const thr = rwyToWorld(-RWY.len / 2, 0);
+    const d = Math.hypot(sim.pos[0] - thr[0], sim.pos[2] - thr[2]);
+    const [u] = worldToRwy(sim.pos[0], sim.pos[2]);
+    if (u < -RWY.len / 2 + 300) {
+      const gp = Math.atan2(sim.pos[1] + WHEEL_BOTTOM - RWY.elev, Math.max(1, -RWY.len / 2 + 300 - u)) / DEG;
+      lines.push([`RWY ${RWY.idents[0]} まで ${(d / 1000).toFixed(1)} km`, COL.ink, `700 14px ${UI}`]);
+      lines.push([`進入角 ${gp.toFixed(1)}°（目標 3.0°）`, Math.abs(gp - 3) < 0.6 ? COL.green : COL.amber, `12px ${UI}`]);
+    }
+  } else if (!JW.active) {
+    const [u, v] = worldToRwy(sim.pos[0], sim.pos[2]);
+    const d = Math.hypot(u, v);
+    if (d > 1500) lines.push([`飛行場まで ${(d / 1000).toFixed(1)} km`, COL.muted, `12px ${UI}`]);
+  }
+  const x = touch ? 14 : 16, y = touch ? touchY : 16;
+  let yy = y;
+  g.textAlign = 'left'; g.textBaseline = 'top';
+  for (const [t, c, f] of lines) {
+    g.font = f; g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillText(t, x + 1, yy + 1);
+    g.fillStyle = c; g.fillText(t, x, yy); yy += parseInt(f.match(/(\d+)px/)[1], 10) + 6;
+  }
+  if (touch) return;
+  // compact key reminder while on the ground at the start
+  if (game.mode === 'runway' && sim.onGround && game.t < 40) {
+    g.font = `12px ${UI}`; g.textAlign = 'center'; g.fillStyle = 'rgba(232,240,250,0.8)';
+    g.fillText('R / F スロットル　W S 機首　A D ロール　G ギア　V フラップ　C カメラ　Esc メニュー', W / 2, H - 28);
+  }
+}
+
+
+// ---------- tutorial: a guided first flight ----------
+const tut = { i: 0, doneT: 0, hold: 0, turn: 0, lastHdg: 0, targetFt: 0 };
+const kt = () => sim.ias * 1.94384;
+const upKey = () => game.invert ? 'W（↑）' : 'S（↓）';
+const downKey = () => game.invert ? 'S（↓）' : 'W（↑）';
+const stickUp = () => game.invert ? '上に押す' : '下に引く';
+const TUT_STEPS = [
+  { title: 'ようこそ', next: true,
+    key: () => 'このチュートリアルでは、まず画面の見方を確認し、そのあと離陸から旋回までを 1 つずつ練習します。読み終わったら「次へ」（Enter キー）で進みます。',
+    touch: () => 'まず画面の見方を確認し、そのあと離陸から旋回までを 1 つずつ練習します。読み終わったら「次へ」で進みます。' },
+  { title: '速度計（左の縦の目盛り）', hl: 'speed', next: true,
+    key: () => '飛行機が空気に対して進む速さです。単位は kt（ノット）で、1 kt は時速 約 1.85 km。飛行機は速さがないと浮けません。赤い帯より遅いと「失速」（翼が機体を支えられなくなる状態）の危険があります。' },
+  { title: '高度計（右の縦の目盛り）', hl: 'alt', next: true,
+    key: () => '海面からの高さです。単位は ft（フィート）で、1 ft は約 0.3 m。茶色の部分は真下の地面の高さ、下の RA は地面からの高さです。いまは空港の地面にいます。' },
+  { title: '姿勢指示器（中央の青と茶色）', hl: 'attitude', next: true,
+    key: () => '機体の傾きです。青が空、茶色が地面、中央の黄色い記号が自分の機体。記号が水平線の上にあれば機首が上向き、線が傾いていれば機体が左右に傾いています。' },
+  { title: '方位計と昇降計', hl: 'heading', next: true,
+    key: () => '下の目盛りは機首の方角（N=北、E=東、S=南、W=西）。右端の細い目盛り（昇降計）は、矢印が上なら上昇中、下なら降下中です。' },
+  { title: '操縦桿と「中立」', hl: 'stick', next: true,
+    key: () => `W / S / A / D（または矢印キー）を押している間だけ操縦桿が動き、離すと中央＝「中立」に戻ります。右下の「操縦桿の位置」で点が中心・緑なら中立です。${game.assist ? '操縦アシストが ON なので、中立にすると機体は自動で水平飛行に戻ります。' : '操縦アシストが OFF なので、中立にしても傾きはそのまま残ります。困ったら L キーで水平に戻せます。'}`,
+    touch: () => `左下のスティックを動かしている間だけ操縦し、指を離すと中央＝「中立」に戻ります。${game.assist ? '操縦アシストが ON なので、中立にすると機体は自動で水平飛行に戻ります。' : '中立にしても傾きはそのまま残ります。困ったら「水平」ボタンで水平に戻せます。'}` },
+  { title: 'スロットルを全開にする', hl: 'thr',
+    key: () => 'スロットル＝エンジンの出力（車のアクセル）です。R キーを押し続けて 100% まで上げましょう。F キーで下げられます。',
+    touch: () => 'スロットル＝エンジンの出力（車のアクセル）です。右端の THR スライダーを一番上までドラッグしましょう。',
+    progress: () => sim.thr, done: () => sim.thr >= 0.95 },
+  { title: '', titleFn: () => `滑走して ${ACFT.v.rotate} kt まで加速`, hl: 'speed',
+    key: () => `左の速度計を見ながら待ちます。機体が左右にそれたら A / D で少しだけ修正しましょう（地上ではハンドルになります）。${ACFT.v.rotate} kt が、この機体が浮き上がれる速さの目安です。`,
+    touch: () => `左の速度計を見ながら待ちます。左右にそれたらスティックを左右に少し倒して修正。${ACFT.v.rotate} kt が浮き上がれる速さの目安です。`,
+    progress: () => kt() / ACFT.v.rotate, done: () => kt() >= ACFT.v.rotate },
+  { title: '機首を上げて離陸', hl: 'attitude',
+    key: () => `${upKey()} を押し続けて機首を上げます（操縦桿を手前に引くのと同じ）。機体が地面を離れて 15 m ほど上がるまで押し続けましょう。`,
+    touch: () => `スティックを${stickUp()}と機首が上がります。地面を離れて 15 m ほど上がるまでそのまま。`,
+    progress: () => sim.agl / 15, done: () => sim.agl > 15 && !sim.onGround },
+  { title: 'ギア（車輪）を上げる', hl: 'gear', skipIf: () => ACFT.gear.fixed,
+    key: () => 'G キーで車輪を機体の中にしまいます。空気抵抗が減って速く飛べます。（着陸の前には必ずもう一度 G で下げます）',
+    touch: () => '「ギア」ボタンで車輪をしまいます。空気抵抗が減って速く飛べます。',
+    done: () => !sim.gearDown },
+  { title: 'フラップを 0° に戻す', hl: 'flaps', skipIf: () => !ACFT.wing.flap || sim.flapIdx === 0,
+    key: () => 'フラップは、ゆっくり飛ぶために主翼の後ろから出す板です。上空では不要なので V キーで 0° に（10° → 20° → 30° → 0° の順に切り替わります）。',
+    touch: () => 'フラップ（ゆっくり飛ぶための翼の板）を「フラップ」ボタンで 0° に戻します（10°→20°→30°→0° の順）。',
+    done: () => sim.flapIdx === 0 },
+  { title: '', hl: 'alt', setup: () => { tut.targetFt = Math.round((RWY.elev * 3.28084 + 1000) / 100) * 100; },
+    titleFn: () => `高度 ${tut.targetFt.toLocaleString()} ft まで上昇`,
+    key: () => game.assist
+      ? `${upKey()} を押している間は上昇し、離すと水平飛行になります。右の高度計が ${tut.targetFt.toLocaleString()} を超えるまで押し続けましょう。`
+      : `機首を少し上げたまま上昇します。右の高度計が ${tut.targetFt.toLocaleString()} を超えるまで。速度が落ちすぎたら ${downKey()} で機首を少し下げます。`,
+    touch: () => `スティックを${stickUp()}ている間は上昇します。右の高度計が ${tut.targetFt.toLocaleString()} を超えるまで。`,
+    progress: () => ((sim.pos[1] + WHEEL_BOTTOM) * 3.28084 - RWY.elev * 3.28084) / (tut.targetFt - RWY.elev * 3.28084),
+    done: () => (sim.pos[1] + WHEEL_BOTTOM) * 3.28084 >= tut.targetFt },
+  { title: '水平飛行に移る', hl: 'vsi',
+    key: () => game.assist
+      ? '操縦キーを離して中立にしましょう。アシストが自動で水平にしてくれます。F キーでスロットルを 60% くらいに下げ、右端の昇降計の矢印がほぼ真ん中のまま 3 秒保ちます。'
+      : `${downKey()} で機首を水平まで下げ、F でスロットルを 60% くらいに。右端の昇降計の矢印がほぼ真ん中（上下 300 fpm 以内）で 3 秒保ちましょう。`,
+    touch: () => 'スティックから指を離して中立に。スロットルを 60% くらいに下げ、昇降計の矢印がほぼ真ん中のまま 3 秒保ちます。',
+    setup: () => { tut.hold = 0; },
+    tick: dt => { tut.hold = Math.abs(sim.vs * 196.85) < 300 && sim.thr < 0.8 && sim.agl > 60 ? tut.hold + dt : 0; },
+    progress: () => tut.hold / 3, done: () => tut.hold >= 3 },
+  { title: '左に 90° 旋回', hl: 'heading',
+    key: () => game.assist
+      ? 'A を押し続けると左に傾き、その方向へ曲がります（高さはアシストが保ちます）。下の方位計が 90° 変わるまで押し続け、変わったら離しましょう。'
+      : `A で左に 20〜30° 傾けたら離し、${upKey()} を軽く押して高さを保ちます。方位計が 90° 変わったら D で水平に戻しましょう。`,
+    touch: () => 'スティックを左に倒し続けると左に傾いて曲がります。方位が 90° 変わったら指を離しましょう。',
+    setup: () => { tut.turn = 0; tut.lastHdg = attitude().hdg; },
+    tick: () => { const h = attitude().hdg; tut.turn += ((h - tut.lastHdg + 540) % 360) - 180; tut.lastHdg = h; },
+    progress: () => -tut.turn / 90, done: () => tut.turn <= -90 },
+  { title: '右に 90° 旋回して戻る', hl: 'heading',
+    key: () => '今度は D で右へ。旋回中は高度計も見ておきましょう。90° 曲がったら離して水平に。',
+    touch: () => '今度はスティックを右に倒して旋回します。90° 曲がったら指を離して水平に。',
+    setup: () => { tut.turn = 0; tut.lastHdg = attitude().hdg; },
+    tick: () => { const h = attitude().hdg; tut.turn += ((h - tut.lastHdg + 540) % 360) - 180; tut.lastHdg = h; },
+    progress: () => tut.turn / 90, done: () => tut.turn >= 90 },
+  { title: 'カメラを切り替えてみる', hl: null,
+    key: () => 'C キーでカメラが切り替わります（追尾 → コックピット → 周回 → フライバイ）。マウスでドラッグすると見回せます。',
+    touch: () => '「カメラ」ボタンでカメラを切り替えられます。画面をドラッグすると見回せます。',
+    setup: () => { tut.cam = cam.mode; }, done: () => cam.mode !== tut.cam },
+];
+function tutStep() { return TUT_STEPS[tut.i]; }
+function tutShow() {
+  const st = tutStep();
+  if (!st) return;
+  $('tut').hidden = false; document.body.classList.add('tut-on');
+  $('tut-step').textContent = `STEP ${tut.i + 1} / ${TUT_STEPS.length}`;
+  $('tut-title').textContent = st.titleFn ? st.titleFn() : st.title;
+  $('tut-text').textContent = game.touch && st.touch ? st.touch() : st.key();
+  $('tut-next').hidden = !st.next;
+  $('tut-next').textContent = game.touch ? '次へ' : '次へ（Enter）';
+  $('tut-bar').parentElement.hidden = !!st.next;
+  $('tut').classList.remove('ok');
+  document.querySelectorAll('.pulse').forEach(e => e.classList.remove('pulse'));
+  if (game.touch) {
+    const el = { thr: $('thr'), stick: $('stick'), gear: document.querySelector('[data-act=gear]'), flaps: document.querySelector('[data-act=flaps]') }[st.hl];
+    if (el) el.classList.add('pulse');
+    if (st === TUT_STEPS[TUT_STEPS.length - 1]) document.querySelector('[data-act=cam]').classList.add('pulse');
+  }
+}
+function tutStart() { tut.i = 0; tut.doneT = 0; if (TUT_STEPS[0].setup) TUT_STEPS[0].setup(); tutShow(); }
+function tutHide() {
+  $('tut').hidden = true; document.body.classList.remove('tut-on');
+  document.querySelectorAll('.pulse').forEach(e => e.classList.remove('pulse'));
+}
+function tutNext() { const st = tutStep(); if (st && st.next) tutAdvance(); }
+function tutAdvance() {
+  tut.i++; tut.doneT = 0;
+  while (TUT_STEPS[tut.i] && TUT_STEPS[tut.i].skipIf && TUT_STEPS[tut.i].skipIf()) tut.i++;
+  if (tut.i >= TUT_STEPS.length) {
+    tutHide();
+    game.best.tutorial = true; saveBest();
+    showResult({ eyebrow: 'TUTORIAL', title: 'チュートリアル完了', rows: [
+      ['所要時間', '', fmtTime(game.t)],
+      ['次のおすすめ', '', '着陸チャレンジ'],
+      ['困ったときは', '', game.touch ? '「水平」ボタン' : 'L キーで水平に戻す'],
+    ] });
+    return;
+  }
+  const st = tutStep();
+  if (st.setup) st.setup();
+  tutShow();
+}
+function tutUpdate(dt) {
+  const st = tutStep();
+  if (!st || st.next) return;
+  if (tut.doneT > 0) {
+    tut.doneT -= dt;
+    if (tut.doneT <= 0) tutAdvance();
+    return;
+  }
+  if (st.tick) st.tick(dt);
+  const pr = st.progress ? clamp(st.progress(), 0, 1) : 0;
+  $('tut-bar').style.width = (pr * 100).toFixed(0) + '%';
+  if (st.done()) {
+    tut.doneT = 1.3;
+    $('tut').classList.add('ok'); $('tut-bar').style.width = '100%';
+    $('tut-title').textContent = '✓ ' + $('tut-title').textContent;
+    audio.ring();
+  }
+}
+function tutHighlight(g) {
+  const st = tutStep();
+  if (!st || !st.hl || !hud.rects) return;
+  const r = hud.rects[st.hl];
+  if (!r) return;
+  const a = 0.65 + 0.3 * Math.sin(R.time * 6);
+  g.save(); g.strokeStyle = `rgba(95,212,255,${a})`; g.lineWidth = 3;
+  rr(g, r[0] - 3, r[1] - 3, r[2] + 6, r[3] + 6, 6); g.stroke(); g.restore();
+}
+$('tut-skip').addEventListener('click', () => { if (game.mode === 'tutorial' && game.state === 'flying') { tut.doneT = 0; tutAdvance(); } glCanvas.focus(); });
+$('tut-next').addEventListener('click', () => { tutNext(); glCanvas.focus(); });
+
+
+// ---------- Japan world: per-frame work, labels, map screen ----------
+function jwFrame(dt) {
+  jwRecenter(false);
+  game.activeT = (game.activeT || 0) - dt;
+  if (game.activeT <= 0) { game.activeT = 1; jwUpdateActive(); }
+  game.trackT = (game.trackT || 0) - dt;
+  if (game.trackT <= 0) { game.trackT = 8; game.track.push(planeGeo()); if (game.track.length > 3000) game.track.shift(); }
+  if (JW.dest && !game.nearDestToast) {
+    const g = planeGeo();
+    if (geoDist(g[0], g[1], JW.dest.lat, JW.dest.lon) < 30000) { game.nearDestToast = true; toast(`${JW.dest.name}まで 30 km。${game.ap ? 'オートパイロットを解除（O）して、' : ''}着陸の準備をしましょう`, 5000); }
+  }
+}
+function drawPlaceLabels(g, W, H) {
+  const [la, lo] = worldToGeo(R.eye[0], R.eye[2]), alt = R.eye[1];
+  const reach = clamp(25000 + alt * 12, 25000, 160000);
+  const items = [];
+  for (const p of JW.places) {
+    if (Math.abs(p.lat - la) > reach / 90000 || Math.abs(p.lon - lo) > reach / 70000) continue;
+    const d = geoDist(la, lo, p.lat, p.lon);
+    if (d > reach) continue;
+    if (p.k === 'c' && d > 12000 && p.p < clamp(d * 4, 50000, 900000)) continue;
+    items.push([p.k === 'm' ? '▲ ' + p.n : p.n, p.lat, p.lon, p.k === 'm' ? p.p : Math.max(coarseH(p.lat, p.lon) || 0, 0) + 30, p.k === 'm' ? '#f2dcb4' : '#ffffff', d]);
+  }
+  for (const l of LANDMARKS) {
+    if (Math.abs(l[1] - la) > 1.2 || Math.abs(l[2] - lo) > 1.5) continue;
+    const d = geoDist(la, lo, l[1], l[2]);
+    if (d > Math.max(reach, l[3] < 0 ? 90000 : 30000)) continue;
+    const top = l[3] < 0 ? Math.max(coarseH(l[1], l[2]) || 0, 0) + 60 : Math.max(rawHeightGeo(l[1], l[2]), 0) + l[3] + 25;
+    items.push(['★ ' + l[0], l[1], l[2], top, '#ffd66b', d * 0.35]);
+  }
+  for (const ap of JW.airports) {
+    if (Math.abs(ap.lat - la) > 2 || Math.abs(wrapLon(ap.lon - lo)) > 3) continue;
+    const d = geoDist(la, lo, ap.lat, ap.lon);
+    if (d < reach * 0.8) items.push(['✈ ' + ap.name, ap.lat, ap.lon, ap.rw[0].elev + 20, JW.dest === ap ? COL.magenta : '#9fe0ff', d * 0.5]);
+  }
+  items.sort((a, b) => a[5] - b[5]);
+  const boxes = [];
+  g.font = `700 12px ${UI}`; g.textAlign = 'center'; g.textBaseline = 'bottom';
+  let n = 0;
+  for (const [t, lat, lon, h, col] of items) {
+    if (n > 26) break;
+    const w = geoToWorld(lat, lon), pp = project([w[0], h, w[1]]);
+    if (pp.w <= 0 || pp.x < 0 || pp.x > W || pp.y < 60 || pp.y > H - 40) continue;
+    const tw = g.measureText(t).width + 8, bx = [pp.x - tw / 2, pp.y - 18, tw, 16];
+    if (boxes.some(b => bx[0] < b[0] + b[2] && b[0] < bx[0] + bx[2] && bx[1] < b[1] + b[3] && b[1] < bx[1] + bx[3])) continue;
+    boxes.push(bx); n++;
+    g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillText(t, pp.x + 1, pp.y - 3);
+    g.fillStyle = col; g.fillText(t, pp.x, pp.y - 4);
+    g.fillRect(pp.x - 1, pp.y - 3, 2, 3);
+  }
+}
+function toggleMap(force) {
+  mapv.open = force !== undefined ? force : !mapv.open;
+  $('mapview').hidden = !mapv.open;
+  if (mapv.open) {
+    mapv.follow = true; mapv.sel = null; $('map-info').hidden = true;
+    if (JW.active) { const g = planeGeo(); mapv.lat = g[0]; mapv.lon = g[1]; if (mapv.zoom < 5 || mapv.zoom > 14) mapv.zoom = 8; }
+    $('map-src').textContent = JW.active ? (JW.online && !JW.mapBlocked ? '地理院地図（標準地図）' : '内蔵の地形図（オフライン）') : '空島の地図';
+  }
+}
+function drawMapView() {
+  const cv = $('map-cv'), dpr = Math.min(devicePixelRatio || 1, 2), W = cv.clientWidth, H = cv.clientHeight;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (!JW.active) {
+    g.fillStyle = '#0c1a2e'; g.fillRect(0, 0, W, H);
+    const S = Math.min(W, H) - 90, x = (W - S) / 2, y = 60;
+    g.drawImage(hud.minimap, x, y, S, S);
+    const m = (wx, wz) => [x + (wx + HM_HALF) / (HM_HALF * 2) * S, y + (wz + HM_HALF) / (HM_HALF * 2) * S];
+    const pm = m(sim.pos[0], sim.pos[2]);
+    g.save(); g.translate(pm[0], pm[1]); g.rotate(attitude().hdg * DEG); g.fillStyle = '#ffd24a';
+    g.beginPath(); g.moveTo(0, -12); g.lineTo(8, 9); g.lineTo(0, 5); g.lineTo(-8, 9); g.closePath(); g.fill(); g.restore();
+    return;
+  }
+  if (mapv.follow) { const p = planeGeo(); mapv.lat = p[0]; mapv.lon = p[1]; }
+  drawMapTo(g, 0, 0, W, H, mapv.lat, mapv.lon, mapv.zoom, { labels: true, big: true });
+  // scale bar
+  const mpp = 156543 * Math.cos(mapv.lat * DEG) / 2 ** mapv.zoom;
+  const nice = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000].map(k => k * 1000).find(k => k / mpp > 90) || 1e6;
+  g.fillStyle = 'rgba(255,255,255,0.85)'; g.fillRect(14, H - 38, nice / mpp + 12, 24);
+  g.fillStyle = '#10243d'; g.fillRect(20, H - 22, nice / mpp, 3);
+  g.font = `11px ${UI}`; g.textAlign = 'left'; g.textBaseline = 'bottom'; g.fillText(`${nice / 1000} km`, 20, H - 24);
+}
+function mapInfo(ap) {
+  mapv.sel = ap;
+  const box = $('map-info');
+  if (!ap) { box.hidden = true; return; }
+  box.hidden = false;
+  $('mi-icao').textContent = ap.icao + (ap.iata ? ' / ' + ap.iata : '') + (ap.cc && ap.cc !== 'JP' ? '・' + (COUNTRY_JA[ap.cc] || ap.cc) + (ap.city ? ' ' + ap.city : '') : '');
+  $('mi-name').textContent = ap.name + (ap.name.endsWith('基地') || ap.name.endsWith('駐屯地') ? '' : ' 空港');
+  const rws = ap.rw.map(r => `RWY ${r.ids.join('/')} ${r.len.toLocaleString()} m`).join('、');
+  let desc = rws;
+  if (JW.active) {
+    const [la, lo] = planeGeo(), d = geoDist(la, lo, ap.lat, ap.lon), gs = Math.max(Math.hypot(sim.vel[0], sim.vel[2]), ACFT.v.cruise / 1.944);
+    const eta = d / gs;
+    desc += `。現在地から ${(d / 1000).toFixed(0)} km・方位 ${Math.round(geoBearing(la, lo, ap.lat, ap.lon))}°・${ACFT.name}で約 ${Math.floor(eta / 3600)} 時間 ${Math.round(eta % 3600 / 60)} 分`;
+  }
+  $('mi-desc').textContent = desc;
+  $('mi-dest').textContent = JW.dest === ap ? '目的地を解除' : '目的地に設定';
+}
+function setupMapView() {
+  const cv = $('map-cv');
+  const zoomAt = (f, sx, sy) => {
+    const W = cv.clientWidth, H = cv.clientHeight, z0 = mapv.zoom, z1 = clamp(z0 + f, 2, 16);
+    const [cx, cy] = mapPx(mapv.lat, mapv.lon, z0), px = cx + (sx - W / 2), py = cy + (sy - H / 2);
+    const [la, lo] = mapGeo(px, py, z0), [qx, qy] = mapPx(la, lo, z1);
+    [mapv.lat, mapv.lon] = mapGeo(qx - (sx - W / 2), qy - (sy - H / 2), z1);
+    mapv.zoom = z1; mapv.follow = false;
+  };
+  cv.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.deltaY < 0 ? 0.35 : -0.35, e.offsetX, e.offsetY); }, { passive: false });
+  let moved = 0, pinch = null;
+  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); mapv.pointers.set(e.pointerId, [e.offsetX, e.offsetY]); moved = 0; if (mapv.pointers.size === 2) { const [a, b] = [...mapv.pointers.values()]; pinch = Math.hypot(a[0] - b[0], a[1] - b[1]); } });
+  cv.addEventListener('pointermove', e => {
+    const prev = mapv.pointers.get(e.pointerId); if (!prev) return;
+    const cur = [e.offsetX, e.offsetY]; mapv.pointers.set(e.pointerId, cur);
+    if (mapv.pointers.size === 2) {
+      const [a, b] = [...mapv.pointers.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      if (pinch) zoomAt(Math.log2(d / pinch), (a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
+      pinch = d; moved += 10; return;
+    }
+    const dx = cur[0] - prev[0], dy = cur[1] - prev[1]; moved += Math.abs(dx) + Math.abs(dy);
+    const [cx, cy] = mapPx(mapv.lat, mapv.lon, mapv.zoom);
+    [mapv.lat, mapv.lon] = mapGeo(cx - dx, cy - dy, mapv.zoom); mapv.lon = wrapLon(mapv.lon); mapv.lat = clamp(mapv.lat, -84, 84); mapv.follow = false;
+  });
+  const up = e => {
+    mapv.pointers.delete(e.pointerId); if (mapv.pointers.size < 2) pinch = null;
+    if (moved < 6 && JW.active) {
+      const W = cv.clientWidth, H = cv.clientHeight, [cx, cy] = mapPx(mapv.lat, mapv.lon, mapv.zoom);
+      let best = null, bd = 16;
+      const full = 256 * 2 ** mapv.zoom;
+      for (const ap of JW.airports) { const [x, y] = mapPx(ap.lat, ap.lon, mapv.zoom); let dx = x - cx; dx -= Math.round(dx / full) * full; const d = Math.hypot(dx + W / 2 - e.offsetX, y - cy + H / 2 - e.offsetY); if (d < bd) { bd = d; best = ap; } }
+      mapInfo(best);
+    }
+  };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  $('map-close').addEventListener('click', () => toggleMap(false));
+  // search airports and cities
+  const sIn = $('map-search'), sOut = $('map-results');
+  const norm = t => (t || '').toLowerCase().normalize('NFKC');
+  sIn.addEventListener('input', () => {
+    const q = norm(sIn.value.trim());
+    sOut.textContent = '';
+    if (!q) { sOut.hidden = true; return; }
+    const res = [];
+    for (const a of JW.airports) {
+      const hay = [a.name, a.icao, a.iata, a.city, COUNTRY_JA[a.cc]].map(norm);
+      const sc = hay.some(h => h === q) ? 0 : hay.some(h => h && h.startsWith(q)) ? 1 : hay.some(h => h && h.includes(q)) ? 2 : 9;
+      if (sc < 9) res.push([sc - (a.big ? 0.5 : 0), 'ap', a]);
+    }
+    for (const p of JW.places) { if (p.k !== 'c') continue; const n = norm(p.n); if (n.startsWith(q) || n.includes(q)) res.push([n === q ? 0.2 : 1.5, 'pl', p]); }
+    res.sort((a, b) => a[0] - b[0]);
+    for (const [, kind, it] of res.slice(0, 12)) {
+      const b = document.createElement('button'); b.type = 'button';
+      b.textContent = kind === 'ap' ? `✈ ${it.name}（${it.iata || it.icao}）${it.cc && it.cc !== 'JP' ? '・' + (COUNTRY_JA[it.cc] || it.cc) : ''}` : `● ${it.n}`;
+      b.addEventListener('click', () => {
+        mapv.lat = it.lat; mapv.lon = it.lon; mapv.zoom = kind === 'ap' ? 10 : 9; mapv.follow = false;
+        if (kind === 'ap') mapInfo(it);
+        sOut.hidden = true; sIn.blur();
+      });
+      sOut.append(b);
+    }
+    if (!res.length) { const d = document.createElement('div'); d.textContent = '見つかりませんでした'; sOut.append(d); }
+    sOut.hidden = false;
+  });
+  sIn.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') { const f = sOut.querySelector('button'); if (f) f.click(); } if (e.key === 'Escape') { sIn.value = ''; sOut.hidden = true; sIn.blur(); } });
+  $('map-me').addEventListener('click', () => { mapv.follow = true; });
+  $('map-zin').addEventListener('click', () => zoomAt(0.7, cv.clientWidth / 2, cv.clientHeight / 2));
+  $('map-zout').addEventListener('click', () => zoomAt(-0.7, cv.clientWidth / 2, cv.clientHeight / 2));
+  $('mi-dest').addEventListener('click', () => {
+    const ap = mapv.sel; if (!ap) return;
+    JW.dest = JW.dest === ap ? null : ap; game.destIcao = JW.dest ? ap.icao : ''; savePrefs(); game.nearDestToast = false;
+    $('sel-dest').value = game.destIcao;
+    toast(JW.dest ? `目的地：${ap.name}（方位計の紫の印と地図の紫の線が目印）` : '目的地を解除しました', 2600); mapInfo(ap);
+  });
+  const go = async mode => {
+    const ap = mapv.sel; if (!ap) return;
+    toggleMap(false); game.depIcao = ap.icao; savePrefs();
+    await loadMap('japan'); startMode(mode);
+  };
+  $('mi-dep').addEventListener('click', () => go('runway'));
+  $('mi-app').addEventListener('click', () => go('landing'));
+  $('mi-drive').addEventListener('click', () => go('drive'));
+  // drive where the map is centred: near the scenery already loaded, the car just moves there; further away
+  // (or from the menu) the nearest airport becomes the starting point
+  $('map-drive').addEventListener('click', async () => {
+    if (!JW.active && game.state === 'flying') { toast('ドライブは日本・世界の地図（場所の選択）で使えます', 2200); return; }
+    const la = mapv.lat, lo = mapv.lon;
+    if (game.state === 'flying' && JW.active) {
+      const w = geoToWorld(la, lo);
+      if (Math.hypot(w[0] - sim.pos[0], w[1] - sim.pos[2]) < 60000 || CAR.on && Math.hypot(w[0] - CAR.pos[0], w[1] - CAR.pos[2]) < 60000) { toggleMap(false); driveStart(la, lo); return; }
+    }
+    const ap = JW.airports ? nearestAirport(la, lo, 400000) : null;
+    if (!ap) { toast('近くに出発できる空港が見つかりませんでした', 2000); return; }
+    toggleMap(false); game.depIcao = ap.icao; savePrefs();
+    await loadMap('japan'); startMode('drive');
+    setTimeout(() => { if (CAR.on) driveStart(la, lo); }, 400);
+  });
+}
+
+// ---------- main loop ----------
+let lastT = performance.now(), acc = 0;
+const STEP = 1 / 120;
+function frame(now) {
+  const rdt = Math.max(0, (now - lastT) / 1000), dt = Math.min(0.1, rdt); lastT = now; dynRes(rdt);   // (the real frame time for the frame rate: the simulation's step is capped)
+  R.time += dt;
+  if (game.state === 'loading') { requestAnimationFrame(frame); return; }
+  devFrameStart(now);                                                 // (the developer panel's timing, p_dev.js)
+  try {
+    updateControls(dt);
+    if (game.state === 'flying' && CAR.on) { carStep(dt); if (JW.active) jwFrame(dt); }
+    else if (game.state === 'flying') {
+      const ts = game.timeScale || 1;
+      acc += dt * ts; let n = 0;
+      while (acc >= STEP && n < 14 * ts) {
+        const prev = sim.pos.slice();
+        game.t += STEP;
+        physicsStep(STEP, game.t);
+        if (sim.crashed) break;
+        if (game.mode === 'rings' && !game.ringDone) { game.ringTime += STEP; updateRings(prev); }
+        if (game.state !== 'flying') break;
+        acc -= STEP; n++;
+      }
+      if (n >= 14 * ts) acc = 0;
+      if (JW.active) jwFrame(dt * ts);
+      if (JW.active && game.state === 'flying') { const hit = cityCollide(); if (hit) crash(hit); }
+      if (game.state === 'flying') gameChecks(dt);
+      cpFrame(dt * ts);
+      if (SCHOOL.active && game.state === 'flying') schoolUpdate(dt * ts);
+      if (game.state === 'flying' && game.mode === 'tutorial') tutUpdate(dt);
+    } else { acc = 0; cpFrame(0); }
+    if (game.state === 'crashed') {
+      game.resultTimer -= dt;
+      if (game.resultTimer <= 0 && game.pendingResult) { const r = game.pendingResult; game.pendingResult = null; showResult(r); }
+    }
+    updateParticles(dt);
+    updateCamera(dt);
+    if (!JW.active) updateTrees(cam.eye); else { jwUpdateClouds(); cityUpdate(); }
+    rxRun();                                                          // (the workers' results, a few ms' worth: p6_city.js)
+    render();
+    googPerf(dt);
+    drawHUD();
+    if (mapv.open) drawMapView();
+    audio.update(dt);
+    if ((R.frame & 15) === 0) { carButton(); devHoldArea(); }
+    devFrameEnd();
+  } catch (err) {
+    console.error(err);
+    $('load-text').textContent = 'エラーが発生しました: ' + err.message;
+    $('loading').hidden = false;
+    return;
+  }
+  requestAnimationFrame(frame);
+}
+
+async function init() {
+  setLoad(0.02);
+  await tick();
+  try { await Promise.race([document.fonts.load('bold 44px "B612 Mono"'), new Promise(r => setTimeout(r, 1500))]); } catch (e) { /* fonts optional */ }
+  buildPrograms();
+  for (const A of AIRCRAFT) A.parts = buildAircraftParts(A);
+  if (!AIRCRAFT.some(a => a.id === game.acftId)) game.acftId = 'trainer';
+  if (game.mapId !== 'japan' && !MAPS.some(m => m.id === game.mapId)) game.mapId = 'japan';
+  setAircraft(game.acftId);
+  initParticles();
+  setupMenu();
+  setupSchool();
+  setupAI();
+  setupCustom();
+  setupGoogle();
+  setupBook();
+  setSound(game.sound);
+  await loadMap(game.mapId);
+  lastT = performance.now();
+  requestAnimationFrame(frame);
+}
+window.SORAJIMA = { sim, game, cam, startMode, spawn, course, RWY, terrainHeight, loadMap, setAircraft };
+init().catch(err => { console.error(err); $('load-text').textContent = '起動できませんでした: ' + err.message; });
+</script>
+</body>
+</html>
+

@@ -1,0 +1,121 @@
+# tools/bld/ のスクリプト（3 本）
+
+
+===== tools/bld/ctx.py =====
+# The context the page uses to choose each PLATEAU building's type and its street side (PLATEAU's 2024 Yokohama tiles
+# have no use or storeys, only the height): OSM's building outlines with their tags, shop / amenity / office points,
+# landuse areas, road centrelines. -> models/area/ctx.bin (CTX1: 'CTX1', header length, JSON header, buffers)
+# Positions: east/north from the Kannai spot in units of 0.5 m (int16). Usage: python3 ctx.py osm_bldg.json osm_ways.json out
+import sys, json, struct, numpy as np
+sys.path.insert(0, '../area_a'); import geo
+B = json.load(open(sys.argv[1]))['elements']; W = json.load(open(sys.argv[2]))['elements']; out = sys.argv[3]
+BT = {'house': 1, 'detached': 1, 'semidetached_house': 1, 'bungalow': 1, 'apartments': 2, 'residential': 2, 'dormitory': 2, 'terrace': 2,
+      'office': 3, 'commercial': 3, 'hotel': 3, 'retail': 4, 'supermarket': 4, 'kiosk': 4, 'industrial': 5, 'warehouse': 5, 'factory': 5,
+      'manufacture': 5, 'storage_tank': 5, 'school': 6, 'university': 6, 'public': 6, 'hospital': 6, 'college': 6, 'government': 6, 'civic': 6,
+      'train_station': 6, 'shrine': 7, 'temple': 7, 'church': 7, 'roof': 8, 'garage': 9, 'shed': 9, 'parking': 9}
+FOOD = {'restaurant', 'cafe', 'fast_food', 'bar', 'pub', 'izakaya', 'food_court', 'ice_cream'}
+def P(geom): a = np.array([[q['lat'], q['lon']] for q in geom]); return geo.enu(a[:, 0], a[:, 1], np.zeros(len(a)) + 40)[:, :2]
+def q(p): return np.clip(np.round(p * 2), -32767, 32767).astype(np.int16)
+bp, bn, bt, bl = [], [], [], []; pts = []; lp, ln, lt = [], [], []
+LU = {'residential': 1, 'commercial': 2, 'retail': 2, 'industrial': 3}
+for e in B:
+    t = e.get('tags', {})
+    if e['type'] == 'way' and 'building' in t and e.get('geometry'):
+        p = P(e['geometry'])
+        try: lv = int(float(str(t.get('building:levels', '0')).split(';')[0]))
+        except Exception: lv = 0
+        bp.append(q(p)); bn.append(len(p)); bt.append(BT.get(t['building'], 0)); bl.append(min(lv, 255))
+    if e['type'] == 'node' and any(k in t for k in ('shop', 'amenity', 'office', 'craft')):
+        a = t.get('amenity'); c = 1 if 'shop' in t else 2 if a in FOOD else 4 if 'office' in t else 5 if 'craft' in t else 3
+        if a in ('parking', 'bicycle_parking', 'vending_machine', 'bench', 'waste_basket', 'toilets', 'post_box', 'telephone', 'parking_entrance', 'motorcycle_parking', 'drinking_water'): continue
+        pts.append((*geo.enu(np.array([e['lat']]), np.array([e['lon']]), np.array([40.0]))[0, :2], c))
+    if e['type'] == 'way' and t.get('landuse') in LU and e.get('geometry'):
+        p = P(e['geometry']); lp.append(q(p)); ln.append(len(p)); lt.append(LU[t['landuse']])
+RC = {'trunk': 1, 'primary': 1, 'secondary': 2, 'tertiary': 3, 'unclassified': 4, 'residential': 4, 'living_street': 5, 'service': 6, 'pedestrian': 5,
+      'trunk_link': 1, 'primary_link': 1, 'secondary_link': 2, 'tertiary_link': 3}
+rp, rn, rc, rw = [], [], [], []
+for e in W:
+    t = e.get('tags', {})
+    if e['type'] != 'way' or t.get('highway') not in RC or not e.get('geometry') or t.get('bridge') or t.get('tunnel'): continue
+    p = P(e['geometry']); c = RC[t['highway']]
+    try: lanes = int(t.get('lanes', 0))
+    except Exception: lanes = 0
+    w = lanes * 3.25 + 2 if lanes else {1: 14, 2: 11, 3: 8, 4: 5, 5: 4, 6: 4}[c]
+    rp.append(q(p)); rn.append(len(p)); rc.append(c); rw.append(min(int(w * 2), 255))
+bufs = []; off = [0]
+def add(a):
+    b = np.ascontiguousarray(a).tobytes(); pad = (-len(b)) % 4; bufs.append(b + b'\0' * pad); o = off[0]; off[0] += len(b) + pad; return [o, len(b)]
+pa = np.array(pts, np.float32) if pts else np.zeros((0, 3), np.float32)
+H = {'v': 1, 'unit': 0.5, 'bldg': {'p': add(np.concatenate(bp)), 'n': add(np.array(bn, np.uint32)), 't': add(np.array(bt, np.uint8)), 'l': add(np.array(bl, np.uint8))},
+     'poi': {'p': add(q(pa[:, :2])), 'c': add(pa[:, 2].astype(np.uint8))},
+     'land': {'p': add(np.concatenate(lp) if lp else np.zeros((0, 2), np.int16)), 'n': add(np.array(ln, np.uint32)), 't': add(np.array(lt, np.uint8))},
+     'road': {'p': add(np.concatenate(rp)), 'n': add(np.array(rn, np.uint32)), 'c': add(np.array(rc, np.uint8)), 'w': add(np.array(rw, np.uint8))},
+     'codes': {'bldg': BT, 'poi': {'shop': 1, 'food': 2, 'amenity': 3, 'office': 4, 'craft': 5}, 'land': LU, 'road': RC}, 'source': 'OpenStreetMap contributors (ODbL)'}
+hj = json.dumps(H).encode(); hj += b' ' * ((-len(hj)) % 4)
+with open(out, 'wb') as f: f.write(b'CTX1'); f.write(struct.pack('<I', len(hj))); f.write(hj); [f.write(b) for b in bufs]
+import os; print('buildings', len(bn), 'tagged', sum(1 for x in bt if x), 'pois', len(pts), 'landuse', len(ln), 'roads', len(rn), 'size KB', os.path.getsize(out) // 1024)
+
+
+===== tools/bld/make_leaf_cluster.py =====
+# The near trees' leaf card (models/tex/tree/leaf_cluster.png): Poly Haven's jacaranda_tree leaves (CC0,
+# https://polyhaven.com/a/jacaranda_tree; jacaranda_tree_leaves_diff_1k.png and _alpha_1k.png in SRC), its three fronds
+# cut out and scattered round a crown, darker inside and lower down (self-shadow), the alpha made hard (alpha-tested)
+import sys, random, numpy as np
+from PIL import Image, ImageEnhance
+SRC = sys.argv[1] if len(sys.argv) > 1 else '.'; OUT = sys.argv[2] if len(sys.argv) > 2 else '../../models/tex/tree/leaf_cluster.png'
+d = Image.open(f'{SRC}/jacaranda_tree_leaves_diff_1k.png').convert('RGB'); a = Image.open(f'{SRC}/jacaranda_tree_leaves_alpha_1k.png').convert('L')
+rgba = d.copy(); rgba.putalpha(a)
+fr = [rgba.crop(b) for b in [(140, 50, 1010, 480), (0, 330, 440, 710), (260, 590, 1020, 1000)]]   # (the fronds on the 1k sheet)
+N = 512; out = Image.new('RGBA', (N, N), (0, 0, 0, 0)); rnd = random.Random(5)
+for i in range(70):
+    f = fr[rnd.randrange(3)]; s = rnd.uniform(0.16, 0.30); f = f.resize((max(8, int(f.width * s)), max(8, int(f.height * s))), Image.LANCZOS)
+    f = f.rotate(rnd.uniform(0, 360), expand=True, resample=Image.BICUBIC)
+    r = (rnd.random() ** 0.6) * 170; t = rnd.uniform(0, 6.283); cx = 256 + np.cos(t) * r; cy = 256 + np.sin(t) * r * 0.85
+    shade = 0.55 + 0.45 * (r / 170) * 0.6 + 0.4 * (0.5 - (cy - 256) / 512)
+    f = ImageEnhance.Brightness(f).enhance(min(1.15, max(0.45, shade)) * rnd.uniform(0.85, 1.1))
+    out.alpha_composite(f, (int(cx - f.width / 2), int(cy - f.height / 2)))
+A = np.asarray(out).copy(); A[..., 3] = np.where(A[..., 3] > 110, 255, 0)
+Image.fromarray(A).save(OUT, optimize=True)
+
+
+===== tools/bld/pack_facade_tex.py =====
+# The facade materials as two stacked images for a texture array (one layer per material, read in the page as a
+# DataArrayTexture): albedo.jpg (1024 x 1024 per layer) and nr.jpg (512 x 512 per layer: R, G = the normal's x, y
+# (OpenGL convention), B = roughness). Sources: Poly Haven (CC0, https://polyhaven.com/license), 1k JPG sets, in SRC.
+# Materials a building's colour tints are made grey with their mean brightness at 0.78 (the pattern kept); the others
+# keep their colour. Sources fetched with `--fetch` (1k JPG from dl.polyhaven.org into SRC). Each layer's real size (metres per image) is in LAYERS: the page tiles them at that size.
+import sys, os, json, numpy as np
+from PIL import Image
+args = [a for a in sys.argv[1:] if not a.startswith('--')]
+SRC = args[0] if len(args) > 0 else '.'; OUT = args[1] if len(args) > 1 else '../../models/tex/facade'
+LAYERS = [  # (name, Poly Haven id, metres per image, tinted)
+    ('render', 'white_stucco', 2.0, True), ('tile', 'rectangular_facade_tiles', 2.0, True), ('mosaic', 'rounded_square_tiled_wall', 2.0, True),
+    ('concrete', 'concrete_wall_004', 2.0, True), ('siding', 'exterior_wall_cladding_03', 1.96, True), ('brick', 'exterior_wall_cladding_02', 1.99, False),
+    ('metal', 'box_profile_metal_sheet', 2.0, True), ('shutter', 'painted_metal_shutter', 2.0, True), ('slate', 'roof_slates_03', 3.0, False), ('kawara', 'grey_roof_tiles', 3.0, False),
+    # (added: fair-faced concrete panels, tiled facades, a beige render, corrugated slate (factories, warehouses), concrete blocks)
+    ('rcpanel', 'concrete_panels', 8.0, True), ('ctile', 'concrete_tile_facade', 2.09, True), ('beige', 'beige_wall_001', 3.0, False),
+    ('slatewave', 'asbestos_sheet', 2.0, True), ('block', 'concrete_block_wall', 2.0, True)]
+if '--fetch' in sys.argv:
+    import urllib.request
+    os.makedirs(SRC, exist_ok=True)
+    for _, pid, _, _ in LAYERS:
+        for k in ('diff', 'nor_gl', 'rough'):
+            f = f'{SRC}/{pid}_{k}_1k.jpg'
+            if not os.path.exists(f): urllib.request.urlretrieve(f'https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/{pid}/{pid}_{k}_1k.jpg', f)
+A = []; N = []
+for name, pid, size, tint in LAYERS:
+    a = np.asarray(Image.open(f'{SRC}/{pid}_diff_1k.jpg').convert('RGB').resize((1024, 1024), Image.LANCZOS)).astype(np.float32) / 255
+    if tint:
+        g = a @ np.array([0.2126, 0.7152, 0.0722]); g = g / max(g.mean(), 1e-3) * 0.78
+        a = np.repeat(np.clip(g, 0, 1)[..., None], 3, 2)
+    elif name == 'kawara':                                              # (Japanese kawara: dark silver grey, the moss taken out)
+        g = a @ np.array([0.2126, 0.7152, 0.0722]); g = g / max(g.mean(), 1e-3) * 0.30; a = np.repeat(np.clip(g, 0, 1)[..., None], 3, 2) * np.array([0.95, 0.98, 1.05])
+    A.append((np.clip(a, 0, 1) * 255).astype(np.uint8))
+    n = np.asarray(Image.open(f'{SRC}/{pid}_nor_gl_1k.jpg').convert('RGB').resize((512, 512), Image.LANCZOS))
+    r = np.asarray(Image.open(f'{SRC}/{pid}_rough_1k.jpg').convert('L').resize((512, 512), Image.LANCZOS))
+    N.append(np.dstack([n[..., 0], n[..., 1], r]))
+os.makedirs(OUT, exist_ok=True)
+Image.fromarray(np.concatenate(A, 0)).save(f'{OUT}/albedo.jpg', quality=88)
+Image.fromarray(np.concatenate(N, 0)).save(f'{OUT}/nr.jpg', quality=90)
+json.dump({'layers': [{'name': n, 'source': f'https://polyhaven.com/a/{p}', 'size': s, 'tinted': t} for n, p, s, t in LAYERS], 'license': 'CC0 (Poly Haven)'}, open(f'{OUT}/layers.json', 'w'), ensure_ascii=False, indent=1)
+print('layers', len(LAYERS), os.path.getsize(f'{OUT}/albedo.jpg') // 1024, 'KB', os.path.getsize(f'{OUT}/nr.jpg') // 1024, 'KB')

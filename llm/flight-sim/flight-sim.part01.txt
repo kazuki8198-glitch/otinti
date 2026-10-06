@@ -1,0 +1,2760 @@
+# flight-sim.html の 1/8 部分（元の 1〜2757 行目、データは省略）
+# 全体の説明は 00_overview.md
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>空島フライト</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=B612:wght@400;700&family=B612+Mono:wght@400;700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#07101d;
+  --panel:rgba(8,17,31,.84);
+  --panel-solid:#0c1a2e;
+  --line:rgba(150,176,206,.26);
+  --ink:#e8f0fa;
+  --muted:#92a5be;
+  --cyan:#5fd4ff;
+  --magenta:#e36bdc;
+  --amber:#ffb547;
+  --red:#ff5a4f;
+  --green:#58e08c;
+  --ui:"B612","Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --jp:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --mono:"B612 Mono","Zen Kaku Gothic New",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--jp);
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none;touch-action:none}
+canvas#hud{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+.screen{position:fixed;inset:0;display:flex;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+
+/* loading */
+#loading{align-items:center;justify-content:center;background:var(--bg)}
+.load-box{width:min(360px,100%);display:grid;gap:12px}
+.load-box .brand{font:700 28px/1.2 var(--jp);letter-spacing:.06em}
+.load-box .eyebrow{margin:0}
+#load-text{color:var(--muted);font-size:14px}
+.bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--cyan);transition:width .15s}
+
+/* menu */
+#menu{align-items:flex-end;justify-content:flex-start;gap:16px;background:linear-gradient(90deg,rgba(5,11,20,.86) 0,rgba(5,11,20,.6) 560px,rgba(5,11,20,0) 980px);overflow-y:auto;touch-action:pan-y}
+
+.eyebrow{font:700 11px/1 var(--ui);letter-spacing:.22em;color:var(--cyan);text-transform:uppercase}
+h1{margin:6px 0 0;font:700 clamp(34px,6vw,52px)/1.05 var(--jp);letter-spacing:.04em;text-wrap:balance}
+.lede{margin:8px 0 0;color:var(--muted);font-size:14px;line-height:1.6}
+.missions{display:grid;gap:6px}
+.mission{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:14px;text-align:left;padding:8px 14px;border-radius:6px;border:1px solid var(--line);background:var(--panel);cursor:pointer;transition:border-color .15s,background .15s}
+.mission:hover{border-color:var(--cyan);background:rgba(20,40,66,.9)}
+.mission .code{font:700 12px/1 var(--mono);color:var(--cyan);width:34px;letter-spacing:.04em}
+.mission .m-title{font:700 16px/1.3 var(--jp)}
+.mission .m-sub{grid-column:2;font:12px/1.5 var(--jp);color:var(--muted)}
+.mission .best{color:var(--amber);font-family:var(--mono)}
+.opts{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;font-size:13px;color:var(--muted)}
+.opt-grid{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;justify-items:start}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{background:transparent;border:0;padding:6px 12px;cursor:pointer;color:var(--muted)}
+.seg button.on{background:var(--cyan);color:#04121f;font-weight:700}
+.chk{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+.chk input{accent-color:var(--cyan);width:16px;height:16px}
+.resume{padding:12px 14px;border-radius:6px;border:1px solid var(--cyan);background:rgba(95,212,255,.14);font:700 15px var(--jp);cursor:pointer;text-align:left}
+.keys{margin-top:auto;margin-left:auto;width:min(330px,100%);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+.keys h2{margin:0 0 10px;font:700 11px/1 var(--ui);letter-spacing:.22em;color:var(--muted)}
+.keys table{width:100%;border-collapse:collapse;font-size:12.5px}
+.keys td{padding:4px 0;vertical-align:top;border-top:1px solid rgba(150,176,206,.12)}
+.keys tr:first-child td{border-top:0}
+.keys td:last-child{text-align:right;font-family:var(--mono);color:var(--cyan);white-space:nowrap;padding-left:10px}
+@media (max-width:860px){.keys{display:none}}
+@media (pointer:coarse){.keys{display:none}}
+
+/* results */
+#result{align-items:center;justify-content:center;background:rgba(4,9,17,.55)}
+.result-panel{width:min(420px,100%);background:var(--panel-solid);border:1px solid var(--line);border-radius:8px;padding:22px 22px 18px;display:grid;gap:14px}
+.result-panel h2{margin:4px 0 0;font:700 28px/1.2 var(--jp)}
+#res-list{margin:0;display:grid;grid-template-columns:1fr auto;gap:6px 16px;font-size:14px}
+#res-list dt{color:var(--muted)}
+#res-list dd{margin:0;text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+#res-list .total{font-size:18px;color:var(--amber);font-weight:700}
+.res-actions{display:flex;gap:10px;flex-wrap:wrap}
+.res-actions button{flex:1;padding:11px 14px;border-radius:6px;border:1px solid var(--line);background:transparent;font:700 14px var(--jp);cursor:pointer}
+.res-actions button.primary{background:var(--cyan);border-color:var(--cyan);color:#04121f}
+
+/* toast */
+#toast{position:fixed;left:50%;top:max(14px,env(safe-area-inset-top));transform:translateX(-50%);display:grid;gap:6px;justify-items:center;pointer-events:none;z-index:5;width:max-content;max-width:calc(100% - 32px)}
+#toast div{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:6px 14px;font:13px/1.4 var(--jp);transition:opacity .4s}
+
+/* touch controls */
+#touch{position:fixed;inset:0;pointer-events:none;z-index:3}
+.stick{position:absolute;left:max(22px,env(safe-area-inset-left));bottom:max(22px,env(safe-area-inset-bottom));width:150px;height:150px;border-radius:50%;border:1.5px solid rgba(232,240,250,.35);background:rgba(8,17,31,.35);pointer-events:auto;touch-action:none}
+.stick::before,.stick::after{content:"";position:absolute;background:rgba(232,240,250,.18)}
+.stick::before{left:50%;top:10px;bottom:10px;width:1px}
+.stick::after{top:50%;left:10px;right:10px;height:1px}
+.stick-knob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:rgba(95,212,255,.55);border:1.5px solid var(--cyan)}
+.thr{position:absolute;right:max(22px,env(safe-area-inset-right));bottom:max(22px,env(safe-area-inset-bottom));width:56px;height:170px;border-radius:8px;border:1.5px solid rgba(232,240,250,.35);background:rgba(8,17,31,.35);pointer-events:auto;overflow:hidden;touch-action:none}
+.thr-fill{position:absolute;left:0;right:0;bottom:0;background:rgba(88,224,140,.45);border-top:2px solid var(--green)}
+.thr-label{position:absolute;left:0;right:0;top:6px;text-align:center;font:700 11px var(--mono);color:var(--ink)}
+.tbtns{position:absolute;right:calc(max(22px,env(safe-area-inset-right)) + 70px);bottom:max(22px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,52px);gap:6px;pointer-events:auto}
+.tbtns button{height:44px;padding:0 2px;border-radius:6px;border:1px solid rgba(232,240,250,.3);background:rgba(8,17,31,.6);font:700 12px var(--jp);white-space:nowrap;touch-action:none}
+.tbtns button.on{border-color:var(--amber);color:var(--amber)}
+#rotate-hint{display:none}
+@media (orientation:portrait) and (pointer:coarse){
+  #rotate-hint{display:block;position:fixed;left:50%;top:40%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 14px;font-size:13px;z-index:4;pointer-events:none;white-space:nowrap}
+}
+
+.menu-panel{width:min(840px,100%);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px 26px;align-items:end;margin-top:auto}
+.col-a,.col-b{display:grid;gap:14px;align-content:end;min-width:0}
+.field{min-width:0}.field select{width:100%;min-width:0}
+.mission-head{color:var(--muted)}
+@media (max-width:860px){.menu-panel{grid-template-columns:1fr}}
+/* setup fields */
+.setup{display:grid;gap:10px}
+.field{display:grid;gap:4px}
+.f-label{font:700 11px/1 var(--ui);letter-spacing:.14em;color:var(--muted)}
+.field select{font:700 15px var(--jp);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:9px 10px;cursor:pointer}
+.field select:hover{border-color:var(--cyan)}
+.f-desc{font:12px/1.55 var(--jp);color:var(--muted)}
+.f-desc .warn{color:var(--amber)}
+.f-desc .stars{color:var(--amber);letter-spacing:.05em}
+.guide-btn{padding:10px 14px;border-radius:6px;border:1px dashed var(--cyan);background:transparent;color:var(--cyan);font:700 13px var(--jp);cursor:pointer;text-align:left}
+.credit{margin:0;font-size:10.5px;color:var(--muted);opacity:.8}
+.keys-note{margin:10px 0 0;font-size:11.5px;line-height:1.6;color:var(--muted)}
+.seg button:not(.on):hover{color:var(--ink)}
+/* guide */
+#guide{align-items:center;justify-content:center;background:rgba(4,9,17,.72);z-index:6}
+.guide-panel{width:min(760px,100%);max-height:100%;display:flex;flex-direction:column;background:var(--panel-solid);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.guide-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px 8px}
+.guide-head h2{margin:0;font:700 20px var(--jp)}
+#guide-close{background:transparent;border:1px solid var(--line);border-radius:5px;padding:6px 10px;cursor:pointer}
+.tabs{display:flex;gap:4px;padding:0 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs button{background:transparent;border:0;border-bottom:2px solid transparent;padding:9px 12px;color:var(--muted);font:700 13px var(--jp);cursor:pointer}
+.tabs button.on{color:var(--cyan);border-bottom-color:var(--cyan)}
+.guide-body{overflow-y:auto;padding:14px 20px 20px;font-size:13.5px;line-height:1.75;touch-action:pan-y}
+.guide-body h3{margin:16px 0 6px;font:700 14px var(--jp);color:var(--cyan)}
+.guide-body h3:first-child{margin-top:0}
+.guide-body p{margin:6px 0}
+.guide-body ol,.guide-body ul{margin:4px 0;padding-left:1.4em}
+.gl{margin:0;display:grid;gap:4px 0}
+.gl dt{font-weight:700;margin-top:8px}
+.gl dd{margin:0;color:#c9d6e6}
+.gt{border-collapse:collapse;width:100%}
+.gt td{padding:5px 6px;border-top:1px solid rgba(150,176,206,.14);vertical-align:top}
+.gt td:first-child{white-space:nowrap;width:1%}
+.nt{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:8px}
+.nt th,.nt td{padding:5px 6px;border-top:1px solid rgba(150,176,206,.14);text-align:right;white-space:nowrap}
+.nt th{color:var(--muted);font-weight:700;font-size:11px}
+.nt td:first-child,.nt th:first-child{text-align:left;white-space:normal}
+.nt tr.grp td{color:var(--cyan);font-weight:700;text-align:left;padding-top:12px}
+.nt td.nx{color:var(--muted)}
+.nt td small{color:var(--muted);font-weight:400}
+.num-wrap{overflow-x:auto}
+.note-box{border:1px solid var(--cyan);border-radius:6px;padding:8px 10px;background:rgba(95,212,255,.08)}
+kbd{font:700 11.5px var(--mono);background:rgba(95,212,255,.12);border:1px solid rgba(95,212,255,.4);border-radius:4px;padding:1px 5px;color:var(--cyan)}
+.guide-demo{margin-bottom:6px;padding:9px 12px;border-radius:6px;border:1px solid var(--cyan);background:rgba(95,212,255,.12);font:700 13px var(--jp);cursor:pointer}
+#callout{position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);width:min(620px,calc(100% - 24px));max-height:46%;overflow-y:auto;z-index:6;
+  background:var(--panel);border:1px solid var(--cyan);border-radius:8px;padding:10px 14px;touch-action:pan-y}
+.co-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#callout-close{background:var(--cyan);color:#04121f;border:0;border-radius:5px;padding:6px 10px;font:700 12px var(--jp);cursor:pointer}
+#callout-list{margin:8px 0 0;padding-left:1.5em;font-size:12.5px;line-height:1.6}
+#callout-list b{color:var(--cyan)}
+#tut-next{justify-self:start;background:var(--cyan);color:#04121f;border:0;border-radius:5px;padding:6px 14px;font:700 13px var(--jp);cursor:pointer}
+@media (max-height:520px){.setup{grid-template-columns:1fr 1fr}.f-desc{display:none}.lede{display:none}.credit{display:none}}
+
+
+/* ---------- flight school ---------- */
+#hood{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 30%,rgba(28,32,38,.97),rgba(12,14,17,.99));display:flex;justify-content:center;align-items:flex-start;padding-top:18vh}
+#hood span{font:700 13px var(--jp);color:#6d7680;letter-spacing:.1em}
+#school{background:rgba(5,11,20,.94);align-items:stretch;justify-content:center;z-index:5}
+.sch-wrap{width:min(1160px,100%);display:flex;flex-direction:column;gap:14px;min-height:0}
+.sch-head{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:flex-end;justify-content:space-between}
+.sch-head h2{margin:2px 0 0;font:700 30px var(--jp)}
+.sch-log{display:flex;gap:22px}
+.sch-log div{display:grid}
+.sch-log b{font:700 24px var(--mono);color:var(--cyan);font-variant-numeric:tabular-nums}
+.sch-log span{font-size:11px;color:var(--muted)}
+.sch-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sch-actions select{font:700 14px var(--jp);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 8px}
+.sch-actions button,.sch-sub{background:transparent;border:1px solid var(--line);border-radius:6px;padding:8px 12px;color:var(--ink);font:700 13px var(--jp);cursor:pointer}
+.sch-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;min-height:0;flex:1}
+.sch-stages{overflow-y:auto;display:grid;gap:14px;align-content:start;padding-right:4px;touch-action:pan-y;max-height:calc(100vh - 150px)}
+.sch-stages h3{margin:0;font:700 14px var(--jp);color:var(--amber)}
+.sch-stages p{margin:2px 0 6px;font-size:12px;color:var(--muted)}
+.sch-stages section{display:grid;gap:5px}
+.sch-item{display:grid;grid-template-columns:30px 1fr;grid-template-rows:auto auto;column-gap:10px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;cursor:pointer;color:var(--ink)}
+.sch-item:hover{border-color:var(--cyan)}
+.sch-item.sel{border-color:var(--cyan);background:rgba(95,212,255,.12)}
+.sch-item.done .sch-grade{background:var(--green);color:#04121f}
+.sch-grade{grid-row:1/3;align-self:center;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font:700 13px var(--mono)}
+.sch-t{font:700 14px var(--jp)} .sch-g{font-size:11.5px;color:var(--muted)}
+.sch-brief{overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 20px;touch-action:pan-y;max-height:calc(100vh - 150px)}
+.sch-brief h2{margin:0 0 4px;font:700 22px var(--jp)}
+.sch-brief h3{margin:14px 0 4px;font:700 14px var(--jp);color:var(--cyan)}
+.sch-brief li{margin:4px 0;line-height:1.65}
+.sch-goal{color:var(--amber);margin:0}
+.sch-std{font:600 13px var(--mono);background:rgba(95,212,255,.08);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.sch-note{font-size:11.5px;color:var(--muted)}
+.sch-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted)}
+.sch-go{background:var(--cyan);color:#04121f;border:0;border-radius:6px;padding:10px 18px;font:700 15px var(--jp);cursor:pointer}
+.sq-panel,.sd-panel{width:min(760px,100%)}
+.sq-q{font:700 17px/1.6 var(--jp)}
+.sq-opts{display:grid;gap:8px;margin:10px 0}
+.sq-opts button{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 12px;color:var(--ink);font:14px var(--jp);cursor:pointer}
+.sq-opts button:hover:not(:disabled){border-color:var(--cyan)}
+.sq-opts button.ok{border-color:var(--green);background:rgba(58,214,122,.15)} .sq-opts button.ng{border-color:var(--red);background:rgba(255,90,80,.15)}
+.sq-why{padding:10px 12px;border-radius:6px;border:1px solid var(--line)} .sq-why.ok{border-color:var(--green)} .sq-why.ng{border-color:var(--red)}
+.sq-result{font:700 18px var(--jp)} .sq-result.ok{color:var(--green)} .sq-result.ng{color:var(--red)}
+.sd-sub{margin:4px 0 0;font-size:13px;color:var(--muted)}
+.sd-grade{font:700 44px var(--mono);width:74px;height:74px;border-radius:50%;display:grid;place-items:center;border:3px solid var(--line)}
+.sd-grade.ok{color:var(--green);border-color:var(--green)} .sd-grade.ng{color:var(--red);border-color:var(--red)}
+.sd-t{width:100%;border-collapse:collapse;font-size:13px}
+.sd-t td{padding:5px 6px;border-top:1px solid rgba(150,176,206,.14)}
+.sd-t td:first-child{width:1.5em;font-weight:700} .sd-t tr.ok td:first-child{color:var(--green)} .sd-t tr.ng td:first-child{color:var(--red)} .sd-t tr.ng td{background:rgba(255,90,80,.06)}
+.sd-t td:last-child{color:var(--muted);white-space:nowrap}
+.sd-foot{display:flex;gap:10px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line)}
+#book{z-index:6;background:rgba(4,9,17,.94);padding:0}
+.bk-wrap{display:flex;flex-direction:column;width:100%;height:100%;max-width:1320px;margin:0 auto}
+.bk-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--line)}
+.bk-head h2{margin:0;font:700 18px var(--jp)}
+.bk-head input{flex:1;min-width:140px;max-width:320px;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:#0b1422;color:var(--ink);font:14px var(--jp)}
+#bk-prog{color:var(--muted);font:700 12px var(--jp)}
+#bk-close{margin-left:auto}
+.bk-body{flex:1;min-height:0;display:grid;grid-template-columns:290px minmax(0,1fr)}
+#bk-nav{overflow-y:auto;border-right:1px solid var(--line);padding:8px 10px 20px}
+#bk-nav h3{margin:12px 4px 4px;font:700 12px var(--jp);color:var(--cyan)}
+.bk-item{display:flex;gap:8px;width:100%;text-align:left;padding:6px 8px;border:0;border-radius:5px;background:transparent;color:var(--ink);font:13px/1.4 var(--jp);cursor:pointer}
+.bk-item:hover{background:rgba(95,212,255,.08)} .bk-item.sel{background:rgba(95,212,255,.16)}
+.bk-item .bk-num{color:var(--muted);min-width:2.6em;font-variant-numeric:tabular-nums}
+.bk-item.done .bk-num::after{content:" ✓";color:var(--green)}
+.bk-none{color:var(--muted);padding:8px}
+#bk-sel{display:none;margin:8px 12px;padding:8px;border-radius:6px;background:#0b1422;color:var(--ink);border:1px solid var(--line);font:14px var(--jp)}
+#bk-art{overflow-y:auto;padding:18px 28px 28px;font-size:15px;line-height:1.85}
+#bk-chap{color:var(--muted);font:700 12px var(--jp);letter-spacing:.04em}
+#bk-title{margin:4px 0 12px;font:700 22px var(--jp)}
+#bk-body{max-width:820px}
+#bk-body h3{margin:22px 0 6px;font:700 16px var(--jp);color:var(--cyan)}
+#bk-body p{margin:8px 0} #bk-body ul,#bk-body ol{margin:6px 0;padding-left:1.4em} #bk-body li{margin:3px 0}
+#bk-body b{color:#ffd28a}
+.bk-t{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px;line-height:1.6}
+.bk-t th,.bk-t td{border:1px solid rgba(150,176,206,.22);padding:5px 8px;vertical-align:top;text-align:left}
+.bk-t th{background:rgba(95,212,255,.08);color:var(--cyan)}
+.bk-t input{width:5.5em;padding:3px 5px;background:#0b1422;color:var(--ink);border:1px solid var(--line);border-radius:4px;font:13px var(--jp)}
+.bk-key{margin:14px 0;padding:10px 14px;border-left:4px solid var(--green);background:rgba(95,212,106,.07);border-radius:4px}
+.bk-key b{color:var(--green)} .bk-key ul{margin:4px 0 0}
+.bk-warn{margin:14px 0;padding:10px 14px;border-left:4px solid var(--amber);background:rgba(255,178,62,.08);border-radius:4px}
+.bk-q{margin:12px 0;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:rgba(197,140,255,.06)}
+.bk-q summary{cursor:pointer;font-weight:700;color:#d8b4ff} .bk-q div{margin-top:8px}
+.bk-sim{margin:16px 0;padding:10px 14px;border:1px dashed var(--cyan);border-radius:6px}
+.bk-sim b{color:var(--cyan)} .bk-sim p{margin:4px 0 8px} .bk-sim button,.bk-qz{margin:4px 6px 0 0}
+.bk-formula{margin:12px 0;padding:10px 14px;background:#0b1422;border:1px solid var(--line);border-radius:6px;font:600 14px/1.7 var(--mono,monospace);overflow-x:auto}
+.bk-fig{margin:14px 0;padding:10px;background:#0b1422;border:1px solid var(--line);border-radius:8px}
+.bk-fig svg{width:100%;height:auto;max-height:340px;display:block}
+.bk-fig figcaption{margin-top:6px;color:var(--muted);font-size:12.5px}
+.bk-calc{margin:12px 0;padding:10px 14px;background:rgba(95,212,255,.05);border:1px solid var(--line);border-radius:6px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13.5px}
+.bk-calc input{width:5.5em;padding:4px 6px;background:#0b1422;color:var(--ink);border:1px solid var(--line);border-radius:4px;font:14px var(--jp)}
+.bk-calc output{flex-basis:100%;color:var(--ink)} .bk-calc .bk-t{flex-basis:100%}
+.bk-link{border:0;background:none;color:var(--cyan);cursor:pointer;font:inherit;padding:0;text-decoration:underline}
+#bk-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;max-width:820px;margin-top:26px;padding-top:14px;border-top:1px solid var(--line)}
+#bk-foot span{color:var(--muted);font-size:12px} #bk-foot button:disabled{opacity:.35}
+@media (max-width:820px){.bk-body{grid-template-columns:1fr}#bk-nav{display:none}#bk-sel{display:block}#bk-art{padding:12px 16px 24px}.bk-head input{max-width:none}}
+.book-btn{padding:10px 14px;border-radius:6px;border:1px solid #ffd66b;background:rgba(255,214,107,.08);color:#ffd66b;font:700 14px var(--jp);cursor:pointer;text-align:left}
+#ai{position:fixed;inset:0 0 0 auto;width:min(460px,100%);z-index:9;display:flex;flex-direction:column;background:var(--panel-solid);border-left:1px solid var(--line);box-shadow:-10px 0 30px rgba(0,0,0,.4)}
+#ai[hidden]{display:none!important}
+.ai-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.ai-head h2{margin:0;font:700 16px var(--jp);flex:1}
+.ai-head button{padding:6px 10px}
+#ai-ctx{padding:6px 14px;color:var(--cyan);font:700 12px var(--jp);border-bottom:1px solid var(--line)}
+#ai-log{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.ai-msg{padding:8px 12px;border-radius:8px;font-size:14px;line-height:1.75;max-width:94%}
+.ai-msg p{margin:4px 0} .ai-msg ul,.ai-msg ol{margin:4px 0;padding-left:1.3em} .ai-msg b{color:#ffd28a} .ai-msg code{background:#0b1422;padding:0 4px;border-radius:3px}
+.ai-msg.user{align-self:flex-end;background:rgba(95,212,255,.14);border:1px solid rgba(95,212,255,.3)}
+.ai-msg.ai{align-self:flex-start;background:#0f1d31;border:1px solid var(--line)}
+.ai-msg.sys{align-self:center;color:var(--muted);font-size:13px}
+.ai-think{color:var(--muted);animation:aip 1.2s ease-in-out infinite}@keyframes aip{50%{opacity:.4}}
+.ai-note{color:var(--amber);font-size:12.5px}
+.ai-refs{margin-top:6px;font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px}
+#ai-sug{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 0}
+#ai-sug button{padding:5px 9px;border-radius:14px;border:1px solid var(--line);background:transparent;color:var(--ink);font:12.5px var(--jp);cursor:pointer}
+.ai-form{display:flex;gap:8px;padding:10px 14px;align-items:flex-end}
+#ai-in{flex:1;min-height:44px;max-height:140px;resize:vertical;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:#0b1422;color:var(--ink);font:14px/1.5 var(--jp)}
+#ai-state{padding:0 14px 10px;color:var(--muted);font-size:11.5px;line-height:1.5}
+.ai-btn{padding:10px 14px;border-radius:6px;border:1px solid #b58cff;background:rgba(181,140,255,.12);color:#d8c2ff;font:700 14px var(--jp);cursor:pointer;text-align:left}
+details.goog{margin:4px 0 2px;font-size:12.5px;color:var(--muted)}
+details.goog summary{cursor:pointer;color:var(--cyan);font-weight:700}
+details.goog p{margin:6px 0;line-height:1.55}
+.goog-row{display:flex;gap:6px;margin:6px 0;flex-wrap:wrap}
+.goog-row input{flex:1;min-width:160px;padding:6px 8px;border-radius:5px;border:1px solid var(--line);background:#0b1422;color:var(--ink);font:13px var(--mono)}
+.goog-row button{padding:6px 10px;border-radius:5px;border:1px solid var(--line);background:rgba(95,212,255,.1);color:var(--ink);font:700 12px var(--jp);cursor:pointer}
+.goog-st.ok{color:var(--green)} .goog-st.ng{color:var(--amber)}
+#goog-credit{position:fixed;left:50%;bottom:4px;transform:translateX(-50%);z-index:3;pointer-events:none;font:11px/1.3 Roboto,Arial,sans-serif;color:#fff;text-shadow:0 0 3px #000,0 0 2px #000;display:flex;gap:8px;align-items:center;max-width:70vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#goog-credit b{font:700 15px/1 'Product Sans',Roboto,Arial,sans-serif;letter-spacing:-.2px}
+#goog-credit b i:nth-child(1),#goog-credit b i:nth-child(4){color:#4285f4}#goog-credit b i:nth-child(2),#goog-credit b i:nth-child(6){color:#ea4335}#goog-credit b i:nth-child(3){color:#fbbc05}#goog-credit b i:nth-child(5){color:#34a853}
+#goog-credit i{font-style:normal}
+#inst-tut,#read-quiz{align-items:center;justify-content:center;background:rgba(4,9,17,.8);z-index:6}
+.it-panel{width:min(1100px,100%);max-height:100%}
+.it-wrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;padding:14px 18px;overflow:auto}
+#it-cv{width:100%;aspect-ratio:4/3;background:#0b1422;border:1px solid var(--line);border-radius:8px;display:block}
+#it-text ul{margin:0;padding-left:1.2em;display:grid;gap:10px;font-size:15px;line-height:1.7}
+#it-text b{color:#ffd28a}
+#it-count{font:700 12px var(--jp);color:var(--muted)}
+.it-foot{display:flex;gap:10px;justify-content:space-between;align-items:center;padding:12px 18px;border-top:1px solid var(--line)}
+.it-foot button:disabled{opacity:.35}
+.rq-panel{width:min(760px,100%)}
+.rq-wrap{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;padding:14px 18px;overflow:auto;align-items:start}
+#rq-cv{width:260px;height:260px;background:#0b1422;border:1px solid var(--line);border-radius:8px}
+@media (max-width:720px){.it-wrap,.rq-wrap{grid-template-columns:1fr}#rq-cv{margin:0 auto}}
+#sch-debrief,#sch-quiz,#sch-pause{align-items:center;justify-content:center;background:rgba(4,9,17,.72);z-index:6}
+.sp-pause{width:min(520px,100%)}
+#sch-panel{position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);width:min(640px,calc(100% - 24px));background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 14px 10px;z-index:4;pointer-events:none;display:grid;gap:4px}
+#sp-step{font:700 11px var(--jp);color:var(--muted);letter-spacing:.04em}
+#sp-say{font:700 15px/1.5 var(--jp)}
+#sp-guide{font:12.5px/1.55 var(--jp);color:#9fe3ff}
+#sp-guide:empty{display:none}
+.sch-guide{margin:2px 0 6px;color:var(--muted);font-size:12.5px;line-height:1.55}
+#sp-tgt{display:flex;flex-wrap:wrap;gap:6px}
+#sp-tgt span{font:600 12px var(--mono);padding:2px 8px;border-radius:4px;border:1px solid var(--line)}
+#sp-tgt span.ok{border-color:var(--green);color:var(--green)} #sp-tgt span.warn{border-color:var(--amber);color:var(--amber)} #sp-tgt span.ng{border-color:var(--red);color:var(--red)}
+.sp-row{display:flex;gap:12px;font-size:12.5px;justify-content:space-between;flex-wrap:wrap} #sp-prog{color:var(--muted);font-family:var(--mono)} #sp-hint{color:var(--amber);font-weight:700}
+#sch-check,#sch-atc{position:fixed;right:16px;top:50%;transform:translateY(-50%);width:min(380px,calc(100% - 32px));background:var(--panel-solid);border:1px solid var(--cyan);border-radius:8px;padding:12px 14px;z-index:5;display:grid;gap:8px}
+.sc-title{font:700 14px var(--jp);color:var(--cyan)}
+#sch-check ol{margin:0;padding-left:1.4em;display:grid;gap:4px}
+#sch-check li{font-size:13px;color:var(--muted)} #sch-check li b{color:var(--ink);margin-right:8px}
+#sch-check li.cur{color:var(--ink)} #sch-check li.cur b{color:var(--cyan)} #sch-check li.ok{opacity:.55;text-decoration:line-through} #sch-check li.ng{color:var(--red)}
+.sc-foot{font-size:11.5px;color:var(--muted)}
+.atc-msg{font:600 13.5px/1.6 var(--mono);background:rgba(95,212,255,.08);border-radius:6px;padding:8px 10px}
+.atc-msg.ok{border:1px solid var(--green)} .atc-msg.ng{border:1px solid var(--red)}
+.atc-q{font-size:12px;color:var(--muted)}
+#sch-atc button{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;color:var(--ink);font:13px var(--mono);cursor:pointer}
+#sch-atc button:hover{border-color:var(--cyan)}
+.school-btn{padding:14px 16px;border-radius:6px;border:0;background:linear-gradient(90deg,#f2b33a,#ffd66b);color:#1a1204;font:700 16px var(--jp);cursor:pointer;text-align:left;display:grid;gap:2px}
+.school-btn small{font:600 11.5px var(--jp);opacity:.8}
+@media (max-width:860px){.sch-body{grid-template-columns:1fr}.sch-stages,.sch-brief{max-height:none}#school{overflow-y:auto}}
+
+/* map screen */
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.f-desc.net a{color:var(--cyan)}
+body:not(.jw) .jw-only{display:none}
+.f-desc.net{font-size:11px;opacity:.85;overflow-wrap:anywhere;user-select:text;-webkit-user-select:text}
+#mapview{position:fixed;inset:0;z-index:7;background:#9ec4de}
+#map-cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+.map-bar{position:absolute;left:0;right:0;top:0;display:flex;gap:6px;align-items:center;padding:max(10px,env(safe-area-inset-top)) 12px 10px;background:linear-gradient(rgba(8,17,31,.88),rgba(8,17,31,.6));flex-wrap:wrap}
+.map-bar strong{font:700 16px var(--jp)}
+.map-src{font-size:12px;color:var(--muted)}
+.map-sp{flex:1}
+.map-bar button{background:var(--panel-solid);border:1px solid var(--line);border-radius:5px;padding:6px 10px;font:700 13px var(--jp);cursor:pointer;color:var(--ink)}
+.map-search-wrap{position:relative;flex:1 1 220px;max-width:360px}
+#map-search{width:100%;font:14px var(--jp);color:var(--ink);background:var(--panel-solid);border:1px solid var(--line);border-radius:5px;padding:6px 10px}
+#map-results{position:absolute;left:0;right:0;top:calc(100% + 4px);display:grid;background:var(--panel-solid);border:1px solid var(--line);border-radius:6px;max-height:60vh;overflow-y:auto;z-index:3}
+#map-results[hidden]{display:none}
+#map-results button,#map-results div{text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:8px 10px;font:13px var(--jp);color:var(--ink);cursor:pointer}
+#map-results button:hover{background:rgba(95,212,255,.12)}
+#map-info{position:absolute;left:12px;bottom:40px;width:min(380px,calc(100% - 24px));background:var(--panel-solid);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:6px}
+#map-info h3{margin:0;font:700 18px var(--jp)}
+#map-info p{margin:0;font-size:12.5px;line-height:1.6;color:#c9d6e6}
+.mi-actions{display:flex;gap:6px;flex-wrap:wrap}
+.mi-actions button{flex:1;padding:8px 10px;border-radius:5px;border:1px solid var(--line);background:transparent;font:700 12.5px var(--jp);cursor:pointer;color:var(--ink);white-space:nowrap}
+.mi-actions button.primary{background:var(--magenta);border-color:var(--magenta);color:#1a0718}
+.map-legend{position:absolute;right:10px;bottom:10px;background:rgba(8,17,31,.75);border-radius:5px;padding:4px 8px;font-size:11px;color:var(--ink);max-width:calc(100% - 20px)}
+/* tutorial */
+.mission.tutorial{border-color:rgba(95,212,255,.55)}
+.mission.drive{border-color:rgba(255,214,107,.7);background:linear-gradient(90deg,rgba(255,214,107,.14),rgba(255,214,107,.03))}.mission.drive .code{color:#ffd66b}
+details.more{margin:6px 0 2px}details.more>summary{cursor:pointer;color:var(--muted,#92a5be);font-size:13px;padding:4px 0}details.more[open]>summary{margin-bottom:4px}
+#tut{position:fixed;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);width:min(460px,calc(100% - 32px));z-index:4;
+  background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--cyan);border-radius:6px;padding:10px 14px 12px;display:grid;gap:6px;transition:border-color .2s}
+#tut.ok{border-left-color:var(--green)}
+.tut-head{display:flex;justify-content:space-between;align-items:center}
+#tut-skip{background:transparent;border:1px solid var(--line);border-radius:4px;color:var(--muted);font-size:11px;padding:3px 8px;cursor:pointer}
+#tut-title{font:700 17px/1.3 var(--jp)}
+#tut.ok #tut-title{color:var(--green)}
+#tut-text{font:13px/1.6 var(--jp);color:var(--ink)}
+.tut-bar{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.tut-bar i{display:block;height:100%;width:0;background:var(--cyan);transition:width .2s}
+#tut.ok .tut-bar i{background:var(--green)}
+body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
+.pulse{animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(95,212,255,.0)}50%{box-shadow:0 0 0 4px rgba(95,212,255,.8)}}
+@media (pointer:coarse){#tut{width:min(420px,calc(100% - 300px));padding:7px 10px 9px;gap:4px}#tut-title{font-size:14px}#tut-text{font-size:11.5px;line-height:1.45}}
+@media (max-height:520px){
+  #menu{align-items:flex-start}
+  .menu-panel{gap:10px;margin-top:0}
+  h1{font-size:30px;margin-top:4px}
+  .lede{display:none}
+  .missions{grid-template-columns:1fr 1fr;gap:6px}
+  .mission.tutorial{grid-column:1 / -1}
+  .mission{padding:8px 10px;column-gap:8px}
+  .mission .m-sub{display:none}
+  .menu-panel{width:min(560px,100%)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="gl" tabindex="0"></canvas>
+<div id="hood" hidden><span>フード装着中：計器だけで飛行します</span></div>
+<canvas id="hud"></canvas>
+<div id="toast" aria-live="polite"></div>
+
+<div id="loading" class="screen">
+  <div class="load-box">
+    <div class="eyebrow">Sorajima Flight Simulator</div>
+    <div class="brand">空島フライト</div>
+    <div id="load-text">島の地形を生成しています…</div>
+    <div class="bar"><i id="load-bar"></i></div>
+  </div>
+</div>
+
+<div id="menu" class="screen" hidden>
+  <div class="menu-panel">
+   <div class="col-a">
+    <header>
+      <div class="eyebrow">Sorajima Flight Simulator</div>
+      <h1>空島フライト</h1>
+      <p class="lede">世界中の実在の空港・地形・街並みの中を飛べるフライトシミュレーター。</p>
+    </header>
+    <div class="setup">
+      <div class="field">
+        <label class="f-label" for="sel-map">場所</label>
+        <select id="sel-map"></select>
+      </div>
+      <div class="row2 jw-only">
+        <div class="field"><label class="f-label" for="sel-dep">出発空港</label><select id="sel-dep"></select></div>
+        <div class="field"><label class="f-label" for="sel-dest">目的地（任意）</label><select id="sel-dest"></select></div>
+      </div>
+      <span class="f-desc" id="map-desc"></span>
+      <span class="f-desc net" id="net-desc"></span>
+      <details class="goog"><summary>Google の 3D 地図（写真から作った立体の街・自分の API キーが必要）</summary>
+        <p>MSFS と同じ種類の写真測量データで、建物や木まで立体になります。オンライン版でのみ使えます。キーはこの端末のブラウザにだけ保存され、Google（tile.googleapis.com）以外には送りません。起動ごとに 1 回（約 3 時間有効）課金対象の取得が発生します（毎月 1,000 回まで無料）。</p>
+        <div class="goog-row"><input type="password" id="goog-key" placeholder="API キー（AIza…）" autocomplete="off" spellcheck="false"><button type="button" id="goog-save">保存して接続</button></div>
+        <div class="goog-row"><button type="button" id="goog-toggle">使う</button><button type="button" id="goog-clear">キーを削除</button></div>
+        <p id="goog-status" class="goog-st"></p>
+      </details>
+      <div class="field">
+        <label class="f-label" for="sel-acft">機体</label>
+        <select id="sel-acft"></select>
+        <span class="f-desc" id="acft-desc"></span>
+        <button type="button" class="guide-btn" id="open-custom" style="margin-top:6px">🎨 機体のカスタマイズ（塗装・燃料・重さ・計器）</button>
+      </div>
+    </div>
+    <div class="opts">
+      <span>操作の感度</span>
+      <div class="seg" role="group" aria-label="操作の感度"><button type="button" data-sens="low">低</button><button type="button" data-sens="mid">中</button><button type="button" data-sens="high">高</button></div>
+      <label class="chk" title="ON にすると、キーを離したとき機体が自動で水平飛行に戻ります"><input type="checkbox" id="opt-assist"> 操縦アシスト</label>
+      <label class="chk" title="ON にすると、プロペラの左偏向や逆ヨーを自動でラダーが打ち消します（U キーで切替）。OFF にすると本物の飛行機と同じく、離陸・上昇で右ラダーが必要です"><input type="checkbox" id="opt-autorud"> 自動ラダー</label>
+    </div>
+    <div class="opts opt-grid">
+      <span>時間帯</span>
+      <div class="seg" role="group" aria-label="時間帯"><button type="button" data-tod="day" class="on">昼</button><button type="button" data-tod="evening">夕方</button><button type="button" data-tod="night">夜</button></div>
+      <span>画質</span>
+      <div class="seg" role="group" aria-label="画質" title="高：立体の雲をきめ細かく、木を 2 km 先まで。重いと感じたら標準か軽量に"><button type="button" data-gfx="low">軽量</button><button type="button" data-gfx="mid">標準</button><button type="button" data-gfx="high">高</button></div>
+      <span>雲</span>
+      <div class="seg" role="group" aria-label="雲の量"><button type="button" data-cloud="off">なし</button><button type="button" data-cloud="few">少し</button><button type="button" data-cloud="normal" class="on">ふつう</button><button type="button" data-cloud="many">多め</button></div>
+    </div>
+    <div class="opts">
+      <label class="chk"><input type="checkbox" id="opt-sound" checked> サウンド</label>
+    </div>
+    <details class="more"><summary>詳細設定（気温・ピッチ反転・エンジン始動など）</summary>
+    <div class="opts opt-grid">
+      <span>気温</span>
+      <div class="seg" role="group" aria-label="気温" title="暑い日は空気が薄く（密度高度が高く）なり、離陸距離が伸び上昇率が落ちます"><button type="button" data-oat="-15">寒い日 0℃</button><button type="button" data-oat="0" class="on">標準 15℃</button><button type="button" data-oat="20">暑い日 35℃</button></div>
+    </div>
+    <div class="opts">
+      <label class="chk"><input type="checkbox" id="opt-invert"> ピッチ反転</label>
+      <label class="chk" title="試験的：運転中、車のまわりの道路の白線・横断歩道・路面の明るさを実際の航空写真（Esri／国土地理院）から取ります。写真に写った車などが白い点として出ることがあります"><input type="checkbox" id="opt-realroad"> 道路の白線を航空写真から取る（試験的）</label>
+    </div>
+    <div class="opts">
+      <label class="chk" title="滑走路スタートを、エンジン・電源がすべて OFF の状態から始めます。コックピットの計器盤のスイッチで、本物と同じ手順で始動します（N キーでチェックリスト、Ctrl+E で自動始動）"><input type="checkbox" id="opt-cold"> エンジン停止から始める（始動手順）</label>
+      <label class="chk" title="OFF にすると、高度が上がるにつれてミクスチャー（燃料の濃さ）を自分で薄くする必要があります（ピストン機）"><input type="checkbox" id="opt-automix"> ミクスチャー自動</label>
+    </div>
+    </details>
+    <button type="button" class="school-btn" id="open-school">✈ パイロット訓練（フライトスクール）<small>計器の読み方・地上学科（12 科目）から実地試験まで 40 課目・自動採点つき</small></button>
+    <button type="button" class="guide-btn" id="open-map">🗺 日本地図を開いて空港を選ぶ（M）</button>
+    <button type="button" class="book-btn" id="open-book">📖 教科書：飛行の原理・機体・性能・気象・航法・通信・法規・人間・実技・緊急（全 13 章）</button>
+    <button type="button" class="guide-btn" id="open-guide">？ ガイド：画面の見方・操作・用語・飛び方のコツ</button>
+    <p class="credit">地形・航空写真・地図：国土地理院 地理院タイル（標高データは加工して使用）／ 海外（および運転中の道路の写真）：航空写真・地図 Esri, Maxar, Earthstar Geographics ／ 標高 AWS Terrain Tiles（Mapzen, SRTM ほか）／ 3D 都市モデル：国土交通省 PLATEAU ／ 建物・樹木：© OpenStreetMap contributors（OpenFreeMap）／ 空港：OurAirports ／ 地名：GeoNames</p>
+   </div>
+   <div class="col-b">
+    <div class="eyebrow mission-head">MISSION ・ 遊び方を選ぶ</div>
+    <div class="missions" id="missions">
+      <button class="mission drive jw-only" data-mode="drive"><span class="code">DRV</span><span class="m-title">🚗 ドライブ（車で街を走る）</span><span class="m-sub">出発空港の近くの道路から、実在の街を車で走ります。地図（M）で好きな場所へ移動できます</span></button>
+      <button class="mission tutorial" data-mode="tutorial"><span class="code">TUT</span><span class="m-title">はじめての飛行（チュートリアル）</span><span class="m-sub">画面の見方から離陸・旋回まで、1 ステップずつ案内します</span></button>
+      <button class="mission tutorial" data-mode="startup"><span class="code">ENG</span><span class="m-title">エンジン始動を習う</span><span class="m-sub">選んだ機体のコックピットで、スイッチを 1 つずつ光らせて案内します</span></button>
+      <button class="mission" data-mode="runway"><span class="code">RWY</span><span class="m-title">滑走路から離陸</span><span class="m-sub" id="sub-runway">滑走路に停止中。スロットルを上げて離陸</span></button>
+      <button class="mission" data-mode="air"><span class="code">AIR</span><span class="m-title">空中スタート</span><span class="m-sub" id="sub-air">島の沖合を巡航中の状態から自由に飛ぶ</span></button>
+      <button class="mission" data-mode="rings"><span class="code">RNG</span><span class="m-title">リングチャレンジ</span><span class="m-sub" id="sub-rings"><span>島を一周する 10 個のリングを順番に通過 </span><span class="best" id="best-rings"></span></span></button>
+      <button class="mission jw-only" data-mode="tour"><span class="code">TOUR</span><span class="m-title">観光フライト</span><span class="m-sub" id="sub-tour">近くの名所をリングでめぐる</span></button>
+      <button class="mission" data-mode="landing"><span class="code">LDG</span><span class="m-title">着陸チャレンジ</span><span class="m-sub" id="sub-landing">3° の進入経路から着陸 <span class="best" id="best-landing"></span></span></button>
+    </div>
+    <button id="resume" class="resume" hidden>飛行を再開する（Esc）</button>
+    <button type="button" id="menu-ai" class="ai-btn" hidden>🤖 AI 教官に質問する（いまの計器の値をふまえて答えます）</button>
+   </div>
+  </div>
+</div>
+
+
+<div id="school" class="screen" hidden>
+  <div class="sch-wrap">
+    <header class="sch-head">
+      <div><div class="eyebrow">FLIGHT SCHOOL · 操縦訓練課程</div><h2>パイロット訓練</h2></div>
+      <div class="sch-log" id="sch-log"></div>
+      <div class="sch-actions"><label class="f-label" for="sch-ap">訓練空港</label><select id="sch-ap"></select><button type="button" id="sch-book">📖 教科書</button><button type="button" id="sch-close">メニューへ戻る</button></div>
+    </header>
+    <div class="sch-body">
+      <nav class="sch-stages" id="sch-stages" aria-label="課程表"></nav>
+      <article class="sch-brief" id="sch-brief"></article>
+    </div>
+  </div>
+</div>
+<div id="sch-quiz" class="screen" hidden>
+  <div class="guide-panel sq-panel" role="dialog" aria-labelledby="sq-title">
+    <div class="guide-head"><h2 id="sq-title">地上学科</h2><button type="button" id="sq-close">課程表へ ✕</button></div>
+    <div class="guide-body" id="sq-body"></div>
+  </div>
+</div>
+<div id="book" class="screen" hidden>
+  <div class="bk-wrap" role="dialog" aria-labelledby="bk-h">
+    <header class="bk-head"><h2 id="bk-h">📖 教科書</h2><input type="search" id="bk-q" placeholder="検索（例：失速、METAR、密度高度）" aria-label="教科書を検索"><span id="bk-prog"></span><button type="button" id="bk-ai" class="ai-btn">🤖 AI 教官に質問</button><button type="button" id="bk-close">閉じる ✕</button></header>
+    <select id="bk-sel" aria-label="節を選ぶ"></select>
+    <div class="bk-body"><nav id="bk-nav" aria-label="目次"></nav>
+      <article id="bk-art"><div id="bk-chap"></div><h2 id="bk-title"></h2><div id="bk-body"></div><div id="bk-foot"></div></article></div>
+  </div>
+</div>
+<div id="goog-credit" hidden><b><i>G</i><i>o</i><i>o</i><i>g</i><i>l</i><i>e</i></b><span></span></div>
+<aside id="ai" hidden aria-labelledby="ai-h">
+  <div class="ai-head"><h2 id="ai-h">🤖 AI 教官</h2><button type="button" id="ai-clear" class="sch-sub">会話をリセット</button><button type="button" id="ai-close">閉じる ✕</button></div>
+  <div id="ai-ctx"></div>
+  <div id="ai-log" aria-live="polite"></div>
+  <div id="ai-sug"></div>
+  <div class="ai-form"><textarea id="ai-in" rows="2" placeholder="例：いま何に気をつければいい？（Enter で送信、Shift+Enter で改行）" aria-label="質問"></textarea><button type="button" id="ai-send" class="sch-go">送信</button><button type="button" id="ai-stop" class="sch-sub" hidden>止める</button></div>
+  <div id="ai-state"></div>
+  <div id="ai-state2" style="padding:0 14px 12px;color:var(--muted);font-size:11px">AI の回答は間違うことがあります。法規・手順・数値は教官と公式資料（POH・航空法令・AIP）で確認してください。</div>
+</aside>
+<div id="inst-tut" class="screen" hidden>
+  <div class="guide-panel it-panel" role="dialog" aria-labelledby="it-title">
+    <div class="guide-head"><div><div class="eyebrow">INSTRUMENTS · 計器の読み方</div><h2 id="it-title">計器の読み方</h2></div><button type="button" id="it-close">閉じる ✕</button></div>
+    <div class="it-wrap"><canvas id="it-cv"></canvas><div id="it-text"></div></div>
+    <div class="it-foot"><button type="button" class="sch-sub" id="it-prev">← 前へ</button><span id="it-count"></span><button type="button" class="sch-go" id="it-next">次へ →</button></div>
+  </div>
+</div>
+<div id="read-quiz" class="screen" hidden>
+  <div class="guide-panel rq-panel" role="dialog" aria-labelledby="rq-title">
+    <div class="guide-head"><h2 id="rq-title">計器の読み取り練習</h2><button type="button" id="rq-close">課程表へ ✕</button></div>
+    <div class="rq-wrap"><canvas id="rq-cv" width="260" height="260"></canvas><div id="rq-body"></div></div>
+  </div>
+</div>
+<div id="sch-debrief" class="screen" hidden>
+  <div class="guide-panel sd-panel" role="dialog" aria-labelledby="sd-title">
+    <div class="guide-head"><div><div class="eyebrow">DEBRIEF · 講評</div><h2 id="sd-title">講評</h2><p id="sd-sub" class="sd-sub"></p></div><div id="sd-grade" class="sd-grade">A</div></div>
+    <div class="guide-body" id="sd-body"></div>
+    <div class="sd-foot"><button type="button" class="sch-go" id="sd-next">次の課目へ</button><button type="button" class="sch-sub" id="sd-retry">もう一度</button><button type="button" class="sch-sub" id="sd-menu">課程表へ</button></div>
+  </div>
+</div>
+<div id="sch-pause" class="screen" hidden>
+  <div class="guide-panel sp-pause"><div class="guide-head"><h2>一時停止</h2></div>
+    <div class="sd-foot"><button type="button" class="sch-go" id="sp-resume">訓練に戻る（Esc）</button><button type="button" class="ai-btn" id="sp-ai">🤖 AI 教官に質問</button><button type="button" class="sch-sub" id="sp-retry">最初からやり直す</button><button type="button" class="sch-sub" id="sp-quit">訓練をやめて課程表へ</button></div></div>
+</div>
+<div id="sch-panel" hidden>
+  <div id="sp-step"></div><div id="sp-say"></div><div id="sp-guide"></div><div id="sp-tgt"></div><div class="sp-row"><span id="sp-prog"></span><span id="sp-hint"></span></div>
+</div>
+<div id="sch-check" hidden></div>
+<div id="sch-atc" hidden></div>
+<div id="guide" class="screen" hidden>
+  <div class="guide-panel" role="dialog" aria-labelledby="guide-title">
+    <div class="guide-head"><h2 id="guide-title">ガイド</h2><button type="button" id="guide-close">閉じる ✕</button></div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="screen" class="on">画面の見方</button>
+      <button type="button" role="tab" data-tab="controls">操作と「中立」</button>
+      <button type="button" role="tab" data-tab="tips">飛び方のコツ</button>
+      <button type="button" role="tab" data-tab="numbers">数値の目安</button>
+      <button type="button" role="tab" data-tab="terms">用語集</button>
+    </div>
+    <div class="guide-body">
+      <section data-tab="screen">
+        <button type="button" class="guide-demo" id="guide-demo">実際の画面に番号を付けて説明する</button>
+        <button type="button" class="guide-demo" id="guide-book">教科書（全 13 章）を開く：飛行の原理から法規・緊急操作まで</button>
+        <button type="button" class="guide-demo" id="guide-inst">アナログ計器（6 計器）の読み方チュートリアルを開く</button>
+        <dl class="gl">
+          <dt>① 速度計（左の縦の目盛り）</dt><dd>空気に対する速さ。単位は kt（ノット）で、1 kt ≒ 時速 1.85 km。赤い帯より遅いと<b>失速</b>（翼が機体を支えられなくなる）の危険。白い帯はフラップを出してよい速さ、黄色は出しすぎ注意の速さです。</dd>
+          <dt>② 姿勢指示器（中央の青と茶色）</dt><dd>機体の傾きを表します。青が空、茶色が地面。中央の黄色い記号が自分の機体です。記号が水平線に重なっていれば水平、線より上なら機首が上を向いています。上の目盛りは左右の傾き（バンク角）です。</dd>
+          <dt>③ 高度計（右の縦の目盛り）</dt><dd>海面からの高さ。単位は ft（フィート）で、1 ft ≒ 0.3 m。茶色の部分は真下の地面の高さ。<b>RA</b> は真下の地面からの高さです。</dd>
+          <dt>④ 昇降計（右端の細い目盛り）</dt><dd>上昇・降下の速さ。矢印が上なら上昇中、下なら降下中、真ん中なら水平です。数字の単位は fpm（1 分あたりのフィート）。</dd>
+          <dt>⑤ 方位計（下の目盛り）</dt><dd>機首が向いている方角。N=北、E=東、S=南、W=西。数字は 10 倍した角度（3=30°）。紫の印は目的地（リングや滑走路）の方向です。</dd>
+          <dt>⑥ エンジンと機体の状態（パネル）</dt><dd>THR はスロットル（エンジン出力）、FLAPS はフラップの角度、GEAR は車輪（緑の丸 3 つ＝出ている）、TRIM はトリム、AOA は迎え角、G は荷重、GS は地面に対する速さです。</dd>
+          <dt>⑦ 操縦桿の位置</dt><dd>いまの操縦の入力を表します。点が十字の中心で緑になっていれば「中立」＝何も操作していない状態です。</dd>
+          <dt>⑧ 地図</dt><dd>上が北。黄色い矢印が自分、白い線が滑走路、紫の点がリングです。</dd>
+          <dt>⑨ 飛行経路マーカー（緑の丸）</dt><dd>機体が実際に進んでいる方向。これが地面に向いていると降下中、空に向いていると上昇中です。</dd>
+        </dl>
+      </section>
+      <section data-tab="controls" hidden>
+        <h3>「中立」ってどこ？</h3>
+        <p>キーを<b>押している間だけ</b>操縦桿（操縦かん）が動き、<b>離すと中央（中立）に戻ります</b>。スマホでは左下のスティックから指を離すと中立です。計器パネル右の「操縦桿の位置」で、点が中心で緑になっていれば中立です。</p>
+        <p><b>操縦アシスト ON</b>（おすすめ）：中立にすると、機体は自動で翼を水平にし、上昇も降下もしない水平飛行に戻ります。傾けたいときは押し続け、戻したいときは離すだけ。</p>
+        <p><b>操縦アシスト OFF</b>：本物の飛行機と同じで、中立にしても傾きや機首の向きは<b>そのまま残ります</b>。水平に戻すには反対方向のキーを少し押します。困ったら <kbd>L</kbd>（スマホは「水平」ボタン）で自動的に水平飛行に戻せます。</p>
+        <h3>PS5 コントローラー（DualSense）</h3>
+        <p>USB ケーブルか Bluetooth でパソコンにつなぎ、ボタンをどれか押すと認識されます（Chrome・Edge 推奨）。</p>
+        <table class="gt">
+          <tr><td>左スティック</td><td>操縦桿（手前に倒すと機首上げ、左右で傾ける）。中央付近は遊びがあり、倒すほど強く効く</td></tr>
+          <tr><td>右スティック 左右</td><td>ラダー（L1／R1 でも可）</td></tr>
+          <tr><td>右スティック 上下／方向キー ↑↓</td><td>トリム（上＝機首下げ、下＝機首上げ）。アシスト OFF のとき</td></tr>
+          <tr><td>R2 ／ L2</td><td>スロットルを上げる／下げる（深く押すほど速く動く）</td></tr>
+          <tr><td>×</td><td>ブレーキ（押している間）。チェックリストでは「次へ」</td></tr>
+          <tr><td>○ ／ □</td><td>フラップを 1 段下げる／上げる</td></tr>
+          <tr><td>△</td><td>カメラ切替</td></tr>
+          <tr><td>クリエイト</td><td>脚（ギア）の上げ下げ</td></tr>
+          <tr><td>オプション</td><td>一時停止／再開（一時停止メニューから AI 教官も開ける）</td></tr>
+          <tr><td>方向キー ← ／ →</td><td>地図／アナログ計器⇔グラス計器</td></tr>
+          <tr><td>L3（左スティック押し込み）</td><td>水平に戻す（アシスト）</td></tr>
+          <tr><td>R3（右スティック押し込み）</td><td>自動ラダー ON／OFF</td></tr>
+          <tr><td>タッチパッド</td><td>物理の見える化（チュートリアル中は「次へ」）</td></tr>
+          <tr><td>管制の復唱（訓練中）</td><td>□ ＝ 1 番、○ ＝ 2 番、△ ＝ 3 番の答え</td></tr>
+          <tr><td>メニュー・教科書・課程表</td><td>方向キー／左スティックで選ぶ、× で決定、○ で戻る</td></tr>
+        </table>
+        <h3>キーボード</h3>
+        <table class="gt">
+          <tr><td><kbd>S</kbd> / <kbd>↓</kbd></td><td>機首を上げる（上昇）。操縦桿を手前に引くのと同じ</td></tr>
+          <tr><td><kbd>W</kbd> / <kbd>↑</kbd></td><td>機首を下げる（降下）</td></tr>
+          <tr><td><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd></td><td>左右に傾ける。傾くとその方向へ曲がる（旋回）。地上ではハンドル</td></tr>
+          <tr><td><kbd>Q</kbd> <kbd>E</kbd></td><td>ラダー：機首を左右に振る（普段は使わなくて OK）</td></tr>
+          <tr><td><kbd>R</kbd> <kbd>F</kbd></td><td>スロットル（エンジン出力）を上げる／下げる</td></tr>
+          <tr><td><kbd>V</kbd></td><td>フラップ切替（離着陸でゆっくり飛ぶための翼の板）</td></tr>
+          <tr><td><kbd>G</kbd></td><td>ギア（車輪）の上げ下げ。着陸前には必ず下げる</td></tr>
+          <tr><td><kbd>B</kbd> / <kbd>Space</kbd></td><td>ブレーキ（地上で止まるとき）</td></tr>
+          <tr><td><kbd>L</kbd></td><td>水平飛行に戻す（数秒間、自動操縦）</td></tr>
+          <tr><td><kbd>C</kbd></td><td>カメラ切替。マウスでドラッグすると見回せます</td></tr>
+          <tr><td><kbd>K</kbd></td><td>車に乗り換える／飛行機に戻る。車は飛行機の真下の地面に出ます（W/S アクセル・ブレーキ、A/D ハンドル、Space サイドブレーキ、C 視点）</td></tr>
+          <tr><td><kbd>M</kbd></td><td>日本地図を開く／閉じる。空港をクリックして目的地や出発地に設定できます</td></tr>
+          <tr><td><kbd>O</kbd></td><td>オートパイロット：今の高度を保ち、目的地（なければ今の方位）へ自動で飛ぶ。操縦すると解除</td></tr>
+          <tr><td><kbd>Z</kbd></td><td>時間加速 ×1 → ×2 → ×4 → ×8 → ×16 → ×32 → ×64（上空のみ）。長い距離の移動に</td></tr>
+          <tr><td><kbd>N</kbd></td><td>チェックリスト（始動・離陸前・着陸前・停止）。項目が済むと自動で ✓</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>E</kbd></td><td>エンジン自動始動（スイッチを順番に操作します）</td></tr>
+          <tr><td><kbd>.</kbd></td><td>パーキングブレーキ</td></tr>
+          <tr><td>コックピット視点</td><td>計器盤のスイッチ・キー・レバーをクリック／ドラッグで操作。ドラッグで見回す、ホイールでズーム、ダブルクリックで正面。<kbd>Y</kbd> で操縦桿を隠す、<kbd>Shift</kbd>+<kbd>H</kbd> で画面の計器も表示</td></tr>
+        </table>
+        <h3>スマホ</h3>
+        <p>左下のスティックで操縦（下に引くと機首が上がる）、右端の THR スライダーでスロットル、ボタンでギア・フラップ・ブレーキ・水平・カメラを操作します。</p>
+        <h3>感度</h3>
+        <p>「操作の感度」は、キーを押したときの傾き方や上昇の強さです。低 がいちばんおだやかで、最初はこれがおすすめです。</p>
+      </section>
+      <section data-tab="tips" hidden>
+        <h3>離陸の手順</h3>
+        <ol><li>スロットルを 100% にする（<kbd>R</kbd> 長押し）</li><li>速度計を見て、機体ごとの離陸速度（練習機なら 55 kt 前後）になったら <kbd>S</kbd> で機首を上げる</li><li>地面を離れたら <kbd>G</kbd> でギアを上げ、<kbd>V</kbd> でフラップを 0° に</li><li>ほしい高さまで上昇したら、キーを離して水平に（アシスト ON の場合）</li></ol>
+        <h3>着陸の手順</h3>
+        <ol><li>滑走路の延長線上に機首を合わせる（方位計の紫の印が目印）</li><li>ギアを下げ、フラップを 20〜30° に</li><li>滑走路左の 4 つの灯火（PAPI）が「赤 2・白 2」になる角度で降りていく。白が多いと高すぎ、赤が多いと低すぎ</li><li>スロットルを少しずつ絞り、地面の直前で機首を軽く上げる（フレア）</li><li>接地したらスロットル 0、<kbd>B</kbd> でブレーキ</li></ol>
+        <h3>遠くの空港へ（例：羽田 → 那覇）</h3>
+        <ol><li>メニューで出発空港と目的地を選ぶ（または <kbd>M</kbd> の地図で空港をクリック）</li><li>離陸して上昇し、安全な高度（旅客機なら 10,000 ft 以上）で <kbd>O</kbd>（オートパイロット）</li><li><kbd>Z</kbd> で時間を早送り。地図（<kbd>M</kbd>）で現在地を確認</li><li>目的地の 30 km 手前で知らせが出たら <kbd>O</kbd> で解除し、高度を下げて着陸</li></ol>
+        <h3>世界の空港へ（例：羽田 → ニューヨーク）</h3>
+        <ol><li>メニューの「目的地」から選ぶか、<kbd>M</kbd> の地図の上の検索欄に「ニューヨーク」「JFK」「パリ」などと入力して空港を選び「目的地に設定」</li><li>離陸して旅客機なら 35,000 ft（約 11,000 m）まで上昇し、<kbd>O</kbd>（オートパイロット）。地球の丸みに沿った最短ルート（大圏航路）で飛びます</li><li><kbd>Z</kbd> を何回か押して ×64 に。羽田 → ニューヨークはゲーム内で約 11 時間、×64 なら約 10 分です</li><li>近づいたら <kbd>O</kbd> で解除して降下・着陸</li></ol>
+        <p>海外でも、航空写真・地形・建物（OpenStreetMap）・名所（エッフェル塔、自由の女神、シドニー・オペラハウスなど）が表示されます。出発空港を海外にすれば、観光フライトも海外の名所でできます。</p>
+        <h3>観光フライト</h3>
+        <p>メニューの「観光フライト」を選ぶと、出発空港の近くの名所（東京なら東京タワー・スカイツリー・皇居など）の横にリングが並びます。紫の枠を順番にくぐると、その名所の説明が表示されます。★ の付いた金色の名前が名所です。</p>
+        <h3>夜の飛行</h3>
+        <p>メニューの「時間帯」で「夜」を選ぶと、街の明かり・ビルの窓の灯り・滑走路の灯火・星空の中を飛べます。滑走路の両側の白い灯火の列、手前の緑（入口）、奥の赤（終わり）を目印に着陸します。翼の先の赤（左）と緑（右）は自分の機体の航法灯です。</p>
+        <h3>本物の 3D の街</h3>
+        <p>詳細版では、東京 23 区・大阪・名古屋・京都・福岡など全国 300 地域で、国土交通省 PLATEAU の「写真の貼られた 3D 建物」が表示されます（近づくと読み込まれます）。それ以外の地域は OpenStreetMap の建物を実際の高さで表示します。</p>
+        <h3>困ったときは</h3>
+        <ul><li>「STALL 失速」が出たら：機首を下げ（<kbd>W</kbd>）、スロットルを上げる</li><li>「PULL UP」が出たら：地面や山が近い。機首を上げてスロットル全開</li><li>どうなっているかわからない：<kbd>L</kbd> で水平飛行に戻す</li></ul>
+      </section>
+      <section data-tab="numbers" hidden>
+        <h3>どこを見ればいい？</h3>
+        <ul>
+          <li><b>ピッチ（機首の上げ下げの角度）</b>：姿勢指示器（青と茶色の丸）で、黄色い機体記号が水平線からどれだけ上にあるか。はしご状の線は 10° ごと、短い線は 5° ごとです。</li>
+          <li><b>バンク（左右の傾き）</b>：姿勢指示器の上の弧の目盛り。10°・20°・30°・45°・60° に印があります。上の白い三角が目盛りのどこを指しているかで読みます。</li>
+          <li><b>スロットル</b>：計器パネル中央の THR の緑のバー（%）。<kbd>R</kbd> で上げる、<kbd>F</kbd> で下げる。</li>
+          <li><b>水平かどうか</b>：昇降計（高度計の右の細い目盛り）が 0、高度計の数字が変わらなければ水平飛行です。</li>
+        </ul>
+        <p class="note-box">飛行中は、計器パネルの右に<b>「目安」パネル</b>が出ます。いまが水平・上昇・降下のどれか、傾き（バンク）とフラップに合わせて、その状態で安定させるスロットルとピッチを表示します。合っていれば緑、ずれていれば黄色になります。</p>
+        <h3>基本のルール</h3>
+        <ol>
+          <li><b>高さはピッチで、速さはスロットルで</b>調整します。高度が下がってきたら機首を 1° 上げる、速度が落ちてきたらスロットルを 5% 上げる、の繰り返しです。</li>
+          <li><b>傾けると（旋回すると）機体は沈みます</b>。翼の力の一部が横向きになるからです。水平を保つには、機首を少し上げ、スロットルも少し足します。必要な量はバンクが深いほど大きくなります。</li>
+          <li>旋回中は体にかかる重さ（G）が増えます：15° で 1.04 倍、30° で 1.15 倍、45° で 1.41 倍、60° で 2 倍。<b>失速する速度も上がる</b>ので、低速で深く傾けるのは危険です。低い高度や遅い速度では 30° までにしましょう。</li>
+          <li>旋回をやめるときは、傾きを戻すと同時に、足した機首上げとスロットルを元に戻します（戻さないと上昇して速度が落ちます）。</li>
+          <li><b>上昇・降下のはじめかた</b>：① ピッチを表の値に合わせる → ② スロットルを表の値に合わせる → ③ 昇降計の数字が目標（例：+500）になるまで待って、ずれていればピッチを 1° ずつ直す。止めるとき（水平に戻すとき）は逆に ① ピッチを水平の値に戻す → ② スロットルを水平の値に戻す。</li>
+          <li>上昇・降下しながら曲がるときは、バンク 10〜20° までにしましょう。表の 10° と 20° の値を使います。</li>
+        </ol>
+        <p><b>操縦アシスト ON</b> のときは、ピッチの調整（沈まないように機首を上げる）は自動でやってくれます。スロットルだけ下の表を目安に合わせてください。<b>アシスト OFF</b> のときは、ピッチもスロットルも自分で合わせます。</p>
+        <h3>機体ごとの数値</h3>
+        <div class="field" style="max-width:320px"><label class="f-label" for="num-acft">機体</label><select id="num-acft"></select></div>
+        <div id="num-table"></div>
+        <p class="keys-note">この飛行シミュレーターの計算で、高度 約 3,000 ft・無風のときに測った値です。高度や重さが変わると少しずれるので、昇降計と速度計を見ながら微調整してください。ピッチは「＋」が機首上げ、昇降の「−」は降下です。</p>
+      </section>
+      <section data-tab="terms" hidden>
+        <dl class="gl">
+          <dt>スロットル（THR）</dt><dd>エンジンの出力。車のアクセルにあたる</dd>
+          <dt>kt（ノット）</dt><dd>速さの単位。1 kt ≒ 時速 1.85 km。100 kt ≒ 時速 185 km</dd>
+          <dt>ft（フィート）</dt><dd>高さの単位。1 ft ≒ 0.3 m。1,000 ft ≒ 300 m</dd>
+          <dt>fpm</dt><dd>1 分あたり何フィート上昇・降下するか。500 fpm ≒ 毎秒 2.5 m</dd>
+          <dt>IAS（指示対気速度）</dt><dd>空気に対する速さ。飛行機が浮くかどうかはこの速さで決まる</dd>
+          <dt>GS（対地速度）</dt><dd>地面に対する速さ。向かい風だと IAS より遅くなる</dd>
+          <dt>失速（STALL）</dt><dd>速度が遅すぎたり機首を上げすぎたりして、翼が機体を支える力を失うこと。機首を下げて速度を回復する</dd>
+          <dt>迎え角（AOA）</dt><dd>翼に当たる風の角度。大きくなりすぎると失速する</dd>
+          <dt>G（荷重）</dt><dd>体にかかる重さの倍率。水平飛行で 1、急旋回すると増える</dd>
+          <dt>ピッチ／ロール／ヨー</dt><dd>機首の上下／左右の傾き／機首の左右の向き</dd>
+          <dt>バンク角</dt><dd>左右に傾いている角度。傾けるとその方向に曲がる</dd>
+          <dt>エレベーター・エルロン・ラダー</dt><dd>尾翼と主翼の動く部分。それぞれピッチ・ロール・ヨーを操作する</dd>
+          <dt>フラップ</dt><dd>主翼の後ろから出す板。ゆっくりでも浮きやすくなる。離着陸で使う</dd>
+          <dt>ギア</dt><dd>車輪（着陸装置）。飛行中は格納すると速く飛べる機体もある</dd>
+          <dt>トリム</dt><dd>操縦桿を押さえ続けなくても機首の角度を保つ調整（アシスト ON なら自動）</dd>
+          <dt>滑走路番号（RWY 08 など）</dt><dd>滑走路の向きを 10 で割った数字。08 は約 80°（東向き）</dd>
+          <dt>PAPI（パピ）</dt><dd>滑走路の横の 4 つの灯火。赤 2・白 2 なら正しい進入角（約 3°）</dd>
+          <dt>進入角・グライドパス</dt><dd>着陸のために降りていく角度。ふつうは 3°</dd>
+          <dt>フレア</dt><dd>接地の直前に機首を少し上げ、ふんわり着地する操作</dd>
+          <dt>A/B（アフターバーナー）</dt><dd>戦闘機のエンジンの追加燃焼。スロットル 95% 以上で作動し、大きく加速する</dd>
+          <dt>N1</dt><dd>ジェットエンジンの回転の強さ（%）</dd>
+          <dt>RA（電波高度）</dt><dd>真下の地面からの高さ</dd>
+        </dl>
+      </section>
+    </div>
+  </div>
+</div>
+<div id="mapview" hidden>
+  <canvas id="map-cv"></canvas>
+  <div class="map-bar">
+    <strong>地図</strong><span id="map-src" class="map-src"></span>
+    <span class="map-search-wrap"><input id="map-search" type="search" placeholder="空港・都市を検索（例：ホノルル、JFK、パリ）" autocomplete="off"><span id="map-results" hidden></span></span>
+    <span class="map-sp"></span>
+    <button type="button" id="map-drive" title="地図の真ん中（＋印）の近くの道路から車で走ります">🚗 地図の中心で運転</button><button type="button" id="map-me">現在地</button><button type="button" id="map-zin" aria-label="拡大">＋</button><button type="button" id="map-zout" aria-label="縮小">－</button><button type="button" id="map-close">閉じる（M）</button>
+  </div>
+  <div id="map-info" hidden>
+    <div class="eyebrow" id="mi-icao"></div><h3 id="mi-name"></h3><p id="mi-desc"></p>
+    <div class="mi-actions"><button type="button" id="mi-dest" class="primary">目的地に設定</button><button type="button" id="mi-dep">ここから離陸</button><button type="button" id="mi-app">ここへ着陸進入</button><button type="button" id="mi-drive">🚗 ここで運転</button></div>
+  </div>
+  <div class="map-legend">空港をクリックで選択　● 緑＝出発　● 紫＝目的地　● 青＝空港　ドラッグで移動・ホイール／ピンチで拡大</div>
+</div>
+<div id="callout" hidden>
+  <div class="co-head"><span class="eyebrow">画面の見方</span><button type="button" id="callout-close">わかった（クリックで再開）</button></div>
+  <ol id="callout-list"></ol>
+</div>
+
+
+<div id="result" class="screen" hidden>
+  <div class="result-panel" role="dialog" aria-labelledby="res-title">
+    <div class="eyebrow" id="res-eyebrow"></div>
+    <h2 id="res-title"></h2>
+    <dl id="res-list"></dl>
+    <div class="res-actions">
+      <button id="res-retry" class="primary" type="button">もう一度</button>
+      <button id="res-menu" type="button">メニューへ</button>
+    </div>
+  </div>
+</div>
+
+<div id="touch" hidden>
+  <div class="stick" id="stick"><div class="stick-knob" id="stick-knob"></div></div>
+  <div class="thr" id="thr"><div class="thr-fill" id="thr-fill"></div><div class="thr-label">THR</div></div>
+  <div class="tbtns">
+    <button type="button" data-act="gear">ギア</button>
+    <button type="button" data-act="flaps">フラップ</button>
+    <button type="button" data-act="brake">ブレーキ</button>
+    <button type="button" data-act="level">水平</button>
+    <button type="button" data-act="ap">A/P</button>
+    <button type="button" data-act="cam">カメラ</button>
+    <button type="button" data-act="map">地図</button>
+    <button type="button" data-act="time">時間</button>
+    <button type="button" data-act="guide">？</button>
+    <button type="button" data-act="pause">Ⅱ</button>
+  </div>
+</div>
+<div id="tut" hidden role="status" aria-live="polite">
+  <div class="tut-head"><span class="eyebrow" id="tut-step"></span><button type="button" id="tut-skip">スキップ</button></div>
+  <div id="tut-title"></div>
+  <div id="tut-text"></div>
+  <button type="button" id="tut-next" hidden>次へ（Enter）</button>
+  <div class="tut-bar"><i id="tut-bar"></i></div>
+</div>
+<div id="rotate-hint">横向きにすると遊びやすくなります</div>
+
+<script>
+'use strict';
+// =====================================================================
+//  空島フライト — single-file WebGL2 flight simulator (no libraries)
+// =====================================================================
+
+// ---------- small math ----------
+const DEG = Math.PI / 180;
+const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
+const lerp = (a, b, t) => a + (b - a) * t;
+const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const damp = (a, b, rate, dt) => lerp(a, b, 1 - Math.exp(-rate * dt));
+
+const vadd = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const vsub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const vscale = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const vmadd = (a, b, s) => [a[0] + b[0] * s, a[1] + b[1] * s, a[2] + b[2] * s];
+const vdot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const vcross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const vlen = a => Math.hypot(a[0], a[1], a[2]);
+const vnorm = a => { const l = vlen(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+const vlerp = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+const vdist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+
+// quaternions [x, y, z, w]; body frame: +x right, +y up, -z forward (nose)
+const qmul = (a, b) => [
+  a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1],
+  a[3] * b[1] - a[0] * b[2] + a[1] * b[3] + a[2] * b[0],
+  a[3] * b[2] + a[0] * b[1] - a[1] * b[0] + a[2] * b[3],
+  a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2]];
+const qconj = q => [-q[0], -q[1], -q[2], q[3]];
+const qaxis = (ax, ang) => { const s = Math.sin(ang / 2); return [ax[0] * s, ax[1] * s, ax[2] * s, Math.cos(ang / 2)]; };
+const qnorm = q => { const l = Math.hypot(q[0], q[1], q[2], q[3]) || 1; return [q[0] / l, q[1] / l, q[2] / l, q[3] / l]; };
+function qrot(q, v) {
+  const x = q[0], y = q[1], z = q[2], w = q[3];
+  const tx = 2 * (y * v[2] - z * v[1]), ty = 2 * (z * v[0] - x * v[2]), tz = 2 * (x * v[1] - y * v[0]);
+  return [v[0] + w * tx + (y * tz - z * ty), v[1] + w * ty + (z * tx - x * tz), v[2] + w * tz + (x * ty - y * tx)];
+}
+function qslerp(a, b, t) {
+  let d = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
+  if (d < 0) { b = [-b[0], -b[1], -b[2], -b[3]]; d = -d; }
+  if (d > 0.9995) return qnorm([lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t), lerp(a[3], b[3], t)]);
+  const th = Math.acos(d), s = Math.sin(th), wa = Math.sin((1 - t) * th) / s, wb = Math.sin(t * th) / s;
+  return [a[0] * wa + b[0] * wb, a[1] * wa + b[1] * wb, a[2] * wa + b[2] * wb, a[3] * wa + b[3] * wb];
+}
+// orientation from heading (deg, clockwise from north = -Z), pitch and bank (deg)
+function qFromHPB(hdg, pitch = 0, bank = 0) {
+  let q = qaxis([0, 1, 0], -hdg * DEG);
+  q = qmul(q, qaxis([1, 0, 0], pitch * DEG));
+  q = qmul(q, qaxis([0, 0, 1], -bank * DEG));
+  return q;
+}
+
+// ---------- 4x4 matrices (column-major) ----------
+const M4 = {
+  persp(fovy, asp, n, f) {
+    const t = 1 / Math.tan(fovy / 2), m = new Float32Array(16);
+    m[0] = t / asp; m[5] = t; m[10] = (f + n) / (n - f); m[11] = -1; m[14] = 2 * f * n / (n - f);
+    return m;
+  },
+  mul(a, b) {
+    const o = new Float32Array(16);
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
+      o[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+    }
+    return o;
+  },
+  fromQP(q, p, s = 1) {
+    const [x, y, z, w] = q, m = new Float32Array(16);
+    m[0] = (1 - 2 * (y * y + z * z)) * s; m[1] = 2 * (x * y + w * z) * s; m[2] = 2 * (x * z - w * y) * s;
+    m[4] = 2 * (x * y - w * z) * s; m[5] = (1 - 2 * (x * x + z * z)) * s; m[6] = 2 * (y * z + w * x) * s;
+    m[8] = 2 * (x * z + w * y) * s; m[9] = 2 * (y * z - w * x) * s; m[10] = (1 - 2 * (x * x + y * y)) * s;
+    m[12] = p[0]; m[13] = p[1]; m[14] = p[2]; m[15] = 1;
+    return m;
+  },
+  lookAt(e, t, up) {
+    const f = vnorm(vsub(t, e)); const s = vnorm(vcross(f, up)); const u = vcross(s, f);
+    return new Float32Array([s[0], u[0], -f[0], 0, s[1], u[1], -f[1], 0, s[2], u[2], -f[2], 0,
+      -vdot(s, e), -vdot(u, e), vdot(f, e), 1]);
+  },
+  // rotation about an axis through a pivot point
+  pivotRot(pivot, axis, ang) {
+    const q = qaxis(vnorm(axis), ang);
+    const r = M4.fromQP(q, [0, 0, 0]);
+    const rp = qrot(q, pivot);
+    r[12] = pivot[0] - rp[0]; r[13] = pivot[1] - rp[1]; r[14] = pivot[2] - rp[2];
+    return r;
+  },
+  ident() { const m = new Float32Array(16); m[0] = m[5] = m[10] = m[15] = 1; return m; },
+};
+function frustumPlanes(m) {
+  const P = [];
+  const row = r => [m[r], m[4 + r], m[8 + r], m[12 + r]];
+  const r0 = row(0), r1 = row(1), r2 = row(2), r3 = row(3);
+  for (const [a, s] of [[r0, 1], [r0, -1], [r1, 1], [r1, -1], [r2, 1], [r2, -1]]) {
+    P.push([r3[0] + s * a[0], r3[1] + s * a[1], r3[2] + s * a[2], r3[3] + s * a[3]]);
+  }
+  return P;
+}
+function boxInFrustum(P, x0, y0, z0, x1, y1, z1) {
+  for (const p of P) {
+    const x = p[0] > 0 ? x1 : x0, y = p[1] > 0 ? y1 : y0, z = p[2] > 0 ? z1 : z0;
+    if (p[0] * x + p[1] * y + p[2] * z + p[3] < 0) return false;
+  }
+  return true;
+}
+
+// ---------- random & noise ----------
+function makeRng(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s + 0x6D2B79F5) >>> 0; let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function hash2(x, y, s = 0) {
+  let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + Math.imul(s | 0, 1440662683)) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
+}
+const PERM = new Uint8Array(512);
+(() => {
+  const r = makeRng(20240917), p = [...Array(256).keys()];
+  for (let i = 255; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; }
+  for (let i = 0; i < 512; i++) PERM[i] = p[i & 255];
+})();
+const GX = new Float32Array(16), GY = new Float32Array(16);
+for (let i = 0; i < 16; i++) { GX[i] = Math.cos(i * Math.PI / 8); GY[i] = Math.sin(i * Math.PI / 8); }
+function perlinCore(xf, yf, a, b, c, d) {
+  const u = xf * xf * xf * (xf * (xf * 6 - 15) + 10), v = yf * yf * yf * (yf * (yf * 6 - 15) + 10);
+  const n00 = GX[a] * xf + GY[a] * yf, n10 = GX[b] * (xf - 1) + GY[b] * yf;
+  const n01 = GX[c] * xf + GY[c] * (yf - 1), n11 = GX[d] * (xf - 1) + GY[d] * (yf - 1);
+  const x0 = n00 + u * (n10 - n00), x1 = n01 + u * (n11 - n01);
+  return (x0 + v * (x1 - x0)) * 1.42;
+}
+function perlin(x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y), X = xi & 255, Y = yi & 255;
+  return perlinCore(x - xi, y - yi, PERM[X + PERM[Y]] & 15, PERM[X + 1 + PERM[Y]] & 15,
+    PERM[X + PERM[Y + 1]] & 15, PERM[X + 1 + PERM[Y + 1]] & 15);
+}
+function perlinP(x, y, per) { // tileable with period `per`
+  const xi = Math.floor(x), yi = Math.floor(y);
+  const X0 = ((xi % per) + per) % per, Y0 = ((yi % per) + per) % per, X1 = (X0 + 1) % per, Y1 = (Y0 + 1) % per;
+  return perlinCore(x - xi, y - yi, PERM[X0 + PERM[Y0]] & 15, PERM[X1 + PERM[Y0]] & 15,
+    PERM[X0 + PERM[Y1]] & 15, PERM[X1 + PERM[Y1]] & 15);
+}
+function fbm(x, y, oct) {
+  let s = 0, a = 1, n = 0;
+  for (let i = 0; i < oct; i++) { s += a * perlin(x, y); n += a; a *= 0.5; x = x * 2.02 + 17.3; y = y * 2.02 - 9.1; }
+  return s / n;
+}
+function ridged(x, y, oct) {
+  let s = 0, a = 0.5, w = 1, n = 0;
+  for (let i = 0; i < oct; i++) {
+    let r = 1 - Math.abs(perlin(x, y)); r *= r; r *= w; w = clamp(r * 2, 0, 1);
+    s += r * a; n += a; a *= 0.5; x = x * 2.03 + 5.1; y = y * 2.03 - 3.7;
+  }
+  return s / n;
+}
+
+// ---------- WebGL2 setup ----------
+const $ = id => document.getElementById(id);
+const glCanvas = $('gl');
+const gl = glCanvas.getContext('webgl2', { antialias: true, alpha: false, powerPreference: 'high-performance' });
+if (!gl) {
+  $('load-text').textContent = 'このブラウザは WebGL2 に対応していないため起動できません。Chrome・Edge・Firefox・Safari の最新版でお試しください。';
+  throw new Error('WebGL2 not supported');
+}
+const anisoExt = gl.getExtension('EXT_texture_filter_anisotropic');
+gl.enable(gl.DEPTH_TEST);
+gl.enable(gl.CULL_FACE);
+
+function compileShader(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+    const log = gl.getShaderInfoLog(s);
+    console.error(log + '\n' + src.split('\n').map((l, i) => (i + 1) + ': ' + l).join('\n'));
+    throw new Error('Shader compile failed: ' + log);
+  }
+  return s;
+}
+function makeProgram(vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, compileShader(gl.VERTEX_SHADER, vs));
+  gl.attachShader(p, compileShader(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('Link failed: ' + gl.getProgramInfoLog(p));
+  const u = {};
+  const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < n; i++) {
+    const info = gl.getActiveUniform(p, i);
+    u[info.name.replace(/\[0\]$/, '')] = gl.getUniformLocation(p, info.name);
+  }
+  if (u.uSunShadow) { gl.useProgram(p); gl.uniform1i(u.uSunShadow, 11); }      // its own unit (a shadow sampler can't share one)
+  if (u.uNP) { gl.useProgram(p); gl.uniform1i(u.uNP, 13); }                      // the aerial photo round the car
+  if (u.uMat) { gl.useProgram(p); gl.uniform1i(u.uMat, 14); }                    // the city's photo materials
+  if (u.uMatN) { gl.useProgram(p); gl.uniform1i(u.uMatN, 16); }                  // ...their relief and gloss
+  if (u.uTranMask) { gl.useProgram(p); gl.uniform1i(u.uTranMask, 17); }          // where PLATEAU's roads stand in for the sim's
+  if (u.uCards) { gl.useProgram(p); gl.uniform1i(u.uCards, 15); }                // the photo tree cards
+  return { p, u };
+}
+// vertex buffers: attribs = [{loc, size, data, divisor?, dynamic?}] ; interleaved = {loc: [size, offset]}
+function makeVAO(attribs, indices) {
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  const bufs = [];
+  for (const a of attribs) {
+    const b = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, b);
+    gl.bufferData(gl.ARRAY_BUFFER, a.data, a.dynamic ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);
+    if (a.layout) { // interleaved
+      const stride = a.stride * 4;
+      for (const [loc, size, off] of a.layout) {
+        gl.enableVertexAttribArray(loc);
+        gl.vertexAttribPointer(loc, size, gl.FLOAT, false, stride, off * 4);
+        if (a.divisor) gl.vertexAttribDivisor(loc, a.divisor);
+      }
+    } else {
+      gl.enableVertexAttribArray(a.loc);
+      gl.vertexAttribPointer(a.loc, a.size, gl.FLOAT, false, 0, 0);
+      if (a.divisor) gl.vertexAttribDivisor(a.loc, a.divisor);
+    }
+    bufs.push(b);
+  }
+  let ib = null;
+  if (indices) {
+    ib = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+  }
+  gl.bindVertexArray(null);
+  return { vao, bufs, ib, count: indices ? indices.length : 0 };
+}
+function makeTexture(opts) {
+  const t = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+  if (opts.source) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, opts.source);
+  else gl.texImage2D(gl.TEXTURE_2D, 0, opts.internal, opts.w, opts.h, 0, opts.format, opts.type, opts.data);
+  const wrap = opts.wrap || gl.CLAMP_TO_EDGE;
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap);
+  if (opts.nearest) {
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  } else {
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    if (anisoExt && opts.aniso) {
+      gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT,
+        Math.min(opts.aniso, gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+    }
+  }
+  return t;
+}
+
+// ---------- shared shader code: sky, fog, lighting ----------
+const GLSL_HEAD = `#version 300 es
+precision highp float;
+precision highp int;
+precision highp sampler2D;
+`;
+const GLSL_COMMON = `
+// the near zone around the car (x, z, inner and outer radius; w = 0: none). The far layer (Google's
+// photogrammetry) is dissolved away inside it and the near layer (the sim's own roads, buildings and trees)
+// only drawn inside it, with the same dither pattern across the band so the two meet without a seam
+uniform vec4 uZone;
+uniform float uZoneSide;       // 1: far layer, -1: near layer, 0: not affected
+uniform vec4 uZoneG;           // the ground round the car as a plane (height, slope x, slope z) and the cut height
+uniform vec4 uZoneG2;          // (its curvature: x², xz, z²)
+float zoneGround(vec3 w){ vec2 d = w.xz - uZone.xy; return uZoneG.x + uZoneG.y * d.x + uZoneG.z * d.y + uZoneG2.x * d.x * d.x + uZoneG2.y * d.x * d.y + uZoneG2.z * d.y * d.y; }
+// the built-up area (x, z, inner and outer radius; w = 0: none: p_auth.js): a place made by hand in the sim's
+// own world, all of it, where Google's photogrammetry gives way entirely (1 inside)
+uniform vec4 uAuth;
+float authK(vec3 w){ return uAuth.w > 0.0 ? 1.0 - smoothstep(uAuth.z, uAuth.w, length(w.xz - uAuth.xy)) : 0.0; }
+bool zoneCut(vec3 w){
+  if (uZoneSide == 0.0) return false;
+  float d = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+  float a = authK(w);
+  if (a > 0.0) { if (uZoneSide > 0.0) { if (a > d) return true; } else if (a > d) return false; }
+  if (uZone.w <= 0.0) return uZoneSide < 0.0;
+  float t = smoothstep(uZone.z, uZone.w, length(w.xz - uZone.xy));
+  // the photo-real layer keeps everything above the cut height (the real buildings), losing only its melted
+  // street level, which gives way further out
+  if (uZoneSide > 0.0 && uZoneG.w > 0.0) return w.y < zoneGround(w) + mix(uZoneG.w, -40.0, t * t);
+  return uZoneSide > 0.0 ? t < d : t >= d;
+}
+// the sim's own buildings, where the real ones stand over them: only their street-level storey
+bool zoneAbove(vec3 w){
+  if (uZoneSide >= 0.0 || uZone.w <= 0.0 || uZoneG.w <= 0.0 || authK(w) > 0.5) return false;
+  return w.y > zoneGround(w) + uZoneG.w + 0.35 && length(w.xz - uZone.xy) < uZone.w;
+}
+// where a landmark tower is drawn (p_landmarks.js), the map's block standing for it is cut away above the
+// buildings at its foot: x, z, radius, height
+uniform vec4 uLmCut0, uLmCut1;
+bool lmCut(vec3 w){
+  return (uLmCut0.z > 0.0 && w.y > uLmCut0.w && distance(w.xz, uLmCut0.xy) < uLmCut0.z) || (uLmCut1.z > 0.0 && w.y > uLmCut1.w && distance(w.xz, uLmCut1.xy) < uLmCut1.z);
+}
+uniform vec3 uSunDir;
+uniform vec3 uSunCol;
+uniform vec3 uZenith;
+uniform vec3 uHorizon;
+uniform vec3 uHorizonAway;
+uniform vec3 uAmbSky;
+uniform vec3 uAmbGround;
+uniform vec3 uCamPos;
+uniform float uFogDens;
+uniform float uTime;
+uniform float uSunI;        // sun radiance scale (0 = old artist sky)
+uniform float uHaze;        // aerosol (Mie) amount: 1 clear, 2-3 hazy
+// ---- physically based atmosphere: Rayleigh + Mie single scattering (Earth values, metres) ----
+const vec3 BR = vec3(5.8e-6, 13.5e-6, 33.1e-6);
+const float BMS = 2.0e-5, HR = 8000.0, HM = 1200.0, PI = 3.14159265;
+float phaseR(float mu){ return 3.0 / (16.0 * PI) * (1.0 + mu * mu); }
+float phaseM(float mu){ const float g = 0.76; float g2 = g * g; return 3.0 / (8.0 * PI) * ((1.0 - g2) * (1.0 + mu * mu)) / ((2.0 + g2) * pow(1.0 + g2 - 2.0 * g * mu, 1.5)); }
+// relative air mass toward a direction with vertical component y (Kasten-Young), large near the horizon
+float airMass(float y){ float z = degrees(acos(clamp(y, -1.0, 1.0))); return y < -0.08 ? 60.0 : 1.0 / (max(y, 0.0) + 0.50572 * pow(max(96.07995 - z, 0.5), -1.6364)); }
+vec3 sunTrans(float h){
+  float m = airMass(uSunDir.y);
+  return exp(-(BR * HR * exp(-h / HR) + BMS * 1.1 * uHaze * HM * exp(-h / HM)) * m);
+}
+vec3 atmoSky(vec3 d){
+  float h0 = max(uCamPos.y, 0.0);
+  // ray length: to the top of the atmosphere, or to the ground below the horizon
+  // on a curved Earth (R = 6371 km): a slightly downward ray may still miss the ground and leave the atmosphere
+  const float RE = 6.371e6, HTOP = 6.0e4;
+  float disc = d.y * d.y - 2.0 * h0 / RE;
+  float tMax = (d.y < 0.0 && disc > 0.0) ? RE * (-d.y - sqrt(disc)) : RE * (-d.y + sqrt(d.y * d.y + 2.0 * (HTOP - h0) / RE));
+  tMax = min(tMax, 4.0e5);
+  const int N = 12;
+  float mu = dot(d, uSunDir), odR = 0.0, odM = 0.0;
+  vec3 sR = vec3(0.0), sM = vec3(0.0);
+  float tPrev = 0.0;
+  for (int i = 1; i <= N; i++) {
+    float f = float(i) / float(N), t = tMax * f * f, ds = t - tPrev; tPrev = t;
+    float h = max(h0 + d.y * (t - ds * 0.5) + (t * t) / (2.0 * 6.371e6), 0.0);
+    float r = exp(-h / HR) * ds, m = exp(-h / HM) * ds;
+    odR += r; odM += m;
+    vec3 att = exp(-(BR * odR + BMS * 1.1 * uHaze * odM)) * sunTrans(h);
+    sR += r * att; sM += m * att;
+  }
+  vec3 L = uSunI * (BR * phaseR(mu) * sR + BMS * uHaze * phaseM(mu) * sM);
+  // multiple scattering / skylight fill so the shadowed side of the sky is not black
+  L += uSunI * 0.012 * BR * 2.0e4 * (0.35 + 0.65 * max(uSunDir.y + 0.1, 0.0)) * exp(-h0 / 9000.0) * (1.0 - exp(-(odR * 1.5e-5)));
+  // multiple scattering whitens the low sky: pull toward the luminance near the horizon
+  float lum = dot(L, vec3(0.2126, 0.7152, 0.0722));
+  L = mix(L, vec3(lum) * vec3(0.96, 1.0, 1.08), 0.35 * exp(-abs(d.y) * 7.0) * smoothstep(-0.05, 0.25, uSunDir.y));
+  return L;
+}
+vec3 skyColor(vec3 d){
+  if (uSunI > 0.0) {
+    vec3 c = atmoSky(d);
+    if (d.y < 0.0) c = mix(c, c * 0.8 + uAmbGround * 0.15, smoothstep(0.0, -0.25, d.y));
+    return c;
+  }
+  float y = d.y;
+  vec2 hz = normalize(d.xz + vec2(1e-5));
+  vec2 sz = normalize(uSunDir.xz + vec2(1e-5));
+  float towards = dot(hz, sz) * 0.5 + 0.5;
+  vec3 hor = mix(uHorizonAway, uHorizon, towards * towards);
+  float alt = clamp(uCamPos.y / 11000.0, 0.0, 1.0);
+  vec3 zen = uZenith * mix(1.0, 0.58, alt) * mix(vec3(1.0), vec3(0.85, 0.9, 1.05), alt);   // deeper blue high up
+  vec3 c = mix(hor, zen, pow(clamp(y, 0.0, 1.0), mix(0.55, 0.35, alt)));
+  c = mix(c, hor * 1.04 + vec3(0.02), exp(-abs(y) * 30.0) * 0.45);                           // bright haze band at the horizon
+  c = mix(c, hor * 0.82, smoothstep(0.0, -0.3, y));
+  float sd = max(dot(d, uSunDir), 0.0);
+  c += uSunCol * (pow(sd, 5.0) * 0.10 + pow(sd, 60.0) * 0.30);
+  return c;
+}
+// the sky as a shiny surface mirrors it (cheap: the horizon's colour up to the zenith's, the sun's glow)
+vec3 skyEnv(vec3 d){
+  vec2 hz = normalize(d.xz + vec2(1e-5)), sz = normalize(uSunDir.xz + vec2(1e-5));
+  float t = dot(hz, sz) * 0.5 + 0.5;
+  vec3 c = mix(mix(uHorizonAway, uHorizon, t * t), uZenith, pow(clamp(d.y, 0.0, 1.0), 0.5));
+  float sd = max(dot(d, uSunDir), 0.0);
+  return c + uSunCol * (pow(sd, 6.0) * 0.12 + pow(sd, 80.0) * 0.5);
+}
+// the light a surface facing n gets from the sky dome, and from the sunlit ground below thrown back up
+vec3 skyIrr(vec3 n){
+  return mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5) * 1.15 + uSunCol * max(uSunDir.y, 0.0) * 0.28 * clamp(0.5 - n.y * 0.5, 0.0, 1.0);
+}
+// what a glossy surface mirrors in a street (uUrban 1): the sky above the roofline, the buildings across the
+// street (a wall each ten degrees round, its rows of windows mirroring the sky behind you), the road below;
+// a rough surface sees all of it blurred
+uniform float uUrban;
+vec3 envRefl(vec3 R, float rough){
+  if (rough >= 0.5) return skyIrr(R) * 0.9;
+  vec3 c = skyEnv(normalize(vec3(R.x, max(R.y, 0.0), R.z)));
+  if (uUrban > 0.0) {
+    float az = atan(R.z, R.x) * 3.58, k = floor(az), hb = fract(sin(k * 12.9898) * 43758.5453);   // (a building every 16 degrees round)
+    float roof = (0.05 + 0.2 * hb) * uUrban, fw = max(fwidth(R.y), 0.004);
+    float inB = 1.0 - smoothstep(roof - fw, roof + fw, R.y);
+    if (inB > 0.0) {
+      vec3 Rh = normalize(vec3(-R.x, 0.0, -R.z));
+      vec3 wall = mix(vec3(0.55, 0.54, 0.52), vec3(0.8, 0.78, 0.74), fract(hb * 7.31));
+      wall *= skyIrr(Rh) * 1.1 + uSunCol * (max(dot(Rh, uSunDir), 0.0) * 0.8 + 0.12);   // (walls in the sun, or lit by the street and the sky)
+      float fr = (16.0 + 14.0 * fract(hb * 3.7)) * R.y, rw = fwidth(fr) + 0.05;
+      float row = smoothstep(0.4 - rw, 0.4 + rw, fract(fr)) * (1.0 - smoothstep(0.9 - rw, 0.9 + rw, fract(fr)));
+      c = mix(c, mix(wall, skyEnv(normalize(vec3(-R.x, 0.35, -R.z))) * 0.6, row * 0.28), inB);
+    }
+  }
+  if (R.y < 0.0) c = mix(c, vec3(0.19, 0.19, 0.2) * (uSunCol * max(uSunDir.y, 0.0) * 0.9 + uAmbSky), smoothstep(0.0, -0.05, R.y));
+  return mix(c, skyIrr(R) * 0.9, smoothstep(0.08, 0.5, rough));      // (a rough surface: only the blurred light of it all)
+}
+float fresnelS(float NV, float f0){ return f0 + (1.0 - f0) * pow(1.0 - NV, 5.0); }
+// optical depth of an exponential layer (scale height H) along a straight segment
+float odExp(float h0, float dy, float L, float H){
+  float e0 = exp(-max(h0, -200.0) / H);
+  return abs(dy * L) > 1e-3 ? e0 * H * (1.0 - exp(-dy * L / H)) / dy : e0 * L;
+}
+vec3 applyFog(vec3 col, vec3 p){
+  vec3 dv = p - uCamPos;
+  float dist = length(dv);
+  vec3 dir = dv / max(dist, 1e-3);
+  if (uSunI > 0.0) {
+    // aerial perspective: extinction plus in-scattered sun and sky light along the view segment
+    float h0 = uCamPos.y, odR = odExp(h0, dir.y, dist, HR), odM = odExp(h0, dir.y, dist, HM) * uHaze;
+    vec3 ext = BR * odR + BMS * 1.1 * odM, T = exp(-ext);
+    float mu = dot(dir, uSunDir);
+    vec3 sc = BR * phaseR(mu) * odR + BMS * phaseM(mu) * odM;
+    vec3 sun = uSunI * sunTrans(max(min(h0, p.y) + 0.5 * abs(p.y - h0), 0.0));
+    vec3 ins = sun * sc / max(ext, vec3(1e-9)) * (1.0 - T);
+    vec3 hz = atmoSky(normalize(vec3(dir.x, max(dir.y, 0.02), dir.z)));
+    ins += hz * (1.0 - T) * 0.55;                                     // skylight scattered into the view ray
+    // far away the view ray ends in haze: converge on the sky colour of that direction so ground meets sky seamlessly
+    return mix(col * T + ins * 0.62, skyColor(dir), smoothstep(0.55, 0.97, 1.0 - T.g) * 0.95);
+  }
+  const float b = 0.00042;
+  float cy = max(uCamPos.y, 0.0);
+  float dy = dir.y;
+  float fog = abs(dy) > 1e-4
+    ? uFogDens * exp(-cy * b) * (1.0 - exp(-dist * dy * b)) / (dy * b)
+    : uFogDens * exp(-cy * b) * dist;
+  fog = 1.0 - exp(-max(fog, 0.0));
+  return mix(col, skyColor(dir), clamp(fog, 0.0, 1.0));
+}
+// city lights: 0 by day, rising through dusk to 1 at night
+uniform float uNightK;
+// an emitted light seen through the air: it dims with distance but is not replaced by the haze colour,
+// so a city at night stays a field of lights far away
+vec3 airLight(vec3 e, vec3 p){ return e * exp(-length(p - uCamPos) / 32000.0); }
+float nHash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+vec3 tonemap(vec3 c){
+  // a film's shoulder for the highlights, then the grade of a sunny open-world game: a little more colour,
+  // a gentle S-curve for contrast, sunlit tones a shade warm and the shade a shade cool
+  c = max(c, 0.0);
+  c = c / (1.0 + max(c - 0.8, 0.0) * 1.0);
+  float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  c = max(mix(vec3(l), c, 1.14), 0.0);
+  vec3 cc = min(c, 1.0);
+  c = mix(c, cc * cc * (3.0 - 2.0 * cc) + (c - cc), 0.2);
+  return c * mix(vec3(0.975, 0.99, 1.035), vec3(1.035, 1.0, 0.955), smoothstep(0.15, 0.75, l));
+}
+`;
+
+// ---------- procedural textures ----------
+function makeNoiseTexture() {
+  const S = 256, data = new Uint8Array(S * S * 4);
+  const hA = new Float32Array(S * S);
+  const f = (u, v, base, oct, off) => {
+    let s = 0, a = 0.5;
+    for (let o = 0; o < oct; o++) { const p = base << o; s += a * perlinP(u * p + off, v * p + off, p); a *= 0.5; }
+    return s;
+  };
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) hA[y * S + x] = f(x / S, y / S, 8, 5, 0);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const i = (y * S + x) * 4;
+    const dx = hA[y * S + ((x + 1) % S)] - hA[y * S + ((x + S - 1) % S)];
+    const dy = hA[((y + 1) % S) * S + x] - hA[((y + S - 1) % S) * S + x];
+    data[i] = clamp(128 - dx * 900, 0, 255);
+    data[i + 1] = clamp(128 - dy * 900, 0, 255);
+    data[i + 2] = clamp(128 + f(x / S, y / S, 16, 4, 64) * 330, 0, 255);
+    data[i + 3] = clamp(128 + f(x / S, y / S, 4, 4, 128) * 300, 0, 255);
+  }
+  return makeTexture({ internal: gl.RGBA8, format: gl.RGBA, type: gl.UNSIGNED_BYTE, w: S, h: S, data, wrap: gl.REPEAT, aniso: 8 });
+}
+function makePuffTexture() {
+  const S = 128, data = new Uint8Array(S * S);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const dx = (x + 0.5) / S * 2 - 1, dy = (y + 0.5) / S * 2 - 1, r = Math.hypot(dx, dy);
+    const base = smoothstep(1.0, 0.2, r);
+    const n = fbm(dx * 2.6 + 5.3, dy * 2.6 + 1.7, 4) * 0.5 + 0.5;
+    data[y * S + x] = clamp((base * (0.45 + 0.95 * n) - 0.12 * (1 - base)) * 255, 0, 255);
+  }
+  return makeTexture({ internal: gl.R8, format: gl.RED, type: gl.UNSIGNED_BYTE, w: S, h: S, data });
+}
+function makeDotTexture() {
+  const S = 64, data = new Uint8Array(S * S);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const r = Math.hypot((x + 0.5) / S * 2 - 1, (y + 0.5) / S * 2 - 1);
+    data[y * S + x] = clamp((1 - smoothstep(0.0, 1.0, r)) * 255 * 1.2, 0, 255);
+  }
+  return makeTexture({ internal: gl.R8, format: gl.RED, type: gl.UNSIGNED_BYTE, w: S, h: S, data });
+}
+
+// ---- data: 国土地理院 標高タイル (DEM, z8 mosaic + 7 detailed patches), OurAirports runways, GeoNames place names ----
+const JP_COARSE = { z: 8, x0: 215, y0: 91, w: 4608, h: 5120, data: '<<省略: base64 のデータ 3,200,436 文字>>' };
+const JP_PATCHES = {"hachijo": {"lat": 33.1, "lon": 139.795, "cell": 20, "data": "<<省略: base64 のデータ 324,980 文字>>"}, "oshima": {"lat": 34.735, "lon": 139.4, "cell": 20, "data": "<<省略: base64 のデータ 369,656 文字>>"}, "yakushima": {"lat": 30.345, "lon": 130.53, "cell": 32, "data": "<<省略: base64 のデータ 953,152 文字>>"}, "rishiri": {"lat": 45.18, "lon": 141.23, "cell": 24, "data": "<<省略: base64 のデータ 475,640 文字>>"}, "kobe": {"lat": 34.7, "lon": 135.235, "cell": 24, "data": "<<省略: base64 のデータ 937,100 文字>>"}, "haneda": {"lat": 35.55, "lon": 139.78, "cell": 24, "data": "<<省略: base64 のデータ 325,912 文字>>"}, "naha": {"lat": 26.2, "lon": 127.68, "cell": 24, "data": "<<省略: base64 のデータ 573,648 文字>>"}};
+const JP_AIRPORTS = [{"icao": "RJ04", "name": "Shikabe", "lat": 42.04503, "lon": 140.79329, "rw": [{"le": [42.042599, 140.787994], "he": [42.047401, 140.798004], "ids": ["07", "25"], "len": 1010, "wid": 30, "elev": 19.2}]}, {"icao": "RJAA", "name": "成田", "lat": 35.76858, "lon": 140.38871, "rw": [{"le": [35.774399, 140.367996], "he": [35.743301, 140.391006], "ids": ["16R", "34L"], "len": 4000, "wid": 60, "elev": 39.6}, {"le": [35.8027, 140.380005], "he": [35.785801, 140.391998], "ids": ["16L", "34R"], "len": 2500, "wid": 60, "elev": 41.1}]}, {"icao": "RJAF", "name": "松本", "lat": 36.1668, "lon": 137.923, "rw": [{"le": [36.175701, 137.921005], "he": [36.157902, 137.923996], "ids": ["18", "36"], "len": 1999, "wid": 46, "elev": 649.8}]}, {"icao": "RJAH", "name": "茨城", "lat": 36.18146, "lon": 140.41443, "rw": [{"le": [36.170218, 140.408564], "he": [36.192694, 140.420304], "ids": ["03L", "21R"], "len": 2700, "wid": 46, "elev": 32.0}, {"le": [36.169601, 140.410004], "he": [36.192501, 140.421005], "ids": ["03R", "21L"], "len": 2700, "wid": 46, "elev": 32.0}]}, {"icao": "RJAM", "name": "南鳥島", "lat": 24.2897, "lon": 153.979, "rw": [{"le": [24.285299, 153.973999], "he": [24.2941, 153.983994],  /* <<省略: 元の 1273 行目はデータで 26,151 文字。最初の 1,200 文字だけ残した>> */
+const JP_PLACES = [{"n": "東京", "lat": 35.6895, "lon": 139.6917, "p": 9733276, "k": "c"}, {"n": "横浜市", "lat": 35.4333, "lon": 139.65, "p": 3777491, "k": "c"}, {"n": "大阪市", "lat": 34.6938, "lon": 135.5011, "p": 2753862, "k": "c"}, {"n": "名古屋市", "lat": 35.1815, "lon": 136.9064, "p": 2332176, "k": "c"}, {"n": "札幌市", "lat": 43.0667, "lon": 141.35, "p": 1973832, "k": "c"}, {"n": "福岡市", "lat": 33.6, "lon": 130.4167, "p": 1612392, "k": "c"}, {"n": "川崎市", "lat": 35.5206, "lon": 139.7172, "p": 1538262, "k": "c"}, {"n": "神戸市", "lat": 34.6913, "lon": 135.183, "p": 1525152, "k": "c"}, {"n": "京都市", "lat": 35.0211, "lon": 135.7538, "p": 1463723, "k": "c"}, {"n": "広島市", "lat": 34.4, "lon": 132.45, "p": 1200754, "k": "c"}, {"n": "仙台市", "lat": 38.2667, "lon": 140.8667, "p": 1096704, "k": "c"}, {"n": "千葉市", "lat": 35.6, "lon": 140.1167, "p": 979768, "k": "c"}, {"n": "北九州市", "lat": 33.8518, "lon": 130.8503, "p": 940978, "k": "c"}, {"n": "世田谷区", "lat": 35.6419, "lon": 139.6472, "p": 940071, "k": "c"}, {"n": "堺市", "lat": 34.5822, "lon": 135.4665, "p": 826161, "k": "c"}, {"n": "新潟市", "lat": 37.9226, "lon": 139.0412, "p": 797591, "k": "c"}, {"n": "浜松市", "lat": 34.7, "lon": 137.7333, "p": 791707, "k": "c"} /* <<省略: 元の 1274 行目はデータで 73,266 文字。最初の 1,200 文字だけ残した>> */
+
+// ---- data: world elevation (AWS Terrain Tiles / Mapzen terrarium, z3 mosaic), OurAirports, GeoNames ----
+const WORLD_COARSE = { z: 3, x0: 0, y0: 0, w: 2048, h: 2048, data: '<<省略: base64 のデータ 2,882,760 文字>>' };
+const WORLD_AIRPORTS = [{"icao":"AG-0001","name":"Burton-Nibbs","lat":17.62119,"lon":-61.79835,"rw":[{"le":[17.620546,-61.806995],"he":[17.621614,-61.789513],"ids":["10","28"],"len":1859,"wid":30,"elev":6.1}],"cc":"AG","iata":"BBQ","big":0,"city":"Codrington"},{"icao":"AGGH","name":"Honiara","lat":-9.428,"lon":160.05499,"rw":[{"le":[-9.43174,160.044998],"he":[-9.42426,160.063995],"ids":["06","24"],"len":2200,"wid":45,"elev":8.5}],"cc":"SB","iata":"HIR","big":1,"city":"Honiara"},{"icao":"AGGM","name":"Munda","lat":-8.32797,"lon":157.263,"rw":[{"le":[-8.32918,157.257004],"he":[-8.32676,157.268997],"ids":["07","25"],"len":1400,"wid":30,"elev":2.1}],"cc":"SB","iata":"MUA","big":0,"city":"Munda"},{"icao":"ANYN","name":"Nauru","lat":-0.54789,"lon":166.91952,"rw":[{"le":[-0.541181,166.912003],"he":[-0.553739,166.925995],"ids":["12","30"],"len":2150,"wid":45,"elev":6.7}],"cc":"NR","iata":"INU","big":0,"city":"Yaren"},{"icao":"AU-0539","name":"Western Sydney International (Nancy-Bird Walton)","lat":-33.88346,"lon":150.71298,"rw":[{"le":[-33.89057,150.69862],"he":[-33.87534,150.72984],"ids":["05","23"],"len":3700,"wid":476,"elev":79.9}],"cc":"AU","iata":"WSI","big":1,"city":"Sydney"},{"icao" /* <<省略: 元の 1278 行目はデータで 768,058 文字。最初の 1,200 文字だけ残した>> */
+const WORLD_PLACES = [{"n":"アンドラ・ラ・ヴェリャ","lat":42.5078,"lon":1.5211,"p":20430,"k":"c"},{"n":"ラス・アル・ハイマ","lat":25.7895,"lon":55.9432,"p":351943,"k":"c"},{"n":"ドバイ","lat":25.0772,"lon":55.3093,"p":3790000,"k":"c"},{"n":"Dayrah","lat":25.2714,"lon":55.3021,"p":400000,"k":"c"},{"n":"シャールジャ","lat":25.3342,"lon":55.4122,"p":1800000,"k":"c"},{"n":"アル・アイン","lat":24.1917,"lon":55.7606,"p":846747,"k":"c"},{"n":"アジュマーン","lat":25.4018,"lon":55.4788,"p":490035,"k":"c"},{"n":"アブダビ","lat":24.4512,"lon":54.397,"p":1807000,"k":"c"},{"n":"マザーリシャリーフ","lat":36.709,"lon":67.1109,"p":523300,"k":"c"},{"n":"カンダハール","lat":31.6133,"lon":65.7101,"p":523300,"k":"c"},{"n":"カブール","lat":34.5281,"lon":69.1723,"p":4434550,"k":"c"},{"n":"ヘラート","lat":34.3482,"lon":62.1997,"p":574300,"k":"c"},{"n":"セントジョンズ","lat":17.121,"lon":-61.8433,"p":51737,"k":"c"},{"n":"バレー","lat":18.217,"lon":-63.0578,"p":2035,"k":"c"},{"n":"ティラナ","lat":41.3274,"lon":19.8187,"p":418495,"k":"c"},{"n":"エレバン","lat":40.1776,"lon":44.5126,"p":1144700,"k":"c"},{"n":"サウリモ","lat":-9.6608,"lon":20.3915,"p":393000,"k":"c"},{"n":"Viana","lat":-8.9055,"lon":13.375,"p":865863,"k":"c"},{"n":"ウイジェ","lat":-7.6087,"lon":15.0613,"p":322531,"k":"c"},{"n":"マランジェ" /* <<省略: 元の 1279 行目はデータで 159,648 文字。最初の 1,200 文字だけ残した>> */
+const COUNTRY_JA = {"PT":"ポルトガル","PR":"Puerto Rico","CC":"Cocos (Keeling) Islands","FJ":"フィジー","AR":"アルゼンチン","GY":"Guyana","MM":"ミャンマー","VC":"Saint Vincent and the Grenadines","GA":"Gabon","RS":"セルビア","LC":"Saint Lucia","MT":"Malta","MO":"マカオ","MN":"モンゴル","VN":"ベトナム","NE":"Niger","NI":"Nicaragua","WF":"Wallis and Futuna","FK":"Falkland Islands","MH":"Marshall Islands","SN":"Senegal","SL":"Sierra Leone","DJ":"Djibouti","RO":"ルーマニア","SH":"Saint Helena, Ascension and Tristan da Cunha","KI":"Kiribati","ID":"インドネシア","PE":"ペルー","TZ":"タンザニア","NU":"Niue","LB":"レバノン","KG":"Kyrgyzstan","CR":"コスタリカ","AL":"Albania","MG":"Madagascar","MU":"Mauritius","GL":"Greenland","CM":"Cameroon","IS":"アイスランド","ES":"スペイン","GB":"イギリス","IL":"イスラエル","PA":"パナマ","LY":"Libya","WS":"Samoa","BR":"ブラジル","RU":"ロシア","BN":"ブルネイ","LR":"Liberia","BF":"Burkina Faso","CN":"中国","ZW":"Zimbabwe","CO":"コロンビア","GM":"Gambia","NL":"オランダ","TM":"Turkmenistan","HU":"ハンガリー","KW":"クウェート","SR":"Suriname","RE":"Réunion","NG":"ナイジェリア","ST":"São Tomé and Principe","YE":"Yemen","KP":"北朝鮮","CA":"カナダ","SE":"スウェーデン","YT":"Mayotte","AS":"American Samoa","BO":"ボリビア","TG":"Togo","DK":"デンマーク","MP":"北マリアナ諸島","KR":"韓国","EC":"エクアドル","PY":"パラグアイ","CW" /* <<省略: 元の 1280 行目はデータで 3,726 文字。最初の 1,200 文字だけ残した>> */
+const COUNTRY_CONT = {"PT":"EU","PR":"NA","CC":"AS","FJ":"OC","AR":"SA","GY":"SA","MM":"AS","VC":"NA","GA":"AF","RS":"EU","LC":"NA","MT":"EU","MO":"AS","MN":"AS","VN":"AS","NE":"AF","NI":"NA","WF":"OC","FK":"SA","MH":"OC","SN":"AF","SL":"AF","DJ":"AF","RO":"EU","SH":"AF","KI":"OC","ID":"AS","PE":"SA","TZ":"AF","NU":"OC","LB":"AS","KG":"AS","CR":"NA","AL":"EU","MG":"AF","MU":"AF","GL":"NA","CM":"AF","IS":"EU","ES":"EU","GB":"EU","IL":"AS","PA":"NA","LY":"AF","WS":"OC","BR":"SA","RU":"EU","BN":"AS","LR":"AF","BF":"AF","CN":"AS","ZW":"AF","CO":"SA","GM":"AF","NL":"EU","TM":"AS","HU":"EU","KW":"AS","SR":"SA","RE":"AF","NG":"AF","ST":"AF","YE":"AS","KP":"AS","CA":"NA","SE":"EU","YT":"AF","AS":"OC","BO":"SA","TG":"AF","DK":"EU","MP":"OC","KR":"AS","EC":"SA","PY":"SA","CW":"NA","NC":"OC","BM":"NA","VU":"OC","BZ":"NA","TO":"OC","FM":"OC","AU":"OC","SO":"AF","TH":"AS","PW":"OC","KY":"NA","PH":"AS","TV":"OC","SA":"AS","AI":"NA","MA":"AF","TW":"AS","PG":"OC","CK":"OC","BD":"AS","NZ":"OC","BB":"NA","GG":"EU","IN":"AS","DM":"NA","JO":"AS","SI":"EU","GH":"AF","UA":"EU","UZ":"AS","TJ":"AS","EH":"AF","ZA":"AF","LA":"AS","AF":"AS","GI":"EU","CG":"AF","EG":"AF","MZ":"AF","NR":"OC","EE":"EU","BH":"AS","DZ":"AF","UG":"AF","PL":"EU","BI":"AF","NP":"AS","GD":"NA","MD":"EU","LV":"EU","GP":"NA","IR":"AS","TC":"NA","MY":"AS","TD":"AF","CZ":"EU","RW":"AF","KH":"AS","MX":"NA","AO":"AF","BQ":"NA","FO":"EU","VE":"SA","UY":"SA","IM":"EU","BW":"AF","ZM":"AF","BA":"EU","BJ":"AF","BE":"EU","MR":"AF","JM":"NA","GN":"AF","HN":"NA","SD":"AF","LU":"EU","DE":"EU","CV":"AF","HR":"EU","AM":"AS","LT":"EU","CD":"AF","GW":"AF","NA":"AF","MK":"EU","CU":"NA","CL":"SA","GF":"SA","HK":"AS","ML":"AF","IT":"EU","SG":"AS","NF":"OC","HT":"NA","MW":"AF","KN":"NA","CF":"AF","TL":"AS","ET":"AF","SB":"OC","KE":"AF","MQ":"NA","PM":"NA","JE":"EU","CI":"AF","SX":"NA","FR":"EU","CY":"AS","NO":"EU","ME":"EU","SS":"AF","PK":"AS","GR":"EU","SY":"AS","SK":"EU","BY":"EU","UM":"OC","GU":"OC","AT":"EU","PF":"OC","IE":"EU","SZ":"AF","GT":"NA","AW":"NA","GE":"AS","KM":"AF","ER":"AF","AE":"AS","KZ":"AS","BS":"NA","GQ":"AF","CX":"AS","QA":"AS","VG":"NA","IQ":"AS","SC":"AF","MV":"AS","US":"NA","TT":"NA","CH":"EU","XK":"EU","SV":"NA","AZ":"AS","BT":"AS","AG":"NA","VI":"NA","DO":"NA","BG":"EU","TR":"AS","FI":"EU","LK":"AS","OM":"AS","LS":"AF","TN":"AF"};
+
+// =====================================================================
+//  WORLD: heightmap island, airport, vegetation, clouds, rings
+// =====================================================================
+const HM_N = 1024;
+let HM_CELL = 20, HM_HALF = HM_N * HM_CELL / 2;   // 20.48 km square for 20 m cells
+const heights = new Float32Array(HM_N * HM_N);
+const vegData = new Float32Array(HM_N * HM_N);
+
+// runway: centre, true heading of the active direction, length/width (m), elevation, idents [active, opposite]
+const RWY = {};
+function setRunway(o) {
+  Object.assign(RWY, o);
+  RWY.dir = [Math.sin(RWY.hdg * DEG), 0, -Math.cos(RWY.hdg * DEG)];
+  RWY.perp = [Math.cos(RWY.hdg * DEG), 0, Math.sin(RWY.hdg * DEG)];     // right of the active direction
+  RWY.windDir = vscale(RWY.dir, -3);                                    // light wind straight down the runway
+}
+const rwyToWorld = (u, v, y = RWY.elev) => [RWY.cx + RWY.dir[0] * u + RWY.perp[0] * v, y, RWY.cz + RWY.dir[2] * u + RWY.perp[2] * v];
+const worldToRwy = (x, z) => { const dx = x - RWY.cx, dz = z - RWY.cz; return [dx * RWY.dir[0] + dz * RWY.dir[2], dx * RWY.perp[0] + dz * RWY.perp[2]]; };
+const av = v => v * (RWY.side || 1);          // lateral offset on the side where the terminal is
+const APRON = { u0: -330, u1: 20, v0: -150, v1: -45 };
+
+const MAP_INFO = {
+  sorajima: '架空の南の島。起伏のある山と、海沿いの小さな飛行場',
+  hachijo: '伊豆諸島の島。八丈富士（854 m）と三原山、2 つの火山のあいだに空港',
+  oshima: '伊豆諸島最大の島。中央に三原山（758 m）のカルデラ',
+  yakushima: '世界遺産の島。九州最高峰の宮之浦岳（1,936 m）がそびえる',
+  rishiri: '北海道の北の島。海から立ち上がる円すい形の利尻山（1,721 m）',
+  kobe: '海に浮かぶ空港。北に六甲山地（931 m）と神戸の街並み',
+  haneda: '東京湾に面した日本最大の空港。地形は平らで、街が広がる',
+  naha: '沖縄本島の玄関口。海沿いの長い滑走路',
+};
+const URBAN = { kobe: 1, haneda: 1, naha: 1 };
+const MAPS = [
+  { id: 'sorajima', name: '空島', icao: '架空', procedural: true, cell: 20, len: 1400, idents: ['09', '27'] },
+];
+let MAP = MAPS[0];
+
+function hTexel(i, j) {
+  i = i < 0 ? 0 : i >= HM_N ? HM_N - 1 : i;
+  j = j < 0 ? 0 : j >= HM_N ? HM_N - 1 : j;
+  return heights[j * HM_N + i];
+}
+function terrainHeight(x, z) {
+  const fx = (x + HM_HALF) / HM_CELL, fz = (z + HM_HALF) / HM_CELL;
+  const ix = Math.floor(fx), iz = Math.floor(fz), tx = fx - ix, tz = fz - iz;
+  const a = hTexel(ix, iz), b = hTexel(ix + 1, iz), c = hTexel(ix, iz + 1), d = hTexel(ix + 1, iz + 1);
+  return lerp(lerp(a, b, tx), lerp(c, d, tx), tz);
+}
+function terrainNormal(x, z) {
+  const e = HM_CELL;
+  return vnorm([terrainHeight(x - e, z) - terrainHeight(x + e, z), 2 * e, terrainHeight(x, z - e) - terrainHeight(x, z + e)]);
+}
+function vegAt(x, z) {
+  const i = clamp(Math.round((x + HM_HALF) / HM_CELL), 0, HM_N - 1), j = clamp(Math.round((z + HM_HALF) / HM_CELL), 0, HM_N - 1);
+  return vegData[j * HM_N + i];
+}
+function onPaved(x, z) {
+  const [u, v0] = worldToRwy(x, z);
+  if (Math.abs(u) <= RWY.len / 2 && Math.abs(v0) <= RWY.wid / 2) return 'rwy';
+  const v = v0 * (RWY.side || 1);
+  if (u >= APRON.u0 && u <= APRON.u1 && v >= APRON.v0 && v <= APRON.v1) return 'apron';
+  if (u >= -300 && u <= -270 && v >= -45 && v <= -RWY.wid / 2) return 'apron';
+  if (u >= -20 && u <= 10 && v >= -45 && v <= -RWY.wid / 2) return 'apron';
+  return null;
+}
+// ground used by the physics: water counts as a (deadly) surface at y = 0
+function groundAt(x, z) {
+  const h = terrainHeight(x, z);
+  const paved = onPaved(x, z);
+  if (paved) return { h: RWY.elev + (paved === 'rwy' ? 0.12 : 0.08), n: [0, 1, 0], paved: true, water: false };
+  if (h < 0) return { h: 0, n: [0, 1, 0], paved: false, water: true };
+  return { h, n: terrainNormal(x, z), paved: false, water: false };
+}
+
+function terrainNatural(x, z) {
+  const nx = x / HM_HALF, nz = z / HM_HALF;
+  const wx = fbm(nx * 1.6 + 3.1, nz * 1.6 - 7.4, 3) * 0.16, wz = fbm(nx * 1.6 - 2.3, nz * 1.6 + 5.5, 3) * 0.16;
+  const px = nx + wx, pz = nz + wz;
+  const r = Math.hypot(px, pz * 1.1);
+  const land = 1 - smoothstep(0.40, 0.80, r + fbm(nx * 4.3 + 1.7, nz * 4.3 + 9.2, 4) * 0.12);
+  let h = (land - 0.52) * 170;
+  h += fbm(px * 7 + 4.4, pz * 7 - 1.3, 5) * 60 * land;
+  const mx = px - 0.04, mz = pz + 0.16;
+  const md = Math.hypot(mx * 1.15, mz) + fbm(px * 3.1 - 6, pz * 3.1 + 2, 3) * 0.18;
+  const mMask = (1 - smoothstep(0.04, 0.52, md)) * land;
+  const rg = ridged(px * 3.6 + 11.7, pz * 3.6 + 3.3, 6);
+  h += mMask * (150 + Math.pow(rg, 1.7) * 1500);
+  return Math.max(h, -95);
+}
+
+// Real terrain: GSI elevation tiles (国土地理院 標高タイル) resampled to a local grid,
+// stored as zlib-compressed, row-delta int16 decimetres; -32768 marks the sea.
+async function decodeRealTerrain(id) {
+  const N = HM_N, b64 = MAP_DATA[id].data;
+  const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const stream = new Blob([bin]).stream().pipeThrough(new DecompressionStream('deflate'));
+  const d = new Int16Array(await new Response(stream).arrayBuffer());
+  const sea = new Uint8Array(N * N);
+  for (let j = 0; j < N; j++) {
+    let acc = 0;
+    for (let i = 0; i < N; i++) {
+      const k = j * N + i;
+      acc = ((acc + d[k]) << 16) >> 16;
+      if (acc === -32768) { sea[k] = 1; heights[k] = 0; } else heights[k] = acc / 10;
+    }
+  }
+  // land touching the edge of the data slopes down into the sea
+  const margin = 48;
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const k = j * N + i; if (sea[k]) continue;
+    const e = Math.min(i, j, N - 1 - i, N - 1 - j);
+    if (e >= margin) continue;
+    const t = smoothstep(0, margin, e + perlin(i * 0.05, j * 0.05) * 14);
+    heights[k] = heights[k] * t - 12 * (1 - t);
+    if (heights[k] < 0) sea[k] = 1;
+  }
+  // sea depth grows with distance from the shore (the elevation data has no bathymetry)
+  const dist = new Float32Array(N * N);
+  for (let k = 0; k < N * N; k++) dist[k] = sea[k] ? 1e9 : 0;
+  const R2 = Math.SQRT2;
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const k = j * N + i; if (!sea[k]) continue;
+    let v = dist[k];
+    if (i > 0) v = Math.min(v, dist[k - 1] + 1);
+    if (j > 0) { v = Math.min(v, dist[k - N] + 1); if (i > 0) v = Math.min(v, dist[k - N - 1] + R2); if (i < N - 1) v = Math.min(v, dist[k - N + 1] + R2); }
+    dist[k] = v;
+  }
+  for (let j = N - 1; j >= 0; j--) for (let i = N - 1; i >= 0; i--) {
+    const k = j * N + i; if (!sea[k]) continue;
+    let v = dist[k];
+    if (i < N - 1) v = Math.min(v, dist[k + 1] + 1);
+    if (j < N - 1) { v = Math.min(v, dist[k + N] + 1); if (i < N - 1) v = Math.min(v, dist[k + N + 1] + R2); if (i > 0) v = Math.min(v, dist[k + N - 1] + R2); }
+    dist[k] = v;
+  }
+  for (let k = 0; k < N * N; k++) if (sea[k]) heights[k] = -Math.min(1.2 + Math.min(dist[k], 4000) * HM_CELL * 0.022, 90);
+}
+
+// pick the runway end whose 3° approach is clear of terrain, and the side with room for the terminal
+function chooseRunwayLayout() {
+  const clear = sign => {
+    let mn = 1e9;
+    for (let d = 200; d <= 6000; d += 100) {
+      const p = rwyToWorld(sign > 0 ? -RWY.len / 2 - d : RWY.len / 2 + d, 0);
+      mn = Math.min(mn, RWY.elev + Math.tan(3 * DEG) * d - Math.max(terrainHeight(p[0], p[2]), 0));
+    }
+    return mn;
+  };
+  if (clear(1) < 60 && clear(-1) > clear(1)) {
+    setRunway({ hdg: (RWY.hdg + 180) % 360, idents: [RWY.idents[1], RWY.idents[0]] });
+  }
+  let best = -1e9;
+  for (const side of [-1, 1]) {
+    let sc = 0;
+    for (let u = -330; u <= 20; u += 35) for (let v = 50; v <= 200; v += 30) {
+      const p = rwyToWorld(u, -v * side), h = terrainHeight(p[0], p[2]);
+      sc += (h > 0 ? 1 : -1.5) - Math.min(Math.abs(h - RWY.elev) / 20, 2);
+    }
+    if (sc > best) { best = sc; RWY.side = side; }
+  }
+}
+function flattenAirport(blend) {
+  const N = HM_N, reach = RWY.len / 2 + blend + 600;
+  const i0 = Math.floor((RWY.cx - reach + HM_HALF) / HM_CELL), i1 = Math.ceil((RWY.cx + reach + HM_HALF) / HM_CELL);
+  const j0 = Math.floor((RWY.cz - reach + HM_HALF) / HM_CELL), j1 = Math.ceil((RWY.cz + reach + HM_HALF) / HM_CELL);
+  for (let j = Math.max(0, j0); j <= Math.min(N - 1, j1); j++) for (let i = Math.max(0, i0); i <= Math.min(N - 1, i1); i++) {
+    const x = -HM_HALF + i * HM_CELL, z = -HM_HALF + j * HM_CELL;
+    const [u, v0] = worldToRwy(x, z), v = v0 * (RWY.side || 1);
+    const du = Math.max(Math.abs(u) - (RWY.len / 2 + 160), 0), dv = Math.max(v - 70, -210 - v, 0);
+    const t = smoothstep(0, blend, Math.hypot(du, dv));
+    const k = j * N + i;
+    heights[k] = lerp(RWY.elev, heights[k], t);
+  }
+}
+
+const tick = () => new Promise(r => setTimeout(r, 0));
+async function generateWorld(map, onProgress) {
+  const N = HM_N;
+  MAP = map;
+  HM_CELL = map.cell || 20; HM_HALF = N * HM_CELL / 2;
+  LEAF = 16 * HM_CELL;
+  LOD_RANGE = LOD_BASE.map(r => r * HM_CELL / 20);
+  if (map.procedural) {
+    setRunway({ cx: -900, cz: 3900, hdg: 90, len: 1400, wid: 30, elev: 20, idents: ['09', '27'], side: 1 });
+    for (let j = 0; j < N; j++) {
+      const z = -HM_HALF + j * HM_CELL;
+      for (let i = 0; i < N; i++) heights[j * N + i] = terrainNatural(-HM_HALF + i * HM_CELL, z);
+      if ((j & 15) === 15) { onProgress(0.05 + 0.75 * j / N); await tick(); }
+    }
+    let sum = 0, cnt = 0;
+    for (let u = -RWY.len / 2; u <= RWY.len / 2; u += 50) for (let v = -80; v <= 40; v += 20) {
+      const p = rwyToWorld(u, v); sum += terrainHeight(p[0], p[2]); cnt++;
+    }
+    RWY.elev = Math.max(8, Math.round(sum / cnt));
+    flattenAirport(520);
+  } else {
+    onProgress(0.2); await tick();
+    await decodeRealTerrain(map.id);
+    onProgress(0.6); await tick();
+    setRunway({ cx: (map.le[0] + map.he[0]) / 2, cz: (map.le[1] + map.he[1]) / 2, hdg: map.hdg, len: map.len,
+      wid: Math.max(30, map.wid), elev: map.elev, idents: map.idents.slice(), side: 1 });
+    let sum = 0, cnt = 0;
+    for (let u = -RWY.len / 2; u <= RWY.len / 2; u += 25) { const p = rwyToWorld(u, 0); sum += terrainHeight(p[0], p[2]); cnt++; }
+    RWY.elev = Math.max(1.5, Math.round(sum / cnt * 10) / 10);
+    chooseRunwayLayout();
+    flattenAirport(260);
+  }
+  onProgress(0.84); await tick();
+  // vegetation density
+  const urban = URBAN[map.id];
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const x = -HM_HALF + i * HM_CELL, z = -HM_HALF + j * HM_CELL, h = heights[j * N + i];
+    let v = clamp(fbm(x / 1500 + 31, z / 1500 - 12, 4) * 0.95 + 0.5, 0, 1);
+    v *= 1 - smoothstep(650, 1000, h);
+    if (urban) v *= smoothstep(25, 110, h);
+    const [u, w0] = worldToRwy(x, z), w = w0 * (RWY.side || 1);
+    if (Math.abs(u) < RWY.len / 2 + 250 && w > -260 && w < 120) v *= 0.1;
+    vegData[j * N + i] = v;
+  }
+  onProgress(0.9); await tick();
+  buildMinMax();
+}
+
+// ---------- GPU resources for terrain ----------
+let heightTex, normalTex, noiseTex, puffTex, dotTex;
+function uploadWorldTextures() {
+  const N = HM_N;
+  if (heightTex) { gl.deleteTexture(heightTex); gl.deleteTexture(normalTex); }
+  heightTex = makeTexture({ internal: gl.R32F, format: gl.RED, type: gl.FLOAT, w: N, h: N, data: heights, nearest: true });
+  const nd = new Uint8Array(N * N * 4);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const dx = hTexel(i - 1, j) - hTexel(i + 1, j), dz = hTexel(i, j - 1) - hTexel(i, j + 1);
+    const n = vnorm([dx, 2 * HM_CELL, dz]), k = (j * N + i) * 4;
+    nd[k] = (n[0] * 0.5 + 0.5) * 255; nd[k + 1] = (n[1] * 0.5 + 0.5) * 255; nd[k + 2] = (n[2] * 0.5 + 0.5) * 255;
+    nd[k + 3] = vegData[j * N + i] * 255;
+  }
+  normalTex = makeTexture({ internal: gl.RGBA8, format: gl.RGBA, type: gl.UNSIGNED_BYTE, w: N, h: N, data: nd, aniso: 8 });
+  if (!noiseTex) { noiseTex = makeNoiseTexture(); puffTex = makePuffTexture(); dotTex = makeDotTexture(); }
+}
+
+// ---------- CDLOD terrain ----------
+let LEAF = 320;                                   // 16 heightmap cells
+const LOD_TOP = 6;                               // 64 leaves across -> 7 levels
+const LOD_BASE = [700, 1400, 2800, 5600, 11200, 22400, 44800];
+let LOD_RANGE = LOD_BASE.slice();
+const minmax = [];
+function buildMinMax() {
+  const leafCells = LEAF / HM_CELL, n0 = HM_N * HM_CELL / LEAF;
+  let prev = new Float32Array(n0 * n0 * 2);
+  for (let j = 0; j < n0; j++) for (let i = 0; i < n0; i++) {
+    let mn = 1e9, mx = -1e9;
+    for (let y = j * leafCells; y <= (j + 1) * leafCells; y++) for (let x = i * leafCells; x <= (i + 1) * leafCells; x++) {
+      const h = hTexel(x, y); if (h < mn) mn = h; if (h > mx) mx = h;
+    }
+    prev[(j * n0 + i) * 2] = mn; prev[(j * n0 + i) * 2 + 1] = mx;
+  }
+  minmax[0] = prev;
+  for (let L = 1, n = n0 / 2; L <= LOD_TOP; L++, n /= 2) {
+    const cur = new Float32Array(n * n * 2), pn = n * 2;
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+      let mn = 1e9, mx = -1e9;
+      for (let c = 0; c < 4; c++) {
+        const k = ((j * 2 + (c >> 1)) * pn + i * 2 + (c & 1)) * 2;
+        mn = Math.min(mn, prev[k]); mx = Math.max(mx, prev[k + 1]);
+      }
+      cur[(j * n + i) * 2] = mn; cur[(j * n + i) * 2 + 1] = mx;
+    }
+    minmax[L] = cur; prev = cur;
+  }
+}
+function boxDist2(p, x0, y0, z0, x1, y1, z1) {
+  const dx = Math.max(x0 - p[0], 0, p[0] - x1), dy = Math.max(y0 - p[1], 0, p[1] - y1), dz = Math.max(z0 - p[2], 0, p[2] - z1);
+  return dx * dx + dy * dy + dz * dz;
+}
+function selectTerrain(cam, planes) {
+  const out = [];
+  const rec = (L, i, j) => {
+    const size = LEAF << L, x0 = -HM_HALF + i * size, z0 = -HM_HALF + j * size;
+    const n = (HM_N * HM_CELL / LEAF) >> L, k = (j * n + i) * 2;
+    const mn = minmax[L][k] - 1, mx = minmax[L][k + 1] + 1;
+    if (!boxInFrustum(planes, x0, mn, z0, x0 + size, mx, z0 + size)) return;
+    if (L === 0) { out.push([x0, z0, size, 0, 32]); return; }
+    const r = LOD_RANGE[L - 1];
+    if (boxDist2(cam, x0, mn, z0, x0 + size, mx, z0 + size) > r * r) { out.push([x0, z0, size, L, 32]); return; }
+    const h = size / 2, cn = n * 2;
+    for (let c = 0; c < 4; c++) {
+      const ci = i * 2 + (c & 1), cj = j * 2 + (c >> 1), cx = -HM_HALF + ci * h, cz = -HM_HALF + cj * h;
+      const ck = (cj * cn + ci) * 2, cmn = minmax[L - 1][ck] - 1, cmx = minmax[L - 1][ck + 1] + 1;
+      if (boxDist2(cam, cx, cmn, cz, cx + h, cmx, cz + h) <= r * r) rec(L - 1, ci, cj);
+      else if (boxInFrustum(planes, cx, cmn, cz, cx + h, cmx, cz + h)) out.push([cx, cz, h, L, 16]);
+    }
+  };
+  rec(LOD_TOP, 0, 0);
+  return out;
+}
+function makeGrid(G) {
+  const v = new Float32Array((G + 1) * (G + 1) * 2);
+  for (let j = 0; j <= G; j++) for (let i = 0; i <= G; i++) { v[(j * (G + 1) + i) * 2] = i; v[(j * (G + 1) + i) * 2 + 1] = j; }
+  const idx = new Uint16Array(G * G * 6); let k = 0;
+  for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
+    const a = j * (G + 1) + i, b = a + 1, c = a + G + 1, d = c + 1;
+    idx[k++] = a; idx[k++] = c; idx[k++] = b; idx[k++] = b; idx[k++] = c; idx[k++] = d;
+  }
+  return makeVAO([{ loc: 0, size: 2, data: v }], idx);
+}
+
+const GLSL_TERRAIN_H = `
+uniform sampler2D uHeight;
+uniform vec3 uHM;           // half size, cell, N
+float hTexel(ivec2 c){ c = clamp(c, ivec2(0), ivec2(int(uHM.z) - 1)); return texelFetch(uHeight, c, 0).r; }
+float terrainH(vec2 p){
+  vec2 t = (p + uHM.x) / uHM.y; vec2 i = floor(t); vec2 f = t - i; ivec2 c = ivec2(i);
+  float a = hTexel(c), b = hTexel(c + ivec2(1, 0)), d = hTexel(c + ivec2(0, 1)), e = hTexel(c + ivec2(1, 1));
+  return mix(mix(a, b, f.x), mix(d, e, f.x), f.y);
+}
+`;
+const TERRAIN_VS = GLSL_HEAD + GLSL_TERRAIN_H + `
+layout(location=0) in vec2 aGrid;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform vec4 uNode;
+uniform vec2 uMorph;
+out vec3 vPos;
+void main(){
+  float G = uNode.w;
+  vec2 p = uNode.xy + aGrid / G * uNode.z;
+  float h = terrainH(p);
+  float k = clamp((distance(vec3(p.x, h, p.y), uCamPos) - uMorph.x) / (uMorph.y - uMorph.x), 0.0, 1.0);
+  vec2 g = aGrid - fract(aGrid * 0.5) * 2.0 * k;
+  p = uNode.xy + g / G * uNode.z;
+  vPos = vec3(p.x, terrainH(p), p.y);
+  gl_Position = uViewProj * vec4(vPos, 1.0);
+}`;
+const GLSL_SHADOW = `
+uniform vec4 uShadowA;   // shadow centre x,z ; plane forward x,z
+uniform vec2 uShadowB;   // strength, softness
+float planeShadow(vec2 p){
+  if (uShadowB.x <= 0.0) return 1.0;
+  vec2 d = p - uShadowA.xy;
+  vec2 f = uShadowA.zw, r = vec2(-f.y, f.x);
+  float a = dot(d, f), b = dot(d, r);
+  float s = uShadowB.y;
+  float fus = smoothstep(1.0 + s, 1.0 - s * 0.5, length(vec2(a / 3.8, b / 0.55)));
+  float wing = smoothstep(1.0 + s, 1.0 - s * 0.5, length(vec2((a + 0.1) / 0.75, b / 4.8)));
+  float tail = smoothstep(1.0 + s, 1.0 - s * 0.5, length(vec2((a + 3.4) / 0.4, b / 1.7)));
+  return 1.0 - max(fus, max(wing, tail)) * uShadowB.x;
+}
+// the sharp aerial photo round the car (p_nearphoto.js): its colour, and how much it applies (0 outside)
+uniform sampler2D uNP;
+uniform vec4 uNPRect;    // world x, z of its north-west corner, its width and depth
+uniform vec4 uNPFade;    // the car's x, z; full within, none beyond
+vec4 nearPhoto(vec3 w){
+  if (uNPRect.z <= 0.0) return vec4(0.0);
+  vec2 uv = (w.xz - uNPRect.xy) / uNPRect.zw;
+  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return vec4(0.0);
+  vec2 e = min(uv, 1.0 - uv);
+  float k = (1.0 - smoothstep(uNPFade.z, uNPFade.w, length(w.xz - uNPFade.xy))) * smoothstep(0.0, 0.03, min(e.x, e.y));
+  vec4 t = texture(uNP, uv);                                        // (alpha 0 where a tile hasn't come)
+  return vec4(t.rgb / max(t.a, 0.01), k * smoothstep(0.5, 0.95, t.a));
+}
+// the painted markings in that photo, as a crisp mask (lines, crossings, arrows: paint brighter than the
+// road round it), and the road's own colour smoothed over a couple of metres
+vec4 nearPaint(vec3 w){
+  if (uNPRect.z <= 0.0) return vec4(0.0);
+  vec2 uv = (w.xz - uNPRect.xy) / uNPRect.zw;
+  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return vec4(0.0);
+  vec4 t = texture(uNP, uv), b = texture(uNP, uv, 3.0);
+  if (t.a < 0.9 || b.a < 0.9) return vec4(0.0);
+  float l = dot(t.rgb, vec3(0.3, 0.55, 0.15)), lb = dot(b.rgb, vec3(0.3, 0.55, 0.15));
+  float sat = max(t.r, max(t.g, t.b)) - min(t.r, min(t.g, t.b));
+  float white = smoothstep(0.07, 0.15, l - lb) * (1.0 - smoothstep(0.12, 0.22, sat));
+  float yellow = smoothstep(0.05, 0.12, l - lb) * smoothstep(0.15, 0.25, t.r - t.b) * step(t.b, t.g);
+  return vec4(b.rgb, max(white, yellow * 2.0) * (yellow > white ? -1.0 : 1.0));
+}
+// the photographed city materials (p_citymat.js): layer, uv in repeats of the photo
+uniform highp sampler2DArray uMat;
+uniform float uMatOn;
+vec3 matC(float layer, vec2 uv){ return texture(uMat, vec3(uv, layer)).rgb; }
+vec3 matAvg(float layer){ return textureLod(uMat, vec3(0.5, 0.5, layer), 12.0).rgb; }
+// ...and their relief and gloss: the normal in the material's own frame (x the way u runs, y the way v runs, z out
+// of the surface) and the roughness; flat and middling until the maps have come
+uniform highp sampler2DArray uMatN;
+uniform float uMatNOn;
+vec4 matN(float layer, vec2 uv){
+  if (uMatNOn < 0.5) return vec4(0.0, 0.0, 1.0, 0.6);
+  vec3 t = texture(uMatN, vec3(uv, layer)).rgb; vec2 xy = t.xy * 2.0 - 1.0;
+  return vec4(xy, sqrt(max(1.0 - dot(xy, xy), 0.0)), t.z);
+}
+// (the same with the uv's screen derivatives given: safe inside a branch that differs from pixel to pixel)
+vec4 matNg(float layer, vec2 uv, vec2 gx, vec2 gy){
+  if (uMatNOn < 0.5) return vec4(0.0, 0.0, 1.0, 0.6);
+  vec3 t = textureGrad(uMatN, vec3(uv, layer), gx, gy).rgb; vec2 xy = t.xy * 2.0 - 1.0;
+  return vec4(xy, sqrt(max(1.0 - dot(xy, xy), 0.0)), t.z);
+}
+// the normal of level ground with a material laid on it by world x, z (uv = xz / size); k: how much relief
+vec3 groundN(vec4 nm, float k){ return normalize(vec3(nm.x * k, nm.z, nm.y * k)); }
+// a surface's texture frame where it is drawn, from the screen derivatives of its position and uv (p: relative to
+// the camera, for precision): the way u and v run on it, and its normal N
+mat3 uvFrame(vec3 N, vec3 p, vec2 uv){
+  vec3 dp1 = dFdx(p), dp2 = dFdy(p); vec2 duv1 = dFdx(uv), duv2 = dFdy(uv);
+  vec3 a = cross(dp2, N), b = cross(N, dp1);
+  vec3 T = a * duv1.x + b * duv2.x, B = a * duv1.y + b * duv2.y;
+  float im = inversesqrt(max(max(dot(T, T), dot(B, B)), 1e-24));
+  return mat3(T * im, B * im, N);
+}
+// a rough surface's sun highlight (normalised Blinn-Phong for a roughness), times its Fresnel
+float specSun(vec3 n, vec3 V, float rough, float f0){
+  vec3 H = normalize(V + uSunDir); float a = max(rough * rough, 0.02), ex = 2.0 / (a * a) - 2.0;
+  return pow(max(dot(n, H), 0.0), ex) * (ex + 8.0) / 25.0 * fresnelS(max(dot(n, V), 1e-3), f0);
+}
+// the sun's shadow map round the car (p_sunshadow.js): 1 lit, down to 1 - strength in shadow
+uniform highp sampler2DShadow uSunShadow;
+uniform mat4 uSunVP;
+uniform vec4 uSunSh;     // strength, texel size
+float sunShadow(vec3 w, vec3 n){
+  if (uSunSh.x <= 0.0) return 1.0;
+  vec3 c = (uSunVP * vec4(w + n * 0.12, 1.0)).xyz * 0.5 + 0.5;
+  vec2 e = abs(c.xy - 0.5) * 2.0;
+  float edge = smoothstep(0.82, 0.98, max(e.x, e.y));
+  if (edge >= 1.0 || c.z >= 1.0) return 1.0;
+  float s = 0.0, t = uSunSh.y * 1.25;
+  for (int i = -1; i <= 1; i++) for (int j = -1; j <= 1; j++) s += texture(uSunShadow, vec3(c.xy + vec2(float(i), float(j)) * t, c.z - 0.00012));
+  return 1.0 - (1.0 - s / 9.0) * (1.0 - edge) * uSunSh.x;
+}
+`;
+const TERRAIN_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vPos;
+uniform sampler2D uNormalTex;
+uniform sampler2D uNoise;
+uniform vec3 uHM;
+uniform vec3 uLand;   // snow line, beach height, urban amount
+out vec4 outColor;
+void main(){
+  vec2 uv = ((vPos.xz + uHM.x) / uHM.y + 0.5) / uHM.z;
+  vec4 nt = texture(uNormalTex, uv);
+  vec3 n = normalize(nt.xyz * 2.0 - 1.0);
+  float veg = nt.a;
+  float dist = distance(vPos, uCamPos);
+  float near = 1.0 - smoothstep(150.0, 1400.0, dist);
+  float d1 = texture(uNoise, vPos.xz / 61.0).b;
+  float d2 = texture(uNoise, vPos.xz / 8.7).b;
+  float d3 = texture(uNoise, vPos.xz / 530.0).a;
+  vec2 dn = (texture(uNoise, vPos.xz / 23.0).rg * 2.0 - 1.0) * 0.35 * near;
+  n = normalize(n + vec3(dn.x, 0.0, dn.y));
+  float h = vPos.y, slope = 1.0 - n.y;
+  vec3 grass = mix(vec3(0.30, 0.43, 0.16), vec3(0.45, 0.52, 0.22), d1);
+  grass = mix(grass, vec3(0.52, 0.52, 0.27), smoothstep(0.55, 0.8, d3) * 0.5);
+  vec3 forest = mix(vec3(0.13, 0.24, 0.10), vec3(0.18, 0.30, 0.12), d2);
+  vec3 rock = mix(vec3(0.40, 0.37, 0.34), vec3(0.56, 0.53, 0.48), d1);
+  vec3 dirt = vec3(0.47, 0.40, 0.28);
+  vec3 sand = mix(vec3(0.80, 0.74, 0.56), vec3(0.88, 0.83, 0.66), d2);
+  vec3 col = mix(grass, forest, smoothstep(0.50, 0.66, veg + (d3 - 0.5) * 0.25));
+  col = mix(col, dirt, smoothstep(0.30, 0.45, slope + (d2 - 0.5) * 0.1) * 0.7);
+  col = mix(col, rock, smoothstep(0.40, 0.55, slope + (d1 - 0.5) * 0.15));
+  col = mix(col, rock, smoothstep(650.0, 1000.0, h + d1 * 160.0) * 0.85);
+  float urb = uLand.z * smoothstep(0.8, 2.5, h) * (1.0 - smoothstep(35.0, 110.0, h)) * (1.0 - smoothstep(0.32, 0.56, veg + (d3 - 0.5) * 0.3)) * (1.0 - smoothstep(0.15, 0.3, slope));
+  col = mix(col, vec3(0.50, 0.50, 0.49) * (0.8 + 0.4 * d2), urb * 0.85);
+  float snow = smoothstep(uLand.x, uLand.x + 170.0, h + d3 * 200.0) * (1.0 - smoothstep(0.42, 0.62, slope));
+  col = mix(col, vec3(0.94, 0.96, 1.0), snow);
+  col = mix(col, sand, (1.0 - smoothstep(uLand.y * 0.35, uLand.y, h + (d1 - 0.5) * uLand.y * 0.7)) * (1.0 - urb));
+  col = mix(col, vec3(0.30, 0.55, 0.55), smoothstep(0.0, -4.0, h));
+  col *= mix(1.0, 0.82 + 0.36 * d2, near);
+  float diff = max(dot(n, uSunDir), 0.0) * planeShadow(vPos.xz);
+  vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
+  vec3 lit = col * (uSunCol * diff + amb);
+  lit += uSunCol * snow * pow(max(dot(n, normalize(uSunDir + normalize(uCamPos - vPos))), 0.0), 30.0) * 0.25;
+  outColor = vec4(tonemap(applyFog(lit, vPos)), 1.0);
+}`;
+
+// ---------- water ----------
+const WATER_VS = GLSL_HEAD + `
+layout(location=0) in vec2 aCorner;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+out vec3 vPos;
+void main(){
+  vPos = vec3(uCamPos.x + aCorner.x * 60000.0, 0.0, uCamPos.z + aCorner.y * 60000.0);
+  gl_Position = uViewProj * vec4(vPos, 1.0);
+}`;
+const WATER_FS = GLSL_HEAD + GLSL_COMMON + GLSL_TERRAIN_H + `
+in vec3 vPos;
+uniform sampler2D uNoise;
+out vec4 outColor;
+void main(){
+  float th = terrainH(vPos.xz);
+  float depth = max(-th, 0.0);
+  float dist = distance(vPos, uCamPos);
+  vec2 uv1 = vPos.xz / 41.0 + vec2(uTime * 0.011, uTime * 0.007);
+  vec2 uv2 = vPos.xz / 13.0 - vec2(uTime * 0.019, -uTime * 0.012);
+  vec2 uv3 = vPos.xz / 190.0 + vec2(-uTime * 0.003, uTime * 0.004);
+  vec2 w = (texture(uNoise, uv1).rg * 2.0 - 1.0) + (texture(uNoise, uv2).rg * 2.0 - 1.0) * 0.55 + (texture(uNoise, uv3).rg * 2.0 - 1.0) * 0.8;
+  float fade = 1.0 - smoothstep(200.0, 9000.0, dist) * 0.85;
+  vec3 n = normalize(vec3(w.x * 0.32 * fade, 1.0, w.y * 0.32 * fade));
+  vec3 V = normalize(uCamPos - vPos);
+  float fres = 0.02 + 0.98 * pow(1.0 - max(dot(n, V), 0.0), 5.0);
+  vec3 rv = reflect(-V, n); rv.y = max(rv.y, 0.02);           // wave-tilted reflections still see the sky
+  vec3 refl = skyColor(normalize(rv));
+  vec3 deep = vec3(0.02, 0.13, 0.25), shallow = vec3(0.09, 0.50, 0.53);
+  vec3 wcol = mix(shallow, deep, smoothstep(0.0, 32.0, depth));
+  vec3 col = wcol * (uSunCol * 0.45 * (max(dot(n, uSunDir), 0.0) * 0.5 + 0.5) + uAmbSky * 0.7);
+  col = mix(col, refl, clamp(fres, 0.0, 1.0) * 0.9);
+  vec3 H = normalize(uSunDir + V);
+  col += uSunCol * pow(max(dot(n, H), 0.0), 220.0) * 1.6;
+  float fn = texture(uNoise, vPos.xz / 7.0 + vec2(uTime * 0.02, 0.0)).b;
+  float foam = (1.0 - smoothstep(0.0, 1.6, depth)) * smoothstep(0.35, 0.65, fn + sin(uTime * 1.4 - depth * 3.0) * 0.18);
+  col = mix(col, vec3(0.92, 0.95, 0.96) * (uSunCol * 0.6 + uAmbSky * 0.6), foam * 0.75);
+  outColor = vec4(tonemap(applyFog(col, vPos)), 1.0);
+}`;
+
+// ---------- sky ----------
+const SKY_VS = GLSL_HEAD + `
+layout(location=0) in vec2 aCorner;
+out vec2 vNdc;
+void main(){ vNdc = aCorner; gl_Position = vec4(aCorner, 1.0, 1.0); }`;
+const SKY_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec2 vNdc;
+uniform vec3 uCamF, uCamR, uCamU;
+uniform vec2 uTan;
+uniform sampler2D uNoise;
+uniform float uStars;
+uniform float uFlatCl;
+out vec4 outColor;
+void main(){
+  vec3 d = normalize(uCamF + vNdc.x * uTan.x * uCamR + vNdc.y * uTan.y * uCamU);
+  vec3 c = skyColor(d);
+  float sd = dot(d, uSunDir);
+  c += uSunCol * smoothstep(0.99955, 0.99975, sd) * 3.0;
+  if (uStars > 0.0 && d.y > 0.0) {
+    vec3 q = d * 380.0, id = floor(q);
+    float h = fract(sin(dot(id, vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+    vec3 f = fract(q) - 0.5;
+    float star = step(0.9965, h) * smoothstep(0.35, 0.0, length(f)) * (0.35 + 0.65 * fract(h * 97.0));
+    c += vec3(0.85, 0.9, 1.0) * star * uStars * smoothstep(0.0, 0.12, d.y) * 1.6;
+    c += vec3(0.02, 0.025, 0.04) * uStars * pow(max(0.0, 1.0 - abs(dot(d, normalize(vec3(0.3, 0.55, 0.78))))), 18.0);   // faint milky way
+  }
+  if (d.y > 0.0) {
+    float t = (6500.0 - uCamPos.y) / max(d.y, 0.02);
+    vec2 p = uCamPos.xz + d.xz * t;
+    float cl = texture(uNoise, p / 11000.0 + vec2(uTime * 0.0004, 0.0)).b * 0.65 + texture(uNoise, p / 2900.0).b * 0.35;
+    cl = smoothstep(0.63, 0.86, cl) * smoothstep(0.03, 0.3, d.y) * 0.32 * (1.0 - uStars * 0.8) * uFlatCl;
+    vec3 ccol = mix(vec3(1.0), uSunCol, 0.35) * 0.95 + uSunCol * pow(max(sd, 0.0), 6.0) * 0.4;
+    c = mix(c, ccol, cl);
+  }
+  outColor = vec4(tonemap(c), 1.0);
+}`;
+
+// ---------- generic lit meshes (airport, plane, rings) ----------
+const MESH_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNormal;
+layout(location=2) in vec3 aColor;
+uniform mat4 uViewProj;
+uniform mat4 uModel;
+uniform vec3 uCamPos;
+uniform float uCurv;
+out vec3 vWorld; out vec3 vN; out vec3 vCol; out vec3 vLocal;
+void main(){
+  vec4 wp = uModel * vec4(aPos, 1.0);
+  vec2 cd = wp.xz - uCamPos.xz; wp.y -= dot(cd, cd) * uCurv;
+  vWorld = wp.xyz; vN = mat3(uModel) * aNormal; vCol = aColor; vLocal = aPos;
+  gl_Position = uViewProj * wp;
+}`;
+const MESH_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec3 vWorld; in vec3 vN; in vec3 vCol; in vec3 vLocal;
+uniform float uSpec;
+uniform vec3 uEmissive;
+uniform float uAlpha;
+uniform int uLivery;
+uniform vec3 uLivBase, uLivA, uLivB;
+uniform vec4 uLivP;   // fuselage half-width, stripe y at z=0, stripe slope, wingtip |x|
+uniform vec4 uLivQ;   // stripe bands: B from..to, A from..to (relative to the stripe line)
+uniform vec4 uLivF;   // fin region: |x| <, y >, z >, coloured top above y
+uniform vec4 uLivN;   // nose z <, anti-glare z <, tailplane tip |x| >, tailplane z >
+uniform vec4 uWin0;   // window mode (1 cabin band, 2 airliner row), z from, z to, spacing
+uniform vec4 uWin1;   // window y from, y to, windshield z from, z to
+uniform float uWinCy;
+out vec4 outColor;
+vec3 livery(vec3 p){
+  vec3 glass = vec3(0.07, 0.10, 0.14);
+  float ax = abs(p.x);
+  if (ax < uLivF.x && p.y > uLivF.y && p.z > uLivF.z) { if (p.y > uLivF.w) return uLivA; if (p.y > uLivF.w - 0.15) return uLivB; return uLivBase; }
+  if (ax < uLivP.x) {
+    if (uWin0.x > 0.5) {
+      if (p.z > uWin0.y && p.z < uWin0.z && p.y > uWin1.x && p.y < uWin1.y) {
+        if (uWin0.x < 1.5 || fract(p.z / uWin0.w) < 0.45) return glass;
+      }
+      if (uWin0.x > 1.5 && p.z > uWin1.z && p.z < uWin1.w && p.y > uWinCy) return glass;
+    }
+    float d = p.y - (uLivP.y + uLivP.z * p.z);
+    if (d > uLivQ.x && d < uLivQ.y) return uLivB;
+    if (d > uLivQ.z && d < uLivQ.w) return uLivA;
+    if (p.z < uLivN.x) return uLivA * 0.9;
+    if (p.z < uLivN.y && p.y > 0.36 + (p.z - uLivN.y) * 0.05) return vec3(0.08, 0.085, 0.095);   // anti-glare panel
+    return uLivBase;
+  }
+  if (ax > uLivP.w) return uLivA;
+  if (ax > uLivN.z && p.z > uLivN.w) return uLivA;
+  return uLivBase;
+}
+void main(){
+  vec3 base = vCol;
+  if (uLivery == 1 && base.r > 0.99 && base.g > 0.99 && base.b > 0.99) base = livery(vLocal);
+  vec3 n = normalize(vN); if (!gl_FrontFacing) n = -n;
+  vec3 V = normalize(uCamPos - vWorld);
+  float diff = max(dot(n, uSunDir), 0.0);
+  vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
+  vec3 H = normalize(uSunDir + V);
+  float spec = pow(max(dot(n, H), 0.0), 70.0) * uSpec;
+  float rim = pow(1.0 - max(dot(n, V), 0.0), 4.0) * 0.12 * uSpec;
+  vec3 col = base * (uSunCol * diff + amb) + uSunCol * spec * smoothstep(0.0, 0.15, diff) + skyColor(reflect(-V, n)) * rim + uEmissive;
+  outColor = vec4(tonemap(applyFog(col, vWorld)), uAlpha);
+}`;
+
+// ---------- instanced props (trees, houses) ----------
+const INST_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNormal;
+layout(location=2) in vec3 aColor;
+layout(location=4) in vec3 iPos;
+layout(location=5) in vec2 iParam;
+layout(location=6) in vec3 iTint;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uFadeDist;
+out vec3 vWorld; out vec3 vN; out vec3 vCol;
+void main(){
+  float d = distance(iPos.xz, uCamPos.xz);
+  float s = iParam.x * (1.0 - smoothstep(uFadeDist * 0.8, uFadeDist, d));
+  float c = cos(iParam.y), sn = sin(iParam.y);
+  mat3 R = mat3(c, 0.0, -sn, 0.0, 1.0, 0.0, sn, 0.0, c);
+  vec3 wp = iPos + R * (aPos * s);
+  vWorld = wp; vN = R * aNormal; vCol = aColor.r < 0.0 ? iTint : aColor;
+  gl_Position = uViewProj * vec4(wp, 1.0);
+}`;
+const INST_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec3 vWorld; in vec3 vN; in vec3 vCol;
+out vec4 outColor;
+void main(){
+  vec3 n = normalize(vN);
+  float diff = max(dot(n, uSunDir), 0.0) * 0.85 + 0.15 * max(dot(-n, uSunDir), 0.0);
+  vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
+  vec3 col = vCol * (uSunCol * diff + amb);
+  outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
+}`;
+
+// ---------- camera-facing sprites (clouds, smoke, fire, lights) ----------
+const SPRITE_VS = GLSL_HEAD + `
+layout(location=0) in vec2 aCorner;
+layout(location=4) in vec4 iPos;     // xyz, size (negative = keep a minimum on-screen size)
+layout(location=5) in vec4 iCol;
+layout(location=6) in float iRot;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos, uCamR, uCamU;
+uniform float uNearFade;
+uniform float uFar;
+uniform float uMinPix;
+uniform float uCurv;
+out vec2 vUv; out vec4 vCol; out vec3 vWorld; out float vFade;
+void main(){
+  float dist = distance(iPos.xyz, uCamPos);
+  float size = iPos.w < 0.0 ? max(-iPos.w, dist * uMinPix) : iPos.w;
+  float c = cos(iRot), s = sin(iRot);
+  vec2 q = vec2(c * aCorner.x - s * aCorner.y, s * aCorner.x + c * aCorner.y);
+  vec3 wp = iPos.xyz + (uCamR * q.x + uCamU * q.y) * size;
+  vec2 cd = iPos.xz - uCamPos.xz; wp.y -= dot(cd, cd) * uCurv;
+  vUv = aCorner * 0.5 + 0.5; vCol = iCol; vWorld = wp;
+  vFade = (uNearFade > 0.0 ? smoothstep(size * 0.25, size * uNearFade, dist) : 1.0) * (1.0 - smoothstep(uFar * 0.7, uFar, dist));
+  gl_Position = uViewProj * vec4(wp, 1.0);
+}`;
+const SPRITE_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec2 vUv; in vec4 vCol; in vec3 vWorld; in float vFade;
+uniform sampler2D uTex;
+uniform float uSilver;
+uniform int uFog;
+out vec4 outColor;
+void main(){
+  float a = texture(uTex, vUv).r * vCol.a * vFade;
+  if (a < 0.004) discard;
+  vec3 c = vCol.rgb;
+  if (uSilver > 0.0) {
+    vec3 vd = normalize(vWorld - uCamPos);
+    c += uSunCol * pow(max(dot(vd, uSunDir), 0.0), 7.0) * uSilver * (1.0 - a);
+  }
+  if (uFog == 1) c = applyFog(c, vWorld);
+  outColor = vec4(tonemap(c), a);
+}`;
+
+let progTerrain, progWater, progSky, progMesh, progInst, progSprite;
+let grid32, grid16, quadVAO, spriteQuad;
+function buildPrograms() {
+  progTerrain = makeProgram(TERRAIN_VS, TERRAIN_FS);
+  progWater = makeProgram(WATER_VS, WATER_FS);
+  progSky = makeProgram(SKY_VS, SKY_FS);
+  progMesh = makeProgram(MESH_VS, MESH_FS);
+  progInst = makeProgram(INST_VS, INST_FS);
+  progSprite = makeProgram(SPRITE_VS, SPRITE_FS);
+  progRunway = makeProgram(RUNWAY_VS, RUNWAY_FS);
+  grid32 = makeGrid(32); grid16 = makeGrid(16);
+  quadVAO = makeVAO([{ loc: 0, size: 2, data: new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]) }]);
+}
+
+// ---------- mesh building ----------
+class MeshBuilder {
+  constructor() { this.pos = []; this.nrm = []; this.col = []; }
+  tri(a, b, c, na, nb, nc, ca, cb, cc) {
+    this.pos.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
+    this.nrm.push(na[0], na[1], na[2], nb[0], nb[1], nb[2], nc[0], nc[1], nc[2]);
+    this.col.push(ca[0], ca[1], ca[2], cb[0], cb[1], cb[2], cc[0], cc[1], cc[2]);
+  }
+  // quad a-b-c-d, oriented to face away from `ref`, flat shaded
+  quad(a, b, c, d, col, ref) {
+    let n = vcross(vsub(c, a), vsub(d, b));
+    const fc = vscale(vadd(vadd(a, b), vadd(c, d)), 0.25);
+    if (vdot(n, vsub(fc, ref)) < 0) { [b, d] = [d, b]; n = vscale(n, -1); }
+    n = vnorm(n);
+    this.tri(a, b, c, n, n, n, col, col, col); this.tri(a, c, d, n, n, n, col, col, col);
+  }
+  box(c, s, col, yaw = 0) {
+    const cs = Math.cos(yaw), sn = Math.sin(yaw);
+    const P = (x, y, z) => [c[0] + x * cs + z * sn, c[1] + y, c[2] - x * sn + z * cs];
+    const hx = s[0] / 2, hy = s[1] / 2, hz = s[2] / 2;
+    const v = [P(-hx, -hy, -hz), P(hx, -hy, -hz), P(hx, hy, -hz), P(-hx, hy, -hz), P(-hx, -hy, hz), P(hx, -hy, hz), P(hx, hy, hz), P(-hx, hy, hz)];
+    const cc = typeof col[0] === 'number' ? () => col : i => col[i];
+    this.quad(v[0], v[1], v[2], v[3], cc(0), c); this.quad(v[4], v[5], v[6], v[7], cc(1), c);
+    this.quad(v[0], v[1], v[5], v[4], cc(2), c); this.quad(v[3], v[2], v[6], v[7], cc(3), c);
+    this.quad(v[0], v[3], v[7], v[4], cc(4), c); this.quad(v[1], v[2], v[6], v[5], cc(5), c);
+  }
+  // loft through closed rings (arrays of points, equal length). color: [r,g,b] or fn(point)
+  loft(rings, color, opt = {}) {
+    const R = rings.length, M = rings[0].length, smooth = opt.smooth !== false;
+    const colorOf = typeof color === 'function' ? color : () => color;
+    const cent = rings.map(r => vscale(r.reduce((s, p) => vadd(s, p), [0, 0, 0]), 1 / r.length));
+    const acc = rings.map(r => r.map(() => [0, 0, 0]));
+    const faces = [];
+    for (let r = 0; r < R - 1; r++) {
+      const axis = vlerp(cent[r], cent[r + 1], 0.5);
+      for (let m = 0; m < M; m++) {
+        let q = [[r, m], [r, (m + 1) % M], [r + 1, (m + 1) % M], [r + 1, m]];
+        const P = q.map(([a, b]) => rings[a][b]);
+        let n = vcross(vsub(P[2], P[0]), vsub(P[3], P[1]));
+        const fc = vscale(vadd(vadd(P[0], P[1]), vadd(P[2], P[3])), 0.25);
+        if (vdot(n, vsub(fc, opt.ref || axis)) < 0) { q = [q[0], q[3], q[2], q[1]]; n = vscale(n, -1); }
+        if (vlen(n) < 1e-9) continue;
+        n = vnorm(n);
+        faces.push([q, n]);
+        for (const [a, b] of q) acc[a][b] = vadd(acc[a][b], n);
+      }
+    }
+    for (const [q, n] of faces) {
+      const P = q.map(([a, b]) => rings[a][b]);
+      const N = q.map(([a, b]) => smooth ? vnorm(acc[a][b]) : n);
+      const C = P.map(colorOf);
+      this.tri(P[0], P[1], P[2], N[0], N[1], N[2], C[0], C[1], C[2]);
+      this.tri(P[0], P[2], P[3], N[0], N[2], N[3], C[0], C[2], C[3]);
+    }
+    const cap = (r, other) => {
+      const c = cent[r], out = vnorm(vsub(c, cent[other]));
+      for (let m = 0; m < M; m++) {
+        let a = rings[r][m], b = rings[r][(m + 1) % M];
+        let n = vcross(vsub(a, c), vsub(b, c));
+        if (vdot(n, out) < 0) { [a, b] = [b, a]; }
+        const cc = colorOf(c);
+        this.tri(c, a, b, out, out, out, cc, colorOf(a), colorOf(b));
+      }
+    };
+    if (opt.capStart) cap(0, 1);
+    if (opt.capEnd) cap(R - 1, R - 2);
+  }
+  cylinder(p0, p1, r0, r1, seg, col, caps = true) {
+    const ax = vnorm(vsub(p1, p0));
+    const helper = Math.abs(ax[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+    const u = vnorm(vcross(ax, helper)), v = vcross(ax, u);
+    const ring = (p, r) => Array.from({ length: seg }, (_, i) => {
+      const a = i / seg * Math.PI * 2; return vadd(p, vadd(vscale(u, Math.cos(a) * r), vscale(v, Math.sin(a) * r)));
+    });
+    this.loft([ring(p0, r0), ring(p1, r1)], col, { capStart: caps, capEnd: caps, smooth: seg > 6 });
+  }
+  build() {
+    return { pos: new Float32Array(this.pos), nrm: new Float32Array(this.nrm), col: new Float32Array(this.col), count: this.pos.length / 3 };
+  }
+}
+function uploadMesh(m, instanceData) {
+  const attrs = [{ loc: 0, size: 3, data: m.pos }, { loc: 1, size: 3, data: m.nrm }, { loc: 2, size: 3, data: m.col }];
+  if (instanceData) attrs.push({ data: instanceData, stride: 8, layout: [[4, 3, 0], [5, 2, 3], [6, 3, 5]], divisor: 1, dynamic: true });
+  const v = makeVAO(attrs);
+  v.count = m.count;
+  return v;
+}
+
+// ---------- props: trees & houses ----------
+const TINT = [-1, -1, -1];
+function makeConiferMesh() {
+  const b = new MeshBuilder();
+  b.cylinder([0, 0, 0], [0, 0.2, 0], 0.045, 0.035, 5, [0.30, 0.22, 0.14], false);
+  const cone = (y0, y1, r) => {
+    const ring = Array.from({ length: 7 }, (_, i) => { const a = i / 7 * Math.PI * 2; return [Math.cos(a) * r, y0, Math.sin(a) * r]; });
+    const tip = Array.from({ length: 7 }, () => [0, y1, 0]);
+    b.loft([ring, tip], TINT, { capStart: true, smooth: false });
+  };
+  cone(0.12, 0.62, 0.30); cone(0.36, 0.84, 0.24); cone(0.60, 1.0, 0.16);
+  return b.build();
+}
+function makeBroadleafMesh() {
+  const b = new MeshBuilder();
+  b.cylinder([0, 0, 0], [0, 0.42, 0], 0.05, 0.035, 5, [0.33, 0.24, 0.15], false);
+  const rings = [];
+  const lat = 6, lon = 8, rng = makeRng(5);
+  for (let i = 0; i <= lat; i++) {
+    const t = i / lat * Math.PI, rr = Math.sin(t) * 0.36, y = 0.62 - Math.cos(t) * 0.32;
+    rings.push(Array.from({ length: lon }, (_, k) => {
+      const a = k / lon * Math.PI * 2, j = i > 0 && i < lat ? 0.85 + rng() * 0.3 : 1;
+      return [Math.cos(a) * rr * j, y, Math.sin(a) * rr * j];
+    }));
+  }
+  b.loft(rings, TINT, { smooth: false, ref: [0, 0.62, 0] });
+  return b.build();
+}
+function makeHouseMesh() {
+  const b = new MeshBuilder();
+  const wall = [0.90, 0.87, 0.80];
+  b.box([0, 0.28, 0], [1, 0.56, 0.72], wall);
+  // gable roof along x
+  const y0 = 0.56, y1 = 0.88, hw = 0.56, hd = 0.44;
+  const A = [-hw, y0, -hd], B = [hw, y0, -hd], C = [hw, y1, 0], D = [-hw, y1, 0], E = [-hw, y0, hd], F = [hw, y0, hd];
+  const ref = [0, 0.5, 0];
+  b.quad(A, B, C, D, TINT, ref); b.quad(E, F, C, D, TINT, ref);
+  b.quad([-0.5, y0, -0.36], [-0.5, y0, 0.36], [-0.5, 0.84, 0], [-0.5, 0.84, 0], wall, ref);
+  b.quad([0.5, y0, -0.36], [0.5, y0, 0.36], [0.5, 0.84, 0], [0.5, 0.84, 0], wall, ref);
+  return b.build();
+}
+const props = { conifer: null, broad: null, house: null, tower: null, center: [1e9, 0, 1e9], treeR: 2400 };
+function makeTowerMesh() {
+  const b = new MeshBuilder();
+  b.box([0, 0.5, 0], [0.34, 1, 0.3], TINT);
+  b.box([0, 1.01, 0], [0.3, 0.02, 0.26], [0.35, 0.36, 0.38]);
+  return b.build();
+}
+function initProps() {
+  if (!props.conifer) {
+    props.conifer = uploadMesh(makeConiferMesh(), new Float32Array(8));
+    props.broad = uploadMesh(makeBroadleafMesh(), new Float32Array(8));
+    props.house = uploadMesh(makeHouseMesh(), new Float32Array(8));
+    props.tower = uploadMesh(makeTowerMesh(), new Float32Array(8));
+  }
+  props.nConifer = props.nBroad = 0; props.center = [1e9, 0, 1e9];
+  const rng = makeRng(4242), houses = [], towers = [];
+  const roofs = [[0.62, 0.20, 0.15], [0.35, 0.38, 0.45], [0.20, 0.30, 0.48], [0.50, 0.30, 0.22], [0.42, 0.42, 0.40]];
+  const inAirport = (x, z) => {
+    const [u, v0] = worldToRwy(x, z), v = v0 * (RWY.side || 1);
+    return Math.abs(u) < RWY.len / 2 + 250 && v > -240 && v < 120;
+  };
+  const grid = new Map();
+  const free = (x, z, r) => {
+    const gx = Math.floor(x / 30), gz = Math.floor(z / 30);
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (const o of grid.get((gx + a) + ',' + (gz + b)) || []) if (Math.hypot(o[0] - x, o[1] - z) < r) return false;
+    return true;
+  };
+  const add = (list, x, z, h, sc, yaw, col) => {
+    list.push([x, h - 0.3, z, sc, yaw, col[0], col[1], col[2]]);
+    const key = Math.floor(x / 30) + ',' + Math.floor(z / 30);
+    if (!grid.has(key)) grid.set(key, []); grid.get(key).push([x, z]);
+  };
+  const tryHouse = (x, z, maxH) => {
+    if (Math.abs(x) > HM_HALF - 200 || Math.abs(z) > HM_HALF - 200) return false;
+    const h = terrainHeight(x, z);
+    if (h < 2 || h > maxH || terrainNormal(x, z)[1] < 0.965 || onPaved(x, z) || inAirport(x, z) || !free(x, z, 20)) return false;
+    add(houses, x, z, h, 9 + rng() * 5, Math.round(rng() * 4) * Math.PI / 2 + (rng() - 0.5) * 0.3, roofs[Math.floor(rng() * roofs.length)]);
+    return true;
+  };
+  if (MAP.procedural) {
+    const centres = [rwyToWorld(250, 520), rwyToWorld(-450, 700), rwyToWorld(900, 380)];
+    for (let t = 0; t < 4000 && houses.length < 180; t++) {
+      const c = centres[t % 3], a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 520;
+      tryHouse(c[0] + Math.cos(a) * r, c[2] + Math.sin(a) * r, 120);
+    }
+  } else if (URBAN[MAP.id]) {
+    // city: dense low houses on the flat lowland, taller buildings where it is lowest and flattest
+    for (let t = 0; t < 60000 && houses.length < 3600; t++) {
+      const x = (rng() * 2 - 1) * HM_HALF, z = (rng() * 2 - 1) * HM_HALF, h = terrainHeight(x, z);
+      if (h > 2 && rng() < 1 - h / 90) tryHouse(x, z, 90);
+    }
+    for (let t = 0; t < 30000 && towers.length < 450; t++) {
+      const x = (rng() * 2 - 1) * HM_HALF, z = (rng() * 2 - 1) * HM_HALF, h = terrainHeight(x, z);
+      if (h < 2 || h > 25 || Math.abs(x) > HM_HALF - 300 || Math.abs(z) > HM_HALF - 300) continue;
+      if (terrainNormal(x, z)[1] < 0.99 || onPaved(x, z) || inAirport(x, z) || !free(x, z, 45)) continue;
+      const g = 0.55 + rng() * 0.35;
+      add(towers, x, z, h, 40 + rng() * rng() * 110, rng() * Math.PI, [g, g * 1.01, g * 1.04]);
+    }
+  } else {
+    // islands: villages on the low, flat land near the coast
+    const villages = [];
+    for (let t = 0; t < 5000 && villages.length < 26; t++) {
+      const x = (rng() * 2 - 1) * HM_HALF, z = (rng() * 2 - 1) * HM_HALF, h = terrainHeight(x, z);
+      if (h > 3 && h < 90 && terrainNormal(x, z)[1] > 0.97 && !inAirport(x, z)) villages.push([x, z, 20 + Math.floor(rng() * 50)]);
+    }
+    for (const [vx, vz, n] of villages) {
+      let placed = 0;
+      for (let t = 0; t < n * 12 && placed < n; t++) {
+        const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * (180 + n * 5);
+        if (tryHouse(vx + Math.cos(a) * r, vz + Math.sin(a) * r, 160)) placed++;
+      }
+    }
+  }
+  gl.bindBuffer(gl.ARRAY_BUFFER, props.house.bufs[3]);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(houses.flat()), gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, props.tower.bufs[3]);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(towers.flat()), gl.STATIC_DRAW);
+  props.nHouse = houses.length; props.nTower = towers.length;
+}
+function updateTrees(cam) {
+  if (Math.hypot(cam[0] - props.center[0], cam[2] - props.center[2]) < 250) return;
+  props.center = [cam[0], 0, cam[2]];
+  const cell = 24, gx0 = Math.floor((cam[0] - props.treeR) / cell), gx1 = Math.ceil((cam[0] + props.treeR) / cell);
+  const gz0 = Math.floor((cam[2] - props.treeR) / cell), gz1 = Math.ceil((cam[2] + props.treeR) / cell);
+  const con = [], brd = [];
+  for (let gz = gz0; gz <= gz1; gz++) for (let gx = gx0; gx <= gx1; gx++) {
+    const r0 = hash2(gx, gz, 1);
+    const x = (gx + hash2(gx, gz, 2)) * cell, z = (gz + hash2(gx, gz, 3)) * cell;
+    if (Math.abs(x) > HM_HALF || Math.abs(z) > HM_HALF) continue;
+    if ((x - cam[0]) ** 2 + (z - cam[2]) ** 2 > props.treeR * props.treeR) continue;
+    const veg = vegAt(x, z);
+    const p = smoothstep(0.48, 0.70, veg) * 0.95 + 0.03;
+    if (r0 > p) continue;
+    const h = terrainHeight(x, z);
+    if (h < 4 || h > 980) continue;
+    const n = terrainNormal(x, z);
+    if (n[1] < 0.84) continue;
+    if (onPaved(x, z)) continue;
+    const s = 9 + hash2(gx, gz, 4) * 9, yaw = hash2(gx, gz, 5) * 6.28, t = hash2(gx, gz, 6);
+    const conifer = h > 260 + t * 200 || (veg > 0.62 && t < 0.35);
+    if (conifer) con.push(x, h - 0.4, z, s * 1.15, yaw, 0.13 + t * 0.06, 0.25 + t * 0.07, 0.13 + t * 0.03);
+    else brd.push(x, h - 0.4, z, s, yaw, 0.20 + t * 0.12, 0.34 + t * 0.12, 0.12 + t * 0.05);
+  }
+  gl.bindBuffer(gl.ARRAY_BUFFER, props.conifer.bufs[3]);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(con), gl.DYNAMIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, props.broad.bufs[3]);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(brd), gl.DYNAMIC_DRAW);
+  props.nConifer = con.length / 8; props.nBroad = brd.length / 8;
+}
+
+// ---------- airport ----------
+function makeRunwayTexture(Rw = RWY) {
+  const W = 128, H = 4096, c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  const mpx = Rw.wid / W, mpy = Rw.len / H;     // metres per pixel
+  const X = m => W / 2 - m / mpx;                    // lateral metres (+ = right of the active direction) -> px
+  const Y = m => m / mpy;                            // metres from the approach end -> px
+  g.fillStyle = '#3b3e42'; g.fillRect(0, 0, W, H);
+  const rng = makeRng(7);
+  for (let i = 0; i < 9000; i++) {
+    const v = 40 + rng() * 40; g.fillStyle = `rgba(${v},${v},${v + 4},0.35)`;
+    g.fillRect(rng() * W, rng() * H, 1 + rng() * 2, 1 + rng() * 3);
+  }
+  for (const [a, b] of [[250, 700], [Rw.len - 700, Rw.len - 250]]) for (let i = 0; i < 70; i++) {
+    const y = Y(a + rng() * (b - a)), x = W / 2 + (rng() - 0.5) * 30;
+    g.fillStyle = 'rgba(15,15,17,0.35)'; g.fillRect(x, y, 2.5, Y(8 + rng() * 40));
+  }
+  g.fillStyle = '#e9ebe6';
+  g.fillRect(X(Rw.wid / 2 - 0.6), 0, 0.9 / mpx, H); g.fillRect(X(-Rw.wid / 2 + 1.5), 0, 0.9 / mpx, H);
+  for (let m = 110; m < Rw.len - 110; m += 50) g.fillRect(X(0.45), Y(m), 0.9 / mpx, Y(30));
+  const keys = Math.max(4, Math.min(8, Math.floor(Rw.wid / 7.5)));
+  for (const end of [0, 1]) {
+    const at = m => end ? Rw.len - m : m;
+    for (let k = 0; k < keys; k++) for (const s of [-1, 1]) {
+      const lat = s * (3 + k * (Rw.wid / 2 - 4.5) / Math.max(keys - 1, 1));
+      g.fillRect(X(lat + 0.9), Math.min(Y(at(6)), Y(at(36))), 1.8 / mpx, Y(30));
+    }
+    for (const s of [-1, 1]) g.fillRect(X(s * Rw.wid * 0.23 + 2), Math.min(Y(at(300)), Y(at(345))), 4 / mpx, Y(45));
+    for (const d of [150, 450, 600]) for (const s of [-1, 1]) {
+      const y0 = Math.min(Y(at(d)), Y(at(d + 22)));
+      g.fillRect(X(s * 7 + 1), y0, 1.8 / mpx, Y(22)); g.fillRect(X(s * 10 + 1), y0, 1.8 / mpx, Y(22));
+    }
+    g.save();
+    const txt = Rw.idents[end];
+    g.translate(W / 2, Y(at(64)));
+    if (!end) g.rotate(Math.PI);
+    g.scale(Math.min(1, 30 / Rw.wid * 1.15), (mpx / mpy) * 1.7 * Math.min(1, 30 / Rw.wid * 1.15));
+    g.font = `bold ${txt.length > 2 ? 34 : 44}px "B612 Mono", monospace`;
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(txt, 0, 0);
+    g.restore();
+  }
+  return makeTexture({ source: c, aniso: 16 });
+}
+let runwayTex, runwayMesh, airportMesh;
+function initAirport() {
+  if (runwayTex) gl.deleteTexture(runwayTex);
+  runwayTex = makeRunwayTexture();
+  const L = RWY.len / 2, Wd = RWY.wid / 2, y = RWY.elev + 0.12;
+  const p = [rwyToWorld(-L, -Wd, y), rwyToWorld(L, -Wd, y), rwyToWorld(L, Wd, y), rwyToWorld(-L, Wd, y)];
+  const uv = [[1, 0], [1, 1], [0, 1], [0, 0]];
+  // winding must face up whichever way the runway points
+  const up = vcross(vsub(p[2], p[0]), vsub(p[1], p[0]))[1] > 0;
+  const order = up ? [0, 2, 1, 0, 3, 2] : [0, 1, 2, 0, 2, 3];
+  runwayMesh = makeVAO([{ loc: 0, size: 3, data: new Float32Array(order.flatMap(k => p[k])) }, { loc: 1, size: 2, data: new Float32Array(order.flatMap(k => uv[k])) }]);
+  runwayMesh.count = 6;
+
+  const b = new MeshBuilder();
+  const E = RWY.elev, yaw = Math.PI / 2 - RWY.hdg * DEG;
+  const conc = [0.56, 0.56, 0.54], grass = [0.34, 0.45, 0.2];
+  const flat = (u0, u1, v0, v1, yy, col) => {
+    const a = rwyToWorld(u0, v0, yy), bb = rwyToWorld(u1, v0, yy), c = rwyToWorld(u1, v1, yy), d = rwyToWorld(u0, v1, yy);
+    b.quad(a, bb, c, d, col, [a[0], yy - 10, a[2]]);
+  };
+  const S = RWY.side || 1;
+  const flatS = (u0, u1, v0, v1, yy, col) => flat(u0, u1, Math.min(v0 * S, v1 * S), Math.max(v0 * S, v1 * S), yy, col);
+  flatS(APRON.u0, APRON.u1, APRON.v0, APRON.v1, E + 0.08, conc);
+  flatS(-300, -270, -45, -Wd, E + 0.08, [0.45, 0.46, 0.46]);
+  flatS(-20, 10, -45, -Wd, E + 0.08, [0.45, 0.46, 0.46]);
+  const bx = (u, v, w, d, h, col, z0 = 0) => b.box(rwyToWorld(u, av(v), E + z0 + h / 2), [w, h, d], col, yaw);
+  const roofCol = [0.62, 0.64, 0.66];
+  for (const [u, w] of [[-300, 34], [-250, 34], [-200, 28]]) {
+    bx(u, -178, w, 26, 9, [0.80, 0.80, 0.78]);
+    bx(u, -178, w - 2, 20, 11, roofCol);
+    bx(u, -178, w - 6, 10, 12.2, roofCol);
+    bx(u, -164.8, w * 0.7, 0.5, 7.5, [0.30, 0.34, 0.40]);
+  }
+  const big = RWY.len > 2200;
+  bx(-120, -175, big ? 90 : 36, 14, big ? 12 : 6, [0.86, 0.84, 0.78]);
+  bx(-120, -175, big ? 92 : 37, 15, 0.6, [0.30, 0.32, 0.36], big ? 12 : 6);
+  bx(-60, -172, 6, 6, big ? 40 : 16, [0.86, 0.86, 0.84]);
+  const th = big ? 40 : 16;
+  bx(-60, -172, 9, 9, 3.5, [0.20, 0.34, 0.44], th);
+  bx(-60, -172, 10, 10, 0.7, [0.9, 0.9, 0.88], th + 3.5);
+  b.cylinder(rwyToWorld(-10, av(-170), E), rwyToWorld(-10, av(-170), E + 7), 4, 4, 14, [0.88, 0.88, 0.86]);
+  b.cylinder(rwyToWorld(4, av(-170), E), rwyToWorld(4, av(-170), E + 7), 4, 4, 14, [0.88, 0.88, 0.86]);
+  // windsock streams downwind (the wind blows along the runway from ahead)
+  const ws = rwyToWorld(-L + 180, av(-40), E), down = vscale(RWY.dir, -1);
+  b.cylinder(ws, vadd(ws, [0, 7, 0]), 0.1, 0.08, 6, [0.8, 0.8, 0.8]);
+  for (let k = 0; k < 4; k++) {
+    const col = k % 2 ? [0.95, 0.95, 0.95] : [0.95, 0.42, 0.12];
+    b.cylinder(vadd(vadd(ws, vscale(down, k * 0.9)), [0, 6.8 - k * 0.12, 0]), vadd(vadd(ws, vscale(down, (k + 1) * 0.9)), [0, 6.8 - (k + 1) * 0.12, 0]),
+      0.45 - k * 0.07, 0.38 - k * 0.07, 10, col, false);
+  }
+  for (const pl of papiLights()) b.box(vadd(pl.p, [0, -0.4, 0]), [1.2, 0.8, 0.8], [0.15, 0.15, 0.15], yaw);
+  flat(-L - 60, L + 60, Wd + 0.1, Wd + 45, E + 0.03, grass);
+  flat(-L - 60, L + 60, -Wd - 45, -Wd - 0.1, E + 0.03, grass);
+  airportMesh = uploadMesh(b.build());
+}
+const RUNWAY_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec2 aUv;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv;
+out vec3 vWorld; out vec2 vUv;
+void main(){ vec3 w = aPos; vec2 cd = w.xz - uCamPos.xz; w.y -= dot(cd, cd) * uCurv; vWorld = w; vUv = aUv; gl_Position = uViewProj * vec4(w, 1.0); }`;
+const RUNWAY_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec2 vUv;
+uniform sampler2D uTex;
+out vec4 outColor;
+void main(){
+  vec3 base = texture(uTex, vUv).rgb;
+  float diff = max(uSunDir.y, 0.0) * planeShadow(vWorld.xz);
+  vec3 col = base * (uSunCol * diff + uAmbSky);
+  outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
+}`;
+let progRunway;
+
+// PAPI: four lights left of each runway's aiming point
+function papiLights() {
+  const out = [];
+  const ang = [3.5, 3.17, 2.83, 2.5];
+  for (const end of [0, 1]) {
+    const u = end ? RWY.len / 2 - 300 : -RWY.len / 2 + 300;
+    const side = end ? 1 : -1;       // pilot's left
+    for (let i = 0; i < 4; i++) {
+      out.push({ p: rwyToWorld(u, side * (RWY.wid / 2 + 15 + i * 9), RWY.elev + 0.9), ang: ang[i], end });
+    }
+  }
+  return out;
+}
+
+// ---------- clouds ----------
+const clouds = { puffs: [], data: null, vao: null };
+function initClouds() {
+  const rng = makeRng(99), puffs = [], ext = HM_HALF * 0.85;
+  const n = Math.min(110, Math.round(60 * (HM_HALF / 10240) ** 2));
+  for (let c = 0; c < n; c++) {
+    const cx = (rng() * 2 - 1) * ext, cz = (rng() * 2 - 1) * ext;
+    if (Math.hypot(cx - RWY.cx, cz - RWY.cz) < 2500) continue;
+    const base = 1450 + rng() * 550, w = 450 + rng() * 900, k = 9 + Math.floor(rng() * 13);
+    for (let i = 0; i < k; i++) {
+      const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * w;
+      const px = cx + Math.cos(a) * r * 1.3, pz = cz + Math.sin(a) * r * 0.8;
+      const up = rng() * w * 0.38 * (1 - r / w * 0.6);
+      const size = 190 + rng() * 240 * (1 - r / w * 0.5);
+      puffs.push({ p: [px, base + up + size * 0.35, pz], size, shade: clamp(up / (w * 0.3), 0, 1), rot: rng() * 6.28 });
+    }
+  }
+  clouds.puffs = puffs; clouds.order = null; clouds.d2 = null;
+  clouds.data = new Float32Array(puffs.length * 9);
+  if (clouds.vao) for (const bf of clouds.vao.bufs) gl.deleteBuffer(bf);
+  clouds.vao = makeVAO([{ loc: 0, size: 2, data: new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]) },
+  { data: clouds.data, stride: 9, layout: [[4, 4, 0], [5, 4, 4], [6, 1, 8]], divisor: 1, dynamic: true }]);
+}
+
+// ---------- ring course: a loop around the land, following the terrain ----------
+const course = { rings: [], radius: 30 };
+function buildRingCourse() {
+  const rng = makeRng(31);
+  let sx = 0, sz = 0, cnt = 0;
+  for (let j = 0; j < HM_N; j += 4) for (let i = 0; i < HM_N; i += 4) {
+    if (heights[j * HM_N + i] > 5) { sx += -HM_HALF + i * HM_CELL; sz += -HM_HALF + j * HM_CELL; cnt++; }
+  }
+  const cx = cnt ? sx / cnt : 0, cz = cnt ? sz / cnt : 0;
+  const landR = Math.sqrt(cnt * (4 * HM_CELL) ** 2 / Math.PI);
+  course.centre = [cx, 0, cz]; course.landR = landR;
+  const R0 = clamp(landR * 0.62, 1800, 5500), lim = HM_HALF - 1500;
+  const pts = [], n = 10;
+  for (let i = 0; i < n; i++) {
+    const a = Math.PI * 0.55 - i / n * Math.PI * 2 * 0.92;
+    const r = R0 * (1 + Math.sin(i * 2.1) * 0.25) + rng() * 300;
+    pts.push([clamp(cx + Math.cos(a) * r, -lim, lim), 0, clamp(cz + Math.sin(a) * r, -lim, lim)]);
+  }
+  for (const p of pts) {
+    let top = terrainHeight(p[0], p[2]);
+    for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; top = Math.max(top, terrainHeight(p[0] + Math.cos(a) * 160, p[2] + Math.sin(a) * 160)); }
+    p[1] = Math.max(Math.max(top, 0) + 90 + rng() * 60, 160);
+  }
+  for (let pass = 0; pass < 6; pass++) for (let i = 0; i < n - 1; i++) {
+    const a = pts[i], b = pts[i + 1];
+    for (let t = 0.05; t < 1; t += 0.05) {
+      const x = lerp(a[0], b[0], t), z = lerp(a[2], b[2], t), y = lerp(a[1], b[1], t);
+      const need = Math.max(terrainHeight(x, z), 0) + 100;
+      if (y < need) { a[1] += (need - y) * 0.6; b[1] += (need - y) * 0.6; }
+    }
+    const d = Math.hypot(b[0] - a[0], b[2] - a[2]), maxDy = d * 0.14;
+    if (b[1] - a[1] > maxDy) a[1] = b[1] - maxDy;
+    if (a[1] - b[1] > maxDy) b[1] = a[1] - maxDy;
+  }
+  course.rings = pts.map((p, i) => {
+    const prev = pts[Math.max(0, i - 1)], next = pts[Math.min(n - 1, i + 1)];
+    const dir = i === 0 ? vnorm(vsub(next, p)) : i === n - 1 ? vnorm(vsub(p, prev)) : vnorm(vsub(next, prev));
+    return { p, n: vnorm([dir[0], dir[1] * 0.5, dir[2]]) };
+  });
+  ensureRingMesh();
+}
+function ensureRingMesh() {
+  if (!course.mesh) {
+    const b = new MeshBuilder();
+    const R = 1, r = 0.065, seg = 48, sides = 8, rings = [];
+    for (let i = 0; i <= seg; i++) {
+      const a = i / seg * Math.PI * 2, c = [Math.cos(a) * R, Math.sin(a) * R, 0];
+      rings.push(Array.from({ length: sides }, (_, k) => {
+        const t = k / sides * Math.PI * 2;
+        return [c[0] + Math.cos(a) * Math.cos(t) * r, c[1] + Math.sin(a) * Math.cos(t) * r, Math.sin(t) * r];
+      }));
+    }
+    for (let i = 0; i < seg; i++) b.loft([rings[i], rings[i + 1]], [1, 1, 1], { smooth: true });
+    course.mesh = uploadMesh(b.build());
+  }
+}
+
+// ---------- minimap image ----------
+function makeMinimap() {
+  const S = 256, c = document.createElement('canvas');
+  c.width = c.height = S;
+  const g = c.getContext('2d'), img = g.createImageData(S, S);
+  const sun = vnorm([0.5, 0.7, 0.4]);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const wx = -HM_HALF + (x + 0.5) / S * HM_HALF * 2, wz = -HM_HALF + (y + 0.5) / S * HM_HALF * 2;
+    const h = terrainHeight(wx, wz);
+    let col;
+    if (h < 0) {
+      const t = smoothstep(0, 60, -h);
+      col = [lerp(40, 14, t), lerp(120, 50, t), lerp(140, 96, t)];
+    } else {
+      const n = terrainNormal(wx, wz), sh = clamp(vdot(n, sun) * 1.25, 0.35, 1.15);
+      const v = vegAt(wx, wz);
+      let base = h < 5 ? [196, 186, 140] : v > 0.58 ? [52, 88, 46] : [104, 128, 64];
+      if (h > 700) base = [132, 124, 112];
+      if (h > (({ yakushima: 1850, rishiri: 1350 })[MAP.id] || 1150)) base = [226, 230, 236];
+      col = base.map(k => k * sh);
+    }
+    const k = (y * S + x) * 4;
+    img.data[k] = col[0]; img.data[k + 1] = col[1]; img.data[k + 2] = col[2]; img.data[k + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  return c;
+}
+
+// =====================================================================
+//  AIRCRAFT: data-driven models + flight dynamics
+//  body frame: +x right wing, +y up, -z nose.  CG at the origin.
+//  Each aircraft is described by its geometry (fuselage stations, wing, tail,
+//  engines, gear, paint) and its aerodynamic data; the 3D model, the contact
+//  points and the physics are all derived from that description.
+// =====================================================================
+const FLAP_DEG = [0, 10, 20, 30];
+// the name of a flap position as that aircraft's lever is marked (Airbus CONF, Boeing detents)
+const flapName = (i, A = ACFT) => A.flapLabels ? A.flapLabels[i] : FLAP_DEG[i] + '°';
+// the lever positions that exist (some aircraft have 3 detents: UP / half / full)
+const flapStops = (A = ACFT) => A.flapStops || [0, 1, 2, 3];
+function flapStep(i, dir, A = ACFT) {
+  const st = flapStops(A), k = st.indexOf(i) >= 0 ? st.indexOf(i) : st.findIndex(v => v >= i);
+  return dir > 0 ? st[(k + 1) % st.length] : st[Math.max(0, k - 1)];
+}
+
+const AIRCRAFT = [
+  {
+    id: 'trainer', name: 'ヒバリ', kind: '高翼の練習機', stars: 1,
+    desc: '翼が胴体の上にある、安定した練習機。ゆっくり飛べて失速しにくいので、はじめての人におすすめ。脚は出たまま（格納できません）。',
+    fuse: [[-2.35, 0.30, 0.30, -0.05], [-2.1, 0.44, 0.42, -0.05], [-1.5, 0.54, 0.56, 0.02], [-0.8, 0.56, 0.70, 0.12], [0.4, 0.55, 0.70, 0.12],
+      [1.4, 0.44, 0.56, 0.14], [2.6, 0.27, 0.38, 0.22], [3.9, 0.14, 0.26, 0.32], [4.9, 0.08, 0.20, 0.36], [5.15, 0.03, 0.08, 0.38]], fuseE: 3.0,
+    wing: { y: 0.84, dih: 1.7, rootX: 0.45, tipX: 5.5, rootLE: -0.75, rootC: 1.62, tipLE: -0.6, tipC: 1.3, t0: 0.14, t1: 0.12, hinge: 0.73, flap: [0.6, 2.7], ail: [2.85, 5.3], struts: true },
+    hstab: { y: 0.42, span: 1.75, rootLE: 3.95, tipLE: 4.35, te: 5.0, hinge: 4.55, t: 0.09 },
+    vstab: { y0: 0.42, y1: 1.75, rootLE: 3.4, topLE: 4.55, te: 5.15, hinge: 4.75, t: 0.1 },
+    engines: [{ type: 'nose', z: -2.45, y: -0.05, r: 0.95, blades: 2 }],
+    gear: { fixed: true, wheelR: 0.24, nose: [0, -1.06, -1.85], mains: [[1.2, -1.06, 0.35]], len: 0.5, pants: true },
+    windows: { mode: 1, z0: -1.55, z1: 0.6, y0: 0.28, y1: 0.74 },
+    livery: { base: [0.94, 0.94, 0.95], a: [0.12, 0.33, 0.72], b: [0.95, 0.72, 0.12], fw: 0.7, y0: -0.05, slope: 0.03, bands: [-0.1, 0.0, 0.05, 0.1], tip: 5.1, fin: [0.12, 0.45, 3.3, 1.45], nose: -2.3, glare: 0 },
+    eye: [0, 0.6, -0.55], cam: [0, 3.2, 15],
+    phys: {
+      mass: 1050, S: 16.2, b: 11, c: 1.5, L: 7.5, CL0: 0.30, CLa: 4.9, aStall: 0.28, CD0: 0.031, K: 0.047, CDgear: 0,
+      Cm0: 0.02, Cma: -1.2, Cmde: 0.36, Cmq: -16, Clda: 0.055, Clp: -0.5, Clb: -0.1, Cnb: 0.1, Cndr: 0.03, Cnr: -0.14, CYb: -0.6,
+      flapCL: 0.75, flapStall: 0.045, engine: { type: 'prop', P: 96000, T0: 2300 }, maxG: 4.4, rollRate: 50, pitchRate: 12,
+    },
+    v: { s0: 40, s1: 47, fe: 85, no: 128, ne: 160, rotate: 52, appr: 65, apprFlaps: 2, apprThr: 0.25, cruise: 105, cruiseThr: 0.62, toFlaps: 1 },
+  },
+  {
+    id: 'sport', name: 'ハヤブサ', kind: '低翼のスポーツ機', stars: 2,
+    desc: '翼が胴体の下にある 4 人乗りのスポーツ機。練習機より速く、脚（車輪）を格納できます。',
+    fuse: [[-3.25, 0.30, 0.30, 0.02], [-3.05, 0.42, 0.42, 0.02], [-2.5, 0.53, 0.53, 0.04], [-1.5, 0.58, 0.60, 0.06], [-0.5, 0.58, 0.62, 0.08],
+      [0.6, 0.52, 0.56, 0.10], [1.7, 0.38, 0.44, 0.16], [2.8, 0.22, 0.30, 0.24], [3.7, 0.09, 0.17, 0.30], [3.98, 0.03, 0.07, 0.32]], fuseE: 2.5,
+    wing: { y: -0.42, dih: 5, rootX: 0.55, tipX: 4.75, rootLE: -1.05, rootC: 1.7, tipLE: -0.7, tipC: 1.1, t0: 0.15, t1: 0.11, hinge: 0.73, flap: [0.62, 2.52], ail: [2.62, 4.62] },
+    hstab: { y: 0.32, span: 1.75, rootLE: 2.95, tipLE: 3.22, te: 3.9, hinge: 3.5, t: 0.1 },
+    vstab: { y0: 0.2, y1: 1.45, rootLE: 2.5, topLE: 3.22, te: 3.96, hinge: 3.5, t: 0.11 },
+    canopy: { z: [-1.3, -1.0, -0.6, -0.15, 0.3, 0.62], h: [0.0, 0.26, 0.40, 0.40, 0.27, 0.02], w: [0.26, 0.40, 0.46, 0.46, 0.40, 0.24] },
+    engines: [{ type: 'nose', z: -3.34, y: 0.02, r: 0.96, blades: 2 }],
+    gear: { fixed: false, wheelR: 0.28, nose: [0, -1.17, -2.3], mains: [[1.3, -1.17, 0.25]], len: 0.75 },
+    livery: { base: [0.93, 0.94, 0.96], a: [0.80, 0.11, 0.13], b: [0.07, 0.15, 0.36], fw: 0.8, y0: -0.02, slope: 0.035, bands: [-0.09, 0.01, 0.05, 0.10], tip: 4.2, fin: [0.12, 0.42, 2.4, 1.22], nose: -3.0, glare: -1.25 },
+    eye: [0, 0.98, -0.3], cam: [0, 3.1, 15.5],
+    phys: {
+      mass: 1000, S: 14.5, b: 9.5, c: 1.55, L: 7.3, CL0: 0.25, CLa: 4.8, aStall: 0.27, CD0: 0.027, K: 0.052, CDgear: 0.016,
+      Cm0: 0.013, Cma: -1.1, Cmde: 0.30, Cmq: -14, Clda: 0.07, Clp: -0.48, Clb: -0.08, Cnb: 0.10, Cndr: 0.03, Cnr: -0.13, CYb: -0.65,
+      flapCL: 0.7, flapStall: 0.045, engine: { type: 'prop', P: 120000, T0: 3300 }, maxG: 5, rollRate: 80, pitchRate: 14,
+    },
+    v: { s0: 46, s1: 51, fe: 85, no: 140, ne: 170, rotate: 55, appr: 70, apprFlaps: 2, apprThr: 0.2, cruise: 115, cruiseThr: 0.55, toFlaps: 1 },
+  },
+  {
+    id: 'aero', name: 'ツバメ', kind: '曲技飛行機', stars: 3,
+    desc: '宙返りや横転（ロール）のための機体。とても素早く回転し、背面飛行もできます。フラップはありません。',
+    fuse: [[-2.75, 0.28, 0.28, 0.02], [-2.55, 0.40, 0.40, 0.02], [-2.0, 0.50, 0.50, 0.03], [-1.0, 0.52, 0.56, 0.05], [0, 0.50, 0.56, 0.08],
+      [1.0, 0.40, 0.46, 0.12], [2.2, 0.24, 0.32, 0.2], [3.3, 0.10, 0.2, 0.28], [3.6, 0.03, 0.07, 0.3]], fuseE: 2.5,
+    wing: { y: -0.1, dih: 0, rootX: 0.5, tipX: 3.75, rootLE: -0.95, rootC: 1.9, tipLE: -0.55, tipC: 1.05, t0: 0.16, t1: 0.12, hinge: 0.73, flap: null, ail: [0.6, 3.65] },
+    hstab: { y: 0.2, span: 1.6, rootLE: 2.35, tipLE: 2.6, te: 3.3, hinge: 2.85, t: 0.1 },
+    vstab: { y0: 0.25, y1: 1.35, rootLE: 2.0, topLE: 2.85, te: 3.55, hinge: 3.1, t: 0.11 },
+    canopy: { z: [-1.1, -0.8, -0.4, 0, 0.4, 0.7], h: [0, 0.24, 0.36, 0.36, 0.24, 0.02], w: [0.24, 0.36, 0.4, 0.4, 0.34, 0.2] },
+    engines: [{ type: 'nose', z: -2.95, y: 0.02, r: 0.98, blades: 3 }],
+    gear: { fixed: true, wheelR: 0.25, nose: [0, -1.1, -1.9], mains: [[1.1, -1.1, 0.2]], len: 0.55, pants: true },
+    livery: { base: [0.96, 0.96, 0.96], a: [0.85, 0.10, 0.12], b: [0.08, 0.08, 0.09], fw: 0.7, y0: -0.05, slope: 0.04, bands: [-0.12, -0.02, 0.03, 0.11], tip: 3.2, fin: [0.12, 0.3, 1.9, 1.05], nose: -2.6, glare: -1.1 },
+    eye: [0, 0.8, -0.1], cam: [0, 2.8, 13],
+    phys: {
+      mass: 820, S: 10.7, b: 7.5, c: 1.45, L: 6.4, CL0: 0.0, CLa: 4.8, aStall: 0.30, CD0: 0.03, K: 0.06, CDgear: 0,
+      Cm0: 0.0, Cma: -0.8, Cmde: 0.30, Cmq: -10, Clda: 0.12, Clp: -0.45, Clb: -0.03, Cnb: 0.09, Cndr: 0.05, Cnr: -0.12, CYb: -0.6,
+      flapCL: 0, flapStall: 0, engine: { type: 'prop', P: 170000, T0: 4300 }, maxG: 10, rollRate: 200, pitchRate: 30,
+    },
+    v: { s0: 55, s1: 55, fe: 0, no: 158, ne: 219, rotate: 58, appr: 80, apprFlaps: 0, apprThr: 0.25, cruise: 140, cruiseThr: 0.6, toFlaps: 0 },
+  },
+  {
+    id: 'twin', name: 'カモメ', kind: '双発ターボプロップ機', stars: 3,
+    desc: 'エンジンが 2 つある 10 人乗りの機体。重くて動きはゆったり、そのぶん速くて安定しています。',
+    fuse: [[-6.2, 0.2, 0.2, 0.1], [-5.9, 0.45, 0.42, 0.05], [-5.0, 0.7, 0.7, 0.05], [-3.8, 0.8, 0.85, 0.08], [-2.0, 0.82, 0.9, 0.1],
+      [1.5, 0.8, 0.9, 0.1], [3.5, 0.62, 0.72, 0.2], [5.5, 0.36, 0.46, 0.38], [7.0, 0.16, 0.28, 0.55], [7.4, 0.05, 0.1, 0.6]], fuseE: 2.3,
+    wing: { y: -0.6, dih: 6, rootX: 0.8, tipX: 8.3, rootLE: -1.4, rootC: 2.6, tipLE: -0.75, tipC: 1.2, t0: 0.16, t1: 0.12, hinge: 0.72, flap: [0.9, 4.4], ail: [4.6, 8.0] },
+    hstab: { y: 3.0, span: 3.0, rootLE: 6.3, tipLE: 6.9, te: 7.8, hinge: 7.25, t: 0.1 },
+    vstab: { y0: 0.5, y1: 3.0, rootLE: 4.2, topLE: 6.4, te: 7.6, hinge: 6.9, t: 0.12 },
+    engines: [{ type: 'wing', x: 2.8, y: -0.3, z: -3.35, r: 1.15, blades: 4, nac: [-3.2, 1.2, 0.42] }],
+    gear: { fixed: false, wheelR: 0.36, nose: [0, -1.72, -4.6], mains: [[2.8, -1.72, 0.35]], len: 1.0 },
+    windows: { mode: 2, z0: -3.5, z1: 2.8, y0: 0.25, y1: 0.52, pitch: 1.0, cz0: -5.6, cz1: -4.3, cy: 0.18 },
+    livery: { base: [0.95, 0.95, 0.96], a: [0.10, 0.30, 0.65], b: [0.78, 0.62, 0.22], fw: 0.95, y0: -0.05, slope: 0.02, bands: [-0.2, -0.05, 0.02, 0.1], tip: 7.9, fin: [0.2, 0.6, 4.0, 2.4], nose: -99, glare: 0 },
+    eye: [0, 0.75, -4.6], cam: [0, 5, 27],
+    phys: {
+      mass: 5000, S: 28, b: 16.6, c: 1.9, L: 13.6, CL0: 0.25, CLa: 5.0, aStall: 0.26, CD0: 0.027, K: 0.045, CDgear: 0.02,
+      Cm0: 0.01, Cma: -1.2, Cmde: 0.30, Cmq: -20, Clda: 0.05, Clp: -0.5, Clb: -0.08, Cnb: 0.1, Cndr: 0.035, Cnr: -0.15, CYb: -0.7,
+      flapCL: 0.8, flapStall: 0.045, engine: { type: 'prop', P: 820000, T0: 18000 }, maxG: 3.8, rollRate: 40, pitchRate: 8,
+    },
+    v: { s0: 76, s1: 88, fe: 150, no: 245, ne: 260, rotate: 95, appr: 110, apprFlaps: 2, apprThr: 0.3, cruise: 200, cruiseThr: 0.7, toFlaps: 1 },
+  },
+  {
+    id: 'airliner', name: 'オオワシ', kind: 'ジェット旅客機', stars: 4,
+    desc: '150 人乗りの旅客機。とても重く、反応はゆっくり。長い滑走路（2,000 m 以上）が必要です。着陸はフラップ 30° で。',
+    fuse: [[-18.0, 0.15, 0.15, -0.2], [-17.6, 0.9, 0.85, -0.2], [-16.5, 1.6, 1.55, -0.1], [-14.5, 1.95, 1.95, 0], [8.0, 1.95, 1.95, 0],
+      [12.0, 1.75, 1.8, 0.2], [15.5, 1.2, 1.3, 0.6], [18.0, 0.6, 0.7, 1.1], [19.6, 0.18, 0.3, 1.35]], fuseE: 2.0, fuseN: 28,
+    wing: { y: -1.2, dih: 5, rootX: 1.9, tipX: 17, rootLE: -3.6, rootC: 6.4, tipLE: 3.4, tipC: 1.6, t0: 0.14, t1: 0.10, hinge: 0.72, flap: [2.2, 10.5], ail: [11, 16.3] },
+    hstab: { y: 1.4, span: 7.2, rootLE: 14.0, tipLE: 17.4, te: 18.8, hinge: 17.9, t: 0.1 },
+    vstab: { y0: 1.6, y1: 8.0, rootLE: 12.6, topLE: 17.2, te: 19.1, hinge: 18.2, t: 0.12 },
+    engines: [{ type: 'pod', x: 5.9, y: -2.05, z0: -3.4, z1: 0.6, r: 1.0 }],
+    gear: { fixed: false, wheelR: 0.57, nose: [0, -2.85, -13.8], mains: [[2.9, -2.85, 1.2]], len: 1.3 },
+    windows: { mode: 2, z0: -15.3, z1: 12, y0: 0.35, y1: 0.75, pitch: 1.0, cz0: -17.3, cz1: -15.9, cy: 0.1 },
+    livery: { base: [0.95, 0.95, 0.96], a: [0.06, 0.33, 0.72], b: [0.04, 0.12, 0.35], fw: 2.1, y0: -0.4, slope: 0, bands: [-0.3, -0.1, -0.02, 0.12], tip: 99, fin: [0.3, 1.9, 12, 2.0], nose: -99, glare: -99 },
+    eye: [0, 0.7, -16.3], cam: [0, 11, 62], minRwy: 2000, airliner: true,
+    phys: {
+      mass: 60000, S: 122.6, b: 34, c: 4.2, L: 37.6, CL0: 0.20, CLa: 5.2, aStall: 0.25, CD0: 0.022, K: 0.045, CDgear: 0.018,
+      Cm0: 0.0, Cma: -1.3, Cmde: 0.35, Cmq: -30, Clda: 0.04, Clp: -0.5, Clb: -0.1, Cnb: 0.12, Cndr: 0.03, Cnr: -0.15, CYb: -0.8,
+      flapCL: 1.2, flapStall: 0.03, engine: { type: 'jet', T: 240000, ab: 0, spool: 3.0 }, maxG: 2.5, rollRate: 20, pitchRate: 4,
+    },
+    v: { s0: 108, s1: 135, fe: 230, no: 340, ne: 360, rotate: 140, appr: 140, apprFlaps: 3, apprThr: 0.3, cruise: 270, cruiseThr: 0.65, toFlaps: 2 },
+  },
+  {
+    id: 'fighter', name: 'ハヤテ', kind: 'ジェット戦闘機', stars: 5,
+    desc: '音速を超えられる戦闘機。スロットル 95% 以上でアフターバーナー（A/B）が点火して急加速します。反応が速いので上級者向け。',
+    fuse: [[-8.2, 0.05, 0.05, 0.1], [-7.6, 0.3, 0.28, 0.1], [-6.5, 0.5, 0.45, 0.15], [-5.0, 0.62, 0.6, 0.15], [-3.0, 0.78, 0.7, 0.1],
+      [0, 0.95, 0.7, 0.05], [3.0, 0.85, 0.65, 0.1], [5.5, 0.62, 0.55, 0.15], [6.8, 0.55, 0.5, 0.15]], fuseE: 2.3,
+    wing: { y: -0.05, dih: -1, rootX: 0.9, tipX: 4.7, rootLE: -1.6, rootC: 5.2, tipLE: 2.5, tipC: 1.3, t0: 0.045, t1: 0.04, hinge: 0.75, flap: [1.0, 2.6], ail: [2.7, 4.6] },
+    hstab: { y: -0.05, span: 3.0, rootLE: 4.4, tipLE: 6.0, te: 6.9, hinge: 4.5, t: 0.05 },
+    vstab: { y0: 0.6, y1: 3.7, rootLE: 2.6, topLE: 5.3, te: 6.5, hinge: 5.6, t: 0.06 },
+    canopy: { z: [-6.3, -5.8, -5.0, -4.0, -3.0, -2.2], h: [0, 0.35, 0.55, 0.55, 0.4, 0.05], w: [0.22, 0.4, 0.48, 0.48, 0.42, 0.25], col: [0.30, 0.26, 0.14] },
+    engines: [{ type: 'nozzle', z0: 6.7, z1: 7.7, y: 0.15, r: 0.55 }],
+    gear: { fixed: false, wheelR: 0.34, nose: [0, -1.6, -4.9], mains: [[1.2, -1.6, 0.7]], len: 0.8 },
+    livery: { base: [0.53, 0.57, 0.61], a: [0.40, 0.44, 0.49], b: [0.30, 0.34, 0.40], fw: 1.0, y0: 0.3, slope: 0.0, bands: [9, 9, 9, 9], tip: 99, fin: [0.2, 0.7, 2.4, 3.3], nose: -7.2, glare: 0 },
+    eye: [0, 0.95, -4.6], cam: [0, 4.5, 26],
+    phys: {
+      mass: 12000, S: 27.9, b: 9.45, c: 3.45, L: 15, CL0: 0.0, CLa: 3.8, aStall: 0.42, CD0: 0.021, K: 0.12, CDgear: 0.02,
+      Cm0: 0.0, Cma: -0.6, Cmde: 0.24, Cmq: -8, Clda: 0.06, Clp: -0.35, Clb: -0.05, Cnb: 0.12, Cndr: 0.03, Cnr: -0.3, CYb: -0.7,
+      flapCL: 0.35, flapStall: 0, engine: { type: 'jet', T: 76000, ab: 50000, spool: 2.0 }, maxG: 9, rollRate: 180, pitchRate: 20, wave: true,
+    },
+    v: { s0: 120, s1: 126, fe: 250, no: 700, ne: 800, rotate: 150, appr: 155, apprFlaps: 2, apprThr: 0.55, cruise: 350, cruiseThr: 0.6, toFlaps: 1 },
+  },
+  // ---------------- real aircraft (dimensions and performance from the published data) ----------------
+  {
+    id: 'c172', name: 'セスナ 172S スカイホーク', kind: '実機・高翼の単発機', stars: 1, real: true,
+    desc: '世界でいちばん多く作られた飛行機。多くの訓練生が最初に乗る 4 人乗りの単発機です。180 馬力（ライカミング IO-360）、巡航 約 120 kt。計器はアナログ 6 計器と、ガーミン G1000 風のグラスをカスタマイズで選べます。',
+    fuse: [[-2.45, 0.30, 0.30, -0.05], [-2.2, 0.45, 0.43, -0.05], [-1.55, 0.55, 0.57, 0.02], [-0.8, 0.57, 0.71, 0.12], [0.4, 0.56, 0.71, 0.12],
+      [1.4, 0.45, 0.57, 0.14], [2.6, 0.28, 0.39, 0.22], [3.9, 0.15, 0.27, 0.32], [5.0, 0.08, 0.20, 0.37], [5.3, 0.03, 0.08, 0.39]], fuseE: 3.0,
+    wing: { y: 0.86, dih: 1.7, rootX: 0.45, tipX: 5.5, rootLE: -0.75, rootC: 1.63, tipLE: -0.62, tipC: 1.12, t0: 0.14, t1: 0.12, hinge: 0.73, flap: [0.6, 2.7], ail: [2.85, 5.3], struts: true },
+    hstab: { y: 0.42, span: 1.7, rootLE: 4.05, tipLE: 4.45, te: 5.1, hinge: 4.65, t: 0.09 },
+    vstab: { y0: 0.42, y1: 1.85, rootLE: 3.35, topLE: 4.65, te: 5.25, hinge: 4.85, t: 0.1 },
+    engines: [{ type: 'nose', z: -2.55, y: -0.05, r: 0.95, blades: 2 }],
+    gear: { fixed: true, wheelR: 0.24, nose: [0, -1.08, -1.95], mains: [[1.25, -1.08, 0.35]], len: 0.5, pants: true },
+    windows: { mode: 1, z0: -1.55, z1: 0.65, y0: 0.28, y1: 0.76 },
+    livery: { base: [0.96, 0.96, 0.97], a: [0.10, 0.20, 0.48], b: [0.80, 0.62, 0.20], fw: 0.7, y0: -0.05, slope: 0.03, bands: [-0.1, 0.0, 0.05, 0.1], tip: 5.1, fin: [0.12, 0.45, 3.3, 1.55], nose: -2.4, glare: 0 },
+    eye: [0, 0.6, -0.55], cam: [0, 3.2, 15],
+    flapLabels: ['UP', '10°', '20°', '30°'],
+    oew: 767, load: { max: 400, def: 180, fuelDef: 0.9 },
+    phys: {
+      mass: 1080, S: 16.2, b: 11, c: 1.49, L: 8.28, CL0: 0.30, CLa: 4.9, aStall: 0.28, CD0: 0.031, K: 0.047, CDgear: 0,
+      Cm0: 0.02, Cma: -1.2, Cmde: 0.36, Cmq: -16, Clda: 0.055, Clp: -0.5, Clb: -0.1, Cnb: 0.1, Cndr: 0.03, Cnr: -0.14, CYb: -0.6,
+      flapCL: 0.78, flapStall: 0.045, flapCD: 0.55, engine: { type: 'prop', P: 110000, T0: 2550 }, maxG: 4.4, rollRate: 50, pitchRate: 12,
+    },
+    v: { s0: 40, s1: 48, fe: 85, no: 129, ne: 163, rotate: 55, appr: 65, apprFlaps: 3, apprThr: 0.3, cruise: 110, cruiseThr: 0.7, toFlaps: 0 },
+  },
+  {
+    id: 'a320', name: 'エアバス A320neo', kind: '実機・ジェット旅客機', stars: 4, real: true,
+    desc: '最も売れている旅客機のひとつ。操縦桿のかわりに横の「サイドスティック」で操縦し、コンピューターが姿勢を守るフライ・バイ・ワイヤ機。翼端のシャークレットが特徴。全長 37.6 m、翼幅 35.8 m、エンジン 2 基（各 約 120 kN）。',
+    fuse: [[-18.0, 0.15, 0.15, -0.25], [-17.55, 0.95, 0.9, -0.22], [-16.4, 1.62, 1.6, -0.1], [-14.3, 1.97, 1.98, 0], [8.0, 1.97, 1.98, 0],
+      [12.0, 1.78, 1.82, 0.2], [15.5, 1.22, 1.32, 0.62], [18.0, 0.6, 0.72, 1.12], [19.6, 0.18, 0.3, 1.36]], fuseE: 2.0, fuseN: 28,
+    wing: { y: -1.25, dih: 5.1, rootX: 1.95, tipX: 17.05, rootLE: -3.7, rootC: 6.3, tipLE: 3.45, tipC: 1.55, t0: 0.14, t1: 0.10, hinge: 0.72, flap: [2.2, 10.5], ail: [11.2, 16.4],
+      winglet: { h: 2.4, cant: 0.2, sweep: 0.9, blend: true } },
+    hstab: { y: 1.4, span: 6.3, rootLE: 14.2, tipLE: 17.3, te: 18.8, hinge: 17.9, t: 0.1 },
+    vstab: { y0: 1.7, y1: 8.1, rootLE: 12.4, topLE: 17.0, te: 19.0, hinge: 18.1, t: 0.12 },
+    engines: [{ type: 'pod', x: 5.75, y: -2.15, z0: -4.3, z1: 0.3, r: 1.08 }],
+    gear: { fixed: false, wheelR: 0.58, nose: [0, -2.95, -11.5], mains: [[3.8, -2.95, 1.15]], len: 1.35 },
+    windows: { mode: 2, z0: -15.3, z1: 12, y0: 0.35, y1: 0.75, pitch: 1.0, cz0: -17.3, cz1: -15.9, cy: 0.1 },
+    livery: { base: [0.96, 0.96, 0.97], a: [0.08, 0.22, 0.52], b: [0.72, 0.12, 0.18], fw: 2.1, y0: -0.45, slope: 0, bands: [-0.34, -0.26, -0.18, -0.02], tip: 99, fin: [0.3, 1.9, 12, 2.2], nose: -99, glare: -99 },
+    eye: [0, 0.72, -16.2], cam: [0, 11, 62],
+    flapLabels: ['0', '1+F', '3', 'FULL'], cockpitStyle: 'airbus', minRwy: 2000, airliner: true,
+    oew: 44300, load: { max: 20000, def: 12000, fuelDef: 0.5 },
+    phys: {
+      mass: 64000, S: 122.6, b: 35.8, c: 4.29, L: 37.6, CL0: 0.20, CLa: 5.3, aStall: 0.25, CD0: 0.021, K: 0.042, CDgear: 0.018,
+      Cm0: 0.0, Cma: -1.3, Cmde: 0.35, Cmq: -30, Clda: 0.04, Clp: -0.5, Clb: -0.1, Cnb: 0.12, Cndr: 0.03, Cnr: -0.15, CYb: -0.8,
+      flapCL: 0.95, flapStall: 0.03, engine: { type: 'jet', T: 241000, ab: 0, spool: 3.2 }, maxG: 2.5, rollRate: 20, pitchRate: 4,
+    },
+    v: { s0: 113, s1: 136, fe: 177, no: 340, ne: 350, rotate: 143, appr: 137, apprFlaps: 3, apprThr: 0.3, cruise: 280, cruiseThr: 0.6, toFlaps: 1 },
+  },
+  {
+    id: 'b738', name: 'ボーイング 737-800', kind: '実機・ジェット旅客機', stars: 4, real: true,
+    desc: '日本の空でもおなじみの双発旅客機。昔ながらの操縦輪（ヨーク）で操縦します。エンジン下面が平たい「ハムスターポーチ」と、跳ね上がったウイングレットが特徴。全長 39.5 m、翼幅 35.8 m、エンジン 2 基（各 約 117 kN）。',
+    fuse: [[-19.0, 0.12, 0.12, -0.35], [-18.45, 0.85, 0.8, -0.28], [-17.2, 1.55, 1.5, -0.12], [-15.0, 1.88, 1.9, 0], [9.0, 1.88, 1.9, 0],
+      [13.0, 1.7, 1.75, 0.2], [16.6, 1.15, 1.25, 0.66], [19.2, 0.55, 0.66, 1.2], [20.5, 0.16, 0.28, 1.45]], fuseE: 2.0, fuseN: 28,
+    wing: { y: -1.2, dih: 6, rootX: 1.9, tipX: 17.15, rootLE: -3.9, rootC: 6.6, tipLE: 3.7, tipC: 1.3, t0: 0.14, t1: 0.10, hinge: 0.72, flap: [2.1, 10.8], ail: [11.4, 16.5],
+      winglet: { h: 2.5, cant: 0.25, sweep: 1.3, blend: true } },
+    hstab: { y: 1.5, span: 6.6, rootLE: 15.3, tipLE: 18.6, te: 20.0, hinge: 19.1, t: 0.1 },
+    vstab: { y0: 1.7, y1: 8.7, rootLE: 13.0, topLE: 18.2, te: 20.2, hinge: 19.3, t: 0.12 },
+    engines: [{ type: 'pod', x: 4.9, y: -1.72, z0: -4.4, z1: -0.4, r: 0.98, flat: 0.8 }],
+    gear: { fixed: false, wheelR: 0.56, nose: [0, -2.6, -14.2], mains: [[2.86, -2.6, 1.55]], len: 1.05 },
+    windows: { mode: 2, z0: -16.2, z1: 13.5, y0: 0.35, y1: 0.75, pitch: 1.0, cz0: -18.3, cz1: -16.8, cy: 0.1 },
+    livery: { base: [0.96, 0.96, 0.97], a: [0.05, 0.35, 0.68], b: [0.95, 0.60, 0.12], fw: 2.0, y0: -0.3, slope: 0, bands: [-0.22, -0.14, -0.1, 0.06], tip: 99, fin: [0.3, 1.9, 13, 2.2], nose: -99, glare: -99 },
+    eye: [0, 0.72, -17.2], cam: [0, 11, 64],
+    flapLabels: ['UP', '5', '15', '30'], cockpitStyle: 'boeing', minRwy: 2000, airliner: true,
+    oew: 41400, load: { max: 20500, def: 13000, fuelDef: 0.5 },
+    phys: {
+      mass: 65000, S: 124.6, b: 35.8, c: 3.96, L: 39.5, CL0: 0.20, CLa: 5.3, aStall: 0.25, CD0: 0.022, K: 0.043, CDgear: 0.018,
+      Cm0: 0.0, Cma: -1.25, Cmde: 0.34, Cmq: -32, Clda: 0.04, Clp: -0.5, Clb: -0.1, Cnb: 0.12, Cndr: 0.03, Cnr: -0.15, CYb: -0.8,
+      flapCL: 0.9, flapStall: 0.03, engine: { type: 'jet', T: 234000, ab: 0, spool: 3.4 }, maxG: 2.5, rollRate: 20, pitchRate: 4,
+    },
+    v: { s0: 117, s1: 140, fe: 175, no: 340, ne: 340, rotate: 147, appr: 144, apprFlaps: 3, apprThr: 0.32, cruise: 280, cruiseThr: 0.6, toFlaps: 1 },
+  },  {
+    id: 'sr22', name: 'シーラス SR22', kind: '実機・低翼の高性能単発機', stars: 2, real: true,
+    desc: '世界でいちばん売れている自家用の高性能機。複合材の機体に 310 馬力のエンジン、巡航 約 180 kt。操縦輪のかわりに横の「サイドヨーク」で操縦し、計器はガーミン製の大きなグラス画面。フラップは UP・50%・100% の 3 段です。',
+    fuse: [[-3.58, 0.31, 0.31, 0.02], [-3.36, 0.44, 0.44, 0.02], [-2.75, 0.56, 0.56, 0.04], [-1.65, 0.61, 0.63, 0.06], [-0.55, 0.61, 0.65, 0.08],
+      [0.66, 0.55, 0.59, 0.10], [1.87, 0.40, 0.46, 0.16], [3.08, 0.23, 0.31, 0.24], [4.07, 0.09, 0.18, 0.30], [4.38, 0.03, 0.07, 0.32]], fuseE: 2.5,
+    wing: { y: -0.45, dih: 4.5, rootX: 0.6, tipX: 5.84, rootLE: -1.0, rootC: 1.45, tipLE: -0.62, tipC: 0.8, t0: 0.15, t1: 0.11, hinge: 0.74, flap: [0.65, 3.2], ail: [3.4, 5.7] },
+    hstab: { y: 0.3, span: 1.95, rootLE: 3.4, tipLE: 3.7, te: 4.3, hinge: 3.92, t: 0.1 },
+    vstab: { y0: 0.25, y1: 1.55, rootLE: 2.9, topLE: 3.75, te: 4.45, hinge: 4.0, t: 0.11 },
+    engines: [{ type: 'nose', z: -3.68, y: 0.02, r: 0.99, blades: 3 }],
+    gear: { fixed: true, wheelR: 0.27, nose: [0, -1.2, -2.55], mains: [[1.4, -1.2, 0.2]], len: 0.72, pants: true },
+    windows: { mode: 1, z0: -1.6, z1: 0.8, y0: 0.2, y1: 0.6 },
+    livery: { base: [0.96, 0.96, 0.97], a: [0.16, 0.20, 0.26], b: [0.62, 0.64, 0.68], fw: 0.8, y0: -0.02, slope: 0.035, bands: [-0.09, 0.01, 0.05, 0.10], tip: 5.4, fin: [0.12, 0.42, 2.8, 1.3], nose: -3.3, glare: 0 },
+    eye: [0, 0.58, -0.45], cam: [0, 3.1, 16],
+    flapLabels: ['UP', '50%', '50%', '100%'], flapStops: [0, 2, 3], cockpitStyle: 'g1000', minRwy: 800,
+    oew: 1040, load: { max: 520, def: 170, fuelDef: 0.8 },
+    phys: {
+      mass: 1410, S: 13.5, b: 11.68, c: 1.2, L: 7.92, CL0: 0.28, CLa: 5.0, aStall: 0.27, CD0: 0.024, K: 0.045, CDgear: 0,
+      Cm0: 0.015, Cma: -1.1, Cmde: 0.32, Cmq: -14, Clda: 0.065, Clp: -0.48, Clb: -0.09, Cnb: 0.1, Cndr: 0.03, Cnr: -0.13, CYb: -0.62,
+      flapCL: 0.7, flapStall: 0.04, engine: { type: 'prop', P: 231000, T0: 5600 }, maxG: 3.8, rollRate: 65, pitchRate: 13,
+    },
+    v: { s0: 60, s1: 70, fe: 104, no: 176, ne: 205, rotate: 73, appr: 80, apprFlaps: 3, apprThr: 0.3, cruise: 170, cruiseThr: 0.75, toFlaps: 2 },
+  },
+  {
+    id: 'pa28', name: 'パイパー PA-28-181 アーチャー', kind: '実機・低翼の単発機', stars: 1, real: true,
+    desc: 'セスナ 172 と並ぶ定番の練習機・自家用機。翼が胴体の下にあり、水平尾翼は全体が動く「スタビレーター」。180 馬力、巡航 約 125 kt。計器はアナログの 6 計器です。',
+    fuse: [[-3.25, 0.30, 0.30, 0.02], [-3.05, 0.43, 0.42, 0.02], [-2.5, 0.55, 0.54, 0.04], [-1.5, 0.60, 0.62, 0.06], [-0.5, 0.60, 0.64, 0.08],
+      [0.6, 0.53, 0.57, 0.10], [1.7, 0.38, 0.44, 0.16], [2.8, 0.22, 0.30, 0.24], [3.75, 0.09, 0.17, 0.30], [4.0, 0.03, 0.07, 0.32]], fuseE: 2.4,
+    wing: { y: -0.45, dih: 7, rootX: 0.55, tipX: 5.4, rootLE: -1.0, rootC: 1.6, tipLE: -0.85, tipC: 1.2, t0: 0.15, t1: 0.12, hinge: 0.74, flap: [0.6, 2.6], ail: [2.8, 5.2] },
+    hstab: { y: 0.25, span: 2.0, rootLE: 3.05, tipLE: 3.05, te: 3.8, hinge: 3.05, t: 0.09 },
+    vstab: { y0: 0.25, y1: 1.5, rootLE: 2.35, topLE: 3.2, te: 3.95, hinge: 3.55, t: 0.1 },
+    engines: [{ type: 'nose', z: -3.34, y: 0.02, r: 0.94, blades: 2 }],
+    gear: { fixed: true, wheelR: 0.25, nose: [0, -1.15, -2.3], mains: [[1.6, -1.15, 0.25]], len: 0.7, pants: true },
+    windows: { mode: 1, z0: -1.4, z1: 0.6, y0: 0.18, y1: 0.58 },
+    livery: { base: [0.96, 0.95, 0.93], a: [0.55, 0.09, 0.11], b: [0.14, 0.14, 0.16], fw: 0.8, y0: -0.02, slope: 0.035, bands: [-0.09, 0.01, 0.05, 0.10], tip: 5.0, fin: [0.12, 0.35, 2.4, 1.25], nose: -3.0, glare: 0 },
+    eye: [0, 0.56, -0.4], cam: [0, 3.1, 15],
+    flapLabels: ['UP', '10°', '25°', '40°'], minRwy: 700,
+    oew: 770, load: { max: 390, def: 170, fuelDef: 0.8 },
+    phys: {
+      mass: 1050, S: 15.8, b: 10.8, c: 1.6, L: 7.25, CL0: 0.28, CLa: 4.8, aStall: 0.28, CD0: 0.032, K: 0.05, CDgear: 0,
+      Cm0: 0.015, Cma: -1.1, Cmde: 0.34, Cmq: -15, Clda: 0.055, Clp: -0.5, Clb: -0.12, Cnb: 0.1, Cndr: 0.03, Cnr: -0.14, CYb: -0.6,
+      flapCL: 0.75, flapStall: 0.045, flapCD: 0.7, engine: { type: 'prop', P: 134000, T0: 3000 }, maxG: 3.8, rollRate: 55, pitchRate: 12,
+    },
+    v: { s0: 45, s1: 50, fe: 102, no: 125, ne: 154, rotate: 55, appr: 66, apprFlaps: 3, apprThr: 0.3, cruise: 115, cruiseThr: 0.72, toFlaps: 0 },
+  },
+  {
+    id: 'kingair', name: 'ビーチクラフト キングエア 350', kind: '実機・双発ターボプロップ機', stars: 3, real: true,
+    desc: 'ビジネス機や救急・調査飛行でおなじみの双発ターボプロップ機。尾翼が T 字形（T テール）。1,050 馬力のエンジン 2 基で巡航 約 300 kt。フラップは UP・APPROACH・DOWN の 3 段です。',
+    fuse: [[-5.9, 0.12, 0.12, 0.0], [-5.6, 0.40, 0.36, -0.02], [-4.9, 0.62, 0.60, 0.02], [-3.9, 0.76, 0.80, 0.08], [-2.5, 0.80, 0.86, 0.10],
+      [2.5, 0.80, 0.86, 0.10], [4.2, 0.64, 0.72, 0.20], [6.3, 0.36, 0.46, 0.40], [7.8, 0.18, 0.28, 0.55], [8.32, 0.06, 0.12, 0.60]], fuseE: 2.3,
+    wing: { y: -0.55, dih: 6, rootX: 0.8, tipX: 8.8, rootLE: -1.4, rootC: 2.2, tipLE: -0.5, tipC: 0.95, t0: 0.16, t1: 0.12, hinge: 0.72, flap: [0.9, 4.8], ail: [5.2, 8.4],
+      winglet: { h: 0.6, cant: 0.3, sweep: 0.35, blend: true } },
+    hstab: { y: 3.0, span: 2.9, rootLE: 6.95, tipLE: 7.5, te: 8.35, hinge: 7.85, t: 0.1 },
+    vstab: { y0: 0.5, y1: 3.0, rootLE: 4.3, topLE: 6.8, te: 8.0, hinge: 7.4, t: 0.12 },
+    engines: [{ type: 'wing', x: 2.65, y: -0.35, z: -3.05, r: 1.33, blades: 4, nac: [-2.9, 1.3, 0.42] }],
+    gear: { fixed: false, wheelR: 0.33, nose: [0, -1.8, -4.3], mains: [[2.65, -1.8, 0.4]], len: 1.05 },
+    windows: { mode: 2, z0: -3.3, z1: 2.6, y0: 0.2, y1: 0.5, pitch: 0.95, cz0: -5.3, cz1: -4.0, cy: 0.18 },
+    livery: { base: [0.96, 0.96, 0.97], a: [0.12, 0.16, 0.30], b: [0.72, 0.58, 0.30], fw: 0.9, y0: -0.05, slope: 0.02, bands: [-0.2, -0.05, 0.02, 0.1], tip: 8.6, fin: [0.2, 0.6, 4.4, 2.4], nose: -99, glare: 0 },
+    eye: [0, 0.62, -4.3], cam: [0, 5, 28],
+    flapLabels: ['UP', 'APPR', 'APPR', 'DOWN'], flapStops: [0, 2, 3], cockpitStyle: 'glass', minRwy: 1000, sys: { psfc: 0.33 },
+    oew: 4200, load: { max: 1600, def: 600, fuelDef: 0.6 },
+    phys: {
+      mass: 5800, S: 28.8, b: 17.65, c: 1.75, L: 14.2, CL0: 0.25, CLa: 5.0, aStall: 0.26, CD0: 0.026, K: 0.042, CDgear: 0.02,
+      Cm0: 0.01, Cma: -1.2, Cmde: 0.30, Cmq: -20, Clda: 0.05, Clp: -0.5, Clb: -0.08, Cnb: 0.1, Cndr: 0.035, Cnr: -0.15, CYb: -0.7,
+      flapCL: 0.75, flapStall: 0.04, engine: { type: 'prop', P: 1300000, T0: 26000 }, maxG: 3.3, rollRate: 40, pitchRate: 8,
+    },
+    v: { s0: 81, s1: 94, fe: 158, no: 245, ne: 263, rotate: 100, appr: 110, apprFlaps: 3, apprThr: 0.3, cruise: 230, cruiseThr: 0.7, toFlaps: 0 },
+  },
+  {
+    id: 'q400', name: 'デ・ハビランド・カナダ DHC-8-400（Q400）', kind: '実機・ターボプロップ旅客機', stars: 3, real: true,
+    desc: '日本の地方路線や離島便でたくさん飛んでいる 70 席級のターボプロップ旅客機。高翼に 6 枚羽根の大きなプロペラ、T テール。短い滑走路でも使えます。全長 32.8 m、翼幅 28.4 m、エンジン 2 基（各 約 5,000 馬力）。',
+    fuse: [[-13.0, 0.12, 0.12, -0.2], [-12.6, 0.6, 0.55, -0.15], [-11.6, 1.05, 1.0, -0.05], [-10.0, 1.35, 1.36, 0], [9.0, 1.35, 1.36, 0],
+      [12.5, 1.2, 1.25, 0.2], [16.0, 0.8, 0.92, 0.55], [18.8, 0.4, 0.52, 0.9], [19.8, 0.12, 0.22, 1.05]], fuseE: 2.0, fuseN: 24,
+    wing: { y: 1.45, dih: 2.5, rootX: 1.3, tipX: 14.2, rootLE: -1.5, rootC: 3.0, tipLE: -0.2, tipC: 1.4, t0: 0.18, t1: 0.13, hinge: 0.72, flap: [1.4, 9.2], ail: [10.0, 13.8] },
+    hstab: { y: 7.4, span: 4.4, rootLE: 17.3, tipLE: 18.3, te: 19.6, hinge: 18.95, t: 0.1 },
+    vstab: { y0: 1.1, y1: 7.4, rootLE: 13.2, topLE: 17.2, te: 19.9, hinge: 18.9, t: 0.12 },
+    engines: [{ type: 'wing', x: 4.1, y: 0.75, z: -3.6, r: 2.05, blades: 6, nac: [-3.3, 3.2, 0.62] }],
+    gear: { fixed: false, wheelR: 0.5, nose: [0, -2.35, -10.8], mains: [[4.1, -2.35, 0.9]], len: 2.2 },
+    windows: { mode: 2, z0: -9.8, z1: 11, y0: 0.1, y1: 0.5, pitch: 0.9, cz0: -12.4, cz1: -11.2, cy: 0.05 },
+    livery: { base: [0.96, 0.96, 0.97], a: [0.10, 0.40, 0.62], b: [0.85, 0.12, 0.18], fw: 1.4, y0: -0.35, slope: 0, bands: [-0.3, -0.1, -0.02, 0.12], tip: 99, fin: [0.3, 1.5, 12.8, 3.0], nose: -99, glare: -99 },
+    eye: [0, 0.62, -11.55], cam: [0, 9, 52],
+    flapLabels: ['0', '5', '15', '35'], cockpitStyle: 'glass', minRwy: 1300, sys: { psfc: 0.3 },
+    oew: 17800, load: { max: 8600, def: 5500, fuelDef: 0.45 },
+    phys: {
+      mass: 25700, S: 63.1, b: 28.4, c: 2.3, L: 32.8, CL0: 0.25, CLa: 5.1, aStall: 0.26, CD0: 0.025, K: 0.04, CDgear: 0.018,
+      Cm0: 0.0, Cma: -1.25, Cmde: 0.33, Cmq: -26, Clda: 0.045, Clp: -0.5, Clb: -0.1, Cnb: 0.12, Cndr: 0.03, Cnr: -0.15, CYb: -0.8,
+      flapCL: 1.0, flapStall: 0.035, engine: { type: 'prop', P: 7000000, T0: 120000 }, maxG: 2.5, rollRate: 25, pitchRate: 5,
+    },

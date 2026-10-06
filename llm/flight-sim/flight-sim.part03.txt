@@ -1,0 +1,2565 @@
+# flight-sim.html の 3/8 部分（元の 5621〜8182 行目、データは省略）
+# 全体の説明は 00_overview.md
+
+        for (const k of c) {
+          const x0 = shopWalls[k], z0 = shopWalls[k + 1], dx = shopWalls[k + 2] - x0, dz = shopWalls[k + 3] - z0, L2 = dx * dx + dz * dz;
+          const t = clamp(((x - x0) * dx + (z - z0) * dz) / L2, 0.1, 0.9), qx = x0 + dx * t, qz = z0 + dz * t, d = Math.hypot(x - qx, z - qz);
+          if (d < 2.5 || d > 16 || (x - qx) * shopWalls[k + 4] + (z - qz) * shopWalls[k + 5] < d * 0.5) continue;
+          const sd = (qx - x) * ox + (qz - z) * oz > 0 ? 0 : 1;
+          if (!best[sd] || d < best[sd].d) best[sd] = { d, qx, qz, y: shopWalls[k + 6] };
+        }
+      }
+      for (const b of best) if (b && (hash(b.qx * 7 | 0, b.qz * 7 | 0) & 3)) wires.push(x, z, g, yaw, b.qx, b.qz, b.y + 5.2 + (hash(b.qx | 0, b.qz | 0) & 3) * 0.3, yaw, 1);
+    };
+    const props = [];
+    const prop = (x, z, y, yaw, type) => { if (x > -2 && z > -2 && x < W + 2 && z < Hm + 2) { props.push(x, z, y, yaw, type); return true; } return false; };
+    lines.forEach((ln, li) => {
+      const { run, w, c, bridge } = ln;
+      let u = 0, prev = -1;
+      const V = [];                                                   // per point: x, z, road height, normal, along, junction
+      for (let i = 0; i < run.length; i++) {
+        const a = run[Math.max(i - 1, 0)], b = run[Math.min(i + 1, run.length - 1)], tx = b[0] - a[0], tz = b[1] - a[1], tl = Math.hypot(tx, tz) || 1;
+        const nx = -tz / tl, nz = tx / tl, p = run[i], g = ln.deck ? ln.deck[i] + 0.05 : ground(p[2], p[3]) + 0.06 + (9 - c) * 0.012;
+        if (i) u += Math.hypot(p[0] - run[i - 1][0], p[1] - run[i - 1][1]);
+        const j = Math.round(junction(li, p[0], p[1], w) * 7), cj = c + 16 * j, oc = junction.other;
+        const l = rput(p[0] + nx * w / 2, p[1] + nz * w / 2, g, u, cj, w, -1), r = rput(p[0] - nx * w / 2, p[1] - nz * w / 2, g, u, cj, w, 1);
+        if (prev >= 0) { ri.push(prev, l, prev + 1, prev + 1, l, r); }
+        prev = l;
+        rPts.push(p[0], p[1], g);
+        V.push([p[0], p[1], g, nx, nz, u, j, oc]);
+      }
+      rOff.push(rPts.length / 3); rCls.push(c); rWid.push(w); rBr.push(bridge ? 1 : 0);
+      if (bridge) {
+        // the bridge itself, in concrete: the parapets each side, the slab's edge under them, and where it
+        // stands high the piers (a column and a crosshead under the deck every 30 m or so)
+        const q = (ax, az, ay0, ay1, bx, bz, by0, by1) => { const a0 = rput(ax, az, ay0, 0, 257, 1, 0), a1 = rput(ax, az, ay1, 0, 257, 1, 1), b0 = rput(bx, bz, by0, 0, 257, 1, 0), b1 = rput(bx, bz, by1, 0, 257, 1, 1); ri.push(a0, b0, a1, a1, b0, b1); };
+        const ph = c <= 2 ? 1.1 : 0.95;
+        for (let i = 1; i < V.length; i++) {
+          const A = V[i - 1], B = V[i], hA = A[2] - ln.G[i - 1], hB = B[2] - ln.G[i], slab = Math.min(1.8, Math.max(hA, hB) * 0.3 + 0.35);
+          for (const sd of [1, -1]) {
+            const oa = w / 2 * sd, ob = (w / 2 - 0.28) * sd;
+            const ax = A[0] + A[3] * oa, az = A[1] + A[4] * oa, bx = B[0] + B[3] * oa, bz = B[1] + B[4] * oa;
+            const ax2 = A[0] + A[3] * ob, az2 = A[1] + A[4] * ob, bx2 = B[0] + B[3] * ob, bz2 = B[1] + B[4] * ob;
+            q(ax, az, A[2] - slab, A[2] + ph, bx, bz, B[2] - slab, B[2] + ph);          // the outer face
+            q(ax2, az2, A[2], A[2] + ph, bx2, bz2, B[2], B[2] + ph);                    // the parapet's inner face
+            const t0 = rput(ax, az, A[2] + ph, 0, 257, 1, 0), t1 = rput(ax2, az2, A[2] + ph, 0, 257, 1, 1), t2 = rput(bx, bz, B[2] + ph, 0, 257, 1, 0), t3 = rput(bx2, bz2, B[2] + ph, 0, 257, 1, 1);
+            ri.push(t0, t2, t1, t1, t2, t3);
+          }
+          // the underside of the slab (the ribbon is the running surface)
+          const l0 = rput(A[0] + A[3] * w / 2, A[1] + A[4] * w / 2, A[2] - slab, 0, 257, 1, 0), r0 = rput(A[0] - A[3] * w / 2, A[1] - A[4] * w / 2, A[2] - slab, 0, 257, 1, 1);
+          const l1 = rput(B[0] + B[3] * w / 2, B[1] + B[4] * w / 2, B[2] - slab, 0, 257, 1, 0), r1 = rput(B[0] - B[3] * w / 2, B[1] - B[4] * w / 2, B[2] - slab, 0, 257, 1, 1);
+          ri.push(l0, l1, r0, r0, l1, r1);
+        }
+        const len = V[V.length - 1][5];
+        for (let d = 12 + (hash(li, 77) & 15); d < len - 6; d += 32) {
+          let k = 1; while (k < V.length - 1 && V[k][5] < d) k++;
+          const A = V[k - 1], B = V[k], f = clamp((d - A[5]) / Math.max(B[5] - A[5], 1e-3), 0, 1);
+          const x = A[0] + (B[0] - A[0]) * f, z = A[1] + (B[1] - A[1]) * f, y = A[2] + (B[2] - A[2]) * f, gy = ln.G[k - 1] + (ln.G[k] - ln.G[k - 1]) * f;
+          const top = y - Math.min(1.8, (y - gy) * 0.3 + 0.35);
+          if (top - gy < 3.2 || junction(li, x, z, w) > 0.3) continue;
+          const tx = B[0] - A[0], tz = B[1] - A[1], tl = Math.hypot(tx, tz) || 1, ax = tx / tl, az = tz / tl, nx = -az, nz = ax;
+          const box = (cx, cz, hx, hz, y0, y1) => {                    // (hx across the road, hz along it)
+            const P = (i, j) => [cx + nx * hx * i + ax * hz * j, cz + nz * hx * i + az * hz * j];
+            for (const [a, b] of [[P(-1, -1), P(1, -1)], [P(1, -1), P(1, 1)], [P(1, 1), P(-1, 1)], [P(-1, 1), P(-1, -1)]]) q(a[0], a[1], y0, y1, b[0], b[1], y0, y1);
+          };
+          const cw = w > 14 ? 1.1 : 0.9;
+          box(x, z, cw, cw, gy - 0.3, top - 1.1);                       // the column
+          box(x, z, w / 2 - 0.2, 0.9, top - 1.2, top);                   // the crosshead
+        }
+        return;
+      }
+      // pavements with kerbs along the main roads (trunk .. tertiary), open where roads meet: the kerb face,
+      // the paving (across 0 at the kerb .. 1 at the back) and a short face down at the back
+      if (c >= 2 && c <= 5) {
+        const sw = c <= 3 ? 3.2 : 2.3, kh = 0.15;
+        for (const sd of [1, -1]) {
+          let pv = -1, wk = [];                                         // (wk: the middle of the pavement, for people walking)
+          const wkEnd = () => { if (wk.length >= 6) walks.push(wk.length / 3, ...wk); wk = []; };
+          for (let i = 0; i < V.length; i++) {
+            const [x, z, g, nx, nz, uu, j] = V[i], ox = nx * sd, oz = nz * sd, ri0 = w / 2, ro = w / 2 + sw, P = d => [x + ox * d, z + oz * d];
+            // (the concrete gutter of the L-shaped kerb unit along the road's edge (L型側溝), a hair over the asphalt;
+            // the kerb stone's face, its top edge chamfered; the paving; the face down at the back)
+            const e0 = rput(...P(ri0 - 0.45), g + 0.015, uu, 267, 0.45, 0), e1 = rput(...P(ri0), g + 0.015, uu, 267, 0.45, 1);
+            const a0 = rput(...P(ri0), g - 0.02, uu, 257, sw, 0), a1 = rput(...P(ri0), g + kh - 0.025, uu, 257, sw, 0.85), a2 = rput(...P(ri0 + 0.025), g + kh, uu, 257, sw, 1);
+            const b0 = rput(...P(ri0 + 0.025), g + kh, uu, 256, sw, 0), b1 = rput(...P(ro), g + kh, uu, 256, sw, 1);
+            const c0 = rput(...P(ro), g + kh, uu, 257, sw, 1), c1 = rput(...P(ro), g - 0.3, uu, 257, sw, 0);
+            if (pv >= 0 && j <= 2 && V[i - 1][6] <= 2) {
+              ri.push(pv, e0, pv + 1, pv + 1, e0, e1);                 // gutter
+              ri.push(pv + 2, a0, pv + 3, pv + 3, a0, a1);             // kerb face
+              ri.push(pv + 3, a1, pv + 4, pv + 4, a1, a2);             // its chamfer
+              ri.push(pv + 5, b0, pv + 6, pv + 6, b0, b1);             // paving
+              ri.push(pv + 7, c0, pv + 8, pv + 8, c0, c1);             // back
+              if (!wk.length) wk.push(V[i - 1][0] + V[i - 1][3] * sd * (w / 2 + sw * 0.55), V[i - 1][1] + V[i - 1][4] * sd * (w / 2 + sw * 0.55), V[i - 1][2] + kh);
+              wk.push(x + ox * (w / 2 + sw * 0.55), z + oz * (w / 2 + sw * 0.55), g + kh);
+              // white guard pipes (ガードパイプ) along the kerb on some stretches, open every so often for a crossing
+              // or a driveway: [x0 z0 y0 u0 x1 z1 y1 u1 nx nz] (n: out from the road)
+              const A = V[i - 1], ua = A[5], cut = [ua, uu];
+              for (let k = Math.ceil(ua / 36) * 36; k < uu + 36; k += 36) { if (k > ua && k < uu) cut.push(k); if (k + 4.5 > ua && k + 4.5 < uu) cut.push(k + 4.5); }
+              cut.sort((p, q) => p - q);
+              for (let k = 1; k < cut.length; k++) {
+                const um = (cut[k - 1] + cut[k]) / 2;
+                if (cut[k] - cut[k - 1] < 0.3 || um % 36 < 4.5 || (hash(li * 13 + (sd > 0 ? 1 : 0), Math.floor(um / 36)) & 255) > 130) continue;
+                const pt = u => { const f = clamp((u - ua) / Math.max(uu - ua, 1e-3), 0, 1), fx = (A[3] + (nx - A[3]) * f) * sd, fz = (A[4] + (nz - A[4]) * f) * sd, o = w / 2 + 0.3;
+                  return [A[0] + (x - A[0]) * f + fx * o, A[1] + (z - A[1]) * f + fz * o, A[2] + (g - A[2]) * f + kh, u, fx, fz]; };
+                const P0 = pt(cut[k - 1]), P1 = pt(cut[k]);
+                fences.push(P0[0], P0[1], P0[2], P0[3], P1[0], P1[1], P1[2], P1[3], (P0[4] + P1[4]) / 2, (P0[5] + P1[5]) / 2);
+              }
+            }
+            if (!(j <= 2)) wkEnd();
+            pv = e0;
+          }
+          wkEnd();
+        }
+      }
+      // street furniture along the road, from its start, never inside a junction
+      const at = (dist, off, sd, fn) => {
+        for (let i = 1; i < V.length; i++) if (V[i][5] >= dist) {
+          const A = V[i - 1], B = V[i], f = clamp((dist - A[5]) / Math.max(B[5] - A[5], 1e-3), 0, 1);
+          if (Math.max(A[6], B[6]) > 1) return;
+          const x = A[0] + (B[0] - A[0]) * f, z = A[1] + (B[1] - A[1]) * f, g = A[2] + (B[2] - A[2]) * f, nx = A[3], nz = A[4];
+          fn(x + nx * sd * off, z + nz * sd * off, g, nx * sd, nz * sd); return;
+        }
+      };
+      const len = V.length ? V[V.length - 1][5] : 0, hs = (hash(li * 131 + 7, c) & 255) / 255;
+      if (c >= 2 && c <= 5) {
+        const sw = c <= 3 ? 3.2 : 2.3;
+        for (let d = 10 + hs * 20; d < len - 5; d += 32) for (const sd of [1, -1])       // street lamps near the kerb, arm over the road
+          at(d + (sd < 0 ? 16 : 0), w / 2 + 0.55, sd, (x, z, g, ox, oz) => prop(x, z, g + 0.15, Math.atan2(-oz, -ox), 0));
+        if (c <= 4) for (let d = 5 + hs * 8; d < len - 4; d += 11) for (const sd of [1, -1])   // roadside trees in the paving
+          at(d + (sd < 0 ? 5.5 : 0), w / 2 + sw * 0.62, sd, (x, z, g) => { if (!inAero(x, z)) prop(x, z, g + 0.15, hash(x * 10 | 0, z * 10 | 0) / 40, 3); });
+      } else if (c >= 6 && c <= 7) {
+        let pp = null;                                                 // concrete utility poles on one side of the narrow streets,
+        for (let d = 8 + hs * 20; d < len - 4; d += 30)                // the wires strung from one to the next and into the houses
+          at(d, w / 2 + 0.35, 1, (x, z, g, ox, oz) => {
+            const yaw = Math.atan2(oz, ox);
+            if (!prop(x, z, g, yaw, 1)) return;
+            const me = [x, z, g, yaw, li, 0];
+            if (pp && Math.hypot(x - pp[0], z - pp[1]) < 70) { wires.push(pp[0], pp[1], pp[2], pp[3], x, z, g, yaw, 0); pp[5]++; me[5]++; }
+            poles.push(pp = me);
+            dropTo(x, z, g, ox, oz, yaw);
+          });
+      }
+      // traffic signals where main roads meet: at the left kerb before the junction (Japan drives on the left),
+      // the arm over the road, the lights facing the traffic that comes in
+      if (c <= 5) for (let i = 1; i < V.length; i++) {
+        const A = V[i - 1], B = V[i];
+        if (A[6] <= 2 && B[6] >= 5 && B[7] <= 5) { const [x, z, g, nx, nz] = A; prop(x - nx * (w / 2 + 0.6), z - nz * (w / 2 + 0.6), g, Math.atan2(nz, nx), 2); }
+        if (A[6] >= 5 && B[6] <= 2 && A[7] <= 5) { const [x, z, g, nx, nz] = B; prop(x + nx * (w / 2 + 0.6), z + nz * (w / 2 + 0.6), g, Math.atan2(-nz, -nx), 2); }
+      }
+      // at the corners of the side streets: the 止まれ sign where one comes out onto a main road (on the left,
+      // facing the traffic coming up), a curve mirror at some of the corners where they meet each other
+      if (c >= 6 && c <= 7) for (let i = 1; i < V.length; i++) for (const [P, Q] of [[V[i - 1], V[i]], [V[i], V[i - 1]]]) {
+        if (!(P[6] <= 2 && Q[6] >= 5)) continue;
+        const tl = Math.hypot(Q[0] - P[0], Q[1] - P[1]) || 1, ux = (Q[0] - P[0]) / tl, uz = (Q[1] - P[1]) / tl, lx = uz, lz = -ux, face = Math.atan2(ux, -uz);
+        if (Q[7] <= 5) {
+          prop(P[0] + lx * (w / 2 + 0.35), P[1] + lz * (w / 2 + 0.35), P[2], face, 9);
+          // and on the road: the stop line just short of the main road's edge, 止まれ in front of it
+          for (let d = 0; d < tl + 14; d += 0.5) {
+            const x = P[0] + ux * d, z = P[1] + uz * d;
+            if (edgeDist(li, x, z) > 1.3) continue;
+            if (d > 5.5) marks.push(x - ux * 0.3, z - uz * 0.3, P[2] + (Q[2] - P[2]) * clamp(d / tl, 0, 1), Math.atan2(uz, ux), w, 0);
+            break;
+          }
+        }
+        else if ((hash(P[0] * 10 | 0, P[1] * 10 | 0) & 3) === 0) prop(Q[0] + lx * (w / 2 + 0.45), Q[1] + lz * (w / 2 + 0.45), Q[2], face - 0.35, 8);
+      }
+    });
+    // the ends of each street's run of poles joined to the nearest pole of the next street (the wires go on
+    // round corners and across the junctions)
+    {
+      const PG = 40, pg = new Map();
+      poles.forEach((p, k) => { const key = jkey(Math.floor(p[0] / PG) + 1000, Math.floor(p[1] / PG) + 1000); let c = pg.get(key); if (!c) pg.set(key, c = []); c.push(k); });
+      const joined = new Set();
+      poles.forEach((p, pk) => {
+        if (p[5] >= 2) return;
+        let best = null, bd = 42, bk = -1;
+        for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) for (const k of pg.get(jkey(Math.floor(p[0] / PG) + i + 1000, Math.floor(p[1] / PG) + j + 1000)) || []) {
+          const q = poles[k]; if (q[4] === p[4] || q[5] >= 3) continue;
+          const d = Math.hypot(q[0] - p[0], q[1] - p[1]); if (d > 6 && d < bd && !joined.has(k * 65536 + pk)) { bd = d; best = q; bk = k; }
+        }
+        if (best) { wires.push(p[0], p[1], p[2], p[3], best[0], best[1], best[2], best[3], 0); p[5]++; best[5]++; joined.add(pk * 65536 + bk); }
+      });
+    }
+    // ---------- the map's points of interest: real shops get their signboards, bus stops, post boxes,
+    // vending machines, subway entrances stand where they are ----------
+    const signs = [], signNames = [];
+    if (L.poi) {
+      const usedWall = new Map();                                    // (wall -> the stretch of it already signed)
+      const SHOPS = new Set(['shop', 'restaurant', 'cafe', 'fast_food', 'bar', 'beer', 'grocery', 'bakery', 'pharmacy', 'clothing_store', 'hairdresser', 'bank', 'laundry', 'ice_cream', 'books', 'library', 'music', 'mobile_phone', 'optician', 'jewelry', 'furniture', 'hardware', 'car', 'bicycle', 'shoes', 'florist', 'alcohol_shop', 'office', 'lodging', 'dentist', 'doctors', 'veterinary', 'post', 'fuel', 'cinema', 'theatre']);
+      let vend = 0;
+      for (const fe of L.poi.feats) {
+        const f = readFeature(L.poi, fe); if (f.type !== 1 || !f.geom) continue;
+        const pts = decodePoints(f.geom); if (!pts.length) continue;
+        const px = pts[0], py = pts[1]; if (px < 0 || py < 0 || px > E || py > E) continue;
+        const x = lx(px), z = lz(py), cls = f.props.class, sub = f.props.subclass;
+        const name = String(f.props['name:ja'] || f.props.name || '').trim();
+        const g = ground(px, py);
+        if (sub === 'bus_stop' || cls === 'bus') {
+          const r = roadEdge(x, z, 7); if (r && r.d < 14) prop(r.x + r.nx * 0.7, r.z + r.nz * 0.7, g + 0.15, Math.atan2(-r.nz, -r.nx), 4);
+        } else if (sub === 'post_box') {
+          const r = roadEdge(x, z, 7); if (r && r.d < 10) prop(r.x + r.nx * 0.9, r.z + r.nz * 0.9, g + 0.15, Math.atan2(-r.nz, -r.nx), 5); else prop(x, z, g, 0, 5);
+        } else if (sub === 'vending_machine') {
+          prop(x, z, g, hash(px, py) / 683, 6);
+        } else if (sub === 'subway_entrance' || sub === 'train_station_entrance') {
+          const r = roadEdge(x, z, 7); if (r && r.d < 12) prop(r.x + r.nx * 1.6, r.z + r.nz * 1.6, g + 0.15, Math.atan2(-r.nz, -r.nx), 7); else prop(x, z, g, 0, 7);
+        } else if (name && SHOPS.has(cls) && sub !== 'parcel_locker' && sub !== 'atm') {
+          // the wall this shop faces the street with: the nearest one whose outside looks towards a road
+          const c = wgrid.get(jkey(Math.floor(x / WG) + 1000, Math.floor(z / WG) + 1000)); if (!c) continue;
+          let best = null;
+          for (const k of c) {
+            const x0 = shopWalls[k], z0 = shopWalls[k + 1], x1 = shopWalls[k + 2], z1 = shopWalls[k + 3], nx = shopWalls[k + 4], nz = shopWalls[k + 5];
+            const dx = x1 - x0, dz = z1 - z0, L2 = dx * dx + dz * dz, t = clamp(((x - x0) * dx + (z - z0) * dz) / L2, 0, 1);
+            const qx = x0 + dx * t, qz = z0 + dz * t, d = Math.hypot(x - qx, z - qz);
+            if (d > 18) continue;
+            const rd = roadNear(qx + nx * 2, qz + nz * 2, 7); if (rd > 9) continue;
+            if (!best || d + rd * 0.5 < best.s) best = { s: d + rd * 0.5, k, t, L: Math.sqrt(L2), qx, qz, nx, nz };
+          }
+          if (!best) continue;
+          const sw = clamp(1.6 + name.length * 0.55, 2.4, Math.min(best.L - 0.3, 11)), used = usedWall.get(best.k) || [];
+          let u = best.t * best.L; u = clamp(u, sw / 2 + 0.15, best.L - sw / 2 - 0.15);
+          if (used.some(v => Math.abs(v - u) < sw * 0.9)) continue;
+          used.push(u); usedWall.set(best.k, used);
+          const k = best.k, ux = (shopWalls[k + 2] - shopWalls[k]) / best.L, uz = (shopWalls[k + 3] - shopWalls[k + 1]) / best.L;
+          const cx = shopWalls[k] + ux * u + best.nx * 0.12, cz = shopWalls[k + 1] + uz * u + best.nz * 0.12;
+          signs.push(cx, cz, shopWalls[k + 6] + 3.35, Math.atan2(best.nz, best.nx), sw, 0.75);
+          signNames.push(name.slice(0, 18) + '\u0001' + cls + '\u0001' + (sub || ''));
+          // a convenience store has its vending machines outside
+          if (sub === 'convenience' && vend < 60) { vend++; prop(cx + best.nx * 0.45 + ux * (sw / 2 + 0.7), cz + best.nz * 0.45 + uz * (sw / 2 + 0.7), shopWalls[k + 6], Math.atan2(best.nz, best.nx), 6); }
+        }
+      }
+      // vending machines along the residential streets too (Japan has one every few blocks)
+      lines.forEach((ln, li) => {
+        if (ln.c < 5 || ln.c > 7 || ln.bridge) return;
+        for (let i = 3; i < ln.run.length - 1; i += 9) {
+          if ((hash(li * 17 + i, 91) & 7) !== 0) continue;
+          const a = ln.run[i], b = ln.run[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l, sd = (i & 1) ? 1 : -1;
+          const x = a[0] + nx * sd * (ln.w / 2 + 0.6), z = a[1] + nz * sd * (ln.w / 2 + 0.6);
+          if (junction(li, a[0], a[1], ln.w) > 0.2) continue;
+          prop(x, z, ground(a[2], a[3]), Math.atan2(-nz * sd, -nx * sd), 6);
+        }
+      });
+    }
+    const gL = (x, z) => ground(x / W * E, z / Hm * E);
+    // ---------- the ground itself, as a driving game's city has it: the built-up blocks paved (concrete and paving
+    // slabs, the dirt of use), parks and lawns in real grass; drawn under the roads, over the terrain's photo ----------
+    const fillPoly = (rings, dy, cls, maxE, skip) => {
+      const flat = [], holes = [];
+      for (const r of rings) { if (flat.length) holes.push(flat.length / 2); for (const v of r) flat.push(v); }
+      const tris = earcut(flat, holes);
+      const tri = (a, b, c, d) => {
+        const ab = Math.hypot(a[0] - b[0], a[1] - b[1]), bc = Math.hypot(b[0] - c[0], b[1] - c[1]), ca = Math.hypot(c[0] - a[0], c[1] - a[1]), mx = Math.max(ab, bc, ca);
+        if (mx > maxE && d < 12) {
+          const M = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+          if (mx === ab) { const m2 = M(a, b); tri(a, m2, c, d + 1); tri(m2, b, c, d + 1); }
+          else if (mx === bc) { const m2 = M(b, c); tri(a, b, m2, d + 1); tri(a, m2, c, d + 1); }
+          else { const m2 = M(c, a); tri(a, b, m2, d + 1); tri(m2, b, c, d + 1); }
+          return;
+        }
+        if (skip && skip((a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3)) return;
+        const k = rput(a[0], a[1], gL(a[0], a[1]) + dy, 0, cls, 0, 0);
+        rput(b[0], b[1], gL(b[0], b[1]) + dy, 0, cls, 0, 0); rput(c[0], c[1], gL(c[0], c[1]) + dy, 0, cls, 0, 0);
+        ri.push(k, k + 1, k + 2);
+      };
+      for (let i = 0; i < tris.length; i += 3) tri([flat[tris[i] * 2], flat[tris[i] * 2 + 1]], [flat[tris[i + 1] * 2], flat[tris[i + 1] * 2 + 1]], [flat[tris[i + 2] * 2], flat[tris[i + 2] * 2 + 1]], 0);
+    };
+    const localRings = poly => poly.rings.map(r => { const o = []; for (let i = 0; i < r.length; i += 2) o.push(lx(r[i]), lz(r[i + 1])); return o; });
+    const PAVED = new Set(['residential', 'commercial', 'industrial', 'retail', 'railway', 'school', 'hospital', 'university', 'college', 'kindergarten', 'library', 'bus_station', 'garages', 'quarter', 'neighbourhood', 'military', 'stadium', 'theme_park', 'zoo']);
+    const riG0 = ri.length;                                          // (where the ground's own triangles start in ri, and end: riG1)
+    if (L.landuse) for (const poly of polygons(L.landuse, E, p => PAVED.has(p.class))) fillPoly(localRings(poly), 0.025, 265, 45, onApron);   // (not over an apron: it has its own concrete, a hair higher)
+    // between the buildings where the map has no land use drawn: the ground round every building paved too (yards,
+    // drives, the little lots), in 20 m cells, a little under the land-use paving, not on the parks
+    {
+      const CG = 20, nx = Math.ceil(W / CG), nz = Math.ceil(Hm / CG), cell = new Uint8Array(nx * nz);
+      for (let b = 0; b < bCen.length / 2; b++) {
+        const bx = bCen[b * 2], bz = bCen[b * 2 + 1], i0 = Math.floor(bx / CG), j0 = Math.floor(bz / CG);
+        for (let j = j0 - 1; j <= j0 + 1; j++) for (let i = i0 - 1; i <= i0 + 1; i++) if (i >= 0 && j >= 0 && i < nx && j < nz) cell[j * nx + i] = 1;
+      }
+      const park = [];
+      if (L.landcover) for (const poly of polygons(L.landcover, E, p => p.class === 'grass' || p.class === 'wood' || p.class === 'wetland' || p.class === 'sand')) {
+        const rings = localRings(poly); let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+        for (const r of rings) for (let i = 0; i < r.length; i += 2) { x0 = Math.min(x0, r[i]); x1 = Math.max(x1, r[i]); z0 = Math.min(z0, r[i + 1]); z1 = Math.max(z1, r[i + 1]); }
+        park.push({ rings, x0, z0, x1, z1 });
+      }
+      for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+        if (!cell[j * nx + i]) continue;
+        const x0 = i * CG, z0 = j * CG, x1 = Math.min(x0 + CG, W), z1 = Math.min(z0 + CG, Hm);
+        if (inRings(park, (x0 + x1) / 2, (z0 + z1) / 2) || inRings(aeroRings, (x0 + x1) / 2, (z0 + z1) / 2)) continue;
+        const a = rput(x0, z0, gL(x0, z0) + 0.018, 0, 265, 0, 0); rput(x1, z0, gL(x1, z0) + 0.018, 0, 265, 0, 0);
+        rput(x1, z1, gL(x1, z1) + 0.018, 0, 265, 0, 0); rput(x0, z1, gL(x0, z1) + 0.018, 0, 265, 0, 0);
+        ri.push(a, a + 1, a + 2, a, a + 2, a + 3);
+      }
+    }
+    // grass where the map has it, but not in among the houses (the map's grass is drawn loosely over whole hillsides
+    // of them; the plots are gravel and concrete): none in a 20 m cell with houses round it
+    const BG = 20, bnx = Math.ceil(W / BG), bnz = Math.ceil(Hm / BG), bcnt = new Uint8Array(bnx * bnz);
+    for (let b = 0; b < bCen.length / 2; b++) { const i = Math.floor(bCen[b * 2] / BG), j = Math.floor(bCen[b * 2 + 1] / BG); if (i >= 0 && j >= 0 && i < bnx && j < bnz && bcnt[j * bnx + i] < 250) bcnt[j * bnx + i]++; }
+    const housed = (x, z) => { const i0 = Math.floor(x / BG), j0 = Math.floor(z / BG); let n = 0; for (let j = j0 - 1; j <= j0 + 1; j++) for (let i = i0 - 1; i <= i0 + 1; i++) if (i >= 0 && j >= 0 && i < bnx && j < bnz) n += bcnt[j * bnx + i] * (i === i0 && j === j0 ? 3 : 1); return n >= 4; };
+    if (L.landcover) for (const poly of polygons(L.landcover, E, p => p.class === 'grass' && p.subclass !== 'golf_course' || p.subclass === 'park')) fillPoly(localRings(poly), 0.04, 266, 30, (x, z) => housed(x, z) || onApron(x, z));
+    const riG1 = ri.length;
+    // ---------- railways: ballasted track with its sleepers and two rails (each track is its own line on the
+    // map), on bridges up on a viaduct; the monorail's concrete beam up on its T-shaped piers ----------
+    const rails = [];
+    if (L.transportation) for (const fe of L.transportation.feats) {
+      const f = readFeature(L.transportation, fe), pr = f.props;
+      if (f.type !== 2 || !f.geom || (pr.class !== 'rail' && pr.class !== 'transit') || pr.brunnel === 'tunnel' || (pr.layer | 0) < 0) continue;
+      if (pr.service === 'yard' || pr.service === 'siding' || pr.subclass === 'subway') continue;
+      const mono = pr.subclass === 'monorail', br = pr.brunnel === 'bridge' || mono;
+      const lay = clamp(Math.round(+pr.layer || 1), 1, 4);
+      for (const ln of decodeLines(f.geom)) {
+        const pts = [];
+        for (let i = 0; i < ln.length; i += 2) {
+          const x = lx(ln[i]), z = lz(ln[i + 1]);
+          if (pts.length) { const [qx, qz] = pts[pts.length - 1], d = Math.hypot(x - qx, z - qz), ns = Math.floor(d / 10); for (let k = 1; k <= ns; k++) pts.push([qx + (x - qx) * k / (ns + 1), qz + (z - qz) * k / (ns + 1)]); }
+          pts.push([x, z]);
+        }
+        let run = []; const flush = () => { if (run.length >= 2) rails.push({ run, mono, br, lay }); run = []; };
+        for (const p of pts) { if (p[0] > -6 && p[1] > -6 && p[0] < W + 6 && p[1] < Hm + 6) run.push(p); else flush(); }
+        flush();
+      }
+    }
+    for (const rl of rails) {
+      const run = rl.run, n = run.length, U = [0];
+      for (let i = 1; i < n; i++) U.push(U[i - 1] + Math.hypot(run[i][0] - run[i - 1][0], run[i][1] - run[i - 1][1]));
+      // viaduct height: a storey or so up by its layer (a monorail's beam a little higher), coming down 3 % to
+      // the ground where the line ends on the ground (not at the tile's edge, where it goes on)
+      const H = rl.mono ? 7 + 4 * (rl.lay - 1) : rl.br ? 6.5 + 5.5 * (rl.lay - 1) : 0;
+      const edge = p => p[0] < 2 || p[1] < 2 || p[0] > W - 2 || p[1] > Hm - 2;
+      const e0 = rl.mono || edge(run[0]) ? 1e9 : 0, e1 = rl.mono || edge(run[n - 1]) ? 1e9 : 0;
+      const Y = run.map((p, i) => gL(p[0], p[1]) + Math.min(H, Math.min(e0 + U[i], e1 + U[n - 1] - U[i]) * 0.03));
+      let pv = -1;
+      for (let i = 0; i < n; i++) {
+        const a = run[Math.max(i - 1, 0)], b = run[Math.min(i + 1, n - 1)], tl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nx = -(b[1] - a[1]) / tl, nz = (b[0] - a[0]) / tl;
+        const [x, z] = run[i], hw = rl.mono ? 0.45 : 1.9, y = Y[i] + (rl.mono ? 0 : 0.12);
+        if (rl.mono) {
+          // the beam: its top (the running surface), both sides down 1.5 m
+          const t0 = rput(x + nx * hw, z + nz * hw, y, U[i], 257, 1, 0), t1 = rput(x - nx * hw, z - nz * hw, y, U[i], 257, 1, 1);
+          const s0 = rput(x + nx * hw, z + nz * hw, y - 1.5, U[i], 257, 1, 0), s1 = rput(x - nx * hw, z - nz * hw, y - 1.5, U[i], 257, 1, 1);
+          if (pv >= 0) ri.push(pv, t0, pv + 1, pv + 1, t0, t1, pv + 2, s0, pv, pv, s0, t0, pv + 1, t1, pv + 3, pv + 3, t1, s1);
+          pv = t0;
+        } else {
+          const l = rput(x + nx * hw, z + nz * hw, y, U[i], 263, hw * 2, -1), r = rput(x - nx * hw, z - nz * hw, y, U[i], 263, hw * 2, 1);
+          if (pv >= 0) ri.push(pv, l, pv + 1, pv + 1, l, r);
+          pv = l;
+        }
+      }
+      // piers where it stands high: a column and a crosshead (a monorail's is a slim T)
+      if (H > 0) for (let d = 10; d < U[n - 1] - 5; d += rl.mono ? 25 : 30) {
+        let k = 1; while (k < n - 1 && U[k] < d) k++;
+        const A = run[k - 1], B = run[k], f = clamp((d - U[k - 1]) / Math.max(U[k] - U[k - 1], 1e-3), 0, 1);
+        const x = A[0] + (B[0] - A[0]) * f, z = A[1] + (B[1] - A[1]) * f, y = Y[k - 1] + (Y[k] - Y[k - 1]) * f, gy = gL(x, z);
+        if (y - gy < 3) continue;
+        const tx = B[0] - A[0], tz = B[1] - A[1], tl = Math.hypot(tx, tz) || 1, ax = tx / tl, az = tz / tl, qx = -az, qz = ax;
+        const box = (hx, hz, y0, y1) => {
+          const P = (i, j) => [x + qx * hx * i + ax * hz * j, z + qz * hx * i + az * hz * j];
+          for (const [p, q] of [[P(-1, -1), P(1, -1)], [P(1, -1), P(1, 1)], [P(1, 1), P(-1, 1)], [P(-1, 1), P(-1, -1)]]) {
+            const a0 = rput(p[0], p[1], y0, 0, 257, 1, 0), a1 = rput(p[0], p[1], y1, 0, 257, 1, 1), b0 = rput(q[0], q[1], y0, 0, 257, 1, 0), b1 = rput(q[0], q[1], y1, 0, 257, 1, 1);
+            ri.push(a0, b0, a1, a1, b0, b1);
+          }
+        };
+        if (rl.mono) { box(0.6, 0.6, gy - 0.3, y - 2.6); box(1.6, 0.6, y - 2.6, y - 1.5); }
+        else { box(0.8, 0.8, gy - 0.3, y - 1.4); box(3.0, 0.9, y - 1.4, y - 0.1); }
+      }
+    }
+    // ---------- the airport: aprons in concrete panels, taxiways (pavement, shoulders, the yellow lines and the
+    // lights along them), where a taxiway comes up to a runway its holding position and the red sign, the
+    // taxiway's name on the black-and-yellow signs ----------
+    if (L.aeroway) {
+      for (const A of apRings) {
+        const flat = [], holes = [];
+        for (const r of A.rings) { if (flat.length) holes.push(flat.length / 2); for (const v of r) flat.push(v); }
+        const tris = earcut(flat, holes);
+        // cut into triangles no side longer than 28 m, so the slab follows the ground
+        const tri = (a, b, c, d) => {
+          const ab = Math.hypot(a[0] - b[0], a[1] - b[1]), bc = Math.hypot(b[0] - c[0], b[1] - c[1]), ca = Math.hypot(c[0] - a[0], c[1] - a[1]), mx = Math.max(ab, bc, ca);
+          if (mx > 28 && d < 12) {
+            const M = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+            if (mx === ab) { const m = M(a, b); tri(a, m, c, d + 1); tri(m, b, c, d + 1); }
+            else if (mx === bc) { const m = M(b, c); tri(a, b, m, d + 1); tri(a, m, c, d + 1); }
+            else { const m = M(c, a); tri(a, b, m, d + 1); tri(m, b, c, d + 1); }
+            return;
+          }
+          const k = rput(a[0], a[1], gL(a[0], a[1]) + 0.03, 0, 258, 0, 0);
+          rput(b[0], b[1], gL(b[0], b[1]) + 0.03, 0, 258, 0, 0); rput(c[0], c[1], gL(c[0], c[1]) + 0.03, 0, 258, 0, 0);
+          ri.push(k, k + 1, k + 2);
+        };
+        for (let i = 0; i < tris.length; i += 3) tri([flat[tris[i] * 2], flat[tris[i] * 2 + 1]], [flat[tris[i + 1] * 2], flat[tris[i + 1] * 2 + 1]], [flat[tris[i + 2] * 2], flat[tris[i + 2] * 2 + 1]], 0);
+      }
+      // the stands: each gate on a terminal's wall, an aircraft parked nose-in in front of it (the main thread
+      // puts it there with its jet bridge): [x z nx nz ground gate], and the yellow lead-in line out to the apron
+      for (const [gx, gz, ref] of aeroGates) {
+        let best = null;
+        for (const [x0, z0, x1, z1, nx, nz, base] of termWalls) {
+          const dx = x1 - x0, dz = z1 - z0, L2 = dx * dx + dz * dz || 1, t = clamp(((gx - x0) * dx + (gz - z0) * dz) / L2, 0.05, 0.95);
+          const px = x0 + dx * t, pz = z0 + dz * t, d = Math.hypot(gx - px, gz - pz);
+          const L = Math.sqrt(L2), sc = d + (L < 30 ? 40 : L < 60 ? 12 : 0);           // (the facade, not a little jog in it)
+          if (d < 60 && (!best || sc < best.sc) && onApron(px + nx * 30, pz + nz * 30)) best = { d, sc, px, pz, nx, nz };
+        }
+        if (!best || best.px < 0 || best.pz < 0 || best.px > W || best.pz > Hm) continue;
+        const g = gL(best.px + best.nx * 25, best.pz + best.nz * 25);
+        stands.push(best.px, best.pz, best.nx, best.nz, g, parseInt(ref) || 0);
+        const a = rput(best.px + best.nx * 4 - best.nz * 2, best.pz + best.nz * 4 + best.nx * 2, g + 0.1, 0, 261, 4, -1), b = rput(best.px + best.nx * 4 + best.nz * 2, best.pz + best.nz * 4 - best.nx * 2, g + 0.1, 0, 261, 4, 1);
+        const c = rput(best.px + best.nx * 80 - best.nz * 2, best.pz + best.nz * 80 + best.nx * 2, gL(best.px + best.nx * 80, best.pz + best.nz * 80) + 0.1, 76, 261, 4, -1), d2 = rput(best.px + best.nx * 80 + best.nz * 2, best.pz + best.nz * 80 - best.nx * 2, gL(best.px + best.nx * 80, best.pz + best.nz * 80) + 0.1, 76, 261, 4, 1);
+        ri.push(a, c, b, b, c, d2);
+      }
+      // the runways (from the airport list the sim has), in local metres: centre, direction, half length
+      const RWY = rws.map(r => { const cx = (r.lon - m.lonW) * kxN, cz = -(r.lat - m.latN) * KZ; return { cx, cz, dx: r.sin, dz: -r.cos, hl: r.len / 2, hw: r.wid / 2, ids: r.ids || '' }; });
+      const rwDist = (x, z) => { let best = 1e9, bi = -1; RWY.forEach((r, i) => { const t = clamp((x - r.cx) * r.dx + (z - r.cz) * r.dz, -r.hl, r.hl), d = Math.hypot(x - r.cx - r.dx * t, z - r.cz - r.dz * t); if (d < best) { best = d; bi = i; } }); rwDist.i = bi; return best; };
+      const TWW = 23, TWS = 7.5, HOLD = 90;
+      const signAt = new Map();                                      // (the same sign not again within 180 m)
+      const twSign = (x, z, fx, fz, txt, cls) => {                 // a sign on the left of the way (fx, fz) the aircraft comes, facing it
+        const lx2 = fz, lz2 = -fx, o = TWW / 2 + TWS + 7, sx = x + lx2 * o, sz = z + lz2 * o;
+        if (sx < 0 || sz < 0 || sx > W || sz > Hm) return;
+        const seen = signAt.get(txt) || []; if (seen.some(([a, b]) => Math.hypot(a - sx, b - sz) < 180)) return;
+        seen.push([sx, sz]); signAt.set(txt, seen);
+        signs.push(sx, sz, gL(sx, sz) + 0.75, Math.atan2(-fz, -fx), 4.0, 0.75); signNames.push(txt + '\u0001' + cls + '\u0001');
+      };
+      let twi = 0;
+      for (const fe of L.aeroway.feats) {
+        const f = readFeature(L.aeroway, fe); if (f.type !== 2 || f.props.class !== 'taxiway' || !f.geom) continue;
+        const ref = String(f.props.ref || '').slice(0, 8);
+        for (const ln of decodeLines(f.geom)) {
+          const pts = [];
+          for (let i = 0; i < ln.length; i += 2) {
+            const x = lx(ln[i]), z = lz(ln[i + 1]);
+            if (pts.length) { const [qx, qz] = pts[pts.length - 1], d = Math.hypot(x - qx, z - qz), ns = Math.floor(d / 12); for (let s2 = 1; s2 <= ns; s2++) pts.push([qx + (x - qx) * s2 / (ns + 1), qz + (z - qz) * s2 / (ns + 1)]); }
+            pts.push([x, z]);
+          }
+          if (pts.length < 2) continue;
+          twi++;
+          const V = []; let u = 0;
+          for (let i = 0; i < pts.length; i++) {
+            const a = pts[Math.max(i - 1, 0)], b = pts[Math.min(i + 1, pts.length - 1)], tl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+            if (i) u += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+            const [x, z] = pts[i];
+            V.push([x, z, gL(x, z), -(b[1] - a[1]) / tl, (b[0] - a[0]) / tl, u, onApron(x, z), rwDist(x, z)]);
+          }
+          // the pavement with its shoulders (not where the taxiway runs across an apron: there it's only the paint),
+          // then the paint over it all (centre line; the edge lines only off the aprons)
+          const hw = TWW / 2 + TWS;
+          let pv = -1;
+          for (let i = 0; i < V.length; i++) {
+            const [x, z, g, nx, nz, uu, apr, dr] = V[i], y = g + 0.05 + (twi % 7) * 0.004;
+            const l = rput(x + nx * hw, z + nz * hw, y, uu, 259, hw * 2, -1), r = rput(x - nx * hw, z - nz * hw, y, uu, 259, hw * 2, 1);
+            if (pv >= 0 && !apr && !V[i - 1][6] && !(dr < 32 && V[i - 1][7] < 32)) ri.push(pv, l, pv + 1, pv + 1, l, r);   // (not on the runway)
+            pv = l;
+          }
+          pv = -1;
+          for (let i = 0; i < V.length; i++) {
+            const [x, z, g, nx, nz, uu, apr, dr] = V[i], y = g + 0.1;
+            const inRw = dr < 32;                                        // (no taxiway paint out on the runway itself)
+            const l = rput(x + nx * hw, z + nz * hw, y, uu, apr ? 261 : 260, hw * 2, -1), r = rput(x - nx * hw, z - nz * hw, y, uu, apr ? 261 : 260, hw * 2, 1);
+            if (pv >= 0 && !inRw && !(V[i - 1][7] < 32)) ri.push(pv, l, pv + 1, pv + 1, l, r);
+            pv = l;
+          }
+          // holding positions: where the taxiway crosses 90 m from a runway's centre line on its way in
+          for (let i = 1; i < V.length; i++) {
+            const A = V[i - 1], B = V[i];
+            for (const [P, Q] of [[A, B], [B, A]]) {
+              if (!(P[7] >= HOLD && Q[7] < HOLD)) continue;
+              const f = (P[7] - HOLD) / Math.max(P[7] - Q[7], 1e-3), x = P[0] + (Q[0] - P[0]) * f, z = P[1] + (Q[1] - P[1]) * f;
+              const dl = Math.hypot(Q[0] - P[0], Q[1] - P[1]) || 1, fx = (Q[0] - P[0]) / dl, fz = (Q[1] - P[1]) / dl, nx = -fz, nz = fx, g = gL(x, z) + 0.12;
+              const a0 = rput(x + nx * TWW / 2, z + nz * TWW / 2, g, 0, 262, TWW, -1), a1 = rput(x - nx * TWW / 2, z - nz * TWW / 2, g, 0, 262, TWW, 1);
+              const b0 = rput(x + nx * TWW / 2 + fx * 1.2, z + nz * TWW / 2 + fz * 1.2, g, 1.2, 262, TWW, -1), b1 = rput(x - nx * TWW / 2 + fx * 1.2, z - nz * TWW / 2 + fz * 1.2, g, 1.2, 262, TWW, 1);
+              ri.push(a0, b0, a1, a1, b0, b1);
+              rwDist(x, z); const R0 = RWY[rwDist.i];
+              if (R0 && R0.ids) twSign(x - fx * 3, z - fz * 3, fx, fz, R0.ids, 'rwyhold');
+            }
+          }
+          // the taxiway's name at each end, for the aircraft coming onto it there
+          if (ref && V.length > 3 && V[V.length - 1][5] > 60) {
+            const s0 = V[Math.min(3, V.length - 1)], s1 = V[Math.max(V.length - 4, 0)];
+            if (!s0[6] && s0[7] > HOLD + 20) twSign(s0[0], s0[1], s0[4], -s0[3], ref, 'twsign');
+            if (!s1[6] && s1[7] > HOLD + 20) twSign(s1[0], s1[1], -s1[4], s1[3], ref, 'twsign');
+          }
+        }
+      }
+    }
+    for (const k of skirt) ri.push(k);
+    // the triangles sorted into a 16 x 16 grid of cells (by their middle), the ground and roads first, then the
+    // contact shadows (blended, drawn last): rCell holds where each cell starts in each, so the main thread
+    // draws only the cells in view
+    // (by sections, each sorted on its own, so what was drawn over what stays so: the roads, then the ground
+    // round them, then the rest, then the contact shadows)
+    const RG = 16, rCell = new Uint32Array(4 * (RG * RG + 1)), rCellB = new Float32Array(RG * RG * 6);   // (rCellB: each cell's reach, x0 z0 x1 z1 y0 y1)
+    for (let c = 0; c < RG * RG; c++) rCellB.set([1e9, 1e9, -1e9, -1e9, 1e9, -1e9], c * 6);
+    {
+      const sk0 = ri.length - skirt.length, out = new Uint32Array(ri.length);
+      for (const [a0, a1, o] of [[0, riG0, 0], [riG0, riG1, RG * RG + 1], [riG1, sk0, 2 * (RG * RG + 1)], [sk0, ri.length, 3 * (RG * RG + 1)]]) {
+        const nt = (a1 - a0) / 3, cell = new Uint16Array(nt), cnt = new Uint32Array(RG * RG + 1);
+        for (let i = 0; i < nt; i++) {
+          const p = a0 + i * 3, A = ri[p] * 7, B = ri[p + 1] * 7, C = ri[p + 2] * 7;
+          const x = (rv0[A] + rv0[B] + rv0[C]) / 3, z = (rv0[A + 1] + rv0[B + 1] + rv0[C + 1]) / 3;
+          const c = clamp(Math.floor(z / Hm * RG), 0, RG - 1) * RG + clamp(Math.floor(x / W * RG), 0, RG - 1);
+          cell[i] = c; cnt[c + 1]++;
+          for (const V of [A, B, C]) { const e = c * 6; if (rv0[V] < rCellB[e]) rCellB[e] = rv0[V]; if (rv0[V + 1] < rCellB[e + 1]) rCellB[e + 1] = rv0[V + 1]; if (rv0[V] > rCellB[e + 2]) rCellB[e + 2] = rv0[V]; if (rv0[V + 1] > rCellB[e + 3]) rCellB[e + 3] = rv0[V + 1]; if (rv0[V + 2] < rCellB[e + 4]) rCellB[e + 4] = rv0[V + 2]; if (rv0[V + 2] > rCellB[e + 5]) rCellB[e + 5] = rv0[V + 2]; }
+        }
+        for (let c = 0; c < RG * RG; c++) cnt[c + 1] += cnt[c];
+        for (let c = 0; c <= RG * RG; c++) rCell[o + c] = a0 + cnt[c] * 3;
+        const at = cnt.slice(0, RG * RG);
+        for (let i = 0; i < nt; i++) { const k = a0 + at[cell[i]]++ * 3, p = a0 + i * 3; out[k] = ri[p]; out[k + 1] = ri[p + 1]; out[k + 2] = ri[p + 2]; }
+      }
+      for (let i = 0; i < ri.length; i++) ri[i] = out[i];
+    }
+    // packed like the buildings (x, z in dm, y, up normal, u in dm, class + 512, width dm, across)
+    const nrv = rv0.length / 7 | 0;
+    const rvb = new ArrayBuffer(Math.max(nrv, 1) * 20), r16 = new Int16Array(rvb), r32 = new Float32Array(rvb), r8 = new Int8Array(rvb);
+    for (let k = 0; k < nrv; k++) {
+      const s = k * 10, o = k * 7;
+      r16[s] = Math.round(rv0[o] * 10); r16[s + 1] = Math.round(rv0[o + 1] * 10); r32[k * 5 + 1] = rv0[o + 2];
+      r8[k * 20 + 8] = 0; r8[k * 20 + 9] = 127; r8[k * 20 + 10] = 0;
+      r16[s + 6] = clamp(Math.round((rv0[o + 3] % 3000) * 10), -32767, 32767); r16[s + 7] = 512 + rv0[o + 4]; r16[s + 8] = Math.round(rv0[o + 5] * 10); r16[s + 9] = rv0[o + 6] * 1000;
+    }
+    // ---------- trees over woods and parks ----------
+    const tpolys = polygons(L.landcover, E, p => p.class === 'wood' || (p.class === 'grass' && (p.subclass === 'park' || p.subclass === 'garden')));
+    let totalA = 0;
+    for (const p of tpolys) { const s = p.props.class === 'wood' ? 1 : 0.25; for (let r = 0; r < p.rings.length; r++) totalA += (r ? -1 : 1) * Math.abs(ringArea(p.rings[r])) * s; }
+    totalA *= (W / E) * (Hm / E);
+    const maxTrees = m.maxTrees, S0 = Math.max(9, Math.sqrt(totalA / maxTrees));
+    const trees = [];
+    for (const p of tpolys) {
+      const wood = p.props.class === 'wood', S = wood ? S0 : S0 * 1.8;
+      const rings = p.rings.map(r => { const o = []; for (let i = 0; i < r.length; i += 2) o.push(lx(r[i]), lz(r[i + 1])); return o; });
+      let zmin = 1e9, zmax = -1e9;
+      for (let i = 1; i < rings[0].length; i += 2) { zmin = Math.min(zmin, rings[0][i]); zmax = Math.max(zmax, rings[0][i]); }
+      for (let gz = Math.ceil(zmin / S); gz * S <= zmax; gz++) {
+        const z = gz * S, xs = [];
+        for (const r of rings) for (let i = 0, k = r.length; i < k; i += 2) {
+          const j = (i + 2) % k, za = r[i + 1], zb = r[j + 1];
+          if ((za <= z) !== (zb <= z)) xs.push(r[i] + (z - za) / (zb - za) * (r[j] - r[i]));
+        }
+        xs.sort((a, b) => a - b);
+        for (let s = 0; s + 1 < xs.length; s += 2) for (let gx = Math.ceil(xs[s] / S); gx * S <= xs[s + 1]; gx++) {
+          const hh = hash(gx + m.x * 4096, gz + m.y * 4096);
+          if (!wood && (hh & 1023) > 600) continue;
+          const X = gx * S + ((hh >>> 10 & 255) / 255 - 0.5) * S * 0.8, Z = z + ((hh >>> 18 & 255) / 255 - 0.5) * S * 0.8;
+          const px = X / (dLon * kxN) * E;
+          let py = (Z / Hm) * E;                                           // near-linear inside a z14 tile
+          const g = ground(px, py);
+          if (g < 0.5) continue;
+          const conifer = ((hh >>> 26) & 63) < (wood ? (g > 150 ? 38 : 20) : 8) ? 1 : 0;
+          trees.push(X, Z, g, ((hh >>> 3) & 1023) / 1024 * 0.999 + conifer * 2);
+          if (trees.length >= maxTrees * 4) break;
+        }
+      }
+    }
+    const tr = new Float32Array(trees);
+    // each building's triangles: its body first (walls, roofs), then its details (windows, doors, fittings,
+    // balconies, the block wall), so the main thread can leave the details out beyond a few hundred metres
+    const bBase = new Uint32Array(bRange.length / 2), DET = k => (k >= 4 && k <= 9) || k === 12, tmp = [];
+    for (let b = 0; b < bBase.length; b++) {
+      const s0 = bRange[b * 2], k = bRange[b * 2 + 1]; let nb0 = 0; tmp.length = 0;
+      for (let i = s0; i < s0 + k; i += 3) {
+        if (DET(i16[idx[i] * 10 + 7] >> 10)) tmp.push(idx[i], idx[i + 1], idx[i + 2]);
+        else { idx[s0 + nb0] = idx[i]; idx[s0 + nb0 + 1] = idx[i + 1]; idx[s0 + nb0 + 2] = idx[i + 2]; nb0 += 3; }
+      }
+      for (let j = 0; j < tmp.length; j++) idx[s0 + nb0 + j] = tmp[j];
+      bBase[b] = nb0;
+    }
+    const vbuf = v === nv ? vb : vb.slice(0, v * 20);
+    const ib = idx.slice(0, q);
+    const res = {
+      id: m.id, nv: v, ni: q, vb: vbuf, ib: ib.buffer, trees: tr.buffer, nTrees: tr.length / 4,
+      boxes: new Float32Array(boxes).buffer, ringXZ: new Float32Array(ringXZ).buffer, ringOff: new Uint32Array(ringOff).buffer,
+      cells: cellCount.buffer, items: items.buffer, bRange: new Uint32Array(bRange).buffer, bBase: bBase.buffer, bCen: new Float32Array(bCen).buffer, maxTop: nb ? maxTop : -1e9, minG: nb ? minG : 0, nBuild: nb, W, Hm,
+      nrv, nri: ri.length, rvb, rib: new Uint32Array(ri).buffer, rCell: rCell.buffer, rCellB: rCellB.buffer, rPts: new Float32Array(rPts).buffer, rOff: new Uint32Array(rOff).buffer, rCls: new Uint8Array(rCls).buffer, rWid: new Float32Array(rWid).buffer, rBr: new Uint8Array(rBr).buffer, props: new Float32Array(props).buffer, wires: new Float32Array(wires).buffer, fences: new Float32Array(fences).buffer, marks: new Float32Array(marks).buffer, stands: new Float32Array(stands).buffer, walks: new Float32Array(walks).buffer, btowers: new Float32Array(btowers).buffer, aero: new Float32Array(aeroRings.flatMap(A => A.rings.flatMap(r => [r.length / 2, ...r]))).buffer, signs: new Float32Array(signs).buffer, signNames,
+    };
+    return res;
+  }
+  onmessage = async e => {
+    const m = e.data, t0 = performance.now();
+    try {
+      let r = null;
+      for (let tries = 0; ; tries++) {
+        const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 30000);
+        try { r = await fetch(m.url, { signal: ctl.signal, mode: 'cors' }); if (r.ok || r.status === 404 || r.status === 204) break; }
+        catch (err) { if (tries >= 3) throw err; }
+        finally { clearTimeout(timer); }
+        if (tries >= 3) break;
+        await new Promise(res => setTimeout(res, 1200 * (tries + 1)));
+      }
+      if (r.status === 404 || r.status === 204) { postMessage({ id: m.id, empty: true }); return; }
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const buf = new Uint8Array(await r.arrayBuffer()), t1 = performance.now();
+      const res = build(buf, m);
+      res.msNet = t1 - t0; res.msBuild = performance.now() - t1;           // (for the developer panel, p_dev.js)
+      postMessage(res, [res.vb, res.ib, res.trees, res.boxes, res.ringXZ, res.ringOff, res.cells, res.items, res.bRange, res.bBase, res.bCen, res.rvb, res.rib, res.rPts, res.rOff, res.rCls, res.rWid, res.rBr, res.props, res.wires, res.fences, res.marks, res.stands, res.signs]);
+    } catch (err) { postMessage({ id: m.id, error: String((err && err.message) || err) }); }
+  };
+}
+
+// what the workers send back (a city tile's buffers, a PLATEAU or Google tile's mesh and photo) is taken in during
+// the frame, a few milliseconds' worth at a time (at least one), not all at once whenever it arrives: a burst of
+// arrivals between two frames was one long stall
+const RXQ = { q: [] };
+function rxPush(fn, data) { RXQ.q.push([fn, data]); }
+function rxRun() {
+  const t0 = performance.now(), B = game.touch ? 3 : 6;
+  while (RXQ.q.length) { const [fn, d] = RXQ.q.shift(); fn(d); if (performance.now() - t0 > B) break; }
+}
+const CITY = {
+  on: true, url: null, workers: [], jobs: new Map(), tiles: new Map(), nextId: 1, verts: 0, trees: 0, failed: 0,
+  prog: null, treeProg: null, treeTex: null, treeGeo: null, ready: false,
+};
+async function cityInit() {
+  if (CITY.ready || CITY.initStarted) return;
+  CITY.initStarted = true;
+  try {
+    const r = await fetch('https://tiles.openfreemap.org/planet', { mode: 'cors' });
+    const j = await r.json();
+    CITY.url = j.tiles[0];
+  } catch (e) { CITY.url = null; }
+  if (!CITY.url) { CITY.on = false; return; }
+  try {
+    const src = '(' + cityWorkerMain.toString() + ')()';
+    const wurl = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+    for (let i = 0; i < (game.touch ? 1 : 2); i++) {
+      const w = new Worker(wurl);
+      w.onmessage = e => rxPush(cityReceive, e.data);
+      w.busy = 0;
+      CITY.workers.push(w);
+    }
+  } catch (e) { CITY.on = false; return; }
+  CITY.prog = makeProgram(BLDG_VS, BLDG_FS);
+  CITY.treeProg = makeProgram(TREE_VS, TREE_FS);
+  CITY.treeTex = makeTreeTexture();
+  // tree geometry: two crossed vertical cards and one horizontal canopy card
+  const g = [];
+  const quad = (pl) => { for (const [x, y] of [[-0.5, 0], [0.5, 0], [0.5, 1], [-0.5, 0], [0.5, 1], [-0.5, 1]]) g.push(x, y, pl); };
+  quad(0); quad(1); quad(2);
+  CITY.treeGeo = { buf: gl.createBuffer(), count: g.length / 3 };
+  gl.bindBuffer(gl.ARRAY_BUFFER, CITY.treeGeo.buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(g), gl.STATIC_DRAW);
+  CITY.ready = true;
+}
+function makeTreeTexture() {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 256;
+  const g = c.getContext('2d');
+  let s = 12345; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const leaf = (x, y, r, dark) => {
+    const l = 22 + rnd() * 16 - dark * 10, sat = 38 + rnd() * 20;
+    g.fillStyle = `hsl(${88 + rnd() * 30},${sat}%,${l}%)`; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+  };
+  // cell 0: broadleaf (side)
+  g.fillStyle = '#4a3a2a'; g.fillRect(60, 180, 8, 76);
+  for (let i = 0; i < 260; i++) { const a = rnd() * 6.283, rr = Math.sqrt(rnd()); const x = 64 + Math.cos(a) * rr * 52, y = 112 + Math.sin(a) * rr * 80; leaf(x, y, 7 + rnd() * 9, (y - 40) / 150 + (x - 20) / 200); }
+  // cell 1: conifer / cedar (side)
+  g.fillStyle = '#3d2e22'; g.fillRect(189, 200, 6, 56);
+  for (let i = 0; i < 320; i++) { const t = rnd(), y = 8 + t * 200, w = 6 + t * 46; const x = 192 + (rnd() * 2 - 1) * w; const l = 16 + rnd() * 12 - t * 6; g.fillStyle = `hsl(${120 + rnd() * 30},${30 + rnd() * 20}%,${l}%)`; g.beginPath(); g.arc(x, y, 5 + rnd() * 6, 0, 7); g.fill(); }
+  // cell 2: broadleaf (top)
+  for (let i = 0; i < 240; i++) { const a = rnd() * 6.283, rr = Math.sqrt(rnd()); const x = 320 + Math.cos(a) * rr * 56, y = 128 + Math.sin(a) * rr * 56; leaf(x, y, 8 + rnd() * 9, (x - 264) / 160 + (y - 72) / 160); }
+  // cell 3: conifer (top)
+  for (let i = 0; i < 200; i++) { const a = rnd() * 6.283, rr = Math.sqrt(rnd()); const x = 448 + Math.cos(a) * rr * 44, y = 128 + Math.sin(a) * rr * 44; const l = 26 - rr * 12 + rnd() * 6; g.fillStyle = `hsl(${125 + rnd() * 25},${30 + rnd() * 15}%,${l}%)`; g.beginPath(); g.arc(x, y, 4 + rnd() * 5, 0, 7); g.fill(); }
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  return tex;
+}
+function cityTile(x, y) {
+  const key = x + '/' + y;
+  let t = CITY.tiles.get(key);
+  if (t) return t;
+  const n = 2 ** 14;
+  t = { key, x, y, lonW: x / n * 360 - 180, lonE: (x + 1) / n * 360 - 180, latN: latFromMerc(y / n), latS: latFromMerc((y + 1) / n), state: 0, used: 0 };
+  t.kxN = kxAt(t.latN);
+  CITY.tiles.set(key, t);
+  return t;
+}
+function cityDispatch(t) {
+  const w = CITY.workers.reduce((a, b) => (b.busy < a.busy ? b : a));
+  const dt = getTile(14, t.x, t.y);
+  const id = CITY.nextId++;
+  t.state = 1; t.job = id; w.busy++;
+  CITY.jobs.set(id, { t, w });
+  const [la, lo] = [(t.latN + t.latS) / 2, (t.lonW + t.lonE) / 2];
+  // no fine elevation for this tile (not there, or it failed to load): the heights the terrain is drawn with,
+  // on a coarse grid, so the roads and buildings sit on the ground that's shown (rebuilt if the fine one comes)
+  let dem = dt.dem ? dt.dem.slice() : null;
+  t.demOk = !!dem;
+  if (!dem) {
+    const G = 33, S = new Float32Array(G * G), n = 2 ** 14;
+    for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) S[j * G + i] = rawHeightGeo(latFromMerc((t.y + j / (G - 1)) / n), t.lonW + (t.lonE - t.lonW) * i / (G - 1));
+    dem = new Float32Array(65536);
+    for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) {
+      const fx = (x + 0.5) / 256 * (G - 1), fy = (y + 0.5) / 256 * (G - 1), ix = Math.min(fx | 0, G - 2), iy = Math.min(fy | 0, G - 2), tx = fx - ix, ty = fy - iy;
+      dem[y * 256 + x] = (S[iy * G + ix] * (1 - tx) + S[iy * G + ix + 1] * tx) * (1 - ty) + (S[(iy + 1) * G + ix] * (1 - tx) + S[(iy + 1) * G + ix + 1] * tx) * ty;
+    }
+  }
+  w.postMessage({
+    id, url: CITY.url.replace('{z}', 14).replace('{x}', t.x).replace('{y}', t.y), z: 14, x: t.x, y: t.y,
+    latN: t.latN, latS: t.latS, lonW: t.lonW, lonE: t.lonE, dem, g0: Math.max(rawHeightGeo(la, lo), 0),
+    maxTrees: game.touch ? 15000 : 45000,
+    rws: rwNear(la, lo).filter(r => Math.abs(r.lat - la) < 0.06 && Math.abs(r.lon - lo) < 0.07).map(r => ({ lat: r.lat, lon: r.lon, kx: r.kx, sin: r.sin, cos: r.cos, len: r.len, wid: r.wid, elev: r.elev, ids: Array.isArray(r.ids) ? r.ids.join('-') : '' })),
+  });
+}
+function cityReceive(r) {
+  const job = CITY.jobs.get(r.id);
+  if (!job) return;
+  const tr0 = performance.now();
+  CITY.jobs.delete(r.id); job.w.busy--;
+  const t = job.t;
+  if (!CITY.tiles.has(t.key) || t.job !== r.id) return;
+  if (r.error) { t.state = 3; t.retry = R.time + 8; CITY.failed++; console.warn('CITY tile', t.key, r.error); return; }
+  t.state = 2;
+  if (r.empty) { t.nv = 0; t.nTrees = 0; return; }
+  t.nv = r.nv; t.ni = r.ni; t.nTrees = r.nTrees; t.maxTop = r.maxTop; t.minG = r.minG; t.W = r.W; t.Hm = r.Hm;
+  t.col = { boxes: new Float32Array(r.boxes), ringXZ: new Float32Array(r.ringXZ), ringOff: new Uint32Array(r.ringOff), cells: new Uint32Array(r.cells), items: new Uint32Array(r.items) };
+  if (r.nv) {
+    const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, r.vb, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.SHORT, false, 20, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 20, 4);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.BYTE, true, 20, 8);
+    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.SHORT, false, 20, 12);
+    t.ibCpu = new Uint32Array(r.ib); t.bRange = new Uint32Array(r.bRange); t.bBase = r.bBase ? new Uint32Array(r.bBase) : null; t.bCen = new Float32Array(r.bCen); t.hideKey = '';
+    const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, t.ibCpu, gl.STATIC_DRAW);
+    gl.bindVertexArray(null);
+    t.vao = vao; t.vb = vb; t.ib = ib;
+    cityOrderIndex(t, null);
+    CITY.verts += r.nv;
+  }
+  if (r.nTrees) {
+    const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, CITY.treeGeo.buf); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    const tb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, tb); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(r.trees), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 0, 0); gl.vertexAttribDivisor(1, 1);
+    gl.bindVertexArray(null);
+    t.tvao = vao; t.tb = tb;
+    CITY.trees += r.nTrees;
+  }
+  if (r.nri) {
+    const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, r.rvb, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.SHORT, false, 20, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 20, 4);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.BYTE, true, 20, 8);
+    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.SHORT, false, 20, 12);
+    const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(r.rib), gl.STATIC_DRAW);
+    gl.bindVertexArray(null);
+    t.rvao = vao; t.rvb = vb; t.rib = ib; t.rni = r.nri; t.rCell = r.rCell ? new Uint32Array(r.rCell) : null; t.rCellB = r.rCellB ? new Float32Array(r.rCellB) : null;
+  }
+  // road centre lines (tile-local metres) for putting the car on a road and for traffic
+  if (r.rPts) t.roads = { pts: new Float32Array(r.rPts), off: new Uint32Array(r.rOff), cls: new Uint8Array(r.rCls), wid: new Float32Array(r.rWid), br: r.rBr ? new Uint8Array(r.rBr) : null };
+  if (typeof streetReceive === 'function') streetReceive(t, r.props);
+  if (typeof signReceive === 'function') signReceive(t, r.signs, r.signNames);
+  if (typeof wireReceive === 'function') wireReceive(t, r.wires, r.fences);
+  if (typeof markReceive === 'function') markReceive(t, r.marks);
+  // the aerodrome's outline (no trees on an airfield): rings of local metres
+  t.aero = null;
+  if (r.aero && r.aero.byteLength) { const F = new Float32Array(r.aero), rings = []; for (let i = 0; i < F.length;) { const n = F[i]; rings.push(F.subarray(i + 1, i + 1 + n * 2)); i += 1 + n * 2; } t.aero = rings; }
+  t.stands = r.stands && r.stands.byteLength ? new Float32Array(r.stands) : null; t.walks = r.walks && r.walks.byteLength ? new Float32Array(r.walks) : null; t.btowers = r.btowers && r.btowers.byteLength ? new Float32Array(r.btowers) : null; if (typeof BIGBR !== 'undefined') BIGBR.key = ''; if (typeof STANDS !== 'undefined') STANDS.key = '';
+  cityRoadGrid(t);
+  // trees placed before this tile's roads and buildings were known are placed again (none on a road or in a house)
+  if (typeof JWTREES !== 'undefined' && JWTREES.cells) for (const [k, c] of JWTREES.cells) {
+    const [la, lo] = worldToGeo(c.ox, c.oz);
+    if (la <= t.latN && la >= t.latS && lo >= t.lonW && lo <= t.lonE) { freeJwTreeCell(c); JWTREES.cells.delete(k); }
+  }
+  t.ov = -1;
+  if (typeof PLAT !== 'undefined' && PLAT.rects.length) cityApplyHidden(t, PLAT.rects);
+  devTile('city', r.msBuild, r.msNet, performance.now() - tr0, r.nv + (r.nrv || 0));
+}
+// a grid over a tile's road segments (12 m cells), to ask quickly whether a point is on a road
+function cityRoadGrid(t) {
+  const R_ = t.roads; t.rgrid = null; if (!R_ || !R_.pts.length) return;
+  const G = 12, nx = Math.ceil((t.W || 2500) / G) + 2, nz = Math.ceil((t.Hm || 2500) / G) + 2, cells = new Map(), P = R_.pts;
+  for (let l = 0; l < R_.cls.length; l++) for (let k = R_.off[l]; k < R_.off[l + 1] - 1; k++) {
+    const m = R_.wid[l] / 2 + 1;
+    const x0 = Math.floor((Math.min(P[k * 3], P[k * 3 + 3]) - m) / G), x1 = Math.floor((Math.max(P[k * 3], P[k * 3 + 3]) + m) / G);
+    const z0 = Math.floor((Math.min(P[k * 3 + 1], P[k * 3 + 4]) - m) / G), z1 = Math.floor((Math.max(P[k * 3 + 1], P[k * 3 + 4]) + m) / G);
+    for (let i = x0; i <= x1; i++) for (let j = z0; j <= z1; j++) { const key = (j + 1) * nx + i + 1; let c = cells.get(key); if (!c) cells.set(key, c = []); c.push(l, k); }
+  }
+  t.rgrid = { G, nx, nz, cells };
+}
+// is a world point on a mapped road or inside a mapped building? (the Japan city layer)
+function cityBlocked(wx, wz) {
+  if (!CITY.ready || !JW.online) return false;
+  const [la, lo] = worldToGeo(wx, wz), n = 2 ** 14, x = Math.floor((lo + 180) / 360 * n), y = Math.floor(mercY(la) * n);
+  const t = CITY.tiles.get(x + '/' + y); if (!t || t.state !== 2) return false;
+  const X = (lo - t.lonW) * t.kxN, Z = -(la - t.latN) * KZ;
+  if (t.rgrid) {
+    const g = t.rgrid, c = g.cells.get((Math.floor(Z / g.G) + 1) * g.nx + Math.floor(X / g.G) + 1), R_ = t.roads, P = R_.pts;
+    if (c) for (let i = 0; i < c.length; i += 2) {
+      const l = c[i], k = c[i + 1], ax = P[k * 3], az = P[k * 3 + 1], dx = P[k * 3 + 3] - ax, dz = P[k * 3 + 4] - az, L2 = dx * dx + dz * dz || 1;
+      const s = clamp(((X - ax) * dx + (Z - az) * dz) / L2, 0, 1);
+      if (Math.hypot(X - ax - dx * s, Z - az - dz * s) < R_.wid[l] / 2 + (R_.cls[l] <= 5 ? 2.5 : 0.8)) return true;   // (main roads: and the pavement)
+    }
+  }
+  if (t.aero) {
+    let inside = false;
+    for (const r of t.aero) for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) if ((r[i + 1] > Z) !== (r[j + 1] > Z) && X < (r[j] - r[i]) * (Z - r[i + 1]) / (r[j + 1] - r[i + 1]) + r[i]) inside = !inside;
+    if (inside) return true;
+  }
+  const col = t.col; if (!col) return false;
+  const G = 32, cx = clamp(Math.floor(X / t.W * G), 0, G - 1), cz = clamp(Math.floor(Z / t.Hm * G), 0, G - 1);
+  for (let k = col.cells[cz * G + cx]; k < col.cells[cz * G + cx + 1]; k++) {
+    const b = col.items[k], B = col.boxes;
+    if (X < B[b * 5] || X > B[b * 5 + 2] || Z < B[b * 5 + 1] || Z > B[b * 5 + 3]) continue;
+    let inside = false;
+    for (let i = col.ringOff[b], j = col.ringOff[b + 1] - 2; i < col.ringOff[b + 1]; j = i, i += 2) {
+      const zi = col.ringXZ[i + 1], zj = col.ringXZ[j + 1];
+      if ((zi > Z) !== (zj > Z) && X < (col.ringXZ[j] - col.ringXZ[i]) * (Z - zi) / (zj - zi) + col.ringXZ[i]) inside = !inside;
+    }
+    if (inside) return true;
+  }
+  return false;
+}
+// the deck of a bridge or an elevated road under a world point, if there is one near the height yRef (you're on
+// it, or just above it): its height, else null. Under an elevated road you're on the street below. (any: a deck
+// here at whatever height)
+function cityDeckAt(wx, wz, yRef, any = false) {
+  if (!CITY.ready || !JW.online) return null;
+  const [la, lo] = worldToGeo(wx, wz), n = 2 ** 14, x = Math.floor((lo + 180) / 360 * n), y = Math.floor(mercY(la) * n);
+  const t = CITY.tiles.get(x + '/' + y); if (!t || t.state !== 2 || !t.rgrid || !t.roads.br) return null;
+  const X = (lo - t.lonW) * t.kxN, Z = -(la - t.latN) * KZ;
+  const g = t.rgrid, c = g.cells.get((Math.floor(Z / g.G) + 1) * g.nx + Math.floor(X / g.G) + 1), R_ = t.roads, P = R_.pts;
+  if (!c) return null;
+  let best = null;
+  for (let i = 0; i < c.length; i += 2) {
+    const l = c[i], k = c[i + 1]; if (!R_.br[l]) continue;
+    const ax = P[k * 3], az = P[k * 3 + 1], dx = P[k * 3 + 3] - ax, dz = P[k * 3 + 4] - az, L2 = dx * dx + dz * dz || 1;
+    const s = clamp(((X - ax) * dx + (Z - az) * dz) / L2, 0, 1);
+    if (Math.hypot(X - ax - dx * s, Z - az - dz * s) > R_.wid[l] / 2 - 0.2) continue;
+    const h = P[k * 3 + 2] + (P[k * 3 + 5] - P[k * 3 + 2]) * s - 0.05;
+    if (!any && (h > yRef + 0.4 || h < yRef - 5)) continue;
+    if (best == null || h > best) best = h;
+  }
+  return best;
+}
+// nearest point on a road to a world position (within maxD m): position, the road's direction there, width, class
+function roadNearest(wx, wz, maxD = 400, minCls = 0) {
+  const [la, lo] = worldToGeo(wx, wz);
+  let best = null;
+  for (const t of CITY.tiles.values()) {
+    const R_ = t.roads; if (!R_ || !R_.pts.length) continue;
+    const X = (lo - t.lonW) * t.kxN, Z = -(la - t.latN) * KZ;
+    if (X < -maxD || Z < -maxD || X > (t.W || 2500) + maxD || Z > (t.Hm || 2500) + maxD) continue;
+    const P = R_.pts;
+    for (let l = 0; l < R_.cls.length; l++) {
+      if (R_.cls[l] >= 8 || (minCls && R_.cls[l] > minCls)) continue;           // no tracks
+      for (let k = R_.off[l]; k < R_.off[l + 1] - 1; k++) {
+        const ax = P[k * 3], az = P[k * 3 + 1], bx = P[k * 3 + 3], bz = P[k * 3 + 4], dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz;
+        if (L2 < 1e-4) continue;
+        const s = clamp(((X - ax) * dx + (Z - az) * dz) / L2, 0, 1), px = ax + dx * s, pz = az + dz * s, d = Math.hypot(X - px, Z - pz);
+        if (d < maxD && (!best || d < best.d)) best = { d, t, X: px, Z: pz, y: P[k * 3 + 2] + (P[k * 3 + 5] - P[k * 3 + 2]) * s, dx, dz, w: R_.wid[l], cls: R_.cls[l], line: l, seg: k };
+      }
+    }
+  }
+  if (!best) return null;
+  const w = geoToWorld(best.t.latN - best.Z / KZ, best.t.lonW + best.X / best.t.kxN), L = Math.hypot(best.dx, best.dz);
+  return { d: best.d, x: w[0], z: w[1], y: best.y, dir: [best.dx / L, best.dz / L], w: best.w, cls: best.cls, tile: best.t, line: best.line, seg: best.seg };
+}
+let cityRoadVis = null;
+function drawRoads(planes) {
+  if (!CITY.ready || !JW.online) return;
+  if (!CITY.roadProg) CITY.roadProg = makeProgram(ROAD_VS, ROAD_FS);
+  const pr = CITY.roadProg, u = pr.u;
+  setCommon(pr);
+  gl.uniform1i(u.uNoise, 2);
+  gl.disable(gl.CULL_FACE);
+  gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-2, -6);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);   // (for the contact shadows, drawn last)
+  for (const t of CITY.tiles.values()) {
+    if (!t.rvao) continue;
+    const b = cityBox(t);
+    if (!boxInFrustum(planes, b[0], t.minG - 60, b[1], b[2], (t.maxTop > -1e8 ? t.maxTop : t.minG + 500) + 5, b[3])) continue;
+    citySetTile(u, t);
+    gl.bindVertexArray(t.rvao);
+    if (!t.rCell || !t.rCellB) { gl.drawElements(gl.TRIANGLES, t.rni, gl.UNSIGNED_INT, 0); continue; }
+    // only the cells in view (the ground's pieces are at most some 45 m across: that much margin)
+    // (each cell by the reach of its own triangles: some of the ground's pieces, an apron's, are big)
+    const G = 16, B = t.rCellB, sx = (b[2] - b[0]) / (t.W || 2500), sz = (b[3] - b[1]) / (t.Hm || 2500), M = 2;
+    const vis = cityRoadVis || (cityRoadVis = new Uint8Array(G * G));
+    for (let i = 0; i < G * G; i++) {
+      const e = i * 6; if (B[e] > B[e + 2]) { vis[i] = 0; continue; }
+      vis[i] = boxInFrustum(planes, b[0] + B[e] * sx - M, B[e + 4] - 1, b[1] + B[e + 1] * sz - M, b[0] + B[e + 2] * sx + M, B[e + 5] + 2, b[1] + B[e + 3] * sz + M) ? 1 : 0;
+    }
+    for (let o = 0; o < t.rCell.length; o += G * G + 1) {
+      let a = -1, e = -1;
+      for (let i = 0; i < G * G; i++) {
+        const s0 = t.rCell[o + i], s1 = t.rCell[o + i + 1];
+        if (s1 === s0 || !vis[i]) continue;
+        if (s0 === e) { e = s1; continue; }
+        if (e > a && a >= 0) gl.drawElements(gl.TRIANGLES, e - a, gl.UNSIGNED_INT, a * 4);
+        a = s0; e = s1;
+      }
+      if (e > a && a >= 0) gl.drawElements(gl.TRIANGLES, e - a, gl.UNSIGNED_INT, a * 4);
+    }
+  }
+  gl.disable(gl.BLEND);
+  if (typeof drawMarks === 'function') drawMarks(planes);           // (止まれ and the stop lines, p_marks.js)
+  gl.disable(gl.POLYGON_OFFSET_FILL);
+  gl.enable(gl.CULL_FACE);
+}
+// hide OSM buildings that a loaded PLATEAU model already shows (rects: [south, west, north, east] in degrees)
+function cityApplyHidden(t, rects) {
+  if (!t.vao || !t.bRange) return;
+  const hit = rects.filter(r => r[0] < t.latN && r[2] > t.latS && r[1] < t.lonE && r[3] > t.lonW);
+  let K = typeof PLAT !== 'undefined' && hit.length ? PLAT.keep : null;
+  if (K && (K.lat - K.rLat > t.latN || K.lat + K.rLat < t.latS || K.lon - K.rLon > t.lonE || K.lon + K.rLon < t.lonW)) K = null;
+  const A = hit.length && AUTH.area && geoDist((t.latN + t.latS) / 2, (t.lonW + t.lonE) / 2, AUTH.area.lat, AUTH.area.lon) < AUTH.area.r1 + 3000;
+  const cmp = typeof platCmpOver === 'function' ? platCmpOver(t) : null;   // (PLATEAU's buildings round the car instead, for comparing them: p7_plateau.js)
+  const key = hit.map(r => r[4]).join(',') + (K ? '|' + K.key : '') + (A ? '|A' + Math.round(AUTH.area.lat * 250) + ',' + Math.round(AUTH.area.lon * 250) : '') + (cmp ? '|C' + cmp.map(n => n.key).join(',') : '');
+  if (key === t.hideKey) return false;
+  t.hideKey = key;
+  t.cmpHid = cmp ? new Uint8Array(t.bRange.length / 2) : null;
+  // (the comparison's leaves' extent in this tile's metres: the buildings outside it aren't looked at closely)
+  let cb = null;
+  if (cmp) { cb = [1e9, 1e9, -1e9, -1e9]; for (const n of cmp) { cb[0] = Math.min(cb[0], (n.w - t.lonW) * t.kxN); cb[2] = Math.max(cb[2], (n.e - t.lonW) * t.kxN); cb[1] = Math.min(cb[1], -(n.n - t.latN) * KZ); cb[3] = Math.max(cb[3], -(n.s - t.latN) * KZ); } }
+  const CB = t.col && t.col.boxes && t.col.boxes.length === t.bRange.length / 2 * 5 ? t.col.boxes : null;
+  cityOrderIndex(t, !hit.length && !cmp ? null : b => {
+    if (cmp) {
+      const x0 = CB ? CB[b * 5] : t.bCen[b * 2], z0 = CB ? CB[b * 5 + 1] : t.bCen[b * 2 + 1], x1 = CB ? CB[b * 5 + 2] : x0, z1 = CB ? CB[b * 5 + 3] : z0;
+      if (x1 > cb[0] && x0 < cb[2] && z1 > cb[1] && z0 < cb[3] && platCmpHides(t, b, cmp)) { t.cmpHid[b] = 1; return false; }
+    }
+    const lat = t.latN - t.bCen[b * 2 + 1] / KZ, lon = t.lonW + t.bCen[b * 2] / t.kxN;
+    let hidden = false, byPhoto = false, best = 1e9;
+    // (PLATEAU's blocks nest, coarse over fine: whether it has a photo is the finest block's)
+    for (const r of hit) if (lat > r[0] && lat < r[2] && lon > r[1] && lon < r[3]) { hidden = true; const a = (r[2] - r[0]) * (r[3] - r[1]); if (a < best) { best = a; byPhoto = !!r[5]; } }
+    // near the car the map's own building comes back where PLATEAU has only a plain box (not a photo-textured one)
+    if (hidden && K && !byPhoto) { const a = (lat - K.lat) / K.rLat, o = (lon - K.lon) / K.rLon; if (a * a + o * o < 1) hidden = false; }
+    if (hidden && A && authHas(lat, lon)) hidden = false;          // (a built-up area is the sim's own)
+    return !hidden;
+  });
+  return true;
+}
+// a tile's building triangles, ordered by a 16 x 16 grid of cells (so the sun's shadow pass can draw just
+// the cells near the car), leaving out the buildings keep() says no to; uploaded, with where each cell starts
+const CITY_SHG = 16;
+function cityOrderIndex(t, keep) {
+  const G = CITY_SHG, nb = t.bRange.length / 2;
+  if (!t.bOrder) {
+    const cell = new Uint16Array(nb), cnt = new Uint32Array(G * G + 1), W = t.W || 2500, Hm = t.Hm || 2500;
+    for (let b = 0; b < nb; b++) {
+      const cx = clamp(Math.floor(t.bCen[b * 2] / W * G), 0, G - 1), cz = clamp(Math.floor(t.bCen[b * 2 + 1] / Hm * G), 0, G - 1);
+      cell[b] = cz * G + cx; cnt[cell[b] + 1]++;
+    }
+    for (let c = 0; c < G * G; c++) cnt[c + 1] += cnt[c];
+    const order = new Uint32Array(nb), at = cnt.slice();
+    for (let b = 0; b < nb; b++) order[at[cell[b]]++] = b;
+    t.bOrder = order; t.bCell = cell;
+    // each cell's reach: how far its buildings stand out over its edges (tile metres, 8 m more for the block
+    // walls and canopies outside the footprints) and its highest roof
+    const B = t.col && t.col.boxes, E = new Float32Array(G * G * 5);
+    for (let c = 0; c < G * G; c++) { const cx = c % G, cz = (c - cx) / G; E.set([cx * W / G, cz * Hm / G, (cx + 1) * W / G, (cz + 1) * Hm / G, -1e9], c * 5); }
+    if (B && B.length / 5 === nb) for (let b = 0; b < nb; b++) {
+      const c = cell[b] * 5;
+      E[c] = Math.min(E[c], B[b * 5] - 8); E[c + 1] = Math.min(E[c + 1], B[b * 5 + 1] - 8);
+      E[c + 2] = Math.max(E[c + 2], B[b * 5 + 2] + 8); E[c + 3] = Math.max(E[c + 3], B[b * 5 + 3] + 8); E[c + 4] = Math.max(E[c + 4], B[b * 5 + 4] + 2);
+    } else for (let c = 0; c < G * G; c++) { E[c * 5] -= 60; E[c * 5 + 1] -= 60; E[c * 5 + 2] += 60; E[c * 5 + 3] += 60; E[c * 5 + 4] = t.maxTop + 5; }
+    t.cellB = E;
+  }
+  // the bodies of the buildings cell by cell, then their details cell by cell (cellOff, cellOffD: where each starts)
+  const out = new Uint32Array(t.ibCpu.length), off = new Uint32Array(G * G + 1), offD = new Uint32Array(G * G + 1), bb = t.bBase;
+  let n = 0, kept = null;
+  if (keep) { kept = new Uint8Array(nb); for (let b = 0; b < nb; b++) kept[b] = keep(b) ? 1 : 0; }   // (asked once a building, not for each pass)
+  for (const det of [false, true]) {
+    const o = det ? offD : off; let cur = 0;
+    for (const b of t.bOrder) {
+      const c = t.bCell[b]; while (cur <= c) o[cur++] = n;
+      if (kept && !kept[b]) continue;
+      const s0 = t.bRange[b * 2], k = t.bRange[b * 2 + 1], kb = bb ? bb[b] : k;
+      const a0 = det ? s0 + kb : s0, a1 = det ? s0 + k : s0 + kb;
+      if (a1 > a0) { out.set(t.ibCpu.subarray(a0, a1), n); n += a1 - a0; }
+    }
+    while (cur <= G * G) o[cur++] = n;
+  }
+  gl.bindVertexArray(null);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, t.ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, out.subarray(0, n), gl.STATIC_DRAW);
+  t.ni = n; t.cellOff = off; t.cellOffD = offD;
+}
+function cityDispose(t) {
+  if (t.vao) { gl.deleteVertexArray(t.vao); gl.deleteBuffer(t.vb); gl.deleteBuffer(t.ib); CITY.verts -= t.nv; }
+  if (t.tvao) { gl.deleteVertexArray(t.tvao); gl.deleteBuffer(t.tb); CITY.trees -= t.nTrees; }
+  if (t.rvao) { gl.deleteVertexArray(t.rvao); gl.deleteBuffer(t.rvb); gl.deleteBuffer(t.rib); }
+  if (typeof streetDispose === 'function') streetDispose(t);
+  if (typeof fenceDispose === 'function') fenceDispose(t);
+  if (typeof markDispose === 'function') markDispose(t);
+  t.vao = t.tvao = t.rvao = null; t.col = null; t.roads = null;
+  CITY.tiles.delete(t.key);
+}
+// world-space bounding box, refreshed when the floating origin moves
+function cityBox(t) {
+  if (t.ov === JW.ov) return t.box;
+  const c = [geoToWorld(t.latN, t.lonW), geoToWorld(t.latN, t.lonE), geoToWorld(t.latS, t.lonW), geoToWorld(t.latS, t.lonE)];
+  t.box = [Math.min(...c.map(p => p[0])), Math.min(...c.map(p => p[1])), Math.max(...c.map(p => p[0])), Math.max(...c.map(p => p[1]))];
+  t.ov = JW.ov;
+  return t.box;
+}
+function cityUpdate() {
+  if (JW.active && JW.online === false && R.time > (JW.recheckAt || 0)) { JW.recheckAt = R.time + 25; jwRecheckOnline(); }
+  if (!JW.active || !JW.online || !CITY.on) return;
+  if (!CITY.ready) { cityInit(); return; }
+  const eye = R.eye, [la, lo] = worldToGeo(eye[0], eye[2]);
+  const agl = eye[1] - Math.max(rawHeightGeo(la, lo), 0);
+  const radius = game.touch ? clamp(1800 + agl * 1.5, 1800, 3500) : clamp(2800 + agl * 2.2, 2800, 7000);
+  CITY.treeR = game.touch ? 1500 : 2600;
+  const n = 2 ** 14, fx = (lo + 180) / 360 * n, fy = mercY(la) * n;
+  const tw = (360 / n) * kxAt(la), rr = Math.ceil(radius / tw) + 1;
+  const want = [];
+  const f = R.frame || 0;
+  for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) {
+    const x = Math.floor(fx) + dx, y = Math.floor(fy) + dy;
+    const cx = (x + 0.5 - fx) * tw, cy = (y + 0.5 - fy) * tw, d = Math.max(Math.hypot(cx, cy) - tw * 0.7, 0);
+    if (d > radius) continue;
+    const t = cityTile(x, y); t.used = f; t.dist = d;
+    want.push(t);
+  }
+  // a built-up area (p_auth.js) is loaded whole while it's in use
+  if (typeof AUTH !== 'undefined' && AUTH.on) {
+    const A = AUTH.area, dLa = A.r1 / 111320, dLo = A.r1 / (111320 * Math.cos(A.lat * DEG));
+    for (let x = Math.floor((A.lon - dLo + 180) / 360 * n); x <= Math.floor((A.lon + dLo + 180) / 360 * n); x++)
+      for (let y = Math.floor(mercY(A.lat + dLa) * n); y <= Math.floor(mercY(A.lat - dLa) * n); y++) {
+        const t = cityTile(x, y); if (t.used === f) continue;
+        t.used = f; t.dist = Math.max(Math.hypot((x + 0.5 - fx) * tw, (y + 0.5 - fy) * tw) - tw * 0.7, 0);
+        want.push(t);
+      }
+  }
+  want.sort((a, b) => a.dist - b.dist);
+  const vBudget = game.touch ? 1.5e6 : 5e6;
+  let busy = 0; for (const w of CITY.workers) busy += w.busy;
+  for (const t of want) {
+    if (busy >= CITY.workers.length * 2) break;
+    if (CITY.verts > vBudget && t.dist > 1500) break;
+    if (t.state === 3 && R.time > t.retry && CITY.failed < 40) t.state = 0;
+    if (t.state === 2 && t.demOk === false && getTile(14, t.x, t.y).demState === 2) { cityDispose(t); continue; }   // (its fine elevation came after all)
+    if (t.state !== 0) continue;
+    const dt = getTile(14, t.x, t.y);
+    if (dt.demState === 0) { loadDem(dt); dt.demT = R.time; continue; }
+    if (dt.demState === 1 && R.time - (dt.demT ?? R.time) < 8) { if (dt.demT == null) dt.demT = R.time; continue; }   // (a slow elevation tile: after 8 s the city goes ahead on the coarse one, rebuilt when it comes)
+    cityDispatch(t); busy++;
+  }
+  // drop tiles that fell well outside the radius
+  if (CITY.tiles.size > want.length + 6 || CITY.verts > vBudget) {
+    for (const t of [...CITY.tiles.values()]) if (t.used < f - 30 && t.state !== 1) cityDispose(t);
+  }
+}
+function citySetTile(u, t) {
+  gl.uniform4f(u.uTileA, t.lonW - JW.lon0, t.latN - JW.lat0, t.latN, t.kxN);
+}
+let cityCellVis = null;
+function drawCity(planes) {
+  if (!CITY.ready || !JW.online) return;
+  const pr = CITY.prog, u = pr.u;
+  setCommon(pr);
+  gl.uniform1i(u.uNoise, 2);
+  gl.uniform1f(u.uNight, ENV.night ? 1 : clamp((0.3 - ENV.sunDir[1]) * 4, 0, 1));
+  gl.enable(gl.CULL_FACE);
+  // cell by cell (16 x 16 to a tile): only the cells in view, and a building's details (windows, doors,
+  // fittings, balconies, block walls: most of a house's triangles) only in the cells near the camera
+  const DR = game.touch ? 280 : 480, eye = R.eye;
+  gl.uniform1f(u.uDetR, DR); gl.uniform1f(u.uRelief, !game.touch || (SUNSH.auto && SUNSH.auto.on) ? 1 : 0);   // (the facades' relief: on a phone with the sun's shadows, while there is the frame time)
+  for (const t of CITY.tiles.values()) {
+    if (!t.vao) continue;
+    const b = cityBox(t), y0 = t.minG - 60, y1 = t.maxTop + 5;
+    if (!boxInFrustum(planes, b[0], y0, b[1], b[2], y1, b[3])) continue;
+    citySetTile(u, t);
+    gl.bindVertexArray(t.vao);
+    if (!t.cellOff) { gl.drawElements(gl.TRIANGLES, t.ni, gl.UNSIGNED_INT, 0); continue; }
+    const G = CITY_SHG, E = t.cellB, sx = (b[2] - b[0]) / (t.W || 2500), sz = (b[3] - b[1]) / (t.Hm || 2500);   // (tile metres to the world box)
+    const vis = cityCellVis || (cityCellVis = new Uint8Array(G * G));
+    for (let i = 0; i < G * G; i++) {
+      if (t.cellOff[i + 1] === t.cellOff[i] && t.cellOffD[i + 1] === t.cellOffD[i]) { vis[i] = 0; continue; }
+      const x0 = b[0] + E[i * 5] * sx, z0 = b[1] + E[i * 5 + 1] * sz, x1 = b[0] + E[i * 5 + 2] * sx, z1 = b[1] + E[i * 5 + 3] * sz;
+      if (!boxInFrustum(planes, x0, y0, z0, x1, Math.min(y1, E[i * 5 + 4]), z1)) { vis[i] = 0; continue; }
+      const dx = Math.max(x0 - eye[0], eye[0] - x1, 0), dz = Math.max(z0 - eye[2], eye[2] - z1, 0);
+      vis[i] = dx * dx + dz * dz < DR * DR ? 2 : 1;
+    }
+    // runs of consecutive visible cells, each one draw
+    for (const [off, need] of [[t.cellOff, 1], [t.cellOffD, 2]]) {
+      let a = -1, e = -1;
+      for (let i = 0; i < G * G; i++) {
+        if (vis[i] < need || off[i + 1] === off[i]) continue;
+        if (off[i] === e) { e = off[i + 1]; continue; }
+        if (e > a && a >= 0) gl.drawElements(gl.TRIANGLES, e - a, gl.UNSIGNED_INT, a * 4);
+        a = off[i]; e = off[i + 1];
+      }
+      if (e > a && a >= 0) gl.drawElements(gl.TRIANGLES, e - a, gl.UNSIGNED_INT, a * 4);
+    }
+  }
+  // trees
+  const tp = CITY.treeProg, tu = tp.u;
+  setCommon(tp);
+  gl.activeTexture(gl.TEXTURE7); gl.bindTexture(gl.TEXTURE_2D, CITY.treeTex); gl.activeTexture(gl.TEXTURE0);
+  gl.uniform1i(tu.uTreeTex, 7);
+  gl.uniform1f(tu.uFade, CITY.treeR);
+  gl.disable(gl.CULL_FACE);
+  for (const t of CITY.tiles.values()) {
+    if (!t.tvao || t.dist > CITY.treeR) continue;
+    const b = cityBox(t);
+    if (!boxInFrustum(planes, b[0], -50, b[1], b[2], 4000, b[3])) continue;
+    citySetTile(tu, t);
+    gl.bindVertexArray(t.tvao);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, CITY.treeGeo.count, t.nTrees);
+  }
+  gl.enable(gl.CULL_FACE);
+}
+// collision: aircraft centre and wing tips against building footprints
+function cityCollide() {
+  if (!CITY.ready || !JW.online || sim.crashed || sim.onGround) return null;
+  const r = qrot(sim.q, [1, 0, 0]), half = (AC.b || 10) * 0.45;
+  for (const s of [0, -1, 1]) {
+    const p = [sim.pos[0] + r[0] * half * s, sim.pos[1] + r[1] * half * s, sim.pos[2] + r[2] * half * s];
+    const [la, lo] = worldToGeo(p[0], p[2]);
+    const n = 2 ** 14, x = Math.floor((lo + 180) / 360 * n), y = Math.floor(mercY(la) * n);
+    const t = CITY.tiles.get(x + '/' + y);
+    if (!t || !t.col || p[1] > t.maxTop + 2) continue;
+    const X = (lo - t.lonW) * t.kxN, Z = -(la - t.latN) * KZ;
+    const G = 32, cx = clamp(Math.floor(X / t.W * G), 0, G - 1), cz = clamp(Math.floor(Z / t.Hm * G), 0, G - 1), c = t.col;
+    for (let k = c.cells[cz * G + cx]; k < c.cells[cz * G + cx + 1]; k++) {
+      const b = c.items[k], B = c.boxes;
+      if (p[1] > B[b * 5 + 4] || X < B[b * 5] || X > B[b * 5 + 2] || Z < B[b * 5 + 1] || Z > B[b * 5 + 3]) continue;
+      let inside = false;
+      for (let i = c.ringOff[b], j = c.ringOff[b + 1] - 2; i < c.ringOff[b + 1]; j = i, i += 2) {
+        const zi = c.ringXZ[i + 1], zj = c.ringXZ[j + 1];
+        if ((zi > Z) !== (zj > Z) && X < (c.ringXZ[j] - c.ringXZ[i]) * (Z - zi) / (zj - zi) + c.ringXZ[i]) inside = !inside;
+      }
+      if (inside) return s === 0 ? '建物に衝突しました' : '翼が建物に接触しました';
+    }
+  }
+  return null;
+}
+
+// ---------- shaders ----------
+const CITY_POS_GLSL = `
+uniform vec4 uTileA;   // lonW - lon0, latN - lat0, latN, metres per degree of longitude at latN
+vec3 cityWorld(vec2 l, float y){
+  float dlat = -l.y / 110574.0;
+  float lat = uTileA.z + dlat;
+  return vec3((uTileA.x + l.x / uTileA.w) * 111320.0 * cos(radians(lat)), y, -(uTileA.y + dlat) * 110574.0);
+}`;
+const BLDG_VS = GLSL_HEAD + `
+layout(location=0) in vec2 aXZ;
+layout(location=1) in float aY;
+layout(location=2) in vec3 aN;
+layout(location=3) in vec4 aM;       // u (dm), seed + 256*roof + 512*feature wall + 1024*kind, height (dm), height above ground (dm)
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv;
+` + CITY_POS_GLSL + `
+out vec3 vWorld; out vec3 vN; out vec3 vM; flat out float vSeed; flat out float vRoof; flat out float vFeat; flat out float vKind;
+void main(){
+  vec3 w = cityWorld(aXZ * 0.1, aY);
+  vec2 d = w.xz - uCamPos.xz;
+  vWorld = w;
+  w.y -= dot(d, d) * uCurv;
+  vN = aN;
+  vM = vec3(aM.x * 0.1, aM.z * 0.1, aM.w * 0.1);
+  vRoof = mod(floor(aM.y / 256.0 + 0.001), 2.0);
+  vFeat = mod(floor(aM.y / 512.0 + 0.001), 2.0);
+  vKind = floor(aM.y / 1024.0 + 0.001);
+  vSeed = mod(aM.y, 256.0);
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+const BLDG_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec3 vN; in vec3 vM; flat in float vSeed; flat in float vRoof; flat in float vFeat; flat in float vKind;
+uniform sampler2D uNoise;
+uniform float uNight;
+uniform float uDetR, uRelief;
+out vec4 outColor;
+float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
+float h2(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+void main(){
+  if (zoneCut(vWorld) || zoneAbove(vWorld) || lmCut(vWorld)) discard;
+  vec3 n = normalize(vN);
+  float H = vM.y, s1 = h1(vSeed + 0.13), s2 = h1(vSeed + 5.71), s3 = h1(vSeed + 9.3);
+  vec3 V = normalize(uCamPos - vWorld);
+  float dist = length(uCamPos - vWorld);
+  float diff = max(dot(n, uSunDir), 0.0) * sunShadow(vWorld, n);
+  // sky light, and the sunlit street's light thrown back up onto the walls (what keeps a wall in shade from going black)
+  vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5) * 1.25 + uSunCol * max(uSunDir.y, 0.0) * 0.3 * clamp(0.5 - n.y * 0.5, 0.0, 1.0);
+  vec3 col, bEm = vec3(0.0);
+  float gloss = 0.0, diffW = diff;
+  vec3 wSpec = vec3(0.0);
+  // the wall's frame: T along it (the way u runs), up, n out of it; the view and the sun in that frame
+  vec3 T = normalize(vec3(-n.z, 0.0, n.x) + vec3(1e-5, 0.0, 0.0));
+  if (dFdx(vM.x) * dot(dFdx(vWorld), T) + dFdy(vM.x) * dot(dFdy(vWorld), T) < 0.0) T = -T;
+  vec3 Vt = vec3(dot(V, T), V.y, max(dot(V, n), 0.06)), Lt = vec3(dot(uSunDir, T), uSunDir.y, dot(uSunDir, n));
+  bool tower = vKind > 2.5 && vKind < 3.5 || H > 45.0, house = vKind > 0.5 && vKind < 1.5, mansion = vKind > 1.5 && vKind < 2.5;
+  if (vKind > 11.5 && vRoof < 0.5) {
+    // a block wall: concrete blocks 39 x 19 cm in stretcher bond, the mortar joints, a cap along the top,
+    // weathered darker at the foot
+    float u = vM.x, y = vM.z;
+    vec2 g = vec2(u / 0.4 + step(0.5, fract(y / 0.4)) * 0.5, y / 0.2), f = fract(g), fw = max(fwidth(g), vec2(1e-4));
+    float joint = max(1.0 - smoothstep(fw.x, fw.x + 0.04, min(f.x, 1.0 - f.x)), 1.0 - smoothstep(fw.y, fw.y + 0.07, min(f.y, 1.0 - f.y)));
+    vec3 c = mix(vec3(0.6, 0.6, 0.58), vec3(0.7, 0.69, 0.66), s1) * (0.94 + 0.06 * h2(floor(g) + vSeed));
+    c *= 1.0 - 0.18 * joint;
+    if (n.y > 0.5) c = vec3(0.55, 0.55, 0.53);
+    c *= mix(0.75, 1.0, smoothstep(0.0, 0.6, y)) * (0.9 + 0.2 * texture(uNoise, vWorld.xz / 3.0 + vWorld.y / 2.0).b);
+    col = c * (uSunCol * diff * 0.9 + amb);
+  } else
+  if (vKind > 9.5 && vRoof < 0.5) {
+    // the airport's own buildings: a terminal's (or the tower cab's) glass curtain wall, a hangar's ribbed metal
+    // cladding and its great door
+    float u = vM.x, y = vM.z;
+    vec3 lit0 = uSunCol * diff * 0.9 + amb;
+    if (vKind < 10.5) {
+      vec2 g = vec2(u / 1.5, y / 4.5), f = fract(g), fw = max(fwidth(g), vec2(1e-4));
+      float mul = 1.0 - smoothstep(fw.x * 1.2, fw.x * 1.2 + 0.03, min(f.x, 1.0 - f.x));
+      float slab = 1.0 - smoothstep(0.1, 0.1 + fw.y * 1.5, f.y);
+      float top = step(H - 1.6, y), bot = step(y, 0.35);
+      vec3 R = reflect(-V, n), sky = mix(uHorizon, uZenith, clamp(R.y * 1.5, 0.0, 1.0));
+      float fr = 0.35 + 0.5 * pow(1.0 - max(dot(n, V), 0.0), 3.0);
+      vec3 glass = mix(vec3(0.07, 0.11, 0.14) * lit0, sky, fr) + uSunCol * pow(max(dot(R, uSunDir), 0.0), 120.0) * 0.8;
+      float solid = max(max(mul * 0.9, slab), max(top, bot));
+      col = mix(glass, vec3(0.74, 0.76, 0.78) * lit0, solid);
+      bEm = vec3(1.0, 0.92, 0.78) * 0.6 * uNight * (1.0 - solid);
+    } else {
+      float rib = 0.9 + 0.1 * smoothstep(0.35, 0.5, abs(fract(u / 0.3) - 0.5)) * clamp(1.0 - fwidth(u / 0.3) * 1.5, 0.0, 1.0);
+      vec3 c = mix(vec3(0.8, 0.81, 0.82), vec3(0.88, 0.88, 0.87), s1) * rib;
+      if (y < 1.2) c = vec3(0.36, 0.37, 0.38);
+      if (vFeat > 0.5 && y < H * 0.78 && y > 0.05) {
+        // the door: leaves 7 m wide with dark seams, horizontal ribs; the header band above in the airline's colour
+        float leaf = fract(u / 7.0), seam = 1.0 - smoothstep(0.0, 0.01 + fwidth(u / 7.0), min(leaf, 1.0 - leaf));
+        c = vec3(0.7, 0.72, 0.74) * (0.9 + 0.1 * step(0.5, fract(y / 0.6))) * (1.0 - 0.6 * seam);
+      } else if (vFeat > 0.5 && y < H * 0.9) c = s1 < 0.5 ? vec3(0.75, 0.08, 0.1) : vec3(0.05, 0.2, 0.55);
+      col = c * lit0;
+      bEm = vec3(1.0, 0.95, 0.85) * 0.25 * uNight * step(y, H * 0.78) * vFeat;
+    }
+    col *= 0.93 + 0.1 * texture(uNoise, vWorld.xz / 23.0 + vWorld.y / 31.0).b;
+  } else
+  if (vKind > 3.5 && vKind < 5.5 || vKind > 7.5) {
+    // a house's openings and fittings (real geometry): windows and sliding doors in aluminium frames, the
+    // front door, canopies, the air-conditioner unit, downpipes
+    float u = vM.x, y = vM.z, w = max(H, 0.3);
+    vec3 alu = (s2 > 0.5 ? vec3(0.28, 0.25, 0.22) : vec3(0.68, 0.69, 0.68));
+    vec3 lit0 = uSunCol * diff * 0.9 + amb;
+    if (vKind < 4.5) {                                                   // fittings
+      vec3 c = mix(vec3(0.72, 0.72, 0.7), vec3(0.85, 0.84, 0.8), s1);
+      if (vFeat > 0.5) {                                                 // the AC unit's front: a round fan grille
+        float r = length(vec2(u - w * 0.38, y - 0.3)) / 0.21;
+        c *= r < 1.0 ? 0.35 + 0.25 * step(0.5, fract(r * 6.0)) : 1.0;
+        c *= 1.0 - 0.15 * step(0.5, fract((u - w * 0.72) / 0.03)) * step(w * 0.7, u) * step(u, w * 0.95) * step(0.1, y) * step(y, 0.5);
+      }
+      col = c * lit0;
+    } else if (vKind > 8.5) {                                            // the front door
+      float edge = min(min(u, w - u), min(y, 2.05 - y));
+      vec3 wood = mix(vec3(0.36, 0.25, 0.16), vec3(0.55, 0.5, 0.44), step(0.5, s3));
+      vec3 c = edge < 0.05 ? alu : wood * (0.92 + 0.08 * step(0.5, fract(y / 0.25)));
+      if (abs(u - w * 0.82) < 0.02 && abs(y - 1.0) < 0.12) c = vec3(0.75);   // the handle
+      if (y > 1.6 && edge > 0.05) c = mix(c, vec3(0.1, 0.12, 0.15), 0.7);    // a pane above
+      col = c * lit0;
+      bEm = vec3(1.0, 0.8, 0.55) * uNight * step(1.6, y) * step(0.05, edge) * 0.8;
+    } else {                                                             // windows and sliding doors
+      float h = vKind > 7.5 ? 1.85 : 1.1;
+      float edge = min(min(u, w - u), min(y, h - y)), mid = abs(u - w * 0.5);
+      // the glass set 5 cm back in its aluminium frame: the frame's inner sides seen at an angle (lit as they
+      // face), the glass and the middle bar shifted, the glass in the frame's shadow when the sun is behind it
+      float rvW = 0.0, shW = 1.0; vec3 nW = n;
+      if (edge > 0.045 && dist < 140.0) {
+        vec2 pm = vec2(u, y), lo = vec2(0.045), hi = vec2(w - 0.045, h - 0.045), dq = -Vt.xy / Vt.z;
+        float tx = dq.x > 1e-4 ? (hi.x - pm.x) / dq.x : dq.x < -1e-4 ? (lo.x - pm.x) / dq.x : 1e9;
+        float ty = dq.y > 1e-4 ? (hi.y - pm.y) / dq.y : dq.y < -1e-4 ? (lo.y - pm.y) / dq.y : 1e9;
+        if (min(tx, ty) < 0.05) { rvW = 1.0; nW = tx < ty ? (dq.x > 0.0 ? -T : T) : vec3(0.0, dq.y > 0.0 ? -1.0 : 1.0, 0.0); }
+        else {
+          vec2 q = pm + dq * 0.05, so = q + Lt.xy / max(Lt.z, 0.05) * 0.05;
+          mid = abs(q.x - w * 0.5);
+          shW = Lt.z > 0.0 && so.x > lo.x && so.x < hi.x && so.y > lo.y && so.y < hi.y ? 1.0 : 0.0;
+        }
+      }
+      float frame = step(edge, 0.045) + step(mid, 0.022) + rvW;
+      vec3 r = reflect(-V, n);
+      float fres = 0.15 + 0.7 * pow(1.0 - max(dot(n, V), 0.0), 4.0);
+      vec3 glz = mix(vec3(0.05, 0.06, 0.07), envRefl(r, 0.02) * 0.85, fres) + uSunCol * pow(max(dot(r, uSunDir), 0.0), 150.0) * 2.0 * shW;
+      glz *= mix(0.75, 1.0, shW * diff + (1.0 - diff));
+      if (rvW > 0.5) lit0 = uSunCol * max(dot(nW, uSunDir), 0.0) * 0.9 * step(0.001, diff) + skyIrr(nW) * 0.7;
+      float cur = step(0.55, h2(vec2(floor(vWorld.x * 0.3), vSeed)));
+      glz = mix(glz, vec3(0.7, 0.66, 0.58) * lit0 * 0.5, cur * 0.45 * step(mid, w * 0.5 - 0.1));      // curtains
+      float on = step(0.72, h2(vec2(floor(vWorld.x * 0.4 + vWorld.z * 0.4), vSeed + 3.0)));
+      col = mix(glz * mix(1.0, 0.35, uNight), alu * lit0, min(frame, 1.0));
+      bEm = vec3(1.0, 0.78, 0.5) * on * uNight * (1.0 - min(frame, 1.0)) * 1.2;
+    }
+  } else if (vKind > 5.5) {
+    // balconies: a concrete slab, and a parapet of frosted glass, a painted panel or open metal bars
+    vec3 cc = mix(vec3(0.74, 0.73, 0.70), vec3(0.86, 0.85, 0.81), s1);
+    vec3 c = cc; float y = vM.z;
+    if (vKind > 6.5 && y > 0.04) {
+      float aaB = clamp(1.0 - fwidth(vM.x / 0.11) * 1.5, 0.0, 1.0);
+      if (y > 0.98) c = vec3(0.55, 0.56, 0.56);                                  // the hand rail
+      else if (s3 < 0.35) {                                                      // open bars: see the rooms through them
+        float bar = step(0.72, fract(vM.x / 0.11));
+        if (y < 0.9 && y > 0.1 && bar < 0.5 && aaB > 0.3) discard;
+        c = vec3(0.5, 0.51, 0.5);
+      } else if (s3 < 0.7) {                                                     // frosted glass
+        vec3 r = reflect(-V, n);
+        c = mix(vec3(0.46, 0.52, 0.55), skyColor(r) * 0.7, 0.25 + 0.5 * pow(1.0 - max(dot(n, V), 0.0), 3.0));
+        c = mix(c, vec3(0.5), step(0.96, fract(vM.x / 1.8)) * aaB);               // posts
+      } else c = cc * (0.96 + 0.04 * step(0.5, fract(vM.x / 0.9)));             // painted panel
+    }
+    if (vKind < 6.5 && n.y < -0.5) c *= 0.8;                                      // the slab's underside
+    col = c * (uSunCol * diff * 0.9 + amb);
+  } else if (vRoof > 0.5) {
+    vec3 rc;
+    if (house) {
+      int k = int(s1 * 7.0);
+      rc = k == 0 ? vec3(0.22, 0.24, 0.28) : k == 1 ? vec3(0.34, 0.25, 0.20) : k == 2 ? vec3(0.42, 0.43, 0.44) :
+           k == 3 ? vec3(0.19, 0.28, 0.32) : k == 4 ? vec3(0.44, 0.23, 0.17) : k == 5 ? vec3(0.60, 0.61, 0.62) : vec3(0.30, 0.31, 0.30);
+    } else {
+      rc = mix(vec3(0.50, 0.50, 0.49), vec3(0.66, 0.65, 0.62), s1);
+      if (s2 > 0.85) rc = vec3(0.30, 0.42, 0.26);                 // rooftop garden
+    }
+    float nz = texture(uNoise, vWorld.xz / 7.0).b * 0.5 + texture(uNoise, vWorld.xz / 1.3).b * 0.5;
+    rc *= 0.86 + nz * 0.28;
+    // pitched roofs: courses of tiles (a shadow line under each course, the joints staggered)
+    if (n.y < 0.97 && n.y > 0.2) {
+      float ty = vWorld.y / 0.095, aaR = clamp(1.0 - fwidth(ty) * 1.5, 0.0, 1.0);
+      float course = smoothstep(0.0, 0.3, fract(ty)), joint = abs(fract(vM.x / 0.3 + floor(ty) * 0.5) - 0.5);
+      rc *= mix(1.0, (0.78 + 0.22 * course) * (1.0 - 0.18 * (1.0 - smoothstep(0.0, 0.06, 0.5 - joint))), aaR);
+      rc *= mix(1.0, 0.93 + 0.14 * h2(vec2(floor(vM.x / 0.3 + floor(ty) * 0.5), floor(ty)) + vSeed), aaR);
+    }
+    // photographed roofing: tiles on pitched roofs, weathered concrete on flat ones, in the roof's own colour
+    if (uMatOn > 0.5) {
+      bool pitch = n.y < 0.97 && n.y > 0.2;
+      float L = pitch ? (s1 < 0.55 ? 16.0 : 17.0) : 18.0, S = pitch ? 2.5 : 4.0;
+      vec2 ruv = pitch ? vec2(vM.x, vWorld.y * 1.6) / S : vWorld.xz / S;
+      rc *= clamp(matC(L, ruv) / max(matAvg(L), vec3(0.05)), 0.3, 2.0);
+    }
+    // rooftop equipment / edge band on larger flat roofs
+    col = rc * (uSunCol * diff * 0.95 + amb);
+  } else {
+    // wall: palette per building
+    vec3 wc;
+    if (house) {
+      int k = int(s1 * 6.0);
+      wc = k == 0 ? vec3(0.88, 0.86, 0.81) : k == 1 ? vec3(0.83, 0.77, 0.67) : k == 2 ? vec3(0.76, 0.76, 0.74) :
+           k == 3 ? vec3(0.64, 0.55, 0.45) : k == 4 ? vec3(0.9, 0.89, 0.86) : vec3(0.68, 0.7, 0.72);
+    } else if (!tower) {
+      int k = int(s1 * 6.0);
+      wc = k == 0 ? vec3(0.78, 0.76, 0.72) : k == 1 ? vec3(0.62, 0.52, 0.44) : k == 2 ? vec3(0.66, 0.66, 0.65) :
+           k == 3 ? vec3(0.84, 0.82, 0.76) : k == 4 ? vec3(0.52, 0.47, 0.42) : vec3(0.72, 0.70, 0.66);
+    } else {
+      wc = mix(vec3(0.55, 0.60, 0.66), vec3(0.70, 0.72, 0.72), s1);
+    }
+    bool shop = vFeat > 0.5 && !mansion, veranda = vFeat > 0.5 && mansion;
+    float fh = house || mansion ? 2.9 : tower ? 4.0 : 3.3;
+    float ws = house ? 3.4 : tower ? 1.8 : veranda ? 3.6 : mix(2.6, 3.8, s2);
+    float z0 = shop ? 4.3 : 0.0;                                                 // storeys over a shop start above its sign
+    vec2 g = vec2(vM.x / ws, (vM.z - z0) / fh + (shop ? 1.0 : 0.0));
+    vec2 cell = floor(g), fp = fract(g);
+    vec2 fw = fwidth(g);
+    float aa = clamp(1.0 - max(fw.x, fw.y) * 1.2, 0.0, 1.0);
+    float win, frame = 0.0;
+    float cov;
+    float rv = 0.0, glassSh = 1.0; vec3 rvN = n;                      // (the window's recess: a reveal seen, its normal; the glass in its shade)
+    // the wall's own finish: lap siding on houses, small tiles on some mansions, rain streaks under windows
+    float nz = texture(uNoise, vWorld.xz / 5.0 + vWorld.y / 9.0).b;
+    float fin = 1.0;
+    float aaF = clamp(1.0 - fwidth(vM.z / 0.24) * 2.0, 0.0, 1.0);
+    if (house && s3 < 0.6) fin = 1.0 - 0.09 * smoothstep(0.8, 0.95, fract(vM.z / 0.24)) * aaF;
+    else if ((mansion && s3 > 0.35) || (!house && !tower && s3 > 0.8)) {
+      vec2 tp = vec2(vM.x / 0.23 + step(0.5, fract(vM.z / 0.12)) * 0.5, vM.z / 0.06);
+      float aaT = clamp(1.0 - max(fwidth(tp.x), fwidth(tp.y)) * 1.5, 0.0, 1.0);
+      vec2 tf = abs(fract(tp) - 0.5);
+      fin = (1.0 - 0.1 * smoothstep(0.38, 0.5, max(tf.x * 0.25, tf.y)) * aaT) * (0.95 + 0.1 * nHash(floor(tp)) * aaT);
+    } else fin = 0.93 + 0.14 * nz;
+    if (tower) {
+      float band = smoothstep(0.10, 0.16, fp.y) * (1.0 - smoothstep(0.86, 0.92, fp.y));
+      float mull = smoothstep(0.03, 0.08, fp.x) * (1.0 - smoothstep(0.92, 0.97, fp.x));
+      win = band * mull; cov = 0.66;
+      if (s3 > 0.5) { win = band; cov = 0.76; }                        // ribbon glazing
+    } else if (veranda) {
+      // behind the balconies: sliding doors, two panes in an aluminium frame
+      float x0 = 0.1, x1 = 0.9, y0 = 0.03, y1 = 0.8;
+      float wx = smoothstep(x0 - 0.01, x0 + 0.01, fp.x) * (1.0 - smoothstep(x1 - 0.01, x1 + 0.01, fp.x));
+      float wy = smoothstep(y0 - 0.01, y0 + 0.01, fp.y) * (1.0 - smoothstep(y1 - 0.01, y1 + 0.01, fp.y));
+      win = wx * wy; cov = 0.6;
+      float fx = min(fp.x - x0, x1 - fp.x) * ws, fy = min(fp.y - y0, y1 - fp.y) * fh, fm = abs(fp.x - 0.5) * ws;
+      frame = win * max(step(min(fx, fy), 0.05), step(fm, 0.035));
+    } else {
+      float x0 = 0.2, x1 = 0.8, y0 = 0.32, y1 = house ? 0.8 : 0.86;
+      float wx = smoothstep(x0 - 0.02, x0 + 0.02, fp.x) * (1.0 - smoothstep(x1 - 0.02, x1 + 0.02, fp.x));
+      float wy = smoothstep(y0 - 0.02, y0 + 0.02, fp.y) * (1.0 - smoothstep(y1 - 0.02, y1 + 0.02, fp.y));
+      win = wx * wy;
+      float skipW = house ? 0.45 : 0.12;
+      if (h2(cell + vSeed) < skipW) win = 0.0;
+      cov = 0.36 * (1.0 - skipW);
+      float fx = min(fp.x - x0, x1 - fp.x) * ws, fy = min(fp.y - y0, y1 - fp.y) * fh;
+      frame = win * max(step(min(fx, fy), 0.055), house ? step(abs(fp.x - 0.5) * ws, 0.03) : 0.0);
+      // the window set back in the wall: the view ray, going in, meets a side of the opening (a reveal: the
+      // jambs, the sill, the head) before the glass, and that side is what is seen, lit by its own facing;
+      // otherwise the glass and its frame, shifted, and in the head's or a jamb's shadow when the sun is behind it
+      float RD = house ? 0.07 : mansion ? 0.13 : 0.2;
+      if (win > 0.5 && aa > 0.5 && dist < 260.0) {
+        vec2 pm = fp * vec2(ws, fh), lo = vec2(x0 * ws, y0 * fh), hi = vec2(x1 * ws, y1 * fh), dq = -Vt.xy / Vt.z;
+        float tx = dq.x > 1e-4 ? (hi.x - pm.x) / dq.x : dq.x < -1e-4 ? (lo.x - pm.x) / dq.x : 1e9;
+        float ty = dq.y > 1e-4 ? (hi.y - pm.y) / dq.y : dq.y < -1e-4 ? (lo.y - pm.y) / dq.y : 1e9;
+        if (min(tx, ty) < RD) { rv = 1.0; rvN = tx < ty ? (dq.x > 0.0 ? -T : T) : vec3(0.0, dq.y > 0.0 ? -1.0 : 1.0, 0.0); }
+        else {
+          vec2 q = pm + dq * RD, so = q + Lt.xy / max(Lt.z, 0.05) * RD;
+          float fx2 = min(q.x - lo.x, hi.x - q.x), fy2 = min(q.y - lo.y, hi.y - q.y);
+          frame = max(step(min(fx2, fy2), 0.05), house ? step(abs(q.x - (lo.x + hi.x) * 0.5), 0.03) : 0.0);
+          glassSh = Lt.z > 0.0 && so.x > lo.x && so.x < hi.x && so.y > lo.y && so.y < hi.y ? 1.0 : 0.0;
+        }
+      }
+      if (!house && s3 > 0.6) { win = wy * smoothstep(0.02, 0.06, fp.x) * (1.0 - smoothstep(0.94, 0.98, fp.x)); cov = 0.5; frame = win * step(fract(g.x * 2.0) * ws * 0.5, 0.05); }   // strip windows
+      // rain streaks run down from the sills
+      if (!house) fin *= 1.0 - 0.13 * wx * (1.0 - smoothstep(0.0, 0.3, fp.y)) * texture(uNoise, vec2(vM.x * 1.7, vM.z * 0.08)).a * aa;
+    }
+    if (vM.z < 0.3 || vM.z > H - 0.9 || (shop && vM.z < z0) || (house && dist < uDetR)) { win = 0.0; rv = 0.0; frame = 0.0; }   // (houses near by have real windows; far off, where those aren't drawn, painted ones)  // plinth, parapet, the shop storey
+    frame *= step(0.001, win) * aa;
+    win = mix(cov, win, aa);
+    // glass: sky reflection with Fresnel, dark interior
+    vec3 r = reflect(-V, n);
+    float fres = 0.12 + 0.75 * pow(1.0 - max(dot(n, V), 0.0), 4.0);
+    vec3 glass = mix(vec3(0.07, 0.08, 0.1), envRefl(r, 0.02) * 0.9, fres + (tower ? 0.25 : 0.0));
+    glass += uSunCol * pow(max(dot(r, uSunDir), 0.0), 120.0) * 2.0 * glassSh;
+    glass *= mix(0.72, 1.0, glassSh * diff + (1.0 - diff));               // (the head's shadow across the glass)
+    if (house || veranda) glass = mix(glass, vec3(0.62, 0.6, 0.55) * (uSunCol * 0.3 + amb), 0.35 * step(0.5, h2(cell * 5.1 + vSeed)));   // curtains drawn
+    // only some rooms are lit (rooms span 2-3 windows), some buildings are nearly dark, brightness varies
+    float bmood = h2(vec2(vSeed * 3.1, 1.7));
+    float share = (tower ? 0.28 : house ? 0.2 : 0.22) * (bmood < 0.2 ? 0.15 : 0.6 + 0.8 * bmood);
+    vec2 room = vec2(floor(cell.x / (house ? 2.0 : 3.0)), cell.y);
+    float on = step(1.0 - share, h2(room * 1.7 + vSeed)) * step(0.15, h2(cell * 3.3 + vSeed));
+    on *= 0.45 + 0.75 * h2(room * 2.9 + vSeed + 4.0);
+    // far away the windows blur into their average: keep that dim and warm, so walls stay dark with a glow
+    float lit = mix(share * 0.07, on, aa * aa) * uNight;
+    vec3 wcol = mix(vec3(1.0, 0.72, 0.42), mix(vec3(1.0, 0.78, 0.5), vec3(0.84, 0.9, 1.0), step(tower ? 0.45 : 0.75, h2(cell * 2.3 + vSeed))), aa);
+    glass = mix(glass, glass * 0.3, uNight);
+    bEm = wcol * lit * win * (1.0 - frame) * 1.5;
+    // the photographed wall finish (tiles, concrete, plaster, siding) in the building's own colour
+    if (uMatOn > 0.5 && !tower) {
+      // (a Japanese house is clad in clean factory-made siding or plaster: the photographed plaster's grain, and
+      // the siding's own lines drawn over it; not the mossy boards of a barn)
+      float L = house ? 11.0 : mansion ? (s3 > 0.35 ? 9.0 : 10.0) : (s3 > 0.5 ? 10.0 : 11.0);
+      float S = L == 9.0 ? 1.2 : 3.0;
+      vec3 wt = matC(L, vec2(vM.x, vM.z) / S) / max(matAvg(L), vec3(0.05));
+      wt = house ? mix(vec3(1.0), wt, 0.6) : wt;
+      fin = mix(1.0, fin, house ? 0.85 : 0.3);
+      wc *= clamp(wt, 0.4, 1.8);
+      // close up, the finish in relief (its normal map: tile joints, the plaster's trowel marks, the siding's
+      // laps) and its own gloss (glazed tiles shine, plaster doesn't)
+      float rkw = (1.0 - smoothstep(10.0, 55.0, dist)) * uMatNOn * (1.0 - win) * (1.0 - frame);
+      vec4 wnm = matN(L, vec2(vM.x, vM.z) / S);
+      vec3 nW = normalize(T * wnm.x * rkw + vec3(0.0, wnm.y * rkw, 0.0) + n * wnm.z);
+      float ndl = max(dot(n, uSunDir), 0.0), dW = max(dot(nW, uSunDir), 0.0) * (ndl > 1e-3 ? diff / ndl : 0.0);
+      wSpec = uSunCol * specSun(nW, V, clamp(wnm.w, 0.25, 0.95), 0.04) * dW * 0.5 * rkw;
+      diffW = mix(diff, dW, step(0.001, rkw));
+    }
+    vec3 wallLit = wc * fin * (uSunCol * diffW * 0.9 + amb) + wSpec;
+    vec3 alu = (s2 > 0.5 && house ? vec3(0.3, 0.26, 0.22) : vec3(0.66, 0.67, 0.66)) * (uSunCol * diff * 0.9 * mix(0.35, 1.0, glassSh) + amb);
+    col = mix(mix(wallLit, glass, win), alu, frame);
+    // a reveal: the wall's own stuff, lit as it faces (the sill up to the sun, the head down in its shade)
+    if (rv > 0.5) col = wc * fin * (uSunCol * max(dot(rvN, uSunDir), 0.0) * 0.9 * step(0.001, diff) + skyIrr(rvN) * 0.62);
+    // offices and towers: a photographed facade, its real windows and panels (and lit windows from night
+    // photos), the storeys matched to the building's height
+    if (uMatOn > 0.5 && (tower || (!house && !mansion && H >= 11.0 && s2 > 0.15))) {
+      float L, S;
+      if (tower) { int k = int(s1 * 4.0); L = k == 0 ? 5.0 : k == 1 ? 6.0 : k == 2 ? 1.0 : 0.0; S = k == 0 ? 38.0 : k == 1 ? 42.9 : k == 2 ? 21.0 : 28.8; if (H > 120.0 && s3 > 0.5) { L = 8.0; S = 112.0; } }
+      else { int k = int(s1 * 5.0); L = float(k); S = k == 0 ? 28.8 : k == 1 ? 21.0 : k == 2 ? 14.4 : 19.2; }
+      vec2 uv = vec2(vM.x + vSeed * 7.3, vM.z) / S;
+      // the facade in relief: the glass (dark in the photo) set back behind the wall's face. The view ray is
+      // marched in; where it reaches the depth of what is there, that is what is seen: the glass at the back,
+      // shifted, or the side of an opening (a reveal) on the way. Then the sun's way out from it: in the
+      // shadow of the head or a jamb, or not
+      float RD2 = tower ? 0.08 : 0.2, relief = 0.0, shR = 1.0;
+      vec3 nR = n;
+      if (uRelief > 0.5 && dist < 170.0) {
+        relief = 1.0 - smoothstep(110.0, 170.0, dist);
+        vec2 du = -Vt.xy / max(Vt.z, 0.3) * RD2 * relief / S;        // (fading out far off, so it never pops; not running away at a glancing angle)
+        float dh = 0.0, hit = 0.0;
+        for (int i = 0; i <= 6; i++) {
+          float dd = float(i) / 6.0;
+          vec2 uvi = uv + du * dd;
+          vec3 ci = matC(L, uvi);
+          dh = smoothstep(0.3, 0.12, dot(ci, vec3(0.3, 0.55, 0.15))) * (1.0 - smoothstep(0.03, 0.1, ci.r - ci.b));   // (glass: dark and not reddish; brick and stone stay at the face)
+          hit = dd;
+          if (dd >= dh) break;
+        }
+        uv += du * hit;
+        if (hit > 0.01 && dh < 0.5) nR = normalize(-(T * du.x + vec3(0.0, du.y, 0.0)) * relief + n * (1.0 - relief) + n * 0.05);   // (a reveal faces back the way the ray came)
+        vec2 us = uv + Lt.xy / max(Lt.z, 0.05) * RD2 * hit / S;
+        vec3 cs = matC(L, us);
+        if (hit > 0.5 && smoothstep(0.3, 0.12, dot(cs, vec3(0.3, 0.55, 0.15))) * (1.0 - smoothstep(0.03, 0.1, cs.r - cs.b)) < 0.5) shR = mix(1.0, 0.35, relief);
+      }
+      vec3 ft = matC(L, uv);
+      float lf = dot(ft, vec3(0.3, 0.55, 0.15)), gm = smoothstep(0.4, 0.16, lf);
+      // the facade's own relief and gloss (the same photo's normal and roughness maps): its glass is what is smooth
+      // (not merely what is dark in the photo: a dark stone panel no longer mirrors the sky), mullions and panel
+      // edges catch the sun
+      float rkf = (1.0 - smoothstep(20.0, 110.0, dist)) * uMatNOn;
+      vec4 fnm = matN(L, uv);
+      vec3 nF = normalize(T * fnm.x * rkf + vec3(0.0, fnm.y * rkf, 0.0) + n * fnm.z);
+      if (uMatNOn > 0.5) gm = mix(gm, 1.0 - smoothstep(0.06, 0.3, fnm.w), 0.85);
+      float ndlF = max(dot(n, uSunDir), 0.0), diffF = max(dot(nF, uSunDir), 0.0) * (ndlF > 1e-3 ? diff / ndlF : 0.0);
+      vec3 rr = reflect(-V, mix(n, nF, 0.5));
+      // (the photo has its own light in it: a face keeps the old balance; a reveal is lit as it faces, the
+      // glass in the shadow of its opening loses the sun)
+      float isRev = step(0.5, 1.0 - dot(nR, n)), diffR = max(dot(nR, uSunDir), 0.0) * step(0.001, diff);
+      vec3 day = ft * (uSunCol * mix(0.35 + 0.5 * diffF * shR, 0.3 + 0.6 * diffR, isRev) + mix(amb * 0.8, skyIrr(nR) * 0.7, isRev)) * 1.05;
+      day += (envRefl(rr, 0.03) * (0.1 + 0.55 * pow(1.0 - max(dot(n, V), 0.0), 4.0)) + uSunCol * pow(max(dot(rr, uSunDir), 0.0), 200.0) * 1.5) * gm * (1.0 - uNight * 0.8);
+      day += uSunCol * specSun(nF, V, clamp(fnm.w, 0.2, 0.9), 0.04) * diffF * 0.4 * (1.0 - gm) * rkf;   // (metal panels' and stone's sheen)
+      // no two buildings alike: a tint, rain streaks down the wall, grime near the street
+      day *= mix(vec3(0.86), vec3(1.12), vec3(h1(vSeed + 1.1), h1(vSeed + 1.1) * 0.6 + h1(vSeed + 2.7) * 0.4, h1(vSeed + 3.9) * 0.5 + h1(vSeed + 1.1) * 0.5));
+      float stk = texture(uNoise, vec2(vM.x * 0.31 + vSeed, vM.z * 0.017)).a;
+      day *= 1.0 - 0.16 * smoothstep(0.45, 0.8, stk) * (1.0 - gm) - 0.12 * (1.0 - smoothstep(0.0, 6.0, vM.z));
+      // street level: a glazed lobby with its entrance, or a darker stone plinth
+      if (vM.z < 4.0 && !shop) {
+        float bay = fract(vM.x / 6.0), lob = step(0.5, h1(vSeed + 7.7));
+        // (granite slabs in 1.2 x 0.6 m courses, a light grey or a warm beige; the lobby behind its glass lit by its
+        // ceiling lights, a warm glow even by day, with the street mirrored over it)
+        vec2 sg = vec2(vM.x / 1.2 + step(0.5, fract(vM.z / 1.2)) * 0.5, vM.z / 0.6), sf = abs(fract(sg) - 0.5), sw = max(fwidth(sg), vec2(1e-4));
+        float sj = max(1.0 - smoothstep(0.5 - sw.x * 1.5, 0.5, sf.x), 1.0 - smoothstep(0.5 - sw.y * 1.5, 0.5, sf.y)) * (1.0 - smoothstep(15.0, 60.0, dist));
+        vec3 stone = mix(vec3(0.58, 0.57, 0.55), vec3(0.62, 0.57, 0.5), step(0.5, h1(vSeed + 3.3))) * (0.9 + 0.2 * texture(uNoise, vec2(vM.x, vM.z) * 0.3).b) * (1.0 - 0.25 * sj) * (uSunCol * (0.35 + 0.5 * diff) + amb * 0.85);
+        vec3 lobby = (vec3(0.2, 0.19, 0.17) * (uSunCol * 0.25 + amb) + vec3(0.62, 0.55, 0.44) * 0.2 * (0.8 + 0.4 * h1(floor(vM.x / 6.0) + vSeed)) + envRefl(rr, 0.03) * (0.15 + 0.6 * pow(1.0 - max(dot(n, V), 0.0), 4.0))) * mix(1.0, 0.35, step(abs(bay - 0.5), 0.02));
+        day = mix(stone, lobby, lob * step(0.35, vM.z) * step(vM.z, 3.6) * step(0.06, bay) * step(bay, 0.94));
+        gm = lob;
+      }
+      col = mix(day, day * 0.18, uNight);
+      vec3 nt = matC(20.0 + step(0.5, s3), vec2(vM.x + vSeed * 11.0, vM.z) / 30.0);
+      bEm = nt * nt * 2.4 * uNight * (0.4 + 0.6 * gm) * (bmood < 0.2 ? 0.3 : 1.0);
+    }
+    // ground-floor shade and contact darkening (the street's own light keeps it from going black)
+    col *= mix(0.74, 1.0, smoothstep(0.0, 4.5, vM.z));
+    if (shop && vM.z < z0) {
+      // a shop front: glazing or a roller shutter, pillars between the shops, and a sign band that lights up
+      float unit = floor(vM.x / 6.5), ux = fract(vM.x / 6.5), sh = h2(vec2(unit, vSeed));
+      float aaS = clamp(1.0 - fwidth(vM.x / 6.5) * 8.0, 0.0, 1.0);
+      vec3 hue = 0.5 + 0.5 * cos(6.2832 * (sh * 3.7 + vec3(0.0, 0.33, 0.67)));
+      vec3 lit0 = uSunCol * diff * 0.9 + amb;
+      if (vM.z > 3.35) {
+        vec3 sign = mix(vec3(0.92), hue, 0.75);
+        float letters = step(0.5, h2(floor(vec2(vM.x / 0.55, (vM.z - 3.35) / 0.3)) + sh)) * step(0.15, abs(ux - 0.5)) * step(abs(ux - 0.5), 0.42) * step(3.5, vM.z) * step(vM.z, 4.1);
+        sign = mix(sign, mix(vec3(0.1), vec3(0.95), step(0.5, fract(sh * 7.0))), letters * 0.8 * aaS);
+        col = sign * lit0 * 0.9;
+        bEm += sign * (0.25 + 1.3 * uNight) * aaS;
+        if (vM.z > 4.2) col = wc * lit0 * 0.85;
+      } else {
+        float pil = 1.0 - step(0.035, ux) * step(ux, 0.965);
+        if (sh < 0.22 || (uNight > 0.5 && sh < 0.55)) {                         // closed: a ribbed steel shutter
+          float rib = 0.85 + 0.15 * smoothstep(0.3, 0.5, abs(fract(vM.z / 0.09) - 0.5)) * aa;
+          col = vec3(0.6, 0.61, 0.6) * rib * lit0 * (vM.z > 3.0 ? 0.75 : 1.0);
+        } else {
+          vec3 shopIn = mix(vec3(0.95, 0.92, 0.82), hue, 0.25);
+          float door = step(0.4, ux) * step(ux, 0.6) * step(vM.z, 2.2);
+          float mul = step(0.01, abs(fract(vM.x / 1.6) - 0.5) - 0.48);
+          col = mix(glass * 0.7 + shopIn * 0.32, shopIn * 0.55 * lit0, 0.35);
+          col = mix(col, alu, max(mul, step(vM.z, 0.35)) * aaS);
+          bEm += shopIn * (0.35 + 1.1 * uNight) * (1.0 - mul) * step(0.35, vM.z) * (1.0 - door * 0.5) * aaS;
+        }
+        col = mix(col, wc * lit0 * 0.9, pil * aaS);
+      }
+    } else if (!house && !mansion && !tower && vFeat < 0.5 && vM.z < 3.6 && vM.z > 0.3 && s2 > 0.7) { col = mix(col, glass * 0.8, 0.5 * aa); bEm += vec3(1.0, 0.86, 0.62) * 0.9 * uNight * aa; }   // glazed lobbies
+  }
+  if (vRoof < 0.5 && abs(n.y) < 0.5) col *= mix(0.7, 1.0, smoothstep(0.0, 3.2, vM.z));   // (darker where the wall meets the ground)
+  outColor = vec4(tonemap(applyFog(col, vWorld) + airLight(bEm, vWorld)), 1.0);
+}`;
+// roads: asphalt with Japanese markings (white edge lines, a dashed or solid centre line, lane lines on
+// motorways), a fine aggregate grain near the camera, darker wheel tracks
+const ROAD_VS = GLSL_HEAD + `
+layout(location=0) in vec2 aXZ;
+layout(location=1) in float aY;
+layout(location=3) in vec4 aM;       // u (dm), class + 512, width (dm), across (-1000..1000)
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv;
+` + CITY_POS_GLSL + `
+out vec3 vWorld; out vec3 vR; flat out float vCls; out float vJ; flat out float vSide; out vec3 vRel;
+void main(){
+  vec3 w = cityWorld(aXZ * 0.1, aY);
+  vec2 d = w.xz - uCamPos.xz;
+  vWorld = w; vRel = w - uCamPos; w.y -= dot(d, d) * uCurv;   // (vRel: small numbers, so a face's own normal from their derivatives is clean far from the origin)
+  vR = vec3(aM.x * 0.1, aM.z * 0.1, aM.w * 0.001);
+  float k = aM.y - 512.0;
+  vCls = mod(k, 16.0); vJ = floor(k / 16.0 + 0.001) / 7.0;         // class, and how much this is a junction
+  vSide = k > 255.5 ? k - 255.0 : 0.0;                              // pavements: 1 the paving, 2 the kerb and back faces
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+const ROAD_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec3 vR; flat in float vCls; in float vJ; flat in float vSide; in vec3 vRel;
+uniform sampler2D uNoise;
+uniform sampler2D uTranMask;
+uniform vec4 uTranRect;     // where PLATEAU's real road surfaces are drawn instead (the developer panel's comparison)
+out vec4 outColor;
+float stripe(float x, float c, float hw, float aa){ return 1.0 - smoothstep(hw - aa, hw + aa, abs(x - c)); }
+void main(){
+  if (zoneCut(vWorld)) discard;
+  if (uTranRect.z > 0.0) {                                             // (the buildings' contact shadows too: the hidden ones' stayed behind)
+    vec2 tu = (vWorld.xz - uTranRect.xy) / uTranRect.zw;
+    if (tu.x > 0.0 && tu.y > 0.0 && tu.x < 1.0 && tu.y < 1.0 && texture(uTranMask, tu).r > 0.5) discard;
+  }
+  if (zoneAbove(vWorld)) discard;       // (over Google's 3D, its real elevated roads stay overhead until you drive up onto one)
+  float u = vR.x, w = vR.y, m = vR.z * w * 0.5;               // along, width, metres from the centre line
+  float dist = length(uCamPos - vWorld), aa = max(fwidth(m), 0.02);
+  float n1 = texture(uNoise, vWorld.xz / 0.45).b, n2 = texture(uNoise, vWorld.xz / 6.0).a, n3 = texture(uNoise, vWorld.xz / 37.0).b;
+  // seen from below (an elevated road over you): its concrete underside, not the surface
+  if (uCamPos.y < vWorld.y - 1.0) {
+    vec3 cu = vec3(0.42, 0.42, 0.41) * (0.85 + 0.2 * n2) * (uAmbSky * 0.9 + uSunCol * 0.12);
+    outColor = vec4(tonemap(applyFog(cu, vWorld)), 1.0); return;
+  }
+  if (vSide > 11.5) {
+    // the gutter of the L-shaped kerb unit (L型側溝): smooth concrete in 60 cm lengths, a shade lighter than the
+    // asphalt; grime and the kerb's shade along its foot, the joint with the asphalt dark
+    float au = max(fwidth(u), 1e-3), jt = 1.0 - smoothstep(0.0, au * 1.5 + 0.004, abs(fract(u / 0.6) - 0.5) * 0.6);
+    float n2g = texture(uNoise, vWorld.xz / 3.0).a, n1g = texture(uNoise, vWorld.xz / 0.5).b;
+    vec3 base = vec3(0.55, 0.54, 0.51) * (0.86 + 0.14 * n2g) * (0.93 + 0.1 * n1g) * (1.0 - 0.3 * jt * (1.0 - smoothstep(10.0, 40.0, dist)));
+    base *= mix(0.6, 1.0, smoothstep(1.0, 0.72, vR.z)) * (1.0 - 0.15 * smoothstep(0.12, 0.0, vR.z));
+    float shg = sunShadow(vWorld, vec3(0.0, 1.0, 0.0)) * planeShadow(vWorld.xz);
+    vec3 cgu = base * (uSunCol * max(uSunDir.y, 0.0) * 0.95 * shg + skyIrr(vec3(0.0, 1.0, 0.0)) * 0.8 * mix(0.65, 1.0, smoothstep(1.0, 0.6, vR.z)));
+    outColor = vec4(tonemap(applyFog(cgu, vWorld)), 1.0); return;
+  }
+  if (vSide > 9.5) {
+    // the city's ground: paved blocks (slabs of concrete and paving, stained by use) or grass
+    float g1 = texture(uNoise, vWorld.xz / 9.0).a, g2 = texture(uNoise, vWorld.xz / 53.0).b, g3 = texture(uNoise, vWorld.xz / 1.7).b;
+    vec3 base;
+    if (vSide < 10.5) {
+      float blk = nHash(floor(vWorld.xz / 23.0));                         // (each lot its own kind of paving)
+      if (uMatOn > 0.5) base = blk < 0.45 ? matC(10.0, vWorld.xz / 3.0) : blk < 0.8 ? matC(14.0, vWorld.xz / 1.2) : matC(13.0, vWorld.xz / 4.0) * 1.25;
+      else base = mix(vec3(0.5, 0.49, 0.46), vec3(0.62, 0.6, 0.56), g3);
+      base *= (0.86 + 0.22 * g1) * (0.9 + 0.15 * g2) * mix(vec3(1.0), vec3(1.03, 1.0, 0.95), blk);
+    } else {
+      base = uMatOn > 0.5 ? matC(19.0, vWorld.xz / 3.0) : vec3(0.28, 0.4, 0.16);
+      base *= (0.82 + 0.3 * g1) * mix(vec3(1.0), vec3(1.08, 1.02, 0.85), g2 * 0.6);
+      // (a Japanese lawn in summer is a dusty, patchy green: worn to earth in places, never a golf course's)
+      float wear = smoothstep(0.55, 0.8, texture(uNoise, vWorld.xz / 17.0).a * 0.7 + g3 * 0.3);
+      base = mix(mix(base, vec3(dot(base, vec3(0.33))), 0.25), vec3(0.4, 0.36, 0.28) * (0.85 + 0.3 * g3), wear * 0.7);
+    }
+    float sh3 = sunShadow(vWorld, vec3(0.0, 1.0, 0.0)) * planeShadow(vWorld.xz);
+    // close up, the surface's own relief (its normal map): slabs' edges, aggregate, tufts catch the sun
+    float rkg = (1.0 - smoothstep(10.0, 60.0, dist)) * uMatOn;
+    vec3 ng = vec3(0.0, 1.0, 0.0);
+    vec2 ggx = dFdx(vRel.xz), ggy = dFdy(vRel.xz);
+    if (rkg > 0.0) {
+      float blk2 = nHash(floor(vWorld.xz / 23.0)), L2 = vSide >= 10.5 ? 19.0 : blk2 < 0.45 ? 10.0 : blk2 < 0.8 ? 14.0 : 13.0, S2 = L2 == 14.0 ? 1.2 : L2 == 13.0 ? 4.0 : 3.0;
+      ng = groundN(matNg(L2, vWorld.xz / S2, ggx / S2, ggy / S2), rkg * (vSide >= 10.5 ? 0.6 : 1.0));
+    }
+    vec3 cg = base * (uSunCol * max(dot(ng, uSunDir), 0.0) * 0.95 * sh3 + mix(uAmbSky, vec3(dot(uAmbSky, vec3(0.333))), 0.45) * 0.95 * (0.75 + 0.25 * ng.y));   // (shade a little blue, not a blue carpet)
+    outColor = vec4(tonemap(applyFog(cg, vWorld)), 1.0);
+    return;
+  }
+  if (vSide > 8.5) {
+    // a building's contact shadow on the ground at its foot
+    float k = 1.0 - (vR.z * 0.5 + 0.5); k = k * k * (1.0 - smoothstep(200.0, 700.0, dist));
+    outColor = vec4(0.0, 0.0, 0.0, 0.42 * k); return;
+  }
+  if (vSide > 2.5) {
+    // the airport (the worker's aeroway layer): aprons, taxiways, their paint and lights
+    float n2a = texture(uNoise, vWorld.xz / 6.0).a, n3a = texture(uNoise, vWorld.xz / 41.0).b;
+    vec3 base, em = vec3(0.0);
+    if (vSide > 7.5) {
+      // railway track: grey ballast, concrete sleepers every 0.6 m, two steel rails 1.067 m apart (narrow gauge)
+      float au = max(fwidth(u), 1e-3), am = max(fwidth(m), 1e-3), far = 1.0 - smoothstep(60.0, 300.0, dist);
+      vec3 bal = mix(vec3(0.42, 0.4, 0.37), vec3(0.52, 0.5, 0.46), texture(uNoise, vWorld.xz / 0.35).b) * (0.9 + 0.15 * n2a);
+      float sl = (1.0 - smoothstep(0.1, 0.1 + au * 1.5, abs(fract(u / 0.6) - 0.5) * 0.6)) * step(abs(m), 1.0) * far;
+      base = mix(bal, vec3(0.6, 0.59, 0.56), max(sl, (1.0 - far) * 0.25 * step(abs(m), 1.0)));
+      float rl = max(stripe(m, 0.534, 0.035, am), stripe(m, -0.534, 0.035, am));
+      base = mix(base, vec3(0.62, 0.6, 0.58) + uSunCol * 0.25, rl);
+      base = mix(base, vec3(0.3, 0.27, 0.24), smoothstep(1.4, 1.9, abs(m)) * 0.6);
+    } else if (vSide < 3.5) {
+      // apron: concrete slabs 7.5 m square with their joints, one a shade off the next, tyre marks and oil
+      vec2 q = vWorld.xz / 7.5, f = abs(fract(q) - 0.5), fq = max(fwidth(q), vec2(1e-4));
+      float jt = max(1.0 - smoothstep(0.0, fq.x * 1.5 + 0.004, 0.5 - f.x), 1.0 - smoothstep(0.0, fq.y * 1.5 + 0.004, 0.5 - f.y)) * (1.0 - smoothstep(25.0, 140.0, dist));
+      base = mix(vec3(0.6, 0.59, 0.56), vec3(0.69, 0.68, 0.64), nHash(floor(q))) * (0.9 + 0.14 * n2a) * (0.93 + 0.1 * n3a);
+      if (uMatOn > 0.5) base *= mix(vec3(1.0), clamp(matC(18.0, vWorld.xz / 4.0) / max(matAvg(18.0), vec3(0.05)), 0.7, 1.3), 1.0 - smoothstep(80.0, 500.0, dist));
+      base *= 1.0 - jt * 0.16;
+      base *= 1.0 - 0.2 * smoothstep(0.58, 0.82, texture(uNoise, vWorld.xz / 17.0).b) * smoothstep(0.4, 0.7, n3a);
+    } else if (vSide < 4.5) {
+      // taxiway: grey asphalt, the shoulders lighter and rougher
+      float sh = smoothstep(11.4, 11.6, abs(m));
+      base = mix(vec3(0.33, 0.33, 0.335), vec3(0.45, 0.45, 0.44), sh) * (0.88 + 0.2 * n2a) * (0.95 + 0.08 * n3a);
+      if (uMatOn > 0.5) base *= mix(vec3(1.0), clamp(matC(13.0, vWorld.xz / 4.0) / max(matAvg(13.0), vec3(0.05)), 0.6, 1.5), 1.0 - smoothstep(80.0, 500.0, dist));
+    } else {
+      // paint over it: the yellow centre line and (off the aprons) the double edge lines; at the holding position
+      // two solid and two dashed lines across; the green centre-line lights and blue edge lights
+      float aa2 = max(fwidth(m), 0.006), p = 0.0;
+      if (vSide < 6.5) {
+        p = stripe(m, 0.0, 0.075, aa2);
+      } else {
+        float au = max(fwidth(u), 0.004), dash = step(0.5, fract(m / 1.8));
+        p = max(max(stripe(u, 0.225, 0.075, au), stripe(u, 0.525, 0.075, au)), max(stripe(u, 0.825, 0.075, au), stripe(u, 1.125, 0.075, au)) * dash) * step(abs(m), w * 0.5);
+      }
+      p *= 0.9 * (0.82 + 0.18 * n2a) * (1.0 - smoothstep(900.0, 3000.0, dist));
+      float lr = max(0.1, max(fwidth(u), fwidth(m)) * 1.3), lit = 0.0, blu = 0.0;
+      if (vSide < 6.5) {
+        float lu = u - 15.0 * floor(u / 15.0 + 0.5); lit = 1.0 - smoothstep(lr * 0.5, lr, length(vec2(lu, m)));
+        if (vSide < 5.5) { float lu2 = u - 30.0 * floor(u / 30.0 + 0.5); blu = 1.0 - smoothstep(lr * 0.5, lr, length(vec2(lu2, abs(m) - 12.3))); }
+      }
+      float night = 0.12 + 1.8 * uNightK;
+      em = (vec3(0.15, 1.0, 0.45) * lit + vec3(0.25, 0.4, 1.3) * blu) * night * clamp(0.25 / lr, 0.12, 1.0);   // (far off a point of light, not a blot)
+      float a = max(p, max(lit, blu) * step(0.2, uNightK + 0.25));
+      if (a < 0.04) discard;
+      base = mix(vec3(0.25), vec3(0.86, 0.64, 0.1), p / max(a, 1e-3));
+    }
+    float sh2 = sunShadow(vWorld, vec3(0.0, 1.0, 0.0)) * planeShadow(vWorld.xz);
+    vec3 ca = base * (uSunCol * max(uSunDir.y, 0.0) * 0.95 * sh2 + uAmbSky * 0.85) + em;
+    outColor = vec4(tonemap(applyFog(ca, vWorld)), 1.0);
+    return;
+  }
+  if (vSide > 0.5) {
+    // the pavement: 30 cm slabs, a kerb-stone edge, the yellow tactile strip for the blind (点字ブロック); and the
+    // upright faces (the kerb, a bridge's parapets and piers) lit by their own normal
+    float n2p = texture(uNoise, vWorld.xz / 6.0).a;
+    vec3 fn = normalize(cross(dFdx(vRel), dFdy(vRel)));
+    if (dot(fn, -vRel) < 0.0) fn = -fn;
+    vec3 base; float aoP = 1.0;
+    // (the paving's texture frame and derivatives, worked out here where every pixel runs: x along the kerb, y away)
+    vec2 puv0 = vec2(u, vR.z * vR.y) / 1.2, pgx = dFdx(puv0), pgy = dFdy(puv0);
+    mat3 Fp = uvFrame(vec3(0.0, 1.0, 0.0), vRel, puv0);
+    vec3 pvN = vec3(0.0, 1.0, 0.0); float pvR = 0.6;
+    if (vSide > 1.5) {
+      base = vec3(0.6, 0.59, 0.56) * (0.88 + 0.12 * n2p);
+      if (vR.y > 2.0) {
+        // the kerb stone's face: precast concrete in 60 cm lengths, the chamfer on its top edge catching the light,
+        // grimy and in the gutter's shade at its foot
+        float au = max(fwidth(u), 1e-3), jt = 1.0 - smoothstep(0.0, au * 1.5 + 0.004, abs(fract(u / 0.6 + 0.25) - 0.5) * 0.6);
+        base = vec3(0.7, 0.69, 0.66) * (0.9 + 0.1 * n2p) * (1.0 - 0.35 * jt * (1.0 - smoothstep(10.0, 40.0, dist)));
+        aoP = mix(0.5, 1.0, smoothstep(0.0, 0.7, vR.z));
+      }
+    }
+    else {
+      float am = vR.z * vR.y;                                     // metres from the kerb
+      vec2 pv = vec2(u, am) / 0.3, f = abs(fract(pv) - 0.5);
+      float joint = smoothstep(0.44, 0.5, max(f.x, f.y)) * (1.0 - smoothstep(8.0, 50.0, dist));
+      base = mix(vec3(0.54, 0.53, 0.5), vec3(0.63, 0.61, 0.57), nHash(floor(pv))) * (0.9 + 0.12 * n2p);
+      base *= 1.0 - joint * 0.22;
+      if (uMatOn > 0.5) base = matC(14.0, vec2(u, am) / 1.2) * (0.85 + 0.15 * n2p);            // photographed paving blocks
+      if (am < 0.18) {                                            // the kerb stone's top, in its 60 cm lengths
+        float au = max(fwidth(u), 1e-3), jt = 1.0 - smoothstep(0.0, au * 1.5 + 0.004, abs(fract(u / 0.6 + 0.25) - 0.5) * 0.6);
+        base = vec3(0.7, 0.69, 0.66) * (0.92 + 0.08 * n2p) * (1.0 - 0.3 * jt * (1.0 - smoothstep(10.0, 40.0, dist)));
+      }
+      float tb = step(0.5, am) * step(am, 0.8) * step(0.5, fract(u / 23.0)) ;
+      base = mix(base, uMatOn > 0.5 ? matC(15.0, vec2(u, am - 0.5) / 1.2) : vec3(0.8, 0.63, 0.12) * (0.9 + 0.1 * n2p), tb);
+      // the blocks in relief close up (the paving's and the tactile blocks' normal maps): their bevelled edges and
+      // the domes catch the sun; the kerb stone's top stays smooth
+      float rkp = (1.0 - smoothstep(8.0, 45.0, dist)) * uMatNOn * step(0.18, am);
+      if (rkp > 0.0) {
+        vec4 pnm = matNg(tb > 0.5 ? 15.0 : 14.0, tb > 0.5 ? vec2(u, am - 0.5) / 1.2 : vec2(u, am) / 1.2, pgx, pgy);
+        pvN = normalize(Fp * vec3(pnm.xy * rkp, pnm.z)); pvR = pnm.w;
+      }
+    }
+    vec3 nG = vSide > 1.5 ? fn : vec3(0.0, 1.0, 0.0), nP = vSide > 1.5 ? fn : pvN;
+    float shP = sunShadow(vWorld, nG) * planeShadow(vWorld.xz);
+    float dp = max(dot(nP, uSunDir), 0.0) * shP;
+    // the real pavement's colour from the aerial photo, under the slab pattern
+    vec4 npv = nearPhoto(vWorld);
+    if (npv.a > 0.0 && vSide < 1.5) base *= mix(1.0, clamp(dot(npv.rgb, vec3(0.3, 0.55, 0.15)) / 0.4, 0.8, 1.2), 0.5 * npv.a);   // (lighter or darker, as the real one)
+    vec3 cp = base * (uSunCol * dp * 0.95 + skyIrr(nP) * 0.78 * aoP);
+    if (vSide < 1.5) cp += uSunCol * specSun(nP, normalize(uCamPos - vWorld), clamp(pvR * 1.1, 0.35, 0.9), 0.04) * dp * 0.45;   // (worn slabs' dull sheen towards the sun)
+    outColor = vec4(tonemap(applyFog(cp, vWorld)), 1.0);
+    return;
+  }
+  bool track = vCls > 7.5;
+  vec3 c = track ? mix(vec3(0.42, 0.37, 0.30), vec3(0.50, 0.45, 0.37), n2) : mix(vec3(0.17, 0.175, 0.18), vec3(0.25, 0.25, 0.255), n2 * 0.6 + n3 * 0.4);
+  if (vCls < 1.5) c *= 0.9;                                    // motorway: darker, newer surface
+  float grain = mix(1.0, 0.86 + 0.28 * n1, 1.0 - smoothstep(20.0, 160.0, dist));
+  if (uMatOn > 0.5 && !track) {                                        // photographed asphalt, darkened to Japanese tarmac
+    vec3 at = matC(13.0, vWorld.xz / 4.0) / max(matAvg(13.0), vec3(0.05));
+    c *= mix(vec3(1.0), clamp(at, 0.5, 1.6), 1.0 - smoothstep(60.0, 400.0, dist)); grain = 1.0;
+  }
+  c *= grain;
+  // wheel tracks: slightly darker and smoother where the tyres run
+  float lane = w > 6.0 ? w * 0.25 : w * 0.5;
+  c *= 1.0 - 0.06 * (stripe(abs(m), lane - 0.9, 0.35, 0.3) + stripe(abs(m), lane + 0.9, 0.35, 0.3));
+  // manhole covers (the sewer under the street): a cast-iron disc every twenty-odd metres, its pattern in relief
+  if (!track && dist < 90.0 && vJ < 0.1) {
+    float cell = floor(u / 23.0), hh = fract(sin(cell * 12.9898 + w * 3.1) * 43758.5453);
+    vec2 mc = vec2(cell * 23.0 + 4.0 + hh * 15.0, (fract(hh * 7.13) - 0.5) * max(w - 2.0, 0.0) * 0.5);
+    vec2 q = vec2(u, m) - mc; float dm = length(q);
+    if (dm < 0.34) {
+      float ring = smoothstep(0.3, 0.31, dm), rib = step(0.5, fract(dm * 16.0)) * step(0.5, fract(atan(q.y, q.x) * 3.8197));
+      vec3 iron = vec3(0.2, 0.19, 0.18) * (0.8 + 0.4 * n1) * (1.0 + 0.35 * rib) * (1.0 - 0.3 * ring);
+      c = mix(c, iron, 1.0 - smoothstep(0.32, 0.34, dm));
+    }
+  }
+  // markings
+  float paint = 0.0;
+  if (!track && vCls < 6.5) {
+    paint += stripe(abs(m), w * 0.5 - (vCls > 1.5 && vCls < 5.5 ? 0.75 : 0.35), 0.075, aa);   // edge lines (inside the gutter where there are kerbs)
+    float dash = step(fract(u / 10.0), 0.5);                                       // 5 m line, 5 m gap
+    if (vCls < 1.5) paint += dash * stripe(m, 0.0, 0.075, aa);                    // motorway lane line
+    else if (vCls < 3.5) paint += stripe(abs(m), 0.12, 0.07, aa);                  // main roads: solid double centre
+    else if (vCls < 5.5) paint += dash * stripe(m, 0.0, 0.075, aa);              // dashed centre line (narrow streets have none)
+  }
+  paint *= 0.85 * (0.8 + 0.2 * n1) * (1.0 - smoothstep(600.0, 2500.0, dist)) * (1.0 - smoothstep(0.15, 0.6, vJ));
+  // zebra crossings where the road comes into a junction: bars 45 cm wide along the road, 45 cm apart
+  if (!track && vCls < 5.5 && vCls > 1.5) {
+    float band = smoothstep(0.16, 0.2, vJ) * (1.0 - smoothstep(0.42, 0.46, vJ));
+    float fb = fract((m + w * 0.5) / 0.9), bars = smoothstep(0.0, 0.05, fb) * (1.0 - smoothstep(0.45, 0.5, fb));
+    bars *= step(abs(m), w * 0.5 - 0.5);
+    paint = max(paint, band * bars * 0.9 * (1.0 - smoothstep(300.0, 900.0, dist)));
+  }
+  // round the car the road is the real one: its colour and painted markings from the aerial photo, with the
+  // fine grain over it (so it stays sharp close up), and none of the made-up markings
+  // round the car: the real markings, taken from the aerial photo as crisp paint on the sim's clean road, and
+  // the real road's colour as a tint (the photo itself, cars and shadows and all, smears at eye level)
+  vec4 np = nearPhoto(vWorld);
+  vec3 paintCol = vec3(0.86, 0.86, 0.84);
+  if (np.a > 0.0) {
+    vec4 rp = nearPaint(vWorld);
+    paint *= 1.0 - np.a;
+    float realPaint = abs(rp.a) * np.a;
+    if (rp.a < 0.0) paintCol = mix(paintCol, vec3(0.85, 0.62, 0.12), step(0.01, realPaint));
+    paint = max(paint, clamp(realPaint * 1.4, 0.0, 1.0));
+    float lt = dot(rp.rgb, vec3(0.3, 0.55, 0.15));
+    c *= mix(1.0, clamp(lt / 0.32, 0.75, 1.3), 0.6 * np.a);            // lighter or darker surface, as the real one
+    c = mix(c, c * normalize(rp.rgb + 0.05) * 1.73, 0.25 * np.a);        // and a hint of its colour
+  }
+  if (!track && vCls > 1.5 && vCls < 5.5) c *= 1.0 - 0.1 * smoothstep(w * 0.5 - 1.2, w * 0.5 - 0.45, abs(m));   // (grime along the gutter)
+  c = mix(c, paintCol, clamp(paint, 0.0, 1.0));
+  // close up, the asphalt's own relief and gloss (the photographed asphalt's normal and roughness maps): the stones
+  // of its aggregate catch the sun and the sky's sheen, the binder between them is duller; paint is smoother
+  float rk = track ? 0.0 : (1.0 - smoothstep(12.0, 70.0, dist)) * (1.0 - 0.7 * clamp(paint, 0.0, 1.0)) * uMatNOn;
+  vec2 agx = dFdx(vRel.xz) / 4.0, agy = dFdy(vRel.xz) / 4.0;
+  vec4 anm = rk > 0.0 ? matNg(13.0, vWorld.xz / 4.0, agx, agy) : vec4(0.0, 0.0, 1.0, 0.52);
+  vec3 nA = groundN(anm, rk);
+  float shA = sunShadow(vWorld, vec3(0.0, 1.0, 0.0)), diff = max(dot(nA, uSunDir), 0.0) * shA;
+  vec3 col = c * (uSunCol * diff * 0.95 + skyIrr(nA) * 0.74);
+  // dry asphalt's gloss: rough, but bright towards the sun and mirroring a little of the sky at a glancing angle
+  if (!track) {
+    vec3 Vr = normalize(uCamPos - vWorld);
+    float ro = mix(mix(0.6, clamp(anm.w * 1.15, 0.3, 0.9), rk), 0.42, clamp(paint, 0.0, 1.0));
+    float Fr = fresnelS(max(dot(nA, Vr), 1e-3), 0.04);
+    col += uSunCol * specSun(nA, Vr, ro, 0.04) * diff * 0.8 + envRefl(reflect(-Vr, nA), ro) * Fr * 0.3 * (0.85 + 0.3 * n1);
+  }
+  // at night the pools of light under the street lamps (every 32 m each side of the main roads, staggered;
+  // the odd lamp on a pole down the side streets)
+  if (uNightK > 0.01 && !track) {
+    float pool = 0.0;
+    if (vCls > 1.5 && vCls < 5.5) {
+      float u1 = u - 32.0 * floor(u / 32.0 + 0.5), u2 = (u - 16.0) - 32.0 * floor((u - 16.0) / 32.0 + 0.5);
+      pool = exp(-(u1 * u1 + (m - w * 0.3) * (m - w * 0.3)) / 70.0) + exp(-(u2 * u2 + (m + w * 0.3) * (m + w * 0.3)) / 70.0);
+    }
+    col += c * vec3(1.0, 0.86, 0.66) * pool * 1.6 * uNightK + vec3(0.004, 0.0035, 0.003) * uNightK;
+  }
+  // soft shoulders: the ribbon's edge fades into the photo so it doesn't look pasted on
+  float edge = smoothstep(w * 0.5, w * 0.5 - 0.5, abs(m));
+  if (edge < 0.02) discard;
+  outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
+}`;
+const TREE_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aC;       // card corner x, y, card index (2 = horizontal)
+layout(location=1) in vec4 aI;       // local x, z, ground y, seed + 2*conifer
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv;
+uniform float uFade;
+` + CITY_POS_GLSL + `
+out vec2 vUv; out float vY; out float vSeed; out float vFade; out vec3 vWorld; flat out float vCard;
+void main(){
+  float con = floor(aI.w * 0.5), seed = aI.w - con * 2.0;
+  vec3 b = cityWorld(aI.xy, aI.z);
+  float dist = length(b - uCamPos);
+  vFade = 1.0 - smoothstep(uFade * 0.75, uFade, dist);
+  float hgt = con > 0.5 ? mix(13.0, 24.0, seed) : mix(7.0, 14.0, fract(seed * 7.31));
+  float wid = con > 0.5 ? hgt * 0.45 : hgt * 0.85;
+  float rot = seed * 6.2832;
+  vec3 p;
+  float col;
+  if (aC.z < 1.5) {
+    float a = rot + aC.z * 1.5708;
+    p = vec3(cos(a) * aC.x * wid, aC.y * hgt, sin(a) * aC.x * wid);
+    col = con;
+    vUv = vec2((aC.x + 0.5 + col) * 0.25, 1.0 - aC.y);
+  } else {
+    float ch = con > 0.5 ? 0.42 : 0.62;
+    p = vec3(aC.x * wid * 0.95, hgt * ch, (aC.y - 0.5) * wid * 0.95);
+    col = 2.0 + con;
+    vUv = vec2((aC.x + 0.5 + col) * 0.25, aC.y * 0.5 + 0.25);
+  }
+  vCard = aC.z; vY = aC.z < 1.5 ? aC.y : 0.8; vSeed = seed;
+  vec3 w = b + p;
+  vWorld = w;
+  vec2 d = w.xz - uCamPos.xz;
+  w.y -= dot(d, d) * uCurv;
+  gl_Position = vFade <= 0.0 ? vec4(2.0, 2.0, 2.0, 1.0) : uViewProj * vec4(w, 1.0);
+}`;
+const TREE_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec2 vUv; in float vY; in float vSeed; in float vFade; in vec3 vWorld; flat in float vCard;
+uniform sampler2D uTreeTex;
+out vec4 outColor;
+void main(){
+  if (zoneCut(vWorld)) discard;
+  vec4 t = texture(uTreeTex, vUv);
+  float dith = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+  if (t.a < 0.5 || dith > vFade) discard;
+  vec3 c = t.rgb * mix(vec3(0.9, 1.0, 0.85), vec3(1.1, 1.05, 0.9), vSeed);
+  float light = mix(0.55, 1.0, vY) * (0.75 + 0.45 * max(uSunDir.y, 0.0));
+  vec3 col = c * (uSunCol * light * 0.75 + uAmbSky * 0.9);
+  outColor = vec4(tonemap(applyFog(col, vWorld)), 1.0);
+}`;
+// PLATEAU (MLIT) textured LOD2 building datasets: [name, path under assets/, south, west, north, east]
+const PLATEAU_BASE = "https://assets.cms.plateau.reearth.io/assets/";
+const PLATEAU_SETS = [["札幌市 中央区","16/06e56d-a2d4-4fe4-ac91-b2762b96e033/01100_sapporo-shi_city_2020_citygml_7_op_bldg_3dtiles_01101_chuo-ku_lod2",43.01327,141.24832,43.08448,141.3884],["札幌市 北区","0d/7900b4-4d6c-4720-8edd-2f129b431235/01100_sapporo-shi_city_2020_citygml_7_op_bldg_3dtiles_01102_kita-ku_lod2",43.06729,141.26753,43.18428,141.43369],["札幌市 東区","18/cbc248-5c55-4a9e-a20d-78055b72b6d9/01100_sapporo-shi_city_2020_citygml_7_op_bldg_3dtiles_01103_higashi-ku_lod2",43.06847,141.34373,43.1565,141.45626],["札幌市 西区","f0/03f2fd-3a52-4620-97a9-6b55a0e81933/01100_sapporo-shi_city_2020_citygml_7_op_bldg_3dtiles_01107_nishi-ku_lod2",43.02797,141.19307,43.11587,141.32762],["青森県 鰺ヶ沢町","67/fba68b-9697-4c35-9cdc-2baa0c48716c/02321_ajigasawa-machi_city_2025_citygml_1_op_bldg_3dtiles_lod2",40.76876,140.18054,40.7866,140.23835],["岩手県 盛岡市","01/3332d3-97b0-4854-8b28-c6f2d73b35e3/03201_morioka-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2",39.60265,141.01496,39.89853,141.20361],["岩手県 宮古市","9b/54b0fb-92ca-4823-b90a-41a1342d8545/03202_miyako-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2",39.55054,141.84797,39.74781,141.98549],["仙台市 青葉区","29/10aacf-3830-4ded-8adc-f58ecc71772e/04100_sendai-shi_city_2024_ /* <<省略: 元の 7498 行目はデータで 46,107 文字。最初の 1,200 文字だけ残した>> */
+
+// =====================================================================
+//  PLATEAU: photo-textured 3D city models (MLIT Project PLATEAU, LOD2)
+//  for the 300 areas that publish them - all 23 wards of Tokyo, Osaka,
+//  Nagoya, Kyoto, Fukuoka and more. The 3D Tiles are streamed near the
+//  aircraft; a worker decodes the Draco meshes and WebP facade photos.
+//  Where a PLATEAU model is loaded, the plain OSM buildings are hidden.
+// =====================================================================
+function platWorkerMain() {
+  const DRACO = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/gltf/';
+  const td = new TextDecoder();
+  let dracoP = null;
+  function getDraco() {
+    if (!dracoP) dracoP = (async () => {
+      importScripts(DRACO + 'draco_wasm_wrapper.js');
+      const wasm = await (await fetch(DRACO + 'draco_decoder.wasm')).arrayBuffer();
+      return await new Promise(res => { DracoDecoderModule({ wasmBinary: wasm, onModuleLoaded: m => res({ m }) }); });
+    })();
+    return dracoP;
+  }
+  const A = 6378137, F = 1 / 298.257223563, E2 = F * (2 - F), R2D = 180 / Math.PI, KZ = 110574;
+  function geo(x, y, z, out) {
+    const p = Math.hypot(x, y); let lat = Math.atan2(z, p * (1 - E2)), h = 0;
+    for (let i = 0; i < 3; i++) { const s = Math.sin(lat), N = A / Math.sqrt(1 - E2 * s * s); h = p / Math.cos(lat) - N; lat = Math.atan2(z, p * (1 - E2 * N / (N + h))); }
+    out[0] = lat * R2D; out[1] = Math.atan2(y, x) * R2D; out[2] = h;
+  }
+  const TYPES = { 5120: Int8Array, 5121: Uint8Array, 5122: Int16Array, 5123: Uint16Array, 5125: Uint32Array, 5126: Float32Array };
+  const COMPS = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 };
+  async function fetchRetry(url) {
+    for (let tries = 0; ; tries++) {
+      const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 40000);
+      try { const r = await fetch(url, { signal: ctl.signal, mode: 'cors' }); if (r.ok) return r; if (r.status === 404) throw new Error('404'); }
+      catch (e) { if (tries >= 3 || String(e.message) === '404') throw e; }
+      finally { clearTimeout(timer); }
+      await new Promise(res => setTimeout(res, 1500 * (tries + 1)));
+    }
+  }
+  async function decode(m) {
+    const t0 = performance.now(), buf = await (await fetchRetry(m.url)).arrayBuffer(), t1 = performance.now();
+    const dv = new DataView(buf), u8 = new Uint8Array(buf);
+    const magic = td.decode(u8.subarray(0, 4));
+    let glb = 0, rtc = null, bt = null;
+    if (magic === 'b3dm') {
+      const ftj = dv.getUint32(12, true), ftb = dv.getUint32(16, true), btj = dv.getUint32(20, true), btb = dv.getUint32(24, true);
+      if (ftj) { const ft = JSON.parse(td.decode(u8.subarray(28, 28 + ftj))); if (Array.isArray(ft.RTC_CENTER)) rtc = ft.RTC_CENTER; }
+      if (btj && m.kind) try { bt = JSON.parse(td.decode(u8.subarray(28 + ftj + ftb, 28 + ftj + ftb + btj))); } catch (e) { bt = null; }   // (each feature's attributes: a road surface's use)
+      glb = 28 + ftj + ftb + btj + btb;
+    } else if (magic !== 'glTF') throw new Error('unsupported tile ' + magic);
+    const jl = dv.getUint32(glb + 12, true), gj = JSON.parse(td.decode(u8.subarray(glb + 20, glb + 20 + jl)));
+    const bin = glb + 20 + jl + 8;
+    if (gj.extensions && gj.extensions.CESIUM_RTC) rtc = gj.extensions.CESIUM_RTC.center;
+    rtc = rtc || [0, 0, 0];
+    const view = i => { const v = gj.bufferViews[i]; return u8.subarray(bin + (v.byteOffset || 0), bin + (v.byteOffset || 0) + v.byteLength); };
+    const accessor = i => {
+      const a = gj.accessors[i], C = TYPES[a.componentType], nc = COMPS[a.type], v = gj.bufferViews[a.bufferView];
+      const off = bin + (v.byteOffset || 0) + (a.byteOffset || 0), es = C.BYTES_PER_ELEMENT, stride = v.byteStride || nc * es;
+      const out = new C(a.count * nc);
+      if (stride === nc * es) out.set(new C(buf.slice(off, off + a.count * nc * es)));
+      else { const dvv = new DataView(buf); for (let k = 0; k < a.count; k++) for (let c = 0; c < nc; c++) {
+        const o = off + k * stride + c * es;
+        out[k * nc + c] = C === Float32Array ? dvv.getFloat32(o, true) : C === Uint16Array ? dvv.getUint16(o, true) : C === Uint32Array ? dvv.getUint32(o, true) : C === Uint8Array ? dvv.getUint8(o) : C === Int16Array ? dvv.getInt16(o, true) : dvv.getInt8(o);
+      } }
+      return { data: out, nc, norm: !!a.normalized, type: a.componentType };
+    };
+    // node transforms (matrix only; PLATEAU tiles use none)
+    const meshMat = {};
+    (gj.nodes || []).forEach(n => { if (n.mesh != null) meshMat[n.mesh] = n.matrix || null; });
+    // first image used as the tile's texture
+    let imgIndex = -1;
+    const texOf = mat => {
+      const pbr = (mat && mat.pbrMetallicRoughness) || {}, ti = pbr.baseColorTexture ? pbr.baseColorTexture.index : null;
+      if (ti == null) return -1;
+      const t = gj.textures[ti]; return t.source != null ? t.source : (t.extensions && t.extensions.EXT_texture_webp ? t.extensions.EXT_texture_webp.source : -1);
+    };
+    const parts = [];
+    let draco = null;
+    for (let mi = 0; mi < gj.meshes.length; mi++) for (const p of gj.meshes[mi].primitives) {
+      if (p.mode != null && p.mode !== 4) continue;
+      let P, N = null, UV = null, COL = null, BID = null, IDX;
+      const dext = p.extensions && p.extensions.KHR_draco_mesh_compression;
+      if (dext) {
+        if (!draco) draco = (await getDraco()).m;
+        const bytes = view(dext.bufferView);
+        const dbuf = new draco.DecoderBuffer(); dbuf.Init(new Int8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength), bytes.byteLength);
+        const dec = new draco.Decoder(), mesh = new draco.Mesh();
+        const st = dec.DecodeBufferToMesh(dbuf, mesh);
+        if (!st.ok() || mesh.ptr === 0) { draco.destroy(mesh); draco.destroy(dec); draco.destroy(dbuf); continue; }
+        const np = mesh.num_points();
+        const get = (id) => {
+          const at = dec.GetAttributeByUniqueId(mesh, id), nc = at.num_components(), nv = np * nc, bl = nv * 4, ptr = draco._malloc(bl);
+          dec.GetAttributeDataArrayForAllPoints(mesh, at, draco.DT_FLOAT32, bl, ptr);
+          const arr = new Float32Array(draco.HEAPF32.buffer, ptr, nv).slice(); draco._free(ptr);
+          return { data: arr, nc };
+        };
+        const at = dext.attributes;
+        P = get(at.POSITION);
+        if (at.NORMAL != null) N = get(at.NORMAL);
+        if (at.TEXCOORD_0 != null) UV = get(at.TEXCOORD_0);
+        if (at.COLOR_0 != null) COL = get(at.COLOR_0);
+        if (at._BATCHID != null) BID = get(at._BATCHID);
+        const nf = mesh.num_faces(), ni = nf * 3, bl = ni * 4, ptr = draco._malloc(bl);
+        dec.GetTrianglesUInt32Array(mesh, bl, ptr);
+        IDX = new Uint32Array(draco.HEAPF32.buffer, ptr, ni).slice(); draco._free(ptr);
+        draco.destroy(mesh); draco.destroy(dec); draco.destroy(dbuf);
+      } else {
+        const at = p.attributes;
+        P = accessor(at.POSITION);
+        if (at.NORMAL != null) N = accessor(at.NORMAL);
+        if (at.TEXCOORD_0 != null) UV = accessor(at.TEXCOORD_0);
+        if (at.COLOR_0 != null) COL = accessor(at.COLOR_0);
+        if (at._BATCHID != null) BID = accessor(at._BATCHID);
+        IDX = p.indices != null ? Uint32Array.from(accessor(p.indices).data) : Uint32Array.from({ length: P.data.length / 3 }, (_, k) => k);
+      }
+      const mat = gj.materials && p.material != null ? gj.materials[p.material] : null;
+      const pbr = (mat && mat.pbrMetallicRoughness) || {};
+      const factor = pbr.baseColorFactor || [1, 1, 1, 1];
+      let src = texOf(mat);
+      if (src >= 0 && imgIndex < 0) imgIndex = src;
+      const textured = src >= 0 && src === imgIndex && UV;
+      parts.push({ P, N, UV: textured ? UV : null, COL, BID, IDX, factor, M: meshMat[mi] });
+    }
+    // merge into one vertex set in local metres around the node centre
+    let nv = 0, ni = 0;
+    for (const q of parts) { nv += q.P.data.length / 3; ni += q.IDX.length; }
+    const pos = new Float32Array(nv * 3), nrm = new Int8Array(nv * 4), uv = new Float32Array(nv * 2), col = new Uint8Array(nv * 4), idx = new Uint32Array(ni);
+    const bidv = m.occ || m.kind ? new Uint16Array(nv) : null;
+    const refLat = m.refLat, refLon = m.refLon, kx = 111320 * Math.cos(refLat * Math.PI / 180);
+    const la = refLat * Math.PI / 180, lo = refLon * Math.PI / 180;
+    const Ex = -Math.sin(lo), Ey = Math.cos(lo), Nx = -Math.sin(la) * Math.cos(lo), Ny = -Math.sin(la) * Math.sin(lo), Nz = Math.cos(la);
+    const Ux = Math.cos(la) * Math.cos(lo), Uy = Math.cos(la) * Math.sin(lo), Uz = Math.sin(la);
+    const g = [0, 0, 0], batchMin = new Map();
+    let v0 = 0, i0 = 0, hmin = 1e9, hmax = -1e9;
+    for (const q of parts) {
+      const n = q.P.data.length / 3, M = q.M;
+      const cs = q.COL ? (q.COL.data.some(v => v > 1.001) ? 1 / 255 : 1) : 1;
+      for (let k = 0; k < n; k++) {
+        let x = q.P.data[k * 3], y = q.P.data[k * 3 + 1], z = q.P.data[k * 3 + 2];
+        if (M) { const X = M[0] * x + M[4] * y + M[8] * z + M[12], Y = M[1] * x + M[5] * y + M[9] * z + M[13], Z = M[2] * x + M[6] * y + M[10] * z + M[14]; x = X; y = Y; z = Z; }
+        // glTF is y-up: rotate to z-up, then add the RTC centre (ECEF)
+        geo(rtc[0] + x, rtc[1] - z, rtc[2] + y, g);
+        const o = v0 + k;
+        pos[o * 3] = (g[1] - refLon) * kx; pos[o * 3 + 1] = g[2]; pos[o * 3 + 2] = -(g[0] - refLat) * KZ;
+        hmin = Math.min(hmin, g[2]); hmax = Math.max(hmax, g[2]);
+        if (q.BID) {
+          const b = q.BID.data[k] | 0, cur = batchMin.get(b);
+          if (!cur || g[2] < cur[2]) batchMin.set(b, [g[0], g[1], g[2]]);
+          if (bidv) bidv[o] = b;
+        }
+        if (q.N) {
+          let nx = q.N.data[k * 3], ny = q.N.data[k * 3 + 1], nz = q.N.data[k * 3 + 2];
+          if (M) { const X = M[0] * nx + M[4] * ny + M[8] * nz, Y = M[1] * nx + M[5] * ny + M[9] * nz, Z = M[2] * nx + M[6] * ny + M[10] * nz; nx = X; ny = Y; nz = Z; }
+          const ex = nx, ey = -nz, ez = ny;                               // y-up -> z-up (ECEF directions)
+          const e = Ex * ex + Ey * ey, nn = Nx * ex + Ny * ey + Nz * ez, u = Ux * ex + Uy * ey + Uz * ez;
+          const l = Math.hypot(e, nn, u) || 1;
+          nrm[o * 4] = Math.round(e / l * 127); nrm[o * 4 + 1] = Math.round(u / l * 127); nrm[o * 4 + 2] = Math.round(-nn / l * 127);
+        } else nrm[o * 4 + 1] = 127;
+        if (q.UV) { uv[o * 2] = q.UV.data[k * 2]; uv[o * 2 + 1] = q.UV.data[k * 2 + 1]; } else { uv[o * 2] = -1; uv[o * 2 + 1] = -1; }
+        let r = q.factor[0], gg = q.factor[1], bb = q.factor[2];
+        if (q.COL) { const c = q.COL.nc; r *= q.COL.data[k * c] * cs; gg *= q.COL.data[k * c + 1] * cs; bb *= q.COL.data[k * c + 2] * cs; }
+        col[o * 4] = Math.min(255, r * 255); col[o * 4 + 1] = Math.min(255, gg * 255); col[o * 4 + 2] = Math.min(255, bb * 255); col[o * 4 + 3] = 255;
+      }
+      for (let k = 0; k < q.IDX.length; k++) idx[i0 + k] = q.IDX[k] + v0;
+      v0 += n; i0 += q.IDX.length;
+    }
+    // footprint samples (lowest point of each building) for the height datum
+    const samples = [...batchMin.values()].slice(0, 80).flat();
+    // trees (PLATEAU's single trees, LOD3): where each stands, how tall, how wide its crown (local metres); the
+    // meshes themselves aren't kept (the sim's photo tree cards are stood there instead)
+    if (m.kind === 'veg') {
+      const T = new Map();
+      for (let k = 0; k < nv; k++) {
+        const b = bidv[k]; let t = T.get(b); if (!t) T.set(b, t = [1e9, 1e9, 1e9, -1e9, -1e9, -1e9]);
+        for (let c = 0; c < 3; c++) { const v = pos[k * 3 + c]; if (v < t[c]) t[c] = v; if (v > t[c + 3]) t[c + 3] = v; }
+      }
+      const trees = [];
+      for (const t of T.values()) if (t[4] - t[1] > 1.5) trees.push((t[0] + t[3]) / 2, (t[2] + t[5]) / 2, t[1], t[4] - t[1], Math.max(t[3] - t[0], t[5] - t[2]) / 2);
+      return { id: m.id, nv: 0, ni: 0, trees: new Float32Array(trees).buffer, samples: new Float32Array(samples).buffer, msNet: t1 - t0, msBuild: performance.now() - t1 };
+    }
+    // road surfaces (PLATEAU's roads, LOD3): each vertex's use in its colour's alpha (1 carriageway, 2 pavement,
+    // 3 planting, 4 island, 5 a kerb face); the open edges of the raised ones (pavements, planting, islands) dropped
+    // 0.25 m as the kerb's face (the data has the surfaces only); and the surface's height on a half-metre grid, for
+    // the car's wheels (and where the sim's own roads give way)
+    let hgrid = null, P2 = pos, N2 = nrm, U2 = uv, C2 = col, I2 = idx, nv2 = nv, ni2 = ni;
+    if (m.kind === 'tran') {
+      const fn = bt && Array.isArray(bt['tran:function']) ? bt['tran:function'] : null;
+      const code = s => /歩道|歩行者/.test(s) ? 2 : /植栽|植樹/.test(s) ? 3 : /島|中央帯|分離帯/.test(s) ? 4 : 1;
+      for (let k = 0; k < nv; k++) col[k * 4 + 3] = fn ? code(String(fn[bidv[k]] || '')) : 1;
+      const key = k => Math.round(pos[k * 3] * 50) + ',' + Math.round(pos[k * 3 + 1] * 50) + ',' + Math.round(pos[k * 3 + 2] * 50);
+      const canon = new Map(), cid = new Int32Array(nv);
+      for (let k = 0; k < nv; k++) { const q = key(k); let c = canon.get(q); if (c === undefined) canon.set(q, c = k); cid[k] = c; }
+      const edges = new Map();
+      for (let t = 0; t < ni; t += 3) {
+        if (col[idx[t] * 4 + 3] < 2) continue;
+        for (let e = 0; e < 3; e++) {
+          const a = idx[t + e], b = idx[t + (e + 1) % 3], c = idx[t + (e + 2) % 3], ka = cid[a], kb = cid[b], q = ka < kb ? ka + ':' + kb : kb + ':' + ka;
+          const v = edges.get(q); if (v) v[0]++; else edges.set(q, [1, a, b, c]);
+        }
+      }
+      const faces = [...edges.values()].filter(v => v[0] === 1);
+      nv2 = nv + faces.length * 4; ni2 = ni + faces.length * 6;
+      P2 = new Float32Array(nv2 * 3); N2 = new Int8Array(nv2 * 4); U2 = new Float32Array(nv2 * 2).fill(-1); C2 = new Uint8Array(nv2 * 4); I2 = new Uint32Array(ni2);
+      P2.set(pos); N2.set(nrm); U2.set(uv); C2.set(col); I2.set(idx);
+      let v = nv, i = ni;
+      for (const [, a, b, c] of faces) {
+        const ax = pos[a * 3], ay = pos[a * 3 + 1], az = pos[a * 3 + 2], bx = pos[b * 3], by = pos[b * 3 + 1], bz = pos[b * 3 + 2];
+        let nx = bz - az, nz = -(bx - ax); const l = Math.hypot(nx, nz) || 1; nx /= l; nz /= l;
+        if (nx * (pos[c * 3] - ax) + nz * (pos[c * 3 + 2] - az) > 0) { nx = -nx; nz = -nz; }   // (out, away from the surface)
+        const quad = [[ax, ay, az], [bx, by, bz], [bx, by - 0.25, bz], [ax, ay - 0.25, az]];
+        for (let q = 0; q < 4; q++) {
+          P2.set(quad[q], (v + q) * 3); N2[(v + q) * 4] = Math.round(nx * 127); N2[(v + q) * 4 + 2] = Math.round(nz * 127);
+          C2.set([200, 198, 192, 5], (v + q) * 4); U2[(v + q) * 2 + 1] = q < 2 ? 1 : 0;   // (v: 1 along the top edge, 0 at the foot)
+        }
+        I2.set([v, v + 1, v + 2, v, v + 2, v + 3], i); v += 4; i += 6;
+      }
+      // the height grid
+      let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+      for (let k = 0; k < nv; k++) { const x = pos[k * 3], z = pos[k * 3 + 2]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z; }
+      const C = 0.5, gw = Math.ceil((x1 - x0) / C) + 1, gh = Math.ceil((z1 - z0) / C) + 1;
+      if (nv && gw * gh <= 4e6) {
+        const H = new Float32Array(gw * gh).fill(-1e9);
+        for (let t = 0; t < ni; t += 3) {
+          const a = idx[t], b = idx[t + 1], c = idx[t + 2];
+          const ax = pos[a * 3], az = pos[a * 3 + 2], bx = pos[b * 3], bz = pos[b * 3 + 2], cx = pos[c * 3], cz = pos[c * 3 + 2];
+          const d = (bx - ax) * (cz - az) - (bz - az) * (cx - ax);
+          if (Math.abs(d) < 1e-4) continue;
+          const ay = pos[a * 3 + 1], by = pos[b * 3 + 1], cy = pos[c * 3 + 1];
+          const gx0 = Math.max(0, Math.floor((Math.min(ax, bx, cx) - x0) / C)), gx1 = Math.min(gw - 1, Math.floor((Math.max(ax, bx, cx) - x0) / C));
+          const gz0 = Math.max(0, Math.floor((Math.min(az, bz, cz) - z0) / C)), gz1 = Math.min(gh - 1, Math.floor((Math.max(az, bz, cz) - z0) / C));
+          for (let gz = gz0; gz <= gz1; gz++) for (let gx = gx0; gx <= gx1; gx++) {
+            const px = x0 + (gx + 0.5) * C, pz = z0 + (gz + 0.5) * C;
+            const w0 = ((bx - px) * (cz - pz) - (bz - pz) * (cx - px)) / d, w1 = ((cx - px) * (az - pz) - (cz - pz) * (ax - px)) / d, w2 = 1 - w0 - w1;
+            if (w0 < -0.05 || w1 < -0.05 || w2 < -0.05) continue;
+            const h = w0 * ay + w1 * by + w2 * cy, o = gz * gw + gx;
+            if (h > H[o]) H[o] = h;
+          }
+        }
+        hgrid = { x0, z0, gw, gh, cell: C, h: H.buffer };
+      }
+    }
+    // for the comparison round the car (p_dev.js): which building stands on each square metre, from the triangles
+    // seen from above (roofs, floors: a wall is edge-on), and each building's lowest and highest point
+    let occ = null;
+    if (m.occ && bidv && nv) {
+      let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9, nb = 1;
+      for (let k = 0; k < nv; k++) { const x = pos[k * 3], z = pos[k * 3 + 2]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z; if (bidv[k] + 1 > nb) nb = bidv[k] + 1; }
+      const C = 1, gw = Math.ceil((x1 - x0) / C) + 1, gh = Math.ceil((z1 - z0) / C) + 1;
+      if (gw * gh <= 4e6) {
+        const grid = new Uint16Array(gw * gh), base = new Float32Array(nb).fill(1e9), top = new Float32Array(nb).fill(-1e9), ctr = new Float32Array(nb * 3);
+        for (let k = 0; k < nv; k++) { const b = bidv[k], y = pos[k * 3 + 1]; if (y < base[b]) base[b] = y; if (y > top[b]) top[b] = y; ctr[b * 3] += pos[k * 3]; ctr[b * 3 + 1] += pos[k * 3 + 2]; ctr[b * 3 + 2]++; }
+        for (let b = 0; b < nb; b++) if (ctr[b * 3 + 2]) { ctr[b * 3] /= ctr[b * 3 + 2]; ctr[b * 3 + 1] /= ctr[b * 3 + 2]; }
+        for (let t = 0; t < ni; t += 3) {
+          const a = idx[t], b = idx[t + 1], c = idx[t + 2];
+          const ax = pos[a * 3], az = pos[a * 3 + 2], bx = pos[b * 3], bz = pos[b * 3 + 2], cx = pos[c * 3], cz = pos[c * 3 + 2];
+          const d = (bx - ax) * (cz - az) - (bz - az) * (cx - ax);
+          if (Math.abs(d) < 0.02) continue;
+          const gx0 = Math.max(0, Math.floor((Math.min(ax, bx, cx) - x0) / C)), gx1 = Math.min(gw - 1, Math.floor((Math.max(ax, bx, cx) - x0) / C));
+          const gz0 = Math.max(0, Math.floor((Math.min(az, bz, cz) - z0) / C)), gz1 = Math.min(gh - 1, Math.floor((Math.max(az, bz, cz) - z0) / C));
+          const id = bidv[a] + 1;
+          for (let gz = gz0; gz <= gz1; gz++) for (let gx = gx0; gx <= gx1; gx++) {
+            const px = x0 + (gx + 0.5) * C, pz = z0 + (gz + 0.5) * C;
+            const w0 = ((bx - px) * (cz - pz) - (bz - pz) * (cx - px)) / d, w1 = ((cx - px) * (az - pz) - (cz - pz) * (ax - px)) / d;
+            if (w0 >= -0.02 && w1 >= -0.02 && w0 + w1 <= 1.02) grid[gz * gw + gx] = id;
+          }
+        }
+        occ = { x0, z0, gw, gh, cell: C, grid: grid.buffer, base: base.buffer, top: top.buffer, ctr: ctr.buffer };
+      }
+    }
+    let bitmap = null;
+    if (imgIndex >= 0) {
+      const im = gj.images[imgIndex];
+      if (im.bufferView != null) {
+        const bytes = view(im.bufferView).slice();
+        try {
+          bitmap = await createImageBitmap(new Blob([bytes], { type: im.mimeType || 'image/webp' }));
+          const mx = m.maxTex || 2048;
+          if (bitmap.width > mx || bitmap.height > mx) {
+            const k = mx / Math.max(bitmap.width, bitmap.height);
+            const small = await createImageBitmap(bitmap, { resizeWidth: Math.max(1, Math.round(bitmap.width * k)), resizeHeight: Math.max(1, Math.round(bitmap.height * k)), resizeQuality: 'high' });
+            bitmap.close(); bitmap = small;
+          }
+        } catch (e) { bitmap = null; }
+      }
+    }
+    return { id: m.id, nv: nv2, ni: ni2, pos: P2.buffer, nrm: N2.buffer, uv: U2.buffer, col: C2.buffer, idx: I2.buffer, samples: new Float32Array(samples).buffer, bitmap, hmin, hmax, occ, hgrid, msNet: t1 - t0, msBuild: performance.now() - t1 };
+  }
+  // ---- Google Photorealistic 3D Tiles: node hierarchy, several textures per tile, tile transform ----
+  const mat4 = (a, b) => { const o = new Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k]; o[c * 4 + r] = s; } return o; };
+  const trs = n => {
+    if (n.matrix) return n.matrix;
+    const t = n.translation || [0, 0, 0], q = n.rotation || [0, 0, 0, 1], s = n.scale || [1, 1, 1];
+    const [x, y, z, w] = q;
+    return [(1 - 2 * (y * y + z * z)) * s[0], 2 * (x * y + z * w) * s[0], 2 * (x * z - y * w) * s[0], 0,
+      2 * (x * y - z * w) * s[1], (1 - 2 * (x * x + z * z)) * s[1], 2 * (y * z + x * w) * s[1], 0,
+      2 * (x * z + y * w) * s[2], 2 * (y * z - x * w) * s[2], (1 - 2 * (x * x + y * y)) * s[2], 0, t[0], t[1], t[2], 1];
+  };
+  async function decodeGoog(m) {
+    const r0 = await fetch(m.url, { mode: 'cors' });
+    if (!r0.ok) throw new Error('HTTP ' + r0.status);
+    const buf = await r0.arrayBuffer(), dv = new DataView(buf), u8 = new Uint8Array(buf);
+    if (td.decode(u8.subarray(0, 4)) !== 'glTF') throw new Error('not glb');
+    const jl = dv.getUint32(12, true), gj = JSON.parse(td.decode(u8.subarray(20, 20 + jl))), bin = 20 + jl + 8;
+    const view = i => { const v = gj.bufferViews[i]; return u8.subarray(bin + (v.byteOffset || 0), bin + (v.byteOffset || 0) + v.byteLength); };
+    const accessor = i => {
+      const a = gj.accessors[i], C = TYPES[a.componentType], nc = COMPS[a.type], v = gj.bufferViews[a.bufferView];
+      const off = bin + (v.byteOffset || 0) + (a.byteOffset || 0), es = C.BYTES_PER_ELEMENT, stride = v.byteStride || nc * es;
+      const out = new Float32Array(a.count * nc), dvv = new DataView(buf);
+      const sc = a.normalized ? (C === Uint8Array ? 1 / 255 : C === Uint16Array ? 1 / 65535 : C === Int8Array ? 1 / 127 : C === Int16Array ? 1 / 32767 : 1) : 1;
+      for (let k = 0; k < a.count; k++) for (let c = 0; c < nc; c++) {
+        const o = off + k * stride + c * es;
+        out[k * nc + c] = (C === Float32Array ? dvv.getFloat32(o, true) : C === Uint16Array ? dvv.getUint16(o, true) : C === Uint32Array ? dvv.getUint32(o, true) : C === Uint8Array ? dvv.getUint8(o) : C === Int16Array ? dvv.getInt16(o, true) : dvv.getInt8(o)) * sc;
+      }
+      return { data: out, nc };
+    };
+    const idxAcc = i => { const a = accessor(i); return Uint32Array.from(a.data); };
+    // world matrix of every node (scene graph), then the 3D Tiles y-up -> z-up convention and the tile transform
+    const world = new Map(), I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+    const walk = (ni, P) => { const n = gj.nodes[ni], M = mat4(P, trs(n)); world.set(ni, M); for (const c of n.children || []) walk(c, M); };
+    const scene = gj.scenes ? gj.scenes[gj.scene || 0] : null;
+    for (const ni of scene ? scene.nodes : (gj.nodes || []).map((_, i) => i)) walk(ni, I);
+    const TF = m.tf || I;
+    const parts = [];
+    for (const [ni, M] of world) {
+      const nd = gj.nodes[ni]; if (nd.mesh == null) continue;
+      for (const p of gj.meshes[nd.mesh].primitives) {
+        if (p.mode != null && p.mode !== 4) continue;
+        let P, UV = null, IDX;
+        const dext = p.extensions && p.extensions.KHR_draco_mesh_compression;
+        if (dext) {
+          const draco = (await getDraco()).m, bytes = view(dext.bufferView);
+          const dbuf = new draco.DecoderBuffer(); dbuf.Init(new Int8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength), bytes.byteLength);
+          const dec = new draco.Decoder(), mesh = new draco.Mesh();
+          const st = dec.DecodeBufferToMesh(dbuf, mesh);
+          if (!st.ok() || mesh.ptr === 0) { draco.destroy(mesh); draco.destroy(dec); draco.destroy(dbuf); continue; }
+          const np = mesh.num_points();
+          const get = id => { const at = dec.GetAttributeByUniqueId(mesh, id), nc = at.num_components(), nv = np * nc, bl = nv * 4, ptr = draco._malloc(bl); dec.GetAttributeDataArrayForAllPoints(mesh, at, draco.DT_FLOAT32, bl, ptr); const arr = new Float32Array(draco.HEAPF32.buffer, ptr, nv).slice(); draco._free(ptr); return { data: arr, nc }; };
+          P = get(dext.attributes.POSITION);
+          if (dext.attributes.TEXCOORD_0 != null) UV = get(dext.attributes.TEXCOORD_0);
+          const nf = mesh.num_faces(), nI = nf * 3, bl = nI * 4, ptr = draco._malloc(bl);
+          dec.GetTrianglesUInt32Array(mesh, bl, ptr); IDX = new Uint32Array(draco.HEAPF32.buffer, ptr, nI).slice(); draco._free(ptr);
+          draco.destroy(mesh); draco.destroy(dec); draco.destroy(dbuf);
+        } else {
+          P = accessor(p.attributes.POSITION);
+          if (p.attributes.TEXCOORD_0 != null) UV = accessor(p.attributes.TEXCOORD_0);
+          IDX = p.indices != null ? idxAcc(p.indices) : Uint32Array.from({ length: P.data.length / 3 }, (_, k) => k);
+        }
+        const mat = gj.materials && p.material != null ? gj.materials[p.material] : null, pbr = (mat && mat.pbrMetallicRoughness) || {};
+        const bt = pbr.baseColorTexture, tt = bt && bt.extensions && bt.extensions.KHR_texture_transform;
+        let src = -1;
+        if (bt) { const t = gj.textures[bt.index]; src = t.source != null ? t.source : (t.extensions && (t.extensions.EXT_texture_webp || t.extensions.KHR_texture_basisu) ? (t.extensions.EXT_texture_webp || {}).source ?? -1 : -1); }
+        parts.push({ P, UV, IDX, M, src, tt, factor: pbr.baseColorFactor || [1, 1, 1, 1] });
+      }
+    }
+    parts.sort((a, b) => a.src - b.src);
+    let nv = 0, nI = 0; for (const q of parts) { nv += q.P.data.length / 3; nI += q.IDX.length; }
+    const pos = new Float32Array(nv * 3), nrm = new Int8Array(nv * 4), uv = new Float32Array(nv * 2), col = new Uint8Array(nv * 4), idx = new Uint32Array(nI);
+    const refLat = m.refLat, refLon = m.refLon, kx = 111320 * Math.cos(refLat * Math.PI / 180), g = [0, 0, 0];
+    const groups = [], samples = [];
+    let v0 = 0, i0 = 0, hmin = 1e9, hmax = -1e9;
+    const step = Math.max(1, Math.floor(nv / 60));
+    for (const q of parts) {
+      const n = q.P.data.length / 3, M = q.M;
+      for (let k = 0; k < n; k++) {
+        const x0 = q.P.data[k * 3], y0 = q.P.data[k * 3 + 1], z0 = q.P.data[k * 3 + 2];
+        const x = M[0] * x0 + M[4] * y0 + M[8] * z0 + M[12], y = M[1] * x0 + M[5] * y0 + M[9] * z0 + M[13], z = M[2] * x0 + M[6] * y0 + M[10] * z0 + M[14];
+        const X = x, Y = -z, Z = y;                                                    // glTF y-up -> z-up
+        const ex = TF[0] * X + TF[4] * Y + TF[8] * Z + TF[12], ey = TF[1] * X + TF[5] * Y + TF[9] * Z + TF[13], ez = TF[2] * X + TF[6] * Y + TF[10] * Z + TF[14];
+        geo(ex, ey, ez, g);
+        const o = v0 + k;
+        pos[o * 3] = (g[1] - refLon) * kx; pos[o * 3 + 1] = g[2]; pos[o * 3 + 2] = -(g[0] - refLat) * KZ;
+        hmin = Math.min(hmin, g[2]); hmax = Math.max(hmax, g[2]);
+        if (o % step === 0 && samples.length < 180) samples.push(g[0], g[1], g[2]);
+        nrm[o * 4 + 1] = 127;
+        if (q.UV) {
+          let u = q.UV.data[k * 2], w = q.UV.data[k * 2 + 1];
+          if (q.tt) { const sc = q.tt.scale || [1, 1], of = q.tt.offset || [0, 0]; u = u * sc[0] + of[0]; w = w * sc[1] + of[1]; }
+          uv[o * 2] = u; uv[o * 2 + 1] = w;
+        } else { uv[o * 2] = -1; uv[o * 2 + 1] = -1; }
+        col[o * 4] = Math.min(255, q.factor[0] * 255); col[o * 4 + 1] = Math.min(255, q.factor[1] * 255); col[o * 4 + 2] = Math.min(255, q.factor[2] * 255); col[o * 4 + 3] = 255;
+      }
+      for (let k = 0; k < q.IDX.length; k++) idx[i0 + k] = q.IDX[k] + v0;
+      const last = groups[groups.length - 1];
+      if (last && last.src === q.src) last.count += q.IDX.length; else groups.push({ src: q.src, start: i0, count: q.IDX.length });
+      v0 += n; i0 += q.IDX.length;
+    }
+    // decode the images the groups use
+    const bitmaps = [], imgOf = new Map();
+    for (const gr of groups) {
+      gr.img = -1;
+      if (gr.src < 0) continue;
+      if (imgOf.has(gr.src)) { gr.img = imgOf.get(gr.src); continue; }
+      const im = gj.images[gr.src];
+      if (im.bufferView == null) continue;
+      try {
+        let bmp = await createImageBitmap(new Blob([view(im.bufferView).slice()], { type: im.mimeType || 'image/jpeg' }));
+        const mx = m.maxTex || 1024;
+        if (bmp.width > mx || bmp.height > mx) { const k = mx / Math.max(bmp.width, bmp.height); const sm = await createImageBitmap(bmp, { resizeWidth: Math.max(1, Math.round(bmp.width * k)), resizeHeight: Math.max(1, Math.round(bmp.height * k)), resizeQuality: 'high' }); bmp.close(); bmp = sm; }
+        gr.img = bitmaps.length; imgOf.set(gr.src, gr.img); bitmaps.push(bmp);
+      } catch (e) { /* undecodable image: draw untextured */ }
+    }
+    return { id: m.id, goog: true, nv, ni: nI, pos: pos.buffer, nrm: nrm.buffer, uv: uv.buffer, col: col.buffer, idx: idx.buffer, samples: new Float32Array(samples).buffer, groups, bitmaps, copyright: (gj.asset && gj.asset.copyright) || '', hmin, hmax };
+  }
+  onmessage = async e => {
+    const m = e.data;
+    if (m.goog) {
+      try { const r = await decodeGoog(m); postMessage(r, [r.pos, r.nrm, r.uv, r.col, r.idx, r.samples, ...r.bitmaps]); }
+      catch (err) { postMessage({ id: m.id, goog: true, error: String((err && err.message) || err) }); }
+      return;
+    }
+    try {
+      const r = await decode(m);
+      const tr = r.trees ? [r.trees, r.samples] : [r.pos, r.nrm, r.uv, r.col, r.idx, r.samples];
+      if (r.bitmap) tr.push(r.bitmap);
+      if (r.occ) tr.push(r.occ.grid, r.occ.base, r.occ.top, r.occ.ctr);
+      if (r.hgrid) tr.push(r.hgrid.h);
+      postMessage(r, tr);
+    } catch (err) { postMessage({ id: m.id, error: String((err && err.message) || err) }); }
+  };
+}
+
+const PLAT = { on: true, ready: false, workers: [], jobs: new Map(), nextId: 1, sets: new Map(), loaded: 0, bytes: 0, prog: null, frame: 0, active: [], rects: [], rectsDirty: false };
+function platInit() {
+  if (PLAT.ready || PLAT.failed) return;
+  try {
+    const wurl = URL.createObjectURL(new Blob(['(' + platWorkerMain.toString() + ')()'], { type: 'text/javascript' }));
+    const nW = game.touch ? 2 : clamp((navigator.hardwareConcurrency || 4) - 2, 3, 6);    // decoding (Draco, images) runs here
+    for (let i = 0; i < nW; i++) { const w = new Worker(wurl); w.busy = 0; w.onmessage = e => rxPush(platReceive, e.data); PLAT.workers.push(w); }
+  } catch (e) { PLAT.failed = true; return; }
+  PLAT.prog = makeProgram(PLAT_VS, PLAT_FS);
+  PLAT.ready = true;
+}
+function platLoadSet(S) {
+  S.state = 1;
+  fetch(S.base + '/tileset.json', { mode: 'cors' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(j => {
+    const conv = (n, parent, baseUrl) => {
+      const bv = n.boundingVolume || {}, rg = bv.region;
+      const node = { parent, ge: n.geometricError != null ? n.geometricError : (parent ? parent.ge / 2 : 100), children: [], mesh: null, state: 0, used: 0, set: S };
+      if (rg) {
+        node.s = rg[1] * 180 / Math.PI; node.w = rg[0] * 180 / Math.PI; node.n = rg[3] * 180 / Math.PI; node.e = rg[2] * 180 / Math.PI;
+        node.h0 = rg[4]; node.h1 = rg[5];
+      } else if (parent) Object.assign(node, { s: parent.s, w: parent.w, n: parent.n, e: parent.e, h0: parent.h0, h1: parent.h1 });
+      const c = n.content && (n.content.uri || n.content.url);
+      if (c) {
+        const url = new URL(c, baseUrl).href;
+        if (/\.json(\?|$)/.test(c)) node.ext = url; else node.uri = url;
+      }
+      node.size = Math.hypot((node.n - node.s) * KZ, (node.e - node.w) * kxAt((node.n + node.s) / 2));
+      node.key = S.id + ':' + (PLAT.nextKey = (PLAT.nextKey || 0) + 1);
+      for (const ch of n.children || []) node.children.push(conv(ch, node, baseUrl));
+      return node;
+    };
+    S.conv = conv;
+    S.root = conv(j.root, null, S.base + '/tileset.json');
+    S.state = 2;
+  }).catch(() => { S.state = 3; S.retry = R.time + 6; });
+}
+function platBox(n) {
+  if (n.ov === JW.ov) return n.box;
+  const c = [geoToWorld(n.s, n.w), geoToWorld(n.s, n.e), geoToWorld(n.n, n.w), geoToWorld(n.n, n.e)];
+  n.box = [Math.min(c[0][0], c[1][0], c[2][0], c[3][0]), Math.min(c[0][1], c[1][1], c[2][1], c[3][1]), Math.max(c[0][0], c[1][0], c[2][0], c[3][0]), Math.max(c[0][1], c[1][1], c[2][1], c[3][1])];
+  n.ov = JW.ov;
+  return n.box;
+}
+function platUpdate(planes) {
+  if (!JW.active || !JW.online || !PLAT.on) return;
+  if (!PLAT.ready) { platInit(); if (!PLAT.ready) return; }
+  const f = ++PLAT.frame, eye = R.eye, [la, lo] = worldToGeo(eye[0], eye[2]);
+  const agl = eye[1] - Math.max(rawHeightGeo(la, lo), 0);
+  const radius = game.touch ? 1800 : 3200;
+  if (agl > 3500) { PLAT.active = []; platEvict(f); return; }
+  const dLat = radius / KZ, dLon = radius / kxAt(la);
+  const out = [], req = [];
+  const K = R.H / (2 * R.tanY), SSE = game.touch ? 24 : 14;
+  const dist = n => { const b = platBox(n), off = n.set.off || 37; if (authHides(b[0], b[1], b[2], b[3])) return 1e9; return Math.hypot(Math.max(b[0] - eye[0], 0, eye[0] - b[2]), Math.max(n.h0 - off - eye[1], 0, eye[1] - (n.h1 - off)), Math.max(b[1] - eye[2], 0, eye[2] - b[3])); };
+  const ready = n => n.uri ? !!n.mesh : n.ext ? false : n.children.length > 0 && n.children.every(c => dist(c) > radius || ready(c));
+  const visit = n => {
+    const d = dist(n);
+    if (d > radius) return;
+    n.used = f;
+    if (n.ext) { if (!n.extState) platLoadExt(n); return; }
+    const b = platBox(n), off = n.set.off || 37;
+    const vis = boxInFrustum(planes, b[0], n.h0 - off - 5, b[1], b[2], n.h1 - off + 5, b[3]);
+    const big = n.size > 1400;                                        // very large nodes are only containers
+    const wantKids = n.children.length && (big || !n.uri || n.ge * K / Math.max(d, 1) > SSE);
+    if (!wantKids) { if (n.uri) { if (n.mesh) { if (vis) out.push(n); } else req.push([n, d]); } return; }
+    const kidsReady = n.children.every(c => dist(c) > radius || ready(c));
+    if (kidsReady || big || !n.uri) { for (const c of n.children) visit(c); if (!kidsReady && n.uri && !big && !n.mesh) req.push([n, d]); else if (!kidsReady && n.mesh && vis && !big) out.push(n); }
+    else { if (n.mesh) { if (vis) out.push(n); } else req.push([n, d]); for (const c of n.children) { const dc = dist(c); if (dc <= radius) { c.used = f; if (c.uri && !c.mesh) req.push([c, dc + 50]); } } }
+  };
+  // (while Google's 3D is shown PLATEAU's city isn't drawn: none of it is fetched or decoded then, and what was
+  // loaded goes after a while; only the developer panel's comparison round the car still loads its own)
+  const googOn = typeof GOOG !== 'undefined' && GOOG.covering;
+  for (const S of PLAT.list) {
+    if (googOn) break;
+    if (S.n < la - dLat || S.s > la + dLat || S.e < lo - dLon || S.w > lo + dLon) continue;
+    if (S.state === 0 || (S.state === 3 && R.time > S.retry)) { platLoadSet(S); continue; }
+    if (S.state !== 2) continue;
+    S.used = f;
+    visit(S.root);
+  }
+  PLAT.active = out;
+  // requests: the comparison round the car first (p_dev.js), then nearest first
+  const creq = platCmpUpdate(planes, f);
+  req.sort((a, b) => a[1] - b[1]);
+  let busy = 0; for (const w of PLAT.workers) busy += w.busy;
+  for (const [n, d, kind] of creq.concat(req)) {
+    if (busy >= PLAT.workers.length * 2) break;
+    if (n.state !== 0) continue;
+    platDispatch(n, d, kind ? kind === 'bldg' : PLAT.cmp > 0 && !n.children.length && !n.ext, kind && kind !== 'bldg' ? kind : undefined); busy++;
+  }
+  platEvict(f);
+  // hide OSM buildings under loaded PLATEAU nodes (throttled). Not while Google's 3D is on: PLATEAU isn't
+  // drawn then, and the OSM buildings are the ones shown round the car (and where Google is flat)
+  const goog = typeof GOOG !== 'undefined' && GOOG.covering;
+  if (goog !== PLAT.rectsGoog) { PLAT.rectsGoog = goog; PLAT.rectsDirty = true; PLAT.rectsT = 0; }
+  if (PLAT.rectsDirty && R.time > (PLAT.rectsT || 0)) {
+    PLAT.rectsDirty = false; PLAT.rectsT = R.time + 0.7;
+    const rects = [];
+    if (!goog) for (const S of PLAT.list) if (S.root) (function walk(n) { if (n.mesh && !n.mesh.empty && n.size <= 1400) rects.push([n.s, n.w, n.n, n.e, n.key, n.mesh.tex ? 1 : 0]); for (const c of n.children) walk(c); })(S.root);
+    PLAT.rects = rects;
+    PLAT.hideQueue = [...CITY.tiles.values()];
+  }
+  // driving: the map's buildings under PLATEAU come back within the near zone round the car (kept by their
+  // centres, a little past the zone's outer edge; moved on every 60 m)
+  const zp = typeof ZONE !== 'undefined' && ZONE.plat;
+  if (!zp ? PLAT.keep : !PLAT.keep || Math.hypot(sim.pos[0] - PLAT.keep.x, sim.pos[2] - PLAT.keep.z) > 60) {
+    if (zp) { const [la, lo] = worldToGeo(sim.pos[0], sim.pos[2]), r = ZONE.r1 + 70;
+      PLAT.keep = { x: sim.pos[0], z: sim.pos[2], lat: la, lon: lo, r, rLat: r / 111320, rLon: r / (111320 * Math.cos(la * Math.PI / 180)), key: 'k' + Math.round(sim.pos[0]) + ',' + Math.round(sim.pos[2]) }; }
+    else PLAT.keep = null;
+    PLAT.hideQueue = [...CITY.tiles.values()];
+  }
+  // (a built-up area coming into use or going: its buildings are the sim's own, p_auth.js)
+  const aid = typeof AUTH !== 'undefined' && AUTH.area ? AUTH.area.id + ':' + Math.round(AUTH.area.lat * 250) + ',' + Math.round(AUTH.area.lon * 250) : '';
+  if (aid !== (PLAT.authId || '')) { PLAT.authId = aid; PLAT.hideQueue = [...CITY.tiles.values()]; }
+  if (PLAT.hideQueue && PLAT.hideQueue.length) {
+    let n = 0;
+    while (PLAT.hideQueue.length && n < 2) { const t = PLAT.hideQueue.shift(); if (cityApplyHidden(t, PLAT.rects)) n++; }
+  }
+}
+function platLoadExt(n) {
+  n.extState = 1;
+  fetch(n.ext, { mode: 'cors' }).then(r => r.json()).then(j => {
+    const sub = n.set.conv(j.root, n, n.ext);
+    n.children.push(sub); n.ext = null; n.extState = 2;
+  }).catch(() => { n.extState = 3; });
+}
+function platDispatch(n, d, occ = false, kind = undefined) {
+  const w = PLAT.workers.reduce((a, b) => (b.busy < a.busy ? b : a));
+  const id = PLAT.nextId++;
+  n.state = 1; n.job = id; w.busy++;
+  n.refLat = (n.s + n.n) / 2; n.refLon = (n.w + n.e) / 2; n.kx = kxAt(n.refLat);
+  PLAT.jobs.set(id, { n, w });
+  w.postMessage({ id, url: n.uri, refLat: n.refLat, refLon: n.refLon, maxTex: game.touch ? 1024 : d < 700 ? 2048 : 1024, occ, kind });
+}
+function platReceive(r) {
+  const job = PLAT.jobs.get(r.id); if (!job) return;
+  PLAT.jobs.delete(r.id); job.w.busy--;
+  if (job.goog) { googReceive(job, r); return; }
+  const n = job.n;
+  if (n.job !== r.id) { if (r.bitmap) r.bitmap.close(); return; }
+  if (r.error) { n.state = 3; if (r.error !== '404') setTimeout(() => { if (n.state === 3) n.state = 0; }, 20000); return; }
+  n.state = 2;
+  if (!r.nv && !r.trees) { n.mesh = { empty: true, count: 0 }; PLAT.rectsDirty = true; return; }
+  const tr0 = performance.now();
+  // height datum: PLATEAU heights are ellipsoidal; compare building bases with the terrain
+  const sm = new Float32Array(r.samples), diffs = [];
+  for (let k = 0; k < sm.length; k += 3) {
+    const zt = 2 ** 14, dt = JW.tiles.get('14/' + Math.floor((sm[k + 1] + 180) / 360 * zt) + '/' + Math.floor(mercY(sm[k]) * zt));
+    if (!dt || !dt.dem) continue;                                     // only trust the 10 m elevation data
+    const gh = sampleDem(dt, sm[k], sm[k + 1]); if (gh > -5) diffs.push(sm[k + 2] - gh);
+  }
+  if (diffs.length >= 3) {
+    diffs.sort((a, b) => a - b);
+    const med = diffs[diffs.length >> 1];
+    const S = n.set; S.offs = S.offs || []; S.offs.push(clamp(med, 20, 55)); if (S.offs.length > 25) S.offs.shift();
+    const so = [...S.offs].sort((a, b) => a - b); S.off = so[so.length >> 1];
+  }
+  if (r.trees) { n.trees = new Float32Array(r.trees); n.mesh = { empty: true, count: 0 }; return; }   // (PLATEAU's trees: only where they stand)
+  const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+  const mk = (data, loc, size, type, norm) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, type, norm, 0, 0); return b; };
+  const bufs = [mk(r.pos, 0, 3, gl.FLOAT, false), mk(r.nrm, 1, 3, gl.BYTE, true), mk(r.uv, 2, 2, gl.FLOAT, false), mk(r.col, 3, 4, gl.UNSIGNED_BYTE, true)];
+  const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, r.idx, gl.STATIC_DRAW); bufs.push(ib);
+  gl.bindVertexArray(null);
+  let tex = null;
+  if (r.bitmap) {
+    tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, r.bitmap);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, game.touch ? 4 : Math.min(16, gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+    PLAT.bytes += r.bitmap.width * r.bitmap.height * 4 * 1.33; n.tw = r.bitmap.width + "x" + r.bitmap.height;
+    n.texBytes = r.bitmap.width * r.bitmap.height * 4 * 1.33;
+    r.bitmap.close();
+  }
+  n.mesh = { vao, bufs, tex, count: r.ni };
+  n.vbytes = r.nv * 32 + r.ni * 4; PLAT.bytes += n.vbytes; n.nv = r.nv; n.uri2 = n.uri.split("/").pop();
+  n.hgrid = r.hgrid ? { x0: r.hgrid.x0, z0: r.hgrid.z0, gw: r.hgrid.gw, gh: r.hgrid.gh, cell: r.hgrid.cell, h: new Float32Array(r.hgrid.h) } : null;
+  n.occ = r.occ ? { x0: r.occ.x0, z0: r.occ.z0, gw: r.occ.gw, gh: r.occ.gh, cell: r.occ.cell, grid: new Uint16Array(r.occ.grid), base: new Float32Array(r.occ.base), top: new Float32Array(r.occ.top), ctr: new Float32Array(r.occ.ctr) } : null;
+  PLAT.loaded++;
+  PLAT.rectsDirty = true;
+  devTile('plat', r.msBuild, r.msNet, performance.now() - tr0, r.nv);
+}
+function platFree(n) {
+  if (n.mesh && !n.mesh.empty) {
+    gl.deleteVertexArray(n.mesh.vao); for (const b of n.mesh.bufs) gl.deleteBuffer(b);
+    if (n.mesh.tex) gl.deleteTexture(n.mesh.tex);
+    PLAT.bytes -= (n.vbytes || 0) + (n.texBytes || 0); PLAT.loaded--;
+  }
+  n.mesh = null; n.state = 0; n.job = 0; n.occ = null; n.hgrid = null; n.trees = null;
+  PLAT.rectsDirty = true;
+}
+function platEvict(f) {
+  if (f % 30) return;
+  const budget = game.touch ? 250e6 : 700e6;
+  const all = [];
+  for (const S of PLAT.list.concat(PLAT.l3list, PLAT.nearList)) if (S.root) (function walk(n) { if (n.mesh) all.push(n); for (const c of n.children) walk(c); })(S.root);
+  for (const n of all) if (n.used < f - 240) platFree(n);
+  if (PLAT.bytes > budget) {
+    all.filter(n => n.mesh).sort((a, b) => a.used - b.used).slice(0, 20).forEach(platFree);
+  }
+}
+function drawPlateau() {
+  if (!PLAT.ready || !PLAT.active.length) return;
+  const pr = PLAT.prog, u = pr.u;
+  setCommon(pr);
+  gl.uniform1i(u.uTex, 8);
+  gl.disable(gl.CULL_FACE);
+  gl.activeTexture(gl.TEXTURE8);
+  for (const n of PLAT.active) {
+    if (!n.mesh || n.mesh.empty || (PLAT.cmp && platCmpNear(n))) continue;
+    gl.uniform4f(u.uTileA, n.refLon - JW.lon0, n.refLat - JW.lat0, n.refLat, n.kx);
+    gl.uniform1f(u.uYOff, n.set.off || 37);
+    if (n.mesh.tex) { gl.bindTexture(gl.TEXTURE_2D, n.mesh.tex); gl.uniform1i(u.uHasTex, 1); } else gl.uniform1i(u.uHasTex, 0);
+    // driving: plain boxes (no photo) give way near the car to the sim's own buildings; photo-textured ones stay
+    if (ZONE.plat) gl.uniform1f(u.uZoneSide, n.mesh.tex && !AUTH.on ? 0 : 1);
+    gl.bindVertexArray(n.mesh.vao);
+    gl.drawElements(gl.TRIANGLES, n.mesh.count, gl.UNSIGNED_INT, 0);
+  }
+  gl.activeTexture(gl.TEXTURE0);
+  gl.enable(gl.CULL_FACE);
+}
+PLAT.list = PLATEAU_SETS.map((r, i) => ({ id: i, name: r[0], base: PLATEAU_BASE + r[1], s: r[2], w: r[3], n: r[4], e: r[5], state: 0, root: null }));
+
+// ---- the comparison round the car (the developer panel, p_dev.js) ----
+// PLATEAU's buildings in place of the sim's own within PLAT.cmpR metres of the car, in a built-up area (p_auth.js)
+// and over Google's 3D too, where PLATEAU otherwise isn't shown: PLAT.cmp 1 LOD2 (every building, a photo-textured
+// block with its roof), 2 LOD3 where a building has one (its doors, windows, eaves and balconies modelled; the
+// rest LOD2: Yokohama's Nishi, Naka and Seya wards). Only the tile tree's leaves (its finest level), so where one
+// hasn't come (loading, failed, no data there) the sim's own buildings stay. The sim's buildings are hidden one by
+// one where a PLATEAU building stands over a quarter of the footprint or more (p6_city.js cityApplyHidden), the car
+// runs into PLATEAU's buildings instead (p_car.js carInBuilding), and they cast and take the sun's shadows
+const PLATEAU_LOD3 = [
+  ['横浜市 西区', '57/4b4e13-9239-4570-b4c3-18f695ef7035/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14103_nishi-ku_lod3', 35.44182, 139.60309, 35.47206, 139.63855, '14103'],
+  ['横浜市 中区', '98/34e4f3-a849-4f12-8bd2-50826a53fa62/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14104_naka-ku_lod3', 35.39683, 139.62172, 35.45749, 139.6902, '14104'],
+  ['横浜市 瀬谷区', '27/d613cc-82be-4235-ada0-c44191af7a39/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14114_seya-ku_lod3', 35.43476, 139.46522, 35.50412, 139.51132, '14114'],
+];
+PLAT.l3list = PLATEAU_LOD3.map((r, i) => ({ id: 1000 + i, name: r[0] + ' LOD3', base: PLATEAU_BASE + r[1], s: r[2], w: r[3], n: r[4], e: r[5], ward: r[6], state: 0, root: null, lod3: true }));
+Object.assign(PLAT, { cmp: 0, cmpR: 300, cmpActive: [], cmpLeaves: [], cmpKey: '', cmpWant: 0, cmpHave: 0, cmpFail: 0, tranOut: [], tranLeaves: [], vegLeaves: [], tranRect: [0, 0, 0, 0], noTree: [0, 0, 0, 0], treeN: 0 });
+// PLATEAU's roads (LOD3: carriageways, pavements, planting, islands, with the kerbs' real heights) and single trees
+// (LOD3: where each one stands, how tall), where they're published (Yokohama: round Kannai): with the comparison's
+// buildings they take the place of the sim's roads, kerbs and pavements and its roadside trees, which are guesses
+// from the map (PLAT.cmpNear false: the buildings alone)
+const PLATEAU_NEAR = [
+  ['横浜市 道路 LOD3', '51/8e3f96-c5d3-4d89-9397-0aa810b096f7/14100_yokohama-shi_city_2024_citygml_2_op_tran_3dtiles_lod3', 35.4422, 139.6327, 35.4504, 139.6431, 'tran'],
+  ['横浜市 単独木 LOD3', '83/75c1ef-9ab7-4e3a-87be-ba98230726d0/14100_yokohama-shi_city_2024_citygml_2_op_veg_SolitaryVegetationObject_3dtiles_lod3', 35.4424, 139.6329, 35.4505, 139.6431, 'veg'],
+];
+PLAT.nearList = PLATEAU_NEAR.map((r, i) => ({ id: 2000 + i, name: r[0], base: PLATEAU_BASE + r[1], s: r[2], w: r[3], n: r[4], e: r[5], kind: r[6], state: 0, root: null }));
+function platCmpSet(m, force) {
+  m = m | 0;
+  if (m === (PLAT.cmp || 0) && !force) return;
+  PLAT.cmp = m; PLAT.cmpActive = []; PLAT.cmpLeaves = []; PLAT.cmpKey = '#' + m; PLAT.cmpWant = PLAT.cmpHave = PLAT.cmpFail = 0;
+  if (typeof CITY !== 'undefined') PLAT.hideQueue = [...CITY.tiles.values()];   // (every tile's buildings looked at again)
+  if (m && !PLAT.ready) platInit();
+}
+// the sets round a place: in the LOD3 mode each ward's LOD3 set where it has one, else its LOD2 set
+function platCmpSets(la, lo, dLat, dLon) {
+  const hit = S => !(S.n < la - dLat || S.s > la + dLat || S.e < lo - dLon || S.w > lo + dLon);
+  return PLAT.list.filter(hit).map(S => (PLAT.cmp === 2 && PLAT.l3list.find(L => S.base.includes('_' + L.ward + '_'))) || S);
+}
+function platCmpDist(n, c) { const b = platBox(n); return Math.hypot(Math.max(b[0] - c[0], 0, c[0] - b[2]), Math.max(b[1] - c[2], 0, c[2] - b[3])); }
+// the leaves within reach of the car: the ones to draw, the ones to ask for (returned, nearest first): the buildings'
+// and, where they're published, the roads' and the trees'
+function platCmpUpdate(planes, f) {
+  if (!PLAT.cmp || !CAR.on || !JW.active) {

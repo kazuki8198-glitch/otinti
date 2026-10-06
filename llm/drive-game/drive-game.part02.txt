@@ -1,0 +1,572 @@
+# plateau-three.html の 2/2 部分（元の 2086〜2654 行目、データは省略）
+# 全体の説明は 00_overview.md
+
+  panel(0, '#0f6e3a', () => { g.font = 'bold 46px sans-serif'; g.fillText('出口', 92, 50); g.font = 'bold 26px sans-serif'; g.fillText('EXIT', 92, 94); g.lineWidth = 9; g.strokeStyle = '#fff'; g.beginPath(); g.moveTo(170, 100); g.lineTo(214, 40); g.stroke(); g.beginPath(); g.moveTo(222, 30); g.lineTo(198, 38); g.lineTo(216, 56); g.closePath(); g.fill(); });
+  for (const [i, a, b, c, d] of [[1, '東京', 'Tokyo', '羽田', 'Haneda'], [2, '狩場', 'Kariba', '本牧', 'Honmoku']]) panel(i, '#0f6e3a', () => {
+    g.font = 'bold 36px sans-serif'; g.fillText(a, 70, 46); g.fillText(c, 186, 46); g.font = '20px sans-serif'; g.fillText(b, 70, 88); g.fillText(d, 186, 88); });
+  panel(3, '#5b2d8c', () => { g.font = 'bold 50px sans-serif'; g.fillText('ETC', 92, 64); g.font = 'bold 34px sans-serif'; g.fillText('専用', 196, 64); });
+});
+const hwSignMat = new THREE.MeshStandardMaterial({ map: hwTex, roughness: 0.4, side: THREE.DoubleSide });
+// manhole lids and drain grates: cast iron, their patterns drawn
+const ironTex = canvasTex(256, 128, (g) => {
+  g.fillStyle = '#000'; g.fillRect(0, 0, 256, 128);
+  g.save(); g.translate(64, 64); g.fillStyle = '#3a3936'; g.beginPath(); g.arc(0, 0, 62, 0, 7); g.fill(); g.strokeStyle = '#26251f'; g.lineWidth = 3;
+  for (let r = 14; r < 60; r += 9) { g.beginPath(); g.arc(0, 0, r, 0, 7); g.stroke(); }
+  for (let a = 0; a < 16; a++) { g.beginPath(); g.moveTo(Math.cos(a / 16 * 6.283) * 12, Math.sin(a / 16 * 6.283) * 12); g.lineTo(Math.cos(a / 16 * 6.283) * 58, Math.sin(a / 16 * 6.283) * 58); g.stroke(); }
+  g.fillStyle = '#4a4843'; g.beginPath(); g.arc(0, 0, 10, 0, 7); g.fill(); g.restore();
+  g.fillStyle = '#34332f'; g.fillRect(132, 4, 120, 120); g.fillStyle = '#0b0b0a'; for (let i = 0; i < 11; i++) g.fillRect(140 + i * 10.4, 12, 5, 104);
+});
+const ironMat = new THREE.MeshStandardMaterial({ map: ironTex, alphaTest: 0.5, roughness: 0.55, metalness: 0.55, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+const lampMat = new THREE.MeshBasicMaterial({ toneMapped: false });
+// models, in metres: +y up, +z the way it faces (to the road, or along it), +x its left
+function part(g, col, x = 0, y = 0, z = 0, rx = 0, rz = 0) {
+  g = g.index ? g.toNonIndexed() : g; g.deleteAttribute('uv');
+  g.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(rx, 0, rz))).translate(x, y, z);
+  const n = g.attributes.position.count, c = new Float32Array(n * 3); for (let i = 0; i < n; i++) c.set(col, i * 3);
+  g.setAttribute('color', new THREE.BufferAttribute(c, 3)); return g;
+}
+function mergeParts(list) {
+  const n = list.reduce((a, g) => a + g.attributes.position.count, 0), out = new THREE.BufferGeometry();
+  for (const k of ['position', 'normal', 'color']) { const A = new Float32Array(n * 3); let at = 0; for (const g of list) { A.set(g.attributes[k].array, at); at += g.attributes[k].array.length; } out.setAttribute(k, new THREE.BufferAttribute(A, 3)); }
+  return out;
+}
+const cyl = (r0, r1, h, col, x = 0, y = 0, z = 0, seg = 8) => part(new THREE.CylinderGeometry(r1, r0, h, seg, 1, false).translate(0, h / 2, 0), col, x, y, z);
+const bx = (w, h, d, col, x = 0, y = 0, z = 0) => part(new THREE.BoxGeometry(w, h, d), col, x, y, z);
+const rod = (r, l, col, x, y, z) => part(new THREE.CylinderGeometry(r, r, l, 6, 1, true), col, x, y, z, Math.PI / 2);   // (along z)
+const GREY = [0.6, 0.6, 0.58], STEEL = [0.5, 0.52, 0.53], DARK = [0.18, 0.19, 0.2], WHITE = [0.9, 0.9, 0.88];
+const ARM = [3, 5, 7];
+function furnModels() {
+  const M = {}, face = (cellI, w, h, y) => { const g = new THREE.PlaneGeometry(w, h).translate(0, y, 0.03), uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setX(i, (cellI + uv.getX(i)) / 5); return g; };
+  const pole = [cyl(0.19, 0.14, 12, GREY), bx(0.1, 0.1, 1.5, STEEL, 0, 10.6, 0), cyl(0.05, 0.04, 0.16, WHITE, 0, 10.65, 0.55), cyl(0.05, 0.04, 0.16, WHITE, 0, 10.65, -0.55),
+    bx(0.08, 0.08, 0.6, STEEL, 0, 7.2, 0.15), bx(0.05, 0.05, 1.0, STEEL, 0, 6.2, 0.5), bx(0.16, 0.08, 0.36, WHITE, 0, 6.15, 1.0)];
+  M.pole0 = { g: mergeParts(pole), shadow: true };
+  M.pole1 = { g: mergeParts([...pole, cyl(0.32, 0.32, 1.1, [0.55, 0.57, 0.55], 0, 7.8, -0.48, 10)]), shadow: true };
+  M.light = { g: mergeParts([cyl(0.11, 0.08, 9, [0.68, 0.69, 0.7]), bx(0.07, 0.07, 2.0, [0.68, 0.69, 0.7], 0, 9.0, 1.0), bx(0.28, 0.13, 0.7, [0.75, 0.76, 0.77], 0, 8.95, 2.2), bx(0.22, 0.02, 0.5, [1, 0.97, 0.9], 0, 8.87, 2.2)]), shadow: true };
+  M.lamp = { g: mergeParts([cyl(0.06, 0.05, 4.2, DARK), bx(0.32, 0.5, 0.32, [0.92, 0.9, 0.84], 0, 4.45, 0), bx(0.4, 0.06, 0.4, DARK, 0, 4.73, 0)]), shadow: true };
+  for (const L of ARM) M['vsig' + L] = { g: mergeParts([cyl(0.15, 0.11, 6.0, STEEL), bx(L, 0.13, 0.13, STEEL, L / 2, 5.65, 0), bx(1.32, 0.44, 0.3, [0.42, 0.44, 0.43], L, 5.4, 0),
+    bx(1.32, 0.04, 0.22, [0.3, 0.31, 0.3], L, 5.64, 0.2)]), shadow: true };
+  M.psig = { g: mergeParts([cyl(0.08, 0.08, 3.6, STEEL), bx(0.42, 0.82, 0.26, [0.42, 0.44, 0.43], 0, 2.9, 0)]), shadow: true };
+  const post = h => cyl(0.035, 0.035, h, STEEL);
+  M.stop = { g: mergeParts([post(2.0)]), face: face(0, 0.9, 0.9, 2.05) };
+  M.xsign = { g: mergeParts([post(2.6)]), face: face(1, 0.65, 0.65, 2.45) };
+  M.speed40 = { g: mergeParts([post(2.5)]), face: face(2, 0.6, 0.6, 2.35) }; M.speed50 = { g: M.speed40.g, face: face(3, 0.6, 0.6, 2.35) };
+  M.bus0 = { g: mergeParts([post(2.4)]), face: face(4, 0.48, 0.48, 2.25) };
+  M.bus1 = { g: mergeParts([post(2.4), bx(3.6, 0.08, 1.6, [0.75, 0.77, 0.78], 0, 2.5, -0.7), cyl(0.04, 0.04, 2.5, STEEL, 1.6, 0, -1.3), cyl(0.04, 0.04, 2.5, STEEL, -1.6, 0, -1.3),
+    bx(3.4, 1.8, 0.03, [0.3, 0.36, 0.38], 0, 1.35, -1.38), bx(2.0, 0.06, 0.4, [0.55, 0.42, 0.3], 0, 0.45, -1.1)]), face: M.bus0.face, shadow: true };
+  M.bollard = { g: mergeParts([cyl(0.06, 0.06, 0.8, [0.75, 0.76, 0.76]), cyl(0.065, 0.065, 0.06, [0.95, 0.75, 0.1], 0, 0.62, 0)]) };
+  M.pipe = { g: mergeParts([cyl(0.035, 0.035, 0.8, WHITE, 0, 0, -1), rod(0.03, 2.0, WHITE, 0, 0.75, 0), rod(0.03, 2.0, WHITE, 0, 0.42, 0)]) };
+  M.hedge = { g: mergeParts([bx(0.62, 0.72, 1.95, [0.1, 0.2, 0.07], 0, 0.36, 0), bx(0.5, 0.14, 1.85, [0.13, 0.26, 0.09], 0, 0.76, 0)]) };
+  const flat = (w, d, u0, u1) => { const g = new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2).translate(0, 0.04, 0), uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setX(i, u0 + uv.getX(i) * (u1 - u0)); return g; };
+  M.manhole = { flat: flat(0.64, 0.64, 0, 0.5) }; M.drain = { flat: flat(0.36, 0.9, 0.5, 1) };
+  // road arrows (straight, left, right, straight-left, straight-right: 5 m long, the head 1 m wide), repair patches, tunnel lamps, a toll booth
+  const arrow = shape => { const P = [], q = (pts) => { for (let i = 1; i + 1 < pts.length; i++) P.push(pts[0][0], 0.03, pts[0][1], pts[i + 1][0], 0.03, pts[i + 1][1], pts[i][0], 0.03, pts[i][1]); };
+    const shaft = (x0, z0, z1) => q([[x0 - 0.15, z0], [x0 + 0.15, z0], [x0 + 0.15, z1], [x0 - 0.15, z1]]), head = (x, z, dx, dz) => q([[x + dz * 0.5, z - dx * 0.5], [x + dx * 1.3, z + dz * 1.3], [x - dz * 0.5, z + dx * 0.5]]);
+    if (shape === 0 || shape === 3 || shape === 4) { shaft(0, -2.5, 1.2); head(0, 1.2, 0, 1); } else shaft(0, -2.5, 0.2);
+    for (const sx of shape === 1 || shape === 3 ? [1] : shape === 2 || shape === 4 ? [-1] : []) { q([[0, -0.2], [0, 0.2], [sx * 1.1, 0.2], [sx * 1.1, -0.2]]); head(sx * 1.1, 0, sx, 0); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(P.map((_, i) => i % 3 === 1 ? 1 : 0), 3)); return g; };
+  for (let k = 0; k < 5; k++) M['arrow' + k] = { flat: arrow(k), mat: paintDecalMat };
+  M.patch0 = { flat: new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2).translate(0, 0.012, 0), mat: patchMat }; M.patch1 = M.patch0;
+  M.tlamp = { flat: new THREE.BoxGeometry(1.2, 0.18, 0.12).translate(0, 0, 0.06), mat: tlampMat };
+  M.booth = { g: mergeParts([bx(1.1, 0.2, 4.0, [0.8, 0.7, 0.2], 0, 0.1, 0), bx(0.9, 2.3, 1.6, [0.86, 0.87, 0.86], 0, 0.2 + 1.15, 0), bx(1.1, 0.12, 1.9, [0.4, 0.4, 0.42], 0, 2.6, 0), bx(0.92, 0.9, 1.2, [0.2, 0.25, 0.3], 0, 1.6, 0)]), shadow: true };
+  // the expressway: a light on the parapet (as the street light), a cantilever sign over the lanes, an ETC gate
+  M.hwlight = M.light;
+  const hwFace = (cellI, w, h, x, y, z) => { const g = new THREE.PlaneGeometry(w, h).translate(x, y, z), uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setX(i, (cellI + uv.getX(i)) / 4); return g; };
+  const cant = mergeParts([cyl(0.22, 0.18, 7.6, STEEL), bx(5.6, 0.25, 0.25, STEEL, 2.8, 7.2, 0), bx(5.0, 0.12, 0.12, STEEL, 2.9, 6.0, 0), bx(4.1, 2.1, 0.1, [0.85, 0.86, 0.86], 3.3, 6.6, -0.02)]);
+  for (const v of [0, 1, 2]) M['hwsign' + v] = { g: cant, shadow: true, hw: hwFace(v, 4.0, 2.0, 3.3, 6.6, 0.04) };
+  M.etc = { g: mergeParts([cyl(0.2, 0.2, 5.6, STEEL, 4.3, 0, 0), cyl(0.2, 0.2, 5.6, STEEL, -4.3, 0, 0), bx(9.0, 0.5, 0.5, STEEL, 0, 5.4, 0), bx(1.9, 0.95, 0.08, [0.85, 0.86, 0.86], 0, 4.75, 0.2),
+    bx(0.6, 1.1, 2.2, [0.95, 0.8, 0.1], 4.3, 0.55, 0), bx(0.6, 1.1, 2.2, [0.95, 0.8, 0.1], -4.3, 0.55, 0)]), shadow: true, hw: hwFace(3, 1.8, 0.9, 0, 4.75, 0.25) };
+  return M;
+}
+const FK = ['pole', 'light', 'lamp', 'vsig', 'psig', 'stop', 'xsign', 'speed', 'bus', 'bollard', 'pipe', 'hedge', 'manhole', 'drain', 'hwlight', 'hwsign', 'etc', 'arrow', 'patch', 'tlamp', 'booth'];
+const armOf = m => ARM.reduce((a, L) => Math.abs(L - m / 10) < Math.abs(a - m / 10) ? L : a, 5);
+function furnKey(k, m) { const n = FK[k]; return n === 'pole' ? 'pole' + (m & 1) : n === 'vsig' ? 'vsig' + armOf(m) : n === 'speed' ? 'speed' + (m >= 50 ? 50 : 40) : n === 'bus' ? 'bus' + (m & 1) : n === 'hwsign' ? 'hwsign' + Math.min(m, 2) : n === 'arrow' ? 'arrow' + Math.min(m, 4) : n === 'patch' ? 'patch' + (m & 1) : n; }
+const COLR = { pole: 0.2, light: 0.12, lamp: 0.08, vsig: 0.15, psig: 0.1, stop: 0.06, xsign: 0.06, speed: 0.06, bus: 0.08, bollard: 0.08, hwsign: 0.22, booth: 0.8 };
+// one chunk's pieces: their matrices by model, the signal lamps, the colliders (in east/north/up)
+function furnChunk(c, o, arr, buf, base) {
+  const out = { e: o[0], n: o[1], by: {}, lamps: [], col: [] };
+  if (c.furn) {
+    const P = arr(Int16Array, c.furn.p), A = arr(Int16Array, c.furn.a), K = new Uint8Array(buf.slice(base + c.furn.k[0], base + c.furn.k[0] + c.furn.k[1])),
+      Mm = new Uint8Array(buf.slice(base + c.furn.m[0], base + c.furn.m[0] + c.furn.m[1])), G = arr(Uint16Array, c.furn.g), Mx = new THREE.Matrix4();
+    for (let i = 0; i < K.length; i++) {
+      const e = P[i * 3] * 0.01 + o[0], n = P[i * 3 + 1] * 0.01 + o[1], u = P[i * 3 + 2] * 0.01 + o[2], yaw = (A[i] + 31416) / 10000 - Math.PI, cs = Math.cos(yaw), sn = Math.sin(yaw);
+      const key = furnKey(K[i], Mm[i]), name = FK[K[i]];
+      const psx = name === 'patch' ? ((Mm[i] & 1) ? 0.6 : 1.0 + (Mm[i] >> 1) * 0.25) : 1, psz = name === 'patch' ? ((Mm[i] & 1) ? 7 + (Mm[i] >> 1) : 0.8 + (Mm[i] >> 1) * 0.2) : 1;
+      Mx.set(-sn, 0, cs, e, cs, 0, sn, n, 0, 1, 0, u, 0, 0, 0, 1);          // (x: its left, y: up, z: its facing)
+      if (psx !== 1 || psz !== 1) Mx.scale(_v.set(psx, 1, psz));
+      (out.by[key] || (out.by[key] = [])).push(...Mx.elements);
+      // lamps: a vehicle signal's three (green, amber, red from the driver's left), a pedestrian signal's two (red over green)
+      const lamp = (x, y, z, role) => out.lamps.push(e - sn * x + cs * z, n + cs * x + sn * z, u + y, yaw, G[i], role);
+      if (name === 'vsig') { const L = armOf(Mm[i]); lamp(L - 0.42, 5.4, 0.16, 0); lamp(L, 5.4, 0.16, 1); lamp(L + 0.42, 5.4, 0.16, 2); }
+      if (name === 'psig') { lamp(0, 3.1, 0.14, 3); lamp(0, 2.7, 0.14, 4); }
+      // colliders: posts (circles), pipes and hedges (2 m along their facing), a shelter's back
+      if (COLR[name] !== undefined) out.col.push(0, e, n, COLR[name], 0, 0, u);
+      if (name === 'pipe' || name === 'hedge') out.col.push(1, e - cs, n - sn, name === 'hedge' ? 0.32 : 0.05, e + cs, n + sn, u);
+      if (name === 'etc') for (const sx of [4.3, -4.3]) out.col.push(0, e - sn * sx, n + cs * sx, 0.45, 0, 0, u);
+      if (key === 'bus1') out.col.push(1, e - sn * 1.7 - cs * 1.3, n + cs * 1.7 - sn * 1.3, 0.1, e + sn * 1.7 - cs * 1.3, n - cs * 1.7 - sn * 1.3, u);
+      FURN.made++;
+    }
+    for (const k in out.by) out.by[k] = new Float32Array(out.by[k]);
+    out.lamps = new Float32Array(out.lamps); out.col = new Float32Array(out.col);
+  }
+  if (c.wire) {   // the wires between the poles, as lines (made into a mesh with the chunk's roads)
+    const q = arr(Int16Array, c.wire.p), nn = arr(Uint32Array, c.wire.n), V = []; let at = 0;
+    for (let l = 0; l < nn.length; l++) { for (let i = 0; i + 1 < nn[l]; i++) { const a = (at + i) * 3, b = a + 3; V.push(q[a] * 0.01 + o[0], q[a + 1] * 0.01 + o[1], q[a + 2] * 0.01 + o[2], q[b] * 0.01 + o[0], q[b + 1] * 0.01 + o[1], q[b + 2] * 0.01 + o[2]); } at += nn[l]; }
+    out.wireV = new Float32Array(V);
+  }
+  FURN.chunks.push(out);
+}
+const wireMat = new THREE.LineBasicMaterial({ color: 0x1c1d1f });
+// the instanced meshes, made once the chunks are read (capacity: every instance of the model in the file)
+function furnMeshes(root) {
+  const M = furnModels(), cap = {};
+  for (const c of FURN.chunks) for (const k in c.by) cap[k] = (cap[k] || 0) + c.by[k].length / 16;
+  for (const k in cap) {
+    const m = M[k] || M[k.replace(/\d+$/, '')]; if (!m) continue; const ims = [];
+    if (m.g) { const im = new THREE.InstancedMesh(m.g, furnMat, cap[k]); im.castShadow = !!m.shadow; im.receiveShadow = true; ims.push(im); }
+    if (m.face) ims.push(new THREE.InstancedMesh(m.face, signMat, cap[k]));
+    if (m.hw) ims.push(new THREE.InstancedMesh(m.hw, hwSignMat, cap[k]));
+    if (m.flat) { const im = new THREE.InstancedMesh(m.flat, m.mat || ironMat, cap[k]); im.receiveShadow = m.mat !== tlampMat; ims.push(im); }
+    for (const im of ims) { im.frustumCulled = false; im.count = 0; im.matrixAutoUpdate = false; root.add(im); }
+    FURN.models[k] = ims;
+  }
+  const nl = FURN.chunks.reduce((a, c) => a + c.lamps.length / 6, 0);
+  if (nl) {
+    const im = new THREE.InstancedMesh(new THREE.CircleGeometry(0.13, 12).translate(0, 0, 0.005), lampMat, nl);
+    im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(nl * 3), 3); im.frustumCulled = false; im.count = 0; im.matrixAutoUpdate = false; root.add(im);
+    FURN.lamps = { im, list: new Float32Array(nl * 6), n: 0, at: -1 };
+  }
+}
+// the chunks near the car: their instances into the meshes (when the set changes)
+function furnNear(e, n) {
+  const R = Math.min(S.dist, 600) + 120, near = FURN.chunks.filter(c => Math.hypot(c.e - e, c.n - n) < R), key = near.map(c => FURN.chunks.indexOf(c)).join(',') + ':' + BLD.entV;
+  if (key === FURN.near) return; FURN.near = key;
+  for (const k in FURN.models) {
+    let at = 0; const ims = FURN.models[k], A = ims[0].instanceMatrix.array, gap = k === 'pipe' || k === 'hedge';
+    for (const c of near) if (c.by[k]) {
+      if (!gap) { A.set(c.by[k], at); at += c.by[k].length; continue; }
+      const B = c.by[k]; for (let i = 0; i < B.length; i += 16) if (!entBlocks(B[i + 12], B[i + 13])) { A.set(B.subarray(i, i + 16), at); at += 16; }   // (open in front of an entrance)
+    }
+    for (const im of ims) { if (im !== ims[0]) im.instanceMatrix.array.set(A.subarray(0, at)); im.count = at / 16; im.instanceMatrix.needsUpdate = true; }
+  }
+  if (FURN.lamps) {
+    const L = FURN.lamps, Mx = new THREE.Matrix4(); let at = 0;
+    for (const c of near) { L.list.set(c.lamps, at * 6); at += c.lamps.length / 6; }
+    for (let i = 0; i < at; i++) { const p = L.list.subarray(i * 6), cs = Math.cos(p[3]), sn = Math.sin(p[3]); Mx.set(-sn, 0, cs, p[0], cs, 0, sn, p[1], 0, 1, 0, p[2], 0, 0, 0, 1); L.im.setMatrixAt(i, Mx); }
+    L.n = at; L.im.count = at; L.im.instanceMatrix.needsUpdate = true; L.at = -1;
+  }
+  FURN.colAll = near.map(c => c.col);
+}
+// the signals' cycle: 60 s per junction (its own offset); axis 0 green 0-25 s, amber 25-28; axis 1 green 30-55, amber 55-58;
+// all red between; the pedestrians' green with the traffic along their way, flashing its last 5 s
+const SIGC = { g: [0.1, 1.0, 0.75], y: [1.0, 0.62, 0.0], r: [1.0, 0.06, 0.03], off: [0.07, 0.075, 0.075] };
+function signalState(g, t) {
+  const tt = (t + ((g >> 1) * 7.31 % 1) * 60) % 60, s = (g & 1) ? tt - 30 : tt;
+  return s >= 0 && s < 25 ? 0 : s >= 25 && s < 28 ? 1 : 2;                // (0 green, 1 amber, 2 red)
+}
+function furnLamps(now) {
+  const L = FURN.lamps; if (!L || !L.n) return;
+  const t = now / 1000, step = Math.floor(t * 4); if (step === L.at) return; L.at = step;
+  const col = L.im.instanceColor.array, k = 2.6;
+  for (let i = 0; i < L.n; i++) {
+    const g = L.list[i * 6 + 4], role = L.list[i * 6 + 5], st = signalState(g, t); let c = SIGC.off, on = 1;
+    if (role < 3) { if (role === st) c = role === 0 ? SIGC.g : role === 1 ? SIGC.y : SIGC.r; }
+    else {
+      const tt = (t + ((g >> 1) * 7.31 % 1) * 60) % 60, s = (g & 1) ? tt - 30 : tt, walk = s >= 2 && s < 25, flash = s >= 20 && s < 25;
+      if (role === 4 && walk && !(flash && step % 2)) c = SIGC.g; else if (role === 3 && !walk) c = SIGC.r;
+    }
+    if (c === SIGC.off) on = 1 / k;
+    col[i * 3] = c[0] * k * on; col[i * 3 + 1] = c[1] * k * on; col[i * 3 + 2] = c[2] * k * on;
+  }
+  L.im.instanceColor.needsUpdate = true;
+}
+// the colliders within 30 m of the car, in world x/z (gathered every half second)
+function furnColliders(now) {
+  if (!FURN.colAll || (now - FURN.colAt < 500 && Math.hypot(C.x - FURN.colX, C.z - FURN.colZ) < 10)) return;
+  FURN.colAt = now; FURN.colX = C.x; FURN.colZ = C.z; FURN.col.length = 0;
+  const p = new THREE.Vector3(), q = new THREE.Vector3();
+  for (const A of FURN.colAll) for (let i = 0; i < A.length; i += 7) {
+    p.set(A[i + 1], A[i + 2], A[i + 6]).applyMatrix4(FRAME.M);
+    if (Math.hypot(p.x - C.x, p.z - C.z) > 32) continue;
+    if (A[i] === 0) FURN.col.push(0, p.x, p.z, A[i + 3], 0, 0, p.y);
+    else if (entBlocks((A[i + 1] + A[i + 4]) / 2, (A[i + 2] + A[i + 5]) / 2)) continue;
+    else { q.set(A[i + 4], A[i + 5], A[i + 6]).applyMatrix4(FRAME.M); FURN.col.push(1, p.x, p.z, A[i + 3], q.x, q.z, p.y); }
+  }
+}
+// the near buildings' entrances (doors, shop fronts, loading doors on a street wall), east/north: the pipes and hedges
+// in front of them are left out (and their colliders)
+const ENTH = { v: -1, m: new Map() };   // (the entrances by 16 m cell: a pipe looks at the 9 cells round it, not at every entrance)
+function entBlocks(e, n) {
+  if (ENTH.v !== BLD.entV) { ENTH.v = BLD.entV; ENTH.m.clear(); for (const t of BLD.ent) { const k = Math.floor(t[0] / 16) + ',' + Math.floor(t[1] / 16); (ENTH.m.get(k) || ENTH.m.set(k, []).get(k)).push(t); } }
+  const ci = Math.floor(e / 16), cj = Math.floor(n / 16);
+  for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) for (const t of ENTH.m.get((ci + i) + ',' + (cj + j)) || []) {
+    const dx = e - t[0], dn = n - t[1], al = dx * t[2] + dn * t[3], la = Math.abs(dx * -t[3] + dn * t[2]); if (al > -0.5 && al < 12 && la < t[4] + 0.9) return true;
+  }
+  return false;
+}
+function segDist(px, pz, ax, az, bx2, bz) { const dx = bx2 - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / l2)); return Math.hypot(px - ax - dx * t, pz - az - dz * t); }
+// is a point within r of a piece standing at about the level y (from 1.5 m below its foot to 6 m above)? (tall: posts only, for the camera)
+function furnHit(x, z, r, tallOnly, y) {
+  const A = FURN.col;
+  for (let i = 0; i < A.length; i += 7) {
+    if (y - A[i + 6] < -1.5 || y - A[i + 6] > 6) continue;
+    if (A[i] === 0) { if (Math.hypot(x - A[i + 1], z - A[i + 2]) < r + A[i + 3]) { furnHit.last = ['柱', +A[i + 1].toFixed(1), +A[i + 2].toFixed(1), +A[i + 3].toFixed(2)]; return true; } }
+    else if (!tallOnly && segDist(x, z, A[i + 1], A[i + 2], A[i + 4], A[i + 5]) < r + A[i + 3]) { furnHit.last = ['柵・植え込み', +A[i + 1].toFixed(1), +A[i + 2].toFixed(1)]; return true; }
+  }
+  return false;
+}
+// chunks shown within 1.3 km of the car; their surfaces for the car's rays within 450 m (their BVHs made on first need)
+const _ce = new THREE.Vector3();
+// chunks made within 1.3 km of the car or of where it will be in 6 s (ahead, by its speed), freed past 1.7 km; the near
+// ones (the car's rays) at once, the rest one a frame (areaWork)
+function areaNear() {
+  if (!FRAME) return;
+  _ce.set(C.x - FRAME.o.x, 0, C.z - FRAME.o.z); const e = _ce.dot(FRAME.E), n = _ce.dot(FRAME.N);
+  const fx = Math.sin(C.hdg) * Math.sign(C.v || 1), fz = Math.cos(C.hdg) * Math.sign(C.v || 1), ahead = Math.min(Math.abs(C.v) * 6, 300);
+  const ae = e + (fx * FRAME.E.x + fz * FRAME.E.z) * ahead, an = n + (fx * FRAME.N.x + fz * FRAME.N.z) * ahead, R = 1300;
+  AREA.near.length = 0; AREA.walls.length = 0; AREA.queue.length = 0;
+  for (const c of AREA.chunks) {
+    const d = Math.hypot(c.e - e, c.n - n), dm = Math.min(d, Math.hypot(c.e - ae, c.n - an));
+    if (!c.grp && d < 480) AREA.make(c);
+    else if (!c.grp && dm < R) AREA.queue.push([dm, c]);
+    else if (c.grp && dm > R + 400) chunkFree(c);
+    if (!c.grp) continue;
+    c.grp.visible = d < R;
+    if (d < 480) {
+      for (const m of c.meshes) { if (!m.geometry.boundsTree) m.geometry.computeBoundsTree(); AREA.near.push(m); }
+      for (const m of c.walls) { if (!m.geometry.boundsTree) m.geometry.computeBoundsTree(); AREA.walls.push(m); }
+    }
+  }
+  AREA.queue.sort((a, b) => a[0] - b[0]);
+  for (const c of FURN.chunks) if (c.wire) c.wire.visible = Math.hypot(c.e - e, c.n - n) < 560;   // (wires: 1 px lines, near only)
+  furnNear(e, n);
+}
+// the ground mesh, 1.8 km across round the car, its heights from the DEM grid (moved when the car is 300 m off its middle)
+function gridU(e, n) {
+  const G = AREA.grid, fi = Math.min(Math.max((e - G.e0) / G.step, 0), G.nx - 1.001), fj = Math.min(Math.max((n - G.n0) / G.step, 0), G.ny - 1.001);
+  const i = Math.floor(fi), j = Math.floor(fj), u = fi - i, v = fj - j, k = j * G.nx + i, A = G.u;
+  return ((A[k] * (1 - u) + A[k + 1] * u) * (1 - v) + (A[k + G.nx] * (1 - u) + A[k + G.nx + 1] * u) * v) * 0.01;
+}
+function groundFollow(force) {
+  const half = (GH.n - 1) * GH.cs / 2, cx = GH.x0 + half, cz = GH.z0 + half;
+  if (!force && Math.hypot(C.x - cx, C.z - cz) < 300) return;
+  GH.x0 = Math.round(C.x / GH.cs) * GH.cs - half; GH.z0 = Math.round(C.z / GH.cs) * GH.cs - half;
+  const n = GH.n, Pp = groundGeo.attributes.position.array, o = FRAME.o, E = FRAME.E, N = FRAME.N, U = FRAME.U;
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const k = j * n + i, x = GH.x0 + i * GH.cs, z = GH.z0 + j * GH.cs, dx = x - o.x, dz = z - o.z, e = dx * E.x + dz * E.z, nn = dx * N.x + dz * N.z;
+    const y = o.y + e * E.y + nn * N.y + gridU(e, nn) * U.y;
+    Pp[k * 3] = x; Pp[k * 3 + 1] = y; Pp[k * 3 + 2] = z; GH.h[k] = y;
+  }
+  groundGeo.attributes.position.needsUpdate = true; groundGeo.computeVertexNormals(); groundGeo.computeBoundingSphere(); GH.ready = true;
+}
+
+// ---- the car: the sim's GR Supra, driven on PLATEAU's road surface ----
+const car = new THREE.Group(); scene.add(car);
+// the cabin in the driver's view: the light through the glass that the sun's shadow map leaves out (the roof's shadow
+// falls on the whole interior), a soft fill, on only in that view
+const cabinLight = new THREE.PointLight(0xfff4e6, 0, 1.6, 2); cabinLight.position.set(-0.3, 1.15, 0.25); car.add(cabinLight);
+fetchBin('models/cars/toyota_gr_supra.glb').then(buf => new GLTFLoader().parse(buf, '', g => {
+  const m = g.scene; m.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } });
+  const box = new THREE.Box3().setFromObject(m), s = 4.38 / (box.max.z - box.min.z || 1);
+  m.scale.setScalar(s); m.position.y = -box.min.y * s;
+  const b2 = new THREE.Box3().setFromObject(m); m.position.x -= (b2.max.x + b2.min.x) / 2; m.position.z -= (b2.max.z + b2.min.z) / 2;
+  car.add(m);
+})).catch(() => { const b = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.3, 4.4), new THREE.MeshStandardMaterial({ color: 0xa01010, roughness: 0.3 })); b.position.y = 0.65; b.castShadow = true; car.add(b); });
+const C = { x: 0, y: 0, z: 0, hdg: 0, v: 0, vy: 0, steer: 0, camYaw: 0, pitch: 0, roll: 0, cam: 0, hand: false, eye: [-0.37, 1.05, -0.25, 0.1, 50] };   // (eye: the driver's eye in the car (x, y up, z ahead), how far it looks down over 10 m, the vertical field of view)
+const L = Math.hypot(SPOT.dx, SPOT.dz);
+let placed = false, start = null;
+// the street's direction and the lane in this frame, from PLATEAU's own globe, once its tiles are placed
+// where to start: Kannai (PLATEAU's own lanes), Minato Mirai (みなとみらい大通り), Yokohama Station (国道1号); the last two
+// in east/north metres from the Kannai spot, with the way the lane runs
+const SPAWNS = [['関内', null], ['みなとみらい', { e: -1040.61, n: 940.33, de: 0.5676, dn: -0.8233 }], ['横浜駅', { e: -1551.69, n: 1739.85, de: 0.0044, dn: -1.0 }],
+  ['山下町', { e: 750.15, n: -169.93, de: 0.8028, dn: -0.5962 }], ['元町', { e: 693.4, n: -734.46, de: -0.8573, dn: -0.5149 }], ['東神奈川', { e: -761.63, n: 3467.74, de: -0.6059, dn: -0.7956 }]];
+let spawnAt = Math.max(0, SPAWNS.findIndex(s => s[0] === qs.get('spawn'))), FRAME = null;
+function place() {
+  const t = Object.values(sets).find(t => t.ellipsoid && t.root && Math.abs(t.group.matrixWorld.elements[13]) >= 1); if (!t) return;
+  t.group.updateMatrixWorld();
+  const w = (dn, de) => t.ellipsoid.getCartographicToPosition((SPOT.lat - dn / 111000) * D2R, (SPOT.lon + de / 90700) * D2R, SPOT.h, new THREE.Vector3()).applyMatrix4(t.group.matrixWorld);
+  const o = w(0, 0), e = w(0, 1).sub(o).normalize(), sth = w(1, 0).sub(o).normalize();
+  const f = e.clone().multiplyScalar(SPOT.dx / L).addScaledVector(sth, SPOT.dz / L).normalize(), side = e.clone().multiplyScalar(-SPOT.dz / L).addScaledVector(sth, SPOT.dx / L);
+  const N = sth.clone().negate(), U = new THREE.Vector3().crossVectors(e, N).normalize();
+  FRAME = { o, E: e, N, U, M: new THREE.Matrix4().makeBasis(e, N, U).setPosition(o) };
+  SPAWNS[0][1] = { x: o.x - side.x * 1.6, z: o.z - side.z * 1.6, hdg: Math.atan2(f.x, f.z) };
+  setSpawn(spawnAt); placed = true;
+}
+function setSpawn(i) {
+  spawnAt = i; const s = SPAWNS[i][1];
+  if (s.x !== undefined) start = s;
+  else { const p = enuToWorld(s.e, s.n, 0), d = FRAME.E.clone().multiplyScalar(s.de).addScaledVector(FRAME.N, s.dn); start = { x: p.x, z: p.z, hdg: Math.atan2(d.x, d.z) }; }
+  car.position.set(start.x, 0, start.z); reset();
+}
+function enuToWorld(e, n, u) { return new THREE.Vector3(e, n, u).applyMatrix4(FRAME.M); }
+function reset() { Object.assign(C, { x: start.x, z: start.z, hdg: start.hdg, camYaw: start.hdg, v: 0, vy: 0, steer: 0 }); C.y = groundAt(C.x, C.z, groundRef(C.x, C.z) + 1.0); }   // (from the ground up: a viaduct over the start is not where the car goes)
+// the DEM's ground under a point (world y): where a search for the road surface starts from, for a start or a reset
+function groundRef(x, z) { if (!AREA.grid || !FRAME) return 30; const dx = x - FRAME.o.x, dz = z - FRAME.o.z, e = dx * FRAME.E.x + dz * FRAME.E.z, n = dx * FRAME.N.x + dz * FRAME.N.z; return enuToWorld(e, n, gridU(e, n)).y; }
+const ray = new THREE.Raycaster(); ray.firstHitOnly = true;
+const DOWN = new THREE.Vector3(0, -1, 0), _o = new THREE.Vector3(), _d = new THREE.Vector3();
+// what the rays may hit: this frame's tiles that have their BVH (the others' turn comes in a frame or two)
+const hitRoads = [], hitBldg = [];
+// (only meshes whose BVH is there: one whose BVH is being rebuilt, after its triangles were hidden or shown, would be
+// tested triangle by triangle: 100 ms and more for a big tile)
+const withBVH = a => a.filter(o => o.geometry.boundsTree);
+function gatherHits() {
+  hitRoads.length = hitBldg.length = 0;
+  if (sets.roads.group.visible) sets.roads.group.traverse(o => { if (o.isMesh && o.geometry.boundsTree) hitRoads.push(o); });
+  for (const t of bsets()) if (t.group.visible) t.group.traverse(o => { if (o.isMesh && o.geometry.boundsTree) hitBldg.push(o); });
+  for (const m of AREA.near) hitRoads.push(m);
+  for (const m of AREA.walls) hitBldg.push(m);
+  for (const r of BLD.near) if (r.hitMesh) hitBldg.push(r.hitMesh);   // (the near buildings' walls, as the data has them)                           // (parapets, tunnel walls, piers: walls to the car and the camera)
+}
+// the ground under a point: PLATEAU's road surface (a pavement, a kerb's top), else the ground between the roads
+function groundAt(x, z, yRef) {
+  ray.set(_o.set(x, yRef + 1.5, z), DOWN); ray.far = 60; ray.firstHitOnly = false;
+  const all = hitRoads.length ? ray.intersectObjects(withBVH(hitRoads), false) : []; ray.firstHitOnly = true;
+  // the surface the wheel is on: the highest no more than 0.5 m above it (a kerb's step up), not a deck alongside a
+  // little higher (a ramp leaving the mainline, their decks overlapping at the split); only if every surface is higher, the nearest
+  let hit = all.find(k => k.point.y <= yRef + 0.5) || all[all.length - 1];
+  const h = hit ? [hit] : [];
+  if (hitRoads.length && (!h.length || h[0].point.y < yRef - 1.2)) {
+    // nothing near under the wheel: a seam between two pieces of road? Look again a few cm aside (from no higher, so a deck
+    // above is never reached)
+    for (const [ox, oz] of [[0.07, 0.05], [-0.06, -0.07]]) {
+      ray.set(_o.set(x + ox, yRef + 1.5, z + oz), DOWN); ray.far = 2.7; ray.firstHitOnly = false;
+      const h2 = ray.intersectObjects(withBVH(hitRoads), false); ray.firstHitOnly = true;
+      const k = h2.find(q => q.point.y <= yRef + 0.5); if (k) return k.point.y;   // (the same rule as above: never a surface above the wheel's step)
+    }
+  }
+  return h.length ? h[0].point.y : gridH(x, z);
+}
+// the nearest wall (a building's) along a level ray, or Infinity
+function wallDist(x, y, z, dx, dz, d) {
+  ray.set(_o.set(x, y, z), _d.set(dx, 0, dz).normalize()); ray.far = d;
+  const h = hitBldg.length ? ray.intersectObjects(withBVH(hitBldg), false) : [];
+  if (h.length) { const o = h[0].object; wallDist.last = { what: o.material === concMat ? '床版の壁・橋脚' : o.material === sndMat ? '遮音壁' : o.material === bldMat ? '近景の建物' : '建物', x: +h[0].point.x.toFixed(1), y: +h[0].point.y.toFixed(1), z: +h[0].point.z.toFixed(1) }; }
+  return h.length ? h[0].distance : Infinity;
+}
+const keys = {};
+addEventListener('keydown', e => { keys[e.code] = true; if (e.code === 'KeyC') C.cam = (C.cam + 1) % 3; if (e.code === 'KeyR' && start) reset(); if (e.code === 'KeyH') for (const id of ['hud', 'help', 'panel', 'credit']) document.getElementById(id).hidden ^= 1; if (e.code === 'Space') e.preventDefault(); });
+addEventListener('keyup', e => { keys[e.code] = false; });
+if (touch) document.getElementById('pad').style.display = 'grid';
+for (const b of document.querySelectorAll('#pad button')) {
+  const k = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' }[b.dataset.k];
+  b.addEventListener('pointerdown', e => { keys[k] = true; b.setPointerCapture(e.pointerId); });
+  for (const ev of ['pointerup', 'pointercancel']) b.addEventListener(ev, () => { keys[k] = false; });
+}
+const _c = new THREE.Vector3(), _t = new THREE.Vector3(), _sx = new THREE.Vector3(), _sy = new THREE.Vector3();
+// the driving (the sim's own bicycle model: the power, the brakes, the grip, the handbrake letting the tail out)
+function drive(dt) {
+  const up = keys.ArrowUp || keys.KeyW, dn = keys.ArrowDown || keys.KeyS, st = (keys.ArrowRight || keys.KeyD ? 1 : 0) - (keys.ArrowLeft || keys.KeyA ? 1 : 0);
+  C.hand = !!keys.Space;
+  const mass = 1520, power = 212500, sp = Math.abs(C.v);                 // (250 kW, 85 % of it at the wheels)
+  let thr = 0, brake = 0, rev = false;
+  if (C.v > 0.6) { thr = up ? 1 : 0; brake = dn ? 1 : 0; } else if (C.v < -0.6) { thr = dn ? 1 : 0; brake = up ? 1 : 0; rev = true; } else { rev = !!dn && !up; thr = up || dn ? 1 : 0; }
+  let F = thr * (rev ? -1 : 1) * Math.min(0.8 * mass * 9.81, power / Math.max(sp, 1)) * (rev ? 0.45 : 1);   // (the tyres' grip, then the power: 0-100 km/h in about 4 s)
+  if (rev && C.v < -8) F = 0;
+  const res = 0.5 * 1.2 * 0.6 * C.v * sp + (sp > 0.05 ? Math.sign(C.v) * 0.013 * mass * 9.81 : 0);
+  let nv = C.v + (F - res) / mass * dt;
+  const bF = brake * 11000 + (C.hand ? 5500 : 0);
+  if (bF > 0) { const dv = bF / mass * dt; nv = Math.abs(nv) <= dv ? 0 : nv - Math.sign(nv) * dv; }
+  if (!thr && Math.abs(C.v) < 0.4 && Math.abs(nv) < 0.6) nv = 0;
+  C.steer += (st * 0.62 / (1 + (Math.abs(nv) / 9) ** 1.3) - C.steer) * Math.min(1, dt * 5);
+  let yaw = nv * Math.tan(C.steer) / 2.47;
+  const grip = (C.hand ? 0.6 : 0.9) * 9.81 / Math.max(Math.abs(nv), 1);
+  if (Math.abs(yaw) > grip) { nv *= 1 - 0.25 * dt; yaw = Math.sign(yaw) * grip; }
+  if (C.hand && Math.abs(nv) > 6) yaw *= 1.45;
+  C.hdg -= yaw * dt;
+  const fx = Math.sin(C.hdg), fz = Math.cos(C.hdg), step = nv * dt;
+  // walls: three level rays at bumper height (the middle and the corners) ahead, or behind when reversing; a tree's trunk
+  if (Math.abs(step) > 1e-4) {
+    const sg = Math.sign(step), reach = 2.25 + Math.abs(step);
+    let hit = false;
+    for (const off of [0, -0.8, 0.8]) if (wallDist(C.x + fz * off, C.y + 0.6, C.z - fx * off, fx * sg, fz * sg, reach) < reach) { hit = true; C.hitBy = wallDist.last; break; }
+    const nx = C.x + fx * sg * 2.1, nz = C.z + fz * sg * 2.1;
+    for (let i = 0; i < treeSpots.length && !hit; i += 3) if (Math.abs(treeSpots[i + 1] - C.y) < 3 && Math.hypot(treeSpots[i] - nx, treeSpots[i + 2] - nz) < 0.9) { hit = true; C.hitBy = { what: '樹木', x: +treeSpots[i].toFixed(1), z: +treeSpots[i + 2].toFixed(1) }; }   // (a trunk at the car's level)
+    for (const off of [0, -0.8, 0.8]) if (!hit && furnHit(nx + fz * off, nz - fx * off, 0.2, false, C.y)) { hit = true; C.hitBy = { what: '街路設備', kind: furnHit.last }; }   // (poles, posts, pipes, hedges at its level)
+    if (hit) { nv = -nv * 0.15; C.hitAt = performance.now(); } else { C.x += fx * step; C.z += fz * step; }
+  }
+  C.v = nv;
+  // on the surface: the wheels' ground front and back, left and right (a kerb is a bump; a drop is a fall)
+  const gF = groundAt(C.x + fx * 1.3, C.z + fz * 1.3, C.y), gB = groundAt(C.x - fx * 1.3, C.z - fz * 1.3, C.y);
+  const gL = groundAt(C.x + fz * 0.8, C.z - fx * 0.8, C.y), gR = groundAt(C.x - fz * 0.8, C.z + fx * 0.8, C.y), g = (gF + gB + gL + gR) / 4;
+  if (C.y > g + 0.05) { C.vy -= 9.81 * dt; C.y = Math.max(g, C.y + C.vy * dt); if (C.y === g) C.vy = 0; } else { C.y += (g - C.y) * Math.min(1, dt * 20); C.vy = 0; }
+  C.pitch += (Math.atan2(gF - gB, 2.6) - C.pitch) * Math.min(1, dt * 10); C.roll += (Math.atan2(gL - gR, 1.6) - C.roll) * Math.min(1, dt * 10);
+  car.position.set(C.x, C.y, C.z); car.rotation.set(0, 0, 0); car.rotateY(C.hdg); car.rotateX(-C.pitch); car.rotateZ(C.roll);
+  car.updateMatrixWorld();
+  // the camera: behind (swinging round smoothly), the driver's seat (right-hand drive), or high behind; kept out of walls
+  const d = ((C.hdg - C.camYaw + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI; C.camYaw += d * Math.min(1, dt * 3);
+  const cx = Math.sin(C.camYaw), cz = Math.cos(C.camYaw);
+  if (window.__camAt) { const c = window.__camAt; camera.position.set(c[0], c[1], c[2]); camera.lookAt(c[3], c[4], c[5]); camera.fov = c[6] || 55; }   // (tests: a camera put where asked)
+  cabinLight.intensity = C.cam === 1 && !window.__camAt ? 0.9 : 0;
+  if (window.__camAt) {} else if (C.cam === 1) { const E = C.eye, e = new THREE.Vector3(E[0], E[1], E[2]).applyMatrix4(car.matrixWorld); camera.position.copy(e); camera.lookAt(e.x + fx * 10, e.y - E[3], e.z + fz * 10); camera.fov = E[4]; }
+  else {
+    const far = C.cam === 2, D = far ? 14 : 7.2, H = far ? 6 : 2.3;
+    _c.set(C.x, C.y + 1.6, C.z); _t.set(C.x - cx * D, C.y + H, C.z - cz * D);
+    _d.subVectors(_t, _c); const len = _d.length(); _d.normalize();
+    ray.set(_c, _d); ray.far = len + 0.4;
+    const h = hitBldg.length ? ray.intersectObjects(withBVH(hitBldg), false) : [];
+    if (h.length) _t.copy(_c).addScaledVector(_d, Math.max(0.8, h[0].distance - 0.4));
+    for (let s = 0.15; s <= 1.0001; s += 0.05) if (furnHit(_c.x + (_t.x - _c.x) * s, _c.z + (_t.z - _c.z) * s, 0.3, true, _c.y + (_t.y - _c.y) * s - 1.6)) { _t.lerpVectors(_c, _t, Math.max(0.12, s - 0.08)); break; }   // (not inside a pole)
+    _t.y = Math.max(_t.y, groundAt(_t.x, _t.z, _t.y) + 0.5);
+    camera.position.copy(_t); camera.lookAt(C.x + cx * 3, C.y + 1.1, C.z + cz * 3); camera.fov = 60;
+  }
+  camera.updateProjectionMatrix();
+  // the sun's shadow box round the car and ahead, moved in whole texels of its map (no shimmer as the car moves)
+  _c.set(C.x + fx * 40, C.y, C.z + fz * 40);
+  _sx.crossVectors(THREE.Object3D.DEFAULT_UP, SUN).normalize(); _sy.crossVectors(SUN, _sx);
+  const tx = 240 / Q.shadow, a = Math.round(_c.dot(_sx) / tx) * tx, b = Math.round(_c.dot(_sy) / tx) * tx, z = _c.dot(SUN);
+  _c.copy(_sx).multiplyScalar(a).addScaledVector(_sy, b).addScaledVector(SUN, z);
+  sun.target.position.copy(_c); sun.position.copy(_c).addScaledVector(SUN, 400);
+}
+
+// ---- the frame, the timing, the measurement ----
+const fr = []; let last = performance.now(), bench = null;
+const hud = document.getElementById('hud'), out = document.getElementById('out');
+const _inv = new THREE.Matrix4();
+function stats(a) { const s = a.slice().sort((x, y) => x - y), sum = a.reduce((x, y) => x + y, 0); return { fps: 1000 * a.length / sum, p50: s[s.length >> 1], p95: s[Math.floor(s.length * 0.95)] || s[s.length - 1], max: s[s.length - 1] }; }
+function gpuName() { const gl = renderer.getContext(), d = gl.getExtension('WEBGL_debug_renderer_info'); return d ? gl.getParameter(d.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); }
+function sizeText() {
+  const W = renderer.domElement.width, H = renderer.domElement.height;
+  return `内部 ${Math.round(W * rscale)}×${Math.round(H * rscale)}（基準 ${W}×${H} の ${Math.round(rscale * 100)}%${S.auto ? '、自動' + rsLast : '、固定'}）`;
+}
+const heapMB = () => performance.memory ? (performance.memory.usedJSHeapSize / 1e6).toFixed(0) + ' MB' : '取得不可';
+// the GPU's own time, where the browser gives its timer (EXT_disjoint_timer_query_webgl2): measured per pass (the scene,
+// the shadow map inside it, AO, bloom, the output) and summed per frame. Measured, not estimated
+const glx = renderer.getContext(), TQ = glx.getExtension('EXT_disjoint_timer_query_webgl2'), GT = { cur: null, list: [], frame: 0, frames: new Map() };
+function gtStart(name) { if (!TQ || !bench || NORENDER || GT.list.length > 96) return; const q = glx.createQuery(); glx.beginQuery(TQ.TIME_ELAPSED_EXT, q); GT.cur = { q, name, frame: GT.frame }; }
+function gtStop() { if (!GT.cur) return; glx.endQuery(TQ.TIME_ELAPSED_EXT); GT.list.push(GT.cur); const f = GT.frames.get(GT.cur.frame) || { sum: 0, n: 0, by: {} }; f.n++; GT.frames.set(GT.cur.frame, f); GT.cur = null; }
+{
+  const names = new Map([[RenderPass, 'シーン描画'], [GTAOPass, 'AO'], [UnrealBloomPass, '光のにじみ'], [OutputPass, '出力']]);
+  for (const p of composer.passes) { const nm = [...names].find(([k]) => p instanceof k); if (!nm) continue; const r = p.render.bind(p); p.render = (...a) => { gtStart(nm[1]); r(...a); gtStop(); }; }
+  const sr = renderer.shadowMap.render.bind(renderer.shadowMap);
+  renderer.shadowMap.render = (...a) => { const outer = GT.cur && GT.cur.name; if (outer) gtStop(); gtStart('影の描画'); sr(...a); gtStop(); if (outer) gtStart(outer); };
+}
+function gpuBegin() { GT.frame++; return null; }
+function gpuEnd() {}
+function gpuPoll() {
+  while (GT.list.length && glx.getQueryParameter(GT.list[0].q, glx.QUERY_RESULT_AVAILABLE)) {
+    const e = GT.list.shift(), ns = glx.getQueryParameter(e.q, glx.QUERY_RESULT), bad = glx.getParameter(TQ.GPU_DISJOINT_EXT); glx.deleteQuery(e.q);
+    const f = GT.frames.get(e.frame); if (!f) continue;
+    if (!bad) { f.sum += ns / 1e6; f.by[e.name] = (f.by[e.name] || 0) + ns / 1e6; } else f.bad = true;
+    if (--f.n === 0) { GT.frames.delete(e.frame); if (!f.bad && bench) { bench.gpu.push(f.sum); for (const k in f.by) (bench.pass[k] || (bench.pass[k] = [])).push(f.by[k]); } }
+  }
+}
+function report(b) {
+  const s = stats(b.fr), f1 = v => v.toFixed(1), on = k => sets[k] && sets[k].group.visible ? 'あり' : 'なし';
+  return [`【計測 three.js 試作】${new Date().toLocaleString('ja-JP')}　関内 ${SPOT.lat}, ${SPOT.lon}（昼・${['後方', '運転席', '高い後方'][C.cam]}視点）`,
+    `端末: ${navigator.userAgent}`, `GPU: ${gpuName()}　CPU ${navigator.hardwareConcurrency || '?'} コア　画面 ${innerWidth}×${innerHeight}（dpr ${devicePixelRatio}）　画質 ${QLABEL}　${sizeText()}　MSAA ${Q.msaa}　影 ${S.shadow || 'なし'}　AO ${S.ao ? 'あり' : 'なし'}　近くの建物写真 ${S.tex}　描画距離 ${S.dist} m`,
+    `出発地点: ${SPAWNS[spawnAt][0]}　範囲 A の道路: ${AREA.state || 'あり'}　建物: PLATEAU ${bmode.toUpperCase()}（中区・西区・神奈川区。南区は LOD1 のみ）　道路: ${on('roads')}　樹木: ${on('trees')}　影: ${renderer.shadowMap.enabled ? 'あり' : 'なし'}　AO: ${ao.enabled ? 'あり' : 'なし'}　光のにじみ: ${bloom.enabled ? 'あり' : 'なし'}　MSAA ${Q.msaa}　影 ${Q.shadow}　AO 解像度 ${Math.round(Q.aoScale * 100)}%　描画解像度 ${Math.round(renderer.domElement.width * rscale)}×${Math.round(renderer.domElement.height * rscale)}（画面の ${Math.round(rscale * 100)}%）`,
+    `実フレームレート ${f1(s.fps)} fps（1フレーム 中央値 ${f1(s.p50)} ms / 95% ${f1(s.p95)} ms / 最大 ${f1(s.max)} ms、${b.fr.length} フレーム）`,
+    `ひっかかり（100 ms 超）${b.fr.filter(x => x > 100).length} 回、うち 1 秒超 ${b.fr.filter(x => x > 1000).length} 回　1 秒超を除いた実フレームレート ${f1(stats(b.fr.filter(x => x <= 1000).length ? b.fr.filter(x => x <= 1000) : b.fr).fps)} fps　計測中にタブが裏に回った: ${b.hidden ? 'あり' : 'なし'}　読み込み中のタイル（計測開始時）${b.busy}`,
+    `1フレームの JS ${f1(b.js / b.fr.length)} ms　描画呼出 ${Math.round(b.calls / b.fr.length)}　三角形 ${Math.round(b.tris / b.fr.length / 1000)} 千　テクスチャ ${renderer.info.memory.textures} 個（建物写真: GPU 推定 ${(texBytes() / 1e6).toFixed(0)} MB、元ファイル ${(texMem().blob / 1e6).toFixed(0)} MB、展開したまま ${(texMem().dec / 1e6).toFixed(0)} MB）　ジオメトリ ${renderer.info.memory.geometries} 個`,
+    `表示中の建物タイル ${bsets().reduce((a, t) => a + (t.visibleTiles ? t.visibleTiles.size : 0), 0)}　範囲 A の道路 ${AREA.chunks.filter(c => c.grp).length}/${AREA.chunks.length} 区画 ${(AREA.bytes / 1e6).toFixed(0)} MB（計測開始時 ${(b.area0 / 1e6).toFixed(0)} MB）　街路設備 ${FURN.made}（描画中 ${Object.values(FURN.models).reduce((a, ims) => a + ims[0].count, 0)}）　LOD3 に置き換えた建物 ${L3.size}　外壁を生成した建物 ${FACADE.made.size}（近景モデル ${BLD.near.size} 棟: ${[1, 2, 3, 4, 5].map(t => BTNAME[t] + ' ' + [...BLD.near].filter(r => r.L.type === t).length).join('・')}）　JS ヒープ ${heapMB()}（計測開始時 ${b.heap}）`,
+    `GPU 時間: ${b.gpu.length ? `中央値 ${f1(stats(b.gpu).p50)} ms / 95% ${f1(stats(b.gpu).p95)} ms（実測: EXT_disjoint_timer_query_webgl2、${b.gpu.length} フレーム）　内訳（中央値）: ${Object.entries(b.pass).map(([k, v]) => `${k} ${f1(stats(v).p50)} ms`).join('　')}` : TQ ? '測定値なし（GPU タイマーの結果が返らなかった）' : '未計測（この環境では GPU タイマー拡張が使えない。CPU 側の時間と fps のみ）'}`].join('\n');
+}
+const PF = { stalls: [], sum: {}, frames: 0 };   // (the frame's JS time by part, and the frames over 50 ms)
+function loop(now) {
+  const real = now - last, dt = Math.min(0.05, real / 1000); last = now;
+  fr.push(real); if (fr.length > 240) fr.shift();
+  const t0 = performance.now();
+  renderer.info.reset();
+  const sec = {}; let tp = t0; const mk = k => { const n = performance.now(); sec[k] = (sec[k] || 0) + n - tp; tp = n; };   // (where the frame's time went: kept for frames over 50 ms)
+  // the newly shown road and tree tiles; a few of the buildings' BVHs; the ground, now and then, as the roads come in
+  for (let i = pending.length - 1; i >= 0; i--) { const s = pending[i]; if (!s.parent) continue; pending.splice(i, 1); if (s.userData.kind === 'roads') processRoads(s); else processTrees(s); }
+  mk('道路・樹木タイル処理');
+  for (let k = Math.min(bvhQueue.length, 24), tEnd = performance.now() + 6; k-- > 0 && performance.now() < tEnd;) {   // (a tile over 250 m off waits: the car's rays never reach it; 24 looked at a frame)
+    const g = bvhQueue.shift(); if (g.boundsTree || g.userData.gone || !g.attributes.position) continue;
+    const o = g.userData.owner; if (o) { if (!g.boundingSphere) g.computeBoundingSphere(); _bs.copy(g.boundingSphere).applyMatrix4(o.matrixWorld); if (Math.hypot(_bs.center.x - C.x, _bs.center.z - C.z) - _bs.radius > 250) { bvhQueue.push(g); continue; } }
+    g.computeBoundsTree();
+  }
+  mk('衝突用 BVH');
+  if (AREA.grid) groundFollow(); else if (GH.dirty && now - GH.at > 1500) { GH.dirty = false; GH.at = now; groundRebuild(); }
+  if (FRAME && AREA.buf && !AREA.built) buildArea();
+  if (AREA.built && (fr.length % 20) === 0) areaNear();
+  for (const tEnd = performance.now() + 4; AREA.queue.length && performance.now() < tEnd;) { const [, c] = AREA.queue.shift(); if (!c.grp) AREA.make(c); }   // (the chunks ahead, a few ms a frame)
+  mk('地面・道路チャンク');
+  if (water.visible) water.position.set(C.x, water.position.y, C.z);
+  for (let i = facadePending.length - 1; i >= 0; i--) { const sc = facadePending[i]; if (!sc.parent) continue; if (facadeSetup(sc)) facadePending.splice(i, 1); }
+  bldJobs(); mk('建物の解析（タイル到着）');
+  if (placed) bldNear(now); bldWork(); BTEX.flush(); WTEX.flush(); mk('近景建物の生成'); if (placed) treeNear(now); mk('近くの樹木');
+  if (dedupeDirty && now - dedupeAt > 400) { dedupeDirty = false; dedupeAt = now; for (const o of L2MESH) l2Filter(o); }
+  mk('重複除去'); texManage(now); mk('写真の解像度');
+  furnLamps(now); if (placed) furnColliders(now);
+  gatherHits(); mk('信号・衝突の準備');
+  if (!placed) place();
+  if (placed && window.__autodrive) window.__autodrive(dt);   // (tests only: a route-following driver pressing the keys)
+  if (placed) drive(dt);
+  mk('運転');
+  // read ahead: the tiles' region (and the photos' sharpening) centred a few seconds down the road, grown to keep the
+  // car's own surroundings: at speed the next blocks come in before the car is there, not as it arrives
+  const ah = Math.min(Math.abs(C.v) * 3, 120) * Math.sign(C.v || 1); PRED.x = C.x + Math.sin(C.hdg) * ah; PRED.z = C.z + Math.cos(C.hdg) * ah;
+  for (const k in sets) {
+    const t = sets[k]; if (!t.group.visible) continue;
+    t.group.updateMatrixWorld();
+    _pv.set(PRED.x - (PRED.x - car.position.x) * 0.4, car.position.y, PRED.z - (PRED.z - car.position.z) * 0.4);
+    t.region.sphere.center.copy(_pv).applyMatrix4(_inv.copy(t.group.matrixWorld).invert());
+    t.region.sphere.radius = (k === 'trees' ? S.dist * 0.8 : S.dist) + Math.abs(ah) * 0.6;
+    t.setResolutionFromRenderer(camera, renderer); t.update();
+  }
+  mk('PLATEAU タイル更新');
+  gpuPoll();
+  const gq = gpuBegin();
+  if (!NORENDER) composer.render(dt);
+  gpuEnd(gq);
+  mk('描画（CPU 側）');
+  adaptScale(now);
+  const js = performance.now() - t0, inf = renderer.info.render;
+  if (js > 50 && PF.stalls.length < 300) PF.stalls.push({ t: +(now / 1000).toFixed(1), js: +js.toFixed(0), at: [Math.round(C.x), Math.round(C.z)], v: +(C.v * 3.6).toFixed(0), sec: Object.fromEntries(Object.entries(sec).filter(([, v]) => v > 5).map(([k, v]) => [k, +v.toFixed(0)])) });
+  for (const k in sec) PF.sum[k] = (PF.sum[k] || 0) + sec[k]; PF.frames++;
+  if (bench) { bench.fr.push(real); bench.js += js; bench.calls += inf.calls; bench.tris += inf.triangles; if (now - bench.t0 > 10000) { out.value = report(bench); out.style.display = 'block'; bench = null; window.__benchDone = out.value; } }
+  if ((fr.length & 15) === 0) {
+    const s = stats(fr.slice(-60)), ld = Object.values(sets).reduce((a, t) => a + (t.stats ? t.stats.downloading + t.stats.parsing : 0), 0);
+    if (!placed && now > 20000) { hud.textContent = 'PLATEAU の街のデータ（assets.cms.plateau.reearth.io）を読み込めません。\nこのページの置き場所によっては外部データへの接続が制限されます。\nGitHub 版で開いてください:\nhttps://raw.githack.com/kazuki8198-glitch/otinti/claude/what-is-this-db5aue/plateau-three.html'; hud.style.pointerEvents = 'auto'; hud.style.userSelect = 'text'; }
+    else hud.textContent = `実 ${s.fps.toFixed(1)} fps　中央値 ${s.p50.toFixed(1)} ms　${QLABEL}\n${sizeText()}\n描画呼出 ${inf.calls}　三角形 ${(inf.triangles / 1000).toFixed(0)} 千　建物写真 ${(texBytes() / 1e6).toFixed(0)} MB\nPLATEAU 表示 ${bsets().reduce((a, t) => a + (t.visibleTiles ? t.visibleTiles.size : 0), 0)} タイル　読込中 ${ld}　道路 ${AREA.chunks.filter(c => c.grp).length}/${AREA.chunks.length} 区画 ${(AREA.bytes / 1e6).toFixed(0)} MB　近景建物 ${BLD.near.size}　${SPAWNS[spawnAt][0]}${AREA.state ? '　' + AREA.state : ''}\n${Math.round(Math.abs(C.v) * 3.6)} km/h${C.hand ? '　サイドブレーキ' : ''}`;
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+document.getElementById('panel').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.b) { setMode(b.dataset.b); for (const o of document.querySelectorAll('[data-b]')) o.classList.toggle('on', o.dataset.b === bmode); }
+  const t = b.dataset.t;
+  if (t === 'roads' || t === 'trees') { sets[t].group.visible = !sets[t].group.visible; b.classList.toggle('on', sets[t].group.visible); }
+  if (t === 'shadow') { S.shadow = renderer.shadowMap.enabled ? 0 : (Q.shadow || 2048); saveSettings(); renderer.shadowMap.enabled = !renderer.shadowMap.enabled; scene.traverse(o => { if (o.material) for (const m of [].concat(o.material)) m.needsUpdate = true; }); b.classList.toggle('on', renderer.shadowMap.enabled); }
+  if (t === 'ao') { ao.enabled = !ao.enabled; S.ao = ao.enabled; saveSettings(); b.classList.toggle('on', ao.enabled); }
+  if (t === 'bloom') { bloom.enabled = !bloom.enabled; b.classList.toggle('on', bloom.enabled); }
+  if (b.dataset.a === 'cam') C.cam = (C.cam + 1) % 3;
+  if (b.dataset.a === 'spawn' && FRAME) setSpawn((spawnAt + 1) % SPAWNS.length);
+  if (b.dataset.a === 'settings') { setEl.style.display = setEl.style.display === 'block' ? 'none' : 'block'; showSettings(); }
+  if (false) { const u = new URL(location.href); u.searchParams.set('q', { high: 'mid', mid: 'low', low: 'high' }[QN]); location.href = u.href; }   // (MSAA and the shadow map are set at the start: reloads)
+  if (b.dataset.a === 'bench') { bench = { heap: heapMB(), hidden: document.hidden, busy: Object.values(sets).reduce((a, t) => a + (t.stats ? t.stats.downloading + t.stats.parsing : 0), 0), t0: performance.now(), fr: [], js: 0, calls: 0, tris: 0, gpu: [], pass: {}, area0: AREA.bytes }; out.style.display = 'block'; out.value = '計測中（10 秒、操作しないでください）…'; }
+  if (b.dataset.a === 'copy') { out.select(); navigator.clipboard && navigator.clipboard.writeText(out.value).catch(() => document.execCommand('copy')); }
+  b.blur();
+});
+for (const id of ['lod2', 'lod3']) document.querySelector(`[data-b=${id}]`).classList.toggle('on', id === bmode);
+for (const [t, on] of [['ao', ao.enabled], ['bloom', bloom.enabled]]) document.querySelector(`[data-t=${t}]`).classList.toggle('on', on);
+addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+// the panel's settings, applied as they change (the preset reloads the page: its MSAA is set at the start)
+function applySettings() {
+  setScale(S.auto ? Math.min(rscale, S.scale) : S.scale);
+  const sh = +S.shadow;
+  if ((sh > 0) !== renderer.shadowMap.enabled) { renderer.shadowMap.enabled = sh > 0; scene.traverse(o => { if (o.material) for (const m of [].concat(o.material)) m.needsUpdate = true; }); }
+  if (sh > 0 && sh !== sun.shadow.mapSize.x) { sun.shadow.mapSize.set(sh, sh); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } Q.shadow = sh; }
+  ao.enabled = !!S.ao;
+  for (const k in sets) if (sets[k].region) sets[k].region.sphere.radius = k === 'trees' ? S.dist * 0.8 : S.dist;
+  document.querySelector('[data-t=shadow]').classList.toggle('on', renderer.shadowMap.enabled); document.querySelector('[data-t=ao]').classList.toggle('on', ao.enabled);
+  saveSettings();
+}
+const setEl = document.getElementById('settings');
+function showSettings() {
+  for (const el of setEl.querySelectorAll('[data-s]')) { const k = el.dataset.s, v = k === 'preset' ? QN : S[k]; if (el.type === 'checkbox') el.checked = !!v; else el.value = String(v); }
+}
+setEl.addEventListener('change', e => {
+  const el = e.target, k = el.dataset.s; if (!k) return;
+  if (k === 'preset') { store.set('ydrive-settings', { preset: el.value, s: PRESETS[el.value].s }); const u = new URL(location.href); u.searchParams.delete('q'); location.href = u.href; return; }
+  S[k] = el.type === 'checkbox' ? el.checked : +el.value; applySettings();
+});
+showSettings();
+addEventListener('visibilitychange', () => { if (document.hidden && bench) bench.hidden = true; });
+window.__three = { enuToWorld: (e, n, u) => FRAME && enuToWorld(e, n, u), pending: () => ({ tiles: Object.values(sets).reduce((a, t) => a + (t.stats ? t.stats.downloading + t.stats.parsing : 0), 0), bld: BLD.queue.length + BLD.jobs.length + (BLD.dirtyParts ? 1 : 0), chunks: AREA.queue.length, photos: texLeft + (texBusy ? 1 : 0) }), areaNear, gatherHits, get areaBuilt() { return AREA.built; }, AREA, get L3n() { return L3.size; }, get facades() { return FACADE.made.size; }, FURN, BLD, BTNAME, furnLamps, signalState, PF, frames: () => fr.slice(), surfacesAt: (x, z, y) => { ray.set(_o.set(x, y + 40, z), DOWN); ray.far = 90; ray.firstHitOnly = false; const h = hitRoads.length ? ray.intersectObjects(withBVH(hitRoads), false) : []; ray.firstHitOnly = true; return h.map(k => +k.point.y.toFixed(2)); }, bvhQueueLen: () => bvhQueue.length, FRAME_ENU: { pos: (x, z) => toENU(x, z), dir: (x, z) => dirENU(x, z) }, texMB: () => texBytes() / 1e6, texMem, S, scene, camera, renderer, sets, C, setMode, composer, ao, bloom, GH, gridH, groundAt, wallDist, treeSpots, keys, THREE, reset: () => start && reset() };
+</script>
+</body>
+</html>
+

@@ -1,0 +1,2487 @@
+# flight-sim.html の 7/8 部分（元の 15299〜17782 行目、データは省略）
+# 全体の説明は 00_overview.md
+
+  const btn = (x, lab, on, tip, fn, w = 64) => { rr(g, x, 30, w, 38, 3); g.fillStyle = '#34383e'; g.fill(); g.fillStyle = on && pw ? '#58e08c' : '#1b1e22'; g.fillRect(x + w / 2 - 14, 36, 28, 4); cpText(g, lab, x + w / 2, 55, 11, '#eef1f4'); hs(x - 2, 24, w + 4, 50, tip, { click: fn }); };
+  const spd = game.ap && game.apSpd ? Math.round(game.apSpd) : Math.round(s.ias * 1.94384);
+  const hdg = Math.round(game.ap ? game.apHdg : att.hdg) % 360, alt = Math.round((game.ap ? game.apAlt : s.pos[1]) * 3.28084 / 100) * 100;
+  const hdgW = d => { game.apHdg = ((game.apHdg ?? att.hdg) + d + 360) % 360; }, altW = d => { game.apAlt = Math.max(300, (game.apAlt ?? s.pos[1]) + d * 30.48); };
+  const spdW = d => { if (game.apSpd) game.apSpd = clamp(game.apSpd + d, ACFT.v.s1, ACFT.v.ne); };
+  const tipT = t => `${t}（ホイールで 1 目盛り、クリックで左半分 −／右半分 ＋。オートパイロット作動中に効きます）`;
+  // warning lights at each end
+  const warn = s.stallWarn || (!s.onGround && !SYS.run), caut = !SYS.gen && SYS.run || SYS.fuelL + SYS.fuelR < SYS.cap * 0.08;
+  const lights = x => { rr(g, x, 22, 60, 50, 4); g.fillStyle = warn && pw && Math.floor(R.time * 3) % 2 ? '#e0322b' : '#3a1414'; g.fill(); cpText(g, ab ? 'MASTER' : 'FIRE', x + 30, 38, 9, '#f4d4d0'); cpText(g, 'WARN', x + 30, 54, 10, '#f4d4d0');
+    rr(g, x + 68, 22, 60, 50, 4); g.fillStyle = caut && pw ? '#f2a31a' : '#3a2a10'; g.fill(); cpText(g, 'MASTER', x + 98, 38, 9, '#20160a'); cpText(g, 'CAUT', x + 98, 54, 10, '#20160a'); };
+  // EFIS control panels
+  const efis = x => { cpPlate(g, x, 4, 330, 92, T); rr(g, x + 20, 30, 76, 30, 3); g.fillStyle = '#07090b'; g.fill(); if (pw) cpText(g, '1013', x + 58, 46, 15, ab ? '#ffb547' : '#f4f4f4'); cpText(g, ab ? 'QNH' : 'BARO', x + 58, 18, 10, T.ink);
+    ['FD', 'LS', 'CSTR', 'ARPT'].forEach((t, i) => { rr(g, x + 114 + i * 52, 30, 44, 30, 3); g.fillStyle = '#2b2e33'; g.fill(); cpText(g, t, x + 136 + i * 52, 45, 9.5, '#e2e5e8'); }); };
+  efis(30); lights(390);
+  if (L.deck === 'airliner') {
+    const x0 = 560;
+    cpPlate(g, x0, 2, 930, 96, T);
+    const W = (x, w, lab, val, tip, wf) => win(x, w, lab, val, tipT(tip), wf, (px) => wf(px < x + w / 2 ? -10 : 10));
+    W(x0 + 20, 110, ab ? 'SPD' : 'IAS/MACH', game.apSpd ? String(spd) : ab ? '---' : String(spd), '速度の目標', spdW);
+    btn(x0 + 150, ab ? 'LOC' : 'LNAV', false, '（装飾）', () => {});
+    W(x0 + 240, 110, ab ? 'HDG' : 'HEADING', String(hdg).padStart(3, '0'), '方位の目標', hdgW);
+    btn(x0 + 370, ab ? 'AP1' : 'CMD A', game.ap, 'オートパイロット（O キー）', () => doAction('ap'));
+    btn(x0 + 444, ab ? 'AP2' : 'CMD B', false, 'オートパイロット 2（装飾：1 と同じ）', () => doAction('ap'));
+    btn(x0 + 518, ab ? 'A/THR' : 'A/T', game.ap && !!game.apSpd, 'オートスロットル（オートパイロットと一緒に入ります）', () => doAction('ap'));
+    W(x0 + 600, 130, ab ? 'ALT' : 'ALTITUDE', String(alt), '高度の目標', altW);
+    win(x0 + 750, 110, ab ? 'V/S' : 'VERT SPEED', String(Math.round(s.vs * 196.85 / 100) * 100), '昇降率（表示のみ）', null, null);
+    cpText(g, ab ? 'FCU' : 'MCP', x0 + 895, 50, 11, T.sub);
+  } else {
+    const x0 = 560;
+    cpPlate(g, x0, 2, 780, 96, T);
+    win(x0 + 30, 110, 'HDG', String(hdg).padStart(3, '0'), tipT('方位の目標'), hdgW, px => hdgW(px < x0 + 85 ? -10 : 10));
+    ['AP', 'YD', 'FD', 'NAV', 'APR'].forEach((t, i) => btn(x0 + 170 + i * 74, t, (t === 'AP' || t === 'YD') && game.ap, t === 'AP' ? 'オートパイロット（O キー）' : t === 'YD' ? 'ヨーダンパー（アシストで常に作動）' : '（装飾）', t === 'AP' ? () => doAction('ap') : () => {}));
+    win(x0 + 560, 130, 'ALT SEL', String(alt), tipT('高度の目標'), altW, px => altW(px < x0 + 625 ? -10 : 10));
+  }
+  lights(1530); efis(1690);
+}
+// ---------------------------------------------------------------------
+//  pedestal (airliners, turboprops) and the small console (light aircraft)
+// ---------------------------------------------------------------------
+function cpCDU(g, x, y, w, h, lines, T) {
+  rr(g, x, y, w, h, 5); g.fillStyle = '#1c1e21'; g.fill(); g.strokeStyle = '#4a4e54'; g.lineWidth = 1.5; g.stroke();
+  const sx = x + 16, sy = y + 10, sw = w - 32, sh = h * 0.62;
+  rr(g, sx, sy, sw, sh, 2); g.fillStyle = '#020303'; g.fill();
+  if (SYS.bus) lines.forEach(([t, c, al], i) => cpText(g, t, al === 'right' ? sx + sw - 4 : al === 'center' ? sx + sw / 2 : sx + 4, sy + 9 + i * (sh - 12) / (lines.length - 0.5), 9.5, c || '#e8ecf0', 700, al || 'left'));
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 6; c++) { rr(g, x + 10 + c * (w - 20) / 6, y + sh + 20 + r * 16, (w - 20) / 6 - 4, 12, 2); g.fillStyle = '#34373c'; g.fill(); }
+}
+function pedStand(g, L, T) {
+  const s = sim, V = ACFT.v, ab = ['airbus', 'a350'].includes(L.theme), tp = L.deck === 'turboprop', [y0, y1] = PED_SLOT;
+  const v1 = V.rotate - 4, vr = V.rotate, v2 = V.rotate + 6, rw = (RWY.idents || ['--'])[0];
+  const green = '#58e08c', cyan = '#5fd4ff', wh = '#e8ecf0', amb = '#ffb547';
+  const left = ab ? [[' TAKE OFF RWY ' + rw, wh, 'center'], ['V1         FLP RETR', wh], [` ${v1}       F=${Math.round(vr * 1.2)}`, cyan], ['VR         SLT RETR', wh], [` ${vr}       S=${Math.round(vr * 1.45)}`, cyan], ['V2           CLEAN', wh], [` ${v2}       O=${Math.round(vr * 1.6)}`, cyan], [`FLAPS/THS ${String(flapName(V.toFlaps || 0))}/UP0.5`, green]]
+    : [['TAKEOFF REF', wh, 'center'], ['FLAPS            V1', wh], [` ${flapName(V.toFlaps || 0)}           ${v1}KT`, green], ['CG               VR', wh], [' 22.0%          ' + vr + 'KT', green], ['RWY ' + rw + '         V2', wh], [`GW ${(AC.mass / 1000).toFixed(1)}      ${v2}KT`, green], ['<INDEX   THRUST LIM>', wh]];
+  const dest = typeof JW !== 'undefined' && JW.active && JW.dest ? (JW.dest.icao || JW.dest.name) : '----';
+  const right = [[ab ? 'FUEL PRED' : 'PROGRESS', wh, 'center'], ['DEST', wh], [String(dest), green], ['FOB', wh], [`${Math.round(SYS.fuelL + SYS.fuelR).toLocaleString()} KG`, green], ['GW', wh], [`${(AC.mass / 1000).toFixed(1)} T`, green], [game.ap ? 'AP ENGAGED' : '', amb]];
+  cpCDU(g, 6, 6, 200, 210, left, T); cpCDU(g, 214, 6, 200, 210, right, T);
+  // levers: the 3D handles ride in these slots
+  const thrMarks = ab ? [[1, 'TOGA'], [0.86, 'FLX'], [0.7, 'CL'], [0, 'IDLE']] : tp ? [[1, 'MAX'], [0.7, 'CRZ'], [0, 'FLT IDLE']] : [[1, 'TO/GA'], [0.7, 'CLB'], [0, 'IDLE']];
+  const thrX = tp ? [150, 205] : [175, 245];
+  cpSlider(g, thrX[0], y0, y1, '', s.thr, '#1b1c1f', cpThrTip, v => { s.thr = v; }, thrMarks, { knob: false, left: true });
+  cpSlider(g, thrX[1], y0, y1, '', s.thr, '#1b1c1f', cpThrTip, v => { s.thr = v; }, null, { knob: false });
+  cpText(g, tp ? 'POWER' : ab ? 'THR LVR' : 'THRUST', (thrX[0] + thrX[1]) / 2, y1 + 24, 10, T.ink);
+  if (tp) {
+    for (const x of [275, 330]) cpSlider(g, x, y0, y1, '', SYS.fuelOn ? 1 : 0.08, '#c9362f', () => `コンディションレバー（RUN / CUTOFF）：${SYS.fuelOn ? 'RUN' : 'CUTOFF'}（N2 が 18% を超えてから RUN）`, v => { SYS.fuelOn = v > 0.5; }, x === 275 ? null : [[1, 'RUN'], [0.08, 'CUT']], { knob: false });
+    cpText(g, 'COND', 302, y1 + 24, 10, T.ink);
+  } else {
+    cpSlider(g, 70, y0, y1 - 120, '', 0, '#1b1c1f', () => 'スピードブレーキ（装飾：このシミュレーターでは未実装）', () => {}, [[0, 'RET'], [0.5, 'ARM'], [1, 'FULL']], { knob: false, left: false });
+    cpText(g, 'SPD BRK', 70, y1 - 96, 10, T.ink);
+  }
+  if (ACFT.wing.flap) { const fx = tp ? 390 : 360; cpSlider(g, fx, y0, y1, '', 1 - s.flapIdx / 3, '#eceff2', cpFlapTip, v => cpSetFlap(1 - v), cpFlapMarks().map(([v, t]) => [1 - v, t]), { knob: false, left: true }); cpText(g, 'FLAPS', fx, y1 + 24, 10, T.ink); }
+  cpSlider(g, tp ? 40 : 30, y1 - 100, y1, '', cpTrimVal(), '#3a3d42', cpTrimTip, cpSetTrim, [[1, 'NU'], [0, 'ND']], { knob: true, ink: T.ink });
+  cpText(g, 'TRIM', tp ? 40 : 30, y1 + 24, 9, T.ink);
+  // engine start and parking brake at the back
+  const by = 628;
+  if (ab) {
+    cpSwitch(g, 150, by - 6, 'MASTER 1', SYS.fuelOn, 'エンジン マスター（ON / OFF）。N2 が 18% を超えてから ON', () => { SYS.fuelOn = !SYS.fuelOn; }, false, T.ink);
+    cpKnob(g, 210, by - 8, 18, ['CRANK', 'NORM', 'IGN'], SYS.start ? 2 : 1, 'MODE', 'エンジン モード：IGN/START（スターターで回転を上げる）', () => { if (!SYS.run) SYS.start = !SYS.start; }, T.ink);
+    cpSwitch(g, 270, by - 6, 'MASTER 2', SYS.fuelOn, 'エンジン マスター（ON / OFF）', () => { SYS.fuelOn = !SYS.fuelOn; }, false, T.ink);
+    cpKnob(g, 360, by - 8, 18, ['OFF', 'ON'], SYS.pbrake ? 1 : 0, 'PARK BRK', 'パーキングブレーキ（. キー）', () => { SYS.pbrake = !SYS.pbrake; }, T.ink);
+  } else if (tp) {
+    cpButton(g, 150, by - 8, 'ENG START', SYS.start, 'エンジン始動（スターターで回転を上げる）', { click: () => { if (!SYS.run) SYS.start = !SYS.start; } }, '#f2b33a', T.ink);
+    cpButton(g, 250, by - 8, 'PARK BRK', SYS.pbrake, 'パーキングブレーキ（. キー）', { click: () => { SYS.pbrake = !SYS.pbrake; } }, '#e0493f', T.ink);
+  } else {
+    for (const [x, n] of [[175, 1], [245, 2]]) cpSwitch(g, x, by - 6, `START ${n}`, SYS.fuelOn, 'スタートレバー（IDLE / CUTOFF）。N2 が 25%（ここでは 18%）を超えたら IDLE', () => { SYS.fuelOn = !SYS.fuelOn; }, true, T.ink);
+    cpButton(g, 70, by - 8, 'PARK BRK', SYS.pbrake, 'パーキングブレーキ（. キー）', { click: () => { SYS.pbrake = !SYS.pbrake; } }, '#e0493f', T.ink);
+    cpText(g, SYS.fuelOn ? 'IDLE' : 'CUTOFF', 210, by + 44, 9, SYS.fuelOn ? '#58e08c' : '#e0493f');
+  }
+}
+function pedConsole(g, L, T) {
+  const s = sim, sr = ACFT.id === 'sr22';
+  if (sr) {
+    cpSlider(g, 110, 60, 330, 'POWER', s.thr, '#1b1c1f', cpThrTip, v => { s.thr = v; }, [[1, 'MAX'], [0, 'IDLE']], { knob: false, left: true, ink: T.ink });
+    cpSlider(g, 200, 60, 330, 'MIXTURE', SYS.mix, '#c9362f', () => `ミクスチャー：${Math.round(SYS.mix * 100)}%`, v => { SYS.mix = v; }, [[1, 'RICH'], [0, 'CUT']], { ink: T.ink });
+    cpSlider(g, 320, 60, 330, 'FLAPS', 1 - s.flapIdx / 3, '#eceff2', cpFlapTip, v => cpSetFlap(1 - v), cpFlapMarks().map(([v, t]) => [1 - v, t]), { ink: T.ink });
+  } else {
+    // pitch trim wheel with its indicator
+    const x = 130, y0 = 60, y1 = 360, t = cpTrimVal();
+    rr(g, x - 40, y0, 80, y1 - y0, 10); g.fillStyle = '#16181b'; g.fill();
+    rr(g, x - 26, y0 + 10, 52, y1 - y0 - 20, 20); g.fillStyle = '#2b2d31'; g.fill();
+    const ph = (s.trim * 400) % 22;
+    g.fillStyle = '#50545a'; for (let yy = y0 + 16 + ph; yy < y1 - 14; yy += 22) g.fillRect(x - 24, yy, 48, 5);
+    cpText(g, 'NOSE DN', x, y0 - 12, 9, T.ink); cpText(g, 'NOSE UP', x, y1 + 14, 9, T.ink);
+    g.fillStyle = '#f2b33a'; g.fillRect(x + 48, y1 - (y1 - y0) * t - 3, 16, 6);
+    g.fillStyle = '#0b0c0e'; g.fillRect(x + 54, y0, 4, y1 - y0);
+    cpText(g, 'TRIM', x, y1 + 34, 10, T.ink);
+    hs(x - 44, y0 - 10, 120, y1 - y0 + 20, cpTrimTip, { slider: true, drag: dv => cpSetTrim(clamp(t - dv / (y1 - y0), 0, 1)), wheel: d => cpSetTrim(clamp(t + d * 0.03, 0, 1)), click: (px, py) => cpSetTrim(clamp((y1 - py) / (y1 - y0), 0, 1)) });
+  }
+  // fuel selector on the floor
+  const fx = sr ? 210 : 300, fy = sr ? 520 : 520, fp = ['OFF', 'LEFT', 'RIGHT', 'BOTH'], fa = [Math.PI / 2, Math.PI, 0, -Math.PI / 2][SYS.fuelSel];
+  g.beginPath(); g.arc(fx, fy, 56, 0, 7); g.fillStyle = '#16181b'; g.fill(); g.strokeStyle = '#5b6067'; g.lineWidth = 2; g.stroke();
+  fp.forEach((p, i) => { const a = [Math.PI / 2, Math.PI, 0, -Math.PI / 2][i]; cpText(g, p, fx + Math.cos(a) * 74, fy + Math.sin(a) * 70, 10, i === SYS.fuelSel ? '#f2b33a' : T.ink); });
+  g.save(); g.translate(fx, fy); g.rotate(fa + Math.PI / 2); g.fillStyle = '#c62d28'; g.beginPath(); g.moveTo(0, -50); g.lineTo(12, 10); g.lineTo(0, 30); g.lineTo(-12, 10); g.closePath(); g.fill(); g.restore();
+  cpText(g, 'FUEL', fx, fy + 100, 11, T.ink);
+  hs(fx - 70, fy - 70, 140, 150, () => `燃料セレクター：${fp[SYS.fuelSel]}（クリックで BOTH→LEFT→RIGHT→OFF）`, { click: () => { SYS.fuelSel = SYS.fuelSel === 3 ? 1 : SYS.fuelSel === 1 ? 2 : SYS.fuelSel === 2 ? 0 : 3; } });
+}
+// ---------------------------------------------------------------------
+//  overhead panel
+// ---------------------------------------------------------------------
+function ovhPanel(g, L, T) {
+  const ab = ['airbus', 'a350'].includes(L.theme), ink = T.ink;
+  const sec = (x, y, w, h, t) => { cpPlate(g, x, y, w, h, T); g.fillStyle = 'rgba(255,255,255,0.75)'; g.fillRect(x + 12, y + 24, w - 24, 1.5); cpText(g, t, x + w / 2, y + 14, 11, ink); };
+  const tog = k => () => { SYS[k] = !SYS[k]; };
+  if (ab) {
+    sec(20, 16, 400, 200, 'ELEC');
+    cpPB(g, 50, 80, 'BAT 1', SYS.bat, 'バッテリー 1（主電源）', tog('bat'), { fault: () => SYS.volts < 22 && SYS.bat });
+    cpPB(g, 130, 80, 'BAT 2', SYS.bat, 'バッテリー 2（主電源）', tog('bat'), { fault: () => SYS.volts < 22 && SYS.bat });
+    cpPB(g, 230, 80, 'GEN 1', SYS.alt, 'ジェネレーター 1（発電機）', tog('alt'), { fault: () => SYS.alt && !SYS.gen });
+    cpPB(g, 310, 80, 'GEN 2', SYS.alt, 'ジェネレーター 2（発電機）', tog('alt'), { fault: () => SYS.alt && !SYS.gen });
+    rr(g, 60, 148, 120, 28, 2); g.fillStyle = '#07090b'; g.fill(); if (SYS.bat) cpText(g, SYS.volts.toFixed(1) + ' V', 120, 162, 13, '#ffb547');
+    sec(440, 16, 440, 200, 'FUEL');
+    ['L TK 1', 'L TK 2', 'CTR TK', 'R TK 1', 'R TK 2'].forEach((t, i) => cpPB(g, 460 + i * 82, 80, t, SYS.pump, '燃料ポンプ', tog('pump'), { fault: () => false }));
+    sec(900, 16, 380, 200, 'APU');
+    cpPB(g, 940, 80, 'MASTER SW', false, 'APU（装飾：このシミュレーターでは未実装）', () => {}, { offTxt: '', w: 90 });
+    cpPB(g, 1060, 80, 'START', false, 'APU（装飾：このシミュレーターでは未実装）', () => {}, { offTxt: '', w: 90 });
+    sec(20, 240, 1260, 200, 'ANTI ICE / AIR COND');
+    ['WING', 'ENG 1', 'ENG 2', 'PROBE', 'PACK 1', 'PACK 2', 'BLEED 1', 'BLEED 2'].forEach((t, i) => cpPB(g, 60 + i * 150, 310, t, true, '（装飾）', () => {}, { offTxt: 'OFF', onTxt: '' }));
+    sec(20, 460, 900, 210, 'EXT LT');
+    cpKnob(g, 90, 560, 24, ['OFF', 'AUTO', 'ON'], SYS.strobe ? 2 : 0, 'STROBE', 'ストロボ（衝突防止灯）', tog('strobe'), ink);
+    cpKnob(g, 220, 560, 24, ['OFF', 'ON'], SYS.beacon ? 1 : 0, 'BEACON', 'ビーコン灯', tog('beacon'), ink);
+    cpKnob(g, 350, 560, 24, ['OFF', '1', '2'], SYS.nav ? 1 : 0, 'NAV & LOGO', '航空灯（翼端の赤・緑）', tog('nav'), ink);
+    cpKnob(g, 480, 560, 24, ['RETR', 'OFF', 'ON'], SYS.land ? 2 : 0, 'LAND', '着陸灯', tog('land'), ink);
+    cpKnob(g, 610, 560, 24, ['OFF', 'TAXI', 'T.O'], SYS.taxi ? 1 : 0, 'NOSE', 'タキシー灯（ノーズ）', tog('taxi'), ink);
+    cpKnob(g, 740, 560, 24, ['OFF', 'ON'], 0, 'RWY TURN OFF', '（装飾）', () => {}, ink);
+    sec(940, 460, 340, 210, 'SIGNS');
+    cpKnob(g, 1030, 560, 24, ['OFF', 'ON'], 1, 'SEAT BELTS', '（装飾）', () => {}, ink);
+    cpKnob(g, 1180, 560, 24, ['OFF', 'AUTO', 'ON'], 1, 'NO SMOKING', '（装飾）', () => {}, ink);
+  } else {
+    sec(20, 16, 400, 200, 'ELECTRICAL');
+    // the battery switch has a red guard
+    g.fillStyle = 'rgba(200,40,30,0.35)'; rr(g, 58, 60, 44, 90, 4); g.fill();
+    cpSwitch(g, 80, 96, 'BAT', SYS.bat, 'バッテリー（主電源・ガード付き）', tog('bat'), false, ink);
+    cpSwitch(g, 200, 96, 'GEN 1', SYS.alt, 'ジェネレーター 1（発電機）', tog('alt'), false, ink);
+    cpSwitch(g, 290, 96, 'GEN 2', SYS.alt, 'ジェネレーター 2（発電機）', tog('alt'), false, ink);
+    rr(g, 150, 170, 200, 28, 2); g.fillStyle = '#07090b'; g.fill(); if (SYS.bat) cpText(g, `${SYS.volts.toFixed(1)} V  ${(SYS.amps >= 0 ? '+' : '') + Math.round(SYS.amps)} A`, 250, 184, 13, '#f4f4f4');
+    sec(440, 16, 440, 200, 'FUEL');
+    ['L AFT', 'L FWD', 'CTR L', 'CTR R', 'R FWD', 'R AFT'].forEach((t, i) => cpSwitch(g, 480 + i * 70, 96, t, SYS.pump, '燃料ポンプ', tog('pump'), false, ink));
+    sec(900, 16, 380, 200, 'ENGINE START');
+    for (const [x, n] of [[1000, 1], [1180, 2]]) cpKnob(g, x, 110, 26, ['GRD', 'OFF', 'CONT', 'FLT'], SYS.start ? 0 : 1, `ENG ${n}`, 'エンジン スタートスイッチ：GRD（スターターで回転を上げる）', () => { if (!SYS.run) SYS.start = !SYS.start; }, ink);
+    sec(20, 240, 1260, 200, 'ANTI-ICE / AIR COND / PRESS');
+    ['WING', 'ENG 1', 'ENG 2', 'PACK L', 'PACK R', 'BLEED 1', 'BLEED 2', 'ISOLATION'].forEach((t, i) => cpSwitch(g, 90 + i * 150, 320, t, true, '（装飾）', () => {}, false, ink));
+    sec(20, 460, 1260, 210, 'LIGHTS');
+    const lights = [['LANDING', 'land', '着陸灯'], ['RWY TURNOFF', null, '（装飾）'], ['TAXI', 'taxi', 'タキシー灯'], ['LOGO', null, '（装飾）'], ['POSITION', 'nav', '航空灯（翼端の赤・緑）'], ['STROBE', 'strobe', 'ストロボ（衝突防止灯）'], ['ANTI COLLISION', 'beacon', 'ビーコン灯（衝突防止灯）'], ['WING', null, '（装飾）']];
+    lights.forEach(([t, k, tip], i) => cpSwitch(g, 90 + i * 150, 548, t, k ? SYS[k] : false, tip, k ? tog(k) : () => {}, false, ink));
+  }
+}
+
+// ---------------------------------------------------------------------
+//  mouse / touch: the ray from the eye is intersected with every surface
+// ---------------------------------------------------------------------
+function cpHit(clientX, clientY) {
+  if (!cpActive() || !ACFT.cp) return null;
+  if (ACFT.cp.L.real) {                                             // (the 3D model's own controls)
+    const hot = typeof cpHotHit === 'function' ? cpHotHit(clientX, clientY) : null;
+    if ((hot && hot.h) || !ACFT.cp.L.realPanel) return hot;
+  }
+  const r = glCanvas.getBoundingClientRect(), nx = (clientX - r.left) / r.width * 2 - 1, ny = 1 - (clientY - r.top) / r.height * 2;
+  const d = vnorm(vadd(R.camF, vadd(vscale(R.camR, nx * R.tanX), vscale(R.camU, ny * R.tanY))));
+  const qi = qconj(sim.q), o = qrot(qi, vsub(cam.eye, sim.pos)), db = qrot(qi, d), L = ACFT.cp.L;
+  let best = null;
+  for (const k in L.S) {
+    if (L.realPanel && k !== 'main') continue;                      // (only the panel is drawn in the 3D cabin)
+    const S = L.S[k], n = vcross(S.u, S.v), den = vdot(db, n);
+    if (Math.abs(den) < 1e-6) continue;
+    const t = vdot(vsub(S.o, o), n) / den; if (t <= 0 || (best && t >= best.t)) continue;
+    const p = vadd(o, vscale(db, t)), rel = vsub(p, S.o), a = vdot(rel, S.u) / vdot(S.u, S.u), b = vdot(rel, S.v) / vdot(S.v, S.v);
+    if (a < 0 || a > 1 || b < 0 || b > 1) continue;
+    best = { t, k, X: a * CP_REG[k][0], Y: b * CP_REG[k][1] };
+  }
+  if (!best) return null;
+  const list = (CPIT.reg[best.k] || { hs: [] }).hs;
+  for (let i = list.length - 1; i >= 0; i--) { const h = list[i]; if (best.X >= h.x && best.X <= h.x + h.w && best.Y >= h.y && best.Y <= h.y + h.h) return { h, X: best.X, Y: best.Y, k: best.k }; }
+  return { h: null, X: best.X, Y: best.Y, k: best.k };
+}
+function cpPointerDown(e) {
+  const hit = cpHit(e.clientX, e.clientY);
+  if (!hit || !hit.h) return false;
+  const h = hit.h;
+  if (h.hold) { h.down(); CPIT.hold = { id: e.pointerId, h }; }
+  else if (h.drag) CPIT.drag = { id: e.pointerId, h, k: hit.k, y: e.clientY, X: hit.X, Y: hit.Y, moved: false };
+  else if (h.click) { h.click(hit.X, hit.Y); audio.blip(700, 0.03, 'square', 0.03); }
+  CPIT.dirty = true;
+  try { glCanvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  return true;
+}
+function cpPointerMove(e) {
+  if (CPIT.drag && CPIT.drag.id === e.pointerId) {
+    const D = CPIT.drag, hit = cpHit(e.clientX, e.clientY);
+    // a lever follows the pointer along its slot; off the slot, the vertical motion moves it
+    if (hit && hit.k === D.k && hit.h && hit.h.key === D.h.key && D.h.slider) { if (Math.abs(hit.Y - D.Y) > 1) { D.moved = true; hit.h.click(hit.X, hit.Y); D.Y = hit.Y; CPIT.dirty = true; } }
+    else { const dv = (e.clientY - D.y) * 1.2; if (Math.abs(dv) > 1) { D.moved = true; const n = (CPIT.reg[D.k].hs || []).find(x => x.key === D.h.key) || D.h; n.drag(dv); CPIT.dirty = true; } }
+    D.y = e.clientY;
+    return true;
+  }
+  if (CPIT.hold && CPIT.hold.id === e.pointerId) return true;
+  const hit = cpHit(e.clientX, e.clientY);
+  CPIT.hover = hit && hit.h ? hit.h : null; CPIT.mx = e.clientX; CPIT.my = e.clientY;
+  glCanvas.style.cursor = CPIT.hover ? (CPIT.hover.drag ? 'ns-resize' : 'pointer') : '';
+  return false;
+}
+function cpPointerUp(e) {
+  let used = false;
+  if (CPIT.hold && CPIT.hold.id === e.pointerId) { CPIT.hold.h.up(); CPIT.hold = null; used = true; }
+  if (CPIT.drag && CPIT.drag.id === e.pointerId) { if (!CPIT.drag.moved && CPIT.drag.h.click) CPIT.drag.h.click(CPIT.drag.X, CPIT.drag.Y); CPIT.drag = null; used = true; }
+  if (used) CPIT.dirty = true;
+  return used;
+}
+function cpWheel(e) {
+  if (!cpActive()) return false;
+  const hit = cpHit(e.clientX, e.clientY);
+  if (hit && hit.h && hit.h.wheel) { hit.h.wheel(-Math.sign(e.deltaY)); CPIT.dirty = true; return true; }
+  CPIT.fov = clamp(CPIT.fov * (e.deltaY > 0 ? 1.08 : 0.93), 30, 90);
+  return true;
+}
+// =====================================================================
+//  3D COCKPIT CONTROLS: the switches, keys, knobs and levers of the 3D
+//  model cockpits made live. Each is a small sphere in the model (found
+//  from the model's named parts, or by casting rays onto it from a
+//  render); pointing at one shows what it is and its state, clicking,
+//  dragging or scrolling works it, with the same effect as the keys.
+// =====================================================================
+const CPHOT = { list: null, key: '', radio: { com: 118.1, comS: 121.5, nav: 113.9, navS: 110.3, baro: 29.92, vol: 1 } };
+const cpOn = v => v ? 'ON' : 'OFF';
+const cpFt = m => Math.round(m * 3.28084 / 100) * 100;
+function cpHdgNow() { return Math.round(attitude().hdg) % 360; }
+// the controls, by what they do: tip (text or a function), and click / wheel / drag / hold (down, up)
+function cpHotAct(a) {
+  const s = sim, R_ = CPHOT.radio, apNeed = () => { if (!game.ap) { doAction('ap'); } return game.ap; };
+  const wheelHdg = d => { game.apHdg = ((game.apHdg ?? cpHdgNow()) + d * (Math.abs(d) > 1 ? 1 : 1) + 360) % 360; game.apLat = 'hdg'; };
+  const wheelAlt = d => { game.apAlt = Math.max(150, (game.apAlt ?? s.pos[1]) + d * 30.48); };
+  const sw = (k, name, extra) => ({ tip: () => `${name}：${cpOn(SYS[k])}（クリックで切替）`, click: () => { SYS[k] = !SYS[k]; toast(`${name} ${cpOn(SYS[k])}`, 1100); if (extra) extra(); } });
+  const T = {
+    // --- autopilot (the G1000's AP keys / the airliners' mode panel) ---
+    ap: { tip: () => `AP（オートパイロット）：${cpOn(game.ap)}（クリックで切替・O キー）`, click: () => doAction('ap') },
+    hdg: { tip: () => `HDG：方位モード${game.ap && game.apLat === 'hdg' ? '（使用中）' : ''}・方位 ${String(Math.round(game.apHdg ?? cpHdgNow())).padStart(3, '0')}°`, click: () => { if (!apNeed()) return; game.apLat = 'hdg'; game.apHdg = game.apHdg ?? cpHdgNow(); toast(`HDG：方位 ${String(Math.round(game.apHdg)).padStart(3, '0')}° を保ちます（HDG ノブで変更）`, 1800); } },
+    nav: { tip: () => `NAV：目的地へ向かうモード${game.ap && game.apLat !== 'hdg' ? '（使用中）' : ''}`, click: () => { if (!JW.active || !JW.dest) { toast('目的地が設定されていません（M キーの地図で選べます）', 2000); return; } if (!apNeed()) return; game.apLat = 'nav'; toast(`NAV：${JW.dest.name}へ向かいます`, 1600); } },
+    apr: { tip: () => 'APR：進入モード（目的地の空港へ向かい、着陸は手動で）', click: () => T.nav.click() },
+    alt: { tip: () => `ALT：高度保持${game.ap && game.apVert === 'alt' ? '（使用中）' : ''}・${cpFt(game.apAlt ?? s.pos[1]).toLocaleString()} ft`, click: () => { if (!apNeed()) return; game.apAlt = s.pos[1]; game.apVert = 'alt'; toast(`ALT：${cpFt(s.pos[1]).toLocaleString()} ft を保ちます`, 1500); } },
+    vs: { tip: () => `VS：昇降率モード ${game.apVs || 0} ft/min（ホイールで ±100）${game.ap && game.apVert === 'vs' ? '・使用中' : ''}`, click: () => { if (!apNeed()) return; game.apVert = 'vs'; game.apVs = Math.round((s.vs || s.vel[1]) * 196.85 / 100) * 100; toast(`VS：${game.apVs} ft/min で、選んだ高度 ${cpFt(game.apAlt).toLocaleString()} ft へ`, 1800); },
+      wheel: d => { game.apVs = clamp((game.apVs || 0) + d * 100, -2000, 2000); if (game.ap) game.apVert = 'vs'; } },
+    flc: { tip: () => `FLC：選んだ高度 ${cpFt(game.apAlt ?? s.pos[1]).toLocaleString()} ft へ一定の率で上昇・降下${game.ap && game.apVert === 'flc' ? '（使用中）' : ''}`, click: () => { if (!apNeed()) return; game.apVert = 'flc'; toast(`FLC：${cpFt(game.apAlt).toLocaleString()} ft へ`, 1500); } },
+    fd: { tip: () => `FD：飛行情報の表示 ${cpOn(game.cpHud)}（H キーと同じ）`, click: () => { game.cpHud = !game.cpHud; } },
+    hdgKnob: { tip: () => `HDG ノブ：${String(Math.round(game.apHdg ?? cpHdgNow())).padStart(3, '0')}°（ホイールで回す・クリックで今の方位に合わせる）`, wheel: wheelHdg, click: () => { game.apHdg = cpHdgNow(); toast(`方位バグを ${String(game.apHdg).padStart(3, '0')}° に合わせました`, 1300); } },
+    spdKnob: { tip: () => `SPD ノブ：オートスロットル ${game.apSpd ? Math.round(game.apSpd) + ' kt' : 'OFF'}（ホイールで ±5 kt・クリックで今の速度）`, wheel: d => { game.apSpd = clamp((game.apSpd || s.ias * 1.94384) + d * 5, ACFT.v.appr || 60, ACFT.v.cruise * 1.1 || 300); },
+      click: () => { game.apSpd = Math.round(s.ias * 1.94384); toast(`速度 ${game.apSpd} kt を保ちます（AP 使用中のとき）`, 1500); } },
+    altKnob: { tip: () => `ALT ノブ：選択高度 ${cpFt(game.apAlt ?? s.pos[1]).toLocaleString()} ft（ホイールで ±100 ft・クリックで今の高度）`, wheel: wheelAlt, click: () => { game.apAlt = s.pos[1]; } },
+    // --- radios, the altimeter setting, the map keys ---
+    com: { tip: () => `COM：${R_.com.toFixed(3)}  予備 ${R_.comS.toFixed(3)}（ホイールで予備の周波数・クリックで入れ替え）`, wheel: d => { R_.comS = Math.round(clamp(R_.comS + d * 0.025, 118, 136.975) * 1000) / 1000; }, click: () => { [R_.com, R_.comS] = [R_.comS, R_.com]; toast(`COM ${R_.com.toFixed(3)}`, 1100); } },
+    nav1: { tip: () => `NAV：${R_.nav.toFixed(2)}  予備 ${R_.navS.toFixed(2)}（ホイールで予備・クリックで入れ替え）`, wheel: d => { R_.navS = Math.round(clamp(R_.navS + d * 0.05, 108, 117.95) * 100) / 100; }, click: () => { [R_.nav, R_.navS] = [R_.navS, R_.nav]; toast(`NAV ${R_.nav.toFixed(2)}`, 1100); } },
+    baro: { tip: () => `BARO：高度計規正 ${R_.baro.toFixed(2)} inHg（ホイールで回す・クリックで 29.92）`, wheel: d => { R_.baro = Math.round(clamp(R_.baro + d * 0.01, 28.5, 31) * 100) / 100; }, click: () => { R_.baro = 29.92; } },
+    vol: { tip: () => `音量：${Math.round(R_.vol * 100)}%（ホイールで調整・クリックで消音／戻す）`, wheel: d => { R_.vol = clamp(R_.vol + d * 0.1, 0, 1); cpHotVol(); }, click: () => { R_.vol = R_.vol > 0 ? 0 : 1; cpHotVol(); toast(R_.vol ? '音 ON' : '消音', 1000); } },
+    direct: { tip: 'D→（ダイレクト・トゥ）：行き先を地図で選ぶ（M キー）', click: () => doAction('map') },
+    fpl: { tip: 'FPL：飛行計画（地図で行き先を選ぶ・M キー）', click: () => doAction('map') },
+    proc: { tip: () => `PROC：手順（チェックリスト）${CL.open ? '表示中' : ''}（N キー）`, click: () => clToggle() },
+    menu: { tip: '操作ガイドを開く', click: () => doAction('guide') },
+    clr: { tip: 'CLR：地図・チェックリストを閉じる', click: () => { if (CL.open) clToggle(false); if (mapv.open) toggleMap(false); } },
+    ent: { tip: 'ENT：チェックリストの次の項目を表示', click: () => { if (!CL.open) clToggle(true); } },
+    // --- electrics, lights, engine ---
+    bat: sw('bat', 'BAT（バッテリー）'), altn: sw('alt', 'ALT（発電機）'), avio: sw('avio', 'アビオニクス'), pump: sw('pump', '燃料ポンプ'),
+    beacon: sw('beacon', 'ビーコン'), land: sw('land', '着陸灯'), taxi: sw('taxi', 'タキシー灯'), navl: sw('nav', '航法灯'), strobe: sw('strobe', 'ストロボ'),
+    master: { tip: () => `マスター（BAT・ALT）：${cpOn(SYS.bat)}・${cpOn(SYS.alt)}（クリックで両方切替）`, click: () => { const v = !(SYS.bat && SYS.alt); SYS.bat = SYS.alt = v; toast(`マスター ${cpOn(v)}`, 1100); } },
+    // the key: each click turns it one step OFF → R → L → BOTH; at BOTH, holding it down is START; the wheel turns it back
+    key: { tip: () => `キー（マグネトー）：${['OFF', 'R', 'L', 'BOTH'][SYS.mags]}（クリックで右へ回す・BOTH で長押しすると START・ホイール下で戻す）`, hold: true,
+      down: () => { if (SYS.mags < 3) { SYS.mags++; toast('キー ' + ['OFF', 'R', 'L', 'BOTH'][SYS.mags], 900); } else SYS.startHeld = true; },
+      up: () => { SYS.startHeld = false; }, wheel: d => { SYS.mags = clamp(SYS.mags + (d > 0 ? 1 : -1), 0, 3); toast('キー ' + ['OFF', 'R', 'L', 'BOTH'][SYS.mags], 900); } },
+    start: { tip: () => `START（押している間スターターが回る）${SYS.run ? '・エンジン作動中' : ''}`, hold: true, down: () => { SYS.startHeld = true; }, up: () => { SYS.startHeld = false; } },
+    engStart: { tip: () => `ENG START：${cpOn(SYS.start)}（スターターで回転を上げる）`, click: () => { if (!SYS.run) SYS.start = !SYS.start; } },
+    fuelLever: { tip: () => `燃料レバー：${SYS.fuelOn ? 'RUN' : 'CUTOFF'}（クリックで切替）`, click: () => { SYS.fuelOn = !SYS.fuelOn; toast('燃料レバー ' + (SYS.fuelOn ? 'RUN' : 'CUTOFF'), 1200); } },
+    fuelSel: { tip: () => `燃料セレクター：${['OFF', 'LEFT', 'RIGHT', 'BOTH'][SYS.fuelSel]}（クリックで回す）`, click: () => { SYS.fuelSel = (SYS.fuelSel + 1) % 4; toast('燃料セレクター ' + ['OFF', 'LEFT', 'RIGHT', 'BOTH'][SYS.fuelSel], 1200); } },
+    pbrake: { tip: () => `パーキングブレーキ：${SYS.pbrake ? 'SET' : '解除'}（クリックで切替・. キー）`, click: () => { SYS.pbrake = !SYS.pbrake; toast(SYS.pbrake ? 'パーキングブレーキ SET' : 'パーキングブレーキ 解除', 1200); } },
+    // --- levers: drag up / down (or scroll) ---
+    throttle: { tip: () => `スロットル：${Math.round(s.thr * 100)}%（上下にドラッグ・ホイール）`, drag: dv => { s.thr = clamp(s.thr - dv / 300, 0, 1); }, wheel: d => { s.thr = clamp(s.thr + d * 0.05, 0, 1); } },
+    mixture: { tip: () => `ミクスチャー：${Math.round(SYS.mix * 100)}%（上下にドラッグ・いちばん下で停止）`, drag: dv => { SYS.mix = clamp(SYS.mix - dv / 300, 0, 1); }, wheel: d => { SYS.mix = clamp(SYS.mix + d * 0.05, 0, 1); } },
+    flaps: { tip: () => `フラップ：${flapName(s.flapIdx)}（クリックで 1 段下げ・いちばん下からは上げ／ホイールや上下ドラッグでも）`, wheel: d => doAction(d > 0 ? 'flapsUp' : 'flaps'),
+      click: () => { const st = flapStops(); doAction(s.flapIdx >= st[st.length - 1] ? 'flapsUp' : 'flaps'); }, drag: dv => { CPHOT.fd = (CPHOT.fd || 0) + dv; if (Math.abs(CPHOT.fd) > 40) { doAction(CPHOT.fd > 0 ? 'flaps' : 'flapsUp'); CPHOT.fd = 0; } } },
+    trim: { tip: () => `トリム：${s.trim >= 0 ? '機首上げ' : '機首下げ'} ${Math.abs(Math.round(s.trim / TRIM_MAX * 100))}%（ホイールで回す・クリックで今の速度に合わせる）`, wheel: d => { s.trim = clamp(s.trim + d * TRIM_MAX * 0.04, -TRIM_MAX, TRIM_MAX); s.trimHold = s.elev; }, click: () => doAction('trim') },
+    gear: { tip: () => `ギアレバー：${s.gearDown ? 'DOWN' : 'UP'}（クリックで切替・G キー）`, click: () => doAction('gear') },
+    // --- the rest of the cabin ---
+    yoke: { tip: () => `操縦桿：${CPIT.yoke ? '表示' : '非表示'}（クリックで切替・Y キー）`, click: () => { CPIT.yoke = !CPIT.yoke; } },
+    extinguisher: { tip: '消火器（非常用）', click: () => toast('消火器：機内火災のとき用です（このシムでは使いません）', 1600) },
+    checklist: { tip: () => `チェックリスト ${CL.open ? '表示中' : ''}（N キー）`, click: () => clToggle() },
+  };
+  return T[a];
+}
+function cpHotVol() { try { if (audio.master) audio.master.gain.value = game.sound ? 0.55 * CPHOT.radio.vol : 0; } catch (e) { /* ignore */ } }
+// the list for this cockpit: [{ c: centre in the aircraft's body frame, r, a, h }]
+function cpHotList() {
+  const real = cpReal(ACFT), L = ACFT.cp && ACFT.cp.L;
+  if (!real || !L || !L.E) return null;
+  const D = real.D, key = ACFT.id + (D.key || '') + L.E.join(',');
+  if (CPHOT.key === key && CPHOT.list) return CPHOT.list;
+  const out = [], xf = cpRealXf(D), xx = D.extra ? cpExtraXf(D) : null;
+  CPHOT.byIdx = {};
+  for (let hi = 0; hi < (D.hot || []).length; hi++) {
+    const H = D.hot[hi];
+    let c, r = H.r || 0.022;
+    if (H.n) {
+      const B = real.m.boxes && real.m.boxes[H.n]; if (!B) continue;
+      c = [(B[0] + B[3]) / 2, (B[1] + B[4]) / 2, (B[2] + B[5]) / 2];
+      if (!H.r) r = clamp(Math.max(B[3] - B[0], B[4] - B[1], B[5] - B[2]) * 0.6, 0.012, 0.07);
+    } else c = cpXfPt(H.x ? xx : xf, H.p);
+    if (H.r && H.x) r = H.r * (D.extra.s || 1);
+    else if (H.r && !H.n) r = H.r * (D.s || 1);
+    const h = cpHotAct(H.a); if (!h) continue;
+    // (each use is remembered, for the part's press / turn animation)
+    const o = { c: vadd(L.E, c), e: c, r, a: H.a, i: hi, t: -9, turn: 0, h: Object.assign({ key: 'hot:' + H.a + out.length }, h) };
+    const mark = (f, dt) => f && ((...a) => { o.t = R.time; if (dt) o.turn += dt(...a); return f(...a); });
+    o.h.click = mark(h.click, () => 1); o.h.down = mark(h.down); o.h.wheel = mark(h.wheel, d => d); o.h.drag = mark(h.drag, dv => -dv / 40);
+    out.push(o); CPHOT.byIdx[hi] = o;
+  }
+  CPHOT.key = key; CPHOT.list = out;
+  CPIT.reg.real = { hs: out.map(o => o.h) };
+  return out;
+}
+// the ray from the pointer against the controls' spheres: the nearest one it passes through
+function cpHotHit(clientX, clientY) {
+  const list = cpHotList(); if (!list) return null;
+  const r = glCanvas.getBoundingClientRect(), nx = (clientX - r.left) / r.width * 2 - 1, ny = 1 - (clientY - r.top) / r.height * 2;
+  const d = vnorm(vadd(R.camF, vadd(vscale(R.camR, nx * R.tanX), vscale(R.camU, ny * R.tanY))));
+  const qi = qconj(sim.q), o = qrot(qi, vsub(cam.eye, sim.pos)), db = qrot(qi, d);
+  let best = null, bestT = 1e9;
+  for (const H of list) {
+    const oc = vsub(H.c, o), t = vdot(oc, db); if (t <= 0) continue;
+    const m2 = vdot(oc, oc) - t * t; if (m2 > H.r * H.r) continue;
+    // (a little in favour of the one nearest the ray's centre when two overlap)
+    const score = t + Math.sqrt(m2) * 2;
+    if (score < bestT) { bestT = score; best = H; }
+  }
+  return best ? { h: best.h, X: 0, Y: 0, k: 'real', H: best } : { h: null, X: 0, Y: 0, k: 'real' };
+}
+// a ring round the control under the pointer (so you can see what you are about to press)
+function cpHotRing(g, H, col, label) {
+  const w = vadd(sim.pos, qrot(sim.q, H.c)), VP = R.VP;
+  const x = VP[0] * w[0] + VP[4] * w[1] + VP[8] * w[2] + VP[12], y = VP[1] * w[0] + VP[5] * w[1] + VP[9] * w[2] + VP[13], W = VP[3] * w[0] + VP[7] * w[1] + VP[11] * w[2] + VP[15];
+  if (W <= 0) return;
+  const sx = (x / W * 0.5 + 0.5) * hud.W, sy = (0.5 - y / W * 0.5) * hud.H;
+  const dist = vlen(vsub(H.c, qrot(qconj(sim.q), vsub(cam.eye, sim.pos)))), rad = clamp(H.r / Math.max(dist, 0.05) / R.tanY * hud.H * 0.5, 6, 60);
+  g.save(); g.strokeStyle = col; g.lineWidth = 2; g.shadowColor = col; g.shadowBlur = 8;
+  g.beginPath(); g.arc(sx, sy, rad, 0, Math.PI * 2); g.stroke();
+  if (label) { g.shadowBlur = 0; g.font = `600 10px ${UI}`; g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText(label, sx, sy - rad - 4); }
+  g.restore();
+}
+function cpHotDraw(g) {
+  if (!cpActive()) return;
+  if (CPHOT.debug) { const list = cpHotList(); if (list) for (const H of list) cpHotRing(g, H, 'rgba(255,214,107,0.9)', H.a); }
+  if (!CPIT.mx) return;
+  const hit = cpHotHit(CPIT.mx, CPIT.my); if (!hit || !hit.H) return;
+  cpHotRing(g, hit.H, 'rgba(95,212,255,0.95)');
+}
+
+// how a control's part moves (in the cockpit's frame, metres): buttons and switches press in when used and
+// toggles sit up when ON, knobs turn, levers slide with what they set, the key and selectors rotate
+const CP_KNOBS = new Set(['hdgKnob', 'altKnob', 'spdKnob', 'baro', 'com', 'nav1', 'vol', 'vs']);
+const CP_TOGGLE = { bat: () => SYS.bat, altn: () => SYS.alt, avio: () => SYS.avio, pump: () => SYS.pump, beacon: () => SYS.beacon, land: () => SYS.land,
+  taxi: () => SYS.taxi, navl: () => SYS.nav, strobe: () => SYS.strobe, master: () => SYS.bat && SYS.alt, fuelLever: () => SYS.fuelOn, engStart: () => SYS.start };
+function cpHotMove(i, L) {
+  cpHotList();
+  const o = CPHOT.byIdx && CPHOT.byIdx[i]; if (!o) return M4.ident();
+  const c = o.e, a = o.a, s = sim, dl = vlen(c) || 1, toward = [c[0] / dl, c[1] / dl, c[2] / dl];   // (from the eye to it)
+  const pulse = clamp(1 - (R.time - o.t) / 0.22, 0, 1), lever = (ACFT.cp && ACFT.cp.L.deck === 'airliner');
+  const T = v => M4.fromQP([0, 0, 0, 1], v);
+  const rot = (axis, ang) => M4.mul(M4.fromQP(qaxis(axis, ang), c), T([-c[0], -c[1], -c[2]]));
+  if (CP_KNOBS.has(a)) return M4.mul(T(vscale(toward, 0.002 * pulse)), rot(toward, o.turn * 0.35));
+  if (a === 'key') return rot(toward, (SYS.mags + (SYS.startHeld ? 0.6 : 0)) * 0.55);
+  if (a === 'fuelSel') return rot([0, 1, 0], (SYS.fuelSel - 3) * Math.PI / 4);        // (BOTH as modelled)
+  if (a === 'trim') return rot([1, 0, 0], s.trim * 6);
+  if (a === 'throttle') return T(lever ? [0, 0.01 * s.thr, -0.09 * s.thr] : [0, 0, -0.06 * (1 - s.thr) * -1 - 0.0]);
+  if (a === 'mixture') return T([0, 0, 0.05 * (1 - SYS.mix)]);
+  if (a === 'flaps') { const st = flapStops(), f = st.indexOf(s.flapIdx) / Math.max(st.length - 1, 1); return T(lever ? [0, -0.01 * f, 0.07 * f] : [0, -0.03 * f, 0]); }
+  if (a === 'gear') return T([0, s.gearDown ? -0.012 : 0.012, 0]);
+  if (a === 'pbrake') return T(vscale(toward, SYS.pbrake ? -0.02 : 0));
+  if (CP_TOGGLE[a]) return T([0, CP_TOGGLE[a]() ? 0.0035 : -0.002, 0].map((v, k) => v + toward[k] * 0.003 * pulse));
+  return T(vscale(toward, 0.0035 * pulse));                          // a push button
+}
+// =====================================================================
+//  ENGINE START GUIDE: one step at a time, in the cockpit. Each step
+//  turns the view toward the switch, rings it on the screen, says what
+//  to do and why, and moves on by itself when the switch is set.
+// =====================================================================
+const EG = { on: false, i: 0, steps: [], el: null, doneT: 0, look: null, lookT: 0, t0: 0 };
+// the steps for the current aircraft (the switch is found by the start of its tooltip)
+function egSteps() {
+  const A = ACFT, L = cpLayout(A), s = sim, piston = sysPiston();
+  const ab = ['airbus', 'a350'].includes(L.theme), bo = L.deck === 'airliner' && !ab, tp = L.deck === 'turboprop';
+  const n2 = () => `N2（エンジンの回転）${(SYS.run ? 60 + 40 * s.n1 : SYS.spin * 60).toFixed(1)}%`;
+  const where = { main: '正面の計器盤', ped: L.ped === 'console' ? '座席の間のコンソール' : '座席の間のペデスタル', ovh: '頭上のオーバーヘッドパネル', glr: '正面上のグレアシールド' };
+  const pb = { t: 'パーキングブレーキをかける', d: 'エンジンがかかった瞬間に機体が動き出さないように、まずブレーキを固定します。', find: ['パーキングブレーキ'], done: () => SYS.pbrake, act: () => { SYS.pbrake = true; } };
+  const bat = { t: 'バッテリーを ON', d: '主電源です。計器もスターター（エンジンを回すモーター）も、この電気で動きます。' + (ab ? 'エアバスは BAT 1 と BAT 2 の押しボタン（押すと OFF の白い文字が消える）。' : ''), find: ['バッテリー'], done: () => SYS.bat, act: () => { SYS.bat = true; } };
+  const bcn = { t: 'ビーコン（赤い衝突防止灯）を ON', d: '「これからエンジンを回します」という周りの人への合図です。', find: ['ビーコン'], done: () => SYS.beacon, act: () => { SYS.beacon = true; } };
+  if (piston) {
+    return [pb,
+      { t: '燃料セレクターを BOTH に', d: '左右両方の翼のタンクから燃料を送ります。赤い矢印のつまみをクリックして BOTH（真上）に。', find: ['燃料セレクター'], done: () => SYS.fuelSel === 3, act: () => { SYS.fuelSel = 3; } },
+      bat, bcn,
+      ...(A.id !== 'trainer' ? [{ t: '電動燃料ポンプを ON', d: 'エンジンが回る前は機械式ポンプが動かないので、電気のポンプで燃料を送ります。', find: ['電動燃料ポンプ'], done: () => SYS.pump, act: () => { SYS.pump = true; } }] : []),
+      { t: 'ミクスチャーを RICH（いちばん上）', d: '赤いつまみ（レバー）は燃料の濃さ。いちばん下はカットオフ（燃料が止まる）なので、かからない一番の原因です。上までドラッグ。', find: ['ミクスチャー'], done: () => SYS.mix > 0.9, act: () => { SYS.mix = 1; } },
+      { t: 'スロットルをほんの少し開ける（5〜20%）', d: '黒いつまみ（レバー）。閉じたままだと空気が入らず、開けすぎると急に回転が上がります。少しだけ上にドラッグ。', find: ['スロットル'], done: () => s.thr > 0.04 && s.thr < 0.25, act: () => { s.thr = 0.1; }, info: () => `スロットル ${Math.round(s.thr * 100)}%` },
+      { t: 'キー（マグネトー）を BOTH に', d: 'マグネトーは点火プラグに火花を送る発電機で、左右 2 系統あります。クリックするたびに OFF → R → L → BOTH と回ります。', find: ['マグネトー'], done: () => SYS.mags >= 3, act: () => { SYS.mags = 3; } },
+      { t: 'START を押し続ける', d: 'START ボタンの上でマウスを押したままにします。スターターがプロペラを回し、1〜2 秒で「ブルン」とかかったら離します。', find: ['始動'], done: () => SYS.run, act: () => { SYS.mags = 3; SYS.mix = 1; SYS.fuelSel = 3; SYS.bat = true; SYS.startHeld = true; EG.holdT = 4; }, info: () => `回転 ${Math.round(s.rpm)} rpm${SYS.crank ? '・スターター作動中' : ''}` },
+      { t: 'ALT（発電機）を ON', d: 'エンジンで発電して、バッテリーを充電します。電流計（AMPS）が＋になれば充電中。', find: ['オルタネーター'], done: () => SYS.alt, act: () => { SYS.alt = true; } },
+      { t: 'アビオニクスを ON', d: '無線・GPS・オートパイロットなどの電子機器。始動のときの電圧の変動から守るため、エンジンがかかってから入れます。', find: ['アビオニクス'], done: () => SYS.avio, act: () => { SYS.avio = true; } },
+    ].map(st => Object.assign({ where }, st));
+  }
+  const startFind = ['エンジン モード', 'エンジン スタートスイッチ', 'エンジン始動'];
+  const fuelFind = ['エンジン マスター', 'スタートレバー', 'コンディションレバー', '燃料レバー'];
+  const startName = ab ? 'ENG MODE を IGN/START に' : bo ? 'ENG START スイッチを GRD に' : 'ENG START を ON';
+  const fuelName = ab ? 'ENG MASTER を ON' : bo ? 'スタートレバーを IDLE に' : tp ? 'コンディションレバーを RUN に' : '燃料レバーを RUN に';
+  return [pb, bat, bcn,
+    { t: '燃料ポンプを ON', d: 'タンクからエンジンへ燃料を送るポンプです。' + (L.ovh ? '頭上のパネルの FUEL の欄にあります。' : ''), find: ['燃料ポンプ', '電動燃料ポンプ'], done: () => SYS.pump, act: () => { SYS.pump = true; } },
+    { t: tp ? 'パワーレバーをアイドル（いちばん下）に' : '推力レバーをアイドル（いちばん下）に', d: '始動はアイドルで。開けたままだと点火のときに温度が上がりすぎます。', find: ['スロットル'], done: () => s.thr < 0.05, act: () => { s.thr = 0; } },
+    { t: startName, d: 'スターターがエンジンの中心（N2）を回し始めます。まだ燃料は入れません。', find: startFind, done: () => SYS.start || SYS.spin > 0.3 || SYS.run, act: () => { SYS.start = true; }, info: n2 },
+    { t: 'N2 が 18% を超えるまで待つ', d: '十分に空気が流れる回転になるまで待ちます。早く燃料を入れると、本物ではエンジンが過熱（ホットスタート）します。', wait: true, find: startFind, done: () => SYS.spin > 0.3 || SYS.run, info: n2 },
+    { t: fuelName, d: '燃料が入って点火し、回転がひとりでに上がっていきます。', find: fuelFind, done: () => SYS.fuelOn, act: () => { SYS.fuelOn = true; }, info: n2 },
+    { t: '回転が安定するまで待つ（N2 約 60%）', d: 'アイドル回転に落ち着けば始動完了。ENG OUT の警告灯が消えます。', wait: true, find: fuelFind, done: () => SYS.run, info: n2 },
+    { t: '発電機（GEN）を ON', d: 'エンジンで発電します。これでバッテリーが減らなくなります。', find: ['ジェネレーター'], done: () => SYS.alt, act: () => { SYS.alt = true; } },
+    ...(cpAutoAvio() ? [] : [{ t: 'アビオニクスを ON', d: '無線・航法・オートパイロットの電子機器です。', find: ['アビオニクス'], done: () => SYS.avio, act: () => { SYS.avio = true; } }]),
+  ].map(st => Object.assign({ where }, st));
+}
+// where a switch is right now: its surface and centre on that surface's canvas
+function egFind(st) {
+  if (!st || !st.find) return null;
+  for (const pre of st.find) for (const k in CPIT.reg) {
+    const L = cpLayout(ACFT); if (!L.S[k]) continue;
+    for (const h of CPIT.reg[k].hs) { const t = typeof h.tip === 'function' ? h.tip() : h.tip; if (t && t.startsWith(pre)) return { k, x: h.x + h.w / 2, y: h.y + h.h / 2, w: h.w, h: h.h }; }
+  }
+  return null;
+}
+function egBody(f) { const L = cpLayout(ACFT), S = L.S[f.k]; return cpPt(S, f.x / CP_REG[f.k][0], f.y / CP_REG[f.k][1]); }
+// turn the view toward a point in the cockpit (the camera looks 6° below its axis)
+function egAim(p) {
+  const E = cpEye(ACFT), d = vsub(p, E);
+  // put it in the middle of the part of the screen the guide box leaves free
+  const H = hud.H || innerHeight, top = EG.el && !EG.el.hidden ? EG.el.getBoundingClientRect().top - glCanvas.getBoundingClientRect().top : H;
+  const fy = clamp(Math.min(top, H) / 2, H * 0.2, H * 0.5), off = Math.atan((H / 2 - fy) / (H / 2) * Math.tan(CPIT.fov * DEG / 2));
+  EG.look = [Math.atan2(-d[0], -d[2]), Math.atan2(d[1], Math.hypot(d[0], d[2])) + Math.atan(0.11) - off];
+  EG.lookT = 1.2;
+}
+function egStart() {
+  EG.steps = egSteps(); EG.on = true; EG.i = 0; EG.doneT = 0; EG.t0 = R.time; EG.aimed = -1;
+  if (CL.open) clToggle(false);
+  SYS.auto = false;
+  cam.mode = 'cockpit'; CPIT.fov = 55;
+  egBuild(); egRender();
+}
+function egStop() { EG.on = false; if (EG.el) EG.el.hidden = true; }
+function egBuild() {
+  if (!EG.el) {
+    const st = document.createElement('style');
+    st.textContent = `#eg{position:fixed;left:50%;bottom:10px;max-height:38vh;overflow:auto;box-sizing:border-box;transform:translateX(-50%);width:min(560px,calc(100vw - 24px));background:rgba(6,12,22,.93);border:1px solid rgba(95,212,255,.45);border-radius:12px;color:#e8f0fa;font:14px "Zen Kaku Gothic New",system-ui,sans-serif;z-index:31;padding:12px 14px;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+#eg .hd{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#92a5be;margin-bottom:4px}#eg .hd button{background:none;border:0;color:#92a5be;font-size:18px;cursor:pointer}
+#eg .bar{height:4px;background:#1b2636;border-radius:2px;margin:4px 0 10px}#eg .bar i{display:block;height:100%;background:#5fd4ff;border-radius:2px}
+#eg h4{margin:0 0 4px;font-size:17px}#eg h4 .ok{color:#58e08c}#eg p{margin:0 0 4px;line-height:1.5;font-size:13px;color:#c8d4e2}#eg .where{color:#ffcf6a;font-size:13px}#eg .info{font:700 13px "B612 Mono",monospace;color:#58e08c}
+#eg .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}#eg .row button{flex:1;min-width:110px;background:#1d2a3a;color:#e8f0fa;border:1px solid #3a4b61;border-radius:7px;padding:7px;font:inherit;font-size:13px;cursor:pointer}#eg .row button.pri{background:#5fd4ff;color:#04121c;border-color:#5fd4ff;font-weight:700}`;
+    document.head.append(st);
+    const el = document.createElement('div'); el.id = 'eg'; document.body.append(el); EG.el = el;
+    el.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      const a = b.dataset.a;
+      if (a === 'close') egStop();
+      else if (a === 'look') { const f = egFind(EG.steps[EG.i]); if (f) egAim(egBody(f)); }
+      else if (a === 'do') { const st = EG.steps[EG.i]; if (st && st.act) { st.act(); CPIT.dirty = true; } }
+      else if (a === 'back') { EG.i = Math.max(0, EG.i - 1); EG.aimed = -1; EG.doneT = 0; }
+      else if (a === 'fly') { SYS.pbrake = false; egStop(); toast(`パーキングブレーキ解除。R でスロットルを上げて離陸（${ACFT.v.rotate} kt で機首上げ）`, 4200); }
+      egRender(true);
+    });
+  }
+  EG.el.hidden = false;
+}
+function egRender(force) {
+  if (!EG.on || !EG.el) return;
+  const N = EG.steps.length, st = EG.steps[EG.i], done = EG.i >= N;
+  let html;
+  if (done) {
+    html = `<div class="hd"><span>エンジン始動ガイド：${ACFT.name}</span><button data-a="close" aria-label="閉じる">×</button></div><div class="bar"><i style="width:100%"></i></div>
+<h4><span class="ok">✓</span> 始動完了！</h4><p>おつかれさまでした。実際の機長も、毎回この順番（チェックリスト）で始動しています。<kbd>N</kbd> でチェックリストを開くと、同じ手順を自分で確認できます。</p>
+<p>次は <b>パーキングブレーキを解除</b> して、滑走路から離陸してみましょう。</p><div class="row"><button class="pri" data-a="fly">ブレーキを解除して離陸へ</button><button data-a="close">ガイドを閉じる</button></div>`;
+  } else {
+    const f = egFind(st), ok = st.done();
+    html = `<div class="hd"><span>エンジン始動ガイド：${ACFT.name}　手順 ${EG.i + 1} / ${N}</span><button data-a="close" aria-label="閉じる">×</button></div><div class="bar"><i style="width:${(EG.i / N * 100).toFixed(0)}%"></i></div>
+<h4>${ok ? '<span class="ok">✓</span> ' : ''}${st.t}</h4><p>${st.d}</p>
+${f ? `<p class="where">📍 ${st.where[f.k] || ''}${st.wait ? '（見ているだけで OK）' : '：光っている輪の所をクリック'}</p>` : ''}${st.info ? `<p class="info">${st.info()}</p>` : ''}
+<div class="row">${EG.i ? '<button data-a="back">← 前の手順</button>' : ''}<button data-a="look">そこを見る</button>${st.act && !st.wait ? '<button data-a="do">代わりに操作する</button>' : ''}</div>`;
+  }
+  if (force || html !== EG.html) { EG.el.innerHTML = html; EG.html = html; }
+}
+// per frame: advance, steer the view, and keep the panel text live
+function egFrame(dt) {
+  if (!EG.on) return;
+  if (game.state !== 'flying' && game.state !== 'paused') { egStop(); return; }
+  if (EG.el) EG.el.hidden = game.state === 'paused';
+  if (CL.open && R.time - EG.t0 < 3) clToggle(false);             // the start-up checklist pops up on a cold start: the guide replaces it
+  if (EG.holdT > 0) { EG.holdT -= dt; if (SYS.run || EG.holdT <= 0) { EG.holdT = 0; SYS.startHeld = false; } }   // 代わりに操作: START held until it runs
+  const st = EG.steps[EG.i];
+  if (st) {
+    if (EG.aimed !== EG.i) { const f = egFind(st); if (f) { EG.aimed = EG.i; egAim(egBody(f)); } }
+    if (st.done()) { EG.doneT += dt; if (EG.doneT > 0.9) { EG.i++; EG.doneT = 0; if (EG.i < EG.steps.length) audio.blip(880, 0.08, 'sine', 0.06); else audio.blip(1180, 0.2, 'sine', 0.08); } }
+    else EG.doneT = 0;
+  }
+  if (EG.look && EG.lookT > 0 && !cam.dragging) {
+    const k = 1 - Math.exp(-dt * 4);
+    cam.lookYaw += (EG.look[0] - cam.lookYaw) * k; cam.lookPitch += (EG.look[1] - cam.lookPitch) * k;
+    EG.lookT -= dt;
+  }
+  egRender();
+}
+// the ring around the switch (or an arrow at the screen edge toward it)
+function egHud(g) {
+  if (!EG.on || cam.mode !== 'cockpit') return;
+  const st = EG.steps[EG.i], f = st && egFind(st); if (!f) return;
+  const L = cpLayout(ACFT), S = L.S[f.k], p = vadd(sim.pos, qrot(sim.q, egBody(f))), pp = project(p);
+  // size of the hot spot on screen
+  const q = project(vadd(sim.pos, qrot(sim.q, cpPt(S, (f.x + f.w / 2) / CP_REG[f.k][0], f.y / CP_REG[f.k][1]))));
+  const r = clamp(Math.hypot(q.x - pp.x, q.y - pp.y) + 8, 16, 70), pulse = 0.5 + 0.5 * Math.sin(R.time * 6);
+  const W = hud.W, H = hud.H, on = pp.w > 0 && pp.x > 0 && pp.x < W && pp.y > 0 && pp.y < H - 150;
+  g.save();
+  if (on) {
+    const col = st.done() ? '88,224,140' : '255,207,106';
+    g.strokeStyle = `rgba(${col},${0.55 + 0.45 * pulse})`; g.lineWidth = 4;
+    g.beginPath(); g.arc(pp.x, pp.y, r + pulse * 6, 0, 7); g.stroke();
+    g.lineWidth = 2; g.strokeStyle = `rgba(${col},0.5)`; g.beginPath(); g.arc(pp.x, pp.y, r + 14 + pulse * 10, 0, 7); g.stroke();
+  } else {
+    // off screen: an arrow at the edge
+    let dx = pp.x - W / 2, dy = pp.y - H / 2; if (pp.w <= 0) { dx = -dx; dy = -dy; }
+    const a = Math.atan2(dy, dx), R0 = Math.min(W, H) * 0.36, x = W / 2 + Math.cos(a) * R0, y = H / 2 + Math.sin(a) * R0;
+    g.save(); g.translate(x, y); g.rotate(a); g.fillStyle = `rgba(255,207,106,${0.6 + 0.4 * pulse})`;
+    g.beginPath(); g.moveTo(26, 0); g.lineTo(-10, -16); g.lineTo(-2, 0); g.lineTo(-10, 16); g.closePath(); g.fill();
+    g.restore();
+    g.font = `700 14px ${UI}`; g.fillStyle = '#ffcf6a'; g.textAlign = 'center'; g.fillText('こっち（ドラッグで見回す／「そこを見る」）', clamp(x, 160, W - 160), clamp(y + 34, 20, H - 170));
+  }
+  g.restore();
+}
+// =====================================================================
+//  GLB (binary glTF 2.0) models: a small loader for ready-made 3D models
+//  (cockpit interiors and cars). Node transforms are baked into the
+//  vertices; primitives are grouped by material (and by moving part: a
+//  wheel, a yoke) into indexed buffers. PBR materials are approximated:
+//  base colour, metal/roughness, clearcoat (car paint), glass, emission,
+//  normal and occlusion maps, with the sky reflected in shiny surfaces.
+// =====================================================================
+const GLB = { prog: null, cache: new Map() };
+const GLB_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNrm;
+layout(location=2) in vec2 aUV;
+uniform mat4 uViewProj, uModel;
+uniform vec3 uCamPos;
+uniform float uCurv;
+out vec3 vWorld; out vec3 vN; out vec2 vUV; out vec3 vRel;
+void main(){
+  vec4 w = uModel * vec4(aPos, 1.0); vWorld = w.xyz; vN = mat3(uModel) * aNrm; vUV = aUV; vRel = w.xyz - uCamPos;
+  vec2 d = w.xz - uCamPos.xz; w.y -= dot(d, d) * uCurv;
+  gl_Position = uViewProj * w;
+}`;
+const GLB_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec3 vN; in vec2 vUV; in vec3 vRel;
+uniform sampler2D uTex, uEmTex, uMRTex, uNrmTex, uOccTex;
+uniform int uHasTex, uHasEm, uHasMR;
+uniform float uNrmK, uOccK;       // the normal map's scale (0: none), the occlusion map's strength (0: none)
+uniform vec4 uColor;
+uniform vec3 uEmis, uLightK;           // sun, ambient, emission multipliers
+uniform float uCut, uRough, uMetal, uCoat, uEnv, uFog, uShadow;
+uniform vec2 uAOy;          // a car's: the road's height under it, 1 (the sky shut out low down round its underside)
+out vec4 outColor;
+void main(){
+  vec4 c = uColor; if (uHasTex == 1) c *= texture(uTex, vUV);
+  if (c.a < uCut) discard;
+  float rough = uRough, metal = uMetal;
+  if (uHasMR == 1) { vec4 mr = texture(uMRTex, vUV); rough *= mr.g; metal *= mr.b; }
+  rough = clamp(rough, 0.04, 1.0);
+  vec3 n = normalize(vN); if (!gl_FrontFacing) n = -n;
+  vec3 ng = n;
+  // the normal map (glTF: +y up the picture, which is down its v): the frame from the uv's screen derivatives
+  if (uNrmK > 0.0) {
+    vec3 tn = texture(uNrmTex, vUV).xyz * 2.0 - 1.0; tn.xy *= vec2(uNrmK, -uNrmK);
+    n = normalize(uvFrame(n, vRel, vUV) * tn);
+  }
+  vec3 V = normalize(uCamPos - vWorld);
+  float NV = max(dot(n, V), 0.0);
+  float sh = uShadow > 0.5 ? planeShadow(vWorld.xz) : 1.0;
+  float diff = max(dot(n, uSunDir), 0.0) * sh * sunShadow(vWorld, ng);
+  float ao = uAOy.y > 0.5 ? mix(0.42, 1.0, smoothstep(0.12, 0.72, vWorld.y - uAOy.x)) : 1.0;
+  if (uOccK > 0.0) ao *= mix(1.0, texture(uOccTex, vUV).r, uOccK);   // (the model's own occlusion map: creases, vents, the wheel arches)
+  vec3 amb = uAOy.y > 0.5 ? skyIrr(n) * ao : mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5) * ao;
+  vec3 base = c.rgb;
+  vec3 col = base * (1.0 - metal) * (uSunCol * diff * 0.8 * uLightK.x + amb * 0.95 * uLightK.y);
+  // specular: the sun, and the sky (or the ground below the horizon) reflected, more on smooth parts
+  vec3 F0 = mix(vec3(0.04), base, metal);
+  vec3 F = F0 + (1.0 - F0) * pow(1.0 - NV, 5.0) * (1.0 - rough);
+  vec3 H = normalize(V + uSunDir);
+  float shin = 2.0 / (rough * rough * rough * rough) + 2.0;
+  float sp = pow(max(dot(n, H), 0.0), min(shin, 4000.0)) * (shin + 8.0) / 25.0 * diff;
+  col += uSunCol * sp * F * uLightK.x * 0.35;
+  vec3 R = reflect(-V, n);
+  vec3 env = R.y > 0.0 ? skyColor(R) : mix(skyColor(vec3(R.x, 0.02, R.z)), uAmbGround * 0.6 + vec3(0.03), smoothstep(0.0, -0.12, R.y));
+  env = mix(env, amb * 1.2, rough);                                   // rough surfaces see a blurred sky
+  if (uUrban > 0.0 && uAOy.y > 0.5) env = envRefl(R, rough) * mix(ao, 1.0, 0.4);   // (a car in a street mirrors the street)
+  col += env * F * uEnv * mix(1.0, 0.25, rough) * (metal > 0.5 ? 1.0 : 0.8);
+  // clearcoat (car paint): a thin glossy layer over it all
+  if (uCoat > 0.0) {
+    float Fc = (0.04 + 0.96 * pow(1.0 - NV, 5.0)) * uCoat;
+    float spc = pow(max(dot(n, H), 0.0), 900.0) * 18.0 * diff;
+    vec3 envC = uUrban > 0.0 && uAOy.y > 0.5 ? envRefl(R, 0.05) * mix(ao, 1.0, 0.6) : env;
+    col = col * (1.0 - Fc) + (envC * uEnv + uSunCol * spc * uLightK.x) * Fc;
+  }
+  vec3 em = uEmis; if (uHasEm == 1) em *= texture(uEmTex, vUV).rgb;
+  col += em * uLightK.z;
+  if (uFog > 0.5) col = applyFog(col, vWorld);
+  outColor = vec4(tonemap(col), c.a);
+}`;
+function glbParse(buf) {
+  const dv = new DataView(buf);
+  if (dv.getUint32(0, true) !== 0x46546c67) throw new Error('GLB ではありません');
+  let off = 12, json = null, bin = null;
+  while (off < buf.byteLength) {
+    const len = dv.getUint32(off, true), type = dv.getUint32(off + 4, true);
+    if (type === 0x4e4f534a) json = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, off + 8, len)));
+    else if (type === 0x004e4942) bin = new Uint8Array(buf, off + 8, len);
+    off += 8 + len;
+  }
+  return { json, bin };
+}
+// an accessor as a plain array of floats (normalised integers converted), respecting the stride
+function glbRead(j, bin, ai) {
+  const a = j.accessors[ai], nc = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 }[a.type];
+  const out = new Float32Array(a.count * nc);
+  if (a.bufferView === undefined) return out;                         // (all zeros, as the spec says)
+  const bv = j.bufferViews[a.bufferView];
+  const size = { 5126: 4, 5125: 4, 5123: 2, 5122: 2, 5121: 1, 5120: 1 }[a.componentType];
+  const stride = bv.byteStride || nc * size, base = (bv.byteOffset || 0) + (a.byteOffset || 0);
+  const dv = new DataView(bin.buffer, bin.byteOffset + base);
+  const rd = { 5126: o => dv.getFloat32(o, true), 5125: o => dv.getUint32(o, true), 5123: o => dv.getUint16(o, true), 5122: o => dv.getInt16(o, true), 5121: o => dv.getUint8(o), 5120: o => dv.getInt8(o) }[a.componentType];
+  const norm = a.normalized ? { 5123: 65535, 5122: 32767, 5121: 255, 5120: 127 }[a.componentType] : 0;
+  for (let i = 0; i < a.count; i++) for (let k = 0; k < nc; k++) { let v = rd(i * stride + k * size); if (norm) v = Math.max(v / norm, -1); out[i * nc + k] = v; }
+  return out;
+}
+function glbNodeMatrix(n) {
+  if (n.matrix) return n.matrix.slice();
+  const t = n.translation || [0, 0, 0], r = n.rotation || [0, 0, 0, 1], s = n.scale || [1, 1, 1];
+  const m = M4.fromQP(r, t);
+  for (let c = 0; c < 3; c++) for (let k = 0; k < 3; k++) m[c * 4 + k] *= s[c];
+  return m;
+}
+// load a GLB (ArrayBuffer) into GPU buffers. Options:
+//   xf:    a matrix applied after the file's own (to put the model in the sim's frame)
+//   split: material names whose parts stay separate per node (moved as a whole: the yokes)
+//   part:  (x, y, z) of a triangle's centre in the final frame -> a part number (0: the body), and
+//   pivot: part number -> its pivot point (the wheels)
+async function glbLoad(buf, opt = {}) {
+  const { json: j, bin } = glbParse(buf);
+  const imgs = await Promise.all((j.images || []).map(async im => {
+    if (im.bufferView === undefined) return null;
+    const bv = j.bufferViews[im.bufferView];
+    const blob = new Blob([new Uint8Array(bin.buffer, bin.byteOffset + (bv.byteOffset || 0), bv.byteLength)], { type: im.mimeType || 'image/png' });
+    try { return await createImageBitmap(blob, { imageOrientation: 'none', premultiplyAlpha: 'none' }); } catch (e) { return null; }
+  }));
+  const texCache = new Map();
+  const tex = info => {
+    if (!info || !j.textures || !j.textures[info.index]) return null;
+    const T = j.textures[info.index], src = T.source ?? (T.extensions && T.extensions.EXT_texture_webp && T.extensions.EXT_texture_webp.source);
+    const smp = (j.samplers || [])[T.sampler] || {}, key = src + '/' + (smp.wrapS || 0) + '/' + (smp.wrapT || 0);
+    if (texCache.has(key)) return texCache.get(key);
+    const bmp = imgs[src]; if (!bmp) return null;
+    const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bmp);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, smp.wrapS || gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, smp.wrapT || gl.REPEAT);
+    if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+    texCache.set(key, t); return t;
+  };
+  const mats = (j.materials || []).map(m => {
+    const p = m.pbrMetallicRoughness || {}, X = m.extensions || {};
+    const tr = X.KHR_materials_transmission ? X.KHR_materials_transmission.transmissionFactor ?? 0 : 0;
+    const color = (p.baseColorFactor || [1, 1, 1, 1]).slice();
+    const blend = m.alphaMode === 'BLEND' || tr > 0.05;
+    if (tr > 0.05) color[3] = Math.min(color[3], 0.1 + 0.35 * (1 - tr));             // glass: see-through, still tinted
+    const es = X.KHR_materials_emissive_strength ? X.KHR_materials_emissive_strength.emissiveStrength ?? 1 : 1;
+    const nt = m.normalTexture, ot = m.occlusionTexture && !m.occlusionTexture.texCoord ? m.occlusionTexture : null;   // (only the first uv set is kept)
+    return {
+      nrm: nt && !nt.texCoord ? tex(nt) : null, nrmK: nt ? nt.scale ?? 1 : 0, occ: ot ? tex(ot) : null, occK: ot ? ot.strength ?? 1 : 0,
+      name: m.name || '', color, tex: tex(p.baseColorTexture), mr: tex(p.metallicRoughnessTexture),
+      em: (m.emissiveFactor || [0, 0, 0]).map(v => v * Math.min(es, 4)), emTex: tex(m.emissiveTexture),
+      rough: tr > 0.05 ? Math.min(p.roughnessFactor ?? 1, 0.1) : p.roughnessFactor ?? 1, metal: p.metallicFactor ?? 1,
+      coat: X.KHR_materials_clearcoat ? X.KHR_materials_clearcoat.clearcoatFactor ?? 0 : 0,
+      blend, cut: m.alphaMode === 'MASK' ? (m.alphaCutoff ?? 0.5) : 0, glass: tr > 0.05,
+    };
+  });
+  // walk the scene, baking each node's transform, and gather triangles per material (and moving part)
+  const groups = new Map(), lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+  // the box round each named part (in the final frame), by the nearest node name that isn't a generic one
+  const boxes = {};
+  const walk = (ni, parent, pname) => {
+    const n = j.nodes[ni], m = M4.mul(parent, glbNodeMatrix(n));
+    const nm = n.name && !/^(Object_\d+|Sketchfab_model|root|RootNode|GLTF_SceneRootNode)$/.test(n.name) ? n.name.replace(/_\d+$/, '') : pname;
+    if (n.mesh !== undefined) for (const p of j.meshes[n.mesh].primitives) {
+      if (p.mode !== undefined && p.mode !== 4) continue;
+      const P = glbRead(j, bin, p.attributes.POSITION), nv = P.length / 3;
+      const N = p.attributes.NORMAL !== undefined ? glbRead(j, bin, p.attributes.NORMAL) : null;
+      const U = p.attributes.TEXCOORD_0 !== undefined ? glbRead(j, bin, p.attributes.TEXCOORD_0) : null;
+      const I = p.indices !== undefined ? glbRead(j, bin, p.indices) : Float32Array.from({ length: nv }, (_, i) => i);
+      const mi = p.material ?? -1, mname = j.materials && j.materials[mi] ? j.materials[mi].name : '';
+      const sep = opt.split && opt.split.includes(mname);
+      // positions and normals in the final frame (normals by the inverse transpose, so mirrored or
+      // unevenly scaled nodes still shade right)
+      const W = new Float32Array(nv * 3), Nw = new Float32Array(nv * 3);
+      const a = m, c00 = a[5] * a[10] - a[6] * a[9], c01 = a[6] * a[8] - a[4] * a[10], c02 = a[4] * a[9] - a[5] * a[8];
+      const c10 = a[2] * a[9] - a[1] * a[10], c11 = a[0] * a[10] - a[2] * a[8], c12 = a[1] * a[8] - a[0] * a[9];
+      const c20 = a[1] * a[6] - a[2] * a[5], c21 = a[2] * a[4] - a[0] * a[6], c22 = a[0] * a[5] - a[1] * a[4];
+      for (let v = 0; v < nv; v++) {
+        const x = P[v * 3], y = P[v * 3 + 1], z = P[v * 3 + 2];
+        W[v * 3] = a[0] * x + a[4] * y + a[8] * z + a[12]; W[v * 3 + 1] = a[1] * x + a[5] * y + a[9] * z + a[13]; W[v * 3 + 2] = a[2] * x + a[6] * y + a[10] * z + a[14];
+        if (nm) { const B = boxes[nm] || (boxes[nm] = [1e9, 1e9, 1e9, -1e9, -1e9, -1e9]); for (let k = 0; k < 3; k++) { const q = W[v * 3 + k]; if (q < B[k]) B[k] = q; if (q > B[k + 3]) B[k + 3] = q; } }
+        if (N) { const nx = N[v * 3], ny = N[v * 3 + 1], nz = N[v * 3 + 2]; const X = c00 * nx + c01 * ny + c02 * nz, Y = c10 * nx + c11 * ny + c12 * nz, Z = c20 * nx + c21 * ny + c22 * nz, l = Math.hypot(X, Y, Z) || 1; Nw[v * 3] = X / l; Nw[v * 3 + 1] = Y / l; Nw[v * 3 + 2] = Z / l; }
+      }
+      if (!N) for (let t = 0; t < I.length; t += 3) {                     // no normals in the file: face normals, summed
+        const i0 = I[t] * 3, i1 = I[t + 1] * 3, i2 = I[t + 2] * 3;
+        const ux = W[i1] - W[i0], uy = W[i1 + 1] - W[i0 + 1], uz = W[i1 + 2] - W[i0 + 2], vx = W[i2] - W[i0], vy = W[i2 + 1] - W[i0 + 1], vz = W[i2 + 2] - W[i0 + 2];
+        const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+        for (const k of [i0, i1, i2]) { Nw[k] += nx; Nw[k + 1] += ny; Nw[k + 2] += nz; }
+      }
+      for (let t = 0; t < I.length; t += 3) {
+        const i0 = I[t], i1 = I[t + 1], i2 = I[t + 2];
+        let part = 0;
+        if (opt.part) part = opt.part((W[i0 * 3] + W[i1 * 3] + W[i2 * 3]) / 3, (W[i0 * 3 + 1] + W[i1 * 3 + 1] + W[i2 * 3 + 1]) / 3, (W[i0 * 3 + 2] + W[i1 * 3 + 2] + W[i2 * 3 + 2]) / 3, mname, nm);
+        if (part < 0) continue;                                          // (dropped: stray parts)
+        const gk = mi + '/' + (sep ? 'n' + ni : part);
+        let g = groups.get(gk); if (!g) { g = { mi, part, sep, pos: [], nrm: [], uv: [], idx: [], map: new Map() }; groups.set(gk, g); }
+        for (const v of [i0, i1, i2]) {
+          let k = g.map.get(v);
+          if (k === undefined) {
+            k = g.pos.length / 3; g.map.set(v, k);
+            const x = W[v * 3], y = W[v * 3 + 1], z = W[v * 3 + 2];
+            g.pos.push(x, y, z); g.nrm.push(Nw[v * 3], Nw[v * 3 + 1], Nw[v * 3 + 2]); g.uv.push(U ? U[v * 2] : 0, U ? U[v * 2 + 1] : 0);
+            if (x < lo[0]) lo[0] = x; if (y < lo[1]) lo[1] = y; if (z < lo[2]) lo[2] = z; if (x > hi[0]) hi[0] = x; if (y > hi[1]) hi[1] = y; if (z > hi[2]) hi[2] = z;
+          }
+          g.idx.push(k);
+        }
+      }
+      for (const g of groups.values()) g.map.clear();                    // (vertex numbers are per primitive)
+    }
+    for (const c of n.children || []) walk(c, m, nm);
+  };
+  const scene = j.scenes[j.scene || 0];
+  for (const ni of scene.nodes) walk(ni, opt.xf || M4.ident(), '');
+  const draws = []; let tris = 0;
+  for (const g of groups.values()) {
+    if (!g.idx.length) continue;
+    const vao = makeVAO([{ loc: 0, size: 3, data: new Float32Array(g.pos) }, { loc: 1, size: 3, data: new Float32Array(g.nrm) }, { loc: 2, size: 2, data: new Float32Array(g.uv) }], new Uint32Array(g.idx));
+    const mat = mats[g.mi] || { name: '', color: [0.8, 0.8, 0.8, 1], tex: null, mr: null, em: [0, 0, 0], emTex: null, rough: 1, metal: 0, coat: 0, blend: false, cut: 0 };
+    let center = null;
+    if (g.sep) { const a = [1e9, 1e9, 1e9], b = [-1e9, -1e9, -1e9]; for (let i = 0; i < g.pos.length; i++) { a[i % 3] = Math.min(a[i % 3], g.pos[i]); b[i % 3] = Math.max(b[i % 3], g.pos[i]); } center = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2]; }
+    else if (g.part && opt.pivot) center = opt.pivot(g.part);
+    draws.push({ vao, count: g.idx.length, mat, center, part: g.sep ? mat.name : g.part || null });
+    tris += g.idx.length / 3;
+  }
+  draws.sort((a, b) => a.mat.blend - b.mat.blend);                     // glass last
+  const extras = j.asset && j.asset.extras || {};
+  return { draws, lo, hi, tris, credit: extras, names: mats.map(m => m.name), boxes };
+}
+// draw a loaded model with a model matrix. light: sun, ambient, emission multipliers; partM(draw) gives the
+// extra matrix of a moving part; o: { env: sky reflection 0..1, fog, shadow (the aircraft's), paint: [r,g,b]
+// for materials that paint() says are the body colour }
+function glbDraw(model, M, lightK = [1, 1, 1], partM = null, o = {}) {
+  if (!GLB.prog) GLB.prog = makeProgram(GLB_VS, GLB_FS);
+  const pr = GLB.prog, u = pr.u;
+  setCommon(pr);
+  if (o.shadow && typeof shadowUniforms === 'function') shadowUniforms(pr);
+  gl.uniform3fv(u.uLightK, lightK);
+  gl.uniform1f(u.uEnv, o.env ?? 0.3); gl.uniform1f(u.uFog, o.fog ? 1 : 0); gl.uniform1f(u.uShadow, o.shadow ? 1 : 0);
+  gl.uniform2f(u.uAOy, o.aoY ?? 0, o.aoY != null ? 1 : 0);
+  gl.uniform1i(u.uTex, 0); gl.uniform1i(u.uEmTex, 1); gl.uniform1i(u.uMRTex, 3); gl.uniform1i(u.uNrmTex, 9); gl.uniform1i(u.uOccTex, 10);
+  let blending = false;
+  gl.disable(gl.CULL_FACE);
+  for (const d of model.draws) {
+    const m = d.mat;
+    if (m.blend && !blending) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); blending = true; }
+    gl.uniformMatrix4fv(u.uModel, false, d.part && partM ? M4.mul(M, partM(d)) : M);
+    const col = o.paint && m.paint ? [o.paint[0], o.paint[1], o.paint[2], m.color[3]] : m.color;
+    gl.uniform4fv(u.uColor, col); gl.uniform3fv(u.uEmis, o.lamps && m.lamp ? o.lamps(m) : m.em); gl.uniform1f(u.uCut, m.cut);
+    gl.uniform1f(u.uRough, m.rough); gl.uniform1f(u.uMetal, m.metal); gl.uniform1f(u.uCoat, m.coat || 0);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, m.tex); gl.uniform1i(u.uHasTex, m.tex ? 1 : 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, m.emTex); gl.uniform1i(u.uHasEm, m.emTex ? 1 : 0);
+    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, m.mr); gl.uniform1i(u.uHasMR, m.mr ? 1 : 0);
+    gl.activeTexture(gl.TEXTURE9); gl.bindTexture(gl.TEXTURE_2D, m.nrm || null); gl.uniform1f(u.uNrmK, m.nrm && GLB.maps !== false ? m.nrmK : 0);
+    gl.activeTexture(gl.TEXTURE10); gl.bindTexture(gl.TEXTURE_2D, m.occ || null); gl.uniform1f(u.uOccK, m.occ && GLB.maps !== false ? m.occK : 0);
+    gl.bindVertexArray(d.vao.vao); gl.drawElements(gl.TRIANGLES, d.count, gl.UNSIGNED_INT, 0);
+  }
+  if (blending) { gl.disable(gl.BLEND); gl.depthMask(true); }
+  gl.enable(gl.CULL_FACE);
+  gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, puffTex);   // (unit 3 is the cloud texture elsewhere)
+  gl.activeTexture(gl.TEXTURE0);
+}
+// fetch a model file next to the page (cached); resolves to null when it can't be had. Where .glb files
+// aren't served, the same file as base64 in `<name>.glb.json` ({ "glb": "..." }) is used instead
+async function glbFetch(url) {
+  try { const r = await fetch(url); if (r.ok) return await r.arrayBuffer(); } catch (e) { /* try the JSON copy */ }
+  const r = await fetch(url + '.json'); if (!r.ok) throw new Error('HTTP ' + r.status);
+  const bin = atob((await r.json()).glb), u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return u8.buffer;
+}
+// (opt.key: the same file loaded with different options is kept separately)
+function glbGet(url, opt) {
+  const key = url + (opt && opt.key ? '#' + opt.key : '');
+  if (!GLB.cache.has(key)) GLB.cache.set(key, { state: 'loading', model: null, p: glbFetch(url).then(b => glbLoad(b, opt))
+    .then(m => { const e = GLB.cache.get(key); e.state = 'ok'; e.model = m; if (opt && opt.ready) opt.ready(m); return m; }).catch(err => { const e = GLB.cache.get(key); e.state = 'error'; e.err = String(err); console.warn('GLB', url, err); return null; }) });
+  return GLB.cache.get(key);
+}
+// =====================================================================
+//  CAR MODELS: smooth bodies built from cross-sections (a lower body and
+//  a glasshouse, each a rounded section swept from nose to tail through
+//  a few key stations), with pillars, door seams, lamps, mirrors and
+//  multi-spoke wheels. Five kinds; also used for the traffic.
+// =====================================================================
+// stations: [position 0 (nose) .. 1 (tail), half width (fraction of W/2), bottom y, top y]
+const CAR_MODELS = [
+  { id: 'sedan', name: 'セダン', L: 4.85, W: 1.82, wb: 2.85, r: 0.33, track: 0.79, fr: 0.27, mass: 1550, power: 150000,
+    body: [[0, 0.72, 0.36, 0.64], [0.03, 0.9, 0.3, 0.76], [0.12, 0.98, 0.27, 0.82], [0.3, 1, 0.26, 0.9], [0.62, 1, 0.26, 0.92], [0.82, 0.98, 0.28, 0.94], [0.95, 0.9, 0.32, 0.92], [1, 0.74, 0.4, 0.82]],
+    cabin: [[0.29, 0.86, 0.88, 0.9], [0.4, 0.8, 0.9, 1.4], [0.64, 0.79, 0.92, 1.44], [0.78, 0.8, 0.93, 1.3], [0.86, 0.84, 0.94, 0.95]], pillars: [0.3, 0.52, 0.8], glass: [0.13, 0.16, 0.2], rim: 'silver' },
+  { id: 'hatch', name: 'ハッチバック', L: 4.0, W: 1.7, wb: 2.53, r: 0.31, track: 0.76, fr: 0.26, mass: 1150, power: 90000,
+    body: [[0, 0.74, 0.34, 0.62], [0.04, 0.92, 0.28, 0.74], [0.15, 0.99, 0.26, 0.84], [0.4, 1, 0.26, 0.92], [0.78, 1, 0.27, 0.95], [0.94, 0.96, 0.3, 0.98], [1, 0.9, 0.36, 0.96]],
+    cabin: [[0.25, 0.85, 0.83, 0.86], [0.36, 0.8, 0.88, 1.45], [0.8, 0.78, 0.94, 1.52], [0.95, 0.78, 0.96, 1.44], [0.99, 0.8, 0.96, 1.0]], pillars: [0.27, 0.56, 0.93], glass: [0.13, 0.16, 0.2], rim: 'silver' },
+  { id: 'suv', name: 'SUV', L: 4.6, W: 1.86, wb: 2.69, r: 0.37, track: 0.8, fr: 0.25, mass: 1650, power: 140000,
+    body: [[0, 0.78, 0.45, 0.8], [0.04, 0.94, 0.4, 0.94], [0.14, 1, 0.38, 1.0], [0.4, 1, 0.38, 1.04], [0.8, 1, 0.39, 1.06], [0.95, 0.97, 0.42, 1.06], [1, 0.88, 0.5, 1.02]],
+    cabin: [[0.27, 0.87, 0.99, 1.02], [0.37, 0.82, 1.03, 1.6], [0.8, 0.8, 1.05, 1.66], [0.94, 0.8, 1.06, 1.6], [0.99, 0.82, 1.06, 1.1]], pillars: [0.28, 0.55, 0.92], glass: [0.1, 0.12, 0.15], rim: 'dark' },
+  { id: 'sports', name: 'スポーツカー', L: 4.4, W: 1.84, wb: 2.57, r: 0.33, track: 0.8, fr: 0.3, mass: 1300, power: 220000,
+    body: [[0, 0.7, 0.26, 0.52], [0.04, 0.9, 0.2, 0.62], [0.2, 0.99, 0.19, 0.74], [0.42, 1, 0.19, 0.82], [0.72, 1, 0.2, 0.86], [0.9, 0.97, 0.23, 0.86], [1, 0.8, 0.3, 0.78]],
+    cabin: [[0.4, 0.84, 0.78, 0.8], [0.5, 0.76, 0.82, 1.22], [0.66, 0.72, 0.84, 1.26], [0.84, 0.74, 0.86, 1.0], [0.95, 0.8, 0.86, 0.87]], pillars: [0.41, 0.68], glass: [0.09, 0.1, 0.12], rim: 'dark' },
+  { id: 'kei', name: '軽ハイトワゴン', L: 3.39, W: 1.47, wb: 2.52, r: 0.28, track: 0.73, fr: 0.2, mass: 950, power: 47000,
+    body: [[0, 0.8, 0.34, 0.66], [0.05, 0.95, 0.28, 0.82], [0.14, 1, 0.26, 0.92], [0.5, 1, 0.26, 0.96], [0.9, 1, 0.27, 0.98], [1, 0.95, 0.3, 0.96]],
+    cabin: [[0.15, 0.9, 0.9, 0.94], [0.26, 0.86, 0.94, 1.7], [0.9, 0.86, 0.98, 1.76], [0.99, 0.87, 0.98, 1.72], [1.0, 0.88, 0.98, 1.0]], pillars: [0.17, 0.52, 0.97], glass: [0.13, 0.16, 0.2], rim: 'silver' },
+];
+const CAR_PAINTS = [[0.62, 0.05, 0.07], [0.92, 0.92, 0.9], [0.06, 0.06, 0.07], [0.52, 0.54, 0.57], [0.08, 0.2, 0.45], [0.75, 0.76, 0.78], [0.14, 0.3, 0.2], [0.85, 0.55, 0.1], [0.35, 0.05, 0.08]];
+// ready-made models (Sketchfab, CC BY 4.0), reduced for the sim. g: where things are in the file's own
+// units - s: scale to metres (from the real wheelbase), gy: the ground, af/ar: front and rear axle along
+// the file's z, bw: half the track, cx: the centre line, front: +1 when the nose points to the file's +z
+const CAR_GLB_DIR = 'models/cars/';
+const CAR_GLB = [
+  { id: 'supra', name: 'トヨタ GR スープラ', L: 4.38, W: 1.86, wb: 2.47, r: 0.34, mass: 1520, power: 250000, sporty: 1, file: 'toyota_gr_supra', g: { s: 0.8381, gy: 0, af: 1.6435, ar: -1.3035, bw: 0.94, cx: 0, front: 1 }, by: 'thelightning' },
+  { id: 'r35', name: '日産 GT-R（R35）', L: 4.71, W: 1.9, wb: 2.78, r: 0.356, mass: 1750, power: 419000, sporty: 1, file: 'nissan_skyline_gtr_r35', g: { s: 0.995, gy: 0.04, af: 1.397, ar: -1.397, bw: 0.857, cx: 0, front: 1 }, eye: [-0.37, 1.11, 0.26], by: 'Black Snow' },
+  { id: 'ek9', name: 'ホンダ シビック タイプR（EK9）', L: 4.18, W: 1.7, wb: 2.62, r: 0.3, mass: 1070, power: 136000, file: 'honda_civic_type_r_-98_free_asset', g: { s: 1.0575, gy: 0.01, af: 1.2405, ar: -1.237, bw: 0.705, cx: 0, front: 1 }, by: 'tiedtke' },
+  { id: 'na', name: 'マツダ ロードスター（NA）', L: 3.97, W: 1.68, wb: 2.265, r: 0.29, mass: 950, power: 88000, sporty: 1, file: 'mazda_miata_mx-5', g: { s: 1.0022, gy: 0.12, af: 1.242, ar: -1.018, bw: 0.71, cx: 0, front: 1 }, eye: [-0.36, 0.96, 0.35], by: 'Black Snow' },
+  { id: 's15', name: '日産 シルビア（S15）', L: 4.45, W: 1.7, wb: 2.525, r: 0.31, mass: 1250, power: 184000, sporty: 1, file: 'nissan_s15_drift_free', g: { s: 0.888, gy: -0.54, af: -1.3065, ar: 1.5365, bw: 0.87, cx: 0, front: -1 }, eye: [0.355, 0.93, 0.19], by: 'autoNgraphic' },
+  { id: 'ae86', name: 'トヨタ AE86', L: 4.18, W: 1.63, wb: 2.4, r: 0.295, mass: 940, power: 96000, file: 'toyota_ae86_black_limited_kouki', g: { s: 0.010046, gy: 5, af: 141.7, ar: -97.2, bw: 71.9, cx: 0, front: 1 }, eye: [0.37, 1.05, 0.1], by: 'Martin Trafas' },
+  { id: 'kenmeri', name: '日産 スカイライン GT-R（ケンメリ）', L: 4.46, W: 1.7, wb: 2.61, r: 0.3, mass: 1145, power: 118000, file: 'nissan_skyline_gt-r_c110_kenmeri_73', g: { s: 0.0022558, gy: 23, af: 509.4, ar: -647.6, bw: 333.1, cx: 0, front: 1 }, by: 'Martin Trafas' },
+  { id: 'lc500', name: 'レクサス LC500', L: 4.77, W: 1.92, wb: 2.87, r: 0.35, mass: 1940, power: 351000, sporty: 1, file: 'lexus_lc-500', g: { s: 0.003134, gy: 7.2, af: 552.3, ar: -363.5, bw: 300, cx: -36.3, front: 1 }, by: 'Socksthecat' },
+];
+for (const c of CAR_GLB) CAR_MODELS.push(Object.assign({ glb: true, fr: 0.2 }, c));
+// eye: the driver's eye in the car's frame (x right, y up, z back), where the model's steering wheel is
+// the frame of a ready-made model: nose to -z, ground at y = 0, the middle of the axles at the origin, and
+// the four wheels (front left, front right, rear left, rear right) cut out as parts that turn
+function carGlbFrame(M) {
+  const g = M.g, s = g.s, f = g.front, zc = (g.af + g.ar) / 2;
+  const xf = [-f * s, 0, 0, 0, 0, s, 0, 0, 0, 0, -f * s, 0, f * s * g.cx, -s * g.gy, f * s * zc, 1];
+  const zF = -f * s * (g.af - zc), zR = -f * s * (g.ar - zc), xw = g.bw * s, r = M.r;
+  const wheels = [[-xw, r, zF, 1], [xw, r, zF, 1], [-xw, r, zR, 0], [xw, r, zR, 0]];
+  const part = (x, y, z) => {
+    if (Math.abs(x) > M.W * 0.75 || y < -0.3 || y > 2.6 || Math.abs(z) > M.L * 0.62 + 0.3) return -1;   // stray bits in the file
+    for (let i = 0; i < 4; i++) { const w = wheels[i]; if (Math.abs(x - w[0]) < 0.17 && (y - r) ** 2 + (z - w[2]) ** 2 < (r * 1.05) ** 2) return i + 1; }
+    return 0;
+  };
+  return { xf, wheels, part, pivot: k => wheels[k - 1].slice(0, 3) };
+}
+// the model for a car (lo: the light version for the traffic), loaded on first use
+function carGlbGet(M, lo) {
+  const F = M.frame || (M.frame = carGlbFrame(M));
+  return glbGet(CAR_GLB_DIR + M.file + (lo ? '_lo' : '') + '.glb', { xf: F.xf, part: F.part, pivot: F.pivot, ready: m => {
+    // which materials are lamps, to light them (by their names in the file)
+    for (const d of m.draws) { const n = d.mat.name; d.mat.lamp = /tail|brake|stop|lampred|redlight|rear.?light|taillight/i.test(n) ? 'rear' : /head|hl\d|hlmat|lampwhite|highbeam|halo/i.test(n) ? 'front' : null; }
+    // the body's colour (its largest clear-coated material), for the plain car that stands in for it far off
+    let best = null, bn = -1;
+    for (const d of m.draws) if (d.mat.coat > 0 && !d.mat.blend && !d.mat.tex && d.count > bn) { bn = d.count; best = d.mat; }
+    if (lo) M.farPaint = best ? best.color.slice(0, 3) : [0.5, 0.5, 0.52];
+  } });
+}
+// a traffic or parked car far off: for a ready-made model (a draw for each of its materials, some forty) the built
+// car of its size in its body's colour (half a dozen draws; at that distance the two look alike)
+function carMeshFar(mi, pi) {
+  const M = CAR_MODELS[mi];
+  if (!M.glb || !M.farPaint) return carMesh(mi, pi, true);
+  const fi = M.sporty ? 3 : M.L > 4.6 ? 0 : 1, key = fi + '/far' + mi;
+  if (!CARMESH.has(key)) CARMESH.set(key, buildCarModel(CAR_MODELS[fi], M.farPaint));
+  return CARMESH.get(key);
+}
+const CAR_FAR = 45;
+// smooth interpolation of the stations (Catmull-Rom on each value)
+function carStation(st, t) {
+  let i = 0; while (i < st.length - 2 && t > st[i + 1][0]) i++;
+  const a = st[Math.max(i - 1, 0)], b = st[i], c = st[i + 1], d = st[Math.min(i + 2, st.length - 1)];
+  const u = clamp((t - b[0]) / Math.max(c[0] - b[0], 1e-6), 0, 1), u2 = u * u, u3 = u2 * u;
+  return b.map((_, k) => k ? 0.5 * (2 * b[k] + (-a[k] + c[k]) * u + (2 * a[k] - 5 * b[k] + 4 * c[k] - d[k]) * u2 + (-a[k] + 3 * b[k] - 3 * c[k] + d[k]) * u3) : t);
+}
+// a rounded section: super-ellipse, with the top narrower than the bottom (tumblehome) when taper < 1
+function carRing(z, hw, y0, y1, e, taper = 1, n = 22) {
+  const out = [], yc = (y0 + y1) / 2, hh = (y1 - y0) / 2;
+  for (let i = 0; i < n; i++) {
+    const a = i / n * Math.PI * 2, c = Math.cos(a), s = Math.sin(a);
+    const y = yc + hh * Math.sign(s) * Math.abs(s) ** (2 / e), k = taper === 1 ? 1 : 1 - (1 - taper) * clamp((y - y0) / (y1 - y0), 0, 1);
+    out.push([hw * k * Math.sign(c) * Math.abs(c) ** (2 / e), y, z]);
+  }
+  return out;
+}
+function buildCarModel(M, paint) {
+  const b = new MeshBuilder(), w = new MeshBuilder(), lt = new MeshBuilder();
+  const L = M.L, W2 = M.W / 2, z0 = -L / 2, black = [0.03, 0.03, 0.035], trim = [0.07, 0.07, 0.08], chrome = [0.72, 0.74, 0.77];
+  const zAt = t => z0 + t * L;
+  // wheel openings: the lower edge of the body rises over each wheel
+  const axF = zAt(M.fr), axR = axF + M.wb, arch = z => { let k = 0; for (const a of [axF, axR]) k = Math.max(k, 1 - clamp(Math.abs(z - a) / (M.r * 1.45), 0, 1) ** 2); return k; };
+  // lower body
+  const rings = [], N = 30;
+  for (let i = 0; i <= N; i++) {
+    const t = i / N, s = carStation(M.body, t), z = zAt(t);
+    const yb = Math.max(s[2], s[2] + (M.r * 2.05 - s[2]) * arch(z) * 0.92);
+    rings.push(carRing(z, s[1] * W2, yb, s[3], 3.2, 0.96));
+  }
+  const seams = M.pillars.slice(1).map(zAt);
+  b.loft(rings, p => {
+    const side = Math.abs(p[0]) > W2 * 0.8 && p[1] < rings[0][0][1] + 1.5;
+    if (p[1] < 0.42 && Math.abs(p[0]) < W2 * 0.93) return black;                    // underside
+    if (side && seams.some(sz => Math.abs(p[2] - sz) < 0.012) && p[1] > 0.35) return vscale(paint, 0.35);   // door seams
+    if (p[1] < 0.36 + (M.id === 'suv' ? 0.12 : 0)) return vscale(paint, M.id === 'suv' ? 0.2 : 0.75);       // sill / cladding
+    return paint;
+  }, { capStart: true, capEnd: true });
+  // glasshouse: glass with body-coloured pillars and roof
+  const cr = [], NC = 16, c0 = M.cabin[0][0], c1 = M.cabin[M.cabin.length - 1][0];
+  for (let i = 0; i <= NC; i++) {
+    const t = c0 + (c1 - c0) * i / NC, s = carStation(M.cabin, t);
+    cr.push(carRing(zAt(t), s[1] * W2, s[2], Math.max(s[3], s[2] + 0.02), 3.6, 0.8));
+  }
+  const pz = M.pillars.map(zAt), roofY = Math.max(...M.cabin.map(s => s[3]));
+  b.loft(cr, p => {
+    if (p[1] > roofY - 0.07 || p[1] < M.cabin[1][2] + 0.03) return paint;
+    if (pz.some((z, i) => Math.abs(p[2] - z) < (i === pz.length - 1 ? 0.1 : 0.05))) return M.id === 'sports' ? black : paint;
+    return M.glass;
+  }, { capStart: true, capEnd: true });
+  // front: grille, bumper lip, number plate; rear: plate, diffuser
+  const fs = carStation(M.body, 0.02), rs = carStation(M.body, 0.985);
+  b.box([0, (fs[2] + fs[3]) * 0.45, z0 + 0.05], [M.W * 0.42, (fs[3] - fs[2]) * 0.35, 0.06], trim);
+  b.box([0, fs[2] + 0.05, z0 + 0.1], [M.W * 0.7, 0.07, 0.1], black);
+  b.box([0, fs[2] + 0.2, z0 + 0.01], [0.33, 0.11, 0.02], [0.92, 0.92, 0.88]);
+  b.box([0, rs[2] + 0.28, -z0 - 0.02], [0.33, 0.11, 0.02], [0.92, 0.92, 0.88]);
+  b.box([0, rs[2] + 0.06, -z0 - 0.08], [M.W * 0.7, 0.08, 0.1], black);
+  // mirrors and door handles
+  const ms = carStation(M.cabin, c0 + 0.02);
+  for (const s of [-1, 1]) {
+    b.box([s * (ms[1] * W2 + 0.1), ms[2] + 0.08, zAt(c0 + 0.03)], [0.14, 0.09, 0.2], M.id === 'sports' ? black : paint);
+    for (const sz of seams) b.box([s * (W2 * 0.99), carStation(M.body, (sz - z0) / L)[3] - 0.1, sz + 0.25], [0.02, 0.025, 0.16], chrome);
+  }
+  // lamps (drawn with their own emission): headlamps wrap the front corners, tail lamps across the back
+  // (kept inside the body's width where they sit, which narrows towards the nose and the tail)
+  const fl = carStation(M.body, 0.035), rl = carStation(M.body, 0.975), fw = Math.min(M.W * 0.12, fl[1] * W2 * 0.4), rw = Math.min(M.W * 0.11, rl[1] * W2 * 0.4);
+  for (const s of [-1, 1]) {
+    lt.box([s * (fl[1] * W2 * 0.96 - fw), fs[3] - 0.08, zAt(0.035) - 0.02], [fw * 2, 0.07, 0.1], [0.96, 0.97, 1.0]);
+    lt.box([s * (rl[1] * W2 * 0.96 - rw), rs[3] - 0.1, zAt(0.975) + 0.04], [rw * 2, 0.08, 0.08], [0.8, 0.05, 0.06]);
+  }
+  if (M.id === 'sedan' || M.id === 'sports') lt.box([0, rs[3] - 0.1, zAt(0.975) + 0.05], [rl[1] * W2 * 0.9 - rw * 2, 0.03, 0.06], [0.6, 0.04, 0.05]);
+  // wheel: rounded tyre, rim with five (or ten) spokes, brake disc
+  const R = M.r, tw = 0.22, rimC = M.rim === 'dark' ? [0.12, 0.12, 0.13] : [0.72, 0.73, 0.75];
+  const tyre = []; for (const [x, rr] of [[-tw / 2, R * 0.72], [-tw / 2 - 0.01, R * 0.9], [-tw / 2 + 0.02, R], [tw / 2 - 0.02, R], [tw / 2 + 0.01, R * 0.9], [tw / 2, R * 0.72]]) tyre.push(Array.from({ length: 24 }, (_, i) => { const a = i / 24 * Math.PI * 2; return [x, Math.cos(a) * rr, Math.sin(a) * rr]; }));
+  w.loft(tyre, [0.05, 0.05, 0.055], { smooth: true });
+  w.cylinder([tw / 2 - 0.06, 0, 0], [tw / 2 - 0.02, 0, 0], R * 0.72, R * 0.72, 20, vscale(rimC, 0.7));
+  w.cylinder([tw / 2 - 0.1, 0, 0], [tw / 2 - 0.06, 0, 0], R * 0.55, R * 0.55, 16, [0.32, 0.3, 0.29]);            // brake disc
+  const nsp = M.id === 'suv' ? 6 : M.id === 'sports' ? 10 : 5;
+  for (let i = 0; i < nsp; i++) { const a = i / nsp * Math.PI * 2; w.cylinder([tw / 2 - 0.02, 0, 0], [tw / 2 - 0.035, Math.cos(a) * R * 0.7, Math.sin(a) * R * 0.7], M.id === 'sports' ? 0.012 : 0.022, M.id === 'sports' ? 0.01 : 0.017, 6, rimC); }
+  w.cylinder([tw / 2 - 0.05, 0, 0], [tw / 2 - 0.03, 0, 0], R * 0.74, R * 0.74, 24, rimC);                  // rim lip
+  w.cylinder([tw / 2 - 0.02, 0, 0], [tw / 2 + 0.005, 0, 0], R * 0.14, R * 0.12, 12, vscale(rimC, 1.1));
+  // each part's material, known by the colour it was given: 0 the paint, 1 glass, 2 rubber and black plastic,
+  // 3 metal (chrome, the rims, the brake discs), 4 the number plates, 5 the lamps' lenses
+  const bm = b.build(), wm = w.build(), lm = lt.build();
+  const bodyMat = carMatOf(bm, [[M.glass, 1], [black, 2], [trim, 2], [chrome, 3], [[0.92, 0.92, 0.88], 4], [vscale(paint, 0.2), M.id === 'suv' ? 2 : 0]], 0);
+  return {
+    body: uploadCarMesh(bm, bodyMat), wheel: uploadCarMesh(wm, carMatOf(wm, [[[0.05, 0.05, 0.055], 2]], 3)), lights: uploadCarMesh(lm, new Float32Array(lm.count).fill(5)),
+    wheels: [[-(W2 - 0.14), R, axF, 1], [W2 - 0.14, R, axF, 1], [-(W2 - 0.14), R, axR, 0], [W2 - 0.14, R, axR, 0]],
+    dims: [W2, L / 2, axF, axR, W2 - 0.14],
+  };
+}
+// built meshes by model and paint (shared by the player's car and the traffic)
+const CARMESH = new Map();
+function carMesh(mi, pi, lo = false) {
+  const M = CAR_MODELS[mi];
+  if (M.glb) {
+    // a ready-made model; until it has loaded (or if it can't be), a built car of a similar size stands in
+    const e = carGlbGet(M, lo), fb = carMesh(M.sporty ? 3 : M.L > 4.6 ? 0 : 1, pi);
+    return e.state === 'ok' ? { glb: e.model, M, F: M.frame, dims: [M.W / 2, M.L / 2, M.frame.wheels[0][2], M.frame.wheels[2][2], Math.abs(M.frame.wheels[0][0])] } : fb;
+  }
+  const key = mi + '/' + pi;
+  if (!CARMESH.has(key)) CARMESH.set(key, buildCarModel(M, CAR_PAINTS[pi]));
+  return CARMESH.get(key);
+}
+// the car's materials: each vertex's by its colour (list: [colour, material]; anything else def)
+function carMatOf(m, list, def) {
+  const out = new Float32Array(m.count);
+  for (let i = 0; i < m.count; i++) {
+    const r = m.col[i * 3], g = m.col[i * 3 + 1], bb = m.col[i * 3 + 2]; let id = def;
+    for (const [c, k] of list) if (Math.abs(c[0] - r) + Math.abs(c[1] - g) + Math.abs(c[2] - bb) < 0.004) { id = k; break; }
+    out[i] = id;
+  }
+  return out;
+}
+function uploadCarMesh(m, mat) {
+  const v = makeVAO([{ loc: 0, size: 3, data: m.pos }, { loc: 1, size: 3, data: m.nrm }, { loc: 2, size: 3, data: m.col }, { loc: 3, size: 1, data: mat }]);
+  v.count = m.count; return v;
+}
+// the built cars' shading: the paint under a clear coat, tinted glass, rubber, chrome and the rims, each with
+// its own gloss; what is mirrored in them is the street (envRefl: the sky over the roofline, the buildings
+// across the road, the road itself); the sky's light is shut out low down round the car's own underside
+const CAR_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNormal;
+layout(location=2) in vec3 aColor;
+layout(location=3) in float aMat;
+uniform mat4 uViewProj;
+uniform mat4 uModel;
+uniform vec3 uCamPos;
+uniform float uCurv;
+out vec3 vWorld; out vec3 vN; out vec3 vCol; out vec3 vLocal; flat out float vMat;
+void main(){
+  vec4 wp = uModel * vec4(aPos, 1.0);
+  vec2 cd = wp.xz - uCamPos.xz; wp.y -= dot(cd, cd) * uCurv;
+  vWorld = wp.xyz; vN = mat3(uModel) * aNormal; vCol = aColor; vLocal = aPos; vMat = aMat;
+  gl_Position = uViewProj * wp;
+}`;
+const CAR_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec3 vN; in vec3 vCol; in vec3 vLocal; flat in float vMat;
+uniform vec3 uEmissive;
+uniform float uAlpha, uWheel;
+out vec4 outColor;
+void main(){
+  int mat = int(vMat + 0.5);
+  vec3 base = vCol, n = normalize(vN); if (!gl_FrontFacing) n = -n;
+  vec3 V = normalize(uCamPos - vWorld);
+  float NV = max(dot(n, V), 1e-3);
+  float rough = mat == 0 ? 0.3 : mat == 1 ? 0.03 : mat == 2 ? 0.75 : mat == 3 ? 0.32 : mat == 4 ? 0.45 : 0.06;
+  float metal = mat == 3 ? 1.0 : 0.0;
+  // ambient occlusion: low down the sky is shut out by the car itself and the road (the wheels sit in the arches)
+  float ao = uWheel > 0.5 ? 0.85 : mix(0.5, 1.0, smoothstep(0.1, 0.6, vLocal.y));
+  float diff = max(dot(n, uSunDir), 0.0) * sunShadow(vWorld, n);
+  vec3 irr = skyIrr(n) * ao, R = reflect(-V, n), H = normalize(V + uSunDir);
+  float NH = max(dot(n, H), 0.0);
+  vec3 col;
+  if (mat == 1 || mat == 5) {
+    // glass: the dim cabin through it, the street mirrored in it (more so at a glancing angle), the sun a spark
+    float F = clamp(fresnelS(NV, 0.04) * 1.1 + 0.07, 0.0, 1.0);
+    col = mix(base * 0.35 * irr, envRefl(R, 0.02) * mix(ao, 1.0, 0.5), F) + uSunCol * pow(NH, 900.0) * 9.0 * diff;
+  } else {
+    float a2 = rough * rough * rough * rough, ex = clamp(2.0 / max(a2, 1e-4) - 2.0, 1.0, 3000.0);
+    float sp = pow(NH, ex) * (ex + 8.0) / 25.0;
+    vec3 F0 = mix(vec3(0.04), base, metal), F = F0 + (1.0 - F0) * pow(1.0 - NV, 5.0) * (1.0 - rough);
+    col = base * (mat == 0 ? 1.12 : 1.0) * (1.0 - metal) * (uSunCol * diff * 0.95 + irr);   // (car paint a shade richer than its swatch)
+    col += uSunCol * sp * F * diff * 0.5 + envRefl(R, rough) * F * ao * (metal > 0.5 ? 1.0 : 0.7);
+    if (mat == 0) {
+      // the clear coat over the paint: a thin glossy layer mirroring the street, the sun a hard point in it
+      float Fc = fresnelS(NV, 0.04);
+      col = col * (1.0 - Fc) + (envRefl(R, 0.05) * mix(ao, 1.0, 0.6) + uSunCol * pow(NH, 1800.0) * 70.0 * diff) * Fc;
+    }
+  }
+  col += uEmissive * (mat == 5 ? 1.0 : 0.0);
+  outColor = vec4(tonemap(applyFog(col, vWorld)), uAlpha);
+}`;
+// the shadow a car casts on the road under it whatever the light (the sky shut out): dark under the floor,
+// soft beyond its edges, darkest where the tyres touch the road
+const CARCS_FS = GLSL_HEAD + GLSL_COMMON + `
+in vec3 vWorld; in vec3 vN; in vec3 vCol; in vec3 vLocal;
+uniform vec4 uCS;      // half width, half length, front axle z, rear axle z
+uniform vec2 uCW;      // the wheels' x, strength
+out vec4 outColor;
+float sdRound(vec2 p, vec2 b, float r){ vec2 q = abs(p) - b + r; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r; }
+void main(){
+  vec2 p = vLocal.xz;
+  float d = sdRound(p, vec2(uCS.x - 0.06, uCS.y - 0.12), 0.55);
+  float body = 1.0 - smoothstep(-0.3, 0.6, d), core = 1.0 - smoothstep(-0.9, -0.15, d), wh = 0.0;
+  for (int i = 0; i < 4; i++) { vec2 w = vec2(i == 0 || i == 2 ? -uCW.x : uCW.x, i < 2 ? uCS.z : uCS.w), q = (p - w) / vec2(0.16, 0.34); wh = max(wh, exp(-dot(q, q))); }
+  outColor = vec4(0.0, 0.0, 0.0, clamp(body * 0.3 + core * 0.28 + wh * 0.42, 0.0, 0.82) * uCW.y);
+}`;
+const CARPROG = { car: null, cs: null, quad: null };
+function carProgs() {
+  if (!CARPROG.car) {
+    CARPROG.car = makeProgram(CAR_VS, CAR_FS); CARPROG.cs = makeProgram(MESH_VS, CARCS_FS);
+    const q = new MeshBuilder(); q.quad([-1, 0.02, -1], [1, 0.02, -1], [1, 0.02, 1], [-1, 0.02, 1], [0, 0, 0], [0, -1, 0]); CARPROG.quad = uploadMesh(q.build());
+  }
+  return CARPROG;
+}
+// the contact shadow under a car (dims: half width, half length, front and rear axle z, the wheels' x)
+function carContactShadow(dims, base, k) {
+  const P = carProgs(), pr = P.cs, u = pr.u, [hw, hl, zf, zr, wx] = dims;
+  setCommon(pr);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+  gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-4, -8);
+  gl.uniform4f(u.uCS, hw, hl, zf, zr); gl.uniform2f(u.uCW, wx, k);
+  const S = new Float32Array(16); S[0] = hw + 0.7; S[5] = 1; S[10] = hl + 0.7; S[15] = 1;   // (the unit quad stretched to the car and a margin)
+  gl.uniformMatrix4fv(u.uModel, false, M4.mul(base, S));
+  gl.bindVertexArray(P.quad.vao); gl.drawArrays(gl.TRIANGLES, 0, P.quad.count);
+  gl.disable(gl.POLYGON_OFFSET_FILL); gl.depthMask(true); gl.disable(gl.BLEND);
+}
+// a ready-made car: shadow, then the model with its wheels turning and the lamps lit
+function drawCarGlb(Mm, base, spin, steer, brake, shadow) {
+  if (shadow) carContactShadow(Mm.dims, base, 1);
+  const W = Mm.F.wheels, night = ENV.night || ENV.sunDir[1] < 0.08;
+  const partM = d => {
+    const w = W[d.part - 1]; if (!w) return M4.ident();
+    const q = qmul(w[3] ? qaxis([0, 1, 0], -steer) : [0, 0, 0, 1], qaxis([1, 0, 0], -spin));
+    return M4.mul(M4.fromQP(q, [w[0], w[1], w[2]]), M4.fromQP([0, 0, 0, 1], [-w[0], -w[1], -w[2]]));
+  };
+  const lamps = m => m.lamp === 'rear' ? [brake ? 1.6 : night ? 0.6 : 0, 0.02, 0.02] : night ? [1.4, 1.35, 1.2] : [0, 0, 0];
+  glbDraw(Mm.glb, base, [1, 1, 1], partM, { env: 1, fog: true, shadow: false, lamps, aoY: base[13] });
+}
+// draw one car: model matrix, wheel spin and steer, lamps
+function drawCarMesh(Mm, base, spin, steer, brake, shadow = true) {
+  if (Mm.glb) { drawCarGlb(Mm, base, spin, steer, brake, shadow); setCommon(progMesh); return; }
+  if (shadow) carContactShadow(Mm.dims, base, 1);
+  const pr = carProgs().car, u = pr.u;
+  setCommon(pr);
+  const draw = (vao, m) => { gl.uniformMatrix4fv(u.uModel, false, m); gl.bindVertexArray(vao.vao); gl.drawArrays(gl.TRIANGLES, 0, vao.count); };
+  gl.uniform1f(u.uAlpha, 1); gl.uniform3f(u.uEmissive, 0, 0, 0); gl.uniform1f(u.uWheel, 0);
+  draw(Mm.body, base);
+  gl.uniform1f(u.uWheel, 1);
+  for (const [x, y, z, front] of Mm.wheels) {
+    const q = qmul(front ? qaxis([0, 1, 0], -steer) : [0, 0, 0, 1], qmul(qaxis([1, 0, 0], -spin), x < 0 ? qaxis([0, 1, 0], Math.PI) : [0, 0, 0, 1]));
+    draw(Mm.wheel, M4.mul(base, M4.fromQP(q, [x, y, z])));
+  }
+  gl.uniform1f(u.uWheel, 0);
+  const night = ENV.night || ENV.sunDir[1] < 0.08, lit = night ? 1 : 0.12;
+  gl.uniform3f(u.uEmissive, lit + (brake ? 0.7 : 0), lit * 0.9, lit * 0.8);
+  draw(Mm.lights, base);
+  gl.uniform3f(u.uEmissive, 0, 0, 0);
+  setCommon(progMesh);
+}
+// =====================================================================
+//  CAR: get out of the aeroplane and drive. The car appears on the
+//  ground straight below the aircraft; the aircraft waits exactly as it
+//  was (in the air it is held where it is) until you get back in.
+//  While driving, `sim.pos` follows the car so the terrain, the Google
+//  3D tiles, the city and the map all load around the car.
+// =====================================================================
+const CAR = {
+  on: false, pos: [0, 0, 0], hdg: 0, v: 0, vy: 0, steer: 0, air: false, q: [0, 0, 0, 1], n: [0, 1, 0],
+  spin: 0, thr: 0, brake: 0, hand: false, rev: false, plane: null, prevCam: 'chase', camYaw: 0, bumpT: 0, mesh: null, msgT: 0,
+};
+const CAR_SPEC = { mass: 1400, power: 110000, fMax: 7200, brake: 11000, wb: 2.7, cd: 0.7, wheelR: 0.34 };
+const carFwd = h => [Math.sin(h), 0, -Math.cos(h)];
+function carReset() { if (CAR.on) { CAR.on = false; CAR.plane = null; } carButton(); }
+// the ground the car drives on: Google's 3D surface where it is shown (roads, bridges, roofs), else the terrain
+function carGround(x, z, yRef, deckRef = yRef) {
+  const g = groundAt(x, z);
+  let h = g.h, water = g.water, google = false;
+  // (the developer panel's comparison: PLATEAU's real road surfaces, their kerbs and pavements, p7_plateau.js)
+  if (typeof PLAT !== 'undefined' && PLAT.cmp && PLAT.tranLeaves.length) { const th = platTranHeight(x, z); if (th != null && Math.abs(th - h) < 6) return { h: th, water: false, n: [0, 1, 0], paved: true, google: false }; }
+  if (typeof GOOG !== 'undefined' && GOOG.covering && GOOG.off != null && !(typeof ZONE !== 'undefined' && ZONE.on)) {   // (in the near zone the sim's own ground is shown)
+    const [la, lo] = worldToGeo(x, z), gh = googGroundAt(la, lo, yRef + GOOG.off);
+    if (gh != null) { h = gh - GOOG.off; google = true; water = water && h < 0.5; }
+  }
+  // on a bridge or an elevated road: its deck (p6_city.js)
+  if (typeof cityDeckAt !== 'function') return { h, water, n: g.n || [0, 1, 0], paved: g.paved, google };
+  const dk = cityDeckAt(x, z, deckRef);
+  // over Google's 3D, once up off the street, the photogrammetry's own deck is the road: the real height of the
+  // real bridge (the sim's own deck is only a guess from the map, and isn't drawn up there). Looked for from a
+  // little above (a real ramp may climb sooner than the guess), the middle of three samples (a car melted into
+  // the deck isn't a bump)
+  if (typeof ZONE !== 'undefined' && ZONE.on && ZONE.g[3] > 0 && GOOG.off != null && (dk != null ? dk - h > 2 : deckRef - 1.2 > h + 1.5) && cityDeckAt(x, z, 0, true) != null) {
+    const top = deckRef + 2.0 + GOOG.off, S = [[0, 0], [1.2, 0], [0, 1.2]].map(([a, b]) => { const [la, lo] = worldToGeo(x + a, z + b); return googGroundAt(la, lo, top); });
+    if (S.every(v => v != null)) {
+      const m = S.sort((a, b) => a - b)[1] - GOOG.off;
+      if (m > h + 1.5) return { h: m, water: false, n: [0, 1, 0], paved: true, google: true, deck: true };
+    }
+  }
+  if (dk != null && dk > h - 0.3) return { h: dk, water: false, n: [0, 1, 0], paved: true, google: false, deck: true };
+  return { h, water, n: g.n || [0, 1, 0], paved: g.paved, google };
+}
+// is there a (map) building at this point? (OSM buildings of the Japan city layer)
+function carInBuilding(p) {
+  if (typeof CITY === 'undefined' || !CITY.ready || !JW.active || !JW.online) return false;
+  const [la, lo] = worldToGeo(p[0], p[2]);
+  const n = 2 ** 14, x = Math.floor((lo + 180) / 360 * n), y = Math.floor(mercY(la) * n);
+  const t = CITY.tiles.get(x + '/' + y);
+  if (typeof PLAT !== 'undefined' && PLAT.cmp && platCmpSolid(p)) return true;   // (PLATEAU's buildings round the car, while comparing: p7_plateau.js)
+  if (!t || !t.col || p[1] > t.maxTop + 2) return false;
+  const X = (lo - t.lonW) * t.kxN, Z = -(la - t.latN) * KZ;
+  const G = 32, cx = clamp(Math.floor(X / t.W * G), 0, G - 1), cz = clamp(Math.floor(Z / t.Hm * G), 0, G - 1), c = t.col;
+  for (let k = c.cells[cz * G + cx]; k < c.cells[cz * G + cx + 1]; k++) {
+    const b = c.items[k], B = c.boxes;
+    if (t.cmpHid && t.cmpHid[b]) continue;                            // (stood in for by a PLATEAU building)
+    if (p[1] > B[b * 5 + 4] || X < B[b * 5] || X > B[b * 5 + 2] || Z < B[b * 5 + 1] || Z > B[b * 5 + 3]) continue;
+    let inside = false;
+    for (let i = c.ringOff[b], j = c.ringOff[b + 1] - 2; i < c.ringOff[b + 1]; j = i, i += 2) {
+      const zi = c.ringXZ[i + 1], zj = c.ringXZ[j + 1];
+      if ((zi > Z) !== (zj > Z) && X < (c.ringXZ[j] - c.ringXZ[i]) * (Z - zi) / (zj - zi) + c.ringXZ[i]) inside = !inside;
+    }
+    if (inside) return true;
+  }
+  return false;
+}
+function carMsg(t, d = 1800) { if (R.time - CAR.msgT > 2) { CAR.msgT = R.time; toast(t, d); } }
+
+// ---------------------------------------------------------------------
+//  getting in and out
+// ---------------------------------------------------------------------
+function carCanUse() { return game.state === 'flying' && !sim.crashed && !(typeof SCHOOL !== 'undefined' && SCHOOL.active) && game.mode !== 'tutorial'; }
+function carToggle() { if (CAR.on) carExit(); else carEnter(); }
+// the Drive mission (and "drive here" on the map): into the car, then onto a proper road once the map's
+// roads round here have loaded (a main road if there is one within reach)
+function driveStart(lat, lon) {
+  if (lat !== undefined && JW.active) {
+    const w = geoToWorld(lat, lon);
+    if (CAR.on) { CAR.pos = [w[0], Math.max(jwHeight(w[0], w[1]), 0) + 0.5, w[1]]; CAR.v = 0; carSync(); }
+    else { sim.pos = [w[0], Math.max(jwHeight(w[0], w[1]), 0) + 2, w[1]]; sim.vel = [0, 0, 0]; }
+  }
+  if (!CAR.on) carEnter();
+  if (!CAR.on) return;
+  cam.mode = 'car';
+  clearInterval(CAR.driveTimer);
+  const t0 = performance.now();
+  toast('🚗 ドライブ：道路を読み込んでいます…', 2500);
+  CAR.driveTimer = setInterval(() => {
+    if (!CAR.on || game.state !== 'flying') { clearInterval(CAR.driveTimer); return; }
+    const ready = typeof CITY !== 'undefined' && CITY.ready && roadNearest(CAR.pos[0], CAR.pos[2], 3000, 5);
+    if (!ready && performance.now() - t0 < 45000) return;
+    clearInterval(CAR.driveTimer);
+    const moved = carToRoad(3000, true, 5) || carToRoad(3000, true);
+    toast(ready || moved ? '🚗 ドライブ開始：W/↑ アクセル・A/D ハンドル・M の地図で好きな場所へ移動できます・K で飛行機に戻る' : '近くに道路が見つかりませんでした（オンラインの地図で使えます）', 5000);
+    CAR.enterT = R.time;
+  }, 500);
+}
+function carEnter() {
+  if (!carCanUse()) { toast('いまは車に乗り換えられません（飛行中のモードで使えます）', 1800); return; }
+  const s = sim, x = s.pos[0], z = s.pos[2];
+  const g = carGround(x, z, s.pos[1] + 1);
+  if (g.water) { toast('真下が海（水の上）なので車を出せません。陸の上で乗り換えてください', 2600); return; }
+  // keep everything about the aircraft, to put it back exactly as it was
+  const snap = {};
+  for (const k in s) snap[k] = Array.isArray(s[k]) ? s[k].slice() : s[k];
+  CAR.plane = snap;
+  const f = qrot(s.q, [0, 0, -1]);
+  CAR.hdg = Math.atan2(f[0], -f[2]); CAR.camYaw = CAR.hdg;
+  CAR.pos = [x, g.h, z]; CAR.v = 0; CAR.vy = 0; CAR.steer = 0; CAR.air = false; CAR.spin = 0; CAR.n = g.n.slice();
+  carApplyModel(); TRAFFIC.cars.length = 0;
+  CAR.on = true; CAR.prevCam = cam.mode; cam.mode = 'car'; cam.lookYaw = cam.lookPitch = 0;
+  if (game.ap) game.ap = false;
+  if (typeof EG !== 'undefined' && EG.on) egStop();
+  if (typeof CL !== 'undefined' && CL.open) clToggle(false);
+  carSync();
+  const above = s.onGround ? '' : `（飛行機は高度 ${Math.round((snap.pos[1] - g.h) * 3.28084).toLocaleString()} ft でそのまま待っています）`;
+  // not on a road (a field, a roof, the airfield)? put the car on the nearest one
+  const moved = carToRoad(600, true);
+  CAR.enterT = R.time; CAR.help = false;
+  toast(`車に乗り換えました${moved ? `（真下が道路ではないので、${moved} m 先の道路に出しました）` : ''}${above}。W/↑ アクセル・S/↓ ブレーキとバック・A/D ハンドル・Space サイドブレーキ・R 近くの道路へ・C 視点・K で飛行機に戻る`, 6000);
+  carButton();
+}
+// move the car onto the nearest road, in the left-hand lane (Japan drives on the left), facing the way it
+// was facing as far as the road allows. Returns the distance moved, or 0
+function carToRoad(maxD = 3000, quiet = false, minCls = 0) {
+  if (typeof roadNearest !== 'function' || typeof CITY === 'undefined' || !CITY.ready) { if (!quiet) toast('道路のデータがありません（オンラインの地図でのみ使えます）', 2200); return 0; }
+  const r = roadNearest(CAR.pos[0], CAR.pos[2], maxD, minCls);
+  if (!r) { if (!quiet) toast(`${maxD >= 1000 ? (maxD / 1000) + ' km' : maxD + ' m'} 以内に道路が見つかりません`, 2200); return 0; }
+  if (r.d < r.w * 0.5 + 0.5) return 0;                               // already on it
+  let h = Math.atan2(r.dir[0], -r.dir[1]);
+  if (Math.cos(h - CAR.hdg) < 0) h += Math.PI;
+  const lane = r.cls <= 1 ? 0 : r.w * 0.25, rt = [Math.cos(h), 0, Math.sin(h)];
+  const x = r.x - rt[0] * lane, z = r.z - rt[2] * lane, g = carGround(x, z, r.y + 3);
+  const d = Math.round(Math.hypot(x - CAR.pos[0], z - CAR.pos[2]));
+  CAR.pos = [x, g.h, z]; CAR.hdg = h; CAR.camYaw = h; CAR.v = 0; CAR.vy = 0; CAR.air = false; CAR.steer = 0;
+  carSync();
+  if (!quiet) toast(`${d} m 先の道路に移動しました`, 1800);
+  return d;
+}
+function carExit() {
+  if (!CAR.on) return;
+  const snap = CAR.plane;
+  // the world may have been re-centred while driving: move the aircraft with it (by its geographic position)
+  for (const k in snap) sim[k] = Array.isArray(snap[k]) ? snap[k].slice() : snap[k];
+  CAR.on = false; CAR.plane = null;
+  cam.mode = CAR.prevCam === 'car' || CAR.prevCam === 'carcab' ? 'chase' : CAR.prevCam; cam.lookYaw = cam.lookPitch = 0; cam.flyPos = null;
+  toast(sim.onGround ? '飛行機に戻りました' : '飛行機に戻りました。乗り換えたときの状態から飛行を再開します', 2400);
+  carButton();
+}
+// the aircraft's state follows the car while driving (streaming, map and labels use sim.pos)
+function carSync() {
+  const s = sim, f = carFwd(CAR.hdg);
+  s.pos = CAR.pos; s.q = CAR.q; s.vel = [f[0] * CAR.v, CAR.vy, f[2] * CAR.v];
+  s.w = [0, 0, 0]; s.onGround = !CAR.air; s.agl = 0; s.tas = Math.abs(CAR.v); s.ias = s.tas; s.vs = CAR.vy; s.stallWarn = false;
+  s.rpm = 800 + Math.min(5200, Math.abs(CAR.v) * 110) * (0.4 + 0.6 * CAR.thr); s.thr = CAR.thr; s.n1 = 0;
+}
+
+// ---------------------------------------------------------------------
+//  driving
+// ---------------------------------------------------------------------
+function carControls(dt) {
+  let up = pressedAny('KeyW', 'ArrowUp') ? 1 : 0, dn = pressedAny('KeyS', 'ArrowDown') ? 1 : 0;
+  let st = (pressedAny('KeyD', 'ArrowRight') ? 1 : 0) - (pressedAny('KeyA', 'ArrowLeft') ? 1 : 0);
+  if (touchIn.stickOn) { st = touchIn.x; const y = -touchIn.y * (game.invert ? -1 : 1); up = Math.max(0, y); dn = Math.max(0, -y); }
+  CAR.hand = pressedAny('Space', 'KeyB') || !!touchIn.brake;
+  if (CAR.hold) { up = 0; dn = 0; st = 0; CAR.hand = true; }          // (standing for a benchmark, p_dev.js)
+  // S: brake while rolling forward, then reverse; W while rolling back brakes first
+  if (CAR.v > 0.6) { CAR.thr = up; CAR.brake = dn; CAR.rev = false; }
+  else if (CAR.v < -0.6) { CAR.thr = dn; CAR.brake = up; CAR.rev = true; }
+  else { CAR.rev = dn > up; CAR.thr = Math.max(up, dn); CAR.brake = 0; }
+  const maxSt = 0.62 / (1 + (Math.abs(CAR.v) / 9) ** 1.3);
+  CAR.steer += clamp(st * maxSt - CAR.steer, -2.2 * dt, 2.2 * dt);
+}
+function carStep(dt) {
+  const n = Math.ceil(dt / (1 / 120));
+  for (let i = 0; i < n; i++) carPhys(dt / n);
+  trafficStep(dt);
+  CAR.spin = (CAR.spin + CAR.v / CAR_SPEC.wheelR * dt) % (Math.PI * 2);
+  CAR.bumpT -= dt;
+  carSync();
+}
+function carPhys(dt) {
+  const C = CAR_SPEC, g = 9.81, f = carFwd(CAR.hdg), p = CAR.pos, v = CAR.v;
+  // slope along the car, from the ground under the front and rear wheels
+  const hf = carGround(p[0] + f[0] * C.wb / 2, p[2] + f[2] * C.wb / 2, p[1] + 1.2).h, hb = carGround(p[0] - f[0] * C.wb / 2, p[2] - f[2] * C.wb / 2, p[1] + 1.2).h;
+  const slope = clamp((hf - hb) / C.wb, -0.6, 0.6);
+  const here = carGround(p[0], p[2], p[1] + 1.2);
+  CAR.deck = !!here.deck;
+  // forces along the car
+  const dir = CAR.rev ? -1 : 1, sp = Math.abs(v);
+  let F = CAR.thr * dir * Math.min(C.fMax, C.power / Math.max(sp, 3)) * (CAR.rev ? 0.45 : 1);
+  if (CAR.rev && v < -8) F = 0;
+  const rough = here.paved || here.google ? 1 : 2.5;                  // grass and fields roll harder
+  const res = 0.5 * 1.2 * C.cd * v * sp + (sp > 0.05 ? Math.sign(v) * (0.013 * rough) * C.mass * g : 0);
+  let brakeF = CAR.brake * C.brake + (CAR.hand ? 5500 : 0);
+  let a = CAR.air ? 0 : (F - res) / C.mass - g * slope / Math.sqrt(1 + slope * slope);
+  let nv = v + a * dt;
+  if (brakeF > 0 && !CAR.air) { const dv = brakeF / C.mass * dt; nv = Math.abs(nv) <= dv ? 0 : nv - Math.sign(nv) * dv; }
+  // standing still with no pedal pressed, the car stays put (as an automatic's hold does), even on a hill
+  if (!CAR.air && !CAR.thr && Math.abs(v) < 0.4 && Math.abs(nv) < 0.6) nv = 0;
+  // steering (a bicycle model); the handbrake lets the tail come round
+  let yaw = nv * Math.tan(CAR.steer) / C.wb;
+  // the tyres can only give so much sideways grip (about 0.9 g); beyond it the car runs wide and scrubs speed
+  const grip = (CAR.hand ? 0.6 : here.paved || here.google ? 0.9 : 0.6) * g / Math.max(Math.abs(nv), 1);
+  if (Math.abs(yaw) > grip) { nv *= 1 - 0.25 * dt; yaw = Math.sign(yaw) * grip; }
+  if (CAR.hand && Math.abs(nv) > 6) yaw *= 1.45;
+  if (!CAR.air) CAR.hdg += yaw * dt;
+  // move, unless something is in the way
+  const nf = carFwd(CAR.hdg), step = nv * dt;
+  const nx = p[0] + nf[0] * step, nz = p[2] + nf[2] * step;
+  const ahead = [p[0] + nf[0] * Math.sign(step) * 2.3, p[1] + 0.8, p[2] + nf[2] * Math.sign(step) * 2.3];
+  const gN = carGround(nx, nz, p[1] + 1.2), gA = carGround(ahead[0], ahead[2], p[1] + 1.2);
+  let blocked = null;
+  if (Math.abs(step) > 1e-4) {
+    if (gA.water || gN.water) blocked = 'この先は海（水）です';
+    else if (!CAR.air && gA.h - p[1] > 1.2 && gA.google) blocked = '建物や壁にぶつかりました';
+    else if (!CAR.air && here.deck && !gA.deck && here.h - gA.h > 1.5) blocked = '橋の欄干にぶつかりました';   // (the parapet keeps you on the deck)
+    else if (carInBuilding(ahead)) blocked = '建物にぶつかりました';
+    else if (trafficHit(p[0] + nf[0] * Math.sign(step) * 1.6, p[2] + nf[2] * Math.sign(step) * 1.6)) blocked = 'ほかの車にぶつかりました';
+  }
+  if (blocked) {
+    if (Math.abs(nv) > 3 && CAR.bumpT <= 0) { audio.blip(90, 0.25, 'sawtooth', 0.12); CAR.bumpT = 0.6; }
+    carMsg(blocked); nv = -nv * 0.15;
+  } else { p[0] = nx; p[2] = nz; }
+  CAR.v = nv;
+  // vertical: follow the ground, or fly off a crest / a roof edge and land again
+  const gh = blocked ? here.h : gN.h;
+  if (CAR.air) {
+    CAR.vy -= g * dt; p[1] += CAR.vy * dt;
+    if (p[1] <= gh) { if (CAR.vy < -7) { carMsg('ドスン！', 1000); audio.blip(70, 0.3, 'square', 0.12); } p[1] = gh; CAR.vy = 0; CAR.air = false; }
+  } else if (gh < p[1] - 0.35 && Math.abs(nv) > 2 || gh < p[1] - 1.2) {
+    CAR.air = true; CAR.vy = nv * slope * 0.9;
+  } else {
+    const prev = p[1]; p[1] += (gh - p[1]) * Math.min(1, dt * 25); CAR.vy = (p[1] - prev) / dt;
+  }
+  // attitude: yaw, then tilt to the ground under the car
+  const up = CAR.air ? CAR.n : vnorm([-(slope) * 0 + here.n[0], here.n[1], here.n[2]]);
+  const fwdTilt = vnorm([nf[0], slope, nf[2]]), rgt = vnorm(vcross(fwdTilt, [0, 1, 0]));
+  const upv = vnorm(vcross(rgt, fwdTilt));
+  const nn = CAR.air ? CAR.n : vnorm(vadd(vscale(upv, 0.6), vscale(up, 0.4)));
+  CAR.n = vnorm(vadd(vscale(CAR.n, 0.85), vscale(nn, 0.15)));
+  CAR.q = qmul(quatFromTo([0, 1, 0], CAR.n), qaxis([0, 1, 0], -CAR.hdg));
+}
+
+// ---------------------------------------------------------------------
+//  model and drawing
+// ---------------------------------------------------------------------
+// the car you drive: one of the models (V changes it); its size, weight and power go into the driving
+function carModel() { return CAR_MODELS[CAR.model || 0]; }
+function carApplyModel() {
+  const M = carModel();
+  Object.assign(CAR_SPEC, { mass: M.mass, power: M.power, fMax: M.power / 14, wb: M.wb, wheelR: M.r, cd: M.id === 'sports' ? 0.6 : M.id === 'suv' || M.id === 'kei' ? 0.9 : 0.7 });
+}
+function carNextModel() {
+  CAR.model = ((CAR.model || 0) + 1) % CAR_MODELS.length; CAR.paint = (CAR.paint ?? 0);
+  carApplyModel();
+  try { localStorage.setItem('sorajima-car', JSON.stringify({ model: CAR.model, paint: CAR.paint })); } catch (e) { /* ignore */ }
+  toast(`車種：${carModel().name}（V で切替・Shift+V で色）`, 1800);
+}
+function carNextPaint() {
+  if (carModel().glb) { toast('この車種は元の色のままです（色は組み立て式の車種で変えられます）', 1800); return; }
+  CAR.paint = ((CAR.paint || 0) + 1) % CAR_PAINTS.length;
+  try { localStorage.setItem('sorajima-car', JSON.stringify({ model: CAR.model, paint: CAR.paint })); } catch (e) { /* ignore */ }
+  toast(`ボディの色：${['レッド', 'ホワイト', 'ブラック', 'ガンメタ', 'ブルー', 'シルバー', 'グリーン', 'オレンジ', 'ワインレッド'][CAR.paint] || CAR.paint + 1}`, 1400);
+}
+try { const c = JSON.parse(localStorage.getItem('sorajima-car') || 'null'); if (c) { CAR.model = c.model | 0; CAR.paint = c.paint | 0; } } catch (e) { /* ignore */ }
+function drawCar() {
+  if (!CAR.on) return;
+  const u = progMesh.u;
+  setCommon(progMesh);
+  gl.uniform1i(u.uLivery, 0); gl.uniform1f(u.uAlpha, 1);
+  drawCarMesh(carMesh(CAR.model || 0, CAR.paint || 0), M4.fromQP(CAR.q, CAR.pos), CAR.spin, CAR.steer, CAR.brake > 0 || CAR.hand, !CAR.air);
+  drawTraffic();
+  // the models' authors (CC BY asks for it): the car you drive, and the others on the road
+  const M = carModel();
+  const ph = typeof NP !== 'undefined' && NP.rect[2] > 0 ? '　道路の写真：Esri, Maxar, Earthstar Geographics／国土地理院' : '';
+  if ((M.glb || TRAFFIC.cars.some(t => CAR_MODELS[t.model].glb) || ph) && typeof cpCredit === 'function')
+    cpCredit((M.glb ? `車：${M.name} / ${M.by}（CC BY 4.0）　` : '') + 'ほかの車：Sketchfab 各作者（CC BY 4.0）' + ph);
+}
+
+// ---------------------------------------------------------------------
+//  traffic: cars driving along the mapped roads around you, in the left lane, at a speed that suits the
+//  road, keeping their distance and stopping for you; they turn at the ends of roads onto a connecting one
+// ---------------------------------------------------------------------
+const TRAFFIC = { cars: [], t: 0 };
+const ROAD_SPEED = [0, 27, 22, 16, 14, 12, 9, 6, 4];                     // m/s by road class
+function trafficRoadPoint(car) {
+  const R_ = car.tile.roads, P = R_.pts, k = car.seg;
+  const ax = P[k * 3], az = P[k * 3 + 1], bx = P[k * 3 + 3], bz = P[k * 3 + 4], ay = P[k * 3 + 2], by = P[k * 3 + 5];
+  const L = Math.hypot(bx - ax, bz - az) || 1, s = clamp(car.s / L, 0, 1);
+  let dx = (bx - ax) / L, dz = (bz - az) / L; if (car.dir < 0) { dx = -dx; dz = -dz; }
+  const X = ax + (bx - ax) * s, Z = az + (bz - az) * s, lane = car.cls <= 1 ? 0 : R_.wid[car.line] * (car.cls >= 6 ? 0.06 : 0.25);   // (the narrow streets: down the middle, past the parked cars)
+  const w = geoToWorld(car.tile.latN - (Z - dx * lane) / KZ, car.tile.lonW + (X + dz * lane) / car.tile.kxN);   // left of travel
+  return { x: w[0], z: w[1], y: ay + (by - ay) * s, h: Math.atan2(dx, -dz), L };
+}
+function trafficSpawn() {
+  // a random point on a road some way from the camera, not in view if possible
+  const ang = Math.random() * Math.PI * 2, d = 120 + Math.random() * 380;
+  const r = roadNearest(CAR.pos[0] + Math.cos(ang) * d, CAR.pos[2] + Math.sin(ang) * d, 150, 7);
+  if (!r) return null;
+  return { tile: r.tile, line: r.line, seg: r.seg, s: 0, dir: Math.random() < 0.5 ? 1 : -1, cls: r.cls, v: ROAD_SPEED[r.cls] * (0.8 + Math.random() * 0.3), model: Math.floor(Math.random() * CAR_MODELS.length), paint: Math.floor(Math.random() * CAR_PAINTS.length), spin: 0, pos: [r.x, r.y, r.z], hdg: 0, q: [0, 0, 0, 1], brake: false };
+}
+function trafficStep(dt) {
+  if (!CAR.on || typeof CITY === 'undefined' || !CITY.ready) { TRAFFIC.cars.length = 0; return; }
+  const want = game.touch ? 12 : 24;                               // (only those in view are drawn: p4_game.js passes the frustum)
+  TRAFFIC.t -= dt;
+  if (TRAFFIC.cars.length < want && TRAFFIC.t <= 0) { TRAFFIC.t = 0.3; const c = trafficSpawn(); if (c) TRAFFIC.cars.push(c); }
+  for (let i = TRAFFIC.cars.length - 1; i >= 0; i--) {
+    const c = TRAFFIC.cars[i];
+    if (!c.tile.roads) { TRAFFIC.cars.splice(i, 1); continue; }
+    // slow for a car ahead (the player's included), otherwise go at the road's speed
+    const f = [Math.sin(c.hdg), -Math.cos(c.hdg)];
+    let gap = 1e9;
+    for (const o of [...TRAFFIC.cars, { pos: CAR.pos }]) {
+      if (o === c) continue;
+      const dx = o.pos[0] - c.pos[0], dz = o.pos[2] - c.pos[2], ah = dx * f[0] + dz * f[1], side = Math.abs(dx * f[1] - dz * f[0]);
+      if (ah > 0 && side < 2.2) gap = Math.min(gap, ah);
+    }
+    const target = gap < 7 ? 0 : gap < 25 ? ROAD_SPEED[c.cls] * (gap - 7) / 18 : ROAD_SPEED[c.cls];
+    c.brake = target < c.v - 0.5;
+    c.v += clamp(target - c.v, -6 * dt, 2.5 * dt);
+    // along the segment; at its end go to the next one, or at the end of the road find one joining it
+    const R_ = c.tile.roads;
+    let p = trafficRoadPoint(c);
+    c.s += c.v * dt;
+    while (c.s > p.L) {
+      c.s -= p.L;
+      const first = R_.off[c.line], last = R_.off[c.line + 1] - 2;
+      c.seg += c.dir;
+      if (c.seg < first || c.seg > last) {
+        // the end of this road: a road starting within 4 m of here, else turn round
+        const endK = c.dir > 0 ? last + 1 : first, ex = R_.pts[endK * 3], ez = R_.pts[endK * 3 + 1];
+        let found = null;
+        for (let l = 0; l < R_.cls.length && !found; l++) {
+          if (l === c.line || R_.cls[l] >= 8) continue;
+          for (const [k, dir] of [[R_.off[l], 1], [R_.off[l + 1] - 1, -1]]) if (Math.hypot(R_.pts[k * 3] - ex, R_.pts[k * 3 + 1] - ez) < 4) { found = { l, k, dir }; break; }
+        }
+        if (found) { c.line = found.l; c.dir = found.dir; c.seg = found.dir > 0 ? found.k : found.k - 1; c.cls = R_.cls[found.l]; }
+        else { c.dir = -c.dir; c.seg = clamp(c.seg - c.dir, first, last); }
+      }
+      p = trafficRoadPoint(c);
+    }
+    const s = c.dir > 0 ? c.s : p.L - c.s;
+    const q = trafficRoadPoint(Object.assign({}, c, { s }));
+    // the height: the ground the player's car uses (Google's surface where shown), checked a few times a second
+    c.gT = (c.gT || 0) - dt;
+    if (c.gT <= 0 || c.gy == null) { c.gT = 0.25; c.gy = carGround(q.x, q.z, (c.gy ?? q.y) + 3).h; }
+    c.pos = [q.x, c.gy, q.z];
+    let dh = ((q.h - c.hdg + Math.PI * 3) % (Math.PI * 2)) - Math.PI; c.hdg += dh * Math.min(1, dt * 6);
+    c.q = qaxis([0, 1, 0], -c.hdg);
+    c.spin = (c.spin + c.v / 0.33 * dt) % (Math.PI * 2);
+    if (Math.hypot(c.pos[0] - CAR.pos[0], c.pos[2] - CAR.pos[2]) > 900) TRAFFIC.cars.splice(i, 1);
+  }
+}
+function drawTraffic() {
+  if (typeof drawParked === 'function') drawParked();
+  for (const c of TRAFFIC.cars) {
+    if (vdist(c.pos, R.eye) > (game.touch ? 450 : 700)) continue;
+    if (R.planes && !boxInFrustum(R.planes, c.pos[0] - 3, c.pos[1] - 1, c.pos[2] - 3, c.pos[0] + 3, c.pos[1] + 3, c.pos[2] + 3)) continue;   // (not in this pass's view)
+    // (over Google's 3D, cars up on an elevated road that isn't drawn round you (p6_city.js) aren't either)
+    if (ZONE.on && ZONE.g[3] > 0 && c.pos[1] > Math.max(jwHeight(c.pos[0], c.pos[2]), 0) + ZONE.g[3] + 1 && Math.hypot(c.pos[0] - ZONE.v[0], c.pos[2] - ZONE.v[1]) < ZONE.r1) continue;
+    const d = vdist(c.pos, R.eye);
+    drawCarMesh(d > CAR_FAR ? carMeshFar(c.model, c.paint) : carMesh(c.model, c.paint, true), M4.fromQP(c.q, c.pos), c.spin, 0, c.brake, d < 200);
+  }
+}
+// bumping into a traffic car stops you
+function trafficHit(nx, nz) {
+  for (const c of TRAFFIC.cars) { const dx = c.pos[0] - nx, dz = c.pos[2] - nz; if (dx * dx + dz * dz < 5.5) return true; }
+  return typeof parkedHit === 'function' && parkedHit(nx, nz);
+}
+// camera: behind the car (it swings round smoothly), or from the driver's seat
+function carCamera(dt) {
+  const f0 = carFwd(CAR.hdg);
+  let d = ((CAR.hdg - CAR.camYaw + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+  if (CAR.v < -1) d = ((CAR.hdg + Math.PI - CAR.camYaw + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+  CAR.camYaw += d * Math.min(1, dt * 3);
+  if (cam.mode === 'carcab') {
+    const lq = qmul(CAR.q, qmul(qaxis([0, 1, 0], cam.lookYaw), qaxis([1, 0, 0], cam.lookPitch)));
+    const M = carModel(), eye = vadd(CAR.pos, qrot(CAR.q, M.eye || [M.W * 0.19, M.glb ? (M.sporty ? 1.02 : 1.12) : M.id === 'sports' ? 1.1 : M.id === 'suv' || M.id === 'kei' ? 1.48 : 1.3, M.L * -0.02]));   // right-hand drive (Japan)
+    return { eye, target: vadd(eye, qrot(lq, [0, -0.35, -10])), up: qrot(CAR.q, [0, 1, 0]), fov: 62, near: 0.1 };
+  }
+  const yaw = CAR.camYaw + cam.lookYaw, f = carFwd(yaw), dist = 7.2, hgt = 2.3 + cam.lookPitch * 3;
+  let eye = [CAR.pos[0] - f[0] * dist, CAR.pos[1] + hgt, CAR.pos[2] - f[2] * dist];
+  const gh = carGround(eye[0], eye[2], eye[1] + 5, CAR.pos[1] + 1.2).h + 0.6; if (eye[1] < gh) eye[1] = gh;   // (under a bridge: the street, not its deck)
+  void f0;
+  return { eye, target: [CAR.pos[0] + f[0] * 3, CAR.pos[1] + 1.1, CAR.pos[2] + f[2] * 3], up: [0, 1, 0], fov: 60, near: 0.2 };
+}
+// HUD while driving: speedometer and the keys
+function carHud(g, W, H) {
+  const kmh = Math.abs(CAR.v) * 3.6, cx = W - 110, cy = H - 110, r = 78;
+  g.save();
+  g.beginPath(); g.arc(cx, cy, r + 8, 0, 7); g.fillStyle = 'rgba(6,12,22,0.72)'; g.fill();
+  g.strokeStyle = 'rgba(232,240,250,0.8)'; g.lineWidth = 2;
+  for (let k = 0; k <= 220; k += 20) { const a = Math.PI * 0.75 + k / 220 * Math.PI * 1.5; g.beginPath(); g.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); g.lineTo(cx + Math.cos(a) * (r - (k % 40 ? 6 : 11)), cy + Math.sin(a) * (r - (k % 40 ? 6 : 11))); g.stroke();
+    if (k % 40 === 0) { g.font = `600 11px ${UI}`; g.fillStyle = '#cdd8e6'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(k, cx + Math.cos(a) * (r - 22), cy + Math.sin(a) * (r - 22)); } }
+  const a = Math.PI * 0.75 + clamp(kmh / 220, 0, 1) * Math.PI * 1.5;
+  g.strokeStyle = '#ff7a3a'; g.lineWidth = 3.5; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a) * (r - 8), cy + Math.sin(a) * (r - 8)); g.stroke();
+  g.font = `700 26px ${UI}`; g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText(Math.round(kmh), cx, cy + 34);
+  g.font = `600 11px ${UI}`; g.fillStyle = '#9fb0c2'; g.fillText('km/h', cx, cy + 52);
+  g.font = `700 16px ${UI}`; g.fillStyle = CAR.rev ? '#ffb547' : '#58e08c'; g.fillText(CAR.rev ? 'R' : Math.abs(CAR.v) < 0.3 && !CAR.thr ? 'N' : 'D', cx, cy - 30);
+  // where you are and the keys
+  const [la, lo] = worldToGeo(CAR.pos[0], CAR.pos[2]);
+  // the keys: shown for the first seconds (and while / is toggled on), then folded to one line
+  const full = CAR.help || R.time - (CAR.enterT ?? R.time) < 14;
+  const lines = full ? ['🚗 運転中　（/ キーで操作一覧を隠す）', `W/↑ アクセル　S/↓ ブレーキ・バック　A/D ハンドル　Space サイドブレーキ`, `R 近くの道路へ　V 車種・Shift+V 色　C 視点（後ろ／運転席）　K 飛行機に戻る　M 地図（好きな場所へ）`]
+    : ['🚗 運転中　/ キーで操作一覧'];
+  g.textAlign = 'left'; g.textBaseline = 'middle';
+  const y0 = H - 44 - (lines.length - 1) * 26;
+  lines.forEach((t, i) => { g.font = `${i ? 600 : 700} ${i ? 12 : 14}px ${UI}`; const w = g.measureText(t).width; g.fillStyle = 'rgba(6,12,22,0.62)'; g.fillRect(12, y0 + i * 26 - 11, w + 16, 22); g.fillStyle = i ? '#dfe7f0' : '#ffd66b'; g.fillText(t, 20, y0 + i * 26); });
+  const top = [];
+  if (JW.active) top.push([`${la.toFixed(4)}°N ${lo.toFixed(4)}°E　標高 ${Math.round(CAR.pos[1])} m　${DYN.fps || '–'} fps（画質 ${Math.round(DYN.k * 100)}%）`, '#dfe7f0']);
+  if (CAR.plane) { const d = Math.hypot(CAR.plane.pos[0] - CAR.pos[0], CAR.plane.pos[2] - CAR.pos[2]); top.push([`✈ 飛行機まで ${d < 1000 ? Math.round(d) + ' m' : (d / 1000).toFixed(1) + ' km'}`, '#9fe0ff']); }
+  top.forEach(([t, c], i) => { g.font = `600 12px ${UI}`; const w = g.measureText(t).width; g.fillStyle = 'rgba(6,12,22,0.62)'; g.fillRect(12, 14 + i * 24, w + 16, 20); g.fillStyle = c; g.fillText(t, 20, 24 + i * 24); });
+  g.restore();
+}
+// a button to change over (for the mouse and for phones)
+function carButton() {
+  let b = document.getElementById('car-btn');
+  if (!b) {
+    b = document.createElement('button'); b.id = 'car-btn'; b.type = 'button';
+    b.style.cssText = 'position:fixed;left:12px;top:42%;z-index:20;padding:8px 12px;border-radius:9px;border:1px solid rgba(95,212,255,.5);background:rgba(6,12,22,.82);color:#e8f0fa;font:700 13px "Zen Kaku Gothic New",system-ui,sans-serif;cursor:pointer';
+    b.addEventListener('click', e => { e.stopPropagation(); carToggle(); b.blur(); glCanvas.focus(); });
+    document.body.append(b);
+  }
+  const show = game.state === 'flying' && (CAR.on || carCanUse());
+  b.hidden = !show;
+  b.textContent = CAR.on ? '✈ 飛行機に戻る（K）' : '🚗 車に乗り換える（K）';
+}
+// =====================================================================
+//  PARKED CARS along the narrow streets round the car (the left side, as
+//  in Japan), every so often, in all the models and colours the traffic
+//  has; the nearest few dozen drawn. You bump into them as into traffic.
+// =====================================================================
+const PARKED = { list: [], at: null, ov: null };
+function parkedUpdate() {
+  if (typeof CITY === 'undefined' || !CITY.ready) return;
+  const eye = CAR.pos, RAD = game.touch ? 150 : 260, MAX = game.touch ? 20 : 60;
+  if (PARKED.at && Math.hypot(eye[0] - PARKED.at[0], eye[2] - PARKED.at[1]) < 40 && PARKED.ov === JW.ov) return;
+  PARKED.at = [eye[0], eye[2]]; PARKED.ov = JW.ov;
+  const [la, lo] = worldToGeo(eye[0], eye[2]), out = [];
+  for (const t of CITY.tiles.values()) {
+    const R_ = t.roads; if (!R_ || t.dist > RAD + 1200) continue;
+    const X = (lo - t.lonW) * t.kxN, Z = -(la - t.latN) * KZ, P = R_.pts;
+    for (let l = 0; l < R_.cls.length; l++) {
+      if (R_.cls[l] < 6 || R_.cls[l] > 7 || (R_.br && R_.br[l])) continue;
+      const w = R_.wid[l]; if (w < 4.5) continue;
+      for (let k = R_.off[l]; k < R_.off[l + 1] - 1; k++) {
+        const ax = P[k * 3], az = P[k * 3 + 1], bx = P[k * 3 + 3], bz = P[k * 3 + 4];
+        if (Math.hypot(ax - X, az - Z) > RAD) continue;
+        const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz); if (L < 6) continue;
+        // (a hash of the place decides: about one car in three slots, never right at the ends of the street)
+        const hsh = Math.abs(Math.sin(ax * 12.9898 + az * 78.233) * 43758.5453) % 1;
+        if (hsh > 0.33 || k === R_.off[l] || k === R_.off[l + 1] - 2) continue;
+        const f = 0.3 + 0.4 * ((hsh * 7) % 1), ux = dx / L, uz = dz / L, off = w / 2 - 1.05;
+        const px = ax + dx * f + uz * off, pz = az + dz * f - ux * off, y = P[k * 3 + 2] + (P[k * 3 + 5] - P[k * 3 + 2]) * f;
+        const wpt = geoToWorld(t.latN - pz / KZ, t.lonW + px / t.kxN), d = Math.hypot(wpt[0] - eye[0], wpt[1] - eye[2]);
+        const hdg = Math.atan2(ux, -uz) + (hsh * 13 % 1 < 0.5 ? 0 : Math.PI);
+        out.push({ d, pos: [wpt[0], y, wpt[1]], q: qaxis([0, 1, 0], -hdg), model: Math.floor(hsh * 997) % CAR_MODELS.length, paint: Math.floor(hsh * 3571) % CAR_PAINTS.length });
+      }
+    }
+  }
+  out.sort((a, b) => a.d - b.d);
+  PARKED.list = out.slice(0, MAX);
+}
+function drawParked() {
+  if (!JW.active || !JW.online) { PARKED.list = []; return; }
+  parkedUpdate();
+  for (const c of PARKED.list) if (!R.planes || boxInFrustum(R.planes, c.pos[0] - 3, c.pos[1] - 1, c.pos[2] - 3, c.pos[0] + 3, c.pos[1] + 3, c.pos[2] + 3)) drawCarMesh(c.d > CAR_FAR ? carMeshFar(c.model, c.paint) : carMesh(c.model, c.paint, true), M4.fromQP(c.q, c.pos), 0, 0, false, c.d < 120);
+}
+function parkedHit(x, z) {
+  for (const c of PARKED.list) { const dx = c.pos[0] - x, dz = c.pos[2] - z; if (dx * dx + dz * dz < 5.0) return true; }
+  return false;
+}
+// =====================================================================
+//  SUN SHADOWS near the car: a shadow map of the few hundred metres
+//  round the view, rendered from the sun each frame. Buildings, street
+//  furniture, trees and cars cast; the ground, roads, walls, trees and
+//  cars receive (sunShadow() in GLSL_SHADOW). Only while driving, by day.
+// =====================================================================
+const SUNSH = { on: false, size: 2048, half: 130, depth: 400, VP: new Float32Array(16), v: [0, 0, 0, 0], fbo: null, tex: null, dummy: null, progs: null };
+const SUNSH_FS = GLSL_HEAD + `
+out vec4 outColor;
+void main(){ outColor = vec4(1.0); }`;
+function sunShadowInit() {
+  if (SUNSH.tex) return;
+  const mk = n => {
+    const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT24, n, n);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
+    return t;
+  };
+  gl.activeTexture(gl.TEXTURE11);
+  SUNSH.size = game.touch ? 1024 : 2048;
+  SUNSH.tex = mk(SUNSH.size); SUNSH.dummy = mk(1);
+  SUNSH.fbo = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, SUNSH.fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, SUNSH.tex, 0);
+  gl.drawBuffers([gl.NONE]); gl.readBuffer(gl.NONE);
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) SUNSH.broken = true;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.bindTexture(gl.TEXTURE_2D, SUNSH.dummy);
+  gl.activeTexture(gl.TEXTURE0);
+}
+// the programs that draw the casters: each model's own vertex shader, writing depth only
+function sunShadowProgs() {
+  if (SUNSH.progs) return SUNSH.progs;
+  const P = {};
+  try { P.bldg = makeProgram(BLDG_VS, SUNSH_FS); } catch (e) { console.warn('shadow bldg', e); }
+  try { P.street = makeProgram(STREET_VS, SUNSH_FS); } catch (e) { console.warn('shadow street', e); }
+  try { if (typeof JWTREE_VS !== 'undefined') P.tree = makeProgram(JWTREE_VS, SUNSH_FS); } catch (e) { console.warn('shadow trees', e); }
+  try { P.glb = makeProgram(GLB_VS, SUNSH_FS); } catch (e) { console.warn('shadow cars', e); }
+  try { P.mesh = makeProgram(MESH_VS, SUNSH_FS); } catch (e) { console.warn('shadow built cars', e); }
+  try { P.plat = makeProgram(PLAT_VS, SUNSH_FS); } catch (e) { console.warn('shadow plateau', e); }
+  try { P.ptree = makeProgram(TCARD_PLAT_VS, TCARD_SH_FS); } catch (e) { console.warn('shadow plateau trees', e); }
+  return SUNSH.progs = P;
+}
+function sunShadowWanted() {
+  if (SUNSH.enabled === false || SUNSH.broken || !CAR.on || !JW.active || !JW.online || typeof CITY === 'undefined' || !CITY.ready) return false;
+  if (ENV.night || ENV.sunDir[1] < 0.06 || game.gfx === 'low') return false;
+  if (game.touch && SUNSH.enabled !== true && !sunShadowPhoneOk()) return false;   // (phones: while there is the frame time for it)
+  return R.eye[1] - Math.max(jwHeight(R.eye[0], R.eye[2]), 0) < 300;
+}
+// on a phone the shadows come on once the picture has run smoothly for a few seconds without them, and go off
+// again (for two minutes) if they drag it under 22 frames a second
+function sunShadowPhoneOk() {
+  const A = SUNSH.auto || (SUNSH.auto = { on: false, t: 0, hold: 0 }), fps = DYN.fps || 0;
+  if (R.time < A.hold) return false;
+  if (A.on) { if (fps && fps < 22 && R.time - A.t > 4) { A.on = false; A.hold = R.time + 120; A.t = R.time; } }
+  else if (fps >= 30 && DYN.k >= 0.8) { if (!A.good) A.good = R.time; if (R.time - A.good > 5) { A.on = true; A.t = R.time; A.good = 0; } }
+  else A.good = 0;
+  return A.on;
+}
+function sunShadowPass() {
+  sunShadowInit();
+  const on = sunShadowWanted();
+  SUNSH.on = on; SUNSH.v = [0, 0, 0, 0];
+  gl.activeTexture(gl.TEXTURE11); gl.bindTexture(gl.TEXTURE_2D, on ? SUNSH.tex : SUNSH.dummy); gl.activeTexture(gl.TEXTURE0);
+  if (!on) return;
+  // the square it covers: centred a little ahead of the camera, facing the sun; its centre snapped to whole
+  // texels so the shadows' edges don't crawl as the car moves
+  const H = SUNSH.half, D = SUNSH.depth, L = ENV.sunDir, f = R.camF, fl = Math.hypot(f[0], f[2]) || 1;
+  const C = [R.eye[0] + f[0] / fl * H * 0.5, CAR.pos[1], R.eye[2] + f[2] / fl * H * 0.5];
+  const up = Math.abs(L[1]) > 0.98 ? [0, 0, 1] : [0, 1, 0];
+  let X = [up[1] * L[2] - up[2] * L[1], up[2] * L[0] - up[0] * L[2], up[0] * L[1] - up[1] * L[0]];
+  const xl = Math.hypot(X[0], X[1], X[2]); X = X.map(v => v / xl);
+  const Y = [L[1] * X[2] - L[2] * X[1], L[2] * X[0] - L[0] * X[2], L[0] * X[1] - L[1] * X[0]];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], ts = 2 * H / SUNSH.size;
+  const sx = Math.round(dot(X, C) / ts) * ts, sy = Math.round(dot(Y, C) / ts) * ts, sz = dot(L, C);
+  const M = SUNSH.VP;
+  M[0] = X[0] / H; M[4] = X[1] / H; M[8] = X[2] / H; M[12] = -sx / H;
+  M[1] = Y[0] / H; M[5] = Y[1] / H; M[9] = Y[2] / H; M[13] = -sy / H;
+  M[2] = -L[0] / D; M[6] = -L[1] / D; M[10] = -L[2] / D; M[14] = sz / D;
+  M[3] = 0; M[7] = 0; M[11] = 0; M[15] = 1;
+  // strength: full in clear sun, less when it is low and red or hazy
+  SUNSH.v = [clamp((L[1] - 0.06) * 8, 0, 1) * 0.82, 1 / SUNSH.size, 0, 0];
+  const P = sunShadowProgs();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, SUNSH.fbo);
+  gl.viewport(0, 0, SUNSH.size, SUNSH.size);
+  gl.clear(gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
+  gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(1.5, 3);
+  const common = (pr) => {
+    const u = pr.u; gl.useProgram(pr.p);
+    if (u.uViewProj) gl.uniformMatrix4fv(u.uViewProj, false, M);
+    if (u.uCamPos) gl.uniform3fv(u.uCamPos, R.eye);
+    if (u.uCurv) gl.uniform1f(u.uCurv, 0);
+    return u;
+  };
+  const near = (x0, z0, x1, z1, m) => C[0] > x0 - m && C[0] < x1 + m && C[2] > z0 - m && C[2] < z1 + m;
+  // buildings
+  if (P.bldg) {
+    const u = common(P.bldg);
+    for (const t of CITY.tiles.values()) {
+      if (!t.vao || !t.ni) continue;
+      const b = cityBox(t); if (!near(b[0], b[1], b[2], b[3], H * 2.5)) continue;
+      citySetTile(u, t); gl.bindVertexArray(t.vao);
+      if (!t.cellOff) { gl.drawElements(gl.TRIANGLES, t.ni, gl.UNSIGNED_INT, 0); continue; }
+      // only the grid cells within reach: rows of cells, each one contiguous run of triangles
+      // (how far out a building can still throw its shadow into the square: a phone takes in a little less)
+      const [la, lo] = worldToGeo(C[0], C[2]), X = (lo - t.lonW) * t.kxN, Z = -(la - t.latN) * KZ, G = CITY_SHG, r = H * (game.touch ? 1.5 : 2);
+      const cw = (t.W || 2500) / G, ch = (t.Hm || 2500) / G;
+      const x0 = clamp(Math.floor((X - r) / cw), 0, G - 1), x1 = clamp(Math.floor((X + r) / cw), 0, G - 1);
+      const z0 = clamp(Math.floor((Z - r) / ch), 0, G - 1), z1 = clamp(Math.floor((Z + r) / ch), 0, G - 1);
+      if (X + r < 0 || X - r > G * cw || Z + r < 0 || Z - r > G * ch) continue;
+      for (let cz = z0; cz <= z1; cz++) {
+        const a = t.cellOff[cz * G + x0], e = t.cellOff[cz * G + x1 + 1];
+        if (e > a) gl.drawElements(gl.TRIANGLES, e - a, gl.UNSIGNED_INT, a * 4);
+      }
+    }
+  }
+  // PLATEAU's buildings, while they stand in for the sim's round the car (the developer panel's comparison)
+  if (P.plat && PLAT.cmp && PLAT.cmpLeaves.length) {
+    const u = common(P.plat);
+    for (const n of PLAT.cmpLeaves) {
+      if (!n.mesh || n.mesh.empty) continue;
+      const b = platBox(n); if (!near(b[0], b[1], b[2], b[3], H * 2.5)) continue;
+      gl.uniform4f(u.uTileA, n.refLon - JW.lon0, n.refLat - JW.lat0, n.refLat, n.kx); gl.uniform1f(u.uYOff, (n.set.off || 37) + platCmpDy(n, 'bldg'));
+      gl.bindVertexArray(n.mesh.vao); gl.drawElements(gl.TRIANGLES, n.mesh.count, gl.UNSIGNED_INT, 0);
+    }
+  }
+  // street lamps, poles, signals, roadside trees
+  if (P.street && STREET.meshes) {
+    const u = common(P.street);
+    for (const t of CITY.tiles.values()) {
+      if (!t.street) continue;
+      const b = cityBox(t); if (!near(b[0], b[1], b[2], b[3], H * 1.5)) continue;
+      citySetTile(u, t);
+      const cd = instCellDist(t, null, C[0], C[2], 12);
+      for (let k = 0; k < PROP_N; k++) { const s = t.street[k]; if (!s) continue; gl.uniform1f(u.uFar, 260); gl.uniform1f(u.uIsTree, k === PROP_TREE ? 1 : 0); gl.uniform4fv(u.uNoTree, PLAT.cmp ? PLAT.noTree : [0, 0, 0, 0]); instDraw(s.vao.vao, s.vao.bufs[3], 3, s.off, cd, H * (game.touch ? 1.15 : 1.5), s.count); }
+    }
+  }
+  // PLATEAU's trees (photo cards, cut out by the picture's alpha), while they stand in for the sim's
+  if (P.ptree && PLAT.cmp && PLAT.treeN && PLAT.treeVAO && TCARD.ready) {
+    const u = common(P.ptree);
+    gl.uniform1f(u.uCardN, TCARD.n); gl.uniform1f(u.uTime, R.time);
+    gl.bindVertexArray(PLAT.treeVAO.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, 12, PLAT.treeN);
+  }
+  // the trees from the map's photos
+  if (P.tree && typeof JWTREES !== 'undefined' && JWTREES.cells && game.gfx !== 'low') {
+    const u = common(P.tree);
+    gl.uniform1f(u.uFade, 5000); gl.uniform1i(u.uPhoto, 6); gl.uniform1i(u.uNoise, 2);
+    gl.activeTexture(gl.TEXTURE6);
+    for (const c of JWTREES.cells.values()) {
+      if (!c.n || !near(c.ox - c.half, c.oz - c.half, c.ox + c.half, c.oz + c.half, H * 1.3)) continue;
+      const tile = JW.tiles.get('16/' + c.x + '/' + c.y), ph = JW.online && c.x !== undefined ? photoFor({ z: 16, x: c.x, y: c.y, tex: (tile || {}).tex }) : null;
+      if (ph) { gl.bindTexture(gl.TEXTURE_2D, ph[0]); gl.uniform4f(u.uUvX, ph[1], ph[2], ph[3], 0); gl.uniform1i(u.uHasPhoto, 1); }
+      else gl.uniform1i(u.uHasPhoto, 0);
+      gl.uniform3f(u.uOrigin, c.ox, 0, c.oz);
+      gl.bindVertexArray(c.vao); gl.drawArraysInstanced(gl.TRIANGLES, 0, JWTREES.mesh.count, c.n);
+    }
+    gl.activeTexture(gl.TEXTURE0);
+  }
+  // the cars (their 3D models; glass left out)
+  if (P.glb) {
+    const u = common(P.glb);
+    const one = (Mm, base, spin, steer) => {
+      if (Mm && !Mm.glb && Mm.body && P.mesh) {                     // (a built car: its body and wheels)
+        const um = common(P.mesh), dr = (vao, m) => { gl.uniformMatrix4fv(um.uModel, false, m); gl.bindVertexArray(vao.vao); gl.drawArrays(gl.TRIANGLES, 0, vao.count); };
+        dr(Mm.body, base);
+        for (const [x, y, z, front] of Mm.wheels) dr(Mm.wheel, M4.mul(base, M4.fromQP(qmul(front ? qaxis([0, 1, 0], -steer) : [0, 0, 0, 1], x < 0 ? qaxis([0, 1, 0], Math.PI) : [0, 0, 0, 1]), [x, y, z])));
+        common(P.glb); return;
+      }
+      if (!Mm || !Mm.glb) return;
+      const W = Mm.F.wheels;
+      for (const d of Mm.glb.draws) {
+        if (d.mat.blend) continue;
+        let m = base;
+        if (d.part && W[d.part - 1]) { const w = W[d.part - 1], q = qmul(w[3] ? qaxis([0, 1, 0], -steer) : [0, 0, 0, 1], qaxis([1, 0, 0], -spin));
+          m = M4.mul(base, M4.mul(M4.fromQP(q, [w[0], w[1], w[2]]), M4.fromQP([0, 0, 0, 1], [-w[0], -w[1], -w[2]]))); }
+        gl.uniformMatrix4fv(u.uModel, false, m);
+        gl.bindVertexArray(d.vao.vao); gl.drawElements(gl.TRIANGLES, d.count, gl.UNSIGNED_INT, 0);
+      }
+    };
+    one(carMesh(CAR.model || 0, CAR.paint || 0), M4.fromQP(CAR.q, CAR.pos), CAR.spin, CAR.steer);
+    for (const c of TRAFFIC.cars) if (Math.hypot(c.pos[0] - C[0], c.pos[2] - C[2]) < H * 1.4) one(carMesh(c.model, c.paint, true), M4.fromQP(c.q, c.pos), c.spin, 0);
+  }
+  gl.bindVertexArray(null);
+  gl.disable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(0, 0);
+  gl.enable(gl.CULL_FACE);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+}
+// =====================================================================
+//  DEVELOPER PANEL (開発用パネル): where a frame's time goes, and which
+//  buildings the street is made of, for measuring before and after a change.
+//   - the real frame rate, from the browser's own frame times (the HUD's
+//     figure can't show less than 10: its frame time is capped at 0.1 s)
+//   - CPU time per stage (input, the car's physics, the city's streaming,
+//     each drawing pass, the HUD); GPU time per drawing pass where the
+//     browser can time it (EXT_disjoint_timer_query_webgl2), else each pass
+//     waited for in turn (gl.finish: its CPU and GPU time together)
+//   - draw calls and vertices per pass; the workers' tile build times
+//   - a benchmark in the Kannai test block: the car on the same spot, the
+//     same camera, the day's light, the full resolution; 5 s for the frame
+//     rate, 5 s per stage; for each building source in turn if asked
+//   - the buildings round the car: the sim's own, or PLATEAU's city models
+//     (LOD2, or LOD3 where a building has one), p7_plateau.js platCmpSet
+//  Opened by holding the position line at the top left for a second while
+//  driving, or with F9.
+// =====================================================================
+const DEV = {
+  open: false, prof: false, sync: false, busy: false, status: '', out: '',
+  fr: new Float32Array(600), frN: 0, lastNow: 0,                      // frame intervals (ms), a ring
+  cpu: {}, gpu: {}, calls: {}, verts: {}, nf: 0, ngf: 0, stack: [], inFrame: false, tf0: 0,
+  ext: undefined, qPool: [], qFrame: null, qPending: [], qActive: null,
+  tiles: { city: [], plat: [] },                                       // [worker build ms, network ms, main-thread ms, vertices]
+  installed: false, el: null, hold: null, shown: 0,
+};
+// the test block: Kannai, Yokohama (PLATEAU's Naka ward has LOD2 for all its buildings here and LOD3 for some),
+// the car in the left lane of the street running north-north-east, the chase camera behind it
+const DEV_SPOT = { lat: 35.446899, lon: 139.641167, dx: 0.54, dz: -0.841, lane: -1.6, name: '関内（横浜市中区）' };
+// the stages: CPU only, and drawing passes (timed on the GPU as well)
+const DEV_CPU = ['updateControls', 'carStep', 'carPhys', 'trafficStep', 'physicsStep', 'jwFrame', 'cityUpdate', 'jwUpdateClouds', 'updateCamera', 'rxRun',
+  'platUpdate', 'googUpdate', 'zoneUpdate', 'npUpdate', 'lmUpdate', 'authUpdate', 'cityReceive', 'platReceive', 'cityApplyHidden', 'drawHUD'];
+const DEV_GPU = ['render', 'sunShadowPass', 'drawJapanTerrain', 'drawGoogle', 'drawJapanRunways', 'drawRoads', 'drawCity', 'drawStreet', 'drawPlateau',
+  'drawJwTrees', 'drawPlane', 'drawStands', 'drawPeds', 'drawCar', 'drawTraffic', 'drawParked', 'drawJapanWater', 'drawWires', 'drawLandmarks',
+  'drawVolClouds', 'drawClouds', 'drawSigns', 'drawMarks', 'drawParticles', 'drawLights', 'drawCockpit', 'drawPlateauCmp', 'drawPlateauTran', 'drawPlateauTrees'];
+const DEV_JA = {
+  frame: 'フレーム全体（JS）', other: 'その他', render: '描画の準備・空・消去', updateControls: '入力', carStep: '車の物理（まとめ）', carPhys: '車の物理',
+  trafficStep: '他の車の動き', physicsStep: '飛行機の物理', jwFrame: '地図の更新', cityUpdate: '街タイルの管理', jwUpdateClouds: '雲の更新', updateCamera: 'カメラ',
+  platUpdate: 'PLATEAU の選択', googUpdate: 'Google 3D の選択', zoneUpdate: '近くの区域', npUpdate: '近くの写真', lmUpdate: 'ランドマーク', authUpdate: '市街地区域',
+  cityReceive: '街タイルの受け取り', platReceive: 'PLATEAU の受け取り', cityApplyHidden: '建物の隠し替え', drawHUD: 'HUD（2D）',
+  sunShadowPass: '太陽の影', drawJapanTerrain: '地形', drawGoogle: 'Google 3D', drawJapanRunways: '滑走路', drawRoads: '道路・歩道', drawCity: '建物（自前）',
+  drawStreet: '街路の小物', drawPlateau: '建物（PLATEAU）', drawJwTrees: '樹木', drawPlane: '飛行機', drawStands: '駐機場', drawPeds: '歩行者', drawCar: '自車',
+  drawTraffic: '他の車', drawParked: '路上駐車', drawJapanWater: '水面', drawWires: '電線', drawLandmarks: 'ランドマーク', drawVolClouds: '雲', drawClouds: '雲',
+  drawSigns: '標識', drawMarks: '路面標示', drawParticles: '粒子', drawLights: '灯火', drawCockpit: '操縦席', rxRun: '受け取り待ち',
+  drawPlateauCmp: '比較: PLATEAU 建物', drawPlateauTran: '比較: PLATEAU 道路', drawPlateauTrees: '比較: PLATEAU 樹木',
+};
+
+// ---- the profiler ----
+function devInstall() {
+  if (DEV.installed) return;
+  DEV.installed = true;
+  if (DEV.ext === undefined) DEV.ext = gl.getExtension('EXT_disjoint_timer_query_webgl2') || null;
+  const wrap = (name, gpu) => {
+    const f = window[name]; if (typeof f !== 'function' || f.__dev) return;
+    const w = function (...a) {
+      if (!DEV.prof) return f.apply(this, a);
+      devEnter(name, gpu);
+      try { return f.apply(this, a); } finally { devLeave(gpu); }
+    };
+    w.__dev = f; window[name] = w;
+  };
+  for (const n of DEV_CPU) wrap(n, false);
+  for (const n of DEV_GPU) wrap(n, true);
+  // draw calls and vertices, counted to the stage they're made in
+  const cnt = { drawElements: a => a[1], drawArrays: a => a[2], drawArraysInstanced: a => a[2] * a[3], drawElementsInstanced: a => a[1] * a[4], drawRangeElements: a => a[3] };
+  for (const k in cnt) {
+    if (typeof gl[k] !== 'function') continue;
+    const f = gl[k].bind(gl), c = cnt[k];
+    gl[k] = (...a) => { if (DEV.prof) { const n = DEV.stack.length ? DEV.stack[DEV.stack.length - 1].n : 'other'; DEV.calls[n] = (DEV.calls[n] || 0) + 1; DEV.verts[n] = (DEV.verts[n] || 0) + c(a); } return f(...a); };
+  }
+}
+function devEnter(name, gpu) {
+  if (gpu && DEV.inFrame) { if (DEV.sync) gl.finish(); else if (DEV.ext) { devQEnd(); devQBegin(name); } }
+  DEV.stack.push({ n: name, t0: performance.now(), child: 0, gpu });
+}
+function devLeave(gpu) {
+  const s = DEV.stack.pop(); if (!s) return;
+  if (gpu && DEV.inFrame && DEV.sync) gl.finish();
+  const total = performance.now() - s.t0, p = DEV.stack[DEV.stack.length - 1];
+  DEV.cpu[s.n] = (DEV.cpu[s.n] || 0) + total - s.child;
+  if (p) p.child += total;
+  if (gpu && DEV.inFrame && !DEV.sync && DEV.ext) { devQEnd(); devQBegin(p ? p.n : 'other'); }
+}
+function devQBegin(name) {
+  const q = DEV.qPool.pop() || gl.createQuery();
+  gl.beginQuery(DEV.ext.TIME_ELAPSED_EXT, q); DEV.qActive = [q, name];
+}
+function devQEnd() {
+  if (!DEV.qActive) return;
+  gl.endQuery(DEV.ext.TIME_ELAPSED_EXT); DEV.qFrame.push(DEV.qActive); DEV.qActive = null;
+}
+// the GPU times come back a few frames later
+function devPoll() {
+  while (DEV.qPending.length) {
+    const F = DEV.qPending[0];
+    if (F.length && !gl.getQueryParameter(F[F.length - 1][0], gl.QUERY_RESULT_AVAILABLE)) break;
+    const disjoint = gl.getParameter(DEV.ext.GPU_DISJOINT_EXT), ok = !disjoint && F.gen === DEV.gen;   // (a frame from before a reset isn't counted)
+    for (const [q, n] of F) { if (ok) DEV.gpu[n] = (DEV.gpu[n] || 0) + gl.getQueryParameter(q, gl.QUERY_RESULT) / 1e6; DEV.qPool.push(q); }
+    if (ok) DEV.ngf++;
+    DEV.qPending.shift();
+  }
+}
+// called by frame() (p4_game.js) at its start and its end
+function devFrameStart(now) {
+  if (DEV.lastNow) { DEV.fr[DEV.frN % DEV.fr.length] = now - DEV.lastNow; DEV.frN++; }
+  DEV.lastNow = now;
+  if (DEV.open && R.frame % 20 === 0) devRender();
+  if (!DEV.prof) return;
+  if (DEV.qActive) { gl.endQuery(DEV.ext.TIME_ELAPSED_EXT); DEV.qPool.push(DEV.qActive[0]); DEV.qActive = null; }   // (a frame that threw)
+  DEV.inFrame = true; DEV.tf0 = performance.now(); DEV.stack.length = 0;
+  if (DEV.ext && !DEV.sync) { devPoll(); DEV.qFrame = []; DEV.qFrame.gen = DEV.gen; devQBegin('other'); }
+}
+function devFrameEnd() {
+  if (!DEV.prof || !DEV.inFrame) return;
+  if (DEV.ext && !DEV.sync) { devQEnd(); DEV.qPending.push(DEV.qFrame); DEV.qFrame = null; }
+  DEV.cpu.frame = (DEV.cpu.frame || 0) + performance.now() - DEV.tf0;
+  DEV.nf++; DEV.inFrame = false;
+}
+function devProfReset() { DEV.cpu = {}; DEV.gpu = {}; DEV.calls = {}; DEV.verts = {}; DEV.nf = 0; DEV.ngf = 0; DEV.gen = (DEV.gen || 0) + 1; }
+function devProf(on) {
+  if (on) { devInstall(); devProfReset(); }
+  DEV.prof = on;
+}
+// the frame times since frame number n0 (the ring's last stretch): mean fps, median, 95th percentile, worst
+function devFrameStats(n0) {
+  const n = Math.min(DEV.frN - n0, DEV.fr.length); if (n < 2) return null;
+  const a = []; for (let k = DEV.frN - n; k < DEV.frN; k++) a.push(DEV.fr[k % DEV.fr.length]);
+  const s = a.slice().sort((x, y) => x - y), sum = a.reduce((x, y) => x + y, 0);
+  return { n, fps: 1000 * n / sum, mean: sum / n, p50: s[n >> 1], p95: s[Math.min(n - 1, Math.floor(n * 0.95))], max: s[n - 1] };
+}
+// the stages per frame, slowest first
+function devStageTable() {
+  const names = new Set([...Object.keys(DEV.cpu), ...Object.keys(DEV.gpu), ...Object.keys(DEV.calls)]);
+  const nf = Math.max(DEV.nf, 1), ng = Math.max(DEV.ngf, 1), rows = [];
+  for (const n of names) { if (n === 'frame') continue; rows.push({ n, cpu: (DEV.cpu[n] || 0) / nf, gpu: DEV.gpu[n] != null ? DEV.gpu[n] / ng : null, calls: (DEV.calls[n] || 0) / nf, kv: (DEV.verts[n] || 0) / nf / 1000 }); }
+  rows.sort((a, b) => (b.cpu + (b.gpu || 0)) - (a.cpu + (a.gpu || 0)));
+  let gt = 0; for (const n in DEV.gpu) gt += DEV.gpu[n];
+  return { rows, cpuFrame: (DEV.cpu.frame || 0) / nf, gpuFrame: DEV.ngf ? gt / ng : null, frames: DEV.nf, gframes: DEV.ngf };
+}
+// a tile built in a worker: kind (city / plat), worker ms, network ms, main-thread ms, vertices
+function devTile(kind, build, net, main, nv) {
+  const L = DEV.tiles[kind]; L.push([build || 0, net || 0, main || 0, nv || 0]); if (L.length > 300) L.shift();
+}
+function devTileStats(kind, from = 0) {
+  const L = DEV.tiles[kind].slice(from); if (!L.length) return null;
+  const avg = i => L.reduce((s, r) => s + r[i], 0) / L.length, mx = i => Math.max(...L.map(r => r[i]));
+  return { n: L.length, build: avg(0), buildMax: mx(0), net: avg(1), main: avg(2), mainMax: mx(2), kv: avg(3) / 1000 };
+}
+
+// ---- the environment, for the record ----
+function devEnv() {
+  let gpu = '';
+  try { const d = gl.getExtension('WEBGL_debug_renderer_info'); gpu = d ? gl.getParameter(d.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e) { gpu = '?'; }
+  const dpr = window.devicePixelRatio || 1;
+  return {
+    ua: navigator.userAgent, gpu, cores: navigator.hardwareConcurrency || '?', mem: navigator.deviceMemory || '?',
+    screen: `${screen.width}×${screen.height}`, view: `${innerWidth}×${innerHeight}`, dpr, canvas: `${glCanvas.width}×${glCanvas.height}`, k: DYN.k,
+    timer: !!DEV.ext && !DEV.sync, touch: !!game.touch, goog: typeof GOOG !== 'undefined' && !!GOOG.covering, auth: typeof AUTH !== 'undefined' && !!AUTH.on,
+    bsrc: devSrcName(), shadows: typeof SUNSH !== 'undefined' ? !!(SUNSH.on !== false && (!game.touch || (SUNSH.auto && SUNSH.auto.on))) : false,
+  };
+}
+function devSrcName(m = typeof PLAT !== 'undefined' ? PLAT.cmp || 0 : 0) { return ['自前の建物', 'PLATEAU LOD2', 'PLATEAU LOD3（あれば）'][m]; }
+
+// ---- the benchmark ----
+const devSleep = ms => new Promise(r => setTimeout(r, ms));
+// the car on the test spot, standing, the chase camera behind it
+function devPlace() {
+  const S = DEV_SPOT, L = Math.hypot(S.dx, S.dz), dx = S.dx / L, dz = S.dz / L, m = geoToWorld(S.lat, S.lon);
+  const px = m[0] - dz * S.lane, pz = m[1] + dx * S.lane;
+  CAR.pos = [px, carGround(px, pz, jwHeight(px, pz) + 1.2).h, pz]; CAR.v = 0; CAR.vy = 0; CAR.air = false; CAR.thr = 0; CAR.brake = 0; CAR.steer = 0; CAR.hand = true;
+  CAR.hdg = CAR.camYaw = Math.atan2(dx, -dz);
+  cam.mode = 'chase'; cam.lookYaw = 0; cam.lookPitch = 0;
+}
+// the city (and PLATEAU, in a PLATEAU mode) loaded round the spot
+async function devWaitLoaded(maxMs) {
+  const t0 = performance.now();
+  for (;;) {
+    devPlace();
+    // (the tiles the street in view stands on: any within 600 m of the car)
+    const near = [...CITY.tiles.values()].filter(t => { const b = cityBox(t); return Math.max(b[0] - CAR.pos[0], 0, CAR.pos[0] - b[2]) ** 2 + Math.max(b[1] - CAR.pos[2], 0, CAR.pos[2] - b[3]) ** 2 < 600 * 600; });
+    const cityOk = near.length >= 1 && near.every(t => t.state === 2 || t.state === 3);
+    const platOk = !(PLAT.cmp > 0) || platCmpSettled();
+    if (cityOk && platOk) return true;
+    if (performance.now() - t0 > maxMs) return false;
+    DEV.status = `読み込み中… 街タイル ${near.filter(t => t.state === 2).length}/${near.length}` + (PLAT.cmp > 0 ? `　PLATEAU ${platCmpProgress()}` : '');
+    devRender();
+    await devSleep(500);
+  }
+}
+async function devBench(modes, ms = 5000, label = '') {
+  if (DEV.busy) return;
+  if (!JW.active || !JW.online) { DEV.status = '日本の地図（オンライン）で使えます'; devRender(); return; }
+  DEV.busy = true;
+  const prevEnv = ENV, prevMode = PLAT.cmp || 0, prevCam = cam.mode, out = [];
+  const env0 = devEnv(), date = new Date();
+  try {
+    if (!CAR.on) carEnter();
+    CAR.hold = true;                                                    // (the controls ignored: the car stands, its physics still run)
+    ENV = TOD.day;
+    for (const m of modes || [PLAT.cmp || 0]) {
+      platCmpSet(m);
+      DEV.status = `${devSrcName(m)}：試験区画へ移動して読み込み中…`; devRender();
+      const loaded = await devWaitLoaded(240000);
+      DYN.lock = 1; DYN.k = 1;                                            // the full resolution, not the dynamic one
+      DEV.status = `${devSrcName(m)}：落ち着くまで待機…`; devRender();
+      await devSleep(3000); devPlace();
+      DEV.status = `${devSrcName(m)}：フレームレートを計測中（${ms / 1000} 秒）…`; devRender();
+      devProf(false);
+      const f0 = DEV.frN; await devSleep(ms);
+      const fs = devFrameStats(f0);
+      DEV.status = `${devSrcName(m)}：段階ごとの時間を計測中（${ms / 1000} 秒）…`; devRender();
+      devProf(true); await devSleep(ms);
+      const st = devStageTable(); devProf(false);
+      out.push({ mode: m, label, loaded, fs, st, canvas: `${glCanvas.width}×${glCanvas.height}`, plat: PLAT.cmp > 0 ? platCmpInfo() : null, check: PLAT.cmp > 0 ? platCmpCheck() : null, relief: !!(typeof CMAT !== 'undefined' && CMAT.nready && CMAT.relief !== false) });
+    }
+  } catch (e) { DEV.status = 'エラー: ' + e.message; console.error(e); }
+  finally {
+    DYN.lock = null; ENV = prevEnv; CAR.hold = false; cam.mode = prevCam;
+    if (modes) platCmpSet(prevMode);
+    DEV.busy = false;
+  }
+  DEV.out = devReport(env0, date, out); DEV.status = '計測しました（下の結果をコピーして送ってください）';
+  window.__devBenchResult = { env: env0, runs: out };
+  devRender();
+}
+function devReport(e, date, runs) {
+  const f1 = v => v == null ? '–' : v.toFixed(1), f2 = v => v == null ? '–' : v.toFixed(2);
+  const L = [];
+  const pad = n => String(n).padStart(2, '0');
+  L.push(`【計測】${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}　試験区画 ${DEV_SPOT.name} ${DEV_SPOT.lat}, ${DEV_SPOT.lon}（昼・停車・後方視点）`);
+  L.push(`端末: ${e.ua}`);
+  L.push(`GPU: ${e.gpu}　CPU ${e.cores} コア　メモリ ${e.mem} GB　画面 ${e.screen}（表示 ${e.view}, dpr ${e.dpr}）　タッチ ${e.touch ? 'あり' : 'なし'}`);
+  L.push(`Google 3D: ${e.goog ? 'あり' : 'なし'}　市街地区域: ${e.auth ? 'あり' : 'なし'}　太陽の影: ${e.shadows ? 'あり' : 'なし'}　GPU時間: ${e.timer ? 'タイマー計測' : DEV.sync ? 'gl.finish 同期（CPU+GPU）' : '計測不可'}`);
+  for (const r of runs) {
+    L.push('');
+    L.push(`■ ${r.label ? r.label + '　' : ''}建物: ${devSrcName(r.mode)}　素材の凹凸・ツヤ: ${r.relief ? 'あり' : 'なし'}　描画解像度 ${r.canvas}${r.loaded ? '' : '（読み込み未完了のまま計測）'}`);
+    if (r.plat) L.push(`  PLATEAU: ${r.plat}`);
+    if (r.check) L.push(`  ${r.check}`);
+    if (r.fs) L.push(`  実フレームレート ${f1(r.fs.fps)} fps（1フレーム 中央値 ${f1(r.fs.p50)} ms / 95% ${f1(r.fs.p95)} ms / 最大 ${f1(r.fs.max)} ms、${r.fs.n} フレーム）`);
+    const s = r.st;
+    L.push(`  1フレームの JS ${f2(s.cpuFrame)} ms` + (s.gpuFrame != null ? `　GPU ${f2(s.gpuFrame)} ms` : '') + `（計測 ${s.frames} フレーム${s.gframes ? '、GPU ' + s.gframes : ''}）`);
+    L.push('  段階　CPU ms / GPU ms / 描画呼出 / 頂点(千)');
+    for (const x of s.rows.slice(0, 16)) if (x.cpu >= 0.05 || (x.gpu || 0) >= 0.05 || x.calls >= 1) L.push(`  ${DEV_JA[x.n] || x.n}　${f2(x.cpu)} / ${f2(x.gpu)} / ${Math.round(x.calls)} / ${Math.round(x.kv)}`);
+  }
+  const c = devTileStats('city'), p = devTileStats('plat');
+  L.push('');
+  if (c) L.push(`街タイル生成（ワーカー）: ${c.n} 枚　生成 平均 ${f1(c.build)} ms（最大 ${f1(c.buildMax)}）　通信 平均 ${f1(c.net)} ms　受け取り（主スレッド）平均 ${f1(c.main)} ms（最大 ${f1(c.mainMax)}）　平均 ${Math.round(c.kv)} 千頂点`);
+  if (p) L.push(`PLATEAU タイル（ワーカー）: ${p.n} 個　デコード 平均 ${f1(p.build)} ms（最大 ${f1(p.buildMax)}）　通信 平均 ${f1(p.net)} ms　受け取り 平均 ${f1(p.main)} ms（最大 ${f1(p.mainMax)}）`);
+  return L.join('\n');
+}
+
+// ---- the panel ----
+function devToggle(on = !DEV.open) {
+  DEV.open = on;
+  if (on && !DEV.el) devBuild();
+  if (DEV.el) DEV.el.hidden = !on;
+  if (on) devRender(); else if (DEV.prof && !DEV.busy) devProf(false);
+}
+function devBuild() {
+  const el = document.createElement('div'); el.id = 'dev-panel';
+  el.style.cssText = 'position:fixed;left:max(12px,env(safe-area-inset-left));top:44px;z-index:30;width:min(430px,calc(100% - 24px));max-height:calc(100% - 60px);overflow:auto;padding:10px 12px;border-radius:8px;border:1px solid rgba(95,212,255,.45);background:rgba(6,12,22,.9);color:#e8f0fa;font:12px/1.45 "B612 Mono",ui-monospace,Menlo,monospace;-webkit-user-select:text;user-select:text';
+  el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font:700 13px system-ui,sans-serif">開発用パネル</b><button data-a="close">閉じる</button></div>
+<div data-k="live" style="margin:6px 0;white-space:pre-wrap"></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0"><span style="font:600 12px system-ui,sans-serif;align-self:center">建物:</span><button data-src="0">自前</button><button data-src="1">PLATEAU LOD2</button><button data-src="2">PLATEAU LOD3</button></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0"><span style="font:600 12px system-ui,sans-serif;align-self:center">PLATEAU の範囲:</span><button data-rad="150">150 m</button><button data-rad="300">300 m</button><button data-rad="600">600 m</button><button data-a="near">樹木</button><button data-a="roads">道路（試験的）</button></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0"><button data-a="prof">段階ごとの計測</button><button data-a="sync">GPU: タイマー</button><button data-a="spot">試験区画へ移動</button></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0"><button data-a="bench">ベンチマーク（今の建物）</button><button data-a="bench3">3方式を比較計測</button></div>
+<div data-k="status" style="margin:6px 0;color:#ffd66b;font-family:system-ui,sans-serif"></div>
+<div data-k="table" style="white-space:pre;overflow-x:auto"></div>
+<textarea data-k="out" readonly style="width:100%;height:150px;margin-top:6px;background:#0b1424;color:#dfe7f0;border:1px solid rgba(232,240,250,.25);border-radius:6px;font:11px/1.4 ui-monospace,Menlo,monospace" placeholder="ベンチマークの結果がここに出ます"></textarea>
+<div style="display:flex;gap:6px;margin-top:6px"><button data-a="copy">結果をコピー</button></div>`;
+  for (const b of el.querySelectorAll('button')) b.style.cssText = 'padding:5px 9px;border-radius:6px;border:1px solid rgba(95,212,255,.5);background:rgba(20,34,54,.95);color:#e8f0fa;font:600 12px system-ui,sans-serif;cursor:pointer';
+  el.addEventListener('click', e => {
+    e.stopPropagation();
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.src != null) { platCmpSet(+b.dataset.src); devRender(); return; }
+    if (b.dataset.rad != null) { PLAT.cmpR = +b.dataset.rad; platCmpSet(PLAT.cmp || 0, true); devRender(); return; }
+    const a = b.dataset.a;
+    if (a === 'close') devToggle(false);
+    else if (a === 'prof') { devProf(!DEV.prof); devRender(); }
+    else if (a === 'sync') { const on = DEV.prof; devProf(false); DEV.sync = !DEV.sync || (DEV.ext === null && !DEV.sync); if (on) devProf(true); devRender(); }
+    else if (a === 'spot') { if (JW.active) { if (!CAR.on) carEnter(); devPlace(); } }
+    else if (a === 'near') { PLAT.cmpNear = PLAT.cmpNear === false; devRender(); }
+    else if (a === 'roads') { PLAT.cmpRoads = !PLAT.cmpRoads; devRender(); }
+    else if (a === 'bench') devBench(null);
+    else if (a === 'bench3') devBench([0, 1, 2]);
+    else if (a === 'copy') { const t = el.querySelector('[data-k=out]'); t.select(); try { navigator.clipboard.writeText(t.value).then(() => toast('コピーしました', 1200), () => document.execCommand('copy')); } catch (err) { document.execCommand('copy'); } }
+  });
+  for (const ev of ['pointerdown', 'touchstart', 'wheel', 'keydown', 'keyup']) el.addEventListener(ev, e => e.stopPropagation(), { passive: true });
+  document.body.append(el); DEV.el = el;
+  if (DEV.ext === undefined) DEV.ext = gl.getExtension('EXT_disjoint_timer_query_webgl2') || null;
+  if (!DEV.ext) DEV.sync = true;
+}
+function devRender() {
+  const el = DEV.el; if (!el || !DEV.open) return;
+  const fs = devFrameStats(Math.max(0, DEV.frN - 120)), f1 = v => v == null ? '–' : v.toFixed(1), f2 = v => v == null ? '–' : v.toFixed(2);
+  el.querySelector('[data-k=live]').textContent = (fs ? `実 ${f1(fs.fps)} fps　1フレーム 中央値 ${f1(fs.p50)} / 95% ${f1(fs.p95)} / 最大 ${f1(fs.max)} ms` : '実 – fps') +
+    `\n描画 ${glCanvas.width}×${glCanvas.height}（画質 ${Math.round(DYN.k * 100)}%${DYN.lock ? ' 固定' : ''}）　頂点 ${typeof CITY !== 'undefined' ? (CITY.verts / 1e6).toFixed(1) : 0}M 読込済` +
+    (typeof PLAT !== 'undefined' && PLAT.cmp > 0 ? `\nPLATEAU: ${platCmpInfo()}` : '');
+  for (const b of el.querySelectorAll('[data-src]')) b.style.borderColor = +b.dataset.src === (PLAT.cmp || 0) ? '#ffd66b' : 'rgba(95,212,255,.5)';
+  for (const b of el.querySelectorAll('[data-rad]')) b.style.borderColor = +b.dataset.rad === (PLAT.cmpR || 300) ? '#ffd66b' : 'rgba(95,212,255,.5)';
+  el.querySelector('[data-a=prof]').textContent = DEV.prof ? '段階ごとの計測: ON' : '段階ごとの計測: OFF';
+  el.querySelector('[data-a=near]').textContent = PLAT.cmpNear !== false ? '樹木: ON' : '樹木: OFF';
+  el.querySelector('[data-a=roads]').textContent = PLAT.cmpRoads ? '道路（試験的）: ON' : '道路（試験的）: OFF';
+  el.querySelector('[data-a=sync]').textContent = DEV.ext && !DEV.sync ? 'GPU: タイマー' : 'GPU: gl.finish 同期';
+  el.querySelector('[data-k=status]').textContent = DEV.status;
+  let tb = '';
+  if (DEV.prof && DEV.nf > 5) {
+    const s = devStageTable();
+    tb = `JS ${f2(s.cpuFrame)} ms` + (s.gpuFrame != null ? `　GPU ${f2(s.gpuFrame)} ms` : '') + `（${s.frames} フレーム平均）\n段階　CPU / GPU ms　呼出　千頂点\n`;
+    for (const x of s.rows.slice(0, 14)) tb += `${(DEV_JA[x.n] || x.n).padEnd(12, '　').slice(0, 12)} ${f2(x.cpu).padStart(6)} ${f2(x.gpu).padStart(6)} ${String(Math.round(x.calls)).padStart(4)} ${String(Math.round(x.kv)).padStart(6)}\n`;
+    if (s.frames > 240 && !DEV.busy) devProfReset();
+  }
+  el.querySelector('[data-k=table]').textContent = tb;
+  const out = el.querySelector('[data-k=out]'); if (out.value !== DEV.out) out.value = DEV.out;
+}
+// the hold area over the position line (the HUD is drawn on a canvas that takes no touches)
+function devHoldArea() {
+  let h = DEV.hold;
+  if (!h) {
+    h = DEV.hold = document.createElement('div'); h.id = 'dev-hold';
+    h.style.cssText = 'position:fixed;left:12px;top:12px;width:300px;height:24px;z-index:21;background:transparent;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none';
+    let timer = 0;
+    const cancel = () => { clearTimeout(timer); timer = 0; };
+    h.addEventListener('pointerdown', e => { e.stopPropagation(); cancel(); timer = setTimeout(() => { timer = 0; if (navigator.vibrate) navigator.vibrate(30); devToggle(); }, 900); });
+    for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) h.addEventListener(ev, cancel);
+    h.addEventListener('contextmenu', e => e.preventDefault());
+    document.body.append(h);
+  }
+  h.hidden = !(CAR.on && JW.active && game.state === 'flying');
+}
+addEventListener('keydown', e => { if (e.key === 'F9') { e.preventDefault(); devToggle(); } });
+
+// =====================================================================
+//  GAME: environment, camera, input, audio, particles, HUD, modes, loop
+// =====================================================================
+const TOD = {
+  day: {
+    sunDir: vnorm([0.5, 0.62, 0.55]), sunCol: [1.05, 1.0, 0.92], zenith: [0.19, 0.41, 0.76], horizon: [0.72, 0.83, 0.93],
+    horizonAway: [0.64, 0.77, 0.92], ambSky: [0.32, 0.40, 0.52], ambGround: [0.20, 0.19, 0.15], fog: 4.2e-5, sunI: 22, haze: 2.4,
+  },
+  evening: {
+    sunDir: vnorm([-0.86, 0.13, 0.34]), sunCol: [1.28, 0.74, 0.42], zenith: [0.15, 0.22, 0.44], horizon: [1.0, 0.64, 0.40],
+    horizonAway: [0.46, 0.46, 0.60], ambSky: [0.26, 0.26, 0.37], ambGround: [0.17, 0.12, 0.10], fog: 5.6e-5, sunI: 22, haze: 2.0,
+  },
+  night: {
+    sunDir: vnorm([-0.35, 0.42, -0.55]), sunCol: [0.15, 0.17, 0.25], zenith: [0.008, 0.013, 0.035], horizon: [0.05, 0.06, 0.10],
+    horizonAway: [0.03, 0.04, 0.075], ambSky: [0.05, 0.06, 0.10], ambGround: [0.02, 0.02, 0.03], fog: 3.2e-5, night: 1,
+  },
+};
+let ENV = TOD.day;
+
+const game = {
+  state: 'loading', mode: 'runway', hud: true, invert: false, touch: false, sound: true,
+  t: 0, ringIdx: 0, ringTime: 0, ringDone: false, firstTouch: null, landingDone: false,
+  warnPull: false, warnGear: false, resultTimer: 0, best: {},
+  cold: false, autoMix: true, cpHud: false, assist: true, autoRud: true, clouds: 'normal', gfx: '', sens: 'low', mapId: 'japan', acftId: 'trainer', levelT: 0,
+  depIcao: 'RJTT', destIcao: '', timeScale: 1, ap: false, apAlt: 0, apHdg: 0, track: [], arrived: false,
+};
+try {
+  const pr = JSON.parse(localStorage.getItem('sorajima-prefs') || '{}') || {};
+  for (const k of ['cold', 'autoMix', 'assist', 'autoRud', 'clouds', 'gfx', 'sens', 'mapId', 'acftId', 'invert', 'sound', 'depIcao', 'destIcao']) if (pr[k] !== undefined) game[k] = pr[k];
+} catch (e) { /* storage unavailable */ }
+function savePrefs() {
+  try { localStorage.setItem('sorajima-prefs', JSON.stringify({ cold: game.cold, autoMix: game.autoMix, assist: game.assist, autoRud: game.autoRud, clouds: game.clouds, gfx: game.gfx, sens: game.sens, mapId: game.mapId, acftId: game.acftId, invert: game.invert, sound: game.sound, depIcao: game.depIcao, destIcao: game.destIcao })); } catch (e) { /* ignore */ }
+}
+try { game.best = JSON.parse(localStorage.getItem('sorajima-best') || '{}') || {}; } catch (e) { game.best = {}; }
+function saveBest() { try { localStorage.setItem('sorajima-best', JSON.stringify(game.best)); } catch (e) { /* storage unavailable */ } }
+
+// ---------- toasts ----------
+function toast(msg, ms = 2400) {
+  const box = $('toast'), d = document.createElement('div');
+  d.textContent = msg; box.appendChild(d);
+  while (box.children.length > 3) box.removeChild(box.firstChild);
+  setTimeout(() => { d.style.opacity = '0'; setTimeout(() => d.remove(), 450); }, ms);
+}
+
+// ---------- spawning ----------
+const parked = [];
+function spawn(mode) {
+  carReset();
+  const s = sim, V = ACFT.v;
+  Object.assign(s, {
+    w: [0, 0, 0], elev: 0, ail: 0, rud: 0, trim: 0, brake: false, smoke: false, crashed: false, crashReason: '', pIn: 0, rIn: 0,
+    onGround: false, mainContact: false, airTime: 0, gLoad: 1, stallW: 0, stallWarn: false, rpm: 700, contacts: WHEELS.map(() => false),
+    vs: 0, alpha: 0, beta: 0, n1: 0, ab: false,
+  });
+  const L = RWY.len / 2, fixed = ACFT.gear.fixed, hasFlaps = !!ACFT.wing.flap;
+  const setFlaps = i => { s.flapIdx = hasFlaps ? i : 0; s.flapDeg = FLAP_DEG[s.flapIdx]; };
+  const setThr = t => { s.thr = t; s.n1 = Math.min(t / 0.95, 1); };
+  const fly = (pos, hdg, kt, gammaDeg, flapIdx, thr, gear) => {
+    setFlaps(flapIdx);
+    const v = kt / 1.94384, ff = hasFlaps ? s.flapDeg / 30 : 0;
+    const tr = trimFor(v, ff, Math.cos(gammaDeg * DEG));
+    s.trim = clamp(tr.elev, -TRIM_MAX, TRIM_MAX); s.trimHold = 0;
+    s.pos = pos; s.q = qFromHPB(hdg, tr.alpha / DEG + gammaDeg, 0);
+    const dir = [Math.sin(hdg * DEG), 0, -Math.cos(hdg * DEG)];
+    s.vel = vadd(vscale(dir, v * Math.cos(gammaDeg * DEG)), [0, v * Math.sin(gammaDeg * DEG), 0]);
+    setThr(thr); s.rpm = rpmFor(thr, kt / 1.94384); s.gearDown = fixed || gear; s.gearPos = s.gearDown ? 1 : 0; s.airTime = 10;
+  };
+  if (mode === 'runway' || mode === 'tutorial') {
+    s.pos = rwyToWorld(-L + 45 + ACFT.phys.L * 0.3, 0, RWY.elev + 0.12 - WHEEL_BOTTOM - ACFT.gear.wheelR * 0.3);
+    s.q = qFromHPB(RWY.hdg, 0.5, 0); s.vel = [0, 0, 0];
+    setThr(0); setFlaps(V.toFlaps); s.gearDown = true; s.gearPos = 1;
+    s.mainContact = true; s.onGround = true;
+  } else if (mode === 'air') {
+    const c = course.centre, far = course.landR + 3500, lim = HM_HALF - 800;
+    const start = [clamp(c[0] + far * 0.25, -lim, lim), 0, clamp(c[2] + far, -lim, lim)];
+    const hdg = (Math.atan2(c[0] - start[0], -(c[2] - start[2])) / DEG + 360) % 360;
+    let top = 0;
+    for (let t = 0; t <= 1.3; t += 0.02) top = Math.max(top, terrainHeight(lerp(start[0], c[0], t), lerp(start[2], c[2], t)));
+    start[1] = Math.max(640, top + 300);
+    fly(start, hdg, V.cruise, 0, 0, V.cruiseThr, false);
+  } else if (mode === 'rings') {
+    const r0 = course.rings[0], dir = vnorm([r0.n[0], 0, r0.n[2]]);
+    const pos = vsub(r0.p, vscale(dir, 1400 + ACFT.phys.L * 20));
+    pos[1] = Math.max(r0.p[1], Math.max(terrainHeight(pos[0], pos[2]), 0) + 150);
+    fly(pos, Math.atan2(dir[0], -dir[2]) / DEG, Math.min(V.cruise, 160), 0, 0, V.cruiseThr * 0.9, false);
+    game.ringIdx = 0; game.ringTime = 0; game.ringDone = false;
+  } else if (mode === 'landing') {
+    const kt = V.appr, D = clamp(kt / 1.944 * 75, 4300, 9500), aim = rwyToWorld(-L + 300, 0);
+    const pos = vsub(aim, vscale(RWY.dir, D)); pos[1] = RWY.elev + Math.tan(3 * DEG) * D - WHEEL_BOTTOM;
+    fly(pos, RWY.hdg, kt - 5, -3, V.apprFlaps, V.apprThr, true);
+  }
+  s.gLoad = 1; s.agl = 100;
+  game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.resultTimer = 0;
+  game.ap = false; game.timeScale = 1; game.track = []; game.arrived = false; game.trackT = 0;
+  const cold = !!game.spawnCold && mode === 'runway' && !(typeof SCHOOL !== 'undefined' && SCHOOL.active); game.spawnCold = false;
+  sysReset(cold);
+  GOOG.lockedLocal = false;                             // measure Google's ground under the new position afresh
+  if (cold) { cam.mode = 'cockpit'; setTimeout(() => { if (game.state === 'flying' && !SYS.run) { toast('エンジン停止の状態から：N キーのチェックリストに沿って始動しましょう（Ctrl+E で自動始動）', 5000); clToggle(true); } }, 900); }
+  if (mode === 'tutorial') tutStart(); else tutHide();
+  cam.q = s.q.slice(); cam.flyPos = null; cam.lookYaw = cam.lookPitch = 0;
+  cam.dist = Math.max(22, ACFT.cam[2] * 1.4);
+  if (cam.mode === 'orbit' && cam.autoOrbit) { cam.mode = cam.prevMode || 'chase'; cam.autoOrbit = false; }
+  particles.length = 0;
+  props.center = [1e9, 0, 1e9];
+}
+function initParked() {
+  parked.length = 0;
+  const S = RWY.side || 1;
+  for (const [u, id, col] of [[-175, 'trainer', null], [-135, 'sport', [0.12, 0.52, 0.30]], [-85, 'twin', null]]) {
+    const A = AIRCRAFT.find(a => a.id === id), bottom = A.gear.nose[1] - A.gear.wheelR;
+    const p = rwyToWorld(u, -105 * S, RWY.elev + 0.08 - bottom - A.gear.wheelR * 0.25);
+    parked.push({ m: M4.fromQP(qFromHPB(RWY.hdg + 90 * S, 0.5, 0), p), col, acft: A });
+  }
+}
+const parkedState = { ail: 0, elev: 0, trim: 0, rud: 0, flapDeg: 0, gearPos: 1, propAng: 0.4, rpm: 0 };
+
+// ---------- camera ----------
+const CAM_MODES = ['chase', 'cockpit', 'orbit', 'flyby'];
+const CAM_NAMES = { chase: '追尾カメラ', cockpit: 'コックピット', orbit: '周回カメラ（ドラッグで回転）', flyby: 'フライバイ' };
+const cam = { mode: 'chase', q: [0, 0, 0, 1], lookYaw: 0, lookPitch: 0, orbitYaw: 2.4, orbitPitch: 0.22, dist: 22,
+  flyPos: null, eye: [0, 50, 0], view: M4.ident(), fov: 58, near: 0.3, dragging: false };
+function updateCamera(dt) {
+  const s = sim;
+  let eye, target, up = [0, 1, 0], fov = 58, near = 0.35;
+  const mode = game.state === 'menu' ? 'attract' : cam.mode;
+  if (!cam.dragging && mode !== 'cockpit') { cam.lookYaw = damp(cam.lookYaw, 0, 1.6, dt); cam.lookPitch = damp(cam.lookPitch, 0, 1.6, dt); }
+  if (mode === 'attract') {
+    if (!cam.dragging) cam.orbitYaw += dt * 0.07;
+    const d = ACFT.cam[2] * 2, p = 0.16 + cam.orbitPitch * 0.3;
+    eye = vadd(s.pos, [Math.sin(cam.orbitYaw) * Math.cos(p) * d, Math.sin(p) * d + 2, Math.cos(cam.orbitYaw) * Math.cos(p) * d]);
+    target = vadd(s.pos, [0, 0.5, 0]); fov = 50;
+  } else if (mode === 'chase') {
+    cam.q = qslerp(cam.q, s.q, 1 - Math.exp(-dt * 5));
+    const lq = qmul(cam.q, qmul(qaxis([0, 1, 0], cam.lookYaw), qaxis([1, 0, 0], cam.lookPitch)));
+    eye = vadd(s.pos, qrot(lq, ACFT.cam));
+    target = vadd(s.pos, qrot(lq, [0, ACFT.cam[1] * 0.45, -ACFT.cam[2] * 0.4]));
+    up = qrot(cam.q, [0, 1, 0]);
+  } else if (mode === 'cockpit') {
+    const lq = qmul(s.q, qmul(qaxis([0, 1, 0], cam.lookYaw), qaxis([1, 0, 0], cam.lookPitch)));
+    // the pilot's head: pushed back by acceleration, bounced by bumps and the runway, then eased back
+    const acc = s.lastVel ? qrot(qconj(s.q), vscale(vsub(s.vel, s.lastVel), 1 / Math.max(dt, 1e-3))) : [0, 0, 0]; s.lastVel = s.vel.slice();
+    const rough = s.onGround ? clamp(Math.hypot(s.vel[0], s.vel[2]) / 40, 0, 1) * (Math.sin(R.time * 37) * 0.6 + Math.sin(R.time * 23.3) * 0.4) * 0.006 : 0;
+    const want = [clamp(-acc[0] * 0.0025, -0.04, 0.04), clamp(-acc[1] * 0.0025, -0.05, 0.05) + rough, clamp(-acc[2] * 0.002, -0.04, 0.04)];
+    cam.head = (cam.head || [0, 0, 0]).map((v, i) => v + (want[i] - v) * Math.min(1, dt * 6));
+    eye = vadd(s.pos, qrot(s.q, vadd(cpEye(ACFT), cam.head)));
+    target = vadd(eye, qrot(lq, [0, -1.1, -10]));
+    up = qrot(lq, [0, 1, 0]); fov = CPIT.fov; near = 0.12;
+  } else if (mode === 'orbit') {
+    const d = cam.dist, p = cam.orbitPitch;
+    eye = vadd(s.pos, [Math.sin(cam.orbitYaw) * Math.cos(p) * d, Math.sin(p) * d, Math.cos(cam.orbitYaw) * Math.cos(p) * d]);
+    target = s.pos;
+  } else {
+    const spd = vlen(s.vel);
+    const away = cam.flyPos ? vdot(s.vel, vsub(s.pos, cam.flyPos)) > 0 : true;
+    if (!cam.flyPos || (vdist(cam.flyPos, s.pos) > 380 && away) || vdist(cam.flyPos, s.pos) > 900) {
+      const dir = spd > 3 ? vscale(s.vel, 1 / spd) : qrot(s.q, [0, 0, -1]);
+      const side = vnorm(vcross(dir, [0, 1, 0]));
+      const p = vadd(vadd(s.pos, vscale(dir, Math.max(160, spd * 4.5))), vscale(side, (12 + ACFT.phys.b) * (Math.random() < 0.5 ? -1 : 1)));
+      p[1] += 5 + Math.random() * 8;
+      p[1] = Math.max(p[1], Math.max(terrainHeight(p[0], p[2]), 0) + 3);
+      cam.flyPos = p;
+    }
+    eye = cam.flyPos; target = s.pos;
+    fov = clamp(2 * Math.atan((4 + ACFT.phys.b * 0.5) / Math.max(vdist(eye, target), 1)) / DEG, 8, 60);
+  }
+  if (CAR.on && game.state !== 'menu') { const c = carCamera(dt); eye = c.eye; target = c.target; up = c.up; fov = c.fov; near = c.near; }
+  const gh = Math.max(terrainHeight(eye[0], eye[2]), 0) + 1.0;
+  if (eye[1] < gh && !CAR.on) eye[1] = gh;
+  if (Math.abs(vdot(vnorm(vsub(target, eye)), vnorm(up))) > 0.999) up = [0, 0, 1];
+  cam.eye = eye; cam.fov = fov; cam.near = near;
+  cam.view = M4.lookAt(eye, target, up);
+}
+function cycleCamera() {
+  if (CAR.on) { cam.mode = cam.mode === 'car' ? 'carcab' : 'car'; cam.lookYaw = cam.lookPitch = 0; toast(cam.mode === 'car' ? '後ろから見る' : '運転席から見る', 1200); return; }
+  const i = CAM_MODES.indexOf(cam.mode);
+  cam.mode = CAM_MODES[(i + 1) % CAM_MODES.length];
+  cam.lookYaw = cam.lookPitch = 0; cam.flyPos = null; cam.autoOrbit = false;
+  toast(CAM_NAMES[cam.mode], 1400);
+}
+
+// ---------- input ----------
+const keys = {};
+const touchIn = { stickOn: false, x: 0, y: 0, brake: false };
+const padPrev = [];
+function pressedAny(...codes) { return codes.some(c => keys[c]); }
+function doAction(a) {
+  const s = sim;
+  if (game.state !== 'flying') return;
+  if (a === 'gear') {
+    if (ACFT.gear.fixed) { toast('この機体の脚（車輪）は固定式で、格納できません', 1800); return; }
+    if (s.onGround && s.gearDown) { toast('地上ではギアを上げられません', 1600); return; }
+    s.gearDown = !s.gearDown; toast(s.gearDown ? 'ギア ダウン' : 'ギア アップ', 1300); audio.blip(s.gearDown ? 330 : 440, 0.12, 'square', 0.06);
+  } else if (a === 'flaps') {
+    if (!ACFT.wing.flap) { toast('この機体にはフラップがありません', 1600); return; }
+    s.flapIdx = flapStep(s.flapIdx, 1); toast('フラップ ' + flapName(s.flapIdx), 1200); audio.blip(520, 0.06, 'square', 0.05);
+  } else if (a === 'flapsUp') {
+    if (!ACFT.wing.flap) return;
+    s.flapIdx = flapStep(s.flapIdx, -1); toast('フラップ ' + flapName(s.flapIdx), 1200); audio.blip(440, 0.06, 'square', 0.05);
+  } else if (a === 'cam') cycleCamera();
+  else if (a === 'hud') { game.hud = !game.hud; }
+  else if (a === 'smoke') { s.smoke = !s.smoke; toast(s.smoke ? 'スモーク ON' : 'スモーク OFF', 1200); }
+  else if (a === 'level') { game.levelT = 4; toast('水平飛行に戻します（アシスト）', 1600); }
+  else if (a === 'trim' && game.assist) { toast('アシスト ON のときはトリムは自動です', 1600); }
+  else if (a === 'trim') {
+    if (s.onGround) { s.trim = 0; s.trimHold = 0; toast('地上ではトリムを中立（離陸位置）にしました', 1500); return; }
+    s.trimHold = s.elev; s.trim = trimLevel();
+    toast('トリム ' + (s.trim >= 0 ? '機首上げ ' : '機首下げ ') + Math.abs(Math.round(s.trim / TRIM_MAX * 100)) + '%（いまの速度で水平に飛ぶように合わせました。操縦桿を離すとそのまま保ちます）', 2600);
+  }
+  else if (a === 'trimReset') { s.trim = 0; s.trimHold = 0; toast('トリム リセット', 1200); }
+  else if (a === 'pause') pauseGame();
+  else if (a === 'guide') openGuide();
+  else if (a === 'map') toggleMap();
+  else if (a === 'time') {
+    const steps = [1, 2, 4, 8, 16, 32, 64], i = steps.indexOf(game.timeScale);
+    const next = steps[(i + 1) % steps.length];
+    if (next > 1 && (s.onGround || s.agl < 300)) { toast('時間加速は上空（地面から 300 m 以上）で使えます', 1800); return; }
+    game.timeScale = next; toast(next === 1 ? '時間加速 OFF（×1）' : `時間加速 ×${next}`, 1300);
+  } else if (a === 'ap') {
+    if (!game.ap && (s.onGround || s.agl < 150)) { toast('オートパイロットは上空で使えます', 1600); return; }
+    game.ap = !game.ap;
+    if (game.ap) {
+      game.apAlt = s.pos[1]; game.apHdg = attitude().hdg; game.apLat = 'nav'; game.apVert = 'alt'; game.apVs = 0;
+      game.apSpd = ACFT.v.cruise > 150 ? clamp(s.ias * 1.94384, ACFT.v.appr + 25, ACFT.v.cruise) : 0;
+      toast((JW.active && JW.dest ? `オートパイロット ON：${JW.dest.name}へ向かい、高度 ${Math.round(s.pos[1] * 3.28084).toLocaleString()} ft を保ちます` : `オートパイロット ON：方位 ${Math.round(game.apHdg)}°・高度を保ちます`) + (game.apSpd ? `（オートスロットル ${Math.round(game.apSpd)} kt）` : ''), 3000);
+    } else toast('オートパイロット OFF', 1300);
+  }
+}
+addEventListener('keydown', e => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA')) return;
+  keys[e.code] = true;
+  if (!e.repeat && schoolKey(e)) { e.preventDefault(); return; }
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'PageUp', 'PageDown'].includes(e.code)) e.preventDefault();
+  if (e.repeat) return;
+  const st = game.state;
+  if (game.callouts) { hideCallouts(); return; }
+  if (!$('guide').hidden) { if (e.code === 'Escape') closeGuide(); return; }
+  if (e.code === 'Enter' && st === 'flying' && game.mode === 'tutorial') { tutNext(); return; }
+  if (e.code === 'Escape' || e.code === 'KeyP') {
+    if (st === 'flying') pauseGame(); else if (st === 'paused') resumeGame();
+    return;
+  }
+  if (e.code === 'Enter' && (st === 'result' || st === 'crashed') && game.resultTimer <= 0) { e.preventDefault(); startMode(game.mode); return; }
+  if (e.code === 'KeyM') { toggleMap(); return; }
+  if (mapv.open && e.code === 'Escape') { toggleMap(false); return; }
+  if (e.code === 'KeyK' && st === 'flying' && !(SCHOOL.active)) { carToggle(); return; }
+  if (e.code === 'KeyC' && (st === 'flying' || st === 'crashed')) { cycleCamera(); return; }
+  if (CAR.on && e.code === 'KeyR' && st === 'flying') { carToRoad(3000); return; }
+  if (CAR.on && e.code === 'Slash' && st === 'flying') { CAR.help = !(CAR.help || R.time - (CAR.enterT ?? R.time) < 14); CAR.enterT = -1e9; return; }
+  if (CAR.on && e.code === 'KeyV' && st === 'flying') { if (e.shiftKey) carNextPaint(); else carNextModel(); return; }
+  if (CAR.on) return;                                               // aircraft keys do nothing while driving
+  const map = { KeyG: 'gear', KeyV: 'flaps', KeyH: 'hud', KeyX: 'smoke', KeyL: 'level', KeyZ: 'time', KeyO: 'ap' };
+  if (map[e.code] && !(e.code === 'KeyH' && e.shiftKey)) doAction(map[e.code]);
+  if (e.code === 'KeyT') doAction(e.shiftKey ? 'trimReset' : 'trim');
+  if (e.code === 'KeyJ' && (st === 'flying' || st === 'paused')) { game.physView = !game.physView; toast(game.physView ? '物理の見える化：揚力・抗力・推力・重力と、その数値を表示' : '物理の見える化を閉じました', 1600); }
+  if (e.code === 'KeyU' && st === 'flying') { game.autoRud = !game.autoRud; if ($('opt-autorud')) $('opt-autorud').checked = game.autoRud; savePrefs(); toast(game.autoRud ? '自動ラダー ON（ボールを自動で中央に）' : '自動ラダー OFF：Q / E でボールを中央に保ちます（離陸・上昇は右ラダー）', 2600); }
+});
+addEventListener('keyup', e => { keys[e.code] = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+
+let dragPt = null;
+glCanvas.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'touch') enableTouch();
+  if (game.callouts) { hideCallouts(); return; }
+  if (cpPointerDown(e)) return;
+  dragPt = { id: e.pointerId, x: e.clientX, y: e.clientY };
+  cam.dragging = true;
+  try { glCanvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+});
+glCanvas.addEventListener('pointermove', e => {
+  if (cpPointerMove(e)) return;
+  if (!dragPt || dragPt.id !== e.pointerId) return;
+  const dx = e.clientX - dragPt.x, dy = e.clientY - dragPt.y;
+  dragPt.x = e.clientX; dragPt.y = e.clientY;
+  if (game.state === 'menu' || cam.mode === 'orbit') {
+    cam.orbitYaw -= dx * 0.006; cam.orbitPitch = clamp(cam.orbitPitch + dy * 0.004, -0.2, 1.3);
+  } else {
+    cam.lookYaw = clamp(cam.lookYaw - dx * 0.005, -Math.PI, Math.PI);
+    cam.lookPitch = clamp(cam.lookPitch - dy * 0.004, -1.2, 1.2);
+  }
+});
+const endDrag = e => { cpPointerUp(e); if (dragPt && dragPt.id === e.pointerId) { dragPt = null; cam.dragging = false; } };
+glCanvas.addEventListener('pointerup', endDrag);
+glCanvas.addEventListener('pointercancel', endDrag);
+glCanvas.addEventListener('dblclick', () => { if (cam.mode === 'cockpit') { cam.lookYaw = cam.lookPitch = 0; CPIT.fov = 55; } });
+glCanvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (cpWheel(e)) return;
+  if (game.state === 'flying') sim.thr = clamp(sim.thr - Math.sign(e.deltaY) * 0.05, 0, 1);
+  else if (cam.mode === 'orbit') cam.dist = clamp(cam.dist * (e.deltaY > 0 ? 1.1 : 0.9), 8, 120);
+}, { passive: false });
+
+// touch controls
+function enableTouch() {
+  if (game.touch) return;
+  game.touch = true;
+  applyQuality();
+  if (game.state === 'flying') $('touch').hidden = false;
+}
+if (matchMedia('(pointer: coarse)').matches) game.touch = true;
+function applyQuality() { props.treeR = game.touch ? 1600 : 2400; props.center = [1e9, 0, 1e9]; }
+(() => {
+  const stick = $('stick'), knob = $('stick-knob');
+  const setStick = e => {
+    const r = stick.getBoundingClientRect(), rad = r.width / 2;
+    let x = (e.clientX - (r.left + rad)) / (rad * 0.8), y = (e.clientY - (r.top + rad)) / (rad * 0.8);
+    const l = Math.hypot(x, y); if (l > 1) { x /= l; y /= l; }
+    touchIn.x = x; touchIn.y = y;
+    knob.style.transform = `translate(${x * rad * 0.8}px, ${y * rad * 0.8}px)`;
+  };
+  stick.addEventListener('pointerdown', e => { touchIn.stickOn = true; stick.setPointerCapture(e.pointerId); setStick(e); e.preventDefault(); });
+  stick.addEventListener('pointermove', e => { if (touchIn.stickOn) setStick(e); });
+  const release = () => { touchIn.stickOn = false; touchIn.x = touchIn.y = 0; knob.style.transform = ''; };
+  stick.addEventListener('pointerup', release); stick.addEventListener('pointercancel', release);
+  const thr = $('thr');
+  let thrOn = false;
+  const setThr = e => { const r = thr.getBoundingClientRect(); sim.thr = clamp(1 - (e.clientY - r.top) / r.height, 0, 1); };
+  thr.addEventListener('pointerdown', e => { thrOn = true; thr.setPointerCapture(e.pointerId); setThr(e); e.preventDefault(); });
+  thr.addEventListener('pointermove', e => { if (thrOn) setThr(e); });
+  thr.addEventListener('pointerup', () => { thrOn = false; }); thr.addEventListener('pointercancel', () => { thrOn = false; });
+  for (const btn of document.querySelectorAll('#touch [data-act]')) {
+    const act = btn.dataset.act;
+    if (act === 'brake') {
+      btn.addEventListener('pointerdown', e => { touchIn.brake = true; btn.classList.add('on'); e.preventDefault(); });
+      for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) btn.addEventListener(ev, () => { touchIn.brake = false; btn.classList.remove('on'); });
+    } else btn.addEventListener('click', () => doAction(act));
+  }
+})();
+
+// ---------- game controller (PS5 DualSense and other "standard" gamepads) ----------
+// flying: left stick = yoke, right stick X = rudder, right stick Y = trim, R2/L2 = throttle up/down,
+// L1/R1 = rudder, × brake, ○ flaps down, □ flaps up, △ camera, Create gear, Options pause,
+// D-pad ↑↓ trim, ← map, → analog/glass instruments, L3 level wings, R3 auto rudder, touch pad physics view.
+// menus: D-pad / left stick move between buttons, × press, ○ back (Esc).
+const PAD = { known: null, navT: 0, navDir: '', helpShown: false };
+const padVisible = e => !!e && !e.hidden && !e.closest('[hidden]') && e.getClientRects().length > 0;
+function padScreenRoot() {
+  for (const id of ['ai', 'book', 'inst-tut', 'read-quiz', 'sch-quiz', 'sch-debrief', 'sch-pause', 'sch-atc', 'sch-check', 'school', 'guide', 'map-screen', 'result', 'menu', 'tut']) { const e = $(id); if (padVisible(e)) return e; }
+  return null;
+}
+function padNav(dir) {
+  const root = padScreenRoot(); if (!root) return;
+  const els = [...root.querySelectorAll('button, select, input, textarea, [tabindex="0"], summary')].filter(e => !e.disabled && padVisible(e));
+  if (!els.length) return;
+  let i = els.indexOf(document.activeElement);
+  if (i < 0) i = dir > 0 ? -1 : els.length;
+  const n = els[clamp(i + dir, 0, els.length - 1)];

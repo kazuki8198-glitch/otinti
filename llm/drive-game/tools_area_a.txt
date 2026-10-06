@@ -1,0 +1,2071 @@
+# tools/area_a/ のスクリプト（22 本）
+
+
+===== tools/area_a/README.md =====
+# Area A data (models/area/area_a.bin)
+
+Kannai – Minato Mirai – Yokohama Station roads outside PLATEAU's LOD3 block, made from:
+
+- PLATEAU 横浜市 2024 交通（道路）LOD1 (MVT z16) road areas, CC BY 4.0
+- GSI 基盤地図 DEM 5A (dem5a_png, z15), heights + 36.28 m (geoid, matched to the LOD3 roads)
+- OpenStreetMap (© OpenStreetMap contributors, ODbL): lanes, one-way, crossings, signals, trees
+
+Order: `roads1.py` (merge road polygons) → `roads2.py` (LOD3 roads' footprint, left out) → `roads3.py`
+(carriageway / pavements) → `hgt.py` (DEM grid; uses `build.py`'s fill) → `paint3.py` (paint, crossings, trees)
+→ `build3.py` (pack). Inputs (tiles, osm_ways.json, osm_nodes.json) are fetched as described in the scripts.
+
+## v2 (ARA2, current): one height for every road, decks, furniture
+
+Inputs as above, plus PLATEAU 橋梁 LOD2 deck points (`brid_pts.py` → `brid_pts.pkl`). After `roads1.py`–`roads3.py` and `hgt.py`:
+
+1. `build4.py` — ways and their profiles (`ways.py`: ground / bridge / tunnel, the expressway graded, nodes shared at one
+   height), road areas (PLATEAU's, holes filled from OSM centrelines), carriageway / pavements, surfaces (`roadheight.py`), kerbs
+2. `build4b.py` — decks (bridges, viaducts, the expressway, tunnels; parapets, girders, piers), paint projected on the final
+   surfaces, crossings, stop lines, trees, the ground; writes `area_a.bin`
+3. `build4c.py` — street furniture and wires, added to `area_a.bin` (rerun from step 2)
+4. `test_area.py area_a.bin` — regression checks; `route.py <from e,n> <to e,n> out.json [ground cost]` makes a route over the
+   ways for `tools/browser/routetest.js` (the page's own ground-finding along it: no snapping to another level)
+
+
+===== tools/area_a/b3dm.py =====
+# read a PLATEAU tran b3dm: positions (ECEF, with RTC), triangles, batch ids, batch table
+import struct, json, numpy as np, DracoPy
+def read(path):
+    b = open(path, 'rb').read()
+    magic, ver, blen, ftj, ftb, btj, btb = struct.unpack('<4sIIIIII', b[:28])
+    o = 28
+    ft = json.loads(b[o:o+ftj].decode('utf8').rstrip(' \x00')) if ftj else {}
+    o += ftj + ftb
+    bt = json.loads(b[o:o+btj].decode('utf8').rstrip(' \x00')) if btj else {}
+    o += btj + btb
+    glb = b[o:]
+    jl = struct.unpack('<I', glb[12:16])[0]
+    gj = json.loads(glb[20:20+jl])
+    bin_off = 20 + jl
+    bl = struct.unpack('<I', glb[bin_off:bin_off+4])[0]
+    binc = glb[bin_off+8:bin_off+8+bl]
+    rtc = gj.get('extensions', {}).get('CESIUM_RTC', {}).get('center', [0, 0, 0])
+    out = []
+    for mi, m in enumerate(gj['meshes']):
+        for p in m['primitives']:
+            ext = p.get('extensions', {}).get('KHR_draco_mesh_compression')
+            if ext:
+                bv = gj['bufferViews'][ext['bufferView']]
+                data = binc[bv.get('byteOffset', 0): bv.get('byteOffset', 0) + bv['byteLength']]
+                dm = DracoPy.decode(data)
+                pos = np.array(dm.points, dtype=np.float64).reshape(-1, 3)
+                faces = np.array(dm.faces, dtype=np.int64).reshape(-1, 3)
+                bid = None
+                aid = ext['attributes'].get('_BATCHID')
+                for a in dm.attributes if hasattr(dm, 'attributes') else []:
+                    if a.get('unique_id') == aid:
+                        bid = np.array(a['data']).reshape(-1).astype(np.int64)
+                out.append(dict(pos=pos, faces=faces, bid=bid, mat=p.get('material')))
+    # node transforms
+    return dict(ft=ft, bt=bt, gltf=gj, rtc=np.array(rtc), prims=out)
+
+
+===== tools/area_a/brid_pts.py =====
+# PLATEAU road bridges (brid LOD2) as deck-top height samples: per 4 m cell, the highest point of each road bridge
+import sys, glob, json, subprocess, numpy as np, pickle
+sys.path.insert(0, '../tran'); import b3dm, geo
+pts = []
+for f in sorted(glob.glob('../brid/l2_*.b3dm')):
+    r = b3dm.read(f); fn = r['bt'].get('brid:function', [])
+    for p in r['prims']:
+        P = p['pos'][:, [0, 2, 1]] * np.array([1, -1, 1]) + r['rtc']; lat, lon, h = geo.geodetic(P); L = geo.enu(lat, lon, h)
+        for b in np.unique(p['bid']):
+            if b >= len(fn) or fn[b] != '道路橋': continue
+            q = L[p['bid'] == b]; key = np.floor(q[:, :2] / 4).astype(int); d = {}
+            for k, row in zip(map(tuple, key), q):
+                if k not in d or row[2] > d[k][2]: d[k] = row
+            pts += list(d.values())
+BR = np.array(pts); print('deck samples', len(BR)); pickle.dump(BR, open('brid_pts.pkl', 'wb'))
+
+
+===== tools/area_a/build.py =====
+# area A (Kannai - Minato Mirai - Yokohama Station): the roads outside PLATEAU's LOD3 block, made from its LOD1 road
+# areas, the GSI 5 m DEM, and OpenStreetMap (lanes, one-way, crossings, signals, trees). Output: one binary file of
+# chunks (carriageway, pavement, kerb faces, paint) in east/north/up metres from the Kannai spot, the ground grid, trees.
+import pickle, json, math, struct, sys, numpy as np, time
+import geo, mapbox_earcut as earcut
+from shapely.geometry import box, Polygon, LineString, Point
+from shapely.ops import unary_union
+from shapely.prepared import prep
+from shapely import STRtree
+T0=time.time()
+GEOID=36.28
+carriage,side,wide,narrow=pickle.load(open('CS.pkl','rb'))
+E0,E1,N0,N1=-2700.,1000.,-1000.,3050.
+# ---- heights: DEM on a 5 m grid in east/north; water (no data) kept apart; filled copy for roads over water ----
+G=5.0; ge=np.arange(E0,E1+G/2,G); gn=np.arange(N0,N1+G/2,G); EE,NN=np.meshgrid(ge,gn)
+P=geo.O+EE[...,None]*geo.Ev+NN[...,None]*geo.Nv
+lat,lon,_=geo.geodetic(P)
+D=geo.dem(lat,lon); water=np.isnan(D)
+def fill(a):
+    a=a.copy(); m=~np.isnan(a); L=[(a.copy(),m.astype(float))]
+    while L[-1][0].shape[0]>1 or L[-1][0].shape[1]>1:
+        v,w=L[-1]; h,wd=v.shape; h2,w2=(h+1)//2,(wd+1)//2
+        vp=np.zeros((h2*2,w2*2)); wp=np.zeros((h2*2,w2*2)); vp[:h,:wd]=np.nan_to_num(v)*w; wp[:h,:wd]=w
+        vs=vp.reshape(h2,2,w2,2).sum((1,3)); ws=wp.reshape(h2,2,w2,2).sum((1,3))
+        L.append((np.where(ws>0,vs/np.maximum(ws,1e-9),0),(ws>0).astype(float)))
+    for l in range(len(L)-2,-1,-1):
+        v,w=L[l]; c,_=L[l+1]; h,wd=v.shape
+        up=np.repeat(np.repeat(c,2,0),2,1)[:h,:wd]
+        L[l]=(np.where(w>0,v,up),np.ones_like(w))
+    return L[0][0]
+Df=fill(D)
+def hgrid(e,n,arr):
+    fi=np.clip((np.asarray(e)-E0)/G,0,len(ge)-1.001); fj=np.clip((np.asarray(n)-N0)/G,0,len(gn)-1.001)
+    i=np.floor(fi).astype(int); j=np.floor(fj).astype(int); u=fi-i; v=fj-j
+    return (arr[j,i]*(1-u)+arr[j,i+1]*u)*(1-v)+(arr[j+1,i]*(1-u)+arr[j+1,i+1]*u)*v
+# orthometric -> 'up' in the Kannai frame (the earth's curve included): up = u0(e,n) + h_ell, u0 = up of h=0
+U0=np.einsum('ijk,k->ij',P-geo.O,geo.Uv)            # (up of the ellipsoid surface point? no: P has u=0) -> recompute below
+Pe=geo.ecef(lat,lon,np.zeros_like(lat)); U0=np.einsum('ijk,k->ij',Pe-geo.O,geo.Uv)   # up of the ellipsoid (h=0) under each grid point
+def up(e,n,h_orth): return hgrid(e,n,U0)+h_orth+GEOID
+def roadh(e,n): return up(e,n,hgrid(e,n,Df))
+print('heights', time.time()-T0)
+# ---- surfaces: cut into 16 m cells, rings sampled every 4 m, triangulated ----
+def densify(c,step=4.0):
+    c=np.asarray(c)[:,:2]; out=[]
+    for a,b in zip(c[:-1],c[1:]):
+        k=max(1,int(math.ceil(np.hypot(*(b-a))/step)))
+        for t in range(k): out.append(a+(b-a)*t/k)
+    return np.array(out)
+def geoms(g):
+    if g.is_empty: return []
+    if g.geom_type=='Polygon': return [g]
+    if hasattr(g,'geoms'): return [x for h in g.geoms for x in geoms(h)]
+    return []
+CH=400.0
+chunks={}
+def chunk(e,n): return (int(math.floor((e-E0)/CH)),int(math.floor((n-N0)/CH)))
+def C(k):
+    if k not in chunks: chunks[k]={'carr':([],[]),'side':([],[]),'kerb':([],[]),'paint':([],[],[])}
+    return chunks[k]
+def add_surface(geom,layer,lift):
+    cell=16.0; tree=None
+    for poly in geoms(geom):
+        x0,y0,x1,y1=poly.bounds
+        pp=prep(poly)
+        for i in range(int(math.floor(x0/cell)),int(math.floor(x1/cell))+1):
+            for j in range(int(math.floor(y0/cell)),int(math.floor(y1/cell))+1):
+                b=box(i*cell,j*cell,(i+1)*cell,(j+1)*cell)
+                if not pp.intersects(b): continue
+                for q in geoms(poly.intersection(b)):
+                    if q.area<0.05: continue
+                    rings=[densify(q.exterior.coords)]+[densify(h.coords) for h in q.interiors]
+                    rings=[r for r in rings if len(r)>=3]
+                    if not rings: continue
+                    V=np.concatenate(rings); ends=np.cumsum([len(r) for r in rings]).astype(np.uint32)
+                    try: tri=earcut.triangulate_float64(V,ends)
+                    except Exception: continue
+                    if len(tri)==0: continue
+                    cx,cy=q.representative_point().coords[0]; ch=C(chunk(cx,cy))[layer]
+                    base=sum(len(v) for v in ch[0])
+                    h=roadh(V[:,0],V[:,1])+lift
+                    ch[0].append(np.stack([V[:,0],V[:,1],h],1).astype(np.float32)); ch[1].append((np.asarray(tri,np.uint32)+base))
+add_surface(carriage,'carr',0.0); print('carriage', time.time()-T0)
+add_surface(side,'side',0.15); print('pavements', time.time()-T0)
+# ---- kerb faces: every ring edge of the pavements (0.15 up, down to 0.45 under the road) and of the carriageway
+# (down 0.45), facing away from their surface ----
+def add_faces(geom,top,drop):
+    for poly in geoms(geom):
+        poly=poly.buffer(0)
+        for q in geoms(poly):
+            from shapely.geometry.polygon import orient
+            q=orient(q,1.0)    # exterior CCW, holes CW: the surface on the left of every edge
+            for ring in [q.exterior]+list(q.interiors):
+                c=densify(ring.coords); c=np.vstack([c,c[:1]])
+                for a,b in zip(c[:-1],c[1:]):
+                    d=b-a; l=np.hypot(*d)
+                    if l<1e-3: continue
+                    nx,ny=d[1]/l,-d[0]/l       # (right of the edge: away from the surface)
+                    ha,hb=roadh(np.array([a[0],b[0]]),np.array([a[1],b[1]]))
+                    ch=C(chunk((a[0]+b[0])/2,(a[1]+b[1])/2))['kerb']; base=sum(len(v) for v in ch[0])
+                    V=np.array([[a[0],a[1],ha+top],[b[0],b[1],hb+top],[b[0],b[1],hb-drop],[a[0],a[1],ha-drop]],np.float32)
+                    ch[0].append(V); ch[1].append(np.array([0,2,1,0,3,2],np.uint32)+base)
+add_faces(side,0.15,0.45); add_faces(carriage,0.0,0.45); print('kerbs', time.time()-T0)
+pickle.dump(dict(chunks=chunks,G=(E0,E1,N0,N1,G),D=D,Df=Df,U0=U0,water=water),open('built1.pkl','wb'))
+print('done', time.time()-T0, 'chunks', len(chunks))
+
+
+===== tools/area_a/build3.py =====
+# area A, compact: surfaces (simplified, 24 m cells, triangulated), kerb and edge faces as polylines, paint as polylines and
+# rectangles, trees, ground grid; positions in cm from each 400 m chunk's middle (Int16), indices Uint16
+import pickle, json, math, struct, numpy as np, time, os, geo, mapbox_earcut as earcut
+from shapely.geometry import box, Point, LineString
+from shapely.prepared import prep
+from shapely.ops import unary_union
+T0=time.time()
+H=pickle.load(open('hgt.pkl','rb')); E0,E1,N0,N1,G=H['G']; Df=H['Df']; U0=H['U0']; water=H['water']
+PA=pickle.load(open('paint.pkl','rb'))
+carriage,side,wide,narrow=pickle.load(open('CS.pkl','rb'))
+GEOID=36.28; CH=400.0
+carriage=carriage.simplify(0.12).buffer(0); side=side.simplify(0.12).buffer(0)
+print('simplified', time.time()-T0)
+def hgrid(e,n,arr):
+    fi=np.clip((np.asarray(e,float)-E0)/G,0,arr.shape[1]-1.001); fj=np.clip((np.asarray(n,float)-N0)/G,0,arr.shape[0]-1.001)
+    i=np.floor(fi).astype(int); j=np.floor(fj).astype(int); u=fi-i; v=fj-j
+    return (arr[j,i]*(1-u)+arr[j,i+1]*u)*(1-v)+(arr[j+1,i]*(1-u)+arr[j+1,i+1]*u)*v
+def roadh(e,n): return hgrid(e,n,U0)+hgrid(e,n,Df)+GEOID
+def ck(e,n): return (int(math.floor((e-E0)/CH)),int(math.floor((n-N0)/CH)))
+chunks={}
+def C(k):
+    if k not in chunks: chunks[k]={'carr':[],'side':[],'kerb':[],'paint':[],'rect':[]}
+    return chunks[k]
+def geoms(g):
+    if g.is_empty: return []
+    if g.geom_type=='Polygon': return [g]
+    return [x for h in getattr(g,'geoms',[]) for x in geoms(h)]
+def densify(c,step):
+    c=np.asarray(c)[:,:2]; out=[]
+    for a,b in zip(c[:-1],c[1:]):
+        k=max(1,int(math.ceil(np.hypot(*(b-a))/step)))
+        for t in range(k): out.append(a+(b-a)*t/k)
+    return np.array(out)
+def surfaces(geom,layer,lift,cell=24.0):
+    for poly in geoms(geom):
+        x0,y0,x1,y1=poly.bounds; pp=prep(poly)
+        for i in range(int(math.floor(x0/cell)),int(math.floor(x1/cell))+1):
+            for j in range(int(math.floor(y0/cell)),int(math.floor(y1/cell))+1):
+                b=box(i*cell,j*cell,(i+1)*cell,(j+1)*cell)
+                if not pp.intersects(b): continue
+                for q in geoms(poly.intersection(b) if not pp.contains(b) else b):
+                    if q.area<0.05: continue
+                    rings=[densify(q.exterior.coords,6.0)]+[densify(h.coords,6.0) for h in q.interiors]
+                    rings=[r for r in rings if len(r)>=3]
+                    if not rings: continue
+                    V=np.concatenate(rings); ends=np.cumsum([len(r) for r in rings]).astype(np.uint32)
+                    try: tri=np.asarray(earcut.triangulate_float64(V,ends),np.uint32)
+                    except Exception: continue
+                    if len(tri)==0: continue
+                    cx,cy=q.representative_point().coords[0]
+                    C(ck(cx,cy))[layer].append((np.column_stack([V,roadh(V[:,0],V[:,1])+lift]),tri))
+surfaces(carriage,'carr',0.0); print('carr',time.time()-T0)
+surfaces(side,'side',0.15); print('side',time.time()-T0)
+# faces: pavement rings (all), carriageway edges that aren't against a pavement; ordered with the surface on the left
+pside=prep(side); pcarr=prep(carriage)
+def lines_of(g):
+    if g.is_empty: return []
+    if g.geom_type in ('LineString','LinearRing'): return [g]
+    return [x for h in getattr(g,'geoms',[]) for x in lines_of(h)]
+def faces(lines,surf,kind):
+    n=0
+    for ln in lines:
+        c=densify(np.asarray(ln.coords),8.0); c=np.vstack([c,np.asarray(ln.coords)[-1:,:2]])
+        if len(c)<2: continue
+        # which side is the surface: a point 0.3 m to the left of the middle of the longest segment
+        k=int(np.argmax(np.hypot(*np.diff(c,axis=0).T))); a,b=c[k],c[k+1]; d=(b-a)/max(np.hypot(*(b-a)),1e-9)
+        if not surf.contains(Point(*(0.5*(a+b)+np.array([-d[1],d[0]])*0.3))): c=c[::-1]
+        h=roadh(c[:,0],c[:,1])
+        P=np.column_stack([c,h])
+        # cut into chunks
+        ks=[ck(*((P[i,:2]+P[i+1,:2])/2)) for i in range(len(P)-1)]
+        s=0
+        for i in range(1,len(ks)+1):
+            if i==len(ks) or ks[i]!=ks[s]:
+                C(ks[s])['kerb'].append((P[s:i+1],kind)); s=i; n+=1
+    return n
+side_lines=[l for p in geoms(side) for l in [p.exterior]+list(p.interiors)]
+print('pavement faces',faces(side_lines,pside,0), time.time()-T0)
+cb=unary_union([LineString(r.coords) for p in geoms(carriage) for r in [p.exterior]+list(p.interiors)])
+cb=cb.difference(side.buffer(0.25))
+print('carriage faces',faces(lines_of(cb),pcarr,1), time.time()-T0)
+for pts,dash in PA['LINES']:
+    P=np.column_stack([pts,roadh(pts[:,0],pts[:,1])+0.03])
+    m=pts.mean(0); C(ck(*m))['paint'].append((P,dash))
+for R in PA['RECTS']:
+    C(ck(*R.mean(0)))['rect'].append(np.column_stack([R,roadh(R[:,0],R[:,1])+0.03]))
+print('paint', time.time()-T0)
+# ---- pack ----
+bufs=[]; off=[0]
+def addbuf(a):
+    b=np.ascontiguousarray(a).tobytes(); pad=(-len(b))%4; bufs.append(b+b'\0'*pad); o=off[0]; off[0]+=len(b)+pad; return [o,len(b)]
+GU=np.where(water,U0+GEOID-3.0,U0+Df+GEOID-0.35)
+head={'v':1,'geoid':GEOID,'chunk':CH,'e0':E0,'n0':N0,'grid':{'e0':E0,'n0':N0,'step':G,'nx':int(GU.shape[1]),'ny':int(GU.shape[0]),'b':addbuf(np.round(GU*100).astype(np.int16))},
+      'water':float(np.median(U0)+GEOID),'trees':addbuf(PA['TREES'].astype(np.float32)),'chunks':[]}
+def q(P,o): return np.round((np.asarray(P)-o)*100).astype(np.int16)
+tot=collections=None
+stats={'carr':0,'side':0,'kerbPts':0,'paintPts':0,'rects':0}
+for (ci,cj),c in sorted(chunks.items()):
+    o=np.array([E0+(ci+0.5)*CH,N0+(cj+0.5)*CH,0.0]); us=[p[0][:,2].mean() for L in ('carr','side') for p in c[L]]; o[2]=round(float(np.mean(us)) if us else 0.0,2)
+    rec={'i':ci,'j':cj,'o':o.tolist()}
+    for L in ('carr','side'):
+        parts=[]; V=[]; I=[]; nv=0
+        for P,tri in c[L]:
+            if nv+len(P)>65535:
+                parts.append({'v':addbuf(q(np.concatenate(V),o)),'i':addbuf(np.concatenate(I).astype(np.uint16))}); V=[]; I=[]; nv=0
+            V.append(P); I.append(tri+nv); nv+=len(P); stats[L]+=len(tri)//3
+        if V: parts.append({'v':addbuf(q(np.concatenate(V),o)),'i':addbuf(np.concatenate(I).astype(np.uint16))})
+        if parts: rec[L]=parts
+    for L,key in (('kerb','kerb'),('paint','paint')):
+        if not c[L]: continue
+        P=np.concatenate([p for p,_ in c[L]]); n=np.array([len(p) for p,_ in c[L]],np.uint32); k=np.array([int(f) for _,f in c[L]],np.uint8)
+        rec[key]={'p':addbuf(q(P,o)),'n':addbuf(n),'k':addbuf(k)}; stats['kerbPts' if L=='kerb' else 'paintPts']+=len(P)
+    if c['rect']:
+        rec['rect']=addbuf(q(np.concatenate(c['rect']),o)); stats['rects']+=len(c['rect'])
+    head['chunks'].append(rec)
+hj=json.dumps(head).encode(); hj+=b' '*((-len(hj))%4)
+with open('area_a.bin','wb') as f:
+    f.write(b'ARA1'); f.write(struct.pack('<I',len(hj))); f.write(hj)
+    for b in bufs: f.write(b)
+print(stats,'size MB',os.path.getsize('area_a.bin')/1e6,'chunks',len(chunks), time.time()-T0)
+
+
+===== tools/area_a/build4.py =====
+# Area A, v2: one height for every road surface, paint, deck and the car (ways.py); bridges, viaducts, tunnels and the
+# expressway as their own decks; ground roads from PLATEAU's road areas minus the decks' footprints where no ground road
+# runs below. Output: models/area/area_a.bin (format ARA2)
+import pickle, json, math, struct, numpy as np, time, os, sys, collections, geo, mapbox_earcut as earcut
+from shapely.geometry import box, Point, LineString, Polygon
+from shapely.prepared import prep
+from shapely.ops import unary_union
+import ways as WAYS
+T0 = time.time(); tick = lambda m: print(f'{time.time() - T0:7.1f}s {m}', flush=True)
+H = pickle.load(open('hgt.pkl', 'rb')); E0, E1, N0, N1, G = H['G']; Df, U0, water = H['Df'], H['U0'], H['water']
+GEOID = 36.28; CH = 400.0
+# the ground roads' height field: the DEM, smoothed over ~10 m (two passes of a 3x3 box): one source for the surfaces,
+# the paint, the ways' profiles and the car
+def box3(a): p = np.pad(a, 1, mode='edge'); return sum(p[1 + i:p.shape[0] - 1 + i, 1 + j:p.shape[1] - 1 + j] for i in (-1, 0, 1) for j in (-1, 0, 1)) / 9
+HS = box3(box3(Df))
+def hgrid(e, n, arr):
+    fi = np.clip((np.asarray(e, float) - E0) / G, 0, arr.shape[1] - 1.001); fj = np.clip((np.asarray(n, float) - N0) / G, 0, arr.shape[0] - 1.001)
+    i = np.floor(fi).astype(int); j = np.floor(fj).astype(int); u = fi - i; v = fj - j
+    return (arr[j, i] * (1 - u) + arr[j, i + 1] * u) * (1 - v) + (arr[j + 1, i] * (1 - u) + arr[j + 1, i + 1] * u) * v
+def demh(e, n): return hgrid(e, n, U0) + hgrid(e, n, HS) + GEOID
+BR = pickle.load(open('brid_pts.pkl', 'rb'))
+WL, fixed, _, _ = WAYS.load(dict(H, Df=HS), 'osm_ways.json', BR)
+from roadheight import RoadHeight
+roadh = RoadHeight([w for w in WL if w['kind'] == 'ground' and w['hw'] not in ('motorway', 'motorway_link') and w['L'] > 4], demh)
+tick(f'ways {len(WL)}')
+MOT = {'motorway', 'motorway_link'}
+def width_of(w):
+    if w['hw'] == 'motorway': n = w['lanes'] or 2; return n * 3.5 + 2.0
+    if w['hw'] == 'motorway_link': n = w['lanes'] or 1; return n * 3.5 + 2.5
+    n = w['lanes'] or (1 if w['oneway'] else 2); return max(6.0, n * 3.25 + 2.0)
+deck_ways = [w for w in WL if w['L'] > 4 and (w['kind'] != 'ground' or w['hw'] in MOT)]
+for w in deck_ways:
+    w['W'] = width_of(w); w['poly'] = LineString(w['xy']).buffer(w['W'] / 2, cap_style=2, join_style=2)
+ground_ways = [w for w in WL if w['L'] > 4 and w['kind'] == 'ground' and w['hw'] not in MOT]
+under = unary_union([LineString(w['xy']).buffer(width_of(w) / 2 + 1.0, cap_style=2) for w in ground_ways])
+remove = unary_union([w['poly'] for w in deck_ways if w['kind'] != 'tunnel']).difference(under)
+tick('footprints')
+# ---- ground roads: PLATEAU's areas minus the decks' own footprints; carriageway and pavements as before ----
+U = pickle.load(open('U.pkl', 'rb')).buffer(0); F3 = pickle.load(open('F3.pkl', 'rb'))
+# where PLATEAU has no road area under an OSM road (the edges of its data, gaps), a strip along the centreline (an
+# estimate: residential 5 m, tertiary 7 m, larger by their lanes); slivers along PLATEAU's own edges are dropped
+FILLW = {'residential': 5.0, 'unclassified': 5.0, 'living_street': 4.0, 'tertiary': 7.0, 'tertiary_link': 6.0}
+fill = unary_union([LineString(w['xy']).buffer(FILLW.get(w['hw'], width_of(w)) / 2) for w in ground_ways if w['hw'] in FILLW or w['hw'] in ('trunk', 'primary', 'secondary', 'trunk_link', 'primary_link', 'secondary_link')])
+fill = fill.difference(U).buffer(-1.0).buffer(1.0); U = U.union(fill).buffer(0)
+pickle.dump(fill, open('fill.pkl', 'wb')); tick(f'road areas filled from OSM (estimated): {fill.area:.0f} m2')
+U = U.difference(remove).buffer(-0.05).buffer(0.05).intersection(box(E0 + 10, N0 + 10, E1 - 10, N1 - 10))   # (inside the DEM's grid only)
+wide = U.buffer(-6.0, quad_segs=6).buffer(6.0, quad_segs=6).intersection(U)
+narrow = U.difference(wide).buffer(-0.05).buffer(0.05)
+carriage = unary_union([wide.buffer(-3.25, quad_segs=6), narrow]).difference(F3)
+side = U.difference(carriage.buffer(0.01)).difference(F3).buffer(-0.02).buffer(0.02)
+carriage = carriage.simplify(0.12).buffer(0); side = side.simplify(0.12).buffer(0)
+pickle.dump((carriage, side), open('CS2.pkl', 'wb'))
+tick('carriageway / pavements')
+def ck(e, n): return (int(math.floor((e - E0) / CH)), int(math.floor((n - N0) / CH)))
+chunks = {}
+def C(k):
+    if k not in chunks: chunks[k] = collections.defaultdict(list)
+    return chunks[k]
+def geoms(g):
+    if g.is_empty: return []
+    if g.geom_type == 'Polygon': return [g]
+    return [x for h in getattr(g, 'geoms', []) for x in geoms(h)]
+def densify(c, step):
+    c = np.asarray(c)[:, :2]; out = []
+    for a, b in zip(c[:-1], c[1:]):
+        k = max(1, int(math.ceil(np.hypot(*(b - a)) / step)))
+        for t in range(k): out.append(a + (b - a) * t / k)
+    return np.array(out)
+def surfaces(geom, layer, lift, cell=24.0):
+    for poly in geoms(geom):
+        x0, y0, x1, y1 = poly.bounds; pp = prep(poly)
+        for i in range(int(math.floor(x0 / cell)), int(math.floor(x1 / cell)) + 1):
+            for j in range(int(math.floor(y0 / cell)), int(math.floor(y1 / cell)) + 1):
+                b = box(i * cell, j * cell, (i + 1) * cell, (j + 1) * cell)
+                if not pp.intersects(b): continue
+                for q in geoms(poly.intersection(b) if not pp.contains(b) else b):
+                    if q.area < 0.05: continue
+                    rings = [densify(q.exterior.coords, 6.0)] + [densify(h.coords, 6.0) for h in q.interiors]
+                    rings = [r for r in rings if len(r) >= 3]
+                    if not rings: continue
+                    V = np.concatenate(rings); ends = np.cumsum([len(r) for r in rings]).astype(np.uint32)
+                    try: tri = np.asarray(earcut.triangulate_float64(V, ends), np.uint32)
+                    except Exception: continue
+                    if len(tri) == 0: continue
+                    cx, cy = q.representative_point().coords[0]
+                    C(ck(cx, cy))[layer].append((np.column_stack([V, roadh(V[:, 0], V[:, 1]) + lift]), tri))
+# ---- kerb cuts (estimated from OSM's marked crossings, not surveyed): at each end of a crossing on a ground road the
+# pavement comes down to 2 cm above the carriageway over 1.2 m, as wide as the crossing (3.6 m); its sides a step ----
+DRIVE = {'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'trunk_link', 'primary_link', 'secondary_link', 'tertiary_link'}
+Nd = json.load(open('osm_nodes.json'))['elements']
+xn = {nd['id'] for nd in Nd if nd['type'] == 'node' and (nd.get('tags', {}).get('highway') == 'crossing' or 'crossing' in nd.get('tags', {})) and nd.get('tags', {}).get('crossing') not in ('unmarked', 'no', 'informal')}
+pc0 = prep(carriage)
+def edge(q, v):                                                          # (where the carriageway ends from q along v)
+    if not pc0.contains(Point(*q)): return None
+    t0 = 0.0
+    for t in np.arange(0.5, 25.0, 0.5):
+        if not pc0.contains(Point(*(q + v * t))):
+            t1 = t
+            for _ in range(5):
+                m = (t0 + t1) / 2
+                if pc0.contains(Point(*(q + v * m))): t0 = m
+                else: t1 = m
+            return q + v * t1
+        t0 = t
+    return None
+ramps = []; taken = None
+for w in ground_ways:
+    if w['hw'] not in DRIVE: continue
+    p = w['p']
+    for k, nid in enumerate(w['nodes']):
+        if nid not in xn: continue
+        q = p[k]; a = p[max(0, k - 1)]; b = p[min(len(p) - 1, k + 1)]; d = b - a; L = np.hypot(*d)
+        if L < 1e-3: continue
+        T = d / L
+        for s_ in (np.array([-T[1], T[0]]), np.array([T[1], -T[0]])):
+            e = edge(q, s_)
+            if e is None: continue
+            g = Polygon([e - T * 1.8 - s_ * 0.3, e + T * 1.8 - s_ * 0.3, e + T * 1.8 + s_ * 1.2, e - T * 1.8 + s_ * 1.2]).intersection(side)
+            if taken is not None: g = g.difference(taken)
+            if g.area < 0.6 * 3.6 * 1.2: continue                        # (little pavement there)
+            ramps.append((g, e, s_)); taken = g if taken is None else taken.union(g)
+side_cut = side.difference(taken).buffer(0) if taken is not None else side
+surfaces(carriage, 'carr', 0.0); surfaces(side_cut, 'side', 0.15)
+for g, e, s_ in ramps:                                                   # (the ramps: from 2 cm at the kerb to the pavement's 15 cm)
+    for poly in geoms(g):
+        if poly.area < 0.05: continue
+        rings = [densify(poly.exterior.coords, 0.6)] + [densify(h.coords, 0.6) for h in poly.interiors]; rings = [r for r in rings if len(r) >= 3]
+        if not rings: continue
+        V = np.concatenate(rings); ends = np.cumsum([len(r) for r in rings]).astype(np.uint32)
+        try: tri = np.asarray(earcut.triangulate_float64(V, ends), np.uint32)
+        except Exception: continue
+        if len(tri) == 0: continue
+        f = np.clip((V - e) @ s_ / 1.2, 0, 1); cx, cy = poly.representative_point().coords[0]
+        C(ck(cx, cy))['side'].append((np.column_stack([V, roadh(V[:, 0], V[:, 1]) + 0.02 + 0.13 * f]), tri))
+tick(f'surfaces; kerb cuts {len(ramps)} (estimated)')
+pside = prep(side_cut); pcarr = prep(carriage)
+def lines_of(g):
+    if g.is_empty: return []
+    if g.geom_type in ('LineString', 'LinearRing'): return [g]
+    return [x for h in getattr(g, 'geoms', []) for x in lines_of(h)]
+def faces(lines, surf, kind):
+    for ln in lines:
+        c = densify(np.asarray(ln.coords), 8.0); c = np.vstack([c, np.asarray(ln.coords)[-1:, :2]])
+        if len(c) < 2: continue
+        k = int(np.argmax(np.hypot(*np.diff(c, axis=0).T))); a, b = c[k], c[k + 1]; d = (b - a) / max(np.hypot(*(b - a)), 1e-9)
+        if not surf.contains(Point(*(0.5 * (a + b) + np.array([-d[1], d[0]]) * 0.3))): c = c[::-1]
+        P = np.column_stack([c, roadh(c[:, 0], c[:, 1])])
+        ks = [ck(*((P[i, :2] + P[i + 1, :2]) / 2)) for i in range(len(P) - 1)]; s = 0
+        for i in range(1, len(ks) + 1):
+            if i == len(ks) or ks[i] != ks[s]: C(ks[s])['kerb'].append((P[s:i + 1], kind)); s = i
+faces([l for p in geoms(side_cut) for l in [p.exterior] + list(p.interiors)], pside, 0)
+cb = unary_union([LineString(r.coords) for p in geoms(carriage) for r in [p.exterior] + list(p.interiors)]).difference(side.buffer(0.25))
+faces(lines_of(cb), pcarr, 1)
+cbuf = carriage.buffer(0.3)
+for g, e, s_ in ramps:                                                   # (a ramp's front: a 2 cm kerb, kind 2)
+    for poly in geoms(g): faces(lines_of(poly.exterior.intersection(cbuf)), prep(poly), 2)
+tick('kerbs')
+pickle.dump(dict(chunks=dict(chunks), WL=WL, deck_ways=deck_ways, ground_ways=ground_ways), open('b4_stage1.pkl', 'wb'))
+tick('saved stage 1')
+
+
+===== tools/area_a/build4b.py =====
+# Area A, v2 part 2: decks (bridges, viaducts, the expressway, tunnels) with parapets, girders, piers, tunnel walls;
+# paint for ground roads (widths smoothed: no wobble) and for decks; crossings and stop lines; trees; the ground; pack
+import pickle, json, math, struct, numpy as np, time, os, collections, geo
+from shapely.geometry import Point
+from shapely.prepared import prep
+from PIL import Image, ImageDraw
+T0 = time.time(); tick = lambda m: print(f'{time.time() - T0:7.1f}s {m}', flush=True)
+H = pickle.load(open('hgt.pkl', 'rb')); E0, E1, N0, N1, G = H['G']; Df, U0, water = H['Df'], H['U0'], H['water']
+GEOID = 36.28; CH = 400.0
+def box3(a): p = np.pad(a, 1, mode='edge'); return sum(p[1 + i:p.shape[0] - 1 + i, 1 + j:p.shape[1] - 1 + j] for i in (-1, 0, 1) for j in (-1, 0, 1)) / 9
+HS = box3(box3(Df))
+def hgrid(e, n, arr):
+    fi = np.clip((np.asarray(e, float) - E0) / G, 0, arr.shape[1] - 1.001); fj = np.clip((np.asarray(n, float) - N0) / G, 0, arr.shape[0] - 1.001)
+    i = np.floor(fi).astype(int); j = np.floor(fj).astype(int); u = fi - i; v = fj - j
+    return (arr[j, i] * (1 - u) + arr[j, i + 1] * u) * (1 - v) + (arr[j + 1, i] * (1 - u) + arr[j + 1, i + 1] * u) * v
+def demh(e, n): return hgrid(e, n, U0) + hgrid(e, n, HS) + GEOID
+S1 = pickle.load(open('b4_stage1.pkl', 'rb')); chunks = collections.defaultdict(lambda: collections.defaultdict(list)); chunks.update({k: collections.defaultdict(list, v) for k, v in S1['chunks'].items()})
+WL, deck_ways, ground_ways = S1['WL'], S1['deck_ways'], S1['ground_ways']
+carriage, side = pickle.load(open('CS2.pkl', 'rb'))
+from roadheight import RoadHeight
+roadh = RoadHeight([w for w in ground_ways if w['L'] > 4], demh)
+def ck(e, n): return (int(math.floor((e - E0) / CH)), int(math.floor((n - N0) / CH)))
+def C(k): return chunks[k]
+def geoms(g):
+    if g.is_empty: return []
+    if g.geom_type == 'Polygon': return [g]
+    return [x for h in getattr(g, 'geoms', []) for x in geoms(h)]
+# ---- the carriageway raster (0.5 m), for measuring across ground roads ----
+R = 0.5; W_ = int((E1 - E0) / R) + 1; H_ = int((N1 - N0) / R) + 1
+M = np.zeros((H_, W_), bool)                                            # (each polygon on its own, its holes from it only)
+for p in geoms(carriage):
+    x0, y0, x1, y1 = p.bounds; i0 = max(0, int((x0 - E0) / R) - 1); i1 = min(W_, int((x1 - E0) / R) + 2); j0 = max(0, int((N1 - y1) / R) - 1); j1 = min(H_, int((N1 - y0) / R) + 2)
+    if i1 <= i0 or j1 <= j0: continue
+    im = Image.new('1', (i1 - i0, j1 - j0), 0); dr = ImageDraw.Draw(im); tp = lambda c: [((x - E0) / R - i0, (N1 - y) / R - j0) for x, y in c]
+    dr.polygon(tp(p.exterior.coords), fill=1)
+    for h in p.interiors: dr.polygon(tp(h.coords), fill=0)
+    M[j0:j1, i0:i1] |= np.asarray(im, dtype=bool)
+tick('raster')
+def inside(e, n):
+    i = np.round((np.asarray(e) - E0) / R).astype(int); j = np.round((N1 - np.asarray(n)) / R).astype(int)
+    ok = (i >= 0) & (j >= 0) & (i < W_) & (j < H_); out = np.zeros(np.shape(i), bool); out[ok] = M[j[ok], i[ok]]; return out
+def reach(e, n, dx, dy, maxd=30.0, step=0.25):
+    alive = inside(e, n); dist = np.zeros(len(e))
+    for k in range(1, int(maxd / step) + 1):
+        s = k * step; inn = inside(e + dx * s, n + dy * s); newly = alive & ~inn; dist[newly] = s - step / 2; alive &= inn
+        if not alive.any(): break
+    dist[alive] = maxd; return dist
+def smooth(a, k):
+    if len(a) < 3: return a
+    k = min(k, (len(a) - 1) // 2); return np.convolve(np.pad(a, k, mode='edge'), np.ones(2 * k + 1) / (2 * k + 1), mode='same')[k:-k] if k > 0 else a
+def runmed(a, k):
+    if len(a) < 3: return a
+    p = np.pad(a, k, mode='edge'); return np.array([np.median(p[i:i + 2 * k + 1]) for i in range(len(a))])
+# ---- geometry helpers: triangles wound to face a given way ----
+def tri_out(L, a, b, c, want):
+    a, b, c = np.asarray(a, float), np.asarray(b, float), np.asarray(c, float)
+    nrm = np.cross(b - a, c - a)
+    L.append((a, c, b) if np.dot(nrm, want) < 0 else (a, b, c))
+def quad_out(L, a, b, c, d, want): tri_out(L, a, b, c, want); tri_out(L, a, c, d, want)
+# all deck samples, hashed: is there another deck alongside (a merge, a diverge, the other carriageway)?
+for w in deck_ways:
+    t = np.gradient(w['xy'], axis=0); t /= np.linalg.norm(t, axis=1)[:, None] + 1e-9; w['t'] = t; w['l'] = np.column_stack([-t[:, 1], t[:, 0]])
+hashd = collections.defaultdict(list)
+from shapely.strtree import STRtree
+DP = [w['poly'] for w in deck_ways]; DT = STRtree(DP); n_pier = n_pier_skip = n_wall_cut = n_skirt_cut = 0
+def deck_near_below(c, h0, self_w):
+    """another deck within 1.5 m of this point, 0.3 to 4.5 m lower: a skirt hanging there would stand in its way"""
+    sq = Point(*c).buffer(1.5)
+    for j in DT.query(sq):
+        w2 = deck_ways[j]
+        if w2 is self_w or not DP[j].intersects(sq): continue
+        k = int(np.argmin(np.hypot(*(w2['xy'] - c).T)))
+        if h0 - 4.5 < w2['h'][k] < h0 - 0.3: return True
+    return False
+def deck_below(c, top, self_w, r):
+    """another deck under this point, lower than the pier's top by a metre or more, within r of it"""
+    sq = Point(*c).buffer(r, cap_style=3)
+    for j in DT.query(sq):
+        w2 = deck_ways[j]
+        if w2 is self_w or not DP[j].intersects(sq): continue
+        k = int(np.argmin(np.hypot(*(w2['xy'] - c).T)))
+        if w2['h'][k] < top - 1.0: return True
+    return False
+for wi, w in enumerate(deck_ways):
+    for j, (x, y) in enumerate(w['xy']): hashd[(int(x // 16), int(y // 16))].append((wi, j))
+def alongside(wi, P, h):
+    for di in (-1, 0, 1):
+        for dj in (-1, 0, 1):
+            for wj, j in hashd.get((int(P[0] // 16) + di, int(P[1] // 16) + dj), ()):
+                if wj == wi: continue
+                w2 = deck_ways[wj]; d = P - w2['xy'][j]
+                if abs(d @ w2['t'][j]) <= 1.3 and abs(d @ w2['l'][j]) < w2['W'] / 2 + 0.3 and abs(h - w2['h'][j]) < 1.8: return True
+    return False
+pcarr = prep(carriage)
+# sound walls (estimated): where OSM shows 2 or more buildings within 35 m of an expressway viaduct's side, its parapet
+# carries panels up to 3 m (osm_bldg.json beside the inputs, if there)
+BC = np.zeros((0, 2)); bhash = collections.defaultdict(list)
+if os.path.exists('osm_bldg.json'):
+    _c = []
+    for e_ in json.load(open('osm_bldg.json'))['elements']:
+        if e_['type'] == 'way' and 'building' in e_.get('tags', {}) and e_.get('geometry'):
+            a_ = np.array([[q_['lat'], q_['lon']] for q_ in e_['geometry']]); _c.append(geo.enu(a_[:, 0], a_[:, 1], np.zeros(len(a_)) + 40)[:, :2].mean(0))
+    BC = np.array(_c)
+    for k_, p_ in enumerate(BC): bhash[(int(p_[0] // 40), int(p_[1] // 40))].append(k_)
+def dense(p, side):
+    n_ = 0
+    for di in (-1, 0, 1):
+        for dj in (-1, 0, 1):
+            for k_ in bhash.get((int(p[0] // 40) + di, int(p[1] // 40) + dj), ()):
+                d_ = BC[k_] - p
+                if np.hypot(*d_) < 35 and d_ @ side > 3: n_ += 1
+    return n_ >= 2
+snd_n = 0
+def side_limits(wi, w):
+    """each sample's half-width to the left and to the right: where another deck runs parallel close by, under 4.5 m
+    above or below (side by side, not one over the other), the two meet between their centrelines instead of overlapping
+    (their widths are estimates: 2 lanes and shoulders, 9 m, for a carriageway that may be narrower)"""
+    xy, h, t, l = w['xy'], w['h'], w['t'], w['l']; n = len(xy); half = w['W'] / 2
+    hl = np.full(n, half); hr = np.full(n, half)
+    for i in range(n):
+        P = xy[i]
+        for di in (-1, 0, 1):
+            for dj in (-1, 0, 1):
+                for wj, j in hashd.get((int(P[0] // 16) + di, int(P[1] // 16) + dj), ()):
+                    if wj == wi: continue
+                    w2 = deck_ways[wj]
+                    if abs(t[i] @ w2['t'][j]) < 0.9 or abs(h[i] - w2['h'][j]) > 4.5: continue
+                    d = w2['xy'][j] - P; along = d @ t[i]; lat = d @ l[i]
+                    if abs(along) > 4 or abs(lat) < 1.0: continue          # (a merge's nose: both on one line)
+                    lim = max(1.6, abs(lat) * half / (half + w2['W'] / 2) + 0.05)
+                    if lat > 0: hl[i] = min(hl[i], lim)
+                    else: hr[i] = min(hr[i], lim)
+    return hl, hr
+est_samples = 0; deck_samples = 0; n_trim = 0
+for wi, w in enumerate(deck_ways):
+    xy, h, t, l = w['xy'], w['h'], w['t'], w['l']; n = len(xy); half = w['W'] / 2
+    if n < 2: continue
+    HL, HR = side_limits(wi, w); n_trim += int(np.sum((HL < half - 0.01) | (HR < half - 0.01)))
+    hs = lambda k, sgn: HL[k] if sgn > 0 else HR[k]
+    mot = w['hw'] in ('motorway', 'motorway_link'); tun = w['kind'] == 'tunnel'; brg = w['kind'] == 'bridge'
+    g = roadh(xy[:, 0], xy[:, 1]); deck_samples += n; est_samples += int(np.sum(w['est']))
+    side_w = 0.0 if mot else 2.0                                         # (ordinary bridges keep their pavements)
+    P3 = lambda i, off, dh, a=0.0: np.array([xy[i, 0] + l[i, 0] * off + t[i, 0] * a, xy[i, 1] + l[i, 1] * off + t[i, 1] * a, h[i] + dh])
+    U_ = np.array([0, 0, 1.0])
+    for i in range(n - 1):
+        k = ck(*((xy[i] + xy[i + 1]) / 2)); ch = C(k)
+        surf = []; conc = []; sidep = []
+        a0 = -0.6 if i == 0 else 0.0; a1 = 0.6 if i + 1 == n - 1 else 0.0       # (the ends overlap the next way's: no seam to fall through)
+        quad_out(surf, P3(i, HL[i], 0, a0), P3(i, -HR[i], 0, a0), P3(i + 1, -HR[i + 1], 0, a1), P3(i + 1, HL[i + 1], 0, a1), U_)
+        for sgn in (1, -1):
+            hv = min(hs(i, sgn), hs(i + 1, sgn)); o0 = sgn * hv; o1 = sgn * (hv + side_w); o2 = sgn * (hv + side_w + 0.25)
+            if side_w:
+                quad_out(sidep, P3(i, o0, 0.15, a0), P3(i, o1, 0.15, a0), P3(i + 1, o1, 0.15, a1), P3(i + 1, o0, 0.15, a1), U_)
+                quad_out(conc, P3(i, o0, 0), P3(i, o0, 0.15), P3(i + 1, o0, 0.15), P3(i + 1, o0, 0), np.array([*(-sgn * l[i]), 0]))
+            mid = (xy[i] + xy[i + 1]) / 2 + l[i] * sgn * (hv + side_w + 0.8)
+            wall = not alongside(wi, mid, (h[i] + h[i + 1]) / 2)
+            dh_ = (h[i] + h[i + 1]) / 2 - (g[i] + g[i + 1]) / 2
+            if wall and mot and not tun and -1.0 < dh_ < 2.5 and min(w['s'][i], w['s'][-1] - w['s'][i + 1]) < 40 and pcarr.contains(Point(*((xy[i] + xy[i + 1]) / 2 + l[i] * sgn * (half + side_w)))):
+                wall = False; n_wall_cut += 1                             # (where an expressway ramp comes down to meet a street, its wall would stand on the street's carriageway)
+            ht = 5.5 if tun else 1.1 if mot else 1.0
+            if tun:                                                       # (in a tunnel: up to the roof, or to the ground in an open cut)
+                gi = g[i]; ht = min(5.5, max(1.1, gi - h[i] + 0.3))
+            if wall:
+                base = 0.15 if side_w else 0.0
+                quad_out(conc, P3(i, o1, base), P3(i, o1, ht), P3(i + 1, o1, ht), P3(i + 1, o1, base), np.array([*(-sgn * l[i]), 0]))
+                quad_out(conc, P3(i, o1, ht), P3(i, o2, ht), P3(i + 1, o2, ht), P3(i + 1, o1, ht), U_)
+                sk = -1.8 if mot and brg else -1.0 if brg else 0
+                if sk and deck_near_below((xy[i] + xy[i + 1]) / 2 + l[i] * o2, (h[i] + h[i + 1]) / 2, w): sk = 0; n_skirt_cut += 1   # (another deck just under the edge: no skirt in its way)
+                quad_out(conc, P3(i, o2, ht), P3(i, o2, sk), P3(i + 1, o2, sk), P3(i + 1, o2, ht), np.array([*(sgn * l[i]), 0]))
+                if mot and brg and not tun and dense((xy[i] + xy[i + 1]) / 2 + l[i] * sgn * half, l[i] * sgn):
+                    snd = []; quad_out(snd, P3(i, o1 + sgn * 0.05, ht), P3(i, o1 + sgn * 0.05, 3.0), P3(i + 1, o1 + sgn * 0.05, 3.0), P3(i + 1, o1 + sgn * 0.05, ht), np.array([*(-sgn * l[i]), 0]))
+                    quad_out(snd, P3(i, o1 + sgn * 0.05, ht), P3(i, o1 + sgn * 0.05, 3.0), P3(i + 1, o1 + sgn * 0.05, 3.0), P3(i + 1, o1 + sgn * 0.05, ht), np.array([*(sgn * l[i]), 0]))
+                    ch['snd'].append(np.array(snd)); snd_n += 1
+        if brg:                                                           # (the deck's underside)
+            D = 1.8 if mot else 1.0; e_ = side_w + 0.25
+            if h[i] - D - g[i] > 0.4: quad_out(conc, P3(i, HL[i] + e_, -D), P3(i, -HR[i] - e_, -D), P3(i + 1, -HR[i + 1] - e_, -D), P3(i + 1, HL[i + 1] + e_, -D), -U_)
+        if tun and g[i] - h[i] > 5.8:                                     # (the roof, where it is under the ground)
+            o = half + 0.25; quad_out(conc, P3(i, o, 5.5), P3(i, -o, 5.5), P3(i + 1, -o, 5.5), P3(i + 1, o, 5.5), -U_)
+        ch['deck'].append(np.array(surf)); 
+        if sidep: ch['dside'].append(np.array(sidep))
+        if conc: ch['conc'].append(np.array(conc))
+    # piers under the expressway's viaducts, every 30 m, where there is room and no road below: neither a ground road's
+    # carriageway nor another deck passing lower (a ramp looping under the viaduct) within the pier's footing
+    if mot and brg:
+        for s0 in np.arange(15, w['s'][-1], 30.0):
+            i = int(np.searchsorted(w['s'], s0)); i = min(i, n - 1)
+            top = h[i] - 1.8; bot = g[i] - 0.5
+            c = np.array([xy[i, 0], xy[i, 1]]); a = 1.1; conc = []
+            if top - g[i] < 2.5: continue
+            if pcarr.intersects(Point(*c).buffer(a + 0.3, cap_style=3)) or deck_below(c, top, w, a + 0.8): n_pier_skip += 1; continue
+            n_pier += 1
+            for dx, dy in ((t[i], l[i]), (l[i], -t[i]), (-t[i], -l[i]), (-l[i], t[i])):
+                p0 = c + dx * a + dy * a; p1 = c + dx * a - dy * a
+                quad_out(conc, [*p0, bot], [*p1, bot], [*p1, top], [*p0, top], np.array([*dx, 0]))
+            C(ck(*c))['conc'].append(np.array(conc))
+    # paint on the deck: lane lines dashed, edge lines solid, a two-way bridge's middle line solid
+    lanes = w['lanes'] or (2 if w['hw'] == 'motorway' else 1 if (mot or w['oneway']) else 2)
+    sl = 1.25 if mot else 0.5; sr = 0.75 if mot else 0.5
+    left = HL - sl; right = -(HR - sr); lw = (left - right) / lanes                   # (per sample: narrowed beside another deck)
+    offs = [(left, False), (right, False)] + [(left - k * lw, True) for k in range(1, lanes)]
+    if not w['oneway'] and not mot: offs = [(left, False), (right, False), ((left + right) / 2, False)] + [(left - k * lw, True) for k in range(1, lanes) if k != lanes // 2]
+    for off, dash in offs:
+        pts = np.column_stack([xy[:, 0] + l[:, 0] * off, xy[:, 1] + l[:, 1] * off, h + 0.02])
+        C(ck(*xy[n // 2]))['paint'].append((pts, dash))
+tick(f'decks {len(deck_ways)} (samples {deck_samples}, estimated heights {est_samples}); sound wall segments {snd_n} (estimated); decks narrowed beside another {n_trim} samples; piers {n_pier}, left out for a road or a lower deck below {n_pier_skip}; low walls left off a street {n_wall_cut} segments; skirts left off over a lower deck {n_skirt_cut}')
+# ---- the ground roads' own surface, as a 1 m height raster made from their triangles (the paint is laid on it, so it
+# neither floats nor sinks where the triangles cut across the DEM) ----
+RS = 1.0; HX = int((E1 - E0) / RS) + 2; HY = int((N1 - N0) / RS) + 2; HR = np.full((HY, HX), np.nan, np.float32)
+for k, c in S1['chunks'].items():
+    for P, tri in c.get('carr', []):
+        T = P[tri.reshape(-1, 3)]
+        for a_, b_, c_ in T:
+            x0 = int(np.floor((min(a_[0], b_[0], c_[0]) - E0) / RS)); x1 = int(np.ceil((max(a_[0], b_[0], c_[0]) - E0) / RS))
+            y0 = int(np.floor((min(a_[1], b_[1], c_[1]) - N0) / RS)); y1 = int(np.ceil((max(a_[1], b_[1], c_[1]) - N0) / RS))
+            gx, gy = np.meshgrid(np.arange(x0, x1 + 1), np.arange(y0, y1 + 1)); px = E0 + gx * RS; py = N0 + gy * RS
+            v0 = b_[:2] - a_[:2]; v1 = c_[:2] - a_[:2]; d = v0[0] * v1[1] - v0[1] * v1[0]
+            if abs(d) < 1e-9: continue
+            u = ((px - a_[0]) * v1[1] - (py - a_[1]) * v1[0]) / d; v = (v0[0] * (py - a_[1]) - v0[1] * (px - a_[0])) / d
+            m = (u >= -0.02) & (v >= -0.02) & (u + v <= 1.02) & (gx >= 0) & (gy >= 0) & (gx < HX) & (gy < HY)
+            if m.any(): HR[gy[m], gx[m]] = (a_[2] + u * (b_[2] - a_[2]) + v * (c_[2] - a_[2]))[m]
+tick('road height raster')
+def surfh(e, n):
+    """the ground roads' surface under (e, n): bilinear in the raster; the DEM's road height where it has no road"""
+    e = np.asarray(e, float); n = np.asarray(n, float); fx = (e - E0) / RS; fy = (n - N0) / RS
+    i = np.clip(np.floor(fx).astype(int), 0, HX - 2); j = np.clip(np.floor(fy).astype(int), 0, HY - 2); u = fx - i; v = fy - j
+    q = np.stack([HR[j, i], HR[j, i + 1], HR[j + 1, i], HR[j + 1, i + 1]]); w = np.stack([(1 - u) * (1 - v), u * (1 - v), (1 - u) * v, u * v])
+    ok = ~np.isnan(q); ws = (w * ok).sum(0); val = (np.nan_to_num(q) * w).sum(0) / np.maximum(ws, 1e-9)
+    return np.where(ws > 0.05, val, roadh(e, n))
+# ---- paint on ground roads: centrelines measured against the carriageway, widths smoothed (a running median, then a
+# mean, over ~20 m): straight where the road is straight ----
+DRIVE = {'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'trunk_link', 'primary_link', 'secondary_link', 'tertiary_link'}
+MAJOR = {'trunk', 'primary', 'secondary', 'tertiary', 'trunk_link', 'primary_link', 'secondary_link', 'tertiary_link'}
+nodeuse = collections.Counter(); npos = {}
+for w in ground_ways:
+    if w['hw'] not in DRIVE: continue
+    p = w['p']
+    for nid, pt in zip(w['nodes'], p): nodeuse[nid] += 1; npos[nid] = pt
+junction = {nid for nid, c in nodeuse.items() if c >= 2}
+def runs(mask):
+    i = 0; n = len(mask)
+    while i < n:
+        if not mask[i]: i += 1; continue
+        j = i
+        while j < n and mask[j]: j += 1
+        if j - i >= 3: yield i, j
+        i = j
+nl = 0
+for w in ground_ways:
+    if w['hw'] not in DRIVE: continue
+    p = w['p']; seg = np.hypot(*np.diff(p, axis=0).T); L = np.concatenate([[0], np.cumsum(seg)])
+    if L[-1] < 8: continue
+    s = np.arange(0, L[-1], 1.0); x = np.interp(s, L, p[:, 0]); y = np.interp(s, L, p[:, 1])
+    tx = np.gradient(x); ty = np.gradient(y); tl = np.hypot(tx, ty) + 1e-9; tx /= tl; ty /= tl; lx, ly = -ty, tx
+    dl = reach(x, y, lx, ly); dr_ = reach(x, y, -lx, -ly); ins = inside(x, y); wt = dl + dr_
+    med = np.median(wt[ins]) if ins.any() else 0
+    if med < 5.5: continue
+    jd = np.full(len(s), 1e9)
+    for nid in w['nodes']:
+        if nid in junction: q = npos[nid]; jd = np.minimum(jd, np.hypot(x - q[0], y - q[1]))
+    ok = ins & (wt < med * 1.35 + 1.5) & (jd > 0.5 * med + 4) & (dl > 0.3) & (dr_ > 0.3)
+    # the road's edges, smoothed where they are measured; the middle and the width from them
+    dls = dl.copy(); drs = dr_.copy()
+    if ok.sum() > 5:
+        dls[ok] = smooth(runmed(dl[ok], 10), 6); drs[ok] = smooth(runmed(dr_[ok], 10), 6)
+    wts = dls + drs
+    lanes = w['lanes'] if w['lanes'] > 0 else max(1 if w['oneway'] else 2, int(round(med / 3.3)))
+    nf = lanes if w['oneway'] else int(w['tags'].get('lanes:forward', lanes // 2 if lanes > 1 else 1)); nb = 0 if w['oneway'] else max(1, lanes - nf)
+    lw = wts / max(lanes, 1)
+    offs = [(k, 'dash') for k in range(1, lanes)] if w['oneway'] else [(k, 'dash') for k in range(1, nf)] + [(nf, 'centre')] + [(nf + k, 'dash') for k in range(1, nb)]
+    for i, j in runs(ok):
+        for k, kind in offs:
+            o = dls[i:j] - k * lw[i:j]; xs = x[i:j] + lx[i:j] * o; ys = y[i:j] + ly[i:j] * o
+            pts = np.column_stack([xs, ys, surfh(xs, ys) + 0.025])[::2]
+            if kind == 'centre' and wts[i:j].mean() >= 11:
+                for d2 in (0.12, -0.12):
+                    q = pts.copy(); q[:, 0] += lx[i:j][::2] * d2; q[:, 1] += ly[i:j][::2] * d2; q[:, 2] = surfh(q[:, 0], q[:, 1]) + 0.025
+                    C(ck(*q[len(q) // 2, :2]))['paint'].append((q, False))
+            else: C(ck(*pts[len(pts) // 2, :2]))['paint'].append((pts, kind == 'dash'))
+            nl += 1
+        if w['hw'] in MAJOR and med >= 7:
+            for sg in (1, -1):
+                o = (dls[i:j] - 0.4) if sg == 1 else -(drs[i:j] - 0.4); xs = x[i:j] + lx[i:j] * o; ys = y[i:j] + ly[i:j] * o
+                pts = np.column_stack([xs, ys, surfh(xs, ys) + 0.025])[::2]; C(ck(*pts[len(pts) // 2, :2]))['paint'].append((pts, False)); nl += 1
+tick(f'ground paint lines {nl}')
+# ---- crossings and stop lines (OSM crossings on ground roads) ----
+Nd = json.load(open('osm_nodes.json'))['elements']
+cross = {nd['id']: nd for nd in Nd if nd['type'] == 'node' and (nd.get('tags', {}).get('highway') == 'crossing' or 'crossing' in nd.get('tags', {})) and nd.get('tags', {}).get('crossing') not in ('unmarked', 'no', 'informal')}
+sig = np.array([geo.enu(np.array([nd['lat']]), np.array([nd['lon']]), np.array([40.0]))[0, :2] for nd in Nd if nd['type'] == 'node' and nd.get('tags', {}).get('highway') == 'traffic_signals'])
+def rect(c, u, v):
+    Q = np.array([c, c + u, c + u + v, c + v]); C(ck(*Q.mean(0)))['rect'].append(np.column_stack([Q, surfh(Q[:, 0], Q[:, 1]) + 0.025]))
+nc = ns = 0; signals = []
+for w in ground_ways:
+    if w['hw'] not in DRIVE: continue
+    p = w['p']
+    for k, nid in enumerate(w['nodes']):
+        if nid not in cross: continue
+        q = p[k]; a = p[max(0, k - 1)]; b = p[min(len(p) - 1, k + 1)]; d = b - a; L = np.hypot(*d)
+        if L < 1e-3: continue
+        T = d / L; Lv = np.array([-T[1], T[0]])
+        dl = reach(np.array([q[0]]), np.array([q[1]]), Lv[0], Lv[1])[0]; dr_ = reach(np.array([q[0]]), np.array([q[1]]), -Lv[0], -Lv[1])[0]; wt = dl + dr_
+        if wt < 5.5 or wt > 45 or not inside(np.array([q[0]]), np.array([q[1]]))[0]: continue
+        cnt = int((wt - 1.0) // 0.9); o0 = -dr_ + (wt - (cnt * 0.9 - 0.45)) / 2
+        for i in range(cnt):                                              # (each stripe kept on the carriageway: shortened at a corner, else left out)
+            c0 = q + Lv * (o0 + i * 0.9)
+            for half_l in (2.0, 1.5, 1.0):
+                ends = [c0 + Lv * 0.225 + T * s_ * half_l for s_ in (-1, 1)] + [c0 + Lv * 0.225 - T * 0 * half_l]
+                if all(pcarr.contains(Point(*p_)) for p_ in [c0 - T * half_l, c0 + T * half_l, c0 + Lv * 0.45 - T * half_l, c0 + Lv * 0.45 + T * half_l]):
+                    rect(c0 - T * half_l, Lv * 0.45, T * (2 * half_l)); break
+        nc += 1
+        sg = cross[nid].get('tags', {}).get('crossing') == 'traffic_signals' or (len(sig) and np.min(np.hypot(*(sig - q).T)) < 30)
+        if not sg: continue
+        mid = dl - wt / 2
+        # stop lines: measured across the road where they lie (4.45 m before the crossing), not at the crossing: the road
+        # may be narrower there (else a line runs onto the pavement)
+        def across(c):
+            a_ = reach(np.array([c[0]]), np.array([c[1]]), Lv[0], Lv[1])[0]; b_ = reach(np.array([c[0]]), np.array([c[1]]), -Lv[0], -Lv[1])[0]; return a_, b_
+        c1 = q - T * 4.65; l1, r1 = across(c1)
+        if w['oneway']:
+            if l1 + r1 > 2: rect(c1 + Lv * (-r1 + 0.3), Lv * (l1 + r1 - 0.6), T * 0.45); ns += 1
+        else:
+            c2 = q + T * 4.2; l2, r2 = across(c2); m1 = (l1 - r1) / 2 + mid - (dl - dr_) / 2; m2 = (l2 - r2) / 2 + mid - (dl - dr_) / 2
+            if l1 - 0.3 - m1 > 1: rect(c1 + Lv * m1, Lv * (l1 - 0.3 - m1), T * 0.45); ns += 1
+            if m2 + r2 - 0.3 > 1: rect(c2 + Lv * (-r2 + 0.3), Lv * (m2 + r2 - 0.3), T * 0.45); ns += 1
+        signals.append((q, T, dl, dr_, w['oneway'], w['id']))
+pickle.dump(signals, open('signals_seed.pkl', 'wb'))
+tick(f'crossings {nc} stop lines {ns}')
+# ---- channelizing zones (導流帯), estimated from OSM's geometry, not surveyed: where a two-way road splits into a divided
+# pair (one one-way way leaving the node, one arriving, under 60° apart), the gore between the pair's lanes is hatched
+# (its outline and 0.45 m stripes at 45°, 2 m apart), out to 45 m or where a raised island (no carriageway) takes over ----
+from shapely.geometry import Polygon, LineString
+ends_at = collections.defaultdict(list)
+for w in ground_ways:
+    if w['hw'] in DRIVE and len(w['p']) >= 2: ends_at[w['nodes'][0]].append((w, 0)); ends_at[w['nodes'][-1]].append((w, -1))
+def run_from(w, end, maxd=45.0):
+    p = w['p'] if end == 0 else w['p'][::-1]; out = [p[0]]; d = 0.0
+    for a, b in zip(p[:-1], p[1:]):
+        l = float(np.hypot(*(b - a)))
+        if l < 1e-6: continue
+        if d + l >= maxd: out.append(a + (b - a) * (maxd - d) / l); break
+        out.append(b); d += l
+    return np.array(out)
+def unit(v): return v / max(float(np.hypot(*v)), 1e-9)
+nz = nzs = 0; zat = []
+for nid, lst in ends_at.items():
+    one = [(w, e) for w, e in lst if w['oneway']]; two = [(w, e) for w, e in lst if not w['oneway']]
+    if len(one) != 2 or not two or (one[0][1] == 0) == (one[1][1] == 0): continue
+    (wa, ea), (wb, eb) = one; A = run_from(wa, ea); B = run_from(wb, eb)
+    if len(A) < 3 or len(B) < 3: continue
+    ua, ub = unit(A[2] - A[0]), unit(B[2] - B[0])
+    if float(ua @ ub) < 0.5: continue
+    gore = Polygon(np.vstack([A, B[::-1]])).buffer(0)
+    for w_, P_ in ((wa, A), (wb, B)): gore = gore.difference(LineString(P_).buffer((w_['lanes'] or 1) * 3.1 / 2, cap_style=2))
+    gore = gore.intersection(carriage)
+    q = Point(*A[0]); bis = unit(ua + ub); sd = unit(bis + np.array([-bis[1], bis[0]])); nn = np.array([-sd[1], sd[0]])
+    for poly in geoms(gore):
+        if poly.area < 4.0 or poly.distance(q) > 12.0 or poly.buffer(-0.5).is_empty: continue
+        ring = np.asarray(poly.exterior.coords)[:, :2]; ring = np.vstack([ring, ring[:1]]) if np.hypot(*(ring[0] - ring[-1])) > 0.01 else ring
+        pts = []
+        for a, b in zip(ring[:-1], ring[1:]):
+            k = max(1, int(np.hypot(*(b - a)) / 1.0)); pts += [a + (b - a) * t / k for t in range(k)]
+        pts.append(ring[-1]); pts = np.array(pts)
+        C(ck(*pts.mean(0)))['paint'].append((np.column_stack([pts, surfh(pts[:, 0], pts[:, 1]) + 0.025]), False))
+        inner = poly.buffer(-0.3); c0 = np.array(poly.centroid.coords[0]); rr = float(np.hypot(*(np.array(poly.bounds[2:]) - poly.bounds[:2])))
+        for o in np.arange(-rr, rr, 2.0):
+            ln = LineString([c0 + nn * o - sd * rr, c0 + nn * o + sd * rr]).intersection(inner)
+            for seg in ([ln] if ln.geom_type == 'LineString' else list(getattr(ln, 'geoms', []))):
+                if seg.is_empty or seg.length < 0.6: continue
+                a, b = np.asarray(seg.coords)[0], np.asarray(seg.coords)[-1]
+                rect(a - nn * 0.225, b - a, nn * 0.45); nzs += 1
+        nz += 1; zat.append([round(float(c0[0]), 1), round(float(c0[1]), 1)])
+json.dump(zat, open('zebra_at.json', 'w'))                              # (where they are, for looking at them)
+tick(f'channelizing zones {nz} ({nzs} stripes, estimated)')
+def runs1(mask):
+    i = 0; n = len(mask)
+    while i < n:
+        if not mask[i]: i += 1; continue
+        j = i
+        while j < n and mask[j]: j += 1
+        yield i, j
+        i = j
+# ---- gutters: a 0.4 m concrete strip along the carriageway's edge (beside a kerb or a pavement's edge), on the road's
+# surface; only where the carriageway is on the kerb line's right ----
+ng = 0
+for k_, c_ in list(chunks.items()):
+    for P, kind in list(c_.get('kerb', [])):
+        if len(P) < 2: continue
+        d = np.diff(P[:, :2], axis=0); L_ = np.hypot(*d.T) + 1e-9; t_ = d / L_[:, None]; r_ = np.column_stack([t_[:, 1], -t_[:, 0]]); mid = (P[:-1, :2] + P[1:, :2]) / 2
+        okr = inside(mid[:, 0] + r_[:, 0] * 0.6, mid[:, 1] + r_[:, 1] * 0.6)
+        for i0, i1 in ((a_, b_) for a_, b_ in runs1(okr)):
+            seg = P[i0:i1 + 1, :2]; rr = np.vstack([r_[i0:i1], r_[i1 - 1:i1]]); g_ = seg + rr * 0.22
+            c_['gut'].append((np.column_stack([g_, surfh(g_[:, 0], g_[:, 1]) + 0.012]), False)); ng += 1
+tick(f'gutters {ng}')
+# ---- trees (as before: OpenStreetMap's, outside PLATEAU's own block), on the new heights ----
+# OSM's trees and tree rows (in PLATEAU's own vegetation block, VEG3, PLATEAU's are used instead); heights from the tags or 6.5-11.5 m
+VEG3 = (35.4424, 35.4505, 139.6329, 139.6431); tl = []
+Wy = json.load(open('osm_ways.json'))['elements']
+for nd in Nd:
+    t = nd.get('tags', {})
+    if nd['type'] == 'node' and t.get('natural') == 'tree' and not (VEG3[0] <= nd['lat'] <= VEG3[1] and VEG3[2] <= nd['lon'] <= VEG3[3]):
+        try: hh = float(str(t.get('height', '')).replace('m', '').strip())
+        except Exception: hh = 0
+        tl.append((*geo.enu(np.array([nd['lat']]), np.array([nd['lon']]), np.array([40.0]))[0, :2], hh))
+for wy in Wy:
+    if wy.get('tags', {}).get('natural') != 'tree_row' or not wy.get('geometry'): continue
+    a = np.array([[q['lat'], q['lon']] for q in wy['geometry']]); pp = geo.enu(a[:, 0], a[:, 1], np.zeros(len(a)) + 40)[:, :2]
+    L = np.concatenate([[0], np.cumsum(np.hypot(*np.diff(pp, axis=0).T))])
+    for s_ in np.arange(4, L[-1], 9.0):
+        lat0, lon0, _ = geo.geodetic(geo.O + np.interp(s_, L, pp[:, 0]) * geo.Ev + np.interp(s_, L, pp[:, 1]) * geo.Nv)
+        if not (VEG3[0] <= lat0 <= VEG3[1] and VEG3[2] <= lon0 <= VEG3[3]): tl.append((np.interp(s_, L, pp[:, 0]), np.interp(s_, L, pp[:, 1]), 0))
+TR = np.array(tl, float); TR = TR[(TR[:, 0] > E0) & (TR[:, 0] < E1) & (TR[:, 1] > N0) & (TR[:, 1] < N1) & ~inside(TR[:, 0], TR[:, 1])]
+TR[:, 2] = np.where(TR[:, 2] > 2, TR[:, 2], np.random.default_rng(7).uniform(6.5, 11.5, len(TR))); TR = np.column_stack([TR[:, :2], np.zeros(len(TR)), TR[:, 2]])
+ps = prep(side.buffer(0.5))
+on = np.array([ps.contains(Point(a, b)) for a, b in TR[:, :2]]); TR[:, 2] = roadh(TR[:, 0], TR[:, 1]) + np.where(on, 0.15, -0.2)
+# ---- pack (ARA2) ----
+bufs = []; off = [0]
+def addbuf(a):
+    b = np.ascontiguousarray(a).tobytes(); pad = (-len(b)) % 4; bufs.append(b + b'\0' * pad); o = off[0]; off[0] += len(b) + pad; return [o, len(b)]
+GU = np.where(water, U0 + GEOID - 3.0, U0 + HS + GEOID - 0.35)
+# the ground (lots, plazas) never above a road beside it: within 6 m of a road, at most the road's height less 0.35 m
+gy, gx = np.mgrid[0:GU.shape[0], 0:GU.shape[1]]; ge = E0 + gx * G; gn = N0 + gy * G
+fx = np.clip(((ge - E0) / RS).astype(int), 0, HX - 1); fy = np.clip(((gn - N0) / RS).astype(int), 0, HY - 1)
+lo = np.full(GU.shape, np.inf)
+for dy in range(-6, 7, 2):
+    for dx in range(-6, 7, 2):
+        v = HR[np.clip(fy + dy, 0, HY - 1), np.clip(fx + dx, 0, HX - 1)]; lo = np.fmin(lo, np.where(np.isnan(v), np.inf, v))
+GU = np.where(np.isfinite(lo), np.minimum(GU, lo - 0.35), GU)
+head = {'v': 2, 'geoid': GEOID, 'chunk': CH, 'e0': E0, 'n0': N0, 'grid': {'e0': E0, 'n0': N0, 'step': G, 'nx': int(GU.shape[1]), 'ny': int(GU.shape[0]), 'b': addbuf(np.round(GU * 100).astype(np.int16))},
+        'water': float(np.median(U0) + GEOID), 'trees': addbuf(TR.astype(np.float32)), 'chunks': [],
+        'stats': {'deckWays': len(deck_ways), 'deckSamples': deck_samples, 'estimatedSamples': est_samples},
+        'deckEnds': [[round(float(v), 1) for v in w['xy'][k]] for w in deck_ways for k in (0, -1)]}   # (where decks meet the ground: for the tests)
+def q(P, o): return np.round((np.asarray(P) - o) * 100).astype(np.int16)
+stats = collections.Counter()
+for (ci, cj), c in sorted(chunks.items()):
+    o = np.array([E0 + (ci + 0.5) * CH, N0 + (cj + 0.5) * CH, 0.0]); us = [p[0][:, 2].mean() for L in ('carr', 'side') for p in c.get(L, [])]; o[2] = round(float(np.mean(us)) if us else 0.0, 2)
+    rec = {'i': ci, 'j': cj, 'o': o.tolist()}
+    for L in ('carr', 'side'):
+        parts = []; V = []; I = []; nv = 0
+        for P, tri in c.get(L, []):
+            if nv + len(P) > 65535: parts.append({'v': addbuf(q(np.concatenate(V), o)), 'i': addbuf(np.concatenate(I).astype(np.uint16))}); V = []; I = []; nv = 0
+            V.append(P); I.append(tri + nv); nv += len(P); stats[L] += len(tri) // 3
+        if V: parts.append({'v': addbuf(q(np.concatenate(V), o)), 'i': addbuf(np.concatenate(I).astype(np.uint16))})
+        if parts: rec[L] = parts
+    for L in ('deck', 'dside', 'conc', 'snd'):                            # (triangle soups: 3 corners each)
+        if c.get(L):
+            T = np.concatenate([a.reshape(-1, 3) for a in c[L]]); rec[L] = addbuf(q(T, o)); stats[L] += len(T) // 3
+    for L in ('kerb', 'paint', 'gut'):
+        if not c.get(L): continue
+        P = np.concatenate([p for p, _ in c[L]]); n = np.array([len(p) for p, _ in c[L]], np.uint32); k = np.array([int(f) for _, f in c[L]], np.uint8)
+        rec[L] = {'p': addbuf(q(P, o)), 'n': addbuf(n), 'k': addbuf(k)}; stats[L + 'Pts'] += len(P)
+    if c.get('rect'): rec['rect'] = addbuf(q(np.concatenate(c['rect']), o)); stats['rects'] += len(c['rect'])
+    head['chunks'].append(rec)
+hj = json.dumps(head).encode(); hj += b' ' * ((-len(hj)) % 4)
+with open('area_a.bin', 'wb') as f:
+    f.write(b'ARA2'); f.write(struct.pack('<I', len(hj))); f.write(hj)
+    for b in bufs: f.write(b)
+tick(f'{dict(stats)} size MB {os.path.getsize("area_a.bin") / 1e6:.1f} chunks {len(chunks)}')
+
+
+===== tools/area_a/build4c.py =====
+# Area A, v2 part 3: street furniture, added to area_a.bin (ARA2) as each chunk's 'furn' (instances) and 'wire' (polylines).
+# Run after build4b.py. Everything here is placed by rule from OpenStreetMap's ways and nodes and the road areas: an estimate,
+# not a survey (PLATEAU's frn data covers only the Kannai block). The rules:
+#  - utility poles every ~30 m on one side of tertiary / unclassified / residential roads, with three wires between them;
+#    none in the areas whose wires are underground (Minato Mirai 21, the Kannai core, round Yokohama Station: by area, estimated)
+#  - street lights on both sides of the larger roads, staggered every ~35 m; small lamps every ~25 m on the small roads in
+#    the underground-wire areas
+#  - at OSM's signalled crossings: a vehicle signal for each direction (beyond the crossing, its arm over the lanes) and a
+#    pedestrian signal at each end; each junction's signals share one cycle, by axis
+#  - OSM's stop signs and bus stops; a crossing sign at unsignalled crossings; speed signs every ~300 m on larger roads
+#  - guard pipes (or hedges) along the larger roads' pavements, open at crossings and junctions; bollards at crossing ends
+#  - manholes on the carriageway, drain grates along its edges
+#  - nothing inside a carriageway, on a crossing, or within 1.2 m of another piece
+# Heights: on a pavement, the road height + 0.15 (as the pavement surface); elsewhere the road height (roadheight.py: the
+# same function the surfaces were made with)
+import pickle, json, math, struct, numpy as np, time, collections, geo, sys
+from PIL import Image, ImageDraw
+T0 = time.time(); tick = lambda m: print(f'{time.time() - T0:7.1f}s {m}', flush=True)
+H = pickle.load(open('hgt.pkl', 'rb')); E0, E1, N0, N1, G = H['G']; Df, U0 = H['Df'], H['U0']
+GEOID = 36.28; CH = 400.0
+def box3(a): p = np.pad(a, 1, mode='edge'); return sum(p[1 + i:p.shape[0] - 1 + i, 1 + j:p.shape[1] - 1 + j] for i in (-1, 0, 1) for j in (-1, 0, 1)) / 9
+HS = box3(box3(Df))
+def hgrid(e, n, arr):
+    fi = np.clip((np.asarray(e, float) - E0) / G, 0, arr.shape[1] - 1.001); fj = np.clip((np.asarray(n, float) - N0) / G, 0, arr.shape[0] - 1.001)
+    i = np.floor(fi).astype(int); j = np.floor(fj).astype(int); u = fi - i; v = fj - j
+    return (arr[j, i] * (1 - u) + arr[j, i + 1] * u) * (1 - v) + (arr[j + 1, i] * (1 - u) + arr[j + 1, i + 1] * u) * v
+def demh(e, n): return hgrid(e, n, U0) + hgrid(e, n, HS) + GEOID
+S1 = pickle.load(open('b4_stage1.pkl', 'rb')); ground_ways = S1['ground_ways']
+carriage, side = pickle.load(open('CS2.pkl', 'rb'))
+from roadheight import RoadHeight
+roadh = RoadHeight([w for w in ground_ways if w['L'] > 4], demh)
+def geoms(g):
+    if g.is_empty: return []
+    if g.geom_type == 'Polygon': return [g]
+    return [x for h in getattr(g, 'geoms', []) for x in geoms(h)]
+R = 0.5; W_ = int((E1 - E0) / R) + 1; H_ = int((N1 - N0) / R) + 1
+def raster(g):
+    # each polygon on its own (its holes cut from it only), then added: a hole drawn over the whole image would wipe out
+    # another polygon lying inside it (an island in a junction, a road inside a block)
+    M = np.zeros((H_, W_), bool)
+    for p in geoms(g):
+        x0, y0, x1, y1 = p.bounds; i0 = max(0, int((x0 - E0) / R) - 1); i1 = min(W_, int((x1 - E0) / R) + 2); j0 = max(0, int((N1 - y1) / R) - 1); j1 = min(H_, int((N1 - y0) / R) + 2)
+        if i1 <= i0 or j1 <= j0: continue
+        im = Image.new('1', (i1 - i0, j1 - j0), 0); dr = ImageDraw.Draw(im); tp = lambda c: [((x - E0) / R - i0, (N1 - y) / R - j0) for x, y in c]
+        dr.polygon(tp(p.exterior.coords), fill=1)
+        for h in p.interiors: dr.polygon(tp(h.coords), fill=0)
+        M[j0:j1, i0:i1] |= np.asarray(im, dtype=bool)
+    return M
+# in PLATEAU's LOD3 block (Kannai: its own roads, left out of area A) the carriageway is estimated from OSM's centrelines
+# (lanes x 3.25 m + 2, at least 6 m) and the rest of the block's road area taken as pavement: for placing things only
+from shapely.geometry import LineString
+from shapely.ops import unary_union
+DRIVE0 = {'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'trunk_link', 'primary_link', 'secondary_link', 'tertiary_link', 'living_street'}
+F3 = pickle.load(open('F3.pkl', 'rb'))
+def width_of(w): n = w['lanes'] or (1 if w['oneway'] else 2); return max(6.0, n * 3.25 + 2.0)
+wb = unary_union([LineString(w['xy']).buffer(width_of(w) / 2) for w in ground_ways if w['hw'] in DRIVE0 and w['L'] > 4])
+MC = raster(carriage.union(F3.intersection(wb))); MS = raster(side.union(F3.difference(wb.buffer(0.3))))
+from shapely.geometry import Point
+from shapely.prepared import prep
+# the decks' footprints (bridges, viaducts, the expressway in its cutting; not tunnels): nothing of the ground roads' goes there
+from shapely.ops import unary_union
+MD = raster(unary_union([w['poly'].buffer(0.6) for w in S1['deck_ways'] if w['kind'] != 'tunnel'])); tick('rasters')
+def at(M, e, n):
+    i = np.round((np.asarray(e, float) - E0) / R).astype(int); j = np.round((N1 - np.asarray(n, float)) / R).astype(int)
+    ok = (i >= 0) & (j >= 0) & (i < W_) & (j < H_); out = np.zeros(np.shape(i), bool); out[ok] = M[j[ok], i[ok]]; return out
+def reach(M, e, n, dx, dy, maxd=30.0, step=0.25):
+    alive = at(M, e, n); dist = np.zeros(len(e))
+    for k in range(1, int(maxd / step) + 1):
+        s = k * step; inn = at(M, e + dx * s, n + dy * s); newly = alive & ~inn; dist[newly] = s - step / 2; alive &= inn
+        if not alive.any(): break
+    dist[alive] = maxd; return dist
+def smooth(a, k):
+    if len(a) < 3: return a
+    k = min(k, (len(a) - 1) // 2); return np.convolve(np.pad(a, k, mode='edge'), np.ones(2 * k + 1) / (2 * k + 1), mode='same')[k:-k] if k > 0 else a
+def hsh(*a): return (math.sin(sum(x * m for x, m in zip(a, (12.9898, 78.233, 37.719, 4.581)))) * 43758.5453) % 1.0
+# ---- areas with the wires underground (estimated, by area: ENU metres from the Kannai spot) ----
+from shapely.geometry import Polygon, Point
+from shapely.prepared import prep
+NOWIRE = prep(Polygon([(-900, 450), (-300, 600), (60, 1100), (-200, 1750), (-1300, 2080), (-1460, 1850)]).union(          # Minato Mirai 21
+    Polygon([(-720, 200), (-520, -520), (300, -640), (950, -220), (520, 560), (-320, 720)])).union(                       # the Kannai core
+    Point(-1551, 1740).buffer(420)))                                                                                       # round Yokohama Station
+# ---- the pieces ----
+KIND = dict(pole=0, light=1, lamp=2, vsig=3, psig=4, stop=5, xsign=6, speed=7, bus=8, bollard=9, pipe=10, hedge=11, manhole=12, drain=13, hwlight=14, hwsign=15, etc=16, arrow=17, patch=18, tlamp=19, booth=20)
+items = []   # (kind, e, n, z, yaw (facing / along, radians from east, counter-clockwise), param, group)
+wires = []   # polylines (n x 3)
+occ = collections.defaultdict(list)
+def free(e, n, r=1.2):
+    for di in (-1, 0, 1):
+        for dj in (-1, 0, 1):
+            for (x, y) in occ[(int(e // 4) + di, int(n // 4) + dj)]:
+                if (x - e) ** 2 + (y - n) ** 2 < r * r: return False
+    return True
+def clear_of_road(e, n, r=0.45):
+    a = np.linspace(0, 2 * np.pi, 9)[:-1]
+    return not at(MC, np.r_[e, e + np.cos(a) * r], np.r_[n, n + np.sin(a) * r]).any()
+crossings = []; Nd = json.load(open('osm_nodes.json'))['elements']
+for nd in Nd:
+    t = nd.get('tags', {})
+    if nd['type'] == 'node' and (t.get('highway') == 'crossing' or 'crossing' in t): crossings.append(geo.enu(np.array([nd['lat']]), np.array([nd['lon']]), np.array([40.0]))[0, :2])
+crossings = np.array(crossings); chash = collections.defaultdict(list)
+for k, q in enumerate(crossings): chash[(int(q[0] // 20), int(q[1] // 20))].append(q)
+def near_crossing(e, n, d):
+    for di in (-1, 0, 1):
+        for dj in (-1, 0, 1):
+            for q in chash.get((int(e // 20) + di, int(n // 20) + dj), ()):
+                if (q[0] - e) ** 2 + (q[1] - n) ** 2 < d * d: return True
+    return False
+PCAR = prep(carriage.union(F3.intersection(wb)).buffer(0.25))             # (the true carriageway, 0.25 m to spare: the rasters are 0.5 m)
+RING = [(math.cos(a) * d, math.sin(a) * d) for d in (0.3, 0.6, 0.9) for a in np.linspace(0, 2 * np.pi, 12, endpoint=False)]
+def put(kind, e, n, yaw, param=0, group=0, r=1.2, onroad=False, z=None, clear=0.45):
+    if at(MD, e, n): return False
+    if not onroad and PCAR.contains(Point(e, n)):                          # (on the carriageway's edge: moved off it, the nearest way)
+        for dx, dy in RING:
+            if not PCAR.contains(Point(e + dx, n + dy)) and not at(MD, e + dx, n + dy): e += dx; n += dy; break
+        else: return False
+    if not onroad and (not clear_of_road(e, n, clear) or not free(e, n, r)): return False
+    if onroad and not free(e, n, 0.8): return False
+    pav = bool(at(MS, e, n))
+    if z is None: z = float(roadh(np.array([e]), np.array([n]))[0]) + (0.15 if pav and not onroad else 0.0)
+    items.append((KIND[kind], e, n, z, yaw, param, group)); occ[(int(e // 4), int(n // 4))].append((e, n)); return True
+cnt = collections.Counter()
+# ---- signals: each junction's crossings share a cycle; axis 0 / 1 by the crossing road's direction ----
+SIG = pickle.load(open('signals_seed.pkl', 'rb'))
+groups = []                                                     # (centre, ref direction)
+def group_of(q, T):
+    for gi, (c, ref) in enumerate(groups):
+        if np.hypot(*(c - q)) < 40: return gi, ref
+    groups.append((q.copy(), T.copy())); return len(groups) - 1, T
+def axis(v, ref): return 0 if abs(v @ ref) > math.cos(math.radians(45)) else 1
+for q, T, dl, dr, oneway, wid_ in SIG:
+    gi, ref = group_of(q, T); Lv = np.array([-T[1], T[0]]); ax = axis(T, ref)
+    # vehicle signals: for traffic along +T (on the left half: left-hand driving) beyond the crossing, the arm over its lanes
+    for d, half, sgn in ((T, dl, 1), (-T, dr, -1)):
+        if oneway and sgn < 0: continue
+        arm = min(max(half * 0.6, 2.0), 7.0)
+        for along, off in ((3.2, 0.6), (3.2, 1.2), (5.5, 0.6), (0.0, 0.8), (-3.4, 0.6), (8.0, 0.8)):   # (beyond the crossing if it can stand there)
+            c = q + d * along + Lv * sgn * (half + off)
+            if put('vsig', c[0], c[1], math.atan2(-d[1], -d[0]), param=int(arm * 10), group=gi * 2 + ax, r=1.0): cnt['vsig'] += 1; break
+    # pedestrian signals at both ends, facing across; green when traffic along the crossing (the other axis) has green
+    for sgn, half in ((1, dl), (-1, dr)):
+        for along, off in ((-1.6, 0.7), (1.6, 0.7), (-1.6, 1.3), (1.6, 1.3)):
+            c = q + Lv * sgn * (half + off) + T * along
+            if put('psig', c[0], c[1], math.atan2(-Lv[1] * sgn, -Lv[0] * sgn), group=gi * 2 + (1 - ax), r=0.8): cnt['psig'] += 1; break
+        for b in (-1, 1):
+            c2 = q + Lv * sgn * (half + 0.4) + T * b * 2.3
+            if put('bollard', c2[0], c2[1], 0.0, r=0.6): cnt['bollard'] += 1
+tick(f'signals: {len(groups)} junctions {dict(cnt)}')
+# ---- arrows on the approaches to signalled crossings with two lanes or more each way (left lane: straight or left;
+# right lane: straight or right; between: straight), 12 m and 30 m before the stop line ----
+for q, T, dl, dr, oneway, wid_ in SIG:
+    Lv = np.array([-T[1], T[0]])
+    for d, half, sgn in ((T, dl, 1), (-T, dr, -1)):
+        if oneway and sgn < 0: continue
+        w_ = half if not oneway else dl + dr; nl = int(round(w_ / 3.2))
+        if nl < 2: continue
+        lw = w_ / nl; edge = q + Lv * sgn * (half if not oneway else dl)
+        for back in (12.0, 30.0):
+            for k in range(nl):
+                o = (k + 0.5) * lw; c = edge - Lv * sgn * o - d * (4.45 + back)
+                shape = (3 if hsh(*c) < 0.5 else 1) if k == 0 else (4 if hsh(*c) < 0.5 else 2) if k == nl - 1 else 0
+                if put('arrow', c[0], c[1], math.atan2(d[1], d[0]), param=shape, onroad=True): cnt['arrow'] += 1
+tick(f'arrows {cnt["arrow"]}')
+# ---- along each ground road ----
+DRIVE = {'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'trunk_link', 'primary_link', 'secondary_link', 'tertiary_link', 'living_street'}
+MAJOR = {'trunk', 'primary', 'secondary', 'trunk_link', 'primary_link', 'secondary_link'}
+POLES = {'tertiary', 'unclassified', 'residential', 'living_street', 'tertiary_link'}
+nodeuse = collections.Counter(); npos = {}
+for w in ground_ways:
+    if w['hw'] in DRIVE:
+        for nid, pt in zip(w['nodes'], w['p']): nodeuse[nid] += 1; npos[nid] = pt
+junction = {nid for nid, c in nodeuse.items() if c >= 2}
+for w in ground_ways:
+    if w['hw'] not in DRIVE: continue
+    p = w['p']; seg = np.hypot(*np.diff(p, axis=0).T); L = np.concatenate([[0], np.cumsum(seg)])
+    if L[-1] < 10: continue
+    s = np.arange(0, L[-1], 1.0); x = np.interp(s, L, p[:, 0]); y = np.interp(s, L, p[:, 1])
+    tx = np.gradient(x); ty = np.gradient(y); tl = np.hypot(tx, ty) + 1e-9; tx /= tl; ty /= tl; lx, ly = -ty, tx
+    ins = at(MC, x, y)
+    if ins.mean() < 0.5: continue
+    dl = smooth(reach(MC, x, y, lx, ly), 4); dr = smooth(reach(MC, x, y, -lx, -ly), 4)
+    jd = np.full(len(s), 1e9)
+    for nid in w['nodes']:
+        if nid in junction: q = npos[nid]; jd = np.minimum(jd, np.hypot(x - q[0], y - q[1]))
+    major = w['hw'] in MAJOR; wid = np.median((dl + dr)[ins]); seed = hsh(w['id'] % 100003, 7)
+    def edge_pt(i, sg, off):
+        d = dl[i] if sg > 0 else dr[i]; ox, oy = lx[i] * sg, ly[i] * sg
+        return x[i] + ox * (d + off), y[i] + oy * (d + off), math.atan2(-oy, -ox)     # (facing the road)
+    def pav_width(e, n, sg, i):
+        ox, oy = lx[i] * sg, ly[i] * sg; return reach(MS, np.array([e]), np.array([n]), ox, oy, 12.0, 0.25)[0] if at(MS, e, n) else 0.0
+    ok_at = lambda i: ins[i] and dl[i] + dr[i] < wid * 1.4 + 1.5
+    # utility poles and their wires (one side of the road; the side by the way's id)
+    if w['hw'] in POLES:
+        sg = 1 if seed < 0.5 else -1; chain = []; last = -1e9
+        for i in range(int(8 + seed * 20), len(s), 2):
+            if s[i] - last < 28 + 8 * hsh(w['id'] % 9973, i) or not ok_at(i): continue
+            e, n, yaw = edge_pt(i, sg, 0.45)
+            if NOWIRE.contains(Point(e, n)) or near_crossing(e, n, 3.0):
+                if chain: wires.append(chain); chain = []
+                continue
+            if put('pole', e, n, yaw, param=1 if hsh(e, n) < 0.18 else 0, r=8.0):
+                z = items[-1][3]
+                if chain and math.hypot(e - chain[-1][0], n - chain[-1][1]) > 48: wires.append(chain); chain = []
+                chain.append((e, n, z, yaw)); last = s[i]; cnt['pole'] += 1
+        if len(chain) > 1: wires.append(chain)
+    # street lights: the larger roads, both sides, staggered; small lamps on small roads without poles
+    if major or (w['hw'] == 'tertiary' and wid > 8):
+        for sg, ph in ((1, 0.0), (-1, 17.5)):
+            for s0 in np.arange(10 + ph + seed * 10, L[-1] - 5, 35.0):
+                i = int(s0)
+                if not ok_at(i) or jd[i] < 6: continue
+                e, n, yaw = edge_pt(i, sg, 0.6)
+                if near_crossing(e, n, 4): continue
+                if put('light', e, n, yaw, param=int(min(30, max(12, (dl[i] if sg > 0 else dr[i]) * 0.45 * 10))), r=6): cnt['light'] += 1
+    elif w['hw'] in POLES and wid > 4:
+        for s0 in np.arange(8 + seed * 12, L[-1] - 5, 25.0):
+            i = int(s0); e, n, yaw = edge_pt(i, 1 if seed < 0.5 else -1, 0.45)
+            if ok_at(i) and NOWIRE.contains(Point(e, n)) and not near_crossing(e, n, 3) and put('lamp', e, n, yaw, r=6): cnt['lamp'] += 1
+    # guard pipes or hedges along the larger roads' pavements (2 m pieces), open at crossings and junctions
+    if major or (w['hw'] == 'tertiary' and wid > 9):
+        for sg in (1, -1):
+            run = None
+            for i in range(0, len(s) - 2, 2):
+                e, n, _ = edge_pt(i, sg, 0.5)
+                good = ok_at(i) and jd[i] > max(10, wid * 0.6 + 4) and not near_crossing(e, n, 5) and at(MS, e, n)
+                if good and pav_width(e, n, sg, i) < 2.0: good = False
+                if not good: continue
+                blk = int(s[i] // 60); hedge = hsh(w['id'] % 7919, blk, sg) < 0.3
+                if hsh(w['id'] % 7907, blk, sg + 3) < 0.25: continue                    # (some blocks have neither)
+                yaw = math.atan2(ty[i], tx[i])
+                if put('hedge' if hedge else 'pipe', e if not hedge else e + lx[i] * sg * 0.3, n if not hedge else n + ly[i] * sg * 0.3, yaw, r=0.9, clear=0.3): cnt['hedge' if hedge else 'pipe'] += 1
+    # speed signs on larger roads, every ~300 m, each direction (on the left of the traffic: left-hand driving)
+    if major:
+        for s0 in np.arange(80 + seed * 150, L[-1] - 20, 300.0):
+            i = int(s0)
+            if ok_at(i) and jd[i] > 20:
+                e, n, yaw = edge_pt(i, 1, 0.7)
+                if put('speed', e, n, math.atan2(-ty[i], -tx[i]), param=50 if w['hw'] in ('trunk', 'primary') else 40): cnt['speed'] += 1
+                if not w['oneway']:
+                    e, n, _ = edge_pt(min(i + 6, len(s) - 1), -1, 0.7)
+                    if put('speed', e, n, math.atan2(ty[i], tx[i]), param=50 if w['hw'] in ('trunk', 'primary') else 40): cnt['speed'] += 1
+    # manholes along the middle, drains along the edges
+    for s0 in np.arange(15 + seed * 20, L[-1] - 5, 45.0 + 20 * seed):
+        i = int(s0)
+        if not ok_at(i) or jd[i] < 8: continue
+        o = (hsh(w['id'] % 997, i) - 0.5) * min(dl[i] + dr[i] - 2, 4); e = x[i] + lx[i] * ((dl[i] - dr[i]) / 2 + o); n = y[i] + ly[i] * ((dl[i] - dr[i]) / 2 + o)
+        if at(MC, e, n) and not near_crossing(e, n, 4) and put('manhole', e, n, hsh(e, n) * 6.28, onroad=True): cnt['manhole'] += 1
+    # patches: a repaired rectangle now and then, a long trench repair on some roads (estimated)
+    for s0 in np.arange(20 + seed * 40, L[-1] - 5, 55.0 + 40 * seed):
+        i = int(s0)
+        if not ok_at(i) or jd[i] < 5: continue
+        o = (hsh(w['id'] % 991, i, 5) - 0.5) * max(dl[i] + dr[i] - 3, 0); e = x[i] + lx[i] * ((dl[i] - dr[i]) / 2 + o); n = y[i] + ly[i] * ((dl[i] - dr[i]) / 2 + o)
+        long = hsh(w['id'] % 991, i, 6) < 0.25
+        if at(MC, e, n) and not near_crossing(e, n, 5) and put('patch', e, n, math.atan2(ty[i], tx[i]), param=(1 if long else 0) + 2 * int(hsh(e, n, 7) * 8), onroad=True): cnt['patch'] += 1
+    if wid > 5:
+        for sg in (1, -1):
+            for s0 in np.arange(6 + seed * 10, L[-1] - 3, 15.0):
+                i = int(s0)
+                if not ok_at(i) or jd[i] < 6: continue
+                e, n, _ = edge_pt(i, sg, -0.3)
+                if at(MC, e, n) and not near_crossing(e, n, 3) and put('drain', e, n, math.atan2(ty[i], tx[i]), onroad=True): cnt['drain'] += 1
+tick(f'along the roads {dict(cnt)}')
+# ---- OSM's stop signs and bus stops; crossing signs at unsignalled crossings ----
+def nearest_edge(e, n, maxd=14.0):
+    """the nearest carriageway edge to (e, n), the point just off it, and the road's outward direction there"""
+    best = None
+    for a in np.linspace(0, 2 * np.pi, 24, endpoint=False):
+        d = reach(MC, np.array([e]), np.array([n]), math.cos(a), math.sin(a), maxd, 0.25)[0]
+        if d < maxd and (best is None or d < best[0]): best = (d, a)
+    return best
+sigpos = [q for q, *_ in SIG]
+for nd in Nd:
+    t = nd.get('tags', {}); hw = t.get('highway')
+    if nd['type'] != 'node' or hw not in ('stop', 'bus_stop', 'crossing'): continue
+    q = geo.enu(np.array([nd['lat']]), np.array([nd['lon']]), np.array([40.0]))[0, :2]
+    if not (E0 < q[0] < E1 and N0 < q[1] < N1): continue
+    if hw == 'crossing':
+        if t.get('crossing') in ('traffic_signals', 'unmarked', 'no') or any(np.hypot(*(p - q)) < 30 for p in sigpos): continue
+    if at(MC, *q):
+        b = nearest_edge(*q)
+        if b is None: continue
+        d, a = b; e = q[0] + math.cos(a) * (d + 0.5); n = q[1] + math.sin(a) * (d + 0.5); yaw = a + math.pi
+    else:
+        b = nearest_edge(*q)
+        if b is None or b[0] > 10: continue
+        e, n = q; yaw = b[1]
+    if hw == 'stop': ok = put('stop', e, n, yaw)
+    elif hw == 'crossing': ok = put('xsign', e, n, yaw, r=3)
+    else:
+        pw = reach(MS, np.array([e]), np.array([n]), -math.cos(yaw), -math.sin(yaw), 10, 0.25)[0] if at(MS, e, n) else 0
+        ok = put('bus', e, n, yaw, param=1 if pw > 3.2 else 0, r=2.5)
+    cnt[hw] += ok
+tick(f'nodes {dict(cnt)}')
+# ---- the expressway (K1 and its ramps): lights on the parapet every 40 m, signs before each exit (and every ~1.2 km one
+# for the direction), an ETC gate on each on-ramp. Placed by rule on OSM's ways: estimated, not surveyed ----
+deck_ways = S1['deck_ways']; motnodes = set()
+for w in deck_ways:
+    if w['hw'] == 'motorway': motnodes.update(w['nodes'])
+def frame(w):
+    t = np.gradient(w['xy'], axis=0); t /= np.linalg.norm(t, axis=1)[:, None] + 1e-9; return t, np.column_stack([-t[:, 1], t[:, 0]])
+def at_s(w, s0): return int(np.clip(np.searchsorted(w['s'], s0), 0, len(w['s']) - 1))
+def raw(kind, e, n, z, yaw, param=0):
+    items.append((KIND[kind], e, n, z, yaw, param, 0)); occ[(int(e // 4), int(n // 4))].append((e, n)); cnt[kind] += 1
+exits = collections.defaultdict(list)                                   # (mainline node -> its exits)
+for w in deck_ways:
+    if w['hw'] == 'motorway_link' and w['nodes'][0] in motnodes and w['nodes'][-1] not in motnodes: exits[w['nodes'][0]].append(w)
+for w in deck_ways:
+    if w['hw'] not in ('motorway', 'motorway_link') or len(w['s']) < 3: continue
+    t, l = frame(w); half = w['W'] / 2; xy, h = w['xy'], w['h']
+    if w['hw'] == 'motorway':
+        if w['kind'] != 'tunnel':
+            for s0 in np.arange(20 + hsh(w['id'] % 991, 3) * 20, w['s'][-1] - 5, 40.0):
+                i = at_s(w, s0); e, n = xy[i] + l[i] * (half + 0.12)
+                if at(MD, *(xy[i] + l[i] * (half + 1.4))): continue   # (another deck alongside: a merge, no parapet there)
+                raw('hwlight', e, n, h[i] + 1.1, math.atan2(-l[i, 1], -l[i, 0]))
+        # exits: a sign 200 m before the node where the ramp leaves (on this way, if it is long enough)
+        for k, nid in enumerate(w['nodes']):
+            if nid not in exits: continue
+            sn = w['s'][int(np.argmin(np.hypot(*(xy - w['p'][k]).T)))]
+            for back, var in ((200.0, 0), (60.0, 0)):
+                if sn - back < 2: continue
+                i = at_s(w, sn - back); e, n = xy[i] + l[i] * (half - 0.4)
+                raw('hwsign', e, n, h[i], math.atan2(-t[i, 1], -t[i, 0]), param=var)
+        if w['kind'] != 'tunnel' and w['s'][-1] > 600:                  # (the direction: north- or southbound)
+            for s0 in np.arange(500, w['s'][-1] - 100, 1200.0):
+                i = at_s(w, s0); e, n = xy[i] + l[i] * (half - 0.4)
+                raw('hwsign', e, n, h[i], math.atan2(-t[i, 1], -t[i, 0]), param=1 if t[i, 1] > 0 else 2)
+    elif w['nodes'][0] not in motnodes and w['nodes'][-1] in motnodes and w['s'][-1] > 70 and w['kind'] != 'tunnel':
+        i = at_s(w, 45.0); e, n = xy[i]                                  # (an on-ramp: its ETC gate, 45 m in)
+        raw('etc', e, n, h[i], math.atan2(-t[i, 1], -t[i, 0]), param=int(min(w['W'], 9) * 10))
+    # tunnels: a lamp on each wall every 9 m, 4.2 m up
+    if w['kind'] == 'tunnel' and w['hw'] in ('motorway', 'motorway_link'):
+        for s0 in np.arange(4.5, w['s'][-1], 9.0):
+            i = at_s(w, s0)
+            for sg in (1, -1): e, n = xy[i] + l[i] * sg * (half + 0.1); raw('tlamp', e, n, h[i] + 4.2, math.atan2(-l[i, 1] * sg, -l[i, 0] * sg))
+    # an on-ramp's toll booth on an island by its left edge, under the ETC gate (estimated)
+    if w['hw'] == 'motorway_link' and w['nodes'][0] not in motnodes and w['nodes'][-1] in motnodes and w['s'][-1] > 70 and w['kind'] != 'tunnel':
+        i = at_s(w, 45.0); e, n = xy[i] + l[i] * (half - 0.7); raw('booth', e, n, h[i], math.atan2(-t[i, 1], -t[i, 0]))
+tick(f'expressway {dict((k, cnt[k]) for k in ("hwlight", "hwsign", "etc", "tlamp", "booth"))}')
+# ---- wires: three, sagging between poles (the top two at the crossarm's ends, the lowest a telephone cable) ----
+WIRE = []
+for chain in wires:
+    for (e0, n0, z0, y0), (e1, n1, z1, y1) in zip(chain[:-1], chain[1:]):
+        span = math.hypot(e1 - e0, n1 - n0); dx, dy = (e1 - e0) / span, (n1 - n0) / span; lx, ly = -dy, dx
+        for off, hgt, sag in ((0.55, 10.6, 0.012), (-0.55, 10.6, 0.012), (0.25, 7.2, 0.02)):
+            t = np.linspace(0, 1, 9); ex = e0 + (e1 - e0) * t + lx * off; ny = n0 + (n1 - n0) * t + ly * off
+            z = z0 + (z1 - z0) * t + hgt - 4 * sag * span * t * (1 - t)
+            WIRE.append(np.column_stack([ex, ny, z]))
+tick(f'items {len(items)}, wire spans {len(WIRE) // 3}')
+# ---- add to the file ----
+path = sys.argv[1] if len(sys.argv) > 1 else 'area_a.bin'
+b = open(path, 'rb').read(); assert b[:4] == b'ARA2'
+hl = struct.unpack('<I', b[4:8])[0]; head = json.loads(b[8:8 + hl]); body = bytearray(b[8 + hl:])
+assert 'furnKinds' not in head, 'furniture already added: run build4b.py first'
+def addbuf(a):
+    d = np.ascontiguousarray(a).tobytes(); o = len(body); body.extend(d + b'\0' * ((-len(d)) % 4)); return [o, len(d)]
+byk = {(c['i'], c['j']): c for c in head['chunks']}
+def ck(e, n): return (int(math.floor((e - E0) / CH)), int(math.floor((n - N0) / CH)))
+per = collections.defaultdict(list); perw = collections.defaultdict(list)
+for it in items: per[ck(it[1], it[2])].append(it)
+for wl in WIRE: perw[ck(*wl[4, :2])].append(wl)
+lost = 0
+for k in set(per) | set(perw):
+    if k not in byk: lost += len(per.get(k, ())); continue
+    c = byk[k]; o = np.array(c['o'])
+    for key in ('furn', 'wire'): c.pop(key, None)
+    if per.get(k):
+        A = np.array(per[k], float)
+        c['furn'] = {'p': addbuf(np.round((A[:, 1:4] - o) * 100).astype(np.int16)), 'k': addbuf(A[:, 0].astype(np.uint8)),
+                     'a': addbuf(np.round(np.mod(A[:, 4] + np.pi, 2 * np.pi) * 10000 - 31416).astype(np.int16)),
+                     'm': addbuf(A[:, 5].astype(np.uint8)), 'g': addbuf(A[:, 6].astype(np.uint16))}
+    if perw.get(k):
+        P = np.concatenate(perw[k]); c['wire'] = {'p': addbuf(np.round((P - o) * 100).astype(np.int16)), 'n': addbuf(np.array([len(w) for w in perw[k]], np.uint32))}
+head['stats']['furniture'] = {kk: int(v) for kk, v in collections.Counter(next(n for n, i in KIND.items() if i == it[0]) for it in items).items()}
+head['stats']['furniture']['wireSpans'] = len(WIRE) // 3; head['stats']['furniture']['junctions'] = len(groups); head['furnKinds'] = KIND
+hj = json.dumps(head).encode(); hj += b' ' * ((-len(hj)) % 4)
+with open(path, 'wb') as f: f.write(b'ARA2'); f.write(struct.pack('<I', len(hj))); f.write(hj); f.write(body)
+tick(f'written {path}: {head["stats"]["furniture"]} (outside the chunks: {lost})')
+
+
+===== tools/area_a/close.py =====
+# roads ride over cuttings, pits and channels: the DEM closed (filled up to the rims of anything under 75 m across)
+import pickle, numpy as np
+from numpy.lib.stride_tricks import sliding_window_view as sw
+def filt(a,k,f):
+    p=k//2
+    a=np.pad(a,((p,p),(0,0)),mode='edge'); a=f(sw(a,k,axis=0),axis=-1)
+    a=np.pad(a,((0,0),(p,p)),mode='edge'); return f(sw(a,k,axis=1),axis=-1)
+H=pickle.load(open('hgt.pkl','rb')); Df=H['Df']
+Dc=filt(filt(Df,9,np.max),9,np.min); Dc=np.minimum(Dc,Df+10)   # (45 m: cuttings, channels, the rivers under the bridges; not the hills' valleys)
+print('raised cells >1 m',(Dc-Df>1).sum(),'max raise',(Dc-Df).max(),Dc.shape==Df.shape)
+H['Dc']=Dc; pickle.dump(H,open('hgt.pkl','wb'))
+
+
+===== tools/area_a/fetch_osm.py =====
+# OSM for area A from Overpass (several mirrors, retried): the ways (highway, trees) and the nodes the furniture uses.
+# Usage: python3 fetch_osm.py S W N E   (degrees)  -> osm_ways.json, osm_nodes.json
+import sys, json, time, urllib.request, urllib.parse
+S, W, N, E = sys.argv[1:5]; bb = f'({S},{W},{N},{E})'
+MIRRORS = ['https://maps.mail.ru/osm/tools/overpass/api/interpreter', 'https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']
+Q = {'osm_ways.json': f'[out:json][timeout:300];(way["highway"]{bb};way["natural"="tree_row"]{bb};);out body geom;',
+     'osm_nodes.json': f'[out:json][timeout:300];(node["highway"~"crossing|traffic_signals|stop|bus_stop"]{bb};node["crossing"]{bb};node["natural"="tree"]{bb};node["public_transport"="platform"]{bb};);out body;'}
+for out, q in Q.items():
+    for attempt in range(60):
+        url = MIRRORS[attempt % len(MIRRORS)]
+        try:
+            req = urllib.request.Request(url, data=urllib.parse.urlencode({'data': q}).encode(), headers={'User-Agent': 'otinti-yokohama-drive/1.0'})
+            b = urllib.request.urlopen(req, timeout=400).read(); j = json.loads(b)
+            if 'elements' not in j: raise ValueError('no elements')
+            open(out, 'w').write(json.dumps(j)); print(out, len(j['elements']), 'from', url, flush=True); break
+        except Exception as e:
+            print(out, 'attempt', attempt, url, str(e)[:120], flush=True); time.sleep(min(60, 10 + attempt * 5))
+
+
+===== tools/area_a/fetch_osm_bldg.py =====
+# evidence for the buildings' use, from OSM (Overpass, mirrors retried): building outlines with their tags, shop / amenity /
+# office / craft points, landuse areas. Usage: python3 fetch_osm_bldg.py S W N E -> osm_bldg.json
+import sys, json, time, urllib.request, urllib.parse
+S, W, N, E = sys.argv[1:5]; bb = f'({S},{W},{N},{E})'
+MIRRORS = ['https://maps.mail.ru/osm/tools/overpass/api/interpreter', 'https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']
+q = f'[out:json][timeout:600];(way["building"]{bb};relation["building"]{bb};node["shop"]{bb};node["amenity"]{bb};node["office"]{bb};node["craft"]{bb};way["shop"]{bb};way["amenity"]{bb};way["landuse"]{bb};);out body geom;'
+for attempt in range(80):
+    url = MIRRORS[attempt % len(MIRRORS)]
+    try:
+        req = urllib.request.Request(url, data=urllib.parse.urlencode({'data': q}).encode(), headers={'User-Agent': 'otinti-yokohama-drive/1.0'})
+        j = json.loads(urllib.request.urlopen(req, timeout=700).read())
+        if 'elements' not in j: raise ValueError('no elements')
+        open('osm_bldg.json', 'w').write(json.dumps(j)); print('osm_bldg.json', len(j['elements']), 'from', url, flush=True); break
+    except Exception as e:
+        print('attempt', attempt, url, str(e)[:120], flush=True); time.sleep(min(90, 15 + attempt * 5))
+
+
+===== tools/area_a/fetch_tiles.py =====
+# the tiles area A needs for a box (degrees): GSI DEM 5A (z15 png) into dem/, PLATEAU 2024 Yokohama roads (tran LOD1 MVT z16)
+# into mvt/; tiles already there are kept. Usage: python3 fetch_tiles.py S W N E
+import sys, os, math, urllib.request, time
+S, W, N, E = map(float, sys.argv[1:5])
+DEM = 'https://cyberjapandata.gsi.go.jp/xyz/dem5a_png/{z}/{x}/{y}.png'
+MVT = 'https://assets.cms.plateau.reearth.io/assets/69/36a0fb-7483-4086-9e0e-ef5fa3c3672c/14100_yokohama-shi_city_2024_citygml_2_op_tran_mvt_lod1/{z}/{x}/{y}.mvt'
+def tile(lat, lon, z): n = 2 ** z; return int((lon + 180) / 360 * n), int((1 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2 * n)
+for z, url, d, ext in ((15, DEM, 'dem', 'png'), (16, MVT, 'mvt', 'mvt')):
+    os.makedirs(d, exist_ok=True); x0, y0 = tile(N, W, z); x1, y1 = tile(S, E, z); got = miss = 0
+    for x in range(x0, x1 + 1):
+        for y in range(y0, y1 + 1):
+            f = f'{d}/{z}_{x}_{y}.{ext}'
+            if os.path.exists(f): continue
+            for k in range(4):
+                try: b = urllib.request.urlopen(urllib.request.Request(url.format(z=z, x=x, y=y), headers={'User-Agent': 'otinti-yokohama-drive/1.0'}), timeout=60).read(); open(f, 'wb').write(b); got += 1; break
+                except urllib.error.HTTPError as e:
+                    if e.code == 404: open(f, 'wb').write(b''); miss += 1; break
+                    time.sleep(2 * (k + 1))
+                except Exception: time.sleep(2 * (k + 1))
+    print(d, 'z', z, 'x', x0, x1, 'y', y0, y1, 'new', got, 'missing (404)', miss)
+
+
+===== tools/area_a/geo.py =====
+import math, numpy as np, glob, os
+from PIL import Image
+A=6378137.0; F=1/298.257223563; E2=F*(2-F)
+SPOT=(35.446899,139.641167,39.3)
+def ecef(lat,lon,h):
+    la,lo=np.radians(lat),np.radians(lon); n=A/np.sqrt(1-E2*np.sin(la)**2)
+    return np.stack([(n+h)*np.cos(la)*np.cos(lo),(n+h)*np.cos(la)*np.sin(lo),(n*(1-E2)+h)*np.sin(la)],-1)
+la0,lo0=math.radians(SPOT[0]),math.radians(SPOT[1])
+O=ecef(SPOT[0],SPOT[1],SPOT[2])
+Ev=np.array([-math.sin(lo0),math.cos(lo0),0]); Nv=np.array([-math.sin(la0)*math.cos(lo0),-math.sin(la0)*math.sin(lo0),math.cos(la0)]); Uv=np.array([math.cos(la0)*math.cos(lo0),math.cos(la0)*math.sin(lo0),math.sin(la0)])
+def enu(lat,lon,h):
+    p=ecef(np.asarray(lat,float),np.asarray(lon,float),np.asarray(h,float))-O
+    return np.stack([p@Ev,p@Nv,p@Uv],-1)
+def geodetic(p):  # ecef -> lat lon h
+    x,y,z=p[...,0],p[...,1],p[...,2]; lon=np.arctan2(y,x); r=np.hypot(x,y); lat=np.arctan2(z,r*(1-E2))
+    for _ in range(5):
+        n=A/np.sqrt(1-E2*np.sin(lat)**2); h=r/np.cos(lat)-n; lat=np.arctan2(z,r*(1-E2*n/(n+h)))
+    return np.degrees(lat),np.degrees(lon),h
+# DEM 5 m z15 mosaic
+Z=15
+def _load():
+    fs=glob.glob(os.path.join(os.path.dirname(__file__),'dem/15_*.png')); xs=sorted({int(f.split('_')[-2]) for f in fs}); ys=sorted({int(f.split('_')[-1][:-4]) for f in fs})
+    M=np.full((len(ys)*256,len(xs)*256),np.nan)
+    for f in fs:
+        if os.path.getsize(f)==0: continue   # (no tile: the sea)
+        x=int(f.split('_')[-2]); y=int(f.split('_')[-1][:-4]); a=np.asarray(Image.open(f).convert('RGB')).astype(np.int64)
+        v=a[...,0]*65536+a[...,1]*256+a[...,2]; h=np.where(v<2**23,v*0.01,(v-2**24)*0.01); h=np.where(v==2**23,np.nan,h)
+        M[(y-ys[0])*256:(y-ys[0]+1)*256,(x-xs[0])*256:(x-xs[0]+1)*256]=h
+    return M,xs[0],ys[0]
+DEM=DX0=DY0=None
+def _ensure():
+    global DEM,DX0,DY0
+    if DEM is None: DEM,DX0,DY0=_load()
+def dem(lat,lon):
+    _ensure(); lat=np.asarray(lat,float); lon=np.asarray(lon,float); n=2**Z
+    px=((lon+180)/360*n-DX0)*256-0.5; py=((1-np.arcsinh(np.tan(np.radians(lat)))/np.pi)/2*n-DY0)*256-0.5
+    i=np.clip(np.floor(px).astype(int),0,DEM.shape[1]-2); j=np.clip(np.floor(py).astype(int),0,DEM.shape[0]-2); u=px-i; v=py-j
+    a,b,c,d=DEM[j,i],DEM[j,i+1],DEM[j+1,i],DEM[j+1,i+1]
+    return (a*(1-u)+b*u)*(1-v)+(c*(1-u)+d*u)*v
+
+
+===== tools/area_a/hgt.py =====
+import pickle, numpy as np, geo
+import sys
+GEOID=36.28; E0,E1,N0,N1,G=(*map(float,sys.argv[1:5]),5.0) if len(sys.argv)>4 else (-2700.,1000.,-1000.,3050.,5.0)   # (east/north metres from the Kannai spot)
+ge=np.arange(E0,E1+G/2,G); gn=np.arange(N0,N1+G/2,G); EE,NN=np.meshgrid(ge,gn)
+P=geo.O+EE[...,None]*geo.Ev+NN[...,None]*geo.Nv; lat,lon,_=geo.geodetic(P)
+D=geo.dem(lat,lon); water=np.isnan(D)
+exec(open('build.py').read().split('def fill(a):')[1].join(['def fill(a):','']).split('Df=fill(D)')[0]) if False else None
+src=open('build.py').read(); i=src.index('def fill(a):'); j=src.index('Df=fill(D)'); exec(src[i:j])
+Df=fill(D); Pe=geo.ecef(lat,lon,np.zeros_like(lat)); U0=np.einsum('ijk,k->ij',Pe-geo.O,geo.Uv)
+pickle.dump(dict(G=(E0,E1,N0,N1,G),D=D,Df=Df,U0=U0,water=water),open('hgt.pkl','wb')); print('ok',D.shape)
+
+
+===== tools/area_a/paint3.py =====
+# area A, part 2: paint from OSM centrelines measured against the carriageway; zebra crossings and stop lines at OSM
+# crossings; street trees from OSM; the ground grid; everything packed into area_a.bin
+import pickle, json, math, struct, numpy as np, time, geo, collections
+from PIL import Image, ImageDraw
+T0=time.time()
+B=pickle.load(open('hgt.pkl','rb')); E0,E1,N0,N1,G=B['G']; Df=B['Df']; U0=B['U0']; water=B['water']
+LINES=[]; RECTS=[]
+carriage,side,wide,narrow=pickle.load(open('CS.pkl','rb'))
+GEOID=36.28; CH=400.0
+def hgrid(e,n,arr):
+    fi=np.clip((np.asarray(e,float)-E0)/G,0,arr.shape[1]-1.001); fj=np.clip((np.asarray(n,float)-N0)/G,0,arr.shape[0]-1.001)
+    i=np.floor(fi).astype(int); j=np.floor(fj).astype(int); u=fi-i; v=fj-j
+    return (arr[j,i]*(1-u)+arr[j,i+1]*u)*(1-v)+(arr[j+1,i]*(1-u)+arr[j+1,i+1]*u)*v
+def roadh(e,n): return hgrid(e,n,U0)+hgrid(e,n,Df)+GEOID
+def chunk(e,n): return (int(math.floor((e-E0)/CH)),int(math.floor((n-N0)/CH)))
+def C(k):
+    if k not in chunks: chunks[k]={'carr':([],[]),'side':([],[]),'kerb':([],[]),'paint':([],[],[])}
+    if len(chunks[k]['paint'])<3: chunks[k]['paint']=([],[],[])
+    return chunks[k]
+# ---- the carriageway as a 0.5 m raster, for measuring across the road ----
+R=0.5; W_=int((E1-E0)/R)+1; H_=int((N1-N0)/R)+1
+im=Image.new('1',(W_,H_),0); dr=ImageDraw.Draw(im)
+def geoms(g):
+    if g.is_empty: return []
+    if g.geom_type=='Polygon': return [g]
+    return [x for h in getattr(g,'geoms',[]) for x in geoms(h)]
+tp=lambda c:[((x-E0)/R,(N1-y)/R) for x,y in c]
+for p in geoms(carriage):
+    dr.polygon(tp(p.exterior.coords),fill=1)
+    for h in p.interiors: dr.polygon(tp(h.coords),fill=0)
+M=np.asarray(im,dtype=bool); print('raster', M.shape, time.time()-T0)
+def inside(e,n):
+    i=np.round((np.asarray(e)-E0)/R).astype(int); j=np.round((N1-np.asarray(n))/R).astype(int)
+    ok=(i>=0)&(j>=0)&(i<W_)&(j<H_); out=np.zeros(np.shape(i),bool); out[ok]=M[j[ok],i[ok]]; return out
+def reach(e,n,dx,dy,maxd=30.0,step=0.25):
+    # distance from (e,n) along (dx,dy) to the carriageway's edge (vectorised over points)
+    d=np.zeros(len(e)); alive=inside(e,n); dist=np.zeros(len(e))
+    for k in range(1,int(maxd/step)+1):
+        s=k*step; inn=inside(e+dx*s,n+dy*s); newly=alive&~inn; dist[newly]=s-step/2; alive&=inn
+        if not alive.any(): break
+    dist[alive]=maxd; return dist
+# ---- OSM ----
+W=json.load(open('osm_ways.json'))['elements']; Nd=json.load(open('osm_nodes.json'))['elements']
+DRIVE={'trunk','primary','secondary','tertiary','unclassified','residential','trunk_link','primary_link','secondary_link','tertiary_link'}
+MAJOR={'trunk','primary','secondary','tertiary','trunk_link','primary_link','secondary_link','tertiary_link'}
+ways=[]; nodeuse=collections.Counter(); npos={}
+for w in W:
+    t=w['tags']; hw=t.get('highway')
+    if hw not in DRIVE or t.get('tunnel') in ('yes','building_passage') or t.get('layer','0').startswith('-') or t.get('area')=='yes': continue
+    g=w.get('geometry'); ids=w.get('nodes')
+    if not g or not ids: continue
+    a=np.array([[q['lat'],q['lon']] for q in g]); p=geo.enu(a[:,0],a[:,1],np.zeros(len(a))+40)[:,:2]
+    for i,(nid,pt) in enumerate(zip(ids,p)): nodeuse[nid]+=1; npos[nid]=pt
+    ways.append((w,p,ids))
+junction={nid for nid,c in nodeuse.items() if c>=2}
+print('drivable ways',len(ways),'junction nodes',len(junction))
+crossings=[]; signals=[]
+for nd in Nd:
+    if nd['type']!='node': continue
+    t=nd.get('tags',{})
+    if t.get('highway')=='traffic_signals': signals.append(nd)
+    if t.get('highway')=='crossing' or 'crossing' in t:
+        if t.get('crossing') in ('unmarked','no','informal'): continue
+        crossings.append(nd)
+sig_ids={nd['id'] for nd in signals}; cross_ids={nd['id']:nd for nd in crossings}
+sig_pos=geo.enu(np.array([s['lat'] for s in signals]),np.array([s['lon'] for s in signals]),np.zeros(len(signals))+40)[:,:2] if signals else np.zeros((0,2))
+# ---- paint pieces ----
+LIFT=0.03
+def put_strip(pts,dash,width=0.15):
+    if len(pts)>=2: LINES.append((np.asarray(pts,float)[::2] if len(pts)>6 else np.asarray(pts,float), dash is not None))
+def put_rect(c,u,v):
+    RECTS.append(np.array([c,c+u,c+u+v,c+v],float))
+# ---- lines along each road ----
+nlines=0
+for w,p,ids in ways:
+    t=w['tags']; hw=t.get('highway'); major=hw in MAJOR
+    # resample every 1 m
+    seg=np.hypot(*np.diff(p,axis=0).T); L=np.concatenate([[0],np.cumsum(seg)])
+    if L[-1]<8: continue
+    s=np.arange(0,L[-1],1.0); x=np.interp(s,L,p[:,0]); y=np.interp(s,L,p[:,1])
+    tx=np.gradient(x); ty=np.gradient(y); tl=np.hypot(tx,ty)+1e-9; tx/=tl; ty/=tl
+    lx,ly=-ty,tx                          # (left of the way's direction)
+    dl=reach(x,y,lx,ly); dr_=reach(x,y,-lx,-ly)
+    ins=inside(x,y)
+    wtot=dl+dr_
+    med=np.median(wtot[ins]) if ins.any() else 0
+    if med<5.5: continue
+    # near a junction (the road widens there): no lines
+    jd=np.full(len(s),1e9)
+    for nid in ids:
+        if nid in junction:
+            q=npos[nid]; jd=np.minimum(jd,np.hypot(x-q[0],y-q[1]))
+    ok=ins&(wtot<med*1.35+1.5)&(jd>0.5*med+4)&(dl>0.3)&(dr_>0.3)
+    oneway=t.get('oneway') in ('yes','1','true','-1') or t.get('junction')=='roundabout'
+    try: lanes=int(str(t.get('lanes','')).split(';')[0])
+    except Exception: lanes=0
+    if lanes<=0: lanes=max(1 if oneway else 2,int(round(med/3.3)))
+    if not oneway and lanes%2==1 and lanes>1 and not ('lanes:forward' in t): lanes=lanes  # (odd: one side gets the extra lane)
+    nf=lanes if oneway else int(t.get('lanes:forward',lanes//2 if lanes>1 else 1)); nb=0 if oneway else max(1,lanes-nf)
+    lw=wtot/max(lanes,1)
+    offs=[]   # (offset from the left edge in lanes, kind)
+    if oneway:
+        offs+=[(k,'dash') for k in range(1,lanes)]
+    else:
+        offs+=[(k,'dash') for k in range(1,nf)]; offs.append((nf,'centre')); offs+=[(nf+k,'dash') for k in range(1,nb)]
+    def runs(mask):
+        i=0; n=len(mask)
+        while i<n:
+            if not mask[i]: i+=1; continue
+            j=i
+            while j<n and mask[j]: j+=1
+            if j-i>=3: yield i,j
+            i=j
+    for i,j in runs(ok):
+        for k,kind in offs:
+            o=dl[i:j]-k*lw[i:j]
+            pts=np.column_stack([x[i:j]+lx[i:j]*o,y[i:j]+ly[i:j]*o])
+            if kind=='centre':
+                if wtot[i:j].mean()>=11: # a wide road: the double line either side of the middle
+                    for d2 in (0.12,-0.12): put_strip(np.column_stack([pts[:,0]+lx[i:j]*d2,pts[:,1]+ly[i:j]*d2]),None)
+                else: put_strip(pts,None)
+            else: put_strip(pts,s[i:j])
+            nlines+=1
+        if major and med>=7:   # edge lines, 0.4 m in from each edge
+            for side_ in (1,-1):
+                o=(dl[i:j]-0.4) if side_==1 else -(dr_[i:j]-0.4)
+                put_strip(np.column_stack([x[i:j]+lx[i:j]*o,y[i:j]+ly[i:j]*o]),None); nlines+=1
+print('lines',nlines, time.time()-T0)
+# ---- crossings ----
+ncross=nstop=0
+for w,p,ids in ways:
+    t=w['tags']; oneway=t.get('oneway') in ('yes','1','true')
+    for k,nid in enumerate(ids):
+        if nid not in cross_ids: continue
+        q=npos[nid]; a=p[max(0,k-1)]; b=p[min(len(p)-1,k+1)]; d=b-a; l=np.hypot(*d)
+        if l<1e-3: continue
+        tx,ty=d/l; lx,ly=-ty,tx
+        dl=reach(np.array([q[0]]),np.array([q[1]]),lx,ly)[0]; dr_=reach(np.array([q[0]]),np.array([q[1]]),-lx,-ly)[0]
+        wt=dl+dr_
+        if wt<5.5 or wt>45 or not inside(np.array([q[0]]),np.array([q[1]]))[0]: continue
+        cnt=int((wt-1.0)//0.9); o0=-dr_+(wt-(cnt*0.9-0.45))/2
+        T=np.array([tx,ty]); Lv=np.array([lx,ly]); Q=np.array(q)
+        for i in range(cnt):
+            o=o0+i*0.9
+            put_rect(Q+Lv*o-T*2.0,Lv*0.45,T*4.0)
+        ncross+=1
+        sig=cross_ids[nid].get('tags',{}).get('crossing')=='traffic_signals' or (len(sig_pos) and np.min(np.hypot(*(sig_pos-Q).T))<30)
+        if not sig: continue
+        if oneway:
+            put_rect(Q-T*4.45+Lv*(-dr_+0.3),Lv*(wt-0.6),T*0.45); nstop+=1
+        else:
+            mid=dl-wt/2   # (the middle, as an offset from the way)
+            put_rect(Q-T*4.45+Lv*mid,Lv*(dl-0.3-mid),T*0.45)       # (coming along the way: keep left)
+            put_rect(Q+T*4.0+Lv*(-dr_+0.3),Lv*(mid+dr_-0.3),T*0.45)  # (coming the other way)
+            nstop+=2
+print('crossings',ncross,'stop lines',nstop, time.time()-T0)
+# ---- trees ----
+trees=[]
+VEG3=(35.4424,35.4505,139.6329,139.6431)
+for nd in Nd:
+    t=nd.get('tags',{})
+    if nd['type']=='node' and t.get('natural')=='tree':
+        if VEG3[0]<=nd['lat']<=VEG3[1] and VEG3[2]<=nd['lon']<=VEG3[3]: continue
+        try: h=float(str(t.get('height','')).replace('m','').strip())
+        except Exception: h=0
+        trees.append((nd['lat'],nd['lon'],h))
+    if nd['type']=='way' and t.get('natural')=='tree_row' and nd.get('geometry'):
+        a=np.array([[q['lat'],q['lon']] for q in nd['geometry']]); pp=geo.enu(a[:,0],a[:,1],np.zeros(len(a))+40)[:,:2]
+        seg=np.hypot(*np.diff(pp,axis=0).T); L=np.concatenate([[0],np.cumsum(seg)])
+        for s_ in np.arange(4,L[-1],9.0):
+            e_=np.interp(s_,L,pp[:,0]); n_=np.interp(s_,L,pp[:,1]); lat0,lon0,_=geo.geodetic(geo.O+e_*geo.Ev+n_*geo.Nv)
+            if VEG3[0]<=lat0<=VEG3[1] and VEG3[2]<=lon0<=VEG3[3]: continue
+            trees.append((float(lat0),float(lon0),0))
+ta=np.array(trees); tp_=geo.enu(ta[:,0],ta[:,1],np.zeros(len(ta))+40)[:,:2]
+keep=~inside(tp_[:,0],tp_[:,1])&(tp_[:,0]>E0)&(tp_[:,0]<E1)&(tp_[:,1]>N0)&(tp_[:,1]<N1)
+tp_=tp_[keep]; th=ta[keep,2]
+rng=np.random.default_rng(7); th=np.where(th>2,th,rng.uniform(6.5,11.5,len(th)))
+from shapely.geometry import Point
+from shapely.prepared import prep
+ps=prep(side.buffer(0.5))
+onside=np.array([ps.contains(Point(x,y)) for x,y in tp_])
+tu=roadh(tp_[:,0],tp_[:,1])+np.where(onside,0.15,-0.2)
+TREES=np.column_stack([tp_,tu,th]).astype(np.float32)
+print('trees',len(TREES),'on pavements',onside.sum(), time.time()-T0)
+pickle.dump(dict(LINES=LINES,RECTS=RECTS,TREES=TREES),open('paint.pkl','wb'))
+print('saved paint', len(LINES), len(RECTS))
+
+
+===== tools/area_a/roadheight.py =====
+# Ground roads' surface height: from the roads' own centreline profiles (the DEM along the middle of each OSM way,
+# smoothed), spread across the road (inverse-distance mix of the nearest centrelines within 25 m; junctions blend);
+# where no way is near (plazas, lanes OSM lacks), the smoothed DEM. Walls and embankments beside a road no longer
+# pull its edges up or down.
+import numpy as np, collections
+class RoadHeight:
+    def __init__(self, ground_ways, fallback, cell=12.0):
+        self.cell = cell; self.fb = fallback; idx = collections.defaultdict(list); pts = []
+        for w in ground_ways:
+            if w.get('h') is None: continue
+            for (x, y), h in zip(w['xy'], w['h']): pts.append((x, y, h))
+        self.P = np.array(pts, float)
+        for k, (x, y, h) in enumerate(self.P): idx[(int(x // cell), int(y // cell))].append(k)
+        self.idx = {k: np.array(v) for k, v in idx.items()}
+    def __call__(self, e, n):
+        e = np.atleast_1d(np.asarray(e, float)); n = np.atleast_1d(np.asarray(n, float)); out = self.fb(e, n).astype(float)
+        c = self.cell
+        for t in range(len(e)):
+            ci, cj = int(e[t] // c), int(n[t] // c); cand = [self.idx.get((ci + a, cj + b)) for a in (-2, -1, 0, 1, 2) for b in (-2, -1, 0, 1, 2)]
+            cand = [x for x in cand if x is not None]
+            if not cand: continue
+            ks = np.concatenate(cand); P = self.P[ks]; d = np.hypot(P[:, 0] - e[t], P[:, 1] - n[t]); m = d < 25
+            if not m.any(): continue
+            d = d[m]; h = P[m, 2]; o = np.argsort(d)[:6]; w = 1.0 / (d[o] + 1.0) ** 2
+            out[t] = np.sum(w * h[o]) / np.sum(w)
+        return out
+
+
+===== tools/area_a/roads1.py =====
+# step 1: PLATEAU road polygons (tran LOD1, MVT z16) -> one road area in local metres (east, north from the Kannai spot);
+# minus the LOD3 block's own roads; split into carriageway and pavements
+import glob, math, pickle, numpy as np, mapbox_vector_tile, sys
+from shapely.geometry import shape, Polygon, MultiPolygon, box
+from shapely.ops import unary_union
+from shapely import affinity
+import geo
+polys=[]
+for f in glob.glob('mvt/16_*.mvt'):
+    import os
+    if os.path.getsize(f)<50: continue
+    z,x,y=map(int,f[4:-4].split('_'))
+    try: t=mapbox_vector_tile.decode(open(f,'rb').read(), default_options={'y_coord_down': True})
+    except Exception: continue
+    L=t.get('Road'); 
+    if not L: continue
+    ext=L['extent']; n=2**z
+    def tr(px,py):
+        lon=(x+px/ext)/n*360-180; yy=(y+py/ext)/n; lat=np.degrees(np.arctan(np.sinh(np.pi*(1-2*yy))))
+        return lat,lon
+    for fe in L['features']:
+        g=fe['geometry']
+        rings=[g['coordinates']] if g['type']=='Polygon' else g['coordinates']
+        for poly in rings:
+            out=[]
+            for ring in poly:
+                a=np.array(ring,float); lat,lon=tr(a[:,0],a[:,1]); p=geo.enu(lat,lon,np.zeros_like(lat)+40)
+                out.append(list(zip(p[:,0],p[:,1])))
+            try:
+                P=Polygon(out[0],out[1:]).buffer(0)
+                if not P.is_empty: polys.append(P)
+            except Exception as e: pass
+print('polygons',len(polys))
+U=unary_union([p.buffer(0.05) for p in polys]).buffer(-0.05)
+print('road area km2', U.area/1e6)
+pickle.dump(U,open('U.pkl','wb'))
+
+
+===== tools/area_a/roads2.py =====
+import json, subprocess, os, pickle, numpy as np, sys
+sys.path.insert(0,'../tran')
+import b3dm, geo
+from shapely.geometry import Polygon
+from shapely.ops import unary_union
+base='https://assets.cms.plateau.reearth.io/assets/51/8e3f96-c5d3-4d89-9397-0aa810b096f7/14100_yokohama-shi_city_2024_citygml_2_op_tran_3dtiles_lod3/'
+ts=json.loads(subprocess.run(['curl','-sS',base+'tileset.json'],capture_output=True).stdout)
+uris=[]
+def w(n):
+    if 'content' in n and not n.get('children'): uris.append(n['content']['uri'])
+    for c in n.get('children',[]): w(c)
+w(ts['root'])
+tris=[]
+for u in uris:
+    p='lod3/'+u.replace('/','_')
+    if not os.path.exists(p): subprocess.run(['curl','-sS','-o',p,base+u])
+    r=b3dm.read(p)
+    for pr in r['prims']:
+        P=pr['pos'][:,[0,2,1]]*np.array([1,-1,1])+r['rtc']; lat,lon,h=geo.geodetic(P); L=geo.enu(lat,lon,h)
+        for f in pr['faces']:
+            q=Polygon(L[f][:,:2])
+            if q.area>1e-4: tris.append(q)
+print('lod3 leaves',len(uris),'triangles',len(tris))
+F=unary_union([t.buffer(0.02) for t in tris]).buffer(0.5)
+print('lod3 footprint km2',F.area/1e6)
+pickle.dump(F,open('F3.pkl','wb'))
+
+
+===== tools/area_a/roads3.py =====
+import pickle, time
+from shapely.ops import unary_union
+U=pickle.load(open('U.pkl','rb')); F3=pickle.load(open('F3.pkl','rb'))
+t=time.time()
+U=U.buffer(0)
+wide=U.buffer(-6.0,quad_segs=6).buffer(6.0,quad_segs=6).intersection(U)
+narrow=U.difference(wide).buffer(-0.05).buffer(0.05)
+carr_w=wide.buffer(-3.25,quad_segs=6)
+carriage=unary_union([carr_w,narrow]).difference(F3)
+side=U.difference(carriage.buffer(0.01)).difference(F3).buffer(-0.02).buffer(0.02)
+print('t',time.time()-t,'wide',wide.area/1e6,'narrow',narrow.area/1e6,'carriage',carriage.area/1e6,'sidewalk',side.area/1e6)
+pickle.dump((carriage,side,wide,narrow),open('CS.pkl','wb'))
+
+
+===== tools/area_a/route.py =====
+# a route over OSM's ways (directed, one-way respected), the expressway cheap: general road -> on-ramp -> K1 -> exit -> general road
+import pickle, numpy as np, heapq, json, sys, collections
+S1 = pickle.load(open('b4_stage1.pkl', 'rb')); WL = S1['WL']
+DRIVE = {'motorway', 'motorway_link', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'trunk_link', 'primary_link', 'secondary_link', 'tertiary_link'}
+adj = collections.defaultdict(list); pos = {}
+for wi, w in enumerate(WL):
+    if w['hw'] not in DRIVE or len(w['nodes']) < 2: continue
+    mot = w['hw'] in ('motorway', 'motorway_link'); ow = w['oneway'] or mot
+    idx = [int(np.argmin(np.hypot(*(w['xy'] - q).T))) for q in w['p']]
+    for k in range(len(w['nodes']) - 1):
+        a, b = w['nodes'][k], w['nodes'][k + 1]; L = float(np.hypot(*(w['p'][k + 1] - w['p'][k]))); c = L * (1.0 if mot else float(sys.argv[4]) if len(sys.argv) > 4 else 3.0)
+        pos[a] = w['p'][k]; pos[b] = w['p'][k + 1]
+        adj[a].append((b, c, wi, idx[k], idx[k + 1]))
+        if not ow: adj[b].append((a, c, wi, idx[k + 1], idx[k]))
+def nearest(q, ground=True):
+    best = None
+    for nid, p in pos.items():
+        d = np.hypot(*(p - q))
+        if best is None or d < best[0]: best = (d, nid)
+    return best[1]
+src = nearest(np.array([float(x) for x in sys.argv[1].split(',')])); dst = nearest(np.array([float(x) for x in sys.argv[2].split(',')]))
+dist = {src: 0}; prev = {}; pq = [(0, src)]
+while pq:
+    d, u = heapq.heappop(pq)
+    if u == dst: break
+    if d > dist.get(u, 1e18): continue
+    for v, c, wi, i0, i1 in adj[u]:
+        if d + c < dist.get(v, 1e18): dist[v] = d + c; prev[v] = (u, wi, i0, i1); heapq.heappush(pq, (d + c, v))
+assert dst in prev, 'no route'
+legs = []; u = dst
+while u != src: p_, wi, i0, i1 = prev[u]; legs.append((wi, i0, i1)); u = p_
+legs.reverse(); pts = []
+for wi, i0, i1 in legs:
+    w = WL[wi]; r = range(i0, i1 + 1) if i1 >= i0 else range(i0, i1 - 1, -1)
+    for i in r: pts.append([float(w['xy'][i, 0]), float(w['xy'][i, 1]), float(w['h'][i]), w['id'], w['hw'], w['kind']])
+kinds = []
+for p in pts:
+    k = p[4] + '/' + p[5]
+    if not kinds or kinds[-1][0] != k: kinds.append([k, 1])
+    else: kinds[-1][1] += 1
+print('points', len(pts), 'length ~', round(sum(np.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]) for i in range(len(pts) - 1))), 'm')
+print(' -> '.join(f'{k}({n})' for k, n in kinds))
+json.dump(pts, open(sys.argv[3], 'w'))
+
+
+===== tools/area_a/test_area.py =====
+# Checks on models/area/area_a.bin (ARA2) that catch the problems seen before. Run: python3 test_area.py [path]
+#  1. paint sits on its road: on ground roads within 1-6 cm above the triangle under it; on decks within 1-5 cm
+#  2. no road surface dips into a pit: on the flat core (east of x = -1300: Kannai, Sakuragicho, MM, the bay) under 2 % of the
+#     ground-road area is steeper than 25 %; the hills to the west (Nishi-ku, Noge-yama, Tobe) are only reported, their streets are steep
+#  3. stacked roads stay apart: a deck is never within 2.5 m over a ground road (the car would hit its underside), away
+#     from the deck's ends (within 30 m of them it meets the ground: counted apart);
+#     2.5-4.5 m (low riverside roads under bridges, or ramp ends) is reported
+#  4. decks climb no more than 16 % anywhere (expressway mainline: see ways)
+#  5. every chunk's data reads and is the size its header says
+import sys, json, struct, numpy as np, collections
+path = sys.argv[1] if len(sys.argv) > 1 else '../../models/area/area_a.bin'
+b = open(path, 'rb').read(); assert b[:4] in (b'ARA1', b'ARA2'), 'not an area file'
+hl = struct.unpack('<I', b[4:8])[0]; H = json.loads(b[8:8 + hl]); base = 8 + hl
+def arr(t, r): return np.frombuffer(b[base + r[0]:base + r[0] + r[1]], t)
+fails = collections.Counter(); notes = []
+def check(ok, what, n=1):
+    if not ok: fails[what] += n
+tri_g = []; tri_d = []; paint = []
+for c in H['chunks']:
+    o = np.array(c['o'])
+    for part in c.get('carr', []):
+        P = arr(np.int16, part['v']).reshape(-1, 3) * 0.01 + o; I = arr(np.uint16, part['i']).reshape(-1, 3)
+        check(len(I) == 0 or I.max() < len(P), 'index out of range'); tri_g.append(P[I])
+    if 'deck' in c: tri_d.append((arr(np.int16, c['deck']).reshape(-1, 3, 3) * 0.01 + o))
+    if 'paint' in c:
+        P = arr(np.int16, c['paint']['p']).reshape(-1, 3) * 0.01 + o; paint.append(P)
+TG = np.concatenate(tri_g); TD = np.concatenate(tri_d) if tri_d else np.zeros((0, 3, 3)); PP = np.concatenate(paint)
+print('ground triangles', len(TG), 'deck triangles', len(TD), 'paint points', len(PP))
+# a 2D grid index of triangles
+def index(T, cell=8.0):
+    idx = collections.defaultdict(list)
+    mn = np.floor(T[:, :, :2].min(1) / cell).astype(int); mx = np.floor(T[:, :, :2].max(1) / cell).astype(int)
+    for t in range(len(T)):
+        for i in range(mn[t, 0], mx[t, 0] + 1):
+            for j in range(mn[t, 1], mx[t, 1] + 1): idx[(i, j)].append(t)
+    return idx
+def heights_at(T, idx, p, cell=8.0):
+    out = []
+    for t in idx.get((int(np.floor(p[0] / cell)), int(np.floor(p[1] / cell))), ()):
+        a, bb, cc = T[t]; v0 = bb[:2] - a[:2]; v1 = cc[:2] - a[:2]; v2 = p[:2] - a[:2]
+        d = v0[0] * v1[1] - v0[1] * v1[0]
+        if abs(d) < 1e-9: continue
+        u = (v2[0] * v1[1] - v2[1] * v1[0]) / d; v = (v0[0] * v2[1] - v0[1] * v2[0]) / d
+        if u >= -1e-6 and v >= -1e-6 and u + v <= 1 + 1e-6: out.append(a[2] + u * (bb[2] - a[2]) + v * (cc[2] - a[2]))
+    return out
+IG = index(TG); ID = index(TD) if len(TD) else {}
+rng = np.random.default_rng(1); sample = PP[rng.choice(len(PP), min(6000, len(PP)), replace=False)]
+off = []; unsupported = 0
+for p in sample:
+    hs = heights_at(TG, IG, p) + (heights_at(TD, ID, p) if len(TD) else [])
+    if not hs: unsupported += 1; continue
+    d = min(hs, key=lambda h: abs(p[2] - h)); off.append(p[2] - d)
+off = np.array(off)
+print(f'1. paint above its road: median {np.median(off) * 100:.1f} cm, 1-99% {np.percentile(off, 1) * 100:.1f}..{np.percentile(off, 99) * 100:.1f} cm; {unsupported} of {len(sample)} paint points off any road surface')
+check(np.mean((off > -0.01) & (off < 0.08)) > 0.97, 'paint off its road (>3 % of samples outside -1..8 cm)')
+n = np.cross(TG[:, 1] - TG[:, 0], TG[:, 2] - TG[:, 0]); slope = np.hypot(n[:, 0], n[:, 1]) / np.maximum(np.abs(n[:, 2]), 1e-9)
+area = 0.5 * np.abs(n[:, 2]); core = TG.mean(1)[:, 0] > -1300; steep = (slope > 0.25) & (np.abs(n[:, 2]) > 1e-3)
+fc = area[core & steep].sum() / area[core].sum(); fh = area[~core & steep].sum() / max(area[~core].sum(), 1)
+print(f'2. ground-road area steeper than 25 %: core {fc * 100:.2f} %, western hills {fh * 100:.2f} % ({np.sum(steep)} of {len(TG)} triangles)')
+check(fc < 0.02, 'steep ground roads on the flat core (pits or humps)')
+if len(TD):
+    cen = TD.mean(1); close = 0; low = 0; stacked = 0; atend = 0
+    ends = np.array(H.get('deckEnds', [[1e9, 1e9]]))
+    for p in cen[::7]:
+        if np.min(np.hypot(ends[:, 0] - p[0], ends[:, 1] - p[1])) < 30:      # (a ramp's or bridge's end, where it meets the ground)
+            atend += sum(1 for h in heights_at(TG, IG, p) if 0.5 < p[2] - h < 2.5); continue
+        hs = heights_at(TG, IG, p)
+        for h in hs:
+            if p[2] - h > 0.5: stacked += 1
+            if 0.5 < p[2] - h < 2.5: close += 1
+            elif 2.5 <= p[2] - h < 4.5: low += 1
+    print(f'3. deck triangles over a ground road: {stacked}; within 2.5 m: {close} (and {atend} within 30 m of a deck\'s end, where it meets the ground); 2.5-4.5 m: {low}')
+    check(close <= max(3, stacked * 0.05), 'decks too close over ground roads')
+    dn = np.cross(TD[:, 1] - TD[:, 0], TD[:, 2] - TD[:, 0]); ds = np.hypot(dn[:, 0], dn[:, 1]) / np.maximum(np.abs(dn[:, 2]), 1e-9)
+    print(f'4. deck triangles steeper than 16 %: {np.sum(ds > 0.16)} of {len(TD)}'); check(np.sum(ds > 0.16) < len(TD) * 0.01, 'decks too steep')
+# 6. furniture: nothing standing on a carriageway at its level, nor on a crossing (a road's own marks - manholes, drains,
+#    arrows, patches - and the expressway's own pieces, on its decks, apart)
+if 'furnKinds' in H:
+    KN = {v: k for k, v in H['furnKinds'].items()}; ONROAD = {'manhole', 'drain', 'arrow', 'patch'}; DECK = {'hwlight', 'hwsign', 'etc', 'tlamp', 'booth'}
+    RQ = []
+    for c in H['chunks']:
+        if 'rect' in c: RQ.append(arr(np.int16, c['rect']).reshape(-1, 4, 3) * 0.01 + np.array(c['o']))
+    RQ = np.concatenate(RQ) if RQ else np.zeros((0, 4, 3)); RC = RQ.mean(1)
+    rh = collections.defaultdict(list)
+    for k_, p_ in enumerate(RC): rh[(int(p_[0] // 8), int(p_[1] // 8))].append(k_)
+    def on_rect(p):
+        for di in (-1, 0, 1):
+            for dj in (-1, 0, 1):
+                for k_ in rh.get((int(p[0] // 8) + di, int(p[1] // 8) + dj), ()):
+                    q = RQ[k_][:, :2]; inside = True
+                    for i in range(4):
+                        a_, b_ = q[i], q[(i + 1) % 4]; cr = (b_[0] - a_[0]) * (p[1] - a_[1]) - (b_[1] - a_[1]) * (p[0] - a_[0])
+                        if i == 0: sgn = np.sign(cr)
+                        elif np.sign(cr) != sgn and cr != 0: inside = False; break
+                    if inside and abs(RQ[k_][:, 2].mean() - p[2]) < 1.0: return True
+        return False
+    bad_road = []; bad_x = []; n_st = 0
+    for c in H['chunks']:
+        if 'furn' not in c: continue
+        o = np.array(c['o']); P = arr(np.int16, c['furn']['p']).reshape(-1, 3) * 0.01 + o; K = arr(np.uint8, c['furn']['k'])
+        for p, k in zip(P, K):
+            name = KN[int(k)]
+            if name in ONROAD or name in DECK: continue
+            n_st += 1
+            if any(abs(h - p[2]) < 0.6 for h in heights_at(TG, IG, p)): bad_road.append((name, np.round(p, 1).tolist()))
+            if on_rect(p): bad_x.append((name, np.round(p, 1).tolist()))
+    print(f'6. standing furniture {n_st}: on a carriageway {len(bad_road)}, on a crossing {len(bad_x)}', bad_road[:5], bad_x[:5])
+    check(len(bad_road) <= n_st * 0.002, 'furniture standing on a carriageway')
+    check(len(bad_x) == 0, 'furniture on a crossing')
+print('stats', H.get('stats'))
+print('FAILED: ' + '; '.join(f'{k} ({v})' for k, v in fails.items()) if fails else 'all checks passed')
+sys.exit(1 if fails else 0)
+
+
+===== tools/area_a/ways.py =====
+# Road graph and heights (one place for every road surface, paint, deck and the car's ground).
+# Each OSM way keeps its id, class, lanes, direction, bridge / tunnel / layer. Heights:
+#  - ground ways: the GSI DEM (orthometric + geoid), smoothed along the way (underpasses keep the DEM's low road);
+#  - bridges and viaducts: their ends where they meet ground roads; PLATEAU's own bridge decks (brid LOD2) where one
+#    lies under the way; else clearance over what is below by layer; smoothed, grade-limited;
+#  - tunnels: under the ground by layer, rising to the portals.
+# A height not backed by DEM or PLATEAU is marked 'est' (estimated) per sample.
+import json, math, pickle, sys, collections, numpy as np, geo
+DRIVE = {'motorway', 'motorway_link', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential',
+         'trunk_link', 'primary_link', 'secondary_link', 'tertiary_link', 'service'}
+GEOID = 36.28
+def load(H, osm='osm_ways.json', brid=None):
+    E0, E1, N0, N1, G = H['G']; Df, U0 = H['Df'], H['U0']
+    def hg(e, n, arr):
+        fi = np.clip((np.asarray(e, float) - E0) / G, 0, arr.shape[1] - 1.001); fj = np.clip((np.asarray(n, float) - N0) / G, 0, arr.shape[0] - 1.001)
+        i = np.floor(fi).astype(int); j = np.floor(fj).astype(int); u = fi - i; v = fj - j
+        return (arr[j, i] * (1 - u) + arr[j, i + 1] * u) * (1 - v) + (arr[j + 1, i] * (1 - u) + arr[j + 1, i + 1] * u) * v
+    ground = lambda e, n: hg(e, n, U0) + hg(e, n, Df) + GEOID          # ('up' in the Kannai frame)
+    curve = lambda e, n: hg(e, n, U0)                                   # (the ellipsoid's own drop, for heights given above sea level)
+    W = json.load(open(osm))['elements']
+    ways = []; node_ways = collections.defaultdict(list)
+    for w in W:
+        t = w['tags']; hw = t.get('highway')
+        if hw not in DRIVE or not w.get('geometry') or t.get('area') == 'yes': continue
+        if hw == 'service' and t.get('service') in ('parking_aisle', 'driveway', 'drive-through'): continue
+        a = np.array([[q['lat'], q['lon']] for q in w['geometry']]); p = geo.enu(a[:, 0], a[:, 1], np.zeros(len(a)) + 40)[:, :2]
+        try: layer = int(str(t.get('layer', '0')).split(';')[0])
+        except ValueError: layer = 0
+        kind = 'tunnel' if t.get('tunnel') in ('yes', 'building_passage', 'culvert') or (layer < 0 and t.get('tunnel')) else 'bridge' if t.get('bridge') in ('yes', 'viaduct', 'movable', 'cantilever') else 'ground'
+        try: lanes = int(str(t.get('lanes', '')).split(';')[0])
+        except ValueError: lanes = 0
+        wd = dict(id=w['id'], hw=hw, ref=t.get('ref'), name=t.get('name'), layer=layer, kind=kind, lanes=lanes,
+                  oneway=t.get('oneway') in ('yes', '1', 'true') or t.get('junction') == 'roundabout' or hw in ('motorway',), tags=t,
+                  nodes=list(w['nodes']), p=p)
+        ways.append(wd)
+        for i, nid in enumerate(wd['nodes']): node_ways[nid].append((len(ways) - 1, i))
+    # node heights: targets and how firmly they are held
+    node_h = {}; fixed = {}
+    for wi, w in enumerate(ways):
+        g = ground(w['p'][:, 0], w['p'][:, 1])
+        for i, nid in enumerate(w['nodes']):
+            kinds = {ways[a]['kind'] for a, _ in node_ways[nid]}
+            if w['kind'] == 'ground' or 'ground' in kinds and w['kind'] != 'ground' and all(ways[a]['kind'] == 'ground' or ways[a]['layer'] == w['layer'] or True for a, _ in node_ways[nid]):
+                if 'ground' in kinds: fixed[nid] = g[i]; node_h[nid] = g[i]
+    # the PLATEAU bridge decks, as height samples: (east, north, deck top 'up')
+    BR = brid if brid is not None else np.zeros((0, 3))
+    from shapely.geometry import Point
+    for w in ways:
+        p = w['p']; seg = np.hypot(*np.diff(p, axis=0).T); L = np.concatenate([[0], np.cumsum(seg)]); w['L'] = L[-1]
+        if L[-1] < 0.5: w['s'] = np.array([0.0]); w['xy'] = p[:1]; w['h'] = ground(p[:1, 0], p[:1, 1]); w['est'] = np.zeros(1, bool); continue
+        s = np.arange(0, L[-1], 2.0); s = np.append(s, L[-1])
+        x = np.interp(s, L, p[:, 0]); y = np.interp(s, L, p[:, 1]); g = ground(x, y)
+        w['s'] = s; w['xy'] = np.column_stack([x, y]); w['g'] = g
+        # each sample's node index along the way (for the ends)
+        if w['kind'] == 'ground':
+            h = g.copy(); k = 7                                           # (the DEM, smoothed over ~15 m)
+            if len(h) > k: h = np.convolve(np.pad(h, k, mode='edge'), np.ones(2 * k + 1) / (2 * k + 1), mode='same')[k:-k]
+            w['h'] = h; w['est'] = np.zeros(len(s), bool)
+        else:
+            w['h'] = None
+    # elevated and buried ways: chains between ground-held nodes, solved per chain
+    def end_height(w, end):
+        nid = w['nodes'][0 if end == 0 else -1]
+        if nid in fixed: return fixed[nid], True
+        return None, False
+    for w in ways:
+        if w['kind'] == 'ground' or w['L'] < 0.5: continue
+        s, xy, g = w['s'], w['xy'], w['g']; n = len(s)
+        lay = w['layer'] if w['layer'] != 0 else (1 if w['kind'] == 'bridge' else -1)
+        mot = w['hw'] in ('motorway', 'motorway_link')
+        if w['kind'] == 'bridge': target = g + (6.5 if not mot else {1: 8.0, 2: 13.0, 3: 18.0, 4: 23.0}.get(lay, 13.0))
+        else: target = g - {-1: 8.0, -2: 13.0}.get(lay, 8.0)
+        est = np.ones(n, bool)
+        # PLATEAU decks under this way (within 8 m sideways), as firmer targets
+        if len(BR):
+            for i in range(0, n, 2):
+                d = np.hypot(BR[:, 0] - xy[i, 0], BR[:, 1] - xy[i, 1]); near = np.where(d < 8)[0]
+                if len(near):                                             # (several decks stacked: the one nearest this way's own level)
+                    j = near[np.argmin(np.abs(BR[near, 2] - target[i]))]
+                    if abs(BR[j, 2] - target[i]) < 9: target[max(0, i - 1):i + 2] = BR[j, 2]; est[max(0, i - 1):i + 2] = False
+        # between PLATEAU's deck points, the way follows them (joined straight); only a way with none at all keeps the
+        # estimate from its layer
+        if (~est).sum() >= 2:
+            sup = np.where(~est)[0]; target = np.interp(s, s[sup], target[sup])
+        h0, f0 = end_height(w, 0); h1, f1 = end_height(w, 1)
+        h = target.copy()
+        # ends meet the ground roads; the way climbs/descends to its target at no more than 6 % (motorway) / 8 %
+        gmax = 0.06 if mot else 0.08
+        if f0: h = np.minimum(h, h0 + gmax * s) if w['kind'] == 'bridge' else np.maximum(h, h0 - gmax * s)
+        if f1: h = np.minimum(h, h1 + gmax * (s[-1] - s)) if w['kind'] == 'bridge' else np.maximum(h, h1 - gmax * (s[-1] - s))
+        if f0: h[0] = h0
+        if f1: h[-1] = h1
+        w['h'] = h; w['est'] = est; w['ends'] = (f0, f1)
+    # shared nodes between elevated ways: one height (the mean), then each such way re-fitted to its ends
+    for it in range(3):
+        nh = collections.defaultdict(list)
+        for w in ways:
+            if w['h'] is None or w['L'] < 0.5: continue
+            nh[w['nodes'][0]].append(w['h'][0]); nh[w['nodes'][-1]].append(w['h'][-1])
+        for w in ways:
+            if w['kind'] == 'ground' or w['L'] < 0.5: continue
+            a = np.mean(nh[w['nodes'][0]]); b = np.mean(nh[w['nodes'][-1]]); s = w['s']
+            if w['nodes'][0] in fixed: a = fixed[w['nodes'][0]]
+            if w['nodes'][-1] in fixed: b = fixed[w['nodes'][-1]]
+            d0 = a - w['h'][0]; d1 = b - w['h'][-1]; t = s / max(s[-1], 1e-6)
+            w['h'] = w['h'] + d0 * (1 - t) + d1 * t
+    # smooth the elevated profiles (vertical curves) keeping their ends: PLATEAU's deck points mix the deck, its
+    # parapets and its girders, so a running median over 30 m first, then a mean over 50 m
+    for w in ways:
+        mot = w['hw'] in ('motorway', 'motorway_link')
+        if (w['kind'] == 'ground' and not mot) or w['L'] < 0.5 or len(w['h']) < 9: continue
+        h = w['h']; a, b = h[0], h[-1]
+        km = min(7, (len(h) - 1) // 2); pm = np.pad(h, km, mode='edge'); h = np.array([np.median(pm[i:i + 2 * km + 1]) for i in range(len(h))])
+        box = lambda x, k: np.convolve(np.pad(x, k, mode='edge'), np.ones(2 * k + 1) / (2 * k + 1), mode='same')[k:-k] if k > 0 else x
+        k = min(30, (len(h) - 1) // 2); hs = box(box(h, k), k)            # (two 120 m means: a long vertical curve)
+        if w['kind'] == 'bridge' and w['hw'] in ('motorway', 'motorway_link'):
+            g = w['g']; t = np.linspace(0, 1, len(h)); inner = np.minimum(w['s'], w['s'][-1] - w['s']) > 60
+            hs = np.where(inner, np.maximum(hs, g + 6.5), hs)                # (room under it for the roads below)
+            k2 = min(8, (len(h) - 1) // 2); hs = box(hs, k2)
+        t = np.linspace(0, 1, len(h)); hs = hs + (a - hs[0]) * (1 - t) + (b - hs[-1]) * t
+        if mot:                                                           # (the expressway: no steeper than 6 %, its ramps 8 %)
+            gm = 0.06 if w['hw'] == 'motorway' else 0.08; ds = np.diff(w['s'])
+            for _ in range(2):
+                for i in range(1, len(hs)): hs[i] = min(max(hs[i], hs[i - 1] - gm * ds[i - 1]), hs[i - 1] + gm * ds[i - 1])
+                for i in range(len(hs) - 2, -1, -1): hs[i] = min(max(hs[i], hs[i + 1] - gm * ds[i]), hs[i + 1] + gm * ds[i])
+        w['h'] = hs
+    # the last word on heights. A ramp lying on the mainline it merges with or leaves (their decks overlapping sideways)
+    # takes the mainline's height there. Then every way meets the ways it shares a node with at one height (the grade
+    # limit and the smoothing above move ends apart), each end eased in over up to 60 m; a node on a ground road keeps
+    # the ground road's height
+    lw = lambda w: (w['lanes'] or 2) * 3.5 + 2.0 if w['hw'] == 'motorway' else (w['lanes'] or 1) * 3.5 + 2.5
+    hm = collections.defaultdict(list); mains = [w for w in ways if w['hw'] == 'motorway' and w['h'] is not None and len(w['s']) > 1]
+    for mi, w in enumerate(mains):
+        w['tn'] = np.gradient(w['xy'], axis=0); w['tn'] /= np.linalg.norm(w['tn'], axis=1)[:, None] + 1e-9
+        for j, (x, y) in enumerate(w['xy']): hm[(int(x // 16), int(y // 16))].append((mi, j))
+    for w in ways:
+        if w['hw'] != 'motorway_link' or w['h'] is None or len(w['s']) < 3: continue
+        h = w['h'].copy(); hit = np.zeros(len(h), bool)
+        for i, (x, y) in enumerate(w['xy']):
+            best = None
+            for di in (-1, 0, 1):
+                for dj in (-1, 0, 1):
+                    for mi, j in hm.get((int(x // 16) + di, int(y // 16) + dj), ()):
+                        m = mains[mi]; d = np.array([x, y]) - m['xy'][j]; t = m['tn'][j]
+                        if abs(d @ t) < 2.2 and abs(d[0] * -t[1] + d[1] * t[0]) < (lw(w) + lw(m)) / 2 - 0.5 and abs(m['h'][j] - h[i]) < 3.0:
+                            if best is None or abs(m['h'][j] - h[i]) < abs(best - h[i]): best = m['h'][j]
+            if best is not None: h[i] = best; hit[i] = True
+        if hit.any():                                                     # (eased in and out over 60 m: no step)
+            hi = np.where(hit)[0]; dlt = h[hi] - w['h'][hi]; s_ = w['s']
+            near = np.abs(s_[:, None] - s_[hi][None, :]); k = near.argmin(1)
+            w['h'] = w['h'] + dlt[k] * np.clip(1 - near[np.arange(len(s_)), k] / 60.0, 0, 1); w['merged'] = int(hit.sum())
+    for it in range(4):
+        nh = collections.defaultdict(list)
+        for w in ways:
+            if w['h'] is None or w['L'] < 0.5: continue
+            nh[w['nodes'][0]].append(w['h'][0]); nh[w['nodes'][-1]].append(w['h'][-1])
+        for w in ways:
+            if w['h'] is None or w['L'] < 0.5 or (w['kind'] == 'ground' and w['hw'] not in ('motorway', 'motorway_link')): continue
+            s = w['s']; D = min(60.0, s[-1] / 2)
+            a = fixed.get(w['nodes'][0], np.mean(nh[w['nodes'][0]])); b = fixed.get(w['nodes'][-1], np.mean(nh[w['nodes'][-1]]))
+            w['h'] = w['h'] + (a - w['h'][0]) * np.clip(1 - s / max(D, 1e-6), 0, 1) + (b - w['h'][-1]) * np.clip(1 - (s[-1] - s) / max(D, 1e-6), 0, 1)
+    return ways, fixed, ground, curve

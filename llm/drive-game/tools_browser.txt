@@ -1,0 +1,472 @@
+# tools/browser/ のスクリプト（10 本）
+
+
+===== tools/browser/compare.py =====
+# Before / after pairs side by side (each labelled with the commit, the place and the view), for the docs.
+# Usage: python3 compare.py shots.json before_dir after_dir out_dir before_label after_label
+import sys, json, os
+from PIL import Image, ImageDraw, ImageFont
+shots = json.load(open(sys.argv[1])); B, A, O, lb, la = sys.argv[2:7]; os.makedirs(O, exist_ok=True)
+font = None
+for f in ['/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf', '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc', '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc', '/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc']:
+    if os.path.exists(f): font = ImageFont.truetype(f, 18); break
+font = font or ImageFont.load_default()
+for s in shots:
+    pb, pa = os.path.join(B, s['name'] + '.png'), os.path.join(A, s['name'] + '.png')
+    if not (os.path.exists(pb) and os.path.exists(pa)): print('missing', s['name']); continue
+    a, b = Image.open(pb).convert('RGB'), Image.open(pa).convert('RGB'); w, h = a.size
+    im = Image.new('RGB', (w * 2 + 8, h + 60), (24, 24, 26)); im.paste(a, (0, 60)); im.paste(b, (w + 8, 60))
+    d = ImageDraw.Draw(im)
+    where = f"{s.get('note', '')}  ({s['e']:.1f}, {s['n']:.1f})"
+    d.text((8, 7), f'変更前 {lb}', fill=(230, 230, 230), font=font); d.text((w + 16, 7), f'変更後 {la}', fill=(230, 230, 230), font=font)
+    d.text((8, 33), where[:90], fill=(180, 200, 220), font=font)
+    im.save(os.path.join(O, s['name'] + '.jpg'), quality=84); print('ok', s['name'])
+
+
+===== tools/browser/longdrive.js =====
+// A long drive with the page's own physics and collisions; a route follower presses the keys (pure pursuit, its
+// speed planned from the route's curvature ahead, backing up when it is stuck). ROUTES=a.json,b.json (looped; ONCE=1 drives it once and stops, for a stretch), MIN=minutes,
+// TELEPORT=1 lets it put the car back on the route after 25 s stuck (counted apart: a drive "without help" has none).
+// Logged: each stop (under 0.5 m/s for 2 s) and each height off the way's profile by more than 1 m, with where (east,
+// north, route point, way id and kind), the car's height, every surface under it, what it hit, what was still loading,
+// the keys and the steering. NORENDER=0 draws the frames (SwiftShader here: slow)
+const { chromium } = require('playwright');
+const fs = require('fs'), path = require('path');
+(async () => {
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-http2', '--enable-precise-memory-info'], proxy: { server: process.env.HTTPS_PROXY, bypass: '127.0.0.1,localhost' } });
+  const page = await browser.newPage({ ignoreHTTPSErrors: true, viewport: { width: 640, height: 360 } });
+  const root = process.env.ROOT || path.resolve(__dirname, '../..');
+  await page.route(/^http:\/\/127\.0\.0\.1:8765\//, route => { const p = path.join(root, decodeURIComponent(new URL(route.request().url()).pathname)); try { route.fulfill({ status: 200, body: fs.readFileSync(p), contentType: p.endsWith('.html') ? 'text/html' : 'application/octet-stream' }); } catch (e) { route.fulfill({ status: 404, body: '' }); } });
+  await page.route(/^https:/, async route => { for (let i = 0; i < 5; i++) { try { const r = await route.fetch({ timeout: 60000 }); return route.fulfill({ response: r }); } catch (e) { await new Promise(r => setTimeout(r, 800 * (i + 1))); } } return route.abort(); });
+  page.on('pageerror', e => console.log('PAGEERROR: ' + e.message + ' | ' + String(e.stack || '').split('\n').slice(1, 4).join(' < ')));
+  await page.goto('http://127.0.0.1:8765/plateau-three.html' + (process.env.NORENDER === '0' ? '?q=high' : '?norender=1'), { waitUntil: 'load' });
+  for (let i = 0; i < 90; i++) { await page.waitForTimeout(5000); if (await page.evaluate(() => __three.areaBuilt)) break; }
+  const pts = process.env.ROUTES.split(',').flatMap(f => JSON.parse(fs.readFileSync(f, 'utf8')));
+  // start: put at the route's start and let the tiles round it load
+  await page.evaluate(([pts, teleport, once]) => {
+    const T = __three, C = T.C, W = pts.map(([e, n, h]) => { const p = T.enuToWorld(e, n, h); return [p.x, p.y, p.z]; });
+    const p0 = W[0], p1 = W[3]; C.x = p0[0]; C.z = p0[2]; C.hdg = C.camYaw = Math.atan2(p1[0] - p0[0], p1[2] - p0[2]); C.v = 0; T.areaNear(); T.gatherHits(); C.y = T.groundAt(C.x, C.z, p0[1] + 1);
+    const A = window.__auto = { W, pts, i: 0, laps: 0, dist: 0, lastX: C.x, lastZ: C.z, slowT: 0, backUntil: 0, stops: [], dy: [], recov: 0, teleports: 0, stuckSince: 0, hold: true, maxOff: 0 };
+    const busy = () => Object.values(T.sets).reduce((a, t) => a + t.stats.downloading + t.stats.parsing, 0);
+    const snap = (why, now) => {
+      const k = Math.min(A.i, W.length - 1), q = A.pts[k];
+      return { why, t: +(now / 1000).toFixed(1), i: k, e: +q[0].toFixed(1), n: +q[1].toFixed(1), way: q[3], hw: q[4], kind: q[5], carY: +C.y.toFixed(2), wayY: +W[k][1].toFixed(2), off: +Math.hypot(W[k][0] - C.x, W[k][2] - C.z).toFixed(2),
+        surfaces: T.surfacesAt(C.x, C.z, C.y), hit: C.hitAt && now - C.hitAt < 3000 ? C.hitBy : null, busy: busy(), bvhQueue: T.bvhQueueLen(),
+        keys: ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].filter(x => T.keys[x]).join('+'), steer: +C.steer.toFixed(2), v: +C.v.toFixed(2), err: +A.err.toFixed(2), target: +A.target.toFixed(1) };
+    };
+    A.err = 0; A.target = 0;
+    window.__autodrive = () => {
+      const now = performance.now(), K = T.keys;
+      if (A.hold) { K.ArrowUp = K.ArrowDown = K.ArrowLeft = K.ArrowRight = false; return; }
+      let best = A.i, bd = 1e9;
+      for (let k = A.i; k < Math.min(W.length, A.i + 40); k++) { const d = Math.hypot(W[k][0] - C.x, W[k][2] - C.z); if (d < bd) { bd = d; best = k; } }
+      A.i = best; A.maxOff = Math.max(A.maxOff, bd); if (A.i >= W.length - 4) { if (once) { A.hold = true; A.done = true; return; } A.i = 0; A.laps++; }
+      A.dist += Math.hypot(C.x - A.lastX, C.z - A.lastZ); A.lastX = C.x; A.lastZ = C.z;
+      const ld = Math.min(14, Math.max(5, 4 + 0.6 * Math.abs(C.v)));
+      let j = A.i, run = 0; while (j < W.length - 1 && run < ld) { run += Math.hypot(W[j + 1][0] - W[j][0], W[j + 1][2] - W[j][2]); j++; }
+      const want = Math.atan2(W[j][0] - C.x, W[j][2] - C.z); const err = ((want - C.hdg + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI; A.err = err;
+      // the speed: from the turning over the next 30 m (3 m/s² sideways at most), 13 m/s at most; slow while far off the heading
+      let turn = 0, d0 = 0, h0 = null;
+      for (let k = A.i; k < Math.min(W.length - 1, A.i + 40) && d0 < 30; k++) { const h = Math.atan2(W[k + 1][0] - W[k][0], W[k + 1][2] - W[k][2]); if (h0 !== null) turn = Math.max(turn, Math.abs(((h - h0 + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI) / Math.max(d0, 4)); else h0 = h; d0 += Math.hypot(W[k + 1][0] - W[k][0], W[k + 1][2] - W[k][2]); }
+      A.target = Math.min(13, Math.sqrt(3 / Math.max(turn, 1e-3)), Math.abs(err) > 0.5 ? 3 : 13);
+      if (now < A.backUntil) { K.ArrowUp = false; K.ArrowDown = true; K.ArrowLeft = err < 0; K.ArrowRight = err > 0; return; }
+      K.ArrowLeft = err > 0.03; K.ArrowRight = err < -0.03; K.ArrowUp = C.v < A.target; K.ArrowDown = C.v > A.target + 2;
+      // stuck: back up 1.5 s (steering the other way), counted; after 25 s still stuck, put on the route if allowed
+      if (Math.abs(C.v) < 0.5) { if (!A.slowT) A.slowT = now; if (!A.stuckSince) A.stuckSince = now; } else { A.slowT = 0; if (Math.abs(C.v) > 2) A.stuckSince = 0; }
+      if (A.slowT && now - A.slowT > 2000) { A.stops.push(snap('止まった', now)); A.recov++; A.backUntil = now + 1500; A.slowT = 0; }
+      if (teleport && A.stuckSince && now - A.stuckSince > 25000) { const k = Math.min(W.length - 2, A.i + 10); A.stops.push(snap('位置を戻した', now)); C.x = W[k][0]; C.z = W[k][2]; C.y = W[k][1]; C.vy = 0; C.v = 0; C.hdg = Math.atan2(W[k + 1][0] - W[k][0], W[k + 1][2] - W[k][2]); A.i = k; A.teleports++; A.stuckSince = 0; }
+      const dy = C.y - W[A.i][1];
+      if (Math.abs(dy) > 1.0 && bd < 3 && (!A.dyLast || now - A.dyLast > 3000)) { A.dyLast = now; A.dy.push(snap('高さのずれ ' + dy.toFixed(2) + ' m', now)); }
+    };
+  }, [pts, process.env.TELEPORT === '1', process.env.ONCE === '1']);
+  for (let i = 0; i < 20; i++) { await page.waitForTimeout(3000); if (await page.evaluate(() => Object.values(__three.sets).reduce((a, t) => a + t.stats.downloading + t.stats.parsing, 0)) === 0) break; }
+  await page.evaluate(() => { window.__auto.hold = false; });
+  const t0 = Date.now(), MIN = +(process.env.MIN || 10);
+  while (Date.now() - t0 < MIN * 60000) {
+    await page.waitForTimeout(30000);
+    if (await page.evaluate(() => window.__auto.done)) { console.log('END of the route (ONCE=1)'); break; }
+    const s = await page.evaluate(() => { const A = window.__auto, AR = __three.AREA, C = __three.C;
+      return { i: A.i, laps: A.laps, km: +(A.dist / 1000).toFixed(2), kmh: Math.round(Math.abs(C.v) * 3.6), stops: A.stops.length, backups: A.recov, teleports: A.teleports, heightEvents: A.dy.length, maxOff: +A.maxOff.toFixed(1),
+        chunks: AR.chunks.filter(c => c.grp).length, areaMB: +(AR.bytes / 1e6).toFixed(1), heapMB: performance.memory ? +(performance.memory.usedJSHeapSize / 1e6).toFixed(0) : null, fps: document.getElementById('hud').textContent.split('\n')[0] }; });
+    console.log('T+' + Math.round((Date.now() - t0) / 1000) + 's ' + JSON.stringify(s));
+    await page.evaluate(() => { window.__auto.maxOff = 0; });
+  }
+  const fin = await page.evaluate(() => ({ stops: window.__auto.stops, dy: window.__auto.dy, km: window.__auto.dist / 1000, teleports: window.__auto.teleports, backups: window.__auto.recov, pf: __three.PF }));
+  console.log(`SUMMARY km ${fin.km.toFixed(2)}, stops ${fin.stops.length} (backed up ${fin.backups}), put back on the route ${fin.teleports}, height events ${fin.dy.length}`);
+  for (const e of fin.stops) console.log('STOP ' + JSON.stringify(e));
+  for (const e of fin.dy) console.log('HEIGHT ' + JSON.stringify(e));
+  // the frames' JS time by part (mean per frame), and the frames over 50 ms with where their time went
+  const pf = fin.pf; console.log('JS per frame (mean ms): ' + Object.entries(pf.sum).map(([k, v]) => `${k} ${(v / pf.frames).toFixed(2)}`).join(', ') + ` (${pf.frames} frames)`);
+  console.log(`frames over 50 ms: ${pf.stalls.length}` + (pf.stalls.length >= 300 ? ' (the first 300 kept)' : ''));
+  for (const e of pf.stalls.slice().sort((a, b) => b.js - a.js).slice(0, 15)) console.log('STALL ' + JSON.stringify(e));
+  await browser.close();
+})();
+
+
+===== tools/browser/memtest.js =====
+// Memory over a tour: the car put at each place in turn (LOOPS times round), the page left to settle, then what it holds:
+// GPU-side estimates (textures, geometries), the photo files kept and the images still decoded, the near buildings and
+// their parts, road chunks, the JS heap. A leak shows as a number that grows lap after lap at the same place.
+// W/H the viewport, Q=?q=high (rendered: textures only reach the GPU when drawn), LOOPS=2
+const { chromium } = require('playwright');
+const fs = require('fs'), path = require('path');
+(async () => {
+  const W = +(process.env.W || 640), H = +(process.env.H || 360), LOOPS = +(process.env.LOOPS || 2);
+  const SPOTS = [['関内', 0, 0], ['東神奈川', -761.6, 3467.7], ['戸部', -1670.3, 555.0], ['元町', 693.4, -734.5], ['山下町', 750.2, -169.9], ['横浜駅', -1551.7, 1739.9]];
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-http2', '--enable-precise-memory-info', '--js-flags=--expose-gc'], proxy: { server: process.env.HTTPS_PROXY, bypass: '127.0.0.1,localhost' } });
+  const page = await browser.newPage({ ignoreHTTPSErrors: true, viewport: { width: W, height: H } });
+  const root = process.env.ROOT || path.resolve(__dirname, '../..');
+  await page.route(/^http:\/\/127\.0\.0\.1:8765\//, route => { const p = path.join(root, decodeURIComponent(new URL(route.request().url()).pathname)); try { route.fulfill({ status: 200, body: fs.readFileSync(p), contentType: p.endsWith('.html') ? 'text/html' : p.endsWith('.js') ? 'text/javascript' : p.endsWith('.jpg') ? 'image/jpeg' : 'application/octet-stream' }); } catch (e) { route.fulfill({ status: 404, body: '' }); } });
+  await page.route(/^https:/, async route => { for (let i = 0; i < 5; i++) { try { const r = await route.fetch({ timeout: 60000 }); return route.fulfill({ response: r }); } catch (e) { await new Promise(r => setTimeout(r, 800 * (i + 1))); } } return route.abort(); });
+  page.on('pageerror', e => console.log('PAGEERROR: ' + e.message + ' | ' + String(e.stack || '').split('\n').slice(1, 4).join(' < ')));
+  await page.goto('http://127.0.0.1:8765/plateau-three.html' + (process.env.Q || '?q=high'), { waitUntil: 'load' });
+  // (drawing here takes seconds a frame: the buildings' set-up, 5 ms a frame in the page, gets 400 ms; the old page has none)
+  await page.waitForFunction(() => window.__three, null, { timeout: 120000 }).catch(() => {}); await page.evaluate(() => { if (window.__three.BLD) window.__three.BLD.jobMs = 3000; });
+  const busy = () => page.evaluate(() => { const T = window.__three; if (!T || !T.enuToWorld(0, 0, 0)) return 99; return Object.values(T.sets).reduce((a, t) => a + t.stats.downloading + t.stats.parsing, 0) + T.BLD.queue.length + T.BLD.jobs.length; });
+  const settle = async (min) => { let calm = 0; for (let i = 0; i < min * 6; i++) { await page.waitForTimeout(10000); calm = (await busy()) === 0 ? calm + 1 : 0; if (calm >= 2) return true; } return false; };
+  await settle(8);
+  for (let lap = 0; lap < LOOPS; lap++) for (const [name, e, n] of SPOTS) {
+    await page.evaluate(([e, n]) => { const T = window.__three, C = T.C, p = T.enuToWorld(e, n, 0); C.x = p.x; C.z = p.z; C.v = 0; C.y = T.groundAt(C.x, C.z, T.gridH(C.x, C.z) + 1.5); T.areaNear(); }, [e, n]);
+    const ok = await settle(5); await page.waitForTimeout(6000);
+    const m = await page.evaluate(() => {
+      if (window.gc) window.gc();
+      const T = window.__three, R = T.renderer.info, B = T.BLD, tm = T.texMem();
+      let parts = 0, partMeshes = 0; B.group.traverse(o => { if (o.isInstancedMesh) { partMeshes++; parts += o.count; } });
+      let tiles = 0; for (const t of Object.values(T.sets)) t.group.traverse(o => { if (o.isMesh && o.visible) tiles++; });
+      return { tex: R.memory.textures, geo: R.memory.geometries, texGPU_MB: +T.texMB().toFixed(0), photoFiles_MB: +(tm.blob / 1e6).toFixed(0), decoded_MB: +(tm.dec / 1e6).toFixed(0),
+        near: B.near.size, nearMeshes: B.idMeshes ? B.idMeshes.size : null, partMeshes, parts, chunks: T.AREA.chunks.filter(c => c.grp).length, areaMB: +(T.AREA.bytes / 1e6).toFixed(0), heapMB: Math.round(performance.memory.usedJSHeapSize / 1e6), meshes: tiles };
+    });
+    console.log(`MEM lap ${lap} ${name} settled=${ok} ` + JSON.stringify(m));
+  }
+  await browser.close();
+})();
+
+
+===== tools/browser/passprof.js =====
+// Where a frame's drawing time goes, pass by pass, here (SwiftShader: the CPU draws; the ratios between passes, not
+// the milliseconds, say something about a real GPU, and even they only roughly: a GPU's costs differ by kind). Each
+// composer pass and the shadow map's render are followed by gl.finish() and timed; FRAMES frames at a place, VARIANTS
+// toggled in turn (none, no shadows, no AO, no near parts...). Also the draw calls and triangles per pass.
+// E, N, HDG, CAM (0 behind, 1 driver), W, H, Q=?q=high
+const { chromium } = require('playwright');
+const fs = require('fs'), path = require('path');
+(async () => {
+  const W = +(process.env.W || 960), H = +(process.env.H || 540), FR = +(process.env.FRAMES || 4);
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-http2'], proxy: { server: process.env.HTTPS_PROXY, bypass: '127.0.0.1,localhost' } });
+  const page = await browser.newPage({ ignoreHTTPSErrors: true, viewport: { width: W, height: H } });
+  const root = process.env.ROOT || path.resolve(__dirname, '../..');
+  await page.route(/^http:\/\/127\.0\.0\.1:8765\//, route => { const p = path.join(root, decodeURIComponent(new URL(route.request().url()).pathname)); try { route.fulfill({ status: 200, body: fs.readFileSync(p), contentType: p.endsWith('.html') ? 'text/html' : p.endsWith('.js') ? 'text/javascript' : p.endsWith('.jpg') ? 'image/jpeg' : 'application/octet-stream' }); } catch (e) { route.fulfill({ status: 404, body: '' }); } });
+  await page.route(/^https:/, async route => { for (let i = 0; i < 5; i++) { try { const r = await route.fetch({ timeout: 60000 }); return route.fulfill({ response: r }); } catch (e) { await new Promise(r => setTimeout(r, 800 * (i + 1))); } } return route.abort(); });
+  page.on('pageerror', e => console.log('PAGEERROR: ' + e.message + ' | ' + String(e.stack || '').split('\n').slice(1, 4).join(' < ')));
+  await page.goto('http://127.0.0.1:8765/plateau-three.html' + (process.env.Q || '?q=high'), { waitUntil: 'load' });
+  await page.waitForFunction(() => window.__three, null, { timeout: 120000 }).catch(() => {}); await page.evaluate(() => { if (window.__three.BLD) window.__three.BLD.jobMs = 3000; });
+  const busy = () => page.evaluate(() => { const T = window.__three; if (!T || !T.enuToWorld(0, 0, 0)) return 99; return Object.values(T.sets).reduce((a, t) => a + t.stats.downloading + t.stats.parsing, 0) + (T.BLD ? T.BLD.queue.length + T.BLD.jobs.length : 0); });
+  const settle = async (min) => { let calm = 0; for (let i = 0; i < min * 6; i++) { await page.waitForTimeout(10000); calm = (await busy()) === 0 ? calm + 1 : 0; if (calm >= 2) return true; } return false; };
+  await settle(8);
+  await page.evaluate(([e, n, hdg, cam]) => {
+    const T = window.__three, C = T.C, p = T.enuToWorld(e, n, 0), hd = hdg * Math.PI / 180, q = T.enuToWorld(e + Math.sin(hd), n + Math.cos(hd), 0);
+    C.x = p.x; C.z = p.z; C.hdg = C.camYaw = Math.atan2(q.x - p.x, q.z - p.z); C.v = 0; C.cam = cam; C.y = T.groundAt(C.x, C.z, T.gridH(C.x, C.z) + 1.5); T.areaNear();
+  }, [+(process.env.E || -827.8), +(process.env.N || 3379.7), +(process.env.HDG || 217), +(process.env.CAM || 0)]);
+  await settle(5); await page.waitForTimeout(5000);
+  // the timing hooks: each pass, then the shadow map inside the first
+  await page.evaluate(() => {
+    const T = window.__three, R = T.renderer, gl = R.getContext(), P = window.__pp = { on: false, t: {}, calls: {}, tris: {} };
+    const wrap = (name, fn) => (...a) => { if (!P.on) return fn(...a); gl.finish(); const c0 = R.info.render.calls, t0 = R.info.render.triangles, s = performance.now(); const r = fn(...a); gl.finish(); P.t[name] = (P.t[name] || 0) + performance.now() - s; P.calls[name] = (P.calls[name] || 0) + R.info.render.calls - c0; P.tris[name] = (P.tris[name] || 0) + R.info.render.triangles - t0; return r; };
+    const names = { RenderPass: 'シーン描画', GTAOPass: 'AO', UnrealBloomPass: '光のにじみ', OutputPass: '出力' };
+    for (const p of T.composer.passes) { const n = names[p.constructor.name]; if (n) p.render = wrap(n, p.render.bind(p)); }
+    const sm = R.shadowMap; sm.render = wrap('影の描画', sm.render.bind(sm));
+  });
+  const VARIANTS = (process.env.VARIANTS || 'all,noshadow,noao,noparts').split(',');
+  for (const v of VARIANTS) {
+    const res = await page.evaluate(async ([v, FR]) => {
+      const T = window.__three, P = window.__pp, R = T.renderer, sm = R.shadowMap.enabled, ao = T.ao.enabled, pv = T.BLD.group.visible;
+      if (v === 'noshadow') R.shadowMap.enabled = false; if (v === 'noao') T.ao.enabled = false; if (v === 'noparts') T.BLD.group.visible = false;
+      if (v === 'noshadow') T.scene.traverse(o => { if (o.material) for (const m of [].concat(o.material)) m.needsUpdate = true; });
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      P.t = {}; P.calls = {}; P.tris = {}; P.on = true;
+      for (let i = 0; i < FR; i++) await new Promise(r => requestAnimationFrame(r));
+      P.on = false;
+      R.shadowMap.enabled = sm; T.ao.enabled = ao; T.BLD.group.visible = pv;
+      if (v === 'noshadow') T.scene.traverse(o => { if (o.material) for (const m of [].concat(o.material)) m.needsUpdate = true; });
+      const out = {}; for (const k in P.t) out[k] = { ms: +(P.t[k] / FR).toFixed(0), calls: Math.round(P.calls[k] / FR), ktris: Math.round(P.tris[k] / FR / 1000) };
+      return out;
+    }, [v, FR]);
+    const tot = Object.values(res).reduce((a, x) => a + x.ms, 0);
+    console.log(`PASS ${v} total ${tot} ms ` + JSON.stringify(res));
+  }
+  await browser.close();
+})();
+
+
+===== tools/browser/photodensity.js =====
+// How sharp the photo-textured buildings can be up close: at each place, for every photo-textured building within R m
+// of the car, its walls' texels per metre at the photo's full size (sqrt(UV area x W x H / wall area)); 1 m of wall
+// filling ~150 px of a 1080p screen at 10 m, anything under ~30 px/m is soft up close and under ~12 px/m a smear.
+// Printed: per place the spread (10/50/90 %) and the share under 12 / 30 px/m, the nearest few with their gml_id.
+const { chromium } = require('playwright');
+const fs = require('fs'), path = require('path');
+(async () => {
+  const R = +(process.env.R || 120);
+  const SPOTS = JSON.parse(process.env.SPOTS || '[["関内",0,0],["桜木町",-907,422],["馬車道",-381,344],["中華街",435,-433],["野毛",-1107,11],["横浜駅東",-1515,2041],["横浜駅西",-1923,2119],["横浜駅北",-1651,2563],["東神奈川",-761.6,3467.7]]');
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-http2'], proxy: { server: process.env.HTTPS_PROXY, bypass: '127.0.0.1,localhost' } });
+  const page = await browser.newPage({ ignoreHTTPSErrors: true, viewport: { width: 480, height: 270 } });
+  const root = process.env.ROOT || path.resolve(__dirname, '../..');
+  await page.route(/^http:\/\/127\.0\.0\.1:8765\//, route => { const p = path.join(root, decodeURIComponent(new URL(route.request().url()).pathname)); try { route.fulfill({ status: 200, body: fs.readFileSync(p), contentType: p.endsWith('.html') ? 'text/html' : p.endsWith('.js') ? 'text/javascript' : p.endsWith('.jpg') ? 'image/jpeg' : 'application/octet-stream' }); } catch (e) { route.fulfill({ status: 404, body: '' }); } });
+  await page.route(/^https:/, async route => { for (let i = 0; i < 5; i++) { try { const r = await route.fetch({ timeout: 60000 }); return route.fulfill({ response: r }); } catch (e) { await new Promise(r => setTimeout(r, 800 * (i + 1))); } } return route.abort(); });
+  page.on('pageerror', e => console.log('PAGEERROR: ' + e.message + ' | ' + String(e.stack || '').split('\n').slice(1, 4).join(' < ')));
+  await page.goto('http://127.0.0.1:8765/plateau-three.html?norender=1', { waitUntil: 'load' });
+  const busy = () => page.evaluate(() => { const T = window.__three; if (!T || !T.enuToWorld(0, 0, 0)) return 99; return Object.values(T.sets).reduce((a, t) => a + t.stats.downloading + t.stats.parsing, 0); });
+  const settle = async (min) => { let calm = 0; for (let i = 0; i < min * 12; i++) { await page.waitForTimeout(5000); calm = (await busy()) === 0 ? calm + 1 : 0; if (calm >= 2) return true; } return false; };
+  await settle(6);
+  for (const [name, e, n] of SPOTS) {
+    await page.evaluate(([e, n]) => { const T = window.__three, C = T.C, p = T.enuToWorld(e, n, 0); C.x = p.x; C.z = p.z; C.v = 0; C.y = T.groundAt(C.x, C.z, T.gridH(C.x, C.z) + 1.5); T.areaNear(); }, [e, n]);
+    const ok = await settle(5);
+    const r = await page.evaluate(([R]) => {
+      const T = window.__three, C = T.C, by = new Map(), v = new T.THREE.Vector3();
+      for (const t of Object.values(T.sets)) t.group.traverse(o => {
+        if (!o.isMesh || !o.material || !o.material.map || !o.geometry.attributes.uv || !o.geometry.attributes._batchid) return;
+        const im = o.material.map.image, src = im && im.__src; const W = src ? src.W : im && im.width, H = src ? src.H : im && im.height; if (!W) return;
+        const g = o.geometry, P = g.attributes.position, U = g.attributes.uv, B = g.attributes._batchid, I = g.index ? g.index.array : null, nt = I ? I.length / 3 : P.count / 3;
+        const ids = o.userData.l2 ? o.userData.l2.ids : null, m = o.matrixWorld, p = [0, 1, 2].map(() => new T.THREE.Vector3());
+        for (let k = 0; k < nt; k++) {
+          const ii = [0, 1, 2].map(j => I ? I[k * 3 + j] : k * 3 + j);
+          ii.forEach((i, j) => p[j].fromBufferAttribute(P, i).applyMatrix4(m));
+          const dx = p[0].x - C.x, dz = p[0].z - C.z; if (dx * dx + dz * dz > R * R) continue;
+          const a = new T.THREE.Vector3().subVectors(p[1], p[0]), b = new T.THREE.Vector3().subVectors(p[2], p[0]), c = a.clone().cross(b), area = c.length() / 2;
+          if (area < 1e-3 || Math.abs(c.y / (2 * area)) > 0.3) continue;   // (walls only)
+          const u0 = U.getX(ii[0]), v0 = U.getY(ii[0]), uvA = Math.abs((U.getX(ii[1]) - u0) * (U.getY(ii[2]) - v0) - (U.getX(ii[2]) - u0) * (U.getY(ii[1]) - v0)) / 2;
+          const bid = B.getX(ii[0]), key = (ids && ids[bid]) || (o.uuid + ':' + bid);
+          let q = by.get(key); if (!q) by.set(key, q = { area: 0, px: 0, d: 1e9 }); q.area += area; q.px += uvA * W * H; q.d = Math.min(q.d, Math.sqrt(dx * dx + dz * dz));
+        }
+      });
+      const L = [...by.entries()].filter(([, q]) => q.area > 20).map(([k, q]) => ({ id: String(k).slice(0, 13), d: Math.round(q.d), area: Math.round(q.area), ppm: +Math.sqrt(q.px / q.area).toFixed(1) }));
+      L.sort((a, b) => a.ppm - b.ppm); const pc = f => L.length ? L[Math.min(L.length - 1, Math.floor(f * L.length))].ppm : null;
+      const near = L.slice().sort((a, b) => a.d - b.d).slice(0, 6);
+      return { n: L.length, p10: pc(0.1), p50: pc(0.5), p90: pc(0.9), under12: L.filter(x => x.ppm < 12).length, under30: L.filter(x => x.ppm < 30).length, near };
+    }, [R]);
+    console.log(`DENSITY ${name} settled=${ok} ` + JSON.stringify(r));
+  }
+  await browser.close();
+})();
+
+
+===== tools/browser/probe.js =====
+// One place, one question: the page loaded (?norender=1 unless NORENDER=0), the car put at E,N, the tiles and the
+// buildings left to settle, then EXPR (a function body run in the page, with T = window.__three) and its result printed
+const { chromium } = require('playwright');
+const fs = require('fs'), path = require('path');
+(async () => {
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-http2'], proxy: { server: process.env.HTTPS_PROXY, bypass: '127.0.0.1,localhost' } });
+  const page = await browser.newPage({ ignoreHTTPSErrors: true, viewport: { width: 480, height: 270 } });
+  const root = process.env.ROOT || path.resolve(__dirname, '../..');
+  await page.route(/^http:\/\/127\.0\.0\.1:8765\//, route => { const p = path.join(root, decodeURIComponent(new URL(route.request().url()).pathname)); try { route.fulfill({ status: 200, body: fs.readFileSync(p), contentType: p.endsWith('.html') ? 'text/html' : p.endsWith('.js') ? 'text/javascript' : p.endsWith('.jpg') ? 'image/jpeg' : 'application/octet-stream' }); } catch (e) { route.fulfill({ status: 404, body: '' }); } });
+  await page.route(/^https:/, async route => { for (let i = 0; i < 5; i++) { try { const r = await route.fetch({ timeout: 60000 }); return route.fulfill({ response: r }); } catch (e) { await new Promise(r => setTimeout(r, 800 * (i + 1))); } } return route.abort(); });
+  page.on('pageerror', e => console.log('PAGEERROR: ' + e.message + ' | ' + String(e.stack || '').split('\n').slice(1, 4).join(' < ')));
+  await page.goto('http://127.0.0.1:8765/plateau-three.html' + (process.env.NORENDER === '0' ? '?q=high' : '?norender=1'), { waitUntil: 'load' });
+  const busy = () => page.evaluate(() => { const T = window.__three; if (!T || !T.enuToWorld(0, 0, 0)) return 99; return Object.values(T.sets).reduce((a, t) => a + t.stats.downloading + t.stats.parsing, 0) + T.BLD.queue.length + T.BLD.jobs.length; });
+  const settle = async (min) => { let calm = 0; for (let i = 0; i < min * 12; i++) { await page.waitForTimeout(5000); calm = (await busy()) === 0 ? calm + 1 : 0; if (calm >= 2) return true; } return false; };
+  await settle(6);
+  await page.evaluate(([e, n]) => { const T = window.__three, C = T.C, p = T.enuToWorld(e, n, 0); C.x = p.x; C.z = p.z; C.v = 0; C.y = T.groundAt(C.x, C.z, T.gridH(C.x, C.z) + 1.5); T.areaNear(); T.gatherHits(); }, [+process.env.E, +process.env.N]);
+  await settle(4); await page.waitForTimeout(3000);
+  console.log(JSON.stringify(await page.evaluate(src => new Function("T", src)(window.__three), process.env.EXPR).catch(e => 'ERR ' + e.message), null, 0));
+  await browser.close();
+})();
+
+
+===== tools/browser/routetest.js =====
+// level tracking along a route (ROUTE=json of [e, n, h, wayId, highway, kind]): the car's ground (the page's own groundAt, from
+// 1.5 m above the last height, as the driving does) against the way's own profile; no drawing
+const { chromium } = require('playwright');
+const fs = require('fs'), path = require('path');
+(async () => {
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-http2'], proxy: { server: process.env.HTTPS_PROXY, bypass: '127.0.0.1,localhost' } });
+  const page = await browser.newPage({ ignoreHTTPSErrors: true, viewport: { width: 640, height: 360 } });
+  const root = process.env.ROOT || path.resolve(__dirname, '../..');
+  await page.route(/^http:\/\/127\.0\.0\.1:8765\//, route => { const p = path.join(root, decodeURIComponent(new URL(route.request().url()).pathname)); try { route.fulfill({ status: 200, body: fs.readFileSync(p), contentType: p.endsWith('.html') ? 'text/html' : 'application/octet-stream' }); } catch (e) { route.fulfill({ status: 404, body: '' }); } });
+  await page.route(/^https:/, async route => { for (let i = 0; i < 5; i++) { try { const r = await route.fetch({ timeout: 60000 }); return route.fulfill({ response: r }); } catch (e) { await new Promise(r => setTimeout(r, 800 * (i + 1))); } } return route.abort(); });
+  page.on('pageerror', e => console.log('PAGEERROR: ' + e.message + ' | ' + String(e.stack || '').split('\n').slice(1, 4).join(' < ')));
+  await page.goto('http://127.0.0.1:8765/plateau-three.html?norender=1', { waitUntil: 'load' });
+  for (let i = 0; i < 60; i++) { await page.waitForTimeout(5000); if (await page.evaluate(() => __three.areaBuilt)) break; }
+  await page.waitForTimeout(5000);
+  for (const file of process.env.ROUTES.split(',')) {
+    const pts = JSON.parse(fs.readFileSync(file, 'utf8'));
+    // in steps of 40 points: the car put at the step's start and the page left to run (its tiles, the roads' BVHs) before the
+    // step's points are tried, each from the height found at the one before
+    let yPrev = null, last = null; const all = [];
+    const busy = () => page.evaluate(() => Object.values(__three.sets).reduce((a, t) => a + t.stats.downloading + t.stats.parsing, 0));
+    for (let i0 = 0; i0 < pts.length; i0 += 40) {
+      const [e, n] = pts[i0];
+      await page.evaluate(([e, n]) => { const T = __three, p = T.enuToWorld(e, n, 0); T.C.x = p.x; T.C.z = p.z; T.C.v = 0; T.areaNear(); }, [e, n]);
+      if (!last || Math.hypot(e - last[0], n - last[1]) > 120) { for (let k = 0; k < 20; k++) { await page.waitForTimeout(700); if (await busy() === 0) break; } last = [e, n]; }
+      await page.waitForTimeout(500);
+      const r = await page.evaluate(([seg, yPrev]) => {
+        const T = __three, out = []; T.gatherHits();
+        for (const [e, nn, h] of seg) { const p = T.enuToWorld(e, nn, h); if (yPrev === null) yPrev = p.y; const y = T.groundAt(p.x, p.z, yPrev); out.push([y - p.y, y - yPrev]); yPrev = y; }
+        return { out, yPrev };
+      }, [pts.slice(i0, i0 + 40), yPrev]);
+      yPrev = r.yPrev; all.push(...r.out);
+    }
+    const errs = all.map(a => Math.abs(a[0])).sort((a, b) => a - b), N = errs.length, bad = [], jumps = [];
+    all.forEach(([err, dy], i) => { const [e, n, h, id, hw, kind] = pts[i]; if (Math.abs(err) > 1.5) bad.push([i, +e.toFixed(1), +n.toFixed(1), +h.toFixed(1), +err.toFixed(2), hw, kind, id]); if (Math.abs(dy) > 0.8) jumps.push([i, +e.toFixed(1), +n.toFixed(1), +dy.toFixed(2), hw, kind]); });
+    const firstBad = bad.length ? bad[0][0] : -1, around = firstBad < 0 ? [] : all.slice(Math.max(0, firstBad - 6), firstBad + 4).map((a, k) => [Math.max(0, firstBad - 6) + k, +pts[Math.max(0, firstBad - 6) + k][2].toFixed(2), +a[0].toFixed(2)]);
+    const r = { n: N, p50: errs[N >> 1], p95: errs[Math.floor(N * 0.95)], max: errs[N - 1], bad: bad.length, badFirst: bad.slice(0, 8), around, jumps: jumps.length, jumpFirst: jumps.slice(0, 8) };
+    r.area = await page.evaluate(() => { const A = __three.AREA; return { chunksMade: A.made, chunksFreed: A.freed, chunksHeld: A.chunks.filter(c => c.grp).length, of: A.chunks.length, MB: +(A.bytes / 1e6).toFixed(1), heapMB: performance.memory ? +(performance.memory.usedJSHeapSize / 1e6).toFixed(0) : null }; });
+    console.log('ROUTE ' + file + ' ' + JSON.stringify(r));
+  }
+  await browser.close();
+})();
+
+
+===== tools/browser/shots.js =====
+// Screenshots at fixed places and views, for before/after comparisons. SHOTS=file.json: [{ name, e, n, hdg, cam } |
+// { name, e, n, cam: 'free', at: [e, n, up above ground], look: [e, n, up above ground], fov }, each with an optional
+// pre: a function body run in the page first, T = window.__three] (east/north metres from
+// the Kannai spot; hdg in degrees from north, clockwise; cam 0 behind the car, 1 the driver's seat, 2 high behind).
+// OUT=dir, W/H the viewport (the page's internal size at 100 %), Q=?q=high, ROOT=the checkout to serve (another commit's
+// worktree for "before"). Each shot: the page settled (tiles loaded), then a frame; its HUD line logged with it
+const { chromium } = require('playwright');
+const fs = require('fs'), path = require('path');
+(async () => {
+  const W = +(process.env.W || 1280), H = +(process.env.H || 720), out = process.env.OUT || '.';
+  const shots = JSON.parse(fs.readFileSync(process.env.SHOTS, 'utf8'));
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-http2'], proxy: { server: process.env.HTTPS_PROXY, bypass: '127.0.0.1,localhost' } });
+  const page = await browser.newPage({ ignoreHTTPSErrors: true, viewport: { width: W, height: H } });
+  const root = process.env.ROOT || path.resolve(__dirname, '../..');
+  await page.route(/^http:\/\/127\.0\.0\.1:8765\//, route => { const p = path.join(root, decodeURIComponent(new URL(route.request().url()).pathname)); try { route.fulfill({ status: 200, body: fs.readFileSync(p), contentType: p.endsWith('.html') ? 'text/html' : p.endsWith('.js') ? 'text/javascript' : p.endsWith('.jpg') ? 'image/jpeg' : p.endsWith('.webp') ? 'image/webp' : 'application/octet-stream' }); } catch (e) { route.fulfill({ status: 404, body: '' }); } });
+  await page.route(/^https:/, async route => { for (let i = 0; i < 5; i++) { try { const r = await route.fetch({ timeout: 60000 }); return route.fulfill({ response: r }); } catch (e) { await new Promise(r => setTimeout(r, 800 * (i + 1))); } } return route.abort(); });
+  page.on('pageerror', e => console.log('PAGEERROR: ' + e.message + ' | ' + String(e.stack || '').split('\n').slice(1, 4).join(' < ')));
+  page.on('console', m => { if (m.type() === 'error') console.log('CONSOLE: ' + m.text().slice(0, 200)); });
+  await page.goto('http://127.0.0.1:8765/plateau-three.html' + (process.env.Q || '?q=high'), { waitUntil: 'load' });
+  // (drawing here takes seconds a frame: the buildings' set-up, 5 ms a frame in the page, gets 400 ms; the old page has none)
+  await page.waitForFunction(() => window.__three, null, { timeout: 120000 }).catch(() => {}); await page.evaluate(() => { if (window.__three.BLD) window.__three.BLD.jobMs = 3000; });
+  // ready: no tile loading or being read, no building being analysed or built, no parts left to place, no road chunk
+  // left to make near, no photo left to sharpen (pending(), where the page has it; an older page: tiles and buildings)
+  const busy = () => page.evaluate(() => { const T = window.__three; if (!T || !T.enuToWorld(0, 0, 0)) return 99;
+    if (T.pending) { const p = T.pending(); return p.tiles + p.bld + p.chunks + p.photos; }
+    return Object.values(T.sets).reduce((a, t) => a + t.stats.downloading + t.stats.parsing, 0) + (T.BLD ? T.BLD.queue.length + (T.BLD.jobs ? T.BLD.jobs.length : 0) : 0); });
+  const settle = async (min) => { let calm = 0; for (let i = 0; i < min * 6; i++) { await page.waitForTimeout(10000); calm = (await busy()) === 0 ? calm + 1 : 0; if (calm >= 2) return true; } return false; };
+  await settle(+(process.env.MAXMIN || 8));
+  let last = null;
+  for (const s of shots) {
+    await page.evaluate(s => {
+      const T = window.__three, C = T.C, p = T.enuToWorld(s.e, s.n, 0), hd = (s.hdg || 0) * Math.PI / 180, q = T.enuToWorld(s.e + Math.sin(hd), s.n + Math.cos(hd), 0);
+      C.x = p.x; C.z = p.z; C.hdg = C.camYaw = Math.atan2(q.x - p.x, q.z - p.z); C.v = 0; C.cam = s.cam === 'free' ? 0 : s.cam || 0; C.y = T.groundAt(C.x, C.z, T.gridH ? T.gridH(C.x, C.z) + 1.5 : 30);
+      if (s.cam === 'free') { const a = T.enuToWorld(s.at[0], s.at[1], 0), b = T.enuToWorld(s.look[0], s.look[1], 0); const ga = T.groundAt(a.x, a.z, C.y + 3), gb = T.groundAt(b.x, b.z, C.y + 3); window.__camAt = [a.x, ga + s.at[2], a.z, b.x, gb + s.look[2], b.z, s.fov || 55]; }
+      else window.__camAt = null;
+      if (s.pre) new Function('T', s.pre)(T);
+      T.areaNear();
+    }, s);
+    const moved = !last || Math.hypot(s.e - last.e, s.n - last.n) > 60;
+    const ok = await settle(moved ? +(process.env.MAXMIN2 || 5) : 1);
+    // the ground again, now the place's roads and DEM are in (measured before they came, a far move put the camera under it)
+    await page.evaluate(s => {
+      const T = window.__three, C = T.C; C.y = T.groundAt(C.x, C.z, T.gridH ? T.gridH(C.x, C.z) + 1.5 : 30);
+      if (s.cam === 'free') { const a = T.enuToWorld(s.at[0], s.at[1], 0), b = T.enuToWorld(s.look[0], s.look[1], 0); const ga = T.groundAt(a.x, a.z, T.gridH(a.x, a.z) + 3), gb = T.groundAt(b.x, b.z, T.gridH(b.x, b.z) + 3); window.__camAt = [a.x, ga + s.at[2], a.z, b.x, gb + s.look[2], b.z, s.fov || 55]; }
+    }, s);
+    await page.waitForTimeout(8000);
+    await page.screenshot({ path: path.join(out, s.name + '.png'), timeout: 600000 });
+    const info = await page.evaluate(() => ({ hud: document.getElementById('hud').textContent.replace(/\n/g, ' | '), near: window.__three.BLD ? window.__three.BLD.near.size : null }));
+    const pend = await page.evaluate(() => window.__three.pending ? window.__three.pending() : null);
+    console.log('SHOT ' + s.name + ' settled=' + ok + ' ' + JSON.stringify({ ...s, ...info, pending: pend }));
+    last = s;
+  }
+  await browser.close();
+})();
+
+
+===== tools/browser/signaltest.js =====
+// The signals over time (not a still): for junctions near the start, the page's own lamp colours sampled every 0.25 s
+// through two cycles. Checked: each axis goes green -> amber (3 s) -> red; the two axes are never green or amber at
+// once; between them all red for at least 1.5 s; a pedestrian green only while the traffic along its way has green
+// (never with the crossing traffic); every head of an axis shows the same. Prints a timeline of one junction
+const { chromium } = require('playwright'); const fs = require('fs'), path = require('path');
+(async () => {
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-http2'], proxy: { server: process.env.HTTPS_PROXY, bypass: '127.0.0.1,localhost' } });
+  const page = await browser.newPage({ viewport: { width: 640, height: 360 } }); const root = process.env.ROOT || path.resolve(__dirname, '../..');
+  await page.route(/^http:\/\/127\.0\.0\.1:8765\//, route => { const p = path.join(root, decodeURIComponent(new URL(route.request().url()).pathname)); try { route.fulfill({ status: 200, body: fs.readFileSync(p), contentType: p.endsWith('.html') ? 'text/html' : 'application/octet-stream' }); } catch (e) { route.fulfill({ status: 404, body: '' }); } });
+  await page.route(/^https:/, async route => { for (let i = 0; i < 5; i++) { try { const r = await route.fetch({ timeout: 60000 }); return route.fulfill({ response: r }); } catch (e) { await new Promise(r => setTimeout(r, 800)); } } return route.abort(); });
+  page.on('pageerror', e => console.log('PAGEERROR: ' + e.message + ' | ' + String(e.stack || '').split('\n').slice(1, 4).join(' < ')));
+  await page.goto('http://127.0.0.1:8765/plateau-three.html?norender=1', { waitUntil: 'load' });
+  for (let i = 0; i < 60; i++) { await page.waitForTimeout(5000); if (await page.evaluate(() => __three.areaBuilt && __three.FURN.lamps && __three.FURN.lamps.n > 0)) break; }
+  const r = await page.evaluate(() => {
+    const T = __three, L = T.FURN.lamps, col = L.im.instanceColor.array, n = L.n, groups = new Map();
+    for (let i = 0; i < n; i++) { const g = L.list[i * 6 + 4], role = L.list[i * 6 + 5], j = g >> 1; (groups.get(j) || groups.set(j, []).get(j)).push([i, g & 1, role]); }
+    const lit = i => { const r = col[i * 3], g = col[i * 3 + 1], b = col[i * 3 + 2]; if (Math.max(r, g, b) < 1) return '-'; return g > r * 1.5 ? 'G' : r > g * 4 ? 'R' : 'Y'; };
+    const res = { junctions: 0, samples: 0, errors: [], timeline: [] };
+    const juncs = [...groups.entries()].filter(([, ls]) => new Set(ls.map(l => l[1])).size === 2 && ls.some(l => l[2] >= 3)).slice(0, 25);
+    res.junctions = juncs.length;
+    const T0 = 1e6;
+    const hist = new Map();
+    for (let k = 0; k <= 480; k++) {
+      const now = T0 + k * 250; T.furnLamps(now); res.samples++;
+      for (const [j, ls] of juncs) {
+        const st = { v: [new Set(), new Set()], p: [new Set(), new Set()] };
+        const heads = new Map();
+        for (const [i, ax, role] of ls) {
+          if (role < 3) { const c = lit(i); if (c !== '-') { const h = heads.get(Math.floor(i / 3) + ':' + ax) || []; h.push(['G', 'Y', 'R'][role]); heads.set(Math.floor(i / 3) + ':' + ax, h); st.v[ax].add(['G', 'Y', 'R'][role]); } }
+          else { const c = lit(i); if (c !== '-') st.p[ax].add(role === 4 ? 'G' : 'R'); }
+        }
+        const v0 = [...st.v[0]].join('') || '(' + ['G', 'Y', 'R'][T.signalState(j * 2, now / 1000)] + ')', v1 = [...st.v[1]].join('') || '(' + ['G', 'Y', 'R'][T.signalState(j * 2 + 1, now / 1000)] + ')', p0 = [...st.p[0]].join(''), p1 = [...st.p[1]].join('');
+        if (st.v[0].size > 1 || st.v[1].size > 1) res.errors.push(`t=${k / 4}s junction ${j}: heads of one axis differ (${v0}/${v1})`);
+        if (/G|Y/.test(v0) && /G|Y/.test(v1)) res.errors.push(`t=${k / 4}s junction ${j}: both axes moving (${v0} ${v1})`);
+        // (an axis without vehicle heads here, e.g. a T-junction's stem with no signalled crossing: its cycle itself)
+        const vis = ax => st.v[ax].size ? [...st.v[ax]].join('') : ['G', 'Y', 'R'][T.signalState(j * 2 + ax, now / 1000)];
+        for (const ax of [0, 1]) if (st.p[ax].has('G') && vis(ax) !== 'G') res.errors.push(`t=${k / 4}s junction ${j}: pedestrians along axis ${ax} green while its traffic shows ${vis(ax)}`);
+        for (const ax of [0, 1]) if (st.p[ax].has('G') && (vis(1 - ax) === 'G' || vis(1 - ax) === 'Y')) res.errors.push(`t=${k / 4}s junction ${j}: pedestrians along axis ${ax} green while the crossing traffic moves`);
+        (hist.get(j) || hist.set(j, []).get(j)).push(v0 + '|' + v1 + '|' + p0 + '|' + p1);
+      }
+    }
+    // the sequence per axis: runs of G, Y, R; amber 3 s; all red at least 1.5 s between
+    for (const [j, h] of hist) {
+      const runs = []; for (const x of h) { if (!runs.length || runs[runs.length - 1][0] !== x) runs.push([x, 1]); else runs[runs.length - 1][1]++; }
+      for (const ax of [0, 1]) {
+        const seq = h.map(x => x.split('|')[ax].replace(/[()]/g, '')); const rr = []; for (const x of seq) { if (!rr.length || rr[rr.length - 1][0] !== x) rr.push([x, 1]); else rr[rr.length - 1][1]++; }
+        for (let i = 1; i + 1 < rr.length; i++) { const [a] = rr[i - 1], [b, len] = rr[i], [c] = rr[i + 1];
+          if (b === 'Y' && !(a === 'G' && c === 'R')) res.errors.push(`junction ${j} axis ${ax}: amber between ${a} and ${c}`);
+          if (b === 'Y' && Math.abs(len / 4 - 3) > 0.3) res.errors.push(`junction ${j} axis ${ax}: amber ${len / 4} s`);
+          if (b === 'G' && a !== 'R') res.errors.push(`junction ${j} axis ${ax}: green after ${a}`); }
+      }
+      const both = h.map(x => x.split('|')); let allRed = 0, minAllRed = 99;
+      for (const [a0, a1] of both) { const v0 = a0.replace(/[()]/g, ''), v1 = a1.replace(/[()]/g, ''); if (v0 === 'R' && v1 === 'R') allRed++; else if (allRed) { minAllRed = Math.min(minAllRed, allRed / 4); allRed = 0; } }
+      if (minAllRed < 1.5) res.errors.push(`junction ${j}: all red only ${minAllRed} s between the axes`);
+      if (!res.timeline.length) { let last = null; h.forEach((x, k) => { if (x !== last) { res.timeline.push(`${(k / 4).toFixed(2)} s  車両(軸0) ${x.split('|')[0]}  車両(軸1) ${x.split('|')[1]}  歩行者(軸0) ${x.split('|')[2] || '-'}  歩行者(軸1) ${x.split('|')[3] || '-'}`); last = x; } }); }
+    }
+    return res;
+  });
+  console.log(`junctions ${r.junctions}, samples ${r.samples}, errors ${r.errors.length}`);
+  for (const e of r.errors.slice(0, 20)) console.log('  ' + e);
+  console.log('timeline of one junction (in brackets: an axis with no vehicle head here, its cycle):'); for (const t of r.timeline.slice(0, 30)) console.log('  ' + t);
+  await browser.close();
+  process.exit(r.errors.length ? 1 : 0);
+})();
+
+
+===== tools/browser/viewtest.js =====
+// screenshots at given places: VIEWS='name@east,north,headingDeg,cam;...' (metres from the Kannai spot; heading: 0 = north, 90 = east)
+const { chromium } = require('playwright');
+const fs = require('fs'), path = require('path');
+(async () => {
+  const W = +(process.env.W || 960), H = +(process.env.H || 540);
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-http2'], proxy: { server: process.env.HTTPS_PROXY, bypass: '127.0.0.1,localhost' } });
+  const page = await browser.newPage({ ignoreHTTPSErrors: true, viewport: { width: W, height: H } });
+  const root = process.env.ROOT || path.resolve(__dirname, '../..');
+  await page.route(/^http:\/\/127\.0\.0\.1:8765\//, route => { const p = path.join(root, decodeURIComponent(new URL(route.request().url()).pathname)); try { route.fulfill({ status: 200, body: fs.readFileSync(p), contentType: p.endsWith('.html') ? 'text/html' : p.endsWith('.jpg') ? 'image/jpeg' : p.endsWith('.webp') ? 'image/webp' : 'application/octet-stream' }); } catch (e) { route.fulfill({ status: 404, body: '' }); } });
+  await page.route(/^https:/, async route => { for (let i = 0; i < 5; i++) { try { const r = await route.fetch({ timeout: 60000 }); return route.fulfill({ response: r }); } catch (e) { await new Promise(r => setTimeout(r, 800 * (i + 1))); } } return route.abort(); });
+  page.on('pageerror', e => console.log('PAGEERROR: ' + e.message + ' | ' + String(e.stack || '').split('\n').slice(1, 4).join(' < ')));
+  page.on('console', m => { if (m.type() === 'error') console.log('CONSOLE: ' + m.text().slice(0, 300)); });
+  await page.goto('http://127.0.0.1:8765/plateau-three.html' + (process.env.Q || '?q=high'), { waitUntil: 'load' });
+  const busy = () => page.evaluate(() => { const T = window.__three; if (!T || !T.enuToWorld(0, 0, 0)) return 99; return Object.values(T.sets).reduce((a, t) => a + t.stats.downloading + t.stats.parsing, 0); });
+  const settle = async (min) => { let calm = 0; for (let i = 0; i < min * 6; i++) { await page.waitForTimeout(10000); const b = await busy(); calm = b === 0 ? calm + 1 : 0; if (calm >= 3) return true; } return false; };
+  await settle(+(process.env.MAXMIN || 10));
+  for (const v of (process.env.VIEWS || '').split(';').filter(Boolean)) {
+    const [name, rest] = v.split('@'); const [e, n, hd, cam, h0] = rest.split(',').map(Number);
+    await page.evaluate(([e, n, hd, cam, h0]) => { const T = window.__three, C = T.C, p = T.enuToWorld(e, n, 0), q = T.enuToWorld(e + Math.sin(hd * Math.PI / 180), n + Math.cos(hd * Math.PI / 180), 0); C.x = p.x; C.z = p.z; C.hdg = C.camYaw = Math.atan2(q.x - p.x, q.z - p.z); C.v = 0; C.cam = cam; C.y = T.groundAt(C.x, C.z, h0); C.h0 = h0; }, [e, n, hd, cam || 0, isNaN(h0) ? 40 : h0]);
+    const ok = await settle(+(process.env.MAXMIN2 || 6));
+    await page.evaluate(() => { const T = window.__three; T.C.y = T.groundAt(T.C.x, T.C.z, T.C.h0 < 40 ? T.C.y + 1.5 : T.C.y + 20); });
+    await page.waitForTimeout(15000);
+    await page.screenshot({ path: `v_${name}.png`, timeout: 600000 });
+    const info = await page.evaluate(() => ({ hud: document.getElementById('hud').textContent.replace(/\n/g, ' | '), L3: window.__three.L3n, facades: window.__three.facades, texMB: window.__three.texMB().toFixed(0) }));
+    console.log('SHOT ' + name + ' settled=' + ok + ' ' + JSON.stringify(info));
+  }
+  await browser.close();
+})();

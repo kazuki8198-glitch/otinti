@@ -1,0 +1,2866 @@
+# flight-sim.html の 2/8 部分（元の 2758〜5620 行目、データは省略）
+# 全体の説明は 00_overview.md
+
+    v: { s0: 95, s1: 115, fe: 148, no: 245, ne: 286, rotate: 115, appr: 120, apprFlaps: 3, apprThr: 0.3, cruise: 250, cruiseThr: 0.75, toFlaps: 1 },
+  },
+  {
+    id: 'b789', name: 'ボーイング 787-9', kind: '実機・大型ジェット旅客機', stars: 5, real: true,
+    desc: '機体の半分が炭素繊維の複合材でできた長距離旅客機。細長くしなる翼と、後縁がギザギザ（シェブロン）のエンジンが特徴。全長 62.8 m、翼幅 60.1 m、エンジン 2 基（各 約 320 kN）。長い滑走路（2,500 m 以上）が必要です。',
+    fuse: [[-30.0, 0.2, 0.2, -0.5], [-29.2, 1.4, 1.3, -0.4], [-27.2, 2.5, 2.45, -0.15], [-24.0, 2.9, 2.95, 0], [14.0, 2.9, 2.95, 0],
+      [20.0, 2.65, 2.7, 0.35], [26.0, 1.8, 1.95, 1.0], [30.5, 0.9, 1.05, 1.75], [32.8, 0.25, 0.4, 2.1]], fuseE: 2.0, fuseN: 32,
+    wing: { y: -2.0, dih: 6, rootX: 2.9, tipX: 30.05, rootLE: -6.0, rootC: 11.5, tipLE: 10.5, tipC: 2.2, t0: 0.13, t1: 0.09, hinge: 0.74, flap: [3.5, 17], ail: [18, 28] },
+    hstab: { y: 2.2, span: 11, rootLE: 23.5, tipLE: 29.0, te: 31.8, hinge: 30.5, t: 0.1 },
+    vstab: { y0: 2.6, y1: 13.5, rootLE: 20.5, topLE: 28.5, te: 32.0, hinge: 30.5, t: 0.12 },
+    engines: [{ type: 'pod', x: 9.8, y: -3.3, z0: -9.0, z1: -1.5, r: 1.65 }],
+    gear: { fixed: false, wheelR: 0.65, nose: [0, -5.3, -25.5], mains: [[4.8, -5.3, 1.8]], len: 2.3 },
+    windows: { mode: 2, z0: -25.5, z1: 20, y0: 0.58, y1: 1.3, pitch: 1.05, cz0: -28.9, cz1: -26.6, cy: 0.17 },
+    livery: { base: [0.96, 0.96, 0.97], a: [0.10, 0.25, 0.55], b: [0.10, 0.55, 0.78], fw: 3.1, y0: -0.6, slope: 0, bands: [-0.5, -0.4, -0.3, -0.05], tip: 99, fin: [0.5, 3.1, 20.5, 4.0], nose: -99, glare: -99 },
+    eye: [0, 1.15, -27.6], cam: [0, 18, 110],
+    flapLabels: ['UP', '5', '20', '30'], cockpitStyle: 'boeing', minRwy: 2500, airliner: true,
+    oew: 128800, load: { max: 52000, def: 25000, fuelDef: 0.55 },
+    phys: {
+      mass: 210000, S: 360, b: 60.1, c: 6.0, L: 62.8, CL0: 0.22, CLa: 5.6, aStall: 0.25, CD0: 0.019, K: 0.038, CDgear: 0.018,
+      Cm0: 0.0, Cma: -1.3, Cmde: 0.35, Cmq: -35, Clda: 0.04, Clp: -0.5, Clb: -0.1, Cnb: 0.12, Cndr: 0.03, Cnr: -0.15, CYb: -0.8,
+      flapCL: 1.0, flapStall: 0.03, engine: { type: 'jet', T: 640000, ab: 0, spool: 3.6 }, maxG: 2.5, rollRate: 16, pitchRate: 3.5,
+    },
+    v: { s0: 118, s1: 145, fe: 180, no: 330, ne: 350, rotate: 155, appr: 150, apprFlaps: 3, apprThr: 0.32, cruise: 290, cruiseThr: 0.6, toFlaps: 1 },
+  },
+  {
+    id: 'a359', name: 'エアバス A350-900', kind: '実機・大型ジェット旅客機', stars: 5, real: true,
+    desc: 'エアバスの最新の長距離旅客機。サイドスティックのフライ・バイ・ワイヤ、大きく反り上がった翼端と、アライグマのような黒い窓枠（コックピット）が特徴。全長 66.8 m、翼幅 64.75 m、エンジン 2 基（各 約 374 kN）。長い滑走路（2,500 m 以上）が必要です。',
+    fuse: [[-31.5, 0.2, 0.2, -0.5], [-30.7, 1.5, 1.4, -0.4], [-28.6, 2.6, 2.55, -0.15], [-25.2, 3.0, 3.05, 0], [15.5, 3.0, 3.05, 0],
+      [21.5, 2.75, 2.8, 0.35], [27.8, 1.85, 2.0, 1.05], [32.8, 0.95, 1.1, 1.8], [35.3, 0.25, 0.4, 2.2]], fuseE: 2.0, fuseN: 32,
+    wing: { y: -2.1, dih: 5.5, rootX: 3.0, tipX: 30.3, rootLE: -6.8, rootC: 12.0, tipLE: 11.0, tipC: 2.0, t0: 0.13, t1: 0.09, hinge: 0.74, flap: [3.6, 18], ail: [19, 29],
+      winglet: { h: 3.6, cant: 0.4, sweep: 1.6, blend: true } },
+    hstab: { y: 2.3, span: 11.5, rootLE: 25.0, tipLE: 31.0, te: 34.0, hinge: 32.6, t: 0.1 },
+    vstab: { y0: 2.8, y1: 14.2, rootLE: 22.0, topLE: 30.5, te: 34.5, hinge: 32.8, t: 0.12 },
+    engines: [{ type: 'pod', x: 10.2, y: -3.5, z0: -10.0, z1: -1.5, r: 1.8 }],
+    gear: { fixed: false, wheelR: 0.66, nose: [0, -5.75, -27.0], mains: [[5.3, -5.75, 2.0]], len: 2.6 },
+    windows: { mode: 2, z0: -27, z1: 22, y0: 0.6, y1: 1.3, pitch: 1.05, cz0: -30.6, cz1: -28.2, cy: 0.2 },
+    livery: { base: [0.96, 0.96, 0.97], a: [0.10, 0.18, 0.36], b: [0.62, 0.10, 0.20], fw: 3.2, y0: -0.6, slope: 0, bands: [-0.5, -0.4, -0.3, -0.05], tip: 99, fin: [0.5, 3.2, 21, 4.0], nose: -99, glare: -99 },
+    eye: [0, 1.2, -28.9], cam: [0, 18, 114],
+    flapLabels: ['0', '1+F', '3', 'FULL'], cockpitStyle: 'airbus', minRwy: 2500, airliner: true,
+    oew: 142400, load: { max: 53000, def: 27000, fuelDef: 0.6 },
+    phys: {
+      mass: 235700, S: 442, b: 64.75, c: 7.0, L: 66.8, CL0: 0.22, CLa: 5.6, aStall: 0.25, CD0: 0.018, K: 0.037, CDgear: 0.018,
+      Cm0: 0.0, Cma: -1.3, Cmde: 0.35, Cmq: -36, Clda: 0.04, Clp: -0.5, Clb: -0.1, Cnb: 0.12, Cndr: 0.03, Cnr: -0.15, CYb: -0.8,
+      flapCL: 1.0, flapStall: 0.03, engine: { type: 'jet', T: 748000, ab: 0, spool: 3.8 }, maxG: 2.5, rollRate: 16, pitchRate: 3.5,
+    },
+    v: { s0: 112, s1: 140, fe: 186, no: 340, ne: 340, rotate: 150, appr: 140, apprFlaps: 3, apprThr: 0.3, cruise: 290, cruiseThr: 0.6, toFlaps: 1 },
+  },
+];
+
+// ---------- geometry helpers ----------
+function fuseAt(F, z) {
+  for (let i = 0; i < F.length - 1; i++) {
+    const a = F[i], b = F[i + 1];
+    if (z <= b[0]) { const t = clamp((z - a[0]) / (b[0] - a[0]), 0, 1); return a.map((v, k) => lerp(v, b[k], t)); }
+  }
+  return F[F.length - 1];
+}
+function superRing(z, hw, hh, yc, n = 22, e = 2.5) {
+  return Array.from({ length: n }, (_, k) => {
+    const t = k / n * Math.PI * 2, c = Math.cos(t), s = Math.sin(t);
+    return [hw * Math.sign(c) * Math.pow(Math.abs(c), 2 / e), yc + hh * Math.sign(s) * Math.pow(Math.abs(s), 2 / e), z];
+  });
+}
+const NACA = xc => 5 * (0.2969 * Math.sqrt(xc) - 0.1260 * xc - 0.3516 * xc * xc + 0.2843 * xc ** 3 - 0.1036 * xc ** 4);
+// airfoil ring. horizontal: points (span, base±t, z) ; vertical: (±t, span, z)
+function foil(span, base, zLE, chord, thick, xc0, xc1, vertical = false) {
+  // fixed station count so sections with different extents can be lofted together
+  const ss = xc0 <= 1e-3 ? [0, 0.015, 0.05, 0.12, 0.22, 0.35, 0.5, 0.65, 0.8, 0.92, 1] : [0, 0.35, 0.7, 1];
+  const xs = ss.map(v => xc0 + (xc1 - xc0) * v);
+  const P = (xc, sgn) => {
+    const t = NACA(Math.max(xc, 0)) * thick * chord * sgn, z = zLE + xc * chord;
+    return vertical ? [t, span, z] : [span, base + t, z];
+  };
+  const up = xs.slice().reverse().map(x => P(x, 1));
+  const lo = xs.map(x => P(x, -1));
+  if (xc0 <= 1e-3) lo.shift();
+  if (xc1 >= 0.999) lo.pop();
+  return [...up, ...lo];
+}
+function wingFns(w) {
+  const span = w.tipX - w.rootX, f = ax => clamp((ax - w.rootX) / span, 0, 1);
+  const W = {
+    y: ax => w.y + (ax - w.rootX) * Math.tan(w.dih * DEG),
+    c: ax => lerp(w.rootC, w.tipC, f(ax)),
+    le: ax => lerp(w.rootLE, w.tipLE, f(ax)),
+    t: ax => lerp(w.t0, w.t1, f(ax)),
+  };
+  W.hinge = x => { const ax = Math.abs(x); return [x, W.y(ax), W.le(ax) + w.hinge * W.c(ax)]; };
+  return W;
+}
+
+const WHITE = [1, 1, 1];
+function buildAircraftParts(A) {
+  const parts = [];
+  const push = (name, b, opt = {}) => { parts.push({ name, vao: uploadMesh(b.build()), spec: 0.9, ...opt }); };
+  const W = wingFns(A.wing), hs = A.hstab, vs = A.vstab;
+  // ---- airframe ----
+  let b = new MeshBuilder();
+  b.loft(A.fuse.map(f => superRing(f[0], f[1], f[2], f[3], A.fuseN || 22, A.fuseE)), WHITE, { capStart: true, capEnd: true });
+  for (const s of [1, -1]) {
+    const xs = [A.wing.rootX, (A.wing.rootX + A.wing.tipX) / 2, A.wing.tipX];
+    b.loft(xs.map(ax => foil(s * ax, W.y(ax), W.le(ax), W.c(ax), W.t(ax), 0, A.wing.hinge - 0.005)), WHITE, { capStart: true, capEnd: true });
+    if (A.wing.winglet) {                                  // winglet / sharklet: a small fin at the tip, canted out and swept
+      const wl = A.wing.winglet, tx = A.wing.tipX, y0 = W.y(tx), le0 = W.le(tx), c0 = W.c(tx);
+      const ring = u => { const c = lerp(c0, c0 * 0.42, u), le = le0 + wl.sweep * u + (c0 - c) * 0.6, x = s * (tx + wl.cant * wl.h * u * u), y = y0 + wl.h * u;
+        return foil(0, 0, le, c, 0.1, 0, 1, true).map(p => [x + p[0], y, p[2]]); };
+      b.loft([0, 0.35, 0.7, 1].map(ring), WHITE, { capEnd: true });
+    }
+    if (A.wing.struts) {
+      const f = fuseAt(A.fuse, W.le(2.6) + W.c(2.6) * 0.35);
+      b.cylinder([s * f[1] * 0.9, f[3] - f[2] * 0.55, W.le(2.6) + W.c(2.6) * 0.35], [s * 2.6, W.y(2.6) - 0.05, W.le(2.6) + W.c(2.6) * 0.35], 0.04, 0.035, 6, [0.85, 0.86, 0.88]);
+    }
+  }
+  const stabLE = ax => lerp(hs.rootLE, hs.tipLE, ax / hs.span);
+  const allMoving = hs.hinge <= hs.tipLE + 0.05;          // e.g. fighter: the whole tailplane pivots
+  if (!allMoving) b.loft([-hs.span, 0, hs.span].map(x => {
+    const ax = Math.abs(x), le = stabLE(ax), ch = hs.te - le;
+    return foil(x, hs.y, le, ch, hs.t, 0, (hs.hinge - le) / ch);
+  }), WHITE, { capStart: true, capEnd: true });
+  const finLE = y => lerp(vs.rootLE, vs.topLE, (y - vs.y0) / (vs.y1 - vs.y0));
+  b.loft([vs.y0, vs.y1].map(y => { const le = finLE(y), ch = vs.te - le; return foil(y, 0, le, ch, vs.t, 0, (vs.hinge - le) / ch, true); }),
+    WHITE, { capStart: true, capEnd: true });
+  // engines (static parts)
+  for (const e of A.engines) {
+    if (e.type === 'nose') {
+      const f0 = A.fuse[0];
+      b.loft([[f0[0], f0[1] * 0.9], [e.z + 0.05, f0[1] * 0.75], [e.z - 0.2, f0[1] * 0.45], [e.z - 0.38, 0.02]].map(([z, r]) => superRing(z, r, r, e.y, 16, 2)),
+        [0.80, 0.11, 0.13], { capEnd: true });
+    } else if (e.type === 'wing') {
+      for (const s of [1, -1]) {
+        const [z0, z1, r] = e.nac, x = s * e.x;
+        b.loft([[z0 - 0.35, r * 0.35], [z0, r * 0.85], [z0 + 0.6, r], [z1 - 1.2, r * 0.95], [z1, r * 0.3]].map(([z, rr]) => superRing(z, rr, rr * 1.1, e.y, 14, 2).map(p => [p[0] + x, p[1], p[2]])),
+          WHITE, { capStart: true, capEnd: true });
+        b.loft([[e.z - 0.02, 0.22], [e.z - 0.3, 0.15], [e.z - 0.48, 0.02]].map(([z, rr]) => superRing(z, rr, rr, e.y, 12, 2).map(p => [p[0] + x, p[1], p[2]])),
+          [0.25, 0.25, 0.27], { capEnd: true });
+      }
+    } else if (e.type === 'pod') {
+      for (const s of [1, -1]) {
+        const x = s * e.x, L = e.z1 - e.z0;
+        b.loft([[e.z0, e.r * 0.92], [e.z0 + 0.3, e.r], [e.z0 + L * 0.6, e.r * 0.95], [e.z1, e.r * 0.6]].map(([z, rr]) => superRing(z, rr, rr * (e.flat || 1), e.y + rr * (1 - (e.flat || 1)) * 0.5, 18, 2).map(p => [p[0] + x, p[1], p[2]])),
+          [0.82, 0.83, 0.86], { capEnd: true });
+        b.cylinder([x, e.y, e.z0 + 0.02], [x, e.y, e.z0 + 0.25], e.r * 0.82, e.r * 0.8, 16, [0.12, 0.12, 0.14]);
+        const wy = W.y(e.x);
+        b.box([x, (e.y + e.r + wy) / 2, e.z0 + L * 0.55], [0.25, Math.max(0.2, wy - e.y - e.r + 0.25), L * 0.6], [0.8, 0.81, 0.84]);   // pylon
+      }
+    } else if (e.type === 'nozzle') {
+      b.cylinder([0, e.y, e.z0], [0, e.y, e.z1], e.r, e.r * 0.85, 16, [0.22, 0.22, 0.24], false);
+      b.cylinder([0, e.y, e.z1 - 0.05], [0, e.y, e.z1], e.r * 0.8, e.r * 0.8, 16, [0.05, 0.05, 0.06]);
+      b.box([0, -0.72, -2.0], [1.1, 0.62, 2.6], [0.47, 0.51, 0.55]);     // air intake
+      b.box([0, -0.78, -3.3], [1.0, 0.5, 0.1], [0.04, 0.04, 0.05]);
+    }
+  }
+  push('body', b);
+  // ---- canopy ----
+  if (A.canopy) {
+    const C = A.canopy;
+    b = new MeshBuilder();
+    b.loft(C.z.map((z, i) => {
+      const f = fuseAt(A.fuse, z), top = f[3] + f[2] * 0.93, pts = [];
+      for (let k = 0; k <= 10; k++) { const a = k / 10 * Math.PI; pts.push([Math.cos(a) * C.w[i], top - 0.06 + Math.sin(a) * (C.h[i] + 0.06), z]); }
+      return pts;
+    }), C.col || [0.10, 0.16, 0.22], { capStart: true, capEnd: true });
+    push('canopy', b, { spec: 2.2, cockpitHide: true });
+  }
+  // ---- control surfaces ----
+  const surf = (name, x0, x1, angleFn) => {
+    const bb = new MeshBuilder();
+    const sec = x => { const ax = Math.abs(x); return foil(x, W.y(ax), W.le(ax), W.c(ax), W.t(ax), A.wing.hinge + 0.01, 1); };
+    bb.loft([sec(x0), sec(x1)], WHITE, { capStart: true, capEnd: true });
+    const p0 = W.hinge(x0), p1 = W.hinge(x1);
+    let axis = vnorm(vsub(p1, p0)); if (axis[0] < 0) axis = vscale(axis, -1);
+    parts.push({ name, vao: uploadMesh(bb.build()), spec: 0.9, pivot: p0, axis, angle: angleFn });
+  };
+  const [a0, a1] = A.wing.ail;
+  surf('ailR', a0, a1, s => -s.ail * 18 * DEG);
+  surf('ailL', -a0, -a1, s => s.ail * 18 * DEG);
+  if (A.wing.flap) {
+    const [f0, f1] = A.wing.flap;
+    surf('flapR', f0, f1, s => s.flapDeg * DEG);
+    surf('flapL', -f0, -f1, s => s.flapDeg * DEG);
+  }
+  {
+    const bb = new MeshBuilder();
+    bb.loft([-hs.span * 0.97, 0, hs.span * 0.97].map(x => {
+      const ax = Math.abs(x), le = stabLE(ax), c = hs.te - le;
+      return allMoving ? foil(x, hs.y, le, c, hs.t, 0, 1) : foil(x, hs.y, le, c, hs.t, clamp((hs.hinge + 0.02 - le) / c, 0.002, 0.9), 1);
+    }), WHITE, { capStart: true, capEnd: true });
+    parts.push({ name: 'elev', vao: uploadMesh(bb.build()), spec: 0.9, pivot: [0, hs.y, hs.hinge + 0.01], axis: [1, 0, 0], angle: s => -clamp(s.elev + s.trim, -1, 1) * 22 * DEG });
+  }
+  {
+    const bb = new MeshBuilder(), ry0 = Math.max(vs.y0 + 0.12 * (vs.y1 - vs.y0), hs.y + 0.1 < vs.y1 ? vs.y0 + 0.1 : vs.y0);
+    bb.loft([ry0, vs.y1 - (hs.y >= vs.y1 - 0.05 ? 0.12 : 0)].map(y => { const le = finLE(y), c = vs.te - le; return foil(y, 0, le, c, vs.t, (vs.hinge + 0.02 - le) / c, 1, true); }),
+      WHITE, { capStart: true, capEnd: true });
+    parts.push({ name: 'rud', vao: uploadMesh(bb.build()), spec: 0.9, pivot: [0, ry0, vs.hinge + 0.01], axis: [0, 1, 0], angle: s => s.rud * 25 * DEG });
+  }
+  // ---- propellers ----
+  for (const e of A.engines) {
+    if (e.type !== 'nose' && e.type !== 'wing') continue;
+    const centers = e.type === 'nose' ? [[0, e.y, e.z]] : [[e.x, e.y, e.z], [-e.x, e.y, e.z]];
+    for (const c of centers) {
+      const pb = new MeshBuilder();
+      for (let k = 0; k < e.blades; k++) {
+        const a = k / e.blades * Math.PI * 2, dir = [Math.cos(a + Math.PI / 2), Math.sin(a + Math.PI / 2), 0];
+        const segs = 6;
+        for (let i = 0; i < segs; i++) {
+          const r0 = 0.12 + (e.r - 0.12) * i / segs, r1 = 0.12 + (e.r - 0.12) * (i + 1) / segs, w = e.r * 0.11 * (1 - 0.4 * i / segs);
+          const side = [-dir[1], dir[0], 0], tw = 0.45 - 0.3 * i / segs;
+          const P = (r, sw) => vadd(vadd(c, vscale(dir, r)), vadd(vscale(side, sw * Math.cos(tw)), [0, 0, sw * Math.sin(tw)]));
+          const col = i === segs - 1 ? [0.95, 0.78, 0.15] : [0.15, 0.15, 0.16];
+          pb.quad(P(r0, -w), P(r0, w), P(r1, w), P(r1, -w), col, vadd(c, [0, 0, 1]));
+          pb.quad(P(r0, -w), P(r0, w), P(r1, w), P(r1, -w), col, vadd(c, [0, 0, -1]));
+        }
+      }
+      parts.push({ name: 'prop', vao: uploadMesh(pb.build()), spec: 0.6, pivot: c, axis: [0, 0, 1], angle: s => s.propAng * (c[0] < 0 ? -1 : 1), propBlade: true });
+      const db = new MeshBuilder(), n = [0, 0, -1], dc = [0.35, 0.35, 0.36];
+      for (let i = 0; i < 40; i++) {
+        const q0 = i / 40 * Math.PI * 2, q1 = (i + 1) / 40 * Math.PI * 2;
+        db.tri([c[0], c[1], c[2] - 0.02], [c[0] + Math.cos(q0) * e.r, c[1] + Math.sin(q0) * e.r, c[2] - 0.02], [c[0] + Math.cos(q1) * e.r, c[1] + Math.sin(q1) * e.r, c[2] - 0.02], n, n, n, dc, dc, dc);
+      }
+      parts.push({ name: 'disc', vao: uploadMesh(db.build()), spec: 0, disc: true });
+    }
+  }
+  // afterburner flame
+  const noz = A.engines.find(e => e.type === 'nozzle');
+  if (noz) {
+    const fb = new MeshBuilder();
+    fb.loft([[noz.z1, noz.r * 0.75], [noz.z1 + 1.2, noz.r * 0.6], [noz.z1 + 3.2, 0.05]].map(([z, r]) => superRing(z, r, r, noz.y, 14, 2)), [1, 1, 1], { smooth: true });
+    parts.push({ name: 'flame', vao: uploadMesh(fb.build()), spec: 0, flame: true });
+  }
+  // ---- landing gear ----
+  const G = A.gear, wr = G.wheelR;
+  const gear = (name, axle, sideSign, isNose) => {
+    const bb = new MeshBuilder();
+    const pivot = [axle[0] * 0.96, axle[1] + G.len + wr * 0.2, axle[2] - 0.05];
+    const width = wr * (isNose ? 0.45 : 0.55);
+    bb.cylinder(pivot, axle, wr * 0.16, wr * 0.14, 6, [0.72, 0.73, 0.75]);
+    bb.cylinder(vadd(axle, [-width / 2, 0, 0]), vadd(axle, [width / 2, 0, 0]), wr, wr, 14, [0.09, 0.09, 0.1]);
+    bb.cylinder(vadd(axle, [-width / 2 - 0.01, 0, 0]), vadd(axle, [width / 2 + 0.01, 0, 0]), wr * 0.4, wr * 0.4, 10, [0.75, 0.75, 0.78]);
+    if (G.pants) {
+      bb.loft([[-0.55, 0.3], [-0.2, 1.05], [0.25, 1.1], [0.7, 0.2]].map(([dz, k]) => superRing(axle[2] + dz * wr * 2.2, width * 0.9 * k, wr * 1.05 * k, axle[1] + wr * 0.1, 12, 2.2).map(p => [p[0] + axle[0], p[1], p[2]])),
+        WHITE, { capStart: true, capEnd: true });
+    }
+    if (G.fixed) { parts.push({ name, vao: uploadMesh(bb.build()), spec: 0.5 }); return; }
+    const ax = isNose ? [1, 0, 0] : [0, 0, 1];
+    const ang = isNose ? (s => -(1 - s.gearPos) * 90 * DEG) : (s => sideSign * -(1 - s.gearPos) * 88 * DEG);
+    parts.push({ name, vao: uploadMesh(bb.build()), spec: 0.5, pivot, axis: ax, angle: ang, gear: true });
+  };
+  gear('gearN', G.nose, 0, true);
+  for (const m of G.mains) { gear('gearR', m, 1, false); gear('gearL', [-m[0], m[1], m[2]], -1, false); }
+  return parts;
+}
+
+// ---------- physics data derived from the description ----------
+// steady-flight reference values measured from this flight model at about 4,000 ft
+// key = group_case_bank ; value = [speed kt, throttle %, pitch deg, vertical speed fpm, bank deg, turn rate deg/s, flap index, flag]
+// flag: 1 ok, 0 not reachable (throttle at its limit), 2 keeps accelerating even at full climb angle
+const TRIM = {"trainer":{"c_level_0":[105,77,0.6,0,0,0,0,1],"c_level_10":[105,78,0.7,0,10,1.7,0,1],"c_level_20":[105,77,0.9,0,20,3.4,0,1],"c_d500_0":[105,43,-2,-500,0,0,0,1],"c_d500_10":[105,43,-1.9,-500,10,1.7,0,1],"c_d500_20":[105,42,-1.7,-500,20,3.5,0,1],"c_d1000_0":[105,13,-4.5,-1000,0,0,0,1],"c_d1000_10":[105,13,-4.5,-1000,10,1.7,0,1],"c_d1000_20":[105,12,-4.2,-1010,20,3.4,0,1],"c_c500_0":[94,100,4.5,500,0,0,0,0],"c_c500_10":[93,100,4.7,500,10,1.8,0,0],"c_c500_20":[91,100,5.1,500,20,3.9,0,0],"y_c500_0":[73,89,8.5,500,0,-0.1,0,1],"y_c500_10":[73,89,8.7,490,10,2.4,0,1],"y_c500_20":[73,89,8.9,500,20,4.9,0,1],"y_c1000_0":[50,100,18.3,440,0,-0.1,0,0],"y_c1000_10":[51,100,18,440,10,3.3,0,0],"y_c1000_20":[53,100,16.8,420,21,6.9,0,0],"y_full_0":[73,100,9.5,640,0,-0.1,0,1],"y_full_10":[73,100,9.4,620,10,2.3,0,1],"y_full_20":[73,100,9.6,620,20,4.9,0,1],"s_level_0":[78,59,1,0,0,0,1,1],"s_level_10":[78,62,1.2,0,10,2.2,1,1],"s_level_20":[78,62,1.6,0,20,4.7,1,1],"s_c500_0":[76,100,4.8,500,0,-0.1,1,1],"s_c500_10":[75,100,5.2,490,10,2.3,1,1],"s_c500_20":[60,100,11.3,500,20,6.1,1,0],"s_d500_0":[78,21,-2.4,-500,0,0,1,1],"s_d500_10":[78,24,-2.3,-500,10,2.3,1,1],"s_d500_20":[78,24,-1.8,-490,20,4. /* <<省略: 元の 3014 行目はデータで 8,606 文字。最初の 1,200 文字だけ残した>> */
+// the real aircraft, measured the same way
+Object.assign(TRIM, {"c172":{"c_level_0":[110,77,0.4,0,0,0,0,1],"c_level_10":[110,77,0.4,0,10,1.6,0,1],"c_level_20":[110,77,0.7,0,20,3.3,0,1],"c_d500_0":[110,45,-2.1,-500,0,0,0,1],"c_d500_10":[110,45,-2.1,-500,10,1.6,0,1],"c_d500_20":[110,45,-1.8,-500,20,3.4,0,1],"c_d1000_0":[110,19,-4.5,-1000,0,0,0,1],"c_d1000_10":[110,19,-4.5,-1000,10,1.6,0,1],"c_d1000_20":[110,18,-4.2,-1000,20,3.3,0,1],"c_c500_0":[102,100,3.6,500,0,0,0,0],"c_c500_10":[101,100,3.8,500,10,1.7,0,0],"c_c500_20":[99,100,4.2,510,20,3.6,0,0],"y_c500_0":[74,83,8.5,500,0,-0.1,0,1],"y_c500_10":[74,84,8.6,500,10,2.3,0,1],"y_c500_20":[74,84,8.8,490,20,4.8,0,1],"y_c1000_0":[52,100,18.2,500,-1,-0.7,0,0],"y_c1000_10":[52,100,17.6,470,10,2.9,0,0],"y_c1000_20":[54,100,16.3,430,21,6.4,0,0],"y_full_0":[74,100,9.9,720,0,-0.2,0,1],"y_full_10":[74,100,9.9,700,10,2.2,0,1],"y_full_20":[74,100,10,690,20,4.8,0,1],"s_level_0":[78,53,1.2,0,0,0,1,1],"s_level_10":[78,57,1.3,0,10,2.2,1,1],"s_level_20":[78,56,1.8,0,20,4.7,1,1],"s_c500_0":[78,91,4.5,500,0,-0.1,1,1],"s_c500_10":[78,92,4.7,500,10,2.2,1,1],"s_c500_20":[78,93,5,490,20,4.6,1,1],"s_d500_0":[78,18,-2.4,-500,0,0,1,1],"s_d500_10":[78,22,-2.2,-490,10,2.3,1,1],"s_d500_20":[78,22,-1.7,-490 /* <<省略: 元の 3016 行目はデータで 4,294 文字。最初の 1,200 文字だけ残した>> */
+Object.assign(TRIM, {"sr22":{"c_level_0":[170,83,-0.7,0,0,0,0,1],"c_level_10":[170,82,-0.6,0,10,1,0,1],"c_level_20":[170,85,-0.5,0,20,2.2,0,1],"c_d500_0":[170,61,-2.3,-500,0,0,0,1],"c_d500_10":[170,60,-2.2,-500,10,1.1,0,1],"c_d500_20":[170,64,-2.1,-500,20,2.2,0,1],"c_d1000_0":[170,45,-3.9,-1000,0,0,0,1],"c_d1000_10":[170,46,-3.8,-1000,10,1.1,0,1],"c_d1000_20":[170,47,-3.6,-1000,20,2.2,0,1],"c_c500_0":[165,100,1,500,0,0,0,0],"c_c500_10":[165,100,1.1,500,10,1.1,0,0],"c_c500_20":[164,100,1.3,500,20,2.2,0,0],"y_c500_0":[109,64,5.2,500,0,-0.1,0,1],"y_c500_10":[109,64,5.3,500,10,1.5,0,1],"y_c500_20":[109,66,5.5,500,20,3.3,0,1],"y_c1000_0":[109,89,7.5,1000,0,-0.1,0,1],"y_c1000_10":[109,90,7.6,1010,10,1.5,0,1],"y_c1000_20":[109,91,7.8,1010,20,3.2,0,1],"y_full_0":[109,100,8.3,1180,0,-0.1,0,1],"y_full_10":[109,100,8.3,1160,10,1.5,0,1],"y_full_20":[109,100,8.4,1150,20,3.1,0,1],"s_level_0":[102,44,1.1,0,0,0,1,1],"s_level_10":[102,44,1.2,0,10,1.7,1,1],"s_level_20":[102,44,1.6,0,20,3.6,1,1],"s_c500_0":[102,71,3.6,500,0,0,1,1],"s_c500_10":[102,71,3.7,500,10,1.7,1,1],"s_c500_20":[102,72,4.1,510,20,3.5,1,1],"s_d500_0":[102,21,-1.6,-500,0,0,1,1],"s_d500_10":[102,22,-1.5,-500,10,1.8,1,1],"s_d500_20": /* <<省略: 元の 3017 行目はデータで 8,617 文字。最初の 1,200 文字だけ残した>> */
+for (const a of AIRCRAFT) if (TRIM[a.id]) { a.v.cruiseThr = TRIM[a.id].c_level_0[1] / 100; if (TRIM[a.id].a_3deg_0[7]) a.v.apprThr = TRIM[a.id].a_3deg_0[1] / 100; }
+let ACFT = AIRCRAFT[0], AC = null, WHEELS = [], TAILSKID = null, HARDPTS = [], WHEEL_BOTTOM = -1.45;
+// =====================================================================
+//  BLADE-ELEMENT AERODYNAMICS (the approach of X-Plane, and of MSFS's surface model)
+//  The wing is cut into spanwise strips, the tailplane and fin into a few pieces. Every piece sees
+//  its own airflow: the aircraft's motion plus its rotation (w x r), sideslip, the wing's downwash
+//  on the tail, the propeller slipstream, ground effect under that piece and the turbulence at that
+//  spot. It makes lift and drag from its own angle of attack and stalls on its own. The summed forces
+//  and moments move the aircraft.
+//  When an aircraft is loaded the pieces are tuned so that the small-angle behaviour (stability,
+//  control power, damping) equals the aircraft's reference data: trim, lessons and assists stay valid,
+//  and what the pieces add is everything beyond it (stall breaks, wing drop, spins, gust bumps...).
+// =====================================================================
+const EL_N = 8;
+function buildElements(A, P) {
+  const W = wingFns(A.wing), w = A.wing, hs = A.hstab, vs = A.vstab, pcs = [];
+  const G = w.dih * DEG, fwd = [0, 0, -1];
+  let area = 0, flapS = 0;
+  for (const side of [-1, 1]) for (let i = 0; i < EL_N; i++) {
+    const x0 = w.tipX * i / EL_N, x1 = w.tipX * (i + 1) / EL_N, xc = (x0 + x1) / 2, xa = Math.max(xc, w.rootX);
+    const c = W.c(xa), s = vnorm([1, side * Math.tan(G), 0]);
+    const p = { kind: 0, side, S: c * (x1 - x0), r: [side * xc, W.y(xa), W.le(xa) + 0.25 * c], s, n: vnorm(vcross(s, fwd)),
+      flap: !!(w.flap && xc >= w.flap[0] && xc <= w.flap[1]), ail: xc >= w.ail[0] - 0.2 && xc <= w.ail[1] ? side : 0, span01: xc / w.tipX };
+    pcs.push(p); area += p.S;
+  }
+  for (const p of pcs) { p.S *= P.S / area; if (p.flap) flapS += p.S; }
+  const hle = x => lerp(hs.rootLE, hs.tipLE, x / hs.span);
+  for (const side of [-1, 1]) for (let i = 0; i < 2; i++) {
+    const xc = hs.span * (i + 0.5) / 2, c = Math.max(hs.te - hle(xc), 0.2);
+    pcs.push({ kind: 1, side, S: c * hs.span / 2, r: [side * xc, hs.y, hle(xc) + 0.25 * c], s: [1, 0, 0], n: [0, 1, 0], wash: i ? 0.6 : 1 });
+  }
+  const fle = y => lerp(vs.rootLE, vs.topLE, (y - vs.y0) / (vs.y1 - vs.y0));
+  for (let i = 0; i < 2; i++) {
+    const dy = (vs.y1 - vs.y0) / 2, yc = vs.y0 + dy * (i + 0.5), c = Math.max(vs.te - fle(yc), 0.2);
+    pcs.push({ kind: 2, side: 0, S: c * dy, r: [0, yc, fle(yc) + 0.25 * c], s: [0, 1, 0], n: [-1, 0, 0], wash: i ? 0.5 : 1 });
+  }
+  const E = { pcs, flapK: flapS > 0 ? P.S / flapS : 0, dCmF: 0, at: 3.5, af: 3, it: 0, deps: 0.35, ke: 1, ka: 1, kr: 1, gdi: 0,
+    dCma: 0, dCmq: 0, dClp: 0, dClr: 0, dCnr: 0, dCnp: 0, dCnda: 0, dCY: 0 };
+  // ---- tune to the reference derivatives, at cruise speed in still air ----
+  const Vc = A.v.cruise / 1.94384, rho = 1.225, q = 0.5 * rho * Vc * Vc, hv = 0.25 * rho * Vc;
+  const a0 = (P.mass * 9.81 / (q * P.S) - P.CL0) / P.CLa;
+  const vAt = (a, b = 0) => [Vc * Math.sin(b), -Vc * Math.sin(a) * Math.cos(b), -Vc * Math.cos(a) * Math.cos(b)];
+  const run = (o = {}) => aeroElements(E, P, o.vb || vAt(o.a ?? a0, o.b || 0), o.w || [0, 0, 0], rho, { flapF: 0, elev: o.elev || 0, ail: o.ail || 0, rud: o.rud || 0, dq: 0 });
+  const d = (f, h) => (f(h) - f(-h)) / (2 * h);
+  const Mx = o => run(o).M[0], Lroll = o => -run(o).M[2], Nyaw = o => -run(o).M[1];
+  const qSc = q * P.S * P.c, qSb = q * P.S * P.b;
+  // pitch: tailplane effectiveness for the static stability, its incidence for zero moment at zero alpha
+  const slope = at => { E.at = at; return d(h => Mx({ a: a0 + h }), 0.01); };
+  const s0 = slope(0), s1 = slope(1);
+  let at = (P.Cma * Math.cos(a0) * qSc - s0) / (s1 - s0);
+  at = clamp(Number.isFinite(at) ? at : 3.5, 0.5, 14); E.at = at;
+  E.dCma = P.Cma - slope(at) / (qSc * Math.cos(a0));
+  E.it = 0; const m0 = Mx({ a: 0 }); E.it = 0.01; const m1 = Mx({ a: 0 }); E.it = -m0 * 0.01 / (m1 - m0);
+  E.ke = 1; E.ke = P.Cmde * qSc / d(h => Mx({ elev: h }), 0.05);
+  // flaps: the pieces make their own pitch change (flap lift ahead/behind the CG, more downwash); the
+  // reference data has none, so it is taken out again
+  E.dCmF = 0; { const m0 = run({}).M[0], m1 = aeroElements(E, P, vAt(a0), [0, 0, 0], rho, { flapF: 1, elev: 0, ail: 0, rud: 0, dq: 0 }).M[0]; E.dCmF = w.flap ? -(m1 - m0) / qSc : 0; }
+  E.dCmq = P.Cmq - d(h => Mx({ w: [h, 0, 0] }), 0.02) / (hv * P.S * P.c * P.c);
+  // roll: aileron power, damping, dihedral effect
+  E.ka = 1; E.ka = P.Clda * qSb / d(h => Lroll({ ail: h }), 0.05);
+  // fin: weathervane stability and rudder power
+  const nb = af => { E.af = af; return d(h => Nyaw({ b: h }), 0.01); };
+  const n0 = nb(0), n1 = nb(1); E.af = clamp((P.Cnb * qSb - n0) / (n1 - n0), 0.3, 14);
+  E.kr = 1; E.kr = P.Cndr * qSb / d(h => Nyaw({ rud: h }), 0.05);
+  const lb = gdi => { E.gdi = gdi; return d(h => Lroll({ b: h }), 0.01); };
+  const l0 = lb(0), l1 = lb(1); E.gdi = (P.Clb * qSb - l0) / (l1 - l0);
+  E.dClp = P.Clp - d(h => Lroll({ w: [0, 0, -h] }), 0.02) / (hv * P.S * P.b * P.b);
+  E.dClr = (P.Clr || 0) - d(h => Lroll({ w: [0, -h, 0] }), 0.02) / (hv * P.S * P.b * P.b);
+  E.dCnr = P.Cnr - d(h => Nyaw({ w: [0, -h, 0] }), 0.02) / (hv * P.S * P.b * P.b);
+  E.dCnp = (P.Cnp || 0) - d(h => Nyaw({ w: [0, 0, -h] }), 0.02) / (hv * P.S * P.b * P.b);
+  E.dCnda = (P.Cnda || 0) - d(h => Nyaw({ ail: h }), 0.05) / qSb;
+  E.dCY = P.CYb - d(h => run({ b: h }).F[0], 0.01) / (q * P.S);
+  return E;
+}
+// forces (body frame) and moments about the centre of gravity from every piece
+// o: flapF, elev, ail, rud (control positions), dq (slipstream dynamic pressure on the tail),
+//    hgt(p) (height of a piece above the ground, for ground effect), gust(p) (extra wind at a piece, body frame)
+const _v = [0, 0, 0];
+function aeroElements(E, P, vb, w, rho, o) {
+  const F = [0, 0, 0], M = [0, 0, 0];
+  const V = Math.hypot(vb[0], vb[1], vb[2]) || 1, sb = vb[0] / V;
+  let clw = 0, stw = 0, eps = 0;
+  const aS0 = P.aStall - P.flapStall * o.flapF;
+  for (let pass = 0; pass < 2; pass++) for (const p of E.pcs) {
+    if ((p.kind === 0) !== (pass === 0)) continue;              // wing first: its lift sets the downwash on the tail
+    const r = p.r;
+    let vx = vb[0] + w[1] * r[2] - w[2] * r[1], vy = vb[1] + w[2] * r[0] - w[0] * r[2], vz = vb[2] + w[0] * r[1] - w[1] * r[0];
+    if (o.gust) { const g = o.gust(p); vx -= g[0]; vy -= g[1]; vz -= g[2]; }
+    const s = p.s, n = p.n, vs = vx * s[0] + vy * s[1] + vz * s[2];
+    const px = vx - vs * s[0], py = vy - vs * s[1], pz = vz - vs * s[2], Vp = Math.hypot(px, py, pz);
+    if (Vp < 0.5) continue;
+    let a = Math.atan2(-(px * n[0] + py * n[1] + pz * n[2]), -pz);
+    let qd = 0.5 * rho * Vp * Vp, slope, cl0 = 0, dcl = 0, aS, cdi, ge = 1;
+    if (p.kind === 0) {
+      a += p.side * E.gdi * sb;                                   // effective dihedral (wing position, fuselage flow)
+      if (o.hgt) { const h = Math.max(o.hgt(p), 0.3) / P.b; ge = (16 * h * h) / (1 + 16 * h * h); }
+      slope = P.CLa * (1 + 0.06 * (1 - ge));
+      cl0 = P.CL0 + (p.flap ? P.flapCL * o.flapF * E.flapK : 0);
+      dcl = p.ail ? E.ka * o.ail * p.ail : 0;
+      aS = aS0 + 0.03 * p.span01;                                 // washout: the root stalls first, the ailerons keep working
+      cdi = P.K * ge;
+    } else if (p.kind === 1) {
+      a += E.it - eps; slope = E.at; dcl = E.ke * o.elev; aS = 0.32; cdi = 0.09;
+    } else {
+      slope = E.af; dcl = E.kr * o.rud; aS = 0.36; cdi = 0.09;
+    }
+    const over = Math.max(a - aS, -aS - 0.06 - a), st = smoothstep(0, 0.07, over);
+    const lin = cl0 + slope * a + dcl * (1 - 0.5 * st);
+    const CL = lerp(lin, 1.15 * Math.sin(2 * a), st), sa = Math.sin(a);
+    const CD = cdi * lin * lin * (1 - st) + st * 1.25 * sa * sa;
+    // lift is perpendicular to the flow and the span, drag along the flow
+    let lx = s[1] * pz - s[2] * py, ly = s[2] * px - s[0] * pz, lz = s[0] * py - s[1] * px;
+    const ll = Math.hypot(lx, ly, lz) || 1, k = qd * p.S;
+    // the propeller slipstream over the tail makes the elevator and rudder bite harder (taxiing, low speed)
+    const cx = p.kind ? o.dq * p.wash * p.S * dcl * (1 - 0.5 * st) : 0;
+    const fx = k * (CL * lx / ll - CD * px / Vp) + cx * lx / ll, fy = k * (CL * ly / ll - CD * py / Vp) + cx * ly / ll, fz = k * (CL * lz / ll - CD * pz / Vp) + cx * lz / ll;
+    // the aircraft's reference lift curve already includes the tailplane: its lift only turns the aircraft
+    if (p.kind === 1) { F[0] -= k * CD * px / Vp; F[1] -= k * CD * py / Vp; F[2] -= k * CD * pz / Vp; }
+    else { F[0] += fx; F[1] += fy; F[2] += fz; }
+    // pitch: the wing's force is taken at the height of the CG (the reference pitch data already holds the
+    // effect of a high or low wing); roll and yaw use the true position
+    M[0] += (p.kind === 0 ? 0 : r[1]) * fz - r[2] * fy; M[1] += r[2] * fx - r[0] * fz; M[2] += r[0] * fy - r[1] * fx;
+    p.cl = CL; p.st = st; p.a = a;                               // kept for the physics view
+    if (p.kind === 0) { clw += CL * p.S; stw += st * p.S; }
+    if (pass === 0) eps = E.deps * (clw / P.S) / P.CLa;
+  }
+  return { F, M, CLw: clw / P.S, stallW: stw / P.S };
+}
+
+function deriveAircraft(A) {
+  const P = { ...A.phys, mass: A.massNow || A.phys.mass }, m = P.mass, g = 9.81;
+  const I = [m * (0.18 * P.L) ** 2, m * (0.19 * (P.L + P.b) / 2) ** 2, m * (0.12 * P.b) ** 2];
+  const wr = A.gear.wheelR, bottom = A.gear.nose[1] - wr;
+  const zn = A.gear.nose[2], zm = A.gear.mains[0][2];
+  const Fn = m * g * zm / (zm - zn), Fm = m * g * -zn / (zm - zn) / (A.gear.mains.length * 2);
+  const defl = clamp(wr * 0.38, 0.05, 0.22);
+  const spring = (load, share) => { const k = load / defl; return { k, c: 2 * 0.65 * Math.sqrt(k * load / g) }; };
+  const wheels = [{ off: [0, bottom, zn], ...spring(Math.max(Fn, m * g * 0.35)), nose: true }];   // nose leg sized for braking loads
+  for (const mm of A.gear.mains) for (const s of [-1, 1]) wheels.push({ off: [s * mm[0], bottom, mm[2]], ...spring(Fm) });
+  const F = A.fuse, zTail = F[F.length - 1][0], tailSt = fuseAt(F, zTail - (zTail - F[0][0]) * 0.1);
+  const W = wingFns(A.wing), hs = A.hstab, vs = A.vstab;
+  const hard = [
+    { off: [0, F[0][3], F[0][0] - (A.engines[0].type === 'nose' ? 0.4 : 0)], name: '機首' },
+    { off: [-A.wing.tipX, W.y(A.wing.tipX), W.le(A.wing.tipX) + W.c(A.wing.tipX) * 0.4], name: '左の翼端' },
+    { off: [A.wing.tipX, W.y(A.wing.tipX), W.le(A.wing.tipX) + W.c(A.wing.tipX) * 0.4], name: '右の翼端' },
+    { off: [0, vs.y1, vs.topLE + 0.2], name: '垂直尾翼' },
+    { off: [-hs.span, hs.y, (hs.tipLE + hs.te) / 2], name: '水平尾翼' },
+    { off: [hs.span, hs.y, (hs.tipLE + hs.te) / 2], name: '水平尾翼' },
+  ];
+  for (const s of [-1, 1]) { const x = A.wing.tipX * 0.55; hard.push({ off: [s * x, W.y(x) - W.t(x) * W.c(x) * 0.3, W.le(x) + W.c(x) * 0.4], name: s < 0 ? '左翼' : '右翼' }); }
+  for (const z of [F[0][0] * 0.45, F[F.length - 1][0] * 0.3]) { const f = fuseAt(F, z); hard.push({ off: [0, f[3] - f[2], z], name: '胴体下面' }); }
+  { const zc = A.eye[2], f = fuseAt(F, zc); hard.push({ off: [0, f[3] + f[2] + (A.canopy ? 0.35 : 0), zc], name: '機体の上面' }); }
+  for (const e of A.engines) {
+    if (e.type === 'nose') hard.push({ off: [0, e.y - e.r, e.z], name: 'プロペラ' });
+    if (e.type === 'wing') for (const s of [-1, 1]) hard.push({ off: [s * e.x, e.y - e.r, e.z], name: 'プロペラ' });
+    if (e.type === 'pod') for (const s of [-1, 1]) { const fl = e.flat || 1; hard.push({ off: [s * e.x, e.y + e.r * (1 - fl) * 0.5 - e.r * fl, (e.z0 + e.z1) / 2], name: 'エンジン' }); }
+  }
+  // propeller: design speed of the fixed-pitch prop, and the fin offset that cancels the
+  // left-turning tendencies at cruise (as real single-engine aircraft are rigged)
+  const E = P.engine, prop = E.type !== 'jet';
+  const pr = {};
+  if (prop) {
+    const Vc = A.v.cruise / 1.94384, qc = 0.5 * 1.225 * Vc * Vc, CLc = m * g / (qc * P.S), ac = (CLc - P.CL0) / P.CLa;
+    const Tc = (P.CD0 + (P.CDgear || 0) * (A.gear.fixed ? 1 : 0) + P.K * CLc * CLc) * qc * P.S;
+    pr.Vd = Vc * 1.2;                                   // prop efficiency peaks a little above cruise
+    pr.a0 = 0.012 * P.b; pr.a1 = 0.15 * P.b;            // slipstream / P-factor lever arms (m, m per rad)
+    pr.fin = Tc * (pr.a0 + pr.a1 * ac) / qc;            // fin offset yaw per unit dynamic pressure (N m / Pa)
+    pr.Ip = 2.5 * E.P / 92000;                          // propeller polar moment of inertia (kg m^2)
+    pr.tq = 0.12 * Math.min(1, 92000 / E.P);                                       // share of engine torque felt as a rolling moment
+    // wing/aileron rigging cancels the torque at cruise power; being aerodynamic it scales with dynamic pressure
+    const thrC = TRIM[A.id] ? TRIM[A.id].c_level_0[1] / 100 : 0.65, omC = rpmFor(thrC, Vc) * Math.PI / 30;
+    pr.rig = (0.04 + 0.96 * thrC) * E.P / 0.85 / omC * pr.tq / qc;
+  }
+  const ac = { ...P, I, prop: prop ? pr : null, // jets: yaw damper / fly-by-wire hides these couplings
+    Cnda: P.Cnda ?? (prop ? -0.1 * P.Clda : 0), Cnp: P.Cnp ?? (prop ? -0.04 : 0), Clr: P.Clr ?? (prop ? 0.06 : 0) };
+  ac.el = buildElements(A, ac);
+  return {
+    AC: ac, WHEELS: wheels, WHEEL_BOTTOM: bottom, HARDPTS: hard,
+    TAILSKID: { off: [0, tailSt[3] - tailSt[2], zTail - (zTail - F[0][0]) * 0.1], k: 30 * m, c: 4 * m },
+  };
+}
+function setAircraft(id, custom = true) {
+  ACFT = AIRCRAFT.find(a => a.id === id) || AIRCRAFT[0];
+  const A = ACFT;
+  // weight from the load (fuel, people, cargo); the speeds that depend on it scale with the square root
+  A.custom = custom; A.massNow = typeof acMass === 'function' ? acMass(A, custom) : A.phys.mass;
+  if (!A.v0) A.v0 = { ...A.v };
+  const k = Math.sqrt(A.massNow / A.phys.mass);
+  A.v = { ...A.v0 }; for (const key of ['s0', 's1', 'rotate', 'appr']) A.v[key] = Math.round(A.v0[key] * k);
+  const d = deriveAircraft(ACFT);
+  AC = d.AC; WHEELS = d.WHEELS; WHEEL_BOTTOM = d.WHEEL_BOTTOM; HARDPTS = d.HARDPTS; TAILSKID = d.TAILSKID;
+  sim.contacts = WHEELS.map(() => false);
+}
+
+const sim = {
+  pos: [0, 0, 0], vel: [0, 0, 0], q: [0, 0, 0, 1], w: [0, 0, 0],
+  thr: 0, elev: 0, ail: 0, rud: 0, trim: 0, brake: false, pIn: 0, rIn: 0,
+  flapIdx: 0, flapDeg: 0, gearDown: true, gearPos: 1, smoke: false,
+  rpm: 0, propAng: 0, n1: 0,
+  onGround: false, mainContact: false, airTime: 0, crashed: false, crashReason: '',
+  alpha: 0, beta: 0, ias: 0, tas: 0, gLoad: 1, stallW: 0, stallWarn: false, agl: 0, groundH: 0, vs: 0,
+  contacts: [], assistOn: false,
+};
+
+// fixed-pitch propeller rpm: grows with power and with airspeed (the prop is driven by the air);
+// about 2,300 static at full throttle, 2,500 in a Vy climb, 2,400 at cruise, redline near 2,700 in a dive
+function rpmFor(thr, u, pw = 1, dead = false) {
+  if (dead) return clamp(14 * u, 0, 1300);
+  return Math.min(650 + 1650 * Math.sqrt(Math.max(thr, 0)) * Math.pow(Math.max(pw, 0.1), 0.3) + 6 * Math.max(u, 0), 2850);
+}
+// ICAO standard atmosphere (troposphere + lower stratosphere); ISA.dev shifts the temperature
+const ISA = { dev: 0 };
+function atmos(h) {
+  h = Math.max(h, -500);
+  let Ts, p;
+  if (h < 11000) { Ts = 288.15 - 0.0065 * h; p = 101325 * Math.pow(Ts / 288.15, 5.25588); }
+  else { Ts = 216.65; p = 22632.1 * Math.exp(-(h - 11000) / 6341.62); }
+  const T = Ts + ISA.dev, rho = p / (287.05 * T);
+  return { T, p, rho, a: Math.sqrt(1.4 * 287.05 * T), sigma: rho / 1.225 };
+}
+// wind near the ground is slowed by friction: log profile referenced to the 10 m reported wind
+function windGradient(agl) { const h = clamp(agl, 1, 400); return clamp(Math.log(h / 0.03) / Math.log(10 / 0.03), 0.55, 1.35); }
+
+// wind blows from the active runway's heading (a headwind for takeoff and landing)
+function windAt(p, t, agl = p[1]) {
+  const gust = Math.min(1, Math.max(agl, 0) / 300 + 0.4), wg = windGradient(agl);
+  const sw = typeof SCHOOL !== 'undefined' && SCHOOL.active && SCHOOL.wind;
+  const w = sw || RWY.windDir || [-3, 0, 0];
+  if (sw) { const k = SCHOOL.gust; return [w[0] * wg + perlin(t * 0.35, 1.7) * 1.6 * gust * k, perlin(t * 0.5, 4.4) * 0.5 * gust * k, w[2] * wg + perlin(t * 0.31, 8.2) * 1.3 * gust * k]; }
+  return [w[0] * wg + perlin(t * 0.35, 1.7) * 1.2 * gust, perlin(t * 0.5, 4.4) * 0.45 * gust, w[2] * wg + perlin(t * 0.31, 8.2) * 0.9 * gust];
+}
+// the trim range (fraction of elevator travel): enough to fly hands-off from the approach to cruise
+const TRIM_MAX = 0.45;
+// T key: the trim that holds 1 g at the present speed with the stick let go. It starts from the elevator in
+// use now and corrects it for the angle of attack being off the 1 g value (a pull-up is not trimmed in)
+function trimLevel() {
+  const s = sim, flapF = ACFT.wing.flap ? s.flapDeg / 30 : 0, rho = s.rho || atmos(s.pos[1]).rho;
+  const a1 = trimFor(Math.max(s.tas || 0, 20), flapF, 1, rho).alpha;
+  return clamp(s.elev + s.trim + AC.Cma / AC.Cmde * (s.alpha - a1), -TRIM_MAX, TRIM_MAX);
+}
+// lift coefficient needed for a load factor, and the elevator that holds that angle of attack
+function trimFor(V, flapF, n = 1, rho = 1.225) {
+  const qd = 0.5 * rho * V * V, cl0 = AC.CL0 + AC.flapCL * flapF;
+  const alpha = (n * AC.mass * 9.81 / (qd * AC.S) - cl0) / AC.CLa;
+  return { alpha, elev: clamp((-AC.Cma * Math.sin(alpha) - AC.Cm0) / AC.Cmde, -1, 1) };
+}
+
+// Flight assist (fly-by-wire): stick left/right = bank angle, stick fore/aft = climb angle.
+// Letting go of the stick levels the wings and returns to level flight.
+// direct (no assist): pitch/roll = control deflection per unit of stick. Pitch is scaled up at low
+// airspeed so that the same stick input gives a similar pitch response at every speed.
+const SENS = {
+  low: { direct: 0.45, pitch: 0.16, roll: 0.36, pMax: 0.4, rMax: 0.6, bank: 30, gamma: 8 },
+  mid: { direct: 0.7, pitch: 0.26, roll: 0.55, pMax: 0.55, rMax: 0.8, bank: 45, gamma: 12 },
+  high: { direct: 1.0, pitch: 0.42, roll: 0.85, pMax: 0.75, rMax: 1, bank: 60, gamma: 18 },
+};
+function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
+  const sens = SENS[game.sens] || SENS.low;
+  const airborne = !s.onGround && s.airTime > 0.6 && V > 12;
+  const leveling = game.levelT > 0;
+  const auto = game.ap && airborne && !s.crashed;
+  s.assistOn = (game.assist || leveling || auto) && airborne && !s.crashed;
+  if (!s.assistOn) {
+    s.gI = 0; s.bI = 0;
+    const vr = ACFT.v.cruise / 1.94384, spd = Math.max(V, 12);
+    // the stick maps to deflection along one smooth, progressive curve (no sudden jump near full travel).
+    // Full stick gives sens.pMax of the elevator at cruise; slower flight allows more, so a flare or a
+    // stall is still possible at low speed.
+    const pMax = Math.min(1, sens.pMax * clamp(vr / spd, 1, 2.6)), rMax = Math.min(1, sens.rMax * clamp(vr / spd, 1, 2));
+    // full elevator for rotation, blended out over the first seconds after lift-off
+    const kg = s.onGround ? 1 : s.airTime < 3 ? 1 - s.airTime / 3 : 0;
+    // the curve is gentle around the centre at cruise, and closer to linear when slow (rotation, flare)
+    const lin = Math.max(clamp(0.45 + (vr / spd - 1) * 0.35, 0.45, 0.8), 0.45 + 0.35 * kg);
+    const shape = (x, a) => a * x + (1 - a) * x * x * x;
+    const kp = Math.max(pMax, kg), kr = rMax;
+    let el = kp * shape(clamp(s.pIn, -1, 1), lin);
+    // just after trimming (T) the stick is still held: the part of it now in the trim is not applied twice
+    if (s.trimHold) { if (Math.abs(s.pIn) < 0.04 || Math.sign(el) !== Math.sign(s.trimHold)) s.trimHold = 0; else el -= Math.sign(el) * Math.min(Math.abs(el), Math.abs(s.trimHold)); }
+    s.elev = clamp(el, -1, 1); s.ail = clamp(kr * shape(clamp(s.rIn, -1, 1), 0.45), -1, 1);
+    // with the assist on, the takeoff rotation is guided: back stick asks for a pitch attitude (up to about
+    // 10 degrees) instead of full elevator, so holding the key can't over-rotate and stall at lift-off
+    if (game.assist && !s.crashed && V > 12 && s.pIn > 0.05 && (s.onGround || s.airTime < 3)) {
+      const f = qrot(s.q, [0, 0, -1]), th = Math.asin(clamp(f[1], -1, 1));
+      const thMax = (AC.maxG > 6 ? 13 : ACFT.v.cruise > 200 ? 11 : 10) * DEG;
+      let thCmd = Math.min(1, s.pIn * 1.8) * thMax;               // half stick already asks for most of the rotation
+      if (alpha > aS - 0.06) thCmd = Math.min(thCmd, th - (alpha - (aS - 0.06)) * 2);   // never into the stall
+      const e = clamp((thCmd - th) * 10 - s.w[0] * 2.5, -1, 1);
+      s.elev = clamp(Math.min(e, 1) - s.trim, -1, 1);
+    }
+    return;
+  }
+  const r = qrot(s.q, [1, 0, 0]), up = qrot(s.q, [0, 1, 0]);
+  const bank = Math.atan2(-r[1], up[1]);
+  const spd = vlen(s.vel) || 1, gamma = Math.asin(clamp(s.vel[1] / spd, -1, 1));
+  const p = -s.w[2];
+  // --- roll: bank-angle command ---
+  const bankMax = Math.min(sens.bank * (AC.rollRate > 150 ? 1.4 : 1), 80) * DEG;
+  let rIn = leveling ? 0 : s.rIn, pIn = leveling ? 0 : s.pIn;
+  const gMax0 = sens.gamma * (AC.maxG > 6 ? 1.6 : 1) * DEG;
+  if (auto) {
+    // autopilot: fly toward the destination (or hold heading) and hold the selected altitude
+    const f = qrot(s.q, [0, 0, -1]), hdg = (Math.atan2(f[0], -f[2]) / DEG + 360) % 360;
+    // lateral: NAV (to the destination, when there is one) or HDG (the selected heading), as the panel's keys set
+    if (game.apLat !== 'hdg' && typeof JW !== 'undefined' && JW.active && JW.dest) { const g = planeGeo(); game.apHdg = geoBearing(g[0], g[1], JW.dest.lat, JW.dest.lon); }
+    const err = ((game.apHdg - hdg + 540) % 360) - 180;
+    rIn = clamp(clamp(err * 1.2, -25, 25) * DEG / bankMax, -1, 1);
+    let alt = game.apAlt;
+    const look = vmadd(s.pos, s.vel, 45), terr = Math.max(terrainHeight(look[0], look[2]), terrainHeight(s.pos[0], s.pos[2]), 0);
+    if (alt < terr + 300) alt = terr + 300;                              // terrain safety
+    // vertical: ALT hold, or VS / FLC (a set climb or descent rate) toward the selected altitude, captured there
+    const vm = game.apVert, dAlt = alt - s.pos[1];
+    if ((vm === 'vs' || vm === 'flc') && Math.abs(dAlt) > 25) {
+      const want = (vm === 'flc' ? Math.sign(dAlt) * 700 : (game.apVs || 0)) * 0.00508;          // ft/min -> m/s
+      const toward = Math.sign(want) === Math.sign(dAlt) || want === 0 ? want : 0;
+      pIn = clamp(clamp(Math.asin(clamp(toward / spd, -0.5, 0.5)) / DEG + (toward - s.vel[1]) * 0.6, -6, 8) * DEG / gMax0, -1, 1);
+    } else {
+      if (vm === 'vs' || vm === 'flc') { game.apVert = 'alt'; }
+      pIn = clamp(clamp(dAlt * 0.02, -4, 5) * DEG / gMax0, -1, 1);
+    }
+    // autothrottle (turbine aircraft, as on real airliners): holds the speed the autopilot was engaged at
+    if (ACFT.v.cruise > 150 && game.apSpd) {
+      const kt = V * Math.sqrt(s.rho ? s.rho / 1.225 : 1) * 1.94384;
+      s.thr = clamp(s.thr + clamp((game.apSpd - kt) * 0.004 - (s.vs || 0) * 0.0006, -0.004, 0.004), 0.02, 0.95);
+    }
+  }
+  const bankCmd = rIn * bankMax;
+  const pMax = AC.rollRate * DEG * (game.sens === 'high' ? 1 : game.sens === 'mid' ? 0.75 : 0.55);
+  // integral term: a steady rolling moment (engine torque at climb power, fuel imbalance) can't leave the wings a little low
+  const bErr = bankCmd - bank;
+  const hold = Math.abs(bankCmd) < 2 * DEG && Math.abs(bErr) < 3 * DEG;            // only while holding the wings level
+  s.bI = hold ? clamp((s.bI || 0) + bErr * (1 / 120) * 1.5 * Math.min(1, AC.rollRate / 50), -0.08, 0.08) : (s.bI || 0) * 0.98;
+  const pCmd = clamp(bErr * 1.6 + s.bI, -pMax, pMax);
+  const kAil = Math.abs(AC.Clp) * AC.b / (2 * Math.max(V, 10) * AC.Clda);
+  s.ail = clamp((pCmd + 0.9 * (pCmd - p)) * kAil, -1, 1);
+  // --- pitch: flight-path-angle command, turns are flown level automatically ---
+  const gMax = sens.gamma * (AC.maxG > 6 ? 1.6 : 1) * DEG;
+  const gammaCmd = pIn * gMax;
+  // integral term: removes the steady sink that a pure proportional command leaves in turns
+  s.gI = clamp((s.gI || 0) * (1 - 0.1 / 120) + clamp(gammaCmd - gamma, -1.5 * DEG, 1.5 * DEG) * (1 / 120) * 0.35, -0.08, 0.08);
+  const gdot = clamp((gammaCmd - gamma) * 0.7 + s.gI, -AC.pitchRate * DEG, AC.pitchRate * DEG);
+  const nCmd = clamp(Math.cos(gamma) / Math.max(Math.cos(bank), 0.35) + spd * gdot / 9.81, -1, AC.maxG);
+  const aFree = (nCmd * AC.mass * 9.81 / Math.max(qd * AC.S, 1) - cl0) / AC.CLa;
+  const aReq = clamp(aFree, -aS * 0.7, aS - 0.04);          // stall protection
+  if (aReq !== aFree) s.gI *= 0.97;                         // no wind-up while the wing is at its limit
+  const ratio = qd / Math.max(qdc, 1);
+  let e = (-AC.Cma * Math.sin(aReq) - AC.Cm0) / AC.Cmde * ratio;
+  // pitch-rate loop sized by the aircraft's own inertia and elevator power, so a heavy airliner is damped as
+  // well as a light trainer (a fixed gain left big aircraft porpoising on the approach): the rate asked for is
+  // the steady turn/pull-up rate plus a correction that brings the angle of attack to its target
+  const Mde = Math.max(qdc * AC.S * AC.c * AC.Cmde / AC.I[0], 0.02);
+  const qCmd = 9.81 / spd * (nCmd - Math.cos(gamma) * Math.cos(bank)) + 2.0 * (aReq - alpha);
+  e += 1.2 * (aReq - alpha) + clamp(2.5 / Mde, 0.1, 30) * (qCmd - s.w[0]);
+  s.elev = clamp(e - s.trim, -1, 1);
+}
+
+function physicsStep(dt, t) {
+  const s = sim;
+  if (sysFlapsOK()) s.flapDeg += clamp(FLAP_DEG[s.flapIdx] - s.flapDeg, -8 * dt, 8 * dt);
+  if (ACFT.gear.fixed) { s.gearDown = true; s.gearPos = 1; }
+  else if (!(s.onGround && !s.gearDown) && sysGearOK()) s.gearPos = clamp(s.gearPos + (s.gearDown ? dt : -dt) / 4.5, 0, 1);
+  const flapF = ACFT.wing.flap ? s.flapDeg / 30 : 0;
+  const atm = atmos(s.pos[1]), rho = atm.rho;
+  const ground = groundAt(s.pos[0], s.pos[2]);
+  const agl = s.pos[1] + WHEEL_BOTTOM - ground.h;
+  const qi = qconj(s.q);
+  const vb = qrot(qi, vsub(s.vel, windAt(s.pos, t, agl + 2)));
+  const V = vlen(vb);
+  const u = -vb[2];
+  const alpha = Math.atan2(-vb[1], u);
+  const beta = V > 0.5 ? Math.asin(clamp(vb[0] / V, -1, 1)) : 0;
+  const qd = 0.5 * rho * V * V;
+  const jet = AC.engine.type === 'jet';
+  const qdc = qd + (jet ? 0 : 240 * s.thr * Math.sqrt(AC.mass / 1000));
+  const aS = AC.aStall - AC.flapStall * flapF;
+  const cl0 = AC.CL0 + AC.flapCL * flapF;
+  applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0);
+
+  const F = [0, 0, 0];
+  const mach = V / atm.a, EL = AC.el;
+  // --- engines ---
+  let T;
+  if (jet) {
+    const E = AC.engine, dry = SYS.run ? Math.min(s.thr / 0.95, 1) : 0;
+    s.n1 += (dry - s.n1) * Math.min(1, dt / E.spool * (s.n1 < dry ? 1 : 1.6));
+    const ab = E.ab && s.thr > 0.95 && s.n1 > 0.9 ? E.ab : 0;
+    T = SYS.run ? (E.T * (0.06 + 0.94 * s.n1 * s.n1) + ab) * Math.pow(atm.sigma, 0.7) * (1 - 0.25 * Math.min(mach, 1.2)) : 0;
+    s.ab = ab > 0;
+  } else {
+    // normally aspirated piston power falls faster than density (Gagg-Ferrar); a fixed-pitch prop
+    // is least efficient at low speed, and its static thrust falls off as the aircraft accelerates
+    const E = AC.engine, pw = Math.max(0, 1.132 * atm.sigma - 0.132) * SYS.pf, ua = Math.max(u, 0), eDead = s.dead || !SYS.run;
+    s.shaftP = eDead ? 0 : (0.04 + 0.96 * s.thr) * pw * E.P / 0.85;
+    if (eDead) T = -0.026 * qd * AC.S * (AC.mass / 1050) ** 0.3;                 // windmilling prop drag
+    else {
+      const eta = Math.pow(Math.min(1, Math.max(ua, 1) / AC.prop.Vd), 0.35);
+      const thrEff = 0.04 + 0.96 * s.thr;
+      T = thrEff * pw * Math.min(E.T0 * (1 - 0.25 * Math.min(ua / AC.prop.Vd, 1)), eta * E.P / Math.max(ua, 1)) - (1 - s.thr) * 2.5 * ua * AC.mass / 1000;
+    }
+    s.ab = false;
+  }
+  if (jet) s.shaftP = 0;
+  s.oat = atm.T - 273.15; s.thrust = T; s.rho = rho; s.nProp = 0;
+  // density altitude: the ISA altitude that has this air density
+  s.densAlt = (1 - Math.pow(Math.min(atm.sigma, 1.2), 0.234969)) * 44330.8;
+  F[2] -= T;
+  // --- moments that are not from the lifting pieces (pilot convention: roll right, pitch up, yaw right) ---
+  const p = -s.w[2], qq = s.w[0], r = -s.w[1];
+  const hv = 0.25 * rho * V;
+  const elevEff = clamp(s.elev + s.trim, -1, 1);
+  // yaw: the propeller's left-turning tendencies (slipstream swirl + P-factor, minus the fin offset that
+  // cancels them at cruise) and what the pieces don't produce of adverse yaw
+  let Nx = qd * AC.S * AC.b * EL.dCnda * s.ail + hv * AC.S * AC.b * AC.b * EL.dCnp * p, Rl = 0, Ng = 0;
+  if (AC.prop) {
+    const Pr = AC.prop, Tp = Math.max(T, 0);
+    s.nProp = -(Tp * (Pr.a0 + Pr.a1 * clamp(alpha, -0.1, 0.35))) + Pr.fin * qd;
+    Nx += s.nProp;
+    const om = Math.max(s.rpm, 300) * Math.PI / 30;
+    Rl = -(s.shaftP || 0) / om * Pr.tq + Pr.rig * qd;                                          // engine torque reaction (partly rigged out): rolls left
+    Ng = Pr.Ip * om * qq;                                                    // gyroscopic precession: pitch up -> yaw right
+  }
+  // automatic rudder (ball kept centred) for the assist and for keyboard pilots who want it
+  const autoR = s.assistOn || (typeof game !== 'undefined' && game.autoRud);
+  const rAuth = Math.max(qdc * AC.S * AC.b * AC.Cndr, 1);
+  s.rudNeed = clamp(-(Nx + Ng) / rAuth, -1, 1);
+  let yd = 0;
+  if (autoR && !s.onGround && V > 10) {                                        // yaw damper: only the yaw rate a coordinated turn doesn't need
+    const rgt = qrot(s.q, [1, 0, 0]), upv = qrot(s.q, [0, 1, 0]), sb = -rgt[1] / Math.hypot(rgt[1], upv[1]);
+    yd = -clamp(1.5 * AC.I[2] / rAuth, 0.8, 20) * (r - 9.81 * sb / V);          // gain sized by yaw inertia: big jets need a strong damper
+  }
+  s.rudAuto = autoR ? clamp(-(Nx + Ng) / rAuth + 1.5 * beta + yd, -1, 1) * (s.onGround && V < 8 ? V / 8 : 1) : 0;
+  const rudEff = clamp(s.rud + s.rudAuto, -1, 1);
+  // --- aerodynamics: the lifting pieces ---
+  const upB = qrot(qi, [0, 1, 0]), hCG = s.pos[1] - ground.h;
+  // turbulence varies across the span and along the fuselage: bumps that roll and pitch the aircraft
+  const gA = (typeof SCHOOL !== 'undefined' && SCHOOL.active && SCHOOL.wind ? SCHOOL.gust : 1) * Math.min(1, Math.max(agl, 0) / 300 + 0.4) * 0.9 * smoothstep(3, 40, agl);
+  const gW = perlin(t * 0.9, 23.1) * gA / (AC.b / 2), gT = perlin(t * 0.7, 41.9) * gA * 0.2;
+  const ae = aeroElements(EL, AC, vb, s.w, rho, {
+    flapF, elev: elevEff, ail: s.ail, rud: rudEff, dq: jet ? 0 : 240 * s.thr * Math.sqrt(AC.mass / 1000),
+    hgt: pc => hCG + pc.r[0] * upB[0] + pc.r[1] * upB[1] + pc.r[2] * upB[2],
+    gust: pc => { const g = pc.kind === 0 ? gW * pc.r[0] : pc.kind === 1 ? gT : 0; return [upB[0] * g, upB[1] * g, upB[2] * g]; },
+  });
+  const stallW = ae.stallW;
+  const hx = Math.max(agl + 1.3, 0.3) / AC.b, ge = (16 * hx * hx) / (1 + 16 * hx * hx);
+  // drag of everything that doesn't lift (fuselage, gear, flaps' profile drag, sideslip, compressibility)
+  const CDp = AC.CD0 + (0.02 * flapF + 0.05 * flapF * flapF) * (AC.flapCD ?? 1) + AC.CDgear * s.gearPos + 0.6 * beta * beta
+    + (AC.wave ? 0.035 : 0.08) * smoothstep(AC.wave ? 0.88 : 0.78, AC.wave ? 1.12 : 0.95, mach);
+  F[0] += ae.F[0] + qd * AC.S * EL.dCY * beta; F[1] += ae.F[1]; F[2] += ae.F[2];
+  if (V > 0.3) { const k = qd * AC.S * CDp / V; F[0] -= vb[0] * k; F[1] -= vb[1] * k; F[2] -= vb[2] * k; }
+  { const ln = Math.hypot(vb[1], vb[2]) || 1, qs = Math.max(qd * AC.S, 1e-6);
+    s.liftN = (ae.F[1] * -vb[2] + ae.F[2] * vb[1]) / ln; s.dragN = -(F[0] * vb[0] + F[1] * vb[1] + (F[2] + T) * vb[2]) / Math.max(V, 1e-3);
+    s.CL = ae.CLw; s.CD = s.dragN / qs; s.ge = ge; }
+  const Mp = ae.M[0] + qd * AC.S * AC.c * (AC.Cm0 + EL.dCma * Math.sin(alpha) + EL.dCmF * flapF)
+    + hv * AC.S * AC.c * AC.c * EL.dCmq * qq;
+  let Lr = -ae.M[2] + hv * AC.S * AC.b * AC.b * (EL.dClp * p + EL.dClr * r) + Rl;
+  if (stallW > 0.15) Lr += qd * AC.S * AC.b * 0.012 * stallW * perlin(t * 1.3, 12.5);          // buffet
+  const Nr = -ae.M[1] + hv * AC.S * AC.b * AC.b * EL.dCnr * r + Nx + Ng;
+  const Tb = [Mp, -Nr, -Lr];
+
+  // --- ground contact (world frame) ---
+  const Fw = qrot(s.q, F);
+  const Tw = [0, 0, 0];
+  const wW = qrot(s.q, s.w);
+  const gs = Math.hypot(s.vel[0], s.vel[2]);
+  const steer = clamp(s.rud + s.rIn * 0.5, -1, 1) * lerp(32, 4, clamp(gs / 25, 0, 1)) * DEG;
+  const noseOff = WHEELS[0].off;
+  const crashPen = Math.max(0.5, ACFT.gear.wheelR * 1.4);
+  let yLoad = F[1];
+  const contact = (off, k, c, kind) => {
+    const rw = qrot(s.q, off), cp = vadd(s.pos, rw);
+    const g = groundAt(cp[0], cp[2]);
+    const pen = g.h - cp[1];
+    if (pen <= 0) return false;
+    if (g.water) { crash(kind === 'hard' ? '海に墜落しました' : '海に着水してしまいました'); return true; }
+    const vc = vadd(s.vel, vcross(wW, rw));
+    const vn = vdot(vc, g.n);
+    if (kind === 'hard') { crash(off.name + 'が地面に接触しました'); return true; }
+    if (kind === 'wheel' && (pen > crashPen || vn < -6)) { crash('接地の衝撃で脚が壊れました（降下率 ' + Math.round(-vn * 196.85) + ' fpm）'); return true; }
+    if (kind === 'skid' && vn < -4) { crash('尾部を強く打ちつけました'); return true; }
+    const Fn = Math.max(0, k * pen - c * vn);
+    let fb = [0, 0, -1];
+    if (off === noseOff) fb = [Math.sin(steer), 0, -Math.cos(steer)];
+    let fwd = qrot(s.q, fb);
+    fwd = vnorm(vsub(fwd, vscale(g.n, vdot(fwd, g.n))));
+    const lat = vnorm(vcross(g.n, fwd));
+    const vl = vdot(vc, fwd), vt = vdot(vc, lat);
+    const mu = kind === 'skid' ? 0.5 : g.paved ? 0.85 : 0.6;
+    const rr = kind === 'skid' ? 0.5 : (g.paved ? 0.02 : 0.05) + (s.brake && off !== noseOff ? (g.paved ? 0.42 : 0.3) : 0);
+    const Ft = clamp(-vt * 9 * AC.mass, -mu * Fn, mu * Fn);
+    const Fl = clamp(-vl * 6 * AC.mass, -rr * Fn, rr * Fn);
+    const Fc = vadd(vadd(vscale(g.n, Fn), vscale(fwd, Fl)), vscale(lat, Ft));
+    Fw[0] += Fc[0]; Fw[1] += Fc[1]; Fw[2] += Fc[2];
+    const tq = vcross(rw, Fc); Tw[0] += tq[0]; Tw[1] += tq[1]; Tw[2] += tq[2];
+    yLoad += vdot(qrot(qi, Fc), [0, 1, 0]);
+    return true;
+  };
+  const hard = HARDPTS.map(h => Object.assign(h.off.slice(), { name: h.name }));
+  const reach = Math.max(8, AC.b * 0.6);
+  if (agl < reach) {
+    for (let i = 0; i < WHEELS.length; i++) s.contacts[i] = s.gearPos > 0.98 ? contact(WHEELS[i].off, WHEELS[i].k, WHEELS[i].c, 'wheel') : false;
+    contact(TAILSKID.off, TAILSKID.k, TAILSKID.c, 'skid');
+    for (const h of hard) { if (s.crashed) break; contact(h, 0, 0, 'hard'); }
+  } else {
+    if (agl < reach + 30) for (const h of hard) { if (s.crashed) break; contact(h, 0, 0, 'hard'); }
+    s.contacts.fill(false);
+  }
+  if (s.crashed) return;
+
+  // --- integrate ---
+  Fw[1] -= AC.mass * 9.81;
+  const saved = { pos: s.pos, vel: s.vel, q: s.q, w: s.w.slice() };
+  s.vel = vmadd(s.vel, Fw, dt / AC.mass);
+  s.pos = vmadd(s.pos, s.vel, dt);
+  const Tt = vadd(Tb, qrot(qi, Tw));
+  const Iw = [AC.I[0] * s.w[0], AC.I[1] * s.w[1], AC.I[2] * s.w[2]];
+  const gyro = vcross(s.w, Iw);
+  for (let k = 0; k < 3; k++) s.w[k] += (Tt[k] - gyro[k] - AC.I[k] * s.w[k] * 0.05) / AC.I[k] * dt;
+  const dq = qmul(s.q, [s.w[0], s.w[1], s.w[2], 0]);
+  s.q = qnorm([s.q[0] + 0.5 * dt * dq[0], s.q[1] + 0.5 * dt * dq[1], s.q[2] + 0.5 * dt * dq[2], s.q[3] + 0.5 * dt * dq[3]]);
+
+  if (![...s.pos, ...s.vel, ...s.q, ...s.w].every(Number.isFinite)) {
+    Object.assign(s, saved);
+    crash('機体が制御不能になりました');
+    return;
+  }
+  // --- derived state ---
+  const wasMain = s.mainContact;
+  s.mainContact = s.contacts.some((c, i) => c && i > 0);
+  s.onGround = s.contacts.some(c => c);
+  if (s.mainContact && !wasMain && s.airTime > 1.5) onTouchdown();
+  s.airTime = s.onGround ? 0 : s.airTime + dt;
+  s.alpha = alpha; s.beta = beta; s.tas = V; s.ias = V * Math.sqrt(atm.sigma); s.mach = mach; s.rudEff = rudEff;
+  s.stallW = stallW;
+  s.stallWarn = !s.onGround && V > 8 && alpha > aS - 0.045;
+  s.gLoad = lerp(s.gLoad, yLoad / (AC.mass * 9.81), 0.1);
+  s.agl = agl; s.groundH = ground.h; s.vs = s.vel[1];
+  if (jet) s.rpm = SYS.run ? s.n1 * 100 : 0;
+  else {
+    const rpmT = SYS.run || s.dead ? rpmFor(s.thr, u, Math.max(0, 1.132 * atm.sigma - 0.132) * SYS.pf, s.dead) * (s.dead ? 1 : SYS.rpmK || 1) : Math.max(sysCrankRpm(), rpmFor(0, u, 1, true));
+    s.rpm += (rpmT - s.rpm) * Math.min(1, dt * 1.8);
+  }
+  s.propAng = (s.propAng + (jet ? 0 : s.rpm) / 60 * Math.PI * 2 * dt) % (Math.PI * 2);
+}
+
+// ---------- drawing ----------
+function planeMatrix(pos, q) { return M4.fromQP(q, pos); }
+function setLivery(A, paint) {
+  const u = progMesh.u, cp = !paint && A === ACFT && typeof acPaint === 'function' ? acPaint(A) : null, L = cp ? { ...A.livery, base: cp[0], a: cp[1], b: cp[2] } : A.livery, Wn = A.windows || { mode: 0 };
+  gl.uniform1i(u.uLivery, 1);
+  gl.uniform3fv(u.uLivBase, L.base);
+  gl.uniform3fv(u.uLivA, paint || L.a);
+  gl.uniform3fv(u.uLivB, paint ? vscale(paint, 0.35) : L.b);
+  gl.uniform4f(u.uLivP, L.fw, L.y0, L.slope, L.tip);
+  gl.uniform4fv(u.uLivQ, L.bands);
+  gl.uniform4fv(u.uLivF, L.fin);
+  gl.uniform4f(u.uLivN, L.nose, L.glare, A.hstab.span * 0.8, A.hstab.rootLE);
+  gl.uniform4f(u.uWin0, Wn.mode || 0, Wn.z0 || 0, Wn.z1 || 0, Wn.pitch || 1);
+  gl.uniform4f(u.uWin1, Wn.y0 || 0, Wn.y1 || 0, Wn.cz0 || 0, Wn.cz1 || 0);
+  gl.uniform1f(u.uWinCy, Wn.cy || 0);
+}
+function drawPlane(base, st, opt = {}) {
+  const A = opt.acft || ACFT, u = progMesh.u;
+  setLivery(A, opt.paint);
+  gl.uniform3f(u.uEmissive, 0, 0, 0);
+  gl.uniform1f(u.uAlpha, 1);
+  const fastProp = st.rpm > 900 && A.phys.engine.type === 'prop';
+  for (const part of A.parts) {
+    if (part.disc || part.flame) continue;
+    if (opt.cockpit && part.cockpitHide) continue;
+    if (part.propBlade && fastProp) continue;
+    if (part.gear && st.gearPos < 0.02) continue;
+    let m = base;
+    if (part.pivot) m = M4.mul(base, M4.pivotRot(part.pivot, part.axis, part.angle(st)));
+    gl.uniformMatrix4fv(u.uModel, false, m);
+    gl.uniform1f(u.uSpec, part.spec);
+    gl.bindVertexArray(part.vao.vao);
+    gl.drawArrays(gl.TRIANGLES, 0, part.vao.count);
+  }
+}
+function drawPropDisc(base, st) {
+  const u = progMesh.u, A = ACFT;
+  gl.uniform1i(u.uLivery, 0);
+  gl.uniform1f(u.uSpec, 0);
+  gl.uniformMatrix4fv(u.uModel, false, base);
+  if (A.phys.engine.type === 'prop' && st.rpm > 900) {
+    gl.uniform3f(u.uEmissive, 0, 0, 0);
+    gl.uniform1f(u.uAlpha, clamp((st.rpm - 900) / 2000, 0.12, 0.3));
+    for (const part of A.parts) if (part.disc) { gl.bindVertexArray(part.vao.vao); gl.drawArrays(gl.TRIANGLES, 0, part.vao.count); }
+  }
+  if (st.ab) {
+    const flicker = 0.8 + 0.2 * Math.sin(R.time * 40);
+    gl.uniform3f(u.uEmissive, 1.6 * flicker, 0.75 * flicker, 0.35);
+    gl.uniform1f(u.uAlpha, 0.55);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+    for (const part of A.parts) if (part.flame) { gl.bindVertexArray(part.vao.vao); gl.drawArrays(gl.TRIANGLES, 0, part.vao.count); }
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  }
+}
+
+// =====================================================================
+//  JAPAN: one seamless world covering the whole country
+//  - positions are kept in metres around a floating origin (lat0, lon0)
+//    that moves with the aircraft, so a 2,000 km flight stays precise
+//  - terrain is a quadtree of Web-Mercator tiles. Online, each tile streams
+//    GSI elevation (dem_png, ~10 m) and aerial photos (seamlessphoto);
+//    offline it falls back to the embedded 500 m DEM of Japan plus
+//    seven detailed 20-30 m patches.
+// =====================================================================
+const R_EARTH = 6371000, KZ = 110574;
+const GSI = 'https://cyberjapandata.gsi.go.jp/xyz/';
+const TERRARIUM = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/';
+const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
+const JW = {
+  active: false, online: null, lat0: 35.55, lon0: 139.78, ov: 0, tiles: new Map(), frame: 0, inflight: 0,
+  rws: [], airports: JP_AIRPORTS, places: JP_PLACES, coarse: null, patches: [], roots: [], dirty: [],
+  dep: null, dest: null, mapBlocked: false, loadedPhotos: 0, loadedDems: 0, texCount: 0,
+};
+const kxAt = lat => 111320 * Math.cos(lat * DEG);
+const wrapLon = d => { d = (d + 180) % 360; return (d < 0 ? d + 360 : d) - 180; };   // longitude (difference) into [-180, 180)
+function geoToWorld(lat, lon) { return [wrapLon(lon - JW.lon0) * kxAt(lat), -(lat - JW.lat0) * KZ]; }
+function worldToGeo(x, z) { const lat = JW.lat0 - z / KZ; return [lat, wrapLon(JW.lon0 + x / Math.max(kxAt(lat), 50))]; }
+function geoDist(a0, o0, a1, o1) {
+  const p = (a1 - a0) * DEG, l = (o1 - o0) * DEG;
+  const h = Math.sin(p / 2) ** 2 + Math.cos(a0 * DEG) * Math.cos(a1 * DEG) * Math.sin(l / 2) ** 2;
+  return 2 * R_EARTH * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+function geoBearing(a0, o0, a1, o1) {
+  const y = Math.sin((o1 - o0) * DEG) * Math.cos(a1 * DEG);
+  const x = Math.cos(a0 * DEG) * Math.sin(a1 * DEG) - Math.sin(a0 * DEG) * Math.cos(a1 * DEG) * Math.cos((o1 - o0) * DEG);
+  return (Math.atan2(y, x) / DEG + 360) % 360;
+}
+const mercY = lat => (1 - Math.asinh(Math.tan(lat * DEG)) / Math.PI) / 2;
+const latFromMerc = my => Math.atan(Math.sinh(Math.PI * (1 - 2 * my))) / DEG;
+const planeGeo = () => worldToGeo(sim.pos[0], sim.pos[2]);
+
+// ---------- embedded data ----------
+async function inflateB64(b64) {
+  const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const stream = new Blob([bin]).stream().pipeThrough(new DecompressionStream('deflate'));
+  return new Int16Array(await new Response(stream).arrayBuffer());
+}
+function undelta(d, W, H) {
+  for (let j = 0; j < H; j++) { let acc = 0; for (let i = 0; i < W; i++) { const k = j * W + i; acc = ((acc + d[k]) << 16) >> 16; d[k] = acc; } }
+  return d;
+}
+async function jwInitData() {
+  if (JW.coarse) return;
+  JW.coarse = undelta(await inflateB64(JP_COARSE.data), JP_COARSE.w, JP_COARSE.h);
+  JW.world = undelta(await inflateB64(WORLD_COARSE.data), WORLD_COARSE.w, WORLD_COARSE.h);
+  // 16-pixel blocks of the Japan mosaic that contain land: near them the coarse world data is not used
+  { const C = JP_COARSE, B = 16, bw = Math.ceil(C.w / B), bh = Math.ceil(C.h / B), m = new Uint8Array(bw * bh);
+    for (let j = 0; j < C.h; j++) for (let i = 0; i < C.w; i++) if (JW.coarse[j * C.w + i] !== -32768) m[(j / B | 0) * bw + (i / B | 0)] = 1;
+    const g = new Uint8Array(bw * bh);
+    for (let j = 0; j < bh; j++) for (let i = 0; i < bw; i++) {
+      let v = 0; for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) { const jj = j + b, ii = i + a; if (jj >= 0 && ii >= 0 && jj < bh && ii < bw && m[jj * bw + ii]) v = 1; }
+      g[j * bw + i] = v;
+    }
+    JW.jpNear = { B, bw, bh, g }; }
+  for (const a of JP_AIRPORTS) { a.cc = 'JP'; a.big = a.rw[0].len >= 2400 ? 1 : 0; }
+  JW.airports = JP_AIRPORTS.concat(WORLD_AIRPORTS);
+  JW.places = JP_PLACES.concat(WORLD_PLACES);
+  for (const [id, p] of Object.entries(JP_PATCHES)) {
+    const N = 1024, raw = undelta(await inflateB64(p.data), N, N), h = new Float32Array(N * N);
+    for (let k = 0; k < N * N; k++) h[k] = raw[k] === -32768 ? NaN : raw[k] / 10;
+    JW.patches.push({ id, lat: p.lat, lon: p.lon, cell: p.cell, half: N * p.cell / 2, kx: kxAt(p.lat), h });
+  }
+  for (const ap of JW.airports) for (const r of ap.rw) {
+    const lat = (r.le[0] + r.he[0]) / 2, lon = (r.le[1] + r.he[1]) / 2, kx = kxAt(lat);
+    const dx = (r.he[1] - r.le[1]) * kx, dz = -(r.he[0] - r.le[0]) * KZ;
+    const hdg = (Math.atan2(dx, -dz) / DEG + 360) % 360;
+    JW.rws.push(Object.assign(r, { ap, lat, lon, kx, hdg, sin: Math.sin(hdg * DEG), cos: Math.cos(hdg * DEG) }));
+  }
+  // spatial index: 0.5-degree cells -> runways within reach (flattening extends ~ len/2 + 300 m)
+  JW.rwGrid = new Map();
+  for (const r of JW.rws) {
+    const ext = (r.len / 2 + 400) / KZ, extLon = (r.len / 2 + 400) / Math.max(r.kx, 1000);
+    for (let a = Math.floor((r.lat - ext) * 2); a <= Math.floor((r.lat + ext) * 2); a++)
+      for (let b = Math.floor((r.lon - extLon) * 2); b <= Math.floor((r.lon + extLon) * 2); b++) {
+        const k = a * 1000 + b; let l = JW.rwGrid.get(k); if (!l) JW.rwGrid.set(k, l = []); l.push(r);
+      }
+  }
+}
+const NO_RW = [];
+const rwNear = (lat, lon) => JW.rwGrid ? JW.rwGrid.get(Math.floor(lat * 2) * 1000 + Math.floor(lon * 2)) || NO_RW : JW.rws;
+function worldCoarseH(lat, lon) {
+  const C = WORLD_COARSE, n = 256 * 2 ** C.z, d = JW.world;
+  if (!d || lat > 85 || lat < -85) return -30;
+  const fx = ((wrapLon(lon) + 180) / 360 * n - 0.5 + n) % n, fy = clamp(mercY(lat) * n - 0.5, 0, C.h - 1.001);
+  const ix = Math.floor(fx), iy = Math.floor(fy), tx = fx - ix, ty = fy - iy, ix1 = (ix + 1) % C.w;
+  const k0 = iy * C.w, k1 = Math.min(iy + 1, C.h - 1) * C.w;
+  return lerp(lerp(d[k0 + ix], d[k0 + ix1], tx), lerp(d[k1 + ix], d[k1 + ix1], tx), ty);
+}
+function jpNearLand(lat, lon) {
+  const C = JP_COARSE, n = 256 * 2 ** C.z, N = JW.jpNear;
+  if (!N) return false;
+  const fx = (lon + 180) / 360 * n - C.x0 * 256, fy = mercY(lat) * n - C.y0 * 256;
+  if (fx < 0 || fy < 0 || fx >= C.w || fy >= C.h) return false;
+  return !!N.g[(fy / N.B | 0) * N.bw + (fx / N.B | 0)];
+}
+function coarseH(lat, lon) {
+  const h = jpCoarseH(lat, lon);
+  if (!Number.isNaN(h)) return h;
+  if (jpNearLand(lat, lon)) return NaN;
+  const w = worldCoarseH(lat, lon);
+  return w > 0.5 ? w : NaN;
+}
+function jpCoarseH(lat, lon) {
+  const C = JP_COARSE, n = 256 * 2 ** C.z;
+  const fx = (lon + 180) / 360 * n - C.x0 * 256 - 0.5, fy = mercY(lat) * n - C.y0 * 256 - 0.5;
+  if (fx < 0 || fy < 0 || fx >= C.w - 1 || fy >= C.h - 1) return NaN;
+  const ix = Math.floor(fx), iy = Math.floor(fy), tx = fx - ix, ty = fy - iy, k = iy * C.w + ix, d = JW.coarse;
+  const v = [d[k], d[k + 1], d[k + C.w], d[k + C.w + 1]];
+  if (v.every(q => q === -32768)) return NaN;
+  const f = q => q === -32768 ? -8 : q;
+  return lerp(lerp(f(v[0]), f(v[1]), tx), lerp(f(v[2]), f(v[3]), tx), ty);
+}
+function patchH(lat, lon) {
+  for (const p of JW.patches) {
+    const x = (lon - p.lon) * p.kx, z = -(lat - p.lat) * KZ;
+    const fx = (x + p.half) / p.cell, fz = (z + p.half) / p.cell;
+    if (fx < 6 || fz < 6 || fx > 1017 || fz > 1017) continue;
+    const ix = Math.floor(fx), iz = Math.floor(fz), tx = fx - ix, tz = fz - iz, k = iz * 1024 + ix;
+    const g = q => Number.isNaN(q) ? -6 : q;
+    const h = lerp(lerp(g(p.h[k]), g(p.h[k + 1]), tx), lerp(g(p.h[k + 1024]), g(p.h[k + 1025]), tx), tz);
+    const w = smoothstep(6, 60, Math.min(fx, fz, 1023 - fx, 1023 - fz));
+    return [h, w];
+  }
+  return null;
+}
+// height from the best available source (metres, NaN = open sea), then runway flattening
+function sampleDem(t, lat, lon) {
+  const n = 2 ** t.z, px = ((lon + 180) / 360 * n - t.x) * 256 - 0.5, py = (mercY(lat) * n - t.y) * 256 - 0.5;
+  const ix = clamp(Math.floor(px), 0, 254), iy = clamp(Math.floor(py), 0, 254), tx = clamp(px - ix, 0, 1), ty = clamp(py - iy, 0, 1);
+  const d = t.dem, k = iy * 256 + ix, v = [d[k], d[k + 1], d[k + 256], d[k + 257]];
+  const valid = v.filter(q => !Number.isNaN(q));
+  if (valid.length < 4) { if (valid.length < 2) return NaN; const m = valid.reduce((a, b) => a + b) / valid.length; for (let i = 0; i < 4; i++) if (Number.isNaN(v[i])) v[i] = m; }
+  return lerp(lerp(v[0], v[1], tx), lerp(v[2], v[3], tx), ty);
+}
+function rawHeightGeo(lat, lon) {
+  if (JW.online) {
+    for (let z = 14; z >= 6; z--) {
+      const n = 2 ** z, t = JW.tiles.get(z + '/' + Math.floor((lon + 180) / 360 * n) + '/' + Math.floor(mercY(lat) * n));
+      if (t && t.dem) { const h = sampleDem(t, lat, lon); return Number.isNaN(h) ? -12 : h; }
+    }
+  }
+  let h = coarseH(lat, lon);
+  if (Number.isNaN(h)) h = -30;
+  const p = patchH(lat, lon);
+  if (p) h = lerp(h, p[0], p[1]);
+  return h;
+}
+function runwayFlatten(lat, lon, h) {
+  for (const r of rwNear(lat, lon)) {
+    if (Math.abs(lat - r.lat) > 0.04 || Math.abs(lon - r.lon) > 0.05) continue;
+    const dx = (lon - r.lon) * r.kx, dz = -(lat - r.lat) * KZ;
+    const u = dx * r.sin - dz * r.cos, v = dx * r.cos + dz * r.sin;
+    const e = Math.hypot(Math.max(Math.abs(u) - r.len / 2 - 90, 0), Math.max(Math.abs(v) - r.wid / 2 - 60, 0));
+    if (e < 220) h = lerp(r.elev, h, smoothstep(0, 220, e));
+  }
+  return h;
+}
+function jwHeightGeo(lat, lon) { return runwayFlatten(lat, lon, rawHeightGeo(lat, lon)); }
+function jwHeight(x, z) { const [lat, lon] = worldToGeo(x, z); return jwHeightGeo(lat, lon); }
+function jwNormal(x, z) {
+  const e = 15;
+  return vnorm([jwHeight(x - e, z) - jwHeight(x + e, z), 2 * e, jwHeight(x, z - e) - jwHeight(x, z + e)]);
+}
+function jwRunwayAt(x, z) {
+  const [lat, lon] = worldToGeo(x, z);
+  for (const r of rwNear(lat, lon)) {
+    if (Math.abs(lat - r.lat) > 0.03 || Math.abs(lon - r.lon) > 0.04) continue;
+    const dx = (lon - r.lon) * r.kx, dz = -(lat - r.lat) * KZ;
+    const u = dx * r.sin - dz * r.cos, v = dx * r.cos + dz * r.sin;
+    if (Math.abs(u) <= r.len / 2 && Math.abs(v) <= r.wid / 2) return r;
+  }
+  return null;
+}
+function jwOnPaved(x, z) { return jwRunwayAt(x, z) ? 'rwy' : null; }
+function jwGroundAt(x, z) {
+  const r = jwRunwayAt(x, z);
+  if (r) return { h: r.elev + 0.15, n: [0, 1, 0], paved: true, water: false };
+  const h = jwHeight(x, z);
+  if (!(h > -0.5)) return { h: 0, n: [0, 1, 0], paved: false, water: true };
+  return { h: Math.max(h, 0), n: jwNormal(x, z), paved: false, water: false };
+}
+
+// ---------- airports and the active runway ----------
+function nearestAirport(lat, lon, maxM = 1e9) {
+  let best = null, bd = maxM;
+  for (const ap of JW.airports) { const d = geoDist(lat, lon, ap.lat, ap.lon); if (d < bd) { bd = d; best = ap; } }
+  return best;
+}
+// make runway `r` (in direction `rev`) the active runway used for spawning, PAPI and the landing HUD
+function jwSetActive(r, rev) {
+  const [cx, cz] = geoToWorld(r.lat, r.lon);
+  setRunway({ cx, cz, hdg: rev ? (r.hdg + 180) % 360 : r.hdg, len: r.len, wid: r.wid, elev: r.elev,
+    idents: rev ? [r.ids[1], r.ids[0]] : [r.ids[0], r.ids[1]], side: 1, rec: r, rev, ap: r.ap });
+}
+function jwChooseRunway(ap) {
+  // longest runway; the end whose 3° approach is clearest of terrain
+  const r = ap.rw[0];
+  const clear = rev => {
+    const hdg = (rev ? r.hdg + 180 : r.hdg) * DEG, kx = r.kx;
+    let mn = 1e9;
+    for (let d = 300; d <= 7000; d += 150) {
+      const back = r.len / 2 + d, dx = -Math.sin(hdg) * back, dz = Math.cos(hdg) * back;
+      const lat = r.lat - dz / KZ, lon = r.lon + dx / kx;
+      mn = Math.min(mn, r.elev + Math.tan(3 * DEG) * d - Math.max(rawHeightGeo(lat, lon), 0));
+    }
+    return mn;
+  };
+  const a = clear(false), b = clear(true);
+  jwSetActive(r, b > a + 30 && a < 80);
+}
+function jwUpdateActive() {
+  const [lat, lon] = planeGeo();
+  const ap = nearestAirport(lat, lon, 40000);
+  if (!ap) return;
+  const hdg = attitude().hdg;
+  let best = null, bs = 1e9;
+  for (const r of ap.rw) for (const rev of [false, true]) {
+    const dh = (rev ? r.hdg + 180 : r.hdg) % 360;
+    const onIt = jwRunwayAt(sim.pos[0], sim.pos[2]) === r;
+    const thrLat = r.lat + (rev ? 1 : -1) * r.cos * r.len / 2 / KZ, thrLon = r.lon - (rev ? 1 : -1) * r.sin * r.len / 2 / r.kx;
+    const toThr = geoBearing(lat, lon, thrLat, thrLon);
+    const angd = (a, b) => Math.abs(((a - b + 540) % 360) - 180);
+    const sc = angd(hdg, dh) + (onIt || sim.onGround ? 0 : angd(toThr, dh) * 0.7) - (onIt ? 100 : 0);
+    if (sc < bs) { bs = sc; best = [r, rev]; }
+  }
+  if (best && (RWY.rec !== best[0] || RWY.rev !== best[1])) jwSetActive(best[0], best[1]);
+}
+
+// ---------- floating origin ----------
+function jwRecenter(force) {
+  if (!force && Math.hypot(sim.pos[0], sim.pos[2]) < 60000) return;
+  const conv = p => { const [lat, lon] = worldToGeo(p[0], p[2]); return lat + ',' + lon; };
+  const oldGeo = p => worldToGeo(p[0], p[2]);
+  const moved = [sim.pos, ...(typeof CAR !== 'undefined' && CAR.on && CAR.plane ? [CAR.plane.pos] : []), ...particles.map(q => q.p), ...(course.rings || []).map(r => r.p)].map(p => [p, oldGeo(p)]);
+  const camGeo = oldGeo(cam.eye);
+  const [lat, lon] = worldToGeo(sim.pos[0], sim.pos[2]);
+  JW.lat0 = lat; JW.lon0 = lon; JW.ov++;
+  for (const [p, g] of moved) { const w = geoToWorld(g[0], g[1]); p[0] = w[0]; p[2] = w[1]; }
+  if (course.centre) { const g = course.centreGeo; if (g) { const w = geoToWorld(g[0], g[1]); course.centre = [w[0], 0, w[1]]; } }
+  const ce = geoToWorld(camGeo[0], camGeo[1]); cam.eye = [ce[0], cam.eye[1], ce[1]]; cam.flyPos = null;
+  if (RWY.rec) jwSetActive(RWY.rec, RWY.rev);
+  JW.cloudKey = null;
+  void conv;
+}
+
+// ---------- terrain tiles ----------
+const TILE_G = 32, TILE_NV = (TILE_G + 1) ** 2 + 4 * (TILE_G + 1);
+let tileIndex = null, tileUv = null;
+function tileTopology() {
+  const G = TILE_G, idx = [];
+  for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
+    const a = j * (G + 1) + i, b = a + 1, c = a + G + 1, d = c + 1;
+    idx.push(a, c, b, b, c, d);
+  }
+  const base = (G + 1) ** 2, edges = [];
+  for (let i = 0; i <= G; i++) edges.push(i);                          // north
+  for (let i = 0; i <= G; i++) edges.push(G * (G + 1) + i);            // south
+  for (let j = 0; j <= G; j++) edges.push(j * (G + 1));                // west
+  for (let j = 0; j <= G; j++) edges.push(j * (G + 1) + G);            // east
+  for (let s = 0; s < 4; s++) for (let k = 0; k < G; k++) {
+    const e0 = edges[s * (G + 1) + k], e1 = edges[s * (G + 1) + k + 1], s0 = base + s * (G + 1) + k, s1 = s0 + 1;
+    idx.push(e0, s0, e1, e1, s0, s1);
+  }
+  tileIndex = new Uint16Array(idx);
+  tileUv = new Float32Array(TILE_NV * 2);
+  for (let j = 0; j <= G; j++) for (let i = 0; i <= G; i++) { const k = j * (G + 1) + i; tileUv[k * 2] = i / G; tileUv[k * 2 + 1] = j / G; }
+  for (let k = 0; k < edges.length; k++) { tileUv[(base + k) * 2] = tileUv[edges[k] * 2]; tileUv[(base + k) * 2 + 1] = tileUv[edges[k] * 2 + 1]; }
+  JW.edges = edges;
+  JW.uvBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, JW.uvBuf); gl.bufferData(gl.ARRAY_BUFFER, tileUv, gl.STATIC_DRAW);
+  JW.idxBuf = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, JW.idxBuf); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, tileIndex, gl.STATIC_DRAW);
+}
+function getTile(z, x, y) {
+  const key = z + '/' + x + '/' + y;
+  let t = JW.tiles.get(key);
+  if (t) return t;
+  const n = 2 ** z;
+  t = { z, x, y, key, lonW: x / n * 360 - 180, lonE: (x + 1) / n * 360 - 180, latN: latFromMerc(y / n), latS: latFromMerc((y + 1) / n),
+    demState: 0, photoState: 0, mesh: null, tex: null, used: 0 };
+  t.size = (t.lonE - t.lonW) * kxAt((t.latN + t.latS) / 2);
+  // rough height range from the coarse data until the mesh exists
+  let mn = 1e9, mx = -1e9;
+  for (let a = 0; a <= 4; a++) for (let b = 0; b <= 4; b++) {
+    const h = coarseH(lerp(t.latN, t.latS, a / 4), lerp(t.lonW, t.lonE, b / 4));
+    const hh = Number.isNaN(h) ? -30 : h; mn = Math.min(mn, hh); mx = Math.max(mx, hh);
+  }
+  const pad = z < 8 ? 2500 : z < 11 ? 900 : 250;
+  t.hmin = mn - pad; t.hmax = mx + pad;
+  t.seaGuess = mx < -1 && z >= 6;
+  JW.tiles.set(key, t);
+  return t;
+}
+// does this tile show Japanese land? (then GSI data is used, otherwise world-wide sources)
+function tileIsJapan(t) {
+  if (t.jp !== undefined) return t.jp;
+  t.jp = false;
+  if (t.latS > 46.2 || t.latN < 23.8 || t.lonE < 122.3 || t.lonW > 146.7 || t.z < 5) return t.jp;
+  for (let a = 0; a <= 6 && !t.jp; a++) for (let b = 0; b <= 6; b++) if (!Number.isNaN(jpCoarseH(lerp(t.latN, t.latS, a / 6), lerp(t.lonW, t.lonE, b / 6)))) { t.jp = true; break; }
+  return t.jp;
+}
+function buildTileMesh(t) {
+  const G = TILE_G, n = 2 ** t.z, nv = TILE_NV;
+  const lat = t.vLat || (t.vLat = new Float64Array(nv)), lon = t.vLon || (t.vLon = new Float64Array(nv));
+  const hv = t.vH || (t.vH = new Float32Array(nv));
+  const own = t.dem && t.z <= 14;
+  let mn = 1e9, mx = -1e9;
+  for (let j = 0; j <= G; j++) for (let i = 0; i <= G; i++) {
+    const k = j * (G + 1) + i;
+    const la = latFromMerc((t.y + j / G) / n), lo = (t.x + i / G) / n * 360 - 180;
+    lat[k] = la; lon[k] = lo;
+    let h = own ? sampleDem(t, la, lo) : rawHeightGeo(la, lo);
+    if (Number.isNaN(h)) h = -12;
+    h = runwayFlatten(la, lo, h);
+    if (h < 0.3) h = Math.min(h, -1.5) - 1.5;                           // sea: sink below the water surface
+    hv[k] = h; mn = Math.min(mn, h); mx = Math.max(mx, h);
+  }
+  const skirt = Math.max(15, t.size * 0.03), base = (G + 1) ** 2;
+  for (let k = 0; k < JW.edges.length; k++) { const e = JW.edges[k]; lat[base + k] = lat[e]; lon[base + k] = lon[e]; hv[base + k] = hv[e] - skirt; }
+  t.hmin = mn - skirt; t.hmax = mx;
+  t.sea = mx < -1;
+  t.demUsed = !!(t.dem || (t.z > 14 && demAncestor(t) && demAncestor(t).dem));
+  projectTileMesh(t);
+}
+function demAncestor(t) {
+  if (t.z <= 14) return t;
+  const s = t.z - 14; return JW.tiles.get('14/' + (t.x >> s) + '/' + (t.y >> s)) || getTile(14, t.x >> s, t.y >> s);
+}
+function projectTileMesh(t) {
+  const G = TILE_G, nv = TILE_NV, pos = t.pos || (t.pos = new Float32Array(nv * 3)), nrm = t.nrm || (t.nrm = new Float32Array(nv * 3));
+  const [cx, cz] = geoToWorld((t.latN + t.latS) / 2, (t.lonW + t.lonE) / 2);
+  t.cx = cx; t.cz = cz;
+  let x0 = 1e18, x1 = -1e18, z0 = 1e18, z1 = -1e18;
+  for (let k = 0; k < nv; k++) {
+    const la = t.vLat[k];
+    const x = wrapLon(t.vLon[k] - JW.lon0) * kxAt(la) - cx, z = -(la - JW.lat0) * KZ - cz;
+    pos[k * 3] = x; pos[k * 3 + 1] = t.vH[k]; pos[k * 3 + 2] = z;
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z;
+  }
+  t.box = [cx + x0, cz + z0, cx + x1, cz + z1];
+  for (let j = 0; j <= G; j++) for (let i = 0; i <= G; i++) {
+    const k = j * (G + 1) + i, kl = j * (G + 1) + Math.max(i - 1, 0), kr = j * (G + 1) + Math.min(i + 1, G);
+    const ku = Math.max(j - 1, 0) * (G + 1) + i, kd = Math.min(j + 1, G) * (G + 1) + i;
+    const tx = [pos[kr * 3] - pos[kl * 3], pos[kr * 3 + 1] - pos[kl * 3 + 1], pos[kr * 3 + 2] - pos[kl * 3 + 2]];
+    const tz = [pos[kd * 3] - pos[ku * 3], pos[kd * 3 + 1] - pos[ku * 3 + 1], pos[kd * 3 + 2] - pos[ku * 3 + 2]];
+    const nn = vnorm(vcross(tz, tx));
+    nrm[k * 3] = nn[0]; nrm[k * 3 + 1] = nn[1]; nrm[k * 3 + 2] = nn[2];
+  }
+  const base = (G + 1) ** 2;
+  for (let k = 0; k < JW.edges.length; k++) { const e = JW.edges[k]; for (let c = 0; c < 3; c++) nrm[(base + k) * 3 + c] = nrm[e * 3 + c]; }
+  if (!t.mesh) {
+    const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    const pb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, pb); gl.bufferData(gl.ARRAY_BUFFER, pos, gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    const nb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, nb); gl.bufferData(gl.ARRAY_BUFFER, nrm, gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, JW.uvBuf); gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, JW.idxBuf);
+    gl.bindVertexArray(null);
+    t.mesh = { vao, pb, nb };
+  } else {
+    gl.bindBuffer(gl.ARRAY_BUFFER, t.mesh.pb); gl.bufferSubData(gl.ARRAY_BUFFER, 0, pos);
+    gl.bindBuffer(gl.ARRAY_BUFFER, t.mesh.nb); gl.bufferSubData(gl.ARRAY_BUFFER, 0, nrm);
+  }
+  t.ov = JW.ov;
+}
+function disposeTile(t) {
+  if (t.mesh) { gl.deleteVertexArray(t.mesh.vao); gl.deleteBuffer(t.mesh.pb); gl.deleteBuffer(t.mesh.nb); t.mesh = null; }
+  if (t.tex) { gl.deleteTexture(t.tex); t.tex = null; JW.texCount--; if (t.photoState === 2) t.photoState = 0; }
+  t.pos = t.nrm = t.vLat = t.vLon = t.vH = null;
+}
+
+// ---------- streaming ----------
+let demCanvas = null;
+async function fetchBitmap(url) {
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 15000);
+  try {
+    const r = await fetch(url, { signal: ctl.signal, mode: 'cors' });
+    if (r.status === 404) return 404;
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await createImageBitmap(await r.blob(), { premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
+  } finally { clearTimeout(timer); }
+}
+async function loadDem(t) {
+  t.demState = 1; JW.inflight++;
+  try {
+    const jp = tileIsJapan(t);
+    const bmp = await fetchBitmap(jp ? `${GSI}dem_png/${t.z}/${t.x}/${t.y}.png` : `${TERRARIUM}${Math.min(t.z, 15)}/${t.x}/${t.y}.png`);
+    if (bmp === 404) { t.demState = 3; return; }
+    if (!demCanvas) { demCanvas = document.createElement('canvas'); demCanvas.width = demCanvas.height = 256; }
+    const g = demCanvas.getContext('2d', { willReadFrequently: true });
+    g.clearRect(0, 0, 256, 256); g.drawImage(bmp, 0, 0); bmp.close && bmp.close();
+    const px = g.getImageData(0, 0, 256, 256).data, dem = new Float32Array(65536);
+    if (jp) for (let k = 0; k < 65536; k++) {
+      const v = (px[k * 4] << 16) | (px[k * 4 + 1] << 8) | px[k * 4 + 2];
+      dem[k] = v === 0x800000 ? NaN : (v >= 0x800000 ? v - 0x1000000 : v) * 0.01;
+    }
+    else for (let k = 0; k < 65536; k++) {                            // terrarium: (R*256 + G + B/256) - 32768
+      const h = px[k * 4] * 256 + px[k * 4 + 1] + px[k * 4 + 2] / 256 - 32768;
+      dem[k] = h;
+    }
+    t.dem = dem; t.demState = 2; JW.loadedDems++;
+    JW.dirty.push(t);
+    if (t.z === 14) for (const d of JW.tiles.values()) if (d.z > 14 && d.mesh && (d.x >> (d.z - 14)) === t.x && (d.y >> (d.z - 14)) === t.y) JW.dirty.push(d);
+  } catch (e) { t.demState = 3; if (JW.loadedDems === 0) jwNetFail(); }
+  finally { JW.inflight--; }
+}
+async function loadPhoto(t) {
+  t.photoState = 1; JW.inflight++;
+  try {
+    const bmp = await fetchBitmap(tileIsJapan(t) && t.z >= 2 ? `${GSI}seamlessphoto/${t.z}/${t.x}/${t.y}.jpg` : `${ESRI}World_Imagery/MapServer/tile/${t.z}/${t.y}/${t.x}?blankTile=false`);
+    if (bmp === 404) { t.photoState = 3; return; }
+    if (!JW.tiles.has(t.key)) { bmp.close && bmp.close(); return; }
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, bmp);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    if (anisoExt) gl.texParameterf(gl.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, game.touch ? 4 : Math.min(16, gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+    bmp.close && bmp.close();
+    t.tex = tex; t.photoState = 2; JW.texCount++; JW.loadedPhotos++;
+  } catch (e) { t.photoState = 3; if (JW.loadedPhotos === 0 && JW.loadedDems === 0) jwNetFail(); }
+  finally { JW.inflight--; }
+}
+function jwNetFail() {
+  JW.netFails = (JW.netFails || 0) + 1;
+  if (JW.netFails > 6 && !JW.loadedPhotos && !JW.loadedDems) { JW.online = false; toast('詳細地図を読み込めないため、内蔵の簡易地形で表示します', 3500); }
+}
+// if the first check failed (slow start, flaky connection), keep trying quietly in the background
+async function jwRecheckOnline() {
+  if (JW.rechecking) return;
+  JW.rechecking = true;
+  try {
+    const b = await Promise.race([fetchBitmap(`${GSI}dem_png/5/28/12.png`), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 12000))]);
+    if (b && b !== 404 && JW.online === false) {
+      JW.online = true; JW.netFails = 0;
+      for (const t of JW.tiles.values()) if (t.mesh) JW.dirty.push(t);
+      toast('詳細地図（航空写真・建物）に接続しました', 2500);
+      if (game.state === 'menu') updateMenuTexts();
+    }
+  } catch (e) { /* still offline */ }
+  finally { JW.rechecking = false; }
+}
+async function jwCheckOnline() {
+  if (JW.online !== null) return JW.online;
+  try { const b = await Promise.race([fetchBitmap(`${GSI}dem_png/5/28/12.png`), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 12000))]); JW.online = !!b && b !== 404; }
+  catch (e) { JW.online = false; }
+  return JW.online;
+}
+
+// ---------- tile selection ----------
+function jwSelect(planes, eye) {
+  const f = ++JW.frame, out = [], wantMesh = [], want = [];
+  // driving: one zoom level finer (about 0.6 m per pixel) and refined sooner, since the ground is right there
+  const drive = typeof CAR !== 'undefined' && CAR.on;
+  const zmax = JW.online ? (game.touch ? 16 : drive ? 18 : 17) : 12, K = game.touch ? 0.9 : drive ? 1.8 : 1.25;
+  const [eLat, eLon] = worldToGeo(eye[0], eye[2]);
+  const reach = 700000 + Math.max(eye[1], 0) * 30;
+  const geoFar = t => {
+    const la = clamp(eLat, t.latS, t.latN);
+    const dl = wrapLon(eLon - (t.lonW + t.lonE) / 2), half = (t.lonE - t.lonW) / 2;
+    const lo = Math.abs(dl) <= half ? eLon : (t.lonW + t.lonE) / 2 + Math.sign(dl) * half;
+    return geoDist(eLat, eLon, la, lo) > reach;
+  };
+  const visit = t => {
+    t.used = f;
+    if (t.z <= 7 && geoFar(t)) return;
+    if (t.seaGuess && !t.mesh) return;
+    if (t.mesh && t.ov !== JW.ov) projectTileMesh(t);
+    if (t.mesh && t.sea && t.z >= 7) return;                       // open sea: the water surface covers it
+    const b = t.box || (() => { const c1 = geoToWorld(t.latN, t.lonW), c2 = geoToWorld(t.latS, t.lonE), c3 = geoToWorld(t.latN, t.lonE), c4 = geoToWorld(t.latS, t.lonW);
+      return [Math.min(c1[0], c4[0]), Math.min(c1[1], c3[1]), Math.max(c2[0], c3[0]), Math.max(c2[1], c4[1])]; })();
+    const dxy = Math.hypot(Math.max(b[0] - eye[0], 0, eye[0] - b[2]), Math.max(b[1] - eye[2], 0, eye[2] - b[3]));
+    const drop = dxy * dxy / (2 * R_EARTH);
+    if (!boxInFrustum(planes, b[0], t.hmin - drop - 50, b[1], b[2], t.hmax + 50, b[3])) return;
+    const dy = Math.max(t.hmin - drop - eye[1], 0, eye[1] - t.hmax);
+    const d = Math.hypot(dxy, dy);
+    if (t.z < zmax && t.size / Math.max(d, 1) > K) {
+      const kids = [0, 1, 2, 3].map(i => getTile(t.z + 1, t.x * 2 + (i & 1), t.y * 2 + (i >> 1)));
+      if (kids.every(k => k.mesh || k.seaGuess)) { for (const k of kids) visit(k); return; }
+      for (const k of kids) if (!k.mesh && !k.seaGuess) wantMesh.push([k, d]);
+    }
+    if (!t.mesh) { wantMesh.push([t, d]); return; }
+    out.push(t);
+    if (JW.online) {
+      const pr = d / t.size;
+      if (t.photoState === 0) want.push(['p', t, pr]);
+      if (t.z >= 6) { const a = demAncestor(t); if (a.demState === 0) want.push(['d', a, pr * 0.7]); }
+    }
+  };
+  for (const r of JW.roots) visit(r);
+  // build meshes: nearest first, limited per frame
+  wantMesh.sort((a, b) => a[1] - b[1]);
+  let built = 0;
+  for (const [t] of wantMesh) { if (built >= 24) break; if (!t.mesh) { buildTileMesh(t); built++; } }
+  while (JW.dirty.length && built < 40) { const t = JW.dirty.shift(); if (t.mesh || t.used > f - 3) { buildTileMesh(t); built++; } }
+  if (JW.online) {
+    want.sort((a, b) => a[2] - b[2]);
+    for (const [k, t] of want) {
+      if (JW.inflight >= 10) break;
+      if (k === 'p' && t.photoState === 0) loadPhoto(t);
+      else if (k === 'd' && t.demState === 0) loadDem(t);
+    }
+  }
+  // evict tiles that have not been used for a while
+  if (JW.tiles.size > 1500 || JW.texCount > 380) {
+    const old = [...JW.tiles.values()].filter(t => t.used < f - 90 && t.z > 5).sort((a, b) => a.used - b.used);
+    for (const t of old.slice(0, Math.max(JW.tiles.size - 1200, JW.texCount - 300, 60))) { disposeTile(t); JW.tiles.delete(t.key); }
+  }
+  JW.drawn = out.length;
+  return out;
+}
+function photoFor(t) {
+  // own photo, else the nearest ancestor's photo with a sub-rectangle
+  let a = t, s = 1, ox = 0, oy = 0;
+  while (a && !a.tex) {
+    if (a.z <= 5) return null;
+    ox = (ox + (a.x & 1)) / 2; oy = (oy + (a.y & 1)) / 2; s /= 2;
+    a = JW.tiles.get((a.z - 1) + '/' + (a.x >> 1) + '/' + (a.y >> 1));
+  }
+  return a ? [a.tex, s, ox, oy] : null;
+}
+
+// ---------- shaders for tiles, water and runways in the Japan world ----------
+const TILE_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNormal;
+layout(location=2) in vec2 aUv;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform vec3 uTileOrigin;
+uniform float uCurv;
+uniform vec4 uUvX;
+uniform float uSink;
+uniform vec4 uZone, uAuth;
+uniform sampler2D uTranMask;
+uniform vec4 uTranRect;     // where PLATEAU's road surfaces are drawn (the developer panel's comparison): the ground sinks under them
+out vec3 vWorld; out vec3 vN; out vec2 vUv; out float vH;
+void main(){
+  vec3 w = aPos + uTileOrigin;
+  if (uTranRect.z > 0.0) { vec2 tu = (w.xz - uTranRect.xy) / uTranRect.zw; if (tu.x > 0.0 && tu.y > 0.0 && tu.x < 1.0 && tu.y < 1.0) w.y = max(w.y - 2.5 * textureLod(uTranMask, tu, 0.0).r, min(w.y, 0.3)); }   /* (but never down to the sea) */
+  // (lowered under the Google mesh, except in the near zone round the car and in a built-up area, where it is
+  // the ground itself)
+  vH = w.y; w.y -= uSink * (uZone.w > 0.0 ? smoothstep(uZone.z, uZone.w, length(w.xz - uZone.xy)) : 1.0) * (uAuth.w > 0.0 ? smoothstep(uAuth.z, uAuth.w, length(w.xz - uAuth.xy)) : 1.0);
+  w.y -= 0.18 * (uAuth.w > 0.0 ? 1.0 - smoothstep(uAuth.z, uAuth.w, length(w.xz - uAuth.xy)) : 0.0);   // (in the sim's own built-up area the terrain sits a hand under the city's paving and lawns, so on a slope it never shows through them)
+  vec2 d = w.xz - uCamPos.xz;
+  w.y -= dot(d, d) * uCurv;
+  vWorld = w; vN = aNormal; vUv = aUv * uUvX.x + uUvX.yz;
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+const TILE_FS = GLSL_HEAD + GLSL_COMMON + GLSL_SHADOW + `
+in vec3 vWorld; in vec3 vN; in vec2 vUv; in float vH;
+uniform sampler2D uPhoto;
+uniform sampler2D uNoise;
+// close-up detail: an aerial photo is about a metre per pixel, so near the camera (driving) a fine grain is
+// laid over it - tarmac gets a speckled aggregate, grass and fields a tufted, patchy texture
+vec3 groundDetail(vec3 ph, vec3 w, sampler2D nz){
+  float dist = length(w - uCamPos), near = 1.0 - smoothstep(25.0, 260.0, dist);
+  if (near <= 0.0) return ph;
+  float lum = dot(ph, vec3(0.3, 0.55, 0.15)), sat = max(ph.r, max(ph.g, ph.b)) - min(ph.r, min(ph.g, ph.b));
+  float green = smoothstep(0.0, 0.06, ph.g - max(ph.r, ph.b) + 0.02);
+  float tar = (1.0 - green) * smoothstep(0.14, 0.05, sat);
+  float f1 = texture(nz, w.xz / 0.37).b, f2 = texture(nz, w.xz / 1.3).a, f3 = texture(nz, w.xz / 5.3).b, f4 = texture(nz, w.xz / 0.11).a;
+  float fine = clamp(1.0 - max(fwidth(w.x), fwidth(w.z)) * 3.0, 0.0, 1.0);   // no shimmer where a pixel covers the grain
+  float grain = mix(1.0, 0.8 + 0.28 * f1 + 0.12 * (f4 - 0.5), fine);
+  float tuft = mix(1.0, 0.72 + 0.34 * f2 + 0.18 * f1, fine) * (0.9 + 0.2 * f3);
+  vec3 g = ph * mix(tuft, grain, tar);
+  // near the ground: photographed grass and asphalt grain (p_citymat.js), coloured by the aerial photo
+  if (uMatOn > 0.5) {
+    vec3 gd = clamp(matC(19.0, w.xz / 3.0) / max(matAvg(19.0), vec3(0.05)), 0.4, 1.8);
+    float ad = dot(clamp(matC(13.0, w.xz / 4.0) / max(matAvg(13.0), vec3(0.05)), 0.5, 1.6), vec3(0.333));
+    g = ph * mix(mix(vec3(1.0), gd, fine), vec3(mix(1.0, ad, fine)), tar);
+  }
+  g = mix(g, g * vec3(0.95, 1.04, 0.9), green * f3 * 0.6 * fine);       // a little colour variation in the grass
+  return mix(ph, g, near);
+}
+
+uniform int uHasPhoto;
+uniform float uNightF;
+out vec4 outColor;
+void main(){
+  vec3 n = normalize(vN);
+  float diff = max(dot(n, uSunDir), 0.0) * planeShadow(vWorld.xz) * sunShadow(vWorld, n);
+  vec3 col, tEm = vec3(0.0);
+  if (uHasPhoto == 1) {
+    vec3 ph = texture(uPhoto, vUv).rgb;
+    float lum = dot(ph, vec3(0.3, 0.55, 0.15));
+    ph = mix(vec3(lum), ph, 1.18);                                   // aerial photos are slightly hazy: restore colour
+    ph = pow(max(ph, 0.0), vec3(1.12));
+    ph = groundDetail(ph, vWorld, uNoise);
+    col = ph * (uAmbSky * 0.55 + uSunCol * (0.46 + 0.36 * diff));
+    if (uNightK > 0.0) {
+      float sat = max(ph.r, max(ph.g, ph.b)) - min(ph.r, min(ph.g, ph.b));
+      float urban = smoothstep(0.17, 0.07, sat) * smoothstep(0.2, 0.42, lum) * (1.0 - smoothstep(0.0, 0.25, 1.0 - n.y));
+      float sp = texture(uNoise, vWorld.xz / 31.0).b, sp2 = texture(uNoise, vWorld.xz / 3.7).b, sp3 = texture(uNoise, vWorld.xz / 610.0).a;
+      vec3 lights = mix(vec3(1.0, 0.62, 0.28), vec3(0.95, 0.95, 1.0), step(0.6, sp)) * urban * (mix(0.09, smoothstep(0.64, 0.86, sp2) * 2.4, clamp(1.0 - max(fwidth(vWorld.x), fwidth(vWorld.z)) / 3.7 * 0.7, 0.0, 1.0)) + 0.015) * (0.5 + sp3);
+      col *= mix(1.0, 0.6, uNightK);
+      tEm = lights * 1.3 * uNightK;
+    }
+  } else {
+    float d1 = texture(uNoise, vWorld.xz / 61.0).b, d2 = texture(uNoise, vWorld.xz / 9.0).b, d3 = texture(uNoise, vWorld.xz / 2300.0).a, d4 = texture(uNoise, vWorld.xz / 700.0).b;
+    float slope = 1.0 - n.y, h = vH;
+    vec3 grass = mix(vec3(0.30, 0.43, 0.16), vec3(0.45, 0.52, 0.22), d1);
+    vec3 forest = mix(vec3(0.13, 0.24, 0.10), vec3(0.18, 0.30, 0.12), d2);
+    vec3 fields = mix(vec3(0.48, 0.52, 0.28), vec3(0.58, 0.55, 0.36), d4);
+    vec3 town = vec3(0.55, 0.54, 0.52) * (0.8 + 0.4 * d2);
+    vec3 c = mix(grass, forest, smoothstep(0.02, 0.18, slope) * 0.8 + smoothstep(120.0, 400.0, h) * 0.6 * smoothstep(0.015, 0.06, slope));
+    float low = 1.0 - smoothstep(30.0, 140.0, h) * smoothstep(0.015, 0.06, slope);   // flat land (coastal plains and inland basins) is farmed
+    c = mix(c, fields, low * smoothstep(0.45, 0.6, d3) * (1.0 - smoothstep(0.05, 0.12, slope)));
+    c = mix(c, town, low * smoothstep(0.62, 0.72, d3 + d4 * 0.15) * (1.0 - smoothstep(0.05, 0.12, slope)));
+    c = mix(c, mix(vec3(0.42, 0.39, 0.35), vec3(0.56, 0.53, 0.48), d1), smoothstep(0.42, 0.6, slope) + smoothstep(1600.0, 2300.0, h) * 0.8);
+    c = mix(c, vec3(0.94, 0.96, 1.0), smoothstep(2500.0, 2900.0, h + d3 * 300.0) * (1.0 - smoothstep(0.45, 0.65, slope)));
+    c = mix(c, vec3(0.80, 0.75, 0.58), 1.0 - smoothstep(0.5, 2.5, h));
+    c = mix(c, vec3(0.30, 0.55, 0.55), smoothstep(0.0, -3.0, h));
+    vec3 amb = mix(uAmbGround, uAmbSky, n.y * 0.5 + 0.5);
+    col = c * (uSunCol * diff + amb);
+  }
+  outColor = vec4(tonemap(applyFog(col, vWorld) + airLight(tEm, vWorld)), 1.0);
+}`;
+const JW_WATER_VS = GLSL_HEAD + `
+layout(location=0) in vec2 aXZ;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv;
+uniform float uSink;
+uniform vec4 uZone, uAuth;
+out vec3 vPos;
+void main(){
+  vPos = vec3(uCamPos.x + aXZ.x, 0.0, uCamPos.z + aXZ.y);
+  vPos.y = -uSink * (uZone.w > 0.0 ? smoothstep(uZone.z, uZone.w, length(vPos.xz - uZone.xy)) : 1.0) * (uAuth.w > 0.0 ? smoothstep(uAuth.z, uAuth.w, length(vPos.xz - uAuth.xy)) : 1.0);
+  vec3 w = vPos; w.y -= dot(aXZ, aXZ) * uCurv;
+  vPos = w;
+  gl_Position = uViewProj * vec4(w, 1.0);
+}`;
+let progTile, progJwWater, jwWaterVAO;
+function initJapanGL() {
+  if (progTile) return;
+  progTile = makeProgram(TILE_VS, TILE_FS);
+  progJwWater = makeProgram(JW_WATER_VS, WATER_FS.replace('float th = terrainH(vPos.xz);', 'float th = -40.0;'));
+  tileTopology();
+  // polar grid for the (curved) sea surface
+  const rings = [0], seg = 64, pts = [], idx = [];
+  for (let r = 40; r < 700000; r *= 1.22) rings.push(r);
+  for (let i = 0; i < rings.length; i++) for (let s = 0; s < seg; s++) { const a = s / seg * Math.PI * 2; pts.push(Math.cos(a) * rings[i], Math.sin(a) * rings[i]); }
+  for (let i = 0; i < rings.length - 1; i++) for (let s = 0; s < seg; s++) {
+    const a = i * seg + s, b = i * seg + (s + 1) % seg, c = (i + 1) * seg + s, d = (i + 1) * seg + (s + 1) % seg;
+    idx.push(a, c, b, b, c, d);
+  }
+  jwWaterVAO = makeVAO([{ loc: 0, size: 2, data: new Float32Array(pts) }], new Uint32Array(idx));
+}
+function drawJapanTerrain(planes) {
+  const tiles = jwSelect(planes, R.eye);
+  setCommon(progTile); shadowUniforms(progTile);
+  const u = progTile.u;
+  gl.uniform1i(u.uPhoto, 6); gl.uniform1i(u.uNoise, 2);
+  gl.disable(gl.CULL_FACE);
+  gl.activeTexture(gl.TEXTURE6);
+  for (const t of tiles) {
+    const ph = photoFor(t);
+    if (ph) { gl.bindTexture(gl.TEXTURE_2D, ph[0]); gl.uniform4f(u.uUvX, ph[1], ph[2], ph[3], 0); gl.uniform1i(u.uHasPhoto, 1); }
+    else gl.uniform1i(u.uHasPhoto, 0);
+    gl.uniform3f(u.uTileOrigin, t.cx, 0, t.cz);
+    gl.bindVertexArray(t.mesh.vao);
+    gl.drawElements(gl.TRIANGLES, tileIndex.length, gl.UNSIGNED_SHORT, 0);
+  }
+  gl.activeTexture(gl.TEXTURE0);
+  gl.enable(gl.CULL_FACE);
+  R.nodes += tiles.length;
+}
+function drawJapanWater() {
+  gl.disable(gl.CULL_FACE);
+  setCommon(progJwWater);
+  gl.bindVertexArray(jwWaterVAO.vao);
+  gl.drawElements(gl.TRIANGLES, jwWaterVAO.count, gl.UNSIGNED_INT, 0);
+}
+// runways near the camera get their own marking texture and mesh
+function drawJapanRunways() {
+  const [lat, lon] = worldToGeo(R.eye[0], R.eye[2]);
+  const near = JW.rws.filter(r => Math.abs(r.lat - lat) < 0.3 && Math.abs(r.lon - lon) < 0.35 && geoDist(lat, lon, r.lat, r.lon) < 26000);
+  if (!near.length) return;
+  gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-2, -4);
+  setCommon(progRunway); shadowUniforms(progRunway); gl.uniform1i(progRunway.u.uTex, 5);
+  gl.activeTexture(gl.TEXTURE5);
+  for (const r of near) {
+    if (!r.tex) {
+      const live = JW.rws.filter(q => q.tex);
+      if (live.length > 10) { const o = live.sort((a, b) => a.texUsed - b.texUsed)[0]; gl.deleteTexture(o.tex); o.tex = null; }
+      r.tex = makeRunwayTexture({ len: r.len, wid: r.wid, idents: r.ids });
+    }
+    r.texUsed = JW.frame;
+    if (!r.vao || r.ov !== JW.ov) {
+      const [cx, cz] = geoToWorld(r.lat, r.lon), L = r.len / 2, W = r.wid / 2, y = r.elev + 0.15;
+      const dir = [r.sin, -r.cos], perp = [r.cos, r.sin];
+      const P = (uu, vv) => [cx + dir[0] * uu + perp[0] * vv, y, cz + dir[1] * uu + perp[1] * vv];
+      const p = [P(-L, -W), P(L, -W), P(L, W), P(-L, W)], uv = [[1, 0], [1, 1], [0, 1], [0, 0]];
+      const up = vcross(vsub(p[2], p[0]), vsub(p[1], p[0]))[1] > 0, order = up ? [0, 2, 1, 0, 3, 2] : [0, 1, 2, 0, 2, 3];
+      if (r.vao) { gl.deleteVertexArray(r.vao.vao); r.vao.bufs.forEach(b => gl.deleteBuffer(b)); }
+      r.vao = makeVAO([{ loc: 0, size: 3, data: new Float32Array(order.flatMap(k => p[k])) }, { loc: 1, size: 2, data: new Float32Array(order.flatMap(k => uv[k])) }]);
+      r.ov = JW.ov;
+    }
+    gl.bindTexture(gl.TEXTURE_2D, r.tex);
+    gl.bindVertexArray(r.vao.vao); gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
+  gl.bindTexture(gl.TEXTURE_2D, runwayTex);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.disable(gl.POLYGON_OFFSET_FILL);
+}
+// ---------- lights: runway edge/threshold/approach lights and the aircraft's navigation lights ----------
+const LIGHT_VS = GLSL_HEAD + `
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec4 aCol;
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform float uCurv;
+uniform float uPx;
+out vec4 vCol;
+void main(){
+  vec3 w = aPos; vec2 d = w.xz - uCamPos.xz; w.y -= dot(d, d) * uCurv;
+  float dist = length(aPos - uCamPos);
+  gl_Position = uViewProj * vec4(w, 1.0);
+  gl_PointSize = clamp(uPx * aCol.a * 900.0 / max(dist, 1.0), 1.5, 14.0);
+  vCol = vec4(aCol.rgb, clamp(1.4 - dist / 26000.0, 0.0, 1.0));
+}`;
+const LIGHT_FS = GLSL_HEAD + `
+in vec4 vCol;
+out vec4 outColor;
+void main(){
+  vec2 p = gl_PointCoord * 2.0 - 1.0;
+  float r = dot(p, p);
+  if (r > 1.0) discard;
+  float a = exp(-r * 3.5) * vCol.a;
+  outColor = vec4(vCol.rgb * a * 1.6, a);
+}`;
+let progLight = null, lightBuf = null;
+function runwayLightPoints(r) {
+  if (r.lights && r.lightsOv === JW.ov) return r.lights;
+  const [cx, cz] = geoToWorld(r.lat, r.lon), L = r.len / 2, W = r.wid / 2 + 1.5, y = r.elev + 0.6;
+  const dir = [r.sin, -r.cos], perp = [r.cos, r.sin], out = [];
+  const P = (u, v, yy, c, s) => out.push(cx + dir[0] * u + perp[0] * v, yy, cz + dir[1] * u + perp[1] * v, c[0], c[1], c[2], s);
+  for (let u = -L; u <= L + 1; u += 60) { const c = Math.abs(u) > L - 600 ? [1, 0.85, 0.45] : [1, 0.96, 0.85]; P(u, W, y, c, 1); P(u, -W, y, c, 1); }
+  for (let v = -W; v <= W + 0.1; v += 4) { P(-L - 2, v, y, [0.3, 1, 0.45], 1.1); P(L + 2, v, y, [0.3, 1, 0.45], 1.1); }
+  for (let v = -W; v <= W + 0.1; v += 6) { P(-L + 3, v, y, [1, 0.2, 0.15], 0.8); P(L - 3, v, y, [1, 0.2, 0.15], 0.8); }
+  for (const sgn of [-1, 1]) for (let k = 1; k <= 30; k++) {                 // approach light bars, 900 m
+    const u = sgn * (L + k * 30);
+    const g = Math.max(jwHeightGeo(...worldToGeo(cx + dir[0] * u, cz + dir[1] * u)), r.elev) + 1.2;
+    for (let v = -6; v <= 6; v += 3) P(u, v, g, [1, 0.97, 0.9], k % 10 === 0 ? 1.4 : 1);
+  }
+  r.lights = new Float32Array(out); r.lightsOv = JW.ov;
+  return r.lights;
+}
+function drawLights() {
+  const night = ENV.night ? 1 : ENV === TOD.evening ? 0.55 : 0;
+  if (!night) return;
+  if (!progLight) { progLight = makeProgram(LIGHT_VS, LIGHT_FS); lightBuf = gl.createBuffer(); JW.lightVAO = gl.createVertexArray();
+    gl.bindVertexArray(JW.lightVAO); gl.bindBuffer(gl.ARRAY_BUFFER, lightBuf);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 28, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 28, 12); gl.bindVertexArray(null); }
+  const parts = [];
+  if (JW.active) {
+    const [lat, lon] = worldToGeo(R.eye[0], R.eye[2]);
+    for (const r of JW.rws) if (Math.abs(r.lat - lat) < 0.25 && Math.abs(r.lon - lon) < 0.3 && geoDist(lat, lon, r.lat, r.lon) < 25000) parts.push(runwayLightPoints(r));
+  }
+  // navigation lights: red left tip, green right tip, white tail, flashing strobes
+  if (!(sim.crashed && game.state !== 'menu')) {
+    const rt = qrot(sim.q, [1, 0, 0]), fw = qrot(sim.q, [0, 0, -1]), half = (AC.b || 10) / 2 - 0.2;
+    const tip = s => vadd(sim.pos, vscale(rt, half * s)), strobe = (R.time % 1.2) < 0.08 ? 1 : 0;
+    const up = qrot(sim.q, [0, 1, 0]), nav = SYS.nav ? [...tip(-1), 1, 0.12, 0.1, 0.5, ...tip(1), 0.1, 1, 0.3, 0.5, ...vadd(sim.pos, vscale(fw, -(ACFT.phys.L || 8) * 0.5)), 1, 1, 1, 0.4] : [];
+    if (SYS.beacon && (R.time % 1.1) < 0.12) nav.push(...vadd(vadd(sim.pos, vscale(fw, -(ACFT.phys.L || 8) * 0.42)), vscale(up, ACFT.vstab.y1 || 1.5)), 1, 0.1, 0.05, 1.0);
+    if (SYS.land) nav.push(...vadd(sim.pos, vscale(fw, (ACFT.phys.L || 8) * 0.45)), 1, 0.97, 0.9, 0.9);
+    if (strobe && SYS.strobe) nav.push(...tip(-1), 1, 1, 1, 1.2, ...tip(1), 1, 1, 1, 1.2);
+    parts.push(new Float32Array(nav));
+  }
+  let n = 0; for (const p of parts) n += p.length;
+  if (!n) return;
+  const all = new Float32Array(n); let o = 0; for (const p of parts) { all.set(p, o); o += p.length; }
+  setCommon(progLight);
+  gl.uniform1f(progLight.u.uPx, (R.H / 900) * night);
+  gl.bindVertexArray(JW.lightVAO);
+  gl.bindBuffer(gl.ARRAY_BUFFER, lightBuf); gl.bufferData(gl.ARRAY_BUFFER, all, gl.STREAM_DRAW);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE); gl.depthMask(false);
+  gl.drawArrays(gl.POINTS, 0, n / 7);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+}
+// clouds live on a lat/lon grid around the aircraft
+function jwUpdateClouds() {
+  const [lat, lon] = worldToGeo(R.eye[0] || sim.pos[0], R.eye[2] || sim.pos[2]);
+  const cs = 0.18, ci = Math.floor(lat / cs), cj = Math.floor(lon / cs), key = ci + ',' + cj + ',' + JW.ov;
+  if (JW.cloudKey === key) return;
+  JW.cloudKey = key;
+  const puffs = [];
+  for (let a = -3; a <= 3; a++) for (let b = -3; b <= 3; b++) {
+    const i = ci + a, j = cj + b;
+    const nC = Math.floor(hash2(i, j, 71) * 3);
+    for (let c = 0; c < nC; c++) {
+      const la = (i + hash2(i, j, 72 + c)) * cs, lo = (j + hash2(i, j, 80 + c)) * cs;
+      const [cx, cz] = geoToWorld(la, lo);
+      const base = 1300 + hash2(i, j, 90 + c) * 900, w = 450 + hash2(i, j, 95 + c) * 900, k = 8 + Math.floor(hash2(i, j, 99 + c) * 10);
+      for (let q = 0; q < k; q++) {
+        const r1 = hash2(i * 31 + q, j, c), r2 = hash2(i, j * 17 + q, c + 5), r3 = hash2(i + q, j - q, c + 9);
+        const ang = r1 * Math.PI * 2, rr = Math.sqrt(r2) * w, up = r3 * w * 0.38 * (1 - rr / w * 0.6), size = 190 + r3 * 240;
+        puffs.push({ p: [cx + Math.cos(ang) * rr * 1.3, base + up + size * 0.35, cz + Math.sin(ang) * rr * 0.8], size, shade: clamp(up / (w * 0.3), 0, 1), rot: r1 * 6.28 });
+      }
+    }
+  }
+  clouds.puffs = puffs; clouds.order = null; clouds.d2 = null;
+  clouds.data = new Float32Array(Math.max(puffs.length, 1) * 9);
+  if (clouds.vao) for (const bf of clouds.vao.bufs) gl.deleteBuffer(bf);
+  clouds.vao = makeVAO([{ loc: 0, size: 2, data: new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]) },
+  { data: clouds.data, stride: 9, layout: [[4, 4, 0], [5, 4, 4], [6, 1, 8]], divisor: 1, dynamic: true }]);
+}
+
+// ---------- switching worlds ----------
+const LEGACY_FN = { terrainHeight, terrainNormal, groundAt, onPaved };
+function useJapanWorld(on) {
+  JW.active = on;
+  if (on) { terrainHeight = jwHeight; terrainNormal = jwNormal; groundAt = jwGroundAt; onPaved = jwOnPaved; HM_HALF = 1e7; }
+  else { terrainHeight = LEGACY_FN.terrainHeight; terrainNormal = LEGACY_FN.terrainNormal; groundAt = LEGACY_FN.groundAt; onPaved = LEGACY_FN.onPaved; }
+}
+function jwSetDeparture(ap) {
+  JW.dep = ap;
+  for (const t of JW.tiles.values()) disposeTile(t);
+  JW.tiles.clear(); JW.dirty.length = 0;
+  for (const r of JW.rws) if (r.vao) { gl.deleteVertexArray(r.vao.vao); r.vao = null; }
+  JW.lat0 = ap.lat; JW.lon0 = ap.lon; JW.ov++;
+  JW.roots = [];
+  for (let x = 0; x < 8; x++) for (let y = 0; y < 8; y++) { const t = getTile(3, x, y); JW.roots.push(t); }
+  jwChooseRunway(ap);
+  JW.cloudKey = null;
+  jwBuildRings(ap);
+  props.nConifer = props.nBroad = props.nHouse = props.nTower = 0;
+  MAP = { id: 'japan', name: ap.name, procedural: false };
+}
+function jwBuildRings(ap) {
+  const [cx, cz] = geoToWorld(ap.lat, ap.lon);
+  course.centre = [cx, 0, cz]; course.centreGeo = [ap.lat, ap.lon]; course.landR = 4000;
+  const pts = [], n = 10, rng = makeRng(ap.icao.charCodeAt(2) * 97 + ap.icao.charCodeAt(3));
+  for (let i = 0; i < n; i++) {
+    const a = Math.PI * 0.55 - i / n * Math.PI * 2 * 0.92, r = 5200 * (1 + Math.sin(i * 2.1) * 0.22) + rng() * 400;
+    pts.push([cx + Math.cos(a) * r, 0, cz + Math.sin(a) * r]);
+  }
+  for (const p of pts) {
+    let top = 0;
+    for (let k = 0; k < 9; k++) { const a = k / 9 * Math.PI * 2, rr = k ? 350 : 0; top = Math.max(top, jwHeight(p[0] + Math.cos(a) * rr, p[2] + Math.sin(a) * rr)); }
+    p[1] = Math.max(top + 200 + rng() * 80, 220);
+  }
+  for (let pass = 0; pass < 6; pass++) for (let i = 0; i < n - 1; i++) {
+    const a = pts[i], b = pts[i + 1];
+    for (let t = 0.05; t < 1; t += 0.05) {
+      const y = lerp(a[1], b[1], t), need = Math.max(jwHeight(lerp(a[0], b[0], t), lerp(a[2], b[2], t)), 0) + 180;
+      if (y < need) { a[1] += (need - y) * 0.6; b[1] += (need - y) * 0.6; }
+    }
+  }
+  course.rings = pts.map((p, i) => {
+    const prev = pts[Math.max(0, i - 1)], next = pts[Math.min(n - 1, i + 1)];
+    const dir = i === 0 ? vnorm(vsub(next, p)) : i === n - 1 ? vnorm(vsub(p, prev)) : vnorm(vsub(next, prev));
+    return { p, n: vnorm([dir[0], dir[1] * 0.5, dir[2]]) };
+  });
+}
+function nearestPlace(lat, lon, maxM) {
+  let best = null, bd = maxM;
+  for (const p of JW.places) {
+    if (p.k !== 'c' || Math.abs(p.lat - lat) > 0.4 || Math.abs(p.lon - lon) > 0.5) continue;
+    const d = geoDist(lat, lon, p.lat, p.lon) / (1 + Math.log10(Math.max(p.p, 10000) / 10000));
+    if (d < bd) { bd = d; best = p; }
+  }
+  return best;
+}
+
+// =====================================================================
+//  MAP (M key): Web-Mercator map with GSI tiles online, relief offline
+// =====================================================================
+const mapv = { open: false, lat: 35.5, lon: 139.8, zoom: 7, sel: null, imgs: new Map(), relief: null, pointers: new Map(), follow: true };
+function mapPx(lat, lon, zoom) { const n = 256 * 2 ** zoom; return [(lon + 180) / 360 * n, mercY(lat) * n]; }
+function mapGeo(px, py, zoom) { const n = 256 * 2 ** zoom; return [latFromMerc(py / n), px / n * 360 - 180]; }
+// offline relief of the whole world (drawn under the Japan relief)
+function worldReliefCanvas() {
+  if (mapv.wrelief) return mapv.wrelief;
+  const C = WORLD_COARSE, s = 2, W = C.w / s, H = C.h / s, c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d'), img = g.createImageData(W, H), d = JW.world;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+    const k = (j * s) * C.w + i * s, h = d[k], o = (j * W + i) * 4;
+    if (h <= 0) { img.data[o] = 158; img.data[o + 1] = 196; img.data[o + 2] = 222; img.data[o + 3] = 255; continue; }
+    const hx = (d[k + s] || 0) - (d[k - s] || 0), hy = (d[k + s * C.w] || 0) - (d[k - s * C.w] || 0);
+    const shade = clamp(1 - (hx + hy) * 0.0012, 0.6, 1.25);
+    const lat = latFromMerc((j * s + 0.5) / C.h);
+    const col = Math.abs(lat) > 66 || h > 4200 ? [236, 238, 242] : h < 200 ? [190, 210, 160] : h < 800 ? [172, 194, 140] : h < 1800 ? [184, 176, 140] : [200, 190, 170];
+    img.data[o] = col[0] * shade; img.data[o + 1] = col[1] * shade; img.data[o + 2] = col[2] * shade; img.data[o + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  return (mapv.wrelief = c);
+}
+function drawRelief(g, ox, oy, zoom) {
+  const W = worldReliefCanvas(), wz = WORLD_COARSE.z, ws = 2 ** (zoom - wz) * 2;
+  const full = 256 * 2 ** zoom;
+  for (const shift of [-full, 0, full]) g.drawImage(W, ox + shift, oy, W.width * ws, W.height * ws);
+  if (zoom >= 4) { const rel = reliefCanvas(), C = JP_COARSE, rs = 2 ** (zoom - C.z) * 2;
+    g.drawImage(rel, ox + C.x0 * 256 * 2 ** (zoom - C.z), oy + C.y0 * 256 * 2 ** (zoom - C.z), rel.width * rs, rel.height * rs); }
+}
+function reliefCanvas() {
+  if (mapv.relief) return mapv.relief;
+  const C = JP_COARSE, s = 2, W = C.w / s, H = C.h / s, c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d'), img = g.createImageData(W, H), d = JW.coarse;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+    const k = (j * s) * C.w + i * s, h = d[k], o = (j * W + i) * 4;
+    if (h === -32768) {
+      const N = JW.jpNear, near = N && N.g[((j * s) / N.B | 0) * N.bw + ((i * s) / N.B | 0)];
+      if (near) { img.data[o] = 158; img.data[o + 1] = 196; img.data[o + 2] = 222; img.data[o + 3] = 255; } else img.data[o + 3] = 0;
+      continue;
+    }
+    const hx = (d[k + s] === -32768 ? 0 : d[k + s]) - (d[k - s] === -32768 ? 0 : d[k - s] || 0);
+    const hy = (d[k + s * C.w] === -32768 ? 0 : d[k + s * C.w] || 0) - (d[k - s * C.w] === -32768 ? 0 : d[k - s * C.w] || 0);
+    const shade = clamp(1 - (hx + hy) * 0.004, 0.6, 1.25);
+    const col = h < 50 ? [196, 214, 168] : h < 400 ? [170, 196, 140] : h < 1200 ? [150, 170, 120] : h < 2200 ? [176, 164, 136] : [232, 232, 236];
+    img.data[o] = col[0] * shade; img.data[o + 1] = col[1] * shade; img.data[o + 2] = col[2] * shade; img.data[o + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  mapv.relief = c;
+  return c;
+}
+function mapTile(z, x, y) {
+  const key = z + '/' + x + '/' + y;
+  let im = mapv.imgs.get(key);
+  if (!im) {
+    if (mapv.imgs.size > 400) { const first = mapv.imgs.keys().next().value; mapv.imgs.delete(first); }
+    im = new Image(); im.decoding = 'async';
+    im.onerror = () => { im.failed = true; mapv.fails = (mapv.fails || 0) + 1; if (mapv.fails > 8 && !mapv.oks) JW.mapBlocked = true; };
+    im.onload = () => { mapv.oks = (mapv.oks || 0) + 1; };
+    const n = 2 ** z, lat = latFromMerc((y + 0.5) / n), lon = (x + 0.5) / n * 360 - 180;
+    const jp = z >= 5 && !Number.isNaN(jpCoarseH(lat, lon)) || (z >= 7 && lat > 24 && lat < 46 && lon > 123 && lon < 146 && !Number.isNaN(jpCoarseH(latFromMerc(y / n), x / n * 360 - 180)));
+    im.src = jp ? `${GSI}std/${z}/${x}/${y}.png` : `${ESRI}World_Street_Map/MapServer/tile/${z}/${y}/${x}`;
+    mapv.imgs.set(key, im);
+  }
+  return im;
+}
+// draw a map into ctx rect (x,y,w,h) centred on (lat,lon) at fractional zoom
+function drawMapTo(g, x, y, w, h, lat, lon, zoom, opt = {}) {
+  lon = wrapLon(lon);
+  g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+  g.fillStyle = '#9ec4de'; g.fillRect(x, y, w, h);
+  const [cx, cy] = mapPx(lat, lon, zoom), ox = x + w / 2 - cx, oy = y + h / 2 - cy;
+  const useTiles = JW.online && !JW.mapBlocked;
+  if (useTiles) {
+    const z = clamp(Math.round(zoom), 2, 17), sc = 2 ** (zoom - z), ts = 256 * sc;
+    const [tcx, tcy] = mapPx(lat, lon, z);
+    const x0 = Math.floor((tcx - w / 2 / sc) / 256), x1 = Math.floor((tcx + w / 2 / sc) / 256);
+    const y0 = Math.floor((tcy - h / 2 / sc) / 256), y1 = Math.floor((tcy + h / 2 / sc) / 256);
+    // relief underneath while tiles load
+    drawRelief(g, ox, oy, zoom);
+    for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
+      if (ty < 0 || ty >= 2 ** z) continue;
+      const im = mapTile(z, ((tx % 2 ** z) + 2 ** z) % 2 ** z, ty);
+      if (im.complete && !im.failed && im.naturalWidth) g.drawImage(im, x + w / 2 + (tx * 256 - tcx) * sc, y + h / 2 + (ty * 256 - tcy) * sc, ts + 0.5, ts + 0.5);
+    }
+  } else if (JW.coarse) {
+    g.imageSmoothingEnabled = true;
+    drawRelief(g, ox, oy, zoom);
+  }
+  const FULLW = 256 * 2 ** zoom;
+  const P = (la, lo) => { const p = mapPx(la, lo, zoom); let dx = p[0] - cx; dx -= Math.round(dx / FULLW) * FULLW; return [x + w / 2 + dx, p[1] + oy]; };
+  const inView = p => p[0] > x - 40 && p[0] < x + w + 40 && p[1] > y - 20 && p[1] < y + h + 20;
+  // labels are placed in priority order and skipped when they would overlap
+  const boxes = [];
+  const fits = (bx, by, bw, bh) => {
+    for (const q of boxes) if (bx < q[0] + q[2] && bx + bw > q[0] && by < q[1] + q[3] && by + bh > q[1]) return false;
+    boxes.push([bx, by, bw, bh]); return true;
+  };
+  const aps = [];
+  for (const ap of JW.airports) {
+    const s = P(ap.lat, ap.lon); if (!inView(s)) continue;
+    const major = ap.rw[0].len >= 2400;
+    const keep = JW.dest === ap || JW.dep === ap || mapv.sel === ap;
+    if (!keep && ap.cc !== 'JP' && (zoom < 4.6 ? !(ap.big && ap.rw[0].len >= 3200) : zoom < 6.2 ? !ap.big : false)) continue;
+    if (!keep && ap.cc === 'JP' && zoom < 4.6 && !['RJTT', 'RJAA', 'RJBB', 'RJCC', 'ROAH', 'RJFF', 'RJGG'].includes(ap.icao)) continue;
+    if (zoom < 6 && !major && !keep) continue;
+    const pri = (mapv.sel === ap ? 4 : 0) + (JW.dest === ap ? 3 : 0) + (JW.dep === ap ? 2 : 0) + (major ? 1 : 0) + ap.rw[0].len / 1e5;
+    aps.push({ ap, s, major, pri });
+  }
+  aps.sort((p, q) => q.pri - p.pri);
+  const apLabels = [];
+  if (opt.labels) {
+    g.font = `700 12px ${UI}`;
+    for (const o of aps) {
+      o.lw = g.measureText(o.ap.name).width;
+      if ((zoom >= 6.3 || o.pri >= 1) && fits(o.s[0] - 7, o.s[1] - 8, o.lw + 17, 16)) apLabels.push(o);
+      else fits(o.s[0] - 6, o.s[1] - 6, 12, 12);
+    }
+  }
+  const placeLabels = [];
+  if (opt.labels && !useTiles) {
+    if (!JW.placesByPop) JW.placesByPop = JW.places.filter(p => p.k === 'c').sort((p, q) => q.p - p.p).concat(JW.places.filter(p => p.k === 'm'));
+    const minPop = zoom < 6 ? 900000 : zoom < 7 ? 250000 : zoom < 8 ? 100000 : 0;
+    g.font = `12px ${UI}`;
+    for (const p of JW.placesByPop) {
+      if (p.k === 'c' && p.p < minPop) continue;
+      if (p.k === 'm' && zoom < 8) continue;
+      const s = P(p.lat, p.lon); if (!inView(s)) continue;
+      const lw = g.measureText(p.n).width;
+      if (fits(s[0] - 3, s[1] - 7, lw + 8, 14)) placeLabels.push([p, s]);
+      if (placeLabels.length > 160) break;
+    }
+  }
+  g.textAlign = 'left'; g.textBaseline = 'middle';
+  g.font = `12px ${UI}`;
+  for (const [p, s] of placeLabels) {
+    g.fillStyle = p.k === 'm' ? '#6b4a1e' : '#1d2733';
+    g.beginPath(); g.arc(s[0], s[1], 2.5, 0, 7); g.fill();
+    g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = 3; g.strokeText(p.n, s[0] + 5, s[1]); g.fillText(p.n, s[0] + 5, s[1]);
+  }
+  // landmarks (sightseeing)
+  if (opt.labels && zoom >= 6.5 && typeof LANDMARKS !== 'undefined') {
+    g.font = `700 12px ${UI}`;
+    for (const l of LANDMARKS) {
+      const sp = P(l[1], l[2]); if (!inView(sp)) continue;
+      const tw = g.measureText('★' + l[0]).width;
+      if (!fits(sp[0] - 7, sp[1] - 8, tw + 10, 16)) continue;
+      g.strokeStyle = 'rgba(255,255,255,0.9)'; g.lineWidth = 3; g.strokeText('★' + l[0], sp[0] - 6, sp[1]);
+      g.fillStyle = '#b07800'; g.fillText('★' + l[0], sp[0] - 6, sp[1]);
+    }
+  }
+  // airports & runways
+  for (let i = aps.length - 1; i >= 0; i--) {
+    const { ap, s, major } = aps[i];
+    if (zoom >= 10) {
+      g.strokeStyle = '#2b2f36'; g.lineWidth = Math.max(2, 2 ** (zoom - 13) * 12);
+      for (const r of ap.rw) { const a = P(r.le[0], r.le[1]), b = P(r.he[0], r.he[1]); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); }
+    }
+    const isDest = JW.dest === ap, isDep = JW.dep === ap, isSel = mapv.sel === ap;
+    g.fillStyle = isDest ? COL.magenta : isDep ? '#1b8a4c' : '#1f5fae';
+    g.strokeStyle = '#fff'; g.lineWidth = 1.5;
+    g.beginPath(); g.arc(s[0], s[1], isSel ? 8 : major ? 6 : 4.5, 0, 7); g.fill(); g.stroke();
+  }
+  g.font = `700 12px ${UI}`;
+  for (const { ap, s } of apLabels) {
+    g.strokeStyle = 'rgba(255,255,255,0.9)'; g.lineWidth = 3; g.strokeText(ap.name, s[0] + 9, s[1]);
+    g.fillStyle = '#0d2a52'; g.fillText(ap.name, s[0] + 9, s[1]);
+  }
+  // track, destination line, aircraft
+  if (JW.active) {
+    const [pl, po] = planeGeo();
+    if (game.track && game.track.length > 1) {
+      g.strokeStyle = 'rgba(227,107,220,0.8)'; g.lineWidth = 2; g.setLineDash([5, 4]); g.beginPath();
+      game.track.forEach((q, i) => { const s = P(q[0], q[1]); i ? g.lineTo(s[0], s[1]) : g.moveTo(s[0], s[1]); });
+      const s = P(pl, po); g.lineTo(s[0], s[1]); g.stroke(); g.setLineDash([]);
+    }
+    if (JW.dest) {
+      const a = P(pl, po), b = P(JW.dest.lat, JW.dest.lon);
+      g.strokeStyle = COL.magenta; g.lineWidth = 2.5; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
+    }
+    const s = P(pl, po);
+    g.save(); g.translate(s[0], s[1]); g.rotate(attitude().hdg * DEG);
+    g.fillStyle = '#ffd24a'; g.strokeStyle = '#000'; g.lineWidth = 1.2;
+    const k = opt.big ? 1.4 : 1;
+    g.beginPath(); g.moveTo(0, -10 * k); g.lineTo(7 * k, 8 * k); g.lineTo(0, 4 * k); g.lineTo(-7 * k, 8 * k); g.closePath(); g.fill(); g.stroke();
+    g.restore();
+  }
+  g.restore();
+}
+// =====================================================================
+//  BUILT-UP AREAS: places made by hand, all in the sim's own world, the
+//  way a driving game's city is — clean surfaces, modelled buildings,
+//  aircraft at the gates, markings and lights — instead of the
+//  photogrammetry, which melts at ground level. Inside a region, round the
+//  camera as far as the city is loaded, Google's 3D gives way entirely
+//  (and PLATEAU's too); the map's own buildings, roads and trees stand
+//  there; outside, everything is as it was.
+//  The Tokyo Bay shore from Haneda through Kawasaki to Yokohama.
+// =====================================================================
+const AUTH_AREAS = [
+  // [lat, lon] outline (roughly: Haneda and Ota ward's south, Kawasaki, Yokohama city)
+  { id: 'bayshore', poly: [[35.60, 139.70], [35.60, 139.83], [35.50, 139.83], [35.40, 139.72], [35.30, 139.68], [35.30, 139.47], [35.43, 139.45], [35.55, 139.55]] },
+];
+const AUTH = { on: false, v: [0, 0, 0, 0], area: null, off: false, r: 0 };
+function authInPoly(poly, lat, lon) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [ai, bi] = poly[i], [aj, bj] = poly[j];
+    if ((ai > lat) !== (aj > lat) && lon < (bj - bi) * (lat - ai) / (aj - ai) + bi) inside = !inside;
+  }
+  return inside;
+}
+function authUpdate() {
+  AUTH.on = false; AUTH.v = [0, 0, 0, 0]; AUTH.area = null;
+  if (typeof JW === 'undefined' || !JW.active || !JW.online || AUTH.off) return;
+  const [la, lo] = worldToGeo(R.eye[0], R.eye[2]);
+  const agl = R.eye[1] - Math.max(rawHeightGeo(la, lo), 0);
+  if (agl > 2500) return;                                             // (from high up the photogrammetry reads better)
+  for (const A of AUTH_AREAS) {
+    if (!authInPoly(A.poly, la, lo)) continue;
+    // the circle round the camera that the city loads (p6_city.js cityUpdate), a little inside it
+    const r = game.touch ? clamp(1800 + agl * 1.5, 1800, 3500) : clamp(2800 + agl * 2.2, 2800, 7000);
+    AUTH.on = true; AUTH.area = A; AUTH.r = r;
+    AUTH.v = [R.eye[0], R.eye[2], r * 0.72, r * 0.9];
+    A.lat = la; A.lon = lo; A.r0 = r * 0.72; A.r1 = r * 0.9;
+    break;
+  }
+}
+// is a place inside the built-up circle in use (lat, lon)? (the map's own buildings aren't hidden under PLATEAU there)
+function authHas(lat, lon) {
+  const A = AUTH.area; if (!A) return false;
+  return geoDist(lat, lon, A.lat, A.lon) < A.r1;
+}
+// whether the sim's own world wholly replaces what lies in this box (x0 z0 x1 z1, world metres): inside the
+// inner circle Google's and PLATEAU's meshes are all cut, so those tiles needn't be loaded or drawn at all
+function authHides(x0, z0, x1, z1) {
+  if (!AUTH.on) return false;
+  const [cx, cz, r0] = AUTH.v, dx = Math.max(Math.abs(x0 - cx), Math.abs(x1 - cx)), dz = Math.max(Math.abs(z0 - cz), Math.abs(z1 - cz));
+  return dx * dx + dz * dz < r0 * r0 * 0.96;
+}
+
+// =====================================================================
+//  CITY: real 3D buildings and trees from OpenStreetMap (OpenFreeMap
+//  vector tiles, zoom 14). A worker decodes each tile, extrudes every
+//  building to its mapped height and scatters trees over woods and
+//  parks; the main thread only uploads the finished buffers.
+// =====================================================================
+function cityWorkerMain() {
+  const KZ = 110574, DEG = Math.PI / 180;
+  const latFromMerc = my => Math.atan(Math.sinh(Math.PI * (1 - 2 * my))) / DEG;
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const td = new TextDecoder();
+  // ---- protobuf / MVT ----
+  let B, P;
+  const rv = () => { let r = 0, s = 1, c; do { c = B[P++]; r += (c & 0x7f) * s; s *= 128; } while (c >= 0x80); return r; };
+  const skip = t => { if (t === 0) rv(); else if (t === 1) P += 8; else if (t === 2) { const l = rv(); P += l; } else if (t === 5) P += 4; };
+  function readValue(end) {
+    let v = null;
+    while (P < end) {
+      const k = rv(), f = k >> 3, t = k & 7;
+      if (f === 1) { const l = rv(); v = td.decode(B.subarray(P, P + l)); P += l; }
+      else if (f === 2) { v = new DataView(B.buffer, B.byteOffset + P, 4).getFloat32(0, true); P += 4; }
+      else if (f === 3) { v = new DataView(B.buffer, B.byteOffset + P, 8).getFloat64(0, true); P += 8; }
+      else if (f === 4 || f === 5) v = rv();
+      else if (f === 6) { const n = rv(); v = n % 2 ? -(n + 1) / 2 : n / 2; }
+      else if (f === 7) v = !!rv();
+      else skip(t);
+    }
+    return v;
+  }
+  function readLayers(buf, wanted) {
+    B = buf; P = 0; const out = {};
+    while (P < B.length) {
+      const k = rv(), f = k >> 3, t = k & 7;
+      if (f !== 3 || t !== 2) { skip(t); continue; }
+      const end = rv() + P, L = { name: '', keys: [], vals: [], feats: [], extent: 4096 };
+      let keep = true;
+      while (P < end) {
+        const k2 = rv(), f2 = k2 >> 3, t2 = k2 & 7;
+        if (f2 === 1) { const l = rv(); L.name = td.decode(B.subarray(P, P + l)); P += l; if (!wanted.includes(L.name)) { keep = false; break; } }
+        else if (f2 === 2) { const l = rv(); L.feats.push([P, P + l]); P += l; }
+        else if (f2 === 3) { const l = rv(); L.keys.push(td.decode(B.subarray(P, P + l))); P += l; }
+        else if (f2 === 4) { const l = rv(); L.vals.push(readValue(P + l)); }
+        else if (f2 === 5) L.extent = rv();
+        else skip(t2);
+      }
+      P = end;
+      if (keep && L.name) out[L.name] = L;
+    }
+    return out;
+  }
+  function readFeature(L, fe) {
+    P = fe[0]; const end = fe[1], props = {}; let type = 0, geom = null;
+    while (P < end) {
+      const k = rv(), f = k >> 3, t = k & 7;
+      if (f === 2) { const e = rv() + P; while (P < e) { const ki = rv(), vi = rv(); props[L.keys[ki]] = L.vals[vi]; } }
+      else if (f === 3) type = rv();
+      else if (f === 4) { const e = rv() + P; geom = []; while (P < e) geom.push(rv()); }
+      else skip(t);
+    }
+    return { props, type, geom };
+  }
+  function decodeRings(geom) {
+    const out = []; let x = 0, y = 0, i = 0, cur = null;
+    while (i < geom.length) {
+      const c = geom[i++], cmd = c & 7, cnt = c >> 3;
+      if (cmd === 7) { if (cur && cur.length >= 6) out.push(cur); cur = null; continue; }
+      for (let j = 0; j < cnt; j++) {
+        const dx = geom[i++], dy = geom[i++];
+        x += (dx >>> 1) ^ -(dx & 1); y += (dy >>> 1) ^ -(dy & 1);
+        if (cmd === 1) { if (cur && cur.length >= 6) out.push(cur); cur = [x, y]; } else if (cur) cur.push(x, y);
+      }
+    }
+    if (cur && cur.length >= 6) out.push(cur);
+    return out;
+  }
+  // line strings (roads): a MoveTo starts a new line
+  function decodePoints(geom) {
+    const out = []; let x = 0, y = 0, i = 0;
+    while (i < geom.length) {
+      const c = geom[i++], cnt = c >> 3;
+      for (let j = 0; j < cnt; j++) { const dx = geom[i++], dy = geom[i++]; x += (dx >>> 1) ^ -(dx & 1); y += (dy >>> 1) ^ -(dy & 1); out.push(x, y); }
+    }
+    return out;
+  }
+  function decodeLines(geom) {
+    const out = []; let x = 0, y = 0, i = 0, cur = null;
+    while (i < geom.length) {
+      const c = geom[i++], cmd = c & 7, cnt = c >> 3;
+      if (cmd === 7) continue;
+      for (let j = 0; j < cnt; j++) {
+        const dx = geom[i++], dy = geom[i++];
+        x += (dx >>> 1) ^ -(dx & 1); y += (dy >>> 1) ^ -(dy & 1);
+        if (cmd === 1) { if (cur && cur.length >= 4) out.push(cur); cur = [x, y]; } else if (cur) cur.push(x, y);
+      }
+    }
+    if (cur && cur.length >= 4) out.push(cur);
+    return out;
+  }
+  // Sutherland-Hodgman against the tile square; points on the border are snapped exactly
+  function clipRing(r, E) {
+    let pts = r;
+    for (let side = 0; side < 4 && pts.length >= 6; side++) {
+      const out = [], n = pts.length;
+      const ins = (x, y) => side === 0 ? x >= 0 : side === 1 ? x <= E : side === 2 ? y >= 0 : y <= E;
+      const cut = (ax, ay, bx, by) => {
+        if (side < 2) { const X = side ? E : 0, t = (X - ax) / (bx - ax); out.push(X, ay + (by - ay) * t); }
+        else { const Y = side === 3 ? E : 0, t = (Y - ay) / (by - ay); out.push(ax + (bx - ax) * t, Y); }
+      };
+      for (let i = 0; i < n; i += 2) {
+        const sx = pts[(i - 2 + n) % n], sy = pts[(i - 1 + n) % n], ex = pts[i], ey = pts[i + 1];
+        const ie = ins(ex, ey), is = ins(sx, sy);
+        if (ie) { if (!is) cut(sx, sy, ex, ey); out.push(ex, ey); }
+        else if (is) cut(sx, sy, ex, ey);
+      }
+      pts = out;
+    }
+    const o = [];
+    for (let i = 0; i < pts.length; i += 2) { const l = o.length; if (l && o[l - 2] === pts[i] && o[l - 1] === pts[i + 1]) continue; o.push(pts[i], pts[i + 1]); }
+    if (o.length >= 4 && o[0] === o[o.length - 2] && o[1] === o[o.length - 1]) o.length -= 2;
+    return o.length >= 6 ? o : null;
+  }
+  const ringArea = r => { let s = 0; for (let i = 0, n = r.length; i < n; i += 2) { const j = (i + 2) % n; s += r[i] * r[j + 1] - r[j] * r[i + 1]; } return s / 2; };
+  function polygons(L, E, filter) {
+    const out = [];
+    if (!L) return out;
+    for (const fe of L.feats) {
+      const f = readFeature(L, fe);
+      if (f.type !== 3 || !f.geom || !filter(f.props)) continue;
+      let cur = null;
+      for (const r0 of decodeRings(f.geom)) {
+        const a0 = ringArea(r0);
+        if (a0 === 0) continue;
+        const r = clipRing(r0, E); if (!r) continue;
+        const a = ringArea(r);
+        if (Math.abs(a) < 1e-3) continue;
+        if (a0 > 0) { cur = { rings: [r], props: f.props }; out.push(cur); }
+        else if (cur) cur.rings.push(r);
+      }
+    }
+    return out;
+  }
+  // ---- earcut (after Mapbox earcut, without the z-order hash) ----
+  function earcut(data, holes) {
+    const outerLen = holes.length ? holes[0] * 2 : data.length;
+    let outer = linkedList(data, 0, outerLen, true);
+    const tris = [];
+    if (!outer || outer.next === outer.prev) return tris;
+    if (holes.length) outer = eliminateHoles(data, holes, outer);
+    earcutLinked(outer, tris, 0);
+    return tris;
+  }
+  function linkedList(data, start, end, cw) {
+    let last;
+    if (cw === (signedArea(data, start, end) > 0)) for (let i = start; i < end; i += 2) last = insertNode(i / 2, data[i], data[i + 1], last);
+    else for (let i = end - 2; i >= start; i -= 2) last = insertNode(i / 2, data[i], data[i + 1], last);
+    if (last && equals(last, last.next)) { removeNode(last); last = last.next; }
+    return last;
+  }
+  function filterPoints(start, end) {
+    if (!start) return start;
+    if (!end) end = start;
+    let p = start, again;
+    do {
+      again = false;
+      if (!p.steiner && (equals(p, p.next) || area(p.prev, p, p.next) === 0)) { removeNode(p); p = end = p.prev; if (p === p.next) break; again = true; }
+      else p = p.next;
+    } while (again || p !== end);
+    return end;
+  }
+  function earcutLinked(ear, tris, pass) {
+    if (!ear) return;
+    let stop = ear, guard = 0;
+    while (ear.prev !== ear.next && guard++ < 200000) {
+      const prev = ear.prev, next = ear.next;
+      if (isEar(ear)) { tris.push(prev.i, ear.i, next.i); removeNode(ear); ear = next.next; stop = next.next; continue; }
+      ear = next;
+      if (ear === stop) {
+        if (!pass) earcutLinked(filterPoints(ear), tris, 1);
+        else if (pass === 1) { ear = cureLocalIntersections(filterPoints(ear), tris); earcutLinked(ear, tris, 2); }
+        else if (pass === 2) splitEarcut(ear, tris);
+        break;
+      }
+    }
+  }
+  function isEar(ear) {
+    const a = ear.prev, b = ear, c = ear.next;
+    if (area(a, b, c) >= 0) return false;
+    let p = c.next;
+    while (p !== a) {
+      if (pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) && area(p.prev, p, p.next) >= 0) return false;
+      p = p.next;
+    }
+    return true;
+  }
+  function cureLocalIntersections(start, tris) {
+    let p = start;
+    do {
+      const a = p.prev, b = p.next.next;
+      if (!equals(a, b) && intersects(a, p, p.next, b) && locallyInside(a, b) && locallyInside(b, a)) {
+        tris.push(a.i, p.i, b.i); removeNode(p); removeNode(p.next); p = start = b;
+      }
+      p = p.next;
+    } while (p !== start);
+    return filterPoints(p);
+  }
+  function splitEarcut(start, tris) {
+    let a = start;
+    do {
+      let b = a.next.next;
+      while (b !== a.prev) {
+        if (a.i !== b.i && isValidDiagonal(a, b)) {
+          let c = splitPolygon(a, b);
+          a = filterPoints(a, a.next); c = filterPoints(c, c.next);
+          earcutLinked(a, tris, 0); earcutLinked(c, tris, 0);
+          return;
+        }
+        b = b.next;
+      }
+      a = a.next;
+    } while (a !== start);
+  }
+  function eliminateHoles(data, holes, outer) {
+    const q = [];
+    for (let i = 0; i < holes.length; i++) {
+      const s = holes[i] * 2, e = i < holes.length - 1 ? holes[i + 1] * 2 : data.length;
+      const list = linkedList(data, s, e, false);
+      if (!list) continue;
+      if (list === list.next) list.steiner = true;
+      q.push(getLeftmost(list));
+    }
+    q.sort((a, b) => a.x - b.x);
+    for (const h of q) { const br = findHoleBridge(h, outer); if (!br) continue; const rev = splitPolygon(br, h); filterPoints(rev, rev.next); outer = filterPoints(br, br.next); }
+    return outer;
+  }
+  function findHoleBridge(hole, outer) {
+    let p = outer, qx = -Infinity, m;
+    const hx = hole.x, hy = hole.y;
+    do {
+      if (hy <= p.y && hy >= p.next.y && p.next.y !== p.y) {
+        const x = p.x + (hy - p.y) * (p.next.x - p.x) / (p.next.y - p.y);
+        if (x <= hx && x > qx) { qx = x; m = p.x < p.next.x ? p : p.next; if (x === hx) return m; }
+      }
+      p = p.next;
+    } while (p !== outer);
+    if (!m) return null;
+    const stop = m, mx = m.x, my = m.y; let tanMin = Infinity;
+    p = m;
+    do {
+      if (hx >= p.x && p.x >= mx && hx !== p.x && pointInTriangle(hy < my ? hx : qx, hy, mx, my, hy < my ? qx : hx, hy, p.x, p.y)) {
+        const tan = Math.abs(hy - p.y) / (hx - p.x);
+        if (locallyInside(p, hole) && (tan < tanMin || (tan === tanMin && (p.x > m.x || (p.x === m.x && area(m.prev, m, p.prev) < 0 && area(p.next, m, m.next) < 0))))) { m = p; tanMin = tan; }
+      }
+      p = p.next;
+    } while (p !== stop);
+    return m;
+  }
+  function getLeftmost(s) { let p = s, l = s; do { if (p.x < l.x || (p.x === l.x && p.y < l.y)) l = p; p = p.next; } while (p !== s); return l; }
+  function pointInTriangle(ax, ay, bx, by, cx, cy, px, py) {
+    return (cx - px) * (ay - py) >= (ax - px) * (cy - py) && (ax - px) * (by - py) >= (bx - px) * (ay - py) && (bx - px) * (cy - py) >= (cx - px) * (by - py);
+  }
+  function isValidDiagonal(a, b) {
+    return a.next.i !== b.i && a.prev.i !== b.i && !intersectsPolygon(a, b) &&
+      ((locallyInside(a, b) && locallyInside(b, a) && middleInside(a, b) && (area(a.prev, a, b.prev) || area(a, b.prev, b))) ||
+       (equals(a, b) && area(a.prev, a, a.next) > 0 && area(b.prev, b, b.next) > 0));
+  }
+  const area = (p, q, r) => (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+  const equals = (a, b) => a.x === b.x && a.y === b.y;
+  const sign = v => v > 0 ? 1 : v < 0 ? -1 : 0;
+  const onSeg = (p, q, r) => q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) && q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y);
+  function intersects(p1, q1, p2, q2) {
+    const o1 = sign(area(p1, q1, p2)), o2 = sign(area(p1, q1, q2)), o3 = sign(area(p2, q2, p1)), o4 = sign(area(p2, q2, q1));
+    if (o1 !== o2 && o3 !== o4) return true;
+    return (o1 === 0 && onSeg(p1, p2, q1)) || (o2 === 0 && onSeg(p1, q2, q1)) || (o3 === 0 && onSeg(p2, p1, q2)) || (o4 === 0 && onSeg(p2, q1, q2));
+  }
+  function intersectsPolygon(a, b) {
+    let p = a;
+    do { if (p.i !== a.i && p.next.i !== a.i && p.i !== b.i && p.next.i !== b.i && intersects(p, p.next, a, b)) return true; p = p.next; } while (p !== a);
+    return false;
+  }
+  const locallyInside = (a, b) => area(a.prev, a, a.next) < 0 ? area(a, b, a.next) >= 0 && area(a, a.prev, b) >= 0 : area(a, b, a.prev) < 0 || area(a, a.next, b) < 0;
+  function middleInside(a, b) {
+    let p = a, inside = false; const px = (a.x + b.x) / 2, py = (a.y + b.y) / 2;
+    do { if (((p.y > py) !== (p.next.y > py)) && p.next.y !== p.y && (px < (p.next.x - p.x) * (py - p.y) / (p.next.y - p.y) + p.x)) inside = !inside; p = p.next; } while (p !== a);
+    return inside;
+  }
+  function splitPolygon(a, b) {
+    const a2 = mk(a.i, a.x, a.y), b2 = mk(b.i, b.x, b.y), an = a.next, bp = b.prev;
+    a.next = b; b.prev = a; a2.next = an; an.prev = a2; b2.next = a2; a2.prev = b2; bp.next = b2; b2.prev = bp;
+    return b2;
+  }
+  function insertNode(i, x, y, last) {
+    const p = mk(i, x, y);
+    if (!last) { p.prev = p; p.next = p; } else { p.next = last.next; p.prev = last; last.next.prev = p; last.next = p; }
+    return p;
+  }
+  function removeNode(p) { p.next.prev = p.prev; p.prev.next = p.next; }
+  function mk(i, x, y) { return { i, x, y, prev: null, next: null, steiner: false }; }
+  function signedArea(d, s, e) { let sum = 0; for (let i = s, j = e - 2; i < e; i += 2) { sum += (d[j] - d[i]) * (d[i + 1] + d[j + 1]); j = i; } return sum; }
+
+  // ---- tile build ----
+  const hash = (a, b) => { let h = (Math.imul(a | 0, 73856093) ^ Math.imul(b | 0, 19349663)) >>> 0; h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0; return (h ^ (h >>> 16)) >>> 0; };
+  function build(buf, m) {
+    const L = readLayers(buf, ['building', 'landcover', 'landuse', 'transportation', 'poi', 'aeroway']);
+    const E = (L.building || L.landcover || { extent: 4096 }).extent;
+    const n = 2 ** m.z, dLon = m.lonE - m.lonW, kxN = 111320 * Math.cos(m.latN * DEG);
+    const W = dLon * kxN, Hm = (m.latN - m.latS) * KZ;
+    const latCache = new Map();
+    const lz = py => { let v = latCache.get(py); if (v === undefined) { v = -(latFromMerc((m.y + py / E) / n) - m.latN) * KZ; if (latCache.size < 20000) latCache.set(py, v); } return v; };
+    const lx = px => px / E * dLon * kxN;
+    const dem = m.dem;
+    // the sim levels the ground around runways (runwayFlatten): the same here, so roads and buildings sit on it
+    const rws = m.rws || [], latAt = py => m.latN + (m.latS - m.latN) * py / E, lonAt = px => m.lonW + (m.lonE - m.lonW) * px / E;
+    const flatten = (px, py, h) => {
+      if (!rws.length) return h;
+      const lat = latAt(py), lon = lonAt(px);
+      for (const r of rws) {
+        const dx = (lon - r.lon) * r.kx, dz = -(lat - r.lat) * KZ, u = dx * r.sin - dz * r.cos, v = dx * r.cos + dz * r.sin;
+        const e = Math.hypot(Math.max(Math.abs(u) - r.len / 2 - 90, 0), Math.max(Math.abs(v) - r.wid / 2 - 60, 0));
+        if (e < 220) { const t = clamp(e / 220, 0, 1), k = t * t * (3 - 2 * t); h = r.elev + (h - r.elev) * k; }
+      }
+      return h;
+    };
+    const ground = (px, py) => flatten(px, py, groundRaw(px, py));
+    const groundRaw = (px, py) => {
+      if (!dem) return m.g0;
+      const fx = clamp(px / E * 256 - 0.5, 0, 254.999), fy = clamp(py / E * 256 - 0.5, 0, 254.999);
+      const ix = fx | 0, iy = fy | 0, tx = fx - ix, ty = fy - iy, k = iy * 256 + ix;
+      const g = v => v !== v ? 0 : v;
+      return (g(dem[k]) * (1 - tx) + g(dem[k + 1]) * tx) * (1 - ty) + (g(dem[k + 256]) * (1 - tx) + g(dem[k + 257]) * tx) * ty;
+    };
+    // ---------- buildings ----------
+    const bpolys = polygons(L.building, E, p => !p.hide_3d);
+    let nv = 0, ni = 0;
+    for (const p of bpolys) for (let r = 0; r < p.rings.length; r++) { const k = p.rings[r].length / 2; nv += k * 4 + (r === 0 || true ? k : 0) + 80; ni += k * 6; }
+    ni += nv;                                                         // generous room for roof triangles (and pitched roofs / roof boxes)
+    let vb = new ArrayBuffer(nv * 20), i16 = new Int16Array(vb), f32 = new Float32Array(vb), i8 = new Int8Array(vb);
+    let idx = new Uint32Array(ni);
+    let v = 0, q = 0;
+    const put = (x, z, y, nx, ny, nz, u, st, h, yr) => {
+      if (v >= nv) { nv *= 2; const g = new ArrayBuffer(nv * 20); new Uint8Array(g).set(new Uint8Array(vb)); vb = g; i16 = new Int16Array(vb); f32 = new Float32Array(vb); i8 = new Int8Array(vb); }
+      const s = v * 10;
+      i16[s] = Math.round(x * 10); i16[s + 1] = Math.round(z * 10); f32[v * 5 + 1] = y;
+      i8[v * 20 + 8] = nx; i8[v * 20 + 9] = ny; i8[v * 20 + 10] = nz;
+      i16[s + 6] = clamp(Math.round(u * 10), -32767, 32767); i16[s + 7] = st; i16[s + 8] = clamp(Math.round(h * 10), 0, 32767); i16[s + 9] = clamp(Math.round(yr * 10), -32767, 32767);
+      return v++;
+    };
+    const tri = (a, b, c) => { if (q + 3 > idx.length) { const g = new Uint32Array(idx.length * 2); g.set(idx); idx = g; } idx[q++] = a; idx[q++] = b; idx[q++] = c; };
+    // a flat-shaded triangle facing along n (points [x, y, z] in local metres); st/yr as for walls or roofs
+    const face = (p1, p2, p3, n, st, H, yr) => {
+      const ex = p2[0] - p1[0], ey = p2[1] - p1[1], ez = p2[2] - p1[2], fx = p3[0] - p1[0], fy = p3[1] - p1[1], fz = p3[2] - p1[2];
+      const cx = ey * fz - ez * fy, cy = ez * fx - ex * fz, cz = ex * fy - ey * fx;
+      if (cx * n[0] + cy * n[1] + cz * n[2] < 0) { const t = p2; p2 = p3; p3 = t; }
+      const nb = [Math.round(n[0] * 127), Math.round(n[1] * 127), Math.round(n[2] * 127)];
+      const along = p => (p[0] * -n[2] + p[2] * n[0]);
+      const a = put(p1[0], p1[2], p1[1], nb[0], nb[1], nb[2], along(p1), st, H, yr), b = put(p2[0], p2[2], p2[1], nb[0], nb[1], nb[2], along(p2), st, H, yr), c = put(p3[0], p3[2], p3[1], nb[0], nb[1], nb[2], along(p3), st, H, yr);
+      tri(a, b, c);
+    };
+    const nrm3 = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+    // a flat quad a b c d (in order round it) facing along n, with its own height value per corner
+    const quad = (P, yr, n, st, H, us) => {
+      const nb = [Math.round(n[0] * 127), Math.round(n[1] * 127), Math.round(n[2] * 127)], along = p => (p[0] * -n[2] + p[2] * n[0]);
+      const i = P.map((p, k) => put(p[0], p[2], p[1], nb[0], nb[1], nb[2], us ? us[k] : along(p), st, H, yr[k]));
+      const ex = P[1][0] - P[0][0], ey = P[1][1] - P[0][1], ez = P[1][2] - P[0][2], fx = P[2][0] - P[0][0], fy = P[2][1] - P[0][1], fz = P[2][2] - P[0][2];
+      if ((ey * fz - ez * fy) * n[0] + (ez * fx - ex * fz) * n[1] + (ex * fy - ey * fx) * n[2] >= 0) { tri(i[0], i[1], i[2]); tri(i[0], i[2], i[3]); }
+      else { tri(i[0], i[2], i[1]); tri(i[0], i[3], i[2]); }
+    };
+    // balconies along a flat wall (a mansion's south side): a slab on every floor from the second up, its
+    // parapet panel, the end panels; st kinds 6 (slab) and 7 (panel)
+    const K_SLAB = 6 * 1024, K_PANEL = 7 * 1024;
+    function balconies(x0, z0, x1, z1, base, H, seed) {
+      const len = Math.hypot(x1 - x0, z1 - z0), ux = (x1 - x0) / len, uz = (z1 - z0) / len, nx = uz, nz = -ux, D = 1.15, fh = 2.9;
+      const e = 0.25, ax = x0 + ux * e, az = z0 + uz * e, bx = x1 - ux * e, bz = z1 - uz * e;
+      const cx = ax + nx * D, cz = az + nz * D, dx = bx + nx * D, dz = bz + nz * D;
+      const sd = seed | K_PANEL, ss = seed | K_SLAB;
+      for (let y = base + fh; y + 1.9 < base + H; y += fh) {
+        const y0 = y - 0.18, y1 = y + 1.05;
+        quad([[ax, y, az], [bx, y, bz], [dx, y, dz], [cx, y, cz]], [0, 0, 0, 0], [0, 1, 0], ss, H);
+        quad([[ax, y0, az], [bx, y0, bz], [dx, y0, dz], [cx, y0, cz]], [0, 0, 0, 0], [0, -1, 0], ss, H);
+        quad([[cx, y0, cz], [dx, y0, dz], [dx, y1, dz], [cx, y1, cz]], [-0.18, -0.18, 1.05, 1.05], [nx, 0, nz], sd, H);
+        quad([[ax, y0, az], [cx, y0, cz], [cx, y1, cz], [ax, y1, az]], [-0.18, -0.18, 1.05, 1.05], [-ux, 0, -uz], sd, H);
+        quad([[bx, y0, bz], [dx, y0, dz], [dx, y1, dz], [bx, y1, bz]], [-0.18, -0.18, 1.05, 1.05], [ux, 0, uz], sd, H);
+      }
+    }
+    // an airport's control tower: a slim shaft that flares out under the glass cab, the cab's windows leaning
+    // out, the roof and the antenna mast (st kinds: 11 the shaft's white cladding, 10 the cab's glass)
+    function controlTower(cxm, czm, base, top, seed) {
+      const H = top - base, N = 16, rs = 3.4, rc = 8.5, yS = base + H * 0.74, yC0 = yS + 4, yC1 = yC0 + 6.5, yR = yC1 + 1.6;
+      const K_SH = seed + 1024 * 11, K_GL = seed + 1024 * 10;
+      const sec = [[base, rs * 1.35, K_SH], [base + 6, rs, K_SH], [yS - 3, rs, K_SH], [yS + 1.5, rc * 0.8, K_SH], [yC0, rc, K_SH], [yC0, rc, K_GL], [yC1, rc * 1.08, K_GL], [yC1, rc * 1.12, K_SH], [yR, rc * 0.95, K_SH]];
+      for (let k = 0; k + 1 < sec.length; k++) {
+        const [y0, r0, st] = sec[k], [y1, r1, st1] = sec[k + 1];
+        if (st !== st1 || y1 - y0 < 0.01) continue;
+        for (let i = 0; i < N; i++) {
+          const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2, am = (a0 + a1) / 2;
+          const P = (a, r, y) => [cxm + Math.cos(a) * r, y, czm + Math.sin(a) * r];
+          const nn = nrm3([Math.cos(am) * (y1 - y0), r0 - r1, Math.sin(am) * (y1 - y0)]);
+          const u0 = a0 * rc, u1 = a1 * rc;
+          quad([P(a0, r0, y0), P(a1, r0, y0), P(a1, r1, y1), P(a0, r1, y1)], [y0 - base, y0 - base, y1 - base, y1 - base], nn, st, H, [u0, u1, u1, u0]);
+        }
+      }
+      // the roof, and the mast on it
+      for (let i = 0; i < N; i++) {
+        const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2, r = rc * 0.95;
+        face([cxm, yR, czm], [cxm + Math.cos(a0) * r, yR, czm + Math.sin(a0) * r], [cxm + Math.cos(a1) * r, yR, czm + Math.sin(a1) * r], [0, 1, 0], K_SH + 256, H, H);
+      }
+      const m = 0.35;
+      for (const [dx, dz, nx, nz] of [[1, 0, 1, 0], [-1, 0, -1, 0], [0, 1, 0, 1], [0, -1, 0, -1]]) {
+        const ux = -dz, uz = dx;
+        quad([[cxm + dx * m + ux * m, yR, czm + dz * m + uz * m], [cxm + dx * m - ux * m, yR, czm + dz * m - uz * m], [cxm + dx * m - ux * m, top, czm + dz * m - uz * m], [cxm + dx * m + ux * m, top, czm + dz * m + uz * m]], [yR - base, yR - base, H, H], [nx, 0, nz], K_SH, H, [0, 0.7, 0.7, 0]);
+      }
+    }
+    // the smallest rectangle around a footprint (tested along each edge's direction)
+    function obb(f) {
+      let best = null; const k = f.length / 2;
+      for (let i = 0; i < k; i++) {
+        const j = (i + 1) % k, dx = f[j * 2] - f[i * 2], dz = f[j * 2 + 1] - f[i * 2 + 1], L = Math.hypot(dx, dz); if (L < 0.5) continue;
+        const ux = dx / L, uz = dz / L; let a0 = 1e9, a1 = -1e9, b0 = 1e9, b1 = -1e9;
+        for (let m = 0; m < k; m++) { const x = f[m * 2], z = f[m * 2 + 1], a = x * ux + z * uz, b = -x * uz + z * ux; a0 = Math.min(a0, a); a1 = Math.max(a1, a); b0 = Math.min(b0, b); b1 = Math.max(b1, b); }
+        const ar = (a1 - a0) * (b1 - b0);
+        if (!best || ar < best.ar) best = { ar, ux, uz, a0, a1, b0, b1 };
+      }
+      if (!best) return null;
+      let { ux, uz, a0, a1, b0, b1 } = best;
+      if (b1 - b0 > a1 - a0) { const t = ux; ux = -uz; uz = t; [a0, a1, b0, b1] = [b0, b1, -a1, -a0]; }   // u along the long side
+      const ca = (a0 + a1) / 2, cb = (b0 + b1) / 2;
+      return { cx: ca * ux - cb * uz, cz: ca * uz + cb * ux, ux, uz, l: a1 - a0, w: b1 - b0, fill: Math.abs(ringArea(f)) / Math.max(best.ar, 1e-6) };
+    }
+    // pitched roof over the rectangle: gable (two slopes and two triangular end walls) or hipped (four slopes)
+    function pitchedRoof(o, top, seed, H, gable) {
+      const ov = 0.35, L2 = o.l / 2 + ov, W2 = o.w / 2 + ov, rh = clamp(o.w * 0.3, 1.2, 3.2), R = top + rh;
+      const P = (a, b, y) => [o.cx + o.ux * a - o.uz * b, y, o.cz + o.uz * a + o.ux * b];
+      const U = [o.ux, 0, o.uz], Vd = [-o.uz, 0, o.ux], rs = seed + 256, eave = top - 0.12;
+      const side = s => nrm3([Vd[0] * s * rh, W2, Vd[2] * s * rh]);
+      const rl = gable ? L2 : Math.max(L2 - W2, 0);
+      for (const s of [-1, 1]) {
+        const n = side(s), a = P(-L2, s * W2, eave), b = P(L2, s * W2, eave), c = P(rl, 0, R), d = P(-rl, 0, R);
+        face(a, b, c, n, rs, H, H); if (rl > 0) face(a, c, d, n, rs, H, H);
+        if (gable) {                                                  // the triangular end wall under the roof
+          const e = s * o.l / 2, wn = [U[0] * s, 0, U[2] * s];
+          face(P(e, -o.w / 2, top), P(e, o.w / 2, top), P(e, 0, R - 0.25), wn, seed, H, H + 2);
+        } else {
+          const en = nrm3([U[0] * s * rh, W2, U[2] * s * rh]);
+          face(P(s * L2, -W2, eave), P(s * L2, W2, eave), P(s * rl, 0, R), en, rs, H, H);
+        }
+      }
+      return rh;
+    }
+    // stair housings and air-conditioning plant on a big flat roof
+    function roofPlant(f, top, seed, H, area) {
+      const k = f.length / 2; let cx = 0, cz = 0; for (let i = 0; i < k; i++) { cx += f[i * 2]; cz += f[i * 2 + 1]; } cx /= k; cz /= k;
+      const inside = (x, z) => { let c = false; for (let i = 0, j = k - 1; i < k; j = i++) { const zi = f[i * 2 + 1], zj = f[j * 2 + 1]; if ((zi > z) !== (zj > z) && x < (f[j * 2] - f[i * 2]) * (z - zi) / (zj - zi) + f[i * 2]) c = !c; } return c; };
+      const n = 1 + (area > 900) + (area > 2500), R = Math.sqrt(area);
+      for (let i = 0; i < n; i++) {
+        const hs = hash(seed * 31 + i, i * 7 + 3), s = clamp(R * (0.08 + (hs & 15) / 150), 2.2, 9), bh = 1.6 + ((hs >>> 4) & 7) * 0.3;
+        const x = cx + (((hs >>> 8) & 255) / 255 - 0.5) * R * 0.45, z = cz + (((hs >>> 16) & 255) / 255 - 0.5) * R * 0.45, s2 = s / 2;
+        if (!inside(x - s2, z - s2) || !inside(x + s2, z - s2) || !inside(x + s2, z + s2) || !inside(x - s2, z + s2)) continue;
+        const y0 = top, y1 = top + bh, C = [[x - s2, z - s2], [x + s2, z - s2], [x + s2, z + s2], [x - s2, z + s2]];
+        for (let e = 0; e < 4; e++) {
+          const [ax, az] = C[e], [bx, bz] = C[(e + 1) % 4], ln = Math.hypot(bx - ax, bz - az), wn = [(bz - az) / ln, 0, -(bx - ax) / ln];
+          const mx = (ax + bx) / 2 - x, mz = (az + bz) / 2 - z, wo = wn[0] * mx + wn[2] * mz < 0 ? [-wn[0], 0, -wn[2]] : wn;
+          face([ax, y0, az], [bx, y0, bz], [bx, y1, bz], wo, seed, H, H + 2); face([ax, y0, az], [bx, y1, bz], [ax, y1, az], wo, seed, H, H + 2);
+        }
+        face([C[0][0], y1, C[0][1]], [C[1][0], y1, C[1][1]], [C[2][0], y1, C[2][1]], [0, 1, 0], seed + 256, H, H);
+        face([C[0][0], y1, C[0][1]], [C[2][0], y1, C[2][1]], [C[3][0], y1, C[3][1]], [0, 1, 0], seed + 256, H, H);
+      }
+    }
+    // ---------- roads: ribbons draped on the ground, plus the centre lines for placing and routing cars ----------
+    const RW = { motorway: 10.5, trunk: 9, primary: 8.5, secondary: 7.5, tertiary: 6.5, minor: 5.2, service: 3.6, track: 3, busway: 6.5, raceway: 10 };
+    const RC = { motorway: 1, trunk: 2, primary: 3, secondary: 4, tertiary: 5, minor: 6, service: 7, track: 8, busway: 5, raceway: 2 };
+    const rv0 = [], ri = [], rPts = [], rOff = [0], rCls = [], rWid = [], rBr = [];
+    const rput = (x, z, y, u, cls, w, acr) => { const k = rv0.length / 7; rv0.push(x, z, y, u, cls, w, acr); return k; };
+    // 1) every road as a run of points (metres, split into short pieces so the ribbon follows the ground),
+    //    keeping only what lies in this tile (the tile buffer would be drawn twice)
+    const lines = [];
+    if (L.transportation) for (const fe of L.transportation.feats) {
+      const f = readFeature(L.transportation, fe), cl = f.props.class;
+      if (f.type !== 2 || !f.geom || !RW[cl] || f.props.brunnel === 'tunnel' || f.props.indoor === 1) continue;
+      const w = RW[cl] * (cl === 'motorway' && f.props.oneway === 1 ? 0.8 : 1), c = RC[cl], bridge = f.props.brunnel === 'bridge', layer = clamp(Math.round(+f.props.layer || 1), 1, 4);
+      for (const ln of decodeLines(f.geom)) {
+        const pts = [];
+        for (let i = 0; i < ln.length; i += 2) {
+          const x = lx(ln[i]), z = lz(ln[i + 1]);
+          if (pts.length) { const [px, pz] = pts[pts.length - 1], d = Math.hypot(x - px, z - pz), ns = Math.floor(d / 9); for (let s = 1; s <= ns; s++) pts.push([px + (x - px) * s / (ns + 1), pz + (z - pz) * s / (ns + 1), ln[i - 2] + (ln[i] - ln[i - 2]) * s / (ns + 1), ln[i - 1] + (ln[i + 1] - ln[i - 1]) * s / (ns + 1)]); }
+          pts.push([x, z, ln[i], ln[i + 1]]);
+        }
+        const inT = p => p[2] >= -8 && p[2] <= E + 8 && p[3] >= -8 && p[3] <= E + 8;
+        let run = [];
+        for (const p of pts) { if (inT(p)) run.push(p); else { if (run.length >= 2) lines.push({ run, w, c, bridge, layer }); run = []; } }
+        if (run.length >= 2) lines.push({ run, w, c, bridge, layer });
+      }
+    }
+    // 2) where roads meet or cross: a grid of all the segments, so each point can find the other roads near it
+    const JG = 16, jcell = new Map(), jkey = (i, j) => i * 65536 + j;
+    lines.forEach((ln, li) => {
+      for (let k = 0; k + 1 < ln.run.length; k++) {
+        const a = ln.run[k], b = ln.run[k + 1], m = ln.w / 2 + 12;
+        for (let i = Math.floor((Math.min(a[0], b[0]) - m) / JG); i <= Math.floor((Math.max(a[0], b[0]) + m) / JG); i++)
+          for (let j = Math.floor((Math.min(a[1], b[1]) - m) / JG); j <= Math.floor((Math.max(a[1], b[1]) + m) / JG); j++) {
+            const key = jkey(i + 1000, j + 1000); let c = jcell.get(key); if (!c) jcell.set(key, c = []); c.push(li, k);
+          }
+      }
+    });
+    // how much a point is in a junction (0..1): 1 where another road's surface is, fading over 6 m
+    const junction = (li, x, z, w) => {
+      const c = jcell.get(jkey(Math.floor(x / JG) + 1000, Math.floor(z / JG) + 1000)); if (!c) return 0;
+      let best = 0; junction.other = 99;
+      for (let n = 0; n < c.length; n += 2) {
+        const lj = c[n]; if (lj === li) continue;
+        const o = lines[lj], a = o.run[c[n + 1]], b = o.run[c[n + 1] + 1];
+        if (o.bridge !== lines[li].bridge) continue;                 // a bridge over a road is not a junction
+        const dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1, t = clamp(((x - a[0]) * dx + (z - a[1]) * dz) / L2, 0, 1);
+        const d = Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t), r = (w + o.w) / 2 + 1;
+        const k = clamp(1 - (d - r) / 6, 0, 1);
+        best = Math.max(best, k); if (k > 0.5) junction.other = Math.min(junction.other, o.c);   // (the biggest road met)
+      }
+      return best;
+    };
+    // bridges at their real height. Each end is joined to a road on the ground (the deck comes down to it), to
+    // another bridge (the elevated road goes on, a storey or more up by its layer: the expressways), or cut by
+    // the tile's edge. The deck never dips below the straight line between its ends (a river or a road under
+    // it), climbs from a grounded end like a ramp (6 %), and is smoothed along its length
+    const btowers = [];                                             // (towers of the great bridges: x z deckY dirx dirz span)
+    const deckH = ln => (ln.c <= 2 ? 8.5 : 6.5) + 5.5 * (ln.layer - 1);
+    const endKind = (li, p) => {
+      if (p[2] < -4 || p[2] > E + 4 || p[3] < -4 || p[3] > E + 4) return 2;
+      const c = jcell.get(jkey(Math.floor(p[0] / JG) + 1000, Math.floor(p[1] / JG) + 1000)); if (!c) return 0;
+      for (let n = 0; n < c.length; n += 2) {
+        const lj = c[n]; if (lj === li) continue;
+        const o = lines[lj]; if (!o.bridge || Math.abs(o.layer - lines[li].layer) > 1) continue;
+        const a = o.run[c[n + 1]], b = o.run[c[n + 1] + 1], dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1, t = clamp(((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / L2, 0, 1);
+        if (Math.hypot(p[0] - a[0] - dx * t, p[1] - a[1] - dz * t) < 1.5) return 1;
+      }
+      return 0;
+    };
+    lines.forEach((ln, li) => {
+      if (!ln.bridge) return;
+      const run = ln.run, n = run.length, H = deckH(ln), U = [0];
+      for (let i = 1; i < n; i++) U.push(U[i - 1] + Math.hypot(run[i][0] - run[i - 1][0], run[i][1] - run[i - 1][1]));
+      const len = Math.max(U[n - 1], 1e-3), G = run.map(p => ground(p[2], p[3]));
+      const k0 = endKind(li, run[0]), k1 = endKind(li, run[n - 1]);
+      const rel = k => k === 0 ? 0.06 : k === 1 || ln.c <= 2 ? H : null;
+      let y0 = rel(k0), y1 = rel(k1);
+      if (y0 != null) y0 += G[0]; if (y1 != null) y1 += G[n - 1];
+      if (y0 == null && y1 == null) y0 = y1 = Math.max(...G) + 0.5; else if (y0 == null) y0 = y1; else if (y1 == null) y1 = y0;
+      const d0 = k0 === 0 ? 0 : 1e9, d1 = k1 === 0 ? 0 : 1e9;
+      const D = run.map((p, i) => Math.max(y0 + (y1 - y0) * U[i] / len, G[i] + Math.min(H, Math.min(d0 + U[i], d1 + len - U[i]) * 0.06)));
+      // a great bridge over the sea (the map's sea level under it for a long way): up to a ship's height over the
+      // middle, climbing 6 % from the shores; its towers (the cable-stayed kind) a quarter of the way in from each shore
+      let wa = -1, wb = -1, ca = -1;
+      for (let i = 0; i < n; i++) { if (G[i] < 0.6) { if (ca < 0) ca = i; if (U[i] - U[ca] > (wb >= 0 ? U[wb] - U[wa] : -1)) { wa = ca; wb = i; } } else ca = -1; }
+      const Lw = wa >= 0 ? U[wb] - U[wa] : 0;
+      if (Lw > 300 && ln.c <= 3) {
+        const hmax = clamp(Lw * 0.065, 20, 55), um = (U[wa] + U[wb]) / 2;
+        for (let i = 0; i < n; i++) D[i] = Math.max(D[i], Math.min(hmax, 12 + (Lw / 2 - Math.abs(U[i] - um)) * 0.06));
+        if (Lw > 750) for (const f of [0.27, 0.73]) {
+          const ut = U[wa] + Lw * f; let k = 1; while (k < n - 1 && U[k] < ut) k++;
+          const A = run[k - 1], B = run[k], tf = clamp((ut - U[k - 1]) / Math.max(U[k] - U[k - 1], 1e-3), 0, 1), tl = Math.hypot(B[0] - A[0], B[1] - A[1]) || 1;
+          btowers.push(A[0] + (B[0] - A[0]) * tf, A[1] + (B[1] - A[1]) * tf, Math.min(hmax, 12 + (Lw / 2 - Math.abs(ut - um)) * 0.06), (B[0] - A[0]) / tl, (B[1] - A[1]) / tl, Lw);
+        }
+      }
+      ln.deck = D.map((y, i) => {
+        if (i === 0 || i === n - 1) return y;
+        let s = 0, ws = 0;
+        for (let j = 0; j < n; j++) { const e = 1 - Math.abs(U[j] - U[i]) / 35; if (e > 0) { s += D[j] * e; ws += e; } }
+        const sm = s / ws, edge = Math.min(U[i], len - U[i]);
+        return y + (sm - y) * clamp(edge / 20, 0, 1);                 // (the ends stay where they join)
+      });
+      ln.G = G; ln.U = U;
+    });
+    // a house's walls made real: framed windows standing off the wall (tall sliding doors on the ground floor
+    // of the garden side), the front door under a little canopy on the street side, canopies over some
+    // upper windows, an air-conditioner's outdoor unit, a downpipe at the corner. st kinds: 5 window,
+    // 8 tall window, 9 door, 4 fittings; u / yr are the metres across / up the opening, H its width
+    const K_WIN = 5 * 1024, K_TALL = 8 * 1024, K_DOOR = 9 * 1024, K_FIT = 4 * 1024;
+    function houseWall(x0, z0, x1, z1, len, nx, nz, front, base, top, seed, wi, shop) {
+      const ux = (x1 - x0) / len, uz = (z1 - z0) / len, o = 0.03;
+      const P = (u, y, d) => [x0 + ux * u + nx * d, y, z0 + uz * u + nz * d];
+      const opening = (u0, w, y0, h, k, st) => quad([P(u0, y0, o), P(u0 + w, y0, o), P(u0 + w, y0 + h, o), P(u0, y0 + h, o)], [0, 0, h, h], [nx, 0, nz], (seed | st), w, [0, w, w, 0]);
+      const canopy = (u0, w, y, d) => {                               // a thin sloping slab over an opening
+        quad([P(u0 - 0.1, y + 0.08, 0), P(u0 + w + 0.1, y + 0.08, 0), P(u0 + w + 0.1, y, d), P(u0 - 0.1, y, d)], [0, 0, 0, 0], nrm3([nx * 0.3, 1, nz * 0.3]), seed | K_FIT, 0);
+        quad([P(u0 - 0.1, y - 0.04, d), P(u0 + w + 0.1, y - 0.04, d), P(u0 + w + 0.1, y, d), P(u0 - 0.1, y, d)], [0, 0, 0, 0], [nx, 0, nz], seed | K_FIT, 0);
+      };
+      const fl = 2.8, nf = Math.max(1, Math.floor((top - base - 0.4) / fl));
+      const n = Math.max(1, Math.floor((len - 0.8) / 2.9)), step = len / n;
+      for (let f = shop ? 1 : 0; f < nf; f++) {                     // (a shop's ground floor is its shop front)
+        const yb = base + f * fl;
+        for (let k = 0; k < n; k++) {
+          const hsh = hash(seed * 7 + wi * 131 + k, f * 17 + 3), uc = (k + 0.5) * step;
+          if (f === 0 && front && k === 0) {                          // the front door, and its canopy
+            const w = 0.95; opening(uc - w / 2, w, yb + 0.15, 2.05, 0, K_DOOR); canopy(uc - w / 2 - 0.2, w + 0.4, yb + 2.45, 0.7); continue;
+          }
+          if ((hsh & 7) < 2) continue;                                // (a blank stretch of wall)
+          if (f === 0 && !front && (hsh >> 3 & 3) === 0 && step > 2.4) {   // a garden-side sliding door
+            const w = 1.7; opening(uc - w / 2, w, yb + 0.35, 1.85, 0, K_TALL); continue;
+          }
+          const w = (hsh >> 5 & 1) ? 1.25 : 0.8, h = f === 0 ? 1.1 : 1.05, y0 = yb + 0.95;
+          opening(uc - w / 2, w, y0, h, 0, K_WIN);
+          if (f > 0 && (hsh >> 6 & 3) === 0) canopy(uc - w / 2, w, y0 + h + 0.12, 0.35);
+        }
+      }
+      // one air-conditioner's outdoor unit on a side (not the street), and a downpipe at the far corner
+      const hs2 = hash(seed * 3 + wi, 71);
+      if (!front && (hs2 & 3) === 0 && len > 2.5) {
+        const u0 = len * 0.3 + (hs2 >> 2 & 7) * 0.1, d0 = 0.05, d1 = 0.35, y0 = base + 0.05, y1 = base + 0.65, w = 0.8;
+        quad([P(u0, y0, d1), P(u0 + w, y0, d1), P(u0 + w, y1, d1), P(u0, y1, d1)], [0, 0, 0.6, 0.6], [nx, 0, nz], seed | K_FIT | 512, w, [0, w, w, 0]);
+        quad([P(u0, y1, d0), P(u0 + w, y1, d0), P(u0 + w, y1, d1), P(u0, y1, d1)], [0, 0, 0, 0], [0, 1, 0], seed | K_FIT, 0);
+        quad([P(u0, y0, d0), P(u0, y0, d1), P(u0, y1, d1), P(u0, y1, d0)], [0, 0, 0, 0], [-ux, 0, -uz], seed | K_FIT, 0);
+        quad([P(u0 + w, y0, d1), P(u0 + w, y0, d0), P(u0 + w, y1, d0), P(u0 + w, y1, d1)], [0, 0, 0, 0], [ux, 0, uz], seed | K_FIT, 0);
+      }
+      if ((hs2 >> 5 & 1) && len > 2) {
+        const u = len - 0.12, t = 0.045;
+        quad([P(u - t, base, 0.08), P(u + t, base, 0.08), P(u + t, top - 0.1, 0.08), P(u - t, top - 0.1, 0.08)], [0, 0, 0, 0], [nx, 0, nz], seed | K_FIT, 0);
+      }
+    }
+    // how far a point is from the edge of the nearest road (of class <= maxC), and that road's class
+    const roadNear = (x, z, maxC) => {
+      roadNear.c = 99;
+      const c = jcell.get(jkey(Math.floor(x / JG) + 1000, Math.floor(z / JG) + 1000)); if (!c) return 1e9;
+      let best = 1e9;
+      for (let n = 0; n < c.length; n += 2) {
+        const o = lines[c[n]]; if (o.c > maxC || o.bridge) continue;
+        const a = o.run[c[n + 1]], b = o.run[c[n + 1] + 1], dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1, t = clamp(((x - a[0]) * dx + (z - a[1]) * dz) / L2, 0, 1);
+        const d = Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t) - o.w / 2;
+        if (d < best) { best = d; roadNear.c = o.c; }
+      }
+      return best;
+    };
+    // how far a point is from the edge of any other (ground) road than line li
+    const edgeDist = (li, x, z) => {
+      const c = jcell.get(jkey(Math.floor(x / JG) + 1000, Math.floor(z / JG) + 1000)); if (!c) return 1e9;
+      let best = 1e9;
+      for (let n = 0; n < c.length; n += 2) {
+        if (c[n] === li) continue;
+        const o = lines[c[n]]; if (o.bridge || o.c > 7) continue;
+        const a = o.run[c[n + 1]], b = o.run[c[n + 1] + 1], dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1, t = clamp(((x - a[0]) * dx + (z - a[1]) * dz) / L2, 0, 1);
+        best = Math.min(best, Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t) - o.w / 2);
+      }
+      return best;
+    };
+    // the nearest road's edge point (of class <= maxC): where, which way is out from the road, and the road
+    const roadEdge = (x, z, maxC) => {
+      const c = jcell.get(jkey(Math.floor(x / JG) + 1000, Math.floor(z / JG) + 1000)); if (!c) return null;
+      let best = null;
+      for (let n = 0; n < c.length; n += 2) {
+        const o = lines[c[n]]; if (o.c > maxC || o.bridge) continue;
+        const a = o.run[c[n + 1]], b = o.run[c[n + 1] + 1], dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1, t = clamp(((x - a[0]) * dx + (z - a[1]) * dz) / L2, 0, 1);
+        const px = a[0] + dx * t, pz = a[1] + dz * t, d = Math.hypot(x - px, z - pz);
+        if (!best || d - o.w / 2 < best.d) {
+          const l = Math.sqrt(L2); let nx = -dz / l, nz = dx / l; if ((x - px) * nx + (z - pz) * nz < 0) { nx = -nx; nz = -nz; }
+          best = { d: d - o.w / 2, x: px + nx * o.w / 2, z: pz + nz * o.w / 2, nx, nz, c: o.c, w: o.w };
+        }
+      }
+      return best;
+    };
+    // the airport, read before the buildings (which of them are terminals, hangars, a control tower): the
+    // aerodrome's outline, the aprons, the gates (local metres)
+    const aeroRings = [], apRings = [], aeroGates = [], termWalls = [], stands = [];
+    const walks = [];                                                // (pavements to walk: [n, x z y ...] per run)
+    const skirt = [];                                                // (the buildings' contact shadows: indices, drawn after all else)
+    const inRings = (list, x, z) => {
+      for (const A of list) {
+        if (x < A.x0 || x > A.x1 || z < A.z0 || z > A.z1) continue;
+        let inside = false;
+        for (const r of A.rings) for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+          if ((r[i + 1] > z) !== (r[j + 1] > z) && x < (r[j] - r[i]) * (z - r[i + 1]) / (r[j + 1] - r[i + 1]) + r[i]) inside = !inside;
+        }
+        if (inside) return true;
+      }
+      return false;
+    };
+    const onApron = (x, z) => inRings(apRings, x, z), inAero = (x, z) => inRings(aeroRings, x, z);
+    if (L.aeroway) {
+      for (const [cls, list] of [['aerodrome', aeroRings], ['apron', apRings]]) for (const poly of polygons(L.aeroway, E, p => p.class === cls)) {
+        const rings = []; let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+        for (const r of poly.rings) { const o = []; for (let i = 0; i < r.length; i += 2) { const X = lx(r[i]), Z = lz(r[i + 1]); o.push(X, Z); x0 = Math.min(x0, X); x1 = Math.max(x1, X); z0 = Math.min(z0, Z); z1 = Math.max(z1, Z); } rings.push(o); }
+        list.push({ rings, x0, z0, x1, z1, poly });
+      }
+      for (const fe of L.aeroway.feats) {
+        const f = readFeature(L.aeroway, fe); if (f.type !== 1 || f.props.class !== 'gate' || !f.geom) continue;
+        const pt = decodePoints(f.geom); if (pt.length) aeroGates.push([lx(pt[0]), lz(pt[1]), String(f.props.ref || '')]);
+      }
+    }
+    const boxes = [], ringXZ = [], ringOff = [0], bRange = [], bCen = [];
+    const shopWalls = [];                                             // outer walls at street level: x0 z0 x1 z1 nx nz base
+    let maxTop = -1e9, minG = 1e9;
+    for (let bi = 0; bi < bpolys.length; bi++) {
+      const poly = bpolys[bi], pr = poly.props, ext = poly.rings[0];
+      let h = +pr.render_height || 0, mh = +pr.render_min_height || 0;
+      if (h < 2.5) h = 3;
+      if (mh >= h - 0.5) continue;
+      // at an airport: the terminals (gates along them), hangars (big and plain, the map has no height for most:
+      // a hangar's), the control tower (tall and slim)
+      let air = 0;
+      if (aeroRings.length && mh < 1) {
+        let ax = 0, az = 0; const k0 = ext.length / 2;
+        for (let i = 0; i < ext.length; i += 2) { ax += ext[i]; az += ext[i + 1]; }
+        if (inAero(lx(ax / k0), lz(az / k0))) {
+          const fl = []; for (let i = 0; i < ext.length; i += 2) fl.push(lx(ext[i]), lz(ext[i + 1]));
+          const ar = Math.abs(ringArea(fl));
+          const nearGate = aeroGates.some(([gx, gz]) => {
+            for (let i = 0; i < fl.length; i += 2) {
+              const j = (i + 2) % fl.length, dx = fl[j] - fl[i], dz = fl[j + 1] - fl[i + 1], L2 = dx * dx + dz * dz || 1, t = clamp(((gx - fl[i]) * dx + (gz - fl[i + 1]) * dz) / L2, 0, 1);
+              if (Math.hypot(gx - fl[i] - dx * t, gz - fl[i + 1] - dz * t) < 45) return true;
+            }
+            return false;
+          });
+          if (h > 55 && ar < 1200) air = 3;
+          else if (nearGate && ar > 1500) { air = 1; if (h < 15) h = 22; }
+          else if (ar > 4000 && h < 40) { air = 2; if (h <= 8) h = 21 + (hash(ext[0], ext[1]) & 7) * 1.5; }
+        }
+      }
+      // ground: lowest point under the footprint so no corner floats
+      let gmin = 1e9, gmax = -1e9, cx = 0, cy = 0;
+      const nk = ext.length / 2, stp = Math.max(1, Math.floor(nk / 12));
+      for (let i = 0; i < ext.length; i += 2) { cx += ext[i]; cy += ext[i + 1]; }
+      cx /= nk; cy /= nk;
+      for (let i = 0; i < ext.length; i += 2 * stp) { const g = ground(ext[i], ext[i + 1]); gmin = Math.min(gmin, g); gmax = Math.max(gmax, g); }
+      const gc = ground(cx, cy); gmin = Math.min(gmin, gc); gmax = Math.max(gmax, gc);
+      const base = gmin, top = (gmin + gmax) / 2 + h, bot = mh > 0 ? (gmin + gmax) / 2 + mh : base - 2.5;
+      const H = top - base, seed = hash(ext[0] + bi * 7, ext[1]) & 255;
+      const iStart = q;
+      maxTop = Math.max(maxTop, top); minG = Math.min(minG, bot);
+      // footprint in metres, its oriented rectangle, and what kind of roof it gets
+      const flat = [], holes = [];
+      for (let r = 0; r < poly.rings.length; r++) { if (r) holes.push(flat.length / 2); const rr = poly.rings[r]; for (let i = 0; i < rr.length; i += 2) flat.push(lx(rr[i]), lz(rr[i + 1])); }
+      const area = Math.abs(ringArea(flat));
+      const ob = poly.rings.length === 1 && h < 13 && area < 420 ? obb(flat) : null;
+      const pitched = !!(ob && ob.fill > 0.82 && ob.l < 40 && ob.w > 3);
+      const parapet = !pitched && h >= 7 ? 0.9 : 0;
+      // what the building is, for its facade (st bits: seed, 256 roof, 512 a feature wall, 1024 * kind):
+      // 0 offices and mixed blocks, 1 houses, 2 apartment blocks (マンション, balconies on the sunny long side),
+      // 3 towers. Walls facing a busy street get shop fronts at street level (a feature wall of kind 0 or 1).
+      const ob2 = ob || (poly.rings.length === 1 && area < 8000 && h >= 11 ? obb(flat) : null);
+      const hs = hash(seed * 13 + bi, 91);
+      const kind = air === 1 || air === 3 ? 10 : air === 2 ? 11 : h > 45 ? 3 : h < 11 && area < 420 ? 1 : h >= 11 && ob2 && ob2.fill > 0.8 && ob2.l > 1.6 * ob2.w && ob2.w < 24 && (hs & 3) ? 2 : 0;
+      if (air === 3) {
+        controlTower(lx(cx), lz(cy), base, top, seed);
+        bRange.push(iStart, q - iStart); bCen.push(lx(cx), lz(cy));
+        const rr0 = 6; ringXZ.push(lx(cx) - rr0, lz(cy) - rr0, lx(cx) + rr0, lz(cy) - rr0, lx(cx) + rr0, lz(cy) + rr0, lx(cx) - rr0, lz(cy) + rr0); ringOff.push(ringXZ.length);
+        boxes.push(lx(cx) - rr0, lz(cy) - rr0, lx(cx) + rr0, lz(cy) + rr0, top);
+        continue;
+      }
+      const walls = [];
+      for (let r = 0; r < poly.rings.length; r++) {
+        const rr = poly.rings[r], k = rr.length / 2;
+        for (let i = 0; i < k; i++) {
+          const j = (i + 1) % k, ax = rr[i * 2], ay = rr[i * 2 + 1], bx = rr[j * 2], by = rr[j * 2 + 1];
+          if ((ax === 0 && bx === 0) || (ax === E && bx === E) || (ay === 0 && by === 0) || (ay === E && by === E)) continue;
+          const x0 = lx(ax), z0 = lz(ay), x1 = lx(bx), z1 = lz(by), dx = x1 - x0, dz = z1 - z0, len = Math.hypot(dx, dz);
+          if (len < 0.05) continue;
+          walls.push([x0, z0, x1, z1, len, dz / len, -dx / len, r === 0, 0]);
+        }
+      }
+      if (kind < 2 && h < 30) {                                         // shop fronts on the street
+        let best = 99;
+        for (const w of walls) if (w[7] && w[4] > 3) {
+          const mx = (w[0] + w[2]) / 2 + w[5] * 1.2, mz = (w[1] + w[3]) / 2 + w[6] * 1.2, d = roadNear(mx, mz, 6);
+          if (d < 7 && roadNear(mx + w[5] * 3, mz + w[6] * 3, 6) < d) { w[8] = 1; best = Math.min(best, roadNear.c); }
+        }
+        const chance = best <= 4 ? 0.85 : best <= 5 ? 0.6 : best <= 6 ? (kind === 1 ? 0.12 : 0.35) : 0;
+        if ((hs >>> 8 & 255) >= chance * 256) for (const w of walls) w[8] = 0;
+      } else if (kind === 11) {                                         // a hangar's door: its long side that opens onto an apron
+        let bl = 0, bw = null;
+        for (const w of walls) if (w[7] && w[4] > 25 && w[4] > bl && onApron((w[0] + w[2]) / 2 + w[5] * 40, (w[1] + w[3]) / 2 + w[6] * 40)) { bl = w[4]; bw = w; }
+        if (bw) bw[8] = 1;
+      } else if (kind === 2) {                                          // balconies: the long walls facing most to the sun
+        let bestS = -2;
+        for (const w of walls) if (w[7] && w[4] > 6) bestS = Math.max(bestS, w[6]);
+        for (const w of walls) if (w[7] && w[4] > 6 && w[6] > Math.max(bestS - 0.35, -0.3)) w[8] = 1;
+      }
+      const st0 = seed + 1024 * kind;
+      // a tall block over a nearly rectangular footprint: a podium (the shops and lobbies) over the whole of it,
+      // the tower set back above, its top storeys set back again: the steps of a real skyline
+      let wallTop = top, splitTop = false;
+      if (kind === 3 && poly.rings.length === 1 && area > 700) {
+        const o3 = obb(flat);
+        if (o3 && o3.fill > 0.82 && o3.w > 18) {
+          const ph = clamp(h * 0.16, 9, 16), ins = clamp(o3.w * 0.12, 2.5, 7), vx = -o3.uz, vz = o3.ux;
+          const tbox = (hl, hw, y0, y1) => {
+            const C = (i, j) => [o3.cx + o3.ux * hl * i + vx * hw * j, o3.cz + o3.uz * hl * i + vz * hw * j], cs = [C(-1, -1), C(1, -1), C(1, 1), C(-1, 1)];
+            for (let k = 0; k < 4; k++) {
+              const a = cs[k], b = cs[(k + 1) % 4], dx = b[0] - a[0], dz = b[1] - a[1], len = Math.hypot(dx, dz) || 1;
+              let nx = dz / len, nz = -dx / len; if (nx * ((a[0] + b[0]) / 2 - o3.cx) + nz * ((a[1] + b[1]) / 2 - o3.cz) < 0) { nx = -nx; nz = -nz; }
+              quad([[a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], y1, b[1]], [a[0], y1, a[1]]], [y0 - base, y0 - base, y1 - base, y1 - base], [nx, 0, nz], st0, H, [0, len, len, 0]);
+            }
+            quad(cs.map(c => [c[0], y1, c[1]]), [H, H, H, H], [0, 1, 0], st0 + 256, H);
+          };
+          const tl = o3.l / 2 - ins, tw = o3.w / 2 - ins;
+          tbox(tl, tw, base + ph, top - 4.5);
+          tbox(tl - 1.6, tw - 1.6, top - 4.5, top);
+          wallTop = base + ph; splitTop = true;
+        }
+      }
+      if (h < 60 && !air) for (const w of walls) if (w[7] && w[4] > 2.2) shopWalls.push(w[0], w[1], w[2], w[3], w[5], w[6], base);
+      if (air === 1) {                                                   // (each wall's normal made to face out of the terminal, whichever way the map wound it)
+        const inB = (x, z) => { let ins = false; for (const rr of poly.rings) for (let i = 0, j = rr.length - 2; i < rr.length; j = i, i += 2) { const zi = lz(rr[i + 1]), zj = lz(rr[j + 1]); if ((zi > z) !== (zj > z) && x < (lx(rr[j]) - lx(rr[i])) * (z - zi) / (zj - zi) + lx(rr[i])) ins = !ins; } return ins; };
+        for (const w of walls) if (w[7] && w[4] > 3) {
+          const mx = (w[0] + w[2]) / 2, mz = (w[1] + w[3]) / 2, s = inB(mx + w[5] * 1.5, mz + w[6] * 1.5) ? -1 : 1;
+          if (s < 0 && inB(mx - w[5] * 1.5, mz - w[6] * 1.5)) continue;         // (inside both ways: a sliver, no gate on it)
+          termWalls.push([w[0], w[1], w[2], w[3], w[5] * s, w[6] * s, base]);
+        }
+      }
+      // contact shadow on the ground round the building (drawn last over the roads and pavements, darkening)
+      if (mh < 1 && (h >= 7 || area > 150)) for (const w of walls) if (w[7] && w[4] > 3.5) {
+        const [x0, z0, x1, z1, len, nx, nz] = w, D = Math.min(1.2 + h * 0.08, 3.2), y = base + 0.2;
+        const a0 = rput(x0, z0, y, 0, 264, D, -1), a1 = rput(x1, z1, y, len, 264, D, -1), b0 = rput(x0 + nx * D, z0 + nz * D, y, 0, 264, D, 1), b1 = rput(x1 + nx * D, z1 + nz * D, y, len, 264, D, 1);
+        skirt.push(a0, b0, a1, a1, b0, b1);
+      }
+      // a house's street side (for its front door): the outer wall nearest a road
+      const fronts = new Set();
+      if (kind === 1) {
+        let bd = 1e9, bw = -1; walls.forEach((w, i) => { if (!w[7] || w[4] < 2) return; const d = roadNear((w[0] + w[2]) / 2 + w[5] * 1.5, (w[1] + w[3]) / 2 + w[6] * 1.5, 7); if (d < bd) { bd = d; bw = i; } }); if (bw >= 0 && bd < 12) fronts.add(bw);
+        // the block wall (ブロック塀) along the front of the plot, just in from the street, with its gap for the
+        // gate by the front door (or a car's width where there is room to park in front)
+        if (bw >= 0 && bd + 1.5 > 1.4 && bd + 1.5 < 8) {
+          const [x0, z0, x1, z1, len, fnx, fnz] = walls[bw], ux = (x1 - x0) / len, uz = (z1 - z0) / len, o = Math.min(bd + 1.5 - 0.3, 6);
+          const hb = hash(seed, 913), bh = 1.0 + (hb & 3) * 0.12, T = 0.15;
+          const P = (u, y, d) => [x0 + ux * u + fnx * d, y, z0 + uz * u + fnz * d];
+          const ua = -0.6, ub = len + 0.6, nwin = Math.max(1, Math.floor((len - 0.8) / 2.9)), uc = len / nwin * 0.5, gw = bd + 1.5 > 4.5 ? 3.0 : 1.1;
+          const ok = u => roadNear(...P(u, 0, o + 0.2).filter((v, k) => k !== 1), 7) > -0.1;
+          if (ok(ua) && ok(ub) && len > 3) for (const [u0, u1] of [[ua, uc - gw / 2], [uc + gw / 2, ub]]) {
+            if (u1 - u0 < 0.5) continue;
+            const Kb = 12 * 1024 | (seed & 255), w = u1 - u0, y0 = base - 0.3, y1 = base + bh;
+            quad([P(u0, y0, o), P(u1, y0, o), P(u1, y1, o), P(u0, y1, o)], [-0.3, -0.3, bh, bh], [fnx, 0, fnz], Kb, w, [u0, u1, u1, u0]);
+            quad([P(u1, y0, o - T), P(u0, y0, o - T), P(u0, y1, o - T), P(u1, y1, o - T)], [-0.3, -0.3, bh, bh], [-fnx, 0, -fnz], Kb, w, [u1, u0, u0, u1]);
+            quad([P(u0, y1, o - T), P(u1, y1, o - T), P(u1, y1, o), P(u0, y1, o)], [bh + 1, bh + 1, bh + 1, bh + 1], [0, 1, 0], Kb, w, [u0, u1, u1, u0]);
+            for (const [u, s] of [[u0, -1], [u1, 1]]) quad([P(u, y0, o), P(u, y0, o - T), P(u, y1, o - T), P(u, y1, o)], [-0.3, -0.3, bh, bh], [ux * s, 0, uz * s], Kb, T, [0, T, T, 0]);
+          }
+        }
+      }
+      let wi = 0;
+      for (const [x0, z0, x1, z1, len, fnx, fnz, isOuter, feat] of walls) {
+        const nx = Math.round(fnx * 127), nz = Math.round(fnz * 127), st = st0 + 512 * feat;
+        const a0 = put(x0, z0, bot, nx, 0, nz, 0, st, H, bot - base), b0 = put(x1, z1, bot, nx, 0, nz, len, st, H, bot - base);
+        const b1 = put(x1, z1, wallTop + parapet, nx, 0, nz, len, st, H, wallTop - base + parapet), a1 = put(x0, z0, wallTop + parapet, nx, 0, nz, 0, st, H, wallTop - base + parapet);
+        tri(a0, b1, b0); tri(a0, a1, b1);
+        if (feat && kind === 2) balconies(x0, z0, x1, z1, base, H, seed);
+        if (kind === 1 && isOuter && len > 1.8) houseWall(x0, z0, x1, z1, len, fnx, fnz, !feat && fronts.has(wi), base, top, seed, wi, !!feat);
+        wi++;
+      }
+      // roof: small, nearly rectangular houses get a pitched (gable or hipped) roof over their oriented
+      // rectangle; bigger flat roofs get a parapet band and some rooftop plant, so nothing reads as a plain box
+      const ridgeUp = pitched ? pitchedRoof(ob, top, st0, H, (seed & 7) < 5) : 0;
+      const t = ridgeUp ? [] : earcut(flat, holes);
+      if (!ridgeUp && !splitTop && h >= 7 && area > 250 && poly.rings.length === 1) roofPlant(flat, top, st0, H, area);
+      if (ridgeUp) maxTop = Math.max(maxTop, top + ridgeUp);
+      if (t.length) {
+        const v0 = v;
+        for (let i = 0; i < flat.length; i += 2) put(flat[i], flat[i + 1], wallTop, 0, 127, 0, 0, st0 + 256, H, wallTop - base);
+        for (let i = 0; i < t.length; i += 3) {
+          const a = t[i], b = t[i + 1], c = t[i + 2];
+          const e1x = flat[b * 2] - flat[a * 2], e1z = flat[b * 2 + 1] - flat[a * 2 + 1], e2x = flat[c * 2] - flat[a * 2], e2z = flat[c * 2 + 1] - flat[a * 2 + 1];
+          if (e1z * e2x - e1x * e2z >= 0) tri(v0 + a, v0 + b, v0 + c); else tri(v0 + a, v0 + c, v0 + b);
+        }
+      }
+      bRange.push(iStart, q - iStart); bCen.push(lx(cx), lz(cy));
+      // collision footprint (outer ring, local metres)
+      let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+      for (let i = 0; i < ext.length; i += 2) { const X = lx(ext[i]), Z = lz(ext[i + 1]); ringXZ.push(X, Z); x0 = Math.min(x0, X); x1 = Math.max(x1, X); z0 = Math.min(z0, Z); z1 = Math.max(z1, Z); }
+      ringOff.push(ringXZ.length);
+      boxes.push(x0, z0, x1, z1, top + ridgeUp);
+    }
+    // collision grid 32 x 32
+    const G = 32, nb = boxes.length / 5, cellCount = new Uint32Array(G * G + 1);
+    const cellOf = (X, sz) => clamp(Math.floor(X / sz * G), 0, G - 1);
+    for (let b = 0; b < nb; b++) for (let cz = cellOf(boxes[b * 5 + 1], Hm); cz <= cellOf(boxes[b * 5 + 3], Hm); cz++) for (let cx = cellOf(boxes[b * 5], W); cx <= cellOf(boxes[b * 5 + 2], W); cx++) cellCount[cz * G + cx + 1]++;
+    for (let i = 1; i <= G * G; i++) cellCount[i] += cellCount[i - 1];
+    const fill = cellCount.slice(), items = new Uint32Array(cellCount[G * G]);
+    for (let b = 0; b < nb; b++) for (let cz = cellOf(boxes[b * 5 + 1], Hm); cz <= cellOf(boxes[b * 5 + 3], Hm); cz++) for (let cx = cellOf(boxes[b * 5], W); cx <= cellOf(boxes[b * 5 + 2], W); cx++) items[fill[cz * G + cx]++] = b;
+    // 3) the ribbons. Bigger roads sit a few centimetres higher, so where roads overlap the main road is
+    //    the one seen (no flicker); junction areas lose their markings (a plain asphalt crossing)
+    // street furniture: [x, z, y, yaw, type] (types: PROP_* on the main thread). yaw turns the prop's +x
+    // street-level walls in a 16 m grid (shop signs, the wires into the houses)
+    const WG = 16, wgrid = new Map();
+    for (let k = 0; k < shopWalls.length; k += 7) {
+      const x0 = shopWalls[k], z0 = shopWalls[k + 1], x1 = shopWalls[k + 2], z1 = shopWalls[k + 3];
+      for (let i = Math.floor(Math.min(x0, x1) / WG); i <= Math.floor(Math.max(x0, x1) / WG); i++) for (let j = Math.floor(Math.min(z0, z1) / WG); j <= Math.floor(Math.max(z0, z1) / WG); j++) {
+        const key = jkey(i + 1000, j + 1000); let c = wgrid.get(key); if (!c) wgrid.set(key, c = []); c.push(k);
+      }
+    }
+    // overhead wires: pole to pole along the street [x0 z0 y0 yaw0 x1 z1 y1 yaw1 kind] (kind 0: a span between
+    // two poles, y the ground at each; 1: the service drop from a pole to a house, y1 where it meets the wall)
+    const wires = [], poles = [], fences = [], marks = [];             // (marks: road markings [x z y yaw roadWidth type])
+    const dropTo = (x, z, g, ox, oz, yaw) => {
+      // the walls each side of the street that look towards the pole: the nearest one on each side gets a line
+      const best = [null, null];
+      for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) {
+        const c = wgrid.get(jkey(Math.floor(x / WG) + i + 1000, Math.floor(z / WG) + j + 1000)); if (!c) continue;

@@ -45,6 +45,11 @@ const fs = require('fs'), path = require('path');
   await page.keyboard.press('Shift+Digit3'); await page.waitForTimeout(300);
   b = await page.evaluate(() => JSON.parse(localStorage.getItem('sorajima-views-' + ACFT.id) || '{}'));
   check('Shift+3 in the cockpit: the present view kept as 3', b[3] && Math.abs(b[3][0] - 0.4) < 0.01, a, b);
+  // Shift+L in the cockpit: the panel's flood light (off, dim, bright), not the wing leveller (L)
+  a = await page.evaluate(() => ({ flood: CPIT.flood ?? 1, ap: game.levelT || 0 }));
+  await page.keyboard.press('Shift+KeyL'); await page.waitForTimeout(300);
+  b = await page.evaluate(() => ({ flood: CPIT.flood ?? 1, ap: game.levelT || 0 }));
+  check('Shift+L in the cockpit: the panel light, not the leveller', b.flood === (a.flood + 1) % 3 && b.ap === a.ap, a, b);
   console.log(`${results.filter(x => x).length}/${results.length} passed`);
   await browser.close();
   process.exit(results.every(x => x) ? 0 : 1);

@@ -636,6 +636,7 @@ body.tut-on #toast{top:calc(max(12px,env(safe-area-inset-top)) + 150px)}
           <tr><td><kbd>Ctrl</kbd>+<kbd>E</kbd></td><td>エンジン自動始動（スイッチを順番に操作します）</td></tr>
           <tr><td><kbd>.</kbd></td><td>パーキングブレーキ</td></tr>
           <tr><td><kbd>1</kbd>〜<kbd>4</kbd>（コックピット）</td><td>視点：1 正面・2 計器盤・3 頭上パネル（小型機はスイッチ）・4 ペデスタルと無線機。<kbd>Shift</kbd>+数字で今の向きをその番号に保存</td></tr>
+          <tr><td><kbd>Shift</kbd>+<kbd>L</kbd>（コックピット）</td><td>計器盤ライト（夕方・夜）：OFF・暗め・明るめ。電源（BAT）が入っているときだけ点灯</td></tr>
           <tr><td>コックピット視点</td><td>計器盤のスイッチ・キー・レバーをクリック／ドラッグで操作。ドラッグで見回す、ホイールでズーム、ダブルクリックで正面。<kbd>Y</kbd> で操縦桿を隠す、<kbd>Shift</kbd>+<kbd>H</kbd> で画面の計器も表示</td></tr>
         </table>
         <h3>スマホ</h3>
@@ -14315,6 +14316,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyY' && e.shiftKey && cam.mode === 'cockpit') cpRealToggle();
   else if (e.code === 'KeyY' && cam.mode === 'cockpit') { CPIT.yoke = !CPIT.yoke; toast(CPIT.yoke ? '操縦桿を表示' : '操縦桿を非表示', 1200); }
   else if (e.code === 'KeyH' && cam.mode === 'cockpit') game.cpHud = !game.cpHud;
+  else if (e.code === 'KeyL' && e.shiftKey && cam.mode === 'cockpit') { CPIT.flood = ((CPIT.flood ?? 1) + 1) % 3; toast('計器盤ライト ' + ['OFF', '暗め', '明るめ'][CPIT.flood] + (SYS.bus ? '' : '（電源が入っていないので点きません）'), 1500); }
   else if (/^Digit[1-4]$/.test(e.code) && cam.mode === 'cockpit' && !(typeof SCHOOL !== 'undefined' && SCHOOL.atc)) cpView(+e.code.slice(5), e.shiftKey);
 });
 // =====================================================================
@@ -14881,6 +14883,11 @@ function drawCockpit(base) {
   gl.enable(gl.CULL_FACE);
   gl.activeTexture(gl.TEXTURE0);
 }
+// the panel's flood light: on in the dark (dusk and night) with power on the bus; Shift+L: off, dim, bright
+function cpFlood() {
+  const dark = ENV.night ? 1 : clamp((0.12 - ENV.sunDir[1]) * 6, 0, 1);
+  return SYS.bus ? dark * [0, 0.55, 1][CPIT.flood ?? 1] : 0;
+}
 // the 3D model cockpit: the model, then the live screens on it
 function cpDrawReal(A, L, C, real, base) {
   const M = M4.mul(base, M4.fromQP([0, 0, 0, 1], L.E));
@@ -14891,8 +14898,9 @@ function cpDrawReal(A, L, C, real, base) {
     if (d.part.startsWith('h:')) return cpHotMove(+d.part.slice(2), L);  // a switch, knob or lever
     const c = d.center; return M4.mul(M4.fromQP(qaxis([0, 0, 1], -s.ail * 0.75), [c[0], c[1], c[2] + s.elev * 0.07]), M4.fromQP([0, 0, 0, 1], vscale(c, -1)));
   };
-  glbDraw(real.m, M, [1.1, night ? 2.4 : 1.8, 1], d => d.part && typeof d.part === 'string' && d.part.startsWith('h:') ? yoke(d) : CPIT.yoke ? yoke(d) : new Float32Array(16));   // (Y hides the yokes: a zero matrix)
-  if (real.x) glbDraw(real.x, M, [1.1, night ? 2.4 : 1.8, 1]);
+  const fl = cpFlood(), flood = { flood: [0.30 * fl, 0.24 * fl, 0.17 * fl] };
+  glbDraw(real.m, M, [1.1, night ? 2.4 : 1.8, 1], d => d.part && typeof d.part === 'string' && d.part.startsWith('h:') ? yoke(d) : CPIT.yoke ? yoke(d) : new Float32Array(16), flood);   // (Y hides the yokes: a zero matrix)
+  if (real.x) glbDraw(real.x, M, [1.1, night ? 2.4 : 1.8, 1], null, flood);
   if (!CPIT.prog) CPIT.prog = makeProgram(CPANEL_VS, CPANEL_FS);
   const pr = CPIT.prog; setCommon(pr);
   gl.uniformMatrix4fv(pr.u.uModel, false, base);
@@ -15699,7 +15707,7 @@ function cpHotList() {
     cnt[H.a] = (cnt[H.a] || 0) + 1;
     const h = cpHotAct(H.a, cnt[H.a] - 1); if (!h) continue;
     // (each use is remembered, for the part's press / turn animation)
-    const o = { c: vadd(L.E, c), e: c, r, a: H.a, i: hi, t: -9, turn: 0, h: Object.assign({ key: 'hot:' + H.a + out.length }, h) };
+    const o = { c: vadd(L.E, c), e: c, r, a: H.a, i: hi, nth: cnt[H.a] - 1, t: -9, turn: 0, h: Object.assign({ key: 'hot:' + H.a + out.length }, h) };
     const mark = (f, dt) => f && ((...a) => { o.t = R.time; if (dt) o.turn += dt(...a); return f(...a); });
     o.h.click = mark(h.click, () => 1); o.h.down = mark(h.down); o.h.wheel = mark(h.wheel, d => d); o.h.drag = mark(h.drag, dv => -dv / 40);
     out.push(o); CPHOT.byIdx[hi] = o;
@@ -15767,6 +15775,7 @@ function cpHotMove(i, L) {
   if (a === 'flaps') { const st = flapStops(), f = st.indexOf(s.flapIdx) / Math.max(st.length - 1, 1); return T(lever ? [0, -0.01 * f, 0.07 * f] : [0, -0.03 * f, 0]); }
   if (a === 'gear') return T([0, s.gearDown ? -0.012 : 0.012, 0]);
   if (a === 'pbrake') return T(vscale(toward, SYS.pbrake ? -0.02 : 0));
+  if (a === 'fuelLever' && sysTwin() && SYS.eng) { const E = SYS.eng[o.nth % 2]; return T([0, E && E.fuel ? 0.0035 : -0.002, 0].map((v, k) => v + toward[k] * 0.003 * pulse)); }   // (each engine's own lever)
   if (CP_TOGGLE[a]) return T([0, CP_TOGGLE[a]() ? 0.0035 : -0.002, 0].map((v, k) => v + toward[k] * 0.003 * pulse));
   return T(vscale(toward, 0.0035 * pulse));                          // a push button
 }
@@ -15954,6 +15963,7 @@ uniform sampler2D uTex, uEmTex, uMRTex, uNrmTex, uOccTex;
 uniform int uHasTex, uHasEm, uHasMR;
 uniform float uNrmK, uOccK;       // the normal map's scale (0: none), the occlusion map's strength (0: none)
 uniform vec4 uColor;
+uniform vec3 uFlood;                   // a lamp inside the cockpit (the panel's flood light at night): the same on every surface
 uniform vec3 uEmis, uLightK;           // sun, ambient, emission multipliers
 uniform float uCut, uRough, uMetal, uCoat, uEnv, uFog, uShadow;
 uniform vec2 uAOy;          // a car's: the road's height under it, 1 (the sky shut out low down round its underside)
@@ -15999,6 +16009,7 @@ void main(){
     vec3 envC = uUrban > 0.0 && uAOy.y > 0.5 ? envRefl(R, 0.05) * mix(ao, 1.0, 0.6) : env;
     col = col * (1.0 - Fc) + (envC * uEnv + uSunCol * spc * uLightK.x) * Fc;
   }
+  col += base * uFlood * ao;
   vec3 em = uEmis; if (uHasEm == 1) em *= texture(uEmTex, vUV).rgb;
   col += em * uLightK.z;
   if (uFog > 0.5) col = applyFog(col, vWorld);
@@ -16163,7 +16174,7 @@ function glbDraw(model, M, lightK = [1, 1, 1], partM = null, o = {}) {
   const pr = GLB.prog, u = pr.u;
   setCommon(pr);
   if (o.shadow && typeof shadowUniforms === 'function') shadowUniforms(pr);
-  gl.uniform3fv(u.uLightK, lightK);
+  gl.uniform3fv(u.uLightK, lightK); gl.uniform3fv(u.uFlood, o.flood || [0, 0, 0]);
   gl.uniform1f(u.uEnv, o.env ?? 0.3); gl.uniform1f(u.uFog, o.fog ? 1 : 0); gl.uniform1f(u.uShadow, o.shadow ? 1 : 0);
   gl.uniform2f(u.uAOy, o.aoY ?? 0, o.aoY != null ? 1 : 0);
   gl.uniform1i(u.uTex, 0); gl.uniform1i(u.uEmTex, 1); gl.uniform1i(u.uMRTex, 3); gl.uniform1i(u.uNrmTex, 9); gl.uniform1i(u.uOccTex, 10);
@@ -17806,7 +17817,7 @@ addEventListener('keydown', e => {
   if (CAR.on && e.code === 'KeyV' && st === 'flying') { if (e.shiftKey) carNextPaint(); else carNextModel(); return; }
   if (CAR.on) return;                                               // aircraft keys do nothing while driving
   const map = { KeyG: 'gear', KeyV: 'flaps', KeyH: 'hud', KeyX: 'smoke', KeyL: 'level', KeyZ: 'time', KeyO: 'ap' };
-  if (map[e.code] && !(e.code === 'KeyH' && (e.shiftKey || cam.mode === 'cockpit'))) doAction(map[e.code]);   // (H in the cockpit: the cockpit's own display, its handler)
+  if (map[e.code] && !(e.code === 'KeyH' && (e.shiftKey || cam.mode === 'cockpit')) && !(e.code === 'KeyL' && e.shiftKey && cam.mode === 'cockpit')) doAction(map[e.code]);   // (H in the cockpit: the cockpit's own display, its handler)
   if (e.code === 'KeyT') doAction(e.shiftKey ? 'trimReset' : 'trim');
   if (e.code === 'KeyJ' && (st === 'flying' || st === 'paused')) { game.physView = !game.physView; toast(game.physView ? '物理の見える化：揚力・抗力・推力・重力と、その数値を表示' : '物理の見える化を閉じました', 1600); }
   if (e.code === 'KeyU' && st === 'flying') { game.autoRud = !game.autoRud; if ($('opt-autorud')) $('opt-autorud').checked = game.autoRud; savePrefs(); toast(game.autoRud ? '自動ラダー ON（ボールを自動で中央に）' : '自動ラダー OFF：Q / E でボールを中央に保ちます（離陸・上昇は右ラダー）', 2600); }

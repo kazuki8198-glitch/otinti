@@ -66,6 +66,16 @@ const fs = require('fs'), path = require('path');
     }, ac);
     check(`${ac} flared by key taps: a soft touchdown`, r.fpm != null && r.fpm < 450 && !r.bounces && !r.noseFirst && !r.crashed, r);
   }
+  // the takeoff: full power and S held from Vr until the wheels leave (on the wheels the keys are the stick as before;
+  // the hold took the rotation away once: the C172 did not leave the ground below 100 kt)
+  for (const [ac, max] of [['c172', 70], ['b738', 185]]) {
+    const r = await page.evaluate((ac) => {
+      window.__ft.setup({ ac, mode: 'runway' }); game.assist = true; SYS.run = true; SYS.pbrake = false; let lift = null;
+      window.__ft.run(70, (s, c, dt) => { keys.KeyR = true; keys.KeyS = c.kias > ACFT.v.rotate && !lift; updateControls(dt); s.ovr = null; if (!c.onGround && c.aglR > 3 && !lift) lift = Math.round(c.kias); });
+      keys.KeyR = false; keys.KeyS = false; return { lift, vr: ACFT.v.rotate };
+    }, ac);
+    check(`${ac} takeoff with S from Vr: off the ground soon after Vr`, r.lift && r.lift < max, r);
+  }
   console.log(`${results.filter(x => x).length}/${results.length} passed`);
   await browser.close();
   process.exit(results.every(x => x) ? 0 : 1);

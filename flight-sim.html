@@ -3404,7 +3404,7 @@ function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
   const leveling = game.levelT > 0;
   const auto = game.ap && airborne && !s.crashed;
   s.assistOn = (game.assist || leveling || auto) && airborne && !s.crashed;
-  const holdP = s.keyHold && !auto && !leveling && !s.crashed && V > 12 && !s.ovr;   // (the keyboard's pitch hold flies the elevator)
+  const holdP = s.keyHold && !auto && !leveling && !s.crashed && V > 12 && !s.ovr && !s.onGround;   // (on the wheels: the stick as before, for the rotation)   // (the keyboard's pitch hold flies the elevator)
   if (!holdP) s.pHI = 0;                                              // (its slow term starts afresh when it takes over)
   if (!s.assistOn) {
     s.gI = 0; s.bI = 0;
@@ -17804,7 +17804,7 @@ function spawn(mode) {
     fly(pos, RWY.hdg, kt - 5, -3, V.apprFlaps, V.apprThr, true);
   }
   s.gLoad = 1; s.agl = 100;
-  game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.wasAir = false; game.parkTip = false; game.fuel0 = null; game.resultTimer = 0; game.colPrev = null; sim.tdLast = null; sim.pTgt = null; sim.pHI = 0; if (!(typeof SCHOOL !== 'undefined' && SCHOOL.active)) wxApply(); flightStateReset(); atcReset(); trafReset(); recReset(); failReset();
+  game.mode = mode; game.t = 0; game.firstTouch = null; game.landingDone = false; game.wasAir = false; game.parkTip = false; game.fuel0 = null; game.yawTip = false; game.resultTimer = 0; game.colPrev = null; sim.tdLast = null; sim.pTgt = null; sim.pHI = 0; if (!(typeof SCHOOL !== 'undefined' && SCHOOL.active)) wxApply(); flightStateReset(); atcReset(); trafReset(); recReset(); failReset();
   game.ap = false; game.timeScale = 1; game.track = []; game.arrived = false; game.trackT = 0;
   const cold = !!game.spawnCold && mode === 'runway' && !(typeof SCHOOL !== 'undefined' && SCHOOL.active); game.spawnCold = false;
   sysReset(cold);
@@ -18171,20 +18171,20 @@ function updateControls(dt) {
   const cv = v => Math.sign(v) * Math.pow(Math.abs(v), 1.3);
   if (analog) { s.pKey = tp; s.rKey = tr; s.pIn = k(s.pIn, tp); s.rIn = k(s.rIn, tr); }
   else { s.pKey = k(s.pKey || 0, tp); s.rKey = k(s.rKey || 0, tr); s.pIn = cv(s.pKey); s.rIn = cv(s.rKey); }
-  // keyboard pitch hold (the default with keys): W/S move the nose attitude to hold, released it stays there.
-  // A tap moves it a little (a flare), held it moves faster; on the ground it follows the nose until S lifts it
+  // keyboard pitch hold (the default with keys): in the air W/S move the nose attitude to hold, released it stays there.
+  // A tap moves it a little (a flare), held it moves faster. On the wheels the keys are the stick as they always were
+  // (S pulls the nose up for the rotation); the hold starts from the attitude at lift-off
   s.keyHold = !analog && game.keyHold !== false && game.state === 'flying';
   const thNow = attitude().pitch;
-  if (!s.keyHold || game.ap || game.levelT > 0 || s.pTgt == null || (s.onGround && tp <= 0)) { s.pTgt = thNow; s.pHeld = 0; }
-  if (s.keyHold && tp && !game.ap) {
+  if (!s.keyHold || game.ap || game.levelT > 0 || s.pTgt == null || s.onGround) { s.pTgt = thNow; s.pHeld = 0; }
+  if (s.keyHold && tp && !game.ap && !s.onGround) {
     s.pHeld = (s.pHeld || 0) + dt;
     const p0 = s.pTgt;
     s.pTgt = clamp(s.pTgt + tp * (s.pHeld < 0.5 ? 1.5 : 3) * dt, -20, ACFT.v.appr > 100 ? 18 : 22);
-    if (s.onGround) s.pTgt = Math.min(s.pTgt, thNow + 4);           // (before the wheels leave, not far ahead of the nose)
     s.pRate = dt > 0 ? (s.pTgt - p0) / dt : 0;
     s.pIn = 0;
   } else { s.pHeld = 0; s.pRate = 0; }
-  if (s.keyHold) s.pIn = 0;                                           // (the elevator is the hold's; the assist keeps the wings)
+  if (s.keyHold && !s.onGround) s.pIn = 0;                            // (in the air the elevator is the hold's; the assist keeps the wings)
   if (game.levelT > 0) game.levelT -= dt;
   s.rud = s.rud + clamp(ty - s.rud, -3 * dt, 3 * dt);
   if (game.state === 'flying') {
@@ -18414,6 +18414,11 @@ function gameChecks(dt) {
   game.warnGear = !s.gearDown && s.agl < 150 && s.ias * 1.94384 < ACFT.v.appr * 1.15 && s.vs < -1;
   // landing challenge: finished when stopped
   if (s.tailTouch && game.firstTouch && !game.landingDone) game.firstTouch.tail = true;
+  // the propeller's swing on the takeoff roll (the real thing): with the automatic rudder off and no rudder held, a word on what to do
+  if (s.onGround && !game.autoRud && !game.yawTip && AC.engine.type === 'prop' && s.thr > 0.6 && s.ias * KTS > 15 && Math.abs(s.rud) < 0.1) {
+    const dh = ((attitude().hdg - RWY.hdg + 540) % 360) - 180;
+    if (onPaved(s.pos[0], s.pos[2]) === 'rwy' && Math.abs(dh) > 5 && Math.abs(dh) < 90) { game.yawTip = true; toast(`機首が${dh < 0 ? '左' : '右'}に向くのはプロペラの回転の影響（本物と同じ）。${dh < 0 ? 'E' : 'Q'} キーのラダーで打ち消すか、U キーで自動ラダーを ON に`, 5000); }
+  }
   // free flight: the flight is complete once landed and parked (the parking brake set, or the engine stopped)
   if (game.fuel0 == null && typeof SYS !== 'undefined') game.fuel0 = SYS.fuelL + SYS.fuelR;
   if (!s.onGround && s.airTime > 5) { game.wasAir = true; if (game.landingDone && game.mode !== 'landing') game.landingDone = false; }
@@ -18449,7 +18454,7 @@ function finishLanding(ftIn) {
   if (ft.u < -RWY.len / 2) why.push('滑走路の手前に接地：進入角（PAPI 赤 2 白 2）を守る');
   else if (d > 420) why.push(`目標点より ${Math.round(d)} m 先に接地：フレアで浮かせすぎない`);
   if (Math.abs(ft.v) > 6) why.push(`センターラインから ${Math.abs(ft.v).toFixed(0)} m：ファイナルの早いうちにセンターラインに乗せる`);
-  if (ATC.on) for (const n of ATC.notes) why.push('管制：' + n);
+  if (ATC.used) for (const n of ATC.notes) why.push('管制：' + n);
   const base = ft.paved ? sink + zone + centre + stopOk : Math.round((sink + centre) * 0.3);
   const total = Math.max(0, base - minus);
   const grade = total >= 90 ? 'S' : total >= 75 ? 'A' : total >= 55 ? 'B' : 'C';
@@ -18483,7 +18488,7 @@ function flightSummary() {
     rows.push(['フライトの記録', '', ''], ['飛行時間（離陸〜接地）', '', m >= 1 ? `${m} 分` : `${Math.round(t1 - t0)} 秒`], ['飛んだ距離', '', `${(dist / 1852).toFixed(1)} nm（${(dist / 1000).toFixed(1)} km）`], ['最高高度', '', `${Math.round(top / 100) * 100} ft`]);
   }
   if (game.fuel0 != null) { const used = game.fuel0 - (SYS.fuelL + SYS.fuelR); rows.push(['使った燃料', '', sysPiston() ? `${used.toFixed(1)} gal（${(used * 3.785).toFixed(0)} L）` : `${Math.round(used).toLocaleString()} kg`]); }
-  if (ATC.on) rows.push(['管制', '', ATC.notes.length ? ATC.notes.join('／') : `交信 ${ATC.log.filter(l => l.who === 'me').length} 回・指摘なし`]);
+  if (ATC.used) rows.push(['管制', '', ATC.notes.length ? ATC.notes.join('／') : `交信 ${ATC.log.filter(l => l.who === 'me').length} 回・指摘なし`]);
   if (WX.vec || WX.fogD) rows.push(['天気', '', `${WX.vec ? `風 ${String(Math.round(WX.from / 10) * 10 || 360).padStart(3, '0')}° ${WX.kt} kt` : '風 穏やか'}${WX.fogD ? `・視程 ${game.vis === 'fog' ? '1.5' : '5'} km` : ''}`]);
   return rows;
 }
@@ -20170,7 +20175,8 @@ function flightStateReset() { FLT.phase = sim.onGround ? '駐機' : '巡航'; FL
 const ATC = { on: false, st: 'idle', need: null, needT: 0, nag: false, call: null, log: [], notes: [], clrTO: false, clrLand: false, el: null, t0: 0, voice: true, k: 0 };
 try { ATC.voice = localStorage.getItem('sorajima-atcvoice') !== '0'; } catch (e) {}
 const ATC_FREQ = { ground: '121.7', tower: '118.1', departure: '126.0', approach: '119.1' };
-function atcReset() { Object.assign(ATC, { on: false, st: 'idle', need: null, needT: 0, nag: false, call: null, log: [], notes: [], clrTO: false, clrLand: false, warnTO: false, warnLand: false, warnHold: false, gaSaid: false, freeT: 0, k: ATC.k + 1 }); atcDraw(); }
+// (in free flight the radio is there from the start, its next call shown; nothing is held against a pilot who never uses it)
+function atcReset() { Object.assign(ATC, { on: (game.mode === 'runway' || game.mode === 'air') && JW.active && !(typeof SCHOOL !== 'undefined' && SCHOOL.active), used: false, st: 'idle', need: null, needT: 0, nag: false, call: null, log: [], notes: [], clrTO: false, clrLand: false, warnTO: false, warnLand: false, warnHold: false, gaSaid: false, freeT: 0, k: ATC.k + 1 }); atcDraw(); }
 function atcCallsign() { return ACFT.v.appr > 100 ? 'Sorajima 101' : 'JA' + ({ c172: '4172', sport: '01SP' }[ACFT.id] || '3801'); }
 // the airport's name as its controllers say it on the radio (English; the ICAO code where the map has only Japanese)
 const ATC_NAMES = { RJTT: 'Tokyo', RJAA: 'Narita', RJBB: 'Kansai', RJOO: 'Osaka', RJBE: 'Kobe', RJGG: 'Chubu', RJCC: 'Chitose', RJFF: 'Fukuoka', ROAH: 'Naha', RJTO: 'Oshima', RJTH: 'Hachijojima', RJFC: 'Yakushima', RJER: 'Rishiri', RJSS: 'Sendai', RJCH: 'Hakodate', RJOA: 'Hiroshima', RJFK: 'Kagoshima', RJNK: 'Komatsu', RJSN: 'Niigata' };
@@ -20194,7 +20200,8 @@ function atcClr(unit, en, ja, rb, then) { atcSay('atc', unit, en, ja); ATC.need 
 function atcNote(t) { if (!ATC.notes.includes(t)) ATC.notes.push(t); }
 // Q: the next call, or the readback
 function atcKey() {
-  if (!ATC.on) { ATC.on = true; ATC.st = 'idle'; toast('管制との交信を始めます（Enter で呼びかけ・復唱）', 1800); }
+  if (!ATC.on) { ATC.on = true; ATC.st = 'idle'; }
+  if (!ATC.used) { ATC.used = true; toast('管制との交信を始めます（Enter で呼びかけ・復唱、Shift+Enter で音声 ON/OFF）', 2200); }
   if (ATC.need) { const n = ATC.need; ATC.need = null; atcSay('me', n.unit, n.rb); if (n.then) n.then(); return; }
   if (ATC.call) { const c = ATC.call; ATC.call = null; c.go(); return; }
   toast(ATC.hint || '今は交信することがありません', 1600);
@@ -20208,11 +20215,11 @@ function atcStep(dt) {
   if (ATC.need) {
     ATC.needT += dt;
     if (ATC.needT > 15 && !ATC.nag) { ATC.nag = true; atcSay('atc', ATC.need.unit, `${cs}, ${ap} ${ATC.need.unit}, read back.`, '復唱してください'); }
-    if (ATC.needT > 35) { atcNote('復唱しなかった指示があった（指示は必ず復唱する）'); const n = ATC.need; ATC.need = null; if (n.then) n.then(); }
+    if (ATC.needT > 35) { if (ATC.used) atcNote('復唱しなかった指示があった（指示は必ず復唱する）'); const n = ATC.need; ATC.need = null; if (n.then) n.then(); }
   }
   // the rules: no takeoff without the clearance, no landing without it
-  if (F.phase === '離陸滑走' && !ATC.clrTO && !ATC.warnTO) { ATC.warnTO = true; atcNote('離陸許可を受けずに離陸滑走を始めた'); atcSay('atc', 'tower', `${cs}, ${ap} tower, you are not cleared for takeoff!`, '離陸許可は出ていません'); }
-  if (F.phase === '着陸滑走' && !ATC.clrLand && !ATC.warnLand && ATC.st !== 'idle' && ATC.st !== 'ground' && ATC.st !== 'ready') { ATC.warnLand = true; atcNote('着陸許可を受けずに着陸した'); }
+  if (ATC.used && F.phase === '離陸滑走' && !ATC.clrTO && !ATC.warnTO) { ATC.warnTO = true; atcNote('離陸許可を受けずに離陸滑走を始めた'); atcSay('atc', 'tower', `${cs}, ${ap} tower, you are not cleared for takeoff!`, '離陸許可は出ていません'); }
+  if (ATC.used && F.phase === '着陸滑走' && !ATC.clrLand && !ATC.warnLand && ATC.st !== 'idle' && ATC.st !== 'ground' && ATC.st !== 'ready') { ATC.warnLand = true; atcNote('着陸許可を受けずに着陸した'); }
   let call = null, hint = '';
   switch (ATC.st) {
     case 'idle':                                                    // the first call: where the aircraft is decides which
@@ -20306,7 +20313,7 @@ function trafSpawn(kind) {
     : { st: 'lineup', u: -L2 + 70, v: 0, h: 0, spd: 0, hdg: RWY.hdg, pitch: 0, wait: 18 };
   Object.assign(T, { A, cs, kind, paint: TRAF.n % 2 ? PAINT_JAL : PAINT_ANA, gear: 1, t: 0, said: false, fade: 1 });
   TRAF.list.push(T);
-  if (ATC.on) {
+  if (ATC.used) {
     if (kind === 'arr') atcSay('other', 'tower', `${cs}, runway ${RWY.idents[0]}, cleared to land.`, `他機（${cs}）への着陸許可`);
     else atcSay('other', 'tower', `${cs}, runway ${RWY.idents[0]}, line up and wait.`, `他機（${cs}）が滑走路に入って待機`);
   }
@@ -20332,7 +20339,7 @@ function trafStep(dt) {
       case 'final': {                                                // down the glide path at the approach speed
         T.u += T.spd * dt; T.h = Math.max(0, Math.tan(3 * DEG) * (aim - T.u)); T.pitch = 2.5;
         if (T.u > aim - 3000 && (playerOnRwy || (s.onGround === false && Math.abs(pu - T.u) < 2500 && Math.abs(pv) < 200 && Math.abs(ph - T.h) < 120))) {
-          T.st = 'goaround'; if (ATC.on) atcSay('other', 'tower', `${T.cs}, go around, runway occupied.`, `他機（${T.cs}）に着陸復行の指示：滑走路が使用中`);
+          T.st = 'goaround'; if (ATC.used) atcSay('other', 'tower', `${T.cs}, go around, runway occupied.`, `他機（${T.cs}）に着陸復行の指示：滑走路が使用中`);
         }
         if (T.h < 15) T.st = 'flare';
         break;
@@ -20347,7 +20354,7 @@ function trafStep(dt) {
         if (Math.abs(T.v) > 220 || T.fade <= 0) T.gone = true;
         break;
       }
-      case 'lineup': T.wait -= dt; if (T.wait <= 0 && !playerFinal) { T.st = 'roll'; if (ATC.on) atcSay('other', 'tower', `${T.cs}, wind ${atcWind()}, runway ${RWY.idents[0]}, cleared for takeoff.`, `他機（${T.cs}）への離陸許可`); } break;
+      case 'lineup': T.wait -= dt; if (T.wait <= 0 && !playerFinal) { T.st = 'roll'; if (ATC.used) atcSay('other', 'tower', `${T.cs}, wind ${atcWind()}, runway ${RWY.idents[0]}, cleared for takeoff.`, `他機（${T.cs}）への離陸許可`); } break;
       case 'roll': T.spd += 2.1 * dt; T.u += T.spd * dt; if (T.spd > 78) { T.st = 'takeoff'; } break;
       case 'takeoff': T.spd += 1.2 * dt; T.u += T.spd * dt; T.pitch = Math.min(14, T.pitch + 3 * dt); if (T.pitch > 8) T.h += T.spd * Math.sin((T.pitch - 8) * DEG * 1.4) * dt; if (T.h > 10) T.st = 'climb'; break;
       case 'goaround': case 'climb':
@@ -20466,7 +20473,7 @@ function atcDraw() {
     el.style.cssText = 'position:fixed;left:12px;bottom:46px;max-width:min(460px,calc(100vw - 24px));background:rgba(8,14,22,.78);border:1px solid rgba(120,200,255,.25);border-radius:8px;padding:8px 10px;font:12px/1.45 var(--jp);color:#dfe8f0;pointer-events:none;z-index:6';
     document.body.append(el);
   }
-  const show = ATC.on && game.state === 'flying' && !(typeof CAR !== 'undefined' && CAR.on);
+  const show = ATC.on && (ATC.used || !!ATC.call) && game.state === 'flying' && !(typeof CAR !== 'undefined' && CAR.on);   // (not yet used: only when there is a call to make)
   el.hidden = !show; if (!show) return;
   const key = ATC.log.length + '|' + (ATC.need ? 1 : 0) + '|' + (ATC.call ? ATC.call.h : '') + '|' + ATC.hint + '|' + ATC.voice;
   if (el.dataset.k === key) return; el.dataset.k = key;

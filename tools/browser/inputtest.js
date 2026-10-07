@@ -52,8 +52,8 @@ const fs = require('fs'), path = require('path');
   check('Shift+L in the cockpit: the panel light, not the leveller', b.flood === (a.flood + 1) % 3 && b.ap === a.ap, a, b);
   // the radio is Enter (Q is the left rudder): Q leaves it off, Enter starts it
   await page.evaluate(() => { cam.mode = 'chase'; atcReset(); });
-  await page.keyboard.press('KeyQ'); await page.waitForTimeout(200); a = await page.evaluate(() => ATC.on);
-  await page.keyboard.press('Enter'); await page.waitForTimeout(300); b = await page.evaluate(() => ATC.on);
+  await page.keyboard.press('KeyQ'); await page.waitForTimeout(200); a = await page.evaluate(() => !!ATC.used);
+  await page.keyboard.press('Enter'); await page.waitForTimeout(300); b = await page.evaluate(() => !!ATC.used);
   check('Q: the rudder only; Enter: the radio', a === false && b === true, a, b);
   console.log(`${results.filter(x => x).length}/${results.length} passed`);
   await browser.close();

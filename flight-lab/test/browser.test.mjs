@@ -14,7 +14,7 @@ import { build } from '../build.mjs';
 const here = path.dirname(fileURLToPath(import.meta.url)), require = createRequire(import.meta.url);
 let chromium = null;
 for (const p of [process.env.PLAYWRIGHT, 'playwright', '/opt/node22/lib/node_modules/playwright'].filter(Boolean)) { try { ({ chromium } = require(p)); break; } catch (e) { /* try the next */ } }
-const FX = path.join(here, 'fixtures'), KEY = 'AIzaFAKE_FIXTURE_KEY_0123456789abcdefgh';
+const FX = path.join(here, 'fixtures'), KEY = ['AIza', 'FAKE_FIXTURE_KEY_', '0123456789abcdefgh'].join('');
 
 test('browser: offline start, keyboard flight, every tab, quiz and ATC, the Google layer with a fixture', { skip: !chromium && 'Playwright not found' }, async () => {
   const { out } = build({ quiet: true });

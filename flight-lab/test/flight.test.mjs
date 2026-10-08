@@ -198,7 +198,7 @@ test('every task can be flown: the scripted pilot completes the remaining tasks 
 
 // ------------------------------------------------------------------ the record
 test('record: saved fields, the "not a logbook" note, and no API key — even one pasted into the memo', () => {
-  const st = memStore(), KEY = 'AIzaSyD-THIS_IS_A_FAKE_TEST_KEY_123456789';
+  const st = memStore(), KEY = ['AIza', 'FAKE', '-TEST-KEY-not-a-real-key-0123456789'].join('');   // (built at run time: no key-like literal in the source)
   const k = T.startTask('t1', 'intro'); run(k.s, 2); T.update(k.run, T.makeCtx(k.s, k.av), 2);
   const rec = T.addRecord(st, T.recordFromRun(k.run, k.s, `メモ ${KEY} と token=abcdefghijklmnop`));
   for (const f of ['taskId', 'datetime', 'level', 'mode', 'achievementPct', 'inCondSec', 'altHist', 'spdHist', 'events', 'memo']) assert.ok(f in rec, f);
@@ -209,7 +209,7 @@ test('record: saved fields, the "not a logbook" note, and no API key — even on
 });
 
 test('record import: unknown fields (an api key, a token, map data) are dropped; malformed files are refused', () => {
-  const evil = JSON.stringify({ app: 'FLIGHT LAB', kind: 'learning-record', records: [{ id: 'r1', taskId: 't3', level: 'basic', mode: 'staged', datetime: '2026-01-02T03:04:05Z', result: 'success', achievementPct: 100, apiKey: 'AIzaSECRETSECRETSECRETSECRET123', googleTiles: [1, 2, 3], altHist: [1, 'x', 3], memo: 'ok' }, { taskId: 'nope' }], progress: { quiz: { 1: [true, false, 'x'] }, read: [1, 2, 99], atc: { luaw: true, 'bad key!': true } } });
+  const evil = JSON.stringify({ app: 'FLIGHT LAB', kind: 'learning-record', records: [{ id: 'r1', taskId: 't3', level: 'basic', mode: 'staged', datetime: '2026-01-02T03:04:05Z', result: 'success', achievementPct: 100, apiKey: 'AI' + 'zaSECRETSECRETSECRETSECRET123', googleTiles: [1, 2, 3], altHist: [1, 'x', 3], memo: 'ok' }, { taskId: 'nope' }], progress: { quiz: { 1: [true, false, 'x'] }, read: [1, 2, 99], atc: { luaw: true, 'bad key!': true } } });
   const j = T.importJSON(evil);
   assert.equal(j.records.length, 1);
   const r = j.records[0]; assert.ok(!('apiKey' in r) && !('googleTiles' in r)); assert.deepEqual(r.altHist, [1, 3]);

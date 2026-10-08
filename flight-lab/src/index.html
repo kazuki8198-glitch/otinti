@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FLIGHT LAB — 非公式の自主学習用 飛行訓練教材</title>
+<!--BUILD:CSS--><link rel="stylesheet" href="style.css"><!--/BUILD:CSS-->
+</head>
+<body>
+<header id="top">
+  <div class="brand"><b>FLIGHT LAB</b><span>公開情報を基にした非公式の自主学習用 飛行訓練教材（ANA 公式ではありません）</span></div>
+  <nav id="tabs" role="tablist" aria-label="画面の切り替え">
+    <button role="tab" data-tab="fly" class="on">飛行訓練</button>
+    <button role="tab" data-tab="curr">カリキュラム</button>
+    <button role="tab" data-tab="book">教科書</button>
+    <button role="tab" data-tab="sfb">Sanford・交信</button>
+    <button role="tab" data-tab="rec">訓練記録</button>
+    <button role="tab" data-tab="g3d">Google 3D 設定</button>
+    <button role="tab" data-tab="about">このアプリについて</button>
+  </nav>
+</header>
+<p id="disclaimer">本アプリは公開情報を基にした非公式の自主学習用教材です。実機訓練、教官の指示、POH/AFM、SOP、航空法規を優先してください。</p>
+<main>
+  <!-- ======================================================= flight -->
+  <section id="tab-fly" class="tab on" aria-label="飛行訓練">
+    <div id="viewWrap">
+      <canvas id="view3d" aria-label="外部視界（教材用の景色）"></canvas>
+      <div id="labels"></div>
+      <div id="hood" hidden>フード中（計器飛行の練習）<br>外の景色は見えません。下の計器（PFD）だけで飛んでください。</div>
+      <div id="hud"></div>
+      <div id="viewBtns">
+        <button id="bView" title="C キー">視点：操縦席</button>
+        <button id="bPause" title="P キー">一時停止</button>
+        <button id="bLayout" title="外部視界と計器の大きさ">配置</button>
+        <button id="bSound" aria-pressed="false">音 OFF</button>
+        <button id="bFull">全画面</button>
+      </div>
+      <div id="flash"></div>
+      <div id="pauseBadge" hidden>一時停止中（P で再開）</div>
+      <div id="gattr" hidden><span class="glogo">Google Maps</span><span id="gcredits"></span></div>
+      <div id="viewNote">景色は教材用の架空の地形です（LAB 空域・LAB RWY 36 は架空）</div>
+    </div>
+    <div id="panel">
+      <div class="disp" id="pfdBox">
+        <canvas id="pfd" aria-label="PFD（G1000型 教材表示）"></canvas>
+        <div class="keys" id="pfdKeys"></div>
+        <div class="keys" id="pfdKnobs"></div>
+      </div>
+      <div id="audio" aria-label="オーディオパネル（教材）"></div>
+      <div class="disp" id="mfdBox">
+        <canvas id="mfd" aria-label="MFD（G1000型 教材表示）"></canvas>
+        <div class="keys" id="mfdKeys"></div>
+        <div class="keys" id="mfdKnobs"></div>
+      </div>
+    </div>
+    <aside id="taskPanel" aria-label="訓練課題"></aside>
+  </section>
+
+  <!-- ======================================================= curriculum -->
+  <section id="tab-curr" class="tab" aria-label="カリキュラム"><div class="page" id="currPage"></div></section>
+  <!-- ======================================================= textbook -->
+  <section id="tab-book" class="tab" aria-label="教科書"><div class="page"><div id="bookWrap"><nav id="bookToc"></nav><article id="bookBody"></article></div></div></section>
+  <!-- ======================================================= Sanford and radio -->
+  <section id="tab-sfb" class="tab" aria-label="Sanford と交信"><div class="page" id="sfbPage"></div></section>
+  <!-- ======================================================= records -->
+  <section id="tab-rec" class="tab" aria-label="訓練記録"><div class="page" id="recPage"></div></section>
+  <!-- ======================================================= Google 3D -->
+  <section id="tab-g3d" class="tab" aria-label="Google 3D 設定"><div class="page" id="g3dPage"></div></section>
+  <!-- ======================================================= about -->
+  <section id="tab-about" class="tab" aria-label="このアプリについて"><div class="page" id="aboutPage"></div></section>
+</main>
+
+<div id="ack" hidden role="dialog" aria-modal="true" aria-labelledby="ackTitle">
+  <div class="box">
+    <h2 id="ackTitle">はじめに（必ずお読みください）</h2>
+    <p><b>本アプリは公開情報を基にした非公式の自主学習用教材です。実機訓練、教官の指示、POH/AFM、SOP、航空法規を優先してください。</b></p>
+    <p>ANA の公式ソフトウェアではなく、認定された訓練装置（FTD など）でもありません。飛行時間・技能・資格の証明にはなりません。速度・高度・許容差などの数値は「仮想教材値」です。</p>
+    <p>LAB RWY 36・LAB 空域・訓練点は架空です。Sanford の資料は学習用の要約・模式図で、航法には使えません（NOT FOR NAVIGATION）。実際の管制とはつながりません。</p>
+    <p style="text-align:right"><button class="primary" id="ackOk">理解しました</button></p>
+  </div>
+</div>
+
+<!--BUILD:JS-->
+<script src="physics.js"></script>
+<script src="avionics.js"></script>
+<script src="sanford-course.js"></script>
+<script src="curriculum.js"></script>
+<script src="training.js"></script>
+<script src="scene.js"></script>
+<script src="google3d.js"></script>
+<script src="app.js"></script>
+<!--/BUILD:JS-->
+</body>
+</html>

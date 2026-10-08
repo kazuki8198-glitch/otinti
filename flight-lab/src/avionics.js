@@ -386,9 +386,10 @@
     txt(g, `${Math.round(altInd / 10) * 10}`, sx + 96, sy + 72, 14); txt(g, 'FT', sx + 96, sy + 86, 9, C.grey);
     // --- the engine status (this teaching layout shows it on the PFD too) ---
     const run = d.engine && d.engine.running;
-    box(g, 8, 32, 128, 40, '#05070a', run ? C.line : C.red);
-    txt(g, run ? 'ENG RUN' : 'ENG STOP', 14, 44, 13, run ? C.green : C.red, 'left', 700);
-    txt(g, `${Math.round(fin(o.rpm))} RPM`, 14, 62, 13, C.white, 'left');
+    const ey = H - 136;
+    box(g, 8, ey, 128, 40, '#05070a', run ? C.line : C.red);
+    txt(g, run ? 'ENG RUN' : 'ENG STOP', 14, ey + 12, 13, run ? C.green : C.red, 'left', 700);
+    txt(g, `${Math.round(fin(o.rpm))} RPM`, 14, ey + 30, 13, C.white, 'left');
     // --- alerts ---
     if (o.stallWarn) { box(g, cx - 60, cy + 70, 120, 26, C.red, null); txt(g, 'STALL', cx, cy + 83, 18, '#fff', 'center', 800); }
     if (!run && !o.onGround) { box(g, cx - 90, cy + 100, 180, 22, '#3a0d0d', C.red); txt(g, 'ENGINE STOP — 滑空', cx, cy + 111, 13, C.red, 'center', 700, jp); }
@@ -409,7 +410,7 @@
     // RPM arc
     const rx = ew / 2, ry = 70, rr = ew * 0.34, rpm = clamp(fin(o.rpm), 0, 2800);
     g.lineWidth = 7;
-    const arc = (a, b, col) => { g.strokeStyle = col; g.beginPath(); g.arc(rx, ry, rr, (210 - 240 * a / 2800) * -DEG, (210 - 240 * b / 2800) * -DEG, true); g.stroke(); };
+    const arc = (a, b, col) => { g.strokeStyle = col; g.beginPath(); g.arc(rx, ry, rr, (210 - 240 * a / 2800) * -DEG, (210 - 240 * b / 2800) * -DEG, false); g.stroke(); };
     arc(500, 2700, C.green); arc(2700, 2800, C.red);
     const ta = (210 - 240 * rpm / 2800) * -DEG; line(g, rx, ry, rx + Math.cos(ta) * (rr - 4), ry + Math.sin(ta) * (rr - 4), C.white, 3);
     txt(g, Math.round(rpm), rx, ry + 22, 16, C.white, 'center', 700); txt(g, 'RPM', rx, ry + 38, 11, C.grey);
@@ -424,12 +425,12 @@
       ['VOLTS', '—', null, '未実装'],
       ['AMPS', '—', null, '未実装'],
     ];
-    let y = 130;
+    let y = 124; const dy = Math.max(26, Math.min(38, (H - 150) / rows.length));
     for (const [lab, val, frac, note] of rows) {
       txt(g, lab, 8, y, 11, C.grey, 'left', 600, jp); txt(g, val, ew - 8, y, 13, val === '—' ? C.grey : C.white, 'right', 700);
       if (frac != null) { box(g, 8, y + 9, ew - 16, 6, '#1b222b', null); g.fillStyle = C.green; g.fillRect(8, y + 9, (ew - 16) * clamp(frac, 0, 1), 6); }
-      else txt(g, note, ew - 8, y + 13, 9, C.grey, 'right', 500, jp);
-      y += 38;
+      else txt(g, note, ew - 8, y + 12, 9, C.grey, 'right', 500, jp);
+      y += dy;
     }
     txt(g, '— = 未実装（架空値は出しません）', ew / 2, H - 12, 9, C.grey, 'center', 500, jp);
     // --- the page area ---

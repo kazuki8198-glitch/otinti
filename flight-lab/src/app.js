@@ -287,6 +287,7 @@
     const av = S.k.av;
     const mon = n => btn(h('span', {}, h('span', { class: 'lamp' }), n), () => ctl('MON', n), `${n} の受信音（教材表示）`, av.audio.monitor[n] ? 'on' : '');
     a.append(
+      h('div', { class: 'small', style: 'color:#f3d9a4', text: 'G1000型配置と基本概念を学ぶ教材（Garmin 製品の再現ではありません）' }),
       h('h4', { text: 'AUDIO（GMA 型・教材）' }),
       h('div', { class: 'row' }, btn('COM1 MIC', () => { if (av.audio.mic !== 'COM1') ctl('MIC'); }, '送信機の選択（送信はできません）', av.audio.mic === 'COM1' ? 'on' : ''), btn('COM2 MIC', () => { if (av.audio.mic !== 'COM2') ctl('MIC'); }, '', av.audio.mic === 'COM2' ? 'on' : '')),
       h('div', { class: 'row' }, mon('COM1'), mon('COM2')), h('div', { class: 'row' }, mon('NAV1'), mon('NAV2')),
@@ -326,7 +327,7 @@
     tp.append(
       h('div', { class: 'row' }, btn('やり直し（R）', resetTask, '', 'primary'), btn(`教科書 第 ${T.chapter} 章`, () => { showTab('book'); openChapter(T.chapter); })),
       h('p', { class: 'small', text: T.brief }),
-      h('div', { class: 'small mute', text: `${T.en} ／ レベル「${L.name}」：高度 ±${L.alt} ft・速度 ±${L.spd} kt・針路 ±${L.hdg}°・保持 ${L.hold} 秒（仮想教材値）` }),
+      h('div', { class: 'small mute', text: `${T.en} ／ レベル「${L.name}」：高度 ±${L.alt} ft・速度 ±${L.spd} kt・針路 ±${L.hdg}°・保持 ${L.hold} 秒（仮想教材値。実機の速度・許容差は機体ごとに要確認）` }),
       h('div', { id: 'objective' }),
       h('div', { id: 'estSlot' }),
       h('h4', { text: '条件（すべて満たし続ける）' }), h('ul', { id: 'items' }),
@@ -611,7 +612,7 @@
       h('h3', { text: '実装したもの' }),
       h('ul', { class: 'small' }, ...[
         '簡略化した単発プロペラ機の飛行モデル（揚力・抗力・推力・重力・迎角・失速警報・ピッチ/バンク/ラダー・トリム・フラップ・風・IAS/TAS/GS/TRK/VSI/高度、エンジン停止と滑空、離陸・着陸・滑走路逸脱・ハードランディングの判定）',
-        'G1000 型の配置と基本概念を学ぶ教材表示：PFD（姿勢・バンク目盛・速度/高度テープ・VSI・HSI・HDG バグ・ALT SEL・BARO・CDI・GS・TRK・AOA・エンジン状態・予備計器）、オーディオパネル（送信不可）、MFD（MAP/FPL・架空訓練点・距離・ETE・XTK・エンジン表示）',
+        'G1000型配置と基本概念を学ぶ教材としての表示（Garmin のソフトウェアの複製ではない）：PFD（姿勢・バンク目盛・速度/高度テープ・VSI・HSI・HDG バグ・ALT SEL・BARO・CDI・GS・TRK・AOA・エンジン状態・予備計器）、オーディオパネル（送信不可）、MFD（MAP/FPL・架空訓練点・距離・ETE・XTK・エンジン表示）',
         '12 の飛行課題 × 3 レベル（導入・基礎・精度）、連続保持による評価、ヒント、振り返り、学習記録（JSON 書き出し・読み込み）',
         '16 章の教科書（日本語の説明・英語の用語・例・注意・確認問題 2 問・参考資料）、6 段階のカリキュラム',
         'Sanford の資料（滑走路・Hot Spot・空域・模式図）と英語 ATC の復唱練習 6 場面（音声合成）',
@@ -621,6 +622,8 @@
         '自動操縦（HDG / ALT への追従）— 意図的に未実装', '油圧・油温・EGT・電圧・電流（MFD では「—」表示）', '双発機（Seminole）の飛行モデル・片発停止の操縦（第 15 章は座学のみ）',
         'エンジンの再始動手順、混合比・キャブヒート・燃料タンク切替', '実在空港の滑走路・誘導路での離着陸、Google の建物・地形との衝突', '実空域・NOTAM・飛行計画・実際の管制、音声認識・録音・送信', '雲・視程の変化・夜間・乱気流モデル（突風は簡易）',
         'G1000 の全機能（地図データ・地形警報・トラフィック・タイマー・インセット地図など）'].map(t => h('li', { text: t }))),
+      h('h3', { text: '数値の扱い' }),
+      h('p', { class: 'small', text: '速度・高度・許容差・接地基準・エンジンの値は「仮想教材値」です。高度計規正値の換算（0.01 inHg ≈ 10 ft）や磁気偏差 6°W などは「教材用近似」です。実際の値・手順は機体ごとに要確認（POH/AFM・チェックリスト・教官）。' }),
       h('h3', { text: 'データとプライバシー' }),
       h('p', { class: 'small', text: '学習記録と進み具合はこのブラウザの localStorage にだけ保存します（サーバーへ送りません）。Google 3D を接続したときだけ、Google のタイル配信先へ API キー付きでタイルを要求します。キーは保存しません。外部リンク（参考資料）はクリックしたときだけ開きます。' }),
       h('h3', { text: 'ライセンス' }),

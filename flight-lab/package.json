@@ -1,0 +1,10 @@
+{
+  "name": "flight-lab",
+  "private": true,
+  "description": "FLIGHT LAB — an unofficial self-study flight training simulator (single HTML file). Not ANA software, not a certified training device.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node build.mjs && node --test test/flight.test.mjs test/avionics.test.mjs test/browser.test.mjs"
+  }
+}

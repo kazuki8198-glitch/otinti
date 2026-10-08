@@ -207,7 +207,7 @@
           reach: c => c.av.altSel === 4000 && c.av.hdgBug === 90, hold: () => 0 },
         { label: '上昇右旋回して 4,000 ft・HDG 090 で直進水平', items: (c, L) => [altItem(c, 4000, L.alt), hdgItem(c, 90, L.hdg), wingsLevel(c, 5), iasItem(c, 97, L.spd + 3)], hold: L => L.hold },
       ],
-      hints: ['BARO が実際より低いと、高度計は実際より低く表示する（設定差 0.01 inHg ≈ 10 ft、教材近似）。', '上昇と旋回を同時にするときもバンクは 20° 以内に。', 'ALT SEL の手前 50〜100 ft から水平移行を始める。', '目標値は口に出して確認する（"Four thousand, heading zero niner zero"）。'],
+      hints: ['BARO が実際より低いと、高度計は実際より低く表示する（設定差 0.01 inHg ≈ 10 ft、教材用近似）。', '上昇と旋回を同時にするときもバンクは 20° 以内に。', 'ALT SEL の手前 50〜100 ft から水平移行を始める。', '目標値は口に出して確認する（"Four thousand, heading zero niner zero"）。'],
       points: ['規正値の設定は高度の基準そのもの。設定後に滑走路標高などで確かめる（実機は手順に従う）。', '"Altitude, heading" のように、変更前に目標をセットしてから操作する習慣。'],
     },
     {

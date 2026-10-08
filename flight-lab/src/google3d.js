@@ -284,7 +284,7 @@
       for (const [n] of req) { if (busy >= cap || G.upq.length > 10) break; if (n.state !== 0) continue; dispatch(n); busy++; }
       uploadStep(); datumStep();
       if (f % 30 === 0) evict(f);
-      const now = performance.now(); if (now > G.creditT) { G.creditT = now + 1000; credits(); }
+      const now = performance.now(); if (now > G.creditT || out.length !== G.lastN) { G.creditT = now + 1000; G.lastN = out.length; credits(); }
     }
     function loadExt(n) {
       n.extState = 1;

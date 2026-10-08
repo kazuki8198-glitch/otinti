@@ -102,6 +102,7 @@
     { id: 'LABEB', name: 'LAB-B（架空）', n: 15000, e: -21000, kind: 'wpt' },
     { id: 'LABEC', name: 'LAB-C（架空）', n: -6000, e: -24000, kind: 'wpt' },
     { id: 'LABED', name: 'LAB-D（架空）', n: -16000, e: -38000, kind: 'wpt' },
+    { id: 'LABEF', name: 'LAB-F（架空・目的地変更先）', n: -2000, e: -33000, kind: 'wpt' },
     { id: 'SFBVW', name: 'Sanford 概略表示原点（模式図）', n: 0, e: 0, kind: 'ref' },
   ];
   const wpt = id => WAYPOINTS.find(w => w.id === id);
@@ -123,7 +124,7 @@
       pfdMenu: 'TOP',             // the PFD's softkey level: TOP / PFD / ALTUNIT
       wind: true, mfdPage: 'MAP', mfdRangeIdx: 4, mapNorthUp: true,
       fpl: { wps: ['LABRW', 'LABEA', 'LABEB'], active: 1 },
-      direct: null,               // D→ target id (overrides the flight plan leg)
+      direct: null, directFrom: null,   // D→ target id (overrides the flight plan leg) and where the D→ leg starts
       timer: 0,
     };
   }
@@ -156,7 +157,7 @@
       case 'NORTH_UP': av.mapNorthUp = !av.mapNorthUp; return av.mapNorthUp ? 'MAP NORTH UP' : 'MAP TRACK UP';
       case 'PFD_MENU': av.pfdMenu = dir; return `PFD ${dir}`;
       case 'WIND': av.wind = !av.wind; return `WIND ${av.wind ? 'ON' : 'OFF'}`;
-      case 'DIRECT': av.direct = dir || null; return dir ? `D→ ${dir}` : 'D→ 解除';
+      case 'DIRECT': av.direct = dir || null; av.directFrom = null; return dir ? `D→ ${dir}` : 'D→ 解除';
       case 'FPL_NEXT': av.fpl.active = clamp(av.fpl.active + dir, 1, av.fpl.wps.length - 1); av.direct = null; return `ACTIVE LEG → ${av.fpl.wps[av.fpl.active]}`;
       default: return '';
     }
@@ -173,7 +174,12 @@
     const out = { src: cdiName(av), dots: 0, toFrom: '', dtk: null, dis: null, ete: null, xtk: null, gsDots: null, brg: null, from: '', to: '', flag: '', crs: av.crs };
     // the GPS leg: direct-to, or the flight plan's active leg
     let A = null, B = null;
-    if (av.direct) { B = wpt(av.direct); A = av.directFrom || { n: pos.n, e: pos.e, id: 'P.POS' }; }
+    if (av.direct) {
+      // D→ starts a new leg from where the aircraft was when it was set (latched on the first solution after D→)
+      B = wpt(av.direct);
+      if (!av.directFrom) av.directFrom = { n: pos.n, e: pos.e, id: 'P.POS' };
+      A = av.directFrom;
+    }
     else { const w = av.fpl.wps; B = wpt(w[av.fpl.active]); A = wpt(w[av.fpl.active - 1]); }
     if (A && B) {
       out.from = A.id || ''; out.to = B.id; out.dtk = trueToMag(neBearing(A, B), varW);

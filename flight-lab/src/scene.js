@@ -188,7 +188,7 @@
     { id: 'LABED', col: [0.95, 0.85, 0.15], label: 'LAB-D（黄の塔）' },
     { id: 'LABEF', col: [0.90, 0.25, 0.80], label: 'LAB-F（紫の塔）' },
   ];
-  const LAKES = [[6000, -36500, 700, 1], [12500, -26000, 900, 2.3], [-9000, -27000, 600, 4], [-19000, -41000, 1100, 0.5], [2500, -47000, 500, 5.1], [-3500, -30500, 450, 2.9], [20000, -33000, 1300, 3.7], [9000, -18000, 800, 1.7]];   // n, e, radius m, shape seed
+  const LAKES = () => FL.physics.LAKES;   // n, e, radius m, shape seed (the same water the wheels find)
 
   function buildWorld(gl, P, A) {
     const R = P.LAB_RWY, G = P.GROUND_M, out = {};
@@ -247,7 +247,7 @@
       const n = cLAB[0] + (r() - 0.5) * 50000, e = cLAB[1] + (r() - 0.5) * 50000;
       if (e > -16000) continue;                                            // stay out of the Sanford display area
       const rc = P.rwyCoords(R, n, e); if (rc.along > -900 && rc.along < R.len + 900 && Math.abs(rc.cross) < 450) continue;
-      if (LAKES.some(L => Math.hypot(n - L[0], e - L[1]) < L[2] * 1.3)) continue;
+      if (LAKES().some(L => Math.hypot(n - L[0], e - L[1]) < L[2] * 1.3)) continue;
       const b = gl3(n, e, -G);
       if (r() < 0.82) {   // a clump of trees: a few cones
         const k = 2 + Math.floor(r() * 5);
@@ -266,45 +266,8 @@
     return out;
   }
 
-  // ---------------------------------------------------------------- the aircraft (body frame: x forward, y right, z down)
-  function buildAircraft(gl) {
-    const g = Geo(), W = [0.93, 0.93, 0.91], B = [0.16, 0.30, 0.62], D = [0.10, 0.12, 0.15], T = [0.25, 0.25, 0.27];
-    // section corners at station x: half width hw, top zt, bottom zb (z down)
-    const sec = (x, hw, zt, zb) => [[x, -hw, zb], [x, hw, zb], [x, hw, zt], [x, -hw, zt]];
-    const hexaX = (s0, s1, col) => {   // a solid between two sections (s0 aft, s1 forward)
-      const [a, b, c, d] = s0, [e, f, h, k] = s1;
-      g.quad(a, b, f, e, col); g.quad(b, c, h, f, col); g.quad(c, d, k, h, col); g.quad(d, a, e, k, col);
-    };
-    const S = [sec(-5.3, 0.10, -0.55, -0.20), sec(-3.0, 0.32, -0.62, 0.10), sec(-0.9, 0.58, -0.72, 0.45), sec(1.0, 0.60, -0.62, 0.45), sec(2.4, 0.42, -0.30, 0.35), sec(2.9, 0.18, -0.02, 0.18)];
-    for (let i = 0; i < S.length - 1; i++) hexaX(S[i], S[i + 1], i === 3 ? W : W);
-    g.quad(S[0][3], S[0][2], S[0][1], S[0][0], W); g.quad(S[5][0], S[5][1], S[5][2], S[5][3], T);
-    // cabin windows (dark panels on the sides) and the windscreen
-    for (const sgn of [-1, 1]) { const y = sgn * 0.605; g.quad(...(sgn < 0 ? [[-0.6, y, -0.25], [0.8, y, -0.25], [0.6, y, -0.62], [-0.7, y, -0.66]] : [[0.8, y, -0.25], [-0.6, y, -0.25], [-0.7, y, -0.66], [0.6, y, -0.62]]), D); }
-    g.quad([1.0, -0.56, -0.63], [1.0, 0.56, -0.63], [1.8, 0.48, -0.42], [1.8, -0.48, -0.42], D);
-    // a blue stripe
-    for (const sgn of [-1, 1]) { const y = sgn * 0.62; g.quad(...(sgn < 0 ? [[-5.0, y * 0.25, -0.30], [2.4, y * 0.75, -0.02], [2.4, y * 0.75, -0.12], [-5.0, y * 0.25, -0.38]] : [[2.4, y * 0.75, -0.02], [-5.0, y * 0.25, -0.30], [-5.0, y * 0.25, -0.38], [2.4, y * 0.75, -0.12]]), B); }
-    // low wing with dihedral (two panels)
-    for (const sgn of [-1, 1]) {
-      const yr = sgn * 0.55, yt = sgn * 5.35, zr = 0.45, zt = 0.45 - 4.8 * Math.tan(7 * DEG), xl0 = 0.55, xt0 = -0.95, xl1 = 0.40, xt1 = -0.80;
-      const top = [[xt0, yr, zr - 0.12], [xl0, yr, zr - 0.12], [xl1, yt, zt - 0.08], [xt1, yt, zt - 0.08]], bot = top.map(p => [p[0], p[1], p[2] + 0.16]);
-      if (sgn > 0) { g.quad(top[0], top[1], top[2], top[3], W); g.quad(bot[3], bot[2], bot[1], bot[0], W); g.quad(top[1], bot[1], bot[2], top[2], W); g.quad(top[3], top[2], bot[2], bot[3], W); }
-      else { g.quad(top[3], top[2], top[1], top[0], W); g.quad(bot[0], bot[1], bot[2], bot[3], W); g.quad(top[2], bot[2], bot[1], top[1], W); g.quad(bot[3], bot[2], top[2], top[3], W); }
-    }
-    // stabilator and fin
-    g.quad([-5.4, -1.7, -0.42], [-4.6, -1.7, -0.42], [-4.6, 1.7, -0.42], [-5.4, 1.7, -0.42], W); g.quad([-5.4, 1.7, -0.38], [-4.6, 1.7, -0.38], [-4.6, -1.7, -0.38], [-5.4, -1.7, -0.38], W);
-    g.quad([-5.35, 0, -0.5], [-4.2, 0, -0.55], [-4.9, 0, -1.75], [-5.45, 0, -1.75], B); g.quad([-5.45, 0, -1.75], [-4.9, 0, -1.75], [-4.2, 0, -0.55], [-5.35, 0, -0.5], B);
-    // landing gear: struts and wheels (fixed gear)
-    const strut = (x, y, z0, z1) => { g.quad([x - 0.04, y, z0], [x + 0.04, y, z0], [x + 0.04, y, z1], [x - 0.04, y, z1], T); g.quad([x + 0.04, y, z0], [x - 0.04, y, z0], [x - 0.04, y, z1], [x + 0.04, y, z1], T); };
-    const wheel = (x, y, z) => { for (const yy of [y - 0.08, y + 0.08]) { const pts = []; for (let i = 0; i < 8; i++) { const a = i / 8 * 2 * Math.PI; pts.push([x + Math.cos(a) * 0.2, yy, z + Math.sin(a) * 0.2]); } for (let i = 1; i < 7; i++) { if (yy > y) g.tri(pts[0], pts[i + 1], pts[i], D); else g.tri(pts[0], pts[i], pts[i + 1], D); } } };
-    strut(1.65, 0, 0.3, 0.85); wheel(1.65, 0, 0.85); strut(-0.3, -1.6, 0.4, 0.85); wheel(-0.3, -1.6, 0.85); strut(-0.3, 1.6, 0.4, 0.85); wheel(-0.3, 1.6, 0.85);
-    const body = g.build(gl);
-    // the propeller disc (drawn translucent) and spinner
-    const p = Geo(), N = 24;
-    for (let i = 0; i < N; i++) { const a1 = i / N * 2 * Math.PI, a2 = (i + 1) / N * 2 * Math.PI; p.tri([2.95, 0, 0.08], [2.95, Math.cos(a1) * 0.95, 0.08 + Math.sin(a1) * 0.95], [2.95, Math.cos(a2) * 0.95, 0.08 + Math.sin(a2) * 0.95], [0.35, 0.35, 0.37]); p.tri([2.95, 0, 0.08], [2.95, Math.cos(a2) * 0.95, 0.08 + Math.sin(a2) * 0.95], [2.95, Math.cos(a1) * 0.95, 0.08 + Math.sin(a1) * 0.95], [0.35, 0.35, 0.37]); }
-    return { body, prop: p.build(gl) };
-  }
   // the inside view: glareshield, instrument panel face, cowling, window posts (body frame)
-  function buildCockpit(gl) {
+  function buildCockpit(gl, spinner = true) {
     const g = Geo(), dark = [0.08, 0.09, 0.10], panel = [0.20, 0.21, 0.23], cowl = [0.90, 0.90, 0.87], post = [0.12, 0.12, 0.13];
     // the cowling: a rounded hump from the windscreen forward and down (a ridge in the middle, the sides lower),
     // with a dark anti-glare band along the top
@@ -320,7 +283,7 @@
     }
     g.quad([2.75, -hw(2.75), side(2.75)], [2.75, hw(2.75), side(2.75)], [2.95, 0.15, 0.0], [2.95, -0.15, 0.0], cowl);
     // the spinner tip just visible over the nose
-    g.tri([2.75, -0.12, ridge(2.75) + 0.05], [2.75, 0.12, ridge(2.75) + 0.05], [3.05, 0, ridge(2.75) + 0.12], [0.85, 0.85, 0.85]);
+    if (spinner) g.tri([2.75, -0.12, ridge(2.75) + 0.05], [2.75, 0.12, ridge(2.75) + 0.05], [3.05, 0, ridge(2.75) + 0.12], [0.85, 0.85, 0.85]);
     // the glareshield (dark top of the panel) and the panel face
     g.quad([0.95, -0.66, -0.50], [0.95, 0.66, -0.50], [0.55, 0.66, -0.53], [0.55, -0.66, -0.53], dark);
     g.quad([0.55, -0.66, -0.53], [0.55, 0.66, -0.53], [0.55, 0.66, 0.30], [0.55, -0.66, 0.30], panel);
@@ -336,7 +299,16 @@
     const P = FL.physics, A = FL.avionics;
     const prog = {}; for (const k of Object.keys(SH)) prog[k] = compile(gl, SH[k][0], SH[k][1]);
     const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
-    const world = buildWorld(gl, P, A), ac = buildAircraft(gl), cockpit = buildCockpit(gl), rwyTex = runwayTexture(gl, aniso);
+    const world = buildWorld(gl, P, A), cockpits = { 1: buildCockpit(gl, true), 2: buildCockpit(gl, false) }, rwyTex = runwayTexture(gl, aniso);
+    // the aircraft models (built from the flight model's description by acmesh.js), uploaded once per type
+    const acCache = {};
+    function upload(m) {
+      const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+      [m.pos, m.nrm, m.col].forEach((d, i) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, d, gl.STATIC_DRAW); gl.enableVertexAttribArray(i); gl.vertexAttribPointer(i, 3, gl.FLOAT, false, 0, 0); });
+      gl.bindVertexArray(null);
+      return { vao, n: m.count };
+    }
+    const aircraftParts = A0 => acCache[A0.id] || (acCache[A0.id] = FL.acmesh.buildParts(A0).map(p => ({ ...p, gpu: upload(p.mesh) })));
     // full-screen triangle for the sky, the ground quad
     const quadVao = (() => { const v = gl.createVertexArray(); gl.bindVertexArray(v); const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0); gl.bindVertexArray(null); return v; })();
     const RG = 120000;
@@ -355,7 +327,7 @@
       gl.bindVertexArray(null);
     };
     const lakesU = new Float32Array(32), ringsU = new Float32Array(32), ringCol = new Float32Array(24);
-    LAKES.forEach((L, i) => { const g = gl3(L[0], L[1], 0); lakesU.set([g[0], -g[2], L[2], L[3]], i * 4); });
+    LAKES().forEach((L, i) => { const g = gl3(L[0], L[1], 0); lakesU.set([g[0], -g[2], L[2], L[3]], i * 4); });
     LANDMARKS.forEach((L, i) => { const w = A.wpt(L.id); if (!w) return; ringsU.set([w.e, w.n, 140, 0], i * 4); ringCol.set(L.col, i * 3); });
     const SUN = V3.norm([0.45, 0.78, 0.43]), FOGC = [0.73, 0.80, 0.88], ZEN = [0.30, 0.50, 0.80];
     let cam = null, smoothPsi = null;
@@ -366,27 +338,29 @@
     }
     // the camera from the aircraft state
     function camera(s, view, look) {
-      const R = P.dcm(s.eul[0], s.eul[1], s.eul[2]);
-      const b2g = v => { const n = R[0] * v[0] + R[1] * v[1] + R[2] * v[2], e = R[3] * v[0] + R[4] * v[1] + R[5] * v[2], d = R[6] * v[0] + R[7] * v[1] + R[8] * v[2]; return [e, -d, -n]; };
-      const pos = gl3(s.pos[0], s.pos[1], s.pos[2]);
-      const bx = b2g([1, 0, 0]), by = b2g([0, 1, 0]), bz = b2g([0, 0, 1]);
-      const model = M4.axes(bx, by, bz, pos);
+      const q = s.q, rot = v => P.qrot(q, v);
+      const pos = s.pos.slice(), bx = rot([1, 0, 0]), by = rot([0, 1, 0]), bz = rot([0, 0, 1]);
+      const model = M4.axes(bx, by, bz, pos), fwdB = rot([0, 0, -1]);
+      const psi = Math.atan2(fwdB[0], -fwdB[2]);
       let eye, fwd, up;
       if (view === 'chase') {
-        const psi = s.eul[2];
         if (smoothPsi == null) smoothPsi = psi;
         smoothPsi += Math.atan2(Math.sin(psi - smoothPsi), Math.cos(psi - smoothPsi)) * 0.08;
         const yaw = smoothPsi + (look || 0) * DEG, back = [-Math.sin(yaw), 0, Math.cos(yaw)];   // GL: forward = (sin ψ, 0, -cos ψ)
-        eye = V3.add(pos, V3.add(V3.scale(back, 15), [0, 3.6, 0]));
+        const dist = 8 + 1.0 * (s.A.phys.L || 7);
+        eye = V3.add(pos, V3.add(V3.scale(back, dist), [0, 2.6, 0]));
         eye[1] = Math.max(eye[1], P.GROUND_M + 1.5);
-        fwd = V3.norm(V3.sub(V3.add(pos, [0, 1.2, 0]), eye)); up = [0, 1, 0];
+        fwd = V3.norm(V3.sub(V3.add(pos, [0, 0.9, 0]), eye)); up = [0, 1, 0];
       } else {
         smoothPsi = null;
-        eye = V3.add(pos, b2g([0.05, -0.30, -0.72]));
+        eye = V3.add(pos, rot(s.A.eye));
         const lk = (look || 0) * DEG;
-        fwd = V3.norm(V3.add(V3.scale(bx, Math.cos(lk)), V3.scale(by, Math.sin(lk)))); up = V3.scale(bz, -1);
+        fwd = V3.norm(V3.add(V3.scale(fwdB, Math.cos(lk)), V3.scale(bx, Math.sin(lk)))); up = by;
       }
-      return { eye, fwd, up, model, bx, by, bz, pos };
+      // the v1 cockpit mesh is in an (x forward, y right, z down) frame around its own eye point (0.05, −0.30, −0.72)
+      const off = V3.sub(s.A.eye, [-0.30, 0.72, -0.05]);
+      const cockpitM = M4.axes(fwdB, bx, V3.scale(by, -1), V3.add(pos, rot(off)));
+      return { eye, fwd, up, model, cockpitM, bx, by, bz, pos, psi };
     }
     function render(st) {
       resize();
@@ -420,8 +394,8 @@
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, rwyTex); gl.uniform1i(tu.uTex, 0);
       gl.bindVertexArray(world.runway.vao); gl.drawElements(gl.TRIANGLES, world.runway.n, gl.UNSIGNED_INT, 0);
       // the aircraft's shadow (sun nearly overhead: a soft dark shape under the aircraft), outside Google's area
-      const agl = -s.pos[2] - P.GROUND_M;
-      if (agl < 200 && !(st.hole && Math.hypot(s.pos[0] - st.hole.n, s.pos[1] - st.hole.e) < st.hole.r)) shadow(s, agl, VP, c, fogD);
+      const agl = s.pos[1] + s.WHEEL_BOTTOM - P.GROUND_M;
+      if (agl < 200 && !(st.hole && Math.hypot(-s.pos[2] - st.hole.n, s.pos[0] - st.hole.e) < st.hole.r)) shadow(s, agl, VP, c, fogD);
       gl.enable(gl.DEPTH_TEST); gl.depthMask(true);
       // Google Photorealistic 3D Tiles (google3d.js), when connected
       if (st.extra) st.extra(gl, { VP, eye: c.eye, fog: FOGC, fogD });
@@ -432,21 +406,42 @@
       // PAPI: white above the light's angle, red below
       papi(c.eye, VP);
       // the aircraft (chase view) or the cockpit (cockpit view, its own depth range)
-      if (view === 'chase') {
-        useLit(VP, c.eye, fogD, c.model, 1);
-        gl.bindVertexArray(ac.body.vao); gl.drawElements(gl.TRIANGLES, ac.body.n, gl.UNSIGNED_INT, 0);
-        gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
-        useLit(VP, c.eye, fogD, c.model, s.engine.running ? 0.28 : 0.6);
-        gl.bindVertexArray(ac.prop.vao); gl.drawElements(gl.TRIANGLES, ac.prop.n, gl.UNSIGNED_INT, 0);
-        gl.disable(gl.BLEND); gl.depthMask(true);
-      } else {
+      if (view === 'chase') drawAircraft(s, VP, c, fogD);
+      else {
         gl.clear(gl.DEPTH_BUFFER_BIT);
-        const Pn = M4.persp(fovY, asp, 0.1, 20), VPn = M4.mul(Pn, V);
-        useLit(VPn, c.eye, 0, c.model, 1);
-        gl.bindVertexArray(cockpit.vao); gl.drawElements(gl.TRIANGLES, cockpit.n, gl.UNSIGNED_INT, 0);
+        const Pn = M4.persp(fovY, asp, 0.1, 20), VPn = M4.mul(Pn, V), ck = cockpits[s.A.engines[0].type === 'nose' ? 1 : 2];
+        useLit(VPn, c.eye, 0, c.cockpitM, 1);
+        gl.bindVertexArray(ck.vao); gl.drawElements(gl.TRIANGLES, ck.n, gl.UNSIGNED_INT, 0);
       }
       gl.bindVertexArray(null);
       return cam;
+    }
+    // the aircraft: each part with its own hinge rotation (control surfaces, propellers, gear)
+    function partMatrix(base, p, s) {
+      if (!p.pivot || !p.angle) return base;
+      const r = FL.acmesh.axisAngle(p.axis, p.angle(s) || 0), c = p.pivot;
+      const t = [c[0] - (r[0] * c[0] + r[1] * c[1] + r[2] * c[2]), c[1] - (r[3] * c[0] + r[4] * c[1] + r[5] * c[2]), c[2] - (r[6] * c[0] + r[7] * c[1] + r[8] * c[2])];
+      const L = new Float32Array([r[0], r[3], r[6], 0, r[1], r[4], r[7], 0, r[2], r[5], r[8], 0, t[0], t[1], t[2], 1]);
+      return M4.mul(base, L);
+    }
+    function drawAircraft(s, VP, c, fogD) {
+      const parts = aircraftParts(s.A);
+      for (const p of parts) {
+        if (p.disc != null) continue;
+        if (p.gear && s.gearPos <= 0.01) continue;
+        if (p.prop != null) { const e = s.eng[p.prop]; if (e && (e.rpm || 0) > 900) continue; }
+        useLit(VP, c.eye, fogD, partMatrix(c.model, p, s), 1);
+        gl.bindVertexArray(p.gpu.vao); gl.drawArrays(gl.TRIANGLES, 0, p.gpu.n);
+      }
+      // spinning propellers: a faint disc
+      gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+      for (const p of parts) {
+        if (p.disc == null) continue;
+        const e = s.eng[p.disc], rpm = e ? e.rpm || 0 : 0; if (rpm < 500) continue;
+        useLit(VP, c.eye, fogD, c.model, clamp((rpm - 500) / 1500, 0, 1) * 0.3);
+        gl.bindVertexArray(p.gpu.vao); gl.drawArrays(gl.TRIANGLES, 0, p.gpu.n);
+      }
+      gl.disable(gl.BLEND); gl.depthMask(true);
     }
     function useLit(VP, eye, fogD, M, alpha) {
       gl.useProgram(prog.lit.p); const u = prog.lit.u;
@@ -455,11 +450,12 @@
     }
     function shadow(s, agl, VP, c, fogD) {
       const g = Geo(), k = clamp(1 - agl / 200, 0, 1), col = [0.10, 0.12, 0.08].map(v => v + (1 - k) * 0.25);
-      const ps = s.eul[2], fx = Math.sin(ps), fz = -Math.cos(ps), rx = Math.cos(ps), rz = Math.sin(ps), y = P.GROUND_M + 0.03;
-      const p = gl3(s.pos[0], s.pos[1], 0), at = (f, r) => [p[0] + fx * f + rx * r, y, p[2] + fz * f + rz * r];
-      g.quad(at(-1.2, -5.3), at(-1.2, 5.3), at(0.6, 5.3), at(0.6, -5.3), col);
-      g.quad(at(-5.4, -0.6), at(-5.4, 0.6), at(2.9, 0.6), at(2.9, -0.6), col);
-      g.quad(at(-5.4, -1.7), at(-5.4, 1.7), at(-4.6, 1.7), at(-4.6, -1.7), col);
+      const fb = P.qrot(s.q, [0, 0, -1]), ps = Math.atan2(fb[0], -fb[2]), fx = Math.sin(ps), fz = -Math.cos(ps), rx = Math.cos(ps), rz = Math.sin(ps), y = P.GROUND_M + 0.03;
+      const p = [s.pos[0], 0, s.pos[2]], at = (f, r) => [p[0] + fx * f + rx * r, y, p[2] + fz * f + rz * r];
+      const A0 = s.A, sp = A0.wing.tipX, nose = -A0.fuse[0][0], tail = -A0.fuse[A0.fuse.length - 1][0], hs = A0.hstab.span;
+      g.quad(at(0.6, -sp), at(0.6, sp), at(-1.0, sp), at(-1.0, -sp), col);
+      g.quad(at(nose, -0.6), at(nose, 0.6), at(tail, 0.6), at(tail, -0.6), col);
+      g.quad(at(tail + 0.8, -hs), at(tail + 0.8, hs), at(tail, hs), at(tail, -hs), col);
       gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       useLit(VP, c.eye, fogD, M4.ident(), 0.25 + 0.4 * k);
       drawDyn(g, gl.TRIANGLES);
@@ -520,5 +516,5 @@
     return o;
   }
 
-  FL.scene = { createScene, M4, V3, gl3, invert, LANDMARKS, LAKES };
+  FL.scene = { createScene, M4, V3, gl3, invert, LANDMARKS };
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

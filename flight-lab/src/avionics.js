@@ -266,7 +266,7 @@
     poly(g, [[cx + 70, cy], [cx + 28, cy], [cx + 22, cy + 8], [cx + 70, cy + 8]], C.yellow, '#000');
     poly(g, [[cx, cy], [cx - 26, cy + 18], [cx, cy + 10], [cx + 26, cy + 18]], C.yellow, '#000');
     // --- the airspeed tape (left), teaching V-speed bands ---
-    const V = FL.physics ? FL.physics.TRAINER.V : { s0: 48, s1: 53, fe: 102, no: 125, ne: 154, r: 55, x: 64, y: 76, glide: 76 };
+    const V = d.V || { s0: 45, s1: 50, fe: 102, no: 125, ne: 154, rotate: 60, x: 64, y: 76, glide: 76 };
     const tx = W * 0.07, tw = W * 0.12, ty0 = cy - H * 0.22, th = H * 0.44, kpp = th / 60;   // 60 kt on the tape
     box(g, tx, ty0, tw, th, 'rgba(0,0,0,0.55)', C.line);
     g.save(); g.beginPath(); g.rect(tx, ty0, tw, th); g.clip();
@@ -278,7 +278,10 @@
       const y = yOf(k); line(g, tx + tw - 22, y, tx + tw - 12, y, C.white, 2);
       if (k % 10 === 0) txt(g, k, tx + tw * 0.42, y, 15);
     }
-    for (const [lab, k] of [['R', V.r], ['X', V.x], ['Y', V.y], ['G', V.glide]]) { const y = yOf(k); if (y > ty0 && y < ty0 + th) { box(g, tx + tw + 2, y - 8, 18, 16, '#000', C.cyan, 1); txt(g, lab, tx + tw + 11, y, 12, C.cyan); } }
+    // twins: the red radial line (Vmc, minimum control speed with one engine out) and the blue line (Vyse)
+    if (V.mc) { const y = yOf(V.mc); g.fillStyle = C.red; g.fillRect(tx, y - 2, tw, 4); }
+    if (V.yse) { const y = yOf(V.yse); g.fillStyle = '#3d8bff'; g.fillRect(tx, y - 2, tw, 4); }
+    for (const [lab, k] of [['R', V.rotate], ['X', V.x], ['Y', V.y], ['G', V.glide]]) { const y = yOf(k); if (y > ty0 && y < ty0 + th) { box(g, tx + tw + 2, y - 8, 18, 16, '#000', C.cyan, 1); txt(g, lab, tx + tw + 11, y, 12, C.cyan); } }
     g.restore();
     poly(g, [[tx + 4, cy - 15], [tx + tw - 6, cy - 15], [tx + tw + 4, cy], [tx + tw - 6, cy + 15], [tx + 4, cy + 15]], '#000', C.white, 2);
     txt(g, ias < 20 ? '---' : Math.round(ias), tx + tw * 0.45, cy, 22, o.stallWarn ? C.red : C.white, 'center', 700);
@@ -385,14 +388,20 @@
     txt(g, `${ias < 20 ? '---' : Math.round(ias)}`, sx + 96, sy + 36, 14); txt(g, 'KT', sx + 96, sy + 50, 9, C.grey);
     txt(g, `${Math.round(altInd / 10) * 10}`, sx + 96, sy + 72, 14); txt(g, 'FT', sx + 96, sy + 86, 9, C.grey);
     // --- the engine status (this teaching layout shows it on the PFD too) ---
-    const run = d.engine && d.engine.running;
+    const engs = d.eng && d.eng.length ? d.eng : [{ run: true, rpm: o.rpm }], run = engs.some(e => e.run), allRun = engs.every(e => e.run);
     const ey = H - 136;
-    box(g, 8, ey, 128, 40, '#05070a', run ? C.line : C.red);
-    txt(g, run ? 'ENG RUN' : 'ENG STOP', 14, ey + 12, 13, run ? C.green : C.red, 'left', 700);
-    txt(g, `${Math.round(fin(o.rpm))} RPM`, 14, ey + 30, 13, C.white, 'left');
+    if (engs.length === 1) {
+      box(g, 8, ey, 128, 40, '#05070a', run ? C.line : C.red);
+      txt(g, run ? 'ENG RUN' : 'ENG STOP', 14, ey + 12, 13, run ? C.green : C.red, 'left', 700);
+      txt(g, `${Math.round(fin(engs[0].rpm))} RPM`, 14, ey + 30, 13, C.white, 'left');
+    } else {
+      box(g, 8, ey, 150, 40, '#05070a', allRun ? C.line : C.red);
+      engs.forEach((e, i) => { const x = 14 + i * 72; txt(g, `${i ? 'R' : 'L'} ${e.run ? 'RUN' : e.feather ? 'FTHR' : 'STOP'}`, x, ey + 12, 12, e.run ? C.green : C.red, 'left', 700); txt(g, `${Math.round(fin(e.rpm))}`, x, ey + 30, 12, C.white, 'left'); });
+    }
     // --- alerts ---
     if (o.stallWarn) { box(g, cx - 60, cy + 70, 120, 26, C.red, null); txt(g, 'STALL', cx, cy + 83, 18, '#fff', 'center', 800); }
     if (!run && !o.onGround) { box(g, cx - 90, cy + 100, 180, 22, '#3a0d0d', C.red); txt(g, 'ENGINE STOP — 滑空', cx, cy + 111, 13, C.red, 'center', 700, jp); }
+    else if (!allRun) { box(g, cx - 100, cy + 100, 200, 22, '#3a2a0d', C.yellow); txt(g, `${engs[0].run ? 'R' : 'L'} ENGINE INOP — 片発`, cx, cy + 111, 13, C.yellow, 'center', 700, jp); }
     // the teaching label
     txt(g, 'G1000型 教材表示 · NOT FOR NAVIGATION', W / 2, H - 8, 10, C.grey, 'center', 600, jp);
     g.restore();
@@ -408,20 +417,24 @@
     box(g, 0, 0, ew, H, '#05070a', C.line);
     txt(g, 'ENGINE', ew / 2, 14, 13, C.white, 'center', 700);
     // RPM arc
-    const rx = ew / 2, ry = 70, rr = ew * 0.34, rpm = clamp(fin(o.rpm), 0, 2800);
-    g.lineWidth = 7;
-    const arc = (a, b, col) => { g.strokeStyle = col; g.beginPath(); g.arc(rx, ry, rr, (210 - 240 * a / 2800) * -DEG, (210 - 240 * b / 2800) * -DEG, false); g.stroke(); };
-    arc(500, 2700, C.green); arc(2700, 2800, C.red);
-    const ta = (210 - 240 * rpm / 2800) * -DEG; line(g, rx, ry, rx + Math.cos(ta) * (rr - 4), ry + Math.sin(ta) * (rr - 4), C.white, 3);
-    txt(g, Math.round(rpm), rx, ry + 22, 16, C.white, 'center', 700); txt(g, 'RPM', rx, ry + 38, 11, C.grey);
+    const engs = d.eng && d.eng.length ? d.eng : [{ run: true, rpm: o.rpm }], twin = engs.length > 1, cap = d.fuelCap || 24;
+    g.lineWidth = twin ? 5 : 7;
+    engs.forEach((e, i) => {
+      const rx = twin ? ew * (0.27 + 0.46 * i) : ew / 2, ry = 70, rr = ew * (twin ? 0.19 : 0.34), rpm = clamp(fin(e.rpm), 0, 2800);
+      const arc = (a, b, col) => { g.strokeStyle = col; g.beginPath(); g.arc(rx, ry, rr, (210 - 240 * a / 2800) * -DEG, (210 - 240 * b / 2800) * -DEG, false); g.stroke(); };
+      arc(500, 2700, C.green); arc(2700, 2800, C.red);
+      const ta = (210 - 240 * rpm / 2800) * -DEG; line(g, rx, ry, rx + Math.cos(ta) * (rr - 4), ry + Math.sin(ta) * (rr - 4), e.run ? C.white : C.red, 3);
+      txt(g, Math.round(rpm), rx, ry + 22, twin ? 13 : 16, e.run ? C.white : C.red, 'center', 700); txt(g, twin ? (i ? 'R RPM' : 'L RPM') : 'RPM', rx, ry + 38, 11, C.grey);
+    });
+    const run = engs.some(e => e.run);
     const rows = [
-      ['出力 PWR', d.engine.running ? `${fin(o.powerPct)} %` : '0 %', d.engine.running ? fin(o.powerPct) / 100 : 0, '教材モデルの出力'],
-      ['FFLOW GPH', fin(o.fuelFlow).toFixed(1), fin(o.fuelFlow) / 12, ''],
-      ['OIL PSI', '—', null, '未実装'],
+      ['出力 PWR', run ? `${fin(o.powerPct)} %` : '0 %', run ? fin(o.powerPct) / 100 : 0, '教材モデルの出力'],
+      ['FFLOW GPH', fin(o.fuelFlow).toFixed(1), fin(o.fuelFlow) / (twin ? 24 : 12), ''],
+      [twin ? 'MAN IN' : 'OIL PSI', '—', null, '未実装'],
       ['OIL °F', '—', null, '未実装'],
       ['EGT °F', '—', null, '未実装'],
-      ['FUEL L GAL', fin(o.fuel && o.fuel[0]).toFixed(1), fin(o.fuel && o.fuel[0]) / 24, ''],
-      ['FUEL R GAL', fin(o.fuel && o.fuel[1]).toFixed(1), fin(o.fuel && o.fuel[1]) / 24, ''],
+      ['FUEL L GAL', fin(o.fuel && o.fuel[0]).toFixed(1), fin(o.fuel && o.fuel[0]) / cap, ''],
+      ['FUEL R GAL', fin(o.fuel && o.fuel[1]).toFixed(1), fin(o.fuel && o.fuel[1]) / cap, ''],
       ['VOLTS', '—', null, '未実装'],
       ['AMPS', '—', null, '未実装'],
     ];

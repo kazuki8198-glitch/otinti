@@ -102,7 +102,7 @@
       phys: {
         mass: 1050, S: 15.8, b: 10.8, c: 1.6, L: 7.25, CL0: 0.28, CLa: 4.8, aStall: 0.28, CD0: 0.032, K: 0.05, CDgear: 0,
         Cm0: 0.015, Cma: -1.1, Cmde: 0.34, Cmq: -15, Clda: 0.055, Clp: -0.5, Clb: -0.12, Cnb: 0.1, Cndr: 0.03, Cnr: -0.14, CYb: -0.6,
-        flapCL: 0.75, flapStall: 0.045, flapCD: 0.7, engine: { type: 'prop', P: 134000, T0: 2400, eta: 0.85, etaK: 0.8 }, maxG: 3.8, rollRate: 55, pitchRate: 12,
+        flapCL: 0.55, flapStall: 0.045, flapCD: 0.7, engine: { type: 'prop', P: 134000, T0: 2400, eta: 0.85, etaK: 0.8 }, maxG: 3.8, rollRate: 55, pitchRate: 12,
       },
       // reference speeds (KIAS). Rotation, climb, Vx / Vy, glide, final approach, go-around, Va, Vfe, the crosswind: the published
       // Archer III G1000 training checklist (MGA 2025); Vso / Vs1, Vno, Vne: teaching values (機体ごとに要確認, the POH governs)
@@ -121,9 +121,9 @@
       gear: { fixed: false, wheelR: 0.27, nose: [0, -1.2, -2.5], mains: [[1.6, -1.2, 0.3]] },
       eye: [-0.3, 0.58, -0.6], flapLabels: ['UP', '10°', '25°', '40°'], fuelCap: 54,
       phys: {
-        mass: 1650, S: 17.08, b: 11.77, c: 1.6, L: 8.41, CL0: 0.25, CLa: 4.8, aStall: 0.27, CD0: 0.028, K: 0.05, CDgear: 0.022,
+        mass: 1650, S: 17.08, b: 11.77, c: 1.6, L: 8.41, CL0: 0.32, CLa: 4.8, aStall: 0.29, CD0: 0.028, K: 0.05, CDgear: 0.022,
         Cm0: 0.01, Cma: -1.1, Cmde: 0.32, Cmq: -16, Clda: 0.055, Clp: -0.5, Clb: -0.1, Cnb: 0.11, Cndr: 0.045, Cnr: -0.14, CYb: -0.6,
-        flapCL: 0.75, flapStall: 0.045, flapCD: 0.7, engine: { type: 'prop', P: 268000, T0: 5200, eta: 0.82, etaK: 0.45 }, maxG: 3.8, rollRate: 50, pitchRate: 11,
+        flapCL: 0.55, flapStall: 0.045, flapCD: 0.7, engine: { type: 'prop', P: 268000, T0: 5200, eta: 0.82, etaK: 0.45 }, maxG: 3.8, rollRate: 50, pitchRate: 11,
       },
       // reference speeds (KIAS) from a published PA-44 maneuver guide (Southeastern Oklahoma State Univ.): Vso 55, Vs 57, Vmc 56 (red line),
       // Vr 75, Vx 82, Vy 88, Vxse 82–88 (sources differ), Vsse 82, Vyse 88 (blue line), Vfe 111, Vlo 109 / 140, Vle 140, Vno 169, Vne 202, Va 135
@@ -595,7 +595,7 @@
     s.agl = agl; s.vs = s.vel[1];
     // engine rpm, fuel
     let rpmSum = 0;
-    s.eng.forEach(e => { const rt = e.run ? rpmFor(A, thrOf(e), u, pw) : e.feather ? 0 : rpmFor(A, 0, u, 1, true); e.rpm = (e.rpm || 0) + (rt - (e.rpm || 0)) * Math.min(1, dt * 1.8); rpmSum += e.rpm; });
+    s.eng.forEach(e => { const rt = e.run ? rpmFor(A, thrOf(e), u, pw) : e.feather ? 0 : rpmFor(A, 0, u, 1, true); e.rpm = (e.rpm || 0) + (rt - (e.rpm || 0)) * Math.min(1, dt * 1.8); e.ang = ((e.ang || 0) + e.rpm / 60 * Math.PI * 2 * dt) % (Math.PI * 2); rpmSum += e.rpm; });
     s.rpm = rpmSum / nE;
     s.propAng = (s.propAng + s.rpm / 60 * Math.PI * 2 * dt) % (Math.PI * 2);
     s.fuelFlow = shaft / 745.7 * 0.078;                       // US gal/h (about 0.47 lb/hp/h, teaching value)

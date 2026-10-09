@@ -2,81 +2,161 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FLIGHT LAB — 非公式の自主学習用 飛行訓練教材</title>
 <!--BUILD:CSS--><link rel="stylesheet" href="style.css"><!--/BUILD:CSS-->
 </head>
 <body>
-<header id="top">
-  <div class="brand"><b>FLIGHT LAB</b><span>公開情報を基にした非公式の自主学習用 飛行訓練教材（ANA 公式ではありません）</span></div>
-  <nav id="tabs" role="tablist" aria-label="画面の切り替え">
-    <button role="tab" data-tab="fly" class="on">飛行訓練</button>
-    <button role="tab" data-tab="curr">カリキュラム</button>
-    <button role="tab" data-tab="book">教科書</button>
-    <button role="tab" data-tab="sfb">Sanford・交信</button>
-    <button role="tab" data-tab="rec">訓練記録</button>
-    <button role="tab" data-tab="g3d">Google 3D 設定</button>
-    <button role="tab" data-tab="about">このアプリについて</button>
-  </nav>
-</header>
-<p id="disclaimer">本アプリは公開情報を基にした非公式の自主学習用教材です。実機訓練、教官の指示、POH/AFM、SOP、航空法規を優先してください。</p>
-<main>
-  <!-- ======================================================= flight -->
-  <section id="tab-fly" class="tab on" aria-label="飛行訓練">
-    <div id="viewWrap">
-      <canvas id="view3d" aria-label="外部視界（教材用の景色）"></canvas>
-      <div id="labels"></div>
-      <div id="hood" hidden>フード中（計器飛行の練習）<br>外の景色は見えません。下の計器（PFD）だけで飛んでください。</div>
-      <div id="hud"></div>
-      <div id="viewBtns">
-        <button id="bView" title="C キー">視点：操縦席</button>
-        <button id="bPause" title="P キー">一時停止</button>
-        <button id="bLayout" title="外部視界と計器の大きさ">配置</button>
-        <button id="bSound" aria-pressed="false">音 OFF</button>
-        <button id="bFull">全画面</button>
-      </div>
-      <div id="flash"></div>
-      <div id="pauseBadge" hidden>一時停止中（P で再開）</div>
-      <div id="gattr" hidden><span class="glogo">Google Maps</span><span id="gcredits"></span></div>
-      <div id="viewNote">景色は教材用の架空の地形です（LAB 空域・LAB RWY 36 は架空）</div>
+<!-- ============================================================ the flight view (always behind the screens) -->
+<div id="fly">
+  <div id="viewWrap">
+    <canvas id="view3d" aria-label="外部視界（教材用の景色）"></canvas>
+    <div id="labels"></div>
+    <div id="hood" hidden><div><b>フード中（計器飛行の練習）</b><br>外の景色は見えません。下の PFD（計器）だけで飛んでください。</div></div>
+    <div id="sch-panel" hidden aria-live="polite">
+      <div id="sp-step"></div>
+      <div id="sp-say"></div>
+      <div id="sp-keys"></div>
+      <div id="sp-guide"></div>
+      <div id="sp-tgt"></div>
+      <div id="sp-prog"><span id="sp-progtxt"></span><div class="bar" id="sp-holdbar"><i></i></div></div>
+      <div id="sp-hint"></div>
     </div>
-    <div id="panel">
-      <div class="disp" id="pfdBox">
-        <canvas id="pfd" aria-label="PFD（G1000型 教材表示）"></canvas>
-        <div class="keys" id="pfdKeys"></div>
-        <div class="keys" id="pfdKnobs"></div>
+    <div id="free-panel" hidden></div>
+    <div id="ctl-strip" aria-label="いまの操作の状態"></div>
+    <div id="sch-check" hidden></div>
+    <div id="sch-atc" hidden></div>
+    <div id="sch-est" hidden></div>
+    <div id="keyhelp" hidden></div>
+    <div id="viewBtns">
+      <button type="button" id="bMenu" title="メニュー（Esc でも一時停止）">☰ メニュー</button>
+      <button type="button" id="bHelp" title="H キー：いま使うキーの説明">？ 操作（H）</button>
+      <button type="button" id="bView" title="C キー">視点：操縦席</button>
+      <button type="button" id="bPause" title="P キー">一時停止</button>
+      <button type="button" id="bSound" aria-pressed="false">音 OFF</button>
+      <button type="button" id="bLayout" title="外部視界と計器の大きさ">配置</button>
+    </div>
+    <div id="gattr" hidden><span class="glogo">Google Maps</span><span id="gcredits"></span></div>
+    <div id="viewNote">非公式の自主学習用教材 · 景色は教材用の架空の地形（LAB RWY 36 は架空） · 実機訓練・教官・POH/AFM・SOP・航空法規を優先</div>
+  </div>
+  <div id="panel">
+    <div class="disp" id="pfdBox">
+      <canvas id="pfd" aria-label="PFD（G1000型 教材表示）"></canvas>
+      <div class="keys" id="pfdKeys"></div>
+      <div class="keys" id="pfdKnobs"></div>
+    </div>
+    <div id="audio" aria-label="オーディオパネル（教材）"></div>
+    <div class="disp" id="mfdBox">
+      <canvas id="mfd" aria-label="MFD（G1000型 教材表示）"></canvas>
+      <div class="keys" id="mfdKeys"></div>
+      <div class="keys" id="mfdKnobs"></div>
+    </div>
+  </div>
+</div>
+<div id="toast" aria-live="polite"></div>
+
+<!-- ============================================================ the start menu -->
+<div id="menu" class="screen" hidden>
+  <div class="menu-panel">
+    <div class="col-a">
+      <header>
+        <div class="eyebrow">FLIGHT LAB · unofficial self-study</div>
+        <h1>FLIGHT LAB</h1>
+        <p class="lede">ANA が公開している自社養成パイロットの基礎訓練の流れ（ロンドンの英語座学 → Sanford の Piper Archer → 航法・横風・目的地変更 → 計器飛行 → Piper Seminole → CRM・TEM）に沿って、飛行の原理から操縦までを学ぶ<b>非公式の自主学習用教材</b>です。</p>
+        <p class="disc">本アプリは公開情報を基にした非公式の自主学習用教材です。実機訓練、教官の指示、POH/AFM、SOP、航空法規を優先してください。</p>
+      </header>
+      <div class="missions" id="mainMenu"></div>
+    </div>
+    <div class="col-b">
+      <div class="opts-box">
+        <h2>操作の設定</h2>
+        <div class="opt-grid">
+          <span>操作の感度</span>
+          <div class="seg" role="group" aria-label="操作の感度" id="optSens"><button type="button" data-v="low">低</button><button type="button" data-v="mid">中</button><button type="button" data-v="high">高</button></div>
+          <span>ピッチ（W / S）</span>
+          <div class="seg" role="group" aria-label="キーボードのピッチ操作" id="optHold"><button type="button" data-v="hold" title="W/S で機首の角度を動かし、離すとその角度を保つ（空島フライトの標準）">離すと姿勢を保つ</button><button type="button" data-v="spring" title="離すと操縦桿が中立に戻る（本物の操縦桿に近い）">離すと中立</button></div>
+        </div>
+        <label class="chk" title="プロペラの左偏向や逆ヨーをラダーが自動で打ち消す。OFF にすると、離陸・上昇では右ラダー（E）が必要になる（本物と同じ）。U キーでも切替"><input type="checkbox" id="optAutoRud"> 自動ラダー（U）：ボールを自動で中央に</label>
+        <label class="chk" title="自由飛行だけ：キーを離すと自動で翼を水平・水平飛行に戻す教材補助（訓練課目では使えません）"><input type="checkbox" id="optAssist"> 操縦アシスト（自由飛行のみ）</label>
+        <label class="chk"><input type="checkbox" id="optSound"> サウンド（エンジン音・失速警報・管制の英語音声）</label>
+        <p class="keys-note">キーボード：W / S 機首（S＝上げ）、A / D 傾き、Q / E ラダー、R / F スロットル、V フラップ、G 脚、B ブレーキ、T トリム、C 視点、P 一時停止、H 操作の説明。ゲームパッドも使えます（ガイドの「操作」）。</p>
       </div>
-      <div id="audio" aria-label="オーディオパネル（教材）"></div>
-      <div class="disp" id="mfdBox">
-        <canvas id="mfd" aria-label="MFD（G1000型 教材表示）"></canvas>
-        <div class="keys" id="mfdKeys"></div>
-        <div class="keys" id="mfdKnobs"></div>
+      <div class="opts-box" id="freeBox">
+        <h2>自由飛行</h2>
+        <div class="field"><label class="f-label" for="freeAc">機体</label><select id="freeAc"></select></div>
+        <div class="field"><label class="f-label" for="freeStart">開始位置</label><select id="freeStart"></select></div>
+        <div class="field"><label class="f-label" for="freeWind">風</label><select id="freeWind"><option value="calm">穏やか（ほぼ無風）</option><option value="light" selected>弱い向かい風 5 kt</option><option value="cross">横風 12 kt（右から 60°）</option><option value="gusty">突風を伴う横風 15 kt</option></select></div>
+        <button type="button" class="primary wide" id="freeGo">自由飛行を始める</button>
+      </div>
+      <p class="credit" id="buildInfo"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ the school (the syllabus) -->
+<div id="school" class="screen" hidden>
+  <div class="sch-wrap">
+    <div class="sch-head">
+      <div><div class="eyebrow">Flight school · syllabus</div><h2>課程表（訓練の段階と課目）</h2></div>
+      <div class="sch-log" id="sch-log"></div>
+      <div class="sch-actions">
+        <span class="f-label">レベル</span>
+        <div class="seg" role="group" aria-label="レベル" id="levelSeg"></div>
+        <button type="button" id="sch-close">メニューへ ✕</button>
       </div>
     </div>
-    <aside id="taskPanel" aria-label="訓練課題"></aside>
-  </section>
+    <div class="sch-body">
+      <nav class="sch-stages" id="sch-stages" aria-label="課目の一覧"></nav>
+      <article class="sch-brief" id="sch-brief"></article>
+    </div>
+  </div>
+</div>
 
-  <!-- ======================================================= curriculum -->
-  <section id="tab-curr" class="tab" aria-label="カリキュラム"><div class="page" id="currPage"></div></section>
-  <!-- ======================================================= textbook -->
-  <section id="tab-book" class="tab" aria-label="教科書"><div class="page"><div id="bookWrap"><nav id="bookToc"></nav><article id="bookBody"></article></div></div></section>
-  <!-- ======================================================= Sanford and radio -->
-  <section id="tab-sfb" class="tab" aria-label="Sanford と交信"><div class="page" id="sfbPage"></div></section>
-  <!-- ======================================================= records -->
-  <section id="tab-rec" class="tab" aria-label="訓練記録"><div class="page" id="recPage"></div></section>
-  <!-- ======================================================= Google 3D -->
-  <section id="tab-g3d" class="tab" aria-label="Google 3D 設定"><div class="page" id="g3dPage"></div></section>
-  <!-- ======================================================= about -->
-  <section id="tab-about" class="tab" aria-label="このアプリについて"><div class="page" id="aboutPage"></div></section>
-</main>
+<!-- ============================================================ debrief, pause -->
+<div id="debrief" class="screen" hidden>
+  <div class="panelbox sd-panel" role="dialog" aria-labelledby="sd-title">
+    <div class="sd-head"><div><div class="eyebrow">Debrief</div><h2 id="sd-title"></h2><p class="sd-sub" id="sd-sub"></p></div><div class="sd-grade" id="sd-grade"></div></div>
+    <div class="sd-body" id="sd-body"></div>
+    <div class="sd-memo"><label for="sd-memo">振り返りメモ（学習記録に保存・正式な飛行日誌ではありません）</label><textarea id="sd-memo" rows="2" placeholder="例：ロールアウトが遅れた → バンク角の半分手前から戻す"></textarea></div>
+    <div class="sd-foot">
+      <button type="button" class="primary" id="sd-next">次の課目へ</button>
+      <button type="button" id="sd-retry">もう一度</button>
+      <button type="button" id="sd-save">メモを保存</button>
+      <button type="button" id="sd-menu">課程表へ</button>
+    </div>
+  </div>
+</div>
+<div id="pause" class="screen" hidden>
+  <div class="panelbox pause-panel" role="dialog" aria-labelledby="pz-title">
+    <div class="eyebrow">Paused</div><h2 id="pz-title">一時停止中</h2>
+    <p class="mute" id="pz-sub"></p>
+    <div class="pz-btns">
+      <button type="button" class="primary" id="pz-resume">再開（P / Esc）</button>
+      <button type="button" id="pz-retry">この課目を最初から</button>
+      <button type="button" id="pz-guide">操作ガイド</button>
+      <button type="button" id="pz-book">教科書</button>
+      <button type="button" id="pz-school">課程表へ（中止）</button>
+      <button type="button" id="pz-save">自由飛行の記録を保存</button>
+      <button type="button" id="pz-menu">メニューへ</button>
+    </div>
+  </div>
+</div>
 
-<div id="ack" hidden role="dialog" aria-modal="true" aria-labelledby="ackTitle">
-  <div class="box">
+<!-- ============================================================ the pages (textbook, quizzes, guide, Sanford, records, Google 3D, about) -->
+<div id="page" class="screen" hidden>
+  <div class="page-wrap">
+    <div class="page-head"><h2 id="pageTitle"></h2><div class="page-tools" id="pageTools"></div><button type="button" id="pageClose">閉じる ✕</button></div>
+    <div class="page-body" id="pageBody"></div>
+  </div>
+</div>
+
+<div id="ack" class="screen" hidden role="dialog" aria-modal="true" aria-labelledby="ackTitle">
+  <div class="panelbox ack-panel">
     <h2 id="ackTitle">はじめに（必ずお読みください）</h2>
     <p><b>本アプリは公開情報を基にした非公式の自主学習用教材です。実機訓練、教官の指示、POH/AFM、SOP、航空法規を優先してください。</b></p>
-    <p>ANA の公式ソフトウェアではなく、認定された訓練装置（FTD など）でもありません。飛行時間・技能・資格の証明にはなりません。速度・高度・許容差などの数値は「仮想教材値」です。</p>
-    <p>LAB RWY 36・LAB 空域・訓練点は架空です。Sanford の資料は学習用の要約・模式図で、航法には使えません（NOT FOR NAVIGATION）。実際の管制とはつながりません。</p>
-    <p style="text-align:right"><button class="primary" id="ackOk">理解しました</button></p>
+    <p>ANA の公式ソフトウェアではなく、認定された訓練装置（FTD など）でもありません。飛行時間・技能・資格の証明にはなりません。速度・高度・許容差などの数値は「仮想教材値」です（出典のある参考値も、機体ごとに要確認）。</p>
+    <p>LAB RWY 36・LAB 空域・訓練点・LAB Tower は架空です。Sanford の資料は学習用の要約・模式図で、航法には使えません（NOT FOR NAVIGATION）。実際の管制とはつながりません。</p>
+    <p style="text-align:right"><button type="button" class="primary" id="ackOk">理解しました</button></p>
   </div>
 </div>
 
@@ -84,10 +164,16 @@
 <script src="physics.js"></script>
 <script src="avionics.js"></script>
 <script src="sanford-course.js"></script>
-<script src="curriculum.js"></script>
-<script src="training.js"></script>
+<script src="school.js"></script>
+<script src="syllabus.js"></script>
+<script src="book-figs.js"></script>
+<script src="book-core.js"></script>
+<script src="book-1.js"></script>
+<script src="quiz.js"></script>
+<script src="acmesh.js"></script>
 <script src="scene.js"></script>
 <script src="google3d.js"></script>
+<script src="pages.js"></script>
 <script src="app.js"></script>
 <!--/BUILD:JS-->
 </body>

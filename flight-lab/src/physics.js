@@ -98,7 +98,7 @@
       vstab: { y0: 0.25, y1: 1.5, rootLE: 2.35, topLE: 3.2, te: 3.95, hinge: 3.55, t: 0.1 },
       engines: [{ type: 'nose', z: -3.34, y: 0.02, r: 0.94, blades: 2 }],
       gear: { fixed: true, wheelR: 0.25, nose: [0, -1.15, -2.3], mains: [[1.6, -1.15, 0.25]] },
-      eye: [-0.3, 0.56, -0.4], flapLabels: ['UP', '10°', '25°', '40°'], fuelCap: 24,
+      eye: [-0.3, 0.62, -0.4], flapLabels: ['UP', '10°', '25°', '40°'], fuelCap: 24,
       phys: {
         mass: 1050, S: 15.8, b: 10.8, c: 1.6, L: 7.25, CL0: 0.28, CLa: 4.8, aStall: 0.28, CD0: 0.032, K: 0.05, CDgear: 0,
         Cm0: 0.015, Cma: -1.1, Cmde: 0.34, Cmq: -15, Clda: 0.055, Clp: -0.5, Clb: -0.12, Cnb: 0.1, Cndr: 0.03, Cnr: -0.14, CYb: -0.6,
@@ -126,8 +126,8 @@
         flapCL: 0.55, flapStall: 0.045, flapCD: 0.7, engine: { type: 'prop', P: 268000, T0: 5200, eta: 0.82, etaK: 0.45 }, maxG: 3.8, rollRate: 50, pitchRate: 11,
       },
       // reference speeds (KIAS) from a published PA-44 maneuver guide (Southeastern Oklahoma State Univ.): Vso 55, Vs 57, Vmc 56 (red line),
-      // Vr 75, Vx 82, Vy 88, Vxse 82–88 (sources differ), Vsse 82, Vyse 88 (blue line), Vfe 111, Vlo 109 / 140, Vle 140, Vno 169, Vne 202, Va 135
-      v: { s0: 55, s1: 57, mc: 56, rotate: 75, x: 82, y: 88, xse: 82, sse: 82, yse: 88, glide: 88, appr: 88, apprFull: 80, ga: 88, va: 135, fe: 111, lo: 109, le: 140, no: 169, ne: 202, xwind: 17,
+      // Vr 75, Vx 82, Vy 88, Vxse 88, Vsse 82, Vyse 88 (blue line), Vfe 111, Vlo 109 / 140, Vle 140, Vno 169, Vne 202, Va 135
+      v: { s0: 55, s1: 57, mc: 56, rotate: 75, x: 82, y: 88, xse: 88, sse: 82, yse: 88, glide: 88, appr: 88, apprFull: 80, ga: 88, va: 135, fe: 111, lo: 109, le: 140, no: 169, ne: 202, xwind: 17,
         apprFlaps: 2, apprThr: 0.3, cruise: 140, cruiseThr: 0.75, toFlaps: 0, climb: 105 },
     },
   ];

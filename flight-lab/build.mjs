@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SRC = path.join(here, 'src'), OUT = path.join(here, 'outputs'), VENDOR = path.join(here, 'vendor', 'draco');
-const MODULES = ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'book-figs.js', 'book-core.js', 'book-1.js', 'quiz.js', 'acmesh.js', 'scene.js', 'google3d.js', 'pages.js', 'app.js'];
+const MODULES = ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-3.js', 'book-4.js', 'book-5.js', 'quiz.js', 'acmesh.js', 'scene.js', 'google3d.js', 'pages.js', 'app.js'];
 
 const read = f => fs.readFileSync(f, 'utf8');
 // inline scripts must not contain "</script" (it would end the element)

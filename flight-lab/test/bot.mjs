@@ -107,9 +107,9 @@ export function makeBot(FL) {
     }
     else if (how === 'approach' || how === 'ils' || how === 'pattern') {
       // the vertical path: from the PAPI angle (or the glide slope), power for the path, pitch for speed
-      const vsT = how === 'ils' ? -(c.gsK * 5.3) + clamp(c.gsd, -2, 2) * 200 : how === 'pattern' ? (g.fpm || -500) : -(c.gsK * 5.3) - clamp((c.gp - 3) * 250, -300, 300);
+      const vsT = how === 'ils' ? -(c.gsK * 5.3) + clamp(c.gsd * 2.5, -2, 2) * 200 : how === 'pattern' ? (g.fpm || -500) : -(c.gsK * 5.3) - clamp((c.gp - 3) * 250, -300, 300);
       vsPitch(s, c, vsT, dt); speedThr(s, c, g.kt, dt);
-      const crab = c.gsK > 30 ? w180(c.hdg - c.trk) : 0, lat = (how === 'ils' ? 360 + clamp(c.loc * 12, -30, 30) : 360 - clamp(c.cross * 0.12, -30, 30)) + crab;
+      const crab = c.gsK > 30 ? w180(c.hdg - c.trk) : 0, lat = (how === 'ils' ? 360 + clamp(c.loc * 30, -30, 30) : 360 - clamp(c.cross * 0.12, -30, 30)) + crab;
       headTo(s, c, lat, 20);
     }
     else if (how === 'oei') { s.thr = 1; speedPitch(s, c, g.kt, dt); const live = s.eng[0].failed ? 1 : -1; bankTo(s, 3 * live + clamp(w180(hdg - c.hdg) * 0.4, -4, 4)); }
@@ -119,8 +119,8 @@ export function makeBot(FL) {
       speedThr(s, c, g.kt || 100, dt);
       vsPitch(s, c, altVs(c, alt), dt);
       let h = hdg;
-      if (S.tgt && (S.tgt.cdi || S.tgt.loc)) h = (L.av.crs || 360) + clamp(c.cdi * 15, -30, 30);
-      if (/ローカライザー/.test(name)) h = c.navFlag || Math.abs(c.loc) > 1.6 ? L.intHdg || 330 : 360 + clamp(c.loc * 12, -30, 30);
+      if (S.tgt && (S.tgt.cdi || S.tgt.loc)) h = (L.av.crs || 360) + clamp(c.cdi * 37.5, -30, 30);
+      if (/ローカライザー/.test(name)) h = c.navFlag || Math.abs(c.loc) > 0.64 ? L.intHdg || 330 : 360 + clamp(c.loc * 30, -30, 30);
       if (/LAB-A/.test(name)) h = brgTo(L, 'LABEA'); if (/LAB-F/.test(name)) h = brgTo(L, 'LABEF');
       if (S.tgt && S.tgt.trk) h = hdg + (hdg - c.trk);
       headTo(s, c, h);

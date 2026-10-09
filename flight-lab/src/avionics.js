@@ -81,18 +81,20 @@
   const eteFmt = s => (s == null || !Number.isFinite(s) ? '--:--' : s >= 3600 ? `${Math.floor(s / 3600)}:${String(Math.floor(s % 3600 / 60)).padStart(2, '0')}` : `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}`);
 
   // ---------------------------------------------------------------- the CDI
-  // dots: + = needle RIGHT (the course is to the right of the aircraft: fly right). 5 dots full scale.
-  // GPS: from the cross-track distance and the full-scale distance (nm)
-  const cdiGps = (xtk, fullScaleNm = 1.0) => clamp(-xtk / fullScaleNm * 5, -5, 5);
-  // VOR: from the radial the aircraft is on and the selected course (OBS); ±10° full scale; TO / FROM
+  // dots: + = needle RIGHT (the course is to the right of the aircraft: fly right). The G1000 HSI scale: two dots each
+  // side, full-scale deflection at the second dot (the needle pegs a little beyond, at 2.5).
+  // GPS: from the cross-track distance and the full-scale distance (nm; the G1000 uses 2.0 en route, 1.0 terminal, 0.3 approach)
+  const cdiGps = (xtk, fullScaleNm = 1.0) => clamp(-xtk / fullScaleNm * 2, -2.5, 2.5);
+  // VOR: from the radial the aircraft is on and the selected course (OBS); ±10° full scale (5° a dot); TO / FROM
   function cdiVor(radial, obs) {
     const off = wrap180(radial - obs), from = Math.abs(off) < 90;
     const devDeg = from ? wrap180(obs - radial) : wrap180(radial - obs - 180);
-    return { dots: clamp(devDeg / 2, -5, 5), toFrom: from ? 'FROM' : 'TO', devDeg };
+    return { dots: clamp(devDeg / 5, -2.5, 2.5), toFrom: from ? 'FROM' : 'TO', devDeg };
   }
-  // localizer: ±2.5° full scale; glide slope: ±0.7° full scale (+ = the path is above: fly up)
-  function cdiLoc(angleOffDeg) { return clamp(-angleOffDeg / 0.5, -5, 5); }
-  const gsDots = (aboveDeg) => clamp(-aboveDeg / 0.14, -2.5, 2.5);
+  // localizer: ±2.5° full scale (1.25° a dot; real localizers are tailored to about 700 ft wide at the threshold);
+  // glide slope: ±0.7° full scale (0.35° a dot; + = the path is above: fly up)
+  function cdiLoc(angleOffDeg) { return clamp(-angleOffDeg / 1.25, -2.5, 2.5); }
+  const gsDots = (aboveDeg) => clamp(-aboveDeg / 0.35, -2.5, 2.5);
 
   // ---------------------------------------------------------------- fictional training points (架空訓練点)
   // Positions on the local plane (metres from the display origin). NOT real fixes, NOT for navigation.
@@ -334,7 +336,7 @@
       line(g, 0, -hr + 30, 0, -hr * 0.42, ccol, 4); poly(g, [[0, -hr + 22], [-8, -hr + 34], [8, -hr + 34]], ccol);
       line(g, 0, hr * 0.42, 0, hr - 30, ccol, 4);
       for (const k of [-2, -1, 1, 2]) { g.strokeStyle = C.white; g.lineWidth = 1.5; g.beginPath(); g.arc(k * hr * 0.17, 0, 4, 0, 7); g.stroke(); }
-      const dx = clamp(fin(nav.dots), -2.5, 2.5) * hr * 0.17 * (5 / 5);
+      const dx = clamp(fin(nav.dots), -2.5, 2.5) * hr * 0.17;
       line(g, dx, -hr * 0.38, dx, hr * 0.38, ccol, 4);
       if (nav.toFrom) { const s = nav.toFrom === 'TO' ? -1 : 1; poly(g, [[hr * 0.3, s * hr * 0.15], [hr * 0.24, s * hr * 0.06], [hr * 0.36, s * hr * 0.06]], C.white); }
     }

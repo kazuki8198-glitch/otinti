@@ -22,6 +22,11 @@
   const rwyNm = L => { const s = ph.ne(L.s); return Math.hypot(s.n - (ph.LAB_RWY.n + 600), s.e - ph.LAB_RWY.e) / 1852; };
   const liveSide = L => (L.s.eng[0].failed ? 1 : -1);            // +1: the right engine runs (bank right), −1: the left
   const deadName = L => (L.s.eng[0].failed ? '左' : '右');
+  // grade "maintain" only after the speed has been "established" (ACS: establish Vyse, then hold it): the transition is not counted,
+  // but a pilot who never gets there never holds the targets, so the continuous hold still fails
+  // (after giveUp seconds the grading starts anyway, so flying around the target forever is not a way to avoid it)
+  const established = (kt, tol, after = 0, giveUp = 30) => (c, L, st) => st.t > after && (st.cap || st.t > giveUp || (Math.abs(c.kias - kt) <= tol * L.level.k && (st.cap = true)));
+  const establishedVs = (fpm, tol, after = 0, giveUp = 25) => (c, L, st) => st.t > after && (st.capV || st.t > giveUp || (Math.abs(c.vs - fpm) <= tol * L.level.k && (st.capV = true)));
 
   // ---------------------------------------------------------------- shared step groups
   // the landing: a stabilised final, then the flare and the touchdown (graded from the touchdown record, sink measured before contact)
@@ -106,7 +111,7 @@
           steps: [
             { name: '上昇（Vy）', g: { kt: AR.y, pwr: 'full', how: 'climbFull' }, keys: k('thr', 'pitch', 'rud'), say: `フルパワー（R）で ${AR.y} kt を保って {alt1} ft まで上昇。ボールがずれたら E（右ラダー）`, tgt: { spd: T_SPD(AR.y) }, gradeWhen: (c, L, st) => st.t > 10 && c.alt < L.alt0 + 900, until: (c, L) => c.alt >= L.alt0 + 950, max: 240, grade: true },
             { name: 'レベルオフ', g: { kt: 100, how: 'level' }, keys: k('pitch', 'thr', 'trim'), say: '{alt1} ft で水平に戻し、速度が付いたらパワーを巡航へ。トリムを取って保つ', tgt: { alt: [L => L.alt0 + 1000, 100] }, hold: 15, max: 90, grade: true, gradeWhen: (c, L, st) => st.t > 6 },
-            { name: '降下', g: { kt: 90, fpm: -500, how: 'rate' }, keys: k('thr', 'pitch', 'trim'), say: 'パワーを絞って 90 kt・約 500 fpm で {alt0} ft まで降下', tgt: { spd: T_SPD(90), vs: [-500, 200] }, gradeWhen: (c, L, st) => st.t > 12 && c.alt > L.alt0 + 150, until: (c, L) => c.alt <= L.alt0 + 60, max: 240, grade: true },
+            { name: '降下', g: { kt: 90, fpm: -500, how: 'rate' }, keys: k('thr', 'pitch', 'trim'), say: 'パワーを絞って 90 kt・約 500 fpm で {alt0} ft まで降下', tgt: { spd: T_SPD(90), vs: [-500, 200] }, gradeWhen: (c, L, st) => c.alt > L.alt0 + 150 && establishedVs(-500, 200, 4)(c, L, st), until: (c, L) => c.alt <= L.alt0 + 60, max: 240, grade: true },
             { name: 'レベルオフ（降下から）', g: { kt: 100, how: 'level' }, keys: k('pitch', 'thr', 'trim'), say: '{alt0} ft で水平に戻し、パワーを巡航へ。保つ', tgt: { alt: T_ALT(100) }, hold: 15, max: 90, grade: true, gradeWhen: (c, L, st) => st.t > 6 },
           ] },
         { id: 'a4', title: '中程度の旋回（30°）', goal: 'バンク 30° で高度を保って 360° 旋回し、元の針路で止める', aircraft: 'pa28',
@@ -122,10 +127,10 @@
         { id: 'a6', title: '低速飛行', goal: '失速警報を鳴らさずに、失速に近い速度で操縦する', aircraft: 'pa28',
           why: '離着陸は失速に近い低速で行う。低速では舵の効きが鈍く、「速度は機首・高度はパワー」になる（バックサイド）。失速の兆候を知り、近づかずに操縦する力をつける。',
           brief: ['パワーを絞り、速度が Vfe（白い帯の上端）以下になったらフラップを下げる（V キー）。', '<b>失速警報が鳴らない程度の低い速度</b>を保つ。低速では<b>速度は機首、高度はパワー</b>。', '舵の効きが鈍いので大きめに・ゆっくり。プロペラの影響でボールが右に寄りやすい（E）。'],
-          std: '速度 +10/−0 kt・高度 ±100 ft・針路 ±10°・失速警報なし（自家用 ACS の Slow Flight を参考）', setup: { at: 'area', kt: 90, hdg: 90 }, book: ['aero.stall', 'ops.slow'],
+          std: '速度 58 kt の +10/−0（58〜68 kt）・高度 ±100 ft・針路 ±10°・失速警報なし（自家用 ACS の Slow Flight を参考）', setup: { at: 'area', kt: 90, hdg: 90 }, book: ['aero.stall', 'ops.slow'],
           steps: [
             { name: '減速と外形変更', keys: k('thr', 'pitch', 'flaps'), g: '目安：スロットルを約 1,700 rpm まで絞り（F）、速度が落ちるにつれて S で機首を少しずつ上げて高度を保つ。白い帯の中でフラップ 25°（V を 2 回）。機首が上がろうとするので押さえる', say: 'パワーを絞って減速。白い帯に入ったらフラップ 25°。高度 {alt0} ft を保ちながら 58 kt まで', tgt: { alt: T_ALT(150) }, until: c => c.kias < 62 && c.flaps >= 2, max: 120, grade: true },
-            { name: '低速飛行', g: { kt: 58, flaps: 2, how: 'slow' }, keys: k('pitch', 'thr', 'rud'), say: '58 kt・高度 {alt0} ft・針路 {hdg0}° を保つ。失速警報を鳴らさない', tgt: { alt: T_ALT(), hdg: T_HDG(), spd: [58, 5] }, hold: 20, max: 120, grade: true, gradeWhen: (c, L, st) => st.t > 6,
+            { name: '低速飛行', g: { kt: 61, flaps: 2, how: 'slow' }, keys: k('pitch', 'thr', 'rud'), say: '58〜68 kt（58 kt より遅くしない）・高度 {alt0} ft・針路 {hdg0}° を保つ。失速警報を鳴らさない', tgt: { alt: T_ALT(), hdg: T_HDG(), spd: [63, 5] }, hold: 20, max: 120, grade: true, gradeWhen: (c, L, st) => st.t > 6,
               check: (c, L, st) => { if (c.stall) st.stallT = (st.stallT || 0) + c.dt; },
               result: (L, st) => [{ name: '失速警報', val: st.stallT ? `${st.stallT.toFixed(1)} 秒` : 'なし', std: 'なし', pass: !st.stallT || st.stallT < 1 }] },
           ] },
@@ -260,7 +265,7 @@
           ] },
         { id: 'n1', title: 'VOR の追跡', goal: 'VOR 局に向かうコースに乗り、局通過まで追跡する', aircraft: 'pa28',
           why: 'VOR は GPS が使えないときの基本の電波航法（FAA の Minimum Operational Network として維持されている）。CDI の針の動きを読んで風の修正角を見つける力は、計器飛行の土台になる。',
-          brief: ['PFD の <b>CDI</b>（HSI の中のコースの針）を使います。下のパネルの <b>CDI</b> ボタンで NAV1 に切り替え、CRS（−/+）でコースを合わせる。', '<b>TO 表示で針が右なら右へ修正（針の方へ飛ぶ）</b>。針が中央に戻り始めたら修正を半分戻す（ブラケッティング）。風があると、針が止まる針路＝風の修正角。', '1 ドット＝2°。局に近づくほど針は敏感に。局上空で TO が FROM に変わります。'],
+          brief: ['PFD の <b>CDI</b>（HSI の中のコースの針）を使います。下のパネルの <b>CDI</b> ボタンで NAV1 に切り替え、CRS（−/+）でコースを合わせる。', '<b>TO 表示で針が右なら右へ修正（針の方へ飛ぶ）</b>。針が中央に戻り始めたら修正を半分戻す（ブラケッティング）。風があると、針が止まる針路＝風の修正角。', '目盛りは片側 2 ドット：VOR は 1 ドット＝5°、2 ドット（いっぱい）＝10°。局に近づくほど針は敏感に。局上空で TO が FROM に変わります。'],
           std: '追跡中 CDI ±1 ドット・高度 ±150 ft（局から 1 NM 以上の区間）', setup: { at: 'away', brg: 220, km: 22, altFt: 3000, toward: true, offset: 25, kt: 100, nav: 'VOR', obsOff: -40, wind: { rel: 80, kt: 12, gust: 0.6 } }, book: ['nav.vor'],
           steps: [
             { name: 'コースの設定と会合', g: { kt: 100, how: 'level' }, keys: 'パネルの CDI（NAV1）と CRS −/+、A / D で針路', say: 'NAV1 は LAB VOR（113.50）。CRS を局への方位 {brgV}° 付近に合わせ（CRS ボタン）、針が中央へ来るように会合する', until: (c, L) => Math.abs(c.cdi) < 1 && L.av.cdi === 'NAV1' && Math.abs(w180(L.av.crs - c.brgV)) < 12, max: 300 },
@@ -301,8 +306,8 @@
             stepSL('計器による水平飛行', 100, 30, { keys: k('pitch', 'roll', 'thr', 'trim') }),
             { name: '標準旋回（左 90°）', g: { kt: 100, bank: 17, how: 'turn' }, keys: k('roll', 'pitch'), say: '標準旋回率で左へ 90° 旋回し {hdgL}° で止める', tgt: { alt: T_ALT(), arate: [3, 1] }, gradeWhen: (c, L, st) => Math.abs(st.turned) > 15 && Math.abs(st.turned) < 75, until: (c, L, st) => Math.abs(st.turned) > 80 && Math.abs(c.bank) < 5, max: 80, grade: true,
               result: (L, st) => { const d = Math.abs(w180(L.last.hdg - (L.hdg0 - 90))), tol = Math.round(10 * L.level.k); return [{ name: 'ロールアウト', val: `${Math.round(d)}° ずれ`, std: `±${tol}°`, pass: d <= tol }]; } },
-            { name: '上昇 500 fpm', g: { kt: 85, fpm: 500, how: 'rate' }, keys: k('thr', 'pitch'), say: '500 fpm で {alt1} ft まで上昇（85 kt 前後）', tgt: { vs: [500, 150] }, gradeWhen: (c, L, st) => st.t > 8 && c.alt < L.alt0 + 900, until: (c, L) => c.alt > L.alt0 + 950, max: 200, grade: true },
-            { name: '降下 500 fpm', g: { kt: 100, fpm: -500, how: 'rate' }, keys: k('thr', 'pitch'), say: '100 kt・500 fpm で {alt0} ft まで降下して水平に', tgt: { vs: [-500, 150] }, gradeWhen: (c, L, st) => st.t > 8 && c.alt > L.alt0 + 100, until: (c, L) => c.alt < L.alt0 + 50, max: 200, grade: true },
+            { name: '上昇 500 fpm', g: { kt: 85, fpm: 500, how: 'rate' }, keys: k('thr', 'pitch'), say: '500 fpm で {alt1} ft まで上昇（85 kt 前後）', tgt: { vs: [500, 150] }, gradeWhen: (c, L, st) => c.alt < L.alt0 + 900 && establishedVs(500, 150, 4)(c, L, st), until: (c, L) => c.alt > L.alt0 + 950, max: 200, grade: true },
+            { name: '降下 500 fpm', g: { kt: 100, fpm: -500, how: 'rate' }, keys: k('thr', 'pitch'), say: '100 kt・500 fpm で {alt0} ft まで降下して水平に', tgt: { vs: [-500, 150] }, gradeWhen: (c, L, st) => c.alt > L.alt0 + 100 && establishedVs(-500, 150, 4)(c, L, st), until: (c, L) => c.alt < L.alt0 + 50, max: 200, grade: true },
           ] },
         { id: 'i2', title: '異常姿勢からの回復', goal: '計器だけで、機首上げ・機首下げの異常姿勢から回復する', aircraft: 'pa28',
           why: '空間識失調や計器の見落としで、気づいたら異常な姿勢になっていることがある。どちらの状態かを速く判断し、正しい順序で回復する（順序を間違えると、構造の破壊や失速に至る）。',
@@ -378,7 +383,7 @@
               check: (c, L, st) => { st.dev = Math.max(st.dev || 0, Math.abs(w180(c.hdg - st.h0))); },
               result: (L, st) => { const good = L.s.eng.every(e => !e.feather || e.failed), when = st.t; return [{ name: 'フェザーした側', val: L.s.eng.some(e => e.feather) ? (good ? `止まった${deadName(L)}エンジン` : '生きているエンジン（重大な誤り）') : 'フェザーしていない', std: '止まったエンジン', pass: good && L.s.eng.some(e => e.feather) }, { name: 'フェザーまで', val: `${Math.round(when)} 秒`, std: '30 秒以内', pass: when <= 30 }]; },
               stopOnFail: '片発停止の処置が基準外でした' },
-            { name: '片発で飛ぶ（Vyse）', g: { kt: SM.yse, pwr: 'dead', how: 'oei' }, keys: k('pitch', 'rud', 'roll', 'rtrim'), say: `Vyse ${SM.yse} kt、生きているエンジン側へ 2〜5° バンク、針路 {hdg0}° を保つ`, tgt: { spd: [SM.yse, 5], hdg: T_HDG(10), bank: [L => 3 * liveSide(L), 3, 'fixed'] }, hold: 30, max: 150, grade: true, gradeWhen: (c, L, st) => st.t > 8 },
+            { name: '片発で飛ぶ（Vyse）', g: { kt: SM.yse, pwr: 'dead', how: 'oei' }, keys: k('pitch', 'rud', 'roll', 'rtrim'), say: `Vyse ${SM.yse} kt、生きているエンジン側へ 2〜5° バンク、針路 {hdg0}° を保つ`, tgt: { spd: [SM.yse, 5], hdg: T_HDG(10), bank: [L => 3 * liveSide(L), 3, 'fixed'] }, hold: 30, max: 150, grade: true, gradeWhen: established(SM.yse, 5, 4) },
             { name: '管制へ連絡', atc: 'oei' },
           ] },
         { id: 'm3', title: 'Vmc デモンストレーション', goal: '片発で速度を下げると方向が保てなくなる速度（Vmc）を知り、正しく回復する', aircraft: 'pa44',
@@ -412,7 +417,7 @@
               until: (c, L, st) => L.s.eng.some(e => e.feather) && st.t > 8, max: 60,
               result: (L, st) => { const good = L.s.eng.every(e => !e.feather || e.failed) && L.s.eng.some(e => e.feather); return [{ name: 'フェザー', val: good ? `止まった${deadName(L)}エンジン（${Math.round(st.t)} 秒）` : L.s.eng.some(e => e.feather) ? '生きているエンジン（重大な誤り）' : 'していない', std: '30 秒以内・止まった側', pass: good && st.t <= 30 }, { name: '脚', val: L.s.gearDown ? 'DOWN のまま' : 'UP', std: 'UP', pass: !L.s.gearDown }]; },
               stopOnFail: '片発停止の処置が基準外でした' },
-            { name: '片発で上昇', g: { kt: SM.yse, pwr: 'dead', how: 'oei' }, keys: k('pitch', 'rud', 'roll'), say: `Vyse ${SM.yse} kt で地上 1,000 ft まで上昇`, tgt: { spd: [SM.yse, 5], rhdg: [0, 15] }, until: c => c.aglR > 1000, max: 300, grade: true, gradeWhen: (c, L, st) => st.t > 5 },
+            { name: '片発で上昇', g: { kt: SM.yse, pwr: 'dead', how: 'oei' }, keys: k('pitch', 'rud', 'roll'), say: `Vyse ${SM.yse} kt で地上 1,000 ft まで上昇`, tgt: { spd: [SM.yse, 5], rhdg: [0, 15] }, until: c => c.aglR > 1000, max: 300, grade: true, gradeWhen: established(SM.yse, 5, 3) },
           ] },
         { id: 'm5', title: '片発の進入と着陸', goal: '片発のまま安定した進入をして着陸する', aircraft: 'pa44',
           why: '片発ではゴーアラウンドの性能がほとんどない。着陸が確実になるまで脚とフラップを出しすぎず、Vyse を保つ。',

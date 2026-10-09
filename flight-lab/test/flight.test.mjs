@@ -171,7 +171,7 @@ test('grading: ≥ 85 % of the time inside and the largest deviation within 1.6 
 
 test('the scripted pilot flies and passes the lessons a script can fly (Archer, Seminole, instruments, navigation)', () => {
   const fails = [];
-  for (const id of ['a1', 'a2', 'a4', 'a5', 'a7', 'a8', 't1', 't3', 't4', 'e1', 'e2', 'e3', 'c1', 'x3', 'n2', 'i3', 'i5', 'm1', 'm3']) {
+  for (const id of ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 't1', 't3', 't4', 'e1', 'e2', 'e3', 'c1', 'x3', 'n1', 'n2', 'n3', 'i3', 'i4', 'i5', 'm1', 'm2', 'm3', 'm4']) {
     const L = runLesson(FL, id, 'basic', 1200);
     if (!(L.done && L.passed)) fails.push(`${id}: ${L.grade} ${L.reason} ${L.results.flatMap(r => r.rows).filter(r => !r.pass).map(r => r.name + ' ' + r.val).join(' / ')}`);
   }

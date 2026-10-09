@@ -7,7 +7,7 @@ export function makeBot(FL) {
   const P = FL.physics, SC = FL.school, DEG = Math.PI / 180, clamp = P.clamp;
   const w180 = a => ((a % 360) + 540) % 360 - 180;
   const st = { pBase: null, iThr: 0, lastIas: null, lastStep: -1, flare: false };
-  function reset() { st.pBase = null; st.iThr = 0; st.lastIas = null; st.flare = false; st.base = null; }
+  function reset() { st.pBase = null; st.iThr = 0; st.lastIas = null; st.flare = false; st.base = null; st.oeiP = null; }
   // the hands: a pitch target (the hold), a bank target (the stick), the rudder
   function pitchTo(s, deg) { s.keyHold = true; s.pTgt = clamp(deg, -20, 22); s.pRate = 0; }
   function bankTo(s, bankT) { const o = s.out, p = -s.w[2] / DEG; s.rIn = clamp(0.045 * (bankT - o.bank) - 0.012 * p, -1, 1); }
@@ -81,7 +81,8 @@ export function makeBot(FL) {
       if (s.A.twin) {
         const dead = s.eng.findIndex(e => e.failed); if (dead >= 0 && !s.eng[dead].feather && L.t - (L.fail.engL ?? L.fail.engR ?? L.t) > 3) { s.eng[dead].feather = true; s.eng[dead].cut = true; }
         s.thr = 1; if (!s.gearDown) {} else if (c.aglR > 50) s.gearDown = false;
-        speedPitch(s, c, g.kt || L.V.yse, dt); const live = s.eng[0].failed ? 1 : -1;
+        { const kt = g.kt || L.V.yse; if (st.oeiP == null) st.oeiP = 5; st.oeiP = clamp(st.oeiP + (c.kias - kt) * 0.04 * dt, -2, 9); pitchTo(s, clamp(st.oeiP + 0.4 * (c.kias - kt), -4, 10)); }
+        const live = s.eng[0].failed ? 1 : -1;
         bankTo(s, 3 * live + clamp(w180((tv('hdg') != null ? hdg : c.rwyHdg && /上昇/.test(name) ? 360 : hdg) - c.hdg) * 0.5, -5, 5));
         return;
       }
@@ -99,12 +100,14 @@ export function makeBot(FL) {
     if (g.flaps != null && s.flapIdx !== g.flaps && !/接地/.test(name)) s.flapIdx = g.flaps;
     if (s.A.twin && !c.onGround && c.aglR > 150 && c.vs > 100 && s.gearDown && how === 'climbFull') s.gearDown = false;
     if (how === 'climbFull') { s.thr = 1; speedPitch(s, c, g.kt, dt); headTo(s, c, S.tgt && S.tgt.rhdg ? 360 : hdg); }
-    else if (how === 'turn') { const dir = /左/.test(name) ? -1 : 1; speedThr(s, c, g.kt, dt); vsPitch(s, c, altVs(c, alt), dt); bankTo(s, dir * (S.tgt && S.tgt.abank ? S.tgt.abank[0] : g.bank || 30)); if (S.tgt && S.tgt.arate) bankTo(s, Math.abs(L.st.turned) > 80 ? 0 : dir * (g.bank || 17)); if (/90°/.test(name) && Math.abs(L.st.turned) > 84) bankTo(s, 0); }
+    else if (/減速と外形変更/.test(name)) { s.thr = c.kias > 66 ? 0.25 : 0.5; vsPitch(s, c, altVs(c, alt), dt); headTo(s, c, hdg, 10); if (c.kias < L.V.fe - 4 && s.flapIdx < 2) s.flapIdx++; }
+    else if (/アウトバウンド 1 分/.test(name)) { speedThr(s, c, g.kt || 100, dt); vsPitch(s, c, altVs(c, alt), dt); if (L.st.t < 60) headTo(s, c, w180(L.hdg0 + 180) + 360); else bankTo(s, 17); }
+    else if (how === 'turn' && /インバウンドへ/.test(name) && Math.abs(L.st.turned) > 150) { speedThr(s, c, g.kt, dt); vsPitch(s, c, altVs(c, alt), dt); headTo(s, c, (L.av.crs || 360) + clamp(c.cdi * 37.5, -30, 30)); }
+    else if (how === 'turn') { const dir = /左/.test(name) ? -1 : 1; speedThr(s, c, g.kt, dt); vsPitch(s, c, altVs(c, alt), dt); bankTo(s, dir * (S.tgt && S.tgt.abank ? S.tgt.abank[0] : g.bank || 30)); if (S.tgt && S.tgt.arate) bankTo(s, Math.abs(L.st.turned) > (/アウトバウンド|インバウンド/.test(name) ? 172 : 80) ? 0 : dir * (g.bank || 17)); if (/90°/.test(name) && Math.abs(L.st.turned) > 84) bankTo(s, 0); }
     else if (how === 'rate') {
-      // the guide's power for the rate, trimmed by the error; the speed with the nose
-      if (st.base == null) st.base = clamp(P.steadyState(s, g.kt, g.fpm || 0, { altFt: c.alt }).thr, 0, 1);
-      const e = (g.fpm || 0) - c.vs; st.iThr = clamp(st.iThr + e * 0.00008 * dt, -0.3, 0.3);
-      s.thr = clamp(st.base + e * 0.0003 + st.iThr, 0, 1); speedPitch(s, c, g.kt, dt); headTo(s, c, hdg);
+      // the rate with the nose, the speed with the power (steadier for a script than the textbook's power-for-rate)
+      if (st.base == null) { st.base = clamp(P.steadyState(s, g.kt, g.fpm || 0, { altFt: c.alt }).thr, 0, 1); s.thr = st.base; }
+      vsPitch(s, c, g.fpm || 0, dt); const e = g.kt - c.kias; st.iThr = clamp(st.iThr + e * 0.004 * dt, -0.3, 0.3); s.thr = clamp(st.base + e * 0.02 + st.iThr, 0, 1); headTo(s, c, hdg);
     }
     else if (how === 'approach' || how === 'ils' || how === 'pattern') {
       // the vertical path: from the PAPI angle (or the glide slope), power for the path, pitch for speed
@@ -113,7 +116,7 @@ export function makeBot(FL) {
       const crab = c.gsK > 30 ? w180(c.hdg - c.trk) : 0, lat = (how === 'ils' ? 360 + clamp(c.loc * 30, -30, 30) : 360 - clamp(c.cross * 0.12, -30, 30)) + crab;
       headTo(s, c, lat, 20);
     }
-    else if (how === 'oei') { s.thr = 1; speedPitch(s, c, g.kt, dt); const live = s.eng[0].failed ? 1 : -1; bankTo(s, 3 * live + clamp(w180(hdg - c.hdg) * 0.4, -4, 4)); }
+    else if (how === 'oei') { s.thr = 1; if (st.oeiP == null) st.oeiP = 5; st.oeiP = clamp(st.oeiP + (c.kias - g.kt) * 0.04 * dt, -2, 9); pitchTo(s, clamp(st.oeiP + 0.4 * (c.kias - g.kt), -4, 10)); const live = s.eng[0].failed ? 1 : -1; bankTo(s, 3 * live + clamp(w180(hdg - c.hdg) * 0.4, -4, 4)); }
     else if (how === 'slow') { speedPitch(s, c, g.kt, dt); const e = alt - c.alt; st.iThr = clamp(st.iThr + e * 0.0004 * dt, -0.3, 0.3); s.thr = clamp(0.55 + e * 0.004 + st.iThr, 0, 1); headTo(s, c, hdg, 10); }
     else {
       // level: altitude by the nose, speed by the throttle; heading (or the CDI, or a waypoint)
@@ -122,6 +125,9 @@ export function makeBot(FL) {
       let h = hdg;
       if (S.tgt && (S.tgt.cdi || S.tgt.loc)) h = (L.av.crs || 360) + clamp(c.cdi * 37.5, -30, 30);
       if (/ローカライザー/.test(name)) h = c.navFlag || Math.abs(c.loc) > 0.64 ? L.intHdg || 330 : 360 + clamp(c.loc * 30, -30, 30);
+      if (/VOR 局へ/.test(name) && Number.isFinite(c.brgV)) h = c.brgV;
+      if (/コースの設定と会合/.test(name) && Number.isFinite(c.brgV)) { L.av.cdi = 'NAV1'; if (L.st.t < 1) L.av.crs = Math.round(c.brgV) || 360; h = (L.av.crs || 360) + clamp(c.cdi * 37.5, -30, 30); }
+      if (/LAB RWY へ/.test(name)) { const R = P.LAB_RWY, p = P.ne(L.s); h = FL.avionics.trueToMag(Math.atan2(R.e - p.e, R.n + 600 - p.n) / DEG, P.MAGVAR_W); }
       if (/LAB-A/.test(name)) h = brgTo(L, 'LABEA'); if (/LAB-F/.test(name)) h = brgTo(L, 'LABEF');
       if (S.tgt && S.tgt.trk) h = hdg + (hdg - c.trk);
       headTo(s, c, h);

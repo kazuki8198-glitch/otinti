@@ -315,6 +315,8 @@
     // keep the history for the record (every 2 s)
     if (L.t >= L.nextSample) { L.nextSample = L.t + 2; if (L.hist.alt.length < 1800) { L.hist.alt.push(Math.round(c.alt)); L.hist.ias.push(Math.round(c.kias)); } }
     const S = L.def.steps[L.step]; if (!S) return;
+    // one engine out in a lesson: no automatic rudder (the lesson is about the pilot's own feet: dead foot, dead engine)
+    if (L.s.A.twin && L.s.eng.some(e => e.failed)) L.s.opts.autoRud = false;
     const st = L.st; st.t += dt;
     st.turned += st.lastHdg == null ? 0 : w180(c.hdg - st.lastHdg); st.lastHdg = c.hdg;
     if (L.s.crashed) { crashed(L, L.s.crashReason); return; }

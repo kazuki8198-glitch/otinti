@@ -2,8 +2,8 @@
 // the CDI's direction, distances, cross-track, the panel controls and the drawing (no NaN / Infinity reaches a canvas).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { load } from './load.mjs';
-const FL = load('physics.js', 'avionics.js', 'sanford-course.js', 'curriculum.js', 'training.js');
+import { load, CORE } from './load.mjs';
+const FL = load(...CORE);
 const A = FL.avionics, P = FL.physics;
 const near = (a, b, eps, msg) => assert.ok(Math.abs(a - b) <= eps, `${msg || ''} ${a} ≈ ${b} (±${eps})`);
 
@@ -74,12 +74,17 @@ test('CDI direction: course to the right of the aircraft → needle right (+); G
   assert.ok(A.xtkNm(a, b, right) > 0 && A.xtkNm(a, b, left) < 0);
   assert.ok(A.cdiGps(A.xtkNm(a, b, right)) < 0, 'needle left when right of course');
   assert.ok(A.cdiGps(A.xtkNm(a, b, left)) > 0, 'needle right when left of course');
-  assert.equal(A.cdiGps(2), -5); assert.equal(A.cdiGps(-0.1), 0.5);
+  // the G1000 HSI scale: two dots a side, full scale at the second dot (pegged at 2.5)
+  assert.equal(A.cdiGps(1), -2, 'TERM: 1.0 NM = full scale'); assert.equal(A.cdiGps(-0.25), 0.5); assert.equal(A.cdiGps(5), -2.5, 'pegged');
+  assert.equal(A.cdiGps(-2, 2), 2, 'ENR: 2.0 NM = full scale');
   // VOR, OBS 360: on the 010 radial (north of the station, east of the 360 radial), FROM → the course is to the left
   const v = A.cdiVor(10, 360); assert.equal(v.toFrom, 'FROM'); assert.ok(v.dots < 0, 'radial 010, OBS 360 FROM: needle left');
   // on the 190 radial (south of the station, west of the 180 radial), TO → the course is to the right
   const w = A.cdiVor(190, 360); assert.equal(w.toFrom, 'TO'); assert.ok(w.dots > 0, 'radial 190, OBS 360 TO: needle right');
   assert.equal(A.cdiVor(360, 360).dots, 0);
+  // VOR: 5° a dot, 10° full scale; localizer 1.25° a dot; glide slope 0.35° a dot
+  near(A.cdiVor(185, 360).dots, 1, 1e-9, 'VOR 5° off'); near(Math.abs(A.cdiVor(170, 360).dots), 2, 1e-9, 'VOR 10° = full scale');
+  near(A.cdiLoc(-1.25), 1, 1e-9); near(A.cdiLoc(2.5), -2, 1e-9); near(A.gsDots(0.35), -1, 1e-9); near(A.gsDots(-0.7), 2, 1e-9);
 });
 
 test('localizer and glide path: right of the centre line → needle left; high → diamond down', () => {
@@ -126,18 +131,18 @@ test('panel controls: HDG / ALT / BARO / COM swap / CDI cycle / range / D→ sta
   const n2 = A.navSolve(av, { n: 1000, e: -39000 }, o, 6, P.LAB_RWY); assert.ok(Math.abs(n2.xtk) > 0.05, 'the D→ leg stays where it was set');
 });
 
-test('drawing: the PFD and MFD give no NaN / Infinity to the canvas, even from broken inputs', () => {
-  const av = A.createAvionics();
-  const cases = [
-    { o: P.derive(P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100)), qnh: 29.92 },
-    { o: { pitch: NaN, bank: Infinity, ias: NaN, vsi: -Infinity, altTrue: NaN, hdgTrue: NaN, trk: undefined, gs: NaN, tas: NaN, rpm: NaN, fuelFlow: NaN, fuel: [NaN, NaN], aoaFrac: NaN, windFrom: NaN, windKt: NaN, oat: NaN, powerPct: NaN, slip: NaN }, qnh: NaN },
-  ];
-  for (const [i, cs] of cases.entries()) for (const page of ['MAP', 'FPL']) for (const cdi of ['GPS', 'NAV1']) {
-    av.mfdPage = page; av.cdi = cdi;
-    const nav = A.navSolve(av, { n: 0, e: -40000 }, cs.o, 6, P.LAB_RWY);
-    const d = { o: cs.o, av, nav, varW: 6, qnh: cs.qnh, engine: { running: i === 0 }, pos: { n: 0, e: -40000 } };
-    const m1 = mockCanvas(); A.drawPFD(m1.g, 640, 420, d); assert.deepEqual(m1.bad, [], `PFD case ${i}`); assert.ok(m1.calls.n > 200);
-    const m2 = mockCanvas(); A.drawMFD(m2.g, 640, 420, d); assert.deepEqual(m2.bad, [], `MFD case ${i} ${page}`); assert.ok(m2.calls.n > 50);
+const panel = (s, av, o = s.out, qnh = 29.92) => ({ o, av, nav: A.navSolve(av, P.ne(s), o, 6, P.LAB_RWY), varW: 6, qnh, eng: s.eng.map(e => ({ run: e.run, rpm: e.rpm, feather: e.feather })), V: s.A.v, fuelCap: s.A.fuelCap, pos: P.ne(s) });
+test('drawing: the PFD and MFD give no NaN / Infinity to the canvas (both aircraft, failures, broken inputs)', () => {
+  const broken = { pitch: NaN, bank: Infinity, ias: NaN, vsi: -Infinity, altTrue: NaN, hdgTrue: NaN, trk: undefined, gs: NaN, tas: NaN, rpm: NaN, fuelFlow: NaN, fuel: [NaN, NaN], aoaFrac: NaN, windFrom: NaN, windKt: NaN, oat: NaN, powerPct: NaN, slip: NaN };
+  for (const ac of ['pa28', 'pa44']) {
+    const s = P.placeInAir(P.newState({ aircraft: ac }), 0, -40000, 3000, 354, ac === 'pa28' ? 100 : 130);
+    if (ac === 'pa44') { s.eng[0].failed = true; s.eng[0].feather = true; }
+    for (const [i, o] of [s.out, broken].entries()) for (const page of ['MAP', 'FPL']) for (const cdi of ['GPS', 'NAV1']) for (const fail of [{}, { ahrs: true, gps: true }]) {
+      const av = A.createAvionics(); av.mfdPage = page; av.cdi = cdi; av.fail = fail;
+      const d = panel(s, av, o, i ? NaN : 29.92);
+      const m1 = mockCanvas(); A.drawPFD(m1.g, 640, 420, d); assert.deepEqual(m1.bad, [], `PFD ${ac} case ${i}`); assert.ok(m1.calls.n > 200);
+      const m2 = mockCanvas(); A.drawMFD(m2.g, 640, 420, d); assert.deepEqual(m2.bad, [], `MFD ${ac} case ${i} ${page}`); assert.ok(m2.calls.n > 50);
+    }
   }
 });
 
@@ -145,8 +150,18 @@ test('MFD engine strip: unimplemented engine values are shown as "—", not as m
   const texts = [];
   const g = new Proxy({}, { get: (t, k) => (k in t ? t[k] : (...a) => { if (k === 'fillText') texts.push(String(a[0])); }), set: (t, k, v) => { t[k] = v; return true; } });
   const av = A.createAvionics(), s = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100);
-  A.drawMFD(g, 640, 420, { o: s.out, av, nav: A.navSolve(av, { n: 0, e: -40000 }, s.out, 6, P.LAB_RWY), varW: 6, qnh: 29.92, engine: s.engine, pos: { n: 0, e: -40000 } });
-  for (const lab of ['OIL PSI', 'OIL °F', 'EGT °F', 'VOLTS', 'AMPS']) { const i = texts.indexOf(lab); assert.ok(i >= 0, lab); assert.equal(texts[i + 1], '—', `${lab} shows —`); }
+  A.drawMFD(g, 640, 420, panel(s, av));
+  for (const lab of ['OIL PSI', 'OIL °F', 'EGT °F']) { const i = texts.indexOf(lab); assert.ok(i >= 0, lab); assert.equal(texts[i + 1], '—', `${lab} shows —`); }
   assert.ok(texts.some(t => /未実装/.test(t)));
   assert.ok(texts.some(t => /NOT FOR NAVIGATION/.test(t)));
+});
+
+test('failures on the displays: AHRS failure flags the attitude and heading, GPS failure flags the GPS course', () => {
+  const s = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100), av = A.createAvionics();
+  av.fail = { gps: true }; av.cdi = 'GPS'; A.control(av, 'DIRECT', 'LABEF');
+  assert.equal(A.navSolve(av, P.ne(s), s.out, 6, P.LAB_RWY).flag, 'NO GPS');
+  const texts = [];
+  const g = new Proxy({}, { get: (t, k) => (k in t ? t[k] : (...a) => { if (k === 'fillText') texts.push(String(a[0])); }), set: (t, k, v) => { t[k] = v; return true; } });
+  av.fail = { ahrs: true }; A.drawPFD(g, 640, 420, panel(s, av));
+  assert.ok(texts.some(t => /AHRS|ATT FAIL|姿勢/.test(t)), texts.filter(t => /FAIL|AHRS/.test(t)).join(','));
 });

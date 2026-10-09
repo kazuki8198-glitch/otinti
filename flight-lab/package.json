@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "test": "node build.mjs && node --test test/flight.test.mjs test/avionics.test.mjs test/browser.test.mjs"
+    "test": "node build.mjs && node --test --test-concurrency=1 test/flight.test.mjs test/avionics.test.mjs test/browser.test.mjs",
+    "test:fast": "node --test test/flight.test.mjs test/avionics.test.mjs"
   }
 }

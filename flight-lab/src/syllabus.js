@@ -13,7 +13,7 @@
   const AR = ph.AIRCRAFT.find(a => a.id === 'pa28').v, SM = ph.AIRCRAFT.find(a => a.id === 'pa44').v;
   const w180 = a => ((a % 360) + 540) % 360 - 180;
   const KEYS = {
-    pitch: 'S＝機首上げ・W＝機首下げ（離すとその姿勢を保つ）', roll: 'A / D＝左右に傾ける', rud: 'Q / E＝ラダー（ボールを中央へ）', thr: 'R＝スロットル増・F＝減',
+    pitch: 'S＝機首上げ・W＝機首下げ（離すとその姿勢を保つ）', roll: 'A / D＝左右に傾ける', rud: 'Q / E＝ラダー（ボールを中央へ）', thr: 'R＝スロットル増・F＝減（Shift で一気に全開 / アイドル）',
     trim: 'T＝いまの速度でトリム（手放しで水平）', flaps: 'V＝フラップを 1 段下げる（最後まで行くと UP に戻る）', brake: 'B / Space＝ブレーキ', gear: 'G＝脚の上げ下げ',
     feather: '[＝左のプロペラをフェザー・]＝右', rtrim: 'Z / X＝ラダートリム 左 / 右（片発で足を楽に）',
   };
@@ -184,11 +184,11 @@
           ] },
         { id: 'e1', title: '離陸中止', goal: '離陸滑走中の異常で、安全に止まる', aircraft: 'pa28',
           why: '浮揚前の異常（計器の異常・エンジンの不調・何か変だ）は「止まる」が原則。判断が遅れるほど止まる距離が足りなくなる。',
-          brief: ['「離陸中止（アボート）」の指示：<b>①スロットル アイドル（F を押し続ける）②ブレーキ（B）③ラダーでセンターライン</b>。', '判断は早く。迷ったら止める。'],
+          brief: ['「離陸中止（アボート）」の指示：<b>①スロットル アイドル（Shift+F で一気に、または F を押し続ける）②ブレーキ（B）③ラダーでセンターライン</b>。', '判断は早く。迷ったら止める。'],
           std: '指示から 2 秒以内にアイドル・センターライン ±8 m・滑走路内で停止', setup: { at: 'runway' }, book: ['emg.abort'],
           steps: [
             { name: '離陸滑走', keys: k('thr', 'rud'), g: '目安：スロットル全開。異常の指示が来たら迷わず止める', say: 'フルパワーで離陸滑走を始める', until: c => c.kias > 40, max: 60 },
-            { name: '離陸中止', keys: k('thr', 'brake', 'rud'), g: '目安：スロットルを一気にアイドル（F）→ ブレーキ（B）。前輪を接地させたまま、ラダー（Q / E）でまっすぐ', say: '離陸中止！ スロットル アイドル・ブレーキ・センターライン', until: c => c.onGround && c.gsK < 3, max: 60, grade: true, tgt: { cl: [0, 8] },
+            { name: '離陸中止', keys: k('thr', 'brake', 'rud'), g: '目安：スロットルを一気にアイドル（Shift+F）→ ブレーキ（B）。前輪を接地させたまま、ラダー（Q / E）でまっすぐ', say: '離陸中止！ スロットル アイドル・ブレーキ・センターライン', until: c => c.onGround && c.gsK < 3, max: 60, grade: true, tgt: { cl: [0, 8] },
               onStart: (L, c, st) => { st.idle = null; }, check: (c, L, st) => { if (st.idle === null && c.thr < 0.05) st.idle = st.t; if (!c.paved && c.onGround) st.off = true; },
               result: (L, st) => [{ name: 'アイドルまで', val: st.idle === null ? '—' : `${st.idle.toFixed(1)} 秒`, std: '2 秒以内', pass: st.idle !== null && st.idle <= 2 }, { name: '停止位置', val: st.off ? '滑走路外' : '滑走路内', std: '滑走路内', pass: !st.off }] },
           ] },

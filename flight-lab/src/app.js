@@ -91,7 +91,7 @@
     if (S.paused || S.L.done) return;
     if ((e.code === 'Enter' || e.code === 'NumpadEnter') && S.L.check) { e.preventDefault(); checklistNext(); return; }
     if (/^(Digit|Numpad)[123]$/.test(e.code) && S.L.atc) { e.preventDefault(); answerAtc(+e.code.slice(-1) - 1); return; }
-    const act = { KeyV: e.shiftKey ? 'flapsUp' : 'flaps', KeyG: 'gear', KeyT: e.shiftKey ? 'trimReset' : 'trim', KeyL: 'level', KeyU: 'autoRud', BracketLeft: e.shiftKey ? 'restart0' : 'feather0', BracketRight: e.shiftKey ? 'restart1' : 'feather1', KeyZ: 'rtrimL', KeyX: 'rtrimR' }[e.code];
+    const act = { KeyV: e.shiftKey ? 'flapsUp' : 'flaps', KeyR: e.shiftKey ? 'thrFull' : null, KeyF: e.shiftKey ? 'thrIdle' : null, KeyG: 'gear', KeyT: e.shiftKey ? 'trimReset' : 'trim', KeyL: 'level', KeyU: 'autoRud', BracketLeft: e.shiftKey ? 'restart0' : 'feather0', BracketRight: e.shiftKey ? 'restart1' : 'feather1', KeyZ: 'rtrimL', KeyX: 'rtrimR' }[e.code];
     if (act) { e.preventDefault(); doAction(act); }
   });
   window.addEventListener('keyup', e => { S.keys.delete(e.code); });
@@ -115,11 +115,15 @@
       if (s.opts.assist) { toast('操縦アシスト中はトリムは自動です', 1500); return; }
       s.trimHold = s.elev; s.trim = P.trimLevel(s);
       toast(`トリム ${s.trim >= 0 ? '機首上げ' : '機首下げ'} ${Math.abs(Math.round(s.trim / P.TRIM_MAX * 100))}%：いまの速度で、手を離してもこの姿勢が続くように合わせました`, 2600);
+    } else if (a === 'thrFull' || a === 'thrIdle') {
+      s.thr = a === 'thrFull' ? 1 : 0;
+      toast(a === 'thrFull' ? 'スロットル全開（Shift+R）：離陸・ゴーアラウンド・失速の回復で一気に出力を出す' : 'スロットル アイドル（Shift+F）：離陸中止・エンジン故障の模擬・着陸の接地前に一気に絞る', 1800);
     } else if (a === 'trimReset') { s.trim = 0; s.trimHold = 0; toast('トリムを中立（離陸位置）に戻しました', 1400); }
     else if (a === 'level') {
       if (!L.free) { toast('L（水平に戻すアシスト）は自由飛行だけで使えます。訓練では自分で回復します', 2200); return; }
       s.opts.levelT = 4; toast('数秒間、自動で翼を水平・水平飛行に戻します（教材の補助）', 1800);
     } else if (a === 'autoRud') {
+      if (!L.free && A.twin && s.eng.some(e => e.failed)) { toast('片発の課目では自動ラダーは使えません。生きているエンジン側のラダー（Q / E）とラダートリム（Z / X）で、自分の足で方向を保つ練習です', 3200); return; }
       s.opts.autoRud = !s.opts.autoRud; S.prefs.autoRud = s.opts.autoRud; savePrefs();
       toast(s.opts.autoRud ? '自動ラダー ON：ボールを自動で中央に保ちます' : '自動ラダー OFF：Q / E でボールを中央に（離陸・上昇は右ラダー E。片発では生きている側の足）', 2600);
     } else if (a === 'feather0' || a === 'feather1') {
@@ -214,8 +218,12 @@
     if (s.keyHold && !s.onGround) s.pIn = 0;
     s.rudKey = (s.rudKey || 0) + clamp(ty - (s.rudKey || 0), -3 * dt, 3 * dt);
     s.rud = clamp(s.rudKey + S.rTrim, -1, 1);
-    if (pressed('KeyR', 'PageUp')) s.thr = clamp(s.thr + 0.45 * dt, 0, 1);
-    if (pressed('KeyF', 'PageDown')) s.thr = clamp(s.thr - 0.45 * dt, 0, 1);
+    // the throttle: fine at first, faster the longer the key is held (a real hand moves the lever in under a second)
+    const thU = pressed('KeyR', 'PageUp'), thD = pressed('KeyF', 'PageDown');
+    S.thrHeld = thU || thD ? (S.thrHeld || 0) + dt : 0;
+    const thRate = S.thrHeld < 0.4 ? 0.45 : 1.6;
+    if (thU) s.thr = clamp(s.thr + thRate * dt, 0, 1);
+    if (thD) s.thr = clamp(s.thr - thRate * dt, 0, 1);
     s.brake = brake;
   }
 
@@ -401,7 +409,7 @@
     ['W / ↑', '機首を下げる', '操縦桿を押す操作。降下・速度を増やす・失速からの回復（迎え角を減らす）に', /W＝機首下げ/, ['W']],
     ['A / D（← / →）', '左右に傾ける（エルロン）', '傾けるとその方向へ曲がる（旋回）。地上では前輪の向きにも少し効く', /A \/ D/, ['A', 'D']],
     ['Q / E', 'ラダー（方向舵）', '機首を左右に振る。ボール（横滑り計）を中央に保つ。離陸・上昇ではプロペラの影響で右ラダー（E）が必要。地上では前輪を操向。片発では生きている側の足を踏む', /Q \/ E/, ['Q', 'E']],
-    ['R / F（PageUp / PageDown）', 'スロットル（出力）', '押している間だけ出力が増える / 減る。水平飛行では速度、上昇・降下では昇降率を決める', /R＝スロットル/, ['R', 'F']],
+    ['R / F（PageUp / PageDown）', 'スロットル（出力）', '押している間だけ出力が増える / 減る（押し続けると速く動く。Shift+R で全開・Shift+F でアイドルに一気に）。水平飛行では速度、上昇・降下では昇降率を決める', /R＝スロットル/, ['R', 'F']],
     ['T（Shift+T）', 'トリム（Shift+T でリセット）', 'いまの速度で手を離しても姿勢が続くように合わせる。操縦の力を消して、正確に・疲れずに飛ぶため', /T＝/, ['T']],
     ['V（Shift+V）', 'フラップを下げる（Shift+V で上げる）', '揚力と抗力が増える。遅く・深い角度で降りられる。白い帯（Vfe 以下）でだけ使う', /V＝/, ['V']],
     ['G', '脚の上げ下げ（Seminole）', '上げると抗力が減って上昇・加速しやすい。着陸前に必ず下げる（GUMPS）', /G＝/, ['G']],

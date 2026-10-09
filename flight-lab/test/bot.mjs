@@ -29,7 +29,7 @@ export function makeBot(FL) {
   }
   const altVs = (c, alt) => clamp((alt - c.alt) * 3, -700, 700);
   function rudder(s, c) {
-    if (s.A.twin && s.eng.some(e => !e.run)) { s.rud = clamp((s.rudNeed || 0) + 0.04 * c.beta, -1, 1); return; }
+    if (s.A.twin && s.eng.some(e => !e.run || e.failed)) { s.rud = clamp((s.rudNeed || 0) + 0.04 * c.beta, -1, 1); return; }
     s.opts.autoRud = true;
   }
   // the instructor's request → the controls
@@ -50,13 +50,14 @@ export function makeBot(FL) {
     const g = S.g && typeof S.g === 'object' ? S.g : {}, name = S.name || '';
     const tv = k => { const sp = S.tgt && S.tgt[k]; return sp ? (typeof sp[0] === 'function' ? sp[0](L, c) : sp[0]) : null; };
     const alt = tv('alt') != null ? tv('alt') : L.alt0, hdg = tv('hdg') != null ? tv('hdg') : L.hdg0;
+    // the rejected takeoff: idle at once, brakes, the centre line
+    if (/離陸中止/.test(name)) { s.thr = 0; s.brake = true; s.rud = clamp(-0.06 * w180(c.hdg - 360) - 0.02 * c.cross, -1, 1); return; }
     // on the ground: full power, the rudder on the centre line, rotate at Vr
     if (c.onGround && /離陸|ローテーション|滑走|フルパワー/.test(name)) {
       s.brake = false; s.thr = 1; s.opts.autoRud = false;
       s.rud = clamp(-0.06 * w180(c.hdg - 360) - 0.02 * c.cross, -1, 1);
       s.pIn = c.kias > L.V.rotate - 1 ? 0.65 : 0; s.rIn = 0; return;
     }
-    if (/離陸中止/.test(name)) { s.thr = 0; s.brake = true; s.rud = clamp(-0.06 * w180(c.hdg - 360) - 0.02 * c.cross, -1, 1); return; }
     // landing: the flare and the roll-out
     if (/接地|着陸$|滑走路視認/.test(name)) {
       if (c.onGround) { s.thr = 0; s.brake = c.gsK < 60; s.pIn = 0; s.opts.autoRud = false; s.rud = clamp(-0.06 * w180(c.hdg - 360) - 0.02 * c.cross, -1, 1); return; }
@@ -98,7 +99,7 @@ export function makeBot(FL) {
     if (g.flaps != null && s.flapIdx !== g.flaps && !/接地/.test(name)) s.flapIdx = g.flaps;
     if (s.A.twin && !c.onGround && c.aglR > 150 && c.vs > 100 && s.gearDown && how === 'climbFull') s.gearDown = false;
     if (how === 'climbFull') { s.thr = 1; speedPitch(s, c, g.kt, dt); headTo(s, c, S.tgt && S.tgt.rhdg ? 360 : hdg); }
-    else if (how === 'turn') { const dir = /左/.test(name) ? -1 : 1; speedThr(s, c, g.kt, dt); vsPitch(s, c, altVs(c, alt), dt); bankTo(s, dir * (S.tgt && S.tgt.abank ? S.tgt.abank[0] : g.bank || 30)); if (S.tgt && S.tgt.arate) bankTo(s, Math.abs(L.st.turned) > 80 ? 0 : dir * (g.bank || 17)); }
+    else if (how === 'turn') { const dir = /左/.test(name) ? -1 : 1; speedThr(s, c, g.kt, dt); vsPitch(s, c, altVs(c, alt), dt); bankTo(s, dir * (S.tgt && S.tgt.abank ? S.tgt.abank[0] : g.bank || 30)); if (S.tgt && S.tgt.arate) bankTo(s, Math.abs(L.st.turned) > 80 ? 0 : dir * (g.bank || 17)); if (/90°/.test(name) && Math.abs(L.st.turned) > 84) bankTo(s, 0); }
     else if (how === 'rate') {
       // the guide's power for the rate, trimmed by the error; the speed with the nose
       if (st.base == null) st.base = clamp(P.steadyState(s, g.kt, g.fpm || 0, { altFt: c.alt }).thr, 0, 1);

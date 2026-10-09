@@ -13,9 +13,9 @@
   const AR = ph.AIRCRAFT.find(a => a.id === 'pa28').v, SM = ph.AIRCRAFT.find(a => a.id === 'pa44').v;
   const w180 = a => ((a % 360) + 540) % 360 - 180;
   const KEYS = {
-    pitch: 'S＝機首上げ・W＝機首下げ（離すとその姿勢を保つ）', roll: 'A / D＝左右に傾ける', rud: 'Q / E＝ラダー（ボールを中央へ）', thr: 'R＝スロットル増・F＝減（Shift で一気に全開 / アイドル）',
+    pitch: 'S＝機首上げ・W＝機首下げ（離すとその姿勢を保つ）', roll: 'A / D＝左右に傾ける', rud: 'Q / E＝ラダー（ボールを中央へ）', thr: 'R＝スロットル増・F＝スロットル減（Shift で一気に全開 / アイドル）',
     trim: 'T＝いまの速度でトリム（手放しで水平）', flaps: 'V＝フラップを 1 段下げる（最後まで行くと UP に戻る）', brake: 'B / Space＝ブレーキ', gear: 'G＝脚の上げ下げ',
-    feather: '[＝左のプロペラをフェザー・]＝右', rtrim: 'Z / X＝ラダートリム 左 / 右（片発で足を楽に）',
+    feather: '[＝左のプロペラをフェザー・]＝右のプロペラをフェザー', rtrim: 'Z / X＝ラダートリム 左 / 右（片発で足を楽に）',
   };
   const k = (...a) => a.map(x => KEYS[x] || x).join('　');
   const distNm = (L, id) => { const w = FL.avionics.wpt(id); return w ? FL.avionics.neDistNm(ph.ne(L.s), w) : 99; };

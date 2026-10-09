@@ -39,6 +39,24 @@ test('browser: offline start, the checklist and ATC by keys, keyboard flight, ke
     await page.click('#ackOk');
     assert.equal(await page.isVisible('#ack'), false);
     assert.equal(await page.isVisible('#menu'), true);
+    // the first-run tour (three cards), then the menu's "continue" card
+    assert.equal(await page.isVisible('#tour'), true, 'the tour follows the notice');
+    for (let i = 0; i < 3; i++) await page.click('#tourBody button.primary');
+    assert.equal(await page.isVisible('#tour'), false);
+    assert.match(await page.textContent('#menuHero'), /姿勢・出力・トリム/);
+    // the settings dialog (Esc closes it)
+    await page.click('#menuMini button:has-text("設定")');
+    assert.equal(await page.isVisible('#settings'), true);
+    await page.click('#optStrip button[data-v="mini"]');
+    assert.equal((await page.evaluate(() => __lab.prefs())).strip, 'mini');
+    await page.click('#optStrip button[data-v="full"]');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.isVisible('#settings'), false);
+    // the school: six stage tabs, lesson cards, the start button always in view
+    await page.click('.tile:has-text("課程表")');
+    assert.equal(await page.locator('.sch-tab').count(), 6);
+    assert.ok(await page.locator('#sch-stages .sch-item').count() >= 5);
+    assert.equal(await page.isVisible('#sch-start .sch-go'), true);
     // lesson t1: the before-takeoff checklist with Enter, the read-back with 1–3, then the takeoff roll with R
     await page.evaluate(() => __lab.start('t1', 'intro'));
     await page.waitForTimeout(300);
@@ -82,6 +100,11 @@ test('browser: offline start, the checklist and ATC by keys, keyboard flight, ke
     // every page
     for (const t of ['book', 'quiz', 'guide', 'tutor', 'readq', 'sfb', 'radio', 'records', 'g3d', 'about']) { await page.evaluate(t => __lab.showPage(t), t); await page.waitForTimeout(120); }
     await page.evaluate(() => __lab.openSchool('m3')); await page.waitForTimeout(150);
+    // the result screen: R starts the lesson again
+    await page.evaluate(() => { __lab.start('a1', 'intro'); FL.pages().showDebrief(__lab.lesson()); });
+    assert.equal(await page.isVisible('#debrief'), true);
+    await page.keyboard.press('KeyR'); await page.waitForTimeout(150);
+    assert.equal(await page.evaluate(() => __lab.state().screen), 'fly', 'R retried the lesson');
     // a chapter question in the textbook: the right answer is stored as progress
     await page.evaluate(() => __lab.showPage('book'));
     const last = await page.evaluate(() => { const c = FL.book.CHAPTERS.find(x => x.id === 'aero'); return `${c.n}.${c.secs.length}`; });

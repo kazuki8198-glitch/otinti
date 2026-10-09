@@ -17,4 +17,6 @@ v2.1：無線交信を一から詳しくしました。教科書の交信の章�
 
 v2.2：飛行モデルの修正。垂直尾翼の横力（プロペラ後流・尾翼のオフセット）に「傾ける力」が抜けていたため、全開の上昇で左へ傾き続けていたのを直しました。キーボードの A / D に「離すとバンクを保つ」（標準）を追加。
 
-開発：`node build.mjs`（ビルド）、`node --test --test-concurrency=1 test/flight.test.mjs test/avionics.test.mjs test/browser.test.mjs`（テスト 47 件）。
+v2.3：画面を作り直しました（ゲームの画面を参考に）。メニューは「続きから ▶ 飛ぶ」と大きな 4 つの入口、設定は別の画面。課程表は段階のタブと課目のカード（メダル・「次はこれ」）、開始ボタンは常に表示。飛行中は目標のゲージ・キーの絵・「簡潔に」表示。結果画面はメダルと「次に意識すること」。H でキーボードの絵（いま使うキーが光る）。最初に「はじめての方へ」。
+
+開発：`node build.mjs`（ビルド）、`node --test --test-concurrency=1 test/flight.test.mjs test/avionics.test.mjs test/browser.test.mjs`（テスト 48 件）。

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { load, CORE } from './load.mjs';
 import { makeBot, runLesson } from './bot.mjs';
 import { build } from '../build.mjs';
-const FL = load(...CORE, 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js', 'quiz.js', 'radio.js');
+const FL = load(...CORE, 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js', 'quiz.js', 'radio.js', 'ui.js');
 const P = FL.physics, A = FL.avionics, SC = FL.school, SY = FL.syllabus, SF = FL.sanford, BK = FL.book, QZ = FL.quiz;
 const DT = 1 / 120, clamp = P.clamp;
 const run = (s, sec, fn) => { for (let i = 0; i < sec * 120; i++) { if (fn) fn(s); P.step(s, DT); } return s; };
@@ -403,4 +403,17 @@ test('radio drills and listening: four different choices, the right one among th
   // the ground-school stage has the four radio lessons, and the practical test bank exists
   for (const id of ['k3', 'k4', 'k5', 'k6']) assert.ok(SC.lesson(id) && SC.lesson(id).radio, id);
   assert.ok(QZ.BANKS.find(b => b.id === 'q_radio'));
+});
+
+test('ui: key chips are made from every lesson\'s key text, and the keyboard map has every key a lesson names', () => {
+  const U = FL.ui;
+  assert.deepEqual(U.parseKeys('S＝機首上げ・W＝機首下げ（離すとその姿勢を保つ）　A / D＝左右に傾ける').map(p => p.keys), [['S'], ['W'], ['A', 'D']]);
+  assert.deepEqual(U.keysUsed('[＝左のプロペラをフェザー・]＝右のプロペラをフェザー　B / Space＝ブレーキ'), ['[', ']', 'B', 'Space']);
+  assert.match(U.keyChips('R＝スロットル増'), /<kbd>R<\/kbd><span>スロットル増<\/span>/);
+  const onMap = new Set(U.KB.map(k => k[0].toUpperCase()));
+  for (const l of SC.lessonOrder().map(id => SC.lesson(id)).filter(l => l.steps)) for (const st of l.steps) {
+    const kt = st.keys || '';
+    for (const p of U.parseKeys(kt)) { if (!p.keys.length) continue; assert.ok(p.what.length > 1, `${l.id}: "${kt}" has a key with no meaning`); for (const k of p.keys) assert.ok(onMap.has(k.replace(/^Shift\+/, '').toUpperCase()), `${l.id}: key ${k} is not on the keyboard map`); }
+  }
+  const svg = U.keyboardSvg(['W', 'S']); assert.match(svg, /^<svg/); assert.equal((svg.match(/filter="url\(#kbglow\)"/g) || []).length, 2, 'two keys lit');
 });

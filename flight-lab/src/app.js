@@ -30,7 +30,7 @@
 
   // ---------------------------------------------------------------- preferences (no secrets: only these fields)
   const PREF_KEY = 'flightlab-prefs-v2';
-  const PREFS0 = { sens: 'low', hold: 'hold', rhold: 'hold', autoRud: true, assist: false, sound: false, level: 'intro', ack: false, layout: 0 };
+  const PREFS0 = { sens: 'low', hold: 'hold', rhold: 'hold', autoRud: true, assist: false, sound: false, level: 'intro', ack: false, layout: 0, hud: 'full', strip: 'full', tour: false };
   function loadPrefs() { try { const p = JSON.parse((store && store.getItem(PREF_KEY)) || '{}'); const o = { ...PREFS0 }; for (const k of Object.keys(PREFS0)) if (typeof p[k] === typeof PREFS0[k]) o[k] = p[k]; return o; } catch (e) { return { ...PREFS0 }; } }
   function savePrefs() { try { store && store.setItem(PREF_KEY, JSON.stringify(S.prefs)); } catch (e) { /* storage unavailable */ } }
 
@@ -40,7 +40,8 @@
     keys: new Set(), pad: { known: null, prev: [], navT: 0, navDir: '' }, rTrim: 0, recId: null, lastLessonId: null, look: 0,
   };
   let scene = null, G = null;
-  const app = { S, h, $, $$, esc, fmt, store, toast, savePrefs, startLesson, startFree, openScreen, closeScreens, resume, pause, speak, errors, ctl, renderAudio, renderSoftkeys };
+  const app = { S, h, $, $$, esc, fmt, store, toast, savePrefs, startLesson, startFree, openScreen, closeScreens, resume, pause, speak, errors, ctl, renderAudio, renderSoftkeys, applyLayout: () => applyLayout(), setSound: v => setSound(v) };
+  const UI = FL.ui;
 
   // ---------------------------------------------------------------- toast
   function toast(text, ms = 2200, kind = '') {
@@ -74,8 +75,10 @@
   const pressed = (...c) => c.some(k => S.keys.has(k));
   function typing(e) { const t = e.target; return t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable); }
   const flying = () => S.screen === 'fly' && !S.paused && S.L && !S.L.done;
+  const openModalEl = () => [...$$('.modal')].find(m => !m.hidden);
   window.addEventListener('keydown', e => {
     if (typing(e)) return;
+    if (openModalEl()) { if (e.code === 'Escape') { e.preventDefault(); FL.pages(app).closeModal(); } return; }
     if (S.screen === 'fly' && FLY_HELD.includes(e.code)) e.preventDefault();
     if (S.screen === 'fly') S.keys.add(e.code);
     if (e.repeat) return;
@@ -83,6 +86,8 @@
     if (S.screen !== 'fly') {
       if (e.code === 'Escape') { e.preventDefault(); backFromScreen(); }
       if (S.screen === 'pause' && e.code === 'KeyP') { e.preventDefault(); resume(); }
+      if (S.screen === 'debrief' && e.code === 'KeyR') { e.preventDefault(); $('#sd-retry').click(); }
+      if (S.screen === 'school' && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) { e.preventDefault(); FL.pages(app).schoolTab(e.code === 'ArrowLeft' ? -1 : 1); }
       return;
     }
     if (e.code === 'Escape' || e.code === 'KeyP') { e.preventDefault(); if (S.help) { toggleHelp(false); return; } pause(); return; }
@@ -160,8 +165,9 @@
       S.pad.navDir = held;
       if (dir) padNav(dir);
       if (E[0]) { const a = document.activeElement; if (a && a !== document.body && a.click) a.click(); }
-      if (E[1]) backFromScreen();
+      if (E[1]) { if (openModalEl()) FL.pages(app).closeModal(); else backFromScreen(); }
       if (E[9] && S.screen === 'pause') resume();
+      if (S.screen === 'school' && (E[4] || E[5])) FL.pages(app).schoolTab(E[4] ? -1 : 1);
       return out;
     }
     if (!S.L) return out;
@@ -185,7 +191,7 @@
     return out;
   }
   function padNav(dir) {
-    const root = [...$$('.screen')].find(e => !e.hidden); if (!root) return;
+    const root = openModalEl() || [...$$('.screen')].find(e => !e.hidden); if (!root) return;
     const els = [...root.querySelectorAll('button, select, input, textarea, summary')].filter(e => !e.disabled && e.getClientRects().length);
     if (!els.length) return;
     let i = els.indexOf(document.activeElement); if (i < 0) i = dir > 0 ? -1 : els.length;
@@ -338,27 +344,34 @@
 
   // ---------------------------------------------------------------- the instructor panel, the control strip, the key help
   function updateUi() {
+    if (document.body.dataset.screen !== S.screen) document.body.dataset.screen = S.screen;
     const L = S.L; if (!L) return;
     $('#hood').hidden = !(S.screen === 'fly' && L.hood && !L.done);
     renderDialogs(false);
     const sp = $('#sch-panel'), fp = $('#free-panel');
     sp.hidden = !(S.screen === 'fly' && !L.free);
     fp.hidden = !(S.screen === 'fly' && L.free);
-    $('#ctl-strip').hidden = S.screen !== 'fly';
+    $('#ctl-strip').hidden = S.screen !== 'fly' || S.prefs.strip === 'off';
     if (!L.free && !sp.hidden) {
       const St = L.def.steps[L.step];
       if (St) {
-        const st = L.st, lv = L.level;
-        $('#sp-step').textContent = `${L.def.title}（${lv.name}）　項目 ${L.step + 1} / ${L.def.steps.length}：${St.name}`;
+        const st = L.st, lv = L.level, mini = S.prefs.hud === 'mini';
+        sp.classList.toggle('mini', mini); $('#sp-size').textContent = mini ? '詳しく' : '簡潔に';
+        $('#sp-step').textContent = `${L.def.title}（${lv.name}）`;
+        $('#sp-dots').innerHTML = L.def.steps.map((x, i) => `<i class="${i < L.step ? 'done' : i === L.step ? 'cur' : ''}" title="${esc(x.name)}"></i>`).join('') + `<span>${L.step + 1} / ${L.def.steps.length}　${esc(St.name)}</span>`;
         $('#sp-say').textContent = L.sayText;
-        $('#sp-keys').textContent = L.keysText ? '使うキー：' + L.keysText : '';
-        $('#sp-guide').textContent = lv.guide ? L.guideText || '' : '';
-        const chips = $('#sp-tgt'); chips.textContent = '';
+        const kh = L.keysText ? UI.keyChips(L.keysText) : '';
+        if ($('#sp-keys').dataset.k !== L.keysText) { $('#sp-keys').innerHTML = kh; $('#sp-keys').dataset.k = L.keysText || ''; }
+        $('#sp-guide').textContent = lv.guide && !mini ? L.guideText || '' : '';
+        // each target as a gauge: the needle is the deviation, the green band the tolerance (the inner part: with a margin)
+        let gh = '';
         if (St.tgt) for (const [k, q] of Object.entries(st.stats)) {
-          const lab = SC.TGT_LABEL[k] || [k, ''], r = Math.abs(q.d) / q.tol, dp = SC.DP[k] || 0;
-          const tvS = ['hdg', 'rhdg', 'dwhdg', 'trk'].includes(k) ? '' : ` ${Math.round(q.tv * 10 ** dp) / 10 ** dp}${lab[1]}`;
-          chips.append(h('span', { class: r <= 0.6 ? 'ok' : r <= 1 ? 'warn' : 'ng', title: `許容 ±${q.tol} ${lab[1]}` }, `${lab[0]}${tvS}　${q.d >= 0 ? '+' : ''}${q.d.toFixed(dp)}`));
+          const lab = SC.TGT_LABEL[k] || [k, ''], r = Math.abs(q.d) / q.tol, dp = SC.DP[k] || 0, cls = r <= 0.6 ? 'ok' : r <= 1 ? 'warn' : 'ng';
+          const tvS = ['hdg', 'rhdg', 'dwhdg', 'trk'].includes(k) ? '' : ` ${(Math.round(q.tv * 10 ** dp) / 10 ** dp).toLocaleString('en-US')}${lab[1]}`;
+          const x = clamp(50 + q.d / q.tol * 25, 2, 98), dir = r <= 1 ? '' : q.d > 0 ? '▼ 下げる / 減らす' : '▲ 上げる / 増やす';
+          gh += `<div class="gauge ${cls}" title="許容 ±${q.tol} ${esc(lab[1])}"><span class="g-lab">${esc(lab[0])}${esc(tvS)}</span><span class="g-bar"><i class="g-tol"></i><i class="g-in"></i><b style="left:${x.toFixed(1)}%"></b></span><span class="g-d">${q.d >= 0 ? '+' : ''}${q.d.toFixed(dp)}${dir && !['hdg', 'rhdg', 'dwhdg', 'trk', 'bank', 'cl', 'cdi', 'gs', 'loc', 'xtk'].includes(k) ? ' ' + dir.split(' ')[0] : ''}</span></div>`;
         }
+        $('#sp-tgt').innerHTML = gh;
         let prog = '', frac = null;
         if (St.dur) prog = `残り ${Math.max(0, Math.ceil(St.dur - st.t))} 秒`;
         else if (st.need) { prog = `基準内を連続 ${st.holdT.toFixed(0)} / ${st.need} 秒（外れると 0 に戻る）`; frac = st.holdT / st.need; }
@@ -366,7 +379,8 @@
         if (st.turned && Math.abs(st.turned) > 5 && /旋回/.test(St.name)) prog += `　旋回 ${Math.round(Math.abs(st.turned))}°`;
         $('#sp-progtxt').textContent = prog;
         $('#sp-holdbar').hidden = frac == null; if (frac != null) $('#sp-holdbar i').style.width = Math.round(clamp(frac, 0, 1) * 100) + '%';
-        $('#sp-hint').textContent = L.hint ? '教官：' + L.hint : '';
+        $('#sp-hint').textContent = L.hint && !mini ? '教官：' + L.hint : L.hint && mini ? L.hint : '';
+        $('#sp-prog').classList.toggle('reset', !!(st.need && st.holdT < 0.2 && st.t > 2 && St.tgt));
       }
     }
     if (L.free && !fp.hidden) {
@@ -395,7 +409,10 @@
     ];
     if (!A.gear.fixed) rows.push(['G', '脚', s.gearPos > 0.98 ? 'DOWN ●●●' : s.gearPos < 0.02 ? 'UP' : '作動中', '', !s.gearDown && o.agl < 400 && s.thr < 0.3 && !s.onGround ? 'bad' : '']);
     rows.push(['B', 'ブレーキ', s.brake ? 'ON' : '—', '', s.brake ? 'warn' : '']);
-    let html = '<table>' + rows.map(([k, n, v, m, c]) => `<tr><td class="k"><kbd>${k}</kbd></td><td class="n">${n}</td><td class="v ${c}">${esc(v)}${m}</td></tr>`).join('') + '</table>';
+    const mini = S.prefs.strip === 'mini';
+    const keep = mini ? ['スロットル', 'フラップ', '脚', 'トリム'] : null;
+    let html = `<div class="cs-head"><span>操作の状態</span><button type="button" class="cs-tog" title="詳しく / 簡潔に（⚙ 設定でも変えられます）">${mini ? '詳しく ▾' : '簡潔に ▴'}</button></div>`;
+    html += '<table>' + rows.filter(r => !keep || keep.includes(r[1])).map(([k, n, v, m, c]) => `<tr><td class="k"><kbd>${k}</kbd></td><td class="n">${n}</td><td class="v ${c}">${esc(v)}${m}</td></tr>`).join('') + '</table>';
     // the stick and the rudder (the pilot's inputs), the ball, the warnings
     const sx = 18 + clamp(s.bankHoldOn ? s.ail || 0 : s.rIn || 0, -1, 1) * 14, sy = 18 + clamp(-(s.keyHold && !s.onGround ? (s.elev || 0) : s.pIn || 0), -1, 1) * 14, rx = 18 + clamp(s.rudEff || 0, -1, 1) * 14;
     const ball = 30 + clamp(o.slip, -1.5, 1.5) * 9;
@@ -405,6 +422,7 @@
       + `<span>${o.stallWarn ? '<b class="bad">STALL</b>' : s.crashed ? '<b class="bad">損傷</b>' : deadAny && !s.crashed ? '<b class="bad">ENG</b>' : 'ボール'}</span></div>`;
     $('#ctl-strip').innerHTML = html;
   }
+  $('#ctl-strip').addEventListener('click', e => { if (e.target.closest('.cs-tog')) { S.prefs.strip = S.prefs.strip === 'mini' ? 'full' : 'mini'; savePrefs(); renderStrip(); } });
   // the key help (H): every key, what it moves, why; the rows used in this step are highlighted
   const KEYMAP = [
     ['S / ↓', '機首を上げる（ピッチ）', '操縦桿を引く操作。押している間だけ機首の角度が上がり、離すとその角度を保つ（設定で「離すと中立」も可）。上昇・速度を落とす・フレア（着陸の引き起こし）に', /S＝機首上げ/, ['S']],
@@ -426,12 +444,12 @@
     ['P / Esc', '一時停止（メニュー）', '再開・やり直し・課程表・ガイド・教科書へ', /^$/, []],
     ['L', '水平に戻す（自由飛行のみ）', '数秒間、自動で翼を水平・水平飛行に戻す教材補助', /^$/, []],
   ];
-  function renderHelp() {
+  function renderHelp(target) {
     const L = S.L, kt = L && L.keysText ? L.keysText : '';
-    const box = $('#keyhelp');
+    const box = target || $('#keyhelp');
     const uses = l => new RegExp(`(^|[^A-Za-z])${l.replace(/[\[\]]/g, '\\$&')}(?=[＝ （/・、]|で|を|$)`).test(kt);
     const now = KEYMAP.map(r => r[3].source !== '^$' && (r[3].test(kt) || r[4].some(uses)));
-    const html = `<h3>操作の説明（H で閉じる）${kt ? '：いまの項目で使うキーを強調' : ''}</h3><table>${KEYMAP.map((r, i) => `<tr class="${now[i] ? 'now' : ''}"><td><kbd>${esc(r[0])}</kbd></td><td><b>${esc(r[1])}</b></td><td>${esc(r[2])}</td></tr>`).join('')}</table>
+    const html = `<h3>${target ? 'キーの一覧' : 'キーの一覧（H で閉じる）'}${kt ? '：いまの手順で使うキーが光っています' : ''}</h3>${UI.keyboardSvg(UI.keysUsed(kt))}<table>${KEYMAP.map((r, i) => `<tr class="${now[i] ? 'now' : ''}"><td><kbd>${esc(r[0])}</kbd></td><td><b>${esc(r[1])}</b></td><td>${esc(r[2])}</td></tr>`).join('')}</table>
       <p class="note">G1000 型パネル（下）のボタンはマウスで押せます：COM / NAV の周波数、CDI（GPS ⇄ NAV1 ⇄ NAV2）、HDG・ALT・BARO・CRS、MFD の地図。ゲームパッドの配置はガイドを参照。</p>`;
     if (box.innerHTML !== html) box.innerHTML = html;
   }
@@ -449,7 +467,7 @@
     $('#pause').hidden = false; $('#pz-resume').focus();
   }
   function resume() { $('#pause').hidden = true; S.screen = 'fly'; S.paused = false; last = performance.now(); }
-  function closeScreens() { for (const id of ['menu', 'school', 'debrief', 'pause', 'page']) $('#' + id).hidden = true; }
+  function closeScreens() { for (const id of ['menu', 'school', 'debrief', 'pause', 'page']) $('#' + id).hidden = true; for (const m of $$('.modal')) m.hidden = true; }
   function openScreen(id) { closeScreens(); S.screen = id; $('#' + id).hidden = false; S.keys.clear(); }
   function backFromScreen() {
     const pg = FL.pages(app);
@@ -461,7 +479,12 @@
   $('#bMenu').addEventListener('click', pause);
   $('#bHelp').addEventListener('click', () => toggleHelp());
   $('#bView').addEventListener('click', cycleView);
-  $('#bPause').addEventListener('click', pause);
+  // the toolbar's icons (drawn, so they look the same on every system)
+  for (const [id, ic, label, key] of [['bMenu', 'pause', '一時停止', 'P'], ['bHelp', 'keys', 'キー', 'H'], ['bSettings', 'gear', '設定', ''], ['bLayout', 'layout', '計器の大きさ', '']]) $('#' + id).innerHTML = `${UI.ico(ic, 15)} ${label}${key ? ` <kbd>${key}</kbd>` : ''}`;
+  $('#bSettings').addEventListener('click', () => { if (S.screen === 'fly') pause(); FL.pages(app).openSettings(); });
+  $('#pz-settings').addEventListener('click', () => FL.pages(app).openSettings());
+  $('#pz-keys').addEventListener('click', () => { renderHelp($('#keysBody')); $('#keysClose').onclick = () => FL.pages(app).closeModal(); FL.pages(app).openModal('keysDlg'); });
+  $('#sp-size').addEventListener('click', () => { S.prefs.hud = S.prefs.hud === 'mini' ? 'full' : 'mini'; savePrefs(); updateUi(); });
   const LAYOUTS = ['44vh', '54vh', '34vh'];
   function applyLayout() { document.documentElement.style.setProperty('--panelH', LAYOUTS[S.prefs.layout % LAYOUTS.length]); }
   $('#bLayout').addEventListener('click', () => { S.prefs.layout = (S.prefs.layout + 1) % LAYOUTS.length; applyLayout(); savePrefs(); });
@@ -608,7 +631,8 @@
   setSound(false);
   FL.pages(app).openMenu();
   if (!S.prefs.ack) $('#ack').hidden = false;
-  $('#ackOk').addEventListener('click', () => { $('#ack').hidden = true; S.prefs.ack = true; savePrefs(); });
+  else if (!S.prefs.tour) FL.pages(app).openTour(0);
+  $('#ackOk').addEventListener('click', () => { $('#ack').hidden = true; S.prefs.ack = true; savePrefs(); if (!S.prefs.tour) FL.pages(app).openTour(0); });
   requestAnimationFrame(frame);
 
   // ---------------------------------------------------------------- test hooks (used by the automated browser test)

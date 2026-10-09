@@ -9,113 +9,190 @@
   let built = null;
   FL.pages = function (app) {
     if (built) return built;
-    const { S, h, $, esc, store, toast } = app;
+    const { S, h, $, $$, esc, store, toast } = app, UI = FL.ui;
     const P = FL.physics, AV = FL.avionics, SC = FL.school, SY = FL.syllabus, BK = FL.book, QZ = FL.quiz, SF = FL.sanford, RD = FL.radio;
     const btn = (label, fn, cls, title) => h('button', { type: 'button', class: cls || '', title: title || null, onclick: fn }, label);
     const save = () => SC.saveProgress(store, S.progress);
     const levelName = id => SC.level(id).name;
 
-    // ============================================================== the start menu
+    // ============================================================== the start menu (a game's title screen: "continue" first)
+    // the next flight lesson not yet passed, in the course order (null when all are passed)
+    function nextFlight() { return SC.lessonOrder().find(id => { const l = SC.lesson(id), r = S.progress.lessons[id]; return l.steps && !(r && r.pass); }) || null; }
+    function nextGround() { const st = SY.STAGES.find(x => x.id === 's0'); const l = st && st.lessons.find(x => !(S.progress.lessons[x.id] && S.progress.lessons[x.id].pass)); return l || null; }
+    const stageOf = id => SY.STAGES.find(st => st.lessons.some(l => l.id === id));
     function openMenu() {
       if (!S.L || !S.L.free) app.startFree('area', 'pa28');
       app.openScreen('menu');
-      const m = $('#mainMenu'); m.textContent = '';
       const order = SC.lessonOrder(), flightIds = order.filter(id => SC.lesson(id).steps), passed = flightIds.filter(id => S.progress.lessons[id] && S.progress.lessons[id].pass).length;
       const chN = BK ? BK.CHAPTERS.length : 0, secN = BK ? BK.CHAPTERS.reduce((a, c) => a + c.secs.length, 0) : 0, read = S.progress.read.length;
-      const items = [
-        ['01', '課程表（スクール）', `飛行 ${flightIds.length} 課目 × 3 レベル・地上学科。合格 ${passed} / ${flightIds.length}`, () => openSchool()],
-        ['02', '教科書', `全 ${chN} 章・${secN} 節（読んだ節 ${read}）。飛行の原理から多発・CRM まで、出典付き`, () => openPage('book')],
-        ['03', '学科テスト', `${QZ ? QZ.BANKS.length : 0} 分野・${QZ ? QZ.BANKS.reduce((a, b) => a + b.qs.length, 0) : 0} 問（解説つき）`, () => openPage('quiz')],
-        ['04', '操作ガイド', 'すべてのキーとゲームパッド：何が動くか・何のために使うか。画面の見方と飛び方のコツ', () => openPage('guide')],
-        ['05', 'G1000 型 PFD の読み方', '計器を 1 つずつ説明するチュートリアルと、読み取り練習', () => openPage('tutor')],
-        ['06', '英語交信（無線）', RD ? `1 回の飛行の全交信（${RD.FLIGHT.reduce((a, p) => a + p.lines.length, 0)} 行）・復唱と応答 ${RD.SCENES.length} 場面・数字とアルファベット・聞き取り・用語集 ${RD.GLOSSARY.length} 語（音声）` : '', () => openRadio('flight')],
-        ['07', 'Sanford の資料', '空港の資料（模式図）・空域・Hot Spot・Sanford の 6 場面', () => openPage('sfb')],
-        ['08', '学習記録', '課目の結果・講評・メモ（JSON の書き出し・読み込み）', () => openPage('records')],
-        ['09', 'Google 3D（任意）', 'Sanford 周辺の写実的な外部景観（自分の API キー・メモリのみ）', () => openPage('g3d')],
-        ['10', 'このアプリについて', '非公式教材であること、実装したもの・していないもの、データの扱い', () => openPage('about')],
-      ];
-      for (const [code, title, sub, fn] of items) m.append(h('button', { type: 'button', class: 'mission', onclick: fn }, h('span', { class: 'code', text: code }), h('span', { class: 'm-title', text: title }), h('span', { class: 'm-sub', text: sub })));
-      // options
-      const seg = (id, key, v) => { for (const b of $('#' + id).querySelectorAll('button')) { b.classList.toggle('on', b.dataset.v === v); b.onclick = () => { S.prefs[key] = b.dataset.v; app.savePrefs(); seg(id, key, b.dataset.v); }; } };
-      seg('optSens', 'sens', S.prefs.sens); seg('optHold', 'hold', S.prefs.hold); seg('optRHold', 'rhold', S.prefs.rhold || 'hold');
+      // the hero: continue with the next lesson
+      const hero = $('#menuHero'); hero.textContent = '';
+      const nid = nextFlight(), lv = SC.level(S.prefs.level);
+      if (nid) {
+        const l = SC.lesson(nid), st = stageOf(nid), A = P.AIRCRAFT.find(a => a.id === (l.aircraft || 'pa28')), started = passed > 0 || S.progress.time > 60;
+        const go = h('button', { type: 'button', class: 'primary big hero-go', onclick: () => app.startLesson(nid, S.prefs.level) }, h('span', { html: UI.ico('play', 18) }), ' 飛ぶ');
+        hero.append(h('div', { class: 'hero-eyebrow', text: started ? '続きから' : 'はじめから' }),
+          h('div', { class: 'hero-stage', text: `${st ? st.title.replace(/（.*$/, '') : ''}　·　飛行課目 ${flightIds.indexOf(nid) + 1} / ${flightIds.length}` }),
+          h('div', { class: 'hero-title', text: l.title }), h('div', { class: 'hero-goal', text: l.goal }),
+          h('div', { class: 'hero-tags' }, h('span', { class: 'tag', text: A.name.replace(/（.*$/, '') }), h('span', { class: 'tag', text: 'レベル：' + lv.name }), h('span', { class: 'tag', text: `合格 ${passed} / ${flightIds.length}` })),
+          h('div', { class: 'hero-btns' }, go, btn('説明を読む', () => openSchool(nid)), btn('課程表を見る', () => openSchool())));
+        const g = nextGround(); if (g && !started) hero.append(h('p', { class: 'hero-note' }, '座学から始めるなら：', h('a', { href: '#', onclick: e => { e.preventDefault(); openSchool(g.id); } }, g.title)));
+      } else hero.append(h('div', { class: 'hero-eyebrow', text: '全課目 合格' }), h('div', { class: 'hero-title', text: 'おめでとうございます' }), h('div', { class: 'hero-goal', text: '上のレベル（精度）や自由飛行で腕を磨きましょう。' }), h('div', { class: 'hero-btns' }, btn('課程表を見る', () => openSchool(), 'primary big')));
+      // the big tiles and the small links
+      const m = $('#mainMenu'); m.textContent = '';
+      const tile = (icon, title, sub, fn, cls) => h('button', { type: 'button', class: 'tile ' + (cls || ''), onclick: fn }, h('span', { class: 't-ico', html: UI.ico(icon, 28) }), h('span', { class: 't-title', text: title }), h('span', { class: 't-sub', text: sub }));
+      m.append(tile('school', '課程表', `飛行 ${flightIds.length} 課目 × 3 レベル・地上学科`, () => openSchool()),
+        tile('plane', '自由飛行', '評価なし。好きな場所・機体・風で', openFree),
+        tile('book', '教科書', `全 ${chN} 章・${secN} 節（読んだ節 ${read}）`, () => openPage('book')),
+        tile('radio', '英語交信', RD ? `全交信 ${RD.FLIGHT.reduce((a, p) => a + p.lines.length, 0)} 行・${RD.SCENES.length} 場面・聞き取り` : '', () => openRadio('flight')));
+      const mini = $('#menuMini'); mini.textContent = '';
+      const link = (icon, title, fn) => h('button', { type: 'button', class: 'mini-btn', onclick: fn }, h('span', { html: UI.ico(icon, 18) }), title);
+      mini.append(link('quiz', `学科テスト（${QZ ? QZ.BANKS.reduce((a, b) => a + b.qs.length, 0) : 0} 問）`, () => openPage('quiz')), link('gauge', 'PFD の読み方', () => openPage('tutor')), link('keys', '操作ガイド', () => openPage('guide')),
+        link('pin', 'Sanford の資料', () => openPage('sfb')), link('list', '学習記録', () => openPage('records')), link('globe', 'Google 3D（任意）', () => openPage('g3d')),
+        link('gear', '設定', openSettings), link('help', 'はじめての方へ', () => openTour(0)), link('info', 'このアプリについて', () => openPage('about')));
+      $('#buildInfo').textContent = `FLIGHT LAB ${FL.BUILD_INFO || '(開発版)'} · 非公式の自主学習用教材`;
+      setTimeout(() => { const f = hero.querySelector('.hero-go') || m.querySelector('button'); if (f && !document.querySelector('.modal:not([hidden])')) f.focus(); }, 30);
+    }
+    // ------------------------------------------------------------ dialogs over the screens: settings, free flight, the tour
+    function openModal(id) { for (const e of document.querySelectorAll('.modal')) e.hidden = e.id !== id; const d = $('#' + id); d.hidden = false; setTimeout(() => { const f = d.querySelector('.dlg-focus, button.primary, button'); if (f) f.focus(); }, 30); }
+    function closeModal() { let any = false; for (const e of document.querySelectorAll('.modal')) { if (!e.hidden) any = true; e.hidden = true; } if (S.screen === 'menu') { const f = document.querySelector('#menuHero .hero-go'); if (f) f.focus(); } return any; }
+    function openSettings() {
+      const seg = (id, key, v, after) => { for (const b of $('#' + id).querySelectorAll('button')) { b.classList.toggle('on', b.dataset.v === String(v)); b.onclick = () => { S.prefs[key] = key === 'layout' ? +b.dataset.v : b.dataset.v; app.savePrefs(); seg(id, key, S.prefs[key], after); if (after) after(); }; } };
+      seg('optSens', 'sens', S.prefs.sens, () => { if (S.L) S.L.s.opts.sens = S.prefs.sens; });
+      seg('optHold', 'hold', S.prefs.hold); seg('optRHold', 'rhold', S.prefs.rhold || 'hold');
+      seg('optLayout', 'layout', S.prefs.layout % 3, app.applyLayout); seg('optHud', 'hud', S.prefs.hud || 'full'); seg('optStrip', 'strip', S.prefs.strip || 'full');
       const cb = (id, key, fn) => { const e = $('#' + id); e.checked = !!S.prefs[key]; e.onchange = () => { S.prefs[key] = e.checked; app.savePrefs(); if (fn) fn(e.checked); }; };
-      cb('optAutoRud', 'autoRud'); cb('optAssist', 'assist');
-      const so = $('#optSound'); so.checked = !!S.prefs.sound; so.onchange = () => $('#bSound').click();
+      cb('optAutoRud', 'autoRud', v => { if (S.L) S.L.s.opts.autoRud = v; }); cb('optAssist', 'assist', v => { if (S.L && S.L.free) S.L.s.opts.assist = v; });
+      const so = $('#optSound'); so.checked = !!S.prefs.sound; so.onchange = () => app.setSound(so.checked);
+      $('#setClose').onclick = closeModal;
+      openModal('settings');
+    }
+    function openFree() {
       const ac = $('#freeAc'); if (!ac.options.length) for (const a of P.AIRCRAFT) ac.append(h('option', { value: a.id }, a.name));
       const st = $('#freeStart'); if (!st.options.length) for (const f of SC.FREE_STARTS) st.append(h('option', { value: f.id }, f.name));
-      $('#freeGo').onclick = () => { app.startFree(st.value, ac.value, $('#freeWind').value); app.closeScreens(); S.screen = 'fly'; S.paused = false; toast('自由飛行：評価はありません。H で操作の説明、Esc で一時停止', 3200); };
-      $('#buildInfo').textContent = `FLIGHT LAB ${FL.BUILD_INFO || '(開発版)'} · 非公式の自主学習用教材`;
-      setTimeout(() => { const f = m.querySelector('button'); if (f) f.focus(); }, 30);
+      $('#freeGo').onclick = () => { closeModal(); app.startFree(st.value, ac.value, $('#freeWind').value); app.closeScreens(); S.screen = 'fly'; S.paused = false; toast('自由飛行：評価はありません。H でキーの一覧、P で一時停止', 3200); };
+      $('#freeClose').onclick = closeModal;
+      openModal('freeDlg');
+    }
+    // the first-run tour: three cards (how the course works, the basic keys, where help is)
+    const TOUR = [
+      { t: 'ようこそ FLIGHT LAB へ', b: () => `<p class="tour-lede">課目をひとつずつ飛んで、操縦を覚えていく教材です。</p><ol class="tour-steps"><li><b>課程表</b>で課目を選ぶ（メニューの「飛ぶ」で次の課目へ直行）</li><li>飛行中は<b>左上の教官パネル</b>の指示に従う：やること・使うキー・目標（緑＝基準内）</li><li>目標を続けて保つと次の手順へ。終わると<b>結果（講評）</b>が出る</li><li>うまくいかなければ「もう一度」。レベルは 導入 → 基礎 → 精度</li></ol>` },
+      { t: '基本の操作', b: () => `<p class="tour-lede">キーの色は動かすものです。まずは <kbd>W</kbd><kbd>S</kbd>（機首）・<kbd>A</kbd><kbd>D</kbd>（傾き）・<kbd>R</kbd><kbd>F</kbd>（出力）の 6 つ。</p>${UI.keyboardSvg(['W', 'S', 'A', 'D', 'R', 'F'])}<p class="small mute">キーを離すと、そのときの機首の角度とバンクを保ちます（設定で「離すと中立」にもできます）。</p>` },
+      { t: '困ったときは', b: () => `<ul class="tour-help"><li><kbd>H</kbd> キーの一覧（いま使うキーが光る）</li><li><kbd>P</kbd> / <kbd>Esc</kbd> 一時停止：やり直し・設定・課程表へ</li><li><kbd>C</kbd> 視点の切替（操縦席 ⇄ 後方）</li><li>画面右上の <b>⚙ 設定</b>：操作の感度・計器の大きさ・音</li><li>くわしい説明はメニューの「操作ガイド」と「教科書」</li></ul>` },
+    ];
+    function openTour(i = 0) {
+      const T = TOUR[i], body = $('#tourBody'); body.textContent = '';
+      const dots = h('div', { class: 'tour-dots' }, ...TOUR.map((_, k) => h('i', { class: k === i ? 'on' : '' })));
+      const last = i === TOUR.length - 1;
+      body.append(h('div', { class: 'dlg-head' }, h('h2', { id: 'tourTitle', text: T.t }), dots), h('div', { class: 'tour-body', html: T.b() }),
+        h('div', { class: 'tour-foot' }, i > 0 ? btn('← 戻る', () => openTour(i - 1)) : btn('閉じる', () => { S.prefs.tour = true; app.savePrefs(); closeModal(); }),
+          btn(last ? 'はじめる ▶' : '次へ →', () => { if (last) { S.prefs.tour = true; app.savePrefs(); closeModal(); } else openTour(i + 1); }, 'primary big dlg-focus')));
+      openModal('tour');
     }
 
-    // ============================================================== the school
+    // ============================================================== the school (a mission select: stage tabs, lesson cards, a briefing with the start button always in view)
+    let schStage = null;
+    const GRADE_CLS = { S: 'g-s', A: 'g-a', B: 'g-b', C: 'g-c' };
     function openSchool(selId) {
       app.openScreen('school');
       const P0 = S.progress, order = SC.lessonOrder(), flightIds = order.filter(id => SC.lesson(id).steps);
       const passedN = flightIds.filter(id => P0.lessons[id] && P0.lessons[id].pass).length;
-      $('#sch-log').innerHTML = `<div><b>${passedN}</b><span>合格した飛行課目 / ${flightIds.length}</span></div><div><b>${(P0.time / 3600).toFixed(1)}</b><span>練習時間（時間）</span></div><div><b>${P0.landings}</b><span>接地の回数</span></div>`;
-      const lv = $('#levelSeg'); lv.textContent = '';
-      for (const L of SC.LEVELS) lv.append(h('button', { type: 'button', class: S.prefs.level === L.id ? 'on' : '', title: L.desc, onclick: () => { S.prefs.level = L.id; app.savePrefs(); openSchool(cur); } }, L.name));
+      $('#sch-log').innerHTML = `<div><b>${passedN}<small> / ${flightIds.length}</small></b><span>合格した飛行課目</span></div><div><b>${(P0.time / 3600).toFixed(1)}</b><span>練習時間（時間）</span></div><div><b>${P0.landings}</b><span>接地の回数</span></div>`;
       $('#sch-close').onclick = openMenu;
-      const nav = $('#sch-stages'); nav.textContent = '';
-      let firstOpen = null, cur = selId;
+      // the stage's lessons (stage 0 also lists the ground-school tests)
+      const lessonsOf = st => { const a = st.lessons.slice(); if (st.id === 's0' && QZ) for (const b of QZ.BANKS) a.push({ id: b.id, quiz: true, title: '学科テスト：' + b.title, goal: `${b.qs.length} 問・80% で合格（解説つき）` }); return a; };
+      const recOf = l => (l.quiz ? (P0.quiz[l.id] != null ? { best: P0.quiz[l.id] + '%', pass: P0.quiz[l.id] >= 80, quiz: true } : null) : P0.lessons[l.id]);
+      const nid = nextFlight();
+      const cur = selId || nid || order[0];
+      schStage = (stageOf(cur) || SY.STAGES[0]).id;
+      // the tabs
+      const tabs = $('#sch-tabs'); tabs.textContent = '';
       for (const st of SY.STAGES) {
-        const sec = h('section', {}, h('h3', { text: st.title }), h('p', { text: st.desc }));
-        const lessons = st.lessons.slice();
-        if (st.id === 's0' && QZ) for (const b of QZ.BANKS) lessons.push({ id: b.id, quiz: true, title: '学科テスト：' + b.title, goal: `${b.qs.length} 問・80% で合格（解説つき）` });
-        for (const l of lessons) {
-          const rec = l.quiz ? (P0.quiz[l.id] != null ? { best: P0.quiz[l.id] + '%', pass: P0.quiz[l.id] >= 80 } : null) : P0.lessons[l.id];
-          const done = rec && rec.pass;
-          const b = h('button', { type: 'button', class: 'sch-item' + (done ? ' done' : '') + (l.id === selId ? ' sel' : ''), onclick: () => openSchool(l.id) },
-            h('span', { class: 'sch-grade', text: rec ? (l.quiz ? (done ? '✓' : '·') : rec.best || '―') : '' }), h('span', { class: 'sch-t', text: l.title }),
-            h('span', { class: 'sch-ac', text: l.aircraft === 'pa44' ? 'Seminole' : l.aircraft === 'pa28' ? 'Archer' : '' }), h('span', { class: 'sch-g', text: l.goal }));
-          sec.append(b);
-          if (!firstOpen && !done && !l.quiz) firstOpen = l.id;
-        }
-        nav.append(sec);
+        const ls = lessonsOf(st), done = ls.filter(l => { const r = recOf(l); return r && r.pass; }).length;
+        const m = /第\s*(\d+)\s*段階\s*(.*)$/.exec(st.title) || [0, '', st.title];
+        tabs.append(h('button', { type: 'button', role: 'tab', 'data-stage': st.id, class: 'sch-tab' + (st.id === schStage ? ' on' : ''), 'aria-selected': st.id === schStage ? 'true' : 'false', onclick: () => { schStage = st.id; drawStage(null); } },
+          h('span', { class: 'st-n', text: m[1] !== '' ? `第 ${m[1]} 段階` : '' }), h('span', { class: 'st-t', text: (m[2] || st.title).replace(/（.*?）/g, '') }),
+          h('span', { class: 'st-bar' }, h('i', { style: `width:${Math.round(done / Math.max(ls.length, 1) * 100)}%` })), h('span', { class: 'st-c', text: `${done} / ${ls.length}` })));
       }
-      cur = selId || firstOpen || order[0];
-      if (!selId) { const el = [...nav.querySelectorAll('.sch-item')].find(e => !e.classList.contains('done')); if (el) el.classList.add('sel'); }
-      renderBrief(cur);
+      const drawStage = sel => {
+        for (const b of tabs.children) { const on = b.dataset.stage === schStage; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); }
+        const st = SY.STAGES.find(x => x.id === schStage), nav = $('#sch-stages'); nav.textContent = '';
+        nav.append(h('p', { class: 'sch-desc', text: st.desc }));
+        const grid = h('div', { class: 'sch-grid' });
+        let first = null;
+        lessonsOf(st).forEach((l, i) => {
+          const rec = recOf(l), done = rec && rec.pass, rec2 = !l.quiz ? P0.lessons[l.id] : null;
+          const lvls = rec2 && rec2.levels ? rec2.levels : [];
+          const grade = rec && rec.best && !l.quiz ? rec.best : '';
+          const kind = l.quiz ? '学科テスト' : l.radio ? '英語交信' : l.tutor || l.read ? '計器の読み方' : l.aircraft === 'pa44' ? 'Seminole' : 'Archer';
+          const card = h('button', { type: 'button', class: 'sch-item' + (done ? ' done' : '') + (l.id === nid ? ' next' : ''), 'data-id': l.id, onclick: e => { if (e.currentTarget.classList.contains('sel')) { const g = $('#sch-start .sch-go'); if (g) g.click(); } else selectCard(l.id); } },
+            h('span', { class: 'sc-num', text: `${st.id.slice(1)}-${i + 1}` }),
+            h('span', { class: 'sch-t', text: l.title }), h('span', { class: 'sch-g', text: l.goal }),
+            h('span', { class: 'sc-foot' }, h('span', { class: 'sch-ac', text: kind }),
+              l.steps ? h('span', { class: 'sc-lv', title: '合格したレベル（導入・基礎・精度）' }, ...SC.LEVELS.map(L => h('i', { class: lvls.includes(L.id) ? 'on' : '', title: L.name }))) : null,
+              h('span', { class: 'sch-grade ' + (GRADE_CLS[grade] || (done ? 'g-ok' : '')), text: l.quiz ? (rec ? rec.best : '') : grade || (done ? '✓' : '') })),
+            l.id === nid ? h('span', { class: 'sc-ribbon', text: '次はこれ' }) : null);
+          grid.append(card); if (!first) first = l.id;
+        });
+        nav.append(grid);
+        selectCard(sel && lessonsOf(st).some(l => l.id === sel) ? sel : (lessonsOf(st).find(l => l.id === nid) || lessonsOf(st).find(l => { const r = recOf(l); return !(r && r.pass); }) || { id: first }).id);
+      };
+      const selectCard = id => {
+        for (const c of $$('#sch-stages .sch-item')) c.classList.toggle('sel', c.dataset.id === id);
+        renderBrief(id);
+      };
+      drawStage(cur);
+      setTimeout(() => { const s = $('#sch-start .sch-go'); if (s) s.focus(); }, 30);
     }
-    function lessonKeys(l) {
-      const set = []; for (const st of l.steps || []) { const t = st.keys || (st.checklist ? 'Enter＝チェックリストの次の項目' : st.atc ? '1 / 2 / 3＝管制への応答' : st.estimate ? '入力欄に見積もり' : ''); for (const part of t.split('　')) if (part && !set.includes(part)) set.push(part); }
-      return set;
+    // ← / → (gamepad LB / RB): the previous / next stage tab
+    function schoolTab(dir) {
+      const i = SY.STAGES.findIndex(x => x.id === schStage), n = SY.STAGES[i + dir]; if (!n) return;
+      const b = document.querySelector(`.sch-tab[data-stage="${n.id}"]`); if (b) { b.click(); b.focus(); }
     }
     function renderBrief(id) {
-      const box = $('#sch-brief'); box.textContent = '';
+      const box = $('#sch-brief'), goWrap = $('#sch-go-wrap'), lvWrap = $('#sch-start .sch-lv'); box.textContent = ''; goWrap.textContent = ''; box.scrollTop = 0; lvWrap.hidden = true;
+      const go = (label, fn, note) => { goWrap.append(h('button', { type: 'button', class: 'sch-go primary big', onclick: fn }, h('span', { html: UI.ico('play', 18) }), ' ' + label)); if (note) goWrap.prepend(h('span', { class: 'sch-rec', text: note })); };
+      const bookLinks = l => { if (!l.book || !BK) return null; const links = l.book.map(sid => BK.findSection(sid)).filter(Boolean); return links.length ? h('div', { class: 'row' }, ...links.map(x => btn(`教科書 ${x.ch.n}. ${x.sec.t}`, () => { openPage('book'); openSection(x.sec.id); }))) : null; };
       const bank = QZ && QZ.BANKS.find(b => b.id === id);
       if (bank) {
-        box.append(h('h2', { text: '学科テスト：' + bank.title }), h('p', { class: 'sch-goal', text: bank.desc || '' }), h('p', { text: `${bank.qs.length} 問の 4 択。答えるたびに解説が出ます。80% 以上で合格。出題の順と選択肢の順は毎回変わります。` }),
-          h('div', { class: 'sch-bar' }, h('button', { type: 'button', class: 'sch-go', onclick: () => { openPage('quiz'); runQuiz(bank.id); } }, 'テストを始める'), S.progress.quiz[bank.id] != null ? h('span', { text: `最高 ${S.progress.quiz[bank.id]}%` }) : null));
+        box.append(h('div', { class: 'br-kind', text: '学科テスト' }), h('h2', { text: bank.title }), h('p', { class: 'sch-goal', text: bank.desc || '' }),
+          h('p', { text: `${bank.qs.length} 問の 4 択。答えるたびに解説が出ます。80% 以上で合格。出題の順と選択肢の順は毎回変わります。` }));
+        go('テストを始める', () => { openPage('quiz'); runQuiz(bank.id); }, S.progress.quiz[bank.id] != null ? `最高 ${S.progress.quiz[bank.id]}%` : '');
         return;
       }
       const l = SC.lesson(id); if (!l) return;
       const rec = S.progress.lessons[id];
-      box.append(h('h2', { text: l.title }), h('p', { class: 'sch-goal', text: '目的：' + l.goal }));
       if (l.radio) {
         const what = { drill: 'フォネティックアルファベットと、高度・針路・速度・周波数・高度計・コード・滑走路・風・時刻（UTC）の言い方を 4 択で（10 問・80% で合格。「すべて」で解いたときに記録）。答えたあと ▶ で正しい言い方を聞けます。',
           flight: 'ATIS → 地上管制 → 管制塔 → 出発管制 → 進入管制 → 管制塔 → 地上管制。1 回の飛行の全部の交信を、日本語の意味・理由・操作と一緒に順に聞きます（音声合成）。「あなたの台詞を隠す」にすると、自分で言ってから答え合わせができます。最後まで確かめたら合格。',
           scenes: '地上・離陸・レーダー・着陸・管制塔のない空港・緊急など、場面ごとに「正しい復唱・言うこと」を選びます。ランダム 10 場面のテストで 80% 以上なら合格。',
           listen: '英語の指示を音声だけで聞き、内容（針路・高度・周波数・コード・滑走路・交通情報など）を選びます（10 問・80% で合格）。音声合成が使えない環境では文字で表示できます。' }[l.radio];
-        box.append(h('p', { text: what }), h('div', { class: 'sch-bar' }, h('button', { type: 'button', class: 'sch-go', onclick: () => openRadio(l.radio) }, '練習を開く'), rec && rec.pass ? h('span', { text: '合格済み' }) : null));
-        if (l.book && BK) { const links = l.book.map(sid => BK.findSection(sid)).filter(Boolean); if (links.length) box.append(h('h3', { text: '教科書の関連する節' }), h('div', { class: 'row' }, ...links.map(x => btn(`${x.ch.n}. ${x.sec.t}`, () => { openPage('book'); openSection(x.sec.id); })))); }
+        box.append(h('div', { class: 'br-kind', text: '英語交信' }), h('h2', { text: l.title }), h('p', { class: 'sch-goal', text: l.goal }), h('p', { text: what }), bookLinks(l));
+        go('練習を開く', () => openRadio(l.radio), rec && rec.pass ? '合格済み' : '');
         return;
       }
       if (l.tutor || l.read) {
-        box.append(h('p', { text: l.tutor ? 'G1000 型 PFD の各部（速度・姿勢・高度・昇降率・方位・CDI・予備計器・エンジン）を、実際の表示に枠を付けて 1 つずつ説明します。最後まで見ると合格。' : 'ランダムな状態の PFD を見て、読み取った値や次の操作を 4 択で答えます（10 問・80% で合格）。' }),
-          h('div', { class: 'sch-bar' }, h('button', { type: 'button', class: 'sch-go', onclick: () => openPage(l.tutor ? 'tutor' : 'readq') }, l.tutor ? 'チュートリアルを開く' : '練習を始める'), rec && rec.pass ? h('span', { text: '合格済み' }) : null));
+        box.append(h('div', { class: 'br-kind', text: '計器の読み方' }), h('h2', { text: l.title }), h('p', { class: 'sch-goal', text: l.goal }),
+          h('p', { text: l.tutor ? 'G1000 型 PFD の各部（速度・姿勢・高度・昇降率・方位・CDI・予備計器・エンジン）を、実際の表示に枠を付けて 1 つずつ説明します。最後まで見ると合格。' : 'ランダムな状態の PFD を見て、読み取った値や次の操作を 4 択で答えます（10 問・80% で合格）。' }));
+        go(l.tutor ? 'チュートリアルを開く' : '練習を始める', () => openPage(l.tutor ? 'tutor' : 'readq'), rec && rec.pass ? '合格済み' : '');
         return;
       }
+      // a flight lesson: the summary first (what you do, the keys, the standard), the details folded below
       const A = P.AIRCRAFT.find(a => a.id === (l.aircraft || 'pa28')), lv = SC.level(S.prefs.level);
-      box.append(h('p', { class: 'small mute', text: `機体：${A.name}　レベル：${lv.name}（${lv.desc}）` }));
-      if (l.why) box.append(h('h3', { text: 'なぜこの課目を練習するのか' }), h('p', { class: 'sch-why', text: l.why }));
-      box.append(h('h3', { text: '知識と手順' }), h('ul', {}, ...l.brief.map(t => h('li', { html: t }))));
-      const keys = lessonKeys(l);
-      if (keys.length) box.append(h('h3', { text: 'この課目で使う操作' }), h('ul', {}, ...keys.map(k => h('li', { class: 'sch-keys', text: k }))), h('p', { class: 'sch-note', text: '飛行中も左上の教官パネルに「使うキー」が出ます。H キーで全部のキーの説明（いま使うキーを強調）。' }));
-      box.append(h('h3', { text: '合格基準（基礎レベル）' }), h('p', { class: 'sch-std', text: l.std }),
-        h('table', { class: 'lv' }, h('tr', {}, h('th', { text: 'レベル' }), h('th', { text: '許容幅' }), h('th', { text: '連続保持' }), h('th', { text: '目安・ヒント' })),
-          ...SC.LEVELS.map(L => h('tr', {}, h('td', { text: L.name }), h('td', { text: `基礎の ${L.k} 倍` }), h('td', { text: `基礎の ${L.holdK} 倍` }), h('td', { text: L.hints ? '表示' : 'なし' })))));
+      lvWrap.hidden = false;
+      const seg = $('#levelSeg'); seg.textContent = '';
+      for (const L of SC.LEVELS) seg.append(h('button', { type: 'button', class: S.prefs.level === L.id ? 'on' : '', title: L.desc, onclick: () => { S.prefs.level = L.id; app.savePrefs(); renderBrief(id); } }, L.name));
+      box.append(h('div', { class: 'br-kind', text: `飛行課目 · ${A.name.replace(/（.*$/, '')}` }), h('h2', { text: l.title }), h('p', { class: 'sch-goal', text: l.goal }));
+      const keyText = (l.steps || []).map(st => st.keys || (st.checklist ? 'Enter＝チェックリストの次の項目' : st.atc ? '1 / 2 / 3＝管制への応答' : '')).filter(Boolean).join('　');
+      const uniq = []; for (const p of UI.parseKeys(keyText)) if (p.keys.length && !uniq.some(q => q.keys.join() === p.keys.join())) uniq.push(p);
+      const steps = h('ol', { class: 'br-steps' }, ...l.steps.map(st => h('li', { text: st.name })));
+      box.append(h('div', { class: 'br-cards' },
+        h('section', { class: 'br-card' }, h('h3', { text: 'やること' }), steps),
+        h('section', { class: 'br-card' }, h('h3', { text: '使うキー' }), h('div', { class: 'br-keys', html: uniq.map(p => `<span class="kc">${p.keys.map(k => `<kbd>${esc(k)}</kbd>`).join('')}<span>${esc(p.what)}</span></span>`).join('') || '<span class="mute small">（観察・説明のみ）</span>' })),
+        h('section', { class: 'br-card' }, h('h3', { text: '合格の基準（基礎）' }), h('p', { class: 'sch-std', text: l.std }), h('p', { class: 'small mute', text: `いまのレベル：${lv.name}（${lv.desc}）` }))));
+      const det = (title, open, ...kids) => h('details', { class: 'br-det', open: open || null }, h('summary', { text: title }), ...kids);
+      if (l.why) box.append(det('なぜこの課目を練習するのか', true, h('p', { class: 'sch-why', text: l.why })));
+      box.append(det('知識と手順', false, h('ul', {}, ...l.brief.map(t => h('li', { html: t })))));
       const ol = h('ol');
       for (const st of l.steps) {
         const li = h('li', {}, h('b', { text: st.name }));
@@ -125,24 +202,25 @@
         if (st.hold) li.append(h('div', { class: 'small mute', text: `基準内を連続 ${Math.round(st.hold * lv.holdK)} 秒（${lv.name}）で次へ` }));
         ol.append(li);
       }
-      box.append(h('h3', { text: '飛行の流れ（教官の指示と目安）' }), ol,
-        h('p', { class: 'sch-note', text: '指示の出し方は実際の訓練と同じです：教官は「目標（速度・高度・昇降率）」を言い、最初の姿勢と出力は「目安」として示します。目安の数字はこの機体モデルの計算値で、重さ・風で変わる最初の見当です。姿勢を決めたら、計器の結果を見て 1〜2° ずつ直し、落ち着いたらトリム（T）を取ります。' }),
-        h('p', { class: 'sch-note', text: '基準は FAA の実地試験基準（ACS）などを参考にした練習用の目安で、実際の試験基準・ANA や訓練校の基準ではありません。実際の手順・数値は教官と POH / AFM・チェックリストで確認してください。' }));
-      if (l.book && BK) {
-        const links = l.book.map(sid => BK.findSection(sid)).filter(Boolean);
-        if (links.length) box.append(h('h3', { text: '教科書の関連する節' }), h('div', { class: 'row' }, ...links.map(x => btn(`${x.ch.n}. ${x.sec.t}`, () => { openPage('book'); openSection(x.sec.id); }))));
-      }
-      box.append(h('div', { class: 'sch-bar' }, h('button', { type: 'button', class: 'sch-go', onclick: () => app.startLesson(id, S.prefs.level) }, `訓練を始める（${lv.name}）`), rec ? h('span', { text: `挑戦 ${rec.tries} 回・最高評価 ${rec.best || '―'}${rec.pass ? '・合格済み（' + rec.levels.map(levelName).join('・') + '）' : ''}` }) : null));
+      box.append(det('飛行の流れ（教官の指示と目安）', false, ol,
+        h('p', { class: 'sch-note', text: '教官は「目標（速度・高度・昇降率）」を言い、最初の姿勢と出力は「目安」として示します。目安の数字はこの機体モデルの計算値で、重さ・風で変わる最初の見当です。姿勢を決めたら、計器の結果を見て 1〜2° ずつ直し、落ち着いたらトリム（T）を取ります。' })));
+      box.append(det('レベルの違い', false, h('table', { class: 'lv' }, h('tr', {}, h('th', { text: 'レベル' }), h('th', { text: '許容幅' }), h('th', { text: '連続保持' }), h('th', { text: '目安・ヒント' })),
+        ...SC.LEVELS.map(L => h('tr', {}, h('td', { text: L.name }), h('td', { text: `基礎の ${L.k} 倍` }), h('td', { text: `基礎の ${L.holdK} 倍` }), h('td', { text: L.hints ? '表示' : 'なし' }))))));
+      const bl = bookLinks(l); if (bl) box.append(det('教科書の関連する節', false, bl));
+      box.append(h('p', { class: 'sch-note', text: '基準は FAA の実地試験基準（ACS）などを参考にした練習用の目安で、実際の試験基準・ANA や訓練校の基準ではありません。実際の手順・数値は教官と POH / AFM・チェックリストで確認してください。' }));
+      go(`開始（${lv.name}）`, () => app.startLesson(id, S.prefs.level), rec ? `挑戦 ${rec.tries} 回・最高 ${rec.best || '―'}${rec.pass ? '・合格（' + rec.levels.map(levelName).join('・') + '）' : ''}` : '');
     }
 
-    // ============================================================== the debrief
+    // ============================================================== the debrief (a result screen: the medal, the verdict, what to do next; the details folded)
     function showDebrief(L) {
       app.openScreen('debrief');
       const body = $('#sd-body'); body.textContent = '';
-      $('#sd-title').textContent = `${L.def.title}（${L.level.name}）：${L.passed ? '合格' : L.reason ? '中止' : '不合格'}`;
-      $('#sd-grade').textContent = L.grade; $('#sd-grade').className = 'sd-grade ' + (L.passed ? 'ok' : 'ng');
-      $('#sd-sub').textContent = L.reason ? `理由：${L.reason}` : L.passed ? 'すべての項目が基準内でした。次のレベルや次の課目へ進みましょう。' : '基準に届かなかった項目（×）があります。下の講評を確認して、もう一度挑戦しましょう。';
-      const bad = [];
+      const status = L.passed ? '合格' : L.reason ? '中止' : '不合格';
+      $('#sd-title').textContent = `${L.def.title}（${L.level.name}）`;
+      $('#sd-grade').innerHTML = `<b>${esc(L.grade || '―')}</b><span>${status}</span>`;
+      $('#sd-grade').className = 'sd-grade ' + (L.passed ? 'ok ' + (GRADE_CLS[L.grade] || '') : 'ng');
+      $('#sd-sub').textContent = L.reason ? `理由：${L.reason}` : L.passed ? 'すべての項目が基準内でした。次の課目か、上のレベルへ進みましょう。' : '基準に届かなかった項目があります。下の「次に意識すること」を読んで、もう一度挑戦しましょう。';
+      const rows = L.results.flatMap(r => r.rows), okN = rows.filter(r => r.pass).length, bad = [];
       for (const r of L.results) {
         body.append(h('h3', { text: r.step }));
         const t = h('table', { class: 'sd-t' });
@@ -150,16 +228,22 @@
         body.append(t);
       }
       if (!L.results.length) body.append(h('p', { text: '採点できる項目がありませんでした。' }));
-      if (bad.length) body.append(h('div', { class: 'sd-advice', html: '<b>次に意識すること：</b>' + esc(advice(bad)) }));
       body.append(h('p', { class: 'note', text: SC.RECORD_NOTE + '　この結果は学習記録に自動で保存されました。' }));
+      const mm = Math.floor((L.t || 0) / 60), ss = Math.round((L.t || 0) % 60);
+      $('#sd-stats').innerHTML = `<span><b>${okN} / ${rows.length}</b>基準内の項目</span><span><b>${L.results.length} / ${L.def.steps.length}</b>終えた手順</span>${L.t ? `<span><b>${mm}:${String(ss).padStart(2, '0')}</b>飛行時間</span>` : ''}`;
+      const adv = $('#sd-advice'); adv.hidden = !bad.length; adv.innerHTML = bad.length ? `<b>次に意識すること</b><p>${esc(advice(bad))}</p><p class="small mute">基準外：${esc(bad.slice(0, 4).map(b => b[1].name).join('・'))}</p>` : '';
+      $('#sd-details').open = false;
       const order = SC.lessonOrder().filter(id => SC.lesson(id).steps), nextId = order[order.indexOf(L.id) + 1];
-      $('#sd-next').hidden = !L.passed || !nextId;
-      $('#sd-next').onclick = () => app.startLesson(nextId, S.prefs.level);
-      $('#sd-retry').onclick = () => app.startLesson(L.id, L.level.id);
+      const next = $('#sd-next'), retry = $('#sd-retry');
+      next.hidden = !L.passed || !nextId;
+      next.classList.toggle('primary', !next.hidden); retry.classList.toggle('primary', next.hidden);
+      retry.innerHTML = `もう一度 <kbd>R</kbd>${next.hidden ? ' <kbd>Enter</kbd>' : ''}`;
+      next.onclick = () => app.startLesson(nextId, S.prefs.level);
+      retry.onclick = () => app.startLesson(L.id, L.level.id);
       $('#sd-menu').onclick = () => openSchool(L.id);
       $('#sd-memo').value = '';
       $('#sd-save').onclick = () => { const all = SC.loadRecords(store), r = all.find(x => x.id === S.recId); if (r) { r.memo = $('#sd-memo').value; SC.saveRecords(store, all); toast('メモを保存しました（正式な飛行日誌ではありません）', 2000, 'good'); } };
-      setTimeout(() => ($('#sd-next').hidden ? $('#sd-retry') : $('#sd-next')).focus(), 30);
+      setTimeout(() => (next.hidden ? retry : next).focus(), 30);
     }
     // one or two sentences of advice from the failed rows (what a real instructor would say first)
     function advice(bad) {
@@ -326,6 +410,7 @@
     }
     const GUIDE = {
       keys(p) {
+        p.append(h('div', { html: UI.keyboardSvg([]) }));
         p.append(h('p', { text: '空島フライトと同じキー配置です。表の「何のために」は、実際の操縦でその操作を使う理由です。迷ったら飛行中に H キーで、いまの項目で使うキーが強調された説明を出せます。' }));
         const rows = [
           ['S / ↓', '機首を上げる（エレベーター）', '操縦桿を手前に引く操作。上昇・減速・フレア（着陸の引き起こし）・ローテーション（離陸）に使う。押している間だけ機首の角度が上がり、離すとその角度を保つ（「ピッチ保持」。メニューで「離すと中立」に変更可）。', '操縦桿（ヨーク）を引く'],
@@ -358,11 +443,11 @@
         p.append(h('table', { class: 'gt' }, ...rows.map(r => h('tr', {}, h('td', { text: r[0] }), h('td', { text: r[1] })))));
       },
       screen(p) {
-        const rows = [['左上：教官パネル', '項目の番号と名前、教官の指示（何をするか）、使うキー、目安（最初の姿勢と出力。導入・基礎レベル）、目標値のチップ（緑＝基準内の余裕あり、黄＝基準ぎりぎり、赤＝基準外）、連続保持のバー（基準内が続くと伸び、外れると 0 に戻る）、教官のヒント。'],
-          ['右上：操作の状態', '各操作のキーと「いまの状態」。迷ったら H キーで全部のキーの説明。'],
+        const rows = [['左上：教官パネル', '手順の進み具合（●＝終わった・◉＝いま・○＝これから）、教官の指示（何をするか）、使うキー（キーの絵と意味）、目安（最初の姿勢と出力。導入・基礎レベル）、目標のゲージ（白い針＝いまのずれ。緑＝余裕あり・黄＝基準ぎりぎり・赤＝基準外。▲ 上げる / ▼ 下げる）、連続保持のバー（基準内が続くと伸び、外れると 0 に戻る）、教官のヒント。右上の「簡潔に」で目安と長いヒントを隠せる。'],
+          ['右上：操作の状態', '各操作のキーと「いまの状態」。右上のボタンで「簡潔に」（⚙ 設定で隠すことも）。迷ったら H キーでキーボードの絵と全部のキーの説明。'],
           ['下：G1000 型パネル', '左が PFD（主飛行表示：速度・姿勢・高度・昇降率・方位・CDI・予備計器）、中央がオーディオパネル（COM / NAV の周波数・送信はできない）、右が MFD（エンジン表示と地図・飛行計画）。ボタンはマウスで押せます。「G1000型配置と基本概念を学ぶ教材」で、Garmin 製品の再現ではありません。'],
           ['外部視界', '教材用の架空の平らな地面と LAB RWY 36（架空）。PAPI（左側の 4 つの灯）：赤 2 白 2 で 3° の進入角。白が多いと高い、赤が多いと低い。'],
-          ['ボタン（右下）', 'メニュー（一時停止）・操作の説明・視点・一時停止・音・配置（外部視界と計器の大きさ）。']];
+          ['ボタン（右下）', '一時停止（P）・キーの一覧（H）・視点（C）・⚙ 設定（一時停止して開く）・音・計器の大きさ（小・中・大）。'], ['結果の画面', '評価のメダル（S 金・A 銀・B 銅・C）と合否、次に意識すること。採点の表は「項目ごとの採点を見る」。Enter＝次へ（不合格ならもう一度）・R＝もう一度・Esc＝課程表。']];
         p.append(h('table', { class: 'gt' }, ...rows.map(r => h('tr', {}, h('td', {}, h('b', { text: r[0] })), h('td', { text: r[1] })))), btn('PFD を 1 つずつ説明するチュートリアルへ', () => openPage('tutor'), 'primary'));
       },
       fly(p) {
@@ -766,7 +851,7 @@
         h('p', { class: 'note', text: `FLIGHT LAB ${FL.BUILD_INFO || '(開発版)'}` }));
     }
 
-    built = { openMenu, openSchool, renderBrief, showDebrief, openPage, closePage, openSection, runQuiz, openRadio };
+    built = { openMenu, openSchool, renderBrief, showDebrief, openPage, closePage, openSection, runQuiz, openRadio, openSettings, openFree, openTour, openModal, closeModal, schoolTab };
     return built;
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

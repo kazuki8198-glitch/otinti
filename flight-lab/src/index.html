@@ -14,7 +14,8 @@
     <div id="labels"></div>
     <div id="hood" hidden><div><b>フード中（計器飛行の練習）</b><br>外の景色は見えません。下の PFD（計器）だけで飛んでください。</div></div>
     <div id="sch-panel" hidden aria-live="polite">
-      <div id="sp-step"></div>
+      <div class="sp-top"><div id="sp-step"></div><button type="button" id="sp-size" title="教官パネルを簡潔に / 詳しく">簡潔に</button></div>
+      <div id="sp-dots"></div>
       <div id="sp-say"></div>
       <div id="sp-keys"></div>
       <div id="sp-guide"></div>
@@ -29,12 +30,12 @@
     <div id="sch-est" hidden></div>
     <div id="keyhelp" hidden></div>
     <div id="viewBtns">
-      <button type="button" id="bMenu" title="メニュー（Esc でも一時停止）">☰ メニュー</button>
-      <button type="button" id="bHelp" title="H キー：いま使うキーの説明">？ 操作（H）</button>
-      <button type="button" id="bView" title="C キー">視点：操縦席</button>
-      <button type="button" id="bPause" title="P キー">一時停止</button>
+      <button type="button" id="bMenu" title="一時停止してメニューを開く（P / Esc）">⏸ 一時停止 <kbd>P</kbd></button>
+      <button type="button" id="bHelp" title="キーの一覧と、いま使うキー（H）">⌨ キー <kbd>H</kbd></button>
+      <button type="button" id="bView" title="視点の切替（C）">視点：操縦席</button>
+      <button type="button" id="bSettings" title="操作・画面・音の設定（一時停止します）">⚙ 設定</button>
       <button type="button" id="bSound" aria-pressed="false">音 OFF</button>
-      <button type="button" id="bLayout" title="外部視界と計器の大きさ">配置</button>
+      <button type="button" id="bLayout" title="計器パネルの大きさ（小・中・大）">▦ 計器の大きさ</button>
     </div>
     <div id="gattr" hidden><span class="glogo">Google Maps</span><span id="gcredits"></span></div>
     <div id="viewNote">非公式の自主学習用教材 · 景色は教材用の架空の地形（LAB RWY 36 は架空） · 実機訓練・教官・POH/AFM・SOP・航空法規を優先</div>
@@ -58,58 +59,82 @@
 <!-- ============================================================ the start menu -->
 <div id="menu" class="screen" hidden>
   <div class="menu-panel">
-    <div class="col-a">
-      <header>
-        <div class="eyebrow">FLIGHT LAB · unofficial self-study</div>
-        <h1>FLIGHT LAB</h1>
-        <p class="lede">ANA が公開している自社養成パイロットの基礎訓練の流れ（ロンドンの英語座学 → Sanford の Piper Archer → 航法・横風・目的地変更 → 計器飛行 → Piper Seminole → CRM・TEM）に沿って、飛行の原理から操縦までを学ぶ<b>非公式の自主学習用教材</b>です。</p>
-        <p class="disc">本アプリは公開情報を基にした非公式の自主学習用教材です。実機訓練、教官の指示、POH/AFM、SOP、航空法規を優先してください。</p>
-      </header>
-      <div class="missions" id="mainMenu"></div>
-    </div>
-    <div class="col-b">
-      <div class="opts-box">
-        <h2>操作の設定</h2>
-        <div class="opt-grid">
-          <span>操作の感度</span>
-          <div class="seg" role="group" aria-label="操作の感度" id="optSens"><button type="button" data-v="low">低</button><button type="button" data-v="mid">中</button><button type="button" data-v="high">高</button></div>
-          <span>ピッチ（W / S）</span>
-          <div class="seg" role="group" aria-label="キーボードのピッチ操作" id="optHold"><button type="button" data-v="hold" title="W/S で機首の角度を動かし、離すとその角度を保つ（空島フライトの標準）">離すと姿勢を保つ</button><button type="button" data-v="spring" title="離すと操縦桿が中立に戻る（本物の操縦桿に近い）">離すと中立</button></div>
-          <span>ロール（A / D）</span>
-          <div class="seg" role="group" aria-label="キーボードのロール操作" id="optRHold"><button type="button" data-v="hold" title="A/D で傾け、離すとそのバンクを保つ（±4° 以内は水平に戻す）。手で操縦輪を支えているのと同じ。全開上昇の左に傾く傾向も打ち消す">離すとバンクを保つ</button><button type="button" data-v="spring" title="離すと補助翼が中立に戻る。全開の上昇では左に傾いていくので、D で直し続ける（本物の操縦輪から手を離したのに近い）">離すと中立</button></div>
-        </div>
-        <label class="chk" title="プロペラの左偏向や逆ヨーをラダーが自動で打ち消す。OFF にすると、離陸・上昇では右ラダー（E）が必要になる（本物と同じ）。U キーでも切替"><input type="checkbox" id="optAutoRud"> 自動ラダー（U）：ボールを自動で中央に</label>
-        <label class="chk" title="自由飛行だけ：キーを離すと自動で翼を水平・水平飛行に戻す教材補助（訓練課目では使えません）"><input type="checkbox" id="optAssist"> 操縦アシスト（自由飛行のみ）</label>
-        <label class="chk"><input type="checkbox" id="optSound"> サウンド（エンジン音・失速警報・管制の英語音声）</label>
-        <p class="keys-note">キーボード：W / S 機首（S＝上げ）、A / D 傾き、Q / E ラダー、R / F スロットル、V フラップ、G 脚、B ブレーキ、T トリム、C 視点、P 一時停止、H 操作の説明。ゲームパッドも使えます（ガイドの「操作」）。</p>
-      </div>
-      <div class="opts-box" id="freeBox">
-        <h2>自由飛行</h2>
-        <div class="field"><label class="f-label" for="freeAc">機体</label><select id="freeAc"></select></div>
-        <div class="field"><label class="f-label" for="freeStart">開始位置</label><select id="freeStart"></select></div>
-        <div class="field"><label class="f-label" for="freeWind">風</label><select id="freeWind"><option value="calm">穏やか（ほぼ無風）</option><option value="light" selected>弱い向かい風 5 kt</option><option value="cross">横風 12 kt（右から 60°）</option><option value="gusty">突風を伴う横風 15 kt</option></select></div>
-        <button type="button" class="primary wide" id="freeGo">自由飛行を始める</button>
-      </div>
-      <p class="credit" id="buildInfo"></p>
-    </div>
+    <header class="menu-head">
+      <div class="eyebrow">FLIGHT LAB · unofficial self-study</div>
+      <h1>FLIGHT LAB</h1>
+      <p class="lede">公開されている自社養成パイロットの基礎訓練の流れ（英語座学 → Piper Archer → 航法 → 計器飛行 → Piper Seminole → CRM）に沿って学ぶ、<b>非公式の自主学習用</b>フライト教材です。</p>
+    </header>
+    <section class="hero" id="menuHero" aria-label="続きから"></section>
+    <div class="tiles" id="mainMenu"></div>
+    <div class="mini" id="menuMini"></div>
+    <p class="disc">本アプリは公開情報を基にした非公式の自主学習用教材です。実機訓練、教官の指示、POH/AFM、SOP、航空法規を優先してください。</p>
+    <p class="credit" id="buildInfo"></p>
   </div>
+</div>
+
+<!-- ============================================================ dialogs over any screen: settings, free flight, the first-run tour -->
+<div id="settings" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="setTitle">
+  <div class="panelbox set-panel">
+    <div class="dlg-head"><h2 id="setTitle">⚙ 設定</h2><button type="button" class="dlg-close" id="setClose">閉じる ✕</button></div>
+    <h3>操縦（キーボード）</h3>
+    <div class="opt-grid">
+      <span>操作の感度</span>
+      <div class="seg" role="group" aria-label="操作の感度" id="optSens"><button type="button" data-v="low">低</button><button type="button" data-v="mid">中</button><button type="button" data-v="high">高</button></div>
+      <span>ピッチ（W / S）</span>
+      <div class="seg" role="group" aria-label="キーボードのピッチ操作" id="optHold"><button type="button" data-v="hold" title="W/S で機首の角度を動かし、離すとその角度を保つ（空島フライトの標準）">離すと姿勢を保つ</button><button type="button" data-v="spring" title="離すと操縦桿が中立に戻る（本物の操縦桿に近い）">離すと中立</button></div>
+      <span>ロール（A / D）</span>
+      <div class="seg" role="group" aria-label="キーボードのロール操作" id="optRHold"><button type="button" data-v="hold" title="A/D で傾け、離すとそのバンクを保つ（±4° 以内は水平に戻す）。手で操縦輪を支えているのと同じ。全開上昇の左に傾く傾向も打ち消す">離すとバンクを保つ</button><button type="button" data-v="spring" title="離すと補助翼が中立に戻る。全開の上昇では左に傾いていくので、D で直し続ける（本物の操縦輪から手を離したのに近い）">離すと中立</button></div>
+    </div>
+    <label class="chk" title="プロペラの左偏向や逆ヨーをラダーが自動で打ち消す。OFF にすると、離陸・上昇では右ラダー（E）が必要になる（本物と同じ）。U キーでも切替"><input type="checkbox" id="optAutoRud"> 自動ラダー（U）：ボールを自動で中央に</label>
+    <label class="chk" title="自由飛行だけ：キーを離すと自動で翼を水平・水平飛行に戻す教材補助（訓練課目では使えません）"><input type="checkbox" id="optAssist"> 操縦アシスト（自由飛行のみ）</label>
+    <h3>画面と音</h3>
+    <div class="opt-grid">
+      <span>計器パネルの大きさ</span>
+      <div class="seg" role="group" aria-label="計器パネルの大きさ" id="optLayout"><button type="button" data-v="2">小（景色を広く）</button><button type="button" data-v="0">中</button><button type="button" data-v="1">大（計器を大きく）</button></div>
+      <span>教官の表示</span>
+      <div class="seg" role="group" aria-label="教官パネルの表示" id="optHud"><button type="button" data-v="full">詳しく</button><button type="button" data-v="mini">簡潔に</button></div>
+      <span>操作の状態（右上）</span>
+      <div class="seg" role="group" aria-label="操作の状態の表示" id="optStrip"><button type="button" data-v="full">詳しく</button><button type="button" data-v="mini">簡潔に</button><button type="button" data-v="off">隠す</button></div>
+    </div>
+    <label class="chk"><input type="checkbox" id="optSound"> サウンド（エンジン音・失速警報・管制の英語音声）</label>
+    <p class="keys-note">設定はこのブラウザにだけ保存されます。キーの一覧は飛行中に H、またはメニューの「操作ガイド」。</p>
+  </div>
+</div>
+<div id="freeDlg" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="freeTitle">
+  <div class="panelbox free-panel-dlg" id="freeBox">
+    <div class="dlg-head"><h2 id="freeTitle">✈ 自由飛行</h2><button type="button" class="dlg-close" id="freeClose">閉じる ✕</button></div>
+    <p class="mute small">評価はありません。好きな場所から自由に飛べます。</p>
+    <div class="field"><label class="f-label" for="freeAc">機体</label><select id="freeAc"></select></div>
+    <div class="field"><label class="f-label" for="freeStart">開始位置</label><select id="freeStart"></select></div>
+    <div class="field"><label class="f-label" for="freeWind">風</label><select id="freeWind"><option value="calm">穏やか（ほぼ無風）</option><option value="light" selected>弱い向かい風 5 kt</option><option value="cross">横風 12 kt（右から 60°）</option><option value="gusty">突風を伴う横風 15 kt</option></select></div>
+    <button type="button" class="primary wide big" id="freeGo">▶ 自由飛行を始める</button>
+  </div>
+</div>
+<div id="keysDlg" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="keysTitle">
+  <div class="panelbox keys-panel"><div class="dlg-head"><h2 id="keysTitle">⌨ キーの一覧</h2><button type="button" class="dlg-close" id="keysClose">閉じる ✕</button></div><div id="keysBody"></div></div>
+</div>
+<div id="tour" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="tourTitle">
+  <div class="panelbox tour-panel"><div id="tourBody"></div></div>
 </div>
 
 <!-- ============================================================ the school (the syllabus) -->
 <div id="school" class="screen" hidden>
   <div class="sch-wrap">
     <div class="sch-head">
-      <div><div class="eyebrow">Flight school · syllabus</div><h2>課程表（訓練の段階と課目）</h2></div>
+      <div><div class="eyebrow">Flight school</div><h2>課程表</h2></div>
       <div class="sch-log" id="sch-log"></div>
-      <div class="sch-actions">
-        <span class="f-label">レベル</span>
-        <div class="seg" role="group" aria-label="レベル" id="levelSeg"></div>
-        <button type="button" id="sch-close">メニューへ ✕</button>
-      </div>
+      <div class="sch-actions"><button type="button" id="sch-close">メニューへ ✕</button></div>
     </div>
+    <div class="sch-tabs" id="sch-tabs" role="tablist" aria-label="訓練の段階"></div>
     <div class="sch-body">
       <nav class="sch-stages" id="sch-stages" aria-label="課目の一覧"></nav>
-      <article class="sch-brief" id="sch-brief"></article>
+      <div class="sch-right">
+        <article class="sch-brief" id="sch-brief"></article>
+        <div class="sch-start" id="sch-start">
+          <div class="sch-lv"><span class="f-label">レベル</span><div class="seg" role="group" aria-label="レベル" id="levelSeg"></div></div>
+          <div class="sch-go-wrap" id="sch-go-wrap"></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -117,14 +142,18 @@
 <!-- ============================================================ debrief, pause -->
 <div id="debrief" class="screen" hidden>
   <div class="panelbox sd-panel" role="dialog" aria-labelledby="sd-title">
-    <div class="sd-head"><div><div class="eyebrow">Debrief</div><h2 id="sd-title"></h2><p class="sd-sub" id="sd-sub"></p></div><div class="sd-grade" id="sd-grade"></div></div>
-    <div class="sd-body" id="sd-body"></div>
+    <div class="sd-hero">
+      <div class="sd-grade" id="sd-grade"></div>
+      <div class="sd-hero-t"><div class="eyebrow">Result</div><h2 id="sd-title"></h2><p class="sd-sub" id="sd-sub"></p><div class="sd-stats" id="sd-stats"></div></div>
+    </div>
+    <div class="sd-advice-box" id="sd-advice" hidden></div>
+    <details class="sd-details" id="sd-details"><summary>項目ごとの採点を見る</summary><div class="sd-body" id="sd-body"></div></details>
     <div class="sd-memo"><label for="sd-memo">振り返りメモ（学習記録に保存・正式な飛行日誌ではありません）</label><textarea id="sd-memo" rows="2" placeholder="例：ロールアウトが遅れた → バンク角の半分手前から戻す"></textarea></div>
     <div class="sd-foot">
-      <button type="button" class="primary" id="sd-next">次の課目へ</button>
-      <button type="button" id="sd-retry">もう一度</button>
+      <button type="button" class="primary big" id="sd-next">次の課目へ ▶ <kbd>Enter</kbd></button>
+      <button type="button" class="big" id="sd-retry">もう一度 <kbd>R</kbd></button>
       <button type="button" id="sd-save">メモを保存</button>
-      <button type="button" id="sd-menu">課程表へ</button>
+      <button type="button" id="sd-menu">課程表へ <kbd>Esc</kbd></button>
     </div>
   </div>
 </div>
@@ -133,12 +162,14 @@
     <div class="eyebrow">Paused</div><h2 id="pz-title">一時停止中</h2>
     <p class="mute" id="pz-sub"></p>
     <div class="pz-btns">
-      <button type="button" class="primary" id="pz-resume">再開（P / Esc）</button>
-      <button type="button" id="pz-retry">この課目を最初から</button>
+      <button type="button" class="primary big" id="pz-resume">▶ 再開 <kbd>P</kbd> <kbd>Esc</kbd></button>
+      <button type="button" id="pz-retry">↺ この課目を最初から</button>
+      <button type="button" id="pz-settings">⚙ 設定（操作・画面・音）</button>
+      <button type="button" id="pz-keys">⌨ キーの一覧</button>
       <button type="button" id="pz-guide">操作ガイド</button>
       <button type="button" id="pz-book">教科書</button>
-      <button type="button" id="pz-school">課程表へ（中止）</button>
       <button type="button" id="pz-save">自由飛行の記録を保存</button>
+      <button type="button" id="pz-school">課程表へ（中止）</button>
       <button type="button" id="pz-menu">メニューへ</button>
     </div>
   </div>
@@ -178,6 +209,7 @@
 <script src="book-5.js"></script>
 <script src="quiz.js"></script>
 <script src="radio.js"></script>
+<script src="ui.js"></script>
 <script src="acmesh.js"></script>
 <script src="scene.js"></script>
 <script src="google3d.js"></script>

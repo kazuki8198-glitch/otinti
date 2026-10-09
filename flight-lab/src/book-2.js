@@ -18,7 +18,7 @@ ${bk.t(['雷雨の危険', '内容'], [['乱気流', '雲の中だけでなく�
 ${bk.key('積乱雲には近づかない・下を通らない・間をすり抜けない', 'ウインドシア（速度が ±15 kt 以上急に変わる、昇降率が大きく変わる）を感じたら、迷わず全開・ゴーアラウンド', 'フロリダの夏の訓練は午前中に計画することが多い（教官・学校の方針に従う）')}` },
       { id: 'wx.fog', t: '霧・低い雲・視程', h: () => `
 ${bk.t(['霧の種類', 'でき方', 'フロリダでの例'], [['放射霧', '晴れて風の弱い夜に地面が冷え、湿った空気が冷やされる', '冬〜春の明け方。日が昇ると消えることが多い'], ['移流霧', '暖かく湿った空気が冷たい地面・海の上へ流れてくる', '冬に暖かい空気が流れ込むとき'], ['前線霧・雨の霧', '暖かい雨が冷たい空気の中に降って湿度が上がる', '前線の通過時']])}
-<p>VFR（有視界飛行）では<b>雲から離れ、決められた視程以上</b>で飛ばなければなりません（第 6 章の 14 CFR 91.155）。視程が悪化しそうな日は、出発前に代替の計画（引き返す・別の空港）を決めます。</p>
+<p>VFR（有視界飛行）では<b>雲から離れ、決められた視程以上</b>で飛ばなければなりません（{ch:law}の 14 CFR 91.155）。視程が悪化しそうな日は、出発前に代替の計画（引き返す・別の空港）を決めます。</p>
 ${bk.key('VFR の操縦士が雲に入るのは重大事故の典型（空間識失調）。雲が近づいたら早めに引き返す', '「行ける」と思ったときこそ、引き返す判断の地点を先に決めておく')}` },
       { id: 'wx.metar', t: 'METAR と TAF の読み方', h: () => `
 <p>空港の定時観測が <b>METAR</b>、予報が <b>TAF</b> です。米国の形式は単位（statute mile・inHg）が日本と違います。<b>以下は架空の例</b>です。</p>
@@ -91,57 +91,7 @@ ${bk.key('TFR の違反は重大な問題になる。飛行前に必ず最新の
     refs: [R.cfr91, R.cfr61, R.aim, R.phak, R.sfb], lessons: ['t2', 'n2'] });
 
   // ======================================================================= 7
-  B.add({ id: 'comm', part: 'p1', t: '航空英語と ATC 交信', en: 'Aviation English and ATC communication',
-    summary: 'フォネティックアルファベットと数字、交信の型、復唱の決まり、ATIS、地上・管制塔・進入管制、Class C への入り方、トランスポンダー、灯火信号、無線が使えないとき。',
-    secs: [
-      { id: 'comm.basic', t: 'フォネティックアルファベットと数字', h: () => `
-${bk.t(['文字', '読み', '文字', '読み', '文字', '読み'], [
-  ['A', 'Alfa', 'J', 'Juliett', 'S', 'Sierra'], ['B', 'Bravo', 'K', 'Kilo', 'T', 'Tango'], ['C', 'Charlie', 'L', 'Lima', 'U', 'Uniform'], ['D', 'Delta', 'M', 'Mike', 'V', 'Victor'],
-  ['E', 'Echo', 'N', 'November', 'W', 'Whiskey'], ['F', 'Foxtrot', 'O', 'Oscar', 'X', 'X-ray'], ['G', 'Golf', 'P', 'Papa', 'Y', 'Yankee'], ['H', 'Hotel', 'Q', 'Quebec', 'Z', 'Zulu'], ['I', 'India', 'R', 'Romeo', '', '']])}
-<ul><li>数字は 1 桁ずつ。9 は <b>niner</b>。例：高度 4,500 は「four thousand five hundred」、針路 090 は「heading zero niner zero」、周波数 118.3 は「one one eight point three」</li>
-<li>滑走路 9L は「runway niner left」、36 は「runway three six」</li>
-<li>米国の登録記号は N で始まる（「November…」）。機種名＋登録記号の一部で呼ぶこともある（この教材の「Archer Seven Lima Alpha」は架空）</li></ul>
-${bk.key('数字は 1 桁ずつはっきり。わからなければ「Say again」', '英語が速くても、内容（誰に・何を・どこで）を落ち着いて聞き取る。紙に書き取る習慣')}` },
-      { id: 'comm.pattern', t: '交信の型と復唱（readback）', h: () => `
-<p>最初の呼びかけは「<b>誰に・誰が・どこで・何を</b>」（Who you are calling, who you are, where you are, what you want）。</p>
-${bk.f('"Sanford Ground, Archer Seven Lima Alpha, at the ramp with information Bravo, VFR to the north practice area, request taxi."')}
-<p>AIM は、<b>滑走路の指定、滑走路に入る許可、滑走路の手前で止まる指示（hold short）や line up and wait</b> を必ず復唱することを求めています。高度・針路・速度の指示も復唱するのが標準です。復唱の最後にはコールサイン。</p>
-${bk.t(['管制の指示', '正しい復唱'], [
-  ['"Archer 7LA, runway 9R, taxi via Charlie, hold short of runway 27C at Charlie."', '"Runway 9 Right, taxi via Charlie, hold short of runway 27 Center at Charlie, Archer 7LA."'],
-  ['"Archer 7LA, runway 9R, line up and wait."', '"Runway 9 Right, line up and wait, Archer 7LA."（離陸許可ではない）'],
-  ['"Archer 7LA, climb and maintain 3,000."', '"Climb and maintain 3,000, Archer 7LA."'],
-  ['"Archer 7LA, runway 36, cleared to land."', '"Runway 36, cleared to land, Archer 7LA."']])}
-${bk.key('Roger＝「受信した」だけ。指示への同意・復唱にはならない', 'Wilco＝「了解し、従う」。滑走路・高度・針路の指示には Wilco ではなく内容を復唱', '聞き取れない・自信がない：「Say again」「Verify …」。推測で動かない')}
-${bk.sim('飛行中の管制の指示に 1〜3 キーで復唱します。Sanford の 6 場面の音声練習は「Sanford・英語交信」へ。', ['t1', '通常離陸と上昇'], ['t2', '場周経路'])}` },
-      { id: 'comm.atis', t: 'ATIS・地上・管制塔・出発／進入管制', h: () => `
-${bk.t(['順番', '相手（周波数）', 'やりとりの例'], [
-  ['1', 'ATIS（録音放送）', '風・視程・雲・気温・高度計規正値・使用滑走路・NOTAM を聞き、情報の記号（Alpha, Bravo…）を覚える'],
-  ['2', 'Ground（地上管制）', 'タキシーの許可。滑走路の横断・手前停止の指示を復唱'],
-  ['3', 'Tower（管制塔）', '離陸許可・場周経路の指示・着陸許可'],
-  ['4', 'Departure / Approach（出発・進入管制、レーダー）', 'Class C 内の誘導、トランスポンダーのコード、交通情報（flight following）']])}
-<p>交通情報の例：「<i>Traffic, two o'clock, three miles, eastbound, altitude indicates two thousand five hundred.</i>」→ 見えたら「<i>Traffic in sight</i>」、見えなければ「<i>Looking</i>」または「<i>Negative contact</i>」。</p>
-${bk.key('ATIS の情報記号を最初の呼びかけで伝える（with information Bravo）', '時計の方位（twelve o\'clock ＝ 正面）は機首方向が基準。風で機首と進行方向がずれていることに注意')}` },
-      { id: 'comm.xpdr', t: 'トランスポンダー・緊急の交信・灯火信号', h: () => `
-${bk.t(['コード', '意味'], [['1200', 'VFR（管制から指定がないとき）'], ['7700', '緊急'], ['7600', '無線の故障'], ['7500', 'ハイジャック']])}
-<p><b>緊急の交信</b>：遭難（すぐに助けが必要）は <b>MAYDAY</b> を 3 回、緊急（すぐではないが助けが必要）は <b>PAN-PAN</b> を 3 回。続けて相手・コールサイン・状況・位置・高度・意図。121.5 MHz は緊急用の周波数。ただし最優先は操縦（Aviate → Navigate → Communicate）。</p>
-<h4>管制塔の灯火信号（AIM 4-3-13 の表）</h4>
-${bk.t(['信号', '地上の航空機', '飛行中の航空機'], [['緑の連続', '離陸してよい', '着陸してよい'], ['緑の点滅', 'タキシーしてよい', '着陸のために戻れ（後で緑の連続）'], ['赤の連続', '止まれ', '他機に進路を譲り、旋回を続けよ'], ['赤の点滅', '使用中の滑走路から出よ', '空港は危険、着陸するな'], ['白の点滅', '出発点に戻れ', '—'], ['赤と緑の交互', '十分に注意せよ', '十分に注意せよ']])}
-<p>昼はエルロンやラダーを動かして、夜は着陸灯や航空灯を点滅させて応答します。</p>
-${bk.key('無線が使えない：7600、管制塔を見て灯火信号に従う', 'MAYDAY をためらわない。優先して着陸させてもらえる（後で「宣言しすぎ」を責められることは基本的にない）')}
-${bk.sim('エンジン故障時の正しい遭難通報を選びます。', ['e3', '上空でのエンジン故障'])}` },
-      { id: 'comm.sfb', t: 'Sanford（KSFB）で気をつけること', h: () => `
-<p>FAA の「From the Flight Deck: Sanford」は、訓練生と旅客機が同じ空港を使うこと、平行滑走路 9L/27R・9C/27C・9R/27L と交差する 18/36 による<b>滑走路の取り違え</b>、Hot Spot（誘導路 C と滑走路 27C）、Line Up and Wait の使用、<b>滑走路・誘導路・hold short の指示を同じ送信で復唱する必要</b>などを説明しています。</p>
-${bk.key('平行滑走路では L・C・R まで含めて復唱し、滑走路に入る前に標識と方位で確かめる', '詳しくは「Sanford・英語交信」の資料と 6 場面の練習へ')}` },
-    ],
-    terms: [['Phonetic alphabet', 'フォネティックアルファベット', ''], ['Readback', '復唱', ''], ['Roger / Wilco / Affirmative / Negative', '受信した・了解し従う・はい・いいえ', ''], ['Say again', 'もう一度', ''], ['Hold short', '手前で止まる', ''], ['Line up and wait (LUAW)', '滑走路に入って待機', '離陸許可ではない'], ['ATIS', '飛行場情報放送', ''], ['Flight following', 'VFR のレーダー情報サービス', ''], ['Squawk', 'トランスポンダーのコードを設定', ''], ['Mayday / Pan-pan', '遭難・緊急', ''], ['Light gun signals', '灯火信号', '']],
-    examples: ['"Archer 7LA, squawk 4271." → "Squawk 4271, Archer 7LA."（コードを設定して復唱）', '"Archer 7LA, report midfield left downwind." → "Report midfield left downwind, Archer 7LA."'],
-    cautions: ['この章の交信例・コールサインは練習用（架空）。実際の周波数・手順は最新のチャート・Chart Supplement・AIM で。', 'この教材は実際の管制にはつながらず、音声は送信しない。'],
-    quiz: [
-      { q: 'AIM が必ず復唱するよう求めている指示は？', choices: ['交通情報', '滑走路の指定・滑走路に入る許可・hold short / line up and wait の指示', '天気の情報', 'ATIS の内容'], answer: 1, why: 'AIM 第 4 章（タキシーの項）：滑走路の指定、滑走路に入る許可、手前停止・LUAW の指示は復唱が必要。' },
-      { q: '"Line up and wait" の意味は？', choices: ['離陸してよい', '滑走路に入って待機（離陸許可ではない）', '滑走路の手前で待つ', 'ゴーアラウンド'], answer: 1, why: 'LUAW は滑走路上で待機する指示。離陸には別に cleared for takeoff が必要。' },
-      { q: '飛行中、管制塔から緑の点滅の灯火信号。意味は？', choices: ['着陸してよい', '着陸のために戻れ（後で緑の連続）', '空港は危険', '旋回を続けよ'], answer: 1, why: 'AIM 4-3-13 の表：飛行中の緑の点滅は「着陸のために戻れ」。着陸の許可は緑の連続。' },
-    ],
-    refs: [R.aim, R.pcg, R.sfb], lessons: ['t1', 't2', 'e3'] });
+  // (chapter 7, radio communication, is now book-comm.js: five chapters inserted before 'hf')
 
   // ======================================================================= 8
   B.add({ id: 'hf', part: 'p1', t: '人間の能力と判断（ADM）', en: 'Human factors and aeronautical decision-making',

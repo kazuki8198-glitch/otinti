@@ -248,6 +248,10 @@ table.lv th { color: var(--cyan); background: rgba(95, 212, 255, .06); }
 .bk-t { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13.5px; line-height: 1.6; }
 .bk-t th, .bk-t td { border: 1px solid rgba(150, 176, 206, .22); padding: 5px 8px; vertical-align: top; text-align: left; }
 .bk-t th { background: rgba(95, 212, 255, .08); color: var(--cyan); }
+.bk-radio td.who { white-space: nowrap; font: 700 12px var(--jp); width: 4.5em; }
+.bk-radio td.who.p { color: var(--green); } .bk-radio td.who.a { color: var(--cyan); }
+.bk-radio td.en { font: 600 13.5px/1.55 var(--mono); color: #e8f0fa; width: 46%; }
+@media (max-width: 700px) { .bk-radio td.en { width: auto; font-size: 12.5px; } }
 .bk-key { margin: 14px 0; padding: 10px 14px; border-left: 4px solid var(--green); background: rgba(95, 212, 106, .07); border-radius: 4px; }
 .bk-key b { color: var(--green); } .bk-key ul { margin: 4px 0 0; }
 .bk-warn { margin: 14px 0; padding: 10px 14px; border-left: 4px solid var(--amber); background: rgba(255, 178, 62, .08); border-radius: 4px; }
@@ -310,3 +314,22 @@ table.recs tr:hover td { background: rgba(95, 212, 255, .06); cursor: pointer; }
   #panel { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   #audio { display: none; }
 }
+/* the English radio page */
+.rd-tabs button { font-weight: 700; }
+.rd-pane { margin-top: 8px; }
+.rd-ph { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.rd-ph .tag { font-weight: 400; }
+.rd-book { font-size: 12px; padding: 2px 8px; }
+.bk-radio tr.cur td { background: rgba(95, 212, 255, .14); }
+.bk-radio tr.act td { color: var(--muted); font-style: italic; }
+.bk-radio td.who.act { color: var(--amber); font-style: normal; }
+.rd-say { padding: 0 7px; font-size: 12px; margin-right: 4px; }
+.rd-hide { color: var(--amber); font-family: var(--jp); font-weight: 400; margin-right: 6px; }
+.rd-nojp .rd-jp { display: none; }
+.rd-abc { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin: 8px 0; }
+.rd-abc button { text-align: left; font: 13px var(--mono); }
+.rd-abc button .note { display: block; }
+.rd-groups, .rd-tabs { width: auto; max-width: 100%; flex-wrap: wrap; }
+.rd-groups { margin: 8px 0; }
+.rd-groups button, .rd-tabs button { white-space: nowrap; }
+.sq-opts button.en { font-family: var(--mono); }

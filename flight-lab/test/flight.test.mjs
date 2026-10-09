@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { load, CORE } from './load.mjs';
 import { makeBot, runLesson } from './bot.mjs';
 import { build } from '../build.mjs';
-const FL = load(...CORE, 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-3.js', 'book-4.js', 'book-5.js', 'quiz.js');
+const FL = load(...CORE, 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js', 'quiz.js', 'radio.js');
 const P = FL.physics, A = FL.avionics, SC = FL.school, SY = FL.syllabus, SF = FL.sanford, BK = FL.book, QZ = FL.quiz;
 const DT = 1 / 120, clamp = P.clamp;
 const run = (s, sec, fn) => { for (let i = 0; i < sec * 120; i++) { if (fn) fn(s); P.step(s, DT); } return s; };
@@ -287,4 +287,81 @@ test('Sanford: the four runways, the hot spot, the airspace, a schematic labelle
   const svg = SF.diagramSvg(); assert.match(svg, /NOT FOR NAVIGATION/); assert.match(svg, /模式図/);
   assert.ok(SF.SCENES.length >= 4);
   for (const s of SF.SCENES) { assert.ok(s.atc && s.why && s.clarify && s.options.length >= 3); assert.ok(s.answer >= 0 && s.answer < s.options.length); }
+});
+
+// ------------------------------------------------------------------ English radio (the textbook's five chapters and the practice page)
+const RD = FL.radio;
+test('radio textbook: five chapters before "human factors", numbered in order; every {ch:} reference resolves; no hard-coded chapter number is wrong', () => {
+  const ids = BK.CHAPTERS.map(c => c.id), at = ids.indexOf('radio1');
+  assert.deepEqual(ids.slice(at, at + 6), ['radio1', 'radio2', 'radio3', 'radio4', 'radio5', 'hf']);
+  BK.CHAPTERS.forEach((c, i) => assert.equal(c.n, i + 1, c.id));
+  const every = [...BK.CHAPTERS.flatMap(c => [c.summary, ...(c.examples || []), ...(c.cautions || []), ...c.quiz.flatMap(q => [q.q, q.why]), ...c.secs.map(s => BK.html(s))]), ...QZ.BANKS.flatMap(b => b.qs.flatMap(q => [BK.fix(q[0]), BK.fix(q[3])]))].join('\n');
+  assert.doesNotMatch(BK.fix(every), /\{ch:|（別の章）/);
+  assert.equal(BK.fix('{ch:crm}'), `第 ${BK.CHAPTERS.find(c => c.id === 'crm').n} 章`);
+  const radio = BK.CHAPTERS.filter(c => /^radio/.test(c.id)), text = radio.flatMap(c => c.secs.map(s => BK.text(s))).join(' ');
+  assert.ok(radio.reduce((a, c) => a + c.secs.length, 0) >= 20, 'sections');
+  for (const w of ['AIM 4-2-3', 'AIM 4-3-18', 'AIM 4-4-7', 'AIM 3-2-4', 'AIM 4-1-9', 'AIM 6-3', '91.185', 'line up and wait', 'cleared for takeoff', 'Say again', 'Wilco', 'Unable', 'MAYDAY', 'PAN-PAN', '7600', 'CTAF', 'decimal', 'QNH', 'student pilot']) assert.ok(text.includes(w), w);
+  assert.doesNotMatch(text, /gusts/i, 'gust phraseology was not verified');
+});
+
+test('radio: numbers are said as the AIM shows (4-2-8 … 4-2-12) and the controller phrases as JO 7110.65', () => {
+  const S = RD.SAY;
+  for (const [ft, w] of [[500, 'five hundred'], [4500, 'four thousand five hundred'], [10000, 'one zero thousand'], [13500, 'one three thousand five hundred'], [12000, 'one two thousand'], [12500, 'one two thousand five hundred'], [19000, 'flight level one niner zero'], [27500, 'flight level two seven five']]) assert.equal(S.altitude(ft), w, ft);
+  assert.equal(S.freq('122.1'), 'one two two point one');
+  assert.equal(S.freq('119.75'), 'one one niner point seven five');
+  assert.equal(S.heading(5), 'heading zero zero five'); assert.equal(S.heading(100), 'heading one zero zero'); assert.equal(S.heading(0), 'heading three six zero');
+  assert.equal(S.speed(250), 'two five zero knots'); assert.equal(S.speed(190), 'one niner zero knots');
+  assert.equal(S.time('0920'), 'zero niner two zero Zulu');
+  assert.equal(S.digits('10'), 'one zero');
+  assert.equal(S.altimeter('30.01'), 'altimeter three zero zero one');
+  assert.equal(S.squawk('0425'), 'squawk zero four two five');
+  assert.equal(S.runway('9R'), 'runway niner right'); assert.equal(S.runway('27C'), 'runway two seven center'); assert.equal(S.runway('36'), 'runway three six');
+  assert.equal(S.wind(220, 15), 'wind two two zero at one five'); assert.equal(S.wind(100, 2), 'wind calm');
+  assert.equal(S.spell('N7LA'), 'November seven Lima Alfa');
+  assert.equal(RD.ALPHA.length, 26); assert.equal(RD.DIGW[9], 'niner');
+});
+
+test('radio: a whole flight in order (ATIS → ground → tower → departure → approach → tower → ground), every call with its meaning', () => {
+  assert.deepEqual(RD.FLIGHT.map(p => p.id), ['atis', 'gnd1', 'twr1', 'dep', 'app', 'twr2', 'gnd2']);
+  const lines = RD.FLIGHT.flatMap(p => p.lines), said = lines.filter(l => l[0] !== 'ACT');
+  assert.ok(said.length >= 30, `${said.length} calls`);
+  for (const p of RD.FLIGHT) assert.ok(BK.findSection(p.sec), p.sec);
+  for (const [who, en, jp] of lines) { assert.ok(RD.WHO[who], who); assert.ok(jp && jp.length > 3, en); if (who !== 'ACT') assert.ok(en.length > 8); }
+  // every read-back carries the call sign; the first call to each facility uses the full call sign
+  for (const [who, en] of said) if (who === 'P') assert.match(en, /Archer (Seven Lima Alpha|7LA)/, en);
+  const seen = new Set();
+  for (const [who, en] of said) { const m = who === 'P' && /^LAB (Ground|Tower|Departure|Approach),/.exec(en); if (m && !seen.has(m[1])) { seen.add(m[1]); assert.match(en, /Archer Seven Lima Alpha/, en); } }
+  assert.equal(seen.size, 4);
+  const all = said.map(l => l[1]).join(' ');
+  for (const w of ['information Bravo', 'hold short of taxiway Charlie', 'line up and wait', 'cleared for takeoff', 'radar contact', 'squawk VFR', 'cleared to land', 'contact Ground point seven']) assert.ok(all.includes(w), w);
+  assert.equal(RD.tts('Contact departure, Archer 7LA.'), 'Contact departure, Archer Seven Lima Alpha.');
+});
+
+test('radio: ≥ 30 read-back / response scenes in every phase (the six Sanford scenes kept by id), each with one right answer, a reason and sources', () => {
+  assert.ok(RD.SCENES.length >= 30, `${RD.SCENES.length}`);
+  const ids = new Set(); for (const sc of RD.SCENES) { assert.ok(!ids.has(sc.id), sc.id); ids.add(sc.id); assert.match(sc.id, /^[a-z0-9_]{1,20}$/); }
+  for (const s of SF.SCENES) assert.ok(ids.has(s.id), s.id);
+  for (const [g] of RD.GROUPS) assert.ok(RD.SCENES.filter(s => s.g === g).length >= 2, g);
+  for (const sc of RD.SCENES) {
+    assert.equal(sc.options.length, 4, sc.id); assert.equal(new Set(sc.options).size, 4, sc.id);
+    assert.ok(Number.isInteger(sc.answer) && sc.answer >= 0 && sc.answer < 4, sc.id);
+    assert.ok(sc.title && sc.situation && sc.q && sc.why && sc.clarify, sc.id);
+    assert.ok(sc.refs.length && sc.refs.every(k => RD.ref(k) && /^https:\/\//.test(RD.ref(k).url)), sc.id);
+  }
+  // the progress keeps a scene id (the same rule as the record)
+  const p = SC.sanitizeProgress({ atc: Object.fromEntries(RD.SCENES.map(s => [s.id, true])) });
+  assert.equal(Object.keys(p.atc).length, RD.SCENES.length);
+});
+
+test('radio drills and listening: four different choices, the right one among them, for every kind (1,000 draws)', () => {
+  const rng = RD.mulberry(42);
+  for (let k = 0; k < 100; k++) for (const [set] of RD.DRILL_SETS) for (const q of RD.drill(10, rng, set)) {
+    assert.equal(q.opts.length, 4, q.q); assert.equal(new Set(q.opts).size, 4, q.q); assert.ok(q.opts.includes(q.ok), q.q); assert.ok(q.why, q.q);
+  }
+  for (let k = 0; k < 100; k++) for (const q of RD.listen(10, rng)) { assert.equal(new Set(q.opts).size, 4, q.q); assert.ok(q.opts.includes(q.ok)); assert.ok(q.say.length > 10); }
+  assert.ok(RD.GLOSSARY.length >= 50);
+  for (const g of RD.GLOSSARY) assert.ok(g[0] && g[1] && g[3] && g[4], g[0]);
+  // the ground-school stage has the four radio lessons, and the practical test bank exists
+  for (const id of ['k3', 'k4', 'k5', 'k6']) assert.ok(SC.lesson(id) && SC.lesson(id).radio, id);
+  assert.ok(QZ.BANKS.find(b => b.id === 'q_radio'));
 });

@@ -1,15 +1,16 @@
 // FLIGHT LAB — pages.js
 // The screens around the flight: the start menu, the school (the syllabus with each lesson's purpose, procedure,
 // keys, standards and steps), the debrief, and the pages: the textbook, the ground-school tests, the guide (keys,
-// gamepad, the screen, how to fly, numbers), the G1000-type PFD tutorial and the reading practice, Sanford and English
-// ATC, the learning record, the Google 3D settings, and "about". FL.pages(app) returns them (built once).
+// gamepad, the screen, how to fly, numbers), the G1000-type PFD tutorial and the reading practice, Sanford, English
+// radio practice (a whole flight, read-backs, number drills, listening, glossary), the learning record, the Google 3D
+// settings, and "about". FL.pages(app) returns them (built once).
 (function (FL) {
   'use strict';
   let built = null;
   FL.pages = function (app) {
     if (built) return built;
     const { S, h, $, esc, store, toast } = app;
-    const P = FL.physics, AV = FL.avionics, SC = FL.school, SY = FL.syllabus, BK = FL.book, QZ = FL.quiz, SF = FL.sanford;
+    const P = FL.physics, AV = FL.avionics, SC = FL.school, SY = FL.syllabus, BK = FL.book, QZ = FL.quiz, SF = FL.sanford, RD = FL.radio;
     const btn = (label, fn, cls, title) => h('button', { type: 'button', class: cls || '', title: title || null, onclick: fn }, label);
     const save = () => SC.saveProgress(store, S.progress);
     const levelName = id => SC.level(id).name;
@@ -27,10 +28,11 @@
         ['03', '学科テスト', `${QZ ? QZ.BANKS.length : 0} 分野・${QZ ? QZ.BANKS.reduce((a, b) => a + b.qs.length, 0) : 0} 問（解説つき）`, () => openPage('quiz')],
         ['04', '操作ガイド', 'すべてのキーとゲームパッド：何が動くか・何のために使うか。画面の見方と飛び方のコツ', () => openPage('guide')],
         ['05', 'G1000 型 PFD の読み方', '計器を 1 つずつ説明するチュートリアルと、読み取り練習', () => openPage('tutor')],
-        ['06', 'Sanford・英語交信', '空港の資料（模式図）と ATC 復唱の 6 場面（音声）', () => openPage('sfb')],
-        ['07', '学習記録', '課目の結果・講評・メモ（JSON の書き出し・読み込み）', () => openPage('records')],
-        ['08', 'Google 3D（任意）', 'Sanford 周辺の写実的な外部景観（自分の API キー・メモリのみ）', () => openPage('g3d')],
-        ['09', 'このアプリについて', '非公式教材であること、実装したもの・していないもの、データの扱い', () => openPage('about')],
+        ['06', '英語交信（無線）', RD ? `1 回の飛行の全交信（${RD.FLIGHT.reduce((a, p) => a + p.lines.length, 0)} 行）・復唱と応答 ${RD.SCENES.length} 場面・数字とアルファベット・聞き取り・用語集 ${RD.GLOSSARY.length} 語（音声）` : '', () => openRadio('flight')],
+        ['07', 'Sanford の資料', '空港の資料（模式図）・空域・Hot Spot・Sanford の 6 場面', () => openPage('sfb')],
+        ['08', '学習記録', '課目の結果・講評・メモ（JSON の書き出し・読み込み）', () => openPage('records')],
+        ['09', 'Google 3D（任意）', 'Sanford 周辺の写実的な外部景観（自分の API キー・メモリのみ）', () => openPage('g3d')],
+        ['10', 'このアプリについて', '非公式教材であること、実装したもの・していないもの、データの扱い', () => openPage('about')],
       ];
       for (const [code, title, sub, fn] of items) m.append(h('button', { type: 'button', class: 'mission', onclick: fn }, h('span', { class: 'code', text: code }), h('span', { class: 'm-title', text: title }), h('span', { class: 'm-sub', text: sub })));
       // options
@@ -91,6 +93,15 @@
       const l = SC.lesson(id); if (!l) return;
       const rec = S.progress.lessons[id];
       box.append(h('h2', { text: l.title }), h('p', { class: 'sch-goal', text: '目的：' + l.goal }));
+      if (l.radio) {
+        const what = { drill: 'フォネティックアルファベットと、高度・針路・速度・周波数・高度計・コード・滑走路・風・時刻（UTC）の言い方を 4 択で（10 問・80% で合格。「すべて」で解いたときに記録）。答えたあと ▶ で正しい言い方を聞けます。',
+          flight: 'ATIS → 地上管制 → 管制塔 → 出発管制 → 進入管制 → 管制塔 → 地上管制。1 回の飛行の全部の交信を、日本語の意味・理由・操作と一緒に順に聞きます（音声合成）。「あなたの台詞を隠す」にすると、自分で言ってから答え合わせができます。最後まで確かめたら合格。',
+          scenes: '地上・離陸・レーダー・着陸・管制塔のない空港・緊急など、場面ごとに「正しい復唱・言うこと」を選びます。ランダム 10 場面のテストで 80% 以上なら合格。',
+          listen: '英語の指示を音声だけで聞き、内容（針路・高度・周波数・コード・滑走路・交通情報など）を選びます（10 問・80% で合格）。音声合成が使えない環境では文字で表示できます。' }[l.radio];
+        box.append(h('p', { text: what }), h('div', { class: 'sch-bar' }, h('button', { type: 'button', class: 'sch-go', onclick: () => openRadio(l.radio) }, '練習を開く'), rec && rec.pass ? h('span', { text: '合格済み' }) : null));
+        if (l.book && BK) { const links = l.book.map(sid => BK.findSection(sid)).filter(Boolean); if (links.length) box.append(h('h3', { text: '教科書の関連する節' }), h('div', { class: 'row' }, ...links.map(x => btn(`${x.ch.n}. ${x.sec.t}`, () => { openPage('book'); openSection(x.sec.id); })))); }
+        return;
+      }
       if (l.tutor || l.read) {
         box.append(h('p', { text: l.tutor ? 'G1000 型 PFD の各部（速度・姿勢・高度・昇降率・方位・CDI・予備計器・エンジン）を、実際の表示に枠を付けて 1 つずつ説明します。最後まで見ると合格。' : 'ランダムな状態の PFD を見て、読み取った値や次の操作を 4 択で答えます（10 問・80% で合格）。' }),
           h('div', { class: 'sch-bar' }, h('button', { type: 'button', class: 'sch-go', onclick: () => openPage(l.tutor ? 'tutor' : 'readq') }, l.tutor ? 'チュートリアルを開く' : '練習を始める'), rec && rec.pass ? h('span', { text: '合格済み' }) : null));
@@ -173,15 +184,15 @@
     function openPage(id) {
       back = S.screen === 'pause' ? 'pause' : S.screen === 'school' ? 'school' : 'menu';
       app.openScreen('page'); pageId = id;
-      const titles = { book: '教科書', quiz: '学科テスト', guide: '操作ガイド', tutor: 'G1000 型 PFD の読み方', readq: 'PFD の読み取り練習', sfb: 'Sanford（KSFB）と英語の交信', records: '学習記録', g3d: 'Google Photorealistic 3D Tiles（任意）', about: 'このアプリについて' };
+      const titles = { book: '教科書', quiz: '学科テスト', guide: '操作ガイド', tutor: 'G1000 型 PFD の読み方', readq: 'PFD の読み取り練習', sfb: 'Sanford（KSFB）の資料', radio: '英語交信（無線）の練習', records: '学習記録', g3d: 'Google Photorealistic 3D Tiles（任意）', about: 'このアプリについて' };
       $('#pageTitle').textContent = titles[id] || '';
       $('#pageTools').textContent = '';
       const body = $('#pageBody'); body.textContent = ''; body.className = 'page-body'; body.scrollTop = 0;
       $('#pageClose').onclick = closePage;
-      ({ book: renderBook, quiz: renderQuizList, guide: renderGuide, tutor: renderTutor, readq: renderReadQuiz, sfb: renderSanford, records: renderRecords, g3d: renderG3d, about: renderAbout }[id] || (() => {}))(body);
+      ({ book: renderBook, quiz: renderQuizList, guide: renderGuide, tutor: renderTutor, readq: renderReadQuiz, sfb: renderSanford, radio: renderRadio, records: renderRecords, g3d: renderG3d, about: renderAbout }[id] || (() => {}))(body);
     }
     function closePage() {
-      if (S.speechOn && 'speechSynthesis' in window) speechSynthesis.cancel();
+      rStop();
       if (back === 'pause') { app.openScreen('pause'); $('#pause').hidden = false; }
       else if (back === 'school') openSchool(S.lastLessonId);
       else openMenu();
@@ -225,23 +236,23 @@
       art.innerHTML = '';
       art.append(h('div', { class: 'bk-chap', text: `第 ${ch.n} 章　${ch.t}（${i + 1} / ${ch.secs.length}）` }), h('h2', { class: 'bk-title', text: sec.t }));
       if (i === 0 && ch.en) art.append(h('div', { class: 'bk-en', text: ch.en }));
-      if (i === 0 && ch.summary) art.append(h('p', { html: '<b>この章で学ぶこと：</b>' + esc(ch.summary) }));
+      if (i === 0 && ch.summary) art.append(h('p', { html: '<b>この章で学ぶこと：</b>' + esc(BK.fix(ch.summary)) }));
       art.append(h('div', { html: BK.html(sec) }));                      // static textbook content (trusted)
       // the chapter's end matter on its last section: terms, examples, cautions, the check questions, lessons, sources
       if (i === ch.secs.length - 1) {
         if (ch.terms && ch.terms.length) art.append(h('h3', { text: '英語の用語（English terms）' }), h('table', { class: 'terms' }, h('tr', {}, h('th', { text: 'English' }), h('th', { text: '日本語' }), h('th', { text: '補足' })), ...ch.terms.map(([en, jp, note]) => h('tr', {}, h('td', { class: 'en', text: en }), h('td', { text: jp }), h('td', { class: 'mute', text: note || '' })))));
-        if (ch.examples && ch.examples.length) art.append(h('h3', { text: '例' }), h('ul', {}, ...ch.examples.map(t => h('li', { text: t }))));
-        if (ch.cautions && ch.cautions.length) art.append(h('h3', { text: '注意' }), h('ul', {}, ...ch.cautions.map(t => h('li', { text: t }))));
+        if (ch.examples && ch.examples.length) art.append(h('h3', { text: '例' }), h('ul', {}, ...ch.examples.map(t => h('li', { text: BK.fix(t) }))));
+        if (ch.cautions && ch.cautions.length) art.append(h('h3', { text: '注意' }), h('ul', {}, ...ch.cautions.map(t => h('li', { text: BK.fix(t) }))));
         if (ch.quiz && ch.quiz.length) {
           art.append(h('h3', { text: '確認問題' }));
           ch.quiz.forEach((qq, qi) => {
             const name = `q_${ch.id}_${qi}`, res = h('div', { class: 'res' });
-            const box = h('div', { class: 'quiz' }, h('div', {}, h('b', { text: `問 ${qi + 1}. ` }), qq.q),
+            const box = h('div', { class: 'quiz' }, h('div', {}, h('b', { text: `問 ${qi + 1}. ` }), BK.fix(qq.q)),
               ...qq.choices.map((c, k) => h('label', { class: 'ch' }, h('input', { type: 'radio', name, value: k }), ' ', c)),
               btn('答え合わせ', () => {
                 const sel = box.querySelector(`input[name="${name}"]:checked`); if (!sel) { res.className = 'res'; res.textContent = '選択肢を選んでください。'; return; }
                 const ok = +sel.value === qq.answer;
-                res.className = 'res ' + (ok ? 'ok' : 'ng'); res.textContent = `${ok ? '正解' : '不正解'}（正答：${qq.choices[qq.answer]}）— ${qq.why}`;
+                res.className = 'res ' + (ok ? 'ok' : 'ng'); res.textContent = `${ok ? '正解' : '不正解'}（正答：${qq.choices[qq.answer]}）— ${BK.fix(qq.why)}`;
                 const key = `${ch.id}.${qi}`; if (ok) { S.progress.bookQuiz[key] = 100; save(); }
               }), res);
             art.append(box);
@@ -277,7 +288,7 @@
     function runQuiz(id) {
       const b = QZ.BANKS.find(x => x.id === id); if (!b) return;
       const shuffle = a => { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; };
-      const qs = shuffle(b.qs).map(q => { const idx = shuffle(q[1].map((_, i) => i)); return { q: q[0], opts: idx.map(i => q[1][i]), ok: idx.indexOf(q[2]), why: q[3] }; });
+      const qs = shuffle(b.qs).map(q => { const idx = shuffle(q[1].map((_, i) => i)); return { q: BK ? BK.fix(q[0]) : q[0], opts: idx.map(i => q[1][i]), ok: idx.indexOf(q[2]), why: BK ? BK.fix(q[3]) : q[3] }; });
       const Z = { qs, i: 0, right: 0, answered: false };
       $('#pageTitle').textContent = '学科テスト：' + b.title;
       const body = $('#pageBody');
@@ -487,6 +498,173 @@
       }
     }
 
+    // ------------------------------------------------------------ English radio practice (FL.radio)
+    // speech: ATC and you in two voices when the system has two English voices; a chosen speed; a queue for "play all"
+    let radioTab = 'flight', rRate = 0.95, rTok = 0;
+    function rStop() { rTok++; if (S.speechOn && 'speechSynthesis' in window) speechSynthesis.cancel(); }
+    function rSay(text, who, done) {
+      if (!('speechSynthesis' in window)) { toast('このブラウザでは音声合成が使えません（文字で練習できます）'); if (done) done(false); return; }
+      S.speechOn = true;
+      const u = new SpeechSynthesisUtterance(RD.tts(text)); u.lang = 'en-US';
+      const all = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang)), us = all.filter(v => /en[-_]US/i.test(v.lang)), pool = us.length ? us : all;
+      if (pool.length) u.voice = pool[who === 'P' ? Math.min(1, pool.length - 1) : 0];
+      u.rate = rRate * (who === 'ATIS' ? 0.95 : 1); u.pitch = who === 'P' ? 1.1 : 0.95;
+      let fired = false; const fin = () => { if (!fired) { fired = true; if (done) done(true); } };
+      u.onend = u.onerror = fin;
+      speechSynthesis.speak(u);
+    }
+    function sayBtn(text, who, label) { return btn(label || '▶', () => { rStop(); rSay(text, who); }, 'rd-say', '音声で聞く'); }
+    function passGround(id, pct) {
+      const r = S.progress.lessons[id] || { tries: 0, best: '', pass: false, levels: [] };
+      r.tries++; if (pct >= 80) { r.pass = true; const g = pct >= 100 ? 'S' : pct >= 90 ? 'A' : 'B'; if (!r.best || 'SAB'.indexOf(g) < 'SAB'.indexOf(r.best)) r.best = g; }
+      S.progress.lessons[id] = r; save();
+    }
+    function openRadio(tab) { radioTab = tab || radioTab; openPage('radio'); }
+    function renderRadio(body) {
+      if (!RD) return;
+      const tabs = [['flight', '1 回の飛行'], ['scenes', '復唱と応答'], ['drill', '数字とアルファベット'], ['listen', '聞き取り'], ['words', '用語集']];
+      const bar = h('div', { class: 'seg rd-tabs' }), pane = h('div', { class: 'rd-pane' });
+      for (const [id, t] of tabs) bar.append(h('button', { type: 'button', 'data-v': id, class: id === radioTab ? 'on' : '', onclick: () => { radioTab = id; rStop(); [...bar.children].forEach(b => b.classList.toggle('on', b.dataset.v === id)); draw(); } }, t));
+      const speed = h('div', { class: 'seg' }); for (const [v, t] of [[0.8, 'ゆっくり'], [0.95, 'ふつう'], [1.12, '速め']]) speed.append(h('button', { type: 'button', class: v === rRate ? 'on' : '', onclick: e => { rRate = v; [...speed.children].forEach(b => b.classList.toggle('on', b === e.currentTarget)); } }, t));
+      body.append(h('p', { class: 'small mute', text: `LAB 空港・周波数・コールサイン「${RD.CS}（${RD.CSS}）」は架空の練習用です。言い方は FAA の AIM・Pilot/Controller Glossary・JO 7110.65 を参考にした教材の台本で、実際の管制官の言い方は場所と状況で違います。音声はブラウザ / OS の音声合成で、録音・送信・音声認識はしません。` }),
+        h('div', { class: 'row' }, bar, h('span', { class: 'small mute', text: '音声の速さ' }), speed), pane);
+      const draw = () => { pane.textContent = ''; ({ flight: rFlight, scenes: rScenes, drill: rDrill, listen: rListen, words: rWords }[radioTab] || rFlight)(pane); };
+      draw();
+    }
+    // a row of the exchange: who, English (▶), meaning and note
+    function rRow(L, hide) {
+      const [who, en, jp, note] = L, tr = h('tr', { class: who === 'ACT' ? 'act' : '' });
+      if (who === 'ACT') { tr.append(h('td', { class: 'who act', text: '操作' }), h('td', { colspan: '2', class: 'small', text: jp })); return tr; }
+      const enCell = h('td', { class: 'en' });
+      const show = () => { enCell.textContent = ''; enCell.append(sayBtn(en, who), ' ', en); };
+      if (hide && who === 'P') { enCell.append(h('span', { class: 'rd-hide', text: '（あなたの番：声に出して言ってから → ）' }), btn('答え合わせ', show)); tr.reveal = show; } else show();
+      tr.append(h('td', { class: 'who ' + (who === 'P' ? 'p' : 'a'), text: RD.WHO[who] || who }), enCell, h('td', { class: 'rd-jp' }, jp, note ? h('div', { class: 'note', text: note }) : null));
+      return tr;
+    }
+    function rFlight(pane) {
+      const opt = rFlight.opt || (rFlight.opt = { hide: false, jp: true });
+      const hideCb = h('input', { type: 'checkbox' }), jpCb = h('input', { type: 'checkbox' }); hideCb.checked = opt.hide; jpCb.checked = opt.jp;
+      hideCb.onchange = () => { opt.hide = hideCb.checked; rStop(); pane.textContent = ''; rFlight(pane); };
+      jpCb.onchange = () => { opt.jp = jpCb.checked; pane.classList.toggle('rd-nojp', !opt.jp); };
+      pane.classList.toggle('rd-nojp', !opt.jp);
+      const rows = [];
+      const play = btn('▶ 最初から通して聞く', () => {
+        rStop(); const tok = rTok; let i = 0;
+        const next = () => {
+          if (tok !== rTok) return;
+          rows.forEach(r => r.tr.classList.remove('cur'));
+          if (i >= rows.length) { toast('最後まで再生しました', 1800, 'good'); return; }
+          const { tr, L } = rows[i++]; tr.classList.add('cur'); tr.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          if (L[0] === 'ACT' || !L[1]) { setTimeout(next, 900 + L[2].length * 25); return; }
+          if (tr.reveal) { setTimeout(() => { if (tok !== rTok) return; tr.reveal(); tr.reveal = null; rSay(L[1], L[0], () => setTimeout(next, 500)); }, 1500 + L[1].length * 55); return; }
+          rSay(L[1], L[0], () => setTimeout(next, 500));
+        };
+        next();
+      }, 'primary');
+      pane.append(h('div', { class: 'row' }, play, btn('■ 止める', () => { rStop(); rows.forEach(r => r.tr.classList.remove('cur')); }),
+        h('label', { class: 'chk' }, hideCb, ' あなたの台詞を隠す（自分で言う練習）'), h('label', { class: 'chk' }, jpCb, ' 日本語の意味を表示')),
+      h('p', { class: 'small', text: '架空の LAB 空港（管制塔とレーダー管制のある Class C を想定）から北東の訓練空域へ行き、戻って着陸するまでの全部の交信です。緑が あなた、青が管制。「操作」の行は、そのとき手と目でしていること。通して聞くと、隠した台詞はあなたが言う時間を空けてから表示・再生します。' }));
+      for (const ph of RD.FLIGHT) {
+        const x = BK && BK.findSection(ph.sec);
+        pane.append(h('h3', { class: 'rd-ph' }, ph.t, ' ', h('span', { class: 'tag', text: ph.freq + '（架空）' }), x ? btn(`教科書 ${x.ch.n}. ${x.sec.t}`, () => { openPage('book'); openSection(ph.sec); }, 'rd-book') : null));
+        const t = h('table', { class: 'bk-t bk-radio' }, h('tr', {}, h('th', { text: '誰' }), h('th', { text: '英語（交信）' }), h('th', { class: 'rd-jp', text: '意味・理由' })));
+        for (const L of ph.lines) { const tr = rRow(L, opt.hide); rows.push({ tr, L }); t.append(tr); }
+        pane.append(t);
+      }
+      const rec = S.progress.lessons.k4;
+      pane.append(h('div', { class: 'row' }, btn('最後まで確かめた（課目「英語交信②」を合格にする）', () => { passGround('k4', 100); toast('「1 回の飛行の交信」を記録しました', 2000, 'good'); pane.textContent = ''; rFlight(pane); }, 'primary'), rec && rec.pass ? h('span', { class: 'tag fact', text: '合格済み' }) : null));
+    }
+    // the generic four-choice runner: q = { q, opts: [text], ok: text, why, say?, auto? (speak when shown), head? }
+    function rMcq(root, qs, title, onDone) {
+      const Z = { i: 0, right: 0 };
+      const draw = () => {
+        root.textContent = '';
+        if (Z.i >= qs.length) {
+          const pct = Math.round(Z.right / qs.length * 100), pass = pct >= 80;
+          if (onDone) onDone(pct);
+          root.append(h('p', { class: 'sq-result ' + (pass ? 'ok' : 'ng'), text: `${title}：${Z.right} / ${qs.length} 問正解（${pct}%）… ${pass ? '合格' : '不合格（80% 以上で合格）'}` }));
+          return;
+        }
+        const q = qs[Z.i], list = h('div', { class: 'sq-opts' });
+        root.append(h('p', { class: 'mute small', text: `${title}　${Z.i + 1} / ${qs.length}` }), h('p', { class: 'sq-q', text: q.q }));
+        if (q.head) root.append(q.head);
+        if (q.auto) { const text = h('div', { class: 'atc hidden', text: q.say }); root.append(h('div', { class: 'row' }, btn('▶ もう一度聞く', () => { rStop(); rSay(q.say, 'ATC'); }, 'primary'), btn('文字を表示 / 隠す', () => text.classList.toggle('hidden'))), text); q.text = text; setTimeout(() => { rStop(); rSay(q.say, 'ATC'); }, 250); }
+        root.append(list);
+        let done = false;
+        q.opts.forEach(o => list.append(h('button', { type: 'button', class: 'en', onclick: e => {
+          if (done) return; done = true; const ok = o === q.ok; if (ok) Z.right++;
+          [...list.children].forEach(x => { x.disabled = true; x.classList.toggle('ok', x.textContent === q.ok); x.classList.toggle('ng', x === e.currentTarget && !ok); });
+          if (q.text) q.text.classList.remove('hidden');
+          root.append(h('p', { class: 'sq-why ' + (ok ? 'ok' : 'ng'), text: (ok ? '正解。' : `不正解。正しくは「${q.ok}」。`) + q.why }),
+            h('div', { class: 'row' }, q.say && !q.auto ? sayBtn(q.say, 'ATC', '▶ 正しい言い方を聞く') : null, btn(Z.i + 1 < qs.length ? '次の問題' : '結果を見る', () => { Z.i++; draw(); }, 'primary')));
+        } }, o)));
+      };
+      draw();
+    }
+    function rScenes(pane) {
+      const g = rScenes.g || 'all', solved = RD.SCENES.filter(sc => S.progress.atc[sc.id]).length;
+      const seg = h('div', { class: 'seg rd-groups' });
+      for (const [id, t] of [['all', 'すべて'], ...RD.GROUPS]) seg.append(h('button', { type: 'button', class: id === g ? 'on' : '', onclick: () => { rScenes.g = id; pane.textContent = ''; rScenes(pane); } }, t));
+      const test = h('div');
+      pane.append(h('p', { class: 'small', text: `場面を読み、▶ で管制の声を聞き、正しい復唱・言うことを選びます。正解済み ${solved} / ${RD.SCENES.length} 場面。` }),
+        h('div', { class: 'row' }, btn('テスト：ランダム 10 場面（80% で課目「英語交信③」合格）', () => {
+          const pick = RD.SCENES.slice().sort(() => Math.random() - 0.5).slice(0, 10);
+          rMcq(test, pick.map(sc => ({ q: `${sc.title}　— ${sc.situation}${sc.atc ? `　聞こえた：“${sc.atc}”` : ''}　${sc.q}`, opts: sc.options.slice().sort(() => Math.random() - 0.5), ok: sc.options[sc.answer], why: sc.why, say: sc.atc || '' })), '復唱と応答のテスト', pct => passGround('k5', pct));
+          test.scrollIntoView({ block: 'start' });
+        }, 'primary')), test, seg);
+      for (const sc of RD.SCENES.filter(x => g === 'all' || x.g === g)) pane.append(sceneCard(sc));
+    }
+    function sceneCard(sc) {
+      const name = 'ratc_' + sc.id, res = h('div', { class: 'res small' }), atc = sc.atc ? h('div', { class: 'atc hidden', text: sc.atc }) : null;
+      const order = sc.options.map((_, i) => i).sort(() => Math.random() - 0.5), grp = (RD.GROUPS.find(x => x[0] === sc.g) || [0, ''])[1];
+      const card = h('div', { class: 'scene' }, h('h4', {}, sc.title, h('span', { class: 'tag', style: 'margin-left:6px', text: grp }), S.progress.atc[sc.id] ? h('span', { class: 'tag fact', text: '正解済み' }) : null),
+        h('p', { class: 'small', text: '状況：' + sc.situation }),
+        atc ? h('div', { class: 'row' }, sayBtn(sc.atc, 'ATC', '▶ 管制の声'), btn('文字を表示 / 隠す', () => atc.classList.toggle('hidden'))) : null, atc,
+        h('div', { class: 'small mute', text: sc.q }),
+        ...order.map(i => h('label', { class: 'ch', style: 'display:block' }, h('input', { type: 'radio', name, value: i }), ' ', h('span', { class: 'en', text: sc.options[i] }))),
+        btn('答え合わせ', () => {
+          const sel = card.querySelector(`input[name="${name}"]:checked`); if (!sel) { res.textContent = '選択肢を選んでください。'; return; }
+          const ok = +sel.value === sc.answer; if (atc) atc.classList.remove('hidden'); res.className = 'res small ' + (ok ? 'ok' : 'ng'); res.textContent = '';
+          res.append(h('div', { text: `${ok ? '正解' : '不正解'}：「${sc.options[sc.answer]}」` }), h('div', { text: '理由：' + sc.why }), h('div', { text: '迷ったとき・従えないとき：' + sc.clarify }));
+          S.progress.atc[sc.id] = S.progress.atc[sc.id] || ok; save();
+        }), res,
+        h('div', { class: 'small' }, '参考：', ...sc.refs.map(RD.ref).filter(Boolean).map(r => h('a', { href: r.url, target: '_blank', rel: 'noopener noreferrer', style: 'margin-right:8px' }, r.label))));
+      return card;
+    }
+    function rDrill(pane) {
+      const set = rDrill.set || 'all', run = h('div');
+      const seg = h('div', { class: 'seg rd-groups' });
+      for (const [id, t] of RD.DRILL_SETS) seg.append(h('button', { type: 'button', class: id === set ? 'on' : '', onclick: () => { rDrill.set = id; pane.textContent = ''; rDrill(pane); } }, t));
+      const nr = BK && BK.findSection('comm.numbers');
+      pane.append(h('p', { class: 'small', text: '高度だけは thousand・hundred（10,000 ft 以上は千の位より上を 1 桁ずつ）、ほかの数字は 1 桁ずつ。針路は必ず 3 桁、小数点は point、9 は niner（AIM 4-2-7〜4-2-12）。' }),
+        h('div', { class: 'row' }, seg, btn('10 問を始める（毎回変わる）', () => rMcq(run, RD.drill(10, Math.random, set), '数字とアルファベット', pct => { if (set === 'all') passGround('k3', pct); }), 'primary'), nr ? btn(`教科書 ${nr.ch.n}. ${nr.sec.t}`, () => { openPage('book'); openSection('comm.numbers'); }) : null),
+        h('p', { class: 'note', text: '課目「英語交信①」の記録は「すべて」で解いたときだけ付きます。' }), run,
+        h('h3', { text: 'フォネティックアルファベット（押すと音声）' }),
+        h('div', { class: 'rd-abc' }, ...RD.ALPHA.map(([c, w, p]) => h('button', { type: 'button', onclick: () => { rStop(); rSay(w, 'ATC'); } }, h('b', { text: c }), ' ', w, h('span', { class: 'note', text: p })))),
+        h('div', { class: 'rd-abc' }, ...RD.DIGW.map((w, i) => h('button', { type: 'button', onclick: () => { rStop(); rSay(w, 'ATC'); } }, h('b', { text: String(i) }), ' ', w, h('span', { class: 'note', text: RD.DIGP[i] })))));
+    }
+    function rListen(pane) {
+      const run = h('div');
+      pane.append(h('p', { class: 'small', text: '英語の指示が自動で 1 回流れます（▶ でもう一度）。聞いた内容を選んでください。まず文字を見ずに。数字は聞いた順に書き取るのがコツです。' }),
+        h('div', { class: 'row' }, btn('10 問を始める（毎回変わる）', () => rMcq(run, RD.listen(10, Math.random).map(q => Object.assign(q, { auto: true })), '聞き取り', pct => passGround('k6', pct)), 'primary')),
+        'speechSynthesis' in window ? null : h('p', { class: 'note', text: 'このブラウザでは音声合成が使えません。「文字を表示」で読み取りの練習としてできます。' }), run);
+    }
+    function rWords(pane) {
+      const q = h('input', { type: 'search', placeholder: '英語・日本語で検索（例：roger、止まれ）', style: 'width:min(420px,100%)' }), out = h('div');
+      const draw = () => {
+        out.textContent = ''; const k = q.value.trim().toLowerCase(); let last = null, t = null;
+        for (const [en, jp, note, src, grp] of RD.GLOSSARY) {
+          if (k && !(en + jp + note).toLowerCase().includes(k)) continue;
+          if (grp !== last) { last = grp; out.append(h('h4', { text: grp })); t = h('table', { class: 'bk-t bk-radio' }, h('tr', {}, h('th', { text: '英語' }), h('th', { text: '意味' }), h('th', { text: '注意' }), h('th', { text: '出典' }))); out.append(t); }
+          t.append(h('tr', {}, h('td', { class: 'en' }, sayBtn(en.replace(/[()]/g, '').replace(/×3/, ''), 'ATC'), ' ', en), h('td', { text: jp }), h('td', { class: 'small', text: note }), h('td', { class: 'small mute', text: src })));
+        }
+        if (!out.childNodes.length) out.append(h('p', { class: 'mute', text: '見つかりません。' }));
+      };
+      q.addEventListener('input', draw);
+      pane.append(h('p', { class: 'small', text: `${RD.GLOSSARY.length} 語。出典の「PCG」は FAA の Pilot/Controller Glossary の定義、「AIM」は AIM の本文、「JO 7110.65」は管制官の方式基準の言い方、「教材の例」はこの教材の台本の言い方です。` }), q, out);
+      draw();
+    }
+
     // ------------------------------------------------------------ the learning record
     let recSel = null;
     function download(name, text) { const a = h('a', { href: URL.createObjectURL(new Blob([text], { type: 'application/json' })), download: name }); document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
@@ -576,9 +754,10 @@
           `空島フライトの教官エンジン：飛行 ${flightN} 課目 × 3 レベル（導入・基礎・精度）。教官の指示・使うキー・目安（機体モデルから計算した姿勢と出力）・目標値・連続保持（外れると 0 に戻る）・ヒント・講評・チェックリスト・英語の管制への復唱`,
           'G1000型配置と基本概念を学ぶ教材としての表示（Garmin のソフトウェアの複製ではない）：PFD・オーディオパネル（送信不可）・MFD、AHRS / GPS の故障、双発の赤線・青線',
           `教科書（全 ${BK ? BK.CHAPTERS.length : 0} 章・出典付き）、学科テスト ${QZ ? QZ.BANKS.length : 0} 分野、G1000 型 PFD のチュートリアルと読み取り練習`,
-          'Sanford の資料と英語 ATC の復唱練習（音声合成）、学習記録（JSON 書き出し・読み込み）、Google Photorealistic 3D Tiles による外部景観（任意・キーはメモリのみ）'].map(t => h('li', { text: t }))),
+          RD ? `英語交信の練習（音声合成）：1 回の飛行の全交信 ${RD.FLIGHT.reduce((a, p) => a + p.lines.length, 0)} 行、復唱と応答 ${RD.SCENES.length} 場面、数字とアルファベットのドリル、聞き取り、用語集 ${RD.GLOSSARY.length} 語。音声認識・録音・送信はしない` : '',
+          'Sanford の資料、学習記録（JSON 書き出し・読み込み）、Google Photorealistic 3D Tiles による外部景観（任意・キーはメモリのみ）'].filter(Boolean).map(t => h('li', { text: t }))),
         h('h3', { text: '実装していないもの（未実装）' }),
-        h('ul', { class: 'small' }, ...['自動操縦（HDG / ALT への追従）— 意図的に未実装', '油圧・油温・EGT・電圧・電流・吸気圧（MFD では「—」表示）', 'エンジンの始動手順、混合比・キャブヒート・燃料タンク切替（チェックリストでは「教材では未実装」と表示）', '双発の左右別のスロットル（共通の 1 本）・プロペラレバー（フェザーはキー）', '実在空港の滑走路・誘導路での離着陸、Google の建物・地形との衝突', '実空域・NOTAM・飛行計画・実際の管制、音声認識・録音・送信', '雲・視程の変化・夜間・着氷・ウインドシア', 'G1000 の全機能（地形警報・トラフィック・タイマー・インセット地図など）'].map(t => h('li', { text: t }))),
+        h('ul', { class: 'small' }, ...['自動操縦（HDG / ALT への追従）— 意図的に未実装', '油圧・油温・EGT・電圧・電流・吸気圧（MFD では「—」表示）', 'エンジンの始動手順、混合比・キャブヒート・燃料タンク切替（チェックリストでは「教材では未実装」と表示）', '双発の左右別のスロットル（共通の 1 本）・プロペラレバー（フェザーはキー）', '実在空港の滑走路・誘導路での離着陸、Google の建物・地形との衝突', '実空域・NOTAM・飛行計画・実際の管制、音声認識・録音・送信', '英語交信の練習は台本と選択式だけ（自分の声の採点・自由な会話・ほかの機の交信が重なる混雑・雑音は未実装）', '雲・視程の変化・夜間・着氷・ウインドシア', 'G1000 の全機能（地形警報・トラフィック・タイマー・インセット地図など）'].map(t => h('li', { text: t }))),
         h('h3', { text: 'データとプライバシー' }),
         h('p', { class: 'small', text: '学習記録・進み具合・操作の設定はこのブラウザの localStorage にだけ保存します（サーバーへ送りません）。Google 3D を接続したときだけ、Google のタイル配信先へ API キー付きでタイルを要求します。キーは保存しません。外部リンク（参考資料）はクリックしたときだけ開きます。' }),
         h('h3', { text: 'ライセンス' }),
@@ -587,7 +766,7 @@
         h('p', { class: 'note', text: `FLIGHT LAB ${FL.BUILD_INFO || '(開発版)'}` }));
     }
 
-    built = { openMenu, openSchool, renderBrief, showDebrief, openPage, closePage, openSection, runQuiz };
+    built = { openMenu, openSchool, renderBrief, showDebrief, openPage, closePage, openSection, runQuiz, openRadio };
     return built;
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

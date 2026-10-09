@@ -80,7 +80,7 @@ test('browser: offline start, the checklist and ATC by keys, keyboard flight, ke
     await page.evaluate(() => __lab.start('i1', 'intro'));
     assert.equal(await page.isVisible('#hood'), true, 'the hood is up as the lesson starts');
     // every page
-    for (const t of ['book', 'quiz', 'guide', 'tutor', 'readq', 'sfb', 'records', 'g3d', 'about']) { await page.evaluate(t => __lab.showPage(t), t); await page.waitForTimeout(120); }
+    for (const t of ['book', 'quiz', 'guide', 'tutor', 'readq', 'sfb', 'radio', 'records', 'g3d', 'about']) { await page.evaluate(t => __lab.showPage(t), t); await page.waitForTimeout(120); }
     await page.evaluate(() => __lab.openSchool('m3')); await page.waitForTimeout(150);
     // a chapter question in the textbook: the right answer is stored as progress
     await page.evaluate(() => __lab.showPage('book'));
@@ -108,6 +108,29 @@ test('browser: offline start, the checklist and ATC by keys, keyboard flight, ke
     await page.click('.scene >> nth=0 >> button:has-text("答え合わせ")');
     assert.match(await page.textContent('.scene >> nth=0 >> .res'), /正解/);
     assert.equal((await page.evaluate(() => __lab.progress())).atc[sc.id], true);
+    // the English radio page: the whole flight, a read-back scene, a number drill run to the end, the glossary
+    await page.evaluate(() => __lab.showPage('radio'));
+    assert.ok(await page.locator('#pageBody .bk-radio tr').count() >= 50, 'the whole flight is listed');
+    await page.click('#pageBody .rd-tabs button:has-text("復唱と応答")');
+    const rs = await page.evaluate(() => FL.radio.SCENES[0]);
+    await page.check(`input[name="ratc_${rs.id}"][value="${rs.answer}"]`);
+    await page.click('.scene >> nth=0 >> button:has-text("答え合わせ")');
+    assert.match(await page.textContent('.scene >> nth=0 >> .res'), /正解/);
+    assert.equal((await page.evaluate(() => __lab.progress())).atc[rs.id], true);
+    await page.click('#pageBody .rd-tabs button:has-text("数字とアルファベット")');
+    await page.click('#pageBody button:has-text("10 問を始める")');
+    for (let i = 0; i < 12; i++) {
+      await page.click('.sq-opts button >> nth=0');
+      const nx = page.locator('#pageBody button:has-text("次の問題"), #pageBody button:has-text("結果を見る")');
+      if (!(await nx.count())) break; const txt = await nx.first().textContent(); await nx.first().click(); if (/結果/.test(txt)) break;
+    }
+    assert.match(await page.textContent('.sq-result'), /数字とアルファベット：\d+ \/ 10 問正解/);
+    assert.equal((await page.evaluate(() => __lab.progress())).lessons.k3.tries, 1, 'the drill is recorded as the ground lesson');
+    await page.click('#pageBody .rd-tabs button:has-text("用語集")');
+    await page.fill('#pageBody input[type=search]', 'wilco');
+    assert.match(await page.textContent('#pageBody'), /理解し、従う/);
+    await page.evaluate(() => __lab.openSchool('k5')); await page.waitForTimeout(100);
+    assert.match(await page.textContent('#sch-brief'), /復唱と応答/);
     // the Google layer, from its page, with the offline fixture
     googleOn = true;
     await page.evaluate(() => __lab.showPage('g3d'));

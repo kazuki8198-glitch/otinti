@@ -83,9 +83,26 @@
     ['地上で、管制塔から赤の点滅。意味は？', ['止まれ', '使用中の滑走路から離れよ', '出発地点へ戻れ', '離陸してよい'], 1, '地上：赤の連続＝止まれ、赤の点滅＝使用中の滑走路から離れよ、白の点滅＝出発地点へ戻れ。'],
     ['"Unable" はいつ使う？', ['指示を聞き取れないとき', '指示に従えないとき（安全・性能・天気の理由で）', '了解したとき', '交信を終えるとき'], 1, '従えない指示は Unable と伝え、理由や代わりの案を言う。黙って違うことをしない。'],
     ['ATIS を聞いた後の最初の交信で言うことは？', ['ATIS の全部を読み上げる', '"with information (アルファベット)"', '何も言わない', '気温だけ'], 1, '受け取った ATIS の記号（例 "information Bravo"）を伝える。'],
-    ['無線の調子が悪く、管制の指示が聞き取れなかった。正しいのは？', ['推測して従う', '"Say again" で聞き返す', '無視して飛ぶ', '別の空港へ行く'], 1, '推測は誤りのもと。聞き返すのは正しい手順（第 21 章 TEM のエラーの管理）。'],
+    ['無線の調子が悪く、管制の指示が聞き取れなかった。正しいのは？', ['推測して従う', '"Say again" で聞き返す', '無視して飛ぶ', '別の空港へ行く'], 1, '推測は誤りのもと。聞き返すのは正しい手順（{ch:crm} TEM のエラーの管理）。'],
   ]);
 
+  add('q_radio', '英語交信（実践）', '数字の言い方・タキシーと滑走路・LUAW・Class C・交通情報・周波数の変更・緊急・CTAF', 'comm.readback', [
+    ['高度 4,500 ft の正しい言い方は？', ['four thousand five hundred', 'forty-five hundred', 'four five zero zero', 'flight level zero four five'], 0, '9,900 ft までの高度は thousand・hundred で言う（AIM 4-2-8）。'],
+    ['高度 10,500 ft の正しい言い方は？', ['one zero thousand five hundred', 'ten thousand five hundred', 'one zero five zero zero', 'ten point five thousand'], 0, '10,000 ft 以上は千の位より上を 1 桁ずつ（AIM 4-2-8・4-2-9）。'],
+    ['針路 090° の正しい言い方は？', ['heading zero niner zero', 'heading ninety', 'heading niner zero', 'heading nine'], 0, '針路・方位・風向は必ず 3 桁を 1 桁ずつ（AIM 4-2-10）。'],
+    ['周波数 119.75 の正しい言い方（FAA）は？', ['one one niner point seven five', 'one nineteen seventy-five', 'one hundred nineteen point seventy-five', 'one one niner seven five'], 0, '1 桁ずつ、小数点は point（AIM 4-2-8。ICAO・英国は decimal）。'],
+    ['地上管制の「Runway three six, taxi via Alpha」で許されていることは？', ['誘導路 A を経由して滑走路 36 の手前まで行くこと', '滑走路 36 に入って待つこと', '滑走路 36 から離陸すること', '途中の滑走路をすべて横切ること'], 0, '滑走路の指定は、その滑走路に入る・横切る許可ではない（AIM 4-3-18）。'],
+    ['「Runway three six, line up and wait」の意味は？', ['滑走路に入り、離陸位置で待て', '離陸してよい', '滑走路の手前で待て', 'ゴーアラウンドせよ'], 0, 'LUAW は離陸許可ではない（AIM 5-2-5）。離陸許可は cleared for takeoff。'],
+    ['LUAW のまま長い時間、離陸許可が来ない。どうする？', ['管制塔に連絡して確かめる', '許可が出たものとして離陸する', '黙って滑走路から出る', '7600 にする'], 0, 'AIM 5-2-5：妥当な時間内に離陸許可がなければ ATC に連絡する。'],
+    ['Class C に入ろうとして呼んだら「Archer Seven Lima Alpha, stand by.」。入ってよい？', ['入ってよい（コールサイン付きの応答で交信確立）', '入ってはいけない', '7700 にすれば入ってよい', '高度を下げれば入ってよい'], 0, 'AIM 3-2-4：コールサインを言って応答されれば交信確立。ただし remain outside と言われたら入らない。'],
+    ['交通情報を探したが見えない。正しい言い方は？', ['Negative contact', 'Negative', 'Unable', 'Roger'], 0, 'Negative contact＝伝えられた交通が見えない（PCG）。'],
+    ['「Contact departure」と言われた。正しいのは？', ['応答してから、できるだけ早く周波数を変える', '黙って変える', '変えずに待つ', 'Roger だけ言って管制塔に残る'], 0, 'AIM 4-2-3：周波数の変更は応答してから変える。'],
+    ['着陸後、管制塔の周波数から地上管制に変えてよいのは？', ['管制塔に言われてから（滑走路を出て停止線を越え、止まってから呼ぶ）', '接地したらすぐ', '滑走路の上で減速中', '駐機場に着いてから'], 0, 'AIM 4-3-14・4-3-21：着陸した機は言われるまで管制塔の周波数にいる。'],
+    ['「Radar service terminated, squawk VFR」で、トランスポンダーは？', ['1200 にする', '切る', '7600 にする', 'そのままのコード'], 0, 'Squawk VFR は 1200（JO 7110.65）。'],
+    ['VFR の天気で無線が完全に使えなくなった（14 CFR 91.185）。正しいのは？', ['7600 にし、VFR を続けて、できるだけ早く着陸する', '7700 にして予定どおり飛ぶ', '雲の中を最短で目的地へ', 'トランスポンダーを切る'], 0, 'AIM 6-4・91.185：VFR を続け、as soon as practicable に着陸。'],
+    ['遭難（MAYDAY）の通報の最初の言葉は？', ['Mayday を 3 回', 'Pan-pan を 3 回', 'Emergency を 1 回', 'Help を 3 回'], 0, 'AIM 6-3-2：遭難は MAYDAY ×3、緊急（urgency）は PAN-PAN ×3。'],
+    ['管制塔のない空港の自己通報（CTAF）として正しいものは？', ['“Lakeside traffic, Archer Seven Lima Alpha, left downwind runway one eight, full stop, Lakeside.”', '“Traffic in the area, please advise.”', '“Archer, landing on the active runway.”', '“Lakeside tower, request landing.”'], 0, '空港名で始めて空港名で終え、滑走路は番号で（AIM 4-1-9）。“Traffic in the area, please advise” は使わない。'],
+  ]);
   add('q_hf', '人間の能力と判断', 'IMSAFE・PAVE・危険な態度・錯覚・低酸素', 'hf.adm', [
     ['IMSAFE の S は？', ['Speed', 'Stress', 'Sleep', 'Sun'], 1, 'Illness・Medication・Stress・Alcohol・Fatigue・Emotion（Eating とする資料もある）。'],
     ['PAVE の E が表すものは？', ['Engine', 'External pressures（外からの圧力：予定・人の期待）', 'Emergency', 'Experience'], 1, 'Pilot・Aircraft・enVironment・External pressures。'],

@@ -78,8 +78,7 @@ test('browser: offline start, the checklist and ATC by keys, keyboard flight, ke
     assert.equal(await page.evaluate(() => __lab.state().av.cdi), 'NAV1');
     // the hood (instrument lessons) hides the outside view
     await page.evaluate(() => __lab.start('i1', 'intro'));
-    await page.waitForTimeout(200);
-    assert.equal(await page.isVisible('#hood'), true);
+    assert.equal(await page.isVisible('#hood'), true, 'the hood is up as the lesson starts');
     // every page
     for (const t of ['book', 'quiz', 'guide', 'tutor', 'readq', 'sfb', 'records', 'g3d', 'about']) { await page.evaluate(t => __lab.showPage(t), t); await page.waitForTimeout(120); }
     await page.evaluate(() => __lab.openSchool('m3')); await page.waitForTimeout(150);

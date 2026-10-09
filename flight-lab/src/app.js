@@ -58,6 +58,7 @@
     S.lastLessonId = id; S.recId = null; S.rTrim = 0; S.keys.clear();
     S.view = 'cockpit'; updateViewBtn();
     closeScreens(); S.screen = 'fly'; S.paused = false;
+    $('#hood').hidden = !S.L.hood;                                    // at once: no glimpse of the outside in an instrument lesson
     renderAudio(); renderSoftkeys();
     toast(`${def.title}（${S.L.level.name}）を開始。教官の指示は左上、使うキーは H で確認できます`, 3600);
   }

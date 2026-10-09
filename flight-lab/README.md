@@ -15,4 +15,6 @@ v2：空島フライト（`../flight-sim.html`）の飛行モデル・操作・�
 
 v2.1：無線交信を一から詳しくしました。教科書の交信の章を 5 章（しくみ・言葉の決まり・型と復唱・1 回の飛行の全交信・管制塔のない空港と緊急）に分けて書き直し（教科書は 27 章・120 節）、メニュー 06「英語交信（無線）」に 1 回の飛行の全交信（音声）、復唱と応答 41 場面、数字とアルファベットのドリル、聞き取り、用語集を追加。学科テストは 14 分野・145 問。
 
-開発：`node build.mjs`（ビルド）、`node --test --test-concurrency=1 test/flight.test.mjs test/avionics.test.mjs test/browser.test.mjs`（テスト 44 件）。
+v2.2：飛行モデルの修正。垂直尾翼の横力（プロペラ後流・尾翼のオフセット）に「傾ける力」が抜けていたため、全開の上昇で左へ傾き続けていたのを直しました。キーボードの A / D に「離すとバンクを保つ」（標準）を追加。
+
+開発：`node build.mjs`（ビルド）、`node --test --test-concurrency=1 test/flight.test.mjs test/avionics.test.mjs test/browser.test.mjs`（テスト 47 件）。

@@ -30,7 +30,7 @@
 
   // ---------------------------------------------------------------- preferences (no secrets: only these fields)
   const PREF_KEY = 'flightlab-prefs-v2';
-  const PREFS0 = { sens: 'low', hold: 'hold', autoRud: true, assist: false, sound: false, level: 'intro', ack: false, layout: 0 };
+  const PREFS0 = { sens: 'low', hold: 'hold', rhold: 'hold', autoRud: true, assist: false, sound: false, level: 'intro', ack: false, layout: 0 };
   function loadPrefs() { try { const p = JSON.parse((store && store.getItem(PREF_KEY)) || '{}'); const o = { ...PREFS0 }; for (const k of Object.keys(PREFS0)) if (typeof p[k] === typeof PREFS0[k]) o[k] = p[k]; return o; } catch (e) { return { ...PREFS0 }; } }
   function savePrefs() { try { store && store.setItem(PREF_KEY, JSON.stringify(S.prefs)); } catch (e) { /* storage unavailable */ } }
 
@@ -209,6 +209,7 @@
     else { s.pKey = k(s.pKey || 0, tp); s.rKey = k(s.rKey || 0, tr); s.pIn = cv(s.pKey); s.rIn = cv(s.rKey); }
     // the keyboard pitch hold: in the air W / S move the nose attitude to hold; released, it stays there
     s.keyHold = !analog && S.prefs.hold === 'hold';
+    s.rollHold = !analog && S.prefs.rhold !== 'spring';    // the keyboard bank hold (released A / D: the bank stays)
     const thNow = P.attitude(s).pitch;
     if (!s.keyHold || (s.opts.levelT || 0) > 0 || s.pTgt == null || s.onGround) { s.pTgt = thNow; s.pHeld = 0; }
     if (s.keyHold && tp && !s.onGround) {
@@ -387,7 +388,7 @@
     const rows = [
       ['R / F', 'スロットル', `${pct(s.thr)}　${engTxt}`, meter(s.thr), deadAny ? 'bad' : ''],
       ['W / S', '機首（ピッチ）', `${pitchTxt}（いま ${fmt(o.pitch, 1)}°）`, '', ''],
-      ['A / D', '傾き（バンク）', `${fmt(o.bank, 0)}°`, '', Math.abs(o.bank) > 45 ? 'warn' : ''],
+      ['A / D', '傾き（バンク）', `${fmt(o.bank, 0)}°${s.bankHoldOn ? `（保持 ${s.bTgt ? fmt(s.bTgt / P.DEG, 0) + '°' : '水平'}・補助翼 ${s.ail >= 0 ? '右' : '左'} ${pct(Math.abs(s.ail))}）` : ''}`, '', Math.abs(o.bank) > 45 ? 'warn' : ''],
       ['Q / E', 'ラダー', rudTxt, '', ''],
       ['T', 'トリム', `${trimPct === 0 ? '中立' : (trimPct > 0 ? '機首上げ ' : '機首下げ ') + Math.abs(trimPct) + '%'}`, '', ''],
       ['V', 'フラップ', `${A.flapLabels[s.flapIdx]}${flapMoving ? '（作動中）' : ''}`, '', s.flapIdx > 0 && o.ias > V.fe ? 'bad' : ''],
@@ -396,7 +397,7 @@
     rows.push(['B', 'ブレーキ', s.brake ? 'ON' : '—', '', s.brake ? 'warn' : '']);
     let html = '<table>' + rows.map(([k, n, v, m, c]) => `<tr><td class="k"><kbd>${k}</kbd></td><td class="n">${n}</td><td class="v ${c}">${esc(v)}${m}</td></tr>`).join('') + '</table>';
     // the stick and the rudder (the pilot's inputs), the ball, the warnings
-    const sx = 18 + clamp(s.rIn || 0, -1, 1) * 14, sy = 18 + clamp(-(s.keyHold && !s.onGround ? (s.elev || 0) : s.pIn || 0), -1, 1) * 14, rx = 18 + clamp(s.rudEff || 0, -1, 1) * 14;
+    const sx = 18 + clamp(s.bankHoldOn ? s.ail || 0 : s.rIn || 0, -1, 1) * 14, sy = 18 + clamp(-(s.keyHold && !s.onGround ? (s.elev || 0) : s.pIn || 0), -1, 1) * 14, rx = 18 + clamp(s.rudEff || 0, -1, 1) * 14;
     const ball = 30 + clamp(o.slip, -1.5, 1.5) * 9;
     html += `<div class="stick"><svg width="36" height="36" viewBox="0 0 36 36"><rect x="2" y="2" width="32" height="32" rx="4" fill="none" stroke="#45607e"/><line x1="18" y1="4" x2="18" y2="32" stroke="#2c4058"/><line x1="4" y1="18" x2="32" y2="18" stroke="#2c4058"/><circle cx="${sx}" cy="${sy}" r="4.5" fill="#5fd4ff"/></svg>`
       + `<svg width="36" height="14" viewBox="0 0 36 14"><rect x="2" y="2" width="32" height="10" rx="3" fill="none" stroke="#45607e"/><circle cx="${rx}" cy="7" r="3.5" fill="#ffb547"/></svg>`

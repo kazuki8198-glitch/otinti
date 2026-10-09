@@ -196,6 +196,8 @@
     E.dCnp = (P.Cnp || 0) - d(h => Nyaw({ w: [0, 0, -h] }), 0.02) / (hv * P.S * P.b * P.b);
     E.dCnda = (P.Cnda || 0) - d(h => Nyaw({ ail: h }), 0.05) / qSb;
     E.dCY = P.CYb - d(h => run({ b: h }).F[0], 0.01) / (q * P.S);
+    // a side force on the fin turns the nose and, as the fin is above the CG, rolls too: roll / yaw = -height / arm
+    { let sy = 0, sz = 0, sa = 0; for (const p of pcs) if (p.kind === 2) { sy += p.r[1] * p.S; sz += p.r[2] * p.S; sa += p.S; } E.finYZ = sa ? sy / Math.max(sz, 0.5) : 0; }
     return E;
   }
   // forces (body frame) and moments about the CG from every piece. o: flapF, elev, ail, rud, dq (slipstream on the tail), hgt(p), gust(p)
@@ -277,9 +279,12 @@
     if (A.counterRotating) { pr.a0 = 0; pr.a1 = 0; }          // (counter-rotating propellers: the left-turning tendencies cancel)
     pr.Ip = 2.5 * Eng.P / 92000 / (A.engines1 || 1); pr.tq = A.counterRotating ? 0 : 0.12 * Math.min(1, 92000 / Eng.P);
     const thrC = A.v.cruiseThr || 0.65, omC = rpmFor(A, thrC, Vc) * Math.PI / 30;
-    pr.rig = (0.04 + 0.96 * thrC) * Eng.P / 0.85 / omC * pr.tq / qc;
     const ac2 = { ...P, I, prop: pr, Cnda: P.Cnda ?? -0.1 * P.Clda, Cnp: P.Cnp ?? -0.04, Clr: P.Clr ?? 0.06 };
     ac2.el = buildElements(A, ac2);
+    // rigging (wing and aileron rig): at cruise power and speed the engine torque and the roll of the fin's side
+    // forces (the slipstream on the fin, the fin offset) cancel, so the airplane flies straight hands off at cruise
+    const finRollC = -ac2.el.finYZ * (-Tc * pr.a0 + pr.fin * qc);
+    pr.rig = ((0.04 + 0.96 * thrC) * Eng.P / 0.85 / omC * pr.tq - finRollC) / qc;
     return { AC: ac2, WHEELS: wheels, WHEEL_BOTTOM: bottom, HARDPTS: hard, TAILSKID: { off: [0, tailSt[3] - tailSt[2], zTail - (zTail - F[0][0]) * 0.1], k: 30 * m, c: 4 * m } };
   }
 
@@ -370,12 +375,26 @@
     s.pHI = s.onGround ? 0 : clamp((s.pHI || 0) + (thT - th) * (1 / 120) * 0.8, -0.3, 0.3);
     s.elev = clamp(e0 + clamp(2.5 / Mde, 0.1, 30) * (qCmd - s.w[0]) + s.pHI - s.trim, -1, 1);
   }
+  // the keyboard's bank hold (A / D released: the aileron keeps the bank there, as a hand on the yoke would; a bank
+  // within 4 degrees is taken as "wings level"). It holds against the left-turning tendencies of a full-power climb.
+  function bankHold(s, V, rMax) {
+    const AC = s.AC, r = qrot(s.q, [1, 0, 0]), up = qrot(s.q, [0, 1, 0]), bank = Math.atan2(-r[1], up[1]), p = -s.w[2];
+    if (s.bTgt == null) { s.bTgt = Math.abs(bank) < 4 * DEG ? 0 : clamp(bank, -60 * DEG, 60 * DEG); s.bHI = 0; }
+    const err = s.bTgt - bank;
+    if (Math.abs(err) < 3 * DEG) s.bHI = clamp((s.bHI || 0) + err * (1 / 120) * 0.6, -0.05, 0.05);     // the slow part: no steady error (no slow turn)
+    const pMaxR = AC.rollRate * DEG * 0.5, pCmd = clamp(err * 1.2 + (s.bHI || 0), -pMaxR, pMaxR);
+    const kAil = Math.abs(AC.Clp) * AC.b / (2 * Math.max(V, 10) * AC.Clda);
+    s.ail = clamp((pCmd + 0.9 * (pCmd - p)) * kAil, -rMax, rMax);
+    s.bankHoldOn = true;
+  }
   function applyControls(s, V, alpha, qd, qdc, flapF, aS, cl0) {
     const AC = s.AC, A = s.A, o = s.opts, sens = SENS[o.sens] || SENS.low;
     const airborne = !s.onGround && s.airTime > 0.6 && V > 12, leveling = (o.levelT || 0) > 0;
     s.assistOn = (o.assist || leveling) && airborne && !s.crashed;
     const holdP = s.keyHold && !leveling && !s.crashed && V > 12 && !s.ovr && !s.onGround;
     if (!holdP) s.pHI = 0;
+    const holdB = s.rollHold && !leveling && !s.crashed && V > 12 && !s.ovr && !s.onGround && s.airTime > 0.6 && Math.abs(s.rIn) < 0.02;
+    s.bankHoldOn = false; if (!holdB) s.bTgt = null;
     if (!s.assistOn) {
       s.gI = 0; s.bI = 0;
       const vr = A.v.cruise / KT, spd = Math.max(V, 12);
@@ -387,6 +406,7 @@
       let el = kp * shape(clamp(s.pIn, -1, 1), lin);
       if (s.trimHold) { if (Math.abs(s.pIn) < 0.04 || Math.sign(el) !== Math.sign(s.trimHold)) s.trimHold = 0; else el -= Math.sign(el) * Math.min(Math.abs(el), Math.abs(s.trimHold)); }
       s.elev = clamp(el, -1, 1); s.ail = clamp(rMax * shape(clamp(s.rIn, -1, 1), 0.45), -1, 1);
+      if (holdB) bankHold(s, V, rMax);
       if (holdP) pitchHold(s, alpha, qd, qdc, aS);
       return;
     }
@@ -497,6 +517,7 @@
       const Pr = AC.prop, Tp = Math.max(T, 0);
       s.nProp = -(Tp * (Pr.a0 + Pr.a1 * clamp(alpha, -0.1, 0.35))) + Pr.fin * qd;
       Nx += s.nProp;
+      Rl += -EL.finYZ * (-Tp * Pr.a0 + Pr.fin * qd);             // the slipstream's swirl on the fin and the fin offset: side forces above the CG
       const om = Math.max(s.rpm, 300) * Math.PI / 30;
       Rl += -(s.shaftP || 0) / om * Pr.tq + Pr.rig * qd;        // engine torque reaction (partly rigged out): rolls left
       Ng = Pr.Ip * om * qq * (A.counterRotating ? 0 : 1);       // gyroscopic precession: pitch up -> yaw right

@@ -70,6 +70,45 @@ test('physics: performance near the published training numbers (Archer Vy climb,
   assert.ok(Math.abs(avg - est) < est * 0.3, `dynamic ${avg.toFixed(0)} fpm vs estimate ${est.toFixed(0)}`);
 });
 
+test('physics: rigged straight at cruise — hands and feet off for two minutes the wings stay within 5° (no roll input at all)', () => {
+  for (const ac of ['pa28', 'pa44']) {
+    const s = P.placeInAir(P.newState({ aircraft: ac }), 0, -40000, 3000, 354, P.newState({ aircraft: ac }).A.v.cruise);
+    s.wind = { fromDeg: 0, kt: 0, gust: 0 }; s.keyHold = true; s.pTgt = P.attitude(s).pitch;
+    let worst = 0; run(s, 120, x => { x.rIn = 0; worst = Math.max(worst, Math.abs(P.attitude(x).bank)); });
+    assert.ok(worst < 5, `${ac}: bank reached ${worst.toFixed(1)}°`);
+  }
+});
+
+test('physics: a side force on the fin rolls as well as yaws (the slipstream on the fin, the fin offset, the rudder) — no runaway left roll in a full-power climb', () => {
+  const s0 = P.newState(); assert.ok(s0.AC.el.finYZ > 0.15 && s0.AC.el.finYZ < 0.4, `fin height / arm ${s0.AC.el.finYZ}`);
+  const climb = (o) => {
+    const s = P.placeInAir(P.newState(), 0, -40000, 2000, 354, s0.A.v.y, 4, 0, 1);
+    s.wind = { fromDeg: 0, kt: 0, gust: 0 }; s.keyHold = true; s.pTgt = P.attitude(s).pitch; s.opts.autoRud = o.autoRud; s.rollHold = o.rollHold;
+    const b = []; run(s, 60, (x) => { x.rIn = 0; if (Math.round(x.t * 120) % 1200 === 0) b.push(P.attitude(x).bank); });
+    return b;
+  };
+  // the ball centred (auto rudder) and hands off: the torque and the rudder's roll still lean it left, but slowly (as in a real climb: a little right aileron)
+  const free = climb({ autoRud: true, rollHold: false });
+  assert.ok(free[1] < 0 && free[1] > -7, `after 10 s ${free[1].toFixed(1)}° (left, gentle)`);
+  // the keyboard's bank hold (A / D released) keeps the wings level for the whole minute
+  const held = climb({ autoRud: true, rollHold: true });
+  assert.ok(held.every(x => Math.abs(x) < 3), `held: ${held.map(x => x.toFixed(1)).join(' ')}`);
+  // and holds a 25° turn
+  const t = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100); t.q = P.qFromHPB(354, P.attitude(t).pitch, 25);
+  t.wind = { fromDeg: 0, kt: 0, gust: 0 }; t.keyHold = true; t.pTgt = P.attitude(t).pitch; t.opts.autoRud = true; t.rollHold = true;
+  run(t, 30, x => { x.rIn = 0; }); assert.ok(Math.abs(P.attitude(t).bank - 25) < 3, `turn ${P.attitude(t).bank.toFixed(1)}°`);
+});
+
+test('physics: lateral stability — a dutch roll dies out, a 15° bank released with no rudder comes back toward level (dihedral)', () => {
+  const s = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 110); s.wind = { fromDeg: 0, kt: 0, gust: 0 }; s.keyHold = true; s.pTgt = P.attitude(s).pitch;
+  const beta = []; run(s, 12, x => { x.ovr = { elev: x.elev, ail: 0, rud: x.t < 0.5 ? 0.5 : 0 }; beta.push(Math.abs(x.out.beta)); });
+  const early = Math.max(...beta.slice(0, 240)), late = Math.max(...beta.slice(-240));
+  assert.ok(late < early * 0.2, `sideslip ${early.toFixed(1)}° → ${late.toFixed(2)}°`);
+  const r = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100); r.wind = { fromDeg: 0, kt: 0, gust: 0 }; r.keyHold = true;
+  r.q = P.qFromHPB(354, P.attitude(r).pitch, 15); r.pTgt = P.attitude(r).pitch;
+  run(r, 40, x => { x.rIn = 0; }); assert.ok(Math.abs(P.attitude(r).bank) < 6, `bank after 40 s ${P.attitude(r).bank.toFixed(1)}°`);
+});
+
 test('physics: the stall warning sounds at a high angle of attack before the critical angle', () => {
   const s = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 70);
   s.thr = 0; s.ovr = { elev: 0.85, ail: 0, rud: 0 }; let warned = null;

@@ -10,3 +10,4 @@ export function load(...names) {
   for (const n of names) vm.runInThisContext(fs.readFileSync(path.join(SRC, n), 'utf8'), { filename: n });
   return globalThis.FL;
 }
+export const CORE = ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js'];

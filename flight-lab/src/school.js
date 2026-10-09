@@ -161,7 +161,7 @@
       dt, t: L.t, alt: A.indicatedAlt(o.altTrue, s.qnh, av.baro), altTrue: o.altTrue, agl: o.agl, aglR, kias: o.ias, tas: o.tas, gsK: o.gs,
       hdg, trk: A.trueToMag(o.trk, varW), pitch: o.pitch, bank: o.bank, vs: o.vsi, rate: L.rateF, along: rc.along, cross: rc.cross, rwyHdg: 360,
       thr: s.thr, flaps: s.flapIdx, gearDown: s.gearDown, gearPos: s.gearPos, onGround: s.onGround, paved: o.onRunway, stall: o.stallWarn, g: o.g, beta: o.beta,
-      latV, gp, cl: rc.cross, cdi: nav.dots, loc: nav.dots, gsd: nav.gsDots == null ? 0 : nav.gsDots, navFlag: nav.flag, dmeV, brgV, dis: nav.dis, xtk: nav.xtk,
+      latV, gp, cl: rc.cross, cdi: nav.flag ? 2.5 : nav.dots, loc: nav.flag ? 2.5 : nav.dots, gsd: nav.flag || nav.gsDots == null ? 2.5 : nav.gsDots, navFlag: nav.flag, dmeV, brgV, dis: nav.dis, xtk: nav.xtk,
       engRun: s.eng.filter(e => e.run).length, crashed: s.crashed, td: s.td,
     };
   }

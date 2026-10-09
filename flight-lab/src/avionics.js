@@ -181,13 +181,14 @@
       A = av.directFrom;
     }
     else { const w = av.fpl.wps; B = wpt(w[av.fpl.active]); A = wpt(w[av.fpl.active - 1]); }
-    if (A && B) {
+    const gpsFail = !!(av.fail && av.fail.gps);
+    if (A && B && !gpsFail) {
       out.from = A.id || ''; out.to = B.id; out.dtk = trueToMag(neBearing(A, B), varW);
       out.dis = neDistNm(pos, B); out.ete = eteSec(out.dis, o.gs); out.xtk = xtkNm(A, B, pos); out.brg = trueToMag(neBearing(pos, B), varW);
     }
     if (av.cdi === 'GPS') {
       out.crs = out.dtk ?? av.crs;
-      out.dots = out.xtk != null ? cdiGps(out.xtk, 1.0) : 0; out.toFrom = 'TO'; out.flag = B ? '' : 'NO LEG';
+      out.dots = out.xtk != null ? cdiGps(out.xtk, 1.0) : 0; out.toFrom = 'TO'; out.flag = gpsFail ? 'NO GPS' : B ? '' : 'NO LEG';
     } else {
       const r = av[av.cdi.toLowerCase()], aid = NAVAIDS.find(x => x.freq === r.act);
       if (!aid) { out.flag = 'NO SIGNAL'; out.dots = 0; out.toFrom = ''; }
@@ -261,10 +262,16 @@
     const sl = clamp(fin(o.slip), -1.5, 1.5) * 16;                                         // slip / skid trapezoid
     poly(g, [[-10 + sl, -rr + 19], [10 + sl, -rr + 19], [12 + sl, -rr + 25], [-12 + sl, -rr + 25]], C.white);
     g.restore();
+    // --- AHRS failure (a lesson's failure): the attitude and the heading are lost; the standby instruments remain ---
+    const ahrsFail = !!(av.fail && av.fail.ahrs);
+    if (ahrsFail) {
+      g.fillStyle = '#000'; g.fillRect(0, 26, W, H * 0.62 - 26);
+      line(g, cx - W * 0.2, 44, cx + W * 0.2, H * 0.6, C.red, 4); line(g, cx + W * 0.2, 44, cx - W * 0.2, H * 0.6, C.red, 4);
+      box(g, cx - 120, cy - 52, 240, 26, '#000', C.red); txt(g, 'AHRS FAIL — 右下の予備計器へ', cx, cy - 39, 14, C.red, 'center', 800, jp);
+    }
     // --- the aircraft symbol ---
-    poly(g, [[cx - 70, cy], [cx - 28, cy], [cx - 22, cy + 8], [cx - 70, cy + 8]], C.yellow, '#000');
-    poly(g, [[cx + 70, cy], [cx + 28, cy], [cx + 22, cy + 8], [cx + 70, cy + 8]], C.yellow, '#000');
-    poly(g, [[cx, cy], [cx - 26, cy + 18], [cx, cy + 10], [cx + 26, cy + 18]], C.yellow, '#000');
+    if (!ahrsFail) poly(g, [[cx - 70, cy], [cx - 28, cy], [cx - 22, cy + 8], [cx - 70, cy + 8]], C.yellow, '#000');
+    if (!ahrsFail) { poly(g, [[cx + 70, cy], [cx + 28, cy], [cx + 22, cy + 8], [cx + 70, cy + 8]], C.yellow, '#000'); poly(g, [[cx, cy], [cx - 26, cy + 18], [cx, cy + 10], [cx + 26, cy + 18]], C.yellow, '#000'); }
     // --- the airspeed tape (left), teaching V-speed bands ---
     const V = d.V || { s0: 45, s1: 50, fe: 102, no: 125, ne: 154, rotate: 60, x: 64, y: 76, glide: 76 };
     const tx = W * 0.07, tw = W * 0.12, ty0 = cy - H * 0.22, th = H * 0.44, kpp = th / 60;   // 60 kt on the tape
@@ -338,11 +345,13 @@
     poly(g, [[hx, hy - hr + 4], [hx - 7, hy - hr - 8], [hx + 7, hy - hr - 8]], C.white);   // lubber line
     // aircraft symbol in the middle of the HSI
     line(g, hx, hy - 16, hx, hy + 14, C.white, 2.5); line(g, hx - 14, hy - 4, hx + 14, hy - 4, C.white, 2.5); line(g, hx - 6, hy + 12, hx + 6, hy + 12, C.white, 2);
-    box(g, hx - 26, hy - hr - 34, 52, 22, '#000', C.white); txt(g, hdgFmt(hdgMag) + '°', hx, hy - hr - 23, 16, C.white, 'center', 700);
+    if (ahrsFail) { g.fillStyle = '#000'; g.beginPath(); g.arc(hx, hy, hr + 6, 0, 7); g.fill(); line(g, hx - hr * 0.7, hy - hr * 0.7, hx + hr * 0.7, hy + hr * 0.7, C.red, 4); line(g, hx + hr * 0.7, hy - hr * 0.7, hx - hr * 0.7, hy + hr * 0.7, C.red, 4); }
+    box(g, hx - 26, hy - hr - 34, 52, 22, '#000', ahrsFail ? C.red : C.white); txt(g, ahrsFail ? '---' : hdgFmt(hdgMag) + '°', hx, hy - hr - 23, 16, ahrsFail ? C.red : C.white, 'center', 700);
     // HDG / CRS readouts, nav source
     box(g, hx - hr - 92, hy - hr - 10, 86, 22, '#000', C.line); txt(g, `HDG ${hdgFmt(av.hdgBug)}°`, hx - hr - 49, hy - hr + 1, 14, C.cyan);
     box(g, hx + hr + 6, hy - hr - 10, 86, 22, '#000', C.line); txt(g, `CRS ${hdgFmt(fin(nav.crs, av.crs))}°`, hx + hr + 49, hy - hr + 1, 14, av.cdi === 'GPS' ? C.magenta : C.green);
     txt(g, nav.src, hx - hr * 0.55, hy - hr * 0.3, 14, ccol);
+    if (nav.dme != null && av.cdi !== 'GPS') { box(g, hx - hr - 92, hy - hr + 16, 86, 22, '#000', C.line); txt(g, `DME ${nav.dme.toFixed(1)}NM`, hx - hr - 49, hy - hr + 27, 13, C.green); }
     if (nav.flag) txt(g, nav.flag, hx, hy + hr * 0.55, 13, C.yellow);
     // --- the glide slope (LOC with a glide path) ---
     if (nav.gsDots != null && av.cdi !== 'GPS') {
@@ -448,7 +457,8 @@
     txt(g, '— = 未実装（架空値は出しません）', ew / 2, H - 12, 9, C.grey, 'center', 500, jp);
     // --- the page area ---
     const px = ew, pw = W - ew;
-    if (av.mfdPage === 'FPL') drawFPL(g, px, 0, pw, H, d); else drawMap(g, px, 0, pw, H, d);
+    if (av.fail && av.fail.gps) { g.fillStyle = '#000'; g.fillRect(px, 0, pw, H); txt(g, 'GPS 信号なし — 地図・位置は使えません', px + pw / 2, H / 2, 16, C.yellow, 'center', 700, jp); txt(g, 'VOR（NAV1）と DME で位置を確かめる', px + pw / 2, H / 2 + 24, 13, C.grey, 'center', 600, jp); }
+    else if (av.mfdPage === 'FPL') drawFPL(g, px, 0, pw, H, d); else drawMap(g, px, 0, pw, H, d);
     // data bar (both pages)
     box(g, px, 0, pw, 26, '#05070a', null);
     const fld = (lab, v, x, col = C.magenta) => { txt(g, lab, x, 13, 11, C.grey, 'left'); txt(g, v, x + 34, 13, 13, col, 'left', 700); };

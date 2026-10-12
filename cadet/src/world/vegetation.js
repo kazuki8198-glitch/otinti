@@ -256,6 +256,8 @@ export function buildVegetation(L, FL, { quality }) {
   const counts = Object.fromEntries(Object.entries(items).map(([k, v]) => [k, v.length]));
   return {
     group, counts,
+    // the trees near a point (world x, z), for the walker's colliders: [x, z, scale, kind]
+    near(x, z, r) { const out = []; for (const [k, list] of Object.entries(items)) if (k !== 'house') for (const it of list) if (Math.hypot(it[0] - x, it[1] - z) < r) out.push([it[0], it[1], it[2], k]); return out; },
     setNearRadius(r) { U.uNearR.value = r; last = null; },
     update(t, cam) {
       U.uTime.value = t;

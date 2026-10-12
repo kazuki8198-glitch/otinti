@@ -72,6 +72,11 @@ export function makeLayout(P) {
     SITE, paved, grass, cells: merged, region, regionCorners, cellAt, lakes, lakeRadius };
 }
 
+// The academy building in the runway frame (along a, across c; metres): its walls' outer faces, the double-height lobby
+// (a lob0–lob1) with its glass front at c = glassC, the wall thickness, the floor slab, the ground floor's window sill
+// and head heights, the door height. (No three.js here: the tests read it too.)
+export const ACADEMY = { a0: 608, a1: 702, c0: 248, c1: 278, H: 8.2, lob0: 646, lob1: 664, glassC: 249.0, wall: 0.4, slab: 3.8, sill: 1.0, head: 2.7, doorH: 2.15 };
+
 // The fictional names the game uses (kept in one place so they are easy to change).
 export const NAMES = {
   airline: { ja: '翔洋航空', en: 'SHOYO AIRWAYS' },

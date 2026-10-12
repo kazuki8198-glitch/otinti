@@ -13,10 +13,10 @@
   <div class="boot-card">
     <div class="boot-kicker">翔洋航空 フライトアカデミー</div>
     <h1>CADET</h1>
-    <p class="boot-sub">パイロット訓練生シミュレーター<span class="tag">試作 M0：LAB 飛行場</span></p>
+    <p class="boot-sub">パイロット訓練生シミュレーター<span class="tag">試作 M1：歩く</span></p>
     <div class="boot-progress"><div id="bootBar"></div></div>
     <p id="bootMsg" class="boot-msg">準備しています…</p>
-    <button id="bootGo" class="btn primary" disabled>飛行場へ</button>
+    <button id="bootGo" class="btn primary" disabled>アカデミーへ</button>
     <p class="boot-note">公開情報を基にした非公式のゲームです。航空会社・訓練所・人物はすべて架空です。実機訓練の代わりにはならず、航法には使えません（NOT FOR NAVIGATION）。</p>
     <p id="buildInfo" class="boot-build"></p>
   </div>
@@ -26,10 +26,10 @@
   <div id="perf" class="glass"></div>
   <div id="panel" class="glass">
     <div class="panel-head">
-      <b>見学モード</b><span>（M0：歩く・話す・飛ぶは次の段階で）</span>
+      <b>見学モード</b><span>（Esc → 歩くモードに戻る）</span>
     </div>
     <div class="panel-sec">
-      <div class="lbl">視点 <small>1〜6 キー</small></div>
+      <div class="lbl">視点 <small>1〜9・0 キー</small></div>
       <div id="views" class="chips"></div>
     </div>
     <div class="panel-sec">
@@ -52,6 +52,10 @@
     </div>
   </div>
   <div id="cross"></div>
+  <div id="prompt" aria-live="polite"></div>
+  <div id="where"></div>
+  <div id="card" hidden><div class="card-title"></div><div class="card-body"></div><div class="card-foot">E で閉じる</div></div>
+  <div id="hint"><b>クリックで始める</b><span>マウスで見回す · WASD で歩く · E で調べる · Esc で一時停止</span></div>
   <div id="toast"></div>
   <div id="disc">非公式・架空の訓練所 · 実機訓練の代わりにはなりません · NOT FOR NAVIGATION</div>
 </div>

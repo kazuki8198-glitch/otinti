@@ -69,3 +69,25 @@ body.locked #cross { opacity: 1; }
 #disc { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); font-size: 11px; color: rgba(255, 255, 255, .55);
   text-shadow: 0 1px 2px rgba(0, 0, 0, .6); white-space: nowrap; }
 @media (max-width: 700px) { #panel { width: calc(100vw - 28px); } #perf { top: auto; bottom: 34px; } #disc { white-space: normal; text-align: center; width: 90vw; } }
+
+/* ---------------------------------------------------------------- walking: the prompt, the examine card, the place */
+body.mode-walk #panel { display: none; }
+#prompt { position: absolute; left: 50%; top: calc(50% + 34px); transform: translateX(-50%); padding: 7px 14px; border-radius: 99px; font-size: 14px;
+  background: rgba(10, 18, 28, 0.66); border: 1px solid var(--glass-line); opacity: 0; transition: opacity .15s; white-space: nowrap; }
+#prompt.show { opacity: 1; }
+#prompt kbd { margin-right: 6px; }
+#where { position: absolute; left: 18px; top: 16px; font-size: 15px; font-weight: 700; letter-spacing: .04em; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.7);
+  opacity: 0; transition: opacity .6s; }
+#where small { display: block; font-weight: 400; font-size: 12px; color: var(--ink-dim); }
+#where.show { opacity: 1; }
+#card { position: absolute; right: 22px; top: 50%; transform: translateY(-50%); width: min(430px, calc(100vw - 44px)); max-height: 70vh; overflow: auto;
+  padding: 18px 20px; border-radius: 16px; background: rgba(250, 248, 242, 0.96); color: #1d2329; box-shadow: 0 20px 60px rgba(0,0,0,.45); pointer-events: auto; }
+#card[hidden] { display: none; }
+#card .card-title { font-size: 17px; font-weight: 800; color: #16324f; padding-bottom: 8px; margin-bottom: 10px; border-bottom: 3px solid #f2b632; }
+#card .card-body { font-size: 14px; line-height: 1.75; white-space: pre-line; }
+#card .card-foot { margin-top: 12px; font-size: 12px; color: #6b7681; text-align: right; }
+#hint { position: absolute; left: 50%; top: 58%; transform: translateX(-50%); display: grid; gap: 6px; text-align: center; padding: 14px 22px; border-radius: 14px;
+  background: rgba(10, 18, 28, 0.7); border: 1px solid var(--glass-line); transition: opacity .3s; }
+#hint b { font-size: 18px; } #hint span { font-size: 13px; color: var(--ink-dim); }
+body.locked #hint, body.mode-spectator #hint { opacity: 0; }
+@media (max-width: 700px) { #card { right: 50%; transform: translate(50%, -50%); } }

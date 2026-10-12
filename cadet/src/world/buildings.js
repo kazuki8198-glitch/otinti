@@ -1,14 +1,13 @@
 // CADET — world/buildings.js : the academy's side of the field (east of the apron, in the runway frame):
-// two hangars (one open), the academy building (two floors, the lobby facing the apron), the tower, the fuel farm
-// and the apron flood lights. Shells only in M0; the academy's inside (briefing rooms, dispatch) comes with walking (M1).
-// All fictional. The names are in layout.NAMES.
+// two hangars (one open, walk-in), the tower, the fuel farm and the apron flood lights. The academy building itself,
+// inside and out, is academy.js. Every box is also a collider for walking (the walker ignores what is below its step
+// height or above its head). All fictional.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { tex, canvasTexture, corrugatedNormal, windowTexture, windowMask } from '../render/textures.js';
 import { metricMaterial, glassMaterial } from '../render/materials.js';
-import { NAMES } from './layout.js';
 
-export function buildBuildings(L) {
+export function buildBuildings(L, { world = null } = {}) {
   const frame = new THREE.Group(); frame.name = 'buildings';
   frame.position.set(0, L.G, 0); frame.rotation.y = L.frameYaw;          // x = across, z = −along
 
@@ -34,7 +33,11 @@ export function buildBuildings(L) {
   const parts = new Map();                                              // material → [geometries]
   const add = (mat, geo) => { if (!parts.has(mat)) parts.set(mat, []); parts.get(mat).push(geo); };
   // a box from (along, across, height) bounds
-  const box = (mat, a0, a1, c0, c1, y0, y1) => { const g = new THREE.BoxGeometry(c1 - c0, y1 - y0, a1 - a0); g.translate((c0 + c1) / 2, (y0 + y1) / 2, -(a0 + a1) / 2); add(mat, g); return g; };
+  const box = (mat, a0, a1, c0, c1, y0, y1) => {
+    const g = new THREE.BoxGeometry(c1 - c0, y1 - y0, a1 - a0); g.translate((c0 + c1) / 2, (y0 + y1) / 2, -(a0 + a1) / 2); add(mat, g);
+    if (world) world.add({ x0: c0, x1: c1, y0, y1, z0: -a1, z1: -a0, tag: 'building' });
+    return g;
+  };
   // a flat panel facing ±across (face: 'w' = towards the runway / apron, 'e' = away) or ±along ('s' / 'n'), uv in bays
   const panel = (mat, face, at, s0, s1, y0, y1, bay = 3) => {
     const w = s1 - s0, h = y1 - y0, g = new THREE.PlaneGeometry(w, h);
@@ -79,49 +82,6 @@ export function buildBuildings(L) {
   };
   hangar(470, 520, 241, 282, 10, false, M.metalWall);
   hangar(536, 590, 241, 282, 10.5, true, M.metalWallB);
-
-  // ---------------------------------------------------------------- the academy building
-  {
-    const a0 = 608, a1 = 702, c0 = 248, c1 = 278, H = 8.2;
-    const lob0 = 646, lob1 = 664;                                                     // the lobby (two floors of glass)
-    // walls with window bands (both floors), the lobby glass on the apron side
-    box(M.plaster, a0, lob0, c0, c0 + 0.4, 0, H); box(M.plaster, lob1, a1, c0, c0 + 0.4, 0, H);
-    box(M.plaster, a0, a1, c1 - 0.4, c1, 0, H);
-    box(M.plaster, a0, a0 + 0.4, c0, c1, 0, H); box(M.plaster, a1 - 0.4, a1, c0, c1, 0, H);
-    for (const [y0, y1] of [[1.0, 2.7], [5.0, 6.7]]) {
-      panel(glass, 'w', c0 - 0.02, a0 + 1.5, lob0 - 1.5, y0, y1);
-      panel(glass, 'w', c0 - 0.02, lob1 + 1.5, a1 - 1.5, y0, y1);
-      panel(glass, 'e', c1 + 0.02, a0 + 1.5, a1 - 1.5, y0, y1);
-      panel(glass, 's', a0 - 0.02, c0 + 2, c1 - 2, y0, y1);
-      panel(glass, 'n', a1 + 0.02, c0 + 2, c1 - 2, y0, y1);
-      // sills
-      box(M.trim, a0 + 1.4, lob0 - 1.4, c0 - 0.12, c0, y0 - 0.12, y0); box(M.trim, lob1 + 1.4, a1 - 1.4, c0 - 0.12, c0, y0 - 0.12, y0);
-      box(M.trim, a0 + 1.4, a1 - 1.4, c1, c1 + 0.12, y0 - 0.12, y0);
-    }
-    // the lobby: glass from the floor to the roof, set back, with mullions
-    panel(lobbyGlass, 'w', c0 + 1.0, lob0, lob1, 0, H - 0.4, 2);
-    for (let a = lob0; a <= lob1 + 0.01; a += 2) box(M.steel, a - 0.06, a + 0.06, c0 + 0.85, c0 + 1.0, 0, H - 0.4);
-    box(M.steel, lob0, lob1, c0 + 0.85, c0 + 1.0, 3.9, 4.1);
-    box(M.plaster, lob0, lob1, c0 + 1.0, c1 - 0.4, H - 0.4, H);                         // lobby roof slab
-    // the floor slab band between the floors and the parapet
-    box(M.trim, a0 - 0.1, a1 + 0.1, c0 - 0.1, c1 + 0.1, 3.8, 4.2);
-    box(M.trim, a0 - 0.15, a1 + 0.15, c0 - 0.15, c1 + 0.15, H, H + 0.9);
-    box(M.roofFlat, a0, a1, c0, c1, H - 0.2, H + 0.05);
-    // the entrance canopy and its columns
-    box(M.white, lob0 - 3, lob1 + 3, c0 - 4.5, c0 + 1.0, 3.3, 3.6);
-    for (const a of [lob0 - 2.5, lob1 + 2.5]) box(M.steel, a - 0.12, a + 0.12, c0 - 4.2, c0 - 3.96, 0, 3.3);
-    // rooftop: plant units, a stair house, railings
-    for (let i = 0; i < 4; i++) box(M.steel, a0 + 12 + i * 9, a0 + 16 + i * 9, c0 + 9, c0 + 12, H + 0.05, H + 1.6);
-    box(M.plaster, a1 - 14, a1 - 8, c1 - 9, c1 - 3, H, H + 3);
-    // the name boards: apron side above the canopy, car-park side
-    const sign = nameBoard();
-    const sw = 22, sh = sw * sign.image.height / sign.image.width;
-    const sm = new THREE.MeshStandardMaterial({ map: sign, roughness: 0.4, metalness: 0.2, emissive: 0xffffff, emissiveMap: sign, emissiveIntensity: 0 });
-    const s1 = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), sm); s1.position.set(c0 - 0.17, H + 0.45, -(lob0 + lob1) / 2); s1.rotation.y = -Math.PI / 2;
-    const s2 = s1.clone(); s2.position.x = c1 + 0.17; s2.rotation.y = Math.PI / 2;
-    frame.add(s1, s2);
-    frame.userData.signMaterial = sm;
-  }
 
   // ---------------------------------------------------------------- the tower (fictional, decorative)
   {
@@ -170,20 +130,6 @@ export function buildBuildings(L) {
   }
   return {
     group: frame,
-    setNight(k) { glass.emissiveIntensity = 0.9 * k; lobbyGlass.emissiveIntensity = 0; if (frame.userData.signMaterial) frame.userData.signMaterial.emissiveIntensity = 0.6 * k; },
+    setNight(k) { glass.emissiveIntensity = 0.9 * k; lobbyGlass.emissiveIntensity = 0; },
   };
-}
-
-// the academy's name board (fictional): English and Japanese, each fitted to its share of the board
-function nameBoard() {
-  return canvasTexture(2048, 230, (g, W, H) => {
-    g.fillStyle = '#16324f'; g.fillRect(0, 0, W, H);
-    g.fillStyle = '#f2b632'; g.fillRect(0, H - 14, W, 14);
-    g.fillStyle = '#ffffff'; g.textBaseline = 'middle';
-    const fit = (text, font, px, maxW) => { g.font = `${font.replace('PX', px)}`; const w = g.measureText(text).width; if (w > maxW) g.font = font.replace('PX', Math.floor(px * maxW / w)); };
-    fit(NAMES.academy.en, '700 PXpx "Arial", "Helvetica Neue", sans-serif', 96, W * 0.56);
-    g.textAlign = 'left'; g.fillText(NAMES.academy.en, 60, H * 0.44);
-    fit(NAMES.academy.ja, '500 PXpx "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Meiryo", "Noto Sans CJK JP", "Noto Sans JP", sans-serif', 60, W * 0.33);
-    g.textAlign = 'right'; g.fillText(NAMES.academy.ja, W - 60, H * 0.46);
-  });
 }

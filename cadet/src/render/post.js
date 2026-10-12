@@ -56,7 +56,11 @@ export function createPipeline(container, quality) {
 
   const camera = new THREE.PerspectiveCamera(70, 1, 0.1, 42000);
   const scene = new THREE.Scene();
-  let composer = null, aerial = null, gtao = null, bloom = null, depthTex = null, dpr = 1;
+  let composer = null, aerial = null, gtao = null, bloom = null, depthTex = null, dpr = 1, baseExposure = 0.62, indoor = 0;
+  // the exposure: outdoors it follows the sun (more at dusk and under the moon); inside a lit room it tends to a fixed
+  // value whatever the time of day (the ceiling lights, not the sky, decide how bright the room is)
+  const INDOOR_EXPOSURE = 1.8;
+  const exposure = () => Math.exp(Math.log(baseExposure) * (1 - indoor) + Math.log(INDOOR_EXPOSURE) * indoor);
   const sceneInfo = { calls: 0, triangles: 0 };
 
   function build(q) {
@@ -82,6 +86,12 @@ export function createPipeline(container, quality) {
       gtao.updateGtaoMaterial({ radius: 0.9, distanceExponent: 1.4, thickness: 1.2, scale: 1.0, samples: q.aoHalf ? 12 : 16, distanceFallOff: 1.0, screenSpaceRadius: false });
       gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 12 });
       gtao.blendIntensity = 0.9;
+      // glass and other see-through things must not cast ambient occlusion (they are not in the depth the AO reads)
+      const hide = gtao._overrideVisibility.bind(gtao);
+      gtao._overrideVisibility = () => {
+        hide();
+        scene.traverse((o) => { if (o.visible && o.isMesh && (o.userData.noAO || (o.material && o.material.transparent))) { o.visible = false; gtao._visibilityCache.push(o); } });
+      };
       composer.addPass(gtao);
     }
     bloom = null;
@@ -100,7 +110,8 @@ export function createPipeline(container, quality) {
   function setHaze({ sunDir, el }) {
     // the eye adapts: more exposure as the sun goes down (dusk, then night under the moon)
     const dark = 1 - THREE.MathUtils.smoothstep(el, -10, 8);
-    renderer.toneMappingExposure = 0.62 * (1 + 7 * dark * dark);
+    baseExposure = 0.62 * (1 + 7 * dark * dark);
+    renderer.toneMappingExposure = exposure();
     const u = aerial.uniforms;
     u.uSunDir.value.copy(sunDir);
     // haze colour: blue-grey by day, warmer near sunrise / sunset, dark at night
@@ -113,12 +124,16 @@ export function createPipeline(container, quality) {
     renderer.info.reset();
     const u = aerial.uniforms;
     u.uInvProj.value.copy(camera.projectionMatrixInverse); u.uCamWorld.value.copy(camera.matrixWorld);
+    // the sun's shadow map once per frame: the AO's normal pass renders the scene again and must not redraw it
+    renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true;
     composer.render();
   }
 
   build(quality); resize(Math.min(window.devicePixelRatio || 1, quality.maxDpr));
   return {
     renderer, scene, camera, render, resize, setHaze,
+    // the eye adapting indoors: 0 outdoors, 1 inside a lit room
+    setIndoor(k) { indoor = Math.max(0, Math.min(1, k)); renderer.toneMappingExposure = exposure(); },
     get dpr() { return dpr; }, sceneInfo,
     setQuality(q) { build(q); resize(Math.min(window.devicePixelRatio || 1, q.maxDpr)); },
   };

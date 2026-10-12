@@ -3,6 +3,7 @@
 // x = right wing, y = up, −z = the nose). Each hinged part turns with the state, as in FLIGHT LAB.
 // Materials: glossy paint with a clear coat, dark glass, rubber, metal — told apart by the vertex colours acmesh uses.
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const toLin = v => (v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
 
@@ -76,7 +77,60 @@ export function parkedAircraft(FL, L, id, along, cross, hdgTrue, opt = {}) {
   const m = buildAircraftModel(FL, s.A);
   m.update(s);
   const lp = L.physToLocal(s.pos);
+  if (opt.bake !== false) bake(m.root);
   m.root.position.set(lp[0], lp[1], lp[2]);
   m.root.quaternion.set(s.q[0], s.q[1], s.q[2], s.q[3]);
   return { ...m, state: s };
+}
+
+// a parked aircraft does not move its controls: its parts (hinges set) become one mesh per material (two draw calls)
+function bake(root) {
+  root.updateMatrixWorld(true);
+  const byMat = new Map(), inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), m4 = new THREE.Matrix4();
+  root.traverse(o => { if (o.isMesh) { const g = o.geometry.clone().applyMatrix4(m4.multiplyMatrices(inv, o.matrixWorld)); if (!byMat.has(o.material)) byMat.set(o.material, []); byMat.get(o.material).push(g); } });
+  for (const c of [...root.children]) root.remove(c);
+  for (const [mat, geos] of byMat) {
+    const mesh = new THREE.Mesh(mergeGeometries(geos.map(g => (g.index ? g.toNonIndexed() : g))), mat);
+    mesh.castShadow = true; mesh.receiveShadow = true; mesh.name = 'aircraft-baked'; root.add(mesh);
+  }
+}
+
+// colliders for walking around a parked aircraft: its triangles' footprints on a grid of `cell` metres in the runway
+// frame (toFrame(x, z) → [fx, fz]), each cell with the lowest and highest point over it, merged into runs along x.
+// Tight for an aircraft parked square to the runway (wings, tail, gear legs each block where they stand; nothing low
+// enough to step over or high enough to walk under, as with a real low-wing trainer).
+export function colliderBoxes(root, toFrame, G, cell = 0.25) {
+  root.updateMatrixWorld(true);
+  const cells = new Map(), v = new THREE.Vector3(), inv = 1 / cell;
+  root.traverse(o => {
+    if (!o.isMesh) return;
+    const pos = o.geometry.attributes.position, idx = o.geometry.index, n = idx ? idx.count : pos.count;
+    for (let t = 0; t + 2 < n; t += 3) {
+      let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      for (let j = 0; j < 3; j++) {
+        v.fromBufferAttribute(pos, idx ? idx.getX(t + j) : t + j).applyMatrix4(o.matrixWorld);
+        const [fx, fz] = toFrame(v.x, v.z);
+        x0 = Math.min(x0, fx); x1 = Math.max(x1, fx); z0 = Math.min(z0, fz); z1 = Math.max(z1, fz); y0 = Math.min(y0, v.y - G); y1 = Math.max(y1, v.y - G);
+      }
+      for (let i = Math.floor(x0 * inv); i <= Math.floor(x1 * inv); i++) for (let k = Math.floor(z0 * inv); k <= Math.floor(z1 * inv); k++) {
+        const key = i + ',' + k, c = cells.get(key);
+        if (c) { c[2] = Math.min(c[2], y0); c[3] = Math.max(c[3], y1); } else cells.set(key, [i, k, y0, y1]);
+      }
+    }
+  });
+  const rows = new Map();
+  for (const c of cells.values()) { if (!rows.has(c[1])) rows.set(c[1], []); rows.get(c[1]).push(c); }
+  const out = [];
+  for (const [k, row] of rows) {
+    row.sort((p, q) => p[0] - q[0]);
+    let run = null;
+    for (const c of row) {
+      if (run && c[0] === run.i1 + 1) { run.i1 = c[0]; run.y0 = Math.min(run.y0, c[2]); run.y1 = Math.max(run.y1, c[3]); continue; }
+      if (run) out.push(run);
+      run = { i0: c[0], i1: c[0], y0: c[2], y1: c[3] };
+    }
+    if (run) out.push(run);
+    for (let j = out.length - 1; j >= 0 && out[j].k === undefined; j--) out[j].k = k;
+  }
+  return out.map(r => ({ x0: r.i0 * cell, x1: (r.i1 + 1) * cell, z0: r.k * cell, z1: (r.k + 1) * cell, y0: Math.max(0, r.y0), y1: r.y1 }));
 }

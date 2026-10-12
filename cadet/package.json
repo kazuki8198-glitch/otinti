@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node build.mjs",
     "test": "node build.mjs && node --test --test-concurrency=1 test/*.test.mjs",
-    "test:fast": "node --test test/origin.test.mjs test/build.test.mjs"
+    "test:fast": "node --test test/layout.test.mjs test/collide.test.mjs test/academy.test.mjs test/build.test.mjs"
   },
   "devDependencies": {
     "esbuild": "0.28.2",

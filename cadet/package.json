@@ -1,0 +1,15 @@
+{
+  "name": "cadet",
+  "private": true,
+  "description": "CADET — a first-person pilot cadet simulator built on FLIGHT LAB (single HTML file). Unofficial; not a training device.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node build.mjs && node --test --test-concurrency=1 test/*.test.mjs",
+    "test:fast": "node --test test/origin.test.mjs test/build.test.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "three": "0.186.1"
+  }
+}

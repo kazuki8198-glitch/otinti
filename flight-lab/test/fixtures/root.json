@@ -1,0 +1,1 @@
+{"asset":{"version":"1.0"},"geometricError":100000,"root":{"boundingVolume":{"box":[852253.1811429859,-5529475.09910253,3052255.0890864995,16000,0,0,0,16000,0,0,0,200]},"geometricError":20,"refine":"REPLACE","content":{"uri":"/v1/3dtiles/datasets/FIXTURE/files/tile.glb?session=FIXTURESESSION"},"children":[]}}

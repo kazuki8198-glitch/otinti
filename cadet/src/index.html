@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CADET — パイロット訓練生シミュレーター</title>
+<!--BUILD:CSS--><link rel="stylesheet" href="style.css"><!--/BUILD:CSS-->
+</head>
+<body>
+<div id="view"></div>
+
+<div id="boot" class="screen">
+  <div class="boot-card">
+    <div class="boot-kicker">翔洋航空 フライトアカデミー</div>
+    <h1>CADET</h1>
+    <p class="boot-sub">パイロット訓練生シミュレーター<span class="tag">試作 M0：LAB 飛行場</span></p>
+    <div class="boot-progress"><div id="bootBar"></div></div>
+    <p id="bootMsg" class="boot-msg">準備しています…</p>
+    <button id="bootGo" class="btn primary" disabled>飛行場へ</button>
+    <p class="boot-note">公開情報を基にした非公式のゲームです。航空会社・訓練所・人物はすべて架空です。実機訓練の代わりにはならず、航法には使えません（NOT FOR NAVIGATION）。</p>
+    <p id="buildInfo" class="boot-build"></p>
+  </div>
+</div>
+
+<div id="hud" hidden>
+  <div id="perf" class="glass"></div>
+  <div id="panel" class="glass">
+    <div class="panel-head">
+      <b>見学モード</b><span>（M0：歩く・話す・飛ぶは次の段階で）</span>
+    </div>
+    <div class="panel-sec">
+      <div class="lbl">視点 <small>1〜6 キー</small></div>
+      <div id="views" class="chips"></div>
+    </div>
+    <div class="panel-sec">
+      <div class="lbl">時刻 <small id="timeTxt"></small></div>
+      <input id="time" type="range" min="5.5" max="20" step="0.05">
+    </div>
+    <div class="panel-sec">
+      <div class="lbl">画質 <small id="dprTxt"></small></div>
+      <div id="quality" class="chips"></div>
+    </div>
+    <div class="panel-sec row">
+      <button id="benchBtn" class="btn">性能を計測</button>
+      <button id="panelHide" class="btn ghost">パネルを隠す（P）</button>
+    </div>
+    <div class="panel-keys">
+      <div><kbd>クリック</kbd> 見回す（<kbd>Esc</kbd> で解除）</div>
+      <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 移動　<kbd>Shift</kbd> 速く</div>
+      <div><kbd>Space</kbd> 上へ　<kbd>C</kbd> 下へ　<kbd>G</kbd> 地面に立つ</div>
+      <div><kbd>[</kbd> <kbd>]</kbd> 時刻　<kbd>F</kbd> 計測の表示</div>
+    </div>
+  </div>
+  <div id="cross"></div>
+  <div id="toast"></div>
+  <div id="disc">非公式・架空の訓練所 · 実機訓練の代わりにはなりません · NOT FOR NAVIGATION</div>
+</div>
+
+<!--BUILD:JS--><script src="main.js"></script><!--/BUILD:JS-->
+</body>
+</html>

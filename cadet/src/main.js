@@ -171,7 +171,7 @@ async function boot() {
       },
     });
   }
-  // today's aircraft (stand 19): look it over; the walk-around inspection itself comes in M3
+  // today's aircraft (stand 19): look it over (the walk-around inspection itself comes later)
   {
     const AR = FL.physics.AIRCRAFT.find(a => a.id === 'pa28'), v = AR.v, tg = spec.target;
     interactor.add({
@@ -181,7 +181,7 @@ async function boot() {
         const desc = AR.desc.split('。').filter(x => x && !/ANA|Acron|公開/.test(x)).join('。') + '。';
         interactor.showCard(`今日の機体：${AR.short}（N738SY・架空の登録記号）`, `${AR.name}\n${desc}\n\n`
           + `覚える速度（KIAS）：ローテーション ${v.rotate}・Vx ${v.x}・Vy ${v.y}・進入 ${v.appr}・Va ${v.va}・Vno ${v.no}・Vne ${v.ne}\n\n`
-          + '飛ぶ前には必ず外部点検（プリフライト）をします。機体の周りを決まった順番で回り、燃料・オイル・舵の動き・タイヤを確かめます（M3 で実際にできるようになります）。');
+          + '飛ぶ前には必ず外部点検（プリフライト）をします。機体の周りを決まった順番で回り、燃料・オイル・舵の動き・タイヤを確かめます。');
         audio.ui('examine'); return 'examined';
       },
     });

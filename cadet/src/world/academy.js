@@ -251,7 +251,7 @@ export function buildAcademy({ L, FL, spec, kit, world, audio = null }) {
   // ---------------------------------------------------------------- furniture, boards, ceiling lights
   const inter = spec.interactables || [];
   const nearestText = (a, c, r = 1.6) => { let best = null, bd = r; for (const it of inter) { const d = Math.hypot(it.a - a, it.c - c); if (d < bd) { bd = d; best = it; } } return best; };
-  const lights = [];
+  const lights = [], surfaces = new Map();                        // 'room:whiteboard' | 'room:wall_screen' → its face
   for (const r of rooms) {
     for (const f of r.furniture || []) {
       const it = nearestText(f.a, f.c), opts = {};
@@ -263,7 +263,12 @@ export function buildAcademy({ L, FL, spec, kit, world, audio = null }) {
       else if (f.type === 'sign_board' && it) opts.text = { title: it.title_ja, lines: [] };
       if (f.y != null) opts.y = f.y;
       if (f.note) opts.note = f.note;
-      kit.place(f.type, { a: f.a, c: f.c, rot: f.rot || 0, opts });
+      const piece = kit.place(f.type, { a: f.a, c: f.c, rot: f.rot || 0, opts });
+      // the boards and screens can be drawn on again later (the instructor shows a figure)
+      if ((f.type === 'whiteboard' || f.type === 'wall_screen') && piece.faces[0]) {
+        const mat = piece.faces[0][0], key = r.id + ':' + f.type;
+        if (!surfaces.has(key)) surfaces.set(key, { mat, a: f.a, c: f.c, rot: f.rot || 0, y: f.type === 'whiteboard' ? 1.45 : 1.6, draw: opts.draw || null });
+      }
     }
     for (const l of r.lights || []) { kit.place('ceiling_light', { a: l.a, c: l.c, rot: 0, y: r.ceiling - 0.005 }); lights.push({ x: l.c, y: r.ceiling - 0.15, z: -l.a, room: r.id }); }
   }
@@ -301,6 +306,17 @@ export function buildAcademy({ L, FL, spec, kit, world, audio = null }) {
 
   return {
     group: frame, doors, rooms, lights, targets, roomOf, interiorMaterials, anchors: built.anchors,
+    // draw on a room's whiteboard or wall screen again: draw(g, w, h) on its canvas, or null for what it showed first;
+    // returns the surface's centre in the frame (x, y, z) or null when the room has none
+    redraw(roomId, type, draw) {
+      const s = surfaces.get(roomId + ':' + type); if (!s) return null;
+      const tex = s.mat.map, cv = tex.image, g = cv.getContext('2d');
+      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
+      (draw || s.draw || ((gg, w, h) => { gg.fillStyle = '#0b1422'; gg.fillRect(0, 0, w, h); }))(g, cv.width, cv.height);
+      tex.needsUpdate = true;
+      return { x: s.c, y: s.y, z: -s.a };
+    },
+    surfaceAt(roomId, type) { const s = surfaces.get(roomId + ':' + type); return s ? { x: s.c, y: s.y, z: -s.a } : null; },
     // the floor under a point (for footsteps), null outside
     floorAt(a, c) { const r = roomOf(a, c); return r ? r.floor : null; },
     // on the ground floor's rooms (the window strip included), but not in the recess in front of the lobby's glass

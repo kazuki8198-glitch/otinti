@@ -1,7 +1,7 @@
 // CADET — ui/settings.js : the player's settings, kept in localStorage ('cadet.settings') when the browser allows it.
 // Every storage access is guarded: a private window, blocked site data or a full quota just means the settings are
 // not remembered. Values are checked and clamped; anything unknown or broken in storage is ignored.
-export const DEFAULTS = { sensitivity: 1.0, invertY: false, fov: 75, headBob: true, quality: null, volume: 0.8, showPerf: false, walkHold: false };
+export const DEFAULTS = { sensitivity: 1.0, invertY: false, fov: 75, headBob: true, quality: null, volume: 0.8, showPerf: false, walkHold: false, voice: false, textSpeed: 1 };
 const KEY = 'cadet.settings';
 const RULES = {
   sensitivity: (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(3, Math.max(0.2, v)) : undefined),
@@ -11,6 +11,8 @@ const RULES = {
   headBob: (v) => (typeof v === 'boolean' ? v : undefined),
   showPerf: (v) => (typeof v === 'boolean' ? v : undefined),
   walkHold: (v) => (typeof v === 'boolean' ? v : undefined),
+  voice: (v) => (typeof v === 'boolean' ? v : undefined),
+  textSpeed: (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(3, Math.max(0.5, v)) : undefined),
   quality: (v) => (v === null || (typeof v === 'string' && /^(low|medium|high|ultra)$/.test(v)) ? v : undefined),
 };
 

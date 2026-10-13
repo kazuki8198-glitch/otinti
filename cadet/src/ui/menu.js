@@ -61,15 +61,18 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         + sw('headBob', '頭の揺れ', '歩くときの小さな上下の揺れ。酔いやすい人は OFF に')
         + range('volume', '音量', 0, 1, 0.05, x => `${Math.round(x * 100)}%`)
         + `<div class="m-row"><span>画質</span><span></span><div class="m-chips" style="grid-column:1/-1">${presets.map(p => `<button data-quality="${p.id}" aria-pressed="${(v.quality || getPreset()) === p.id}">${esc(p.label)}${!v.quality && getPreset() === p.id ? '（自動）' : ''}</button>`).join('')}</div><small>最初は GPU に合わせて自動で選びます。カクつくときは下げてください</small></div>`
+        + range('textSpeed', '字幕の速さ', 0.5, 3, 0.25, x => `×${x.toFixed(2)}`, '会話の文字が出る速さ')
+        + sw('voice', '教官の声（読み上げ）', 'ブラウザの音声合成で教官の台詞を読み上げます（日本語の声がある場合）')
         + sw('showPerf', '性能の表示', 'fps・描画回数・三角形の数を右上に表示');
     }
     if (tab === 'keys') {
       return `<table>
         <tr><td>W A S D</td><td>移動</td></tr><tr><td>マウス</td><td>見回す（画面をクリックすると操作が始まります）</td></tr>
-        <tr><td>Shift（押したまま）</td><td>走る</td></tr><tr><td>E / 左クリック</td><td>調べる・扉を開け閉めする・カードを閉じる</td></tr>
+        <tr><td>Shift（押したまま）</td><td>走る</td></tr><tr><td>E / 左クリック</td><td>調べる・話しかける・扉を開け閉めする・カードを閉じる</td></tr>
+        <tr><td>会話中</td><td>クリック・Space・Enter で次へ。1〜9 か ↑↓ と Enter で選ぶ。Esc で教科書を閉じる</td></tr>
         <tr><td>Esc</td><td>一時停止（このメニュー）</td></tr><tr><td>F</td><td>性能の表示</td></tr>
         <tr><td>見学モード</td><td>WASD・Space（上）・C（下）・G（地面に立つ）・1〜9・0（視点）・[ ]（時刻）</td></tr></table>
-        <p class="m-note">操縦（W / S ピッチ・A / D ロール・Q / E ラダー・R / F スロットル など、FLIGHT LAB と同じキー）は M3 で操縦席に座ったときから使います。</p>`;
+        <p class="m-note">操縦（W / S ピッチ・A / D ロール・Q / E ラダー・R / F スロットル など、FLIGHT LAB と同じキー）は、操縦席に座ってから使います（これから作ります）。</p>`;
     }
     return `<p><b>CADET</b>（パイロット訓練生シミュレーター）${version ? ` <span class="m-val">${esc(version)}</span>` : ''}</p>
       <p>公開情報を基にした非公式のゲームです。航空会社（翔洋航空）・訓練所・人物はすべて架空です。実機訓練の代わりにはならず、航法には使えません（NOT FOR NAVIGATION）。飛行モデル・課目・教科書は FLIGHT LAB（同じリポジトリの自主学習教材）を使っています。</p>
@@ -92,7 +95,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
     const k = e.target.dataset && e.target.dataset.set; if (!k) return;
     settings.set(k, parseFloat(e.target.value));
     const v = settings.get(k), out = el.querySelector(`[data-val="${k}"]`);
-    if (out) out.textContent = k === 'sensitivity' ? v.toFixed(2) : k === 'fov' ? `${v}°` : `${Math.round(v * 100)}%`;
+    if (out) out.textContent = k === 'sensitivity' ? v.toFixed(2) : k === 'fov' ? `${v}°` : k === 'textSpeed' ? `×${v.toFixed(2)}` : `${Math.round(v * 100)}%`;
   });
   el.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(true); return; }

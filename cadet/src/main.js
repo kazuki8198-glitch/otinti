@@ -5,13 +5,13 @@
 // opens doors; Esc pauses (settings, keys, the visit camera). ?view=N starts in the visit camera at viewpoint N;
 // ?bench measures the frame time at the fixed viewpoints.
 import * as THREE from 'three';
-import { makeLayout, NAMES } from './world/layout.js';
+import { makeLayout, NAMES, HANGARS } from './world/layout.js';
 import { loadTextures, setAnisotropy } from './render/textures.js';
 import { createPipeline } from './render/post.js';
 import { createSky } from './render/sky.js';
-import { installIndoorShading, indoorAt, createLightPool } from './render/indoor.js';
+import { installIndoorShading, indoorAt, createLightPool, roomClusters } from './render/indoor.js';
 import { buildGround } from './world/ground.js';
-import { buildAirfield, STANDS } from './world/airfield.js';
+import { buildAirfield, airfieldColliders, STANDS } from './world/airfield.js';
 import { buildBuildings } from './world/buildings.js';
 import { buildAcademy, ACADEMY } from './world/academy.js';
 import { createPropKit } from './world/props.js';
@@ -74,7 +74,7 @@ async function boot() {
 
   bootMsg('飛行場を作っています…', 0.35); await frame();
   const ground = buildGround(L, FL, { quality: preset }); scene.add(ground.group);
-  const airfield = buildAirfield(L, FL, { quality: preset }); scene.add(airfield.group);
+  const airfield = buildAirfield(L, FL, { quality: preset }); scene.add(airfield.group); airfieldColliders(airfield, world);
   bootMsg('訓練所を作っています…', 0.45); await frame();
   const buildings = buildBuildings(L, { world }); scene.add(buildings.group);
   const spec = academySpec(FL);
@@ -115,8 +115,16 @@ async function boot() {
   bootMsg('空と光を準備しています…', 0.8); await frame();
   const sky = createSky(renderer, scene, preset);
   const pool = createLightPool(scene, 5);
+  // the light the lit rooms bounce around (ceilings, the sides of things facing away from the lamps); the indoor shading
+  // applies it inside the buildings only
+  const fill = new THREE.AmbientLight(0xfff1e0, 0); scene.add(fill);
   academy.group.updateMatrixWorld(true);
-  const fixtures = academy.lights.map(l => ({ p: academy.group.localToWorld(new THREE.Vector3(l.x, l.y, l.z)), w: l.y > 4 ? 4 : 1 }));
+  // each room's ceiling fixtures as a few light clusters (a fixture hanging high in the lobby counts for more)
+  const clusters = new Map();
+  for (const r of academy.rooms) {
+    const fx = academy.lights.filter(l => l.room === r.id).map(l => ({ a: -l.z, c: l.x, p: academy.group.localToWorld(new THREE.Vector3(l.x, l.y, l.z)), w: l.y > 4 ? 3 : 1 }));
+    clusters.set(r.id, roomClusters(fx, 5, G));
+  }
   let hours = parseFloat(params.get('t')) || 9.6;
   const applyTime = () => {
     const st = sky.setTime(hours);
@@ -138,7 +146,7 @@ async function boot() {
     return k === 'apron' || k === 'walk' ? 'concrete' : k ? 'asphalt' : 'grass';
   };
   const walker = createWalker({ camera, world, L, input, settings, surfaceAt, onStep: (s, k) => audio.footstep(s, k) });
-  const spectator = createSpectator(camera, input, { groundY: G });
+  const spectator = createSpectator(camera, input, { groundY: G, settings });
   // the HUD for the interactor: the prompt under the crosshair and the examine card
   let lastPrompt = null, interactor = null;
   const hud = {
@@ -219,7 +227,12 @@ async function boot() {
   function openMenu(tab) { if (menu.isOpen) return; interactor.closeCard(); input.enabled = false; input.exitLock(); menu.open(tab); audio.ui('open'); }
   input.onLock((on) => {
     document.body.classList.toggle('locked', on);
-    if (!on) { lostAt = performance.now(); if (started && mode === 'walk' && !menu.isOpen) openMenu(); }
+    if (!on) {
+      lostAt = performance.now();
+      // Esc while reading a card (the browser takes that Esc to free the mouse): just close the card
+      if (interactor.cardOpen) { interactor.closeCard(); audio.ui('close'); }
+      else if (started && mode === 'walk' && !menu.isOpen) openMenu();
+    }
   });
   renderer.domElement.addEventListener('click', () => { audio.unlock(); if (started && !menu.isOpen) input.requestLock(); });
   addEventListener('keydown', (e) => {
@@ -234,12 +247,15 @@ async function boot() {
     if (e.code === 'KeyF') settings.set('showPerf', !settings.get('showPerf'));
     if (mode !== 'spectator') return;
     if (/^Digit[0-9]$/.test(e.code)) { const k = +e.code.slice(5), i = k === 0 ? 9 : k - 1; if (VIEWS[i]) setView(i); }
-    if (e.code === 'BracketLeft') { hours = Math.max(5.5, hours - 0.25); applyTime(); }
-    if (e.code === 'BracketRight') { hours = Math.min(20, hours + 0.25); applyTime(); }
+    // the printed key ('[' / ']'), so it also works on a JIS keyboard; the US position as a fallback
+    const back = e.key === '[' || (e.key !== ']' && e.code === 'BracketLeft'), fwd = e.key === ']' || (e.key !== '[' && e.code === 'BracketRight');
+    if (back) { hours = Math.max(5.5, hours - 0.25); applyTime(); }
+    if (fwd) { hours = Math.min(20, hours + 0.25); applyTime(); }
     if (e.code === 'KeyP') $('#panel').classList.toggle('hidden');
   });
   settings.onChange((k, v) => {
     if (k === 'volume') audio.setVolume(v);
+    if (k === 'fov') { camera.fov = v; camera.updateProjectionMatrix(); }          // at once, in either mode
     if (k === 'showPerf') $('#perf').style.display = v ? '' : 'none';
   });
   $('#perf').style.display = settings.get('showPerf') ? '' : 'none';
@@ -254,6 +270,10 @@ async function boot() {
   $('#time').addEventListener('input', (e) => { hours = parseFloat(e.target.value); applyTime(); });
   $('#panelHide').addEventListener('click', () => $('#panel').classList.toggle('hidden'));
   $('#benchBtn').addEventListener('click', () => runBench());
+  // a panel control clicked with the mouse gives the keyboard back to the game (Space would click it again, a focused
+  // slider would take the arrow keys); keyboard users keep the focus where they put it
+  $('#panel').addEventListener('click', (e) => { if (e.detail > 0 && e.target.closest('button')) e.target.closest('button').blur(); });
+  $('#time').addEventListener('pointerup', (e) => e.target.blur());
   function setQuality(id) {
     if (!PRESETS[id]) return;
     preset = PRESETS[id]; rememberPreset(id); settings.set('quality', id);
@@ -266,11 +286,10 @@ async function boot() {
   addEventListener('resize', () => pipe.resize());
 
   // where the player is (the label top left, shown for a few seconds when it changes)
-  const HANGARS = [[536, 590, 241, 282, '格納庫 2（整備）'], [470, 520, 241, 282, '格納庫 1']];
   const OUTSIDE = { apron: '駐機場（エプロン）', walk: 'アカデミー前の歩道', lot: '駐車場', twy: '誘導路 — 立ち入りには許可が要ります', rwy: '滑走路 — 立ち入り禁止' };
   function placeAt(a, c) {
     if (academy.inside(a, c)) { const r = academy.roomOf(a, c); return { name: r ? r.name_ja : NAMES.academy.ja, sub: NAMES.academy.ja }; }
-    for (const h of HANGARS) if (a > h[0] && a < h[1] && c > h[2] && c < h[3]) return { name: h[4], sub: NAMES.field.ja };
+    for (const h of HANGARS) if (a > h.a0 && a < h.a1 && c > h.c0 && c < h.c1) return { name: h.name, sub: NAMES.field.ja };
     const k = L.cellAt(a, c)?.kind;
     return { name: OUTSIDE[k] || '飛行場の草地', sub: NAMES.field.ja };
   }
@@ -284,27 +303,33 @@ async function boot() {
   // ---------------------------------------------------------------- the loop
   const dyn = makeDynRes(pipe, () => preset);
   const stats = { fps: 0, ms: 0, frames: 0, acc: 0 };
-  let last = performance.now(), t0 = last, running = true, perfT = 0, adapt = 0, ambT = 0;
+  let last = performance.now(), t0 = last, running = true, perfT = 0, adapt = 0, litK = 1, ambT = 0;
   const camWorld = new THREE.Vector3(), focus = new THREE.Vector3();
   // the game's state for one step (also used by the scripted walk, without drawing)
+  let scripted = 0;              // > 0 while a script drives the walker (tests): it may run before the start
   function simulate(dt) {
+    const live = started || scripted > 0;   // behind the start screen nothing moves, and no key does anything
+    if (!live) input.takeLook();
     if (mode === 'walk') {
-      if (!menu.isOpen) {
+      if (!menu.isOpen && live) {
         walker.update(dt);
         if (input.pressed('KeyE') || input.pressed('Mouse0')) { const r = interactor.use(); if (r === 'closed') audio.ui('close'); }
       }
-    } else if (!menu.isOpen) spectator.update(dt);
+    } else if (!menu.isOpen && live) spectator.update(dt);
     input.endFrame();
     camera.updateMatrixWorld();
     camera.getWorldPosition(camWorld);
     const [fx, fz] = toFrame(camWorld.x, camWorld.z), pa = -fz, pc = fx;
     academy.update(dt, mode === 'walk' ? walker.framePos : { x: fx, z: fz });
-    if (mode === 'walk') { interactor.update(camera); showPlace(dt, pa, pc); }
+    if (mode === 'walk' && live) { interactor.update(camera); showPlace(dt, pa, pc); }
     // inside: the eye adapts (exposure), the ceiling lights near the player light the room, the ambience changes
     const k = indoorAt(ACADEMY, pa, pc, camWorld.y - G);
     adapt += (Math.min(1, k / 0.85) - adapt) * (1 - Math.exp(-dt / 0.7));
-    pipe.setIndoor(adapt);
-    pool.update(camWorld, fixtures, academy.inside(pa, pc) || Math.abs(pa - 655) < 60 && Math.abs(pc - 263) < 30 ? 1 : 0, sky.state.lightsOn ? 7 + 4 * sky.state.lightsOn : 7);
+    const room = academy.inside(pa, pc) && camWorld.y - G < ACADEMY.slab ? academy.roomOf(pa, pc) : null;
+    litK += ((room ? 1 : 0) - litK) * (1 - Math.exp(-dt / 0.7));          // the lights' share of the eye's adaptation
+    pipe.setIndoor(adapt, litK);
+    fill.intensity = litK * (0.3 + 0.5 * (sky.state.lightsOn || 0));       // by day the windows already do much of it
+    pool.update(dt, room ? clusters.get(room.id) : null, 7 + 4 * (sky.state.lightsOn || 0));
     if ((ambT -= dt) <= 0) { ambT = 0.25; audio.setAmbience({ indoor: k > 0 ? Math.min(1, k * 1.15) : 0, wind: 0.5 }); }
     audio.update(dt);
     return { a: pa, c: pc };
@@ -341,7 +366,12 @@ async function boot() {
   function loop(now) { if (running) step(now); requestAnimationFrame(loop); }
 
   // ---------------------------------------------------------------- bench: fixed viewpoints, fixed render scale
-  async function runBench(frames = 90, warm = 20) {
+  let benching = null;           // one bench at a time: a second request gets the running one
+  function runBench(frames = 90, warm = 20) {
+    if (!benching) { $('#benchBtn').disabled = true; benching = bench(frames, warm).finally(() => { benching = null; $('#benchBtn').disabled = false; }); }
+    return benching;
+  }
+  async function bench(frames, warm) {
     toast('計測しています…（そのまま）', 60000);
     const keepDyn = dyn.enabled, keepMode = mode; dyn.enabled = false; running = false;
     const out = [];
@@ -380,7 +410,8 @@ async function boot() {
     if (interactor.current !== cand) return null;
     return { door: cand.door.id, result: interactor.use() };
   }
-  function walkRoute(points, { dt = 1 / 60, maxT = 300, run = false, openDoors = true } = {}) {
+  function walkRoute(points, opts = {}) { scripted++; try { return walkRouteNow(points, opts); } finally { scripted--; } }
+  function walkRouteNow(points, { dt = 1 / 60, maxT = 300, run = false, openDoors = true } = {}) {
     const keepMode = mode; setMode('walk');
     const log = [], doors = [];
     let t = 0, i = 0, stuck = 0, tries = 0;
@@ -416,7 +447,15 @@ async function boot() {
   if (startView >= 1 && startView <= VIEWS.length) setView(startView - 1);
   renderChips();
   bootMsg('シェーダーを準備しています…', 0.9); await frame();
-  try { await renderer.compileAsync(scene, camera); } catch (e) { /* older drivers: compile on first draw */ }
+  // the textures drawn while building the world (floors, wood, boards) get the preset's anisotropy too
+  setAnisotropy(Math.min(preset.aniso, renderer.capabilities.getMaxAnisotropy()));
+  // compile every material twice: with the room lights on (inside) and off (outdoors), so walking in or out never
+  // waits for a shader
+  for (const on of [false, true]) {
+    pool.setVisible(on);
+    try { await pipe.compile(); } catch (e) { /* older drivers: compile on first draw */ }
+  }
+  pool.setVisible(false);
   step(performance.now());
   requestAnimationFrame(loop);
   window.__cadet = {
@@ -431,7 +470,7 @@ async function boot() {
     card: () => (interactor.cardOpen ? { title: $('#card .card-title').textContent, text: $('#card .card-body').textContent } : null),
     targets: () => interactor.list().map(t => ({ id: t.id, a: -t.frame[2], c: t.frame[0], y: t.frame[1] })),
     doors: () => academy.doors.doors.map(d => ({ id: d.id, kind: d.kind, angle: +d.angle.toFixed(3), open: +d.open.toFixed(3) })),
-    simulate: (seconds, dt = 1 / 60) => { for (let s = 0; s < seconds; s += dt) simulate(dt); },
+    simulate: (seconds, dt = 1 / 60) => { scripted++; try { for (let s = 0; s < seconds; s += dt) simulate(dt); } finally { scripted--; } },
     menu: { open: (tab) => openMenu(tab), close: () => menu.close(true), isOpen: () => menu.isOpen },
     settings,
     // render n frames now and return the last as a PNG data URL (for tests: the drawing buffer is read in the same task)
@@ -440,7 +479,7 @@ async function boot() {
   bootMsg(`準備ができました（${NAMES.field.ja}）`, 1);
   const go = $('#bootGo'); go.disabled = false;
   const start = () => {
-    if (started) return; started = true;
+    if (started) return; started = true; lastPlace = '';
     $('#boot').classList.add('fade'); $('#hud').hidden = false; renderer.domElement.focus(); setTimeout(() => $('#boot').remove(), 700);
     audio.unlock();
     if (mode === 'walk') { input.requestLock(); toast('ブリーフィング室 1 にいます。\n今日の機体（Archer）は駐機場で待っています', 5000); }

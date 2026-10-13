@@ -60,11 +60,17 @@ export function createWalker({ camera, world, L, input, settings, surfaceAt = ()
     const [nx, nz] = toWorld(r.x, r.z);
     const moved = Math.hypot(nx - st.x, nz - st.z);
     if (dt > 0) {
-      // lose the velocity pressed into a wall, so sliding stays smooth and stopping is crisp
-      const real = moved / dt; if (real < Math.hypot(st.vx, st.vz) * 0.98) { const kk = real / (Math.hypot(st.vx, st.vz) || 1); st.vx *= kk; st.vz *= kk; }
+      // against a wall only the part of the velocity pressed into it is lost; the part along it stays, so sliding
+      // keeps the wish's speed along the wall at any frame rate
+      if (r.blocked && r.hitNormal) {
+        const [wnx, wnz] = toWorld(r.hitNormal[0], r.hitNormal[1]), vn = st.vx * wnx + st.vz * wnz;
+        if (vn < 0) { st.vx -= wnx * vn; st.vz -= wnz * vn; }
+      }
+      // never faster than what really happened (a corner stops you crisply)
+      const real = moved / dt, v = Math.hypot(st.vx, st.vz); if (real < v * 0.98) { const kk = real / (v || 1); st.vx *= kk; st.vz *= kk; }
     }
     st.x = nx; st.z = nz;
-    st.speed = dt > 0 ? moved / dt : 0;
+    st.speed = dt > 0 ? Math.min(moved / dt, 3.8) : 0;
     // steps: one per stride (longer when running)
     const stride = st.speed > 2.4 ? 1.05 : 0.72;
     st.phase += moved / stride / 2;                                         // one full bob cycle = two steps

@@ -77,7 +77,7 @@ test('academy: from briefing room 1, every open room and the outside can be reac
   while (queue.length) { const r = queue.shift(); for (const d of open) if (d.rooms.includes(r)) for (const o of d.rooms) if (!seen.has(o)) { seen.add(o); queue.push(o); } }
   assert.ok(seen.has('outside'), 'cannot get out');
   for (const r of S.rooms) if (!r.closed) assert.ok(seen.has(r.id), `${r.id} cannot be reached`);
-  for (const r of S.rooms) if (r.closed) assert.ok(!seen.has(r.id) || S.doors.some(d => d.rooms.includes(r.id) && d.kind === 'opening'), `closed room ${r.id} has an open door`);
+  for (const r of S.rooms) if (r.closed) assert.ok(!seen.has(r.id), `closed room ${r.id} can be entered`);
 });
 
 test('academy: the things to examine are in their rooms, at eye level, with text', () => {

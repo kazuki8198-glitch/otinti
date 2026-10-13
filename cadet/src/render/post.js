@@ -60,7 +60,13 @@ export function createPipeline(container, quality) {
   // the exposure: outdoors it follows the sun (more at dusk and under the moon); inside a lit room it tends to a fixed
   // value whatever the time of day (the ceiling lights, not the sky, decide how bright the room is)
   const INDOOR_EXPOSURE = 1.8;
-  const exposure = () => Math.exp(Math.log(baseExposure) * (1 - indoor) + Math.log(INDOOR_EXPOSURE) * indoor);
+  let lit = 1;
+  const exposure = () => {
+    const e = Math.exp(Math.log(baseExposure) * (1 - indoor) + Math.log(INDOOR_EXPOSURE) * indoor);
+    // an unlit interior (the hangar at night) only adapts brighter; lit (0..1, smoothed by the caller) blends the two
+    const eu = Math.max(baseExposure, e);
+    return Math.exp(Math.log(e) * lit + Math.log(eu) * (1 - lit));
+  };
   const sceneInfo = { calls: 0, triangles: 0 };
 
   function build(q) {
@@ -107,7 +113,9 @@ export function createPipeline(container, quality) {
     if (composer) { composer.setPixelRatio(dpr); composer.setSize(w, h); }
   }
 
+  let lastHaze = null;               // kept so that a rebuilt pipeline (a new preset) gets the same sky
   function setHaze({ sunDir, el }) {
+    lastHaze = { sunDir, el };
     // the eye adapts: more exposure as the sun goes down (dusk, then night under the moon)
     const dark = 1 - THREE.MathUtils.smoothstep(el, -10, 8);
     baseExposure = 0.62 * (1 + 7 * dark * dark);
@@ -133,8 +141,17 @@ export function createPipeline(container, quality) {
   return {
     renderer, scene, camera, render, resize, setHaze,
     // the eye adapting indoors: 0 outdoors, 1 inside a lit room
-    setIndoor(k) { indoor = Math.max(0, Math.min(1, k)); renderer.toneMappingExposure = exposure(); },
+    setIndoor(k, isLit = 1) { indoor = Math.max(0, Math.min(1, k)); lit = Math.max(0, Math.min(1, +isLit)); renderer.toneMappingExposure = exposure(); },
+    // compile the scene's shaders as the game draws them: into the pipeline's buffer (no tone mapping, linear colour),
+    // not to the screen (a different program for every material)
+    async compile() {
+      const rt = renderer.getRenderTarget();
+      let p = null;
+      renderer.setRenderTarget(composer.readBuffer);
+      try { p = renderer.compileAsync(scene, camera); } finally { renderer.setRenderTarget(rt); }
+      await p;
+    },
     get dpr() { return dpr; }, sceneInfo,
-    setQuality(q) { build(q); resize(Math.min(window.devicePixelRatio || 1, q.maxDpr)); },
+    setQuality(q) { build(q); resize(Math.min(window.devicePixelRatio || 1, q.maxDpr)); if (lastHaze) setHaze(lastHaze); },
   };
 }

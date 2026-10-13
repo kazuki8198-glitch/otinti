@@ -330,7 +330,7 @@ const BUILDERS = {
   },
   sign_board(P, M, opts) {
     const y = opts.y ?? 2.3, note = opts.note || '';
-    const text = opts.text ? [opts.text.title, (opts.text.lines || []).join(' ')] : /south/.test(note) ? ['← ブリーフィング室・訓練装置室', 'Briefing · FTD'] : /north/.test(note) ? ['運航管理・パイロットルーム →', 'Dispatch · Pilot room · Lounge'] : /plaque/.test(note) ? ['翔洋航空 フライトアカデミー', '架空の訓練所 · A FICTIONAL ACADEMY'] : ['案内', ''];
+    const text = opts.text ? [opts.text.title, (opts.text.lines || []).join(' ')] : /south/.test(note) ? ['↑ ブリーフィング室・訓練装置室', 'Briefing · FTD'] : /north/.test(note) ? ['← 運航管理　↑ パイロットルーム・ラウンジ', 'Dispatch · Pilot room · Lounge'] : /plaque/.test(note) ? ['翔洋航空 フライトアカデミー', '架空の訓練所 · A FICTIONAL ACADEMY'] : ['案内', ''];
     const w = /plaque/.test(note) ? 0.9 : 1.6, h = /plaque/.test(note) ? 0.5 : 0.36;
     P.rbox(/plaque/.test(note) ? M.gold : M.navyHard, w + 0.04, h + 0.04, 0.03, 0, y, 0.015, 0.006);
     P.face(signFace(text[0], text[1]), w, h, 0, y, 0.031, { px: 1024, emissive: /plaque/.test(note) ? 0 : 0.25 });

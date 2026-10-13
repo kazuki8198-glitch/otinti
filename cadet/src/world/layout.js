@@ -77,6 +77,12 @@ export function makeLayout(P) {
 // and head heights, the door height. (No three.js here: the tests read it too.)
 export const ACADEMY = { a0: 608, a1: 702, c0: 248, c1: 278, H: 8.2, lob0: 646, lob1: 664, glassC: 249.0, wall: 0.4, slab: 3.8, sill: 1.0, head: 2.7, doorH: 2.15 };
 
+// The two hangars (runway frame): their outer faces, eave height, and whether the door to the apron stands open.
+export const HANGARS = [
+  { a0: 470, a1: 520, c0: 241, c1: 282, h: 10, open: false, name: '格納庫 1' },
+  { a0: 536, a1: 590, c0: 241, c1: 282, h: 10.5, open: true, name: '格納庫 2（整備）' },
+];
+
 // The fictional names the game uses (kept in one place so they are easy to change).
 export const NAMES = {
   airline: { ja: '翔洋航空', en: 'SHOYO AIRWAYS' },

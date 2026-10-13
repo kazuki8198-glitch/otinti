@@ -303,7 +303,8 @@ export function buildAcademy({ L, FL, spec, kit, world, audio = null }) {
     group: frame, doors, rooms, lights, targets, roomOf, interiorMaterials, anchors: built.anchors,
     // the floor under a point (for footsteps), null outside
     floorAt(a, c) { const r = roomOf(a, c); return r ? r.floor : null; },
-    inside(a, c) { return a > A.a0 && a < A.a1 && c > A.glassC - 0.01 && c < A.c1 && (c > IN.c0 || (a > A.lob0 && a < A.lob1)); },
+    // on the ground floor's rooms (the window strip included), but not in the recess in front of the lobby's glass
+    inside(a, c) { return a > A.a0 && a < A.a1 && c > IN.c0 && c < A.c1 && (c > A.glassC || a < A.lob0 - 0.4 || a > A.lob1 + 0.4); },
     setNight(k) { sm.emissiveIntensity = 0.6 * k; upperGlass.emissiveIntensity = 0.5 * k; },
     update(dt, playerFrame) {
       doors.update(dt, playerFrame);

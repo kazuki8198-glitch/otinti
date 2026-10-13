@@ -15,6 +15,26 @@ export const HOLD_C = 37;                           // the hold-short line (cros
 export const STANDS = [];                           // tie-down spots on the apron: { a, c, row }
 for (let a = 470; a <= 730; a += 18.5) { STANDS.push({ a, c: 168, row: 1 }); STANDS.push({ a, c: 208, row: 2 }); }
 
+// colliders for walking among the airfield's furniture: each sign, each PAPI unit, the windsock's pole (boxes in the
+// runway frame, from the meshes' own bounds; the airfield's group is the runway frame)
+export function airfieldColliders(airfield, world) {
+  const frame = airfield.group;
+  frame.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(frame.matrixWorld).invert(), m = new THREE.Matrix4();
+  const boxOf = (obj) => {
+    const box = new THREE.Box3();
+    obj.traverse(o => { if (o.isMesh) { if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); box.union(o.geometry.boundingBox.clone().applyMatrix4(m.multiplyMatrices(inv, o.matrixWorld))); } });
+    return box;
+  };
+  const add = (box, tag) => { if (!box.isEmpty()) world.add({ x0: box.min.x, x1: box.max.x, y0: Math.max(0, box.min.y), y1: box.max.y, z0: box.min.z, z1: box.max.z, tag }); };
+  let n = 0;
+  for (const [name, each] of [['signs', true], ['papi', true], ['windsock', false]]) {
+    const grp = frame.getObjectByName(name); if (!grp) continue;
+    for (const obj of grp.children) if (each || obj.isMesh) { add(boxOf(obj), name); n++; }       // windsock: the pole only
+  }
+  return n;
+}
+
 export function buildAirfield(L, FL, { quality }) {
   const R = L.R, LEN = R.len, HW = R.wid / 2;
   const frame = new THREE.Group(); frame.name = 'airfield';

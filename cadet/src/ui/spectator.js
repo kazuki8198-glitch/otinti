@@ -3,7 +3,7 @@
 // stand on the ground at eye height. Walking with collisions is player/walker.js.
 import * as THREE from 'three';
 
-export function createSpectator(camera, input, { groundY }) {
+export function createSpectator(camera, input, { groundY, settings = null }) {
   let yaw = 0, pitch = 0;
   const fwd = new THREE.Vector3(), right = new THREE.Vector3(), v = new THREE.Vector3(), euler = new THREE.Euler(0, 0, 0, 'YXZ');
   return {
@@ -18,8 +18,9 @@ export function createSpectator(camera, input, { groundY }) {
     fromCamera() { euler.setFromQuaternion(camera.quaternion, 'YXZ'); yaw = euler.y; pitch = euler.x; },
     apply() { euler.set(pitch, yaw, 0); camera.quaternion.setFromEuler(euler); },
     update(dt) {
-      const look = input.takeLook();
-      yaw -= look.x * 0.0021; pitch = THREE.MathUtils.clamp(pitch - look.y * 0.0021, -1.52, 1.52);
+      // the same mouse settings as walking (sensitivity, invert Y, field of view)
+      const look = input.takeLook(), sens = 0.0021 * (settings ? settings.get('sensitivity') : 1), inv = settings && settings.get('invertY') ? -1 : 1;
+      yaw -= look.x * sens; pitch = THREE.MathUtils.clamp(pitch - look.y * sens * inv, -1.52, 1.52);
       const fast = input.down('ShiftLeft') || input.down('ShiftRight');
       const high = camera.position.y - groundY;
       const speed = (fast ? 6 : 1) * (high > 40 ? Math.min(60, 7 + high * 0.15) : 4.5);

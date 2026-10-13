@@ -38,7 +38,8 @@ function plaque(text) {
   return new THREE.MeshStandardMaterial({ map: t, roughness: 0.4, metalness: 0.1 });
 }
 
-export function createDoors({ frame, world, audio = null, wallT = 0.12 }) {
+const SEG = 3;                                   // boxes along a swing leaf while it stands part-way open
+export function createDoors({ frame, world, audio = null, wallT = 0.12, bodyRadius = 0.28 }) {
   const group = new THREE.Group(); group.name = 'doors'; frame.add(group);
   const M = materials();
   const doors = [];
@@ -62,8 +63,9 @@ export function createDoors({ frame, world, audio = null, wallT = 0.12 }) {
     const mesh = (parent, mat, geos, shadow = true) => { const m = new THREE.Mesh(mergeGeometries(geos), mat); m.castShadow = shadow; m.receiveShadow = true; parent.add(m); return m; };
     // the frame: two jambs and a head, as deep as the wall
     if (d.kind !== 'sliding_auto') {
-      mesh(g, M.frame, [at(new THREE.BoxGeometry(0.07, H + 0.07, wt + 0.03), -0.035, (H + 0.07) / 2, 0), at(new THREE.BoxGeometry(0.07, H + 0.07, wt + 0.03), W + 0.035, (H + 0.07) / 2, 0),
-        at(new THREE.BoxGeometry(W + 0.14, 0.07, wt + 0.03), W / 2, H + 0.035, 0)]);
+      // 5 mm proud of the cut wall's faces, so the reveal and the soffit never share a plane with the frame
+      mesh(g, M.frame, [at(new THREE.BoxGeometry(0.075, H + 0.07, wt + 0.03), -0.0325, (H + 0.07) / 2, 0), at(new THREE.BoxGeometry(0.075, H + 0.07, wt + 0.03), W + 0.0325, (H + 0.07) / 2, 0),
+        at(new THREE.BoxGeometry(W + 0.14, 0.075, wt + 0.03), W / 2, H + 0.0325, 0)]);
     } else {
       mesh(g, M.frame, [at(new THREE.BoxGeometry(W * 2 + 0.3, 0.22, 0.2), W / 2, H + 0.11, d.slideOffset)]);
     }
@@ -99,8 +101,9 @@ export function createDoors({ frame, world, audio = null, wallT = 0.12 }) {
       for (const s of [-1, 1]) { const q = new THREE.PlaneGeometry(0.42, 0.105); if (s < 0) q.rotateY(Math.PI); faces.push(at(q, W + 0.32, 1.55, s * (wt / 2 + 0.006))); }
       mesh(g, pm, faces, false);
     }
-    // collider: the closed opening
-    d.colliders.push(world.add(aabb(d, [[0, d.slideOffset - T], [W, d.slideOffset + T]])));
+    // colliders: the closed opening for the sliding leaves; one box per swing leaf, following it as it turns
+    if (d.kind === 'sliding_auto') d.colliders.push(world.add(aabb(d, [[0, d.slideOffset - T], [W, d.slideOffset + T]])));
+    else for (const L of d.leaves) for (const b of leafBoxes(d, L, 0)) { const id = world.add(b || leafBoxes(d, L, 0)[0]); world.setEnabled(id, !!b); d.colliders.push(id); }
     doors.push(d);
     return d;
   }
@@ -111,22 +114,31 @@ export function createDoors({ frame, world, audio = null, wallT = 0.12 }) {
       world.setEnabled(d.colliders[0], d.open < 0.65);
       return;
     }
-    for (const L of d.leaves) L.pivot.rotation.y = d.angle * L.flip;
-    const moving = Math.abs(d.angle - d.target) > 0.02;
-    const c = d.colliders[0];
-    if (Math.abs(d.angle) < 0.02 && !moving) { world.update(c, aabb(d, [[0, -T], [d.W, T]])); world.setEnabled(c, true); }
-    else if (!moving && Math.abs(d.angle) > 1.45) {
-      // open: the leaves stand out from the wall on one side
-      const side = -Math.sign(d.angle), L0 = d.leaves[0];
-      const pts = d.kind === 'double_swing' ? [[-0.05, 0], [0.05, side * L0.w]] : [[-0.05, 0], [0.05, side * d.W]];
-      world.update(c, aabb(d, pts)); world.setEnabled(c, true);
-      if (d.kind === 'double_swing') {
-        if (!d.colliders[1]) d.colliders[1] = world.add(aabb(d, [[d.W - 0.05, 0], [d.W + 0.05, side * L0.w]]));
-        else world.update(d.colliders[1], aabb(d, [[d.W - 0.05, 0], [d.W + 0.05, side * L0.w]]));
-        world.setEnabled(d.colliders[1], true);
-      }
-    } else { world.setEnabled(c, false); if (d.colliders[1]) world.setEnabled(d.colliders[1], false); }
+    d.leaves.forEach((L, i) => {
+      L.pivot.rotation.y = d.angle * L.flip;
+      leafBoxes(d, L, d.angle).forEach((b, k) => { const id = d.colliders[i * SEG + k]; if (b) world.update(id, b); world.setEnabled(id, !!b); });
+    });
   }
+
+  // the boxes around a swing leaf at an angle (door-local, from its hinge (base, 0) to its far edge, as thick as the
+  // closed leaf): one box when it is shut or fully open (square to the wall), SEG boxes along it in between, so a door
+  // stopped half open blocks where its leaf is drawn and not the whole corner of the doorway
+  function leafBoxes(d, L, angle) {
+    const ex = L.flip * L.w * Math.cos(angle), ez = -L.w * Math.sin(angle), out = [];
+    const square = Math.abs(ez) < 0.02 * L.w || Math.abs(ex) < 0.03 * L.w;
+    const n = square ? 1 : SEG;
+    for (let k = 0; k < SEG; k++) {
+      if (k >= n) { out.push(null); continue; }
+      const t0 = k / n, t1 = (k + 1) / n, x0 = L.base + ex * t0, x1 = L.base + ex * t1, z0 = ez * t0, z1 = ez * t1;
+      out.push(aabb(d, [[Math.min(x0, x1) - T, Math.min(z0, z1) - T], [Math.max(x0, x1) + T, Math.max(z0, z1) + T]]));
+    }
+    return out;
+  }
+  const distTo = (boxes, p) => {
+    let m = Infinity;
+    for (const b of boxes) if (b) m = Math.min(m, Math.hypot(p.x - Math.max(b.x0, Math.min(p.x, b.x1)), p.z - Math.max(b.z0, Math.min(p.z, b.z1))));
+    return m;
+  };
 
   // the player's position in the door's own coordinates
   const localOf = (d, p) => {
@@ -156,8 +168,12 @@ export function createDoors({ frame, world, audio = null, wallT = 0.12 }) {
       }
       if (d.angle !== d.target) {
         const sp = dt * 2.6;
-        d.angle = d.angle < d.target ? Math.min(d.target, d.angle + sp) : Math.max(d.target, d.angle - sp);
-        placeLeaves(d);
+        const next = d.angle < d.target ? Math.min(d.target, d.angle + sp) : Math.max(d.target, d.angle - sp);
+        // a leaf does not swing into the player: when its next position would come inside the body (and nearer than
+        // now), the door stops where it is (E again to carry on). Whatever the frame rate; standing against a closed
+        // door does not stop it opening away (the leaf moves off, not nearer)
+        if (player && d.leaves.some(L => { const n = distTo(leafBoxes(d, L, next), player); return n < bodyRadius - 1e-4 && n < distTo(leafBoxes(d, L, d.angle), player) - 1e-6; })) d.target = d.angle;
+        else { d.angle = next; placeLeaves(d); }
       }
     }
   }

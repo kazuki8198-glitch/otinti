@@ -81,6 +81,24 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.ok(a.sd > 8 && a.mean > 40, `by the aircraft: mean ${a.mean.toFixed(0)} sd ${a.sd.toFixed(1)}`);
   });
 
+  test('a door does not close onto you: it stops, and you are not pushed', async () => {
+    // briefing room 1's door was opened into the corridor on the walk; stand in its swing on the corridor side
+    await ev(() => window.__cadet.placeWalker(643.0, 261.5, { a: 643.1, c: 261.0 }));
+    assert.equal(await ev(() => window.__cadet.lookAt(643.1, 261.0, 1.1)), 'door:d-brief-1');
+    const before = await ev(() => window.__cadet.player());
+    assert.equal(await ev(() => window.__cadet.use()), 'closed');
+    await ev(() => window.__cadet.simulate(1.5));
+    const d = (await ev(() => window.__cadet.doors())).find(x => x.id === 'd-brief-1'), after = await ev(() => window.__cadet.player());
+    assert.ok(Math.abs(d.angle) > 0.4, `the door closed onto the player (angle ${d.angle})`);
+    assert.ok(Math.hypot(after.a - before.a, after.c - before.c) < 0.01, `pushed ${JSON.stringify(before)} → ${JSON.stringify(after)}`);
+    // step back out of its way and close it: now it shuts
+    await ev(() => window.__cadet.placeWalker(644.6, 262.6, { a: 643.1, c: 261.0 }));
+    assert.equal(await ev(() => window.__cadet.lookAt(643.1, 261.0, 1.1)), 'door:d-brief-1');
+    assert.equal(await ev(() => window.__cadet.use()), 'closed');
+    await ev(() => window.__cadet.simulate(1.5));
+    assert.equal((await ev(() => window.__cadet.doors())).find(x => x.id === 'd-brief-1').angle, 0);
+  });
+
   test('examine: a whiteboard opens its card; a locked door rattles and stays shut', async () => {
     const it = await ev(() => window.__cadet.spec.interactables.find(x => x.room === 'brief-1'));
     await ev((it) => window.__cadet.placeWalker(it.a + 1.6, it.c, { a: it.a, c: it.c }), it);

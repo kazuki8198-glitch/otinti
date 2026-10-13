@@ -5,10 +5,14 @@ export function createInput(canvas) {
   const keys = new Set(), edges = new Set();
   let lookX = 0, lookY = 0, locked = false, drag = null, enabled = true;
   const lockFns = [];
-  const typing = () => { const a = document.activeElement; return !!a && (a.tagName === 'INPUT' || a.tagName === 'SELECT' || a.tagName === 'TEXTAREA' || a.isContentEditable); };
+  // typing into a field: the game's keys are left alone (a slider or a switch is not a field)
+  const typing = () => { const a = document.activeElement; return !!a && ((a.tagName === 'INPUT' && !/^(range|checkbox|radio|button)$/.test(a.type)) || a.tagName === 'SELECT' || a.tagName === 'TEXTAREA' || a.isContentEditable); };
   function requestLock() {
     if (locked || !canvas.requestPointerLock) return;
-    try { const r = canvas.requestPointerLock({ unadjustedMovement: true }); if (r && r.catch) r.catch(() => { try { canvas.requestPointerLock(); } catch (e) { /* not allowed */ } }); } catch (e) { try { canvas.requestPointerLock(); } catch (e2) { /* not allowed here */ } }
+    // raw mouse movement where the browser offers it; a plain lock otherwise. A refusal (no click to allow it, or just
+    // after Esc) leaves the hint on screen: the next click on the game locks the mouse.
+    const plain = () => { try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* not allowed here */ } };
+    try { const r = canvas.requestPointerLock({ unadjustedMovement: true }); if (r && r.catch) r.catch(plain); } catch (e) { plain(); }
   }
   document.addEventListener('pointerlockchange', () => {
     const was = locked; locked = document.pointerLockElement === canvas;
@@ -25,6 +29,9 @@ export function createInput(canvas) {
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   addEventListener('keydown', (e) => {
     if (!enabled || typing()) return;
+    // a focused slider keeps its own keys (the arrows step it); the other keys still reach the game
+    const a = document.activeElement;
+    if (a && a.tagName === 'INPUT' && a.type === 'range' && /^(Arrow|Page|Home|End)/.test(e.code)) return;
     if (!keys.has(e.code)) edges.add(e.code);
     keys.add(e.code);
     if (['Space', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.code) && locked) e.preventDefault();

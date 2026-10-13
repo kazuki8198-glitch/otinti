@@ -145,9 +145,12 @@ test('collide: no tunnelling through a 0.1 m wall at 60 m/s with dt 1/30', () =>
   close(W.move({ x: 0, y: 0, z: -3 }, 0, 500).z, -R, 1e-9, 'one 500 m move');
   W.add({ x0: -10, x1: 10, z0: 20, z1: 20.01, y0: 0, y1: 3 });
   close(W.move({ x: 0, y: 0, z: 5 }, 0.001, 300).z, 20 - R, 1e-9, 'a 1 cm wall');
-  // at a 1° grazing angle and across many hash cells
-  p = walk(W, { x: -9, z: -1 }, 60 * Math.cos(Math.PI / 2 - 0.0175), 60 * Math.sin(0.0175), 1, {}, dt).p;
-  assert.ok(p.z < 0, 'grazing');
+  // at a 1° grazing angle, 60 m/s, across many hash cells: it slides the whole way and never gets in front of the wall
+  const G = createCollisionWorld();
+  G.add({ x0: -10, x1: 60, z0: 0, z1: 0.1, y0: 0, y1: 3 });
+  const gr = walk(G, { x: -9, z: -1 }, 60 * Math.cos(0.0175), 60 * Math.sin(0.0175), 1, {}, dt);
+  for (const f of gr.frames) assert.ok(f.z <= -R + 1e-9, `grazing: in front of the wall at ${f.x}, ${f.z}`);
+  assert.ok(gr.p.x > 40, `grazing: slid to x ${gr.p.x}`);
 });
 
 test('collide: steps over a 0.2 m box (and stands on it), not over a 0.5 m one; stairs climb', () => {
@@ -348,6 +351,17 @@ test('collide: the same walk gives the same path whatever the cell size or updat
   assert.deepEqual(run(4, true), a, 'after shuffling the hash');
 });
 
+// does the segment p → q pass through the box's floor plan (shrunk by a hair: touching a face is not crossing)?
+function segHits(p, q, b, e = 1e-6) {
+  let t0 = 0, t1 = 1;
+  for (const [o, d, lo, hi] of [[p.x, q.x - p.x, b.x0 + e, b.x1 - e], [p.z, q.z - p.z, b.z0 + e, b.z1 - e]]) {
+    if (Math.abs(d) < 1e-12) { if (o < lo || o > hi) return false; continue; }
+    let u = (lo - o) / d, v = (hi - o) / d; if (u > v) [u, v] = [v, u];
+    t0 = Math.max(t0, u); t1 = Math.min(t1, v); if (t0 > t1) return false;
+  }
+  return true;
+}
+
 test('collide: a random walk through a crowded room never ends up inside anything', () => {
   const W = createCollisionWorld(), rnd = rng(5);
   for (let i = 0; i < 400; i++) {                                     // desks, pillars, thin partitions
@@ -370,12 +384,11 @@ test('collide: a random walk through a crowded room never ends up inside anythin
     const m = W.move(w.p, Math.cos(w.a) * sp * dt, Math.sin(w.a) * sp * dt);
     w.p.x = m.x; w.p.z = m.z;
     worst = Math.max(worst, deepest(boxes, m.x, m.z));
-    // the centre never jumped across a box (thin partitions included)
+    // the centre never jumped across a box (thin partitions included): the straight line from where it was to where it
+    // is never passes through a blocking box's floor plan, in any direction
     for (const b of boxes) {
       if (!(b.y1 > 0.35 && b.y0 < 1.75)) continue;
-      const crossX = (old.x < b.x0 && m.x > b.x1) || (old.x > b.x1 && m.x < b.x0), inZ = Math.max(old.z, m.z) >= b.z0 && Math.min(old.z, m.z) <= b.z1;
-      const crossZ = (old.z < b.z0 && m.z > b.z1) || (old.z > b.z1 && m.z < b.z0), inX = Math.max(old.x, m.x) >= b.x0 && Math.min(old.x, m.x) <= b.x1;
-      assert.ok(!(crossX && inZ && Math.abs(m.z - old.z) < 1e-9) && !(crossZ && inX && Math.abs(m.x - old.x) < 1e-9), 'jumped a box');
+      assert.ok(!segHits(old, m, b), `jumped a box: ${JSON.stringify(old)} → ${m.x}, ${m.z} across ${JSON.stringify(b)}`);
     }
     if (m.blocked) { blocked++; w.a += Math.PI * rnd(); }
     if (Math.abs(w.p.x) > 30 || Math.abs(w.p.z) > 30) { w.a += Math.PI; }

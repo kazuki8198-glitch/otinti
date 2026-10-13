@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { tex, canvasTexture, corrugatedNormal, windowTexture, windowMask } from '../render/textures.js';
 import { metricMaterial, glassMaterial } from '../render/materials.js';
+import { HANGARS } from './layout.js';
 
 export function buildBuildings(L, { world = null } = {}) {
   const frame = new THREE.Group(); frame.name = 'buildings';
@@ -80,8 +81,7 @@ export function buildBuildings(L, { world = null } = {}) {
     // small personnel door and windows in the gable end facing south
     box(M.dark, a0 - 0.05, a0, c1 - 6, c1 - 5, 0, 2.1);
   };
-  hangar(470, 520, 241, 282, 10, false, M.metalWall);
-  hangar(536, 590, 241, 282, 10.5, true, M.metalWallB);
+  for (const hg of HANGARS) hangar(hg.a0, hg.a1, hg.c0, hg.c1, hg.h, hg.open, hg.open ? M.metalWallB : M.metalWall);
 
   // ---------------------------------------------------------------- the tower (fictional, decorative)
   {
@@ -102,6 +102,7 @@ export function buildBuildings(L, { world = null } = {}) {
     const a = 434.5, c = 212;
     for (const da of [-3.2, 3.2]) {
       const g = new THREE.CylinderGeometry(1.35, 1.35, 9, 28); g.rotateZ(Math.PI / 2); g.translate(c, 2.0, -(a + da)); add(M.tank, g);
+      if (world) world.add({ x0: c - 4.5, x1: c + 4.5, y0: 0.65, y1: 3.35, z0: -(a + da) - 1.35, z1: -(a + da) + 1.35, tag: 'building' });   // the tank itself
       for (const dc of [-3, 3]) box(M.trim, a + da - 0.6, a + da + 0.6, c + dc - 0.3, c + dc + 0.3, 0, 1.0);
     }
     box(M.trim, 423, 446, 193, 194, 0, 0.8); box(M.trim, 423, 446, 224, 225, 0, 0.8); box(M.trim, 423, 424, 193, 225, 0, 0.8);

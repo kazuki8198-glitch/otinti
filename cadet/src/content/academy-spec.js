@@ -194,9 +194,9 @@ export function academySpec(FL) {
   const tails = ['N731SY', 'N732SY', 'N735SY', 'N738SY', 'N741SY', 'N744SY', 'N452SY'];
   const today = [
     ['08:00', tails[0], 'Archer', 'a1 ' + a1.title, '完了'],
-    ['09:30', tails[1], 'Archer', 'a1 ' + a1.title, '準備中'],
+    ['09:30', tails[3], 'Archer', 'a1 ' + a1.title, '準備中'],          // the player's lesson and aircraft (N738SY)
     ['10:00', tails[2], 'Archer', 'a3 ' + (lesson('a3').title || ''), '準備中'],
-    ['11:00', tails[3], 'Archer', 't1 ' + t1.title, '予定'],
+    ['11:00', tails[1], 'Archer', 't1 ' + t1.title, '予定'],
     ['13:00', tails[4], 'Archer', 't3 ' + (lesson('t3').title || ''), '予定'],
     ['14:30', tails[6], 'Seminole', 'm1 ' + (lesson('m1').title || ''), '天候待ち（午後の雷雨）'],
     ['16:00', tails[5], 'Archer', 'x1 ' + (lesson('x1').title || ''), '予定'],
@@ -221,7 +221,7 @@ export function academySpec(FL) {
     { id: 'schedule', room: 'dispatch', a: 675.8, c: 257.5, y: 1.5, prompt_ja: '予定表を見る', title_ja: '本日の割り当て（運航管理）',
       text_ja: today.slice(0, 5).map(r => `${r[0]} ${r[1]} ${r[3]}`).join('\n') + '\n※ 14:30 以降は雷雨の予報：運航管理と相談して判断' },
     { id: 'metar', room: 'dispatch', a: 675.8, c: 252.6, y: 1.6, prompt_ja: '気象を見る', title_ja: '気象（KLAB は架空の飛行場）',
-      text_ja: 'METAR KLAB 121350Z 33008KT 10SM FEW035 SCT250 29/21 A3002\nTAF KLAB 121130Z 1212/1312 33008KT P6SM FEW035\n  TEMPO 1219/1222 4SM TSRA BKN030CB\n読み方：風 330° 8 kt、視程 10 SM、3,500 ft に少しの雲。気温 29℃・露点 21℃、高度計 30.02。\n午後 7〜10 時（Z では 19〜22Z）は一時的に雷雨。' },
+      text_ja: 'METAR KLAB 121253Z 33008KT 10SM FEW035 SCT250 29/21 A3002\nTAF KLAB 121130Z 1212/1312 33008KT P6SM FEW035\n  TEMPO 1219/1222 4SM TSRA BKN030CB\n読み方：風 330° 8 kt、視程 10 SM、3,500 ft に少しの雲。気温 29℃・露点 21℃、高度計 30.02。\n午後 3〜6 時（現地時刻。EDT＝Z−4 なので 19〜22Z）は一時的に雷雨。' },
     { id: 'counter', room: 'dispatch', a: 670.0, c: 257.4, y: 1.1, prompt_ja: 'カウンターで尋ねる', title_ja: '運航管理のカウンター',
       text_ja: '飛ぶ前にここで、機体の割り当て・燃料・天気を確かめ、機体の書類と鍵を受け取る。\n（M4 から：運航管理の担当者と話して手続きします）' },
     { id: 'headsets', room: 'pilot', a: 676.4, c: 258.0, y: 1.4, prompt_ja: 'ヘッドセットを見る', title_ja: 'ヘッドセット',

@@ -1,53 +1,64 @@
 // CADET — ui/dialog-ui.js : the conversation on screen: subtitles with a typewriter reveal, numbered choices, and the
 // textbook overlay (a paper-like tablet that shows one FLIGHT LAB section with its tables and figures).
 // Input: click / Space / Enter / E reveal the rest of a line, then go on; 1–9, ↑↓ + Enter or the mouse pick a choice;
-// Esc closes the textbook (and only the textbook: otherwise it is left to the game's pause menu). Keys are read in the
-// capture phase and stopped there, so the game does not also act on them. Works with a mouse, a keyboard or a touch
-// screen, at phone width. The CSS is injected once and scoped under #dlg, so it cannot leak into the game's HUD.
+// Esc closes the textbook (and only the textbook: otherwise it is left to the game's pause menu); while it is open, Tab
+// stays inside it and the line underneath waits. Keys are read in the capture phase and stopped there, so the game does
+// not also act on them; keys the conversation does not use (WASD, F, Esc without the book) still reach the game.
+// Works with a mouse, a keyboard or a touch screen, at phone width. The CSS is injected once and scoped under #dlg, so
+// it cannot leak into the game's HUD.
 const CSS = `
 #dlg { position: fixed; inset: 0; z-index: 25; pointer-events: none; font-family: var(--font, system-ui, sans-serif); color: var(--ink, #eef3f8); }
 #dlg [hidden] { display: none !important; }
-#dlg .dlg-wrap { position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); width: min(900px, calc(100vw - 24px)); display: flex; flex-direction: column; gap: 8px; }
+#dlg .dlg-wrap { position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); width: min(900px, calc(100vw - 24px));
+  max-height: calc(100% - 46px); display: flex; flex-direction: column; gap: 8px; }
 #dlg .dlg-wrap.in { animation: dlg-in .16s ease-out; }
 @keyframes dlg-in { from { opacity: 0; transform: translate(-50%, 8px); } }
-#dlg .dlg-choices { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow-y: auto; padding: 3px; pointer-events: auto; overscroll-behavior: contain; }
-#dlg .dlg-ch { display: flex; gap: 10px; align-items: baseline; width: 100%; margin: 0; padding: 9px 14px; text-align: left; font: inherit; font-size: 16px; line-height: 1.55;
-  color: var(--ink, #eef3f8); background: rgba(10, 18, 28, 0.8); border: 1px solid var(--glass-line, rgba(255,255,255,.12)); border-radius: 12px; cursor: pointer;
-  backdrop-filter: blur(8px); transition: background .12s, border-color .12s; }
+/* on a short screen (a phone held sideways) the choices give way and scroll, so the top of the list is never cut off */
+#dlg .dlg-choices { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow-y: auto;
+  padding: 4px; pointer-events: auto; overscroll-behavior: contain; }
+#dlg .dlg-ch { flex: none; display: flex; gap: 10px; align-items: baseline; width: 100%; margin: 0; padding: 9px 14px; text-align: left;
+  overflow-wrap: anywhere; font: inherit; font-size: 16px; line-height: 1.55; color: var(--ink, #eef3f8); background: rgba(10, 18, 28, 0.88);
+  border: 1px solid var(--glass-line, rgba(255,255,255,.12)); border-radius: 12px; cursor: pointer; transition: background .12s, border-color .12s; }
 #dlg .dlg-ch:hover { background: rgba(26, 44, 64, 0.9); border-color: rgba(92, 200, 255, .45); }
 #dlg .dlg-ch.sel { background: rgba(22, 50, 74, 0.94); border-color: var(--accent, #5cc8ff); box-shadow: inset 0 0 0 1px var(--accent, #5cc8ff); }
 #dlg .dlg-ch:focus-visible { outline: 2px solid #ffd479; outline-offset: 2px; }
-#dlg .dlg-n { flex: none; display: inline-grid; place-items: center; min-width: 1.75em; height: 1.75em; padding: 0 4px; border-radius: 7px; font-size: 13px; font-weight: 800;
-  color: var(--accent-ink, #04121c); background: var(--accent, #5cc8ff); font-variant-numeric: tabular-nums; }
+#dlg .dlg-n { flex: none; display: inline-grid; place-items: center; min-width: 1.75em; height: 1.75em; padding: 0 4px; border-radius: 7px;
+  font-size: 13px; font-weight: 800; color: var(--accent-ink, #04121c); background: var(--accent, #5cc8ff); font-variant-numeric: tabular-nums; }
 #dlg .dlg-ch.far .dlg-n { color: var(--ink, #eef3f8); background: rgba(255, 255, 255, .14); }
-#dlg .dlg-box { position: relative; padding: 12px 20px 10px; border-radius: 16px; background: rgba(10, 18, 28, 0.84); border: 1px solid var(--glass-line, rgba(255,255,255,.12));
+#dlg .dlg-box { flex: none; position: relative; max-height: 50vh; overflow-y: auto; overscroll-behavior: contain; padding: 12px 20px 10px;
+  border-radius: 16px; background: rgba(10, 18, 28, 0.84); border: 1px solid var(--glass-line, rgba(255,255,255,.12));
   box-shadow: 0 16px 50px rgba(0, 0, 0, .42); backdrop-filter: blur(8px); pointer-events: auto; cursor: pointer;
   user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
-#dlg .dlg-chip { display: inline-block; margin: 0 0 6px; padding: 2px 12px; border-radius: 99px; font-size: 14px; font-weight: 800; letter-spacing: .05em;
-  color: var(--sp-ink, #04121c); background: var(--sp, var(--accent, #5cc8ff)); }
-#dlg .dlg-text { margin: 0; min-height: 1.7em; font-size: 19px; line-height: 1.7; white-space: pre-line; overflow-wrap: anywhere; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+#dlg .dlg-chip { display: inline-block; max-width: 100%; margin: 0 0 6px; padding: 2px 12px; border-radius: 99px; font-size: 14px; font-weight: 800;
+  letter-spacing: .05em; overflow-wrap: anywhere; color: var(--sp-ink, #04121c); background: var(--sp, var(--accent, #5cc8ff)); }
+#dlg .dlg-text { margin: 0; min-height: 1.7em; font-size: 19px; line-height: 1.7; white-space: pre-line; overflow-wrap: anywhere;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
 #dlg .dlg-text .off { visibility: hidden; }
 #dlg .dlg-box.narr .dlg-text { color: var(--ink-dim, #a9b7c6); font-style: italic; }
 #dlg .dlg-cue { min-height: 1.5em; margin-top: 2px; text-align: right; font-size: 12px; color: var(--ink-dim, #a9b7c6); }
 #dlg .dlg-cue.wait { animation: dlg-pulse 1.6s ease-in-out infinite; }
 @keyframes dlg-pulse { 50% { opacity: .45; } }
-#dlg .dlg-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+#dlg .dlg-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 
-#dlg .dlg-book { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(4, 8, 14, 0.55); backdrop-filter: blur(3px); pointer-events: auto; }
-#dlg .dlg-paper { display: flex; flex-direction: column; width: min(860px, 100%); max-height: 100%; overflow: hidden; border-radius: 16px; background: rgba(250, 248, 242, 0.98);
-  color: #1d2329; box-shadow: 0 24px 70px rgba(0, 0, 0, .5); }
+#dlg .dlg-book { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: rgba(4, 8, 14, 0.55); backdrop-filter: blur(3px); pointer-events: auto; }
+#dlg .dlg-paper { display: flex; flex-direction: column; width: min(860px, 100%); max-height: 100%; overflow: hidden; border-radius: 16px;
+  background: rgba(250, 248, 242, 0.98); color: #1d2329; box-shadow: 0 24px 70px rgba(0, 0, 0, .5); }
 #dlg .dlg-bk-head { display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px 10px 22px; border-bottom: 3px solid #f2b632; }
-#dlg .dlg-bk-kicker { font-size: 12px; font-weight: 700; letter-spacing: .04em; color: #6b7681; }
+#dlg .dlg-bk-ht { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+#dlg .dlg-bk-kicker { font-size: 12px; font-weight: 700; letter-spacing: .04em; color: #5f6b77; }
 #dlg .dlg-bk-title { margin: 2px 0 0; font-size: 21px; line-height: 1.4; font-weight: 800; color: #16324f; }
-#dlg .dlg-x { flex: none; margin-left: auto; width: 38px; height: 38px; border-radius: 50%; border: 1px solid #d3d9e0; background: #fff; color: #16324f; font: inherit; font-size: 17px;
-  line-height: 1; cursor: pointer; }
+#dlg .dlg-x { flex: none; margin-left: auto; width: 38px; height: 38px; border-radius: 50%; border: 1px solid #d3d9e0; background: #fff;
+  color: #16324f; font: inherit; font-size: 17px; line-height: 1; cursor: pointer; }
 #dlg .dlg-x:hover { background: #eef3f8; }
 #dlg .dlg-x:focus-visible, #dlg .dlg-bk-body summary:focus-visible { outline: 2px solid #1b6fa8; outline-offset: 2px; }
-#dlg .dlg-bk-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 4px 22px 24px; font-size: 15.5px; line-height: 1.85; overscroll-behavior: contain;
-  user-select: text; -webkit-user-select: text; }
+#dlg .dlg-bk-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 4px 22px 24px; font-size: 15.5px;
+  line-height: 1.85; overflow-wrap: break-word; overscroll-behavior: contain; user-select: text; -webkit-user-select: text; }
 #dlg .dlg-bk-body:focus { outline: none; }
-#dlg .dlg-bk-foot { padding: 7px 18px; border-top: 1px solid #e4e0d4; font-size: 12px; color: #6b7681; text-align: right; }
+#dlg .dlg-bk-foot { padding: 7px 18px; border-top: 1px solid #e4e0d4; font-size: 12px; color: #5f6b77; text-align: right; }
 
+/* FLIGHT LAB's textbook classes (its style.css), redrawn for a light page */
 #dlg .dlg-bk-body h3 { margin: 22px 0 6px; padding-bottom: 2px; font-size: 17px; font-weight: 800; color: #16324f; border-bottom: 1px solid #d9dee4; }
 #dlg .dlg-bk-body h4 { margin: 16px 0 4px; font-size: 15px; font-weight: 800; color: #24476b; }
 #dlg .dlg-bk-body p { margin: 8px 0; }
@@ -56,15 +67,17 @@ const CSS = `
 #dlg .dlg-bk-body b { color: #0f3456; }
 #dlg .dlg-bk-body code { padding: 0 4px; border-radius: 4px; background: #ebeff4; font: 600 .92em ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
 #dlg .dlg-bk-body .mute { color: #5f6b77; } #dlg .dlg-bk-body .small { font-size: 12.5px; }
-#dlg .dlg-bk-body .tag { display: inline-block; margin: 0 4px 0 0; padding: 0 6px; border-radius: 9px; border: 1px solid #c9d1da; background: transparent; color: #5f6b77;
-  font-size: 11px; font-weight: 700; line-height: 1.6; vertical-align: 1px; }
-#dlg .dlg-bk-body .tag.fact { border-color: #7fbf98; color: #1f6b43; } #dlg .dlg-bk-body .tag.unk { border-color: #d9b45a; color: #7a5a06; }
-#dlg .dlg-bk-body .bk-ref { display: inline-block; margin: 2px 4px 2px 0; padding: 0 8px; border-radius: 6px; background: #e9eff6; color: #24476b; font-size: 13px; }
+#dlg .dlg-bk-body .tag { display: inline-block; margin: 0 4px 0 0; padding: 0 6px; border-radius: 9px; border: 1px solid #c9d1da;
+  background: transparent; color: #5f6b77; font-size: 11px; font-weight: 700; line-height: 1.6; vertical-align: 1px; }
+#dlg .dlg-bk-body .tag.fact { border-color: #7fbf98; color: #1f6b43; } #dlg .dlg-bk-body .tag.sum { border-color: #8fb3d6; color: #24476b; }
+#dlg .dlg-bk-body .tag.unk { border-color: #d9b45a; color: #7a5a06; }
+#dlg .dlg-bk-body .bk-ref { display: inline-block; margin: 2px 4px 2px 0; padding: 0 8px; border-radius: 6px; background: #e9eff6;
+  color: #24476b; font-size: 13px; }
 #dlg .bk-key { margin: 14px 0; padding: 10px 14px; border-left: 4px solid #2f9e62; border-radius: 4px; background: #e8f5ed; }
 #dlg .bk-key b { color: #1d7346; } #dlg .bk-key ul { margin: 4px 0 0; }
 #dlg .bk-warn { margin: 14px 0; padding: 10px 14px; border-left: 4px solid #e0a020; border-radius: 4px; background: #fdf2dc; }
-#dlg .bk-f { margin: 12px 0; padding: 8px 14px; border: 1px solid #cfd8e3; border-radius: 8px; background: #eef2f7; color: #13283f; text-align: center;
-  font: 600 14.5px/1.7 ui-monospace, "SF Mono", Menlo, Consolas, monospace; overflow-x: auto; }
+#dlg .bk-f { margin: 12px 0; padding: 8px 14px; border: 1px solid #cfd8e3; border-radius: 8px; background: #eef2f7; color: #13283f;
+  text-align: center; font: 600 14.5px/1.7 ui-monospace, "SF Mono", Menlo, Consolas, monospace; overflow-x: auto; }
 #dlg .bk-q { margin: 12px 0; padding: 10px 14px; border: 1px solid #d5dbe2; border-radius: 8px; background: #f3f5f8; }
 #dlg .bk-q summary { cursor: pointer; color: #1b6fa8; font-size: 14px; font-weight: 700; }
 #dlg .bk-q p { margin: 8px 0 2px; }
@@ -81,7 +94,7 @@ const CSS = `
 #dlg .bk-src { font-size: 12.5px; color: #5f6b77; } #dlg .bk-src li { margin: 2px 0; }
 
 @media (max-width: 700px) {
-  #dlg .dlg-wrap { bottom: 54px; width: calc(100vw - 16px); }
+  #dlg .dlg-wrap { bottom: 54px; width: calc(100vw - 16px); max-height: calc(100% - 62px); }
   #dlg .dlg-box { padding: 10px 14px 8px; }
   #dlg .dlg-text { font-size: 18px; }
   #dlg .dlg-ch { font-size: 15px; padding: 8px 12px; }
@@ -114,11 +127,15 @@ function inkOn(color) {
   const lin = (i) => { const c = parseInt(h.slice(i, i + 2), 16) / 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
   return 0.2126 * lin(0) + 0.7152 * lin(2) + 0.0722 * lin(4) > 0.2 ? '#04121c' : '#ffffff';
 }
+// a speaker's colour goes into a CSS custom property: only a plain colour value (hex, rgb()/hsl(), a name) is let through
+const COLOR = /^(?:#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})|(?:rgb|hsl)a?\([0-9a-z\s.,%/+-]*\)|[a-z]{3,24})$/i;
+const safeColor = (c) => (typeof c === 'string' && COLOR.test(c.trim()) ? c.trim() : null);
 function chapterLabel(ch) {
   if (!ch) return '';
   if (typeof ch === 'string') return ch;
-  if (typeof ch === 'object') return ch.n != null && ch.title ? `第 ${ch.n} 章　${ch.title}` : String(ch.title || '');
-  return '';
+  if (typeof ch !== 'object') return '';
+  const t = String(ch.title || ch.t || ''), n = ch.n != null && ch.n !== '' ? `第 ${ch.n} 章` : '';
+  return n && t ? `${n}　${t}` : n || t;
 }
 const sameView = (a, b) => !!a && !!b && a.dialog === b.dialog && a.node === b.node && a.text === b.text && a.name === b.name && a.color === b.color
   && a.choices.length === b.choices.length && a.choices.every((c, k) => c.text === b.choices[k].text && c.i === b.choices[k].i);
@@ -155,7 +172,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   const book = make('div', 'dlg-book', { role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'dlg-book-title' });
   const paper = make('article', 'dlg-paper');
   const head = make('header', 'dlg-bk-head');
-  const headText = make('div');
+  const headText = make('div', 'dlg-bk-ht');
   const kicker = make('div', 'dlg-bk-kicker');
   const bkTitle = make('h2', 'dlg-bk-title', { id: 'dlg-book-title' });
   const xBtn = make('button', 'dlg-x', { type: 'button', 'aria-label': '教科書を閉じる', title: '閉じる（Esc）' });
@@ -184,13 +201,17 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   const acting = () => actedGen === gen && now() - actedAt < ACT_MS;
   const markActed = () => { actedGen = gen; actedAt = now(); };
 
-  // ---- the typewriter: the whole line is laid out from the start (the unrevealed part invisible), so the box never jumps
+  // ---- the typewriter: the whole line is laid out from the start (the unrevealed part invisible), so the box never jumps.
+  // It waits while the textbook is open (the line is under it) and goes on from there when the book closes.
   function paint() { onText.data = chars.slice(0, shown).join(''); offText.data = chars.slice(shown).join(''); }
-  function schedule() { timerIsRaf = !!raf; timer = raf ? raf(tick) : setTimeout(tick, 16); }
+  function schedule() {
+    if (timer || !typing || bookOpen || destroyed) return;
+    timerIsRaf = !!raf; timer = raf ? raf(tick) : setTimeout(tick, 16);
+  }
   function unschedule() { if (!timer) return; if (timerIsRaf) { if (caf) caf(timer); } else clearTimeout(timer); timer = 0; }
   function tick() {
     timer = 0;
-    if (!typing || destroyed) return;
+    if (!typing || destroyed || bookOpen) return;
     const t = now(), dt = Math.min(0.25, Math.max(0, (t - last) / 1000)); last = t;   // a paused tab resumes where it was
     progress += dt * CPS * speed();
     let n = shown;
@@ -290,8 +311,10 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   function show(view) {
     if (destroyed) return;
     if (!view) { hide(); return; }
-    const v = { dialog: view.dialog, node: view.node, speaker: view.speaker, name: view.name || '', color: view.color || null, text: String(view.text ?? ''),
-      choices: Array.isArray(view.choices) ? view.choices.map((c, k) => ({ i: Number.isInteger(c && c.i) ? c.i : k, text: String((c && c.text) ?? '') })) : [],
+    const v = { dialog: view.dialog, node: view.node, speaker: view.speaker, name: String(view.name || ''), color: safeColor(view.color),
+      text: String(view.text ?? ''),
+      choices: Array.isArray(view.choices)
+        ? view.choices.map((c, k) => ({ i: Number.isInteger(c && c.i) ? c.i : k, text: String((c && c.text) ?? '') })) : [],
       ends: !!view.ends };
     // the same line again with nothing done in between (a second call for one change): keep the reveal where it is
     if (open && actedGen !== gen && sameView(cur, v)) { cur = v; return; }
@@ -310,6 +333,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
       open = true; wrap.hidden = false;
       wrap.classList.remove('in'); void wrap.offsetWidth; wrap.classList.add('in');   // restart the entrance
     }
+    box.scrollTop = 0;                                                        // a very long line scrolls inside the box: start at its top
     startTyping(v.text);
     speak(v);
   }
@@ -366,11 +390,13 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     bkBody.scrollTop = 0;
     if (!bookOpen) prevFocus = doc.activeElement;
     bookOpen = true; book.hidden = false; armed = false; bookDown = false;
+    unschedule();                                                             // the line underneath waits (see schedule)
     try { bkBody.focus({ preventScroll: true }); } catch (e) { /* the keys still scroll it (see onKey) */ }
   }
   function closeBook(reason) {
     if (!bookOpen) return;
     bookOpen = false; book.hidden = true; bookDown = false;
+    if (typing) { last = now(); schedule(); }
     if (book.contains(doc.activeElement)) try { doc.activeElement.blur(); } catch (e) { /* nothing focused */ }
     const p = prevFocus; prevFocus = null;
     if (p && p !== doc.body && p.isConnected && typeof p.focus === 'function' && (open || !wrap.contains(p))) {
@@ -384,27 +410,45 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   const inside = (node, t) => !!t && t.nodeType === 1 && node.contains(t);    // contains() throws on a non-node (window)
   const isField = (t) => !!t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
   const isControl = (t) => !!t && (isField(t) || t.tagName === 'BUTTON' || t.tagName === 'A' || t.tagName === 'SUMMARY');
-  // another modal panel (the pause menu) has the keyboard and the mouse: leave its events alone
+  // another modal panel (the pause menu) has the keyboard and the mouse: leave its events alone. A closed one does not
+  // count, even when focus was left on one of its (now hidden) buttons. An open one counts even when focus is still in
+  // the textbook under it (it sits above #dlg), so Esc and Tab go to it and not to the book behind.
+  const unhidden = (n) => { for (let x = n; x && x.nodeType === 1; x = x.parentNode) if (x.hidden) return false; return true; };
   function otherModal(t) {
-    if (inside(el, t)) return false;
-    for (let n = t; n && n.nodeType === 1; n = n.parentNode) {
-      if (n.getAttribute && (n.getAttribute('aria-modal') === 'true' || n.getAttribute('role') === 'dialog')) return true;
+    if (!inside(el, t)) {
+      for (let n = t; n && n.nodeType === 1; n = n.parentNode) {
+        if (n.getAttribute && (n.getAttribute('aria-modal') === 'true' || n.getAttribute('role') === 'dialog')) { if (unhidden(n)) return true; break; }
+      }
     }
     if (typeof doc.querySelectorAll === 'function') {
-      for (const m of doc.querySelectorAll('[aria-modal="true"]')) {
-        if (el.contains(m)) continue;
-        let hiddenUp = false;
-        for (let n = m; n && n.nodeType === 1; n = n.parentNode) if (n.hidden) { hiddenUp = true; break; }
-        if (!hiddenUp) return true;
-      }
+      for (const m of doc.querySelectorAll('[aria-modal="true"]')) if (!el.contains(m) && unhidden(m)) return true;
     }
     return false;
   }
   const digitOf = (e) => { const m = /^(?:Digit|Numpad)([1-9])$/.exec(e.code || ''); if (m) return +m[1]; return /^[1-9]$/.test(e.key || '') ? +e.key : 0; };
   const SCROLL = { ArrowUp: -48, ArrowDown: 48, PageUp: -0.85, PageDown: 0.85, Space: 0.85, Home: -Infinity, End: Infinity };
+  // the textbook is modal: Tab goes round its own controls (✕, the questions' <summary>, links) instead of leaving it
+  function bookStops() {
+    const out = [];
+    try {
+      for (const n of paper.querySelectorAll('button, summary, a[href], [tabindex]:not([tabindex="-1"])')) {
+        if (!n.disabled && (typeof n.getClientRects !== 'function' || n.getClientRects().length)) out.push(n);   // not inside a closed <details>
+      }
+    } catch (e) { /* the ✕ is enough */ }
+    return out.length ? out : [xBtn];
+  }
+  function bookTab(e) {
+    e.stopPropagation();
+    const f = bookStops(), a = doc.activeElement, i = f.indexOf(a), out = !inside(paper, a);
+    const wrapAround = out || (e.shiftKey ? i === 0 : i === f.length - 1) || (a === bkBody && !e.shiftKey && !f.some(n => bkBody.contains(n)));
+    if (!wrapAround) return;                                                  // the browser moves on inside the page
+    e.preventDefault();
+    try { (e.shiftKey ? f[f.length - 1] : f[0]).focus(); } catch (err) { /* stays where it is */ }
+  }
   function bookKey(e) {
     const code = e.code || e.key;
-    if (code === 'Escape' || e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeBook('esc'); return; }
+    if (code === 'Escape' || e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); held.add(e.code); closeBook('esc'); return; }
+    if (code === 'Tab' || e.key === 'Tab') { bookTab(e); return; }
     const inBook = inside(book, e.target);
     if (code in SCROLL) {
       e.stopPropagation();
@@ -422,8 +466,14 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     // the dialogue keys wait while the book is open (Enter still works on the book's own controls)
     if (code === 'Enter' || code === 'NumpadEnter' || code === 'KeyE' || digitOf(e)) { e.stopPropagation(); if (!inBook) e.preventDefault(); }
   }
+  // keys whose press the conversation used: their auto-repeat, when the key is held past the line (or the book) it
+  // closed, is not a new press for the game (a held E would otherwise start the talk again, a held Esc open the menu)
+  const held = new Set();
   function onKey(e) {
-    if (destroyed || (!open && !bookOpen)) return;
+    if (destroyed) return;
+    if (e.repeat && e.code && held.has(e.code)) { e.preventDefault(); e.stopPropagation(); return; }
+    held.delete(e.code);                                                      // a fresh press (the key was let go)
+    if (!open && !bookOpen) return;
     if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
     if (otherModal(e.target)) return;
     if (bookOpen) { bookKey(e); return; }
@@ -437,10 +487,10 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     if (!confirm && !space && !eKey && !arrow && !d) return;
     // a focused control elsewhere on the page keeps its own Enter / Space
     const t = e.target, mine = inside(wrap, t);
-    if ((confirm || space) && !mine && t !== doc.body && t !== doc.documentElement && isControl(t)) return;
+    if ((confirm || space) && !mine && t !== doc.body && t !== doc.documentElement && isControl(t) && unhidden(t)) return;
     if (arrow && !choicesShown()) return;                                     // nothing to move through: the game keeps its arrows
     if (d && !typing && !choicesShown()) return;
-    e.preventDefault(); e.stopPropagation();
+    e.preventDefault(); e.stopPropagation(); held.add(e.code);
     if (e.repeat) return;                                                     // a held key does not race through the conversation
     if (typing) { reveal(); return; }
     if (!choicesShown()) { if (confirm || space || eKey) advance(); return; }
@@ -467,8 +517,9 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     if (!open || bookOpen) return;
     e.stopPropagation();
     const k = choiceOf(e.target);
-    // a click from a screen reader or another assistive tool has no pointer press before it (detail 0): it counts on a choice
-    if (!armed && !(k >= 0 && e.detail === 0)) return;
+    // a click from a screen reader or another assistive tool has no pointer press before it (detail 0): it counts on a
+    // choice and on the subtitle box (the click that started the talk never lands here: it began before the box was up)
+    if (!armed && e.detail !== 0) return;
     armed = false;
     if (k >= 0) { pick(k); return; }
     if (inside(box, e.target)) advance();

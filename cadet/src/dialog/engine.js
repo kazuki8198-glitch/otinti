@@ -155,6 +155,7 @@ export function createRunner({ data, state, ctx = {}, hooks = {} } = {}) {
   const getCtx = typeof ctx === 'function' ? ctx : () => ctx;
   const fns = new Set();
   let cur = null;                                                              // { dialog, node } shown now, or null
+  let quiet = true;                                                            // listeners last heard null (or nothing yet)
   const nodeOf = (p) => data.dialogs[p.dialog].nodes[p.node];
   const visible = (n) => (Array.isArray(n.choices) ? n.choices.filter(ch => evalCond(ch.if, st, getCtx())) : []);
 
@@ -172,8 +173,11 @@ export function createRunner({ data, state, ctx = {}, hooks = {} } = {}) {
       why = `${p.dialog}:${p.node}`; target = t; p = resolveTarget(data, p.dialog, t);
     }
   }
+  // null is sent once per close: a hook that stops the talk inside a step must not make listeners hear it twice
   function emit() {
     const v = view();
+    if (!v && quiet) return;
+    quiet = !v;
     for (const f of [...fns]) { try { f(v); } catch (e) { console.error(e); } }
   }
   function show(p) {
@@ -183,7 +187,7 @@ export function createRunner({ data, state, ctx = {}, hooks = {} } = {}) {
     applyEffects(n.effects, st, hooks);
     if (isObj(n.hook)) callHook(hooks, n.hook.name, n.hook.arg);
   }
-  function finish() { const was = !!cur; cur = null; if (was) emit(); }
+  function finish() { cur = null; emit(); }
   // a step that fails (bad data, also in the view of the new node) ends the conversation, so the game is not left stuck
   // in it, then reports the error
   function step(fn) {
@@ -210,6 +214,7 @@ export function createRunner({ data, state, ctx = {}, hooks = {} } = {}) {
     get state() { return st; },
     view,
     // begins `dialogId` at `nodeId` (default: its start); → false when every node on the way was skipped to the end
+    // (or a hook of the first node already stopped the talk)
     start(dialogId, nodeId) {
       if (!own(data.dialogs, dialogId)) throw new Error(`dialog: unknown dialog "${dialogId}"`);
       let p;
@@ -217,7 +222,7 @@ export function createRunner({ data, state, ctx = {}, hooks = {} } = {}) {
       try { p = settle(dialogId, nodeId ?? data.dialogs[dialogId].start, `the start of ${dialogId}`); } catch (e) { finish(); throw e; }
       if (p === END) { finish(); return false; }
       step(() => show(p));
-      return true;
+      return cur !== null;
     },
     // advances a node without choices; at the end the conversation closes (running = false, onChange(null))
     next() {

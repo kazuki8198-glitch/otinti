@@ -1,8 +1,9 @@
 // CADET — dialog/validate.js : checks dialogue data before it ships (node --test runs it on every conversation).
 // Errors are what would break or confuse a conversation in the game (a dead end, a missing node, an undeclared flag,
 // a textbook section that does not exist, a placeholder the context cannot fill); warnings are probably-unintended data
-// (a declared flag nobody reads, a dialog that can never end). It never throws: broken data is reported, not crashed on.
-import { END, CHOICES_MAX, condKind, effectKind, fill, resolveTarget } from './engine.js';
+// (a declared flag nobody reads, a dialog that can never end, if-nodes that skip to each other in a ring). It never
+// throws: broken data is reported, not crashed on.
+import { END, CHOICES_MAX, MAX_HOPS, condKind, effectKind, fill, resolveTarget } from './engine.js';
 
 const isObj = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
 const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
@@ -26,7 +27,8 @@ export function validateDialogs(data, opts = {}) {
   const flagList = Array.isArray(data.flags) ? data.flags : (err('data.flags: missing (declare every flag)'), []);
   const hookList = Array.isArray(data.hooks) ? data.hooks : (err('data.hooks: missing (declare every hook)'), []);
   const dialogs = isObj(data.dialogs) ? data.dialogs : (err('data.dialogs: missing'), {});
-  const flags = new Set(flagList), hooks = new Set(hookList), read = new Set();
+  const names = (list) => new Set(list.filter(x => typeof x === 'string' && x));  // the others are reported just below
+  const flags = names(flagList), hooks = names(hookList), read = new Set();
   for (const [what, list] of [['flag', flagList], ['hook', hookList]]) {
     const s = new Set();
     for (const x of list) {
@@ -42,6 +44,8 @@ export function validateDialogs(data, opts = {}) {
   function text(t, at) {
     if (typeof t !== 'string' || !t.trim()) { err(`${at}: empty text`); return; }
     fill(t, sampleCtx, (p) => err(`${at}: placeholder {${p}} does not resolve in the sample context`));
+    // what is left once every placeholder is taken out is shown as it is: a brace there is a mistyped placeholder
+    if (/[{}]/.test(fill(t, null))) warn(`${at}: a brace that is not a {dotted.name} placeholder is shown as it is: "${short(t)}"`);
   }
   function flagName(f, at, how) {
     if (typeof f !== 'string' || !f) { err(`${at}: flag ${how} without a name`); return; }
@@ -190,6 +194,30 @@ export function validateDialogs(data, opts = {}) {
     if (!isObj(d) || !isObj(d.nodes)) continue;
     for (const nid of Object.keys(d.nodes)) if (!all.seen.has(`${did}:${nid}`)) err(`${did}:${nid}: cannot be reached from any dialog's start`);
     if (starts[did] && !walk([starts[did]]).ends) warn(`dialog ${did}: no end can be reached (every path loops forever)`);
+  }
+  // a ring of if-nodes whose skip ways (else, or else next) lead back into the ring: when their conditions are all false
+  // at once the runner gives up after MAX_HOPS skips (a warning: the conditions may never be false together)
+  const skipTo = (p) => {
+    const n = nodeAt(p);
+    if (!isObj(n) || n.if === undefined) return null;
+    const q = resolveTarget(data, p.dialog, n.else !== undefined ? n.else : n.next);
+    return q && q !== END ? q : null;
+  };
+  const done = new Set();
+  for (const [did, d] of Object.entries(dialogs)) {
+    if (!isObj(d) || !isObj(d.nodes)) continue;
+    for (const nid of Object.keys(d.nodes)) {
+      const path = [], on = new Map();
+      for (let q = { dialog: did, node: nid }; q && !done.has(key(q)); q = skipTo(q)) {
+        if (on.has(key(q))) {
+          const ring = path.slice(on.get(key(q))).join(' → ');
+          warn(`${key(q)}: if-nodes skip to each other in a ring (${ring}): all false at once stops the talk after ${MAX_HOPS} skips`);
+          break;
+        }
+        on.set(key(q), path.length); path.push(key(q));
+      }
+      for (const k of path) done.add(k);
+    }
   }
   for (const f of flags) if (!read.has(f)) warn(`flag "${f}" is declared but never read`);
   return { errors, warnings };

@@ -6,7 +6,8 @@
 // gestures (nod, point, explain, wave, shrug).
 // Soft low-poly like the academy's props: rounded lofted shapes with smooth normals and flat colours. Every actor
 // shares one material: the colour is per vertex (linear), and roughness / metalness come from a tiny palette texture
-// (each part's uv points at its texel), so a body is 20 draw calls. update() allocates nothing.
+// (each part's uv points at its texel), so a body is 20 draw calls. update() makes no new objects (it reuses its vectors
+// and quaternions).
 // The look is fictional: a white short-sleeved pilot shirt with navy epaulettes (3 gold bars), a navy tie, a lanyard
 // ID card and a small SHOYO wing badge, navy trousers, black shoes.
 import * as THREE from 'three';
@@ -28,6 +29,20 @@ const P = {
   clav: [0.03, 1.405, -0.014], uarm: [0.172, 1.39, -0.016], thigh: [0.092, HIPJ_Y, 0.004], ankle: [0.098, ANKLE_Y, 0.004],
 };
 const UARM_LEN = 0.295, FARM_LEN = 0.25, TOE_OUT = 7 * DEG;
+const DOWN = new THREE.Vector3(0, -1, 0), AX = new THREE.Vector3(1, 0, 0), AY = new THREE.Vector3(0, 1, 0);
+const _lq = new THREE.Quaternion(), _lq2 = new THREE.Quaternion();
+// two-bone IK of a leg in the hips' frame: `to` (changed) runs from the hip joint to the ankle; sets the thigh's and the
+// shin's rotations (the knee forwards, the thigh turned out a little with the foot)
+function legIK(to, s, thighQ, shinQ) {
+  const d = clamp(to.length(), 0.3, (L1 + L2) * 0.9995); to.normalize();
+  const a = Math.acos(clamp((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1));
+  const k = Math.PI - Math.acos(clamp((L1 * L1 + L2 * L2 - d * d) / (2 * L1 * L2), -1, 1));
+  thighQ.setFromUnitVectors(DOWN, to).multiply(_lq.setFromAxisAngle(AY, s * TOE_OUT * 0.6)).multiply(_lq2.setFromAxisAngle(AX, -a));
+  shinQ.setFromAxisAngle(AX, k);
+}
+// the left leg standing at rest (the trousers are shaped for it)
+const LEG_REST = { thigh: new THREE.Quaternion(), shin: new THREE.Quaternion() };
+legIK(new THREE.Vector3(P.ankle[0] - P.thigh[0], P.ankle[1] - P.thigh[1], P.ankle[2] - P.thigh[2]), 1, LEG_REST.thigh, LEG_REST.shin);
 
 // ---------------------------------------------------------------- the material: colour per vertex, roughness / metalness per class
 const CLASSES = {
@@ -75,9 +90,11 @@ function mirrorX(g) {
 }
 // a tube through rings { x, y, z, a, b, p } (superellipses of half-sizes a, b and exponent p). axis 'y': a across x and
 // b across z, going up y; axis 'z': a across x and b across y, going along z. cap0 / cap1: false, or the end's bulge.
+// A ring can also be { pts: [[x, y, z] × seg] } (in the same turning order: x = cos, z = sin), without caps.
 function loft(rings, seg, axis = 'y', cap0 = false, cap1 = false) {
   const pos = [], idx = [], n = rings.length, Y = axis === 'y';
   for (const r of rings) for (let j = 0; j < seg; j++) {
+    if (r.pts) { pos.push(...r.pts[j]); continue; }
     const t = j / seg * TAU, c = Math.cos(t), s = Math.sin(t), e = 2 / (r.p || 2);
     const u = Math.sign(c) * Math.pow(Math.abs(c), e) * r.a, v = Math.sign(s) * Math.pow(Math.abs(s), e) * r.b;
     if (Y) pos.push(r.x + u, r.y, r.z + v); else pos.push(r.x + u, r.y + v, r.z);
@@ -119,7 +136,7 @@ class Part {
     for (const k of Object.keys(geo.attributes)) if (k !== 'position' && k !== 'normal') geo.deleteAttribute(k);
     if (!geo.attributes.normal) geo.computeVertexNormals();
     if (!geo.index) geo.setIndex([...Array(geo.attributes.position.count).keys()]);
-    const n = geo.attributes.position.count, c = _c.setHex(typeof col === 'string' ? this.C[col] : col), cv = new Float32Array(n * 3), uv = new Float32Array(n * 2), u = uOf(cls);
+    const n = geo.attributes.position.count, c = _c.set(typeof col === 'string' ? this.C[col] : col), cv = new Float32Array(n * 3), uv = new Float32Array(n * 2), u = uOf(cls);
     for (let i = 0; i < n; i++) { cv[i * 3] = c.r; cv[i * 3 + 1] = c.g; cv[i * 3 + 2] = c.b; uv[i * 2] = u; uv[i * 2 + 1] = 0.5; }
     geo.setAttribute('color', new THREE.BufferAttribute(cv, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
     geo.clearGroups(); this.geos.push(geo); return geo;
@@ -132,12 +149,12 @@ class Part {
 }
 // tint the vertices of a geometry (already added) whose test(x, y, z) is true
 function tint(geo, col, test) {
-  const p = geo.attributes.position, c = geo.attributes.color; _c.setHex(col);
+  const p = geo.attributes.position, c = geo.attributes.color; _c.set(col);
   for (let i = 0; i < p.count; i++) if (test(p.getX(i), p.getY(i), p.getZ(i))) c.setXYZ(i, _c.r, _c.g, _c.b);
 }
 
 // ---------------------------------------------------------------- the head: a deformed sphere (bind space)
-const HD = { cy: 1.622, cz: 0.012, ryU: 0.112, ryL: 0.117, w: 0.077, jaw: 0.0105, dF: 0.09, dB: 0.104, chin: 0.028 };
+const HD = { cy: 1.622, cz: 0.012, ryU: 0.112, ryL: 0.117, w: 0.077, jaw: 0.0078, dF: 0.09, dB: 0.104, chin: 0.028 };
 function headPt(ux, uy, uz, o) {
   const W = HD.w - HD.jaw * smooth(-0.15, -0.9, uy);
   // the underside rises from the chin towards the ears (a jaw line, not a round bowl)
@@ -162,36 +179,34 @@ function buildHead(C) {
   const g = clean(new THREE.SphereGeometry(1, 24, 16)), p = g.attributes.position;
   for (let i = 0; i < p.count; i++) { headPt(p.getX(i), p.getY(i), p.getZ(i), o); p.setXYZ(i, o.x, o.y, o.z); }
   g.computeVertexNormals(); H.add(g, 'skin', 'skin');
-  // short hair: a cap over the skull, its edge on the hairline (forehead, temples with short sideburns, nape)
-  const hairEdge = (phi) => {
-    const a = Math.abs(phi) / DEG;
-    const th = a <= 90 ? 45 + 39 * smooth(12, 85, a) : 84 + 44 * smooth(95, 172, a);
-    return (th + 10 * Math.exp(-(((a - 79) / 8) ** 2))) * DEG;
-  };
-  const NP = 24, NT = 6, rows = [];
+  // short hair: a cap over the skull, thick on top and short at the sides, thinning to nothing on the hairline. The
+  // columns sit where the hairline turns: forehead, temples, sideburns, over the ears, the nape.
+  const NT = 6, rows = [], cols = [];
+  for (const [a] of HAIRLINE) { if (a > 0 && a < 180) cols.push(-a); }
+  cols.reverse(); cols.unshift(-180); cols.push(0, ...HAIRLINE.filter(([a]) => a > 0 && a < 180).map(([a]) => a));
   for (let j = 0; j <= NT; j++) {
-    const row = [];
-    for (let i = 0; i < NP; i++) {
-      const phi = (i / NP) * TAU - Math.PI, tm = hairEdge(phi), th = Math.max(tm * j / NT, 1e-4), f = j / NT;
+    const row = [], f = j / NT;
+    for (const a of cols) {
+      const phi = a * DEG, th = Math.max(hairline(Math.abs(a)) * f, 1e-4) * DEG;
       headPt(Math.sin(th) * Math.sin(phi), Math.cos(th), Math.sin(th) * Math.cos(phi), o);
-      const quiff = 0.006 * Math.max(0, Math.cos(phi)) ** 2 * Math.exp(-(((th / DEG - 34) / 20) ** 2));
-      const t = 0.0024 + 0.0098 * (1 - f * f) + quiff, dx = o.x, dy = o.y - HD.cy, dz = o.z - HD.cz, l = Math.hypot(dx, dy, dz);
+      const quiff = 0.005 * Math.max(0, Math.cos(phi)) ** 2 * Math.exp(-(((th / DEG - 36) / 16) ** 2));
+      const t = lerp(0.0135, 0.0003, Math.pow(f, 1.7)) + quiff, dx = o.x, dy = o.y - HD.cy, dz = o.z - HD.cz, l = Math.hypot(dx, dy, dz);
       row.push([o.x + dx / l * t, o.y + dy / l * t, o.z + dz / l * t]);
     }
     rows.push(row);
   }
   const hair = clean(grid(rows, true)); hair.computeVertexNormals(); H.add(hair, 'hair', 'hair');
-  // ears
+  // ears: tilted back a little, their back rim standing out from the head; the hollow a shade darker
   for (const s of [-1, 1]) {
-    const e = ellipsoid(0.0095, 0.027, 0.017, 8, 6); xf(e, s * 0.0755, 1.603, -0.008, 0, s * 0.3, s * -0.1); H.add(e, 'skin', 'skin');
-    tint(e, C.lid, (x, y, z) => s * x > 0.0835 && Math.abs(y - 1.603) < 0.018);
+    const e = ellipsoid(0.0085, 0.028, 0.0175, 8, 6); xf(e, s * 0.0765, 1.604, -0.012, -0.16, s * -0.42, s * -0.06); H.add(e, 'skin', 'skin');
+    tint(e, C.lid, (x, y, z) => s * x > 0.0815 && Math.abs(y - 1.6) < 0.016 && z < -0.004);
   }
   // nose (bridge, tip, wings)
   // the nose: a narrow bridge widening to a soft tip (rings of [y, half width, half depth, out of the face at the front])
-  { const N = [[1.5665, 0.006, 0.003, 0.004], [1.5705, 0.0105, 0.0075, 0.0115], [1.578, 0.0105, 0.0095, 0.0155], [1.589, 0.008, 0.009, 0.0125], [1.602, 0.0062, 0.0075, 0.0075],
-      [1.615, 0.0052, 0.005, 0.003]];
+  { const N = [[1.567, 0.0055, 0.003, 0.004], [1.571, 0.0092, 0.0072, 0.011], [1.578, 0.0092, 0.0088, 0.0145], [1.589, 0.0074, 0.0086, 0.012], [1.602, 0.0064, 0.0072, 0.0075],
+      [1.616, 0.0068, 0.005, 0.0025]];
     H.add(loft(N.map(([y, a, b, f]) => ring(y, a, b, 0, faceZ(0, y) + f - b, 2.2)), 10, 'y', 0.002, 0), 'skin', 'skin'); }
-  for (const s of [-1, 1]) { const n = ellipsoid(0.0062, 0.005, 0.0062, 6, 4); xf(n, s * 0.0102, 1.5735, faceZ(0.0102, 1.5735) + 0.0038); H.add(n, 'skin', 'skin'); }
+  for (const s of [-1, 1]) { const n = ellipsoid(0.0058, 0.0048, 0.0062, 6, 4); xf(n, s * 0.0098, 1.5735, faceZ(0.0098, 1.5735) + 0.0026, 0, s * 0.5); H.add(n, 'skin', 'skin'); }
   // eyeballs, lower lids (static) and brows
   for (const s of [-1, 1]) {
     const ex = s * EYE.x;
@@ -201,13 +216,27 @@ function buildHead(C) {
     const lo = clean(new THREE.SphereGeometry(1, 12, 3, 0, TAU, Math.PI / 2 + 20 * DEG, Math.PI / 2 - 20 * DEG));
     lo.scale(EYE.r * 1.07, EYE.r * 1.07, EYE.r * 1.07); lo.computeVertexNormals(); xf(lo, ex, EYE.y, EYE.z); H.add(lo, 'skin', 'skin');
     tint(lo, C.lid, (x, y) => y > EYE.y - EYE.r * 0.5);
-    for (let k = 0; k < 2; k++) {
-      const bx = s * (0.0225 + k * 0.0175), by = 1.6455 + k * 0.0012;
-      const b = ellipsoid(0.0112, 0.0029, 0.0028, 8, 4);
-      xf(b, bx, by, faceZ(bx, by) + 0.0012, 0, s * (0.22 + k * 0.38), s * (k ? -0.12 : 0.1)); H.add(b, 'hair', 'brow');
-    }
+    H.add(brow(s), 'hair', 'brow');
   }
   return H.build(P.head);
+}
+// the hairline: [|azimuth| (0 = the forehead, 180 = the nape), its angle from the crown] (degrees, round the unit head)
+const HAIRLINE = [[0, 46], [24, 47.5], [44, 50], [54, 56], [62, 71], [70, 91], [77, 98], [83, 95], [89, 80], [98, 76], [107, 78], [114, 88],
+  [122, 101], [140, 115], [160, 122], [180, 124]];
+function hairline(a) {
+  let i = 0; while (i < HAIRLINE.length - 2 && HAIRLINE[i + 1][0] < a) i++;
+  const [a0, t0] = HAIRLINE[i], [a1, t1] = HAIRLINE[i + 1]; return lerp(t0, t1, clamp((a - a0) / (a1 - a0), 0, 1));
+}
+// an eyebrow on the brow ridge: a strip thicker at the inner end, arched, thin at the outer end; its edges sink into the skin
+function brow(s) {
+  const rows = [[], [], []], N = 6;
+  for (let i = 0; i <= N; i++) {
+    const u = i / N, x = lerp(0.0125, 0.0505, u), yc = 1.6445 + 0.0042 * Math.sin(Math.PI * Math.min(1, u * 1.3)) - 0.0035 * u * u;
+    const hw = lerp(0.0033, 0.0013, u), lift = lerp(0.0017, 0.0007, u);
+    [[hw, -0.0008], [0, lift], [-hw, -0.0008]].forEach(([dy, dz], k) => rows[k].push([x, yc + dy, faceZ(x, yc + dy) + dz]));
+  }
+  const g = grid(rows); g.computeVertexNormals();
+  return s < 0 ? mirrorX(g) : g;
 }
 // the upper lids: one mesh for both eyes, turned about the line through the eyes' centres (blinks, follows the gaze)
 function buildLids(C) {
@@ -255,9 +284,10 @@ const TORSO = [
   [1.220, 0.168, 0.115, 0.015, 2.6], [1.290, 0.174, 0.115, 0.014, 2.7], [1.345, 0.178, 0.108, 0.006, 2.8], [1.390, 0.179, 0.098, -0.004, 2.9],
   [1.420, 0.172, 0.086, -0.010, 2.8], [1.440, 0.140, 0.074, -0.013, 2.6], [1.456, 0.100, 0.064, -0.015, 2.3], [1.468, 0.064, 0.056, -0.016, 2.0],
 ];
-const HIPS = [
-  [0.79, 0.07, 0.058, 0.000, 2.2], [0.805, 0.112, 0.08, -0.004, 2.3], [0.84, 0.158, 0.1, -0.008, 2.5], [0.890, 0.174, 0.110, -0.008, 2.5],
-  [0.940, 0.170, 0.109, -0.004, 2.5], [0.985, 0.163, 0.108, 0.000, 2.5], [1.012, 0.161, 0.108, 0.002, 2.5],
+// the trousers' section round the hips and seat (the legs carry it below the belt: see buildThigh)
+const SEAT = [
+  [0.78, 0.168, 0.09, -0.004, 2.4], [0.81, 0.170, 0.100, -0.008, 2.5], [0.85, 0.174, 0.108, -0.010, 2.5], [0.89, 0.176, 0.111, -0.008, 2.5],
+  [0.94, 0.171, 0.109, -0.004, 2.5], [0.985, 0.163, 0.108, 0.000, 2.5], [1.012, 0.161, 0.108, 0.002, 2.5],
 ];
 function rowAt(T, y) {
   let i = 0; while (i < T.length - 2 && T[i + 1][0] < y) i++;
@@ -300,11 +330,14 @@ function buildTorso(C) {
   T.add(loft(TORSO.map(r => ring(r[0], r[1], r[2], 0, r[3], r[4])), 22, 'y', 0, 0.004), 'shirt', 'shirt');
   // the collar: a band round the neck, lower at the front, and its two points
   const nz = P.neck[2];
-  { const c = loft([ring(1.45, 0.0635, 0.0665, 0, nz), ring(1.49, 0.062, 0.065, 0, nz), ring(1.494, 0.057, 0.0605, 0, nz)], 22, 'y');
+  { const c = loft([ring(1.452, 0.0595, 0.0625, 0, nz), ring(1.45, 0.0635, 0.0665, 0, nz), ring(1.49, 0.062, 0.065, 0, nz), ring(1.495, 0.06, 0.063, 0, nz),
+      ring(1.49, 0.058, 0.061, 0, nz), ring(1.452, 0.0595, 0.0625, 0, nz)], 22, 'y');
     c.translate(0, -1.47, -nz); c.rotateX(13 * DEG); c.translate(0, 1.47, nz); T.add(c, 'shirt', 'shirt'); }
   for (const s of [-1, 1]) { const f = new THREE.BoxGeometry(0.026, 0.04, 0.003); f.translate(0, -0.012, 0); f.rotateZ(s * 0.62); T.add(onFront(f, s * 0.016, 1.448, 0.003), 'shirt', 'shirt'); }
   // the tie: the knot, then the blade down the shirt front to the belt
-  { const k = rbox(0.03, 0.03, 0.016, 0.006, 1); const p = k.attributes.position; for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) * (1 + p.getY(i) * 9)); k.computeVertexNormals(); xf(k, 0, 1.446, frontZ(TORSO, 0, 1.446) + 0.0045, -0.25); T.add(k, 'tie', 'tie'); }
+  { const k = rbox(0.03, 0.03, 0.016, 0.006, 1), p = k.attributes.position;
+    for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) * (1 + p.getY(i) * 9));                     // wider at the top
+    k.computeVertexNormals(); xf(k, 0, 1.446, frontZ(TORSO, 0, 1.446) + 0.0045, -0.25); T.add(k, 'tie', 'tie'); }
   { const ys = [1.436, 1.4, 1.34, 1.26, 1.18, 1.1, 1.06, 1.044, 1.034], ws = [0.016, 0.0175, 0.022, 0.027, 0.032, 0.036, 0.037, 0.026, 0.006];
     T.add(loft(ys.map((y, i) => ring(y, ws[i], 0.0022, 0, frontZ(TORSO, 0, y) + 0.0032, 4)).reverse(), 8, 'y', 0, 0), 'tie', 'tie'); }
   // chest pockets with flaps and buttons; a pen in the left one
@@ -356,10 +389,13 @@ function buildTorso(C) {
   return T.build(P.chest);
 }
 function buildHips(C) {
-  const H = new Part(C);
-  H.add(loft(HIPS.map(r => ring(r[0], r[1], r[2], 0, r[3], r[4])), 20, 'y', 0, 0), 'trousers', 'trousers');
+  const H = new Part(C), sec = (y, dw = 0, dd = 0, w = null) => { const r = rowAt(SEAT, y); return ring(y, w ?? r[1] + dw, r[2] + dd, 0, r[3], w ? 2 : r[4]); };
+  // the waistband above the belt, and a core between the legs' two halves of the seat (a crease shows trouser colour)
+  H.add(loft([sec(0.972), sec(0.99), sec(1.012)], 20, 'y', false, 0), 'trousers', 'trousers');
+  H.add(loft([ring(0.796, 0.012, 0.04, 0, -0.006), ring(0.82, 0.02, 0.07, 0, -0.008), sec(0.86, 0, -0.006, 0.024), sec(0.975, 0, -0.006, 0.024)], 8, 'y', 0.008, false),
+    'trousers', 'trousers');
   // the belt and its buckle
-  const b0 = rowAt(HIPS, 0.962), b1 = rowAt(HIPS, 0.998);
+  const b0 = rowAt(SEAT, 0.962), b1 = rowAt(SEAT, 0.998);
   H.add(loft([ring(0.962, b0[1] - 0.002, b0[2] - 0.002, 0, b0[3], b0[4]), ring(0.962, b0[1] + 0.004, b0[2] + 0.004, 0, b0[3], b0[4]),
     ring(0.998, b1[1] + 0.004, b1[2] + 0.004, 0, b1[3], b1[4]), ring(0.998, b1[1] - 0.002, b1[2] - 0.002, 0, b1[3], b1[4])], 20, 'y'), 'belt', 'leather');
   const fz = b1[3] + b1[2] + 0.004;
@@ -371,8 +407,9 @@ function buildHips(C) {
 // ---------------------------------------------------------------- limbs (each in its bone's frame: the bone hangs down −y)
 function buildUpperArm(C, s) {
   const A = new Part(C);
-  A.add(loft([ring(-0.122, 0.043, 0.041), ring(-0.128, 0.051, 0.049), ring(-0.121, 0.0535, 0.0515), ring(-0.06, 0.0545, 0.0525), ring(0, 0.0545, 0.053),
-    ring(0.018, 0.047, 0.046), ring(0.03, 0.033, 0.032), ring(0.036, 0.013, 0.013)], 12, 'y', false, 0.002), 'shirt', 'shirt');
+  // the sleeve: its cap low and a little outwards, so the shoulder runs on into it
+  A.add(loft([ring(-0.122, 0.043, 0.041), ring(-0.128, 0.05, 0.048), ring(-0.121, 0.0525, 0.0505), ring(-0.06, 0.0535, 0.0515), ring(0, 0.0535, 0.052, 0.003),
+    ring(0.016, 0.0465, 0.0455, 0.006), ring(0.026, 0.0345, 0.0335, 0.008), ring(0.031, 0.015, 0.015, 0.009)], 12, 'y', false, 0.002), 'shirt', 'shirt');
   A.add(loft([ring(-0.3, 0.03, 0.029), ring(-0.287, 0.036, 0.034), ring(-0.2, 0.0395, 0.038), ring(-0.12, 0.042, 0.041), ring(-0.08, 0.043, 0.042)], 10, 'y', 0.012, 0), 'skin', 'skin');
   const g = A.build(); return s < 0 ? mirrorX(g) : g;
 }
@@ -416,16 +453,49 @@ function buildHand(C, s, pose) {
   A.add(pt ? finger(0.0112, 0.066, 38 * DEG, 52 * DEG, -0.008, -0.03, 0.033, -0.25, 0.55) : finger(0.0115, 0.068, 20 * DEG, 24 * DEG, -0.009, -0.03, 0.033, -0.36, 0.55), 'skin', 'skin');
   const g = A.build(); return s < 0 ? mirrorX(g) : g;
 }
-function buildThigh(C) {
-  const A = new Part(C);
-  A.add(loft([ring(-L1 - 0.045, 0.0575, 0.0595), ring(-L1, 0.0605, 0.0625), ring(-0.3, 0.067, 0.07), ring(-0.15, 0.075, 0.078), ring(-0.05, 0.079, 0.082, 0, -0.003),
-    ring(0.02, 0.072, 0.075, 0, -0.004)], 10, 'y', 0, 0.01), 'trousers', 'trousers');
-  return A.build();
+// trouser legs: [y in the bone's frame, half width, half depth, centre z]
+const THIGH = [[-L1, 0.0595, 0.0615, 0], [-0.35, 0.064, 0.0665, 0], [-0.25, 0.07, 0.073, -0.001], [-0.17, 0.0745, 0.0775, -0.002], [-0.1, 0.078, 0.081, -0.003],
+  [0, 0.08, 0.083, -0.004], [0.08, 0.078, 0.081, -0.004]];
+const SHIN = [[-0.32, 0.059, 0.065, -0.003], [-0.2, 0.0595, 0.063, 0], [-0.08, 0.0585, 0.0605, 0], [0, 0.0565, 0.059, 0], [0.03, 0.05, 0.05, -0.005]];
+// where a ray from (cx, Cz) in the direction (c, s) leaves the left half (x ≥ 0) of the seat's section at height y; cx
+// puts the half's front and back corners on the rays at 120° and 240° (ring vertices: the two halves meet exactly there)
+function halfSeat(y, c, s, out) {
+  const [, W, D, Cz, p] = rowAt(SEAT, y), cx = D / Math.sqrt(3);
+  if (c < 0 && Math.abs(s * cx / c) <= D * (1 + 1e-9)) return out.set(0, y, Cz - s * cx / c);   // through the middle (the fly, the seat seam)
+  let lo = 0, hi = W * 2;
+  for (let i = 0; i < 28; i++) { const m = (lo + hi) / 2, x = cx + c * m; if (x >= 0 && Math.pow(Math.abs(x / W), p) + Math.pow(Math.abs(s * m / D), p) < 1) lo = m; else hi = m; }
+  return out.set(cx + c * lo, y, Cz + s * lo);
+}
+// a trouser leg from the belt to just below the knee, in the thigh's frame (the left one; the right one is its mirror
+// image). Each leg carries its half of the seat: the top rings are the half of the hips' section on its side (the two
+// meet in the middle, as trousers do at the fly and the seat seam) and turn into the round thigh by the crotch, so there
+// is no seam round the hips. Its end hugs the shin's top as the knee is bent at rest.
+function buildThigh(C, s) {
+  const A = new Part(C), seg = 12, inv = LEG_REST.thigh.clone().invert(), J = new THREE.Vector3(...P.thigh), v = new THREE.Vector3(), rings = [];
+  for (const ys of [-0.03, -0.012]) {
+    const [, a, b, zc] = rowAt(SHIN, ys), pts = [];
+    for (let j = 0; j < seg; j++) { const t = j / seg * TAU; v.set(Math.cos(t) * (a + 0.0012), ys, zc + Math.sin(t) * (b + 0.0012)).applyQuaternion(LEG_REST.shin); pts.push([v.x, v.y - L1, v.z]); }
+    rings.push({ pts });
+  }
+  for (const [y, a, b, z] of THIGH.slice(0, 4)) rings.push(ring(y, a, b, 0, z));
+  for (const yb of [0.775, 0.8, 0.83, 0.865, 0.9, 0.94, 0.985]) {
+    const yl = yb - HIPJ_Y, [, a, b, zc] = rowAt(THIGH, yl), pts = [];
+    for (let j = 0; j < seg; j++) {
+      const t = j / seg * TAU, c = Math.cos(t), sn = Math.sin(t), side = (1 + c) / 2;
+      halfSeat(yb, c, sn, v).sub(J).applyQuaternion(inv);
+      // the inside of the leg joins the other one just above the crotch; the outside blends into the hip slowly
+      const w = smooth(lerp(0.77, 0.83, side), lerp(0.815, 0.93, side), yb);
+      pts.push([lerp(c * a, v.x, w), lerp(yl, v.y, w), lerp(zc + sn * b, v.z, w)]);
+    }
+    rings.push({ pts });
+  }
+  A.add(loft(rings, seg, 'y'), 'trousers', 'trousers');
+  const g = A.build(); return s < 0 ? mirrorX(g) : g;
 }
 function buildShin(C) {
   const A = new Part(C), hem = ANKLE_Y - 0.038 - (HIPJ_Y - L1 - L2);   // the hem 3.8 cm above the soles in the bind pose
   A.add(loft([ring(-L2 - hem + 0.006, 0.05, 0.058, 0, -0.004), ring(-L2 - hem, 0.0585, 0.067, 0, -0.006), ring(-L2 - hem + 0.012, 0.059, 0.067, 0, -0.006),
-    ring(-0.32, 0.059, 0.065, 0, -0.003), ring(-0.2, 0.0595, 0.063), ring(-0.08, 0.0585, 0.0605), ring(0, 0.0555, 0.0575), ring(0.05, 0.05, 0.052)], 10, 'y', false, 0.008), 'trousers', 'trousers');
+    ...SHIN.map(([y, a, b, z]) => ring(y, a, b, 0, z))], 10, 'y', false, 0.006), 'trousers', 'trousers');
   return A.build();
 }
 // the shoe, in the ankle's frame (the sole at y = −ANKLE_Y); left and right are the same (the toe-out is in the pose)
@@ -473,7 +543,8 @@ const GESTURES = {
 };
 export const GESTURE_NAMES = ['nod', 'point', 'explain', 'wave', 'shrug'];
 // compiled: per channel the key times, values (radians) and monotone tangents (no overshoot past a key)
-for (const g of Object.values(GESTURES)) {
+for (const [name, g] of Object.entries(GESTURES)) {
+  g.pub = GESTURE_NAMES.includes(name);                     // the talking beats are not reported as gestures
   g.tracks = Object.entries(g.ch).map(([k, a]) => {
     const n = a.length / 2, t = new Float64Array(n), v = new Float64Array(n), m = new Float64Array(n), sc = UNITLESS.has(k) ? 1 : DEG;
     for (let i = 0; i < n; i++) { t[i] = a[i * 2]; v[i] = a[i * 2 + 1] * sc; }
@@ -497,15 +568,16 @@ function spring(a, i, target, w, dt) {
 }
 
 const NO_OPTS = Object.freeze({});
-const DOWN = new THREE.Vector3(0, -1, 0), AX = new THREE.Vector3(1, 0, 0), AY = new THREE.Vector3(0, 1, 0);
 
 // ---------------------------------------------------------------- the actor
-// opts: { seed (idle timing), height (m, default 1.745), colors: { skin, hair, … } }
+// opts: { seed (idle timing), height (m, default 1.745), colors: { skin, hair, … } (sRGB: 0xrrggbb or '#rrggbb') }
 export function createActor(opts = {}) {
+  opts = opts || {};
   const C = { ...COLORS, ...(opts.colors || {}) }, mat = actorMaterial(), seed = opts.seed ?? 1;
   const root = new THREE.Group(); root.name = 'actor';
   const body = new THREE.Group(); body.name = 'actor-body'; body.userData.bind = new THREE.Vector3(); root.add(body);
-  body.scale.setScalar(clamp((opts.height ?? MODEL_H) / MODEL_H, 0.85, 1.12));
+  const height = Number(opts.height ?? MODEL_H);               // a bad height falls back to the default (not a NaN body)
+  body.scale.setScalar(clamp(Number.isFinite(height) ? height / MODEL_H : 1, 0.85, 1.12));
   const bones = {}, meshes = [];
   const bone = (name, parent, [x, y, z]) => {
     const g = new THREE.Group(); g.name = 'actor-' + name; const b = parent.userData.bind;
@@ -537,7 +609,7 @@ export function createActor(opts = {}) {
     const th = bone('thigh' + L, hips, [s * P.thigh[0], P.thigh[1], P.thigh[2]]);
     const sh = bone('shin' + L, th, [s * P.thigh[0], P.thigh[1] - L1, P.thigh[2]]);
     const ft = bone('foot' + L, sh, [s * P.thigh[0], P.thigh[1] - L1 - L2, P.thigh[2]]);
-    mesh('thigh' + L, buildThigh(C), th); mesh('shin' + L, buildShin(C), sh); mesh('foot' + L, buildFoot(C), ft);
+    mesh('thigh' + L, buildThigh(C, s), th); mesh('shin' + L, buildShin(C), sh); mesh('foot' + L, buildFoot(C), ft);
     leg[L] = { s, th, sh, ft, ankle: new THREE.Vector3(s * P.ankle[0], P.ankle[1], P.ankle[2]), toe: new THREE.Quaternion().setFromAxisAngle(AY, s * TOE_OUT) };
   }
   let triangles = 0;
@@ -554,7 +626,7 @@ export function createActor(opts = {}) {
   let blinkIn = 1.5 + R1() * 3, blinkT = -1, wanderIn = 2 + R1() * 2, wanderY = 0, wanderP = -2 * DEG, microIn = 1, microY = 0, microP = 0, lastHyT = 0;
   let sylT = 0, sylDur = 0, sylAmp = 0, sylLeft = 6, beatIn = 1.5;
   const tv = new THREE.Vector3(), pv = new THREE.Vector3(), v1 = new THREE.Vector3(), v2 = new THREE.Vector3();
-  const q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion(), q3 = new THREE.Quaternion();
+  const q1 = new THREE.Quaternion();
   const pointTarget = new THREE.Vector3(), pointNow = new THREE.Vector3();
   let hasPoint = false;
   const EYE0 = new THREE.Vector3(0, EYE.y, EYE.z + 0.012);   // the eyes' midpoint in the body's frame (bind)
@@ -564,7 +636,7 @@ export function createActor(opts = {}) {
   function startGesture(name) {
     const def = GESTURES[name]; if (!def) return 0;
     for (let i = 0; i < CH.length; i++) F[i] = G[i];        // whatever is still moving fades out under the new one
-    fadeT = 0; gDef = def; gName = name; gT = 0;
+    fadeT = 0; gDef = def; gName = def.pub ? name : null; gT = 0;
     if (name === 'point') { if (hasPoint) pointNow.copy(pointTarget); else { root.updateWorldMatrix(true, true); pointNow.set(-0.9, 1.55, 1.4); body.localToWorld(pointNow); } }
     return def.dur;
   }
@@ -580,14 +652,8 @@ export function createActor(opts = {}) {
   function solveLeg(l) {
     const { th, sh, ft } = l;
     v1.copy(th.position).applyQuaternion(hips.quaternion).add(hips.position);   // the hip joint in the body's frame
-    v2.subVectors(l.ankle, v1);
-    const d = clamp(v2.length(), 0.3, (L1 + L2) * 0.9995);
-    v2.normalize().applyQuaternion(q1.copy(hips.quaternion).invert());           // towards the ankle, in the hips' frame
-    const a = Math.acos(clamp((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1));
-    const k = Math.PI - Math.acos(clamp((L1 * L1 + L2 * L2 - d * d) / (2 * L1 * L2), -1, 1));
-    q1.setFromUnitVectors(DOWN, v2); q2.setFromAxisAngle(AY, l.s * TOE_OUT * 0.6); q3.setFromAxisAngle(AX, -a);
-    th.quaternion.copy(q1).multiply(q2).multiply(q3);
-    sh.quaternion.setFromAxisAngle(AX, k);
+    v2.subVectors(l.ankle, v1).applyQuaternion(q1.copy(hips.quaternion).invert());   // to the ankle, in the hips' frame
+    legIK(v2, l.s, th.quaternion, sh.quaternion);
     q1.copy(hips.quaternion).multiply(th.quaternion).multiply(sh.quaternion).invert();
     ft.quaternion.copy(q1).multiply(l.toe);
   }
@@ -601,6 +667,7 @@ export function createActor(opts = {}) {
   }
 
   function update(dt, o = NO_OPTS) {
+    if (!o) o = NO_OPTS;
     dt = clamp(Number(dt) || 0, 0, 0.1);
     const lookAt = o.lookAt || null, talking = !!o.talking;
     time += dt;
@@ -629,14 +696,18 @@ export function createActor(opts = {}) {
 
     // ---- where to look (in the body's frame): the target, an idle glance, or towards the pointed-at thing
     body.updateWorldMatrix(true, false);
-    if (lookAt) { tv.copy(lookAt); body.worldToLocal(tv); }
+    if (lookAt && Number.isFinite(lookAt.x + lookAt.y + lookAt.z)) { tv.copy(lookAt); body.worldToLocal(tv); }   // (a bad point is ignored)
     else tv.set(EYE0.x + Math.sin(wanderY) * 2, EYE0.y + Math.tan(wanderP) * 2, EYE0.z + Math.cos(wanderY) * 2);
     const glance = G[C_.glance];
     if (glance > 0) { pv.copy(pointNow); body.worldToLocal(pv); tv.lerp(pv, glance); }
-    const dx = tv.x - EYE0.x, dy = tv.y - EYE0.y, dz = tv.z - EYE0.z;
-    let yaw = Math.atan2(dx, dz), pitch = Math.atan2(dy, Math.hypot(dx, dz));
-    const behind = 1 - smooth(115 * DEG, 150 * DEG, Math.abs(yaw));   // someone behind: give up and look ahead
-    yaw *= behind; pitch *= behind;
+    const dx = tv.x - EYE0.x, dy = tv.y - EYE0.y, dz = tv.z - EYE0.z, dh = Math.sqrt(dx * dx + dz * dz), dist = Math.sqrt(dh * dh + dy * dy);
+    let yaw = Math.atan2(dx, dz), pitch = Math.atan2(dy, dh);
+    // someone behind: give up and look ahead. Nearly straight above or below, the yaw means nothing: keep the pitch only.
+    // A point at the eyes themselves has no direction: look ahead. The eyes then aim where the head does (no side-eye).
+    const behind = 1 - smooth(115 * DEG, 150 * DEG, Math.abs(yaw)), steep = smooth(62 * DEG, 80 * DEG, Math.abs(pitch)), near = smooth(0.08, 0.2, dist);
+    yaw *= behind * (1 - steep) * near; pitch *= lerp(behind, 1, steep) * near;
+    const r = Math.max(dist, 0.2), cp = Math.cos(pitch);
+    tv.set(EYE0.x + r * Math.sin(yaw) * cp, EYE0.y + r * Math.sin(pitch), EYE0.z + r * Math.cos(yaw) * cp);
     const hyT = clamp(yaw - clamp(yaw, -LIMITS.eyes, LIMITS.eyes), -LIMITS.headYaw, LIMITS.headYaw);
     const hpT = clamp(pitch - clamp(pitch, -LIMITS.eyes, LIMITS.eyes), -LIMITS.headPitch, LIMITS.headPitch);
     if (Math.abs(hyT - lastHyT) > 25 * DEG && blinkT < 0) blinkT = 0;   // a big change of gaze comes with a blink
@@ -677,10 +748,10 @@ export function createActor(opts = {}) {
     // ---- eyes: towards the target in the head's frame (the eyes do the first 15°), then lids and mouth
     head.updateWorldMatrix(true, false);
     v1.copy(tv); body.localToWorld(v1); head.worldToLocal(v1); v1.sub(EYE_HEAD);
-    const ey = clamp(Math.atan2(v1.x, v1.z) + microY, -LIMITS.eyes, LIMITS.eyes), ep = clamp(Math.atan2(v1.y, Math.hypot(v1.x, v1.z)) + microP, -LIMITS.eyes, LIMITS.eyes);
+    const ey = clamp(Math.atan2(v1.x, v1.z) + microY, -LIMITS.eyes, LIMITS.eyes), ep = clamp(Math.atan2(v1.y, Math.sqrt(v1.x * v1.x + v1.z * v1.z)) + microP, -LIMITS.eyes, LIMITS.eyes);
     spring(S, EY, ey, 38, dt); spring(S, EP, ep, 38, dt);
     for (let i = 0; i < 2; i++) eyes[i].rotation.set(-S[EP], S[EY], 0, 'YXZ');
-    const lidOpen = clamp(17 * DEG + 0.75 * S[EP], 2 * DEG, 32 * DEG);
+    const lidOpen = clamp(21 * DEG + 0.75 * S[EP], 4 * DEG, 34 * DEG);           // the upper lid follows the gaze up and down
     lids.rotation.x = -lerp(lidOpen, -27 * DEG, close);
     spring(S, MO, mouthT, 42, dt);
     const m = clamp(S[MO], 0, 1); mouth.morphTargetInfluences[0] = m;
@@ -693,11 +764,11 @@ export function createActor(opts = {}) {
     update,
     // plays once and goes back to idle; returns its length in seconds (0 for an unknown name)
     gesture(name) { return GESTURE_NAMES.includes(name) ? startGesture(name) : 0; },
-    pointAt(target) { if (target) { pointTarget.copy(target); hasPoint = true; } else hasPoint = false; },
+    pointAt(target) { if (target && Number.isFinite(target.x + target.y + target.z)) { pointTarget.copy(target); hasPoint = true; } else hasPoint = false; },
     headWorld(out = new THREE.Vector3()) { head.updateWorldMatrix(true, false); return out.copy(EYE_HEAD).applyMatrix4(head.matrixWorld); },
     get gesturing() { return gName; },
     // for tests: the objects update() works with (they must stay the same ones)
-    _scratch: [tv, pv, v1, v2, q1, q2, q3, pointTarget, pointNow, S, G, F],
+    _scratch: [tv, pv, v1, v2, q1, pointTarget, pointNow, S, G, F],
     dispose() { for (const m of meshes) m.geometry.dispose(); for (const L of ['L', 'R']) { arm[L].pointing.dispose(); arm[L].relaxed.dispose(); } },
   };
   update(0);

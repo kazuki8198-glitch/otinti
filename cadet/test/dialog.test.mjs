@@ -272,6 +272,36 @@ test('engine: a runaway loop of skipped nodes throws a clear error instead of ha
   c.start('d'); assert.equal(c.view().node, 'n' + MAX_HOPS);
 });
 
+test('engine: skips that cross dialogs (else into another dialog, then a skipped next back)', () => {
+  const d = DATA();
+  d.flags.push('x');
+  d.dialogs.side = { start: 'a', nodes: {
+    a: { if: { flag: 'x' }, else: 'brief:gate', speaker: 'instructor', text: 'a', next: 'end' },
+    b: { speaker: 'instructor', text: 'b', end: true },
+  } };
+  d.dialogs.brief.nodes.gate = { if: { flag: 'x' }, speaker: 'instructor', text: 'gate', next: 'side:b' };
+  const { r } = run(d);
+  r.start('side');                                                              // a skipped → brief:gate skipped → side:b
+  assert.deepEqual([r.view().dialog, r.view().node, r.view().ends], ['side', 'b', true]);
+  assert.equal(r.state.seen['side:a'], undefined); assert.equal(r.state.seen['brief:gate'], undefined);
+  const s = createDialogState({ v: 1, flags: { x: true } });
+  const q = run(d, s); q.r.start('side');
+  assert.equal(q.r.view().node, 'a', 'shown when its if holds');
+});
+
+test('engine: a hook that stops the talk while a node is shown', () => {
+  const d = DATA();
+  let r = null; const heard = [];
+  r = createRunner({ data: d, state: createDialogState(), ctx: CTX, hooks: { onHook: (name) => { if (name === 'point') r.stop(); } } });
+  r.onChange((v) => heard.push(v && v.node));
+  assert.equal(r.start('brief', 'again'), true);
+  assert.equal(r.next(), true);                                                 // → menu, whose point hook stops the talk
+  assert.equal(r.running, false);
+  assert.deepEqual(heard, ['again', null], 'null is heard once');
+  assert.equal(r.start('brief', 'menu'), false, 'start reports that nothing is running');
+  assert.deepEqual(heard, ['again', null], 'nothing was shown, so nothing to close');
+});
+
 test('engine: a context given as a function is read when needed', () => {
   let title = 'A';
   const d = DATA();
@@ -371,6 +401,30 @@ test('validate: warnings — a declared flag never read, a dialog that cannot en
   assert.deepEqual(r.warnings, ['dialog loop: no end can be reached (every path loops forever)']);
   // 'ask' itself has no end node, but it reaches one through brief:menu: no warning for it
   assert.ok(!r.warnings.some(w => /dialog ask/.test(w)));
+  // if-nodes whose skip ways lead round in a ring: the runner would give up after MAX_HOPS skips
+  d = DATA();
+  d.dialogs.brief.nodes.again.if = { flag: 'done' }; d.dialogs.brief.nodes.again.else = 'hello';
+  r = check(d);
+  assert.deepEqual(r.errors, []);
+  assert.ok(r.warnings.some(w => /^brief:(hello|again): if-nodes skip to each other in a ring/.test(w)), JSON.stringify(r.warnings));
+  // a brace that is not a placeholder reaches the player as it is
+  d = DATA(); d.dialogs.brief.nodes.again.text = '今日は{lesson title}です。';
+  r = check(d);
+  assert.deepEqual(r.errors, []);
+  assert.ok(r.warnings.some(w => /^brief:again: a brace that is not a/.test(w)), JSON.stringify(r.warnings));
+});
+
+test('validate: nodes reached only through another dialog count as reachable', () => {
+  const d = DATA();
+  d.dialogs.quiz = { start: 'q', nodes: {
+    q: { speaker: 'instructor', text: '問題です。', choices: [{ text: 'はい', next: 'end' }] },
+    hint: { speaker: 'instructor', text: 'ヒントです。', next: 'brief:menu' },
+  } };
+  let r = check(d);
+  assert.ok(r.errors.some(e => /^quiz:hint: cannot be reached/.test(e)), JSON.stringify(r.errors));
+  d.dialogs.ask.nodes.root.choices.push({ text: 'ヒントを', next: 'quiz:hint' });  // only 'ask' leads to it
+  r = check(d);
+  assert.deepEqual(r.errors, []);
 });
 
 // ---------------------------------------------------------------- save

@@ -71,8 +71,9 @@ const CSS = `
   background: transparent; color: #5f6b77; font-size: 11px; font-weight: 700; line-height: 1.6; vertical-align: 1px; }
 #dlg .dlg-bk-body .tag.fact { border-color: #7fbf98; color: #1f6b43; } #dlg .dlg-bk-body .tag.sum { border-color: #8fb3d6; color: #24476b; }
 #dlg .dlg-bk-body .tag.unk { border-color: #d9b45a; color: #7a5a06; }
-#dlg .dlg-bk-body .bk-ref { display: inline-block; margin: 2px 4px 2px 0; padding: 0 8px; border-radius: 6px; background: #e9eff6;
-  color: #24476b; font-size: 13px; }
+/* "→ section" cross-references: .bk-see from content/book.js, .bk-ref from a button tidied here */
+#dlg .dlg-bk-body .bk-ref, #dlg .dlg-bk-body .bk-see { display: inline-block; margin: 2px 4px 2px 0; padding: 0 8px; border-radius: 6px;
+  background: #e9eff6; color: #24476b; font-size: 13px; }
 #dlg .bk-key { margin: 14px 0; padding: 10px 14px; border-left: 4px solid #2f9e62; border-radius: 4px; background: #e8f5ed; }
 #dlg .bk-key b { color: #1d7346; } #dlg .bk-key ul { margin: 4px 0 0; }
 #dlg .bk-warn { margin: 14px 0; padding: 10px 14px; border-left: 4px solid #e0a020; border-radius: 4px; background: #fdf2dc; }
@@ -119,13 +120,21 @@ function pauseAfter(ch) {
   if (ch === '…' || ch === '―' || ch === '—') return 1.5;
   return 0;
 }
-// the readable ink on a speaker's colour chip (#rgb / #rrggbb); null keeps the default
+// the readable ink on a speaker's colour chip (#rgb(a) / #rrggbb(aa) / rgb(a)(); alpha ignored); null keeps the default
 function inkOn(color) {
-  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(color || '').trim());
-  if (!m) return null;
-  const h = m[1].length === 3 ? m[1].replace(/./g, c => c + c) : m[1];
-  const lin = (i) => { const c = parseInt(h.slice(i, i + 2), 16) / 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
-  return 0.2126 * lin(0) + 0.7152 * lin(2) + 0.0722 * lin(4) > 0.2 ? '#04121c' : '#ffffff';
+  const s = String(color || '').trim();
+  let rgb = null;
+  const m = /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.exec(s);
+  if (m) {
+    const h = m[1].length <= 4 ? m[1].slice(0, 3).replace(/./g, c => c + c) : m[1].slice(0, 6);
+    rgb = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
+  } else {
+    const r = /^rgba?\(\s*([\d.]+)(%?)[\s,]+([\d.]+)(%?)[\s,]+([\d.]+)(%?)/i.exec(s);
+    if (r) rgb = [1, 3, 5].map(k => Number(r[k]) * (r[k + 1] ? 2.55 : 1));
+  }
+  if (!rgb || !rgb.every(Number.isFinite)) return null;
+  const lin = (v) => { const c = Math.min(1, Math.max(0, v / 255)); return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+  return 0.2126 * lin(rgb[0]) + 0.7152 * lin(rgb[1]) + 0.0722 * lin(rgb[2]) > 0.2 ? '#04121c' : '#ffffff';
 }
 // a speaker's colour goes into a CSS custom property: only a plain colour value (hex, rgb()/hsl(), a name) is let through
 const COLOR = /^(?:#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})|(?:rgb|hsl)a?\([0-9a-z\s.,%/+-]*\)|[a-z]{3,24})$/i;
@@ -216,8 +225,15 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     progress += dt * CPS * speed();
     let n = shown;
     while (n < chars.length && at[n] <= progress) n++;
-    if (n !== shown) { shown = n; paint(); }
+    if (n !== shown) { shown = n; paint(); follow(); }
     if (shown >= chars.length) finishTyping(); else schedule();
+  }
+  // a line taller than its box (a long one on a short screen) scrolls inside it: keep the revealed end in view as it types
+  function follow() {
+    const h = box.clientHeight;
+    if (!(box.scrollHeight > h + 1)) return;
+    const bottom = onSpan.offsetTop + onSpan.offsetHeight + 4;                // the box is the offsetParent (position: relative)
+    if (Number.isFinite(bottom) && bottom > box.scrollTop + h) box.scrollTop = bottom - h;
   }
   function startTyping(text) {
     unschedule();

@@ -30,8 +30,11 @@ const SECTIONS = BOOK.chapters.flatMap(c => c.sections.map(s => s.id));
 const REAL = [/(?<![A-Za-z])ANA(?![A-Za-z])/, /ＡＮＡ/, /all\s*nippon/i, /全日空/, /全日本空輸/, /acron/i, /ana\.co\.jp/i, /anahd/i];
 const realIn = (s) => REAL.find(r => r.test(String(s)));
 // FLIGHT LAB's own controls and pages
-// (a key in brackets after a Japanese word: 右ラダー（E）・スロットル（R / F）; Restricted Area（R） is a name)
-const APP = /キーボード|[^ァ-ヶ]キー[（(で を]|Shift\s*\+|Enter\s*で|空島|このシミュレータ|シミュレータで体験|メニュー|data-lesson|bk-sim|bk-calc|[ぁ-んァ-ヶー一-龠][（(]\s*[WASDQERFTVBZXU](?:\s*\/\s*[WASDQERFTVBZXU])*\s*[）)]/;
+// (a key in brackets after a Japanese word: 右ラダー（E）・スロットル（R / F）, or a key with its meaning in brackets:
+// → E（右ラダー）; Restricted Area（R）・LAB-A（架空の訓練点）・Class B（大空港） are names)
+const APP = /キーボード|[^ァ-ヶ]キー[（(で を]|Shift\s*\+|Enter\s*で|空島|このシミュレータ|シミュレータで体験|メニュー|data-lesson|bk-sim|bk-calc|[ぁ-んァ-ヶー一-龠][（(]\s*[WASDQERFTVBZXU](?:\s*\/\s*[WASDQERFTVBZXU])*\s*[）)]|(?<![A-Za-z0-9-]\s?)[WASDQERFTVBZXU][（(][ぁ-んァ-ヶー一-龠]/;
+// FLIGHT LAB's notes on what is published or guessed about the real course (the academy states its own course plainly)
+const COURSE_NOTE = /公開情報|推測・要確認|class="tag (?:fact|unk)"/;
 
 // ---------------------------------------------------------------- the book
 
@@ -63,6 +66,7 @@ test('book: no real airline, call sign, training partner or their sites in any s
       for (const [what, v] of [['title', s.title], ['html', s.html], ['text', s.text], ['summary', s.summary], ['keyPoints', s.keyPoints.join('\n')], ['caption', s.caption || ''], ['chapter', s.chapter.title]]) {
         const r = realIn(v);
         assert.ok(!r, `${id}: ${what} matches ${r}`);
+        assert.ok(!COURSE_NOTE.test(v), `${id}: ${what} has a note on the real course: ${(String(v).match(COURSE_NOTE) || [])[0]}`);
       }
     }
   }
@@ -71,6 +75,8 @@ test('book: no real airline, call sign, training partner or their sites in any s
   assert.match(BOOK.section('comm.icao').html, /CAP 413/);
   assert.match(BOOK.section('nav.divert').html, /まず向きを変え/);
   assert.match(BOOK.section('solo.req').text, /訓練回数の決まりはない/);
+  assert.match(BOOK.section('me.basics').text, /^Archer の次に双発機 Piper Seminole/);
+  assert.match(BOOK.section('comm.icao').text, /両方を知っておくと混乱しません。代表的な例/);
 });
 
 test('book: FLIGHT LAB\'s simulator boxes, calculators, lesson buttons and key notes are gone; tables and figures stay', () => {
@@ -298,7 +304,8 @@ test('instructor: lines are sayable — length, no FLIGHT LAB controls or pages,
         assert.ok(t.length >= 2 && t.length <= 120, `${l.id} ${id}: ${t.length} characters: ${t}`);
         if (t.length > 90) long++;
         assert.ok(!APP.test(t), `${l.id} ${id}: names FLIGHT LAB's controls: ${t}`);
-        assert.ok(!realIn(t), `${l.id} ${id}: a real name: ${t}`);
+        assert.ok(!realIn(t) && !COURSE_NOTE.test(t), `${l.id} ${id}: a real name or a note on the real course: ${t}`);
+        if (!l.aircraft && /^brief:(check|wrap)/.test(id)) assert.ok(!/飛ぶ|エプロン|運航管理/.test(t), `${l.id} ${id}: a ground lesson does not fly: ${t}`);
         assert.ok(!/[{}<>]|undefined|null|NaN/.test(t), `${l.id} ${id}: ${t}`);
       }
       for (const c of node.choices || []) assert.ok(c.text.length <= 60, `${l.id} ${id}: a long choice: ${c.text}`);
@@ -314,6 +321,8 @@ test('instructor: lines are sayable — length, no FLIGHT LAB controls or pages,
   assert.equal(speakable('主輪から接地し、B でブレーキ。'), '主輪から接地し、ブレーキ。');
   assert.equal(speakable('45° では 1.41 G で失速速度が約 19% 上がる。荷重倍数（G）'), '45° では 1.41 G で失速速度が約 19% 上がる。荷重倍数（G）');
   assert.equal(speakable('脚を上げる（G）。高すぎれば S 字で高度を捨てる。'), '脚を上げる。高すぎれば S 字で高度を捨てる。');
+  assert.equal(speakable('振られやすい → <b>E（右ラダー）でボールを中央</b>に。'), '振られやすい → 右ラダーでボールを中央に。', 'a key after an arrow');
+  assert.equal(speakable('（姿勢→高度→姿勢）・局通過（TO→FROM）'), '（姿勢 → 高度 → 姿勢）・局通過（TO → FROM）', 'arrows spaced on both sides');
   for (const t of ['Class D で交信を確立する。', 'T 字尾翼の双発機。', 'TO 表示で針が右なら右へ。', 'Class B（cleared into the Class Bravo）が必要。', 'LAB-A（架空の訓練点）へ。'])
     assert.equal(speakable(t), t, 'English and names are left alone');
   for (const [a, b] of [
@@ -328,6 +337,8 @@ test('instructor: lines are sayable — length, no FLIGHT LAB controls or pages,
   ]) assert.equal(polite(a), b, a);
   assert.deepEqual(speechLines('手順：①機首を合わせる ②落ち着いたら T ③高度が保たれるか見る。', { steps: true }),
     ['手順：① 機首を合わせます。② 落ち着いたらトリム。③ 高度が保たれるか見ます。'], 'short steps share a line');
+  assert.deepEqual(speechLines('正の上昇率（VSI がプラス・高度が増えている）を確認したら脚を上げる。使える滑走路が残っていない高さで。'),
+    ['正の上昇率（VSI がプラス・高度が増えている）を確認したら脚を上げます。使える滑走路が残っていない高さで。'], 'a phrase that leans on its sentence stays with it');
   assert.deepEqual(speechLines('この教材の地図は架空。実際の空域判定はしない', { whole: true }), [], 'a key point that loses its context is not said');
 });
 
@@ -344,6 +355,15 @@ test('instructor: the words come from FLIGHT LAB\'s data', () => {
   assert.equal(check.length, 3);
   for (const c of check) assert.ok(goals.has(c.text), c.text);
   assert.equal(check.filter(c => c.next === 'check:ok').length, 1);
+  // in every lesson: one right answer, and no wrong one worded almost like it (shared pairs of characters)
+  const pairs = (s) => { const c = [...s]; return new Set(c.slice(1).map((ch, k) => c[k] + ch)); };
+  const alike = (a, b) => { const A = pairs(a), B = pairs(b), n = [...A].filter(x => B.has(x)).length; return n / (A.size + B.size - n); };
+  for (const l of LESSONS) {
+    const cs = (l.id === 'a1' ? A1 : instructorDialogs(FL, { lessonId: l.id })).dialogs.brief.nodes.check.choices;
+    const right = cs.filter(c => c.next === 'check:ok');
+    assert.equal(cs.length, 3, `${l.id}: 3 answers`); assert.equal(right.length, 1, `${l.id}: one right answer`);
+    for (const c of cs) if (c !== right[0]) assert.ok(alike(c.text, right[0].text) < 0.4, `${l.id}: "${c.text}" is worded almost like "${right[0].text}"`);
+  }
   // aircraft numbers said in a briefing are FLIGHT LAB's (here the Archer's Vr / Vy for t1)
   const t1 = nodesOf(instructorDialogs(FL, { lessonId: 't1' })).map(([, n]) => n.text).join('\n');
   const v = FL.physics.AIRCRAFT.find(a => a.id === 'pa28').v;

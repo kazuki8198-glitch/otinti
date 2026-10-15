@@ -104,6 +104,10 @@ function filterHtml(html, sectionExists) {
   });
   h = h.replace(/<div class="bk-(warn|f)">([\s\S]*?)<\/div>/g, (m, cls, t) => { const k = keepSentences(t); return k === null ? '' : `<div class="bk-${cls}">${k}</div>`; });
   h = h.replace(/<details\b[^>]*>(?:(?!<summary)[\s\S])*?<\/details>/g, '');  // a question that lost its question
+  // FLIGHT LAB's notes on what is published or only guessed about the real course: the academy's own book states its
+  // course plainly (公開情報では、Archer の次に… → Archer の次に…; （どちらで教わるかは推測・要確認） goes)
+  h = h.replace(/（[^（）<]*<span class="tag unk">[^<]*<\/span>[^（）<]*）/g, '').replace(/<span class="tag (?:fact|unk)">[^<]*<\/span>/g, '')
+    .replace(/(^|[>。])公開情報では、/g, '$1');
   // what emptied out
   for (let prev = ''; prev !== h; ) {
     prev = h;

@@ -19,8 +19,9 @@ const KEY_LINES = 4;                                                           /
 
 const KEY = '[WASDQERFTVBZXU]';                // FLIGHT LAB's keys (G is not here: it is also the unit of load factor)
 const JA = 'ぁ-んァ-ヶー\\u4e00-\\u9fff';
-// a key letter stands alone after Japanese (落ち着いたら T・B でブレーキ), not inside English (Class D で・TO 表示・T 字)
-const NB = `(?<=^|[${JA}、。：（「]\\s?)`, NA = '(?![A-Za-z0-9\\-]|\\s*字)';
+// a key letter stands alone after Japanese or an arrow (落ち着いたら T・B でブレーキ・→ E（右ラダー）), not inside English
+// (Class D で・TO 表示・T 字)
+const NB = `(?<=^|[${JA}、。：（「→]\\s?)`, NA = '(?![A-Za-z0-9\\-]|\\s*字)';
 const KEY_ONLY = new RegExp(`^\\s*${KEY}(?:\\s*[/／]\\s*${KEY})*\\s*$`);         // （R / F）（T）（E）
 const KEY_AT_END = new RegExp(`[ぁ-ん]\\s*${KEY}\\s*$`);                         // （機首が左へ振られたら E）
 const APP_NOTE = /キー|Shift\s*\+|Enter\s*で|長押し|押し続ける|空島|シミュレータ|この教材|教材では|^[\s[\]/−+＋-]*$/;
@@ -44,7 +45,8 @@ export function speakable(html) {
   s = s.replace(new RegExp(`\\s?${NB}${KEY} で\\s?`, 'g'), '');                      // S で少し引いて / B でブレーキ
   s = s.replace(/[[\]＝・左右]+\s*のキーで/g, '');                                   // [＝左・]＝右 のキーで
   s = s.replace(new RegExp(`\\s?${NB}T${NA}\\s?`, 'g'), 'トリム');                   // 落ち着いたら T → トリム
-  return s.replace(/([^\s①-⑩])([②-⑩])/g, '$1 $2').replace(/([^\s])→/g, '$1 →').replace(/\s+([。、）」])/g, '$1').replace(/\s+/g, ' ').trim();
+  return s.replace(/([^\s①-⑩])([②-⑩])/g, '$1 $2').replace(/([^\s])→/g, '$1 →').replace(/→([^\s])/g, '→ $1')
+    .replace(/\s+([。、）」])/g, '$1').replace(/\s+/g, ' ').trim();
 }
 
 // ---- です / ます ----
@@ -156,7 +158,11 @@ export function speechLines(text, { max = LINE, whole = false, steps = false } =
     // 。 closes a Japanese sentence; one that ends in English or a quotation keeps its own ending
     const p = polite(/[。！？.!?”"]$/.test(sen) || /[A-Za-z0-9]$/.test(sen) ? sen : sen + '。');
     const last = out[out.length - 1];
-    if (last !== undefined && (last.length < 20 || p.length < 16) && last.length + p.length <= 60) out[out.length - 1] = last + (/[。！？]$/.test(last) ? '' : ' ') + p;
+    const short = last !== undefined && (last.length < 20 || p.length < 16) && last.length + p.length <= 60;
+    // a phrase that leans on its neighbour (使える滑走路が残っていない高さで。・ファイナル（約 5 km）から。) or a bare
+    // label (ILS（計器着陸装置）。) is not left on a line of its own while the two still fit on one
+    const leans = last !== undefined && [last, p].some(x => /(?:で|から|まで)。$/.test(x) || x.length < 16) && last.length + p.length <= max;
+    if (short || leans) out[out.length - 1] = last + (/[。！？]$/.test(last) ? '' : ' ') + p;
     else out.push(p);
   }
   return out.flatMap(l => split(l, max));
@@ -187,7 +193,18 @@ const q = (t) => '「' + String(t).replace(/「/g, '『').replace(/」/g, '』')
 
 function lessonsOf(FL) { return FL.syllabus && Array.isArray(FL.syllabus.STAGES) ? FL.syllabus.STAGES.flatMap(s => s.lessons || []) : []; }
 
-// one question about today's goal: the right answer and two goals of other lessons, in an order that depends on the lesson
+// how alike two short texts are (shared pairs of characters, 0–1)
+function alike(a, b) {
+  const pairs = (s) => { const o = new Set(); for (let k = 0; k + 1 < s.length; k++) o.add(s.slice(k, k + 2)); return o; };
+  const A = pairs(a), B = pairs(b);
+  let n = 0;
+  for (const x of A) if (B.has(x)) n++;
+  return n / Math.max(1, A.size + B.size - n);
+}
+
+// one question about today's goal: the right answer and two goals of other lessons, in an order that depends on the lesson.
+// A goal worded almost like today's (ランダムな 10 場面・80% で合格 next to ランダムな PFD の表示を読み取る 10 問・80% で合格)
+// is not offered: the check asks what was said, not how closely it was heard.
 function goalCheck(lessons, lesson) {
   const all = lessons.filter(l => !!l.why === !!lesson.why);                   // flight lessons with flight lessons, ground with ground
   const i = Math.max(0, all.findIndex(l => l.id === lesson.id));
@@ -196,7 +213,7 @@ function goalCheck(lessons, lesson) {
   for (const k of [4, 9, 13, 17, 21, 25, 29, 33, 2, 6]) {
     const o = all[(i + k) % all.length];
     const g = o && goalOf(o);
-    if (!g || used.has(g) || g.length > 46) continue;
+    if (!g || used.has(g) || g.length > 46 || alike(g, goalOf(lesson)) >= 0.4) continue;
     used.add(g); pick.push({ id: o.id, title: o.title, goal: g });
     if (pick.length === 2) break;
   }
@@ -290,7 +307,7 @@ export function instructorDialogs(FL, { lessonId = 'a1' } = {}) {
   B['check:ok:2'] = say('目標がはっきりしていれば、何に集中すればいいかが決まります。', { next: 'post' });
   opts.forEach((o, k) => { if (!o.right) B[`check:ng${k}`] = say(`それは${q(speakable(o.title))}の課目の目標ですね。`, { next: 'check:fix' }); });
   B['check:fix'] = say(`今日の${goalLine}`, { hook: { name: 'point', arg: 'board' }, next: 'check:fix:2' });
-  B['check:fix:2'] = say('大丈夫。飛ぶ前に確かめられて、よかったです。', { next: 'post' });
+  B['check:fix:2'] = say(`大丈夫。${lesson.aircraft ? '飛ぶ' : '始める'}前に確かめられて、よかったです。`, { next: 'post' });   // ground lessons do not fly
 
   B.post = say('ここまでで、質問はありますか。', { choices: [
     { text: '質問があります', next: 'ask:root' },

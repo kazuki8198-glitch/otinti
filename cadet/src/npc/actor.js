@@ -573,7 +573,8 @@ const NO_OPTS = Object.freeze({});
 // opts: { seed (idle timing), height (m, default 1.745), colors: { skin, hair, … } (sRGB: 0xrrggbb or '#rrggbb') }
 export function createActor(opts = {}) {
   opts = opts || {};
-  const C = { ...COLORS, ...(opts.colors || {}) }, mat = actorMaterial(), seed = opts.seed ?? 1;
+  const C = { ...COLORS }, mat = actorMaterial(), seed = opts.seed ?? 1;
+  for (const [k, v] of Object.entries(opts.colors || {})) if (v != null) C[k] = v;   // (an undefined override keeps the default)
   const root = new THREE.Group(); root.name = 'actor';
   const body = new THREE.Group(); body.name = 'actor-body'; body.userData.bind = new THREE.Vector3(); root.add(body);
   const height = Number(opts.height ?? MODEL_H);               // a bad height falls back to the default (not a NaN body)
@@ -669,6 +670,7 @@ export function createActor(opts = {}) {
   function update(dt, o = NO_OPTS) {
     if (!o) o = NO_OPTS;
     dt = clamp(Number(dt) || 0, 0, 0.1);
+    for (let i = 0; i < S.length; i++) if (!Number.isFinite(S[i])) S[i] = 0;   // a NaN let in once (a broken parent transform) does not stay
     const lookAt = o.lookAt || null, talking = !!o.talking;
     time += dt;
     // ---- timers: blinks, idle glances, tiny eye movements, syllables, hand beats while talking
@@ -700,13 +702,14 @@ export function createActor(opts = {}) {
     else tv.set(EYE0.x + Math.sin(wanderY) * 2, EYE0.y + Math.tan(wanderP) * 2, EYE0.z + Math.cos(wanderY) * 2);
     const glance = G[C_.glance];
     if (glance > 0) { pv.copy(pointNow); body.worldToLocal(pv); tv.lerp(pv, glance); }
+    if (!Number.isFinite(tv.x + tv.y + tv.z)) tv.set(EYE0.x, EYE0.y, EYE0.z + 2);   // overflowed (a point absurdly far away): look ahead
     const dx = tv.x - EYE0.x, dy = tv.y - EYE0.y, dz = tv.z - EYE0.z, dh = Math.sqrt(dx * dx + dz * dz), dist = Math.sqrt(dh * dh + dy * dy);
     let yaw = Math.atan2(dx, dz), pitch = Math.atan2(dy, dh);
     // someone behind: give up and look ahead. Nearly straight above or below, the yaw means nothing: keep the pitch only.
     // A point at the eyes themselves has no direction: look ahead. The eyes then aim where the head does (no side-eye).
     const behind = 1 - smooth(115 * DEG, 150 * DEG, Math.abs(yaw)), steep = smooth(62 * DEG, 80 * DEG, Math.abs(pitch)), near = smooth(0.08, 0.2, dist);
     yaw *= behind * (1 - steep) * near; pitch *= lerp(behind, 1, steep) * near;
-    const r = Math.max(dist, 0.2), cp = Math.cos(pitch);
+    const r = clamp(dist, 0.2, 100), cp = Math.cos(pitch);           // only the direction matters (and ∞ · 0 would be NaN)
     tv.set(EYE0.x + r * Math.sin(yaw) * cp, EYE0.y + r * Math.sin(pitch), EYE0.z + r * Math.cos(yaw) * cp);
     const hyT = clamp(yaw - clamp(yaw, -LIMITS.eyes, LIMITS.eyes), -LIMITS.headYaw, LIMITS.headYaw);
     const hpT = clamp(pitch - clamp(pitch, -LIMITS.eyes, LIMITS.eyes), -LIMITS.headPitch, LIMITS.headPitch);

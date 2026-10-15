@@ -276,6 +276,14 @@ test('actor: update() reuses its objects (no per-frame allocation)', () => {
   a.pointAt(new THREE.Vector3(NaN, 1, 1)); a.gesture('point'); run(a, 1, { lookAt: new THREE.Vector3(0, NaN, 2), talking: true });
   assert.ok(finite(a.state.headYaw, a.state.eyeYaw, a.state.mouth), 'a bad lookAt or pointAt target is ignored');
   for (const n of BONES) assert.ok(finite(a.bones[n].quaternion.w), `${n} after bad steps`);
+  // absurdly far (but finite) targets, where ∞ · 0 = NaN could creep in, and one frame under a broken parent transform
+  const far = createActor(), ok = (x) => BONES.every(n => finite(x.bones[n].quaternion.w)) && finite(x.state.headYaw, x.state.headPitch, x.state.eyeYaw, x.state.eyePitch);
+  for (const v of [[1e200, 1.6, 0], [0, 1e300, 0], [-1e300, -1e300, -1e300], [1e307, 1e307, 1e307]]) run(far, 0.2, { lookAt: new THREE.Vector3(...v) });
+  far.pointAt(new THREE.Vector3(0, 1e300, 0)); far.gesture('point'); run(far, 1);
+  assert.ok(ok(far), 'a target absurdly far away');
+  const ahead = new THREE.Vector3(0, 1.6, 2);
+  far.root.position.x = NaN; far.update(DT, { lookAt: ahead }); far.root.position.x = 0; run(far, 1, { lookAt: ahead });
+  assert.ok(ok(far) && Math.abs(far.state.headYaw) < 2 * DEG, 'recovers after one frame with a NaN parent transform');
   // bad options fall back to the defaults instead of a NaN body
   for (const o of [null, { height: NaN }, { height: 'tall' }]) {
     const b = createActor(o); b.root.updateMatrixWorld(true);
@@ -285,4 +293,7 @@ test('actor: update() reuses its objects (no per-frame allocation)', () => {
   // colours as numbers or CSS strings
   const red = createActor({ colors: { skin: '#ff0000' } }).meshes.find(m => m.name === 'actor-head').geometry.attributes.color;
   assert.deepEqual([red.getX(0), red.getY(0), red.getZ(0)], [1, 0, 0]);
+  // an undefined override keeps the default (not the colour of whatever part was made before)
+  const headColors = (o) => Array.from(createActor(o).meshes.find(m => m.name === 'actor-head').geometry.attributes.color.array);
+  assert.deepEqual(headColors({ colors: { hair: undefined, skin: null } }), headColors(), 'undefined colours');
 });

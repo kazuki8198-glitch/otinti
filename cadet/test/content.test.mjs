@@ -180,7 +180,7 @@ test('instructor: every textbook section can be reached from ask:root; no list h
       assert.ok(seen.has(`sec:${id}`), `sec:${id} from root`);
       const menu = nodes[`sec:${id}:menu`].choices.map(c => c.text);
       assert.ok(menu.includes('教科書で読む') && menu.includes('ほかの質問') && menu.includes('ありがとうございました'), `${id}: menu`);
-      assert.equal(menu.includes('図をホワイトボードに描いてください'), !!BOOK.section(id).figure, `${id}: the board only with a figure`);
+      assert.equal(menu.includes('図を画面に映してください'), !!BOOK.section(id).figure, `${id}: the screen only with a figure`);
     }
     for (const [id, n] of nodesOf(data)) if (n.choices) {
       assert.ok(n.choices.length >= 1 && n.choices.length <= 12, `${id}: ${n.choices.length} choices`);
@@ -271,7 +271,8 @@ test('instructor: a run through with the real engine — first meeting, lesson, 
   assert.ok(talk.includes(lesson.title), 'the title');
   assert.ok(talk.includes('トリムを使い、操縦から手を離しても水平飛行が続く状態を作る'), 'the goal');
   assert.ok(talk.includes(lesson.std), 'the standard');
-  assert.ok(hooks.some(([n, a]) => n === 'board' && a === 'aero.forces'), 'the figure on the board');
+  assert.ok(hooks.some(([n, a]) => n === 'board' && a === 'aero.forces'), 'the figure on the screen');
+  assert.ok(hooks.some(([n, a]) => n === 'point' && a === 'screen'), 'pointing at the screen');
   assert.ok(hooks.some(([n, a]) => n === 'point' && a === 'board'), 'pointing at the board');
   choose('トリムを使い、操縦から手を離しても水平飛行が続く状態を作る');
   assert.equal(state.trust.instructor, 53); assert.equal(state.flags.brief_checked, true);

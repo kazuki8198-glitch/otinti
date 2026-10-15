@@ -3,8 +3,8 @@
 // (title, goal, why, brief, std) and the game's textbook (content/book.js: key points, figures). Written text is made
 // speakable (FLIGHT LAB's key names and notes about its own pages left out) and, where the ending is one this file
 // knows for sure, put into です / ます; anything else is quoted as written rather than guessed at.
-// Hooks the game acts out: look 'player'; point 'board' | 'apron'; nod; board <section id> (draws that section's
-// figure on the whiteboard); book <section id> (opens the textbook there).
+// Hooks the game acts out: look 'player'; point 'board' | 'screen' | 'apron'; nod; board <section id> (shows that
+// section's figure on the briefing room's screen); book <section id> (opens the textbook there).
 import { gameBook, sentences } from '../book.js';
 
 export const INSTRUCTOR = { id: 'instructor', name_ja: '早瀬 航', title_ja: '早瀬 教官', role_ja: '担当教官' };
@@ -219,7 +219,7 @@ function goalCheck(lessons, lesson) {
   }
   const right = { id: lesson.id, title: lesson.title, goal: goalOf(lesson), right: true };
   const opts = [...pick];
-  opts.splice(i % (opts.length + 1), 0, right);
+  opts.splice((2 * i + 1) % (opts.length + 1), 0, right);                    // the right answer moves about (not first in a1)
   return opts;
 }
 
@@ -286,7 +286,7 @@ export function instructorDialogs(FL, { lessonId = 'a1' } = {}) {
   }
   if (figSec) {
     steps.push([`図にすると、こうなります。教科書の${q(figSec.title)}にある図です。`, { hook: { name: 'board', arg: figSec.id } }]);
-    steps.push(...figLines.map((t, k) => [t, k ? {} : { hook: { name: 'point', arg: 'board' } }]));
+    steps.push(...figLines.map((t, k) => [t, k ? {} : { hook: { name: 'point', arg: 'screen' } }]));
   }
   if (points.length) {
     steps.push(['では、飛び方のポイントです。', { hook: { name: 'point', arg: 'board' } }]);
@@ -379,7 +379,7 @@ export function instructorDialogs(FL, { lessonId = 'a1' } = {}) {
       : used === 1 ? `${q(sec.title)}ですね。大事なのは、この一点です。` : `${q(sec.title)}ですね。大事なことは ${used} つあります。`;
     const menuChoices = [
       { text: '教科書で読む', next: `${id}:read` },
-      ...(sec.figure ? [{ text: '図をホワイトボードに描いてください', next: `${id}:board` }] : []),
+      ...(sec.figure ? [{ text: '図を画面に映してください', next: `${id}:board` }] : []),
       { text: 'ほかの質問', next: 'root' },
       { text: 'ありがとうございました', next: 'thanks' },
     ];
@@ -389,8 +389,8 @@ export function instructorDialogs(FL, { lessonId = 'a1' } = {}) {
     A[`${id}:read`] = say(`教科書の${q(sec.title)}です。ゆっくり読んでください。`, { hook: { name: 'book', arg: s.id }, next: `${id}:again` });
     if (sec.figure) {
       const cap = sec.caption ? firstLines(speechLines(sec.caption.replace(/^図[：:]\s*/, '')), 2) : [];
-      A[`${id}:board`] = say('いいですよ。ホワイトボードに描きますね。', { hook: { name: 'board', arg: s.id }, next: `${id}:fig` });
-      chain(A, `${id}:fig`, cap.length ? cap : ['図と教科書の説明を、照らし合わせてみてください。'], `${id}:again`, [{ hook: { name: 'point', arg: 'board' } }]);
+      A[`${id}:board`] = say('いいですよ。画面に映しますね。', { hook: { name: 'board', arg: s.id }, next: `${id}:fig` });
+      chain(A, `${id}:fig`, cap.length ? cap : ['図と教科書の説明を、照らし合わせてみてください。'], `${id}:again`, [{ hook: { name: 'point', arg: 'screen' } }]);
     }
   }
   A.thanks = say('どういたしまして。わからないことは、そのままにしないでくださいね。', { hook: { name: 'nod' }, next: 'brief:menu' });

@@ -2,7 +2,8 @@
 // network blocked) and checks that the world starts with no errors and no requests; that every viewpoint, outdoors and
 // in the academy, draws a real picture within the draw budget; that you can walk from briefing room 1 through the door,
 // the corridor, the lobby and the automatic doors to today's aircraft on the apron (with the real colliders: a closed
-// door stops you); that boards, the aircraft and locked doors answer E; that the pause menu and the settings work;
+// door stops you); that boards, the aircraft and locked doors answer E; that the instructor talks you through today's
+// lesson, checks it, answers a question from the textbook and the record is saved; that the pause menu and the settings work;
 // that the time of day and the presets switch; and that the bench reports.
 // Needs Playwright (PLAYWRIGHT=its module path if it is not installed next to this project); skipped otherwise.
 import { describe, test, before, after } from 'node:test';
@@ -105,8 +106,8 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.equal(await ev((it) => window.__cadet.lookAt(it.a, it.c, it.y), it), 'ex:' + it.id);
     assert.equal(await ev(() => window.__cadet.use()), 'examined');
     assert.equal((await ev(() => window.__cadet.card())).title, it.title_ja);
-    // walking away closes the card
-    await ev((it) => window.__cadet.walkRoute([{ a: it.a + 1.6, c: 258.0 }]), it);
+    // walking away (back into the room, clear of the instructor beside the board) closes the card
+    await ev((it) => window.__cadet.walkRoute([{ a: it.a + 3.9, c: it.c }]), it);
     assert.equal(await ev(() => window.__cadet.card()), null);
     // the WC is closed for cleaning
     await ev(() => window.__cadet.placeWalker(633.5, 262.2, { a: 633.5, c: 263.6 }));
@@ -115,6 +116,72 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.equal(await ev(() => window.__cadet.use()), 'locked');
     await ev(() => window.__cadet.simulate(1));
     assert.equal((await ev(() => window.__cadet.doors())).find(d => d.id === 'd-wc').angle, 0);
+  });
+
+  test('talk: the instructor briefs today\'s lesson, checks it, answers from the textbook, and it is saved', async () => {
+    await ev(() => { window.__cadet.setMode('walk'); window.__cadet.resetProgress(); });
+    assert.equal(await ev(() => window.__cadet.savedState()), null, 'the record is erased');
+    const ins = await ev(() => window.__cadet.instructor());
+    assert.ok(ins.triangles > 1000 && ins.triangles < 20000, `${ins.triangles} triangles`);
+    await ev((ins) => window.__cadet.placeWalker(ins.a + 2.4, ins.c - 0.6, { a: ins.a, c: ins.c }), ins);
+    assert.equal(await ev((ins) => window.__cadet.lookAt(ins.a, ins.c, 1.5), ins), 'npc:instructor');
+    assert.equal(await ev(() => window.__cadet.use()), 'talk');
+    assert.equal(await ev(() => document.body.classList.contains('talking') && !!window.__cadet.dialog()), true);
+    // one line after another (a single answer is given), until a list with `want` in it
+    const until = async (want, max = 40) => {
+      const said = [];
+      let v = await ev(() => window.__cadet.dialog());
+      for (let k = 0; k < max && v && !v.choices.some(c => want.test(c.text)); k++) {
+        said.push(v.text);
+        v = await ev(() => { const C = window.__cadet; C.simulate(0.2); return C.dialog().choices.length === 1 ? C.dialogChoose(0) : C.dialogNext(); });
+      }
+      assert.ok(v && v.choices.some(c => want.test(c.text)), `no "${want}" after ${JSON.stringify(said.slice(-3))}`);
+      return { said, v };
+    };
+    const first = await until(/今日の課目/);
+    assert.match(first.said[0], /はじめまして.*早瀬/);
+    // today's lesson: its title, goal and standard from FLIGHT LAB's syllabus, the figure on the screen
+    const lesson = await ev(() => window.__cadet.FL.syllabus.STAGES.flatMap(s => s.lessons).find(l => l.id === 'a1'));
+    await ev(() => window.__cadet.dialogChoose('今日の課目'));
+    const brief = await until(/./);
+    const talk = brief.said.join('\n');
+    assert.ok(talk.includes(lesson.title), 'the title'); assert.ok(talk.includes(lesson.std), 'the standard');
+    assert.match(talk, /トリムを使い、操縦から手を離しても水平飛行が続く状態を作る/);
+    // the check: the right answer raises trust
+    assert.equal(brief.v.choices.length, 3);
+    await ev(() => window.__cadet.dialogChoose('トリムを使い'));
+    let st = await ev(() => window.__cadet.talkState());
+    assert.equal(st.flags.brief_checked, true); assert.equal(st.trust.instructor, 53);
+    // a question about the textbook: the section's key points, then the textbook opens on it
+    await until(/質問があります/); await ev(() => window.__cadet.dialogChoose('質問があります'));
+    await ev(() => window.__cadet.dialogChoose('飛行機に働く 4 つの力'));
+    const ans = await until(/教科書で読む/);
+    assert.match(ans.said[0], /飛行機に働く 4 つの力/);
+    await ev(() => window.__cadet.dialogChoose('図を画面に映して'));
+    assert.match((await until(/教科書で読む/)).said[0], /画面に映します/);
+    await ev(() => window.__cadet.dialogChoose('教科書で読む'));
+    assert.equal((await ev(() => window.__cadet.dialog())).bookOpen, true);
+    assert.match(await ev(() => document.body.innerText), /重力（Weight）/);
+    await ev(() => window.__cadet.closeBook());
+    assert.equal((await ev(() => window.__cadet.dialog())).bookOpen, false);
+    // thanks → back to the menu → the wrap-up and goodbye: the walk comes back
+    await until(/ありがとうございました/); await ev(() => window.__cadet.dialogChoose('ありがとうございました'));
+    await until(/このあとの流れ/); await ev(() => window.__cadet.dialogChoose('このあとの流れ'));
+    const wrap = [];
+    for (let k = 0; k < 12 && await ev(() => !!window.__cadet.dialog()); k++) wrap.push(await ev(() => { const t = window.__cadet.dialog().text; window.__cadet.dialogNext(); return t; }));
+    assert.equal(await ev(() => window.__cadet.dialog()), null);
+    assert.match(wrap.join('\n'), /運航管理[\s\S]*エプロン/);
+    assert.equal(await ev(() => document.body.classList.contains('talking')), false);
+    // the record is kept: met, briefed, checked; talking again starts from "again"
+    st = await ev(() => window.__cadet.savedState());
+    assert.deepEqual([st.flags.met_instructor, st.flags.briefed_today, st.flags.brief_checked], [true, true, true]);
+    assert.equal(await ev((ins) => window.__cadet.lookAt(ins.a, ins.c, 1.5), ins), 'npc:instructor');
+    assert.equal(await ev(() => window.__cadet.use()), 'talk');
+    assert.doesNotMatch((await ev(() => window.__cadet.dialog())).text, /はじめまして/);
+    await ev(() => window.__cadet.setMode('spectator'));
+    assert.equal(await ev(() => window.__cadet.dialog()), null, 'leaving walk mode ends the talk');
+    assert.equal(await ev(() => document.body.classList.contains('talking')), false);
+    await ev(() => window.__cadet.setMode('walk'));
   });
 
   test('the pause menu opens and closes; settings apply at once', async () => {

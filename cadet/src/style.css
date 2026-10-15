@@ -91,3 +91,6 @@ body.mode-walk #panel { display: none; }
 #hint b { font-size: 18px; } #hint span { font-size: 13px; color: var(--ink-dim); }
 body.locked #hint, body.mode-spectator #hint { opacity: 0; }
 @media (max-width: 700px) { #card { right: 50%; transform: translate(50%, -50%); } }
+
+/* ---------------------------------------------------------------- talking: the conversation has the screen */
+body.talking #hint, body.talking #prompt, body.talking #cross, body.talking #where { opacity: 0 !important; }

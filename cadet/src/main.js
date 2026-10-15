@@ -28,6 +28,12 @@ import { createSpectator } from './ui/spectator.js';
 import { createSettings } from './ui/settings.js';
 import { createMenu } from './ui/menu.js';
 import { createAudio } from './audio/sfx.js';
+import { createRunner, createDialogState } from './dialog/engine.js';
+import { createSave } from './core/save.js';
+import { gameBook } from './content/book.js';
+import { INSTRUCTOR, instructorDialogs, sampleCtx } from './content/dialog/instructor.js';
+import { createActor } from './npc/actor.js';
+import { createDialogUI } from './ui/dialog-ui.js';
 
 /* global __BUILD_INFO__ */
 const $ = (s) => document.querySelector(s);
@@ -187,6 +193,113 @@ async function boot() {
     });
   }
 
+  // ---------------------------------------------------------------- the instructor, and talking
+  // 早瀬 教官 (fictional) waits in briefing room 1 between the whiteboard and the screen, facing the room. E starts the
+  // conversation: the mouse is freed for the choices, the view turns to the instructor, the walk stops. Flags and trust
+  // are kept in localStorage ('cadet.save'). The instructor's hooks point at the board, nod, show a figure on the
+  // screen and open the textbook.
+  const book = gameBook(FL);
+  const saved = createSave();
+  const talkState = createDialogState(saved.load());
+  const talkData = instructorDialogs(FL, { lessonId: 'a1' });
+  const instructor = createActor();
+  const INS = { a: 634.9, c: 256.7 };
+  instructor.root.position.set(INS.c, 0, -INS.a); instructor.root.rotation.y = Math.PI;      // facing +a, into the room
+  academy.group.add(instructor.root);
+  world.add({ x0: INS.c - instructor.radius, x1: INS.c + instructor.radius, y0: 0, y1: 1.8, z0: -INS.a - instructor.radius, z1: -INS.a + instructor.radius, tag: 'npc:instructor' });
+  const frameToWorld = (p, out = new THREE.Vector3()) => academy.group.localToWorld(out.set(p.x, p.y, p.z));
+  let talk = null;                                            // { yaw, pitch } (the view to come back to) while talking
+  const runner = createRunner({ data: talkData, state: talkState, ctx: sampleCtx(FL), hooks: { onHook } });
+  const dui = createDialogUI({
+    root: document.body, settings,
+    onNext: () => { runner.next(); afterStep(); },
+    onChoose: (i) => { runner.choose(i); afterStep(); },
+  });
+  runner.onChange((view) => {
+    if (view) { dui.show(view); speak(view); if (view.speaker === 'instructor' && Math.random() < 0.25) instructor.gesture('explain'); }
+    else endTalk();
+    saved.save(talkState);
+  });
+  // the click (or key) that ended the conversation also takes the mouse back for walking
+  function afterStep() { if (!runner.running && started && mode === 'walk' && !menu.isOpen) input.requestLock(); }
+  function startTalk() {
+    if (runner.running) return 'talking';
+    interactor.closeCard(); hud.prompt(null);
+    talk = { yaw: walker.state.yaw, pitch: walker.state.pitch };
+    document.body.classList.add('talking');
+    input.exitLock();
+    audio.ui('open');
+    runner.start('brief');
+    return 'talk';
+  }
+  function endTalk() {
+    if (!talk) return;
+    talk = null; dui.hide(); document.body.classList.remove('talking'); stopVoice();
+  }
+  // the pause menu's "erase the record": the instructor meets you again for the first time
+  function resetProgress() {
+    if (runner.running) runner.stop();
+    const fresh = createDialogState();
+    for (const k of Object.keys(talkState)) delete talkState[k];
+    Object.assign(talkState, fresh);
+    saved.clear();
+  }
+  // the instructor's hooks
+  function onHook(name, arg) {
+    if (name === 'nod') instructor.gesture('nod');
+    else if (name === 'look') instructor.gesture('explain');          // 'player': they already look at you while talking
+    else if (name === 'point') {
+      // the whiteboard (or the screen) behind them, or out of the window towards the apron
+      const s = arg === 'apron' ? { x: 240, y: 1.4, z: -INS.a - 2 } : academy.surfaceAt('brief-1', arg === 'screen' ? 'wall_screen' : 'whiteboard');
+      if (s) { instructor.pointAt(frameToWorld(s)); instructor.gesture('point'); }
+    } else if (name === 'book') {
+      const sec = book.section(arg);
+      if (sec) dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sec.html });
+    } else if (name === 'board') showFigure(arg);
+  }
+  // a textbook figure on the briefing room's screen (the figures are FLIGHT LAB's SVG, drawn for a dark background)
+  function showFigure(secId) {
+    const sec = book.section(secId); if (!sec || !sec.figure) return;
+    const svg = sec.figure.replace(/^<svg(?![^>]*xmlns=)/, '<svg xmlns="http://www.w3.org/2000/svg"').replace(/^<svg /, '<svg width="1200" height="760" ');
+    const img = new Image();
+    img.onload = () => {
+      academy.redraw('brief-1', 'wall_screen', (g, w, h) => {
+        g.fillStyle = '#0b1422'; g.fillRect(0, 0, w, h);
+        g.fillStyle = '#e8f0fa'; g.font = `600 ${Math.round(h * 0.06)}px "Hiragino Sans", "Yu Gothic UI", "Meiryo", "Noto Sans CJK JP", sans-serif`;
+        g.textBaseline = 'top'; g.fillText(sec.title, w * 0.04, h * 0.04, w * 0.92);
+        const top = h * 0.14, bw = w * 0.92, bh = h * 0.82, k = Math.min(bw / img.width, bh / img.height);
+        g.drawImage(img, (w - img.width * k) / 2, top + (bh - img.height * k) / 2, img.width * k, img.height * k);
+      });
+      const s = academy.surfaceAt('brief-1', 'wall_screen');
+      if (s) { instructor.pointAt(frameToWorld(s)); instructor.gesture('point'); }
+    };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+  // the instructor's voice (optional: the browser's speech synthesis, when it has a Japanese voice)
+  function speak(view) {
+    if (!settings.get('voice') || typeof speechSynthesis === 'undefined') return;
+    try {
+      speechSynthesis.cancel();
+      if (view.speaker !== 'instructor') return;
+      const u = new SpeechSynthesisUtterance(view.text), v = speechSynthesis.getVoices().find(x => /^ja/i.test(x.lang));
+      if (!v) return;
+      u.voice = v; u.lang = v.lang; u.rate = 1.05; speechSynthesis.speak(u);
+    } catch (e) { /* no voice */ }
+  }
+  function stopVoice() { try { if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); } catch (e) { /* none */ } }
+  interactor.add({ id: 'npc:instructor', frame: [INS.c, 1.5, -INS.a], radius: 0.45, prompt: `${INSTRUCTOR.title_ja}と話す`, use: startTalk });
+  // turn the view smoothly towards the instructor's face while talking
+  const insHead = new THREE.Vector3();
+  function faceInstructor(dt) {
+    instructor.headWorld(insHead);
+    const y0 = walker.state.yaw, p0 = walker.state.pitch;
+    walker.lookAt(insHead.x, insHead.y - 0.05, insHead.z);
+    const y1 = walker.state.yaw, p1 = walker.state.pitch, k = 1 - Math.exp(-dt / 0.18);
+    let dy = y1 - y0; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+    walker.state.yaw = y0 + dy * k; walker.state.pitch = p0 + (p1 - p0) * k;
+    walker.apply(dt);
+  }
+
   // ---------------------------------------------------------------- viewpoints (the visit camera)
   const V = (a, c, up) => new THREE.Vector3(...L.rwyToLocal(a, c, up));
   const labA = FL.avionics.wpt('LABEA');
@@ -211,6 +324,7 @@ async function boot() {
   function setMode(m) {
     if (m === mode) return;
     mode = m;
+    if (runner.running) runner.stop();
     if (m === 'spectator') spectator.fromCamera();
     else { walker.apply(0); interactor.closeCard(); }
     hud.prompt(null);
@@ -221,8 +335,9 @@ async function boot() {
   document.body.classList.add('mode-walk');
   const menu = createMenu({
     root: document.body, settings, presets: ORDER.map(id => ({ id, label: PRESETS[id].label })), version: buildInfo,
-    onResume: () => { input.enabled = true; input.requestLock(); audio.ui('close'); },
+    onResume: () => { input.enabled = true; if (!talk) input.requestLock(); audio.ui('close'); },
     onQuality: (id) => setQuality(id), onMode: (m) => setMode(m), getMode: () => mode, getPreset: () => preset.id,
+    onResetProgress: () => resetProgress(),
   });
   function openMenu(tab) { if (menu.isOpen) return; interactor.closeCard(); input.enabled = false; input.exitLock(); menu.open(tab); audio.ui('open'); }
   input.onLock((on) => {
@@ -231,10 +346,15 @@ async function boot() {
       lostAt = performance.now();
       // Esc while reading a card (the browser takes that Esc to free the mouse): just close the card
       if (interactor.cardOpen) { interactor.closeCard(); audio.ui('close'); }
+      else if (talk) { /* talking: the mouse is free for the choices */ }
       else if (started && mode === 'walk' && !menu.isOpen) openMenu();
     }
   });
-  renderer.domElement.addEventListener('click', () => { audio.unlock(); if (started && !menu.isOpen) input.requestLock(); });
+  renderer.domElement.addEventListener('click', () => {
+    audio.unlock();
+    if (talk) { const v = runner.view(); if (dui.typing) dui.reveal(); else if (v && !v.choices.length) { runner.next(); afterStep(); } return; }
+    if (started && !menu.isOpen) input.requestLock();
+  });
   addEventListener('keydown', (e) => {
     if (!started || input.typing()) return;
     if (e.code === 'Escape') {
@@ -311,7 +431,8 @@ async function boot() {
     const live = started || scripted > 0;   // behind the start screen nothing moves, and no key does anything
     if (!live) input.takeLook();
     if (mode === 'walk') {
-      if (!menu.isOpen && live) {
+      if (talk) { input.takeLook(); faceInstructor(dt); }
+      else if (!menu.isOpen && live) {
         walker.update(dt);
         if (input.pressed('KeyE') || input.pressed('Mouse0')) { const r = interactor.use(); if (r === 'closed') audio.ui('close'); }
       }
@@ -321,7 +442,13 @@ async function boot() {
     camera.getWorldPosition(camWorld);
     const [fx, fz] = toFrame(camWorld.x, camWorld.z), pa = -fz, pc = fx;
     academy.update(dt, mode === 'walk' ? walker.framePos : { x: fx, z: fz });
-    if (mode === 'walk' && live) { interactor.update(camera); showPlace(dt, pa, pc); }
+    if (mode === 'walk' && live && !talk) { interactor.update(camera); showPlace(dt, pa, pc); }
+    // the instructor looks at the player when they are near (or talking), and moves their mouth while their line shows
+    {
+      const near = Math.hypot(pa - INS.a, pc - INS.c) < 7 && academy.roomOf(pa, pc)?.id === 'brief-1';
+      const v = talk ? runner.view() : null;
+      instructor.update(dt, { lookAt: talk || near ? camWorld : null, talking: !!(v && v.speaker === 'instructor' && dui.typing) });
+    }
     // inside: the eye adapts (exposure), the ceiling lights near the player light the room, the ambience changes
     const k = indoorAt(ACADEMY, pa, pc, camWorld.y - G);
     adapt += (Math.min(1, k / 0.85) - adapt) * (1 - Math.exp(-dt / 0.7));
@@ -467,6 +594,21 @@ async function boot() {
     player: () => { const p = walker.framePos; return { a: p.a, c: p.c, yaw: walker.state.yaw, place: placeAt(p.a, p.c).name }; },
     lookAt: (a, c, y = 1.2) => { setMode('walk'); lookAtFrame(a, c, y); camera.updateMatrixWorld(); interactor.update(camera); return interactor.current ? interactor.current.id : null; },
     use: () => interactor.use(), current: () => (interactor.current ? interactor.current.id : null),
+    // talking: start, read the current line, go on, choose (by index or by a regular expression on the text)
+    talk: () => startTalk(),
+    dialog: () => { const v = runner.view(); return v ? { ...v, typing: dui.typing, bookOpen: dui.bookOpen } : null; },
+    dialogNext: () => { if (dui.typing) dui.reveal(); runner.next(); afterStep(); return runner.view(); },
+    dialogChoose: (which) => {
+      const v = runner.view(); if (!v) return null;
+      const c = typeof which === 'number' ? v.choices[which] : v.choices.find(x => new RegExp(which).test(x.text));
+      if (!c) return null;
+      if (dui.typing) dui.reveal();
+      runner.choose(c.i); afterStep(); return runner.view();
+    },
+    closeBook: () => dui.hideBook(),
+    talkState: () => JSON.parse(JSON.stringify(talkState)),
+    savedState: () => saved.load(), resetProgress: () => resetProgress(),
+    instructor: () => ({ a: INS.a, c: INS.c, gesture: instructor.gesturing, triangles: instructor.triangles }),
     card: () => (interactor.cardOpen ? { title: $('#card .card-title').textContent, text: $('#card .card-body').textContent } : null),
     targets: () => interactor.list().map(t => ({ id: t.id, a: -t.frame[2], c: t.frame[0], y: t.frame[1] })),
     doors: () => academy.doors.doors.map(d => ({ id: d.id, kind: d.kind, angle: +d.angle.toFixed(3), open: +d.open.toFixed(3) })),

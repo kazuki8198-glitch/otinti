@@ -34,7 +34,7 @@ const CSS = `
 #menu p { line-height: 1.75; font-size: 14px; }
 `;
 
-export function createMenu({ root = document.body, settings, presets = [], onResume = () => {}, onQuality = () => {}, onMode = () => {}, getMode = () => 'walk', getPreset = () => null, version = '' }) {
+export function createMenu({ root = document.body, settings, presets = [], onResume = () => {}, onQuality = () => {}, onMode = () => {}, getMode = () => 'walk', getPreset = () => null, onResetProgress = null, version = '' }) {
   if (!document.getElementById('menu-css')) { const st = document.createElement('style'); st.id = 'menu-css'; st.textContent = CSS; document.head.appendChild(st); }
   const el = document.createElement('div'); el.id = 'menu'; el.hidden = true; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', '一時停止メニュー');
   root.appendChild(el);
@@ -76,7 +76,9 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
     }
     return `<p><b>CADET</b>（パイロット訓練生シミュレーター）${version ? ` <span class="m-val">${esc(version)}</span>` : ''}</p>
       <p>公開情報を基にした非公式のゲームです。航空会社（翔洋航空）・訓練所・人物はすべて架空です。実機訓練の代わりにはならず、航法には使えません（NOT FOR NAVIGATION）。飛行モデル・課目・教科書は FLIGHT LAB（同じリポジトリの自主学習教材）を使っています。</p>
-      <p class="m-note">使っているもの：three.js（MIT License）、ambientCG のテクスチャ（CC0）。家具・木・機体・標識などはプログラムで作っています。</p>`;
+      <p class="m-note">使っているもの：three.js（MIT License）、ambientCG のテクスチャ（CC0）。家具・木・機体・標識などはプログラムで作っています。</p>`
+      + (onResetProgress ? `<div class="m-big"><button data-act="reset">訓練の記録を消す（教官との会話を最初から）</button></div>
+      <p class="m-note">記録はこのブラウザの中だけに保存されています。設定は消えません。</p>` : '');
   }
   function render() {
     el.innerHTML = `<div class="m-panel"><h2>一時停止</h2><p class="m-sub">Esc で閉じる</p>
@@ -88,6 +90,11 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
     if (b.dataset.tab) { tab = b.dataset.tab; render(); el.querySelector(`[data-tab="${tab}"][role=tab]`)?.focus(); return; }
     if (b.dataset.act === 'resume') return close(true);
     if (b.dataset.act === 'mode') { onMode(getMode() === 'walk' ? 'spectator' : 'walk'); return close(true); }
+    // erasing the record asks twice: the first press only arms the button
+    if (b.dataset.act === 'reset') {
+      if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'もう一度押すと記録を消します'; return; }
+      onResetProgress(); b.removeAttribute('data-armed'); b.textContent = '記録を消しました'; b.disabled = true; return;
+    }
     if (b.dataset.toggle) { const k = b.dataset.toggle; settings.set(k, !settings.get(k)); b.setAttribute('aria-checked', String(!!settings.get(k))); return; }
     if (b.dataset.quality) { settings.set('quality', b.dataset.quality); onQuality(b.dataset.quality); el.querySelectorAll('[data-quality]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.quality === b.dataset.quality))); }
   });

@@ -127,5 +127,15 @@ export function createSky(renderer, scene, quality) {
     sun.position.copy(f).addScaledVector(d, 1200);
     sun.target.updateMatrixWorld();
   }
-  return { sky, sun, state, setTime, update, applyQuality, uniforms: U };
+  // a smaller shadow box for a while (the cockpit: millimetre texels around the seat); null goes back to the preset's
+  let presetHalf = state.half;
+  function setShadowHalf(m) {
+    const h = m == null ? presetHalf : m;
+    if (h === state.half) return;
+    state.half = h;
+    const c = sun.shadow.camera; c.left = -h; c.right = h; c.top = h; c.bottom = -h; c.updateProjectionMatrix();
+  }
+  const applyQ = applyQuality;
+  function applyQualityKeep(q) { const custom = state.half !== presetHalf ? state.half : null; applyQ(q); presetHalf = state.half; if (custom != null) setShadowHalf(custom); }
+  return { sky, sun, state, setTime, update, applyQuality: applyQualityKeep, setShadowHalf, uniforms: U };
 }

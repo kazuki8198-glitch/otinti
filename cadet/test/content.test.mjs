@@ -33,6 +33,10 @@ const realIn = (s) => REAL.find(r => r.test(String(s)));
 // (a key in brackets after a Japanese word: 右ラダー（E）・スロットル（R / F）, or a key with its meaning in brackets:
 // → E（右ラダー）; Restricted Area（R）・LAB-A（架空の訓練点）・Class B（大空港） are names)
 const APP = /キーボード|[^ァ-ヶ]キー[（(で を]|Shift\s*\+|Enter\s*で|空島|このシミュレータ|シミュレータで体験|メニュー|data-lesson|bk-sim|bk-calc|実装|G1000 型表示|教材の簡略版|教材の使い方|この教材には[^。]*自動操縦|この教材は IFR|[ぁ-んァ-ヶー一-龠][（(]\s*[WASDQERFTVBZXU](?:\s*\/\s*[WASDQERFTVBZXU])*\s*[）)]|(?<![A-Za-z0-9-]\s?)[WASDQERFTVBZXU][（(][ぁ-んァ-ヶー一-龠]/;
+// what must stay: the fiction's and safety notes (この教材 as the course itself), and the real half of a sentence whose
+// other half was about FLIGHT LAB's build
+const KEEP = { 'nav.chart': [/架空/, /NOT FOR NAVIGATION/], 'law.special': [/架空/], 'solo.first': [/根拠にはならない/], 'perf.climb': [/POH/],
+  'perf.wb': [/POH/], 'aero.lift': [/この教材の Archer/], 'ifr.np': [/自動操縦（オートパイロット）があることが多いです。/] };
 // FLIGHT LAB's notes on what is published or guessed about the real course (the academy states its own course plainly)
 const COURSE_NOTE = /公開情報|推測・要確認|class="tag (?:fact|unk)"/;
 
@@ -103,6 +107,10 @@ test('book: FLIGHT LAB\'s simulator boxes, calculators, lesson buttons and key n
   }
   assert.ok(figs >= 15, `${figs} figures`);
   assert.ok(tables >= 40, `${tables} sections with tables`);
+  // its notes on itself as software are gone, with what only explained them; the course's own notes stay
+  assert.doesNotMatch(BOOK.section('crm.auto').html, /練習するためです|この教材には/);
+  assert.doesNotMatch(BOOK.section('ifr.np').html, /この教材|実装/);
+  for (const [id, keep] of Object.entries(KEEP)) for (const re of keep) assert.match(BOOK.section(id).text, re, `${id}: ${re}`);
   // FLIGHT LAB's key column is taken out of the controls table; the table itself stays
   const ctl = BOOK.section('sys.ctl').html;
   assert.match(ctl, /スタビレーター/); assert.doesNotMatch(ctl, /このシミュレータのキー|<td>W \/ S<\/td>/);

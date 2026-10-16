@@ -522,6 +522,7 @@ const CH = ['headP', 'headY', 'headR', 'neckP', 'chestP', 'chestY', 'chestR', 'c
   'pointHandL', 'pointHandR'];
 const C_ = Object.fromEntries(CH.map((k, i) => [k, i]));
 const UNITLESS = new Set(['aimL', 'aimR', 'glance', 'pointHandL', 'pointHandR']);
+const AIM_CH = { L: [C_.aimL, C_.pointHandL], R: [C_.aimR, C_.pointHandR] };
 const both = (k, keys) => ({ [k + 'L']: keys, [k + 'R']: keys });
 const GESTURES = {
   nod: { dur: 1.0, ch: { headP: [0, 0, 0.2, 13, 0.42, -2, 0.6, 7, 0.85, 0, 1, 0], neckP: [0, 0, 0.2, 4, 0.42, -1, 0.6, 2, 0.85, 0, 1, 0] } },
@@ -646,6 +647,25 @@ export function createActor(opts = {}) {
   const pointTarget = new THREE.Vector3(), want = { L: new THREE.Vector3(), R: new THREE.Vector3() }, aimAt = { L: new THREE.Vector3(), R: new THREE.Vector3() };
   let hasPoint = false, pSide = 'R';
   const TURN_MAX = 40 * DEG;                                 // the upper body turns this far at most towards what is pointed at
+  const AIM_RATE = 240 * DEG;                                // an arm swings over to a new target at most this fast (per second)
+  const piv = new THREE.Vector3(), du = new THREE.Vector3(), dw = new THREE.Vector3(), ax = new THREE.Vector3();
+  // the aim moves towards its goal by direction (seen from the chest, at a bounded rate) and by distance on a log scale:
+  // a target much farther away, or across from the old one, never makes the arm jump
+  function easeAim(p, goal, dt) {
+    piv.set(0, 1.4, 0); body.localToWorld(piv);
+    du.subVectors(p, piv); dw.subVectors(goal, piv);
+    const r0 = du.length(), r1 = dw.length();
+    if (!(r0 > 1e-4 && r1 > 1e-4 && Number.isFinite(r0 + r1))) { p.copy(goal); return; }
+    du.multiplyScalar(1 / r0); dw.multiplyScalar(1 / r1);
+    const k = 1 - Math.exp(-dt / 0.14), ang = Math.acos(clamp(du.dot(dw), -1, 1));
+    if (ang > 1e-6) {
+      ax.crossVectors(du, dw);
+      if (ax.lengthSq() < 1e-12) { ax.set(0, 1, 0); if (Math.abs(du.y) > 0.99) ax.set(1, 0, 0); }   // straight across: about the vertical
+      q1.setFromAxisAngle(ax.normalize(), Math.min(ang * k, AIM_RATE * dt));
+      du.applyQuaternion(q1);
+    }
+    p.copy(piv).addScaledVector(du, r0 * Math.pow(r1 / r0, k));
+  }
   const EYE0 = new THREE.Vector3(0, EYE.y, EYE.z + 0.012);   // the eyes' midpoint in the body's frame (bind)
   const EYE_HEAD = new THREE.Vector3(0, EYE.y - P.head[1], EYE.z - P.head[2]);
   const state = { headYaw: 0, headPitch: 0, eyeYaw: 0, eyePitch: 0, blink: 0, mouth: 0, gesture: null };
@@ -658,7 +678,8 @@ export function createActor(opts = {}) {
       root.updateWorldMatrix(true, true);
       if (hasPoint) v1.copy(pointTarget); else { v1.set(-0.9, 1.55, 1.4); body.localToWorld(v1); }
       v2.copy(v1); body.worldToLocal(v2);
-      const side = v2.x > 0.15 ? 'L' : 'R', aimCh = side === 'L' ? C_.aimL : C_.aimR;
+      // (in front the right arm may take a target a little left of the middle; behind, each arm keeps to its own side)
+      const side = (v2.z < 0 ? v2.x >= 0 : v2.x > 0.15) ? 'L' : 'R', aimCh = side === 'L' ? C_.aimL : C_.aimR;
       def = side === 'L' ? GESTURES.pointL : GESTURES.point;
       // already pointing with that arm: it swings over to the new target and goes on from where it is (no restart, no
       // sag); an arm that is down aims straight at it as it comes up
@@ -677,7 +698,13 @@ export function createActor(opts = {}) {
     }
     for (let i = 0; i < CH.length; i++) F[i] = G[i];        // whatever is still moving fades out under the new one
     fadeT = 0; gDef = def; gName = def.pub ? (def.alias || name) : null; gT = 0;
-    return def.dur;
+    if (name === 'point') {
+      // that arm is still up (letting go, or the other arm took over a moment ago): it goes on from its height instead of
+      // sinking under the fade and rising again
+      const ch = AIM_CH[pSide], a = clamp(G[ch[0]], 0, 1);
+      if (a > 0.05) { F[ch[0]] = 0; F[ch[1]] = 0; gT = POINT_HOLD * (0.5 - Math.sin(Math.asin(1 - 2 * a) / 3)); }
+    }
+    return def.dur - gT;
   }
   function gestures(dt) {
     G.fill(0);
@@ -736,14 +763,18 @@ export function createActor(opts = {}) {
 
     // ---- where to look (in the body's frame): the target, an idle glance, or towards the pointed-at thing
     body.updateWorldMatrix(true, false);
-    // pointing: each arm's aim eases towards its target; the upper body turns towards it, by the arm's share
-    let turn = 0;                                            // (smooth: it follows the arms' aim curves)
+    // pointing: each arm's aim eases towards its target; the upper body turns towards it, by the arm's share, only to
+    // that arm's side, and less the more the target is straight above or below (smooth: it follows the aim curves)
+    let turn = 0;
     for (const side of SIDES) {
       const w = clamp(G[side === 'L' ? C_.aimL : C_.aimR], 0, 1);
       if (w <= 1e-4) continue;
-      aimAt[side].lerp(want[side], 1 - Math.exp(-dt / 0.14));
+      easeAim(aimAt[side], want[side], dt);
       pv.copy(aimAt[side]); body.worldToLocal(pv);
-      if (pv.x * pv.x + pv.z * pv.z > 1e-6) turn += w * clamp(0.4 * Math.atan2(pv.x, pv.z), -TURN_MAX, TURN_MAX);
+      const hd = Math.sqrt(pv.x * pv.x + pv.z * pv.z), hy = pv.y - 1.4;
+      if (!(hd > 1e-4)) continue;
+      const share = smooth(0.2, 0.6, hd / Math.sqrt(hd * hd + hy * hy));
+      turn += w * share * clamp(0.4 * Math.atan2(pv.x, pv.z), side === 'L' ? -5 * DEG : -TURN_MAX, side === 'L' ? TURN_MAX : 5 * DEG);
     }
     if (lookAt && Number.isFinite(lookAt.x + lookAt.y + lookAt.z)) { tv.copy(lookAt); body.worldToLocal(tv); }   // (a bad point is ignored)
     else tv.set(EYE0.x + Math.sin(wanderY) * 2, EYE0.y + Math.tan(wanderP) * 2, EYE0.z + Math.cos(wanderY) * 2);
@@ -824,7 +855,7 @@ export function createActor(opts = {}) {
     headWorld(out = new THREE.Vector3()) { head.updateWorldMatrix(true, false); return out.copy(EYE_HEAD).applyMatrix4(head.matrixWorld); },
     get gesturing() { return gName; },
     // for tests: the objects update() works with (they must stay the same ones)
-    _scratch: [tv, pv, v1, v2, q1, pointTarget, want.L, want.R, aimAt.L, aimAt.R, S, G, F],
+    _scratch: [tv, pv, v1, v2, q1, pointTarget, want.L, want.R, aimAt.L, aimAt.R, piv, du, dw, ax, S, G, F],
     dispose() { for (const m of meshes) m.geometry.dispose(); for (const L of ['L', 'R']) { arm[L].pointing.dispose(); arm[L].relaxed.dispose(); } },
   };
   update(0);

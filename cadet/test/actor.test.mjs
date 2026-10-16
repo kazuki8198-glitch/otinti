@@ -246,6 +246,22 @@ test('actor: point aims the arm on the target\'s side at it, wherever the actor 
   assert.ok(hr.y < shr.y - 0.45, 'the right arm stays down');
   const chestYaw = new THREE.Euler().setFromQuaternion(a.bones.chest.getWorldQuaternion(new THREE.Quaternion()), 'YXZ').y;
   assert.ok(chestYaw > 25 * DEG && chestYaw < 45 * DEG, `the upper body turns towards it (${(chestYaw / DEG).toFixed(1)}°)`);
+  // straight behind (and a hair either side of it): the arm and the turn agree on the side, and it points back there
+  for (const lx of [0, 0.1, -0.1, -1e-9]) {
+    const x = createActor(); run(x, 0.5);
+    const t = new THREE.Vector3(lx, 1.4, -2); x.pointAt(t); x.gesture('point'); run(x, 1.2); x.root.updateWorldMatrix(true, true);
+    const side = lx >= 0 ? 'L' : 'R', sh = x.bones['upperArm' + side].getWorldPosition(new THREE.Vector3());
+    const d = x.bones['forearm' + side].getWorldPosition(new THREE.Vector3()).sub(sh).normalize();
+    const cy = new THREE.Euler().setFromQuaternion(x.bones.chest.getWorldQuaternion(new THREE.Quaternion()), 'YXZ').y;
+    assert.ok(d.angleTo(t.clone().sub(sh).normalize()) < 35 * DEG, `behind (${lx}): the ${side} arm is ${(d.angleTo(t.clone().sub(sh).normalize()) / DEG).toFixed(1)}° off`);
+    assert.ok(side === 'L' ? cy > 20 * DEG : cy < -20 * DEG, `behind (${lx}): turned the ${side === 'L' ? 'left' : 'right'} way (${(cy / DEG).toFixed(1)}°)`);
+  }
+  // straight above or below: no twist (the bearing means nothing there)
+  for (const t of [[0, 4, -0.01], [0, 0, -0.01]]) {
+    const x = createActor(); run(x, 0.5); x.pointAt(new THREE.Vector3(...t)); x.gesture('point'); run(x, 1.2);
+    const cy = new THREE.Euler().setFromQuaternion(x.bones.chest.getWorldQuaternion(new THREE.Quaternion()), 'YXZ').y;
+    assert.ok(Math.abs(cy) < 3 * DEG, `${t}: twisted ${(cy / DEG).toFixed(1)}°`);
+  }
   // across the body (the right arm cannot reach a target far to the left in front): the left arm takes it
   const c = createActor(); c.pointAt(new THREE.Vector3(1.2, 1.5, 1.0)); c.gesture('point'); run(c, 1.1);
   c.root.updateWorldMatrix(true, true);
@@ -281,6 +297,25 @@ test('actor: in the briefing room, the board and the screen behind are pointed a
     for (const t of [board, screen, board, board, screen, screen]) { x.pointAt(t); x.gesture('point'); for (let k = 0; k < gap / DT; k++) step(); }
     assert.ok(worst < 9 * DEG, `gap ${gap} s: the arm jumped ${(worst / DEG).toFixed(1)}° in one frame`);
   }
+  // re-aimed with the same arm from the board to the apron out of the window (16 m away) and back: by direction, at a
+  // bounded rate (not along the straight line between the two points, which would swing the arm 17°+ in one frame)
+  const apron = new THREE.Vector3(240, 1.4, -634.9 - 2);
+  for (const gap of [0.3, 1.0, 2.2]) {
+    const x = make(); run(x, 0.5); x.pointAt(board); x.gesture('point'); run(x, gap);
+    for (const t of [apron, board]) {
+      let p = upper(x, 'L').dir, worst = 0;
+      x.pointAt(t); x.gesture('point');
+      for (let k = 0; k < 72; k++) { x.update(DT); const d = upper(x, 'L').dir; worst = Math.max(worst, d.angleTo(p)); p = d; }
+      const { sh, dir } = upper(x, 'L');
+      assert.ok(worst < 6 * DEG, `gap ${gap} s, re-aimed: ${(worst / DEG).toFixed(1)}° in one frame`);
+      assert.ok(dir.angleTo(t.clone().sub(sh).normalize()) < 10 * DEG, `gap ${gap} s: reached the new target`);
+    }
+  }
+  // the left arm, still up, asked again just after the right one took over: it goes on from its height (no dip)
+  { const x = make(); run(x, 0.5); x.pointAt(board); x.gesture('point'); run(x, 1.0);
+    const d0 = upper(x, 'L').dir; x.pointAt(screen); x.gesture('point'); run(x, 0.05); x.pointAt(board); x.gesture('point');
+    let dev = 0; for (let k = 0; k < 48; k++) { x.update(DT); dev = Math.max(dev, upper(x, 'L').dir.angleTo(d0)); }
+    assert.ok(dev < 8 * DEG, `the left arm dipped ${(dev / DEG).toFixed(1)}°`); }
   // the same target again while held: the arm stays up (no sag)
   const y = make(); run(y, 0.5); y.pointAt(screen); y.gesture('point'); run(y, 1.0);
   const d0 = upper(y, 'R').dir;

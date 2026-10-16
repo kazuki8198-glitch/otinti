@@ -252,23 +252,27 @@ export function instructorDialogs(FL, { lessonId = 'a1' } = {}) {
   const figLines = figSec && figSec.caption ? firstLines(speechLines(figSec.caption.replace(/^図[：:]\s*/, '')), 2) : [];
 
   B.hello = say('はじめまして。今日からあなたの担当教官になる、早瀬 航です。', {
-    if: { not: { flag: 'met_instructor' } }, else: 'again', effects: [{ set: 'met_instructor' }, { hook: 'look', arg: 'player' }], next: 'hello:2' });
+    if: { not: { flag: 'met_instructor' } }, else: 'again', effects: [{ hook: 'look', arg: 'player' }], next: 'hello:2' });
   B['hello:2'] = say('ここ、翔洋航空 フライトアカデミーでは、飛ぶ前に必ずこの部屋でブリーフィングをします。', { next: 'hello:3' });
   B['hello:3'] = say('何を、どう飛ぶのか。地上で頭に入れておけば、空の上で慌てずに済みます。', { choices: [{ text: 'よろしくお願いします', next: 'hello:4' }] });
-  B['hello:4'] = say('こちらこそ、よろしくお願いします。わからないことは、いつでも聞いてください。', { hook: { name: 'nod' }, next: 'menu' });
+  // met only once the greeting is over (a talk cut short before this greets you again from the start)
+  B['hello:4'] = say('こちらこそ、よろしくお願いします。わからないことは、いつでも聞いてください。', { effects: [{ set: 'met_instructor' }], hook: { name: 'nod' }, next: 'menu' });
   B.again = say('おかえりなさい。準備は進んでいますか。', { if: { flag: 'briefed_today' }, else: 'again:2', hook: { name: 'look', arg: 'player' }, next: 'menu' });
   B['again:2'] = say('お疲れさまです。準備はいいですか。', { hook: { name: 'look', arg: 'player' }, next: 'menu' });
 
-  // the menu: before the check / between the check and the wrap-up / after the wrap-up
+  // the menu: before the check / between the check and the wrap-up / after the wrap-up. Each one lets you leave.
   B.menu = say('何から始めましょうか。', { if: { not: { flag: 'brief_checked' } }, else: 'menu:mid', choices: [
     { text: '今日の課目を教えてください', next: 'lesson' },
     { text: '質問があります', next: 'ask:root' },
+    { text: 'また後で来ます', next: 'later' },
   ] });
   B['menu:mid'] = say('では、続けましょうか。', { if: { not: { flag: 'briefed_today' } }, else: 'menu:done', choices: [
     { text: 'このあとの流れを教えてください', next: 'wrap' },
     { text: '今日の課目をもう一度聞かせてください', next: 'lesson' },
     { text: '質問があります', next: 'ask:root' },
+    { text: 'また後で来ます', next: 'later' },
   ] });
+  B.later = say('わかりました。準備ができたら、声をかけてください。', { hook: { name: 'nod' }, end: true });
   B['menu:done'] = say('ほかに何かありますか。', { choices: [
     { text: '今日の課目をもう一度聞かせてください', next: 'lesson' },
     { text: '質問があります', next: 'ask:root' },
@@ -315,7 +319,7 @@ export function instructorDialogs(FL, { lessonId = 'a1' } = {}) {
   ] });
 
   // the wrap-up: a flight lesson goes to dispatch, then out to the aircraft; a ground lesson to the training devices
-  B.wrap = say('では、このあとの流れです。', { effects: [{ set: 'briefed_today' }], next: 'wrap:2' });
+  B.wrap = say('では、このあとの流れです。', { next: 'wrap:2' });
   if (lesson.aircraft) {
     B['wrap:2'] = say('まず運航管理（ディスパッチ）で、今日の機体の割り当てと天気を確かめてください。', { next: 'wrap:3' });
     B['wrap:3'] = say('それからエプロン（駐機場）へ出て、機体のところまで歩いていきましょう。', { hook: { name: 'point', arg: 'apron' }, next: 'wrap:4' });
@@ -324,7 +328,8 @@ export function instructorDialogs(FL, { lessonId = 'a1' } = {}) {
     B['wrap:2'] = say('今日は飛びません。訓練装置室の練習席で、この課目を進めてください。', { next: 'wrap:3' });
     B['wrap:3'] = say('地上での練習も、空の上でそのまま役に立ちます。', { next: 'bye' });
   }
-  B.bye = say('では、行きましょう。焦らず、一つずつ確かめていけば大丈夫です。', { hook: { name: 'nod' }, end: true });
+  // briefed once the wrap-up has been heard to the end (every way to the end of it passes here)
+  B.bye = say('では、行きましょう。焦らず、一つずつ確かめていけば大丈夫です。', { effects: [{ set: 'briefed_today' }], hook: { name: 'nod' }, end: true });
 
   // ---- 'ask' ----
   const A = {};

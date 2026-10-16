@@ -125,8 +125,22 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.ok(ins.triangles > 1000 && ins.triangles < 20000, `${ins.triangles} triangles`);
     await ev((ins) => window.__cadet.placeWalker(ins.a + 2.4, ins.c - 0.6, { a: ins.a, c: ins.c }), ins);
     assert.equal(await ev((ins) => window.__cadet.lookAt(ins.a, ins.c, 1.5), ins), 'npc:instructor');
+    await ev(() => window.__cadet.settings.set('textSpeed', 0.5));          // slow enough to click while it types
     assert.equal(await ev(() => window.__cadet.use()), 'talk');
     assert.equal(await ev(() => document.body.classList.contains('talking') && !!window.__cadet.dialog()), true);
+    // a real click on the view while the line types shows the whole line (and only that); the next click goes on
+    const d0 = await ev(() => window.__cadet.dialog());
+    assert.match(d0.text, /はじめまして.*早瀬/);
+    assert.equal(d0.typing, true, 'the first line types out');
+    await g.page.mouse.click(400, 120);
+    const d1 = await ev(() => window.__cadet.dialog());
+    assert.deepEqual([d1.node, d1.typing], [d0.node, false], 'one click: the whole line, still the same line');
+    await g.page.waitForTimeout(700);
+    await g.page.mouse.click(400, 120);
+    const d2 = await ev(() => window.__cadet.dialog());
+    assert.notEqual(d2.node, d0.node, 'the next click goes to the next line');
+    assert.equal(d2.typing, true, 'and that line types out too');
+    await ev(() => window.__cadet.settings.set('textSpeed', 1));
     // one line after another (a single answer is given), until a list with `want` in it
     const until = async (want, max = 40) => {
       const said = [];
@@ -138,8 +152,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
       assert.ok(v && v.choices.some(c => want.test(c.text)), `no "${want}" after ${JSON.stringify(said.slice(-3))}`);
       return { said, v };
     };
-    const first = await until(/今日の課目/);
-    assert.match(first.said[0], /はじめまして.*早瀬/);
+    await until(/今日の課目/);
     // today's lesson: its title, goal and standard from FLIGHT LAB's syllabus, the figure on the screen
     const lesson = await ev(() => window.__cadet.FL.syllabus.STAGES.flatMap(s => s.lessons).find(l => l.id === 'a1'));
     await ev(() => window.__cadet.dialogChoose('今日の課目'));

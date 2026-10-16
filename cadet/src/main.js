@@ -209,6 +209,7 @@ async function boot() {
   world.add({ x0: INS.c - instructor.radius, x1: INS.c + instructor.radius, y0: 0, y1: 1.8, z0: -INS.a - instructor.radius, z1: -INS.a + instructor.radius, tag: 'npc:instructor' });
   const frameToWorld = (p, out = new THREE.Vector3()) => academy.group.localToWorld(out.set(p.x, p.y, p.z));
   let talk = null;                                            // { yaw, pitch } (the view to come back to) while talking
+  let talkEndedAt = -Infinity;                                // the E or click that ended a talk does not start it again
   const runner = createRunner({ data: talkData, state: talkState, ctx: sampleCtx(FL), hooks: { onHook } });
   const dui = createDialogUI({
     root: document.body, settings,
@@ -216,7 +217,8 @@ async function boot() {
     onChoose: (i) => { runner.choose(i); afterStep(); },
   });
   runner.onChange((view) => {
-    if (view) { dui.show(view); speak(view); if (view.speaker === 'instructor' && Math.random() < 0.25) instructor.gesture('explain'); }
+    // dui.show also speaks the line (settings: voice, volume); a line whose hook started a gesture (point, nod) keeps it
+    if (view) { dui.show(view); if (view.speaker === 'instructor' && !instructor.gesturing && Math.random() < 0.25) instructor.gesture('explain'); }
     else endTalk();
     saved.save(talkState);
   });
@@ -234,7 +236,8 @@ async function boot() {
   }
   function endTalk() {
     if (!talk) return;
-    talk = null; dui.hide(); document.body.classList.remove('talking'); stopVoice();
+    talk = null; dui.hide(); document.body.classList.remove('talking');
+    talkEndedAt = performance.now();
   }
   // the pause menu's "erase the record": the instructor meets you again for the first time
   function resetProgress() {
@@ -275,18 +278,6 @@ async function boot() {
     };
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
-  // the instructor's voice (optional: the browser's speech synthesis, when it has a Japanese voice)
-  function speak(view) {
-    if (!settings.get('voice') || typeof speechSynthesis === 'undefined') return;
-    try {
-      speechSynthesis.cancel();
-      if (view.speaker !== 'instructor') return;
-      const u = new SpeechSynthesisUtterance(view.text), v = speechSynthesis.getVoices().find(x => /^ja/i.test(x.lang));
-      if (!v) return;
-      u.voice = v; u.lang = v.lang; u.rate = 1.05; speechSynthesis.speak(u);
-    } catch (e) { /* no voice */ }
-  }
-  function stopVoice() { try { if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); } catch (e) { /* none */ } }
   interactor.add({ id: 'npc:instructor', frame: [INS.c, 1.5, -INS.a], radius: 0.45, prompt: `${INSTRUCTOR.title_ja}と話す`, use: startTalk });
   // turn the view smoothly towards the instructor's face while talking
   const insHead = new THREE.Vector3();
@@ -352,7 +343,7 @@ async function boot() {
   });
   renderer.domElement.addEventListener('click', () => {
     audio.unlock();
-    if (talk) { const v = runner.view(); if (dui.typing) dui.reveal(); else if (v && !v.choices.length) { runner.next(); afterStep(); } return; }
+    if (talk) return;                                         // the dialogue UI takes clicks on the view while talking
     if (started && !menu.isOpen) input.requestLock();
   });
   addEventListener('keydown', (e) => {
@@ -434,7 +425,7 @@ async function boot() {
       if (talk) { input.takeLook(); faceInstructor(dt); }
       else if (!menu.isOpen && live) {
         walker.update(dt);
-        if (input.pressed('KeyE') || input.pressed('Mouse0')) { const r = interactor.use(); if (r === 'closed') audio.ui('close'); }
+        if ((input.pressed('KeyE') || input.pressed('Mouse0')) && performance.now() - talkEndedAt > 500) { const r = interactor.use(); if (r === 'closed') audio.ui('close'); }
       }
     } else if (!menu.isOpen && live) spectator.update(dt);
     input.endFrame();

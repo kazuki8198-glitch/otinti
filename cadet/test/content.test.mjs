@@ -210,13 +210,13 @@ function walk(data, state) {
     return p;
   };
   const visit = (p, st) => {
-    if (p === END) { ends.push(st); return; }
+    if (p === END) { ends.push({ ...st, at: 'END' }); return; }
     const key = `${p.dialog}:${p.node}|${JSON.stringify(st.flags)}|${JSON.stringify(st.trust)}`;
     if (seen.has(key)) return;
     seen.add(key);
     const n = data.dialogs[p.dialog].nodes[p.node];
     st = copy(st); applyEffects(n.effects, st, {});
-    if (n.end === true) { ends.push(st); return; }
+    if (n.end === true) { ends.push({ ...st, at: p.node }); return; }
     if (n.choices) {
       const vis = n.choices.filter(c => evalCond(c.if, st, {}));
       if (!vis.length) stuck.push(`${p.dialog}:${p.node}`);
@@ -227,7 +227,7 @@ function walk(data, state) {
   return { ends, stuck, seen };
 }
 
-test('instructor: every way through the briefing that ends sets briefed_today (first meeting and later)', () => {
+test('instructor: every way through the briefing ends at bye (briefed) or later (left for now), met either way', () => {
   const starts = [
     createDialogState(),
     createDialogState({ v: 1, flags: { met_instructor: true } }),
@@ -239,9 +239,13 @@ test('instructor: every way through the briefing that ends sets briefed_today (f
     for (const s0 of starts) {
       const { ends, stuck, seen } = walk(data, s0);
       assert.deepEqual(stuck, [], `${lessonId}: a list with every choice hidden`);
-      assert.ok(ends.length > 0, `${lessonId}: an end is reached`);
+      assert.ok(ends.some(st => st.at === 'bye'), `${lessonId}: the briefing can be heard to the end`);
+      // before the wrap-up, 'later' leaves the talk; after it, 準備に向かいます (→ bye) does
+      if (!s0.flags.briefed_today) assert.ok(ends.some(st => st.at === 'later'), `${lessonId}: the talk can be left`);
       for (const st of ends) {
-        assert.equal(st.flags.briefed_today, true, `${lessonId}: ended without briefed_today from ${JSON.stringify(s0.flags)}`);
+        assert.ok(['bye', 'later'].includes(st.at), `${lessonId}: ended at ${st.at}`);
+        if (st.at === 'bye') assert.equal(st.flags.briefed_today, true, `${lessonId}: ended without briefed_today from ${JSON.stringify(s0.flags)}`);
+        else assert.equal(!!st.flags.briefed_today, !!s0.flags.briefed_today, `${lessonId}: leaving does not count as briefed`);
         assert.equal(st.flags.met_instructor, true);
       }
       if (!s0.flags.brief_checked) {

@@ -69,7 +69,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
       return `<table>
         <tr><td>W A S D</td><td>移動</td></tr><tr><td>マウス</td><td>見回す（画面をクリックすると操作が始まります）</td></tr>
         <tr><td>Shift（押したまま）</td><td>走る</td></tr><tr><td>E / 左クリック</td><td>調べる・話しかける・扉を開け閉めする・カードを閉じる</td></tr>
-        <tr><td>会話中</td><td>クリック・Space・Enter で次へ。1〜9 か ↑↓ と Enter で選ぶ。Esc で教科書を閉じる</td></tr>
+        <tr><td>会話中</td><td>クリック・Space・Enter で次へ。1〜9 か ↑↓ と Enter で選ぶ。Esc で教科書を閉じる。話を切り上げるときは「また後で来ます」</td></tr>
         <tr><td>Esc</td><td>一時停止（このメニュー）</td></tr><tr><td>F</td><td>性能の表示</td></tr>
         <tr><td>見学モード</td><td>WASD・Space（上）・C（下）・G（地面に立つ）・1〜9・0（視点）・[ ]（時刻）</td></tr></table>
         <p class="m-note">操縦（W / S ピッチ・A / D ロール・Q / E ラダー・R / F スロットル など、FLIGHT LAB と同じキー）は、操縦席に座ってから使います（これから作ります）。</p>`;

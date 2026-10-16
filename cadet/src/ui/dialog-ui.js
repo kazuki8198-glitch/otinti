@@ -16,6 +16,10 @@ const CSS = `
 /* on a short screen (a phone held sideways) the choices give way and scroll, so the top of the list is never cut off */
 #dlg .dlg-choices { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow-y: auto;
   padding: 4px; pointer-events: auto; overscroll-behavior: contain; }
+/* a long list (the textbook's parts) in two columns on a wide screen, read down the left one first */
+@media (min-width: 701px) {
+  #dlg .dlg-choices.many { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(var(--rows, 6), auto); grid-auto-flow: column; }
+}
 #dlg .dlg-ch { flex: none; display: flex; gap: 10px; align-items: baseline; width: 100%; margin: 0; padding: 9px 14px; text-align: left;
   overflow-wrap: anywhere; font: inherit; font-size: 16px; line-height: 1.55; color: var(--ink, #eef3f8); background: rgba(10, 18, 28, 0.88);
   border: 1px solid var(--glass-line, rgba(255,255,255,.12)); border-radius: 12px; cursor: pointer; transition: background .12s, border-color .12s; }
@@ -168,15 +172,17 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   const el = make('div', '', { id: 'dlg' });
   const wrap = make('div', 'dlg-wrap', { role: 'dialog', 'aria-label': '会話' });
   const list = make('div', 'dlg-choices', { role: 'group', 'aria-label': '返事を選ぶ' });
-  const box = make('div', 'dlg-box', { 'aria-live': 'polite' });
+  const box = make('div', 'dlg-box');
   const chip = make('div', 'dlg-chip', { 'aria-hidden': 'true' });
   const line = make('p', 'dlg-text', { 'aria-hidden': 'true' });
   const onSpan = make('span', 'on'), offSpan = make('span', 'off');
   const onText = doc.createTextNode(''), offText = doc.createTextNode('');
   onSpan.appendChild(onText); offSpan.appendChild(offText); line.appendChild(onSpan); line.appendChild(offSpan);
-  const sr = make('p', 'dlg-sr');                                             // the whole line at once, for screen readers
+  // the whole line at once, for screen readers: a live region that is always rendered (outside the subtitle, which is
+  // display:none between talks), so the first line of a talk is announced too
+  const sr = make('p', 'dlg-sr', { 'aria-live': 'polite' });
   const cue = make('div', 'dlg-cue', { 'aria-hidden': 'true' });
-  box.appendChild(chip); box.appendChild(line); box.appendChild(sr); box.appendChild(cue);
+  box.appendChild(chip); box.appendChild(line); box.appendChild(cue);
   wrap.appendChild(list); wrap.appendChild(box);
   const book = make('div', 'dlg-book', { role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'dlg-book-title' });
   const paper = make('article', 'dlg-paper');
@@ -191,7 +197,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   const foot = make('div', 'dlg-bk-foot');
   foot.textContent = coarse ? '✕ か外側をタップで閉じる' : 'Esc・✕・外側のクリックで閉じる';
   paper.appendChild(head); paper.appendChild(bkBody); paper.appendChild(foot); book.appendChild(paper);
-  el.appendChild(wrap); el.appendChild(book);
+  el.appendChild(sr); el.appendChild(wrap); el.appendChild(book);
   wrap.hidden = true; book.hidden = true; list.hidden = true;
   root.appendChild(el);
 
@@ -271,6 +277,8 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
       b.appendChild(num); b.appendChild(txt);
       list.appendChild(b); buttons.push(b);
     });
+    list.classList.toggle('many', choices.length > 6);
+    list.style.setProperty('--rows', String(Math.ceil(choices.length / 2)));
     list.hidden = true;
   }
   function highlight(k) {

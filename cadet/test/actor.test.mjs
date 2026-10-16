@@ -12,6 +12,7 @@ import { createActor, LIMITS, GESTURE_NAMES } from '../src/npc/actor.js';
 
 const DEG = Math.PI / 180;
 const DT = 1 / 60;
+const SIDES2 = ['L', 'R'];
 const run = (a, seconds, o = {}) => { for (let t = 0; t < seconds - 1e-9; t += DT) a.update(DT, o); };
 const finite = (...v) => v.every(Number.isFinite);
 const BONES = ['hips', 'spine', 'chest', 'neck', 'head', 'shoulderL', 'upperArmL', 'forearmL', 'handL', 'shoulderR', 'upperArmR', 'forearmR', 'handR',
@@ -58,12 +59,18 @@ test('actor: builds within budget, the right size and the right way round', () =
   assert.ok(eyes.z > 0.05, `eyes at z ${eyes.z}`);
   const foot = new THREE.Box3().setFromObject(a.bones.footL, true);
   assert.ok(foot.max.z > 0.18 && foot.min.z > -0.1, 'toes forwards');
-  // every body part casts a shadow (the tiny face parts may not), one shared material
+  // every body part casts a shadow (the tiny face parts may not); one shared material, and one of its own for the mouth
+  // (the only morph target: sharing a material with it would switch the shader program every frame)
   for (const n of ['torso', 'hips', 'head', 'upperArmL', 'forearmR', 'handL', 'thighR', 'shinL', 'footR']) {
     const m = a.meshes.find(x => x.name === 'actor-' + n);
     assert.ok(m && m.castShadow, `${n} casts a shadow`);
   }
-  assert.equal(new Set(a.meshes.map(m => m.material)).size, 1);
+  const morph = a.meshes.filter(m => m.geometry.morphAttributes.position), plain = a.meshes.filter(m => !m.geometry.morphAttributes.position);
+  assert.deepEqual(morph.map(m => m.name), ['actor-mouth']);
+  assert.equal(new Set(plain.map(m => m.material)).size, 1);
+  assert.ok(!plain.some(m => m.material === morph[0].material), 'the mouth\'s material is its own');
+  assert.equal(morph[0].material.roughnessMap, plain[0].material.roughnessMap, 'with the same palette');
+  assert.equal(createActor().meshes.find(m => m.name === 'actor-mouth').material, morph[0].material, 'and shared by every actor');
   for (const m of a.meshes) for (const k of ['position', 'normal', 'color', 'uv']) assert.ok(m.geometry.attributes[k], `${m.name}: ${k}`);
   // another height scales the whole body
   const b = createActor({ height: 1.71 }); b.root.updateMatrixWorld(true);
@@ -201,7 +208,7 @@ test('actor: every gesture plays, then the body is back in its idle pose', () =>
   assert.ok(angleTo(before, c.bones.forearmR.quaternion) < 4 * DEG, 'no jump when one gesture cuts into another');
 });
 
-test('actor: point aims the right arm at the target, wherever the actor stands', () => {
+test('actor: point aims the arm on the target\'s side at it, wherever the actor stands', () => {
   for (const [px, pz, ry] of [[0, 0, 0], [3, -2, Math.PI / 2], [-4, 6, -2.4]]) {
     const a = createActor();
     a.root.position.set(px, 0, pz); a.root.rotation.y = ry; a.root.updateMatrixWorld(true);
@@ -222,18 +229,65 @@ test('actor: point aims the right arm at the target, wherever the actor stands',
     // and it glances there
     assert.ok(Math.abs(a.state.headYaw) > 10 * DEG, 'looks towards what it points at');
   }
-  // a target behind the actor, across the body: the arm stays in front of the body instead of swinging back through it
+  // a target behind on the left: the left arm points, out to its side and back (the upper body turns towards it); the
+  // right one stays down, and neither arm goes through the body
   const a = createActor();
   a.pointAt(new THREE.Vector3(1.5, 1.2, -2));
   run(a, 1.2); a.gesture('point'); run(a, 1.1);
+  assert.equal(a.gesturing, 'point');
   a.root.updateWorldMatrix(true, true);
-  const sh = a.bones.upperArmR.getWorldPosition(new THREE.Vector3()), hand = a.bones.handR.getWorldPosition(new THREE.Vector3());
-  assert.ok(hand.z > 0.25, `the hand stays well in front of the body (${hand.z.toFixed(3)})`);
-  assert.ok(hand.y > sh.y - 0.3, `and up (${(hand.y - sh.y).toFixed(3)})`);
+  const sh = a.bones.upperArmL.getWorldPosition(new THREE.Vector3()), el = a.bones.forearmL.getWorldPosition(new THREE.Vector3());
+  const hand = a.bones.handL.getWorldPosition(new THREE.Vector3());
+  const want = new THREE.Vector3(1.5, 1.2, -2).sub(sh).normalize();
+  assert.ok(el.clone().sub(sh).normalize().angleTo(want) < 12 * DEG, `left upper arm off by ${(el.clone().sub(sh).normalize().angleTo(want) / DEG).toFixed(1)}°`);
+  assert.ok(hand.x > sh.x + 0.2, `the hand is out to the side (${(hand.x - sh.x).toFixed(3)})`);
+  assert.notEqual(a.meshes.find(m => m.name === 'actor-handL').geometry, a.meshes.find(m => m.name === 'actor-handR').geometry);
+  const hr = a.bones.handR.getWorldPosition(new THREE.Vector3()), shr = a.bones.upperArmR.getWorldPosition(new THREE.Vector3());
+  assert.ok(hr.y < shr.y - 0.45, 'the right arm stays down');
+  const chestYaw = new THREE.Euler().setFromQuaternion(a.bones.chest.getWorldQuaternion(new THREE.Quaternion()), 'YXZ').y;
+  assert.ok(chestYaw > 25 * DEG && chestYaw < 45 * DEG, `the upper body turns towards it (${(chestYaw / DEG).toFixed(1)}°)`);
+  // across the body (the right arm cannot reach a target far to the left in front): the left arm takes it
+  const c = createActor(); c.pointAt(new THREE.Vector3(1.2, 1.5, 1.0)); c.gesture('point'); run(c, 1.1);
+  c.root.updateWorldMatrix(true, true);
+  assert.ok(c.bones.handL.getWorldPosition(new THREE.Vector3()).y > 1.2 && c.bones.handR.getWorldPosition(new THREE.Vector3()).y < 1.0, 'left arm up, right down');
   // without pointAt it still points somewhere sensible (front right)
   const b = createActor(); b.gesture('point'); run(b, 1.1); b.root.updateWorldMatrix(true, true);
   const hb = b.bones.handR.getWorldPosition(new THREE.Vector3());
   assert.ok(hb.y > 1.0 && hb.z > 0.2 && hb.x < -0.1, `default point (${hb.toArray().map(v => v.toFixed(2))})`);
+});
+
+test('actor: in the briefing room, the board and the screen behind are pointed at; one point after another is smooth', () => {
+  // as main.js places the instructor: facing +a (rotation π in the runway frame), the whiteboard behind on his left and
+  // the screen behind on his right (academy-spec: a 633.66, c 254.6 / 258.4; he stands at a 634.9, c 256.7)
+  const at = (a, c, y) => new THREE.Vector3(c, y, -a);
+  const board = at(633.66, 254.6, 1.45), screen = at(633.66, 258.4, 1.6);
+  const make = () => { const x = createActor(); x.root.position.set(256.7, 0, -634.9); x.root.rotation.y = Math.PI; x.root.updateMatrixWorld(true); return x; };
+  const upper = (x, side) => {
+    x.root.updateWorldMatrix(true, true);
+    const sh = x.bones['upperArm' + side].getWorldPosition(new THREE.Vector3()), el = x.bones['forearm' + side].getWorldPosition(new THREE.Vector3());
+    return { sh, dir: el.sub(sh).normalize() };
+  };
+  for (const [target, side] of [[board, 'L'], [screen, 'R']]) {
+    const x = make(); run(x, 0.5); x.pointAt(target); x.gesture('point'); run(x, 1.2);
+    const { sh, dir } = upper(x, side), off = dir.angleTo(target.clone().sub(sh).normalize());
+    assert.ok(off < 15 * DEG, `${side === 'L' ? 'board' : 'screen'}: the ${side} arm is ${(off / DEG).toFixed(1)}° off`);
+  }
+  // board → screen → board → the same again, each while the last one is still held: no jump from one frame to the next
+  for (const gap of [0.3, 0.8, 1.5, 2.2]) {
+    const x = make(); run(x, 0.5);
+    let worst = 0;
+    const prev = { L: null, R: null };
+    const step = () => { x.update(DT); for (const s of SIDES2) { const d = upper(x, s).dir; if (prev[s]) worst = Math.max(worst, d.angleTo(prev[s])); prev[s] = d; } };
+    for (const t of [board, screen, board, board, screen, screen]) { x.pointAt(t); x.gesture('point'); for (let k = 0; k < gap / DT; k++) step(); }
+    assert.ok(worst < 9 * DEG, `gap ${gap} s: the arm jumped ${(worst / DEG).toFixed(1)}° in one frame`);
+  }
+  // the same target again while held: the arm stays up (no sag)
+  const y = make(); run(y, 0.5); y.pointAt(screen); y.gesture('point'); run(y, 1.0);
+  const d0 = upper(y, 'R').dir;
+  y.pointAt(screen); y.gesture('point');
+  let sag = 0;
+  for (let k = 0; k < 40; k++) { y.update(DT); sag = Math.max(sag, upper(y, 'R').dir.angleTo(d0)); }
+  assert.ok(sag < 4 * DEG, `pointing again sags by ${(sag / DEG).toFixed(1)}°`);
 });
 
 test('actor: update() reuses its objects (no per-frame allocation)', () => {

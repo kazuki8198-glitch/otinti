@@ -380,8 +380,10 @@ export function instructorDialogs(FL, { lessonId = 'a1' } = {}) {
       lines.push(...l); used++;
     }
     if (!lines.length) { lines.push(...firstLines(speechLines(sec.summary || sec.text), KEY_LINES)); used = 0; }
+    // a count only when every point in the book's box is said (one cut for length or left unsaid would make it wrong)
     const intro = !fromKeys || !used ? `${q(sec.title)}ですね。かいつまんで話します。`
-      : used === 1 ? `${q(sec.title)}ですね。大事なのは、この一点です。` : `${q(sec.title)}ですね。大事なことは ${used} つあります。`;
+      : used < sec.keyPoints.length ? `${q(sec.title)}ですね。大事なところを話します。`
+        : used === 1 ? `${q(sec.title)}ですね。大事なのは、この一点です。` : `${q(sec.title)}ですね。大事なことは ${used} つあります。`;
     const menuChoices = [
       { text: '教科書で読む', next: `${id}:read` },
       ...(sec.figure ? [{ text: '図を画面に映してください', next: `${id}:board` }] : []),

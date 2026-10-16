@@ -596,7 +596,7 @@ async function boot() {
       if (dui.typing) dui.reveal();
       runner.choose(c.i); afterStep(); return runner.view();
     },
-    closeBook: () => dui.hideBook(),
+    closeBook: () => dui.hideBook(), dialogReveal: () => dui.reveal(),
     talkState: () => JSON.parse(JSON.stringify(talkState)),
     savedState: () => saved.load(), resetProgress: () => resetProgress(),
     instructor: () => ({ a: INS.a, c: INS.c, gesture: instructor.gesturing, triangles: instructor.triangles }),

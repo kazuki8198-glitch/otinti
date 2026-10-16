@@ -18,6 +18,7 @@ const DEG = Math.PI / 180, TAU = Math.PI * 2;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const smooth = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
 const lerp = (a, b, t) => a + (b - a) * t;
+const SIDES = ['L', 'R'];
 function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
 // ---------------------------------------------------------------- limits and sizes (metres; bind pose: feet at y = 0, facing +z)
@@ -60,6 +61,13 @@ export function actorMaterial() {
   MAT = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 1, roughnessMap: t, metalnessMap: t });
   MAT.name = 'actor';
   return MAT;
+}
+// the mouth (the one part with a morph target) has a material of its own: one shared with the meshes that have none
+// would make three.js switch the shader program back and forth every frame
+let MOUTH_MAT = null;
+function mouthMaterial() {
+  if (!MOUTH_MAT) { MOUTH_MAT = actorMaterial().clone(); MOUTH_MAT.name = 'actor-mouth'; }   // (the same palette texture)
+  return MOUTH_MAT;
 }
 const uOf = (cls) => (CLASS_IDS.indexOf(cls) + 0.5) / CLASS_IDS.length;
 
@@ -510,15 +518,16 @@ function buildFoot(C) {
 
 // ---------------------------------------------------------------- gestures: eased keyframe curves per channel (degrees)
 const CH = ['headP', 'headY', 'headR', 'neckP', 'chestP', 'chestY', 'chestR', 'clavL', 'clavR',
-  'flexL', 'abdL', 'rotL', 'elbowL', 'proL', 'wristL', 'flexR', 'abdR', 'rotR', 'elbowR', 'proR', 'wristR', 'aim', 'glance', 'pointHand'];
+  'flexL', 'abdL', 'rotL', 'elbowL', 'proL', 'wristL', 'flexR', 'abdR', 'rotR', 'elbowR', 'proR', 'wristR', 'aimL', 'aimR', 'glance',
+  'pointHandL', 'pointHandR'];
 const C_ = Object.fromEntries(CH.map((k, i) => [k, i]));
-const UNITLESS = new Set(['aim', 'glance', 'pointHand']);
+const UNITLESS = new Set(['aimL', 'aimR', 'glance', 'pointHandL', 'pointHandR']);
 const both = (k, keys) => ({ [k + 'L']: keys, [k + 'R']: keys });
 const GESTURES = {
   nod: { dur: 1.0, ch: { headP: [0, 0, 0.2, 13, 0.42, -2, 0.6, 7, 0.85, 0, 1, 0], neckP: [0, 0, 0.2, 4, 0.42, -1, 0.6, 2, 0.85, 0, 1, 0] } },
   point: { dur: 2.6, ch: {
-    aim: [0, 0, 0.55, 1, 1.95, 1, 2.6, 0], elbowR: [0, 0, 0.55, -7, 1.95, -7, 2.6, 0], wristR: [0, 0, 0.55, -4, 1.95, -4, 2.6, 0],
-    pointHand: [0, 0, 0.28, 1, 2.25, 1, 2.5, 0], glance: [0, 0, 0.35, 1, 1.1, 1, 1.6, 0], clavR: [0, 0, 0.55, 3, 1.95, 3, 2.6, 0],
+    aimR: [0, 0, 0.55, 1, 1.95, 1, 2.6, 0], elbowR: [0, 0, 0.55, -7, 1.95, -7, 2.6, 0], wristR: [0, 0, 0.55, -4, 1.95, -4, 2.6, 0],
+    pointHandR: [0, 0, 0.28, 1, 2.25, 1, 2.5, 0], glance: [0, 0, 0.35, 1, 1.1, 1, 1.6, 0], clavR: [0, 0, 0.55, 3, 1.95, 3, 2.6, 0],
     headP: [0, 0, 1.3, 0, 1.6, 4, 1.9, 0, 2.6, 0] } },
   explain: { dur: 2.2, ch: {
     flexR: [0, 0, 0.4, 20, 1.0, 24, 1.5, 18, 2.2, 0], abdR: [0, 0, 0.4, 5, 1.0, 14, 1.5, 10, 2.2, 0], rotR: [0, 0, 0.4, 10, 1.0, 0, 1.5, 4, 2.2, 0],
@@ -541,10 +550,14 @@ const GESTURES = {
   beatL: { dur: 1.2, ch: { elbowL: [0, 0, 0.35, 30, 0.75, 34, 1.2, 0], flexL: [0, 0, 0.35, 7, 0.75, 9, 1.2, 0], proL: [0, 0, 0.35, -38, 0.75, -42, 1.2, 0],
     wristL: [0, 0, 0.35, -8, 0.75, -4, 1.2, 0], headP: [0, 0, 0.4, 2, 0.8, -1, 1.2, 0] } },
 };
+// pointing at something on the actor's left: the same curves on the left arm (reported as 'point')
+GESTURES.pointL = { dur: GESTURES.point.dur, alias: 'point',
+  ch: Object.fromEntries(Object.entries(GESTURES.point.ch).map(([k, v]) => [k.replace(/^(aim|pointHand|elbow|wrist|clav)R$/, '$1L'), v])) };
+const POINT_HOLD = 0.55, POINT_END = 1.95;                 // the point's hold (aim 1, finger out), from … to
 export const GESTURE_NAMES = ['nod', 'point', 'explain', 'wave', 'shrug'];
 // compiled: per channel the key times, values (radians) and monotone tangents (no overshoot past a key)
 for (const [name, g] of Object.entries(GESTURES)) {
-  g.pub = GESTURE_NAMES.includes(name);                     // the talking beats are not reported as gestures
+  g.pub = GESTURE_NAMES.includes(g.alias || name);          // the talking beats are not reported as gestures
   g.tracks = Object.entries(g.ch).map(([k, a]) => {
     const n = a.length / 2, t = new Float64Array(n), v = new Float64Array(n), m = new Float64Array(n), sc = UNITLESS.has(k) ? 1 : DEG;
     for (let i = 0; i < n; i++) { t[i] = a[i * 2]; v[i] = a[i * 2 + 1] * sc; }
@@ -594,6 +607,7 @@ export function createActor(opts = {}) {
   const torsoMesh = mesh('torso', buildTorso(C), chest);
   mesh('hips', buildHips(C), hips); mesh('neck', buildNeck(C), neck); mesh('head', buildHead(C), head);
   const mouthPivot = bone('mouth', head, [0, MOUTH.y, MOUTH.z]), mouth = mesh('mouth', buildMouth(C), mouthPivot, false);
+  mouth.material = mouthMaterial();
   const lids = bone('lids', head, [0, EYE.y, EYE.z]); mesh('lids', buildLids(C), lids, false);
   const eyes = [-1, 1].map(s => { const e = bone(s > 0 ? 'eyeL' : 'eyeR', head, [s * EYE.x, EYE.y, EYE.z]); mesh(s > 0 ? 'irisL' : 'irisR', buildIris(C), e, false); return e; });
   const arm = {}, leg = {};
@@ -628,17 +642,41 @@ export function createActor(opts = {}) {
   let sylT = 0, sylDur = 0, sylAmp = 0, sylLeft = 6, beatIn = 1.5;
   const tv = new THREE.Vector3(), pv = new THREE.Vector3(), v1 = new THREE.Vector3(), v2 = new THREE.Vector3();
   const q1 = new THREE.Quaternion();
-  const pointTarget = new THREE.Vector3(), pointNow = new THREE.Vector3();
-  let hasPoint = false;
+  // pointing: the asked-for target, and per arm where it is going (want) and where it aims now (aim, eased towards want)
+  const pointTarget = new THREE.Vector3(), want = { L: new THREE.Vector3(), R: new THREE.Vector3() }, aimAt = { L: new THREE.Vector3(), R: new THREE.Vector3() };
+  let hasPoint = false, pSide = 'R';
+  const TURN_MAX = 40 * DEG;                                 // the upper body turns this far at most towards what is pointed at
   const EYE0 = new THREE.Vector3(0, EYE.y, EYE.z + 0.012);   // the eyes' midpoint in the body's frame (bind)
   const EYE_HEAD = new THREE.Vector3(0, EYE.y - P.head[1], EYE.z - P.head[2]);
   const state = { headYaw: 0, headPitch: 0, eyeYaw: 0, eyePitch: 0, blink: 0, mouth: 0, gesture: null };
 
   function startGesture(name) {
-    const def = GESTURES[name]; if (!def) return 0;
+    let def = GESTURES[name]; if (!def) return 0;
+    let hold = false;
+    if (name === 'point') {
+      // the target (by default: ahead to the right), and the arm on its side (+x is the actor's left)
+      root.updateWorldMatrix(true, true);
+      if (hasPoint) v1.copy(pointTarget); else { v1.set(-0.9, 1.55, 1.4); body.localToWorld(v1); }
+      v2.copy(v1); body.worldToLocal(v2);
+      const side = v2.x > 0.15 ? 'L' : 'R', aimCh = side === 'L' ? C_.aimL : C_.aimR;
+      def = side === 'L' ? GESTURES.pointL : GESTURES.point;
+      // already pointing with that arm: it swings over to the new target and goes on from where it is (no restart, no
+      // sag); an arm that is down aims straight at it as it comes up
+      hold = gDef === def;
+      if (G[aimCh] < 0.05) aimAt[side].copy(v1);
+      want[side].copy(v1); pSide = side;
+      if (hold) {
+        if (gT > POINT_HOLD && gT <= POINT_END) gT = POINT_HOLD;                    // holding: hold again
+        else if (gT > POINT_END) {
+          // letting go: back onto the way up, at the same height (the arm's channels rise and fall on the same smoothstep)
+          const a = clamp(G[aimCh], 0, 1);
+          gT = POINT_HOLD * (0.5 - Math.sin(Math.asin(1 - 2 * a) / 3));
+        }
+        return def.dur - gT;
+      }
+    }
     for (let i = 0; i < CH.length; i++) F[i] = G[i];        // whatever is still moving fades out under the new one
-    fadeT = 0; gDef = def; gName = def.pub ? name : null; gT = 0;
-    if (name === 'point') { if (hasPoint) pointNow.copy(pointTarget); else { root.updateWorldMatrix(true, true); pointNow.set(-0.9, 1.55, 1.4); body.localToWorld(pointNow); } }
+    fadeT = 0; gDef = def; gName = def.pub ? (def.alias || name) : null; gT = 0;
     return def.dur;
   }
   function gestures(dt) {
@@ -698,10 +736,19 @@ export function createActor(opts = {}) {
 
     // ---- where to look (in the body's frame): the target, an idle glance, or towards the pointed-at thing
     body.updateWorldMatrix(true, false);
+    // pointing: each arm's aim eases towards its target; the upper body turns towards it, by the arm's share
+    let turn = 0;                                            // (smooth: it follows the arms' aim curves)
+    for (const side of SIDES) {
+      const w = clamp(G[side === 'L' ? C_.aimL : C_.aimR], 0, 1);
+      if (w <= 1e-4) continue;
+      aimAt[side].lerp(want[side], 1 - Math.exp(-dt / 0.14));
+      pv.copy(aimAt[side]); body.worldToLocal(pv);
+      if (pv.x * pv.x + pv.z * pv.z > 1e-6) turn += w * clamp(0.4 * Math.atan2(pv.x, pv.z), -TURN_MAX, TURN_MAX);
+    }
     if (lookAt && Number.isFinite(lookAt.x + lookAt.y + lookAt.z)) { tv.copy(lookAt); body.worldToLocal(tv); }   // (a bad point is ignored)
     else tv.set(EYE0.x + Math.sin(wanderY) * 2, EYE0.y + Math.tan(wanderP) * 2, EYE0.z + Math.cos(wanderY) * 2);
     const glance = G[C_.glance];
-    if (glance > 0) { pv.copy(pointNow); body.worldToLocal(pv); tv.lerp(pv, glance); }
+    if (glance > 0) { pv.copy(aimAt[pSide]); body.worldToLocal(pv); tv.lerp(pv, glance); }
     if (!Number.isFinite(tv.x + tv.y + tv.z)) tv.set(EYE0.x, EYE0.y, EYE0.z + 2);   // overflowed (a point absurdly far away): look ahead
     const dx = tv.x - EYE0.x, dy = tv.y - EYE0.y, dz = tv.z - EYE0.z, dh = Math.sqrt(dx * dx + dz * dz), dist = Math.sqrt(dh * dh + dy * dy);
     let yaw = Math.atan2(dx, dz), pitch = Math.atan2(dy, dh);
@@ -711,12 +758,13 @@ export function createActor(opts = {}) {
     yaw *= behind * (1 - steep) * near; pitch *= lerp(behind, 1, steep) * near;
     const r = clamp(dist, 0.2, 100), cp = Math.cos(pitch);           // only the direction matters (and ∞ · 0 would be NaN)
     tv.set(EYE0.x + r * Math.sin(yaw) * cp, EYE0.y + r * Math.sin(pitch), EYE0.z + r * Math.cos(yaw) * cp);
-    const hyT = clamp(yaw - clamp(yaw, -LIMITS.eyes, LIMITS.eyes), -LIMITS.headYaw, LIMITS.headYaw);
+    // (the head's limits are the neck's: on top of the upper body's turn)
+    const hyT = clamp(yaw - clamp(yaw, -LIMITS.eyes, LIMITS.eyes), turn - LIMITS.headYaw, turn + LIMITS.headYaw);
     const hpT = clamp(pitch - clamp(pitch, -LIMITS.eyes, LIMITS.eyes), -LIMITS.headPitch, LIMITS.headPitch);
     if (Math.abs(hyT - lastHyT) > 25 * DEG && blinkT < 0) blinkT = 0;   // a big change of gaze comes with a blink
     lastHyT = hyT;
     spring(S, HY, hyT, 6.5, dt); spring(S, HP, hpT, 6.5, dt);
-    S[HY] = clamp(S[HY], -LIMITS.headYaw, LIMITS.headYaw); S[HP] = clamp(S[HP], -LIMITS.headPitch, LIMITS.headPitch);
+    S[HY] = clamp(S[HY], turn - LIMITS.headYaw, turn + LIMITS.headYaw); S[HP] = clamp(S[HP], -LIMITS.headPitch, LIMITS.headPitch);
     spring(S, TN, talking ? 0.022 * Math.sin(time * 5.1) * Math.sin(time * 1.7 + 1) : 0, 9, dt);
 
     // ---- the body: breathing, weight shift (hips sway, the spine keeps the shoulders level), looking
@@ -725,9 +773,9 @@ export function createActor(opts = {}) {
     const hRoll = 1.5 * DEG * w1, hYaw = 1.3 * DEG * w2;
     hips.position.set(0.015 * w1, P.hips[1] - 0.003 * w1 * w1, 0);
     hips.rotation.set(0.5 * DEG * w2, hYaw, hRoll);
-    spine.rotation.set(0.8 * DEG, -0.5 * hYaw, -0.5 * hRoll);
-    const Y = S[HY], Pt = S[HP], chestYaw = 0.12 * Y, rest = Y - chestYaw;
-    chest.rotation.set(-0.8 * DEG - 0.6 * DEG * br + G[C_.chestP], chestYaw - 0.5 * hYaw + G[C_.chestY], -0.6 * hRoll + G[C_.chestR]);
+    spine.rotation.set(0.8 * DEG, -0.5 * hYaw + 0.45 * turn, -0.5 * hRoll);
+    const Y = S[HY] - turn, Pt = S[HP], chestYaw = 0.12 * Y, rest = Y - chestYaw;   // Y: the head's turn on top of the body's
+    chest.rotation.set(-0.8 * DEG - 0.6 * DEG * br + G[C_.chestP], chestYaw + 0.55 * turn - 0.5 * hYaw + G[C_.chestY], -0.6 * hRoll + G[C_.chestR]);
     torsoMesh.scale.set(1 + 0.006 * br, 1, 1 + 0.014 * br);
     const nod = S[TN];
     neck.rotation.set(-0.4 * Pt + 0.6 * DEG * br + G[C_.neckP] + 0.4 * nod, 0.4 * rest, 0, 'YXZ');
@@ -735,17 +783,22 @@ export function createActor(opts = {}) {
     // arms: relaxed at the sides, plus the gesture
     poseArm(arm.L, (3 + 1.2 * w2) * DEG + G[C_.flexL], 8 * DEG + G[C_.abdL], G[C_.rotL], (13 + 2 * br) * DEG + G[C_.elbowL], G[C_.proL], 5 * DEG + G[C_.wristL], G[C_.clavL], br);
     poseArm(arm.R, (3 - 1.2 * w2) * DEG + G[C_.flexR], 8 * DEG + G[C_.abdR], G[C_.rotR], (13 + 2 * br) * DEG + G[C_.elbowR], G[C_.proR], 5 * DEG + G[C_.wristR], G[C_.clavR], br);
-    // pointing: the right arm turns towards the target (kept in front of the body and away from the head)
-    const aim = G[C_.aim];
-    if (aim > 1e-4) {
-      const a = arm.R; a.clav.updateWorldMatrix(true, false);
-      v1.copy(pointNow); a.clav.worldToLocal(v1); v1.sub(a.ua.position);
-      if (v1.lengthSq() > 1e-6) {
-        v1.normalize(); v1.z = Math.max(v1.z, 0.3); v1.x = Math.min(v1.x, 0.3); v1.y = clamp(v1.y, -0.8, 0.72); v1.normalize();
-        q1.setFromUnitVectors(DOWN, v1); a.ua.quaternion.slerp(q1, aim);
-      }
+    // pointing: the arm turns towards its target. It does not cross the body (at most a little past the middle), and it
+    // reaches back only out to its own side (a board behind and to the left: the left arm, out to the side and back).
+    for (const side of SIDES) {
+      const a = arm[side], aim = clamp(G[side === 'L' ? C_.aimL : C_.aimR], 0, 1);
+      a.hm.geometry = G[side === 'L' ? C_.pointHandL : C_.pointHandR] > 0.5 ? a.pointing : a.relaxed;
+      if (aim <= 1e-4) continue;
+      a.clav.updateWorldMatrix(true, false);
+      v1.copy(aimAt[side]); a.clav.worldToLocal(v1); v1.sub(a.ua.position);
+      if (v1.lengthSq() <= 1e-6) continue;
+      v1.normalize();
+      const out = a.s * v1.x;                                // outwards, to the arm's own side
+      if (out < -0.3) v1.x = -0.3 * a.s;
+      v1.z = Math.max(v1.z, lerp(0.3, -0.6, smooth(0.15, 0.75, out)));
+      v1.y = clamp(v1.y, -0.8, 0.72); v1.normalize();
+      q1.setFromUnitVectors(DOWN, v1); a.ua.quaternion.slerp(q1, aim);
     }
-    arm.R.hm.geometry = G[C_.pointHand] > 0.5 ? arm.R.pointing : arm.R.relaxed;
     solveLeg(leg.L); solveLeg(leg.R);
 
     // ---- eyes: towards the target in the head's frame (the eyes do the first 15°), then lids and mouth
@@ -771,7 +824,7 @@ export function createActor(opts = {}) {
     headWorld(out = new THREE.Vector3()) { head.updateWorldMatrix(true, false); return out.copy(EYE_HEAD).applyMatrix4(head.matrixWorld); },
     get gesturing() { return gName; },
     // for tests: the objects update() works with (they must stay the same ones)
-    _scratch: [tv, pv, v1, v2, q1, pointTarget, pointNow, S, G, F],
+    _scratch: [tv, pv, v1, v2, q1, pointTarget, want.L, want.R, aimAt.L, aimAt.R, S, G, F],
     dispose() { for (const m of meshes) m.geometry.dispose(); for (const L of ['L', 'R']) { arm[L].pointing.dispose(); arm[L].relaxed.dispose(); } },
   };
   update(0);

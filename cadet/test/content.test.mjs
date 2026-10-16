@@ -32,7 +32,7 @@ const realIn = (s) => REAL.find(r => r.test(String(s)));
 // FLIGHT LAB's own controls and pages
 // (a key in brackets after a Japanese word: 右ラダー（E）・スロットル（R / F）, or a key with its meaning in brackets:
 // → E（右ラダー）; Restricted Area（R）・LAB-A（架空の訓練点）・Class B（大空港） are names)
-const APP = /キーボード|[^ァ-ヶ]キー[（(で を]|Shift\s*\+|Enter\s*で|空島|このシミュレータ|シミュレータで体験|メニュー|data-lesson|bk-sim|bk-calc|[ぁ-んァ-ヶー一-龠][（(]\s*[WASDQERFTVBZXU](?:\s*\/\s*[WASDQERFTVBZXU])*\s*[）)]|(?<![A-Za-z0-9-]\s?)[WASDQERFTVBZXU][（(][ぁ-んァ-ヶー一-龠]/;
+const APP = /キーボード|[^ァ-ヶ]キー[（(で を]|Shift\s*\+|Enter\s*で|空島|このシミュレータ|シミュレータで体験|メニュー|data-lesson|bk-sim|bk-calc|実装|G1000 型表示|教材の簡略版|教材の使い方|この教材には[^。]*自動操縦|この教材は IFR|[ぁ-んァ-ヶー一-龠][（(]\s*[WASDQERFTVBZXU](?:\s*\/\s*[WASDQERFTVBZXU])*\s*[）)]|(?<![A-Za-z0-9-]\s?)[WASDQERFTVBZXU][（(][ぁ-んァ-ヶー一-龠]/;
 // FLIGHT LAB's notes on what is published or guessed about the real course (the academy states its own course plainly)
 const COURSE_NOTE = /公開情報|推測・要確認|class="tag (?:fact|unk)"/;
 
@@ -354,6 +354,14 @@ test('instructor: the words come from FLIGHT LAB\'s data', () => {
   assert.ok(trim.length >= 3 && trim.length <= 4, `${trim.length} lines`);
   assert.equal(trim[trim.length - 1], 'トリムは最後です。トリムで機首を上げ下げしません。');
   assert.match(ask['sec:aero.forces'].text, /大事なことは 2 つ/);
+  // a count said is the count in the book's box, and that many points follow
+  for (const id of SECTIONS) {
+    const t = ask[`sec:${id}`].text, m = /大事なことは (\d+) つ|この一点/.exec(t);
+    if (!m) continue;
+    const n = m[1] ? +m[1] : 1, keys = BOOK.section(id).keyPoints.length;
+    assert.equal(n, keys, `${id}: says ${n}, the book has ${keys}`);
+  }
+  assert.match(ask['sec:aero.aoa'].text, /大事なところを話します/);
   // the check: today's goal and two other lessons' goals
   const goals = new Set(LESSONS.map(l => sentences(l.goal).pop()));
   const check = brief.check.choices;

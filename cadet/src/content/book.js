@@ -9,8 +9,12 @@
 const DROP_CHAPTERS = new Set(['intro', 'sim']);
 // the real airline, its call sign, its training partner and their sites (the game's airline and school are fictional)
 export const REAL_NAMES = /(?<![A-Za-z])ANA(?![A-Za-z])|ＡＮＡ|All\s*Nippon|全日空|全日本空輸|Acron|ana\.co\.jp|anahd\.co\.jp|acronaviation/i;
-// FLIGHT LAB's own user interface: its keys, menus, pages, calculators and simulator notes (the game has its own)
-const APP_ONLY = /このシミュレータ|シミュレータでは|メニューの「|メニュー →|本アプリ|「英語交信」ページ|同じページの|オーディオパネルも同じ配置|上の計算機|教材用の簡略化/;
+// FLIGHT LAB's own user interface: its keys, menus, pages, calculators and simulator notes (the game has its own), and
+// its notes on itself as software (its G1000-style display, what it has not built). "この教材" as the course itself stays:
+// この教材の Archer（教材値）, この教材の LAB 空域は架空, この教材の課目「…」
+const APP_ONLY = new RegExp(['このシミュレータ', 'シミュレータでは', 'メニューの「', 'メニュー →', '本アプリ', '「英語交信」ページ', '同じページの',
+  'オーディオパネルも同じ配置', '上の計算機', '教材用の簡略化', 'G1000 型表示', '教材の簡略版', '実装していません', '未実装',
+  'この教材には[^。]*自動操縦', 'この教材は IFR'].join('|'));
 const bad = (s) => REAL_NAMES.test(s) || APP_ONLY.test(s);
 
 // ---- text helpers (the instructor's lines use them too) ----
@@ -84,7 +88,7 @@ function filterHtml(html, sectionExists) {
   // FLIGHT LAB's own pages: "try it in the simulator" boxes, calculators, notes on its keys and its unbuilt parts
   h = h.replace(/<div class="bk-sim">[\s\S]*?<\/div>/g, '').replace(/<div class="bk-calc[^"]*"[^>]*>\s*<\/div>/g, '');
   h = h.replace(/<p class="(?:small )?mute">([\s\S]*?)<\/p>/g, (m, t) => (/シミュレータ|教材/.test(t) ? '' : m));
-  h = h.replace(/<span class="tag unk">[^<]*シミュレータ[^<]*<\/span>/g, '');
+  h = h.replace(/<span class="tag unk">[^<]*シミュレータ[^<]*<\/span>/g, '').replace(/（この教材の使い方）/g, '');
   // its keys in brackets after a Japanese word: 右ラダー（E） → 右ラダー (Restricted Area（R）, 荷重倍数（G） stay)
   h = h.replace(/([ぁ-んァ-ヶー\u4e00-\u9fff])（\s*[WASDQERFTVBZXU](?:\s*[/／]\s*[WASDQERFTVBZXU])*\s*）/g, '$1');
   // figures are set aside while the text is filtered (their drawings hold text too), then put back

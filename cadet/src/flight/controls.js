@@ -19,11 +19,15 @@ export const actionForKey = (code, shift) => { const a = KEY_ACTS[code]; return 
 export const PREFS0 = { hold: 'hold', rhold: 'hold', sens: 'low', autoRud: true, assist: false };
 
 const NOKEYS = { has: () => false, shift: false };
-const navPads = () => (typeof navigator !== 'undefined' && navigator && navigator.getGamepads ? navigator.getGamepads() : []);
+const NOPADS = [];
+const navPads = () => (typeof navigator !== 'undefined' && navigator && navigator.getGamepads ? navigator.getGamepads() : NOPADS);
 // keys move the stick gradually and it springs back to the centre when released (an analog stick follows quickly)
 const ramp = (clamp, cur, tgt, dt, analog) => (analog ? cur + (tgt - cur) * Math.min(1, 12 * dt) : cur + clamp(tgt - cur, -(tgt === 0 ? 3.5 : 0.67) * dt, (tgt === 0 ? 3.5 : 0.67) * dt));
 const curve = v => Math.sign(v) * Math.pow(Math.abs(v), 1.3);
 const expo = v => Math.sign(v) * Math.pow(Math.abs(v), 1.2);
+// the gamepad's dead zone (rescaled so the travel outside it still reaches 1) and a button's value
+const dz = (v, z = 0.12) => Math.abs(v || 0) < z ? 0 : (v - Math.sign(v) * z) / (1 - z);
+const btn = (gp, i) => (gp.buttons[i] ? gp.buttons[i].value : 0);
 
 // opts: prefs (merged over PREFS0), savePrefs(prefs) when the player changes one, getGamepads() (default: the browser's),
 // readPad(L, dt) → a pad reading { stick, tr, tp, ty, brake } | null in place of the gamepad (tests)
@@ -150,34 +154,37 @@ export function createControls(FL, { prefs, savePrefs = () => {}, getGamepads = 
   // the gamepad (standard mapping; a PS5 DualSense or an Xbox pad), in flight. FLIGHT LAB padInput: the left stick is
   // the yoke (it turns the keyboard holds off), the right stick x + the bumpers the rudder, the right stick y the trim,
   // the triggers the throttle; the buttons as in FLIGHT LAB's guide. What the cockpit has to do goes to padOut.
+  // One difference: FLIGHT LAB answers a checklist item (A) or the tower (X / B / Y) at once, so the same press also
+  // brakes (A, last item) or works the flaps / the view (B / X / Y) once the dialog has closed; here the dialogs are
+  // answered by the bridge after this frame's controls, and a press does one thing.
+  const padAct = (L, a) => { const text = action(L, a); if (text) st.padOut.push({ type: 'toast', text, kind: st.kind }); };
   function padInput(L, dt) {
-    const pads = getGamepads() || [];
+    const pads = getGamepads() || NOPADS;
     let gp = null; for (let i = 0; i < pads.length; i++) { const p = pads[i]; if (p && p.connected) { gp = p; break; } }
     const pad = st.pad;
     if (!gp) { pad.known = null; return null; }
     if (pad.known !== gp.id) { pad.known = gp.id; st.padOut.push({ type: 'toast', text: `コントローラーを認識しました${gp.mapping === 'standard' ? '' : '：このブラウザでは配置が標準ではないため、一部のボタンが違う場合があります'}`, kind: '' }); }
-    const dz = (v, z = 0.12) => Math.abs(v || 0) < z ? 0 : (v - Math.sign(v) * z) / (1 - z);
-    const ax = gp.axes, b = i => (gp.buttons[i] ? gp.buttons[i].value : 0);
-    const E = pad.edge; for (let i = 0; i < 18; i++) { const now = b(i) > 0.5, was = !!pad.prev[i]; pad.prev[i] = now; E[i] = now && !was; }
+    const ax = gp.axes;
+    const E = pad.edge; for (let i = 0; i < 18; i++) { const now = btn(gp, i) > 0.5, was = !!pad.prev[i]; pad.prev[i] = now; E[i] = now && !was; }
     const out = pad.out; out.stick = false; out.tr = 0; out.tp = 0; out.ty = 0; out.brake = false;
     if (!L) return out;
-    const s = L.s, act = (a) => { const text = action(L, a); if (text) st.padOut.push({ type: 'toast', text, kind: st.kind }); };
+    const s = L.s;
     if (L.check && E[0]) st.padOut.push({ type: 'checklist' });
     if (L.atc) { if (E[2]) st.padOut.push({ type: 'atc', i: 0 }); else if (E[1]) st.padOut.push({ type: 'atc', i: 1 }); else if (E[3]) st.padOut.push({ type: 'atc', i: 2 }); }
     const lx = dz(ax[0]), ly = dz(ax[1]), rx = dz(ax[2]), ry = dz(ax[3], 0.2);
     if (lx || ly) { out.stick = true; out.tr = lx; out.tp = ly; }
-    out.ty = clamp(rx + (b(5) - b(4)), -1, 1);
+    out.ty = clamp(rx + (btn(gp, 5) - btn(gp, 4)), -1, 1);
     if (ry && !s.opts.assist) s.trim = clamp(s.trim + ry * 0.12 * dt, -P.TRIM_MAX, P.TRIM_MAX);
-    s.thr = clamp(s.thr + (b(7) - b(6)) * 0.5 * dt, 0, 1);
-    if (b(0) > 0.5 && !L.check) out.brake = true;
-    if (!L.atc) { if (E[1]) act('flaps'); if (E[2]) act('flapsUp'); if (E[3]) st.padOut.push({ type: 'view' }); }
-    if (E[8]) act('gear');
+    s.thr = clamp(s.thr + (btn(gp, 7) - btn(gp, 6)) * 0.5 * dt, 0, 1);
+    if (btn(gp, 0) > 0.5 && !L.check) out.brake = true;
+    if (!L.atc) { if (E[1]) padAct(L, 'flaps'); if (E[2]) padAct(L, 'flapsUp'); if (E[3]) st.padOut.push({ type: 'view' }); }
+    if (E[8]) padAct(L, 'gear');
     if (E[9]) { st.padOut.push({ type: 'pause' }); return out; }
     if (E[12] || E[13]) s.trim = clamp(s.trim + (E[13] ? 0.02 : -0.02), -P.TRIM_MAX, P.TRIM_MAX);
-    if (E[10]) act('level');
-    if (E[11]) act('autoRud');
-    if (E[14]) act('feather0');
-    if (E[15]) act('feather1');
+    if (E[10]) padAct(L, 'level');
+    if (E[11]) padAct(L, 'autoRud');
+    if (E[14]) padAct(L, 'feather0');
+    if (E[15]) padAct(L, 'feather1');
     if (E[16]) st.padOut.push({ type: 'help' });
     return out;
   }

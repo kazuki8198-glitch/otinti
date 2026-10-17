@@ -17,7 +17,7 @@ const SANS = '"Arial Narrow", "Helvetica Neue", Arial, Helvetica, sans-serif';
 // A 10.4" display unit: the screen (4:3) with the softkey labels along its bottom (the strip), 12 keys under it,
 // the knobs in the two side columns (NAV / HDG / ALT on the left, COM / CRS-BARO / RANGE / keys / FMS on the right).
 export const BEZEL = { w: 0.27, h: 0.21, depth: 0.02, screenW: 0.21, screenH: 0.1575, screenY: 0.012 };
-BEZEL.stripH = BEZEL.screenW * 64 / 512;                                     // the label strip: 512 × 64 px
+BEZEL.stripH = BEZEL.screenW * 32 / 512;                                     // the label strip: 512 × 32 px
 BEZEL.imageH = BEZEL.screenW * 400 / 640;                                    // the display itself: 640 × 400 (16:10)
 BEZEL.screenBot = BEZEL.screenY - BEZEL.screenH / 2;
 BEZEL.keyY = BEZEL.screenBot - 0.0145;
@@ -60,10 +60,12 @@ export const softkeysOf = (which, av) => (which === 'mfd' ? SOFTKEYS.mfd : av &&
 
 // ---------------------------------------------------------------- the canvases and their textures
 const SCR_W = 1024, SCR_H = 640, LW = 640, LH = 400;
-const DYN_W = 512, DYN_H = 256;
+const DYN_W = 512, DYN_H = 192;
 // regions of the small canvas: the two label strips, the three standby dials, a white patch (lamps take its colour)
-export const DYN = { W: DYN_W, H: DYN_H, strip: { pfd: [0, 0, 512, 64], mfd: [0, 64, 512, 64] }, asi: [0, 128, 128, 128], att: [128, 128, 128, 128], alt: [256, 128, 128, 128], white: [400, 150, 16, 16] };
+export const DYN = { W: DYN_W, H: DYN_H, strip: { pfd: [0, 0, 512, 32], mfd: [0, 32, 512, 32] }, asi: [0, 64, 128, 128], att: [128, 64, 128, 128], alt: [256, 64, 128, 128], white: [420, 100, 16, 16] };
 export const dynUV = ([x, y, w, h]) => [x / DYN_W, 1 - (y + h) / DYN_H, (x + w) / DYN_W, 1 - y / DYN_H];   // [u0, v0, u1, v1]
+
+const FONT_S = `700 11px ${SANS}`, FONT_L = `700 14px ${SANS}`;
 
 function canvasTex(cv, mips) {
   const t = new THREE.CanvasTexture(cv);
@@ -72,7 +74,8 @@ function canvasTex(cv, mips) {
   return t;
 }
 
-// createGlass(FL, makeCanvas) → { pfd, mfd, dyn: { canvas, texture } | null, drawScreen, blankScreen, drawStrips, drawStandby, setAnisotropy, bytes }
+// createGlass(FL, makeCanvas) → { pfd, mfd, dyn: { canvas, texture } | null, stats, drawScreen, blankScreen, drawStrips, drawStandby,
+//   setAnisotropy, bytes, dispose }
 export function createGlass(FL, makeCanvas) {
   const AV = FL.avionics, P = FL.physics;
   const mk = (w, h, mips) => {
@@ -98,9 +101,11 @@ export function createGlass(FL, makeCanvas) {
     for (let i = 0; i < d.eng.length && i < s.eng.length; i++) { const e = s.eng[i], o = d.eng[i]; o.run = e.run; o.rpm = e.rpm; o.feather = e.feather; }
     return d;
   }
+  const stats = { pfd: 0, mfd: 0, blank: 0, strips: 0, standby: 0 };      // draws so far (tests, the perf overlay)
   function drawScreen(which, s, av) {
     const sc = which === 'mfd' ? mfd : pfd;
     if (!sc || !s || !av) return;
+    stats[which]++;
     sc.g.setTransform(SCR_W / LW, 0, 0, SCR_H / LH, 0, 0);
     if (which === 'mfd') AV.drawMFD(sc.g, LW, LH, fill(s, av)); else AV.drawPFD(sc.g, LW, LH, fill(s, av));
     sc.g.setTransform(1, 0, 0, 1, 0, 0);
@@ -109,6 +114,7 @@ export function createGlass(FL, makeCanvas) {
   function blankScreen(which) {
     const sc = which === 'mfd' ? mfd : pfd;
     if (!sc) return;
+    stats.blank++;
     sc.g.setTransform(1, 0, 0, 1, 0, 0); sc.g.fillStyle = '#000'; sc.g.fillRect(0, 0, SCR_W, SCR_H);
     sc.texture.needsUpdate = true;
   }
@@ -122,26 +128,32 @@ export function createGlass(FL, makeCanvas) {
     g.textAlign = 'center'; g.textBaseline = 'middle';
     for (let i = 0; i < 12; i++) {
       const k = keys[i], label = typeof k.label === 'function' ? k.label(av) : k.label, cx = x0 + (i + 0.5) * sw;
-      g.fillStyle = '#2a3038'; g.fillRect(x0 + i * sw + 1, y0 + h - 22, sw - 2, 20);          // the label box, as on the display
+      g.fillStyle = '#2a3038'; g.fillRect(x0 + i * sw + 1, y0 + 4, sw - 2, h - 6);            // the label box, as on the display
       if (!label) continue;
       const on = k.on && av && k.on(av);
       g.fillStyle = !k.act ? '#6c737c' : on ? '#33d6ff' : '#f2f4f7';
-      const fs = label.length > 7 ? 11 : 13;
-      g.font = `700 ${fs}px ${SANS}`;
-      g.fillText(label, cx, y0 + h - 12, sw - 3);
+      g.font = label.length > 7 ? FONT_S : FONT_L;
+      g.fillText(label, cx, y0 + h / 2 + 1, sw - 3);
       if (on) { g.fillStyle = '#33d6ff'; g.fillRect(x0 + i * sw + 4, y0 + h - 4, sw - 8, 2); }
     }
   }
   function drawStrips(av, powered) {
     if (!dyn) return;
+    stats.strips++;
     strip('pfd', av, powered); strip('mfd', av, powered);
     dyn.texture.needsUpdate = true;
   }
 
   // ---------------------------------------------------------------- the standby instruments (2¼" dials)
+  // drawn 15 times a second: the gradients, fonts and numerals are made once
+  const grads = new Map(), fonts = new Map(), NUM = [];
+  for (let i = 0; i <= 160; i++) NUM.push(String(i));
+  const font = (w, px) => { const k = w * 1000 + px; let f = fonts.get(k); if (!f) { f = `${w} ${px}px ${SANS}`; fonts.set(k, f); } return f; };
+  const BANK_MARKS = [-90, -60, -30, -20, -10, 10, 20, 30, 60, 90];
+  const baroText = { v: NaN, hpa: false, text: '' };
   function face(g, cx, cy, R) {
-    const gr = g.createRadialGradient(cx, cy - R * 0.3, R * 0.1, cx, cy, R);
-    gr.addColorStop(0, '#1b1d20'); gr.addColorStop(1, '#0a0b0c');
+    let gr = grads.get(cx);
+    if (!gr) { gr = g.createRadialGradient(cx, cy - R * 0.3, R * 0.1, cx, cy, R); gr.addColorStop(0, '#1b1d20'); gr.addColorStop(1, '#0a0b0c'); grads.set(cx, gr); }
     g.fillStyle = '#000'; g.fillRect(cx - R - 2, cy - R - 2, 2 * R + 4, 2 * R + 4);
     g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill();
   }
@@ -151,13 +163,14 @@ export function createGlass(FL, makeCanvas) {
     g.restore();
   }
   // airspeed: knots, 40 at about 1 o'clock, 160 at 11 o'clock; white (flaps), green (normal), yellow (caution) arcs, red line
+  const V_DEF = { s0: 45, s1: 50, fe: 102, no: 125, ne: 154 };          // the Archer's, if the type has none
   const asiAng = kt => (kt <= 40 ? Math.max(0, kt) / 40 * 30 : 30 + (Math.min(kt, 175) - 40) / 120 * 300) * DEG;
   function arcBand(g, cx, cy, r, w, a0, a1, col) {
     g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.arc(cx, cy, r, a0 - Math.PI / 2, a1 - Math.PI / 2); g.stroke();
   }
   function drawASI(g, cx, cy, R, ias, V) {
     face(g, cx, cy, R);
-    const v = V || { s0: 45, s1: 50, fe: 102, no: 125, ne: 154 };
+    const v = V || V_DEF;
     arcBand(g, cx, cy, R * 0.80, R * 0.07, asiAng(v.s0), asiAng(v.fe), '#f2f2f2');
     arcBand(g, cx, cy, R * 0.88, R * 0.08, asiAng(v.s1), asiAng(v.no), '#21b04b');
     arcBand(g, cx, cy, R * 0.88, R * 0.08, asiAng(v.no), asiAng(v.ne), '#f1c40f');
@@ -168,9 +181,9 @@ export function createGlass(FL, makeCanvas) {
       g.lineWidth = big ? 2.2 : 1.2; g.beginPath(); g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); g.lineTo(cx + Math.cos(a) * R * 0.93, cy + Math.sin(a) * R * 0.93); g.stroke();
     }
     { const a = asiAng(v.ne) - Math.PI / 2; g.strokeStyle = '#e02a1f'; g.lineWidth = 3.2; g.beginPath(); g.moveTo(cx + Math.cos(a) * R * 0.74, cy + Math.sin(a) * R * 0.74); g.lineTo(cx + Math.cos(a) * R * 0.95, cy + Math.sin(a) * R * 0.95); g.stroke(); }
-    g.fillStyle = '#f2f2f2'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `700 ${Math.round(R * 0.2)}px ${SANS}`;
-    for (let kt = 40; kt <= 160; kt += 20) { const a = asiAng(kt) - Math.PI / 2; g.fillText(String(kt), cx + Math.cos(a) * R * 0.58, cy + Math.sin(a) * R * 0.58); }
-    g.font = `600 ${Math.round(R * 0.13)}px ${SANS}`; g.fillText('KNOTS', cx, cy - R * 0.28); g.fillText('AIRSPEED', cx, cy + R * 0.32);
+    g.fillStyle = '#f2f2f2'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = font(700, Math.round(R * 0.2));
+    for (let kt = 40; kt <= 160; kt += 20) { const a = asiAng(kt) - Math.PI / 2; g.fillText(NUM[kt], cx + Math.cos(a) * R * 0.58, cy + Math.sin(a) * R * 0.58); }
+    g.font = font(600, Math.round(R * 0.13)); g.fillText('KNOTS', cx, cy - R * 0.28); g.fillText('AIRSPEED', cx, cy + R * 0.32);
     needle(g, cx, cy, asiAng(ias), R * 0.86, R * 0.05, R * 0.16, '#f4f4f4');
     g.fillStyle = '#26282b'; g.beginPath(); g.arc(cx, cy, R * 0.09, 0, Math.PI * 2); g.fill();
   }
@@ -182,14 +195,15 @@ export function createGlass(FL, makeCanvas) {
       const a = i / 50 * Math.PI * 2 - Math.PI / 2, big = i % 5 === 0, r0 = R * (big ? 0.78 : 0.86);
       g.lineWidth = big ? 2.2 : 1.1; g.beginPath(); g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); g.lineTo(cx + Math.cos(a) * R * 0.94, cy + Math.sin(a) * R * 0.94); g.stroke();
     }
-    g.fillStyle = '#f2f2f2'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `700 ${Math.round(R * 0.22)}px ${SANS}`;
-    for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 - Math.PI / 2; g.fillText(String(i), cx + Math.cos(a) * R * 0.62, cy + Math.sin(a) * R * 0.62); }
+    g.fillStyle = '#f2f2f2'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = font(700, Math.round(R * 0.22));
+    for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 - Math.PI / 2; g.fillText(NUM[i], cx + Math.cos(a) * R * 0.62, cy + Math.sin(a) * R * 0.62); }
     // the setting window
     const wx = cx + R * 0.30, wy = cy - R * 0.11, ww = R * 0.42, wh = R * 0.22;
     g.fillStyle = '#000'; g.fillRect(wx, wy, ww, wh); g.strokeStyle = '#555'; g.lineWidth = 1; g.strokeRect(wx, wy, ww, wh);
-    g.fillStyle = '#f2f2f2'; g.font = `700 ${Math.round(R * 0.15)}px ${SANS}`;
-    g.fillText(hpa ? String(Math.round(baro * 33.8639)) : baro.toFixed(2), wx + ww / 2, wy + wh / 2 + 0.5);
-    g.font = `600 ${Math.round(R * 0.12)}px ${SANS}`; g.fillText('ALT', cx, cy - R * 0.30); g.fillText('100 FEET', cx, cy + R * 0.34);
+    g.fillStyle = '#f2f2f2'; g.font = font(700, Math.round(R * 0.15));
+    if (baroText.v !== baro || baroText.hpa !== hpa) { baroText.v = baro; baroText.hpa = hpa; baroText.text = hpa ? String(Math.round(baro * 33.8639)) : baro.toFixed(2); }
+    g.fillText(baroText.text, wx + ww / 2, wy + wh / 2 + 0.5);
+    g.font = font(600, Math.round(R * 0.12)); g.fillText('ALT', cx, cy - R * 0.30); g.fillText('100 FEET', cx, cy + R * 0.34);
     const a = Math.max(0, alt);
     needle(g, cx, cy, (a % 100000) / 100000 * Math.PI * 2, R * 0.92, R * 0.022, 0, '#d8d8d8');             // 10,000 ft (thin)
     needle(g, cx, cy, (a % 10000) / 10000 * Math.PI * 2, R * 0.52, R * 0.075, R * 0.1, '#f4f4f4');        // 1,000 ft (short)
@@ -206,19 +220,20 @@ export function createGlass(FL, makeCanvas) {
     g.fillStyle = '#2b78c8'; g.fillRect(-R * 2, -R * 3, R * 4, R * 3);
     g.fillStyle = '#7b4b25'; g.fillRect(-R * 2, 0, R * 4, R * 3);
     g.strokeStyle = '#ffffff'; g.lineWidth = 2; g.beginPath(); g.moveTo(-R * 2, 0); g.lineTo(R * 2, 0); g.stroke();
-    g.lineWidth = 1.4; g.fillStyle = '#fff'; g.font = `700 ${Math.round(R * 0.13)}px ${SANS}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.lineWidth = 1.4; g.fillStyle = '#fff'; g.font = font(700, Math.round(R * 0.13)); g.textAlign = 'center'; g.textBaseline = 'middle';
     for (let p = -30; p <= 30; p += 5) {
       if (!p) continue;
       const y = -p * k, w = p % 10 === 0 ? R * 0.30 : R * 0.14;
       g.beginPath(); g.moveTo(-w, y); g.lineTo(w, y); g.stroke();
-      if (p % 10 === 0) { g.fillText(String(Math.abs(p)), -w - R * 0.12, y); g.fillText(String(Math.abs(p)), w + R * 0.12, y); }
+      if (p % 10 === 0) { g.fillText(NUM[Math.abs(p)], -w - R * 0.12, y); g.fillText(NUM[Math.abs(p)], w + R * 0.12, y); }
     }
     g.translate(0, -clamp(pitch, -40, 40) * k);
     g.fillStyle = '#fff'; g.beginPath(); g.moveTo(0, -R * 0.74); g.lineTo(-R * 0.07, -R * 0.62); g.lineTo(R * 0.07, -R * 0.62); g.closePath(); g.fill();
     g.restore();
     // the case: bank marks at 10, 20, 30, 60 and 90, the zero index
     g.strokeStyle = '#f2f2f2';
-    for (const b of [-90, -60, -30, -20, -10, 10, 20, 30, 60, 90]) {
+    for (let i = 0; i < BANK_MARKS.length; i++) {
+      const b = BANK_MARKS[i];
       const a = b * DEG - Math.PI / 2, big = Math.abs(b) === 30 || Math.abs(b) === 60 || Math.abs(b) === 90;
       g.lineWidth = big ? 2.4 : 1.5; g.beginPath(); g.moveTo(cx + Math.cos(a) * R * (big ? 0.78 : 0.84), cy + Math.sin(a) * R * (big ? 0.78 : 0.84)); g.lineTo(cx + Math.cos(a) * R * 0.95, cy + Math.sin(a) * R * 0.95); g.stroke();
     }
@@ -233,16 +248,18 @@ export function createGlass(FL, makeCanvas) {
   // all three at once: o = s.out, alt = indicated altitude (ft), baro (inHg), hpa = the setting shown in hPa
   function drawStandby(o, alt, baro, hpa, V) {
     if (!dyn) return;
+    stats.standby++;
     const g = dyn.g;
-    let [x, y, w] = DYN.asi; drawASI(g, x + w / 2, y + w / 2, w / 2 - 2, o.ias || 0, V);
-    [x, y, w] = DYN.att; drawATT(g, x + w / 2, y + w / 2, w / 2 - 2, o.pitch || 0, o.bank || 0);
-    [x, y, w] = DYN.alt; drawALT(g, x + w / 2, y + w / 2, w / 2 - 2, alt, baro, hpa);
+    const A = DYN.asi, T = DYN.att, H = DYN.alt;
+    drawASI(g, A[0] + A[2] / 2, A[1] + A[3] / 2, A[2] / 2 - 2, o.ias || 0, V);
+    drawATT(g, T[0] + T[2] / 2, T[1] + T[3] / 2, T[2] / 2 - 2, o.pitch || 0, o.bank || 0);
+    drawALT(g, H[0] + H[2] / 2, H[1] + H[3] / 2, H[2] / 2 - 2, alt, baro, hpa);
     dyn.texture.needsUpdate = true;
   }
 
   const list = [pfd, mfd, dyn].filter(Boolean);
   return {
-    pfd, mfd, dyn, drawScreen, blankScreen, drawStrips, drawStandby,
+    pfd, mfd, dyn, stats, drawScreen, blankScreen, drawStrips, drawStandby,
     setAnisotropy(n) { for (const c of list) c.texture.anisotropy = n; },
     bytes: list.reduce((b, c) => b + c.w * c.h * 4, 0),
     dispose() { for (const c of list) c.texture.dispose(); },

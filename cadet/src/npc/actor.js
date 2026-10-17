@@ -478,8 +478,11 @@ function halfSeat(y, c, s, out) {
 // image). Each leg carries its half of the seat: the top rings are the half of the hips' section on its side (the two
 // meet in the middle, as trousers do at the fly and the seat seam) and turn into the round thigh by the crotch, so there
 // is no seam round the hips. Its end hugs the shin's top as the knee is bent at rest.
-function buildThigh(C, s) {
-  const A = new Part(C), seg = 12, inv = LEG_REST.thigh.clone().invert(), J = new THREE.Vector3(...P.thigh), v = new THREE.Vector3(), rings = [];
+// seat (sitting): { thigh, shin } — the (left) thigh's rotation in the hips' frame and the knee's, as seated; the
+// same rings, shaped for that pose instead (see seatRings)
+const THIGH_SEG = 12;
+function buildThigh(C, s, seat = null) {
+  const A = new Part(C), seg = THIGH_SEG, inv = LEG_REST.thigh.clone().invert(), J = new THREE.Vector3(...P.thigh), v = new THREE.Vector3(), rings = [];
   for (const ys of [-0.03, -0.012]) {
     const [, a, b, zc] = rowAt(SHIN, ys), pts = [];
     for (let j = 0; j < seg; j++) { const t = j / seg * TAU; v.set(Math.cos(t) * (a + 0.0012), ys, zc + Math.sin(t) * (b + 0.0012)).applyQuaternion(LEG_REST.shin); pts.push([v.x, v.y - L1, v.z]); }
@@ -497,8 +500,45 @@ function buildThigh(C, s) {
     }
     rings.push({ pts });
   }
-  A.add(loft(rings, seg, 'y'), 'trousers', 'trousers');
+  A.add(loft(seat ? seatRings(rings, seat) : rings, seg, 'y'), 'trousers', 'trousers');
   const g = A.build(); return s < 0 ? mirrorX(g) : g;
+}
+// the points of a ring as loft() makes them (axis 'y')
+function ringPts(r, seg) {
+  if (r.pts) return r.pts;
+  const out = [], e = 2 / (r.p || 2);
+  for (let j = 0; j < seg; j++) {
+    const t = j / seg * TAU, c = Math.cos(t), s = Math.sin(t);
+    out.push([r.x + Math.sign(c) * Math.pow(Math.abs(c), e) * r.a, r.y, r.z + Math.sign(s) * Math.pow(Math.abs(s), e) * r.b]);
+  }
+  return out;
+}
+// the trouser leg sitting down. The standing leg is bent at the hip joint: each point turns with the thigh by a share
+// that runs from all of it below the crotch to none above the hip joint, so the seat of the trousers stays with the
+// pelvis and rolls round under it onto the cushion (and the front folds into the crease of the hip). The knee end is
+// mitred: a ring in the plane halving the knee's angle, then one round the shin's top.
+const SEAT_BEND = [-0.15, 0.05];                           // the share falls from 1 to 0 over these heights (from the hip joint, standing)
+function seatRings(rings, seat) {
+  const seg = THIGH_SEG, Qs = LEG_REST.thigh, rel = seat.thigh.clone().multiply(Qs.clone().invert()), invT = seat.thigh.clone().invert();
+  const q = new THREE.Quaternion(), I = new THREE.Quaternion(), v = new THREE.Vector3(), out = [];
+  // the knee: round the shin's top, then the mitre (the thigh's section at the knee, slid along the thigh onto the plane)
+  { const ys = -0.035, [, a, b, zc] = rowAt(SHIN, ys), pts = [];
+    for (let j = 0; j < seg; j++) { const t = j / seg * TAU; v.set(Math.cos(t) * (a + 0.0012), ys, zc + Math.sin(t) * (b + 0.0012)).applyQuaternion(seat.shin); pts.push([v.x, v.y - L1, v.z]); }
+    out.push({ pts }); }
+  { const n = new THREE.Vector3(0, -1, 0).applyQuaternion(seat.shin).add(new THREE.Vector3(0, -1, 0)).normalize(), [, a, b, zc] = THIGH[0], pts = [];
+    for (let j = 0; j < seg; j++) { const t = j / seg * TAU, x = Math.cos(t) * a, z = zc + Math.sin(t) * b, l = -(x * n.x + z * n.z) / -n.y; pts.push([x, -L1 - l, z]); }
+    out.push({ pts }); }
+  // the thigh (its rows moved up a little, clear of the mitre) and the seat: bent
+  const ys = [-0.36, -0.3, -0.235, -0.17], src = [...ys.map(y => { const [, a, b, z] = rowAt(THIGH, y); return ring(y, a, b, 0, z); }), ...rings.slice(6)];
+  for (const r of src) {
+    out.push({ pts: ringPts(r, seg).map(p => {
+      v.set(p[0], p[1], p[2]).applyQuaternion(Qs);           // standing, in the hips' frame (from the hip joint)
+      q.copy(I).slerp(rel, 1 - smooth(SEAT_BEND[0], SEAT_BEND[1], v.y));
+      v.applyQuaternion(q).applyQuaternion(invT);
+      return [v.x, v.y, v.z];
+    }) });
+  }
+  return out;
 }
 function buildShin(C) {
   const A = new Part(C), hem = ANKLE_Y - 0.038 - (HIPJ_Y - L1 - L2);   // the hem 3.8 cm above the soles in the bind pose
@@ -517,11 +557,13 @@ function buildFoot(C) {
 }
 
 // ---------------------------------------------------------------- gestures: eased keyframe curves per channel (degrees)
+// (liftL / liftR: seated, how far the gesture takes that arm off the lap; made from its arm's curves below)
 const CH = ['headP', 'headY', 'headR', 'neckP', 'chestP', 'chestY', 'chestR', 'clavL', 'clavR',
   'flexL', 'abdL', 'rotL', 'elbowL', 'proL', 'wristL', 'flexR', 'abdR', 'rotR', 'elbowR', 'proR', 'wristR', 'aimL', 'aimR', 'glance',
-  'pointHandL', 'pointHandR'];
+  'pointHandL', 'pointHandR', 'liftL', 'liftR'];
 const C_ = Object.fromEntries(CH.map((k, i) => [k, i]));
-const UNITLESS = new Set(['aimL', 'aimR', 'glance', 'pointHandL', 'pointHandR']);
+const UNITLESS = new Set(['aimL', 'aimR', 'glance', 'pointHandL', 'pointHandR', 'liftL', 'liftR']);
+const ARM_CH = ['clav', 'flex', 'abd', 'rot', 'elbow', 'pro', 'wrist', 'aim'];
 const AIM_CH = { L: [C_.aimL, C_.pointHandL], R: [C_.aimR, C_.pointHandR] };
 const both = (k, keys) => ({ [k + 'L']: keys, [k + 'R']: keys });
 const GESTURES = {
@@ -550,6 +592,11 @@ const GESTURES = {
     wristR: [0, 0, 0.35, -8, 0.75, -4, 1.2, 0], headP: [0, 0, 0.4, 2, 0.8, -1, 1.2, 0] } },
   beatL: { dur: 1.2, ch: { elbowL: [0, 0, 0.35, 30, 0.75, 34, 1.2, 0], flexL: [0, 0, 0.35, 7, 0.75, 9, 1.2, 0], proL: [0, 0, 0.35, -38, 0.75, -42, 1.2, 0],
     wristL: [0, 0, 0.35, -8, 0.75, -4, 1.2, 0], headP: [0, 0, 0.4, 2, 0.8, -1, 1.2, 0] } },
+  // seated, the beats are smaller and start from the lap (rel: on top of the seated rest, the arm is not lifted)
+  beatRS: { dur: 1.2, rel: true, ch: { elbowR: [0, 0, 0.35, 13, 0.75, 16, 1.2, 0], flexR: [0, 0, 0.35, 4, 0.75, 5, 1.2, 0], proR: [0, 0, 0.35, -16, 0.75, -20, 1.2, 0],
+    wristR: [0, 0, 0.35, -9, 0.75, -5, 1.2, 0], headP: [0, 0, 0.4, 2, 0.8, -1, 1.2, 0] } },
+  beatLS: { dur: 1.2, rel: true, ch: { elbowL: [0, 0, 0.35, 12, 0.75, 15, 1.2, 0], flexL: [0, 0, 0.35, 4, 0.75, 5, 1.2, 0], proL: [0, 0, 0.35, -15, 0.75, -18, 1.2, 0],
+    wristL: [0, 0, 0.35, -9, 0.75, -5, 1.2, 0], headP: [0, 0, 0.4, 2, 0.8, -1, 1.2, 0] } },
 };
 // pointing at something on the actor's left: the same curves on the left arm (reported as 'point')
 GESTURES.pointL = { dur: GESTURES.point.dur, alias: 'point',
@@ -559,6 +606,11 @@ export const GESTURE_NAMES = ['nod', 'point', 'explain', 'wave', 'shrug'];
 // compiled: per channel the key times, values (radians) and monotone tangents (no overshoot past a key)
 for (const [name, g] of Object.entries(GESTURES)) {
   g.pub = GESTURE_NAMES.includes(g.alias || name);          // the talking beats are not reported as gestures
+  // seated, an arm leaves the lap while any of its channels is away from rest: 1 from its first key to its last
+  if (!g.rel) for (const L of SIDES) {
+    const ts = [...new Set(ARM_CH.flatMap(k => (g.ch[k + L] || []).filter((_, i) => i % 2 === 0)))].sort((a, b) => a - b);
+    if (ts.length > 1) g.ch['lift' + L] = ts.flatMap((t, i) => [t, i > 0 && i < ts.length - 1 ? 1 : 0]);
+  }
   g.tracks = Object.entries(g.ch).map(([k, a]) => {
     const n = a.length / 2, t = new Float64Array(n), v = new Float64Array(n), m = new Float64Array(n), sc = UNITLESS.has(k) ? 1 : DEG;
     for (let i = 0; i < n; i++) { t[i] = a[i * 2]; v[i] = a[i * 2 + 1] * sc; }
@@ -582,6 +634,32 @@ function spring(a, i, target, w, dt) {
 }
 
 const NO_OPTS = Object.freeze({});
+
+// ---------------------------------------------------------------- seated
+// the seated rest (radians): the pelvis tipped back onto the seat and the back against a seat back reclined about 14°,
+// the neck bringing the head level again; the feet pitched up onto the pedals; the upper body turns less towards what it
+// points at than standing (a share of the standing turn)
+const SEAT_POSE = { hips: -16 * DEG, spine: 2 * DEG, chest: -0.5 * DEG, footPitch: 30 * DEG, turn: 0.6 };
+// the instructor in the right seat of the Archer (PA-28-181), fitted to the cockpit's seat and pedals. In the aircraft's
+// body frame (x the right wing, y up, −z the nose; the right-seat eye ≈ (+0.30, 0.62, −0.40)) the actor's root goes at
+// `position` (on the cabin floor, below his hips), turned by `yaw` (π: facing the nose); `seat` is setSeated()'s cfg in
+// the root's frame: the middle of the hip joints 0.10 m above the cushion and just clear of the seat back (its back
+// reclined 13°), the ankles 0.65 m ahead of them and 0.21 m lower, the balls of the feet on the right pair of rudder
+// pedals (0.8 m ahead of the hips). The knees are bent about 70°, 9 cm above the hips; his eyes come to about
+// (+0.29, 0.67, −0.36).
+export const SEATED_PA28 = Object.freeze({
+  position: Object.freeze([0.29, -0.40, -0.41]), yaw: Math.PI,
+  seat: Object.freeze({ hip: Object.freeze([0, 0.365, 0]), ankleL: Object.freeze([0.08, 0.15, 0.65]), ankleR: Object.freeze([-0.10, 0.15, 0.65]) }),
+});
+// the same worked out from points in the aircraft's body frame (e.g. a cockpit's instructorSeat { hip, ankleL, ankleR },
+// left and right as the seated person's), the root put at y = floor below the hips → { position, yaw, seat }
+export function seatFromBody({ hip, ankleL, ankleR, footPitch }, yaw = Math.PI, floor = hip[1] - 0.4) {
+  const c = Math.cos(yaw), s = Math.sin(yaw), pos = [hip[0], floor, hip[2]];
+  const local = (p) => { const x = p[0] - pos[0], z = p[2] - pos[2]; return [c * x - s * z, p[1] - floor, s * x + c * z]; };
+  const seat = { hip: local(hip), ankleL: local(ankleL), ankleR: local(ankleR) };
+  if (footPitch != null) seat.footPitch = footPitch;
+  return { position: pos, yaw, seat };
+}
 
 // ---------------------------------------------------------------- the actor
 // opts: { seed (idle timing), height (m, default 1.745), colors: { skin, hair, … } (sRGB: 0xrrggbb or '#rrggbb') }
@@ -625,8 +703,11 @@ export function createActor(opts = {}) {
     const th = bone('thigh' + L, hips, [s * P.thigh[0], P.thigh[1], P.thigh[2]]);
     const sh = bone('shin' + L, th, [s * P.thigh[0], P.thigh[1] - L1, P.thigh[2]]);
     const ft = bone('foot' + L, sh, [s * P.thigh[0], P.thigh[1] - L1 - L2, P.thigh[2]]);
-    mesh('thigh' + L, buildThigh(C, s), th); mesh('shin' + L, buildShin(C), sh); mesh('foot' + L, buildFoot(C), ft);
-    leg[L] = { s, th, sh, ft, ankle: new THREE.Vector3(s * P.ankle[0], P.ankle[1], P.ankle[2]), toe: new THREE.Quaternion().setFromAxisAngle(AY, s * TOE_OUT) };
+    const tm = mesh('thigh' + L, buildThigh(C, s), th); mesh('shin' + L, buildShin(C), sh); mesh('foot' + L, buildFoot(C), ft);
+    // (stand / seated: the trouser leg's two shapes, swapped by setSeated; foot: the foot's turn in the body's frame)
+    leg[L] = { s, th, sh, ft, tm, stand: tm.geometry, seated: null, seatQ: new THREE.Quaternion(), seatShin: new THREE.Quaternion(),
+      ankle: new THREE.Vector3(s * P.ankle[0], P.ankle[1], P.ankle[2]), toe: new THREE.Quaternion().setFromAxisAngle(AY, s * TOE_OUT), foot: new THREE.Quaternion() };
+    leg[L].foot.copy(leg[L].toe);
   }
   let triangles = 0;
   for (const m of meshes) triangles += m.geometry.index.count / 3;
@@ -652,7 +733,7 @@ export function createActor(opts = {}) {
   // the aim moves towards its goal by direction (seen from the chest, at a bounded rate) and by distance on a log scale:
   // a target much farther away, or across from the old one, never makes the arm jump
   function easeAim(p, goal, dt) {
-    piv.set(0, 1.4, 0); body.localToWorld(piv);
+    piv.copy(PIV0); body.localToWorld(piv);
     du.subVectors(p, piv); dw.subVectors(goal, piv);
     const r0 = du.length(), r1 = dw.length();
     if (!(r0 > 1e-4 && r1 > 1e-4 && Number.isFinite(r0 + r1))) { p.copy(goal); return; }
@@ -666,9 +747,82 @@ export function createActor(opts = {}) {
     }
     p.copy(piv).addScaledVector(du, r0 * Math.pow(r1 / r0, k));
   }
-  const EYE0 = new THREE.Vector3(0, EYE.y, EYE.z + 0.012);   // the eyes' midpoint in the body's frame (bind)
+  const EYE0 = new THREE.Vector3(0, EYE.y, EYE.z + 0.012);   // the eyes' midpoint in the body's frame (bind; seated: at rest)
   const EYE_HEAD = new THREE.Vector3(0, EYE.y - P.head[1], EYE.z - P.head[2]);
   const state = { headYaw: 0, headPitch: 0, eyeYaw: 0, eyePitch: 0, blink: 0, mouth: 0, gesture: null };
+
+  // ---------------------------------------------------------------- seated: setSeated() works the rest pose out once
+  // (PIV0: the chest's middle at shoulder height, where pointing is seen from; POINT0: where 'point' aims without pointAt)
+  const EYE_STAND = EYE0.clone(), PIV0 = new THREE.Vector3(0, 1.4, 0), POINT0 = new THREE.Vector3(-0.9, 1.55, 1.4);
+  // hipsPos / hipsQ: the hips on the seat; neckQ: the neck's turn that brings the head level over the reclined back;
+  // arm: the arms' rest channels [flex, abd, rot, elbow, pro, wrist] with the hands on the thighs
+  const seat = { on: false, hipsPos: new THREE.Vector3(), hipsQ: new THREE.Quaternion(), neckQ: new THREE.Quaternion(), arm: { L: new Float64Array(6), R: new Float64Array(6) } };
+  const vec = (p, out) => (Array.isArray(p) || ArrayBuffer.isView(p) ? out.set(+p[0], +p[1], +p[2]) : out.set(+p.x, +p.y, +p.z));
+  const okPt = (p) => p != null && typeof p === 'object' && Number.isFinite(vec(p, v1).x + v1.y + v1.z);
+  function stand() {
+    seat.on = false;
+    for (const L of SIDES) { const l = leg[L]; l.ankle.set(l.s * P.ankle[0], P.ankle[1], P.ankle[2]); l.foot.copy(l.toe); l.tm.geometry = l.stand; }
+    EYE0.copy(EYE_STAND); PIV0.set(0, 1.4, 0); POINT0.set(-0.9, 1.55, 1.4);
+  }
+  // cfg: { hip, ankleL, ankleR [, footPitch] } in the root's frame ([x, y, z] or {x, y, z}; metres): where the middle of
+  // the hip joints and each ankle go; footPitch: the toes up by this much (radians). null: stands up again. A bad cfg
+  // changes nothing (→ false). The pose follows on the next update().
+  function setSeated(cfg) {
+    if (!cfg) { stand(); return true; }
+    if (!(okPt(cfg.hip) && okPt(cfg.ankleL) && okPt(cfg.ankleR))) return false;
+    const k = 1 / body.scale.x, hm = vec(cfg.hip, new THREE.Vector3()).multiplyScalar(k);
+    seat.hipsQ.setFromAxisAngle(AX, SEAT_POSE.hips);
+    seat.hipsPos.set(0, HIPJ_Y - P.hips[1], P.thigh[2] - P.hips[2]).applyQuaternion(seat.hipsQ).negate().add(hm);
+    seat.neckQ.setFromAxisAngle(AX, -(SEAT_POSE.hips + SEAT_POSE.spine + SEAT_POSE.chest));
+    const pitch = Number.isFinite(cfg.footPitch) ? cfg.footPitch : SEAT_POSE.footPitch, qp = new THREE.Quaternion().setFromAxisAngle(AX, -pitch);
+    for (const L of SIDES) { const l = leg[L]; vec(L === 'L' ? cfg.ankleL : cfg.ankleR, l.ankle).multiplyScalar(k); l.foot.copy(l.toe).multiply(qp); }
+    // the rest pose (no breath, no gesture, looking ahead): the legs by IK, then what hangs on it
+    hips.position.copy(seat.hipsPos); hips.quaternion.copy(seat.hipsQ);
+    spine.rotation.set(SEAT_POSE.spine, 0, 0); chest.rotation.set(SEAT_POSE.chest, 0, 0);
+    neck.rotation.set(0, 0, 0, 'YXZ'); neck.quaternion.premultiply(seat.neckQ); head.rotation.set(0, 0, 0, 'YXZ');
+    for (const L of SIDES) { const a = arm[L]; a.clav.position.copy(a.clav.userData.rest); a.clav.rotation.set(0, 0, 0); solveLeg(leg[L]); }
+    // the trouser legs shaped for this pose (made again only when the pose changes)
+    for (const L of SIDES) {
+      const l = leg[L], qt = l.th.quaternion.clone(), qs = l.sh.quaternion.clone();
+      if (l.s < 0) { qt.set(qt.x, -qt.y, -qt.z, qt.w); qs.set(qs.x, -qs.y, -qs.z, qs.w); }   // the right leg as the left one's mirror image
+      if (!l.seated || l.seatQ.angleTo(qt) > 1e-4 || l.seatShin.angleTo(qs) > 1e-4) {
+        if (l.seated) l.seated.dispose();
+        l.seated = buildThigh(C, l.s, { thigh: qt, shin: qs }); l.seatQ.copy(qt); l.seatShin.copy(qs);
+      }
+      l.tm.geometry = l.seated;
+    }
+    body.updateWorldMatrix(true, true);
+    const inv = body.matrixWorld.clone().invert(), inBody = (b) => new THREE.Matrix4().multiplyMatrices(inv, b.matrixWorld);
+    EYE0.set(0, EYE.y - P.head[1], EYE.z + 0.012 - P.head[2]).applyMatrix4(inBody(head));
+    PIV0.set(0, 1.4 - P.chest[1], -P.chest[2]).applyMatrix4(inBody(chest));
+    POINT0.set(-0.9, PIV0.y + 0.15, 1.4);
+    // the arms: two-bone IK from the shoulder to the wrist resting on the thigh (a third of the way to the knee), the
+    // elbow out and back; the palm turned down onto the thigh, the fingers along it
+    for (const L of SIDES) {
+      const a = arm[L], s = a.s, R = seat.arm[L], l = leg[L], [, , tb, tz] = rowAt(THIGH, -0.13);
+      const S0 = new THREE.Vector3().setFromMatrixPosition(inBody(a.ua)), Qc = new THREE.Quaternion().setFromRotationMatrix(inBody(a.clav));
+      const W = new THREE.Vector3(s * 0.012, -0.13, tz + tb + 0.024).applyMatrix4(inBody(l.th));
+      const dir = W.clone().sub(S0), d = clamp(dir.length(), Math.abs(UARM_LEN - FARM_LEN) + 0.01, (UARM_LEN + FARM_LEN) * 0.999); dir.normalize();
+      const pole = new THREE.Vector3(s * 0.45, -0.2, -1); pole.addScaledVector(dir, -pole.dot(dir)).normalize();
+      const ca = clamp((UARM_LEN * UARM_LEN + d * d - FARM_LEN * FARM_LEN) / (2 * UARM_LEN * d), -1, 1);
+      const E = S0.clone().addScaledVector(dir, ca * UARM_LEN).addScaledVector(pole, Math.sqrt(1 - ca * ca) * UARM_LEN);
+      const u = E.clone().sub(S0).normalize(), f = S0.clone().addScaledVector(dir, d).sub(E).normalize();
+      const zt = f.clone().addScaledVector(u, -f.dot(u)).normalize(), yt = u.clone().negate(), xt = new THREE.Vector3().crossVectors(yt, zt);
+      const Qu = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(xt, yt, zt));
+      const e = new THREE.Euler().setFromQuaternion(Qc.clone().invert().multiply(Qu), 'XZY');
+      R[0] = -e.x; R[1] = s * e.z; R[2] = -s * e.y; R[3] = Math.acos(clamp(u.dot(f), -1, 1));
+      // (the forearm turns about its length by −s·pro; the palm faces −s·x in the hand's frame)
+      const Qf = Qu.clone().multiply(new THREE.Quaternion().setFromAxisAngle(AX, -R[3])), n = new THREE.Vector3(0, -1, 0).applyQuaternion(Qf.clone().invert());
+      R[4] = clamp(-s * Math.atan2(s * n.z, -s * n.x), -30 * DEG, 100 * DEG);
+      Qf.multiply(new THREE.Quaternion().setFromAxisAngle(AY, -s * R[4]));
+      // (the hand turns about its z by −s·wrist; the fingers point down its −y): along the thigh, a little up (they curl)
+      const T = new THREE.Vector3(0, -1, 0).applyQuaternion(new THREE.Quaternion().setFromRotationMatrix(inBody(l.th))).add(new THREE.Vector3(0, 0.12, 0)).applyQuaternion(Qf.invert());
+      R[5] = clamp(-s * Math.atan2(T.x, -T.y), -50 * DEG, 50 * DEG);
+      poseArm(a, R[0], R[1], R[2], R[3], R[4], R[5], 0, 0);
+    }
+    seat.on = true;
+    return true;
+  }
 
   function startGesture(name) {
     let def = GESTURES[name]; if (!def) return 0;
@@ -676,7 +830,7 @@ export function createActor(opts = {}) {
     if (name === 'point') {
       // the target (by default: ahead to the right), and the arm on its side (+x is the actor's left)
       root.updateWorldMatrix(true, true);
-      if (hasPoint) v1.copy(pointTarget); else { v1.set(-0.9, 1.55, 1.4); body.localToWorld(v1); }
+      if (hasPoint) v1.copy(pointTarget); else { v1.copy(POINT0); body.localToWorld(v1); }
       v2.copy(v1); body.worldToLocal(v2);
       // (in front the right arm may take a target a little left of the middle; behind, each arm keeps to its own side)
       const side = (v2.z < 0 ? v2.x >= 0 : v2.x > 0.15) ? 'L' : 'R', aimCh = side === 'L' ? C_.aimL : C_.aimR;
@@ -721,7 +875,7 @@ export function createActor(opts = {}) {
     v2.subVectors(l.ankle, v1).applyQuaternion(q1.copy(hips.quaternion).invert());   // to the ankle, in the hips' frame
     legIK(v2, l.s, th.quaternion, sh.quaternion);
     q1.copy(hips.quaternion).multiply(th.quaternion).multiply(sh.quaternion).invert();
-    ft.quaternion.copy(q1).multiply(l.toe);
+    ft.quaternion.copy(q1).multiply(l.foot);
   }
   function poseArm(a, flex, abd, rot, elbow, pro, wrist, clavUp, breath) {
     const s = a.s;
@@ -757,7 +911,7 @@ export function createActor(opts = {}) {
       }
       mouthT = sylAmp * Math.pow(Math.sin(Math.PI * sylT / sylDur), 0.7);
       beatIn -= dt;
-      if (beatIn <= 0) { beatIn = 2.4 + R2() * 4; if (!gDef) startGesture(R2() < 0.6 ? 'beatR' : 'beatL'); }
+      if (beatIn <= 0) { beatIn = 2.4 + R2() * 4; if (!gDef) startGesture(R2() < 0.6 ? (seat.on ? 'beatRS' : 'beatR') : (seat.on ? 'beatLS' : 'beatL')); }
     } else { sylT = sylDur = 0; sylAmp = 0; sylLeft = 6; beatIn = Math.max(beatIn, 0.8); }
     gestures(dt);
 
@@ -771,11 +925,12 @@ export function createActor(opts = {}) {
       if (w <= 1e-4) continue;
       easeAim(aimAt[side], want[side], dt);
       pv.copy(aimAt[side]); body.worldToLocal(pv);
-      const hd = Math.sqrt(pv.x * pv.x + pv.z * pv.z), hy = pv.y - 1.4;
+      const hd = Math.sqrt(pv.x * pv.x + pv.z * pv.z), hy = pv.y - PIV0.y;
       if (!(hd > 1e-4)) continue;
       const share = smooth(0.2, 0.6, hd / Math.sqrt(hd * hd + hy * hy));
       turn += w * share * clamp(0.4 * Math.atan2(pv.x, pv.z), side === 'L' ? -5 * DEG : -TURN_MAX, side === 'L' ? TURN_MAX : 5 * DEG);
     }
+    if (seat.on) turn *= SEAT_POSE.turn;                        // (against the seat back)
     if (lookAt && Number.isFinite(lookAt.x + lookAt.y + lookAt.z)) { tv.copy(lookAt); body.worldToLocal(tv); }   // (a bad point is ignored)
     else tv.set(EYE0.x + Math.sin(wanderY) * 2, EYE0.y + Math.tan(wanderP) * 2, EYE0.z + Math.cos(wanderY) * 2);
     const glance = G[C_.glance];
@@ -798,22 +953,38 @@ export function createActor(opts = {}) {
     S[HY] = clamp(S[HY], turn - LIMITS.headYaw, turn + LIMITS.headYaw); S[HP] = clamp(S[HP], -LIMITS.headPitch, LIMITS.headPitch);
     spring(S, TN, talking ? 0.022 * Math.sin(time * 5.1) * Math.sin(time * 1.7 + 1) : 0, 9, dt);
 
-    // ---- the body: breathing, weight shift (hips sway, the spine keeps the shoulders level), looking
+    // ---- the body: breathing, weight shift (hips sway, the spine keeps the shoulders level), looking. Seated: the hips
+    // stay where the seat put them, the back reclined against the seat back, the neck bringing the head level again.
     const br = 0.5 - 0.5 * Math.cos(time * TAU / 4.3 + ph[0]);
     const w1 = 0.65 * Math.sin(time * TAU / 11.3 + ph[1]) + 0.35 * Math.sin(time * TAU / 7.1 + ph[2]), w2 = Math.sin(time * TAU / 13.7 + ph[3]);
-    const hRoll = 1.5 * DEG * w1, hYaw = 1.3 * DEG * w2;
-    hips.position.set(0.015 * w1, P.hips[1] - 0.003 * w1 * w1, 0);
-    hips.rotation.set(0.5 * DEG * w2, hYaw, hRoll);
-    spine.rotation.set(0.8 * DEG, -0.5 * hYaw + 0.45 * turn, -0.5 * hRoll);
+    const sat = seat.on, hRoll = sat ? 0 : 1.5 * DEG * w1, hYaw = sat ? 0 : 1.3 * DEG * w2;
+    if (sat) {
+      hips.position.copy(seat.hipsPos); hips.quaternion.copy(seat.hipsQ);
+      spine.rotation.set(SEAT_POSE.spine, 0.45 * turn, 0);
+    } else {
+      hips.position.set(0.015 * w1, P.hips[1] - 0.003 * w1 * w1, 0);
+      hips.rotation.set(0.5 * DEG * w2, hYaw, hRoll);
+      spine.rotation.set(0.8 * DEG, -0.5 * hYaw + 0.45 * turn, -0.5 * hRoll);
+    }
     const Y = S[HY] - turn, Pt = S[HP], chestYaw = 0.12 * Y, rest = Y - chestYaw;   // Y: the head's turn on top of the body's
-    chest.rotation.set(-0.8 * DEG - 0.6 * DEG * br + G[C_.chestP], chestYaw + 0.55 * turn - 0.5 * hYaw + G[C_.chestY], -0.6 * hRoll + G[C_.chestR]);
+    chest.rotation.set((sat ? SEAT_POSE.chest : -0.8 * DEG) - 0.6 * DEG * br + G[C_.chestP], chestYaw + 0.55 * turn - 0.5 * hYaw + G[C_.chestY], -0.6 * hRoll + G[C_.chestR]);
     torsoMesh.scale.set(1 + 0.006 * br, 1, 1 + 0.014 * br);
     const nod = S[TN];
     neck.rotation.set(-0.4 * Pt + 0.6 * DEG * br + G[C_.neckP] + 0.4 * nod, 0.4 * rest, 0, 'YXZ');
+    if (sat) neck.quaternion.premultiply(seat.neckQ);
     head.rotation.set(-0.6 * Pt + G[C_.headP] + 0.6 * nod, 0.6 * rest + G[C_.headY], G[C_.headR] + 1.2 * DEG * w2, 'YXZ');
-    // arms: relaxed at the sides, plus the gesture
-    poseArm(arm.L, (3 + 1.2 * w2) * DEG + G[C_.flexL], 8 * DEG + G[C_.abdL], G[C_.rotL], (13 + 2 * br) * DEG + G[C_.elbowL], G[C_.proL], 5 * DEG + G[C_.wristL], G[C_.clavL], br);
-    poseArm(arm.R, (3 - 1.2 * w2) * DEG + G[C_.flexR], 8 * DEG + G[C_.abdR], G[C_.rotR], (13 + 2 * br) * DEG + G[C_.elbowR], G[C_.proR], 5 * DEG + G[C_.wristR], G[C_.clavR], br);
+    // arms: relaxed at the sides, plus the gesture. Seated: the hands rest on the thighs, and a gesture lifts an arm
+    // from there into its standing curves (lift); the talking beats start from the lap.
+    if (sat) {
+      const kL = clamp(G[C_.liftL], 0, 1), kR = clamp(G[C_.liftR], 0, 1), aL = seat.arm.L, aR = seat.arm.R;
+      poseArm(arm.L, lerp(aL[0], 3 * DEG, kL) + G[C_.flexL], lerp(aL[1], 8 * DEG, kL) + G[C_.abdL], lerp(aL[2], 0, kL) + G[C_.rotL],
+        lerp(aL[3], 13 * DEG, kL) + lerp(0.5, 2, kL) * DEG * br + G[C_.elbowL], lerp(aL[4], 0, kL) + G[C_.proL], lerp(aL[5], 5 * DEG, kL) + G[C_.wristL], G[C_.clavL], br);
+      poseArm(arm.R, lerp(aR[0], 3 * DEG, kR) + G[C_.flexR], lerp(aR[1], 8 * DEG, kR) + G[C_.abdR], lerp(aR[2], 0, kR) + G[C_.rotR],
+        lerp(aR[3], 13 * DEG, kR) + lerp(0.5, 2, kR) * DEG * br + G[C_.elbowR], lerp(aR[4], 0, kR) + G[C_.proR], lerp(aR[5], 5 * DEG, kR) + G[C_.wristR], G[C_.clavR], br);
+    } else {
+      poseArm(arm.L, (3 + 1.2 * w2) * DEG + G[C_.flexL], 8 * DEG + G[C_.abdL], G[C_.rotL], (13 + 2 * br) * DEG + G[C_.elbowL], G[C_.proL], 5 * DEG + G[C_.wristL], G[C_.clavL], br);
+      poseArm(arm.R, (3 - 1.2 * w2) * DEG + G[C_.flexR], 8 * DEG + G[C_.abdR], G[C_.rotR], (13 + 2 * br) * DEG + G[C_.elbowR], G[C_.proR], 5 * DEG + G[C_.wristR], G[C_.clavR], br);
+    }
     // pointing: the arm turns towards its target. It does not cross the body (at most a little past the middle), and it
     // reaches back only out to its own side (a board behind and to the left: the left arm, out to the side and back).
     for (const side of SIDES) {
@@ -849,14 +1020,22 @@ export function createActor(opts = {}) {
   const actor = {
     root, bones, meshes, radius: 0.3, triangles, state,
     update,
+    // sits down (seated in the root's frame: see setSeated above; SEATED_PA28.seat for the Archer's right seat) or, with
+    // null, stands up again; true when done
+    setSeated,
+    get seated() { return seat.on; },
     // plays once and goes back to idle; returns its length in seconds (0 for an unknown name)
     gesture(name) { return GESTURE_NAMES.includes(name) ? startGesture(name) : 0; },
     pointAt(target) { if (target && Number.isFinite(target.x + target.y + target.z)) { pointTarget.copy(target); hasPoint = true; } else hasPoint = false; },
     headWorld(out = new THREE.Vector3()) { head.updateWorldMatrix(true, false); return out.copy(EYE_HEAD).applyMatrix4(head.matrixWorld); },
     get gesturing() { return gName; },
     // for tests: the objects update() works with (they must stay the same ones)
-    _scratch: [tv, pv, v1, v2, q1, pointTarget, want.L, want.R, aimAt.L, aimAt.R, piv, du, dw, ax, S, G, F],
-    dispose() { for (const m of meshes) m.geometry.dispose(); for (const L of ['L', 'R']) { arm[L].pointing.dispose(); arm[L].relaxed.dispose(); } },
+    _scratch: [tv, pv, v1, v2, q1, pointTarget, want.L, want.R, aimAt.L, aimAt.R, piv, du, dw, ax, S, G, F, EYE0, PIV0, POINT0, seat.hipsPos, seat.hipsQ, seat.neckQ,
+      seat.arm.L, seat.arm.R, leg.L.ankle, leg.R.ankle, leg.L.foot, leg.R.foot],
+    dispose() {
+      for (const m of meshes) m.geometry.dispose();
+      for (const L of ['L', 'R']) { arm[L].pointing.dispose(); arm[L].relaxed.dispose(); leg[L].stand.dispose(); if (leg[L].seated) leg[L].seated.dispose(); }
+    },
   };
   update(0);
   return actor;

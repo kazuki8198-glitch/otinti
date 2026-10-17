@@ -1,7 +1,7 @@
 // CADET — aircraft/cockpit.js : the cabin of the flown Archer (a PA-28-181 with the G1000-type panel), built at start-up
 // (no model files) in the aircraft's BODY frame (x = right wing, y = up, −z = the nose; metres; origin at the CG), to be
 // parented to the flown aircraft's root. Seen from the left seat (FLIGHT LAB's eye, A.eye) it is the real layout: the
-// glareshield ~13° below the eye with the white cowling over it, the windshield up to the roof, the PFD in front of
+// glareshield ~12° below the eye with the white cowling over it, the windshield up to the roof, the PFD in front of
 // the pilot, the audio panel and the MFD to its right, the standby instruments, the switch row, the key, the circuit
 // breakers, the throttle quadrant, two yokes, the rudder pedals, the flap handle and the trim wheel between the seats,
 // the fuel selector on the left wall, the door on the right, the seats, the rear bench and the aft windows.
@@ -41,10 +41,10 @@ const LEVER = { y: -0.045, z: -1.24, len: 0.22, idle: -11 * DEG, full: 27 * DEG 
 const FLAP = { y: -0.268, z: -0.40, det: [0, 11 * DEG, 22 * DEG, 33 * DEG] };
 const TRIMW = { y: -0.30, z: -0.64, r: 0.072, turns: 1.6 };
 const COMPASS = [0, 0.737, -0.892];
-const KEYSW = [-0.505, 0.10];
+const KEYSW = [-0.488, 0.10];                     // the key: just right of where the yoke's left horn hides the panel
 const ROCKERS = [['master', 'MASTER'], ['avionics', 'AVIONICS'], ['fuelPump', 'FUEL PUMP'], ['beacon', 'BEACON'], ['nav', 'NAV'], ['strobe', 'STROBE'],
   ['landing', 'LANDING'], ['taxi', 'TAXI'], ['pitot', 'PITOT HEAT']];
-const ROCKER = { x0: -0.445, dx: 0.036, y: 0.095, tilt: 12 * DEG };
+const ROCKER = { x0: -0.428, dx: 0.036, y: 0.095, tilt: 12 * DEG };
 const SWITCH_JA = { master: 'マスター', avionics: 'アビオニクス', fuelPump: '燃料ポンプ', beacon: 'ビーコン', nav: '航法灯', strobe: 'ストロボ', landing: '着陸灯', taxi: 'タキシー灯', pitot: 'ピトー ヒート' };
 const MAG = ['OFF', 'R', 'L', 'BOTH', 'START'], MAG_ANG = [-70 * DEG, -35 * DEG, 0, 35 * DEG, 70 * DEG];
 const FUEL_ANG = { L: 50 * DEG, R: -50 * DEG };
@@ -54,7 +54,7 @@ const FUEL_ANG = { L: 50 * DEG, R: -50 * DEG };
 const S = {
   panel: { c: 0x313439, r: 0.72, k: 1 }, glare: { c: 0x1c1d20, r: 0.9, k: 1 }, glareLip: { c: 0x232427, r: 0.62, k: 4 },
   bezel: { c: 0x17181b, r: 0.36 }, key: { c: 0x26282c, r: 0.5 }, knob: { c: 0x101113, r: 0.42 }, knobRing: { c: 0x2b2d31, r: 0.35 },
-  wall: { c: 0xb4afa6, r: 0.62, k: 4 }, wallDark: { c: 0x6f6b66, r: 0.6, k: 4 }, roof: { c: 0xd2cdc3, r: 0.95, k: 5 }, trim: { c: 0x8f8b84, r: 0.55, k: 4 },
+  wall: { c: 0xb4afa6, r: 0.62, k: 4 }, sidePanel: { c: 0x9d988f, r: 0.66, k: 4 }, wallDark: { c: 0x6f6b66, r: 0.6, k: 4 }, roof: { c: 0xd2cdc3, r: 0.95, k: 5 }, trim: { c: 0x8f8b84, r: 0.55, k: 4 },
   arm: { c: 0x4a4542, r: 0.55, k: 2 }, carpet: { c: 0x302f2e, r: 1, k: 3 }, seat: { c: 0x9a7b5c, r: 0.55, k: 2 }, seatSide: { c: 0x3a302b, r: 0.5, k: 2 },
   chrome: { c: 0xc8ccd1, r: 0.16, m: 1 }, alu: { c: 0x9ba1a7, r: 0.34, m: 0.9 }, steel: { c: 0x5d6268, r: 0.4, m: 0.8 },
   black: { c: 0x121315, r: 0.5 }, rubber: { c: 0x151515, r: 0.9 }, red: { c: 0xb3231c, r: 0.42 }, white: { c: 0xe9e7e2, r: 0.4 },
@@ -65,7 +65,7 @@ const S = {
 // ---------------------------------------------------------------- geometry helpers (everything ends non-indexed)
 const _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _one = new THREE.Vector3(1, 1, 1);
 function at(g, p, r) { _e.set(r ? r[0] : 0, r ? r[1] : 0, r ? r[2] : 0); _q.setFromEuler(_e); _p.set(p[0], p[1], p[2]); return g.applyMatrix4(_m4.compose(_p, _q, _one)); }
-const rbox = (w, h, d, r = 0.004, seg = 2) => { const rr = Math.min(r, Math.min(w, h, d) * 0.49); return rr < 0.0025 ? new THREE.BoxGeometry(w, h, d) : new RoundedBoxGeometry(w, h, d, seg, rr); };
+const rbox = (w, h, d, r = 0.004, seg = 1) => { const rr = Math.min(r, Math.min(w, h, d) * 0.49); return rr < 0.0025 ? new THREE.BoxGeometry(w, h, d) : new RoundedBoxGeometry(w, h, d, seg, rr); };
 const cylZ = (rFront, rBack, h, seg = 16) => new THREE.CylinderGeometry(rFront, rBack, h, seg).rotateX(Math.PI / 2);   // along z, the front (+z) radius first
 const cylX = (r, h, seg = 16) => new THREE.CylinderGeometry(r, r, h, seg).rotateZ(Math.PI / 2);
 const cylY = (r0, r1, h, seg = 16) => new THREE.CylinderGeometry(r1, r0, h, seg);
@@ -270,11 +270,32 @@ function kitMaterial() {
   m.customProgramCacheKey = () => 'cadet-cockpit-kit';
   return m;
 }
-// labels and placards (one atlas): roughness / metalness / backlight / occlusion per vertex; at night only the
-// backlit labels glow (emissive masked by cdMat.z)
-function decalMaterial(map, key) {
-  const m = new THREE.MeshStandardMaterial({ map, emissiveMap: map, emissive: 0xffe6c4, emissiveIntensity: 0, transparent: true, depthWrite: false,
-    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4, roughness: 1, metalness: 1 });
+// labels and placards' ink: the atlas holds only the ink's coverage (one channel), the colour comes from the vertices;
+// roughness / metalness / backlight / occlusion per vertex; at night only the backlit labels glow (cdMat.z). base: an
+// opaque variant, the ink over a ground of that colour (the compass card)
+function decalMaterial(map, key, base = null) {
+  const m = new THREE.MeshStandardMaterial({ map, vertexColors: true, emissive: 0xffe6c4, emissiveIntensity: 0, roughness: 1, metalness: 1,
+    transparent: !base, depthWrite: !!base, polygonOffset: !base, polygonOffsetFactor: -2, polygonOffsetUnits: -4 });
+  const ground = base ? new THREE.Color(base) : null;
+  m.onBeforeCompile = (sh) => {
+    VERT(sh);
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying vec4 vMat; varying vec3 vOP; varying vec3 vON; float cdCov = 1.0;')
+      .replace('#include <map_fragment>', '#ifdef USE_MAP\n  cdCov = texture2D( map, vMapUv ).r;\n#endif')
+      .replace('#include <color_fragment>', '#include <color_fragment>\n' + (ground
+        ? `diffuseColor.rgb = mix(vec3(${ground.r.toFixed(4)}, ${ground.g.toFixed(4)}, ${ground.b.toFixed(4)}), diffuseColor.rgb, cdCov);`
+        : 'diffuseColor.a *= cdCov;'))
+      .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = vMat.x;')
+      .replace('#include <metalnessmap_fragment>', 'float metalnessFactor = vMat.y;')
+      .replace('#include <emissivemap_fragment>', 'totalEmissiveRadiance *= vColor.rgb * cdCov * vMat.z;')
+      .replace('#include <aomap_fragment>', AO_FRAG);
+  };
+  m.customProgramCacheKey = () => 'cadet-cockpit-decal-' + key;
+  return m;
+}
+// the standby dials' faces (a colour texture, redrawn): lit like the panel, a faint backlight that grows at night
+function dialMaterial(map) {
+  const m = new THREE.MeshStandardMaterial({ map, emissiveMap: map, emissive: 0xffffff, emissiveIntensity: 0.04, roughness: 1, metalness: 1 });
   m.onBeforeCompile = (sh) => {
     VERT(sh);
     sh.fragmentShader = sh.fragmentShader
@@ -284,7 +305,7 @@ function decalMaterial(map, key) {
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance *= vMat.z;')
       .replace('#include <aomap_fragment>', AO_FRAG);
   };
-  m.customProgramCacheKey = () => 'cadet-cockpit-decal-' + key;
+  m.customProgramCacheKey = () => 'cadet-cockpit-dials';
   return m;
 }
 // a display (self-lit, exact colours): the texture is never mipmapped (redrawn up to 30 times a second), so it is
@@ -320,7 +341,6 @@ function cowlMaterial() {
           float split = (1.0 - smoothstep(0.0, w, abs(vOP.y - 0.205))) * step(vOP.z, -1.47);           // upper / lower cowling
           float fz = fract((vOP.z + 1.47) / 0.085);
           float dots = (1.0 - smoothstep(0.002, 0.0035, length(vec2((fz - 0.5) * 0.085, vOP.y - 0.218)))) * step(vOP.z, -1.5);
-          float base = 1.0 - smoothstep(0.0, 0.004, vOP.y - 0.43 + (vOP.z + 1.3) * 0.0);
           cdSeam = clamp(joint + door + split + dots * 0.7, 0.0, 1.0);
           diffuseColor.rgb *= 1.0 - 0.55 * cdSeam;
         }`)
@@ -331,37 +351,42 @@ function cowlMaterial() {
 }
 
 // ---------------------------------------------------------------- the decal atlas (labels and placards, drawn once)
+// One channel: the ink's coverage, drawn white on black (a colour canvas uploaded as R8 — a quarter of the memory);
+// the ink's colour is the decal's vertex colour, and a placard's ground is a plate of its own under the ink. Its scale
+// (pixels per millimetre) is the largest at which everything fits.
 const SANS = '"Arial Narrow", "Helvetica Neue", Arial, Helvetica, sans-serif';
+const ATLAS_W = 1024, ATLAS_H = 256, INK = 0xeeeeea;
 class Atlas {
-  constructor(W, H, k) { this.W = W; this.H = H; this.k = k; this.items = []; this.x = 2; this.y = 2; this.row = 0; }
+  constructor(W, H) { this.W = W; this.H = H; this.k = 4; this.used = 0; this.items = []; }
   // a region of w × h millimetres; draw(g, w, h) in pixels
   add(wmm, hmm, draw) {
-    const it = { x: 0, y: 0, w: Math.max(2, Math.round(wmm * this.k)), h: Math.max(2, Math.round(hmm * this.k)), draw };
+    const it = { wmm, hmm, x: 0, y: 0, w: 0, h: 0, draw };
     this.items.push(it);
     return it;
   }
-  // shelves, tallest first (call once, after the last add)
-  pack() {
-    this.x = 2; this.y = 2; this.row = 0;
-    for (const it of [...this.items].sort((a, b) => b.h - a.h || b.w - a.w)) {
-      if (this.x + it.w + 2 > this.W) { this.x = 2; this.y += this.row + 3; this.row = 0; }
-      it.x = this.x; it.y = this.y; this.x += it.w + 3; this.row = Math.max(this.row, it.h);
+  // shelves, tallest first, at k pixels per mm: does it fit?
+  packAt(k) {
+    let x = 2, y = 2, row = 0;
+    for (const it of [...this.items].sort((a, b) => b.hmm - a.hmm || b.wmm - a.wmm)) {
+      it.w = Math.max(2, Math.round(it.wmm * k)); it.h = Math.max(2, Math.round(it.hmm * k));
+      if (x + it.w + 2 > this.W) { x = 2; y += row + 3; row = 0; }
+      it.x = x; it.y = y; x += it.w + 3; row = Math.max(row, it.h);
     }
+    this.used = (y + row + 2) / this.H;
+    return this.used <= 1;
   }
-  get full() { return this.y + this.row + 2 > this.H; }
-  get used() { return (this.y + this.row) / this.H; }
+  pack(kMax = 4) { for (this.k = kMax; this.k > 1.5 && !this.packAt(this.k); this.k -= 0.05); return this; }
+  get full() { return this.used > 1; }
   uv(it) { return [it.x / this.W, 1 - (it.y + it.h) / this.H, (it.x + it.w) / this.W, 1 - it.y / this.H]; }
   render(cv) {
-    const g = cv.getContext('2d'); g.clearRect(0, 0, this.W, this.H);
-    for (const it of this.items) { g.save(); g.translate(it.x, it.y); g.beginPath(); g.rect(0, 0, it.w, it.h); g.clip(); it.draw(g, it.w, it.h); g.restore(); }
+    const g = cv.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, this.W, this.H);
+    for (const it of this.items) { g.save(); g.translate(it.x, it.y); g.beginPath(); g.rect(0, 0, it.w, it.h); g.clip(); g.fillStyle = '#fff'; g.strokeStyle = '#fff'; it.draw(g, it.w, it.h); g.restore(); }
   }
 }
-// text on a transparent ground: lines (strings), size = the cap height in mm (about)
-function textDraw(lines, { color = '#eeeeea', weight = 700, align = 'center', box = null, bg = null, font = SANS } = {}) {
+// text (white ink): lines (strings), size = the cap height in mm (about)
+function textDraw(lines, { weight = 700, align = 'center', font = SANS } = {}) {
   return (g, w, h) => {
-    if (bg) { g.fillStyle = bg; g.fillRect(0, 0, w, h); }
-    if (box) { g.strokeStyle = box; g.lineWidth = Math.max(1, h * 0.06); g.strokeRect(g.lineWidth, g.lineWidth, w - 2 * g.lineWidth, h - 2 * g.lineWidth); }
-    g.fillStyle = color; g.textBaseline = 'middle'; g.textAlign = align;
+    g.textBaseline = 'middle'; g.textAlign = align;
     const n = lines.length, lh = h / n, fs = lh * 0.78;
     g.font = `${weight} ${fs}px ${font}`;
     lines.forEach((l, i) => g.fillText(l, align === 'center' ? w / 2 : align === 'left' ? w * 0.04 : w * 0.96, lh * (i + 0.55), w * 0.94));
@@ -382,7 +407,6 @@ function makeBuilder() {
     for (let i = 0; i < n; i++) { col[i * 3] = r; col[i * 3 + 1] = gg; col[i * 3 + 2] = b; mat[i * 4] = ro; mat[i * 4 + 1] = me; mat[i * 4 + 2] = ki; mat[i * 4 + 3] = s.ao ?? 1; }
     geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.setAttribute('cdMat', new THREE.BufferAttribute(mat, 4));
     if (refineLen) geo = refine(geo, refineLen);
-    if (globalThis.__stats) { const ln = (new Error().stack.split('\n')[2].match(/:(\d+):\d+\)?$/) || [])[1]; globalThis.__stats[ln] = (globalThis.__stats[ln] || 0) + geo.attributes.position.count / 3; }
     if (part) { if (!moving.has(part)) moving.set(part, []); moving.get(part).push(geo); } else kit.push(geo);
     return geo;
   }
@@ -401,37 +425,67 @@ function withMat(g, rough, metal, z, ao = 1) {
   g.setAttribute('cdMat', new THREE.BufferAttribute(m, 4));
   return g;
 }
+function withCol(g, hex) {
+  const c = new THREE.Color(hex), n = g.attributes.position.count, a = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { a[i * 3] = c.r; a[i * 3 + 1] = c.g; a[i * 3 + 2] = c.b; }
+  g.setAttribute('color', new THREE.BufferAttribute(a, 3));
+  return g;
+}
 
 // ================================================================ buildCockpit
+// buildCockpit(FL, A, opts) → { root, eye, instructorSeat: { hip, ankleL, ankleR, eye, yaw, seatY }, screens: { pfd, mfd },
+//   controls, switches, parts, pick(raycaster), aimPoint(control, out), update(dt, o), setVisible(v), setAnisotropy(n),
+//   markDirty(), triangles, meshes, textureBytes, stats, dispose() }. root goes under the flown aircraft's root (the body
+//   frame); eye and instructorSeat are in that frame. update(dt, { s, L, av = L.av, parkBrake, night 0..1 }) every frame.
+// controls: [{ id, label (Japanese, short), kind, target (its hit mesh, on PICK_LAYER), at (where to aim, at rest),
+//   act(dir, wheel) }]: dir +1 = a click or the wheel turned up (clockwise / forward / on), −1 = the wheel down; act
+//   returns what the game should do, or null for nothing: { type: 'flight', name, arg? } (the flight bridge's action),
+//   { type: 'av', what, dir, big } (FL.avionics.control(L.av, what, dir, big); the softkey labels and the lamps follow
+//   av by themselves), { type: 'switch', id, on } and { type: 'select', id, value } (set cockpit.switches[id]; the
+//   lights and the magnetos are the game's to apply), { type: 'exit' }, { type: 'info', text }.
 // opts: { makeCanvas(w, h) → canvas | null (default: a DOM canvas when there is a document), anisotropy }
 export function buildCockpit(FL, A, opts = {}) {
   const P = FL.physics, AV = FL.avionics;
   const makeCanvas = opts.makeCanvas !== undefined ? opts.makeCanvas
     : (typeof document !== 'undefined' ? (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; } : null);
   const B = makeBuilder(), add = B.add;
-  const atlas = new Atlas(1024, 512, 4);
-  const decal = (wmm, hmm, draw, p, r, { lit = 1, rough = 0.55 } = {}) => {
-    const it = atlas.add(wmm, hmm, draw);
-    B.decals.push(withMat(quad(wmm / 1000, hmm / 1000, null || [0, 0, 1, 1], p, r), rough, 0, lit));
-    B.decals[B.decals.length - 1].userData = { it };
+  const atlas = new Atlas(ATLAS_W, ATLAS_H);
+  // ink from the atlas on a quad of w × h mm at p (turned by r), in the colour col; lit: backlit at night
+  const decal = (wmm, hmm, draw, p, r, { lit = 1, rough = 0.55, col = INK } = {}) => {
+    const it = atlas.add(wmm, hmm, draw), g = withCol(withMat(quad(wmm / 1000, hmm / 1000, [0, 0, 1, 1], p, r), rough, 0, lit), col);
+    g.userData = { it }; B.decals.push(g);
     return it;
   };
-  const label = (text, p, { size = 2.2, r = null, lit = 1, color, weight, wmm = null, align } = {}) => {
+  const label = (text, p, { size = 2.2, r = null, lit = 1, col = INK, weight, wmm = null, align } = {}) => {
     const lines = Array.isArray(text) ? text : [text], n = lines.length, longest = Math.max(...lines.map(l => l.length));
     const w = wmm || Math.max(3, longest * size * 0.66 + size * 0.6), h = size * 1.45 * n;
-    return decal(w, h, textDraw(lines, { color, weight, align }), p, r, { lit });
+    return decal(w, h, textDraw(lines, { weight, align }), p, r, { lit, col });
   };
-  const controls = [], hitMat = new THREE.MeshBasicMaterial({ visible: false }), hits = [];
+  // a placard: its ground (a plate in the cabin's material, on the surface) and its ink just in front
+  const placard = (lines, wmm, hmm, p, { bg = 0xd7d4cc, fg = 0x151515, r = null, lift = 0.0004 } = {}) => {
+    add(at(new THREE.PlaneGeometry(wmm / 1000, hmm / 1000), [p[0], p[1], p[2] + lift], r), { c: bg, r: 0.32 });
+    return decal(wmm, hmm, placardDraw(lines), [p[0], p[1], p[2] + lift + 0.0003], r, { lit: 0, rough: 0.32, col: fg });
+  };
+  const controls = [], hitMat = new THREE.MeshBasicMaterial({ visible: false }), hits = [], hitGeos = [];
   const hitRoot = new THREE.Group(); hitRoot.name = 'cockpit-hits';
-  // a control: target = an invisible box (or cylinder) a little larger than the thing; part = the moving part it rides on
+  // a control: target = an invisible box (or cylinder) a little larger than the thing (more: further boxes [size, pos] of
+  // the same control, e.g. a yoke's two horns); part = the moving part it rides on; at = where to aim at it
   function control(c) {
     const g = c.cyl ? cylZ(c.cyl[0], c.cyl[0], c.cyl[1], 12) : new THREE.BoxGeometry(c.size[0], c.size[1], c.size[2]);
     const mesh = new THREE.Mesh(g, hitMat);
     mesh.position.set(c.pos[0], c.pos[1], c.pos[2]); if (c.rot) mesh.rotation.set(c.rot[0], c.rot[1], c.rot[2]);
     mesh.layers.set(PICK_LAYER); mesh.name = 'hit-' + c.id;
     const ctl = { id: c.id, label: c.label, kind: c.kind, target: mesh, at: new THREE.Vector3(...(c.aim || c.pos)), part: c.part || null, act: c.act };
+    if (typeof c.label === 'function') Object.defineProperty(ctl, 'label', { get: c.label, enumerable: true });     // it changes (a softkey's function)
+    mesh.updateMatrix();
+    ctl.aimLocal = ctl.at.clone().applyMatrix4(mesh.matrix.clone().invert());     // where to aim, in the hit mesh's frame (moves with it)
     mesh.userData.control = ctl;
-    hits.push({ mesh, part: c.part || null });
+    for (const [sz, p] of c.more || []) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(sz[0], sz[1], sz[2]), hitMat);
+      m.position.set(p[0] - c.pos[0], p[1] - c.pos[1], p[2] - c.pos[2]); m.layers.set(PICK_LAYER); m.name = mesh.name; m.userData.control = ctl;
+      mesh.add(m); hitGeos.push(m.geometry);
+    }
+    hits.push({ mesh, part: c.part || null }); hitGeos.push(g);
     controls.push(ctl);
     return ctl;
   }
@@ -444,11 +498,13 @@ export function buildCockpit(FL, A, opts = {}) {
   // ============================================================ the shell
   // floor (carpet), firewall, the plate under the panel
   add(sheet((u, v, o) => o.set(-0.462 + 0.924 * u, FLOOR, FIRE + (AFT - FIRE) * v), 6, 18, true), S.carpet);
-  add(sheet((u, v, o) => o.set(-0.53 + 1.06 * u, FLOOR + (0.44 - FLOOR) * v, FIRE), 8, 8, false), S.carpet);
+  add(sheet((u, v, o) => o.set(-0.53 + 1.06 * u, FLOOR + (WS.y0 - 0.03 - FLOOR) * v, FIRE), 8, 8, false), S.carpet);   // (its top hidden under the glareshield)
   add(sheet((u, v, o) => o.set(-0.55 + 1.1 * u, PBOT - 0.004, PZ - 0.02 + (FIRE - PZ + 0.02) * v), 6, 4, true), { ...S.black, ao: 0.6 });
   // the lower walls (to the window sill): a soft profile from the floor up
   for (const sd of [-1, 1]) {
     add(sheet((u, v, o) => { const y = FLOOR + (SILL - FLOOR) * v; o.set(sd * lowX(y), y, FIRE + (AFT - FIRE) * u); }, 22, 8, sd < 0), S.wall);
+    // the upholstered side panel (on the right: the door's), a shade darker than the wall
+    add(sheet((u, v, o) => { const y = -0.27 + (SILL - 0.02 + 0.27) * v; o.set(sd * (lowX(y) - 0.0025), y, -1.17 + 1.01 * u); }, 6, 6, sd < 0), S.sidePanel);
     // the window band (leaning in towards the roof): a ring round each window (its thick, soft-edged reveal) and the
     // posts between them, all in the band's plane
     const len = Math.hypot(KX, 1), nx = sd / len, ny = -KX / len;
@@ -467,7 +523,7 @@ export function buildCockpit(FL, A, opts = {}) {
     add(tube(pil, 0.028, 16, 8), S.trim);
     add(at(rbox(0.04, 0.03, AFT - zp(WTOP) + 0.02, 0.01, 1), [sd * (HWT - 0.005), WTOP + 0.002, (AFT + zp(WTOP)) / 2]), S.trim);
     // the B-pillar trim between the front and rear windows
-    add(at(rbox(0.03, WTOP - SILL + 0.02, 0.17, 0.012), [sd * (HW - 0.045), (WTOP + SILL) / 2, -0.175], [0, 0, -sd * Math.atan(-KX)]), S.trim);
+    add(at(rbox(0.024, WTOP - SILL + 0.02, 0.15, 0.010, 2), [sd * (HW - 0.034), (WTOP + SILL) / 2, -0.175], [0, 0, -sd * Math.atan(-KX)]), S.trim);
   }
   // the headliner: an arch from window top to window top, from the windshield's top edge to the aft bulkhead
   add(sheet((u, v, o) => {
@@ -489,7 +545,8 @@ export function buildCockpit(FL, A, opts = {}) {
   // the glareshield: a hood from under its lip, over the rounded lip, forward to the windshield's base
   add(sheet((u, v, o) => {
     const x = -0.553 + 1.106 * u, zb = wsZ(x, WS.y0);
-    const prof = [[PZ + 0.004, 0.459], [-1.045, 0.459], [-1.031, 0.465], [-1.027, 0.4745], [-1.032, 0.4845], [-1.05, 0.4875], [-1.13, 0.4865], [zb + 0.05, WS.y0 + 0.022], [zb - 0.002, WS.y0 - 0.002]];
+    const z1 = zb - 0.002, y1 = WS.y0 - 0.002, slope = (f) => [-1.05 + (z1 + 1.05) * f, 0.4795 + (y1 - 0.4795) * f];   // the hood falls straight to the windshield
+    const prof = [[PZ + 0.004, 0.451], [-1.045, 0.451], [-1.031, 0.457], [-1.027, 0.4665], [-1.032, 0.4765], [-1.05, 0.4795], slope(0.33), slope(0.67), [z1, y1]];
     const f = v * (prof.length - 1), i = Math.min(prof.length - 2, Math.floor(f)), t = f - i;
     o.set(x, prof[i][1] + (prof[i + 1][1] - prof[i][1]) * t, prof[i][0] + (prof[i + 1][0] - prof[i][0]) * t);
   }, 24, 16, false), S.glare);
@@ -505,19 +562,23 @@ export function buildCockpit(FL, A, opts = {}) {
     add(at(new THREE.PlaneGeometry(BEZEL.screenW + 0.008, BEZEL.screenH + 0.008), [C[0], C[1] + BEZEL.screenY, PZ + 0.004]), S.caseBlack);
     // the screen itself (the display, then the label strip under it)
     const zS = PZ + 0.0085;
-    scr[which].push(quad(BEZEL.screenW, BEZEL.imageH, [0, 0, 1, 1], [C[0], C[1] + sy0 + BEZEL.stripH + BEZEL.imageH / 2, zS]));
+    scr[which].push(quad(BEZEL.screenW, BEZEL.imageH, [0, 0, 1, 1], [C[0], C[1] + sy1 - BEZEL.imageH / 2, zS]));
     strips.push(quad(BEZEL.screenW, BEZEL.stripH, dynUV(DYN.strip[which]), [C[0], C[1] + sy0 + BEZEL.stripH / 2, zS]));
+    const band = sy1 - BEZEL.imageH - sy0 - BEZEL.stripH;
+    if (band > 1e-4) { const q = quad(BEZEL.screenW, band, dynUV(DYN.white), [C[0], C[1] + sy0 + BEZEL.stripH + band / 2, zS]); q.userData.black = true; B.unlit.push(q); }
     // softkeys
     for (let i = 0; i < 12; i++) {
       const x = C[0] + KEY_X(i), y = C[1] + BEZEL.keyY;
       add(at(rbox(0.0125, 0.0068, 0.008, 0.0018), [x, y, BZ - 0.001]), S.key);
-      control({ id: `${which}.sk${i + 1}`, label: `${which === 'pfd' ? 'PFD' : 'MFD'} ソフトキー ${i + 1}`, kind: 'button', size: [0.016, 0.011, 0.02], pos: [x, y, BZ + 0.002],
+      const tag = `${which === 'pfd' ? 'PFD' : 'MFD'} ソフトキー ${i + 1}`;
+      const now = () => { const k = softkeysOf(which, cur.av)[i], l = k && (typeof k.label === 'function' ? (cur.av ? k.label(cur.av) : '') : k.label); return l && k.act ? `${tag}（${l}）` : tag; };
+      control({ id: `${which}.sk${i + 1}`, label: now, kind: 'button', size: [0.016, 0.011, 0.02], pos: [x, y, BZ + 0.002],
         act: () => { const k = softkeysOf(which, cur.av)[i], w = k && k.act ? k.act(cur.av) : null; return w ? avc(w[0], w[1]) : info('このキーはこの訓練では使いません'); } });
     }
     // knobs: dual (outer ring + inner knob) or single, with the labels around them
     for (const kn of KNOBS) {
       const x = C[0] + kn.x, y = C[1] + kn.y;
-      add(at(cylZ(kn.r + 0.003, kn.r + 0.003, 0.002, 16), [x, y, BZ]), S.knobRing);
+      add(at(new THREE.CircleGeometry(kn.r + 0.003, 16), [x, y, BZ + 0.0006]), S.knobRing);
       if (kn.dual) {
         add(at(knurled(kn.r, 0.0085, 20), [x, y, BZ + 0.005]), S.knob);
         add(at(knurled(kn.r * 0.62, 0.0085, 14), [x, y, BZ + 0.0125]), S.knob);
@@ -535,14 +596,15 @@ export function buildCockpit(FL, A, opts = {}) {
   function knurled(r, h, n) {
     const g = new THREE.CylinderGeometry(r, r, h, n, 1, false);
     const p = g.attributes.position;
-    for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i), a = Math.atan2(z, x), rr = Math.hypot(x, z); if (rr > r * 0.9) { const k = 1 + 0.03 * (i % 2 ? 1 : -1); p.setX(i, x * k); p.setZ(i, z * k); } }
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i), rr = Math.hypot(x, z); if (rr > r * 0.9) { const k = 1 + 0.03 * (i % 2 ? 1 : -1); p.setX(i, x * k); p.setZ(i, z * k); } }
     g.computeVertexNormals();
     return g.rotateX(Math.PI / 2);
   }
   function knobControls(which, kn, x, y) {
-    const tag = which === 'pfd' ? 'PFD' : 'MFD', id = `${which}.${kn.id}`, z = BZ + 0.012;
+    const id = `${which}.${kn.id}`, z = BZ + 0.012;
     const dual = (name, outer, inner, push, labOut, labIn) => {
-      control({ id: id + '.outer', label: `${name}（外側）${labOut}`, kind: 'knob', cyl: [kn.r + 0.003, 0.012], pos: [x, y, BZ + 0.004], aim: [x + kn.r * 0.82, y, BZ + 0.009],
+      const ex = EYE0[0] - x, ey = EYE0[1] - y, el = Math.hypot(ex, ey) || 1;                 // the ring's side towards the eye
+      control({ id: id + '.outer', label: `${name}（外側）${labOut}`, kind: 'knob', cyl: [kn.r + 0.003, 0.012], pos: [x, y, BZ + 0.004], aim: [x + ex / el * kn.r * 0.86, y + ey / el * kn.r * 0.86, BZ + 0.009],
         act: (dir, wheel) => outer(wheel ? dir : 1) });
       control({ id: id + '.inner', label: `${name}（内側）${labIn}`, kind: 'knob', cyl: [kn.r * 0.62 + 0.0015, 0.01], pos: [x, y, z + 0.003],
         act: (dir, wheel) => (wheel || !push ? inner(wheel ? dir : 1) : push()) });
@@ -554,9 +616,8 @@ export function buildCockpit(FL, A, opts = {}) {
     else if (kn.id === 'fms') dual('FMS', d => avc('FPL_NEXT', d), d => avc('FPL_NEXT', d), null, 'レグ', 'レグ');
     else if (kn.id === 'hdg') control({ id, label: 'HDG ヘディング バグ（押すと現在の機首方位）', kind: 'knob', cyl: [kn.r + 0.003, 0.016], pos: [x, y, BZ + 0.007],
       act: (dir, wheel) => (wheel ? avc('HDG', dir) : avc('HDG_SYNC', cur.s ? Math.round(AV.trueToMag(cur.s.out.hdgTrue || 0, P.MAGVAR_W)) : 360)) });
-    else if (kn.id === 'range') control({ id, label: 'RANGE 地図の範囲', kind: 'knob', cyl: [kn.r + 0.003, 0.016], pos: [x, y, BZ + 0.007], act: (dir) => avc('RANGE', dir === 0 ? 1 : -dir) });
+    else if (kn.id === 'range') control({ id, label: 'RANGE 地図の範囲', kind: 'knob', cyl: [kn.r + 0.003, 0.016], pos: [x, y, BZ + 0.007], act: (dir) => avc('RANGE', dir < 0 ? -1 : 1) });
     else control({ id, label: `${kn.label}（音量）`, kind: 'knob', cyl: [kn.r + 0.003, 0.016], pos: [x, y, BZ + 0.007], act: () => info('音量はこの訓練では変えません') });
-    void tag;
   }
   function keyControl(which, k, x, y) {
     const id = `${which}.${k.id}`, size = [k.w + 0.003, 0.0095, 0.016], pos = [x, y, BZ + 0.003];
@@ -565,7 +626,7 @@ export function buildCockpit(FL, A, opts = {}) {
       navSwap: () => avc('NAV_SWAP'), comSwap: () => avc('COM_SWAP'), fpl: () => avc('MFD_PAGE'),
       direct: () => { const now = cur.av && cur.av.direct, i = wps.indexOf(now); return avc('DIRECT', i + 1 < wps.length ? wps[i + 1] : null); },
     };
-    const labels = { navSwap: 'NAV 周波数の入れ替え', comSwap: 'COM 周波数の入れ替え', fpl: 'FPL（飛行計画のページ）', direct: 'D→（直行先を順に選ぶ）', menu: 'MENU', proc: 'PROC', clr: 'CLR', ent: 'ENT' };
+    const labels = { navSwap: 'NAV 周波数の入れ替え', comSwap: 'COM 周波数の入れ替え', fpl: 'FPL（飛行計画のページ）', direct: 'D→（直行先を順に選ぶ）', menu: 'MENU キー', proc: 'PROC キー', clr: 'CLR キー', ent: 'ENT キー' };
     control({ id, label: labels[k.id], kind: 'button', size, pos, act: acts[k.id] || (() => info('このキーはこの訓練では使いません')) });
   }
   // the screens' and strips' textures come later (createGlass); remember the quads
@@ -583,7 +644,7 @@ export function buildCockpit(FL, A, opts = {}) {
       const lampKey = { 'COM1 MIC': 'micCOM1', 'COM2 MIC': 'micCOM2', COM1: 'monCOM1', COM2: 'monCOM2', NAV1: 'monNAV1', NAV2: 'monNAV2' }[name] || null;
       B.unlit.push(quad(0.009, 0.0016, dynUV(DYN.white), [x, y + 0.0037, z + 0.0052]));
       lamps.push({ key: lampKey, index: B.unlit.length - 1 });
-      const act = name.endsWith(' MIC') ? () => { const r = name.slice(0, 4); return cur.av && cur.av.audio.mic === r ? info(`送信は ${r}（このまま）`) : avc('MIC'); }
+      const act = name === 'COM1 MIC' || name === 'COM2 MIC' ? () => { const r = name.slice(0, 4); return cur.av && cur.av.audio.mic === r ? info(`送信は ${r}（このまま）`) : avc('MIC'); }
         : /^(COM1|COM2|NAV1|NAV2)$/.test(name) ? () => avc('MON', name) : () => info('このボタンはこの訓練では使いません');
       control({ id: 'audio.' + name.replace(/[^A-Z0-9]/g, ''), label: `オーディオ ${name}`, kind: 'button', size: [0.026, 0.0125, 0.016], pos: [x, y, z + 0.004], act });
     }));
@@ -599,7 +660,7 @@ export function buildCockpit(FL, A, opts = {}) {
   stbyNames.forEach((k, i) => {
     const y = STBY_Y[i], x = STBY_X;
     add(slab(rectPts(x - 0.035, y - 0.035, x + 0.035, y + 0.035), 0.006, [[circlePts(x, y, 0.0295, 24), 0.0005]], 0.012, PZ + 0.015, 0, 3), S.bezel);
-    for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) add(at(cylZ(0.0022, 0.0022, 0.002, 8), [x + sx * 0.029, y + sy * 0.029, PZ + 0.0165]), S.steel);
+    for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) add(at(new THREE.CircleGeometry(0.0022, 6), [x + sx * 0.029, y + sy * 0.029, PZ + 0.0156]), S.steel);
     const g = new THREE.CircleGeometry(0.0295, 32), uv = dynUV(DYN[k]), a = g.attributes.uv;
     for (let j = 0; j < a.count; j++) a.setXY(j, uv[0] + a.getX(j) * (uv[2] - uv[0]), uv[1] + a.getY(j) * (uv[3] - uv[1]));
     B.dynLit.push(withMat(at(g.toNonIndexed(), [x, y, PZ + 0.004]), 0.5, 0, 1));
@@ -646,28 +707,28 @@ export function buildCockpit(FL, A, opts = {}) {
   { const names = [['PFD', 'MFD', 'AHRS', 'ADC', 'GPS/NAV1', 'GPS/NAV2', 'AUDIO'], ['COM1', 'COM2', 'XPDR', 'ENG', 'FUEL PUMP', 'PITOT', 'TURN'], ['NAV LT', 'STROBE', 'LDG LT', 'TAXI LT', 'BEACON', 'ALT FLD', 'MASTER']];
     names.forEach((row, j) => row.forEach((n, i) => {
       const x = 0.322 + i * 0.033, y = 0.178 - j * 0.052;
-      add(at(cylZ(0.0062, 0.0062, 0.003, 10), [x, y, PZ + 0.0015]), S.steel);
-      add(at(cylZ(0.0048, 0.0052, 0.011, 10), [x, y, PZ + 0.007]), S.cbBody);
+      add(at(new THREE.CircleGeometry(0.0062, 10), [x, y, PZ + 0.0008]), S.steel);
+      add(at(cylZ(0.0048, 0.0052, 0.011, 8), [x, y, PZ + 0.0062]), S.cbBody);
       label(n, [x, y - 0.0125, PZ + 0.0002], { size: 1.3, wmm: 15 });
       label(['5', '5', '5', '3', '5', '5', '2', '5', '5', '2', '5', '10', '10', '2', '5', '5', '5', '5', '5', '5', '60'][j * 7 + i] || '5', [x, y + 0.0095, PZ + 0.0002], { size: 1.2 });
     }));
     label('CIRCUIT BREAKERS', [0.421, 0.205, PZ + 0.0002], { size: 1.8, wmm: 50 });
-    control({ id: 'cb', label: 'サーキット ブレーカー', kind: 'button', size: [0.23, 0.15, 0.02], pos: [0.421, 0.13, PZ + 0.008], act: () => info('サーキット ブレーカー：飛んだ（飛び出た）ものはないか、目で確かめます') });
+    control({ id: 'cb', label: 'サーキット ブレーカー', kind: 'button', size: [0.23, 0.15, 0.02], pos: [0.421, 0.13, PZ + 0.008], aim: [0.49, 0.13, PZ + 0.008], act: () => info('サーキット ブレーカー：飛んだ（飛び出た）ものはないか、目で確かめます') });
   }
   // placards (right of the panel)
-  decal(88, 30, placard(['THIS AIRPLANE MUST BE OPERATED IN THE NORMAL OR UTILITY', 'CATEGORY IN COMPLIANCE WITH THE OPERATING LIMITATIONS', 'STATED IN THE FORM OF PLACARDS, MARKINGS AND MANUALS.', 'NO ACROBATIC MANEUVERS INCLUDING SPINS APPROVED.']),
-    [0.424, 0.37, PZ + 0.0002], null, { lit: 0, rough: 0.3 });
-  decal(64, 9, placard(['MANEUVERING SPEED 113 KIAS AT 2550 LBS']), [0.424, 0.336, PZ + 0.0002], null, { lit: 0, rough: 0.3 });
-  decal(64, 9, placard(['DEMONSTRATED CROSSWIND 17 KTS']), [0.424, 0.322, PZ + 0.0002], null, { lit: 0, rough: 0.3 });
-  decal(30, 9, placard(['NO SMOKING'], '#e8e4da', '#b3231c'), [0.424, 0.300, PZ + 0.0002], null, { lit: 0, rough: 0.3 });
+  placard(['THIS AIRPLANE MUST BE OPERATED IN THE NORMAL OR UTILITY', 'CATEGORY IN COMPLIANCE WITH THE OPERATING LIMITATIONS', 'STATED IN THE FORM OF PLACARDS, MARKINGS AND MANUALS.', 'NO ACROBATIC MANEUVERS INCLUDING SPINS APPROVED.'],
+    88, 30, [0.424, 0.37, PZ]);
+  placard(['MANEUVERING SPEED 113 KIAS AT 2550 LBS'], 64, 9, [0.424, 0.336, PZ]);
+  placard(['DEMONSTRATED CROSSWIND 17 KTS'], 64, 9, [0.424, 0.322, PZ]);
+  placard(['NO SMOKING'], 30, 9, [0.424, 0.300, PZ], { bg: 0xe8e4da, fg: 0xb3231c });
   // the hour meter
   add(at(rbox(0.032, 0.016, 0.004, 0.002), [0.47, 0.255, PZ + 0.002]), S.caseBlack);
-  decal(26, 9, (g, w, h) => { g.fillStyle = '#0b0b0b'; g.fillRect(0, 0, w, h); g.fillStyle = '#f0f0f0'; g.font = `700 ${h * 0.62}px ${SANS}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('0 4 7 1 2', w / 2, h * 0.55); }, [0.47, 0.255, PZ + 0.0042], null, { lit: 0 });
+  decal(26, 9, (g, w, h) => { g.font = `700 ${h * 0.62}px ${SANS}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('0 4 7 1 2', w / 2, h * 0.55); }, [0.47, 0.255, PZ + 0.0042], null, { lit: 0, col: 0xf0f0f0 });
   label('HOURS', [0.47, 0.268, PZ + 0.0002], { size: 1.4 });
-  function placard(lines, bg = '#d7d4cc', fg = '#151515') {
+  function placardDraw(lines) {
     return (g, w, h) => {
-      g.fillStyle = bg; g.fillRect(0, 0, w, h); g.strokeStyle = fg; g.lineWidth = Math.max(1, h * 0.03); g.strokeRect(g.lineWidth * 1.5, g.lineWidth * 1.5, w - g.lineWidth * 3, h - g.lineWidth * 3);
-      g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.lineWidth = Math.max(1, h * 0.03); g.strokeRect(g.lineWidth * 1.5, g.lineWidth * 1.5, w - g.lineWidth * 3, h - g.lineWidth * 3);
+      g.textAlign = 'center'; g.textBaseline = 'middle';
       const lh = (h * 0.86) / lines.length; g.font = `700 ${lh * 0.72}px ${SANS}`;
       lines.forEach((l, i) => g.fillText(l, w / 2, h * 0.07 + lh * (i + 0.5), w * 0.94));
     };
@@ -692,7 +753,7 @@ export function buildCockpit(FL, A, opts = {}) {
     lever(0.045, 'mixture', ribbed(0.026, 0.024, 0.026), S.red);
     lever(-0.05, 'carb', rbox(0.02, 0.016, 0.014, 0.003), S.black);
     const lp = (x, a) => [x, LEVER.y + Math.sin(a) * (LEVER.len + 0.012), LEVER.z + Math.cos(a) * (LEVER.len + 0.012)];
-    control({ id: 'throttle', label: 'スロットル（出力）', kind: 'lever', part: 'throttle', size: [0.04, 0.032, 0.04], pos: lp(-0.005, 0), act: (dir) => flight('thrStep', dir >= 0 ? 1 : -1) });
+    control({ id: 'throttle', label: 'スロットル（R / F）', kind: 'lever', part: 'throttle', size: [0.04, 0.032, 0.04], pos: lp(-0.005, 0), act: (dir) => flight('thrStep', dir >= 0 ? 1 : -1) });
     control({ id: 'mixture', label: 'ミクスチャー', kind: 'lever', part: 'mixture', size: [0.032, 0.03, 0.036], pos: lp(0.045, 0), act: () => info('ミクスチャーはフル リッチのまま使います（この飛行では動かしません）') });
     control({ id: 'carbHeat', label: 'キャブレター ヒート', kind: 'lever', part: 'carb', size: [0.026, 0.024, 0.026], pos: lp(-0.05, 0), act: () => info('キャブレター ヒート：着氷の点検で使います（この飛行では OFF のまま）') });
   }
@@ -725,8 +786,8 @@ export function buildCockpit(FL, A, opts = {}) {
     }
     if (sd < 0) add(at(cylZ(0.0048, 0.0048, 0.006, 12), P3(-0.152, 0.112, 0.016)), S.red, part);           // push-to-talk
     add(at(cylZ(0.032, 0.03, 0.01, 24), [x0, y0, PZ + 0.005]), S.rubber);                                  // the boot at the panel
-    control({ id: part, label: sd < 0 ? '操縦かん（W/S または ↑/↓ でピッチ、A/D または ←/→ でロール）' : '右席の操縦かん（教官側。左と一緒に動きます）', kind: 'handle', part,
-      size: [0.36, 0.17, 0.06], pos: [x0, y0 + 0.04, z0 + 0.005], act: () => info('操縦かん：W / S（↑ / ↓）で機首の上げ下げ、A / D（← / →）で傾き') });
+    control({ id: part, label: sd < 0 ? '操縦かん（W / S・A / D）' : '右席の操縦かん（左と連動）', kind: 'handle', part,
+      size: [0.11, 0.07, 0.06], pos: [x0, y0, z0 + 0.004], more: [[[0.042, 0.15, 0.045], [x0 - 0.152, y0 + 0.075, z0 + 0.008]], [[0.042, 0.15, 0.045], [x0 + 0.152, y0 + 0.075, z0 + 0.008]]], act: () => info('操縦かん：W / S（↑ / ↓）で機首の上げ下げ、A / D（← / →）で傾き') });
   }
 
   // ============================================================ rudder pedals (left pair, right pair: they move opposite ways)
@@ -740,7 +801,7 @@ export function buildCockpit(FL, A, opts = {}) {
     add(tube([[x, PEDAL.y - 0.05, PEDAL.z - 0.02], [x, PEDAL.y - 0.09, PEDAL.z - 0.07], [x, FLOOR + 0.035, PEDAL.z - 0.11]], 0.008, 8, 6), S.steel, part);
   });
   add(at(cylX(0.016, 0.98, 12), [0, FLOOR + 0.035, PEDAL.z - 0.115]), S.steel);
-  control({ id: 'pedals', label: 'ラダー ペダル（Q / E）とブレーキ（Space）', kind: 'handle', size: [0.30, 0.16, 0.12], pos: [-0.30, PEDAL.y, PEDAL.z], act: () => info('ラダー ペダル：Q / E で踏みます。つま先でブレーキ（Space）') });
+  control({ id: 'pedals', label: 'ラダー ペダル（Q / E）', kind: 'handle', size: [0.30, 0.16, 0.12], pos: [-0.30, PEDAL.y, PEDAL.z], act: () => info('ラダー ペダル：Q / E で踏みます。つま先のブレーキは B / Space') });
 
   // ============================================================ the seats
   const seat = (x, z, w, front) => {
@@ -775,12 +836,12 @@ export function buildCockpit(FL, A, opts = {}) {
   add(tube([[0, FLAP.y, FLAP.z], [0, FLAP.y + 0.004, FLAP.z + 0.15], [0, FLAP.y + 0.006, FLAP.z + 0.32]], 0.009, 10, 8), S.chrome, 'flap');
   add(at(cylZ(0.016, 0.017, 0.11, 16), [0, FLAP.y + 0.006, FLAP.z + 0.36]), S.grip, 'flap');
   add(at(cylZ(0.008, 0.008, 0.01, 12), [0, FLAP.y + 0.006, FLAP.z + 0.418]), S.chrome, 'flap');
-  ['0°', '10°', '25°', '40°'].forEach((t, i) => label(t, [0.045, FLOAT0(i), FLAP.z + 0.25], { size: 2.2, r: [0, Math.PI / 2, 0] }));
-  function FLOAT0(i) { return FLAP.y + Math.sin(FLAP.det[i]) * 0.25 + 0.006; }
+  ['0°', '10°', '25°', '40°'].forEach((t, i) => label(t, [0.045, flapLabelY(i), FLAP.z + 0.25], { size: 2.2, r: [0, Math.PI / 2, 0] }));
+  function flapLabelY(i) { return FLAP.y + Math.sin(FLAP.det[i]) * 0.25 + 0.006; }
   label('FLAPS', [0.068, FLAP.y + 0.035, FLAP.z + 0.10], { size: 2.4, r: [0, Math.PI / 2, 0] });
-  control({ id: 'flaps', label: 'フラップ レバー（F で下げる）', kind: 'lever', part: 'flap', size: [0.05, 0.05, 0.16], pos: [0, FLAP.y + 0.006, FLAP.z + 0.35],
+  control({ id: 'flaps', label: 'フラップ レバー（V / Shift+V）', kind: 'lever', part: 'flap', size: [0.05, 0.05, 0.16], pos: [0, FLAP.y + 0.006, FLAP.z + 0.35],
     act: (dir, wheel) => {
-      const s = cur.s, n = s ? s.A.flapLabels.length : 4, i = s ? s.flapIdx : 0, down = wheel ? dir < 0 : true;
+      const s = cur.s, n = s ? s.A.flapLabels.length : 4, i = s ? s.flapIdx : 0, down = dir > 0;                // up on the handle = more flap
       if (down) return i < n - 1 ? flight('flaps') : info('フラップはいちばん下（40°）です');
       return i > 0 ? flight('flapsUp') : info('フラップは上がっています（UP）');
     } });
@@ -796,14 +857,14 @@ export function buildCockpit(FL, A, opts = {}) {
 
   // ============================================================ the fuel selector (left wall, low)
   { const x = -lowX(-0.13) + 0.004, y = -0.13, z = -1.0, r = [0, Math.PI / 2, 0];
+    add(at(new THREE.CircleGeometry(0.0298, 28), [x - 0.0004, y, z], r), { ...S.black, r: 0.45 });
     decal(62, 62, (g, w, h) => {
-      g.fillStyle = '#1b1c1e'; g.beginPath(); g.arc(w / 2, h / 2, w * 0.48, 0, Math.PI * 2); g.fill();
-      g.strokeStyle = '#d8d8d2'; g.lineWidth = w * 0.012; g.beginPath(); g.arc(w / 2, h / 2, w * 0.45, 0, Math.PI * 2); g.stroke();
-      g.fillStyle = '#eeeeea'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `700 ${w * 0.085}px ${SANS}`;
+      g.lineWidth = w * 0.012; g.beginPath(); g.arc(w / 2, h / 2, w * 0.45, 0, Math.PI * 2); g.stroke();
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `700 ${w * 0.085}px ${SANS}`;
       g.save(); g.translate(w / 2, h / 2);
       for (const [t, a] of [['L TANK', -50], ['R TANK', 50], ['OFF', 180]]) { g.save(); g.rotate(a * DEG); g.fillText(t, 0, -h * 0.33); g.restore(); }
       g.restore(); g.font = `700 ${w * 0.07}px ${SANS}`; g.fillText('FUEL', w / 2, h * 0.72); g.font = `600 ${w * 0.05}px ${SANS}`; g.fillText('24 GAL USABLE EACH', w / 2, h * 0.80);
-    }, [x, y, z], r, { lit: 0 });
+    }, [x, y, z], r, { lit: 0, col: 0xdcdcd6 });
     add(at(cylX(0.011, 0.008, 16), [x + 0.004, y, z]), S.black, 'fuel');
     add(at(rbox(0.012, 0.062, 0.016, 0.005), [x + 0.012, y + 0.015, z]), S.black, 'fuel');
     add(at(rbox(0.008, 0.016, 0.01, 0.003), [x + 0.012, y + 0.044, z]), S.white, 'fuel');
@@ -812,22 +873,23 @@ export function buildCockpit(FL, A, opts = {}) {
   }
 
   // ============================================================ the door (right), its handle and latch
-  { const x = HW - 0.004;
-    for (const [y0, y1, z0, z1] of [[-0.30, WTOP - 0.01, -0.13, -0.13], [-0.30, -0.30, -1.22, -0.13]]) {
-      const len = Math.hypot(y1 - y0, z1 - z0) + 0.004;
-      add(at(rbox(0.006, Math.max(0.004, y1 - y0 + 0.004), Math.max(0.004, z1 - z0 + 0.004), 0.001), [x, (y0 + y1) / 2, (z0 + z1) / 2]), { ...S.wallDark, ao: 0.5 });
-      void len;
-    }
-    add(at(rbox(0.03, 0.022, 0.12, 0.006), [x - 0.02, 0.255, -0.94]), S.chrome);
-    add(at(rbox(0.012, 0.016, 0.03, 0.004), [x - 0.012, 0.255, -0.87]), S.black);
+  { const x = HW - 0.004, D = { z0: -1.20, z1: -0.13, y0: -0.30 };
+    // its outline (dark seams following the wall), the upholstered panel inside it, the map pocket
+    const seam = (y0, y1, z0, z1) => add(sheet((u, v, o) => { const y = y0 + (y1 - y0) * v; o.set(lowX(y) - 0.0035, y, z0 + (z1 - z0) * u); }, 1, 6), { ...S.wallDark, c: 0x2c2a28, ao: 0.6 });
+    seam(D.y0, SILL, D.z0 - 0.003, D.z0 + 0.003); seam(D.y0, SILL, D.z1 - 0.003, D.z1 + 0.003); seam(D.y0 - 0.003, D.y0 + 0.003, D.z0, D.z1);
+    add(at(rbox(0.02, 0.10, 0.34, 0.006), [lowX(-0.15) - 0.011, -0.15, -0.86]), { ...S.arm, c: 0x55504b });
+    add(at(rbox(0.03, 0.022, 0.12, 0.006), [x - 0.02, 0.27, -0.76]), S.chrome);
+    add(at(rbox(0.012, 0.016, 0.03, 0.004), [x - 0.012, 0.27, -0.685]), S.black);
     add(at(rbox(0.022, 0.03, 0.09, 0.006), [bandX(0.72) - 0.02, 0.715, -0.98]), S.chrome);
-    label(['DOOR', 'LATCH'], [x - 0.0005, 0.29, -0.94], { size: 1.8, r: [0, -Math.PI / 2, 0], lit: 0 });
-    control({ id: 'door', label: 'ドア ハンドル（降りる）', kind: 'handle', size: [0.05, 0.05, 0.16], pos: [x - 0.02, 0.255, -0.92], act: () => ({ type: 'exit' }) });
+    label(['DOOR', 'LATCH'], [x - 0.0005, 0.302, -0.76], { size: 1.8, r: [0, -Math.PI / 2, 0], lit: 0 });
+    control({ id: 'door', label: 'ドア ハンドル（降りる）', kind: 'handle', size: [0.05, 0.05, 0.16], pos: [x - 0.02, 0.27, -0.74], act: () => ({ type: 'exit' }) });
   }
 
   // ============================================================ the wet compass on the windshield's centre post, the sun visors
   { const [cx, cy, cz] = COMPASS;
-    add(at(rbox(0.064, 0.056, 0.058, 0.008, 2), [cx, cy, cz - 0.006]), S.caseBlack);
+    // the case: its body round the back of the card, and its face with the window the card is read through
+    add(at(rbox(0.064, 0.056, 0.040, 0.008, 2), [cx, cy, cz - 0.015]), S.caseBlack);
+    add(slab(rectPts(cx - 0.032, cy - 0.028, cx + 0.032, cy + 0.028), 0.008, [[rectPts(cx - 0.025, cy - 0.0145, cx + 0.025, cy + 0.0145), 0.004]], 0.019, cz + 0.025, 0.002, 3, 1), S.caseBlack);
     add(at(rbox(0.012, 0.03, 0.03, 0.002), [cx, cy + 0.038, cz - 0.012]), S.caseBlack);
     const card = new THREE.CylinderGeometry(0.024, 0.024, 0.014, 48, 1, true);
     const it = atlas.add(151, 14, compassCard), cg = card.toNonIndexed(), a = cg.attributes.uv;
@@ -835,19 +897,26 @@ export function buildCockpit(FL, A, opts = {}) {
     cg.userData = { it }; cg.deleteAttribute('normal'); cg.computeVertexNormals();
     B.cardGeo = at(cg, [cx, cy, cz]);
     B.glass.push(at(new THREE.PlaneGeometry(0.05, 0.03), [cx, cy, cz + 0.0235]));
-    decal(2, 26, (g, w, h) => { g.fillStyle = '#f2f2ee'; g.fillRect(w * 0.3, 0, w * 0.4, h); }, [cx, cy, cz + 0.0238], null, { lit: 1 });
-    decal(46, 22, (g, w, h) => {
-      g.fillStyle = '#e4e1d9'; g.fillRect(0, 0, w, h); g.fillStyle = '#151515'; g.font = `700 ${h * 0.2}px ${SANS}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-      const cols = ['N', '30', '60', 'E', '120', '150'], cols2 = ['S', '210', '240', 'W', '300', '330'];
-      g.fillText('FOR', w * 0.07, h * 0.2); g.fillText('STEER', w * 0.07, h * 0.42); g.fillText('FOR', w * 0.07, h * 0.65); g.fillText('STEER', w * 0.07, h * 0.87);
-      cols.forEach((c, i) => { g.fillText(c, w * (0.22 + i * 0.14), h * 0.2); g.fillText(String((i * 30 + [2, 1, 359, 358, 359, 1][i] + 360) % 360 || 360).padStart(3, '0'), w * (0.22 + i * 0.14), h * 0.42); });
-      cols2.forEach((c, i) => { g.fillText(c, w * (0.22 + i * 0.14), h * 0.65); g.fillText(String(180 + i * 30 + [2, 1, 0, -1, 0, 1][i]), w * (0.22 + i * 0.14), h * 0.87); });
-    }, [cx, cy - 0.045, cz + 0.022], null, { lit: 0, rough: 0.3 });
+    decal(2, 26, (g, w, h) => { g.fillRect(w * 0.3, 0, w * 0.4, h); }, [cx, cy, cz + 0.0238], null, { lit: 1, col: 0xf2f2ee });
+    // the deviation card under it: FOR (the heading wanted) / STEER (what the compass shows then)
+    const cardY = cy - 0.0285 - 0.0105;
+    add(at(new THREE.PlaneGeometry(0.046, 0.021), [cx, cardY, cz + 0.0218]), { c: 0xe4e1d9, r: 0.35 });
+    decal(46, 21, (g, w, h) => {
+      const rows = [0.2, 0.42, 0.64, 0.86], cx0 = 0.28, dx = 0.125;
+      const steer = [2, 31, 59, 88, 119, 151, 182, 211, 240, 269, 300, 331];
+      g.textBaseline = 'middle'; g.textAlign = 'left'; g.font = `700 ${h * 0.13}px ${SANS}`;
+      ['FOR', 'STEER', 'FOR', 'STEER'].forEach((t, i) => g.fillText(t, w * 0.025, h * rows[i], w * 0.16));
+      g.textAlign = 'center'; g.font = `700 ${h * 0.16}px ${SANS}`;
+      ['N', '30', '60', 'E', '120', '150', 'S', '210', '240', 'W', '300', '330'].forEach((t, i) => {
+        const x = w * (cx0 + (i % 6) * dx), r = i < 6 ? 0 : 2;
+        g.fillText(t, x, h * rows[r], w * 0.11); g.fillText(String(steer[i]).padStart(3, '0'), x, h * rows[r + 1], w * 0.11);
+      });
+      g.fillRect(0, h * 0.53, w, Math.max(1, h * 0.02)); g.fillRect(w * 0.205, 0, Math.max(1, w * 0.008), h);
+    }, [cx, cardY, cz + 0.0221], null, { lit: 0, rough: 0.3, col: 0x151515 });
     control({ id: 'compass', label: '磁気コンパス', kind: 'button', size: [0.07, 0.07, 0.07], pos: [cx, cy, cz], act: () => info('磁気コンパス：機首の磁方位（PFD が使えないときの予備）') });
   }
   function compassCard(g, w, h) {
-    g.fillStyle = '#121212'; g.fillRect(0, 0, w, h);
-    g.fillStyle = '#f0efe8'; g.strokeStyle = '#f0efe8'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
     for (let d = 0; d < 360; d += 5) {
       const u = 1 - d / 360, x = (u % 1) * w, big = d % 30 === 0;
       g.lineWidth = Math.max(1, w / 400); g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h * (big ? 0.34 : d % 10 === 0 ? 0.26 : 0.18)); g.stroke();
@@ -908,7 +977,10 @@ export function buildCockpit(FL, A, opts = {}) {
   const atlasCv = makeCanvas ? makeCanvas(atlas.W, atlas.H) : null;
   if (atlasCv) atlas.render(atlasCv);
   let atlasTex = null;
-  if (atlasCv) { atlasTex = new THREE.CanvasTexture(atlasCv); atlasTex.colorSpace = THREE.SRGBColorSpace; atlasTex.generateMipmaps = true; atlasTex.minFilter = THREE.LinearMipmapLinearFilter; atlasTex.anisotropy = opts.anisotropy || 8; texs.push(atlasTex); }
+  if (atlasCv) {
+    atlasTex = new THREE.CanvasTexture(atlasCv); atlasTex.format = THREE.RedFormat; atlasTex.colorSpace = THREE.NoColorSpace;
+    atlasTex.generateMipmaps = true; atlasTex.minFilter = THREE.LinearMipmapLinearFilter; atlasTex.anisotropy = opts.anisotropy || 8; texs.push(atlasTex);
+  }
   for (const g of B.decals) { const uv = atlas.uv(g.userData.it), a = g.attributes.uv; for (let i = 0; i < a.count; i++) a.setXY(i, uv[0] + a.getX(i) * (uv[2] - uv[0]), uv[1] + a.getY(i) * (uv[3] - uv[1])); }
   const decalMat = decalMaterial(atlasTex, 'labels'); mats.push(decalMat);
   const decalMesh = mesh(mergeGeometries(B.decals), decalMat, 'cockpit-labels', { cast: false }); decalMesh.renderOrder = 1; decalMesh.userData.noAO = true;
@@ -928,16 +1000,19 @@ export function buildCockpit(FL, A, opts = {}) {
   const pfdMat = screenMaterial(glassPanel.pfd ? glassPanel.pfd.texture : null), mfdMat = screenMaterial(glassPanel.mfd ? glassPanel.mfd.texture : null);
   const dynTex = glassPanel.dyn ? glassPanel.dyn.texture : null;
   const unlitMat = screenMaterial(dynTex, true);
-  const dynLitMat = decalMaterial(dynTex, 'dials'); dynLitMat.transparent = false; dynLitMat.depthWrite = true; dynLitMat.emissive.set(0xffffff); dynLitMat.emissiveIntensity = 0.04;
+  const dynLitMat = dialMaterial(dynTex);
   mats.push(pfdMat, mfdMat, unlitMat, dynLitMat);
   if (glassPanel.pfd) glassPanel.setAnisotropy(opts.anisotropy || 8);
   screens.pfd = mesh(scr.pfd[0], pfdMat, 'cockpit-pfd', { cast: false });
   screens.mfd = mesh(scr.mfd[0], mfdMat, 'cockpit-mfd', { cast: false });
   cabin.add(screens.pfd, screens.mfd);
-  // the label strips and the audio panel's lamps: one unlit mesh with vertex colours (lamps change colour)
-  const unlitGeos = [...strips, ...B.unlit].map(g => { const n = g.attributes.position.count, c = new Float32Array(n * 3).fill(1); g.setAttribute('color', new THREE.BufferAttribute(c, 3)); if (!g.attributes.normal) g.computeVertexNormals(); return g; });
+  // the label strips, the black band over them and the audio panel's lamps: one unlit mesh with vertex colours (lamps
+  // change colour)
+  const unlitGeos = [...strips, ...B.unlit].map(g => { const n = g.attributes.position.count, c = new Float32Array(n * 3).fill(g.userData.black ? 0 : 1); g.setAttribute('color', new THREE.BufferAttribute(c, 3)); if (!g.attributes.normal) g.computeVertexNormals(); return g; });
+  const firstOf = [];
   let vOff = strips.reduce((a, g) => a + g.attributes.position.count, 0);
-  for (const l of lamps) { const n = B.unlit[l.index].attributes.position.count; l.first = vOff; l.count = n; vOff += n; }
+  for (const g of B.unlit) { firstOf.push(vOff); vOff += g.attributes.position.count; }
+  for (const l of lamps) { l.first = firstOf[l.index]; l.count = B.unlit[l.index].attributes.position.count; }
   const unlitMesh = mesh(mergeGeometries(unlitGeos), unlitMat, 'cockpit-lit', { cast: false });
   const dialMesh = mesh(mergeGeometries(B.dynLit), dynLitMat, 'cockpit-dials', { cast: false });
   cabin.add(unlitMesh, dialMesh);
@@ -948,34 +1023,34 @@ export function buildCockpit(FL, A, opts = {}) {
     throttle: [-0.005, LEVER.y, LEVER.z], mixture: [0.045, LEVER.y, LEVER.z], carb: [-0.05, LEVER.y, LEVER.z],
     flap: [0, FLAP.y, FLAP.z], trim: [0, TRIMW.y, TRIMW.z], key: [KEYSW[0], KEYSW[1], PZ], fuel: [-lowX(-0.13) + 0.004, -0.13, -1.0], brake: [-0.135, 0.036, PZ - 0.012],
   };
-  const parts = {};
+  const parts = {}, CASTS = new Set(['yokeL', 'yokeR', 'throttle', 'mixture', 'flap']);   // the small ones cast no shadow
   for (const [name, list] of B.moving) {
     const p = PIV[name], g = mergeGeometries(list); g.translate(-p[0], -p[1], -p[2]);
     const grp = new THREE.Group(); grp.name = 'cockpit-' + name; grp.position.set(p[0], p[1], p[2]);
-    grp.add(mesh(g, kitMat, 'cockpit-' + name));
+    grp.add(mesh(g, kitMat, 'cockpit-' + name, { cast: CASTS.has(name) }));
     cabin.add(grp); parts[name] = grp;
   }
   // the compass card (labels material, turns about y)
   { const uv = atlas.uv(B.cardGeo.userData.it), a = B.cardGeo.attributes.uv;
     for (let i = 0; i < a.count; i++) a.setXY(i, uv[0] + a.getX(i) * (uv[2] - uv[0]), uv[1] + a.getY(i) * (uv[3] - uv[1]));
-    withMat(B.cardGeo, 0.5, 0, 1, 0.55); B.cardGeo.translate(-COMPASS[0], -COMPASS[1], -COMPASS[2]);
+    withCol(withMat(B.cardGeo, 0.5, 0, 1, 0.55), 0xf0efe8); B.cardGeo.translate(-COMPASS[0], -COMPASS[1], -COMPASS[2]);
     const grp = new THREE.Group(); grp.position.set(COMPASS[0], COMPASS[1], COMPASS[2]); grp.name = 'cockpit-compass';
-    const cm = mesh(B.cardGeo, decalMaterial(atlasTex, 'card'), 'cockpit-compass-card', { cast: false });
-    cm.material.transparent = false; cm.material.depthWrite = true; cm.material.polygonOffset = false; mats.push(cm.material);
+    const cm = mesh(B.cardGeo, decalMaterial(atlasTex, 'card', 0x121212), 'cockpit-compass-card', { cast: false }); mats.push(cm.material);
     grp.add(cm); cabin.add(grp); parts.compass = grp;
   }
-  // the rocker switches: one instanced mesh (master and avionics red, the rest black)
+  // the rocker switches: one instanced mesh (the master red, the rest black)
   const RK0 = [ROCKER.x0 + 4 * ROCKER.dx, ROCKER.y, PZ + 0.0045];
   B.add(at(rbox(0.0145, 0.026, 0.008, 0.003, 1), RK0), { c: 0xffffff, r: 0.38 });
   const rkGeo = B.kit.pop();
   bakeAO(rkGeo, cache); rkGeo.translate(-RK0[0], -RK0[1], -RK0[2]);
   const rockers = new THREE.InstancedMesh(rkGeo, kitMat, ROCKERS.length);
-  rockers.name = 'cockpit-rockers'; rockers.castShadow = true; rockers.receiveShadow = true; meshes.push(rockers);
+  rockers.name = 'cockpit-rockers'; rockers.castShadow = false; rockers.receiveShadow = true; meshes.push(rockers);
   const red = new THREE.Color(S.red.c), blk = new THREE.Color(0x1f2023);
   ROCKERS.forEach(([id], i) => rockers.setColorAt(i, id === 'master' ? red : blk));
   cabin.add(rockers);
 
-  // the hit meshes: on their moving part, or on the cabin
+  // the hit meshes: on their moving part, or on the cabin; the aim points in the cockpit's (root's) frame
+  for (const c of controls) { c.at.x += off[0]; c.at.y += off[1]; c.at.z += off[2]; }
   for (const h of hits) {
     if (h.part && parts[h.part]) { const p = PIV[h.part]; h.mesh.position.x -= p[0]; h.mesh.position.y -= p[1]; h.mesh.position.z -= p[2]; parts[h.part].add(h.mesh); }
     else hitRoot.add(h.mesh);
@@ -989,14 +1064,17 @@ export function buildCockpit(FL, A, opts = {}) {
   let triangles = 0;
   for (const m of meshes) triangles += (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3 * (m.isInstancedMesh ? m.count : 1);
 
-  // ================================================================ per frame (no allocation below this line)
+  // what update() works with (made here, once)
   const RK_POS = new THREE.Vector3(), RK_Q = new THREE.Quaternion(), RK_M = new THREE.Matrix4(), RK_E = new THREE.Euler();
   const lastSw = new Array(ROCKERS.length).fill(null);
   const avSeen = { pfdMenu: '', wind: null, baroUnit: '', mfdPage: '', north: null, mic: '', c1: null, c2: null, n1: null, n2: null, powered: null, cdi: '' };
   const lampCol = unlitMesh.geometry.attributes.color;
   const comp = { a: 0, v: 0, init: false };
   const t = { pfd: 1, mfd: 1, stby: 1 };
+  const RATE = { pfd: 1 / 30, mfd: 1 / 10, stby: 1 / 15 };
   let visible = true, flapAng = 0, night = -1;
+
+  // ================================================================ per frame (no allocation below this line)
   function avChanged(av, powered) {
     const a = av.audio, m = a.monitor;
     if (avSeen.pfdMenu === av.pfdMenu && avSeen.wind === av.wind && avSeen.baroUnit === av.baroUnit && avSeen.mfdPage === av.mfdPage && avSeen.north === av.mapNorthUp
@@ -1034,8 +1112,11 @@ export function buildCockpit(FL, A, opts = {}) {
     }
     if (changed) rockers.instanceMatrix.needsUpdate = true;
   }
+  // dt (s); o: { s, L, av (default L.av), parkBrake, night 0..1, rpmVisual (unused: no rpm gauge outside the MFD) }
   function update(dt, o) {
-    const s = o.s, av = o.av || (o.L ? o.L.av : null);
+    if (!o) return;
+    if (!(dt >= 0)) dt = 0; else if (dt > 0.25) dt = 0.25;
+    const s = o.s || null, av = o.av || (o.L ? o.L.av : null);
     cur.s = s; cur.av = av; cur.L = o.L || null;
     poseRockers();
     const nt = clamp(o.night || 0, 0, 1);
@@ -1045,19 +1126,21 @@ export function buildCockpit(FL, A, opts = {}) {
       pfdMat.color.setScalar(1 - 0.45 * nt); mfdMat.color.setScalar(1 - 0.45 * nt); unlitMat.color.setScalar(1 - 0.35 * nt);
     }
     if (!s) return;
-    // the controls
-    const pc = clamp(s.elev + s.trim, -1, 1), roll = -clamp(s.ail, -1, 1) * YOKE.roll;
+    // the controls: the yokes ride fore and aft with the stabilator (elevator + trim; aft = nose up) and turn with
+    // the ailerons; the pedals with the rudder after the auto-rudder; the levers, the flap handle (eased between its
+    // detents), the trim wheel, the key, the fuel selector, the park brake handle
+    const pc = clamp((s.elev || 0) + (s.trim || 0), -1, 1), roll = -clamp(s.ail || 0, -1, 1) * YOKE.roll;
     parts.yokeL.position.z = YOKE.z + pc * YOKE.travel; parts.yokeL.rotation.z = roll;
     parts.yokeR.position.z = YOKE.z + pc * YOKE.travel; parts.yokeR.rotation.z = roll;
-    const rud = clamp(s.rudEff != null ? s.rudEff : s.rud, -1, 1);
+    const rud = clamp((s.rudEff != null ? s.rudEff : s.rud) || 0, -1, 1);
     parts.pedalsL.position.z = rud * PEDAL.travel; parts.pedalsR.position.z = -rud * PEDAL.travel;
-    parts.throttle.rotation.x = -(LEVER.idle + (LEVER.full - LEVER.idle) * clamp(s.thr, 0, 1));
+    parts.throttle.rotation.x = -(LEVER.idle + (LEVER.full - LEVER.idle) * clamp(s.thr || 0, 0, 1));
     parts.mixture.rotation.x = -(LEVER.idle + (LEVER.full - LEVER.idle) * clamp(switches.mixture, 0, 1));
     parts.carb.rotation.x = -(switches.carbHeat ? LEVER.full : LEVER.idle + 0.15);
     const fi = clamp(s.flapIdx | 0, 0, FLAP.det.length - 1);
     flapAng += (FLAP.det[fi] - flapAng) * (1 - Math.exp(-dt * 12));
     parts.flap.rotation.x = -flapAng;
-    parts.trim.rotation.x = s.trim / P.TRIM_MAX * TRIMW.turns * Math.PI * 2;
+    parts.trim.rotation.x = (s.trim || 0) / P.TRIM_MAX * TRIMW.turns * Math.PI * 2;
     parts.key.rotation.z = -MAG_ANG[Math.max(0, MAG.indexOf(switches.mag))];
     parts.fuel.rotation.x = FUEL_ANG[switches.fuelSel] || 0;
     parts.brake.rotation.x = o.parkBrake ? -38 * DEG : 0;
@@ -1065,8 +1148,10 @@ export function buildCockpit(FL, A, opts = {}) {
     const mag = ((s.out.hdgTrue || 0) + P.MAGVAR_W) * DEG;
     if (!comp.init) { comp.a = mag; comp.v = 0; comp.init = true; }
     let da = mag - comp.a; da -= Math.round(da / (Math.PI * 2)) * Math.PI * 2;
-    const h = Math.min(dt, 0.05);
-    comp.v += (da * 9 - comp.v * 3.6) * h; comp.a += comp.v * h;
+    for (let left = dt; left > 1e-9; left -= 0.02) {
+      const h = Math.min(left, 0.02);
+      comp.v += (da * 9 - comp.v * 3.6) * h; comp.a += comp.v * h; da -= comp.v * h;
+    }
     parts.compass.rotation.y = comp.a;
     // the displays: on a schedule, only when seen; black without power
     if (!visible) return;
@@ -1075,21 +1160,22 @@ export function buildCockpit(FL, A, opts = {}) {
     if (av && avChanged(av, powered)) {
       glassPanel.drawStrips(av, powered); setLamps(av, powered);
       if (!powered) { glassPanel.blankScreen('pfd'); glassPanel.blankScreen('mfd'); }
-      t.pfd = t.mfd = 1;
+      t.pfd = RATE.pfd; t.mfd = RATE.mfd;
     }
     if (powered && av) {
-      if (t.pfd >= 1 / 30) { t.pfd = 0; glassPanel.drawScreen('pfd', s, av); }
-      if (t.mfd >= 1 / 10) { t.mfd = 0; glassPanel.drawScreen('mfd', s, av); }
+      if (t.pfd >= RATE.pfd - 1e-6) { t.pfd = Math.min(t.pfd - RATE.pfd, RATE.pfd); glassPanel.drawScreen('pfd', s, av); }
+      if (t.mfd >= RATE.mfd - 1e-6) { t.mfd = Math.min(t.mfd - RATE.mfd, RATE.mfd); glassPanel.drawScreen('mfd', s, av); }
     }
-    if (t.stby >= 1 / 15) {
-      t.stby = 0;
+    if (t.stby >= RATE.stby - 1e-6) {
+      t.stby = Math.min(t.stby - RATE.stby, RATE.stby);
       const baro = av ? av.baro : s.qnh;
       glassPanel.drawStandby(s.out, AV.indicatedAlt(s.out.altTrue || 0, s.qnh, baro), baro, !!(av && av.baroUnit === 'HPA'), s.A.v);
     }
   }
   // ================================================================ end of the per-frame code
 
-  const _ray = { layers: null };
+  // where to aim at a control now (world): its aim point, carried by its moving part
+  function aimPoint(ctl, out) { return out.copy(ctl.aimLocal).applyMatrix4(ctl.target.matrixWorld); }
   function pick(raycaster) {
     const mask = raycaster.layers.mask;
     raycaster.layers.set(PICK_LAYER);
@@ -1098,19 +1184,18 @@ export function buildCockpit(FL, A, opts = {}) {
     for (const h of out) if (h.object.userData.control) return h.object.userData.control;
     return null;
   }
-  void _ray;
   poseRockers();
-  const bytes = glassPanel.bytes + (atlasCv ? Math.round(atlas.W * atlas.H * 4 * 4 / 3) : 0);
+  const bytes = glassPanel.bytes + (atlasCv ? Math.round(atlas.W * atlas.H * 4 / 3) : 0);      // the atlas: one byte a texel, mipmapped
   return {
-    root, eye: new THREE.Vector3(A.eye[0], A.eye[1], A.eye[2]), instructorSeat, screens, controls, switches, parts, pick, update,
-    setVisible(v) { visible = !!v; root.visible = visible; if (visible) { avSeen.powered = null; t.pfd = t.mfd = t.stby = 1; } },
+    root, eye: new THREE.Vector3(A.eye[0], A.eye[1], A.eye[2]), instructorSeat, screens, controls, switches, parts, pick, aimPoint, update,
+    setVisible(v) { visible = !!v; root.visible = visible; if (visible) { avSeen.powered = null; t.pfd = RATE.pfd; t.mfd = RATE.mfd; t.stby = RATE.stby; } },
     get visible() { return visible; },
     markDirty() { avSeen.powered = null; },
     setAnisotropy(n) { glassPanel.setAnisotropy(n); if (atlasTex) { atlasTex.anisotropy = n; atlasTex.needsUpdate = true; } },
-    triangles, meshes, textureBytes: bytes, atlasFull: atlas.full, atlasUsed: atlas.used,
+    triangles, meshes, textureBytes: bytes, atlasFull: atlas.full, atlasUsed: atlas.used, atlasScale: atlas.k, stats: glassPanel.stats,
     dispose() {
       for (const m of meshes) m.geometry.dispose();
-      for (const h of hits) h.mesh.geometry.dispose();
+      for (const g of hitGeos) g.dispose();
       for (const m of mats) m.dispose();
       hitMat.dispose(); glassPanel.dispose(); for (const tx of texs) tx.dispose();
       root.removeFromParent();

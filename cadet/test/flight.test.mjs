@@ -5,13 +5,16 @@
 //    lessons (a2, t1, the Seminole's m2). Reading the lesson for the HUD changes nothing.
 //  - the controls (controls.js) are FLIGHT LAB's: updateControls and doAction are cut out of flight-lab/src/app.js and
 //    run beside the port on long random key / dt / action sequences, on the ground and in the air, keyboard and stick;
-//    every field of the state stays bit-identical. The key → action table is app.js's.
-//  - the realtime path (frame) is app.js tick, also cut out of app.js and compared frame by frame; hands off, a1 passes
-//    with S; nothing moves while paused or after the end; the frame dt is clamped and the steps capped.
+//    every field of the state stays bit-identical; so does the gamepad (app.js padInput beside the port, a fake pad).
+//    The key → action table is app.js's.
+//  - the realtime path (frame) is app.js tick, also cut out of app.js and compared frame by frame, in the air and on the
+//    ground; hands off, a1 passes with S; nothing moves while paused or after the end; the frame dt is clamped and the
+//    steps capped.
 //  - status() shows the step, the texts, the gauges and the hold (a1), the checklist and the read-back (t1); key() steps
 //    the checklist, answers the tower and runs the action keys; the gamepad and CADET's cockpit steps work.
-//  - a free flight standing on the apron stand stays put on the parking brake and taxis when it is released; a crash
-//    against CADET's own obstacles ends a lesson; the records and the progress go to 'cadet.'-prefixed keys only.
+//  - a free flight standing on the apron stand stays exactly put (position and heading) on the parking brake and taxis
+//    when it is released; a crash against CADET's own obstacles ends a lesson; FLIGHT LAB's words for itself (教材) are
+//    reworded for the aircraft; the records and the progress go to 'cadet.'-prefixed keys only.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -19,7 +22,7 @@ import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { makeBot, runLesson } from '../../flight-lab/test/bot.mjs';
-import { createFlight, H, MAX_STEPS } from '../src/flight/flight.js';
+import { createFlight, inWorld, H, MAX_STEPS, WINDS } from '../src/flight/flight.js';
 import { createControls, actionForKey, FLY_HELD, PREFS0 } from '../src/flight/controls.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -197,6 +200,60 @@ test('controls: the edges — each key held through its ramps at 0.1 s and 1/60 
   }
 });
 
+// app.js padInput beside the port: a fake navigator hands both the same pad; app.js's dialogs / view / pause / help are
+// recorded (the port asks for them through padOut)
+function appPadSandbox(pads, prefs = {}) {
+  const S = { L: null, screen: 'fly', paused: false, keys: new Set(), prefs: { ...PREFS0, sound: false, ...prefs }, rTrim: 0, thrHeld: 0, progress: { time: 0 }, pad: { known: null, prev: [], navT: 0, navDir: '' } };
+  const asked = [];
+  const ctx = vm.createContext({
+    S, P, SC, clamp: P.clamp, Math, toast: () => {}, savePrefs: () => {},
+    navigator: { getGamepads: () => pads.list },
+    pressed: (...c) => c.some(k => S.keys.has(k)),
+    checklistNext: () => asked.push('checklist'), answerAtc: i => asked.push('atc' + i),
+    cycleView: () => asked.push('view'), pause: () => asked.push('pause'), toggleHelp: () => asked.push('help'),
+  });
+  vm.runInContext(`const flying = () => S.screen === 'fly' && !S.paused && S.L && !S.L.done;\n${['updateControls', 'doAction', 'padInput'].map(extract).join('\n')}\nthis.fns = { updateControls };`, ctx);
+  return { S, asked, ...ctx.fns };
+}
+
+test('controls: the gamepad is app.js padInput (cut out of app.js) — sticks, triggers, bumpers, trim, buttons, a pad unplugged — to the last bit', () => {
+  const seen = { stick: 0, buttons: 0, asked: 0 };
+  let seed = 101;
+  for (const name of ['a1 (air, Archer)', 'runway (ground, Archer)', 'area (air, Seminole)']) for (const prefs of [{}, { hold: 'spring', rhold: 'spring' }]) {
+    const r = rng(seed++), pads = { list: [] }, A = appPadSandbox(pads, prefs), down = new Set();
+    const C = createControls(FL, { prefs: { ...PREFS0, ...prefs }, getGamepads: () => pads.list });
+    const LA = START[name](), LB = START[name]();
+    A.S.L = LA;
+    const mk = (id) => ({ id, connected: true, mapping: 'standard', axes: [0, 0, 0, 0], buttons: Array.from({ length: 18 }, () => ({ value: 0 })) });
+    let gp = mk('Pad A');
+    for (let f = 0; f < 1500; f++) {
+      // plugged in most of the time; now and then unplugged, or another pad
+      if (r() < 0.004) pads.list = pads.list.length ? [] : [null, gp];
+      if (r() < 0.002) { gp = mk(gp.id === 'Pad A' ? 'Pad B' : 'Pad A'); if (pads.list.length) pads.list = [gp]; }
+      for (let i = 0; i < 4; i++) if (r() < 0.05) { const u = r(); gp.axes[i] = u < 0.3 ? 0 : u < 0.5 ? (r() - 0.5) * 0.24 : r() * 2 - 1; }
+      for (let i = 0; i < 18; i++) if (r() < (i === 6 || i === 7 ? 0.05 : 0.015)) gp.buttons[i].value = i === 6 || i === 7 ? (r() < 0.4 ? 0 : r()) : gp.buttons[i].value ? 0 : 1;
+      for (const k of HELD) if (r() < 0.01) { if (down.has(k)) down.delete(k); else down.add(k); }
+      A.S.keys = new Set(down);
+      const dt = r() < 0.1 ? 0.1 : 1 / 144 + r() * (0.1 - 1 / 144);
+      A.updateControls(dt); C.update(LB, dt, keySet(down), true);
+      assert.deepStrictEqual(view(LB.s), view(LA.s), `${name}: frame ${f} after the controls`);
+      assert.ok(Object.is(C.rTrim, A.S.rTrim) && Object.is(C.thrHeld, A.S.thrHeld) && C.prefs.autoRud === A.S.prefs.autoRud && C.padId === A.S.pad.known, `${name}: frame ${f}: controls state`);
+      const asked = C.padOut.filter(e => e.type !== 'toast').map(e => (e.type === 'atc' ? 'atc' + e.i : e.type));
+      assert.deepEqual(asked, A.asked, `${name}: frame ${f}: what the pad asked for`);
+      seen.asked += asked.length; C.padOut.length = 0; A.asked.length = 0;
+      for (let n = Math.round(dt * 120); n > 0; n--) {
+        P.step(LA.s, H); P.step(LB.s, H);
+        if (LA.free) { SC.freeUpdate(LA, H); SC.freeUpdate(LB, H); } else { SC.update(LA, H); SC.update(LB, H); }
+      }
+      assert.deepStrictEqual(view(LB.s), view(LA.s), `${name}: frame ${f} after the physics`);
+      if (pads.list.length && (gp.axes[0] || gp.axes[1])) seen.stick++;
+      if (pads.list.length && gp.buttons.some(b => b.value)) seen.buttons++;
+      if (LA.done) break;
+    }
+  }
+  assert.ok(seen.stick > 1000 && seen.buttons > 1000 && seen.asked > 20, JSON.stringify(seen));
+});
+
 test('controls: the key → action table is app.js\'s keydown table', () => {
   const line = APP.match(/const act = (\{[^\n]*\})\[e\.code\];/);
   assert.ok(line, 'app.js keydown table');
@@ -246,20 +303,38 @@ test('controls: a gamepad — the left stick is the yoke (holds off), the trigge
   const T = f.startLesson('t1', 'basic'); const i0 = T.check.i;
   gp.buttons = btn([0]); r = f.frame(1 / 60, NOKEYS);
   assert.ok(r.pad.some(e => e.type === 'checklist' && e.r.ok)); assert.equal(T.check.i, i0 + 1);
+  // the tower's read-back with B (the second answer): it answers, and (unlike FLIGHT LAB) does not also work the flaps
+  gp.buttons = btn([]); f.frame(1 / 60, NOKEYS);
+  for (let n = 0; n < 20 && T.check; n++) f.checklistNext();
+  f.frame(1 / 60, NOKEYS); assert.ok(T.atc, 'the tower asks');
+  const flaps = T.s.flapIdx, nRes = T.results.length;
+  gp.buttons = btn([1]); r = f.frame(1 / 60, NOKEYS);
+  assert.deepEqual(r.pad.map(e => [e.type, e.i]), [['atc', 1]]); assert.equal(typeof r.pad[0].r.ok, 'boolean');
+  assert.equal(T.s.flapIdx, flaps, 'B answered, the flaps stayed'); assert.equal(T.results.length, nRes + 1);
 });
 
 // ------------------------------------------------------------------ 3. the realtime path: app.js tick
 test('realtime: frame() is app.js tick (controls once per frame, 1/120 s steps from the accumulator) to the last bit', () => {
-  for (const [id, lv, seed] of [['a1', 'basic', 5], ['a2', 'intro', 6]]) {
+  const [sn, se] = P.rwyToNE(P.LAB_RWY, 636.5, 207.6);
+  // [CADET's start, FLIGHT LAB's start, seed, on the ground]; a released parking brake leaves the state alone
+  const CASES = {
+    'a1 basic': [f => f.startLesson('a1', 'basic', { sens: 'low', autoRud: true }), () => { const L = SC.startLesson('a1', 'basic', { sens: 'low', autoRud: true }); L.s.opts.assist = false; return L; }, 5],
+    'a2 intro': [f => f.startLesson('a2', 'intro', { sens: 'low', autoRud: true }), () => { const L = SC.startLesson('a2', 'intro', { sens: 'low', autoRud: true }); L.s.opts.assist = false; return L; }, 6],
+    'free, runway, gusty': [f => f.startFree('rwy', 'pa28', { wind: 'gusty' }), () => SC.startFree('rwy', 'pa28', { sens: 'low', autoRud: true, assist: false, wind: WINDS.gusty }), 7, true],
+    'apron stand, brake released': [f => { const L = f.startOnGround(sn, se, 264); f.action('parkBrake'); return L; },
+      () => { const g = createFlight(FL, { store: null }), L = g.startOnGround(sn, se, 264); g.action('parkBrake'); return L; }, 8, true],
+  };
+  for (const [what, [startB, startA, seed, ground]] of Object.entries(CASES)) {
     const r = rng(seed), A = appSandbox(), down = new Set();
     const f = createFlight(FL, { store: null });
-    const LB = f.startLesson(id, lv, { sens: 'low', autoRud: true });
-    const LA = SC.startLesson(id, lv, { sens: 'low', autoRud: true }); LA.s.opts.assist = false;
+    const LB = startB(f), LA = startA();
+    assert.deepStrictEqual(view(LB.s), view(LA.s), `${what}: the same start`);
     A.S.L = LA;
-    let steps = 0;
+    let steps = 0, rolled = 0;
     for (let fr = 0; fr < 3000 && !LA.done; fr++) {
-      // a gentle pilot: short taps (so the lesson keeps going), a few actions; nothing held as the lesson starts
-      if (fr > 0) for (const k of ['KeyW', 'KeyS', 'KeyA', 'KeyD', 'KeyQ', 'KeyE', 'KeyR', 'KeyF']) if (down.has(k) ? r() < 0.3 : r() < 0.01) { if (down.has(k)) down.delete(k); else down.add(k); }
+      // a gentle pilot: short taps (so the lesson keeps going), a few actions; nothing held as the lesson starts; on the
+      // ground the throttle is held longer, so it rolls
+      if (fr > 0) for (const k of ['KeyW', 'KeyS', 'KeyA', 'KeyD', 'KeyQ', 'KeyE', 'KeyR', 'KeyF']) if (down.has(k) ? r() < (ground && k === 'KeyR' ? 0.03 : 0.3) : r() < 0.01) { if (down.has(k)) down.delete(k); else down.add(k); }
       A.S.keys = new Set(down);
       // long frames (clamped), frames of exactly one or two steps, and anything between
       const u = r(), dt = u < 0.05 ? 0.25 : u < 0.15 ? H : u < 0.25 ? 1 / 60 : 1 / 144 + r() * (1 / 20 - 1 / 144), paused = r() < 0.02;
@@ -268,12 +343,14 @@ test('realtime: frame() is app.js tick (controls once per frame, 1/120 s steps f
       const res = f.frame(dt, keySet(down), { paused });
       steps += res.steps;
       if (r() < 0.01 && !LA.done) { const a = ['trim', 'rtrimL', 'rtrimR', 'flaps', 'flapsUp'][Math.floor(r() * 5)]; A.doAction(a); f.action(a); }
-      assert.deepStrictEqual(view(LB.s), view(LA.s), `${id} frame ${fr}`);
-      assert.ok(Object.is(f.acc, A.acc()), `${id} frame ${fr}: accumulator ${f.acc} vs ${A.acc()}`);
-      assert.ok(Object.is(LB.t, LA.t) && LB.step === LA.step, `${id} frame ${fr}: lesson time / step`);
+      assert.deepStrictEqual(view(LB.s), view(LA.s), `${what} frame ${fr}`);
+      assert.ok(Object.is(f.acc, A.acc()), `${what} frame ${fr}: accumulator ${f.acc} vs ${A.acc()}`);
+      assert.ok(Object.is(LB.t, LA.t) && LB.step === LA.step, `${what} frame ${fr}: lesson time / step`);
+      if (LB.s.onGround) rolled = Math.max(rolled, LB.s.out.gs);
     }
     assert.deepStrictEqual(LB.results, LA.results);
-    assert.equal(steps, Math.round(LB.s.t * 120), 'every step reported');
+    assert.equal(steps, Math.round(LB.s.t * 120), `${what}: every step reported`);
+    if (ground) assert.ok(rolled > 5, `${what}: it rolled (${rolled.toFixed(1)} kt)`);
   }
 });
 
@@ -403,15 +480,22 @@ test('ground: on the apron stand the parking brake holds it for 30 s; released, 
   assert.ok(Math.abs(P.attitude(s).hdg - 264) < 1e-9);
   assert.equal(L.hdg0, 270, 'heading reference in magnetic');
   const p0 = s.pos.slice();
-  for (let i = 0; i < 60; i++) f.frame(1 / 60, NOKEYS);
-  const p1 = s.pos.slice();
-  for (let i = 0; i < 60 * 29; i++) f.frame(1 / 60, NOKEYS);
-  const moved = Math.hypot(s.pos[0] - p0[0], s.pos[2] - p0[2]);
-  assert.ok(moved < 0.002, `stays put: moved ${moved} m while settling on the wheels`);
-  assert.deepEqual([s.pos[0], s.pos[2]], [p1[0], p1[2]], 'then not at all (FLIGHT LAB\'s viscous tyres alone creep ≈ 5 mm/s at idle)');
+  for (let i = 0; i < 60 * 30; i++) f.frame(1 / 60, NOKEYS);
+  assert.deepEqual([s.pos[0], s.pos[2]], [p0[0], p0[2]], 'not a millimetre from the stand (FLIGHT LAB\'s viscous tyres alone creep ≈ 5 mm/s at idle)');
   assert.ok(s.onGround && !s.crashed && s.out.gs < 0.1, 'still and on its wheels');
-  assert.ok(Math.abs(P.wrap180(P.attitude(s).hdg - 264)) < 0.2, `heading ${P.attitude(s).hdg}`);
+  assert.ok(Math.abs(P.wrap180(P.attitude(s).hdg - 264)) < 1e-9, `heading ${P.attitude(s).hdg}`);
+  assert.ok(Math.abs(P.attitude(s).pitch - 1.6) < 0.2 && Math.abs(P.attitude(s).bank) < 0.5, 'settled on the gear springs (nose a little up, wings level)');
   assert.ok(!s.events.length, JSON.stringify(s.events));
+  // gusts and the idle prop turn a free aircraft on its wheels; the parking brake keeps the heading too
+  {
+    const g = createFlight(FL, { store: null }), G = g.startOnGround(n, e, 264, 'pa28', { wind: 'gusty' }).s;
+    for (let i = 0; i < 60 * 60; i++) g.frame(1 / 60, NOKEYS);
+    assert.ok(Math.abs(P.wrap180(P.attitude(G).hdg - 264)) < 1e-9 && G.pos[0] === p0[0] && G.pos[2] === p0[2], `gusty: heading ${P.attitude(G).hdg}`);
+    const h = createFlight(FL, { store: null }), F = h.startOnGround(n, e, 264, 'pa28', { wind: 'gusty' }).s;
+    h.action('parkBrake');
+    for (let i = 0; i < 60 * 60; i++) h.frame(1 / 60, NOKEYS);
+    assert.ok(Math.abs(P.wrap180(P.attitude(F).hdg - 264)) > 0.3, `gusty, no brake: it turns (${P.attitude(F).hdg})`);
+  }
   // the brake off, a little power: it rolls
   assert.match(f.action('parkBrake'), /解除/);
   const R2 = new Set(['KeyR']);
@@ -439,6 +523,39 @@ test('crash: CADET\'s own obstacle damages the airframe — an event, and a less
   f.frame(1 / 60, NOKEYS); f.crash('鳥と衝突');
   r = f.frame(1 / 60, NOKEYS);
   assert.ok(L.done && !L.passed && L.grade === '―' && L.reason === '鳥と衝突' && r.ended);
+});
+
+test('text: FLIGHT LAB calling itself teaching material (教材) never reaches the aircraft — the HUD, the events, the record', () => {
+  assert.equal(inWorld('接地の衝撃で脚が壊れました（降下率 1234 fpm、教材基準 1,000 fpm 超）'), '接地の衝撃で脚が壊れました（降下率 1234 fpm、基準 1,000 fpm 超）');
+  assert.equal(inWorld('故障（教材の想定）'), '故障');
+  assert.equal(inWorld('離陸前点検（BEFORE TAKEOFF・教材の簡略版）'), '離陸前点検（BEFORE TAKEOFF・簡略版）');
+  assert.equal(inWorld('燃料の多い側（教材では未実装）'), '燃料の多い側');
+  for (const t of ['トリム 中立', '', null, undefined]) assert.equal(inWorld(t), t);
+  const s0 = P.newState({});
+  for (const C of Object.values(SC.CHECKLISTS)) {
+    assert.doesNotMatch(inWorld(C.title), /教材/);
+    for (const it of C.items) assert.doesNotMatch(inWorld(it[0]) + inWorld(SC.checklistText(it, s0)), /教材/);
+  }
+  // t1's checklist as the HUD gets it
+  const f = createFlight(FL, { store: memStore() });
+  f.startLesson('t1', 'basic');
+  assert.doesNotMatch(JSON.stringify(f.status().check), /教材/);
+  // a1, dropped onto the ground: FLIGHT LAB's own reason is left as it is (the grading never sees the difference)
+  const L = f.startLesson('a1', 'intro'), s = L.s;
+  f.frame(1 / 60, NOKEYS);
+  const fw = P.qrot(s.q, [0, 0, -1]);
+  s.pos = [s.pos[0], P.GROUND_M - s.WHEEL_BOTTOM + 0.3, s.pos[2]]; s.vel = [fw[0] * 45, -8, fw[2] * 45];
+  const evs = [];
+  for (let i = 0; i < 30 && !L.done; i++) evs.push(...f.frame(1 / 60, NOKEYS).events);
+  assert.ok(L.done && s.crashed && /教材基準/.test(L.reason), L.reason);
+  const st = f.status();
+  assert.match(st.reason, /^接地の衝撃で脚が壊れました（降下率 \d+ fpm、基準 1,000 fpm 超）$/);
+  assert.equal(st.crashReason, st.reason);
+  assert.equal(evs.find(e => e.type === 'crash').why, st.reason);
+  assert.doesNotMatch(JSON.stringify(st.results), /教材/); assert.match(JSON.stringify(st.results), /基準 1,000 fpm/);
+  const rec = f.finish();
+  assert.doesNotMatch(JSON.stringify([rec.reason, rec.steps, rec.events]), /教材/);
+  assert.equal(f.records().at(-1).reason, st.reason);
 });
 
 test('records: a finished lesson is noted once in CADET\'s own keys (cadet.…), never in FLIGHT LAB\'s', () => {

@@ -19,6 +19,17 @@ export const WINDS = {
   cross: { rel: 60, kt: 12, gust: 1.2 }, gusty: { rel: 70, kt: 15, gust: 2.5 },
 };
 
+const DEG = Math.PI / 180;
+// FLIGHT LAB's own texts call it teaching material here and there (a checklist 「教材の簡略版」, a hard landing over the
+// 「教材基準」, an engine failure 「（教材の想定）」); in the aircraft they are just the school's rules
+const IN_WORLD = [[/（教材(では[^）]*|の想定)）/g, ''], [/教材の簡略版/g, '簡略版'], [/教材基準/g, '基準'], [/教材/g, '訓練']];
+export function inWorld(text) {
+  if (typeof text !== 'string' || text.indexOf('教材') < 0) return text;
+  for (const [re, by] of IN_WORLD) text = text.replace(re, by);
+  return text;
+}
+const rowsInWorld = (results) => results.map(r => ({ ...r, step: inWorld(r.step), rows: r.rows.map(x => ({ ...x, name: inWorld(x.name), val: inWorld(x.val), std: inWorld(x.std) })) }));
+
 const defaultStore = () => { try { return globalThis.localStorage || null; } catch (e) { return null; } };
 // CADET's own records and progress: the same format as FLIGHT LAB's, under keys of its own (a page on the same origin,
 // file:// included, never merges with FLIGHT LAB's)
@@ -46,8 +57,10 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
   const tally = { time: 0, landings: 0 };
   // is the current step being graded now (its graded seconds grew during the last frame)
   const gr = { step: -1, n: 0, on: false };
-  // where the parking brake holds the aircraft
-  const pin = { on: false, x: 0, z: 0 };
+  // where the parking brake holds the aircraft (position and true heading)
+  const pin = { on: false, x: 0, z: 0, h: 0 };
+  // the lesson's rows as status() shows them (made again only when a row is added)
+  const shown = { L: null, n: -1, results: [] };
 
   function snap() {
     if (!L) return; const s = L.s;
@@ -92,19 +105,23 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
     nl.hdg0 = Math.round(AV.trueToMag(hdgTrue, P.MAGVAR_W)) || 360; nl.av.hdgBug = nl.hdg0;
     nl.prevHdg = null; nl.rateF = null; nl.last = SC.ctx(nl);
     begin(nl);
+    // the parking brake set, holding it exactly on the given spot and heading from the first step
     ctl.action(nl, 'parkBrake', true);
+    pin.on = true; pin.x = s.pos[0]; pin.z = s.pos[2]; pin.h = hdgTrue;
     return nl;
   }
 
   // ---------------------------------------------------------------- the realtime path (app.js tick)
-  // keys: { has(code) } (CADET's input.down); opts.paused stops everything
+  // keys: { has(code) } (CADET's input.keys, or { has: input.down }); opts.paused stops everything
   function frame(dt, keys, { paused = false } = {}) {
     res.steps = 0; res.events.length = 0; res.pad.length = 0; res.ended = false;
     if (!L) return res;
     const dtr = Math.min(0.1, Math.max(0, dt || 0)), wasDone = L.done;
     const flying = !paused && !L.done;
     ctl.update(L, dtr, keys, flying);
-    // what the gamepad asked for: the dialogs are answered here, the rest goes to the integrator
+    // what the gamepad asked for: the dialogs are answered here, after the controls (so A on the last checklist item
+    // does not also brake, and B / X / Y answering the tower do not also work the flaps or the view as in FLIGHT LAB);
+    // the rest goes to the integrator
     const po = ctl.padOut;
     for (let i = 0; i < po.length; i++) {
       const e = po[i];
@@ -131,16 +148,26 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
     return res;
   }
   // the parking brake holds the aircraft where it stopped, heading included. (FLIGHT LAB's tyres are viscous: braked or
-  // not, idle thrust alone lets it creep about 5 mm/s.) It takes hold below 0.3 m/s and lets go when it is released.
+  // not, idle thrust alone lets it creep about 5 mm/s, and the idle prop and the wind slowly turn it.) It takes hold
+  // on the ground below 0.3 m/s, holds through the gear springs' first bounce (wheels off for < 0.5 s) and lets go when
+  // it is released; the springs still settle the height, the pitch and the bank.
   function parkHold(s) {
-    if (!ctl.parkBrake || !s.onGround || s.crashed) { pin.on = false; return; }
-    if (!pin.on) { if (Math.hypot(s.vel[0], s.vel[2]) > 0.3) return; pin.on = true; pin.x = s.pos[0]; pin.z = s.pos[2]; }
+    if (!ctl.parkBrake || s.crashed || (!s.onGround && s.airTime > 0.5)) { pin.on = false; return; }
+    if (!pin.on) { if (!s.onGround || Math.hypot(s.vel[0], s.vel[2]) > 0.3) return; pin.on = true; pin.x = s.pos[0]; pin.z = s.pos[2]; pin.h = P.attitude(s).hdg; }
     s.pos[0] = pin.x; s.pos[2] = pin.z; s.vel[0] = 0; s.vel[2] = 0; s.w[1] = 0;
+    // back to the held heading by a turn about the vertical (q is body → world: a world turn multiplies from the left)
+    const d = P.wrap180(pin.h - P.attitude(s).hdg) * DEG;
+    if (d) s.q = P.qmul([0, Math.sin(-d / 2), 0, Math.cos(-d / 2)], s.q);
   }
-  // the physics events since the last frame (touchdown, hard_landing, crash, ...), read with the lesson's own cursor
+  // the physics events since the last frame (touchdown, hard_landing, crash, ...), read with the lesson's own cursor;
+  // a reason worded for FLIGHT LAB comes as a copy worded for the aircraft (inWorld)
   function collect() {
     const ev = L.s.events;
-    while (L.evSeen < ev.length) { const e = ev[L.evSeen++]; res.events.push(e); if (e.type === 'touchdown') tally.landings++; }
+    while (L.evSeen < ev.length) {
+      const e = ev[L.evSeen++];
+      res.events.push(e.why && inWorld(e.why) !== e.why ? { ...e, why: inWorld(e.why) } : e);
+      if (e.type === 'touchdown') tally.landings++;
+    }
   }
   function gradedNow() {
     let sum = 0; const st = L.st;
@@ -175,14 +202,14 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
   function checklistNext() {
     if (!L) return { ok: false, text: '' };
     const r = SC.checklistNext(L);
-    r.text = !r.ok && r.item ? L.hint || '' : '';
+    r.text = !r.ok && r.item ? inWorld(L.hint || '') : '';
     return r;
   }
   // the read-back (1–3): { ok, why, right } | null
   function answerAtc(i) {
     if (!L) return null;
     const r = SC.answerAtc(L, i);
-    if (r) lastRight = r.right;
+    if (r) { lastRight = r.right; r.why = inWorld(r.why); }
     return r;
   }
   // a key pressed (once per press; the held keys are read by frame): Enter → the checklist, 1–3 → the read-back, then
@@ -219,12 +246,19 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
     L.endHandled = true;
     const prog = flush(SC.loadProgress(db));
     SC.noteLesson(prog, L); SC.saveProgress(db, prog);
-    return SC.addRecord(db, SC.recordFromLesson(L, ''));
+    const rec = SC.recordFromLesson(L, '');
+    if (rec) {
+      rec.reason = inWorld(rec.reason);
+      for (const S of rec.steps) { S.step = inWorld(S.step); for (const x of S.rows) { x.name = inWorld(x.name); x.val = inWorld(x.val); x.std = inWorld(x.std); } }
+      for (const e of rec.events) if (e.why) e.why = inWorld(e.why);
+    }
+    return SC.addRecord(db, rec);
   }
   const progress = () => SC.loadProgress(db);
   const records = () => SC.loadRecords(db);
 
   // ---------------------------------------------------------------- what the HUD shows (reads only: L.last, never SC.ctx)
+  // (the texts as the aircraft words them: inWorld)
   function status() {
     if (!L) return null;
     const s = L.s, lv = L.level, S = L.def.steps[L.step] || null, st = L.st || null;
@@ -236,20 +270,21 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
     let check = null;
     if (L.check) {
       const C = SC.CHECKLISTS[L.check.id], at = L.check.i;
-      check = { id: L.check.id, title: C.title, i: at, items: C.items.map((it, i) => ({ name: it[0], text: SC.checklistText(it, s), ok: i < at, cur: i === at })) };
+      check = { id: L.check.id, title: inWorld(C.title), i: at, items: C.items.map((it, i) => ({ name: inWorld(it[0]), text: inWorld(SC.checklistText(it, s)), ok: i < at, cur: i === at })) };
     }
+    if (shown.L !== L || shown.n !== L.results.length) { shown.L = L; shown.n = L.results.length; shown.results = rowsInWorld(L.results); }
     const ar = L.atcResult;
     return {
       mode: L.free ? 'free' : 'lesson', id: L.id, title: L.def.title, level: lv.id, levelName: lv.name, aircraft: L.A.id,
-      done: !!L.done, passed: !!L.passed, grade: L.grade || '', score: L.score || 0, passPct: L.passPct || 0, reason: L.reason || '',
+      done: !!L.done, passed: !!L.passed, grade: L.grade || '', score: L.score || 0, passPct: L.passPct || 0, reason: inWorld(L.reason || ''),
       t: L.t, step: L.step, steps: L.def.steps.map(x => x.name), stepName: S ? S.name : '',
       kind: !S ? '' : S.checklist ? 'checklist' : S.atc ? 'atc' : S.estimate ? 'estimate' : 'fly',
-      sayText: L.sayText || '', keysText: L.keysText || '', guideText: lv.guide ? L.guideText || '' : '', hint: L.hint || '', chime: L.chime || 0,
+      sayText: inWorld(L.sayText || ''), keysText: inWorld(L.keysText || ''), guideText: lv.guide ? inWorld(L.guideText || '') : '', hint: inWorld(L.hint || ''), chime: L.chime || 0,
       check, atc: L.atc ? { msg: L.atc.msg, opts: L.atc.opts.slice(), ok: L.atc.ok } : null,
-      atcResult: ar ? { ok: ar.ok, why: ar.why, t: ar.t, right: lastRight } : null,
+      atcResult: ar ? { ok: ar.ok, why: inWorld(ar.why), t: ar.t, right: lastRight } : null,
       stats, holdT: st ? st.holdT : 0, need: st ? st.need || 0 : 0, stepT: st ? st.t : 0, turned: st ? st.turned : 0,
       dur: S && S.dur || 0, max: S && S.max || 0, graded: gr.on,
-      results: L.results, hood: !!L.hood, crashed: !!s.crashed, crashReason: s.crashReason || '',
+      results: shown.results, hood: !!L.hood, crashed: !!s.crashed, crashReason: inWorld(s.crashReason || ''),
       alt0: L.alt0, hdg0: L.hdg0, ctx: L.last || null,
     };
   }

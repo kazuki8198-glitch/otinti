@@ -264,12 +264,14 @@ export function lightSpots(A) {
   const side = (s, deg) => [s * Math.sin(deg * DEG), 0, -Math.cos(deg * DEG)];
   const fwd = (x, y) => { const l = Math.hypot(x, y, 1); return [x / l, y / l, -1 / l]; };
   // size: the halo's radius (m), at most `ang` (the tangent of its angular radius: glare is in the eye, so a lamp close
-  // by does not fill the view); cone: [cos of the outer edge, cos of the inner edge, sharpness], cone[0] < −1: all round
+  // by does not fill the view); cone: [cos of the outer edge, cos of the inner edge, sharpness], cone[0] < −1: all round.
+  // glow: the halo's strength; lens: the lens's own glow, kept low for the coloured ones so that by day (AgX turns
+  // anything much brighter white) a red lens still looks red — at night the halo does the glowing
   return [
-    { id: 'navL', pos: [-(w.tipX + 0.012), tipY, navZ], col: L_COL.red, size: 0.3, ang: 0.022, glow: 2.2, lens: 14, axis: side(-1, 55), cone: [Math.cos(82 * DEG), Math.cos(55 * DEG), 1], lensId: 0 },
-    { id: 'navR', pos: [w.tipX + 0.012, tipY, navZ], col: L_COL.green, size: 0.3, ang: 0.022, glow: 2.2, lens: 14, axis: side(1, 55), cone: [Math.cos(82 * DEG), Math.cos(55 * DEG), 1], lensId: 1 },
-    { id: 'tail', pos: [0, end[3], end[0] + 0.012], col: L_COL.white, size: 0.22, ang: 0.018, glow: 1.6, lens: 10, axis: [0, 0, 1], cone: [Math.cos(92 * DEG), Math.cos(70 * DEG), 1], lensId: 2 },
-    { id: 'beacon', pos: beacon, col: L_COL.red, size: 0.45, ang: 0.03, glow: 10, lens: 30, axis: [0, 1, 0], cone: [-2, -1, 1], lensId: 3 },
+    { id: 'navL', pos: [-(w.tipX + 0.012), tipY, navZ], col: L_COL.red, size: 0.3, ang: 0.022, glow: 2.2, lens: 4, axis: side(-1, 55), cone: [Math.cos(82 * DEG), Math.cos(55 * DEG), 1], lensId: 0 },
+    { id: 'navR', pos: [w.tipX + 0.012, tipY, navZ], col: L_COL.green, size: 0.3, ang: 0.022, glow: 2.2, lens: 3, axis: side(1, 55), cone: [Math.cos(82 * DEG), Math.cos(55 * DEG), 1], lensId: 1 },
+    { id: 'tail', pos: [0, end[3], end[0] + 0.012], col: L_COL.white, size: 0.22, ang: 0.018, glow: 1.6, lens: 5, axis: [0, 0, 1], cone: [Math.cos(92 * DEG), Math.cos(70 * DEG), 1], lensId: 2 },
+    { id: 'beacon', pos: beacon, col: L_COL.red, size: 0.45, ang: 0.03, glow: 10, lens: 7, axis: [0, 1, 0], cone: [-2, -1, 1], lensId: 3 },
     { id: 'strobeL', pos: [-(w.tipX + 0.02), tipY, navZ + 0.02], col: L_COL.xenon, size: 0.9, ang: 0.045, glow: 50, lens: 90, axis: [0, 1, 0], cone: [-2, -1, 1], lensId: 0 },
     { id: 'strobeR', pos: [w.tipX + 0.02, tipY, navZ + 0.02], col: L_COL.xenon, size: 0.9, ang: 0.045, glow: 50, lens: 90, axis: [0, 1, 0], cone: [-2, -1, 1], lensId: 1 },
     { id: 'landing', pos: nose(-1), col: L_COL.led, size: 0.6, ang: 0.05, glow: 40, lens: 40, axis: fwd(-0.02, -0.06), cone: [Math.cos(35 * DEG), Math.cos(6 * DEG), 3], lensId: 4 },
@@ -366,6 +368,8 @@ function flashIn(t0, t1) {
 
 // the flown aircraft: liveAircraft(FL, A, { cabinRear }) → { root, update(s, { dt, rpmVisual, lights, inside }),
 // setInside(v), cabin, parts, spots, dispose }. Pose the root from the physics (position, quaternion) every frame.
+// parts: body (with the parts that never move, named in parts.fixed: the Archer's gear), cabin, each hinged part by
+// name, props / discs (prop / disc: the first engine's), lights (the lenses), glow (the halos).
 // rpmVisual (a number, or one per engine) overrides the engines' rpm for the eye — an engine start or stop — and the
 // propeller then turns by it; otherwise the blades sit at the physics' own angle. lights: { nav, beacon, strobe,
 // landing, taxi } (true/false or 0..1). inside (or setInside): the cockpit view, where the cabin section is not drawn
@@ -378,16 +382,19 @@ export function liveAircraft(FL, A, opts = {}) {
   const raw = FL.acmesh.buildParts(A);
   const discOf = new Map(raw.filter(p => p.disc != null).map(p => [p.disc, p]));
   const mesh = (geo, mat, name, cast = true) => { const m = new THREE.Mesh(geo, mat); m.name = name; m.castShadow = cast; m.receiveShadow = true; geos.push(geo); return m; };
+  // the parts that never move (the Archer's fixed gear legs) go into the body's mesh: one draw call for all of them
+  const fixed = [];
+  parts.fixed = [];
   for (const p of raw) {
     if (p.disc != null) continue;
     if (p.name === 'body') {
       const { cabin, rest } = splitBody(p.mesh, A, zRear);
-      root.add(parts.body = mesh(geometryOf(p.mesh, rest), paintMat, 'body'));
+      fixed.unshift(geometryOf(p.mesh, rest));
       root.add(parts.cabin = mesh(geometryOf(p.mesh, cabin), paintMat, 'cabin'));
       continue;
     }
+    if (!(p.pivot && p.angle) && p.prop == null) { fixed.push(geometryOf(p.mesh)); parts.fixed.push(p.name); continue; }
     const m = mesh(geometryOf(p.mesh), p.prop != null ? propMat : paintMat, p.name);
-    if (!(p.pivot && p.angle)) { root.add(m); parts[p.name] = m; continue; }
     const pivot = new THREE.Group(); pivot.name = p.name + '-pivot'; pivot.position.set(...p.pivot);
     m.position.set(-p.pivot[0], -p.pivot[1], -p.pivot[2]);
     pivot.add(m); root.add(pivot);
@@ -401,6 +408,9 @@ export function liveAircraft(FL, A, opts = {}) {
     props.push({ idx: p.prop, sign, angle: p.angle, pivot, blades: m, disc, U, ang: 0, rpm: 0 });
     parts.props.push(m); parts.discs.push(disc);
   }
+  const bodyGeo = fixed.length > 1 ? mergeGeometries(fixed) : fixed[0];
+  if (fixed.length > 1) fixed.forEach(g => g.dispose());
+  root.add(parts.body = mesh(bodyGeo, paintMat, 'body'));
   parts.prop = parts.props[0]; parts.disc = parts.discs[0];
   const spots = lightSpots(A), lt = buildLights(spots);
   root.add(lt.lens, lt.glow); parts.lights = lt.lens; parts.glow = lt.glow;

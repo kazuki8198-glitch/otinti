@@ -1,6 +1,7 @@
 // CADET — exterior tests (node --test): the aircraft seen from outside (src/aircraft/exterior.js), without a browser.
 //  - the flown aircraft (liveAircraft) has every part: the surfaces, the cabin section, the propeller with its disc,
-//    the lights' lenses and halos, each light where it belongs on the airframe;
+//    the lights' lenses and halos, each light where it belongs on the airframe; the Archer's fixed gear is merged into
+//    the body (12 meshes in all);
 //  - the propeller: no disc at rest, a disc and no blades at cruise rpm, the blades only below 900 rpm; it turns
 //    clockwise seen from the cockpit (and the twin's right engine the other way), from the physics or from rpmVisual;
 //  - the cabin split keeps every triangle of the body, and the cabin holds the windows, the cowling and nothing aft of
@@ -31,8 +32,14 @@ const ALL = { nav: true, beacon: true, strobe: true, landing: true, taxi: true }
 test('exterior: the flown aircraft has its parts, and the lights sit on the airframe', () => {
   for (const id of ['pa28', 'pa44']) {
     const A = AC(id), ac = liveAircraft(FL, A), names = new Set();
-    ac.root.traverse(o => { if (o.isMesh) names.add(o.name); });
-    for (const n of ['body', 'cabin', 'ailR', 'ailL', 'flapR', 'flapL', 'stab', 'rud', 'prop', 'disc', 'gearN', 'gearR', 'gearL', 'lights', 'light-glow']) assert.ok(names.has(n), `${id}: ${n}`);
+    let meshes = 0;
+    ac.root.traverse(o => { if (o.isMesh) { names.add(o.name); meshes++; } });
+    for (const n of ['body', 'cabin', 'ailR', 'ailL', 'flapR', 'flapL', 'stab', 'rud', 'prop', 'disc', 'lights', 'light-glow']) assert.ok(names.has(n), `${id}: ${n}`);
+    // the Archer's fixed gear is in the body's mesh (it never moves); the twin's folds, so it keeps its hinges
+    const gear = ['gearN', 'gearR', 'gearL'];
+    if (id === 'pa28') assert.deepEqual([gear.some(n => names.has(n)), ac.parts.fixed], [false, gear], 'the fixed gear merged into the body');
+    else assert.ok(gear.every(n => names.has(n) && ac.parts[n].parent.name === n + '-pivot') && ac.parts.fixed.length === 0, 'the twin\'s gear on hinges');
+    assert.ok(meshes <= (id === 'pa28' ? 12 : 17), `${id}: ${meshes} meshes (draw calls)`);
     assert.equal(ac.cabin, ac.parts.cabin);
     assert.equal(ac.parts.props.length, A.engines1 || 1, `${id}: a propeller per engine`);
     for (let i = 0; i < ac.parts.props.length; i++) assert.equal(ac.parts.discs[i].parent, ac.parts.props[i].parent, 'the disc turns with its blades');
@@ -124,9 +131,12 @@ test('exterior: the cabin split keeps every triangle; the cockpit view takes the
     assert.equal(cabin.filter(glass).length, 14, `${id}: the six side panes and the windscreen (14 triangles)`);
     assert.equal(rest.filter(glass).length, 0);
     assert.ok(cabin.every(t => cz(t) < zRear), `${id}: nothing aft of the cabin's rear ring`);
-    // the live model: the two meshes are the body exactly
-    const ac = liveAircraft(FL, A);
-    assert.equal(tris(ac.parts.body.geometry) + tris(ac.parts.cabin.geometry), n);
+    // the live model: the two meshes are the body exactly (plus the fixed parts merged into it, the Archer's gear)
+    const ac = liveAircraft(FL, A), parts = FL.acmesh.buildParts(A);
+    const fixedTris = ac.parts.fixed.reduce((k, name) => k + parts.find(p => p.name === name).mesh.count / 3, 0);
+    assert.equal(fixedTris, id === 'pa28' ? 3 * 216 : 0);
+    assert.equal(tris(ac.parts.body.geometry) + tris(ac.parts.cabin.geometry), n + fixedTris);
+    assert.equal(tris(ac.parts.cabin.geometry), cabin.length);
     const bb = new THREE.Box3().setFromObject(ac.parts.body, true), cb = new THREE.Box3().setFromObject(ac.parts.cabin, true);
     assert.ok(bb.max.x > A.wing.tipX - 0.01 && bb.max.y > A.vstab.y1 - 0.05, `${id}: the wings and the fin stay outside`);
     assert.ok(cb.max.x < 0.7 && cb.max.z <= zRear + 1e-6, `${id}: the cabin is fuselage only`);
@@ -241,12 +251,14 @@ test('exterior: struts and hub caps read as metal; the blades keep their yellow 
   const sh = { fragmentShader: '#include <roughnessmap_fragment>\n#include <lights_physical_fragment>\n#include <metalnessmap_fragment>' };
   ac.parts.body.material.onBeforeCompile(sh);
   assert.equal(sh.fragmentShader.split('step(abs(vColor.r - vColor.b), 0.060)').length - 1, 2, 'metal tolerance in the shader');
-  // every gear leg has metal-coloured triangles; the propeller's material keeps the vertex colours (yellow tips)
-  for (const g of ['gearN', 'gearR', 'gearL']) {
-    const c = ac.parts[g].geometry.attributes.color;
-    let metal = 0; for (let i = 0; i < c.count; i++) if (paintClass([c.getX(i), c.getY(i), c.getZ(i)]) === 'metal') metal++;
-    assert.ok(metal > 30, `${g}: ${metal} metal vertices`);
-  }
+  // every gear leg has metal-coloured triangles (the Archer's are in its body mesh, the twin's on their hinges); the
+  // propeller's material keeps the vertex colours (yellow tips)
+  const metalIn = g => { const c = g.attributes.color; let k = 0; for (let i = 0; i < c.count; i++) if (paintClass([c.getX(i), c.getY(i), c.getZ(i)]) === 'metal') k++; return k; };
+  assert.equal(metalIn(ac.parts.body.geometry), 216 + 360, 'the Archer\'s three legs: struts and hub caps (vertices)');
+  assert.equal(metalIn(ac.parts.cabin.geometry), 0);
+  const tw = liveAircraft(FL, AC('pa44'));
+  for (const g of ['gearN', 'gearR', 'gearL']) { const k = metalIn(tw.parts[g].geometry); assert.ok(k > 30, `pa44 ${g}: ${k} metal vertices`); }
+  tw.dispose();
   assert.equal(ac.parts.prop.material.vertexColors, true);
   const pc = ac.parts.prop.geometry.attributes.color;
   let yellow = 0; for (let i = 0; i < pc.count; i++) if (pc.getX(i) > 0.5 && pc.getZ(i) < 0.1) yellow++;

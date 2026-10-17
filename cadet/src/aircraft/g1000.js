@@ -92,6 +92,18 @@ export function createGlass(FL, makeCanvas) {
   const ENG = [{ run: true, rpm: 0, feather: false }, { run: true, rpm: 0, feather: false }];
   const ENG1 = [ENG[0]];
   const d = { o: {}, av: null, nav: null, varW: P.MAGVAR_W, qnh: 29.92, eng: ENG1, V: null, fuelCap: 24, pos: { n: 0, e: 0 } };
+  const stats = { pfd: 0, mfd: 0, blank: 0, strips: 0, standby: 0 };      // draws so far (tests, the perf overlay)
+  // the standby dials, drawn 15 times a second: the gradients, fonts and numerals are made once
+  const grads = new Map(), fonts = new Map(), NUM = [];
+  for (let i = 0; i <= 160; i++) NUM.push(String(i));
+  const font = (w, px) => { const k = w * 1000 + px; let f = fonts.get(k); if (!f) { f = `${w} ${px}px ${SANS}`; fonts.set(k, f); } return f; };
+  const BANK_MARKS = [-90, -60, -30, -20, -10, 10, 20, 30, 60, 90];
+  const baroText = { v: NaN, hpa: false, text: '' };
+  const V_DEF = { s0: 45, s1: 50, fe: 102, no: 125, ne: 154 };          // the Archer's, if the type has none
+  const asiAng = kt => (kt <= 40 ? Math.max(0, kt) / 40 * 30 : 30 + (Math.min(kt, 175) - 40) / 120 * 300) * DEG;
+
+  // ================================================================ per frame (no allocation below this line; FLIGHT LAB's
+  // drawPFD / drawMFD / navSolve allocate inside, the drawing here does not)
   function fill(s, av) {
     Object.assign(d.o, s.out); d.o.onGround = s.onGround;
     d.av = av; d.pos.n = -s.pos[2]; d.pos.e = s.pos[0];
@@ -101,7 +113,6 @@ export function createGlass(FL, makeCanvas) {
     for (let i = 0; i < d.eng.length && i < s.eng.length; i++) { const e = s.eng[i], o = d.eng[i]; o.run = e.run; o.rpm = e.rpm; o.feather = e.feather; }
     return d;
   }
-  const stats = { pfd: 0, mfd: 0, blank: 0, strips: 0, standby: 0 };      // draws so far (tests, the perf overlay)
   function drawScreen(which, s, av) {
     const sc = which === 'mfd' ? mfd : pfd;
     if (!sc || !s || !av) return;
@@ -145,12 +156,6 @@ export function createGlass(FL, makeCanvas) {
   }
 
   // ---------------------------------------------------------------- the standby instruments (2¼" dials)
-  // drawn 15 times a second: the gradients, fonts and numerals are made once
-  const grads = new Map(), fonts = new Map(), NUM = [];
-  for (let i = 0; i <= 160; i++) NUM.push(String(i));
-  const font = (w, px) => { const k = w * 1000 + px; let f = fonts.get(k); if (!f) { f = `${w} ${px}px ${SANS}`; fonts.set(k, f); } return f; };
-  const BANK_MARKS = [-90, -60, -30, -20, -10, 10, 20, 30, 60, 90];
-  const baroText = { v: NaN, hpa: false, text: '' };
   function face(g, cx, cy, R) {
     let gr = grads.get(cx);
     if (!gr) { gr = g.createRadialGradient(cx, cy - R * 0.3, R * 0.1, cx, cy, R); gr.addColorStop(0, '#1b1d20'); gr.addColorStop(1, '#0a0b0c'); grads.set(cx, gr); }
@@ -163,8 +168,6 @@ export function createGlass(FL, makeCanvas) {
     g.restore();
   }
   // airspeed: knots, 40 at about 1 o'clock, 160 at 11 o'clock; white (flaps), green (normal), yellow (caution) arcs, red line
-  const V_DEF = { s0: 45, s1: 50, fe: 102, no: 125, ne: 154 };          // the Archer's, if the type has none
-  const asiAng = kt => (kt <= 40 ? Math.max(0, kt) / 40 * 30 : 30 + (Math.min(kt, 175) - 40) / 120 * 300) * DEG;
   function arcBand(g, cx, cy, r, w, a0, a1, col) {
     g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.arc(cx, cy, r, a0 - Math.PI / 2, a1 - Math.PI / 2); g.stroke();
   }
@@ -256,6 +259,7 @@ export function createGlass(FL, makeCanvas) {
     drawALT(g, H[0] + H[2] / 2, H[1] + H[3] / 2, H[2] / 2 - 2, alt, baro, hpa);
     dyn.texture.needsUpdate = true;
   }
+  // ================================================================ end of the per-frame code
 
   const list = [pfd, mfd, dyn].filter(Boolean);
   return {

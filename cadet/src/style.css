@@ -72,6 +72,9 @@ body.locked #cross { opacity: 1; }
 
 /* ---------------------------------------------------------------- walking: the prompt, the examine card, the place */
 body.mode-walk #panel { display: none; }
+/* flying: the visit panel, the walking hint and the place label are not for the cockpit */
+body.mode-fly #panel, body.mode-fly #where { display: none; }
+body.mode-fly #hint { opacity: 0; }
 #prompt { position: absolute; left: 50%; top: calc(50% + 34px); transform: translateX(-50%); padding: 7px 14px; border-radius: 99px; font-size: 14px;
   background: rgba(10, 18, 28, 0.66); border: 1px solid var(--glass-line); opacity: 0; transition: opacity .15s; white-space: nowrap; }
 #prompt.show { opacity: 1; }

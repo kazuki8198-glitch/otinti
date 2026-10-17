@@ -4,6 +4,7 @@
 //    the body (12 meshes in all);
 //  - the propeller: no disc at rest, a disc and no blades at cruise rpm, the blades only below 900 rpm; it turns
 //    clockwise seen from the cockpit (and the twin's right engine the other way), from the physics or from rpmVisual;
+//    the smear joins the frames up, and the disc's pattern drifts slowly once the blades are hidden (no strobing);
 //  - the cabin split keeps every triangle of the body, and the cabin holds the windows, the cowling and nothing aft of
 //    its rear ring; setInside hides it and stops its shadow;
 //  - the lights: off by default, the right colours, a beacon flash about every second, a double strobe every 1.2 s
@@ -28,6 +29,9 @@ const AC = id => P.AIRCRAFT.find(a => a.id === id);
 const tris = g => (g.index ? g.index.count : g.attributes.position.count) / 3;
 const state = (id, rpm = 0, ang = 0) => { const s = P.newState({ aircraft: id }); for (const e of s.eng) { e.rpm = rpm; e.ang = ang; } return s; };
 const ALL = { nav: true, beacon: true, strobe: true, landing: true, taxi: true };
+// a disc's uniforms (the live objects update() writes), through its material's onBeforeCompile
+const discU = d => { const sh = { uniforms: {}, vertexShader: '#include <common>\n#include <begin_vertex>', fragmentShader: '#include <common>\n#include <map_fragment>' }; d.material.onBeforeCompile(sh); return sh.uniforms; };
+const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
 
 test('exterior: the flown aircraft has its parts, and the lights sit on the airframe', () => {
   for (const id of ['pa28', 'pa44']) {
@@ -74,10 +78,34 @@ test('exterior: the propeller — a disc at speed, blades below 900 rpm, clockwi
   }
   // at cruise rpm the blur is a whole half-turn (an even disc), and it is fully faded in
   s.eng[0].rpm = 2300; ac.update(s, { dt: 1 / 60 });
-  const U = disc.material.onBeforeCompile && (() => { const sh = { uniforms: {}, vertexShader: '#include <common>\n#include <begin_vertex>', fragmentShader: '#include <common>\n#include <map_fragment>' }; disc.material.onBeforeCompile(sh); return sh.uniforms; })();
+  const U = discU(disc);
   assert.ok(U.uSweep.value >= Math.PI * 0.95, `smear ${U.uSweep.value}`);
   assert.equal(U.uAlpha.value, 1);
   assert.equal(U.uDir.value, 1);
+  // the smear joins the frames up: at a long frame it reaches back to the last frame's blade, and never falls short
+  for (const fps of [24, 30, 60, 144, 240]) {
+    s.eng[0].rpm = 800; ac.update(s, { dt: 1 / fps });
+    const arc = 800 / 60 * 2 * Math.PI / fps;
+    assert.ok(U.uSweep.value >= arc - 1e-9 && (fps > 60 || Math.abs(U.uSweep.value - arc) < 1e-9), `smear at ${fps} fps: ${U.uSweep.value} for ${arc}`);
+  }
+  // the pattern stays on the blades while they are seen; once they are hidden it drifts slowly on its own, clockwise
+  // from the cockpit, whatever the physics' angle does from frame to frame (1200 rpm at 60 fps: 120° a frame, which
+  // the eye would take for a strobe, or a turn backwards); paused, it stays
+  const pattern = () => -s.eng[0].ang + U.uPhase.value;          // the pattern's angle (the pivot's sense, about +z)
+  s.eng[0].rpm = 800; s.eng[0].ang = 1; ac.update(s, { dt: 1 / 60 });
+  assert.equal(U.uPhase.value, 0, 'on the blades');
+  const steps = [];
+  let was = pattern();
+  for (let i = 0; i < 40; i++) {
+    s.eng[0].rpm = 1200; s.eng[0].ang = (s.eng[0].ang + 1200 / 60 * 2 * Math.PI / 60) % (2 * Math.PI);
+    ac.update(s, { dt: 1 / 60 });
+    steps.push(wrap(pattern() - was)); was = pattern();
+  }
+  assert.ok(steps.every(d => d < -0.05 && d > -0.3 && Math.abs(d - steps[0]) < 1e-9), `a slow, even drift: ${steps[0]} rad a frame`);
+  s.eng[0].ang = 2.5; ac.update(s, { dt: 0 });
+  assert.ok(Math.abs(wrap(pattern() - was)) < 1e-9, 'paused: the pattern stays');
+  s.eng[0].rpm = 700; ac.update(s, { dt: 1 / 60 });
+  assert.equal(U.uPhase.value, 0, 'back on the blades below 900 rpm');
   // rpmVisual overrides the physics both ways (an engine start, a stop)
   s.eng[0].rpm = 2300; ac.update(s, { dt: 1 / 60, rpmVisual: 0 });
   assert.equal(disc.visible, false); assert.equal(blades.visible, true);
@@ -115,6 +143,12 @@ test('exterior: the propeller — a disc at speed, blades below 900 rpm, clockwi
   assert.ok(tipOf(right, [e.x, e.y, e.z]) < -0.2, 'right engine counter-clockwise from behind');
   tw.update(st, { dt: 0.01, rpmVisual: [0, 2400] });
   assert.equal(tw.parts.discs[0].visible, false); assert.equal(tw.parts.discs[1].visible, true, 'rpmVisual per engine');
+  // with the blades hidden, each disc's pattern drifts its own engine's way (the physics' angles held still here)
+  const UL = discU(tw.parts.discs[0]), UR = discU(tw.parts.discs[1]);
+  st.eng[0].rpm = st.eng[1].rpm = 2400; tw.update(st, { dt: 1 / 60 });
+  const pl = UL.uPhase.value, pq = UR.uPhase.value;
+  tw.update(st, { dt: 1 / 60 });
+  assert.ok(wrap(UL.uPhase.value - pl) < -0.05 && wrap(UR.uPhase.value - pq) > 0.05, 'the twin\'s patterns drift opposite ways');
   tw.dispose();
 });
 
@@ -144,7 +178,7 @@ test('exterior: the cabin split keeps every triangle; the cockpit view takes the
     // outside: drawn and casting; inside: neither, and the disc fainter; back out: as before
     assert.equal(ac.inside, false);
     assert.ok(ac.cabin.visible && ac.cabin.castShadow);
-    const gain = () => { const sh = { uniforms: {}, vertexShader: '#include <common>\n#include <begin_vertex>', fragmentShader: '#include <common>\n#include <map_fragment>' }; ac.parts.disc.material.onBeforeCompile(sh); return sh.uniforms.uGain.value; };
+    const gain = () => discU(ac.parts.disc).uGain.value;
     const gOut = gain();
     ac.setInside(true);
     assert.ok(!ac.cabin.visible && !ac.cabin.castShadow && ac.inside);

@@ -597,7 +597,26 @@ const GESTURES = {
     wristR: [0, 0, 0.35, -9, 0.75, -5, 1.2, 0], headP: [0, 0, 0.4, 2, 0.8, -1, 1.2, 0] } },
   beatLS: { dur: 1.2, rel: true, ch: { elbowL: [0, 0, 0.35, 12, 0.75, 15, 1.2, 0], flexL: [0, 0, 0.35, 4, 0.75, 5, 1.2, 0], proL: [0, 0, 0.35, -15, 0.75, -18, 1.2, 0],
     wristL: [0, 0, 0.35, -9, 0.75, -5, 1.2, 0], headP: [0, 0, 0.4, 2, 0.8, -1, 1.2, 0] } },
+  // seated (in a cabin: a door at the elbow, the roof just above): the same gestures with the elbows kept in. Explaining,
+  // the arms come further forward (the back is reclined); the shrug keeps the elbows at the sides; the wave is made in
+  // front of the shoulder, the forearm up and swinging inwards
+  explainS: { dur: 2.2, alias: 'explain', ch: {
+    flexR: [0, 0, 0.4, 28, 1.0, 32, 1.5, 26, 2.2, 0], abdR: [0, 0, 0.4, -1, 1.0, 3, 1.5, 1, 2.2, 0], rotR: [0, 0, 0.4, 12, 1.0, 4, 1.5, 6, 2.2, 0],
+    elbowR: [0, 0, 0.4, 58, 1.0, 64, 1.5, 56, 2.2, 0], proR: [0, 0, 0.4, -60, 1.5, -64, 2.2, 0], wristR: [0, 0, 0.4, -12, 1.5, -10, 2.2, 0],
+    flexL: [0, 0, 0.5, 24, 1.1, 28, 1.6, 22, 2.2, 0], abdL: [0, 0, 0.5, 2, 1.1, 9, 1.6, 6, 2.2, 0], rotL: [0, 0, 0.5, 8, 1.1, 0, 1.6, 3, 2.2, 0],
+    elbowL: [0, 0, 0.5, 54, 1.1, 60, 1.6, 50, 2.2, 0], proL: [0, 0, 0.5, -55, 1.6, -58, 2.2, 0], wristL: [0, 0, 0.5, -10, 1.6, -8, 2.2, 0],
+    headP: [0, 0, 0.6, -3, 1.2, 3, 1.7, 0, 2.2, 0], chestP: [0, 0, 0.6, 3, 1.5, 3, 2.2, 0] } },
+  shrugS: { dur: 1.6, alias: 'shrug', ch: {
+    ...both('clav', [0, 0, 0.35, 11, 0.95, 11, 1.6, 0]), ...both('elbow', [0, 0, 0.35, 82, 0.95, 82, 1.6, 0]), ...both('abd', [0, 0, 0.35, -6, 0.95, -6, 1.6, 0]),
+    ...both('flex', [0, 0, 0.35, -2, 0.95, -2, 1.6, 0]), ...both('pro', [0, 0, 0.35, -82, 0.95, -82, 1.6, 0]), ...both('rot', [0, 0, 0.35, 6, 0.95, 6, 1.6, 0]),
+    ...both('wrist', [0, 0, 0.35, -16, 0.95, -16, 1.6, 0]),
+    headR: [0, 0, 0.35, 7, 0.95, 7, 1.6, 0], headP: [0, 0, 0.35, -3, 0.95, -3, 1.6, 0] } },
+  waveS: { dur: 2.6, alias: 'wave', ch: {
+    flexR: [0, 0, 0.5, 54, 2.0, 54, 2.6, 0], abdR: [0, 0, 0.5, -2, 2.0, -2, 2.6, 0], elbowR: [0, 0, 0.5, 94, 2.0, 94, 2.6, 0],
+    rotR: [0, 0, 0.5, 8, 0.75, 18, 1.0, 4, 1.25, 18, 1.5, 4, 1.75, 15, 2.0, 8, 2.6, 0], proR: [0, 0, 0.5, 20, 2.0, 20, 2.6, 0],
+    clavR: [0, 0, 0.5, 4, 2.0, 4, 2.6, 0], headR: [0, 0, 0.5, 3, 2.0, 3, 2.6, 0] } },
 };
+GESTURES.explain.seated = GESTURES.explainS; GESTURES.shrug.seated = GESTURES.shrugS; GESTURES.wave.seated = GESTURES.waveS;
 // pointing at something on the actor's left: the same curves on the left arm (reported as 'point')
 GESTURES.pointL = { dur: GESTURES.point.dur, alias: 'point',
   ch: Object.fromEntries(Object.entries(GESTURES.point.ch).map(([k, v]) => [k.replace(/^(aim|pointHand|elbow|wrist|clav)R$/, '$1L'), v])) };
@@ -638,26 +657,39 @@ const NO_OPTS = Object.freeze({});
 // ---------------------------------------------------------------- seated
 // the seated rest (radians): the pelvis tipped back onto the seat and the back against a seat back reclined about 14°,
 // the neck bringing the head level again; the feet pitched up onto the pedals; the upper body turns less towards what it
-// points at than standing (a share of the standing turn)
-const SEAT_POSE = { hips: -16 * DEG, spine: 2 * DEG, chest: -0.5 * DEG, footPitch: 30 * DEG, turn: 0.6 };
+// points at than standing (a share of the standing turn). lift: where a gesture takes an arm from the lap (its channels
+// [flex, abd, rot, elbow, pro, wrist] before the gesture's own: the standing rest, the elbow closer in); tuck / tuckAim:
+// on the way up from the lap and back the elbow comes in, in front of the body (clear of an armrest at the door), by up
+// to this much at half way (radians of abduction; the share of a pointing arm's direction). up / down: a pointing arm
+// rises at most, and drops at most, this much (the sine of its angle from level, in the body's frame: under a cabin roof,
+// and over the knees rather than into them).
+const SEAT_POSE = { hips: -16 * DEG, spine: 2 * DEG, chest: -0.5 * DEG, footPitch: 30 * DEG, turn: 0.45,
+  lift: [3 * DEG, 2 * DEG, 0, 13 * DEG, 0, 5 * DEG], tuck: 12 * DEG, tuckAim: 0.3, up: 0.4, down: -0.35 };
+const REACH = UARM_LEN + FARM_LEN + 0.17;                  // the shoulder joint to the fingertips, the arm straight
 // the instructor in the right seat of the Archer (PA-28-181), fitted to the cockpit's seat and pedals. In the aircraft's
 // body frame (x the right wing, y up, −z the nose; the right-seat eye ≈ (+0.30, 0.62, −0.40)) the actor's root goes at
 // `position` (on the cabin floor, below his hips), turned by `yaw` (π: facing the nose); `seat` is setSeated()'s cfg in
 // the root's frame: the middle of the hip joints 0.10 m above the cushion and just clear of the seat back (its back
 // reclined 13°), the ankles 0.65 m ahead of them and 0.21 m lower, the balls of the feet on the right pair of rudder
-// pedals (0.8 m ahead of the hips). The knees are bent about 70°, 9 cm above the hips; his eyes come to about
-// (+0.29, 0.67, −0.36).
+// pedals (0.8 m ahead of the hips). The knees are bent about 75°, 11 cm above the hips; his eyes come to about
+// (+0.29, 0.65, −0.36), the top of his head 5 cm under the headliner. room: the door is 9 cm outside his right shoulder,
+// so that hand never reaches out past it (the left one may: across to the student's side of the panel).
+// (In the seat as cockpit.js draws it the cushion and the back give 1–2 cm under him; a hip 3 cm further back, at
+// z −0.38, would sink the back of his hips 3 cm into the seat back and his head 2 cm into the headrest.)
 export const SEATED_PA28 = Object.freeze({
   position: Object.freeze([0.29, -0.40, -0.41]), yaw: Math.PI,
-  seat: Object.freeze({ hip: Object.freeze([0, 0.365, 0]), ankleL: Object.freeze([0.08, 0.15, 0.65]), ankleR: Object.freeze([-0.10, 0.15, 0.65]) }),
+  seat: Object.freeze({ hip: Object.freeze([0, 0.365, 0]), ankleL: Object.freeze([0.08, 0.15, 0.65]), ankleR: Object.freeze([-0.10, 0.15, 0.65]),
+    room: Object.freeze({ L: 0.45, R: 0.09 }) }),
 });
 // the same worked out from points in the aircraft's body frame (e.g. a cockpit's instructorSeat { hip, ankleL, ankleR },
-// left and right as the seated person's), the root put at y = floor below the hips → { position, yaw, seat }
-export function seatFromBody({ hip, ankleL, ankleR, footPitch }, yaw = Math.PI, floor = hip[1] - 0.4) {
+// left and right as the seated person's), the root put at y = floor below the hips → { position, yaw, seat }; footPitch
+// and room are passed on as they are
+export function seatFromBody({ hip, ankleL, ankleR, footPitch, room }, yaw = Math.PI, floor = hip[1] - 0.4) {
   const c = Math.cos(yaw), s = Math.sin(yaw), pos = [hip[0], floor, hip[2]];
   const local = (p) => { const x = p[0] - pos[0], z = p[2] - pos[2]; return [c * x - s * z, p[1] - floor, s * x + c * z]; };
   const seat = { hip: local(hip), ankleL: local(ankleL), ankleR: local(ankleR) };
   if (footPitch != null) seat.footPitch = footPitch;
+  if (room) seat.room = { L: room.L, R: room.R };
   return { position: pos, yaw, seat };
 }
 
@@ -755,8 +787,11 @@ export function createActor(opts = {}) {
   // (PIV0: the chest's middle at shoulder height, where pointing is seen from; POINT0: where 'point' aims without pointAt)
   const EYE_STAND = EYE0.clone(), PIV0 = new THREE.Vector3(0, 1.4, 0), POINT0 = new THREE.Vector3(-0.9, 1.55, 1.4);
   // hipsPos / hipsQ: the hips on the seat; neckQ: the neck's turn that brings the head level over the reclined back;
-  // arm: the arms' rest channels [flex, abd, rot, elbow, pro, wrist] with the hands on the thighs
-  const seat = { on: false, hipsPos: new THREE.Vector3(), hipsQ: new THREE.Quaternion(), neckQ: new THREE.Quaternion(), arm: { L: new Float64Array(6), R: new Float64Array(6) } };
+  // arm: the arms' rest channels [flex, abd, rot, elbow, pro, wrist] with the hands on the thighs; reach: how far out
+  // to its own side a pointing arm may lean (the sine of the angle, in the body's frame; from cfg.room)
+  const seat = { on: false, hipsPos: new THREE.Vector3(), hipsQ: new THREE.Quaternion(), neckQ: new THREE.Quaternion(), arm: { L: new Float64Array(6), R: new Float64Array(6) },
+    reach: { L: 1, R: 1 } };
+  const q2 = new THREE.Quaternion();
   const vec = (p, out) => (Array.isArray(p) || ArrayBuffer.isView(p) ? out.set(+p[0], +p[1], +p[2]) : out.set(+p.x, +p.y, +p.z));
   const okPt = (p) => p != null && typeof p === 'object' && Number.isFinite(vec(p, v1).x + v1.y + v1.z);
   function stand() {
@@ -764,13 +799,15 @@ export function createActor(opts = {}) {
     for (const L of SIDES) { const l = leg[L]; l.ankle.set(l.s * P.ankle[0], P.ankle[1], P.ankle[2]); l.foot.copy(l.toe); l.tm.geometry = l.stand; }
     EYE0.copy(EYE_STAND); PIV0.set(0, 1.4, 0); POINT0.set(-0.9, 1.55, 1.4);
   }
-  // cfg: { hip, ankleL, ankleR [, footPitch] } in the root's frame ([x, y, z] or {x, y, z}; metres): where the middle of
-  // the hip joints and each ankle go; footPitch: the toes up by this much (radians). null: stands up again. A bad cfg
-  // changes nothing (→ false). The pose follows on the next update().
+  // cfg: { hip, ankleL, ankleR [, footPitch, room] } in the root's frame ([x, y, z] or {x, y, z}; metres): where the
+  // middle of the hip joints and each ankle go; footPitch: the toes up by this much (radians); room: { L, R }, how far
+  // the hand may reach out beyond each shoulder (a door, the next seat; default: as far as the arm goes). null: stands up
+  // again. A bad cfg changes nothing (→ false). The pose follows on the next update().
   function setSeated(cfg) {
     if (!cfg) { stand(); return true; }
     if (!(okPt(cfg.hip) && okPt(cfg.ankleL) && okPt(cfg.ankleR))) return false;
     const k = 1 / body.scale.x, hm = vec(cfg.hip, new THREE.Vector3()).multiplyScalar(k);
+    for (const L of SIDES) { const r = Number(cfg.room?.[L]); seat.reach[L] = Number.isFinite(r) ? clamp((r * k - 0.06) / REACH, 0, 1) : 1; }
     seat.hipsQ.setFromAxisAngle(AX, SEAT_POSE.hips);
     seat.hipsPos.set(0, HIPJ_Y - P.hips[1], P.thigh[2] - P.hips[2]).applyQuaternion(seat.hipsQ).negate().add(hm);
     seat.neckQ.setFromAxisAngle(AX, -(SEAT_POSE.hips + SEAT_POSE.spine + SEAT_POSE.chest));
@@ -795,7 +832,7 @@ export function createActor(opts = {}) {
     const inv = body.matrixWorld.clone().invert(), inBody = (b) => new THREE.Matrix4().multiplyMatrices(inv, b.matrixWorld);
     EYE0.set(0, EYE.y - P.head[1], EYE.z + 0.012 - P.head[2]).applyMatrix4(inBody(head));
     PIV0.set(0, 1.4 - P.chest[1], -P.chest[2]).applyMatrix4(inBody(chest));
-    POINT0.set(-0.9, PIV0.y + 0.15, 1.4);
+    POINT0.set(-0.15, PIV0.y + 0.2, 2.5);                    // (seated, 'point' alone points ahead, out of the windscreen)
     // the arms: two-bone IK from the shoulder to the wrist resting on the thigh (a third of the way to the knee), the
     // elbow out and back; the palm turned down onto the thigh, the fingers along it
     for (const L of SIDES) {
@@ -826,6 +863,7 @@ export function createActor(opts = {}) {
 
   function startGesture(name) {
     let def = GESTURES[name]; if (!def) return 0;
+    if (seat.on && def.seated) def = def.seated;              // (seated: the variant that keeps clear of the door and the roof)
     let hold = false;
     if (name === 'point') {
       // the target (by default: ahead to the right), and the arm on its side (+x is the actor's left)
@@ -976,11 +1014,12 @@ export function createActor(opts = {}) {
     // arms: relaxed at the sides, plus the gesture. Seated: the hands rest on the thighs, and a gesture lifts an arm
     // from there into its standing curves (lift); the talking beats start from the lap.
     if (sat) {
-      const kL = clamp(G[C_.liftL], 0, 1), kR = clamp(G[C_.liftR], 0, 1), aL = seat.arm.L, aR = seat.arm.R;
-      poseArm(arm.L, lerp(aL[0], 3 * DEG, kL) + G[C_.flexL], lerp(aL[1], 8 * DEG, kL) + G[C_.abdL], lerp(aL[2], 0, kL) + G[C_.rotL],
-        lerp(aL[3], 13 * DEG, kL) + lerp(0.5, 2, kL) * DEG * br + G[C_.elbowL], lerp(aL[4], 0, kL) + G[C_.proL], lerp(aL[5], 5 * DEG, kL) + G[C_.wristL], G[C_.clavL], br);
-      poseArm(arm.R, lerp(aR[0], 3 * DEG, kR) + G[C_.flexR], lerp(aR[1], 8 * DEG, kR) + G[C_.abdR], lerp(aR[2], 0, kR) + G[C_.rotR],
-        lerp(aR[3], 13 * DEG, kR) + lerp(0.5, 2, kR) * DEG * br + G[C_.elbowR], lerp(aR[4], 0, kR) + G[C_.proR], lerp(aR[5], 5 * DEG, kR) + G[C_.wristR], G[C_.clavR], br);
+      const kL = clamp(G[C_.liftL], 0, 1), kR = clamp(G[C_.liftR], 0, 1), aL = seat.arm.L, aR = seat.arm.R, U = SEAT_POSE.lift;
+      const tL = 4 * kL * (1 - kL) * SEAT_POSE.tuck, tR = 4 * kR * (1 - kR) * SEAT_POSE.tuck;
+      poseArm(arm.L, lerp(aL[0], U[0], kL) + G[C_.flexL], lerp(aL[1], U[1], kL) - tL + G[C_.abdL], lerp(aL[2], U[2], kL) + G[C_.rotL],
+        lerp(aL[3], U[3], kL) + lerp(0.5, 2, kL) * DEG * br + G[C_.elbowL], lerp(aL[4], U[4], kL) + G[C_.proL], lerp(aL[5], U[5], kL) + G[C_.wristL], G[C_.clavL], br);
+      poseArm(arm.R, lerp(aR[0], U[0], kR) + G[C_.flexR], lerp(aR[1], U[1], kR) - tR + G[C_.abdR], lerp(aR[2], U[2], kR) + G[C_.rotR],
+        lerp(aR[3], U[3], kR) + lerp(0.5, 2, kR) * DEG * br + G[C_.elbowR], lerp(aR[4], U[4], kR) + G[C_.proR], lerp(aR[5], U[5], kR) + G[C_.wristR], G[C_.clavR], br);
     } else {
       poseArm(arm.L, (3 + 1.2 * w2) * DEG + G[C_.flexL], 8 * DEG + G[C_.abdL], G[C_.rotL], (13 + 2 * br) * DEG + G[C_.elbowL], G[C_.proL], 5 * DEG + G[C_.wristL], G[C_.clavL], br);
       poseArm(arm.R, (3 - 1.2 * w2) * DEG + G[C_.flexR], 8 * DEG + G[C_.abdR], G[C_.rotR], (13 + 2 * br) * DEG + G[C_.elbowR], G[C_.proR], 5 * DEG + G[C_.wristR], G[C_.clavR], br);
@@ -999,7 +1038,23 @@ export function createActor(opts = {}) {
       if (out < -0.3) v1.x = -0.3 * a.s;
       v1.z = Math.max(v1.z, lerp(0.3, -0.6, smooth(0.15, 0.75, out)));
       v1.y = clamp(v1.y, -0.8, 0.72); v1.normalize();
-      q1.setFromUnitVectors(DOWN, v1); a.ua.quaternion.slerp(q1, aim);
+      if (sat) {
+        // seated, in the body's frame: no further out than the room beside him allows (a door, the next seat; it then
+        // points ahead, not back round the seat), no higher than under a cabin roof, no lower than over the knees
+        a.clav.getWorldQuaternion(q1); body.getWorldQuaternion(q2); q2.invert().multiply(q1);   // the shoulder's frame → the body's
+        v1.applyQuaternion(q2);
+        const lim = seat.reach[side], y = clamp(v1.y, SEAT_POSE.down, SEAT_POSE.up);
+        let x = v1.x;
+        if (a.s * x > lim) { x = a.s * lim; v1.z = Math.abs(v1.z); }
+        x -= a.s * 4 * aim * (1 - aim) * SEAT_POSE.tuckAim;                    // (on the way up and down: the elbow in)
+        x = clamp(x, -Math.sqrt(1 - y * y), Math.sqrt(1 - y * y));
+        v1.set(x, y, (v1.z < 0 ? -1 : 1) * Math.sqrt(Math.max(0, 1 - x * x - y * y)));
+        v1.applyQuaternion(q2.invert());
+        // and it swings straight up from the lap to the aim, keeping its twist (the bent elbow does not sweep outwards)
+        pv.copy(DOWN).applyQuaternion(a.ua.quaternion);
+        q1.setFromUnitVectors(pv, v1).multiply(a.ua.quaternion);
+      } else q1.setFromUnitVectors(DOWN, v1);
+      a.ua.quaternion.slerp(q1, aim);
     }
     solveLeg(leg.L); solveLeg(leg.R);
 
@@ -1031,7 +1086,7 @@ export function createActor(opts = {}) {
     get gesturing() { return gName; },
     // for tests: the objects update() works with (they must stay the same ones)
     _scratch: [tv, pv, v1, v2, q1, pointTarget, want.L, want.R, aimAt.L, aimAt.R, piv, du, dw, ax, S, G, F, EYE0, PIV0, POINT0, seat.hipsPos, seat.hipsQ, seat.neckQ,
-      seat.arm.L, seat.arm.R, leg.L.ankle, leg.R.ankle, leg.L.foot, leg.R.foot],
+      seat.arm.L, seat.arm.R, seat.reach, leg.L.ankle, leg.R.ankle, leg.L.foot, leg.R.foot, q2],
     dispose() {
       for (const m of meshes) m.geometry.dispose();
       for (const L of ['L', 'R']) { arm[L].pointing.dispose(); arm[L].relaxed.dispose(); leg[L].stand.dispose(); if (leg[L].seated) leg[L].seated.dispose(); }

@@ -13,7 +13,7 @@
 // the cockpit. update() is cheap: it writes only the nodes whose text, class or size changed. The CSS is injected once
 // and scoped under #fhud.
 const CSS = `
-#fhud { --fh-w: min(380px, 31vw); --fh-rw: min(380px, 30vw); --fh-sub-h: 0px; --p2d-h: min(44vh, calc((100vw - 220px) / 3.2));
+#fhud { --fh-w: min(380px, 31vw); --fh-rw: min(380px, 30vw); --fh-sub-h: 0px; --p2d-h: min(44vh, calc((100vw - 240px) / 3.2));
   --fh-bg: rgba(10, 18, 28, 0.8); --fh-ok: #6fe3a0; --fh-warn: var(--warn, #ffcf5c); --fh-ng: #ff7a6b; --fh-amber: #ffb547;
   --fh-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
   position: fixed; inset: 0; z-index: 11; pointer-events: none; font-family: var(--font, system-ui, sans-serif); color: var(--ink, #eef3f8); }
@@ -39,7 +39,7 @@ const CSS = `
   color: var(--ink-dim, #a9b7c6); background: transparent; border: 1px solid var(--glass-line, rgba(255,255,255,.12)); }
 #fhud .fh-fold:hover { color: var(--ink, #eef3f8); background: rgba(255, 255, 255, .08); }
 #fhud .fh-dots { display: flex; align-items: center; gap: 4px; margin: 4px 0 2px; min-width: 0; font-size: 12px; font-weight: 700; color: var(--accent, #5cc8ff); }
-#fhud .fh-dots i { flex: none; width: 9px; height: 9px; border-radius: 50%; background: #233448; }
+#fhud .fh-dots i { flex: none; width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, .2); }
 #fhud .fh-dots i.done { background: var(--fh-ok); }
 #fhud .fh-dots i.cur { background: var(--accent, #5cc8ff); box-shadow: 0 0 0 3px rgba(92, 200, 255, .25); }
 #fhud .fh-dots span { margin-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -48,7 +48,8 @@ const CSS = `
 #fhud .fh-kc { display: inline-flex; align-items: center; gap: 3px; max-width: 100%; font-size: 11.5px; line-height: 1.45; color: #cfe3f5;
   background: rgba(92, 200, 255, .07); border: 1px solid rgba(92, 200, 255, .25); border-radius: 6px; padding: 1px 7px 1px 3px; }
 #fhud .fh-kc.nokey { padding-left: 7px; }
-#fhud .fh-guide { flex: 0 1 auto; min-height: 1.6em; overflow: hidden; margin: 0 0 6px; padding: 4px 8px; border-left: 3px solid var(--accent, #5cc8ff); border-radius: 3px;
+#fhud .fh-kx { margin-left: -3px; color: #9db2c8; }
+#fhud .fh-guide { margin: 0 0 6px; padding: 4px 8px; border-left: 3px solid var(--accent, #5cc8ff); border-radius: 3px;
   font-size: 12px; line-height: 1.6; color: #c9d7e8; background: rgba(92, 200, 255, .07); }
 #fhud .fh-gauges { display: grid; gap: 4px; margin: 0 0 5px; }
 #fhud .fh-g { display: grid; grid-template-columns: minmax(84px, auto) 1fr 58px; gap: 8px; align-items: center; font-size: 12px; }
@@ -68,6 +69,11 @@ const CSS = `
 #fhud .fh-bar { margin-top: 3px; height: 7px; border-radius: 4px; overflow: hidden; background: rgba(0, 0, 0, .4); }
 #fhud .fh-bar i { display: block; height: 100%; width: 0; border-radius: 4px; background: linear-gradient(90deg, #1f9e5b, var(--fh-ok)); transition: width .15s linear; }
 #fhud .fh-hint { margin-top: 6px; padding: 4px 8px; border-radius: 6px; font-size: 13px; font-weight: 700; line-height: 1.5; color: var(--fh-amber); background: rgba(255, 181, 71, .09); }
+/* when the panel does not fit its column (fitLesson): the keys' explanations go, then the guide is cut to two lines,
+   then hidden, then the keys (they are all in the key help) */
+#fhud .fh-lesson.fit1 .fh-kx { display: none; }
+#fhud .fh-lesson.fit2 .fh-guide { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+#fhud .fh-lesson.fit3 .fh-guide, #fhud .fh-lesson.fit4 .fh-keys { display: none; }
 
 /* ---- free flight: the four numbers and the main keys */
 #fhud .fh-free .fh-sub2 { font-size: 11.5px; color: var(--ink-dim, #a9b7c6); }
@@ -136,8 +142,13 @@ const CSS = `
   background: #05080d; border: 1px solid #262d35; box-shadow: 0 10px 30px rgba(0, 0, 0, .4); }
 #fhud .fh-disp { width: calc(var(--p2d-h) * 1.6); height: var(--p2d-h); padding: 5px; border-radius: 10px; background: #14181d; border: 1px solid #262d35; }
 #fhud .fh-disp canvas { display: block; width: 100%; height: 100%; border-radius: 4px; background: #000; }
-#fhud .fh-mid { width: 150px; display: flex; flex-direction: column; justify-content: center; }
-#fhud .fh-mid .fh-strip { width: 100%; padding: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); background: transparent; border: 0; box-shadow: none; }
+#fhud .fh-mid { width: 170px; display: flex; flex-direction: column; justify-content: center; }
+/* between the screens: one line per control (the screens show the rpm and the attitude themselves) */
+#fhud .fh-mid .fh-strip { width: 100%; padding: 0; grid-template-columns: 1fr; gap: 3px; background: transparent; border: 0; box-shadow: none; }
+#fhud .fh-mid .fh-tile { display: flex; align-items: center; gap: 6px; padding: 3px 7px; }
+#fhud .fh-mid .fh-tk { flex: 0 1 auto; min-width: 0; }
+#fhud .fh-mid .fh-tv { flex: 1 0 auto; text-align: right; font-size: 12.5px; }
+#fhud .fh-mid .fh-ts, #fhud .fh-mid .fh-meter { display: none; }
 
 /* ---- the key help (H) */
 #fhud .fh-help { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(900px, calc(100vw - 28px)); max-height: calc(100% - 56px);
@@ -155,6 +166,7 @@ const CSS = `
 #fhud .fh-help .fh-hn { margin: 8px 0 0; font-size: 11.5px; color: var(--ink-dim, #a9b7c6); }
 
 /* ---- the debrief */
+#fhud.deb .fh-left, #fhud.deb .fh-right { visibility: hidden; }
 #fhud .fh-deb { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; pointer-events: auto; background: rgba(4, 8, 14, 0.42); }
 #fhud .fh-card { display: flex; flex-direction: column; width: min(660px, 100%); max-height: 100%; overflow: auto; border-radius: 18px; background: rgba(10, 18, 28, 0.94);
   border: 1px solid var(--glass-line, rgba(255,255,255,.12)); box-shadow: 0 24px 70px rgba(0, 0, 0, .5); backdrop-filter: blur(6px); animation: fh-in .25s ease-out; }
@@ -208,10 +220,15 @@ const CSS = `
 }
 @media (max-height: 600px) {
   #fhud .fh-say { font-size: 14px; margin: 2px 0 4px; }
-  #fhud .fh-guide { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; min-height: 0; font-size: 11.5px; padding: 2px 7px; }
+  #fhud .fh-guide { font-size: 11.5px; line-height: 1.5; padding: 2px 7px; margin-bottom: 4px; }
+  #fhud .fh-keys { margin-bottom: 4px; } #fhud .fh-kc { font-size: 11px; }
   #fhud .fh-hint { font-size: 12px; margin-top: 4px; padding: 3px 7px; }
   #fhud .fh-check li span { display: block; font-size: 11px; line-height: 1.35; }
   #fhud .fh-check li { padding: 1px 4px; font-size: 12px; }
+  #fhud .fh-check li.ok span { display: none; }
+  #fhud .fh-tile { padding: 2px 7px 3px; } #fhud .fh-tv { font-size: 12.5px; line-height: 1.3; } #fhud .fh-ts { min-height: 1.25em; line-height: 1.25; }
+  #fhud .fh-help { padding: 10px 14px 8px; } #fhud .fh-help h3 { font-size: 14px; } #fhud .fh-help .fh-hs { margin-bottom: 4px; }
+  #fhud .fh-help h4 { margin: 2px 0; } #fhud .fh-help table { font-size: 12px; } #fhud .fh-help td { padding: 1px 4px; }
   #fhud .fh-help td.d { display: none; }
   #fhud .fh-hero { padding: 12px 18px 6px; } #fhud .fh-grade { width: 76px; height: 76px; } #fhud .fh-grade b { font-size: 36px; }
   #fhud .fh-hero h2 { font-size: 18px; }
@@ -307,12 +324,22 @@ export function adviceTips(bad) {
 const ADVICE_NONE = '基準外の項目の数字を見て、どの操作が足りなかったかを考えてから、もう一度。';
 export const advice = bad => adviceTips(bad).join('。') || ADVICE_NONE;
 // everything the card shows, from status() at the end of a lesson. The steps count is the steps finished (FLIGHT LAB
-// counted the steps that produced rows, so a passed a1 read "1 / 2")
+// counted the steps that produced rows, so a passed a1 read "1 / 2"). A free flight has no grade: its card (after a
+// crash, or when the game ends it) says how it ended and for how long it flew.
 export function debriefOf(sum) {
   const rows = [], bad = [];
   for (const r of sum.results || []) for (const row of r.rows) { rows.push(row); if (!row.pass) bad.push([r.step, row]); }
   const N = (sum.steps || []).length, t = sum.t || 0, mm = Math.floor(t / 60), ss = Math.floor(t % 60);
+  const time = t ? `${mm}:${String(ss).padStart(2, '0')}` : '';
+  if (sum.mode === 'free') {
+    return {
+      free: true, kick: '自由飛行の終わり', title: '自由飛行', grade: '―', status: sum.crashed ? '損傷' : '終了', cls: sum.crashed ? 'ng' : '',
+      sub: sum.crashed ? `理由：${sum.crashReason || '機体が損傷しました'}` : '採点のない飛行でした。',
+      okN: 0, rowsN: 0, stepsDone: 0, stepsN: 0, time, tips: [], tipNone: '', bad: '', results: [],
+    };
+  }
   return {
+    free: false, kick: '課目の結果',
     title: `${sum.title || ''}（${sum.levelName || ''}）`,
     grade: sum.grade || '―',
     status: sum.passed ? '合格' : sum.reason ? '中止' : '不合格',
@@ -321,7 +348,7 @@ export function debriefOf(sum) {
       : '基準に届かなかった項目があります。下の「次に意識すること」を読んで、もう一度挑戦しましょう。',
     okN: rows.filter(r => r.pass).length, rowsN: rows.length,
     stepsDone: clamp(sum.step || 0, 0, N), stepsN: N,
-    time: t ? `${mm}:${String(ss).padStart(2, '0')}` : '',
+    time,
     tips: bad.length ? adviceTips(bad) : [], tipNone: bad.length && !adviceTips(bad).length ? ADVICE_NONE : '',
     bad: bad.slice(0, 4).map(b => b[1].name).join('・'),
     results: sum.results || [],
@@ -502,8 +529,8 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   const card = make('section', 'fh-card', { role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'fh-deb-title' });
   const grade = make('div', 'fh-grade'), gradeB = make('b'), gradeS = make('span');
   put(grade, gradeB, gradeS);
-  const dTitle = make('h2', '', { id: 'fh-deb-title' }), dSub = make('p');
-  const hero = put(make('div', 'fh-hero'), grade, put(make('div'), make('div', 'fh-kick', null, '課目の結果'), dTitle, dSub));
+  const dTitle = make('h2', '', { id: 'fh-deb-title' }), dSub = make('p'), dKick = make('div', 'fh-kick');
+  const hero = put(make('div', 'fh-hero'), grade, put(make('div'), dKick, dTitle, dSub));
   const dStats = make('div', 'fh-stats');
   const dAdv = make('div', 'fh-adv');
   const dDet = make('details', 'fh-det'), dDetBody = make('div');
@@ -511,18 +538,19 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   const dNote = make('p', 'fh-note', null, 'この結果は訓練の記録に保存されました。正式な飛行日誌（logbook）ではなく、飛行時間には数えません。');
   const bRetry = make('button', '', { type: 'button', 'data-act': 'retry' }), bFree = make('button', '', { type: 'button', 'data-act': 'free' }, '自由に飛ぶ');
   const bRet = make('button', '', { type: 'button', 'data-act': 'return' }, '駐機場へ戻る');
-  put(bRetry, doc.createTextNode('もう一度'), make('kbd', '', null, 'R'));
+  const retryTxt = doc.createTextNode('もう一度');
+  put(bRetry, retryTxt, make('kbd', '', null, 'R'));
   const dBtns = put(make('div', 'fh-btns'), bRetry, bFree, bRet);
   put(card, hero, dStats, dAdv, dDet, dNote, dBtns);
   put(deb, card);
   deb.hidden = true;
 
-  put(el, hood, left, subt, right, p2d, help, deb);
+  put(el, hood, left, right, p2d, help, deb, subt);
   root.appendChild(el);
 
   // ---- state
   let mode = 'lesson', status = null, panel = null, compact = false, helpOn = false, p2dOn = false, debOpen = false, destroyed = false;
-  let lastHold = 0, subTimer = 0, flashTimer = 0, footTimer = 0, sizeDirty = true;
+  let lastHold = 0, subTimer = 0, flashTimer = 0, footTimer = 0, sizeDirty = true, layoutN = 0, fitSig = '';
   let onCheck = null, onAtc = null, debCb = null;
   const G = {}, PR = {};
   const gaugeRows = [];
@@ -542,8 +570,10 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     if (!changed(keysEl, 'k', st.keysText)) return;
     keysEl.textContent = '';
     for (const p of parseKeys(st.keysText)) {
-      const c = make('span', p.keys.length ? 'fh-kc' : 'fh-kc nokey');
-      kbds(c, p.keys); put(c, make('span', '', null, p.what)); put(keysEl, c);
+      const c = make('span', p.keys.length ? 'fh-kc' : 'fh-kc nokey'), m = /^(.+?)(（.*）)$/.exec(p.what);
+      kbds(c, p.keys); put(c, make('span', '', null, m ? m[1] : p.what));
+      if (m) put(c, make('span', 'fh-kx', null, m[2]));
+      put(keysEl, c);
     }
     shown(keysEl, !!st.keysText);
   }
@@ -584,6 +614,16 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     lastHold = st.need ? st.holdT : 0;
     const h = st.hint && !st.done ? (compact ? st.hint : '教官：' + st.hint) : '';
     text(hint, h); shown(hint, !!h);
+    fitLesson(`${st.step}|${st.done}|${st.sayText.length}|${st.keysText.length}|${guide.hidden ? 0 : st.guideText.length}|${st.stats.length}|${p.text.length}|${p.frac != null}|${h.length}|${p2dOn}|${layoutN}`);
+  }
+  // the panel always fits its column, checked only when something that sets its height changed (a step, a text's
+  // length, the window, the big G1000): if it overflows, the levels of .fitN take away the least needed parts first
+  const FITS = ['fit1', 'fit2', 'fit3', 'fit4'];
+  function fitLesson(sig) {
+    if (sig === fitSig || lesson.hidden || el.hidden) return;
+    fitSig = sig;
+    for (const f of FITS) lesson.classList.remove(f);
+    for (let i = 0; i < FITS.length && lesson.scrollHeight > lesson.clientHeight + 1; i++) lesson.classList.add(FITS[i]);
   }
 
   // ---- the free-flight panel
@@ -592,9 +632,10 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
       text(fIas, String(Math.round(pn.ias))); text(fAlt, thousands(Math.round(pn.alt / 10) * 10));
       text(fHdg, hdg3(pn.hdg)); text(fVs, signed(Math.round(pn.vs / 10) * 10));
     }
+    // where it is: on the ground, what holds it; in the air, how far the runway is (FLIGHT LAB's free panel)
     const c = st && st.ctx;
     let w = '';
-    if (pn && pn.onGround) w = '地上　出力を上げる前に周りを確認・ブレーキの状態を確認';
+    if (pn && pn.onGround) w = pn.parkBrake ? 'パーキング ブレーキ中：パネル下の T ハンドルをクリックで解除' : '地上：Q / E で前輪の向き・B / Space でブレーキ';
     else if (c && Number.isFinite(c.along)) w = `滑走路 36 まで ${(Math.hypot(c.along - 600, c.cross) / 1852).toFixed(1)} NM`;
     text(fWhere, w); shown(fWhere, !!w);
   }
@@ -650,8 +691,11 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   }
 
   // ---- the key help: the rows this step uses are lit
+  const used = new Set();
   function renderHelp(st) {
-    const used = new Set();
+    const sig = st ? `${mode}|${st.kind}|${st.aircraft}|${st.keysText}` : mode;
+    if (!changed(help, 'k', sig)) return;
+    used.clear();
     if (st) {
       for (const p of parseKeys(st.keysText)) for (const k of p.keys) used.add(k.replace(/^Shift\+/, ''));
       if (st.kind === 'checklist') used.add('Enter');
@@ -689,16 +733,16 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   const typing = t => !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
   const otherModal = () => Array.from(doc.querySelectorAll('[aria-modal="true"]')).some(n => n !== card && !n.closest('[hidden]') && n.getClientRects().length > 0);
   function onKey(e) {
-    if (!debOpen || e.code !== 'KeyR' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || typing(e.target) || otherModal()) return;
+    if (!debOpen || e.code !== 'KeyR' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || bRetry.hidden || typing(e.target) || otherModal()) return;
     e.preventDefault(); e.stopPropagation();
     choose('retry');
   }
   if (keys) win.addEventListener('keydown', onKey, true);
-  const onResize = () => { sizeDirty = true; };
+  const onResize = () => { sizeDirty = true; layoutN++; };
   win.addEventListener('resize', onResize);
 
   // ---- the API
-  function show(v = true) { el.hidden = !v; }
+  function show(v = true) { el.hidden = !v; if (v) fitSig = ''; }
   function setMode(m) {
     mode = m === 'free' ? 'free' : 'lesson';
     shown(lesson, mode === 'lesson' && !!status); shown(free, mode === 'free');
@@ -741,17 +785,19 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
       footTimer = setTimeout(() => { cFoot.classList.remove('ng'); cFoot.textContent = 'Enter かクリックで 1 項目ずつ確認。条件のある項目は、その状態にしてから'; }, 2600);
     }
   }
-  // the end of a lesson: summary = status() once it is done; the buttons hide the card and call back
+  // the end of a lesson (or of a free flight): summary = status() once it is done; cbs = { onRetry, onFree, onReturn,
+  // labels: { retry, free, return } }. A button without a callback is not shown; a button hides the card, then calls back
   function showDebrief(sum, cbs = {}) {
     if (destroyed || !sum) return;
-    debCb = cbs;
-    const D = debriefOf(sum);
+    debCb = cbs || {};
+    const D = debriefOf(sum), lab = debCb.labels || {};
     text(gradeB, D.grade); text(gradeS, D.status); grade.className = 'fh-grade ' + D.cls;
-    text(dTitle, D.title); text(dSub, D.sub);
+    text(dKick, D.kick); text(dTitle, D.title); text(dSub, D.sub);
     dStats.textContent = '';
     const stat = (v, l) => put(dStats, put(make('span'), make('b', '', null, v), doc.createTextNode(l)));
-    stat(`${D.okN} / ${D.rowsN}`, '基準内の項目'); stat(`${D.stepsDone} / ${D.stepsN}`, '終えた手順');
+    if (!D.free) { stat(`${D.okN} / ${D.rowsN}`, '基準内の項目'); stat(`${D.stepsDone} / ${D.stepsN}`, '終えた手順'); }
     if (D.time) stat(D.time, '飛行時間');
+    dStats.hidden = !dStats.firstChild;
     dAdv.textContent = '';
     if (D.tips.length || D.tipNone) {
       put(dAdv, make('b', '', null, '次に意識すること'));
@@ -766,15 +812,20 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
       put(dDetBody, make('h3', '', null, r.step), t);
     }
     if (!D.results.length) put(dDetBody, make('p', '', null, '採点できる項目がありませんでした。'));
-    dDet.open = false;
-    // what to do next: try again after a miss, fly on after a pass
-    bRetry.classList.toggle('primary', !sum.passed); bFree.classList.toggle('primary', !!sum.passed);
-    deb.hidden = false; debOpen = true; card.scrollTop = 0;
-    setTimeout(() => { if (debOpen) try { (sum.passed ? bFree : bRetry).focus({ preventScroll: true }); } catch (e) { /* focus is a nicety */ } }, 30);
+    dDet.open = false; dDet.hidden = D.free; dNote.hidden = D.free;
+    // the buttons there is something to do for; what to do next: try again after a miss, fly on after a pass
+    const has = { retry: typeof debCb.onRetry === 'function', free: typeof debCb.onFree === 'function', ret: typeof debCb.onReturn === 'function' };
+    bRetry.hidden = !has.retry; bFree.hidden = !has.free; bRet.hidden = !has.ret; dBtns.hidden = !(has.retry || has.free || has.ret);
+    retryTxt.textContent = lab.retry || (D.free ? 'もう一度飛ぶ' : 'もう一度');
+    bFree.textContent = lab.free || '自由に飛ぶ'; bRet.textContent = lab.return || '駐機場へ戻る';
+    const first = sum.passed && has.free ? bFree : has.retry ? bRetry : has.free ? bFree : bRet;
+    for (const b of [bRetry, bFree, bRet]) b.classList.toggle('primary', b === first);
+    deb.hidden = false; debOpen = true; card.scrollTop = 0; klass(el, 'deb', true);
+    setTimeout(() => { if (debOpen) try { first.focus({ preventScroll: true }); } catch (e) { /* focus is a nicety */ } }, 30);
   }
   function hideDebrief() {
     if (!debOpen) return;
-    debOpen = false; deb.hidden = true;
+    debOpen = false; deb.hidden = true; klass(el, 'deb', false);
     if (deb.contains(doc.activeElement)) try { doc.activeElement.blur(); } catch (e) { /* nothing focused */ }
   }
   function setHelp(v) { helpOn = v == null ? !helpOn : !!v; shown(help, helpOn); if (helpOn) renderHelp(status); return helpOn; }
@@ -783,7 +834,8 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     p2dOn = v == null ? !p2dOn : !!v;
     shown(p2d, p2dOn); klass(el, 'p2d', p2dOn);
     if (p2dOn) put(mid, strip); else left.appendChild(strip);
-    sizeDirty = true;
+    sizeDirty = true; layoutN++;
+    if (status && mode === 'lesson') renderLesson(status);
     return { pfd, mfd };
   }
   // a canvas ready to draw on at 640 × H logical (the CSS box is read only after a resize or a toggle)

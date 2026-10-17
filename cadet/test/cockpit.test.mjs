@@ -1,15 +1,16 @@
 // CADET — cockpit tests (node --test): the flown Archer's cabin (src/aircraft/cockpit.js, src/aircraft/g1000.js), without a
 // browser (the canvases are fakes that take every 2D call).
-//  - it builds within budget: ≤ 40 draw calls, ≤ 40,000 triangles, ≤ 6 MB of textures; the screens are unlit, exact
-//    colours, never mipmapped;
-//  - the view from the left seat: the PFD ahead and below, the MFD to its right, the glareshield ~12–15° below the eye
-//    with the cowling over it, the roof ~0.2 m over the head, nothing within 0.12 m of the eye;
-//  - every control has a name, a kind, a hit box inside the cabin, can be picked from the seat, and says what to do
-//    (descriptors that FLIGHT LAB's own avionics control accepts);
+//  - it builds within budget: ≤ 40 draw calls, ≤ 40,000 triangles, ≤ 6 MB of textures; the screens are unlit (their
+//    material not tone mapped: CADET's OutputPass still tone maps the whole image), never mipmapped;
+//  - the view from the left seat: the PFD ahead and below, the MFD to its right, the whole of both displays in sight
+//    (the bezels' lips hide nothing), the glareshield ~12–15° below the eye with the cowling over it, the roof ~0.2 m
+//    over the head, nothing within 0.12 m of the eye;
+//  - every control has a name, a kind, a hit box inside the cabin, is in sight and can be picked from the seat, and
+//    says what to do (descriptors that FLIGHT LAB's own avionics control accepts);
 //  - the yokes, pedals, levers, flap handle, trim wheel and compass card follow the state;
 //  - the screens are redrawn on schedule (PFD 30 Hz, MFD 10 Hz), only when seen, black without power, and the softkey
 //    labels only when the avionics change;
-//  - update() works on the same objects every frame (no allocation).
+//  - update() works on the same objects every frame (no allocation), and so does the glass panel's drawing it calls.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -58,7 +59,7 @@ test('cockpit: builds within budget', () => {
   assert.ok(!cp.atlasFull, 'the labels fit their atlas');
   for (const n of ['cockpit-shell', 'cockpit-labels', 'cockpit-glass', 'cockpit-cowl', 'cockpit-pfd', 'cockpit-mfd', 'cockpit-yokeL', 'cockpit-yokeR',
     'cockpit-pedalsL', 'cockpit-pedalsR', 'cockpit-throttle', 'cockpit-flap', 'cockpit-trim', 'cockpit-compass-card', 'cockpit-rockers']) assert.ok(names.has(n), n);
-  // the screens: exact colours (unlit, not tone mapped), 1024 × 640, never mipmapped
+  // the screens: unlit, the material not tone mapped, 1024 × 640, never mipmapped
   for (const k of ['pfd', 'mfd']) {
     const m = cp.screens[k].material;
     assert.ok(m.isMeshBasicMaterial && m.toneMapped === false, `${k}: unlit`);
@@ -102,6 +103,19 @@ test('cockpit: the view from the left seat', () => {
   assert.ok(mfd.x > pfd.x + 0.25 && Math.abs(mfd.y - pfd.y) < 0.01, 'the MFD to the right, level with the PFD');
   // a 10.4" screen in a bezel about 0.27 × 0.21 m
   assert.ok(Math.abs(BEZEL.screenW - 0.21) < 0.01 && Math.abs(BEZEL.screenH - 0.158) < 0.01 && Math.abs(BEZEL.w - 0.27) < 0.02 && Math.abs(BEZEL.h - 0.21) < 0.02);
+  // the bezel's lip hides nothing of either display from the seat (the PFD's top bar, the MFD's engine strip): the
+  // image's corners and edge middles (1 mm in), and both ends of the softkey labels' strip, are the first thing seen
+  const lit = cp.meshes.find(m => m.name === 'cockpit-lit');
+  for (const k of ['pfd', 'mfd']) {
+    const m = cp.screens[k], bb = m.geometry.boundingBox, w = bb.max.x - bb.min.x - 0.002;
+    const sy = bb.min.y - (BEZEL.screenH - BEZEL.imageH - BEZEL.stripH) - BEZEL.stripH / 2;
+    const pts = [[0, 0], [0.5, 0], [1, 0], [0, 0.5], [1, 0.5], [0, 1], [0.5, 1], [1, 1]].map(([u, v]) => [bb.min.x + 0.001 + u * w, bb.min.y + 0.001 + v * (bb.max.y - bb.min.y - 0.002), m])
+      .concat([[bb.min.x + 0.001, sy, lit], [bb.max.x - 0.001, sy, lit]]);
+    for (const [x, y, want] of pts) {
+      const h = firstHit(cp, new THREE.Vector3(x, y, bb.max.z).applyMatrix4(m.matrixWorld).sub(cp.eye));
+      assert.ok(h && h.object === want, `${k}: the point (${x.toFixed(3)}, ${y.toFixed(3)}) is hidden by ${h && h.object.name}`);
+    }
+  }
   // over the nose: the glareshield's edge 12–15° under the eye (scanned down the pilot's line of sight), the cowling
   // over it, the windshield in front of it all
   let edge = null;
@@ -167,7 +181,7 @@ test('cockpit: every control can be found, picked from the seat, and says what t
   cp.root.updateMatrixWorld(true);
   const shell = cp.meshes.find(m => m.name === 'cockpit-shell');
   const cabin = new THREE.Box3().setFromObject(shell, true).expandByScalar(0.01);
-  const ids = new Set(), unpicked = [];
+  const ids = new Set(), unpicked = [], unseen = [];
   for (const c of cp.controls) {
     assert.ok(!ids.has(c.id), `duplicate ${c.id}`); ids.add(c.id);
     assert.ok(typeof c.label === 'string' && /[぀-ヿ一-鿿]/.test(c.label), `${c.id}: a Japanese label (${c.label})`);
@@ -186,8 +200,17 @@ test('cockpit: every control can be found, picked from the seat, and says what t
     const got = cp.pick(rc);
     if (got !== c) unpicked.push(`${c.id} (${got ? got.id : 'nothing'})`);
     assert.equal(rc.layers.mask, new THREE.Layers().mask, 'pick() leaves the raycaster as it was');
+    // and seen there: nothing drawn stands in front of the aim point (picking goes through what is drawn, so a control
+    // hidden behind a seat or the yoke could be clicked without being seen)
+    const front = firstHit(cp, to.clone().sub(cp.eye), cp.eye, n => n === 'cockpit-glass' || n === 'cockpit-labels');
+    if (front && front.distance < to.distanceTo(cp.eye) - 0.03 && front.object.name !== `cockpit-${c.part}`) unseen.push(`${c.id} (${front.object.name})`);
   }
   assert.deepEqual(unpicked, [], 'controls that cannot be picked from the seat');
+  assert.deepEqual(unseen, [], 'controls hidden from the seat');
+  // hidden (the chase view), nothing is picked
+  const anyCtl = cp.controls[0], ray = new THREE.Raycaster(cp.eye.clone(), cp.aimPoint(anyCtl, new THREE.Vector3()).sub(cp.eye).normalize(), 0, 3);
+  assert.equal(cp.pick(ray), anyCtl);
+  cp.setVisible(false); assert.equal(cp.pick(ray), null, 'nothing picked while hidden'); cp.setVisible(true);
   for (const id of ['pfd.hdg', 'pfd.alt.inner', 'pfd.alt.outer', 'pfd.crs.outer', 'mfd.range', 'sw.master', 'sw.avionics', 'sw.landing', 'mag', 'throttle',
     'mixture', 'parkBrake', 'yokeL', 'pedals', 'flaps', 'trim', 'fuelSel', 'door', 'compass', 'stby.att', 'audio.COM1MIC', 'pfd.sk3', 'mfd.sk3']) assert.ok(ids.has(id), id);
   // a ray at nothing picks nothing
@@ -342,14 +365,17 @@ test('cockpit: update() works on the same objects every frame (no allocation)', 
   cp.root.traverse(o => after.push(o, o.position, o.quaternion, o.rotation, o.scale, o.matrix, o.geometry || null, o.material || null));
   assert.equal(after.length, objs.length);
   after.forEach((o, i) => assert.ok(o === objs[i], `object ${i} was replaced`));
-  // and the per-frame code has no constructors, clones, spreads, closures or literals in it
-  const src = fs.readFileSync(path.join(here, '../src/aircraft/cockpit.js'), 'utf8');
-  const a = src.indexOf('per frame (no allocation below this line)'), b = src.indexOf('end of the per-frame code');
-  assert.ok(a > 0 && b > a, 'the per-frame code is marked');
-  const body = src.slice(a, b).replace(/\/\/.*$/gm, '');
-  assert.ok(body.length > 2000, 'found the per-frame code');
-  for (const [re, what] of [[/\bnew\s/, 'new'], [/\.clone\(/, 'clone()'], [/\.\.\./, 'spread'], [/=>/, 'closure'], [/\[\s*\]|\{\s*\}/, 'literal'], [/`/, 'template string']]) {
-    assert.ok(!re.test(body), `${what} in the per-frame code`);
+  // and the per-frame code has no constructors, clones, spreads, closures or literals in it (the cockpit's, and the glass
+  // panel's drawing that it calls: the screens, the softkey labels, the standby dials)
+  for (const f of ['cockpit.js', 'g1000.js']) {
+    const src = fs.readFileSync(path.join(here, '../src/aircraft', f), 'utf8');
+    const a = src.indexOf('per frame (no allocation below this line'), b = src.indexOf('end of the per-frame code');
+    assert.ok(a > 0 && b > a, `${f}: the per-frame code is marked`);
+    const body = src.slice(a, b).replace(/\/\/.*$/gm, '');
+    assert.ok(body.length > 2000, `${f}: found the per-frame code`);
+    for (const [re, what] of [[/\bnew\s/, 'new'], [/\.clone\(/, 'clone()'], [/\.\.\./, 'spread'], [/=>/, 'closure'], [/\[\s*\]|\{\s*\}/, 'literal'], [/`/, 'template string']]) {
+      assert.ok(!re.test(body), `${f}: ${what} in the per-frame code`);
+    }
   }
   cp.dispose();
 });

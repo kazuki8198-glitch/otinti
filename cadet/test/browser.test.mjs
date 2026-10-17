@@ -10,6 +10,17 @@ import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { build } from '../build.mjs';
 import { loadChromium, openGame } from './shots.mjs';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { runLesson } from '../../flight-lab/test/bot.mjs';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+const FL = globalThis.FL;
+// FLIGHT LAB's scripted pilot, to run in the page
+const BOT_SRC = fs.readFileSync(path.join(here, '../../flight-lab/test/bot.mjs'), 'utf8').replace(/^export /gm, '');
 
 const chromium = loadChromium();
 // the picture's contrast (standard deviation of the luminance, 0–255) and its mean
@@ -69,8 +80,9 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.equal(r.place, '駐機場（エプロン）');
     assert.ok(r.t < 120, `the walk took ${r.t} s`);
     assert.ok((await ev(() => window.__cadet.doors())).find(d => d.id === 'd-brief-1').angle !== 0, 'the door stays open');
-    // look at the aircraft and examine it
-    assert.equal(await ev(() => { const t = window.__cadet.spec.target; return window.__cadet.lookAt(t.a + 0.9, t.c, 1.0); }), 'aircraft:today');
+    // look at the aircraft's nose and examine it (its door is for getting in)
+    assert.equal(await ev(() => { const t = window.__cadet.spec.target; return window.__cadet.lookAt(t.a + 1.0, t.c, 1.25); }), 'aircraft:board');
+    assert.equal(await ev(() => { const t = window.__cadet.spec.target; return window.__cadet.lookAt(t.a, t.c - 3.2, 1.0); }), 'aircraft:today');
     assert.equal(await ev(() => window.__cadet.use()), 'examined');
     const card = await ev(() => window.__cadet.card());
     assert.match(card.title, /Archer/);
@@ -195,6 +207,96 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.equal(await ev(() => window.__cadet.dialog()), null, 'leaving walk mode ends the talk');
     assert.equal(await ev(() => document.body.classList.contains('talking')), false);
     await ev(() => window.__cadet.setMode('walk'));
+  });
+
+  test('fly: in today\'s Archer with the instructor beside you, a1 to a pass from the cockpit — FLIGHT LAB\'s score for the same inputs', async () => {
+    const tg = await ev(() => window.__cadet.spec.target);
+    await ev((tg) => { const C = window.__cadet; C.setMode('walk'); C.placeWalker(tg.a + 2.6, tg.c + 1.0, { a: tg.a + 1.0, c: tg.c }); }, tg);
+    assert.equal(await ev((tg) => window.__cadet.lookAt(tg.a + 1.0, tg.c, 1.25), tg), 'aircraft:board');
+    assert.equal(await ev(() => window.__cadet.use()), 'board');
+    await g.page.waitForTimeout(900);                                          // the fade
+    await ev(() => window.__cadet.simulate(0.3));
+    let fs = await ev(() => window.__cadet.fly.status());
+    assert.equal(await ev(() => window.__cadet.mode()), 'fly');
+    assert.deepEqual([fs.active, fs.phase, fs.view, fs.talking], [true, 'board', 'cockpit', true]);
+    // the instructor in the right seat: his head right of yours, about as high, not ahead of the panel
+    const [hx, hy, hz] = fs.seatAt, [ex, ey, ez] = fs.eye;
+    assert.ok(hx - ex > 0.4 && hx - ex < 0.8 && Math.abs(hy - ey) < 0.2 && Math.abs(hz - ez) < 0.25, `his head at ${fs.seatAt} (your eye ${fs.eye})`);
+    assert.match((await ev(() => window.__cadet.dialog())).text, /シートベルト/);
+    // the cockpit, drawn within budget
+    const a = await analyse(g.page, await ev(() => window.__cadet.snapshot(2)));
+    assert.ok(a.sd > 8 && a.mean > 30 && a.mean < 235, `cockpit: mean ${a.mean.toFixed(0)} sd ${a.sd.toFixed(1)}`);
+    let st = await ev(() => window.__cadet.stats());
+    assert.ok(st.calls < 400 && st.triangles < 900000, `cockpit: ${st.calls} calls, ${st.triangles} triangles`);
+    // his talk: today's lesson (briefed already), then the choice; the basic level, and on to the training area
+    const said = [];
+    let v = await ev(() => window.__cadet.dialog());
+    for (let k = 0; k < 8 && v && !v.choices.length; k++) { said.push(v.text); v = await ev(() => { window.__cadet.dialogReveal(); return window.__cadet.dialogNext(); }); }
+    assert.match(said.join('\n'), /今日の課目は「姿勢・出力・トリム」/);
+    assert.doesNotMatch(said.join('\n'), /ブリーフィングはまだ/);
+    assert.equal(v.choices.length, 5);
+    await ev(() => window.__cadet.dialogChoose('基礎'));
+    await ev(() => { window.__cadet.dialogReveal(); window.__cadet.dialogNext(); });
+    assert.equal(await ev(() => window.__cadet.dialog()), null);
+    await g.page.waitForTimeout(900);
+    await ev(() => window.__cadet.simulate(0.1));
+    fs = await ev(() => window.__cadet.fly.status());
+    assert.deepEqual([fs.phase, fs.flight.mode, fs.flight.id, fs.flight.level, fs.flight.step], ['lesson', 'lesson', 'a1', 'basic', 0]);
+    assert.ok(Math.abs(fs.yaw) < 1e-9, 'the head turned back to the front');
+    // real time, hands off (FLIGHT LAB holds the attitude when the keys are let go): the lesson runs to its end
+    for (let k = 0; k < 70 && !(fs.flight && fs.flight.done); k++) fs = await ev(() => { window.__cadet.simulate(1); return window.__cadet.fly.status(); });
+    assert.deepEqual([fs.flight.done, fs.flight.passed, fs.flight.grade], [true, true, 'S'], JSON.stringify(fs.flight.results));
+    await g.page.waitForTimeout(900);
+    await ev(() => window.__cadet.simulate(0.1));
+    assert.equal((await ev(() => window.__cadet.fly.status())).debrief, true);
+    assert.match(await ev(() => document.body.innerText), /課目の結果[\s\S]*合格/);
+    // FLIGHT LAB's scripted pilot (bot.mjs) through the same bridge, in the page: bit for bit FLIGHT LAB's run in node
+    await ev((src) => { (0, eval)(src + '\nwindow.makeBot = makeBot;'); }, BOT_SRC);
+    for (const [lv, hook] of [['intro', ''], ['basic', ''], ['precision', ''], ['basic', 'noseUp']]) {
+      const got = await ev(({ lv, hook }) => {
+        const C = window.__cadet, h = hook === 'noseUp' ? (L) => { if (L.step === 1 && L.st.t < 15) L.s.pTgt = 5; } : undefined;
+        C.fly.lesson(lv);
+        const r = C.fly.runScripted(window.makeBot(C.FL).fly, 900, h), L = C.fly.flight.L;
+        return { grade: r.grade, score: r.score, t: L.t, pos: L.s.pos, rows: L.results };
+      }, { lv, hook });
+      const ref = runLesson(FL, 'a1', lv, 900, hook === 'noseUp' ? (L) => { if (L.step === 1 && L.st.t < 15) L.s.pTgt = 5; } : undefined);
+      assert.deepEqual(got, { grade: ref.grade, score: ref.score, t: ref.t, pos: ref.s.pos, rows: ref.results }, `a1 ${lv} ${hook}`);
+    }
+    await g.page.waitForTimeout(900);
+    await ev(() => window.__cadet.simulate(0.1));
+    // the chase view (C) and a lever in the cockpit
+    await ev(() => window.__cadet.fly.view('chase'));
+    const ch = await analyse(g.page, await ev(() => window.__cadet.snapshot(2)));
+    st = await ev(() => window.__cadet.stats());
+    assert.ok(ch.sd > 8 && st.calls < 400 && st.triangles < 900000, `chase: sd ${ch.sd.toFixed(1)}, ${st.calls} calls, ${st.triangles} triangles`);
+    await ev(() => window.__cadet.fly.view('cockpit'));
+    // a lesson again (from the debrief's button): the keys fly it — R holds the throttle forward — and the flap lever
+    // under the hand moves the flaps
+    await g.page.getByRole('button', { name: /もう一度/ }).click();
+    await g.page.waitForTimeout(900);
+    await ev(() => window.__cadet.simulate(0.1));
+    assert.deepEqual(await ev(() => { const s = window.__cadet.fly.status(); return [s.debrief, s.flight.done, s.flight.level]; }), [false, false, 'basic']);
+    const thr0 = await ev(() => window.__cadet.fly.flight.s.thr);
+    await g.page.keyboard.down('KeyR'); await ev(() => window.__cadet.simulate(0.5)); await g.page.keyboard.up('KeyR');
+    assert.ok(await ev(() => window.__cadet.fly.flight.s.thr) > thr0 + 0.05, 'R: more throttle');
+    const f0 = await ev(() => window.__cadet.fly.flight.s.flapIdx);
+    await ev(() => window.__cadet.fly.act('flaps', 1));
+    assert.equal(await ev(() => window.__cadet.fly.flight.s.flapIdx), f0 + 1, 'the flap lever moves the flaps');
+    // getting out while the lesson runs is not offered; it ends from the debrief (the bot finishes this one)
+    assert.equal(await ev(() => window.__cadet.fly.status().flight.done), false);
+    await ev(() => { const C = window.__cadet; C.fly.lesson('basic'); C.fly.runScripted(window.makeBot(C.FL).fly, 900); });
+    await g.page.waitForTimeout(900);
+    await ev(() => window.__cadet.simulate(0.1));
+    // back to the apron from the debrief: walking beside the aircraft, the instructor back in his room
+    await g.page.getByRole('button', { name: '駐機場へ戻る' }).click();
+    await g.page.waitForTimeout(900);
+    await ev(() => window.__cadet.simulate(0.2));
+    assert.equal(await ev(() => window.__cadet.mode()), 'walk');
+    assert.equal((await ev(() => window.__cadet.fly.status())).active, false);
+    assert.equal((await ev(() => window.__cadet.player())).place, '駐機場（エプロン）');
+    assert.equal(await ev((tg) => window.__cadet.lookAt(tg.a + 1.0, tg.c, 1.25), tg), 'aircraft:board');
+    const ins = await ev(() => window.__cadet.instructor());
+    assert.ok(Math.hypot(ins.at.a - ins.a, ins.at.c - ins.c) < 0.01, `the instructor is at ${JSON.stringify(ins.at)}`);
   });
 
   test('the pause menu opens and closes; settings apply at once', async () => {

@@ -1,9 +1,10 @@
-// CADET — main.js : start-up, walking (M1) and the free "visit" camera.
+// CADET — main.js : start-up, walking, talking, flying, and the free "visit" camera.
 // Builds the world from FLIGHT LAB's data (the airfield, the ground, the lakes, the trees, parked aircraft), the
 // academy (inside and out), the sky and the image pipeline. You start in briefing room 1 and walk: through the doors,
 // the lobby and the airside doors out to today's aircraft on the apron; E (or a click) examines boards and models and
-// opens doors; Esc pauses (settings, keys, the visit camera). ?view=N starts in the visit camera at viewpoint N;
-// ?bench measures the frame time at the fixed viewpoints.
+// opens doors; the instructor in briefing room 1 talks you through today's lesson; today's Archer can be boarded and
+// flown (flight/fly-mode.js). Esc pauses (settings, keys, the visit camera). ?view=N starts in the visit camera at
+// viewpoint N; ?bench measures the frame time at the fixed viewpoints.
 import * as THREE from 'three';
 import { makeLayout, NAMES, HANGARS } from './world/layout.js';
 import { loadTextures, setAnisotropy } from './render/textures.js';
@@ -34,6 +35,8 @@ import { gameBook } from './content/book.js';
 import { INSTRUCTOR, instructorDialogs, sampleCtx } from './content/dialog/instructor.js';
 import { createActor } from './npc/actor.js';
 import { createDialogUI } from './ui/dialog-ui.js';
+import { createFlyMode } from './flight/fly-mode.js';
+import { createFlightHUD } from './ui/flight-hud.js';
 
 /* global __BUILD_INFO__ */
 const $ = (s) => document.querySelector(s);
@@ -97,11 +100,14 @@ async function boot() {
   const hdgOut = (L.R.trueHdg + 270) % 360;
   const parked = [];
   const spots = [[0, 'pa28'], [2, 'pa28'], [3, 'pa28'], [5, 'pa28'], [8, 'pa28'], [10, 'pa44'], [13, 'pa28'], [16, 'pa44'], [19, 'pa28'], [22, 'pa28']];
-  const aircraftColliders = (ac, tag) => { for (const b of colliderBoxes(ac.root, toFrame, G)) world.add({ ...b, tag }); };
+  const aircraftColliders = (ac, tag) => colliderBoxes(ac.root, toFrame, G).map(b => world.add({ ...b, tag }));
+  let todayIds = [], todayAc = null;
   for (const [i, id] of spots) {
     const s = STANDS[i]; if (!s) continue;
     const ac = parkedAircraft(FL, L, id, s.a, s.c - 0.4, hdgOut, { prop: 0.3 + i * 0.7 });
-    scene.add(ac.root); parked.push(ac); aircraftColliders(ac, i === 19 ? 'aircraft:today' : 'aircraft');
+    scene.add(ac.root); parked.push(ac);
+    const ids = aircraftColliders(ac, i === 19 ? 'aircraft:today' : 'aircraft');
+    if (i === 19) { todayIds = ids; todayAc = ac; }
   }
   { const ac = parkedAircraft(FL, L, 'pa28', 563, 258, hdgOut, { prop: 1.1 }); scene.add(ac.root); parked.push(ac); aircraftColliders(ac, 'aircraft'); }
   // tree trunks and shrubs around the academy's grounds; an invisible fence at the edge of the airfield's grass
@@ -156,10 +162,11 @@ async function boot() {
   // the HUD for the interactor: the prompt under the crosshair and the examine card
   let lastPrompt = null, interactor = null;
   const hud = {
-    prompt(text) {
+    prompt(text, key = 'E') {
       if (interactor && interactor.cardOpen) text = null;
-      if (text === lastPrompt) return; lastPrompt = text;
-      const el = $('#prompt'); if (text) el.innerHTML = `<kbd>E</kbd>${esc(text)}`; el.classList.toggle('show', !!text);
+      const k = text ? `${key}|${text}` : null;
+      if (k === lastPrompt) return; lastPrompt = k;
+      const el = $('#prompt'); if (text) el.innerHTML = `<kbd>${esc(key || 'E')}</kbd>${esc(text)}`; el.classList.toggle('show', !!text);
     },
     card(title, text) {
       const c = $('#card'); if (!title) { c.hidden = true; return; }
@@ -177,11 +184,13 @@ async function boot() {
       },
     });
   }
-  // today's aircraft (stand 19): look it over (the walk-around inspection itself comes later)
+  // today's aircraft (stand 19): look it over at the nose; get in over the right wing (the walk-around inspection itself
+  // comes later)
   {
     const AR = FL.physics.AIRCRAFT.find(a => a.id === 'pa28'), v = AR.v, tg = spec.target;
+    interactor.add({ id: 'aircraft:board', frame: [tg.c, 1.25, -(tg.a + 1.0)], radius: 0.9, prompt: '乗り込む', use: () => (fly ? fly.board() : null) });
     interactor.add({
-      id: 'aircraft:today', frame: [tg.c, 1.0, -(tg.a + 0.9)], radius: 1.1, prompt: '今日の機体を見る',
+      id: 'aircraft:today', frame: [tg.c - 3.2, 1.0, -tg.a], radius: 1.0, prompt: '今日の機体を見る',
       use: () => {
         // FLIGHT LAB's description, without its notes on real operators (the game's airline and school are fictional)
         const desc = AR.desc.split('。').filter(x => x && !/ANA|Acron|公開/.test(x)).join('。') + '。';
@@ -206,15 +215,18 @@ async function boot() {
   const INS = { a: 634.9, c: 256.7 };
   instructor.root.position.set(INS.c, 0, -INS.a); instructor.root.rotation.y = Math.PI;      // facing +a, into the room
   academy.group.add(instructor.root);
-  world.add({ x0: INS.c - instructor.radius, x1: INS.c + instructor.radius, y0: 0, y1: 1.8, z0: -INS.a - instructor.radius, z1: -INS.a + instructor.radius, tag: 'npc:instructor' });
+  const insCollider = world.add({ x0: INS.c - instructor.radius, x1: INS.c + instructor.radius, y0: 0, y1: 1.8, z0: -INS.a - instructor.radius, z1: -INS.a + instructor.radius, tag: 'npc:instructor' });
   const frameToWorld = (p, out = new THREE.Vector3()) => academy.group.localToWorld(out.set(p.x, p.y, p.z));
   let talk = null;                                            // { yaw, pitch } (the view to come back to) while talking
   let talkEndedAt = -Infinity;                                // the E or click that ended a talk does not start it again
   const runner = createRunner({ data: talkData, state: talkState, ctx: sampleCtx(FL), hooks: { onHook } });
+  // the dialogue UI serves the room's talk and the talk in the aircraft (fly-mode's own runner)
+  let fly = null;
+  const talkRunner = () => (fly && fly.talking ? fly.runner : runner);
   const dui = createDialogUI({
     root: document.body, settings,
-    onNext: () => { runner.next(); afterStep(); },
-    onChoose: (i) => { runner.choose(i); afterStep(); },
+    onNext: () => { talkRunner().next(); afterStep(); },
+    onChoose: (i) => { talkRunner().choose(i); afterStep(); },
   });
   runner.onChange((view) => {
     // dui.show also speaks the line (settings: voice, volume); a line whose hook started a gesture (point, nod) keeps it
@@ -291,6 +303,32 @@ async function boot() {
     walker.apply(dt);
   }
 
+  // ---------------------------------------------------------------- flying (today's Archer, with the instructor)
+  const flightHud = createFlightHUD({ root: document.body, settings });
+  fly = createFlyMode({
+    FL, L, scene, camera, renderer, sky, input, settings, audio, toast, hud, dui, talkState, world, flightHud,
+    saveTalk: () => saved.save(talkState), instructor, instructorName: INSTRUCTOR.title_ja, lessonId: 'a1',
+    stand: { a: spec.target.a, c: spec.target.c, hdgTrue: (L.R.trueHdg + 270) % 360 },
+    parkedToday: todayAc.root, toFrame,
+    todayColliders: (on) => { for (const id of todayIds) world.setEnabled(id, on); },
+    // he is in the aircraft: not in his room (no collider, nothing to talk to there)
+    instructorHome: (root) => {
+      academy.group.add(root); root.position.set(INS.c, 0, -INS.a); root.rotation.set(0, Math.PI, 0); root.visible = true;
+      world.setEnabled(insCollider, true); for (const t of interactor.list()) if (t.id === 'npc:instructor') t.enabled = true;
+    },
+    onEnter: () => {
+      world.setEnabled(insCollider, false); for (const t of interactor.list()) if (t.id === 'npc:instructor') t.enabled = false;
+      setMode('fly');
+    },
+    onLeave: (then) => {
+      setMode(then === 'spectator' ? 'spectator' : 'walk');
+      // beside the right wing, behind its trailing edge, facing the cabin
+      const tg = spec.target; placeWalker(tg.a + 1.4, tg.c + 2.6, { a: tg.a, c: tg.c });
+      if (then !== 'spectator' && !menu.isOpen) input.requestLock();
+    },
+    onTalk: (on) => { document.body.classList.toggle('talking', on); },
+  });
+
   // ---------------------------------------------------------------- viewpoints (the visit camera)
   const V = (a, c, up) => new THREE.Vector3(...L.rwyToLocal(a, c, up));
   const labA = FL.avionics.wpt('LABEA');
@@ -314,19 +352,22 @@ async function boot() {
   let mode = 'walk', started = false, lostAt = -1e9;
   function setMode(m) {
     if (m === mode) return;
+    // leaving the aircraft goes through fly-mode (the fade, the instructor back to his room, the aircraft to its stand)
+    if (mode === 'fly' && fly && fly.active) { fly.leave({ then: m }); return; }
     mode = m;
     if (runner.running) runner.stop();
     if (m === 'spectator') spectator.fromCamera();
-    else { walker.apply(0); interactor.closeCard(); }
+    else if (m === 'walk') { walker.apply(0); interactor.closeCard(); }
+    else interactor.closeCard();
     hud.prompt(null);
-    document.body.classList.toggle('mode-walk', m === 'walk'); document.body.classList.toggle('mode-spectator', m === 'spectator');
+    for (const k of ['walk', 'spectator', 'fly']) document.body.classList.toggle('mode-' + k, m === k);
     $('#where').classList.remove('show');
     lastPlace = '';
   }
   document.body.classList.add('mode-walk');
   const menu = createMenu({
     root: document.body, settings, presets: ORDER.map(id => ({ id, label: PRESETS[id].label })), version: buildInfo,
-    onResume: () => { input.enabled = true; if (!talk) input.requestLock(); audio.ui('close'); },
+    onResume: () => { input.enabled = true; if (!talk && !(fly && (fly.talking || fly.debrief))) input.requestLock(); audio.ui('close'); },
     onQuality: (id) => setQuality(id), onMode: (m) => setMode(m), getMode: () => mode, getPreset: () => preset.id,
     onResetProgress: () => resetProgress(),
   });
@@ -337,13 +378,13 @@ async function boot() {
       lostAt = performance.now();
       // Esc while reading a card (the browser takes that Esc to free the mouse): just close the card
       if (interactor.cardOpen) { interactor.closeCard(); audio.ui('close'); }
-      else if (talk) { /* talking: the mouse is free for the choices */ }
-      else if (started && mode === 'walk' && !menu.isOpen) openMenu();
+      else if (talk || (fly && (fly.talking || fly.debrief))) { /* talking, or the debrief: the mouse is free for the choices */ }
+      else if (started && (mode === 'walk' || mode === 'fly') && !menu.isOpen) openMenu();
     }
   });
   renderer.domElement.addEventListener('click', () => {
     audio.unlock();
-    if (talk) return;                                         // the dialogue UI takes clicks on the view while talking
+    if (talk || (fly && (fly.talking || fly.debrief))) return;   // the dialogue UI (or the debrief) takes the clicks
     if (started && !menu.isOpen) input.requestLock();
   });
   addEventListener('keydown', (e) => {
@@ -355,6 +396,7 @@ async function boot() {
       return;
     }
     if (menu.isOpen) return;
+    if (mode === 'fly') { if (fly) fly.key(e); return; }       // F is the throttle there (perf: the menu's setting)
     if (e.code === 'KeyF') settings.set('showPerf', !settings.get('showPerf'));
     if (mode !== 'spectator') return;
     if (/^Digit[0-9]$/.test(e.code)) { const k = +e.code.slice(5), i = k === 0 ? 9 : k - 1; if (VIEWS[i]) setView(i); }
@@ -427,15 +469,17 @@ async function boot() {
         walker.update(dt);
         if ((input.pressed('KeyE') || input.pressed('Mouse0')) && performance.now() - talkEndedAt > 500) { const r = interactor.use(); if (r === 'closed') audio.ui('close'); }
       }
-    } else if (!menu.isOpen && live) spectator.update(dt);
+    } else if (mode === 'fly') fly.update(dt, { live, paused: menu.isOpen });
+    else if (!menu.isOpen && live) spectator.update(dt);
     input.endFrame();
     camera.updateMatrixWorld();
     camera.getWorldPosition(camWorld);
     const [fx, fz] = toFrame(camWorld.x, camWorld.z), pa = -fz, pc = fx;
     academy.update(dt, mode === 'walk' ? walker.framePos : { x: fx, z: fz });
+    if (mode === 'fly') { if (fly) fly.draw2D(dt); }
     if (mode === 'walk' && live && !talk) { interactor.update(camera); showPlace(dt, pa, pc); }
     // the instructor looks at the player when they are near (or talking), and moves their mouth while their line shows
-    {
+    if (!(fly && fly.active)) {                                // (in the aircraft fly-mode moves him)
       const near = Math.hypot(pa - INS.a, pc - INS.c) < 7 && academy.roomOf(pa, pc)?.id === 'brief-1';
       const v = talk ? runner.view() : null;
       instructor.update(dt, { lookAt: talk || near ? camWorld : null, talking: !!(v && v.speaker === 'instructor' && dui.typing) });
@@ -448,7 +492,7 @@ async function boot() {
     pipe.setIndoor(adapt, litK);
     fill.intensity = litK * (0.3 + 0.5 * (sky.state.lightsOn || 0));       // by day the windows already do much of it
     pool.update(dt, room ? clusters.get(room.id) : null, 7 + 4 * (sky.state.lightsOn || 0));
-    if ((ambT -= dt) <= 0) { ambT = 0.25; audio.setAmbience({ indoor: k > 0 ? Math.min(1, k * 1.15) : 0, wind: 0.5 }); }
+    if ((ambT -= dt) <= 0) { ambT = 0.25; const up = mode === 'fly' && fly ? fly.altitude() : 0; audio.setAmbience({ indoor: mode === 'fly' && fly && fly.view === 'cockpit' ? 0.6 : k > 0 ? Math.min(1, k * 1.15) : 0, wind: 0.5, airborne: up > 30 }); }
     audio.update(dt);
     return { a: pa, c: pc };
   }
@@ -459,10 +503,12 @@ async function boot() {
     dyn.tick(dtMs);
     simulate(Math.min(dt, 0.1));
     // the shadow follows a point a little ahead of the camera, on the ground
-    focus.set(0, 0, -1).applyQuaternion(camera.quaternion).setY(0).normalize().multiplyScalar(Math.min(preset.shadowHalf * 0.5, 40)).add(camWorld).setY(G);
+    if (mode === 'fly' && fly && fly.active) fly.shadowFocus(focus);               // round the aircraft (its cockpit)
+    else focus.set(0, 0, -1).applyQuaternion(camera.quaternion).setY(0).normalize().multiplyScalar(Math.min(preset.shadowHalf * 0.5, 40)).add(camWorld).setY(G);
     sky.update(camera, t, focus);
     ground.update(t);
-    airfield.update(t, { cameraWorld: camWorld, windFromDeg: 330, windKt: 8, lightsOn: sky.state.lightsOn });
+    const w = mode === 'fly' && fly ? fly.wind() : null;
+    airfield.update(t, { cameraWorld: camWorld, windFromDeg: w ? w.fromDeg : 330, windKt: w ? w.kt : 8, lightsOn: sky.state.lightsOn });
     veg.update(t, camWorld);
     pipe.render();
     stats.frames++; stats.acc += dtMs;
@@ -506,7 +552,7 @@ async function boot() {
       out.push({ view: VIEWS[i].id, label: VIEWS[i].label, avgMs: +avg.toFixed(2), p95Ms: +times[Math.floor(times.length * 0.95)].toFixed(2), calls: pipe.sceneInfo.calls, callsAll: renderer.info.render.calls, triangles: pipe.sceneInfo.triangles });
     }
     dyn.enabled = keepDyn; running = true; last = performance.now();
-    if (keepMode === 'walk') setMode('walk');
+    if (keepMode === 'walk' || keepMode === 'fly') setMode('walk');
     window.__cadet.benchResult = { preset: preset.id, dpr: pipe.dpr, gpu, views: out };
     console.table(out);
     toast(out.map(o => `${o.label}：${o.avgMs} ms（95% ${o.p95Ms}）描画 ${o.calls}・三角形 ${(o.triangles / 1000).toFixed(0)}k`).join('\n'), 12000);
@@ -569,11 +615,13 @@ async function boot() {
   setAnisotropy(Math.min(preset.aniso, renderer.capabilities.getMaxAnisotropy()));
   // compile every material twice: with the room lights on (inside) and off (outdoors), so walking in or out never
   // waits for a shader
+  fly.prepareCompile(true);                                   // the flown aircraft and its cockpit too
   for (const on of [false, true]) {
     pool.setVisible(on);
     try { await pipe.compile(); } catch (e) { /* older drivers: compile on first draw */ }
   }
   pool.setVisible(false);
+  fly.prepareCompile(false);
   step(performance.now());
   requestAnimationFrame(loop);
   window.__cadet = {
@@ -587,24 +635,34 @@ async function boot() {
     use: () => interactor.use(), current: () => (interactor.current ? interactor.current.id : null),
     // talking: start, read the current line, go on, choose (by index or by a regular expression on the text)
     talk: () => startTalk(),
-    dialog: () => { const v = runner.view(); return v ? { ...v, typing: dui.typing, bookOpen: dui.bookOpen } : null; },
-    dialogNext: () => { if (dui.typing) dui.reveal(); runner.next(); afterStep(); return runner.view(); },
+    dialog: () => { const v = talkRunner().view(); return v ? { ...v, typing: dui.typing, bookOpen: dui.bookOpen } : null; },
+    dialogNext: () => { const r = talkRunner(); if (dui.typing) dui.reveal(); r.next(); afterStep(); return r.view(); },
     dialogChoose: (which) => {
-      const v = runner.view(); if (!v) return null;
+      const r = talkRunner(), v = r.view(); if (!v) return null;
       const c = typeof which === 'number' ? v.choices[which] : v.choices.find(x => new RegExp(which).test(x.text));
       if (!c) return null;
       if (dui.typing) dui.reveal();
-      runner.choose(c.i); afterStep(); return runner.view();
+      r.choose(c.i); afterStep(); return r.view();
     },
     closeBook: () => dui.hideBook(), dialogReveal: () => dui.reveal(),
     talkState: () => JSON.parse(JSON.stringify(talkState)),
     savedState: () => saved.load(), resetProgress: () => resetProgress(),
-    instructor: () => ({ a: INS.a, c: INS.c, gesture: instructor.gesturing, triangles: instructor.triangles }),
+    instructor: () => { const w = instructor.root.getWorldPosition(new THREE.Vector3()), [fx, fz] = toFrame(w.x, w.z); return { a: INS.a, c: INS.c, at: { a: -fz, c: fx }, gesture: instructor.gesturing, triangles: instructor.triangles }; },
     card: () => (interactor.cardOpen ? { title: $('#card .card-title').textContent, text: $('#card .card-body').textContent } : null),
     targets: () => interactor.list().map(t => ({ id: t.id, a: -t.frame[2], c: t.frame[0], y: t.frame[1] })),
     doors: () => academy.doors.doors.map(d => ({ id: d.id, kind: d.kind, angle: +d.angle.toFixed(3), open: +d.open.toFixed(3) })),
     simulate: (seconds, dt = 1 / 60) => { scripted++; try { for (let s = 0; s < seconds; s += dt) simulate(dt); } finally { scripted--; } },
     menu: { open: (tab) => openMenu(tab), close: () => menu.close(true), isOpen: () => menu.isOpen },
+    // flying: board (instant: no fade), the state, a lesson run by a scripted pilot exactly as FLIGHT LAB's bot.mjs runs
+    // it (pilot: makeBot(FL).fly, injected by the test), the view, a cockpit control by id, getting out
+    fly: {
+      board: (instant = true) => fly.board({ instant }), status: () => fly.status(),
+      runScripted: (pilot, maxSec = 900, hook) => { const L0 = fly.runScripted(pilot, maxSec, hook); return { ...fly.flight.status(), steps: Math.round(L0.t * 120) }; },
+      lesson: (level = 'basic') => fly.beginLesson(level, { instant: true }),
+      view: (v) => fly.setView(v), act: (id, dir = 1, wheel = false) => fly.actOn(id, dir, wheel),
+      leave: () => fly.leave({ instant: true }), controls: () => fly.cockpit.controls.map(c => ({ id: c.id, label: c.label, kind: c.kind })),
+      pose: () => { const r = fly.live.root; return { pos: r.position.toArray(), q: r.quaternion.toArray(), cam: camera.position.toArray(), fov: camera.fov }; },
+    },
     settings,
     // render n frames now and return the last as a PNG data URL (for tests: the drawing buffer is read in the same task)
     snapshot: (n = 1) => { for (let k = 0; k < n; k++) step(performance.now()); return renderer.domElement.toDataURL('image/png'); },

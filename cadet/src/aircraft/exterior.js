@@ -157,7 +157,9 @@ export function colliderBoxes(root, toFrame, G, cell = 0.25) {
 // ================================================================ the flown aircraft
 export const BLADES_OFF = 900;          // rpm: faster than this the blades are seen only as the disc (FLIGHT LAB's rule)
 export const DISC_ON = 60;              // rpm: slower than this there is no blur to draw
-const SMEAR_S = 0.013;                  // s: how long the eye smears a blade over (a whole half-turn from ≈ 2300 rpm)
+const SMEAR_S = 0.013;                  // s: how long the eye smears a blade over (a whole half-turn from ≈ 2300 rpm);
+                                        // a longer frame smears over the whole frame, so that the frames join up
+const DISC_DRIFT = 2 * Math.PI * 1.4;   // rad/s: with the blades hidden, the blur's pattern turns this fast (≈ 85 rpm)
 const DISC_GAIN = { out: 3.4, in: 1.2 };   // the disc is barely there from the seat, as in a real cockpit
 const CABIN_AFT = 2.05;                 // m behind the eye: the cockpit's aft bulkhead (the cabin skin ends at the next ring)
 const BEACON_T = 0.95;                  // s per turn of the rotating beacon (a flash each turn)
@@ -214,11 +216,13 @@ function geometryOf(m, tris = null, shift = null) {
 // the propeller's disc: what the eye keeps of two blades turning (no texture: drawn from the position on the disc).
 // Each blade covers its own width plus the arc it swept during SMEAR_S; over that arc it is seen for (width / arc) of
 // the time, so it thins out as it speeds up until, past half a turn, the disc is even — darker towards the hub where
-// the blades are wide, with a yellow ring from the tips. The disc turns with the blades (it is under the same pivot).
+// the blades are wide, with a yellow ring from the tips. The disc turns with the blades (it is under the same pivot);
+// once they are hidden its pattern drifts slowly on its own (uPhase, from where the blades were): following the real
+// angle — 120° a frame at 1200 rpm and 60 fps — it would strobe, or seem to turn backwards.
 function discMaterial(e, dir) {
   const U = {
     uR: { value: e.r }, uHub: { value: 0.1 }, uTip: { value: 0.1 + (e.r - 0.1) * 5 / 6 }, uDir: { value: dir },
-    uSweep: { value: 0 }, uAlpha: { value: 0 }, uGain: { value: DISC_GAIN.out },
+    uSweep: { value: 0 }, uPhase: { value: 0 }, uAlpha: { value: 0 }, uGain: { value: DISC_GAIN.out },
     uBlade: { value: new THREE.Vector3(toLin(0.13), toLin(0.13), toLin(0.14)) }, uTipC: { value: new THREE.Vector3(toLin(0.95), toLin(0.78), toLin(0.15)) },
   };
   const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6, metalness: 0, envMapIntensity: 0.5, transparent: true, depthWrite: false, side: THREE.DoubleSide, forceSinglePass: true });
@@ -226,14 +230,14 @@ function discMaterial(e, dir) {
     Object.assign(sh.uniforms, U);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vDP;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvDP = position.xy;');
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nvarying vec2 vDP; uniform float uR, uHub, uTip, uDir, uSweep, uAlpha, uGain; uniform vec3 uBlade, uTipC;')
+      .replace('#include <common>', '#include <common>\nvarying vec2 vDP; uniform float uR, uHub, uTip, uDir, uSweep, uPhase, uAlpha, uGain; uniform vec3 uBlade, uTipC;')
       .replace('#include <map_fragment>', /* glsl */`
       {
         float rr = length(vDP);
         float f = clamp((rr - uHub) / (uR - uHub), 0.0, 1.0);
         float aw = min(2.0 * uR * 0.09 * (1.0 - 0.4 * f) * cos(0.45 - 0.3 * f) / max(rr, 0.02), 1.4);   // a blade's width here (rad)
         float span = aw + min(uSweep, PI);                                         // what one blade covered in the smear
-        float d = mod(uDir * (atan(vDP.y, vDP.x) - 0.5 * PI) + 0.5 * aw, PI);      // radians behind a leading edge
+        float d = mod(uDir * (atan(vDP.y, vDP.x) - 0.5 * PI - uPhase) + 0.5 * aw, PI);   // radians behind a leading edge
         float full = smoothstep(0.7 * PI, PI, span);                               // half a turn smeared: an even disc
         float m = mix(smoothstep(0.0, 0.04, d) * (1.0 - smoothstep(0.55 * span, span, d)), 1.0, full);
         float cov = aw / clamp(span, aw, PI);                                      // the share of the time a point is covered
@@ -405,7 +409,7 @@ export function liveAircraft(FL, A, opts = {}) {
     const { mat, U } = discMaterial(e, sign); mats.push(mat);
     const disc = mesh(geometryOf(dp.mesh, null, [-p.pivot[0], -p.pivot[1], -p.pivot[2]]), mat, 'disc', false);
     disc.geometry.deleteAttribute('color'); disc.visible = false; pivot.add(disc);
-    props.push({ idx: p.prop, sign, angle: p.angle, pivot, blades: m, disc, U, ang: 0, rpm: 0 });
+    props.push({ idx: p.prop, sign, angle: p.angle, pivot, blades: m, disc, U, ang: 0, vang: 0, rpm: 0 });
     parts.props.push(m); parts.discs.push(disc);
   }
   const bodyGeo = fixed.length > 1 ? mergeGeometries(fixed) : fixed[0];
@@ -462,7 +466,13 @@ export function liveAircraft(FL, A, opts = {}) {
       pr.pivot.quaternion.setFromAxisAngle(Z_AXIS, pr.ang);
       pr.blades.visible = rpm < BLADES_OFF;
       pr.disc.visible = rpm > DISC_ON;
-      pr.U.uSweep.value = rpm / 60 * 2 * Math.PI * SMEAR_S;
+      // the arc smeared: what the eye keeps, or at a low frame rate all the way back to the last frame's blade (at
+      // 60 fps and 800 rpm the blades jump 80° a frame; their smears join them up)
+      pr.U.uSweep.value = rpm / 60 * 2 * Math.PI * (dt > SMEAR_S ? dt : SMEAR_S);
+      // the pattern: on the blades while they are seen, then drifting the way they turn, from where they were
+      if (rpm < BLADES_OFF) pr.vang = pr.ang;
+      else pr.vang = (pr.vang - pr.sign * DISC_DRIFT * dt) % (2 * Math.PI);
+      pr.U.uPhase.value = (pr.vang - pr.ang) % (2 * Math.PI);
       pr.U.uAlpha.value = THREE.MathUtils.smoothstep(rpm, DISC_ON, 500);
     }
     lightsUpdate(o.lights || DARK, dt);

@@ -11,7 +11,8 @@
 // The left and right columns keep clear of the middle of the view and of the panel's G1000 below it. Only the
 // dialogs, the debrief, the help and the panel's fold button take the mouse; everything else lets clicks through to
 // the cockpit. update() is cheap: it writes only the nodes whose text, class or size changed. The CSS is injected once
-// and scoped under #fhud (but for one rule: the game's toast moves up above the big G1000 while it is shown).
+// and scoped under #fhud (but for two rules: the fold button is not shown while the game has captured the mouse, and
+// the game's toast moves up above the big G1000 while it is shown).
 const CSS = `
 #fhud { --fh-w: min(380px, 31vw); --fh-rw: min(380px, 30vw); --fh-sub-h: 0px; --p2d-h: min(44vh, calc((100vw - 240px) / 3.2));
   --fh-bg: rgba(10, 18, 28, 0.8); --fh-ok: #6fe3a0; --fh-warn: var(--warn, #ffcf5c); --fh-ng: #ff7a6b; --fh-amber: #ffb547;
@@ -271,6 +272,8 @@ const CSS = `
   #fhud .fh-hcols { grid-template-columns: auto auto auto; gap: 4px 10px; }
   #fhud .fh-help td.n { white-space: normal; }
 }
+/* with the mouse captured (the game's body.locked) the fold button cannot be pressed: it is not shown */
+body.locked #fhud .fh-fold { visibility: hidden; }
 /* the game's toast (#hud, under this layer) moves up above the big G1000 while it is shown */
 body.fhud-p2d #toast { bottom: calc(min(44vh, calc((100vw - 240px) / 3.2)) + 58px); }
 @media (prefers-reduced-motion: reduce) {
@@ -362,8 +365,9 @@ const ADVICE_NONE = '基準外の項目の数字を見て、どの操作が足�
 export const advice = bad => adviceTips(bad).join('。') || ADVICE_NONE;
 // everything the card shows, from status() at the end of a lesson. The steps count is the steps finished (FLIGHT LAB
 // counted the steps that produced rows, so a passed a1 read "1 / 2"). The row an ended lesson adds for itself (結果:
-// stopped, or an accident, whose reason the card already gives) is counted but not turned into advice. A free flight
-// has no grade: its card (after a crash, or when the game ends it) says how it ended and for how long it flew.
+// stopped, or an accident, whose reason the card already gives) is counted but not turned into advice; an accident reads
+// 損傷 rather than 中止. A free flight has no grade: its card (after a crash, or when the game ends it) says how it ended
+// and for how long it flew.
 export function debriefOf(sum) {
   const rows = [], bad = [];
   for (const r of sum.results || []) for (const row of r.rows) {
@@ -383,7 +387,7 @@ export function debriefOf(sum) {
     free: false, kick: '課目の結果',
     title: `${sum.title || ''}（${sum.levelName || ''}）`,
     grade: sum.grade || '―',
-    status: sum.passed ? '合格' : sum.reason ? '中止' : '不合格',
+    status: sum.passed ? '合格' : sum.crashed ? '損傷' : sum.reason ? '中止' : '不合格',
     cls: sum.passed ? 'ok ' + (GRADE_CLS[sum.grade] || '') : 'ng',
     sub: sum.reason ? `理由：${sum.reason}` : sum.passed ? 'すべての項目が基準内でした。次の課目か、上のレベルへ進みましょう。'
       : '基準に届かなかった項目があります。下の「次に意識すること」を読んで、もう一度挑戦しましょう。',
@@ -404,8 +408,29 @@ export function fitCanvas(cv, r, dpr = 1) {
   const w = Math.max(1, Math.round(r.width * dpr)), hh = Math.max(1, Math.round(r.height * dpr));
   if (cv.width !== w || cv.height !== hh) { cv.width = w; cv.height = hh; }
   const LH = Math.round(LW * clamp(r.height / Math.max(1, r.width), 376 / LW, 0.85));
-  const g = cv.getContext('2d'); g.setTransform(w / LW, 0, 0, hh / LH, 0, 0);
+  const g = inWorldText(cv.getContext('2d')); g.setTransform(w / LW, 0, 0, hh / LH, 0, 0);
   return { g, W: LW, H: LH };
+}
+// FLIGHT LAB's screens label themselves as teaching material here and there (「G1000型 教材表示」, 「STBY 予備（教材）」,
+// 「ACTIVE FLIGHT PLAN（教材）」, 「未実装」 beside the readings it has no model for). In the aircraft they are just the
+// screens: those words go, the disclaimers (架空訓練点, NOT FOR NAVIGATION) stay. The context's fillText passes its text
+// through panelText (a string with neither word is passed on untouched; the few that have one are rewritten once).
+const PANEL_TEXT = [[/（教材）/g, ''], [/ ?教材表示/g, ''], [/教材用の架空訓練点/g, '架空の訓練点'], [/教材モデルの/g, ''],
+  [/^(?:— = )?未実装.*$/, ''], [/教材/g, '訓練'], [/未実装/g, '']];
+const panelMemo = new Map();
+export function panelText(s) {
+  if (typeof s !== 'string' || (s.indexOf('教材') < 0 && s.indexOf('未実装') < 0)) return s;
+  let r = panelMemo.get(s);
+  if (r === undefined) { r = s; for (const [re, by] of PANEL_TEXT) r = r.replace(re, by); panelMemo.set(s, r); }
+  return r;
+}
+const worded = new WeakSet();
+function inWorldText(g) {
+  if (!g || worded.has(g) || typeof g.fillText !== 'function') return g;
+  const fill = g.fillText;
+  g.fillText = function (s, x, y, w) { s = panelText(s); return w === undefined ? fill.call(this, s, x, y) : fill.call(this, s, x, y, w); };
+  worded.add(g);
+  return g;
 }
 
 // ---------------------------------------------------------------- the key help (H)
@@ -421,12 +446,12 @@ const FLY_KEYS = [
   ['T（Shift+T）', 'トリム（リセット）', 'いまの速度で、手を離しても姿勢が続くように合わせる', ['T']],
   ['V（Shift+V）', 'フラップ 下げ（上げ）', '白い帯（Vfe 以下）でだけ使う', ['V']],
   ['B / Space', 'ブレーキ', '押している間。地上で減速・停止', ['B', 'Space']],
-  ['Shift+B', 'パーキングブレーキ', '止まっている間、機体をその場に保つ。セット / 解除（操縦席の T ハンドルでも）', []],
+  ['Shift+B', 'パーキングブレーキ', '止まっている間、機体をその場に保つ（操縦席の T ハンドルでも）', []],
   ['G', '脚の上げ下げ', '着陸前に必ず下げる（GUMPS）', ['G'], 'twin'],
   ['[ / ]', 'フェザー 左 / 右', '止まった側を確かめてから（Identify → Verify）', ['[', ']'], 'twin'],
   ['Z / X', 'ラダートリム 左 / 右', '踏み続ける力を消す', ['Z', 'X']],
-  ['U', '自動ラダー ON / OFF', 'OFF では本物と同じく自分で踏む', ['U']],
-  ['L', '水平に戻す', '自由飛行だけ。数秒で翼と機首を水平に', ['L'], 'free'],
+  ['U', '自動ラダー ON / OFF', 'OFF では自分で踏む（Q / E）', ['U']],
+  ['L', '水平に戻す', '自由飛行だけ。数秒で水平に戻る', ['L'], 'free'],
   ['Enter', 'チェックリストの次の項目', '1 項目ずつ確認する', ['Enter']],
   ['1 / 2 / 3', '管制への応答', '滑走路・高度・針路の数字を含めて復唱', ['1', '2', '3']],
 ];
@@ -434,12 +459,14 @@ const FLY_MAIN = 8;
 const CABIN_KEYS = [
   ['マウス', '見回す', '画面をクリックで開始。マウスが自由なときは右ドラッグ'],
   ['右ボタン（長押し）', 'ズーム', '計器や外の目標を拡大して見る'],
-  ['クリック / ホイール', '操縦席の操作', '中央の点をスイッチ・つまみ・レバーに合わせて動かす'],
+  ['クリック / ホイール', '操縦席の操作', '中央の点を合わせる。ホイールで両方向、クリックで 1 段（レバーは前・下げ側）'],
   ['C', '視点', '操縦席 ⇄ 機体の後ろから'],
   ['Tab', '計器を大きく', 'PFD と MFD を画面の下に大きく表示'],
   ['H', 'このキー一覧', '開く / 閉じる'],
   ['Esc', '一時停止メニュー', '設定・操作・降りる'],
 ];
+
+const CHECK_FOOT = 'Enter で 1 項目ずつ確認。条件のある項目は、その状態にしてから';
 
 // the instructor's subtitle stays up about as long as it takes to read (× the player's text speed)
 const sayMs = (text, speed = 1) => clamp(2200 + Array.from(text).length * 85 / (speed > 0 ? speed : 1), 3000, 9000);
@@ -534,11 +561,13 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
 
   // the dialogs
   const right = make('div', 'fh-right');
-  const check = make('section', 'fh-panel fh-dlg fh-check', { role: 'dialog', 'aria-label': 'チェックリスト', title: 'クリックで次の項目を確認' });
+  // (the dialogs name the keys only: in the cockpit the mouse is captured, a click works the control under the crosshair
+  // and freeing the mouse opens the pause menu; a click on them still works when the mouse happens to be free)
+  const check = make('section', 'fh-panel fh-dlg fh-check', { role: 'dialog', 'aria-label': 'チェックリスト', title: 'Enter で次の項目を確認' });
   const cTitle = make('div', 'fh-dt'), cList = make('ol'), cFoot = make('div', 'fh-df');
   put(check, cTitle, cList, cFoot);
   const atc = make('section', 'fh-panel fh-dlg fh-atc', { role: 'dialog', 'aria-label': '管制との交信' });
-  const aTitle = make('div', 'fh-dt', null, '無線（管制）'), aMsg = make('div', 'fh-am'), aQ = make('div', 'fh-aq', null, '正しい応答（復唱）は？　1〜3 キーかクリック');
+  const aTitle = make('div', 'fh-dt', null, '無線（管制）'), aMsg = make('div', 'fh-am'), aQ = make('div', 'fh-aq', null, '正しい応答（復唱）は？　1〜3 キーで選ぶ');
   const aOpts = make('div', 'fh-ao'), aRes = make('div', 'fh-ar');
   put(atc, aTitle, aMsg, aQ, aOpts, aRes);
   check.hidden = atc.hidden = true;
@@ -570,7 +599,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
       put(make('div'), make('h4', '', null, '操縦'), keyTable(FLY_KEYS.slice(0, FLY_MAIN), true)),
       put(make('div'), make('h4', '', null, '操縦（そのほか）'), keyTable(FLY_KEYS.slice(FLY_MAIN), true)),
       put(make('div'), make('h4', '', null, '操縦席'), keyTable(CABIN_KEYS, false),
-        make('p', 'fh-hn', null, '燃料セレクター・マグネトー・ライトのスイッチ・ドア・パーキングブレーキは、操縦席でクリックして操作します。'))));
+        make('p', 'fh-hn', null, '燃料セレクター・マグネトー・ライトのスイッチ・ドアは、操縦席でクリックして操作します。'))));
   help.hidden = true;
 
   // the debrief
@@ -685,7 +714,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     // where it is: on the ground, what holds it; in the air, how far the runway is (FLIGHT LAB's free panel)
     const c = st && st.ctx;
     let w = '';
-    if (pn && pn.onGround) w = pn.parkBrake ? 'パーキング ブレーキ中：Shift+B か、パネル下の T ハンドルで解除' : '地上：Q / E で前輪の向き・B / Space でブレーキ';
+    if (pn && pn.onGround) w = pn.parkBrake ? 'パーキングブレーキ中：Shift+B か、パネル下の T ハンドルで解除' : '地上：Q / E で前輪の向き・B / Space でブレーキ';
     else if (c && Number.isFinite(c.along)) w = `滑走路 36 まで ${(Math.hypot(c.along - 600, c.cross) / 1852).toFixed(1)} NM`;
     text(fWhere, w); shown(fWhere, !!w);
   }
@@ -696,7 +725,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     text(tThr.v, pct(pn.thr)); text(tThr.s, `${thousands(pn.rpm)} rpm`); css(tThr.m, 'width', pct(clamp(pn.thr, 0, 1)));
     klass(tThr.t, 'bad', !pn.engRun);
     if (pn.keyHold) { text(tPitch.v, `保持 ${signed(pn.pTgt, 1)}°`); text(tPitch.s, `いま ${signed(pn.pitch, 1)}°`); }
-    else { text(tPitch.v, `${pn.pIn >= 0 ? '引き' : '押し'} ${pct(Math.abs(pn.pIn))}`); text(tPitch.s, `いま ${signed(pn.pitch, 1)}°`); }
+    else { text(tPitch.v, Math.abs(pn.pIn) < 0.005 ? '中立' : `${pn.pIn > 0 ? '引き' : '押し'} ${pct(Math.abs(pn.pIn))}`); text(tPitch.s, `いま ${signed(pn.pitch, 1)}°`); }
     text(tTrim.v, pn.trimPct === 0 ? '中立' : `${pn.trimPct > 0 ? '機首上げ' : '機首下げ'} ${Math.abs(pn.trimPct)}%`);
     text(tTrim.s, '');
     text(tFlap.v, pn.flapLabel); text(tFlap.s, pn.flapMoving ? '作動中' : ''); klass(tFlap.t, 'move', !!pn.flapMoving);
@@ -717,7 +746,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     text(cTitle, ck.title);
     cList.textContent = '';
     for (const it of ck.items) put(cList, put(make('li', it.ok ? 'ok' : it.cur ? 'cur' : ''), make('b', '', null, it.name), make('span', '', null, it.text)));
-    if (!cFoot.classList.contains('ng')) cFoot.textContent = 'Enter かクリックで 1 項目ずつ確認。条件のある項目は、その状態にしてから';
+    if (!cFoot.classList.contains('ng')) cFoot.textContent = CHECK_FOOT;
   }
   function renderAtc(st) {
     const ar = st.atcResult, res = !st.atc && ar && st.t >= ar.t && st.t - ar.t < (ar.ok ? 2.6 : 5.2);
@@ -756,7 +785,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
       shown(r.tr, !(r.only === 'twin' && !twin) && !(r.only === 'free' && !isFree));
       klass(r.tr, 'now', r.names.some(n => used.has(n)));
     }
-    text(helpSub, used.size ? 'いまの手順で使うキーが光っています' : 'FLIGHT LAB と同じキーで飛びます');
+    text(helpSub, used.size ? 'いまの手順で使うキーが光っています' : '課目の中では、いまの手順で使うキーが光ります');
   }
 
   // ---- input from the mouse
@@ -835,7 +864,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     if (reason) {
       cFoot.textContent = reason; cFoot.classList.add('ng');
       clearTimeout(footTimer);
-      footTimer = setTimeout(() => { cFoot.classList.remove('ng'); cFoot.textContent = 'Enter かクリックで 1 項目ずつ確認。条件のある項目は、その状態にしてから'; }, 2600);
+      footTimer = setTimeout(() => { cFoot.classList.remove('ng'); cFoot.textContent = CHECK_FOOT; }, 2600);
     }
   }
   // the end of a lesson (or of a free flight): summary = status() once it is done; cbs = { onRetry, onFree, onReturn,

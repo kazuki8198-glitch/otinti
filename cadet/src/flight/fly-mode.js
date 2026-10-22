@@ -26,7 +26,7 @@ const HOME_PITCH = -4 * DEG;            // the head at rest: a little down, the 
 // ctx: { FL, L, scene, camera, renderer, sky, input, settings, audio, toast(text, ms), hud (prompt), dui (the dialogue
 //   UI), talkState, saveTalk(), instructor, instructorHome(root) (puts him back in the briefing room), stand { a, c,
 //   hdgTrue }, parkedToday (its root), todayColliders(on), toFrame(x, z), world (colliders, for the taxi check),
-//   flightHud (optional), lessonId, onEnter(), onLeave(), onTalk(on) }
+//   flightHud (optional), lessonId, wind { fromDeg, kt } (the day's), onEnter(), onLeave(), onTalk(on), onPause() }
 export function createFlyMode(ctx) {
   const { FL, L, scene, camera, sky, input, settings, audio, toast, hud, instructor, world } = ctx;
   const P = FL.physics, AV = FL.avionics;
@@ -39,11 +39,7 @@ export function createFlyMode(ctx) {
   // the HUD's checklist and read-back answers take clicks too (as Enter and 1–3 do)
   if (fh) {
     fh.onChecklistClick(() => { if (!active || stopped()) return null; const r = flight.checklistNext(); if (audio.click) audio.click(); return r; });
-    fh.onAtcClick((i) => {
-      if (!active || stopped()) return;
-      const r = flight.answerAtc(i);
-      if (r) toast((r.ok ? '正解。' : `不正解。正しくは「${r.right}」。`) + r.why, 4200);
-    });
+    fh.onAtcClick((i) => { if (active && !stopped()) flight.answerAtc(i); });      // (the HUD shows the answer)
   }
 
   // ---- the objects (built once, at boot, so their shaders compile with everything else)
@@ -64,18 +60,22 @@ export function createFlyMode(ctx) {
   const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), camWorld = new THREE.Vector3(), head = new THREE.Vector3();
   const ray = new THREE.Raycaster(), center = new THREE.Vector2(0, 0);
   ray.far = 1.6;
-  let hover = null, zoomHold = false;
+  let hover = null, zoomHold = false, wasStop = true, engineOn = false, hintCool = 0, shadowHalf = undefined;
 
   // ---- the fade (a black sheet over everything; the work happens while it is opaque)
   const sheet = document.createElement('div');
   sheet.style.cssText = 'position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:28;transition:opacity .4s ease';
   document.body.appendChild(sheet);
+  // A newer fade cancels one still pending (getting out while a lesson is being set up): only the last one's work runs.
+  let fadeGen = 0;
   function fade(fn, instant) {
-    if (instant) { fn(); return; }
+    const g = ++fadeGen;
+    if (instant) { sheet.style.opacity = '0'; fading = false; fn(); return; }
     fading = true; sheet.style.opacity = '1';
     setTimeout(() => {
+      if (g !== fadeGen) return;
       try { fn(); } catch (e) { console.error(e); }
-      setTimeout(() => { sheet.style.opacity = '0'; fading = false; }, 120);
+      setTimeout(() => { if (g === fadeGen) { sheet.style.opacity = '0'; fading = false; } }, 120);
     }, FADE_MS);
   }
 
@@ -88,18 +88,23 @@ export function createFlyMode(ctx) {
     ctx.saveTalk();
   });
   function onHook(name, arg) {
-    if (name === 'fly') chosen = arg;
+    if (name === 'fly') { chosen = arg; if (arg === 'free') startEngine(); }   // 「エンジンをかけますね」
     else if (name === 'nod') instructor.gesture('nod');
     else if (name === 'look') instructor.gesture('explain');
     else if (name === 'point') { pointAtPanel(arg); }
   }
+  // what he points at: the PFD's middle, or the student's pedals (the parts are built in place, so their origins are
+  // the cabin's: the points come from their geometry and the controls' aim points)
+  const pfdMid = new THREE.Vector3(), pedalsCtl = cockpit.controls.find(c => c.id === 'pedals') || null;
+  { const g = cockpit.screens.pfd && cockpit.screens.pfd.geometry; if (g) { g.computeBoundingBox(); g.boundingBox.getCenter(pfdMid); } }
   function pointAtPanel(what) {
-    const t = what === 'pedals' ? cockpit.parts.pedalsL : cockpit.screens.pfd;
-    if (!t) return;
-    t.getWorldPosition(v1); instructor.pointAt(v1); instructor.gesture('point');
+    if (what === 'pedals') { if (!pedalsCtl) return; cockpit.aimPoint(pedalsCtl, v1); }        // (in the world)
+    else { if (!cockpit.screens.pfd) return; cockpit.screens.pfd.localToWorld(v1.copy(pfdMid)); }
+    instructor.pointAt(v1); instructor.gesture('point');
   }
   function startTalk() {
     talkOn = true; chosen = null; ctx.onTalk(true);
+    if (fh) fh.show(false);                 // his talk alone on the screen (the flight's panels come back after it)
     input.exitLock();
     runner.start('board');
   }
@@ -107,6 +112,8 @@ export function createFlyMode(ctx) {
     if (!talkOn) return;
     talkOn = false; ctx.dui.hide(); ctx.onTalk(false);
     const c = chosen; chosen = null;
+    if (!active || phase === 'leaving') return;          // stopped by getting out (the menu): nothing to start
+    if (fh) fh.show(true);
     if (c === 'leave') leave();
     else if (c === 'free') beginFree();
     else if (c === 'intro' || c === 'basic' || c === 'precision') beginLesson(c);
@@ -116,15 +123,17 @@ export function createFlyMode(ctx) {
   }
 
   // ---- boarding and getting out
+  // the day's wind (the METAR's and the windsock's), relative to the runway as FLIGHT LAB's free flights take it
+  const dayWind = () => { const w = ctx.wind || { fromDeg: 330, kt: 8 }; return { rel: w.fromDeg - P.LAB_RWY.trueHdg, kt: w.kt, gust: 0.5 }; };
   function board({ instant = false } = {}) {
     if (active) return 'flying';
     active = true; phase = 'board';
     fade(() => {
       const [n, e] = P.rwyToNE(P.LAB_RWY, ctx.stand.a, ctx.stand.c);
-      flight.startOnGround(n, e, ctx.stand.hdgTrue, 'pa28', { autoRud: settings.get('autoRud') });
+      flight.startOnGround(n, e, ctx.stand.hdgTrue, 'pa28', { autoRud: settings.get('autoRud'), wind: dayWind() });
       ctx.parkedToday.visible = false; ctx.todayColliders(false);
       live.root.visible = true; cockpit.setVisible(true); setView('cockpit');
-      rpmVisual = 0; startT = -1;                               // the engine is off until he starts it
+      rpmVisual = 0; startT = -1; engineOn = false;             // the engine is off until he starts it
       // the instructor: in the right seat
       live.root.add(instructor.root);
       instructor.root.position.set(seat.position[0], seat.position[1], seat.position[2]); instructor.root.rotation.set(0, seat.yaw, 0);
@@ -141,18 +150,19 @@ export function createFlyMode(ctx) {
     if (!active || phase === 'leaving') return;
     phase = 'leaving';
     if (runner.running) runner.stop();
-    if (flight.L && !flight.free && !flight.L.done) flight.abort('中止');
+    if (flight.L && !flight.free && !flight.L.done) { flight.abort('中止'); flight.finish(); }
+    else if (flight.L && flight.free) flight.finish();
     fade(() => {
       active = false; phase = 'off';
       live.root.visible = false; cockpit.setVisible(false);
       ctx.parkedToday.visible = true; ctx.todayColliders(true);
       if (instructor.setSeated) instructor.setSeated(null);
       ctx.instructorHome(instructor.root);
-      rpmVisual = null;
+      rpmVisual = null; engineOn = false;
       if (audio.engine) audio.engine(null);
-      if (fh) { fh.hideDebrief(); fh.show(false); }
+      if (fh) { fh.hideDebrief(); fh.setHelp(false); fh.show(false); }
       debriefShown = false;
-      sky.setShadowHalf(null);
+      sky.setShadowHalf(null); shadowHalf = undefined;
       camera.fov = settings.get('fov'); camera.updateProjectionMatrix(); fov = null;
       hud.prompt(null);
       ctx.onLeave(then);
@@ -161,17 +171,21 @@ export function createFlyMode(ctx) {
   function beginFree() {
     phase = 'ground';
     if (fh) fh.setMode('free');
-    // the engine start: the starter turns the propeller, the engine catches and settles at idle (the physics' engine
-    // was running all along, at idle with the park brake on: nothing moves)
-    startT = 0; rpmVisual = 0;
+    startEngine();
+  }
+  // the engine start: the starter turns the propeller, the engine catches and settles at idle (the physics' engine
+  // was running all along, at idle with the park brake on: nothing moves)
+  function startEngine() {
+    if (engineOn) return;
+    engineOn = true; startT = 0; rpmVisual = 0;
     if (audio.starter) audio.starter();
   }
   function beginLesson(level, { instant = false } = {}) {
     lastLevel = level; settings.set('lessonLevel', level);
     fade(() => {
       flight.startLesson(ctx.lessonId || 'a1', level, { autoRud: settings.get('autoRud') });
-      phase = 'lesson'; rpmVisual = null; startT = -1; lastChime = -1; lastHint = ''; debriefShown = false;
-      yaw = 0; pitch = HOME_PITCH; homeT = 0;
+      phase = 'lesson'; rpmVisual = null; startT = -1; engineOn = true; lastChime = -1; lastHint = ''; hintCool = 0; debriefShown = false;
+      yaw = 0; pitch = HOME_PITCH; homeT = 0; psiS = null;
       if (fh) { fh.hideDebrief(); fh.setMode('lesson'); }
       placeNow();
       toast('訓練空域に着きました', 2600);
@@ -181,8 +195,8 @@ export function createFlyMode(ctx) {
   function freeFromHere() {
     if (fh) fh.hideDebrief(); debriefShown = false;
     fade(() => {
-      flight.startFree('area', 'pa28', { autoRud: settings.get('autoRud') });
-      phase = 'ground'; rpmVisual = null; startT = -1;
+      flight.startFree('area', 'pa28', { autoRud: settings.get('autoRud'), wind: dayWind() });
+      phase = 'ground'; rpmVisual = null; startT = -1; engineOn = true; psiS = null;
       if (fh) fh.setMode('free');
       placeNow();
     });
@@ -195,14 +209,30 @@ export function createFlyMode(ctx) {
     const inside = v === 'cockpit';
     live.setInside(inside); cockpit.setVisible(inside);
     instructor.root.visible = inside;
-    sky.setShadowHalf(inside ? 5 : null);
+    applyShadow();
     hud.prompt(null); hover = null;
+    if (!inside) psiS = null;
+  }
+  // the sun's shadow box: small and sharp round the cockpit in the air; on the ground wide enough for the hangars, the
+  // parked aircraft and the whole wing (the chase view keeps the preset's box)
+  function applyShadow() {
+    const s = flight.s;
+    const half = view !== 'cockpit' ? null : s && !s.onGround && s.out.agl > 100 ? 5 : 24;
+    if (half !== shadowHalf) { shadowHalf = half; sky.setShadowHalf(half); }
   }
   // the aircraft where the physics has it (between the last two steps), the camera at the eye or behind
+  // On the ground FLIGHT LAB's spring gear sinks about 11 cm under the aircraft's weight; drawn as it is, the tyres
+  // would be half in the concrete: the drawing (only) is lifted until the lowest wheel touches.
   function placeNow() {
     flight.pose(pose);
-    live.root.position.set(pose.pos[0] - L.E0, pose.pos[1], pose.pos[2] + L.N0);
     live.root.quaternion.set(pose.q[0], pose.q[1], pose.q[2], pose.q[3]);
+    let lift = 0;
+    const s = flight.s;
+    if (s && s.WHEELS) for (const w of s.WHEELS) {
+      const y = pose.pos[1] + v2.set(w.off[0], w.off[1], w.off[2]).applyQuaternion(live.root.quaternion).y;
+      if (P.GROUND_M - y > lift) lift = P.GROUND_M - y;
+    }
+    live.root.position.set(pose.pos[0] - L.E0, pose.pos[1] + Math.min(lift, 0.3), pose.pos[2] + L.N0);
     live.root.updateMatrixWorld(true);
   }
   function placeCamera(dt) {
@@ -227,6 +257,7 @@ export function createFlyMode(ctx) {
   function applyAct(d) {
     if (!d) return;
     if (d.type === 'flight') {
+      if (d.name === 'parkBrake' && !flight.free) { toast('課目の中ではパーキングブレーキは使いません', 2200); return; }
       const t = flight.action(d.name, d.arg);
       if (t) toast(t, 2200);
       if (audio.click) audio.click();
@@ -244,7 +275,10 @@ export function createFlyMode(ctx) {
       if (audio.click) audio.click();
     } else if (d.type === 'exit') {
       if (canExit()) leave();
-      else if (performance.now() - warnedExit > 1500) { warnedExit = performance.now(); toast('止まって、エンジンをアイドルにしてから降りましょう', 2400); }
+      else if (performance.now() - warnedExit > 1500) {
+        warnedExit = performance.now();
+        toast(flight.free ? '止まってから降りましょう' : '課目の途中です。終わってから降りましょう（やめるときは Esc のメニューから）', 2600);
+      }
     } else if (d.type === 'info' && d.text) toast(d.text, 2600);
   }
   function canExit() {
@@ -255,23 +289,33 @@ export function createFlyMode(ctx) {
   }
   function lights() {
     const sw = cockpit.switches, on = sw.master !== false;
-    return { nav: on && sw.nav, beacon: on && sw.beacon, strobe: on && sw.strobe, landing: on && sw.landing, taxi: on && sw.taxi };
+    lightsNow.nav = !!(on && sw.nav); lightsNow.beacon = !!(on && sw.beacon); lightsNow.strobe = !!(on && sw.strobe);
+    lightsNow.landing = !!(on && sw.landing); lightsNow.taxi = !!(on && sw.taxi);
+    return lightsNow;
   }
   const lightsOut = { nav: false, beacon: false, strobe: false, landing: false, taxi: false };
+  // the options handed on every frame (reused: nothing new per frame)
+  const frameOpt = { paused: false }, liveOpt = { dt: 0, rpmVisual: null, lights: lightsOut, inside: true };
+  const cockOpt = { s: null, L: null, av: null, parkBrake: false, night: 0 }, insOpt = { lookAt: null, talking: false };
+  const engOpt = { rpm: 0, thr: 0, ias: 0, onGround: true, stall: false, inside: true, running: false }, lightsNow = { ...lightsOut };
 
   // ---- every frame while flying
   function update(dt, { live: isLive = true, paused = false } = {}) {
     if (!active) return;
     const look = input.takeLook(), wheel = input.takeWheel ? input.takeWheel() : 0;
     const stop = paused || fading || talkOn || debriefShown || !isLive;
+    if (wasStop && !stop) flight.controls.clearKeys();
+    wasStop = stop;
     // the flight (FLIGHT LAB's tick: the keys once, then 1/120 s steps)
-    const res = flight.frame(dt, keysFor(stop), { paused: stop || phase === 'board' || phase === 'leaving' });
+    frameOpt.paused = stop || phase === 'board' || phase === 'leaving';
+    const res = flight.frame(dt, keysFor(stop), frameOpt);
     for (const ev of res.events) onEvent(ev);
     if (res.ended) onEnded();
     for (const r of res.pad || []) {
       if (r.type === 'view') setView(view === 'cockpit' ? 'chase' : 'cockpit');
       else if (r.type === 'toast' && r.text) toast(r.text, 2400);
       else if (r.type === 'help' && fh) fh.setHelp(!fh.help);
+      else if (r.type === 'pause' && ctx.onPause) ctx.onPause();
     }
     // the head (or the orbit round the aircraft)
     if (!stop) {
@@ -293,7 +337,9 @@ export function createFlyMode(ctx) {
       if (rpmVisual == null) startT = -1;
     }
     placeNow();
-    live.update(flight.s, { dt, rpmVisual, lights: cockpit.switches.master === false ? lightsOut : lights(), inside: view === 'cockpit' });
+    applyShadow();
+    liveOpt.dt = dt; liveOpt.rpmVisual = rpmVisual; liveOpt.lights = lights(); liveOpt.inside = view === 'cockpit';
+    live.update(flight.s, liveOpt);
     placeCamera(dt);
     // looking closer (the right button held), back to the setting's field of view
     const want = view === 'cockpit' && !stop && (input.down('Mouse2') || zoomHold) ? ZOOM_FOV : settings.get('fov');
@@ -306,22 +352,35 @@ export function createFlyMode(ctx) {
     if (view === 'cockpit' && !stop) {
       ray.setFromCamera(center, camera);
       hover = cockpit.pick(ray);
-      hud.prompt(hover ? hover.label : null, hover ? (hover.kind === 'knob' ? 'ホイール' : 'クリック') : null);
+      hud.prompt(hover ? hover.label : null, hover ? (hover.kind === 'knob' ? 'ホイール' : hover.kind === 'lever' ? 'クリック・ホイール' : 'クリック') : null);
       if (hover) {
         if (input.pressed('Mouse0')) applyAct(hover.act(1, false));
         if (wheel) for (let i = 0; i < Math.abs(wheel); i++) applyAct(hover.act(Math.sign(wheel), true));
       }
     } else if (hover) { hover = null; hud.prompt(null); }
-    cockpit.update(dt, { s: flight.s, L: flight.L, av: flight.av, parkBrake: flight.controls.parkBrake, night: night() });
-    // the instructor: looks at you while he speaks, otherwise round the panel and outside
+    cockOpt.s = flight.s; cockOpt.L = flight.L; cockOpt.av = flight.av; cockOpt.parkBrake = flight.controls.parkBrake; cockOpt.night = night();
+    cockpit.update(dt, cockOpt);
+    // the instructor: looks at you while he speaks, otherwise round the panel and outside (unseen from outside: left be)
     const speaking = talkOn || lineT > 0;
     if (lineT > 0) lineT -= dt;
-    instructor.update(dt, { lookAt: speaking ? camWorld : null, talking: speaking && (talkOn ? !!(ctx.dui.typing) : lineT > 0.4) });
-    if (phase === 'lesson' && !stop) lessonVoice();
-    if (fh && (hudT -= dt) <= 0) { hudT = 0.12; fh.update(flight.status(), flight.panel()); fh.setHood(!!(flight.L && flight.L.hood && !flight.L.done)); }
+    if (hintCool > 0) hintCool -= dt;
+    if (view === 'cockpit') {
+      insOpt.lookAt = speaking ? camWorld : null; insOpt.talking = speaking && (talkOn ? !!(ctx.dui.typing) : lineT > 0.4);
+      instructor.update(dt, insOpt);
+    }
+    // the HUD and what he says in a lesson (the lesson's texts as the aircraft words them), 8 times a second
+    if ((hudT -= dt) <= 0) {
+      hudT = 0.12;
+      const st = flight.status();
+      if (fh) { fh.update(st, flight.panel()); fh.setHood(!!(flight.L && flight.L.hood && !flight.L.done)); }
+      if (phase === 'lesson' && !stop) lessonVoice(st);
+    }
     if (audio.engine) {
       const s = flight.s, o = s.out;
-      audio.engine({ rpm: rpmVisual != null ? rpmVisual : o.rpm, thr: s.thr, ias: o.ias, onGround: s.onGround, stall: !!o.stallWarn, inside: view === 'cockpit', running: startT < 0 && phase !== 'board' && !!(s.eng[0] && s.eng[0].run) });
+      engOpt.rpm = rpmVisual != null ? rpmVisual : o.rpm; engOpt.thr = s.thr; engOpt.ias = o.ias; engOpt.onGround = s.onGround;
+      engOpt.stall = !stop && !!o.stallWarn; engOpt.inside = view === 'cockpit';
+      engOpt.running = engineOn && startT < 0 && !!(s.eng[0] && s.eng[0].run);
+      audio.engine(engOpt);
     }
     if (flight.free && phase === 'ground') taxiCheck();
   }
@@ -345,20 +404,20 @@ export function createFlyMode(ctx) {
     if (fh) fh.say(instructorName(), text, ms); else toast(text, ms);
   }
   const instructorName = () => (ctx.instructorName || '早瀬 教官');
-  function lessonVoice() {
-    const st = flight.L; if (!st || st.done) return;
+  function lessonVoice(st) {
+    if (!st || st.done) return;
     if (st.chime !== lastChime) {
       lastChime = st.chime;
       const line = flightLine(st.sayText);
       if (line) { say(line); if (/PFD|計器|姿勢表示/.test(line)) pointAtPanel('pfd'); }
       if (audio.chime) audio.chime();
-      lastHint = st.hint; lineT = Math.max(lineT, 4);
+      lastHint = st.hint; hintCool = 4;
       return;
     }
-    if (st.hint && st.hint !== lastHint && lineT <= 0) {
-      lastHint = st.hint;
+    // a hint when it changes, not more often than every 6 s (most of the "good" ones go unsaid)
+    if (st.hint && st.hint !== lastHint && lineT <= 0 && hintCool <= 0) {
+      lastHint = st.hint; hintCool = 6;
       if (!/^良い調子/.test(st.hint) || Math.random() < 0.3) say(flightLine(st.hint), 4200);
-      lineT = Math.max(lineT, 6);
     }
   }
   function onEvent(ev) {
@@ -369,28 +428,29 @@ export function createFlyMode(ctx) {
     else if (ev.type === 'runway_excursion') say('滑走路から外れました。ラダーでセンターラインを保ちましょう。', 4200);
     else if (ev.type === 'tail_strike') say('尾部を擦りました。機首の上げすぎです。', 3800);
     else if (ev.type === 'engine_stop') toast(`エンジン停止：${ev.why}`, 3500);
-    else if (ev.type === 'crash') { toast(`機体損傷：${ev.why}`, 5000); if (flight.free) setTimeout(() => showFreeEnd(), 1500); }
+    else if (ev.type === 'crash') { toast(`機体損傷：${ev.why}`, 5000); if (flight.free) { const L0 = flight.L; setTimeout(() => { if (flight.L === L0) showFreeEnd(); }, 1500); } }
   }
   function onEnded() {
     flight.finish();
-    const st = flight.status();
+    const st = flight.status(), L0 = flight.L;
     setTimeout(() => {
-      if (!active || flight.status().done !== true) return;
+      if (!active || flight.L !== L0 || debriefShown || flight.status().done !== true) return;
       say(debriefLine(st), 6000);
       if (fh) { fh.showDebrief(st, { onRetry: retry, onFree: freeFromHere, onReturn: () => leave() }); debriefShown = true; input.exitLock(); }
     }, st.crashed ? 1500 : 600);
   }
   function showFreeEnd() {
-    if (!active || !fh) return;
-    fh.showDebrief(flight.status(), { onRetry: () => { fh.hideDebrief(); debriefShown = false; fade(() => { const [n, e] = P.rwyToNE(P.LAB_RWY, ctx.stand.a, ctx.stand.c); flight.startOnGround(n, e, ctx.stand.hdgTrue, 'pa28', { autoRud: settings.get('autoRud') }); placeNow(); }); input.requestLock(); }, onFree: null, onReturn: () => leave() });
+    if (!active || !fh || debriefShown || phase === 'leaving') return;
+    fh.showDebrief(flight.status(), { onRetry: () => { fh.hideDebrief(); debriefShown = false; fade(() => { const [n, e] = P.rwyToNE(P.LAB_RWY, ctx.stand.a, ctx.stand.c); flight.startOnGround(n, e, ctx.stand.hdgTrue, 'pa28', { autoRud: settings.get('autoRud'), wind: dayWind() }); phase = 'ground'; engineOn = false; startEngine(); psiS = null; placeNow(); }); input.requestLock(); }, onFree: null, onReturn: () => leave() });
     debriefShown = true; input.exitLock();
   }
   // taxiing into a hangar, a building or another aircraft: the colliders the walker uses (the aircraft's nose, wing
   // tips and tail, at their heights)
-  const PROBES = [[0, -0.1, -3.3], [5.3, -0.2, -0.6], [-5.3, -0.2, -0.6], [0, 0.6, 4.0], [0, 1.4, 3.6]];
+  const PROBES = [[0, -0.1, -3.3], [0.9, -0.1, -3.2], [-0.9, -0.1, -3.2], [5.3, -0.2, -0.6], [-5.3, -0.2, -0.6], [2.7, -0.25, -1.0],
+    [-2.7, -0.25, -1.0], [1.7, 0.3, 4.0], [-1.7, 0.3, 4.0], [0, 0.6, 4.0], [0, 1.4, 3.6]];
   function taxiCheck() {
     const s = flight.s;
-    if (!s.onGround || s.crashed || Math.hypot(s.vel[0], s.vel[2]) < 0.3) return;
+    if (!s.onGround || s.crashed || Math.hypot(s.vel[0], s.vel[2]) < 0.02) return;
     for (const p of PROBES) {
       v1.set(p[0], p[1], p[2]); live.root.localToWorld(v1);
       const [fx, fz] = ctx.toFrame(v1.x, v1.z), h = v1.y - L.G;
@@ -414,7 +474,7 @@ export function createFlyMode(ctx) {
     const r = flight.key(e.code, e.shiftKey);
     if (!r) return false;
     if (r.kind === 'checklist' && r.ok === false && fh) fh.flashChecklist(r.text);
-    else if (r.text) toast(r.text, r.kind === 'atc' ? 4200 : 2400);
+    else if (r.text && !(r.kind === 'atc' && fh)) toast(r.text, r.kind === 'atc' ? 4200 : 2400);
     if (r.kind === 'action' && audio.click) audio.click();
     e.preventDefault();
     return true;
@@ -432,7 +492,7 @@ export function createFlyMode(ctx) {
   return {
     flight, live, cockpit,
     get active() { return active; }, get phase() { return phase; }, get view() { return view; }, get talking() { return talkOn; },
-    get debrief() { return debriefShown; }, get runner() { return runner; },
+    get debrief() { return debriefShown; }, get runner() { return runner; }, get fading() { return fading; },
     board, leave, setView, update, key, draw2D, canExit,
     actOn(id, dir = 1, wheel = false) { const c = cockpit.controls.find(x => x.id === id); if (!c) return null; const d = c.act(dir, wheel); applyAct(d); return d; },
     beginLesson, retry, freeFromHere,

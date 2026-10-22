@@ -779,7 +779,7 @@ export function buildCockpit(FL, A, opts = {}) {
     add(at(cylX(0.0105, 0.07, 16), [x, py - 0.073, pz + 0.025]), S.black, 'brake');
     label('PARK BRAKE', [x, PBOT - 0.012, PZ + 0.0002], { size: 1.5, wmm: 24 });
     // (aimed at its right end: the left one goes behind the yoke's horn as soon as the yoke comes back a little)
-    control({ id: 'parkBrake', label: 'パーキング ブレーキ', kind: 'lever', part: 'brake', size: [0.085, 0.035, 0.04], pos: [x, py - 0.073, pz + 0.025], aim: [x + 0.023, py - 0.073, pz + 0.025], act: () => flight('parkBrake') });
+    control({ id: 'parkBrake', label: 'パーキングブレーキ', kind: 'lever', part: 'brake', size: [0.085, 0.035, 0.04], pos: [x, py - 0.073, pz + 0.025], aim: [x + 0.023, py - 0.073, pz + 0.025], act: () => flight('parkBrake') });
   }
 
   // ============================================================ the yokes

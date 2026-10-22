@@ -4,8 +4,7 @@
 // 'fly' (arg 'intro' | 'basic' | 'precision' | 'free' | 'leave'); the game acts on it when the talk ends.
 // In flight the instructor speaks the lesson's own instructions (FLIGHT LAB's school) through flightLine(), which says
 // the controls' names instead of the keyboard keys, and comments on the result with debriefLine().
-import { INSTRUCTOR } from './instructor.js';
-import { speakable } from './instructor.js';
+import { INSTRUCTOR, speakable, polite } from './instructor.js';
 
 const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' } };
 export const COCKPIT_FLAGS = ['briefed_today'];
@@ -26,7 +25,7 @@ export function cockpitDialogs(FL, { lessonId = 'a1' } = {}) {
   B.today = say(`今日の課目は${q(lesson.title)}です。ブリーフィングのとおりにやってみましょう。`, {
     if: { flag: 'briefed_today' }, else: 'today:new', hook: { name: 'nod' }, next: 'menu' });
   B['today:new'] = say(`ブリーフィングはまだでしたね。今日の課目は${q(lesson.title)}です。飛びながら説明します。`, { next: 'menu' });
-  B.menu = say('訓練空域までの移動は省いて、課目から始められます。どうしますか。', { hook: { name: 'point', arg: 'panel' }, choices: [
+  B.menu = say('課目は、訓練空域に着いたところから始めます。どうしますか。', { hook: { name: 'point', arg: 'panel' }, choices: [
     { text: `課目を飛ぶ（${lv('intro').name}：基準がゆるやか）`, next: 'go', effects: [{ hook: 'fly', arg: 'intro' }] },
     { text: `課目を飛ぶ（${lv('basic').name}）`, next: 'go', effects: [{ hook: 'fly', arg: 'basic' }] },
     { text: `課目を飛ぶ（${lv('precision').name}：基準がきびしい）`, next: 'go', effects: [{ hook: 'fly', arg: 'precision' }] },
@@ -52,10 +51,15 @@ const KEYWORD = [
   [/(?<![A-Za-z0-9-])B\s*を押したまま/g, 'ブレーキを踏んだまま'], [/(?<![A-Za-z0-9-])B\s*を/g, 'ブレーキを'],
   [/[（(][^（）()]*\b[WASDQERFTVBGLUZX]\b[^（）()]*を(?:軽く|少し)?[^（）()]*[）)]/g, ''],   // （W を軽く）
 ];
+// said, as everything he says, with です / ます (保つ → 保ちます); a sentence that ends in an action (…10 秒観察) is
+// something to do (観察します), not a name
+const ACT_END = /(観察|確認|上昇|降下|旋回|減速|加速|離陸|着陸|接地|復唱|点検|保持)です。$/;
 export function flightLine(text) {
   let s = String(text ?? '');
   for (const [re, to] of KEYWORD) s = s.replace(re, to);
-  return speakable(s).replace(/\s+/g, ' ').trim();
+  s = speakable(s).replace(/\s+/g, ' ').trim();
+  return s.split(/(?<=[。！？])/).map(x => x.trim()).filter(Boolean)
+    .map(x => polite(/[。！？]$/.test(x) ? x : x + '。').replace(ACT_END, '$1します。')).join('');
 }
 
 // the first words after a lesson, by its result (a summary from the flight bridge's status())

@@ -42,6 +42,8 @@ import { createFlightHUD } from './ui/flight-hud.js';
 const $ = (s) => document.querySelector(s);
 const frame = () => new Promise(r => requestAnimationFrame(() => r()));
 const params = new URLSearchParams(location.search);
+// the day's wind (the METAR on the dispatch board, the windsock, the flights from the apron)
+const DAY_WIND = { fromDeg: 330, kt: 8 };
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function bootMsg(text, k) { $('#bootMsg').textContent = text; if (k != null) $('#bootBar').style.width = `${Math.round(k * 100)}%`; }
@@ -258,6 +260,7 @@ async function boot() {
     for (const k of Object.keys(talkState)) delete talkState[k];
     Object.assign(talkState, fresh);
     saved.clear();
+    if (fly) for (const k of ['flightlab-records-v2', 'flightlab-progress-v2']) { try { fly.flight.store.removeItem(k); } catch (e) { /* storage unavailable */ } }
   }
   // the instructor's hooks
   function onHook(name, arg) {
@@ -308,7 +311,7 @@ async function boot() {
   fly = createFlyMode({
     FL, L, scene, camera, renderer, sky, input, settings, audio, toast, hud, dui, talkState, world, flightHud,
     saveTalk: () => saved.save(talkState), instructor, instructorName: INSTRUCTOR.title_ja, lessonId: 'a1',
-    stand: { a: spec.target.a, c: spec.target.c, hdgTrue: (L.R.trueHdg + 270) % 360 },
+    stand: { a: spec.target.a, c: spec.target.c, hdgTrue: (L.R.trueHdg + 270) % 360 }, wind: DAY_WIND,
     parkedToday: todayAc.root, toFrame,
     todayColliders: (on) => { for (const id of todayIds) world.setEnabled(id, on); },
     // he is in the aircraft: not in his room (no collider, nothing to talk to there)
@@ -327,6 +330,7 @@ async function boot() {
       if (then !== 'spectator' && !menu.isOpen) input.requestLock();
     },
     onTalk: (on) => { document.body.classList.toggle('talking', on); },
+    onPause: () => openMenu(),
   });
 
   // ---------------------------------------------------------------- viewpoints (the visit camera)
@@ -346,7 +350,8 @@ async function boot() {
     { id: 'dispatch', label: '運航管理', pos: V(665.5, 249.8, 1.65), look: V(675.0, 257.0, 1.3) },
   ];
   let viewIdx = 0;
-  const setView = (i) => { viewIdx = i; setMode('spectator'); const v = VIEWS[i]; spectator.setPose(v.pos, v.look); renderChips(); };
+  const outOfAircraft = () => { if (fly && fly.active) fly.leave({ instant: true, then: 'spectator' }); };
+  const setView = (i) => { viewIdx = i; outOfAircraft(); setMode('spectator'); const v = VIEWS[i]; spectator.setPose(v.pos, v.look); renderChips(); };
 
   // ---------------------------------------------------------------- modes, the menu, the HUD
   let mode = 'walk', started = false, lostAt = -1e9;
@@ -368,10 +373,10 @@ async function boot() {
   const menu = createMenu({
     root: document.body, settings, presets: ORDER.map(id => ({ id, label: PRESETS[id].label })), version: buildInfo,
     onResume: () => { input.enabled = true; if (!talk && !(fly && (fly.talking || fly.debrief))) input.requestLock(); audio.ui('close'); },
-    onQuality: (id) => setQuality(id), onMode: (m) => setMode(m), getMode: () => mode, getPreset: () => preset.id,
+    onQuality: (id) => setQuality(id), onMode: (m) => { if (!(fly && fly.fading)) setMode(m); }, getMode: () => mode, getPreset: () => preset.id,
     onResetProgress: () => resetProgress(),
   });
-  function openMenu(tab) { if (menu.isOpen) return; interactor.closeCard(); input.enabled = false; input.exitLock(); menu.open(tab); audio.ui('open'); }
+  function openMenu(tab) { if (menu.isOpen || (fly && fly.fading)) return; interactor.closeCard(); input.enabled = false; input.exitLock(); menu.open(tab); audio.ui('open'); }
   input.onLock((on) => {
     document.body.classList.toggle('locked', on);
     if (!on) {
@@ -510,7 +515,7 @@ async function boot() {
     sky.update(camera, t, focus);
     ground.update(t);
     const w = mode === 'fly' && fly ? fly.wind() : null;
-    airfield.update(t, { cameraWorld: camWorld, windFromDeg: w ? w.fromDeg : 330, windKt: w ? w.kt : 8, lightsOn: sky.state.lightsOn });
+    airfield.update(t, { cameraWorld: camWorld, windFromDeg: w ? w.fromDeg : DAY_WIND.fromDeg, windKt: w ? w.kt : DAY_WIND.kt, lightsOn: sky.state.lightsOn });
     veg.update(t, camWorld);
     pipe.render();
     stats.frames++; stats.acc += dtMs;
@@ -628,7 +633,7 @@ async function boot() {
   requestAnimationFrame(loop);
   window.__cadet = {
     ready: true, L, FL, VIEWS, spec, world, scene, camera, renderer, setView, setQuality, runBench, walkRoute, placeWalker,
-    setPose: (p, look) => { setMode('spectator'); spectator.setPose(new THREE.Vector3(...p), new THREE.Vector3(...look)); },
+    setPose: (p, look) => { outOfAircraft(); setMode('spectator'); spectator.setPose(new THREE.Vector3(...p), new THREE.Vector3(...look)); },
     setTime: (h) => { hours = h; applyTime(); }, stats: () => ({ fps: stats.fps, ...pipe.sceneInfo, all: renderer.info.render.calls, dpr: pipe.dpr, preset: preset.id, gpu, trees: veg.counts, colliders: world.count() }),
     pause: (v) => { running = !v; },
     mode: () => mode, setMode,
@@ -658,7 +663,7 @@ async function boot() {
     // flying: board (instant: no fade), the state, a lesson run by a scripted pilot exactly as FLIGHT LAB's bot.mjs runs
     // it (pilot: makeBot(FL).fly, injected by the test), the view, a cockpit control by id, getting out
     fly: {
-      board: (instant = true) => fly.board({ instant }), status: () => fly.status(),
+      board: (instant = true) => fly.board({ instant }), status: () => fly.status(), get flight() { return fly.flight; },
       runScripted: (pilot, maxSec = 900, hook) => { const L0 = fly.runScripted(pilot, maxSec, hook); return { ...fly.flight.status(), steps: Math.round(L0.t * 120) }; },
       lesson: (level = 'basic') => fly.beginLesson(level, { instant: true }),
       view: (v) => fly.setView(v), act: (id, dir = 1, wheel = false) => fly.actOn(id, dir, wheel),

@@ -608,7 +608,7 @@ const GESTURES = {
     wristL: [0, 0, 0.5, -12, 1.1, -7, 1.6, -10, 2.2, 0],
     headP: [0, 0, 0.6, -3, 1.2, 3, 1.7, 0, 2.2, 0], chestP: [0, 0, 0.6, 2, 1.5, 2, 2.2, 0] } },
   shrugS: { dur: 1.6, alias: 'shrug', ch: {
-    ...both('clav', [0, 0, 0.35, 11, 0.95, 11, 1.6, 0]), ...both('elbow', [0, 0, 0.35, 82, 0.95, 82, 1.6, 0]), ...both('abd', [0, 0, 0.35, -6, 0.95, -6, 1.6, 0]),
+    ...both('clav', [0, 0, 0.35, 11, 0.95, 11, 1.6, 0]), ...both('elbow', [0, 0, 0.35, 82, 0.95, 82, 1.6, 0]), ...both('abd', [0, 0, 0.35, -14, 0.95, -14, 1.6, 0]),
     ...both('flex', [0, 0, 0.35, -2, 0.95, -2, 1.6, 0]), ...both('pro', [0, 0, 0.35, -82, 0.95, -82, 1.6, 0]), ...both('rot', [0, 0, 0.35, 6, 0.95, 6, 1.6, 0]),
     ...both('wrist', [0, 0, 0.35, -16, 0.95, -16, 1.6, 0]),
     headR: [0, 0, 0.35, 7, 0.95, 7, 1.6, 0], headP: [0, 0, 0.35, -3, 0.95, -3, 1.6, 0] } },
@@ -662,10 +662,9 @@ const NO_OPTS = Object.freeze({});
 // points at than standing (a share of the standing turn). lift: where a gesture takes an arm from the lap (its channels
 // [flex, abd, rot, elbow, pro, wrist] before the gesture's own: the standing rest, the elbow closer in); tuck: on the way
 // up from the lap and back the elbow comes in, in front of the body (clear of an armrest at the door), by up to this much
-// at half way (radians of abduction). up / down: a pointing hand goes at most this far up, and down, from the shoulder
-// (the sine of its angle from level, in the body's frame: under a cabin roof, and over the knees rather than into them).
+// at half way (radians of abduction). (Pointing has its own: SEAT_POINT.)
 const SEAT_POSE = { hips: -16 * DEG, spine: 2 * DEG, chest: -0.5 * DEG, footPitch: 30 * DEG, turn: 0.45,
-  lift: [3 * DEG, 2 * DEG, 0, 13 * DEG, 0, 5 * DEG], tuck: 12 * DEG, up: 0.4, down: -0.35 };
+  lift: [3 * DEG, 2 * DEG, 0, 13 * DEG, 0, 5 * DEG], tuck: 12 * DEG };
 // pointing seated (in a cockpit the panel is an arm's length away and the student sits beside him): the elbow bent, the
 // forearm and the finger pointing on at the target. The upper arm goes down and forward from the shoulder, `steep`
 // below level for something near (the panel), `level` for something far away (`far`: from … to, m), and less (`lift`:
@@ -697,8 +696,9 @@ function fold(a, s) {
 // pedals (0.8 m ahead of the hips). The knees are bent about 75°, 11 cm above the hips; his eyes come to about
 // (+0.29, 0.65, −0.36), the top of his head 5 cm under the headliner. room: the door is 9 cm outside his right shoulder,
 // so that hand never reaches out past it. keepOut: the student's side — left of x = +0.05 in the aircraft's frame (5 cm
-// on his own side of the cabin's middle), above the panel's top (y 0.465) the student's head: his hands stay on his side
-// of it (low down at the panel they may cross it by a few cm, pointing at the student's PFD).
+// on his own side of the cabin's middle), above the panel's top (y 0.465) the student's head and their view of the
+// panel: his hands stay on his side of it (low down, under the PFD, a finger may cross it by up to SEAT_POINT.cross,
+// pointing at the student's PFD from below it; the student still sees the whole screen).
 // (In the seat as cockpit.js draws it the cushion and the back give 1–2 cm under him; a hip 3 cm further back, at
 // z −0.38, would sink the back of his hips 3 cm into the seat back and his head 2 cm into the headrest.)
 const ARCHER = { room: { L: 0.45, R: 0.09 }, keepOut: { x: 0.05, y: 0.465 } };   // (room: from the shoulders; keepOut: body frame)
@@ -1133,12 +1133,14 @@ export function createActor(opts = {}) {
     if (sat) neck.quaternion.premultiply(seat.neckQ);
     head.rotation.set(-0.6 * Pt + G[C_.headP] + 0.6 * nod, 0.6 * rest + G[C_.headY], G[C_.headR] + 1.2 * DEG * w2, 'YXZ');
     // arms: relaxed at the sides, plus the gesture. Seated: the hands rest on the thighs, and a gesture lifts an arm
-    // from there into its standing curves (lift; the elbow in on the way up and down); the talking beats start from the lap.
+    // from there into its standing curves (lift; the elbow in on the way up and down); the talking beats and explaining
+    // start from the lap.
     if (sat) {
       for (let i = 0; i < 2; i++) {
         const c = seat.ch[SIDES[i]], r = seat.arm[SIDES[i]], U = SEAT_POSE.lift, b = i ? C_.flexR : C_.flexL, k = clamp(G[i ? C_.liftR : C_.liftL], 0, 1);
         for (let j = 0; j < 6; j++) c[j] = lerp(r[j], U[j], k) + G[b + j];
         c[1] -= 4 * k * (1 - k) * SEAT_POSE.tuck; c[3] += lerp(0.5, 2, k) * DEG * br;
+        c[0] += 0.6 * SEAT_POINT.lean * lean; c[3] += 0.4 * SEAT_POINT.lean * lean;   // (leaning in: the hands stay on the thighs)
         poseArm(arm[SIDES[i]], c[0], c[1], c[2], c[3], c[4], c[5], G[i ? C_.clavR : C_.clavL], br);
       }
     } else {

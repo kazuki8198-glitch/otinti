@@ -41,11 +41,14 @@ export function createInteractor({ walker, world, L, hud }) {
       if (score < bestT) { bestT = score; best = t; }
     }
     if (best) {
-      // a wall in between hides it (the target's own collider does not count, nor its owner's: the aircraft's door)
+      // a wall in between hides it (the target's own collider does not count, nor its owner's where it touches the
+      // target: the aircraft's wing under its door, not the fuselage seen from the other side)
       const [tx, ty, tz] = best.frame;
-      const d = Math.hypot(tx - r.ox, ty - r.oy, tz - r.oz);
-      const hit = world.raycast(r.ox, r.oy, r.oz, (tx - r.ox) / d, (ty - r.oy) / d, (tz - r.oz) / d, d);
-      if (hit && hit.dist < d - (best.radius * 0.8) && !(hit.box && hit.box.tag && (hit.box.tag === best.id || hit.box.tag === best.owner))) best = null;
+      const d = Math.hypot(tx - r.ox, ty - r.oy, tz - r.oz), ux = (tx - r.ox) / d, uy = (ty - r.oy) / d, uz = (tz - r.oz) / d;
+      const hit = world.raycast(r.ox, r.oy, r.oz, ux, uy, uz, d);
+      const own = hit && hit.box && hit.box.tag && (hit.box.tag === best.id
+        || (hit.box.tag === best.owner && d - hit.dist < best.radius + 0.6));
+      if (hit && hit.dist < d - (best.radius * 0.8) && !own) best = null;
     }
     current = best;
     hud.prompt(current ? (typeof current.prompt === 'function' ? current.prompt() : current.prompt) : null);

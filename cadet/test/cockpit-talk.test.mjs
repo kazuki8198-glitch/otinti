@@ -59,8 +59,9 @@ test('cockpit talk: the lesson\'s instructions without keyboard keys, for every 
     }
   }
   assert.ok(n > 60, `${n} instructions`);
-  assert.equal(flightLine('W / S で高度 3,000 ft を保ち、昇降率が 0 付近になったら T。手を離して保つ'), '機首の上げ下げで高度 3,000 ft を保ち、昇降率が 0 付近になったらトリム。手を離して保つ');
-  assert.equal(flightLine('高度が 60 ft 高い：機首を 1〜2° 下げる（W を軽く）'), '高度が 60 ft 高い：機首を 1〜2° 下げる');
+  assert.equal(flightLine('W / S で高度 3,000 ft を保ち、昇降率が 0 付近になったら T。手を離して保つ'), '機首の上げ下げで高度 3,000 ft を保ち、昇降率が 0 付近になったらトリム。手を離して保ちます。');
+  assert.equal(flightLine('高度が 60 ft 高い：機首を 1〜2° 下げる（W を軽く）'), '高度が 60 ft 高い：機首を 1〜2° 下げます。');
+  assert.equal(flightLine('何も操作せず、PFD の姿勢表示・速度・高度・昇降率がどう動くか 10 秒観察'), '何も操作せず、PFD の姿勢表示・速度・高度・昇降率がどう動くか 10 秒観察します。');
 });
 
 test('cockpit talk: the first words after a lesson', () => {

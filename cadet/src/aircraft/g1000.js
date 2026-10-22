@@ -8,6 +8,7 @@
 // The canvases come from a factory (opts.makeCanvas), so the cockpit also builds without a DOM (tests): no factory,
 // no drawing. Generic bezels, no maker's name or logo ("G1000 型").
 import * as THREE from 'three';
+import { panelText } from '../ui/flight-hud.js';
 
 const DEG = Math.PI / 180;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -82,6 +83,11 @@ export function createGlass(FL, makeCanvas) {
     const cv = makeCanvas ? makeCanvas(w, h) : null;
     if (!cv) return null;
     const g = cv.getContext('2d');
+    // FLIGHT LAB's screens carry its own notes (教材・未実装); the aircraft's screens say what the aircraft would
+    if (g && typeof g.fillText === 'function') {
+      const fill = g.fillText;
+      g.fillText = function (s, x, y, mw) { s = panelText(s); return mw === undefined ? fill.call(this, s, x, y) : fill.call(this, s, x, y, mw); };
+    }
     g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
     return { canvas: cv, g, texture: canvasTex(cv, mips), w, h };
   };

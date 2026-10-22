@@ -7,7 +7,9 @@
 //  - update() works on the same objects every frame (no per-frame allocation);
 //  - seated in the Archer's right seat (setSeated, SEATED_PA28, seatFromBody): the hips and ankles where they were put,
 //    knees up, hands on the thighs, looking round at the student; every gesture plays seated, keeps clear of the door
-//    and the roof, and ends in the seated rest; standing up again is exactly standing.
+//    and the roof, and ends in the seated rest; explaining is a small movement over the lap; pointing at the student's
+//    side of the panel is done low, the elbow bent, with the nearer (left) arm, never up in front of the student's face
+//    nor over the PFD as the student sees it; standing up again is exactly standing.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
@@ -419,6 +421,20 @@ const palm = (a, L) => world(a, 'hand' + L, [0, -0.06, 0]), tip = (a, L) => worl
 const ARM_R = [0.04, 0.034, 0.025, 0.018, 0.01];
 const armPts = (a, L) => { const el = world(a, 'forearm' + L), wr = world(a, 'hand' + L); return [el, mid(el, wr), wr, palm(a, L), tip(a, L)]; };
 const armInto = (a, L) => Math.max(...armPts(a, L).map((p, i) => intoCabin(p, ARM_R[i])));
+// the student's side above the panel (left of 5 cm short of the cabin's middle, above the panel's top: their head and
+// what they look at): how far a point of an arm (radius r) goes into it (m)
+const intoStudent = (p, r) => Math.min(0.05 - (p.x - r), p.y + r - 0.465);
+// the PFD's screen as cockpit.js draws it (x, y at z −1.0825); whether a point of an arm (radius r) hides part of it from
+// the student's eye
+const PFD_SCREEN = { x: [-0.405, -0.195], y: [0.2995, 0.4308], z: -1.0825 };
+function hidesPFD(p, r) {
+  const k = (PFD_SCREEN.z - PILOT_EYE.z) / (p.z - PILOT_EYE.z);
+  if (!(k > 1)) return false;                                              // (not between the eye and the screen)
+  const x = PILOT_EYE.x + (p.x - PILOT_EYE.x) * k, y = PILOT_EYE.y + (p.y - PILOT_EYE.y) * k, rr = r * k;
+  return x > PFD_SCREEN.x[0] - rr && x < PFD_SCREEN.x[1] + rr && y > PFD_SCREEN.y[0] - rr && y < PFD_SCREEN.y[1] + rr;
+}
+// the upper arm too (the shoulder to the elbow), with its radius
+const armPts2 = (a, L) => { const sh = world(a, 'upperArm' + L); return [[sh, 0.05], [mid(sh, world(a, 'forearm' + L)), 0.045], ...armPts(a, L).map((p, i) => [p, ARM_R[i]])]; };
 
 test('actor: seated in the Archer\'s right seat — hips on the seat, feet on the pedals, hands on the thighs', () => {
   const a = seatedActor(), cfg = SEATED_PA28.seat, v = (p) => new THREE.Vector3(...p);
@@ -507,17 +523,20 @@ test('actor: seated, every gesture plays, keeps clear of the door and the roof, 
     const dur = a.gesture(name);
     assert.ok(dur > 0.5 && dur < 4, `${name}: ${dur} s`);
     assert.equal(a.gesturing, name);
-    let moved = 0, lift = 0, into = -9, pilot = 9;
+    const lap = { L: palm(a, 'L'), R: palm(a, 'R') };
+    let moved = 0, lift = 0, reach = 0, into = -9, pilot = 9;
     for (let t = 0; t < dur; t += DT) {
       a.update(DT, { lookAt: PILOT_EYE }); b.update(DT, { lookAt: PILOT_EYE });
       for (const n of BONES) moved = Math.max(moved, angleTo(a.bones[n].quaternion, b.bones[n].quaternion));
       for (const L of SIDES2) {
-        lift = Math.max(lift, palm(a, L).y - rest[L]); into = Math.max(into, armInto(a, L));
+        lift = Math.max(lift, palm(a, L).y - rest[L]); reach = Math.max(reach, palm(a, L).distanceTo(lap[L])); into = Math.max(into, armInto(a, L));
         for (const p of armPts(a, L)) pilot = Math.min(pilot, p.distanceTo(PILOT_EYE));
       }
     }
     assert.ok(moved > 6 * DEG, `${name}: hardly moved (${(moved / DEG).toFixed(1)}°)`);
-    if (name !== 'nod') assert.ok(lift > 0.12, `${name}: the hands hardly leave the lap (${lift.toFixed(3)} m)`);
+    // (explaining seated is a small movement of the open hands over the lap, not an arm raised in the cabin)
+    if (name === 'explain') assert.ok(lift > 0.05 && reach < 0.16, `explain: the hands go ${lift.toFixed(3)} m up, ${reach.toFixed(3)} m off the lap`);
+    else if (name !== 'nod') assert.ok(lift > 0.12, `${name}: the hands hardly leave the lap (${lift.toFixed(3)} m)`);
     assert.ok(into < 0.01, `${name}: an arm goes ${(into * 100).toFixed(1)} cm into the door, the armrest or the headliner`);
     assert.ok(pilot > 0.3, `${name}: a hand ${pilot.toFixed(3)} m from the student's eye`);
     run(a, 3, { lookAt: PILOT_EYE }); run(b, 3, { lookAt: PILOT_EYE });
@@ -543,25 +562,72 @@ test('actor: seated, every gesture plays, keeps clear of the door and the roof, 
 });
 
 test('actor: seated, point takes the student\'s side of the panel with the left arm; the door side stays in', () => {
-  const upper = (a, L) => { const sh = world(a, 'upperArm' + L); return { sh, dir: world(a, 'forearm' + L).sub(sh).normalize() }; };
-  // the student's PFD (ahead to his left): the left arm, straight at it; the right hand stays on the lap
-  { const a = seatedActor(); run(a, 0.5, { lookAt: PILOT_EYE });
-    const pfd = new THREE.Vector3(-0.30, 0.34, -1.10), lap = palm(a, 'R');
+  // the whole gesture (up from the lap, held, back down), seen by the student: the nearest an arm comes to their eye,
+  // how far into their head space and into the cabin, whether it hides the PFD, the most a fingertip or an elbow moves in
+  // one frame
+  const watch = (a, o = {}) => {
+    const w = { pilot: 9, head: -9, into: -9, hides: false, jump: 0 }, last = {};
+    for (let t = 0; t < 3.2; t += DT) {
+      a.update(DT, o);
+      for (const L of SIDES2) {
+        armPts2(a, L).forEach(([p, r], i) => {
+          w.pilot = Math.min(w.pilot, p.distanceTo(PILOT_EYE) - r); w.hides ||= hidesPFD(p, r);
+          if (i > 0) w.head = Math.max(w.head, intoStudent(p, r));             // (from the upper arm's middle on: the shoulder is his own)
+        });
+        w.into = Math.max(w.into, armInto(a, L));
+        const el = world(a, 'forearm' + L), tp = tip(a, L);
+        if (last[L]) w.jump = Math.max(w.jump, el.distanceTo(last[L][0]), tp.distanceTo(last[L][1]));
+        last[L] = [el, tp];
+      }
+    }
+    return w;
+  };
+  const clear = (what, w) => {
+    assert.ok(w.pilot > 0.3, `${what}: an arm comes ${w.pilot.toFixed(3)} m from the student's eye`);
+    assert.ok(w.head < -0.03, `${what}: an arm goes ${(w.head * 100).toFixed(1)} cm into the student's side above the panel`);
+    assert.ok(!w.hides, `${what}: an arm hides the PFD from the student`);
+    assert.ok(w.into < 0.01, `${what}: an arm goes ${(w.into * 100).toFixed(1)} cm into the door, the armrest or the headliner`);
+    assert.ok(w.jump < 0.05, `${what}: a hand or an elbow jumps ${(w.jump * 100).toFixed(1)} cm in one frame`);
+  };
+  // the student's PFD (ahead to his left): the left arm, low, the elbow bent, the finger on at it from his own side of the
+  // panel (short of the screen); the right hand stays on the lap
+  for (const place of [SEATED_PA28, seatFromBody({ hip: [0.29, -0.03, -0.38], ankleL: [0.21, -0.25, -1.06], ankleR: [0.39, -0.25, -1.06] })]) {
+    const a = seatedActor(1, place); run(a, 0.5, { lookAt: PILOT_EYE });
+    const pfd = new THREE.Vector3(-0.30, 0.365, -1.0825), lap = palm(a, 'R');
     a.pointAt(pfd); a.gesture('point'); run(a, 1.2, { lookAt: PILOT_EYE });
-    const { sh, dir } = upper(a, 'L'), off = dir.angleTo(pfd.clone().sub(sh).normalize());
-    assert.ok(off < 12 * DEG, `the left arm is ${(off / DEG).toFixed(1)}° off the PFD`);
+    const sh = world(a, 'upperArmL'), el = world(a, 'forearmL'), wr = world(a, 'handL'), t = tip(a, 'L');
+    const off = t.clone().sub(wr).angleTo(pfd.clone().sub(wr)) / DEG, bend = el.clone().sub(sh).angleTo(wr.clone().sub(el)) / DEG;
+    assert.ok(off < 12, `the finger is ${off.toFixed(1)}° off the PFD`);
+    assert.ok(bend > 30 && bend < 100, `the elbow bent ${bend.toFixed(1)}°`);
+    assert.ok(el.y < sh.y - 0.12 && wr.y < 0.35 && t.y < 0.4, `low: the elbow ${(sh.y - el.y).toFixed(3)} m under the shoulder, the wrist at y ${wr.y.toFixed(3)}, the fingertip at ${t.y.toFixed(3)}`);
+    assert.ok(t.x > PFD_SCREEN.x[1] + 0.03 && t.distanceTo(pfd) > 0.15, `the fingertip short of the PFD (${t.toArray().map(x => x.toFixed(3))})`);
     assert.ok(palm(a, 'R').distanceTo(lap) < 0.03, 'the right hand stays on the lap');
-    assert.notEqual(a.meshes.find(m => m.name === 'actor-handL').geometry, a.meshes.find(m => m.name === 'actor-handR').geometry, 'the finger is out'); }
-  // out of the right window, up at the sky, down at the pedals, and nowhere in particular: inside the cabin, ahead
-  for (const [what, t] of [['right', [4, 0.2, -1.5]], ['behind right', [3, 0.5, 2]], ['up', [0.3, 5, -2]], ['pedals', [0.3, -0.27, -1.21]], ['default', null]]) {
+    assert.notEqual(a.meshes.find(m => m.name === 'actor-handL').geometry, a.meshes.find(m => m.name === 'actor-handR').geometry, 'the finger is out');
+    const b = seatedActor(1, place); run(b, 0.5, { lookAt: PILOT_EYE }); b.pointAt(pfd); b.gesture('point');
+    clear('the PFD', watch(b, { lookAt: PILOT_EYE }));
+  }
+  // the student's left rudder pedal: the left arm, down between the knees towards it
+  { const a = seatedActor(); run(a, 0.5, { lookAt: PILOT_EYE });
+    const pedal = new THREE.Vector3(-0.39, -0.27, -1.21);
+    a.pointAt(pedal); a.gesture('point'); run(a, 1.2, { lookAt: PILOT_EYE });
+    const wr = world(a, 'handL'), t = tip(a, 'L'), off = t.clone().sub(wr).angleTo(pedal.clone().sub(wr)) / DEG;
+    assert.ok(off < 15 && t.y < 0.2, `the pedal: the finger ${off.toFixed(1)}° off, the fingertip at y ${t.y.toFixed(3)}`);
+    const b = seatedActor(); run(b, 0.5, { lookAt: PILOT_EYE }); b.pointAt(pedal); b.gesture('point');
+    clear('the pedal', watch(b, { lookAt: PILOT_EYE })); }
+  // out of the right window, up at the sky, down at his own pedals, behind him between the seats, out of the student's
+  // window, and nowhere in particular: inside the cabin, out of the student's way, ahead; no jumps
+  for (const [what, t] of [['right', [4, 0.2, -1.5]], ['behind right', [3, 0.5, 2]], ['up', [0.3, 5, -2]], ['pedals', [0.3, -0.27, -1.21]], ['between the seats', [0, 0, 0]],
+    ['left', [-4, 0.3, -1]], ['default', null]]) {
+    for (const o of [{}, { lookAt: PILOT_EYE }]) {
+      const a = seatedActor(); run(a, 0.5, o);
+      a.pointAt(t ? new THREE.Vector3(...t) : null); a.gesture('point');
+      clear(what, watch(a, o));
+    }
     const a = seatedActor(); run(a, 0.5);
-    a.pointAt(t ? new THREE.Vector3(...t) : null); a.gesture('point');
-    let into = -9;
-    for (let k = 0; k < 90; k++) { a.update(DT); for (const L of SIDES2) into = Math.max(into, armInto(a, L)); }
-    assert.ok(into < 0.01, `${what}: an arm goes ${(into * 100).toFixed(1)} cm into the door, the armrest or the headliner`);
+    a.pointAt(t ? new THREE.Vector3(...t) : null); a.gesture('point'); run(a, 1.2);
     const side = a.meshes.find(m => m.name === 'actor-handL').geometry === a.meshes.find(m => m.name === 'actor-handR').geometry ? null : 'R';
-    const { sh, dir } = upper(a, 'R');
-    if (what !== 'pedals' && what !== 'behind right') assert.ok(side === 'R' && dir.z < -0.6, `${what}: the right arm points ahead (${dir.toArray().map(x => x.toFixed(2))})`);
+    const sh = world(a, 'upperArmR'), dir = world(a, 'forearmR').sub(sh).normalize();
+    if (['right', 'up', 'default'].includes(what)) assert.ok(side === 'R' && dir.z < -0.6, `${what}: the right arm points ahead (${dir.toArray().map(x => x.toFixed(2))})`);
     assert.ok(tip(a, 'R').z < sh.z, `${what}: the hand stays in front of the shoulder`);
   }
 });

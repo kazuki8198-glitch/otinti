@@ -5,9 +5,10 @@
 //  - the gauges and the progress line read genuine status() objects (a1 through the bridge: FLIGHT LAB's bot, and the
 //    realtime path the game feeds the HUD from, hands off): the needle, the bands, the arrow, the time left, the hold
 //    and its bar, no red before the graded window opens, red when the hold drops back to 0 inside it;
-//  - the debrief card for a pass (S), a fail (C, the nose held up), a stopped lesson and a free flight that ended in a
-//    crash: the grade, the words, the counts, the advice;
-//  - the big G1000's canvas: 640 logical wide, the height kept between 376 and 544.
+//  - the debrief card for a pass (S), a fail (C, the nose held up), a stopped lesson, a lesson that ended in a crash
+//    and a free flight that did: the grade, the words, the counts, the advice;
+//  - the big G1000's canvas: 640 logical wide, the height kept between 376 and 544; FLIGHT LAB's own PFD and MFD drawn
+//    on it say nothing of teaching material or of what is not modelled (the disclaimers stay).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -16,7 +17,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { makeBot } from '../../flight-lab/test/bot.mjs';
 import { createFlight } from '../src/flight/flight.js';
-import { parseKeys, gaugeOf, progressOf, advice, adviceTips, debriefOf, fitCanvas, LW } from '../src/ui/flight-hud.js';
+import { parseKeys, gaugeOf, progressOf, advice, adviceTips, debriefOf, fitCanvas, panelText, LW } from '../src/ui/flight-hud.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const FLSRC = path.join(here, '../../flight-lab/src');
@@ -108,7 +109,7 @@ test('gauges and progress from genuine status(): a1 step 0, step 1 before and in
   assert.equal(gaugeOf({ key: 'spd', label: '速度', unit: 'kt', tv: 100, d: -0.4, tol: 10 }).dev, '0');
 });
 
-test('the debrief card: pass S, fail C, stopped, a free flight that crashed', () => {
+test('the debrief card: pass S, fail C, stopped, a lesson and a free flight that crashed', () => {
   const pass = debriefOf(flyA1().status());
   assert.deepEqual([pass.grade, pass.status, pass.cls, pass.okN, pass.rowsN, pass.stepsDone, pass.stepsN, pass.time, pass.tips.length, pass.tipNone],
     ['S', '合格', 'ok g-s', 2, 2, 2, 2, '0:38', 0, '']);
@@ -128,6 +129,10 @@ test('the debrief card: pass S, fail C, stopped, a free flight that crashed', ()
   fr.crash('地上の障害物に接触しました');
   const fd = debriefOf(fr.status());
   assert.deepEqual([fd.free, fd.grade, fd.status, fd.cls, fd.sub, fd.time, fd.results.length], [true, '―', '損傷', 'ng', '理由：地上の障害物に接触しました', '0:03', 0]);
+  // a lesson that ends in a crash (a1, the nose down at idle into the ground): damaged, not "stopped"; no advice for it
+  const cr = flyRT(() => false, (L) => { L.s.pTgt = -20; L.s.thr = 0; }), cs = cr.status(), cd = debriefOf(cs);
+  assert.equal(cs.crashed, true); assert.ok(cs.reason.length > 0);
+  assert.deepEqual([cd.free, cd.grade, cd.status, cd.cls, cd.sub, cd.tips.length, cd.tipNone, cd.bad], [false, '―', '損傷', 'ng', `理由：${cs.reason}`, 0, '', '']);
 });
 
 test('the big G1000: 640 logical wide, the height between 376 and 544, the backing store at the device pixel ratio', () => {
@@ -137,4 +142,26 @@ test('the big G1000: 640 logical wide, the height between 376 and 544, the backi
   assert.deepEqual(cv.g.m, [1200 / 640, 0, 0, 750 / 400, 0, 0]);
   r = fitCanvas(cv, { width: 600, height: 200 }); assert.equal(r.H, 376);
   r = fitCanvas(cv, { width: 600, height: 900 }); assert.equal(r.H, 544);
+});
+
+test('the big G1000 in the aircraft: FLIGHT LAB\'s PFD and MFD drawn through fitCanvas say nothing of 教材 or 未実装', () => {
+  // a canvas whose context records the text drawn (every other call does nothing)
+  const texts = [], noop = () => {};
+  const base = { fillText: (s) => texts.push(String(s)), measureText: (s) => ({ width: String(s).length * 6 }), createLinearGradient: () => ({ addColorStop: noop }), createRadialGradient: () => ({ addColorStop: noop }) };
+  const g = new Proxy(base, { get: (t, k) => (k in t ? t[k] : typeof k === 'string' ? noop : undefined), set: (t, k, v) => { t[k] = v; return true; } });
+  const cv = { width: 0, height: 0, getContext: () => g };
+  const f = flyA1(L => L.step === 1 && L.st.t > 3), s = f.s, P = FL.physics, AV = FL.avionics;
+  const d = { o: { ...s.out, onGround: s.onGround }, av: f.av, nav: AV.navSolve(f.av, P.ne(s), s.out, P.MAGVAR_W, P.LAB_RWY), varW: P.MAGVAR_W, qnh: s.qnh,
+    eng: s.eng.map(e => ({ run: e.run, rpm: e.rpm, feather: e.feather })), V: s.A.v, fuelCap: s.A.fuelCap, pos: P.ne(s) };
+  const draw = (fn) => { const a = fitCanvas(cv, { width: 640, height: 400 }); fn(a.g, a.W, a.H, d); };
+  draw(AV.drawPFD); draw(AV.drawMFD); f.av.mfdPage = 'FPL'; draw(AV.drawMFD);
+  assert.ok(texts.length > 100, `${texts.length} texts`);
+  const meta = texts.filter(t => /教材|未実装|シミュレータ/.test(t));
+  assert.deepEqual(meta, []);
+  assert.ok(texts.some(t => /^G1000型 · NOT FOR NAVIGATION$/.test(t)) && texts.some(t => /架空訓練点 · NOT FOR NAVIGATION/.test(t)), 'the disclaimers stay');
+  assert.ok(texts.includes('STBY 予備') && texts.includes('ACTIVE FLIGHT PLAN'));
+  // without the context: the same rewriting, a text without those words is the same string
+  assert.equal(panelText('飛行計画は教材用の架空訓練点です。実際の飛行計画には使えません。'), '飛行計画は架空の訓練点です。実際の飛行計画には使えません。');
+  assert.equal(panelText('— = 未実装（架空値は出しません）'), '');
+  const plain = 'HDG 090°'; assert.equal(panelText(plain), plain); assert.equal(panelText(42), 42);
 });

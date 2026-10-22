@@ -252,17 +252,23 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.equal((await ev(() => window.__cadet.fly.status())).debrief, true);
     const card = await ev(() => document.body.innerText);
     assert.ok(/課目の結果/.test(card) && /合格/.test(card) && /姿勢・出力・トリム（基礎）/.test(card), card);
-    // FLIGHT LAB's scripted pilot (bot.mjs) through the same bridge, in the page: bit for bit FLIGHT LAB's run in node
-    await ev((src) => { (0, eval)(src + '\nwindow.makeBot = makeBot;'); }, BOT_SRC);
+    // FLIGHT LAB's scripted pilot (bot.mjs) through the same bridge, in the page: bit for bit FLIGHT LAB's own loop
+    // (bot.mjs runLesson) in the same page; and the same grade, score and time as in node (another JavaScript engine
+    // may round a sine or a power differently in the last bit, so the positions are compared to the millimetre there)
+    await ev((src) => { (0, eval)(src + '\nwindow.makeBot = makeBot; window.runLesson = runLesson;'); }, BOT_SRC);
     for (const [lv, hook] of [['intro', ''], ['basic', ''], ['precision', ''], ['basic', 'noseUp']]) {
-      const got = await ev(({ lv, hook }) => {
+      const { got, lab } = await ev(({ lv, hook }) => {
         const C = window.__cadet, h = hook === 'noseUp' ? (L) => { if (L.step === 1 && L.st.t < 15) L.s.pTgt = 5; } : undefined;
+        const pick = (L) => ({ grade: L.grade, passed: L.passed, score: L.score, t: L.t, pos: L.s.pos, q: L.s.q, rows: L.results });
         C.fly.lesson(lv);
-        const r = C.fly.runScripted(window.makeBot(C.FL).fly, 900, h), L = C.fly.flight.L;
-        return { grade: r.grade, score: r.score, t: L.t, pos: L.s.pos, rows: L.results };
+        C.fly.runScripted(window.makeBot(C.FL).fly, 900, h);
+        return { got: pick(C.fly.flight.L), lab: pick(window.runLesson(C.FL, 'a1', lv, 900, h)) };
       }, { lv, hook });
+      assert.deepEqual(got, lab, `a1 ${lv} ${hook}: CADET and FLIGHT LAB in the same page`);
       const ref = runLesson(FL, 'a1', lv, 900, hook === 'noseUp' ? (L) => { if (L.step === 1 && L.st.t < 15) L.s.pTgt = 5; } : undefined);
-      assert.deepEqual(got, { grade: ref.grade, score: ref.score, t: ref.t, pos: ref.s.pos, rows: ref.results }, `a1 ${lv} ${hook}`);
+      assert.deepEqual([got.grade, got.passed, got.score.toFixed(6), got.t.toFixed(3)], [ref.grade, ref.passed, ref.score.toFixed(6), ref.t.toFixed(3)], `a1 ${lv} ${hook}: as in node`);
+      assert.deepEqual(got.rows.flatMap(r => r.rows.map(x => [x.name, x.val, x.pass])), ref.results.flatMap(r => r.rows.map(x => [x.name, x.val, x.pass])), `a1 ${lv} ${hook}: the rows as in node`);
+      for (let i = 0; i < 3; i++) assert.ok(Math.abs(got.pos[i] - ref.s.pos[i]) < 1e-3, `a1 ${lv} ${hook}: position ${got.pos} vs ${ref.s.pos}`);
     }
     await g.page.waitForTimeout(900);
     await ev(() => window.__cadet.simulate(0.1));

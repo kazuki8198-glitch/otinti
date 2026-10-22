@@ -188,7 +188,7 @@ async function boot() {
   // comes later)
   {
     const AR = FL.physics.AIRCRAFT.find(a => a.id === 'pa28'), v = AR.v, tg = spec.target;
-    interactor.add({ id: 'aircraft:board', frame: [tg.c, 1.25, -(tg.a + 1.0)], radius: 0.9, prompt: '乗り込む', use: () => (fly ? fly.board() : null) });
+    interactor.add({ id: 'aircraft:board', owner: 'aircraft:today', frame: [tg.c, 1.25, -(tg.a + 1.0)], radius: 0.9, prompt: '乗り込む', use: () => (fly ? fly.board() : null) });
     interactor.add({
       id: 'aircraft:today', frame: [tg.c - 3.2, 1.0, -tg.a], radius: 1.0, prompt: '今日の機体を見る',
       use: () => {
@@ -410,6 +410,8 @@ async function boot() {
     if (k === 'volume') audio.setVolume(v);
     if (k === 'fov') { camera.fov = v; camera.updateProjectionMatrix(); }          // at once, in either mode
     if (k === 'showPerf') $('#perf').style.display = v ? '' : 'none';
+    // the auto rudder, changed in the menu while flying: as U would (FLIGHT LAB's action, which also keeps the setting)
+    if (k === 'autoRud' && fly && fly.active && fly.flight.s && !!fly.flight.s.opts.autoRud !== !!v) fly.flight.action('autoRud');
   });
   $('#perf').style.display = settings.get('showPerf') ? '' : 'none';
 
@@ -660,6 +662,7 @@ async function boot() {
       runScripted: (pilot, maxSec = 900, hook) => { const L0 = fly.runScripted(pilot, maxSec, hook); return { ...fly.flight.status(), steps: Math.round(L0.t * 120) }; },
       lesson: (level = 'basic') => fly.beginLesson(level, { instant: true }),
       view: (v) => fly.setView(v), act: (id, dir = 1, wheel = false) => fly.actOn(id, dir, wheel),
+      look: (yawDeg, pitchDeg) => fly.look(yawDeg, pitchDeg), zoom: (on) => fly.setZoom(on),
       leave: () => fly.leave({ instant: true }), controls: () => fly.cockpit.controls.map(c => ({ id: c.id, label: c.label, kind: c.kind })),
       pose: () => { const r = fly.live.root; return { pos: r.position.toArray(), q: r.quaternion.toArray(), cam: camera.position.toArray(), fov: camera.fov }; },
     },

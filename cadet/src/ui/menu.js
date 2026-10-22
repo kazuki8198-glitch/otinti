@@ -30,6 +30,7 @@ const CSS = `
 #menu table { width: 100%; border-collapse: collapse; font-size: 14px; }
 #menu td { padding: 7px 4px; border-bottom: 1px solid rgba(255,255,255,.07); vertical-align: top; }
 #menu td:first-child { white-space: nowrap; color: var(--ink-dim); width: 40%; }
+#menu h3 { margin: 16px 0 6px; font-size: 14px; color: var(--ink-dim); font-weight: 600; letter-spacing: .04em; }
 #menu .m-note { margin-top: 12px; font-size: 12px; color: var(--ink-dim); line-height: 1.7; }
 #menu p { line-height: 1.75; font-size: 14px; }
 `;
@@ -63,6 +64,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         + `<div class="m-row"><span>画質</span><span></span><div class="m-chips" style="grid-column:1/-1">${presets.map(p => `<button data-quality="${p.id}" aria-pressed="${(v.quality || getPreset()) === p.id}">${esc(p.label)}${!v.quality && getPreset() === p.id ? '（自動）' : ''}</button>`).join('')}</div><small>最初は GPU に合わせて自動で選びます。カクつくときは下げてください</small></div>`
         + range('textSpeed', '字幕の速さ', 0.5, 3, 0.25, x => `×${x.toFixed(2)}`, '会話の文字が出る速さ')
         + sw('voice', '教官の声（読み上げ）', 'ブラウザの音声合成で教官の台詞を読み上げます（日本語の声がある場合）')
+        + sw('autoRud', '自動ラダー', 'ON：ボールを自動で中央に保ちます。飛んでいる間は U で切り替え')
         + sw('showPerf', '性能の表示', 'fps・描画回数・三角形の数を右上に表示');
     }
     if (tab === 'keys') {
@@ -72,7 +74,17 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         <tr><td>会話中</td><td>クリック・Space・Enter で次へ。1〜9 か ↑↓ と Enter で選ぶ。Esc で教科書を閉じる。話を切り上げるときは「また後で来ます」（説明を聞き終えたあとは「準備に向かいます」）</td></tr>
         <tr><td>Esc</td><td>一時停止（このメニュー）</td></tr><tr><td>F</td><td>性能の表示</td></tr>
         <tr><td>見学モード</td><td>WASD・Space（上）・C（下）・G（地面に立つ）・1〜9・0（視点）・[ ]（時刻）</td></tr></table>
-        <p class="m-note">操縦（W / S ピッチ・A / D ロール・Q / E ラダー・R / F スロットル など、FLIGHT LAB と同じキー）は、操縦席に座ってから使います（これから作ります）。</p>`;
+        <h3>操縦席で（FLIGHT LAB と同じキー）</h3>
+        <table>
+        <tr><td>W / S</td><td>機首を下げる / 上げる（離すとその姿勢を保つ）</td></tr><tr><td>A / D</td><td>左右に傾ける（離すとその傾きを保つ）</td></tr>
+        <tr><td>Q / E</td><td>ラダー（地上では前輪の向き）</td></tr><tr><td>R / F</td><td>スロットル（Shift+R で全開・Shift+F でアイドル）</td></tr>
+        <tr><td>T</td><td>いまの速度でトリム（Shift+T で戻す）</td></tr><tr><td>V / Shift+V</td><td>フラップを下げる / 上げる</td></tr>
+        <tr><td>B / Space（押したまま）</td><td>ブレーキ</td></tr><tr><td>Shift+B</td><td>パーキングブレーキ（かける・外す）</td></tr>
+        <tr><td>U</td><td>自動ラダー</td></tr><tr><td>L</td><td>翼を水平に戻す（自由飛行だけ）</td></tr>
+        <tr><td>Enter / 1〜3</td><td>チェックリストを進める / 無線の復唱を選ぶ</td></tr>
+        <tr><td>マウス</td><td>見回す。右ボタンを押したままで近くを見る</td></tr><tr><td>左クリック / ホイール</td><td>照準の先のスイッチ・レバー・つまみを操作する</td></tr>
+        <tr><td>C</td><td>操縦席 ⇄ 外からの視点</td></tr><tr><td>Tab</td><td>画面の計器盤（PFD・MFD）</td></tr><tr><td>H</td><td>操作の説明</td></tr></table>
+        <p class="m-note">ゲームパッドも使えます（FLIGHT LAB と同じ配置）。</p>`;
     }
     return `<p><b>CADET</b>（パイロット訓練生シミュレーター）${version ? ` <span class="m-val">${esc(version)}</span>` : ''}</p>
       <p>公開情報を基にした非公式のゲームです。航空会社（翔洋航空）・訓練所・人物はすべて架空です。実機訓練の代わりにはならず、航法には使えません（NOT FOR NAVIGATION）。飛行モデル・課目・教科書は FLIGHT LAB（同じリポジトリの自主学習教材）を使っています。</p>

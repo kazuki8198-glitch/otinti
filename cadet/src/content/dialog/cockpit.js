@@ -35,7 +35,7 @@ export function cockpitDialogs(FL, { lessonId = 'a1' } = {}) {
   ] });
   B.go = say('わかりました。では、訓練空域へ向かいます。', { hook: { name: 'nod' }, end: true });
   B.free = say('わかりました。エンジンをかけますね。', { next: 'free:2' });
-  B['free:2'] = say('地上では、足のペダルで向きを変えます。止まるときはブレーキです。', { hook: { name: 'point', arg: 'pedals' }, next: 'free:3' });
+  B['free:2'] = say('地上では、足のペダルで向きを変えます。止まるときはブレーキです。動き出す前に、パーキングブレーキを外してください。', { hook: { name: 'point', arg: 'pedals' }, next: 'free:3' });
   B['free:3'] = say('滑走路 36 から離陸して、場周を一周してみましょう。わからないことがあれば、いつでも聞いてください。', { hook: { name: 'look', arg: 'player' }, end: true });
   B.leave = say('わかりました。準備ができたら、また乗ってください。', { hook: { name: 'nod' }, end: true });
   return { speakers: SPEAKERS, flags: [...COCKPIT_FLAGS], hooks: [...COCKPIT_HOOKS], dialogs: { board: { start: 'seat', nodes: B } } };

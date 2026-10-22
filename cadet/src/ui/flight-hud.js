@@ -11,7 +11,7 @@
 // The left and right columns keep clear of the middle of the view and of the panel's G1000 below it. Only the
 // dialogs, the debrief, the help and the panel's fold button take the mouse; everything else lets clicks through to
 // the cockpit. update() is cheap: it writes only the nodes whose text, class or size changed. The CSS is injected once
-// and scoped under #fhud.
+// and scoped under #fhud (but for one rule: the game's toast moves up above the big G1000 while it is shown).
 const CSS = `
 #fhud { --fh-w: min(380px, 31vw); --fh-rw: min(380px, 30vw); --fh-sub-h: 0px; --p2d-h: min(44vh, calc((100vw - 240px) / 3.2));
   --fh-bg: rgba(10, 18, 28, 0.8); --fh-ok: #6fe3a0; --fh-warn: var(--warn, #ffcf5c); --fh-ng: #ff7a6b; --fh-amber: #ffb547;
@@ -24,7 +24,8 @@ const CSS = `
 
 /* ---- the hood: the windscreen dark, the panel (below the glareshield line) still in view */
 #fhud .fh-hood { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(9, 11, 14, .97) 0%, rgba(9, 11, 14, .96) 47%, rgba(9, 11, 14, .55) 54%, rgba(9, 11, 14, 0) 59%); }
-#fhud .fh-hood p { position: absolute; left: 50%; top: 24%; transform: translateX(-50%); margin: 0; width: min(520px, 60vw); text-align: center; font-size: 13px; line-height: 1.7; color: #8a949e; }
+#fhud .fh-hood p { position: absolute; left: 50%; top: 38%; transform: translateX(-50%); margin: 0; width: min(440px, calc(100vw - 2 * var(--fh-w) - 64px));
+  text-align: center; font-size: 13px; line-height: 1.7; color: #8a949e; }
 
 /* ---- the left column: the lesson (or free-flight) panel on top, the control strip at the bottom */
 #fhud .fh-left { position: absolute; left: 14px; top: 14px; bottom: 30px; width: var(--fh-w); display: flex; flex-direction: column; gap: 8px; }
@@ -62,30 +63,32 @@ const CSS = `
 #fhud .fh-gd { text-align: right; font: 700 12px var(--fh-mono); white-space: nowrap; }
 #fhud .fh-g.ok .fh-gd { color: var(--fh-ok); } #fhud .fh-g.warn .fh-gd { color: var(--fh-warn); } #fhud .fh-g.ng .fh-gd { color: var(--fh-ng); }
 #fhud .fh-prog { font-size: 12px; color: var(--ink-dim, #a9b7c6); border-radius: 6px; }
-#fhud .fh-prog.reset .fh-pt { color: var(--fh-ng); }
-#fhud .fh-prog.pre .fh-pt { color: #8fb3d6; }
+#fhud .fh-prog.reset .fh-pt, #fhud .fh-prog.reset .fh-pn { color: var(--fh-ng); }
+#fhud .fh-prog.pre .fh-pt, #fhud .fh-prog.pre .fh-pn { color: #8fb3d6; }
 #fhud .fh-prog.flash { animation: fh-flash .9s ease-out; }
 @keyframes fh-flash { 0% { background: rgba(255, 90, 80, .55); box-shadow: 0 0 0 4px rgba(255, 90, 80, .55); } 100% { background: transparent; box-shadow: 0 0 0 4px rgba(255, 90, 80, 0); } }
 #fhud .fh-bar { margin-top: 3px; height: 7px; border-radius: 4px; overflow: hidden; background: rgba(0, 0, 0, .4); }
 #fhud .fh-bar i { display: block; height: 100%; width: 0; border-radius: 4px; background: linear-gradient(90deg, #1f9e5b, var(--fh-ok)); transition: width .15s linear; }
 #fhud .fh-hint { margin-top: 6px; padding: 4px 8px; border-radius: 6px; font-size: 13px; font-weight: 700; line-height: 1.5; color: var(--fh-amber); background: rgba(255, 181, 71, .09); }
 /* when the panel does not fit its column (fitLesson): the keys' explanations go, then the guide is cut to two lines,
-   then hidden, then the keys (they are all in the key help) */
+   then hidden, then the keys (they are all in the key help), the progress line's note, a smaller instruction, and last
+   the hint (the instructor says it aloud in the subtitle as well) */
 #fhud .fh-lesson.fit1 .fh-kx { display: none; }
 #fhud .fh-lesson.fit2 .fh-guide { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-#fhud .fh-lesson.fit3 .fh-guide, #fhud .fh-lesson.fit4 .fh-keys { display: none; }
+#fhud .fh-lesson.fit3 .fh-guide, #fhud .fh-lesson.fit4 .fh-keys, #fhud .fh-lesson.fit5 .fh-pn, #fhud .fh-lesson.fit7 .fh-hint { display: none; }
+#fhud .fh-lesson.fit6 .fh-say { font-size: 13px; line-height: 1.45; margin: 2px 0 3px; }
 
 /* ---- free flight: the four numbers and the main keys */
 #fhud .fh-free .fh-sub2 { font-size: 11.5px; color: var(--ink-dim, #a9b7c6); }
 #fhud .fh-nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 6px 0; }
 #fhud .fh-num { padding: 3px 6px 4px; border-radius: 8px; background: rgba(255, 255, 255, .05); min-width: 0; }
-#fhud .fh-num small { display: block; font-size: 10.5px; color: var(--ink-dim, #a9b7c6); }
+#fhud .fh-num small { display: block; font-size: 10.5px; color: var(--ink-dim, #a9b7c6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #fhud .fh-num b { font: 700 16px/1.25 var(--fh-mono); font-variant-numeric: tabular-nums; }
 #fhud .fh-num em { font-style: normal; font-size: 10.5px; color: var(--ink-dim, #a9b7c6); margin-left: 2px; }
 #fhud .fh-where { font-size: 12px; color: #cfe0f2; margin-bottom: 5px; }
 
 /* ---- the control strip */
-#fhud .fh-strip { position: relative; width: min(300px, 100%); padding: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+#fhud .fh-strip { position: relative; width: 300px; max-width: calc(100vw - 28px); padding: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
 #fhud .fh-tile { min-width: 0; padding: 3px 7px 4px; border-radius: 8px; background: rgba(255, 255, 255, .05); }
 #fhud .fh-tk { display: flex; align-items: center; gap: 2px; white-space: nowrap; overflow: hidden; font-size: 10.5px; color: var(--ink-dim, #a9b7c6); }
 #fhud .fh-tk kbd { min-width: 14px; padding: 0 3px; font-size: 9.5px; line-height: 13px; }
@@ -144,18 +147,22 @@ const CSS = `
 #fhud .fh-disp canvas { display: block; width: 100%; height: 100%; border-radius: 4px; background: #000; }
 #fhud .fh-mid { width: 170px; display: flex; flex-direction: column; justify-content: center; }
 /* between the screens: one line per control (the screens show the rpm and the attitude themselves) */
-#fhud .fh-mid .fh-strip { width: 100%; padding: 0; grid-template-columns: 1fr; gap: 3px; background: transparent; border: 0; box-shadow: none; }
+#fhud .fh-mid .fh-strip { width: 100%; max-width: none; padding: 0; grid-template-columns: 1fr; gap: 3px; background: transparent; border: 0; box-shadow: none; }
 #fhud .fh-mid .fh-tile { display: flex; align-items: center; gap: 6px; padding: 3px 7px; }
 #fhud .fh-mid .fh-tk { flex: 0 1 auto; min-width: 0; }
 #fhud .fh-mid .fh-tv { flex: 1 0 auto; text-align: right; font-size: 12.5px; }
 #fhud .fh-mid .fh-ts, #fhud .fh-mid .fh-meter { display: none; }
 
 /* ---- the key help (H) */
-#fhud .fh-help { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(900px, calc(100vw - 28px)); max-height: calc(100% - 56px);
+/* centred in what the instructor's subtitle leaves free; the controls on the left, the other keys and the cockpit's on the
+   right (three columns on a short screen, where the explanations are left out) */
+#fhud .fh-help { position: absolute; left: 50%; top: calc(50% + var(--fh-sub-h) / 2); transform: translate(-50%, -50%); width: min(1000px, calc(100vw - 28px));
+  max-height: calc(100% - 44px - var(--fh-sub-h));
   overflow: auto; padding: 14px 18px 12px; pointer-events: auto; background: rgba(10, 18, 28, 0.92); backdrop-filter: blur(6px); }
 #fhud .fh-help h3 { margin: 0 0 2px; font-size: 16px; }
 #fhud .fh-help .fh-hs { margin: 0 0 8px; font-size: 12px; color: var(--ink-dim, #a9b7c6); }
-#fhud .fh-hcols { display: grid; grid-template-columns: 1.15fr 1fr; gap: 6px 22px; }
+#fhud .fh-hcols { display: grid; grid-template-columns: 1.15fr 1fr; grid-template-rows: auto 1fr; gap: 6px 22px; }
+#fhud .fh-hcols > :first-child { grid-row: span 2; }
 #fhud .fh-help h4 { margin: 4px 0 4px; font-size: 12.5px; color: var(--accent, #5cc8ff); letter-spacing: .04em; }
 #fhud .fh-help table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 #fhud .fh-help td { padding: 3px 4px; border-bottom: 1px solid rgba(255, 255, 255, .07); vertical-align: top; }
@@ -167,10 +174,14 @@ const CSS = `
 
 /* ---- the debrief */
 #fhud.deb .fh-left, #fhud.deb .fh-right { visibility: hidden; }
-#fhud .fh-deb { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; pointer-events: auto; background: rgba(4, 8, 14, 0.42); }
-#fhud .fh-card { display: flex; flex-direction: column; width: min(660px, 100%); max-height: 100%; overflow: auto; border-radius: 18px; background: rgba(10, 18, 28, 0.94);
+/* the card sits below the instructor's subtitle (he comments on the flight as it opens); on a short screen its body
+   scrolls and the buttons stay in view */
+#fhud .fh-deb { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; padding-top: max(16px, calc(var(--fh-sub-h) + 14px));
+  pointer-events: auto; background: rgba(4, 8, 14, 0.42); transition: padding-top .3s ease; }
+#fhud .fh-card { display: flex; flex-direction: column; width: min(660px, 100%); max-height: 100%; overflow: hidden; border-radius: 18px; background: rgba(10, 18, 28, 0.94);
   border: 1px solid var(--glass-line, rgba(255,255,255,.12)); box-shadow: 0 24px 70px rgba(0, 0, 0, .5); backdrop-filter: blur(6px); animation: fh-in .25s ease-out; }
 @keyframes fh-in { from { opacity: 0; transform: translateY(10px) scale(.98); } }
+#fhud .fh-cbody { flex: 0 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; }
 #fhud .fh-hero { display: flex; gap: 18px; align-items: center; padding: 18px 22px 10px; background: linear-gradient(135deg, rgba(20, 52, 86, .6), transparent); }
 #fhud .fh-hero > div { min-width: 0; }
 #fhud .fh-kick { font-size: 12px; letter-spacing: .14em; color: var(--accent, #5cc8ff); }
@@ -200,7 +211,7 @@ const CSS = `
 #fhud .fh-det tr.ok td:first-child { color: var(--fh-ok); } #fhud .fh-det tr.ng td:first-child { color: var(--fh-ng); } #fhud .fh-det tr.ng td { background: rgba(255, 90, 80, .06); }
 #fhud .fh-det td:last-child { color: var(--ink-dim, #a9b7c6); white-space: nowrap; }
 #fhud .fh-note { margin: 6px 22px 0; font-size: 11.5px; line-height: 1.6; color: var(--ink-dim, #a9b7c6); }
-#fhud .fh-btns { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 22px 16px; margin-top: 6px; border-top: 1px solid var(--glass-line, rgba(255,255,255,.12)); }
+#fhud .fh-btns { flex: none; display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 22px 16px; margin-top: 6px; border-top: 1px solid var(--glass-line, rgba(255,255,255,.12)); }
 #fhud .fh-btns button { flex: 1 1 140px; font: inherit; font-size: 14px; padding: 10px 14px; border-radius: 10px; cursor: pointer; color: var(--ink, #eef3f8);
   background: rgba(255, 255, 255, .08); border: 1px solid var(--glass-line, rgba(255,255,255,.12)); }
 #fhud .fh-btns button:hover { background: rgba(255, 255, 255, .16); }
@@ -214,22 +225,36 @@ const CSS = `
 @media (max-width: 1180px) {
   #fhud { --fh-w: min(300px, 33vw); --fh-rw: min(330px, 33vw); }
   #fhud .fh-subt { left: calc(var(--fh-w) + 28px); right: 14px; transform: none; width: auto; max-width: none; text-align: center; }
+  #fhud.deb .fh-subt { left: 14px; }
   #fhud .fh-right { top: calc(14px + var(--fh-sub-h)); max-height: calc(100% - 44px - var(--fh-sub-h)); }
   #fhud.p2d .fh-right { max-height: calc(100% - var(--p2d-h) - 64px - var(--fh-sub-h)); }
   #fhud .fh-subt span { font-size: 15px; }
+  /* the four numbers in two rows, the label beside the number; the main keys without the help key (the title says H) */
+  #fhud .fh-nums { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 5px 0; }
+  #fhud .fh-num { display: flex; align-items: baseline; gap: 4px; padding: 2px 7px 3px; }
+  #fhud .fh-num small { flex: 1 1 auto; min-width: 0; }
+  #fhud .fh-num .en, #fhud .fh-free .fh-kc.help { display: none; }
+  #fhud .fh-num b { font-size: 14.5px; }
+  #fhud .fh-hood p { left: calc(var(--fh-w) + 28px); right: 14px; width: auto; transform: none; }
+  #fhud .fh-tv { font-size: 12px; }
 }
 @media (max-height: 600px) {
   #fhud .fh-say { font-size: 14px; margin: 2px 0 4px; }
   #fhud .fh-guide { font-size: 11.5px; line-height: 1.5; padding: 2px 7px; margin-bottom: 4px; }
   #fhud .fh-keys { margin-bottom: 4px; } #fhud .fh-kc { font-size: 11px; }
   #fhud .fh-hint { font-size: 12px; margin-top: 4px; padding: 3px 7px; }
-  #fhud .fh-check li span { display: block; font-size: 11px; line-height: 1.35; }
+  /* the checklist: what to check is written out for the current item only */
+  #fhud .fh-check li span { display: none; }
+  #fhud .fh-check li.cur span { display: block; font-size: 11px; line-height: 1.35; }
   #fhud .fh-check li { padding: 1px 4px; font-size: 12px; }
-  #fhud .fh-check li.ok span { display: none; }
+  #fhud .fh-dt { margin-bottom: 4px; font-size: 12.5px; }
   #fhud .fh-tile { padding: 2px 7px 3px; } #fhud .fh-tv { font-size: 12.5px; line-height: 1.3; } #fhud .fh-ts { min-height: 1.25em; line-height: 1.25; }
   #fhud .fh-help { padding: 10px 14px 8px; } #fhud .fh-help h3 { font-size: 14px; } #fhud .fh-help .fh-hs { margin-bottom: 4px; }
   #fhud .fh-help h4 { margin: 2px 0; } #fhud .fh-help table { font-size: 12px; } #fhud .fh-help td { padding: 1px 4px; }
   #fhud .fh-help td.d { display: none; }
+  #fhud .fh-hcols { grid-template-columns: auto auto auto; grid-template-rows: auto; gap: 4px 14px; }
+  #fhud .fh-hcols > :first-child { grid-row: auto; }
+  #fhud .fh-help table { font-size: 11.5px; } #fhud .fh-help kbd { padding: 0 3px; font-size: 10px; line-height: 15px; }
   #fhud .fh-hero { padding: 12px 18px 6px; } #fhud .fh-grade { width: 76px; height: 76px; } #fhud .fh-grade b { font-size: 36px; }
   #fhud .fh-hero h2 { font-size: 18px; }
 }
@@ -237,10 +262,20 @@ const CSS = `
   #fhud { --fh-w: calc(100vw - 28px); --fh-rw: calc(100vw - 28px); }
   #fhud .fh-right { top: auto; bottom: 30px; }
   #fhud .fh-subt { left: 14px; top: auto; bottom: 40%; }
-  #fhud .fh-hcols { grid-template-columns: 1fr; }
+  #fhud.deb .fh-subt { top: 14px; bottom: auto; }
+  #fhud .fh-hood p { left: 14px; }
+  #fhud .fh-hcols { grid-template-columns: 1fr; grid-template-rows: auto; }
+  #fhud .fh-hcols > :first-child { grid-row: auto; }
 }
+@media (max-width: 700px) and (max-height: 600px) {
+  #fhud .fh-hcols { grid-template-columns: auto auto auto; gap: 4px 10px; }
+  #fhud .fh-help td.n { white-space: normal; }
+}
+/* the game's toast (#hud, under this layer) moves up above the big G1000 while it is shown */
+body.fhud-p2d #toast { bottom: calc(min(44vh, calc((100vw - 240px) / 3.2)) + 58px); }
 @media (prefers-reduced-motion: reduce) {
   #fhud .fh-prog.flash, #fhud .fh-tile.move .fh-ts, #fhud .fh-badge.blink, #fhud .fh-card { animation: none; }
+  #fhud .fh-deb { transition: none; }
   #fhud .fh-gb b, #fhud .fh-bar i { transition: none; }
 }
 `;
@@ -284,19 +319,21 @@ export function gaugeOf(q, out = {}) {
   out.tip = `許容 ±${q.tol} ${q.unit}`;
   return out;
 }
-// the progress line: the time left of a fixed-length step, or the continuous hold (with its bar), or the time spent.
+// the progress line: the time left of a fixed-length step, or the continuous hold (with its bar), or the time spent;
+// note: the reminder after it (the first part to go when the panel is short of room).
 // reset: the hold is back at 0 inside the graded window (red); pre: the window has not opened yet (no red: the first
 // seconds of a step are for settling down, FLIGHT LAB's red there looked like a failure)
 export function progressOf(st, out = {}) {
-  out.text = ''; out.frac = null; out.reset = false; out.pre = false;
+  out.text = ''; out.note = ''; out.frac = null; out.reset = false; out.pre = false;
   if (st.done) { out.text = '課目終了'; return out; }
   const targets = st.stats && st.stats.length > 0;
   if (st.dur) out.text = `残り ${Math.max(0, Math.ceil(st.dur - st.stepT))} 秒`;
   else if (st.need) {
     out.pre = targets && !st.graded && st.holdT < 0.05;
-    out.text = `基準内を連続 ${Math.floor(st.holdT)} / ${st.need} 秒` + (out.pre ? '（採点前：まず姿勢と出力を整える）' : '（外れると 0 に戻る）');
+    out.text = `基準内を連続 ${Math.floor(st.holdT)} / ${st.need} 秒`;
+    out.note = out.pre ? '（採点前：まず姿勢と出力を整える）' : '（外れると 0 に戻る）';
     out.frac = clamp(st.holdT / st.need, 0, 1);
-  } else if (st.max && st.kind === 'fly') out.text = `経過 ${Math.floor(st.stepT)} 秒`;
+  } else if (st.max && st.kind !== 'checklist' && st.kind !== 'atc') out.text = `経過 ${Math.floor(st.stepT)} 秒`;
   if (st.turned && Math.abs(st.turned) > 5 && /旋回/.test(st.stepName)) out.text += `　旋回 ${Math.round(Math.abs(st.turned))}°`;
   out.reset = !!(st.need && targets && st.graded && st.holdT < 0.2 && st.stepT > 2);
   return out;
@@ -324,12 +361,16 @@ export function adviceTips(bad) {
 const ADVICE_NONE = '基準外の項目の数字を見て、どの操作が足りなかったかを考えてから、もう一度。';
 export const advice = bad => adviceTips(bad).join('。') || ADVICE_NONE;
 // everything the card shows, from status() at the end of a lesson. The steps count is the steps finished (FLIGHT LAB
-// counted the steps that produced rows, so a passed a1 read "1 / 2"). A free flight has no grade: its card (after a
-// crash, or when the game ends it) says how it ended and for how long it flew.
+// counted the steps that produced rows, so a passed a1 read "1 / 2"). The row an ended lesson adds for itself (結果:
+// stopped, or an accident, whose reason the card already gives) is counted but not turned into advice. A free flight
+// has no grade: its card (after a crash, or when the game ends it) says how it ended and for how long it flew.
 export function debriefOf(sum) {
   const rows = [], bad = [];
-  for (const r of sum.results || []) for (const row of r.rows) { rows.push(row); if (!row.pass) bad.push([r.step, row]); }
-  const N = (sum.steps || []).length, t = sum.t || 0, mm = Math.floor(t / 60), ss = Math.floor(t % 60);
+  for (const r of sum.results || []) for (const row of r.rows) {
+    rows.push(row);
+    if (!row.pass && !(sum.reason && row.name === '結果')) bad.push([r.step, row]);
+  }
+  const N = (sum.steps || []).length, t = Math.floor((sum.t || 0) + 1e-6), mm = Math.floor(t / 60), ss = t % 60;
   const time = t ? `${mm}:${String(ss).padStart(2, '0')}` : '';
   if (sum.mode === 'free') {
     return {
@@ -369,7 +410,8 @@ export function fitCanvas(cv, r, dpr = 1) {
 
 // ---------------------------------------------------------------- the key help (H)
 // FLIGHT LAB's keys (app.js KEYMAP, shorter) and the cockpit's; a row lights up when this step's keys use it.
-// [keys, what, why, key names, only: 'twin' | 'free']
+// [keys, what, why, key names, only: 'twin' | 'free']. The first FLY_MAIN rows are the hands on the controls (the
+// left column); the rest go in the right column above the cockpit's, so the two columns are about as tall.
 const FLY_KEYS = [
   ['S / ↓', '機首を上げる', '押している間だけ機首の角度が上がり、離すとその角度を保つ', ['S']],
   ['W / ↑', '機首を下げる', '降下・増速・失速からの回復（迎え角を減らす）', ['W']],
@@ -379,6 +421,7 @@ const FLY_KEYS = [
   ['T（Shift+T）', 'トリム（リセット）', 'いまの速度で、手を離しても姿勢が続くように合わせる', ['T']],
   ['V（Shift+V）', 'フラップ 下げ（上げ）', '白い帯（Vfe 以下）でだけ使う', ['V']],
   ['B / Space', 'ブレーキ', '押している間。地上で減速・停止', ['B', 'Space']],
+  ['Shift+B', 'パーキングブレーキ', '止まっている間、機体をその場に保つ。セット / 解除（操縦席の T ハンドルでも）', []],
   ['G', '脚の上げ下げ', '着陸前に必ず下げる（GUMPS）', ['G'], 'twin'],
   ['[ / ]', 'フェザー 左 / 右', '止まった側を確かめてから（Identify → Verify）', ['[', ']'], 'twin'],
   ['Z / X', 'ラダートリム 左 / 右', '踏み続ける力を消す', ['Z', 'X']],
@@ -387,6 +430,7 @@ const FLY_KEYS = [
   ['Enter', 'チェックリストの次の項目', '1 項目ずつ確認する', ['Enter']],
   ['1 / 2 / 3', '管制への応答', '滑走路・高度・針路の数字を含めて復唱', ['1', '2', '3']],
 ];
+const FLY_MAIN = 8;
 const CABIN_KEYS = [
   ['マウス', '見回す', '画面をクリックで開始。マウスが自由なときは右ドラッグ'],
   ['右ボタン（長押し）', 'ズーム', '計器や外の目標を拡大して見る'],
@@ -442,8 +486,8 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   const keysEl = make('div', 'fh-keys');
   const guide = make('div', 'fh-guide');
   const gauges = make('div', 'fh-gauges');
-  const prog = make('div', 'fh-prog'), progTxt = make('span', 'fh-pt'), bar = make('div', 'fh-bar'), barFill = make('i');
-  put(prog, progTxt, put(bar, barFill));
+  const prog = make('div', 'fh-prog'), progTxt = make('span', 'fh-pt'), progNote = make('span', 'fh-pn'), bar = make('div', 'fh-bar'), barFill = make('i');
+  put(prog, progTxt, progNote, put(bar, barFill));
   const hint = make('div', 'fh-hint', { 'aria-live': 'polite' });
   put(lesson, head, dots, sayEl, keysEl, guide, gauges, prog, hint);
 
@@ -451,12 +495,16 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   const free = make('section', 'fh-panel fh-free', { 'aria-label': '自由飛行' });
   const fHead = put(make('div', 'fh-head'), make('span', 'fh-title', null, '自由飛行'), make('span', 'fh-sub2', null, '採点なし・H でキーの一覧'));
   const nums = make('div', 'fh-nums');
-  const num = (label, unit) => { const b = make('b', '', null, '—'); put(nums, put(make('div', 'fh-num'), make('small', '', null, label), b, make('em', '', null, unit))); return b; };
-  const fIas = num('速度 IAS', 'kt'), fAlt = num('高度 ALT', 'ft'), fHdg = num('針路 HDG', '°'), fVs = num('昇降率 VS', 'fpm');
+  const num = (label, en, unit) => {
+    const b = make('b', '', null, '—');
+    put(nums, put(make('div', 'fh-num'), put(make('small', '', null, label), make('span', 'en', null, ' ' + en)), b, make('em', '', null, unit)));
+    return b;
+  };
+  const fIas = num('速度', 'IAS', 'kt'), fAlt = num('高度', 'ALT', 'ft'), fHdg = num('針路', 'HDG', '°'), fVs = num('昇降率', 'VS', 'fpm');
   const fWhere = make('div', 'fh-where');
   const fKeys = make('div', 'fh-keys');
   for (const [k, w] of [[['W', 'S'], 'ピッチ'], [['A', 'D'], 'バンク'], [['R', 'F'], '出力'], [['T'], 'トリム'], [['V'], 'フラップ'], [['B'], 'ブレーキ'], [['H'], 'キー一覧']]) {
-    put(fKeys, put(kbds(make('span', 'fh-kc'), k), make('span', '', null, w)));
+    put(fKeys, put(kbds(make('span', k[0] === 'H' ? 'fh-kc help' : 'fh-kc'), k), make('span', '', null, w)));
   }
   put(free, fHead, nums, fWhere, fKeys);
   free.hidden = true;
@@ -519,9 +567,10 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   };
   put(help, make('h3', '', null, 'キーの一覧（H で閉じる）'), helpSub,
     put(make('div', 'fh-hcols'),
-      put(make('div'), make('h4', '', null, '操縦'), keyTable(FLY_KEYS, true)),
+      put(make('div'), make('h4', '', null, '操縦'), keyTable(FLY_KEYS.slice(0, FLY_MAIN), true)),
+      put(make('div'), make('h4', '', null, '操縦（そのほか）'), keyTable(FLY_KEYS.slice(FLY_MAIN), true)),
       put(make('div'), make('h4', '', null, '操縦席'), keyTable(CABIN_KEYS, false),
-        make('p', 'fh-hn', null, 'パーキングブレーキ・燃料セレクター・マグネトー・ライトのスイッチ・ドアは、操縦席でクリックして操作します。'))));
+        make('p', 'fh-hn', null, '燃料セレクター・マグネトー・ライトのスイッチ・ドア・パーキングブレーキは、操縦席でクリックして操作します。'))));
   help.hidden = true;
 
   // the debrief
@@ -541,7 +590,8 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   const retryTxt = doc.createTextNode('もう一度');
   put(bRetry, retryTxt, make('kbd', '', null, 'R'));
   const dBtns = put(make('div', 'fh-btns'), bRetry, bFree, bRet);
-  put(card, hero, dStats, dAdv, dDet, dNote, dBtns);
+  const cbody = put(make('div', 'fh-cbody'), hero, dStats, dAdv, dDet, dNote);
+  put(card, cbody, dBtns);
   put(deb, card);
   deb.hidden = true;
 
@@ -606,7 +656,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     text(guide, st.guideText); shown(guide, !compact && !!st.guideText && !st.done);
     renderGauges(st);
     const p = progressOf(st, PR);
-    text(progTxt, p.text); shown(prog, !!p.text);
+    text(progTxt, p.text); text(progNote, p.note); shown(prog, !!p.text);
     shown(bar, p.frac != null); if (p.frac != null) css(barFill, 'width', (p.frac * 100).toFixed(1) + '%');
     klass(prog, 'reset', p.reset); klass(prog, 'pre', p.pre);
     // the hold dropped back to 0 (it had been counting) inside the graded window: a red flash
@@ -614,11 +664,11 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     lastHold = st.need ? st.holdT : 0;
     const h = st.hint && !st.done ? (compact ? st.hint : '教官：' + st.hint) : '';
     text(hint, h); shown(hint, !!h);
-    fitLesson(`${st.step}|${st.done}|${st.sayText.length}|${st.keysText.length}|${guide.hidden ? 0 : st.guideText.length}|${st.stats.length}|${p.text.length}|${p.frac != null}|${h.length}|${p2dOn}|${layoutN}`);
+    fitLesson(`${st.step}|${st.done}|${st.sayText.length}|${st.keysText.length}|${guide.hidden ? 0 : st.guideText.length}|${st.stats.length}|${p.text.length + p.note.length}|${p.frac != null}|${h.length}|${p2dOn}|${layoutN}`);
   }
   // the panel always fits its column, checked only when something that sets its height changed (a step, a text's
   // length, the window, the big G1000): if it overflows, the levels of .fitN take away the least needed parts first
-  const FITS = ['fit1', 'fit2', 'fit3', 'fit4'];
+  const FITS = ['fit1', 'fit2', 'fit3', 'fit4', 'fit5', 'fit6', 'fit7'];
   function fitLesson(sig) {
     if (sig === fitSig || lesson.hidden || el.hidden) return;
     fitSig = sig;
@@ -635,7 +685,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     // where it is: on the ground, what holds it; in the air, how far the runway is (FLIGHT LAB's free panel)
     const c = st && st.ctx;
     let w = '';
-    if (pn && pn.onGround) w = pn.parkBrake ? 'パーキング ブレーキ中：パネル下の T ハンドルをクリックで解除' : '地上：Q / E で前輪の向き・B / Space でブレーキ';
+    if (pn && pn.onGround) w = pn.parkBrake ? 'パーキング ブレーキ中：Shift+B か、パネル下の T ハンドルで解除' : '地上：Q / E で前輪の向き・B / Space でブレーキ';
     else if (c && Number.isFinite(c.along)) w = `滑走路 36 まで ${(Math.hypot(c.along - 600, c.cross) / 1852).toFixed(1)} NM`;
     text(fWhere, w); shown(fWhere, !!w);
   }
@@ -738,11 +788,15 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     choose('retry');
   }
   if (keys) win.addEventListener('keydown', onKey, true);
-  const onResize = () => { sizeDirty = true; layoutN++; };
+  const onResize = () => { sizeDirty = true; layoutN++; measureSub(); };
   win.addEventListener('resize', onResize);
 
   // ---- the API
-  function show(v = true) { el.hidden = !v; if (v) fitSig = ''; }
+  function show(v = true) { el.hidden = !v; if (v) fitSig = ''; syncBody(); }
+  // the game's toast moves up while the big G1000 is on screen (see the CSS)
+  function syncBody() { doc.body.classList.toggle('fhud-p2d', p2dOn && !el.hidden && !destroyed); }
+  // the subtitle's height, for what has to keep clear of it (the dialogs on a narrower screen, the debrief card)
+  function measureSub() { el.style.setProperty('--fh-sub-h', subt.classList.contains('show') ? (subt.offsetHeight + 8) + 'px' : '0px'); }
   function setMode(m) {
     mode = m === 'free' ? 'free' : 'lesson';
     shown(lesson, mode === 'lesson' && !!status); shown(free, mode === 'free');
@@ -765,15 +819,14 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   function say(name, line, ms, color) {
     if (destroyed) return;
     clearTimeout(subTimer);
-    if (!line) { subt.classList.remove('show'); el.style.setProperty('--fh-sub-h', '0px'); return; }
+    if (!line) { subt.classList.remove('show'); measureSub(); return; }
     text(subName, name || ''); shown(subName, !!name);
     if (color) subt.style.setProperty('--sp', color); else subt.style.removeProperty('--sp');
     text(subText, String(line));
     subt.classList.add('show');
-    // on a narrower screen the dialogs on the right move down below it
-    el.style.setProperty('--fh-sub-h', (subt.offsetHeight + 8) + 'px');
+    measureSub();
     const speed = settings && typeof settings.get === 'function' ? Number(settings.get('textSpeed')) || 1 : 1;
-    subTimer = setTimeout(() => { subt.classList.remove('show'); el.style.setProperty('--fh-sub-h', '0px'); }, ms > 0 ? ms : sayMs(String(line), speed));
+    subTimer = setTimeout(() => { subt.classList.remove('show'); measureSub(); }, ms > 0 ? ms : sayMs(String(line), speed));
   }
   // the refused checklist item flashes; the reason (what to set first) shows under the list for a while
   function flashChecklist(reason = '') {
@@ -820,12 +873,12 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     bFree.textContent = lab.free || '自由に飛ぶ'; bRet.textContent = lab.return || '駐機場へ戻る';
     const first = sum.passed && has.free ? bFree : has.retry ? bRetry : has.free ? bFree : bRet;
     for (const b of [bRetry, bFree, bRet]) b.classList.toggle('primary', b === first);
-    deb.hidden = false; debOpen = true; card.scrollTop = 0; klass(el, 'deb', true);
+    deb.hidden = false; debOpen = true; cbody.scrollTop = 0; klass(el, 'deb', true); measureSub();
     setTimeout(() => { if (debOpen) try { first.focus({ preventScroll: true }); } catch (e) { /* focus is a nicety */ } }, 30);
   }
   function hideDebrief() {
     if (!debOpen) return;
-    debOpen = false; deb.hidden = true; klass(el, 'deb', false);
+    debOpen = false; deb.hidden = true; klass(el, 'deb', false); measureSub();
     if (deb.contains(doc.activeElement)) try { doc.activeElement.blur(); } catch (e) { /* nothing focused */ }
   }
   function setHelp(v) { helpOn = v == null ? !helpOn : !!v; shown(help, helpOn); if (helpOn) renderHelp(status); return helpOn; }
@@ -834,7 +887,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     p2dOn = v == null ? !p2dOn : !!v;
     shown(p2d, p2dOn); klass(el, 'p2d', p2dOn);
     if (p2dOn) put(mid, strip); else left.appendChild(strip);
-    sizeDirty = true; layoutN++;
+    sizeDirty = true; layoutN++; syncBody();
     if (status && mode === 'lesson') renderLesson(status);
     return { pfd, mfd };
   }
@@ -862,7 +915,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     clearTimeout(subTimer); clearTimeout(flashTimer); clearTimeout(footTimer);
     if (keys) win.removeEventListener('keydown', onKey, true);
     win.removeEventListener('resize', onResize);
-    el.remove();
+    el.remove(); syncBody();
   }
 
   return {

@@ -80,8 +80,9 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.equal(r.place, '駐機場（エプロン）');
     assert.ok(r.t < 120, `the walk took ${r.t} s`);
     assert.ok((await ev(() => window.__cadet.doors())).find(d => d.id === 'd-brief-1').angle !== 0, 'the door stays open');
-    // look at the aircraft's nose and examine it (its door is for getting in)
+    // the walk ends by the door (getting in comes later); in front of the aircraft, look at its nose and examine it
     assert.equal(await ev(() => { const t = window.__cadet.spec.target; return window.__cadet.lookAt(t.a + 1.0, t.c, 1.25); }), 'aircraft:board');
+    await ev(() => { const C = window.__cadet, t = C.spec.target; C.placeWalker(t.a + 1.0, t.c - 5.6, { a: t.a, c: t.c - 3.2 }); });
     assert.equal(await ev(() => { const t = window.__cadet.spec.target; return window.__cadet.lookAt(t.a, t.c - 3.2, 1.0); }), 'aircraft:today');
     assert.equal(await ev(() => window.__cadet.use()), 'examined');
     const card = await ev(() => window.__cadet.card());
@@ -249,7 +250,8 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     await g.page.waitForTimeout(900);
     await ev(() => window.__cadet.simulate(0.1));
     assert.equal((await ev(() => window.__cadet.fly.status())).debrief, true);
-    assert.match(await ev(() => document.body.innerText), /課目の結果[\s\S]*合格/);
+    const card = await ev(() => document.body.innerText);
+    assert.ok(/課目の結果/.test(card) && /合格/.test(card) && /姿勢・出力・トリム（基礎）/.test(card), card);
     // FLIGHT LAB's scripted pilot (bot.mjs) through the same bridge, in the page: bit for bit FLIGHT LAB's run in node
     await ev((src) => { (0, eval)(src + '\nwindow.makeBot = makeBot;'); }, BOT_SRC);
     for (const [lv, hook] of [['intro', ''], ['basic', ''], ['precision', ''], ['basic', 'noseUp']]) {

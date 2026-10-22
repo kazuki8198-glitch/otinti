@@ -36,6 +36,15 @@ export function createFlyMode(ctx) {
     savePrefs: (p) => { if (typeof p.autoRud === 'boolean') settings.set('autoRud', p.autoRud); },
   });
   const fh = ctx.flightHud || null;
+  // the HUD's checklist and read-back answers take clicks too (as Enter and 1–3 do)
+  if (fh) {
+    fh.onChecklistClick(() => { if (!active || stopped()) return null; const r = flight.checklistNext(); if (audio.click) audio.click(); return r; });
+    fh.onAtcClick((i) => {
+      if (!active || stopped()) return;
+      const r = flight.answerAtc(i);
+      if (r) toast((r.ok ? '正解。' : `不正解。正しくは「${r.right}」。`) + r.why, 4200);
+    });
+  }
 
   // ---- the objects (built once, at boot, so their shaders compile with everything else)
   const live = liveAircraft(FL, A);
@@ -55,7 +64,7 @@ export function createFlyMode(ctx) {
   const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), camWorld = new THREE.Vector3(), head = new THREE.Vector3();
   const ray = new THREE.Raycaster(), center = new THREE.Vector2(0, 0);
   ray.far = 1.6;
-  let hover = null;
+  let hover = null, zoomHold = false;
 
   // ---- the fade (a black sheet over everything; the work happens while it is opaque)
   const sheet = document.createElement('div');
@@ -123,7 +132,7 @@ export function createFlyMode(ctx) {
       yaw = 0; pitch = HOME_PITCH;
       ctx.onEnter();
       placeNow();
-      if (fh) { fh.show(true); fh.setMode('free'); }
+      if (fh) { fh.show(true); fh.setMode('free'); if (settings.get('panel2D') !== fh.panel2D) fh.setPanel2D(!!settings.get('panel2D')); }
       startTalk();
     }, instant);
     return 'board';
@@ -287,7 +296,7 @@ export function createFlyMode(ctx) {
     live.update(flight.s, { dt, rpmVisual, lights: cockpit.switches.master === false ? lightsOut : lights(), inside: view === 'cockpit' });
     placeCamera(dt);
     // looking closer (the right button held), back to the setting's field of view
-    const want = view === 'cockpit' && !stop && input.down('Mouse2') ? ZOOM_FOV : settings.get('fov');
+    const want = view === 'cockpit' && !stop && (input.down('Mouse2') || zoomHold) ? ZOOM_FOV : settings.get('fov');
     fov = fov == null ? camera.fov : fov;
     fov += (want - fov) * (1 - Math.exp(-dt / 0.12));
     if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); }
@@ -316,6 +325,7 @@ export function createFlyMode(ctx) {
     }
     if (flight.free && phase === 'ground') taxiCheck();
   }
+  const stopped = () => fading || talkOn || debriefShown || phase === 'board' || phase === 'leaving';
   // the keys go to the aircraft only when the player is flying it (not while a talk, the debrief or the menu is up)
   const NO_KEYS = { has: () => false };
   const KEYS = { has: (c) => input.down(c) };
@@ -399,9 +409,12 @@ export function createFlyMode(ctx) {
     if (e.code === 'KeyH') { if (fh) fh.setHelp(!fh.help); return true; }
     if (e.code === 'Tab') { e.preventDefault(); if (fh) { const on = !fh.panel2D; fh.setPanel2D(on); settings.set('panel2D', on); } return true; }
     if (phase === 'board') return false;
+    // CADET's own: Shift+B sets or releases the parking brake (FLIGHT LAB has none; B alone is the brakes, held)
+    if (e.code === 'KeyB' && e.shiftKey) { applyAct({ type: 'flight', name: 'parkBrake' }); e.preventDefault(); return true; }
     const r = flight.key(e.code, e.shiftKey);
     if (!r) return false;
-    if (r.text) toast(r.text, r.kind === 'atc' ? 4200 : 2400);
+    if (r.kind === 'checklist' && r.ok === false && fh) fh.flashChecklist(r.text);
+    else if (r.text) toast(r.text, r.kind === 'atc' ? 4200 : 2400);
     if (r.kind === 'action' && audio.click) audio.click();
     e.preventDefault();
     return true;
@@ -423,6 +436,9 @@ export function createFlyMode(ctx) {
     board, leave, setView, update, key, draw2D, canExit,
     actOn(id, dir = 1, wheel = false) { const c = cockpit.controls.find(x => x.id === id); if (!c) return null; const d = c.act(dir, wheel); applyAct(d); return d; },
     beginLesson, retry, freeFromHere,
+    // the head (degrees: yaw + to the left, pitch + up) and looking closer, as the mouse would (for the tests)
+    look(yawDeg, pitchDeg) { yaw = yawDeg * DEG; pitch = pitchDeg * DEG; homeT = 0; },
+    setZoom(on) { zoomHold = !!on; },
     // a lesson flown by a scripted pilot (FLIGHT LAB's bot, for the tests), then the same end as a flown one
     runScripted(pilot, maxSec, hook) { const L0 = flight.runScripted(pilot, maxSec, hook); if (L0 && L0.done) onEnded(); return L0; },
     // the shadow box follows the aircraft (a small one round the cockpit), the windsock the lesson's wind

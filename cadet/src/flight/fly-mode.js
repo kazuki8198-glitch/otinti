@@ -321,7 +321,7 @@ export function createFlyMode(ctx) {
     if (fh && (hudT -= dt) <= 0) { hudT = 0.12; fh.update(flight.status(), flight.panel()); fh.setHood(!!(flight.L && flight.L.hood && !flight.L.done)); }
     if (audio.engine) {
       const s = flight.s, o = s.out;
-      audio.engine({ rpm: rpmVisual != null ? rpmVisual : o.rpm, thr: s.thr, ias: o.ias, onGround: s.onGround, stall: !!o.stallWarn, inside: view === 'cockpit', running: startT < 0 && phase !== 'board' });
+      audio.engine({ rpm: rpmVisual != null ? rpmVisual : o.rpm, thr: s.thr, ias: o.ias, onGround: s.onGround, stall: !!o.stallWarn, inside: view === 'cockpit', running: startT < 0 && phase !== 'board' && !!(s.eng[0] && s.eng[0].run) });
     }
     if (flight.free && phase === 'ground') taxiCheck();
   }

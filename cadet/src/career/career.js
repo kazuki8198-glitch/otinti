@@ -31,8 +31,8 @@ export const GROUND = ['k1', 'k2', 'k3', 'k4', 'k5', 'k6'];
 // along the way; the instructor schedules them on their own only if they are not)
 export const CH2 = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 't2', 't4', 'e1', 'e2', 'e3', 't1', 't3'];
 export const ALL_CH2 = [...CH2, 'c1'];
-// the classes of chapter 1: the textbook's part 1, two chapters a day (the lecturer's talk: content/dialog/school.js)
-export const CLASSES = [['intro', 'aero'], ['sys', 'perf'], ['wx', 'law'], ['radio1', 'radio2'], ['radio3', 'radio4'], ['radio5', 'hf']];
+// the classes of chapter 1: the textbook's part 1 (its chapters by id), a class a day (the lecturer: content/school.js)
+export const CLASSES = [['aero'], ['sys', 'perf'], ['wx'], ['law', 'hf'], ['radio1', 'radio2'], ['radio3', 'radio4', 'radio5']];
 // the written tests: FLIGHT LAB's question banks (quiz.js), so many questions drawn, the pass mark
 export const EXAMS = {
   written1: { title: '学科試験（第 1 章）', banks: ['q_aero', 'q_sys', 'q_perf', 'q_wx', 'q_law', 'q_comm', 'q_hf'], n: 28, pass: 80, room: 'planning' },
@@ -152,7 +152,7 @@ export function schedule(state, prog, { trust = 50, weather = null } = {}) {
   if (state.chapter === 'ch1') {
     const cls = CLASSES.findIndex((_, i) => !state.done[`class:${i}`]);
     const k = GROUND.find(id => !groundPassed(prog, id));
-    if (cls >= 0) out.push({ slot: 'am', kind: 'class', id: String(cls), title: `座学：${CLASSES[cls].join('・')}`, where: 'brief-2', who: 'lecturer' });
+    if (cls >= 0) out.push({ slot: 'am', kind: 'class', id: String(cls), title: `座学（${cls + 1} / ${CLASSES.length}）`, where: 'brief-2', who: 'lecturer' });
     if (k) out.push({ slot: cls >= 0 ? 'pm' : 'am', kind: 'ftd', id: k, title: `訓練装置：${k}`, where: 'sim', who: 'lecturer' });
     const ex = state.exams.written1;
     if (cls < 0 && !k && !(ex && ex.pass)) out.push({ slot: out.length ? 'pm' : 'am', kind: 'exam', id: 'written1', title: EXAMS.written1.title, where: 'planning', who: 'lecturer' });

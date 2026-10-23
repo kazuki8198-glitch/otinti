@@ -1,0 +1,138 @@
+// CADET — the career's core without a screen (career/career.js): the calendar, the weather, the plan of each day by
+// chapter, the gates between the chapters, the time of day and the night's sleep, the save (versioned and cleaned).
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createCareer, newCareer, cleanCareer, weatherFor, dateOf, dateText, isOff, schedule, gate, nextLesson, passedAt, CH2, GROUND, CLASSES, EXAMS, WEATHER, SOLO_TRUST, CAREER_KEY, SLOTS } from '../src/career/career.js';
+
+const memStore = () => { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k), m }; };
+const rec = (levels = ['basic']) => ({ tries: 1, best: 'S', pass: true, levels });
+const progWith = (ids, levels) => ({ lessons: Object.fromEntries(ids.map(id => [id, rec(levels)])) });
+
+test('career: the calendar — day 1 is 1 April 2027, Sundays are days off (not the first day)', () => {
+  assert.equal(dateOf(1).iso, '2027-04-01'); assert.equal(dateText(1), '2027 年 4 月 1 日（木）');
+  assert.equal(dateOf(31).iso, '2027-05-01');
+  assert.ok(isOff(4)); assert.equal(dateOf(4).wd, 0);
+  assert.ok(!isOff(1) && !isOff(5));
+});
+
+test('career: the weather — the same for the same seed and day, all five kinds over a season, the lessons\' wind on a day that can be flown', () => {
+  assert.deepEqual(weatherFor(7, 12), weatherFor(7, 12));
+  const kinds = new Set(), n = {};
+  for (let d = 1; d <= 400; d++) { const w = weatherFor(3, d); kinds.add(w.kind); n[w.kind] = (n[w.kind] || 0) + 1; }
+  assert.deepEqual([...kinds].sort(), Object.keys(WEATHER).sort());
+  assert.ok(n.good > 180 && n.good < 300, JSON.stringify(n));
+  const g = weatherFor(3, 2, { force: 'good' });
+  assert.match(g.metar.am, /00405KT 10SM/); assert.equal(g.decision, 'go'); assert.deepEqual(g.fly, { am: true, pm: true });
+  const f = weatherFor(3, 2, { force: 'amFog' }); assert.match(f.metar.am, /FG/); assert.deepEqual(f.fly, { am: false, pm: true });
+  const s = weatherFor(3, 2, { force: 'pmStorm' }); assert.match(s.metar.pm, /TSRA/); assert.match(s.taf, /TSRA/);
+  const x = weatherFor(3, 2, { force: 'crosswind' }); assert.match(x.metar.am, /09016G24KT/); assert.equal(x.decision, 'cancel');
+});
+
+test('career: the prologue, then chapter 1 — classes in the morning, the training device in the afternoon, the written test last', () => {
+  const s = newCareer(5);
+  const p = schedule(s, {});
+  assert.deepEqual(p.map(x => x.kind), ['ceremony', 'tour', 'brief']);
+  assert.deepEqual(gate(s, {}), ['入社の 1 日']);
+  s.done.prologue = 1; s.chapter = 'ch1'; s.day = 2;
+  let d = schedule(s, {});
+  assert.deepEqual(d.map(x => [x.slot, x.kind, x.id]), [['am', 'class', '0'], ['pm', 'ftd', 'k1']]);
+  for (let i = 0; i < CLASSES.length; i++) s.done[`class:${i}`] = 2;
+  d = schedule(s, progWith(['k1', 'k2']));
+  assert.deepEqual(d.map(x => [x.slot, x.kind, x.id]), [['am', 'ftd', 'k3']]);
+  const allK = progWith(GROUND);
+  d = schedule(s, allK);
+  assert.deepEqual(d.map(x => [x.slot, x.kind, x.id]), [['am', 'exam', 'written1']]);
+  assert.deepEqual(gate(s, allK), [EXAMS.written1.title]);
+  s.exams.written1 = { tries: 1, best: 86, pass: true };
+  assert.deepEqual(gate(s, allK), []);
+});
+
+test('career: chapter 2 — the next lesson each day, a morning lost to fog flies in the afternoon, the tests, c1, then the solo with enough trust', () => {
+  const s = newCareer(9); s.chapter = 'ch2'; s.day = 10;
+  // the first flying day is a good one whatever the seed
+  assert.equal(nextLesson({}), 'a1');
+  assert.deepEqual(schedule(s, {}).map(x => [x.kind, x.id]), [['flight', 'a1']]);
+  const fog = weatherFor(9, 10, { force: 'amFog' }), cancel = weatherFor(9, 10, { force: 'storm' });
+  const p2 = progWith(['a1', 'a2']);
+  assert.deepEqual(schedule(s, p2, { weather: fog }).map(x => [x.slot, x.kind, x.id]), [['pm', 'flight', 'a3']]);
+  assert.deepEqual(schedule(s, p2, { weather: cancel }).map(x => [x.slot, x.kind]), [['am', 'study']]);
+  // a pass at the gentlest level does not count for the syllabus
+  assert.equal(nextLesson(progWith(['a1'], ['intro'])), 'a1');
+  assert.ok(passedAt(progWith(['a1'], ['precision']), 'a1'));
+  // all 15: the pre-solo test (in the slot of the day), then c1 with the chief instructor
+  const all = progWith(CH2), good = weatherFor(9, 10, { force: 'good' });
+  assert.deepEqual(schedule(s, all, { weather: good }).map(x => [x.kind, x.id, x.who]), [['exam', 'presolo', 'instructor']]);
+  s.exams.presolo = { tries: 1, best: 90, pass: true };
+  assert.deepEqual(schedule(s, all, { weather: good }).map(x => [x.kind, x.id, x.who]), [['checkride', 'c1', 'chief']]);
+  const withC1 = progWith([...CH2, 'c1']);
+  assert.deepEqual(schedule(s, withC1, { trust: SOLO_TRUST, weather: good }).map(x => [x.kind, x.id]), [['solo', 'solo']]);
+  assert.deepEqual(schedule(s, withC1, { trust: SOLO_TRUST - 1, weather: good }).map(x => [x.kind, x.id]), [['flight', 't2']]);
+  assert.deepEqual(gate(s, withC1, SOLO_TRUST - 1), [`担当教官の信頼（${SOLO_TRUST} 以上）`]);
+  assert.deepEqual(gate(s, withC1, 70), []);
+  // late in the syllabus the pre-solo test is offered the same day as the flight
+  delete s.exams.presolo;
+  const late = progWith(CH2.slice(0, 10));
+  assert.deepEqual(schedule(s, late, { weather: good }).map(x => [x.slot, x.kind, x.id]), [['am', 'flight', CH2[10]], ['pm', 'exam', 'presolo']]);
+  // Sundays: a day off
+  s.day = 11; assert.equal(dateOf(11).wd, 0); assert.deepEqual(schedule(s, all).map(x => x.kind), ['off']);
+});
+
+test('career: the time of day, the night, the tiredness; the chapter moves on only through its gate', () => {
+  const st = memStore(), c = createCareer({ store: st, seed: 4 });
+  assert.equal(c.slot, 'morning'); assert.equal(c.day, 1);
+  assert.ok(c.advance()); assert.equal(c.slot, 'am'); assert.ok(c.advance('evening')); assert.equal(c.slot, 'evening');
+  assert.ok(!c.advance(), 'the evening lasts until bed');
+  c.tire(60); assert.ok(c.tired());
+  const n = c.sleep({ late: true }); assert.equal(n.day, 2); assert.equal(c.slot, 'morning'); assert.ok(c.state.fatigue > 40, 'a late night rests less');
+  c.sleep(); assert.ok(c.state.fatigue < 20);
+  assert.equal(c.advanceChapter({}), false, 'the prologue is not done');
+  c.finishPrologue(); assert.equal(c.advanceChapter({}), true); assert.equal(c.chapter, 'ch1');
+  assert.equal(c.advanceChapter(progWith(GROUND)), false, 'the written test');
+  const r = c.exam('written1', 75); assert.equal(r.pass, false);
+  c.exam('written1', 82); assert.equal(c.state.exams.written1.best, 82);
+  assert.equal(c.advanceChapter(progWith(GROUND)), true); assert.equal(c.chapter, 'ch2');
+  // the go / no-go: the right call for the weather
+  assert.equal(c.decision('wait', weatherFor(4, 3, { force: 'amFog' })), true);
+  assert.equal(c.decidedToday().right, true);
+  // kept: a new career on the same store reads it back
+  const c2 = createCareer({ store: st });
+  assert.deepEqual(c2.state, c.state);
+  assert.ok(st.m.has(CAREER_KEY));
+});
+
+test('career: the save — another version or broken data is not read, values of the wrong kind are dropped', () => {
+  assert.equal(cleanCareer({ v: 99, day: 3 }), null); assert.equal(cleanCareer('x'), null);
+  const c = cleanCareer({ v: 1, seed: 3, day: 12, slot: 'pm', chapter: 'ch2', fatigue: 250, exams: { presolo: { tries: 2, best: 140, pass: 1 }, '__proto__': {} }, decisions: [{ day: 3, choice: 'go', right: true }, { bad: 1 }], done: { 'class:0': 2, x: 'no' }, solo: { day: 'z' } });
+  assert.deepEqual([c.day, c.slot, c.chapter, c.fatigue], [12, 'pm', 'ch2', 100]);
+  assert.deepEqual(c.exams.presolo, { tries: 2, best: 100, pass: true });
+  assert.equal(c.decisions.length, 1); assert.deepEqual(c.done, { 'class:0': 2 }); assert.equal(c.solo, null);
+  const broken = memStore(); broken.setItem(CAREER_KEY, '{nope');
+  assert.equal(createCareer({ store: broken, seed: 2 }).day, 1, 'broken: a new career');
+  assert.equal(createCareer({ store: null, seed: 2 }).slot, SLOTS[0], 'no storage: still a career');
+});
+
+test('career: one file for everything — written, read back cleaned; a wrong or broken file is refused with the reason', async () => {
+  const fs = await import('node:fs'), vm = await import('node:vm'), path = await import('node:path'), { fileURLToPath } = await import('node:url');
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+  const FL = globalThis.FL;
+  const { exportArchive, importArchive } = await import('../src/career/archive.js');
+  const { createDialogState } = await import('../src/dialog/engine.js');
+  const { entryFrom, createLogbook } = await import('../src/career/logbook.js');
+  const career = newCareer(8); career.chapter = 'ch2'; career.day = 14; career.exams.written1 = { tries: 1, best: 88, pass: true };
+  const talk = createDialogState(); talk.flags.met_instructor = true; talk.trust.instructor = 63;
+  const ent = entryFrom({ lessons: [{ id: 't2', title: '場周経路', grade: 'S', passed: true, done: true }], blockT: 1800, landings: 3, solo: true, trust: 5 }, { date: '2027-04-30', dayN: 30 });
+  assert.deepEqual([ent.total, ent.dual, ent.solo, ent.landings], [0.5, 0, 0.5, 3]); assert.match(ent.endorsement, /単独飛行/);
+  const progress = { lessons: { a1: { tries: 2, best: 'A', pass: true, levels: ['basic'] } }, quiz: { q_aero: 90 } };
+  const text = exportArchive({ career, talk, logbook: [ent], progress, records: [] }, { now: new Date('2027-05-01T00:00:00Z') });
+  const back = importArchive(text, FL);
+  assert.deepEqual(back.career, cleanCareer(career)); assert.equal(back.talk.trust.instructor, 63);
+  assert.deepEqual(back.logbook, [ent]); assert.equal(back.progress.lessons.a1.best, 'A'); assert.equal(back.progress.quiz.q_aero, 90);
+  // into a logbook: replaced, kept, the solo time in the totals
+  const store = memStore(), book = createLogbook(store); book.replace(back.logbook);
+  assert.deepEqual(createLogbook(store).totals(), { total: 0.5, dual: 0, solo: 0.5, landings: 3, days: 1 });
+  assert.throws(() => importArchive('{', FL), /JSON/);
+  assert.throws(() => importArchive(JSON.stringify({ app: 'FLIGHT LAB', kind: 'learning-record' }), FL), /CADET の記録/);
+  assert.throws(() => importArchive(JSON.stringify({ app: 'CADET', kind: 'cadet-save', v: 2 }), FL), /版/);
+  assert.throws(() => importArchive(JSON.stringify({ app: 'CADET', kind: 'cadet-save', v: 1, career: { v: 7 } }), FL), /キャリア/);
+});

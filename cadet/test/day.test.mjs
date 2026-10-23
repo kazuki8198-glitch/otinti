@@ -67,7 +67,7 @@ test('day: the whole first day, every phase in order — the lessons graded exac
   const ent = book.add(entryFrom(sum, { date: '2026-10-23', remarks: lines[lines.length - 1], skippedSec: 600 }));
   assert.deepEqual(ent.lessons.map(l => [l.id, l.grade]), [['t1', ref.t1.grade], ['a2', ref.a2.grade], ['t3', ref.t3.grade]]);
   assert.equal(ent.landings, 1); assert.ok(ent.total >= 0.3 && ent.total < 1.5, `logged ${ent.total} h`);
-  assert.deepEqual(book.totals(), { total: ent.total, dual: ent.total, landings: 1, days: 1 });
+  assert.deepEqual(book.totals(), { total: ent.total, dual: ent.total, solo: 0, landings: 1, days: 1 });
   assert.equal(createLogbook(null).entries.length, 0, 'no storage: an empty book, no error');
 });
 

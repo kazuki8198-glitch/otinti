@@ -372,6 +372,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     await act('primer'); await act('primer'); await act('primer'); await tick();
     await C(() => window.__cadet.fly.key('Enter'));                                                          // the propeller clear
     for (let k = 0; k < 4; k++) await act('mag');                                                            // OFF → R → L → BOTH → START
+    await tick(0.1);                                                                                         // (the starter engages on the next frame)
     fs = await C(() => window.__cadet.fly.status());
     assert.ok(fs.engine.cranking, 'the starter turns it');
     await tick(3);

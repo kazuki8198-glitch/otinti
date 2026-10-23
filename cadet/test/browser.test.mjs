@@ -210,7 +210,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     await ev(() => window.__cadet.setMode('walk'));
   });
 
-  test('fly: in today\'s Archer with the instructor beside you, a1 to a pass from the cockpit — FLIGHT LAB\'s score for the same inputs', async () => {
+  test('fly: in today\'s Archer with the instructor beside you, today\'s lesson alone to a pass from the cockpit, a1 — FLIGHT LAB\'s score for the same inputs', async () => {
     const tg = await ev(() => window.__cadet.spec.target);
     await ev((tg) => { const C = window.__cadet; C.setMode('walk'); C.placeWalker(tg.a + 2.6, tg.c + 1.0, { a: tg.a + 1.0, c: tg.c }); }, tg);
     assert.equal(await ev((tg) => window.__cadet.lookAt(tg.a + 1.0, tg.c, 1.25), tg), 'aircraft:board');
@@ -233,16 +233,18 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     const said = [];
     let v = await ev(() => window.__cadet.dialog());
     for (let k = 0; k < 8 && v && !v.choices.length; k++) { said.push(v.text); v = await ev(() => { window.__cadet.dialogReveal(); return window.__cadet.dialogNext(); }); }
-    assert.match(said.join('\n'), /今日の課目は「姿勢・出力・トリム」/);
+    assert.match(said.join('\n'), /今日は「通常離陸と上昇」、「直線水平飛行」、「通常着陸」/);
     assert.doesNotMatch(said.join('\n'), /ブリーフィングはまだ/);
-    assert.equal(v.choices.length, 5);
+    assert.equal(v.choices.length, 4);
+    // today's lesson alone (a2, from the training area), at the basic level
+    await ev(() => window.__cadet.dialogChoose('課目だけ'));
     await ev(() => window.__cadet.dialogChoose('基礎'));
     await ev(() => { window.__cadet.dialogReveal(); window.__cadet.dialogNext(); });
     assert.equal(await ev(() => window.__cadet.dialog()), null);
     await g.page.waitForTimeout(900);
     await ev(() => window.__cadet.simulate(0.1));
     fs = await ev(() => window.__cadet.fly.status());
-    assert.deepEqual([fs.phase, fs.flight.mode, fs.flight.id, fs.flight.level, fs.flight.step], ['lesson', 'lesson', 'a1', 'basic', 0]);
+    assert.deepEqual([fs.phase, fs.flight.mode, fs.flight.id, fs.flight.level, fs.flight.step], ['lesson', 'lesson', 'a2', 'basic', 0]);
     assert.ok(Math.abs(fs.yaw) < 1e-9, 'the head turned back to the front');
     // real time, hands off (FLIGHT LAB holds the attitude when the keys are let go): the lesson runs to its end
     for (let k = 0; k < 70 && !(fs.flight && fs.flight.done); k++) fs = await ev(() => { window.__cadet.simulate(1); return window.__cadet.fly.status(); });
@@ -251,7 +253,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     await ev(() => window.__cadet.simulate(0.1));
     assert.equal((await ev(() => window.__cadet.fly.status())).debrief, true);
     const card = await ev(() => document.body.innerText);
-    assert.ok(/課目の結果/.test(card) && /合格/.test(card) && /姿勢・出力・トリム（基礎）/.test(card), card);
+    assert.ok(/課目の結果/.test(card) && /合格/.test(card) && /直線水平飛行（基礎）/.test(card), card);
     // FLIGHT LAB's scripted pilot (bot.mjs) through the same bridge, in the page: bit for bit FLIGHT LAB's own loop
     // (bot.mjs runLesson) in the same page; and the same grade, score and time as in node (another JavaScript engine
     // may round a sine or a power differently in the last bit, so the positions are compared to the millimetre there)
@@ -260,7 +262,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
       const { got, lab } = await ev(({ lv, hook }) => {
         const C = window.__cadet, h = hook === 'noseUp' ? (L) => { if (L.step === 1 && L.st.t < 15) L.s.pTgt = 5; } : undefined;
         const pick = (L) => ({ grade: L.grade, passed: L.passed, score: L.score, t: L.t, pos: L.s.pos, q: L.s.q, rows: L.results });
-        C.fly.lesson(lv);
+        C.fly.lesson(lv, 'a1');
         C.fly.runScripted(window.makeBot(C.FL).fly, 900, h);
         return { got: pick(C.fly.flight.L), lab: pick(window.runLesson(C.FL, 'a1', lv, 900, h)) };
       }, { lv, hook });
@@ -292,10 +294,10 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.equal(await ev(() => window.__cadet.fly.flight.s.flapIdx), f0 + 1, 'the flap lever moves the flaps');
     // getting out while the lesson runs is not offered; it ends from the debrief (the bot finishes this one)
     assert.equal(await ev(() => window.__cadet.fly.status().flight.done), false);
-    await ev(() => { const C = window.__cadet; C.fly.lesson('basic'); C.fly.runScripted(window.makeBot(C.FL).fly, 900); });
+    await ev(() => { const C = window.__cadet; C.fly.lesson('basic', 'a1'); C.fly.runScripted(window.makeBot(C.FL).fly, 900); });
     await g.page.waitForTimeout(900);
     await ev(() => window.__cadet.simulate(0.1));
-    // back to the apron from the debrief: walking beside the aircraft, the instructor back in his room
+    // back to the apron from the debrief: walking beside the aircraft
     await g.page.getByRole('button', { name: '駐機場へ戻る' }).click();
     await g.page.waitForTimeout(900);
     await ev(() => window.__cadet.simulate(0.2));
@@ -303,8 +305,110 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.equal((await ev(() => window.__cadet.fly.status())).active, false);
     assert.equal((await ev(() => window.__cadet.player())).place, '駐機場（エプロン）');
     assert.equal(await ev((tg) => window.__cadet.lookAt(tg.a + 1.0, tg.c, 1.25), tg), 'aircraft:board');
-    const ins = await ev(() => window.__cadet.instructor());
-    assert.ok(Math.hypot(ins.at.a - ins.a, ins.at.c - ins.c) < 0.01, `the instructor is at ${JSON.stringify(ins.at)}`);
+    // briefed already: he is back by the aircraft, behind its right wing
+    const ins = await ev(() => window.__cadet.instructor()), wi = await ev(() => window.__cadet.walk.instructor());
+    assert.equal(wi.at, 'apron');
+    assert.ok(Math.hypot(ins.at.a - wi.a, ins.at.c - wi.c) < 0.01, `the instructor is at ${JSON.stringify(ins.at)}`);
+  });
+
+  test('the first day: the walk-around by hand, the start, the radio, the taxi, t1 → a2 → t3 by FLIGHT LAB\'s bot, the debrief and the logbook', async () => {
+    const C = (fn, a) => ev(fn, a);
+    await ev((src) => { if (!window.makeBot) (0, eval)(src + '\nwindow.makeBot = makeBot; window.runLesson = runLesson;'); }, BOT_SRC);
+    await C(() => { window.__cadet.setMode('walk'); });
+    // the walk-around: every place from where a cadet stands, E, then the decision (1–4); anomalies reported
+    const targets = await C(() => window.__cadet.walk.targets()), planted = await C(() => window.__cadet.walk.planted());
+    assert.equal(targets.length, 15);
+    const props0 = await C(() => window.__cadet.walk.props());
+    assert.ok(props0.pitot && props0.tieL && props0.tieR && props0.tieT && props0.chocks, 'the cover, the ropes and the chocks are there');
+    for (const t of targets) {
+      const got = await C(({ t }) => {
+        const W = window.__cadet, st = W.walk.stand(t.id);
+        W.placeWalker(st.a, st.c, { a: t.a, c: t.c });
+        return W.lookAt(t.a, t.c, t.y);
+      }, { t });
+      assert.equal(got, 'walk:' + t.id, `${t.id}: seen from where one stands`);
+      assert.equal(await C(() => window.__cadet.use()), 'examined');
+      for (let k = 0; k < 4; k++) {
+        const ch = await C(() => window.__cadet.walk.choices()); if (!ch) break;
+        const i = ch.indexOf('task') >= 0 ? ch.indexOf('task') : ch.indexOf('fix') >= 0 ? ch.indexOf('fix') : planted.includes(t.id) && ch.indexOf('report') >= 0 ? ch.indexOf('report') : ch.indexOf('ok');
+        if (i < 0) break;
+        await g.page.keyboard.press(`Digit${i + 1}`);
+      }
+      if (await C(() => window.__cadet.card())) await C(() => window.__cadet.use());
+    }
+    const ws = await C(() => window.__cadet.walk.summary());
+    assert.equal(ws.done, 15, JSON.stringify(ws.rows.filter(r => !r.done)));
+    assert.equal(ws.found, ws.anomalies); assert.equal(ws.missed.length, 0);
+    const props1 = await C(() => window.__cadet.walk.props());
+    assert.ok(!props1.pitot && !props1.tieL && !props1.tieR && !props1.tieT && !props1.chocks && !props1.capOpen, 'all taken away');
+    // in the seat: the aircraft cold (the M3 tachometer: 0 rpm until it is started), the whole day at the basic level
+    const tg = await C(() => window.__cadet.spec.target);
+    await C((tg) => { const W = window.__cadet; W.placeWalker(tg.a + 2.6, tg.c + 1.0, { a: tg.a + 1.0, c: tg.c }); W.lookAt(tg.a + 1.0, tg.c, 1.25); return W.use(); }, tg);
+    await g.page.waitForTimeout(900); await C(() => window.__cadet.simulate(0.3));
+    let fs = await C(() => window.__cadet.fly.status());
+    assert.deepEqual([fs.engine.running, Math.round(fs.engine.rpm), fs.engine.sw.master, fs.engine.sw.mag], [false, 0, false, 'OFF'], 'cold on the stand');
+    for (let i = 0; i < 12; i++) {
+      const d = await C(() => window.__cadet.dialog()); if (!d) break;
+      if (d.choices.length) await C((re) => window.__cadet.dialogChoose(re), d.choices.some(c => /通して/.test(c.text)) ? '通して' : '基礎');
+      else await C(() => window.__cadet.dialogNext());
+    }
+    let day = await C(() => window.__cadet.fly.day());
+    assert.equal(day.phase, 'prestart');
+    // the start by hand: the switches clicked as the checklist asks (the ring shows each), the key to START
+    const act = (id, dir = 1, wheel = false) => C(({ id, dir, wheel }) => window.__cadet.fly.act(id, dir, wheel), { id, dir, wheel });
+    const tick = (s = 0.5) => C((s) => window.__cadet.simulate(s, 1 / 30), s);
+    await C(() => window.__cadet.fly.key('Enter')); await C(() => window.__cadet.fly.key('Enter'));         // seat and door, breakers (looked at)
+    await act('parkBrake'); await tick();
+    day = await C(() => window.__cadet.fly.day());
+    assert.equal(day.phase, 'start', JSON.stringify(day.items));
+    assert.equal((await C(() => window.__cadet.fly.status())).guide, 'mixture', 'the ring round the mixture');
+    await act('mixture'); await act('throttle', 1, true); await act('sw.master'); await act('sw.beacon'); await act('sw.fuelPump');
+    await act('primer'); await act('primer'); await act('primer'); await tick();
+    await C(() => window.__cadet.fly.key('Enter'));                                                          // the propeller clear
+    for (let k = 0; k < 4; k++) await act('mag');                                                            // OFF → R → L → BOTH → START
+    fs = await C(() => window.__cadet.fly.status());
+    assert.ok(fs.engine.cranking, 'the starter turns it');
+    await tick(3);
+    fs = await C(() => window.__cadet.fly.status());
+    assert.ok(fs.engine.running && fs.engine.sw.mag === 'BOTH', 'it caught, the key sprang back');
+    assert.ok(fs.engine.rpm > 500, `rpm ${fs.engine.rpm}`);
+    // from here the instructor's hands, the radio answered right, the taxi by the instructor, the lessons by the bot
+    // (seen from outside: the cockpit's screens are not drawn, which keeps the software renderer quick)
+    await C(() => window.__cadet.fly.view('chase'));
+    const log = [];
+    for (let k = 0; k < 700; k++) {
+      day = await C(() => window.__cadet.fly.day()); if (!day) break;
+      if (!log.length || log[log.length - 1] !== day.phase) log.push(day.phase);
+      if (day.phase === 'done') break;
+      const dlg = await C(() => window.__cadet.dialog());
+      if (dlg) { if (dlg.choices.length) await C((re) => window.__cadet.dialogChoose(re), dlg.choices.some(c => /省く/.test(c.text)) ? '省く' : dlg.choices.some(c => /航空日誌/.test(c.text)) ? '航空日誌' : dlg.choices[0].text); else await C(() => window.__cadet.dialogNext()); continue; }
+      const lb = await C(() => window.__cadet.logbook());
+      if (lb.open) { await g.page.getByRole('button', { name: '閉じる' }).click(); continue; }
+      fs = await C(() => window.__cadet.fly.status());
+      if (fs.flight && fs.flight.mode === 'lesson' && !fs.flight.done) {
+        await C(() => { const W = window.__cadet; W.fly.runScripted(window.makeBot(W.FL).fly, 900, () => { W.fly.radioTick(1 / 120); W.fly.answer(true); }); });
+        continue;
+      }
+      if (day.radio && day.radio.phase === 'choose') await C(() => window.__cadet.fly.answer(true));
+      if (day.items && !day.assisting) await C(() => window.__cadet.fly.assist());
+      if (['taxiOut', 'lineup', 'taxiOff', 'taxiIn'].includes(day.phase) && !day.assisting) await C(() => window.__cadet.fly.key('KeyY'));
+      await tick(4);
+    }
+    assert.deepEqual(log, ['start', 'afterStart', 'atis', 'ground', 'taxiOut', 'runup', 'tower', 'lineup', 't1', 'leave', 'transit', 'a2', 'back', 'return', 't3', 'exit', 'taxiOff', 'groundIn', 'taxiIn', 'shutdown', 'debrief', 'done']);
+    assert.equal(day.phase, 'done', log.join(' '));
+    assert.ok(!day.st.incursion);
+    // the lessons in the logbook: FLIGHT LAB's grades for the same inputs (its bot in node)
+    const lb = await C(() => window.__cadet.logbook());
+    const e = lb.entries[lb.entries.length - 1];
+    assert.deepEqual(e.lessons.map(l => [l.id, l.grade]), ['t1', 'a2', 't3'].map(id => [id, runLesson(FL, id, 'basic', 900).grade]));
+    assert.equal(e.reg, 'N738SY'); assert.equal(e.landings, 1); assert.ok(e.sig.name === '早瀬 航' && e.total > 0);
+    fs = await C(() => window.__cadet.fly.status());
+    assert.ok(!fs.engine.running && !fs.engine.sw.master, 'shut down');
+    await C(() => window.__cadet.fly.view('cockpit'));
+    // out through the door: the next day is a new walk-around
+    await act('door'); await g.page.waitForTimeout(900); await C(() => window.__cadet.simulate(0.3));
+    assert.equal(await C(() => window.__cadet.mode()), 'walk');
+    assert.equal((await C(() => window.__cadet.walk.summary())).done, 0);
   });
 
   test('the pause menu opens and closes; settings apply at once', async () => {

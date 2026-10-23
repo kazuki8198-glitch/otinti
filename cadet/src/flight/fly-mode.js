@@ -7,6 +7,9 @@
 // The view: the pilot's eye with the mouse (right button held: look closer), or outside behind the aircraft (C); a
 // click on a switch, lever or knob under the crosshair works it, the wheel turns it. Getting out puts the aircraft back
 // on its stand.
+// M4: the engine and the electrics are aircraft/systems.js behind the cockpit's switches (cold on the stand: the
+// cadet, or the instructor, starts it); the whole first day is flight/day-mode.js (the checklists, the radio, the
+// taxiing, t1 → a2 → t3, the debrief and the logbook).
 // main.js owns the modes, the menu and the loop; it hands this module what it needs (ctx below) and calls update()
 // every frame while flying.
 import * as THREE from 'three';
@@ -16,6 +19,12 @@ import { buildCockpit } from '../aircraft/cockpit.js';
 import { seatFromBody } from '../npc/actor.js';
 import { createRunner } from '../dialog/engine.js';
 import { cockpitDialogs, flightLine, debriefLine } from '../content/dialog/cockpit.js';
+import { debriefDialogs } from '../content/dialog/debrief.js';
+import { EVENT_LINES } from '../content/dialog/day1.js';
+import { createSystems, RUNNING } from '../aircraft/systems.js';
+import { createDayMode } from './day-mode.js';
+import { createRouteLine } from '../world/route-line.js';
+import { ourCall } from '../content/dialog/atc.js';
 
 const DEG = Math.PI / 180;
 const FADE_MS = 420;
@@ -26,7 +35,9 @@ const HOME_PITCH = -4 * DEG;            // the head at rest: a little down, the 
 // ctx: { FL, L, scene, camera, renderer, sky, input, settings, audio, toast(text, ms), hud (prompt), dui (the dialogue
 //   UI), talkState, saveTalk(), instructor, instructorHome(root) (puts him back in the briefing room), stand { a, c,
 //   hdgTrue }, parkedToday (its root), todayColliders(on), toFrame(x, z), world (colliders, for the taxi check),
-//   flightHud (optional), lessonId, wind { fromDeg, kt } (the day's), onEnter(), onLeave(), onTalk(on), onPause() }
+//   flightHud (optional), dayHud (optional), lessonId (the lesson flown alone), today() (the day: career/day.js, made by
+//   main with the walk-around), onLogbook(summary, remark) (the debrief signed the logbook; returns a promise that
+//   resolves when the cadet has closed it), onDayOver(day) (got out after a day, finished or not), wind { fromDeg, kt } (the day's), onEnter(), onLeave(), onTalk(on), onPause() }
 export function createFlyMode(ctx) {
   const { FL, L, scene, camera, sky, input, settings, audio, toast, hud, instructor, world } = ctx;
   const P = FL.physics, AV = FL.avionics;
@@ -49,18 +60,35 @@ export function createFlyMode(ctx) {
   live.root.visible = false;
   scene.add(live.root);
   const seat = seatFromBody(cockpit.instructorSeat, cockpit.instructorSeat.yaw ?? Math.PI);
+  // the engine and the electrics behind the switches
+  const systems = createSystems(cockpit.switches);
+  const engShow = { rpm: 0, run: false };
+  // the ring round the control to use next (the day's checklists): drawn over everything, pulsing
+  const guide = new THREE.Mesh(new THREE.RingGeometry(0.014, 0.019, 32), new THREE.MeshBasicMaterial({ color: 0xffd479, transparent: true, opacity: 0.9, depthTest: false, depthWrite: false, side: THREE.DoubleSide }));
+  guide.renderOrder = 10; guide.visible = false; guide.name = 'cockpit-guide';
+  live.root.add(guide);
+  let guideCtl = null;
+  // the way to taxi, on the pavement
+  const routeLine = createRouteLine(L); scene.add(routeLine.mesh);
+  // the first day (what it borrows from here)
+  const NOHUD = { setTask() {}, setChecklist() {}, setRadio() {}, hideAll() {} };
+  const dayMode = createDayMode({ FL, flight, systems, audio, settings, routeLine, dayHud: ctx.dayHud || NOHUD,
+    get stand() { return { a: ctx.stand.a, c: ctx.stand.c }; },
+    say: (t, ms) => say(t, ms), setGuide: (id) => setGuide(id), startLesson: startDayLesson, talk: (w) => startTalk(w), debrief: startDebrief,
+    markDirty: () => { if (cockpit.markDirty) cockpit.markDirty(); } });
 
   // ---- state
   let active = false, phase = 'off';          // 'board' (talking in the seat) | 'ground' | 'lesson' | 'debrief' | 'leaving'
   let view = 'cockpit', yaw = 0, pitch = 0, chaseYaw = 0, chasePitch = 0.08, psiS = null, fov = null;
-  let rpmVisual = null, startT = -1, talkOn = false, lineT = 0, lastChime = -1, lastHint = '', hudT = 0, chosen = null;
+  let rpmVisual = null, talkOn = false, talkKind = 'board', lineT = 0, lastChime = -1, lastHint = '', hudT = 0, chosen = null, go = null, lastAtcMsg = '';
+  const blend = { t: 0, pos: [0, 0, 0], q: new THREE.Quaternion() };
   let fading = false, warnedExit = 0, debriefShown = false, lastLevel = settings.get('lessonLevel') || 'basic', homeT = 0;
   const pose = { pos: [0, 0, 0], q: [0, 0, 0, 1] };
-  const qBody = new THREE.Quaternion(), qHead = new THREE.Quaternion(), eHead = new THREE.Euler(0, 0, 0, 'YXZ');
+  const qBlend = new THREE.Quaternion(), qBody = new THREE.Quaternion(), qHead = new THREE.Quaternion(), eHead = new THREE.Euler(0, 0, 0, 'YXZ');
   const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), camWorld = new THREE.Vector3(), head = new THREE.Vector3();
   const ray = new THREE.Raycaster(), center = new THREE.Vector2(0, 0);
   ray.far = 1.6;
-  let hover = null, zoomHold = false, wasStop = true, engineOn = false, hintCool = 0, shadowHalf = undefined;
+  let hover = null, zoomHold = false, wasStop = true, hintCool = 0, shadowHalf = undefined, debRunner = null;
 
   // ---- the fade (a black sheet over everything; the work happens while it is opaque)
   const sheet = document.createElement('div');
@@ -80,15 +108,18 @@ export function createFlyMode(ctx) {
   }
 
   // ---- the instructor's talk in the seat (the dialogue UI, with its own runner)
-  const talkData = cockpitDialogs(FL, { lessonId: ctx.lessonId || 'a1' });
+  const talkData = cockpitDialogs(FL, { lessonId: ctx.lessonId || 'a2' });
   const runner = createRunner({ data: talkData, state: ctx.talkState, hooks: { onHook } });
-  runner.onChange((v) => {
+  const onTalkView = (v) => {
     if (v) { ctx.dui.show(v); if (v.speaker === 'instructor' && !instructor.gesturing && Math.random() < 0.25) instructor.gesture('explain'); }
     else endTalk();
     ctx.saveTalk();
-  });
+  };
+  runner.onChange(onTalkView);
   function onHook(name, arg) {
     if (name === 'fly') { chosen = arg; if (arg === 'free') startEngine(); }   // 「エンジンをかけますね」
+    else if (name === 'go') go = arg;
+    else if (name === 'logbook') signLogbook();
     else if (name === 'nod') instructor.gesture('nod');
     else if (name === 'look') instructor.gesture('explain');
     else if (name === 'point') { pointAtPanel(arg); }
@@ -102,23 +133,31 @@ export function createFlyMode(ctx) {
     else { if (!cockpit.screens.pfd) return; cockpit.screens.pfd.localToWorld(v1.copy(pfdMid)); }
     instructor.pointAt(v1); instructor.gesture('point');
   }
-  function startTalk() {
-    talkOn = true; chosen = null; ctx.onTalk(true);
+  // which: 'board' (the menu on sitting down), 'transit' / 'return' (the day's two questions in the air), 'debrief'
+  function startTalk(which = 'board', data = null) {
+    talkOn = true; talkKind = which; chosen = null; go = null; ctx.onTalk(true);
     if (fh) fh.show(false);                 // his talk alone on the screen (the flight's panels come back after it)
     input.exitLock();
-    runner.start('board');
+    if (which === 'debrief') {
+      debRunner = createRunner({ data, state: ctx.talkState, hooks: { onHook } });
+      debRunner.onChange(onTalkView);
+      debRunner.start('debrief');
+    } else runner.start(which);
   }
   function endTalk() {
     if (!talkOn) return;
     talkOn = false; ctx.dui.hide(); ctx.onTalk(false);
-    const c = chosen; chosen = null;
+    const c = chosen, kind = talkKind, g = go; chosen = null; go = null;
     if (!active || phase === 'leaving') return;          // stopped by getting out (the menu): nothing to start
     if (fh) fh.show(true);
+    homeT = 1.2;                            // the head turns back to the front (unless the mouse moves it)
+    if (kind === 'transit' || kind === 'return') { dayMode.onChoice(g || 'skip'); input.requestLock(); return; }
+    if (kind === 'debrief') { return; }     // (the logbook is open, or closed: signLogbook carries on)
     if (c === 'leave') leave();
     else if (c === 'free') beginFree();
+    else if (c && c.startsWith('day:')) beginDay(c.slice(4));
     else if (c === 'intro' || c === 'basic' || c === 'precision') beginLesson(c);
     else beginFree();                       // a talk stopped some other way (the mode changed): stay on the ground
-    homeT = 1.2;                            // the head turns back to the front (unless the mouse moves it)
     if (active && phase !== 'leaving') input.requestLock();
   }
 
@@ -133,7 +172,7 @@ export function createFlyMode(ctx) {
       flight.startOnGround(n, e, ctx.stand.hdgTrue, 'pa28', { autoRud: settings.get('autoRud'), wind: dayWind() });
       ctx.parkedToday.visible = false; ctx.todayColliders(false);
       live.root.visible = true; cockpit.setVisible(true); setView('cockpit');
-      rpmVisual = 0; startT = -1; engineOn = false;             // the engine is off until he starts it
+      systems.setCold(flight.s); rpmVisual = 0;                     // the aircraft as left on the stand: everything off
       // the instructor: in the right seat
       live.root.add(instructor.root);
       instructor.root.position.set(seat.position[0], seat.position[1], seat.position[2]); instructor.root.rotation.set(0, seat.yaw, 0);
@@ -141,7 +180,7 @@ export function createFlyMode(ctx) {
       yaw = 0; pitch = HOME_PITCH;
       ctx.onEnter();
       placeNow();
-      if (fh) { fh.show(true); fh.setMode('free'); if (settings.get('panel2D') !== fh.panel2D) fh.setPanel2D(!!settings.get('panel2D')); }
+      if (fh) { fh.show(true); fh.setMode('free'); if (fh.setFreeTitle) fh.setFreeTitle(); if (settings.get('panel2D') !== fh.panel2D) fh.setPanel2D(!!settings.get('panel2D')); }
       startTalk();
     }, instant);
     return 'board';
@@ -158,7 +197,9 @@ export function createFlyMode(ctx) {
       ctx.parkedToday.visible = true; ctx.todayColliders(true);
       if (instructor.setSeated) instructor.setSeated(null);
       ctx.instructorHome(instructor.root);
-      rpmVisual = null; engineOn = false;
+      rpmVisual = null;
+      if (dayMode.active) { if (ctx.onDayOver) ctx.onDayOver(dayMode.day); dayMode.end(); }
+      if (audio.crank) audio.crank(false);
       if (audio.engine) audio.engine(null);
       if (fh) { fh.hideDebrief(); fh.setHelp(false); fh.show(false); }
       debriefShown = false;
@@ -173,34 +214,73 @@ export function createFlyMode(ctx) {
     if (fh) fh.setMode('free');
     startEngine();
   }
-  // the engine start: the starter turns the propeller, the engine catches and settles at idle (the physics' engine
-  // was running all along, at idle with the park brake on: nothing moves)
+  // the instructor starts the engine (a free flight): everything on as for the flight, primed, the throttle cracked,
+  // the key to START; the systems turn it over until it catches
   function startEngine() {
-    if (engineOn) return;
-    engineOn = true; startT = 0; rpmVisual = 0;
-    if (audio.starter) audio.starter();
+    if (systems.running || systems.cranking) return;
+    Object.assign(cockpit.switches, RUNNING, { mag: 'START' });
+    for (let i = 0; i < 3; i++) systems.prime();
+    if (flight.s && flight.s.thr < 0.03) flight.s.thr = 0.05;
   }
-  function beginLesson(level, { instant = false } = {}) {
-    lastLevel = level; settings.set('lessonLevel', level);
+  function beginLesson(level, { instant = false, lessonId = ctx.lessonId || 'a2' } = {}) {
+    lastLevel = level; settings.set('lessonLevel', level); lastLesson = lessonId;
     fade(() => {
-      flight.startLesson(ctx.lessonId || 'a1', level, { autoRud: settings.get('autoRud') });
-      phase = 'lesson'; rpmVisual = null; startT = -1; engineOn = true; lastChime = -1; lastHint = ''; hintCool = 0; debriefShown = false;
+      flight.startLesson(lessonId, level, { autoRud: settings.get('autoRud') });
+      systems.setRunning(flight.s);
+      phase = 'lesson'; rpmVisual = null; lastChime = -1; lastHint = ''; hintCool = 0; debriefShown = false;
       yaw = 0; pitch = HOME_PITCH; homeT = 0; psiS = null;
       if (fh) { fh.hideDebrief(); fh.setMode('lesson'); }
       placeNow();
       toast('訓練空域に着きました', 2600);
     }, instant);
   }
-  function retry() { if (fh) fh.hideDebrief(); debriefShown = false; beginLesson(lastLevel); input.requestLock(); }
+  let lastLesson = ctx.lessonId || 'a2';
+  function retry() { if (fh) fh.hideDebrief(); debriefShown = false; beginLesson(lastLevel, { lessonId: lastLesson }); input.requestLock(); }
   function freeFromHere() {
     if (fh) fh.hideDebrief(); debriefShown = false;
     fade(() => {
       flight.startFree('area', 'pa28', { autoRud: settings.get('autoRud'), wind: dayWind() });
-      phase = 'ground'; rpmVisual = null; startT = -1; engineOn = true; psiS = null;
+      systems.setRunning(flight.s);
+      phase = 'ground'; rpmVisual = null; psiS = null;
       if (fh) fh.setMode('free');
       placeNow();
     });
     input.requestLock();
+  }
+
+  // ---- the whole day (flight/day-mode.js drives it; these are the parts it borrows)
+  function beginDay(level) {
+    lastLevel = level; settings.set('lessonLevel', level);
+    const d = ctx.today ? ctx.today(level) : null;
+    if (!d) { beginFree(); return; }
+    phase = 'day';
+    if (fh) { fh.setMode('free'); if (fh.setFreeTitle) fh.setFreeTitle('今日の 1 日', 'H でキーの一覧'); }
+    dayMode.begin(d, level);
+  }
+  // a lesson of the day: from where the cadet is (handoff: FLIGHT LAB's own start, the picture blending the last
+  // metres) or after a fade (the transit skipped, or flown and arrived)
+  function startDayLesson(id, level, { handoff = false, fade: withFade = false, toast: note = '' } = {}) {
+    const go = () => {
+      const was = { pos: live.root.position.clone(), q: live.root.quaternion.clone() };
+      flight.startLesson(id, level, { autoRud: settings.get('autoRud') });
+      systems.adopt(flight.s);
+      phase = 'lesson'; lastChime = -1; lastHint = ''; hintCool = 0; debriefShown = false; psiS = null;
+      if (fh) fh.setMode('lesson');
+      placeNow();
+      if (handoff) { blend.t = 1; blend.pos[0] = was.pos.x - live.root.position.x; blend.pos[1] = was.pos.y - live.root.position.y; blend.pos[2] = was.pos.z - live.root.position.z; blend.q.copy(live.root.quaternion).invert().premultiply(was.q); placeNow(); }
+      if (note) toast(note, 2600);
+    };
+    if (withFade) fade(go); else go();
+  }
+  // the debrief (in the seat, on the stand), then the logbook signed
+  function startDebrief(sum) { phase = 'day'; debSum = sum; startTalk('debrief', debriefDialogs(sum)); }
+  let debSum = null;
+  function signLogbook() {
+    const d = dayMode.day, sum = debSum; if (!d || !sum) return;
+    const remark = (sum.lessons.every(l => l.passed) ? '今日の 3 課目は基準内。' : '再訓練の課目あり。') + (sum.walk.missed.length ? '外部点検の見落としあり。' : '') + (sum.incursion ? '停止線の越境あり（指導済み）。' : '');
+    const done = () => { if (dayMode.day) dayMode.day.debriefRead(); say('今日はここまで。降りるときは、右のドアの取っ手をどうぞ。', 5200); };
+    const p = ctx.onLogbook ? ctx.onLogbook(sum, remark) : null;
+    if (p && p.then) p.then(done); else done();
   }
 
   // ---- the view
@@ -233,6 +313,12 @@ export function createFlyMode(ctx) {
       if (P.GROUND_M - y > lift) lift = P.GROUND_M - y;
     }
     live.root.position.set(pose.pos[0] - L.E0, pose.pos[1] + Math.min(lift, 0.3), pose.pos[2] + L.N0);
+    // a lesson started where the cadet was: the few metres between drawn away over a second (the picture only)
+    if (blend.t > 0) {
+      const k = blend.t * blend.t * (3 - 2 * blend.t);
+      live.root.position.x += blend.pos[0] * k; live.root.position.y += blend.pos[1] * k; live.root.position.z += blend.pos[2] * k;
+      qBlend.identity().slerp(blend.q, k); live.root.quaternion.premultiply(qBlend);
+    }
     live.root.updateMatrixWorld(true);
   }
   function placeCamera(dt) {
@@ -270,20 +356,24 @@ export function createFlyMode(ctx) {
       cockpit.switches[d.id] = d.on;
       if (audio.click) audio.click();
     } else if (d.type === 'select') {
-      cockpit.switches[d.id] = d.value;
-      if (d.id === 'mag' && d.value === 'START') setTimeout(() => { if (cockpit.switches.mag === 'START') cockpit.switches.mag = 'BOTH'; }, 900);
+      cockpit.switches[d.id] = d.value;              // (the key springs back from START by itself: aircraft/systems.js)
       if (audio.click) audio.click();
+    } else if (d.type === 'prime') {
+      const n = systems.prime();
+      toast(`プライマー ${n} 回`, 1200);
+      if (audio.knob) audio.knob();
     } else if (d.type === 'exit') {
       if (canExit()) leave();
       else if (performance.now() - warnedExit > 1500) {
         warnedExit = performance.now();
-        toast(flight.free ? '止まってから降りましょう' : '課目の途中です。終わってから降りましょう（やめるときは Esc のメニューから）', 2600);
+        toast(dayMode.active ? '今日の飛行の途中です。最後まで終わってから降りましょう（やめるときは Esc のメニューから）' : flight.free ? '止まってから降りましょう' : '課目の途中です。終わってから降りましょう（やめるときは Esc のメニューから）', 2600);
       }
     } else if (d.type === 'info' && d.text) toast(d.text, 2600);
   }
   function canExit() {
     if (!flight.L) return true;
     const s = flight.s;
+    if (dayMode.active) return dayMode.day.phase === 'done' || s.crashed;
     if (!flight.free) return !!flight.L.done;
     return s.crashed || (s.onGround && Math.hypot(s.vel[0], s.vel[2]) < 0.6);
   }
@@ -308,7 +398,10 @@ export function createFlyMode(ctx) {
     wasStop = stop;
     // the flight (FLIGHT LAB's tick: the keys once, then 1/120 s steps)
     frameOpt.paused = stop || phase === 'board' || phase === 'leaving';
-    const res = flight.frame(dt, keysFor(stop), frameOpt);
+    frameOpt.pilot = dayMode.pilot;                               // the instructor taxiing (I have control)
+    const res = flight.frame(dt, keysFor(stop || !!frameOpt.pilot), frameOpt);
+    // the engine and the electrics
+    for (const ev of systems.update(frameOpt.paused ? 0 : dt, flight.s)) onSystems(ev);
     for (const ev of res.events) onEvent(ev);
     if (res.ended) onEnded();
     for (const r of res.pad || []) {
@@ -329,13 +422,10 @@ export function createFlyMode(ctx) {
         chaseYaw -= look.x * sens; chasePitch = THREE.MathUtils.clamp(chasePitch - look.y * sens * inv, -0.15, 1.2);
       }
     } else if (talkOn) faceInstructor(dt);
-    // the engine start (the propeller only: the physics' engine idles throughout)
-    if (startT >= 0) {
-      startT += dt;
-      const idle = flight.s.rpm || 650;
-      rpmVisual = startT < 1.3 ? 180 * (startT / 1.3) : startT < 2.6 ? 180 + (idle - 180) * THREE.MathUtils.smoothstep(startT, 1.3, 2.6) : null;
-      if (rpmVisual == null) startT = -1;
-    }
+    // the propeller as the systems turn it (the starter, the run-up's magneto drop: the picture and the sound)
+    rpmVisual = systems.rpm; engShow.rpm = systems.rpm; engShow.run = systems.running;
+    if (blend.t > 0) blend.t = Math.max(0, blend.t - dt / 1.2);
+    if (dayMode.active) dayMode.update(dt, { stop });
     placeNow();
     applyShadow();
     liveOpt.dt = dt; liveOpt.rpmVisual = rpmVisual; liveOpt.lights = lights(); liveOpt.inside = view === 'cockpit';
@@ -358,8 +448,9 @@ export function createFlyMode(ctx) {
         if (wheel) for (let i = 0; i < Math.abs(wheel); i++) applyAct(hover.act(Math.sign(wheel), true));
       }
     } else if (hover) { hover = null; hud.prompt(null); }
-    cockOpt.s = flight.s; cockOpt.L = flight.L; cockOpt.av = flight.av; cockOpt.parkBrake = flight.controls.parkBrake; cockOpt.night = night();
+    cockOpt.s = flight.s; cockOpt.L = flight.L; cockOpt.av = flight.av; cockOpt.parkBrake = flight.controls.parkBrake; cockOpt.night = night(); cockOpt.eng = engShow;
     cockpit.update(dt, cockOpt);
+    placeGuide(dt, stop);
     // the instructor: looks at you while he speaks, otherwise round the panel and outside (unseen from outside: left be)
     const speaking = talkOn || lineT > 0;
     if (lineT > 0) lineT -= dt;
@@ -374,16 +465,42 @@ export function createFlyMode(ctx) {
       const st = flight.status();
       if (fh) { fh.update(st, flight.panel()); fh.setHood(!!(flight.L && flight.L.hood && !flight.L.done)); }
       if (phase === 'lesson' && !stop) lessonVoice(st);
+      // the tower in a lesson (FLIGHT LAB's read-back): heard once, when the voice is on
+      if (st && st.atc && st.atc.msg !== lastAtcMsg) { lastAtcMsg = st.atc.msg; if (dayMode.active) dayMode.speak(st.atc.msg.replace(/^[^:]*:\s*"?|"$/g, '')); }
     }
     if (audio.engine) {
       const s = flight.s, o = s.out;
-      engOpt.rpm = rpmVisual != null ? rpmVisual : o.rpm; engOpt.thr = s.thr; engOpt.ias = o.ias; engOpt.onGround = s.onGround;
+      engOpt.rpm = systems.rpm; engOpt.thr = s.thr; engOpt.ias = o.ias; engOpt.onGround = s.onGround;
       engOpt.stall = !stop && !!o.stallWarn; engOpt.inside = view === 'cockpit';
-      engOpt.running = engineOn && startT < 0 && !!(s.eng[0] && s.eng[0].run);
+      engOpt.running = systems.running;
       audio.engine(engOpt);
     }
-    if (flight.free && phase === 'ground') taxiCheck();
+    if (flight.free && (phase === 'ground' || phase === 'day')) taxiCheck();
   }
+  // what the systems tell: the starter's sound, the catch, a start that did not work, an engine that stopped
+  function onSystems(ev) {
+    if (ev.type === 'crank') { if (audio.crank) audio.crank(true); }
+    else if (ev.type === 'catch') { if (audio.crank) audio.crank(false); if (audio.fire) audio.fire(); }
+    else if (ev.type === 'nocatch') { if (audio.crank) audio.crank(false); say(ev.why, 5200); }
+    else if (ev.type === 'nostarter') say(EVENT_LINES.nostarter, 4200);
+    else if (ev.type === 'surge') say(EVENT_LINES.surge, 5200);
+    else if (ev.type === 'stop') {
+      const planned = dayMode.active && dayMode.day.phase === 'shutdown';
+      if (!planned) { toast(`エンジン停止：${ev.why}`, 3500); if (!flight.free || flight.s.onGround === false) say(EVENT_LINES.stopped(ev.why), 4200); }
+    }
+  }
+  // the ring round the control the day's checklist asks for (only in the cockpit view, only when free to act)
+  function placeGuide(dt, stop) {
+    const c = guideCtl;
+    guide.visible = !!c && view === 'cockpit' && !stop;
+    if (!guide.visible) return;
+    cockpit.aimPoint(c, v1); live.root.worldToLocal(v1);
+    guide.position.copy(v1);
+    guide.quaternion.copy(live.root.quaternion).invert().multiply(camera.quaternion);
+    const t = performance.now() / 1000;
+    guide.scale.setScalar(1 + 0.18 * Math.sin(t * 5)); guide.material.opacity = 0.65 + 0.3 * Math.sin(t * 5);
+  }
+  function setGuide(id) { guideCtl = id ? cockpit.controls.find(c => c.id === id) || null : null; }
   const stopped = () => fading || talkOn || debriefShown || phase === 'board' || phase === 'leaving';
   // the keys go to the aircraft only when the player is flying it (not while a talk, the debrief or the menu is up)
   const NO_KEYS = { has: () => false };
@@ -428,11 +545,25 @@ export function createFlyMode(ctx) {
     else if (ev.type === 'runway_excursion') say('滑走路から外れました。ラダーでセンターラインを保ちましょう。', 4200);
     else if (ev.type === 'tail_strike') say('尾部を擦りました。機首の上げすぎです。', 3800);
     else if (ev.type === 'engine_stop') toast(`エンジン停止：${ev.why}`, 3500);
+    else if (ev.type === 'crash' && dayMode.active && flight.free) {
+      // the day ends there: the debrief in the seat
+      toast(`機体損傷：${ev.why}`, 5000); say('止まって！……ぶつけてしまいましたね。今日の飛行はここまでにします。', 5000);
+      const d = dayMode.day; d.st.crash = ev.why;
+      setTimeout(() => { if (dayMode.day === d && d.phase !== 'debrief' && d.phase !== 'done') d.abortTo('debrief'); }, 2500);
+    }
     else if (ev.type === 'crash') { toast(`機体損傷：${ev.why}`, 5000); if (flight.free) { const L0 = flight.L; setTimeout(() => { if (flight.L === L0) showFreeEnd(); }, 1500); } }
   }
   function onEnded() {
     flight.finish();
     const st = flight.status(), L0 = flight.L;
+    if (dayMode.active) {
+      // the day goes on: a word from the instructor, the grade on the screen, the flight carries on as CADET's own
+      say(debriefLine(st), 5200);
+      if (!st.crashed) toast(`${st.id} ${st.title}：評価 ${st.grade}`, 3600);
+      phase = 'day'; if (fh) fh.setMode('free');
+      dayMode.lessonEnded(st);
+      return;
+    }
     setTimeout(() => {
       if (!active || flight.L !== L0 || debriefShown || flight.status().done !== true) return;
       say(debriefLine(st), 6000);
@@ -441,7 +572,7 @@ export function createFlyMode(ctx) {
   }
   function showFreeEnd() {
     if (!active || !fh || debriefShown || phase === 'leaving') return;
-    fh.showDebrief(flight.status(), { onRetry: () => { fh.hideDebrief(); debriefShown = false; fade(() => { const [n, e] = P.rwyToNE(P.LAB_RWY, ctx.stand.a, ctx.stand.c); flight.startOnGround(n, e, ctx.stand.hdgTrue, 'pa28', { autoRud: settings.get('autoRud'), wind: dayWind() }); phase = 'ground'; engineOn = false; startEngine(); psiS = null; placeNow(); }); input.requestLock(); }, onFree: null, onReturn: () => leave() });
+    fh.showDebrief(flight.status(), { onRetry: () => { fh.hideDebrief(); debriefShown = false; fade(() => { const [n, e] = P.rwyToNE(P.LAB_RWY, ctx.stand.a, ctx.stand.c); flight.startOnGround(n, e, ctx.stand.hdgTrue, 'pa28', { autoRud: settings.get('autoRud'), wind: dayWind() }); phase = 'ground'; systems.setCold(flight.s); startEngine(); psiS = null; placeNow(); }); input.requestLock(); }, onFree: null, onReturn: () => leave() });
     debriefShown = true; input.exitLock();
   }
   // taxiing into a hangar, a building or another aircraft: the colliders the walker uses (the aircraft's nose, wing
@@ -469,6 +600,8 @@ export function createFlyMode(ctx) {
     if (e.code === 'KeyH') { if (fh) fh.setHelp(!fh.help); return true; }
     if (e.code === 'Tab') { e.preventDefault(); if (fh) { const on = !fh.panel2D; fh.setPanel2D(on); settings.set('panel2D', on); } return true; }
     if (phase === 'board') return false;
+    // the day's own keys (Enter: the checklist item looked at; Y: leave it to the instructor; 1–3: the radio)
+    if (dayMode.active && dayMode.key(e.code)) { e.preventDefault(); return true; }
     // CADET's own: Shift+B sets or releases the parking brake (FLIGHT LAB has none; B alone is the brakes, held)
     if (e.code === 'KeyB' && e.shiftKey) { applyAct({ type: 'flight', name: 'parkBrake' }); e.preventDefault(); return true; }
     const r = flight.key(e.code, e.shiftKey);
@@ -492,7 +625,8 @@ export function createFlyMode(ctx) {
   return {
     flight, live, cockpit,
     get active() { return active; }, get phase() { return phase; }, get view() { return view; }, get talking() { return talkOn; },
-    get debrief() { return debriefShown; }, get runner() { return runner; }, get fading() { return fading; },
+    get debrief() { return debriefShown; }, get runner() { return talkKind === 'debrief' && debRunner ? debRunner : runner; }, get fading() { return fading; },
+    systems, dayMode, routeLine, beginDay,
     board, leave, setView, update, key, draw2D, canExit,
     actOn(id, dir = 1, wheel = false) { const c = cockpit.controls.find(x => x.id === id); if (!c) return null; const d = c.act(dir, wheel); applyAct(d); return d; },
     beginLesson, retry, freeFromHere,
@@ -511,7 +645,10 @@ export function createFlyMode(ctx) {
       // the instructor's head in the aircraft's frame (x right, y up, −z forward): in the right seat while flying
       let seatAt = null;
       if (active && instructor.headWorld) { instructor.headWorld(v2); live.root.worldToLocal(v2); seatAt = v2.toArray(); }
-      return { active, phase, view, talking: talkOn, debrief: debriefShown, flight: flight.L ? flight.status() : null, rpmVisual, yaw, pitch, hover: hover ? hover.id : null, seatAt, eye: cockpit.eye.toArray() };
+      const d = dayMode.day;
+      return { active, phase, view, talking: talkOn, talkKind, debrief: debriefShown, flight: flight.L ? flight.status() : null, rpmVisual, yaw, pitch, hover: hover ? hover.id : null, seatAt, eye: cockpit.eye.toArray(),
+        engine: { running: systems.running, cranking: systems.cranking, rpm: systems.rpm, oil: systems.oil, sw: { ...cockpit.switches } }, guide: guideCtl ? guideCtl.id : null,
+        day: d ? { phase: d.phase, label: d.label, items: d.items(), radio: d.atc.view(), assisting: dayMode.assisting, flying: dayMode.flying, st: { incursion: d.st.incursion, exit: d.st.exit, memo: { ...d.st.memo, hold: undefined } } } : null };
     },
   };
 }

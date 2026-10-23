@@ -308,6 +308,52 @@ export function createAudio() {
     m.start(t); m.stop(t + 2); s.start(t, Math.random() * 1.5); s.stop(t + 2.7); th.start(t); th.stop(t + 2.7);
     burst({ f: 2400, q: 1.2, d: 0.03, g: 0.14, thump: 0.4, thumpF: 120 });       // the starter's gear engaging
   }
+  // the starter turning the engine for as long as the key is at START (M4: the start from aircraft/systems.js): the
+  // motor's whine dragged down at each compression (about 4 a second at cranking speed) with a chuff, until crank(false);
+  // fire() is the first uneven firings when it catches
+  let crk = null;
+  function crank(on) {
+    if (!ok()) return;
+    const t = ctx.currentTime;
+    if (on && !crk) {
+      const inside = eng ? eng.inside : true;
+      const m = ctx.createOscillator(), mlp = ctx.createBiquadFilter(), mg = ctx.createGain();
+      m.type = 'sawtooth'; mlp.type = 'lowpass'; mlp.frequency.value = inside ? 1400 : 2600; mlp.Q.value = 2;
+      m.frequency.setValueAtTime(140, t); m.frequency.exponentialRampToValueAtTime(430, t + 0.15);
+      // the compressions: a slow square wave pulling the motor's pitch down (and a chuff of noise with each)
+      const lfo = ctx.createOscillator(), lg = ctx.createGain(), s = src(true), nlp = ctx.createBiquadFilter(), ng = ctx.createGain(), nAm = ctx.createGain();
+      lfo.type = 'square'; lfo.frequency.value = 3.9; lg.gain.value = 55;
+      lfo.connect(lg).connect(m.frequency);
+      nlp.type = 'lowpass'; nlp.frequency.value = 420; ng.gain.value = 0.03; nAm.gain.value = 0.03;
+      lfo.connect(nAm.gain);
+      s.connect(nlp).connect(ng).connect(nAm).connect(master);
+      m.connect(mlp).connect(mg).connect(master);
+      mg.gain.setValueAtTime(0.0001, t); mg.gain.exponentialRampToValueAtTime(0.035, t + 0.08);
+      m.start(t); lfo.start(t); s.start(t, Math.random() * 1.5);
+      burst({ f: 2400, q: 1.2, d: 0.03, g: 0.14, thump: 0.4, thumpF: 120 });       // the starter's gear engaging
+      crk = { m, lfo, s, mg, ng };
+    } else if (!on && crk) {
+      const c = crk; crk = null;
+      c.mg.gain.setTargetAtTime(0, t, 0.06); c.ng.gain.setTargetAtTime(0, t, 0.06); c.m.frequency.setTargetAtTime(90, t, 0.15);
+      for (const n of [c.m, c.lfo, c.s]) n.stop(t + 0.5);
+    }
+  }
+  function fire() {
+    if (!ok()) return;
+    const t = ctx.currentTime, F = [0.0, 0.12, 0.21, 0.36, 0.44, 0.52, 0.61, 0.68, 0.76];
+    const s = src(true), lp = ctx.createBiquadFilter(), g = ctx.createGain(), th = ctx.createOscillator(), tg = ctx.createGain();
+    lp.type = 'lowpass'; lp.Q.value = 0.7; lp.frequency.value = 1500; g.gain.value = 0; tg.gain.value = 0;
+    s.connect(lp).connect(g).connect(master); th.connect(tg).connect(master);
+    for (const c0 of F) {
+      const c = c0 + Math.random() * 0.02, a = (c0 < 0.3 ? 0.14 : 0.1) * (0.6 + 0.5 * Math.random());
+      th.frequency.setValueAtTime(78, t + c); th.frequency.setTargetAtTime(45, t + c, 0.03);
+      g.gain.setTargetAtTime(a, t + c, 0.003); g.gain.setTargetAtTime(0, t + c + 0.012, 0.03);
+      tg.gain.setTargetAtTime(a * 1.4, t + c, 0.003); tg.gain.setTargetAtTime(0, t + c + 0.01, 0.04);
+    }
+    s.start(t, Math.random() * 1.5); s.stop(t + 1.2); th.start(t); th.stop(t + 1.2);
+  }
+  // the radio: the hiss of the squelch opening at the start and closing at the end of a transmission
+  function squelch() { if (!ok()) return; burst({ f: 2200, q: 0.8, d: 0.07, g: 0.05 }); }
   // the wheels meeting the runway: a tyre chirp (the other main wheel a moment later) and the gear's thump, both
   // stronger for a harder landing (fpm: the sink rate at touchdown, ft/min)
   function touchdown(fpm = 200) {
@@ -332,7 +378,7 @@ export function createAudio() {
     unlock,
     setVolume(v) { volume = Math.max(0, Math.min(1, +v || 0)); if (ok()) master.gain.setTargetAtTime(volume, ctx.currentTime, 0.05); },
     footstep, door, ui, update,
-    engine, starter, touchdown, chime, click, knob,
+    engine, starter, crank, fire, squelch, touchdown, chime, click, knob,
     // indoor 0..1 (the cockpit: 0.6), wind 0..1, airborne (above ≈30 m: nothing of the ground)
     setAmbience({ indoor = mix.indoor, wind = mix.wind, airborne = mix.airborne } = {}) {
       mix.indoor = cl(+indoor || 0); mix.wind = cl(+wind || 0); mix.airborne = !!airborne;

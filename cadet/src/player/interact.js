@@ -46,8 +46,9 @@ export function createInteractor({ walker, world, L, hud }) {
       const [tx, ty, tz] = best.frame;
       const d = Math.hypot(tx - r.ox, ty - r.oy, tz - r.oz), ux = (tx - r.ox) / d, uy = (ty - r.oy) / d, uz = (tz - r.oz) / d;
       const hit = world.raycast(r.ox, r.oy, r.oz, ux, uy, uz, d);
+      // (a place under a wing or at a wheel: one crouches to look, so its owner's own parts do not hide it: `low`)
       const own = hit && hit.box && hit.box.tag && (hit.box.tag === best.id
-        || (hit.box.tag === best.owner && d - hit.dist < best.radius + 0.6));
+        || (hit.box.tag === best.owner && (best.low || d - hit.dist < best.radius + 0.6)));
       if (hit && hit.dist < d - (best.radius * 0.8) && !own) best = null;
     }
     current = best;
@@ -62,7 +63,7 @@ export function createInteractor({ walker, world, L, hud }) {
     if (!current) return null;
     return current.use ? current.use(current) : null;
   }
-  function showCard(title, text) { card = { x: walker.state.x, z: walker.state.z }; hud.card(title, text); }
+  function showCard(title, text, choices) { card = { x: walker.state.x, z: walker.state.z }; hud.card(title, text, choices); }
   function closeCard() { if (!card) return; card = null; hud.card(null); }
 
   return {

@@ -110,21 +110,24 @@ export function createGlass(FL, makeCanvas) {
 
   // ================================================================ per frame (no allocation below this line; FLIGHT LAB's
   // drawPFD / drawMFD / navSolve allocate inside, the drawing here does not)
-  function fill(s, av) {
+  // eng (optional): the engine as the cockpit's systems have it ({ rpm, run }: the tachometer's reading, the run-up's
+  // magneto drop included; aircraft/systems.js), in place of the physics' own for a single engine
+  function fill(s, av, eng) {
     Object.assign(d.o, s.out); d.o.onGround = s.onGround;
     d.av = av; d.pos.n = -s.pos[2]; d.pos.e = s.pos[0];
     d.nav = AV.navSolve(av, d.pos, s.out, P.MAGVAR_W, P.LAB_RWY);
     d.qnh = s.qnh; d.V = s.A.v; d.fuelCap = s.A.fuelCap;
     d.eng = s.eng.length > 1 ? ENG : ENG1;
     for (let i = 0; i < d.eng.length && i < s.eng.length; i++) { const e = s.eng[i], o = d.eng[i]; o.run = e.run; o.rpm = e.rpm; o.feather = e.feather; }
+    if (eng && s.eng.length === 1) { d.eng[0].rpm = eng.rpm; d.eng[0].run = eng.run; d.o.rpm = eng.rpm; }
     return d;
   }
-  function drawScreen(which, s, av) {
+  function drawScreen(which, s, av, eng) {
     const sc = which === 'mfd' ? mfd : pfd;
     if (!sc || !s || !av) return;
     stats[which]++;
     sc.g.setTransform(SCR_W / LW, 0, 0, SCR_H / LH, 0, 0);
-    if (which === 'mfd') AV.drawMFD(sc.g, LW, LH, fill(s, av)); else AV.drawPFD(sc.g, LW, LH, fill(s, av));
+    if (which === 'mfd') AV.drawMFD(sc.g, LW, LH, fill(s, av, eng)); else AV.drawPFD(sc.g, LW, LH, fill(s, av, eng));
     sc.g.setTransform(1, 0, 0, 1, 0, 0);
     sc.texture.needsUpdate = true;
   }

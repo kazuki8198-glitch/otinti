@@ -1,7 +1,7 @@
 // CADET — career/day.js : the first day (M4), from the walk-around to the logbook, as one thin line through the game:
 //   walk-around → before start → start → after start → ATIS → Ground (taxi) → taxi out → run-up → Tower (line up) →
 //   lined up → t1 (FLIGHT LAB) → Tower (frequency change) → to the practice area (skipped, or flown) → a2 (FLIGHT LAB) →
-//   Tower (back) → t3 (FLIGHT LAB; the landing clearance on final) → Tower (off the runway) → taxi off → Ground → taxi in
+//   Tower (back) → back to LAB (skipped, or flown) → t3 (FLIGHT LAB; the landing clearance on final) → Tower (off the runway) → taxi off → Ground → taxi in
 //   → shutdown → debrief → logbook.
 // The lessons are FLIGHT LAB's own, started fresh where FLIGHT LAB starts them (t1 lined up on 36 at 30 m, a2 in the
 // practice area, t3 on a 5 km final), so their grades are FLIGHT LAB's for the same inputs. Everything between them
@@ -34,6 +34,7 @@ export const PHASES = {
   transit: { label: '訓練空域へ' },
   a2: { label: '課目 a2：直線水平飛行', lesson: 'a2' },
   back: { label: '管制塔を呼ぶ（帰投）', radio: 'back' },
+  return: { label: 'LAB へ戻る' },
   t3: { label: '課目 t3：通常着陸', lesson: 't3' },
   exit: { label: '管制塔：滑走路を出る', radio: 'exit' },
   taxiOff: { label: '滑走路を出て止まる', place: 'clear' },
@@ -59,6 +60,8 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     lessons: {}, incursion: false, overHold: false, exit: '', stopAt: null, transit: 'skip', t: 0, airT: 0, blockT: 0, started: false, shutdown: false,
     trust: 0, notes: [], auto: { list: 0, taxi: 0 }, leftOn: [],
   };
+  // what happened since the last update() (a phase entered from outside it — a lesson ended, the cadet boarded —
+  // is told at the next one)
   const events = [];
   const emit = (e) => events.push(e);
   function enter(phase) {
@@ -130,10 +133,10 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
   }
   // c: { sw, sys, s, park, av, rpm (the tachometer's), pos, v, hdg, onGround, qnh, act, setThr, setFlaps, prime, dt }
   function update(c) {
-    events.length = 0;
     const dt = c.dt || 0; st.t += dt;
     prep(c);
-    if (c.sys && c.sys.running) { st.started = true; st.blockT += dt; if (c.onGround === false) st.airT += dt; }
+    // the time from the start to the shutdown (the lessons' own time is added when each ends: FLIGHT LAB's clock)
+    if (c.sys && c.sys.running && !PHASES[st.phase].lesson) { st.started = true; st.blockT += dt; if (c.onGround === false) st.airT += dt; }
     // across the hold-short line without a clearance (before the tower's line up and wait)
     if (['taxiOut', 'runup', 'tower'].includes(st.phase) && c.pos && c.pos.c < HOLD.c - 0.5 && c.pos.a < A1.a + 30 && !st.incursion) {
       st.incursion = true; st.trust -= 8; emit({ type: 'incursion' });
@@ -145,7 +148,7 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     if (ph.radio) { if (!atc.busy) next(); }
     else if (ph.place) { if (at(ph.place, c) && (!ph.list || ph.soft || listDone())) next(); }
     else if (ph.list) { if (listDone()) next(); }
-    return events;
+    return events.splice(0);
   }
   // the next phase (the lessons' and the transit's are started by the game: lessonStarted)
   function next() {
@@ -158,6 +161,7 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
   // landing's stop, the debrief read
   function boarded() { if (st.phase === 'walk') { walk.settle(); enter('prestart'); } }
   function lessonEnded(id, status) {
+    if (status.t > 0 && !st.lessons[id]) { st.blockT += status.t; st.airT += status.t; }
     st.lessons[id] = { grade: status.grade, score: status.score, passed: status.passed, t: status.t, done: status.done, crashed: status.crashed, reason: status.reason,
       rows: (status.results || []).flatMap(r => r.rows.map(x => ({ step: r.step, ...x }))) };
     if (status.crashed) { enter('debrief'); return; }
@@ -167,7 +171,7 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
   }
   function lessonStarted(id) {
     if (id === 'a2' && st.phase === 'transit') enter('a2');
-    if (id === 't3' && st.phase === 'back') enter('t3');
+    if (id === 't3' && st.phase === 'return') enter('t3');
   }
   function transitFlown(how) { st.transit = how; }
   function debriefRead() { if (st.phase === 'debrief') enter('done'); }
@@ -184,7 +188,8 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     trust += Math.round(r.first / 2) - r.wrong - r.late;
     for (const l of flown) trust += l.passed ? (l.grade === 'S' ? 2 : 1) : -1;
     if (st.auto.list > 6) trust -= 1;
-    return { walk: w, radio: r, lessons, incursion: st.incursion, transit: st.transit, blockT: st.blockT, airT: st.airT, autoItems: st.auto.list, leftOn: st.leftOn.slice(), trust: Math.max(-10, Math.min(12, trust)), level };
+    if (st.crash) trust -= 6;
+    return { walk: w, radio: r, lessons, incursion: st.incursion, crash: st.crash || '', transit: st.transit, blockT: st.blockT, airT: st.airT, autoItems: st.auto.list, leftOn: st.leftOn.slice(), trust: Math.max(-10, Math.min(12, trust)), level };
   }
   return {
     radio, atc, walk, st, update, confirm, assist, items, boarded, lessonEnded, lessonStarted, transitFlown, debriefRead, abortTo, summary, next,

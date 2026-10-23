@@ -64,6 +64,16 @@ export function createTaxiPilot(FL, points, { speed = 4.1, turnSpeed = 2.2, look
     st.at = { a, c };
     const v = Math.hypot(s.vel[0], s.vel[2]); st.v = v;
     s.pIn = 0; s.rIn = 0;
+    // the first call: start from the segment nearest to where the aircraft is (it may be part of the way already)
+    if (st.i === 0 && !st.started) {
+      st.started = true; st.fresh = true;           // (already there: it just stops)
+      let best = Infinity;
+      for (let k = 0; k < points.length - 1; k++) {
+        const p0 = points[k], p1 = points[k + 1], sl = segLen(k) || 1, ux = (p1.a - p0.a) / sl, uy = (p1.c - p0.c) / sl;
+        const t = clamp((a - p0.a) * ux + (c - p0.c) * uy, 0, sl), d = Math.hypot(p0.a + ux * t - a, p0.c + uy * t - c);
+        if (d < best - 0.5) { best = d; st.i = k; }
+      }
+    }
     if (st.done) { s.thr = 0; s.brake = true; s.rud = 0; st.stopped = v < 0.15; return; }
     // the segment we are on: move on once past the end of the current one (projected)
     while (st.i < points.length - 1) {
@@ -98,7 +108,8 @@ export function createTaxiPilot(FL, points, { speed = 4.1, turnSpeed = 2.2, look
     if (cor.ang > 30) vt = Math.min(vt, turnSpeed + Math.max(0, cor.d - 6) * 0.25);
     if (Math.abs(err) > 25) vt = Math.min(vt, turnSpeed);
     vt = Math.min(vt, Math.sqrt(Math.max(0, 2 * 0.5 * (toEnd - 0.6))) + 0.15);
-    if (toEnd < 0.8 || (toEnd < 3 && v < 0.25 && last.stop)) { st.done = true; s.thr = 0; s.brake = true; s.rud = 0; return; }
+    if (toEnd < 0.8 || (toEnd < 3 && (v < 0.25 || st.fresh))) { st.done = true; s.thr = 0; s.brake = true; s.rud = 0; return; }
+    st.fresh = false;
     const e = vt - v;
     st.iThr = clamp(st.iThr + e * 0.05 * dt, 0, 0.12);
     s.thr = clamp(0.06 + st.iThr + e * 0.09, 0, 0.42);

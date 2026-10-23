@@ -47,7 +47,8 @@ const ROCKERS = [['master', 'MASTER'], ['avionics', 'AVIONICS'], ['fuelPump', 'F
 const ROCKER = { x0: -0.428, dx: 0.036, y: 0.095, tilt: 12 * DEG };
 const SWITCH_JA = { master: 'マスター', avionics: 'アビオニクス', fuelPump: '燃料ポンプ', beacon: 'ビーコン', nav: '航法灯', strobe: 'ストロボ', landing: '着陸灯', taxi: 'タキシー灯', pitot: 'ピトー ヒート' };
 const MAG = ['OFF', 'R', 'L', 'BOTH', 'START'], MAG_ANG = [-70 * DEG, -35 * DEG, 0, 35 * DEG, 70 * DEG];
-const FUEL_ANG = { L: 50 * DEG, R: -50 * DEG };
+const FUEL_ANG = { L: 50 * DEG, R: -50 * DEG, OFF: 180 * DEG };
+const FUEL = ['L', 'R', 'OFF'];
 
 // ---------------------------------------------------------------- surfaces (sRGB colour, roughness, metalness, detail kind)
 // kinds: 0 smooth, 1 textured paint, 2 leather, 3 carpet, 4 grained vinyl, 5 woven headliner
@@ -442,7 +443,8 @@ function withCol(g, hex) {
 //   returns what the game should do, or null for nothing: { type: 'flight', name, arg? } (the flight bridge's action),
 //   { type: 'av', what, dir, big } (FL.avionics.control(L.av, what, dir, big); the softkey labels and the lamps follow
 //   av by themselves), { type: 'switch', id, on } and { type: 'select', id, value } (set cockpit.switches[id]; the
-//   lights and the magnetos are the game's to apply), { type: 'exit' }, { type: 'info', text }.
+//   lights and the engine are the game's to apply: aircraft/systems.js), { type: 'prime' } (one stroke of the primer),
+//   { type: 'exit' }, { type: 'info', text }.
 // pick(raycaster): the control whose hit box the ray meets first (what is drawn does not block it, so every aim point
 //   is kept in plain sight from the eye: see the tests), null while the cockpit is hidden.
 // The screens are unlit and toneMapped: false, but CADET's composer tone maps the whole image in its OutputPass (AgX),
@@ -702,9 +704,12 @@ export function buildCockpit(FL, A, opts = {}) {
   control({ id: 'mag', label: 'マグネトー（エンジンの点火）', kind: 'switch', part: 'key', size: [0.03, 0.04, 0.04], pos: [KEYSW[0], KEYSW[1] + 0.005, PZ + 0.022],
     act: (dir, wheel) => { const i = MAG.indexOf(switches.mag), j = clamp(i + (wheel ? dir : 1), 0, MAG.length - 1); return j === i ? null : { type: 'select', id: 'mag', value: MAG[j] }; } });
   // the primer and the dimmers (left column)
-  add(at(cylZ(0.009, 0.009, 0.004, 20), [-0.505, 0.185, PZ + 0.002]), S.chrome);
-  add(at(cylZ(0.0065, 0.0055, 0.016, 20), [-0.505, 0.185, PZ + 0.012]), S.chrome);
-  label('PRIMER', [-0.505, 0.205, PZ + 0.0002], { size: 1.7 });
+  // (above the key, just right of where the yoke's left horn hides the panel from the left seat)
+  const PRIM = [-0.468, 0.183];
+  add(at(cylZ(0.009, 0.009, 0.004, 20), [PRIM[0], PRIM[1], PZ + 0.002]), S.chrome);
+  add(at(cylZ(0.0065, 0.0055, 0.016, 20), [PRIM[0], PRIM[1], PZ + 0.012]), S.chrome);
+  label('PRIMER', [PRIM[0], PRIM[1] + 0.018, PZ + 0.0002], { size: 1.7 });
+  control({ id: 'primer', label: 'プライマー（押すごとに 1 回）', kind: 'button', size: [0.026, 0.026, 0.03], pos: [PRIM[0], PRIM[1], PZ + 0.012], act: () => ({ type: 'prime' }) });
   for (const [y, name] of [[0.33, 'PANEL LTS'], [0.285, 'SWITCH LTS']]) { add(at(knurled(0.007, 0.01, 18), [-0.51, y, PZ + 0.005]), S.knob); label(name, [-0.51, y + 0.014, PZ + 0.0002], { size: 1.5, wmm: 22 }); }
   // the air vents (eyeballs)
   for (const sx of [-1, 1]) {
@@ -764,8 +769,15 @@ export function buildCockpit(FL, A, opts = {}) {
     lever(-0.05, 'carb', rbox(0.02, 0.016, 0.014, 0.003), S.black);
     const lp = (x, a) => [x, LEVER.y + Math.sin(a) * (LEVER.len + 0.012), LEVER.z + Math.cos(a) * (LEVER.len + 0.012)];
     control({ id: 'throttle', label: 'スロットル（R / F）', kind: 'lever', part: 'throttle', size: [0.04, 0.032, 0.04], pos: lp(-0.005, 0), act: (dir) => flight('thrStep', dir >= 0 ? 1 : -1) });
-    control({ id: 'mixture', label: 'ミクスチャー', kind: 'lever', part: 'mixture', size: [0.032, 0.03, 0.036], pos: lp(0.045, 0), act: () => info('ミクスチャーはフル リッチのまま使います（この飛行では動かしません）') });
-    control({ id: 'carbHeat', label: 'キャブレター ヒート', kind: 'lever', part: 'carb', size: [0.026, 0.024, 0.026], pos: lp(-0.05, 0), act: () => info('キャブレター ヒート：着氷の点検で使います（この飛行では OFF のまま）') });
+    // the mixture: a click, full rich or (on the ground only) idle cut-off; the wheel, a tenth at a time
+    control({ id: 'mixture', label: () => `ミクスチャー（${switches.mixture >= 0.95 ? 'リッチ' : switches.mixture < 0.15 ? 'アイドル カットオフ' : 'リーン'}）`, kind: 'lever', part: 'mixture', size: [0.032, 0.03, 0.036], pos: lp(0.045, 0),
+      act: (dir, wheel) => {
+        if (wheel) { const v = clamp(Math.round((switches.mixture + (dir > 0 ? 0.1 : -0.1)) * 10) / 10, 0, 1); return v === switches.mixture ? null : { type: 'select', id: 'mixture', value: v }; }
+        if (switches.mixture < 0.95) return { type: 'select', id: 'mixture', value: 1 };
+        return cur.s && !cur.s.onGround ? info('飛んでいる間は、ミクスチャーはリッチのままにします') : { type: 'select', id: 'mixture', value: 0 };
+      } });
+    control({ id: 'carbHeat', label: () => `キャブレター ヒート（${switches.carbHeat ? 'ON' : 'OFF'}）`, kind: 'lever', part: 'carb', size: [0.026, 0.024, 0.026], pos: lp(-0.05, 0),
+      act: (dir, wheel) => { const on = wheel ? dir > 0 : !switches.carbHeat; return on === switches.carbHeat ? null : { type: 'switch', id: 'carbHeat', on }; } });
   }
   function ribbed(w, h, d) {
     const parts = [rbox(w, h, d, 0.004, 2)];
@@ -879,8 +891,12 @@ export function buildCockpit(FL, A, opts = {}) {
     add(at(cylX(0.011, 0.008, 16), [x + 0.004, y, z]), S.black, 'fuel');
     add(at(rbox(0.012, 0.062, 0.016, 0.005), [x + 0.012, y + 0.015, z]), S.black, 'fuel');
     add(at(rbox(0.008, 0.016, 0.01, 0.003), [x + 0.012, y + 0.044, z]), S.white, 'fuel');
-    control({ id: 'fuelSel', label: '燃料セレクター（左 / 右タンク）', kind: 'switch', part: 'fuel', size: [0.03, 0.08, 0.04], pos: [x + 0.012, y + 0.015, z],
-      act: (dir, wheel) => { const v = wheel ? (dir > 0 ? 'R' : 'L') : (switches.fuelSel === 'L' ? 'R' : 'L'); return v === switches.fuelSel ? null : { type: 'select', id: 'fuelSel', value: v }; } });
+    control({ id: 'fuelSel', label: '燃料セレクター（左 / 右 / OFF）', kind: 'switch', part: 'fuel', size: [0.03, 0.08, 0.04], pos: [x + 0.012, y + 0.015, z],
+      act: (dir, wheel) => {
+        // a click: the other tank; the wheel: L → R → OFF and back
+        const i = FUEL.indexOf(switches.fuelSel), v = wheel ? FUEL[clamp(i + (dir > 0 ? 1 : -1), 0, FUEL.length - 1)] : (switches.fuelSel === 'L' ? 'R' : 'L');
+        return v === switches.fuelSel ? null : { type: 'select', id: 'fuelSel', value: v };
+      } });
   }
 
   // ============================================================ the door (right), its handle and latch
@@ -1123,7 +1139,8 @@ export function buildCockpit(FL, A, opts = {}) {
     }
     if (changed) rockers.instanceMatrix.needsUpdate = true;
   }
-  // dt (s); o: { s, L, av (default L.av), parkBrake, night 0..1, rpmVisual (unused: no rpm gauge outside the MFD) }
+  // dt (s); o: { s, L, av (default L.av), parkBrake, night 0..1, eng: { rpm, run } (the engine as the systems have it, for
+  // the MFD's tachometer; default the physics') }
   function update(dt, o) {
     if (!o) return;
     if (!(dt >= 0)) dt = 0; else if (dt > 0.25) dt = 0.25;
@@ -1174,8 +1191,8 @@ export function buildCockpit(FL, A, opts = {}) {
       t.pfd = RATE.pfd; t.mfd = RATE.mfd;
     }
     if (powered && av) {
-      if (t.pfd >= RATE.pfd - 1e-6) { t.pfd = Math.min(t.pfd - RATE.pfd, RATE.pfd); glassPanel.drawScreen('pfd', s, av); }
-      if (t.mfd >= RATE.mfd - 1e-6) { t.mfd = Math.min(t.mfd - RATE.mfd, RATE.mfd); glassPanel.drawScreen('mfd', s, av); }
+      if (t.pfd >= RATE.pfd - 1e-6) { t.pfd = Math.min(t.pfd - RATE.pfd, RATE.pfd); glassPanel.drawScreen('pfd', s, av, o.eng); }
+      if (t.mfd >= RATE.mfd - 1e-6) { t.mfd = Math.min(t.mfd - RATE.mfd, RATE.mfd); glassPanel.drawScreen('mfd', s, av, o.eng); }
     }
     if (t.stby >= RATE.stby - 1e-6) {
       t.stby = Math.min(t.stby - RATE.stby, RATE.stby);

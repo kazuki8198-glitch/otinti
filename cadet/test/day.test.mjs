@@ -48,7 +48,7 @@ function playDay({ level = 'basic', anomalies = ['oil', 'r_sump'], skipWalk = []
   fl.startOnGround(n, e, (R.trueHdg + 270) % 360, 'pa28', { wind: { rel: 10, kt: 5, gust: 0.5 } });
   sys.setCold(fl.s);
   day.boarded();
-  const phases = [day.phase], ref = {}, got = {};
+  const phases = [], ref = {}, got = {};
   const pos = () => { const p = P.ne(fl.s); const rc = P.rwyCoords(R, p.n, p.e); return { a: rc.along, c: rc.cross }; };
   const ctx = (dt) => ({ dt, sw, sys, s: fl.s, park: fl.controls.parkBrake, av: fl.av, rpm: sys.rpm, pos: pos(), v: Math.hypot(fl.s.vel[0], fl.s.vel[2]), hdg: P.attitude(fl.s).hdg,
     onGround: fl.s.onGround, act: (a, x) => fl.action(a, x), setThr: (x) => { fl.s.thr = x; }, setFlaps: (i) => { fl.s.flapIdx = i; }, prime: () => sys.prime() });
@@ -87,6 +87,7 @@ function playDay({ level = 'basic', anomalies = ['oil', 'r_sump'], skipWalk = []
       if (['taxiOff', 'taxiIn', 'lineup', 'taxiOut'].includes(ev.to)) { /* set above */ }
       if (ev.to === 't1') fly('t1');
       if (ev.to === 'transit') { day.transitFlown('skip'); day.lessonStarted('a2'); fly('a2'); }
+      if (ev.to === 'return') { day.transitFlown('skip'); day.lessonStarted('t3'); }
       if (ev.to === 't3') { day.atc.start('final'); fly('t3'); }
       if (['runup', 'shutdown'].includes(ev.to)) fl.action('parkBrake', true);
     }

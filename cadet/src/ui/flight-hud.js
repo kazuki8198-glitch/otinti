@@ -520,7 +520,8 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
 
   // the free-flight panel
   const free = make('section', 'fh-panel fh-free', { 'aria-label': '自由飛行' });
-  const fHead = put(make('div', 'fh-head'), make('span', 'fh-title', null, '自由飛行'), make('span', 'fh-sub2', null, '採点なし・H でキーの一覧'));
+  const fTitle = make('span', 'fh-title', null, '自由飛行'), fSub = make('span', 'fh-sub2', null, '採点なし・H でキーの一覧');
+  const fHead = put(make('div', 'fh-head'), fTitle, fSub);
   const nums = make('div', 'fh-nums');
   const num = (label, en, unit) => {
     const b = make('b', '', null, '—');
@@ -937,6 +938,8 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     return true;
   }
   function setHood(v) { shown(hood, !!v); }
+  // the free-flight panel's heading (the day's own flying between its lessons is not a free flight)
+  function setFreeTitle(title = '自由飛行', sub = '採点なし・H でキーの一覧') { text(fTitle, title); text(fSub, sub); }
   function setCompact(v) { compact = !!v; text(fold, compact ? '詳しく' : '簡潔に'); if (status && mode === 'lesson') renderLesson(status); }
   function destroy() {
     if (destroyed) return;
@@ -948,7 +951,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   }
 
   return {
-    el, show, setMode, update, say, flashChecklist, showDebrief, hideDebrief, setHelp, setPanel2D, fitPanel, drawPanel2D, setHood, setCompact,
+    el, show, setMode, update, say, flashChecklist, showDebrief, hideDebrief, setHelp, setPanel2D, fitPanel, drawPanel2D, setHood, setCompact, setFreeTitle,
     onChecklistClick(fn) { onCheck = typeof fn === 'function' ? fn : null; },
     onAtcClick(fn) { onAtc = typeof fn === 'function' ? fn : null; },
     destroy,

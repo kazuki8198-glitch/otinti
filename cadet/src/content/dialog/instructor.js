@@ -225,7 +225,9 @@ function goalCheck(lessons, lesson) {
 
 // ---- the dialogs ----
 
-export function instructorDialogs(FL, { lessonId = 'a1' } = {}) {
+// day: the day's lessons in order, when today's lesson is flown inside a whole day (M4: t1 → a2 → t3); the briefing
+// then says where it sits in the day and the wrap-up sends the cadet to the walk-around
+export function instructorDialogs(FL, { lessonId = 'a1', day = null } = {}) {
   const book = gameBook(FL);
   const all = lessonsOf(FL);
   const lesson = all.find(l => l.id === lessonId);
@@ -298,6 +300,11 @@ export function instructorDialogs(FL, { lessonId = 'a1' } = {}) {
   }
   if (std && std.length <= LINE - 12) steps.push([`今日の基準は${q(std)}です。`, { hook: { name: 'look', arg: 'player' } }]);
   else if (std) steps.push(['今日の基準は、こうです。', { hook: { name: 'look', arg: 'player' } }], [/[。」）]$/.test(std) ? std : std + '。', {}]);
+  if (Array.isArray(day) && day.length > 1) {
+    const T = (id) => { const l = all.find(x => x.id === id); if (!l) throw new Error(`instructorDialogs: no lesson "${id}"`); return q(speakable(l.title)); };
+    const at = day.indexOf(lesson.id), before = day.slice(0, Math.max(0, at)).map(T), after = day.slice(at + 1).map(T);
+    steps.push([`今日はこの課目を、1 日の飛行の中でやります。${before.length ? `まず${before.join('と')}で離陸して、` : ''}訓練空域でこの課目、${after.length ? `戻って${after.join('と')}です。` : 'それで戻ります。'}`, { hook: { name: 'point', arg: 'board' } }]);
+  }
   chain(B, 'lesson', steps.map(x => x[0]), 'check', steps.map(x => x[1]));
 
   // the check: one question, three answers
@@ -322,7 +329,8 @@ export function instructorDialogs(FL, { lessonId = 'a1' } = {}) {
   B.wrap = say('では、このあとの流れです。', { next: 'wrap:2' });
   if (lesson.aircraft) {
     B['wrap:2'] = say('まず運航管理（ディスパッチ）で、今日の機体の割り当てと天気を確かめてください。', { next: 'wrap:3' });
-    B['wrap:3'] = say('それからエプロン（駐機場）へ出て、機体のところまで歩いていきましょう。', { hook: { name: 'point', arg: 'apron' }, next: 'wrap:4' });
+    B['wrap:3'] = day ? say('それからエプロン（駐機場）の今日の機体へ。外部点検をして、異常があれば私に知らせてください。私は機体のところで待っています。', { hook: { name: 'point', arg: 'apron' }, next: 'wrap:4' })
+      : say('それからエプロン（駐機場）へ出て、機体のところまで歩いていきましょう。', { hook: { name: 'point', arg: 'apron' }, next: 'wrap:4' });
     B['wrap:4'] = say('体調に不安があれば、遠慮なく言ってください。飛ばないと決めるのも、大切な判断です。', { next: 'bye' });
   } else {
     B['wrap:2'] = say('今日は飛びません。訓練装置室の練習席で、この課目を進めてください。', { next: 'wrap:3' });

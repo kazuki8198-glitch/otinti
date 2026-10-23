@@ -18,27 +18,37 @@ const FL = globalThis.FL, SC = FL.school;
 const REAL = /(?<![A-Za-z])ANA(?![A-Za-z])|ＡＮＡ|all\s*nippon|全日空|acron/i;
 
 test('cockpit talk: valid data; every way through ends with one fly choice', () => {
-  const data = cockpitDialogs(FL, { lessonId: 'a1' });
+  const data = cockpitDialogs(FL);
   const { errors, warnings } = validateDialogs(data, { lessonExists: (id) => !!SC.lesson(id) });
   assert.deepEqual(errors, []); assert.deepEqual(warnings, []);
-  const lesson = FL.syllabus.STAGES.flatMap(s => s.lessons).find(l => l.id === 'a1');
+  const titles = ['t1', 'a2', 't3'].map(id => SC.lesson(id).title);
+  // the ways through the menu (the choice made at each question) and the fly choice each tells
+  const PATHS = [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2], [3]];
   for (const briefed of [false, true]) {
-    for (let k = 0; k < FLY_CHOICES.length; k++) {
+    PATHS.forEach((path, k) => {
       const told = [], said = [];
       const state = createDialogState(briefed ? { v: 1, flags: { briefed_today: true } } : null);
       const r = createRunner({ data, state, hooks: { onHook: (n, a) => { if (n === 'fly') told.push(a); } } });
       r.start('board');
+      let q = 0;
       for (let i = 0; i < 20 && r.running; i++) {
         const v = r.view(); said.push(v.text);
-        if (v.choices.length) r.choose(v.choices[k].i); else r.next();
+        if (v.choices.length) r.choose(v.choices[path[q++]].i); else r.next();
       }
       assert.equal(r.running, false, 'the talk ends');
-      assert.deepEqual(told, [FLY_CHOICES[k]], `choice ${k}`);
+      assert.deepEqual(told, [FLY_CHOICES[k]], `path ${path}`);
       const all = said.join('\n');
-      assert.ok(all.includes(lesson.title), 'names today\'s lesson');
+      for (const t of titles) assert.ok(all.includes(t), `names today's lesson ${t}`);
       assert.equal(/ブリーフィングはまだ/.test(all), !briefed);
       assert.ok(!REAL.test(all) && !NOT_SPOKEN.test(all), all);
-    }
+    });
+  }
+  // the day's two questions in the air: each way tells the game one 'go'
+  for (const d of ['transit', 'return']) for (const k of [0, 1]) {
+    const go = []; const r = createRunner({ data, state: createDialogState(), hooks: { onHook: (n, a) => { if (n === 'go') go.push(a); } } });
+    r.start(d);
+    for (let i = 0; i < 10 && r.running; i++) { const v = r.view(); if (v.choices.length) r.choose(v.choices[k].i); else r.next(); }
+    assert.deepEqual(go, [k ? 'fly' : 'skip'], `${d} ${k}`);
   }
   assert.throws(() => cockpitDialogs(FL, { lessonId: 'zz' }));
 });
@@ -72,4 +82,25 @@ test('cockpit talk: the first words after a lesson', () => {
   assert.match(debriefLine({ done: true, passed: false, grade: 'C' }), /惜しかった/);
   assert.match(debriefLine({ done: true, passed: false, grade: '―' }), /ここまで/);
   assert.match(debriefLine({ done: true, crashed: true }), /大丈夫/);
+});
+
+test('day-1 talk (M4): the briefing within the day, the apron, the day\'s lines — valid, polite, no keys or real names', async () => {
+  for (const m of ['book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+  const { instructorDialogs } = await import('../src/content/dialog/instructor.js');
+  const { apronDialogs, PHASE_LINES, ASSIST_LINES, EVENT_LINES } = await import('../src/content/dialog/day1.js');
+  const { PHASES } = await import('../src/career/day.js');
+  for (const data of [instructorDialogs(FL, { lessonId: 'a2', day: ['t1', 'a2', 't3'] }), apronDialogs()]) {
+    const { errors, warnings } = validateDialogs(data, { lessonExists: (id) => !!SC.lesson(id), sectionExists: () => true });
+    assert.deepEqual(errors, []);
+    assert.ok(warnings.every(w => !/never|unreach/.test(w)), warnings.join('\n'));
+  }
+  const brief = JSON.stringify(instructorDialogs(FL, { lessonId: 'a2', day: ['t1', 'a2', 't3'] }));
+  assert.ok(brief.includes(SC.lesson('t1').title) && brief.includes(SC.lesson('t3').title) && /外部点検/.test(brief));
+  const lines = [...Object.values(PHASE_LINES), ...Object.values(ASSIST_LINES), ...Object.values(EVENT_LINES).map(v => (typeof v === 'function' ? v('タイヤの空気が足りません。') : v))];
+  for (const k of Object.keys(PHASE_LINES)) assert.ok(PHASES[k], `a phase line for an unknown phase ${k}`);
+  for (const l of lines) {
+    assert.ok(!REAL.test(l), l);
+    assert.ok(!/FLIGHT LAB|ゲーム|ソフト|シミュレータ/.test(l), `talks about the game: ${l}`);
+    assert.match(l, /(です|ます|ください|ましょう|ね|。|！|control。?)$/, l);
+  }
 });

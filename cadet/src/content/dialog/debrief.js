@@ -40,7 +40,7 @@ export function debriefDialogs(sum) {
   const rl = r.n === 0 ? '無線は今日は使いませんでした。' : r.first === r.n ? `無線は ${r.n} 回のやりとりを、全部 1 回で正しく言えました。` :
     `無線は ${r.n} 回のうち ${r.first} 回を 1 回で正しく言えました。${r.wrong ? '言い直しになったものは、管制官の言い直しをよく聞いて覚えましょう。' : ''}${r.late ? '答えが遅れたこともありました。言うことを先に頭の中で組み立てておきます。' : ''}`;
   N.radio = say(rl, { next: nx('radio') });
-  N.taxi = say(sum.incursion ? 'ひとつ大事なこと。許可の前に、A1 の停止線を越えました。滑走路に入る許可がないときは、停止線の手前で必ず止まります。これは今日いちばんの反省点です。'
+  N.taxi = say(sum.crash ? `地上で、機体を障害物に当ててしまいました（${sum.crash}）。タキシーは歩くくらいの速さで、翼の先と周りをよく見て。` : sum.incursion ? 'ひとつ大事なこと。許可の前に、A1 の停止線を越えました。滑走路に入る許可がないときは、停止線の手前で必ず止まります。これは今日いちばんの反省点です。'
     : 'タキシーでは、許可のとおりに A1 の停止線の手前で止まれていました。', { hook: { name: sum.incursion ? 'look' : 'nod', arg: 'player' }, next: nx('taxi') });
   N.lessons = say(sum.lessons.map(lessonLine).join(''), { next: nx('lessons') });
   // one thing for next time

@@ -35,7 +35,7 @@ const CSS = `
 #menu p { line-height: 1.75; font-size: 14px; }
 `;
 
-export function createMenu({ root = document.body, settings, presets = [], onResume = () => {}, onQuality = () => {}, onMode = () => {}, getMode = () => 'walk', getPreset = () => null, onResetProgress = null, version = '' }) {
+export function createMenu({ root = document.body, settings, presets = [], onResume = () => {}, onQuality = () => {}, onMode = () => {}, getMode = () => 'walk', getPreset = () => null, onResetProgress = null, onLogbook = null, version = '' }) {
   if (!document.getElementById('menu-css')) { const st = document.createElement('style'); st.id = 'menu-css'; st.textContent = CSS; document.head.appendChild(st); }
   const el = document.createElement('div'); el.id = 'menu'; el.hidden = true; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', '一時停止メニュー');
   root.appendChild(el);
@@ -49,6 +49,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
       return `<div class="m-big">
         <button class="primary" data-act="resume">再開する</button>
         <button data-act="mode">${walk ? '見学モードに切り替える（自由なカメラ・視点 1〜9・0）' : getMode() === 'fly' ? '機体を降りる（機体は駐機場に戻ります）' : '歩くモードに戻る'}</button>
+        ${onLogbook ? '<button data-act="logbook">航空日誌を見る</button>' : ''}
         <button data-tab="settings">設定</button><button data-tab="keys">操作</button><button data-tab="about">このゲームについて</button></div>`;
     }
     if (tab === 'settings') {
@@ -64,6 +65,8 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         + `<div class="m-row"><span>画質</span><span></span><div class="m-chips" style="grid-column:1/-1">${presets.map(p => `<button data-quality="${p.id}" aria-pressed="${(v.quality || getPreset()) === p.id}">${esc(p.label)}${!v.quality && getPreset() === p.id ? '（自動）' : ''}</button>`).join('')}</div><small>最初は GPU に合わせて自動で選びます。カクつくときは下げてください</small></div>`
         + range('textSpeed', '字幕の速さ', 0.5, 3, 0.25, x => `×${x.toFixed(2)}`, '会話の文字が出る速さ')
         + sw('voice', '教官の声（読み上げ）', 'ブラウザの音声合成で教官の台詞を読み上げます（日本語の声がある場合）')
+        + sw('atcVoice', '管制官の声（英語の読み上げ）', 'ブラウザの音声合成で管制官の英語を読み上げます（英語の声がある場合）')
+        + sw('radioJa', '無線の日本語訳', '無線の画面で、英語の下に日本語の意味を出します')
         + sw('autoRud', '自動ラダー', 'ON：ボールを自動で中央に保ちます。飛んでいる間は U で切り替え')
         + sw('showPerf', '性能の表示', 'fps・描画回数・三角形の数を右上に表示');
     }
@@ -83,7 +86,9 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         <tr><td>Z / X</td><td>ラダートリム 左 / 右</td></tr><tr><td>U</td><td>自動ラダー</td></tr><tr><td>L</td><td>翼を水平に戻す（自由飛行だけ）</td></tr>
         <tr><td>Enter / 1〜3</td><td>チェックリストを進める / 無線の復唱を選ぶ</td></tr>
         <tr><td>マウス</td><td>見回す。右ボタンを押したままで近くを見る</td></tr><tr><td>左クリック / ホイール</td><td>照準の先のスイッチ・レバー・つまみを操作する</td></tr>
-        <tr><td>C</td><td>操縦席 ⇄ 外からの視点</td></tr><tr><td>Tab</td><td>画面の計器盤（PFD・MFD）</td></tr><tr><td>H</td><td>操作の説明</td></tr></table>
+        <tr><td>C</td><td>操縦席 ⇄ 外からの視点</td></tr><tr><td>Tab</td><td>画面の計器盤（PFD・MFD）</td></tr><tr><td>H</td><td>操作の説明</td></tr>
+        <tr><td>Enter</td><td>チェックリストの項目を確かめた（◇ の項目）</td></tr><tr><td>Y</td><td>チェックリストや地上走行を教官に任せる</td></tr>
+        <tr><td>1〜3</td><td>無線で答える（管制との交信）</td></tr></table>
         <p class="m-note">ゲームパッドも使えます（FLIGHT LAB と同じ配置）。</p>`;
     }
     return `<p><b>CADET</b>（パイロット訓練生シミュレーター）${version ? ` <span class="m-val">${esc(version)}</span>` : ''}</p>
@@ -102,6 +107,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
     if (b.dataset.tab) { tab = b.dataset.tab; render(); el.querySelector(`[data-tab="${tab}"][role=tab]`)?.focus(); return; }
     if (b.dataset.act === 'resume') return close(true);
     if (b.dataset.act === 'mode') { onMode(getMode() === 'walk' ? 'spectator' : 'walk'); return close(true); }
+    if (b.dataset.act === 'logbook') { close(false); onLogbook(); return; }
     // erasing the record asks twice: the first press only arms the button
     if (b.dataset.act === 'reset') {
       if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'もう一度押すと記録を消します'; return; }

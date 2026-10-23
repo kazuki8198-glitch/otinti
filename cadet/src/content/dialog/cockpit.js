@@ -1,43 +1,56 @@
 // CADET — content/dialog/cockpit.js : what 早瀬 教官 (fictional) says in the aircraft. 'board' runs once the player
-// has sat down in the left seat: belts and door, today's lesson, then the choice — fly today's lesson (the transit to
-// the training area is skipped), fly freely from the apron, or get out again. The choice reaches the game as the hook
-// 'fly' (arg 'intro' | 'basic' | 'precision' | 'free' | 'leave'); the game acts on it when the talk ends.
+// has sat down in the left seat: belts and door, today's lessons, then the choice — the whole day (the start, the
+// radio, the taxi, t1 → a2 → t3, back to the stand: M4) at one of three levels, one lesson alone from the training
+// area, a free flight from the apron, or getting out again. The choice reaches the game as the hook 'fly' (arg
+// 'day:<level>' | '<level>' | 'free' | 'leave'); the game acts on it when the talk ends. The day's two questions in
+// the air (to the practice area and back: content/dialog/day1.js) are in the same data ('transit', 'return').
 // In flight the instructor speaks the lesson's own instructions (FLIGHT LAB's school) through flightLine(), which says
 // the controls' names instead of the keyboard keys, and comments on the result with debriefLine().
 import { INSTRUCTOR, speakable, polite } from './instructor.js';
+import { dayDialogs } from './day1.js';
 
 const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' } };
 export const COCKPIT_FLAGS = ['briefed_today'];
-export const COCKPIT_HOOKS = ['look', 'nod', 'point', 'fly'];
-export const FLY_CHOICES = ['intro', 'basic', 'precision', 'free', 'leave'];
+export const COCKPIT_HOOKS = ['look', 'nod', 'point', 'fly', 'go'];
+export const FLY_CHOICES = ['day:intro', 'day:basic', 'day:precision', 'intro', 'basic', 'precision', 'free', 'leave'];
 
 const lessonsOf = (FL) => (FL.syllabus && Array.isArray(FL.syllabus.STAGES) ? FL.syllabus.STAGES.flatMap(s => s.lessons || []) : []);
 const q = (s) => `「${s}」`;
 
-export function cockpitDialogs(FL, { lessonId = 'a1' } = {}) {
-  const lesson = lessonsOf(FL).find(l => l.id === lessonId);
+// lessonId: the lesson flown on its own (from the practice area); day: today's lessons in order (the whole day)
+export function cockpitDialogs(FL, { lessonId = 'a2', day = ['t1', 'a2', 't3'] } = {}) {
+  const all = lessonsOf(FL), lesson = all.find(l => l.id === lessonId);
   if (!lesson) throw new Error(`cockpitDialogs: no lesson "${lessonId}" in FLIGHT LAB's syllabus`);
+  const dayTitles = day.map(id => { const l = all.find(x => x.id === id); if (!l) throw new Error(`cockpitDialogs: no lesson "${id}"`); return l.title; });
   const levels = FL.school && Array.isArray(FL.school.LEVELS) ? FL.school.LEVELS : [];
   const lv = (id) => levels.find(l => l.id === id) || { name: id };
   const say = (text, more = {}) => ({ speaker: 'instructor', text, ...more });
+  const levelChoices = (prefix, next) => [
+    { text: `${lv('intro').name}（基準がゆるやか）`, next, effects: [{ hook: 'fly', arg: prefix + 'intro' }] },
+    { text: `${lv('basic').name}`, next, effects: [{ hook: 'fly', arg: prefix + 'basic' }] },
+    { text: `${lv('precision').name}（基準がきびしい）`, next, effects: [{ hook: 'fly', arg: prefix + 'precision' }] },
+  ];
   const B = {};
   B.seat = say('シートベルトは締めましたか。……はい、ドアもロックしました。', { hook: { name: 'look', arg: 'player' }, next: 'today' });
-  B.today = say(`今日の課目は${q(lesson.title)}です。ブリーフィングのとおりにやってみましょう。`, {
+  B.today = say(`今日は${dayTitles.map(q).join('、')}。離陸して訓練空域で練習し、戻って着陸します。ブリーフィングのとおりにやってみましょう。`, {
     if: { flag: 'briefed_today' }, else: 'today:new', hook: { name: 'nod' }, next: 'menu' });
-  B['today:new'] = say(`ブリーフィングはまだでしたね。今日の課目は${q(lesson.title)}です。飛びながら説明します。`, { next: 'menu' });
-  B.menu = say('課目は、訓練空域に着いたところから始めます。どうしますか。', { hook: { name: 'point', arg: 'panel' }, choices: [
-    { text: `課目を飛ぶ（${lv('intro').name}：基準がゆるやか）`, next: 'go', effects: [{ hook: 'fly', arg: 'intro' }] },
-    { text: `課目を飛ぶ（${lv('basic').name}）`, next: 'go', effects: [{ hook: 'fly', arg: 'basic' }] },
-    { text: `課目を飛ぶ（${lv('precision').name}：基準がきびしい）`, next: 'go', effects: [{ hook: 'fly', arg: 'precision' }] },
+  B['today:new'] = say(`ブリーフィングはまだでしたね。今日は${dayTitles.map(q).join('、')}です。離陸して訓練空域で練習し、戻って着陸します。飛びながら説明します。`, { next: 'menu' });
+  B.menu = say('どうしますか。', { hook: { name: 'point', arg: 'panel' }, choices: [
+    { text: '今日の 1 日を通して飛ぶ（エンジン始動から駐機まで）', next: 'day' },
+    { text: `課目だけ飛ぶ（${q(lesson.title)}を訓練空域から）`, next: 'lesson' },
     { text: '駐機場から自由に飛ぶ', next: 'free', effects: [{ hook: 'fly', arg: 'free' }] },
     { text: 'やっぱり降ります', next: 'leave', effects: [{ hook: 'fly', arg: 'leave' }] },
   ] });
+  B.day = say('基準のきびしさ（レベル）はどうしますか。3 つの課目とも、同じレベルで採点します。', { choices: levelChoices('day:', 'dayGo') });
+  B.dayGo = say('わかりました。では、エンジン始動前の点検から始めましょう。', { hook: { name: 'nod' }, end: true });
+  B.lesson = say('課目は、訓練空域に着いたところから始めます。レベルはどうしますか。', { choices: levelChoices('', 'go') });
   B.go = say('わかりました。では、訓練空域へ向かいます。', { hook: { name: 'nod' }, end: true });
   B.free = say('わかりました。エンジンをかけますね。', { next: 'free:2' });
   B['free:2'] = say('地上では、足のペダルで向きを変えます。止まるときはブレーキです。動き出す前に、パーキングブレーキを外してください。', { hook: { name: 'point', arg: 'pedals' }, next: 'free:3' });
   B['free:3'] = say('滑走路 36 から離陸して、場周を一周してみましょう。わからないことがあれば、いつでも聞いてください。', { hook: { name: 'look', arg: 'player' }, end: true });
   B.leave = say('わかりました。準備ができたら、また乗ってください。', { hook: { name: 'nod' }, end: true });
-  return { speakers: SPEAKERS, flags: [...COCKPIT_FLAGS], hooks: [...COCKPIT_HOOKS], dialogs: { board: { start: 'seat', nodes: B } } };
+  const D = dayDialogs();
+  return { speakers: SPEAKERS, flags: [...COCKPIT_FLAGS], hooks: [...COCKPIT_HOOKS], dialogs: { board: { start: 'seat', nodes: B }, ...D.dialogs } };
 }
 
 // ---- in flight ----

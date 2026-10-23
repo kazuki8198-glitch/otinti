@@ -29,7 +29,7 @@ const CX = { A2: 'Alpha Two', A3: 'Alpha Three' };
 // dayRadio(FL, weather) → { exchanges: { id: exchange }, sequences: { id: [ids] }, info, weather }
 // weather: { windMag, windKt, qnh (inHg), tempC, dewC, zulu 'HHMM', info letter }
 export function dayRadio(weather) {
-  const W = { windMag: 10, windKt: 5, qnh: 29.92, tempC: 15, dewC: 8, zulu: '1336', info: 'Alpha', ...weather };
+  const W = { windMag: 10, windKt: 5, qnh: 29.92, tempC: 15, dewC: 8, zulu: '1253', info: 'Alpha', ...weather };
   const windSay = W.windKt < 3 ? 'wind calm' : `wind ${digits(String(Math.round(W.windMag) || 360).padStart(3, '0'))} at ${digits(Math.round(W.windKt))}`;
   const windJa = W.windKt < 3 ? '風は静穏' : `風 ${String(W.windMag).padStart(3, '0')}° ${W.windKt} kt`;
   const qnhSay = digits(W.qnh.toFixed(2).replace('.', '')), qnhTxt = W.qnh.toFixed(2);

@@ -173,7 +173,7 @@ test('cockpit: the view from the left seat', () => {
 });
 
 const KINDS = new Set(['button', 'knob', 'lever', 'switch', 'handle']);
-const TYPES = new Set(['flight', 'av', 'switch', 'select', 'exit', 'info']);
+const TYPES = new Set(['flight', 'av', 'switch', 'select', 'exit', 'prime', 'info']);
 test('cockpit: every control can be found, picked from the seat, and says what to do', () => {
   const cp = build(), L = lesson();
   Object.assign(L.s, { elev: 0, trim: 0.1, ail: 0, rud: 0, rudEff: 0 });          // hands off, a little nose-up trim
@@ -251,6 +251,15 @@ test('cockpit: the controls say what the game should do', () => {
   assert.deepEqual(C['mag'].act(-1, true), { type: 'select', id: 'mag', value: 'L' });
   assert.equal(C['mag'].act(1, true).value, 'START');
   assert.deepEqual(C['fuelSel'].act(1, false), { type: 'select', id: 'fuelSel', value: 'R' });
+  // the engine's controls (M4): the selector's OFF on the wheel, the mixture (cut-off on the ground only), carb heat, the primer
+  cp.switches.fuelSel = 'R'; assert.deepEqual(C['fuelSel'].act(1, true), { type: 'select', id: 'fuelSel', value: 'OFF' }); cp.switches.fuelSel = 'L';
+  assert.equal(C['fuelSel'].act(-1, true), null, 'L is the first');
+  cp.switches.mixture = 1; assert.equal(C['mixture'].act(1, false).type, 'info', 'no cut-off in the air');
+  assert.deepEqual(C['mixture'].act(-1, true), { type: 'select', id: 'mixture', value: 0.9 });
+  cp.switches.mixture = 0.4; assert.deepEqual(C['mixture'].act(1, false), { type: 'select', id: 'mixture', value: 1 }, 'a click: full rich');
+  cp.switches.mixture = 1;
+  assert.deepEqual(C['carbHeat'].act(1, false), { type: 'switch', id: 'carbHeat', on: true });
+  assert.deepEqual(C['primer'].act(1, false), { type: 'prime' });
   // flight controls: the bridge's own actions
   assert.deepEqual(C['throttle'].act(1, true), { type: 'flight', name: 'thrStep', arg: 1 });
   assert.deepEqual(C['throttle'].act(-1, true), { type: 'flight', name: 'thrStep', arg: -1 });

@@ -2,7 +2,7 @@
 // Every storage access is guarded: a private window, blocked site data or a full quota just means the settings are
 // not remembered. Values are checked and clamped; anything unknown or broken in storage is ignored.
 export const DEFAULTS = { sensitivity: 1.0, invertY: false, fov: 75, headBob: true, quality: null, volume: 0.8, showPerf: false, walkHold: false, voice: false, textSpeed: 1,
-  autoRud: true, lessonLevel: 'basic', panel2D: false };
+  autoRud: true, lessonLevel: 'basic', panel2D: false, atcVoice: true, radioJa: true };
 const KEY = 'cadet.settings';
 const RULES = {
   sensitivity: (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(3, Math.max(0.2, v)) : undefined),
@@ -17,6 +17,8 @@ const RULES = {
   quality: (v) => (v === null || (typeof v === 'string' && /^(low|medium|high|ultra)$/.test(v)) ? v : undefined),
   autoRud: (v) => (typeof v === 'boolean' ? v : undefined),
   panel2D: (v) => (typeof v === 'boolean' ? v : undefined),
+  atcVoice: (v) => (typeof v === 'boolean' ? v : undefined),
+  radioJa: (v) => (typeof v === 'boolean' ? v : undefined),
   lessonLevel: (v) => (typeof v === 'string' && /^(intro|basic|precision)$/.test(v) ? v : undefined),
 };
 

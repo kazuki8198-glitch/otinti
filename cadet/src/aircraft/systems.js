@@ -51,6 +51,13 @@ export function createSystems(sw) {
     if (s) { if (s.eng[0] && s.eng[0].cut) cut(s, false); st.rpm = s.eng[0] ? s.eng[0].rpm || 0 : 0; }
     st.oil = 70;
   }
+  // a new physics state for the same aircraft (a lesson started where the cadet is: FLIGHT LAB's state, running): the
+  // switches stay as the cadet set them; the engine runs on (or, if it was not running, everything is set running)
+  function adopt(s) {
+    if (st.eng !== 'run' || !s) { setRunning(s); return; }
+    if (s.eng[0] && s.eng[0].cut) cut(s, false);
+    st.rpm = s.eng[0] ? s.eng[0].rpm || 0 : 0; st.dead = false;
+  }
   // what the primer does (one stroke); a stroke without fuel does nothing
   function prime() { if (sw.fuelSel !== 'OFF') st.primes = Math.min(st.primes + 1, 9); return st.primes; }
   const tankFuel = (s) => (sw.fuelSel === 'L' ? s.fuel[0] : sw.fuelSel === 'R' ? s.fuel[1] : 0);
@@ -129,7 +136,7 @@ export function createSystems(sw) {
     return events;
   }
   return {
-    sw, st, setCold, setRunning, prime, update, catchTime,
+    sw, st, setCold, setRunning, adopt, prime, update, catchTime,
     get running() { return st.eng === 'run'; }, get cranking() { return st.eng === 'crank'; },
     get rpm() { return st.rpm; }, get oil() { return st.oil; }, get primes() { return st.primes; },
     get powered() { return !!sw.master; }, get avionicsOn() { return !!(sw.master && sw.avionics); },

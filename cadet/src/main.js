@@ -37,13 +37,20 @@ import { createActor } from './npc/actor.js';
 import { createDialogUI } from './ui/dialog-ui.js';
 import { createFlyMode } from './flight/fly-mode.js';
 import { createFlightHUD } from './ui/flight-hud.js';
+import { createDayHUD } from './ui/day-hud.js';
+import { createDay, DAY1 } from './career/day.js';
+import { createLogbook, entryFrom } from './career/logbook.js';
+import { buildWalkaroundProps } from './aircraft/walkaround-props.js';
+import { apronDialogs } from './content/dialog/day1.js';
+import { POINTS } from './content/walkaround-archer.js';
 
 /* global __BUILD_INFO__ */
 const $ = (s) => document.querySelector(s);
 const frame = () => new Promise(r => requestAnimationFrame(() => r()));
 const params = new URLSearchParams(location.search);
-// the day's wind (the METAR on the dispatch board, the windsock, the flights from the apron)
-const DAY_WIND = { fromDeg: 330, kt: 8 };
+// the day's wind: the one FLIGHT LAB's lessons fly in (the runway's heading + 10° true, 5 kt), so the METAR on the
+// dispatch board, the ATIS, the windsock and the flights from the apron all agree with the lessons
+const DAY_WIND = { fromDeg: 4, kt: 5 };
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function bootMsg(text, k) { $('#bootMsg').textContent = text; if (k != null) $('#bootBar').style.width = `${Math.round(k * 100)}%`; }
@@ -170,9 +177,15 @@ async function boot() {
       if (k === lastPrompt) return; lastPrompt = k;
       const el = $('#prompt'); if (text) el.innerHTML = `<kbd>${esc(key || 'E')}</kbd>${esc(text)}`; el.classList.toggle('show', !!text);
     },
-    card(title, text) {
-      const c = $('#card'); if (!title) { c.hidden = true; return; }
-      c.querySelector('.card-title').textContent = title; c.querySelector('.card-body').textContent = text; c.hidden = false;
+    // choices: [{ k, text }] (the walk-around's decisions, keys 1–4), or none
+    card(title, text, choices = null) {
+      const c = $('#card'); if (!title) { c.hidden = true; walkOpen = null; return; }
+      c.querySelector('.card-title').textContent = title; c.querySelector('.card-body').textContent = text;
+      const ch = c.querySelector('.card-choices'); ch.textContent = '';
+      for (const x of choices || []) { const b = document.createElement('button'); b.type = 'button'; b.tabIndex = -1; b.innerHTML = `<kbd>${x.k}</kbd>${esc(x.text)}`; b.dataset.k = String(x.k - 1); ch.appendChild(b); }
+      ch.hidden = !(choices && choices.length);
+      c.querySelector('.card-foot').textContent = choices && choices.length ? '1〜4 で選ぶ・E で閉じる' : 'E で閉じる';
+      c.hidden = false;
     },
   };
   interactor = createInteractor({ walker, world, L, hud });
@@ -186,22 +199,80 @@ async function boot() {
       },
     });
   }
-  // today's aircraft (stand 19): look it over at the nose; get in over the right wing (the walk-around inspection itself
-  // comes later)
+  // today's aircraft (stand 19): get in over the right wing; look it over (its card) from the left side; the walk-around
+  // inspection's 15 places on it (aircraft/walkaround.js: E opens the place's card, 1–4 decide), with what it finds
+  // drawn (the pitot cover, the ropes, the chocks, a cap left open)
+  const logbook = createLogbook();
+  const tg = spec.target;
+  let today = null, dayN = 0;
+  // ?anomalies=r_sump,r_cap plants those on the first day (tests, screenshots)
+  const planted = params.get('anomalies') ? params.get('anomalies').split(',') : undefined;
+  const newDay = () => { dayN++; today = createDay(FL, { seed: logbook.entries.length * 7 + dayN, stand: { a: tg.a, c: tg.c }, anomalies: dayN === 1 ? planted : undefined }); walkProps.set(today.walk.props()); renderWalk(); return today; };
+  const walkProps = buildWalkaroundProps();
+  todayAc.root.add(walkProps.root);
+  todayAc.root.updateMatrixWorld(true);
+  // a point on today's parked aircraft (its body frame) → the runway frame [x = across, y up, z = −along]
+  const bodyToFrame = (b) => { const w = todayAc.root.localToWorld(new THREE.Vector3(b[0], b[1], b[2])), [fx, fz] = toFrame(w.x, w.z); return [fx, w.y - G, fz]; };
   {
-    const AR = FL.physics.AIRCRAFT.find(a => a.id === 'pa28'), v = AR.v, tg = spec.target;
+    const AR = FL.physics.AIRCRAFT.find(a => a.id === 'pa28'), v = AR.v;
     interactor.add({ id: 'aircraft:board', owner: 'aircraft:today', frame: [tg.c, 1.25, -(tg.a + 1.0)], radius: 0.9, prompt: '乗り込む', use: () => (fly ? fly.board() : null) });
     interactor.add({
-      id: 'aircraft:today', frame: [tg.c - 3.2, 1.0, -tg.a], radius: 1.0, prompt: '今日の機体を見る',
+      id: 'aircraft:today', owner: 'aircraft:today', frame: bodyToFrame([-0.66, 0.15, 1.0]), radius: 0.5, prompt: '今日の機体を見る',
       use: () => {
         // FLIGHT LAB's description, without its notes on real operators (the game's airline and school are fictional)
-        const desc = AR.desc.split('。').filter(x => x && !/ANA|Acron|公開/.test(x)).join('。') + '。';
-        interactor.showCard(`今日の機体：${AR.short}（N738SY・架空の登録記号）`, `${AR.name}\n${desc}\n\n`
+        const desc = AR.desc.split('。').filter(x => x && !/ANA|Acron|公開|教材/.test(x)).join('。') + '。';
+        interactor.showCard(`今日の機体：${AR.short}（N738SY・架空の登録記号）`, `${AR.name.replace(/（教材モデル）/, '')}\n${desc}\n\n`
           + `覚える速度（KIAS）：ローテーション ${v.rotate}・Vx ${v.x}・Vy ${v.y}・進入 ${v.appr}・Va ${v.va}・Vno ${v.no}・Vne ${v.ne}\n\n`
           + '飛ぶ前には必ず外部点検（プリフライト）をします。機体の周りを決まった順番で回り、燃料・オイル・舵の動き・タイヤを確かめます。');
         audio.ui('examine'); return 'examined';
       },
     });
+  }
+  // the walk-around's card: what to check, what is seen, and the choices (1–4 / a click)
+  const walkTargets = [];
+  let walkOpen = null;                                       // the place whose card is open
+  function walkCard(id) {
+    const c = today.walk.inspect(id); if (!c) return null;
+    walkOpen = id;
+    interactor.showCard(c.title, `【確かめること】${c.check}\n\n【見えること】${c.seen}`, c.choices.map((x, i) => ({ k: i + 1, text: x.text, act: x.act })));
+    audio.ui('examine');
+    renderWalk();
+    return 'examined';
+  }
+  function walkChoose(k) {
+    if (!walkOpen) return false;
+    const c = today.walk.inspect(walkOpen), ch = c && c.choices[k];
+    if (!ch) return false;
+    if (ch.act === 'close') { interactor.closeCard(); return true; }
+    const r = today.walk.act(walkOpen, ch.act);
+    if (audio.click) audio.click();
+    walkProps.set(today.walk.props());
+    if (r && r.mx) {
+      // the maintenance is called: the mechanic puts it right
+      interactor.closeCard();
+      toast(`整備に連絡しました。${r.mx}`, 5200);
+      walkOpen = null; renderWalk();
+      return true;
+    }
+    if (r && r.say) toast(`早瀬 教官：${r.say}`, 4800);
+    walkCard(walkOpen);
+    return true;
+  }
+  for (const p of POINTS) {
+    const t = interactor.add({ id: 'walk:' + p.id, owner: 'aircraft:today', frame: bodyToFrame(p.at), radius: 0.32, low: p.at[1] < -0.2,
+      prompt: () => `点検：${p.name}${today && today.walk.isDone(p.id) ? '（済）' : ''}`, use: () => walkCard(p.id) });
+    walkTargets.push(t);
+  }
+  // the walk-around's progress (left, under the place's name) while near today's aircraft
+  const walkEl = document.createElement('div'); walkEl.id = 'walk'; walkEl.hidden = true; document.getElementById('hud').appendChild(walkEl);
+  function renderWalk() {
+    if (!today) return;
+    const sm = today.walk.summary();
+    const groups = { cabin: '操縦席', 'right wing': '右翼', nose: '機首', 'left wing': '左翼', tail: '尾部' };
+    walkEl.innerHTML = `<b>外部点検 ${sm.done} / ${sm.total}</b>` + Object.entries(groups).map(([g, name]) => {
+      const ps = today.walk.points.filter(p => p.group === g);
+      return `<div><span>${name}</span>${ps.map(p => `<i class="${today.walk.isDone(p.id) ? 'ok' : ''}" title="${esc(p.name)}"></i>`).join('')}</div>`;
+    }).join('') + '<small>E：点検する　1〜4：決める</small>';
   }
 
   // ---------------------------------------------------------------- the instructor, and talking
@@ -212,55 +283,80 @@ async function boot() {
   const book = gameBook(FL);
   const saved = createSave();
   const talkState = createDialogState(saved.load());
-  const talkData = instructorDialogs(FL, { lessonId: 'a1' });
+  const talkData = instructorDialogs(FL, { lessonId: 'a2', day: DAY1.lessons });
   const instructor = createActor();
   const INS = { a: 634.9, c: 256.7 };
   instructor.root.position.set(INS.c, 0, -INS.a); instructor.root.rotation.y = Math.PI;      // facing +a, into the room
   academy.group.add(instructor.root);
   const insCollider = world.add({ x0: INS.c - instructor.radius, x1: INS.c + instructor.radius, y0: 0, y1: 1.8, z0: -INS.a - instructor.radius, z1: -INS.a + instructor.radius, tag: 'npc:instructor' });
+  // once the briefing is over (M4) he waits by today's aircraft, just behind its tail, facing its door (clear of the
+  // way to the door)
+  const APRON = (() => { const f = bodyToFrame([-1.8, -1.4, 5.3]), d = bodyToFrame([0.6, -1.4, -0.3]); return { c: f[0], a: -f[2], yaw: Math.atan2(d[0] - f[0], d[2] - f[2]) }; })();
+  const insApron = world.add({ x0: APRON.c - instructor.radius, x1: APRON.c + instructor.radius, y0: 0, y1: 1.8, z0: -APRON.a - instructor.radius, z1: -APRON.a + instructor.radius, tag: 'npc:instructor' });
+  world.setEnabled(insApron, false);
+  let insAt = 'room';
+  function placeInstructor(where = talkState.flags && talkState.flags.briefed_today ? 'apron' : 'room') {
+    insAt = where;
+    const root = instructor.root, P0 = where === 'apron' ? APRON : { c: INS.c, a: INS.a, yaw: Math.PI };
+    academy.group.add(root); root.position.set(P0.c, 0, -P0.a); root.rotation.set(0, P0.yaw, 0); root.visible = true;
+    world.setEnabled(insCollider, where === 'room'); world.setEnabled(insApron, where === 'apron');
+    for (const t of interactor.list()) if (t.id === 'npc:instructor') { t.enabled = true; t.frame = [P0.c, 1.5, -P0.a]; }
+  }
   const frameToWorld = (p, out = new THREE.Vector3()) => academy.group.localToWorld(out.set(p.x, p.y, p.z));
   let talk = null;                                            // { yaw, pitch } (the view to come back to) while talking
   let talkEndedAt = -Infinity;                                // the E or click that ended a talk does not start it again
   const runner = createRunner({ data: talkData, state: talkState, ctx: sampleCtx(FL), hooks: { onHook } });
+  // by the aircraft (M4): his word on the walk-around
+  const apronRunner = createRunner({ data: apronDialogs(), state: talkState, hooks: { onHook } });
+  let walkTalk = false;
   // the dialogue UI serves the room's talk and the talk in the aircraft (fly-mode's own runner)
   let fly = null;
-  const talkRunner = () => (fly && fly.talking ? fly.runner : runner);
+  const talkRunner = () => (fly && fly.talking ? fly.runner : walkTalk ? apronRunner : runner);
   const dui = createDialogUI({
     root: document.body, settings,
     onNext: () => { talkRunner().next(); afterStep(); },
     onChoose: (i) => { talkRunner().choose(i); afterStep(); },
   });
-  runner.onChange((view) => {
+  const onRoomView = (view) => {
     // dui.show also speaks the line (settings: voice, volume); a line whose hook started a gesture (point, nod) keeps it
     if (view) { dui.show(view); if (view.speaker === 'instructor' && !instructor.gesturing && Math.random() < 0.25) instructor.gesture('explain'); }
     else endTalk();
     saved.save(talkState);
-  });
+  };
+  runner.onChange(onRoomView); apronRunner.onChange(onRoomView);
   // the click (or key) that ended the conversation also takes the mouse back for walking
-  function afterStep() { if (!runner.running && started && mode === 'walk' && !menu.isOpen) input.requestLock(); }
+  function afterStep() { if (!runner.running && !apronRunner.running && started && mode === 'walk' && !menu.isOpen) input.requestLock(); }
   function startTalk() {
-    if (runner.running) return 'talking';
+    if (runner.running || apronRunner.running) return 'talking';
     interactor.closeCard(); hud.prompt(null);
     talk = { yaw: walker.state.yaw, pitch: walker.state.pitch };
     document.body.classList.add('talking');
     input.exitLock();
     audio.ui('open');
-    runner.start('brief');
+    walkTalk = insAt === 'apron';
+    if (walkTalk) apronRunner.start('apron'); else runner.start('brief');
     return 'talk';
   }
   function endTalk() {
     if (!talk) return;
     talk = null; dui.hide(); document.body.classList.remove('talking');
     talkEndedAt = performance.now();
+    walkTalk = false;
+    // briefed: he goes out to the aircraft (out of sight: while the cadet is still in the room he stays to see them off)
+    if (insAt === 'room' && talkState.flags.briefed_today) insGoOut = true;
   }
+  let insGoOut = false;
   // the pause menu's "erase the record": the instructor meets you again for the first time
   function resetProgress() {
     if (runner.running) runner.stop();
+    if (apronRunner.running) apronRunner.stop();
     const fresh = createDialogState();
     for (const k of Object.keys(talkState)) delete talkState[k];
     Object.assign(talkState, fresh);
     saved.clear();
     if (fly) for (const k of ['flightlab-records-v2', 'flightlab-progress-v2']) { try { fly.flight.store.removeItem(k); } catch (e) { /* storage unavailable */ } }
+    logbook.clear();
+    if (!(fly && fly.active)) { placeInstructor('room'); newDay(); }
   }
   // the instructor's hooks
   function onHook(name, arg) {
@@ -308,22 +404,32 @@ async function boot() {
 
   // ---------------------------------------------------------------- flying (today's Archer, with the instructor)
   const flightHud = createFlightHUD({ root: document.body, settings });
+  const dayHud = createDayHUD({ settings });
   fly = createFlyMode({
     FL, L, scene, camera, renderer, sky, input, settings, audio, toast, hud, dui, talkState, world, flightHud,
-    saveTalk: () => saved.save(talkState), instructor, instructorName: INSTRUCTOR.title_ja, lessonId: 'a1',
+    saveTalk: () => saved.save(talkState), instructor, instructorName: INSTRUCTOR.title_ja, lessonId: 'a2', dayHud,
+    today: () => today,
+    // the debrief signed the logbook: the line written, the page shown; resolves when it is closed
+    onLogbook: (sum, remarks) => new Promise((done) => {
+      logbook.add(entryFrom(sum, { remarks, dayN: logbook.entries.length + 1, skippedSec: sum.transit === 'skip' ? 600 : 0 }));
+      input.exitLock();
+      dayHud.showLogbook(logbook.entries, logbook.totals(), { fresh: logbook.entries.length - 1, onClose: () => { done(); if (mode === 'fly' && !menu.isOpen) input.requestLock(); } });
+    }),
+    // out of the aircraft after a day (done or given up): the next one is a new day (a new walk-around)
+    onDayOver: () => { pendingNewDay = true; },
     stand: { a: spec.target.a, c: spec.target.c, hdgTrue: (L.R.trueHdg + 270) % 360 }, wind: DAY_WIND,
     parkedToday: todayAc.root, toFrame,
     todayColliders: (on) => { for (const id of todayIds) world.setEnabled(id, on); },
-    // he is in the aircraft: not in his room (no collider, nothing to talk to there)
-    instructorHome: (root) => {
-      academy.group.add(root); root.position.set(INS.c, 0, -INS.a); root.rotation.set(0, Math.PI, 0); root.visible = true;
-      world.setEnabled(insCollider, true); for (const t of interactor.list()) if (t.id === 'npc:instructor') t.enabled = true;
-    },
+    // he is in the aircraft: not in his room nor on the apron (no collider, nothing to talk to there); back out, by the
+    // aircraft if the cadet was briefed
+    instructorHome: () => placeInstructor(),
     onEnter: () => {
-      world.setEnabled(insCollider, false); for (const t of interactor.list()) if (t.id === 'npc:instructor') t.enabled = false;
+      world.setEnabled(insCollider, false); world.setEnabled(insApron, false); for (const t of interactor.list()) if (t.id === 'npc:instructor') t.enabled = false;
+      walkEl.hidden = true;
       setMode('fly');
     },
     onLeave: (then) => {
+      if (pendingNewDay) { pendingNewDay = false; newDay(); }
       setMode(then === 'spectator' ? 'spectator' : 'walk');
       // beside the right wing, behind its trailing edge, facing the cabin
       const tg = spec.target; placeWalker(tg.a + 1.4, tg.c + 2.6, { a: tg.a, c: tg.c });
@@ -332,6 +438,12 @@ async function boot() {
     onTalk: (on) => { document.body.classList.toggle('talking', on); },
     onPause: () => openMenu(),
   });
+
+  let pendingNewDay = false;
+  newDay();
+  placeInstructor();
+  // the walk-around card's choices with the mouse (when it is free)
+  $('#card .card-choices').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) walkChoose(+b.dataset.k); });
 
   // ---------------------------------------------------------------- viewpoints (the visit camera)
   const V = (a, c, up) => new THREE.Vector3(...L.rwyToLocal(a, c, up));
@@ -375,6 +487,7 @@ async function boot() {
     onResume: () => { input.enabled = true; if (!talk && !(fly && (fly.talking || fly.debrief))) input.requestLock(); audio.ui('close'); },
     onQuality: (id) => setQuality(id), onMode: (m) => { if (!(fly && fly.fading)) setMode(m); }, getMode: () => mode, getPreset: () => preset.id,
     onResetProgress: () => resetProgress(),
+    onLogbook: () => { input.enabled = true; input.exitLock(); dayHud.showLogbook(logbook.entries, logbook.totals(), { onClose: () => { if ((mode === 'walk' || mode === 'fly') && !talk && !(fly && (fly.talking || fly.debrief))) input.requestLock(); } }); },
   });
   function openMenu(tab) { if (menu.isOpen || (fly && fly.fading)) return; interactor.closeCard(); input.enabled = false; input.exitLock(); menu.open(tab); audio.ui('open'); }
   input.onLock((on) => {
@@ -383,13 +496,13 @@ async function boot() {
       lostAt = performance.now();
       // Esc while reading a card (the browser takes that Esc to free the mouse): just close the card
       if (interactor.cardOpen) { interactor.closeCard(); audio.ui('close'); }
-      else if (talk || (fly && (fly.talking || fly.debrief))) { /* talking, or the debrief: the mouse is free for the choices */ }
+      else if (talk || (fly && (fly.talking || fly.debrief)) || dayHud.logbookOpen) { /* talking, the debrief, the logbook: the mouse is free */ }
       else if (started && (mode === 'walk' || mode === 'fly') && !menu.isOpen) openMenu();
     }
   });
   renderer.domElement.addEventListener('click', () => {
     audio.unlock();
-    if (talk || (fly && (fly.talking || fly.debrief))) return;   // the dialogue UI (or the debrief) takes the clicks
+    if (talk || (fly && (fly.talking || fly.debrief)) || dayHud.logbookOpen) return;   // the dialogue UI (or the debrief, the logbook) takes the clicks
     if (started && !menu.isOpen) input.requestLock();
   });
   addEventListener('keydown', (e) => {
@@ -401,7 +514,9 @@ async function boot() {
       return;
     }
     if (menu.isOpen) return;
+    if (dayHud.logbookOpen) return;
     if (mode === 'fly') { if (fly) fly.key(e); return; }       // F is the throttle there (perf: the menu's setting)
+    if (mode === 'walk' && walkOpen && /^(Digit|Numpad)[1-4]$/.test(e.code)) { walkChoose(+e.code.slice(-1) - 1); return; }
     if (e.code === 'KeyF') settings.set('showPerf', !settings.get('showPerf'));
     if (mode !== 'spectator') return;
     if (/^Digit[0-9]$/.test(e.code)) { const k = +e.code.slice(5), i = k === 0 ? 9 : k - 1; if (VIEWS[i]) setView(i); }
@@ -485,10 +600,14 @@ async function boot() {
     academy.update(dt, mode === 'walk' ? walker.framePos : { x: fx, z: fz });
     if (mode === 'fly') { if (fly) fly.draw2D(dt); }
     if (mode === 'walk' && live && !talk) { interactor.update(camera); showPlace(dt, pa, pc); }
+    // near today's aircraft: the walk-around's progress; the instructor leaves the room for it once the cadet has gone
+    walkEl.hidden = !(mode === 'walk' && Math.hypot(pa - tg.a, pc - tg.c) < 14);
+    if (insGoOut && academy.roomOf(pa, pc)?.id !== 'brief-1') { insGoOut = false; placeInstructor('apron'); }
+    walkProps.update(performance.now() / 1000, DAY_WIND.kt);
     // the instructor looks at the player when they are near (or talking), and moves their mouth while their line shows
     if (!(fly && fly.active)) {                                // (in the aircraft fly-mode moves him)
-      const near = Math.hypot(pa - INS.a, pc - INS.c) < 7 && academy.roomOf(pa, pc)?.id === 'brief-1';
-      const v = talk ? runner.view() : null;
+      const near = insAt === 'room' ? Math.hypot(pa - INS.a, pc - INS.c) < 7 && academy.roomOf(pa, pc)?.id === 'brief-1' : Math.hypot(pa - APRON.a, pc - APRON.c) < 9;
+      const v = talk ? talkRunner().view() : null;
       instructor.update(dt, { lookAt: talk || near ? camWorld : null, talking: !!(v && v.speaker === 'instructor' && dui.typing) });
     }
     // inside: the eye adapts (exposure), the ceiling lights near the player light the room, the ambience changes
@@ -665,12 +784,37 @@ async function boot() {
     fly: {
       board: (instant = true) => fly.board({ instant }), status: () => fly.status(), get flight() { return fly.flight; },
       runScripted: (pilot, maxSec = 900, hook) => { const L0 = fly.runScripted(pilot, maxSec, hook); return { ...fly.flight.status(), steps: Math.round(L0.t * 120) }; },
-      lesson: (level = 'basic') => fly.beginLesson(level, { instant: true }),
+      lesson: (level = 'basic', lessonId) => fly.beginLesson(level, { instant: true, ...(lessonId ? { lessonId } : {}) }),
       view: (v) => fly.setView(v), act: (id, dir = 1, wheel = false) => fly.actOn(id, dir, wheel),
       look: (yawDeg, pitchDeg) => fly.look(yawDeg, pitchDeg), zoom: (on) => fly.setZoom(on),
       leave: () => fly.leave({ instant: true }), controls: () => fly.cockpit.controls.map(c => ({ id: c.id, label: c.label, kind: c.kind })),
       pose: () => { const r = fly.live.root; return { pos: r.position.toArray(), q: r.quaternion.toArray(), cam: camera.position.toArray(), fov: camera.fov }; },
+      // the day (M4): its state, a key as the cadet presses it, the instructor's hands, a radio answer (the right one or not)
+      day: () => (fly.status().day),
+      key: (code, shift = false) => fly.key({ code, shiftKey: !!shift, repeat: false, preventDefault() {} }),
+      assist: () => fly.dayMode.assist(),
+      answer: (right = true) => { const d = fly.dayMode.day; if (!d) return null; const k = d.atc.rightIndex(); if (k < 0) return null; return d.atc.answer(right ? k : (k + 1) % 3); },
+      lessonLevel: () => settings.get('lessonLevel'),
+      // the radio's clock (a lesson run by a scripted pilot has no frames: its hook moves the radio on)
+      radioTick: (dt) => { const d = fly.dayMode.day; if (d) d.atc.update(dt); },
     },
+    // the walk-around (M4): where its places are (runway frame), a decision on the open card, the result so far
+    walk: {
+      targets: () => walkTargets.map(t => ({ id: t.id.slice(5), a: -t.frame[2], c: t.frame[0], y: t.frame[1] })),
+      open: () => walkOpen, choose: (k) => walkChoose(k), choices: () => (walkOpen ? today.walk.inspect(walkOpen).choices.map(c => c.act) : null),
+      summary: () => today.walk.summary(), planted: () => today.walk.planted.slice(), props: () => today.walk.props(),
+      instructor: () => ({ at: insAt, a: APRON.a, c: APRON.c }),
+      // where a cadet stands to look at a place (body frame: in front of the wing, behind it at a wheel, beside the nose,
+      // behind the tail, on the wing walk at the door)
+      stand: (id) => {
+        const p = POINTS.find(x => x.id === id), [x, , z] = p.at, sd = Math.sign(x) || 1;
+        const b = p.group === 'cabin' ? [1.6, 0, -0.1] : p.group === 'tail' ? [1.4, 0, 4.4] : p.group === 'nose' ? [1.25, 0, -3.3]
+          : Math.abs(x) < 2 ? [x + sd * 0.3, 0, 1.7] : [x, 0, z - 1.6];
+        const f = bodyToFrame([b[0], -1.4, b[2]]);
+        return { a: -f[2], c: f[0] };
+      },
+    },
+    logbook: () => ({ entries: logbook.entries, totals: logbook.totals(), open: dayHud.logbookOpen, close: () => dayHud.hideLogbook() }),
     settings,
     // render n frames now and return the last as a PNG data URL (for tests: the drawing buffer is read in the same task)
     snapshot: (n = 1) => { for (let k = 0; k < n; k++) step(performance.now()); return renderer.domElement.toDataURL('image/png'); },

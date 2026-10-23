@@ -194,7 +194,7 @@ export function academySpec(FL) {
   const tails = ['N731SY', 'N732SY', 'N735SY', 'N738SY', 'N741SY', 'N744SY', 'N452SY'];
   const today = [
     ['08:00', tails[0], 'Archer', 'a1 ' + a1.title, '完了'],
-    ['09:30', tails[3], 'Archer', 'a1 ' + a1.title, '準備中'],          // the player's lesson and aircraft (N738SY)
+    ['09:30', tails[3], 'Archer', `t1 → a2 ${a2.title} → t3`, '準備中'],     // the player's day and aircraft (N738SY)
     ['10:00', tails[2], 'Archer', 'a3 ' + (lesson('a3').title || ''), '準備中'],
     ['11:00', tails[1], 'Archer', 't1 ' + t1.title, '予定'],
     ['13:00', tails[4], 'Archer', 't3 ' + (lesson('t3').title || ''), '予定'],
@@ -202,10 +202,10 @@ export function academySpec(FL) {
     ['16:00', tails[5], 'Archer', 'x1 ' + (lesson('x1').title || ''), '予定'],
   ];
   const interactables = [
-    { id: 'wb-brief-1', room: 'brief-1', a: 633.7, c: 254.6, y: 1.5, prompt_ja: 'ホワイトボードを見る', title_ja: `本日：a1 ${a1.title}`,
-      text_ja: `目的：${a1.goal}\n考え方：姿勢＋出力＝性能（機首の高さとパワーを決めれば、速度と昇降率が決まる）\n手順：${(a1.steps || []).map(s => s.name).join(' → ')}\n基準：${a1.std}\n天気：風 330° 8 kt・視程 10 SM 以上（架空）` },
+    { id: 'wb-brief-1', room: 'brief-1', a: 633.7, c: 254.6, y: 1.5, prompt_ja: 'ホワイトボードを見る', title_ja: `本日：a2 ${a2.title}（t1 → a2 → t3）`,
+      text_ja: `目的：${a2.goal}\n今日の流れ：外部点検 → エンジン始動 → ATIS・地上管制 → タキシー → ランナップ → t1 ${t1.title} → 訓練空域で a2 → 帰投・t3 ${lesson('t3').title} → 駐機・講評\n基準：${a2.std}\n天気：風 010° 5 kt・視程 10 SM 以上・高度計 29.92（架空）` },
     { id: 'model-archer', room: 'brief-1', a: 644.8, c: 250.0, y: 1.2, prompt_ja: '模型を見る', title_ja: 'Piper PA-28-181 Archer（訓練の単発機）',
-      text_ja: `低翼・単発・固定脚の 4 人乗り。G1000 型の画面で飛ぶ。\n離陸の速度 Vr ${AR.v.rotate} kt、上昇 Vy ${AR.v.y} kt・Vx ${AR.v.x} kt、進入 ${AR.v.appr} kt、最良滑空 ${AR.v.glide} kt。\n（この値は FLIGHT LAB の教材用の値です。実機はその機体の POH に従います）` },
+      text_ja: `低翼・単発・固定脚の 4 人乗り。G1000 型の画面で飛ぶ。\n離陸の速度 Vr ${AR.v.rotate} kt、上昇 Vy ${AR.v.y} kt・Vx ${AR.v.x} kt、進入 ${AR.v.appr} kt、最良滑空 ${AR.v.glide} kt。\n（訓練用の目安の値です。実機はその機体の POH に従います）` },
     { id: 'wb-brief-2', room: 'brief-2', a: 621.1, c: 254.6, y: 1.5, prompt_ja: 'ホワイトボードを見る', title_ja: `復習：t1 ${t1.title}`,
       text_ja: `目的：${t1.goal}\n${(t1.brief || []).slice(1).map(strip).join('\n')}\n基準：${t1.std}` },
     { id: 'wb-brief-3', room: 'brief-3', a: 608.5, c: 254.6, y: 1.5, prompt_ja: 'ホワイトボードを見る', title_ja: `予習：n2 ${n2.title || '推測航法'}`,
@@ -217,17 +217,17 @@ export function academySpec(FL) {
     { id: 'plaque', room: 'lobby', a: 663.8, c: 259.6, y: 1.7, prompt_ja: '銘板を読む', title_ja: '翔洋航空 フライトアカデミー',
       text_ja: '翔洋航空の自社養成パイロットが、基礎訓練（単発機・航法・計器・双発）を受ける訓練所です。\nこのゲームの航空会社・訓練所・人物はすべて架空です。公開情報を基にした非公式のゲームで、実機訓練の代わりにはなりません。' },
     { id: 'model-seminole', room: 'lobby', a: 649.0, c: 252.5, y: 1.2, prompt_ja: '模型を見る', title_ja: 'Piper PA-44-180 Seminole（訓練の双発機）',
-      text_ja: `双発・引き込み脚・T 字尾翼。第 4 段階で片発停止の扱いを学ぶ。\n最小操縦速度 Vmc ${SM.v.mc} kt（赤線）、片発での最良上昇率 Vyse ${SM.v.yse} kt（青線）。\n（FLIGHT LAB の教材用の値です）` },
+      text_ja: `双発・引き込み脚・T 字尾翼。第 4 段階で片発停止の扱いを学ぶ。\n最小操縦速度 Vmc ${SM.v.mc} kt（赤線）、片発での最良上昇率 Vyse ${SM.v.yse} kt（青線）。\n（訓練用の目安の値です。実機はその機体の POH に従います）` },
     { id: 'schedule', room: 'dispatch', a: 675.8, c: 257.5, y: 1.5, prompt_ja: '予定表を見る', title_ja: '本日の割り当て（運航管理）',
       text_ja: today.slice(0, 5).map(r => `${r[0]} ${r[1]} ${r[3]}`).join('\n') + '\n※ 14:30 以降は雷雨の予報：運航管理と相談して判断' },
     { id: 'metar', room: 'dispatch', a: 675.8, c: 252.6, y: 1.6, prompt_ja: '気象を見る', title_ja: '気象（KLAB は架空の飛行場）',
-      text_ja: 'METAR KLAB 121253Z 33008KT 10SM FEW035 SCT250 29/21 A3002\nTAF KLAB 121130Z 1212/1312 33008KT P6SM FEW035\n  TEMPO 1219/1222 4SM TSRA BKN030CB\n読み方：風 330° 8 kt、視程 10 SM、3,500 ft に少しの雲。気温 29℃・露点 21℃、高度計 30.02。\n午後 3〜6 時（現地時刻。EDT＝Z−4 なので 19〜22Z）は一時的に雷雨。' },
+      text_ja: 'METAR KLAB 121253Z 00405KT 10SM FEW035 SCT250 15/08 A2992\nTAF KLAB 121130Z 1212/1312 00405KT P6SM FEW035\n  TEMPO 1219/1222 4SM TSRA BKN030CB\n読み方：風 004°（真方位）5 kt、視程 10 SM、3,500 ft に少しの雲。気温 15℃・露点 8℃、高度計 29.92。\n午後 3〜6 時（現地時刻。EDT＝Z−4 なので 19〜22Z）は一時的に雷雨。\nATIS は磁方位で伝えるので、風は「010 at 5」と聞こえます。' },
     { id: 'counter', room: 'dispatch', a: 670.0, c: 257.4, y: 1.1, prompt_ja: 'カウンターで尋ねる', title_ja: '運航管理のカウンター',
       text_ja: '飛ぶ前にここで、機体の割り当て・燃料・天気を確かめ、機体の書類と鍵を受け取る。' },
     { id: 'headsets', room: 'pilot', a: 676.4, c: 258.0, y: 1.4, prompt_ja: 'ヘッドセットを見る', title_ja: 'ヘッドセット',
       text_ja: '機内はエンジン音が大きいので、教官・管制との会話はすべてヘッドセットで。\n使う前に：マイクの位置（口元から 1 cm ほど）、音量、ケーブルの差し込みを確認。' },
     { id: 'kneeboard', room: 'pilot', a: 676.4, c: 254.6, y: 1.2, prompt_ja: 'ニーボードを見る', title_ja: 'ニーボード',
-      text_ja: '膝に付ける小さな板。ATIS・管制の指示・周波数・時間をここに書き留める。\n今日の a1 では：出発時刻、トリムを取った速度と高度、気づいたこと。' },
+      text_ja: '膝に付ける小さな板。ATIS・管制の指示・周波数・時間をここに書き留める。\n今日は：ATIS の記号と高度計、タキシーの指示、離陸の時刻、気づいたこと。' },
     { id: 'map', room: 'pilot', a: 683.6, c: 260.8, y: 1.6, prompt_ja: '地図を見る', title_ja: 'LAB 訓練空域図（架空・NOT FOR NAVIGATION）',
       text_ja: 'LAB 飛行場（滑走路 36/18）、LAB VOR、訓練点 LAB-A〜F（色の塔が目印）、湖。\n空中操作の課目は訓練空域（飛行場の北東）で行います。' },
     { id: 'imsafe', room: 'pilot', a: 687.8, c: 251.2, y: 1.5, prompt_ja: 'ポスターを読む', title_ja: 'IMSAFE：飛ぶ前の自分の点検',

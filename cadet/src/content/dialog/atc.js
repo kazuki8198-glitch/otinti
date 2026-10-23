@@ -28,8 +28,12 @@ const CX = { A2: 'Alpha Two', A3: 'Alpha Three' };
 
 // dayRadio(FL, weather) → { exchanges: { id: exchange }, sequences: { id: [ids] }, info, weather }
 // weather: { windMag, windKt, qnh (inHg), tempC, dewC, zulu 'HHMM', info letter }
+// (intent: 'area' — out to the practice area and back; 'pattern' — take-offs and landings in the circuit. solo: the
+// first solo — the tower is told it is a student's first)
 export function dayRadio(weather) {
-  const W = { windMag: 10, windKt: 5, qnh: 29.92, tempC: 15, dewC: 8, zulu: '1253', info: 'Alpha', ...weather };
+  const W = { windMag: 10, windKt: 5, qnh: 29.92, tempC: 15, dewC: 8, zulu: '1253', info: 'Alpha', intent: 'area', solo: false, ...weather };
+  const pattern = W.intent === 'pattern';
+  const goEn = pattern ? 'for closed traffic' : 'VFR to the practice area', goJa = pattern ? '場周経路' : '訓練空域';
   const windSay = W.windKt < 3 ? 'wind calm' : `wind ${digits(String(Math.round(W.windMag) || 360).padStart(3, '0'))} at ${digits(Math.round(W.windKt))}`;
   const windJa = W.windKt < 3 ? '風は静穏' : `風 ${String(W.windMag).padStart(3, '0')}° ${W.windKt} kt`;
   const qnhSay = digits(W.qnh.toFixed(2).replace('.', '')), qnhTxt = W.qnh.toFixed(2);
@@ -48,7 +52,7 @@ export function dayRadio(weather) {
   X.gnd_call = { station: 'GND', freq: FREQ.ground, kind: 'call',
     q: '地上管制を最初に呼びます。正しい呼び方は？',
     choices: [
-      { en: `LAB Ground, ${F}, student pilot, at the east ramp with information ${info}, VFR to the practice area, request taxi.`, ok: true },
+      { en: `LAB Ground, ${F}, student pilot, at the east ramp with information ${info}, ${goEn}, request taxi.`, ok: true },
       { en: `LAB Ground, ${S}, request taxi.`, why: '最初の交信ではコールサインを省略しません（省略は管制官が先にしてから）。位置と ATIS も伝えます（AIM 4-2-3・4-2-4）。',
         negative: `Aircraft calling LAB Ground, say again your full call sign, position and request.` },
       { en: 'Ground, Archer, ready to go, over.', why: '相手 → 自分 → 位置 → ATIS → 要求、の順です。“over” は使いません。',
@@ -65,12 +69,12 @@ export function dayRadio(weather) {
       { en: `Runway three six, cleared for takeoff, ${S}.`, why: '「滑走路 36 へ」は離陸の許可ではありません。滑走路に入る許可でもありません。',
         negative: `${S}, negative, you are not cleared for takeoff. Taxi via Alpha, hold short of runway three six at Alpha One.` },
     ],
-    note: '誘導路 A を南へ走り、A1 の停止線の手前で止まります。ランナップはそこで。', time: 25 };
+    note: `誘導路 A を南へ走り、A1 の停止線の手前で止まります。ランナップはそこで。今日は${goJa}です。`, time: 25 };
   // ③ the tower: ready, then line up and wait
   X.twr_ready = { station: 'TWR', freq: FREQ.tower, kind: 'call',
     q: 'ランナップが終わりました。管制塔に出発の準備ができたことを伝えます。',
     choices: [
-      { en: `LAB Tower, ${F}, holding short runway three six at Alpha One, ready for departure, VFR to the practice area.`, ok: true },
+      { en: `LAB Tower, ${F}, holding short runway three six at Alpha One, ready for departure, ${goEn}${W.solo ? ', first solo' : ''}.`, ok: true },
       { en: `LAB Ground, ${S}, ready for departure.`, why: '滑走路の手前まで来たら、周波数を管制塔（118.3）に変えて管制塔を呼びます（AIM 4-3-14）。',
         negative: `${S}, LAB Ground, contact Tower one one eight point three.` },
       { en: `LAB Tower, ${S}, taking off runway three six.`, why: '管制塔のある空港では、許可を受けてから滑走路に入ります。自分で離陸を宣言しません。',
@@ -158,8 +162,36 @@ export function dayRadio(weather) {
       { en: `Roger, ${S}.`, why: '地上の経路の指示も復唱します（AIM 4-3-18）。', negative: `${S}, read back.` },
       { en: `Taxi via Alpha, hold short of runway three six, ${S}.`, why: '今度は滑走路の手前で止まる指示はありません。言われたことだけを、そのまま返します。', negative: `${S}, negative, taxi to the east ramp via Alpha.` },
     ], note: '駐機場で止まり、チェックリストでエンジンを止めます。交信はここまでです。', time: 25 };
+  // ⑦ the take-off clearance (before a lesson that starts rolling at once: e1, e2)
+  X.twr_takeoff = { station: 'TWR', freq: FREQ.tower, kind: 'readback',
+    hear: [{ who: 'TWR', en: `${S}, runway three six, ${windSay}, cleared for takeoff.`, ja: `滑走路 36、${windJa}、離陸を許可。` }],
+    q: '離陸許可を復唱します。',
+    choices: [
+      { en: `Runway three six, cleared for takeoff, ${S}.`, ok: true },
+      { en: `Cleared for takeoff, ${S}.`, why: '離陸許可は滑走路番号を付けて復唱します（AIM 4-4-7）。', negative: `${S}, read back runway number.` },
+      { en: `Runway three six, line up and wait, ${S}.`, why: 'いま出たのは離陸の許可です。聞こえたとおりに返します。', negative: `${S}, negative, runway three six, cleared for takeoff.` },
+    ], note: 'センターラインを保って、出力を全開にします。', time: 20 };
+  // ⑧ in the circuit: after the climb (or a go-around), round again to land
+  X.twr_closed = { station: 'TWR', freq: FREQ.tower, kind: 'readback',
+    hear: [{ who: 'TWR', en: `${S}, make left closed traffic runway three six, report midfield downwind.`, ja: '滑走路 36 の左場周経路を回れ。ダウンウインドの中間で報告せよ。' }],
+    q: '指示を復唱します。',
+    choices: [
+      { en: `Left closed traffic runway three six, report midfield downwind, ${S}.`, ok: true },
+      { en: `Right closed traffic runway three six, ${S}.`, why: '左（left）の場周経路です。滑走路 36 の左場周は、滑走路の西側を回ります。', negative: `${S}, negative, make left closed traffic.` },
+      { en: `Roger, ${S}.`, why: '回る向きと報告の地点を復唱します。', negative: `${S}, read back.` },
+    ], note: '場周経路の高度（1,000 ft AGL）でダウンウインドに入ります。', time: 25 };
+  // ⑨ the first solo: stopped after a full-stop landing, off again for the next circuit
+  X.twr_stopgo = { station: 'TWR', freq: FREQ.tower, kind: 'readback',
+    hear: [{ who: 'TWR', en: `${S}, runway three six, ${windSay}, cleared for takeoff, make left closed traffic.`, ja: `滑走路 36、${windJa}、離陸を許可。左場周経路を回れ。` }],
+    q: '復唱します。',
+    choices: [
+      { en: `Runway three six, cleared for takeoff, left closed traffic, ${S}.`, ok: true },
+      { en: `Cleared for takeoff, ${S}.`, why: '滑走路番号と、離陸後の指示（左場周）も復唱します。', negative: `${S}, read back runway and traffic pattern.` },
+      { en: `Runway three six, taxi to the ramp, ${S}.`, why: 'もう一度離陸する許可です。駐機場へ戻る指示ではありません。', negative: `${S}, negative, runway three six, cleared for takeoff.` },
+    ], note: 'フラップを上げ、出力を全開にして、もう一度離陸します。', time: 20 };
   const sequences = {
     atis: ['atis'], ground: ['gnd_call', 'gnd_rb'], tower: ['twr_ready', 'twr_luaw'], leave: ['twr_leave'],
+    takeoff: ['twr_takeoff'], closed: ['twr_closed'], stopgo: ['twr_stopgo'],
     back: ['twr_back', 'twr_straight'], final: ['twr_final', 'twr_land'], exit: ['twr_exit'], groundIn: ['gnd_in', 'gnd_in_rb'],
   };
   return { exchanges: X, sequences, weather: W, atisText: ATIS, call: CALL, freq: FREQ };

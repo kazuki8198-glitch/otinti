@@ -1,5 +1,7 @@
-// CADET — content/dialog/day1.js : what 早瀬 教官 says through the first day (M4), phase by phase (career/day.js), and
-// the two questions he asks in the air: to the practice area and back — skip the transit, or fly it.
+// CADET — content/dialog/day1.js : what 早瀬 教官 says through a flying day (M4; M5: every day of chapter 2), step by
+// step (career/day.js), and the questions he asks in the air: to the practice area and back, round the circuit to
+// where the next lesson begins — skip the move, or fly it. On the first solo he is on the ground: the cadet's own
+// reminders (SOLO_LINES) take his place.
 // The lines are his own words for CADET's parts of the day (FLIGHT LAB's lessons speak for themselves: flightLine).
 export const PHASE_LINES = {
   prestart: 'では、エンジン始動前のチェックリストから始めます。右の一覧のとおり、ひとつずつ。目で見て確かめる項目は、確かめたら Enter です。',
@@ -11,6 +13,8 @@ export const PHASE_LINES = {
   runup: 'ここでランナップです。止まったまま、パーキングブレーキをかけてから。',
   tower: '準備ができました。管制塔を呼びます。周波数は 118.3 です。',
   lineup: '停止線を越えて滑走路に入り、センターラインに合わせて止まってください。',
+  takeoff: '管制塔から離陸の許可が出ます。復唱してから。今日の課目は、滑走を始めたところから始まります。',
+  closed: '今日は場周経路で練習します。管制塔の指示を聞いて、復唱しましょう。',
   leave: '地上 1,000 ft。上昇を続けながら、管制塔に応答します。',
   back: 'お疲れさまでした。LAB に戻ります。管制塔を呼びましょう。',
   exit: 'よく止まりました。管制塔の指示を聞きましょう。',
@@ -24,6 +28,23 @@ export const ASSIST_LINES = {
   list: 'わかりました、ここは私がやります。手元を見ていてください。',
   taxi: 'I have control。地上走行は私がやります。ペダルとブレーキの使い方を見ていてください。',
   taxiDone: 'You have control。ここからはお願いします。',
+};
+// after a lesson that ends in a field (the engine failure flown to the end): he takes it back to LAB
+export const RECOVER_LINE = '不時着の場所までは十分です。本当の訓練では、地上 500 ft までに私が出力を戻して上昇します。I have control。このまま LAB に戻ります。';
+// the first solo: what the cadet tells themselves (no one in the right seat)
+export const SOLO_LINES = {
+  prestart: '右の席は空いている。チェックリストは、ひとつずつ自分で。',
+  atis: 'ATIS。高度計の値を聞き逃さない。',
+  ground: '最初の呼び出し。“student pilot” を忘れずに。',
+  taxiOut: 'ゆっくり。A1 の停止線の手前まで。',
+  runup: 'ランナップ。数字を自分の目で確かめる。',
+  tower: '管制塔へ。今日は “first solo” と伝える。',
+  lineup: '滑走路に入って、センターラインに合わせる。',
+  closed: '左場周。いつもの高さ、いつもの形で。',
+  stopgo: '止まった。もう一度離陸の許可をもらう。',
+  exit: '3 回目の着陸。管制塔の指示を聞く。',
+  taxiIn: '駐機場へ。みんなが待っている。',
+  shutdown: 'エンジン停止のチェックリストまで、気を抜かない。',
 };
 export const EVENT_LINES = {
   incursion: '止まって！ 停止線を越えています。滑走路に入る許可はまだです。',
@@ -54,7 +75,15 @@ export function dayDialogs() {
     skip: say('わかりました。最終進入から始めます。', { hook: { name: 'nod' }, end: true }),
     fly: say('では、滑走路 36 の延長線上、南 5 km の地点へ。高度は 1,000 ft くらいまで下げておきましょう。', { hook: { name: 'point', arg: 'pfd' }, end: true }),
   };
-  return { speakers: SPEAKERS, flags: [], hooks: ['look', 'nod', 'point', 'go'], dialogs: { transit: { start: 'ask', nodes: T }, return: { start: 'ask', nodes: R } } };
+  const C = {
+    ask: say('もう一度、場周を回ります。次の課目は、場周経路の途中から始まります。そこまでの移動は省きますか。', { hook: { name: 'look', arg: 'player' }, choices: [
+      { text: '移動は省く（次の課目の始まるところから）', next: 'skip', effects: [{ hook: 'go', arg: 'skip' }] },
+      { text: '自分で場周を回って行く（左場周・地上 1,000 ft）', next: 'fly', effects: [{ hook: 'go', arg: 'fly' }] },
+    ] }),
+    skip: say('わかりました。そこから始めます。', { hook: { name: 'nod' }, end: true }),
+    fly: say('では、左旋回でクロスウインド、ダウンウインドへ。地上 1,000 ft・90 kt です。課目の始まるところで私が言います。', { hook: { name: 'point', arg: 'pfd' }, end: true }),
+  };
+  return { speakers: SPEAKERS, flags: [], hooks: ['look', 'nod', 'point', 'go'], dialogs: { transit: { start: 'ask', nodes: T }, return: { start: 'ask', nodes: R }, pattern: { start: 'ask', nodes: C } } };
 }
 
 // at the aircraft before the flight (the walk-around): what he asks of the cadet

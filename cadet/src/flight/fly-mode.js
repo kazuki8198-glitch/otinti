@@ -74,7 +74,8 @@ export function createFlyMode(ctx) {
   const NOHUD = { setTask() {}, setChecklist() {}, setRadio() {}, hideAll() {} };
   const dayMode = createDayMode({ FL, flight, systems, audio, settings, routeLine, dayHud: ctx.dayHud || NOHUD,
     get stand() { return { a: ctx.stand.a, c: ctx.stand.c }; },
-    say: (t, ms) => say(t, ms), setGuide: (id) => setGuide(id), startLesson: startDayLesson, talk: (w) => startTalk(w), debrief: startDebrief,
+    say: (t, ms) => say(t, ms), note: (t, ms) => { if (fh) fh.say('メモ', t, ms); else toast(t, ms); },
+    setGuide: (id) => setGuide(id), startLesson: startDayLesson, talk: (w) => startTalk(w), debrief: startDebrief,
     markDirty: () => { if (cockpit.markDirty) cockpit.markDirty(); } });
 
   // ---- state
@@ -133,7 +134,7 @@ export function createFlyMode(ctx) {
     else { if (!cockpit.screens.pfd) return; cockpit.screens.pfd.localToWorld(v1.copy(pfdMid)); }
     instructor.pointAt(v1); instructor.gesture('point');
   }
-  // which: 'board' (the menu on sitting down), 'transit' / 'return' (the day's two questions in the air), 'debrief'
+  // which: 'board' (the menu on sitting down), 'transit' / 'return' / 'pattern' (the day's questions in the air), 'debrief'
   function startTalk(which = 'board', data = null) {
     talkOn = true; talkKind = which; chosen = null; go = null; ctx.onTalk(true);
     if (fh) fh.show(false);                 // his talk alone on the screen (the flight's panels come back after it)
@@ -151,7 +152,7 @@ export function createFlyMode(ctx) {
     if (!active || phase === 'leaving') return;          // stopped by getting out (the menu): nothing to start
     if (fh) fh.show(true);
     homeT = 1.2;                            // the head turns back to the front (unless the mouse moves it)
-    if (kind === 'transit' || kind === 'return') { dayMode.onChoice(g || 'skip'); input.requestLock(); return; }
+    if (kind === 'transit' || kind === 'return' || kind === 'pattern') { dayMode.onChoice(g || 'skip'); input.requestLock(); return; }
     if (kind === 'debrief') { return; }     // (the logbook is open, or closed: signLogbook carries on)
     if (c === 'leave') leave();
     else if (c === 'free') beginFree();

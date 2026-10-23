@@ -84,20 +84,22 @@ test('cockpit talk: the first words after a lesson', () => {
   assert.match(debriefLine({ done: true, crashed: true }), /大丈夫/);
 });
 
-test('day-1 talk (M4): the briefing within the day, the apron, the day\'s lines — valid, polite, no keys or real names', async () => {
+test('day talk (M4–M5): the briefing within the day, the apron, the questions in the air, the day\'s lines — valid, polite, no keys or real names', async () => {
   for (const m of ['book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
   const { instructorDialogs } = await import('../src/content/dialog/instructor.js');
-  const { apronDialogs, PHASE_LINES, ASSIST_LINES, EVENT_LINES } = await import('../src/content/dialog/day1.js');
-  const { PHASES } = await import('../src/career/day.js');
-  for (const data of [instructorDialogs(FL, { lessonId: 'a2', day: ['t1', 'a2', 't3'] }), apronDialogs()]) {
+  const { apronDialogs, dayDialogs, PHASE_LINES, ASSIST_LINES, EVENT_LINES, RECOVER_LINE, SOLO_LINES } = await import('../src/content/dialog/day1.js');
+  const { STEPS } = await import('../src/career/day.js');
+  for (const data of [instructorDialogs(FL, { lessonId: 'a2', day: ['t1', 'a2', 't3'] }), apronDialogs(), dayDialogs()]) {
     const { errors, warnings } = validateDialogs(data, { lessonExists: (id) => !!SC.lesson(id), sectionExists: () => true });
     assert.deepEqual(errors, []);
     assert.ok(warnings.every(w => !/never|unreach/.test(w)), warnings.join('\n'));
   }
   const brief = JSON.stringify(instructorDialogs(FL, { lessonId: 'a2', day: ['t1', 'a2', 't3'] }));
   assert.ok(brief.includes(SC.lesson('t1').title) && brief.includes(SC.lesson('t3').title) && /外部点検/.test(brief));
-  const lines = [...Object.values(PHASE_LINES), ...Object.values(ASSIST_LINES), ...Object.values(EVENT_LINES).map(v => (typeof v === 'function' ? v('タイヤの空気が足りません。') : v))];
-  for (const k of Object.keys(PHASE_LINES)) assert.ok(PHASES[k], `a phase line for an unknown phase ${k}`);
+  const lines = [...Object.values(PHASE_LINES), ...Object.values(ASSIST_LINES), RECOVER_LINE, ...Object.values(EVENT_LINES).map(v => (typeof v === 'function' ? v('タイヤの空気が足りません。') : v))];
+  for (const k of [...Object.keys(PHASE_LINES), ...Object.keys(SOLO_LINES)]) assert.ok(STEPS[k], `a line for an unknown step ${k}`);
+  // the first solo's reminders: the cadet's own short notes (no one to say them to)
+  for (const l of Object.values(SOLO_LINES)) { assert.ok(!REAL.test(l) && !/FLIGHT LAB|ゲーム|ソフト/.test(l), l); assert.match(l, /。$/, l); }
   for (const l of lines) {
     assert.ok(!REAL.test(l), l);
     assert.ok(!/FLIGHT LAB|ゲーム|ソフト|シミュレータ/.test(l), `talks about the game: ${l}`);

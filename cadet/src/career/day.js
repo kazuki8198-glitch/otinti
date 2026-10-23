@@ -1,14 +1,20 @@
-// CADET — career/day.js : the first day (M4), from the walk-around to the logbook, as one thin line through the game:
+// CADET — career/day.js : a flying day, from the walk-around to the logbook (M4's first day; M5: any day of chapter
+// 2 and the first solo), as one line through the game:
 //   walk-around → before start → start → after start → ATIS → Ground (taxi) → taxi out → run-up → Tower (line up) →
-//   lined up → t1 (FLIGHT LAB) → Tower (frequency change) → to the practice area (skipped, or flown) → a2 (FLIGHT LAB) →
-//   Tower (back) → back to LAB (skipped, or flown) → t3 (FLIGHT LAB; the landing clearance on final) → Tower (off the runway) → taxi off → Ground → taxi in
-//   → shutdown → debrief → logbook.
+//   lined up → the day's lessons, with the moves between them → Tower (off the runway) → taxi off → Ground → taxi in →
+//   shutdown → debrief → logbook.
+// The day's lessons come from the lesson to practise (planFor): a lesson in the practice area is flown between the
+// take-off (t1) and the landing (t3) — t1 → Tower (frequency change) → to the practice area (skipped, or flown) → the
+// lesson → Tower (back) → back to LAB → t3; the circuit's lessons (t2, t4) after t1 round the circuit; the ones that
+// start rolling (e1, e2, c1) at once, the tower's clearance first where the lesson has none of its own; after a lesson
+// that ends in a forced landing the instructor takes it back to LAB ('recover'). The first solo: t1, then three
+// circuits to a full stop (t2), each one off again with the tower's clearance (stopgo).
 // The lessons are FLIGHT LAB's own, started fresh where FLIGHT LAB starts them (t1 lined up on 36 at 30 m, a2 in the
-// practice area, t3 on a 5 km final), so their grades are FLIGHT LAB's for the same inputs. Everything between them
+// practice area, t3 on a 5 km final…), so their grades are FLIGHT LAB's for the same inputs. Everything between them
 // is CADET's: its checklists (content/checklists-archer.js) tick themselves as the switches are set (an item to look at
 // is confirmed with Enter), the radio (dialog/atc.js), the taxiing, the run-up's readings.
-// update(c) every frame with what the aircraft is doing; the phase changes come back as events. The game (fly-mode)
-// acts on them: starting a lesson, the radio panel, the instructor's words.
+// update(c) every frame with what the aircraft is doing; the step changes come back as events. The game (fly-mode,
+// day-mode) acts on them: starting a lesson, the radio panel, the instructor's words.
 // Pure logic: no three.js, no DOM.
 import { createWalkaround } from '../aircraft/walkaround.js';
 import { CHECKLISTS } from '../content/checklists-archer.js';
@@ -16,9 +22,11 @@ import { dayRadio } from '../content/dialog/atc.js';
 import { createAtc } from '../dialog/atc.js';
 import { HOLD, HOLD_STOP, A1 } from '../flight/taxi.js';
 
+// the first day's lessons (M4); every other day is built the same way from its lesson (planFor)
 export const DAY1 = { id: 'day1', n: 1, title: '最初の 1 日', lessons: ['t1', 'a2', 't3'], aircraft: 'N738SY', type: 'PA-28-181' };
-// phase → what it is: a checklist, a radio sequence, a place to get to, a lesson
-export const PHASES = {
+// the steps that are not lessons: a checklist, a radio sequence, a place to get to, or a move between two lessons
+// (move: the game starts the next lesson — the cadet flies there or it is skipped; 'recover' is always skipped)
+export const STEPS = {
   walk: { label: '外部点検' },
   prestart: { label: 'エンジン始動前', list: 'before_start' },
   start: { label: 'エンジン始動', list: 'start' },
@@ -29,13 +37,16 @@ export const PHASES = {
   runup: { label: 'ランナップ', list: 'runup' },
   tower: { label: '管制塔を呼ぶ', radio: 'tower' },
   lineup: { label: '滑走路 36 に入って待つ', place: 'lineup' },
-  t1: { label: '課目 t1：通常離陸と上昇', lesson: 't1' },
+  takeoff: { label: '管制塔：離陸の許可', radio: 'takeoff' },
   leave: { label: '管制塔：周波数の変更', radio: 'leave' },
-  transit: { label: '訓練空域へ' },
-  a2: { label: '課目 a2：直線水平飛行', lesson: 'a2' },
+  transit: { label: '訓練空域へ', move: 'transit' },
   back: { label: '管制塔を呼ぶ（帰投）', radio: 'back' },
-  return: { label: 'LAB へ戻る' },
-  t3: { label: '課目 t3：通常着陸', lesson: 't3' },
+  return: { label: 'LAB へ戻る', move: 'return' },
+  closed: { label: '管制塔：場周経路', radio: 'closed' },
+  pattern: { label: '場周経路を回る', move: 'pattern' },
+  recover: { label: '教官が出力を戻して LAB へ', move: 'recover' },
+  stopgo: { label: '管制塔：もう一度離陸', radio: 'stopgo' },
+  recycle: { label: 'もう一度離陸して場周経路へ', move: 'recycle' },
   exit: { label: '管制塔：滑走路を出る', radio: 'exit' },
   taxiOff: { label: '滑走路を出て止まる', place: 'clear' },
   groundIn: { label: '地上管制を呼ぶ', radio: 'groundIn' },
@@ -44,19 +55,70 @@ export const PHASES = {
   debrief: { label: '講評' },
   done: { label: '1 日の終わり' },
 };
-export const ORDER = Object.keys(PHASES);
+const GROUND_OUT = ['walk', 'prestart', 'start', 'afterStart', 'atis', 'ground', 'taxiOut', 'runup', 'tower', 'lineup'];
+const GROUND_IN = ['exit', 'taxiOff', 'groundIn', 'taxiIn', 'shutdown', 'debrief', 'done'];
+// where a lesson starts (FLIGHT LAB's setup.at) and how it ends: in the air (t1, t4: climbing away), in the practice
+// area, stopped on the runway (t2, t3: landed; e1: the take-off rejected), or with the engine failed and the aircraft
+// down (e2, e3, c1: FLIGHT LAB flies the forced landing to the end)
+const START_OF = { runway: 'runway', area: 'area', away: 'area', final: 'pattern', downwind: 'pattern', ils: 'pattern' };
+const END_OF = { t1: 'air', t4: 'air', x3: 'air', t2: 'stopped', t3: 'stopped', e1: 'stopped', x1: 'stopped', x2: 'stopped', e2: 'failed', e3: 'failed', c1: 'failed' };
+// the lessons that give their own take-off clearance (FLIGHT LAB's ATC step); before the others the tower gives it
+const OWN_TAKEOFF = new Set(['t1', 'c1']);
+const lessonOf = (FL, id) => FL.syllabus.STAGES.flatMap(s => s.lessons).find(l => l.id === id);
+export const startKind = (FL, id) => START_OF[(lessonOf(FL, id) || {}).setup?.at] || 'area';
+export const endKind = (FL, id) => END_OF[id] || (startKind(FL, id) === 'area' ? 'area' : 'air');
+
+// the day's lessons for a lesson to practise: the take-off (t1) and the landing (t3) around it where it needs them;
+// the first solo: the take-off, then three circuits to a full stop (t2)
+export function planFor(FL, id, { solo = false } = {}) {
+  if (solo) return { main: 't2', solo: true, lessons: ['t1', 't2', 't2', 't2'] };
+  const k = startKind(FL, id), e = endKind(FL, id);
+  let lessons;
+  if (k === 'runway') lessons = e === 'stopped' ? [id] : [id, 't3'];
+  else if (id === 't3') lessons = ['t1', 't3'];
+  else lessons = ['t1', id, ...(e === 'stopped' ? [] : ['t3'])];
+  return { main: id, solo: false, lessons };
+}
+// the steps of a day with these lessons
+export function stepsFor(FL, lessons) {
+  const out = GROUND_OUT.slice();
+  lessons.forEach((id, i) => {
+    const k = startKind(FL, id);
+    if (i === 0) {
+      if (k !== 'runway') throw new Error(`the day's first lesson starts on the runway (${id} does not)`);
+      if (!OWN_TAKEOFF.has(id)) out.push('takeoff');
+    } else {
+      const pe = endKind(FL, lessons[i - 1]);
+      if (k === 'runway') throw new Error(`${id} starts on the runway: only as the day's first lesson`);
+      if (pe === 'failed') out.push('recover');
+      else if (k === 'area') out.push('leave', 'transit');
+      else if (pe === 'area') out.push('back', 'return');
+      else if (pe === 'air') out.push('closed', 'pattern');
+      else out.push('stopgo', 'recycle');
+    }
+    out.push(id);
+  });
+  if (endKind(FL, lessons[lessons.length - 1]) !== 'stopped') throw new Error('the day ends with a landing');
+  return out.concat(GROUND_IN);
+}
+// M4's first day, step by step
+export const ORDER = [...GROUND_OUT, 't1', 'leave', 'transit', 'a2', 'back', 'return', 't3', ...GROUND_IN];
 const w180 = (a) => ((a % 360) + 540) % 360 - 180;
 
-// createDay(FL, opts): opts { seed, level ('intro' | 'basic' | 'precision'), anomalies (tests), stand { a, c } }
-export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { a: 636.5, c: 207.6 } } = {}) {
+// createDay(FL, opts): opts { seed, level ('intro' | 'basic' | 'precision'), anomalies (tests), stand { a, c },
+// plan (planFor: the day's lessons; M4's first day when left out), weather (for the ATIS: { info, zulu, tempC, dewC }) }
+export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { a: 636.5, c: 207.6 }, plan = null, weather = {} } = {}) {
   const P = FL.physics, SC = FL.school, R = P.LAB_RWY;
+  const PLAN = plan || { main: 'a2', solo: false, lessons: DAY1.lessons };
+  const steps = stepsFor(FL, PLAN.lessons);
+  const intent = PLAN.lessons.some(id => startKind(FL, id) === 'area') ? 'area' : 'pattern';
   // the weather the lessons fly in (FLIGHT LAB's: their wind and altimeter), for the ATIS
-  const L1 = SC.startLesson('t1', 'intro'), wm = /^(\d+) at (\d+)$/.exec(L1.windStr || '');
-  const radio = dayRadio({ windMag: wm ? +wm[1] : 10, windKt: wm ? +wm[2] : 5, qnh: L1.s.qnh });
+  const L1 = SC.startLesson(PLAN.lessons[0], 'intro'), wm = /^(\d+) at (\d+)$/.exec(L1.windStr || '');
+  const radio = dayRadio({ ...weather, windMag: wm ? +wm[1] : 10, windKt: wm ? +wm[2] : 5, qnh: L1.s.qnh, intent, solo: PLAN.solo });
   const atc = createAtc(radio, { seed });
   const walk = createWalkaround({ seed, anomalies });
   const st = {
-    phase: 'walk', list: null, i: 0, ticked: [], skipped: [], memo: { both: 0, dropL: 0, dropR: 0, carb: 0, idle: false, hold: { L: 0, R: 0, C: 0 } },
+    phase: 'walk', step: 0, list: null, i: 0, flown: [], ticked: [], skipped: [], memo: { both: 0, dropL: 0, dropR: 0, carb: 0, idle: false, hold: { L: 0, R: 0, C: 0 } },
     lessons: {}, incursion: false, overHold: false, exit: '', stopAt: null, transit: 'skip', t: 0, airT: 0, blockT: 0, started: false, shutdown: false,
     trust: 0, notes: [], auto: { list: 0, taxi: 0 }, leftOn: [],
   };
@@ -64,9 +126,13 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
   // is told at the next one)
   const events = [];
   const emit = (e) => events.push(e);
-  function enter(phase) {
-    const from = st.phase; st.phase = phase;
-    const ph = PHASES[phase];
+  // a step by its id: a lesson's own (its title from FLIGHT LAB's syllabus), or one of STEPS
+  const info = (id) => STEPS[id] || { label: `課目 ${id}：${(lessonOf(FL, id) || {}).title || id}`, lesson: id };
+  // enter the step at index k (or the next step with this id: a step entered from outside, a crash's debrief)
+  function enter(phase, k) {
+    if (k == null) { k = steps.indexOf(phase, st.step + 1); if (k < 0) k = steps.indexOf(phase); }
+    const from = st.phase; st.phase = phase; st.step = k;
+    const ph = info(phase);
     st.list = ph.list || null; st.i = 0;
     if (ph.radio) atc.start(ph.radio, phase === 'exit' || phase === 'groundIn' ? st.exit : undefined);
     emit({ type: 'phase', from, to: phase });
@@ -136,14 +202,14 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     const dt = c.dt || 0; st.t += dt;
     prep(c);
     // the time from the start to the shutdown (the lessons' own time is added when each ends: FLIGHT LAB's clock)
-    if (c.sys && c.sys.running && !PHASES[st.phase].lesson) { st.started = true; st.blockT += dt; if (c.onGround === false) st.airT += dt; }
+    if (c.sys && c.sys.running && !info(st.phase).lesson) { st.started = true; st.blockT += dt; if (c.onGround === false) st.airT += dt; }
     // across the hold-short line without a clearance (before the tower's line up and wait)
     if (['taxiOut', 'runup', 'tower'].includes(st.phase) && c.pos && c.pos.c < HOLD.c - 0.5 && c.pos.a < A1.a + 30 && !st.incursion) {
       st.incursion = true; st.trust -= 8; emit({ type: 'incursion' });
     }
     watchRunup(c, dt);
     for (const e of atc.update(dt)) emit({ ...e, type: 'radio', kind: e.type });
-    const ph = PHASES[st.phase];
+    const ph = info(st.phase);
     if (ph.list) tick(c);
     if (ph.radio) { if (!atc.busy) next(); }
     else if (ph.place) { if (at(ph.place, c) && (!ph.list || ph.soft || listDone())) next(); }
@@ -152,35 +218,41 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
   }
   // the next phase (the lessons' and the transit's are started by the game: lessonStarted)
   function next() {
-    const k = ORDER.indexOf(st.phase), to = ORDER[k + 1];
+    const to = steps[st.step + 1];
     if (!to) return;
     if (st.phase === 'taxiIn') { const C = CHECKLISTS.after_landing; if (st.list === 'after_landing' && st.i < C.items.length) st.leftOn.push('after_landing'); }
-    enter(to);
+    enter(to, st.step + 1);
   }
   // the game tells: boarded (the walk-around is over), a lesson started / ended, the transit flown or skipped, the
   // landing's stop, the debrief read
   function boarded() { if (st.phase === 'walk') { walk.settle(); enter('prestart'); } }
   function lessonEnded(id, status) {
-    if (status.t > 0 && !st.lessons[id]) { st.blockT += status.t; st.airT += status.t; }
-    st.lessons[id] = { grade: status.grade, score: status.score, passed: status.passed, t: status.t, done: status.done, crashed: status.crashed, reason: status.reason,
-      rows: (status.results || []).flatMap(r => r.rows.map(x => ({ step: r.step, ...x }))) };
-    if (status.crashed) { enter('debrief'); return; }
-    if (id === 't1' && st.phase === 't1') next();
-    else if (id === 'a2' && st.phase === 'a2') next();
-    else if (id === 't3' && st.phase === 't3') { st.exit = status.exit || 'A2'; next(); }
+    if (st.phase !== id) return;                                  // (a lesson the day did not start)
+    if (status.t > 0) { st.blockT += status.t; st.airT += status.t; }
+    // (an engine-failure lesson that ends in a field, gently, is a forced landing FLIGHT LAB passes: not a crash for the
+    // day — the physics marks every touchdown off the runway as one)
+    const forced = !!status.crashed && !!status.done && !!status.passed;
+    const rec = { id, title: (lessonOf(FL, id) || {}).title || id, grade: status.grade, score: status.score, passed: status.passed, t: status.t, done: status.done,
+      crashed: !!status.crashed && !forced, forced, reason: status.reason, end: endKind(FL, id), rows: (status.results || []).flatMap(r => r.rows.map(x => ({ step: r.step, ...x }))) };
+    st.flown.push(rec); st.lessons[id] = rec;
+    if (rec.crashed) { st.crash = status.reason || status.crashReason || 'crash'; enter('debrief'); return; }
+    if (rec.end === 'stopped') st.exit = status.exit || 'A2';
+    next();
   }
+  // the move before a lesson is over (skipped, flown there, or the instructor's 'recover'): the lesson begins
   function lessonStarted(id) {
-    if (id === 'a2' && st.phase === 'transit') enter('a2');
-    if (id === 't3' && st.phase === 'return') enter('t3');
+    if (info(st.phase).move && steps[st.step + 1] === id) next();
   }
+  // what comes next in the day (the HUD, the game's moves)
+  const nextLesson = () => steps.slice(st.step + 1).find(x => !STEPS[x]) || null;
   function transitFlown(how) { st.transit = how; }
   function debriefRead() { if (st.phase === 'debrief') enter('done'); }
-  function abortTo(phase) { if (PHASES[phase]) enter(phase); }
+  function abortTo(phase) { if (steps.includes(phase)) enter(phase, steps.lastIndexOf(phase)); }
 
   // ---- the results for the debrief and the logbook
   function summary() {
     const w = walk.summary(), r = atc.summary();
-    const lessons = DAY1.lessons.map(id => ({ id, title: SC.lesson(id).title, ...(st.lessons[id] || { grade: '', passed: false }) }));
+    const lessons = st.flown.map(l => ({ ...l }));
     const flown = lessons.filter(l => l.done);
     // the cadet's own work: what the trust moves by
     let trust = st.trust;
@@ -189,10 +261,12 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     for (const l of flown) trust += l.passed ? (l.grade === 'S' ? 2 : 1) : -1;
     if (st.auto.list > 6) trust -= 1;
     if (st.crash) trust -= 6;
-    return { walk: w, radio: r, lessons, incursion: st.incursion, crash: st.crash || '', transit: st.transit, blockT: st.blockT, airT: st.airT, autoItems: st.auto.list, leftOn: st.leftOn.slice(), trust: Math.max(-10, Math.min(12, trust)), level };
+    const landings = lessons.filter(l => l.done && !l.crashed && l.end === 'stopped').length;
+    return { walk: w, radio: r, lessons, plan: { main: PLAN.main, solo: !!PLAN.solo, lessons: PLAN.lessons.slice() }, solo: !!PLAN.solo, landings,
+      incursion: st.incursion, crash: st.crash || '', transit: st.transit, blockT: st.blockT, airT: st.airT, autoItems: st.auto.list, leftOn: st.leftOn.slice(), trust: Math.max(-10, Math.min(12, trust)), level };
   }
   return {
-    radio, atc, walk, st, update, confirm, assist, items, boarded, lessonEnded, lessonStarted, transitFlown, debriefRead, abortTo, summary, next,
-    get phase() { return st.phase; }, get label() { return PHASES[st.phase].label; }, get level() { return level; },
+    radio, atc, walk, st, steps, plan: PLAN, info, nextLesson, update, confirm, assist, items, boarded, lessonEnded, lessonStarted, transitFlown, debriefRead, abortTo, summary, next,
+    get phase() { return st.phase; }, get label() { return info(st.phase).label; }, get level() { return level; },
   };
 }

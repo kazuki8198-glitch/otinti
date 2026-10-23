@@ -9,7 +9,9 @@
 // (each part's uv points at its texel), so a body is 20 draw calls. update() makes no new objects (it reuses its vectors
 // and quaternions).
 // The look is fictional: a white short-sleeved pilot shirt with navy epaulettes (3 gold bars), a navy tie, a lanyard
-// ID card and a small SHOYO wing badge, navy trousers, black shoes.
+// ID card and a small SHOYO wing badge, navy trousers, black shoes. opts.look changes it for the academy's other people
+// (M5): the bars (0–4: a cadet 1, the chief instructor 4, none for the staff), the tie, the badge, the lanyard, the
+// hair (short, crop, long — tied back in a tail —, bun), glasses; opts.colors the shirt, the trousers, the hair, the skin.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -188,7 +190,9 @@ function buildHead(C) {
   for (let i = 0; i < p.count; i++) { headPt(p.getX(i), p.getY(i), p.getZ(i), o); p.setXYZ(i, o.x, o.y, o.z); }
   g.computeVertexNormals(); H.add(g, 'skin', 'skin');
   // short hair: a cap over the skull, thick on top and short at the sides, thinning to nothing on the hairline. The
-  // columns sit where the hairline turns: forehead, temples, sideburns, over the ears, the nape.
+  // columns sit where the hairline turns: forehead, temples, sideburns, over the ears, the nape. (crop: thinner, no
+  // quiff; long and bun: fuller, and tied back below)
+  const LK = C.look || {}, hairK = LK.hair === 'crop' ? 0.55 : LK.hair === 'long' || LK.hair === 'bun' ? 1.25 : 1;
   const NT = 6, rows = [], cols = [];
   for (const [a] of HAIRLINE) { if (a > 0 && a < 180) cols.push(-a); }
   cols.reverse(); cols.unshift(-180); cols.push(0, ...HAIRLINE.filter(([a]) => a > 0 && a < 180).map(([a]) => a));
@@ -197,13 +201,32 @@ function buildHead(C) {
     for (const a of cols) {
       const phi = a * DEG, th = Math.max(hairline(Math.abs(a)) * f, 1e-4) * DEG;
       headPt(Math.sin(th) * Math.sin(phi), Math.cos(th), Math.sin(th) * Math.cos(phi), o);
-      const quiff = 0.005 * Math.max(0, Math.cos(phi)) ** 2 * Math.exp(-(((th / DEG - 36) / 16) ** 2));
-      const t = lerp(0.0135, 0.0003, Math.pow(f, 1.7)) + quiff, dx = o.x, dy = o.y - HD.cy, dz = o.z - HD.cz, l = Math.hypot(dx, dy, dz);
+      const quiff = LK.hair === 'crop' ? 0 : 0.005 * Math.max(0, Math.cos(phi)) ** 2 * Math.exp(-(((th / DEG - 36) / 16) ** 2));
+      const t = lerp(0.0135 * hairK, 0.0003, Math.pow(f, 1.7)) + quiff, dx = o.x, dy = o.y - HD.cy, dz = o.z - HD.cz, l = Math.hypot(dx, dy, dz);
       row.push([o.x + dx / l * t, o.y + dy / l * t, o.z + dz / l * t]);
     }
     rows.push(row);
   }
   const hair = clean(grid(rows, true)); hair.computeVertexNormals(); H.add(hair, 'hair', 'hair');
+  // tied back: a tail from the crown's back down the nape, or a bun on the back of the head
+  if (LK.hair === 'long') {
+    const pts = [[0, 1.66, -0.1], [0, 1.625, -0.122], [0, 1.57, -0.128], [0, 1.51, -0.118], [0, 1.47, -0.105]].map(([x, y, z]) => new THREE.Vector3(x, y, z));
+    const tube = clean(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 10, 0.016, 8, false)), tp = tube.attributes.position;
+    // thicker at the tie, thinning to the end
+    for (let i = 0; i < tp.count; i++) { const y = tp.getY(i), k = clamp((1.66 - y) / 0.19, 0, 1), sc = lerp(1.15, 0.45, k * k); tp.setX(i, tp.getX(i) * sc); tp.setZ(i, -0.11 + (tp.getZ(i) + 0.11) * sc); }
+    tube.computeVertexNormals(); H.add(tube, 'hair', 'hair');
+    const tie = cyl(0.0125, 0.0125, 0.01, 10); xf(tie, 0, 1.652, -0.112, -0.5); H.add(tie, 0x22252c, 'plastic');
+  } else if (LK.hair === 'bun') {
+    const b = ellipsoid(0.034, 0.03, 0.026, 12, 8); xf(b, 0, 1.64, -0.115); H.add(b, 'hair', 'hair');
+  }
+  // glasses: thin dark rims, the bridge, the arms back to the ears
+  if (LK.glasses) {
+    for (const s of [-1, 1]) {
+      const rim = clean(new THREE.TorusGeometry(0.0175, 0.0013, 4, 18)); rim.scale(1, 0.78, 1); xf(rim, s * EYE.x, EYE.y - 0.002, faceZ(s * EYE.x, EYE.y) + 0.011); H.add(rim, 0x2b2f36, 'plastic');
+      const arm = rbox(0.0018, 0.0018, 0.085, 0); xf(arm, s * 0.0745, EYE.y + 0.004, faceZ(s * EYE.x, EYE.y) - 0.032, 0, s * 0.06); H.add(arm, 0x2b2f36, 'plastic');
+    }
+    const br = rbox(0.016, 0.0016, 0.0016, 0); xf(br, 0, EYE.y + 0.004, faceZ(0, EYE.y) + 0.012); H.add(br, 0x2b2f36, 'plastic');
+  }
   // ears: tilted back a little, their back rim standing out from the head; the hollow a shade darker
   for (const s of [-1, 1]) {
     const e = ellipsoid(0.0085, 0.028, 0.0175, 8, 6); xf(e, s * 0.0765, 1.604, -0.012, -0.16, s * -0.42, s * -0.06); H.add(e, 'skin', 'skin');
@@ -334,7 +357,7 @@ function frontSlab(x0, x1, y0, y1, t, nx = 6, ny = 4) {
 }
 
 function buildTorso(C) {
-  const T = new Part(C);
+  const T = new Part(C), LK = { bars: 3, tie: true, badge: true, lanyard: true, ...(C.look || {}) };
   T.add(loft(TORSO.map(r => ring(r[0], r[1], r[2], 0, r[3], r[4])), 22, 'y', 0, 0.004), 'shirt', 'shirt');
   // the collar: a band round the neck, lower at the front, and its two points
   const nz = P.neck[2];
@@ -343,10 +366,10 @@ function buildTorso(C) {
     c.translate(0, -1.47, -nz); c.rotateX(13 * DEG); c.translate(0, 1.47, nz); T.add(c, 'shirt', 'shirt'); }
   for (const s of [-1, 1]) { const f = new THREE.BoxGeometry(0.026, 0.04, 0.003); f.translate(0, -0.012, 0); f.rotateZ(s * 0.62); T.add(onFront(f, s * 0.016, 1.448, 0.003), 'shirt', 'shirt'); }
   // the tie: the knot, then the blade down the shirt front to the belt
-  { const k = rbox(0.03, 0.03, 0.016, 0.006, 1), p = k.attributes.position;
+  if (LK.tie) { const k = rbox(0.03, 0.03, 0.016, 0.006, 1), p = k.attributes.position;
     for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) * (1 + p.getY(i) * 9));                     // wider at the top
     k.computeVertexNormals(); xf(k, 0, 1.446, frontZ(TORSO, 0, 1.446) + 0.0045, -0.25); T.add(k, 'tie', 'tie'); }
-  { const ys = [1.436, 1.4, 1.34, 1.26, 1.18, 1.1, 1.06, 1.044, 1.034], ws = [0.016, 0.0175, 0.022, 0.027, 0.032, 0.036, 0.037, 0.026, 0.006];
+  if (LK.tie) { const ys = [1.436, 1.4, 1.34, 1.26, 1.18, 1.1, 1.06, 1.044, 1.034], ws = [0.016, 0.0175, 0.022, 0.027, 0.032, 0.036, 0.037, 0.026, 0.006];
     T.add(loft(ys.map((y, i) => ring(y, ws[i], 0.0022, 0, frontZ(TORSO, 0, y) + 0.0032, 4)).reverse(), 8, 'y', 0, 0), 'tie', 'tie'); }
   // chest pockets with flaps and buttons; a pen in the left one
   for (const s of [-1, 1]) {
@@ -358,26 +381,26 @@ function buildTorso(C) {
   { const pen = cyl(0.0042, 0.0042, 0.04, 8); onFront(pen, 0.108, 1.3, 0.0035); T.add(pen, 0x1a1c22, 'plastic');
     const clip = rbox(0.0022, 0.022, 0.0016, 0); onFront(clip, 0.108, 1.305, 0.0085); T.add(clip, 'silver', 'silver'); }
   // the wing badge (SHOYO, fictional) above the left pocket
-  { const at = (g, x, y) => onFront(g, 0.077 + x, 1.333 + y, 0.0032);
+  if (LK.badge) { const at = (g, x, y) => onFront(g, 0.077 + x, 1.333 + y, 0.0032);
     const d = cyl(0.0068, 0.0068, 0.003, 10); d.rotateX(Math.PI / 2); T.add(at(d, 0, 0), 'gold', 'gold');
     const d2 = cyl(0.0038, 0.0038, 0.003, 8); d2.rotateX(Math.PI / 2); d2.translate(0, 0, 0.0012); T.add(at(d2, 0, 0), 'navy', 'cloth');
     for (const s of [-1, 1]) {
       const w1 = rbox(0.03, 0.0062, 0.0024, 0); w1.rotateZ(s * 0.13); T.add(at(w1, s * 0.02, 0.0012), 'gold', 'gold');
       const w2 = rbox(0.021, 0.0042, 0.0024, 0); w2.rotateZ(s * 0.24); T.add(at(w2, s * 0.016, -0.0042), 'gold', 'gold');
     } }
-  // epaulettes on the shoulders: navy, three gold bars at the outer end, a gold button at the inner end
-  for (const s of [-1, 1]) {
+  // epaulettes on the shoulders: navy, the bars (three: an instructor) in gold at the outer end, a gold button inside
+  if (LK.bars > 0) for (const s of [-1, 1]) {
     // a straight strap from the collar to the sleeve, resting on the shoulder's curve
     const xi = 0.07, xo = 0.166, yi = shoulderY(xi), yo = shoulderY(xo), ang = Math.atan2(yo - yi, xo - xi), len = Math.hypot(xo - xi, yo - yi);
     let lift = 0; for (let k = 0; k <= 8; k++) { const x = lerp(xi, xo, k / 8); lift = Math.max(lift, shoulderY(x) - lerp(yi, yo, k / 8)); }
     const cx = (xi + xo) / 2, cy = (yi + yo) / 2 + lift;
     const parts = [[rbox(len, 0.006, 0.05, 0.0025), 0, 0.003, 'navy', 'cloth']];
-    for (let k = 0; k < 3; k++) parts.push([rbox(0.0048, 0.0024, 0.042, 0), len / 2 - 0.016 - k * 0.0095, 0.0068, 'gold', 'gold']);
+    for (let k = 0; k < Math.min(4, LK.bars); k++) parts.push([rbox(0.0048, 0.0024, 0.042, 0), len / 2 - 0.016 - k * 0.0095, 0.0068, 'gold', 'gold']);
     parts.push([cyl(0.0055, 0.0055, 0.003, 8), -len / 2 + 0.012, 0.0072, 'gold', 'gold']);
     for (const [g, x, y, col, cls] of parts) { g.translate(x, y, 0); g.rotateZ(ang); g.translate(cx, cy + 0.0015, -0.01); if (s < 0) mirrorX(g); T.add(g, col, cls); }
   }
   // the lanyard (a cord round the neck) and the ID card on it
-  { const pts = [], over = (x) => 0.0045 + 0.0075 * Math.exp(-((x / 0.03) ** 2));
+  if (LK.lanyard) { const pts = [], over = (x) => 0.0045 + 0.0075 * Math.exp(-((x / 0.03) ** 2));
     const front = [[0.0, 1.262], [0.011, 1.29], [0.022, 1.33], [0.033, 1.38], [0.043, 1.42], [0.05, 1.445]];
     for (const [x, y] of front) pts.push(new THREE.Vector3(-x, y, frontZ(TORSO, x, y) + over(x)));
     const back = [[-0.062, 1.47, 0.01], [-0.066, 1.482, -0.03], [-0.04, 1.492, -0.075], [0, 1.495, -0.084], [0.04, 1.492, -0.075], [0.066, 1.482, -0.03], [0.062, 1.47, 0.01]];
@@ -727,6 +750,7 @@ export function createActor(opts = {}) {
   opts = opts || {};
   const C = { ...COLORS }, mat = actorMaterial(), seed = opts.seed ?? 1;
   for (const [k, v] of Object.entries(opts.colors || {})) if (v != null) C[k] = v;   // (an undefined override keeps the default)
+  C.look = { ...(opts.look || {}) };
   const root = new THREE.Group(); root.name = 'actor';
   const body = new THREE.Group(); body.name = 'actor-body'; body.userData.bind = new THREE.Vector3(); root.add(body);
   const height = Number(opts.height ?? MODEL_H);               // a bad height falls back to the default (not a NaN body)

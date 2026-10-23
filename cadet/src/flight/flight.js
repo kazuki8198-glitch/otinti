@@ -10,6 +10,7 @@
 // picture between steps (display only), and saves records and progress under 'cadet.'-prefixed keys.
 // Pure logic: no three.js, no DOM.
 import { createControls, actionForKey, PREFS0 } from './controls.js';
+import { ourCall } from '../content/dialog/atc.js';
 
 export const H = 1 / 120;
 export const MAX_STEPS = 30;
@@ -111,9 +112,26 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
     return nl;
   }
 
+  // a free flight that carries on from where the current one is (the same aircraft state and avionics): after a lesson
+  // has ended (lined up after t1's climb, stopped on the runway after t3) the day goes on in CADET's own flight. The
+  // lesson itself is finished (its record is FLIGHT LAB's); nothing of it is changed.
+  function continueFree() {
+    if (!L) return null;
+    const old = L, s = old.s;
+    const nl = SC.startFree('rwy', s.A.id, { sens: s.opts.sens, autoRud: !!s.opts.autoRud, assist: false });
+    nl.s = s; nl.av = old.av; nl.A = s.A; nl.V = s.A.v; nl.evSeen = old.evSeen;
+    nl.alt0 = old.alt0; nl.hdg0 = old.hdg0; nl.prevHdg = null; nl.rateF = null;
+    nl.last = SC.ctx(nl);
+    const keepPark = ctl.parkBrake;
+    begin(nl);
+    if (keepPark) ctl.action(nl, 'parkBrake', true);
+    return nl;
+  }
+
   // ---------------------------------------------------------------- the realtime path (app.js tick)
-  // keys: { has(code) } (CADET's input.keys, or { has: input.down }); opts.paused stops everything
-  function frame(dt, keys, { paused = false } = {}) {
+  // keys: { has(code) } (CADET's input.keys, or { has: input.down }); opts.paused stops everything; opts.pilot(L, H), in a
+  // free flight only (CADET's taxi pilot), writes the controls before each step as FLIGHT LAB's bot does
+  function frame(dt, keys, { paused = false, pilot = null } = {}) {
     res.steps = 0; res.events.length = 0; res.pad.length = 0; res.ended = false;
     if (!L) return res;
     const dtr = Math.min(0.1, Math.max(0, dt || 0)), wasDone = L.done;
@@ -135,6 +153,7 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
     while (acc >= H && n < MAX_STEPS) {
       prev.pos[0] = s.pos[0]; prev.pos[1] = s.pos[1]; prev.pos[2] = s.pos[2];
       prev.q[0] = s.q[0]; prev.q[1] = s.q[1]; prev.q[2] = s.q[2]; prev.q[3] = s.q[3];
+      if (pilot && L.free) pilot(L, H);
       P.step(L.s, H); parkHold(L.s);
       if (L.free) SC.freeUpdate(L, H); else SC.update(L, H);
       acc -= H; n++;
@@ -220,7 +239,7 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
     if ((code === 'Enter' || code === 'NumpadEnter') && L.check) { const r = checklistNext(); return { kind: 'checklist', ok: r.ok, text: r.text }; }
     if (/^(Digit|Numpad)[123]$/.test(code) && L.atc) {
       const r = answerAtc(+code.slice(-1) - 1);
-      return r ? { kind: 'atc', ok: r.ok, text: (r.ok ? '正解。' : `不正解。正しくは「${r.right}」。`) + r.why } : null;
+      return r ? { kind: 'atc', ok: r.ok, text: (r.ok ? '正解。' : `不正解。正しくは「${ourCall(r.right)}」。`) + r.why } : null;
     }
     const a = actionForKey(code, shift); if (!a) return null;
     return { kind: 'action', name: a, text: ctl.action(L, a), tone: ctl.kind };
@@ -258,7 +277,7 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
   const records = () => SC.loadRecords(db);
 
   // ---------------------------------------------------------------- what the HUD shows (reads only: L.last, never SC.ctx)
-  // (the texts as the aircraft words them: inWorld)
+  // (the texts as the aircraft words them: inWorld; the tower's lines with today's call sign: ourCall)
   function status() {
     if (!L) return null;
     const s = L.s, lv = L.level, S = L.def.steps[L.step] || null, st = L.st || null;
@@ -280,8 +299,8 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
       t: L.t, step: L.step, steps: L.def.steps.map(x => x.name), stepName: S ? S.name : '',
       kind: !S ? '' : S.checklist ? 'checklist' : S.atc ? 'atc' : S.estimate ? 'estimate' : 'fly',
       sayText: inWorld(L.sayText || ''), keysText: inWorld(L.keysText || ''), guideText: lv.guide ? inWorld(L.guideText || '') : '', hint: inWorld(L.hint || ''), chime: L.chime || 0,
-      check, atc: L.atc ? { msg: L.atc.msg, opts: L.atc.opts.slice(), ok: L.atc.ok } : null,
-      atcResult: ar ? { ok: ar.ok, why: inWorld(ar.why), t: ar.t, right: lastRight } : null,
+      check, atc: L.atc ? { msg: ourCall(L.atc.msg), opts: L.atc.opts.map(ourCall), ok: L.atc.ok } : null,
+      atcResult: ar ? { ok: ar.ok, why: inWorld(ar.why), t: ar.t, right: ourCall(lastRight) } : null,
       stats, holdT: st ? st.holdT : 0, need: st ? st.need || 0 : 0, stepT: st ? st.t : 0, turned: st ? st.turned : 0,
       dur: S && S.dur || 0, max: S && S.max || 0, graded: gr.on,
       results: shown.results, hood: !!L.hood, crashed: !!s.crashed, crashReason: inWorld(s.crashReason || ''),
@@ -318,7 +337,7 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
   }
 
   return {
-    startLesson, startFree, startOnGround, frame, runScripted, action, key, checklistNext, answerAtc, abort, crash,
+    startLesson, startFree, startOnGround, continueFree, frame, runScripted, action, key, checklistNext, answerAtc, abort, crash,
     finish, progress, records, status, panel, pose,
     get L() { return L; }, get s() { return L ? L.s : null; }, get av() { return L ? L.av : null; }, get free() { return !!(L && L.free); },
     get acc() { return acc; }, get controls() { return ctl; }, get prefs() { return ctl.prefs; }, get store() { return db; },

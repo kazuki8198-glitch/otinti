@@ -160,8 +160,9 @@ export function ftdDialogs(FL, k, { seed = 1 } = {}) {
 }
 
 // ---------------------------------------------------------------- the written tests
-export function examDialogs(FL, id, { seed = 1, speaker } = {}) {
-  const E = EXAMS[id]; if (!E) throw new Error(`examDialogs: no test ${id}`);
+// (exam: another test's settings — the tablet's practice: one bank, ten questions)
+export function examDialogs(FL, id, { seed = 1, speaker, exam = null } = {}) {
+  const E = exam || EXAMS[id]; if (!E) throw new Error(`examDialogs: no test ${id}`);
   const r = rng(seed * 17 + id.length), who = speaker || (id === 'presolo' ? 'instructor' : 'lecturer'), book = gameBook(FL);
   // drawn evenly from the banks
   const per = Math.ceil(E.n / E.banks.length), pool = [];

@@ -49,6 +49,7 @@ const CSS = `
 .dh-page td.n { text-align: right; font-variant-numeric: tabular-nums; font-family: ui-monospace, Consolas, monospace; }
 .dh-page tr.new td { background: rgba(255, 230, 150, .25); }
 .dh-page tfoot td { font-weight: 700; background: rgba(29, 59, 92, .05); }
+.dh-page .dh-end { margin-top: 4px; padding: 3px 6px; border-left: 3px solid #b8892a; font-size: 11.5px; color: #5b4a22; background: rgba(184, 137, 42, .08); }
 .dh-page .g { display: inline-block; margin-right: 6px; white-space: nowrap; }
 .dh-page .g b { display: inline-block; min-width: 1.4em; text-align: center; margin-left: 2px; border-radius: 4px; color: #fff; background: #2f6f4f; }
 .dh-page .g b.c { background: #a0473d; }
@@ -59,7 +60,7 @@ const CSS = `
 .dh-page footer { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: #6b6457; }
 .dh-page footer button { font: inherit; font-size: 14px; font-weight: 700; padding: 9px 18px; border-radius: 10px; border: 0; cursor: pointer; color: #fff; background: #1d3b5c; }
 .dh-page footer button:focus-visible { outline: 2px solid #ffd479; outline-offset: 2px; }
-@media (max-width: 760px) { .dh-page { padding: 14px; } .dh-page table { font-size: 11px; } .dh-page th:nth-child(3), .dh-page td:nth-child(3) { display: none; } }
+@media (max-width: 760px) { .dh-page { padding: 14px; } .dh-page table { font-size: 11px; } .dh-page th:nth-child(3), .dh-page td:nth-child(3), .dh-page th:nth-child(4), .dh-page td:nth-child(4) { display: none; } }
 @media (prefers-reduced-motion: reduce) { .dh-sig.write span { animation: none; clip-path: none; } }
 `;
 const WHO = { ATIS: 'ATIS', GND: 'GND', TWR: 'TWR', P: 'あなた' };
@@ -168,21 +169,22 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
     const page = make('section', 'dh-page');
     const head = put(make('header'), make('h2', '', '航空日誌　PILOT LOGBOOK'), make('small', '', '翔洋航空 フライトアカデミー　訓練生'));
     const tbl = make('table'), thead = make('thead'), tr = make('tr');
-    for (const h of ['日付', '機種', '登録記号', '出発 → 到着', '飛行時間', '同乗教育', '着陸', '課目と評価', '所見', '教官の署名']) put(tr, make('th', '', h));
+    for (const h of ['日付', '機種', '登録記号', '出発 → 到着', '飛行時間', '同乗教育', '単独', '着陸', '課目と評価', '所見', '教官の署名']) put(tr, make('th', '', h));
     put(tbl, put(thead, tr));
     const tb = make('tbody');
     entries.forEach((e, i) => {
       const r = make('tr', i === fresh ? 'new' : '');
       const les = make('td'); for (const l of e.lessons) put(les, put(make('span', 'g', `${l.id} ${l.title}`), make('b', l.passed ? '' : 'c', l.grade)));
-      const rem = make('td', '', e.remarks + (e.skipped ? `（空域との往復 約 ${e.skipped} 分は移動を省略）` : ''));
+      const rem = make('td', '', e.remarks + (e.skipped ? `（移動 約 ${e.skipped} 分は省略）` : ''));
+      if (e.endorsement) put(rem, make('div', 'dh-end', `裏書き：${e.endorsement}`));
       const sig = make('td'), s = make('span', 'dh-sig' + (i === fresh ? ' write' : ''));
       put(s, make('span', '', e.sig.name), make('small', '', e.sig.cert)); put(sig, s);
       put(r, make('td', 'n', e.date), make('td', 'nw', e.aircraft), make('td', 'nw', e.reg), make('td', 'nw', `${e.from} → ${e.to}`), make('td', 'n', fmtH(e.total)),
-        make('td', 'n', fmtH(e.dual)), make('td', 'n', String(e.landings)), les, rem, sig);
+        make('td', 'n', fmtH(e.dual)), make('td', 'n', fmtH(e.solo || 0)), make('td', 'n', String(e.landings)), les, rem, sig);
       put(tb, r);
     });
-    if (!entries.length) put(tb, put(make('tr'), Object.assign(make('td', '', 'まだ記入はありません。'), { colSpan: 10 })));
-    const tf = put(make('tfoot'), put(make('tr'), Object.assign(make('td', '', `合計（${totals.days} 日）`), { colSpan: 4 }), make('td', 'n', fmtH(totals.total)), make('td', 'n', fmtH(totals.dual)), make('td', 'n', String(totals.landings)), Object.assign(make('td'), { colSpan: 3 })));
+    if (!entries.length) put(tb, put(make('tr'), Object.assign(make('td', '', 'まだ記入はありません。'), { colSpan: 11 })));
+    const tf = put(make('tfoot'), put(make('tr'), Object.assign(make('td', '', `合計（${totals.days} 日）`), { colSpan: 4 }), make('td', 'n', fmtH(totals.total)), make('td', 'n', fmtH(totals.dual)), make('td', 'n', fmtH(totals.solo || 0)), make('td', 'n', String(totals.landings)), Object.assign(make('td'), { colSpan: 3 })));
     put(tbl, tb, tf);
     const btn = Object.assign(make('button', '', '閉じる'), { type: 'button' });
     btn.addEventListener('click', () => hideLogbook());

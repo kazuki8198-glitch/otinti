@@ -150,22 +150,28 @@ export function schedule(state, prog, { trust = 50, weather = null } = {}) {
     return out;
   }
   if (state.chapter === 'ch1') {
-    const cls = CLASSES.findIndex((_, i) => !state.done[`class:${i}`]);
-    const k = GROUND.find(id => !groundPassed(prog, id));
+    // (what was done today stays today's: the plan does not move on to tomorrow's work)
+    const today = (key) => state.done[key] === day;
+    const cls = CLASSES.findIndex((_, i) => !state.done[`class:${i}`] || today(`class:${i}`));
+    const k = GROUND.find(id => !groundPassed(prog, id) || today(`ftd:${id}`));
     if (cls >= 0) out.push({ slot: 'am', kind: 'class', id: String(cls), title: `座学（${cls + 1} / ${CLASSES.length}）`, where: 'brief-2', who: 'lecturer' });
     if (k) out.push({ slot: cls >= 0 ? 'pm' : 'am', kind: 'ftd', id: k, title: `訓練装置：${k}`, where: 'sim', who: 'lecturer' });
     const ex = state.exams.written1;
-    if (cls < 0 && !k && !(ex && ex.pass)) out.push({ slot: out.length ? 'pm' : 'am', kind: 'exam', id: 'written1', title: EXAMS.written1.title, where: 'planning', who: 'lecturer' });
+    if (cls < 0 && !k && (!(ex && ex.pass) || today('exam:written1'))) out.push({ slot: out.length ? 'pm' : 'am', kind: 'exam', id: 'written1', title: EXAMS.written1.title, where: 'planning', who: 'lecturer' });
     return out;
   }
-  // chapter 2: one flight a day (in the morning, or the afternoon when the morning cannot be flown); the tests
-  const id = nextLesson(prog), ex = state.exams.presolo;
+  // chapter 2: one flight a day (in the morning, or the afternoon when the morning cannot be flown); the tests. A flight
+  // already flown today stays today's
+  const flown = Object.entries(state.done).find(([k, v]) => v === day && /^(flight|checkride|solo):/.test(k));
+  const id = flown && flown[0].startsWith('flight:') ? flown[0].slice(7) : nextLesson(prog), ex = state.exams.presolo;
   const flySlot = W.fly.am ? 'am' : W.fly.pm ? 'pm' : null;
   const ground = (slot) => { if (!(ex && ex.pass) && id && CH2.indexOf(id) >= 9) out.push({ slot, kind: 'exam', id: 'presolo', title: EXAMS.presolo.title, where: 'planning', who: 'instructor' }); };
-  if (state.solo) return [{ slot: 'am', kind: 'study', id: 'after', title: '自習（次の段階の予習）', where: 'planning', who: null }];
+  if (state.solo && !(flown && flown[0] === 'solo:solo')) return [{ slot: 'am', kind: 'study', id: 'after', title: '自習（次の段階の予習）', where: 'planning', who: null }];
+  if (flown && flown[0] === 'checkride:c1') return [{ slot: W.fly.am ? 'am' : 'pm', kind: 'checkride', id: 'c1', title: 'ソロ前の審査（c1・主任教官）', where: 'apron', who: 'chief' }];
+  if (flown && flown[0] === 'solo:solo') return [{ slot: W.fly.am ? 'am' : 'pm', kind: 'solo', id: 'solo', title: 'ファーストソロ', where: 'apron', who: 'instructor' }];
   if (!flySlot) { out.push({ slot: 'am', kind: 'study', id: 'weather', title: '天気で飛べない日：地上で復習', where: 'brief-1', who: 'instructor' }); ground('pm'); return out; }
   if (id) out.push({ slot: flySlot, kind: 'flight', id, title: `飛行：${id}`, where: 'apron', who: 'instructor' });
-  else if (!(ex && ex.pass)) out.push({ slot: flySlot, kind: 'exam', id: 'presolo', title: EXAMS.presolo.title, where: 'planning', who: 'instructor' });
+  else if (!(ex && ex.pass) || state.done['exam:presolo'] === day) out.push({ slot: flySlot, kind: 'exam', id: 'presolo', title: EXAMS.presolo.title, where: 'planning', who: 'instructor' });
   else if (!passedAt(prog, 'c1')) out.push({ slot: flySlot, kind: 'checkride', id: 'c1', title: 'ソロ前の審査（c1・主任教官）', where: 'apron', who: 'chief' });
   else if (trust >= SOLO_TRUST) out.push({ slot: flySlot, kind: 'solo', id: 'solo', title: 'ファーストソロ', where: 'apron', who: 'instructor' });
   else out.push({ slot: flySlot, kind: 'flight', id: 't2', title: '飛行：場周経路の仕上げ（t2）', where: 'apron', who: 'instructor' });

@@ -36,7 +36,7 @@ test('career: the prologue, then chapter 1 — classes in the morning, the train
   s.done.prologue = 1; s.chapter = 'ch1'; s.day = 2;
   let d = schedule(s, {});
   assert.deepEqual(d.map(x => [x.slot, x.kind, x.id]), [['am', 'class', '0'], ['pm', 'ftd', 'k1']]);
-  for (let i = 0; i < CLASSES.length; i++) s.done[`class:${i}`] = 2;
+  for (let i = 0; i < CLASSES.length; i++) s.done[`class:${i}`] = 1;   // (done on earlier days)
   d = schedule(s, progWith(['k1', 'k2']));
   assert.deepEqual(d.map(x => [x.slot, x.kind, x.id]), [['am', 'ftd', 'k3']]);
   const allK = progWith(GROUND);
@@ -135,4 +135,15 @@ test('career: one file for everything — written, read back cleaned; a wrong or
   assert.throws(() => importArchive(JSON.stringify({ app: 'FLIGHT LAB', kind: 'learning-record' }), FL), /CADET の記録/);
   assert.throws(() => importArchive(JSON.stringify({ app: 'CADET', kind: 'cadet-save', v: 2 }), FL), /版/);
   assert.throws(() => importArchive(JSON.stringify({ app: 'CADET', kind: 'cadet-save', v: 1, career: { v: 7 } }), FL), /キャリア/);
+});
+
+test('career: what was done today stays today\'s plan (the class, the device, the flight), not tomorrow\'s', () => {
+  const s = newCareer(5); s.chapter = 'ch1'; s.day = 3; s.done['class:0'] = 2; s.done['class:1'] = 3; s.done['ftd:k2'] = 3;
+  const p = progWith(['k1', 'k2']);
+  assert.deepEqual(schedule(s, p).map(x => [x.kind, x.id]), [['class', '1'], ['ftd', 'k2']]);
+  s.chapter = 'ch2'; s.day = 12; s.done['flight:a3'] = 12;
+  const good = weatherFor(5, 12, { force: 'good' });
+  assert.deepEqual(schedule(s, progWith(['a1', 'a2', 'a3']), { weather: good }).map(x => [x.kind, x.id]), [['flight', 'a3']], 'not a4 the same day');
+  s.done['checkride:c1'] = 12; delete s.done['flight:a3'];
+  assert.deepEqual(schedule(s, progWith([...CH2, 'c1']), { weather: good, trust: 80 }).map(x => [x.kind, x.id]), [['checkride', 'c1']], 'not the solo the same day');
 });

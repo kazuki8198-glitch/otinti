@@ -43,6 +43,20 @@ import { createLogbook, entryFrom } from './career/logbook.js';
 import { buildWalkaroundProps } from './aircraft/walkaround-props.js';
 import { apronDialogs } from './content/dialog/day1.js';
 import { POINTS } from './content/walkaround-archer.js';
+import { createCareer, SLOT_HOURS, SLOT_NAMES, CHAPTERS, CH2, GROUND, EXAMS, CLASSES, SOLO_TRUST, dateText, dateOf, passedAt, groundPassed } from './career/career.js';
+import { planFor } from './career/day.js';
+import { exportArchive, importArchive } from './career/archive.js';
+import { PEOPLE, PEERS } from './content/people.js';
+import { createCast } from './npc/cast.js';
+import { peopleDialogs } from './content/dialog/people.js';
+import { careerInstructorDialogs } from './content/dialog/instructor-career.js';
+import { careerBoardDialogs } from './content/dialog/cockpit.js';
+import { classDialogs, ftdDialogs, examDialogs, scoreOf, FTD_TITLES, pfdPictures } from './content/school.js';
+import { drawPfdPicture } from './world/pfd-picture.js';
+import { createTablet } from './ui/tablet.js';
+import { createCards } from './ui/cards.js';
+import { trustOf } from './dialog/engine.js';
+import { spoken } from './content/dialog/atc.js';
 
 /* global __BUILD_INFO__ */
 const $ = (s) => document.querySelector(s);
@@ -51,6 +65,8 @@ const params = new URLSearchParams(location.search);
 // the day's wind: the one FLIGHT LAB's lessons fly in (the runway's heading + 10° true, 5 kt), so the METAR on the
 // dispatch board, the ATIS, the windsock and the flights from the apron all agree with the lessons
 const DAY_WIND = { fromDeg: 4, kt: 5 };
+// a day too windy to fly (M5's weather): the windsock shows it
+const XWIND = { fromDeg: 90, kt: 16 };
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function bootMsg(text, k) { $('#bootMsg').textContent = text; if (k != null) $('#bootBar').style.width = `${Math.round(k * 100)}%`; }
@@ -70,6 +86,9 @@ async function boot() {
   // less sky light inside the buildings: patched into three's shader chunks before any material compiles
   installIndoorShading(L, ACADEMY);
   const settings = createSettings();
+  // the cadet's career (M5): the calendar, the time of day, the chapter (kept in localStorage 'cadet.career')
+  const store = (() => { try { return globalThis.localStorage || null; } catch (e) { return null; } })();
+  const career = createCareer({ store, seed: params.get('seed') ? +params.get('seed') : undefined });
 
   bootMsg('画像を読み込んでいます…', 0.05);
   await loadTextures((k) => bootMsg('画像を読み込んでいます…', 0.05 + 0.25 * k));
@@ -146,7 +165,7 @@ async function boot() {
     const fx = academy.lights.filter(l => l.room === r.id).map(l => ({ a: -l.z, c: l.x, p: academy.group.localToWorld(new THREE.Vector3(l.x, l.y, l.z)), w: l.y > 4 ? 3 : 1 }));
     clusters.set(r.id, roomClusters(fx, 5, G));
   }
-  let hours = parseFloat(params.get('t')) || 9.6;
+  let hours = parseFloat(params.get('t')) || career.hours;
   const applyTime = () => {
     const st = sky.setTime(hours);
     pipe.setHaze({ sunDir: st.dir, el: st.el });
@@ -179,7 +198,7 @@ async function boot() {
     },
     // choices: [{ k, text }] (the walk-around's decisions, keys 1–4), or none
     card(title, text, choices = null) {
-      const c = $('#card'); if (!title) { c.hidden = true; walkOpen = null; return; }
+      const c = $('#card'); if (!title) { c.hidden = true; walkOpen = null; homeOpen = false; return; }
       c.querySelector('.card-title').textContent = title; c.querySelector('.card-body').textContent = text;
       const ch = c.querySelector('.card-choices'); ch.textContent = '';
       for (const x of choices || []) { const b = document.createElement('button'); b.type = 'button'; b.tabIndex = -1; b.innerHTML = `<kbd>${x.k}</kbd>${esc(x.text)}`; b.dataset.k = String(x.k - 1); ch.appendChild(b); }
@@ -207,7 +226,16 @@ async function boot() {
   let today = null, dayN = 0;
   // ?anomalies=r_sump,r_cap plants those on the first day (tests, screenshots)
   const planted = params.get('anomalies') ? params.get('anomalies').split(',') : undefined;
-  const newDay = () => { dayN++; today = createDay(FL, { seed: logbook.entries.length * 7 + dayN, stand: { a: tg.a, c: tg.c }, anomalies: dayN === 1 ? planted : undefined }); walkProps.set(today.walk.props()); renderWalk(); return today; };
+  // a new flying day's walk-around and radio (career/day.js): today's lessons (the career's plan), the ATIS from the
+  // day's weather (the information letter moves on each day)
+  const PHON = ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo', 'Foxtrot', 'Golf', 'Hotel', 'India', 'Juliett', 'Kilo', 'Lima', 'Mike', 'November', 'Oscar', 'Papa', 'Quebec', 'Romeo', 'Sierra', 'Tango', 'Uniform', 'Victor', 'Whiskey', 'Xray', 'Yankee', 'Zulu'];
+  const newDay = () => {
+    dayN++;
+    const w = career.weather(prog()), pm = career.slot === 'pm';
+    today = createDay(FL, { seed: career.state.seed * 31 + career.day * 7 + dayN, stand: { a: tg.a, c: tg.c }, anomalies: dayN === 1 ? planted : undefined, plan: planOf(flightItem()),
+      weather: { info: PHON[(career.day * 2 + (pm ? 1 : 0)) % 26], zulu: pm ? '1853' : '1353', tempC: w.tempC + (pm ? 3 : 0), dewC: w.dewC } });
+    walkProps.set(today.walk.props()); renderWalk(); return today;
+  };
   const walkProps = buildWalkaroundProps();
   todayAc.root.add(walkProps.root);
   todayAc.root.updateMatrixWorld(true);
@@ -231,6 +259,7 @@ async function boot() {
   // the walk-around's card: what to check, what is seen, and the choices (1–4 / a click)
   const walkTargets = [];
   let walkOpen = null;                                       // the place whose card is open
+  let homeOpen = false;                                      // the front door's card (home to sleep) is open
   function walkCard(id) {
     const c = today.walk.inspect(id); if (!c) return null;
     walkOpen = id;
@@ -275,15 +304,15 @@ async function boot() {
     }).join('') + '<small>E：点検する　1〜4：決める</small>';
   }
 
-  // ---------------------------------------------------------------- the instructor, and talking
-  // 早瀬 教官 (fictional) waits in briefing room 1 between the whiteboard and the screen, facing the room. E starts the
-  // conversation: the mouse is freed for the choices, the view turns to the instructor, the walk stops. Flags and trust
-  // are kept in localStorage ('cadet.save'). The instructor's hooks point at the board, nod, show a figure on the
-  // screen and open the textbook.
+  // ---------------------------------------------------------------- the people, and talking
+  // 早瀬 教官 (fictional) waits in briefing room 1 between the whiteboard and the screen, facing the room; the academy's
+  // other people (M5: npc/cast.js) are where the time of day puts them. E starts a conversation: the mouse is freed for
+  // the choices, the view turns to whoever is talking, the walk stops. Flags and trust are kept in localStorage
+  // ('cadet.save'). The hooks point at the board, nod, show a figure or a PFD on a screen, speak English, open the
+  // textbook, and move the career on (a class, a test, the go / no-go, …).
   const book = gameBook(FL);
   const saved = createSave();
   const talkState = createDialogState(saved.load());
-  const talkData = instructorDialogs(FL, { lessonId: 'a2', day: DAY1.lessons });
   const instructor = createActor();
   const INS = { a: 634.9, c: 256.7 };
   instructor.root.position.set(INS.c, 0, -INS.a); instructor.root.rotation.y = Math.PI;      // facing +a, into the room
@@ -295,7 +324,11 @@ async function boot() {
   const insApron = world.add({ x0: APRON.c - instructor.radius, x1: APRON.c + instructor.radius, y0: 0, y1: 1.8, z0: -APRON.a - instructor.radius, z1: -APRON.a + instructor.radius, tag: 'npc:instructor' });
   world.setEnabled(insApron, false);
   let insAt = 'room';
-  function placeInstructor(where = talkState.flags && talkState.flags.briefed_today ? 'apron' : 'room') {
+  let celebrate = false;                                   // the first solo flown: they are waiting by the aircraft
+  // where he is: by the aircraft once the cadet is briefed for today's flight (or for the solo, or after it, to
+  // celebrate), else in his room
+  const insWhere = () => (celebrate || (talkState.flags.briefed_today && !flownToday()) ? 'apron' : 'room');
+  function placeInstructor(where = insWhere()) {
     insAt = where;
     const root = instructor.root, P0 = where === 'apron' ? APRON : { c: INS.c, a: INS.a, yaw: Math.PI };
     academy.group.add(root); root.position.set(P0.c, 0, -P0.a); root.rotation.set(0, P0.yaw, 0); root.visible = true;
@@ -303,97 +336,226 @@ async function boot() {
     for (const t of interactor.list()) if (t.id === 'npc:instructor') { t.enabled = true; t.frame = [P0.c, 1.5, -P0.a]; }
   }
   const frameToWorld = (p, out = new THREE.Vector3()) => academy.group.localToWorld(out.set(p.x, p.y, p.z));
-  let talk = null;                                            // { yaw, pitch } (the view to come back to) while talking
-  let talkEndedAt = -Infinity;                                // the E or click that ended a talk does not start it again
-  const runner = createRunner({ data: talkData, state: talkState, ctx: sampleCtx(FL), hooks: { onHook } });
+
+  // ---- the career's state for the talks (content/dialog/people.js, instructor-career.js read it through ctx)
+  let fly = null;
+  const prog = () => (fly && fly.flight ? FL.school.loadProgress(fly.flight.store) : FL.school.sanitizeProgress({}));
+  const trustI = () => trustOf(talkState, 'instructor');
+  const weatherNow = () => career.weather(prog());
+  const planToday = () => career.schedule(prog(), { trust: trustI(), weather: weatherNow() });
+  const FLY_KINDS = ['flight', 'checkride', 'solo'];
+  const flightItem = () => planToday().find(x => FLY_KINDS.includes(x.kind)) || null;
+  const grounded = () => career.doneToday('grounded', 'imsafe');
+  const flownToday = () => { const it = flightItem(); return !it || career.doneToday(it.kind, it.id); };
+  const planOf = (it) => (!it ? planFor(FL, 'a1') : it.kind === 'solo' ? planFor(FL, 't2', { solo: true }) : planFor(FL, it.kind === 'checkride' ? 'c1' : it.id));
+  const lessonTitle = (id) => { const l = FL.school.lesson(id); return l ? `「${l.title}」` : id; };
+  const cx = { career: {}, today: {}, weather: {}, imsafe: { honest: true }, quiz: { right: 0, n: 0, pct: 0, pass: false } };
+  function refreshCtx() {
+    const st = career.state, w = weatherNow(), it = flightItem(), sch = planToday();
+    Object.assign(cx.career, { chapter: st.chapter, slot: st.slot, day: st.day, dayMod3: st.day % 3, tired: career.tired(), solo: !!st.solo });
+    const study = it && it.kind === 'flight' ? it.id : sch.find(x => x.kind === 'study') ? (CH2.find(id => !passedAt(prog(), id)) || 't2') : 't2';
+    const sec = book.lessonSections(study).map(x => book.section(x.id)).find(x => x && x.figure);
+    Object.assign(cx.today, {
+      flight: it ? it.id : '', flightTitle: it ? (it.kind === 'solo' ? 'ファーストソロ' : it.kind === 'checkride' ? 'ソロ前の審査' : `${lessonTitle(it.id)}の飛行`) : '今日の飛行',
+      checkride: !!(it && it.kind === 'checkride' && !flownToday()), solo: !!(it && it.kind === 'solo'), exam: sch.some(x => x.kind === 'exam'),
+      needsDecision: st.chapter === 'ch2' && !st.solo, decided: !!career.decidedToday(), decisionRight: career.decidedToday() ? career.decidedToday().right : true,
+      lessonTitle: it ? lessonTitle(planOf(it).main) : '', studyTitle: lessonTitle(study), studySection: sec ? sec.id : null,
+    });
+    Object.assign(cx.weather, { ja: w.ja, metarAm: w.metar.am, metarPm: w.metar.pm, taf: w.taf, why: w.why });
+    return cx;
+  }
+
+  // ---- the conversations: the instructor's (the day's briefing and his career talks), the others', the lessons
+  const instructorData = () => {
+    const it = flightItem(), plan = planOf(it), main = plan.main === 'c1' ? 'c1' : plan.main;
+    const d = instructorDialogs(FL, { lessonId: main, day: plan.lessons }), c = careerInstructorDialogs();
+    return { speakers: { ...d.speakers, ...c.speakers }, flags: [...new Set([...d.flags, ...c.flags])], hooks: [...new Set([...d.hooks, ...c.hooks])], dialogs: { ...d.dialogs, ...c.dialogs } };
+  };
+  let runner = null;
+  function buildInstructorTalk() { runner = createRunner({ data: instructorData(), state: talkState, ctx: () => cx, hooks: { onHook } }); runner.onChange(onRoomView); }
   // by the aircraft (M4): his word on the walk-around
   const apronRunner = createRunner({ data: apronDialogs(), state: talkState, hooks: { onHook } });
-  let walkTalk = false;
+  const peopleRunner = createRunner({ data: peopleDialogs(), state: talkState, ctx: () => cx, hooks: { onHook } });
+  // a lesson or a test (its own state: what is scored is not kept)
+  let lessonRun = null, lessonState = null, lessonKind = null, lessonQuestions = null;
+  function startLesson(kind, id, data) {
+    lessonState = createDialogState(); lessonKind = { kind, id, n: (data.questions || []).length }; lessonQuestions = data.questions || [];
+    lessonRun = createRunner({ data, state: lessonState, ctx: () => cx, hooks: { onHook } });
+    lessonRun.onChange(onRoomView);
+    return lessonRun;
+  }
   // the dialogue UI serves the room's talk and the talk in the aircraft (fly-mode's own runner)
-  let fly = null;
-  const talkRunner = () => (fly && fly.talking ? fly.runner : walkTalk ? apronRunner : runner);
+  let talk = null;                                            // { yaw, pitch } (the view to come back to) while talking
+  let talkEndedAt = -Infinity;                                // the E or click that ended a talk does not start it again
+  let talkWho = null, talkRun = null, talkActor = null;
+  const talkRunner = () => (fly && fly.talking ? fly.runner : talkRun || runner);
   const dui = createDialogUI({
     root: document.body, settings,
     onNext: () => { talkRunner().next(); afterStep(); },
     onChoose: (i) => { talkRunner().choose(i); afterStep(); },
   });
-  const onRoomView = (view) => {
+  function onRoomView(view) {
     // dui.show also speaks the line (settings: voice, volume); a line whose hook started a gesture (point, nod) keeps it
-    if (view) { dui.show(view); if (view.speaker === 'instructor' && !instructor.gesturing && Math.random() < 0.25) instructor.gesture('explain'); }
+    if (view) { dui.show(view); if (talkActor && view.speaker !== 'player' && !talkActor.gesturing && Math.random() < 0.25) talkActor.gesture('explain'); }
     else endTalk();
     saved.save(talkState);
-  };
-  runner.onChange(onRoomView); apronRunner.onChange(onRoomView);
+  }
+  apronRunner.onChange(onRoomView); peopleRunner.onChange(onRoomView);
   // the click (or key) that ended the conversation also takes the mouse back for walking
-  function afterStep() { if (!runner.running && !apronRunner.running && started && mode === 'walk' && !menu.isOpen) input.requestLock(); }
-  function startTalk() {
-    if (runner.running || apronRunner.running) return 'talking';
+  function afterStep() { if (!talk && started && mode === 'walk' && !menu.isOpen && !tablet.isOpen) input.requestLock(); }
+  // who: 'instructor' or one of the cast; the talk chosen by the career (today's work comes first)
+  function startTalk(who = 'instructor') {
+    if (talk) return 'talking';
     interactor.closeCard(); hud.prompt(null);
+    refreshCtx();
+    const pick = chooseTalk(who);
+    if (!pick) return null;
     talk = { yaw: walker.state.yaw, pitch: walker.state.pitch };
+    talkWho = who; talkRun = pick.run; talkActor = who === 'instructor' ? instructor : cast.actor(who);
     document.body.classList.add('talking');
     input.exitLock();
     audio.ui('open');
-    walkTalk = insAt === 'apron';
-    if (walkTalk) apronRunner.start('apron'); else runner.start('brief');
+    // the morning is over once the day's work starts
+    if (career.slot === 'morning' && career.chapter !== 'prologue') { career.advance('am'); applySlot(); }
+    if (!pick.run.start(pick.dialog, pick.node)) { endTalk(); return null; }
     return 'talk';
+  }
+  function chooseTalk(who) {
+    const st = career.state, slot = st.slot, sch = planToday(), due = (k) => sch.find(x => x.kind === k && (x.slot === slot || (slot === 'morning' && x.slot === 'am')));
+    if (who === 'lecturer') {
+      const cls = due('class'), ftd = due('ftd'), ex = due('exam');
+      if (cls && !career.doneToday('class', cls.id)) return { run: startLesson('class', +cls.id, classDialogs(FL, +cls.id, { seed: st.seed })), dialog: 'class' };
+      if (ftd && !career.doneToday('ftd', ftd.id)) return { run: startLesson('ftd', ftd.id, ftdDialogs(FL, ftd.id, { seed: st.seed + st.day })), dialog: 'ftd' };
+      if (ex && ex.id === 'written1' && !career.doneToday('exam', ex.id)) return { run: startLesson('exam', ex.id, examDialogs(FL, ex.id, { seed: st.seed + st.day })), dialog: 'exam' };
+      return { run: peopleRunner, dialog: 'lecturer' };
+    }
+    if (who !== 'instructor') return { run: peopleRunner, dialog: who };
+    if (insAt === 'apron' && !celebrate) return { run: apronRunner, dialog: 'apron' };
+    if (celebrate) return { run: runner, dialog: 'celebrate' };
+    if (st.chapter === 'prologue') return { run: runner, dialog: talkState.flags.met_instructor ? 'ground' : 'meet' };
+    if (st.chapter === 'ch1') return { run: runner, dialog: 'ground' };
+    if (st.solo) return { run: runner, dialog: 'after' };
+    const ex = sch.find(x => x.kind === 'exam' && x.id === 'presolo');
+    if (ex && !career.doneToday('exam', 'presolo') && (ex.slot === slot || slot === 'morning')) return { run: startLesson('exam', 'presolo', examDialogs(FL, 'presolo', { seed: st.seed + st.day })), dialog: 'exam' };
+    const it = flightItem();
+    if (sch.some(x => x.kind === 'study') && !career.doneToday('study', 'weather')) return { run: runner, dialog: 'study' };
+    if (it && grounded() && !career.doneToday('study', 'imsafe')) return { run: runner, dialog: 'study' };
+    if (it && it.kind === 'solo' && !flownToday()) return { run: runner, dialog: 'solo' };
+    if (it && it.kind === 'checkride' && !flownToday()) return { run: runner, dialog: 'checkday' };
+    if (it && it.kind === 'flight' && !flownToday()) return { run: runner, dialog: talkState.flags.briefed_today ? 'brief' : 'day' };
+    return { run: runner, dialog: 'brief', node: 'menu:done' };
   }
   function endTalk() {
     if (!talk) return;
     talk = null; dui.hide(); document.body.classList.remove('talking');
     talkEndedAt = performance.now();
-    walkTalk = false;
+    const who = talkWho; talkWho = null; talkRun = null; talkActor = null; lessonRun = null;
     // briefed: he goes out to the aircraft (out of sight: while the cadet is still in the room he stays to see them off)
-    if (insAt === 'room' && talkState.flags.briefed_today) insGoOut = true;
+    if (who === 'instructor' && insAt === 'room' && insWhere() === 'apron') insGoOut = true;
+    afterTalk.splice(0).forEach(f => f());
+    lessonKind = null;
   }
+  const afterTalk = [];                                       // what happens once the talk is over (a fade to the afternoon…)
   let insGoOut = false;
-  // the pause menu's "erase the record": the instructor meets you again for the first time
+  // the pause menu's "erase the record": a new career, the instructor meets you again for the first time
   function resetProgress() {
-    if (runner.running) runner.stop();
-    if (apronRunner.running) apronRunner.stop();
+    if (talk && talkRun) talkRun.stop();
     const fresh = createDialogState();
     for (const k of Object.keys(talkState)) delete talkState[k];
     Object.assign(talkState, fresh);
     saved.clear();
     if (fly) for (const k of ['flightlab-records-v2', 'flightlab-progress-v2']) { try { fly.flight.store.removeItem(k); } catch (e) { /* storage unavailable */ } }
     logbook.clear();
-    if (!(fly && fly.active)) { placeInstructor('room'); newDay(); }
+    career.reset();
+    celebrate = false;
+    if (!(fly && fly.active)) startDay({ card: true, place: true });
   }
-  // the instructor's hooks
+  // the hooks of every talk
   function onHook(name, arg) {
-    if (name === 'nod') instructor.gesture('nod');
-    else if (name === 'look') instructor.gesture('explain');          // 'player': they already look at you while talking
+    const actor = talkActor || instructor;
+    if (name === 'nod') actor.gesture('nod');
+    else if (name === 'look') actor.gesture('explain');          // 'player': they already look at you while talking
     else if (name === 'point') {
       // the whiteboard (or the screen) behind them, or out of the window towards the apron
-      const s = arg === 'apron' ? { x: 240, y: 1.4, z: -INS.a - 2 } : academy.surfaceAt('brief-1', arg === 'screen' ? 'wall_screen' : 'whiteboard');
-      if (s) { instructor.pointAt(frameToWorld(s)); instructor.gesture('point'); }
+      const room = talkWho === 'lecturer' ? (lessonKind && lessonKind.kind === 'ftd' ? 'sim' : 'brief-2') : 'brief-1';
+      const s = arg === 'apron' ? { x: 240, y: 1.4, z: -INS.a - 2 } : academy.surfaceAt(room, arg === 'screen' ? 'wall_screen' : 'whiteboard');
+      if (s) { actor.pointAt(frameToWorld(s)); actor.gesture('point'); }
     } else if (name === 'book') {
       const sec = book.section(arg);
       if (sec) dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sec.html });
-    } else if (name === 'board') showFigure(arg);
+    } else if (name === 'board') showFigure(arg === 'study' ? cx.today.studySection : arg, talkWho === 'lecturer' ? 'brief-2' : 'brief-1');
+    else if (name === 'pfd') showPfd(arg);
+    else if (name === 'say') speakEnglish(arg);
+    else if (name === 'quizEnd') { cx.quiz = scoreOf(lessonState, +arg); }
+    else if (name === 'done') workDone(arg);
+    else if (name === 'decide') { const right = career.decision(arg, weatherNow()); refreshCtx(); cx.today.decisionRight = right; afterTalk.push(() => afterDecision()); }
+    else if (name === 'tablet') toast('タブレットを受け取りました。Tab キーで開けます', 4200);
+    else if (name === 'help') { career.tire(15); }
+    else if (name === 'checkride') { cast.put('chief', CHIEF_APRON); talkState.flags.c1_briefed = true; toast('真壁 主任教官が、機体のところで待っています', 3600); }
+    else if (name === 'imsafe') {
+      const tired = career.tired(), honest = (arg === 'tired') === tired;
+      cx.imsafe.honest = honest;
+      if (arg === 'tired' || tired) { career.done('grounded', 'imsafe'); afterTalk.push(() => { buildInstructorTalk(); toast('今日は飛ばずに、地上で予習します。もう一度、早瀬 教官と話してください', 4200); }); }
+    } else if (name === 'logbook') showLogbookNow(logbook.entries.length - 1);
+    else if (name === 'solo') { celebrate = false; career.soloDone(); talkState.flags.soloed = true; afterTalk.push(() => { career.advance('evening'); applySlot(); placeInstructor('room'); layoutPeople(); }); }
   }
-  // a textbook figure on the briefing room's screen (the figures are FLIGHT LAB's SVG, drawn for a dark background)
-  function showFigure(secId) {
-    const sec = book.section(secId); if (!sec || !sec.figure) return;
+  // a textbook figure on a room's screen (the figures are FLIGHT LAB's SVG, drawn for a dark background)
+  function showFigure(secId, room = 'brief-1') {
+    const sec = secId && book.section(secId); if (!sec || !sec.figure) return;
     const svg = sec.figure.replace(/^<svg(?![^>]*xmlns=)/, '<svg xmlns="http://www.w3.org/2000/svg"').replace(/^<svg /, '<svg width="1200" height="760" ');
     const img = new Image();
     img.onload = () => {
-      academy.redraw('brief-1', 'wall_screen', (g, w, h) => {
+      academy.redraw(room, 'wall_screen', (g, w, h) => {
         g.fillStyle = '#0b1422'; g.fillRect(0, 0, w, h);
         g.fillStyle = '#e8f0fa'; g.font = `600 ${Math.round(h * 0.06)}px "Hiragino Sans", "Yu Gothic UI", "Meiryo", "Noto Sans CJK JP", sans-serif`;
         g.textBaseline = 'top'; g.fillText(sec.title, w * 0.04, h * 0.04, w * 0.92);
         const top = h * 0.14, bw = w * 0.92, bh = h * 0.82, k = Math.min(bw / img.width, bh / img.height);
         g.drawImage(img, (w - img.width * k) / 2, top + (bh - img.height * k) / 2, img.width * k, img.height * k);
       });
-      const s = academy.surfaceAt('brief-1', 'wall_screen');
-      if (s) { instructor.pointAt(frameToWorld(s)); instructor.gesture('point'); }
+      const s = academy.surfaceAt(room, 'wall_screen'), actor = talkActor || instructor;
+      if (s) { actor.pointAt(frameToWorld(s)); actor.gesture('point'); }
     };
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
-  interactor.add({ id: 'npc:instructor', frame: [INS.c, 1.5, -INS.a], radius: 0.45, prompt: `${INSTRUCTOR.title_ja}と話す`, use: startTalk });
-  // turn the view smoothly towards the instructor's face while talking
+  // the training device room's screen: a PFD picture (k2: the question's; k1: the tutorial's, a part framed)
+  const TUTOR_PIC = { ias: 105, alt: 3500, hdg: 30, vs: 500, bank: 15 };
+  function showPfd(arg) {
+    const tut = /^tutor:(\w+)$/.exec(arg || '');
+    const pic = tut ? TUTOR_PIC : pfdPictures(career.state.seed + career.day)[+arg];
+    if (!pic) return;
+    academy.redraw('sim', 'wall_screen', (g, w, h) => drawPfdPicture(FL, g, w, h, pic, { highlight: tut && tut[1] !== 'all' ? tut[1] : null, title: tut ? 'G1000 型 PFD（主な飛行表示）' : `PFD の読み取り：第 ${+arg + 1} 問` }));
+    const s = academy.surfaceAt('sim', 'wall_screen'), actor = talkActor;
+    if (s && actor && Math.random() < 0.5) { actor.pointAt(frameToWorld(s)); actor.gesture('point'); }
+  }
+  // English said aloud (the training device's radio lessons), when the voice is on
+  function speakEnglish(en) {
+    if (audio.squelch) audio.squelch();
+    const synth = globalThis.speechSynthesis;
+    if (!synth || settings.get('atcVoice') === false || typeof SpeechSynthesisUtterance === 'undefined') return;
+    try {
+      synth.cancel();
+      const u = new SpeechSynthesisUtterance(spoken(en));
+      const v = synth.getVoices().find(x => /^en(-|_)US/i.test(x.lang)) || synth.getVoices().find(x => /^en/i.test(x.lang));
+      if (v) u.voice = v;
+      u.lang = 'en-US'; u.rate = 1.0; u.volume = Math.max(0, Math.min(1, settings.get('volume') ?? 0.8));
+      synth.speak(u);
+    } catch (e) { /* no speech here */ }
+  }
+  interactor.add({ id: 'npc:instructor', frame: [INS.c, 1.5, -INS.a], radius: 0.45, prompt: `${INSTRUCTOR.title_ja}と話す`, use: () => startTalk('instructor') });
+  // the academy's other people
+  const cast = createCast({ parent: academy.group, world, interactor, ids: ['chief', 'lecturer', 'dispatcher', 'mechanic', ...PEERS], onTalk: (id) => startTalk(id) });
+  const CHIEF_APRON = { a: APRON.a + 1.4, c: APRON.c + 0.9, face: { a: tg.a, c: tg.c } };
+  function layoutPeople() {
+    refreshCtx();
+    cast.layout(career.slot, career.chapter, planToday());
+    if (talkState.flags.c1_briefed && cx.today.checkride) cast.put('chief', CHIEF_APRON);
+    // after the first solo: the cadets by the aircraft with the instructor
+    if (celebrate) PEERS.forEach((id, i) => cast.put(id, { a: APRON.a + 1.3 + i * 0.9, c: APRON.c + 1.6 - i * 0.5, face: { a: tg.a + 0.8, c: tg.c + 1.5 } }));
+  }
+  // turn the view smoothly towards the face of whoever is talking
   const insHead = new THREE.Vector3();
-  function faceInstructor(dt) {
-    instructor.headWorld(insHead);
+  function faceTalker(dt) {
+    (talkActor || instructor).headWorld(insHead);
     const y0 = walker.state.yaw, p0 = walker.state.pitch;
     walker.lookAt(insHead.x, insHead.y - 0.05, insHead.z);
     const y1 = walker.state.yaw, p1 = walker.state.pitch, k = 1 - Math.exp(-dt / 0.18);
@@ -409,22 +571,32 @@ async function boot() {
     FL, L, scene, camera, renderer, sky, input, settings, audio, toast, hud, dui, talkState, world, flightHud,
     saveTalk: () => saved.save(talkState), instructor, instructorName: INSTRUCTOR.title_ja, lessonId: 'a2', dayHud,
     today: () => today,
+    // the right seat today: the instructor, the chief instructor on the check ride, no one on the first solo
+    crew: () => {
+      const it = flightItem(), open = it && !flownToday();
+      if (open && it.kind === 'solo' && talkState.flags.briefed_today) return null;
+      if (open && it.kind === 'checkride' && talkState.flags.c1_briefed) return { actor: cast.actor('chief'), name: PEOPLE.chief.title, id: 'chief' };
+      return { actor: instructor, name: INSTRUCTOR.title_ja, id: 'instructor' };
+    },
+    boardDialogs: () => boardTalk(),
     // the debrief signed the logbook: the line written, the page shown; resolves when it is closed
     onLogbook: (sum, remarks) => new Promise((done) => {
-      logbook.add(entryFrom(sum, { remarks, dayN: logbook.entries.length + 1, skippedSec: sum.transit === 'skip' ? 600 : 0 }));
+      logbook.add(entryFrom(sum, { remarks, date: dateOf(career.day).iso, dayN: career.day, skippedSec: sum.transit === 'skip' ? 600 : 0 }));
       input.exitLock();
       dayHud.showLogbook(logbook.entries, logbook.totals(), { fresh: logbook.entries.length - 1, onClose: () => { done(); if (mode === 'fly' && !menu.isOpen) input.requestLock(); } });
     }),
     // out of the aircraft after a day (done or given up): the next one is a new day (a new walk-around)
-    onDayOver: () => { pendingNewDay = true; },
+    onDayOver: (d) => { pendingNewDay = true; dayOver(d); },
+    // the first solo's day is over in the seat: its line in the logbook (signed outside, with the endorsement)
+    onSolo: (sum) => soloLanded(sum),
     stand: { a: spec.target.a, c: spec.target.c, hdgTrue: (L.R.trueHdg + 270) % 360 }, wind: DAY_WIND,
     parkedToday: todayAc.root, toFrame,
     todayColliders: (on) => { for (const id of todayIds) world.setEnabled(id, on); },
-    // he is in the aircraft: not in his room nor on the apron (no collider, nothing to talk to there); back out, by the
-    // aircraft if the cadet was briefed
-    instructorHome: () => placeInstructor(),
+    // they were in the aircraft: back where the day puts them (the instructor by the aircraft if the cadet was briefed)
+    instructorHome: (root, actor) => { if (!actor || actor === instructor) placeInstructor(); else { for (const id of ['chief']) cast.home(id); layoutPeople(); } },
     onEnter: () => {
       world.setEnabled(insCollider, false); world.setEnabled(insApron, false); for (const t of interactor.list()) if (t.id === 'npc:instructor') t.enabled = false;
+      if (cast.where('chief') && fly.crewId === 'chief') cast.detach('chief');
       walkEl.hidden = true;
       setMode('fly');
     },
@@ -434,14 +606,207 @@ async function boot() {
       // beside the right wing, behind its trailing edge, facing the cabin
       const tg = spec.target; placeWalker(tg.a + 1.4, tg.c + 2.6, { a: tg.a, c: tg.c });
       if (then !== 'spectator' && !menu.isOpen) input.requestLock();
+      if (celebrate) toast('みんなが機体の後ろで待っています', 4200);
     },
     onTalk: (on) => { document.body.classList.toggle('talking', on); },
     onPause: () => openMenu(),
   });
 
   let pendingNewDay = false;
-  newDay();
-  placeInstructor();
+  // ---------------------------------------------------------------- the career (M5): the day, the time, the work
+  // Each morning the cadet comes in through the academy's front door (the dorm is out of the grounds); the day's plan
+  // is the career's (career/career.js schedule()). Work done moves the time on (morning → 午前 → 午後 → 夜); in the
+  // evening the front door takes them home to sleep, and the next morning begins with its card.
+  const cards = createCards();
+  const ENTRANCE = { a: 655.0, c: 274.6, face: { a: 655.0, c: 266.0 } };            // inside the front doors, facing the lobby
+  const windNow = () => (career.weather(prog()).kind === 'crosswind' ? XWIND : DAY_WIND);
+  // the light and the sky for the time of day and the weather
+  function applySlot() {
+    if (!params.has('t')) { hours = career.hours; }
+    const w = career.weather(prog()), slot = career.slot;
+    const fog = w.kind === 'amFog' && (slot === 'morning' || slot === 'am') ? 0.85 : 0;
+    const overcast = w.kind === 'storm' ? 1 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.95 : fog ? 0.7 : w.kind === 'crosswind' ? 0.35 : 0;
+    const grey = w.kind === 'storm' ? 0.7 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.6 : 0;
+    sky.setWeather({ overcast });
+    const st = sky.setTime(hours);
+    pipe.setHaze({ sunDir: st.dir, el: st.el, fog, grey });
+    buildings.setNight(st.lightsOn); academy.setNight(st.lightsOn);
+    $('#time').value = String(hours);
+    layoutPeople();
+    if (!(fly && fly.active) && !talk) placeInstructor();
+  }
+  // the work of the day done (a talk's hook 'done'): recorded, the time moved on
+  function workDone(arg) {
+    const k = lessonKind, slot = career.slot;
+    const next = () => { if (slot === 'morning') career.advance('am'); else if (slot === 'am') career.advance('pm'); else if (slot === 'pm') career.advance('evening'); };
+    if (arg === 'ceremony') { career.done('ceremony', 'welcome'); afterTalk.push(() => { career.advance('am'); applySlot(); toast('運航管理の佐伯さんが、訓練所を案内してくれます（ロビーの北、運航管理）', 5200); }); }
+    else if (arg === 'tour') { career.done('tour', 'tour'); afterTalk.push(() => { career.advance('pm'); applySlot(); toast('午後：ブリーフィング室 1 で、担当の早瀬 教官と顔合わせです', 5200); }); }
+    else if (arg === 'meet') { career.done('brief', 'meet'); career.finishPrologue(); afterTalk.push(() => { career.advance('evening'); applySlot(); toast('夕方です。ラウンジで同期と話してみましょう。今日を終えるときは、正面入口から寮へ', 6000); }); }
+    else if (arg === 'class' && k) { career.done('class', String(k.id)); career.tire(6); afterTalk.push(() => { next(); applySlot(); toast('午後：訓練装置室（FTD）で訓練装置の課目です', 4200); }); }
+    else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'ftd') {
+      career.done('ftd', k.id); career.tire(6);
+      if (arg === 'pass') groundPass(k.id, k.n ? cx.quiz.pct : 100);
+      afterTalk.push(() => { next(); applySlot(); toast(arg === 'pass' ? `${k.id} 合格。${career.slot === 'evening' ? '今日の予定は終わりです' : ''}` : 'もう一度、別の日に受けられます', 4200); });
+    } else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'exam') {
+      career.exam(k.id, cx.quiz.pct);
+      afterTalk.push(() => { next(); applySlot(); });
+    } else if (arg === 'study') { career.done('study', grounded() ? 'imsafe' : 'weather'); career.tire(4); afterTalk.push(() => { next(); applySlot(); }); }
+  }
+  // a training device lesson passed: into FLIGHT LAB's record (school.js's shape, as FLIGHT LAB's own ground pages write it)
+  function groundPass(id, pct) {
+    const p = prog(), r = p.lessons[id] || { tries: 0, best: '', pass: false, levels: [] };
+    r.tries++; r.pass = true; const g = pct >= 100 ? 'S' : pct >= 90 ? 'A' : 'B';
+    if (!r.best || 'SAB'.indexOf(g) < 'SAB'.indexOf(r.best)) r.best = g;
+    p.lessons[id] = r; FL.school.saveProgress(fly.flight.store, p);
+  }
+  // the go / no-go given: a morning of fog waits for the afternoon
+  function afterDecision() {
+    const w = weatherNow();
+    if (!w.fly.am && w.fly.pm && (career.slot === 'morning' || career.slot === 'am')) {
+      cards.show({ kicker: SLOT_NAMES.pm, title: '霧が晴れてきました', sub: dateText(career.day), ms: 1600, onDark: () => { career.advance('pm'); applySlot(); newDay(); } });
+    } else if (!w.fly.am && !w.fly.pm) toast('今日は飛びません。早瀬 教官と、地上で復習しましょう', 4600);
+    buildInstructorTalk();
+  }
+  // the talk on sitting down: today's flight when it can be flown now, else why not
+  function boardTalk() {
+    refreshCtx();
+    const it = flightItem(), plan = planOf(it);
+    if (career.chapter !== 'ch2') return careerBoardDialogs(FL, { reason: 'none' });
+    let reason = null;
+    if (!it || flownToday()) reason = it ? 'done' : 'none';
+    else if (!career.decidedToday()) reason = 'weather';
+    else if (grounded()) reason = 'tired';
+    else if (it.kind === 'checkride') reason = talkState.flags.c1_briefed ? null : 'brief';
+    else if (!talkState.flags.briefed_today) reason = 'brief';
+    if (it && it.kind === 'checkride' && !reason) return careerBoardDialogs(FL, { lessons: plan.lessons, checkride: true, who: PEOPLE.chief.title, color: PEOPLE.chief.color });
+    return careerBoardDialogs(FL, { lessons: plan.lessons, ready: !reason, reason: reason || 'none' });
+  }
+  // out of the aircraft after a flying day: what was flown counts (FLIGHT LAB's record already has the lessons)
+  function dayOver(d) {
+    const it = flightItem();
+    if (!d || d.phase !== 'done' || !it || career.chapter !== 'ch2') return;
+    career.done(it.kind, it.id); career.tire(15);
+    talkState.flags.briefed_today = false;
+    if (it.kind === 'checkride') { talkState.flags.c1_briefed = false; toast(passedAt(prog(), 'c1') ? 'ソロ前の審査、合格です。ソロの許可は早瀬 教官から' : '審査は今回は不合格。もう一度、別の日に受けられます', 6000); }
+    if (it.kind === 'solo') return;                          // (the celebration moves the time on)
+    if (career.slot === 'morning' || career.slot === 'am') career.advance('pm'); else career.advance('evening');
+    afterTalkOrNow(() => { applySlot(); buildInstructorTalk(); });
+  }
+  const afterTalkOrNow = (f) => { if (talk) afterTalk.push(f); else setTimeout(f, 0); };
+  // the first solo landed: its line in the logbook (solo time, the instructor's endorsement); they wait by the aircraft
+  function soloLanded(sum) {
+    logbook.add(entryFrom(sum, { remarks: 'ファーストソロ。場周経路 3 回、いずれも停止まで着陸。', date: dateOf(career.day).iso, dayN: career.day }));
+    career.done('solo', 'solo'); career.tire(15);
+    celebrate = true; talkState.flags.briefed_today = false;
+    placeInstructor('apron'); layoutPeople();
+  }
+  function showLogbookNow(fresh = -1) {
+    input.exitLock();
+    dayHud.showLogbook(logbook.entries, logbook.totals(), { fresh, onClose: () => { if ((mode === 'walk' || mode === 'fly') && !talk && !(fly && (fly.talking || fly.debrief)) && !tablet.isOpen) input.requestLock(); } });
+  }
+  // a new day (or the game's start): the card, the cadet at the front door, everyone in place
+  function startDay({ card = true, place = true } = {}) {
+    const st = career.state, ch = CHAPTERS[st.chapter];
+    const setUp = () => {
+      celebrate = false;
+      applySlot();
+      newDay(); buildInstructorTalk(); placeInstructor(); layoutPeople();
+      if (place) placeWalker(ENTRANCE.a, ENTRANCE.c, ENTRANCE.face);
+    };
+    if (!card) { setUp(); return Promise.resolve(); }
+    return cards.show({ kicker: ch.title, title: dateText(st.day), sub: `${SLOT_NAMES[st.slot]}　${career.weather(prog()).ja}`, ms: 1700, onDark: setUp }).then(() => greet());
+  }
+  // a word for the start of a day
+  function greet() {
+    const st = career.state, sch = planToday();
+    if (st.chapter === 'prologue') toast('入社の日です。ロビーで、主任教官の話が始まります', 5200);
+    else if (sch.some(x => x.kind === 'off')) toast('今日は休日です。ラウンジで休むのも、自習するのもいい。正面入口から寮に帰れば、明日になります', 6000);
+    else toast(`今日の予定：${sch.map(x => `${SLOT_NAMES[x.slot]} ${x.title}`).join('／')}（Tab でタブレット）`, 6000);
+  }
+  // the front door: home to the dorm (the evening, or a day off) — early, or after some study (it tires)
+  function goHome() {
+    const st = career.state, off = planToday().some(x => x.kind === 'off');
+    if (st.slot !== 'evening' && !off) { toast('まだ今日の予定が残っています（Tab でタブレット）', 3000); return 'closed'; }
+    homeOpen = true;
+    interactor.showCard('寮へ帰る', '今日の訓練はここまで。寮に帰って休みます。', [{ k: 1, text: 'すぐに寝る', act: 'early' }, { k: 2, text: '少し自習してから寝る（疲れが残る）', act: 'late' }, { k: 3, text: 'やっぱり残る', act: 'stay' }]);
+    return 'examined';
+  }
+  function homeChoose(k) {
+    if (!homeOpen) return false;
+    homeOpen = false; interactor.closeCard();
+    if (k === 2) return true;
+    sleepNow({ late: k === 1 });
+    return true;
+  }
+  function sleepNow({ late = false } = {}) {
+    const was = career.chapter;
+    career.sleep({ late });
+    // the day's own flags go with the day
+    for (const f of ['briefed_today', 'brief_checked', 'c1_briefed']) delete talkState.flags[f];
+    saved.save(talkState);
+    career.advanceChapter(prog(), trustI());
+    if (career.chapter !== was) toast(`${CHAPTERS[career.chapter].title}`, 4000);
+    return startDay({ card: true, place: true });
+  }
+  interactor.add({ id: 'home', frame: [ENTRANCE.c + 1.6, 1.3, -ENTRANCE.a], radius: 0.9, prompt: () => (career.slot === 'evening' || planToday().some(x => x.kind === 'off') ? '寮へ帰る（今日を終える）' : '正面入口'), use: goHome });
+  $('#card .card-choices').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && homeOpen) homeChoose(+b.dataset.k); });
+
+  // the tablet (Tab): what it shows, what it does
+  const BANKS = FL.quiz.BANKS.filter(b => !['q_me', 'q_ifr', 'q_nav', 'q_crm'].includes(b.id));
+  const tablet = createTablet({
+    model: () => {
+      refreshCtx();
+      const st = career.state, p = prog(), sch = planToday(), w = career.weather(p), order = ['morning', 'am', 'pm', 'evening'];
+      const state = (x) => (career.doneToday(x.kind, x.id) || (x.kind === 'class' && career.doneToday('class', x.id)) ? 'done' : order.indexOf(x.slot) < order.indexOf(st.slot) ? 'missed' : x.slot === st.slot ? 'now' : 'later');
+      return {
+        date: dateText(st.day), chapterTitle: CHAPTERS[st.chapter].title, slotName: SLOT_NAMES[st.slot],
+        plan: sch.filter(x => x.kind !== 'off').map(x => ({ ...x, slotName: SLOT_NAMES[x.slot], state: state(x) })),
+        weather: { ja: w.ja, metarAm: w.metar.am, metarPm: w.metar.pm, taf: w.taf, flyAm: w.fly.am, flyPm: w.fly.pm },
+        fatigue: st.fatigue, tired: career.tired(), gate: career.gate(p, trustI()), solo: !!st.solo,
+        ground: GROUND.map(id => ({ id, title: FTD_TITLES[id], pass: groundPassed(p, id) })),
+        classes: { done: CLASSES.filter((_, i) => career.isDone('class', String(i))).length, total: CLASSES.length },
+        exams: Object.entries(EXAMS).map(([id, e]) => ({ title: e.title, ...(st.exams[id] || { best: 0, pass: false, tries: 0 }) })),
+        lessons: [...CH2, 'c1'].map(id => ({ id, title: FL.school.lesson(id).title, best: p.lessons[id] ? p.lessons[id].best : '', pass: passedAt(p, id) })),
+        trust: [['instructor', INSTRUCTOR.title_ja], ['chief', PEOPLE.chief.title], ['dispatcher', PEOPLE.dispatcher.title], ['mechanic', PEOPLE.mechanic.title]].map(([k, n]) => ({ name: n, v: Math.round(trustOf(talkState, k)) })),
+        book: book.chapters.map(c => ({ id: c.id, n: c.n, title: c.title, sections: c.sections.map(x => ({ id: x.id, title: x.title })) })),
+        banks: BANKS.map(b => ({ id: b.id, title: b.title, n: b.qs.length })),
+        evening: st.slot === 'evening', canWait: st.slot !== 'evening' && !sch.some(x => x.slot === st.slot && state(x) === 'now'),
+      };
+    },
+    act: {
+      logbook: () => showLogbookNow(-1),
+      read: (id) => { const sec = book.section(id); if (sec) dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sec.html }); },
+      practice: (bankId) => practice(bankId),
+      exportSave: () => exportArchive({ career: career.state, talk: talkState, logbook: logbook.entries, progress: prog(), records: FL.school.loadRecords(fly.flight.store) }),
+      importSave: (text) => {
+        try {
+          const a = importArchive(text, FL);
+          career.load(a.career);
+          for (const k of Object.keys(talkState)) delete talkState[k];
+          Object.assign(talkState, a.talk); saved.save(talkState);
+          logbook.replace(a.logbook);
+          FL.school.saveProgress(fly.flight.store, a.progress); FL.school.saveRecords(fly.flight.store, a.records);
+          tablet.close(); startDay({ card: true, place: true });
+          return '読み込みました。';
+        } catch (e) { return `読み込めませんでした：${e.message}`; }
+      },
+      reset: () => resetProgress(),
+      wait: () => { if (career.advance()) { cards.show({ kicker: SLOT_NAMES[career.slot], title: dateText(career.day), sub: '', ms: 900, onDark: () => applySlot() }); } },
+    },
+    onClose: () => { if (mode === 'walk' && !talk && !menu.isOpen) input.requestLock(); },
+  });
+  // a practice test (the tablet): ten questions from one bank, said by the tablet itself (not scored)
+  function practice(bankId) {
+    const b = FL.quiz.BANKS.find(x => x.id === bankId); if (!b) return;
+    const E = { title: `練習：${b.title}`, banks: [bankId], n: 10, pass: 80 };
+    const data = examDialogs(FL, 'written1', { seed: Date.now() % 100000, speaker: 'lecturer', exam: E });
+    data.speakers = { ...data.speakers, lecturer: { name_ja: 'タブレット（練習問題）', color: '#8fd3ff' } };
+    talk = { yaw: walker.state.yaw, pitch: walker.state.pitch }; talkWho = 'tablet'; talkActor = null;
+    talkRun = startLesson('practice', bankId, data);
+    document.body.classList.add('talking'); input.exitLock();
+    talkRun.start('exam');
+  }
+
   // the walk-around card's choices with the mouse (when it is free)
   $('#card .card-choices').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) walkChoose(+b.dataset.k); });
 
@@ -472,7 +837,7 @@ async function boot() {
     // leaving the aircraft goes through fly-mode (the fade, the instructor back to his room, the aircraft to its stand)
     if (mode === 'fly' && fly && fly.active) { fly.leave({ then: m }); return; }
     mode = m;
-    if (runner.running) runner.stop();
+    if (talk && talkRun) talkRun.stop();
     if (m === 'spectator') spectator.fromCamera();
     else if (m === 'walk') { walker.apply(0); interactor.closeCard(); }
     else interactor.closeCard();
@@ -496,13 +861,13 @@ async function boot() {
       lostAt = performance.now();
       // Esc while reading a card (the browser takes that Esc to free the mouse): just close the card
       if (interactor.cardOpen) { interactor.closeCard(); audio.ui('close'); }
-      else if (talk || (fly && (fly.talking || fly.debrief)) || dayHud.logbookOpen) { /* talking, the debrief, the logbook: the mouse is free */ }
+      else if (talk || (fly && (fly.talking || fly.debrief)) || dayHud.logbookOpen || tablet.isOpen || cards.showing) { /* talking, the debrief, the logbook, the tablet: the mouse is free */ }
       else if (started && (mode === 'walk' || mode === 'fly') && !menu.isOpen) openMenu();
     }
   });
   renderer.domElement.addEventListener('click', () => {
     audio.unlock();
-    if (talk || (fly && (fly.talking || fly.debrief)) || dayHud.logbookOpen) return;   // the dialogue UI (or the debrief, the logbook) takes the clicks
+    if (talk || (fly && (fly.talking || fly.debrief)) || dayHud.logbookOpen || tablet.isOpen) return;   // the dialogue UI (or the debrief, the logbook, the tablet) takes the clicks
     if (started && !menu.isOpen) input.requestLock();
   });
   addEventListener('keydown', (e) => {
@@ -514,9 +879,17 @@ async function boot() {
       return;
     }
     if (menu.isOpen) return;
-    if (dayHud.logbookOpen) return;
+    if (dayHud.logbookOpen || tablet.isOpen || cards.showing) return;
     if (mode === 'fly') { if (fly) fly.key(e); return; }       // F is the throttle there (perf: the menu's setting)
     if (mode === 'walk' && walkOpen && /^(Digit|Numpad)[1-4]$/.test(e.code)) { walkChoose(+e.code.slice(-1) - 1); return; }
+    if (mode === 'walk' && homeOpen && /^(Digit|Numpad)[1-3]$/.test(e.code)) { homeChoose(+e.code.slice(-1) - 1); return; }
+    if (e.code === 'Tab' && mode === 'walk' && !talk) {
+      e.preventDefault();
+      if (tablet.isOpen) tablet.close();
+      else if (talkState.flags.has_tablet || career.chapter !== 'prologue') { interactor.closeCard(); input.exitLock(); tablet.open(); audio.ui('open'); }
+      else toast('タブレットは、運航管理で受け取ります', 2600);
+      return;
+    }
     if (e.code === 'KeyF') settings.set('showPerf', !settings.get('showPerf'));
     if (mode !== 'spectator') return;
     if (/^Digit[0-9]$/.test(e.code)) { const k = +e.code.slice(5), i = k === 0 ? 9 : k - 1; if (VIEWS[i]) setView(i); }
@@ -586,7 +959,7 @@ async function boot() {
     const live = started || scripted > 0;   // behind the start screen nothing moves, and no key does anything
     if (!live) input.takeLook();
     if (mode === 'walk') {
-      if (talk) { input.takeLook(); faceInstructor(dt); }
+      if (talk) { input.takeLook(); if (talkWho !== 'tablet') faceTalker(dt); }
       else if (!menu.isOpen && live) {
         walker.update(dt);
         if ((input.pressed('KeyE') || input.pressed('Mouse0')) && performance.now() - talkEndedAt > 500) { const r = interactor.use(); if (r === 'closed') audio.ui('close'); }
@@ -603,12 +976,13 @@ async function boot() {
     // near today's aircraft: the walk-around's progress; the instructor leaves the room for it once the cadet has gone
     walkEl.hidden = !(mode === 'walk' && Math.hypot(pa - tg.a, pc - tg.c) < 14);
     if (insGoOut && mode === 'walk' && !(fly && fly.active) && academy.roomOf(pa, pc)?.id !== 'brief-1') { insGoOut = false; placeInstructor('apron'); }
-    walkProps.update(performance.now() / 1000, DAY_WIND.kt);
+    walkProps.update(performance.now() / 1000, windNow().kt);
     // the instructor looks at the player when they are near (or talking), and moves their mouth while their line shows
     if (!(fly && fly.active)) {                                // (in the aircraft fly-mode moves him)
       const near = insAt === 'room' ? Math.hypot(pa - INS.a, pc - INS.c) < 7 && academy.roomOf(pa, pc)?.id === 'brief-1' : Math.hypot(pa - APRON.a, pc - APRON.c) < 9;
       const v = talk ? talkRunner().view() : null;
-      instructor.update(dt, { lookAt: talk || near ? camWorld : null, talking: !!(v && v.speaker === 'instructor' && dui.typing) });
+      instructor.update(dt, { lookAt: (talk && talkWho === 'instructor') || near ? camWorld : null, talking: !!(v && v.speaker === 'instructor' && dui.typing) });
+      cast.update(dt, camWorld, { a: pa, c: pc }, talk ? talkWho : null, !!(v && v.speaker === talkWho && dui.typing));
     }
     // inside: the eye adapts (exposure), the ceiling lights near the player light the room, the ambience changes
     const k = indoorAt(ACADEMY, pa, pc, camWorld.y - G);
@@ -634,7 +1008,7 @@ async function boot() {
     sky.update(camera, t, focus);
     ground.update(t);
     const w = mode === 'fly' && fly ? fly.wind() : null;
-    airfield.update(t, { cameraWorld: camWorld, windFromDeg: w ? w.fromDeg : DAY_WIND.fromDeg, windKt: w ? w.kt : DAY_WIND.kt, lightsOn: sky.state.lightsOn });
+    airfield.update(t, { cameraWorld: camWorld, windFromDeg: w ? w.fromDeg : windNow().fromDeg, windKt: w ? w.kt : windNow().kt, lightsOn: sky.state.lightsOn });
     veg.update(t, camWorld);
     pipe.render();
     stats.frames++; stats.acc += dtMs;
@@ -732,7 +1106,9 @@ async function boot() {
   }
 
   // ---------------------------------------------------------------- start
-  placeWalker(spec.start.a, spec.start.c, spec.start.yawToward);
+  // the career's day: everyone in place, the cadet inside the front doors (?brief: in briefing room 1, as M1–M4 began)
+  startDay({ card: false, place: true });
+  if (params.has('brief')) placeWalker(spec.start.a, spec.start.c, spec.start.yawToward);
   const startView = parseInt(params.get('view'), 10);
   if (startView >= 1 && startView <= VIEWS.length) setView(startView - 1);
   renderChips();
@@ -815,6 +1191,29 @@ async function boot() {
       },
     },
     logbook: () => ({ entries: logbook.entries, totals: logbook.totals(), open: dayHud.logbookOpen, close: () => dayHud.hideLogbook() }),
+    // the career (M5): its state, today's plan and weather, the talks' context; a jump to any point (tests); the time
+    // moved on, the night; talking to anyone; the lesson or test running (its questions, to answer them); the tablet
+    career: {
+      state: () => JSON.parse(JSON.stringify(career.state)), schedule: () => planToday(), weather: () => career.weather(prog()), ctx: () => JSON.parse(JSON.stringify(refreshCtx())),
+      progress: () => prog(), trust: (who = 'instructor') => trustOf(talkState, who), flags: () => ({ ...talkState.flags }),
+      set: (o = {}) => {
+        const st = { ...career.state, ...o.state };
+        career.load(st);
+        if (o.progress) FL.school.saveProgress(fly.flight.store, o.progress);
+        if (o.flags) Object.assign(talkState.flags, o.flags);
+        if (o.trust) Object.assign(talkState.trust, o.trust);
+        saved.save(talkState);
+        return startDay({ card: false, place: o.place !== false });
+      },
+      advance: (slot) => { const r = career.advance(slot); applySlot(); return r; },
+      sleep: (late = false) => sleepNow({ late }),
+      talkTo: (id) => startTalk(id), where: (id) => (id === 'instructor' ? { at: insAt } : cast.where(id)),
+      activity: () => (lessonKind ? { kind: lessonKind.kind, id: lessonKind.id, n: lessonKind.n, questions: (lessonRun && lessonQuestions) || [] } : null),
+      home: () => goHome(), homeChoose: (k) => homeChoose(k),
+      tablet: { open: (p) => tablet.open(p), close: () => tablet.close(), isOpen: () => tablet.isOpen, page: () => tablet.page },
+      cards: () => cards.showing, celebrate: () => celebrate, reset: () => resetProgress(),
+      readiness: () => { const d = boardTalk(); return d.dialogs.board.nodes.today ? 'ready' : d.dialogs.board.nodes.c2 ? 'checkride' : d.dialogs.board.nodes.not.text; },
+    },
     settings,
     // render n frames now and return the last as a PNG data URL (for tests: the drawing buffer is read in the same task)
     snapshot: (n = 1) => { for (let k = 0; k < n; k++) step(performance.now()); return renderer.domElement.toDataURL('image/png'); },
@@ -825,7 +1224,11 @@ async function boot() {
     if (started) return; started = true; lastPlace = '';
     $('#boot').classList.add('fade'); $('#hud').hidden = false; renderer.domElement.focus(); setTimeout(() => $('#boot').remove(), 700);
     audio.unlock();
-    if (mode === 'walk') { input.requestLock(); toast('ブリーフィング室 1 にいます。\n今日の機体（Archer）は駐機場で待っています', 5000); }
+    if (mode === 'walk') {
+      input.requestLock();
+      const st = career.state;
+      cards.show({ kicker: CHAPTERS[st.chapter].title, title: dateText(st.day), sub: `${SLOT_NAMES[st.slot]}　${career.weather(prog()).ja}`, ms: 1500 }).then(() => greet());
+    }
   };
   go.addEventListener('click', start);
   if (params.has('auto') || params.has('bench')) start();

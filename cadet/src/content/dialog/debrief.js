@@ -1,4 +1,5 @@
-// CADET — content/dialog/debrief.js : 早瀬 教官's debrief at the end of the first day (M4), in the aircraft on the stand
+// CADET — content/dialog/debrief.js : 早瀬 教官's debrief at the end of a flying day (M4; M5: every day of chapter 2;
+// on the check ride the chief instructor gives it), in the aircraft on the stand
 // with the engine stopped. It is made from the day's summary (career/day.js): the walk-around (what was found, what
 // was missed, what was left undone), the radio (right the first time), the taxiing (the hold-short line), the three
 // lessons (FLIGHT LAB's grades and the row furthest outside its standard), then one thing to work on, the trust
@@ -49,7 +50,7 @@ export function debriefDialogs(sum) {
   const nextTxt = sum.incursion ? '次は、停止線の前で止まる。それだけは、毎回必ず。' : weak ? `次は${q(weak.title)}をもう一度やりましょう。` : missed ? '次は、外部点検をもっとゆっくり、ひとつずつ。' : r.first < r.n ? '次は、無線の復唱を、声に出して練習しておきましょう。' : '次は、今日の課目を少し厳しい基準で飛んでみましょう。';
   N.next = say(nextTxt, { next: nx('next') });
   const t = sum.trust;
-  N.trust = say(t >= 6 ? '今日はとても良い 1 日でした。この調子で行きましょう。' : t >= 0 ? '最初の 1 日としては十分です。少しずつ慣れていきましょう。' : '今日は反省点の多い 1 日でしたね。でも、ここで気づけたことが大事です。', {
+  N.trust = say(t >= 6 ? '今日はとても良い 1 日でした。この調子で行きましょう。' : t >= 0 ? '大事なところは押さえられています。少しずつ、余裕を増やしていきましょう。' : '今日は反省点の多い 1 日でしたね。でも、ここで気づけたことが大事です。', {
     effects: [{ trust: 'instructor', add: t }, { set: 'day1_done', to: true }], hook: { name: 'nod' }, next: nx('trust') });
   N.sign = say('航空日誌に今日の飛行を書いて、署名しておきます。', { choices: [
     { text: '航空日誌を見る', next: 'bye', effects: [{ hook: 'logbook' }] },

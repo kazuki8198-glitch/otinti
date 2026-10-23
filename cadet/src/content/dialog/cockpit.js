@@ -85,3 +85,48 @@ export function debriefLine(st) {
   if (st.passed) return '合格です。よくできました。次は、もう少し基準の真ん中を狙ってみましょう。';
   return '惜しかったですね。どこでずれたか、結果を一緒に見てみましょう。';
 }
+
+// ---- M5: the talk on sitting down, in the career ----
+// opts: { lessons (today's: career/day.js planFor), ready (the day can be flown now) or reason (why not: 'brief' — not
+// briefed yet; 'weather' — no go / no-go given at the counter; 'none' — nothing to fly today; 'tired' — grounded by the
+// IMSAFE question), checkride (the chief instructor in the right seat) }. The choice reaches the game as the hook 'fly'
+// ('day:<level>' | 'free' | 'leave'), as in M4.
+export function careerBoardDialogs(FL, { lessons = [], ready = false, reason = 'none', checkride = false, who = INSTRUCTOR.title_ja, color = '#5cc8ff' } = {}) {
+  const all = lessonsOf(FL);
+  const titles = lessons.map(id => { const l = all.find(x => x.id === id); return l ? q(l.title) : id; });
+  const levels = FL.school && Array.isArray(FL.school.LEVELS) ? FL.school.LEVELS : [];
+  const lv = (id) => levels.find(l => l.id === id) || { name: id };
+  const say = (text, more = {}) => ({ speaker: 'instructor', text, ...more });
+  const B = {};
+  const speakers = { instructor: { name_ja: who, color }, player: SPEAKERS.player };
+  if (checkride) {
+    B.seat = say('シートベルト、ドア、よし。……では、ソロ前の審査を始めます。', { hook: { name: 'look', arg: 'player' }, next: 'c2' });
+    B.c2 = say(`内容は${titles.join('、')}。ここから先、私は手伝いません。いつもどおりに、チェックリストから。`, { choices: [
+      { text: '始めます（エンジン始動前の点検から）', next: 'go', effects: [{ hook: 'fly', arg: 'day:basic' }] },
+      { text: '一度降ります', next: 'leave', effects: [{ hook: 'fly', arg: 'leave' }] },
+    ] });
+    B.go = say('どうぞ。', { end: true });
+    B.leave = say('わかりました。準備ができたら、また。', { end: true });
+    return { speakers, flags: [], hooks: [...COCKPIT_HOOKS], dialogs: { board: { start: 'seat', nodes: B } } };
+  }
+  const why = { brief: 'まだブリーフィングをしていませんね。先に、ブリーフィング室 1 で今日の課目を確かめましょう。', weather: '今日の天気の判断がまだです。運航管理で METAR と TAF を見て、佐伯さんと決めてきてください。',
+    tired: '今日は飛ばないと決めましたね。その判断を守りましょう。', none: '今日は飛ぶ予定はありません。', done: '今日の飛行は終わりましたね。' }[reason] || '今日は飛ぶ予定はありません。';
+  B.seat = say('シートベルトは締めましたか。……はい、ドアもロックしました。', { hook: { name: 'look', arg: 'player' }, next: ready ? 'today' : 'not' });
+  if (ready) {
+    B.today = say(`今日は${titles.join('、')}。ブリーフィングのとおりに、エンジン始動前の点検から始めましょう。基準のきびしさ（レベル）はどうしますか。`, { hook: { name: 'point', arg: 'panel' }, choices: [
+      { text: `${lv('basic').name}`, next: 'go', effects: [{ hook: 'fly', arg: 'day:basic' }] },
+      { text: `${lv('intro').name}（基準がゆるやか：課目の合格には数えません）`, next: 'go', effects: [{ hook: 'fly', arg: 'day:intro' }] },
+      { text: `${lv('precision').name}（基準がきびしい）`, next: 'go', effects: [{ hook: 'fly', arg: 'day:precision' }] },
+      { text: 'やっぱり降ります', next: 'leave', effects: [{ hook: 'fly', arg: 'leave' }] },
+    ] });
+    B.go = say('わかりました。では、始めましょう。', { hook: { name: 'nod' }, end: true });
+  } else {
+    B.not = say(why, { choices: [
+      { text: '駐機場から少しだけ飛ぶ（練習）', next: 'free', effects: [{ hook: 'fly', arg: 'free' }] },
+      { text: '降ります', next: 'leave', effects: [{ hook: 'fly', arg: 'leave' }] },
+    ] });
+    B.free = say('わかりました。エンジンをかけますね。場周を一周して戻りましょう。', { end: true });
+  }
+  B.leave = say('わかりました。準備ができたら、また乗ってください。', { hook: { name: 'nod' }, end: true });
+  return { speakers, flags: [], hooks: [...COCKPIT_HOOKS], dialogs: { board: { start: 'seat', nodes: B } } };
+}

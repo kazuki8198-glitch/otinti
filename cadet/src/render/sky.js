@@ -78,7 +78,7 @@ export function createSky(renderer, scene, quality) {
   const hemi = new THREE.HemisphereLight(0x9cc3e6, 0x3a4a2a, 0.0);       // only at night (moon / sky glow)
   scene.add(hemi);
 
-  const state = { hours: 9.5, day: 285, el: 30, dir: new THREE.Vector3(0, 1, 0), lightsOn: 0, half: 90 };
+  const state = { hours: 9.5, day: 285, el: 30, dir: new THREE.Vector3(0, 1, 0), lightsOn: 0, half: 90, overcast: 0 };
   function applyQuality(q) {
     sun.shadow.mapSize.set(q.shadow, q.shadow);
     if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
@@ -97,7 +97,8 @@ export function createSky(renderer, scene, quality) {
     const low = 1 - THREE.MathUtils.smoothstep(p.el, 2, 25);
     U.turbidity.value = 2.8 + 3.5 * low; U.rayleigh.value = 1.15 + 0.9 * low;
     const L = sunlight(p.el);
-    sun.color.copy(L.color); sun.intensity = 10 * L.k;                    // about four times the sky's light on open ground
+    // under an overcast the sun is behind the cloud: less of it, more of a grey sky
+    sun.color.copy(L.color); sun.intensity = 10 * L.k * (1 - 0.8 * state.overcast);   // about four times the sky's light on open ground
     hemi.intensity = 0.25 * (1 - THREE.MathUtils.smoothstep(p.el, -6, 2));            // moonlight and sky glow at night
     state.lightsOn = 1 - THREE.MathUtils.smoothstep(p.el, -4, 5);
     // the image-based light from this sky
@@ -135,7 +136,14 @@ export function createSky(renderer, scene, quality) {
     state.half = h;
     const c = sun.shadow.camera; c.left = -h; c.right = h; c.top = h; c.bottom = -h; c.updateProjectionMatrix();
   }
+  // the day's weather (M5): cloud cover 0..1 (0.34 a fair day's few clouds, 1 overcast), the sky redrawn at once
+  function setWeather({ overcast = 0 } = {}) {
+    state.overcast = Math.max(0, Math.min(1, overcast));
+    U.cloudCoverage.value = 0.34 + 0.6 * state.overcast; U.cloudDensity.value = 0.55 + 0.4 * state.overcast;
+    U.turbidity.value = 2.8 + 6 * state.overcast;
+    setTime(state.hours, state.day);
+  }
   const applyQ = applyQuality;
   function applyQualityKeep(q) { const custom = state.half !== presetHalf ? state.half : null; applyQ(q); presetHalf = state.half; if (custom != null) setShadowHalf(custom); }
-  return { sky, sun, state, setTime, update, applyQuality: applyQualityKeep, setShadowHalf, uniforms: U };
+  return { sky, sun, state, setTime, setWeather, update, applyQuality: applyQualityKeep, setShadowHalf, uniforms: U };
 }

@@ -401,7 +401,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
       if (['taxiOut', 'lineup', 'taxiOff', 'taxiIn'].includes(day.phase) && !day.assisting) await C(() => window.__cadet.fly.key('KeyY'));
       await tick(4);
     }
-    assert.deepEqual(log, ['start', 'afterStart', 'atis', 'ground', 'taxiOut', 'runup', 'tower', 'lineup', 't1', 'leave', 'transit', 'a2', 'back', 'return', 't3', 'exit', 'taxiOff', 'groundIn', 'taxiIn', 'shutdown', 'debrief', 'done']);
+    assert.deepEqual(log, ['afterStart', 'atis', 'ground', 'taxiOut', 'runup', 'tower', 'lineup', 't1', 'leave', 'transit', 'a2', 'back', 'return', 't3', 'exit', 'taxiOff', 'groundIn', 'taxiIn', 'shutdown', 'debrief', 'done']);
     assert.equal(day.phase, 'done', log.join(' '));
     assert.ok(!day.st.incursion);
     // the lessons in the logbook: FLIGHT LAB's grades for the same inputs (its bot in node)

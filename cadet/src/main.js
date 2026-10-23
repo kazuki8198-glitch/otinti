@@ -215,7 +215,7 @@ async function boot() {
   const bodyToFrame = (b) => { const w = todayAc.root.localToWorld(new THREE.Vector3(b[0], b[1], b[2])), [fx, fz] = toFrame(w.x, w.z); return [fx, w.y - G, fz]; };
   {
     const AR = FL.physics.AIRCRAFT.find(a => a.id === 'pa28'), v = AR.v;
-    interactor.add({ id: 'aircraft:board', owner: 'aircraft:today', frame: [tg.c, 1.25, -(tg.a + 1.0)], radius: 0.5, prompt: '乗り込む', use: () => (fly ? fly.board() : null) });
+    interactor.add({ id: 'aircraft:board', owner: 'aircraft:today', frame: [tg.c, 1.25, -(tg.a + 1.0)], radius: 0.5, onOwner: true, prompt: '乗り込む', use: () => (fly ? fly.board() : null) });
     interactor.add({
       id: 'aircraft:today', owner: 'aircraft:today', frame: bodyToFrame([-0.66, 0.15, 1.0]), radius: 0.5, prompt: '今日の機体を見る',
       use: () => {

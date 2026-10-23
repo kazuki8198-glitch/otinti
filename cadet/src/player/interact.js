@@ -47,9 +47,10 @@ export function createInteractor({ walker, world, L, hud }) {
       const [tx, ty, tz] = t.frame;
       const d = Math.hypot(tx - r.ox, ty - r.oy, tz - r.oz), ux = (tx - r.ox) / d, uy = (ty - r.oy) / d, uz = (tz - r.oz) / d;
       const hit = world.raycast(r.ox, r.oy, r.oz, ux, uy, uz, d);
-      // (a place under a wing or at a wheel: one crouches to look, so its owner's own parts do not hide it: `low`)
+      // (a place under a wing or at a wheel: one crouches to look, so its owner's own parts do not hide it: `low`;
+      // the door on the wing walk: `onOwner`, the wing's collider round it does not hide it either)
       const own = hit && hit.box && hit.box.tag && (hit.box.tag === t.id
-        || (hit.box.tag === t.owner && (t.low || d - hit.dist < t.radius + 0.6)));
+        || (hit.box.tag === t.owner && (t.low || t.onOwner || d - hit.dist < t.radius + 0.6)));
       if (hit && hit.dist < d - (t.radius * 0.8) && !own) continue;
       best = t; break;
     }

@@ -1,6 +1,6 @@
 // CADET — player/interact.js : what the player is looking at, and E (or a click) to use it.
 // Targets are spheres in the runway frame ({ id, frame: [x, y, z], radius, prompt(), use() }). The nearest target the
-// view ray passes through (within reach) wins, unless a wall stands between the eyes and it (collision raycast).
+// view ray passes through (within reach) wins; one with a wall between the eyes and it (collision raycast) gives way to the next.
 // The examine card shows a title and a few lines; it closes with E / Esc / a click, or when the player walks away.
 export const REACH = 2.6;
 
@@ -26,7 +26,7 @@ export function createInteractor({ walker, world, L, hud }) {
 
   function update(camera) {
     const r = viewRay(camera);
-    let best = null, bestT = Infinity;
+    const cands = [];
     for (const t of targets.values()) {
       if (t.enabled === false) continue;
       const [tx, ty, tz] = t.frame;
@@ -37,19 +37,21 @@ export function createInteractor({ walker, world, L, hud }) {
       const off = Math.hypot(px, py, pz);
       if (off > t.radius) continue;
       // prefer what is nearest to the centre of the view, then nearest
-      const score = along + off * 1.5;
-      if (score < bestT) { bestT = score; best = t; }
+      cands.push({ t, score: along + off * 1.5 });
     }
-    if (best) {
-      // a wall in between hides it (the target's own collider does not count, nor its owner's where it touches the
-      // target: the aircraft's wing under its door, not the fuselage seen from the other side)
-      const [tx, ty, tz] = best.frame;
+    cands.sort((x, y) => x.score - y.score);
+    // the best one not hidden: a wall in between hides it (the target's own collider does not count, nor its owner's
+    // where it touches the target: the aircraft's wing under its door, not the fuselage seen from the other side)
+    let best = null;
+    for (const { t } of cands) {
+      const [tx, ty, tz] = t.frame;
       const d = Math.hypot(tx - r.ox, ty - r.oy, tz - r.oz), ux = (tx - r.ox) / d, uy = (ty - r.oy) / d, uz = (tz - r.oz) / d;
       const hit = world.raycast(r.ox, r.oy, r.oz, ux, uy, uz, d);
       // (a place under a wing or at a wheel: one crouches to look, so its owner's own parts do not hide it: `low`)
-      const own = hit && hit.box && hit.box.tag && (hit.box.tag === best.id
-        || (hit.box.tag === best.owner && (best.low || d - hit.dist < best.radius + 0.6)));
-      if (hit && hit.dist < d - (best.radius * 0.8) && !own) best = null;
+      const own = hit && hit.box && hit.box.tag && (hit.box.tag === t.id
+        || (hit.box.tag === t.owner && (t.low || d - hit.dist < t.radius + 0.6)));
+      if (hit && hit.dist < d - (t.radius * 0.8) && !own) continue;
+      best = t; break;
     }
     current = best;
     hud.prompt(current ? (typeof current.prompt === 'function' ? current.prompt() : current.prompt) : null);

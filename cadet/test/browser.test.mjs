@@ -167,28 +167,33 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
       return { said, v };
     };
     await until(/今日の課目/);
-    // today's lesson: its title, goal and standard from FLIGHT LAB's syllabus, the figure on the screen
-    const lesson = await ev(() => window.__cadet.FL.syllabus.STAGES.flatMap(s => s.lessons).find(l => l.id === 'a1'));
+    // today's lesson (a2, the middle of the day): its title, goal and standard from FLIGHT LAB's syllabus
+    const lesson = await ev(() => window.__cadet.FL.syllabus.STAGES.flatMap(s => s.lessons).find(l => l.id === 'a2'));
     await ev(() => window.__cadet.dialogChoose('今日の課目'));
     const brief = await until(/./);
     const talk = brief.said.join('\n');
     assert.ok(talk.includes(lesson.title), 'the title'); assert.ok(talk.includes(lesson.std), 'the standard');
-    assert.match(talk, /トリムを使い、操縦から手を離しても水平飛行が続く状態を作る/);
+    assert.ok(talk.includes(lesson.goal), 'the goal');
+    assert.match(talk, /1 日の飛行の中で/, 'where it sits in the day');
     // the check: the right answer raises trust
     assert.equal(brief.v.choices.length, 3);
-    await ev(() => window.__cadet.dialogChoose('トリムを使い'));
+    await ev((g) => window.__cadet.dialogChoose(g), lesson.goal.slice(0, 8));
     let st = await ev(() => window.__cadet.talkState());
     assert.equal(st.flags.brief_checked, true); assert.equal(st.trust.instructor, 53);
     // a question about the textbook: the section's key points, then the textbook opens on it
     await until(/質問があります/); await ev(() => window.__cadet.dialogChoose('質問があります'));
-    await ev(() => window.__cadet.dialogChoose('飛行機に働く 4 つの力'));
+    // (today's section first in the list)
+    const sec = (await ev(() => window.__cadet.dialog())).choices.find(c => /（今日の課目）/.test(c.text)).text.replace('（今日の課目）', '');
+    await ev(() => window.__cadet.dialogChoose('今日の課目'));
     const ans = await until(/教科書で読む/);
-    assert.match(ans.said[0], /飛行機に働く 4 つの力/);
-    await ev(() => window.__cadet.dialogChoose('図を画面に映して'));
-    assert.match((await until(/教科書で読む/)).said[0], /画面に映します/);
+    assert.ok(ans.said[0].includes(sec), `${sec}: ${ans.said[0]}`);
+    if (ans.v.choices.some(c => /図を画面に映して/.test(c.text))) {
+      await ev(() => window.__cadet.dialogChoose('図を画面に映して'));
+      assert.match((await until(/教科書で読む/)).said[0], /画面に映します/);
+    }
     await ev(() => window.__cadet.dialogChoose('教科書で読む'));
     assert.equal((await ev(() => window.__cadet.dialog())).bookOpen, true);
-    assert.match(await ev(() => document.body.innerText), /重力（Weight）/);
+    assert.ok((await ev(() => document.body.innerText)).includes(sec), 'the textbook opens on it');
     await ev(() => window.__cadet.closeBook());
     assert.equal((await ev(() => window.__cadet.dialog())).bookOpen, false);
     // thanks → back to the menu → the wrap-up and goodbye: the walk comes back

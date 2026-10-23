@@ -103,10 +103,10 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
   }
   const prep = (c) => { c.memo = st.memo; c.walk = true; c.qnh = radio.weather.qnh; return c; };
   function confirm(c) {
-    prep(c);
+    prep(c); tick(c);                                    // (the items already set tick first: Enter is for the one waiting)
     const C = list(); if (!C || st.i >= C.items.length) return false;
     const it = C.items[st.i];
-    if (it[2]) { tick(c); return false; }
+    if (it[2]) return false;
     st.ticked.push(`${st.list}:${st.i}`); st.i++; emit({ type: 'tick', list: st.list, i: st.i - 1, confirmed: true });
     tick(c);
     return true;

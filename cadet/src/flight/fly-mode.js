@@ -64,7 +64,7 @@ export function createFlyMode(ctx) {
   const systems = createSystems(cockpit.switches);
   const engShow = { rpm: 0, run: false };
   // the ring round the control to use next (the day's checklists): drawn over everything, pulsing
-  const guide = new THREE.Mesh(new THREE.RingGeometry(0.014, 0.019, 32), new THREE.MeshBasicMaterial({ color: 0xffd479, transparent: true, opacity: 0.9, depthTest: false, depthWrite: false, side: THREE.DoubleSide }));
+  const guide = new THREE.Mesh(new THREE.RingGeometry(0.02, 0.0275, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.0, 0.7), transparent: true, opacity: 0.9, depthTest: false, depthWrite: false, side: THREE.DoubleSide }));
   guide.renderOrder = 10; guide.visible = false; guide.name = 'cockpit-guide';
   live.root.add(guide);
   let guideCtl = null;

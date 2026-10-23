@@ -215,7 +215,7 @@ async function boot() {
   const bodyToFrame = (b) => { const w = todayAc.root.localToWorld(new THREE.Vector3(b[0], b[1], b[2])), [fx, fz] = toFrame(w.x, w.z); return [fx, w.y - G, fz]; };
   {
     const AR = FL.physics.AIRCRAFT.find(a => a.id === 'pa28'), v = AR.v;
-    interactor.add({ id: 'aircraft:board', owner: 'aircraft:today', frame: [tg.c, 1.25, -(tg.a + 1.0)], radius: 0.9, prompt: '乗り込む', use: () => (fly ? fly.board() : null) });
+    interactor.add({ id: 'aircraft:board', owner: 'aircraft:today', frame: [tg.c, 1.25, -(tg.a + 1.0)], radius: 0.5, prompt: '乗り込む', use: () => (fly ? fly.board() : null) });
     interactor.add({
       id: 'aircraft:today', owner: 'aircraft:today', frame: bodyToFrame([-0.66, 0.15, 1.0]), radius: 0.5, prompt: '今日の機体を見る',
       use: () => {
@@ -809,7 +809,7 @@ async function boot() {
       stand: (id) => {
         const p = POINTS.find(x => x.id === id), [x, , z] = p.at, sd = Math.sign(x) || 1;
         const b = p.group === 'cabin' ? [1.6, 0, -0.1] : p.group === 'tail' ? [1.4, 0, 4.4] : p.group === 'nose' ? [1.25, 0, -3.3]
-          : Math.abs(x) < 2 ? [x + sd * 0.3, 0, 1.7] : [x, 0, z - 1.6];
+          : Math.abs(x) < 2 ? [x + sd * 0.3, 0, 1.7] : z > 0.3 ? [x, 0, z + 1.4] : [x, 0, z - 1.6];
         const f = bodyToFrame([b[0], -1.4, b[2]]);
         return { a: -f[2], c: f[0] };
       },

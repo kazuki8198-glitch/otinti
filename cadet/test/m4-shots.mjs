@@ -1,5 +1,5 @@
 // CADET — the M4 screenshots (docs/m4): the first day, in one session at 1280×720 (the page itself, HUD included).
-//   node test/m4-shots.mjs [quality] [outDir]
+//   node test/m4-shots.mjs [quality] [outDir] [03,05…]   (only those)
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,18 +9,25 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const [q = 'high', outDir = path.resolve(here, '../docs/m4')] = process.argv.slice(2);
 fs.mkdirSync(outDir, { recursive: true });
 const BOT_SRC = fs.readFileSync(path.join(here, '../../flight-lab/test/bot.mjs'), 'utf8').replace(/^export /gm, '');
+const ONLY = process.argv[4] ? process.argv[4].split(',') : null;          // only these (by their number)
 const g = await openGame(loadChromium(), { q, w: 1280, h: 720, t: 9.8, extra: '&anomalies=r_sump,r_cap' });
 const ev = (fn, a) => g.page.evaluate(fn, a);
+const cdp = await g.page.context().newCDPSession(g.page);
 // the frame drawn by the game (the loop paused), laid under the HUD as a picture, then the page's screenshot
-const shot = async (name, frames = 2) => {
+// (one that takes more than 8 minutes is given up: the software renderer sometimes stalls)
+const shot = (name, frames = 2) => { if (ONLY && !ONLY.some(p => name.startsWith(p))) return Promise.resolve(); let tm; return Promise.race([shotNow(name, frames).finally(() => clearTimeout(tm)), new Promise((r) => { tm = setTimeout(() => { console.log('skipped (too slow)', name); r(); }, 480000); })]); };
+const shotNow = async (name, frames) => {
+  console.log('  shooting', name, new Date().toISOString().slice(11, 19));
   await ev((n) => {
     const url = window.__cadet.snapshot(n);
-    let im = document.getElementById('shotbg');
-    if (!im) { im = document.createElement('img'); im.id = 'shotbg'; im.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none'; document.getElementById('view').after(im); }
-    im.hidden = false; im.src = url; return im.decode();
+    const im = document.createElement('img'); im.id = 'shotbg'; im.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none';
+    document.getElementById('view').after(im);
+    return new Promise((done) => { im.onload = () => done(); im.src = url; });
   }, frames);
-  await g.page.screenshot({ path: path.join(outDir, name), type: 'jpeg', quality: 86, timeout: 240000, animations: 'disabled', caret: 'hide' });
-  await ev(() => { document.getElementById('shotbg').hidden = true; });
+  // (the DevTools protocol directly: Playwright's own screenshot waits on the fonts, which can hang here)
+  const r = await cdp.send('Page.captureScreenshot', { format: 'jpeg', quality: 86 });
+  fs.writeFileSync(path.join(outDir, name), Buffer.from(r.data, 'base64'));
+  await ev(() => { document.getElementById('shotbg').remove(); });
   console.log(name);
 };
 await ev(() => window.__cadet.pause(true));
@@ -48,7 +55,7 @@ for (let i = 0; i < 12; i++) { const d = await ev(() => window.__cadet.dialog())
 await sim(4);
 await ev(() => { window.__cadet.fly.key('Enter'); window.__cadet.fly.key('Enter'); window.__cadet.fly.act('parkBrake'); });
 await sim(9);                                                   // the instructor's lines
-await ev(() => window.__cadet.fly.look(8, -22));
+await ev(() => window.__cadet.fly.look(-4, -36));
 await shot('03-start.jpg');
 // on through the start (the instructor's hands) to the ground call
 async function until(phase, { stepS = 1, chase = false, max = 400 } = {}) {
@@ -85,8 +92,7 @@ await until('t1', { stepS: 1 });
 await ev(() => { const W = window.__cadet; W.fly.runScripted(window.makeBot(W.FL).fly, 24); });
 await ev(() => window.__cadet.fly.view('chase')); await sim(0.05);
 await shot('07-takeoff.jpg');
-await ev(() => window.__cadet.fly.view('cockpit'));
-// the rest of the day (the lessons by FLIGHT LAB's bot) to the debrief
+// the rest of the day (the lessons by FLIGHT LAB's bot) to the debrief, seen from outside (quicker to draw)
 for (let k = 0; k < 600; k++) {
   const d = await day(); if (d.phase === 'debrief') break;
   const fs = await ev(() => window.__cadet.fly.status());
@@ -96,7 +102,7 @@ for (let k = 0; k < 600; k++) {
   if (d.radio && d.radio.phase === 'choose') await ev(() => window.__cadet.fly.answer(true));
   if (d.items && !d.assisting) await ev(() => window.__cadet.fly.assist());
   if (['taxiOut', 'lineup', 'taxiOff', 'taxiIn'].includes(d.phase) && !d.assisting) { await ev(() => window.__cadet.fly.key('KeyY')); await ev(() => window.__cadet.fly.view('chase')); }
-  await sim(2);
+  await sim(4);
 }
 await ev(() => window.__cadet.fly.view('cockpit')); await sim(0.5);
 for (let k = 0; k < 4; k++) await ev(() => { window.__cadet.dialogReveal(); window.__cadet.dialogNext(); });

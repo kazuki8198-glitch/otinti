@@ -31,10 +31,11 @@ export function buildWalkaroundProps() {
   const cover = new THREE.Group();
   cover.add(mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.15, 12).rotateX(Math.PI / 2), red, [PX, wy - 0.17, PZ - 0.14]));
   const tex = streamerTexture();
-  const flagG = new THREE.PlaneGeometry(0.5, 0.06, 8, 1);
-  flagG.translate(0, -0.03, 0);
+  // the streamer hangs from the cover's front end (its top at the origin, the text reading down), face fore and aft
+  const flagG = new THREE.PlaneGeometry(0.46, 0.075, 10, 1);
+  flagG.translate(0.23, 0, 0).rotateZ(-Math.PI / 2).rotateY(Math.PI);     // running down from its top, the text facing forward
   const flag = new THREE.Mesh(flagG, new THREE.MeshStandardMaterial({ color: tex ? 0xffffff : 0xd4211b, map: tex, roughness: 0.8, side: THREE.DoubleSide }));
-  flag.position.set(PX, wy - 0.18, PZ - 0.2); flag.rotation.set(0, Math.PI / 2, Math.PI / 2); flag.castShadow = true;
+  flag.position.set(PX, wy - 0.18, PZ - 0.22); flag.castShadow = true;
   cover.add(flag);
   root.add(cover);
   const flagBase = Float32Array.from(flagG.attributes.position.array);
@@ -73,7 +74,7 @@ export function buildWalkaroundProps() {
     if (!cover.visible) return;
     const pa = flagG.attributes.position, k = Math.min(1, 0.2 + windKt / 12);
     for (let i = 0; i < pa.count; i++) {
-      const x0 = flagBase[i * 3], u = (x0 + 0.25) / 0.5;
+      const u = -flagBase[i * 3 + 1] / 0.46;                          // 0 at the top, 1 at the free end
       pa.setZ(i, flagBase[i * 3 + 2] + Math.sin(t * 6 + u * 7) * 0.025 * u * k);
     }
     pa.needsUpdate = true;

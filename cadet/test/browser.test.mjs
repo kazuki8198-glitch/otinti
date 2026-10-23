@@ -80,10 +80,11 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.equal(r.place, '駐機場（エプロン）');
     assert.ok(r.t < 120, `the walk took ${r.t} s`);
     assert.ok((await ev(() => window.__cadet.doors())).find(d => d.id === 'd-brief-1').angle !== 0, 'the door stays open');
-    // the walk ends by the door (getting in comes later); in front of the aircraft, look at its nose and examine it
+    // the walk ends by the door (getting in comes later); on the aircraft's left side, look at it and examine it
     assert.equal(await ev(() => { const t = window.__cadet.spec.target; return window.__cadet.lookAt(t.a + 1.0, t.c, 1.25); }), 'aircraft:board');
-    await ev(() => { const C = window.__cadet, t = C.spec.target; C.placeWalker(t.a + 1.0, t.c - 5.6, { a: t.a, c: t.c - 3.2 }); });
-    assert.equal(await ev(() => { const t = window.__cadet.spec.target; return window.__cadet.lookAt(t.a, t.c - 3.2, 1.0); }), 'aircraft:today');
+    const info = await ev(() => window.__cadet.targets().find(t => t.id === 'aircraft:today'));
+    await ev((p) => window.__cadet.placeWalker(p.a - 2.6, p.c, { a: p.a, c: p.c }), info);
+    assert.equal(await ev((p) => window.__cadet.lookAt(p.a, p.c, p.y), info), 'aircraft:today');
     assert.equal(await ev(() => window.__cadet.use()), 'examined');
     const card = await ev(() => window.__cadet.card());
     assert.match(card.title, /Archer/);

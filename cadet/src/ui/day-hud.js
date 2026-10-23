@@ -43,8 +43,9 @@ const CSS = `
 .dh-page h2 { margin: 0; font-size: 20px; letter-spacing: .08em; color: #1d3b5c; }
 .dh-page header small { color: #6b6457; font-size: 12px; letter-spacing: .06em; }
 .dh-page table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-.dh-page th { padding: 5px 6px; font-size: 11px; font-weight: 700; color: #1d3b5c; background: rgba(29, 59, 92, .07); border: 1px solid #c9bfa9; text-align: center; }
+.dh-page th { white-space: nowrap; padding: 5px 6px; font-size: 11px; font-weight: 700; color: #1d3b5c; background: rgba(29, 59, 92, .07); border: 1px solid #c9bfa9; text-align: center; }
 .dh-page td { padding: 6px; border: 1px solid #d6ccb6; vertical-align: top; }
+.dh-page td.n, .dh-page td.nw { white-space: nowrap; }
 .dh-page td.n { text-align: right; font-variant-numeric: tabular-nums; font-family: ui-monospace, Consolas, monospace; }
 .dh-page tr.new td { background: rgba(255, 230, 150, .25); }
 .dh-page tfoot td { font-weight: 700; background: rgba(29, 59, 92, .05); }
@@ -176,7 +177,7 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
       const rem = make('td', '', e.remarks + (e.skipped ? `（空域との往復 約 ${e.skipped} 分は移動を省略）` : ''));
       const sig = make('td'), s = make('span', 'dh-sig' + (i === fresh ? ' write' : ''));
       put(s, make('span', '', e.sig.name), make('small', '', e.sig.cert)); put(sig, s);
-      put(r, make('td', 'n', e.date), make('td', '', e.aircraft), make('td', '', e.reg), make('td', '', `${e.from} → ${e.to}`), make('td', 'n', fmtH(e.total)),
+      put(r, make('td', 'n', e.date), make('td', 'nw', e.aircraft), make('td', 'nw', e.reg), make('td', 'nw', `${e.from} → ${e.to}`), make('td', 'n', fmtH(e.total)),
         make('td', 'n', fmtH(e.dual)), make('td', 'n', String(e.landings)), les, rem, sig);
       put(tb, r);
     });

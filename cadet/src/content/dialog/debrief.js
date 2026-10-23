@@ -17,7 +17,7 @@ function lessonLine(l) {
   if (l.crashed) return `${q(l.title)}で、機体を壊してしまいました。何が起きたか、あとで記録を一緒に見ましょう。`;
   const bad = (l.rows || []).filter(r => !r.pass);
   const g = GRADE[l.grade] || l.grade;
-  if (!bad.length) return `${q(l.title)}は ${g}。すべての項目が基準の中でした。`;
+  if (!bad.length) return `${q(l.title)}は ${g}。${l.grade === 'S' ? '基準の真ん中を、しっかり保てていました。' : 'すべての項目が基準の中でした。'}`;
   const r = bad[0];
   return `${q(l.title)}は ${g}。${r.name}が基準の外でした（${r.val}、基準は ${r.std}）。`;
 }
@@ -25,7 +25,7 @@ function lessonLine(l) {
 export function debriefDialogs(sum) {
   const N = {}, say = (text, more = {}) => ({ speaker: 'instructor', text, ...more });
   const w = sum.walk, r = sum.radio;
-  const order = ['open', 'walk', 'radio', 'taxi', 'lessons', 'next', 'trust', 'sign'];
+  const order = ['open', 'walk', 'radio', 'taxi', ...sum.lessons.map(l => 'lesson:' + l.id), 'next', 'trust', 'sign'];
   const nx = (k) => order[order.indexOf(k) + 1];
   N.open = say('エンジン停止、お疲れさまでした。今日の 1 日を、順番に振り返りましょう。', { if: { not: { flag: 'day1_done' } }, else: 'again', hook: { name: 'look', arg: 'player' }, next: nx('open') });
   N.again = say('お疲れさまでした。今日の飛行も、順番に振り返りましょう。', { hook: { name: 'look', arg: 'player' }, next: nx('open') });
@@ -42,7 +42,8 @@ export function debriefDialogs(sum) {
   N.radio = say(rl, { next: nx('radio') });
   N.taxi = say(sum.crash ? `地上で、機体を障害物に当ててしまいました（${sum.crash}）。タキシーは歩くくらいの速さで、翼の先と周りをよく見て。` : sum.incursion ? 'ひとつ大事なこと。許可の前に、A1 の停止線を越えました。滑走路に入る許可がないときは、停止線の手前で必ず止まります。これは今日いちばんの反省点です。'
     : 'タキシーでは、許可のとおりに A1 の停止線の手前で止まれていました。', { hook: { name: sum.incursion ? 'look' : 'nod', arg: 'player' }, next: nx('taxi') });
-  N.lessons = say(sum.lessons.map(lessonLine).join(''), { next: nx('lessons') });
+  // one line a lesson (the first with the word that the lessons come now)
+  sum.lessons.forEach((l, k) => { const id = 'lesson:' + l.id; N[id] = say((k ? '' : '課目です。') + lessonLine(l), { next: nx(id) }); });
   // one thing for next time
   const weak = sum.lessons.find(l => l.done && !l.passed);
   const nextTxt = sum.incursion ? '次は、停止線の前で止まる。それだけは、毎回必ず。' : weak ? `次は${q(weak.title)}をもう一度やりましょう。` : missed ? '次は、外部点検をもっとゆっくり、ひとつずつ。' : r.first < r.n ? '次は、無線の復唱を、声に出して練習しておきましょう。' : '次は、今日の課目を少し厳しい基準で飛んでみましょう。';

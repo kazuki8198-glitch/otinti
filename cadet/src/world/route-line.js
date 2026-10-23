@@ -28,7 +28,7 @@ export function createRouteLine(L, { width = 1.1, color = 0xffd25a } = {}) {
   const mat = new THREE.ShaderMaterial({
     vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false,
     uniforms: { uTime: { value: 0 }, uAt: { value: 0 }, uCol: { value: new THREE.Color(color) }, uOn: { value: 0 } },
-    polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4,
+    polygonOffset: true, polygonOffsetFactor: -8, polygonOffsetUnits: -8,
   });
   const mesh = new THREE.Mesh(new THREE.BufferGeometry(), mat);
   mesh.name = 'route-line'; mesh.renderOrder = 3; mesh.frustumCulled = false; mesh.visible = false;
@@ -48,7 +48,7 @@ export function createRouteLine(L, { width = 1.1, color = 0xffd25a } = {}) {
       const dx = q.x - o.x, dz = q.z - o.z, l = Math.hypot(dx, dz) || 1, nx = -dz / l * width / 2, nz = dx / l * width / 2;
       if (i) acc += p.distanceTo(sp[i - 1]);
       for (const sd of [-1, 1]) {
-        pos.push(...L.rwyToLocal(-(p.z + sd * nz), p.x + sd * nx, 0.035));
+        pos.push(...L.rwyToLocal(-(p.z + sd * nz), p.x + sd * nx, 0.07));
         uv.push(acc / width, sd < 0 ? 0 : 1); along.push(acc);
       }
       pts2.push({ a: -p.z, c: p.x }); cum.push(acc);

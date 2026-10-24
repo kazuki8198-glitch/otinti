@@ -44,7 +44,7 @@ import { createLogbook, entryFrom } from './career/logbook.js';
 import { buildWalkaroundProps } from './aircraft/walkaround-props.js';
 import { apronDialogs } from './content/dialog/day1.js';
 import { POINTS } from './content/walkaround-archer.js';
-import { createCareer, SLOT_HOURS, SLOT_NAMES, CHAPTERS, CH2, GROUND, EXAMS, CLASSES, SOLO_TRUST, dateText, dateOf, passedAt, groundPassed } from './career/career.js';
+import { createCareer, prologueFlags, SLOT_HOURS, SLOT_NAMES, CHAPTERS, CH2, GROUND, EXAMS, CLASSES, SOLO_TRUST, dateText, dateOf, passedAt, groundPassed } from './career/career.js';
 import { planFor } from './career/day.js';
 import { exportArchive, importArchive } from './career/archive.js';
 import { PEOPLE, PEERS } from './content/people.js';
@@ -474,7 +474,9 @@ async function boot() {
     if (who !== 'instructor') return { run: peopleRunner, dialog: who };
     if (insAt === 'apron' && !celebrate) return { run: apronRunner, dialog: 'apron' };
     if (celebrate) return { run: runner, dialog: 'celebrate' };
-    if (st.chapter === 'prologue') return { run: runner, dialog: talkState.flags.met_instructor ? 'ground' : 'meet' };
+    // (the prologue: the meeting is the afternoon's — before it, a word on where to go first; the career's record
+    // decides, not the flag)
+    if (st.chapter === 'prologue') return { run: runner, dialog: career.isDone('brief', 'meet') ? 'ground' : slot === 'pm' || slot === 'evening' ? 'meet' : 'early' };
     if (st.chapter === 'ch1') return { run: runner, dialog: 'ground' };
     if (st.solo) return { run: runner, dialog: 'after' };
     const ex = sch.find(x => x.kind === 'exam' && x.id === 'presolo');
@@ -755,12 +757,21 @@ async function boot() {
     const st = career.state, ch = CHAPTERS[st.chapter];
     const setUp = () => {
       celebrate = false;
+      syncFlags();
       applySlot();
       newDay(); buildInstructorTalk(); placeInstructor(); layoutPeople();
       if (place) placeWalker(ENTRANCE.a, ENTRANCE.c, ENTRANCE.face);
     };
     if (!card) { setUp(); return Promise.resolve(); }
     return cards.show({ kicker: ch.title, title: dateText(st.day), sub: `${SLOT_NAMES[st.slot]}　${career.weather(prog()).ja}`, ms: 1700, onDark: setUp }).then(() => greet());
+  }
+  // the prologue's flags as the career has it (career.js prologueFlags: a flag from another save must not skip a talk)
+  function syncFlags() {
+    let changed = false;
+    for (const [f, on] of Object.entries(prologueFlags(career.state))) {
+      if (!!talkState.flags[f] !== on) { changed = true; if (on) talkState.flags[f] = true; else delete talkState.flags[f]; }
+    }
+    if (changed) saved.save(talkState);
   }
   // a word for the start of a day
   function greet() {
@@ -1013,7 +1024,7 @@ async function boot() {
   // (career/guide.js) — worked out twice a second; the arrow every frame, towards the next door on the way there (the
   // academy's doors as a graph) or the place itself: the person to talk to, the walk-around's next place, the door
   const guideEl = $('#guide'), router = makeRouter(spec);
-  let guideT = 0, guideStep = null;
+  let guideT = 0, guideStep = null, guideWay = null;
   const guideAt = { a: 0, c: 0, ok: false }, guideW = new THREE.Vector3();
   function planStates() {
     const st = career.state, order = ['morning', 'am', 'pm', 'evening'];
@@ -1033,30 +1044,32 @@ async function boot() {
     if (g.at === 'entrance') return { a: 655.0, c: 276.6 };                     // (inside the front doors)
     return g.room ? router.centre(g.room) : null;
   }
-  function updateGuide(dt, pa, pc) {
-    const on = mode === 'walk' && !talk && !cards.showing && !tablet.isOpen && settings.get('guide') !== false;
-    guideEl.hidden = !on; if (!on) return;
-    if ((guideT -= dt) <= 0) {
-      guideT = 0.5;
-      const it = flightItem(), checkride = it && it.kind === 'checkride';
-      const sm = today ? today.walk.summary() : null;
-      guideStep = nextStep({ chapter: career.chapter, slot: career.slot, plan: planStates(), decided: !!career.decidedToday(),
-        briefed: !!(checkride ? talkState.flags.c1_briefed : talkState.flags.briefed_today), walk: sm ? { done: sm.done, total: sm.total } : null, flown: flownToday() });
-      guideEl.querySelector('.g-text').textContent = guideStep.text;
-    }
+  // the step and the way to it (the guide's own state: also what the tests follow)
+  function computeGuide(pa, pc) {
+    const it = flightItem(), checkride = it && it.kind === 'checkride';
+    const sm = today ? today.walk.summary() : null;
+    guideStep = nextStep({ chapter: career.chapter, slot: career.slot, plan: planStates(), decided: !!career.decidedToday(),
+      briefed: !!(checkride ? talkState.flags.c1_briefed : talkState.flags.briefed_today), walk: sm ? { done: sm.done, total: sm.total } : null, flown: flownToday() });
     const t = guideTarget(guideStep);
-    const arrow = guideEl.querySelector('.g-arrow'), dist = guideEl.querySelector('.g-dist');
-    if (!t) { arrow.hidden = true; dist.textContent = ''; return; }
+    if (!t) { guideWay = null; return; }
     // the way: from the room the cadet is in to the target's room, through the doors (outside: 'outside')
     const roomOf = (a, c) => (academy.inside(a, c) ? academy.roomOf(a, c)?.id || null : 'outside');
     const step = router.next(roomOf(pa, pc), roomOf(t.a, t.c)), w = step || t;
-    const d = Math.hypot(w.a - pa, w.c - pc);
+    guideWay = { a: w.a, c: w.c, door: !!step, doorId: step ? step.door : null, label: step ? step.label : '', d: Math.hypot(w.a - pa, w.c - pc), target: t };
+  }
+  function updateGuide(dt, pa, pc) {
+    const on = mode === 'walk' && !talk && !cards.showing && !tablet.isOpen && settings.get('guide') !== false;
+    guideEl.hidden = !on; if (!on) return;
+    if ((guideT -= dt) <= 0) { guideT = 0.5; computeGuide(pa, pc); guideEl.querySelector('.g-text').textContent = guideStep.text; }
+    const arrow = guideEl.querySelector('.g-arrow'), dist = guideEl.querySelector('.g-dist');
+    if (!guideWay) { arrow.hidden = true; dist.textContent = ''; return; }
+    const w = guideWay, step = w.door, d = Math.hypot(w.a - pa, w.c - pc);
     frameToWorld({ x: w.c, y: 0, z: -w.a }, guideW);
     const yawT = Math.atan2(-(guideW.x - camWorld.x), -(guideW.z - camWorld.z));
     let rel = yawT - walker.state.yaw; rel = Math.atan2(Math.sin(rel), Math.cos(rel));
     arrow.hidden = false; arrow.classList.toggle('here', !step && d < 2.5);
     arrow.style.transform = `rotate(${(-rel).toFixed(3)}rad)`;
-    dist.textContent = step ? `${step.label ? step.label + 'の扉' : '扉'}まで ${Math.round(d)} m` : d < 2.5 ? 'ここ' : `${Math.round(d)} m`;
+    dist.textContent = step ? `${w.label ? w.label + 'の扉' : '扉'}まで ${Math.round(d)} m` : d < 2.5 ? 'ここ' : `${Math.round(d)} m`;
   }
 
   // ---------------------------------------------------------------- the loop
@@ -1191,7 +1204,7 @@ async function boot() {
     return { door: cand.door.id, result: interactor.use() };
   }
   function walkRoute(points, opts = {}) { scripted++; try { return walkRouteNow(points, opts); } finally { scripted--; } }
-  function walkRouteNow(points, { dt = 1 / 60, maxT = 300, run = false, openDoors = true } = {}) {
+  function walkRouteNow(points, { dt = 1 / 60, maxT = 300, run = false, openDoors = true, giveUp = 12 } = {}) {
     const keepMode = mode; setMode('walk');
     const log = [], doors = [];
     let t = 0, i = 0, stuck = 0, tries = 0;
@@ -1205,7 +1218,7 @@ async function boot() {
       const np = walker.framePos, moved = Math.hypot(np.a - fp.a, np.c - fp.c);
       stuck = moved < 0.15 * 1.45 * dt ? stuck + dt : 0;
       if (stuck > 0.4) {
-        stuck = 0; if (++tries > 12) break;
+        stuck = 0; if (++tries > giveUp) break;
         walker.setAuto({ forward: 0 });
         const u = openDoors ? useDoorNear() : null; if (u) doors.push({ ...u, t: +t.toFixed(2) });
         for (let k = 0; k < 50; k++) { simulate(dt); t += dt; }        // let it swing open
@@ -1215,6 +1228,78 @@ async function boot() {
     if (keepMode !== 'walk') setMode(keepMode);
     const fp = walker.framePos;
     return { reached: i >= points.length, t: +t.toFixed(2), log, doors, at: { a: +fp.a.toFixed(2), c: +fp.c.toFixed(2) }, place: placeAt(fp.a, fp.c).name };
+  }
+  // (tests) walk where the guide points, the way a player finds it: a path round the walls and furniture on the floor
+  // plan (closed doors count as passable: walkRoute opens them with E on the way), then look at what the guide
+  // points at — a person, the walk-around's place, the aircraft's door, the front doors
+  function followGuide(opts = {}) { scripted++; try { return followGuideNow(opts); } finally { scripted--; } }
+  function followGuideNow({ near = 1.5, maxT = 300 } = {}) {
+    setMode('walk');
+    simulate(1 / 60);
+    { const p = walker.framePos; computeGuide(p.a, p.c); }
+    const g = guideStep, w = guideWay;
+    if (!g || !w) return { reached: false, why: 'no guide' };
+    // (a door opened on the way swings into the path planned through it: plan again from there)
+    let r = null; const doorsUsed = [];
+    for (let k = 0; k < 4; k++) {
+      const fp = walker.framePos, path = navPath(fp.a, fp.c, w.target.a, w.target.c, near);
+      if (!path) return { reached: false, why: 'no path', step: { ...g }, at: { a: fp.a, c: fp.c }, target: w.target };
+      r = walkRouteNow(path, { maxT, giveUp: 3 }); doorsUsed.push(...r.doors);
+      if (r.reached) break;
+    }
+    r.doors = doorsUsed;
+    const p2 = walker.framePos, y = g.at === 'person' ? 1.5 : g.at === 'walk' ? 1.0 : 1.25;
+    lookAtFrame(w.target.a, w.target.c, y); camera.updateMatrixWorld(); interactor.update(camera);
+    return { reached: r.reached && Math.hypot(w.target.a - p2.a, w.target.c - p2.c) < near + 0.4, t: r.t, step: { ...g }, firstWay: { a: w.a, c: w.c, door: w.doorId },
+      current: interactor.current ? interactor.current.id : null, doors: r.doors, at: r.at, place: r.place };
+  }
+  // A* on a 0.25 m grid over the floor plan (runway frame) from (a0, c0) to within `near` of (a1, c1) → waypoints
+  let debugNav = false;
+  function navPath(a0, c0, a1, c1, near, dbg = false) {
+    debugNav = dbg;
+    const h = 0.2, R = 0.29, pad = 12;
+    const A0 = Math.min(a0, a1) - pad, C0 = Math.min(c0, c1) - pad, NA = Math.ceil((Math.abs(a1 - a0) + 2 * pad) / h), NC = Math.ceil((Math.abs(c1 - c0) + 2 * pad) / h);
+    const blocked = new Uint8Array(NA * NC);
+    for (const b of world.query(C0 - 1, -(A0 + NA * h) - 1, C0 + NC * h + 1, -A0 + 1)) {
+      if (b.y0 > 1.7 || b.y1 < 0.3) continue;
+      if (b.tag && String(b.tag).startsWith('door:') && Math.abs(academy.doors.doors.find(d => 'door:' + d.id === b.tag)?.angle || 0) < 0.01) continue;
+      // (frame: x = c, z = −a)
+      const ia0 = Math.max(0, Math.floor((-b.z1 - R - A0) / h)), ia1 = Math.min(NA - 1, Math.floor((-b.z0 + R - A0) / h));
+      const ic0 = Math.max(0, Math.floor((b.x0 - R - C0) / h)), ic1 = Math.min(NC - 1, Math.floor((b.x1 + R - C0) / h));
+      for (let i = ia0; i <= ia1; i++) for (let k = ic0; k <= ic1; k++) blocked[i * NC + k] = 1;
+    }
+    const idx = (a, c) => Math.round((a - A0) / h) * NC + Math.round((c - C0) / h);
+    const s = idx(a0, c0); blocked[s] = 0;
+    const dist = new Float64Array(NA * NC).fill(Infinity), prev = new Int32Array(NA * NC).fill(-1), done = new Uint8Array(NA * NC), open = [[0, s]];
+    dist[s] = 0;
+    // (a binary heap on the estimate)
+    const push = (e) => { open.push(e); let j = open.length - 1; while (j) { const q = (j - 1) >> 1; if (open[q][0] <= open[j][0]) break; [open[q], open[j]] = [open[j], open[q]]; j = q; } };
+    const pop = () => {
+      const top = open[0], last = open.pop();
+      if (open.length) { open[0] = last; let j = 0; for (;;) { const l = 2 * j + 1, r = l + 1; let m = j; if (l < open.length && open[l][0] < open[m][0]) m = l; if (r < open.length && open[r][0] < open[m][0]) m = r; if (m === j) break; [open[m], open[j]] = [open[j], open[m]]; j = m; } }
+      return top;
+    };
+    const hEst = (n) => Math.hypot(Math.floor(n / NC) * h + A0 - a1, (n % NC) * h + C0 - c1);
+    let goal = -1;
+    while (open.length) {
+      const [, n] = pop();
+      if (done[n]) continue; done[n] = 1;
+      if (hEst(n) < near) { goal = n; break; }
+      const i = Math.floor(n / NC), k = n % NC;
+      for (let di = -1; di <= 1; di++) for (let dk = -1; dk <= 1; dk++) {
+        if (!di && !dk) continue;
+        const ii = i + di, kk = k + dk; if (ii < 0 || kk < 0 || ii >= NA || kk >= NC) continue;
+        const m = ii * NC + kk; if (blocked[m] || (di && dk && (blocked[i * NC + kk] || blocked[ii * NC + k]))) continue;
+        const nd = dist[n] + h * (di && dk ? Math.SQRT2 : 1);
+        if (nd < dist[m]) { dist[m] = nd; prev[m] = n; push([nd + hEst(m), m]); }
+      }
+    }
+    if (goal < 0) return debugNav ? { blocked, NA, NC, A0, C0 } : null;
+    const pts = [];
+    for (let n = goal, k = 0; n >= 0 && n !== s && k < NA * NC; n = prev[n], k++) pts.push({ a: Math.floor(n / NC) * h + A0, c: (n % NC) * h + C0 });
+    pts.reverse();
+    // every fifth cell (1 m) and the last
+    return pts.filter((_, j) => j % 5 === 4 || j === pts.length - 1);
   }
   function placeWalker(a, c, toward) {
     const [x, , z] = L.rwyToLocal(a, c); walker.setPose(x, z, 0, 0);
@@ -1243,7 +1328,8 @@ async function boot() {
   step(performance.now());
   requestAnimationFrame(loop);
   window.__cadet = {
-    ready: true, L, FL, VIEWS, spec, world, scene, camera, renderer, setView, setQuality, runBench, walkRoute, placeWalker,
+    ready: true, L, FL, VIEWS, spec, world, scene, camera, renderer, setView, setQuality, runBench, walkRoute, placeWalker, followGuide, navPath,
+    guide: () => (guideStep ? { ...guideStep, way: guideWay } : null),
     setPose: (p, look) => { outOfAircraft(); setMode('spectator'); spectator.setPose(new THREE.Vector3(...p), new THREE.Vector3(...look)); },
     setTime: (h) => { hours = h; applyTime(); }, stats: () => ({ fps: stats.fps, ...pipe.sceneInfo, all: renderer.info.render.calls, dpr: pipe.dpr, preset: preset.id, gpu, trees: veg.counts, colliders: world.count(), memory: { ...renderer.info.memory, programs: (renderer.info.programs || []).length } }),
     pause: (v) => { running = !v; },

@@ -1,5 +1,6 @@
 // CADET — content/dialog/instructor-career.js : 早瀬 教官's talks outside the day's briefing (M5).
 //  - meet: the prologue's afternoon — who he is, how the training goes, the cadet's first questions;
+//  - early: the prologue's morning, before the meeting — where to go first (the welcome, the tour);
 //  - ground: during chapter 1 (classes and the training device) — a word, the textbook to ask about;
 //  - day: on a flying day, before the briefing: how the cadet feels (IMSAFE: tired or not — the honest answer is the
 //    right one), then the day's briefing (instructorDialogs' 'brief');
@@ -17,7 +18,7 @@ export const CAREER_FLAGS = ['met_instructor', 'soloed', 'briefed_today'];
 const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' }, kiryu: { name_ja: '桐生', color: '#c9b6ff' }, asahi: { name_ja: '朝日', color: '#ffc4a8' }, mori: { name_ja: '森', color: '#a8e3ff' } };
 // the context: today { lessonTitle, studyTitle, studySection (a textbook section with a figure, or '') },
 // imsafe { honest (true / false) }, career { tired }
-export const CAREER_SAMPLE = { today: { lessonTitle: '「直線水平飛行」', studyTitle: '「場周経路」', studySection: 'ops.pattern' }, imsafe: { honest: true }, career: { tired: false } };
+export const CAREER_SAMPLE = { today: { lessonTitle: '「直線水平飛行」', studyTitle: '「場周経路」', studySection: 'ops.pattern' }, imsafe: { honest: true }, career: { tired: false, slot: 'morning' } };
 
 export function careerInstructorDialogs() {
   const say = (text, more = {}) => ({ speaker: 'instructor', text, ...more });
@@ -38,6 +39,12 @@ export function careerInstructorDialogs() {
       { text: 'ありがとうございます。よろしくお願いします', next: 'm:end' },
     ] }),
     'm:end': say('こちらこそ。夕方はラウンジで同期と話してみてください。今日はゆっくり休んで、明日の授業に備えましょう。', { effects: [{ set: 'met_instructor' }, { hook: 'done', arg: 'meet' }], hook: { name: 'nod' }, end: true }),
+  };
+  // (the prologue's morning: the meeting is in the afternoon; the welcome and the tour come first)
+  const E = {
+    e1: say('おはようございます。担当教官の早瀬です。顔合わせは午後、この部屋でしましょう。', { hook: { name: 'look', arg: 'player' }, next: 'e2' }),
+    e2: say('まずはロビーで、真壁さんの歓迎の話を聞いてきてください。もうすぐ始まりますよ。', { if: { ctx: 'career.slot', is: 'morning' }, else: 'e3', hook: { name: 'nod' }, end: true }),
+    e3: say('午前は、運航管理の佐伯さんが訓練所を案内してくれます。ロビーの北の部屋です。また午後に。', { hook: { name: 'nod' }, end: true }),
   };
   const G = {
     g1: say('座学、がんばっていますね。教科書でわからないところがあれば、聞いてください。', { hook: { name: 'look', arg: 'player' }, choices: [
@@ -92,7 +99,7 @@ export function careerInstructorDialogs() {
   };
   return {
     speakers: SPEAKERS, flags: [...CAREER_FLAGS], hooks: [...CAREER_HOOKS],
-    dialogs: { meet: { start: 'm1', nodes: M }, ground: { start: 'g1', nodes: G }, day: { start: 'd1', nodes: D }, study: { start: 's1', nodes: S },
+    dialogs: { meet: { start: 'm1', nodes: M }, early: { start: 'e1', nodes: E }, ground: { start: 'g1', nodes: G }, day: { start: 'd1', nodes: D }, study: { start: 's1', nodes: S },
       solo: { start: 'o1', nodes: O }, checkday: { start: 'k1', nodes: K }, celebrate: { start: 'c1', nodes: C }, after: { start: 'a1', nodes: A } },
   };
 }

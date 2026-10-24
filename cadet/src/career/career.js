@@ -136,6 +136,17 @@ export function gate(state, prog, trust = 50) {
   return miss;
 }
 
+// ---- the prologue's talks are told apart by the conversations' flags (who has welcomed, shown round, met the cadet);
+// the career's record is what counts. A flag kept from another save (an older game's: the M2–M4 briefing set
+// met_instructor on the first talk) would skip a talk that moves the day on — the instructor's meeting, that ends the
+// prologue — so the game sets these from the career: flag → the work it stands for
+export const PROLOGUE_FLAGS = { welcome_done: 'ceremony:welcome', tour_done: 'tour:tour', met_instructor: 'brief:meet' };
+// → { flag: true / false } as the career says (all true once the prologue is over)
+export function prologueFlags(state) {
+  const past = state.chapter !== 'prologue' || state.done.prologue != null;
+  return Object.fromEntries(Object.entries(PROLOGUE_FLAGS).map(([f, k]) => [f, past || state.done[k] != null]));
+}
+
 // ---- what is due today: [{ slot, kind, id, title, where, who }]
 //  kind: 'ceremony' | 'tour' | 'class' | 'ftd' | 'exam' | 'flight' | 'checkride' | 'solo' | 'study' | 'off'
 // where: the room (academy-spec's ids; 'apron' for the aircraft); who: the person it is with

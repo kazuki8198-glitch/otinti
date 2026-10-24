@@ -2,7 +2,7 @@
 // chapter, the gates between the chapters, the time of day and the night's sleep, the save (versioned and cleaned).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createCareer, newCareer, cleanCareer, weatherFor, dateOf, dateText, isOff, schedule, gate, nextLesson, passedAt, CH2, GROUND, CLASSES, EXAMS, WEATHER, SOLO_TRUST, CAREER_KEY, SLOTS } from '../src/career/career.js';
+import { createCareer, newCareer, cleanCareer, prologueFlags, PROLOGUE_FLAGS, weatherFor, dateOf, dateText, isOff, schedule, gate, nextLesson, passedAt, CH2, GROUND, CLASSES, EXAMS, WEATHER, SOLO_TRUST, CAREER_KEY, SLOTS } from '../src/career/career.js';
 import { installSorajima } from '../src/flight/sorajima.js';
 
 const memStore = () => { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k), m }; };
@@ -148,4 +148,18 @@ test('career: what was done today stays today\'s plan (the class, the device, th
   assert.deepEqual(schedule(s, progWith(['a1', 'a2', 'a3']), { weather: good }).map(x => [x.kind, x.id]), [['flight', 'a3']], 'not a4 the same day');
   s.done['checkride:c1'] = 12; delete s.done['flight:a3'];
   assert.deepEqual(schedule(s, progWith([...CH2, 'c1']), { weather: good, trust: 80 }).map(x => [x.kind, x.id]), [['checkride', 'c1']], 'not the solo the same day');
+});
+
+test('career: the prologue\'s talk flags follow the career, not an older save (the instructor\'s meeting is not skipped)', () => {
+  const C = createCareer({ store: memStore(), seed: 3 });
+  // a new career: none of them, whatever an older game's conversations kept (M2–M4 set met_instructor)
+  assert.deepEqual(prologueFlags(C.state), { welcome_done: false, tour_done: false, met_instructor: false });
+  C.done('ceremony', 'welcome');
+  assert.deepEqual(prologueFlags(C.state), { welcome_done: true, tour_done: false, met_instructor: false });
+  C.done('tour', 'tour'); C.done('brief', 'meet'); C.finishPrologue();
+  assert.deepEqual(prologueFlags(C.state), { welcome_done: true, tour_done: true, met_instructor: true });
+  // a career past the prologue (a record loaded without its conversations): all of them
+  const later = newCareer(3); later.chapter = 'ch2';
+  assert.ok(Object.values(prologueFlags(later)).every(Boolean));
+  assert.deepEqual(Object.keys(PROLOGUE_FLAGS).sort(), ['met_instructor', 'tour_done', 'welcome_done']);
 });

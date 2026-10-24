@@ -173,32 +173,56 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.equal((await ev(() => window.__cadet.doors())).find(d => d.id === 'd-wc').angle, 0);
   });
 
-  test('the prologue: the welcome in the lobby, the tour and the tablet, the instructor, the cadets in the lounge, home and the next morning', async () => {
+  // the next step played as a player plays it: where the guide at the top of the screen points (walked round the walls,
+  // doors opened with E), what is there looked at, and E; a talk then answered (picks) to its end
+  const playGuide = async (picks = [], expect = null) => {
+    const r = await ev(() => window.__cadet.followGuide());
+    assert.ok(r.reached, `walked to the guide's place: ${JSON.stringify(r)}`);
+    if (expect) assert.equal(r.current, expect, `looking at ${expect}: ${JSON.stringify(r)}`);
+    const u = await ev(() => window.__cadet.use());
+    const t = u === 'talk' ? await talkThrough(null, picks) : { lines: [] };
+    return { ...r, use: u, lines: t.lines };
+  };
+
+  test('the prologue, played as the guide says (walk there, E): the welcome, the tour and the tablet, the instructor, the cadets in the lounge, home and the next morning', async () => {
     await ev(() => window.__cadet.setMode('walk'));
-    // the chief instructor's welcome (the morning), the dispatcher's tour (the tablet), the instructor (the afternoon)
+    // an older game's conversations (the M2–M4 briefing) left met_instructor: it must not skip the meeting
+    await ev(() => { localStorage.setItem('cadet.save', JSON.stringify({ ...JSON.parse(localStorage.getItem('cadet.save') || '{}'), flags: { met_instructor: true } })); });
+    await ev(() => window.__cadet.career.set({ flags: { met_instructor: true }, place: true }));
+    assert.equal((await ev(() => window.__cadet.career.flags())).met_instructor, undefined, 'the stale flag is put right by the career');
     for (const id of ['chief', 'lecturer', 'kiryu', 'asahi', 'mori']) { const w = await ev((id) => window.__cadet.career.where(id), id); assert.ok(w && w.a > 646 && w.a < 664, `${id} in the lobby: ${JSON.stringify(w)}`); }
-    let t = await talkThrough('chief');
-    assert.match(t.lines.join('\n'), /ようこそ/);
+    // the morning: 早瀬 教官 is met in the afternoon — before then he says where to go first, and the day stays as it is
+    let t = await talkThrough('instructor');
+    assert.match(t.lines.join('\n'), /顔合わせは午後/);
+    assert.equal((await career()).slot, 'morning');
+    // the chief instructor's welcome (the guide: the lobby)
+    t = await playGuide([], 'npc:chief');
+    assert.match(t.step.text, /真壁/); assert.match(t.lines.join('\n'), /ようこそ/);
     assert.equal((await career()).slot, 'am');
-    t = await talkThrough('dispatcher');
+    // the dispatcher's tour and the tablet (the guide: through the double doors into dispatch)
+    t = await playGuide([], 'npc:dispatcher');
     assert.match(t.lines.join('\n'), /タブレット/);
     assert.ok((await ev(() => window.__cadet.career.flags())).has_tablet);
     assert.equal((await career()).slot, 'pm');
-    // the tablet: Tab opens it on today's page; Tab closes it
+    // the tablet: Tab opens it on today's page; Tab closes it (once the first day's card has gone: keys wait for it)
+    await g.page.waitForFunction(() => !window.__cadet.career.cards());
     await g.page.keyboard.press('Tab');
     assert.equal(await ev(() => window.__cadet.career.tablet.isOpen()), true);
     assert.match(await ev(() => document.querySelector('.tb').innerText), /今日の予定[\s\S]*入社の式[\s\S]*天気/);
     await g.page.keyboard.press('Tab');
     assert.equal(await ev(() => window.__cadet.career.tablet.isOpen()), false);
-    t = await talkThrough('instructor', ['今は大丈夫']);
+    // the instructor in briefing room 1 (the guide: down the south corridor, his door opened with E)
+    t = await playGuide(['今は大丈夫'], 'npc:instructor');
     assert.match(t.lines.join('\n'), /担当教官になる、早瀬/);
     let st = await career();
     assert.deepEqual([st.slot, !!st.done.prologue], ['evening', true]);
+    assert.equal((await ev(() => window.__cadet.career.flags())).met_instructor, true);
     // the evening: the cadets in the lounge; the instructor and the staff gone home
     for (const id of ['kiryu', 'asahi', 'mori']) { const w = await ev((id) => window.__cadet.career.where(id), id); assert.ok(w && w.a > 688, `${id} in the lounge`); t = await talkThrough(id); assert.ok(t.lines.length, id); }
     assert.equal(await ev(() => window.__cadet.career.where('dispatcher')), null);
-    // home through the front door: the night, the card, the next morning — chapter 1
-    assert.equal(await ev(() => window.__cadet.career.home()), 'examined');
+    // home through the front door (the guide: the entrance): the night, the card, the next morning — chapter 1
+    t = await playGuide([], 'home');
+    assert.equal(t.use, 'examined');
     await ev(() => window.__cadet.career.homeChoose(0));
     await g.page.waitForTimeout(4200);
     st = await career();

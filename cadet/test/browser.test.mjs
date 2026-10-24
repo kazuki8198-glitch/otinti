@@ -43,6 +43,15 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     await ev(() => window.__cadet.pause(true));
   });
   after(async () => { if (g) await g.browser.close(); });
+  // a new browser on the same file (the software renderer here keeps every shader and picture it has made: a few
+  // chapters in one page grow past the machine's memory); the errors and requests so far are kept for the last test
+  const seen = { errors: [], requests: [] };
+  const restart = async () => {
+    seen.errors.push(...g.errors); seen.requests.push(...g.requests);
+    await g.browser.close(); g = null;
+    g = await openGame(chromium, { q: 'high', w: 800, h: 450, t: 10 });
+    await ev(() => window.__cadet.pause(true));
+  };
 
   // a talk run to its end in the page: the right answer where a lesson or a test asks, else the first choice matching
   // one of `picks` (or the first choice); who: someone to talk to (or null: the talk already open)
@@ -195,6 +204,9 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
   });
 
   test('chapter 1: a class (its figures on the classroom\'s screen), the training device (k2: the PFD on its screen), the written test', async () => {
+    // (in a new browser: the second morning, chapter 1, as the prologue left it)
+    await restart();
+    await ev(() => window.__cadet.career.set({ state: { chapter: 'ch1', day: 2, slot: 'morning', done: { prologue: 1 } }, flags: { met_instructor: true, has_tablet: true }, place: false }));
     // the class: the lecturer at the whiteboard of briefing room 2
     const w = await ev(() => window.__cadet.career.where('lecturer'));
     assert.ok(w.a > 621 && w.a < 633.6 && w.c < 261, `the lecturer in briefing room 2: ${JSON.stringify(w)}`);
@@ -533,6 +545,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
   });
 
   test('the check ride with the chief instructor in the right seat; the first solo — no one in the right seat, three circuits by FLIGHT LAB\'s bot, the celebration and the endorsement', async () => {
+    await restart();
     const C = (fn, a) => ev(fn, a);
     await ev((src) => { if (!window.makeBot) (0, eval)(src + '\nwindow.makeBot = makeBot; window.runLesson = runLesson;'); }, BOT_SRC);
     await ev((src) => { if (!window.patternHook) (0, eval)(src + '\nwindow.patternHook = patternHook;'); }, HOOK_SRC);
@@ -651,7 +664,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
   });
 
   test('no page errors, no network requests', () => {
-    assert.deepEqual(g.errors.filter(e => !/KHR_parallel_shader_compile/.test(e)), [], 'page errors');
-    assert.deepEqual(g.requests, [], 'network requests');
+    assert.deepEqual([...seen.errors, ...g.errors].filter(e => !/KHR_parallel_shader_compile/.test(e)), [], 'page errors');
+    assert.deepEqual([...seen.requests, ...g.requests], [], 'network requests');
   });
 });

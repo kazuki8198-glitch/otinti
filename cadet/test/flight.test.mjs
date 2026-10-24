@@ -76,8 +76,8 @@ function appSandbox(prefs = {}) {
 // score (6 decimals), lesson time L.t (s), physics steps
 const REF = {
   'a1 intro': ['S', '1.000000', '27.992', 3359], 'a1 basic': ['S', '1.000000', '38.000', 4560], 'a1 precision': ['S', '1.000000', '48.000', 5760],
-  'a1 intro noseUp': ['S', '0.986761', '36.592', 4391], 'a1 basic noseUp': ['C', '0.655248', '51.658', 6199], 'a1 precision noseUp': ['C', '0.657443', '92.833', 11140],
-  'a1 intro idle': ['S', '1.000000', '27.992', 3359], 'a1 basic idle': ['C', '0.199176', '130.000', 15600], 'a1 precision idle': ['C', '0.089876', '130.000', 15600],
+  'a1 intro noseUp': ['S', '1.000000', '27.992', 3359], 'a1 basic noseUp': ['C', '0.653529', '47.508', 5701], 'a1 precision noseUp': ['C', '0.655613', '98.683', 11842],
+  'a1 intro idle': ['S', '1.000000', '27.992', 3359], 'a1 basic idle': ['C', '0.189159', '130.000', 15600], 'a1 precision idle': ['C', '0.084382', '130.000', 15600],
 };
 const HOOKS = {
   '': undefined,
@@ -108,7 +108,7 @@ test('bridge: a1 flown by bot.mjs through runScripted is bit-identical to runLes
   // the hooks really are seen: the nose-up run at basic is graded C on the altitude, the hold is still met
   const f = createFlight(FL, { store: null }); f.startLesson('a1', 'basic', { autoRud: false });
   const L = f.runScripted(makeBot(FL).fly, 900, HOOKS.noseUp);
-  assert.deepEqual(L.results.flatMap(r => r.rows).map(r => [r.name, r.val, r.pass]), [['高度', '78% が基準内（最大のずれ 158 ft）', false], ['連続保持', '最長 20 秒', true]]);
+  assert.deepEqual(L.results.flatMap(r => r.rows).map(r => [r.name, r.val, r.pass]), [['高度', '77% が基準内（最大のずれ 144 ft）', false], ['連続保持', '最長 20 秒', true]]);
 });
 
 test('bridge: other lessons (a2, t1 with its checklist and read-back, the Seminole m2) at basic are bit-identical too', () => {
@@ -273,12 +273,13 @@ test('controls: the key → action table is app.js\'s keydown table', () => {
   assert.deepEqual(FLY_HELD, JSON.parse(APP.match(/const FLY_HELD = (\[[^\]]*\]);/)[1].replace(/'/g, '"')));
 });
 
-test('controls: CADET\'s cockpit steps — trim wheel ±0.02 (not under the assist), throttle ±0.05, the latched parking brake', () => {
+test('controls: CADET\'s cockpit steps — trim wheel 4 % of its range a notch (Sorajima\'s; not under the assist), throttle ±0.05, the latched parking brake', () => {
   const f = createFlight(FL, { store: null });
   const L = f.startFree('area', 'pa28', { assist: false }), s = L.s;
   s.trim = 0; const t0 = s.trim, th0 = s.thr;
-  assert.match(f.action('trimStep', +1), /トリム 機首上げ/); assert.ok(Math.abs(s.trim - (t0 + 0.02)) < 1e-12);
-  f.action('trimStep', -1); f.action('trimStep', -1); assert.ok(Math.abs(s.trim - (t0 - 0.02)) < 1e-12);
+  const n = P.TRIM_MAX * 0.04;
+  assert.match(f.action('trimStep', +1), /トリム 機首上げ/); assert.ok(Math.abs(s.trim - (t0 + n)) < 1e-12);
+  f.action('trimStep', -1); f.action('trimStep', -1); assert.ok(Math.abs(s.trim - (t0 - n)) < 1e-12);
   for (let i = 0; i < 40; i++) f.action('trimStep', +1);
   assert.equal(s.trim, P.TRIM_MAX, 'the trim stops at its end');
   f.action('thrStep', +1); assert.ok(Math.abs(s.thr - Math.min(1, th0 + 0.05)) < 1e-12);
@@ -359,7 +360,8 @@ test('realtime: frame() is app.js tick (controls once per frame, 1/120 s steps f
       if (LB.s.onGround) rolled = Math.max(rolled, LB.s.out.gs);
     }
     assert.deepStrictEqual(LB.results, LA.results);
-    assert.equal(steps, Math.round(LB.s.t * 120), `${what}: every step reported`);
+    // (every step reported; a run that ends in a crash has one step more than its clock: the clock stops there)
+    assert.equal(steps, Math.round(LB.s.t * 120) + (LB.s.crashed ? 1 : 0), `${what}: every step reported${LB.s.crashed ? ' (crashed)' : ''}`);
     if (ground) assert.ok(rolled > 5, `${what}: it rolled (${rolled.toFixed(1)} kt)`);
   }
 });

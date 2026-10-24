@@ -138,7 +138,8 @@ export function createControls(FL, { prefs, savePrefs = () => {}, getGamepads = 
     // CADET's cockpit: one notch of the trim wheel (as the gamepad's D-pad), of the throttle, and the parking brake
     else if (a === 'trimStep') {
       if (s.opts.assist) return say('操縦アシスト中はトリムは自動です');
-      s.trim = clamp(s.trim + (arg < 0 ? -0.02 : 0.02), -P.TRIM_MAX, P.TRIM_MAX);
+      // (Sorajima's trim wheel: 4 % of the range a notch; the stick held now is not counted twice)
+      s.trim = clamp(s.trim + (arg < 0 ? -1 : 1) * P.TRIM_MAX * 0.04, -P.TRIM_MAX, P.TRIM_MAX); s.trimHold = s.elev;
       return say(`トリム ${trimTxt(s)}`);
     } else if (a === 'thrStep') {
       s.thr = clamp(s.thr + (arg < 0 ? -0.05 : 0.05), 0, 1);

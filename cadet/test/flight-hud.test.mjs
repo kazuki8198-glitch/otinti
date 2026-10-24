@@ -117,7 +117,7 @@ test('the debrief card: pass S, fail C, stopped, a lesson and a free flight that
     ['S', '合格', 'ok g-s', 2, 2, 2, 2, '0:38', 0, '']);
   assert.equal(pass.title, '姿勢・出力・トリム（基礎）');
   const c = flyA1(() => false, noseUp).status(), fail = debriefOf(c);
-  assert.equal(c.score.toFixed(6), '0.655248');                                 // (the scripted pilot on the game's model: test/flight.test.mjs REF)
+  assert.equal(c.score.toFixed(6), '0.653529');                                 // (the scripted pilot on the game's model: test/flight.test.mjs REF)
   assert.deepEqual([fail.grade, fail.status, fail.cls, fail.okN, fail.rowsN, fail.stepsDone, fail.bad], ['C', '不合格', 'ng', 1, 2, 2, '高度']);
   assert.equal(fail.tips.length, 1); assert.match(fail.tips[0], /^高度：/);
   assert.match(fail.sub, /次に意識すること/);

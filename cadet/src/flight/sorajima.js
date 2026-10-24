@@ -2,8 +2,9 @@
 // FLIGHT LAB's physics.js (itself carried over from Sorajima, then tuned for the lessons) is the frame: the world
 // (LAB field, the ground, the lakes), the state the lessons read, the touchdown record, the runway checks, the same
 // functions (FL.physics's API, so FLIGHT LAB's school grades flights flown on it). The Archer in it flies as in
-// Sorajima: its aircraft data (phys), the propeller's thrust (a static pull of 3,000 N and an efficiency that does not
-// fall away at climb speed), the rigging (no roll from the fin's side forces, FLIGHT LAB's v2.2 addition), the
+// Sorajima: its aircraft data (phys) — but for the engine, FLIGHT LAB's (a static pull of 2,400 N and a fixed-pitch
+// propeller's efficiency: about 700 fpm at Vy, as the real one, not Sorajima's 1,270; the thrust does not change how
+// the keys move the nose: tools/feel/compare.mjs measures both and they agree within 0.2°) —, the rigging (no roll from the fin's side forces, FLIGHT LAB's v2.2 addition), the
 // keyboard with the stick springing back (no bank hold), the gear's limit (6 m/s), the parts that must not touch
 // checked within 30 m of the ground. The reference speeds the lessons teach (rotation, Vx, Vy, the approach) stay the
 // published checklist's (FLIGHT LAB's). The Seminole is FLIGHT LAB's (Sorajima has none).
@@ -106,13 +107,13 @@ export function installSorajima(FL) {
       phys: {
         mass: 1050, S: 15.8, b: 10.8, c: 1.6, L: 7.25, CL0: 0.28, CLa: 4.8, aStall: 0.28, CD0: 0.032, K: 0.05, CDgear: 0,
         Cm0: 0.015, Cma: -1.1, Cmde: 0.34, Cmq: -15, Clda: 0.055, Clp: -0.5, Clb: -0.12, Cnb: 0.1, Cndr: 0.03, Cnr: -0.14, CYb: -0.6,
-        flapCL: 0.75, flapStall: 0.045, flapCD: 0.7, engine: { type: 'prop', P: 134000, T0: 3000 }, maxG: 3.8, rollRate: 55, pitchRate: 12,
+        flapCL: 0.75, flapStall: 0.045, flapCD: 0.7, engine: { type: 'prop', P: 134000, T0: 2400, eta: 0.85, etaK: 0.8 }, maxG: 3.8, rollRate: 55, pitchRate: 12,
       },
       sora: true,                                   // (Sorajima's Archer: its phys above, and its formulas below)
       // reference speeds (KIAS). Rotation, climb, Vx / Vy, glide, final approach, go-around, Va, Vfe, the crosswind: the published
       // Archer III G1000 training checklist (MGA 2025); Vso / Vs1, Vno, Vne: teaching values (機体ごとに要確認, the POH governs)
       v: { s0: 45, s1: 50, rotate: 60, x: 64, y: 76, climb: 87, glide: 76, glideLand: 66, appr: 70, apprShort: 65, ga: 64, va: 113, fe: 102, no: 125, ne: 154, xwind: 17,
-        apprFlaps: 3, apprThr: 0.3, cruise: 115, cruiseThr: 0.73, toFlaps: 0, descMax: 122 },   // (cruise 115 kt and 73 % power: Sorajima's trim point)
+        apprFlaps: 3, apprThr: 0.3, cruise: 115, cruiseThr: 0.84, toFlaps: 0, descMax: 122 },   // (cruise 115 kt: Sorajima's — the stick's travel is scaled from it)
     },
     {
       id: 'pa44', name: 'Piper PA-44-180 Seminole（教材モデル）', short: 'Seminole', kind: '低翼の双発練習機・T 字尾翼', engines1: 2, twin: true, counterRotating: true, cs: true,

@@ -2,6 +2,7 @@
 // (content/people.js); what they say (content/dialog/people.js) — valid dialog data, every talk reachable and runnable
 // in every chapter, the go / no-go answered right and wrong, the friend helped; polite, in the world's own words.
 import test from 'node:test';
+import { NOT_SPOKEN } from '../src/content/dialog/instructor.js';
 import assert from 'node:assert/strict';
 import { PEOPLE, PEERS, placeOf } from '../src/content/people.js';
 import { peopleDialogs, PEOPLE_HOOKS, SAMPLE_CTX, GAME_READS } from '../src/content/dialog/people.js';
@@ -63,6 +64,10 @@ test('people: what they say — valid, every node reachable, runnable in every c
     assert.ok(!REAL.test(l), l);
     assert.ok(!/ゲーム|ソフト|プレイヤー|FLIGHT LAB/.test(l), `talks about the game: ${l}`);
     assert.ok(!/\{|\}/.test(l), `a placeholder left: ${l}`);
+  }
+  // every line written (not only the ones these walks reach): no keys, menus or software in what people say
+  for (const d of Object.values(data.dialogs)) for (const [id, n] of Object.entries(d.nodes)) {
+    for (const t of [n.text, ...(n.choices || []).map(c => c.text)]) if (t) assert.ok(!NOT_SPOKEN.test(t) && !/ゲーム|ソフト|プレイヤー|クリック/.test(t), `${id}: ${t}`);
   }
   // the first meeting, then what comes after it
   const st = createDialogState();

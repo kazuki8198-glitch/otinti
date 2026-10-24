@@ -57,7 +57,7 @@ export function peopleDialogs() {
     D.dispatcher = { start: 't1', nodes: {
       t1: say('運航管理の佐伯です。ここは、その日の予定と機体と天気を決める場所です。訓練生のみなさんも、飛ぶ前に必ず寄ってください。', { if: { all: [ch('prologue'), flag('tour_done', false)] }, else: 'wx1', hook: { name: 'look', arg: 'player' }, effects: [{ set: 'met_dispatcher' }], next: 't2' }),
       t2: say('右の壁が今日の割り当て、隣の画面が天気です。METAR は今の天気、TAF はこれからの予報。飛ぶかどうかは、教官と、ここで一緒に決めます。', { hook: { name: 'point', arg: 'board' }, next: 't3' }),
-      t3: say('それから、これを。訓練生用のタブレットです。予定、天気、航空日誌、教科書、学科の練習問題が入っています。Tab キーで開けます。', { effects: [{ give: 'tablet' }, { set: 'has_tablet' }, { hook: 'tablet' }], next: 't4' }),
+      t3: say('それから、これを。訓練生用のタブレットです。予定、天気、航空日誌、教科書、学科の練習問題が入っています。毎朝、まずこれで今日の予定を確かめてください。', { effects: [{ give: 'tablet' }, { set: 'has_tablet' }, { hook: 'tablet' }], next: 't4' }),
       t4: say('隣のパイロットルームにヘッドセットとニーボード、北の廊下の奥がラウンジです。機体のことは、駐機場の大城さんへ。', { next: 't5' }),
       t5: say('案内はここまでです。午後は早瀬教官との顔合わせ、ブリーフィング室 1 ですね。いってらっしゃい。', { hook: { name: 'nod' }, effects: [{ set: 'tour_done' }, { hook: 'done', arg: 'tour' }], end: true }),
       wx1: say('今日の天気です。いまの METAR は「{weather.metarAm}」。午後は「{weather.metarPm}」の見込みで、TAF は「{weather.taf}」です。', { if: { all: [{ ctx: 'today.needsDecision', is: true }, { ctx: 'today.decided', is: false }] }, else: 'info:ch2', hook: { name: 'point', arg: 'weather' }, next: 'wx2' }),

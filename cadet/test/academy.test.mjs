@@ -12,9 +12,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ACADEMY as A } from '../src/world/layout.js';
 import { academySpec } from '../src/content/academy-spec.js';
+import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL;
 const S = academySpec(FL);
 const IN = { a0: A.a0 + A.wall, a1: A.a1 - A.wall, c0: A.c0 + A.wall, c1: A.c1 - A.wall };

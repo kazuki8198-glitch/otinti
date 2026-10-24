@@ -18,9 +18,11 @@ import { createRunner, createDialogState } from '../src/dialog/engine.js';
 import { validateDialogs } from '../src/dialog/validate.js';
 import { createLogbook, entryFrom } from '../src/career/logbook.js';
 import { playDay as play } from './helpers/play-day.mjs';
+import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL;
 const memStore = () => { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k) }; };
 // M4's first day (t1 → a2 → t3); the lessons by id

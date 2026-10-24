@@ -14,13 +14,15 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { runLesson } from '../../flight-lab/test/bot.mjs';
+import { runLesson } from './helpers/bot.mjs';
+import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's, as in the page)
 const FL = globalThis.FL;
 // FLIGHT LAB's scripted pilot, to run in the page
-const BOT_SRC = fs.readFileSync(path.join(here, '../../flight-lab/test/bot.mjs'), 'utf8').replace(/^export /gm, '');
+const BOT_SRC = fs.readFileSync(path.join(here, './helpers/bot.mjs'), 'utf8').replace(/^export /gm, '');
 // the circuit's shape for the bot in t2 (test/helpers/pattern-hook.mjs), to run in the page too
 const HOOK_SRC = fs.readFileSync(path.join(here, 'helpers/pattern-hook.mjs'), 'utf8').replace(/^export /gm, '');
 
@@ -491,7 +493,9 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     const act = (id, dir = 1, wheel = false) => C(({ id, dir, wheel }) => window.__cadet.fly.act(id, dir, wheel), { id, dir, wheel });
     const tick = (s = 0.5) => C((s) => window.__cadet.simulate(s, 1 / 30), s);
     await C(() => window.__cadet.fly.key('Enter')); await C(() => window.__cadet.fly.key('Enter'));         // seat and door, breakers (looked at)
-    await act('parkBrake'); await tick();
+    // the parking brake: set on the stand already (a click would release it — and at 1,000 rpm the Archer rolls)
+    assert.equal(await C(() => window.__cadet.fly.flight.controls.parkBrake), true, 'the parking brake set on the stand');
+    await tick();
     day = await C(() => window.__cadet.fly.day());
     assert.equal(day.phase, 'start', JSON.stringify(day.items));
     assert.equal((await C(() => window.__cadet.fly.status())).guide, 'mixture', 'the ring round the mixture');
@@ -528,7 +532,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
       if (['taxiOut', 'lineup', 'taxiOff', 'taxiIn'].includes(day.phase) && !day.assisting) await C(() => window.__cadet.fly.key('KeyY'));
       await tick(4);
     }
-    assert.deepEqual(log, ['afterStart', 'atis', 'ground', 'taxiOut', 'runup', 'tower', 'lineup', 't1', 'leave', 'transit', 'a2', 'back', 'return', 't3', 'exit', 'taxiOff', 'groundIn', 'taxiIn', 'shutdown', 'debrief', 'done']);
+    assert.deepEqual(log, ['afterStart', 'atis', 'ground', 'taxiOut', 'runup', 'tower', 'lineup', 't1', 'leave', 'transit', 'a2', 'back', 'return', 't3', 'exit', 'taxiOff', 'groundIn', 'taxiIn', 'shutdown', 'debrief', 'done'], `the day's phases (${day && day.st && day.st.crash ? 'damaged: ' + day.st.crash + ' ' + JSON.stringify(day.st.obstacle) : 'not damaged'})`);
     assert.equal(day.phase, 'done', log.join(' '));
     assert.ok(!day.st.incursion);
     // the lessons in the logbook: FLIGHT LAB's grades for the same inputs (its bot in node)

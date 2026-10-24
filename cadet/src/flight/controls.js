@@ -66,7 +66,7 @@ export function createControls(FL, { prefs, savePrefs = () => {}, getGamepads = 
     else { s.pKey = ramp(clamp, s.pKey || 0, tp, dt, false); s.rKey = ramp(clamp, s.rKey || 0, tr, dt, false); s.pIn = curve(s.pKey); s.rIn = curve(s.rKey); }
     // the keyboard pitch hold: in the air W / S move the nose attitude to hold; released, it stays there
     s.keyHold = !analog && st.prefs.hold === 'hold';
-    s.rollHold = !analog && st.prefs.rhold !== 'spring';    // the keyboard bank hold (released A / D: the bank stays)
+    s.rollHold = !P.SORAJIMA && !analog && st.prefs.rhold !== 'spring';    // the keyboard bank hold (FLIGHT LAB's; Sorajima's stick springs back)
     const thNow = P.attitude(s).pitch;
     if (!s.keyHold || (s.opts.levelT || 0) > 0 || s.pTgt == null || s.onGround) { s.pTgt = thNow; s.pHeld = 0; }
     if (s.keyHold && tp && !s.onGround) {
@@ -80,7 +80,7 @@ export function createControls(FL, { prefs, savePrefs = () => {}, getGamepads = 
     // the throttle: fine at first, faster the longer the key is held (a real hand moves the lever in under a second)
     const thU = pressed('KeyR', 'PageUp'), thD = pressed('KeyF', 'PageDown');
     st.thrHeld = thU || thD ? (st.thrHeld || 0) + dt : 0;
-    const thRate = st.thrHeld < 0.4 ? 0.45 : 1.6;
+    const thRate = P.SORAJIMA || st.thrHeld < 0.4 ? 0.45 : 1.6;             // (Sorajima's: one steady speed)
     if (thU) s.thr = clamp(s.thr + thRate * dt, 0, 1);
     if (thD) s.thr = clamp(s.thr - thRate * dt, 0, 1);
     // the parking brake holds both mains until the player releases it

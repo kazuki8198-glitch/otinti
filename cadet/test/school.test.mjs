@@ -12,10 +12,12 @@ import { classDialogs, ftdDialogs, examDialogs, scoreOf, CLASS_CHAPTERS, FTD_TIT
 import { validateDialogs } from '../src/dialog/validate.js';
 import { createRunner, createDialogState } from '../src/dialog/engine.js';
 import { EXAMS } from '../src/career/career.js';
+import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'quiz.js', 'radio.js', 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js'])
   vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL;
 const REAL = /(?<![A-Za-z])ANA(?![A-Za-z])|ＡＮＡ|all\s*nippon|全日空|acron|garmin|Seven Lima Alpha|7LA/i;
 const APP = /ゲーム|ソフト|プレイヤー|FLIGHT LAB|シミュレータ|キーボード|メニュー/;

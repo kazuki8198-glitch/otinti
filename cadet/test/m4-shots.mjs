@@ -8,7 +8,7 @@ import { loadChromium, openGame } from './shots.mjs';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const [q = 'high', outDir = path.resolve(here, '../docs/m4')] = process.argv.slice(2);
 fs.mkdirSync(outDir, { recursive: true });
-const BOT_SRC = fs.readFileSync(path.join(here, '../../flight-lab/test/bot.mjs'), 'utf8').replace(/^export /gm, '');
+const BOT_SRC = fs.readFileSync(path.join(here, './helpers/bot.mjs'), 'utf8').replace(/^export /gm, '');
 const ONLY = process.argv[4] ? process.argv[4].split(',') : null;          // only these (by their number)
 const g = await openGame(loadChromium(), { q, w: 1280, h: 720, t: 9.8, extra: '&anomalies=r_sump,r_cap' });
 const ev = (fn, a) => g.page.evaluate(fn, a);

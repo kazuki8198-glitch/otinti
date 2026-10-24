@@ -16,11 +16,13 @@ import { gameBook, plain, sentences } from '../src/content/book.js';
 import { INSTRUCTOR, instructorDialogs, sampleCtx, speakable, polite, speechLines } from '../src/content/dialog/instructor.js';
 import { validateDialogs } from '../src/dialog/validate.js';
 import { createDialogState, createRunner, evalCond, applyEffects, resolveTarget, END } from '../src/dialog/engine.js';
+import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js',
   'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js'])
   vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL;
 const BOOK = gameBook(FL);
 const LESSONS = FL.syllabus.STAGES.flatMap(s => s.lessons);

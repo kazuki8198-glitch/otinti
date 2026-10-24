@@ -4,7 +4,7 @@
 //  - FLIGHT LAB's plain-script modules, read from ../flight-lab/src (not copied: FLIGHT LAB keeps working on its own),
 //  - the game, bundled by esbuild into one script (three.js pinned in package.json, licence kept),
 //  - the textures as data URLs (assets/tex, CC0: see assets/CREDITS.md), the people's models (assets/model/actor.glb and
-//    actor-near.glb, made by tools/actor: base64).
+//    actor-near.glb, made by tools/actor) and the Archer's (archer.glb and archer-far.glb, made by tools/aircraft): base64.
 // Output: outputs/CADET.html
 //   node build.mjs          minified
 //   node build.mjs --dev    readable, with an inline source map
@@ -33,7 +33,7 @@ function assetsScript() {
     const ext = path.extname(f); if (!MIME[ext]) continue;
     map['tex/' + path.basename(f, ext)] = `data:${MIME[ext]};base64,` + fs.readFileSync(path.join(TEX, f)).toString('base64');
   }
-  for (const f of ['actor', 'actor-near']) map['model/' + f] = fs.readFileSync(path.join(here, 'assets', 'model', f + '.glb')).toString('base64');
+  for (const f of ['actor', 'actor-near', 'archer', 'archer-far']) map['model/' + f] = fs.readFileSync(path.join(here, 'assets', 'model', f + '.glb')).toString('base64');
   return `globalThis.CADET_ASSETS = ${JSON.stringify(map)};`;
 }
 

@@ -10,13 +10,15 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { makeBot } from '../../flight-lab/test/bot.mjs';
+import { makeBot } from './helpers/bot.mjs';
 import { createFlight } from '../src/flight/flight.js';
 import { createSystems } from '../src/aircraft/systems.js';
 import { routeOut, routeLineUp, routeIn, createTaxiPilot, exitFor, HOLD, LINEUP } from '../src/flight/taxi.js';
+import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL, P = FL.physics, R = P.LAB_RWY;
 const NOKEYS = { has: () => false };
 const STAND = { a: 636.5, c: 207.6 };

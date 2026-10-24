@@ -11,9 +11,11 @@ import { validateDialogs } from '../src/dialog/validate.js';
 import { createRunner, createDialogState } from '../src/dialog/engine.js';
 import { NOT_SPOKEN } from '../src/content/dialog/instructor.js';
 import { cockpitDialogs, flightLine, debriefLine, FLY_CHOICES } from '../src/content/dialog/cockpit.js';
+import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL, SC = FL.school;
 const REAL = /(?<![A-Za-z])ANA(?![A-Za-z])|ＡＮＡ|all\s*nippon|全日空|acron/i;
 

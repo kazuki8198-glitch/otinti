@@ -11,7 +11,10 @@
 //    (none missed at a low frame rate);
 //  - update() works on the same objects every frame (no allocation);
 //  - struts and hub caps read as metal, and the blades keep their yellow tips;
-//  - the parked aircraft are exactly as before (two baked meshes, the same triangles, the same colliders).
+//  - the parked twin is exactly as before (two baked meshes, the same triangles, the same colliders); the parked Archer
+//    is the Blender model in two details under an LOD, its colliders from the near one, its registration its own;
+//  - the Archer's model: every part and registration, faces outward (drawn one-sided), the moving surfaces on acmesh's
+//    hinge lines, the lights on its skin, the walk-around's places by it, within its triangle budgets.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -19,11 +22,16 @@ import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
-import { liveAircraft, parkedAircraft, buildAircraftModel, colliderBoxes, splitBody, cabinRear, paintClass, BLADES_OFF } from '../src/aircraft/exterior.js';
+import { liveAircraft, parkedAircraft, buildAircraftModel, colliderBoxes, splitBody, cabinRear, paintClass, BLADES_OFF, LOD_FAR } from '../src/aircraft/exterior.js';
+import { archerMeshes, exteriorParts } from '../src/aircraft/archer-model.js';
+import { TAILS } from '../src/aircraft/registrations.js';
+import { POINTS } from '../src/content/walkaround-archer.js';
 import { makeLayout } from '../src/world/layout.js';
+import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 for (const m of ['physics.js', 'acmesh.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL, P = FL.physics;
 const AC = id => P.AIRCRAFT.find(a => a.id === id);
 const tris = g => (g.index ? g.index.count : g.attributes.position.count) / 3;
@@ -165,16 +173,27 @@ test('exterior: the cabin split keeps every triangle; the cockpit view takes the
     assert.equal(cabin.filter(glass).length, 14, `${id}: the six side panes and the windscreen (14 triangles)`);
     assert.equal(rest.filter(glass).length, 0);
     assert.ok(cabin.every(t => cz(t) < zRear), `${id}: nothing aft of the cabin's rear ring`);
-    // the live model: the two meshes are the body exactly (plus the fixed parts merged into it, the Archer's gear)
-    const ac = liveAircraft(FL, A), parts = FL.acmesh.buildParts(A);
+    // the live model: the two meshes are the body exactly (plus the fixed parts merged into it, the Archer's gear); the
+    // Archer's from the Blender model (its cabin made apart, at the same ring), the twin's acmesh's split
+    const ac = liveAircraft(FL, A), parts = exteriorParts(FL, A);
     const fixedTris = ac.parts.fixed.reduce((k, name) => k + parts.find(p => p.name === name).mesh.count / 3, 0);
-    assert.equal(fixedTris, id === 'pa28' ? 3 * 216 : 0);
-    assert.equal(tris(ac.parts.body.geometry) + tris(ac.parts.cabin.geometry), n + fixedTris);
-    assert.equal(tris(ac.parts.cabin.geometry), cabin.length);
+    const pb = parts.find(p => p.name === 'body');
+    if (id === 'pa28') {
+      assert.ok(pb.cabin && fixedTris > 3 * 216, 'the model: its cabin, its gear (more than acmesh\'s)');
+      assert.equal(tris(ac.parts.body.geometry), pb.mesh.count / 3 + fixedTris);
+      assert.equal(tris(ac.parts.cabin.geometry), pb.cabin.count / 3);
+      const mc = pb.cabin.col, gl = (m) => { let k = 0; for (let t = 0; t < m.count / 3; t++) if ([0, 3, 6].every(v => Math.abs(m.col[t * 9 + v] - 0.10) < 1e-3 && Math.abs(m.col[t * 9 + v + 2] - 0.19) < 1e-3)) k++; return k; };
+      assert.ok(gl(pb.cabin) > 100 && gl(pb.mesh) === 0, `the windows and the windshield in the cabin (${gl(pb.cabin)} triangles), none behind`);
+      assert.ok(mc.length > 0);
+    } else {
+      assert.equal(fixedTris, 0);
+      assert.equal(tris(ac.parts.body.geometry) + tris(ac.parts.cabin.geometry), n + fixedTris);
+      assert.equal(tris(ac.parts.cabin.geometry), cabin.length);
+    }
     const bb = new THREE.Box3().setFromObject(ac.parts.body, true), cb = new THREE.Box3().setFromObject(ac.parts.cabin, true);
     assert.ok(bb.max.x > A.wing.tipX - 0.01 && bb.max.y > A.vstab.y1 - 0.05, `${id}: the wings and the fin stay outside`);
     assert.ok(cb.max.x < 0.7 && cb.max.z <= zRear + 1e-6, `${id}: the cabin is fuselage only`);
-    if (id === 'pa28') assert.ok(cb.min.z < A.engines[0].z - 0.3, 'the nose cowling is part of it (the cockpit draws its own)');
+    if (id === 'pa28') assert.ok(cb.min.z < A.fuse[0][0], 'the nose cowling is part of it (the cockpit draws its own)');
     // outside: drawn and casting; inside: neither, and the disc fainter; back out: as before
     assert.equal(ac.inside, false);
     assert.ok(ac.cabin.visible && ac.cabin.castShadow);
@@ -282,14 +301,15 @@ test('exterior: struts and hub caps read as metal; the blades keep their yellow 
     [[0.20, 0.22, 0.28], 'paint'], [[0.10, 0.14, 0.19], 'glass'], [[0.09, 0.09, 0.1], 'rubber']]) assert.equal(paintClass(lin(c)), k, `${c} is ${k}`);
   // the paint shader uses the same tolerance (both for roughness and metalness)
   const ac = liveAircraft(FL, AC('pa28'));
-  const sh = { fragmentShader: '#include <roughnessmap_fragment>\n#include <lights_physical_fragment>\n#include <metalnessmap_fragment>' };
+  const sh = { vertexShader: '#include <common>\n#include <begin_vertex>', fragmentShader: '#include <common>\n#include <roughnessmap_fragment>\n#include <lights_physical_fragment>\n#include <metalnessmap_fragment>\n#include <aomap_fragment>' };
   ac.parts.body.material.onBeforeCompile(sh);
   assert.equal(sh.fragmentShader.split('step(abs(vColor.r - vColor.b), 0.060)').length - 1, 2, 'metal tolerance in the shader');
+  assert.ok(/attribute float ao/.test(sh.vertexShader) && /indirectDiffuse \*= vAO/.test(sh.fragmentShader), 'the baked occlusion on the sky\'s light');
   // every gear leg has metal-coloured triangles (the Archer's are in its body mesh, the twin's on their hinges); the
   // propeller's material keeps the vertex colours (yellow tips)
   const metalIn = g => { const c = g.attributes.color; let k = 0; for (let i = 0; i < c.count; i++) if (paintClass([c.getX(i), c.getY(i), c.getZ(i)]) === 'metal') k++; return k; };
-  assert.equal(metalIn(ac.parts.body.geometry), 216 + 360, 'the Archer\'s three legs: struts and hub caps (vertices)');
-  assert.equal(metalIn(ac.parts.cabin.geometry), 0);
+  assert.ok(metalIn(ac.parts.body.geometry) > 300, 'the Archer\'s three legs: struts and hubs (vertices)');
+  assert.ok(metalIn(ac.parts.cabin.geometry) < metalIn(ac.parts.body.geometry) / 4, 'the cabin: the door handle, little else');
   const tw = liveAircraft(FL, AC('pa44'));
   for (const g of ['gearN', 'gearR', 'gearL']) { const k = metalIn(tw.parts[g].geometry); assert.ok(k > 30, `pa44 ${g}: ${k} metal vertices`); }
   tw.dispose();
@@ -300,25 +320,86 @@ test('exterior: struts and hub caps read as metal; the blades keep their yellow 
   ac.dispose();
 });
 
-test('exterior: the parked aircraft are unchanged (two baked meshes, the same triangles and colliders)', () => {
+test('exterior: the parked aircraft — the twin as before (two baked meshes, the same triangles and colliders); the Archer from the model, both details', () => {
   const L = makeLayout(P), G = P.GROUND_M, cy = Math.cos(L.frameYaw), sy = Math.sin(L.frameYaw), toFrame = (x, z) => [x * cy - z * sy, x * sy + z * cy];
   const hdg = (L.R.trueHdg + 270) % 360;
   // measured from the code before the flown aircraft was added
-  const REF = { pa28: { tris: 2018, boxes: 59, hash: -150336.043077, at: [636.5, 207.6], parts: 11 }, pa44: { tris: 2066, boxes: 69, hash: -190275.448182, at: [655, 167.6], parts: 12 } };
-  for (const id of ['pa28', 'pa44']) {
-    const R = REF[id], ac = parkedAircraft(FL, L, id, R.at[0], R.at[1], hdg, { prop: 1.3 });
-    const meshes = [];
-    ac.root.traverse(o => { if (o.isMesh) meshes.push(o); });
-    assert.equal(meshes.length, 2, `${id}: baked into two meshes`);
-    assert.ok(meshes.every(m => m.name === 'aircraft-baked' && m.castShadow && m.receiveShadow));
-    assert.equal(meshes.reduce((n, m) => n + tris(m.geometry), 0), R.tris, `${id}: triangles`);
-    const boxes = colliderBoxes(ac.root, toFrame, G);
-    let h = 0; for (const b of boxes) h += b.x0 * 1.3 + b.x1 * 1.7 + b.z0 * 2.1 + b.z1 * 2.9 + b.y0 * 3.3 + b.y1 * 3.7;
-    assert.equal(boxes.length, R.boxes, `${id}: collider boxes`);
-    assert.ok(Math.abs(h - R.hash) < 1e-3, `${id}: the same boxes (${h})`);
-    const m = buildAircraftModel(FL, AC(id)), names = [];
-    m.root.traverse(o => { if (o.isMesh) names.push(o.name); });
-    assert.equal(names.length, R.parts, `${id}: a mesh per part`);
-    assert.ok(!names.includes('disc'), 'no disc on a parked aircraft');
+  const R = { tris: 2066, boxes: 69, hash: -190275.448182, at: [655, 167.6], parts: 12 };
+  const tw = parkedAircraft(FL, L, 'pa44', R.at[0], R.at[1], hdg, { prop: 1.3 });
+  const meshesOf = (o) => { const out = []; o.traverse(m => { if (m.isMesh) out.push(m); }); return out; };
+  const meshes = meshesOf(tw.root);
+  assert.equal(meshes.length, 2, 'pa44: baked into two meshes');
+  assert.ok(meshes.every(m => m.name === 'aircraft-baked' && m.castShadow && m.receiveShadow));
+  assert.equal(meshes.reduce((n, m) => n + tris(m.geometry), 0), R.tris, 'pa44: triangles');
+  const boxes = colliderBoxes(tw.root, toFrame, G);
+  let h = 0; for (const b of boxes) h += b.x0 * 1.3 + b.x1 * 1.7 + b.z0 * 2.1 + b.z1 * 2.9 + b.y0 * 3.3 + b.y1 * 3.7;
+  assert.equal(boxes.length, R.boxes, 'pa44: collider boxes');
+  assert.ok(Math.abs(h - R.hash) < 1e-3, `pa44: the same boxes (${h})`);
+  const names = []; buildAircraftModel(FL, AC('pa44')).root.traverse(o => { if (o.isMesh) names.push(o.name); });
+  assert.equal(names.length, R.parts, 'pa44: a mesh per part');
+  assert.ok(!names.includes('disc'), 'no disc on a parked aircraft');
+  // the Archer: near and far baked (two meshes each) under an LOD, the near one within LOD_FAR; the colliders from the
+  // near one only, round the whole airframe (span, length, the fin), low enough at the wings not to be walked under
+  const at = [636.5, 207.6], ac = parkedAircraft(FL, L, 'pa28', at[0], at[1], hdg, { prop: 1.3, reg: 'N731SY', lod: 'auto' });
+  const lod = ac.root.getObjectByName('aircraft-lod');
+  assert.ok(lod && lod.isLOD && lod.levels.length === 2 && lod.levels[1].distance === LOD_FAR);
+  const [nearM, farM] = lod.levels.map(l => meshesOf(l.object));
+  assert.equal(nearM.length, 2); assert.equal(farM.length, 2);
+  const nt = nearM.reduce((n, m) => n + tris(m.geometry), 0), ft = farM.reduce((n, m) => n + tris(m.geometry), 0);
+  assert.ok(nt > 18000 && nt < 26000 && ft > 2000 && ft < 3000 && ft < nt / 7, `triangles: near ${nt}, far ${ft}`);
+  const one = parkedAircraft(FL, L, 'pa28', at[0], at[1], hdg, { prop: 1.3, reg: 'N731SY' });
+  const ab = colliderBoxes(ac.root, toFrame, G), ob = colliderBoxes(one.root, toFrame, G);
+  assert.deepEqual(ab, ob, 'the colliders of the LOD are the near model\'s');
+  const ext = (k0, k1) => [Math.min(...ab.map(b => b[k0])), Math.max(...ab.map(b => b[k1]))];
+  const [x0, x1] = ext('x0', 'x1'), [z0, z1] = ext('z0', 'z1'), top = Math.max(...ab.map(b => b.y1));
+  const span = Math.max(x1 - x0, z1 - z0), len = Math.min(x1 - x0, z1 - z0);
+  assert.ok(span > 10.6 && span < 11.4 && len > 7.2 && len < 8.3 && top > 2.6 && top < 3.2, `the airframe: ${span.toFixed(2)} × ${len.toFixed(2)} m, ${top.toFixed(2)} m high`);
+  // another registration: the same aircraft, other letters
+  const tri = (o) => meshesOf(o).reduce((n, m) => n + tris(m.geometry), 0);
+  const b = parkedAircraft(FL, L, 'pa28', at[0], at[1], hdg, { reg: 'N738SY' });
+  assert.notEqual(tri(b.root), tri(one.root), 'the letters differ');
+});
+
+test('exterior: the Archer\'s model — every part, outward faces, the hinges on acmesh\'s lines, the lights and the walk-around on its skin', () => {
+  const A = AC('pa28'), lab = FL.acmesh.buildParts(A);
+  for (const lod of ['near', 'far']) {
+    const M = archerMeshes(lod);
+    assert.ok(M, `${lod}: the model is there`);
+    for (const n of ['body', 'cabin', 'ailL', 'ailR', 'flapL', 'flapR', 'stab', 'rud', 'prop', 'gearN', 'gearL', 'gearR']) assert.ok(M.has(n), `${lod}: ${n}`);
+    for (const t of TAILS.filter(t => t.type === 'pa28')) assert.equal(M.has('reg.' + t.reg), lod === 'near', `${lod}: ${t.reg} painted (near only: a few pixels high beyond)`);
+    let total = 0;
+    for (const [k, m] of M) {
+      if (!k.startsWith('reg.')) total += m.count / 3;
+      // faces drawn one-sided: each triangle's winding agrees with its normals, and each closed piece encloses a positive volume
+      let bad = 0, vol = 0;
+      for (let t = 0; t < m.count / 3; t++) {
+        const v = (i) => new THREE.Vector3().fromArray(m.pos, (t * 3 + i) * 3), [a, b, c] = [v(0), v(1), v(2)];
+        const nf = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a));
+        const nv = new THREE.Vector3(); for (let i = 0; i < 3; i++) nv.add(new THREE.Vector3().fromArray(m.nrm, (t * 3 + i) * 3));
+        if (nf.dot(nv) < 0) bad++;
+        vol += a.dot(new THREE.Vector3().crossVectors(b, c)) / 6;
+      }
+      assert.equal(bad, 0, `${lod} ${k}: windings`);
+      if (!k.startsWith('reg.')) assert.ok(vol > -1e-4, `${lod} ${k}: outward (${vol})`);
+      assert.ok(m.ao.every(x => x >= 0.3 && x <= 1), `${lod} ${k}: occlusion in range`);
+    }
+    assert.ok(lod === 'near' ? total < 24000 : total < 3000, `${lod}: ${total} triangles`);
+    // each moving surface's front lies on its hinge line (acmesh's pivot and axis)
+    for (const n of ['ailL', 'ailR', 'flapL', 'flapR', 'rud']) {
+      const p = lab.find(q => q.name === n), m = M.get(n), P0 = new THREE.Vector3(...p.pivot), ax = new THREE.Vector3(...p.axis).normalize();
+      let near = Infinity;
+      for (let i = 0; i < m.count; i++) { const v = new THREE.Vector3().fromArray(m.pos, i * 3).sub(P0); near = Math.min(near, v.sub(ax.clone().multiplyScalar(v.dot(ax))).length()); }
+      assert.ok(near < 0.045, `${lod} ${n}: on its hinge (${near.toFixed(3)} m)`);
+    }
   }
+  // the lights sit on the skin, the walk-around's places are by it (the near model, with its parts in place)
+  const M = archerMeshes('near'), pts = [];
+  for (const [k, m] of M) if (!k.startsWith('reg.') || k === 'reg.N738SY') for (let i = 0; i < m.count; i += 2) pts.push(new THREE.Vector3().fromArray(m.pos, i * 3));
+  const gap = (p) => { const q = new THREE.Vector3(...p); let d = Infinity; for (const v of pts) d = Math.min(d, v.distanceToSquared(q)); return Math.sqrt(d); };
+  for (const s of liveAircraft(FL, A).spots) assert.ok(gap(s.pos) < (s.id === 'beacon' ? 0.06 : 0.09), `${s.id} on the skin (${gap(s.pos).toFixed(3)} m)`);
+  for (const w of POINTS) assert.ok(gap(w.at) < 0.45, `${w.id} by the aircraft (${gap(w.at).toFixed(2)} m)`);
+  // the propeller: blade 0 up at rest, as far out as the physics' radius; the spinner ahead of the cowling
+  const pr = M.get('prop'); let top = -Infinity, front = Infinity;
+  for (let i = 0; i < pr.count; i++) { top = Math.max(top, pr.pos[i * 3 + 1]); front = Math.min(front, pr.pos[i * 3 + 2]); }
+  assert.ok(Math.abs(top - (A.engines[0].y + A.engines[0].r)) < 0.03 && front < A.engines[0].z - 0.3, `blade tip ${top}, spinner ${front}`);
 });

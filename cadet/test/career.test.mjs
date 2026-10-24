@@ -3,6 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createCareer, newCareer, cleanCareer, weatherFor, dateOf, dateText, isOff, schedule, gate, nextLesson, passedAt, CH2, GROUND, CLASSES, EXAMS, WEATHER, SOLO_TRUST, CAREER_KEY, SLOTS } from '../src/career/career.js';
+import { installSorajima } from '../src/flight/sorajima.js';
 
 const memStore = () => { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k), m }; };
 const rec = (levels = ['basic']) => ({ tries: 1, best: 'S', pass: true, levels });
@@ -115,6 +116,7 @@ test('career: one file for everything — written, read back cleaned; a wrong or
   const fs = await import('node:fs'), vm = await import('node:vm'), path = await import('node:path'), { fileURLToPath } = await import('node:url');
   const here = path.dirname(fileURLToPath(import.meta.url));
   for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+  installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
   const FL = globalThis.FL;
   const { exportArchive, importArchive } = await import('../src/career/archive.js');
   const { createDialogState } = await import('../src/dialog/engine.js');

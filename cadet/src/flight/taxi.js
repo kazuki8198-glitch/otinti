@@ -40,7 +40,8 @@ export const exitFor = (along) => (along < A2.a - 22 ? 'A2' : 'A3');
 // across the apron's south end → the lane north → the stand, nose east, into it (in)
 export function routeIn(from, stand) {
   const ex = exitFor(from.a), xa = ex === 'A2' ? A2.a : A3.a;
-  const off = [{ a: Math.max(from.a + 3, xa - 30), c: 0 }, { a: xa - 6, c: 3 }, { a: xa, c: 18 }, { a: xa, c: HOLD.c + 9, stop: true, name: 'clear' }];
+  // (from where it stopped, so the way starts at the aircraft — a long roll down the runway to A3 is part of it)
+  const off = [{ a: from.a, c: 0 }, { a: Math.max(from.a + 3, xa - 30), c: 0 }, { a: xa - 6, c: 3 }, { a: xa, c: 18 }, { a: xa, c: HOLD.c + 9, stop: true, name: 'clear' }];
   const inn = [{ a: xa, c: HOLD.c + 9 }, { a: xa, c: TWY.c - 3 }, { a: xa - 9, c: TWY.c }, { a: APRON_S + 9, c: TWY.c }, { a: APRON_S, c: TWY.c + 3 }, { a: APRON_S, c: LANE.c - 10 },
     { a: APRON_S + 10, c: LANE.c }, { a: stand.a - 10, c: LANE.c }, { a: stand.a, c: LANE.c + 9 }, { a: stand.a, c: stand.c - 1.5, stop: true, name: 'stand' }];
   return { exit: ex, off, in: inn, points: [...off.slice(0, -1), ...inn] };

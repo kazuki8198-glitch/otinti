@@ -20,6 +20,7 @@ import { academySpec } from './content/academy-spec.js';
 import { buildVegetation } from './world/vegetation.js';
 import { buildLandmarks } from './world/landmarks.js';
 import { parkedAircraft, colliderBoxes } from './aircraft/exterior.js';
+import { TODAY, PARKED_ARCHERS } from './aircraft/registrations.js';
 import { PRESETS, ORDER, gpuName, pickPreset, rememberPreset, makeDynRes } from './core/quality.js';
 import { createInput } from './core/input.js';
 import { createCollisionWorld } from './player/collide.js';
@@ -59,6 +60,7 @@ import { createCards } from './ui/cards.js';
 import { trustOf } from './dialog/engine.js';
 import { spoken } from './content/dialog/atc.js';
 import { nextStep, makeRouter } from './career/guide.js';
+import { installSorajima } from './flight/sorajima.js';
 
 /* global __BUILD_INFO__ */
 const $ = (s) => document.querySelector(s);
@@ -81,7 +83,7 @@ function fail(e) {
 async function boot() {
   const buildInfo = typeof __BUILD_INFO__ !== 'undefined' ? __BUILD_INFO__ : 'dev';
   $('#buildInfo').textContent = buildInfo;
-  const FL = globalThis.FL;
+  const FL = globalThis.FL; if (FL) installSorajima(FL);    // (the flight model: Sorajima's — flight/sorajima.js)
   const need = ['physics', 'avionics', 'school', 'syllabus', 'acmesh'].filter(k => !FL || !FL[k]);
   if (need.length) throw new Error('FLIGHT LAB のモジュールがありません: ' + need.join(', '));
   const L = makeLayout(FL.physics), G = L.G;
@@ -132,14 +134,16 @@ async function boot() {
   const spots = [[0, 'pa28'], [2, 'pa28'], [3, 'pa28'], [5, 'pa28'], [8, 'pa28'], [10, 'pa44'], [13, 'pa28'], [16, 'pa44'], [19, 'pa28'], [22, 'pa28']];
   const aircraftColliders = (ac, tag) => colliderBoxes(ac.root, toFrame, G).map(b => world.add({ ...b, tag }));
   let todayIds = [], todayAc = null;
+  let archers = 0;
   for (const [i, id] of spots) {
     const s = STANDS[i]; if (!s) continue;
-    const ac = parkedAircraft(FL, L, id, s.a, s.c - 0.4, hdgOut, { prop: 0.3 + i * 0.7 });
+    const reg = id === 'pa28' ? (i === 19 ? TODAY : PARKED_ARCHERS[archers++ % PARKED_ARCHERS.length]) : undefined;
+    const ac = parkedAircraft(FL, L, id, s.a, s.c - 0.4, hdgOut, { prop: 0.3 + i * 0.7, reg, lod: 'auto' });
     scene.add(ac.root); parked.push(ac);
     const ids = aircraftColliders(ac, i === 19 ? 'aircraft:today' : 'aircraft');
     if (i === 19) { todayIds = ids; todayAc = ac; }
   }
-  { const ac = parkedAircraft(FL, L, 'pa28', 563, 258, hdgOut, { prop: 1.1 }); scene.add(ac.root); parked.push(ac); aircraftColliders(ac, 'aircraft'); }
+  { const ac = parkedAircraft(FL, L, 'pa28', 563, 258, hdgOut, { prop: 1.1, reg: PARKED_ARCHERS[archers++ % PARKED_ARCHERS.length], lod: 'auto' }); scene.add(ac.root); parked.push(ac); aircraftColliders(ac, 'aircraft'); }
   // tree trunks and shrubs around the academy's grounds; an invisible fence at the edge of the airfield's grass
   {
     const [cx, , cz] = L.rwyToLocal(640, 260);

@@ -9,9 +9,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { academySpec } from '../src/content/academy-spec.js';
 import { nextStep, makeRouter } from '../src/career/guide.js';
+import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const S = academySpec(globalThis.FL);
 const item = (kind, slot, state = 'now', o = {}) => ({ kind, slot, state, id: 'x', title: o.title || kind, where: o.where || null, who: o.who || null });
 

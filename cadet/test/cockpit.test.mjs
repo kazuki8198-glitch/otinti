@@ -20,9 +20,11 @@ import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
 import { buildCockpit, PICK_LAYER } from '../src/aircraft/cockpit.js';
 import { BEZEL, SOFTKEYS } from '../src/aircraft/g1000.js';
+import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'acmesh.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL, P = FL.physics, AV = FL.avionics, SC = FL.school;
 const AC = id => P.AIRCRAFT.find(a => a.id === id);
 const DEG = Math.PI / 180, DT = 1 / 60;

@@ -21,13 +21,15 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { makeBot, runLesson } from '../../flight-lab/test/bot.mjs';
+import { makeBot, runLesson } from './helpers/bot.mjs';
 import { createFlight, inWorld, H, MAX_STEPS, WINDS } from '../src/flight/flight.js';
 import { createControls, actionForKey, FLY_HELD, PREFS0 } from '../src/flight/controls.js';
+import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const FLSRC = path.join(here, '../../flight-lab/src');
 for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js']) vm.runInThisContext(fs.readFileSync(path.join(FLSRC, m), 'utf8'), { filename: m });
+installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL, P = FL.physics, SC = FL.school;
 
 const memStore = () => { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k), keys: () => [...m.keys()] }; };
@@ -45,9 +47,16 @@ function extract(name) {
   const i = APP.indexOf(`function ${name}(`); assert.ok(i >= 0, `app.js has function ${name}`);
   for (let k = APP.indexOf('{', i), d = 0; k < APP.length; k++) {
     if (APP[k] === '{') d++;
-    else if (APP[k] === '}' && --d === 0) return APP.slice(i, k + 1);
+    else if (APP[k] === '}' && --d === 0) return SORA(APP.slice(i, k + 1));
   }
   throw new Error(`unbalanced braces in ${name}`);
+}
+// the game's keyboard is Sorajima's where FLIGHT LAB changed it: the stick springs back (no bank hold) and the throttle
+// moves at one speed. The reference is app.js with those two lines put back as Sorajima has them (each must be found)
+function SORA(src) {
+  const swaps = [["s.rollHold = !analog && S.prefs.rhold !== 'spring';", 's.rollHold = false;'], ['const thRate = S.thrHeld < 0.4 ? 0.45 : 1.6;', 'const thRate = 0.45;']];
+  for (const [a, b] of swaps) if (src.includes('function updateControls(')) { assert.ok(src.includes(a), `app.js: ${a}`); src = src.replace(a, b); }
+  return src;
 }
 const APP_SRC = ['updateControls', 'doAction', 'tick'].map(extract).join('\n');
 // app.js's S and the helpers those functions use; padInput is a stub that returns the test's own stick reading
@@ -63,11 +72,12 @@ function appSandbox(prefs = {}) {
 }
 
 // ------------------------------------------------------------------ 1. the scripted pilot: bit-identical to bot.mjs
-// measured with flight-lab/test/bot.mjs runLesson: grade, score (6 decimals), lesson time L.t (s), physics steps
+// measured with the scripted pilot's runLesson (test/helpers/bot.mjs) on the game's flight model (Sorajima's): grade,
+// score (6 decimals), lesson time L.t (s), physics steps
 const REF = {
   'a1 intro': ['S', '1.000000', '27.992', 3359], 'a1 basic': ['S', '1.000000', '38.000', 4560], 'a1 precision': ['S', '1.000000', '48.000', 5760],
-  'a1 intro noseUp': ['S', '1.000000', '27.992', 3359], 'a1 basic noseUp': ['C', '0.653217', '47.525', 5703], 'a1 precision noseUp': ['C', '0.656073', '98.542', 11825],
-  'a1 intro idle': ['S', '1.000000', '27.992', 3359], 'a1 basic idle': ['C', '0.190141', '130.000', 15600], 'a1 precision idle': ['C', '0.084875', '130.000', 15600],
+  'a1 intro noseUp': ['S', '0.986761', '36.592', 4391], 'a1 basic noseUp': ['C', '0.655248', '51.658', 6199], 'a1 precision noseUp': ['C', '0.657443', '92.833', 11140],
+  'a1 intro idle': ['S', '1.000000', '27.992', 3359], 'a1 basic idle': ['C', '0.199176', '130.000', 15600], 'a1 precision idle': ['C', '0.089876', '130.000', 15600],
 };
 const HOOKS = {
   '': undefined,
@@ -93,12 +103,12 @@ test('bridge: a1 flown by bot.mjs through runScripted is bit-identical to runLes
     assert.equal(L, f.L);
     sameRun(ref, L, what);
     const [grade, score, t, steps] = REF[what];
-    assert.deepEqual([L.grade, L.score.toFixed(6), L.t.toFixed(3), Math.round(L.s.t * 120)], [grade, score, t, steps], `${what}: FLIGHT LAB's numbers`);
+    assert.deepEqual([L.grade, L.score.toFixed(6), L.t.toFixed(3), Math.round(L.s.t * 120)], [grade, score, t, steps], `${what}: the reference numbers`);
   }
   // the hooks really are seen: the nose-up run at basic is graded C on the altitude, the hold is still met
   const f = createFlight(FL, { store: null }); f.startLesson('a1', 'basic', { autoRud: false });
   const L = f.runScripted(makeBot(FL).fly, 900, HOOKS.noseUp);
-  assert.deepEqual(L.results.flatMap(r => r.rows).map(r => [r.name, r.val, r.pass]), [['高度', '77% が基準内（最大のずれ 146 ft）', false], ['連続保持', '最長 20 秒', true]]);
+  assert.deepEqual(L.results.flatMap(r => r.rows).map(r => [r.name, r.val, r.pass]), [['高度', '78% が基準内（最大のずれ 158 ft）', false], ['連続保持', '最長 20 秒', true]]);
 });
 
 test('bridge: other lessons (a2, t1 with its checklist and read-back, the Seminole m2) at basic are bit-identical too', () => {
@@ -266,7 +276,7 @@ test('controls: the key → action table is app.js\'s keydown table', () => {
 test('controls: CADET\'s cockpit steps — trim wheel ±0.02 (not under the assist), throttle ±0.05, the latched parking brake', () => {
   const f = createFlight(FL, { store: null });
   const L = f.startFree('area', 'pa28', { assist: false }), s = L.s;
-  const t0 = s.trim, th0 = s.thr;
+  s.trim = 0; const t0 = s.trim, th0 = s.thr;
   assert.match(f.action('trimStep', +1), /トリム 機首上げ/); assert.ok(Math.abs(s.trim - (t0 + 0.02)) < 1e-12);
   f.action('trimStep', -1); f.action('trimStep', -1); assert.ok(Math.abs(s.trim - (t0 - 0.02)) < 1e-12);
   for (let i = 0; i < 40; i++) f.action('trimStep', +1);
@@ -331,7 +341,7 @@ test('realtime: frame() is app.js tick (controls once per frame, 1/120 s steps f
     assert.deepStrictEqual(view(LB.s), view(LA.s), `${what}: the same start`);
     A.S.L = LA;
     let steps = 0, rolled = 0;
-    for (let fr = 0; fr < 3000 && !LA.done; fr++) {
+    for (let fr = 0; fr < 3000 && !LA.done && !LA.s.crashed; fr++) {          // (a crash ends the run: its clock stops there)
       // a gentle pilot: short taps (so the lesson keeps going), a few actions; nothing held as the lesson starts; on the
       // ground the throttle is held longer, so it rolls
       if (fr > 0) for (const k of ['KeyW', 'KeyS', 'KeyA', 'KeyD', 'KeyQ', 'KeyE', 'KeyR', 'KeyF']) if (down.has(k) ? r() < (ground && k === 'KeyR' ? 0.03 : 0.3) : r() < 0.01) { if (down.has(k)) down.delete(k); else down.add(k); }
@@ -363,7 +373,7 @@ test('realtime: hands off, a1 passes with S at every level (the keyboard pitch h
     const st = f.status();
     assert.ok(st.done && st.passed && st.grade === 'S', `a1 ${lv}: ${st.grade} ${st.reason} ${JSON.stringify(st.results)}`);
     assert.equal(ended, 1, 'ended reported once'); assert.equal(chime, 2, 'two steps');
-    assert.equal(L.s.keyHold, true); assert.equal(L.s.rollHold, true);
+    assert.equal(L.s.keyHold, true); assert.equal(L.s.rollHold, false);          // (Sorajima: the stick springs back)
   }
 });
 
@@ -547,12 +557,12 @@ test('text: FLIGHT LAB calling itself teaching material (教材) never reaches t
   s.pos = [s.pos[0], P.GROUND_M - s.WHEEL_BOTTOM + 0.3, s.pos[2]]; s.vel = [fw[0] * 45, -8, fw[2] * 45];
   const evs = [];
   for (let i = 0; i < 30 && !L.done; i++) evs.push(...f.frame(1 / 60, NOKEYS).events);
-  assert.ok(L.done && s.crashed && /教材基準/.test(L.reason), L.reason);
+  assert.ok(L.done && s.crashed && /接地の衝撃/.test(L.reason), L.reason);
   const st = f.status();
-  assert.match(st.reason, /^接地の衝撃で脚が壊れました（降下率 \d+ fpm、基準 1,000 fpm 超）$/);
+  assert.match(st.reason, /^接地の衝撃で脚が壊れました（降下率 \d+ fpm）$/);                // (Sorajima's words: no teaching standard in them)
   assert.equal(st.crashReason, st.reason);
   assert.equal(evs.find(e => e.type === 'crash').why, st.reason);
-  assert.doesNotMatch(JSON.stringify(st.results), /教材/); assert.match(JSON.stringify(st.results), /基準 1,000 fpm/);
+  assert.doesNotMatch(JSON.stringify(st.results), /教材/); assert.match(JSON.stringify(st.results), /降下率 \d+ fpm/);
   const rec = f.finish();
   assert.doesNotMatch(JSON.stringify([rec.reason, rec.steps, rec.events]), /教材/);
   assert.equal(f.records().at(-1).reason, st.reason);

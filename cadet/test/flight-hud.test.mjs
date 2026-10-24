@@ -15,13 +15,15 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { makeBot } from '../../flight-lab/test/bot.mjs';
+import { makeBot } from './helpers/bot.mjs';
 import { createFlight } from '../src/flight/flight.js';
 import { parseKeys, gaugeOf, progressOf, advice, adviceTips, debriefOf, fitCanvas, panelText, LW } from '../src/ui/flight-hud.js';
+import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const FLSRC = path.join(here, '../../flight-lab/src');
 for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'ui.js']) vm.runInThisContext(fs.readFileSync(path.join(FLSRC, m), 'utf8'), { filename: m });
+installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL, SC = FL.school;
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
@@ -115,7 +117,7 @@ test('the debrief card: pass S, fail C, stopped, a lesson and a free flight that
     ['S', '合格', 'ok g-s', 2, 2, 2, 2, '0:38', 0, '']);
   assert.equal(pass.title, '姿勢・出力・トリム（基礎）');
   const c = flyA1(() => false, noseUp).status(), fail = debriefOf(c);
-  assert.equal(c.score.toFixed(6), '0.653217');
+  assert.equal(c.score.toFixed(6), '0.655248');                                 // (the scripted pilot on the game's model: test/flight.test.mjs REF)
   assert.deepEqual([fail.grade, fail.status, fail.cls, fail.okN, fail.rowsN, fail.stepsDone, fail.bad], ['C', '不合格', 'ng', 1, 2, 2, '高度']);
   assert.equal(fail.tips.length, 1); assert.match(fail.tips[0], /^高度：/);
   assert.match(fail.sub, /次に意識すること/);

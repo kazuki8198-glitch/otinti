@@ -4,7 +4,7 @@
 // flown by FLIGHT LAB's bot through CADET's flight bridge (flight/flight.js runScripted). Each lesson is also flown
 // by FLIGHT LAB's own runLesson with the same pilot (and hook), so the caller can compare the two.
 // Between lessons the moves are skipped (the fade), as a cadet choosing "skip" would.
-import { makeBot, runLesson } from '../../../flight-lab/test/bot.mjs';
+import { makeBot, runLesson } from './bot.mjs';
 import { createFlight } from '../../src/flight/flight.js';
 import { createSystems } from '../../src/aircraft/systems.js';
 import { createDay } from '../../src/career/day.js';

@@ -13,9 +13,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { planFor, stepsFor } from '../src/career/day.js';
 import { playDay } from './helpers/play-day.mjs';
+import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL;
 export const CH2 = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 't1', 't2', 't3', 't4', 'e1', 'e2', 'e3', 'c1'];
 

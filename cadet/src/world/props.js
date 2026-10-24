@@ -6,6 +6,7 @@
 // Soft low-poly: rounded boxes, believable sizes in metres, PBR materials in the academy's palette (light oak, white
 // laminate, charcoal fabric, navy #16324f and gold #f2b632).
 import * as THREE from 'three';
+import { exteriorParts } from '../aircraft/archer-model.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { canvasTexture } from '../render/textures.js';
@@ -279,11 +280,13 @@ const BUILDERS = {
     if (FL && FL.acmesh) {
       const A = FL.physics.AIRCRAFT.find(x => x.id === (/seminole/i.test(opts.note || '') ? 'pa44' : 'pa28'));
       const geos = [];
-      for (const p of FL.acmesh.buildParts(A)) {
+      for (const p of exteriorParts(FL, A, { lod: 'far', reg: A.id === 'pa28' ? 'N731SY' : undefined })) {
         if (p.disc != null) continue;
-        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p.mesh.pos.slice(), 3)); g.setAttribute('normal', new THREE.BufferAttribute(p.mesh.nrm.slice(), 3));
-        const c = new Float32Array(p.mesh.col.length); for (let i = 0; i < c.length; i++) c[i] = toLin(p.mesh.col[i]); g.setAttribute('color', new THREE.BufferAttribute(c, 3));
-        geos.push(g);
+        for (const m of p.cabin ? [p.mesh, p.cabin] : [p.mesh]) {
+          const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(m.pos.slice(), 3)); g.setAttribute('normal', new THREE.BufferAttribute(m.nrm.slice(), 3));
+          const c = new Float32Array(m.col.length); for (let i = 0; i < c.length; i++) c[i] = toLin(m.col[i]); g.setAttribute('color', new THREE.BufferAttribute(c, 3));
+          geos.push(g);
+        }
       }
       const g = mergeGeometries(geos); g.scale(1 / 13, 1 / 13, 1 / 13); g.rotateY(Math.PI * 0.8); g.rotateZ(0.08); g.translate(0, 1.2, 0);
       P.add(MODEL_MAT(), g);

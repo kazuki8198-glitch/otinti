@@ -1,13 +1,16 @@
-// CADET — aircraft/exterior.js : the aircraft as seen from outside, built from FLIGHT LAB's own description
-// (FL.acmesh.buildParts: the fuselage, wings, tail, moving surfaces, propellers and gear, in the physics' body frame:
-// x = right wing, y = up, −z = the nose). Each hinged part turns with the state, as in FLIGHT LAB.
-// Materials: glossy paint with a clear coat, dark glass, rubber, metal — told apart by the vertex colours acmesh uses.
+// CADET — aircraft/exterior.js : the aircraft as seen from outside: the Archer made in Blender (aircraft/archer-model.js:
+// SHOYO AIRWAYS' colours, its registration), any other type from FLIGHT LAB's own description (FL.acmesh.buildParts),
+// both as acmesh's parts — the fuselage, wings, tail, moving surfaces, propellers and gear, in the physics' body frame
+// (x = right wing, y = up, −z = the nose). Each hinged part turns with the state on acmesh's hinge lines.
+// Materials: glossy paint with a clear coat, dark glass, rubber, metal — told apart by the vertex colours acmesh uses;
+// the model's ambient occlusion (baked per vertex) darkens the light from the sky (attribute ao, 1 for acmesh's).
 // Parked aircraft are baked (two draw calls). The flown one (liveAircraft) stays alive: its propeller turns the way a
 // Lycoming does and becomes a blurred disc at speed, the exterior lights glow (lenses and halos, no light sources), and
 // the fuselage round the cabin is its own mesh, which the cockpit view takes away (seen from inside, the skin is culled
 // but would still cast its shadow over the whole cockpit, and the cockpit draws its own cabin and cowling).
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { exteriorParts } from './archer-model.js';
 
 const DEG = Math.PI / 180;
 const toLin = v => (v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
@@ -24,12 +27,21 @@ export function paintClass(c) {
 }
 
 let paintMat = null, propMat = null;
+// the baked occlusion: the light from the sky (and the environment's reflections) scaled by it, the sun's left alone
+// (the shadows do that)
+function withAO(sh) {
+  sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float ao; varying float vAO;')
+    .replace('#include <begin_vertex>', '#include <begin_vertex>\nvAO = ao;');
+  sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vAO;')
+    .replace('#include <aomap_fragment>', '#include <aomap_fragment>\n  reflectedLight.indirectDiffuse *= vAO; reflectedLight.indirectSpecular *= mix(1.0, vAO, 0.7);');
+}
 function materials() {
   if (paintMat) return { paintMat, propMat };
   const C = PAINT_CLASSES, f = v => v.toFixed(3);
   const metal = mx => `step(${f(C.metalMin)}, ${mx}) * step(abs(vColor.r - vColor.b), ${f(C.metalTint)}) * step(${mx}, ${f(C.metalMax)})`;
   paintMat = new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.32, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.06, envMapIntensity: 1.1 });
   paintMat.onBeforeCompile = (sh) => {
+    withAO(sh);
     sh.fragmentShader = sh.fragmentShader.replace('#include <roughnessmap_fragment>', /* glsl */`
       float roughnessFactor = roughness;
       #if defined( USE_COLOR )
@@ -54,21 +66,20 @@ function materials() {
   paintMat.customProgramCacheKey = () => 'cadet-ac-paint';
   // the blades: black paint with acmesh's yellow tips (vertex colours)
   propMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0.15 });
+  propMat.onBeforeCompile = withAO;
+  propMat.customProgramCacheKey = () => 'cadet-ac-prop';
   return { paintMat, propMat };
 }
 
 // one aircraft model; update(s) turns the hinged parts from a physics state (or a parked state)
-export function buildAircraftModel(FL, A) {
+// opts: { lod: 'near' | 'far', reg } (the Archer's model: its detail, the registration painted on it)
+export function buildAircraftModel(FL, A, opts = {}) {
   const { paintMat, propMat } = materials();
   const root = new THREE.Group(); root.name = 'aircraft-' + A.id;
   const hinges = [];
-  for (const p of FL.acmesh.buildParts(A)) {
+  for (const p of exteriorParts(FL, A, opts)) {
     if (p.disc != null) continue;                                     // the spinning disc: only the flown aircraft (liveAircraft)
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(p.mesh.pos, 3));
-    g.setAttribute('normal', new THREE.BufferAttribute(p.mesh.nrm, 3));
-    const col = new Float32Array(p.mesh.col.length); for (let i = 0; i < col.length; i++) col[i] = toLin(p.mesh.col[i]);
-    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    const g = p.cabin ? mergeGeometries([geometryOf(p.mesh), geometryOf(p.cabin)]) : geometryOf(p.mesh);
     const mesh = new THREE.Mesh(g, p.name === 'prop' ? propMat : paintMat);
     mesh.castShadow = true; mesh.receiveShadow = true; mesh.name = p.name;
     if (p.pivot && p.angle) {
@@ -84,7 +95,10 @@ export function buildAircraftModel(FL, A) {
   };
 }
 
-// a parked aircraft: a physics state at rest on its wheels (so the hinges and the height come from FLIGHT LAB)
+// a parked aircraft: a physics state at rest on its wheels (so the hinges and the height come from FLIGHT LAB).
+// opt: { prop (the blades' angle), elev, bake (false: the parts kept apart), reg (the registration), lod: 'near' |
+// 'far' | 'auto' (the Archer: near within LOD_FAR metres of the eye, far beyond: both baked, one drawn) }
+export const LOD_FAR = 20;
 export function parkedAircraft(FL, L, id, along, cross, hdgTrue, opt = {}) {
   const P = FL.physics, s = P.newState({ aircraft: id });
   const [n, e] = P.rwyToNE(L.R, along, cross);
@@ -93,10 +107,20 @@ export function parkedAircraft(FL, L, id, along, cross, hdgTrue, opt = {}) {
   s.thr = 0; s.flapIdx = 0; s.flapDeg = 0; s.gearDown = true; s.gearPos = 1; s.propAng = opt.prop ?? 0.6;
   for (const en of s.eng) en.ang = opt.prop ?? 0.6;
   s.elev = opt.elev ?? -0.15; s.ail = 0; s.rud = 0;
-  const m = buildAircraftModel(FL, s.A);
+  const lod = opt.lod || 'near', reg = opt.reg;
+  const m = buildAircraftModel(FL, s.A, { lod: lod === 'far' ? 'far' : 'near', reg });
   m.update(s);
   const lp = L.physToLocal(s.pos);
   if (opt.bake !== false) bake(m.root);
+  if (lod === 'auto' && s.A.id === 'pa28' && opt.bake !== false) {
+    // both details baked under an LOD (the renderer picks one per camera); the colliders come from the near one
+    const far = buildAircraftModel(FL, s.A, { lod: 'far', reg }); far.update(s); bake(far.root);
+    const near = new THREE.Group(), lo = new THREE.Group(); near.name = 'lod-near'; lo.name = 'lod-far';
+    for (const c of [...m.root.children]) near.add(c);
+    for (const c of [...far.root.children]) { c.userData.lodFar = true; lo.add(c); }
+    const sw = new THREE.LOD(); sw.name = 'aircraft-lod'; sw.addLevel(near, 0); sw.addLevel(lo, LOD_FAR);
+    m.root.add(sw);
+  }
   m.root.position.set(lp[0], lp[1], lp[2]);
   m.root.quaternion.set(s.q[0], s.q[1], s.q[2], s.q[3]);
   return { ...m, state: s };
@@ -122,7 +146,7 @@ export function colliderBoxes(root, toFrame, G, cell = 0.25) {
   root.updateMatrixWorld(true);
   const cells = new Map(), v = new THREE.Vector3(), inv = 1 / cell;
   root.traverse(o => {
-    if (!o.isMesh) return;
+    if (!o.isMesh || o.userData.lodFar) return;
     const pos = o.geometry.attributes.position, idx = o.geometry.index, n = idx ? idx.count : pos.count;
     for (let t = 0; t + 2 < n; t += 3) {
       let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity, y0 = Infinity, y1 = -Infinity;
@@ -201,15 +225,17 @@ export function splitBody(m, A, zRear = cabinRear(A)) {
 
 // a BufferGeometry from an acmesh mesh (sRGB vertex colours → linear), optionally only some triangles, optionally shifted
 function geometryOf(m, tris = null, shift = null) {
-  const n = tris ? tris.length : m.count / 3, pos = new Float32Array(n * 9), nrm = new Float32Array(n * 9), col = new Float32Array(n * 9);
+  const n = tris ? tris.length : m.count / 3, pos = new Float32Array(n * 9), nrm = new Float32Array(n * 9), col = new Float32Array(n * 9), ao = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) {
     const t = tris ? tris[i] : i;
     for (let k = 0; k < 9; k++) { pos[i * 9 + k] = m.pos[t * 9 + k] + (shift ? shift[k % 3] : 0); nrm[i * 9 + k] = m.nrm[t * 9 + k]; col[i * 9 + k] = toLin(m.col[t * 9 + k]); }
+    for (let k = 0; k < 3; k++) ao[i * 3 + k] = m.ao ? m.ao[t * 3 + k] : 1;
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.setAttribute('ao', new THREE.BufferAttribute(ao, 1));
   return g;
 }
 
@@ -383,7 +409,7 @@ export function liveAircraft(FL, A, opts = {}) {
   const root = new THREE.Group(); root.name = 'aircraft-live-' + A.id;
   const parts = { props: [], discs: [] }, hinges = [], props = [], geos = [], mats = [];
   const zRear = opts.cabinRear ?? cabinRear(A);
-  const raw = FL.acmesh.buildParts(A);
+  const raw = exteriorParts(FL, A, { lod: 'near', reg: opts.reg });
   const discOf = new Map(raw.filter(p => p.disc != null).map(p => [p.disc, p]));
   const mesh = (geo, mat, name, cast = true) => { const m = new THREE.Mesh(geo, mat); m.name = name; m.castShadow = cast; m.receiveShadow = true; geos.push(geo); return m; };
   // the parts that never move (the Archer's fixed gear legs) go into the body's mesh: one draw call for all of them
@@ -392,6 +418,11 @@ export function liveAircraft(FL, A, opts = {}) {
   for (const p of raw) {
     if (p.disc != null) continue;
     if (p.name === 'body') {
+      if (p.cabin) {                                                   // the model's: already apart (at its cabin's rear ring)
+        fixed.unshift(geometryOf(p.mesh));
+        root.add(parts.cabin = mesh(geometryOf(p.cabin), paintMat, 'cabin'));
+        continue;
+      }
       const { cabin, rest } = splitBody(p.mesh, A, zRear);
       fixed.unshift(geometryOf(p.mesh, rest));
       root.add(parts.cabin = mesh(geometryOf(p.mesh, cabin), paintMat, 'cabin'));

@@ -601,6 +601,7 @@ export function createFlyMode(ctx) {
   // tips and tail, at their heights)
   const PROBES = [[0, -0.1, -3.3], [0.9, -0.1, -3.2], [-0.9, -0.1, -3.2], [5.3, -0.2, -0.6], [-5.3, -0.2, -0.6], [2.7, -0.25, -1.0],
     [-2.7, -0.25, -1.0], [1.7, 0.3, 4.0], [-1.7, 0.3, 4.0], [0, 0.6, 4.0], [0, 1.4, 3.6]];
+  let lastObstacle = null;                   // (what the last taxi contact was: for the tests)
   function taxiCheck() {
     const s = flight.s;
     if (!s.onGround || s.crashed || Math.hypot(s.vel[0], s.vel[2]) < 0.02) return;
@@ -609,7 +610,7 @@ export function createFlyMode(ctx) {
       const [fx, fz] = ctx.toFrame(v1.x, v1.z), h = v1.y - L.G;
       for (const b of world.query(fx - 0.05, fz - 0.05, fx + 0.05, fz + 0.05)) {
         if (b.tag === 'fence' || b.tag === 'tree' && h > 8) continue;
-        if (fx > b.x0 && fx < b.x1 && fz > b.z0 && fz < b.z1 && h > b.y0 && h < b.y1) { flight.crash('地上の障害物に接触しました'); return; }
+        if (fx > b.x0 && fx < b.x1 && fz > b.z0 && fz < b.z1 && h > b.y0 && h < b.y1) { lastObstacle = { tag: b.tag || '', probe: p.join(','), at: [fx, h, fz].map(v => +v.toFixed(2)), box: [b.x0, b.x1, b.y0, b.y1, b.z0, b.z1].map(v => +v.toFixed(2)) }; flight.crash('地上の障害物に接触しました'); return; }
       }
     }
   }
@@ -670,7 +671,7 @@ export function createFlyMode(ctx) {
       const d = dayMode.day;
       return { active, phase, view, talking: talkOn, talkKind, debrief: debriefShown, flight: flight.L ? flight.status() : null, rpmVisual, yaw, pitch, hover: hover ? hover.id : null, seatAt, eye: cockpit.eye.toArray(),
         engine: { running: systems.running, cranking: systems.cranking, rpm: systems.rpm, oil: systems.oil, sw: { ...cockpit.switches } }, guide: guideCtl ? guideCtl.id : null,
-        day: d ? { phase: d.phase, label: d.label, items: d.items(), radio: d.atc.view(), assisting: dayMode.assisting, flying: dayMode.flying, st: { incursion: d.st.incursion, exit: d.st.exit, memo: { ...d.st.memo, hold: undefined } } } : null };
+        day: d ? { phase: d.phase, label: d.label, items: d.items(), radio: d.atc.view(), assisting: dayMode.assisting, flying: dayMode.flying, st: { incursion: d.st.incursion, exit: d.st.exit, crash: d.st.crash || null, obstacle: lastObstacle, memo: { ...d.st.memo, hold: undefined } } } : null };
     },
   };
 }

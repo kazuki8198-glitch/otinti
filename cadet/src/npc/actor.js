@@ -168,8 +168,8 @@ const MOUTH = { y: 1.548 }; MOUTH.z = faceZ(0, MOUTH.y);
 
 // the model's meshes of one part whose variant the look shows, added to a Part (its colour times the baked shading)
 // (the biggest first: the part's main surface, the skin or the shirt, leads its geometry)
-function addModel(Pt, part, shows) {
-  const list = [...actorModel().values()].filter(m => m.part === part && shows(m.variant)).sort((a, b) => b.index.length - a.index.length);
+function addModel(Pt, part, shows, lod = 'far') {
+  const list = [...actorModel(lod).values()].filter(m => m.part === part && shows(m.variant)).sort((a, b) => b.index.length - a.index.length);
   for (const m of list) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(m.position.slice(), 3));
@@ -180,18 +180,18 @@ function addModel(Pt, part, shows) {
   }
 }
 const hairOf = (LK) => 'hair-' + (['crop', 'long', 'bun'].includes(LK.hair) ? LK.hair : 'short');
-function buildHead(C) {
+function buildHead(C, lod) {
   const H = new Part(C), LK = C.look || {}, hair = hairOf(LK);
-  addModel(H, 'head', (v) => v === 'base' || v === hair || (v === 'glasses' && !!LK.glasses));
+  addModel(H, 'head', (v) => v === 'base' || v === hair || (v === 'glasses' && !!LK.glasses), lod);
   return H.build(P.head);
 }
 // the upper lids: one mesh for both eyes, turned about the line through the eyes' centres (blinks, follows the gaze)
-function buildLids(C) { const L = new Part(C); addModel(L, 'lids', (v) => v === 'base'); return L.build([0, EYE.y, EYE.z]); }
+function buildLids(C, lod) { const L = new Part(C); addModel(L, 'lids', (v) => v === 'base', lod); return L.build([0, EYE.y, EYE.z]); }
 // one iris and pupil, on the front of the eyeball (turns with the eye)
-function buildIris(C, s) { const I = new Part(C); addModel(I, s > 0 ? 'irisL' : 'irisR', (v) => v === 'base'); return I.build([s * EYE.x, EYE.y, EYE.z]); }
+function buildIris(C, s, lod) { const I = new Part(C); addModel(I, s > 0 ? 'irisL' : 'irisR', (v) => v === 'base', lod); return I.build([s * EYE.x, EYE.y, EYE.z]); }
 // the mouth: a dark line that opens (a morph target), the lower lip that drops with it, the teeth; pivot on the upper lip
-function buildMouth(C) {
-  const M = new Part(C); addModel(M, 'mouth', (v) => v === 'base');
+function buildMouth(C, lod) {
+  const M = new Part(C); addModel(M, 'mouth', (v) => v === 'base', lod);
   const g = M.build([0, MOUTH.y, MOUTH.z]); g.morphTargetsRelative = true; g.computeBoundingSphere(); return g;
 }
 const buildNeck = (C) => {
@@ -256,11 +256,11 @@ function nameLetters(text) {
 }
 // the shirt and what is on it (the model's), by the look: the tie (or the placket's buttons), the epaulettes and their
 // bars, the wing badge, the lanyard and ID card, the name plate (with look.tag: the name)
-function buildTorso(C) {
+function buildTorso(C, lod) {
   const T = new Part(C), LK = { bars: 3, tie: true, badge: true, lanyard: true, ...(C.look || {}) }, bars = Math.min(4, Math.max(0, LK.bars | 0));
   const shows = (v) => v === 'base' || (v === 'tie' && LK.tie) || (v === 'notie' && !LK.tie) || (v === 'bars' && bars > 0) || (/^bar\d$/.test(v) && +v.slice(3) <= bars) ||
     (v === 'badge' && LK.badge) || (v === 'lanyard' && LK.lanyard) || (v === 'nametag' && !!LK.tag);
-  addModel(T, 'torso', shows);
+  addModel(T, 'torso', shows, lod);
   const letters = LK.tag ? nameLetters(LK.tag) : null;
   if (letters) T.add(letters, 'gold', 'gold');
   return T.build(P.chest);
@@ -304,8 +304,11 @@ function buildForearm(C, s) {
 }
 // a finger: a tube of two segments bent towards the palm (−x) by c1 at the knuckle and c2 at the middle; tilted
 // forwards by rx (the thumb); l1 = the share of the first segment
-function finger(r, len, c1, c2, x, y, z, rx = 0, l1 = 0.52) {
-  const a = len * l1, g = loft([ring(-len + r * 0.7, r * 0.8, r * 0.8), ring(-a, r * 0.94, r * 0.94), ring(0, r, r)], 5, 'y', r * 0.7, r * 0.6);
+// (near: rounder, and the joints a little thicker than between them)
+function finger(r, len, c1, c2, x, y, z, rx = 0, l1 = 0.52, near = false) {
+  const a = len * l1, g = near
+    ? loft([ring(-len + r * 0.55, r * 0.72, r * 0.68), ring(-len * 0.8, r * 0.86, r * 0.84), ring(-a - len * 0.04, r * 0.88, r * 0.86), ring(-a, r * 0.97, r * 0.95), ring(-a * 0.45, r * 0.9, r * 0.9), ring(0, r * 1.04, r)], 8, 'y', r * 0.55, r * 0.6)
+    : loft([ring(-len + r * 0.7, r * 0.8, r * 0.8), ring(-a, r * 0.94, r * 0.94), ring(0, r, r)], 5, 'y', r * 0.7, r * 0.6);
   const p = g.attributes.position, v = new THREE.Vector3(), Z = new THREE.Vector3(0, 0, 1);
   for (let i = 0; i < p.count; i++) {
     v.fromBufferAttribute(p, i);
@@ -316,18 +319,18 @@ function finger(r, len, c1, c2, x, y, z, rx = 0, l1 = 0.52) {
   g.computeVertexNormals(); return g;
 }
 // the left hand (palm towards −x, thumb forwards +z), relaxed or pointing; the right one is its mirror image
-function buildHand(C, s, pose) {
-  const A = new Part(C), pt = pose === 'point';
+function buildHand(C, s, pose, lod = 'far') {
+  const A = new Part(C), pt = pose === 'point', near = lod === 'near';
   // the palm: a soft mitten, narrower at the wrist (rings: [y, half thickness, half width, x, z])
   const PALM = [[-0.097, 0.0105, 0.033, -0.001, 0.001], [-0.088, 0.0135, 0.0395, 0, 0.001], [-0.06, 0.015, 0.0405, 0.0005, 0.002], [-0.03, 0.0165, 0.036, 0.001, 0.003],
     [-0.005, 0.0195, 0.0295, 0.001, 0.002], [0.012, 0.0165, 0.024, 0, 0]];
-  A.add(loft(PALM.map(([y, a, b, x, z]) => ring(y, a, b, x, z, 2.6)), 10, 'y', 0.004, 0.003), 'skin', 'skin');
+  A.add(loft(PALM.map(([y, a, b, x, z]) => ring(y, a, b, x, z, 2.6)), near ? 16 : 10, 'y', 0.004, 0.003), 'skin', 'skin');
   // fingers: [z, knuckle y, length, radius]; curls [knuckle, middle] in degrees, more towards the little finger
   const F = [[0.0255, -0.093, 0.07, 0.0088], [0.0085, -0.095, 0.078, 0.0092], [-0.0085, -0.093, 0.073, 0.0087], [-0.0245, -0.089, 0.058, 0.0077]];
   const curl = pt ? [[2, 4], [85, 100], [88, 100], [90, 100]] : [[18, 30], [22, 34], [26, 38], [30, 42]];
-  F.forEach(([z, y, len, r], k) => A.add(finger(r, len, curl[k][0] * DEG, curl[k][1] * DEG, -0.003, y, z), 'skin', 'skin'));
+  F.forEach(([z, y, len, r], k) => A.add(finger(r, len, curl[k][0] * DEG, curl[k][1] * DEG, -0.003, y, z, 0, 0.52, near), 'skin', 'skin'));
   // the thumb: from the palm's front edge, forwards and down (folded across the curled fingers when pointing)
-  A.add(pt ? finger(0.0112, 0.066, 38 * DEG, 52 * DEG, -0.008, -0.03, 0.033, -0.25, 0.55) : finger(0.0115, 0.068, 20 * DEG, 24 * DEG, -0.009, -0.03, 0.033, -0.36, 0.55), 'skin', 'skin');
+  A.add(pt ? finger(0.0112, 0.066, 38 * DEG, 52 * DEG, -0.008, -0.03, 0.033, -0.25, 0.55, near) : finger(0.0115, 0.068, 20 * DEG, 24 * DEG, -0.009, -0.03, 0.033, -0.36, 0.55, near), 'skin', 'skin');
   const g = A.build(); return s < 0 ? mirrorX(g) : g;
 }
 // trouser legs: [y in the bone's frame, half width, half depth, centre z]
@@ -613,12 +616,15 @@ export function createActor(opts = {}) {
   };
   const hips = bone('hips', body, P.hips), spine = bone('spine', hips, P.spine), chest = bone('chest', spine, P.chest);
   const neck = bone('neck', chest, P.neck), head = bone('head', neck, P.head);
-  const torsoMesh = mesh('torso', buildTorso(C), chest);
-  mesh('hips', buildHips(C), hips); mesh('neck', buildNeck(C), neck); mesh('head', buildHead(C), head);
-  const mouthPivot = bone('mouth', head, [0, MOUTH.y, MOUTH.z]), mouth = mesh('mouth', buildMouth(C), mouthPivot, false);
-  mouth.material = mouthMaterial();
-  const lids = bone('lids', head, [0, EYE.y, EYE.z]); mesh('lids', buildLids(C), lids, false);
-  const eyes = [-1, 1].map(s => { const e = bone(s > 0 ? 'eyeL' : 'eyeR', head, [s * EYE.x, EYE.y, EYE.z]); mesh(s > 0 ? 'irisL' : 'irisR', buildIris(C, s), e, false); return e; });
+  // the actor's own meshes are the near detail (they are drawn up close: talking, pointing, in the cockpit); the far
+  // detail of the parts that have one is kept for the crowd (far: mesh → its far geometry)
+  const far = new Map(), withFar = (m, farGeo) => { far.set(m, farGeo); return m; };
+  const torsoMesh = withFar(mesh('torso', buildTorso(C, 'near'), chest), buildTorso(C, 'far'));
+  mesh('hips', buildHips(C), hips); mesh('neck', buildNeck(C), neck); withFar(mesh('head', buildHead(C, 'near'), head), buildHead(C, 'far'));
+  const mouthPivot = bone('mouth', head, [0, MOUTH.y, MOUTH.z]), mouth = mesh('mouth', buildMouth(C, 'near'), mouthPivot, false);
+  mouth.material = mouthMaterial(); far.set(mouth, buildMouth(C, 'far'));
+  const lids = bone('lids', head, [0, EYE.y, EYE.z]); withFar(mesh('lids', buildLids(C, 'near'), lids, false), buildLids(C, 'far'));
+  const eyes = [-1, 1].map(s => { const e = bone(s > 0 ? 'eyeL' : 'eyeR', head, [s * EYE.x, EYE.y, EYE.z]); withFar(mesh(s > 0 ? 'irisL' : 'irisR', buildIris(C, s, 'near'), e, false), buildIris(C, s, 'far')); return e; });
   const arm = {}, leg = {};
   for (const s of [1, -1]) {
     const L = s > 0 ? 'L' : 'R';
@@ -628,8 +634,8 @@ export function createActor(opts = {}) {
     const hd = bone('hand' + L, fa, [s * P.uarm[0], P.uarm[1] - UARM_LEN - FARM_LEN, P.uarm[2]]);
     ua.rotation.order = 'XZY';
     mesh('upperArm' + L, buildUpperArm(C, s), ua); mesh('forearm' + L, buildForearm(C, s), fa);
-    const relaxed = buildHand(C, s, 'relaxed'), pointing = buildHand(C, s, 'point'), hm = mesh('hand' + L, relaxed, hd);
-    arm[L] = { s, clav, ua, fa, hd, hm, relaxed, pointing };
+    const relaxed = buildHand(C, s, 'relaxed', 'near'), pointing = buildHand(C, s, 'point', 'near'), hm = mesh('hand' + L, relaxed, hd);
+    arm[L] = { s, clav, ua, fa, hd, hm, relaxed, pointing, relaxedFar: buildHand(C, s, 'relaxed', 'far') };
     const th = bone('thigh' + L, hips, [s * P.thigh[0], P.thigh[1], P.thigh[2]]);
     const sh = bone('shin' + L, th, [s * P.thigh[0], P.thigh[1] - L1, P.thigh[2]]);
     const ft = bone('foot' + L, sh, [s * P.thigh[0], P.thigh[1] - L1 - L2, P.thigh[2]]);
@@ -661,7 +667,8 @@ export function createActor(opts = {}) {
   // the parts for the crowd's mesh: each geometry in the root's frame now, the object it is skinned to (its own mesh,
   // or a slot), and that object's matrix in the root's frame now (the crowd's bind pose: any pose works, the two are
   // taken together)
-  function crowdParts() {
+  // (lod: 'near' — the actor's own geometries — or 'far')
+  function crowdParts(lod = 'far') {
     root.updateWorldMatrix(true, true);
     const toRoot = new THREE.Matrix4().copy(root.matrixWorld).invert(), targets = [], inverses = [], geos = [], idx = new Map();
     const target = (o) => {
@@ -670,7 +677,7 @@ export function createActor(opts = {}) {
     };
     for (const m of meshes) {
       const hand = m === arm.L.hm ? 'L' : m === arm.R.hm ? 'R' : null, thigh = m === leg.L.tm ? leg.L : m === leg.R.tm ? leg.R : null;
-      const src = hand ? arm[hand].relaxed : thigh ? thigh.stand : m.geometry, to = m === mouth ? slot.mouth : hand ? slot[hand] : m;   // (the mesh itself: its bone, and the torso's breath)
+      const src = hand ? (lod === 'far' ? arm[hand].relaxedFar : arm[hand].relaxed) : thigh ? thigh.stand : lod === 'far' && far.has(m) ? far.get(m) : m.geometry, to = m === mouth ? slot.mouth : hand ? slot[hand] : m;   // (the mesh itself: its bone, and the torso's breath)
       const geo = src.clone(); geo.morphAttributes = {}; geo.morphTargetsRelative = false;
       geo.applyMatrix4(new THREE.Matrix4().multiplyMatrices(toRoot, to.matrixWorld));
       geos.push({ geo, t: target(to) });
@@ -678,8 +685,9 @@ export function createActor(opts = {}) {
     return { targets, inverses, geos, slots: { mouth: idx.get(slot.mouth), L: idx.get(slot.L), R: idx.get(slot.R) } };
   }
 
-  let triangles = 0;
-  for (const m of meshes) triangles += m.geometry.index.count / 3;
+  // triangles: up close (its own meshes; a hand pointing), and far (as the crowd draws it far from the eye)
+  let triangles = 0, trianglesFar = 0;
+  for (const m of meshes) { triangles += m.geometry.index.count / 3; trianglesFar += (far.has(m) ? far.get(m) : m === arm.L.hm ? arm.L.relaxedFar : m === arm.R.hm ? arm.R.relaxedFar : m.geometry).index.count / 3; }
   for (const L of ['L', 'R']) triangles += Math.max(0, arm[L].pointing.index.count - arm[L].relaxed.index.count) / 3;
 
   // ---------------------------------------------------------------- state (made once; update() reuses it)
@@ -1093,7 +1101,7 @@ export function createActor(opts = {}) {
   }
 
   const actor = {
-    root, bones, meshes, radius: 0.3, triangles, state,
+    root, bones, meshes, radius: 0.3, triangles, trianglesFar, state,
     update,
     // sits down (seated in the root's frame: see setSeated above; SEATED_PA28.seat for the Archer's right seat) or, with
     // null, stands up again; true when done
@@ -1101,6 +1109,8 @@ export function createActor(opts = {}) {
     get seated() { return seat.on; },
     // npc/crowd.js: join (drawn by the crowd while standing), the parts, what it reads each frame
     crowd: { join() { inCrowd = true; applyDraw(); }, parts: crowdParts, view },
+    // the geometry the crowd draws for one of its meshes far from the eye (its own, if it has no far detail)
+    farGeometry: (m) => (m === arm.L.hm ? arm.L.relaxedFar : m === arm.R.hm ? arm.R.relaxedFar : far.get(m) || m.geometry),
     // plays once and goes back to idle; returns its length in seconds (0 for an unknown name)
     gesture(name) { return GESTURE_NAMES.includes(name) ? startGesture(name) : 0; },
     // a point in the world (kept in the room's frame from now on: see pointTarget above)

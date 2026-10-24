@@ -1,21 +1,24 @@
 // CADET — npc/actor-model.js : the people's heads and uniforms made in Blender (tools/actor/build_actor.py →
-// assets/model/actor.glb, embedded in the page by build.mjs). Read once, synchronously (a person is built at once):
+// assets/model/*.glb, embedded in the page by build.mjs). Read once, synchronously (a person is built at once):
 // the glTF's binary is parsed here for what that file holds — per mesh one primitive with positions, normals, a
 // colour (the shading baked by Blender: occlusion and tints) and indices, and on the mouth one morph target. Mesh
 // names: part.variant.colour.class[.n] (see the script).
-// In the page the file comes from CADET_ASSETS (base64); in Node (the tests) from the file itself.
-let MODEL = null;
+// Two of them: 'far' (assets/model/actor.glb: everyone, within a person's share of a crowd's budget) and 'near'
+// (actor-near.glb: the same parts with more of their triangles, for the few people close to the eye).
+// In the page the files come from CADET_ASSETS (base64); in Node (the tests) from the files themselves.
+const MODELS = {};
+const FILES = { far: 'actor', near: 'actor-near' };
 
-function fileBytes() {
-  const A = globalThis.CADET_ASSETS;
-  if (A && A['model/actor']) {
-    const s = atob(A['model/actor']), b = new Uint8Array(s.length);
+function fileBytes(lod) {
+  const A = globalThis.CADET_ASSETS, key = 'model/' + FILES[lod];
+  if (A && A[key]) {
+    const s = atob(A[key]), b = new Uint8Array(s.length);
     for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
     return b;
   }
   const fs = typeof process !== 'undefined' && process.getBuiltinModule ? process.getBuiltinModule('node:fs') : null;
   if (!fs) throw new Error('actor-model: the model is not in the page');
-  return new Uint8Array(fs.readFileSync(new URL('../../assets/model/actor.glb', import.meta.url)));
+  return new Uint8Array(fs.readFileSync(new URL(`../../assets/model/${FILES[lod]}.glb`, import.meta.url)));
 }
 
 const COMPONENTS = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 };
@@ -32,9 +35,10 @@ function read(json, bin, i, asIndex = false) {
 }
 
 // → Map name → { part, variant, key, cls, position, normal, shade (rgb per vertex), index, morph (relative) }
-export function actorModel() {
-  if (MODEL) return MODEL;
-  const b = fileBytes(), dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+export function actorModel(lod = 'far') {
+  if (!FILES[lod]) throw new Error('actor-model: no detail ' + lod);
+  if (MODELS[lod]) return MODELS[lod];
+  const b = fileBytes(lod), dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
   if (dv.getUint32(0, true) !== 0x46546c67) throw new Error('actor-model: not a glb');
   let json = null, bin = null;
   for (let o = 12; o < b.byteLength;) {
@@ -42,7 +46,7 @@ export function actorModel() {
     if (type === 0x4e4f534a) json = JSON.parse(new TextDecoder().decode(chunk)); else if (type === 0x004e4942) bin = chunk;
     o += 8 + len;
   }
-  MODEL = new Map();
+  const model = MODELS[lod] = new Map();
   for (const node of json.nodes || []) {
     if (node.mesh == null) continue;
     if (node.translation || node.rotation || node.scale || node.matrix) throw new Error('actor-model: a mesh with a transform: ' + node.name);
@@ -51,12 +55,12 @@ export function actorModel() {
     const col = at.COLOR_0 != null ? read(json, bin, at.COLOR_0) : null, nv = json.accessors[at.POSITION].count;
     const shade = new Float32Array(nv * 3);
     for (let i = 0; i < nv; i++) for (let c = 0; c < 3; c++) shade[i * 3 + c] = col ? col.data[i * col.n + c] : 1;
-    MODEL.set(m.name, {
+    model.set(m.name, {
       part, variant, key, cls, shade,
       position: read(json, bin, at.POSITION).data, normal: at.NORMAL != null ? read(json, bin, at.NORMAL).data : null,
       index: read(json, bin, p.indices, true).data,
       morph: p.targets && p.targets[0] ? read(json, bin, p.targets[0].POSITION).data : null,
     });
   }
-  return MODEL;
+  return model;
 }

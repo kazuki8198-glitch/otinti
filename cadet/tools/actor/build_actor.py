@@ -1,7 +1,8 @@
 # CADET — tools/actor/build_actor.py : the academy's people's heads and uniforms, made in Blender (run in the
 # background, no window):
 #   node tools/actor/anchors.mjs > /tmp/anchors.json
-#   blender -b --factory-startup -P tools/actor/build_actor.py -- /tmp/anchors.json assets/model/actor.glb [preview_dir]
+#   blender -b --factory-startup -P tools/actor/build_actor.py -- /tmp/anchors.json assets/model/actor.glb [preview_dir|-] [far|near]
+#   (far: assets/model/actor.glb; near: assets/model/actor-near.glb — the same parts with more triangles)
 # Everything is made by this script (no other files: see assets/CREDITS.md). The parts are modelled dense from
 # shape functions, then Blender's decimation (collapse) brings each down to its share of the triangle budget, keeping
 # the triangles where the shape bends (the eyes, the nose, the lips, the collar). Each vertex then gets an ambient
@@ -21,7 +22,14 @@ from mathutils.bvhtree import BVHTree
 argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 A = json.load(open(argv[0]))
 OUT = argv[1]
-PREVIEW = argv[2] if len(argv) > 2 else None
+PREVIEW = argv[2] if len(argv) > 2 and argv[2] != '-' else None
+# the detail: 'far' (everyone, within the budget of a person in a crowd: 8,000 triangles) or 'near' (the few people
+# close to the eye, and the instructor in the cockpit): the same shapes, more of their triangles kept
+LOD = argv[3] if len(argv) > 3 else 'far'
+D = {'far': dict(skin=790, ear=76, hair={'short': 670, 'crop': 500, 'long': 530, 'bun': 600}, tail=140, bun=150, shirt=580,
+                 brow=9, ball=(14, 10), lid=(7, 11), iris=14, mouth=(12, 4), teeth=8, glass=12, collar=18, knot=8, cord=(0,)),
+     'near': dict(skin=2600, ear=260, hair={'short': 1900, 'crop': 1300, 'long': 1500, 'bun': 1700}, tail=420, bun=400, shirt=1900,
+                  brow=16, ball=(22, 16), lid=(10, 17), iris=24, mouth=(20, 6), teeth=12, glass=20, collar=30, knot=12, cord=(0, 0.5))}[LOD]
 HD, EYE, MOUTH, P = A['HD'], A['EYE'], A['MOUTH'], A['P']
 TAU, DEG = math.tau, math.pi / 180
 
@@ -384,7 +392,7 @@ def ear(name, s):
 def brow(name, s, surf):
     # a strip on the brow ridge: thicker at the inner end, arched, thin and lower at the outer end; its edges sink into
     # the skin; a few tufts along its upper edge
-    rows = [[], [], []]; N = 9
+    rows = [[], [], []]; N = D['brow']
     for i in range(N + 1):
         u = i / N; x = lerp(0.0122, 0.0515, u)
         yc = 1.6455 + 0.0046 * math.sin(math.pi * min(1, u * 1.25)) - 0.004 * u * u
@@ -401,7 +409,7 @@ def brow(name, s, surf):
 
 def eyeball(name, s):
     # the eyeball's front (the rest is inside the head)
-    bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=14, v_segments=10, radius=ER)
+    bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=D['ball'][0], v_segments=D['ball'][1], radius=ER)
     # (z is already forwards: Blender's sphere has its poles on z, the iris end at +z)
     bmesh.ops.translate(bm, verts=bm.verts, vec=Vector((s * EX, EY, EZ)))
     # only what can show through the opening (the rest could only ever show through the skin where it should not)
@@ -411,9 +419,9 @@ def eyeball(name, s):
 def iris_parts(L):
     # on the front of the eyeball: the iris (a dark ring at its edge, the limbus), the pupil; in the eye bone's frame
     # (the eye's centre at 0), as actor.js turns it
-    out, seg = [], 14
+    out, seg = [], D['iris']
     def at(th, ph, r): th = math.radians(th); return (math.sin(th) * math.cos(ph) * ER * r, math.sin(th) * math.sin(ph) * ER * r, math.cos(th) * ER * r)
-    for key, a0, a1, r, rings in (('lash', 26, 33, 1.010, 1), ('iris', 13.5, 26.5, 1.013, 2), ('pupil', 0, 14, 1.018, 1)):
+    for key, a0, a1, r, rings in (('lash', 29, 36, 1.010, 1), ('iris', 14.5, 29.5, 1.013, 2), ('pupil', 0, 15, 1.018, 1)):
         verts, faces = [], []
         for j in range(rings + 1):
             for i in range(seg): verts.append(at(lerp(a0, a1, j / rings), i / seg * TAU, r))
@@ -439,20 +447,21 @@ def lids(name):
     obs = []
     for s in (-1, 1):
         rows = []
-        for j in range(7):
-            t = j / 6
+        NJ, NI = D['lid']
+        for j in range(NJ):
+            t = j / (NJ - 1)
             # polar angle from the top (0) to the edge at the equator (90°); the last rows roll in under the edge
             th = math.radians(lerp(0, 90, min(t / 0.84, 1)))
             rr = ER * (1.1 if t <= 0.84 else 1.025)
             row = []
-            for i in range(11):
-                ph = math.radians(lerp(-80, 80, i / 10))     # (only the front: the back is inside the head)
+            for i in range(NI):
+                ph = math.radians(lerp(-80, 80, i / (NI - 1)))     # (only the front: the back is inside the head)
                 row.append((s * EX + rr * math.sin(th) * math.sin(ph), rr * math.cos(th), rr * math.sin(th) * math.cos(ph)))
             rows.append(row)
         verts = [v for r in rows for v in r]; faces = []
-        for j in range(6):
-            for i in range(10):
-                a = j * 11 + i; faces.append((a, a + 1, a + 12, a + 11))
+        for j in range(NJ - 1):
+            for i in range(NI - 1):
+                a = j * NI + i; faces.append((a, a + 1, a + NI + 1, a + NI))
         obs.append(mesh_obj(f'lid{s}', verts, faces))
     ob = join(obs, name)
     bm = bmesh.new(); bm.from_mesh(ob.data); bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-7); bm.to_mesh(ob.data); bm.free()
@@ -482,11 +491,11 @@ def mouth_parts(surf):
         return ob
     lens = lambda u, v: math.sqrt(max(0, 1 - u * u)) * v           # (an ellipse's outline: v from −1 to 1)
     # the opening: a sliver when closed, an oval when open (the inside a little behind the lips)
-    parts.append(sheet('mouth.base.mouth.mouth', 12, 4,
+    parts.append(sheet('mouth.base.mouth.mouth', *D['mouth'],
         lambda u, v: (u * 0.0232, MOUTH_C + bend(u * 0.0232) + v * 0.0011 * (0.4 + 0.6 * math.sqrt(max(0, 1 - u * u))), 0.0007),
         lambda u, v: (u * 0.0185, MOUTH_C - 0.0062 + bend(u * 0.0185) * 0.6 + lens(u, v) * 0.0068 * (1 - 0.15 * u * u), -0.0015 + 0.0012 * (1 - u * u))))
     # the upper teeth: hidden in the line when closed, a band under the upper lip when open
-    parts.append(sheet('mouth.base.xe9e4da.eye', 8, 1,
+    parts.append(sheet('mouth.base.xe9e4da.eye', D['teeth'], 1,
         lambda u, v: (u * 0.012, MOUTH_C + bend(u * 0.012) + 0.0002 * v, -0.0028),
         lambda u, v: (u * 0.0125, MOUTH_C - 0.0012 + bend(u * 0.0125) * 0.6 + 0.0011 * v - 0.0008 * u * u, -0.0006 + 0.0006 * (1 - u * u))))
     # the lower lip: a soft roll under the line, down with the jaw when open
@@ -495,7 +504,7 @@ def mouth_parts(surf):
             w = math.sqrt(max(0, 1 - u * u)); x = u * 0.0172
             return (x, MOUTH_C - 0.0004 - 0.0056 * (1 - v) / 2 * (0.55 + 0.45 * w) + bend(x) * 0.6 - drop, 0.0029 * w ** 0.7 * math.sin(math.pi * (v + 1) / 2) ** 0.6 - 0.0003)
         return f
-    parts.append(sheet('mouth.base.lip.skin', 12, 4, lip(0), lip(0.0098)))
+    parts.append(sheet('mouth.base.lip.skin', *D['mouth'], lip(0), lip(0.0098)))
     return parts
 
 # ---------------------------------------------------------------- shading: ambient occlusion and tints, as the vertex colour
@@ -570,25 +579,25 @@ def skin_tint(p):
 
 def glasses(surf):
     # thin dark frames: two rounded rims a little in front of the eyes, the bridge, the arms back over the ears
-    obs = []
+    obs, GS = [], D['glass']
     for s in (-1, 1):
         cx, cy = s * EX, EY - 0.0015
         p, n = surf.front(cx, cy); z0 = (p.z if p else face_z(EX, EY)) + 0.0085
         rows = []
-        for k in range(12):
-            a = k / 12 * TAU; c, sn = math.cos(a), math.sin(a)
+        for k in range(GS):
+            a = k / GS * TAU; c, sn = math.cos(a), math.sin(a)
             # a soft rectangle, wider at the top, the outer side a little higher
             x = cx + 0.0182 * math.copysign(abs(c) ** 0.7, c); y = cy + 0.0128 * math.copysign(abs(sn) ** 0.8, sn) * (1.05 if sn > 0 else 0.95) + 0.0012 * c * s
             z = z0 - 0.0045 * ((x - s * 0.003) / 0.03) ** 2 * (1 if s * (x - cx) > 0 else 0.3)
             rows.append(Vector((x, y, z)))
         ring = []
-        for k in range(12):
-            q = rows[k]; t = (rows[(k + 1) % 12] - rows[k - 1]).normalized(); nz = Vector((0, 0, 1)); b = t.cross(nz).normalized()
+        for k in range(GS):
+            q = rows[k]; t = (rows[(k + 1) % GS] - rows[k - 1]).normalized(); nz = Vector((0, 0, 1)); b = t.cross(nz).normalized()
             ring.append([tuple(q + b * 0.0011 * math.cos(j / 3 * TAU) + nz * 0.0011 * math.sin(j / 3 * TAU)) for j in range(3)])
         verts = [v for r in ring for v in r]; faces = []
-        for k in range(12):
+        for k in range(GS):
             for j in range(3):
-                a, b2 = k * 3 + j, k * 3 + (j + 1) % 3; c2, d = ((k + 1) % 12) * 3 + (j + 1) % 3, ((k + 1) % 12) * 3 + j
+                a, b2 = k * 3 + j, k * 3 + (j + 1) % 3; c2, d = ((k + 1) % GS) * 3 + (j + 1) % 3, ((k + 1) % GS) * 3 + j
                 faces.append((a, d, c2, b2))
         obs.append(mesh_obj(f'rim{s}', verts, faces))
         # the arm: from the rim's outer edge back along the side of the head to the ear
@@ -607,7 +616,7 @@ def glasses(surf):
 LASH_T = ratio(0x3a2a24, 0xcf9a7c)
 def lash_tint(p):
     # the lid's edge (the lash line) dark
-    y = p[1]; return lerp(1, LASH_T[0], smooth(0.0028, 0.0006, y)), lerp(1, LASH_T[1], smooth(0.0028, 0.0006, y)), lerp(1, LASH_T[2], smooth(0.0028, 0.0006, y))
+    y = p[1]; k = smooth(0.0042, 0.0012, y); return lerp(1, LASH_T[0], k), lerp(1, LASH_T[1], k), lerp(1, LASH_T[2], k)
 
 def build_head():
     dense = head_skin_full(); surf = Surface(dense)
@@ -618,10 +627,10 @@ def build_head():
     balls = [eyeball(f'ball{s}', s) for s in (-1, 1)]
     occ_face = occluder([dense] + earsD + browsD + [hairs['short']] + balls)
     # the skin: decimated to its share, shaded like the dense one, ears joined
-    skin = decimate(copy_obj(dense, 'skin'), 790, use_symmetry=True, symmetry_axis='X'); transfer_normals(skin, dense)
+    skin = decimate(copy_obj(dense, 'skin'), D['skin'], use_symmetry=True, symmetry_axis='X'); transfer_normals(skin, dense)
     ears = []
     for e in earsD:
-        lo = decimate(copy_obj(e, e.name + 'L'), 76); transfer_normals(lo, e); ears.append(lo)
+        lo = decimate(copy_obj(e, e.name + 'L'), D['ear']); transfer_normals(lo, e); ears.append(lo)
     # (gently: the game's own ambient occlusion (GTAO) adds to it)
     for o in [skin] + ears: shade(o, occ_face, reach=0.018, strength=0.32, floor=0.72, tint=skin_tint)
     out = [to_export(join([skin] + ears, 'h'), 'head.base.skin.skin')]
@@ -631,13 +640,13 @@ def build_head():
     out.append(to_export(join(browsD, 'w'), 'head.base.hair.brow'))
     for st, d in hairs.items():
         occ = occluder([d, dense] + earsD + ([tail] if st == 'long' else [bun] if st == 'bun' else []))
-        lo = decimate(copy_obj(d, 'hair-' + st), {'short': 670, 'crop': 500, 'long': 530, 'bun': 600}[st], use_symmetry=(st == 'crop'), symmetry_axis='X')
+        lo = decimate(copy_obj(d, 'hair-' + st), D['hair'][st], use_symmetry=(st == 'crop'), symmetry_axis='X')
         transfer_normals(lo, d); shade(lo, occ, reach=0.02, strength=0.55)
         parts = [lo]
         if st == 'long':
-            t = decimate(copy_obj(tail, 'tail'), 140); transfer_normals(t, tail); shade(t, occ, reach=0.02, strength=0.7); parts.append(t)
+            t = decimate(copy_obj(tail, 'tail'), D['tail']); transfer_normals(t, tail); shade(t, occ, reach=0.02, strength=0.7); parts.append(t)
         if st == 'bun':
-            b = decimate(copy_obj(bun, 'bun'), 150); transfer_normals(b, bun); shade(b, occ, reach=0.02, strength=0.7); parts.append(b)
+            b = decimate(copy_obj(bun, 'bun'), D['bun']); transfer_normals(b, bun); shade(b, occ, reach=0.02, strength=0.7); parts.append(b)
         out.append(to_export(join(parts, 'hj'), f'head.hair-{st}.hair.hair'))
         tie = hair_tie('tie', (0, 1.655, -0.112), 0.0128, -0.5) if st == 'long' else hair_tie('tie', (0, 1.627, -0.106), 0.017, 0.35) if st == 'bun' else None
         if tie: out.append(to_export(tie, f'head.hair-{st}.x22252c.plastic'))
@@ -720,7 +729,7 @@ def collar(surf):
         # (tilted forwards about the neck's front)
         v.y -= 1.47; v.z -= nz; v = Matrix.Rotation(13 * DEG, 3, 'X') @ v; v.y += 1.47; v.z += nz
         return tuple(v)
-    N = 18; ts = [math.pi / 2 + 0.2 + (TAU - 0.4) * k / (N - 1) for k in range(N)]     # (open a little at the front)
+    N = D['collar']; ts = [math.pi / 2 + 0.2 + (TAU - 0.4) * k / (N - 1) for k in range(N)]     # (open a little at the front)
     rows = [[band_pt(t, 1.452, 1.0) for t in ts], [band_pt(t, 1.452, 1.06) for t in ts], [band_pt(t, 1.494, 1.05) for t in ts], [band_pt(t, 1.496, 0.995) for t in ts], [band_pt(t, 1.455, 0.985) for t in ts]]
     verts = [v for r in rows for v in r]; faces = []
     for r in range(len(rows) - 1):
@@ -741,7 +750,7 @@ def tie(surf):
     k = []
     for j, (y, w, d) in enumerate([(1.452, 0.0175, 0.011), (1.44, 0.016, 0.012), (1.428, 0.012, 0.0105), (1.42, 0.0085, 0.008)]):
         p, n = surf_point(surf, 0, y, 0.0035)
-        k.append([tuple(Vector((se(math.cos(t), 3) * w, y, p.z - d * 0.4 + se(math.sin(t), 3) * d * 0.6))) for t in [i / 8 * TAU for i in range(8)]])
+        k.append([tuple(Vector((se(math.cos(t), 3) * w, y, p.z - d * 0.4 + se(math.sin(t), 3) * d * 0.6))) for t in [i / D['knot'] * TAU for i in range(D['knot'])]])
     knot = loft('knot', k, cap0=Vector((0, 0.002, 0)), cap1=Vector((0, -0.002, 0)))
     rows, ys, ws = [], [1.428, 1.40, 1.34, 1.26, 1.18, 1.1, 1.06, 1.046, 1.036], [0.0105, 0.0175, 0.022, 0.027, 0.032, 0.036, 0.037, 0.026, 0.005]
     for y, w in zip(ys, ws):
@@ -831,7 +840,7 @@ def lanyard(surf):
     M = len(pts); curve = []
     for k in range(M):
         p0, p1, p2, p3 = pts[k - 1], pts[k], pts[(k + 1) % M], pts[(k + 2) % M]
-        for t in (0,):
+        for t in D['cord']:
             t2, t3 = t * t, t * t * t
             curve.append(0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3))
     rings, b1 = [], None
@@ -860,7 +869,7 @@ def lanyard(surf):
 def build_torso():
     dense = shirt_dense(); surf = Surface(dense)
     out = []
-    shirt = decimate(copy_obj(dense, 'shirt'), 580, use_symmetry=True, symmetry_axis='X'); transfer_normals(shirt, dense)
+    shirt = decimate(copy_obj(dense, 'shirt'), D['shirt'], use_symmetry=True, symmetry_axis='X'); transfer_normals(shirt, dense)
     col = collar(surf)
     pockets, flaps, btns = [], [], []
     for s in (-1, 1):

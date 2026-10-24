@@ -1,5 +1,6 @@
 // CADET — actor tests (node --test): the instructor's body (src/npc/actor.js), without a browser.
-//  - it builds within budget: ≤ 8,000 triangles, ≤ 20 meshes, 1.70–1.78 m tall, feet at y = 0, facing +z;
+//  - it builds within budget: ≤ 8,000 triangles far from the eye (as the crowd draws most people), ≤ 16,000 up close,
+//    ≤ 20 meshes, 1.70–1.78 m tall, feet at y = 0, facing +z;
 //  - 600 frames with a moving lookAt (talking or not) stay finite, and the head turns only within human limits while the
 //    eyes do the first 15°; someone behind is not followed round;
 //  - every gesture plays, then the body is back in exactly the pose it would have had without it;
@@ -10,7 +11,7 @@
 //    and the roof, and ends in the seated rest; explaining is a small movement over the lap; pointing at the student's
 //    side of the panel is done low, the elbow bent, with the nearer (left) arm, never up in front of the student's face
 //    nor over the PFD as the student sees it; standing up again is exactly standing;
-//  - the model made in Blender (assets/model/actor.glb): each look within the budget, every face turned the way its
+//  - the models made in Blender (assets/model/actor.glb, actor-near.glb): each look within the budget, every face turned the way its
 //    normals say (it is drawn one-sided), the mouth's morph target, the name plate's letters.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -52,7 +53,8 @@ test('actor: builds within budget, the right size and the right way round', () =
   let meshes = 0, tris = 0;
   a.root.traverse(o => { if (o.isMesh) { meshes++; tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; } });
   assert.ok(meshes <= 20, `${meshes} meshes`);
-  assert.ok(a.triangles <= 8000, `${a.triangles} triangles`);
+  assert.ok(a.trianglesFar <= 8000, `far: ${a.trianglesFar} triangles`);
+  assert.ok(a.triangles <= 16000, `near: ${a.triangles} triangles`);
   assert.ok(tris <= a.triangles, `counted ${tris} > reported ${a.triangles}`);
   assert.equal(a.radius, 0.3);
   a.root.updateMatrixWorld(true);
@@ -398,8 +400,7 @@ test('actor: update() reuses its objects (no per-frame allocation)', () => {
 
 // ---------------------------------------------------------------- the model (Blender)
 test('actor: the model — every look within budget, faces turned out, the mouth opens, the name on the plate', () => {
-  const M = actorModel();
-  for (const [name, m] of M) {
+  for (const [name, m] of [...actorModel('far')].concat([...actorModel('near')].map(([n, x]) => ['near:' + n, x]))) {
     if (name.startsWith('anchor.')) continue;
     assert.ok(m.normal && m.index.length % 3 === 0 && m.shade.every(v => v >= 0 && v <= 1.0001), `${name}: normals, triangles, shading 0…1`);
     // the faces' winding against their normals, by area (slivers under a millimetre square aside)
@@ -416,7 +417,7 @@ test('actor: the model — every look within budget, faces turned out, the mouth
   for (const look of [{}, { hair: 'long', bars: 1, tag: 'ASAHI' }, { hair: 'bun', glasses: true, tie: false, badge: false, bars: 0, tag: 'MILLER' }, { hair: 'crop', lanyard: false, tie: false, bars: 0 },
     { bars: 4, tag: 'MAKABE' }, { bars: 1, glasses: true, tag: 'MORI' }, { tag: 'WMWMWMW', glasses: true, hair: 'long' }]) {
     const a = createActor({ look });
-    assert.ok(a.triangles <= 8000, `${JSON.stringify(look)}: ${a.triangles} triangles`);
+    assert.ok(a.trianglesFar <= 8000 && a.triangles <= 16000, `${JSON.stringify(look)}: ${a.trianglesFar} triangles far, ${a.triangles} near`);
   }
   const mouth = createActor().meshes.find(m => m.name === 'actor-mouth').geometry;
   assert.ok(mouth.morphTargetsRelative && mouth.morphAttributes.position[0].count === mouth.attributes.position.count, 'the mouth: one relative morph target');

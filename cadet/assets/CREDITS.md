@@ -12,9 +12,9 @@
 | `plaster_c` / `plaster_nr` | PaintedPlaster017 | 建物の壁 |
 | `concrete2_c` / `concrete2_nr` | Concrete031 | 歩道・屋上・建物の縁 |
 
-## 人物の模型（`assets/model/actor.glb`）
+## 人物の模型（`assets/model/actor.glb`・`actor-near.glb`）
 
-自作です（素材は使っていません）。`tools/actor/build_actor.py` を Blender 5.2 でコマンドから動かして作ります（`blender -b --factory-startup -P tools/actor/build_actor.py -- 寸法.json assets/model/actor.glb`。寸法は `node tools/actor/anchors.mjs` が `src/npc/actor.js` から書き出します）。
+自作です（素材は使っていません）。`tools/actor/build_actor.py` を Blender 5.2 でコマンドから動かして作ります（`blender -b --factory-startup -P tools/actor/build_actor.py -- 寸法.json assets/model/actor.glb - far`、近くの人の模型は `actor-near.glb - near`。寸法は `node tools/actor/anchors.mjs` が `src/npc/actor.js` から書き出します）。
 
 - 顔・髪（短髪・刈り上げ・後ろで結んだ長い髪・まとめ髪）・耳・眉・目・まぶた・瞳・口と、制服（シャツ・襟・ネクタイ・胸ポケット・肩章と線・翼の記章・名札・ネックストラップと ID カード）。
 - 形はスクリプトの中の関数で細かく作り、Blender の間引き（デシメーション）で三角形の数を減らし、細かい形の法線を写します。陰（アンビエントオクルージョン）と唇やまぶたの色は、頂点の色に焼き込みます。

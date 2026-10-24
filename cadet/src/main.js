@@ -1044,7 +1044,7 @@ async function boot() {
     const w = mode === 'fly' && fly ? fly.wind() : null;
     airfield.update(t, { cameraWorld: camWorld, windFromDeg: w ? w.fromDeg : windNow().fromDeg, windKt: w ? w.kt : windNow().kt, lightsOn: sky.state.lightsOn });
     veg.update(t, camWorld);
-    crowd.update();
+    crowd.update(camWorld);
     pipe.render();
     stats.frames++; stats.acc += dtMs;
     if ((perfT += dtMs) > 400) {

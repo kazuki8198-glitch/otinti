@@ -9,9 +9,14 @@
 // the floor already, and the shadow would cost as many triangles again as the people). three.js draws a mesh's shadow
 // from the same ranges as the mesh, so there are two meshes on the same skeleton and the same vertices: the people
 // indoors (no shadow) and the people outdoors (with it); each person drawn is in the ranges of one of them.
+// Two details: everyone is in the geometry twice, far (within a person's share of the budget) and near (the parts
+// with more triangles: npc/actor-model.js); the few people closest to the eye (NEAR_MAX, within NEAR_DIST) are drawn
+// from their near range, everyone else from the far one.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { actorMaterial } from './actor.js';
+
+export const NEAR_DIST = 5, NEAR_MAX = 2;                  // metres from the eye; how many people at most
 
 // scene: where the crowd's meshes go (at the scene's origin: the bones' world matrices place everyone);
 // outdoors(root): whether that actor stands outside
@@ -21,19 +26,20 @@ export function createCrowd(scene, { outdoors = () => true } = {}) {
   ZERO.matrixWorld.makeScale(0, 0, 0); ZERO.matrixAutoUpdate = false; ZERO.matrixWorldAutoUpdate = false;
   let mesh = null, outside = null, dirty = false;
 
-  function add(actor) { members.push({ actor, from: 0, targets: [], slots: null, start: 0, count: 0 }); actor.crowd.join(); dirty = true; }
+  function add(actor) { members.push({ actor, from: 0, targets: [], slots: null, far: { start: 0, count: 0 }, near: { start: 0, count: 0 }, d: 0, lod: 'far' }); actor.crowd.join(); dirty = true; }
   function build() {
     dirty = false;
     if (mesh) { mesh.removeFromParent(); outside.removeFromParent(); mesh.geometry.dispose(); outside.geometry.dispose(); mesh.skeleton.dispose(); mesh = outside = null; }
     const bones = [], inverses = [], geos = [];
     let at = 0;
-    for (const m of members) {
-      const p = m.actor.crowd.parts();
-      m.from = bones.length; m.targets = p.targets; m.slots = p.slots; m.start = at;
-      for (const { geo } of p.geos) at += geo.index.count;
-      m.count = at - m.start;
-      bones.push(...p.targets); inverses.push(...p.inverses);
-      for (const { geo, t } of p.geos) {
+    // everyone's far detail first, then everyone's near detail (people far from the eye, next to each other in the
+    // geometry, are one draw call); both on the same bones (the near parts' targets are the far ones')
+    const parts = members.map(m => ({ m, far: m.actor.crowd.parts('far'), near: m.actor.crowd.parts('near') }));
+    for (const { m, far } of parts) { m.from = bones.length; m.targets = far.targets; m.slots = far.slots; bones.push(...far.targets); inverses.push(...far.inverses); }
+    for (const lod of ['far', 'near']) for (const P of parts) {
+      const m = P.m, r = m[lod];
+      r.start = at; for (const { geo } of P[lod].geos) at += geo.index.count; r.count = at - r.start;
+      for (const { geo, t } of P[lod].geos) {
         const n = geo.attributes.position.count, si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
         for (let i = 0; i < n; i++) { si[i * 4] = m.from + t; sw[i * 4] = 1; }
         geo.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); geo.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
@@ -51,15 +57,18 @@ export function createCrowd(scene, { outdoors = () => true } = {}) {
     for (const o of [mesh, outside]) { o.receiveShadow = true; o.frustumCulled = false; o.bindMode = THREE.DetachedBindMode; scene.add(o); o.bind(skeleton, new THREE.Matrix4()); }
   }
   // the ranges of the people drawn (runs next to each other merged)
+  const byStart = (a, b) => a[a.lod].start - b[b.lod].start;
   function ranges(geo, list) {
-    geo.clearGroups();
+    geo.clearGroups(); list.sort(byStart);
     let s = -1, e = -1;
-    for (const m of list) { if (m.start === e) { e += m.count; continue; } if (s >= 0) geo.addGroup(s, e - s, 0); s = m.start; e = s + m.count; }
+    for (const m of list) { const r = m[m.lod]; if (r.start === e) { e += r.count; continue; } if (s >= 0) geo.addGroup(s, e - s, 0); s = r.start; e = s + r.count; }
     if (s >= 0) geo.addGroup(s, e - s, 0);
   }
   const shown = (root) => { for (let o = root; o; o = o.parent) { if (!o.visible) return false; if (o === scene) return true; } return false; };
-  // every frame, before the picture: who is drawn, which slots are folded
-  function update() {
+  // every frame, before the picture: who is drawn, from which detail (eye: the camera's world position; none: all
+  // far), which slots are folded
+  const _p = new THREE.Vector3();
+  function update(eye = null) {
     if (dirty) build();
     if (!mesh) return;
     const B = mesh.skeleton.bones;
@@ -73,10 +82,15 @@ export function createCrowd(scene, { outdoors = () => true } = {}) {
       if (v.L) B[m.from + m.slots.L] = ZERO;
       if (v.R) B[m.from + m.slots.R] = ZERO;
     }
+    // the nearest few within NEAR_DIST: near (the list in the geometry's order again for the ranges)
+    for (const m of drawn) { m.lod = 'far'; m.d = eye ? m.actor.root.getWorldPosition(_p).distanceTo(eye) : Infinity; }
+    near.length = 0; for (const m of drawn) if (m.d < NEAR_DIST) near.push(m);
+    near.sort((a, b) => a.d - b.d); for (let i = 0; i < near.length && i < NEAR_MAX; i++) near[i].lod = 'near';
     ranges(mesh.geometry, inner); ranges(outside.geometry, outer);
     mesh.visible = inner.length > 0; outside.visible = outer.length > 0;
   }
-  const drawn = [], inner = [], outer = [];
+  const drawn = [], inner = [], outer = [], near = [];
   // (meshes: the people indoors, the people outdoors)
-  return { add, update, get meshes() { return mesh ? [mesh, outside] : []; }, get size() { return members.length; }, get drawn() { return drawn.length; } };
+  return { add, update, get meshes() { return mesh ? [mesh, outside] : []; }, get size() { return members.length; }, get drawn() { return drawn.length; },
+    get near() { return drawn.filter(m => m.lod === 'near').map(m => m.actor); } };
 }

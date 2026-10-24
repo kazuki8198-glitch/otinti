@@ -1,5 +1,6 @@
 // CADET — npc/crowd.js (node --test): everyone standing drawn as one skinned mesh. Checked: every vertex of the
-// crowd's mesh lands where the person's own mesh puts it (after they have moved, turned and gestured); only the people
+// crowd's mesh lands where the person's own mesh puts it (after they have moved, turned and gestured), in both
+// details; the nearest two within 5 m of the eye are drawn near, everyone else far; only the people
 // drawn are in the ranges drawn (hidden, far or seated people are not); a talking mouth and a pointing hand are the
 // person's own meshes then, and their copies in the crowd are folded away; the people outdoors are drawn by the
 // mesh that casts the sun's shadow, the people indoors by the one that does not.
@@ -32,16 +33,17 @@ test('crowd: each vertex where the person\'s own mesh puts it, after moving, tur
   for (let k = 0; k < 10; k++) a.update(1 / 30);
   crowd.update(); scene.updateMatrixWorld(true); crowd.meshes[0].skeleton.update();
   assert.equal(crowd.drawn, 2);
-  // the meshes of both people, in the order the crowd took them: positions, compared vertex by vertex
+  // the meshes of both people, in the order the crowd took them (everyone's far detail, then everyone's near detail —
+  // their own meshes): positions, compared vertex by vertex
   const own = [];
-  for (const x of [a, b]) for (const m of x.meshes) {
-    const thigh = /thigh/.test(m.name), hand = /hand/.test(m.name);
-    own.push({ m, n: m.geometry.attributes.position.count, thigh, hand });
+  for (const lod of ['far', 'near']) for (const x of [a, b]) for (const m of x.meshes) {
+    const g = lod === 'far' ? x.farGeometry(m) : m.geometry;
+    own.push({ m, g, n: g.attributes.position.count });
   }
   const v = new THREE.Vector3(), w = new THREE.Vector3();
   let i = 0, worst = 0, where = '';
   for (const o of own) {
-    const pos = o.m.geometry.attributes.position;
+    const pos = o.g.attributes.position;
     for (let j = 0; j < o.n; j++, i++) {
       if (o.m.name === 'actor-mouth') continue;                   // (the mouth's morph: checked below with the slots)
       w.fromBufferAttribute(pos, j).applyMatrix4(o.m.matrixWorld);
@@ -54,10 +56,31 @@ test('crowd: each vertex where the person\'s own mesh puts it, after moving, tur
   for (const x of [a, b]) for (const m of x.meshes) assert.equal(m.visible, false, m.name);
 });
 
+test('crowd: the people near the eye are drawn in the near detail — the nearest two within 5 m; the rest far', () => {
+  const { scene, room, a, b, crowd } = setup();
+  const c = createActor({ seed: 9 }); room.add(c.root); crowd.add(c);
+  // (positions in the room: a at (2, −1); b and c put where each case needs them)
+  const put = (x, px, pz) => { x.root.position.set(px, 0, pz); scene.updateMatrixWorld(true); };
+  const drawn = () => crowd.meshes[0].geometry.groups.reduce((n, g) => n + g.count, 0) / 3;
+  const eye = room.localToWorld(new THREE.Vector3(2, 1.6, 0));          // 1 m from a
+  put(b, -6, 4); put(c, 8, 6);
+  crowd.update();
+  assert.deepEqual(crowd.near, [], 'no eye: all far');
+  assert.equal(crowd.meshes[0].geometry.groups.length, 1, 'all far: one draw call');
+  assert.equal(drawn(), a.trianglesFar + b.trianglesFar + c.trianglesFar, 'all far: their far triangles');
+  crowd.update(eye);
+  assert.deepEqual(crowd.near, [a], 'a near, b and c (more than 5 m away) far');
+  const own = a.meshes.reduce((n, m) => n + m.geometry.index.count / 3, 0);  // (its own meshes: the near detail)
+  assert.equal(drawn(), own + b.trianglesFar + c.trianglesFar, 'a drawn from its near detail');
+  put(b, 3.2, -1); put(c, -0.5, -1);                                    // b 1.6 m, c 2.7 m from the eye
+  crowd.update(eye);
+  assert.deepEqual(new Set(crowd.near), new Set([a, b]), 'all three within 5 m: the nearest two');
+});
+
 test('crowd: only the people drawn are drawn — hidden, out of the scene or seated people are not', () => {
   const { scene, room, a, b, crowd } = setup();
   crowd.update();
-  const total = crowd.meshes[0].geometry.index.count;
+  const total = (a.trianglesFar + b.trianglesFar) * 3;                  // (no eye given: both far)
   assert.deepEqual(crowd.meshes[0].geometry.groups.map(g => [g.start, g.count]), [[0, total]], 'both: one range, one draw call');
   b.root.visible = false; crowd.update();
   assert.equal(crowd.drawn, 1); assert.equal(crowd.meshes[0].geometry.groups.length, 1);

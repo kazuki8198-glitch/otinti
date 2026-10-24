@@ -21,6 +21,8 @@ for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 
 const FL = globalThis.FL;
 // FLIGHT LAB's scripted pilot, to run in the page
 const BOT_SRC = fs.readFileSync(path.join(here, '../../flight-lab/test/bot.mjs'), 'utf8').replace(/^export /gm, '');
+// the circuit's shape for the bot in t2 (test/helpers/pattern-hook.mjs), to run in the page too
+const HOOK_SRC = fs.readFileSync(path.join(here, 'helpers/pattern-hook.mjs'), 'utf8').replace(/^export /gm, '');
 
 const chromium = loadChromium();
 // the picture's contrast (standard deviation of the luminance, 0–255) and its mean
@@ -42,10 +44,35 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
   });
   after(async () => { if (g) await g.browser.close(); });
 
-  test('it starts walking in briefing room 1', async () => {
+  // a talk run to its end in the page: the right answer where a lesson or a test asks, else the first choice matching
+  // one of `picks` (or the first choice); who: someone to talk to (or null: the talk already open)
+  const talkThrough = (who, picks = []) => ev(({ who, picks }) => {
+    const C = window.__cadet; const r = who ? C.career.talkTo(who) : 'talk';
+    if (r !== 'talk') return { r, lines: [] };
+    const lines = [];
+    for (let k = 0; k < 600; k++) {
+      const v = C.dialog(); if (!v) break; lines.push(`${v.name}：${v.text}`);
+      if (v.choices.length) {
+        const act = C.career.activity(), m = /^q(\d+)$/.exec(v.node); let i = 0;
+        if (act && m && act.questions[+m[1]]) { const q = act.questions[+m[1]]; i = v.choices.findIndex(c => c.text === q.opts[q.ok]); }
+        else for (const p of picks) { const j = v.choices.findIndex(c => new RegExp(p).test(c.text)); if (j >= 0) { i = j; break; } }
+        lines.push(`  > ${v.choices[i].text}`); C.dialogChoose(i);
+      } else C.dialogNext();
+      C.simulate(0.05);
+    }
+    return { r, lines, open: !!C.dialog() };
+  }, { who, picks });
+  const career = () => ev(() => window.__cadet.career.state());
+  const GROUND_OK = Object.fromEntries(['k1', 'k2', 'k3', 'k4', 'k5', 'k6'].map(k => [k, { tries: 1, best: 'S', pass: true, levels: [] }]));
+  const passed = (ids) => ({ lessons: { ...GROUND_OK, ...Object.fromEntries(ids.map(id => [id, { tries: 1, best: 'S', pass: true, levels: ['basic'] }])) } });
+
+  test('the first morning: inside the academy\'s front doors, the first day\'s plan', async () => {
     assert.equal(await ev(() => window.__cadet.mode()), 'walk');
     const p = await ev(() => window.__cadet.player());
-    assert.equal(p.place, 'ブリーフィング室 1');
+    assert.equal(p.place, 'ロビー');
+    const st = await career();
+    assert.deepEqual([st.day, st.slot, st.chapter], [1, 'morning', 'prologue']);
+    assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => x.kind), ['ceremony', 'tour', 'brief']);
     const a = await analyse(g.page, await ev(() => window.__cadet.snapshot(2)));
     assert.ok(a.sd > 8 && a.mean > 40 && a.mean < 235, `start: mean ${a.mean.toFixed(0)} sd ${a.sd.toFixed(1)}`);
   });
@@ -132,9 +159,83 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.equal((await ev(() => window.__cadet.doors())).find(d => d.id === 'd-wc').angle, 0);
   });
 
-  test('talk: the instructor briefs today\'s lesson, checks it, answers from the textbook, and it is saved', async () => {
+  test('the prologue: the welcome in the lobby, the tour and the tablet, the instructor, the cadets in the lounge, home and the next morning', async () => {
+    await ev(() => window.__cadet.setMode('walk'));
+    // the chief instructor's welcome (the morning), the dispatcher's tour (the tablet), the instructor (the afternoon)
+    for (const id of ['chief', 'lecturer', 'kiryu', 'asahi', 'mori']) { const w = await ev((id) => window.__cadet.career.where(id), id); assert.ok(w && w.a > 646 && w.a < 664, `${id} in the lobby: ${JSON.stringify(w)}`); }
+    let t = await talkThrough('chief');
+    assert.match(t.lines.join('\n'), /ようこそ/);
+    assert.equal((await career()).slot, 'am');
+    t = await talkThrough('dispatcher');
+    assert.match(t.lines.join('\n'), /タブレット/);
+    assert.ok((await ev(() => window.__cadet.career.flags())).has_tablet);
+    assert.equal((await career()).slot, 'pm');
+    // the tablet: Tab opens it on today's page; Tab closes it
+    await g.page.keyboard.press('Tab');
+    assert.equal(await ev(() => window.__cadet.career.tablet.isOpen()), true);
+    assert.match(await ev(() => document.querySelector('.tb').innerText), /今日の予定[\s\S]*入社の式[\s\S]*天気/);
+    await g.page.keyboard.press('Tab');
+    assert.equal(await ev(() => window.__cadet.career.tablet.isOpen()), false);
+    t = await talkThrough('instructor', ['今は大丈夫']);
+    assert.match(t.lines.join('\n'), /担当教官になる、早瀬/);
+    let st = await career();
+    assert.deepEqual([st.slot, !!st.done.prologue], ['evening', true]);
+    // the evening: the cadets in the lounge; the instructor and the staff gone home
+    for (const id of ['kiryu', 'asahi', 'mori']) { const w = await ev((id) => window.__cadet.career.where(id), id); assert.ok(w && w.a > 688, `${id} in the lounge`); t = await talkThrough(id); assert.ok(t.lines.length, id); }
+    assert.equal(await ev(() => window.__cadet.career.where('dispatcher')), null);
+    // home through the front door: the night, the card, the next morning — chapter 1
+    assert.equal(await ev(() => window.__cadet.career.home()), 'examined');
+    await ev(() => window.__cadet.career.homeChoose(0));
+    await g.page.waitForTimeout(4200);
+    st = await career();
+    assert.deepEqual([st.day, st.slot, st.chapter], [2, 'morning', 'ch1']);
+    assert.equal((await ev(() => window.__cadet.player())).place, 'ロビー');
+    assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => `${x.slot} ${x.kind} ${x.id}`), ['am class 0', 'pm ftd k1']);
+  });
+
+  test('chapter 1: a class (its figures on the classroom\'s screen), the training device (k2: the PFD on its screen), the written test', async () => {
+    // the class: the lecturer at the whiteboard of briefing room 2
+    const w = await ev(() => window.__cadet.career.where('lecturer'));
+    assert.ok(w.a > 621 && w.a < 633.6 && w.c < 261, `the lecturer in briefing room 2: ${JSON.stringify(w)}`);
+    let t = await talkThrough('lecturer');
+    assert.match(t.lines[0], /Good morning/); assert.match(t.lines.join('\n'), /See you tomorrow/);
+    let st = await career();
+    assert.deepEqual([st.slot, st.done['class:0']], ['pm', 2]);
+    // the device (k2 as the next one: k1 passed): ten PFD pictures to read, every one right — passed
+    await ev((p) => window.__cadet.career.set({ progress: { lessons: { k1: p.k1 } }, place: false }), GROUND_OK);
+    await ev(() => window.__cadet.career.advance('pm'));
+    assert.deepEqual((await ev(() => window.__cadet.career.schedule())).find(x => x.kind === 'ftd').id, 'k2');
+    t = await talkThrough('lecturer');
+    assert.match(t.lines.join('\n'), /10 \/ 10 問、100%/);
+    assert.ok((await ev(() => window.__cadet.career.progress())).lessons.k2.pass);
+    const sim = await ev(() => { const C = window.__cadet; C.placeWalker(624.0, 270.6, { a: 629.9, c: 270.6 }); return C.snapshot(2); });
+    const a = await analyse(g.page, sim);
+    assert.ok(a.sd > 8, `the device room with its screen: sd ${a.sd.toFixed(1)}`);
+    // the written test (all the classes and the device done): in the planning room, 28 questions, passed
+    const done = Object.fromEntries([0, 1, 2, 3, 4, 5].map(i => [`class:${i}`, 2]));
+    await ev(({ p, done }) => window.__cadet.career.set({ state: { day: 9, slot: 'morning', done: { prologue: 1, ...done } }, progress: p, place: false }), { p: GROUND_OK, done });
+    assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => `${x.kind} ${x.id}`), ['exam written1']);
+    t = await talkThrough('lecturer');
+    assert.match(t.lines.join('\n'), /28 \/ 28 問、100%/);
+    st = await career();
+    assert.ok(st.exams.written1.pass);
+    // the next morning: chapter 2
+    await ev(() => window.__cadet.career.advance('evening'));
+    await ev(() => window.__cadet.career.sleep());
+    await g.page.waitForTimeout(4200);
+    st = await career();
+    assert.deepEqual([st.chapter, st.day], ['ch2', 10]);
+    assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => `${x.kind} ${x.id}`), ['flight a1']);
+  });
+
+  test('talk: a morning of chapter 2 — how the cadet feels, then today\'s lesson briefed, checked, a question from the textbook, and it is saved', async () => {
     await ev(() => { window.__cadet.setMode('walk'); window.__cadet.resetProgress(); });
     assert.equal(await ev(() => window.__cadet.savedState()), null, 'the record is erased');
+    assert.equal((await career()).chapter, 'prologue', 'a new career');
+    await g.page.waitForTimeout(3600);                                         // (the new career's card)
+    // day 12 of the career (a Monday), a1 flown: today a2
+    await ev((p) => window.__cadet.career.set({ state: { chapter: 'ch2', day: 12, slot: 'morning', done: { prologue: 1 }, exams: { written1: { tries: 1, best: 90, pass: true } } }, progress: p, flags: { met_instructor: true, has_tablet: true }, place: false }), passed(['a1']));
+    assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => `${x.kind} ${x.id}`), ['flight a2']);
     const ins = await ev(() => window.__cadet.instructor());
     assert.ok(ins.triangles > 1000 && ins.triangles < 20000, `${ins.triangles} triangles`);
     await ev((ins) => window.__cadet.placeWalker(ins.a + 2.4, ins.c - 0.6, { a: ins.a, c: ins.c }), ins);
@@ -143,8 +244,11 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.equal(await ev(() => window.__cadet.use()), 'talk');
     assert.equal(await ev(() => document.body.classList.contains('talking') && !!window.__cadet.dialog()), true);
     // a real click on the view while the line types shows the whole line (and only that); the next click goes on
+    // IMSAFE first: rested, said so; then the clicks on the line that follows
+    assert.match((await ev(() => window.__cadet.dialog())).text, /今日の体調/);
+    await ev(() => window.__cadet.dialogChoose('問題ありません'));
     const d0 = await ev(() => window.__cadet.dialog());
-    assert.match(d0.text, /はじめまして.*早瀬/);
+    assert.match(d0.text, /それならよかった/);
     assert.equal(d0.typing, true, 'the first line types out');
     await g.page.mouse.click(400, 120);
     const d1 = await ev(() => window.__cadet.dialog());
@@ -216,7 +320,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     await ev(() => window.__cadet.setMode('walk'));
   });
 
-  test('fly: in today\'s Archer with the instructor beside you, today\'s lesson alone to a pass from the cockpit, a1 — FLIGHT LAB\'s score for the same inputs', async () => {
+  test('fly: in today\'s Archer with the instructor beside you (not ready for today\'s flight: a practice), a lesson alone to a pass from the cockpit, a1 — FLIGHT LAB\'s score for the same inputs', async () => {
     const tg = await ev(() => window.__cadet.spec.target);
     await ev((tg) => { const C = window.__cadet; C.setMode('walk'); C.placeWalker(tg.a + 2.6, tg.c + 1.0, { a: tg.a + 1.0, c: tg.c }); }, tg);
     assert.equal(await ev((tg) => window.__cadet.lookAt(tg.a + 1.0, tg.c, 1.25), tg), 'aircraft:board');
@@ -235,19 +339,18 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.ok(a.sd > 8 && a.mean > 30 && a.mean < 235, `cockpit: mean ${a.mean.toFixed(0)} sd ${a.sd.toFixed(1)}`);
     let st = await ev(() => window.__cadet.stats());
     assert.ok(st.calls < 400 && st.triangles < 900000, `cockpit: ${st.calls} calls, ${st.triangles} triangles`);
-    // his talk: today's lesson (briefed already), then the choice; the basic level, and on to the training area
+    // his talk: briefed, but no go / no-go given at the counter yet — not today's flight: a practice flight or out again
     const said = [];
     let v = await ev(() => window.__cadet.dialog());
     for (let k = 0; k < 8 && v && !v.choices.length; k++) { said.push(v.text); v = await ev(() => { window.__cadet.dialogReveal(); return window.__cadet.dialogNext(); }); }
-    assert.match(said.join('\n'), /今日は「通常離陸と上昇」、「直線水平飛行」、「通常着陸」/);
-    assert.doesNotMatch(said.join('\n'), /ブリーフィングはまだ/);
-    assert.equal(v.choices.length, 4);
-    // today's lesson alone (a2, from the training area), at the basic level
-    await ev(() => window.__cadet.dialogChoose('課目だけ'));
-    await ev(() => window.__cadet.dialogChoose('基礎'));
+    said.push(v.text);
+    assert.match(said.join('\n'), /天気の判断がまだ/);
+    assert.deepEqual(v.choices.map(c => c.text), ['駐機場から少しだけ飛ぶ（練習）', '降ります']);
+    await ev(() => window.__cadet.dialogChoose('練習'));
     await ev(() => { window.__cadet.dialogReveal(); window.__cadet.dialogNext(); });
     assert.equal(await ev(() => window.__cadet.dialog()), null);
-    await g.page.waitForTimeout(900);
+    // a lesson alone (a2, from the training area), at the basic level
+    await ev(() => window.__cadet.fly.lesson('basic', 'a2'));
     await ev(() => window.__cadet.simulate(0.1));
     fs = await ev(() => window.__cadet.fly.status());
     assert.deepEqual([fs.phase, fs.flight.mode, fs.flight.id, fs.flight.level, fs.flight.step], ['lesson', 'lesson', 'a2', 'basic', 0]);
@@ -317,10 +420,16 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.ok(Math.hypot(ins.at.a - wi.a, ins.at.c - wi.c) < 0.01, `the instructor is at ${JSON.stringify(ins.at)}`);
   });
 
-  test('the first day: the walk-around by hand, the start, the radio, the taxi, t1 → a2 → t3 by FLIGHT LAB\'s bot, the debrief and the logbook', async () => {
+  test('a flying day: the go / no-go, the walk-around by hand, the start, the radio, the taxi, t1 → a2 → t3 by FLIGHT LAB\'s bot, the debrief and the logbook', async () => {
     const C = (fn, a) => ev(fn, a);
     await ev((src) => { if (!window.makeBot) (0, eval)(src + '\nwindow.makeBot = makeBot; window.runLesson = runLesson;'); }, BOT_SRC);
     await C(() => { window.__cadet.setMode('walk'); });
+    // the go / no-go at the dispatch counter: the right call for today's weather
+    const wx = await C(() => window.__cadet.career.weather());
+    const call = { go: '予定どおり', wait: '午後まで待ちます', early: '早めに出て', cancel: '今日は飛びません' }[wx.decision];
+    const dt = await talkThrough('dispatcher', [call]);
+    assert.match(dt.lines.join('\n'), /私もそう思います/);
+    assert.match(await C(() => window.__cadet.career.readiness()), /ready/);
     // the walk-around: every place from where a cadet stands, E, then the decision (1–4); anomalies reported
     const targets = await C(() => window.__cadet.walk.targets()), planted = await C(() => window.__cadet.walk.planted());
     assert.equal(targets.length, 15);
@@ -355,7 +464,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.deepEqual([fs.engine.running, Math.round(fs.engine.rpm), fs.engine.sw.master, fs.engine.sw.mag], [false, 0, false, 'OFF'], 'cold on the stand');
     for (let i = 0; i < 12; i++) {
       const d = await C(() => window.__cadet.dialog()); if (!d) break;
-      if (d.choices.length) await C((re) => window.__cadet.dialogChoose(re), d.choices.some(c => /通して/.test(c.text)) ? '通して' : '基礎');
+      if (d.choices.length) await C((re) => window.__cadet.dialogChoose(re), '^基礎');
       else await C(() => window.__cadet.dialogNext());
     }
     let day = await C(() => window.__cadet.fly.day());
@@ -412,10 +521,99 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     fs = await C(() => window.__cadet.fly.status());
     assert.ok(!fs.engine.running && !fs.engine.sw.master, 'shut down');
     await C(() => window.__cadet.fly.view('cockpit'));
-    // out through the door: the next day is a new walk-around
+    // out through the door: the day's flight is done (the afternoon now), the next one is a new walk-around
     await act('door'); await g.page.waitForTimeout(900); await C(() => window.__cadet.simulate(0.3));
     assert.equal(await C(() => window.__cadet.mode()), 'walk');
     assert.equal((await C(() => window.__cadet.walk.summary())).done, 0);
+    const st = await career();
+    assert.deepEqual([st.done['flight:a2'], st.slot], [12, 'pm']);
+    assert.equal(e.date, '2027-04-12');
+    assert.match(await C(() => window.__cadet.career.readiness()), /終わりました/);
+  });
+
+  test('the check ride with the chief instructor in the right seat; the first solo — no one in the right seat, three circuits by FLIGHT LAB\'s bot, the celebration and the endorsement', async () => {
+    const C = (fn, a) => ev(fn, a);
+    await ev((src) => { if (!window.makeBot) (0, eval)(src + '\nwindow.makeBot = makeBot; window.runLesson = runLesson;'); }, BOT_SRC);
+    await ev((src) => { if (!window.patternHook) (0, eval)(src + '\nwindow.patternHook = patternHook;'); }, HOOK_SRC);
+    const CH2 = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 't2', 't4', 'e1', 'e2', 'e3', 't1', 't3'];
+    const exams = { written1: { tries: 1, best: 90, pass: true }, presolo: { tries: 1, best: 95, pass: true } };
+    // the first day after day 25 that can be flown and has `kind` planned
+    const dayWith = (kind, prog) => C(({ kind, prog, exams }) => {
+      const K = window.__cadet.career;
+      for (let d = 26; d < 60; d++) { K.set({ state: { chapter: 'ch2', day: d, slot: 'morning', done: { prologue: 1 }, exams, solo: null }, progress: prog, flags: { met_instructor: true, has_tablet: true }, trust: { instructor: 72 }, place: false }); if (K.schedule().some(x => x.kind === kind)) return d; }
+      return -1;
+    }, { kind, prog, exams });
+    // ---- the check ride: the chief instructor's brief in his room, then by the aircraft; in the right seat
+    const d1 = await dayWith('checkride', passed(CH2));
+    assert.ok(d1 > 0);
+    await C(() => window.__cadet.setMode('walk'));
+    let t = await talkThrough('chief', ['よろしくお願いします']);
+    assert.match(t.lines.join('\n'), /ソロ前の審査です/);
+    const cw = await C(() => window.__cadet.career.where('chief'));
+    assert.ok(cw && cw.c < 230, `the chief instructor by the aircraft: ${JSON.stringify(cw)}`);
+    const wx = await C(() => window.__cadet.career.weather());
+    await talkThrough('dispatcher', [{ go: '予定どおり', wait: '午後まで', early: '早めに出て', cancel: '今日は飛びません' }[wx.decision]]);
+    assert.equal(await C(() => window.__cadet.career.readiness()), 'checkride');
+    const tg = await C(() => window.__cadet.spec.target);
+    const board = async () => { await C((tg) => { const W = window.__cadet; W.placeWalker(tg.a + 2.6, tg.c + 1.0, { a: tg.a + 1.0, c: tg.c }); W.lookAt(tg.a + 1.0, tg.c, 1.25); return W.use(); }, tg); await g.page.waitForTimeout(900); await C(() => window.__cadet.simulate(0.3)); };
+    await board();
+    let fs = await C(() => window.__cadet.fly.status());
+    assert.equal(await C(() => window.__cadet.fly.crew()), 'chief');
+    assert.ok(fs.seatAt, 'someone in the right seat');
+    let d = await C(() => window.__cadet.dialog());
+    assert.equal(d.name, '真壁 主任教官'); assert.match(d.text, /ソロ前の審査を始めます/);
+    t = await talkThrough(null, ['一度降ります']);
+    await g.page.waitForTimeout(900); await C(() => window.__cadet.simulate(0.3));
+    assert.equal(await C(() => window.__cadet.mode()), 'walk');
+    assert.ok((await C(() => window.__cadet.career.where('chief'))).c < 230, 'back by the aircraft');
+    // ---- c1 passed: the solo (good weather, the instructor's trust 72)
+    const d2 = await dayWith('solo', passed([...CH2, 'c1']));
+    assert.ok(d2 > 0);
+    await talkThrough('dispatcher', ['予定どおり']);
+    t = await talkThrough('instructor', ['行ってきます']);
+    assert.match(t.lines.join('\n'), /ファーストソロです/);
+    assert.equal(await C(() => window.__cadet.career.readiness()), 'ready');
+    await board();
+    fs = await C(() => window.__cadet.fly.status());
+    assert.deepEqual([await C(() => window.__cadet.fly.crew()), fs.seatAt, fs.talking, await C(() => window.__cadet.fly.solo())], [null, null, false, true], 'alone: no one to talk to, the day begins');
+    let day = await C(() => window.__cadet.fly.day());
+    assert.equal(day.phase, 'prestart');
+    await C(() => window.__cadet.fly.view('chase'));
+    const tick = (s = 0.5) => C((s) => window.__cadet.simulate(s, 1 / 30), s);
+    const log = [];
+    for (let k = 0; k < 1200; k++) {
+      day = await C(() => window.__cadet.fly.day()); if (!day) break;
+      if (!log.length || log[log.length - 1] !== day.phase) log.push(day.phase);
+      if (day.phase === 'done') break;
+      fs = await C(() => window.__cadet.fly.status());
+      if (fs.flight && fs.flight.mode === 'lesson' && !fs.flight.done) {
+        await C(() => { const W = window.__cadet, h = W.fly.flight.L.id === 't2' ? window.patternHook(W.FL) : null; W.fly.runScripted(window.makeBot(W.FL).fly, 900, (L, t) => { W.fly.radioTick(1 / 120); W.fly.answer(true); if (h) h(L, t); }); });
+        continue;
+      }
+      if (await C(() => window.__cadet.fly.asking())) { await C(() => window.__cadet.fly.key('Digit2')); continue; }
+      if (day.radio && day.radio.phase === 'choose') await C(() => window.__cadet.fly.answer(true));
+      if (day.items && !day.assisting) await C(() => window.__cadet.fly.assist());
+      if (['taxiOut', 'lineup', 'taxiOff', 'taxiIn'].includes(day.phase) && !day.assisting) await C(() => window.__cadet.fly.taxi());
+      await tick(4);
+    }
+    assert.deepEqual(log.filter(p => /^t[12]$|closed|pattern|stopgo|recycle|exit|debrief|done/.test(p)), ['t1', 'closed', 'pattern', 't2', 'stopgo', 'recycle', 't2', 'stopgo', 'recycle', 't2', 'exit', 'debrief', 'done']);
+    // signed off outside: the logbook's line (solo time, three landings, the endorsement); they wait by the aircraft
+    const lb = await C(() => window.__cadet.logbook()), e = lb.entries[lb.entries.length - 1];
+    assert.ok(e.solo > 0 && e.dual === 0, `solo ${e.solo}`); assert.equal(e.landings, 3); assert.match(e.endorsement, /単独飛行/);
+    assert.deepEqual(e.lessons.map(l => l.id), ['t1', 't2', 't2', 't2']);
+    assert.ok(e.lessons.every(l => l.passed));
+    await C(() => window.__cadet.fly.view('cockpit'));
+    await C(() => window.__cadet.fly.act('door')); await g.page.waitForTimeout(900); await C(() => window.__cadet.simulate(0.3));
+    assert.equal(await C(() => window.__cadet.mode()), 'walk');
+    assert.equal(await C(() => window.__cadet.career.celebrate()), true);
+    for (const id of ['kiryu', 'asahi', 'mori']) assert.ok((await C((id) => window.__cadet.career.where(id), id)).c < 230, `${id} by the aircraft`);
+    t = await talkThrough('instructor', ['航空日誌を見る']);
+    assert.match(t.lines.join('\n'), /ファーストソロ、おめでとう[\s\S]*シャツの裾/);
+    if ((await C(() => window.__cadet.logbook())).open) await g.page.getByRole('button', { name: '閉じる' }).click();
+    const st = await career();
+    assert.ok(st.solo && st.solo.day === d2);
+    assert.equal(st.slot, 'evening');
+    assert.deepEqual(await C(() => window.__cadet.career.gate()), [], 'chapter 2 done');
   });
 
   test('the pause menu opens and closes; settings apply at once', async () => {

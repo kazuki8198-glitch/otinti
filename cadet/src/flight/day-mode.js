@@ -63,7 +63,7 @@ export function createDayMode(h) {
     FLOW = d.steps.filter(p => p !== 'done');
     // the instructor's look round the aircraft: what was left undone, what was missed (he puts it right)
     const pend = day.walk.pending();
-    if (pend.length) say(EVENT_LINES.walkFound(pend.map(p => p.say).join('')), 9000);
+    if (pend.length) { if (solo) note(`外部点検の残りは、整備の大城さんが見てくれていた。${pend.map(p => p.say).join('')}`, 9000); else say(EVENT_LINES.walkFound(pend.map(p => p.say).join('')), 9000); }
     day.boarded();
     onPhase(day.phase);
   }
@@ -159,7 +159,7 @@ export function createDayMode(h) {
       if (taxi && taxi.state.done && taxi.state.stopped) {
         taxi = null;
         if (day.phase !== 'lineup') flight.action('parkBrake', true);
-        say(ASSIST_LINES.taxiDone, 3000);
+        if (!solo) say(ASSIST_LINES.taxiDone, 3000);
       }
     }
     h.routeLine.update(performance.now() / 1000, pos(), dt);
@@ -208,9 +208,18 @@ export function createDayMode(h) {
     return false;
   }
   function answer(k) { if (!day) return; const v = day.atc.view(); if (v && v.phase === 'choose') day.atc.answer(k); }
+  // the taxi along the day's way by the taxi pilot, whoever is in the right seat (the tests: the solo's taxiing)
+  function autoTaxi() {
+    if (!day || !PLACES.has(day.phase) || taxi) return false;
+    const stand = h.stand, ph = day.phase;
+    const pts = ph === 'taxiOut' ? routeOut(stand) : ph === 'lineup' ? routeLineUp() : ph === 'taxiOff' ? routeIn(pos(), stand).off : routeIn({ a: day.st.exit === 'A3' ? 1160 : 590, c: 0 }, stand).in;
+    flight.action('parkBrake', false);
+    taxi = createTaxiPilot(FL, pts, ph === 'lineup' ? { speed: 2.2, turnSpeed: 1.8 } : {});
+    return true;
+  }
   function end() { day = null; assistOn = false; taxi = null; fly = null; asking = false; recoverT = 0; queue.length = 0; targets.clear(); h.routeLine.set(null); h.dayHud.hideAll(); h.setGuide(null); }
   return {
-    begin, update, key, answer, onChoice, lessonEnded, end, speak,
+    begin, update, key, answer, onChoice, lessonEnded, end, speak, autoTaxi,
     get active() { return !!day; }, get day() { return day; }, get pilot() { return taxi ? taxi.fly : null; }, get flying() { return fly; },
     get assisting() { return assistOn || !!taxi; }, get solo() { return solo; }, get asking() { return asking; },
     // for the tests: the instructor's hands for everything until `phase` (or the next lesson)

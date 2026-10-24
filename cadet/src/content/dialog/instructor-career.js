@@ -13,7 +13,7 @@
 import { INSTRUCTOR } from './instructor.js';
 
 export const CAREER_HOOKS = ['imsafe', 'done', 'board', 'logbook', 'solo', 'look', 'nod', 'point'];
-export const CAREER_FLAGS = ['met_instructor', 'soloed'];
+export const CAREER_FLAGS = ['met_instructor', 'soloed', 'briefed_today'];
 const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' }, kiryu: { name_ja: '桐生', color: '#c9b6ff' }, asahi: { name_ja: '朝日', color: '#ffc4a8' }, mori: { name_ja: '森', color: '#a8e3ff' } };
 // the context: today { lessonTitle, studyTitle, studySection (a textbook section with a figure, or '') },
 // imsafe { honest (true / false) }, career { tired }
@@ -67,7 +67,7 @@ export function careerInstructorDialogs() {
     o2: say('私は乗りません。離陸して、左場周を回って、止まるまで着陸。それを 3 回。管制塔には、初めてのソロだと伝えてください。', { hook: { name: 'point', arg: 'board' }, next: 'o3' }),
     o3: say('何かおかしいと思ったら、迷わずゴーアラウンド。それでも変なら、着陸して止まって、管制塔に言えばいい。私は地上で無線を聞いています。', { next: 'o4' }),
     o4: say('いつもどおりの点検、いつもどおりの交信。あなたはもう、それができます。……いってらっしゃい。', { choices: [{ text: '行ってきます', next: 'o5' }] }),
-    o5: say('外部点検から。機体で待っていたりはしませんよ。今日は全部、あなたの手で。', { hook: { name: 'nod' }, end: true }),
+    o5: say('外部点検から。機体で待っていたりはしませんよ。今日は全部、あなたの手で。', { hook: { name: 'nod' }, effects: [{ set: 'briefed_today' }], end: true }),
   };
   const C = {
     c1: say('おかえりなさい。……ファーストソロ、おめでとう。', { hook: { name: 'look', arg: 'player' }, next: 'c2' }),

@@ -1168,7 +1168,7 @@ async function boot() {
       // the day (M4): its state, a key as the cadet presses it, the instructor's hands, a radio answer (the right one or not)
       day: () => (fly.status().day),
       key: (code, shift = false) => fly.key({ code, shiftKey: !!shift, repeat: false, preventDefault() {} }),
-      assist: () => fly.dayMode.assist(),
+      assist: () => fly.dayMode.assist(), taxi: () => fly.dayMode.autoTaxi(), solo: () => fly.dayMode.solo, asking: () => fly.dayMode.asking, crew: () => fly.crewId,
       answer: (right = true) => { const d = fly.dayMode.day; if (!d) return null; const k = d.atc.rightIndex(); if (k < 0) return null; return d.atc.answer(right ? k : (k + 1) % 3); },
       lessonLevel: () => settings.get('lessonLevel'),
       // the radio's clock (a lesson run by a scripted pilot has no frames: its hook moves the radio on)
@@ -1211,7 +1211,7 @@ async function boot() {
       activity: () => (lessonKind ? { kind: lessonKind.kind, id: lessonKind.id, n: lessonKind.n, questions: (lessonRun && lessonQuestions) || [] } : null),
       home: () => goHome(), homeChoose: (k) => homeChoose(k),
       tablet: { open: (p) => tablet.open(p), close: () => tablet.close(), isOpen: () => tablet.isOpen, page: () => tablet.page },
-      cards: () => cards.showing, celebrate: () => celebrate, reset: () => resetProgress(),
+      cards: () => cards.showing, celebrate: () => celebrate, reset: () => resetProgress(), gate: () => career.gate(prog(), trustI()),
       readiness: () => { const d = boardTalk(); return d.dialogs.board.nodes.today ? 'ready' : d.dialogs.board.nodes.c2 ? 'checkride' : d.dialogs.board.nodes.not.text; },
     },
     settings,

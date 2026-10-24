@@ -232,8 +232,11 @@ async function boot() {
   // a new flying day's walk-around and radio (career/day.js): today's lessons (the career's plan), the ATIS from the
   // day's weather (the information letter moves on each day)
   const PHON = ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo', 'Foxtrot', 'Golf', 'Hotel', 'India', 'Juliett', 'Kilo', 'Lima', 'Mike', 'November', 'Oscar', 'Papa', 'Quebec', 'Romeo', 'Sierra', 'Tango', 'Uniform', 'Victor', 'Whiskey', 'Xray', 'Yankee', 'Zulu'];
+  // (today's flight as planned when the day was made: once its lesson is passed, the plan would already show the next)
+  let dayItem = null;
   const newDay = () => {
     dayN++;
+    dayItem = { day: career.day, it: flightItem() };
     const w = career.weather(prog()), pm = career.slot === 'pm';
     today = createDay(FL, { seed: career.state.seed * 31 + career.day * 7 + dayN, stand: { a: tg.a, c: tg.c }, anomalies: dayN === 1 ? planted : undefined, plan: planOf(flightItem()),
       weather: { info: PHON[(career.day * 2 + (pm ? 1 : 0)) % 26], zulu: pm ? '1853' : '1353', tempC: w.tempC + (pm ? 3 : 0), dewC: w.dewC } });
@@ -697,7 +700,7 @@ async function boot() {
   }
   // out of the aircraft after a flying day: what was flown counts (FLIGHT LAB's record already has the lessons)
   function dayOver(d) {
-    const it = flightItem();
+    const it = dayItem && dayItem.day === career.day && dayItem.it ? dayItem.it : flightItem();
     if (!d || d.phase !== 'done' || !it || career.chapter !== 'ch2') return;
     career.done(it.kind, it.id); career.tire(15);
     talkState.flags.briefed_today = false;

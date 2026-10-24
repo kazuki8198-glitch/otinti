@@ -334,6 +334,9 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
   });
 
   test('fly: in today\'s Archer with the instructor beside you (not ready for today\'s flight: a practice), a lesson alone to a pass from the cockpit, a1 — FLIGHT LAB\'s score for the same inputs', async () => {
+    // (in a new browser: day 12 as the talk left it — a1 flown, a2 briefed and checked, no go / no-go yet)
+    await restart();
+    await ev((p) => window.__cadet.career.set({ state: { chapter: 'ch2', day: 12, slot: 'morning', done: { prologue: 1 }, exams: { written1: { tries: 1, best: 90, pass: true } } }, progress: p, flags: { met_instructor: true, has_tablet: true, briefed_today: true, brief_checked: true }, place: false }), passed(['a1']));
     const tg = await ev(() => window.__cadet.spec.target);
     await ev((tg) => { const C = window.__cadet; C.setMode('walk'); C.placeWalker(tg.a + 2.6, tg.c + 1.0, { a: tg.a + 1.0, c: tg.c }); }, tg);
     assert.equal(await ev((tg) => window.__cadet.lookAt(tg.a + 1.0, tg.c, 1.25), tg), 'aircraft:board');
@@ -610,7 +613,8 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
       if (['taxiOut', 'lineup', 'taxiOff', 'taxiIn'].includes(day.phase) && !day.assisting) await C(() => window.__cadet.fly.taxi());
       await tick(4);
     }
-    assert.deepEqual(log.filter(p => /^t[12]$|closed|pattern|stopgo|recycle|exit|debrief|done/.test(p)), ['t1', 'closed', 'pattern', 't2', 'stopgo', 'recycle', 't2', 'stopgo', 'recycle', 't2', 'exit', 'debrief', 'done']);
+    // (no debrief to sit through alone: that step passes at once, between two looks)
+    assert.deepEqual(log.filter(p => /^t[12]$|closed|pattern|stopgo|recycle|exit|done/.test(p)), ['t1', 'closed', 'pattern', 't2', 'stopgo', 'recycle', 't2', 'stopgo', 'recycle', 't2', 'exit', 'done']);
     // signed off outside: the logbook's line (solo time, three landings, the endorsement); they wait by the aircraft
     const lb = await C(() => window.__cadet.logbook()), e = lb.entries[lb.entries.length - 1];
     assert.ok(e.solo > 0 && e.dual === 0, `solo ${e.solo}`); assert.equal(e.landings, 3); assert.match(e.endorsement, /単独飛行/);
@@ -631,6 +635,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
   });
 
   test('the pause menu opens and closes; settings apply at once', async () => {
+    await ev(() => window.__cadet.setMode('walk'));
     await ev(() => window.__cadet.menu.open('settings'));
     assert.equal(await ev(() => window.__cadet.menu.isOpen()), true);
     assert.equal(await ev(() => !document.getElementById('menu').hidden), true);

@@ -248,8 +248,8 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.equal(await ev(() => window.__cadet.savedState()), null, 'the record is erased');
     assert.equal((await career()).chapter, 'prologue', 'a new career');
     await g.page.waitForTimeout(3600);                                         // (the new career's card)
-    // day 12 of the career (a Monday), a1 flown: today a2
-    await ev((p) => window.__cadet.career.set({ state: { chapter: 'ch2', day: 12, slot: 'morning', done: { prologue: 1 }, exams: { written1: { tries: 1, best: 90, pass: true } } }, progress: p, flags: { met_instructor: true, has_tablet: true }, place: false }), passed(['a1']));
+    // day 12 of the career (a Monday; a weather seed with a day to fly), a1 flown: today a2
+    await ev((p) => window.__cadet.career.set({ state: { seed: 2, chapter: 'ch2', day: 12, slot: 'morning', done: { prologue: 1 }, exams: { written1: { tries: 1, best: 90, pass: true } } }, progress: p, flags: { met_instructor: true, has_tablet: true }, place: false }), passed(['a1']));
     assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => `${x.kind} ${x.id}`), ['flight a2']);
     const ins = await ev(() => window.__cadet.instructor());
     assert.ok(ins.triangles > 1000 && ins.triangles < 20000, `${ins.triangles} triangles`);
@@ -338,7 +338,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
   test('fly: in today\'s Archer with the instructor beside you (not ready for today\'s flight: a practice), a lesson alone to a pass from the cockpit, a1 — FLIGHT LAB\'s score for the same inputs', async () => {
     // (in a new browser: day 12 as the talk left it — a1 flown, a2 briefed and checked, no go / no-go yet)
     await restart();
-    await ev((p) => window.__cadet.career.set({ state: { chapter: 'ch2', day: 12, slot: 'morning', done: { prologue: 1 }, exams: { written1: { tries: 1, best: 90, pass: true } } }, progress: p, flags: { met_instructor: true, has_tablet: true, briefed_today: true, brief_checked: true }, place: false }), passed(['a1']));
+    await ev((p) => window.__cadet.career.set({ state: { seed: 2, chapter: 'ch2', day: 12, slot: 'morning', done: { prologue: 1 }, exams: { written1: { tries: 1, best: 90, pass: true } } }, progress: p, flags: { met_instructor: true, has_tablet: true, briefed_today: true, brief_checked: true }, place: false }), passed(['a1']));
     const tg = await ev(() => window.__cadet.spec.target);
     await ev((tg) => { const C = window.__cadet; C.setMode('walk'); C.placeWalker(tg.a + 2.6, tg.c + 1.0, { a: tg.a + 1.0, c: tg.c }); }, tg);
     assert.equal(await ev((tg) => window.__cadet.lookAt(tg.a + 1.0, tg.c, 1.25), tg), 'aircraft:board');

@@ -53,7 +53,7 @@ await shot('01-welcome.jpg'); await closeTalk();
 // 02 the dispatch counter: the go / no-go on a morning of fog
 await K({ state: { chapter: 'ch2', day: 16, slot: 'morning', done: { prologue: 1 }, exams: { written1: { tries: 1, best: 90, pass: true } } }, progress: { lessons: { ...ground, a1: { tries: 1, best: 'S', pass: true, levels: ['basic'] } } }, flags: { met_instructor: true, has_tablet: true, met_dispatcher: true }, place: false });
 await place(670.0, 258.6, { a: 670.0, c: 254.7 }); await sim(0.5);
-await talkTo('dispatcher', 'どうしますか'); await shot('02-dispatch.jpg'); await closeTalk();
+await talkTo('dispatcher', '今日の天気です'); await sim(0.3); await shot('02-dispatch.jpg'); await closeTalk();
 // 03 a class: the lecturer and a figure on briefing room 2's screen
 await K({ state: { chapter: 'ch1', day: 2, slot: 'am', done: { prologue: 1 } }, progress: { lessons: {} }, place: false });
 await place(628.6, 257.6, { a: 621.8, c: 255.5 }); await sim(0.5);
@@ -63,7 +63,7 @@ await K({ state: { chapter: 'ch1', day: 2, slot: 'pm', done: { prologue: 1, 'cla
 await place(624.6, 271.6, { a: 629.9, c: 270.2 }); await sim(0.5);
 await talkTo('lecturer', '左のテープが速度'); await sim(0.5); await shot('04-ftd.jpg'); await closeTalk();
 // 05 the lounge in the evening: the three cadets
-await K({ state: { chapter: 'ch1', day: 3, slot: 'evening', done: { prologue: 1 } }, place: false });
+await K({ state: { chapter: 'ch1', day: 3, slot: 'evening', done: { prologue: 1 } }, flags: { met_mori: true, helped_mori: false }, place: false });
 await place(698.6, 258.4, { a: 693.0, c: 253.0 }); await sim(0.5);
 await talkTo('mori', '学科、少し教えて'); await shot('05-lounge.jpg'); await closeTalk();
 // 06 the tablet: today's page

@@ -8,7 +8,7 @@
 
 [`outputs/CADET.html`](outputs/CADET.html) をダブルクリックすると Chrome で開きます。インストールは要らず、オフラインでも動きます。WebGL2 が必要です。
 
-ブラウザで直接開くこともできます：**[CADET を開く（raw.githack）](https://raw.githack.com/kazuki8198-glitch/otinti/11aa3b5da88cbe2bfd44ac3de0cb98f68506c033/cadet/outputs/CADET.html)**
+ブラウザで直接開くこともできます：**[CADET を開く（raw.githack）](https://raw.githack.com/kazuki8198-glitch/otinti/d1cc4fe4cd5173a78cc4a6a74557c9e51c769af2/cadet/outputs/CADET.html)**
 - 最初に raw.githack の確認画面（One more step）が出ます。赤い「Open the page」を押すと、ゲームが始まります。
 - キーボードとマウスのある PC（Chrome など）で開いてください。スマートフォンやタブレットでは操作できません。
 - 起動には数十秒かかることがあります（4.7 MB）。

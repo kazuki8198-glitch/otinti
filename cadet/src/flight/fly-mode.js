@@ -44,7 +44,7 @@ const HOME_PITCH = -4 * DEG;            // the head at rest: a little down, the 
 export function createFlyMode(ctx) {
   const { FL, L, scene, camera, sky, input, settings, audio, toast, hud, world } = ctx;
   // who is in the right seat (chosen when boarding): the instructor's actor, or the chief instructor's, or no one
-  let crew = ctx.instructor, crewName = ctx.instructorName || '早瀬 教官', crewId = 'instructor';
+  let crew = ctx.instructor, crewName = ctx.instructorName || '早瀬 教官', crewColor = null, crewId = 'instructor';
   const P = FL.physics, AV = FL.avionics;
   const A = P.AIRCRAFT.find(a => a.id === 'pa28');
   const flight = createFlight(FL, {
@@ -116,7 +116,12 @@ export function createFlyMode(ctx) {
   // ---- the instructor's talk in the seat (the dialogue UI, with its own runner)
   // (the talk is the day's own: made again each time the cadet sits down)
   let runner = null;
-  const makeRunner = (data) => { runner = createRunner({ data, state: ctx.talkState, hooks: { onHook } }); runner.onChange(onTalkView); return runner; };
+  // (the one in the right seat speaks: the chief instructor on the check ride has his own name on the lines)
+  const seatName = (data) => {
+    const sp = data.speakers && data.speakers.instructor; if (!sp || !crewName) return data;
+    return { ...data, speakers: { ...data.speakers, instructor: { ...sp, name_ja: crewName, ...(crewColor ? { color: crewColor } : {}) } } };
+  };
+  const makeRunner = (data) => { runner = createRunner({ data: seatName(data), state: ctx.talkState, hooks: { onHook } }); runner.onChange(onTalkView); return runner; };
   const onTalkView = (v) => {
     if (v) { ctx.dui.show(v); if (crew && v.speaker !== 'player' && !crew.gesturing && Math.random() < 0.25) crew.gesture('explain'); }
     else endTalk();
@@ -182,7 +187,7 @@ export function createFlyMode(ctx) {
       systems.setCold(flight.s); rpmVisual = 0;                     // the aircraft as left on the stand: everything off
       // the right seat: the instructor (or the chief instructor), or no one on the first solo
       const cw = ctx.crew ? ctx.crew() : { actor: ctx.instructor, name: ctx.instructorName };
-      crew = cw ? cw.actor : null; crewName = cw ? cw.name : ''; crewId = cw ? cw.id || 'instructor' : null;
+      crew = cw ? cw.actor : null; crewName = cw ? cw.name : ''; crewColor = cw ? cw.color || null : null; crewId = cw ? cw.id || 'instructor' : null;
       if (crew) {
         live.root.add(crew.root);
         crew.root.position.set(seat.position[0], seat.position[1], seat.position[2]); crew.root.rotation.set(0, seat.yaw, 0);
@@ -289,9 +294,7 @@ export function createFlyMode(ctx) {
     phase = 'day'; debSum = sum;
     // the first solo: no one in the seat to debrief it — the day is signed off outside (ctx.onSolo)
     if (!crew) { if (dayMode.day) dayMode.day.debriefRead(); if (ctx.onSolo) ctx.onSolo(sum); return; }
-    const data = debriefDialogs(sum);
-    if (data.speakers && data.speakers.instructor) data.speakers = { ...data.speakers, instructor: { ...data.speakers.instructor, name_ja: crewName } };
-    startTalk('debrief', data);
+    startTalk('debrief', seatName(debriefDialogs(sum)));
   }
   let debSum = null;
   function signLogbook() {

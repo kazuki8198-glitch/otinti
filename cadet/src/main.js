@@ -592,7 +592,7 @@ async function boot() {
     crew: () => {
       const it = flightItem(), open = it && !flownToday();
       if (open && it.kind === 'solo' && talkState.flags.briefed_today) return null;
-      if (open && it.kind === 'checkride' && talkState.flags.c1_briefed) return { actor: cast.actor('chief'), name: PEOPLE.chief.title, id: 'chief' };
+      if (open && it.kind === 'checkride' && talkState.flags.c1_briefed) return { actor: cast.actor('chief'), name: PEOPLE.chief.title, color: PEOPLE.chief.color, id: 'chief' };
       return { actor: instructor, name: INSTRUCTOR.title_ja, id: 'instructor' };
     },
     boardDialogs: () => boardTalk(),

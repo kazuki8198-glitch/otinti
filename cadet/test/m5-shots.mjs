@@ -13,9 +13,10 @@ const g = await openGame(loadChromium(), { q, w: 1280, h: 720, t: 0 });
 const ev = (fn, a) => g.page.evaluate(fn, a);
 const cdp = await g.page.context().newCDPSession(g.page);
 // the frame drawn by the game (the loop paused), laid under the HUD as a picture, then the page's screenshot
-const shot = (name, frames = 2) => { if (ONLY && !ONLY.some(p => name.startsWith(p))) return Promise.resolve(); let tm; return Promise.race([shotNow(name, frames).finally(() => clearTimeout(tm)), new Promise((r) => { tm = setTimeout(() => { console.log('skipped (too slow)', name); r(); }, 480000); })]); };
+const shot = (name, frames = 2) => { if (ONLY && !ONLY.some(p => name.startsWith(p))) return Promise.resolve(); let tm; return Promise.race([shotNow(name, frames).finally(() => clearTimeout(tm)), new Promise((r) => { tm = setTimeout(() => { console.log('skipped (too slow)', name); r(); }, 1200000); })]); };
 const shotNow = async (name, frames) => {
   console.log('  shooting', name, new Date().toISOString().slice(11, 19));
+  await g.page.waitForFunction(() => !window.__cadet.career.cards(), null, { timeout: 60000 });   // (a card of the day or the weather: gone first)
   await ev((n) => {
     const url = window.__cadet.snapshot(n);
     const im = document.createElement('img'); im.id = 'shotbg'; im.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none';

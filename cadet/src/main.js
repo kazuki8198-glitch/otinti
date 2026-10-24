@@ -1006,7 +1006,7 @@ async function boot() {
     if (mode === 'fly') { if (fly) fly.draw2D(dt); }
     if (mode === 'walk' && live && !talk) { interactor.update(camera); showPlace(dt, pa, pc); }
     // near today's aircraft: the walk-around's progress; the instructor leaves the room for it once the cadet has gone
-    walkEl.hidden = !(mode === 'walk' && Math.hypot(pa - tg.a, pc - tg.c) < 14);
+    walkEl.hidden = !(mode === 'walk' && Math.hypot(pa - tg.a, pc - tg.c) < 14 && !flownToday());   // (no flight left today: no walk-around)
     if (insGoOut && mode === 'walk' && !(fly && fly.active) && academy.roomOf(pa, pc)?.id !== 'brief-1') { insGoOut = false; placeInstructor('apron'); }
     walkProps.update(performance.now() / 1000, windNow().kt);
     // the instructor looks at the player when they are near (or talking), and moves their mouth while their line shows

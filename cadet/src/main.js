@@ -48,6 +48,7 @@ import { planFor } from './career/day.js';
 import { exportArchive, importArchive } from './career/archive.js';
 import { PEOPLE, PEERS } from './content/people.js';
 import { createCast, FAR as CAST_FAR } from './npc/cast.js';
+import { createCrowd } from './npc/crowd.js';
 import { peopleDialogs } from './content/dialog/people.js';
 import { careerInstructorDialogs } from './content/dialog/instructor-career.js';
 import { careerBoardDialogs } from './content/dialog/cockpit.js';
@@ -553,6 +554,10 @@ async function boot() {
   interactor.add({ id: 'npc:instructor', frame: [INS.c, 1.5, -INS.a], radius: 0.45, prompt: `${INSTRUCTOR.title_ja}と話す`, use: () => startTalk('instructor') });
   // the academy's other people
   const cast = createCast({ parent: academy.group, world, interactor, ids: ['chief', 'lecturer', 'dispatcher', 'mechanic', ...PEERS], onTalk: (id) => startTalk(id) });
+  // everyone standing drawn as one mesh (npc/crowd.js)
+  const crowdAt = new THREE.Vector3();
+  const crowd = createCrowd(scene, { outdoors: (root) => { root.getWorldPosition(crowdAt); const [fx, fz] = toFrame(crowdAt.x, crowdAt.z); return !academy.inside(-fz, fx); } });
+  crowd.add(instructor); for (const id of Object.keys(cast.people)) crowd.add(cast.actor(id));
   const CHIEF_APRON = { a: APRON.a + 1.4, c: APRON.c + 0.9, face: { a: tg.a, c: tg.c } };
   function layoutPeople() {
     refreshCtx();
@@ -1036,6 +1041,7 @@ async function boot() {
     const w = mode === 'fly' && fly ? fly.wind() : null;
     airfield.update(t, { cameraWorld: camWorld, windFromDeg: w ? w.fromDeg : windNow().fromDeg, windKt: w ? w.kt : windNow().kt, lightsOn: sky.state.lightsOn });
     veg.update(t, camWorld);
+    crowd.update();
     pipe.render();
     stats.frames++; stats.acc += dtMs;
     if ((perfT += dtMs) > 400) {

@@ -793,6 +793,45 @@ export function createActor(opts = {}) {
       ankle: new THREE.Vector3(s * P.ankle[0], P.ankle[1], P.ankle[2]), toe: new THREE.Quaternion().setFromAxisAngle(AY, s * TOE_OUT), foot: new THREE.Quaternion() };
     leg[L].foot.copy(leg[L].toe);
   }
+  // ---------------------------------------------------------------- in a crowd (npc/crowd.js)
+  // Standing, the actor can be drawn as a part of one skinned mesh shared by everyone in the crowd (a person is some 20
+  // meshes: with their shadows, six people in the lobby would be 200 draw calls). Its copies of the mouth and the hands
+  // are skinned to slots of their own (at the mouth's pivot and the hands): while the mouth talks (its morph target)
+  // or a hand points (another shape), that part is shown as this actor's own mesh and the crowd folds its copy away.
+  // Seated (the trouser legs change shape, and it is near: the cockpit), the actor is all its own meshes again.
+  const slot = { mouth: new THREE.Group(), L: new THREE.Group(), R: new THREE.Group() };
+  slot.mouth.name = 'actor-slot-mouth'; mouthPivot.add(slot.mouth);
+  for (const L of ['L', 'R']) { slot[L].name = 'actor-slot-hand' + L; arm[L].hd.add(slot[L]); }
+  let inCrowd = false;
+  const view = { on: false, mouth: false, L: false, R: false };    // (the crowd reads it: drawn there; which slots folded)
+  function applyDraw() {
+    const own = !inCrowd || seat.on;
+    for (const m of meshes) m.visible = own;
+    view.on = !own;
+    if (own) return;
+    mouth.visible = S[MO] > 0.01; view.mouth = mouth.visible;
+    for (const L of ['L', 'R']) { const a = arm[L]; a.hm.visible = a.hm.geometry === a.pointing; view[L] = a.hm.visible; }
+  }
+  // the parts for the crowd's mesh: each geometry in the root's frame now, the object it is skinned to (its own mesh,
+  // or a slot), and that object's matrix in the root's frame now (the crowd's bind pose: any pose works, the two are
+  // taken together)
+  function crowdParts() {
+    root.updateWorldMatrix(true, true);
+    const toRoot = new THREE.Matrix4().copy(root.matrixWorld).invert(), targets = [], inverses = [], geos = [], idx = new Map();
+    const target = (o) => {
+      if (!idx.has(o)) { idx.set(o, targets.length); targets.push(o); inverses.push(new THREE.Matrix4().multiplyMatrices(toRoot, o.matrixWorld).invert()); }
+      return idx.get(o);
+    };
+    for (const m of meshes) {
+      const hand = m === arm.L.hm ? 'L' : m === arm.R.hm ? 'R' : null, thigh = m === leg.L.tm ? leg.L : m === leg.R.tm ? leg.R : null;
+      const src = hand ? arm[hand].relaxed : thigh ? thigh.stand : m.geometry, to = m === mouth ? slot.mouth : hand ? slot[hand] : m;   // (the mesh itself: its bone, and the torso's breath)
+      const geo = src.clone(); geo.morphAttributes = {}; geo.morphTargetsRelative = false;
+      geo.applyMatrix4(new THREE.Matrix4().multiplyMatrices(toRoot, to.matrixWorld));
+      geos.push({ geo, t: target(to) });
+    }
+    return { targets, inverses, geos, slots: { mouth: idx.get(slot.mouth), L: idx.get(slot.L), R: idx.get(slot.R) } };
+  }
+
   let triangles = 0;
   for (const m of meshes) triangles += m.geometry.index.count / 3;
   for (const L of ['L', 'R']) triangles += Math.max(0, arm[L].pointing.index.count - arm[L].relaxed.index.count) / 3;
@@ -1204,6 +1243,7 @@ export function createActor(opts = {}) {
     const m = clamp(S[MO], 0, 1); mouth.morphTargetInfluences[0] = m;
 
     state.headYaw = Y; state.headPitch = Pt; state.eyeYaw = S[EY]; state.eyePitch = S[EP]; state.blink = close; state.mouth = m; state.gesture = gName;
+    if (inCrowd) applyDraw();
   }
 
   const actor = {
@@ -1213,6 +1253,8 @@ export function createActor(opts = {}) {
     // null, stands up again; true when done
     setSeated,
     get seated() { return seat.on; },
+    // npc/crowd.js: join (drawn by the crowd while standing), the parts, what it reads each frame
+    crowd: { join() { inCrowd = true; applyDraw(); }, parts: crowdParts, view },
     // plays once and goes back to idle; returns its length in seconds (0 for an unknown name)
     gesture(name) { return GESTURE_NAMES.includes(name) ? startGesture(name) : 0; },
     // a point in the world (kept in the room's frame from now on: see pointTarget above)

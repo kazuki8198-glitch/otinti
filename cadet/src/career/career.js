@@ -270,7 +270,7 @@ function laterSchedule(state, prog, W, out) {
 function checkItems(state, C, id, W, out, flown) {
   if (C.kind === 'xc') {
     // the navigation log first (the planning room, in the morning), the flight after it
-    out.push({ slot: 'am', kind: 'navlog', id: 'xc', title: '航法ログを作る（計画室）', where: 'planning', who: 'instructor' });
+    out.push({ slot: 'am', kind: 'navlog', id: 'xc', title: '航法ログを作る（ブリーフィング室 1）', where: 'brief-1', who: 'instructor' });
     out.push({ slot: 'pm', kind: 'xc', id, title: C.title, where: 'apron', who: null });
     return out;
   }

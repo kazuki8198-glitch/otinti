@@ -8,12 +8,14 @@
 
 const SLOT_JA = { morning: '朝', am: '午前', pm: '午後', evening: '夜' };
 const ORDER = ['morning', 'am', 'pm', 'evening'];
-const FLYING = new Set(['flight', 'checkride', 'solo']);
+const FLYING = new Set(['flight', 'checkride', 'solo', 'xc']);
+const WHO_JA = { chief: '真壁 主任教官', examiner: '黒田 審査官' };
 
 // s: { chapter, slot, plan: [{ slot, kind, id, title, where, who, state: 'done' | 'missed' | 'now' | 'later' }],
 //      decided, briefed (today's briefing heard: the chief's on the check ride's day), walk: { done, total }, flown }
 export function nextStep(s) {
   const plan = (s.plan || []).filter(x => x.kind !== 'off');
+  if (s.graduated) return { text: '修了しました。ラウンジで同期と話したり、航空日誌を見返したり（Tab）。正面入口から寮へ帰れます', who: null, room: 'outside', at: 'entrance' };
   if (!plan.length) return { text: '今日は休日。ラウンジで休んでも、自習してもいい。正面入口から寮に帰ると次の日になります', who: null, room: 'outside', at: 'entrance' };
   const cur = plan.find(x => x.state === 'now' || x.state === 'later');
   if (!cur) {
@@ -25,8 +27,9 @@ export function nextStep(s) {
   if (FLYING.has(cur.kind)) {
     if (!s.decided) return { text: `${later}運航管理で今日の天気を見て、飛ぶかを決める（佐伯さんに話しかける）`, who: 'dispatcher', room: 'dispatch', at: 'person' };
     if (!s.briefed) {
-      return cur.kind === 'checkride'
-        ? { text: `${later}審査の前に、真壁 主任教官のブリーフィングを受ける`, who: 'chief', room: null, at: 'person' }
+      if (cur.kind === 'checkride') { const who = cur.who || 'chief'; return { text: `${later}審査の前に、${WHO_JA[who] || WHO_JA.chief}のブリーフィングを受ける（教官室）`, who, room: null, at: 'person' }; }
+      return cur.kind === 'xc'
+        ? { text: `${later}ブリーフィング室 1 で、早瀬 教官から単独の野外飛行のブリーフィングを受ける`, who: 'instructor', room: 'brief-1', at: 'person' }
         : { text: `${later}ブリーフィング室 1 で、早瀬 教官から今日の課目の説明を受ける`, who: 'instructor', room: 'brief-1', at: 'person' };
     }
     if (s.walk && s.walk.done < s.walk.total) return { text: `駐機場の今日の機体で外部点検（${s.walk.done} / ${s.walk.total}）。光る印の所を調べる（E）`, who: null, room: 'outside', at: 'walk' };
@@ -38,7 +41,9 @@ export function nextStep(s) {
     brief: { text: 'ブリーフィング室 1 で、担当の早瀬 教官に会う', who: 'instructor', room: 'brief-1' },
     class: { text: `ブリーフィング室 2 で、ミラー講師の授業を受ける（${cur.title}）`, who: 'lecturer', room: 'brief-2' },
     ftd: { text: `訓練装置室で、ミラー講師と${cur.title}`, who: 'lecturer', room: 'sim' },
-    exam: { text: `計画室で、${cur.title}を受ける`, who: cur.who, room: 'planning' },
+    exam: { text: `${cur.title}を受ける（${cur.who === 'lecturer' ? 'ミラー講師' : '早瀬 教官'}に話しかける）`, who: cur.who, room: cur.who === 'lecturer' ? 'planning' : 'brief-1' },
+    navlog: { text: 'ブリーフィング室 1 で、早瀬 教官と航法ログを作る', who: 'instructor', room: 'brief-1' },
+    graduation: { text: 'ロビーで修了式。真壁 主任教官に話しかける', who: 'chief', room: 'lobby' },
     study: { text: cur.title, who: cur.who, room: cur.where },
   }[cur.kind] || { text: cur.title, who: cur.who, room: cur.where };
   return { ...T, text: later + T.text, at: T.who ? 'person' : 'room' };

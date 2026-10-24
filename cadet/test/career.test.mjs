@@ -132,7 +132,7 @@ test('career: one file for everything — written, read back cleaned; a wrong or
   assert.deepEqual(back.logbook, [ent]); assert.equal(back.progress.lessons.a1.best, 'A'); assert.equal(back.progress.quiz.q_aero, 90);
   // into a logbook: replaced, kept, the solo time in the totals
   const store = memStore(), book = createLogbook(store); book.replace(back.logbook);
-  assert.deepEqual(createLogbook(store).totals(), { total: 0.5, dual: 0, solo: 0.5, landings: 3, days: 1 });
+  assert.deepEqual(createLogbook(store).totals(), { total: 0.5, dual: 0, solo: 0.5, xc: 0, inst: 0, me: 0, landings: 3, days: 1 });
   assert.throws(() => importArchive('{', FL), /JSON/);
   assert.throws(() => importArchive(JSON.stringify({ app: 'FLIGHT LAB', kind: 'learning-record' }), FL), /CADET の記録/);
   assert.throws(() => importArchive(JSON.stringify({ app: 'CADET', kind: 'cadet-save', v: 2 }), FL), /版/);

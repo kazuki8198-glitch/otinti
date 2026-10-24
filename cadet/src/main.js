@@ -43,8 +43,8 @@ import { createDay, DAY1 } from './career/day.js';
 import { createLogbook, entryFrom } from './career/logbook.js';
 import { buildWalkaroundProps } from './aircraft/walkaround-props.js';
 import { apronDialogs } from './content/dialog/day1.js';
-import { POINTS } from './content/walkaround-archer.js';
-import { createCareer, prologueFlags, SLOT_HOURS, SLOT_NAMES, CHAPTERS, CH2, GROUND, EXAMS, CLASSES, SOLO_TRUST, dateText, dateOf, passedAt, groundPassed } from './career/career.js';
+import { KITS } from './aircraft/walkaround.js';
+import { createCareer, prologueFlags, STAGE, CHECKS, LATER, SLOT_HOURS, SLOT_NAMES, CHAPTERS, CH2, GROUND, EXAMS, CLASSES, SOLO_TRUST, dateText, dateOf, passedAt, groundPassed } from './career/career.js';
 import { planFor } from './career/day.js';
 import { exportArchive, importArchive } from './career/archive.js';
 import { PEOPLE, PEERS } from './content/people.js';
@@ -53,7 +53,7 @@ import { createCrowd } from './npc/crowd.js';
 import { peopleDialogs } from './content/dialog/people.js';
 import { careerInstructorDialogs } from './content/dialog/instructor-career.js';
 import { careerBoardDialogs } from './content/dialog/cockpit.js';
-import { classDialogs, ftdDialogs, examDialogs, scoreOf, FTD_TITLES, pfdPictures } from './content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, FTD_TITLES, pfdPictures } from './content/school.js';
 import { drawPfdPicture } from './world/pfd-picture.js';
 import { createTablet } from './ui/tablet.js';
 import { createCards } from './ui/cards.js';
@@ -144,6 +144,15 @@ async function boot() {
     if (i === 19) { todayIds = ids; todayAc = ac; }
   }
   { const ac = parkedAircraft(FL, L, 'pa28', 563, 258, hdgOut, { prop: 1.1, reg: PARKED_ARCHERS[archers++ % PARKED_ARCHERS.length], lod: 'auto' }); scene.add(ac.root); parked.push(ac); aircraftColliders(ac, 'aircraft'); }
+  // (M6) the twin's days: the Seminole N452SY on stand 19 in the Archer's place (kept, hidden, until a day needs it)
+  const todays = { pa28: { ac: todayAc, ids: todayIds } };
+  {
+    const s = STANDS[19], ac = parkedAircraft(FL, L, 'pa44', s.a, s.c - 0.4, hdgOut, { prop: 0.8, reg: 'N452SY' });
+    scene.add(ac.root); ac.root.visible = false;
+    const ids = aircraftColliders(ac, 'aircraft:today'); for (const id of ids) world.setEnabled(id, false);
+    todays.pa44 = { ac, ids };
+  }
+  let todayType = 'pa28';
   // tree trunks and shrubs around the academy's grounds; an invisible fence at the edge of the airfield's grass
   {
     const [cx, , cz] = L.rwyToLocal(640, 260);
@@ -242,13 +251,15 @@ async function boot() {
   const newDay = () => {
     dayN++;
     dayItem = { day: career.day, it: flightItem() };
+    setTodayType((planOf(flightItem()) || {}).aircraft || 'pa28');
     const w = career.weather(prog()), pm = career.slot === 'pm';
     today = createDay(FL, { seed: career.state.seed * 31 + career.day * 7 + dayN, stand: { a: tg.a, c: tg.c }, anomalies: dayN === 1 ? planted : undefined, plan: planOf(flightItem()),
-      weather: { info: PHON[(career.day * 2 + (pm ? 1 : 0)) % 26], zulu: pm ? '1853' : '1353', tempC: w.tempC + (pm ? 3 : 0), dewC: w.dewC } });
+      weather: { info: PHON[(career.day * 2 + (pm ? 1 : 0)) % 26], zulu: pm ? '1853' : '1353', tempC: w.tempC + (pm ? 3 : 0), dewC: w.dewC, ifr: w.kind === 'lowCloud' } });
     walkProps.set(today.walk.props()); renderWalk(); return today;
   };
-  const walkProps = buildWalkaroundProps();
-  todayAc.root.add(walkProps.root);
+  todays.pa28.props = buildWalkaroundProps('pa28'); todays.pa44.props = buildWalkaroundProps('pa44');
+  todays.pa28.ac.root.add(todays.pa28.props.root); todays.pa44.ac.root.add(todays.pa44.props.root);
+  let walkProps = todays.pa28.props;
   todayAc.root.updateMatrixWorld(true);
   // a point on today's parked aircraft (its body frame) → the runway frame [x = across, y up, z = −along]
   const bodyToFrame = (b) => { const w = todayAc.root.localToWorld(new THREE.Vector3(b[0], b[1], b[2])), [fx, fz] = toFrame(w.x, w.z); return [fx, w.y - G, fz]; };
@@ -256,19 +267,21 @@ async function boot() {
     const AR = FL.physics.AIRCRAFT.find(a => a.id === 'pa28'), v = AR.v;
     // (flying begins in chapter 2: before it, the aircraft is not the cadet's to get into)
     interactor.add({ id: 'aircraft:board', owner: 'aircraft:today', frame: [tg.c, 1.25, -(tg.a + 1.0)], radius: 0.5, onOwner: true,
-      prompt: () => (career.chapter === 'ch2' ? '乗り込む' : '機体のドア'),
+      prompt: () => (flyingChapter() ? '乗り込む' : '機体のドア'),
       use: () => {
         if (!fly) return null;
-        if (career.chapter !== 'ch2') { toast('飛行訓練は第 2 章（座学を終えてから）です。いまは乗りません。今日の予定は画面の上とタブレット（Tab）に出ています', 5200); audio.ui('close'); return 'shut'; }
+        if (!flyingChapter()) { toast('飛行訓練は第 2 章（座学を終えてから）です。いまは乗りません。今日の予定は画面の上とタブレット（Tab）に出ています', 5200); audio.ui('close'); return 'shut'; }
         return fly.board();
       } });
     interactor.add({
       id: 'aircraft:today', owner: 'aircraft:today', frame: bodyToFrame([-0.66, 0.15, 1.0]), radius: 0.5, prompt: '今日の機体を見る',
       use: () => {
         // FLIGHT LAB's description, without its notes on real operators (the game's airline and school are fictional)
-        const desc = AR.desc.split('。').filter(x => x && !/ANA|Acron|公開|教材/.test(x)).join('。') + '。';
-        interactor.showCard(`今日の機体：${AR.short}（N738SY・架空の登録記号）`, `${AR.name.replace(/（教材モデル）/, '')}\n${desc}\n\n`
-          + `覚える速度（KIAS）：ローテーション ${v.rotate}・Vx ${v.x}・Vy ${v.y}・進入 ${v.appr}・Va ${v.va}・Vno ${v.no}・Vne ${v.ne}\n\n`
+        const T = FL.physics.AIRCRAFT.find(a => a.id === todayType), tv = T.v, twin = todayType === 'pa44';
+        const desc = T.desc.split('。').filter(x => x && !/ANA|Acron|公開|教材/.test(x)).join('。') + '。';
+        interactor.showCard(`今日の機体：${T.short}（${twin ? 'N452SY' : 'N738SY'}・架空の登録記号）`, `${T.name.replace(/（教材モデル）/, '')}\n${desc}\n\n`
+          + (twin ? `覚える速度（KIAS）：ローテーション ${tv.rotate}・Vmc ${tv.mc}（赤線）・Vyse ${tv.yse}（青線）・Vx ${tv.x}・Vy ${tv.y}・Vle ${tv.le}・Vne ${tv.ne}\n\n`
+            : `覚える速度（KIAS）：ローテーション ${v.rotate}・Vx ${v.x}・Vy ${v.y}・進入 ${v.appr}・Va ${v.va}・Vno ${v.no}・Vne ${v.ne}\n\n`)
           + '飛ぶ前には必ず外部点検（プリフライト）をします。機体の周りを決まった順番で回り、燃料・オイル・舵の動き・タイヤを確かめます。');
         audio.ui('examine'); return 'examined';
       },
@@ -310,14 +323,31 @@ async function boot() {
   // not inside the cabin where the mark would float in the window)
   const DOOR_SPOTS = { docs: [0.74, 0.22, -0.40], cabin: [0.74, 0.22, -0.86] };
   const spotOf = (p) => DOOR_SPOTS[p.id] || p.at;
-  for (const p of POINTS) {
-    const t = interactor.add({ id: 'walk:' + p.id, owner: 'aircraft:today', frame: bodyToFrame(spotOf(p)), radius: 0.32, low: p.at[1] < -0.2,
-      prompt: () => `点検：${p.name}${today && today.walk.isDone(p.id) ? '（済）' : ''}`, use: () => walkCard(p.id) });
-    walkTargets.push(t);
+  let POINTS = KITS.pa28.POINTS;
+  function makeWalkTargets() {
+    for (const t of walkTargets) interactor.remove(t.id);
+    walkTargets.length = 0;
+    for (const p of POINTS) {
+      const t = interactor.add({ id: 'walk:' + p.id, owner: 'aircraft:today', frame: bodyToFrame(spotOf(p)), radius: 0.32, low: p.at[1] < -0.2,
+        prompt: () => `点検：${p.name}${today && today.walk.isDone(p.id) ? '（済）' : ''}`, use: () => walkCard(p.id) });
+      walkTargets.push(t);
+    }
+  }
+  makeWalkTargets();
+  // (M6) today's aircraft for the day's lessons: the Archer, or the Seminole in its place on stand 19
+  function setTodayType(type) {
+    if (!todays[type] || type === todayType) return;
+    const was = todays[todayType], now = todays[type];
+    was.ac.root.visible = false; for (const id of was.ids) world.setEnabled(id, false);
+    now.ac.root.visible = true; for (const id of now.ids) world.setEnabled(id, true);
+    todayType = type; todayAc = now.ac; todayIds = now.ids; walkProps = now.props;
+    todayAc.root.add(walkMarks); todayAc.root.updateMatrixWorld(true);
+    POINTS = KITS[type].POINTS; makeWalkTargets();
+    const tgt = interactor.list().find(t => t.id === 'aircraft:today'); if (tgt) tgt.frame = bodyToFrame([-0.66, 0.15, 1.0]);
   }
   // the walk-around's places marked on the aircraft (one instanced mesh: a small glowing diamond over each place not yet
   // looked at, the next one in the order larger and pulsing); shown while the walk-around is on (walkEl)
-  const walkMarks = new THREE.InstancedMesh(new THREE.OctahedronGeometry(0.075, 0), new THREE.MeshBasicMaterial({ color: 0xffb547, toneMapped: false, transparent: true, opacity: 0.92, depthWrite: false }), POINTS.length);
+  const walkMarks = new THREE.InstancedMesh(new THREE.OctahedronGeometry(0.075, 0), new THREE.MeshBasicMaterial({ color: 0xffb547, toneMapped: false, transparent: true, opacity: 0.92, depthWrite: false }), Math.max(KITS.pa28.POINTS.length, KITS.pa44.POINTS.length));
   walkMarks.name = 'walk-marks'; walkMarks.frustumCulled = false; walkMarks.renderOrder = 5; walkMarks.userData.noAO = true; walkMarks.visible = false;
   todayAc.root.add(walkMarks);
   const _wm = new THREE.Matrix4(), _wq = new THREE.Quaternion(), _wp = new THREE.Vector3(), _ws = new THREE.Vector3();
@@ -331,6 +361,7 @@ async function boot() {
       _wp.set(at[0], at[1] + lift + 0.03 * Math.sin(t * 2 + i), at[2]); _wq.setFromAxisAngle(_ws.set(0, 1, 0), t * 1.5 + i);
       _wm.compose(_wp, _wq, _ws.setScalar(done ? 0 : k)); walkMarks.setMatrixAt(i, _wm);
     });
+    for (let i = POINTS.length; i < walkMarks.count; i++) { _wm.makeScale(0, 0, 0); walkMarks.setMatrixAt(i, _wm); }   // (the other type's extra places)
     walkMarks.instanceMatrix.needsUpdate = true;
   }
   // the walk-around's progress (left, under the place's name) while near today's aircraft
@@ -368,7 +399,16 @@ async function boot() {
   let celebrate = false;                                   // the first solo flown: they are waiting by the aircraft
   // where he is: by the aircraft once the cadet is briefed for today's flight (or for the solo, or after it, to
   // celebrate), else in his room
-  const insWhere = () => (celebrate || (talkState.flags.briefed_today && !flownToday()) ? 'apron' : career.slot === 'evening' ? 'away' : 'room');
+  // (M6: the graduation morning in the lobby with everyone; the solo cross-country's afternoon he stays in his room, on
+  // the radio)
+  const INS_LOBBY = { a: 657.8, c: 268.4, yaw: Math.atan2(266.5 - 268.4, 657.8 - 655.0) };
+  const insWhere = () => {
+    const sch = planToday();
+    if (sch.some(x => x.kind === 'graduation') && career.slot === 'morning') return 'lobby';
+    const it = flightItem();
+    if (it && it.kind === 'xc') return career.slot === 'evening' ? 'away' : 'room';
+    return celebrate || (talkState.flags.briefed_today && !flownToday()) ? 'apron' : career.slot === 'evening' ? 'away' : 'room';
+  };
   function placeInstructor(where = insWhere()) {
     insAt = where;
     // the evening: gone home (nothing to bump into or talk to)
@@ -377,9 +417,11 @@ async function boot() {
       for (const t of interactor.list()) if (t.id === 'npc:instructor') t.enabled = false;
       return;
     }
-    const root = instructor.root, P0 = where === 'apron' ? APRON : { c: INS.c, a: INS.a, yaw: Math.PI };
+    const root = instructor.root, P0 = where === 'apron' ? APRON : where === 'lobby' ? INS_LOBBY : { c: INS.c, a: INS.a, yaw: Math.PI };
     academy.group.add(root); root.position.set(P0.c, 0, -P0.a); root.rotation.set(0, P0.yaw, 0); root.visible = true;
-    world.setEnabled(insCollider, where === 'room'); world.setEnabled(insApron, where === 'apron');
+    // (the apron's collider goes where he stands outside his room: by the aircraft, or in the lobby)
+    if (where !== 'room') { const r = instructor.radius; world.update(insApron, { x0: P0.c - r, x1: P0.c + r, z0: -P0.a - r, z1: -P0.a + r }); }
+    world.setEnabled(insCollider, where === 'room'); world.setEnabled(insApron, where !== 'room');
     for (const t of interactor.list()) if (t.id === 'npc:instructor') { t.enabled = true; t.frame = [P0.c, 1.5, -P0.a]; }
   }
   const frameToWorld = (p, out = new THREE.Vector3()) => academy.group.localToWorld(out.set(p.x, p.y, p.z));
@@ -390,22 +432,33 @@ async function boot() {
   const trustI = () => trustOf(talkState, 'instructor');
   const weatherNow = () => career.weather(prog());
   const planToday = () => career.schedule(prog(), { trust: trustI(), weather: weatherNow() });
-  const FLY_KINDS = ['flight', 'checkride', 'solo'];
+  const FLY_KINDS = ['flight', 'checkride', 'solo', 'xc'];
+  // (M6) the chapters that fly (from chapter 2 on)
+  const flyingChapter = () => career.chapter !== 'prologue' && career.chapter !== 'ch1';
   const flightItem = () => planToday().find(x => FLY_KINDS.includes(x.kind)) || null;
   const grounded = () => career.doneToday('grounded', 'imsafe');
   const flownToday = () => { const it = flightItem(); return !it || career.doneToday(it.kind, it.id); };
-  const planOf = (it) => (!it ? planFor(FL, 'a1') : it.kind === 'solo' ? planFor(FL, 't2', { solo: true }) : planFor(FL, it.kind === 'checkride' ? 'c1' : it.id));
+  const planOf = (it) => (!it ? planFor(FL, 'a1') : it.kind === 'solo' ? planFor(FL, 't2', { solo: true })
+    : CHECKS[it.id] && (it.kind === 'xc' || it.kind === 'checkride') ? planFor(FL, null, { check: CHECKS[it.id] }) : planFor(FL, it.kind === 'checkride' ? 'c1' : it.id));
+  // today's check pilot: the chief instructor (c1, the instrument and multi-engine checks) or the examiner (the final)
+  const checkWho = (it) => (it && CHECKS[it.id] && CHECKS[it.id].who) || 'chief';
   const lessonTitle = (id) => { const l = FL.school.lesson(id); return l ? `「${l.title}」` : id; };
   const cx = { career: {}, today: {}, weather: {}, imsafe: { honest: true }, quiz: { right: 0, n: 0, pct: 0, pass: false } };
   function refreshCtx() {
     const st = career.state, w = weatherNow(), it = flightItem(), sch = planToday();
-    Object.assign(cx.career, { chapter: st.chapter, slot: st.slot, day: st.day, dayMod3: st.day % 3, tired: career.tired(), solo: !!st.solo });
+    Object.assign(cx.career, { chapter: st.chapter, slot: st.slot, day: st.day, dayMod3: st.day % 3, tired: career.tired(), solo: !!st.solo, flying: flyingChapter(), graduated: !!st.graduated });
     const study = it && it.kind === 'flight' ? it.id : sch.find(x => x.kind === 'study') ? (CH2.find(id => !passedAt(prog(), id)) || 't2') : 't2';
     const sec = book.lessonSections(study).map(x => book.section(x.id)).find(x => x && x.figure);
     Object.assign(cx.today, {
-      flight: it ? it.id : '', flightTitle: it ? (it.kind === 'solo' ? 'ファーストソロ' : it.kind === 'checkride' ? 'ソロ前の審査' : `${lessonTitle(it.id)}の飛行`) : '今日の飛行',
+      flight: it ? it.id : '', flightTitle: it ? (it.kind === 'solo' ? 'ファーストソロ' : it.kind === 'xc' ? '単独の野外飛行' : it.kind === 'checkride' ? (CHECKS[it.id] ? CHECKS[it.id].title : 'ソロ前の審査') : `${lessonTitle(it.id)}の飛行`) : '今日の飛行',
       checkride: !!(it && it.kind === 'checkride' && !flownToday()), solo: !!(it && it.kind === 'solo'), exam: sch.some(x => x.kind === 'exam'),
-      needsDecision: st.chapter === 'ch2' && !st.solo, decided: !!career.decidedToday(), decisionRight: career.decidedToday() ? career.decidedToday().right : true,
+      // (M6) the checks, the solo cross-country, the graduation, today's aircraft, a later chapter's first flying day
+      checkId: it && it.kind === 'checkride' ? it.id : '', checkTitle: it && it.kind === 'checkride' ? (CHECKS[it.id] ? CHECKS[it.id].title : 'ソロ前の審査') : '',
+      checkWho: it && it.kind === 'checkride' ? (checkWho(it) === 'examiner' ? '審査官の黒田さん' : '真壁さん') : '',
+      xc: !!(it && it.kind === 'xc'), graduation: sch.some(x => x.kind === 'graduation') && !career.doneToday('graduation', 'grad'),
+      reg: todayType === 'pa44' ? 'N452SY' : 'N738SY', type: todayType === 'pa44' ? 'Seminole' : 'Archer',
+      intro: STAGE[st.chapter] && it && it.kind === 'flight' && it.id === STAGE[st.chapter].lessons[0] && !(prog().lessons[it.id] && prog().lessons[it.id].tries) ? st.chapter : '',
+      needsDecision: flyingChapter() && !st.graduated && !!it && !(st.chapter === 'ch2' && st.solo), decided: !!career.decidedToday(), decisionRight: career.decidedToday() ? career.decidedToday().right : true,
       lessonTitle: it ? lessonTitle(planOf(it).main) : '', studyTitle: lessonTitle(study), studySection: sec ? sec.id : null,
     });
     Object.assign(cx.weather, { ja: w.ja, metarAm: w.metar.am, metarPm: w.metar.pm, taf: w.taf, why: w.why });
@@ -483,10 +536,15 @@ async function boot() {
     // decides, not the flag)
     if (st.chapter === 'prologue') return { run: runner, dialog: career.isDone('brief', 'meet') ? 'ground' : slot === 'pm' || slot === 'evening' ? 'meet' : 'early' };
     if (st.chapter === 'ch1') return { run: runner, dialog: 'ground' };
-    if (st.solo) return { run: runner, dialog: 'after' };
-    const ex = sch.find(x => x.kind === 'exam' && x.id === 'presolo');
-    if (ex && !career.doneToday('exam', 'presolo') && (ex.slot === slot || slot === 'morning')) return { run: startLesson('exam', 'presolo', examDialogs(FL, 'presolo', { seed: st.seed + st.day })), dialog: 'exam' };
+    // (M6) the graduation morning and after; the navigation log; the solo cross-country's brief
+    if (st.graduated || sch.some(x => x.kind === 'graduation')) return { run: runner, dialog: 'grad' };
+    if (st.solo && st.chapter === 'ch2') return { run: runner, dialog: 'after' };
+    const ex = sch.find(x => x.kind === 'exam' && x.id !== 'written1');
+    if (ex && !career.doneToday('exam', ex.id) && (ex.slot === slot || slot === 'morning')) return { run: startLesson('exam', ex.id, examDialogs(FL, ex.id, { seed: st.seed + st.day })), dialog: 'exam' };
+    const nl = sch.find(x => x.kind === 'navlog');
+    if (nl && !career.doneToday('navlog', 'xc')) return { run: startLesson('navlog', 'xc', navlogDialogs(FL, { seed: st.seed + st.day })), dialog: 'navlog' };
     const it = flightItem();
+    if (it && it.kind === 'xc' && !flownToday()) return { run: runner, dialog: talkState.flags.briefed_today ? 'brief' : 'xc', ...(talkState.flags.briefed_today ? { node: 'menu:done' } : {}) };
     if (sch.some(x => x.kind === 'study') && !career.doneToday('study', 'weather')) return { run: runner, dialog: 'study' };
     if (it && grounded() && !career.doneToday('study', 'imsafe')) return { run: runner, dialog: 'study' };
     if (it && it.kind === 'solo' && !flownToday()) return { run: runner, dialog: 'solo' };
@@ -532,7 +590,8 @@ async function boot() {
     } else if (name === 'book') {
       const sec = book.section(arg);
       if (sec) dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sec.html });
-    } else if (name === 'board') showFigure(arg === 'study' ? cx.today.studySection : arg, talkWho === 'lecturer' ? 'brief-2' : 'brief-1');
+    } else if (name === 'board' && arg === 'navlog') showNavlog();
+    else if (name === 'board') showFigure(arg === 'study' ? cx.today.studySection : arg, talkWho === 'lecturer' ? 'brief-2' : 'brief-1');
     else if (name === 'pfd') showPfd(arg);
     else if (name === 'say') speakEnglish(arg);
     else if (name === 'quizEnd') { cx.quiz = scoreOf(lessonState, +arg); }
@@ -540,13 +599,55 @@ async function boot() {
     else if (name === 'decide') { const right = career.decision(arg, weatherNow()); refreshCtx(); cx.today.decisionRight = right; afterTalk.push(() => afterDecision()); }
     else if (name === 'tablet') toast('タブレットを受け取りました。Tab キーで開けます', 4200);
     else if (name === 'help') { career.tire(15); }
-    else if (name === 'checkride') { cast.put('chief', CHIEF_APRON); talkState.flags.c1_briefed = true; toast('真壁 主任教官が、機体のところで待っています', 3600); }
+    else if (name === 'checkride') {
+      const who = checkWho(flightItem());
+      cast.put(who, CHIEF_APRON); talkState.flags.c1_briefed = true; toast(`${PEOPLE[who].title}が、機体のところで待っています`, 3600);
+    }
     else if (name === 'imsafe') {
       const tired = career.tired(), honest = (arg === 'tired') === tired;
       cx.imsafe.honest = honest;
       if (arg === 'tired' || tired) { career.done('grounded', 'imsafe'); afterTalk.push(() => { buildInstructorTalk(); toast('今日は飛ばずに、地上で予習します。もう一度、早瀬 教官と話してください', 4200); }); }
     } else if (name === 'logbook') showLogbookNow(logbook.entries.length - 1);
     else if (name === 'solo') { celebrate = false; career.soloDone(); talkState.flags.soloed = true; afterTalk.push(() => { career.advance('evening'); applySlot(); placeInstructor('room'); layoutPeople(); }); }
+  }
+  // (M6) the navigation log on briefing room 1's whiteboard, in marker: the chart's line LAB → LAB-A → LAB-B, the wind's
+  // arrow, and the log's columns (what the cadet is asked to work out is left blank: the instructor writes the given)
+  function showNavlog() {
+    const x = navlogNumbers(FL), n = NAVLOG, d3 = (v) => String(Math.round((v + 360) % 360) || 360).padStart(3, '0');
+    academy.redraw('brief-1', 'whiteboard', (g, w, h) => {
+      g.fillStyle = '#f4f6f5'; g.fillRect(0, 0, w, h);
+      const font = (px, wt = 600) => `${wt} ${Math.round(px)}px "Hiragino Sans", "Yu Gothic UI", "Meiryo", "Noto Sans CJK JP", sans-serif`;
+      g.lineCap = 'round'; g.lineJoin = 'round';
+      g.fillStyle = '#1d3f8a'; g.font = font(h * 0.07, 700); g.textBaseline = 'top'; g.fillText('航法ログ（NAV LOG）　LAB → LAB-B', w * 0.04, h * 0.04);
+      // the chart: the points, north up, the planned line in red
+      const A = FL.avionics, pts = ['LABRW', 'LABEA', 'LABEB', 'LABEF'].map(id => A.wpt(id));
+      const n0 = Math.min(...pts.map(p => p.n)), n1 = Math.max(...pts.map(p => p.n)), e0 = Math.min(...pts.map(p => p.e)), e1 = Math.max(...pts.map(p => p.e));
+      const bx = w * 0.05, by = h * 0.18, bw = w * 0.4, bh = h * 0.74, k = Math.min(bw / (e1 - e0), bh / (n1 - n0)) * 0.86;
+      const at = (p) => [bx + bw / 2 + (p.e - (e0 + e1) / 2) * k, by + bh / 2 - (p.n - (n0 + n1) / 2) * k];
+      g.strokeStyle = '#c9d2d0'; g.lineWidth = 2; g.strokeRect(bx, by, bw, bh);
+      g.strokeStyle = '#c4201b'; g.lineWidth = 6; g.beginPath(); g.moveTo(...at(pts[0])); g.lineTo(...at(pts[2])); g.stroke();
+      g.setLineDash([10, 10]); g.strokeStyle = '#1d3f8a'; g.lineWidth = 3; g.beginPath(); g.moveTo(...at(pts[1])); g.lineTo(...at(pts[3])); g.stroke(); g.setLineDash([]);
+      g.font = font(h * 0.045); g.fillStyle = '#1b1f22';
+      for (const [p, label] of [[pts[0], 'LAB'], [pts[1], 'LAB-A'], [pts[2], 'LAB-B'], [pts[3], 'LAB-F ?']]) { const [px, py] = at(p); g.beginPath(); g.arc(px, py, 7, 0, Math.PI * 2); g.fill(); g.fillText(label, px + 12, py - h * 0.05); }
+      // the wind's arrow (from 330°)
+      const wx = bx + bw * 0.86, wy = by + bh * 0.16, wr = h * 0.08, a = n.windFrom * Math.PI / 180;
+      g.strokeStyle = '#1b1f22'; g.lineWidth = 4; g.beginPath(); g.moveTo(wx + Math.sin(a) * wr, wy - Math.cos(a) * wr); g.lineTo(wx - Math.sin(a) * wr, wy + Math.cos(a) * wr); g.stroke();
+      g.beginPath(); g.arc(wx - Math.sin(a) * wr, wy + Math.cos(a) * wr, 6, 0, Math.PI * 2); g.fill();
+      g.font = font(h * 0.04); g.fillText(`風 ${d3(n.windFrom)}°/${n.windKt} kt`, wx - wr * 1.6, wy + wr * 1.2);
+      g.fillText('N↑', bx + 10, by + 8);
+      // the log
+      const lx = w * 0.5, rows = [['区間', 'LAB → LAB-B'], ['真方位 TC', `${d3(x.tc)}°`], ['偏差', `${n.varW}° W`], ['磁方位 MC', '？'], ['風', `${d3(n.windFrom)}° / ${n.windKt} kt`],
+        ['TAS', `${n.tas} kt`], ['磁針路 MH', '？'], ['距離', `${x.dist.toFixed(1)} NM`], ['対地速度 GS', '？'], ['所要時間 ETE', '？'], ['燃料（予備 30 分）', '？']];
+      g.font = font(h * 0.048); g.strokeStyle = '#1d3f8a'; g.lineWidth = 2;
+      rows.forEach(([k2, v], i) => {
+        const y = h * 0.18 + i * h * 0.068;
+        g.fillStyle = '#1b1f22'; g.fillText(k2, lx, y); g.fillStyle = v === '？' ? '#c4201b' : '#1d3f8a'; g.fillText(v, lx + w * 0.26, y);
+        g.beginPath(); g.moveTo(lx, y + h * 0.06); g.lineTo(w * 0.96, y + h * 0.06); g.stroke();
+      });
+      g.fillStyle = '#5c6670'; g.font = font(h * 0.034, 500); g.fillText('架空の訓練点。NOT FOR NAVIGATION', lx, h * 0.93);
+    });
+    const s = academy.surfaceAt('brief-1', 'whiteboard'), actor = talkActor || instructor;
+    if (s) { actor.pointAt(frameToWorld(s)); actor.gesture('point'); }
   }
   // a textbook figure on a room's screen (the figures are FLIGHT LAB's SVG, drawn for a dark background)
   function showFigure(secId, room = 'brief-1') {
@@ -601,7 +702,7 @@ async function boot() {
   function layoutPeople() {
     refreshCtx();
     cast.layout(career.slot, career.chapter, planToday());
-    if (talkState.flags.c1_briefed && cx.today.checkride) cast.put('chief', CHIEF_APRON);
+    if (talkState.flags.c1_briefed && cx.today.checkride) cast.put(checkWho(flightItem()), CHIEF_APRON);
     // after the first solo: the cadets by the aircraft with the instructor
     if (celebrate) PEERS.forEach((id, i) => cast.put(id, { a: APRON.a + 1.3 + i * 0.9, c: APRON.c + 1.6 - i * 0.5, face: { a: tg.a + 0.8, c: tg.c + 1.5 } }));
   }
@@ -627,23 +728,26 @@ async function boot() {
     // the right seat today: the instructor, the chief instructor on the check ride, no one on the first solo
     crew: () => {
       const it = flightItem(), open = it && !flownToday();
-      if (open && it.kind === 'solo' && talkState.flags.briefed_today) return null;
-      if (open && it.kind === 'checkride' && talkState.flags.c1_briefed) return { actor: cast.actor('chief'), name: PEOPLE.chief.title, color: PEOPLE.chief.color, id: 'chief' };
+      if (open && (it.kind === 'solo' || it.kind === 'xc') && talkState.flags.briefed_today) return null;
+      if (open && it.kind === 'checkride' && talkState.flags.c1_briefed) { const who = checkWho(it); return { actor: cast.actor(who), name: PEOPLE[who].title, color: PEOPLE[who].color, id: who }; }
       return { actor: instructor, name: INSTRUCTOR.title_ja, id: 'instructor' };
     },
     boardDialogs: () => boardTalk(),
     // the debrief signed the logbook: the line written, the page shown; resolves when it is closed
     onLogbook: (sum, remarks) => new Promise((done) => {
-      logbook.add(entryFrom(sum, { remarks, date: dateOf(career.day).iso, dayN: career.day, skippedSec: sum.transit === 'skip' ? 600 : 0 }));
+      // (M6: a check's line is signed by the check pilot)
+      const it = flightItem(), chk = it && it.kind === 'checkride' && CHECKS[it.id] ? CHECKS[it.id] : null;
+      const sig = chk ? { name: PEOPLE[chk.who].name, cert: chk.who === 'examiner' ? '試験官 DPE-0907（架空）' : '主任教官 CFI-0007（架空）' } : null;
+      logbook.add(entryFrom(sum, { remarks, date: dateOf(career.day).iso, dayN: career.day, skippedSec: sum.transit === 'skip' ? 600 : 0, sig }));
       input.exitLock();
       dayHud.showLogbook(logbook.entries, logbook.totals(), { fresh: logbook.entries.length - 1, onClose: () => { done(); if (mode === 'fly' && !menu.isOpen) input.requestLock(); } });
     }),
     // out of the aircraft after a day (done or given up): the next one is a new day (a new walk-around)
     onDayOver: (d) => { pendingNewDay = true; dayOver(d); },
     // the first solo's day is over in the seat: its line in the logbook (signed outside, with the endorsement)
-    onSolo: (sum) => soloLanded(sum),
+    onSolo: (sum) => (flightItem() && flightItem().kind === 'xc' ? xcLanded(sum) : soloLanded(sum)),
     stand: { a: spec.target.a, c: spec.target.c, hdgTrue: (L.R.trueHdg + 270) % 360 }, wind: DAY_WIND,
-    parkedToday: todayAc.root, toFrame,
+    parkedToday: () => todayAc.root, aircraft: () => todayType, toFrame,
     todayColliders: (on) => { for (const id of todayIds) world.setEnabled(id, on); },
     // they were in the aircraft: back where the day puts them (the instructor by the aircraft if the cadet was briefed)
     instructorHome: (root, actor) => { if (!actor || actor === instructor) placeInstructor(); else { for (const id of ['chief']) cast.home(id); layoutPeople(); } },
@@ -677,16 +781,31 @@ async function boot() {
   function applySlot() {
     if (!(parseFloat(params.get('t')) > 0)) { hours = career.hours; }        // (?t=H keeps the sky at H: the tests, the bench)
     const w = career.weather(prog()), slot = career.slot;
-    const fog = w.kind === 'amFog' && (slot === 'morning' || slot === 'am') ? 0.85 : 0;
-    const overcast = w.kind === 'storm' ? 1 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.95 : fog ? 0.9 : w.kind === 'crosswind' ? 0.35 : 0;
-    const grey = w.kind === 'storm' ? 0.7 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.6 : 0;
+    const low = w.kind === 'lowCloud';                       // (M6) low cloud: mist under an overcast at 800 ft
+    const fog = w.kind === 'amFog' && (slot === 'morning' || slot === 'am') ? 0.85 : low ? 0.55 : 0;
+    const overcast = w.kind === 'storm' || low ? 1 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.95 : fog ? 0.9 : w.kind === 'crosswind' ? 0.35 : 0;
+    const grey = w.kind === 'storm' ? 0.7 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.6 : low ? 0.55 : 0;
     sky.setWeather({ overcast });
     const st = sky.setTime(hours);
     pipe.setHaze({ sunDir: st.dir, el: st.el, fog, grey });
+    haze0 = { sunDir: st.dir.clone ? st.dir.clone() : st.dir, el: st.el, fog, grey, kind: w.kind }; cloudK = fog;
     buildings.setNight(st.lightsOn); academy.setNight(st.lightsOn);
     $('#time').value = String(hours);
     layoutPeople();
     if (!(fly && fly.active) && !talk) placeInstructor();
+  }
+  // (M6) a day of low cloud seen from the air: the mist under the base (800 ft), white inside the cloud up to its top
+  // (4,000 ft), clear above it; the instrument chapter's ILS comes down through it
+  let haze0 = null, cloudK = 0, cloudSet = -1;
+  function updateClouds(dt) {
+    if (!haze0 || haze0.kind !== 'lowCloud') return;
+    let target = haze0.fog;
+    if (mode === 'fly' && fly && fly.active) {
+      const ft = fly.altitude() * 3.28084;
+      target = ft < 650 ? 0.55 : ft < 950 ? 0.55 + (ft - 650) / 300 * 0.42 : ft < 3900 ? 0.97 : ft < 4200 ? 0.97 - (ft - 3900) / 300 * 0.8 : 0.17;
+    }
+    cloudK += (target - cloudK) * (1 - Math.exp(-dt / 0.6));
+    if (Math.abs(cloudK - cloudSet) > 0.004) { cloudSet = cloudK; pipe.setHaze({ sunDir: haze0.sunDir, el: haze0.el, fog: cloudK, grey: haze0.grey }); }
   }
   // the work of the day done (a talk's hook 'done'): recorded, the time moved on
   function workDone(arg) {
@@ -703,6 +822,16 @@ async function boot() {
     } else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'exam') {
       career.exam(k.id, cx.quiz.pct);
       afterTalk.push(() => { next(); applySlot(); });
+    } else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'navlog') {
+      // (M6) the navigation log made: the afternoon's solo cross-country (or another try after lunch)
+      if (arg === 'pass') { career.done('navlog', 'xc'); afterTalk.push(() => { next(); applySlot(); toast('午後：単独の野外飛行。早瀬 教官のブリーフィングを受けて、外部点検から', 5200); }); }
+      else afterTalk.push(() => toast('航法ログを見直して、もう一度、早瀬 教官と', 4200));
+    } else if (arg === 'graduation') {
+      career.graduate();
+      afterTalk.push(() => {
+        cards.show({ kicker: '修了', title: '翔洋航空 フライトアカデミー', sub: '基礎訓練課程　修了おめでとう', ms: 4200, onDark: () => { career.advance('evening'); applySlot(); layoutPeople(); placeInstructor(); } })
+          .then(() => toast('修了です。ラウンジで同期と話すことも、航空日誌を見返すこともできます（Tab）', 7000));
+      });
     } else if (arg === 'study') { career.done('study', grounded() ? 'imsafe' : 'weather'); career.tire(4); afterTalk.push(() => { next(); applySlot(); }); }
   }
   // a training device lesson passed: into FLIGHT LAB's record (school.js's shape, as FLIGHT LAB's own ground pages write it)
@@ -724,23 +853,32 @@ async function boot() {
   function boardTalk() {
     refreshCtx();
     const it = flightItem(), plan = planOf(it);
-    if (career.chapter !== 'ch2') return careerBoardDialogs(FL, { reason: 'none' });
+    if (!flyingChapter()) return careerBoardDialogs(FL, { reason: 'none' });
     let reason = null;
     if (!it || flownToday()) reason = it ? 'done' : 'none';
     else if (!career.decidedToday()) reason = 'weather';
     else if (grounded()) reason = 'tired';
     else if (it.kind === 'checkride') reason = talkState.flags.c1_briefed ? null : 'brief';
     else if (!talkState.flags.briefed_today) reason = 'brief';
-    if (it && it.kind === 'checkride' && !reason) return careerBoardDialogs(FL, { lessons: plan.lessons, checkride: true, who: PEOPLE.chief.title, color: PEOPLE.chief.color });
+    if (it && it.kind === 'checkride' && !reason) { const who = checkWho(it); return careerBoardDialogs(FL, { lessons: plan.lessons, checkride: true, who: PEOPLE[who].title, color: PEOPLE[who].color }); }
     return careerBoardDialogs(FL, { lessons: plan.lessons, ready: !reason, reason: reason || 'none' });
   }
   // out of the aircraft after a flying day: what was flown counts (FLIGHT LAB's record already has the lessons)
   function dayOver(d) {
     const it = dayItem && dayItem.day === career.day && dayItem.it ? dayItem.it : flightItem();
-    if (!d || d.phase !== 'done' || !it || career.chapter !== 'ch2') return;
-    career.done(it.kind, it.id); career.tire(15);
+    if (!d || d.phase !== 'done' || !it || !flyingChapter()) return;
+    if (it.kind === 'xc') return;                            // (signed off outside: xcLanded)
+    // (M6) a later check: passed when every lesson of the day was
+    const sum = d.summary ? d.summary() : null, all = !!(sum && sum.lessons.length && sum.lessons.every(l => l.done && l.passed));
+    if (it.kind === 'checkride' && CHECKS[it.id]) career.check(it.id, all); else career.done(it.kind, it.id);
+    career.tire(15);
     talkState.flags.briefed_today = false;
-    if (it.kind === 'checkride') { talkState.flags.c1_briefed = false; toast(passedAt(prog(), 'c1') ? 'ソロ前の審査、合格です。ソロの許可は早瀬 教官から' : '審査は今回は不合格。もう一度、別の日に受けられます', 6000); }
+    if (it.kind === 'checkride') {
+      talkState.flags.c1_briefed = false;
+      const passed = CHECKS[it.id] ? all : passedAt(prog(), 'c1'), title = CHECKS[it.id] ? CHECKS[it.id].title : 'ソロ前の審査';
+      toast(passed ? (it.id === 'c1' ? 'ソロ前の審査、合格です。ソロの許可は早瀬 教官から' : it.id === 'final' ? '最終審査、合格です。明日の朝、ロビーで修了式です' : `${title}、合格です。次の章は明日から`) : '審査は今回は不合格。もう一度、別の日に受けられます', 6000);
+      if (CHECKS[it.id]) for (const who of ['chief', 'examiner']) cast.home(who);
+    }
     if (it.kind === 'solo') return;                          // (the celebration moves the time on)
     if (career.slot === 'morning' || career.slot === 'am') career.advance('pm'); else career.advance('evening');
     afterTalkOrNow(() => { applySlot(); buildInstructorTalk(); });
@@ -752,6 +890,15 @@ async function boot() {
     career.done('solo', 'solo'); career.tire(15);
     celebrate = true; talkState.flags.briefed_today = false;
     placeInstructor('apron'); layoutPeople();
+  }
+  // (M6) the solo cross-country landed: its line in the logbook (solo, cross-country), the check passed or not
+  function xcLanded(sum) {
+    const pass = sum.lessons.length > 0 && sum.lessons.every(l => l.done && l.passed);
+    logbook.add(entryFrom(sum, { remarks: pass ? '単独の野外飛行（LAB → LAB-A、目的地変更あり）。航法ログどおり。' : '単独の野外飛行。基準に届かない区間あり、再訓練。', date: dateOf(career.day).iso, dayN: career.day, xc: true }));
+    career.check('xc', pass); career.tire(15);
+    talkState.flags.briefed_today = false;
+    if (career.slot === 'morning' || career.slot === 'am') career.advance('pm'); else career.advance('evening');
+    afterTalkOrNow(() => { applySlot(); buildInstructorTalk(); toast(pass ? '単独の野外飛行、合格。第 3 章の関門を越えました。明日から計器飛行です' : '今回は基準に届きませんでした。別の日にもう一度', 6400); });
   }
   function showLogbookNow(fresh = -1) {
     input.exitLock();
@@ -807,7 +954,11 @@ async function boot() {
     for (const f of ['briefed_today', 'brief_checked', 'c1_briefed']) delete talkState.flags[f];
     saved.save(talkState);
     career.advanceChapter(prog(), trustI());
-    if (career.chapter !== was) toast(`${CHAPTERS[career.chapter].title}`, 4000);
+    if (career.chapter !== was) {
+      // (M6) a new chapter: its own card first (the title and what it is), then the day's
+      const ch = CHAPTERS[career.chapter];
+      return cards.show({ kicker: '新しい章', title: ch.title, sub: ch.sub || '', ms: 2600 }).then(() => startDay({ card: true, place: true }));
+    }
     return startDay({ card: true, place: true });
   }
   interactor.add({ id: 'home', frame: [ENTRANCE.c + 1.6, 1.3, -ENTRANCE.a], radius: 0.9, prompt: () => (career.slot === 'evening' || planToday().some(x => x.kind === 'off') ? '寮へ帰る（今日を終える）' : '正面入口'), use: goHome });
@@ -818,18 +969,25 @@ async function boot() {
     const id = t.id.replace(/^ex:/, ''); if (!['schedule', 'metar', 'status-board', 'wb-brief-1'].includes(id)) return null;
     const st = career.state, p = prog(), w = career.weather(p), sch = planToday(), it = flightItem();
     const date = dateText(st.day), plan = it ? planOf(it) : null;
-    const flights = sch.filter(x => FLY_KINDS.includes(x.kind)).map(x => `${x.slot === 'pm' ? '14:00' : '09:30'}  N738SY  PA-28-181  ${x.kind === 'solo' ? 'ファーストソロ（訓練生のみ）' : x.kind === 'checkride' ? '審査 c1（主任教官）' : `${x.id}（早瀬 教官）`}`);
-    if (id === 'metar') return { title: `気象（${date}・KLAB は架空の飛行場）`, text: `METAR ${w.metar.am}\n午後の見込み ${w.metar.pm}\n${w.taf}\n\n今日の天気：${w.ja}。ソロ前の訓練生の基準：雷雨なし・視程 5 SM 以上・雲高 3,000 ft 以上・横風 10 kt 以下。` };
+    const reg = todayType === 'pa44' ? 'N452SY  PA-44-180' : 'N738SY  PA-28-181';
+    const flights = sch.filter(x => FLY_KINDS.includes(x.kind)).map(x => `${x.slot === 'pm' ? '14:00' : '09:30'}  ${reg}  ${x.kind === 'solo' ? 'ファーストソロ（訓練生のみ）' : x.kind === 'xc' ? '単独の野外飛行（訓練生のみ）'
+      : x.kind === 'checkride' ? `${CHECKS[x.id] ? CHECKS[x.id].short : '審査 c1'}（${CHECKS[x.id] && CHECKS[x.id].who === 'examiner' ? '審査官' : '主任教官'}）` : `${x.id}（早瀬 教官）`}`);
+    if (id === 'metar') return { title: `気象（${date}・KLAB は架空の飛行場）`, text: `METAR ${w.metar.am}\n午後の見込み ${w.metar.pm}\n${w.taf}\n\n今日の天気：${w.ja}。訓練生の有視界飛行の基準：雷雨なし・視程 5 SM 以上・雲高 3,000 ft 以上・横風 10 kt 以下。${st.chapter === 'ch4' ? '計器飛行の訓練は、雲の中でも教官と一緒なら飛べます。' : ''}` };
     if (id === 'schedule' || id === 'status-board') {
       const rows = [...flights, '10:00  N512SY  PA-28-181  訓練（同期）', '13:30  N806SY  PA-44-180  双発（上級）'];
       return { title: id === 'schedule' ? `本日の割り当て（運航管理・${date}）` : `本日のフライト（LAB 飛行場・${date}）`, text: (sch.some(x => x.kind === 'off') ? '本日は訓練休み\n' : '') + rows.join('\n') + (w.fly.am && w.fly.pm ? '' : `\n※ ${w.ja}：${w.why}`) };
     }
-    if (!plan || st.chapter !== 'ch2') return { title: 'ホワイトボード', text: st.chapter === 'ch1' ? '座学の期間：午前はブリーフィング室 2 で授業、午後は訓練装置室。\nわからないことは、早瀬 教官に。' : '入社おめでとう。\n翔洋航空 フライトアカデミー' };
+    if (st.graduated) return { title: 'ホワイトボード', text: '修了おめでとう。\nここで覚えたことを、次の空へ。\n翔洋航空 フライトアカデミー' };
+    if (!plan || !flyingChapter()) return { title: 'ホワイトボード', text: st.chapter === 'ch1' ? '座学の期間：午前はブリーフィング室 2 で授業、午後は訓練装置室。\nわからないことは、早瀬 教官に。' : STAGE[st.chapter] ? `${CHAPTERS[st.chapter].title}\n${CHAPTERS[st.chapter].sub}` : '入社おめでとう。\n翔洋航空 フライトアカデミー' };
+    if (it && (it.kind === 'xc' || (it.kind === 'checkride' && CHECKS[it.id]))) {
+      const C = CHECKS[it.id];
+      return { title: `本日：${C.title}`, text: `今日の流れ：${it.kind === 'xc' ? '航法ログ（午前）→ ' : ''}外部点検 → エンジン始動 → 交信 → ${plan.lessons.map(x => `${x} ${FL.school.lesson(x).title}`).join(' → ')} → 駐機\n${it.kind === 'xc' ? '単独：教官は乗りません。途中で目的地の変更あり。' : `${C.who === 'examiner' ? '審査官' : '主任教官'}が同乗し、何も言いません。すべての課目で基準内なら合格。`}` };
+    }
     const main = FL.school.lesson(plan.main), titles = plan.lessons.map(x => `${x} ${FL.school.lesson(x).title}`).join(' → ');
     return { title: `本日：${plan.main} ${main.title}`, text: `目的：${main.goal}\n今日の流れ：外部点検 → エンジン始動 → 交信 → タキシー → ランナップ → ${titles} → 駐機・講評\n基準：${main.std}` };
   }
   // the tablet (Tab): what it shows, what it does
-  const BANKS = FL.quiz.BANKS.filter(b => !['q_me', 'q_ifr', 'q_nav', 'q_crm'].includes(b.id));
+  const BANKS = FL.quiz.BANKS;
   const tablet = createTablet({
     model: () => {
       refreshCtx();
@@ -843,7 +1001,7 @@ async function boot() {
         ground: GROUND.map(id => ({ id, title: FTD_TITLES[id], pass: groundPassed(p, id) })),
         classes: { done: CLASSES.filter((_, i) => career.isDone('class', String(i))).length, total: CLASSES.length },
         exams: Object.entries(EXAMS).map(([id, e]) => ({ title: e.title, ...(st.exams[id] || { best: 0, pass: false, tries: 0 }) })),
-        lessons: [...CH2, 'c1'].map(id => ({ id, title: FL.school.lesson(id).title, best: p.lessons[id] ? p.lessons[id].best : '', pass: passedAt(p, id) })),
+        lessons: [...CH2, 'c1', ...LATER.filter(c => CHAPTERS[c].n <= CHAPTERS[st.chapter].n).flatMap(c => STAGE[c].lessons)].map(id => ({ id, title: FL.school.lesson(id).title, best: p.lessons[id] ? p.lessons[id].best : '', pass: passedAt(p, id) })),
         trust: [['instructor', INSTRUCTOR.title_ja], ['chief', PEOPLE.chief.title], ['dispatcher', PEOPLE.dispatcher.title], ['mechanic', PEOPLE.mechanic.title]].map(([k, n]) => ({ name: n, v: Math.round(trustOf(talkState, k)) })),
         book: book.chapters.map(c => ({ id: c.id, n: c.n, title: c.title, sections: c.sections.map(x => ({ id: x.id, title: x.title })) })),
         banks: BANKS.map(b => ({ id: b.id, title: b.title, n: b.qs.length })),
@@ -1038,7 +1196,7 @@ async function boot() {
   // where the step is: a person, the walk-around's next place, the aircraft's door, the front doors, a room
   function guideTarget(g) {
     if (g.at === 'person' && g.who) {
-      const w = g.who === 'instructor' ? (insAt === 'apron' ? APRON : insAt === 'room' ? INS : null) : cast.where(g.who);
+      const w = g.who === 'instructor' ? (insAt === 'apron' ? APRON : insAt === 'room' ? INS : insAt === 'lobby' ? INS_LOBBY : null) : cast.where(g.who);
       if (w) return { a: w.a, c: w.c };
     }
     if (g.at === 'walk' && today) {
@@ -1053,7 +1211,7 @@ async function boot() {
   function computeGuide(pa, pc) {
     const it = flightItem(), checkride = it && it.kind === 'checkride';
     const sm = today ? today.walk.summary() : null;
-    guideStep = nextStep({ chapter: career.chapter, slot: career.slot, plan: planStates(), decided: !!career.decidedToday(),
+    guideStep = nextStep({ chapter: career.chapter, slot: career.slot, plan: planStates(), decided: !!career.decidedToday(), graduated: !!career.state.graduated,
       briefed: !!(checkride ? talkState.flags.c1_briefed : talkState.flags.briefed_today), walk: sm ? { done: sm.done, total: sm.total } : null, flown: flownToday() });
     const t = guideTarget(guideStep);
     if (!t) { guideWay = null; return; }
@@ -1105,6 +1263,7 @@ async function boot() {
     // near today's aircraft: the walk-around's progress; the instructor leaves the room for it once the cadet has gone
     walkEl.hidden = !(mode === 'walk' && Math.hypot(pa - tg.a, pc - tg.c) < 14 && !flownToday());   // (no flight left today: no walk-around)
     updateGuide(dt, pa, pc);
+    updateClouds(dt);
     if (insGoOut && mode === 'walk' && !(fly && fly.active) && academy.roomOf(pa, pc)?.id !== 'brief-1') { insGoOut = false; placeInstructor('apron'); }
     walkProps.update(performance.now() / 1000, windNow().kt);
     updateWalkMarks(performance.now() / 1000);
@@ -1112,7 +1271,7 @@ async function boot() {
     if (!(fly && fly.active)) {                                // (in the aircraft fly-mode moves him)
       const near = insAt === 'room' ? Math.hypot(pa - INS.a, pc - INS.c) < 7 && academy.roomOf(pa, pc)?.id === 'brief-1' : Math.hypot(pa - APRON.a, pc - APRON.c) < 9;
       // (far from the eye he is not drawn, as the cast: npc/cast.js)
-      if (insAt !== 'away') { const P0 = insAt === 'apron' ? APRON : INS; instructor.root.visible = Math.hypot(pa - P0.a, pc - P0.c) < CAST_FAR || talkWho === 'instructor'; }
+      if (insAt !== 'away') { const P0 = insAt === 'apron' ? APRON : insAt === 'lobby' ? INS_LOBBY : INS; instructor.root.visible = Math.hypot(pa - P0.a, pc - P0.c) < CAST_FAR || talkWho === 'instructor'; }
       const v = talk ? talkRunner().view() : null;
       instructor.update(dt, { lookAt: (talk && talkWho === 'instructor') || near ? camWorld : null, talking: !!(v && v.speaker === 'instructor' && dui.typing) });
       cast.update(dt, camWorld, { a: pa, c: pc }, talk ? talkWho : null, !!(v && v.speaker === talkWho && dui.typing));
@@ -1391,7 +1550,8 @@ async function boot() {
       // behind the tail, on the wing walk at the door)
       stand: (id) => {
         const p = POINTS.find(x => x.id === id), [x, , z] = p.at, sd = Math.sign(x) || 1;
-        const b = p.group === 'cabin' ? [1.6, 0, -0.1] : p.group === 'tail' ? [1.4, 0, 4.4] : p.group === 'nose' ? [1.25, 0, -3.3]
+        // (the Seminole's engines and propellers from in front of them, its static port from the left)
+        const b = /_eng|_prop/.test(id) ? [x + sd * 1.1, 0, z - 1.2] : id === 'static' ? [-1.5, 0, z] : p.group === 'cabin' ? [1.6, 0, -0.1] : p.group === 'tail' ? [1.4, 0, 4.4] : p.group === 'nose' ? [1.25, 0, -3.3]
           : Math.abs(x) < 2 ? [x + sd * 0.3, 0, 1.7] : z > 0.3 ? [x, 0, z + 1.4] : [x, 0, z - 1.6];
         const f = bodyToFrame([b[0], -1.4, b[2]]);
         return { a: -f[2], c: f[0] };

@@ -169,7 +169,7 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
     const page = make('section', 'dh-page');
     const head = put(make('header'), make('h2', '', '航空日誌　PILOT LOGBOOK'), make('small', '', '翔洋航空 フライトアカデミー　訓練生'));
     const tbl = make('table'), thead = make('thead'), tr = make('tr');
-    for (const h of ['日付', '機種', '登録記号', '出発 → 到着', '飛行時間', '同乗教育', '単独', '着陸', '課目と評価', '所見', '教官の署名']) put(tr, make('th', '', h));
+    for (const h of ['日付', '機種', '登録記号', '出発 → 到着', '飛行時間', '同乗教育', '単独', '野外', '計器', '双発', '着陸', '課目と評価', '所見', '署名']) put(tr, make('th', '', h));
     put(tbl, put(thead, tr));
     const tb = make('tbody');
     entries.forEach((e, i) => {
@@ -180,11 +180,11 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
       const sig = make('td'), s = make('span', 'dh-sig' + (i === fresh ? ' write' : ''));
       put(s, make('span', '', e.sig.name), make('small', '', e.sig.cert)); put(sig, s);
       put(r, make('td', 'n', e.date), make('td', 'nw', e.aircraft), make('td', 'nw', e.reg), make('td', 'nw', `${e.from} → ${e.to}`), make('td', 'n', fmtH(e.total)),
-        make('td', 'n', fmtH(e.dual)), make('td', 'n', fmtH(e.solo || 0)), make('td', 'n', String(e.landings)), les, rem, sig);
+        make('td', 'n', fmtH(e.dual)), make('td', 'n', fmtH(e.solo || 0)), make('td', 'n', fmtH(e.xc || 0)), make('td', 'n', fmtH(e.inst || 0)), make('td', 'n', fmtH(e.me || 0)), make('td', 'n', String(e.landings)), les, rem, sig);
       put(tb, r);
     });
-    if (!entries.length) put(tb, put(make('tr'), Object.assign(make('td', '', 'まだ記入はありません。'), { colSpan: 11 })));
-    const tf = put(make('tfoot'), put(make('tr'), Object.assign(make('td', '', `合計（${totals.days} 日）`), { colSpan: 4 }), make('td', 'n', fmtH(totals.total)), make('td', 'n', fmtH(totals.dual)), make('td', 'n', fmtH(totals.solo || 0)), make('td', 'n', String(totals.landings)), Object.assign(make('td'), { colSpan: 3 })));
+    if (!entries.length) put(tb, put(make('tr'), Object.assign(make('td', '', 'まだ記入はありません。'), { colSpan: 14 })));
+    const tf = put(make('tfoot'), put(make('tr'), Object.assign(make('td', '', `合計（${totals.days} 日）`), { colSpan: 4 }), make('td', 'n', fmtH(totals.total)), make('td', 'n', fmtH(totals.dual)), make('td', 'n', fmtH(totals.solo || 0)), make('td', 'n', fmtH(totals.xc || 0)), make('td', 'n', fmtH(totals.inst || 0)), make('td', 'n', fmtH(totals.me || 0)), make('td', 'n', String(totals.landings)), Object.assign(make('td'), { colSpan: 3 })));
     put(tbl, tb, tf);
     const btn = Object.assign(make('button', '', '閉じる'), { type: 'button' });
     btn.addEventListener('click', () => hideLogbook());

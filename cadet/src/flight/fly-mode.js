@@ -59,11 +59,21 @@ export function createFlyMode(ctx) {
   }
 
   // ---- the objects (built once, at boot, so their shaders compile with everything else)
-  const live = liveAircraft(FL, A);
+  // (M6) the twin's days fly the Seminole: its own flown model; the cockpit (the Archer's, as M3 made it) moves into
+  // whichever is today's (ctx.aircraft())
+  const lives = { pa28: liveAircraft(FL, A), pa44: liveAircraft(FL, P.AIRCRAFT.find(a => a.id === 'pa44'), { reg: 'N452SY' }) };
+  let live = lives.pa28, liveId = 'pa28';
   const cockpit = buildCockpit(FL, A, { anisotropy: Math.min(8, ctx.renderer.capabilities.getMaxAnisotropy()) });
   live.root.add(cockpit.root);
-  live.root.visible = false;
-  scene.add(live.root);
+  for (const l of Object.values(lives)) { l.root.visible = false; scene.add(l.root); }
+  const todayType = () => (ctx.aircraft ? ctx.aircraft() : 'pa28') || 'pa28';
+  function useAircraft(id) {
+    if (!lives[id] || id === liveId) return;
+    const was = live, vis = was.root.visible;
+    live = lives[id]; liveId = id;
+    for (const c of [...was.root.children]) if (c === cockpit.root || c.name === 'cockpit-guide' || (crew && c === crew.root)) live.root.add(c);
+    was.root.visible = false; live.root.visible = vis;
+  }
   const seat = seatFromBody(cockpit.instructorSeat, cockpit.instructorSeat.yaw ?? Math.PI);
   // the engine and the electrics behind the switches
   const systems = createSystems(cockpit.switches);
@@ -175,14 +185,17 @@ export function createFlyMode(ctx) {
 
   // ---- boarding and getting out
   // the day's wind (the METAR's and the windsock's), relative to the runway as FLIGHT LAB's free flights take it
+  // (today's parked aircraft: the one on the stand changes with the day's type — main.js's own)
+  const parked = () => (typeof ctx.parkedToday === 'function' ? ctx.parkedToday() : ctx.parkedToday);
   const dayWind = () => { const w = ctx.wind || { fromDeg: 330, kt: 8 }; return { rel: w.fromDeg - P.LAB_RWY.trueHdg, kt: w.kt, gust: 0.5 }; };
   function board({ instant = false } = {}) {
     if (active) return 'flying';
     active = true; phase = 'board';
     fade(() => {
       const [n, e] = P.rwyToNE(P.LAB_RWY, ctx.stand.a, ctx.stand.c);
-      flight.startOnGround(n, e, ctx.stand.hdgTrue, 'pa28', { autoRud: settings.get('autoRud'), wind: dayWind() });
-      ctx.parkedToday.visible = false; ctx.todayColliders(false);
+      useAircraft(todayType());
+      flight.startOnGround(n, e, ctx.stand.hdgTrue, liveId, { autoRud: settings.get('autoRud'), wind: dayWind() });
+      parked().visible = false; ctx.todayColliders(false);
       live.root.visible = true; cockpit.setVisible(true); setView('cockpit');
       systems.setCold(flight.s); rpmVisual = 0;                     // the aircraft as left on the stand: everything off
       // the right seat: the instructor (or the chief instructor), or no one on the first solo
@@ -212,7 +225,7 @@ export function createFlyMode(ctx) {
     fade(() => {
       active = false; phase = 'off';
       live.root.visible = false; cockpit.setVisible(false);
-      ctx.parkedToday.visible = true; ctx.todayColliders(true);
+      parked().visible = true; ctx.todayColliders(true);
       if (crew) { if (crew.setSeated) crew.setSeated(null); ctx.instructorHome(crew.root, crew); }
       rpmVisual = null;
       if (dayMode.active) { if (ctx.onDayOver) ctx.onDayOver(dayMode.day); dayMode.end(); }
@@ -256,7 +269,7 @@ export function createFlyMode(ctx) {
   function freeFromHere() {
     if (fh) fh.hideDebrief(); debriefShown = false;
     fade(() => {
-      flight.startFree('area', 'pa28', { autoRud: settings.get('autoRud'), wind: dayWind() });
+      flight.startFree('area', liveId, { autoRud: settings.get('autoRud'), wind: dayWind() });
       systems.setRunning(flight.s);
       phase = 'ground'; rpmVisual = null; psiS = null;
       if (fh) fh.setMode('free');
@@ -594,7 +607,7 @@ export function createFlyMode(ctx) {
   }
   function showFreeEnd() {
     if (!active || !fh || debriefShown || phase === 'leaving') return;
-    fh.showDebrief(flight.status(), { onRetry: () => { fh.hideDebrief(); debriefShown = false; fade(() => { const [n, e] = P.rwyToNE(P.LAB_RWY, ctx.stand.a, ctx.stand.c); flight.startOnGround(n, e, ctx.stand.hdgTrue, 'pa28', { autoRud: settings.get('autoRud'), wind: dayWind() }); phase = 'ground'; systems.setCold(flight.s); startEngine(); psiS = null; placeNow(); }); input.requestLock(); }, onFree: null, onReturn: () => leave() });
+    fh.showDebrief(flight.status(), { onRetry: () => { fh.hideDebrief(); debriefShown = false; fade(() => { const [n, e] = P.rwyToNE(P.LAB_RWY, ctx.stand.a, ctx.stand.c); flight.startOnGround(n, e, ctx.stand.hdgTrue, liveId, { autoRud: settings.get('autoRud'), wind: dayWind() }); phase = 'ground'; systems.setCold(flight.s); startEngine(); psiS = null; placeNow(); }); input.requestLock(); }, onFree: null, onReturn: () => leave() });
     debriefShown = true; input.exitLock();
   }
   // taxiing into a hangar, a building or another aircraft: the colliders the walker uses (the aircraft's nose, wing
@@ -663,7 +676,7 @@ export function createFlyMode(ctx) {
     wind() { const w = flight.s ? flight.s.wind : null; return w ? { fromDeg: ((w.fromDeg % 360) + 360) % 360, kt: w.kt } : null; },
     altitude() { return flight.s ? flight.s.out.agl / 3.28084 : 0; },
     // shown during the boot compile, hidden afterwards
-    prepareCompile(on) { live.root.visible = on; cockpit.setVisible(on); },
+    prepareCompile(on) { live.root.visible = on; lives.pa44.root.visible = on; cockpit.setVisible(on); },
     status() {
       // the instructor's head in the aircraft's frame (x right, y up, −z forward): in the right seat while flying
       let seatAt = null;

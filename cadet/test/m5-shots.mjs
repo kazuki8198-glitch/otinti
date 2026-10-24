@@ -27,6 +27,8 @@ const shotNow = async (name, frames) => {
   await ev(() => { document.getElementById('shotbg')?.remove(); });
   console.log(name);
 };
+// (the first day's date card, gone before the first picture)
+await g.page.waitForFunction(() => !window.__cadet.career.cards(), null, { timeout: 60000 });
 await ev(() => window.__cadet.pause(true));
 const sim = (s, dt = 1 / 30) => ev(({ s, dt }) => window.__cadet.simulate(s, dt), { s, dt });
 const K = (o) => ev((o) => window.__cadet.career.set(o), o);

@@ -306,8 +306,12 @@ async function boot() {
     walkCard(walkOpen);
     return true;
   }
+  // (the cabin's two places are looked at through the open door: marked and aimed at just outside it, by the handle,
+  // not inside the cabin where the mark would float in the window)
+  const DOOR_SPOTS = { docs: [0.74, 0.22, -0.40], cabin: [0.74, 0.22, -0.86] };
+  const spotOf = (p) => DOOR_SPOTS[p.id] || p.at;
   for (const p of POINTS) {
-    const t = interactor.add({ id: 'walk:' + p.id, owner: 'aircraft:today', frame: bodyToFrame(p.at), radius: 0.32, low: p.at[1] < -0.2,
+    const t = interactor.add({ id: 'walk:' + p.id, owner: 'aircraft:today', frame: bodyToFrame(spotOf(p)), radius: 0.32, low: p.at[1] < -0.2,
       prompt: () => `点検：${p.name}${today && today.walk.isDone(p.id) ? '（済）' : ''}`, use: () => walkCard(p.id) });
     walkTargets.push(t);
   }
@@ -323,7 +327,8 @@ async function boot() {
     const next = today.walk.points.findIndex(p => !today.walk.isDone(p.id));
     POINTS.forEach((p, i) => {
       const done = today.walk.isDone(p.id), k = i === next ? 1.6 + 0.35 * Math.sin(t * 5) : 0.85;
-      _wp.set(p.at[0], p.at[1] + 0.28 + 0.03 * Math.sin(t * 2 + i), p.at[2]); _wq.setFromAxisAngle(_ws.set(0, 1, 0), t * 1.5 + i);
+      const at = spotOf(p), lift = DOOR_SPOTS[p.id] ? 0.08 : 0.28;
+      _wp.set(at[0], at[1] + lift + 0.03 * Math.sin(t * 2 + i), at[2]); _wq.setFromAxisAngle(_ws.set(0, 1, 0), t * 1.5 + i);
       _wm.compose(_wp, _wq, _ws.setScalar(done ? 0 : k)); walkMarks.setMatrixAt(i, _wm);
     });
     walkMarks.instanceMatrix.needsUpdate = true;

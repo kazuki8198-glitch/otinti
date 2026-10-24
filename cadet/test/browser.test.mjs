@@ -226,7 +226,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     assert.ok(a.sd > 8, `the device room with its screen: sd ${a.sd.toFixed(1)}`);
     // the written test (all the classes and the device done): in the planning room, 28 questions, passed
     const done = Object.fromEntries([0, 1, 2, 3, 4, 5].map(i => [`class:${i}`, 2]));
-    await ev(({ p, done }) => window.__cadet.career.set({ state: { day: 9, slot: 'morning', done: { prologue: 1, ...done } }, progress: p, place: false }), { p: GROUND_OK, done });
+    await ev(({ p, done }) => window.__cadet.career.set({ state: { day: 9, slot: 'morning', done: { prologue: 1, ...done } }, progress: { lessons: p }, place: false }), { p: GROUND_OK, done });
     assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => `${x.kind} ${x.id}`), ['exam written1']);
     t = await talkThrough('lecturer');
     assert.match(t.lines.join('\n'), /28 \/ 28 問、100%/);

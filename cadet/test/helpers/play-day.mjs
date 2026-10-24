@@ -9,17 +9,18 @@ import { createFlight } from '../../src/flight/flight.js';
 import { createSystems } from '../../src/aircraft/systems.js';
 import { createDay } from '../../src/career/day.js';
 import { routeOut, routeLineUp, routeIn, createTaxiPilot, exitFor } from '../../src/flight/taxi.js';
-import { POINTS } from '../../src/content/walkaround-archer.js';
+import { KITS } from '../../src/aircraft/walkaround.js';
 import { patternHook } from './pattern-hook.mjs';
 
 const NOKEYS = { has: () => false };
 export const STAND = { a: 636.5, c: 207.6 };
 
 // hooks: { lessonId: (FL) => hook } — t2 gets the circuit's shape by default (FLIGHT LAB's bot cannot fly it alone)
-export function playDay(FL, { plan = null, level = 'basic', anomalies = ['oil', 'r_sump'], skipWalk = [], wrongFirst = [], crossHold = false, seed = 3, hooks = { t2: patternHook } } = {}) {
+export function playDay(FL, { plan = null, level = 'basic', anomalies = ['oil', 'r_sump'], skipWalk = [], wrongFirst = [], crossHold = false, seed = 3, hooks = { t2: patternHook, r1: patternHook } } = {}) {
   const P = FL.physics, R = P.LAB_RWY;
   const day = createDay(FL, { seed, level, anomalies, stand: STAND, plan });
   // ---- the walk-around: every place looked at; anomalies reported (and fixed by the cadet where they can be)
+  const ac = (plan && plan.aircraft) || 'pa28', { POINTS } = KITS[ac];
   for (const p of POINTS) {
     if (skipWalk.includes(p.id)) continue;
     const card = day.walk.inspect(p.id);
@@ -31,7 +32,7 @@ export function playDay(FL, { plan = null, level = 'basic', anomalies = ['oil', 
   // ---- in the seat: the aircraft as left on the stand
   const fl = createFlight(FL, { store: null }), sw = {}, sys = createSystems(sw);
   const [n, e] = P.rwyToNE(R, STAND.a, STAND.c);
-  fl.startOnGround(n, e, (R.trueHdg + 270) % 360, 'pa28', { wind: { rel: 10, kt: 5, gust: 0.5 } });
+  fl.startOnGround(n, e, (R.trueHdg + 270) % 360, ac, { wind: { rel: 10, kt: 5, gust: 0.5 } });
   sys.setCold(fl.s);
   day.boarded();
   const phases = [], ref = [], got = [];

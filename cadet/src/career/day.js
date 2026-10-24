@@ -17,8 +17,9 @@
 // day-mode) acts on them: starting a lesson, the radio panel, the instructor's words.
 // Pure logic: no three.js, no DOM.
 import { createWalkaround } from '../aircraft/walkaround.js';
-import { CHECKLISTS } from '../content/checklists-archer.js';
-import { dayRadio } from '../content/dialog/atc.js';
+import { CHECKLISTS as CHECKLISTS_ARCHER } from '../content/checklists-archer.js';
+import { CHECKLISTS as CHECKLISTS_SEMINOLE } from '../content/checklists-seminole.js';
+import { dayRadio, setCall } from '../content/dialog/atc.js';
 import { createAtc } from '../dialog/atc.js';
 import { HOLD, HOLD_STOP, A1 } from '../flight/taxi.js';
 
@@ -61,24 +62,37 @@ const GROUND_IN = ['exit', 'taxiOff', 'groundIn', 'taxiIn', 'shutdown', 'debrief
 // area, stopped on the runway (t2, t3: landed; e1: the take-off rejected), or with the engine failed and the aircraft
 // down (e2, e3, c1: FLIGHT LAB flies the forced landing to the end)
 const START_OF = { runway: 'runway', area: 'area', away: 'area', final: 'pattern', downwind: 'pattern', ils: 'pattern' };
-const END_OF = { t1: 'air', t4: 'air', x3: 'air', t2: 'stopped', t3: 'stopped', e1: 'stopped', x1: 'stopped', x2: 'stopped', e2: 'failed', e3: 'failed', c1: 'failed' };
+const END_OF = { t1: 'air', t4: 'air', x3: 'air', t2: 'stopped', t3: 'stopped', e1: 'stopped', x1: 'stopped', x2: 'stopped', e2: 'failed', e3: 'failed', c1: 'failed',
+  m1: 'air', m4: 'air', m5: 'stopped', r1: 'stopped' };
 // the lessons that give their own take-off clearance (FLIGHT LAB's ATC step); before the others the tower gives it
 const OWN_TAKEOFF = new Set(['t1', 'c1']);
+// the twin's lessons (M6): the Seminole takes off in m1 (or m4, whose engine fails after it) and lands in m5
 const lessonOf = (FL, id) => FL.syllabus.STAGES.flatMap(s => s.lessons).find(l => l.id === id);
 export const startKind = (FL, id) => START_OF[(lessonOf(FL, id) || {}).setup?.at] || 'area';
 export const endKind = (FL, id) => END_OF[id] || (startKind(FL, id) === 'area' ? 'area' : 'air');
 
 // the day's lessons for a lesson to practise: the take-off (t1) and the landing (t3) around it where it needs them;
 // the first solo: the take-off, then three circuits to a full stop (t2)
-export function planFor(FL, id, { solo = false } = {}) {
-  if (solo) return { main: 't2', solo: true, lessons: ['t1', 't2', 't2', 't2'] };
+// (M6) a check's own lessons in its order (career.js CHECKS); the solo cross-country flies n2 alone (xc)
+export function planFor(FL, id, { solo = false, check = null } = {}) {
+  if (check) return { main: check.lessons.find(x => !/^t[13]$/.test(x)) || check.lessons[0], solo: check.kind === 'xc', xc: check.kind === 'xc', check: check.kind === 'checkride', lessons: check.lessons.slice(), aircraft: aircraftOf(FL, check.lessons) };
+  if (solo) return { main: 't2', solo: true, lessons: ['t1', 't2', 't2', 't2'], aircraft: 'pa28' };
   const k = startKind(FL, id), e = endKind(FL, id);
   let lessons;
+  if (aircraftOf(FL, [id]) === 'pa44') {
+    // the twin: up with m1 (m4 is its own take-off), down with m5
+    if (id === 'm5') lessons = ['m1', 'm5'];
+    else if (k === 'runway') lessons = [id, 'm5'];
+    else lessons = ['m1', id, 'm5'];
+    return { main: id, solo: false, lessons, aircraft: 'pa44' };
+  }
   if (k === 'runway') lessons = e === 'stopped' ? [id] : [id, 't3'];
   else if (id === 't3') lessons = ['t1', 't3'];
   else lessons = ['t1', id, ...(e === 'stopped' ? [] : ['t3'])];
-  return { main: id, solo: false, lessons };
+  return { main: id, solo: false, lessons, aircraft: 'pa28' };
 }
+// the aircraft a day's lessons are flown in (FLIGHT LAB's lesson says)
+export const aircraftOf = (FL, lessons) => (lessons.some(id => (lessonOf(FL, id) || {}).aircraft === 'pa44') ? 'pa44' : 'pa28');
 // the steps of a day with these lessons
 export function stepsFor(FL, lessons) {
   const out = GROUND_OUT.slice();
@@ -110,13 +124,15 @@ const w180 = (a) => ((a % 360) + 540) % 360 - 180;
 export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { a: 636.5, c: 207.6 }, plan = null, weather = {} } = {}) {
   const P = FL.physics, SC = FL.school, R = P.LAB_RWY;
   const PLAN = plan || { main: 'a2', solo: false, lessons: DAY1.lessons };
+  setCall(PLAN.aircraft || 'pa28');                          // (today's aircraft is the radio's call sign)
   const steps = stepsFor(FL, PLAN.lessons);
   const intent = PLAN.lessons.some(id => startKind(FL, id) === 'area') ? 'area' : 'pattern';
   // the weather the lessons fly in (FLIGHT LAB's: their wind and altimeter), for the ATIS
   const L1 = SC.startLesson(PLAN.lessons[0], 'intro'), wm = /^(\d+) at (\d+)$/.exec(L1.windStr || '');
-  const radio = dayRadio({ ...weather, windMag: wm ? +wm[1] : 10, windKt: wm ? +wm[2] : 5, qnh: L1.s.qnh, intent, solo: PLAN.solo });
+  const radio = dayRadio({ ...weather, windMag: wm ? +wm[1] : 10, windKt: wm ? +wm[2] : 5, qnh: L1.s.qnh, intent, solo: PLAN.solo && !PLAN.xc, xc: !!PLAN.xc });
   const atc = createAtc(radio, { seed });
-  const walk = createWalkaround({ seed, anomalies });
+  const AIRCRAFT = PLAN.aircraft || 'pa28', CHECKLISTS = AIRCRAFT === 'pa44' ? CHECKLISTS_SEMINOLE : CHECKLISTS_ARCHER;
+  const walk = createWalkaround({ seed, anomalies, aircraft: AIRCRAFT });
   const st = {
     phase: 'walk', step: 0, list: null, i: 0, flown: [], ticked: [], skipped: [], memo: { both: 0, dropL: 0, dropR: 0, carb: 0, idle: false, hold: { L: 0, R: 0, C: 0 } },
     lessons: {}, incursion: false, overHold: false, exit: '', stopAt: null, transit: 'skip', t: 0, airT: 0, blockT: 0, started: false, shutdown: false,
@@ -262,7 +278,7 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     if (st.auto.list > 6) trust -= 1;
     if (st.crash) trust -= 6;
     const landings = lessons.filter(l => l.done && !l.crashed && l.end === 'stopped').length;
-    return { walk: w, radio: r, lessons, plan: { main: PLAN.main, solo: !!PLAN.solo, lessons: PLAN.lessons.slice() }, solo: !!PLAN.solo, landings,
+    return { walk: w, radio: r, lessons, plan: { main: PLAN.main, solo: !!PLAN.solo, xc: !!PLAN.xc, check: !!PLAN.check, aircraft: PLAN.aircraft || 'pa28', lessons: PLAN.lessons.slice() }, solo: !!PLAN.solo, landings,
       incursion: st.incursion, crash: st.crash || '', transit: st.transit, blockT: st.blockT, airT: st.airT, autoItems: st.auto.list, leftOn: st.leftOn.slice(), trust: Math.max(-10, Math.min(12, trust)), level };
   }
   return {

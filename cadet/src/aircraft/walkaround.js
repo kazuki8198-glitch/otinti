@@ -10,12 +10,16 @@
 // summary() is what the debrief reads; pending() what the instructor finds before the start (tasks left undone,
 // anomalies not found).
 // Pure logic: no three.js, no DOM.
-import { POINTS, ANOMALIES, TASK_MISSED } from '../content/walkaround-archer.js';
+import * as ARCHER from '../content/walkaround-archer.js';
+import * as SEMINOLE from '../content/walkaround-seminole.js';
+// (M6) each aircraft its own places: the Archer's, the Seminole's
+export const KITS = { pa28: ARCHER, pa44: SEMINOLE };
 
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
 // how many anomalies a day has (0, 1 or 2) and where: from the seed. opts.anomalies: [place id…] (tests) instead.
 export function plant(seed, opts = {}) {
+  const { POINTS, ANOMALIES } = KITS[opts.aircraft] || ARCHER;
   if (Array.isArray(opts.anomalies)) return opts.anomalies.filter(id => POINTS.some(p => p.id === id && p.bad));
   const R = rng(seed), roll = R(), n = roll < 0.2 ? 0 : roll < 0.7 ? 1 : 2;
   const can = POINTS.filter(p => p.bad && ANOMALIES.includes(p.bad.id)).map(p => p.id);
@@ -24,8 +28,9 @@ export function plant(seed, opts = {}) {
   return out;
 }
 
-export function createWalkaround({ seed = 1, anomalies } = {}) {
-  const bad = new Set(plant(seed, { anomalies }));
+export function createWalkaround({ seed = 1, anomalies, aircraft = 'pa28' } = {}) {
+  const { POINTS, TASK_MISSED } = KITS[aircraft] || ARCHER;
+  const bad = new Set(plant(seed, { anomalies, aircraft }));
   // per place: looked (opened), verdict ('ok' | 'report' | null), the state of its anomaly ('open' | 'found' | 'fixed'),
   // its task done
   const st = new Map(POINTS.map(p => [p.id, { looked: false, verdict: null, bad: bad.has(p.id) ? 'open' : null, task: !p.task, falseReport: false, selfFixed: false }]));
@@ -104,9 +109,11 @@ export function createWalkaround({ seed = 1, anomalies } = {}) {
   }
   // what the 3D props show (the tasks' things, the anomalies one can see)
   function props() {
-    const g = (id) => st.get(id);
-    return { lock: !g('docs').task, tieR: !g('r_tip').task, tieL: !g('l_tip').task, tieT: !g('tail').task, chocks: !g('nose').task, pitot: !g('pitot').task,
-      capOpen: g('r_cap').bad === 'open' || g('r_cap').bad === 'found', tireLow: g('r_main').bad === 'open' || g('r_main').bad === 'found' };
+    // (by the task's id: each aircraft has its places where it has them)
+    const task = (tid) => { const p = POINTS.find(x => x.task && x.task.id === tid); return p ? !st.get(p.id).task : false; };
+    const open = (id) => { const g = st.get(id); return !!g && (g.bad === 'open' || g.bad === 'found'); };
+    return { lock: task('lock'), tieR: task('tieR'), tieL: task('tieL'), tieT: task('tieT'), chocks: task('chocks'), pitot: task('pitot'),
+      capOpen: open('r_cap'), tireLow: open('r_main') };
   }
   return { points: POINTS, inspect, act, pending, settle, summary, props, isDone, planted: [...bad], get log() { return log.slice(); } };
 }

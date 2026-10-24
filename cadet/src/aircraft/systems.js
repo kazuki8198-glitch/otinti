@@ -33,29 +33,36 @@ export function createSystems(sw) {
   const st = { eng: 'off', dead: false, crankT: 0, primes: 0, warm: false, rpm: 0, lineT: LINE_FUEL_S, oil: 0, starterTried: false, reason: '' };
   const events = [];
   const emit = (type, why = '') => events.push({ type, why });
-  function cut(s, on) {
-    const e = s.eng[0]; if (!e) return;
-    if (on) { e.cut = true; s.engStopNoted = true; }          // (this module says why it stopped)
-    else { e.cut = false; s.engStopNoted = false; }
+  // (k: one engine of a twin; without it every engine)
+  function cut(s, on, k = null) {
+    const es = k == null ? s.eng : [s.eng[k]];
+    for (const e of es) { if (!e) continue; e.cut = !!on; }
+    s.engStopNoted = !!on;                                     // (this module says why it stopped)
   }
+  // (M6) the twin: the same switches (one key, one primer, the mixtures together); START turns the starter of the
+  // first engine not yet running — the left, then the right; each catches as the Archer's does
+  const twin = [{ eng: 'off', crankT: 0, catchAt: Infinity, rpm: 0 }, { eng: 'off', crankT: 0, catchAt: Infinity, rpm: 0 }];
+  const twinState = () => (twin.every(t => t.eng === 'run') ? 'run' : twin.some(t => t.eng === 'crank') ? 'crank' : twin.some(t => t.eng === 'run') ? 'half' : twin.some(t => t.eng === 'stopping') ? 'stopping' : 'off');
   // the aircraft as left on the apron: switches off, the engine stopped and still
   function setCold(s) {
     Object.assign(sw, COLD);
     st.eng = 'off'; st.dead = false; st.crankT = 0; st.primes = 0; st.warm = false; st.rpm = 0; st.lineT = LINE_FUEL_S; st.oil = 0; st.reason = '';
     if (s) { cut(s, true); for (const e of s.eng) { e.rpm = 0; } s.rpm = 0; }
+    for (const t of twin) Object.assign(t, { eng: 'off', crankT: 0, catchAt: Infinity, rpm: 0 });
   }
   // the aircraft as a lesson starts it: everything on, the engine running (the physics' own rpm)
   function setRunning(s) {
     Object.assign(sw, RUNNING);
     st.eng = 'run'; st.dead = false; st.crankT = 0; st.warm = true; st.lineT = LINE_FUEL_S; st.reason = '';
-    if (s) { if (s.eng[0] && s.eng[0].cut) cut(s, false); st.rpm = s.eng[0] ? s.eng[0].rpm || 0 : 0; }
+    if (s) { if (s.eng.some(e => e.cut)) cut(s, false); st.rpm = s.eng[0] ? s.eng[0].rpm || 0 : 0; }
+    for (const t of twin) Object.assign(t, { eng: 'run', crankT: 0, catchAt: Infinity });
     st.oil = 70;
   }
   // a new physics state for the same aircraft (a lesson started where the cadet is: FLIGHT LAB's state, running): the
   // switches stay as the cadet set them; the engine runs on (or, if it was not running, everything is set running)
   function adopt(s) {
     if (st.eng !== 'run' || !s) { setRunning(s); return; }
-    if (s.eng[0] && s.eng[0].cut) cut(s, false);
+    if (s.eng.some(e => e.cut)) cut(s, false);
     st.rpm = s.eng[0] ? s.eng[0].rpm || 0 : 0; st.dead = false;
   }
   // what the primer does (one stroke); a stroke without fuel does nothing
@@ -82,8 +89,7 @@ export function createSystems(sw) {
     events.length = 0;
     if (!s) return events;
     dt = clamp(dt || 0, 0, 0.25);
-    // a twin (FLIGHT LAB's Seminole, flown from this cockpit in its lessons): its engines are the physics' alone
-    if (s.eng.length > 1) { st.eng = 'run'; st.rpm = s.rpm || 0; st.oil = 70; return events; }
+    if (s.eng.length > 1) return twinUpdate(dt, s);
     const e = s.eng[0], master = !!sw.master;
     if (st.eng === 'off' || st.eng === 'stopping') {
       if (sw.mag === 'START') {
@@ -135,8 +141,60 @@ export function createSystems(sw) {
     }
     return events;
   }
+  // the twin, engine by engine (the stops — mixture, magnetos, fuel — stop both: the switches are shared)
+  function twinUpdate(dt, s) {
+    const master = !!sw.master;
+    if (sw.mag === 'START') {
+      const k = twin.findIndex(t => t.eng !== 'run');
+      if (k < 0) sw.mag = 'BOTH';
+      else if (!master) { if (!st.starterTried) { st.starterTried = true; emit('nostarter', 'マスター スイッチが OFF なので、スターターが回りません。'); } }
+      else if (twin[k].eng !== 'crank') { twin[k].eng = 'crank'; twin[k].crankT = 0; twin[k].catchAt = catchTime(s); emit('crank', k ? '右エンジン' : '左エンジン'); }
+    } else st.starterTried = false;
+    twin.forEach((t, k) => {
+      const e = s.eng[k];
+      if (t.eng === 'crank') {
+        t.crankT += dt; t.rpm = CRANK_RPM * (0.8 + 0.2 * Math.sin(t.crankT * 2 * Math.PI * 4));
+        if (sw.mag !== 'START' || !master) t.eng = 'off';
+        else if (t.crankT >= t.catchAt) {
+          t.eng = 'run'; st.warm = true; st.primes = 0; st.lineT = LINE_FUEL_S;
+          cut(s, false, k); if (e) e.rpm = CATCH_RPM; t.rpm = CATCH_RPM;
+          sw.mag = 'BOTH'; emit('catch', k ? '右エンジン' : '左エンジン');
+        } else if (t.crankT >= STARTER_MAX) { sw.mag = 'BOTH'; t.eng = 'off'; emit('nocatch', NOCATCH[st.reason] || NOCATCH.starter); }
+      } else if (t.eng === 'off' || t.eng === 'stopping') {
+        if (e && !e.cut && t.eng === 'off') cut(s, true, k);
+        const wind = s.onGround ? 0 : e ? e.rpm || 0 : 0;
+        t.rpm = Math.max(wind, t.rpm - (t.rpm * 1.6 + 140) * dt);
+        if (t.rpm <= 0.5 && t.eng === 'stopping') t.eng = 'off';
+      } else if (t.eng === 'run') {
+        if (e && (e.failed || e.feather)) { t.rpm = e.rpm || 0; return; }
+        // (the constant-speed propeller's governor keeps the physics' rpm up; at low power on the ground the gauge
+        // reads as the lever is set: about 1,000 rpm a little open, 2,000 for the run-up)
+        const lever = s.thr < 0.045 ? 650 + s.thr / 0.045 * 350 : 1000 + (s.thr - 0.045) / 0.625 * 1000, r = Math.min(e ? e.rpm || 0 : 0, lever), kk = clamp((r - 700) / 1300, 0, 1.25);
+        const drop = (sw.mag === 'L' ? RUNUP.dropL : sw.mag === 'R' ? RUNUP.dropR : 0) * kk + (sw.carbHeat ? RUNUP.carb * kk : 0);
+        t.rpm = Math.max(0, r - drop);
+      }
+    });
+    if (twin.some(t => t.eng === 'run')) {
+      st.lineT = sw.fuelSel === 'OFF' ? st.lineT - dt : LINE_FUEL_S;
+      let why = '';
+      if (sw.mixture < 0.15) why = 'ミクスチャー アイドル カットオフ';
+      else if (sw.mag === 'OFF') why = 'マグネトー OFF';
+      else if (st.lineT <= 0) why = '燃料セレクター OFF';
+      if (why) { twin.forEach((t, k) => { if (t.eng === 'run') { t.eng = 'stopping'; cut(s, true, k); } }); emit('stop', why); }
+    }
+    const was = st.eng; st.eng = twinState();
+    if (was === 'run' && st.eng !== 'run' && !events.some(e => e.type === 'stop') && s.eng.some(e => e.failed)) emit('stop', '故障');
+    // the gauge: the left engine's (the cockpit has one tachometer; the MFD shows both)
+    // (an engine failed or feathered in a lesson — m2, m5 — leaves the gauge to the other)
+    const live = (k) => (twin[k].eng === 'run' || twin[k].eng === 'crank') && !(s.eng[k] && (s.eng[k].failed || s.eng[k].feather));
+    st.rpm = live(0) ? twin[0].rpm : live(1) ? twin[1].rpm : Math.max(twin[0].rpm, twin[1].rpm);
+    const on = twin.filter(t => t.eng === 'run').length;
+    st.oil += ((on ? clamp(55 + st.rpm * 0.012, 0, 85) : 0) - st.oil) * Math.min(1, dt * 1.5);
+    return events;
+  }
   return {
     sw, st, setCold, setRunning, adopt, prime, update, catchTime,
+    get twin() { return twin.map(t => ({ eng: t.eng, rpm: t.rpm })); }, get runningL() { return twin[0].eng === 'run'; },
     get running() { return st.eng === 'run'; }, get cranking() { return st.eng === 'crank'; },
     get rpm() { return st.rpm; }, get oil() { return st.oil; }, get primes() { return st.primes; },
     get powered() { return !!sw.master; }, get avionicsOn() { return !!(sw.master && sw.avionics); },

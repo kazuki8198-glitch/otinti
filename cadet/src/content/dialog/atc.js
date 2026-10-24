@@ -9,15 +9,20 @@
 // reply (heard after the right answer). A wrong answer brings the controller's correction (negative) and the choice
 // again. The day's sequences group them (the ground call, then the read-back of the taxi instruction).
 export const CALL = { full: 'Archer Seven Three Eight Sierra Yankee', short: 'Archer 8SY', spokenShort: 'Archer Eight Sierra Yankee', reg: 'N738SY' };
+// (M6) the twin's days fly the Seminole N452SY (fictional): "Seminole Four Five Two Sierra Yankee", "Seminole 2SY";
+// setCall('pa44' | 'pa28') makes today's aircraft the radio's (CALL is read as the day is made)
+export const CALLS = {
+  pa28: { full: 'Archer Seven Three Eight Sierra Yankee', short: 'Archer 8SY', spokenShort: 'Archer Eight Sierra Yankee', reg: 'N738SY' },
+  pa44: { full: 'Seminole Four Five Two Sierra Yankee', short: 'Seminole 2SY', spokenShort: 'Seminole Two Sierra Yankee', reg: 'N452SY' },
+};
+export function setCall(type = 'pa28') { Object.assign(CALL, CALLS[type] || CALLS.pa28); return CALL; }
 export const FREQ = { atis: '127.65', ground: '121.7', tower: '118.3' };      // (fictional, as FLIGHT LAB's)
-const FL_CALL = [[/Archer Seven Lima Alpha/g, CALL.full], [/Archer 7LA/g, CALL.short]];
 export function ourCall(text) {
   if (typeof text !== 'string') return text;
-  for (const [re, by] of FL_CALL) text = text.replace(re, by);
-  return text;
+  return text.replace(/(Archer|Seminole) Seven Lima Alpha/g, CALL.full).replace(/(Archer|Seminole) 7LA/g, CALL.short);
 }
 // what the speech synthesis says: the short call sign in words
-export const spoken = (s) => String(s).replace(/Archer 8SY/g, CALL.spokenShort);
+export const spoken = (s) => String(s).replace(/Archer 8SY|Seminole 2SY/g, CALL.spokenShort);
 
 const DIG = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'niner'];
 const digits = (s) => String(s).split('').filter(c => /[0-9.]/.test(c)).map(c => (c === '.' ? 'point' : DIG[+c])).join(' ');
@@ -31,20 +36,23 @@ const CX = { A2: 'Alpha Two', A3: 'Alpha Three' };
 // (intent: 'area' — out to the practice area and back; 'pattern' — take-offs and landings in the circuit. solo: the
 // first solo — the tower is told it is a student's first)
 export function dayRadio(weather) {
-  const W = { windMag: 10, windKt: 5, qnh: 29.92, tempC: 15, dewC: 8, zulu: '1253', info: 'Alpha', intent: 'area', solo: false, ...weather };
+  const W = { windMag: 10, windKt: 5, qnh: 29.92, tempC: 15, dewC: 8, zulu: '1253', info: 'Alpha', intent: 'area', solo: false, xc: false, ifr: false, ...weather };
   const pattern = W.intent === 'pattern';
   const goEn = pattern ? 'for closed traffic' : 'VFR to the practice area', goJa = pattern ? '場周経路' : '訓練空域';
   const windSay = W.windKt < 3 ? 'wind calm' : `wind ${digits(String(Math.round(W.windMag) || 360).padStart(3, '0'))} at ${digits(Math.round(W.windKt))}`;
   const windJa = W.windKt < 3 ? '風は静穏' : `風 ${String(W.windMag).padStart(3, '0')}° ${W.windKt} kt`;
   const qnhSay = digits(W.qnh.toFixed(2).replace('.', '')), qnhTxt = W.qnh.toFixed(2);
   const info = W.info, F = CALL.full, S = CALL.short;
-  const ATIS = `LAB information ${info}. ${cap(digits(W.zulu))} Zulu. ${cap(windSay)}. Visibility one zero. Few clouds at three thousand five hundred. `
-    + `Temperature ${digits(W.tempC)}, dew point ${digits(String(W.dewC).padStart(2, '0'))}. Altimeter ${qnhSay}. Landing and departing runway three six. `
+  // (M6: a day of low cloud — the instrument chapter flies in it — has its own sky and the ILS in use)
+  const skyEn = W.ifr ? 'Visibility three, mist. Ceiling eight hundred broken, one thousand five hundred overcast' : 'Visibility one zero. Few clouds at three thousand five hundred';
+  const skyJa = W.ifr ? '視程 3 SM、もや。雲底 800 ft（BKN）、1,500 ft に OVC' : '視程 10 SM。3,500 ft に少しの雲';
+  const ATIS = `LAB information ${info}. ${cap(digits(W.zulu))} Zulu. ${cap(windSay)}. ${skyEn}. `
+    + `Temperature ${digits(W.tempC)}, dew point ${digits(String(W.dewC).padStart(2, '0'))}. Altimeter ${qnhSay}. ${W.ifr ? 'I L S runway three six approach in use. ' : ''}Landing and departing runway three six. `
     + `Advise on initial contact you have information ${info}.`;
   const X = {};
   // ① ATIS: listen, then what to set
   X.atis = { station: 'ATIS', freq: FREQ.atis, kind: 'listen',
-    hear: [{ who: 'ATIS', en: ATIS, ja: `LAB の情報 ${info.charAt(0)}。${W.zulu.slice(0, 2)}:${W.zulu.slice(2)} UTC。${windJa}。視程 10 SM。3,500 ft に少しの雲。気温 ${W.tempC}℃・露点 ${W.dewC}℃。高度計 ${qnhTxt}。離着陸の滑走路 36。最初の交信で ${info.charAt(0)} を聞いたと伝えよ。` }],
+    hear: [{ who: 'ATIS', en: ATIS, ja: `LAB の情報 ${info.charAt(0)}。${W.zulu.slice(0, 2)}:${W.zulu.slice(2)} UTC。${windJa}。${skyJa}。気温 ${W.tempC}℃・露点 ${W.dewC}℃。高度計 ${qnhTxt}。離着陸の滑走路 36。最初の交信で ${info.charAt(0)} を聞いたと伝えよ。` }],
     q: 'ATIS の高度計規正値は？（高度計の BARO に合わせる値）',
     choices: [{ en: qnhTxt, ok: true }, { en: (W.qnh + 0.1).toFixed(2), why: '数字は 1 桁ずつ読まれます。もう一度聞いてみましょう。' }, { en: swapped(qnhTxt, W.qnh), why: `数字の順番に気を付けて。「${qnhSay}」は ${qnhTxt} です。` }],
     note: `高度計を ${qnhTxt} に合わせ、表示が飛行場の標高（55 ft）に近いことを確かめます。`, time: 30 };
@@ -74,7 +82,7 @@ export function dayRadio(weather) {
   X.twr_ready = { station: 'TWR', freq: FREQ.tower, kind: 'call',
     q: 'ランナップが終わりました。管制塔に出発の準備ができたことを伝えます。',
     choices: [
-      { en: `LAB Tower, ${F}, holding short runway three six at Alpha One, ready for departure, ${goEn}${W.solo ? ', first solo' : ''}.`, ok: true },
+      { en: `LAB Tower, ${F}, holding short runway three six at Alpha One, ready for departure, ${goEn}${W.solo ? ', first solo' : W.xc ? ', student pilot solo' : ''}.`, ok: true },
       { en: `LAB Ground, ${S}, ready for departure.`, why: '滑走路の手前まで来たら、周波数を管制塔（118.3）に変えて管制塔を呼びます（AIM 4-3-14）。',
         negative: `${S}, LAB Ground, contact Tower one one eight point three.` },
       { en: `LAB Tower, ${S}, taking off runway three six.`, why: '管制塔のある空港では、許可を受けてから滑走路に入ります。自分で離陸を宣言しません。',

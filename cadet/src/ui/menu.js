@@ -61,6 +61,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         + sw('invertY', '上下反転', 'マウスを前に動かすと下を向く')
         + range('fov', '視野角', 60, 100, 1, x => `${x}°`, '広いほど周りが見えます。酔いやすい人は 70〜80° がおすすめ')
         + sw('headBob', '頭の揺れ', '歩くときの小さな上下の揺れ。酔いやすい人は OFF に')
+        + sw('guide', '次にすることの案内', '画面の上に、次にすることとその方向を出す')
         + range('volume', '音量', 0, 1, 0.05, x => `${Math.round(x * 100)}%`)
         + `<div class="m-row"><span>画質</span><span></span><div class="m-chips" style="grid-column:1/-1">${presets.map(p => `<button data-quality="${p.id}" aria-pressed="${(v.quality || getPreset()) === p.id}">${esc(p.label)}${!v.quality && getPreset() === p.id ? '（自動）' : ''}</button>`).join('')}</div><small>最初は GPU に合わせて自動で選びます。カクつくときは下げてください</small></div>`
         + range('textSpeed', '字幕の速さ', 0.5, 3, 0.25, x => `×${x.toFixed(2)}`, '会話の文字が出る速さ')

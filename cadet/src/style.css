@@ -83,6 +83,20 @@ body.mode-fly #hint { opacity: 0; }
   opacity: 0; transition: opacity .6s; }
 #where small { display: block; font-weight: 400; font-size: 12px; color: var(--ink-dim); }
 #where.show { opacity: 1; }
+/* the guide: what to do next and which way (top middle); the arrow turns with the view, towards the next door on the
+   way or the place itself */
+#guide { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; max-width: min(720px, calc(100vw - 32px));
+  padding: 8px 14px 8px 10px; border-radius: 14px; background: rgba(10, 18, 28, 0.62); border: 1px solid var(--glass-line); transition: opacity .3s; }
+#guide[hidden] { display: none; }
+#guide span { display: grid; gap: 1px; min-width: 0; }
+#guide small { font-size: 11px; letter-spacing: .08em; color: var(--ink-dim); }
+#guide b { font-size: 14px; font-weight: 700; line-height: 1.45; }
+#guide .g-dist { font-style: normal; font-size: 12.5px; color: var(--ink-dim); white-space: nowrap; }
+#guide .g-arrow { flex: none; width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 181, 71, .16); position: relative; }
+#guide .g-arrow::before { content: ''; position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: translate(-50%, -62%);
+  border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 14px solid #ffb547; }
+#guide .g-arrow.here::before { border: none; width: 10px; height: 10px; border-radius: 50%; background: #ffb547; transform: translate(-50%, -50%); }
+body.talking #guide, body.mode-fly #guide, body.mode-spectator #guide { opacity: 0; }
 #card { position: absolute; right: 22px; top: 50%; transform: translateY(-50%); width: min(430px, calc(100vw - 44px)); max-height: 70vh; overflow: auto;
   padding: 18px 20px; border-radius: 16px; background: rgba(250, 248, 242, 0.96); color: #1d2329; box-shadow: 0 20px 60px rgba(0,0,0,.45); pointer-events: auto; }
 #card[hidden] { display: none; }

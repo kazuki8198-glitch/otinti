@@ -58,6 +58,7 @@ import { createTablet } from './ui/tablet.js';
 import { createCards } from './ui/cards.js';
 import { trustOf } from './dialog/engine.js';
 import { spoken } from './content/dialog/atc.js';
+import { nextStep, makeRouter } from './career/guide.js';
 
 /* global __BUILD_INFO__ */
 const $ = (s) => document.querySelector(s);
@@ -249,7 +250,14 @@ async function boot() {
   const bodyToFrame = (b) => { const w = todayAc.root.localToWorld(new THREE.Vector3(b[0], b[1], b[2])), [fx, fz] = toFrame(w.x, w.z); return [fx, w.y - G, fz]; };
   {
     const AR = FL.physics.AIRCRAFT.find(a => a.id === 'pa28'), v = AR.v;
-    interactor.add({ id: 'aircraft:board', owner: 'aircraft:today', frame: [tg.c, 1.25, -(tg.a + 1.0)], radius: 0.5, onOwner: true, prompt: '乗り込む', use: () => (fly ? fly.board() : null) });
+    // (flying begins in chapter 2: before it, the aircraft is not the cadet's to get into)
+    interactor.add({ id: 'aircraft:board', owner: 'aircraft:today', frame: [tg.c, 1.25, -(tg.a + 1.0)], radius: 0.5, onOwner: true,
+      prompt: () => (career.chapter === 'ch2' ? '乗り込む' : '機体のドア'),
+      use: () => {
+        if (!fly) return null;
+        if (career.chapter !== 'ch2') { toast('飛行訓練は第 2 章（座学を終えてから）です。いまは乗りません。今日の予定は画面の上とタブレット（Tab）に出ています', 5200); audio.ui('close'); return 'shut'; }
+        return fly.board();
+      } });
     interactor.add({
       id: 'aircraft:today', owner: 'aircraft:today', frame: bodyToFrame([-0.66, 0.15, 1.0]), radius: 0.5, prompt: '今日の機体を見る',
       use: () => {
@@ -298,6 +306,23 @@ async function boot() {
     const t = interactor.add({ id: 'walk:' + p.id, owner: 'aircraft:today', frame: bodyToFrame(p.at), radius: 0.32, low: p.at[1] < -0.2,
       prompt: () => `点検：${p.name}${today && today.walk.isDone(p.id) ? '（済）' : ''}`, use: () => walkCard(p.id) });
     walkTargets.push(t);
+  }
+  // the walk-around's places marked on the aircraft (one instanced mesh: a small glowing diamond over each place not yet
+  // looked at, the next one in the order larger and pulsing); shown while the walk-around is on (walkEl)
+  const walkMarks = new THREE.InstancedMesh(new THREE.OctahedronGeometry(0.075, 0), new THREE.MeshBasicMaterial({ color: 0xffb547, toneMapped: false, transparent: true, opacity: 0.92, depthWrite: false }), POINTS.length);
+  walkMarks.name = 'walk-marks'; walkMarks.frustumCulled = false; walkMarks.renderOrder = 5; walkMarks.userData.noAO = true; walkMarks.visible = false;
+  todayAc.root.add(walkMarks);
+  const _wm = new THREE.Matrix4(), _wq = new THREE.Quaternion(), _wp = new THREE.Vector3(), _ws = new THREE.Vector3();
+  function updateWalkMarks(t) {
+    walkMarks.visible = !walkEl.hidden && !!today;
+    if (!walkMarks.visible) return;
+    const next = today.walk.points.findIndex(p => !today.walk.isDone(p.id));
+    POINTS.forEach((p, i) => {
+      const done = today.walk.isDone(p.id), k = i === next ? 1.6 + 0.35 * Math.sin(t * 5) : 0.85;
+      _wp.set(p.at[0], p.at[1] + 0.28 + 0.03 * Math.sin(t * 2 + i), p.at[2]); _wq.setFromAxisAngle(_ws.set(0, 1, 0), t * 1.5 + i);
+      _wm.compose(_wp, _wq, _ws.setScalar(done ? 0 : k)); walkMarks.setMatrixAt(i, _wm);
+    });
+    walkMarks.instanceMatrix.needsUpdate = true;
   }
   // the walk-around's progress (left, under the place's name) while near today's aircraft
   const walkEl = document.createElement('div'); walkEl.id = 'walk'; walkEl.hidden = true; document.getElementById('hud').appendChild(walkEl);
@@ -980,6 +1005,56 @@ async function boot() {
     if (placeT > 0 && (placeT -= dt) <= 0) $('#where').classList.remove('show');
   }
 
+  // ---------------------------------------------------------------- the guide: what to do next, and which way
+  // (career/guide.js) — worked out twice a second; the arrow every frame, towards the next door on the way there (the
+  // academy's doors as a graph) or the place itself: the person to talk to, the walk-around's next place, the door
+  const guideEl = $('#guide'), router = makeRouter(spec);
+  let guideT = 0, guideStep = null;
+  const guideAt = { a: 0, c: 0, ok: false }, guideW = new THREE.Vector3();
+  function planStates() {
+    const st = career.state, order = ['morning', 'am', 'pm', 'evening'];
+    return planToday().map(x => ({ ...x, state: career.doneToday(x.kind, x.id) ? 'done' : order.indexOf(x.slot) < order.indexOf(st.slot) ? 'missed' : x.slot === st.slot ? 'now' : 'later' }));
+  }
+  // where the step is: a person, the walk-around's next place, the aircraft's door, the front doors, a room
+  function guideTarget(g) {
+    if (g.at === 'person' && g.who) {
+      const w = g.who === 'instructor' ? (insAt === 'apron' ? APRON : insAt === 'room' ? INS : null) : cast.where(g.who);
+      if (w) return { a: w.a, c: w.c };
+    }
+    if (g.at === 'walk' && today) {
+      const i = today.walk.points.findIndex(p => !today.walk.isDone(p.id));
+      const t = i >= 0 && walkTargets[i]; if (t) return { a: -t.frame[2], c: t.frame[0] };
+    }
+    if (g.at === 'board' || g.at === 'walk') return { a: tg.a + 1.0, c: tg.c };
+    if (g.at === 'entrance') return { a: 655.0, c: 276.6 };                     // (inside the front doors)
+    return g.room ? router.centre(g.room) : null;
+  }
+  function updateGuide(dt, pa, pc) {
+    const on = mode === 'walk' && !talk && !cards.showing && !tablet.isOpen && settings.get('guide') !== false;
+    guideEl.hidden = !on; if (!on) return;
+    if ((guideT -= dt) <= 0) {
+      guideT = 0.5;
+      const it = flightItem(), checkride = it && it.kind === 'checkride';
+      const sm = today ? today.walk.summary() : null;
+      guideStep = nextStep({ chapter: career.chapter, slot: career.slot, plan: planStates(), decided: !!career.decidedToday(),
+        briefed: !!(checkride ? talkState.flags.c1_briefed : talkState.flags.briefed_today), walk: sm ? { done: sm.done, total: sm.total } : null, flown: flownToday() });
+      guideEl.querySelector('.g-text').textContent = guideStep.text;
+    }
+    const t = guideTarget(guideStep);
+    const arrow = guideEl.querySelector('.g-arrow'), dist = guideEl.querySelector('.g-dist');
+    if (!t) { arrow.hidden = true; dist.textContent = ''; return; }
+    // the way: from the room the cadet is in to the target's room, through the doors (outside: 'outside')
+    const roomOf = (a, c) => (academy.inside(a, c) ? academy.roomOf(a, c)?.id || null : 'outside');
+    const step = router.next(roomOf(pa, pc), roomOf(t.a, t.c)), w = step || t;
+    const d = Math.hypot(w.a - pa, w.c - pc);
+    frameToWorld({ x: w.c, y: 0, z: -w.a }, guideW);
+    const yawT = Math.atan2(-(guideW.x - camWorld.x), -(guideW.z - camWorld.z));
+    let rel = yawT - walker.state.yaw; rel = Math.atan2(Math.sin(rel), Math.cos(rel));
+    arrow.hidden = false; arrow.classList.toggle('here', !step && d < 2.5);
+    arrow.style.transform = `rotate(${(-rel).toFixed(3)}rad)`;
+    dist.textContent = step ? `${step.label ? step.label + 'の扉' : '扉'}まで ${Math.round(d)} m` : d < 2.5 ? 'ここ' : `${Math.round(d)} m`;
+  }
+
   // ---------------------------------------------------------------- the loop
   const dyn = makeDynRes(pipe, () => preset);
   const stats = { fps: 0, ms: 0, frames: 0, acc: 0 };
@@ -1007,8 +1082,10 @@ async function boot() {
     if (mode === 'walk' && live && !talk) { interactor.update(camera); showPlace(dt, pa, pc); }
     // near today's aircraft: the walk-around's progress; the instructor leaves the room for it once the cadet has gone
     walkEl.hidden = !(mode === 'walk' && Math.hypot(pa - tg.a, pc - tg.c) < 14 && !flownToday());   // (no flight left today: no walk-around)
+    updateGuide(dt, pa, pc);
     if (insGoOut && mode === 'walk' && !(fly && fly.active) && academy.roomOf(pa, pc)?.id !== 'brief-1') { insGoOut = false; placeInstructor('apron'); }
     walkProps.update(performance.now() / 1000, windNow().kt);
+    updateWalkMarks(performance.now() / 1000);
     // the instructor looks at the player when they are near (or talking), and moves their mouth while their line shows
     if (!(fly && fly.active)) {                                // (in the aircraft fly-mode moves him)
       const near = insAt === 'room' ? Math.hypot(pa - INS.a, pc - INS.c) < 7 && academy.roomOf(pa, pc)?.id === 'brief-1' : Math.hypot(pa - APRON.a, pc - APRON.c) < 9;

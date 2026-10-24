@@ -12,6 +12,15 @@
 | `plaster_c` / `plaster_nr` | PaintedPlaster017 | 建物の壁 |
 | `concrete2_c` / `concrete2_nr` | Concrete031 | 歩道・屋上・建物の縁 |
 
+## 人物の模型（`assets/model/actor.glb`）
+
+自作です（素材は使っていません）。`tools/actor/build_actor.py` を Blender 5.2 でコマンドから動かして作ります（`blender -b --factory-startup -P tools/actor/build_actor.py -- 寸法.json assets/model/actor.glb`。寸法は `node tools/actor/anchors.mjs` が `src/npc/actor.js` から書き出します）。
+
+- 顔・髪（短髪・刈り上げ・後ろで結んだ長い髪・まとめ髪）・耳・眉・目・まぶた・瞳・口と、制服（シャツ・襟・ネクタイ・胸ポケット・肩章と線・翼の記章・名札・ネックストラップと ID カード）。
+- 形はスクリプトの中の関数で細かく作り、Blender の間引き（デシメーション）で三角形の数を減らし、細かい形の法線を写します。陰（アンビエントオクルージョン）と唇やまぶたの色は、頂点の色に焼き込みます。
+- 名札の文字は、ゲームが起動時に 5×7 の点の字で書きます（`src/npc/actor.js`）。
+- 翼の記章は架空の翔洋航空のもので、実在の会社の記章をまねていません。
+
 ## プログラムで作っているもの（ファイルなし）
 
 起動時にプログラムで描いています。
@@ -23,11 +32,13 @@
 - 水面の波
 - 木
 - 機体：FLIGHT LAB の `acmesh.js` が、物理モデルと同じ寸法から作る形をそのまま使っています。
+- 人物の手足・腰・首（`src/npc/actor.js`。座ると形が変わるため、模型ではなくプログラムで作っています）
 
 ## ライブラリ
 
 - three.js 0.186.1（MIT License）：ビルドしたファイルの末尾に、ライセンスの全文を入れています。
 - esbuild 0.28.2（MIT License）：ビルドに使うだけで、出力には含まれません。
+- Blender 5.2（GPL）：人物の模型を作る道具として使うだけで、出力には含まれません（Blender で作ったものは、作った人のものです）。
 
 ## 名前
 

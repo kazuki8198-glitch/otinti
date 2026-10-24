@@ -4,21 +4,21 @@
 // Positions are in the runway frame (a along, c across), facing a point (yaw is worked out from it).
 export const PEOPLE = {
   instructor: { name: '早瀬 航', title: '早瀬 教官', role: '担当教官', color: '#5cc8ff', height: 1.76,
-    look: {}, colors: {} },
+    look: { tag: 'HAYASE' }, colors: {} },
   chief: { name: '真壁 恭一', title: '真壁 主任教官', role: '主任教官（ソロ前の審査・ソロの許可）', color: '#ffb35c', height: 1.8,
-    look: { bars: 4 }, colors: { hair: 0x8f8a84, skin: 0xd0a080 } },
+    look: { tag: 'MAKABE', bars: 4 }, colors: { hair: 0x8f8a84, skin: 0xd0a080 } },
   lecturer: { name: 'ダナ・ミラー', title: 'ミラー 講師', role: '座学の講師（英語と日本語）', color: '#9be08a', height: 1.7,
-    look: { bars: 0, tie: false, badge: false, hair: 'bun', glasses: true }, colors: { shirt: 0xc9dcef, pocket: 0xbdd2e8, hair: 0x7a5a3a, skin: 0xe9c2a8, trousers: 0x3a3f48 } },
+    look: { tag: 'MILLER', bars: 0, tie: false, badge: false, hair: 'bun', glasses: true }, colors: { shirt: 0xc9dcef, pocket: 0xbdd2e8, hair: 0x7a5a3a, skin: 0xe9c2a8, trousers: 0x3a3f48 } },
   dispatcher: { name: '佐伯 由美', title: '佐伯さん（運航管理）', role: '運航管理：予定・機体・天気', color: '#e9a0e0', height: 1.62,
-    look: { bars: 0, tie: false, badge: true, hair: 'bun' }, colors: { shirt: 0x24456e, pocket: 0x213f66, button: 0x1a2c44, hair: 0x241c18, trousers: 0x2a2d33 } },
+    look: { tag: 'SAEKI', bars: 0, tie: false, badge: true, hair: 'bun' }, colors: { shirt: 0x24456e, pocket: 0x213f66, button: 0x1a2c44, hair: 0x241c18, trousers: 0x2a2d33 } },
   mechanic: { name: '大城 剛', title: '大城さん（整備士）', role: '整備士：機体の不具合はここへ', color: '#f2d36b', height: 1.74,
-    look: { bars: 0, tie: false, badge: false, lanyard: false, hair: 'crop' }, colors: { shirt: 0x5d6b78, pocket: 0x55626e, button: 0x3c444c, trousers: 0x5d6b78, skin: 0xc58f6c } },
+    look: { tag: 'OSHIRO', bars: 0, tie: false, badge: false, lanyard: false, hair: 'crop' }, colors: { shirt: 0x5d6b78, pocket: 0x55626e, button: 0x3c444c, trousers: 0x5d6b78, skin: 0xc58f6c } },
   kiryu: { name: '桐生 蓮', title: '桐生', role: '同期の訓練生（何でもよくできる）', color: '#c9b6ff', height: 1.82, peer: true,
-    look: { bars: 1 }, colors: { hair: 0x1c1a1a } },
+    look: { tag: 'KIRYU', bars: 1 }, colors: { hair: 0x1c1a1a } },
   asahi: { name: '朝日 さくら', title: '朝日', role: '同期の訓練生（明るく、まわりをよく見ている）', color: '#ffc4a8', height: 1.63, peer: true,
-    look: { bars: 1, hair: 'long' }, colors: { hair: 0x3b2a20, skin: 0xe6bba0, lip: 0xc07870 } },
+    look: { tag: 'ASAHI', bars: 1, hair: 'long' }, colors: { hair: 0x3b2a20, skin: 0xe6bba0, lip: 0xc07870 } },
   mori: { name: '森 拓海', title: '森', role: '同期の訓練生（学科で苦戦している）', color: '#a8e3ff', height: 1.69, peer: true,
-    look: { bars: 1, glasses: true }, colors: { hair: 0x2c2420 } },
+    look: { tag: 'MORI', bars: 1, glasses: true }, colors: { hair: 0x2c2420 } },
 };
 export const PEERS = ['kiryu', 'asahi', 'mori'];
 

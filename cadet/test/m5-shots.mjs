@@ -18,14 +18,17 @@ const shotNow = async (name, frames) => {
   console.log('  shooting', name, new Date().toISOString().slice(11, 19));
   await g.page.waitForFunction(() => !window.__cadet.career.cards(), null, { timeout: 60000 });   // (a card of the day or the weather: gone first)
   await ev((n) => {
+    // as while playing (the mouse captured: no "click to start"), without a passing message from earlier staging
+    document.body.classList.add('locked'); document.getElementById('toast')?.classList.remove('show');
     const url = window.__cadet.snapshot(n);
     const im = document.createElement('img'); im.id = 'shotbg'; im.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none';
     document.getElementById('view').after(im);
     return new Promise((done) => { im.onload = () => done(); im.src = url; });
   }, frames);
+  await g.page.waitForTimeout(400);                     // (the hint's and the message's fades)
   const r = await cdp.send('Page.captureScreenshot', { format: 'jpeg', quality: 86 });
   fs.writeFileSync(path.join(outDir, name), Buffer.from(r.data, 'base64'));
-  await ev(() => { document.getElementById('shotbg')?.remove(); });
+  await ev(() => { document.getElementById('shotbg')?.remove(); document.body.classList.remove('locked'); });
   console.log(name);
 };
 // (the first day's date card, gone before the first picture)
@@ -70,7 +73,7 @@ await K({ state: { chapter: 'ch1', day: 3, slot: 'evening', done: { prologue: 1 
 await place(698.6, 258.4, { a: 693.0, c: 253.0 }); await sim(0.5);
 await talkTo('mori', '学科、少し教えて'); await shot('05-lounge.jpg'); await closeTalk();
 // 06 the tablet: today's page
-await K({ state: { chapter: 'ch2', day: 13, slot: 'am', done: { prologue: 1 }, exams: { written1: { tries: 1, best: 90, pass: true } } }, progress: { lessons: { ...ground, a1: { tries: 1, best: 'S', pass: true, levels: ['basic'] }, a2: { tries: 1, best: 'A', pass: true, levels: ['basic'] } } }, flags: { met_instructor: true, has_tablet: true }, place: false });
+await K({ state: { chapter: 'ch2', day: 13, slot: 'am', done: { prologue: 1, 'class:0': 2, 'class:1': 3, 'class:2': 4, 'class:3': 5, 'class:4': 6, 'class:5': 8 }, exams: { written1: { tries: 1, best: 90, pass: true } } }, progress: { lessons: { ...ground, a1: { tries: 1, best: 'S', pass: true, levels: ['basic'] }, a2: { tries: 1, best: 'A', pass: true, levels: ['basic'] } } }, flags: { met_instructor: true, has_tablet: true }, place: false });
 await place(650.0, 266.0, { a: 655.0, c: 250.0 }); await sim(0.3);
 await ev(() => window.__cadet.career.tablet.open('today')); await shot('06-tablet.jpg');
 await ev(() => window.__cadet.career.tablet.open('progress')); await shot('07-progress.jpg');

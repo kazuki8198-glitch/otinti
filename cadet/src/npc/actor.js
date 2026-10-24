@@ -1,20 +1,24 @@
-// CADET — npc/actor.js : a person built at start-up (no model files) — the flight instructor of M2, and later the
-// academy's other people. A hierarchy of groups (hips → spine → chest → neck → head; shoulders → upper arm → forearm →
-// hand; thighs → shins → feet) with one merged mesh per moving part, so it animates without a skeleton: breathing and a
-// slow weight shift (the feet stay planted: two-bone IK), blinking eyelids, eyes and head that follow a point within
-// human limits, a mouth that moves in syllables while talking, hands that gesture now and then, and short keyframed
-// gestures (nod, point, explain, wave, shrug).
-// Soft low-poly like the academy's props: rounded lofted shapes with smooth normals and flat colours. Every actor
-// shares one material: the colour is per vertex (linear), and roughness / metalness come from a tiny palette texture
-// (each part's uv points at its texel), so a body is 20 draw calls. update() makes no new objects (it reuses its vectors
-// and quaternions).
+// CADET — npc/actor.js : a person — the flight instructor of M2, and the academy's other people. A hierarchy of groups
+// (hips → spine → chest → neck → head; shoulders → upper arm → forearm → hand; thighs → shins → feet) with one merged
+// mesh per moving part, so it animates without a skeleton: breathing and a slow weight shift (the feet stay planted:
+// two-bone IK), blinking eyelids, eyes and head that follow a point within human limits, a mouth that moves in
+// syllables while talking, hands that gesture now and then, and short keyframed gestures (nod, point, explain, wave,
+// shrug).
+// The head (face, hair, eyes, lids, mouth) and the uniform on the chest are modelled in Blender (tools/actor, embedded
+// in the page: npc/actor-model.js) with their shading baked into the vertices; the limbs, the hips and the neck are
+// built here at start-up (rounded lofted shapes: the trouser legs change shape to sit). Every actor shares one
+// material: the colour is per vertex (linear: the person's colours times the baked shading), and roughness / metalness
+// come from a tiny palette texture (each part's uv points at its texel), so a body is 20 draw calls. update() makes no
+// new objects (it reuses its vectors and quaternions).
 // The look is fictional: a white short-sleeved pilot shirt with navy epaulettes (3 gold bars), a navy tie, a lanyard
-// ID card and a small SHOYO wing badge, navy trousers, black shoes. opts.look changes it for the academy's other people
-// (M5): the bars (0–4: a cadet 1, the chief instructor 4, none for the staff), the tie, the badge, the lanyard, the
-// hair (short, crop, long — tied back in a tail —, bun), glasses; opts.colors the shirt, the trousers, the hair, the skin.
+// ID card, a small SHOYO wing badge and a name plate, navy trousers, black shoes. opts.look changes it for the
+// academy's other people (M5): the bars (0–4: a cadet 1, the chief instructor 4, none for the staff), the tie, the
+// badge, the lanyard, the name on the plate (tag: Latin letters; none, no plate), the hair (short, crop, long — tied
+// back in a tail —, bun), glasses; opts.colors the shirt, the trousers, the hair, the skin.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+import { actorModel } from './actor-model.js';
 
 const DEG = Math.PI / 180, TAU = Math.PI * 2;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -88,8 +92,6 @@ function xf(g, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, order = 'XYZ') {
 }
 // shared vertices along seams and poles, so the normals are smooth everywhere
 function clean(g) { g.deleteAttribute('uv'); g.deleteAttribute('normal'); const m = mergeVertices(g, 1e-7); g.dispose(); return m; }
-const ellipsoid = (rx, ry, rz, ws = 12, hs = 8) => { const g = clean(new THREE.SphereGeometry(1, ws, hs)); g.scale(rx, ry, rz); g.computeVertexNormals(); return g; };
-const capsule = (r, len, rs = 5, cs = 1) => { const g = clean(new THREE.CapsuleGeometry(r, len, cs, rs, 1)); g.computeVertexNormals(); return g; };
 const cyl = (r0, r1, h, seg = 12) => { const g = clean(new THREE.CylinderGeometry(r1, r0, h, seg)); g.computeVertexNormals(); return g; };
 const rbox = (w, h, d, r = 0.002, seg = 1) => (r > 0 && Math.min(w, h, d) > r * 2.2 ? new RoundedBoxGeometry(w, h, d, seg, r) : new THREE.BoxGeometry(w, h, d));
 function mirrorX(g) {
@@ -126,28 +128,17 @@ function loft(rings, seg, axis = 'y', cap0 = false, cap1 = false) {
   g.computeVertexNormals(); return g;
 }
 const ring = (y, a, b, x = 0, z = 0, p = 2) => ({ x, y, z, a, b, p });
-// a grid of rows of vertices (each row the same length): rows[i][j] = [x, y, z]; faces towards (row → next row) × (j → j+1)
-function grid(rows, wrap = false) {
-  const pos = [], idx = [], n = rows.length, m = rows[0].length;
-  for (const r of rows) for (const v of r) pos.push(v[0], v[1], v[2]);
-  const mm = wrap ? m : m - 1;
-  for (let i = 0; i < n - 1; i++) for (let j = 0; j < mm; j++) {
-    const a = i * m + j, b = i * m + (j + 1) % m, c = b + m, d = a + m;
-    idx.push(a, d, b, b, d, c);
-  }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx);
-  return g;
-}
-
 // a part: geometries in one colour and class each, merged into one geometry (translated so `origin` is at 0)
 class Part {
   constructor(colors) { this.geos = []; this.C = colors; }
-  add(geo, col, cls) {
+  // (shade: a factor per vertex and channel, linear — the model's baked occlusion and tints)
+  add(geo, col, cls, shade = null) {
     for (const k of Object.keys(geo.attributes)) if (k !== 'position' && k !== 'normal') geo.deleteAttribute(k);
     if (!geo.attributes.normal) geo.computeVertexNormals();
     if (!geo.index) geo.setIndex([...Array(geo.attributes.position.count).keys()]);
     const n = geo.attributes.position.count, c = _c.set(typeof col === 'string' ? this.C[col] : col), cv = new Float32Array(n * 3), uv = new Float32Array(n * 2), u = uOf(cls);
     for (let i = 0; i < n; i++) { cv[i * 3] = c.r; cv[i * 3 + 1] = c.g; cv[i * 3 + 2] = c.b; uv[i * 2] = u; uv[i * 2 + 1] = 0.5; }
+    if (shade) for (let i = 0; i < n * 3; i++) cv[i] *= shade[i];
     geo.setAttribute('color', new THREE.BufferAttribute(cv, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
     geo.clearGroups(); this.geos.push(geo); return geo;
   }
@@ -163,18 +154,10 @@ function tint(geo, col, test) {
   for (let i = 0; i < p.count; i++) if (test(p.getX(i), p.getY(i), p.getZ(i))) c.setXYZ(i, _c.r, _c.g, _c.b);
 }
 
-// ---------------------------------------------------------------- the head: a deformed sphere (bind space)
+// ---------------------------------------------------------------- the head (bind space): the parts made in Blender
+// (npc/actor-model.js); the face's front as the old deformed sphere had it still sets the eyes' and the mouth's pivots
+// (the model was made round them: tools/actor reads ANCHORS)
 const HD = { cy: 1.622, cz: 0.012, ryU: 0.112, ryL: 0.117, w: 0.077, jaw: 0.0078, dF: 0.09, dB: 0.104, chin: 0.028 };
-function headPt(ux, uy, uz, o) {
-  const W = HD.w - HD.jaw * smooth(-0.15, -0.9, uy);
-  // the underside rises from the chin towards the ears (a jaw line, not a round bowl)
-  o.x = ux * W; o.y = HD.cy + uy * (uy >= 0 ? HD.ryU : HD.ryL) + 0.026 * smooth(-0.5, -1, uy) * smooth(0.5, -0.6, uz);
-  // the back of the lower head is pulled in: the neck meets the skull at the occiput, the jaw ends under the ear
-  const back = HD.dB * (1 - 0.42 * smooth(-0.1, -0.75, uy));
-  o.z = HD.cz + (uz >= 0 ? Math.pow(uz, 0.8) * HD.dF : -Math.pow(-uz, 0.9) * back) + HD.chin * smooth(-0.25, -1, uy);
-  return o;
-}
-// the face's z at (x, y) (the front of the deformed sphere)
 function faceZ(x, y) {
   const uy = (y - HD.cy) / (y >= HD.cy ? HD.ryU : HD.ryL), ux = x / (HD.w - HD.jaw * smooth(-0.15, -0.9, uy));
   return HD.cz + Math.pow(Math.max(1 - ux * ux - uy * uy, 0), 0.4) * HD.dF + HD.chin * smooth(-0.25, -1, uy);
@@ -183,124 +166,33 @@ const EYE = { x: 0.0318, y: 1.622, r: 0.0121 };
 EYE.z = faceZ(EYE.x, EYE.y) + 0.005 - EYE.r;             // the eyeball stands 5 mm out of the face
 const MOUTH = { y: 1.548 }; MOUTH.z = faceZ(0, MOUTH.y);
 
+// the model's meshes of one part whose variant the look shows, added to a Part (its colour times the baked shading)
+// (the biggest first: the part's main surface, the skin or the shirt, leads its geometry)
+function addModel(Pt, part, shows) {
+  const list = [...actorModel().values()].filter(m => m.part === part && shows(m.variant)).sort((a, b) => b.index.length - a.index.length);
+  for (const m of list) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(m.position.slice(), 3));
+    if (m.normal) g.setAttribute('normal', new THREE.BufferAttribute(m.normal.slice(), 3));
+    g.setIndex(new THREE.BufferAttribute(m.index.slice(), 1));
+    if (m.morph) g.morphAttributes.position = [new THREE.BufferAttribute(m.morph.slice(), 3)];
+    Pt.add(g, m.key.startsWith('x') ? parseInt(m.key.slice(1), 16) : m.key, m.cls, m.shade);
+  }
+}
+const hairOf = (LK) => 'hair-' + (['crop', 'long', 'bun'].includes(LK.hair) ? LK.hair : 'short');
 function buildHead(C) {
-  const H = new Part(C), o = new THREE.Vector3();
-  // the skull and face
-  const g = clean(new THREE.SphereGeometry(1, 24, 16)), p = g.attributes.position;
-  for (let i = 0; i < p.count; i++) { headPt(p.getX(i), p.getY(i), p.getZ(i), o); p.setXYZ(i, o.x, o.y, o.z); }
-  g.computeVertexNormals(); H.add(g, 'skin', 'skin');
-  // short hair: a cap over the skull, thick on top and short at the sides, thinning to nothing on the hairline. The
-  // columns sit where the hairline turns: forehead, temples, sideburns, over the ears, the nape. (crop: thinner, no
-  // quiff; long and bun: fuller, and tied back below)
-  const LK = C.look || {}, hairK = LK.hair === 'crop' ? 0.55 : LK.hair === 'long' || LK.hair === 'bun' ? 1.25 : 1;
-  const NT = 6, rows = [], cols = [];
-  for (const [a] of HAIRLINE) { if (a > 0 && a < 180) cols.push(-a); }
-  cols.reverse(); cols.unshift(-180); cols.push(0, ...HAIRLINE.filter(([a]) => a > 0 && a < 180).map(([a]) => a));
-  for (let j = 0; j <= NT; j++) {
-    const row = [], f = j / NT;
-    for (const a of cols) {
-      const phi = a * DEG, th = Math.max(hairline(Math.abs(a)) * f, 1e-4) * DEG;
-      headPt(Math.sin(th) * Math.sin(phi), Math.cos(th), Math.sin(th) * Math.cos(phi), o);
-      const quiff = LK.hair === 'crop' ? 0 : 0.005 * Math.max(0, Math.cos(phi)) ** 2 * Math.exp(-(((th / DEG - 36) / 16) ** 2));
-      const t = lerp(0.0135 * hairK, 0.0003, Math.pow(f, 1.7)) + quiff, dx = o.x, dy = o.y - HD.cy, dz = o.z - HD.cz, l = Math.hypot(dx, dy, dz);
-      row.push([o.x + dx / l * t, o.y + dy / l * t, o.z + dz / l * t]);
-    }
-    rows.push(row);
-  }
-  const hair = clean(grid(rows, true)); hair.computeVertexNormals(); H.add(hair, 'hair', 'hair');
-  // tied back: a tail from the crown's back down the nape, or a bun on the back of the head
-  if (LK.hair === 'long') {
-    const pts = [[0, 1.66, -0.1], [0, 1.625, -0.122], [0, 1.57, -0.128], [0, 1.51, -0.118], [0, 1.47, -0.105]].map(([x, y, z]) => new THREE.Vector3(x, y, z));
-    const tube = clean(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 10, 0.016, 8, false)), tp = tube.attributes.position;
-    // thicker at the tie, thinning to the end
-    for (let i = 0; i < tp.count; i++) { const y = tp.getY(i), k = clamp((1.66 - y) / 0.19, 0, 1), sc = lerp(1.15, 0.45, k * k); tp.setX(i, tp.getX(i) * sc); tp.setZ(i, -0.11 + (tp.getZ(i) + 0.11) * sc); }
-    tube.computeVertexNormals(); H.add(tube, 'hair', 'hair');
-    const tie = cyl(0.0125, 0.0125, 0.01, 10); xf(tie, 0, 1.652, -0.112, -0.5); H.add(tie, 0x22252c, 'plastic');
-  } else if (LK.hair === 'bun') {
-    const b = ellipsoid(0.034, 0.03, 0.026, 12, 8); xf(b, 0, 1.64, -0.115); H.add(b, 'hair', 'hair');
-  }
-  // glasses: thin dark rims, the bridge, the arms back to the ears
-  if (LK.glasses) {
-    for (const s of [-1, 1]) {
-      const rim = clean(new THREE.TorusGeometry(0.0175, 0.0013, 4, 18)); rim.scale(1, 0.78, 1); xf(rim, s * EYE.x, EYE.y - 0.002, faceZ(s * EYE.x, EYE.y) + 0.011); H.add(rim, 0x2b2f36, 'plastic');
-      const arm = rbox(0.0018, 0.0018, 0.085, 0); xf(arm, s * 0.0745, EYE.y + 0.004, faceZ(s * EYE.x, EYE.y) - 0.032, 0, s * 0.06); H.add(arm, 0x2b2f36, 'plastic');
-    }
-    const br = rbox(0.016, 0.0016, 0.0016, 0); xf(br, 0, EYE.y + 0.004, faceZ(0, EYE.y) + 0.012); H.add(br, 0x2b2f36, 'plastic');
-  }
-  // ears: tilted back a little, their back rim standing out from the head; the hollow a shade darker
-  for (const s of [-1, 1]) {
-    const e = ellipsoid(0.0085, 0.028, 0.0175, 8, 6); xf(e, s * 0.0765, 1.604, -0.012, -0.16, s * -0.42, s * -0.06); H.add(e, 'skin', 'skin');
-    tint(e, C.lid, (x, y, z) => s * x > 0.0815 && Math.abs(y - 1.6) < 0.016 && z < -0.004);
-  }
-  // nose (bridge, tip, wings)
-  // the nose: a narrow bridge widening to a soft tip (rings of [y, half width, half depth, out of the face at the front])
-  { const N = [[1.567, 0.0055, 0.003, 0.004], [1.571, 0.0092, 0.0072, 0.011], [1.578, 0.0092, 0.0088, 0.0145], [1.589, 0.0074, 0.0086, 0.012], [1.602, 0.0064, 0.0072, 0.0075],
-      [1.616, 0.0068, 0.005, 0.0025]];
-    H.add(loft(N.map(([y, a, b, f]) => ring(y, a, b, 0, faceZ(0, y) + f - b, 2.2)), 10, 'y', 0.002, 0), 'skin', 'skin'); }
-  for (const s of [-1, 1]) { const n = ellipsoid(0.0058, 0.0048, 0.0062, 6, 4); xf(n, s * 0.0098, 1.5735, faceZ(0.0098, 1.5735) + 0.0026, 0, s * 0.5); H.add(n, 'skin', 'skin'); }
-  // eyeballs, lower lids (static) and brows
-  for (const s of [-1, 1]) {
-    const ex = s * EYE.x;
-    // the eyeball's front half (the rest is inside the head)
-    const ball = clean(new THREE.SphereGeometry(EYE.r, 12, 5, 0, TAU, 0, 0.6 * Math.PI)); ball.computeVertexNormals(); ball.rotateX(Math.PI / 2);
-    xf(ball, ex, EYE.y, EYE.z); H.add(ball, 'eye', 'eye');
-    const lo = clean(new THREE.SphereGeometry(1, 12, 3, 0, TAU, Math.PI / 2 + 20 * DEG, Math.PI / 2 - 20 * DEG));
-    lo.scale(EYE.r * 1.07, EYE.r * 1.07, EYE.r * 1.07); lo.computeVertexNormals(); xf(lo, ex, EYE.y, EYE.z); H.add(lo, 'skin', 'skin');
-    tint(lo, C.lid, (x, y) => y > EYE.y - EYE.r * 0.5);
-    H.add(brow(s), 'hair', 'brow');
-  }
+  const H = new Part(C), LK = C.look || {}, hair = hairOf(LK);
+  addModel(H, 'head', (v) => v === 'base' || v === hair || (v === 'glasses' && !!LK.glasses));
   return H.build(P.head);
 }
-// the hairline: [|azimuth| (0 = the forehead, 180 = the nape), its angle from the crown] (degrees, round the unit head)
-const HAIRLINE = [[0, 46], [24, 47.5], [44, 50], [54, 56], [62, 71], [70, 91], [77, 98], [83, 95], [89, 80], [98, 76], [107, 78], [114, 88],
-  [122, 101], [140, 115], [160, 122], [180, 124]];
-function hairline(a) {
-  let i = 0; while (i < HAIRLINE.length - 2 && HAIRLINE[i + 1][0] < a) i++;
-  const [a0, t0] = HAIRLINE[i], [a1, t1] = HAIRLINE[i + 1]; return lerp(t0, t1, clamp((a - a0) / (a1 - a0), 0, 1));
-}
-// an eyebrow on the brow ridge: a strip thicker at the inner end, arched, thin at the outer end; its edges sink into the skin
-function brow(s) {
-  const rows = [[], [], []], N = 6;
-  for (let i = 0; i <= N; i++) {
-    const u = i / N, x = lerp(0.0125, 0.0505, u), yc = 1.6445 + 0.0042 * Math.sin(Math.PI * Math.min(1, u * 1.3)) - 0.0035 * u * u;
-    const hw = lerp(0.0033, 0.0013, u), lift = lerp(0.0017, 0.0007, u);
-    [[hw, -0.0008], [0, lift], [-hw, -0.0008]].forEach(([dy, dz], k) => rows[k].push([x, yc + dy, faceZ(x, yc + dy) + dz]));
-  }
-  const g = grid(rows); g.computeVertexNormals();
-  return s < 0 ? mirrorX(g) : g;
-}
 // the upper lids: one mesh for both eyes, turned about the line through the eyes' centres (blinks, follows the gaze)
-function buildLids(C) {
-  const L = new Part(C);
-  for (const s of [-1, 1]) {
-    const g = clean(new THREE.SphereGeometry(1, 12, 5, 0, TAU, 0, Math.PI / 2)); g.scale(EYE.r * 1.1, EYE.r * 1.1, EYE.r * 1.1); g.computeVertexNormals();
-    g.translate(s * EYE.x, 0, 0); L.add(g, 'lid', 'skin');
-    tint(g, C.lash, (x, y) => y < EYE.r * 0.12);         // the lash line along the edge
-  }
-  return L.build();
-}
+function buildLids(C) { const L = new Part(C); addModel(L, 'lids', (v) => v === 'base'); return L.build([0, EYE.y, EYE.z]); }
 // one iris and pupil, on the front of the eyeball (turns with the eye)
-function buildIris(C) {
-  const I = new Part(C);
-  const cap = (r, ang, col, rows) => { const g = clean(new THREE.SphereGeometry(r, 14, rows, 0, TAU, 0, ang)); g.computeVertexNormals(); g.rotateX(Math.PI / 2); I.add(g, col, 'iris'); };
-  cap(EYE.r * 1.012, 33 * DEG, 'iris', 2); cap(EYE.r * 1.022, 14 * DEG, 'pupil', 1);
-  return I.build();
-}
-// the mouth: a dark smile line that opens (a morph target) and the lower lip that drops with it; pivot on the upper lip
+function buildIris(C, s) { const I = new Part(C); addModel(I, s > 0 ? 'irisL' : 'irisR', (v) => v === 'base'); return I.build([s * EYE.x, EYE.y, EYE.z]); }
+// the mouth: a dark line that opens (a morph target), the lower lip that drops with it, the teeth; pivot on the upper lip
 function buildMouth(C) {
-  const M = new Part(C), curve = (x, y) => faceZ(x, MOUTH.y + y) - MOUTH.z, bend = (x) => 0.0022 * (x / 0.021) ** 2;
-  const shape = (geo, closed, open) => {
-    const p = geo.attributes.position, o = new Float32Array(p.count * 3), a = [0, 0, 0];
-    for (let i = 0; i < p.count; i++) { const u = [p.getX(i), p.getY(i), p.getZ(i)]; closed(u, a); p.setXYZ(i, a[0], a[1], a[2]); open(u, a); o.set(a, i * 3); }
-    geo.computeVertexNormals(); geo.morphAttributes.position = [new THREE.BufferAttribute(o, 3)]; return geo;
-  };
-  M.add(shape(clean(new THREE.SphereGeometry(1, 12, 6)),
-    ([x, y, z], a) => { a[0] = x * 0.021; a[1] = y * 0.0016 + bend(a[0]); a[2] = z * 0.004 - 0.0021 + curve(a[0], a[1]); },
-    ([x, y, z], a) => { a[0] = x * 0.0185; a[1] = y * 0.0072 - 0.0066 + bend(a[0]) * 0.7; a[2] = z * 0.0052 - 0.0036 + curve(a[0], a[1]); }), 'mouth', 'mouth');
-  M.add(shape(clean(new THREE.SphereGeometry(1, 10, 5)),
-    ([x, y, z], a) => { a[0] = x * 0.0145; a[1] = y * 0.0042 - 0.0062; a[2] = z * 0.004 - 0.0018 + curve(a[0], a[1]); },
-    ([x, y, z], a) => { a[0] = x * 0.0138; a[1] = y * 0.0042 - 0.0062 - 0.0098; a[2] = z * 0.004 - 0.003 + curve(a[0], a[1]); }), 'lip', 'skin');
-  const g = M.build(); g.computeBoundingSphere(); return g;
+  const M = new Part(C); addModel(M, 'mouth', (v) => v === 'base');
+  const g = M.build([0, MOUTH.y, MOUTH.z]); g.morphTargetsRelative = true; g.computeBoundingSphere(); return g;
 }
 const buildNeck = (C) => {
   const N = new Part(C), z = P.neck[2];
@@ -320,103 +212,57 @@ const SEAT = [
   [0.78, 0.168, 0.09, -0.004, 2.4], [0.81, 0.170, 0.100, -0.008, 2.5], [0.85, 0.174, 0.108, -0.010, 2.5], [0.89, 0.176, 0.111, -0.008, 2.5],
   [0.94, 0.171, 0.109, -0.004, 2.5], [0.985, 0.163, 0.108, 0.000, 2.5], [1.012, 0.161, 0.108, 0.002, 2.5],
 ];
+// the sizes the model's parts are made to (tools/actor: the Blender script reads them, so the parts fit the bones)
+export const ANCHORS = { P, HD, EYE, MOUTH, TORSO, SEAT, HIPJ_Y, MODEL_H, UARM_LEN };
 function rowAt(T, y) {
   let i = 0; while (i < T.length - 2 && T[i + 1][0] < y) i++;
   const a = T[i], b = T[i + 1], t = clamp((y - a[0]) / (b[0] - a[0]), 0, 1);
   return a.map((v, k) => lerp(v, b[k], t));
 }
-function frontZ(T, x, y) { const [, wx, dz, cz, p] = rowAt(T, y), u = Math.min(Math.abs(x) / wx, 0.999); return cz + dz * Math.pow(1 - Math.pow(u, p), 1 / p); }
-function frontN(T, x, y, o) { const h = 0.004; return o.set(-(frontZ(T, x + h, y) - frontZ(T, x - h, y)) / (2 * h), -(frontZ(T, x, y + h) - frontZ(T, x, y - h)) / (2 * h), 1).normalize(); }
-// y of the shoulder's top at |x| (the upper rings, where the width shrinks towards the neck)
-function shoulderY(x) {
-  const U = TORSO.slice(7); let i = 0; while (i < U.length - 2 && U[i + 1][1] > x) i++;
-  const a = U[i], b = U[i + 1]; return lerp(a[0], b[0], clamp((a[1] - x) / (a[1] - b[1]), 0, 1));
+// the name plate's letters (a 5 × 7 font of pixels, the runs of each row one quad): the plate's frame from the model's
+// anchor (its middle, 1 cm along it, 1 cm up it)
+const FONT = { A: '01110100011000111111100011000110001', B: '11110100011000111110100011000111110', C: '01110100011000010000100001000101110',
+  D: '11110100011000110001100011000111110', E: '11111100001000011110100001000011111', F: '11111100001000011110100001000010000',
+  G: '01110100011000010111100011000101111', H: '10001100011000111111100011000110001', I: '01110001000010000100001000010001110',
+  J: '00111000100001000010000101001001100', K: '10001100101010011000101001001010001', L: '10000100001000010000100001000011111',
+  M: '10001110111010110101100011000110001', N: '10001110011010110011100011000110001', O: '01110100011000110001100011000101110',
+  P: '11110100011000111110100001000010000', Q: '01110100011000110001101011001001101', R: '11110100011000111110101001001010001',
+  S: '01111100001000001110000010000111110', T: '11111001000010000100001000010000100', U: '10001100011000110001100011000101110',
+  V: '10001100011000110001100010101000100', W: '10001100011000110101101011010101010', X: '10001100010101000100010101000110001',
+  Y: '10001100010101000100001000010000100', Z: '11111000010001000100010001000011111' };
+function nameLetters(text) {
+  const a = actorModel().get('anchor.nametag.x000000.plastic'); if (!a || !text) return null;
+  const p = a.position, o = new THREE.Vector3(p[0], p[1], p[2]), xa = new THREE.Vector3(p[3], p[4], p[5]).sub(o).multiplyScalar(100), ya = new THREE.Vector3(p[6], p[7], p[8]).sub(o).multiplyScalar(100);
+  const n = new THREE.Vector3().crossVectors(xa, ya).normalize(), chars = [...text.toUpperCase()].filter(c => FONT[c]).slice(0, 7);
+  const px = Math.min(0.0009, 0.05 / (chars.length * 6)), w = chars.length * 6 * px - px, pos = [], idx = [], v = new THREE.Vector3();
+  const at = (x, y) => { v.copy(o).addScaledVector(xa, x).addScaledVector(ya, y).addScaledVector(n, 0.0002); pos.push(v.x, v.y, v.z); };
+  chars.forEach((c, k) => {
+    // the runs of each row; a run the same in the rows below it is one quad down through them
+    const f = FONT[c], runs = [];
+    for (let r = 0; r < 7; r++) for (let x = 0; x < 5;) {
+      if (f[r * 5 + x] !== '1') { x++; continue; }
+      let e = x; while (e < 5 && f[r * 5 + e] === '1') e++;
+      const up = runs.find(q => q.x === x && q.e === e && q.r1 === r);
+      if (up) up.r1 = r + 1; else runs.push({ x, e, r0: r, r1: r + 1 });
+      x = e;
+    }
+    for (const q of runs) {
+      const x0 = -w / 2 + (k * 6 + q.x) * px, x1 = -w / 2 + (k * 6 + q.e) * px, y1 = (3.5 - q.r0) * px, y0 = (3.5 - q.r1) * px, b = pos.length / 3;
+      at(x0, y0); at(x1, y0); at(x1, y1); at(x0, y1); idx.push(b, b + 1, b + 2, b, b + 2, b + 3);
+    }
+  });
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx);
+  g.computeVertexNormals(); return g;
 }
-// put a small part (modelled facing +z, centred at 0) on the torso's front at (x, y), `off` out of the surface
-function onFront(g, x, y, off) {
-  const n = frontN(TORSO, x, y, new THREE.Vector3()), xa = new THREE.Vector3(0, 1, 0).cross(n).normalize(), ya = n.clone().cross(xa);
-  g.applyMatrix4(new THREE.Matrix4().makeBasis(xa, ya, n).setPosition(x, y, frontZ(TORSO, x, y) + off)); return g;
-}
-// a patch of cloth on the front (a pocket, a flap): a slab that follows the surface, its edges soft
-function frontSlab(x0, x1, y0, y1, t, nx = 6, ny = 4) {
-  const n = new THREE.Vector3(), pos = [], idx = [], W = nx + 1, at = (i, j) => j * W + i;
-  for (let j = 0; j <= ny; j++) for (let i = 0; i <= nx; i++) {
-    const x = lerp(x0, x1, i / nx), y = lerp(y0, y1, j / ny); frontN(TORSO, x, y, n);
-    const z = frontZ(TORSO, x, y); pos.push(x + n.x * t, y + n.y * t, z + n.z * t);
-  }
-  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) idx.push(at(i, j), at(i + 1, j), at(i, j + 1), at(i + 1, j), at(i + 1, j + 1), at(i, j + 1));
-  const loop = [];
-  for (let i = 0; i < nx; i++) loop.push(at(i, 0));
-  for (let j = 0; j < ny; j++) loop.push(at(nx, j));
-  for (let i = nx; i > 0; i--) loop.push(at(i, ny));
-  for (let j = ny; j > 0; j--) loop.push(at(0, j));
-  const base = pos.length / 3;
-  for (const k of loop) { const x = pos[k * 3], y = pos[k * 3 + 1]; frontN(TORSO, x, y, n); const z = frontZ(TORSO, x, y); pos.push(x - n.x * 0.002, y - n.y * 0.002, z - n.z * 0.002); }
-  for (let k = 0; k < loop.length; k++) { const f0 = loop[k], f1 = loop[(k + 1) % loop.length], b0 = base + k, b1 = base + (k + 1) % loop.length; idx.push(f0, b0, f1, f1, b0, b1); }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
-}
-
+// the shirt and what is on it (the model's), by the look: the tie (or the placket's buttons), the epaulettes and their
+// bars, the wing badge, the lanyard and ID card, the name plate (with look.tag: the name)
 function buildTorso(C) {
-  const T = new Part(C), LK = { bars: 3, tie: true, badge: true, lanyard: true, ...(C.look || {}) };
-  T.add(loft(TORSO.map(r => ring(r[0], r[1], r[2], 0, r[3], r[4])), 22, 'y', 0, 0.004), 'shirt', 'shirt');
-  // the collar: a band round the neck, lower at the front, and its two points
-  const nz = P.neck[2];
-  { const c = loft([ring(1.452, 0.0595, 0.0625, 0, nz), ring(1.45, 0.0635, 0.0665, 0, nz), ring(1.49, 0.062, 0.065, 0, nz), ring(1.495, 0.06, 0.063, 0, nz),
-      ring(1.49, 0.058, 0.061, 0, nz), ring(1.452, 0.0595, 0.0625, 0, nz)], 22, 'y');
-    c.translate(0, -1.47, -nz); c.rotateX(13 * DEG); c.translate(0, 1.47, nz); T.add(c, 'shirt', 'shirt'); }
-  for (const s of [-1, 1]) { const f = new THREE.BoxGeometry(0.026, 0.04, 0.003); f.translate(0, -0.012, 0); f.rotateZ(s * 0.62); T.add(onFront(f, s * 0.016, 1.448, 0.003), 'shirt', 'shirt'); }
-  // the tie: the knot, then the blade down the shirt front to the belt
-  if (LK.tie) { const k = rbox(0.03, 0.03, 0.016, 0.006, 1), p = k.attributes.position;
-    for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) * (1 + p.getY(i) * 9));                     // wider at the top
-    k.computeVertexNormals(); xf(k, 0, 1.446, frontZ(TORSO, 0, 1.446) + 0.0045, -0.25); T.add(k, 'tie', 'tie'); }
-  if (LK.tie) { const ys = [1.436, 1.4, 1.34, 1.26, 1.18, 1.1, 1.06, 1.044, 1.034], ws = [0.016, 0.0175, 0.022, 0.027, 0.032, 0.036, 0.037, 0.026, 0.006];
-    T.add(loft(ys.map((y, i) => ring(y, ws[i], 0.0022, 0, frontZ(TORSO, 0, y) + 0.0032, 4)).reverse(), 8, 'y', 0, 0), 'tie', 'tie'); }
-  // chest pockets with flaps and buttons; a pen in the left one
-  for (const s of [-1, 1]) {
-    const [x0, x1] = s > 0 ? [0.032, 0.122] : [-0.122, -0.032];
-    T.add(frontSlab(x0, x1, 1.17, 1.292, 0.0024), 'pocket', 'shirt');
-    T.add(frontSlab(x0 - 0.002, x1 + 0.002, 1.266, 1.3, 0.0052, 6, 2), 'shirt', 'shirt');
-    const b = ellipsoid(0.004, 0.004, 0.0022, 6, 4); onFront(b, s * 0.077, 1.274, 0.0068); T.add(b, 'button', 'plastic');
-  }
-  { const pen = cyl(0.0042, 0.0042, 0.04, 8); onFront(pen, 0.108, 1.3, 0.0035); T.add(pen, 0x1a1c22, 'plastic');
-    const clip = rbox(0.0022, 0.022, 0.0016, 0); onFront(clip, 0.108, 1.305, 0.0085); T.add(clip, 'silver', 'silver'); }
-  // the wing badge (SHOYO, fictional) above the left pocket
-  if (LK.badge) { const at = (g, x, y) => onFront(g, 0.077 + x, 1.333 + y, 0.0032);
-    const d = cyl(0.0068, 0.0068, 0.003, 10); d.rotateX(Math.PI / 2); T.add(at(d, 0, 0), 'gold', 'gold');
-    const d2 = cyl(0.0038, 0.0038, 0.003, 8); d2.rotateX(Math.PI / 2); d2.translate(0, 0, 0.0012); T.add(at(d2, 0, 0), 'navy', 'cloth');
-    for (const s of [-1, 1]) {
-      const w1 = rbox(0.03, 0.0062, 0.0024, 0); w1.rotateZ(s * 0.13); T.add(at(w1, s * 0.02, 0.0012), 'gold', 'gold');
-      const w2 = rbox(0.021, 0.0042, 0.0024, 0); w2.rotateZ(s * 0.24); T.add(at(w2, s * 0.016, -0.0042), 'gold', 'gold');
-    } }
-  // epaulettes on the shoulders: navy, the bars (three: an instructor) in gold at the outer end, a gold button inside
-  if (LK.bars > 0) for (const s of [-1, 1]) {
-    // a straight strap from the collar to the sleeve, resting on the shoulder's curve
-    const xi = 0.07, xo = 0.166, yi = shoulderY(xi), yo = shoulderY(xo), ang = Math.atan2(yo - yi, xo - xi), len = Math.hypot(xo - xi, yo - yi);
-    let lift = 0; for (let k = 0; k <= 8; k++) { const x = lerp(xi, xo, k / 8); lift = Math.max(lift, shoulderY(x) - lerp(yi, yo, k / 8)); }
-    const cx = (xi + xo) / 2, cy = (yi + yo) / 2 + lift;
-    const parts = [[rbox(len, 0.006, 0.05, 0.0025), 0, 0.003, 'navy', 'cloth']];
-    for (let k = 0; k < Math.min(4, LK.bars); k++) parts.push([rbox(0.0048, 0.0024, 0.042, 0), len / 2 - 0.016 - k * 0.0095, 0.0068, 'gold', 'gold']);
-    parts.push([cyl(0.0055, 0.0055, 0.003, 8), -len / 2 + 0.012, 0.0072, 'gold', 'gold']);
-    for (const [g, x, y, col, cls] of parts) { g.translate(x, y, 0); g.rotateZ(ang); g.translate(cx, cy + 0.0015, -0.01); if (s < 0) mirrorX(g); T.add(g, col, cls); }
-  }
-  // the lanyard (a cord round the neck) and the ID card on it
-  if (LK.lanyard) { const pts = [], over = (x) => 0.0045 + 0.0075 * Math.exp(-((x / 0.03) ** 2));
-    const front = [[0.0, 1.262], [0.011, 1.29], [0.022, 1.33], [0.033, 1.38], [0.043, 1.42], [0.05, 1.445]];
-    for (const [x, y] of front) pts.push(new THREE.Vector3(-x, y, frontZ(TORSO, x, y) + over(x)));
-    const back = [[-0.062, 1.47, 0.01], [-0.066, 1.482, -0.03], [-0.04, 1.492, -0.075], [0, 1.495, -0.084], [0.04, 1.492, -0.075], [0.066, 1.482, -0.03], [0.062, 1.47, 0.01]];
-    for (const [x, y, z] of back) pts.push(new THREE.Vector3(x, y, z));
-    for (let i = front.length - 1; i > 0; i--) { const [x, y] = front[i]; pts.push(new THREE.Vector3(x, y, frontZ(TORSO, x, y) + over(x))); }
-    const cord = clean(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true, 'centripetal'), 30, 0.0033, 3, true)); cord.computeVertexNormals();
-    T.add(cord, 'lanyard', 'cloth');
-    const cz = frontZ(TORSO, 0, 1.2) + 0.014, card = (g, x, y, z = 0) => { g.translate(x, 1.2 + y, cz + z); return g; };
-    T.add(card(rbox(0.054, 0.085, 0.0024, 0), 0, 0), 'card', 'plastic');
-    T.add(card(rbox(0.054, 0.016, 0.0008, 0), 0, 0.0345, 0.0012), 'navy', 'plastic');
-    T.add(card(rbox(0.018, 0.022, 0.0006, 0), -0.0135, 0.008, 0.0013), 'photo', 'plastic');
-    for (let k = 0; k < 3; k++) T.add(card(rbox(k ? 0.019 : 0.023, 0.0026, 0.0006, 0), 0.0105 - (k ? 0.002 : 0), 0.014 - k * 0.0065, 0.0013), 'ink', 'plastic');
-    T.add(card(rbox(0.04, 0.0024, 0.0006, 0), 0, -0.024, 0.0013), 'ink', 'plastic');
-    for (const s of [-1, 1]) { const w = rbox(0.009, 0.0022, 0.0008, 0); w.rotateZ(s * 0.15); T.add(card(w, s * 0.006, 0.0345, 0.0018), 'gold', 'gold'); }
-    T.add(card(rbox(0.012, 0.014, 0.004, 0), 0, 0.047, -0.0008), 'silver', 'silver');
-  }
+  const T = new Part(C), LK = { bars: 3, tie: true, badge: true, lanyard: true, ...(C.look || {}) }, bars = Math.min(4, Math.max(0, LK.bars | 0));
+  const shows = (v) => v === 'base' || (v === 'tie' && LK.tie) || (v === 'notie' && !LK.tie) || (v === 'bars' && bars > 0) || (/^bar\d$/.test(v) && +v.slice(3) <= bars) ||
+    (v === 'badge' && LK.badge) || (v === 'lanyard' && LK.lanyard) || (v === 'nametag' && !!LK.tag);
+  addModel(T, 'torso', shows);
+  const letters = LK.tag ? nameLetters(LK.tag) : null;
+  if (letters) T.add(letters, 'gold', 'gold');
   return T.build(P.chest);
 }
 function buildHips(C) {
@@ -772,7 +618,7 @@ export function createActor(opts = {}) {
   const mouthPivot = bone('mouth', head, [0, MOUTH.y, MOUTH.z]), mouth = mesh('mouth', buildMouth(C), mouthPivot, false);
   mouth.material = mouthMaterial();
   const lids = bone('lids', head, [0, EYE.y, EYE.z]); mesh('lids', buildLids(C), lids, false);
-  const eyes = [-1, 1].map(s => { const e = bone(s > 0 ? 'eyeL' : 'eyeR', head, [s * EYE.x, EYE.y, EYE.z]); mesh(s > 0 ? 'irisL' : 'irisR', buildIris(C), e, false); return e; });
+  const eyes = [-1, 1].map(s => { const e = bone(s > 0 ? 'eyeL' : 'eyeR', head, [s * EYE.x, EYE.y, EYE.z]); mesh(s > 0 ? 'irisL' : 'irisR', buildIris(C, s), e, false); return e; });
   const arm = {}, leg = {};
   for (const s of [1, -1]) {
     const L = s > 0 ? 'L' : 'R';

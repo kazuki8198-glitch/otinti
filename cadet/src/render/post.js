@@ -16,19 +16,29 @@ const AerialShader = {
     tDiffuse: { value: null }, tDepth: { value: null },
     uInvProj: { value: new THREE.Matrix4() }, uCamWorld: { value: new THREE.Matrix4() },
     uSunDir: { value: new THREE.Vector3(0, 1, 0) }, uHaze: { value: new THREE.Color(0.55, 0.66, 0.80) }, uSunHaze: { value: new THREE.Color(0.9, 0.75, 0.5) },
-    uDensity: { value: 0.000085 }, uFall: { value: 0.00055 }, uGround: { value: 16.8 },
+    uDensity: { value: 0.000085 }, uFall: { value: 0.00055 }, uGround: { value: 16.8 }, uSkyFog: { value: 0 }, uSkyGrey: { value: 0 },
   },
   vertexShader: /* glsl */`varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: /* glsl */`
     uniform sampler2D tDiffuse, tDepth; uniform mat4 uInvProj, uCamWorld;
-    uniform vec3 uSunDir, uHaze, uSunHaze; uniform float uDensity, uFall, uGround;
+    uniform vec3 uSunDir, uHaze, uSunHaze; uniform float uDensity, uFall, uGround, uSkyFog, uSkyGrey;
     varying vec2 vUv;
     void main() {
       vec4 col = texture2D(tDiffuse, vUv);
       // the sun's disc is far brighter than half floats like (and bloom would spread it over the sky): cap it
       col.rgb = clamp(col.rgb, 0.0, 12.0); if (any(isnan(col.rgb))) col.rgb = vec3(12.0);
       float d = texture2D(tDepth, vUv).x;
-      if (d >= 1.0) { gl_FragColor = col; return; }                          // nothing drawn here: the sky has its own atmosphere
+      if (d >= 1.0) {                                                       // nothing drawn here: the sky has its own atmosphere,
+        if (uSkyFog + uSkyGrey <= 0.0) { gl_FragColor = col; return; }
+        // under a storm's deck it is grey and darker; in fog it is the fog's colour (as far off as the ground is)
+        vec4 sp = uInvProj * vec4(vUv * 2.0 - 1.0, 1.0, 1.0); sp /= sp.w;
+        float up = clamp(normalize(mat3(uCamWorld) * sp.xyz).y, 0.0, 1.0);
+        // (the deck's brightness from the haze's, the horizon's: the sky's own is far brighter; its clouds' pattern kept)
+        float ref = dot(uHaze, vec3(0.2126, 0.7152, 0.0722)), sky = dot(col.rgb, vec3(0.2126, 0.7152, 0.0722));
+        vec3 deck = vec3(0.86, 0.9, 0.97) * ref * (0.92 + 0.25 * clamp(sky / max(ref * 4.0, 1e-4) - 1.0, -1.0, 1.0)) * (1.0 - 0.5 * sqrt(up));
+        vec3 c = mix(col.rgb, deck, min(1.0, uSkyGrey * 1.7));
+        gl_FragColor = vec4(mix(c, uHaze, uSkyFog * (1.0 - 0.2 * up)), col.a); return;
+      }
       vec4 vp = uInvProj * vec4(vUv * 2.0 - 1.0, d * 2.0 - 1.0, 1.0); vp /= vp.w;
       vec3 cam = uCamWorld[3].xyz;
       vec3 wp = (uCamWorld * vec4(vp.xyz, 1.0)).xyz;
@@ -75,8 +85,11 @@ export function createPipeline(container, quality) {
     depthTex = new THREE.DepthTexture(1, 1); depthTex.type = THREE.UnsignedIntType;
     const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: q.msaa, depthTexture: depthTex });
     composer = new EffectComposer(renderer, rt);
-    // the first pass renders into the read buffer: give that buffer the depth texture
-    composer.renderTarget2.depthTexture = depthTex; composer.renderTarget1.depthTexture = null;
+    // the first pass renders into the read buffer, and which of the two that is changes from frame to frame when a
+    // frame swaps them an odd number of times (with the AO): each has a depth texture, and the haze reads the one the
+    // scene was drawn into (render())
+    const depth1 = new THREE.DepthTexture(1, 1); depth1.type = THREE.UnsignedIntType;
+    composer.renderTarget2.depthTexture = depthTex; composer.renderTarget1.depthTexture = depth1;
     composer.renderTarget1.depthBuffer = true;
     composer.setPixelRatio(dpr); composer.setSize(size.x, size.y);
     const rp = new RenderPass(scene, camera);
@@ -127,7 +140,9 @@ export function createPipeline(container, quality) {
     const day = THREE.MathUtils.smoothstep(el, -6, 10), low = 1 - THREE.MathUtils.smoothstep(el, 0, 25);
     u.uHaze.value.setRGB(0.52 - 0.1 * low, 0.62 - 0.12 * low, 0.78 - 0.25 * low).multiplyScalar(0.03 + 0.97 * day);
     u.uSunHaze.value.setRGB(1.0, 0.72 - 0.25 * low, 0.42 - 0.25 * low).multiplyScalar((0.4 + 0.8 * low) * day);
-    u.uDensity.value = 0.000085 * (1 + 60 * fog * fog) * (1 + grey);
+    // (fog 0.85: a visibility of about 800 m, the METAR's 1/2 SM; the sky hidden as with VV002)
+    u.uDensity.value = 0.000085 * (1 + 80 * fog * fog) * (1 + grey);
+    u.uSkyFog.value = fog > 0 ? Math.min(1, fog * 1.18) : 0; u.uSkyGrey.value = grey;
     if (grey > 0) { u.uHaze.value.lerp(new THREE.Color(0.42, 0.45, 0.5).multiplyScalar(0.03 + 0.97 * day), grey * 0.7); u.uSunHaze.value.multiplyScalar(1 - grey * 0.8); }
     if (fog > 0) u.uHaze.value.lerp(new THREE.Color(0.66, 0.69, 0.72).multiplyScalar(0.03 + 0.97 * day), fog * 0.8);
   }
@@ -136,6 +151,7 @@ export function createPipeline(container, quality) {
     renderer.info.reset();
     const u = aerial.uniforms;
     u.uInvProj.value.copy(camera.projectionMatrixInverse); u.uCamWorld.value.copy(camera.matrixWorld);
+    u.tDepth.value = composer.readBuffer.depthTexture;
     // the sun's shadow map once per frame: the AO's normal pass renders the scene again and must not redraw it
     renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true;
     composer.render();

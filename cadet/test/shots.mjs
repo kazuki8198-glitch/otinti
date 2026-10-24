@@ -11,14 +11,13 @@ export function loadChromium() {
   for (const p of [process.env.PLAYWRIGHT, 'playwright', '/opt/node22/lib/node_modules/playwright'].filter(Boolean)) { try { return require(p).chromium; } catch (e) { /* next */ } }
   return null;
 }
-export async function openGame(chromium, { q = 'ultra', w = 1280, h = 720, t = 9.6, extra = '' } = {}) {
+export async function openGame(chromium, { q = 'ultra', w = 1280, h = 720, t = 9.6, extra = '', file = path.resolve(here, '../outputs/CADET.html') } = {}) {
   const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const ctx = await browser.newContext({ viewport: { width: w, height: h } });
   const page = await ctx.newPage(), errors = [], requests = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') errors.push(m.type() + ': ' + m.text()); });
   await ctx.route(/^https?:/, r => { requests.push(r.request().url()); return r.abort(); });
-  const file = path.resolve(here, '../outputs/CADET.html');
   await page.goto(`file://${file}?q=${q}&t=${t}&auto${extra}`);
   try { await page.waitForFunction(() => window.__cadet && window.__cadet.ready, null, { timeout: 240000 }); } catch (e) {
     const msg = await page.evaluate(() => document.querySelector('#bootMsg')?.textContent).catch(() => '');

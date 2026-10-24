@@ -320,7 +320,7 @@ async function boot() {
   const book = gameBook(FL);
   const saved = createSave();
   const talkState = createDialogState(saved.load());
-  const instructor = createActor();
+  const instructor = createActor({ look: PEOPLE.instructor.look });
   const INS = { a: 634.9, c: 256.7 };
   instructor.root.position.set(INS.c, 0, -INS.a); instructor.root.rotation.y = Math.PI;      // facing +a, into the room
   academy.group.add(instructor.root);
@@ -642,7 +642,7 @@ async function boot() {
     if (!(parseFloat(params.get('t')) > 0)) { hours = career.hours; }        // (?t=H keeps the sky at H: the tests, the bench)
     const w = career.weather(prog()), slot = career.slot;
     const fog = w.kind === 'amFog' && (slot === 'morning' || slot === 'am') ? 0.85 : 0;
-    const overcast = w.kind === 'storm' ? 1 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.95 : fog ? 0.7 : w.kind === 'crosswind' ? 0.35 : 0;
+    const overcast = w.kind === 'storm' ? 1 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.95 : fog ? 0.9 : w.kind === 'crosswind' ? 0.35 : 0;
     const grey = w.kind === 'storm' ? 0.7 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.6 : 0;
     sky.setWeather({ overcast });
     const st = sky.setTime(hours);

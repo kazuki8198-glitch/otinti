@@ -9,11 +9,14 @@
 //    knees up, hands on the thighs, looking round at the student; every gesture plays seated, keeps clear of the door
 //    and the roof, and ends in the seated rest; explaining is a small movement over the lap; pointing at the student's
 //    side of the panel is done low, the elbow bent, with the nearer (left) arm, never up in front of the student's face
-//    nor over the PFD as the student sees it; standing up again is exactly standing.
+//    nor over the PFD as the student sees it; standing up again is exactly standing;
+//  - the model made in Blender (assets/model/actor.glb): each look within the budget, every face turned the way its
+//    normals say (it is drawn one-sided), the mouth's morph target, the name plate's letters.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { createActor, LIMITS, GESTURE_NAMES, SEATED_PA28, seatFromBody } from '../src/npc/actor.js';
+import { actorModel } from '../src/npc/actor-model.js';
 
 const DEG = Math.PI / 180;
 const DT = 1 / 60;
@@ -386,10 +389,42 @@ test('actor: update() reuses its objects (no per-frame allocation)', () => {
   }
   // colours as numbers or CSS strings
   const red = createActor({ colors: { skin: '#ff0000' } }).meshes.find(m => m.name === 'actor-head').geometry.attributes.color;
-  assert.deepEqual([red.getX(0), red.getY(0), red.getZ(0)], [1, 0, 0]);
+  // (times the model's baked shading: red, darker in the creases)
+  assert.ok(red.getX(0) > 0.3 && red.getX(0) <= 1 && red.getY(0) === 0 && red.getZ(0) === 0, `[${red.getX(0)}, ${red.getY(0)}, ${red.getZ(0)}]`);
   // an undefined override keeps the default (not the colour of whatever part was made before)
   const headColors = (o) => Array.from(createActor(o).meshes.find(m => m.name === 'actor-head').geometry.attributes.color.array);
   assert.deepEqual(headColors({ colors: { hair: undefined, skin: null } }), headColors(), 'undefined colours');
+});
+
+// ---------------------------------------------------------------- the model (Blender)
+test('actor: the model — every look within budget, faces turned out, the mouth opens, the name on the plate', () => {
+  const M = actorModel();
+  for (const [name, m] of M) {
+    if (name.startsWith('anchor.')) continue;
+    assert.ok(m.normal && m.index.length % 3 === 0 && m.shade.every(v => v >= 0 && v <= 1.0001), `${name}: normals, triangles, shading 0…1`);
+    // the faces' winding against their normals, by area (slivers under a millimetre square aside)
+    const P = m.position, N = m.normal, I = m.index; let all = 0, wrong = 0;
+    for (let t = 0; t < I.length; t += 3) {
+      const [a, b, c] = [I[t] * 3, I[t + 1] * 3, I[t + 2] * 3];
+      const u = [P[b] - P[a], P[b + 1] - P[a + 1], P[b + 2] - P[a + 2]], v = [P[c] - P[a], P[c + 1] - P[a + 1], P[c + 2] - P[a + 2]];
+      const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]], area = Math.hypot(...n) / 2;
+      const d = n[0] * (N[a] + N[b] + N[c]) + n[1] * (N[a + 1] + N[b + 1] + N[c + 1]) + n[2] * (N[a + 2] + N[b + 2] + N[c + 2]);
+      all += area; if (d < 0 && area > 1e-6) wrong += area;
+    }
+    assert.ok(wrong <= all * 0.01, `${name}: ${(100 * wrong / all).toFixed(1)}% of its area faces inwards`);
+  }
+  for (const look of [{}, { hair: 'long', bars: 1, tag: 'ASAHI' }, { hair: 'bun', glasses: true, tie: false, badge: false, bars: 0, tag: 'MILLER' }, { hair: 'crop', lanyard: false, tie: false, bars: 0 },
+    { bars: 4, tag: 'MAKABE' }, { bars: 1, glasses: true, tag: 'MORI' }, { tag: 'WMWMWMW', glasses: true, hair: 'long' }]) {
+    const a = createActor({ look });
+    assert.ok(a.triangles <= 8000, `${JSON.stringify(look)}: ${a.triangles} triangles`);
+  }
+  const mouth = createActor().meshes.find(m => m.name === 'actor-mouth').geometry;
+  assert.ok(mouth.morphTargetsRelative && mouth.morphAttributes.position[0].count === mouth.attributes.position.count, 'the mouth: one relative morph target');
+  let open = 0; for (const v of mouth.morphAttributes.position[0].array) open = Math.max(open, Math.abs(v));
+  assert.ok(open > 0.008 && open < 0.02, `the mouth opens ${open} m`);
+  // the name: letters on the plate (more triangles than without), none without a tag
+  const torso = (look) => createActor({ look }).meshes.find(m => m.name === 'actor-torso').geometry.index.count / 3;
+  assert.ok(torso({ tag: 'HAYASE' }) > torso({ tag: 'I' }) && torso({ tag: 'I' }) > torso({}), 'the name plate and its letters');
 });
 
 // ---------------------------------------------------------------- seated

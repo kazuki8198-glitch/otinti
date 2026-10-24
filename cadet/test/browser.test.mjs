@@ -146,7 +146,8 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
     await ev((it) => window.__cadet.placeWalker(it.a + 1.6, it.c, { a: it.a, c: it.c }), it);
     assert.equal(await ev((it) => window.__cadet.lookAt(it.a, it.c, it.y), it), 'ex:' + it.id);
     assert.equal(await ev(() => window.__cadet.use()), 'examined');
-    assert.equal((await ev(() => window.__cadet.card())).title, it.title_ja);
+    // (the board shows today's plan: on the first morning, no flight yet, just the board)
+    assert.equal((await ev(() => window.__cadet.card())).title, 'ホワイトボード');
     // walking away (back into the room, clear of the instructor beside the board) closes the card
     await ev((it) => window.__cadet.walkRoute([{ a: it.a + 3.9, c: it.c }]), it);
     assert.equal(await ev(() => window.__cadet.card()), null);

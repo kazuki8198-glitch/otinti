@@ -107,7 +107,7 @@ export function careerBoardDialogs(FL, { lessons = [], ready = false, reason = '
     ] });
     B.go = say('どうぞ。', { end: true });
     B.leave = say('わかりました。準備ができたら、また。', { end: true });
-    return { speakers, flags: [], hooks: [...COCKPIT_HOOKS], dialogs: { board: { start: 'seat', nodes: B } } };
+    return { speakers, flags: [], hooks: [...COCKPIT_HOOKS], dialogs: { board: { start: 'seat', nodes: B }, ...dayDialogs().dialogs } };   // (and the day's own questions in flight)
   }
   const why = { brief: 'まだブリーフィングをしていませんね。先に、ブリーフィング室 1 で今日の課目を確かめましょう。', weather: '今日の天気の判断がまだです。運航管理で METAR と TAF を見て、佐伯さんと決めてきてください。',
     tired: '今日は飛ばないと決めましたね。その判断を守りましょう。', none: '今日は飛ぶ予定はありません。', done: '今日の飛行は終わりましたね。' }[reason] || '今日は飛ぶ予定はありません。';
@@ -128,5 +128,5 @@ export function careerBoardDialogs(FL, { lessons = [], ready = false, reason = '
     B.free = say('わかりました。エンジンをかけますね。場周を一周して戻りましょう。', { end: true });
   }
   B.leave = say('わかりました。準備ができたら、また乗ってください。', { hook: { name: 'nod' }, end: true });
-  return { speakers, flags: [], hooks: [...COCKPIT_HOOKS], dialogs: { board: { start: 'seat', nodes: B } } };
+  return { speakers, flags: [], hooks: [...COCKPIT_HOOKS], dialogs: { board: { start: 'seat', nodes: B }, ...dayDialogs().dialogs } };   // (and the day's own questions in flight)
 }

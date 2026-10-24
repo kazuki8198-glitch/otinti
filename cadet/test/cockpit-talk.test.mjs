@@ -106,3 +106,13 @@ test('day talk (M4–M5): the briefing within the day, the apron, the questions 
     assert.match(l, /(です|ます|ください|ましょう|ね|。|！|control。?)$/, l);
   }
 });
+
+test('cockpit talk in the career (M5): ready, not ready, the check ride — valid, and the day\'s questions in the air are there', async () => {
+  const { careerBoardDialogs } = await import('../src/content/dialog/cockpit.js');
+  for (const o of [{ lessons: ['t1', 'a2', 't3'], ready: true }, { reason: 'weather' }, { lessons: ['c1', 't3'], checkride: true, who: '真壁 主任教官' }]) {
+    const data = careerBoardDialogs(FL, o);
+    const { errors } = validateDialogs(data, { lessonExists: (id) => !!SC.lesson(id), sectionExists: () => true });
+    assert.deepEqual(errors, [], JSON.stringify(o));
+    for (const id of ['board', 'transit', 'return', 'pattern']) assert.ok(data.dialogs[id], `${id}: ${JSON.stringify(o)}`);
+  }
+});

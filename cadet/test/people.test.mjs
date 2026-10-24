@@ -28,8 +28,8 @@ function talk(data, state, id, ctx, pick) {
   return { lines, hooks };
 }
 
-test('people: eight of them, each with a look and a place for each time of day', () => {
-  assert.deepEqual(Object.keys(PEOPLE).sort(), ['asahi', 'chief', 'dispatcher', 'instructor', 'kiryu', 'lecturer', 'mechanic', 'mori']);
+test('people: nine of them (the examiner with M6), each with a look and a place for each time of day', () => {
+  assert.deepEqual(Object.keys(PEOPLE).sort(), ['asahi', 'chief', 'dispatcher', 'examiner', 'instructor', 'kiryu', 'lecturer', 'mechanic', 'mori']);
   assert.deepEqual(PEERS, ['kiryu', 'asahi', 'mori']);
   for (const [id, p] of Object.entries(PEOPLE)) { assert.ok(p.name && p.title && p.role, id); assert.ok(!REAL.test(JSON.stringify(p)), id); }
   // the evening: the cadets in the lounge, the staff gone

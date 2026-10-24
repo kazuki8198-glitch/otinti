@@ -9,6 +9,10 @@
 //  - celebrate: by the aircraft after the solo — the shirt tail, the logbook's endorsement;
 //  - checkday: the morning of the check ride (the chief instructor briefs it);
 //  - after: once the solo is behind them.
+// M6: the first flying day of each later chapter starts with what the chapter is (intro, before 'day');
+//  - xc: the afternoon of the solo cross-country — what to do alone, the diversion that may come;
+//  - checkday: the morning of a check (the chief instructor's, or the examiner's for the final);
+//  - grad: the graduation morning; graduated: after it.
 // Hooks: 'imsafe' ('fit' | 'tired': the game checks it against how tired the cadet is and answers through ctx), 'done'
 // ('meet' | 'study'), 'board', 'logbook', 'solo' (the solo's day is signed off), 'look', 'nod', 'point'.
 import { INSTRUCTOR } from './instructor.js';
@@ -18,7 +22,7 @@ export const CAREER_FLAGS = ['met_instructor', 'soloed', 'briefed_today'];
 const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' }, kiryu: { name_ja: '桐生', color: '#c9b6ff' }, asahi: { name_ja: '朝日', color: '#ffc4a8' }, mori: { name_ja: '森', color: '#a8e3ff' } };
 // the context: today { lessonTitle, studyTitle, studySection (a textbook section with a figure, or '') },
 // imsafe { honest (true / false) }, career { tired }
-export const CAREER_SAMPLE = { today: { lessonTitle: '「直線水平飛行」', studyTitle: '「場周経路」', studySection: 'ops.pattern' }, imsafe: { honest: true }, career: { tired: false, slot: 'morning' } };
+export const CAREER_SAMPLE = { today: { lessonTitle: '「直線水平飛行」', studyTitle: '「場周経路」', studySection: 'ops.pattern', intro: '', checkTitle: 'ソロ前の審査', checkWho: '真壁さん', checkId: 'c1' }, imsafe: { honest: true }, career: { tired: false, slot: 'morning', chapter: 'ch2' } };
 
 export function careerInstructorDialogs() {
   const say = (text, more = {}) => ({ speaker: 'instructor', text, ...more });
@@ -52,6 +56,17 @@ export function careerInstructorDialogs() {
       { text: '大丈夫です', next: 'g2' },
     ] }),
     g2: say('数字の言い方と、交信の型。今のうちに体に入れておくと、飛び始めてから楽になります。', { end: true }),
+  };
+  // (M6) a later chapter's first day: what it is, then the day as always
+  const I = {
+    i3: say('今日から第 3 章、航法です。場周経路の外へ、もっと遠くへ。横風、短い滑走路、VOR、それから地図と時計で飛ぶ推測航法。', { if: { ctx: 'today.intro', is: 'ch3' }, else: 'i4', hook: { name: 'look', arg: 'player' }, next: 'i3:2' }),
+    'i3:2': say('最後は、ひとりでの野外飛行です。航法ログを自分で作って、ひとりで飛んで、帰ってくる。途中で目的地が変わることもあります。', { hook: { name: 'point', arg: 'board' }, next: 'd1' }),
+    i4: say('今日から第 4 章、計器飛行です。フードをかぶると、外は見えません。見えるのは計器だけ。', { if: { ctx: 'today.intro', is: 'ch4' }, else: 'i5', hook: { name: 'look', arg: 'player' }, next: 'i4:2' }),
+    'i4:2': say('体の感覚は、雲の中ではうそをつきます。姿勢、高度、姿勢、方位、姿勢、速度。目を止めずに、計器を信じてください。最後は真壁さんの審査、雲の中の ILS です。', { next: 'd1' }),
+    i5: say('今日から第 5 章、双発機の Seminole です。重くて、速くて、エンジンが 2 つ。', { if: { ctx: 'today.intro', is: 'ch5' }, else: 'i6', hook: { name: 'look', arg: 'player' }, next: 'i5:2' }),
+    'i5:2': say('エンジンが 2 つあるのは、片方が止まっても飛べるからです。でも、止まった瞬間は強く片側へ引かれる。足で方向を保つ練習を、何度もします。', { hook: { name: 'point', arg: 'board' }, next: 'd1' }),
+    i6: say('第 6 章、最後の章です。TEM、脅威とエラーの管理。飛ぶ前に「今日の危ないところ」を言葉にする練習をします。', { if: { ctx: 'today.intro', is: 'ch6' }, else: 'd1', hook: { name: 'look', arg: 'player' }, next: 'i6:2' }),
+    'i6:2': say('それが終わったら、最終審査。外から来る審査官が、あなたの隣に座ります。ここで覚えたこと、全部を見せてください。', { next: 'd1' }),
   };
   const D = {
     d1: say('おはようございます。始める前に、ひとつ聞きます。今日の体調はどうですか。昨日はよく眠れましたか。', { hook: { name: 'look', arg: 'player' }, choices: [
@@ -87,7 +102,7 @@ export function careerInstructorDialogs() {
     c8: say('ここからが本当の始まりです。次は航法。もっと遠くまで飛びますよ。今日は、ゆっくり休んでください。', { effects: [{ set: 'soloed' }, { hook: 'solo' }], hook: { name: 'nod' }, end: true }),
   };
   const K = {
-    k1: say('今日はソロ前の審査ですね。真壁さんが教官室で待っています。審査の前に、真壁さんのブリーフィングを受けてください。', { hook: { name: 'look', arg: 'player' }, next: 'k2' }),
+    k1: say('今日は{today.checkTitle}ですね。{today.checkWho}が教官室で待っています。審査の前に、ブリーフィングを受けてください。', { hook: { name: 'look', arg: 'player' }, next: 'k2' }),
     k2: say('特別なことはしなくていい。毎日やってきたとおりに。……いってらっしゃい。', { hook: { name: 'nod' }, end: true }),
   };
   const A = {
@@ -95,11 +110,25 @@ export function careerInstructorDialogs() {
       { text: '質問があります', next: 'ask:root' },
       { text: 'はい、気をつけます', next: 'a2' },
     ] }),
-    a2: say('次の段階の予定は、まだ運航管理から出ていません。それまでは、教科書の第 3 部を読んでおくといいですよ。', { end: true }),
+    a2: say('今日の予定は、タブレットと運航管理の予定表に出ています。わからないところは、いつでも聞いてください。', { end: true }),
+  };
+  // (M6) the solo cross-country's afternoon
+  const X = {
+    x1: say('航法ログは、ちゃんとできていましたね。では、単独の野外飛行です。', { hook: { name: 'look', arg: 'player' }, next: 'x2' }),
+    x2: say('離陸したら、LAB-A へ。そこから先は、管制か私から目的地の変更を言うかもしれません。言われたら、新しい針路と距離と時間を、落ち着いて見積もってください。', { hook: { name: 'point', arg: 'board' }, next: 'x3' }),
+    x3: say('迷ったら、最後に確かだった場所から考える。VOR と DME もあります。それでもわからなければ、正直に管制に聞く。それは恥ずかしいことではありません。', { next: 'x4' }),
+    x4: say('燃料と時間に余裕を。帰ってきたら、航空日誌に「野外飛行」と書きましょう。……いってらっしゃい。', { choices: [{ text: '行ってきます', next: 'x5' }] }),
+    x5: say('外部点検から。今日も、全部あなたの手で。', { hook: { name: 'nod' }, effects: [{ set: 'briefed_today' }], end: true }),
+  };
+  // (M6) the graduation morning, and after it
+  const GR = {
+    g1: say('おはようございます。今日は修了式です。ロビーで、真壁さんが待っています。……少し、緊張しますね。私もです。', { if: { ctx: 'career.graduated', is: false }, else: 'g2', hook: { name: 'look', arg: 'player' }, end: true }),
+    g2: say('修了、おめでとう。あなたの担当になれて、よかったです。……次に会うのは、どこかの空港かもしれませんね。', { hook: { name: 'nod' }, end: true }),
   };
   return {
     speakers: SPEAKERS, flags: [...CAREER_FLAGS], hooks: [...CAREER_HOOKS],
-    dialogs: { meet: { start: 'm1', nodes: M }, early: { start: 'e1', nodes: E }, ground: { start: 'g1', nodes: G }, day: { start: 'd1', nodes: D }, study: { start: 's1', nodes: S },
+    dialogs: { meet: { start: 'm1', nodes: M }, early: { start: 'e1', nodes: E }, ground: { start: 'g1', nodes: G }, day: { start: 'i3', nodes: { ...I, ...D } }, study: { start: 's1', nodes: S },
+      xc: { start: 'x1', nodes: X }, grad: { start: 'g1', nodes: GR },
       solo: { start: 'o1', nodes: O }, checkday: { start: 'k1', nodes: K }, celebrate: { start: 'c1', nodes: C }, after: { start: 'a1', nodes: A } },
   };
 }

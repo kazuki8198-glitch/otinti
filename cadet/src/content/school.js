@@ -163,7 +163,7 @@ export function ftdDialogs(FL, k, { seed = 1 } = {}) {
 // (exam: another test's settings — the tablet's practice: one bank, ten questions)
 export function examDialogs(FL, id, { seed = 1, speaker, exam = null } = {}) {
   const E = exam || EXAMS[id]; if (!E) throw new Error(`examDialogs: no test ${id}`);
-  const r = rng(seed * 17 + id.length), who = speaker || (id === 'presolo' ? 'instructor' : 'lecturer'), book = gameBook(FL);
+  const r = rng(seed * 17 + id.length), who = speaker || (id === 'written1' ? 'lecturer' : 'instructor'), book = gameBook(FL);
   // drawn evenly from the banks
   const per = Math.ceil(E.n / E.banks.length), pool = [];
   for (const b of E.banks) pool.push(...pick((FL.quiz.BANKS.find(x => x.id === b) || { qs: [] }).qs, per, r));
@@ -171,9 +171,49 @@ export function examDialogs(FL, id, { seed = 1, speaker, exam = null } = {}) {
   const N = {};
   N.hello = { speaker: who, text: `${E.title}です。${E.n} 問、${E.pass}% 以上で合格。答えを選ぶと、すぐに正解と理由を言います。`, hook: { name: 'look', arg: 'player' }, next: 'q0' };
   quizNodes(N, qs, { speaker: who });
-  resultNodes(N, who, id === 'presolo' ? '合格です。これで、ソロ前の審査に進めます。' : '合格です。おめでとうございます。来週から、いよいよ実機の訓練です。',
+  resultNodes(N, who, E.ok || (id === 'presolo' ? '合格です。これで、ソロ前の審査に進めます。' : '合格です。おめでとうございます。来週から、いよいよ実機の訓練です。'),
     '今回は届きませんでした。間違えた問題の理由を、教科書でもう一度確かめてください。また受けられます。');
   return { speakers: SPEAKERS, flags: qs.map((_, k) => `qz_${k}`), hooks: [...SCHOOL_HOOKS], dialogs: { exam: { start: 'hello', nodes: N } }, questions: qs };
 }
 // the score of a finished quiz from its state's flags
 export const scoreOf = (state, n) => { let right = 0; for (let k = 0; k < n; k++) if (state.flags[`qz_${k}`]) right++; const pct = n ? Math.round(right / n * 100) : 0; return { right, n, pct, pass: pct >= PASS }; };
+
+// ---------------------------------------------------------------- the navigation log (M6: the solo cross-country's morning)
+// 早瀬 教官 and the cadet plan the leg the solo cross-country is planned on (LAB → LAB-B, by LAB-A: FLIGHT LAB's n2,
+// whose diversion to LAB-F comes in the air): its true course
+// and distance off the chart, the magnetic course (the variation: 6° W, added), the wind (the day's winds aloft) and
+// the heading that holds the course, the ground speed, the time and the fuel. Each a question with the right number
+// and the usual mistakes (the correction the wrong way, true for magnetic, the wind forgotten); 80% to pass.
+export const NAVLOG = { from: 'LABRW', to: 'LABEB', tas: 105, windFrom: 330, windKt: 15, varW: 6, gph: 10, reserveMin: 30 };
+export function navlogNumbers(FL, o = NAVLOG) {
+  const A = FL.avionics, a = A.wpt(o.from), b = A.wpt(o.to), DEG = Math.PI / 180;
+  const tc = ((Math.atan2(b.e - a.e, b.n - a.n) / DEG) + 360) % 360, dist = Math.hypot(b.e - a.e, b.n - a.n) / 1852;
+  const mc = (tc + o.varW) % 360, rel = (o.windFrom - mc) * DEG;
+  const wca = Math.asin(o.windKt * Math.sin(rel) / o.tas) / DEG, mh = (mc + wca + 360) % 360;
+  const gs = o.tas * Math.cos(wca * DEG) - o.windKt * Math.cos(rel), ete = dist / gs * 60, fuel = (ete + o.reserveMin) / 60 * o.gph;
+  return { tc, dist, mc, wca, mh, gs, ete, fuel, from: a, to: b };
+}
+export function navlogDialogs(FL, { seed = 1 } = {}) {
+  const r = rng(seed * 41 + 7), x = navlogNumbers(FL), o = NAVLOG, d3 = (v) => String(Math.round((v + 360) % 360) || 360).padStart(3, '0');
+  const opts = (right, wrong) => { const all = shuffled([right, ...wrong.filter(w => w !== right)].slice(0, 4), r); return { opts: all, ok: all.indexOf(right) }; };
+  const Q = [];
+  const mcO = opts(`${d3(x.mc)}°`, [`${d3(x.tc)}°`, `${d3(x.tc - o.varW)}°`, `${d3(x.mc + 180)}°`]);
+  Q.push({ q: `地図に引いた線（${x.from.name.replace(/（架空）/, '')} → ${x.to.name.replace(/（架空）/, '')}）は、真方位 ${d3(x.tc)}°・${x.dist.toFixed(1)} NM。偏差は 6° W です。磁方位のコース（MC）は？`, ...mcO,
+    why: `西偏差は足します（"West is best"）。${d3(x.tc)} ＋ 6 ＝ ${d3(x.mc)}°。` });
+  const wcaR = Math.round(x.wca), mhO = opts(`${d3(x.mh)}°`, [`${d3(x.mc - x.wca)}°`, `${d3(x.mc)}°`, `${d3(x.mh + 10)}°`]);
+  Q.push({ q: `上空の風は ${d3(o.windFrom)}° から ${o.windKt} kt、真対気速度（TAS）は ${o.tas} kt。コースを保つための磁針路（MH）は？`, ...mhO,
+    why: `風は${wcaR < 0 ? '左' : '右'}から吹いているので、機首を風上（${wcaR < 0 ? '左' : '右'}）へ ${Math.abs(wcaR)}° 向けます（偏流修正角）。${d3(x.mc)} ${wcaR >= 0 ? '＋' : '−'} ${Math.abs(wcaR)} ＝ ${d3(x.mh)}°。` });
+  const gsR = Math.round(x.gs), gsO = opts(`${gsR} kt`, [`${o.tas} kt`, `${Math.round(o.tas + (o.tas - x.gs))} kt`, `${o.tas - o.windKt} kt`]);
+  Q.push({ q: `そのときの対地速度（GS）は？`, ...gsO, why: `${x.gs < o.tas ? '向かい風' : '追い風'}の成分の分だけ${x.gs < o.tas ? '遅く' : '速く'}なり、機首を風上に向けた分は少し遅くなります。約 ${gsR} kt。` });
+  const eteR = Math.round(x.ete), eteO = opts(`${eteR} 分`, [`${Math.round(x.dist / o.tas * 60) === eteR ? eteR + 2 : Math.round(x.dist / o.tas * 60)} 分`, `${eteR * 2} 分`, `${Math.max(1, eteR - 4)} 分`]);
+  Q.push({ q: `${x.dist.toFixed(1)} NM を対地速度 ${gsR} kt で。所要時間（ETE）は？`, ...eteO, why: `時間＝距離 ÷ 対地速度。${x.dist.toFixed(1)} ÷ ${gsR} × 60 ≒ ${eteR} 分（対気速度で割ると、風の分を忘れます）。` });
+  const fR = x.fuel.toFixed(1), fO = opts(`${fR} gal`, [`${(x.ete / 60 * o.gph).toFixed(1)} gal`, `${((x.ete + 45) / 60 * o.gph).toFixed(1)} gal`, `${(o.gph).toFixed(1)} gal`]);
+  Q.push({ q: `燃料の消費は 1 時間に ${o.gph} gal。昼間の有視界飛行の予備（30 分）を含めて、この区間に最低いるのは？（タキシーと上昇の分は別に足します）`, ...fO,
+    why: `（${eteR} 分 ＋ 予備 30 分）÷ 60 × ${o.gph} ≒ ${fR} gal。予備は昼 30 分・夜 45 分。` });
+  const N = {};
+  N.hello = { speaker: 'instructor', text: '今日は単独の野外飛行です。その前に、ここで航法ログを作りましょう。地図に線を引いて、風の計算をして、時間と燃料。全部、自分の手で。', hook: { name: 'look', arg: 'player' }, next: 'hello:2' };
+  N['hello:2'] = { speaker: 'instructor', text: '途中で目的地が変わることもあります。そのときに慌てないように、最初の計算をきちんと。', hook: { name: 'board', arg: 'navlog' }, next: 'q0' };
+  quizNodes(N, Q, { speaker: 'instructor' });
+  resultNodes(N, 'instructor', '航法ログは、これで大丈夫。午後、外部点検から始めてください。私は乗りません。無線は、ここで聞いています。', 'もう一度、計算を見直しましょう。午後までに直せば、今日飛べます。');
+  return { speakers: SPEAKERS, flags: Q.map((_, k) => `qz_${k}`), hooks: [...SCHOOL_HOOKS], dialogs: { navlog: { start: 'hello', nodes: N } }, questions: Q, numbers: x };
+}

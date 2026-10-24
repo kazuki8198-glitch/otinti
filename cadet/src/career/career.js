@@ -36,7 +36,7 @@ export const STAGE = {
   ch3: { lessons: ['x3', 'x1', 'x2', 'n1', 'n2', 'n3'], exam: 'nav', check: 'xc', aircraft: 'pa28' },
   ch4: { lessons: ['i1', 'i2', 'i3', 'i4', 'i5'], exam: 'instr', check: 'ir', aircraft: 'pa28' },
   ch5: { lessons: ['m1', 'm2', 'm3', 'm4', 'm5'], exam: 'multi', check: 'me', aircraft: 'pa44' },
-  ch6: { lessons: ['r1'], exam: 'final', check: 'final', aircraft: 'pa44' },
+  ch6: { lessons: ['r1'], exam: 'final', check: 'final', aircraft: 'pa28' },          // (r1 in the Archer; the final check in the Seminole)
 };
 // the checks: kind 'xc' (the solo cross-country: the navigation log in the morning, then FLIGHT LAB's n2 flown alone —
 // its diversion is the chapter's turn of events) or 'checkride' (the lessons flown one after the other with the check
@@ -327,7 +327,7 @@ export function createCareer({ store = null, seed } = {}) {
       if (gate(st, prog, trust).length) return false;
       if (st.chapter === 'prologue') st.chapter = 'ch1';
       else if (st.chapter === 'ch1') st.chapter = 'ch2';
-      else if (st.chapter === 'ch2') st.chapter = 'ch3';
+      else if (st.chapter === 'ch2') { if (!st.solo) return false; st.chapter = 'ch3'; }   // (the gate opens the solo; the solo flown, chapter 3)
       else if (LATER.includes(st.chapter) && st.chapter !== 'ch6') st.chapter = LATER[LATER.indexOf(st.chapter) + 1];
       else return false;
       save(); return true;

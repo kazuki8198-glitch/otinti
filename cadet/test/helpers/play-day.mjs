@@ -46,8 +46,8 @@ export function playDay(FL, { plan = null, level = 'basic', anomalies = ['oil', 
     if (id === 't3' || id === 't4') day.atc.start('final');
     fl.startLesson(id, level, { sens: 'low', autoRud: !!FL.school.lesson(id).autoRud }); sys.setRunning(fl.s);
     const bot = makeBot(FL), hook = hooks[id] ? hooks[id](FL) : undefined, refHook = hooks[id] ? hooks[id](FL) : undefined;
-    const L = fl.runScripted((L, dt) => { bot.fly(L, dt); sys.update(dt, L.s); for (const ev of day.atc.update(dt)) if (ev.type === 'say') said.push(ev.en); answer(); }, 900, hook);
-    ref.push(runLesson(FL, id, level, 900, refHook)); got.push(L);
+    const L = fl.runScripted((L, dt) => { bot.fly(L, dt); sys.update(dt, L.s); for (const ev of day.atc.update(dt)) if (ev.type === 'say') said.push(ev.en); answer(); }, 1500, hook);
+    ref.push(runLesson(FL, id, level, 1500, refHook)); got.push(L);
     const st = fl.status();
     day.lessonEnded(id, { ...st, results: L.results, exit: exitFor(pos().a) });
     fl.continueFree();

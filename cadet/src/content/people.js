@@ -20,6 +20,9 @@ export const PEOPLE = {
   mori: { name: '森 拓海', title: '森', role: '同期の訓練生（学科で苦戦している）', color: '#a8e3ff', height: 1.69, peer: true,
     look: { tag: 'MORI', bars: 1, glasses: true }, colors: { hair: 0x2c2420 } },
 };
+// (M6) the examiner: from outside the academy, for the final check only (a designated examiner: fictional)
+PEOPLE.examiner = { name: '黒田 誠一', title: '黒田 審査官', role: '審査官（最終審査の Check Flight）', color: '#b9c4d0', height: 1.74,
+  look: { tag: 'KURODA', bars: 4, glasses: true, hair: 'crop' }, colors: { hair: 0x6e6a66, skin: 0xd4aa8a, shirt: 0xeef0f2, pocket: 0xe2e5e8, trousers: 0x2b2e34 } };
 export const PEERS = ['kiryu', 'asahi', 'mori'];
 
 // where each one stands: { a, c, face: { a, c } } by the time of day; null: not in the academy then (gone home, flying)
@@ -35,6 +38,12 @@ const AT = {
   lounge1: { a: 692.6, c: 253.9, face: { a: 695.2, c: 252.6 } }, lounge2: { a: 697.6, c: 253.9, face: { a: 695.2, c: 253.0 } }, lounge3: { a: 690.8, c: 257.1, face: { a: 693.0, c: 255.0 } },
   pilot1: { a: 681.0, c: 252.6, face: { a: 682.0, c: 254.0 } }, pilot2: { a: 683.2, c: 252.6, face: { a: 682.0, c: 254.0 } },
   lobby1: { a: 650.6, c: 262.4, face: { a: 652.0, c: 266.0 } }, lobby2: { a: 652.2, c: 263.8, face: { a: 650.8, c: 262.6 } }, lobby3: { a: 657.6, c: 265.2, face: { a: 655.0, c: 266.5 } },
+  // (M6) the examiner's place in the instructors' room; the graduation in the lobby: everyone in a half circle round
+  // the plaque, facing the chief instructor
+  examRoom: { a: 675.0, c: 268.4, face: { a: 670.0, c: 266.0 } },
+  grad1: { a: 651.2, c: 262.2, face: { a: 655.0, c: 266.5 } }, grad2: { a: 653.0, c: 261.6, face: { a: 655.0, c: 266.5 } }, grad3: { a: 657.0, c: 261.6, face: { a: 655.0, c: 266.5 } },
+  grad4: { a: 658.8, c: 262.4, face: { a: 655.0, c: 266.5 } }, grad5: { a: 650.2, c: 264.4, face: { a: 655.0, c: 266.5 } }, grad6: { a: 659.8, c: 264.6, face: { a: 655.0, c: 266.5 } },
+  grad7: { a: 652.4, c: 268.6, face: { a: 655.0, c: 266.5 } },
 };
 export const PLACES = AT;
 // placeOf(id, slot, chapter, what) → a place or null. what: today's work ({ kind } of career/career.js schedule()),
@@ -42,6 +51,9 @@ export const PLACES = AT;
 export function placeOf(id, slot, chapter, what = []) {
   const has = (k) => what.some(x => x.kind === k && (x.slot === slot || (slot === 'morning' && x.slot === 'am')));
   if (slot === 'evening') return PEERS.includes(id) ? AT[`lounge${PEERS.indexOf(id) + 1}`] : null;
+  // (M6) the graduation morning: everyone in the lobby
+  if (has('graduation')) return id === 'chief' ? AT.lobbyFront : AT[`grad${['kiryu', 'asahi', 'mori', 'lecturer', 'dispatcher', 'mechanic', 'examiner'].indexOf(id) + 1}`] || null;
+  if (id === 'examiner') return chapter === 'ch6' && has('checkride') ? AT.examRoom : null;
   switch (id) {
     case 'dispatcher': return AT.counter;
     case 'mechanic': return AT.apron;

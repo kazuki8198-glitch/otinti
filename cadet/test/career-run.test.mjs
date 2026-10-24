@@ -13,11 +13,11 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createCareer, CH2, GROUND, passedAt, SOLO_TRUST, CLASSES } from '../src/career/career.js';
+import { createCareer, CH2, GROUND, passedAt, SOLO_TRUST, CLASSES, STAGE, CHECKS, LATER, EXAMS } from '../src/career/career.js';
 import { planFor } from '../src/career/day.js';
 import { peopleDialogs } from '../src/content/dialog/people.js';
 import { careerInstructorDialogs } from '../src/content/dialog/instructor-career.js';
-import { classDialogs, ftdDialogs, examDialogs, scoreOf } from '../src/content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, scoreOf } from '../src/content/school.js';
 import { createRunner, createDialogState, trustOf } from '../src/dialog/engine.js';
 import { playDay } from './helpers/play-day.mjs';
 import { installSorajima } from '../src/flight/sorajima.js';
@@ -96,3 +96,68 @@ test('career run: from the first day to the first solo — every gate in order, 
   assert.ok(log.some(l => / off/.test(l) || /off:/.test(l)), 'Sundays off');
 });
 const FLY_KINDS = ['flight', 'checkride', 'solo'];
+
+// M6's goal: "最初から修了式まで通して遊べる（bot.mjs で各章の関門を通る）" — from the morning after the first solo to the
+// graduation: each later chapter's lessons flown by the bot in whole days (the twin's in the Seminole, from its own
+// walk-around and two-engine start), the written tests, the navigation log and the solo cross-country, the instrument
+// check in low cloud, the multi-engine check, the final check with the examiner, the graduation in the lobby.
+test('career run M6: from the morning after the first solo to the graduation — every chapter\'s gate by the bot', { timeout: 3600000 }, () => {
+  const career = createCareer({ store: memStore(), seed: 21 });
+  const talk = createDialogState(), prog = SC.sanitizeProgress({});
+  for (const id of [...GROUND, ...CH2, 'c1']) prog.lessons[id] = { tries: 1, best: 'S', pass: true, levels: ['basic'] };
+  career.load({ ...career.state, chapter: 'ch2', day: 30, done: { prologue: 1 }, exams: { written1: { tries: 1, best: 90, pass: true }, presolo: { tries: 1, best: 90, pass: true } }, solo: { day: 30 } });
+  talk.trust.instructor = 70;
+  career.sleep(); assert.ok(career.advanceChapter(prog, 70)); assert.equal(career.chapter, 'ch3');
+  const quiz = (data, id) => {
+    const q = { quiz: {} }, s2 = createDialogState(), r = createRunner({ data, state: s2, ctx: q, hooks: { onHook: (n, a) => { if (n === 'quizEnd') q.quiz = scoreOf(s2, +a); if (n === 'done') q.result = a; } } });
+    r.start(id);
+    for (let k = 0; k < 600 && r.running; k++) {
+      const v = r.view(), m = /^q(\d+)$/.exec(v.node);
+      if (v.choices.length) r.choose(m && data.questions[+m[1]] ? v.choices.findIndex(c => c.text === data.questions[+m[1]].opts[data.questions[+m[1]].ok]) : 0); else r.next();
+    }
+    return q;
+  };
+  const log = [], chapterDays = {};
+  let days = 0, graduated = false;
+  while (!graduated && days < 160) {
+    days++;
+    const st = career.state, w = career.weather(prog), sch = career.schedule(prog, { trust: 70, weather: w });
+    chapterDays[st.chapter] = (chapterDays[st.chapter] || 0) + 1;
+    log.push(`${st.day} ${st.chapter} ${w.kind}: ${sch.map(x => `${x.kind}:${x.id}`).join(' ')}`);
+    for (const it of sch) {
+      if (it.kind === 'exam') { const q = quiz(examDialogs(FL, it.id, { seed: st.seed + st.day }), 'exam'); career.exam(it.id, q.quiz.pct); assert.equal(q.result, 'pass', `${it.id} passed with the right answers`); }
+      else if (it.kind === 'navlog') { const q = quiz(navlogDialogs(FL, { seed: st.day }), 'navlog'); assert.equal(q.result, 'pass', 'the navigation log'); career.done('navlog', 'xc'); }
+      else if (it.kind === 'graduation') {
+        let hooked = false;
+        const ctx = { career: { chapter: st.chapter, graduated: false, flying: true }, today: { graduation: true, checkride: false, checkId: '' }, weather: {} };
+        const r = createRunner({ data: peopleDialogs(), state: talk, ctx, hooks: { onHook: (n, a) => { if (n === 'done' && a === 'graduation') hooked = true; } } });
+        r.start('chief'); for (let k = 0; k < 100 && r.running; k++) { const v = r.view(); if (v.choices.length) r.choose(0); else r.next(); }
+        assert.ok(hooked, 'the ceremony\'s speech heard to its end');
+        career.graduate(); graduated = true;
+      } else if (['flight', 'xc', 'checkride'].includes(it.kind)) {
+        assert.ok(career.decision(w.decision, w));
+        const plan = it.kind === 'flight' ? planFor(FL, it.id) : planFor(FL, null, { check: CHECKS[it.id] });
+        if (it.kind === 'flight') assert.equal(plan.aircraft, STAGE[st.chapter].aircraft, `${it.id} in the ${plan.aircraft}`);
+        const r = playDay(FL, { plan, anomalies: [], seed: st.day });
+        assert.equal(r.day.phase, 'debrief', `day ${st.day} ${plan.lessons.join(' ')}: ${r.phases.join(' ')}`);
+        for (const L of r.got) SC.noteLesson(prog, L);
+        const pass = r.got.every(L => L.passed);
+        assert.ok(pass, `day ${st.day} ${plan.lessons.join(' ')}: ${r.got.map(L => `${L.def.id} ${L.grade}`).join(', ')}`);
+        if (it.kind === 'flight') career.done('flight', it.id); else career.check(it.id, pass);
+      } else if (it.kind === 'study') career.done('study', it.id);
+    }
+    if (!graduated) { career.sleep(); career.advanceChapter(prog, 70); }
+  }
+  if (process.env.DBG) console.log(log.join('\n'));
+  const st = career.state;
+  assert.ok(st.graduated, `graduated (after ${days} days)\n${log.join('\n')}`);
+  for (const ch of LATER) {
+    const S = STAGE[ch];
+    for (const id of S.lessons) assert.ok(passedAt(prog, id), `${ch} ${id}`);
+    assert.ok(st.exams[S.exam].pass, `${ch}: ${EXAMS[S.exam].title}`);
+    assert.ok(st.checks[S.check].pass, `${ch}: ${CHECKS[S.check].title}`);
+    assert.ok(chapterDays[ch] >= 3, `${ch}: ${chapterDays[ch]} days`);           // (a twin's day flies m1 and m5 round its lesson: they pass early)
+  }
+  assert.ok(log.some(l => /lowCloud/.test(l)), 'a day of low cloud in the instrument chapter');
+  assert.ok(days >= 25 && days <= 120, `${days} days`);
+});

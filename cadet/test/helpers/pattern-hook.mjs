@@ -29,7 +29,8 @@ export function patternHook(FL) {
       const kt = down ? 80 : 75, e = kt - c.kias;
       st.iThr = clamp(st.iThr + e * 0.004 * dt, -0.4, 0.4); s.thr = clamp(s.thr + (e * 0.02 + st.iThr * 0.5) * dt * 2, 0, 1);
     } else if (fin || (/接地/.test(S.name) && c.aglR > 16)) {
-      if (c.aglR > 150) h = 360 - clamp(c.cross * 0.35, -45, 45);
+      // (the heading for a track onto the centre line: the crab the wind needs added — r1's crosswind kept it 30 m off)
+      if (c.aglR > 150) h = 360 - clamp(c.cross * 0.35, -45, 45) + (c.gsK > 30 ? clamp(w180(c.hdg - c.trk), -20, 20) : 0);
       // three knots above the bot's own speed (from the approach speed itself its flare floats down to the slowest
       // touchdown the lesson allows); the power alone, as the bot's own speed hold does it
       if (!c.onGround) { const e = L.V.appr + 3 - c.kias; st.iThr = clamp(st.iThr + e * 0.004 * dt, -0.4, 0.4); s.thr = clamp(s.thr + (e * 0.02 + st.iThr * 0.5) * dt * 2, 0, 1); }

@@ -10,7 +10,7 @@ export function makeBot(FL) {
   const P = FL.physics, SC = FL.school, DEG = Math.PI / 180, clamp = P.clamp;
   const w180 = a => ((a % 360) + 540) % 360 - 180;
   const st = { pBase: null, iThr: 0, lastIas: null, lastStep: -1, flare: false };
-  function reset() { st.pBase = null; st.iThr = 0; st.lastIas = null; st.flare = false; st.base = null; st.oeiP = null; }
+  function reset() { st.pBase = null; st.iThr = 0; st.lastIas = null; st.flare = false; st.base = null; st.oeiP = null; st.slip = null; st.rI = 0; st.aI = 0; st.xI = 0; st.rateHdg = null; st.lastVs = null; }
   // the hands: a pitch target (the hold), a bank target (the stick), the rudder
   function pitchTo(s, deg) { s.keyHold = true; s.pTgt = clamp(deg, -20, 22); s.pRate = 0; }
   function bankTo(s, bankT) { const o = s.out, p = -s.w[2] / DEG; s.rIn = clamp(0.045 * (bankT - o.bank) - 0.012 * p, -1, 1); }
@@ -25,12 +25,19 @@ export function makeBot(FL) {
     pitchTo(s, st.pBase + 0.35 * (c.kias - kt) + 1.5 * dv);
   }
   // altitude / vertical speed with the nose (level flight)
-  function vsPitch(s, c, vsT, dt) {
+  function vsPitch(s, c, vsT, dt, damp = 0) {
     if (st.pBase == null) st.pBase = c.pitch;
     st.pBase = clamp(st.pBase + (vsT - c.vs) * 0.0012 * dt, -10, 15);
-    pitchTo(s, st.pBase + (vsT - c.vs) * 0.004);
+    // (CADET: `damp` — the rate's own trend held back, so a rate step settles without the overshoot; i1's 500 fpm
+    // climb swung ±250 fpm round its target without)
+    const dvs = st.lastVs == null ? 0 : (c.vs - st.lastVs) / dt; st.lastVs = c.vs;
+    pitchTo(s, st.pBase + (vsT - c.vs) * 0.004 - damp * clamp(dvs, -600, 600));
   }
   const altVs = (c, alt) => clamp((alt - c.alt) * 3, -700, 700);
+  // (CADET: the short-field landing, x2, aims at its own touchdown mark 300 m in: a 3° path to 110 m short of it (the flare floats the rest), held with the
+  // height off it — the PAPI's path lands 180 m long after the flare's float — and a short, idle flare)
+  const shortField = (L) => L.def.steps.some(x => /短距離接地/.test(x.name));
+  const shortPath = (c) => { const aglT = Math.max(0, 190 - c.along) * Math.tan(3 * DEG) * 3.28084; return -(c.gsK * 5.3) + clamp((aglT - c.aglR) * 4, -400, 400); };
   function rudder(s, c) {
     if (s.A.twin && s.eng.some(e => !e.run || e.failed)) { s.rud = clamp((s.rudNeed || 0) + 0.04 * c.beta, -1, 1); return; }
     s.opts.autoRud = true;
@@ -64,18 +71,46 @@ export function makeBot(FL) {
     // landing: the flare and the roll-out
     if (/接地|着陸$|滑走路視認/.test(name)) {
       if (c.onGround) { s.thr = 0; s.brake = c.gsK < 60; s.pIn = 0; s.opts.autoRud = false; s.rud = clamp(-0.06 * w180(c.hdg - 360) - 0.02 * c.cross, -1, 1); return; }
-      { const crab = w180(c.hdg - c.trk); headTo(s, c, 360 - clamp(c.cross * 0.5, -8, 8) - clamp(c.latV * 2, -6, 6) + (c.aglR > 12 ? crab : 0), 8); }
+      // (CADET: a crosswind — the crab still more than 4° at 45 m — is landed with a sideslip, as taught: the downwind
+      // rudder lines the nose up with the runway, the upwind wing down stops the drift. FLIGHT LAB's bot took the crab
+      // out with the bank alone and drifted off the centre line: x1 and r1 failed on it)
+      const crab = w180(c.hdg - c.trk);
+      if (st.slip == null && c.aglR < 45) st.slip = Math.abs(crab) > 4;
+      if (st.slip) {
+        s.opts.autoRud = false;
+        const e = w180(c.hdg - 360), r = -s.w[1] / DEG;
+        st.rI = clamp((st.rI || 0) - e * 0.03 * dt, -0.7, 0.7);
+        s.rud = clamp(st.rI - 0.08 * e - 0.05 * r, -1, 1);
+        const lim = c.aglR < 3 ? 6 : 12, bT = clamp(-c.latV * 4 - c.cross * 0.5, -lim, lim), p = -s.w[2] / DEG;
+        st.aI = clamp((st.aI || 0) + (bT - c.bank) * 0.08 * dt, -0.6, 0.6);
+        s.rIn = clamp(st.aI + 0.12 * (bT - c.bank) - 0.03 * p, -1, 1);
+      } else headTo(s, c, 360 - clamp(c.cross * 0.5, -8, 8) - clamp(c.latV * 2, -6, 6) + (c.aglR > 12 ? crab : 0), 8);
       if (c.aglR < 12 || st.flare) {
         // the flare: the nose up as the ground comes, more if the sink is fast (Sorajima: later, and not at idle — its
         // flaps lift more, a FLIGHT LAB flare floats it down to 54 kt)
         if (!st.flare) { st.flare = true; st.p0 = c.pitch; st.t0 = s.thr; }
         // (half the power, eased off to idle at the wheels; the nose to +3.5° there)
-        s.thr = st.t0 * 0.5 * clamp(c.aglR / 12, 0, 1); pitchTo(s, clamp(st.p0 + (3.5 - st.p0) * (12 - c.aglR) / 12 + clamp((-c.vs - 150) * 0.015, 0, 3), -2, 6));
+        s.thr = st.t0 * 0.5 * clamp(c.aglR / 12, 0, 1); let pT = clamp(st.p0 + (3.5 - st.p0) * (12 - c.aglR) / 12 + clamp((-c.vs - 150) * 0.015, 0, 3), -2, 6);
+        // (CADET: in a sideslip, in the gusty crosswinds of x1 and r1, the flare follows a sink rate that shrinks with
+        // the height — a gust that balloons it is not pulled into further, a fast sink just above the runway gets a
+        // touch of power. FLIGHT LAB's flare, from a fixed attitude, landed hard there)
+        if (shortField(L)) s.thr = 0;
+        if (st.slip) { const vsT = -(100 + 14 * c.aglR); pT = clamp(c.pitch + 0.012 * (vsT - c.vs), -3, 8); if (c.vs < vsT - 150 || c.kias < L.V.appr - 7) s.thr = Math.max(s.thr, 0.3); }
+        pitchTo(s, pT);
       } else {
         // the bot flies the path with the nose and the speed with the power (steadier for a script)
-        const vsT = -(c.gsK * 5.3) - clamp((c.gp - 3) * 250, -300, 300);
-        vsPitch(s, c, vsT, dt); speedThr(s, c, (S.g && S.g.kt) || L.V.appr - 2, dt);
+        const vsT = shortField(L) ? shortPath(c) : -(c.gsK * 5.3) - clamp((c.gp - 3) * 250, -300, 300);
+        vsPitch(s, c, vsT, dt); speedThr(s, c, (S.g && S.g.kt) || (shortField(L) ? L.V.apprShort : L.V.appr - 2), dt);
       }
+      return;
+    }
+    // (CADET: the unusual attitudes of i2, which FLIGHT LAB's bot flew as level flight and pulled 3.9 G out of the
+    // spiral: nose high — full power, the nose down to the horizon, the wings level; nose low — idle, the wings level
+    // first, then the nose up a little at a time, under 2.5 G)
+    if (/異常姿勢/.test(name)) {
+      const p = -s.w[2] / DEG, roll = (bT) => { s.rIn = clamp(0.06 * (bT - c.bank) - 0.015 * p, -1, 1); };
+      if (/機首上げ/.test(name)) { s.thr = 1; roll(0); pitchTo(s, c.kias < 75 ? Math.max(c.pitch - 4, -3) : 0); }
+      else { s.thr = 0; roll(0); pitchTo(s, Math.abs(c.bank) > 15 || c.g > 2.5 ? c.pitch : Math.min(c.pitch + 2.5, 1)); }
       return;
     }
     // stalls: idle (or full) and the nose up slowly; the recovery
@@ -112,13 +147,20 @@ export function makeBot(FL) {
     else if (how === 'rate') {
       // the rate with the nose, the speed with the power (steadier for a script than the textbook's power-for-rate)
       if (st.base == null) { st.base = clamp(P.steadyState(s, g.kt, g.fpm || 0, { altFt: c.alt }).thr, 0, 1); s.thr = st.base; }
-      vsPitch(s, c, g.fpm || 0, dt); const e = g.kt - c.kias; st.iThr = clamp(st.iThr + e * 0.004 * dt, -0.3, 0.3); s.thr = clamp(st.base + e * 0.02 + st.iThr, 0, 1); headTo(s, c, hdg);
+      // (CADET: after a turn — i1's climb follows its 90° turn — the heading the turn ended on is held; turning back to
+      // the lesson's first heading during the climb took the rate 250 fpm off its target)
+      if (st.rateHdg == null) st.rateHdg = tv('hdg') == null && Math.abs(w180(hdg - c.hdg)) > 30 ? c.hdg : hdg;
+      vsPitch(s, c, g.fpm || 0, dt, 0.004); const e = g.kt - c.kias; st.iThr = clamp(st.iThr + e * 0.004 * dt, -0.3, 0.3); s.thr = clamp(st.base + e * 0.02 + st.iThr, 0, 1); headTo(s, c, st.rateHdg);
     }
     else if (how === 'approach' || how === 'ils' || how === 'pattern') {
       // the vertical path: from the PAPI angle (or the glide slope), power for the path, pitch for speed
-      const vsT = how === 'ils' ? -(c.gsK * 5.3) + clamp(c.gsd * 2.5, -2, 2) * 200 : how === 'pattern' ? (g.fpm || -500) : -(c.gsK * 5.3) - clamp((c.gp - 3) * 250, -300, 300);
+      let vsT = how === 'ils' ? -(c.gsK * 5.3) + clamp(c.gsd * 2.5, -2, 2) * 200 : how === 'pattern' ? (g.fpm || -500) : -(c.gsK * 5.3) - clamp((c.gp - 3) * 250, -300, 300);
+      if (how === 'approach' && shortField(L)) vsT = shortPath(c);
       vsPitch(s, c, vsT, dt); speedThr(s, c, g.kt, dt);
-      const crab = c.gsK > 30 ? w180(c.hdg - c.trk) : 0, lat = (how === 'ils' ? 360 + clamp(c.loc * 30, -30, 30) : 360 - clamp(c.cross * 0.12, -30, 30)) + crab;
+      // (CADET: on final a slow integral of the distance off the centre line as well — in a steady crosswind the crab
+      // read from heading and track lags, and FLIGHT LAB's bot settled 30 m to one side in r1's)
+      if (how === 'approach') st.xI = clamp((st.xI || 0) - c.cross * 0.004 * dt, -8, 8);
+      const crab = c.gsK > 30 ? w180(c.hdg - c.trk) : 0, lat = (how === 'ils' ? 360 + clamp(c.loc * 30, -30, 30) : 360 - clamp(c.cross * 0.12, -30, 30) + (how === 'approach' ? st.xI : 0)) + crab;
       headTo(s, c, lat, 20);
     }
     else if (how === 'oei') { s.thr = 1; if (st.oeiP == null) st.oeiP = 5; st.oeiP = clamp(st.oeiP + (c.kias - g.kt) * 0.04 * dt, -2, 9); pitchTo(s, clamp(st.oeiP + 0.4 * (c.kias - g.kt), -4, 10)); const live = s.eng[0].failed ? 1 : -1; bankTo(s, 3 * live + clamp(w180(hdg - c.hdg) * 0.4, -4, 4)); }

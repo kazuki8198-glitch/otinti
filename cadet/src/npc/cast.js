@@ -6,6 +6,7 @@
 import { createActor } from './actor.js';
 import { PEOPLE, placeOf } from '../content/people.js';
 
+export const FAR = 45;                                     // metres: beyond this a person is not drawn
 const hash = (s) => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; };
 
 // parent: the academy's group (the runway frame: x = across, z = −along); world: the colliders; interactor: the E
@@ -42,11 +43,14 @@ export function createCast({ parent, world, interactor, ids, onTalk }) {
   function layout(slot, chapter, what = []) { for (const id of ids) put(id, placeOf(id, slot, chapter, what)); }
   // every frame: they look at the cadet when near (or when talking to them), their mouth while their line types
   const opt = { lookAt: null, talking: false };
-  // (camWorld: where to look, in the scene; at: the cadet in the runway frame { a, c })
+  // (camWorld: where to look, in the scene; at: the eye in the runway frame { a, c }). Someone far from the eye is not
+  // drawn (a person is some 20 draw calls and their shadows: far away they are a few pixels, or behind walls)
   function update(dt, camWorld, at, talkingTo = null, typing = false) {
     for (const id of ids) {
       const o = people[id]; if (!o.at) continue;
-      const da = at.a - o.at.a, dc = at.c - o.at.c, near = da * da + dc * dc < 36;
+      const da = at.a - o.at.a, dc = at.c - o.at.c, d2 = da * da + dc * dc, near = d2 < 36;
+      o.actor.root.visible = d2 < FAR * FAR || talkingTo === id;
+      if (!o.actor.root.visible) continue;
       opt.lookAt = near || talkingTo === id ? camWorld : null; opt.talking = talkingTo === id && typing;
       o.actor.update(dt, opt);
     }

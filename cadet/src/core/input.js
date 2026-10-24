@@ -15,10 +15,14 @@ export function createInput(canvas) {
     const plain = () => { try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* not allowed here */ } };
     try { const r = canvas.requestPointerLock({ unadjustedMovement: true }); if (r && r.catch) r.catch(plain); } catch (e) { plain(); }
   }
+  // (the second argument: the game let the mouse go itself — a talk, the tablet — rather than the player pressing Esc;
+  // the event comes later, so it is remembered when exitLock is called)
+  let selfExit = false;
   document.addEventListener('pointerlockchange', () => {
     const was = locked; locked = document.pointerLockElement === canvas;
     if (!locked) keys.clear();
-    if (was !== locked) for (const f of lockFns) f(locked);
+    const bySelf = !locked && selfExit; if (!locked) selfExit = false;
+    if (was !== locked) for (const f of lockFns) f(locked, bySelf);
   });
   document.addEventListener('mousemove', (e) => {
     if (!enabled) return;
@@ -52,7 +56,7 @@ export function createInput(canvas) {
 
   return {
     keys, requestLock,
-    exitLock() { if (locked && document.exitPointerLock) document.exitPointerLock(); },
+    exitLock() { if (locked && document.exitPointerLock) { selfExit = true; document.exitPointerLock(); } },
     get locked() { return locked; },
     set enabled(v) { enabled = v; if (!v) { keys.clear(); edges.clear(); lookX = lookY = 0; wheel = wheelAcc = 0; } },
     get enabled() { return enabled; },

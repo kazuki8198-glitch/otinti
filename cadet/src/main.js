@@ -47,7 +47,7 @@ import { createCareer, SLOT_HOURS, SLOT_NAMES, CHAPTERS, CH2, GROUND, EXAMS, CLA
 import { planFor } from './career/day.js';
 import { exportArchive, importArchive } from './career/archive.js';
 import { PEOPLE, PEERS } from './content/people.js';
-import { createCast } from './npc/cast.js';
+import { createCast, FAR as CAST_FAR } from './npc/cast.js';
 import { peopleDialogs } from './content/dialog/people.js';
 import { careerInstructorDialogs } from './content/dialog/instructor-career.js';
 import { careerBoardDialogs } from './content/dialog/cockpit.js';
@@ -208,7 +208,9 @@ async function boot() {
     },
   };
   interactor = createInteractor({ walker, world, L, hud });
-  for (const t of academy.targets) interactor.add({ ...t, use: () => { interactor.showCard(t.title, t.text); audio.ui('examine'); return 'examined'; } });
+  // (the boards that tell the day — the dispatch's schedule and weather, the lobby's flights, briefing room 1's
+  // whiteboard — say the career's own day: boardCard below)
+  for (const t of academy.targets) interactor.add({ ...t, use: () => { const c = boardCard(t) || t; interactor.showCard(c.title, c.text); audio.ui('examine'); return 'examined'; } });
   for (const t of academy.doors.targets()) {
     interactor.add({
       ...t, use: () => {
@@ -277,9 +279,10 @@ async function boot() {
     if (audio.click) audio.click();
     walkProps.set(today.walk.props());
     if (r && r.mx) {
-      // the maintenance is called: the mechanic puts it right
+      // the maintenance is called: the mechanic puts it right (and remembers who looked carefully)
+      talkState.trust.mechanic = Math.min(100, trustOf(talkState, 'mechanic') + 2); saved.save(talkState);
       interactor.closeCard();
-      toast(`整備に連絡しました。${r.mx}`, 5200);
+      toast(`整備の大城さんに連絡しました。${r.mx}`, 5200);
       walkOpen = null; renderWalk();
       return true;
     }
@@ -327,9 +330,15 @@ async function boot() {
   let celebrate = false;                                   // the first solo flown: they are waiting by the aircraft
   // where he is: by the aircraft once the cadet is briefed for today's flight (or for the solo, or after it, to
   // celebrate), else in his room
-  const insWhere = () => (celebrate || (talkState.flags.briefed_today && !flownToday()) ? 'apron' : 'room');
+  const insWhere = () => (celebrate || (talkState.flags.briefed_today && !flownToday()) ? 'apron' : career.slot === 'evening' ? 'away' : 'room');
   function placeInstructor(where = insWhere()) {
     insAt = where;
+    // the evening: gone home (nothing to bump into or talk to)
+    if (where === 'away') {
+      instructor.root.visible = false; world.setEnabled(insCollider, false); world.setEnabled(insApron, false);
+      for (const t of interactor.list()) if (t.id === 'npc:instructor') t.enabled = false;
+      return;
+    }
     const root = instructor.root, P0 = where === 'apron' ? APRON : { c: INS.c, a: INS.a, yaw: Math.PI };
     academy.group.add(root); root.position.set(P0.c, 0, -P0.a); root.rotation.set(0, P0.yaw, 0); root.visible = true;
     world.setEnabled(insCollider, where === 'room'); world.setEnabled(insApron, where === 'apron');
@@ -622,7 +631,7 @@ async function boot() {
   const windNow = () => (career.weather(prog()).kind === 'crosswind' ? XWIND : DAY_WIND);
   // the light and the sky for the time of day and the weather
   function applySlot() {
-    if (!params.has('t')) { hours = career.hours; }
+    if (!(parseFloat(params.get('t')) > 0)) { hours = career.hours; }        // (?t=H keeps the sky at H: the tests, the bench)
     const w = career.weather(prog()), slot = career.slot;
     const fog = w.kind === 'amFog' && (slot === 'morning' || slot === 'am') ? 0.85 : 0;
     const overcast = w.kind === 'storm' ? 1 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.95 : fog ? 0.7 : w.kind === 'crosswind' ? 0.35 : 0;
@@ -751,6 +760,21 @@ async function boot() {
   interactor.add({ id: 'home', frame: [ENTRANCE.c + 1.6, 1.3, -ENTRANCE.a], radius: 0.9, prompt: () => (career.slot === 'evening' || planToday().some(x => x.kind === 'off') ? '寮へ帰る（今日を終える）' : '正面入口'), use: goHome });
   $('#card .card-choices').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && homeOpen) homeChoose(+b.dataset.k); });
 
+  // the day's boards: what the career has today
+  function boardCard(t) {
+    const id = t.id.replace(/^ex:/, ''); if (!['schedule', 'metar', 'status-board', 'wb-brief-1'].includes(id)) return null;
+    const st = career.state, p = prog(), w = career.weather(p), sch = planToday(), it = flightItem();
+    const date = dateText(st.day), plan = it ? planOf(it) : null;
+    const flights = sch.filter(x => FLY_KINDS.includes(x.kind)).map(x => `${x.slot === 'pm' ? '14:00' : '09:30'}  N738SY  PA-28-181  ${x.kind === 'solo' ? 'ファーストソロ（訓練生のみ）' : x.kind === 'checkride' ? '審査 c1（主任教官）' : `${x.id}（早瀬 教官）`}`);
+    if (id === 'metar') return { title: `気象（${date}・KLAB は架空の飛行場）`, text: `METAR ${w.metar.am}\n午後の見込み ${w.metar.pm}\n${w.taf}\n\n今日の天気：${w.ja}。ソロ前の訓練生の基準：雷雨なし・視程 5 SM 以上・雲高 3,000 ft 以上・横風 10 kt 以下。` };
+    if (id === 'schedule' || id === 'status-board') {
+      const rows = [...flights, '10:00  N512SY  PA-28-181  訓練（同期）', '13:30  N806SY  PA-44-180  双発（上級）'];
+      return { title: id === 'schedule' ? `本日の割り当て（運航管理・${date}）` : `本日のフライト（LAB 飛行場・${date}）`, text: (sch.some(x => x.kind === 'off') ? '本日は訓練休み\n' : '') + rows.join('\n') + (w.fly.am && w.fly.pm ? '' : `\n※ ${w.ja}：${w.why}`) };
+    }
+    if (!plan || st.chapter !== 'ch2') return { title: 'ホワイトボード', text: st.chapter === 'ch1' ? '座学の期間：午前はブリーフィング室 2 で授業、午後は訓練装置室。\nわからないことは、早瀬 教官に。' : '入社おめでとう。\n翔洋航空 フライトアカデミー' };
+    const main = FL.school.lesson(plan.main), titles = plan.lessons.map(x => `${x} ${FL.school.lesson(x).title}`).join(' → ');
+    return { title: `本日：${plan.main} ${main.title}`, text: `目的：${main.goal}\n今日の流れ：外部点検 → エンジン始動 → 交信 → タキシー → ランナップ → ${titles} → 駐機・講評\n基準：${main.std}` };
+  }
   // the tablet (Tab): what it shows, what it does
   const BANKS = FL.quiz.BANKS.filter(b => !['q_me', 'q_ifr', 'q_nav', 'q_crm'].includes(b.id));
   const tablet = createTablet({
@@ -855,10 +879,10 @@ async function boot() {
     onLogbook: () => { input.enabled = true; input.exitLock(); dayHud.showLogbook(logbook.entries, logbook.totals(), { onClose: () => { if ((mode === 'walk' || mode === 'fly') && !talk && !(fly && (fly.talking || fly.debrief))) input.requestLock(); } }); },
   });
   function openMenu(tab) { if (menu.isOpen || (fly && fly.fading)) return; interactor.closeCard(); input.enabled = false; input.exitLock(); menu.open(tab); audio.ui('open'); }
-  input.onLock((on) => {
+  input.onLock((on, bySelf) => {
     document.body.classList.toggle('locked', on);
-    if (!on) {
-      lostAt = performance.now();
+    if (!on) lostAt = performance.now();
+    if (!on && !bySelf) {
       // Esc while reading a card (the browser takes that Esc to free the mouse): just close the card
       if (interactor.cardOpen) { interactor.closeCard(); audio.ui('close'); }
       else if (talk || (fly && (fly.talking || fly.debrief)) || dayHud.logbookOpen || tablet.isOpen || cards.showing) { /* talking, the debrief, the logbook, the tablet: the mouse is free */ }
@@ -980,6 +1004,8 @@ async function boot() {
     // the instructor looks at the player when they are near (or talking), and moves their mouth while their line shows
     if (!(fly && fly.active)) {                                // (in the aircraft fly-mode moves him)
       const near = insAt === 'room' ? Math.hypot(pa - INS.a, pc - INS.c) < 7 && academy.roomOf(pa, pc)?.id === 'brief-1' : Math.hypot(pa - APRON.a, pc - APRON.c) < 9;
+      // (far from the eye he is not drawn, as the cast: npc/cast.js)
+      if (insAt !== 'away') { const P0 = insAt === 'apron' ? APRON : INS; instructor.root.visible = Math.hypot(pa - P0.a, pc - P0.c) < CAST_FAR || talkWho === 'instructor'; }
       const v = talk ? talkRunner().view() : null;
       instructor.update(dt, { lookAt: (talk && talkWho === 'instructor') || near ? camWorld : null, talking: !!(v && v.speaker === 'instructor' && dui.typing) });
       cast.update(dt, camWorld, { a: pa, c: pc }, talk ? talkWho : null, !!(v && v.speaker === talkWho && dui.typing));
@@ -1212,6 +1238,8 @@ async function boot() {
       home: () => goHome(), homeChoose: (k) => homeChoose(k),
       tablet: { open: (p) => tablet.open(p), close: () => tablet.close(), isOpen: () => tablet.isOpen, page: () => tablet.page },
       cards: () => cards.showing, celebrate: () => celebrate, reset: () => resetProgress(), gate: () => career.gate(prog(), trustI()),
+      // (the screenshots: everyone by the aircraft as after the first solo)
+      stageCelebrate: () => { celebrate = true; placeInstructor('apron'); layoutPeople(); },
       readiness: () => { const d = boardTalk(); return d.dialogs.board.nodes.today ? 'ready' : d.dialogs.board.nodes.c2 ? 'checkride' : d.dialogs.board.nodes.not.text; },
     },
     settings,

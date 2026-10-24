@@ -32,6 +32,10 @@ const shotNow = async (name, frames) => {
 };
 await ev(() => window.__cadet.pause(true));
 await ev((src) => { (0, eval)(src + '\nwindow.makeBot = makeBot;'); }, BOT_SRC);
+// (M5: the career's day 12, a1 flown — today t1 → a2 → t3 — the go / no-go given and the briefing done)
+await ev(() => window.__cadet.career.set({ state: { chapter: 'ch2', day: 12, slot: 'am', done: { prologue: 1 }, exams: { written1: { tries: 1, best: 90, pass: true } } },
+  progress: { lessons: { a1: { tries: 1, best: 'S', pass: true, levels: ['basic'] } } }, flags: { met_instructor: true, has_tablet: true, briefed_today: true, brief_checked: true }, place: false }));
+await ev(() => { const C = window.__cadet; C.career.talkTo('dispatcher'); for (let k = 0; k < 40 && C.dialog(); k++) { const v = C.dialog(); if (v.choices.length) C.dialogChoose('予定どおり'); else C.dialogNext(); } });
 const day = () => ev(() => window.__cadet.fly.day());
 const sim = (s, dt = 1 / 30) => ev(({ s, dt }) => window.__cadet.simulate(s, dt), { s, dt });
 // the walk-around: the pitot cover, then the water in the right sump
@@ -51,7 +55,7 @@ for (const p of await ev(() => window.__cadet.walk.targets())) {
 }
 // in: the day at the basic level
 await ev(() => window.__cadet.fly.board(true)); await sim(0.3);
-for (let i = 0; i < 12; i++) { const d = await ev(() => window.__cadet.dialog()); if (!d) break; if (d.choices.length) await ev((r) => window.__cadet.dialogChoose(r), d.choices.some(c => /通して/.test(c.text)) ? '通して' : '基礎'); else await ev(() => window.__cadet.dialogNext()); }
+for (let i = 0; i < 12; i++) { const d = await ev(() => window.__cadet.dialog()); if (!d) break; if (d.choices.length) await ev((r) => window.__cadet.dialogChoose(r), '^基礎'); else await ev(() => window.__cadet.dialogNext()); }
 await sim(4);
 await ev(() => { window.__cadet.fly.key('Enter'); window.__cadet.fly.key('Enter'); window.__cadet.fly.act('parkBrake'); });
 await sim(9);                                                   // the instructor's lines

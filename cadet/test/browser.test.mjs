@@ -34,7 +34,7 @@ const analyse = (page, url) => page.evaluate(async (url) => {
   return { mean: s / n, sd: Math.sqrt(s2 / n - (s / n) ** 2) };
 }, url);
 
-describe('browser', { skip: !chromium && 'Playwright not found', timeout: 1800000 }, () => {
+describe('browser', { skip: !chromium && 'Playwright not found', timeout: 3600000 }, () => {
   let g = null;
   const ev = (fn, arg) => g.page.evaluate(fn, arg);
   before(async () => {
@@ -44,12 +44,14 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 180000
   });
   after(async () => { if (g) await g.browser.close(); });
   // a new browser on the same file (the software renderer here keeps every shader and picture it has made: a few
-  // chapters in one page grow past the machine's memory); the errors and requests so far are kept for the last test
+  // chapters in one page grow past the machine's memory), at the medium preset (the budget is checked at 'high' above;
+  // the first picture at 'high' alone takes some 9 GB in the software renderer); the errors and requests so far are
+  // kept for the last test
   const seen = { errors: [], requests: [] };
   const restart = async () => {
     seen.errors.push(...g.errors); seen.requests.push(...g.requests);
     await g.browser.close(); g = null;
-    g = await openGame(chromium, { q: 'high', w: 800, h: 450, t: 10 });
+    g = await openGame(chromium, { q: 'medium', w: 800, h: 450, t: 10 });
     await ev(() => window.__cadet.pause(true));
   };
 

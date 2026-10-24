@@ -1161,7 +1161,7 @@ async function boot() {
   window.__cadet = {
     ready: true, L, FL, VIEWS, spec, world, scene, camera, renderer, setView, setQuality, runBench, walkRoute, placeWalker,
     setPose: (p, look) => { outOfAircraft(); setMode('spectator'); spectator.setPose(new THREE.Vector3(...p), new THREE.Vector3(...look)); },
-    setTime: (h) => { hours = h; applyTime(); }, stats: () => ({ fps: stats.fps, ...pipe.sceneInfo, all: renderer.info.render.calls, dpr: pipe.dpr, preset: preset.id, gpu, trees: veg.counts, colliders: world.count(), memory: { ...renderer.info.memory } }),
+    setTime: (h) => { hours = h; applyTime(); }, stats: () => ({ fps: stats.fps, ...pipe.sceneInfo, all: renderer.info.render.calls, dpr: pipe.dpr, preset: preset.id, gpu, trees: veg.counts, colliders: world.count(), memory: { ...renderer.info.memory, programs: (renderer.info.programs || []).length } }),
     pause: (v) => { running = !v; },
     mode: () => mode, setMode,
     player: () => { const p = walker.framePos; return { a: p.a, c: p.c, yaw: walker.state.yaw, place: placeAt(p.a, p.c).name }; },

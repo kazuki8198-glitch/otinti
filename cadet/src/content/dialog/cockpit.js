@@ -91,7 +91,7 @@ export function debriefLine(st) {
 // briefed yet; 'weather' — no go / no-go given at the counter; 'none' — nothing to fly today; 'tired' — grounded by the
 // IMSAFE question), checkride (the chief instructor in the right seat) }. The choice reaches the game as the hook 'fly'
 // ('day:<level>' | 'free' | 'leave'), as in M4.
-export function careerBoardDialogs(FL, { lessons = [], ready = false, reason = 'none', checkride = false, who = INSTRUCTOR.title_ja, color = '#5cc8ff' } = {}) {
+export function careerBoardDialogs(FL, { lessons = [], ready = false, reason = 'none', checkride = false, checkTitle = 'ソロ前の審査', who = INSTRUCTOR.title_ja, color = '#5cc8ff' } = {}) {
   const all = lessonsOf(FL);
   const titles = lessons.map(id => { const l = all.find(x => x.id === id); return l ? q(l.title) : id; });
   const levels = FL.school && Array.isArray(FL.school.LEVELS) ? FL.school.LEVELS : [];
@@ -100,7 +100,7 @@ export function careerBoardDialogs(FL, { lessons = [], ready = false, reason = '
   const B = {};
   const speakers = { instructor: { name_ja: who, color }, player: SPEAKERS.player };
   if (checkride) {
-    B.seat = say('シートベルト、ドア、よし。……では、ソロ前の審査を始めます。', { hook: { name: 'look', arg: 'player' }, next: 'c2' });
+    B.seat = say(`シートベルト、ドア、よし。……では、${checkTitle}を始めます。`, { hook: { name: 'look', arg: 'player' }, next: 'c2' });
     B.c2 = say(`内容は${titles.join('、')}。ここから先、私は手伝いません。いつもどおりに、チェックリストから。`, { choices: [
       { text: '始めます（エンジン始動前の点検から）', next: 'go', effects: [{ hook: 'fly', arg: 'day:basic' }] },
       { text: '一度降ります', next: 'leave', effects: [{ hook: 'fly', arg: 'leave' }] },

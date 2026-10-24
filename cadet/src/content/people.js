@@ -52,7 +52,7 @@ export function placeOf(id, slot, chapter, what = []) {
   const has = (k) => what.some(x => x.kind === k && (x.slot === slot || (slot === 'morning' && x.slot === 'am')));
   if (slot === 'evening') return PEERS.includes(id) ? AT[`lounge${PEERS.indexOf(id) + 1}`] : null;
   // (M6) the graduation morning: everyone in the lobby
-  if (has('graduation')) return id === 'chief' ? AT.lobbyFront : AT[`grad${['kiryu', 'asahi', 'mori', 'lecturer', 'dispatcher', 'mechanic', 'examiner'].indexOf(id) + 1}`] || null;
+  if (what.some(x => x.kind === 'graduation')) return id === 'chief' ? AT.lobbyFront : AT[`grad${['kiryu', 'asahi', 'mori', 'lecturer', 'dispatcher', 'mechanic', 'examiner'].indexOf(id) + 1}`] || null;
   if (id === 'examiner') return chapter === 'ch6' && has('checkride') ? AT.examRoom : null;
   switch (id) {
     case 'dispatcher': return AT.counter;

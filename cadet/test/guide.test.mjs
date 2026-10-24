@@ -62,3 +62,20 @@ test('guide: the way through the academy\'s doors', () => {
   // rooms have centres
   assert.ok(R.centre('dispatch').a > 664 && R.centre('dispatch').a < 676);
 });
+
+test('guide M6: the navigation log, the solo cross-country, a check with the examiner, the graduation, after it', () => {
+  let g = nextStep({ chapter: 'ch3', slot: 'am', plan: [item('navlog', 'am', 'now', { who: 'instructor' }), item('xc', 'pm', 'later')] });
+  assert.match(g.text, /航法ログ/); assert.deepEqual([g.who, g.room, g.at], ['instructor', 'brief-1', 'person']);
+  g = nextStep({ chapter: 'ch3', slot: 'pm', plan: [item('navlog', 'am', 'done'), item('xc', 'pm', 'now')], decided: true, briefed: false });
+  assert.match(g.text, /単独の野外飛行のブリーフィング/);
+  g = nextStep({ chapter: 'ch3', slot: 'pm', plan: [item('xc', 'pm', 'now')], decided: true, briefed: true, walk: { done: 0, total: 15 } });
+  assert.match(g.text, /外部点検/);
+  g = nextStep({ chapter: 'ch6', slot: 'am', plan: [item('checkride', 'am', 'now', { who: 'examiner' })], decided: true, briefed: false });
+  assert.match(g.text, /黒田 審査官のブリーフィング/); assert.equal(g.who, 'examiner');
+  g = nextStep({ chapter: 'ch6', slot: 'morning', plan: [item('graduation', 'morning', 'now', { who: 'chief' })] });
+  assert.match(g.text, /修了式/); assert.deepEqual([g.who, g.room], ['chief', 'lobby']);
+  g = nextStep({ chapter: 'ch6', slot: 'evening', plan: [item('off', 'am', 'later')], graduated: true });
+  assert.match(g.text, /修了しました/); assert.equal(g.at, 'entrance');
+  // a written test of the later chapters is the instructor's (in his room), the first one the lecturer's
+  assert.equal(nextStep({ chapter: 'ch4', slot: 'pm', plan: [item('exam', 'pm', 'now', { who: 'instructor', title: '計器飛行の筆記試験' })] }).room, 'brief-1');
+});

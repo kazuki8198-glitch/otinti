@@ -516,7 +516,7 @@ async function boot() {
     input.exitLock();
     audio.ui('open');
     // the morning is over once the day's work starts
-    if (career.slot === 'morning' && career.chapter !== 'prologue') { career.advance('am'); applySlot(); }
+    if (career.slot === 'morning' && career.chapter !== 'prologue' && !planToday().some(x => x.kind === 'graduation')) { career.advance('am'); applySlot(); }
     if (!pick.run.start(pick.dialog, pick.node)) { endTalk(); return null; }
     return 'talk';
   }
@@ -693,7 +693,7 @@ async function boot() {
   }
   interactor.add({ id: 'npc:instructor', frame: [INS.c, 1.5, -INS.a], radius: 0.45, prompt: `${INSTRUCTOR.title_ja}と話す`, use: () => startTalk('instructor') });
   // the academy's other people
-  const cast = createCast({ parent: academy.group, world, interactor, ids: ['chief', 'lecturer', 'dispatcher', 'mechanic', ...PEERS], onTalk: (id) => startTalk(id) });
+  const cast = createCast({ parent: academy.group, world, interactor, ids: ['chief', 'lecturer', 'dispatcher', 'mechanic', 'examiner', ...PEERS], onTalk: (id) => startTalk(id) });
   // everyone standing drawn as one mesh (npc/crowd.js)
   const crowdAt = new THREE.Vector3();
   const crowd = createCrowd(scene, { outdoors: (root) => { root.getWorldPosition(crowdAt); const [fx, fz] = toFrame(crowdAt.x, crowdAt.z); return !academy.inside(-fz, fx); } });
@@ -860,7 +860,7 @@ async function boot() {
     else if (grounded()) reason = 'tired';
     else if (it.kind === 'checkride') reason = talkState.flags.c1_briefed ? null : 'brief';
     else if (!talkState.flags.briefed_today) reason = 'brief';
-    if (it && it.kind === 'checkride' && !reason) { const who = checkWho(it); return careerBoardDialogs(FL, { lessons: plan.lessons, checkride: true, who: PEOPLE[who].title, color: PEOPLE[who].color }); }
+    if (it && it.kind === 'checkride' && !reason) { const who = checkWho(it); return careerBoardDialogs(FL, { lessons: plan.lessons, checkride: true, checkTitle: CHECKS[it.id] ? CHECKS[it.id].title : 'ソロ前の審査', who: PEOPLE[who].title, color: PEOPLE[who].color }); }
     return careerBoardDialogs(FL, { lessons: plan.lessons, ready: !reason, reason: reason || 'none' });
   }
   // out of the aircraft after a flying day: what was flown counts (FLIGHT LAB's record already has the lessons)
@@ -1579,6 +1579,8 @@ async function boot() {
       home: () => goHome(), homeChoose: (k) => homeChoose(k),
       tablet: { open: (p) => tablet.open(p), close: () => tablet.close(), isOpen: () => tablet.isOpen, page: () => tablet.page },
       cards: () => cards.showing, celebrate: () => celebrate, reset: () => resetProgress(), gate: () => career.gate(prog(), trustI()),
+      // (M6) today's aircraft on stand 19, the cloud the eye is in (0 clear … 1 white), what is on briefing room 1's whiteboard
+      aircraft: () => todayType, cloud: () => cloudK, haze: () => (haze0 ? haze0.kind : null),
       // (the screenshots: everyone by the aircraft as after the first solo)
       stageCelebrate: () => { celebrate = true; placeInstructor('apron'); layoutPeople(); },
       readiness: () => { const d = boardTalk(); return d.dialogs.board.nodes.today ? 'ready' : d.dialogs.board.nodes.c2 ? 'checkride' : d.dialogs.board.nodes.not.text; },

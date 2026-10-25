@@ -1071,6 +1071,24 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.ok(await ev(() => parseFloat(getComputedStyle(document.querySelector('#guide b')).fontSize)) > 18);
     await ev(() => { window.__cadet.settings.set('subSize', 1); window.__cadet.settings.set('colorAssist', false); });
     assert.ok(!(await ev(() => document.body.classList.contains('cvd'))));
+    // (M8) the new features: all off as the game starts (nothing goes out unless the player turns them on)
+    assert.deepEqual(await ev(() => ['aiTutor', 'micRadio', 'crewEnglish'].map(k => window.__cadet.settings.get(k))), [false, false, false]);
+  });
+
+  test('(M8) the tablet\'s notes: written, kept in this browser with where and when, taken away as text', async () => {
+    await ev(() => { window.__cadet.setMode('walk'); window.__cadet.career.tablet.open('notes'); });
+    assert.equal(await ev(() => window.__cadet.career.tablet.page()), 'notes');
+    await g.page.fill('.tb .tb-note-in', '運航管理の場所がわからなかった。');
+    await g.page.getByRole('button', { name: '保存する' }).click();
+    const notes = await ev(() => window.__cadet.notes());
+    assert.equal(notes.length, 1);
+    assert.equal(notes[0].text, '運航管理の場所がわからなかった。');
+    assert.match(notes[0].where, /^第 \d 章|^序章/);
+    assert.match(await ev(() => localStorage.getItem('cadet.notes')), /運航管理の場所/);
+    await g.page.getByRole('button', { name: '文字で書き出す（コピー用）' }).click();
+    const rep = await ev(() => window.__cadet.report());
+    assert.ok(rep && /CADET の感想/.test(rep.text) && /\[1\] .*\n運航管理の場所がわからなかった。/.test(rep.text), JSON.stringify(rep));
+    await ev(() => { window.__cadet.closeReport(); window.__cadet.career.tablet.close(); });
   });
 
   test('dusk, presets and the bench', async () => {
@@ -1092,6 +1110,12 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     const r = await ev(() => window.__cadet.runBench(1, 1));
     assert.equal(r.views.length, 10);
     for (const v of r.views) assert.ok(v.avgMs > 0 && v.calls > 0 && v.triangles > 0, JSON.stringify(v));
+    // (M8) its result as text for README's table of real machines
+    await ev((r) => window.__cadet.benchReport(r), r);
+    const rep = await ev(() => window.__cadet.report());
+    assert.equal(rep.title, '性能の計測結果');
+    assert.equal(rep.text.split('\n').filter(l => /^\| \d{4}-/.test(l)).length, 10, rep.text);
+    await ev(() => window.__cadet.closeReport());
   });
 
   test('no page errors, no network requests', () => {

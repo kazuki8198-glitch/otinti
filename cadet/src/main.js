@@ -61,6 +61,7 @@ import { createCards } from './ui/cards.js';
 import { createCoach } from './ui/coach.js';
 import { createReport } from './ui/report.js';
 import { benchText } from './core/bench-report.js';
+import { createNotes } from './core/notes.js';
 import { trustOf } from './dialog/engine.js';
 import { spoken } from './content/dialog/atc.js';
 import { nextStep, makeRouter } from './career/guide.js';
@@ -1084,6 +1085,7 @@ async function boot() {
   }
   // the tablet (Tab): what it shows, what it does
   const BANKS = FL.quiz.BANKS;
+  const notes = createNotes(store);
   const coach = createCoach({ root: $('#hud'), settings });
   let coachAt = null;
   const tablet = createTablet({
@@ -1124,6 +1126,12 @@ async function boot() {
         } catch (e) { return `読み込めませんでした：${e.message}`; }
       },
       reset: () => resetProgress(),
+      // (M8) the player's notes: where they were written (the chapter, the day, the place), taken away as text
+      notes: {
+        list: () => notes.list(), get draft() { return notes.draft; }, setDraft: (t) => notes.setDraft(t), remove: (id) => notes.remove(id), clear: () => notes.clear(),
+        add: (t) => { const st = career.state, p = walker.framePos; return notes.add(t, `${CHAPTERS[st.chapter].title}・${dateText(st.day)}・${SLOT_NAMES[st.slot]}・${placeAt(p.a, p.c).name}`); },
+        export: () => report.show({ title: '感想（書き出し）', intro: '下の文字をコピーして、作った人に渡してください（メールやメッセージに貼り付け）。', text: notes.exportText({ build: buildInfo, ua: navigator.userAgent }), filename: 'cadet-notes.txt' }),
+      },
       wait: () => { if (career.advance()) { cards.show({ kicker: SLOT_NAMES[career.slot], title: dateText(career.day), sub: '', ms: 900, onDark: () => applySlot() }); } },
     },
     onClose: () => { if (mode === 'walk' && !talk && !menu.isOpen) input.requestLock(); },
@@ -1730,6 +1738,9 @@ async function boot() {
       readiness: () => { const d = boardTalk(); return d.dialogs.board.nodes.today ? 'ready' : d.dialogs.board.nodes.c2 ? 'checkride' : d.dialogs.board.nodes.not.text; },
     },
     settings, coach: () => coach.step,
+    // (M8) the player's notes (the tablet's 感想), the text shown to take away (the bench's results, the notes)
+    notes: () => notes.list(), report: () => (report.isOpen ? { title: report.el.querySelector('h2').textContent, text: report.text } : null), closeReport: () => report.hide(),
+    benchReport: (r) => showBenchReport(r),
     // (M8) the AI instructor: a stand-in for the API (tests), the key (as the settings set it), its talk on screen
     ai: {
       useFetch: (fn) => { aiFetch = typeof fn === 'function' ? fn : null; },

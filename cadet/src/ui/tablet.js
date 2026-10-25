@@ -3,7 +3,8 @@
 // cadet is, what stands between them and the next chapter), 進み具合 (the training device's lessons, the classes, the
 // written tests, the 16 lessons of chapter 2 with FLIGHT LAB's best grades, the trust), 航空日誌, 教科書 (the game's
 // textbook: a chapter, a section, read), 練習 (a practice test from any of FLIGHT LAB's question banks), 記録 (the save
-// as a file, read back from one, a new start).
+// as a file, read back from one, a new start), 感想 (M8: what the player noticed, kept in this browser, taken away as
+// text).
 // It shows what model() returns each time it is drawn and calls back for anything that changes the game; it owns no
 // state but the page shown.
 const CSS = `
@@ -38,15 +39,23 @@ const CSS = `
 .tb-btn:focus-visible, .tb-top button:focus-visible { outline: 2px solid #ffd479; outline-offset: 2px; }
 .tb-note { margin-top: 10px; font-size: 12px; color: #9fb4c9; }
 .tb-msg { margin-top: 8px; padding: 6px 10px; border-radius: 8px; background: rgba(255, 255, 255, .06); }
+.tb-note-in { width: 100%; box-sizing: border-box; min-height: 110px; resize: vertical; padding: 10px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .14);
+  background: rgba(255, 255, 255, .04); color: #e6eef7; font: inherit; font-size: 14px; line-height: 1.6; }
+.tb-note-in:focus-visible { outline: 2px solid #ffd479; outline-offset: 2px; }
+.tb-notes { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.tb-notes li { padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, .04); }
+.tb-notes small { display: block; color: #9fb4c9; font-size: 11.5px; margin-bottom: 2px; }
+.tb-notes p { margin: 0 0 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 640px) { .tb-dev { border-radius: 14px; padding: 8px; } .tb-scr { padding: 10px; } }
 `;
-const PAGES = [['today', '今日'], ['progress', '進み具合'], ['logbook', '航空日誌'], ['book', '教科書'], ['practice', '練習'], ['save', '記録']];
+const PAGES = [['today', '今日'], ['progress', '進み具合'], ['logbook', '航空日誌'], ['book', '教科書'], ['practice', '練習'], ['save', '記録'], ['notes', '感想']];
 
 // model() → { date, chapterTitle, slotName, plan: [{ slot, title, state: 'done' | 'now' | 'later' | 'missed' }],
 //   weather: { ja, metarAm, metarPm, taf, flyAm, flyPm }, fatigue, tired, gate: [..], ground: [{ id, title, pass }],
 //   classes: { done, total }, exams: [{ title, best, pass, tries }], lessons: [{ id, title, best, pass }], trust: [{ name, v }],
 //   solo, book: [{ id, n, title, sections: [{ id, title }] }], banks: [{ id, title, n }], evening, canWait }
-// act: { logbook(), read(sectionId), practice(bankId), exportSave() → text, importSave(text) → message, reset(), wait(), home() }
+// act: { logbook(), read(sectionId), practice(bankId), exportSave() → text, importSave(text) → message, reset(), wait(), home(),
+//   (M8) notes: { list(), draft, setDraft(t), add(t), remove(id), clear(), export() } }
 export function createTablet({ doc = document, model, act, onClose } = {}) {
   if (!doc.getElementById('tb-css')) { const st = doc.createElement('style'); st.id = 'tb-css'; st.textContent = CSS; doc.head.appendChild(st); }
   const make = (tag, cls, text) => { const e = doc.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -135,11 +144,30 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     if (msg) put(scr, make('div', 'tb-msg', msg));
     put(scr, make('div', 'tb-note', '記録はこのブラウザの中に保存されています。ブラウザのデータを消すと、記録も消えます。'));
   }
+  // (M8) what the player noticed: written here, kept in this browser, taken away as text
+  function notes() {
+    const N = act.notes;
+    put(scr, make('h2', '', '感想を書く'), make('p', 'sub', '遊んでいて気づいたこと（わかりにくかった・困った・よかったこと）を書き残せます。書いた場所と時刻も一緒に残ります。'));
+    const ta = Object.assign(make('textarea', 'tb-note-in'), { maxLength: 2000, placeholder: '例：運航管理の場所がわからなかった。案内の矢印が扉の裏を指していた。', value: N.draft });
+    ta.setAttribute('aria-label', '感想');
+    ta.addEventListener('input', () => N.setDraft(ta.value));
+    // (Tab and Esc close the tablet, as everywhere in it; what is written stays as a draft)
+    put(scr, ta, btn('保存する', () => { if (N.add(ta.value)) { msg = '保存しました。'; draw(); } else { msg = '何も書かれていません。'; draw(); } }),
+      btn('文字で書き出す（コピー用）', () => N.export(), 'tb-btn ghost'),
+      btn('全部消す', () => { if (doc.defaultView.confirm('このブラウザに保存した感想を、全部消しますか？')) { N.clear(); msg = '消しました。'; draw(); } }, 'tb-btn danger'));
+    if (msg) put(scr, make('div', 'tb-msg', msg));
+    const list = N.list();
+    put(scr, make('h3', '', `保存した感想（${list.length} 件）`));
+    const ul = make('ul', 'tb-notes');
+    for (const n of list) put(ul, put(make('li'), make('small', '', `${n.at}　${n.where}`), make('p', '', n.text), btn('消す', () => { N.remove(n.id); draw(); }, 'tb-btn ghost')));
+    put(scr, ul);
+    put(scr, make('div', 'tb-note', '感想はこのブラウザの localStorage（cadet.notes）にだけ保存され、どこにも送られません。「文字で書き出す」でまとめてコピーして、作った人に渡してください。ブラウザのデータを消すと、感想も消えます。'));
+  }
   function draw() {
     if (root.hidden) return;
     const m = model();
     nav(m); scr.textContent = '';
-    ({ today, progress, logbook, book, practice, save })[page](m);
+    ({ today, progress, logbook, book, practice, save, notes })[page](m);
   }
   function open(p) { if (p) page = p; root.hidden = false; msg = ''; draw(); setTimeout(() => { const b = top.querySelector('button.on'); if (b) b.focus(); }, 0); }
   function close() { if (root.hidden) return; root.hidden = true; if (onClose) onClose(); }

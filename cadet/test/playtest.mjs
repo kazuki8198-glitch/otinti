@@ -2,9 +2,11 @@
 // Walking is the guide's way (followGuide: the path a player would take towards the arrow); everything else is a
 // key pressed in the page (E, Tab, Space, 1–9, Enter, Esc). After each move it notes the guide's line, the toast, the
 // subtitles and every pair of text boxes on the screen that overlap, to test-output/playtest-<name>.log.
-//   node test/playtest.mjs [start|seminole] [days=4]
+//   node test/playtest.mjs [start|ch2|seminole|epilogue] [days=4]
 // start: a new career, the prologue → chapter 1 → chapter 2's first flying day (until the cadet is in the seat).
 // seminole: a chapter 5 day, from the walk-around to both engines running.
+// epilogue (M8): the evening of the graduation — out of the front doors, the 737's right seat at Haneda, the captain
+// (E to talk to him again, Esc for the menu), his goodbye, the academy's next morning.
 // One browser; no pictures (the software renderer grows with every one) unless SHOT=1 (one, at the end).
 import fs from 'node:fs';
 import path from 'node:path';
@@ -108,7 +110,7 @@ async function stepOnce() {
   if ((r.step || before.g).at === 'entrance') {
     const c = await ev(() => window.__cadet.current());
     if (c !== 'home') issue(`正面入口で E の対象が「寮へ帰る」でない（${c}）`);
-    await key('KeyE', 0.15);
+    await key('KeyE', 0.15); await sleep(300);                     // (the prompt's fade)
     const card = await ev(() => window.__cadet.card()); log(`    [カード] ${card ? card.title + '：' + card.text.replace(/\n/g, ' ') : 'なし'}`);
     await look('寮へ帰る');
     await key('Digit1', 0.2); await sleep(400); await waitCards(); await sleep(1500); await look('次の朝');
@@ -217,6 +219,44 @@ if (which === 'start') {
   await sleep(4000);
   for (let k = 0; k < 80; k++) { const r = await stepOnce(); if (r === 'fly' || r === 'stuck') { log('== ' + r); break; } }
   await cockpit();
+} else if (which === 'epilogue') {
+  // the graduation's evening (the final check passed, the ceremony done)
+  await ev(() => {
+    const K = window.__cadet.career, EX = Object.fromEntries(['written1', 'presolo', 'nav', 'instr', 'multi', 'final'].map(id => [id, { tries: 1, best: 90, pass: true }]));
+    const C = { tries: 1, pass: true, day: 40 };
+    K.set({ state: { chapter: 'ch6', day: 60, slot: 'evening', done: { prologue: 1, 'graduation:grad': 60 }, exams: EX, solo: { day: 30 }, checks: { xc: C, ir: C, me: C, final: C }, graduated: { day: 60 } }, flags: { met_instructor: true, has_tablet: true }, trust: { instructor: 70 } });
+  });
+  log('# 修了式の日の夕方から'); await sleep(3000); await waitCards();
+  for (let k = 0; k < 6; k++) {
+    const r = await stepOnce();
+    if (await ev(() => window.__cadet.epilogue.state().on)) break;
+    if (r === 'stuck') break;
+  }
+  for (let i = 0; i < 40 && !(await ev(() => window.__cadet.dialog())); i++) await sleep(250);
+  const e0 = await ev(() => window.__cadet.epilogue.state());
+  log(`== 終章：${e0.on ? '始まった' : '始まらない'}（${e0.mode}）`); if (!e0.on) issue('入口から出ても終章が始まらない');
+  await look('終章のはじめ');
+  await talk();
+  await look('終章・機長のあと');
+  // E: to him again (stay: the first choice), Esc: the menu (its main button ends the epilogue), E again: the goodbye
+  await key('KeyE', 0.1); await talk();
+  log(`- もう少し見る → ${(await ev(() => window.__cadet.epilogue.state())).on ? '終章のまま' : '終章が終わった'}`);
+  await key('Escape', 0.1);
+  const menuBtn = await ev(() => { const b = [...document.querySelectorAll('#menu button')].find(b => /終章を終える/.test(b.textContent)); return document.querySelector('#menu') && window.__cadet.menu.isOpen() ? (b ? b.textContent : '（ボタンなし）') : '（開かない）'; });
+  log(`- Esc → メニュー：${menuBtn}`); if (!/終章を終える/.test(menuBtn)) issue('終章のメニューに「終章を終える」がない');
+  await ev(() => window.__cadet.menu.close()); await ev(() => window.__cadet.simulate(0.6)); await sleep(650);
+  await key('KeyE', 0.1);
+  for (let n = 0; n < 20; n++) {
+    const v = await ev(() => window.__cadet.dialog()); if (!v) break;
+    log(`    ${v.name}：${v.text}`);
+    if (v.typing) await key('Space', 0.05);
+    if (v.choices.length) { const i = v.choices.findIndex(c => /そろそろ行きます/.test(c.text)); log(`      > ${i + 1}. ${v.choices[i].text}`); await key(`Digit${i + 1}`, 0.05); } else await key('Space', 0.05);
+  }
+  for (let i = 0; i < 80 && (await ev(() => window.__cadet.epilogue.state().on || window.__cadet.career.cards())); i++) { await look('終わりのカード'); await sleep(250); }
+  const st = await ev(() => window.__cadet.career.state()), e1 = await ev(() => window.__cadet.epilogue.state());
+  log(`== 終章のあと：${e1.mode}、${st.day} 日目 ${st.slot}、見た印 ${e1.seen}`);
+  if (e1.on || e1.mode !== 'walk' || st.slot !== 'morning') issue('終章のあと、アカデミーの朝に戻らない');
+  await look('アカデミーの朝');
 }
 log('\n## 気になった所');
 for (const s of [...new Set(issues)]) log('- ' + s);

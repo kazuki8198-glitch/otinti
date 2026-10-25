@@ -33,14 +33,23 @@ const CSS = `
 #menu h3 { margin: 16px 0 6px; font-size: 14px; color: var(--ink-dim); font-weight: 600; letter-spacing: .04em; }
 #menu .m-note { margin-top: 12px; font-size: 12px; color: var(--ink-dim); line-height: 1.7; }
 #menu p { line-height: 1.75; font-size: 14px; }
+#menu .m-field { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+#menu .m-field input[type=text], #menu .m-field input[type=password] { flex: 1 1 200px; min-width: 0; font: inherit; font-size: 14px; padding: 8px 10px; border-radius: 10px;
+  border: 1px solid var(--glass-line); background: rgba(255,255,255,.06); color: var(--ink); }
+#menu .m-field button { font: inherit; font-size: 13px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--glass-line); background: rgba(255,255,255,.08); color: var(--ink); cursor: pointer; }
+#menu .m-field label { font-size: 13px; color: var(--ink-dim); display: flex; gap: 6px; align-items: center; }
+#menu .m-state { grid-column: 1 / -1; font-size: 13px; color: var(--accent); }
+#menu .m-state.bad { color: #ff9a8a; }
 `;
 
-export function createMenu({ root = document.body, settings, presets = [], onResume = () => {}, onQuality = () => {}, onMode = () => {}, getMode = () => 'walk', getPreset = () => null, onResetProgress = null, onLogbook = null, version = '' }) {
+// ai: { keys (ai/keys.js), keyName, defaultModel } — the M8 tab's API key field
+export function createMenu({ root = document.body, settings, presets = [], onResume = () => {}, onQuality = () => {}, onMode = () => {}, getMode = () => 'walk', getPreset = () => null, onResetProgress = null, onLogbook = null, version = '', ai = null, onBench = null }) {
   if (!document.getElementById('menu-css')) { const st = document.createElement('style'); st.id = 'menu-css'; st.textContent = CSS; document.head.appendChild(st); }
   const el = document.createElement('div'); el.id = 'menu'; el.hidden = true; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', '一時停止メニュー');
   root.appendChild(el);
   let tab = 'main', open = false;
-  const TABS = [['main', '再開'], ['settings', '設定'], ['keys', '操作'], ['about', 'このゲームについて']];
+  const TABS = [['main', '再開'], ['settings', '設定'], ['net', 'AI・マイク・英語'], ['keys', '操作'], ['about', 'このゲームについて']];
+  let keyMsg = '', keyBad = false;
   const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   function body() {
@@ -48,7 +57,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
       const walk = getMode() === 'walk';
       return `<div class="m-big">
         <button class="primary" data-act="resume">再開する</button>
-        <button data-act="mode">${walk ? '見学モードに切り替える（自由なカメラ・視点 1〜9・0）' : getMode() === 'fly' ? '機体を降りる（機体は駐機場に戻ります）' : '歩くモードに戻る'}</button>
+        <button data-act="mode">${walk ? '見学モードに切り替える（自由なカメラ・視点 1〜9・0）' : getMode() === 'fly' ? '機体を降りる（機体は駐機場に戻ります）' : getMode() === 'epilogue' ? '終章を終える（アカデミーに戻ります）' : '歩くモードに戻る'}</button>
         ${onLogbook ? '<button data-act="logbook">航空日誌を見る</button>' : ''}
         <button data-tab="settings">設定</button><button data-tab="keys">操作</button><button data-tab="about">このゲームについて</button></div>`;
     }
@@ -77,6 +86,31 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         + sw('autoRud', '自動ラダー', 'ON：ボールを自動で中央に保ちます。飛んでいる間は U で切り替え')
         + sw('showPerf', '性能の表示', 'fps・描画回数・三角形の数を右上に表示');
     }
+    if (tab === 'net') {
+      const v = settings.all();
+      const sw = (k, label, note = '') => `<div class="m-row"><span>${label}</span><button class="m-switch" role="switch" aria-checked="${!!v[k]}" aria-label="${label}" data-toggle="${k}"></button>${note ? `<small>${note}</small>` : ''}</div>`;
+      const has = ai && ai.keys.has(), mem = ai && ai.keys.remembered;
+      return `<p class="m-note" style="margin-top:0">ここの機能は、どれも最初は OFF です。OFF のあいだは、外への通信を一切しません。ネットにつながなくても、最初から最後まで遊べます。</p>
+        <h3>AI 教官（Claude API）</h3>`
+        + sw('aiTutor', 'AI 教官に自由に質問する', 'ブリーフィング室と飛行のあとの講評で、早瀬 教官に日本語で自由に質問できます（答えは字幕で）。ON にして API キーを入れたときだけ、質問のたびに Anthropic の API（api.anthropic.com）へ送ります。キーがない・つながらない・エラーのときは、いつもの会話（ブリーフィング室では教科書の質問、講評では航空日誌の記入）に戻ります。')
+        + `<div class="m-row"><span>モデル</span><span></span><div class="m-field"><input type="text" data-text="aiModel" value="${esc(v.aiModel)}" aria-label="モデル名" spellcheck="false" autocomplete="off"></div>
+          <small>既定は ${esc(ai ? ai.defaultModel : 'claude-opus-5-5')}。返事の速さと料金を優先するなら claude-sonnet-5-5 や claude-haiku-5-5 も使えます。</small></div>`
+        + `<div class="m-row"><span>API キー</span><span></span>
+          <div class="m-field"><input type="password" id="m-key" aria-label="API キー" autocomplete="off" spellcheck="false" placeholder="sk-ant-…"><button data-act="key-save">保存</button></div>
+          <div class="m-field"><label><input type="checkbox" id="m-key-remember"${mem ? ' checked' : ''}> このブラウザに覚えておく（OFF なら、このページを閉じると消えます）</label></div>
+          <div class="m-state${keyBad ? ' bad' : ''}" id="m-key-state">${esc(keyMsg || (has ? `設定済み：${ai.keys.masked()}（${mem ? 'このブラウザに保存' : 'このページを閉じるまで'}）` : '未設定'))}</div>
+          <div class="m-field"><button data-act="key-clear"${has || mem ? '' : ' disabled'}>キーを消す</button></div>
+          <small>キーは自分で <b>Anthropic Console</b> で作ったものを使います。料金はキーの持ち主のアカウントにかかります。<br>
+          <b>保存する場所</b>：「覚えておく」を選んだときだけ、このブラウザの localStorage の「${esc(ai ? ai.keyName : 'cadet.secret.anthropic')}」に保存します（このパソコンのこのブラウザの中だけ。ほかの記録・設定・書き出しには入りません）。ほかの人も使うサイト（raw.githack など：同じサイトのほかのページからも読めます）や、ほかの HTML ファイルも開くブラウザでは、「覚えておく」を OFF のまま使うのが安全です。<br>
+          <b>消し方</b>：上の「キーを消す」。または、ブラウザの設定でこのページ（ファイル）のサイトデータを消去します。<br>
+          <b>送るもの</b>：質問・直前のやり取り（3 往復まで）・今日の場所と訓練の段階と日付と課目と天気（METAR）・その日の結果（講評のとき）・教科書の目次と要約と近い節・教官の話し方の決まり。OFF にすると、開いている質問の欄も閉じます。キーは通信の見出しにだけ入れ、ブラウザから直接 API に送られます。自分の PC で、自分だけが使ってください。</small></div>
+        <h3>マイクで交信</h3>`
+        + sw('micRadio', 'マイクで復唱する（英語）', '管制への答えを声で言えます（操縦席で M を押してから話す）。コールサイン・滑走路・高度・周波数・スコーク・指示の言葉を照らし合わせ、足りない言葉を字幕に出します。マイクや音声認識が使えないときは、いつもの 1〜3 キーのまま。ブラウザの音声認識は、声を提供元のサーバーで文字にすることがあります（ON のときだけ。マイクの許可はブラウザが聞きます）。')
+        + `<h3>教官が英語で話す</h3>`
+        + sw('crewEnglish', '教官・主任教官・審査官の台詞を英語にする', '訓練所の 3 人の教官が英語で話します。教材（課目の説明・教科書）を読み上げる行は、日本語のままです。')
+        + sw('crewEnglishJa', '英語の字幕に日本語訳を付ける', '英語の台詞の下に、もとの日本語を小さく出します。')
+        + (onBench ? `<h3>性能の計測</h3><div class="m-big"><button data-act="bench">性能を計測して結果を書き出す</button></div><p class="m-note">10 か所の視点で描画の時間を測り、結果をコピーできる文字で出します（約 30 秒）。README の「実機での計測」に貼ってください。</p>` : '');
+    }
     if (tab === 'keys') {
       return `<table>
         <tr><td>W A S D</td><td>移動</td></tr><tr><td>マウス</td><td>見回す（画面をクリックすると操作が始まります）</td></tr>
@@ -95,12 +129,13 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         <tr><td>マウス</td><td>見回す。右ボタンを押したままで近くを見る</td></tr><tr><td>左クリック / ホイール</td><td>照準の先のスイッチ・レバー・つまみを操作する</td></tr>
         <tr><td>C</td><td>操縦席 ⇄ 外からの視点</td></tr><tr><td>Tab</td><td>画面の計器盤（PFD・MFD）</td></tr><tr><td>H</td><td>操作の説明</td></tr>
         <tr><td>Enter</td><td>チェックリストの項目を確かめた（◇ の項目）</td></tr><tr><td>Y</td><td>チェックリストや地上走行を教官に任せる</td></tr>
-        <tr><td>1〜3</td><td>無線で答える（管制との交信）</td></tr></table>
+        <tr><td>1〜3</td><td>無線で答える（管制との交信）</td></tr><tr><td>M</td><td>無線の答えを声で言う（「マイクで交信」が ON のとき）</td></tr></table>
         <p class="m-note">ゲームパッドも使えます（FLIGHT LAB と同じ配置）。</p>`;
     }
     return `<p><b>CADET</b>（パイロット訓練生シミュレーター）${version ? ` <span class="m-val">${esc(version)}</span>` : ''}</p>
       <p>公開情報を基にした非公式のゲームです。航空会社（翔洋航空）・訓練所・人物はすべて架空です。実機訓練の代わりにはならず、航法には使えません（NOT FOR NAVIGATION）。飛行モデル・課目・教科書は FLIGHT LAB（同じリポジトリの自主学習教材）を使っています。</p>
-      <p class="m-note">使っているもの：three.js（MIT License）、ambientCG のテクスチャ（CC0）。機体と人物の模型は Blender で自作し、家具・木・標識などはプログラムで作っています。音（エンジン・風・足音・無線など）は、音のファイルを使わずにブラウザの中で作っています。くわしくは assets/CREDITS.md。</p>`
+      <p class="m-note">使っているもの：three.js（MIT License）、Anthropic TypeScript SDK（MIT License。AI 教官を ON にしたときだけ使う）、ambientCG のテクスチャ（CC0）。機体（737 型を含む）と人物の模型は Blender で自作し、家具・木・標識・終章の空港などはプログラムで作っています。音（エンジン・風・足音・無線など）は、音のファイルを使わずにブラウザの中で作っています。終章の羽田空港の形は架空で、実際の空港を写していません。くわしくは assets/CREDITS.md。</p>
+      <p class="m-note">外への通信：AI 教官（Anthropic の API）とマイクで交信（ブラウザの音声認識）は、設定で ON にしたときだけ使います。初めはどちらも OFF で、OFF のあいだはどこにも通信しません。</p>`
       + (onResetProgress ? `<div class="m-big"><button data-act="reset">訓練の記録を消す（教官との会話を最初から）</button></div>
       <p class="m-note">記録はこのブラウザの中だけに保存されています。設定は消えません。</p>` : '');
   }
@@ -120,8 +155,27 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
       if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'もう一度押すと記録を消します'; return; }
       onResetProgress(); b.removeAttribute('data-armed'); b.textContent = '記録を消しました'; b.disabled = true; return;
     }
+    if (b.dataset.act === 'key-save' && ai) {
+      const inp = el.querySelector('#m-key'), rem = el.querySelector('#m-key-remember');
+      const ok = ai.keys.set(inp ? inp.value : '', { remember: !!(rem && rem.checked) });
+      if (inp) inp.value = '';
+      keyBad = !ok; keyMsg = ok ? '' : 'キーの形ではないようです（空白や改行がないか確かめてください）';
+      render(); return;
+    }
+    if (b.dataset.act === 'key-clear' && ai) { ai.keys.clear(); keyMsg = 'キーを消しました（このブラウザからも）'; keyBad = false; render(); return; }
+    if (b.dataset.act === 'bench' && onBench) { close(false); onBench(); return; }
     if (b.dataset.toggle) { const k = b.dataset.toggle; settings.set(k, !settings.get(k)); b.setAttribute('aria-checked', String(!!settings.get(k))); return; }
     if (b.dataset.quality) { settings.set('quality', b.dataset.quality); onQuality(b.dataset.quality); el.querySelectorAll('[data-quality]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.quality === b.dataset.quality))); }
+  });
+  // (M8) the model's name: kept when it looks like one, else the field goes back to the setting
+  el.addEventListener('change', (e) => {
+    const k = e.target.dataset && e.target.dataset.text; if (!k) return;
+    if (!settings.set(k, e.target.value)) e.target.value = settings.get(k);
+  });
+  // (the remember box alone: the key already given is kept, or forgotten, in this browser)
+  el.addEventListener('change', (e) => {
+    if (e.target.id !== 'm-key-remember' || !ai || !ai.keys.has()) return;
+    ai.keys.set(ai.keys.get(), { remember: e.target.checked }); keyMsg = ''; render();
   });
   el.addEventListener('input', (e) => {
     const k = e.target.dataset && e.target.dataset.set; if (!k) return;
@@ -137,7 +191,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
       tab = TABS[j][0]; render(); el.querySelector(`[data-tab="${tab}"][role=tab]`)?.focus();
     }
   });
-  function show(t = 'main') { tab = t; open = true; render(); el.hidden = false; setTimeout(() => el.querySelector('.m-big .primary, [role=tab][aria-selected=true]')?.focus(), 0); }
+  function show(t = 'main') { tab = t; open = true; keyMsg = ''; keyBad = false; render(); el.hidden = false; setTimeout(() => el.querySelector('.m-big .primary, [role=tab][aria-selected=true]')?.focus(), 0); }
   function close(resume = false) { if (!open) return; open = false; el.hidden = true; if (resume) onResume(); }
   return { open: show, close, toggle: () => (open ? close(true) : show()), get isOpen() { return open; }, destroy() { el.remove(); } };
 }

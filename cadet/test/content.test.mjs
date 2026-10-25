@@ -163,7 +163,7 @@ test('instructor: who he is, and data that passes the validator for every lesson
   assert.equal(A1.speakers.instructor.name_ja, '早瀬 教官');
   assert.deepEqual(Object.keys(A1.dialogs).sort(), ['ask', 'brief']);
   for (const f of ['met_instructor', 'briefed_today', 'brief_checked']) assert.ok(A1.flags.includes(f), f);
-  assert.deepEqual([...A1.hooks].sort(), ['board', 'book', 'look', 'nod', 'point']);
+  assert.deepEqual([...A1.hooks].sort(), ['ai', 'board', 'book', 'look', 'nod', 'point']);          // (M8: ai, the free question)
   for (const l of LESSONS) {
     const data = l.id === 'a1' ? A1 : instructorDialogs(FL, { lessonId: l.id });
     const r = validateDialogs(data, OPTS);

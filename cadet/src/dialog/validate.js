@@ -13,7 +13,9 @@ const short = (v) => {
   let s; try { s = typeof v === 'string' ? v : String(JSON.stringify(v)); } catch (e) { s = String(v); }
   return s.length > 80 ? s.slice(0, 77) + '…' : s;
 };
-const NODE_KEYS = new Set(['speaker', 'text', 'if', 'else', 'effects', 'hook', 'next', 'choices', 'end']);
+// (M8: en, the line in English for the crew's English mode; tag, what kind of line it is — 'material': read from the
+// course's material, said as written)
+const NODE_KEYS = new Set(['speaker', 'text', 'if', 'else', 'effects', 'hook', 'next', 'choices', 'end', 'en', 'tag']);
 const CHOICE_KEYS = new Set(['text', 'next', 'if', 'effects']);
 const LESSON_PATH = /(^|\.)(lesson\.id|lessonId)$/;                            // ctx conditions that name a lesson
 
@@ -131,6 +133,8 @@ export function validateDialogs(data, opts = {}) {
         for (const k of Object.keys(n)) if (!NODE_KEYS.has(k)) warn(`${at}: unknown field "${k}"`);
         if (n.speaker !== 'narrator' && !(typeof n.speaker === 'string' && own(speakers, n.speaker))) err(`${at}: unknown speaker "${short(n.speaker)}"`);
         text(n.text, at);
+        if (n.en !== undefined) text(n.en, `${at} en`);
+        if (n.tag !== undefined && (typeof n.tag !== 'string' || !n.tag)) err(`${at}: tag is not a name`);
         cond(n.if, `${at} if`);
         effects(n.effects, at);
         if (n.hook !== undefined) { if (isObj(n.hook)) hook(n.hook.name, n.hook.arg, `${at} hook`); else err(`${at}: hook must be { name, arg }`); }

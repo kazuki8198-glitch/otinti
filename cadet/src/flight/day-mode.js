@@ -2,7 +2,8 @@
 // solo). fly-mode boards and flies; this drives the day (career/day.js) through it, frame by frame:
 //  - the checklists (the HUD's list ticks as the switches are set; Enter confirms what is looked at; Y leaves the
 //    current list to the instructor, whose hands set it item by item), a ring round the control to use next;
-//  - the radio (the panel, 1–3 or a click to answer, the controllers' English spoken when the voice is on);
+//  - the radio (the panel, 1–3 or a click to answer, the controllers' English spoken when the voice is on; M8: with
+//    the microphone on, M and the answer said aloud — dialog/readback.js finds which one, or what is missing);
 //  - the taxiing (the way drawn on the pavement; Y: the instructor taxis, "I have control");
 //  - the lessons: the first begins where the cadet lined up (FLIGHT LAB's own start, 30 m past the threshold: the
 //    picture blends the last few metres); the others after a move — to the practice area, back, round the circuit —
@@ -13,6 +14,8 @@
 import { routeOut, routeLineUp, routeIn, routeBack, createTaxiPilot, exitFor } from './taxi.js';
 import { PHASE_LINES, ASSIST_LINES, EVENT_LINES, RECOVER_LINE, SOLO_LINES } from '../content/dialog/day1.js';
 import { spoken } from '../content/dialog/atc.js';
+import { createMic, MIC_REASON_JA } from '../ui/mic.js';
+import { matchReadback } from '../dialog/readback.js';
 
 const COM = { atis: 127650, ground: 121700, groundIn: 121700, tower: 118300, leave: 118300, back: 118300, exit: 118300, takeoff: 118300, closed: 118300, stopgo: 118300 };
 const PLACES = new Set(['taxiOut', 'lineup', 'taxiOff', 'taxiIn']);
@@ -24,6 +27,28 @@ export function createDayMode(h) {
   const P = FL.physics, R = P.LAB_RWY;
   let day = null, level = 'basic', assistOn = false, assistT = 0, taxi = null, fly = null, flash = '', flashT = 0, lastPhase = '', FLOW = [], solo = false, recoverT = 0, asking = false;
   const queue = []; let lineT = 0;
+  // (M8) the microphone (made on its first use, only when it is on in the settings): what it heard, for which exchange
+  let mic = null, micState = null, micFor = '', micGen = 0;          // (micGen: which listen a result belongs to)
+  const exId = (v) => (v ? `${v.seq}:${v.id}` : '');
+  function micKey() {
+    if (!h.settings.get('micRadio')) return false;
+    const v = day.atc.view(); if (!v || v.phase !== 'choose') return false;
+    if (!mic) mic = h.mic || createMic();
+    if (mic.busy) { mic.stop(); return true; }
+    const id = micFor = exId(v), gen = ++micGen; micState = { on: true };
+    mic.listen().then((r) => {
+      if (!day || gen !== micGen || micFor !== id) return;               // (stopped meanwhile: stopMic)
+      if (!h.settings.get('micRadio')) { micState = null; return; }         // (turned off meanwhile: what it heard is not used)
+      const v2 = day.atc.view();
+      if (!v2 || v2.phase !== 'choose' || exId(v2) !== id) { micState = null; return; }
+      if (!r.ok) { micState = { msg: MIC_REASON_JA[r.reason] || MIC_REASON_JA['no-speech'] }; return; }
+      const right = day.atc.rightIndex();
+      const m = matchReadback(v2.choices.map((c, i) => ({ en: c.en, ok: i === right })), r.texts, { call: day.radio.call, number: v2.kind === 'listen' });
+      if (m.pick >= 0) { micState = { heard: m.heard }; day.atc.answer(m.pick); if (h.audio.click) h.audio.click(); }
+      else micState = { heard: m.heard, missing: m.missing.map(k => k.ja), msg: 'もう一度 M で言い直すか、1〜3 キーで答えてください' };
+    });
+    return true;
+  }
   // ---- the instructor's words, one after another
   function say(text, ms) { if (!text) return; queue.push([text, ms]); }
   // (alone: the cadet's own reminders, not the instructor's voice)
@@ -181,14 +206,17 @@ export function createDayMode(h) {
     let text = '', keys = [];
     if (items && cur) { text = `${cur.name}：${cur.what}`; keys = cur.confirm ? [['Enter', '確認した'], ['Y', '教官に任せる']] : [['Y', '教官に任せる']]; }
     else if (PLACES.has(ph)) { text = ph === 'taxiOut' ? '地面の線をたどって、A1 の停止線の手前で止まる' : ph === 'lineup' ? '滑走路 36 のセンターラインに合わせて止まる' : ph === 'taxiOff' ? '右へ出て、停止線を越えたら止まる' : '駐機場のいつもの場所（N738SY の場所）で止まる'; keys = taxi ? [] : [['Q / E', 'ペダル（向き）'], ['R / F', 'スロットル'], ['B', 'ブレーキ'], ['Shift+B', 'パーキングブレーキ'], ['Y', '教官に任せる']]; }
-    else if (inf.radio) { text = '管制との交信'; keys = [['1〜3', '答える']]; }
+    else if (inf.radio) { text = '管制との交信'; keys = h.settings.get('micRadio') ? [['1〜3', '答える'], ['M', '声で答える']] : [['1〜3', '答える']]; }
     else if (fly) text = flyCheck() || '';
     else if (asking) { text = '次の課目の始まるところまで'; keys = [['1', '自分で飛んで行く'], ['2', '移動を省く']]; }
     else if (inf.lesson) text = '';
     h.dayHud.setTask(lessonOn || ph === 'debrief' || ph === 'done' ? null : { kicker: `${solo ? 'ファーストソロ' : '今日の流れ'} ${k + 1} / ${FLOW.length}`, title: inf.label, text, keys,
       flow: FLOW.map((p, i) => ({ done: i < k, cur: i === k, lesson: !!day.info(p).lesson })) });
     h.dayHud.setChecklist(lessonOn ? null : items, flash);
-    h.dayHud.setRadio(day.atc.view());
+    const rv = day.atc.view();
+    if (micState && !micState.on && exId(rv) !== micFor) micState = null;          // (the next exchange: the mic's note goes)
+    h.dayHud.setRadio(rv, { mic: !!h.settings.get('micRadio') });
+    if (h.dayHud.setMic) h.dayHud.setMic(micState);
     h.setGuide(!lessonOn && cur && cur.ctl ? cur.ctl : null);
   }
   // keys (once per press): Enter, Y, 1–3 → true when used
@@ -213,6 +241,7 @@ export function createDayMode(h) {
       }
       return false;
     }
+    if (code === 'KeyM' && !(flight.L && flight.L.atc) && micKey()) return true;
     if (/^(Digit|Numpad)[123]$/.test(code) && !(flight.L && flight.L.atc)) {
       const v = day.atc.view();
       if (v && v.phase === 'choose') { day.atc.answer(+code.slice(-1) - 1); if (h.audio.click) h.audio.click(); return true; }
@@ -229,11 +258,19 @@ export function createDayMode(h) {
     taxi = createTaxiPilot(FL, pts, ph === 'lineup' ? { speed: 2.2, turnSpeed: 1.8 } : {});
     return true;
   }
-  function end() { day = null; assistOn = false; taxi = null; fly = null; asking = false; recoverT = 0; queue.length = 0; targets.clear(); h.routeLine.set(null); h.dayHud.hideAll(); h.setGuide(null); }
+  // (M8) listening no more: the pause menu opened (note: a word left on the radio panel, until the next exchange), the
+  // setting turned off (all: the panel's last note goes too). What a stopped listen heard is not used.
+  function stopMic({ note = '', all = false } = {}) {
+    const live = !!(mic && mic.busy); micGen++;
+    if (live) mic.stop();
+    if (live && note && !all) micState = { msg: note };
+    else if (live || all) { micState = null; micFor = ''; }
+  }
+  function end() { if (mic) mic.stop(); micState = null; micFor = ''; day = null; assistOn = false; taxi = null; fly = null; asking = false; recoverT = 0; queue.length = 0; targets.clear(); h.routeLine.set(null); h.dayHud.hideAll(); h.setGuide(null); }
   return {
-    begin, update, key, answer, onChoice, lessonEnded, end, speak, autoTaxi,
+    begin, update, key, answer, onChoice, lessonEnded, end, speak, autoTaxi, stopMic,
     get active() { return !!day; }, get day() { return day; }, get pilot() { return taxi ? taxi.fly : null; }, get flying() { return fly; },
-    onFault, get assisting() { return assistOn || !!taxi; }, get solo() { return solo; }, get asking() { return asking; },
+    onFault, get assisting() { return assistOn || !!taxi; }, get mic() { return micState; }, get solo() { return solo; }, get asking() { return asking; },
     // for the tests: the instructor's hands for everything until `phase` (or the next lesson)
     assist() { assistOn = true; assistT = 0; },
   };

@@ -10,7 +10,9 @@ import { gameBook, sentences } from '../book.js';
 export const INSTRUCTOR = { id: 'instructor', name_ja: '早瀬 航', title_ja: '早瀬 教官', role_ja: '担当教官' };
 const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' } };
 const FLAGS = ['met_instructor', 'briefed_today', 'brief_checked'];
-const HOOKS = ['board', 'book', 'nod', 'point', 'look'];
+const HOOKS = ['board', 'book', 'nod', 'point', 'look', 'ai'];
+// (M8) the AI instructor: offered only while the setting is on (ctx ai.on); its talk is the game's (ai/session.js)
+const FREE = { text: '自由に質問したい', if: { ctx: 'ai.on', is: true }, next: 'free' };
 const CHOICES_MAX = 12;
 const LINE = 90;                                                               // characters per line, where the data allows
 const KEY_LINES = 4;                                                           // an answer: at most this many lines
@@ -266,40 +268,47 @@ export function instructorDialogs(FL, { lessonId = 'a1', day = null } = {}) {
   B.menu = say('何から始めましょうか。', { if: { not: { flag: 'brief_checked' } }, else: 'menu:mid', choices: [
     { text: '今日の課目を教えてください', next: 'lesson' },
     { text: '質問があります', next: 'ask:root' },
+    FREE,
     { text: 'また後で来ます', next: 'later' },
   ] });
   B['menu:mid'] = say('では、続けましょうか。', { if: { not: { flag: 'briefed_today' } }, else: 'menu:done', choices: [
     { text: 'このあとの流れを教えてください', next: 'wrap' },
     { text: '今日の課目をもう一度聞かせてください', next: 'lesson' },
     { text: '質問があります', next: 'ask:root' },
+    FREE,
     { text: 'また後で来ます', next: 'later' },
   ] });
   B.later = say('わかりました。準備ができたら、声をかけてください。', { hook: { name: 'nod' }, end: true });
   B['menu:done'] = say('ほかに何かありますか。', { choices: [
     { text: '今日の課目をもう一度聞かせてください', next: 'lesson' },
     { text: '質問があります', next: 'ask:root' },
+    FREE,
     { text: '準備に向かいます', next: 'bye' },
   ] });
+  // (M8) a free question: the game opens the AI instructor's talk here (hook 'ai'); when it is over the talk goes on
+  // from 'ask:thanks' (or, when no answer could come, from the textbook's questions: 'ask:root')
+  B.free = say('いいですよ。何でも聞いてください。', { hook: { name: 'ai', arg: 'brief' }, next: 'ask:thanks' });
 
   // today's lesson: title → goal → why (with the figure on the board) → the points → the standard
-  const steps = [];                                                            // [text, extra]
+  // (M8: the lines read out of the course's material are tagged 'material': the English mode says them as written)
+  const steps = [], MAT = { tag: 'material' };                                // [text, extra]
   steps.push([`ホワイトボードを見てください。今日の課目は${q(title)}です。`, { hook: { name: 'point', arg: 'board' } }]);
-  for (const g of goalParts) steps.push(...speechLines(g).map(t => [t, {}]));
+  for (const g of goalParts) steps.push(...speechLines(g).map(t => [t, MAT]));
   steps.push([goalLine, {}]);
   if (why.length) {
     steps.push(['まず、この課目の考え方からお話しします。', { hook: { name: 'look', arg: 'player' } }]);
-    steps.push(...why.map(t => [t, {}]));
+    steps.push(...why.map(t => [t, MAT]));
   }
   if (figSec) {
     steps.push([`図にすると、こうなります。教科書の${q(figSec.title)}にある図です。`, { hook: { name: 'board', arg: figSec.id } }]);
-    steps.push(...figLines.map((t, k) => [t, k ? {} : { hook: { name: 'point', arg: 'screen' } }]));
+    steps.push(...figLines.map((t, k) => [t, k ? MAT : { ...MAT, hook: { name: 'point', arg: 'screen' } }]));
   }
   if (points.length) {
     steps.push(['では、飛び方のポイントです。', { hook: { name: 'point', arg: 'board' } }]);
-    steps.push(...points.map(t => [t, {}]));
+    steps.push(...points.map(t => [t, MAT]));
   }
   if (std && std.length <= LINE - 12) steps.push([`今日の基準は${q(std)}です。`, { hook: { name: 'look', arg: 'player' } }]);
-  else if (std) steps.push(['今日の基準は、こうです。', { hook: { name: 'look', arg: 'player' } }], [/[。」）]$/.test(std) ? std : std + '。', {}]);
+  else if (std) steps.push(['今日の基準は、こうです。', { hook: { name: 'look', arg: 'player' } }], [/[。」）]$/.test(std) ? std : std + '。', MAT]);
   if (Array.isArray(day) && day.length > 1) {
     const T = (id) => { const l = all.find(x => x.id === id); if (!l) throw new Error(`instructorDialogs: no lesson "${id}"`); return q(speakable(l.title)); };
     const at = day.indexOf(lesson.id), before = day.slice(0, Math.max(0, at)).map(T), after = day.slice(at + 1).map(T);
@@ -322,6 +331,7 @@ export function instructorDialogs(FL, { lessonId = 'a1', day = null } = {}) {
 
   B.post = say('ここまでで、質問はありますか。', { choices: [
     { text: '質問があります', next: 'ask:root' },
+    FREE,
     { text: '大丈夫です', next: 'wrap' },
   ] });
 
@@ -398,14 +408,15 @@ export function instructorDialogs(FL, { lessonId = 'a1', day = null } = {}) {
       { text: 'ほかの質問', next: 'root' },
       { text: 'ありがとうございました', next: 'thanks' },
     ];
-    A[id] = say(intro, { hook: { name: 'look', arg: 'player' }, next: chain(A, `${id}:k`, lines, `${id}:menu`) });
+    A[id] = say(intro, { hook: { name: 'look', arg: 'player' }, next: chain(A, `${id}:k`, lines, `${id}:menu`, lines.map(() => ({ tag: 'material' }))) });
     A[`${id}:menu`] = say(sec.figure ? '詳しくは教科書のこの節にあります。図もありますよ。' : '詳しくは教科書のこの節にあります。', { choices: menuChoices });
     A[`${id}:again`] = say('ほかに、この節で確かめたいことはありますか。', { choices: menuChoices });
     A[`${id}:read`] = say(`教科書の${q(sec.title)}です。ゆっくり読んでください。`, { hook: { name: 'book', arg: s.id }, next: `${id}:again` });
     if (sec.figure) {
       const cap = sec.caption ? firstLines(speechLines(sec.caption.replace(/^図[：:]\s*/, '')), 2) : [];
       A[`${id}:board`] = say('いいですよ。画面に映しますね。', { hook: { name: 'board', arg: s.id }, next: `${id}:fig` });
-      chain(A, `${id}:fig`, cap.length ? cap : ['図と教科書の説明を、照らし合わせてみてください。'], `${id}:again`, [{ hook: { name: 'point', arg: 'screen' } }]);
+      chain(A, `${id}:fig`, cap.length ? cap : ['図と教科書の説明を、照らし合わせてみてください。'], `${id}:again`,
+        (cap.length ? cap : [0]).map((_, k) => ({ ...(k ? {} : { hook: { name: 'point', arg: 'screen' } }), ...(cap.length ? { tag: 'material' } : {}) })));
     }
   }
   A.thanks = say('どういたしまして。わからないことは、そのままにしないでくださいね。', { hook: { name: 'nod' }, next: 'brief:menu' });

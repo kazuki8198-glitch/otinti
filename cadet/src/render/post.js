@@ -128,8 +128,9 @@ export function createPipeline(container, quality) {
 
   let lastHaze = null;               // kept so that a rebuilt pipeline (a new preset) gets the same sky
   // fog (M5's weather): 0 clear … 1 a visibility of a few hundred metres; grey (the overcast's light)
-  function setHaze({ sunDir, el, fog = lastHaze ? lastHaze.fog || 0 : 0, grey = lastHaze ? lastHaze.grey || 0 : 0 }) {
-    lastHaze = { sunDir, el, fog, grey };
+  // (M8) clear: the haze's density scaled (the epilogue's clear winter morning: Mt Fuji far off)
+  function setHaze({ sunDir, el, fog = lastHaze ? lastHaze.fog || 0 : 0, grey = lastHaze ? lastHaze.grey || 0 : 0, clear = 1 }) {
+    lastHaze = { sunDir, el, fog, grey, clear };
     // the eye adapts: more exposure as the sun goes down (dusk, then night under the moon)
     const dark = 1 - THREE.MathUtils.smoothstep(el, -10, 8);
     // (M7: a little less at full night — it read as a bright dusk: the apron's floodlit patches should stand out)
@@ -142,7 +143,7 @@ export function createPipeline(container, quality) {
     u.uHaze.value.setRGB(0.52 - 0.1 * low, 0.62 - 0.12 * low, 0.78 - 0.25 * low).multiplyScalar(0.03 + 0.97 * day);
     u.uSunHaze.value.setRGB(1.0, 0.72 - 0.25 * low, 0.42 - 0.25 * low).multiplyScalar((0.4 + 0.8 * low) * day);
     // (fog 0.85: a visibility of about 800 m, the METAR's 1/2 SM; the sky hidden as with VV002)
-    u.uDensity.value = 0.000085 * (1 + 80 * fog * fog) * (1 + grey);
+    u.uDensity.value = 0.000085 * (1 + 80 * fog * fog) * (1 + grey) * clear;
     u.uSkyFog.value = fog > 0 ? Math.min(1, fog * 1.18) : 0; u.uSkyGrey.value = grey;
     if (grey > 0) { u.uHaze.value.lerp(new THREE.Color(0.42, 0.45, 0.5).multiplyScalar(0.03 + 0.97 * day), grey * 0.7); u.uSunHaze.value.multiplyScalar(1 - grey * 0.8); }
     if (fog > 0) u.uHaze.value.lerp(new THREE.Color(0.66, 0.69, 0.72).multiplyScalar(0.03 + 0.97 * day), fog * 0.8);

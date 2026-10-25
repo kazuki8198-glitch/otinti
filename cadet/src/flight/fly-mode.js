@@ -20,6 +20,7 @@ import { seatFromBody } from '../npc/actor.js';
 import { createRunner } from '../dialog/engine.js';
 import { cockpitDialogs, flightLine, debriefLine } from '../content/dialog/cockpit.js';
 import { debriefDialogs } from '../content/dialog/debrief.js';
+import { withEnglish, airEnglish } from '../content/dialog/en.js';
 import { EVENT_LINES } from '../content/dialog/day1.js';
 import { createSystems, RUNNING } from '../aircraft/systems.js';
 import { createDayMode } from './day-mode.js';
@@ -133,7 +134,7 @@ export function createFlyMode(ctx) {
     const sp = data.speakers && data.speakers.instructor; if (!sp || !crewName) return data;
     return { ...data, speakers: { ...data.speakers, instructor: { ...sp, name_ja: crewName, ...(crewColor ? { color: crewColor } : {}) } } };
   };
-  const makeRunner = (data) => { runner = createRunner({ data: seatName(data), state: ctx.talkState, hooks: { onHook } }); runner.onChange(onTalkView); return runner; };
+  const makeRunner = (data) => { runner = createRunner({ data: seatName(withEnglish(data)), state: ctx.talkState, hooks: { onHook } }); runner.onChange(onTalkView); return runner; };
   const onTalkView = (v) => {
     if (v) { ctx.dui.show(v); if (crew && v.speaker !== 'player' && !crew.gesturing && Math.random() < 0.25) crew.gesture('explain'); }
     else endTalk();
@@ -147,6 +148,8 @@ export function createFlyMode(ctx) {
     else if (name === 'nod') { if (crew) crew.gesture('nod'); }
     else if (name === 'look') { if (crew) crew.gesture('explain'); }
     else if (name === 'point') { pointAtPanel(arg); }
+    // (M8) a free question to the AI instructor at the debrief: the game opens it (main.js), with the day's results
+    else if (name === 'ai' && ctx.onAi) ctx.onAi(arg, talkKind === 'debrief' && debRunner ? debRunner : runner, { summary: debSum });
   }
   // what he points at: the PFD's middle, or the student's pedals (the parts are built in place, so their origins are
   // the cabin's: the points come from their geometry and the controls' aim points)
@@ -163,7 +166,7 @@ export function createFlyMode(ctx) {
     if (fh) fh.show(false);                 // his talk alone on the screen (the flight's panels come back after it)
     input.exitLock();
     if (which === 'debrief') {
-      debRunner = createRunner({ data, state: ctx.talkState, hooks: { onHook } });
+      debRunner = createRunner({ data: withEnglish(data), state: ctx.talkState, ctx: () => ({ ai: { on: !!settings.get('aiTutor') } }), hooks: { onHook } });
       debRunner.onChange(onTalkView);
       debRunner.start('debrief');
     } else runner.start(which);
@@ -566,6 +569,8 @@ export function createFlyMode(ctx) {
   // ---- what the instructor says in a lesson: each step's instruction, the hints (not too often)
   function say(text, ms = 5200) {
     if (!text) return;
+    // (M8) the crew in English: his own words in the air in English (the lessons' own hints stay as written)
+    if (crewName && settings.get('crewEnglish')) { const en = airEnglish(text); if (en) text = settings.get('crewEnglishJa') !== false ? `${en}\n${text}` : en; }
     lineT = Math.min(6, 1 + text.length * 0.09);
     if (fh) fh.say(crewName || 'メモ', text, ms); else toast(text, ms);
   }

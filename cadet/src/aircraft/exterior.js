@@ -71,6 +71,10 @@ function materials() {
   return { paintMat, propMat };
 }
 
+// (M8) the paint's material and a geometry from a model's mesh, for the other models drawn with them (the epilogue's 737)
+export const paintMaterial = () => materials().paintMat;
+export const meshGeometry = (m) => geometryOf(m);
+
 // one aircraft model; update(s) turns the hinged parts from a physics state (or a parked state)
 // opts: { lod: 'near' | 'far', reg } (the Archer's model: its detail, the registration painted on it)
 export function buildAircraftModel(FL, A, opts = {}) {

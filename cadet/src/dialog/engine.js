@@ -206,7 +206,9 @@ export function createRunner({ data, state, ctx = {}, hooks = {} } = {}) {
     if (Array.isArray(n.choices)) ends = choices.length === 0;
     else if (n.end !== true && n.next !== undefined) { try { ends = settle(cur.dialog, n.next, '') === END; } catch (e) { ends = false; } }
     return { dialog: cur.dialog, node: cur.node, speaker: n.speaker, name: sp ? sp.name_ja ?? '' : '', color: sp ? sp.color ?? null : null,
-      text: fill(n.text, c), choices, ends };
+      text: fill(n.text, c), choices, ends,
+      // (M8) the line in English (the crew's English mode), and what kind of line it is
+      ...(n.en !== undefined ? { en: fill(n.en, c) } : {}), ...(n.tag !== undefined ? { tag: n.tag } : {}) };
   }
 
   const runner = {

@@ -1,8 +1,9 @@
 // CADET — test/perf.mjs : the draw calls and triangles of the busiest places as the game shows them (not the visit
 // camera's viewpoints): the apron by today's aircraft with the instructor and the mechanic, the lobby on the morning
-// everyone is there (the graduation), the Seminole's day on the apron, and its cockpit. No pictures (the frames are
+// everyone is there (the graduation), the Seminole's day on the apron, and its cockpit; (M8) the epilogue's right seat at
+// Haneda, looking ahead, left and right. No pictures (the frames are
 // drawn by the page's own loop for a moment, then read). One browser.
-//   node test/perf.mjs [quality=high] [apron,lobby,seminole,cockpit]  (the software renderer here runs out of memory
+//   node test/perf.mjs [quality=high] [apron,lobby,seminole,cockpit,epilogue]  (the software renderer here runs out of memory
 //   after three or four places: the cockpit in a run of its own)
 import { loadChromium, openGame } from './shots.mjs';
 
@@ -53,6 +54,14 @@ await ev(() => window.__cadet.fly.board(true)); await sleep(500);
 await ev(() => { const C = window.__cadet; while (C.dialog()) { const v = C.dialog(); if (v.choices.length) C.dialogChoose(0); else C.dialogNext(); } C.fly.view('cockpit'); C.fly.look(0, -8); });
 }
 if (want('cockpit')) out.cockpit = await measure('cockpit (Seminole)');
+}
+// (M8) the epilogue: the 737's right seat (the set only; the academy hidden)
+if (want('epilogue')) {
+await ev(() => window.__cadet.epilogue.enter());
+for (const [name, y, p] of [['ahead', 0, -5], ['left', 70, 0], ['right', -75, 0]]) {
+  await ev(([y, p]) => window.__cadet.epilogue.look(y, p), [y, p]);
+  out['epilogue-' + name] = await measure(`epilogue (737, ${name})`);
+}
 }
 console.log(JSON.stringify(out));
 console.log('errors:', g.errors.filter(e => !/KHR_parallel/.test(e)).join(' | ') || 'none');

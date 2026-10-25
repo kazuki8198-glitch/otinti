@@ -26,6 +26,14 @@ export const COLD = { master: false, avionics: false, fuelPump: false, beacon: f
 export const RUNNING = { master: true, avionics: true, fuelPump: true, beacon: true, nav: true, strobe: true, landing: false, taxi: false, pitot: false,
   mag: 'BOTH', fuelSel: 'L', mixture: 1, carbHeat: false, propCycleT: 0 };
 
+// the reason a start did not work, in the instructor's words (M8: exported for its English, content/dialog/en.js)
+export const NOCATCH = {
+  fuel: '燃料が来ていません。燃料セレクターをタンクに。', mixture: 'ミクスチャーをフル リッチにしてからかけます。',
+  prime: 'エンジンが冷えているので、プライマーを 2〜3 回押してからかけます。',
+  flooded: 'プライマーの押しすぎで、燃料が多すぎます。スロットルを半分ほど開けて、もう一度かけます（かかったらすぐに戻す）。',
+  starter: 'スターターは長く回し続けないようにします。少し待ってから、もう一度。',
+};
+
 // createSystems(sw) → the systems for one aircraft; sw: the cockpit's switches (changed here only for the key's spring
 // return). update(dt, s) every frame (or every physics step) returns the events since the last call (the same array,
 // emptied each time): { type: 'crank' | 'catch' | 'nocatch' | 'stop' | 'nostarter' | 'surge', why? }.
@@ -81,13 +89,6 @@ export function createSystems(sw) {
     st.reason = '';
     return (st.primes === 1 ? 2.6 : 1.2) + (sw.fuelPump ? 0 : 0.4);
   }
-  // the reason a start did not work, in the instructor's words
-  const NOCATCH = {
-    fuel: '燃料が来ていません。燃料セレクターをタンクに。', mixture: 'ミクスチャーをフル リッチにしてからかけます。',
-    prime: 'エンジンが冷えているので、プライマーを 2〜3 回押してからかけます。',
-    flooded: 'プライマーの押しすぎで、燃料が多すぎます。スロットルを半分ほど開けて、もう一度かけます（かかったらすぐに戻す）。',
-    starter: 'スターターは長く回し続けないようにします。少し待ってから、もう一度。',
-  };
   function update(dt, s) {
     events.length = 0;
     if (!s) return events;

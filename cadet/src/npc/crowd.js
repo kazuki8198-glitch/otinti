@@ -68,6 +68,9 @@ export function createCrowd(scene, { outdoors = () => true } = {}) {
   // every frame, before the picture: who is drawn, from which detail (eye: the camera's world position; none: all
   // far), which slots are folded
   const _p = new THREE.Vector3();
+  // (M8) everyone hidden (the epilogue's set is elsewhere)
+  let hidden = false;
+  function setHidden(v) { hidden = !!v; if (mesh && hidden) { mesh.visible = false; outside.visible = false; } }
   function update(eye = null) {
     if (dirty) build();
     if (!mesh) return;
@@ -87,10 +90,10 @@ export function createCrowd(scene, { outdoors = () => true } = {}) {
     near.length = 0; for (const m of drawn) if (m.d < NEAR_DIST) near.push(m);
     near.sort((a, b) => a.d - b.d); for (let i = 0; i < near.length && i < NEAR_MAX; i++) near[i].lod = 'near';
     ranges(mesh.geometry, inner); ranges(outside.geometry, outer);
-    mesh.visible = inner.length > 0; outside.visible = outer.length > 0;
+    mesh.visible = !hidden && inner.length > 0; outside.visible = !hidden && outer.length > 0;
   }
   const drawn = [], inner = [], outer = [], near = [];
   // (meshes: the people indoors, the people outdoors)
-  return { add, update, get meshes() { return mesh ? [mesh, outside] : []; }, get size() { return members.length; }, get drawn() { return drawn.length; },
+  return { add, update, setHidden, get meshes() { return mesh ? [mesh, outside] : []; }, get size() { return members.length; }, get drawn() { return drawn.length; },
     get near() { return drawn.filter(m => m.lod === 'near').map(m => m.actor); } };
 }

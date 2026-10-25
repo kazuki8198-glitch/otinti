@@ -40,6 +40,10 @@ function read(json, bin, i) {
 export function archerMeshes(lod = 'near', type = 'pa28') {
   const file = (FILES[type] || {})[lod];
   if (!file) throw new Error(`archer-model: no detail ${lod} of ${type}`);
+  return modelMeshes(file);
+}
+// (M8) any of the models made in Blender, by its file (the 737 of the epilogue: 'jet737') → as archerMeshes
+export function modelMeshes(file) {
   if (file in RAW) return RAW[file];
   const b = fileBytes(file);
   if (!b) return (RAW[file] = null);

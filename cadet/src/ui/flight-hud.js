@@ -114,7 +114,7 @@ const CSS = `
 #fhud .fh-subt.show { opacity: 1; }
 #fhud .fh-subt b { display: inline-block; margin: 0 8px 0 0; padding: 1px 10px; border-radius: 99px; font-size: 12.5px; font-weight: 800; letter-spacing: .05em;
   vertical-align: 1px; color: var(--sp-ink, #04121c); background: var(--sp, var(--accent, #5cc8ff)); }
-#fhud .fh-subt span { font-size: calc(16.5px * var(--sub-k, 1)); line-height: 1.6; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+#fhud .fh-subt span { font-size: calc(16.5px * var(--sub-k, 1)); line-height: 1.6; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); white-space: pre-line; }
 
 /* ---- the dialogs (top right) */
 #fhud .fh-right { position: absolute; right: 14px; top: 14px; width: var(--fh-rw); max-height: calc(100% - 44px); display: flex; flex-direction: column; gap: 8px; }

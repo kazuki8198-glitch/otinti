@@ -30,6 +30,9 @@ export const RUNNING = { master: true, avionics: true, fuelPump: true, beacon: t
 // return). update(dt, s) every frame (or every physics step) returns the events since the last call (the same array,
 // emptied each time): { type: 'crank' | 'catch' | 'nocatch' | 'stop' | 'nostarter' | 'surge', why? }.
 export function createSystems(sw) {
+  // (M7) a fault the run-up finds: { dropL } a left magneto (a fouled plug or the magneto itself) dropping more than the
+  // limit; null: none
+  let fault = null;
   const st = { eng: 'off', dead: false, crankT: 0, primes: 0, warm: false, rpm: 0, lineT: LINE_FUEL_S, oil: 0, starterTried: false, reason: '' };
   const events = [];
   const emit = (type, why = '') => events.push({ type, why });
@@ -134,7 +137,7 @@ export function createSystems(sw) {
         st.dead = false;
         if (sw.mag === 'START') sw.mag = 'BOTH';             // (the starter does not engage while running: the key is let go)
         const r = e ? e.rpm || 0 : 0, k = clamp((r - 700) / 1300, 0, 1.25);
-        const drop = (sw.mag === 'L' ? RUNUP.dropL : sw.mag === 'R' ? RUNUP.dropR : 0) * k + (sw.carbHeat ? RUNUP.carb * k : 0);
+        const drop = (sw.mag === 'L' ? (fault && fault.dropL) || RUNUP.dropL : sw.mag === 'R' ? RUNUP.dropR : 0) * k + (sw.carbHeat ? RUNUP.carb * k : 0);
         st.rpm = Math.max(0, r - drop);
         st.oil += (clamp(55 + r * 0.012, 0, 85) - st.oil) * Math.min(1, dt * 1.5);
       }
@@ -202,6 +205,7 @@ export function createSystems(sw) {
   }
   return {
     sw, st, setCold, setRunning, adopt, prime, update, catchTime,
+    setFault(f) { fault = f && f.dropL > 0 ? { dropL: +f.dropL } : null; }, get fault() { return fault; },
     get twin() { return twin.map(t => ({ eng: t.eng, rpm: t.rpm })); }, get runningL() { return twin[0].eng === 'run'; },
     twinLive: twin,                                          // (read only: the gauges each frame, without copying)
     get running() { return st.eng === 'run'; }, get cranking() { return st.eng === 'crank'; },

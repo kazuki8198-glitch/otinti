@@ -16,8 +16,9 @@ export const SAMPLE_CTX = {
   career: { chapter: 'ch2', slot: 'am', day: 12, dayMod3: 0, tired: false, solo: false, flying: true, graduated: false },
   today: { flight: 'a3', flightTitle: '「上昇・降下・レベルオフ」の飛行', checkride: false, checkId: '', checkTitle: '', graduation: false, solo: false, xc: false, exam: false, needsDecision: true, decided: false, decisionRight: true, reg: 'N738SY', type: 'Archer', stand: 19 },
   weather: { ja: '晴れ', metarAm: 'KLAB 121353Z 00405KT 10SM FEW035 19/12 A2992', metarPm: 'KLAB 121853Z 00405KT 10SM SCT045 22/12 A2992', taf: 'TAF KLAB … 01005KT P6SM FEW035', why: '視程・雲・風とも基準内です。' },
+  tem: { on: true, o0: '午後の雷雨', o1: '審査の緊張', o2: '朝の霧', right: true, threat: '審査の緊張', why: '今日は審査です。緊張すると、いつもの手順が抜けます', plan: '毎日の手順のとおりに', not: '' },
 };
-export const PEOPLE_HOOKS = ['done', 'decide', 'tablet', 'help', 'checkride', 'look', 'nod', 'point'];
+export const PEOPLE_HOOKS = ['done', 'decide', 'tablet', 'help', 'checkride', 'look', 'nod', 'point', 'tem'];
 // ('done' also takes 'graduation': the ceremony's speech heard)
 export const PEOPLE_FLAGS = ['met_chief', 'met_dispatcher', 'met_mechanic', 'met_kiryu', 'met_asahi', 'met_mori', 'helped_mori', 'kiryu_tip', 'asahi_imsafe', 'has_tablet', 'tour_done', 'welcome_done', 'c1_briefed'];
 // the flags set here that the game reads (the tablet, the people met for the prologue's end, the check ride's brief)
@@ -27,6 +28,8 @@ const SPEAKERS = Object.fromEntries([...Object.entries(PEOPLE).map(([id, p]) => 
 const ch = (c) => ({ ctx: 'career.chapter', is: c });
 const flag = (f, is) => (is === undefined ? { flag: f } : { flag: f, is });
 
+// (M7) TEM's three answers on a check's briefing (the hook 'tem' with the index, as the instructor's briefing)
+const temChoices = (p) => [0, 1, 2].map(i => ({ text: `{tem.o${i}}`, next: p + ':a', effects: [{ hook: 'tem', arg: String(i) }] }));
 export function peopleDialogs() {
   const D = {};
   // ---------------------------------------------------------------- 真壁 主任教官
@@ -53,15 +56,19 @@ export function peopleDialogs() {
       ir: say('今日は計器飛行の審査です。私が右の席に座ります。外は雲の中、あなたはフードの下。見えるのは計器だけです。', { if: { all: [{ ctx: 'today.checkride', is: true }, { ctx: 'today.checkId', is: 'ir' }] }, else: 'me', hook: { name: 'look', arg: 'player' }, effects: [{ set: 'c1_briefed' }], next: 'ir:2' }),
       'ir:2': say('離陸したら、部分パネル。主の姿勢表示が止まった想定で、予備の計器で飛んでもらいます。そのあと、ILS 進入。決心高度で滑走路が見えなければ、そこで判断を。', { next: 'ir:3' }),
       'ir:3': say('スキャンを止めないこと。ひとつの計器を見つめると、ほかが逃げていきます。', { choices: [
-        { text: 'よろしくお願いします', next: 'chk:go' },
+        { text: 'よろしくお願いします', next: 'chk:tem' },
         { text: '少し準備してから行きます', next: 'c1:later' },
       ] }),
       me: say('今日は双発の審査です。Seminole で、私が右の席に座ります。', { if: { all: [{ ctx: 'today.checkride', is: true }, { ctx: 'today.checkId', is: 'me' }] }, else: 'final', hook: { name: 'look', arg: 'player' }, effects: [{ set: 'c1_briefed' }], next: 'me:2' }),
       'me:2': say('離陸の直後に、片方のエンジンを止めます。Identify、Verify、Feather。足で方向を保って、Vyse で上昇。上空でもう一度、そして片発のまま着陸です。', { next: 'me:3' }),
       'me:3': say('死んだ足は、死んだエンジン。踏んでいない側のエンジンが止まっています。……落ち着いて、声に出して確かめなさい。', { choices: [
-        { text: 'よろしくお願いします', next: 'chk:go' },
+        { text: 'よろしくお願いします', next: 'chk:tem' },
         { text: '少し準備してから行きます', next: 'c1:later' },
       ] }),
+      // (M7) TEM on a later chapter's check too (ctx tem: career/tem.js, as the instructor's briefing): his own words
+      'chk:tem': say('その前に、TEM を。審査の日の脅威を、ひとつ。今日いちばん気をつけることは？', { if: { ctx: 'tem.on', is: true }, else: 'chk:go', hook: { name: 'look', arg: 'player' }, choices: temChoices('chk:tem') }),
+      'chk:tem:a': say('結構。{tem.why}。だから、{tem.plan}。それを言える人は、審査でも崩れません。', { if: { ctx: 'tem.right', is: true }, else: 'chk:tem:b', effects: [{ trust: 'chief', add: 1 }], hook: { name: 'nod' }, next: 'chk:go' }),
+      'chk:tem:b': say('違いますね。{tem.not}。今日の脅威は「{tem.threat}」。{tem.why}。対策は、{tem.plan}。', { next: 'chk:go' }),
       'chk:go': say('機体で待っています。外部点検から、いつもどおりに。', { hook: { name: 'nod' }, effects: [{ hook: 'checkride' }], end: true }),
       final: say('今日は最終審査ですね。審査官の黒田さんが、教官室で待っています。私たちは、今日は何もしてあげられません。', { if: { all: [{ ctx: 'today.checkride', is: true }, { ctx: 'today.checkId', is: 'final' }] }, else: 'grad', hook: { name: 'look', arg: 'player' }, next: 'final:2' }),
       'final:2': say('ここで覚えたことを、全部、いつもどおりに。それで十分です。', { hook: { name: 'nod' }, end: true }),
@@ -207,9 +214,13 @@ export function peopleDialogs() {
       x2: say('機体は Seminole。離陸、上空での片発停止、そして片発のままの進入と着陸。管制との交信、チェックリスト、判断。全部を見ます。', { next: 'x3' }),
       x3: say('審査の間、私は何も言いません。手伝いもしません。私を乗客だと思ってください。', { next: 'x4' }),
       x4: say('ひとつだけ。わからないとき、迷ったときは、そう言って、安全なほうを選びなさい。それも審査のうちです。', { choices: [
-        { text: 'よろしくお願いします', next: 'x:go' },
+        { text: 'よろしくお願いします', next: 'x:tem' },
         { text: '少し準備してから行きます', next: 'x:later' },
       ] }),
+      // (M7) the examiner asks for the TEM too, and only notes the answer
+      'x:tem': say('出発前に、TEM を聞きます。今日の脅威を、ひとつ挙げてください。', { if: { ctx: 'tem.on', is: true }, else: 'x:go', hook: { name: 'look', arg: 'player' }, choices: temChoices('x:tem') }),
+      'x:tem:a': say('……「{tem.threat}」。記録しておきます。対策も、言葉にしてありますね。', { if: { ctx: 'tem.right', is: true }, else: 'x:tem:b', next: 'x:go' }),
+      'x:tem:b': say('……そうですか。{tem.not}。私なら「{tem.threat}」を挙げます。{tem.why}。記録しておきます。', { next: 'x:go' }),
       'x:go': say('機体で待っています。', { hook: { name: 'nod' }, effects: [{ hook: 'checkride' }], end: true }),
       'x:later': say('わかりました。時間は十分にあります。', { end: true }),
       x9: say('……。', { if: { ctx: 'career.graduated', is: true }, else: 'x10', next: 'x9:2' }),

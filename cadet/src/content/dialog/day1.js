@@ -83,7 +83,26 @@ export function dayDialogs() {
     skip: say('わかりました。そこから始めます。', { hook: { name: 'nod' }, end: true }),
     fly: say('では、左旋回でクロスウインド、ダウンウインドへ。地上 1,000 ft・90 kt です。課目の始まるところで私が言います。', { hook: { name: 'point', arg: 'pfd' }, end: true }),
   };
-  return { speakers: SPEAKERS, flags: [], hooks: ['look', 'nod', 'point', 'go'], dialogs: { transit: { start: 'ask', nodes: T }, return: { start: 'ask', nodes: R }, pattern: { start: 'ask', nodes: C } } };
+  // (M7) the run-up's fault: the left magneto drops beyond the limit (the hook 'go': 'return' | 'burn' | 'go'); asked
+  // again (fault2) when a lean run-up did not clear it
+  const F = {
+    ask: say('左のマグネトーで、回転の下がり方が制限の 175 rpm を超えました。エンジンも少し荒れていますね。どうしますか。', { hook: { name: 'point', arg: 'pfd' }, choices: [
+      { text: '離陸はやめて、駐機場へ戻り整備に報告する', next: 'ret', effects: [{ hook: 'go', arg: 'return' }] },
+      { text: 'ミクスチャーを絞って回し、プラグの汚れを焼き切ってから、もう一度確かめる', next: 'burn', effects: [{ hook: 'go', arg: 'burn' }] },
+      { text: '少しなので、このまま離陸する', next: 'go', effects: [{ hook: 'go', arg: 'go' }] },
+    ] }),
+    ret: say('いい判断です。制限を超えたら、飛ばない。地上管制には私が連絡します。駐機場へ戻りましょう。大城さんに見てもらいます。', { hook: { name: 'nod' }, end: true }),
+    burn: say('それも手順のひとつです。1,800 rpm くらいで、ミクスチャーを少し絞って 30 秒。そのあと、もう一度 L と R を確かめてください。', { hook: { name: 'point', arg: 'pfd' }, end: true }),
+    go: say('いいえ、それはだめです。制限を超えたマグネトーで離陸すると、上空で片方の点火が止まったとき、もう余裕がありません。今日は戻ります。', { hook: { name: 'look', arg: 'player' }, end: true }),
+  };
+  const F2 = {
+    ask: say('焼いても、まだ制限を超えて落ちますね。プラグの汚れではなく、マグネトーそのものかもしれません。', { hook: { name: 'look', arg: 'player' }, choices: [
+      { text: '駐機場へ戻って、整備に報告する', next: 'ret', effects: [{ hook: 'go', arg: 'return' }] },
+      { text: 'このまま離陸する', next: 'go', effects: [{ hook: 'go', arg: 'go' }] },
+    ] }),
+    ret: F.ret, go: F.go,
+  };
+  return { speakers: SPEAKERS, flags: [], hooks: ['look', 'nod', 'point', 'go'], dialogs: { transit: { start: 'ask', nodes: T }, return: { start: 'ask', nodes: R }, pattern: { start: 'ask', nodes: C }, fault: { start: 'ask', nodes: F }, fault2: { start: 'ask', nodes: F2 } } };
 }
 
 // at the aircraft before the flight (the walk-around): what he asks of the cadet

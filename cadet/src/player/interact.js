@@ -55,7 +55,8 @@ export function createInteractor({ walker, world, L, hud }) {
       best = t; break;
     }
     current = best;
-    hud.prompt(current ? (typeof current.prompt === 'function' ? current.prompt() : current.prompt) : null);
+    // (while a card is open E closes it, as its foot says: no prompt over it)
+    hud.prompt(current && !card ? (typeof current.prompt === 'function' ? current.prompt() : current.prompt) : null);
     // close the card when the player walks away from where it was opened
     if (card && Math.hypot(walker.state.x - card.x, walker.state.z - card.z) > 2.0) closeCard();
     return current;

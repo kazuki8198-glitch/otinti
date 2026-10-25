@@ -15,8 +15,8 @@ const CSS = `
 #fhud .dh-task h3 { margin: 1px 0 3px; font-size: 15.5px; line-height: 1.4; }
 #fhud .dh-task p { margin: 0 0 6px; color: #d7e4f2; }
 #fhud .dh-flow { display: flex; gap: 3px; margin: 2px 0 6px; }
-#fhud .dh-flow i { flex: 1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .14); }
-#fhud .dh-flow i.done { background: var(--fh-ok, #6fe3a0); } #fhud .dh-flow i.cur { background: var(--accent, #5cc8ff); }
+#fhud .dh-flow i { flex: 1; height: 4px; border-radius: 2px; background: transparent; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3); }
+#fhud .dh-flow i.done { background: var(--fh-ok, #6fe3a0); box-shadow: none; } #fhud .dh-flow i.cur { background: var(--accent, #5cc8ff); box-shadow: none; height: 7px; margin-top: -1.5px; }
 #fhud .dh-flow i.lesson { height: 6px; margin-top: -1px; }
 #fhud .dh-keys { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: #cfe3f5; }
 #fhud .dh-keys span { display: inline-flex; gap: 4px; align-items: center; }

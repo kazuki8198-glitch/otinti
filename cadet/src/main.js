@@ -58,6 +58,7 @@ import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, navlogNumbers, NA
 import { drawPfdPicture } from './world/pfd-picture.js';
 import { createTablet } from './ui/tablet.js';
 import { createCards } from './ui/cards.js';
+import { createCoach } from './ui/coach.js';
 import { trustOf } from './dialog/engine.js';
 import { spoken } from './content/dialog/atc.js';
 import { nextStep, makeRouter } from './career/guide.js';
@@ -113,6 +114,8 @@ async function boot() {
   const world = createCollisionWorld();
   const audio = createAudio();
   audio.setVolume(settings.get('volume'));
+  const groupVolumes = () => audio.setVolumes({ engine: settings.get('volEngine'), amb: settings.get('volAmb'), radio: settings.get('volRadio') });
+  groupVolumes();
 
   bootMsg('飛行場を作っています…', 0.35); await frame();
   const ground = buildGround(L, FL, { quality: preset }); scene.add(ground.group);
@@ -219,7 +222,7 @@ async function boot() {
       const ch = c.querySelector('.card-choices'); ch.textContent = '';
       for (const x of choices || []) { const b = document.createElement('button'); b.type = 'button'; b.tabIndex = -1; b.innerHTML = `<kbd>${x.k}</kbd>${esc(x.text)}`; b.dataset.k = String(x.k - 1); ch.appendChild(b); }
       ch.hidden = !(choices && choices.length);
-      c.querySelector('.card-foot').textContent = choices && choices.length ? '1〜4 で選ぶ・E で閉じる' : 'E で閉じる';
+      c.querySelector('.card-foot').textContent = choices && choices.length ? `1〜${choices.length} で選ぶ・E で閉じる` : 'E で閉じる';
       c.hidden = false;
     },
   };
@@ -248,13 +251,16 @@ async function boot() {
   // day's weather (the information letter moves on each day)
   const PHON = ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo', 'Foxtrot', 'Golf', 'Hotel', 'India', 'Juliett', 'Kilo', 'Lima', 'Mike', 'November', 'Oscar', 'Papa', 'Quebec', 'Romeo', 'Sierra', 'Tango', 'Uniform', 'Victor', 'Whiskey', 'Xray', 'Yankee', 'Zulu'];
   // (today's flight as planned when the day was made: once its lesson is passed, the plan would already show the next)
-  let dayItem = null;
+  let dayItem = null, forceFault = null;
   const newDay = () => {
     dayN++;
     dayItem = { day: career.day, it: flightItem() };
     setTodayType((planOf(flightItem()) || {}).aircraft || 'pa28');
     const w = career.weather(prog()), pm = career.slot === 'pm';
-    today = createDay(FL, { seed: career.state.seed * 31 + career.day * 7 + dayN, stand: { a: tg.a, c: tg.c }, anomalies: dayN === 1 ? planted : undefined, plan: planOf(flightItem()),
+    // (M7) now and then a later chapter's ordinary Archer day has a fault the run-up finds: the left magneto
+    const it0 = flightItem(), h = (career.state.seed * 13 + career.day * 7) >>> 0;
+    const fault = forceFault != null ? forceFault : it0 && it0.kind === 'flight' && ['ch3', 'ch4'].includes(career.chapter) && todayType === 'pa28' && it0.id !== (STAGE[career.chapter] || { lessons: [] }).lessons[0] && h % 6 === 4 ? 'mag' : null;
+    today = createDay(FL, { fault, seed: career.state.seed * 31 + career.day * 7 + dayN, stand: { a: tg.a, c: tg.c }, anomalies: dayN === 1 ? planted : undefined, plan: planOf(flightItem()),
       weather: { info: PHON[(career.day * 2 + (pm ? 1 : 0)) % 26], zulu: pm ? '1853' : '1353', tempC: w.tempC + (pm ? 3 : 0), dewC: w.dewC, ifr: w.kind === 'lowCloud' } });
     walkProps.set(today.walk.props()); renderWalk(); return today;
   };
@@ -465,8 +471,9 @@ async function boot() {
       lessonTitle: it ? lessonTitle(planOf(it).main) : '', studyTitle: lessonTitle(study), studySection: sec ? sec.id : null,
     });
     Object.assign(cx.weather, { ja: w.ja, metarAm: w.metar.am, metarPm: w.metar.pm, taf: w.taf, why: w.why });
-    const temOn = !!(it && (it.kind === 'flight' || it.kind === 'xc') && STAGE[st.chapter] && !st.graduated && !flownToday());
-    temData = temOn ? temFor({ weather: w.kind, fatigue: st.fatigue, chapter: st.chapter, aircraft: todayType, check: false, xc: it.kind === 'xc', day: st.day }) : null;
+    // (M7) the later chapters' checks too: the chief's or the examiner's briefing asks for it
+    const temOn = !!(it && (it.kind === 'flight' || it.kind === 'xc' || (it.kind === 'checkride' && it.id !== 'c1')) && STAGE[st.chapter] && !st.graduated && !flownToday());
+    temData = temOn ? temFor({ weather: w.kind, fatigue: st.fatigue, chapter: st.chapter, aircraft: todayType, check: it.kind === 'checkride', xc: it.kind === 'xc', day: st.day }) : null;
     if (temData) Object.assign(cx.tem, { on: true, o0: temData.options[0], o1: temData.options[1], o2: temData.options[2], threat: temData.threat.ja, why: temData.threat.why, plan: temData.threat.plan });
     else cx.tem.on = false;
     return cx;
@@ -691,7 +698,7 @@ async function boot() {
   }
   // English said aloud (the training device's radio lessons), when the voice is on
   function speakEnglish(en) {
-    if (audio.squelch) audio.squelch();
+    if (audio.radio) audio.radio(1.2 + String(en).length / 13);
     const synth = globalThis.speechSynthesis;
     if (!synth || settings.get('atcVoice') === false || typeof SpeechSynthesisUtterance === 'undefined') return;
     try {
@@ -699,7 +706,7 @@ async function boot() {
       const u = new SpeechSynthesisUtterance(spoken(en));
       const v = synth.getVoices().find(x => /^en(-|_)US/i.test(x.lang)) || synth.getVoices().find(x => /^en/i.test(x.lang));
       if (v) u.voice = v;
-      u.lang = 'en-US'; u.rate = 1.0; u.volume = Math.max(0, Math.min(1, settings.get('volume') ?? 0.8));
+      u.lang = 'en-US'; u.rate = 1.0; u.volume = Math.max(0, Math.min(1, (settings.get('volume') ?? 0.8) * (settings.get('volRadio') ?? 1)));
       synth.speak(u);
     } catch (e) { /* no speech here */ }
   }
@@ -946,9 +953,13 @@ async function boot() {
     else toast(`今日の予定：${sch.map(x => `${SLOT_NAMES[x.slot]} ${x.title}`).join('／')}（Tab でタブレット）`, 6000);
   }
   // the front door: home to the dorm (the evening, or a day off) — early, or after some study (it tires)
+  // the day is over: the evening, a day off, or everything on today's plan done (or gone by)
+  function dayIsDone() {
+    if (career.state.slot === 'evening' || planToday().some(x => x.kind === 'off')) return true;
+    return planStates().filter(x => x.kind !== 'off').every(x => x.state === 'done' || x.state === 'missed');
+  }
   function goHome() {
-    const st = career.state, off = planToday().some(x => x.kind === 'off');
-    if (st.slot !== 'evening' && !off) { toast('まだ今日の予定が残っています（Tab でタブレット）', 3000); return 'closed'; }
+    if (!dayIsDone()) { toast('まだ今日の予定が残っています（Tab でタブレット）', 3000); return 'closed'; }
     homeOpen = true;
     interactor.showCard('寮へ帰る', '今日の訓練はここまで。寮に帰って休みます。', [{ k: 1, text: 'すぐに寝る', act: 'early' }, { k: 2, text: '少し自習してから寝る（疲れが残る）', act: 'late' }, { k: 3, text: 'やっぱり残る', act: 'stay' }]);
     return 'examined';
@@ -982,13 +993,12 @@ async function boot() {
     if (!out) { outsideSeen = false; return; }
     if (outsideSeen || leaving || talk || cards.showing) return;
     outsideSeen = true;
-    const st = career.state, off = planToday().some(x => x.kind === 'off');
-    if (st.slot !== 'evening' && !off) { toast('まだ今日の予定が残っています（Tab でタブレット）', 3000); return; }
+    if (!dayIsDone()) { toast('まだ今日の予定が残っています（Tab でタブレット）', 3000); return; }
     leaving = true; interactor.closeCard();
     toast('寮へ帰ります', 1600);
     Promise.resolve(sleepNow({ late: false })).finally(() => { leaving = false; });
   }
-  interactor.add({ id: 'home', frame: [ENTRANCE.c + 1.6, 1.3, -ENTRANCE.a], radius: 0.9, prompt: () => (career.slot === 'evening' || planToday().some(x => x.kind === 'off') ? '寮へ帰る（今日を終える）' : '正面入口'), use: goHome });
+  interactor.add({ id: 'home', frame: [ENTRANCE.c + 1.6, 1.3, -ENTRANCE.a], radius: 0.9, prompt: () => (dayIsDone() ? '寮へ帰る（今日を終える）' : '正面入口'), use: goHome });
   $('#card .card-choices').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && homeOpen) homeChoose(+b.dataset.k); });
 
   // the day's boards: what the career has today
@@ -1015,6 +1025,8 @@ async function boot() {
   }
   // the tablet (Tab): what it shows, what it does
   const BANKS = FL.quiz.BANKS;
+  const coach = createCoach({ root: $('#hud'), settings });
+  let coachAt = null;
   const tablet = createTablet({
     model: () => {
       refreshCtx();
@@ -1163,12 +1175,18 @@ async function boot() {
   });
   settings.onChange((k, v) => {
     if (k === 'volume') audio.setVolume(v);
+    if (k === 'volEngine' || k === 'volAmb' || k === 'volRadio') groupVolumes();
+    if (k === 'subSize') document.documentElement.style.setProperty('--sub-k', String(v));
+    if (k === 'colorAssist') document.body.classList.toggle('cvd', !!v);
+    if (k === 'firstHelp' && v) coach.restart();
     if (k === 'fov') { camera.fov = v; camera.updateProjectionMatrix(); }          // at once, in either mode
     if (k === 'showPerf') $('#perf').style.display = v ? '' : 'none';
     // the auto rudder, changed in the menu while flying: as U would (FLIGHT LAB's action, which also keeps the setting)
     if (k === 'autoRud' && fly && fly.active && fly.flight.s && !!fly.flight.s.opts.autoRud !== !!v) fly.flight.action('autoRud');
   });
   $('#perf').style.display = settings.get('showPerf') ? '' : 'none';
+  document.documentElement.style.setProperty('--sub-k', String(settings.get('subSize') || 1));
+  document.body.classList.toggle('cvd', !!settings.get('colorAssist'));
 
   const chips = $('#views');
   function renderChips() {
@@ -1290,6 +1308,14 @@ async function boot() {
     // near today's aircraft: the walk-around's progress; the instructor leaves the room for it once the cadet has gone
     walkEl.hidden = !(mode === 'walk' && Math.hypot(pa - tg.a, pc - tg.c) < 14 && !flownToday());   // (no flight left today: no walk-around)
     updateGuide(dt, pa, pc);
+    if (mode === 'walk' && live) {
+      const y = walker.state.yaw, p = walker.state.pitch, fp = walker.framePos;
+      const look = coachAt ? Math.abs(Math.atan2(Math.sin(y - coachAt.yaw), Math.cos(y - coachAt.yaw))) * 57.3 + Math.abs(p - coachAt.pitch) * 57.3 : 0;
+      const walked = coachAt ? Math.min(2, Math.hypot(fp.a - coachAt.a, fp.c - coachAt.c)) : 0;
+      coachAt = { yaw: y, pitch: p, a: fp.a, c: fp.c };
+      coach.update(dt, { look: talk ? 0 : look, walked, talking: !!talk && talkWho !== 'tablet', tablet: tablet.isOpen, hasTablet: !!talkState.flags.has_tablet || career.chapter !== 'prologue',
+        menu: menu.isOpen, busy: !!talk || cards.showing || tablet.isOpen || interactor.cardOpen });
+    }
     updateClouds(dt);
     if (insGoOut && mode === 'walk' && !(fly && fly.active) && academy.roomOf(pa, pc)?.id !== 'brief-1') { insGoOut = false; placeInstructor('apron'); }
     walkProps.update(performance.now() / 1000, windNow().kt);
@@ -1432,8 +1458,12 @@ async function boot() {
     if (!g || !w) return { reached: false, why: 'no guide' };
     // (a door opened on the way swings into the path planned through it: plan again from there)
     let r = null; const doorsUsed = [];
+    // (a place of the walk-around is on the aircraft, among its own colliders: close enough from a little further off)
+    if (g.at === 'walk' || g.at === 'board') near = Math.max(near, 2.2);
     for (let k = 0; k < 4; k++) {
-      const fp = walker.framePos, path = navPath(fp.a, fp.c, w.target.a, w.target.c, near);
+      const fp = walker.framePos;
+      let path = navPath(fp.a, fp.c, w.target.a, w.target.c, near);
+      if (!path) path = navPath(fp.a, fp.c, w.target.a, w.target.c, near + 1.5);
       if (!path) return { reached: false, why: 'no path', step: { ...g }, at: { a: fp.a, c: fp.c }, target: w.target };
       r = walkRouteNow(path, { maxT, giveUp: 3 }); doorsUsed.push(...r.doors);
       if (r.reached) break;
@@ -1610,9 +1640,10 @@ async function boot() {
       aircraft: () => todayType, cloud: () => cloudK, haze: () => (haze0 ? haze0.kind : null),
       // (the screenshots: everyone by the aircraft as after the first solo)
       stageCelebrate: () => { celebrate = true; placeInstructor('apron'); layoutPeople(); },
+      fault: (f) => { forceFault = f === undefined ? null : f; },        // (tests: 'mag', false for none, undefined: the day's own)
       readiness: () => { const d = boardTalk(); return d.dialogs.board.nodes.today ? 'ready' : d.dialogs.board.nodes.c2 ? 'checkride' : d.dialogs.board.nodes.not.text; },
     },
-    settings,
+    settings, coach: () => coach.step,
     // render n frames now and return the last as a PNG data URL (for tests: the drawing buffer is read in the same task)
     snapshot: (n = 1) => { for (let k = 0; k < n; k++) step(performance.now()); return renderer.domElement.toDataURL('image/png'); },
   };

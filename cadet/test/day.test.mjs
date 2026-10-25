@@ -5,7 +5,9 @@
 //  - the day goes through every phase in order and ends signed in the logbook;
 //  - each lesson's grade, score and record are bit-identical to FLIGHT LAB's runLesson for the same level;
 //  - the walk-around: planted anomalies found and fixed, or missed (the instructor finds them, the debrief says so);
-//  - crossing the hold-short line without a clearance is caught; a wrong read-back is corrected.
+//  - crossing the hold-short line without a clearance is caught; a wrong read-back is corrected;
+//  - (M7) the run-up's fault: the left magneto beyond its limit stops the day at that item; back to the stand (after a
+//    lean run-up that does not clear it), no lesson flown, the debrief and the trust say what was decided.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -108,4 +110,40 @@ test('day: the walk-around\'s later anomalies — planted on either aircraft, re
     assert.equal(s.found, 5, `${aircraft}: all five found`);
     assert.equal(w.props().brakeLeak, false, `${aircraft}: the brake put right, no stain`);
   }
+});
+
+test('day (M7): the run-up\'s magneto fault — the day stops there, the cadet goes back to the stand, the debrief says why', () => {
+  const ok = playDay({ fault: 'mag', faultChoices: ['burn', 'return'] }), sum = ok.day.summary();
+  assert.ok(ok.phases.includes('runup') && !ok.phases.includes('tower') && !ok.phases.includes('t1'), `no take-off: ${ok.phases.join(' ')}`);
+  assert.ok(['taxiIn', 'shutdown', 'debrief'].every(p => ok.phases.includes(p)), ok.phases.join(' '));
+  assert.equal(sum.fault.decided, 'return'); assert.equal(sum.fault.tries, 1);
+  assert.equal(sum.lessons.length, 0);
+  assert.ok(sum.fault.drop > 175, `the drop seen ${sum.fault.drop}`);
+  const lines = []; const r = createRunner({ data: debriefDialogs(sum), state: createDialogState() }); r.start('debrief');
+  for (let k = 0; k < 30 && r.running; k++) { const v = r.view(); lines.push(v.text); if (v.choices.length) r.choose(0); else r.next(); }
+  assert.match(lines.join(''), /離陸をやめて戻ったのは、正しい判断です/); assert.match(lines.join(''), /プラグを焼き/);
+  // going anyway: the instructor takes it back; the trust goes down
+  const bad = playDay({ fault: 'mag', faultChoices: ['go'] }).day.summary();
+  assert.equal(bad.fault.decided, 'go'); assert.ok(bad.trust < sum.trust, `${bad.trust} < ${sum.trust}`);
+  assert.equal(validateDialogs(debriefDialogs(sum), { hooks: DEBRIEF_HOOKS }).errors.length, 0);
+});
+
+test('day (M7): the debrief in three voices — the instructor, the chief instructor, the examiner — the same facts, their own words', () => {
+  const { day } = playDay({ level: 'basic' });
+  const sum = { ...day.summary(), tem: { threat: { id: 'check', ja: '審査の緊張' }, named: true } };
+  const read = (voice) => {
+    const data = debriefDialogs(sum, { voice });
+    assert.equal(validateDialogs(data, { hooks: DEBRIEF_HOOKS }).errors.length, 0, voice);
+    const lines = []; const r = createRunner({ data, state: createDialogState() }); r.start('debrief');
+    for (let k = 0; k < 40 && r.running; k++) { const v = r.view(); lines.push(v.text); if (v.choices.length) r.choose(0); else r.next(); }
+    return lines;
+  };
+  const ins = read('instructor'), chief = read('chief'), exam = read('examiner');
+  for (const L of [chief, exam]) {
+    assert.notEqual(L[0], ins[0]); assert.notEqual(L[L.length - 1], ins[ins.length - 1]);
+    // the facts (the walk-around, the radio, the lessons) are the same lines
+    assert.ok(ins.filter(x => /^課目です/.test(x)).every(x => L.includes(x)));
+  }
+  assert.match(exam.join(''), /記録/); assert.match(chief.join(''), /審査/);
+  assert.notEqual(chief.join(''), exam.join(''));
 });

@@ -62,9 +62,15 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         + range('fov', '視野角', 60, 100, 1, x => `${x}°`, '広いほど周りが見えます。酔いやすい人は 70〜80° がおすすめ')
         + sw('headBob', '頭の揺れ', '歩くときの小さな上下の揺れ。酔いやすい人は OFF に')
         + sw('guide', '次にすることの案内', '画面の上に、次にすることとその方向を出す')
-        + range('volume', '音量', 0, 1, 0.05, x => `${Math.round(x * 100)}%`)
+        + sw('firstHelp', 'はじめての操作の案内', '左下に、見回す・歩く・E・Tab・Esc の使い方を 1 つずつ出す（全部済むと消えます。ON でもう一度最初から）')
+        + range('volume', '音量（全体）', 0, 1, 0.05, x => `${Math.round(x * 100)}%`)
+        + range('volEngine', 'エンジンと風切り音', 0, 1, 0.05, x => `${Math.round(x * 100)}%`)
+        + range('volAmb', '周りの音と足音', 0, 1, 0.05, x => `${Math.round(x * 100)}%`)
+        + range('volRadio', '無線（雑音と管制官の声）', 0, 1, 0.05, x => `${Math.round(x * 100)}%`)
         + `<div class="m-row"><span>画質</span><span></span><div class="m-chips" style="grid-column:1/-1">${presets.map(p => `<button data-quality="${p.id}" aria-pressed="${(v.quality || getPreset()) === p.id}">${esc(p.label)}${!v.quality && getPreset() === p.id ? '（自動）' : ''}</button>`).join('')}</div><small>最初は GPU に合わせて自動で選びます。カクつくときは下げてください</small></div>`
         + range('textSpeed', '字幕の速さ', 0.5, 3, 0.25, x => `×${x.toFixed(2)}`, '会話の文字が出る速さ')
+        + range('subSize', '字幕の大きさ', 0.85, 1.6, 0.05, x => `×${x.toFixed(2)}`, '会話・教官の言葉・案内・お知らせの文字の大きさ')
+        + sw('colorAssist', '色の組み合わせ（色覚に配慮）', '良い・悪いを示す緑と赤を、青と橙にします。どちらの色でも ✓ △ ✕ の印が付きます')
         + sw('voice', '教官の声（読み上げ）', 'ブラウザの音声合成で教官の台詞を読み上げます（日本語の声がある場合）')
         + sw('atcVoice', '管制官の声（英語の読み上げ）', 'ブラウザの音声合成で管制官の英語を読み上げます（英語の声がある場合）')
         + sw('radioJa', '無線の日本語訳', '無線の画面で、英語の下に日本語の意味を出します')
@@ -121,7 +127,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
     const k = e.target.dataset && e.target.dataset.set; if (!k) return;
     settings.set(k, parseFloat(e.target.value));
     const v = settings.get(k), out = el.querySelector(`[data-val="${k}"]`);
-    if (out) out.textContent = k === 'sensitivity' ? v.toFixed(2) : k === 'fov' ? `${v}°` : k === 'textSpeed' ? `×${v.toFixed(2)}` : `${Math.round(v * 100)}%`;
+    if (out) out.textContent = k === 'sensitivity' ? v.toFixed(2) : k === 'fov' ? `${v}°` : k === 'textSpeed' || k === 'subSize' ? `×${v.toFixed(2)}` : `${Math.round(v * 100)}%`;
   });
   el.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(true); return; }

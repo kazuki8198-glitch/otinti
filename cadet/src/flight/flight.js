@@ -309,7 +309,7 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
   }
   // the control strip's numbers for the HUD (one object, reused): the levers, the holds, the brakes, the basic readings
   const pnl = { thr: 0, rpm: 0, pitch: 0, pTgt: 0, keyHold: false, pIn: 0, trimPct: 0, flapLabel: '', flapMoving: false, brake: false, parkBrake: false,
-    autoRud: false, rud: 0, rTrim: 0, stall: false, engRun: true, onGround: false, ias: 0, alt: 0, hdg: 0, vs: 0 };
+    autoRud: false, rud: 0, rTrim: 0, stall: false, engRun: true, onGround: false, ias: 0, alt: 0, hdg: 0, vs: 0, gear: null };
   function panel(out = pnl) {
     if (!L) return out;
     const s = L.s, o = s.out, c = L.last || {};
@@ -319,6 +319,8 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
     out.flapLabel = s.A.flapLabels[s.flapIdx]; out.flapMoving = Math.abs(P.FLAP_DEG[s.flapIdx] - s.flapDeg) > 0.5;
     out.brake = !!s.brake; out.parkBrake = ctl.parkBrake; out.autoRud = !!s.opts.autoRud; out.rud = s.rudEff ?? s.rud; out.rTrim = ctl.rTrim;
     out.stall = !!o.stallWarn; out.onGround = !!s.onGround;
+    // (a retractable gear: 'down' — the three green lights —, 'up', or 'moving' — the red light)
+    out.gear = s.A.gear && s.A.gear.fixed === false ? (s.gearPos >= 0.995 ? 'down' : s.gearPos <= 0.005 ? 'up' : 'moving') : null;
     out.engRun = true; for (let i = 0; i < s.eng.length; i++) if (!s.eng[i].run) out.engRun = false;
     out.ias = c.kias ?? o.ias; out.alt = c.alt ?? o.altTrue; out.hdg = c.hdg ?? 0; out.vs = c.vs ?? o.vsi;
     return out;

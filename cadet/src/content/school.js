@@ -72,13 +72,15 @@ export function classDialogs(FL, i, { seed = 1 } = {}) {
   chs.forEach((c, k) => {
     const nextC = k < chs.length - 1 ? `c${k + 1}` : 'check';
     const secs = c.sections.map(s => book.section(s.id)).filter(Boolean);
-    N[`c${k}`] = { speaker: 'lecturer', text: `${k ? 'Next, ' : ''}第 ${c.n} 章${q(c.title)}。${secs.length} の節を順に見ていきます。`, next: secs.length ? `c${k}s0` : nextC };
+    N[`c${k}`] = { speaker: 'lecturer', text: `${k ? 'Next, ' : ''}第 ${c.n} 章${q(c.title)}。${secs.length} 節あります。順に見ていきましょう。`, next: secs.length ? `c${k}s0` : nextC };
     secs.forEach((sec, j) => {
       const id = `c${k}s${j}`, after = j < secs.length - 1 ? `c${k}s${j + 1}` : nextC;
       // the section's title and its first key points (two lines at most: a class goes through every section)
       const pts = []; for (const kp of sec.keyPoints) { const l = speechLines(kp, { whole: true }); if (pts.length + l.length > 2) break; pts.push(...l); }
       const body = pts.length ? pts : speechLines(sec.summary || '').slice(0, 2);
-      const lines = (body.length ? [`${q(sec.title)}。${body[0]}`, ...body.slice(1)] : [`${q(sec.title)}。`]).map(callFix);
+      // (a line in English alone is the textbook's mnemonic: said as one)
+      const lines = (body.length ? [`${q(sec.title)}。${body[0]}`, ...body.slice(1)] : [`${q(sec.title)}。`]).map(callFix)
+        .map(l => (/[\u3040-\u30ff\u4e00-\u9fff]/.test(l) ? l : `英語の覚え方もあります。“${l.replace(/[.。]$/, '')}”。`));
       // the first line puts the section's figure on the screen (when it has one)
       chain(N, id, lines, after, 'lecturer', sec.figure ? { hook: { name: 'board', arg: sec.id } } : {});
     });

@@ -21,7 +21,7 @@ const CSS = `
   #dlg .dlg-choices.many { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(var(--rows, 6), auto); grid-auto-flow: column; }
 }
 #dlg .dlg-ch { flex: none; display: flex; gap: 10px; align-items: baseline; width: 100%; margin: 0; padding: 9px 14px; text-align: left;
-  overflow-wrap: anywhere; font: inherit; font-size: 16px; line-height: 1.55; color: var(--ink, #eef3f8); background: rgba(10, 18, 28, 0.88);
+  overflow-wrap: anywhere; font: inherit; font-size: calc(16px * var(--sub-k, 1)); line-height: 1.55; color: var(--ink, #eef3f8); background: rgba(10, 18, 28, 0.88);
   border: 1px solid var(--glass-line, rgba(255,255,255,.12)); border-radius: 12px; cursor: pointer; transition: background .12s, border-color .12s; }
 #dlg .dlg-ch:hover { background: rgba(26, 44, 64, 0.9); border-color: rgba(92, 200, 255, .45); }
 #dlg .dlg-ch.sel { background: rgba(22, 50, 74, 0.94); border-color: var(--accent, #5cc8ff); box-shadow: inset 0 0 0 1px var(--accent, #5cc8ff); }
@@ -33,9 +33,9 @@ const CSS = `
   border-radius: 16px; background: rgba(10, 18, 28, 0.84); border: 1px solid var(--glass-line, rgba(255,255,255,.12));
   box-shadow: 0 16px 50px rgba(0, 0, 0, .42); backdrop-filter: blur(8px); pointer-events: auto; cursor: pointer;
   user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
-#dlg .dlg-chip { display: inline-block; max-width: 100%; margin: 0 0 6px; padding: 2px 12px; border-radius: 99px; font-size: 14px; font-weight: 800;
+#dlg .dlg-chip { display: inline-block; max-width: 100%; margin: 0 0 6px; padding: 2px 12px; border-radius: 99px; font-size: calc(14px * var(--sub-k, 1)); font-weight: 800;
   letter-spacing: .05em; overflow-wrap: anywhere; color: var(--sp-ink, #04121c); background: var(--sp, var(--accent, #5cc8ff)); }
-#dlg .dlg-text { margin: 0; min-height: 1.7em; font-size: 19px; line-height: 1.7; white-space: pre-line; overflow-wrap: anywhere;
+#dlg .dlg-text { margin: 0; min-height: 1.7em; font-size: calc(19px * var(--sub-k, 1)); line-height: 1.7; white-space: pre-line; overflow-wrap: anywhere;
   text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
 #dlg .dlg-text .off { visibility: hidden; }
 #dlg .dlg-box.narr .dlg-text { color: var(--ink-dim, #a9b7c6); font-style: italic; }

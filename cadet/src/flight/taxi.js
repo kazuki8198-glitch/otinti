@@ -30,6 +30,12 @@ export function routeOut(stand) {
     { a: HOLD_STOP.a, c: HOLD_STOP.c, stop: true, name: 'hold' },
   ];
 }
+// (M7) from the hold-short line back to the stand (the run-up found a fault): turned round on the taxiway, the way out
+// in reverse
+export function routeBack(stand) {
+  return [{ a: A1.a + 7, c: TWY.c - 4 }, { a: A1.a + 12, c: TWY.c }, { a: APRON_S - 9, c: TWY.c }, { a: APRON_S, c: TWY.c + 3 }, { a: APRON_S, c: LANE.c - 10 },
+    { a: APRON_S + 10, c: LANE.c }, { a: stand.a - 10, c: LANE.c }, { a: stand.a, c: LANE.c + 9 }, { a: stand.a, c: stand.c - 1.5, stop: true, name: 'stand' }];
+}
 // over the line and onto the runway, lined up (on the centre line, heading 36)
 export function routeLineUp() {
   return [{ a: A1.a, c: 24 }, { a: A1.a, c: 14 }, { a: A1.a + 1.5, c: 5 }, { a: A1.a + 3, c: 0 }, { a: LINEUP.a, c: 0, stop: true, name: 'lineup' }];

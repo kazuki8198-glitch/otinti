@@ -41,11 +41,11 @@ const CSS = `
   color: var(--ink-dim, #a9b7c6); background: transparent; border: 1px solid var(--glass-line, rgba(255,255,255,.12)); }
 #fhud .fh-fold:hover { color: var(--ink, #eef3f8); background: rgba(255, 255, 255, .08); }
 #fhud .fh-dots { display: flex; align-items: center; gap: 4px; margin: 4px 0 2px; min-width: 0; font-size: 12px; font-weight: 700; color: var(--accent, #5cc8ff); }
-#fhud .fh-dots i { flex: none; width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, .2); }
-#fhud .fh-dots i.done { background: var(--fh-ok); }
+#fhud .fh-dots i { flex: none; width: 9px; height: 9px; border-radius: 50%; background: transparent; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .4); }
+#fhud .fh-dots i.done { background: var(--fh-ok); box-shadow: none; }
 #fhud .fh-dots i.cur { background: var(--accent, #5cc8ff); box-shadow: 0 0 0 3px rgba(92, 200, 255, .25); }
 #fhud .fh-dots span { margin-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#fhud .fh-say { margin: 3px 0 5px; font-size: 15.5px; line-height: 1.5; font-weight: 700; }
+#fhud .fh-say { margin: 3px 0 5px; font-size: calc(15.5px * var(--sub-k, 1)); line-height: 1.5; font-weight: 700; }
 #fhud .fh-keys { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 0 0 6px; }
 #fhud .fh-kc { display: inline-flex; align-items: center; gap: 3px; max-width: 100%; font-size: 11.5px; line-height: 1.45; color: #cfe3f5;
   background: rgba(92, 200, 255, .07); border: 1px solid rgba(92, 200, 255, .25); border-radius: 6px; padding: 1px 7px 1px 3px; }
@@ -54,7 +54,7 @@ const CSS = `
 #fhud .fh-guide { margin: 0 0 6px; padding: 4px 8px; border-left: 3px solid var(--accent, #5cc8ff); border-radius: 3px;
   font-size: 12px; line-height: 1.6; color: #c9d7e8; background: rgba(92, 200, 255, .07); }
 #fhud .fh-gauges { display: grid; gap: 4px; margin: 0 0 5px; }
-#fhud .fh-g { display: grid; grid-template-columns: minmax(84px, auto) 1fr 58px; gap: 8px; align-items: center; font-size: 12px; }
+#fhud .fh-g { display: grid; grid-template-columns: minmax(84px, auto) 1fr 72px; gap: 8px; align-items: center; font-size: 12px; }
 #fhud .fh-gl { white-space: nowrap; color: #cfe0f2; }
 #fhud .fh-gb { position: relative; height: 10px; border-radius: 5px; overflow: hidden; background: rgba(255, 90, 80, .25); }
 #fhud .fh-gb i { position: absolute; top: 0; bottom: 0; }
@@ -62,6 +62,7 @@ const CSS = `
 #fhud .fh-gb .in { left: 35%; width: 30%; background: rgba(88, 224, 140, .5); }
 #fhud .fh-gb b { position: absolute; top: -2px; bottom: -2px; width: 4px; margin-left: -2px; border-radius: 2px; background: #fff; box-shadow: 0 0 4px rgba(0, 0, 0, .7); transition: left .12s linear; }
 #fhud .fh-gd { text-align: right; font: 700 12px var(--fh-mono); white-space: nowrap; }
+#fhud .fh-g.ok .fh-gd::before { content: '✓ '; } #fhud .fh-g.warn .fh-gd::before { content: '△ '; } #fhud .fh-g.ng .fh-gd::before { content: '✕ '; }
 #fhud .fh-g.ok .fh-gd { color: var(--fh-ok); } #fhud .fh-g.warn .fh-gd { color: var(--fh-warn); } #fhud .fh-g.ng .fh-gd { color: var(--fh-ng); }
 #fhud .fh-prog { font-size: 12px; color: var(--ink-dim, #a9b7c6); border-radius: 6px; }
 #fhud .fh-prog.reset .fh-pt, #fhud .fh-prog.reset .fh-pn { color: var(--fh-ng); }
@@ -113,7 +114,7 @@ const CSS = `
 #fhud .fh-subt.show { opacity: 1; }
 #fhud .fh-subt b { display: inline-block; margin: 0 8px 0 0; padding: 1px 10px; border-radius: 99px; font-size: 12.5px; font-weight: 800; letter-spacing: .05em;
   vertical-align: 1px; color: var(--sp-ink, #04121c); background: var(--sp, var(--accent, #5cc8ff)); }
-#fhud .fh-subt span { font-size: 16.5px; line-height: 1.6; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+#fhud .fh-subt span { font-size: calc(16.5px * var(--sub-k, 1)); line-height: 1.6; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
 
 /* ---- the dialogs (top right) */
 #fhud .fh-right { position: absolute; right: 14px; top: 14px; width: var(--fh-rw); max-height: calc(100% - 44px); display: flex; flex-direction: column; gap: 8px; }
@@ -127,6 +128,7 @@ const CSS = `
 #fhud .fh-check li span { color: var(--ink-dim, #a9b7c6); font-size: 12px; }
 #fhud .fh-check li.ok, #fhud .fh-check li.ok span { color: var(--fh-ok); }
 #fhud .fh-check li.ok b::after { content: ' ✓'; }
+#fhud .fh-check li.ng b::after { content: ' ✕'; }
 #fhud .fh-check li.cur { background: rgba(92, 200, 255, .14); outline: 1px solid var(--accent, #5cc8ff); }
 #fhud .fh-check li.ng { background: rgba(255, 90, 79, .32); outline-color: var(--fh-ng); }
 #fhud .fh-df { margin-top: 6px; font-size: 11.5px; color: var(--ink-dim, #a9b7c6); }
@@ -229,7 +231,7 @@ const CSS = `
   #fhud.deb .fh-subt { left: 14px; }
   #fhud .fh-right { top: calc(14px + var(--fh-sub-h)); max-height: calc(100% - 44px - var(--fh-sub-h)); }
   #fhud.p2d .fh-right { max-height: calc(100% - var(--p2d-h) - 64px - var(--fh-sub-h)); }
-  #fhud .fh-subt span { font-size: 15px; }
+  #fhud .fh-subt span { font-size: calc(15px * var(--sub-k, 1)); }
   /* the four numbers in two rows, the label beside the number; the main keys without the help key (the title says H) */
   #fhud .fh-nums { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 5px 0; }
   #fhud .fh-num { display: flex; align-items: baseline; gap: 4px; padding: 2px 7px 3px; }
@@ -729,7 +731,9 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     else { text(tPitch.v, Math.abs(pn.pIn) < 0.005 ? '中立' : `${pn.pIn > 0 ? '引き' : '押し'} ${pct(Math.abs(pn.pIn))}`); text(tPitch.s, `いま ${signed(pn.pitch, 1)}°`); }
     text(tTrim.v, pn.trimPct === 0 ? '中立' : `${pn.trimPct > 0 ? '機首上げ' : '機首下げ'} ${Math.abs(pn.trimPct)}%`);
     text(tTrim.s, '');
-    text(tFlap.v, pn.flapLabel); text(tFlap.s, pn.flapMoving ? '作動中' : ''); klass(tFlap.t, 'move', !!pn.flapMoving);
+    // (the Seminole: the gear in words under the flaps, not only as the panel's green and red lights)
+    const gearTxt = pn.gear === 'down' ? '脚 DOWN（緑 3）' : pn.gear === 'up' ? '脚 UP' : pn.gear === 'moving' ? '脚 作動中（赤）' : '';
+    text(tFlap.v, pn.flapLabel); text(tFlap.s, pn.flapMoving ? '作動中' : gearTxt); klass(tFlap.t, 'move', !!pn.flapMoving || pn.gear === 'moving');
     text(tBrake.v, pn.parkBrake ? 'PARK' : pn.brake ? 'ON' : '—'); text(tBrake.s, pn.parkBrake ? 'パーキング' : '');
     klass(tBrake.t, 'warn', !!(pn.brake || pn.parkBrake));
     const rud = pn.rud || 0;

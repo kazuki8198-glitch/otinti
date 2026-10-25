@@ -8,7 +8,7 @@ import { makeBot, runLesson } from './bot.mjs';
 import { createFlight } from '../../src/flight/flight.js';
 import { createSystems } from '../../src/aircraft/systems.js';
 import { createDay } from '../../src/career/day.js';
-import { routeOut, routeLineUp, routeIn, createTaxiPilot, exitFor } from '../../src/flight/taxi.js';
+import { routeOut, routeLineUp, routeIn, routeBack, createTaxiPilot, exitFor } from '../../src/flight/taxi.js';
 import { KITS } from '../../src/aircraft/walkaround.js';
 import { patternHook } from './pattern-hook.mjs';
 
@@ -16,9 +16,9 @@ const NOKEYS = { has: () => false };
 export const STAND = { a: 636.5, c: 207.6 };
 
 // hooks: { lessonId: (FL) => hook } — t2 gets the circuit's shape by default (FLIGHT LAB's bot cannot fly it alone)
-export function playDay(FL, { plan = null, level = 'basic', anomalies = ['oil', 'r_sump'], skipWalk = [], wrongFirst = [], crossHold = false, seed = 3, hooks = { t2: patternHook, r1: patternHook } } = {}) {
+export function playDay(FL, { plan = null, level = 'basic', anomalies = ['oil', 'r_sump'], skipWalk = [], wrongFirst = [], crossHold = false, seed = 3, fault = null, faultChoices = ['return'], hooks = { t2: patternHook, r1: patternHook } } = {}) {
   const P = FL.physics, R = P.LAB_RWY;
-  const day = createDay(FL, { seed, level, anomalies, stand: STAND, plan });
+  const day = createDay(FL, { seed, level, anomalies, stand: STAND, plan, fault });
   // ---- the walk-around: every place looked at; anomalies reported (and fixed by the cadet where they can be)
   const ac = (plan && plan.aircraft) || 'pa28', { POINTS } = KITS[ac];
   for (const p of POINTS) {
@@ -31,6 +31,7 @@ export function playDay(FL, { plan = null, level = 'basic', anomalies = ['oil', 
   }
   // ---- in the seat: the aircraft as left on the stand
   const fl = createFlight(FL, { store: null }), sw = {}, sys = createSystems(sw);
+  if (fault === 'mag') sys.setFault({ dropL: 260 });
   const [n, e] = P.rwyToNE(R, STAND.a, STAND.c);
   fl.startOnGround(n, e, (R.trueHdg + 270) % 360, ac, { wind: { rel: 10, kt: 5, gust: 0.5 } });
   sys.setCold(fl.s);
@@ -61,6 +62,8 @@ export function playDay(FL, { plan = null, level = 'basic', anomalies = ['oil', 
     if (ph === 'taxiOut' && !taxi) { fl.action('parkBrake', false); taxi = createTaxiPilot(FL, routeOut(STAND)); }
     if (ph === 'lineup' && !taxi) { fl.action('parkBrake', false); taxi = createTaxiPilot(FL, routeLineUp(), { speed: 2.2, turnSpeed: 1.8 }); }
     if (ph === 'taxiOff' && !taxi) { fl.action('parkBrake', false); taxi = createTaxiPilot(FL, routeIn(pos(), STAND).off); }
+    const back = day.st.fault && day.st.fault.decided;
+    if (ph === 'taxiIn' && !taxi && back) { fl.action('parkBrake', false); taxi = createTaxiPilot(FL, routeBack(STAND)); }
     if (ph === 'taxiIn' && !taxi) { fl.action('parkBrake', false); taxi = createTaxiPilot(FL, routeIn({ a: day.st.exit === 'A2' ? 590 : 1160, c: 0 }, STAND).in); }
     // a careless cadet rolls over the hold-short line before the tower is called
     if (crossHold && ph === 'tower' && !day.st.incursion) { fl.action('parkBrake', false); taxi = createTaxiPilot(FL, [{ ...pos() }, { a: 17.5, c: 30, stop: true }]); }
@@ -68,6 +71,8 @@ export function playDay(FL, { plan = null, level = 'basic', anomalies = ['oil', 
     for (const ev of sys.update(dt, fl.s)) if (ev.type === 'nocatch') throw new Error('no start: ' + ev.why);
     for (const ev of day.update(ctx(dt))) {
       if (ev.type === 'radio' && ev.kind === 'say') said.push(ev.en);
+      // (the run-up's fault: the cadet's answers in turn; a lean run-up puts the key back to BOTH to try again)
+      if (ev.type === 'fault') { const a = faultChoices[Math.min(ev.tries, faultChoices.length - 1)]; if (day.decideFault(a) === 'again') sw.mag = 'BOTH'; }
       if (ev.type !== 'phase') continue;
       phases.push(ev.to); taxi = null;
       const info = day.info(ev.to);

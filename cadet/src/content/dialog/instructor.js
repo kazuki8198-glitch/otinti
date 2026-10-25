@@ -328,7 +328,7 @@ export function instructorDialogs(FL, { lessonId = 'a1', day = null } = {}) {
   // the wrap-up: a flight lesson goes to dispatch, then out to the aircraft; a ground lesson to the training devices
   B.wrap = say('では、このあとの流れです。', { next: 'wrap:2' });
   if (lesson.aircraft) {
-    B['wrap:2'] = say('まず運航管理（ディスパッチ）で、今日の機体の割り当てと天気を確かめてください。', { next: 'wrap:3' });
+    B['wrap:2'] = say('天気と今日の機体の割り当ては、運航管理（ディスパッチ）の予定表にあります。出る前に、もう一度だけ見ておくと安心です。', { next: 'wrap:3' });
     B['wrap:3'] = day ? say('それからエプロン（駐機場）の今日の機体へ。外部点検をして、異常があれば私に知らせてください。私は機体のところで待っています。', { hook: { name: 'point', arg: 'apron' }, next: 'wrap:4' })
       : say('それからエプロン（駐機場）へ出て、機体のところまで歩いていきましょう。', { hook: { name: 'point', arg: 'apron' }, next: 'wrap:4' });
     B['wrap:4'] = say('体調に不安があれば、遠慮なく言ってください。飛ばないと決めるのも、大切な判断です。', { next: 'bye' });

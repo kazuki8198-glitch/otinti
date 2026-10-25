@@ -176,6 +176,7 @@ export function createFlyMode(ctx) {
     if (fh) fh.show(true);
     homeT = 1.2;                            // the head turns back to the front (unless the mouse moves it)
     if (kind === 'transit' || kind === 'return' || kind === 'pattern') { dayMode.onChoice(g || 'skip'); input.requestLock(); return; }
+    if (kind === 'fault' || kind === 'fault2') { dayMode.onFault(g || 'return'); input.requestLock(); return; }
     if (kind === 'debrief') { return; }     // (the logbook is open, or closed: signLogbook carries on)
     if (c === 'leave') leave();
     else if (c === 'free') beginFree();
@@ -287,6 +288,7 @@ export function createFlyMode(ctx) {
     if (!d) { beginFree(); return; }
     phase = 'day';
     if (fh) { fh.setMode('free'); if (fh.setFreeTitle) fh.setFreeTitle('今日の 1 日', 'H でキーの一覧'); }
+    systems.setFault(d.st.fault ? { dropL: 265 } : null);      // (M7) the run-up's fault, when the day has one
     dayMode.begin(d, level);
   }
   // a lesson of the day: from where the cadet is (handoff: FLIGHT LAB's own start, the picture blending the last
@@ -310,12 +312,12 @@ export function createFlyMode(ctx) {
     if (ctx.tem && !sum.tem) sum.tem = ctx.tem();                 // (M6) the threat the cadet named this morning
     // the first solo: no one in the seat to debrief it — the day is signed off outside (ctx.onSolo)
     if (!crew) { if (dayMode.day) dayMode.day.debriefRead(); if (ctx.onSolo) ctx.onSolo(sum); return; }
-    startTalk('debrief', seatName(debriefDialogs(sum)));
+    startTalk('debrief', seatName(debriefDialogs(sum, { voice: crewId || 'instructor' })));
   }
   let debSum = null;
   function signLogbook() {
     const d = dayMode.day, sum = debSum; if (!d || !sum) return;
-    const remark = (sum.lessons.every(l => l.passed) ? '今日の 3 課目は基準内。' : '再訓練の課目あり。') + (sum.walk.missed.length ? '外部点検の見落としあり。' : '') + (sum.incursion ? '停止線の越境あり（指導済み）。' : '');
+    const remark = (sum.fault ? 'ランナップで左マグネトーの低下が制限超過。離陸を中止し整備へ（課目なし）。' : sum.lessons.every(l => l.passed) ? '今日の 3 課目は基準内。' : '再訓練の課目あり。') + (sum.walk.missed.length ? '外部点検の見落としあり。' : '') + (sum.incursion ? '停止線の越境あり（指導済み）。' : '');
     const done = () => { if (dayMode.day) dayMode.day.debriefRead(); say('今日はここまで。降りるときは、右のドアの取っ手をどうぞ。', 5200); };
     const p = ctx.onLogbook ? ctx.onLogbook(sum, remark) : null;
     if (p && p.then) p.then(done); else done();
@@ -511,14 +513,22 @@ export function createFlyMode(ctx) {
       engOpt.rpm = systems.rpm; engOpt.thr = s.thr; engOpt.ias = o.ias; engOpt.onGround = s.onGround;
       engOpt.stall = !stop && !!o.stallWarn; engOpt.inside = view === 'cockpit';
       engOpt.running = systems.running;
+      // (the Seminole: each engine its own voice, as far along its start as it is; the gear's pump while it travels)
+      if (todayType() === 'pa44') {
+        const tw = systems.twinLive;
+        if (!engOpt.engines) engOpt.engines = [{ rpm: 0, running: false }, { rpm: 0, running: false }];
+        for (let k = 0; k < 2; k++) { engOpt.engines[k].rpm = tw[k].rpm; engOpt.engines[k].running = tw[k].eng === 'run' || tw[k].eng === 'stopping'; }
+        engOpt.gearMoving = s.gearPos > 0.005 && s.gearPos < 0.995;
+      } else { engOpt.engines = null; engOpt.gearMoving = false; }
       audio.engine(engOpt);
     }
     if (flight.free && (phase === 'ground' || phase === 'day')) taxiCheck();
   }
   // what the systems tell: the starter's sound, the catch, a start that did not work, an engine that stopped
   function onSystems(ev) {
-    if (ev.type === 'crank') { if (audio.crank) audio.crank(true); }
-    else if (ev.type === 'catch') { if (audio.crank) audio.crank(false); if (audio.fire) audio.fire(); }
+    const side = ev.why === '左エンジン' ? -1 : ev.why === '右エンジン' ? 1 : 0;
+    if (ev.type === 'crank') { if (audio.crank) audio.crank(true, side); }
+    else if (ev.type === 'catch') { if (audio.crank) audio.crank(false); if (audio.fire) audio.fire(side); }
     else if (ev.type === 'nocatch') { if (audio.crank) audio.crank(false); say(ev.why, 5200); }
     else if (ev.type === 'nostarter') say(EVENT_LINES.nostarter, 4200);
     else if (ev.type === 'surge') say(EVENT_LINES.surge, 5200);

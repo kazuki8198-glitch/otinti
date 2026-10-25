@@ -13,7 +13,10 @@
 //  - starter() lets the engine's own sound catch about 2 s in (running still false), and no later;
 //  - the one-shots make a bounded number of nodes, reach the master and all end; a hard touchdown is louder;
 //  - setAmbience: airborne → no birds or distant aircraft and the gusts fade; in the aircraft no building air
-//    conditioning; the old { indoor, wind } calls still work.
+//    conditioning; the old { indoor, wind } calls still work;
+//  - (M7) a twin: two engine voices, one to each side, each at its own rpm (one running while the other is still
+//    being started); the gear's pump while the wheels travel; the radio's hiss for a transmission, then the squelch
+//    tail; the three groups' volumes (aircraft, around, radio) each under the overall volume.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createAudio } from '../src/audio/sfx.js';
@@ -221,7 +224,7 @@ test('sfx: engine(null) fades, stops and disconnects everything; a later engine(
   const { a, ctx } = fresh();
   const master = masterOf(ctx);
   const g = engineGraph(a, ctx, O());
-  const n = g.nodes.length, bus = g.nodes.find(x => x.kind === 'gain' && x.outs.includes(master));
+  const n = g.nodes.length, bus = g.nodes.find(x => x.kind === 'gain' && x.outs.some(o => !g.nodes.includes(o)));   // (into the aircraft's group)
   for (let i = 0; i < 30; i++) { step(ctx); a.engine(O()); }
   const t = ctx.currentTime;
   a.engine(null);
@@ -307,4 +310,49 @@ test('sfx: setAmbience — airborne: no birds or distant aircraft, the gusts fad
   assert.ok(windG.gain.target > 0 && Number.isFinite(windG.gain.target));
   // the other sounds still work
   assert.doesNotThrow(() => { a.footstep('metal'); a.door('swing_close'); a.door('slide_open'); a.door('locked'); a.ui('examine'); a.setVolume(0.3); });
+});
+
+test('sfx (M7): a twin has two voices, panned left and right, each at its own rpm; one can run while the other is still', () => {
+  const { a, ctx } = fresh();
+  const n0 = ctx.nodes.length;
+  a.engine(O({ engines: [{ rpm: 1000, running: true }, { rpm: 0, running: false }], thr: 0.05, onGround: true, ias: 0 }));
+  const nodes = ctx.nodes.slice(n0), cycs = nodes.filter(n => n.kind === 'osc' && n.type === 'custom' && n.wave.re.length > 300);
+  assert.equal(cycs.length, 2, 'two engines');
+  const pans = nodes.filter(n => n.kind === 'panner').map(p => p.pan.value).sort((x, y) => x - y);
+  assert.ok(pans[0] < -0.2 && pans[1] > 0.2, `panned ${pans}`);
+  assert.ok(Math.abs(cycs[0].frequency.target - 1000 / 120) < 1e-9, 'the left at its rpm');
+  // the left firing, the right silent (its start not begun)
+  const gainBelow = (o) => [...below(o)].find(n => n.kind === 'gain');
+  assert.ok(gainBelow(cycs[0]).gain.target > 0.05 && gainBelow(cycs[1]).gain.target === 0, 'the left runs, the right not yet');
+  step(ctx); a.engine(O({ engines: [{ rpm: 1000 }, { rpm: 1030 }], thr: 0.05 }));
+  assert.ok(gainBelow(cycs[1]).gain.target > 0.05 && Math.abs(cycs[1].frequency.target - 1030 / 120) < 1e-9, 'both run, a little apart (they beat)');
+  // a single engine again: the twin's nodes go, one voice is made
+  step(ctx); const n1 = ctx.nodes.length; a.engine(O());
+  assert.equal(ctx.nodes.slice(n1).filter(n => n.kind === 'osc' && n.type === 'custom' && n.wave.re.length > 300).length, 1);
+});
+
+test('sfx (M7): the gear pump while the wheels travel; the radio hiss for a transmission; the three volumes', async () => {
+  const { a, ctx } = fresh();
+  const n0 = ctx.nodes.length;
+  a.engine(O({ engines: [{ rpm: 2500 }, { rpm: 2500 }], gearMoving: false }));
+  const nodes = ctx.nodes.slice(n0), pump = nodes.find(n => n.kind === 'osc' && n.type === 'sawtooth' && n.frequency.value === 410);
+  const pg = [...below(pump)].find(n => n.kind === 'gain');
+  assert.equal(pg.gain.target, 0);
+  step(ctx); a.engine(O({ engines: [{ rpm: 2500 }, { rpm: 2500 }], gearMoving: true }));
+  assert.ok(pg.gain.target > 0, 'the pump runs');
+  // the radio: a hiss reaching the master, band-limited, gone after radio(0)
+  const n1 = ctx.nodes.length; a.radio(4);
+  const made = ctx.nodes.slice(n1), hp = made.find(n => n.kind === 'biquad' && n.type === 'highpass' && n.frequency.value === 300);
+  assert.ok(hp && reaches(hp, masterOf(ctx)), 'a hiss through the receiver\'s band');
+  const hiss = made.find(n => n.kind === 'buffer' && n.loop);
+  a.radio(0);
+  assert.ok(hiss.stopped != null, 'the squelch closes');
+  assert.doesNotThrow(() => { a.radio(0); a.radio(NaN); a.radio(1); a.radio(0); });
+  // the groups: each its own gain into the master
+  const master = masterOf(ctx), groups = ctx.nodes.filter(n => n.kind === 'gain' && n.outs.includes(master));
+  assert.ok(groups.length >= 3);
+  a.setVolumes({ engine: 0.2, amb: 0.5, radio: 0 });
+  const tg = groups.map(g => g.gain.target).sort();
+  assert.deepEqual(tg.slice(0, 3), [0, 0.2, 0.5]);
+  assert.doesNotThrow(() => a.setVolumes({ engine: NaN, amb: 5 }));
 });

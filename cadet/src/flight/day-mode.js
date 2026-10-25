@@ -10,7 +10,7 @@
 //    instructor's 'recover' (always a fade); after each the flight carries on as CADET's own until the next;
 //  - the debrief and the logbook at the end.
 // h is fly-mode's handle (what it lends: the flight, the systems, the cockpit, the voice, the fades, the HUDs).
-import { routeOut, routeLineUp, routeIn, createTaxiPilot, exitFor } from './taxi.js';
+import { routeOut, routeLineUp, routeIn, routeBack, createTaxiPilot, exitFor } from './taxi.js';
 import { PHASE_LINES, ASSIST_LINES, EVENT_LINES, RECOVER_LINE, SOLO_LINES } from '../content/dialog/day1.js';
 import { spoken } from '../content/dialog/atc.js';
 
@@ -36,14 +36,15 @@ export function createDayMode(h) {
   }
   // ---- the controllers' voice (the browser's English speech, when the setting is on)
   function speak(en) {
-    if (h.audio.squelch) h.audio.squelch();
+    // the receiver's hiss under the transmission (about as long as it takes to say: some 13 letters a second)
+    if (h.audio.radio) h.audio.radio(1.2 + String(en).length / 13); else if (h.audio.squelch) h.audio.squelch();
     const synth = globalThis.speechSynthesis;
     if (!synth || h.settings.get('atcVoice') === false || typeof SpeechSynthesisUtterance === 'undefined') return;
     try {
       const u = new SpeechSynthesisUtterance(spoken(en));
       const v = synth.getVoices().find(x => /^en(-|_)US/i.test(x.lang)) || synth.getVoices().find(x => /^en/i.test(x.lang));
       if (v) u.voice = v;
-      u.lang = 'en-US'; u.rate = 1.05; u.volume = Math.max(0, Math.min(1, h.settings.get('volume') ?? 0.8));
+      u.lang = 'en-US'; u.rate = 1.05; u.volume = Math.max(0, Math.min(1, (h.settings.get('volume') ?? 0.8) * (h.settings.get('volRadio') ?? 1)));
       synth.speak(u);
     } catch (e) { /* no speech here */ }
   }
@@ -76,7 +77,7 @@ export function createDayMode(h) {
     if (COM[to] && flight.av) { flight.av.com1.act = COM[to]; if (h.markDirty) h.markDirty(); }
     const stand = h.stand;
     h.routeLine.set(to === 'taxiOut' ? routeOut(stand) : to === 'lineup' ? routeLineUp() : to === 'taxiOff' ? routeIn(pos(), stand).off
-      : to === 'taxiIn' ? routeIn({ a: day.st.exit === 'A3' ? 1160 : 590, c: 0 }, stand).in : null);
+      : to === 'taxiIn' ? (back() ? routeBack(stand) : routeIn({ a: day.st.exit === 'A3' ? 1160 : 590, c: 0 }, stand).in) : null);
     if (to === 'runup' || to === 'shutdown') { /* the cadet sets the brake (the first item) */ }
     const inf = day.info(to);
     // a lesson that starts where the day is (lined up on the runway): at once, from where the cadet stopped
@@ -94,6 +95,15 @@ export function createDayMode(h) {
     asking = false;
     day.transitFlown(arg);
     if (arg === 'fly') fly = day.nextLesson(); else startNext();
+  }
+  // the decision on the run-up's fault: once more after a lean run-up, or back to the stand (the route from here)
+  // (back to the stand from the hold-short line: the run-up's fault)
+  const back = () => !!(day && day.st.fault && day.st.fault.decided);
+  function onFault(arg) {
+    if (!day) return;
+    const r = day.decideFault(arg);
+    if (r === 'again') { say('1,800 rpm で、ミクスチャーを少し絞って 30 秒。それから L と R を、もう一度。', 6000); return; }
+    if (r) { h.routeLine.set(routeBack(h.stand)); say('駐機場へ戻ります。地上管制には連絡しました。タキシーは、いつもどおりに。', 6000); }
   }
   // where the next lesson begins, and what the screen says on arriving there
   const ARRIVE = { area: '訓練空域に着きました', downwind: 'ダウンウインド：地上 1,000 ft', final: '最終進入：滑走路 36' };
@@ -149,6 +159,8 @@ export function createDayMode(h) {
         if (ev.type === 'phase') onPhase(ev.to);
         else if (ev.type === 'radio' && ev.kind === 'say') speak(ev.en);
         else if (ev.type === 'incursion') { say(EVENT_LINES.incursion, 4500); if (h.audio.chime) h.audio.chime(); }
+        // (M7) the run-up's fault: the instructor asks (his talk: the hook 'go' → onFault)
+        else if (ev.type === 'fault') { assistOn = false; h.talk(ev.tries ? 'fault2' : 'fault'); }
         else if (ev.type === 'tick' && h.audio.knob) h.audio.knob();
       }
       // the instructor's hands: the list item by item, a little apart
@@ -193,7 +205,7 @@ export function createDayMode(h) {
       if (day.st.list && !assistOn) { assistOn = true; assistT = 0.4; say(ASSIST_LINES.list, 3000); return true; }
       if (PLACES.has(day.phase) && !taxi) {
         const stand = h.stand, ph = day.phase;
-        const pts = ph === 'taxiOut' ? routeOut(stand) : ph === 'lineup' ? routeLineUp() : ph === 'taxiOff' ? routeIn(pos(), stand).off : routeIn({ a: day.st.exit === 'A3' ? 1160 : 590, c: 0 }, stand).in;
+        const pts = ph === 'taxiOut' ? routeOut(stand) : ph === 'lineup' ? routeLineUp() : ph === 'taxiOff' ? routeIn(pos(), stand).off : back() ? routeBack(stand) : routeIn({ a: day.st.exit === 'A3' ? 1160 : 590, c: 0 }, stand).in;
         flight.action('parkBrake', false);
         taxi = createTaxiPilot(FL, pts, ph === 'lineup' ? { speed: 2.2, turnSpeed: 1.8 } : {});
         say(ASSIST_LINES.taxi, 3500);
@@ -212,7 +224,7 @@ export function createDayMode(h) {
   function autoTaxi() {
     if (!day || !PLACES.has(day.phase) || taxi) return false;
     const stand = h.stand, ph = day.phase;
-    const pts = ph === 'taxiOut' ? routeOut(stand) : ph === 'lineup' ? routeLineUp() : ph === 'taxiOff' ? routeIn(pos(), stand).off : routeIn({ a: day.st.exit === 'A3' ? 1160 : 590, c: 0 }, stand).in;
+    const pts = ph === 'taxiOut' ? routeOut(stand) : ph === 'lineup' ? routeLineUp() : ph === 'taxiOff' ? routeIn(pos(), stand).off : back() ? routeBack(stand) : routeIn({ a: day.st.exit === 'A3' ? 1160 : 590, c: 0 }, stand).in;
     flight.action('parkBrake', false);
     taxi = createTaxiPilot(FL, pts, ph === 'lineup' ? { speed: 2.2, turnSpeed: 1.8 } : {});
     return true;
@@ -221,7 +233,7 @@ export function createDayMode(h) {
   return {
     begin, update, key, answer, onChoice, lessonEnded, end, speak, autoTaxi,
     get active() { return !!day; }, get day() { return day; }, get pilot() { return taxi ? taxi.fly : null; }, get flying() { return fly; },
-    get assisting() { return assistOn || !!taxi; }, get solo() { return solo; }, get asking() { return asking; },
+    onFault, get assisting() { return assistOn || !!taxi; }, get solo() { return solo; }, get asking() { return asking; },
     // for the tests: the instructor's hands for everything until `phase` (or the next lesson)
     assist() { assistOn = true; assistT = 0; },
   };

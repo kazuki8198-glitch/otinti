@@ -16,7 +16,7 @@ export const PHRASES = ['hold short', 'line up and wait', 'cleared for takeoff',
 // text → words: lower case, numbers as digits ("3,000" → "3000"), the alphabet's words as letters, "point" as "."
 export function normalize(text) {
   const words = String(text || '').toLowerCase().replace(/x-ray/g, 'xray').replace(/take[\s-]?off/g, 'takeoff').replace(/mid[\s-]field/g, 'midfield')
-    .replace(/(\d),(\d{3})/g, '$1$2').replace(/(\d)\.(\d)/g, '$1 . $2')
+    .replace(/(\d),(\d{3})/g, '$1$2').replace(/(\d)\.(\d)/g, '$1 . $2').replace(/(^|[^a-z0-9.])\.(\d)/g, '$1 . $2')   // (".7": "point seven" as the recognizer may write it)
     .replace(/[^a-z0-9.\s]/g, ' ').split(/\s+/).map(w => (w === '.' ? w : w.replace(/^\.+|\.+$/g, ''))).filter(Boolean);
   const out = [];
   for (const w of words) {

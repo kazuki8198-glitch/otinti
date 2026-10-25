@@ -44,6 +44,8 @@ export function build({ quiet = false, dev = false } = {}) {
   const info = `build ${new Date().toISOString().slice(0, 10)} · ${rev}`;
   const bundle = esbuild.buildSync({
     entryPoints: [path.join(SRC, 'main.js')], bundle: true, write: false, format: 'iife', target: ['chrome110'],
+    // (M8) the SDK's webhook verifier is never used in a page: its library is left out (src/ai/no-webhooks.js)
+    absWorkingDir: here, alias: { standardwebhooks: './src/ai/no-webhooks.js' },
     minify: !dev, sourcemap: dev ? 'inline' : false, legalComments: 'inline', charset: 'utf8',
     define: { __BUILD_INFO__: JSON.stringify(info) }, logLevel: 'error',
   }).outputFiles[0].text;

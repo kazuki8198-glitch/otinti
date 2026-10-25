@@ -24,7 +24,8 @@ function lessonLineEn(l) {
   const g = GRADE_EN[l.grade] || l.grade;
   if (!bad.length) return `${qe(l.title)}: ${g}. ${l.grade === 'S' ? 'You held the middle of the standard well.' : 'Every item was within the standard.'}`;
   const r = bad[0];
-  return `${qe(l.title)}: ${g}. ${qe(r.name)} was outside the standard (${r.val}; the standard is ${r.std}).`;
+  // (the value and the standard as the course writes them: FLIGHT LAB's rows say them in Japanese)
+  return `${qe(l.title)}: ${g}. ${qe(r.name)} was outside the standard (${qe(r.val)}${r.std ? `; the standard is ${qe(r.std)}` : ''}).`;
 }
 
 // the line about one lesson: its grade and the worst row (or the best thing about it)
@@ -151,10 +152,11 @@ export function debriefDialogs(sum, { voice = 'instructor' } = {}) {
       effects: [{ trust: 'instructor', add: t }, { set: 'day1_done', to: true }], hook: { name: 'nod' }, next: nx('trust') });
   N.sign = say(V ? V.sign : '航空日誌に今日の飛行を書いて、署名しておきます。', V ? VE.sign : 'I\'ll write today\'s flight in your logbook and sign it.', { choices: [
     { text: '航空日誌を見る', next: 'bye', effects: [{ hook: 'logbook' }] },
-    // (M8) a free question about the day, to the AI instructor (only while the setting is on: ctx ai.on)
-    { text: '今日の飛行について質問したい', if: { ctx: 'ai.on', is: true }, next: 'free' },
+    // (M8) a free question about the day, to the AI instructor (only while the setting is on: ctx ai.on); his own
+    // debrief only (the AI instructor is 早瀬 教官: the chief and the examiner do not take it)
+    ...(V ? [] : [{ text: '今日の飛行について質問したい', if: { ctx: 'ai.on', is: true }, next: 'free' }]),
   ] });
-  N.free = say(V ? 'どうぞ。' : 'いいですよ。今日の飛行のことなら、何でも。', V ? 'Go ahead.' : 'Sure. Anything about today\'s flight.', { hook: { name: 'ai', arg: 'debrief' }, next: 'sign' });
+  if (!V) N.free = say('いいですよ。今日の飛行のことなら、何でも。', 'Sure. Anything about today\'s flight.', { hook: { name: 'ai', arg: 'debrief' }, next: 'sign' });
   N.bye = say(V ? V.bye : '今日はここまで。ゆっくり休んでください。', V ? VE.bye : 'That\'s all for today. Get some good rest.', { end: true });
-  return { speakers: SPEAKERS, flags: [...DEBRIEF_FLAGS], hooks: [...DEBRIEF_HOOKS], dialogs: { debrief: { start: 'open', nodes: N } } };
+  return { speakers: SPEAKERS, flags: [...DEBRIEF_FLAGS], hooks: DEBRIEF_HOOKS.filter(h => !V || h !== 'ai'), dialogs: { debrief: { start: 'open', nodes: N } } };
 }

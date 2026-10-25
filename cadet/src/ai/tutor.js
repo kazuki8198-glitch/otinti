@@ -134,26 +134,27 @@ export function buildParams({ model = DEFAULT_MODEL, book, question, today = {},
 const CITE = /(?:^|\n)\s*根拠\s*[:：][^\n]*$/;
 // what the cadet sees while it streams: up to the line of sources (also while that line is only half written)
 export function visible(text) {
-  let s = String(text || '');
+  let s = String(text || '').trimEnd();                   // (a last line break: the line before it is the last)
   const nl = s.lastIndexOf('\n'), last = s.slice(nl + 1).trim();
   if (/^根(?:拠\s*(?:[:：].*)?)?$/.test(last)) s = s.slice(0, nl + 1);
   return s.replace(/[#*|`]/g, '').trim();
 }
 // → { text, cites } (the sections named that exist in the book; when none were named, none)
 export function parseAnswer(text, book) {
-  const s = String(text || ''), m = s.match(CITE);
+  const s = String(text || '').trimEnd(), m = s.match(CITE);
   const cites = [];
   if (m) for (const id of m[0].replace(/^[\s\S]*?[:：]/, '').split(/[,、\s]+/)) { const t = id.trim(); if (t && book.sectionExists(t) && !cites.includes(t)) cites.push(t); }
   return { text: (m ? s.slice(0, m.index) : s).replace(/[#*|`]/g, '').trim(), cites };
 }
-// an error → why, in a word: 'nokey' | 'auth' | 'busy' | 'network' | 'server' | 'bad' | 'abort'
+// an error → why, in a word: 'nokey' | 'auth' | 'busy' | 'network' | 'server' | 'model' | 'bad' | 'abort'
 export function reasonOf(e) {
   if (!e) return 'server';
   if (e instanceof Anthropic.APIUserAbortError || e.name === 'AbortError') return 'abort';
   if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError) return 'auth';
   if (e instanceof Anthropic.RateLimitError) return 'busy';
   if (e instanceof Anthropic.APIConnectionError) return 'network';
-  if (e instanceof Anthropic.BadRequestError || e instanceof Anthropic.NotFoundError || e instanceof Anthropic.UnprocessableEntityError) return 'bad';
+  if (e instanceof Anthropic.NotFoundError) return 'model';                  // (no such model: the name in the settings)
+  if (e instanceof Anthropic.BadRequestError || e instanceof Anthropic.UnprocessableEntityError) return 'bad';
   if (e instanceof Anthropic.APIError) return e.status === 529 || e.status === 503 ? 'busy' : 'server';
   return 'network';
 }
@@ -161,7 +162,8 @@ export function reasonOf(e) {
 export const REASON_JA = {
   nokey: 'API キーが設定されていません（設定 → AI 教官）', auth: 'API キーが受け付けられませんでした（キーを確かめてください）',
   busy: 'API が混んでいます。少し待ってから', network: 'API に接続できませんでした（ネットワークを確かめてください）',
-  server: 'API でエラーが起きました', bad: 'リクエストが受け付けられませんでした（モデル名を確かめてください）', abort: '中止しました', empty: '答えが空でした',
+  off: 'AI 教官は設定で OFF です（設定 → AI・マイク・英語）', server: 'API でエラーが起きました', model: 'モデルが見つかりませんでした（設定のモデル名を確かめてください）', bad: 'リクエストが受け付けられませんでした',
+  abort: '中止しました', empty: '答えが空でした',
 };
 // a message that might carry the key is never shown or kept: only the reason is
 const scrub = (s, key) => (key ? String(s).split(key).join('［キー］') : String(s));
@@ -189,8 +191,9 @@ export function createTutor({ book, getKey = () => '', getModel = () => DEFAULT_
       if (msg.stop_reason === 'refusal') return { ok: true, declined: true, text: '', cites: [], sections, model: msg.model };
       const a = parseAnswer(raw, book);
       if (!a.text) return { ok: false, reason: 'empty' };
-      // this talk's next question sees the answer as it came (its blocks unchanged)
-      history = [...history, params.messages[params.messages.length - 1], { role: 'assistant', content: msg.content }].slice(-HISTORY * 2);
+      // this talk's next question sees what he said (its text only: a thinking block is bound to the exact turns before
+      // it, and this window drops the oldest turns — sent back, it would be refused once the window moves)
+      history = [...history, params.messages[params.messages.length - 1], { role: 'assistant', content: [{ type: 'text', text: raw }] }].slice(-HISTORY * 2);
       return { ok: true, text: a.text, cites: a.cites, sections, model: msg.model, cut: msg.stop_reason === 'max_tokens' };
     } catch (e) {
       const reason = reasonOf(e);

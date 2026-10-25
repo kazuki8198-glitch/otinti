@@ -960,6 +960,8 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.equal(s.mode, 'epilogue');
     assert.ok(s.triangles > 50000, `the set: ${s.triangles} triangles`);
     assert.equal((await ev(() => window.__cadet.dialog())).name, '柏木 機長');
+    assert.deepEqual(await ev(() => [getComputedStyle(document.getElementById('panel')).display, document.getElementById('hint').textContent]),
+      ['none', 'クリックで始めるマウスで見回す · E で機長と話す · Esc で一時停止（終章を終える）'], 'no visit panel; the hint for this place');
     let t = await talkThrough(null, ['はい']);
     assert.match(t.lines.join('\n'), /機長の柏木です[\s\S]*羽田[\s\S]*点検し、確かめ、声に出す[\s\S]*外を見てごらん/);
     assert.equal(t.open, false);
@@ -982,6 +984,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     await g.page.waitForFunction(() => !window.__cadet.epilogue.state().on && !window.__cadet.career.cards(), null, { timeout: 30000 });
     s = await ev(() => window.__cadet.epilogue.state());
     assert.deepEqual([s.mode, s.seen], ['walk', true]);
+    assert.match(await ev(() => document.getElementById('hint').textContent), /WASD で歩く/, 'the walking hint back');
     const st = await career();
     assert.deepEqual([st.slot, st.day > day], ['morning', true], JSON.stringify(st));
     const back = await ev(() => window.__cadet.frame(2));
@@ -1062,6 +1065,20 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.match(await ev(() => document.getElementById('toast').textContent), /API キーが受け付けられませんでした/);
     await ev(() => window.__cadet.dialogChoose('はい'));
     assert.equal((await ev(() => window.__cadet.dialog())).node, 'root', 'the textbook\'s questions');
+    await ev(() => { const C = window.__cadet; C.setMode('spectator'); C.setMode('walk'); });
+    assert.equal(await ev(() => window.__cadet.dialog()), null);
+    // turned off while the question field is open: the AI talk ends at once, nothing more is sent, the offer is gone
+    await ev(() => window.__cadet.ai.useFetch(window.__fakeClaude({ calls: window.__calls })));
+    v = await toMenu();
+    await ev(() => window.__cadet.dialogChoose('自由に質問'));
+    await g.page.waitForFunction(() => window.__cadet.ai.asking(), null, { timeout: 5000 });
+    const sent = await ev(() => window.__calls.length);
+    await ev(() => window.__cadet.settings.set('aiTutor', false));
+    assert.equal(await ev(() => window.__cadet.ai.open()), false, 'the AI talk closed');
+    v = await ev(() => window.__cadet.dialog());
+    assert.match(v.node, /^menu/, 'back to his menu');
+    assert.ok(!v.choices.some(c => /自由に質問/.test(c.text)), 'the offer gone');
+    assert.equal(await ev(() => window.__calls.length), sent, 'nothing more sent');
     await ev(() => { const C = window.__cadet; C.setMode('spectator'); C.setMode('walk'); });
     assert.equal(await ev(() => window.__cadet.dialog()), null);
     // the key: nowhere in this browser unless remembered; then only in its one place; erased from the menu

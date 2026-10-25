@@ -9,7 +9,7 @@ import { QUESTION_MAX } from './tutor.js';
 export const AI_LINES = {
   intro: 'いいですよ。何でも聞いてください。',
   again: 'どうぞ。ほかに何を聞きたいですか。',
-  think: '（早瀬 教官が考えています…）',
+  think: (name) => `（${name}が考えています…）`,
   declined: 'その質問には、ここではお答えできません。訓練の話に戻りましょう。',
   failBrief: 'すみません、いまはうまく答えがまとまりません。教科書から一緒に探しましょう。',
   failDebrief: 'すみません、いまはうまく答えがまとまりません。気になるところは、次のブリーフィングで一緒に見ましょう。',
@@ -17,7 +17,7 @@ export const AI_LINES = {
 };
 // (M8) the same when the crew speak English (the answer itself comes in English then: ai/tutor.js todayText)
 export const AI_LINES_EN = {
-  intro: 'Sure. Ask me anything.', again: 'Go ahead. What else would you like to ask?', think: '（早瀬 教官が考えています…）',
+  intro: 'Sure. Ask me anything.', again: 'Go ahead. What else would you like to ask?', think: (name) => `(${name} is thinking…)`,
   declined: 'I can\'t answer that one here. Let\'s get back to training.',
   failBrief: 'Sorry, I can\'t put an answer together right now. Let\'s look for it in the textbook together.',
   failDebrief: 'Sorry, I can\'t put an answer together right now. Let\'s look at what\'s on your mind at the next briefing.',
@@ -25,14 +25,17 @@ export const AI_LINES_EN = {
 };
 
 // opts: tutor (ai/tutor.js), book, speaker { name, color }, today() → the material, place 'brief' | 'debrief',
-// ready() → false when it cannot ask at all (no key), onEnd(how: 'done' | 'cancel' | 'fallback'), onBook(sectionId),
+// ready() → true, or why it cannot ask at all: false (no key) or a reason ('off': the setting turned off) — asked when
+// the talk opens and again before each question, onEnd(how: 'done' | 'cancel' | 'fallback'), onBook(sectionId),
 // notice(text, reason), placeholder
 export function createAiSession({ tutor, book, speaker = { name: '早瀬 教官', color: '#5cc8ff' }, today = () => ({}), place = 'brief', ready = () => true, onEnd = () => {}, onBook = () => {}, notice = () => {}, reasonText = (r) => r, english = () => false } = {}) {
   const fns = new Set();
   const T = () => (english() ? AI_LINES_EN : AI_LINES);
   let cur = null, seq = 0, running = false, ctrl = null, lastAnswer = null;
   const node = (k) => `${k}:${++seq}`;
-  const me = (text, more = {}) => ({ dialog: 'ai', node: node(more.kind || 'say'), speaker: 'instructor', name: speaker.name, color: speaker.color || null, text, choices: [], ends: false, ...more });
+  // (lang: the language of his line — English when the crew speak English, the answer included — for the voice and
+  // the subtitle's lang; no `en`: the line is already in the language it is said in)
+  const me = (text, more = {}) => ({ dialog: 'ai', node: node(more.kind || 'say'), speaker: 'instructor', name: speaker.name, color: speaker.color || null, text, choices: [], ends: false, lang: english() ? 'en' : 'ja', ...more });
   function emit() { const v = view(); for (const f of [...fns]) { try { f(v); } catch (e) { console.error(e); } } }
   function set(v) { cur = v; emit(); }
   function input(first) {
@@ -54,8 +57,10 @@ export function createAiSession({ tutor, book, speaker = { name: '早瀬 教官'
   async function submit(text) {
     const q = String(text || '').trim().slice(0, QUESTION_MAX);
     if (!running || !cur || !cur.input || !q) return false;
+    const ok = ready();
+    if (ok !== true) { failed(typeof ok === 'string' ? ok : 'nokey'); return false; }   // (the key erased or the setting turned off since the field opened)
     // the question stays on screen while he thinks
-    set({ dialog: 'ai', node: node('asked'), speaker: 'player', name: 'あなた', color: '#f2b632', text: q, choices: [], ends: false, pending: true, cue: T().think });
+    set({ dialog: 'ai', node: node('asked'), speaker: 'player', name: 'あなた', color: '#f2b632', text: q, choices: [], ends: false, pending: true, cue: T().think(speaker.name) });
     const my = (ctrl = typeof AbortController === 'function' ? new AbortController() : null);
     let streamNode = null;
     const r = await tutor.ask(q, { ...today(), place, lang: english() ? 'en' : 'ja' }, {
@@ -79,7 +84,7 @@ export function createAiSession({ tutor, book, speaker = { name: '早瀬 教官'
     get state() { return {}; },
     get lastAnswer() { return lastAnswer; },
     view,
-    start() { running = true; seq = 0; lastAnswer = null; if (ready()) input(true); else failed('nokey'); return true; },
+    start() { running = true; seq = 0; lastAnswer = null; const ok = ready(); if (ok === true) input(true); else failed(typeof ok === 'string' ? ok : 'nokey'); return true; },
     submit,
     // a line without choices: nothing to go on to (the answer always ends in choices; a pending line waits)
     next() { return false; },

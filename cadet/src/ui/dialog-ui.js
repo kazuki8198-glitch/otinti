@@ -355,10 +355,11 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   function show(view) {
     if (destroyed) return;
     if (!view) { hide(); return; }
-    // (M8) the crew in English: the line's English shown (and spoken), its Japanese under it when asked for
+    // (M8) the crew in English: the line's English shown (and spoken), its Japanese under it when asked for; a line
+    // that is English already (the AI instructor's in that mode: view.lang) spoken and marked as English
     const english = !!(settings && typeof settings.get === 'function' && settings.get('crewEnglish') && typeof view.en === 'string' && view.en);
     const v = { dialog: view.dialog, node: view.node, speaker: view.speaker, name: String(view.name || ''), color: safeColor(view.color),
-      text: String((english ? view.en : view.text) ?? ''), ja: english && settings.get('crewEnglishJa') !== false ? String(view.text ?? '') : '', lang: english ? 'en' : 'ja',
+      text: String((english ? view.en : view.text) ?? ''), ja: english && settings.get('crewEnglishJa') !== false ? String(view.text ?? '') : '', lang: english || view.lang === 'en' ? 'en' : 'ja',
       choices: Array.isArray(view.choices)
         ? view.choices.map((c, k) => ({ i: Number.isInteger(c && c.i) ? c.i : k, text: String((c && c.text) ?? '') })) : [],
       ends: !!view.ends, stream: !!view.stream, pending: !!view.pending, cue: view.cue ? String(view.cue) : '',

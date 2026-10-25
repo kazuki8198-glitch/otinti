@@ -549,7 +549,8 @@ async function boot() {
     const v0 = prev.view() || {};
     const s = createAiSession({
       tutor, book, place, speaker: { name: v0.name || INSTRUCTOR.title_ja, color: v0.color || '#5cc8ff' },
-      ready: () => aiKeys.has(), today: () => aiToday(place, extra.summary),
+      // (asked when the talk opens and again before each question: the setting turned off, or the key erased, stops it)
+      ready: () => (settings.get('aiTutor') ? aiKeys.has() : 'off'), today: () => aiToday(place, extra.summary),
       reasonText: (r) => `AI 教官：${REASON_JA[r] || r}`, notice: (t) => toast(t, 6000), english: () => !!settings.get('crewEnglish'),
       onBook: (id) => { const sec = book.section(id); if (sec) dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sec.html }); },
       onEnd: (how) => {
@@ -639,6 +640,7 @@ async function boot() {
   let insGoOut = false;
   // the pause menu's "erase the record": a new career, the instructor meets you again for the first time
   function resetProgress() {
+    if (epi.on) leaveEpilogue('walk');          // (M8: out of Haneda first; the epilogue_seen it saves goes with the rest)
     if (talk && talkRun) talkRun.stop();
     const fresh = createDialogState();
     for (const k of Object.keys(talkState)) delete talkState[k];
@@ -814,6 +816,8 @@ async function boot() {
     pipe.setHaze({ sunDir: st.dir, el: st.el, fog: 0, grey: 0, clear: 0.3 });
     haneda.group.rotation.y = Math.atan2(st.dir.x, st.dir.z) + 0.55;      // (the terminal's front, behind our nose, lit by it)
     haneda.group.visible = true; haneda.showOwn(false); if (haneda.jets) haneda.jets.visible = true; epi.frozen = false;
+    epi.hint = $('#hint').innerHTML;                                       // (the hint to click: this place's keys)
+    $('#hint').innerHTML = '<b>クリックで始める</b><span>マウスで見回す · E で機長と話す · Esc で一時停止（終章を終える）</span>';
     haneda.group.updateMatrixWorld(true);
     placeEpilogueCamera();
   }
@@ -853,6 +857,7 @@ async function boot() {
     if (!epi.on) return;
     if (talk && talkRun) talkRun.stop();
     epi.on = false; haneda.group.visible = false;
+    if (epi.hint) { $('#hint').innerHTML = epi.hint; epi.hint = null; }
     LAB_GROUPS().forEach((g, i) => { g.visible = epi.vis ? epi.vis[i] : true; });
     if (crowd.setHidden) crowd.setHidden(false);
     hours = epi.hours != null ? epi.hours : hours;
@@ -1270,13 +1275,15 @@ async function boot() {
   ];
   let viewIdx = 0;
   const outOfAircraft = () => { if (fly && fly.active) fly.leave({ instant: true, then: 'spectator' }); };
-  const setView = (i) => { viewIdx = i; outOfAircraft(); setMode('spectator'); const v = VIEWS[i]; spectator.setPose(v.pos, v.look); renderChips(); };
+  const setView = (i) => { if (epi.on) return; viewIdx = i; outOfAircraft(); setMode('spectator'); const v = VIEWS[i]; spectator.setPose(v.pos, v.look); renderChips(); };
 
   // ---------------------------------------------------------------- modes, the menu, the HUD
   let mode = 'walk', started = false, lostAt = -1e9;
   function setMode(m) {
     if (m === mode) return;
-    if (mode === 'epilogue' && epi.on && m !== 'epilogue') { leaveEpilogue(m); return; }      // (out of the epilogue: its set away first)
+    // (out of the epilogue: its set away first; when not by its own end, which sets up the next day after its card, the
+    // academy's day is set up here)
+    if (mode === 'epilogue' && epi.on && m !== 'epilogue') { const ending = epiEnding; leaveEpilogue(m); if (!ending) startDay({ card: false, place: true }); return; }
     // leaving the aircraft goes through fly-mode (the fade, the instructor back to his room, the aircraft to its stand)
     if (mode === 'fly' && fly && fly.active) { fly.leave({ then: m }); return; }
     mode = m;
@@ -1297,7 +1304,7 @@ async function boot() {
     onResetProgress: () => resetProgress(),
     // (M8) the API key's field (ai/keys.js), and the bench with its result to copy
     ai: { keys: aiKeys, keyName: KEY_NAME, defaultModel: DEFAULT_MODEL },
-    onBench: () => { input.enabled = true; runBench().then((r) => showBenchReport(r)); },
+    onBench: () => { input.enabled = true; if (epi.on) { toast('性能の計測は、終章を終えてからできます（Esc →「終章を終える」）', 4000); return; } runBench().then((r) => showBenchReport(r)); },
     onLogbook: () => { input.enabled = true; input.exitLock(); dayHud.showLogbook(logbook.entries, logbook.totals(), { onClose: () => { if ((mode === 'walk' || mode === 'fly') && !talk && !(fly && (fly.talking || fly.debrief))) input.requestLock(); } }); },
   });
   // (M8) text to take away: the bench's results for README, the player's notes
@@ -1308,7 +1315,11 @@ async function boot() {
     report.show({ title: '性能の計測結果', intro: 'README.md の「実機での計測」の表に、下の行をそのまま貼ってください（GPU の名前・画質・視点ごとの 1 フレームの時間）。',
       text: benchText(r, { build: buildInfo, ua: navigator.userAgent, size: `${innerWidth}×${innerHeight}` }), filename: 'cadet-bench.txt' });
   }
-  function openMenu(tab) { if (menu.isOpen || (fly && fly.fading)) return; interactor.closeCard(); input.enabled = false; input.exitLock(); menu.open(tab); audio.ui('open'); }
+  function openMenu(tab) {
+    if (menu.isOpen || (fly && fly.fading)) return;
+    if (fly && fly.dayMode) fly.dayMode.stopMic();                // (M8: not listening behind the menu)
+    interactor.closeCard(); input.enabled = false; input.exitLock(); menu.open(tab); audio.ui('open');
+  }
   input.onLock((on, bySelf) => {
     document.body.classList.toggle('locked', on);
     if (!on) lostAt = performance.now();
@@ -1363,6 +1374,14 @@ async function boot() {
     if (k === 'showPerf') $('#perf').style.display = v ? '' : 'none';
     // the auto rudder, changed in the menu while flying: as U would (FLIGHT LAB's action, which also keeps the setting)
     if (k === 'autoRud' && fly && fly.active && fly.flight.s && !!fly.flight.s.opts.autoRud !== !!v) fly.flight.action('autoRud');
+    // (M8) turned off: nothing more goes out — an open AI talk ends (back to the talk it came from), its offer goes from
+    // the choices on screen; the microphone stops listening
+    if (k === 'aiTutor' && !v) {
+      refreshCtx();
+      if (aiRun) aiRun.stop();
+      else { const r = talkRunner(); if (r && r.running && (talk || (fly && fly.talking))) { const w = r.view(); if (w) dui.show(w); } }
+    }
+    if (k === 'micRadio' && !v && fly && fly.dayMode) fly.dayMode.stopMic();
   });
   $('#perf').style.display = settings.get('showPerf') ? '' : 'none';
   document.documentElement.style.setProperty('--sub-k', String(settings.get('subSize') || 1));

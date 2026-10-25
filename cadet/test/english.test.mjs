@@ -22,6 +22,8 @@ import { examDialogs, navlogDialogs } from '../src/content/school.js';
 import { EXAMS, CHECKS } from '../src/career/career.js';
 import { temFor, THREATS, THREATS_EN } from '../src/career/tem.js';
 import { validateDialogs } from '../src/dialog/validate.js';
+import { TASK_MISSED } from '../src/content/walkaround-archer.js';
+import { TASK_MISSED as SEMINOLE_TASKS } from '../src/content/walkaround-seminole.js';
 import { createRunner, createDialogState } from '../src/dialog/engine.js';
 import { installSorajima } from '../src/flight/sorajima.js';
 
@@ -36,7 +38,7 @@ const JA = /[ぁ-んァ-ヶ一-龯々]/;
 const plainEnglish = (en) => !JA.test(String(en).replace(/“[^”]*”/g, '').replace(/\{[\w.]+\}/g, ''));
 const SUMS = [
   { walk: { anomalies: 2, found: 1, missed: [{ name: 'エンジン：オイルの量' }], tasksLeft: ['tie'] }, radio: { n: 8, first: 6, late: 1, wrong: 2 }, incursion: true, crash: '', fault: null, trust: 3,
-    lessons: [{ id: 't1', title: '通常離陸と上昇', done: true, passed: true, grade: 'S', rows: [] }, { id: 'a2', title: '直線水平飛行', done: true, passed: false, grade: 'C', rows: [{ name: '高度', val: '+180 ft', std: '±100 ft', pass: false }] }, { id: 't3', title: '通常着陸', done: false }],
+    lessons: [{ id: 't1', title: '通常離陸と上昇', done: true, passed: true, grade: 'S', rows: [] }, { id: 'a2', title: '直線水平飛行', done: true, passed: false, grade: 'C', rows: [{ name: '高度', val: '72% が基準内（最大のずれ 160 ft）', std: '±100 ft', pass: false }] }, { id: 't3', title: '通常着陸', done: false }, { id: 't4', title: '短距離着陸', done: true, passed: false, grade: 'C', rows: [{ name: '連続保持', val: '最長 8 秒', std: '15 秒続けて基準内', pass: false }] }],
     tem: { threat: { ja: '午後の雷雨', en: { threat: 'afternoon thunderstorms' } }, named: false } },
   { walk: { anomalies: 0, found: 0, missed: [], tasksLeft: [] }, radio: { n: 0, first: 0 }, incursion: false, crash: '', fault: { decided: 'return', tries: 1 }, trust: 8, lessons: [], tem: { threat: { ja: '審査の緊張', en: { threat: 'check-ride nerves' } }, named: true } },
   { walk: { anomalies: 1, found: 1, missed: [], tasksLeft: [] }, radio: { n: 6, first: 6 }, incursion: false, crash: '機体の右翼端', fault: { decided: 'go', tries: 0 }, trust: -4, autoItems: 9,
@@ -100,14 +102,21 @@ test('the course\'s words in a line keep their quotes; the threats, the checks a
   assert.equal(english('今日は「通常離陸と上昇」、「直線水平飛行」、「通常着陸」。離陸して訓練空域で練習し、戻って着陸します。ブリーフィングのとおりにやってみましょう。'),
     'Today: “通常離陸と上昇”, “直線水平飛行”, “通常着陸”. We take off, practise in the area, and come back to land. Let\'s do it as briefed.');
   assert.equal(english('まだ英語にしていない新しい台詞'), null);
+  // the day's plan: a title with its own と stays one title
+  assert.equal(english('今日はこの課目を、1 日の飛行の中でやります。まず「通常離陸と上昇」で離陸して、訓練空域でこの課目、戻って「片発の進入と着陸」と「通常着陸」です。'),
+    'Today we fly this lesson inside a whole day\'s flight. First we take off with “通常離陸と上昇”, this lesson in the practice area, then back for “片発の進入と着陸” and “通常着陸”.');
   for (const th of THREATS) { const e = THREATS_EN[th.id]; assert.ok(e && e.ja && e.why && e.plan && (e.not || th.id === 'traffic'), th.id); for (const x of Object.values(e)) assert.ok(plainEnglish(x), `${th.id}: ${x}`); }
   for (const v of Object.values(EN)) assert.ok(plainEnglish(v), v);
 });
 
 test('his words in the air: every line of the day in English', () => {
   const lines = [...Object.values(PHASE_LINES), ...Object.values(ASSIST_LINES), RECOVER_LINE, EVENT_LINES.incursion, EVENT_LINES.nostarter, EVENT_LINES.surge, EVENT_LINES.noClear,
-    EVENT_LINES.walkFound('ピトー管のカバー。'), EVENT_LINES.stopped('燃料切れ')];
-  for (const l of lines) { const e = airEnglish(l); assert.ok(e, l); assert.ok(plainEnglish(e.replace(/ピトー管のカバー。|燃料切れ/, '')), e); }
+    EVENT_LINES.walkFound(TASK_MISSED.pitot + TASK_MISSED.tieR), EVENT_LINES.stopped('燃料切れ'), EVENT_LINES.stopped('ミクスチャー アイドル カットオフ')];
+  for (const l of lines) { const e = airEnglish(l); assert.ok(e, l); assert.ok(plainEnglish(e), e); }
+  // what he found undone, in English; an anomaly in the walk-around's own words, quoted
+  assert.equal(airEnglish(EVENT_LINES.walkFound(TASK_MISSED.lock + 'ピトー管：カバーが破れています。')),
+    'Before we got in, I had a look round the aircraft too. The control lock was still in. The yoke can\'t move like that. I\'ll take it out. And this: “ピトー管：カバーが破れています。”');
+  for (const [k, ja] of Object.entries(TASK_MISSED)) assert.equal(SEMINOLE_TASKS[k], ja, `the Seminole's ${k} says the same`);
   assert.ok(Object.keys(AIR_EN).length >= 25);
   assert.equal(airEnglish('右に 10° 修正。'), null, 'a lesson\'s own hint stays as written');
 });

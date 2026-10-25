@@ -7,6 +7,7 @@
 // (content/dialog/day1.js) for fly-mode's voice.
 import { PHASE_LINES, ASSIST_LINES, RECOVER_LINE, EVENT_LINES } from './day1.js';
 import { debriefLine } from './cockpit.js';
+import { TASK_MISSED } from '../walkaround-archer.js';          // (the Seminole's table says the same)
 
 export const CREW = ['instructor', 'chief', 'examiner'];
 
@@ -213,6 +214,8 @@ export const EN = {
 
 // the lesson's own title as the course writes it, in quotes ("「直線水平飛行」" → "“直線水平飛行”")
 const qt = (s) => `“${String(s).replace(/^「|」$/g, '')}”`;
+// 「A」と「B」 → “A” and “B” (each title whole: a title may have its own と)
+const titlesOf = (s) => { const t = String(s).match(/「[^」]*」/g); return (t || [s]).map(qt).join(' and '); };
 export const PATTERNS = [
   [/^ホワイトボードを見てください。今日の課目は「(.+)」です。$/, (m) => `Look at the whiteboard. Today's lesson is ${qt(m[1])}.`],
   [/^目標は、(.+)ことです。$/, (m) => `The goal: ${qt(m[1])}.`],
@@ -222,7 +225,8 @@ export const PATTERNS = [
   [/^図にすると、こうなります。教科書の「(.+)」にある図です。$/, (m) => `As a figure, it looks like this. It's from the textbook's ${qt(m[1])}.`],
   [/^今日の基準は「(.+)」です。$/, (m) => `Today's standard is ${qt(m[1])}.`],
   [/^今日はこの課目を、1 日の飛行の中でやります。(?:まず(.+)で離陸して、)?訓練空域でこの課目、(?:戻って(.+)です。|それで戻ります。)$/,
-    (m) => `Today we fly this lesson inside a whole day's flight.${m[1] ? ` First we take off with ${m[1].split('と').map(qt).join(' and ')},` : ''} this lesson in the practice area${m[2] ? `, then back for ${m[2].split('と').map(qt).join(' and ')}` : ', and back'}.`],
+    // (the titles split at their brackets: a title has its own と, 「通常離陸と上昇」)
+    (m) => `Today we fly this lesson inside a whole day's flight.${m[1] ? ` First we take off with ${titlesOf(m[1])},` : ''} this lesson in the practice area${m[2] ? `, then back for ${titlesOf(m[2])}` : ', and back'}.`],
   [/^それは「(.+)」の課目の目標ですね。$/, (m) => `That's the goal of the lesson ${qt(m[1])}.`],
   [/^(.+)ですね。どの章にしますか。$/, (m) => `${qt(m[1])}. Which chapter?`],
   [/^第 (\d+) 章「(.+)」ですね。どの節を聞きたいですか。$/, (m) => `Chapter ${m[1]}, ${qt(m[2])}. Which section would you like?`],
@@ -246,7 +250,8 @@ const EXAM_EN = { 'ソロ前の筆記試験': 'pre-solo written test', '航法�
 export const CHECK_EN = { 'ソロ前の審査': 'pre-solo check', '単独の野外飛行': 'solo cross-country', '計器飛行の審査': 'instrument check', '双発の審査': 'multi-engine check', '最終審査（Check Flight）': 'final check (check flight)' };
 const checkEn = (s) => CHECK_EN[s] || s;
 // the people's names as the crew say them in English
-export const WHO_EN = { '真壁さん': 'Mr. Makabe', '審査官の黒田さん': 'the examiner, Mr. Kuroda', '早瀬 教官': 'Mr. Hayase' };
+// (said at the start of a sentence: "{checkWho} is waiting in the instructors' room")
+export const WHO_EN = { '真壁さん': 'Mr. Makabe', '審査官の黒田さん': 'The examiner, Mr. Kuroda,', '早瀬 教官': 'Mr. Hayase' };
 
 // a line in English: the written one, or one of the shapes; null when there is none (the material, or not yet)
 export function english(text) {
@@ -325,11 +330,26 @@ const AIR = new Map([
   [debriefLine({ done: true, passed: true, grade: 'A' }), 'A pass. Well done. Next time, aim a little closer to the middle of the standard.'],
   [debriefLine({ done: true, passed: false, grade: 'C' }), 'So close. Let\'s look at the results together and see where it drifted.'],
 ]);
+// what he found undone on the walk-around (walkaround-*.js TASK_MISSED), and why an engine stopped (aircraft/systems.js)
+const TASK_EN = {
+  lock: 'The control lock was still in. The yoke can\'t move like that. I\'ll take it out.',
+  pitot: 'The pitot cover was still on. Take off with it on and the airspeed stays at 0. I took it off.',
+  tieR: 'The right wing\'s tie-down was still on. I untied it.', tieL: 'The left wing\'s tie-down was still on. I untied it.',
+  tieT: 'The tail tie-down was still on. I untied it.', chocks: 'The nose-wheel chocks were still in place. I took them away.',
+};
+const TASK_AIR = Object.entries(TASK_MISSED).map(([k, ja]) => [ja, TASK_EN[k]]);
+const STOP_EN = { 'ミクスチャー アイドル カットオフ': 'mixture at idle cut-off', 'マグネトー OFF': 'magnetos OFF', '燃料セレクター OFF': 'fuel selector OFF', '燃料切れ': 'out of fuel', '故障': 'a failure' };
 export function airEnglish(text) {
   if (AIR.has(text)) return AIR.get(text);
   let m = /^乗る前に、機体の周りを私も見てきました。([\s\S]*)$/.exec(text);
-  if (m) return `Before we got in, I had a look round the aircraft too. ${m[1]}`;
+  if (m) {
+    // the tasks in English; an anomaly (its place and what was seen: the walk-around's own words) quoted as written
+    let rest = m[1]; const out = [];
+    for (const [ja, en] of TASK_AIR) if (rest.includes(ja)) { out.push(en); rest = rest.replace(ja, ''); }
+    if (rest.trim()) out.push(`And this: “${rest.trim()}”`);
+    return `Before we got in, I had a look round the aircraft too. ${out.join(' ')}`;
+  }
   m = /^エンジンが止まりました（(.+)）。$/.exec(text);
-  if (m) return `The engine has stopped (${m[1]}).`;
+  if (m) return `The engine has stopped (${STOP_EN[m[1]] || `“${m[1]}”`}).`;
   return null;
 }

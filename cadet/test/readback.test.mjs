@@ -102,4 +102,10 @@ test('what is missing from a read-back, in words the panel can show; the best of
   const g = r.exchanges.gnd_call, s = matchReadback(g.choices, 'lab ground archer 8 sierra yankee request taxi', { call: r.call });
   assert.equal(g.choices[s.pick].en, `LAB Ground, ${r.call.short}, request taxi.`);
   assert.deepEqual(matchReadback(g.choices, '', { call: r.call }).pick, -1);
+  // "Ground point seven" written by the recognizer as ".7" (or "0.7", "121.7", "point 7")
+  const ex = r.exchanges.twr_exit('A2'), right = ex.choices.findIndex(c => c.ok);
+  for (const said of ['right at Alpha 2 ground .7 Archer 8 Sierra Yankee', 'right at alpha two ground 0.7 archer 8 sierra yankee', 'right at A2, ground point 7, Archer 8SY']) {
+    const e = matchReadback(ex.choices, said, { call: r.call });
+    assert.deepEqual([e.pick, e.missing], [right, []], said);
+  }
 });

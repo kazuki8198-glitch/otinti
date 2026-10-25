@@ -38,6 +38,7 @@ export function createDayMode(h) {
     const id = micFor = exId(v); micState = { on: true };
     mic.listen().then((r) => {
       if (!day || micFor !== id) return;
+      if (!h.settings.get('micRadio')) { micState = null; return; }         // (turned off meanwhile: what it heard is not used)
       const v2 = day.atc.view();
       if (!v2 || v2.phase !== 'choose' || exId(v2) !== id) { micState = null; return; }
       if (!r.ok) { micState = { msg: MIC_REASON_JA[r.reason] || MIC_REASON_JA['no-speech'] }; return; }
@@ -257,9 +258,11 @@ export function createDayMode(h) {
     taxi = createTaxiPilot(FL, pts, ph === 'lineup' ? { speed: 2.2, turnSpeed: 1.8 } : {});
     return true;
   }
+  // (M8) listening no more: the setting turned off, the pause menu opened
+  function stopMic() { if (mic && mic.busy) mic.stop(); micState = null; micFor = ''; }
   function end() { if (mic) mic.stop(); micState = null; micFor = ''; day = null; assistOn = false; taxi = null; fly = null; asking = false; recoverT = 0; queue.length = 0; targets.clear(); h.routeLine.set(null); h.dayHud.hideAll(); h.setGuide(null); }
   return {
-    begin, update, key, answer, onChoice, lessonEnded, end, speak, autoTaxi,
+    begin, update, key, answer, onChoice, lessonEnded, end, speak, autoTaxi, stopMic,
     get active() { return !!day; }, get day() { return day; }, get pilot() { return taxi ? taxi.fly : null; }, get flying() { return fly; },
     onFault, get assisting() { return assistOn || !!taxi; }, get mic() { return micState; }, get solo() { return solo; }, get asking() { return asking; },
     // for the tests: the instructor's hands for everything until `phase` (or the next lesson)

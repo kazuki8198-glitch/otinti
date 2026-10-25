@@ -112,6 +112,9 @@ test('the answer: streamed without its line of sources; the sources that exist b
   assert.deepEqual(parseAnswer('はい。\n根拠：aero.lift, nope.x, wx.metar', BOOK), { text: 'はい。', cites: ['aero.lift', 'wx.metar'] });
   assert.deepEqual(parseAnswer('はい。\n根拠：なし', BOOK), { text: 'はい。', cites: [] });
   assert.deepEqual(parseAnswer('根拠のない話はしません。', BOOK), { text: '根拠のない話はしません。', cites: [] });
+  // (an answer that ends with a line break: the sources are still found and hidden)
+  assert.deepEqual(parseAnswer('はい。\n根拠：aero.lift\n', BOOK), { text: 'はい。', cites: ['aero.lift'] });
+  assert.equal(visible('はい。\n根拠：aero.lift\n'), 'はい。');
   const seen = [];
   const tutor = createTutor({ book: BOOK, getKey: () => KEY, fetchImpl: fakeClaude({ chunks: 6, answer: 'いい質問です。翼が空気を下へ曲げると、その反作用で上へ押されます。\n根拠：aero.lift' }) });
   const r = await tutor.ask('揚力とは', {}, { onText: (t) => seen.push(t) });
@@ -123,6 +126,21 @@ test('the answer: streamed without its line of sources; the sources that exist b
   tutor.reset(); assert.equal(tutor.history.length, 0);
 });
 
+test('a long talk: the answers come with thinking blocks; the window of earlier turns moves; no thinking block is ever sent back', async () => {
+  const calls = [];
+  const tutor = createTutor({ book: BOOK, getKey: () => KEY, fetchImpl: fakeClaude({ calls, thinking: true }) });
+  for (let i = 0; i < 6; i++) { const r = await tutor.ask(`質問 ${i + 1}`); assert.equal(r.ok, true, JSON.stringify(r)); }
+  assert.equal(calls.length, 6);
+  for (const c of calls) {
+    const sent = c.body.messages.flatMap(m => (Array.isArray(m.content) ? m.content : []));
+    assert.ok(sent.every(b => b.type !== 'thinking' && b.type !== 'redacted_thinking'), 'no thinking block sent back');
+  }
+  const last = calls[5].body.messages;
+  assert.equal(last.length, 7, 'the last 3 turns and the new question');
+  assert.match(JSON.stringify(last[0]), /質問 3/);
+  assert.deepEqual(last[1].content, [{ type: 'text', text: 'いい質問です。揚力は翼の上と下の圧力の差で生まれます。\n根拠：aero.lift' }]);
+});
+
 test('what goes wrong: no key (nothing sent), refused key, busy, server error, no network, bad model, a refusal — a reason, never the key', async () => {
   const calls = [];
   const none = createTutor({ book: BOOK, getKey: () => '', fetchImpl: fakeClaude({ calls }) });
@@ -131,7 +149,7 @@ test('what goes wrong: no key (nothing sent), refused key, busy, server error, n
   assert.deepEqual(await createTutor({ book: BOOK, getKey: () => KEY, fetchImpl: fakeClaude({ calls }) }).ask('   '), { ok: false, reason: 'empty' });
   assert.equal(calls.length, 0);
   const cases = [[{ status: 401 }, 'auth'], [{ status: 403, errorType: 'permission_error' }, 'auth'], [{ status: 429, errorType: 'rate_limit_error' }, 'busy'],
-    [{ status: 529, errorType: 'overloaded_error' }, 'busy'], [{ status: 500, errorType: 'api_error' }, 'server'], [{ network: true }, 'network'], [{ status: 404, errorType: 'not_found_error' }, 'bad']];
+    [{ status: 529, errorType: 'overloaded_error' }, 'busy'], [{ status: 500, errorType: 'api_error' }, 'server'], [{ network: true }, 'network'], [{ status: 404, errorType: 'not_found_error' }, 'model'], [{ status: 400, errorType: 'invalid_request_error' }, 'bad']];
   for (const [o, why] of cases) {
     const t = createTutor({ book: BOOK, getKey: () => KEY, fetchImpl: fakeClaude(o) });
     const { r, out } = await quiet(() => t.ask('揚力'));
@@ -200,6 +218,21 @@ test('the talk when no answer can come: no key at once, an error after the quest
   const d = talk({ tutor: createTutor({ book: BOOK, getKey: () => KEY, fetchImpl: fakeClaude({ delayMs: 20 }) }) });
   d.s.start(); const pd = d.s.submit('揚力'); d.s.stop();
   assert.equal(await pd, false); assert.deepEqual(d.ends, ['cancel']); assert.equal(d.s.view(), null);
+  // the setting turned off while the field is open: the question is not sent; the reason, and back to the scripted talk
+  const calls = []; let on = true;
+  const e = talk({ tutor: createTutor({ book: BOOK, getKey: () => KEY, fetchImpl: fakeClaude({ calls }) }), ready: () => (on ? true : 'off') });
+  e.s.start(); assert.ok(e.s.view().input);
+  on = false;
+  assert.equal(await e.s.submit('揚力'), false);
+  assert.equal(calls.length, 0, 'nothing sent once it is off');
+  assert.deepEqual(e.notices, ['off']); assert.ok(REASON_JA.off);
+  e.s.choose(0); assert.deepEqual(e.ends, ['fallback']);
+  // his thinking cue names who answers; in English mode his lines are marked English (the voice and the subtitle)
+  const f = talk({ tutor: createTutor({ book: BOOK, getKey: () => KEY, fetchImpl: fakeClaude({ delayMs: 5 }) }), speaker: { name: '早瀬 教官' }, english: () => true });
+  f.s.start(); assert.equal(f.s.view().lang, 'en');
+  const pf = f.s.submit('Why does a wing stall?');
+  assert.equal(f.s.view().cue, '(早瀬 教官 is thinking…)');
+  await pf; assert.equal(f.s.view().lang, 'en');
 });
 
 test('the scripted talk offers the free question only while the setting is on; it comes back to thanks', () => {

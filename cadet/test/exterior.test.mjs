@@ -26,6 +26,7 @@ import { liveAircraft, parkedAircraft, buildAircraftModel, colliderBoxes, splitB
 import { archerMeshes, exteriorParts } from '../src/aircraft/archer-model.js';
 import { TAILS } from '../src/aircraft/registrations.js';
 import { POINTS } from '../src/content/walkaround-archer.js';
+import { POINTS as SEMINOLE_POINTS } from '../src/content/walkaround-seminole.js';
 import { makeLayout } from '../src/world/layout.js';
 import { installSorajima } from '../src/flight/sorajima.js';
 
@@ -173,22 +174,18 @@ test('exterior: the cabin split keeps every triangle; the cockpit view takes the
     assert.equal(cabin.filter(glass).length, 14, `${id}: the six side panes and the windscreen (14 triangles)`);
     assert.equal(rest.filter(glass).length, 0);
     assert.ok(cabin.every(t => cz(t) < zRear), `${id}: nothing aft of the cabin's rear ring`);
-    // the live model: the two meshes are the body exactly (plus the fixed parts merged into it, the Archer's gear); the
-    // Archer's from the Blender model (its cabin made apart, at the same ring), the twin's acmesh's split
+    // the live model: the two meshes are the body exactly (plus the fixed parts merged into it, the Archer's gear); both
+    // from their Blender models (the cabin made apart, at the same ring; the Seminole's gear hinged, not fixed)
     const ac = liveAircraft(FL, A), parts = exteriorParts(FL, A);
     const fixedTris = ac.parts.fixed.reduce((k, name) => k + parts.find(p => p.name === name).mesh.count / 3, 0);
     const pb = parts.find(p => p.name === 'body');
-    if (id === 'pa28') {
-      assert.ok(pb.cabin && fixedTris > 3 * 216, 'the model: its cabin, its gear (more than acmesh\'s)');
+    {
+      assert.ok(pb.cabin && (id === 'pa28' ? fixedTris > 3 * 216 : fixedTris === 0), `${id} the model: its cabin, its gear (${fixedTris})`);
       assert.equal(tris(ac.parts.body.geometry), pb.mesh.count / 3 + fixedTris);
       assert.equal(tris(ac.parts.cabin.geometry), pb.cabin.count / 3);
       const mc = pb.cabin.col, gl = (m) => { let k = 0; for (let t = 0; t < m.count / 3; t++) if ([0, 3, 6].every(v => Math.abs(m.col[t * 9 + v] - 0.10) < 1e-3 && Math.abs(m.col[t * 9 + v + 2] - 0.19) < 1e-3)) k++; return k; };
       assert.ok(gl(pb.cabin) > 100 && gl(pb.mesh) === 0, `the windows and the windshield in the cabin (${gl(pb.cabin)} triangles), none behind`);
       assert.ok(mc.length > 0);
-    } else {
-      assert.equal(fixedTris, 0);
-      assert.equal(tris(ac.parts.body.geometry) + tris(ac.parts.cabin.geometry), n + fixedTris);
-      assert.equal(tris(ac.parts.cabin.geometry), cabin.length);
     }
     const bb = new THREE.Box3().setFromObject(ac.parts.body, true), cb = new THREE.Box3().setFromObject(ac.parts.cabin, true);
     assert.ok(bb.max.x > A.wing.tipX - 0.01 && bb.max.y > A.vstab.y1 - 0.05, `${id}: the wings and the fin stay outside`);
@@ -320,24 +317,30 @@ test('exterior: struts and hub caps read as metal; the blades keep their yellow 
   ac.dispose();
 });
 
-test('exterior: the parked aircraft — the twin as before (two baked meshes, the same triangles and colliders); the Archer from the model, both details', () => {
+test('exterior: the parked aircraft — the Archer and the Seminole from their models, both details', () => {
   const L = makeLayout(P), G = P.GROUND_M, cy = Math.cos(L.frameYaw), sy = Math.sin(L.frameYaw), toFrame = (x, z) => [x * cy - z * sy, x * sy + z * cy];
   const hdg = (L.R.trueHdg + 270) % 360;
-  // measured from the code before the flown aircraft was added
-  const R = { tris: 2066, boxes: 69, hash: -190275.448182, at: [655, 167.6], parts: 12 };
-  const tw = parkedAircraft(FL, L, 'pa44', R.at[0], R.at[1], hdg, { prop: 1.3 });
   const meshesOf = (o) => { const out = []; o.traverse(m => { if (m.isMesh) out.push(m); }); return out; };
+  // the Seminole (M6: from its Blender model; acmesh's had 2,066 triangles): two baked meshes, a mesh per part unbaked
+  // (its two propellers as acmesh's), colliders round the whole airframe
+  const tw = parkedAircraft(FL, L, 'pa44', 655, 167.6, hdg, { prop: 1.3, reg: 'N455SY' });
   const meshes = meshesOf(tw.root);
   assert.equal(meshes.length, 2, 'pa44: baked into two meshes');
   assert.ok(meshes.every(m => m.name === 'aircraft-baked' && m.castShadow && m.receiveShadow));
-  assert.equal(meshes.reduce((n, m) => n + tris(m.geometry), 0), R.tris, 'pa44: triangles');
-  const boxes = colliderBoxes(tw.root, toFrame, G);
-  let h = 0; for (const b of boxes) h += b.x0 * 1.3 + b.x1 * 1.7 + b.z0 * 2.1 + b.z1 * 2.9 + b.y0 * 3.3 + b.y1 * 3.7;
-  assert.equal(boxes.length, R.boxes, 'pa44: collider boxes');
-  assert.ok(Math.abs(h - R.hash) < 1e-3, `pa44: the same boxes (${h})`);
+  const twt = meshes.reduce((n, m) => n + tris(m.geometry), 0);
+  assert.ok(twt > 20000 && twt < 30000, `pa44: ${twt} triangles`);
   const names = []; buildAircraftModel(FL, AC('pa44')).root.traverse(o => { if (o.isMesh) names.push(o.name); });
-  assert.equal(names.length, R.parts, 'pa44: a mesh per part');
+  assert.equal(names.length, 12, 'pa44: a mesh per part');
+  assert.equal(names.filter(n => n === 'prop').length, 2, 'pa44: two propellers');
   assert.ok(!names.includes('disc'), 'no disc on a parked aircraft');
+  {
+    const tb = colliderBoxes(tw.root, toFrame, G), ext = (k0, k1) => [Math.min(...tb.map(b => b[k0])), Math.max(...tb.map(b => b[k1]))];
+    const [x0, x1] = ext('x0', 'x1'), [z0, z1] = ext('z0', 'z1'), top = Math.max(...tb.map(b => b.y1));
+    const span = Math.max(x1 - x0, z1 - z0), len = Math.min(x1 - x0, z1 - z0);
+    assert.ok(span > 11.4 && span < 12.2 && len > 8.0 && len < 9.3 && top > 3.1 && top < 3.8, `pa44: ${span.toFixed(2)} × ${len.toFixed(2)} m, ${top.toFixed(2)} m high`);
+    const lod = parkedAircraft(FL, L, 'pa44', 655, 167.6, hdg, { prop: 1.3, reg: 'N455SY', lod: 'auto' }).root.getObjectByName('aircraft-lod');
+    assert.ok(lod && lod.levels.length === 2, 'pa44: near and far under an LOD');
+  }
   // the Archer: near and far baked (two meshes each) under an LOD, the near one within LOD_FAR; the colliders from the
   // near one only, round the whole airframe (span, length, the fin), low enough at the wings not to be walked under
   const at = [636.5, 207.6], ac = parkedAircraft(FL, L, 'pa28', at[0], at[1], hdg, { prop: 1.3, reg: 'N731SY', lod: 'auto' });
@@ -360,13 +363,13 @@ test('exterior: the parked aircraft — the twin as before (two baked meshes, th
   assert.notEqual(tri(b.root), tri(one.root), 'the letters differ');
 });
 
-test('exterior: the Archer\'s model — every part, outward faces, the hinges on acmesh\'s lines, the lights and the walk-around on its skin', () => {
-  const A = AC('pa28'), lab = FL.acmesh.buildParts(A);
+for (const id of ['pa28', 'pa44']) test(`exterior: the ${id === 'pa28' ? 'Archer' : 'Seminole'}'s model — every part, outward faces, the hinges on acmesh's lines, the lights and the walk-around on its skin`, () => {
+  const A = AC(id), lab = FL.acmesh.buildParts(A), PROPS = id === 'pa28' ? ['prop'] : ['prop.0', 'prop.1'];
   for (const lod of ['near', 'far']) {
-    const M = archerMeshes(lod);
+    const M = archerMeshes(lod, id);
     assert.ok(M, `${lod}: the model is there`);
-    for (const n of ['body', 'cabin', 'ailL', 'ailR', 'flapL', 'flapR', 'stab', 'rud', 'prop', 'gearN', 'gearL', 'gearR']) assert.ok(M.has(n), `${lod}: ${n}`);
-    for (const t of TAILS.filter(t => t.type === 'pa28')) assert.equal(M.has('reg.' + t.reg), lod === 'near', `${lod}: ${t.reg} painted (near only: a few pixels high beyond)`);
+    for (const n of ['body', 'cabin', 'ailL', 'ailR', 'flapL', 'flapR', 'stab', 'rud', ...PROPS, 'gearN', 'gearL', 'gearR']) assert.ok(M.has(n), `${lod}: ${n}`);
+    for (const t of TAILS.filter(t => t.type === id)) assert.equal(M.has('reg.' + t.reg), lod === 'near', `${lod}: ${t.reg} painted (near only: a few pixels high beyond)`);
     let total = 0;
     for (const [k, m] of M) {
       if (!k.startsWith('reg.')) total += m.count / 3;
@@ -383,7 +386,7 @@ test('exterior: the Archer\'s model — every part, outward faces, the hinges on
       if (!k.startsWith('reg.')) assert.ok(vol > -1e-4, `${lod} ${k}: outward (${vol})`);
       assert.ok(m.ao.every(x => x >= 0.3 && x <= 1), `${lod} ${k}: occlusion in range`);
     }
-    assert.ok(lod === 'near' ? total < 24000 : total < 3000, `${lod}: ${total} triangles`);
+    assert.ok(lod === 'near' ? total < (id === 'pa28' ? 24000 : 27000) : total < (id === 'pa28' ? 3000 : 3300), `${lod}: ${total} triangles`);
     // each moving surface's front lies on its hinge line (acmesh's pivot and axis)
     for (const n of ['ailL', 'ailR', 'flapL', 'flapR', 'rud']) {
       const p = lab.find(q => q.name === n), m = M.get(n), P0 = new THREE.Vector3(...p.pivot), ax = new THREE.Vector3(...p.axis).normalize();
@@ -393,13 +396,17 @@ test('exterior: the Archer\'s model — every part, outward faces, the hinges on
     }
   }
   // the lights sit on the skin, the walk-around's places are by it (the near model, with its parts in place)
-  const M = archerMeshes('near'), pts = [];
-  for (const [k, m] of M) if (!k.startsWith('reg.') || k === 'reg.N738SY') for (let i = 0; i < m.count; i += 2) pts.push(new THREE.Vector3().fromArray(m.pos, i * 3));
+  const M = archerMeshes('near', id), pts = [];
+  for (const [k, m] of M) if (!k.startsWith('reg.') || k === 'reg.' + TAILS.find(t => t.type === id).reg) for (let i = 0; i < m.count; i += 2) pts.push(new THREE.Vector3().fromArray(m.pos, i * 3));
   const gap = (p) => { const q = new THREE.Vector3(...p); let d = Infinity; for (const v of pts) d = Math.min(d, v.distanceToSquared(q)); return Math.sqrt(d); };
   for (const s of liveAircraft(FL, A).spots) assert.ok(gap(s.pos) < (s.id === 'beacon' ? 0.06 : 0.09), `${s.id} on the skin (${gap(s.pos).toFixed(3)} m)`);
-  for (const w of POINTS) assert.ok(gap(w.at) < 0.45, `${w.id} by the aircraft (${gap(w.at).toFixed(2)} m)`);
-  // the propeller: blade 0 up at rest, as far out as the physics' radius; the spinner ahead of the cowling
-  const pr = M.get('prop'); let top = -Infinity, front = Infinity;
-  for (let i = 0; i < pr.count; i++) { top = Math.max(top, pr.pos[i * 3 + 1]); front = Math.min(front, pr.pos[i * 3 + 2]); }
-  assert.ok(Math.abs(top - (A.engines[0].y + A.engines[0].r)) < 0.03 && front < A.engines[0].z - 0.3, `blade tip ${top}, spinner ${front}`);
+  for (const w of (id === 'pa28' ? POINTS : SEMINOLE_POINTS)) assert.ok(gap(w.at) < 0.45, `${w.id} by the aircraft (${gap(w.at).toFixed(2)} m)`);
+  // the propellers: blade 0 up at rest, as far out as the physics' radius; the spinner ahead of the cowling; the
+  // Seminole's on acmesh's hubs (its pivots), the right one the left's mirror image (it turns the other way)
+  for (const n of PROPS) {
+    const pr = M.get(n); let top = -Infinity, front = Infinity, x = 0;
+    for (let i = 0; i < pr.count; i++) { top = Math.max(top, pr.pos[i * 3 + 1]); front = Math.min(front, pr.pos[i * 3 + 2]); x += pr.pos[i * 3] / pr.count; }
+    assert.ok(Math.abs(top - (A.engines[0].y + A.engines[0].r)) < 0.03 && front < A.engines[0].z - 0.3, `${n}: blade tip ${top}, spinner ${front}`);
+    if (id === 'pa44') { const hub = lab.filter(p => p.prop != null)[+n.slice(-1)].pivot; assert.ok(Math.abs(x - hub[0]) < 0.05, `${n}: on its hub (${x.toFixed(2)} vs ${hub[0]})`); }
+  }
 });

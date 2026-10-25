@@ -7,11 +7,13 @@
 // The glTF: per mesh one primitive with positions, normals and COLOR_0 (rgb: the paint, sRGB as acmesh's colours;
 // alpha: the ambient occlusion baked by Blender), indexed; read here into flat triangles (acmesh's form).
 // Two details: 'near' (today's aircraft, the flown one) and 'far' (the parked ones further away).
-const FILES = { near: 'archer', far: 'archer-far' };
+// (M6) the Seminole the same way (tools/aircraft/build_seminole.py → seminole.glb and seminole-far.glb): its two
+// propellers are prop.0 and prop.1 (acmesh's engines in order: the left, the right).
+const FILES = { pa28: { near: 'archer', far: 'archer-far' }, pa44: { near: 'seminole', far: 'seminole-far' } };
 const RAW = {};
 
-function fileBytes(lod) {
-  const A = globalThis.CADET_ASSETS, key = 'model/' + FILES[lod];
+function fileBytes(file) {
+  const A = globalThis.CADET_ASSETS, key = 'model/' + file;
   if (A && A[key]) {
     const s = atob(A[key]), b = new Uint8Array(s.length);
     for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
@@ -19,7 +21,7 @@ function fileBytes(lod) {
   }
   const fs = typeof process !== 'undefined' && process.getBuiltinModule ? process.getBuiltinModule('node:fs') : null;
   if (!fs) return null;
-  try { return new Uint8Array(fs.readFileSync(new URL(`../../assets/model/${FILES[lod]}.glb`, import.meta.url))); } catch { return null; }
+  try { return new Uint8Array(fs.readFileSync(new URL(`../../assets/model/${file}.glb`, import.meta.url))); } catch { return null; }
 }
 
 const COMPONENTS = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 };
@@ -35,11 +37,12 @@ function read(json, bin, i) {
 }
 
 // → Map name → { pos, nrm, col, ao, count } (flat triangles), or null when the model is not there
-export function archerMeshes(lod = 'near') {
-  if (!FILES[lod]) throw new Error('archer-model: no detail ' + lod);
-  if (lod in RAW) return RAW[lod];
-  const b = fileBytes(lod);
-  if (!b) return (RAW[lod] = null);
+export function archerMeshes(lod = 'near', type = 'pa28') {
+  const file = (FILES[type] || {})[lod];
+  if (!file) throw new Error(`archer-model: no detail ${lod} of ${type}`);
+  if (file in RAW) return RAW[file];
+  const b = fileBytes(file);
+  if (!b) return (RAW[file] = null);
   const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
   if (dv.getUint32(0, true) !== 0x46546c67) throw new Error('archer-model: not a glb');
   let json = null, bin = null;
@@ -48,7 +51,7 @@ export function archerMeshes(lod = 'near') {
     if (type === 0x4e4f534a) json = JSON.parse(new TextDecoder().decode(chunk)); else if (type === 0x004e4942) bin = chunk;
     o += 8 + len;
   }
-  const out = RAW[lod] = new Map();
+  const out = RAW[file] = new Map();
   for (const node of json.nodes || []) {
     if (node.mesh == null) continue;
     if (node.translation || node.rotation || node.scale || node.matrix) throw new Error('archer-model: a mesh with a transform: ' + node.name);
@@ -72,21 +75,24 @@ const join = (list) => {
   return o;
 };
 
-// the parts of an aircraft in acmesh's form: the Archer (pa28) from the model when it is there, any other type (and the
-// Archer without the model) acmesh's own. opts: { lod: 'near' | 'far', reg: the registration painted on it }
-export function exteriorParts(FL, A, { lod = 'near', reg = 'N738SY' } = {}) {
+// the parts of an aircraft in acmesh's form: the Archer (pa28) and the Seminole (pa44) from their models when they are
+// there, any other type (and either without its model) acmesh's own. opts: { lod: 'near' | 'far', reg: the
+// registration painted on it }
+const FIRST_REG = { pa28: 'N738SY', pa44: 'N452SY' };
+export function exteriorParts(FL, A, { lod = 'near', reg } = {}) {
   const lab = FL.acmesh.buildParts(A);
-  const M = A.id === 'pa28' ? archerMeshes(lod) : null;
+  const M = FILES[A.id] ? archerMeshes(lod, A.id) : null;
   if (!M) return lab;
+  reg = reg || FIRST_REG[A.id];
   const out = [];
   for (const p of lab) {
     if (p.disc != null) { out.push(p); continue; }                       // the propeller's disc: acmesh's (a flat circle)
     if (p.name === 'body') {
-      const r = M.get('reg.' + reg) || M.get('reg.N738SY');
+      const r = M.get('reg.' + reg) || M.get('reg.' + FIRST_REG[A.id]);
       out.push({ ...p, mesh: join([M.get('body'), ...(r ? [r] : [])]), cabin: M.get('cabin') });
       continue;
     }
-    const m = M.get(p.name);
+    const m = M.get(p.prop != null && !M.has('prop') ? 'prop.' + p.prop : p.name);
     if (!m) throw new Error('archer-model: no part ' + p.name);
     out.push({ ...p, mesh: m });
   }

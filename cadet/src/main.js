@@ -20,7 +20,7 @@ import { academySpec } from './content/academy-spec.js';
 import { buildVegetation } from './world/vegetation.js';
 import { buildLandmarks } from './world/landmarks.js';
 import { parkedAircraft, colliderBoxes } from './aircraft/exterior.js';
-import { TODAY, PARKED_ARCHERS } from './aircraft/registrations.js';
+import { TODAY, PARKED_ARCHERS, PARKED_SEMINOLES } from './aircraft/registrations.js';
 import { PRESETS, ORDER, gpuName, pickPreset, rememberPreset, makeDynRes } from './core/quality.js';
 import { createInput } from './core/input.js';
 import { createCollisionWorld } from './player/collide.js';
@@ -134,10 +134,10 @@ async function boot() {
   const spots = [[0, 'pa28'], [2, 'pa28'], [3, 'pa28'], [5, 'pa28'], [8, 'pa28'], [10, 'pa44'], [13, 'pa28'], [16, 'pa44'], [19, 'pa28'], [22, 'pa28']];
   const aircraftColliders = (ac, tag) => colliderBoxes(ac.root, toFrame, G).map(b => world.add({ ...b, tag }));
   let todayIds = [], todayAc = null;
-  let archers = 0;
+  let archers = 0, twins = 0;
   for (const [i, id] of spots) {
     const s = STANDS[i]; if (!s) continue;
-    const reg = id === 'pa28' ? (i === 19 ? TODAY : PARKED_ARCHERS[archers++ % PARKED_ARCHERS.length]) : undefined;
+    const reg = id === 'pa28' ? (i === 19 ? TODAY : PARKED_ARCHERS[archers++ % PARKED_ARCHERS.length]) : PARKED_SEMINOLES[twins++ % PARKED_SEMINOLES.length];
     const ac = parkedAircraft(FL, L, id, s.a, s.c - 0.4, hdgOut, { prop: 0.3 + i * 0.7, reg, lod: 'auto' });
     scene.add(ac.root); parked.push(ac);
     const ids = aircraftColliders(ac, i === 19 ? 'aircraft:today' : 'aircraft');

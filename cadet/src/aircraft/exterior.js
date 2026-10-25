@@ -97,7 +97,7 @@ export function buildAircraftModel(FL, A, opts = {}) {
 
 // a parked aircraft: a physics state at rest on its wheels (so the hinges and the height come from FLIGHT LAB).
 // opt: { prop (the blades' angle), elev, bake (false: the parts kept apart), reg (the registration), lod: 'near' |
-// 'far' | 'auto' (the Archer: near within LOD_FAR metres of the eye, far beyond: both baked, one drawn) }
+// 'far' | 'auto' (the Archer and the Seminole: near within LOD_FAR metres of the eye, far beyond: both baked, one drawn) }
 export const LOD_FAR = 20;
 export function parkedAircraft(FL, L, id, along, cross, hdgTrue, opt = {}) {
   const P = FL.physics, s = P.newState({ aircraft: id });
@@ -112,7 +112,7 @@ export function parkedAircraft(FL, L, id, along, cross, hdgTrue, opt = {}) {
   m.update(s);
   const lp = L.physToLocal(s.pos);
   if (opt.bake !== false) bake(m.root);
-  if (lod === 'auto' && s.A.id === 'pa28' && opt.bake !== false) {
+  if (lod === 'auto' && (s.A.id === 'pa28' || s.A.id === 'pa44') && opt.bake !== false) {
     // both details baked under an LOD (the renderer picks one per camera); the colliders come from the near one
     const far = buildAircraftModel(FL, s.A, { lod: 'far', reg }); far.update(s); bake(far.root);
     const near = new THREE.Group(), lo = new THREE.Group(); near.name = 'lod-near'; lo.name = 'lod-far';
@@ -281,7 +281,7 @@ function discMaterial(e, dir) {
 // where they are on the airframe (body frame) and what they look like. Nav lights: red left tip, green right tip (each
 // seen from ahead to 110° to its side), white on the tail cone (140° aft); the red beacon on the fin top; white strobes
 // in the tip lenses; landing and taxi lights in the lower nose, looking ahead (a design choice: the Archer III family
-// carries them in the cowling).
+// carries them in the cowling); a twin with its engines on the wings (the Seminole) has them in the nose's point.
 const L_COL = { red: [1.0, 0.045, 0.02], green: [0.04, 1.0, 0.32], white: [1.0, 0.94, 0.86], xenon: [0.9, 0.95, 1.0], led: [1.0, 0.96, 0.9] };
 export function lightSpots(A) {
   const w = A.wing, tipY = w.y + (w.tipX - w.rootX) * Math.tan(w.dih * DEG), navZ = w.tipLE + 0.16 * w.tipC;
@@ -290,7 +290,7 @@ export function lightSpots(A) {
   const tTail = hs.y >= vs.y1 - 0.2;                                              // a T-tail: on the fin's leading edge, below the stabilator
   const beacon = tTail ? [0, vs.y1 - 0.16, finLE(vs.y1 - 0.16) - 0.03] : [0, vs.y1 + 0.03, (vs.topLE + vs.hinge) / 2];
   const zl = F[0][0] + 0.12, f = fuseAt(F, zl), kx = Math.pow(Math.cos(40 * DEG), 0.8), ky = Math.pow(Math.sin(40 * DEG), 0.8);
-  const nose = s => [s * f[1] * kx * 0.98, f[3] - f[2] * ky * 0.98, zl - 0.012];
+  const nose = A.engines[0].type === 'wing' ? s => [s * 0.055, F[0][3] - 0.035, F[0][0] - 0.035] : s => [s * f[1] * kx * 0.98, f[3] - f[2] * ky * 0.98, zl - 0.012];
   const side = (s, deg) => [s * Math.sin(deg * DEG), 0, -Math.cos(deg * DEG)];
   const fwd = (x, y) => { const l = Math.hypot(x, y, 1); return [x / l, y / l, -1 / l]; };
   // size: the halo's radius (m), at most `ang` (the tangent of its angular radius: glare is in the eye, so a lamp close

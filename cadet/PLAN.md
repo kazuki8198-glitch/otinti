@@ -300,7 +300,7 @@ M4 の「遊んでもらう確認」はまだですが、先に M5 に進むこ�
 **計画との違い**
 
 - TEM と、不具合の種類を増やすことは M7 に回した。
-- Seminole の外観は FLIGHT LAB の機体の形のまま（Archer のような Blender の模型はまだ）。操縦席は Archer のものを Seminole の目の位置に動かしたもの（M3 のまま）。
+- Seminole の外観は、Archer と同じ作り方で Blender の模型にした（`tools/aircraft/build_seminole.py`、`assets/model/seminole.glb`・`seminole-far.glb`、前と後の比べは `docs/seminole`）。操縦席は Archer のものを Seminole の目の位置に動かしたもの（M3 のまま）で、客室の外形もそれに合わせて Archer と同じ形にした。着陸灯と誘導灯は、機首のとがった先に置いた。
 - 第 6 章の課目 r1（Archer）のあと、審査官の最終審査は Seminole で m1 → m2 → m5 を飛ぶ（FLIGHT LAB の課目と採点を組み合わせた）。
 
 ---

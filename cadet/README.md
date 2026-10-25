@@ -88,6 +88,12 @@ M1 の画像（歩く）：
 - 審査：IR と ME は真壁 主任教官、最終審査は黒田 審査官（架空）。審査の日は教官室でブリーフィングを受け、機体の横で待っていて、右の席に座ります。
 - 航空日誌に、機体（PA-28／PA-44 と登録記号）・野外飛行・計器・双発の列と合計が入ります。
 
+**Seminole の外観（Blender で作り直し）**
+- Seminole も Archer と同じく Blender で作った模型にしました（`assets/model/seminole.glb` と `seminole-far.glb`、ページに埋め込み済み）。寸法は FLIGHT LAB の PA-44 の物理の記述のままで、動翼・脚・2 つのプロペラは同じヒンジと軸で動きます。
+- とがった機首、長い尾部、T 字尾翼、左右のナセル（空気取り入れ口・合わせ目・排気管）、反対向きに回る 2 つのプロペラ、引き込み脚（緩衝支柱・トルクリンク・脚の扉）。客室は Archer と同じ形です。塗装は翔洋航空の色で、登録記号は N452SY・N455SY・N457SY（架空）。
+- 細かさは 2 段階（約 2 万 6 千三角形と約 3,100 三角形、20 m で切り替え）。
+- 前と後の比べは [`docs/seminole`](docs/seminole)（左が前、右が後）。
+
 **直したこと**
 - 序章で早瀬 教官と話しても次に進めないことがあった：前の版（M2〜M4）の保存に残っていた会話の記録が原因でした。1 日の始まりに、キャリアの進み具合と合わない記録を直します。
 - 外部点検の「書類」「客室」の目印が窓の外に浮いていた → ドアの外に置きました（[`docs/walkmarks`](docs/walkmarks)：前と後）。
@@ -135,7 +141,7 @@ M1 の画像（歩く）：
 - 塗装は翔洋航空の色（白に濃い青の帯と金の線、翼端と垂直尾翼の上が濃い青）。登録記号は機体ごとに違い（今日の機体は N738SY）、後ろの胴体の両側に書いてあります。
 - 陰（アンビエントオクルージョン）を頂点に焼き込んで、空の光だけを暗くしています（太陽の光は影で）。
 - 細かさは 2 段階：今日の機体と飛ぶ機体は約 2 万 3 千三角形、駐機場で 20 m より遠い機体は約 2,500 三角形の模型に切り替わります（登録記号は近い模型だけ。遠くでは数ピクセルの高さになるため）。当たり判定は細かい模型から作ります。描画の予算（描画 400 回・90 万三角形）は前と同じです。
-- 双発機（Seminole）は前のまま（FLIGHT LAB の形）です。
+- 双発機（Seminole）も M6 で Blender の模型にしました（下の「M6 で入ったもの」）。
 - 前と後の比べは [`docs/aircraft`](docs/aircraft)（左が前、右が後）。
 
 **人物の模型（Blender で作り直し）**
@@ -413,6 +419,9 @@ Archer の外観の模型も同じです（最後の前の引数にフォルダ�
 node tools/aircraft/spec.mjs > /tmp/archer.json        # 物理の寸法・ヒンジの線・登録記号
 blender -b --factory-startup -P tools/aircraft/build_archer.py -- /tmp/archer.json assets/model/archer.glb - near
 blender -b --factory-startup -P tools/aircraft/build_archer.py -- /tmp/archer.json assets/model/archer-far.glb - far
+node tools/aircraft/spec.mjs pa44 > /tmp/seminole.json  # (M6) Seminole も同じように
+blender -b --factory-startup -P tools/aircraft/build_seminole.py -- /tmp/seminole.json assets/model/seminole.glb - near
+blender -b --factory-startup -P tools/aircraft/build_seminole.py -- /tmp/seminole.json assets/model/seminole-far.glb - far
 ```
 
 - 形はスクリプトの中の関数で細かく作り、間引いて三角形を減らし、細かい形の法線と陰（頂点の色）を移します。最後の引数が細かさ（far：遠くの人、near：近くの人）です。3 つ目の引数を `-` の代わりにフォルダにすると、Cycles で確認用の絵を描きます。
@@ -568,8 +577,9 @@ src/ui/                menu（一時停止）、settings（設定の保存）、
                        flight-hud（課目の手順・操縦の状態・講評・画面の計器盤）、day-hud（1 日の流れ・チェックリスト・航空日誌）、
                        tablet（タブレット）、cards（日付と章のカード）
 assets/tex/            テクスチャ（CC0）。出典は assets/CREDITS.md
-assets/model/          人物と Archer の模型（自作。tools/actor・tools/aircraft で作る）
+assets/model/          人物と Archer・Seminole の模型（自作。tools/actor・tools/aircraft で作る）
 tools/actor/           人物の模型を Blender で作るスクリプト（build_actor.py）と、確認用の絵（preview.py）
-tools/aircraft/        Archer の外観を Blender で作るスクリプト（build_archer.py）と、その寸法の書き出し（spec.mjs）
+tools/aircraft/        Archer と Seminole の外観を Blender で作るスクリプト（build_archer.py・build_seminole.py）と、その寸法の書き出し（spec.mjs）
+tools/feel/            空島フライトと CADET の操縦の感覚を同じキー入力で比べる（compare.mjs）
 test/                  テストとスクリーンショットの道具
 ```

@@ -1144,6 +1144,14 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     await ev(() => { window.__cadet.setMode('walk'); window.__cadet.career.tablet.open('notes'); });
     assert.equal(await ev(() => window.__cadet.career.tablet.page()), 'notes');
     await g.page.fill('.tb .tb-note-in', '運航管理の場所がわからなかった。');
+    console.log('# notes layout', JSON.stringify(await ev(() => {
+      const desc = (e) => (e ? `${e.tagName}.${String(e.className).replace(/\s+/g, '.')}#${e.id}` : 'null');
+      const rr = (e) => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.width, r.height].map(Math.round); };
+      const b = [...document.querySelectorAll('.tb button')].find(x => x.textContent === '保存する'), r = b.getBoundingClientRect();
+      const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      const chain = []; for (let e = b; e && e !== document.body; e = e.parentElement) chain.push(`${desc(e)} ${JSON.stringify(rr(e))} st=${e.scrollTop}`);
+      return { at: desc(at), chain, vw: [innerWidth, innerHeight], tbs: document.querySelectorAll('.tb').length, cls: document.body.className };
+    })));
     await g.page.getByRole('button', { name: '保存する' }).click();
     const notes = await ev(() => window.__cadet.notes());
     assert.equal(notes.length, 1);

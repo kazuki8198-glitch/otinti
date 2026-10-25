@@ -103,7 +103,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
           <small>キーは自分で <b>Anthropic Console</b> で作ったものを使います。料金はキーの持ち主のアカウントにかかります。<br>
           <b>保存する場所</b>：「覚えておく」を選んだときだけ、このブラウザの localStorage の「${esc(ai ? ai.keyName : 'cadet.secret.anthropic')}」に保存します（このパソコンのこのブラウザの中だけ。ほかの記録・設定・書き出しには入りません）。<br>
           <b>消し方</b>：上の「キーを消す」。または、ブラウザの設定でこのページ（ファイル）のサイトデータを消去します。<br>
-          <b>送るもの</b>：質問・今日の課目・その日の結果・教科書の近い節・教官の話し方の決まり。キーは通信の見出しにだけ入れ、ブラウザから直接 API に送られます。自分の PC で、自分だけが使ってください。</small></div>
+          <b>送るもの</b>：質問・直前のやり取り（3 往復まで）・今日の場所と課目と天気・その日の結果・教科書の目次と近い節・教官の話し方の決まり。キーは通信の見出しにだけ入れ、ブラウザから直接 API に送られます。自分の PC で、自分だけが使ってください。</small></div>
         <h3>マイクで交信</h3>`
         + sw('micRadio', 'マイクで復唱する（英語）', '管制への答えを声で言えます（操縦席で M を押してから話す）。コールサイン・滑走路・高度・周波数・スコーク・指示の言葉を照らし合わせ、足りない言葉を字幕に出します。マイクや音声認識が使えないときは、いつもの 1〜3 キーのまま。ブラウザの音声認識は、声を提供元のサーバーで文字にすることがあります（ON のときだけ。マイクの許可はブラウザが聞きます）。')
         + `<h3>教官が英語で話す</h3>`
@@ -129,12 +129,13 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         <tr><td>マウス</td><td>見回す。右ボタンを押したままで近くを見る</td></tr><tr><td>左クリック / ホイール</td><td>照準の先のスイッチ・レバー・つまみを操作する</td></tr>
         <tr><td>C</td><td>操縦席 ⇄ 外からの視点</td></tr><tr><td>Tab</td><td>画面の計器盤（PFD・MFD）</td></tr><tr><td>H</td><td>操作の説明</td></tr>
         <tr><td>Enter</td><td>チェックリストの項目を確かめた（◇ の項目）</td></tr><tr><td>Y</td><td>チェックリストや地上走行を教官に任せる</td></tr>
-        <tr><td>1〜3</td><td>無線で答える（管制との交信）</td></tr></table>
+        <tr><td>1〜3</td><td>無線で答える（管制との交信）</td></tr><tr><td>M</td><td>無線の答えを声で言う（「マイクで交信」が ON のとき）</td></tr></table>
         <p class="m-note">ゲームパッドも使えます（FLIGHT LAB と同じ配置）。</p>`;
     }
     return `<p><b>CADET</b>（パイロット訓練生シミュレーター）${version ? ` <span class="m-val">${esc(version)}</span>` : ''}</p>
       <p>公開情報を基にした非公式のゲームです。航空会社（翔洋航空）・訓練所・人物はすべて架空です。実機訓練の代わりにはならず、航法には使えません（NOT FOR NAVIGATION）。飛行モデル・課目・教科書は FLIGHT LAB（同じリポジトリの自主学習教材）を使っています。</p>
-      <p class="m-note">使っているもの：three.js（MIT License）、ambientCG のテクスチャ（CC0）。機体と人物の模型は Blender で自作し、家具・木・標識などはプログラムで作っています。音（エンジン・風・足音・無線など）は、音のファイルを使わずにブラウザの中で作っています。くわしくは assets/CREDITS.md。</p>`
+      <p class="m-note">使っているもの：three.js（MIT License）、Anthropic TypeScript SDK（MIT License。AI 教官を ON にしたときだけ使う）、ambientCG のテクスチャ（CC0）。機体（737 型を含む）と人物の模型は Blender で自作し、家具・木・標識・終章の空港などはプログラムで作っています。音（エンジン・風・足音・無線など）は、音のファイルを使わずにブラウザの中で作っています。終章の羽田空港の形は架空で、実際の空港を写していません。くわしくは assets/CREDITS.md。</p>
+      <p class="m-note">外への通信：AI 教官（Anthropic の API）とマイクで交信（ブラウザの音声認識）は、設定で ON にしたときだけ使います。初めはどちらも OFF で、OFF のあいだはどこにも通信しません。</p>`
       + (onResetProgress ? `<div class="m-big"><button data-act="reset">訓練の記録を消す（教官との会話を最初から）</button></div>
       <p class="m-note">記録はこのブラウザの中だけに保存されています。設定は消えません。</p>` : '');
   }

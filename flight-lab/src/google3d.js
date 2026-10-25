@@ -141,25 +141,31 @@
   }
 
   // ---------------------------------------------------------------- the layer
-  function create(gl) {
-    const ORIGIN = FL.avionics.ORIGIN, GROUND_M = FL.physics.GROUND_M;
+  // create(gl, opts): every GL object belongs to gl. opts.srgb (the three.js view, whose pipeline works in linear
+  // light and encodes sRGB at the end): the photos are uploaded as sRGB textures (sampled as linear) and the grey of
+  // untextured parts is linear too; without it (the legacy view) the colours go to the screen as they are.
+  function create(gl, opts = {}) {
+    const ORIGIN = FL.avionics.ORIGIN, GROUND_M = FL.physics.GROUND_M, SRGB = opts.srgb === true;
     let KEY = '';                                                   // memory only
     const G = { state: 'off', msg: '', root: null, session: '', nodes: 0, active: [], upq: [], bytes: 0, loaded: 0, frame: 0, credits: '', creditT: 0,
       off: null, manual: null, samp: [], jobs: new Map(), nextId: 1, workers: [], fallback: null, drawn: 0 };
-    // the textured, unlit tile shader (photogrammetry is already lit), with fog and the round clip
+    // the textured, unlit tile shader (photogrammetry is already lit), with fog and the round clip; uGain scales the
+    // colour (the three.js view: so that the photos come out of its tone mapping about as they went in)
+    const lin = v => (v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+    const GREY = [0.55, 0.56, 0.52].map(v => (SRGB ? lin(v) : v).toFixed(4)).join(', ');
     const vs = `#version 300 es
       layout(location=0) in vec3 aP; layout(location=1) in vec2 aT; uniform mat4 uVP; uniform float uOff; out vec2 vT; out vec3 vW;
       void main() { vW = aP + vec3(0.0, uOff, 0.0); vT = aT; gl_Position = uVP * vec4(vW, 1.0); }`;
     const fs = `#version 300 es
-      precision highp float; in vec2 vT; in vec3 vW; out vec4 o; uniform sampler2D uTex; uniform int uHasTex; uniform vec3 uCam, uFog; uniform float uFogD, uClip;
+      precision highp float; in vec2 vT; in vec3 vW; out vec4 o; uniform sampler2D uTex; uniform int uHasTex; uniform vec3 uCam, uFog; uniform float uFogD, uClip, uGain;
       void main() {
         if (length(vW.xz) > uClip) discard;
-        vec3 c = uHasTex == 1 && vT.x >= 0.0 ? texture(uTex, vT).rgb : vec3(0.55, 0.56, 0.52);
-        o = vec4(mix(uFog, c, exp(-length(vW - uCam) * uFogD)), 1.0);
+        vec3 c = uHasTex == 1 && vT.x >= 0.0 ? texture(uTex, vT).rgb : vec3(${GREY});
+        o = vec4(mix(uFog, c * uGain, exp(-length(vW - uCam) * uFogD)), 1.0);
       }`;
     const mk = (t, s) => { const h = gl.createShader(t); gl.shaderSource(h, s); gl.compileShader(h); if (!gl.getShaderParameter(h, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(h)); return h; };
     const prog = gl.createProgram(); gl.attachShader(prog, mk(gl.VERTEX_SHADER, vs)); gl.attachShader(prog, mk(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(prog);
-    const U = n => gl.getUniformLocation(prog, n), u = { uVP: U('uVP'), uOff: U('uOff'), uTex: U('uTex'), uHasTex: U('uHasTex'), uCam: U('uCam'), uFog: U('uFog'), uFogD: U('uFogD'), uClip: U('uClip') };
+    const U = n => gl.getUniformLocation(prog, n), u = { uVP: U('uVP'), uOff: U('uOff'), uTex: U('uTex'), uHasTex: U('uHasTex'), uCam: U('uCam'), uFog: U('uFog'), uFogD: U('uFogD'), uClip: U('uClip'), uGain: U('uGain') };
     const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
 
     function url(uri) {
@@ -253,7 +259,9 @@
     function update(cam, s) {
       if (G.state !== 'on' || !G.root || !cam) { G.active = []; return; }
       const f = ++G.frame, eye = cam.eye, planes = frustum(cam.VP), off = offset();
-      const K = cam.H / (2 * Math.tan(cam.fovY / 2)), SSE = 16, MAXD = 70000;
+      // (cam: VP and eye in this frame, H in device pixels, fovY in radians; far: nothing beyond the camera's far plane
+      // is loaded, as it would not be drawn)
+      const K = cam.H / (2 * Math.tan(cam.fovY / 2)), SSE = 16, MAXD = Math.min(70000, cam.far || Infinity);
       const center = n => [n.e, n.h + off, -n.n];
       const inArea = n => n.planet || Math.hypot(n.e, n.n) - n.r < COVER_R;
       const dist = n => { if (n.planet) return 0; const c = center(n); return Math.max(0, Math.hypot(c[0] - eye[0], c[1] - eye[1], c[2] - eye[2]) - n.r); };
@@ -331,7 +339,7 @@
         }
         if (job.texs.length < r.bitmaps.length) {
           const bmp = r.bitmaps[job.texs.length], t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bmp); gl.generateMipmap(gl.TEXTURE_2D);
+          gl.texImage2D(gl.TEXTURE_2D, 0, SRGB ? gl.SRGB8_ALPHA8 : gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bmp); gl.generateMipmap(gl.TEXTURE_2D);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
           if (aniso) gl.texParameterf(gl.TEXTURE_2D, aniso.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
@@ -370,13 +378,15 @@
       if (!G.active.length) { G.drawn = 0; return; }
       gl.useProgram(prog);
       gl.uniformMatrix4fv(u.uVP, false, c.VP); gl.uniform1f(u.uOff, offset()); gl.uniform3fv(u.uCam, c.eye); gl.uniform3fv(u.uFog, c.fog); gl.uniform1f(u.uFogD, c.fogD); gl.uniform1f(u.uClip, COVER_R);
+      gl.uniform1f(u.uGain, c.gain != null ? c.gain : 1);
       gl.activeTexture(gl.TEXTURE0); gl.uniform1i(u.uTex, 0);
       let k = 0;
       for (const n of G.active) {
         const m = n.mesh; if (!m || m.empty) continue; k++;
         gl.bindVertexArray(m.vao);
         for (const g of m.groups) {
-          if (g.img >= 0 && m.texs[g.img]) { gl.bindTexture(gl.TEXTURE_2D, m.texs[g.img]); gl.uniform1i(u.uHasTex, 1); } else gl.uniform1i(u.uHasTex, 0);
+          // (an untextured part unbinds unit 0: what was left there may be the very texture being drawn into)
+          if (g.img >= 0 && m.texs[g.img]) { gl.bindTexture(gl.TEXTURE_2D, m.texs[g.img]); gl.uniform1i(u.uHasTex, 1); } else { gl.bindTexture(gl.TEXTURE_2D, null); gl.uniform1i(u.uHasTex, 0); }
           gl.drawElements(gl.TRIANGLES, g.count, gl.UNSIGNED_INT, g.start * 4);
         }
       }

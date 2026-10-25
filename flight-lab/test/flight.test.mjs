@@ -4,7 +4,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { load, CORE } from './load.mjs';
 import { makeBot, runLesson } from './bot.mjs';
-import { build } from '../build.mjs';
+import vm from 'node:vm';
+import { build, MODELS, MAX_BYTES } from '../build.mjs';
 const FL = load(...CORE, 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js', 'quiz.js', 'radio.js', 'ui.js');
 const P = FL.physics, A = FL.avionics, SC = FL.school, SY = FL.syllabus, SF = FL.sanford, BK = FL.book, QZ = FL.quiz;
 const DT = 1 / 120, clamp = P.clamp;
@@ -17,6 +18,12 @@ const hands = (s, kt, bank = 0) => { if (s.base == null) s.base = s.out.pitch; c
 // ------------------------------------------------------------------ the built single file
 const B = build({ quiet: true });
 const html = B.html;
+// the page without its base64 payloads (CADET's textures and models, the Draco WebAssembly): random letters can spell
+// anything, so the placeholder and key checks read the rest
+const ASSETS_RE = /globalThis\.CADET_ASSETS = (\{[^}]*\});/;
+const assets = JSON.parse((ASSETS_RE.exec(html) || [, '{}'])[1]);
+const text = html.replace(ASSETS_RE, 'globalThis.CADET_ASSETS = {};').replace(/FL\.DRACO_WASM_B64 = "[A-Za-z0-9+/=]*"/, 'FL.DRACO_WASM_B64 = ""');
+const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
 
 test('build: one HTML file, no external scripts or stylesheets, everything inline; the only remote host is Google\'s tile host', () => {
   assert.doesNotMatch(html, /<script[^>]*\bsrc\s*=/i, 'no <script src>');
@@ -30,8 +37,44 @@ test('build: one HTML file, no external scripts or stylesheets, everything inlin
 });
 
 test('build: no placeholders, no template markers, no API keys', () => {
-  for (const re of [/\bTODO\b/, /\bFIXME\b/, /\bTBD\b/, /lorem ipsum/i, /PLACEHOLDER/, /<!--BUILD:/, /\{\{\s*\w+\s*\}\}/, /XXX/]) assert.doesNotMatch(html, re, String(re));
-  assert.doesNotMatch(html, /sk-ant-api/); assert.doesNotMatch(html, /AIza[0-9A-Za-z_-]{30,}/);
+  assert.ok(text.length < html.length / 3 && Object.keys(assets).length > 0, 'the base64 payloads were found and set aside');
+  for (const re of [/\bTODO\b/, /\bFIXME\b/, /\bTBD\b/, /lorem ipsum/i, /PLACEHOLDER/, /<!--BUILD:/, /\{\{\s*\w+\s*\}\}/, /XXX/]) assert.doesNotMatch(text, re, String(re));
+  assert.doesNotMatch(text, /sk-ant-api/); assert.doesNotMatch(text, /AIza[0-9A-Za-z_-]{30,}/);
+});
+
+test('build: the three.js view — one bundle, one three.js, CADET\'s 12 textures and 4 aircraft models, the licences, under the size limit', () => {
+  // every inline script parses (the escaping of "</script" and "<!--" kept them valid)
+  for (const sc of scripts) new vm.Script(sc);
+  // the bundle: a classic script after acmesh.js and before scene.js / app.js, defining FL.view3d (and nothing at load)
+  const at = k => html.indexOf(k);
+  const b = at('/* ---- the three.js view (src3d');
+  assert.ok(b > 0 && at('/* ---- acmesh.js ---- */') < b && b < at('/* ---- scene.js ---- */') && at('/* ---- scene.js ---- */') < at('/* ---- google3d.js ---- */') && at('/* ---- pages.js ---- */') < at('/* ---- app.js ---- */'), 'script order');
+  assert.ok(at('/* ---- CADET\'s assets') > 0 && at('/* ---- CADET\'s assets') < at('/* ---- physics.js ---- */'), 'the assets before the modules');
+  const bundle = scripts.find(sc => sc.includes('/* ---- the three.js view (src3d'));
+  assert.match(bundle, /\.view3d\s*=/, 'FL.view3d defined');
+  // loading it only defines FL.view3d: run here with no DOM at all, it needs none
+  const box = vm.createContext({ console, FL: {} });
+  vm.runInContext(bundle, box);
+  const V = box.FL.view3d;
+  assert.deepEqual(Object.keys(box.FL), ['view3d']);
+  assert.equal(typeof V.createScene, 'function'); assert.equal(typeof V.probe, 'function');
+  assert.deepEqual([...V.ORDER], ['low', 'medium', 'high', 'ultra']); assert.ok(V.ORDER.every(k => V.PRESETS[k]));
+  assert.equal(V.guessPreset('ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero)))'), 'low');
+  assert.equal(V.probe().webgl2, false, 'no canvas here: probe() says so instead of throwing');
+  // exactly one three.js (the bundle's own check, and one copy of the core in the text)
+  assert.deepEqual(B.three.roots, ['node_modules/three']);
+  assert.equal((html.match(/Multiple instances of Three\.js being imported/g) || []).length, 1, 'one copy of three.core');
+  // CADET's assets in CADET's own format: the textures as data URLs, the models as bare base64 GLB
+  const tex = Object.keys(assets).filter(k => k.startsWith('tex/')), models = Object.keys(assets).filter(k => k.startsWith('model/'));
+  assert.deepEqual(tex.sort(), ['asphalt_c', 'asphalt_n', 'asphalt_r', 'concrete2_c', 'concrete2_nr', 'concrete_c', 'concrete_n', 'concrete_r', 'grass_c', 'grass_nr', 'plaster_c', 'plaster_nr'].map(n => 'tex/' + n));
+  for (const k of tex) assert.match(assets[k], /^data:image\/webp;base64,UklGR/, k);
+  assert.deepEqual(models.sort(), MODELS.map(m => 'model/' + m).sort());
+  for (const k of models) assert.equal(Buffer.from(assets[k].slice(0, 8), 'base64').toString('latin1', 0, 4), 'glTF', k);
+  // three.js's licence: at the end of the file and for the About page; the assets' credits
+  assert.match(html, /<!--\nthree\.js licence:\n[\s\S]*Copyright © 2010-\d{4} three\.js authors[\s\S]*-->\n<\/html>/);
+  assert.match(html, /FL\.THREE_LICENSE = "The MIT License/);
+  assert.match(html, /FL\.ASSET_CREDITS = "[^"]*ambientCG[^"]*CC0[^"]*Blender/);
+  assert.ok(B.bytes < MAX_BYTES, `${(B.bytes / 1048576).toFixed(2)} MiB (limit ${MAX_BYTES / 1048576} MiB)`);
 });
 
 test('build: the displays, the instructor panel, the control strip and the required notices are on the page', () => {

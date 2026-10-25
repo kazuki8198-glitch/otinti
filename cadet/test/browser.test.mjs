@@ -1137,6 +1137,10 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
   });
 
   test('(M8) the tablet\'s notes: written, kept in this browser with where and when, taken away as text', async () => {
+    // (a card still on from the tests before — the screen covered — goes first)
+    const card = await ev(() => (window.__cadet.career.cards() ? document.querySelector('.cd').innerText.replace(/\s+/g, ' ') : ''));
+    if (card) console.log(`# notes: waiting for the card "${card}" (${JSON.stringify(await career())})`);
+    await g.page.waitForFunction(() => !window.__cadet.career.cards(), null, { timeout: 90000 });
     await ev(() => { window.__cadet.setMode('walk'); window.__cadet.career.tablet.open('notes'); });
     assert.equal(await ev(() => window.__cadet.career.tablet.page()), 'notes');
     await g.page.fill('.tb .tb-note-in', '運航管理の場所がわからなかった。');

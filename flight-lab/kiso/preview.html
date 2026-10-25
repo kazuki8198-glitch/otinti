@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>基礎教材 プレビュー</title>
+<!-- FLIGHT LAB に組み込む前の見え方の確認用。kiso-data.js を読み、章・節・図・写真・確認問題・用語集を表示する。 -->
+<style>
+:root{color-scheme:dark;--bg:#07101d;--panel:#0c1a2e;--line:rgba(150,176,206,.26);--ink:#e8f0fa;--muted:#92a5be;--cyan:#5fd4ff;--amber:#ffb547;
+--jp:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo","Noto Sans JP",system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--jp);font-size:15px;line-height:1.75}
+.wrap{display:grid;grid-template-columns:260px 1fr;min-height:100vh}nav{border-right:1px solid var(--line);padding:12px;overflow:auto;max-height:100vh;position:sticky;top:0}
+nav button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--ink);padding:6px 8px;border-radius:6px;cursor:pointer;font:inherit;font-size:13px}
+nav button:hover,nav button.on{background:var(--panel);color:var(--cyan)}main{padding:24px 32px;max-width:860px}
+h2{color:var(--cyan);margin:.2em 0}h3{border-bottom:1px solid var(--line);padding-bottom:4px}h4{color:var(--amber);margin:1.2em 0 .3em}
+a{color:var(--cyan)}.kiso-eq{text-align:center;font-weight:600}
+.kiso-t{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}.kiso-t th,.kiso-t td{border:1px solid var(--line);padding:5px 8px;vertical-align:top}.kiso-t th{background:var(--panel)}
+figure{margin:16px 0;background:#fff;border-radius:8px;padding:8px}figure svg{width:100%;height:auto;display:block}
+figure.photo{background:var(--panel)}figure.photo img{max-width:100%;display:block;margin:auto;border-radius:4px}
+figcaption{color:#1f2937;font-size:13px;margin-top:6px}figure.photo figcaption{color:var(--muted)}.credit{font-size:11px;color:var(--muted)}
+details{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:8px 0}summary{cursor:pointer;color:var(--cyan)}
+.tabs button{background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:4px 10px;border-radius:6px;margin-right:6px;cursor:pointer}
+.note{color:var(--muted);font-size:12px}
+@media(max-width:700px){.wrap{grid-template-columns:1fr}nav{position:static;max-height:none}main{padding:16px}}
+</style></head><body>
+<div class="wrap"><nav id="nav"></nav><main id="main"></main></div>
+<script src="kiso-data.js"></script>
+<script>
+const K=FL.kiso, nav=document.getElementById('nav'), main=document.getElementById('main');
+const fill=root=>{root.querySelectorAll('.kiso-fig').forEach(d=>{const f=findFig(d.dataset.fig);d.outerHTML=`<figure>${K.figs[d.dataset.fig]}<figcaption>${f?f.caption:''}</figcaption></figure>`});
+ root.querySelectorAll('.kiso-photo').forEach(d=>{const p=findPhoto(d.dataset.photo);d.outerHTML=`<figure class="photo"><img src="${K.photos[d.dataset.photo]}" width="${p.w}" height="${p.h}" alt=""><figcaption>${p.caption}<div class="credit">${p.credit}</div></figcaption></figure>`})};
+const findFig=id=>K.chapters.flatMap(c=>c.figures).find(f=>f.id===id), findPhoto=id=>K.chapters.flatMap(c=>c.photos).find(p=>p.id===id);
+function chapterNav(){nav.innerHTML='<div class="note">基礎教材（日本の航空法 前提）</div>'+K.chapters.map((c,i)=>`<button data-i="${i}">${c.no}. ${c.title}</button>`).join('');
+ nav.querySelectorAll('button').forEach(b=>b.onclick=()=>openCh(+b.dataset.i))}
+function openCh(i,tab='sec',s=0){const c=K.chapters[i];nav.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.i===i));
+ let h=`<div class="note">${c.label}</div><h2>${c.title}</h2><div class="note">${c.subtitle}</div><div class="tabs"><button data-t="sec">本文</button><button data-t="qa">確認問題（${c.qa.length}）</button><button data-t="gl">用語（${c.glossary.length}）</button><button data-t="src">出典</button></div>`;
+ if(tab==='sec'){h+=`<p><select id="sel">${c.sections.map((x,j)=>`<option value="${j}" ${j===s?'selected':''}>${x.no?x.no+' ':''}${x.title}</option>`).join('')}</select></p><h3>${c.sections[s].no?c.sections[s].no+' ':''}${c.sections[s].title}</h3>${c.sections[s].html}`}
+ if(tab==='qa'){h+=c.qa.length?c.qa.map(q=>`<details><summary>問 ${q.n}</summary>${q.q}<details><summary>解答と解説</summary>${q.a}</details></details>`).join(''):'<p>この章には確認問題がありません。</p>'}
+ if(tab==='gl'){h+=`<table class="kiso-t"><thead><tr>${(c.glossaryHeader||[]).map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${c.glossary.map(r=>`<tr>${r.map(x=>`<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table>`}
+ if(tab==='src'){h+=c.sourcesHtml+'<h4>写真の出典</h4>'+c.photoCreditsHtml}
+ main.innerHTML=h;fill(main);main.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>openCh(i,b.dataset.t));
+ const sel=document.getElementById('sel');if(sel)sel.onchange=()=>openCh(i,'sec',+sel.value);window.scrollTo(0,0)}
+chapterNav();const q=new URLSearchParams(location.search);openCh(+(q.get('ch')||0),q.get('tab')||'sec',+(q.get('s')||0));
+</script></body></html>

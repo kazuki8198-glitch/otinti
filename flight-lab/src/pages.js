@@ -61,16 +61,29 @@
       seg('optSens', 'sens', S.prefs.sens, () => { if (S.L) S.L.s.opts.sens = S.prefs.sens; });
       seg('optHold', 'hold', S.prefs.hold); seg('optRHold', 'rhold', S.prefs.rhold || 'hold');
       seg('optLayout', 'layout', S.prefs.layout % 3, app.applyLayout); seg('optHud', 'hud', S.prefs.hud || 'full'); seg('optStrip', 'strip', S.prefs.strip || 'full');
+      // the renderer applies after a reload (the note says so, with the button); the quality at once
+      seg('optRender', 'render', S.prefs.render || 'auto', renderNote); seg('optQuality', 'quality', S.prefs.quality || 'auto', () => { app.applyQuality(); renderNote(); });
+      renderNote(); $('#renderReload').onclick = () => app.reloadView();
       const cb = (id, key, fn) => { const e = $('#' + id); e.checked = !!S.prefs[key]; e.onchange = () => { S.prefs[key] = e.checked; app.savePrefs(); if (fn) fn(e.checked); }; };
       cb('optAutoRud', 'autoRud', v => { if (S.L) S.L.s.opts.autoRud = v; }); cb('optAssist', 'assist', v => { if (S.L && S.L.free) S.L.s.opts.assist = v; });
       const so = $('#optSound'); so.checked = !!S.prefs.sound; so.onchange = () => app.setSound(so.checked);
       $('#setClose').onclick = closeModal;
       openModal('settings');
     }
+    // the 3D display's line in the settings: what runs now and why, and whether a reload is needed for the stored choice
+    function renderNote() {
+      const r = app.renderInfo(), Q = { low: '低', medium: '中', high: '高', ultra: '最高' };
+      const why = { url: '（アドレスの ?render= で指定）', software: '（自動：この PC は GPU を使わないソフトウェア描画のため）', nowebgl2: '（自動：WebGL2 が使えないため）', nobundle: '（この版には高画質の 3D 表示が入っていません）', failed: '（高画質の 3D 表示を始められなかったため）' }[r.why] || '';
+      $('#renderNow').textContent = !r.ok ? 'いま：WebGL2 が使えないため外部視界なし。' : r.kind === 'three'
+        ? `いま：高画質（three.js・3D の操縦席）・画質 ${Q[r.quality] || r.quality}${S.prefs.quality === 'auto' ? '（自動）' : ''}${why}。`
+        : `いま：軽量（2D の計器盤つき）${why}。`;
+      $('#renderLater').hidden = !r.pending;
+      $('#optQuality').classList.toggle('dim', r.kind !== 'three');
+    }
     function openFree() {
       const ac = $('#freeAc'); if (!ac.options.length) for (const a of P.AIRCRAFT) ac.append(h('option', { value: a.id }, a.name));
       const st = $('#freeStart'); if (!st.options.length) for (const f of SC.FREE_STARTS) st.append(h('option', { value: f.id }, f.name));
-      $('#freeGo').onclick = () => { closeModal(); app.startFree(st.value, ac.value, $('#freeWind').value); app.closeScreens(); S.screen = 'fly'; S.paused = false; toast('自由飛行：評価はありません。H でキーの一覧、P で一時停止', 3200); };
+      $('#freeGo').onclick = () => { closeModal(); app.startFree(st.value, ac.value, $('#freeWind').value); app.closeScreens(); S.screen = 'fly'; S.paused = false; app.applyLayout(); toast('自由飛行：評価はありません。H でキーの一覧、P で一時停止', 3200); };
       $('#freeClose').onclick = closeModal;
       openModal('freeDlg');
     }
@@ -78,7 +91,7 @@
     const TOUR = [
       { t: 'ようこそ FLIGHT LAB へ', b: () => `<p class="tour-lede">課目をひとつずつ飛んで、操縦を覚えていく教材です。</p><ol class="tour-steps"><li><b>課程表</b>で課目を選ぶ（メニューの「飛ぶ」で次の課目へ直行）</li><li>飛行中は<b>左上の教官パネル</b>の指示に従う：やること・使うキー・目標（緑＝基準内）</li><li>目標を続けて保つと次の手順へ。終わると<b>結果（講評）</b>が出る</li><li>うまくいかなければ「もう一度」。レベルは 導入 → 基礎 → 精度</li></ol>` },
       { t: '基本の操作', b: () => `<p class="tour-lede">キーの色は動かすものです。まずは <kbd>W</kbd><kbd>S</kbd>（機首）・<kbd>A</kbd><kbd>D</kbd>（傾き）・<kbd>R</kbd><kbd>F</kbd>（出力）の 6 つ。</p>${UI.keyboardSvg(['W', 'S', 'A', 'D', 'R', 'F'])}<p class="small mute">キーを離すと、そのときの機首の角度とバンクを保ちます（設定で「離すと中立」にもできます）。</p>` },
-      { t: '困ったときは', b: () => `<ul class="tour-help"><li><kbd>H</kbd> キーの一覧（いま使うキーが光る）</li><li><kbd>P</kbd> / <kbd>Esc</kbd> 一時停止：やり直し・設定・課程表へ</li><li><kbd>C</kbd> 視点の切替（操縦席 ⇄ 後方）</li><li>画面右上の <b>⚙ 設定</b>：操作の感度・計器の大きさ・音</li><li>くわしい説明はメニューの「操作ガイド」と「教科書」</li></ul>` },
+      { t: '困ったときは', b: () => `<ul class="tour-help"><li><kbd>H</kbd> キーの一覧（いま使うキーが光る）</li><li><kbd>P</kbd> / <kbd>Esc</kbd> 一時停止：やり直し・設定・課程表へ</li><li><kbd>C</kbd> 視点の切替（操縦席 ⇄ 後方）</li>${app.renderInfo().kind === 'three' ? '<li>3D の操縦席：ドラッグで見回す・右ボタンでズーム・計器のキーやつまみはクリック、<kbd>I</kbd> で 2D の計器盤</li>' : ''}<li>画面右下の <b>⚙ 設定</b>：操作の感度・計器の大きさ・3D 表示・音</li><li>くわしい説明はメニューの「操作ガイド」と「教科書」</li></ul>` },
     ];
     function openTour(i = 0) {
       const T = TOUR[i], body = $('#tourBody'); body.textContent = '';
@@ -428,11 +441,17 @@
           ['1 / 2 / 3', '管制への応答（復唱）を選ぶ', '管制の指示を正しく復唱する。滑走路・高度・針路の数字を含める。', '無線で復唱'],
           ['U', '自動ラダー ON / OFF', 'ON：ボールを自動で中央に保つ（初心者向けの補助）。OFF：本物と同じく自分で。片発の課目では OFF になる。', '—'],
           ['C', '視点（操縦席 / 後方）', '操縦席は本物の見え方。後方は機体の姿勢や舵面・脚・プロペラの動きを外から確かめられる。', '—'],
+          ['I', '2D の計器盤を出す / しまう（3D 表示のとき）', '3D の操縦席では計器は操縦席の G1000 型パネルそのもの。小さくて読みにくいときは、右ボタンのズームか I で画面の下に大きな 2D の PFD・MFD を出す。後方視点とフード中は自動で出る。軽量表示ではいつも出ている。', '—'],
           ['H', '操作の説明を表示', 'いまの項目で使うキーを強調表示。', '—'],
           ['P / Esc', '一時停止', '再開・やり直し・課程表・ガイド・教科書へ。', '—'],
           ['L', '水平に戻す（自由飛行のみ）', '数秒間、自動で翼を水平・水平飛行に戻す教材補助。', '—'],
         ];
         p.append(h('table', { class: 'gt' }, h('tr', {}, h('th', { text: 'キー' }), h('th', { text: '動くもの' }), h('th', { text: '何のために・いつ使う' }), h('th', { text: '実機では' })), ...rows.map(r => h('tr', {}, h('td', {}, h('kbd', { text: r[0] })), h('td', {}, h('b', { text: r[1] })), h('td', { text: r[2] }), h('td', { class: 'mute', text: r[3] })))));
+        p.append(h('h3', { text: 'マウス（3D 表示のとき）' }), h('table', { class: 'gt' }, ...[
+          ['操縦席：ドラッグ', '見回す（左右 150°・上下）。ダブルクリックで正面に戻す'],
+          ['操縦席：右ボタンを押している間', 'ズーム（計器や遠くを大きく見る）'],
+          ['操縦席：クリック / ホイール', 'G1000 のキー・つまみ（周波数・HDG・ALT・BARO・CRS・地図の範囲）、フラップのレバー、脚のレバー（Seminole）、スロットル（1 回で 5 %）、トリムの輪。マウスを合わせると名前が出る。ホイールでつまみを回す。マスターなどのスイッチは絵だけが変わる'],
+          ['後方視点：ドラッグ / ホイール', '機体のまわりを回る / 近く・遠く。ダブルクリックで元の位置']].map(r => h('tr', {}, h('td', {}, h('b', { text: r[0] })), h('td', { text: r[1] })))));
         p.append(h('h3', { text: '「中立」と「保持」' }), h('p', { text: 'キーは押している間だけ操縦桿を動かし、離すと中立に戻ります（ラダー・エルロン）。機首の上げ下げ（W / S）は標準で「ピッチ保持」：押している間に目標の機首角度が動き、離すとその角度を飛行機が保ちます（空島フライトと同じ）。傾き（A / D）も標準で「バンク保持」：離したときのバンクを保ち、±4° 以内なら翼を水平に戻します。本物の操縦桿に近い「離すと中立」にも変えられます（メニューの操作の設定）。どちらでも、トリム（T）を取ると手を離した状態が楽になります。' }),
           h('h3', { text: '操作の感度' }), h('p', { text: '低・中・高で、キーやスティックを倒したときの舵の量が変わります。最初は「低」がおすすめ。低速ほど舵を大きく動かす（実機でも低速では舵の効きが鈍い）ように自動で補正しています。' }),
           h('h3', { text: '画面の右上（操作の状態）' }), h('p', { text: 'スロットル・機首（ピッチ保持の目標）・傾き・ラダー・トリム・フラップ・脚・ブレーキの「いまの状態」と、そのキーを常に表示します。下の小さな図は、操縦桿の位置（青い点）、ラダー（オレンジの点）、ボール（横滑り計：白い玉）です。' }));
@@ -445,9 +464,10 @@
       screen(p) {
         const rows = [['左上：教官パネル', '手順の進み具合（●＝終わった・◉＝いま・○＝これから）、教官の指示（何をするか）、使うキー（キーの絵と意味）、目安（最初の姿勢と出力。導入・基礎レベル）、目標のゲージ（白い針＝いまのずれ。緑＝余裕あり・黄＝基準ぎりぎり・赤＝基準外。▲ 上げる / ▼ 下げる）、連続保持のバー（基準内が続くと伸び、外れると 0 に戻る）、教官のヒント。右上の「簡潔に」で目安と長いヒントを隠せる。'],
           ['右上：操作の状態', '各操作のキーと「いまの状態」。右上のボタンで「簡潔に」（⚙ 設定で隠すことも）。迷ったら H キーでキーボードの絵と全部のキーの説明。'],
-          ['下：G1000 型パネル', '左が PFD（主飛行表示：速度・姿勢・高度・昇降率・方位・CDI・予備計器）、中央がオーディオパネル（COM / NAV の周波数・送信はできない）、右が MFD（エンジン表示と地図・飛行計画）。ボタンはマウスで押せます。「G1000型配置と基本概念を学ぶ教材」で、Garmin 製品の再現ではありません。'],
-          ['外部視界', '教材用の架空の平らな地面と LAB RWY 36（架空）。PAPI（左側の 4 つの灯）：赤 2 白 2 で 3° の進入角。白が多いと高い、赤が多いと低い。'],
-          ['ボタン（右下）', '一時停止（P）・キーの一覧（H）・視点（C）・⚙ 設定（一時停止して開く）・音・計器の大きさ（小・中・大）。'], ['結果の画面', '評価のメダル（S 金・A 銀・B 銅・C）と合否、次に意識すること。採点の表は「項目ごとの採点を見る」。Enter＝次へ（不合格ならもう一度）・R＝もう一度・Esc＝課程表。']];
+          ['G1000 型パネル', '左が PFD（主飛行表示：速度・姿勢・高度・昇降率・方位・CDI・予備計器）、中央がオーディオパネル（COM / NAV の周波数・送信はできない）、右が MFD（エンジン表示と地図・飛行計画）。3D 表示では操縦席の計器盤そのもの（キーとつまみはマウスで）で、画面の下の 2D の計器盤は後方視点・フード中・I キーのときに出ます。軽量表示では 2D の計器盤がいつも画面の下にあります。2D の計器盤のボタンもマウスで押せます。「G1000型配置と基本概念を学ぶ教材」で、Garmin 製品の再現ではありません。'],
+          ['外部視界', '教材用の架空の地形と LAB RWY 36（架空）。3D 表示では芝・舗装・建物・木と、外から見える機体。PAPI（左側の 4 つの灯）：赤 2 白 2 で 3° の進入角。白が多いと高い、赤が多いと低い。'],
+          ['フード（計器飛行の課目）', '外が見えない練習。3D 表示では窓が暗くなり、上に「フード中」の帯が出て、2D の計器盤が自動で出ます。軽量表示では外部視界が隠れます。'],
+          ['ボタン（右下）', '一時停止（P）・キーの一覧（H）・視点（C）・⚙ 設定（一時停止して開く）・音・計器の大きさ（小・中・大）・計器盤（I、3D 表示のとき）。'], ['結果の画面', '評価のメダル（S 金・A 銀・B 銅・C）と合否、次に意識すること。採点の表は「項目ごとの採点を見る」。Enter＝次へ（不合格ならもう一度）・R＝もう一度・Esc＝課程表。']];
         p.append(h('table', { class: 'gt' }, ...rows.map(r => h('tr', {}, h('td', {}, h('b', { text: r[0] })), h('td', { text: r[1] })))), btn('PFD を 1 つずつ説明するチュートリアルへ', () => openPage('tutor'), 'primary'));
       },
       fly(p) {
@@ -808,7 +828,7 @@
           h('li', { text: '表示中は画面に Google のロゴ表記（Google Maps）とデータ提供元（著作権表示）を表示します。' }),
           h('li', { text: '利用は Google Maps Platform の課金対象です（ルートのタイル要求でセッションが始まり、約 3 時間有効）。無料枠・料金・利用上限は Google の最新の案内を確認し、キーには API の制限（Map Tiles API のみ）とアプリケーション制限を設定してください。' })),
         h('div', { class: 'keyfield' }, key, btn('接続', () => { if (!G) return; G.setKey(key.value.trim()); key.value = ''; G.start(); renderG3d(); }, 'primary'), btn('切断（キーも消去）', () => { if (G) G.stop(true); renderG3d(); })),
-        h('div', { class: 'row' }, btn('Sanford 上空へ（自由飛行）', () => { app.startFree('sfb', 'pa28'); app.closeScreens(); S.screen = 'fly'; S.paused = false; })),
+        h('div', { class: 'row' }, btn('Sanford 上空へ（自由飛行）', () => { app.startFree('sfb', 'pa28'); app.closeScreens(); S.screen = 'fly'; S.paused = false; app.applyLayout(); })),
         h('h3', { text: '状態' }), h('div', { class: 'status', id: 'gstatus', text: statusText(st) }),
         h('h3', { text: '高さ合わせ（教材の平らな地面 55 ft と Google の地形の差）' }),
         h('p', { class: 'small mute', text: 'Google のタイルの高さは楕円体高のため、表示原点付近のタイルの高さから自動で合わせます（推定）。ずれて見えるときは手動で調整できます。' }),
@@ -840,14 +860,21 @@
           'G1000型配置と基本概念を学ぶ教材としての表示（Garmin のソフトウェアの複製ではない）：PFD・オーディオパネル（送信不可）・MFD、AHRS / GPS の故障、双発の赤線・青線',
           `教科書（全 ${BK ? BK.CHAPTERS.length : 0} 章・出典付き）、学科テスト ${QZ ? QZ.BANKS.length : 0} 分野、G1000 型 PFD のチュートリアルと読み取り練習`,
           RD ? `英語交信の練習（音声合成）：1 回の飛行の全交信 ${RD.FLIGHT.reduce((a, p) => a + p.lines.length, 0)} 行、復唱と応答 ${RD.SCENES.length} 場面、数字とアルファベットのドリル、聞き取り、用語集 ${RD.GLOSSARY.length} 語。音声認識・録音・送信はしない` : '',
+          FL.view3d ? '3D 表示（高画質）：姉妹作 CADET の three.js の景色（芝・舗装・建物・木・空）と、計器まで 3D の操縦席（G1000 型の画面・キー・つまみ・レバーをマウスで操作）。GPU のない PC では軽い表示（軽量）に自動で切り替え' : '',
           'Sanford の資料、学習記録（JSON 書き出し・読み込み）、Google Photorealistic 3D Tiles による外部景観（任意・キーはメモリのみ）'].filter(Boolean).map(t => h('li', { text: t }))),
         h('h3', { text: '実装していないもの（未実装）' }),
-        h('ul', { class: 'small' }, ...['自動操縦（HDG / ALT への追従）— 意図的に未実装', '油圧・油温・EGT・電圧・電流・吸気圧（MFD では「—」表示）', 'エンジンの始動手順、混合比・キャブヒート・燃料タンク切替（チェックリストでは「教材では未実装」と表示）', '双発の左右別のスロットル（共通の 1 本）・プロペラレバー（フェザーはキー）', '実在空港の滑走路・誘導路での離着陸、Google の建物・地形との衝突', '実空域・NOTAM・飛行計画・実際の管制、音声認識・録音・送信', '英語交信の練習は台本と選択式だけ（自分の声の採点・自由な会話・ほかの機の交信が重なる混雑・雑音は未実装）', '雲・視程の変化・夜間・着氷・ウインドシア', 'G1000 の全機能（地形警報・トラフィック・タイマー・インセット地図など）'].map(t => h('li', { text: t }))),
+        h('ul', { class: 'small' }, ...['自動操縦（HDG / ALT への追従）— 意図的に未実装', '油圧・油温・EGT・電圧・電流・吸気圧（MFD では「—」表示）', `エンジンの始動手順、混合比・キャブヒート・燃料タンク切替（チェックリストでは「教材では未実装」と表示${FL.view3d ? '。3D の操縦席のスイッチ・レバーは絵だけが動く' : ''}）`, '双発の左右別のスロットル（共通の 1 本）・プロペラレバー（フェザーはキー）', '実在空港の滑走路・誘導路での離着陸、Google の建物・地形との衝突', '実空域・NOTAM・飛行計画・実際の管制、音声認識・録音・送信', '英語交信の練習は台本と選択式だけ（自分の声の採点・自由な会話・ほかの機の交信が重なる混雑・雑音は未実装）', '雲・視程の変化・夜間・着氷・ウインドシア', 'G1000 の全機能（地形警報・トラフィック・タイマー・インセット地図など）'].map(t => h('li', { text: t }))),
         h('h3', { text: 'データとプライバシー' }),
         h('p', { class: 'small', text: '学習記録・進み具合・操作の設定はこのブラウザの localStorage にだけ保存します（サーバーへ送りません）。Google 3D を接続したときだけ、Google のタイル配信先へ API キー付きでタイルを要求します。キーは保存しません。外部リンク（参考資料）はクリックしたときだけ開きます。' }),
         h('h3', { text: 'ライセンス' }),
         h('p', { class: 'small', text: 'Draco 3D データ圧縮デコーダー（Google、Apache License 2.0）を同梱しています（Google 3D タイルの展開用）。' }),
         FL.DRACO_LICENSE ? h('details', {}, h('summary', { text: 'Apache License 2.0（全文）' }), h('pre', { class: 'small', style: 'white-space:pre-wrap', text: FL.DRACO_LICENSE })) : null,
+        // the three.js view's parts (only in a build that has it)
+        FL.view3d ? h('ul', { class: 'small' }, ...['3D 表示：three.js（© three.js authors、MIT License）を同梱しています。',
+          '地面・滑走路・建物の質感（テクスチャ）：ambientCG（https://ambientcg.com）の素材、CC0 1.0（パブリックドメイン）。',
+          'Archer と Seminole の 3D の模型：姉妹作 CADET のスクリプトで Blender を使って作った自作の模型（素材・フォントは使っていません。塗装と登録記号は架空のもの）。操縦席・景色・木・空はプログラムで作っています。'].map(t => h('li', { text: t }))) : null,
+        FL.THREE_LICENSE ? h('details', {}, h('summary', { text: 'three.js の MIT License（全文）' }), h('pre', { class: 'small', style: 'white-space:pre-wrap', text: FL.THREE_LICENSE })) : null,
+        FL.ASSET_CREDITS ? h('details', {}, h('summary', { text: '3D 表示の素材の出典（全文）' }), h('pre', { class: 'small', style: 'white-space:pre-wrap', text: FL.ASSET_CREDITS })) : null,
         h('p', { class: 'note', text: `FLIGHT LAB ${FL.BUILD_INFO || '(開発版)'}` }));
     }
 

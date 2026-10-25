@@ -3,6 +3,10 @@
 // a textbook question, a ground-school test and an ATC scene, and checks the Google
 // layer with an OFFLINE FIXTURE (test/fixtures: not Google data) served in place of tile.googleapis.com: the tile is
 // decoded in the worker with the embedded Draco, drawn, credited, and the key never reaches storage or the record.
+// The second test forces the three.js view (?render=three, quality 'low') on the same software WebGL: the 3D cockpit, its
+// G1000, the 2D panel on demand (I) and in the chase view, a cockpit control, the hood banner, and the Google layer in
+// the three.js pipeline. It is skipped when the build has no three.js view (no FL.view3d). A frame of the three.js world
+// takes seconds here, so it waits on the page's state with long timeouts and never on flight time.
 // Needs Playwright (set PLAYWRIGHT to its module path if it is not installed next to this project); skipped otherwise.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -34,6 +38,8 @@ test('browser: offline start, the checklist and ATC by keys, keyboard flight, ke
     });
     await page.goto('file://' + out);
     await page.waitForFunction(() => window.__lab && __lab.sceneOk());
+    // software WebGL (SwiftShader): 'auto' keeps the light renderer, whatever this build holds
+    assert.equal(await page.evaluate(() => __lab.renderer()), 'legacy', 'auto on a software GPU: the light renderer');
     // the first-run notice, then the start menu
     assert.equal(await page.isVisible('#ack'), true);
     await page.click('#ackOk');
@@ -179,6 +185,77 @@ test('browser: offline start, the checklist and ATC by keys, keyboard flight, ke
     await page.evaluate(() => __lab.showPage('g3d'));
     await page.click('#pageBody button:has-text("切断")');
     assert.equal((await page.evaluate(() => __lab.google())).hasKey, false);
+    assert.deepEqual(errors, []);
+    assert.deepEqual(await page.evaluate(() => __lab.errors), []);
+  } finally { await browser.close(); }
+});
+
+// the share of lit pixels on a 2D canvas (one pixel in four; lit: r + g + b > 60), as for the 2D panel above
+const litShare = (c) => { const g = c.getContext('2d'), d = g.getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 16) if (d[i] + d[i + 1] + d[i + 2] > 60) n++; return n / (d.length / 16); };
+
+test('browser: the three.js view (forced, low)', { skip: !chromium && 'Playwright not found' }, async (t) => {
+  const { out } = build({ quiet: true });
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  try {
+    const ctx = await browser.newContext({ viewport: { width: 960, height: 540 } });
+    const page = await ctx.newPage(), errors = [], requests = [];
+    page.on('pageerror', e => errors.push(e.message));
+    page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+    let googleOn = false;
+    await ctx.route(/^https?:/, r => {
+      const u = r.request().url(); requests.push(u);
+      if (googleOn && u.startsWith('https://tile.googleapis.com/v1/3dtiles/root.json')) return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: fs.readFileSync(path.join(FX, 'root.json')) });
+      if (googleOn && u.startsWith('https://tile.googleapis.com/v1/3dtiles/datasets/FIXTURE/files/tile.glb')) return r.fulfill({ status: 200, contentType: 'model/gltf-binary', headers: { 'access-control-allow-origin': '*' }, body: fs.readFileSync(path.join(FX, 'tile.glb')) });
+      return r.abort();
+    });
+    // past the first-run notice and tour; the low preset (the URL forces the renderer)
+    await page.addInitScript(() => { try { localStorage.setItem('flightlab-prefs-v2', JSON.stringify({ ack: true, tour: true, quality: 'low' })); } catch (e) { /* storage blocked */ } });
+    await page.goto('file://' + out + '?render=three');
+    await page.waitForFunction(() => window.__lab && __lab.sceneOk(), null, { timeout: 120000 });
+    if (await page.evaluate(() => typeof FL.view3d === 'undefined')) { t.skip('this build has no three.js view (FL.view3d)'); return; }
+    assert.equal(await page.evaluate(() => __lab.renderer()), 'three', '?render=three on a software GPU');
+    assert.equal(await page.evaluate(() => document.querySelectorAll('#view3d').length), 1, 'one #view3d: the three.js canvas took the old one\'s place');
+    await page.waitForFunction(() => { const v = __lab.view3d(); return v && v.ready; }, null, { timeout: 240000, polling: 500 });   // textures, the world, the shaders
+    assert.equal((await page.evaluate(() => __lab.view3d())).preset, 'low');
+    // lesson t1 in the cockpit view: the 3D cockpit fills the screen, its own G1000 is drawn
+    await page.evaluate(() => __lab.start('t1', 'intro'));
+    assert.equal((await page.evaluate(() => __lab.state())).view, 'cockpit');
+    assert.equal(await page.isHidden('#panel'), true, 'no 2D panel under the 3D cockpit');
+    assert.equal(await page.evaluate(() => __lab.panel2d()), false);
+    await page.waitForFunction(`(() => { const g = __lab.glass(); return !!(g && g.pfd) && (${litShare})(g.pfd) > 0.2; })()`, null, { timeout: 90000, polling: 500 });
+    // I: the 2D panel comes up and is drawn; I again puts it away
+    await page.keyboard.press('KeyI');
+    assert.equal(await page.isVisible('#panel'), true, 'I shows the 2D panel');
+    await page.waitForFunction(`(${litShare})(document.getElementById('pfd')) > 0.2`, null, { timeout: 90000, polling: 500 });
+    await page.keyboard.press('KeyI');
+    assert.equal(await page.isHidden('#panel'), true, 'I hides it again');
+    assert.equal((await page.evaluate(() => __lab.prefs())).panel2d, false);
+    // the chase view always has the 2D panel
+    await page.keyboard.press('KeyC');
+    assert.equal((await page.evaluate(() => __lab.state())).view, 'chase');
+    assert.equal(await page.isVisible('#panel'), true, 'the chase view shows the 2D panel');
+    // a cockpit control's result goes through the same mapping as a click (the CDI softkey: GPS → NAV1)
+    const cdi0 = await page.evaluate(() => __lab.lesson().av.cdi);
+    await page.evaluate(() => __lab.act({ type: 'av', what: 'CDI' }));
+    assert.notEqual(await page.evaluate(() => __lab.lesson().av.cdi), cdi0, 'the CDI key from the cockpit');
+    // the hood: a banner over the cockpit (not a cover), and the 2D panel up
+    await page.evaluate(() => __lab.start('i1', 'intro'));
+    assert.equal(await page.isVisible('#hood'), true, 'the hood is up as the lesson starts');
+    assert.equal(await page.evaluate(() => document.getElementById('hood').classList.contains('banner')), true);
+    const hb = await page.locator('#hood').boundingBox(), vb = await page.locator('#viewWrap').boundingBox();
+    assert.ok(hb.height < vb.height * 0.3, `the hood banner leaves the view: ${hb.height} of ${vb.height}`);
+    assert.equal(await page.isVisible('#panel'), true, 'the 2D panel under the hood');
+    // the Google layer drawn inside the three.js pipeline (the offline fixture)
+    googleOn = true;
+    await page.evaluate(() => __lab.showPage('g3d'));
+    await page.fill('#gkey', KEY);
+    await page.click('#pageBody button:has-text("接続")');
+    await page.click('#pageBody button:has-text("Sanford 上空へ")');
+    await page.waitForFunction(() => { const g = __lab.google(); return g && g.drawn > 0 && g.credits; }, null, { timeout: 120000, polling: 500 });
+    const g = await page.evaluate(() => __lab.google());
+    assert.equal(g.state, 'on'); assert.match(g.credits, /test fixture/);
+    assert.equal(await page.isVisible('#gattr'), true); assert.match(await page.textContent('#gattr'), /Google Maps/);
+    assert.ok(requests.filter(u => u.includes('key=')).every(u => u.startsWith('https://tile.googleapis.com/')), requests.join('\n'));
     assert.deepEqual(errors, []);
     assert.deepEqual(await page.evaluate(() => __lab.errors), []);
   } finally { await browser.close(); }

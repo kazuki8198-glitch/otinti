@@ -1,8 +1,9 @@
 // FLIGHT LAB — app.js
-// The page: the flight loop (physics 120 Hz, the school's evaluation, the out-the-window view, the G1000-type panel
-// at 30 Hz), the controls of 空島フライト (keyboard pitch hold, stick curves, rudder, throttle, trim, flaps, gear,
-// brakes; a gamepad with the same mapping), the instructor panel (what to do, which keys, the guide, the targets,
-// the continuous hold, the hints), the control-status strip (what each control is doing now and its key), the
+// The page: the flight loop (physics 120 Hz, the school's evaluation, the out-the-window view — the three.js world with
+// the full 3D cockpit, or the light WebGL2 renderer — and the 2D G1000-type panel at 30 Hz), the controls of 空島フライト
+// (keyboard pitch hold, stick curves, rudder, throttle, trim, flaps, gear, brakes; a gamepad with the same mapping; the
+// mouse on the 3D cockpit's controls), the instructor panel (what to do, which keys, the guide, the targets, the
+// continuous hold, the hints), the control-status strip (what each control is doing now and its key), the
 // checklist / ATC / estimate dialogs, sound, and the screens (pages.js draws the menu's pages).
 // Privacy: the Google API key lives only in memory (google3d.js); records and preferences never contain it.
 (function (FL) {
@@ -30,7 +31,9 @@
 
   // ---------------------------------------------------------------- preferences (no secrets: only these fields)
   const PREF_KEY = 'flightlab-prefs-v2';
-  const PREFS0 = { sens: 'low', hold: 'hold', rhold: 'hold', autoRud: true, assist: false, sound: false, level: 'intro', ack: false, layout: 0, hud: 'full', strip: 'full', tour: false };
+  // render: 'auto' | 'three' | 'legacy' (read once at start-up), quality: 'auto' or a three.js preset id, panel2d: the 2D
+  // panel shown under the 3D cockpit as well (I)
+  const PREFS0 = { sens: 'low', hold: 'hold', rhold: 'hold', autoRud: true, assist: false, sound: false, level: 'intro', ack: false, layout: 0, hud: 'full', strip: 'full', tour: false, render: 'auto', quality: 'auto', panel2d: false };
   function loadPrefs() { try { const p = JSON.parse((store && store.getItem(PREF_KEY)) || '{}'); const o = { ...PREFS0 }; for (const k of Object.keys(PREFS0)) if (typeof p[k] === typeof PREFS0[k]) o[k] = p[k]; return o; } catch (e) { return { ...PREFS0 }; } }
   function savePrefs() { try { store && store.setItem(PREF_KEY, JSON.stringify(S.prefs)); } catch (e) { /* storage unavailable */ } }
 
@@ -40,7 +43,8 @@
     keys: new Set(), pad: { known: null, prev: [], navT: 0, navDir: '' }, rTrim: 0, recId: null, lastLessonId: null, look: 0,
   };
   let scene = null, G = null;
-  const app = { S, h, $, $$, esc, fmt, store, toast, savePrefs, startLesson, startFree, openScreen, closeScreens, resume, pause, speak, errors, ctl, renderAudio, renderSoftkeys, applyLayout: () => applyLayout(), setSound: v => setSound(v) };
+  const app = { S, h, $, $$, esc, fmt, store, toast, savePrefs, startLesson, startFree, openScreen, closeScreens, resume, pause, speak, errors, ctl, renderAudio, renderSoftkeys, applyLayout: () => applyLayout(), setSound: v => setSound(v),
+    renderInfo: () => renderInfo(), applyQuality: () => applyQuality(), reloadView: () => reloadView() };
   const UI = FL.ui;
 
   // ---------------------------------------------------------------- toast
@@ -60,6 +64,7 @@
     S.view = 'cockpit'; updateViewBtn();
     closeScreens(); S.screen = 'fly'; S.paused = false;
     $('#hood').hidden = !S.L.hood;                                    // at once: no glimpse of the outside in an instrument lesson
+    applyLayout();                                                    // (the 3D cockpit: the 2D panel comes up with the hood)
     renderAudio(); renderSoftkeys();
     toast(`${def.title}（${S.L.level.name}）を開始。教官の指示は左上、使うキーは H で確認できます`, 3600);
   }
@@ -67,6 +72,7 @@
     const W = { calm: { rel: 0, kt: 0, gust: 0.3 }, light: { rel: 10, kt: 5, gust: 0.5 }, cross: { rel: 60, kt: 12, gust: 1.2 }, gusty: { rel: 70, kt: 15, gust: 2.5 } }[wind || 'light'];
     S.L = SC.startFree(startId, aircraft, { ...lessonOpts(), assist: S.prefs.assist, wind: W });
     S.recId = null; S.rTrim = 0; S.keys.clear();
+    applyLayout();
     renderAudio(); renderSoftkeys();
   }
 
@@ -94,6 +100,7 @@
     if (!S.L) return;
     if (e.code === 'KeyH') { toggleHelp(); return; }
     if (e.code === 'KeyC') { cycleView(); return; }
+    if (e.code === 'KeyI') { togglePanel(); return; }
     if (S.paused || S.L.done) return;
     if ((e.code === 'Enter' || e.code === 'NumpadEnter') && S.L.check) { e.preventDefault(); checklistNext(); return; }
     if (/^(Digit|Numpad)[123]$/.test(e.code) && S.L.atc) { e.preventDefault(); answerAtc(+e.code.slice(-1) - 1); return; }
@@ -146,6 +153,35 @@
       S.rTrim = clamp(S.rTrim + (a === 'rtrimR' ? 0.05 : -0.05), -0.6, 0.6);
       toast(`ラダートリム ${S.rTrim === 0 ? '中立' : `${S.rTrim > 0 ? '右' : '左'} ${Math.round(Math.abs(S.rTrim) * 100)}%`}：ラダーを踏み続けなくてよいように`, 1400);
     }
+  }
+  // the 3D cockpit's controls: FL.view3d hands over what a click or a wheel notch on a knob, key or lever asked for, in
+  // CADET's words (aircraft/cockpit.js). The G1000's keys and knobs are the 2D panel's ctl(); the flap lever and the gear
+  // selector are the keys' doAction(); the throttle and the trim wheel move one notch (CADET's steps: 5 % of the throttle,
+  // 4 % of the trim's range, as Sorajima's trim wheel). The electrical switches, the magnetos, the mixture, the fuel
+  // selector and the primer change only the picture (the view has already moved them): FLIGHT LAB's engine model has no
+  // such systems, so the toast says so once per lesson. Kept apart from doAction so CADET's tests, which cut doAction,
+  // updateControls and tick out of this file, see no new names.
+  function cockpitAction(r, c) {
+    const L = S.L; if (!r || !L) return;
+    const s = L.s, label = c && c.label ? String(c.label) : '';
+    if (r.type === 'av') ctl(r.what, r.dir, r.big);
+    else if (r.type === 'flight') {
+      if (r.name === 'flaps' || r.name === 'flapsUp' || r.name === 'gear') doAction(r.name);
+      else if (r.name === 'thrStep') { s.thr = clamp(s.thr + (r.arg < 0 ? -0.05 : 0.05), 0, 1); toast(`スロットル ${Math.round(s.thr * 100)}%（R / F で連続して動かせます）`, 1400); }
+      else if (r.name === 'trimStep') {
+        if (s.opts.assist) { toast('操縦アシスト中はトリムは自動です', 1500); return; }
+        s.trim = clamp(s.trim + (r.arg < 0 ? -1 : 1) * P.TRIM_MAX * 0.04, -P.TRIM_MAX, P.TRIM_MAX); s.trimHold = s.elev;
+        const pc = Math.round(s.trim / P.TRIM_MAX * 100);
+        toast(`トリム ${pc === 0 ? '中立' : `${pc > 0 ? '機首上げ' : '機首下げ'} ${Math.abs(pc)}%`}（T でいまの速度に一度で合わせられます）`, 1400);
+      } else if (r.name === 'parkBrake') toast('FLIGHT LAB にパーキングブレーキはありません。止めておくときは B / Space（押している間ブレーキ）', 2600);
+    } else if (r.type === 'switch' || r.type === 'select') {
+      const x = r.value, name = label.replace(/（.*$/, '') || r.id;
+      const v = r.type === 'switch' ? (r.on ? 'ON' : 'OFF') : typeof x === 'string' ? x : r.id === 'mixture' && Number.isFinite(x) ? (x >= 0.95 ? 'リッチ' : x < 0.15 ? 'アイドル カットオフ' : `リーン ${Math.round(x * 100)}%`) : '';
+      toast(`${name}${v ? ' ' + v : ''}`, 1400);
+      if (!L.switchNoted) { L.switchNoted = true; toast('FLIGHT LAB では、スイッチ・マグネトー・ミクスチャー・燃料の切替は操縦席の絵だけが変わります（エンジンと電気系の動きは変わりません。エンジンは回った状態で始まります）', 4200); }
+    } else if (r.type === 'prime') toast('プライマー：FLIGHT LAB ではエンジンの始動手順を省いています（エンジンは回った状態で始まります）', 2600);
+    else if (r.type === 'exit') toast('飛行をやめるときは Esc / P（一時停止）からメニューや課程表へ', 2400);
+    else if (r.type === 'info' && r.text) toast(r.text, 2600);
   }
   // the gamepad (standard mapping; a PS5 DualSense or an Xbox pad)
   function padInput(dt) {
@@ -347,6 +383,7 @@
     if (document.body.dataset.screen !== S.screen) document.body.dataset.screen = S.screen;
     const L = S.L; if (!L) return;
     $('#hood').hidden = !(S.screen === 'fly' && L.hood && !L.done);
+    applyLayout(); cockpitHint();                                     // (a step can put the hood on or take it off)
     renderDialogs(false);
     const sp = $('#sch-panel'), fp = $('#free-panel');
     sp.hidden = !(S.screen === 'fly' && !L.free);
@@ -440,23 +477,30 @@
     ['1 / 2 / 3', '管制への応答を選ぶ', '管制の指示を正しく復唱する（滑走路・高度・針路を含めて）', /1〜3/, []],
     ['U', '自動ラダー ON / OFF', 'ON：ボールを自動で中央に。OFF：本物と同じく自分で（離陸は右ラダー）', /U/, ['U']],
     ['C', '視点の切替（操縦席 / 後方）', '操縦席：本物の見え方。後方：機体の姿勢や舵面の動きを外から見る', /C/, ['C']],
+    ['I', '2D の計器盤を出す / しまう', '3D の操縦席では、計器は操縦席の G1000 型パネルそのもの。I で大きな 2D の PFD・MFD を画面の下に出せる（後方視点とフード中は自動で出る）', /^$/, [], 'three'],
     ['H', 'この説明を表示 / 閉じる', '', /^$/, []],
     ['P / Esc', '一時停止（メニュー）', '再開・やり直し・課程表・ガイド・教科書へ', /^$/, []],
     ['L', '水平に戻す（自由飛行のみ）', '数秒間、自動で翼を水平・水平飛行に戻す教材補助', /^$/, []],
+    ['マウス（操縦席）', '見回す・ズーム・計器を操作', 'ドラッグで見回す（ダブルクリックで正面に戻す）。右ボタンを押している間ズーム（計器を大きく読む）。G1000 のキー・つまみ、フラップ・脚・スロットルのレバー、トリムの輪はクリック（ホイールで回す・動かす）', /^$/, [], 'three'],
+    ['マウス（後方視点）', '機体のまわりを回る', 'ドラッグで回る・ホイールで近く / 遠く・ダブルクリックで元の位置', /^$/, [], 'three'],
   ];
   function renderHelp(target) {
     const L = S.L, kt = L && L.keysText ? L.keysText : '';
     const box = target || $('#keyhelp');
     const uses = l => new RegExp(`(^|[^A-Za-z])${l.replace(/[\[\]]/g, '\\$&')}(?=[＝ （/・、]|で|を|$)`).test(kt);
-    const now = KEYMAP.map(r => r[3].source !== '^$' && (r[3].test(kt) || r[4].some(uses)));
-    const html = `<h3>${target ? 'キーの一覧' : 'キーの一覧（H で閉じる）'}${kt ? '：いまの手順で使うキーが光っています' : ''}</h3>${UI.keyboardSvg(UI.keysUsed(kt))}<table>${KEYMAP.map((r, i) => `<tr class="${now[i] ? 'now' : ''}"><td><kbd>${esc(r[0])}</kbd></td><td><b>${esc(r[1])}</b></td><td>${esc(r[2])}</td></tr>`).join('')}</table>
-      <p class="note">G1000 型パネル（下）のボタンはマウスで押せます：COM / NAV の周波数、CDI（GPS ⇄ NAV1 ⇄ NAV2）、HDG・ALT・BARO・CRS、MFD の地図。ゲームパッドの配置はガイドを参照。</p>`;
+    const rows = KEYMAP.filter(r => !r[5] || isThree());              // (the light renderer has no 3D cockpit and no mouse look)
+    const now = rows.map(r => r[3].source !== '^$' && (r[3].test(kt) || r[4].some(uses)));
+    const html = `<h3>${target ? 'キーの一覧' : 'キーの一覧（H で閉じる）'}${kt ? '：いまの手順で使うキーが光っています' : ''}</h3>${UI.keyboardSvg(UI.keysUsed(kt))}<table>${rows.map((r, i) => `<tr class="${now[i] ? 'now' : ''}"><td><kbd>${esc(r[0])}</kbd></td><td><b>${esc(r[1])}</b></td><td>${esc(r[2])}</td></tr>`).join('')}</table>
+      <p class="note">G1000 型パネルのボタンはマウスで押せます：COM / NAV の周波数、CDI（GPS ⇄ NAV1 ⇄ NAV2）、HDG・ALT・BARO・CRS、MFD の地図。${isThree() ? '3D の操縦席では画面のまわりのキー・つまみをクリック（つまみはホイールでも回る）、2D の計器盤（I）ではボタンをクリック。' : ''}ゲームパッドの配置はガイドを参照。</p>`;
     if (box.innerHTML !== html) box.innerHTML = html;
   }
   function toggleHelp(v) { S.help = v == null ? !S.help : v; $('#keyhelp').hidden = !S.help; if (S.help) renderHelp(); }
 
   // ---------------------------------------------------------------- views, pause, screens
-  function cycleView() { S.view = S.view === 'cockpit' ? 'chase' : 'cockpit'; updateViewBtn(); toast(S.view === 'cockpit' ? '視点：操縦席（本物の見え方）' : '視点：後方（機体の姿勢・舵面の動きが見える）', 1400); }
+  function cycleView() {
+    S.view = S.view === 'cockpit' ? 'chase' : 'cockpit'; updateViewBtn(); applyLayout();
+    toast(S.view === 'cockpit' ? '視点：操縦席（本物の見え方）' : `視点：後方（機体の姿勢・舵面の動きが見える${isThree() ? '。ドラッグで回る・ホイールで距離' : ''}）`, 1400);
+  }
   function updateViewBtn() { $('#bView').textContent = '視点：' + (S.view === 'cockpit' ? '操縦席' : '後方'); }
   function pause() {
     if (S.screen !== 'fly' || !S.L) return;
@@ -466,9 +510,9 @@
     $('#pz-retry').hidden = L.free; $('#pz-school').hidden = L.free; $('#pz-save').hidden = !L.free;
     $('#pause').hidden = false; $('#pz-resume').focus();
   }
-  function resume() { $('#pause').hidden = true; S.screen = 'fly'; S.paused = false; last = performance.now(); }
+  function resume() { $('#pause').hidden = true; S.screen = 'fly'; S.paused = false; last = performance.now(); applyLayout(); }
   function closeScreens() { for (const id of ['menu', 'school', 'debrief', 'pause', 'page']) $('#' + id).hidden = true; for (const m of $$('.modal')) m.hidden = true; }
-  function openScreen(id) { closeScreens(); S.screen = id; $('#' + id).hidden = false; S.keys.clear(); }
+  function openScreen(id) { closeScreens(); S.screen = id; $('#' + id).hidden = false; S.keys.clear(); applyLayout(); }
   function backFromScreen() {
     const pg = FL.pages(app);
     if (S.screen === 'page') pg.closePage();
@@ -480,13 +524,44 @@
   $('#bHelp').addEventListener('click', () => toggleHelp());
   $('#bView').addEventListener('click', cycleView);
   // the toolbar's icons (drawn, so they look the same on every system)
-  for (const [id, ic, label, key] of [['bMenu', 'pause', '一時停止', 'P'], ['bHelp', 'keys', 'キー', 'H'], ['bSettings', 'gear', '設定', ''], ['bLayout', 'layout', '計器の大きさ', '']]) $('#' + id).innerHTML = `${UI.ico(ic, 15)} ${label}${key ? ` <kbd>${key}</kbd>` : ''}`;
+  for (const [id, ic, label, key] of [['bMenu', 'pause', '一時停止', 'P'], ['bHelp', 'keys', 'キー', 'H'], ['bSettings', 'gear', '設定', ''], ['bLayout', 'layout', '計器の大きさ', ''], ['bPanel', 'panel', '計器盤', 'I']]) $('#' + id).innerHTML = `${UI.ico(ic, 15)} ${label}${key ? ` <kbd>${key}</kbd>` : ''}`;
+  $('#bPanel').addEventListener('click', () => togglePanel());
   $('#bSettings').addEventListener('click', () => { if (S.screen === 'fly') pause(); FL.pages(app).openSettings(); });
   $('#pz-settings').addEventListener('click', () => FL.pages(app).openSettings());
   $('#pz-keys').addEventListener('click', () => { renderHelp($('#keysBody')); $('#keysClose').onclick = () => FL.pages(app).closeModal(); FL.pages(app).openModal('keysDlg'); });
   $('#sp-size').addEventListener('click', () => { S.prefs.hud = S.prefs.hud === 'mini' ? 'full' : 'mini'; savePrefs(); updateUi(); });
   const LAYOUTS = ['44vh', '54vh', '34vh'];
-  function applyLayout() { document.documentElement.style.setProperty('--panelH', LAYOUTS[S.prefs.layout % LAYOUTS.length]); }
+  // the 2D panel: always under the light renderer's view, as before. Under the three.js view the G1000 is in the 3D
+  // cockpit itself, so the 2D panel comes up only where that panel cannot be used: in the chase view (the menu's
+  // background is one too), under the hood (the instruments are all there is: they should be big), or when the pilot
+  // asks for it (I / 計器盤, kept in the preferences). Hidden, it takes no height (the cockpit fills the screen) and is
+  // not drawn. Called on every change of view, screen, lesson or hood (and by updateUi); it touches the page only when
+  // the answer changes.
+  const effView = () => (S.screen === 'menu' ? 'chase' : S.view);
+  // (paused under the hood the hood stays: the 3D cockpit's windows stay dark and the layout does not jump)
+  const hoodOn = () => !!(S.L && (S.screen === 'fly' || S.screen === 'pause') && S.L.hood && !S.L.done);
+  function panelShown() { return !isThree() || S.prefs.panel2d || hoodOn() || effView() === 'chase'; }
+  let layoutKey = '';
+  function applyLayout() {
+    const show = panelShown(), hgt = show ? LAYOUTS[S.prefs.layout % LAYOUTS.length] : '0px';
+    $('#bPanel').setAttribute('aria-pressed', String(!!S.prefs.panel2d));
+    document.body.classList.toggle('hooded', isThree() && hoodOn());   // (narrow screens: the toasts make room for the hood banner)
+    if (layoutKey === hgt) return; layoutKey = hgt;
+    document.documentElement.style.setProperty('--panelH', hgt);
+    $('#panel').hidden = !show; document.body.classList.toggle('nopanel', !show);
+  }
+  function togglePanel() {
+    if (!isThree()) { toast('軽量表示では、2D の計器盤はいつも画面の下に出ています', 1800); return; }
+    S.prefs.panel2d = !S.prefs.panel2d; savePrefs(); applyLayout();
+    toast(S.prefs.panel2d ? '2D の計器盤を表示（I でしまう）' : panelShown() ? '2D の計器盤：後方視点とフード中はいつも出ます（I は操縦席の視点で効きます）' : '2D の計器盤をしまいました。計器は操縦席の G1000 型パネルで（右ボタンでズーム・I でまた出す）', 2200);
+  }
+  // the first time in the 3D cockpit (once per page load): how to look around, zoom, use the controls, the 2D panel
+  let hinted = false;
+  function cockpitHint() {
+    if (hinted || !isThree() || !flying() || effView() !== 'cockpit' || hoodOn() || (scene.ready && !scene.ready())) return;
+    hinted = true;
+    toast('3D の操縦席：ドラッグで見回す（ダブルクリックで正面）・右ボタンを押している間ズーム・計器のキーやつまみ、レバーはクリック（ホイールで回す）・I で 2D の計器盤', 7000);
+  }
   $('#bLayout').addEventListener('click', () => { S.prefs.layout = (S.prefs.layout + 1) % LAYOUTS.length; applyLayout(); savePrefs(); });
   $('#bSound').addEventListener('click', () => { setSound(!S.prefs.sound); });
   $('#pz-resume').addEventListener('click', resume);
@@ -498,14 +573,19 @@
   $('#pz-menu').addEventListener('click', () => { if (S.L && !S.L.free && !S.L.done) SC.abort(S.L, '中止'); FL.pages(app).openMenu(); });
 
   // ---------------------------------------------------------------- the 3D view and the panel
+  // the light renderer stops drawing under the hood (the opaque #hood covers it); the three.js view draws on, the cockpit
+  // and its G1000 with the windows dark (hood: true), and skips the frame behind the opaque screens (the pages and the
+  // school), where a frame of the three.js world would cost time and show nothing
   function draw3d() {
     if (!scene || !S.L) return;
-    const L = S.L, hood = S.screen === 'fly' && L.hood && !L.done;
-    if (hood) { $('#labels').textContent = ''; return; }
-    const gHole = G && G.hole ? G.hole() : null;
-    scene.render({ s: L.s, view: S.screen === 'menu' ? 'chase' : S.view, hole: gHole, extra: G && G.active() ? (gl, c) => G.draw(gl, c) : null });
-    if (G && G.active()) G.update(scene.camera(), L.s);
+    const L = S.L, three = scene.kind === 'three', hood = three ? hoodOn() : S.screen === 'fly' && L.hood && !L.done;
+    if (three && (S.screen === 'page' || S.screen === 'school')) return;
+    if (hood && !three) { $('#labels').textContent = ''; return; }
+    const gHole = G && G.hole ? G.hole() : null, gOn = !!(G && G.active()) && !hood;
+    scene.render({ s: L.s, L, view: effView(), hood, screen: S.screen, hole: gHole, extra: gOn ? (gl, c) => G.draw(gl, c) : null });
+    if (gOn) G.update(scene.camera(), L.s);
     const box = $('#labels'); let html = '';
+    if (hood) { box.textContent = ''; $('#gattr').hidden = true; return; }
     for (const lab of scene.labels) {
       const p = scene.project(lab.pos); if (!p || p.dist > 25000) continue;
       const x = Math.round(p.x), y = Math.round(p.y); if (x < -50 || y < -20 || x > box.clientWidth + 50 || y > box.clientHeight + 20) continue;
@@ -529,7 +609,7 @@
     return { o: s.out, av: L.av, nav, varW: P.MAGVAR_W, qnh: s.qnh, eng: s.eng.map(e => ({ run: e.run, rpm: e.rpm, feather: e.feather })), V: s.A.v, fuelCap: s.A.fuelCap, pos: P.ne(s) };
   }
   function drawPanels() {
-    if (!S.L) return;
+    if (!S.L || $('#panel').hidden) return;                          // (hidden under the 3D cockpit: its own G1000 draws)
     const d = panelData(S.L);
     const a = fitCanvas($('#pfd')); AV.drawPFD(a.g, a.W, a.H, d);
     const b = fitCanvas($('#mfd')); AV.drawMFD(b.g, b.W, b.H, d);
@@ -621,11 +701,76 @@
     speechSynthesis.speak(u);
   }
 
+  // ---------------------------------------------------------------- the out-the-window view: which renderer
+  // Chosen once, before anything makes a WebGL context on #view3d: ?render=three|legacy in the address, else the stored
+  // choice (⚙ 設定 → 3D 表示). 'auto' takes the three.js view (CADET's world and the full 3D cockpit, FL.view3d) unless
+  // this build has no such bundle, WebGL2 is missing, or the GPU is a software renderer (SwiftShader, llvmpipe: a frame
+  // of the three.js world takes seconds there, and since the simulation gets at most 0.1 s a frame, the flight would
+  // crawl). The light renderer (scene.js, 「軽量」) is the old view, unchanged. A three.js view that fails to start falls
+  // back to it with a note in the console only: the lessons work the same with either. Changing the choice needs a
+  // reload (a new canvas and context, and the Google layer is bound to the old one), which also forgets the Google key.
+  const RENDERS = ['auto', 'three', 'legacy'];
+  let probe = null, renderWhy = '';
+  function isThree() { return !!(scene && scene.kind === 'three'); }
+  function urlRender() { try { const v = new URLSearchParams(location.search).get('render'); return v === 'three' || v === 'legacy' ? v : ''; } catch (e) { return ''; } }
+  function wantRender() { return RENDERS.includes(S.prefs.render) ? S.prefs.render : 'auto'; }
+  // → [renderer, why]: why is what the settings say about the choice
+  function pickRenderer(want) {
+    const V = FL.view3d;
+    if (!V) return ['legacy', 'nobundle'];
+    if (want === 'legacy') return ['legacy', 'chosen'];
+    if (!probe) { try { probe = V.probe(); } catch (e) { probe = null; } probe = probe || { webgl2: false, gpu: '', software: false }; }
+    if (want === 'three') return ['three', 'chosen'];
+    if (!probe.webgl2) return ['legacy', 'nowebgl2'];
+    if (probe.software) return ['legacy', 'software'];
+    return ['three', 'auto'];
+  }
+  // the three.js preset: the stored one, or for 'auto' CADET's guess from the GPU's name
+  function qualityId() {
+    const V = FL.view3d, q = S.prefs.quality;
+    if (V && V.ORDER && V.ORDER.includes(q)) return q;
+    return V && V.guessPreset ? V.guessPreset((probe && probe.gpu) || '') : 'medium';
+  }
+  function applyQuality() {
+    if (!isThree() || !scene.setQuality) return;
+    const q = qualityId();
+    try { if (scene.quality() !== q) scene.setQuality(q); } catch (e) { errors.push('quality: ' + e.message); }
+  }
+  function createView() {
+    const url = urlRender(), [kind, why] = pickRenderer(url || wantRender());
+    renderWhy = url && why === 'chosen' ? 'url' : why;
+    if (kind === 'three') {
+      try {
+        scene = FL.view3d.createScene($('#viewWrap'), { replace: $('#view3d'), quality: qualityId(), onAction: (r, c) => cockpitAction(r, c), canAct: () => !!flying() }) || null;
+      } catch (e) { scene = null; console.warn('FLIGHT LAB: the three.js view did not start, using the light renderer', e); }
+      if (!scene) renderWhy = 'failed';
+    }
+    if (!scene) { try { scene = FL.scene.createScene($('#view3d')); } catch (e) { errors.push('scene: ' + e.message); scene = null; } }
+    const three = isThree();
+    document.body.classList.toggle('r3', three);
+    $('#bPanel').hidden = !three;
+    // the hood under the 3D cockpit: a banner, not a cover (the cockpit draws its windows dark itself, and the panel's
+    // keys and knobs must stay in sight and under the mouse)
+    if (three) { const hd = $('#hood'); hd.classList.add('banner'); hd.firstElementChild.textContent = 'フード中：外は見えません。計器だけで飛んでください'; }
+  }
+  // what the settings say: the renderer in use and why, the quality, what the stored choice gives after a reload
+  function renderInfo() {
+    const next = pickRenderer(wantRender())[0], kind = isThree() ? 'three' : 'legacy';
+    // (a reload drops ?render=; after a failed start, asking for three again would only fail again)
+    const pending = next !== kind && !(renderWhy === 'failed' && next === 'three');
+    return { kind, why: renderWhy, url: urlRender(), next, pending, quality: isThree() ? scene.quality() : qualityId(), gpu: probe ? probe.gpu : '', bundle: !!FL.view3d, ok: !!scene };
+  }
+  // the reload that applies a new choice (an address with ?render= would override it, so that part goes)
+  function reloadView() {
+    try { const u = new URL(location.href); if (u.searchParams.has('render')) { u.searchParams.delete('render'); location.replace(u.href); return; } } catch (e) { /* keep the address as it is */ }
+    location.reload();
+  }
+
   // ---------------------------------------------------------------- start up
   applyLayout();
-  try { scene = FL.scene.createScene($('#view3d')); } catch (e) { errors.push('scene: ' + e.message); scene = null; }
+  createView();
   if (!scene) $('#viewNote').textContent = 'WebGL2 が使えないため外部視界を表示できません（計器・課程・教科書は使えます）';
-  try { G = scene && FL.google3d ? FL.google3d.create(scene.gl) : null; } catch (e) { errors.push('google3d: ' + e.message); G = null; }
+  try { G = scene && FL.google3d ? FL.google3d.create(scene.gl, isThree() ? { srgb: true } : undefined) : null; } catch (e) { errors.push('google3d: ' + e.message); G = null; }
   app.google = () => G;
   startFree('area', 'pa28');
   setSound(false);
@@ -638,11 +783,15 @@
   // ---------------------------------------------------------------- test hooks (used by the automated browser test)
   window.__lab = {
     errors, sceneOk: () => !!scene,
-    start: (id, lv) => startLesson(id, lv), free: (st, ac) => { startFree(st, ac); closeScreens(); S.screen = 'fly'; S.paused = false; },
+    start: (id, lv) => startLesson(id, lv), free: (st, ac) => { startFree(st, ac); closeScreens(); S.screen = 'fly'; S.paused = false; applyLayout(); },
     state: () => { const L = S.L; return L && { o: { ...L.s.out }, step: L.step, stepName: (L.def.steps[L.step] || {}).name, done: L.done, passed: L.passed, view: S.view, paused: S.paused, screen: S.screen, hood: !$('#hood').hidden, av: L.av, flapIdx: L.s.flapIdx, thr: L.s.thr, pTgt: L.s.pTgt, check: L.check, atc: !!L.atc, help: S.help }; },
     lesson: () => S.L, showPage: id => FL.pages(app).openPage(id), openSchool: id => FL.pages(app).openSchool(id), openMenu: () => FL.pages(app).openMenu(),
     records: () => SC.loadRecords(store), progress: () => S.progress, prefs: () => S.prefs, control: (w, d, b) => ctl(w, d, b),
     storageDump: () => { const o = {}; if (store) for (let i = 0; i < store.length; i++) { const k = store.key(i); o[k] = store.getItem(k); } return o; },
     google: () => (G ? G.status() : null), endNow: () => { if (S.L && !S.L.free) { SC.endLesson(S.L, true); } },
+    // the renderer in use, the three.js view's own report (null under the light renderer), whether the 2D panel is on
+    // the screen, a cockpit control's result run through the same mapping as a click, and the 3D G1000's canvases
+    renderer: () => (isThree() ? 'three' : 'legacy'), view3d: () => (isThree() ? scene.info() : null), panel2d: () => !$('#panel').hidden,
+    act: r => cockpitAction(r, null), glass: () => (isThree() && scene.glass ? scene.glass() : null),
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

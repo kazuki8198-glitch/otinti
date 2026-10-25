@@ -92,7 +92,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
       const has = ai && ai.keys.has(), mem = ai && ai.keys.remembered;
       return `<p class="m-note" style="margin-top:0">ここの機能は、どれも最初は OFF です。OFF のあいだは、外への通信を一切しません。ネットにつながなくても、最初から最後まで遊べます。</p>
         <h3>AI 教官（Claude API）</h3>`
-        + sw('aiTutor', 'AI 教官に自由に質問する', 'ブリーフィング室と飛行のあとの講評で、早瀬 教官に日本語で自由に質問できます（答えは字幕で）。ON にして API キーを入れたときだけ、質問のたびに Anthropic の API（api.anthropic.com）へ送ります。キーがない・つながらない・エラーのときは、いつもの会話（教科書の質問）に戻ります。')
+        + sw('aiTutor', 'AI 教官に自由に質問する', 'ブリーフィング室と飛行のあとの講評で、早瀬 教官に日本語で自由に質問できます（答えは字幕で）。ON にして API キーを入れたときだけ、質問のたびに Anthropic の API（api.anthropic.com）へ送ります。キーがない・つながらない・エラーのときは、いつもの会話（ブリーフィング室では教科書の質問、講評では航空日誌の記入）に戻ります。')
         + `<div class="m-row"><span>モデル</span><span></span><div class="m-field"><input type="text" data-text="aiModel" value="${esc(v.aiModel)}" aria-label="モデル名" spellcheck="false" autocomplete="off"></div>
           <small>既定は ${esc(ai ? ai.defaultModel : 'claude-opus-5-5')}。返事の速さと料金を優先するなら claude-sonnet-5-5 や claude-haiku-5-5 も使えます。</small></div>`
         + `<div class="m-row"><span>API キー</span><span></span>

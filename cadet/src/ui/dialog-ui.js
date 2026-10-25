@@ -368,6 +368,15 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     if (open && cur && v.stream && cur.dialog === v.dialog && cur.node === v.node && v.text.startsWith(cur.text)) { extend(v); return; }
     // the same line again with nothing done in between (a second call for one change): keep the reveal where it is
     if (open && actedGen !== gen && sameView(cur, v)) { cur = v; return; }
+    // the same line with other choices (an offer taken off the screen: the AI setting turned off): the reveal and the
+    // voice go on as they were, the choices are new
+    if (open && cur && actedGen !== gen && !v.stream && !v.pending && !cur.pending && cur.dialog === v.dialog && cur.node === v.node
+      && cur.text === v.text && cur.name === v.name && cur.color === v.color && !!cur.input === !!v.input) {
+      if (list.contains(doc.activeElement)) try { doc.activeElement.blur(); } catch (e) { /* the old buttons go anyway */ }
+      cur = v; buildChoices(v.choices);
+      if (!typing) finishTyping();
+      return;
+    }
     gen++; cur = v;
     const narr = v.speaker === 'narrator' || !v.name;
     box.classList.toggle('narr', narr);

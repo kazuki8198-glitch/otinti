@@ -855,8 +855,9 @@ async function boot() {
   }
   function leaveEpilogue(next = 'walk') {
     if (!epi.on) return;
+    epi.on = false;                     // (first: an end the goodbye line queued — afterTalk's finishEpilogue — then does nothing)
     if (talk && talkRun) talkRun.stop();
-    epi.on = false; haneda.group.visible = false;
+    haneda.group.visible = false;
     if (epi.hint) { $('#hint').innerHTML = epi.hint; epi.hint = null; }
     LAB_GROUPS().forEach((g, i) => { g.visible = epi.vis ? epi.vis[i] : true; });
     if (crowd.setHidden) crowd.setHidden(false);
@@ -1317,7 +1318,8 @@ async function boot() {
   }
   function openMenu(tab) {
     if (menu.isOpen || (fly && fly.fading)) return;
-    if (fly && fly.dayMode) fly.dayMode.stopMic();                // (M8: not listening behind the menu)
+    // (M8: not listening behind the menu — the first time, the browser's question about the microphone lets the mouse go)
+    if (fly && fly.dayMode) fly.dayMode.stopMic({ note: 'マイクを止めました（メニューを開いたため）。マイクを許可したら、もう一度 M で話してください' });
     interactor.closeCard(); input.enabled = false; input.exitLock(); menu.open(tab); audio.ui('open');
   }
   input.onLock((on, bySelf) => {
@@ -1381,7 +1383,7 @@ async function boot() {
       if (aiRun) aiRun.stop();
       else { const r = talkRunner(); if (r && r.running && (talk || (fly && fly.talking))) { const w = r.view(); if (w) dui.show(w); } }
     }
-    if (k === 'micRadio' && !v && fly && fly.dayMode) fly.dayMode.stopMic();
+    if (k === 'micRadio' && !v && fly && fly.dayMode) fly.dayMode.stopMic({ all: true });
   });
   $('#perf').style.display = settings.get('showPerf') ? '' : 'none';
   document.documentElement.style.setProperty('--sub-k', String(settings.get('subSize') || 1));
@@ -1850,7 +1852,8 @@ async function boot() {
       talkTo: (id) => startTalk(id), where: (id) => (id === 'instructor' ? { at: insAt } : cast.where(id)),
       activity: () => (lessonKind ? { kind: lessonKind.kind, id: lessonKind.id, n: lessonKind.n, questions: (lessonRun && lessonQuestions) || [] } : null),
       home: () => goHome(), homeChoose: (k) => homeChoose(k),
-      tablet: { open: (p) => tablet.open(p), close: () => tablet.close(), isOpen: () => tablet.isOpen, page: () => tablet.page },
+      // (opened as Tab opens it: the card closed, the mouse let go)
+      tablet: { open: (p) => { interactor.closeCard(); input.exitLock(); tablet.open(p); }, close: () => tablet.close(), isOpen: () => tablet.isOpen, page: () => tablet.page },
       cards: () => cards.showing, celebrate: () => celebrate, reset: () => resetProgress(), gate: () => career.gate(prog(), trustI()),
       // (M6) today's aircraft on stand 19, the cloud the eye is in (0 clear … 1 white), what is on briefing room 1's whiteboard
       aircraft: () => todayType, cloud: () => cloudK, haze: () => (haze0 ? haze0.kind : null),

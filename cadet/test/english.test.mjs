@@ -23,6 +23,7 @@ import { EXAMS, CHECKS } from '../src/career/career.js';
 import { temFor, THREATS, THREATS_EN } from '../src/career/tem.js';
 import { validateDialogs } from '../src/dialog/validate.js';
 import { TASK_MISSED } from '../src/content/walkaround-archer.js';
+import { NOCATCH } from '../src/aircraft/systems.js';
 import { TASK_MISSED as SEMINOLE_TASKS } from '../src/content/walkaround-seminole.js';
 import { createRunner, createDialogState } from '../src/dialog/engine.js';
 import { installSorajima } from '../src/flight/sorajima.js';
@@ -111,7 +112,7 @@ test('the course\'s words in a line keep their quotes; the threats, the checks a
 
 test('his words in the air: every line of the day in English', () => {
   const lines = [...Object.values(PHASE_LINES), ...Object.values(ASSIST_LINES), RECOVER_LINE, EVENT_LINES.incursion, EVENT_LINES.nostarter, EVENT_LINES.surge, EVENT_LINES.noClear,
-    EVENT_LINES.walkFound(TASK_MISSED.pitot + TASK_MISSED.tieR), EVENT_LINES.stopped('燃料切れ'), EVENT_LINES.stopped('ミクスチャー アイドル カットオフ')];
+    EVENT_LINES.walkFound(TASK_MISSED.pitot + TASK_MISSED.tieR), EVENT_LINES.stopped('燃料切れ'), EVENT_LINES.stopped('ミクスチャー アイドル カットオフ'), ...Object.values(NOCATCH)];
   for (const l of lines) { const e = airEnglish(l); assert.ok(e, l); assert.ok(plainEnglish(e), e); }
   // what he found undone, in English; an anomaly in the walk-around's own words, quoted
   assert.equal(airEnglish(EVENT_LINES.walkFound(TASK_MISSED.lock + 'ピトー管：カバーが破れています。')),

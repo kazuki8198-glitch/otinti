@@ -8,6 +8,7 @@
 import { PHASE_LINES, ASSIST_LINES, RECOVER_LINE, EVENT_LINES } from './day1.js';
 import { debriefLine } from './cockpit.js';
 import { TASK_MISSED } from '../walkaround-archer.js';          // (the Seminole's table says the same)
+import { NOCATCH } from '../../aircraft/systems.js';
 
 export const CREW = ['instructor', 'chief', 'examiner'];
 
@@ -329,6 +330,14 @@ const AIR = new Map([
   [debriefLine({ done: true, passed: true, grade: 'S' }), 'Excellent. Right inside the standard.'],
   [debriefLine({ done: true, passed: true, grade: 'A' }), 'A pass. Well done. Next time, aim a little closer to the middle of the standard.'],
   [debriefLine({ done: true, passed: false, grade: 'C' }), 'So close. Let\'s look at the results together and see where it drifted.'],
+  // a start that did not catch (aircraft/systems.js NOCATCH)
+  ...Object.entries({
+    fuel: 'No fuel is getting through. Fuel selector to a tank.',
+    mixture: 'Mixture full rich first, then start.',
+    prime: 'The engine is cold, so two or three strokes of the primer first, then start.',
+    flooded: 'Too much priming: there\'s too much fuel. Open the throttle about halfway and try again (pull it back as soon as it catches).',
+    starter: 'Don\'t keep the starter turning for long. Wait a moment, then try again.',
+  }).map(([k, en]) => [NOCATCH[k], en]),
 ]);
 // what he found undone on the walk-around (walkaround-*.js TASK_MISSED), and why an engine stopped (aircraft/systems.js)
 const TASK_EN = {

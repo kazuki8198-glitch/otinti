@@ -50,16 +50,20 @@ export function build({ quiet = false, dev = false } = {}) {
     define: { __BUILD_INFO__: JSON.stringify(info) }, logLevel: 'error',
   }).outputFiles[0].text;
   const threeLicense = read(path.join(here, 'node_modules', 'three', 'LICENSE'));
-  const sdkLicense = read(path.join(here, 'node_modules', '@anthropic-ai', 'sdk', 'LICENSE'));     // (M8: the AI instructor's client)
+  // (M8) the AI instructor's client, and the code it carries inside: its copy of qs (BSD 3-Clause) and of
+  // partial-json-parser (its licence is not in the SDK's package: tools/licenses)
+  const sdkLicense = read(path.join(here, 'node_modules', '@anthropic-ai', 'sdk', 'LICENSE'));
+  const qsLicense = read(path.join(here, 'node_modules', '@anthropic-ai', 'sdk', 'src', 'internal', 'qs', 'LICENSE.md'));
+  const pjpLicense = read(path.join(here, 'tools', 'licenses', 'partial-json-parser.LICENSE'));
   const scripts = [
     `<script>\n${safeJs(assetsScript())}\n</script>`,
     ...FL_MODULES.map(m => `<script>\n/* ---- FLIGHT LAB: ${m} ---- */\n${safeJs(read(path.join(FL_SRC, m)))}\n</script>`),
-    `<script>\n/* ---- CADET (bundled with three.js and the Anthropic TypeScript SDK; their licences at the end of this file) ---- */\n${safeJs(bundle)}\n</script>`,
+    `<script>\n/* ---- CADET (bundled with three.js and the Anthropic TypeScript SDK with its qs and partial-json-parser; their licences at the end of this file) ---- */\n${safeJs(bundle)}\n</script>`,
   ].join('\n');
   let html = read(path.join(SRC, 'index.html'));
   html = html.replace(/<!--BUILD:CSS-->[\s\S]*?<!--\/BUILD:CSS-->/, () => `<style>\n${read(path.join(SRC, 'style.css'))}</style>`);
   html = html.replace(/<!--BUILD:JS-->[\s\S]*?<!--\/BUILD:JS-->/, () => scripts);
-  html = html.replace('</html>', () => `<!--\nthree.js licence:\n${threeLicense.replace(/--/g, '- -')}\n\nAnthropic TypeScript SDK (@anthropic-ai/sdk) licence:\n${sdkLicense.replace(/--/g, '- -')}\n-->\n</html>`);
+  html = html.replace('</html>', () => `<!--\nthree.js licence:\n${threeLicense.replace(/--/g, '- -')}\n\nAnthropic TypeScript SDK (@anthropic-ai/sdk) licence:\n${sdkLicense.replace(/--/g, '- -')}\n\nqs (neoqs; inside @anthropic-ai/sdk as internal/qs) licence:\n${qsLicense.replace(/--/g, '- -')}\n\npartial-json-parser (inside @anthropic-ai/sdk as _vendor/partial-json-parser) licence:\n${pjpLicense.replace(/--/g, '- -')}\n-->\n</html>`);
   fs.mkdirSync(OUT, { recursive: true });
   const out = path.join(OUT, 'CADET.html');
   fs.writeFileSync(out, html);

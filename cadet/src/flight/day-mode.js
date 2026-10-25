@@ -28,16 +28,16 @@ export function createDayMode(h) {
   let day = null, level = 'basic', assistOn = false, assistT = 0, taxi = null, fly = null, flash = '', flashT = 0, lastPhase = '', FLOW = [], solo = false, recoverT = 0, asking = false;
   const queue = []; let lineT = 0;
   // (M8) the microphone (made on its first use, only when it is on in the settings): what it heard, for which exchange
-  let mic = null, micState = null, micFor = '';
+  let mic = null, micState = null, micFor = '', micGen = 0;          // (micGen: which listen a result belongs to)
   const exId = (v) => (v ? `${v.seq}:${v.id}` : '');
   function micKey() {
     if (!h.settings.get('micRadio')) return false;
     const v = day.atc.view(); if (!v || v.phase !== 'choose') return false;
     if (!mic) mic = h.mic || createMic();
     if (mic.busy) { mic.stop(); return true; }
-    const id = micFor = exId(v); micState = { on: true };
+    const id = micFor = exId(v), gen = ++micGen; micState = { on: true };
     mic.listen().then((r) => {
-      if (!day || micFor !== id) return;
+      if (!day || gen !== micGen || micFor !== id) return;               // (stopped meanwhile: stopMic)
       if (!h.settings.get('micRadio')) { micState = null; return; }         // (turned off meanwhile: what it heard is not used)
       const v2 = day.atc.view();
       if (!v2 || v2.phase !== 'choose' || exId(v2) !== id) { micState = null; return; }
@@ -258,8 +258,14 @@ export function createDayMode(h) {
     taxi = createTaxiPilot(FL, pts, ph === 'lineup' ? { speed: 2.2, turnSpeed: 1.8 } : {});
     return true;
   }
-  // (M8) listening no more: the setting turned off, the pause menu opened
-  function stopMic() { if (mic && mic.busy) mic.stop(); micState = null; micFor = ''; }
+  // (M8) listening no more: the pause menu opened (note: a word left on the radio panel, until the next exchange), the
+  // setting turned off (all: the panel's last note goes too). What a stopped listen heard is not used.
+  function stopMic({ note = '', all = false } = {}) {
+    const live = !!(mic && mic.busy); micGen++;
+    if (live) mic.stop();
+    if (live && note && !all) micState = { msg: note };
+    else if (live || all) { micState = null; micFor = ''; }
+  }
   function end() { if (mic) mic.stop(); micState = null; micFor = ''; day = null; assistOn = false; taxi = null; fly = null; asking = false; recoverT = 0; queue.length = 0; targets.clear(); h.routeLine.set(null); h.dayHud.hideAll(); h.setGuide(null); }
   return {
     begin, update, key, answer, onChoice, lessonEnded, end, speak, autoTaxi, stopMic,

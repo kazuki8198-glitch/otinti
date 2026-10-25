@@ -88,6 +88,15 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => x.kind), ['ceremony', 'tour', 'brief']);
     const a = await analyse(g.page, await ev(() => window.__cadet.snapshot(2)));
     assert.ok(a.sd > 8 && a.mean > 40 && a.mean < 235, `start: mean ${a.mean.toFixed(0)} sd ${a.sd.toFixed(1)}`);
+    // (M7) the first minutes' help: look first, then walk — each step gone once done
+    await ev(() => window.__cadet.simulate(0.1));
+    assert.equal(await ev(() => window.__cadet.coach()), 'look');
+    assert.match(await ev(() => document.getElementById('coach').textContent), /見回す/);
+    await ev(() => { const C = window.__cadet, p = C.player(); C.placeWalker(p.a, p.c, { a: p.a - 5, c: p.c + 5 }); C.simulate(0.2); });
+    assert.equal(await ev(() => window.__cadet.coach()), 'walk');
+    await ev(() => { const C = window.__cadet, p = C.player(); C.walkRoute([{ a: p.a - 3, c: p.c }, { a: p.a - 3, c: p.c - 2.5 }]); });
+    assert.equal(await ev(() => window.__cadet.coach()), 'guide');
+    await ev(() => { const C = window.__cadet; C.placeWalker(C.spec.start.a, C.spec.start.c, C.spec.start.yawToward); });
   });
 
   test('every viewpoint, outdoors and inside, draws a picture within budget', async () => {
@@ -283,13 +292,15 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     st = await career();
     assert.deepEqual([st.chapter, st.day], ['ch2', 10]);
     assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => `${x.kind} ${x.id}`), ['flight a1']);
+    assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => `${x.kind} ${x.id}`), ['flight a1']);
   });
 
   test('talk: a morning of chapter 2 — how the cadet feels, then today\'s lesson briefed, checked, a question from the textbook, and it is saved', async () => {
     await ev(() => { window.__cadet.setMode('walk'); window.__cadet.resetProgress(); });
     assert.equal(await ev(() => window.__cadet.savedState()), null, 'the record is erased');
     assert.equal((await career()).chapter, 'prologue', 'a new career');
-    await g.page.waitForTimeout(3600);                                         // (the new career's card)
+    // (the new career's card — after any still queued from the night before: no card for a whole second)
+    await g.page.waitForFunction(() => { const C = window.__cadet; if (C.career.cards()) window.__noCard = 0; else window.__noCard = (window.__noCard || 0) + 1; return window.__noCard > 10; }, null, { polling: 100, timeout: 30000 });
     // day 12 of the career (a Monday; a weather seed with a day to fly), a1 flown: today a2
     await ev((p) => window.__cadet.career.set({ state: { seed: 2, chapter: 'ch2', day: 12, slot: 'morning', done: { prologue: 1 }, exams: { written1: { tries: 1, best: 90, pass: true } } }, progress: p, flags: { met_instructor: true, has_tablet: true }, place: false }), passed(['a1']));
     assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => `${x.kind} ${x.id}`), ['flight a2']);
@@ -767,6 +778,37 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.equal(st.chapter, 'ch4');
   });
 
+  test('chapter 3 (M7): the run-up finds the left magneto beyond its limit — the instructor asks, the cadet goes back to the stand, the debrief says why', async () => {
+    await restart(); await loadBot();
+    await ev(() => window.__cadet.career.fault('mag'));
+    const d = await m6Day({ chapter: 'ch3', kind: 'flight', exams: EX('nav'), prog: passed([...ALL2, 'x3']), flags: { briefed_today: true, brief_checked: true } });
+    assert.ok(d > 0);
+    await goNoGo();
+    assert.equal(await boardToday(), 'board');
+    for (let i = 0; i < 12; i++) { const dd = await ev(() => window.__cadet.dialog()); if (!dd) break; if (dd.choices.length) await ev((re) => window.__cadet.dialogChoose(re), '^基礎'); else await ev(() => window.__cadet.dialogNext()); }
+    await ev(() => window.__cadet.fly.view('chase'));
+    let asked = null, log = [];
+    for (let k = 0; k < 400; k++) {
+      const day = await ev(() => window.__cadet.fly.day()); if (!day) break;
+      if (!log.length || log[log.length - 1] !== day.phase) log.push(day.phase);
+      if (day.phase === 'debrief' || day.phase === 'done') break;
+      const dlg = await ev(() => window.__cadet.dialog());
+      if (dlg) {
+        if (/マグネトー/.test(dlg.text) && dlg.choices.length) { asked = dlg.text; await ev(() => window.__cadet.dialogChoose('整備に報告')); continue; }
+        if (dlg.choices.length) await ev((t) => window.__cadet.dialogChoose(t), dlg.choices[0].text); else await ev(() => window.__cadet.dialogNext());
+        continue;
+      }
+      if (day.radio && day.radio.phase === 'choose') await ev(() => window.__cadet.fly.answer(true));
+      if (day.items && !day.assisting) await ev(() => window.__cadet.fly.assist());
+      if (['taxiOut', 'taxiIn'].includes(day.phase) && !day.assisting) await ev(() => window.__cadet.fly.key('KeyY'));
+      await ev(() => window.__cadet.simulate(2, 1 / 30));
+    }
+    assert.match(asked || '', /制限の 175 rpm を超えました/, log.join(' '));
+    assert.ok(log.includes('runup') && log.includes('taxiIn') && !log.includes('tower') && !log.includes('t1'), log.join(' '));
+    assert.ok(log.includes('debrief') || log.includes('done'), log.join(' '));
+    await ev(() => window.__cadet.career.fault(undefined));
+  });
+
   test('chapter 4: the instrument check in low cloud with the chief instructor — his brief, the right seat, t1 → i3 → i5 → t3 under the hood (inside the cloud at 2,000 ft), signed by him', async () => {
     await restart(); await loadBot();
     const d = await m6Day({ chapter: 'ch4', kind: 'checkride', exams: EX('nav', 'instr'), checks: CHK('xc'), prog: passed([...ALL2, ...CH3L, ...CH4L]) });
@@ -874,6 +916,17 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.equal(await ev(() => window.__cadet.camera.fov), 90);
     await ev(() => window.__cadet.settings.set('fov', 75));
     assert.equal(await ev(() => window.__cadet.menu.isOpen()), false);
+    // (M7) the subtitles' size, the colour assist, the three volumes: at once, and in the menu
+    await ev(() => window.__cadet.menu.open('settings'));
+    const rows = await ev(() => [...document.querySelectorAll('#menu .m-row span:first-child')].map(x => x.textContent));
+    for (const k of ['字幕の大きさ', '色の組み合わせ（色覚に配慮）', 'エンジンと風切り音', '周りの音と足音', '無線（雑音と管制官の声）', 'はじめての操作の案内']) assert.ok(rows.includes(k), k);
+    await ev(() => window.__cadet.menu.close());
+    await ev(() => { window.__cadet.settings.set('subSize', 1.4); window.__cadet.settings.set('colorAssist', true); });
+    assert.equal(await ev(() => document.documentElement.style.getPropertyValue('--sub-k')), '1.4');
+    assert.ok(await ev(() => document.body.classList.contains('cvd')));
+    assert.ok(await ev(() => parseFloat(getComputedStyle(document.querySelector('#guide b')).fontSize)) > 18);
+    await ev(() => { window.__cadet.settings.set('subSize', 1); window.__cadet.settings.set('colorAssist', false); });
+    assert.ok(!(await ev(() => document.body.classList.contains('cvd'))));
   });
 
   test('dusk, presets and the bench', async () => {

@@ -6,6 +6,11 @@
   "scripts": {
     "build": "node build.mjs",
     "test": "node build.mjs && node --test --test-concurrency=1 test/flight.test.mjs test/avionics.test.mjs test/browser.test.mjs",
-    "test:fast": "node --test test/flight.test.mjs test/avionics.test.mjs"
+    "test:fast": "node --test test/flight.test.mjs test/avionics.test.mjs",
+    "build:dev": "node build.mjs --dev"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "three": "0.186.1"
   }
 }

@@ -1,7 +1,10 @@
 // FLIGHT LAB — src3d/input3d.js : the mouse in the three.js view (pointer events on its canvas; no pointer lock, the
 // keyboard is left to app.js).
 // Cockpit view: dragging with the left button looks round (the head turns; the body stays strapped in), a
-// double-click looks ahead again, the right button held looks closer (the field of view narrows). Over a switch, a
+// double-click looks ahead again, the right button held looks closer at what the cursor is on (the head turns towards
+// it as the field of view narrows; let go, it turns back), and dragging meanwhile looks round the closer view. A left
+// click still works while the right button holds the zoom (the browser reports that press and release as moves of the
+// pointer, not as presses of their own). Over a switch, a
 // knob, a lever or a key the cursor becomes a hand and a small label says what it is; a click works it once, the
 // wheel turns it. Chase view: dragging orbits the aircraft, the wheel moves the camera nearer or further, a
 // double-click puts it back behind.
@@ -16,11 +19,15 @@ const DRAG_PX = 4;                      // a press that moves further than this 
 const RAY_FAR = 1.6;                    // the controls are within reach of the seat
 const HINT = { knob: 'ホイール・クリック', lever: 'クリック・ホイール', switch: 'クリック', button: 'クリック' };
 
-// h: { camera (THREE.PerspectiveCamera), view() → 'cockpit' | 'chase', pick(raycaster) → control | null,
-//      act(control, dir, wheel) (the scene applies it; it asks the app first) }
+// h: { camera (THREE.PerspectiveCamera), view() → 'cockpit' | 'chase', head() → { yaw, pitch } (radians: the head as
+//      last drawn), pick(raycaster) → control | null, act(control, dir, wheel) (the scene applies it; it asks the app
+//      first) }
+// state: yaw / pitch (where the pilot looks), zYaw / zPitch (where the zoom looks, while the right button is held),
+//   zoom, snap (the scene takes the look at once instead of easing from the zoom's aim: a new flight, a double-click),
+//   the chase camera's orbit
 export function createInput(canvas, wrap, h) {
-  const st = { yaw: 0, pitch: LOOK.rest, chaseYaw: 0, chasePitch: CHASE.pitch0, chaseDist: 1, zoom: false };
-  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  const st = { yaw: 0, pitch: LOOK.rest, zYaw: 0, zPitch: LOOK.rest, chaseYaw: 0, chasePitch: CHASE.pitch0, chaseDist: 1, zoom: false, snap: true };
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), dir = new THREE.Vector3(), eul = new THREE.Euler(0, 0, 0, 'YXZ');
   ray.far = RAY_FAR;
   let press = null, mouse = null, hover = null, wheelAcc = 0;
 
@@ -37,9 +44,12 @@ export function createInput(canvas, wrap, h) {
   const clampLook = () => {
     st.yaw = THREE.MathUtils.clamp(st.yaw, -LOOK.yaw, LOOK.yaw);
     st.pitch = THREE.MathUtils.clamp(st.pitch, -LOOK.down, LOOK.up);
+    st.zYaw = THREE.MathUtils.clamp(st.zYaw, -LOOK.yaw, LOOK.yaw);
+    st.zPitch = THREE.MathUtils.clamp(st.zPitch, -LOOK.down, LOOK.up);
     st.chasePitch = THREE.MathUtils.clamp(st.chasePitch, CHASE.pitchMin, CHASE.pitchMax);
   };
-  function resetLook() { st.yaw = 0; st.pitch = LOOK.rest; st.chaseYaw = 0; st.chasePitch = CHASE.pitch0; st.chaseDist = 1; }
+  // (snap: the scene takes the head as it is now, without easing from the zoom's aim)
+  function resetLook() { st.yaw = st.zYaw = 0; st.pitch = st.zPitch = LOOK.rest; st.chaseYaw = 0; st.chasePitch = CHASE.pitch0; st.chaseDist = 1; st.snap = true; }
 
   // the control under the cursor (cockpit view only), from the camera of the frame last drawn
   function pickAt(x, y) {
@@ -72,7 +82,20 @@ export function createInput(canvas, wrap, h) {
     showTip(pickAt(mouse.x, mouse.y));
   }
 
-  const zoomFrom = e => { st.zoom = (e.buttons & 2) !== 0 && h.view() === 'cockpit'; };
+  // the zoom's aim: the direction under the cursor, from the head as last drawn (in the aircraft's frame)
+  function aimZoom(x, y) {
+    const r = canvas.getBoundingClientRect(), hd = h.head(), cam = h.camera;
+    if (!(r.width > 0 && r.height > 0)) { st.zYaw = hd.yaw; st.zPitch = hd.pitch; return; }
+    const t = Math.tan(cam.fov * DEG / 2), nx = (x - r.left) / r.width * 2 - 1, ny = -((y - r.top) / r.height) * 2 + 1;
+    dir.set(nx * t * cam.aspect, ny * t, -1).applyEuler(eul.set(hd.pitch, hd.yaw, 0));
+    st.zYaw = Math.atan2(-dir.x, -dir.z); st.zPitch = Math.atan2(dir.y, Math.hypot(dir.x, dir.z));
+    clampLook();
+  }
+  const zoomFrom = (e) => {
+    const z = (e.buttons & 2) !== 0 && h.view() === 'cockpit';
+    if (z && !st.zoom) aimZoom(e.clientX, e.clientY);
+    st.zoom = z;
+  };
   const onDown = (e) => {
     zoomFrom(e);
     if (e.button === 2) { e.preventDefault(); try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* already released */ } return; }
@@ -83,13 +106,16 @@ export function createInput(canvas, wrap, h) {
   const onMove = (e) => {
     mouse = { x: e.clientX, y: e.clientY };
     zoomFrom(e);
+    // a left press or release while another button is held (the right one, for the zoom) comes as a pointermove
+    // (a plain move has button −1)
+    if (e.button === 0) { if (e.buttons & 1) onDown(e); else onUp(e); return; }
     if (press && e.pointerId === press.id && (e.buttons & 1)) {
       if (!press.drag && Math.hypot(e.clientX - press.x, e.clientY - press.y) > DRAG_PX) { press.drag = true; showTip(null); canvas.style.cursor = 'grabbing'; }
       if (press.drag) {
         // the angle a pixel spans on the screen (the head turns about as far as the cursor moves); as CADET's mouse
         // look: the view (or the camera round the aircraft) goes the way the mouse goes
         const k = h.camera.fov * DEG / Math.max(100, canvas.clientHeight), dx = e.clientX - press.lx, dy = e.clientY - press.ly;
-        if (h.view() === 'cockpit') { st.yaw -= dx * k; st.pitch -= dy * k; } else { st.chaseYaw -= dx * k * 1.6; st.chasePitch -= dy * k * 1.6; }
+        if (h.view() !== 'cockpit') { st.chaseYaw -= dx * k * 1.6; st.chasePitch -= dy * k * 1.6; } else if (st.zoom) { st.zYaw -= dx * k; st.zPitch -= dy * k; } else { st.yaw -= dx * k; st.pitch -= dy * k; }
         clampLook();
       }
       press.lx = e.clientX; press.ly = e.clientY;

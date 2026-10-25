@@ -12,11 +12,13 @@ import { createScene } from './scene3d.js';
 const SOFTWARE = /swiftshader|llvmpipe|software|basic render/i;
 
 // what the browser offers, from a throwaway canvas (its context given back at once): WebGL2 or not, the GPU's name,
-// and whether that is a software renderer (where three.js would run at a frame every second or two)
+// and whether that is a software renderer (where three.js would run at a frame every second or two). The context asks
+// for the GPU the renderer will ask for (CADET's pipeline: 'high-performance'): with two GPUs (a laptop's integrated
+// and discrete ones) the browser can pick per context, and the name decides the renderer and the quality
 function probe() {
   const out = { webgl2: false, gpu: '', software: false };
   try {
-    const cv = document.createElement('canvas'), gl = cv.getContext('webgl2');
+    const cv = document.createElement('canvas'), gl = cv.getContext('webgl2', { powerPreference: 'high-performance' });
     if (gl) {
       out.webgl2 = true;
       const ext = gl.getExtension('WEBGL_debug_renderer_info');

@@ -97,11 +97,11 @@
       <span>操作の状態（右上）</span>
       <div class="seg" role="group" aria-label="操作の状態の表示" id="optStrip"><button type="button" data-v="full">詳しく</button><button type="button" data-v="mini">簡潔に</button><button type="button" data-v="off">隠す</button></div>
       <span>3D 表示</span>
-      <div class="seg" role="group" aria-label="3D 表示" id="optRender"><button type="button" data-v="auto" title="GPU があれば高画質、なければ（ソフトウェア描画では）軽量">自動</button><button type="button" data-v="three" title="three.js の景色と、計器まで 3D の操縦席">高画質</button><button type="button" data-v="legacy" title="古い PC・内蔵 GPU で重いとき。簡単な景色と、いつも画面の下に出る 2D の計器盤">軽量</button></div>
-      <span>画質（高画質のとき）</span>
+      <div class="seg" role="group" aria-label="3D 表示" id="optRender"><button type="button" data-v="auto" title="GPU があれば標準、なければ（ソフトウェア描画では）軽量">自動</button><button type="button" data-v="three" title="three.js の景色と、計器まで 3D の操縦席">標準</button><button type="button" data-v="legacy" title="古い PC・内蔵 GPU で重いとき。簡単な景色と、いつも画面の下に出る 2D の計器盤">軽量</button></div>
+      <span>画質（標準のとき）</span>
       <div class="seg" role="group" aria-label="画質" id="optQuality"><button type="button" data-v="auto" title="GPU の名前から決める">自動</button><button type="button" data-v="low">低</button><button type="button" data-v="medium">中</button><button type="button" data-v="high">高</button><button type="button" data-v="ultra">最高</button></div>
     </div>
-    <div class="render-note" id="renderNote"><span id="renderNow"></span><span id="renderLater" hidden>3D 表示の切り替えは、ページを読み込み直すと有効になります。読み込み直すと Google 3D の API キーは消えるので、使うときはもう一度入れてください。 <button type="button" id="renderReload">いま読み込み直す</button></span></div>
+    <div class="render-note" id="renderNote"><span id="renderNow"></span><span id="renderLater" hidden><span id="renderLaterMsg">3D 表示の切り替えは、ページを読み込み直すと有効になります。</span>読み込み直すと Google 3D の API キーは消えるので、使うときはもう一度入れてください。 <button type="button" id="renderReload">いま読み込み直す</button></span></div>
     <label class="chk"><input type="checkbox" id="optSound"> サウンド（エンジン音・失速警報・管制の英語音声）</label>
     <p class="keys-note">設定はこのブラウザにだけ保存されます。キーの一覧は飛行中に H、またはメニューの「操作ガイド」。</p>
   </div>

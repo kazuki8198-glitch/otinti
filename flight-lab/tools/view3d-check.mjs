@@ -7,7 +7,12 @@
 //  - no page errors, no console errors, no WebGL errors after the frames; the scenery built (ready());
 //  - the 3D G1000's own canvases drawn (lit pixels, as the browser test asks of the 2D panel);
 //  - the camera in FLIGHT LAB's frame: the eye at the pilot's seat, project() of a label agreeing with camera().VP;
-//  - a click on a control (aimed at by its aim point) reaching onAction, the wheel over a knob, a switch applied;
+//  - a click on a control (aimed at by its aim point) reaching onAction, the wheel over a knob, a switch applied, and
+//    a click while the right button holds the zoom; the zoom turning towards the cursor and back;
+//  - the 3D G1000 drawing FLIGHT LAB's own notes (教材表示, （教材）, 未実装), the same ones as the 2D panel;
+//  - the aircraft's outside lights following the cockpit's switches (the master first);
+//  - the landmarks' labels hidden where the cockpit hides them from the eye (not in the chase view);
+//  - a scene whose scenery cannot be built (a picture that will not decode): a plain ground, the error reported;
 //  - Google's hook: a raw-GL triangle drawn by a stand-in extra() at a known place, seen where project() puts it;
 //    then the real google3d.js with the fixture: tiles decoded, drawn through the hook (drawn > 0).
 // Saves a PNG of each view. Software rendering: a frame takes a second or more; the pictures are right, the frame
@@ -156,6 +161,21 @@ try {
   const agree = proj.every(o => (!o.p && !o.ref) || (o.p && o.ref && Math.abs(o.p.x - o.ref.x) < 0.5 && Math.abs(o.p.y - o.ref.y) < 0.5 && o.p.dist <= o.euclid + 1));
   const seen = proj.filter(o => o.p);
   check(`labels: ${proj.length} (the legacy ids), project() agrees with camera().VP`, proj.length === 6 && agree && seen.length > 0, seen.map(o => ({ id: o.id, x: Math.round(o.p.x), y: Math.round(o.p.y), nm: +(o.p.dist / 1852).toFixed(1) })));
+  // the cockpit hides a label under the glareshield (in the chase view it is shown): a landmark 1.4 NM ahead, the
+  // aircraft level at 3,000 ft (17° below the eye: on the panel), then 7 NM ahead (3.5° below: over the cowling)
+  const hid = await page.evaluate(() => {
+    const P = FL.physics, sc = __v3.scene, L = __lab.lesson(), s = L.s, lab = sc.labels[0], out = { id: lab.id };
+    const put = (d) => { s.pos[0] = lab.pos[0]; s.pos[1] = 914; s.pos[2] = lab.pos[2] + d; s.q = P.qFromHPB(0, 0, 0); };
+    const screen = (p) => { const c = sc.camera(), m = c.VP, x = p; const v = [0, 1, 2, 3].map(r => m[r] * x[0] + m[4 + r] * x[1] + m[8 + r] * x[2] + m[12 + r]); const W = sc.gl.canvas.clientWidth, H = sc.gl.canvas.clientHeight; return v[3] > 0.5 ? { x: Math.round((v[0] / v[3] * 0.5 + 0.5) * W), y: Math.round((1 - (v[1] / v[3] * 0.5 + 0.5)) * H), on: Math.abs(v[0] / v[3]) < 1 && Math.abs(v[1] / v[3]) < 1 } : null; };
+    for (const [k, d, view] of [['near', 2593, 'cockpit'], ['far', 12964, 'cockpit'], ['nearChase', 2593, 'chase']]) {
+      put(d); __v3.frame(view, false);
+      out[k] = { p: sc.project(lab.pos), raw: screen(lab.pos) };
+    }
+    return out;
+  });
+  check('labels: hidden where the cockpit hides them (on the panel), shown above the cowling and in the chase view',
+    hid.near.raw && hid.near.raw.on && hid.near.p === null && hid.far.p && hid.nearChase.p, hid);
+  await page.evaluate(() => { __lab.free('area', 'pa28'); __v3.scene.resetLook(); });
   // the legacy view's own labels, from a legacy scene made on a canvas of its own
   const same = await page.evaluate(() => {
     const cv = document.createElement('canvas'); cv.width = cv.height = 16;
@@ -187,6 +207,38 @@ try {
   acts = await page.evaluate(() => __v3.actions.splice(0));
   const sw = await page.evaluate(() => __v3.scene.__test.switches());
   check('click: sw.landing → a switch result, applied to the cockpit\'s switches', acts.length === 1 && acts[0].d.type === 'switch' && acts[0].d.on === true && sw.landing === true, { acts, landing: sw.landing });
+  // the outside lights follow the switches (CADET's mapping): the landing light now on; the master off puts all out
+  const lights = await page.evaluate(() => {
+    const T = __v3.scene.__test, sw = T.parts().cockpit.switches;
+    __v3.frame('cockpit', false);
+    const on = T.lights();
+    sw.master = false; __v3.frame('cockpit', false);
+    const off = T.lights();
+    sw.master = true; sw.landing = false; __v3.frame('cockpit', false);
+    return { on, off, back: T.lights() };
+  });
+  check('lights: the outside lights follow the switches (landing on with its switch; master off → all out)',
+    lights.on.landing && lights.on.nav && lights.on.beacon && lights.on.strobe && !lights.on.taxi && Object.values(lights.off).every(v => v === false) && lights.back.nav && !lights.back.landing, lights);
+  // FLIGHT LAB's own notes on the 3D G1000, as on the 2D panel (CADET's screens would take them out): every text the
+  // screens draw over a few frames, read through the context's fillText; the app's own 2D panel (drawn underneath
+  // meanwhile, hidden) for comparison
+  const notes = await page.evaluate(async () => {
+    const proto = CanvasRenderingContext2D.prototype, orig = proto.fillText, g = __v3.scene.glass(), seen = { pfd: new Set(), mfd: new Set(), pfd2: new Set(), mfd2: new Set() };
+    const p2 = document.getElementById('pfd'), m2 = document.getElementById('mfd');
+    proto.fillText = function (t, ...a) {
+      const k = this.canvas === g.pfd ? 'pfd' : this.canvas === g.mfd ? 'mfd' : this.canvas === p2 ? 'pfd2' : this.canvas === m2 ? 'mfd2' : null;
+      if (k && typeof t === 'string') seen[k].add(t);
+      return orig.call(this, t, ...a);
+    };
+    try { for (let i = 0; i < 5; i++) { __v3.frame('cockpit', false); await new Promise(r => setTimeout(r, 150)); } } finally { proto.fillText = orig; }
+    const own = { pfd: Object.getOwnPropertyDescriptor(g.pfd.getContext('2d'), 'fillText') };
+    const pick = k => [...seen[k]].filter(t => /教材|未実装|架空訓練点/.test(t));
+    return { pfd: pick('pfd'), mfd: pick('mfd'), pfd2: pick('pfd2'), mfd2: pick('mfd2'), n: { pfd: seen.pfd.size, mfd: seen.mfd.size, pfd2: seen.pfd2.size }, accessor: !!(own.pfd && own.pfd.get && own.pfd.set) };
+  });
+  const in3d = new Set([...notes.pfd, ...notes.mfd]), missing = [...notes.pfd2, ...notes.mfd2].filter(t => !in3d.has(t));
+  check('3D G1000: FLIGHT LAB\'s own notes, as the 2D panel draws them (教材表示, （教材）, 未実装)',
+    notes.accessor && notes.pfd.some(t => t.includes('教材表示')) && notes.pfd.some(t => t.includes('（教材）')) && notes.mfd.some(t => t.includes('未実装')) && notes.mfd.includes('— = 未実装（架空値は出しません）') && notes.pfd2.length > 0 && missing.length === 0,
+    { pfd: notes.pfd, mfd: notes.mfd, missing, n: notes.n });
   // a drag looks round (no act), a double-click looks ahead again
   await page.mouse.move(480, 200); await page.mouse.down(); await page.mouse.move(380, 180, { steps: 4 }); await page.mouse.up();
   const looked = await page.evaluate(() => ({ n: __v3.actions.length }));
@@ -194,6 +246,26 @@ try {
   await shot('cockpit-looked-right');
   await page.mouse.dblclick(480, 200);
   check('drag: looks round without acting', looked.n === 0);
+
+  // ---- the right button held (the zoom): a left click still works a control (Chrome reports that press and release
+  // as pointermove), and the zoom turns the head towards what the cursor was on, then back
+  await page.evaluate(() => { __v3.scene.resetLook(); __v3.frame('cockpit', false); });
+  const head0 = await page.evaluate(() => __v3.scene.__test.head());
+  const c1 = await aim('pfd.hdg');
+  await page.mouse.move(c1.x, c1.y);
+  await page.mouse.down({ button: 'right' });
+  await page.mouse.down(); await page.mouse.up();
+  acts = await page.evaluate(() => __v3.actions.splice(0));
+  check('click while the right button holds the zoom: pfd.hdg → onAction once', acts.length === 1 && acts[0].id === 'pfd.hdg' && acts[0].d.what === 'HDG_SYNC', acts);
+  for (let i = 0; i < 6; i++) await page.evaluate(() => __v3.frame('cockpit', false));
+  const zin = await page.evaluate(() => ({ at: __v3.scene.__test.aimAt('pfd.hdg'), head: __v3.scene.__test.head(), W: innerWidth, H: innerHeight }));
+  await shot('cockpit-zoom-on-pfd');
+  check('zoom: towards the cursor (the HDG knob, under the cursor when pressed, near the middle; the view 30°)',
+    zin.at && Math.abs(zin.at.x - zin.W / 2) < zin.W * 0.08 && Math.abs(zin.at.y - zin.H / 2) < zin.H * 0.08 && zin.head.fov < 34 && zin.head.zoom > 0.95, zin);
+  await page.mouse.up({ button: 'right' });
+  for (let i = 0; i < 6; i++) await page.evaluate(() => __v3.frame('cockpit', false));
+  const zout = await page.evaluate(() => __v3.scene.__test.head());
+  check('zoom: let go, the head turns back to where it looked', Math.abs(zout.yaw - head0.yaw) < 0.5 && Math.abs(zout.pitch - head0.pitch) < 0.5 && zout.fov > 70 && zout.zoom < 0.05, { before: head0, after: zout });
 
   // ---- Google's hook with a stand-in: a raw-GL triangle 60 m ahead of the aircraft, in FLIGHT LAB's frame
   await page.evaluate(() => { __lab.free('area', 'pa28'); __v3.scene.resetLook(); });
@@ -257,6 +329,26 @@ try {
   const q = await page.evaluate(() => { __v3.scene.setQuality('medium'); __v3.frame('chase', false); const i = __v3.scene.info(); __v3.scene.setQuality('low'); __v3.frame('chase', false); return { mid: i.preset, now: __v3.scene.quality() }; });
   check('setQuality(): medium, then back to low', q.mid === 'medium' && q.now === 'low', q);
 
+  // ---- a scene whose scenery cannot be built (no picture decodes): it goes on with a plain ground and says so
+  const nog = await page.evaluate(async (quality) => {
+    const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:0;top:0;width:240px;height:150px;z-index:100001';
+    const old = document.createElement('canvas'); box.appendChild(old); document.body.appendChild(box);
+    const proto = HTMLImageElement.prototype, dec = proto.decode;
+    proto.decode = function () { return Promise.reject(new Error('view3d-check: a picture that will not decode')); };
+    let sc = null;
+    try {
+      sc = FL.view3d.createScene(box, { replace: old, quality });
+      for (let i = 0; i < 200 && !sc.info().error; i++) await new Promise(r => setTimeout(r, 50));
+    } finally { proto.decode = dec; }
+    const L = __lab.lesson();
+    sc.render({ s: L.s, L, view: 'chase', hood: false, screen: 'fly', hole: null, extra: null });
+    const w = sc.__test.world(), i = sc.info(), g = w.ground && w.ground.group;
+    const out = { error: i.error, ready: i.ready, ground: g ? g.name : null, inScene: !!(g && g.parent), calls: i.calls };
+    const lose = sc.gl.getExtension('WEBGL_lose_context'); box.remove(); if (lose) lose.loseContext();
+    return out;
+  }, QUALITY);
+  check('scenery that cannot be built: a plain ground, info().error, the frame drawn, not ready', nog.error && !nog.ready && nog.ground === 'ground-plain' && nog.inScene && nog.calls > 0, nog);
+
   // ---- a scene that fails half-way (the cockpit cannot be built) throws, and leaves the page as it was
   const broken = await page.evaluate((quality) => {
     const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:0;top:0;width:200px;height:120px';
@@ -269,7 +361,8 @@ try {
     box.remove();
     return { msg, same };
   }, QUALITY);
-  check('createScene() that fails: throws, no change to the page', broken.msg && broken.same, broken);
+  // (the error is the build's own, not one of the clean-up's: dispose() runs before the per-frame state exists)
+  check('createScene() that fails: throws its own error, no change to the page', broken.msg && !/before initialization/.test(broken.msg) && broken.same, broken);
 
   const glErrors = await page.evaluate(() => __v3.glErrors);
   check('no WebGL errors after the frames', glErrors.length === 0, glErrors);

@@ -7,7 +7,8 @@
 // Output: outputs/FLIGHT-LAB.html
 //   npm ci                  once (three.js and esbuild, pinned to the versions CADET uses)
 //   node build.mjs          minified
-//   node build.mjs --dev    the 3D view readable, with an inline source map
+//   node build.mjs --dev    the 3D view readable, with an inline source map (over the size limit: for debugging only,
+//                           never to commit; its build line says 'dev'). A release build over the limit fails.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
@@ -93,7 +94,7 @@ export function build({ quiet = false, dev = false } = {}) {
   html = html.replace(/<!--BUILD:CSS-->[\s\S]*?<!--\/BUILD:CSS-->/, () => `<style>\n${css}</style>`);
   let rev = 'dev';
   try { rev = execSync('git rev-parse --short HEAD', { cwd: here, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch (e) { /* not a git checkout */ }
-  const info = `build ${new Date().toISOString().slice(0, 10)} · ${rev}`;
+  const info = `build ${new Date().toISOString().slice(0, 10)} · ${rev}${dev ? ' · dev' : ''}`;
   const wrapper = read(path.join(VENDOR, 'draco_wasm_wrapper.js'));
   const wasm = fs.readFileSync(path.join(VENDOR, 'draco_decoder.wasm')).toString('base64');
   const lic = read(path.join(VENDOR, 'LICENSE-draco.txt'));
@@ -110,10 +111,14 @@ export function build({ quiet = false, dev = false } = {}) {
   ].join('\n');
   html = html.replace(/<!--BUILD:JS-->[\s\S]*?<!--\/BUILD:JS-->/, () => scripts);
   html = html.replace('</html>', () => `<!--\nthree.js licence:\n${threeLicense.replace(/--/g, '- -')}\n-->\n</html>`);
+  // the size limit (the release file is committed and opened with a double click): a release build over it is not
+  // written; a readable one is, with a warning (the tools open outputs/FLIGHT-LAB.html)
+  const bytes = Buffer.byteLength(html);
+  if (!dev && bytes >= MAX_BYTES) throw new Error(`outputs/FLIGHT-LAB.html would be ${(bytes / 1048576).toFixed(2)} MiB, over the ${MAX_BYTES / 1048576} MiB limit`);
   fs.mkdirSync(OUT, { recursive: true });
   const out = path.join(OUT, 'FLIGHT-LAB.html');
   fs.writeFileSync(out, html);
-  const bytes = Buffer.byteLength(html);
+  if (dev) console.warn('readable (--dev) build: do not commit outputs/FLIGHT-LAB.html; run node build.mjs before committing');
   if (!quiet) console.log(`wrote ${path.relative(here, out)} (${(bytes / 1024 / 1024).toFixed(2)} MB, 3D view ${(view.text.length / 1024).toFixed(0)} KB${dev ? ' readable' : ''}, ${info})`);
   return { out, html, info, bytes, three: { roots: view.threeRoots }, bundleBytes: Buffer.byteLength(view.text) };
 }

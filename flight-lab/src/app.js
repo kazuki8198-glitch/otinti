@@ -160,10 +160,11 @@
   // the 3D cockpit's controls: FL.view3d hands over what a click or a wheel notch on a knob, key or lever asked for, in
   // CADET's words (aircraft/cockpit.js). The G1000's keys and knobs are the 2D panel's ctl(); the flap lever and the gear
   // selector are the keys' doAction(); the throttle and the trim wheel move one notch (CADET's steps: 5 % of the throttle,
-  // 4 % of the trim's range, as Sorajima's trim wheel). The electrical switches, the magnetos, the mixture, the fuel
-  // selector and the primer change only the picture (the view has already moved them): FLIGHT LAB's engine model has no
-  // such systems, so the toast says so once per lesson. Kept apart from doAction so CADET's tests, which cut doAction,
-  // updateControls and tick out of this file, see no new names.
+  // 4 % of the trim's range, as Sorajima's trim wheel). The electrical switches, the magnetos, the mixture and the fuel
+  // selector change only the picture (the view has already moved them; the light switches, under the master, also
+  // turn the aircraft's own outside lights on and off): FLIGHT LAB's engine model has no such systems, so the toast
+  // says so once per lesson. The primer and the parking brake do not move at all: they only toast. Kept apart from
+  // doAction so CADET's tests, which cut doAction, updateControls and tick out of this file, see no new names.
   function cockpitAction(r, c) {
     const L = S.L; if (!r || !L) return;
     const s = L.s, label = c && c.label ? String(c.label) : '';
@@ -181,7 +182,7 @@
       const x = r.value, name = label.replace(/（.*$/, '') || r.id;
       const v = r.type === 'switch' ? (r.on ? 'ON' : 'OFF') : typeof x === 'string' ? x : r.id === 'mixture' && Number.isFinite(x) ? (x >= 0.95 ? 'リッチ' : x < 0.15 ? 'アイドル カットオフ' : `リーン ${Math.round(x * 100)}%`) : '';
       toast(`${name}${v ? ' ' + v : ''}`, 1400);
-      if (!L.switchNoted) { L.switchNoted = true; toast('FLIGHT LAB では、スイッチ・マグネトー・ミクスチャー・燃料の切替は操縦席の絵だけが変わります（エンジンと電気系の動きは変わりません。エンジンは回った状態で始まります）', 4200); }
+      if (!L.switchNoted) { L.switchNoted = true; toast('FLIGHT LAB では、スイッチ・マグネトー・ミクスチャー・燃料の切替は絵だけが変わります（灯火のスイッチは機体の外の灯りも点け消しします）。エンジンと電気系の動きは変わりません（エンジンは回った状態で始まります）', 4600); }
     } else if (r.type === 'prime') toast('プライマー：FLIGHT LAB ではエンジンの始動手順を省いています（エンジンは回った状態で始まります）', 2600);
     else if (r.type === 'exit') toast('飛行をやめるときは Esc / P（一時停止）からメニューや課程表へ', 2400);
     else if (r.type === 'info' && r.text) toast(r.text, 2600);
@@ -389,6 +390,7 @@
     applyLayout();                                                    // (a step can put the hood on or take it off)
     renderDialogs(false);
     cockpitHint();                                                    // (after the dialogs: it waits until none is up)
+    sceneryNote();
     const sp = $('#sch-panel'), fp = $('#free-panel');
     sp.hidden = !(S.screen === 'fly' && !L.free);
     fp.hidden = !(S.screen === 'fly' && L.free);
@@ -485,7 +487,7 @@
     ['H', 'この説明を表示 / 閉じる', '', /^$/, []],
     ['P / Esc', '一時停止（メニュー）', '再開・やり直し・課程表・ガイド・教科書へ', /^$/, []],
     ['L', '水平に戻す（自由飛行のみ）', '数秒間、自動で翼を水平・水平飛行に戻す教材補助', /^$/, []],
-    ['マウス（操縦席）', '見回す・ズーム・計器を操作', 'ドラッグで見回す（ダブルクリックで正面に戻す）。右ボタンを押している間ズーム（計器を大きく読む）。G1000 のキー・つまみ、フラップ・脚・スロットルのレバー、トリムの輪はクリック（ホイールで回す・動かす）', /^$/, [], 'three'],
+    ['マウス（操縦席）', '見回す・ズーム・計器を操作', 'ドラッグで見回す（ダブルクリックで正面に戻す）。右ボタンを押している間、マウスの所をズーム（計器を大きく読む）。G1000 のキー・つまみ、フラップ・脚・スロットルのレバー、トリムの輪はクリック（1 回で 1 段：スロットルは開く・フラップは下げる・トリムは機首下げ）。ホイールでつまみを回す・レバーを動かす（奥へ＝クリックと同じ向き、手前へ＝逆）', /^$/, [], 'three'],
     ['マウス（後方視点）', '機体のまわりを回る', 'ドラッグで回る・ホイールで近く / 遠く・ダブルクリックで元の位置', /^$/, [], 'three'],
   ];
   function renderHelp(target) {
@@ -555,19 +557,30 @@
     $('#panel').hidden = !show; document.body.classList.toggle('nopanel', !show);
     $('#bLayout').hidden = !show;                                     // (the panel's height: nothing to size while it is away)
   }
+  // (in the chase view and under the hood the panel is up whatever I says: I then sets what the cockpit view will do)
   function togglePanel() {
     if (!isThree()) { toast('軽量表示では、2D の計器盤はいつも画面の下に出ています', 1800); return; }
+    const forced = hoodOn() || effView() === 'chase';
     S.prefs.panel2d = !S.prefs.panel2d; savePrefs(); applyLayout();
-    toast(S.prefs.panel2d ? '2D の計器盤を表示（I でしまう）' : panelShown() ? '2D の計器盤：後方視点とフード中はいつも出ます（I は操縦席の視点で効きます）' : '2D の計器盤をしまいました。計器は操縦席の G1000 型パネルで（右ボタンでズーム・I でまた出す）', 2200);
+    if (forced) toast(`操縦席の視点では 2D の計器盤を${S.prefs.panel2d ? '出します' : 'しまいます'}（後方視点とフード中はいつも出ます）`, 2400);
+    else toast(S.prefs.panel2d ? '2D の計器盤を表示（I でしまう）' : '2D の計器盤をしまいました。計器は操縦席の G1000 型パネルで（右ボタンでマウスの所をズーム・I でまた出す）', 2200);
   }
   // the first time in the 3D cockpit (once per page load): how to look around, zoom, use the controls, the 2D panel.
   // Not while a checklist, an ATC call or the estimate is up: the toasts would sit over the dialog's lines
-  let hinted = false;
+  let hinted = false, sceneryNoted = false;
+  const sceneryError = () => !!(isThree() && scene.info && scene.info().error);
   function cockpitHint() {
-    if (hinted || !isThree() || !flying() || effView() !== 'cockpit' || hoodOn() || (scene.ready && !scene.ready())) return;
+    if (hinted || !isThree() || !flying() || effView() !== 'cockpit' || hoodOn() || (scene.ready && !scene.ready() && !sceneryError())) return;
     if (['#sch-check', '#sch-atc', '#sch-est'].some(id => !$(id).hidden)) return;
     hinted = true;
-    toast('3D の操縦席：ドラッグで見回す（ダブルクリックで正面）・右ボタンを押している間ズーム・計器のキーやつまみ、レバーはクリック（ホイールで回す）・I で 2D の計器盤', 7000);
+    toast('3D の操縦席：ドラッグで見回す（ダブルクリックで正面）・右ボタンを押している間マウスの所をズーム・計器のキーやつまみ、レバーはクリック（ホイールで回す）・I で 2D の計器盤', 7000);
+  }
+  // the three.js view's scenery could not be built (a picture that would not decode): the view goes on with a plain
+  // ground; said once per page load (not an app error: the lessons fly the same)
+  function sceneryNote() {
+    if (sceneryNoted || !flying() || !sceneryError()) return;
+    sceneryNoted = true;
+    toast('3D の景色を作れませんでした（地面は無地、飛行場と建物は出ません）。⚙ 設定 → 3D 表示で「軽量」を選ぶと従来の景色で飛べます', 6000, 'bad');
   }
   $('#bLayout').addEventListener('click', () => { S.prefs.layout = (S.prefs.layout + 1) % LAYOUTS.length; applyLayout(); savePrefs(); });
   $('#bSound').addEventListener('click', () => { setSound(!S.prefs.sound); });
@@ -586,7 +599,7 @@
   function draw3d() {
     if (!scene || !S.L) return;
     const L = S.L, three = scene.kind === 'three', hood = three ? hoodOn() : S.screen === 'fly' && L.hood && !L.done;
-    if (three && (S.screen === 'page' || S.screen === 'school')) return;
+    if (three && (S.screen === 'page' || S.screen === 'school')) { if (scene.pause) scene.pause(); return; }
     if (hood && !three) { $('#labels').textContent = ''; return; }
     const gHole = G && G.hole ? G.hole() : null, gOn = !!(G && G.active()) && !hood;
     scene.render({ s: L.s, L, view: effView(), hood, screen: S.screen, hole: gHole, extra: gOn ? (gl, c) => G.draw(gl, c) : null });
@@ -763,9 +776,11 @@
   // what the settings say: the renderer in use and why, the quality, what the stored choice gives after a reload
   function renderInfo() {
     const next = pickRenderer(wantRender())[0], kind = isThree() ? 'three' : 'legacy';
-    // (a reload drops ?render=; after a failed start, asking for three again would only fail again)
+    // (the stored choice, as the settings' 「いま読み込み直す」 button (reloadView) applies it: it drops ?render= from the
+    // address; a plain reload keeps ?render=, and the settings say so. After a failed start, asking for three again
+    // would only fail again)
     const pending = next !== kind && !(renderWhy === 'failed' && next === 'three');
-    return { kind, why: renderWhy, url: urlRender(), next, pending, quality: isThree() ? scene.quality() : qualityId(), gpu: probe ? probe.gpu : '', bundle: !!FL.view3d, ok: !!scene };
+    return { kind, why: renderWhy, url: urlRender(), next, pending, quality: isThree() ? scene.quality() : qualityId(), gpu: probe ? probe.gpu : '', bundle: !!FL.view3d, ok: !!scene, scenery: !sceneryError() };
   }
   // the reload that applies a new choice (an address with ?render= would override it, so that part goes)
   function reloadView() {

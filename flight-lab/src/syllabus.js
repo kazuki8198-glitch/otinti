@@ -269,10 +269,10 @@
           ] },
         { id: 'n1', title: 'VOR の追跡', goal: 'VOR 局に向かうコースに乗り、局通過まで追跡する', aircraft: 'pa28',
           why: 'VOR は GPS が使えないときの基本の電波航法（FAA の Minimum Operational Network として維持されている）。CDI の針の動きを読んで風の修正角を見つける力は、計器飛行の土台になる。',
-          brief: ['PFD の <b>CDI</b>（HSI の中のコースの針）を使います。下のパネルの <b>CDI</b> ボタンで NAV1 に切り替え、CRS（−/+）でコースを合わせる。', '<b>TO 表示で針が右なら右へ修正（針の方へ飛ぶ）</b>。針が中央に戻り始めたら修正を半分戻す（ブラケッティング）。風があると、針が止まる針路＝風の修正角。', '目盛りは片側 2 ドット：VOR は 1 ドット＝5°、2 ドット（いっぱい）＝10°。局に近づくほど針は敏感に。局上空で TO が FROM に変わります。'],
+          brief: ['PFD の <b>CDI</b>（HSI の中のコースの針）を使います。PFD の下の <b>CDI</b> キーで NAV1 に切り替え、CRS（3D の操縦席ではつまみ、2D の計器盤では −/+）でコースを合わせる。', '<b>TO 表示で針が右なら右へ修正（針の方へ飛ぶ）</b>。針が中央に戻り始めたら修正を半分戻す（ブラケッティング）。風があると、針が止まる針路＝風の修正角。', '目盛りは片側 2 ドット：VOR は 1 ドット＝5°、2 ドット（いっぱい）＝10°。局に近づくほど針は敏感に。局上空で TO が FROM に変わります。'],
           std: '追跡中 CDI ±1 ドット・高度 ±150 ft（局から 1 NM 以上の区間）', setup: { at: 'away', brg: 220, km: 22, altFt: 3000, toward: true, offset: 25, kt: 100, nav: 'VOR', obsOff: -40, wind: { rel: 80, kt: 12, gust: 0.6 } }, book: ['nav.vor'],
           steps: [
-            { name: 'コースの設定と会合', g: { kt: 100, how: 'level' }, keys: 'パネルの CDI（NAV1）と CRS −/+、A / D で針路', say: 'NAV1 は LAB VOR（113.50）。CRS を局への方位 {brgV}° 付近に合わせ（CRS ボタン）、針が中央へ来るように会合する', until: (c, L) => Math.abs(c.cdi) < 1 && L.av.cdi === 'NAV1' && Math.abs(w180(L.av.crs - c.brgV)) < 12, max: 300 },
+            { name: 'コースの設定と会合', g: { kt: 100, how: 'level' }, keys: 'PFD の CDI キー（NAV1）と CRS、A / D で針路', say: 'NAV1 は LAB VOR（113.50）。CRS を局への方位 {brgV}° 付近に合わせ（CRS）、針が中央へ来るように会合する', until: (c, L) => Math.abs(c.cdi) < 1 && L.av.cdi === 'NAV1' && Math.abs(w180(L.av.crs - c.brgV)) < 12, max: 300 },
             { name: 'VOR 追跡', g: { kt: 100, how: 'level' }, keys: k('roll', 'pitch', 'trim'), say: '針を中央に保って VOR 局へ（局上空で TO→FROM）。針が止まる針路を探す', tgt: { cdi: [0, 1], alt: [L => L.alt0, 150] }, hold: 60, until: c => c.dmeV < 0.5, max: 720, grade: true, gradeWhen: c => c.dmeV > 1 },
           ] },
         { id: 'n2', title: '推測航法と目的地変更', goal: '針路と時間で目標へ飛び、途中の目的地変更で新しい針路・距離・時間を見積もる', aircraft: 'pa28',
@@ -293,7 +293,7 @@
           steps: [
             { name: 'GPS 故障', say: 'GPS 信号を失いました（MFD の地図が使えません）。落ち着いて、まず高度と姿勢を保つ', g: { kt: 100, how: 'level' }, keys: k('pitch', 'thr'), fail: 'gps', dur: 8 },
             { name: '管制へ', atc: 'lost' },
-            { name: 'VOR で位置を確かめる', g: { kt: 100, how: 'level' }, keys: 'パネルの CDI → NAV1、CRS −/+（局への方位を探す）', say: 'CDI を NAV1 に。CRS を回して針が中央・TO になる方位を探し、その方位へ旋回', until: (c, L) => L.av.cdi === 'NAV1' && Math.abs(c.cdi) < 1.5 && Math.abs(w180(c.hdg - c.brgV)) < 25, max: 300 },
+            { name: 'VOR で位置を確かめる', g: { kt: 100, how: 'level' }, keys: 'PFD の CDI キー → NAV1、CRS（局への方位を探す）', say: 'CDI を NAV1 に。CRS を回して針が中央・TO になる方位を探し、その方位へ旋回', until: (c, L) => L.av.cdi === 'NAV1' && Math.abs(c.cdi) < 1.5 && Math.abs(w180(c.hdg - c.brgV)) < 25, max: 300 },
             { name: 'VOR 局へ', g: { kt: 100, how: 'level' }, keys: k('roll', 'pitch'), say: '針を中央に保って局へ。DME（距離）が減ることを確かめる', tgt: { alt: [L => L.alt0, 300] }, until: c => c.dmeV < 1.0, max: 900, grade: true },
             { name: 'LAB RWY へ', g: { kt: 100, how: 'level' }, keys: k('roll', 'pitch'), say: 'LAB VOR から LAB RWY へ（局から方位 約 250°・5.6 NM）。滑走路が見えたら報告のつもりで', tgt: { alt: [L => L.alt0, 300] }, until: (c, L) => rwyNm(L) < 2, max: 600, grade: true },
           ] },

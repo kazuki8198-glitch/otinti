@@ -16,16 +16,25 @@ const flightLessons = () => SC.lessonOrder().map(id => SC.lesson(id)).filter(l =
 const hands = (s, kt, bank = 0) => { if (s.base == null) s.base = s.out.pitch; const e = s.out.ias - kt; s.base = clamp(s.base + e * 0.05 * DT, -15, 18); s.keyHold = true; s.pRate = 0; s.pTgt = clamp(s.base + 0.35 * e, -15, 18); s.rIn = clamp(0.045 * (bank - s.out.bank) - 0.012 * (-s.w[2] / P.DEG), -1, 1); };
 
 // ------------------------------------------------------------------ the built single file
-const B = build({ quiet: true });
-const html = B.html;
-// the page without its base64 payloads (CADET's textures and models, the Draco WebAssembly): random letters can spell
-// anything, so the placeholder and key checks read the rest
+// Built on first use, by the build tests only: they need esbuild and ../cadet (npm ci); without them those four fail
+// with build()'s message, and the flight, school, book, quiz and radio tests below still run.
+// text: the page without its base64 payloads (CADET's textures and models, the Draco WebAssembly): random letters can
+// spell anything, so the placeholder and key checks read the rest
 const ASSETS_RE = /globalThis\.CADET_ASSETS = (\{[^}]*\});/;
-const assets = JSON.parse((ASSETS_RE.exec(html) || [, '{}'])[1]);
-const text = html.replace(ASSETS_RE, 'globalThis.CADET_ASSETS = {};').replace(/FL\.DRACO_WASM_B64 = "[A-Za-z0-9+/=]*"/, 'FL.DRACO_WASM_B64 = ""');
-const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+let built_ = null;
+const built = () => {
+  if (!built_) {
+    const B = build({ quiet: true }), html = B.html;
+    const assets = JSON.parse((ASSETS_RE.exec(html) || [, '{}'])[1]);
+    const text = html.replace(ASSETS_RE, 'globalThis.CADET_ASSETS = {};').replace(/FL\.DRACO_WASM_B64 = "[A-Za-z0-9+/=]*"/, 'FL.DRACO_WASM_B64 = ""');
+    const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+    built_ = { B, html, assets, text, scripts };
+  }
+  return built_;
+};
 
 test('build: one HTML file, no external scripts or stylesheets, everything inline; the only remote host is Google\'s tile host', () => {
+  const { html } = built();
   assert.doesNotMatch(html, /<script[^>]*\bsrc\s*=/i, 'no <script src>');
   assert.doesNotMatch(html, /<link[^>]*rel=["']?stylesheet/i, 'no external stylesheet');
   assert.doesNotMatch(html, /import\s*\(\s*['"]https?:/, 'no remote import()');
@@ -37,12 +46,14 @@ test('build: one HTML file, no external scripts or stylesheets, everything inlin
 });
 
 test('build: no placeholders, no template markers, no API keys', () => {
+  const { html, text, assets } = built();
   assert.ok(text.length < html.length / 3 && Object.keys(assets).length > 0, 'the base64 payloads were found and set aside');
   for (const re of [/\bTODO\b/, /\bFIXME\b/, /\bTBD\b/, /lorem ipsum/i, /PLACEHOLDER/, /<!--BUILD:/, /\{\{\s*\w+\s*\}\}/, /XXX/]) assert.doesNotMatch(text, re, String(re));
   assert.doesNotMatch(text, /sk-ant-api/); assert.doesNotMatch(text, /AIza[0-9A-Za-z_-]{30,}/);
 });
 
 test('build: the three.js view — one bundle, one three.js, CADET\'s 12 textures and 4 aircraft models, the licences, under the size limit', () => {
+  const { B, html, assets, scripts } = built();
   // every inline script parses (the escaping of "</script" and "<!--" kept them valid)
   for (const sc of scripts) new vm.Script(sc);
   // the bundle: a classic script after acmesh.js and before scene.js / app.js, defining FL.view3d (and nothing at load)
@@ -78,6 +89,7 @@ test('build: the three.js view — one bundle, one three.js, CADET\'s 12 texture
 });
 
 test('build: the displays, the instructor panel, the control strip and the required notices are on the page', () => {
+  const { html } = built();
   for (const id of ['pfd', 'mfd', 'audio', 'view3d', 'sch-panel', 'ctl-strip', 'keyhelp', 'menu', 'school', 'debrief', 'page', 'ack', 'gattr']) assert.match(html, new RegExp(`id="${id}"`), id);
   assert.match(html, /本アプリは公開情報を基にした非公式の自主学習用教材です。実機訓練、教官の指示、POH\/AFM、SOP、航空法規を優先してください。/);
   assert.match(html, /G1000型配置と基本概念を学ぶ教材/); assert.match(html, /NOT FOR NAVIGATION/); assert.match(html, /模式図/); assert.match(html, /正式な飛行日誌ではありません/);

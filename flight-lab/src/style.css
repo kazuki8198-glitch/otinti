@@ -54,6 +54,10 @@ kbd { font: 700 11.5px var(--mono); background: rgba(95, 212, 255, .12); border:
 #viewBtns button { font-size: 12px; padding: 4px 10px; background: rgba(8, 17, 31, .8); border-radius: 16px; }
 #gattr { position: absolute; left: 8px; bottom: 24px; background: rgba(255, 255, 255, .88); color: #333; border-radius: 4px; padding: 1px 6px; font-size: 11px; max-width: 60%; }
 #gattr .glogo { font-weight: 700; margin-right: 6px; }
+/* the 3D cockpit filling the screen: the buttons at the bottom left (at the right they sat over the Seminole's gear
+   lever, and a click on it pressed 視点 / 音 / 一時停止 instead), Google's attribution above them */
+body.r3.nopanel #viewBtns { left: 8px; right: auto; justify-content: flex-start; }
+body.r3.nopanel #gattr { bottom: 58px; pointer-events: none; }
 
 /* the instructor panel (top left): the step, the instruction, the keys, the targets as gauges, the hold */
 #sch-panel, #free-panel { position: absolute; left: 10px; top: 10px; width: min(460px, calc(100% - 330px)); min-width: 280px; background: rgba(6, 14, 26, .88); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px 10px; font-size: 13px; line-height: 1.55; max-height: calc(100% - 56px); overflow: auto; box-shadow: 0 6px 22px rgba(0, 0, 0, .35); }
@@ -128,8 +132,6 @@ kbd { font: 700 11.5px var(--mono); background: rgba(95, 212, 255, .12); border:
 #toast { position: fixed; left: 50%; bottom: calc(var(--panelH) + 58px); transform: translateX(-50%); display: grid; gap: 6px; justify-items: center; pointer-events: none; z-index: 40; width: max-content; max-width: calc(100% - 32px); }
 #toast div { background: var(--panel-solid); border: 1px solid var(--line); border-radius: 5px; padding: 6px 14px; font: 13px/1.45 var(--jp); transition: opacity .4s; max-width: 620px; }
 #toast div.good { border-color: var(--green); } #toast div.bad { border-color: var(--red); color: #ffd0cc; }
-/* with the 2D panel away, the 3D cockpit's own panel fills the lower part of the screen: the toasts go above it */
-body.nopanel #toast { bottom: 44%; }
 
 /* ------------------------------------------------------------------ the G1000-type panel (bottom) */
 #panel { display: grid; grid-template-columns: minmax(0, 1fr) 150px minmax(0, 1fr); gap: 6px; padding: 6px; background: #05080d; border-top: 1px solid var(--line2); min-height: 0; }

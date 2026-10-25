@@ -11,7 +11,7 @@ import { errorsOf } from '../../career/tem.js';
 
 const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' } };
 export const DEBRIEF_FLAGS = ['day1_done'];
-export const DEBRIEF_HOOKS = ['look', 'nod', 'logbook'];
+export const DEBRIEF_HOOKS = ['look', 'nod', 'logbook', 'ai'];
 const GRADE = { S: 'S（とても良い）', A: 'A（良い）', B: 'B（合格）', C: 'C（もう一度）', '―': '途中まで' };
 const q = (s) => `「${s}」`;
 
@@ -101,7 +101,10 @@ export function debriefDialogs(sum, { voice = 'instructor' } = {}) {
     effects: [{ trust: 'instructor', add: t }, { set: 'day1_done', to: true }], hook: { name: 'nod' }, next: nx('trust') });
   N.sign = say(V ? V.sign : '航空日誌に今日の飛行を書いて、署名しておきます。', { choices: [
     { text: '航空日誌を見る', next: 'bye', effects: [{ hook: 'logbook' }] },
+    // (M8) a free question about the day, to the AI instructor (only while the setting is on: ctx ai.on)
+    { text: '今日の飛行について質問したい', if: { ctx: 'ai.on', is: true }, next: 'free' },
   ] });
+  N.free = say(V ? 'どうぞ。' : 'いいですよ。今日の飛行のことなら、何でも。', { hook: { name: 'ai', arg: 'debrief' }, next: 'sign' });
   N.bye = say(V ? V.bye : '今日はここまで。ゆっくり休んでください。', { end: true });
   return { speakers: SPEAKERS, flags: [...DEBRIEF_FLAGS], hooks: [...DEBRIEF_HOOKS], dialogs: { debrief: { start: 'open', nodes: N } } };
 }

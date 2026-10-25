@@ -32,6 +32,13 @@ const CSS = `
 #fhud .dh-line.p .w { color: #f2b632; }
 #fhud .dh-line .en { font: 600 12.5px/1.5 var(--fh-mono); color: #e1f4ff; }
 #fhud .dh-line .ja { display: block; margin-top: 2px; font-size: 11.5px; color: var(--ink-dim, #a9b7c6); }
+#fhud .dh-mic { margin: 4px 0 2px; padding: 5px 8px; border-radius: 6px; font-size: 12px; line-height: 1.55; background: rgba(92, 200, 255, .1); border-left: 3px solid var(--accent, #5cc8ff); }
+#fhud .dh-mic.on { animation: dh-mic 1.2s ease-in-out infinite; }
+#fhud .dh-mic.ng { background: rgba(255, 181, 71, .1); border-left-color: var(--fh-amber, #ffb547); }
+#fhud .dh-mic .heard { display: block; font: 600 12px/1.5 var(--fh-mono); color: #e1f4ff; }
+#fhud .dh-mic .miss { display: block; color: var(--fh-amber, #ffb547); font-weight: 700; }
+@keyframes dh-mic { 50% { background: rgba(92, 200, 255, .22); } }
+@media (prefers-reduced-motion: reduce) { #fhud .dh-mic.on { animation: none; } }
 #fhud .dh-clock { height: 4px; margin: 6px 0 2px; border-radius: 2px; background: rgba(255, 255, 255, .12); overflow: hidden; }
 #fhud .dh-clock i { display: block; height: 100%; background: var(--accent, #5cc8ff); transition: width .12s linear; }
 #fhud .dh-clock.low i { background: var(--fh-amber, #ffb547); }
@@ -90,8 +97,9 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
   const rSt = make('div', 'dh-st'), rStB = make('b'), rStF = make('span');
   put(rSt, rStB, rStF);
   const rLines = make('div', 'dh-lines'), rQ = make('div', 'fh-aq'), rOpts = make('div', 'fh-ao'), rClock = make('div', 'dh-clock'), rClockI = make('i'), rRes = make('div', 'fh-ar');
+  const rMic = make('div', 'dh-mic'); rMic.hidden = true; rMic.setAttribute('aria-live', 'polite');   // (M8) the microphone
   put(rClock, rClockI);
-  put(radio, rSt, rLines, rQ, rOpts, rClock, rRes); radio.hidden = true;
+  put(radio, rSt, rLines, rQ, rOpts, rMic, rClock, rRes); radio.hidden = true;
   if (right) { right.insertBefore(radio, right.firstChild); right.insertBefore(check, right.firstChild); }
   let onRadioPick = null, onCheckClick = null;
   rOpts.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && onRadioPick) onRadioPick(+b.dataset.k); });
@@ -126,11 +134,12 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
     const curEl = cL.children[c.i]; if (curEl && curEl.scrollIntoView) curEl.scrollIntoView({ block: 'nearest' });
   }
   // v: atc.view() | null; ja: show the Japanese
-  function setRadio(v) {
+  // (M8) mic: the microphone is on (M answers by voice)
+  function setRadio(v, { mic = false } = {}) {
     radio.hidden = !v;
     if (!v) return;
     const ja = !settings || settings.get('radioJa') !== false;
-    const sig = JSON.stringify([v.id, v.phase, v.lines.length, v.lines.length ? v.lines[v.lines.length - 1].en : '', v.choices.length, v.last && v.last.en, ja]);
+    const sig = JSON.stringify([v.id, v.phase, v.lines.length, v.lines.length ? v.lines[v.lines.length - 1].en : '', v.choices.length, v.last && v.last.en, ja, mic]);
     if (!same(radio, sig)) {
       rStB.textContent = STATION[v.station] || v.station; rStF.textContent = v.freq;
       rLines.textContent = '';
@@ -140,7 +149,7 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
         if (ja && l.ja) put(d, make('span', 'ja', l.ja));
         put(rLines, d);
       }
-      rQ.textContent = v.phase === 'choose' ? `${v.q}　1〜3 キーで選ぶ` : v.phase === 'hear' ? '聞いています…' : '';
+      rQ.textContent = v.phase === 'choose' ? `${v.q}　1〜3 キーで選ぶ${mic ? '・M を押して声で言う' : ''}` : v.phase === 'hear' ? '聞いています…' : '';
       rQ.hidden = !rQ.textContent;
       rOpts.textContent = '';
       for (const c of v.choices) {
@@ -154,6 +163,19 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
     rClock.hidden = v.phase !== 'choose';
     const k = v.time ? Math.max(0, v.timeLeft / v.time) : 0;
     rClockI.style.width = `${(k * 100).toFixed(1)}%`; rClock.classList.toggle('low', k < 0.3);
+  }
+
+  // (M8) what the microphone heard: { on (listening), heard, missing: [the right answer's key words not heard], msg } | null
+  function setMic(m) {
+    const sig = JSON.stringify(m || null); if (same(rMic, sig)) return;
+    rMic.hidden = !m;
+    if (!m) return;
+    rMic.className = 'dh-mic' + (m.on ? ' on' : m.missing && m.missing.length ? ' ng' : '');
+    rMic.textContent = '';
+    put(rMic, make('b', '', m.on ? 'マイク：聞いています（英語で答えを言ってください）' : 'マイク'));
+    if (m.heard) put(rMic, make('span', 'heard', `聞こえた：“${m.heard}”`));
+    if (m.missing && m.missing.length) put(rMic, make('span', 'miss', `足りない言葉：${m.missing.join('・')}`));
+    if (m.msg) put(rMic, make('span', '', m.msg));
   }
 
   // ---- the logbook
@@ -197,9 +219,9 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
   book.addEventListener('keydown', (e) => { if (e.code === 'Escape' || e.code === 'Enter') { e.preventDefault(); e.stopPropagation(); hideLogbook(); } });
 
   return {
-    setTask, setChecklist, setRadio, showLogbook, hideLogbook,
+    setTask, setChecklist, setRadio, setMic, showLogbook, hideLogbook,
     onRadioPick(fn) { onRadioPick = fn; }, onChecklistClick(fn) { onCheckClick = fn; },
     get logbookOpen() { return !book.hidden; },
-    hideAll() { setTask(null); setChecklist(null); setRadio(null); },
+    hideAll() { setTask(null); setChecklist(null); setRadio(null); setMic(null); },
   };
 }

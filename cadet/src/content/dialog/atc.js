@@ -43,6 +43,8 @@ export function dayRadio(weather) {
   const windJa = W.windKt < 3 ? '風は静穏' : `風 ${String(W.windMag).padStart(3, '0')}° ${W.windKt} kt`;
   const qnhSay = digits(W.qnh.toFixed(2).replace('.', '')), qnhTxt = W.qnh.toFixed(2);
   const info = W.info, F = CALL.full, S = CALL.short;
+  // (M8) the solo cross-country goes out with a transponder code for the flight following (the read-back has it too)
+  const sqEn = W.xc ? ', squawk four two one five' : '', sqJa = W.xc ? 'スコーク 4215。' : '';
   // (M6: a day of low cloud — the instrument chapter flies in it — has its own sky and the ILS in use)
   const skyEn = W.ifr ? 'Visibility three, mist. Ceiling eight hundred broken, one thousand five hundred overcast' : 'Visibility one zero. Few clouds at three thousand five hundred';
   const skyJa = W.ifr ? '視程 3 SM、もや。雲底 800 ft（BKN）、1,500 ft に OVC' : '視程 10 SM。3,500 ft に少しの雲';
@@ -66,18 +68,18 @@ export function dayRadio(weather) {
       { en: 'Ground, Archer, ready to go, over.', why: '相手 → 自分 → 位置 → ATIS → 要求、の順です。“over” は使いません。',
         negative: 'Station calling Ground, say again.' },
     ],
-    reply: [{ who: 'GND', en: `${F}, LAB Ground, runway three six, taxi via Alpha, hold short of runway three six at Alpha One.`, ja: '滑走路 36 へ。誘導路 A 経由、A1 で滑走路 36 の手前に止まれ。' }],
+    reply: [{ who: 'GND', en: `${F}, LAB Ground, runway three six, taxi via Alpha, hold short of runway three six at Alpha One${sqEn}.`, ja: `滑走路 36 へ。誘導路 A 経由、A1 で滑走路 36 の手前に止まれ。${sqJa}` }],
     time: 25 };
   X.gnd_rb = { station: 'GND', freq: FREQ.ground, kind: 'readback',
     q: 'タキシーの指示を復唱します。',
     choices: [
-      { en: `Runway three six, taxi via Alpha, hold short of runway three six at Alpha One, ${S}.`, ok: true },
+      { en: `Runway three six, taxi via Alpha, hold short of runway three six at Alpha One${sqEn}, ${S}.`, ok: true },
       { en: `Taxi via Alpha, ${S}.`, why: '滑走路の手前で止まる指示（hold short）は必ず復唱します（AIM 4-3-18）。',
         negative: `${S}, negative. Read back the hold short instruction: hold short of runway three six at Alpha One.` },
       { en: `Runway three six, cleared for takeoff, ${S}.`, why: '「滑走路 36 へ」は離陸の許可ではありません。滑走路に入る許可でもありません。',
         negative: `${S}, negative, you are not cleared for takeoff. Taxi via Alpha, hold short of runway three six at Alpha One.` },
     ],
-    note: `誘導路 A を南へ走り、A1 の停止線の手前で止まります。ランナップはそこで。今日は${goJa}です。`, time: 25 };
+    note: `誘導路 A を南へ走り、A1 の停止線の手前で止まります。ランナップはそこで。今日は${goJa}です。${W.xc ? 'トランスポンダーは 4215 に。' : ''}`, time: 25 };
   // ③ the tower: ready, then line up and wait
   X.twr_ready = { station: 'TWR', freq: FREQ.tower, kind: 'call',
     q: 'ランナップが終わりました。管制塔に出発の準備ができたことを伝えます。',

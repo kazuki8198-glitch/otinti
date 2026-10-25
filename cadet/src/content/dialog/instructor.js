@@ -10,7 +10,9 @@ import { gameBook, sentences } from '../book.js';
 export const INSTRUCTOR = { id: 'instructor', name_ja: '早瀬 航', title_ja: '早瀬 教官', role_ja: '担当教官' };
 const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' } };
 const FLAGS = ['met_instructor', 'briefed_today', 'brief_checked'];
-const HOOKS = ['board', 'book', 'nod', 'point', 'look'];
+const HOOKS = ['board', 'book', 'nod', 'point', 'look', 'ai'];
+// (M8) the AI instructor: offered only while the setting is on (ctx ai.on); its talk is the game's (ai/session.js)
+const FREE = { text: '自由に質問したい', if: { ctx: 'ai.on', is: true }, next: 'free' };
 const CHOICES_MAX = 12;
 const LINE = 90;                                                               // characters per line, where the data allows
 const KEY_LINES = 4;                                                           // an answer: at most this many lines
@@ -266,20 +268,26 @@ export function instructorDialogs(FL, { lessonId = 'a1', day = null } = {}) {
   B.menu = say('何から始めましょうか。', { if: { not: { flag: 'brief_checked' } }, else: 'menu:mid', choices: [
     { text: '今日の課目を教えてください', next: 'lesson' },
     { text: '質問があります', next: 'ask:root' },
+    FREE,
     { text: 'また後で来ます', next: 'later' },
   ] });
   B['menu:mid'] = say('では、続けましょうか。', { if: { not: { flag: 'briefed_today' } }, else: 'menu:done', choices: [
     { text: 'このあとの流れを教えてください', next: 'wrap' },
     { text: '今日の課目をもう一度聞かせてください', next: 'lesson' },
     { text: '質問があります', next: 'ask:root' },
+    FREE,
     { text: 'また後で来ます', next: 'later' },
   ] });
   B.later = say('わかりました。準備ができたら、声をかけてください。', { hook: { name: 'nod' }, end: true });
   B['menu:done'] = say('ほかに何かありますか。', { choices: [
     { text: '今日の課目をもう一度聞かせてください', next: 'lesson' },
     { text: '質問があります', next: 'ask:root' },
+    FREE,
     { text: '準備に向かいます', next: 'bye' },
   ] });
+  // (M8) a free question: the game opens the AI instructor's talk here (hook 'ai'); when it is over the talk goes on
+  // from 'ask:thanks' (or, when no answer could come, from the textbook's questions: 'ask:root')
+  B.free = say('いいですよ。何でも聞いてください。', { hook: { name: 'ai', arg: 'brief' }, next: 'ask:thanks' });
 
   // today's lesson: title → goal → why (with the figure on the board) → the points → the standard
   const steps = [];                                                            // [text, extra]
@@ -322,6 +330,7 @@ export function instructorDialogs(FL, { lessonId = 'a1', day = null } = {}) {
 
   B.post = say('ここまでで、質問はありますか。', { choices: [
     { text: '質問があります', next: 'ask:root' },
+    FREE,
     { text: '大丈夫です', next: 'wrap' },
   ] });
 

@@ -4,6 +4,9 @@
 // Esc closes the textbook (and only the textbook: otherwise it is left to the game's pause menu); while it is open, Tab
 // stays inside it and the line underneath waits. Keys are read in the capture phase and stopped there, so the game does
 // not also act on them; keys the conversation does not use (WASD, F, Esc without the book) still reach the game.
+// (M8) A line may ask for a question (view.input: a text field above the subtitle, Enter or 聞く sends it to onAsk) and
+// a line may grow while it shows (view.stream: the same node with more text — the AI instructor's answer as it comes;
+// view.pending: more is coming, so no choices and no "next" yet).
 // Works with a mouse, a keyboard or a touch screen, at phone width. The CSS is injected once and scoped under #dlg, so
 // it cannot leak into the game's HUD.
 const CSS = `
@@ -42,6 +45,13 @@ const CSS = `
 #dlg .dlg-cue { min-height: 1.5em; margin-top: 2px; text-align: right; font-size: 12px; color: var(--ink-dim, #a9b7c6); }
 #dlg .dlg-cue.wait { animation: dlg-pulse 1.6s ease-in-out infinite; }
 @keyframes dlg-pulse { 50% { opacity: .45; } }
+/* (M8) the question typed to the AI instructor: a field over the subtitle */
+#dlg .dlg-ask { flex: none; display: flex; gap: 8px; padding: 0 4px; pointer-events: auto; }
+#dlg .dlg-ask input { flex: 1 1 auto; min-width: 0; font: inherit; font-size: calc(17px * var(--sub-k, 1)); padding: 10px 14px; border-radius: 12px;
+  border: 1px solid var(--accent, #5cc8ff); background: rgba(10, 18, 28, 0.94); color: var(--ink, #eef3f8); }
+#dlg .dlg-ask input:focus-visible { outline: 2px solid #ffd479; outline-offset: 2px; }
+#dlg .dlg-ask button { flex: none; font: inherit; font-weight: 800; padding: 0 18px; border-radius: 12px; border: 0; cursor: pointer;
+  background: var(--accent, #5cc8ff); color: var(--accent-ink, #04121c); }
 #dlg .dlg-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden;
   clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 
@@ -153,7 +163,7 @@ function chapterLabel(ch) {
 const sameView = (a, b) => !!a && !!b && a.dialog === b.dialog && a.node === b.node && a.text === b.text && a.name === b.name && a.color === b.color
   && a.choices.length === b.choices.length && a.choices.every((c, k) => c.text === b.choices[k].text && c.i === b.choices[k].i);
 
-export function createDialogUI({ root = document.body, onNext = () => {}, onChoose = () => {}, onBookClose = () => {}, settings = null } = {}) {
+export function createDialogUI({ root = document.body, onNext = () => {}, onChoose = () => {}, onBookClose = () => {}, onAsk = () => {}, settings = null } = {}) {
   const doc = root.ownerDocument || document;
   const win = doc.defaultView || globalThis;
   if (!doc.getElementById('dlg-css')) { const st = doc.createElement('style'); st.id = 'dlg-css'; st.textContent = CSS; doc.head.appendChild(st); }
@@ -183,7 +193,11 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   const sr = make('p', 'dlg-sr', { 'aria-live': 'polite' });
   const cue = make('div', 'dlg-cue', { 'aria-hidden': 'true' });
   box.appendChild(chip); box.appendChild(line); box.appendChild(cue);
-  wrap.appendChild(list); wrap.appendChild(box);
+  const askRow = make('div', 'dlg-ask');
+  const askInput = make('input', '', { type: 'text', 'aria-label': '教官への質問', autocomplete: 'off', spellcheck: 'false', enterkeyhint: 'send' });
+  const askBtn = make('button', '', { type: 'button' }); askBtn.textContent = '聞く';
+  askRow.appendChild(askInput); askRow.appendChild(askBtn); askRow.hidden = true;
+  wrap.appendChild(list); wrap.appendChild(askRow); wrap.appendChild(box);
   const book = make('div', 'dlg-book', { role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'dlg-book-title' });
   const paper = make('article', 'dlg-paper');
   const head = make('header', 'dlg-bk-head');
@@ -255,6 +269,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     unschedule();
     typing = false; shown = chars.length; paint();
     if (!cur) return;
+    if (cur.pending) { cue.textContent = cur.cue || '…'; cue.classList.add('wait'); return; }
     if (cur.choices.length) {
       list.hidden = false; choicesAt = now();
       const n = Math.min(9, cur.choices.length);
@@ -302,6 +317,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   function advance() {
     if (!open || !cur) return;
     if (typing) { reveal(); return; }
+    if (cur.pending) return;
     if (cur.choices.length || acting()) return;
     markActed();
     onNext();
@@ -318,7 +334,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   function speak(v) {
     hush();
     if (!settings || typeof settings.get !== 'function' || !settings.get('voice')) return;
-    if (!v || v.speaker === 'player' || v.speaker === 'narrator' || !win.speechSynthesis || typeof win.SpeechSynthesisUtterance !== 'function') return;
+    if (!v || v.pending || v.speaker === 'player' || v.speaker === 'narrator' || !win.speechSynthesis || typeof win.SpeechSynthesisUtterance !== 'function') return;
     const voice = jaVoice();
     if (!voice) return;
     try {
@@ -339,7 +355,10 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
       text: String(view.text ?? ''),
       choices: Array.isArray(view.choices)
         ? view.choices.map((c, k) => ({ i: Number.isInteger(c && c.i) ? c.i : k, text: String((c && c.text) ?? '') })) : [],
-      ends: !!view.ends };
+      ends: !!view.ends, stream: !!view.stream, pending: !!view.pending, cue: view.cue ? String(view.cue) : '',
+      input: view.input && typeof view.input === 'object' ? { max: Number(view.input.max) || 300, placeholder: String(view.input.placeholder || '') } : null };
+    // (M8) more of a line that is still coming in: added to what is already shown
+    if (open && cur && v.stream && cur.dialog === v.dialog && cur.node === v.node && v.text.startsWith(cur.text)) { extend(v); return; }
     // the same line again with nothing done in between (a second call for one change): keep the reveal where it is
     if (open && actedGen !== gen && sameView(cur, v)) { cur = v; return; }
     gen++; cur = v;
@@ -358,16 +377,50 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
       wrap.classList.remove('in'); void wrap.offsetWidth; wrap.classList.add('in');   // restart the entrance
     }
     box.scrollTop = 0;                                                        // a very long line scrolls inside the box: start at its top
+    showAsk(v.input);
     startTyping(v.text);
     speak(v);
   }
+  // (M8) the line grows (the same node, more text): the new characters join the typewriter; the choices come when it is done
+  function extend(v) {
+    const was = cur; cur = v;
+    const add = Array.from(v.text).slice(chars.length);
+    let t = chars.length ? at[chars.length - 1] + 1 + pauseAfter(chars[chars.length - 1]) : 0;
+    for (const c of add) { at.push(t); chars.push(c); t += 1 + pauseAfter(c); }
+    const sameChoices = was.choices.length === v.choices.length && was.choices.every((c, k) => c.text === v.choices[k].text);
+    if (!sameChoices) buildChoices(v.choices);
+    if (shown < chars.length) {
+      if (!typing) { typing = true; last = now(); progress = Math.max(progress, at[shown] || 0); cue.textContent = ''; cue.classList.remove('wait'); list.hidden = true; }
+      paint(); schedule();
+    } else if (!typing) finishTyping();
+    if (was.pending && !v.pending) { sr.textContent = `${v.name}：${v.text}`; speak(v); }
+  }
+  function showAsk(inp) {
+    askRow.hidden = !inp;
+    if (!inp) { if (askRow.contains(doc.activeElement)) try { doc.activeElement.blur(); } catch (e) { /* nothing focused */ } return; }
+    askInput.maxLength = inp.max; askInput.placeholder = inp.placeholder; askInput.value = '';
+    setTimeout(() => { if (!askRow.hidden && !bookOpen) try { askInput.focus({ preventScroll: true }); } catch (e) { /* focus is a nicety */ } }, 30);
+  }
+  function sendAsk() {
+    const t = askInput.value.trim();
+    if (!t || askRow.hidden || !cur || !cur.input) return;
+    askInput.value = ''; askRow.hidden = true;
+    try { askInput.blur(); } catch (e) { /* gone */ }
+    onAsk(t);
+  }
+  askInput.addEventListener('keydown', (e) => {
+    // Enter sends (not the Enter that ends a kana-kanji conversion); Esc only leaves the field
+    if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); e.stopPropagation(); sendAsk(); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); try { askInput.blur(); } catch (err) { /* gone */ } }
+  });
+  askBtn.addEventListener('click', (e) => { e.stopPropagation(); sendAsk(); });
   function hide() {
     unschedule(); hush();
     typing = false; armed = false;
     if (!open) { cur = null; return; }
     open = false; cur = null; gen++;
     if (wrap.contains(doc.activeElement)) try { doc.activeElement.blur(); } catch (e) { /* nothing focused */ }
-    wrap.hidden = true; list.hidden = true; list.textContent = ''; buttons = []; sel = -1;
+    wrap.hidden = true; list.hidden = true; list.textContent = ''; buttons = []; sel = -1; askRow.hidden = true; askInput.value = '';
     chars = []; at = []; shown = 0; paint(); cue.textContent = ''; sr.textContent = '';
   }
 
@@ -569,6 +622,9 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     get bookOpen() { return bookOpen; },
     get typing() { return typing; },
     reveal,
+    // (M8) the question field: what is typed in it, and sending it (tests; the field's own Enter does the same)
+    get asking() { return !askRow.hidden; },
+    ask(text) { askInput.value = String(text ?? ''); sendAsk(); },
     get el() { return el; },
     destroy() {
       if (destroyed) return;

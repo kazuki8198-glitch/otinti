@@ -33,14 +33,23 @@ const CSS = `
 #menu h3 { margin: 16px 0 6px; font-size: 14px; color: var(--ink-dim); font-weight: 600; letter-spacing: .04em; }
 #menu .m-note { margin-top: 12px; font-size: 12px; color: var(--ink-dim); line-height: 1.7; }
 #menu p { line-height: 1.75; font-size: 14px; }
+#menu .m-field { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+#menu .m-field input[type=text], #menu .m-field input[type=password] { flex: 1 1 200px; min-width: 0; font: inherit; font-size: 14px; padding: 8px 10px; border-radius: 10px;
+  border: 1px solid var(--glass-line); background: rgba(255,255,255,.06); color: var(--ink); }
+#menu .m-field button { font: inherit; font-size: 13px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--glass-line); background: rgba(255,255,255,.08); color: var(--ink); cursor: pointer; }
+#menu .m-field label { font-size: 13px; color: var(--ink-dim); display: flex; gap: 6px; align-items: center; }
+#menu .m-state { grid-column: 1 / -1; font-size: 13px; color: var(--accent); }
+#menu .m-state.bad { color: #ff9a8a; }
 `;
 
-export function createMenu({ root = document.body, settings, presets = [], onResume = () => {}, onQuality = () => {}, onMode = () => {}, getMode = () => 'walk', getPreset = () => null, onResetProgress = null, onLogbook = null, version = '' }) {
+// ai: { keys (ai/keys.js), keyName, defaultModel } — the M8 tab's API key field
+export function createMenu({ root = document.body, settings, presets = [], onResume = () => {}, onQuality = () => {}, onMode = () => {}, getMode = () => 'walk', getPreset = () => null, onResetProgress = null, onLogbook = null, version = '', ai = null, onBench = null }) {
   if (!document.getElementById('menu-css')) { const st = document.createElement('style'); st.id = 'menu-css'; st.textContent = CSS; document.head.appendChild(st); }
   const el = document.createElement('div'); el.id = 'menu'; el.hidden = true; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', '一時停止メニュー');
   root.appendChild(el);
   let tab = 'main', open = false;
-  const TABS = [['main', '再開'], ['settings', '設定'], ['keys', '操作'], ['about', 'このゲームについて']];
+  const TABS = [['main', '再開'], ['settings', '設定'], ['net', 'AI・マイク・英語'], ['keys', '操作'], ['about', 'このゲームについて']];
+  let keyMsg = '', keyBad = false;
   const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   function body() {
@@ -76,6 +85,31 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         + sw('radioJa', '無線の日本語訳', '無線の画面で、英語の下に日本語の意味を出します')
         + sw('autoRud', '自動ラダー', 'ON：ボールを自動で中央に保ちます。飛んでいる間は U で切り替え')
         + sw('showPerf', '性能の表示', 'fps・描画回数・三角形の数を右上に表示');
+    }
+    if (tab === 'net') {
+      const v = settings.all();
+      const sw = (k, label, note = '') => `<div class="m-row"><span>${label}</span><button class="m-switch" role="switch" aria-checked="${!!v[k]}" aria-label="${label}" data-toggle="${k}"></button>${note ? `<small>${note}</small>` : ''}</div>`;
+      const has = ai && ai.keys.has(), mem = ai && ai.keys.remembered;
+      return `<p class="m-note" style="margin-top:0">ここの機能は、どれも最初は OFF です。OFF のあいだは、外への通信を一切しません。ネットにつながなくても、最初から最後まで遊べます。</p>
+        <h3>AI 教官（Claude API）</h3>`
+        + sw('aiTutor', 'AI 教官に自由に質問する', 'ブリーフィング室と飛行のあとの講評で、早瀬 教官に日本語で自由に質問できます（答えは字幕で）。ON にして API キーを入れたときだけ、質問のたびに Anthropic の API（api.anthropic.com）へ送ります。キーがない・つながらない・エラーのときは、いつもの会話（教科書の質問）に戻ります。')
+        + `<div class="m-row"><span>モデル</span><span></span><div class="m-field"><input type="text" data-text="aiModel" value="${esc(v.aiModel)}" aria-label="モデル名" spellcheck="false" autocomplete="off"></div>
+          <small>既定は ${esc(ai ? ai.defaultModel : 'claude-opus-5-5')}。返事の速さと料金を優先するなら claude-sonnet-5-5 や claude-haiku-5-5 も使えます。</small></div>`
+        + `<div class="m-row"><span>API キー</span><span></span>
+          <div class="m-field"><input type="password" id="m-key" aria-label="API キー" autocomplete="off" spellcheck="false" placeholder="sk-ant-…"><button data-act="key-save">保存</button></div>
+          <div class="m-field"><label><input type="checkbox" id="m-key-remember"${mem ? ' checked' : ''}> このブラウザに覚えておく（OFF なら、このページを閉じると消えます）</label></div>
+          <div class="m-state${keyBad ? ' bad' : ''}" id="m-key-state">${esc(keyMsg || (has ? `設定済み：${ai.keys.masked()}（${mem ? 'このブラウザに保存' : 'このページを閉じるまで'}）` : '未設定'))}</div>
+          <div class="m-field"><button data-act="key-clear"${has || mem ? '' : ' disabled'}>キーを消す</button></div>
+          <small>キーは自分で <b>Anthropic Console</b> で作ったものを使います。料金はキーの持ち主のアカウントにかかります。<br>
+          <b>保存する場所</b>：「覚えておく」を選んだときだけ、このブラウザの localStorage の「${esc(ai ? ai.keyName : 'cadet.secret.anthropic')}」に保存します（このパソコンのこのブラウザの中だけ。ほかの記録・設定・書き出しには入りません）。<br>
+          <b>消し方</b>：上の「キーを消す」。または、ブラウザの設定でこのページ（ファイル）のサイトデータを消去します。<br>
+          <b>送るもの</b>：質問・今日の課目・その日の結果・教科書の近い節・教官の話し方の決まり。キーは通信の見出しにだけ入れ、ブラウザから直接 API に送られます。自分の PC で、自分だけが使ってください。</small></div>
+        <h3>マイクで交信</h3>`
+        + sw('micRadio', 'マイクで復唱する（英語）', '管制への答えを声で言えます（操縦席で M を押してから話す）。コールサイン・滑走路・高度・周波数・スコーク・指示の言葉を照らし合わせ、足りない言葉を字幕に出します。マイクや音声認識が使えないときは、いつもの 1〜3 キーのまま。ブラウザの音声認識は、声を提供元のサーバーで文字にすることがあります（ON のときだけ。マイクの許可はブラウザが聞きます）。')
+        + `<h3>教官が英語で話す</h3>`
+        + sw('crewEnglish', '教官・主任教官・審査官の台詞を英語にする', '訓練所の 3 人の教官が英語で話します。教材（課目の説明・教科書）を読み上げる行は、日本語のままです。')
+        + sw('crewEnglishJa', '英語の字幕に日本語訳を付ける', '英語の台詞の下に、もとの日本語を小さく出します。')
+        + (onBench ? `<h3>性能の計測</h3><div class="m-big"><button data-act="bench">性能を計測して結果を書き出す</button></div><p class="m-note">10 か所の視点で描画の時間を測り、結果をコピーできる文字で出します（約 30 秒）。README の「実機での計測」に貼ってください。</p>` : '');
     }
     if (tab === 'keys') {
       return `<table>
@@ -120,8 +154,27 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
       if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'もう一度押すと記録を消します'; return; }
       onResetProgress(); b.removeAttribute('data-armed'); b.textContent = '記録を消しました'; b.disabled = true; return;
     }
+    if (b.dataset.act === 'key-save' && ai) {
+      const inp = el.querySelector('#m-key'), rem = el.querySelector('#m-key-remember');
+      const ok = ai.keys.set(inp ? inp.value : '', { remember: !!(rem && rem.checked) });
+      if (inp) inp.value = '';
+      keyBad = !ok; keyMsg = ok ? '' : 'キーの形ではないようです（空白や改行がないか確かめてください）';
+      render(); return;
+    }
+    if (b.dataset.act === 'key-clear' && ai) { ai.keys.clear(); keyMsg = 'キーを消しました（このブラウザからも）'; keyBad = false; render(); return; }
+    if (b.dataset.act === 'bench' && onBench) { close(false); onBench(); return; }
     if (b.dataset.toggle) { const k = b.dataset.toggle; settings.set(k, !settings.get(k)); b.setAttribute('aria-checked', String(!!settings.get(k))); return; }
     if (b.dataset.quality) { settings.set('quality', b.dataset.quality); onQuality(b.dataset.quality); el.querySelectorAll('[data-quality]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.quality === b.dataset.quality))); }
+  });
+  // (M8) the model's name: kept when it looks like one, else the field goes back to the setting
+  el.addEventListener('change', (e) => {
+    const k = e.target.dataset && e.target.dataset.text; if (!k) return;
+    if (!settings.set(k, e.target.value)) e.target.value = settings.get(k);
+  });
+  // (the remember box alone: the key already given is kept, or forgotten, in this browser)
+  el.addEventListener('change', (e) => {
+    if (e.target.id !== 'm-key-remember' || !ai || !ai.keys.has()) return;
+    ai.keys.set(ai.keys.get(), { remember: e.target.checked }); keyMsg = ''; render();
   });
   el.addEventListener('input', (e) => {
     const k = e.target.dataset && e.target.dataset.set; if (!k) return;
@@ -137,7 +190,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
       tab = TABS[j][0]; render(); el.querySelector(`[data-tab="${tab}"][role=tab]`)?.focus();
     }
   });
-  function show(t = 'main') { tab = t; open = true; render(); el.hidden = false; setTimeout(() => el.querySelector('.m-big .primary, [role=tab][aria-selected=true]')?.focus(), 0); }
+  function show(t = 'main') { tab = t; open = true; keyMsg = ''; keyBad = false; render(); el.hidden = false; setTimeout(() => el.querySelector('.m-big .primary, [role=tab][aria-selected=true]')?.focus(), 0); }
   function close(resume = false) { if (!open) return; open = false; el.hidden = true; if (resume) onResume(); }
   return { open: show, close, toggle: () => (open ? close(true) : show()), get isOpen() { return open; }, destroy() { el.remove(); } };
 }

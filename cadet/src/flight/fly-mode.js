@@ -147,6 +147,8 @@ export function createFlyMode(ctx) {
     else if (name === 'nod') { if (crew) crew.gesture('nod'); }
     else if (name === 'look') { if (crew) crew.gesture('explain'); }
     else if (name === 'point') { pointAtPanel(arg); }
+    // (M8) a free question to the AI instructor at the debrief: the game opens it (main.js), with the day's results
+    else if (name === 'ai' && ctx.onAi) ctx.onAi(arg, talkKind === 'debrief' && debRunner ? debRunner : runner, { summary: debSum });
   }
   // what he points at: the PFD's middle, or the student's pedals (the parts are built in place, so their origins are
   // the cabin's: the points come from their geometry and the controls' aim points)
@@ -163,7 +165,7 @@ export function createFlyMode(ctx) {
     if (fh) fh.show(false);                 // his talk alone on the screen (the flight's panels come back after it)
     input.exitLock();
     if (which === 'debrief') {
-      debRunner = createRunner({ data, state: ctx.talkState, hooks: { onHook } });
+      debRunner = createRunner({ data, state: ctx.talkState, ctx: () => ({ ai: { on: !!settings.get('aiTutor') } }), hooks: { onHook } });
       debRunner.onChange(onTalkView);
       debRunner.start('debrief');
     } else runner.start(which);

@@ -217,7 +217,8 @@ async function boot() {
     },
     // choices: [{ k, text }] (the walk-around's decisions, keys 1–4), or none
     card(title, text, choices = null) {
-      const c = $('#card'); if (!title) { c.hidden = true; walkOpen = null; homeOpen = false; return; }
+      const c = $('#card'); document.body.classList.toggle('card-open', !!title);
+      if (!title) { c.hidden = true; walkOpen = null; homeOpen = false; return; }
       c.querySelector('.card-title').textContent = title; c.querySelector('.card-body').textContent = text;
       const ch = c.querySelector('.card-choices'); ch.textContent = '';
       for (const x of choices || []) { const b = document.createElement('button'); b.type = 'button'; b.tabIndex = -1; b.innerHTML = `<kbd>${x.k}</kbd>${esc(x.text)}`; b.dataset.k = String(x.k - 1); ch.appendChild(b); }
@@ -335,7 +336,8 @@ async function boot() {
     for (const t of walkTargets) interactor.remove(t.id);
     walkTargets.length = 0;
     for (const p of POINTS) {
-      const t = interactor.add({ id: 'walk:' + p.id, owner: 'aircraft:today', frame: bodyToFrame(spotOf(p)), radius: 0.32, low: p.at[1] < -0.2,
+      const t = interactor.add({ id: 'walk:' + p.id, owner: 'aircraft:today', frame: bodyToFrame(spotOf(p)), radius: 0.32, low: p.at[1] < -0.2, onOwner: !!DOOR_SPOTS[p.id], reach: DOOR_SPOTS[p.id] ? 3.4 : undefined,
+        get priority() { return today && !today.walk.isDone(p.id) ? 1 : -0.5; },  // (not yet looked at: before the door and the marks beside it)
         prompt: () => `点検：${p.name}${today && today.walk.isDone(p.id) ? '（済）' : ''}`, use: () => walkCard(p.id) });
       walkTargets.push(t);
     }
@@ -1246,7 +1248,7 @@ async function boot() {
     }
     if (g.at === 'walk' && today) {
       const i = today.walk.points.findIndex(p => !today.walk.isDone(p.id));
-      const t = i >= 0 && walkTargets[i]; if (t) return { a: -t.frame[2], c: t.frame[0] };
+      const t = i >= 0 && walkTargets[i]; if (t) return { a: -t.frame[2], c: t.frame[0], y: t.frame[1] };
     }
     if (g.at === 'board' || g.at === 'walk') return { a: tg.a + 1.0, c: tg.c };
     if (g.at === 'entrance') return { a: 655.0, c: 276.6 };                     // (inside the front doors)
@@ -1308,6 +1310,7 @@ async function boot() {
     // near today's aircraft: the walk-around's progress; the instructor leaves the room for it once the cadet has gone
     walkEl.hidden = !(mode === 'walk' && Math.hypot(pa - tg.a, pc - tg.c) < 14 && !flownToday());   // (no flight left today: no walk-around)
     updateGuide(dt, pa, pc);
+    if (mode !== 'walk') coach.el.hidden = true;
     if (mode === 'walk' && live) {
       const y = walker.state.yaw, p = walker.state.pitch, fp = walker.framePos;
       const look = coachAt ? Math.abs(Math.atan2(Math.sin(y - coachAt.yaw), Math.cos(y - coachAt.yaw))) * 57.3 + Math.abs(p - coachAt.pitch) * 57.3 : 0;
@@ -1446,6 +1449,16 @@ async function boot() {
     const fp = walker.framePos;
     return { reached: i >= points.length, t: +t.toFixed(2), log, doors, at: { a: +fp.a.toFixed(2), c: +fp.c.toFixed(2) }, place: placeAt(fp.a, fp.c).name };
   }
+  // where a cadet stands to look at a place of the walk-around (body frame: in front of the wing, behind it at a wheel,
+  // beside the nose, behind the tail, on the wing walk at the door) → the runway frame
+  function walkStand(id) {
+    const p = POINTS.find(x => x.id === id), [x, , z] = p.at, sd = Math.sign(x) || 1;
+    // (the Seminole's engines and propellers from in front of them, its static port from the left)
+    const b = /_eng|_prop/.test(id) ? [x + sd * 1.1, 0, z - 1.2] : id === 'static' ? [-1.5, 0, z] : p.group === 'cabin' ? [1.6, 0, -0.1] : p.group === 'tail' ? [1.4, 0, 4.4] : p.group === 'nose' ? [1.25, 0, -3.3]
+      : Math.abs(x) < 2 ? [x + sd * 0.3, 0, 1.7] : z > 0.3 ? [x, 0, z + 1.4] : [x, 0, z - 1.6];
+    const f = bodyToFrame([b[0], -1.4, b[2]]);
+    return { a: -f[2], c: f[0] };
+  }
   // (tests) walk where the guide points, the way a player finds it: a path round the walls and furniture on the floor
   // plan (closed doors count as passable: walkRoute opens them with E on the way), then look at what the guide
   // points at — a person, the walk-around's place, the aircraft's door, the front doors
@@ -1458,27 +1471,38 @@ async function boot() {
     if (!g || !w) return { reached: false, why: 'no guide' };
     // (a door opened on the way swings into the path planned through it: plan again from there)
     let r = null; const doorsUsed = [];
-    // (a place of the walk-around is on the aircraft, among its own colliders: close enough from a little further off)
-    if (g.at === 'walk' || g.at === 'board') near = Math.max(near, 2.2);
-    for (let k = 0; k < 4; k++) {
-      const fp = walker.framePos;
-      let path = navPath(fp.a, fp.c, w.target.a, w.target.c, near);
-      if (!path) path = navPath(fp.a, fp.c, w.target.a, w.target.c, near + 1.5);
-      if (!path) return { reached: false, why: 'no path', step: { ...g }, at: { a: fp.a, c: fp.c }, target: w.target };
-      r = walkRouteNow(path, { maxT, giveUp: 3 }); doorsUsed.push(...r.doors);
-      if (r.reached) break;
+    // (a place of the walk-around: where one stands to look at it, as a cadet would — under the wing, by the wheel;
+    // the aircraft's door: close enough from a little further off, among the aircraft's own colliders)
+    const wi = g.at === 'walk' && today ? today.walk.points.findIndex(p => !today.walk.isDone(p.id)) : -1;
+    const tries = wi >= 0 ? [[walkStand(today.walk.points[wi].id), 0.35], [w.target, 2.0]] : [[w.target, g.at === 'board' ? Math.max(near, 2.2) : near]];
+    const y = w.target.y != null ? w.target.y : g.at === 'person' ? 1.5 : g.at === 'walk' ? 1.0 : 1.25;
+    const look = () => { lookAtFrame(w.target.a, w.target.c, y); camera.updateMatrixWorld(); interactor.update(camera); return interactor.current ? interactor.current.id : null; };
+    let goTo = null, p2 = null;
+    for (const [to, nr] of tries) {
+      goTo = to; near = nr;
+      for (let k = 0; k < 4; k++) {
+        const fp = walker.framePos;
+        let path = navPath(fp.a, fp.c, goTo.a, goTo.c, near);
+        if (!path) path = navPath(fp.a, fp.c, goTo.a, goTo.c, near + 1.5);
+        if (!path) { if (to === tries[tries.length - 1][0]) return { reached: false, why: 'no path', step: { ...g }, at: { a: fp.a, c: fp.c }, target: w.target }; break; }
+        r = walkRouteNow(path, { maxT, giveUp: 3 }); doorsUsed.push(...r.doors);
+        if (r.reached) break;
+      }
+      p2 = walker.framePos;
+      // (the place of the walk-around in sight and reach from here: done; else closer from another side)
+      if (wi < 0 || (r && look() === 'walk:' + today.walk.points[wi].id)) break;
     }
+    if (!r) r = { reached: false, t: 0, doors: [], at: { ...walker.framePos }, place: '' };
     r.doors = doorsUsed;
-    const p2 = walker.framePos, y = g.at === 'person' ? 1.5 : g.at === 'walk' ? 1.0 : 1.25;
-    lookAtFrame(w.target.a, w.target.c, y); camera.updateMatrixWorld(); interactor.update(camera);
-    return { reached: r.reached && Math.hypot(w.target.a - p2.a, w.target.c - p2.c) < near + 0.4, t: r.t, step: { ...g }, firstWay: { a: w.a, c: w.c, door: w.doorId },
+    const cur = look(); p2 = walker.framePos;
+    return { reached: wi >= 0 ? cur === 'walk:' + today.walk.points[wi].id : r.reached && Math.hypot(goTo.a - p2.a, goTo.c - p2.c) < near + 0.4, t: r.t, step: { ...g }, firstWay: { a: w.a, c: w.c, door: w.doorId },
       current: interactor.current ? interactor.current.id : null, doors: r.doors, at: r.at, place: r.place };
   }
   // A* on a 0.25 m grid over the floor plan (runway frame) from (a0, c0) to within `near` of (a1, c1) → waypoints
   let debugNav = false;
   function navPath(a0, c0, a1, c1, near, dbg = false) {
     debugNav = dbg;
-    const h = 0.2, R = 0.29, pad = 12;
+    const h = 0.2, R = 0.29, pad = 32;            // (room enough round both ends for the way through the lobby)
     const A0 = Math.min(a0, a1) - pad, C0 = Math.min(c0, c1) - pad, NA = Math.ceil((Math.abs(a1 - a0) + 2 * pad) / h), NC = Math.ceil((Math.abs(c1 - c0) + 2 * pad) / h);
     const blocked = new Uint8Array(NA * NC);
     for (const b of world.query(C0 - 1, -(A0 + NA * h) - 1, C0 + NC * h + 1, -A0 + 1)) {
@@ -1605,14 +1629,7 @@ async function boot() {
       instructor: () => ({ at: insAt, a: APRON.a, c: APRON.c }),
       // where a cadet stands to look at a place (body frame: in front of the wing, behind it at a wheel, beside the nose,
       // behind the tail, on the wing walk at the door)
-      stand: (id) => {
-        const p = POINTS.find(x => x.id === id), [x, , z] = p.at, sd = Math.sign(x) || 1;
-        // (the Seminole's engines and propellers from in front of them, its static port from the left)
-        const b = /_eng|_prop/.test(id) ? [x + sd * 1.1, 0, z - 1.2] : id === 'static' ? [-1.5, 0, z] : p.group === 'cabin' ? [1.6, 0, -0.1] : p.group === 'tail' ? [1.4, 0, 4.4] : p.group === 'nose' ? [1.25, 0, -3.3]
-          : Math.abs(x) < 2 ? [x + sd * 0.3, 0, 1.7] : z > 0.3 ? [x, 0, z + 1.4] : [x, 0, z - 1.6];
-        const f = bodyToFrame([b[0], -1.4, b[2]]);
-        return { a: -f[2], c: f[0] };
-      },
+      stand: (id) => walkStand(id),
     },
     logbook: () => ({ entries: logbook.entries, totals: logbook.totals(), open: dayHud.logbookOpen, close: () => dayHud.hideLogbook() }),
     // the career (M5): its state, today's plan and weather, the talks' context; a jump to any point (tests); the time

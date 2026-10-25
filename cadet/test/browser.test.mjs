@@ -256,11 +256,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     const done = Object.fromEntries([0, 1, 2, 3, 4, 5].map(i => [`class:${i}`, 2]));
     await ev(({ p, done }) => window.__cadet.career.set({ state: { day: 9, slot: 'morning', done: { prologue: 1, ...done } }, progress: { lessons: p }, place: false }), { p: GROUND_OK, done });
     assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => `${x.kind} ${x.id}`), ['exam written1']);
-    t = await talkThrough('lecturer');
-    assert.match(t.lines.join('\n'), /28 \/ 28 問、100%/);
-    st = await career();
-    assert.ok(st.exams.written1.pass);
-    // out of the front doors before the evening: a word, the day goes on; back in
+    // out of the front doors before the test: a word, the day goes on; back in
     // (the toast read in the same step as the walk: the day's greeting may come over it a moment later)
     const out = () => ev(() => { const C = window.__cadet; C.placeWalker(655.0, 273.5, { a: 655.0, c: 285 }); const r = C.walkRoute([{ a: 655.0, c: 276.5 }, { a: 655.0, c: 281.0 }]); return { ...r, toast: document.querySelector('#toast').textContent }; });
     await g.page.waitForFunction(() => !window.__cadet.career.cards());
@@ -268,11 +264,19 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     let r = await out();
     assert.ok(r.reached && r.at.c > 280, `out of the front doors: ${JSON.stringify(r.at)}`);
     st = await career();
-    assert.deepEqual([st.day, st.chapter], [9, 'ch1'], 'not the evening yet: the day goes on');
+    assert.deepEqual([st.day, st.chapter], [9, 'ch1'], 'the test still to take: the day goes on');
     assert.match(r.toast, /予定が残っています/);
     await ev(() => window.__cadet.walkRoute([{ a: 655.0, c: 276.5 }, { a: 655.0, c: 272.0 }]));
-    // the evening: walking out of the front doors is enough (no E, no card) — the next morning, chapter 2
-    await ev(() => window.__cadet.career.advance('evening'));
+    t = await talkThrough('lecturer');
+    assert.match(t.lines.join('\n'), /28 \/ 28 問、100%/);
+    st = await career();
+    assert.ok(st.exams.written1.pass);
+    // (M7) the day's plan done before the evening: the guide says to go home, and the front doors agree — walking out is
+    // enough (no E, no card): the next morning, chapter 2
+    await g.page.waitForTimeout(700);
+    assert.match(await ev(() => { const C = window.__cadet; C.followGuide({ maxT: 0.1 }); return C.guide().text; }), /正面入口から寮に帰ると/);
+    assert.equal(await ev(() => { const C = window.__cadet; C.placeWalker(655.0, 273.8, { a: 655.0, c: 285 }); C.lookAt(655.0, 276.2, 1.3); return C.current(); }), 'home');
+    assert.match(await ev(() => document.querySelector('#prompt').textContent), /寮へ帰る/);
     r = await out();
     assert.equal(await ev(() => window.__cadet.card()), null, 'no card to answer');
     await g.page.waitForTimeout(4200);

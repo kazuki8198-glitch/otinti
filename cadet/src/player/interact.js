@@ -32,12 +32,14 @@ export function createInteractor({ walker, world, L, hud }) {
       const [tx, ty, tz] = t.frame;
       const vx = tx - r.ox, vy = ty - r.oy, vz = tz - r.oz;
       const along = vx * r.dx + vy * r.dy + vz * r.dz;
-      if (along < 0.15 || along > REACH + t.radius) continue;
+      // (t.reach: a target looked at from further off — the cabin's marks, seen through the open door from the wing's edge)
+      if (along < 0.15 || along > (t.reach || REACH) + t.radius) continue;
       const px = vx - r.dx * along, py = vy - r.dy * along, pz = vz - r.dz * along;
       const off = Math.hypot(px, py, pz);
       if (off > t.radius) continue;
-      // prefer what is nearest to the centre of the view, then nearest
-      cands.push({ t, score: along + off * 1.5 });
+      // prefer what is nearest to the centre of the view, then nearest; a target with a priority (the walk-around's
+      // marks beside the aircraft's door) wins over one without wherever both are under the crosshair
+      cands.push({ t, score: along + off * 1.5 - (t.priority || 0) * 10 });
     }
     cands.sort((x, y) => x.score - y.score);
     // the best one not hidden: a wall in between hides it (the target's own collider does not count, nor its owner's

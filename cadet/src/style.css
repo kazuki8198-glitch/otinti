@@ -98,7 +98,8 @@ body.mode-fly #hint { opacity: 0; }
   border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 14px solid #ffb547; }
 #guide .g-arrow.here::before { border: none; width: 10px; height: 10px; border-radius: 50%; background: #ffb547; transform: translate(-50%, -50%); }
 body.talking #guide, body.mode-fly #guide, body.mode-spectator #guide { opacity: 0; }
-#card { position: absolute; right: 22px; top: 50%; transform: translateY(-50%); width: min(430px, calc(100vw - 44px)); max-height: 70vh; overflow: auto;
+/* (kept below the guide at the top: its top edge never above 100 px) */
+#card { position: absolute; right: 22px; top: calc(50% + 30px); transform: translateY(-50%); width: min(430px, calc(100vw - 44px)); max-height: calc(100vh - 140px); overflow: auto;
   padding: 18px 20px; border-radius: 16px; background: rgba(250, 248, 242, 0.96); color: #1d2329; box-shadow: 0 20px 60px rgba(0,0,0,.45); pointer-events: auto; }
 #card[hidden] { display: none; }
 #card .card-title { font-size: 17px; font-weight: 800; color: #16324f; padding-bottom: 8px; margin-bottom: 10px; border-bottom: 3px solid #f2b632; }
@@ -130,6 +131,9 @@ body.locked #hint, body.mode-spectator #hint { opacity: 0; }
 body.talking #hint, body.talking #prompt, body.talking #cross, body.talking #where { opacity: 0 !important; }
 /* a note shown while talking goes to the top (the guide is hidden then), clear of the conversation at the bottom */
 body.talking #toast { bottom: auto; top: 16px; }
+/* beside an open card (on the right), the note keeps to the left of it */
+body.card-open #toast { left: 18px; transform: none; max-width: calc(100vw - min(430px, calc(100vw - 44px)) - 60px); }
+@media (max-width: 700px) { body.card-open #toast { left: 50%; transform: translateX(-50%); bottom: 12px; max-width: calc(100vw - 32px); } }
 
 /* ---------------------------------------------------------------- colour vision
    Good, careful and wrong are told by a mark or a shape as well as by colour (✓ △ ✕ beside a gauge's number, a filled

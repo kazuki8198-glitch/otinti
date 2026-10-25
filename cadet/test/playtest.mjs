@@ -116,9 +116,9 @@ async function stepOnce() {
   }
   if (!cur) { issue(`E で使える物が照準にない（${(r.step || before.g).text}）`); }
   await key('KeyE', 0.15);
-  await sleep(100);
+  await sleep((r.step || before.g).at === 'board' ? 1600 : 100);         // (boarding: the screen fades first)
   const after = await ev(() => { const C = window.__cadet; return { mode: C.mode(), dialog: !!C.dialog(), card: C.card(), walk: C.walk.open(), tablet: C.career.tablet.isOpen() }; });
-  if (after.dialog) await talk();
+  if (after.dialog) { await talk(); await sleep(1500); if (await ev(() => window.__cadet.mode()) === 'fly') return 'fly'; }
   else if (after.walk) {
     const ch = await ev(() => ({ choices: window.__cadet.walk.choices(), planted: window.__cadet.walk.planted(), card: window.__cadet.card() }));
     log(`    [点検] ${ch.card ? ch.card.title + '：' + ch.card.text.slice(0, 90) : ''}`);
@@ -146,8 +146,11 @@ async function stepOnce() {
 // in the seat: the board talk, then the checklists as a player works them — the ring's control clicked, Enter on an
 // item to look at — until both engines run (or the radio's turn comes)
 async function cockpit() {
-  await sleep(1200); await ev(() => window.__cadet.simulate(0.3));
-  if (await ev(() => !!window.__cadet.dialog())) await talk();
+  for (let k = 0; k < 40; k++) {
+    await sleep(400); await ev(() => window.__cadet.simulate(0.2));
+    if (await ev(() => !!window.__cadet.dialog())) await talk();
+    if (await ev(() => !!window.__cadet.fly.day())) break;
+  }
   let last = '', same = 0;
   for (let k = 0; k < 300; k++) {
     const st = await ev(() => window.__cadet.fly.status());
@@ -213,7 +216,7 @@ if (which === 'start') {
   log(`# ${which}：${d} 日目の朝から`);
   await sleep(4000);
   for (let k = 0; k < 80; k++) { const r = await stepOnce(); if (r === 'fly' || r === 'stuck') { log('== ' + r); break; } }
-  if (which === 'seminole') await cockpit();
+  await cockpit();
 }
 log('\n## 気になった所');
 for (const s of [...new Set(issues)]) log('- ' + s);

@@ -39,8 +39,9 @@ export function createCoach({ root, settings, steps = STEPS }) {
     if (settings.get('firstHelp') === false || i >= steps.length) { el.hidden = true; return null; }
     const step = steps[i];
     if (step.when && !step.when(s)) { el.hidden = true; return step.id; }
-    if (el.hidden || el.dataset.step !== step.id) { show(step); el.dataset.step = step.id; }
-    el.hidden = false;
+    if (el.dataset.step !== step.id) { show(step); el.dataset.step = step.id; }
+    // (a talk or the tablet has the screen: the box steps aside, the step still counts what is done)
+    el.hidden = !!(s.talking || s.tablet);
     if (!s.busy) m.shown += dt;
     m.look += s.look || 0; m.walked += s.walked || 0;
     if (s.talking) m.talked = true;

@@ -70,6 +70,9 @@ import { createTutor, DEFAULT_MODEL, REASON_JA } from './ai/tutor.js';
 import { createAiSession } from './ai/session.js';
 import { createKeyStore, KEY_NAME } from './ai/keys.js';
 import { withEnglish, CHECK_EN, WHO_EN } from './content/dialog/en.js';
+import { buildHaneda, OFFSET as HANEDA_OFFSET, EYE as HANEDA_EYE, CAPTAIN as HANEDA_SEAT } from './epilogue/haneda.js';
+import { epilogueDialogs, CAPTAIN } from './content/dialog/epilogue.js';
+import { seatFromBody } from './npc/actor.js';
 
 /* global __BUILD_INFO__ */
 const $ = (s) => document.querySelector(s);
@@ -133,7 +136,7 @@ async function boot() {
   const academy = buildAcademy({ L, FL, spec, kit: createPropKit(), world, audio }); scene.add(academy.group);
   bootMsg('木と景色を作っています…', 0.6); await frame();
   const veg = buildVegetation(L, FL, { quality: preset }); scene.add(veg.group);
-  scene.add(buildLandmarks(L, FL).group);
+  const landmarks = buildLandmarks(L, FL); scene.add(landmarks.group);
   bootMsg('機体を並べています…', 0.7); await frame();
 
   // the runway frame (where the colliders live): x = across, z = −along
@@ -652,6 +655,11 @@ async function boot() {
     const actor = talkActor || instructor;
     if (name === 'nod') actor.gesture('nod');
     else if (name === 'look') actor.gesture('explain');          // 'player': they already look at you while talking
+    else if (name === 'point' && talkWho === 'captain') {
+      // (M8) the captain: at the panel, or out through the windscreen
+      const p = arg === 'panel' ? new THREE.Vector3(0.2, 3.5, -16.9) : new THREE.Vector3(30, 12, -60);
+      captain.pointAt(haneda.group.localToWorld(p)); captain.gesture('point');
+    }
     else if (name === 'point') {
       // the whiteboard (or the screen) behind them, or out of the window towards the apron
       const room = talkWho === 'lecturer' ? (lessonKind && lessonKind.kind === 'ftd' ? 'sim' : 'brief-2') : 'brief-1';
@@ -776,6 +784,95 @@ async function boot() {
   const crowd = createCrowd(scene, { outdoors: (root) => { root.getWorldPosition(crowdAt); const [fx, fz] = toFrame(crowdAt.x, crowdAt.z); return !academy.inside(-fz, fx); } });
   crowd.add(instructor); for (const id of Object.keys(cast.people)) crowd.add(cast.actor(id));
   const CHIEF_APRON = { a: APRON.a + 1.4, c: APRON.c + 0.9, face: { a: tg.a, c: tg.c } };
+
+  // ---------------------------------------------------------------- (M8) the epilogue: the right seat of a 737 at Haneda
+  // epilogue/haneda.js: a set far from the LAB airfield (further than the camera sees), shown alone; the training
+  // captain in the left seat (content/dialog/epilogue.js). It begins the night after the graduation (going home), and
+  // again from the tablet; it ends with the captain's goodbye (or the menu), back to the academy the next morning.
+  const haneda = buildHaneda({ quality: preset });
+  haneda.group.position.set(HANEDA_OFFSET, G, 0); scene.add(haneda.group);
+  const captain = createActor({ look: { tag: 'KASHIWAGI', bars: 4 }, height: 1.78, seed: 41, colors: { hair: 0x6a6460 } });
+  {
+    const st = seatFromBody({ hip: HANEDA_SEAT.hip, ankleL: HANEDA_SEAT.ankleL, ankleR: HANEDA_SEAT.ankleR, room: null, keepOut: null }, Math.PI, HANEDA_SEAT.floor);
+    haneda.group.add(captain.root); captain.root.position.set(...st.position); captain.root.rotation.set(0, st.yaw, 0);
+    if (captain.setSeated) captain.setSeated(st.seat);
+  }
+  const epi = { on: false, yaw: 0, pitch: -0.1, hours: null, talkYaw: null };
+  const epiRunner = createRunner({ data: withEnglish(epilogueDialogs()), state: talkState, hooks: { onHook } });
+  epiRunner.onChange(onRoomView);
+  const LAB_GROUPS = () => [ground.group, airfield.group, buildings.group, academy.group, veg.group, landmarks.group, ...parked.map(p => p.root), todays.pa28.ac.root, todays.pa44.ac.root];
+  function enterEpilogue() {
+    if (fly && fly.active) fly.leave({ instant: true });
+    interactor.closeCard();
+    setMode('epilogue');
+    epi.on = true; epi.yaw = 0; epi.pitch = -0.1; epi.hours = hours; epi.vis = LAB_GROUPS().map(g => g.visible);
+    for (const g of LAB_GROUPS()) g.visible = false;
+    if (crowd.setHidden) crowd.setHidden(true);
+    // a clear winter morning: the sun low in the south-east, the haze thin (Mt Fuji shows)
+    hours = 8.6; sky.setWeather({ overcast: 0 });
+    const st = sky.setTime(hours);
+    pipe.setHaze({ sunDir: st.dir, el: st.el, fog: 0, grey: 0, clear: 0.3 });
+    haneda.group.rotation.y = Math.atan2(st.dir.x, st.dir.z) + 0.55;      // (the terminal's front, behind our nose, lit by it)
+    haneda.group.visible = true; haneda.showOwn(false); if (haneda.jets) haneda.jets.visible = true; epi.frozen = false;
+    haneda.group.updateMatrixWorld(true);
+    placeEpilogueCamera();
+  }
+  const _eq = new THREE.Quaternion(), _ee = new THREE.Euler(0, 0, 0, 'YXZ');
+  function placeEpilogueCamera() {
+    camera.position.set(...HANEDA_EYE); haneda.group.localToWorld(camera.position);
+    _ee.set(epi.pitch, epi.yaw, 0); camera.quaternion.setFromEuler(_ee).premultiply(_eq.setFromEuler(haneda.group.rotation));
+    camera.updateMatrixWorld();
+  }
+  // the view: the mouse looks round (not through the seat back); while he talks, the head turns to him
+  const capHead = new THREE.Vector3(), _ev = new THREE.Vector3();
+  function updateEpilogue(dt, live) {
+    if (talk) {
+      captain.headWorld(capHead); haneda.group.worldToLocal(_ev.copy(capHead));
+      const dx = _ev.x - HANEDA_EYE[0], dy = _ev.y - HANEDA_EYE[1] - 0.05, dz = _ev.z - HANEDA_EYE[2];
+      const ty = Math.atan2(-dx, -dz), tp = Math.atan2(dy, Math.hypot(dx, dz)), k = 1 - Math.exp(-dt / 0.25);
+      epi.yaw += Math.atan2(Math.sin(ty - epi.yaw), Math.cos(ty - epi.yaw)) * k; epi.pitch += (tp - epi.pitch) * k;
+      input.takeLook();
+    } else {
+      const look = input.takeLook(), sens = 0.0022 * settings.get('sensitivity'), inv = settings.get('invertY') ? -1 : 1;
+      if (live && !menu.isOpen) { epi.yaw -= look.x * sens; epi.pitch -= look.y * sens * inv; }
+      epi.yaw = Math.max(-2.2, Math.min(2.2, epi.yaw)); epi.pitch = Math.max(-0.9, Math.min(0.75, epi.pitch));
+      if (live && !menu.isOpen && (input.pressed('KeyE') || input.pressed('Mouse0')) && performance.now() - talkEndedAt > 500) startEpiTalk('again');
+    }
+    if (!epi.frozen) placeEpilogueCamera();
+    captain.update(dt, { lookAt: talk ? camWorldNow() : null, talking: !!(talk && dui.typing) });
+  }
+  const camWorldNow = () => camera.getWorldPosition(_ev);
+  function startEpiTalk(id) {
+    if (talk || !epi.on) return null;
+    talk = { yaw: epi.yaw, pitch: epi.pitch }; talkWho = 'captain'; talkRun = epiRunner; talkActor = captain;
+    document.body.classList.add('talking'); input.exitLock(); audio.ui('open');
+    if (!epiRunner.start(id)) { endTalk(); return null; }
+    return 'talk';
+  }
+  function leaveEpilogue(next = 'walk') {
+    if (!epi.on) return;
+    if (talk && talkRun) talkRun.stop();
+    epi.on = false; haneda.group.visible = false;
+    LAB_GROUPS().forEach((g, i) => { g.visible = epi.vis ? epi.vis[i] : true; });
+    if (crowd.setHidden) crowd.setHidden(false);
+    hours = epi.hours != null ? epi.hours : hours;
+    talkState.flags.epilogue_seen = true; saved.save(talkState);
+    setMode(next);
+    applySlot();
+  }
+  // the end: a card, then the academy (the next morning when it began from going home)
+  let epiEnding = false;
+  function finishEpilogue() {
+    if (!epi.on || epiEnding) return Promise.resolve();
+    epiEnding = true;
+    return cards.show({ kicker: 'おわり', title: 'CADET', sub: 'ここで覚えたことを、次の空へ。　翔洋航空 フライトアカデミー', ms: 3000, onDark: () => leaveEpilogue() })
+      .then(() => startDay({ card: true, place: true })).finally(() => { epiEnding = false; });
+  }
+  function beginEpilogue() {
+    if (epi.on) return Promise.resolve();
+    return cards.show({ kicker: '終章', title: '羽田空港', sub: '修了から数か月後　翔洋航空 737 型の訓練', ms: 2400, onDark: () => enterEpilogue() })
+      .then(() => { toast('マウスで見回す・E で機長と話す・Esc で一時停止（終章を終える）', 6000); startEpiTalk('meet'); });
+  }
   function layoutPeople() {
     refreshCtx();
     cast.layout(career.slot, career.chapter, planToday());
@@ -912,6 +1009,7 @@ async function boot() {
         cards.show({ kicker: '修了', title: '翔洋航空 フライトアカデミー', sub: '基礎訓練課程　修了おめでとう', ms: 4200, onDark: () => { career.advance('evening'); applySlot(); layoutPeople(); placeInstructor(); } })
           .then(() => toast('修了です。ラウンジで同期と話すことも、航空日誌を見返すこともできます（Tab）', 7000));
       });
+    } else if (arg === 'epilogue') { afterTalk.push(() => finishEpilogue());
     } else if (arg === 'study') { career.done('study', grounded() ? 'imsafe' : 'weather'); career.tire(4); afterTalk.push(() => { next(); applySlot(); }); }
   }
   // a training device lesson passed: into FLIGHT LAB's record (school.js's shape, as FLIGHT LAB's own ground pages write it)
@@ -1038,6 +1136,8 @@ async function boot() {
     for (const f of ['briefed_today', 'brief_checked', 'c1_briefed']) delete talkState.flags[f];
     saved.save(talkState);
     career.advanceChapter(prog(), trustI());
+    // (M8) the night after the graduation: the epilogue (a few months later, Haneda), then the academy's next morning
+    if (career.state.graduated && !talkState.flags.epilogue_seen) return beginEpilogue();
     if (career.chapter !== was) {
       // (M6) a new chapter: its own card first (the title and what it is), then the day's
       const ch = CHAPTERS[career.chapter];
@@ -1105,7 +1205,7 @@ async function boot() {
         trust: [['instructor', INSTRUCTOR.title_ja], ['chief', PEOPLE.chief.title], ['dispatcher', PEOPLE.dispatcher.title], ['mechanic', PEOPLE.mechanic.title]].map(([k, n]) => ({ name: n, v: Math.round(trustOf(talkState, k)) })),
         book: book.chapters.map(c => ({ id: c.id, n: c.n, title: c.title, sections: c.sections.map(x => ({ id: x.id, title: x.title })) })),
         banks: BANKS.map(b => ({ id: b.id, title: b.title, n: b.qs.length })),
-        evening: st.slot === 'evening', canWait: st.slot !== 'evening' && !sch.some(x => x.slot === st.slot && state(x) === 'now'),
+        graduated: !!st.graduated, evening: st.slot === 'evening', canWait: st.slot !== 'evening' && !sch.some(x => x.slot === st.slot && state(x) === 'now'),
       };
     },
     act: {
@@ -1132,6 +1232,7 @@ async function boot() {
         add: (t) => { const st = career.state, p = walker.framePos; return notes.add(t, `${CHAPTERS[st.chapter].title}・${dateText(st.day)}・${SLOT_NAMES[st.slot]}・${placeAt(p.a, p.c).name}`); },
         export: () => report.show({ title: '感想（書き出し）', intro: '下の文字をコピーして、作った人に渡してください（メールやメッセージに貼り付け）。', text: notes.exportText({ build: buildInfo, ua: navigator.userAgent }), filename: 'cadet-notes.txt' }),
       },
+      epilogue: () => beginEpilogue(),
       wait: () => { if (career.advance()) { cards.show({ kicker: SLOT_NAMES[career.slot], title: dateText(career.day), sub: '', ms: 900, onDark: () => applySlot() }); } },
     },
     onClose: () => { if (mode === 'walk' && !talk && !menu.isOpen) input.requestLock(); },
@@ -1175,6 +1276,7 @@ async function boot() {
   let mode = 'walk', started = false, lostAt = -1e9;
   function setMode(m) {
     if (m === mode) return;
+    if (mode === 'epilogue' && epi.on && m !== 'epilogue') { leaveEpilogue(m); return; }      // (out of the epilogue: its set away first)
     // leaving the aircraft goes through fly-mode (the fade, the instructor back to his room, the aircraft to its stand)
     if (mode === 'fly' && fly && fly.active) { fly.leave({ then: m }); return; }
     mode = m;
@@ -1183,7 +1285,7 @@ async function boot() {
     else if (m === 'walk') { walker.apply(0); interactor.closeCard(); }
     else interactor.closeCard();
     hud.prompt(null);
-    for (const k of ['walk', 'spectator', 'fly']) document.body.classList.toggle('mode-' + k, m === k);
+    for (const k of ['walk', 'spectator', 'fly', 'epilogue']) document.body.classList.toggle('mode-' + k, m === k);
     $('#where').classList.remove('show');
     lastPlace = '';
   }
@@ -1191,7 +1293,7 @@ async function boot() {
   const menu = createMenu({
     root: document.body, settings, presets: ORDER.map(id => ({ id, label: PRESETS[id].label })), version: buildInfo,
     onResume: () => { input.enabled = true; if (!talk && !(fly && (fly.talking || fly.debrief))) input.requestLock(); audio.ui('close'); },
-    onQuality: (id) => setQuality(id), onMode: (m) => { if (!(fly && fly.fading)) setMode(m); }, getMode: () => mode, getPreset: () => preset.id,
+    onQuality: (id) => setQuality(id), onMode: (m) => { if (mode === 'epilogue') { finishEpilogue(); return; } if (!(fly && fly.fading)) setMode(m); }, getMode: () => mode, getPreset: () => preset.id,
     onResetProgress: () => resetProgress(),
     // (M8) the API key's field (ai/keys.js), and the bench with its result to copy
     ai: { keys: aiKeys, keyName: KEY_NAME, defaultModel: DEFAULT_MODEL },
@@ -1214,7 +1316,7 @@ async function boot() {
       // Esc while reading a card (the browser takes that Esc to free the mouse): just close the card
       if (interactor.cardOpen) { interactor.closeCard(); audio.ui('close'); }
       else if (talk || (fly && (fly.talking || fly.debrief)) || dayHud.logbookOpen || tablet.isOpen || cards.showing || report.isOpen) { /* talking, the debrief, the logbook, the tablet, a report: the mouse is free */ }
-      else if (started && (mode === 'walk' || mode === 'fly') && !menu.isOpen) openMenu();
+      else if (started && (mode === 'walk' || mode === 'fly' || mode === 'epilogue') && !menu.isOpen) openMenu();
     }
   });
   renderer.domElement.addEventListener('click', () => {
@@ -1375,6 +1477,7 @@ async function boot() {
         if ((input.pressed('KeyE') || input.pressed('Mouse0')) && performance.now() - talkEndedAt > 500) { const r = interactor.use(); if (r === 'closed') audio.ui('close'); }
       }
     } else if (mode === 'fly') fly.update(dt, { live, paused: menu.isOpen });
+    else if (mode === 'epilogue') updateEpilogue(dt, live);
     else if (!menu.isOpen && live) spectator.update(dt);
     input.endFrame();
     camera.updateMatrixWorld();
@@ -1416,7 +1519,7 @@ async function boot() {
     pipe.setIndoor(adapt, litK);
     fill.intensity = litK * (0.3 + 0.5 * (sky.state.lightsOn || 0));       // by day the windows already do much of it
     pool.update(dt, room ? clusters.get(room.id) : null, 7 + 4 * (sky.state.lightsOn || 0));
-    if ((ambT -= dt) <= 0) { ambT = 0.25; const up = mode === 'fly' && fly ? fly.altitude() : 0; audio.setAmbience({ indoor: mode === 'fly' && fly && fly.view === 'cockpit' ? 0.6 : k > 0 ? Math.min(1, k * 1.15) : 0, wind: 0.5, airborne: up > 30 }); }
+    if ((ambT -= dt) <= 0) { ambT = 0.25; const up = mode === 'fly' && fly ? fly.altitude() : 0; audio.setAmbience({ indoor: (mode === 'fly' && fly && fly.view === 'cockpit') || mode === 'epilogue' ? 0.6 : k > 0 ? Math.min(1, k * 1.15) : 0, wind: 0.5, airborne: up > 30 }); }
     audio.update(dt);
     return { a: pa, c: pc };
   }
@@ -1741,6 +1844,14 @@ async function boot() {
     // (M8) the player's notes (the tablet's 感想), the text shown to take away (the bench's results, the notes)
     notes: () => notes.list(), report: () => (report.isOpen ? { title: report.el.querySelector('h2').textContent, text: report.text } : null), closeReport: () => report.hide(),
     benchReport: (r) => showBenchReport(r),
+    // (M8) the epilogue: begin it (the card, then the right seat), its state, the view, the end
+    epilogue: {
+      begin: () => beginEpilogue(), enter: () => enterEpilogue(), finish: () => finishEpilogue(), talk: (id = 'again') => startEpiTalk(id),
+      state: () => ({ on: epi.on, mode, yaw: epi.yaw, pitch: epi.pitch, triangles: haneda.triangles(), seen: !!talkState.flags.epilogue_seen }),
+      look: (yawDeg, pitchDeg) => { epi.yaw = yawDeg * Math.PI / 180; epi.pitch = pitchDeg * Math.PI / 180; placeEpilogueCamera(); },
+      // (pictures: the set seen from a point of its own frame, our aircraft drawn at its gate; the airliners hidden: the "before")
+      view: (eye, at, { own = true, jets = true } = {}) => { haneda.showOwn(own); if (haneda.jets) haneda.jets.visible = jets; camera.position.set(...eye); haneda.group.localToWorld(camera.position); camera.lookAt(haneda.group.localToWorld(new THREE.Vector3(...at))); camera.updateMatrixWorld(); epi.frozen = true; },
+    },
     // (M8) the AI instructor: a stand-in for the API (tests), the key (as the settings set it), its talk on screen
     ai: {
       useFetch: (fn) => { aiFetch = typeof fn === 'function' ? fn : null; },

@@ -949,6 +949,49 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.equal(st.slot, 'evening');
   });
 
+  // (M8) the epilogue: the night after the graduation, going home — a few months later, the right seat of SHOYO
+  // AIRWAYS' 737 at Haneda (its own set, far from the LAB airfield), the training captain in the left seat
+  test('(M8) the epilogue: after the graduation, going home — the right seat of the 737 at Haneda and the captain\'s first words; the view within budget all round; his goodbye, then the academy\'s next morning', async () => {
+    assert.ok((await career()).graduated);
+    const day = (await career()).day;
+    ev(() => { window.__cadet.career.sleep(); });                  // (not awaited: the cards are what is looked at)
+    await g.page.waitForFunction(() => window.__cadet.epilogue.state().on && !window.__cadet.career.cards() && window.__cadet.dialog(), null, { timeout: 30000 });
+    let s = await ev(() => window.__cadet.epilogue.state());
+    assert.equal(s.mode, 'epilogue');
+    assert.ok(s.triangles > 50000, `the set: ${s.triangles} triangles`);
+    assert.equal((await ev(() => window.__cadet.dialog())).name, '柏木 機長');
+    let t = await talkThrough(null, ['はい']);
+    assert.match(t.lines.join('\n'), /機長の柏木です[\s\S]*羽田[\s\S]*点検し、確かめ、声に出す[\s\S]*外を見てごらん/);
+    assert.equal(t.open, false);
+    // the view: ahead (the terminal), to the left (the captain, the other gates), to the right (the runway, Mt Fuji), up
+    for (const [yaw, pitch] of [[0, -5], [70, 0], [-75, 0], [0, 35]]) {
+      const st = await ev(([y, p]) => { window.__cadet.epilogue.look(y, p); return window.__cadet.frame(2); }, [yaw, pitch]);
+      assert.ok(st.calls < 400 && st.triangles < 900000, `look ${yaw}°/${pitch}°: ${st.calls} calls, ${st.triangles} triangles`);
+      assert.ok(st.calls > 10, `look ${yaw}°/${pitch}°: something drawn (${st.calls} calls)`);
+    }
+    // E: to him again; 'stay' keeps the epilogue, the goodbye ends it
+    t = await ev(() => window.__cadet.epilogue.talk('again'));
+    assert.equal(t, 'talk');
+    t = await talkThrough(null, ['もう少し見ています']);
+    assert.match(t.lines.join('\n'), /富士山/);
+    assert.equal((await ev(() => window.__cadet.epilogue.state())).on, true);
+    await ev(() => window.__cadet.simulate(0.6));
+    assert.equal(await ev(() => window.__cadet.epilogue.talk('again')), 'talk');
+    t = await talkThrough(null, ['そろそろ行きます']);
+    assert.match(t.lines.join('\n'), /ようこそ、翔洋航空へ/);
+    await g.page.waitForFunction(() => !window.__cadet.epilogue.state().on && !window.__cadet.career.cards(), null, { timeout: 30000 });
+    s = await ev(() => window.__cadet.epilogue.state());
+    assert.deepEqual([s.mode, s.seen], ['walk', true]);
+    const st = await career();
+    assert.deepEqual([st.slot, st.day > day], ['morning', true], JSON.stringify(st));
+    const back = await ev(() => window.__cadet.frame(2));
+    assert.ok(back.calls < 400 && back.triangles < 900000 && back.calls > 10, `back at the academy: ${JSON.stringify(back)}`);
+    // going home again: the next morning as before (the epilogue once; again from the tablet)
+    await ev(() => window.__cadet.career.tablet.open('today'));
+    assert.ok(await ev(() => [...document.querySelectorAll('.tb button')].some(b => /終章：羽田の 737（もう一度）/.test(b.textContent))), 'the tablet offers the epilogue again');
+    await ev(() => window.__cadet.career.tablet.close());
+  });
+
   // (M8) the AI instructor, with a stand-in for the API in the page (nothing goes out: the last test counts requests)
   test('(M8) the AI instructor: off, not offered; on with a key set in the menu — a free question, the answer in the subtitles, its textbook section; an error falls back to the textbook\'s questions; the key stays in its one place', async () => {
     const KEY = 'sk-ant-api03-BROWSERTEST-0123456789abcdef';

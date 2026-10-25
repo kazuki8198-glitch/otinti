@@ -69,7 +69,7 @@ export function createInteractor({ walker, world, L, hud }) {
     if (!current) return null;
     return current.use ? current.use(current) : null;
   }
-  function showCard(title, text, choices) { card = { x: walker.state.x, z: walker.state.z }; hud.card(title, text, choices); }
+  function showCard(title, text, choices) { card = { x: walker.state.x, z: walker.state.z }; hud.prompt(null); hud.card(title, text, choices); }
   function closeCard() { if (!card) return; card = null; hud.card(null); }
 
   return {

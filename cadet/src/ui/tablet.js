@@ -83,6 +83,8 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     put(plan, ul);
     if (m.canWait) put(plan, btn('次の予定まで待つ', () => { act.wait(); draw(); }, 'tb-btn ghost'));
     if (m.evening) put(plan, make('div', 'tb-note', '今日はここまで。正面入口から寮に帰ると、次の日になります。'));
+    // (M8) after the graduation: the epilogue again (Haneda, the right seat of the 737)
+    if (m.graduated && act.epilogue) put(plan, btn('終章：羽田の 737（もう一度）', () => { close(); act.epilogue(); }, 'tb-btn ghost'));
     const wx = put(make('div', 'tb-card'), make('h3', '', `天気：${m.weather.ja}`),
       make('div', 'tb-mono', m.weather.metarAm), make('div', 'tb-mono', m.weather.metarPm), make('div', 'tb-mono', m.weather.taf),
       make('div', 'tb-note', `ソロ前の訓練生の基準：雷雨なし・視程 5 SM 以上・雲高 3,000 ft 以上・横風 10 kt 以下。飛べる時間：午前 ${m.weather.flyAm ? '○' : '×'}・午後 ${m.weather.flyPm ? '○' : '×'}`));

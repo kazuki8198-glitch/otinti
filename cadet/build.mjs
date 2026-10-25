@@ -5,7 +5,7 @@
 //  - the game, bundled by esbuild into one script (three.js pinned in package.json, licence kept),
 //  - the textures as data URLs (assets/tex, CC0: see assets/CREDITS.md), the people's models (assets/model/actor.glb and
 //    actor-near.glb, made by tools/actor), the Archer's and the Seminole's (archer.glb, archer-far.glb, seminole.glb and
-//    seminole-far.glb, made by tools/aircraft): base64.
+//    seminole-far.glb, made by tools/aircraft; M8: jet737.glb, the epilogue's airliner): base64.
 // Output: outputs/CADET.html
 //   node build.mjs          minified
 //   node build.mjs --dev    readable, with an inline source map
@@ -34,7 +34,7 @@ function assetsScript() {
     const ext = path.extname(f); if (!MIME[ext]) continue;
     map['tex/' + path.basename(f, ext)] = `data:${MIME[ext]};base64,` + fs.readFileSync(path.join(TEX, f)).toString('base64');
   }
-  for (const f of ['actor', 'actor-near', 'archer', 'archer-far', 'seminole', 'seminole-far']) map['model/' + f] = fs.readFileSync(path.join(here, 'assets', 'model', f + '.glb')).toString('base64');
+  for (const f of ['actor', 'actor-near', 'archer', 'archer-far', 'seminole', 'seminole-far', 'jet737']) map['model/' + f] = fs.readFileSync(path.join(here, 'assets', 'model', f + '.glb')).toString('base64');
   return `globalThis.CADET_ASSETS = ${JSON.stringify(map)};`;
 }
 
@@ -48,15 +48,16 @@ export function build({ quiet = false, dev = false } = {}) {
     define: { __BUILD_INFO__: JSON.stringify(info) }, logLevel: 'error',
   }).outputFiles[0].text;
   const threeLicense = read(path.join(here, 'node_modules', 'three', 'LICENSE'));
+  const sdkLicense = read(path.join(here, 'node_modules', '@anthropic-ai', 'sdk', 'LICENSE'));     // (M8: the AI instructor's client)
   const scripts = [
     `<script>\n${safeJs(assetsScript())}\n</script>`,
     ...FL_MODULES.map(m => `<script>\n/* ---- FLIGHT LAB: ${m} ---- */\n${safeJs(read(path.join(FL_SRC, m)))}\n</script>`),
-    `<script>\n/* ---- CADET (bundled with three.js; three.js licence at the end of this file) ---- */\n${safeJs(bundle)}\n</script>`,
+    `<script>\n/* ---- CADET (bundled with three.js and the Anthropic TypeScript SDK; their licences at the end of this file) ---- */\n${safeJs(bundle)}\n</script>`,
   ].join('\n');
   let html = read(path.join(SRC, 'index.html'));
   html = html.replace(/<!--BUILD:CSS-->[\s\S]*?<!--\/BUILD:CSS-->/, () => `<style>\n${read(path.join(SRC, 'style.css'))}</style>`);
   html = html.replace(/<!--BUILD:JS-->[\s\S]*?<!--\/BUILD:JS-->/, () => scripts);
-  html = html.replace('</html>', () => `<!--\nthree.js licence:\n${threeLicense.replace(/--/g, '- -')}\n-->\n</html>`);
+  html = html.replace('</html>', () => `<!--\nthree.js licence:\n${threeLicense.replace(/--/g, '- -')}\n\nAnthropic TypeScript SDK (@anthropic-ai/sdk) licence:\n${sdkLicense.replace(/--/g, '- -')}\n-->\n</html>`);
   fs.mkdirSync(OUT, { recursive: true });
   const out = path.join(OUT, 'CADET.html');
   fs.writeFileSync(out, html);

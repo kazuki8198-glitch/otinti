@@ -229,3 +229,8 @@ test('career M6: the checks and their aircraft, the weather of the later chapter
   assert.deepEqual(sch.map(x => `${x.kind}:${x.id}`), ['checkride:ir']);
   assert.equal(nextIn(prog, STAGE.ch4.lessons), null);
 });
+
+test('career: the first day is a fine one, whatever the seed', () => {
+  const memStore = () => { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k) }; };
+  for (let seed = 1; seed < 60; seed++) assert.equal(createCareer({ store: memStore(), seed }).weather().kind, 'good', `seed ${seed}`);
+});

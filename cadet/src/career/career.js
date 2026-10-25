@@ -287,6 +287,7 @@ function checkItems(state, C, id, W, out, flown) {
 
 // the first day of flying and the first solo are not spoiled by the weather (the instructor picks a good day)
 function forcedWeather(state, prog) {
+  if (state.chapter === 'prologue') return { force: 'good' };              // (the first day: a fine morning to arrive in)
   // (M6) a chapter's first flight and the solo cross-country on a good day; the instrument check in low cloud (its ILS
   // in cloud is the chapter's high point); the instrument chapter's other days can be cloudy
   if (STAGE[state.chapter]) {

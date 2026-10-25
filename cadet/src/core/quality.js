@@ -15,12 +15,14 @@ export function gpuName(renderer) {
     return String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
   } catch (e) { return 'unknown'; }
 }
-// the first guess: software rendering → low; integrated Intel → high; a discrete or Apple GPU → ultra
+// the first guess: software rendering → low; Iris Xe → high, older integrated Intel → medium; a discrete or Apple GPU → ultra
 export function guessPreset(gpu) {
   const g = gpu.toLowerCase();
   if (/swiftshader|llvmpipe|software|basic render/.test(g)) return 'low';
   if (/nvidia|geforce|rtx|radeon rx|amd radeon pro|apple m\d|apple gpu/.test(g)) return 'ultra';
-  if (/intel|iris|uhd|radeon\(tm\) graphics|vega/.test(g)) return 'high';
+  // (M7) Iris Xe and AMD's integrated graphics: high (with the dynamic resolution); older Intel UHD / HD: medium
+  if (/iris|radeon\(tm\) graphics|vega/.test(g)) return 'high';
+  if (/intel|uhd|hd graphics/.test(g)) return 'medium';
   return 'high';
 }
 export function pickPreset(gpu) {

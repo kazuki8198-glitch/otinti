@@ -810,6 +810,15 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
       const got = await ev(({ tt }) => { const W = window.__cadet, st = W.walk.stand(tt.id); W.placeWalker(st.a, st.c, { a: tt.a, c: tt.c }); return W.lookAt(tt.a, tt.c, tt.y); }, { tt });
       assert.equal(got, 'walk:' + id, `${id} seen from where one stands`);
     }
+    // (M7, found playing) from the wing's trailing edge — as near as one can walk — the cabin's mark is in reach, and a
+    // mark not yet looked at wins over the door beside it (E used to board instead)
+    const near = await ev(() => {
+      const W = window.__cadet, T = W.walk.targets(), cab = T.find(x => x.id === 'cabin'), docs = T.find(x => x.id === 'docs');
+      W.placeWalker(cab.a + 6, cab.c + 6, { a: cab.a, c: cab.c });
+      const r = W.walkRoute([W.walk.stand('cabin')], { maxT: 20 });
+      return { at: r.at, cabin: W.lookAt(cab.a, cab.c, cab.y), docs: W.lookAt(docs.a, docs.c, docs.y) };
+    });
+    assert.deepEqual([near.cabin, near.docs], ['walk:cabin', 'walk:docs'], JSON.stringify(near));
     const a = await analyse(g.page, await ev(() => window.__cadet.snapshot(2)));
     assert.ok(a.sd > 8, 'the Seminole drawn');
     await goNoGo();

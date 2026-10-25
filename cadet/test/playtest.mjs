@@ -116,7 +116,7 @@ async function stepOnce() {
   }
   if (!cur) { issue(`E で使える物が照準にない（${(r.step || before.g).text}）`); }
   await key('KeyE', 0.15);
-  await sleep((r.step || before.g).at === 'board' ? 1600 : 100);         // (boarding: the screen fades first)
+  await sleep((r.step || before.g).at === 'board' ? 1600 : 300);         // (boarding: the screen fades first; else the prompt's fade)
   const after = await ev(() => { const C = window.__cadet; return { mode: C.mode(), dialog: !!C.dialog(), card: C.card(), walk: C.walk.open(), tablet: C.career.tablet.isOpen() }; });
   if (after.dialog) { await talk(); await sleep(1500); if (await ev(() => window.__cadet.mode()) === 'fly') return 'fly'; }
   else if (after.walk) {

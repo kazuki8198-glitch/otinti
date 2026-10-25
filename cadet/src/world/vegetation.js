@@ -220,13 +220,16 @@ export function buildVegetation(L, FL, { quality }) {
     q.setFromAxisAngle(V(0, 1, 0), it[3]); sc.setScalar(it[2]); tp.set(it[0], y0, it[1]);
     m4.compose(tp, q, sc); mesh.setMatrixAt(i, m4); mesh.setColorAt(i, col.setScalar(it[4]));
   };
-  const rings = [];                                  // { mesh, ring: 0 close | 1 middle, items }
+  const rings = [];                                  // { mesh, ring: 0 close | 1 middle | 2 far, items }
   for (const [kind, [close, middle, farGeo]] of Object.entries(GEO)) {
     const list = items[kind];
     if (farGeo) {
+      // (M7) only the trees beyond the middle ring, refilled as the camera moves (before: every tree, the near ones
+      // folded away by the shader — their vertices were still processed: about 270,000 triangles in every view)
       const fm = new THREE.InstancedMesh(farGeo, farMat, list.length);
       list.forEach((it, i) => setInst(fm, i, it));
-      fm.computeBoundingSphere(); fm.name = 'trees-far-' + kind; group.add(fm);
+      fm.computeBoundingSphere(); fm.frustumCulled = false; fm.name = 'trees-far-' + kind; group.add(fm);
+      rings.push({ mesh: fm, ring: 2, items: list });
     }
     for (const [ring, geos] of [[0, close], [1, middle]]) geos.forEach((g, vi) => {
       const mine = list.filter((_, i) => i % geos.length === vi);
@@ -241,14 +244,17 @@ export function buildVegetation(L, FL, { quality }) {
   houses.castShadow = true; houses.receiveShadow = true; houses.computeBoundingSphere(); group.add(houses);
 
   let last = null;
+  const FAR2 = 2500 ** 2, FAR4 = 5000 ** 2;
   function refill(cam) {
     U.uNearC.value.set(cam.x, 0, cam.z);
     const R1 = nearR() ** 2, R2 = U.uNearR.value ** 2;
     for (const { mesh, ring, items: its } of rings) {
       let k = 0; const cap = mesh.instanceMatrix.count;
-      for (const it of its) {
-        const dx = it[0] - cam.x, dz = it[1] - cam.z, d2 = dx * dx + dz * dz;
-        if ((ring === 0 ? d2 < R1 : d2 >= R1 && d2 < R2) && k < cap) setInst(mesh, k++, it);
+      for (let i = 0; i < its.length; i++) {
+        const it = its[i], dx = it[0] - cam.x, dz = it[1] - cam.z, d2 = dx * dx + dz * dz;
+        // (far off, deep in the haze, one tree in two beyond 2.5 km and one in four beyond 5 km: the woods' outline the same)
+        const thin = ring === 2 && ((d2 > FAR2 && i % 2) || (d2 > FAR4 && i % 4));
+        if (!thin && (ring === 0 ? d2 < R1 : ring === 1 ? d2 >= R1 && d2 < R2 : d2 >= R2 * 0.92) && k < cap) setInst(mesh, k++, it);
       }
       mesh.count = k; mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     }

@@ -100,7 +100,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
     }
     return `<p><b>CADET</b>（パイロット訓練生シミュレーター）${version ? ` <span class="m-val">${esc(version)}</span>` : ''}</p>
       <p>公開情報を基にした非公式のゲームです。航空会社（翔洋航空）・訓練所・人物はすべて架空です。実機訓練の代わりにはならず、航法には使えません（NOT FOR NAVIGATION）。飛行モデル・課目・教科書は FLIGHT LAB（同じリポジトリの自主学習教材）を使っています。</p>
-      <p class="m-note">使っているもの：three.js（MIT License）、ambientCG のテクスチャ（CC0）。家具・木・機体・標識などはプログラムで作っています。</p>`
+      <p class="m-note">使っているもの：three.js（MIT License）、ambientCG のテクスチャ（CC0）。機体と人物の模型は Blender で自作し、家具・木・標識などはプログラムで作っています。音（エンジン・風・足音・無線など）は、音のファイルを使わずにブラウザの中で作っています。くわしくは assets/CREDITS.md。</p>`
       + (onResetProgress ? `<div class="m-big"><button data-act="reset">訓練の記録を消す（教官との会話を最初から）</button></div>
       <p class="m-note">記録はこのブラウザの中だけに保存されています。設定は消えません。</p>` : '');
   }

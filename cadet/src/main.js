@@ -1662,6 +1662,8 @@ async function boot() {
     },
     settings, coach: () => coach.step,
     // render n frames now and return the last as a PNG data URL (for tests: the drawing buffer is read in the same task)
+    // render n frames now, without reading them back (the tests' measurements)
+    frame: (n = 1) => { for (let k = 0; k < n; k++) step(performance.now()); return { ...pipe.sceneInfo }; },
     snapshot: (n = 1) => { for (let k = 0; k < n; k++) step(performance.now()); return renderer.domElement.toDataURL('image/png'); },
   };
   bootMsg(`準備ができました（${NAMES.field.ja}）`, 1);

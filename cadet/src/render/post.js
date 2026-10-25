@@ -132,7 +132,8 @@ export function createPipeline(container, quality) {
     lastHaze = { sunDir, el, fog, grey };
     // the eye adapts: more exposure as the sun goes down (dusk, then night under the moon)
     const dark = 1 - THREE.MathUtils.smoothstep(el, -10, 8);
-    baseExposure = 0.62 * (1 + 7 * dark * dark);
+    // (M7: a little less at full night — it read as a bright dusk: the apron's floodlit patches should stand out)
+    baseExposure = 0.62 * (1 + 4.2 * dark * dark);
     renderer.toneMappingExposure = exposure();
     const u = aerial.uniforms;
     u.uSunDir.value.copy(sunDir);

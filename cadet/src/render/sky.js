@@ -99,7 +99,7 @@ export function createSky(renderer, scene, quality) {
     const L = sunlight(p.el);
     // under an overcast the sun is behind the cloud: less of it, more of a grey sky
     sun.color.copy(L.color); sun.intensity = 10 * L.k * (1 - 0.8 * state.overcast);   // about four times the sky's light on open ground
-    hemi.intensity = 0.25 * (1 - THREE.MathUtils.smoothstep(p.el, -6, 2));            // moonlight and sky glow at night
+    hemi.intensity = 0.2 * (1 - THREE.MathUtils.smoothstep(p.el, -6, 2));            // moonlight and sky glow at night
     state.lightsOn = 1 - THREE.MathUtils.smoothstep(p.el, -4, 5);
     // the image-based light from this sky
     const EU = envSky.material.uniforms;

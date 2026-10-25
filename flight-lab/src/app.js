@@ -65,6 +65,7 @@
     closeScreens(); S.screen = 'fly'; S.paused = false;
     $('#hood').hidden = !S.L.hood;                                    // at once: no glimpse of the outside in an instrument lesson
     applyLayout();                                                    // (the 3D cockpit: the 2D panel comes up with the hood)
+    lookAhead();
     renderAudio(); renderSoftkeys();
     toast(`${def.title}（${S.L.level.name}）を開始。教官の指示は左上、使うキーは H で確認できます`, 3600);
   }
@@ -72,9 +73,11 @@
     const W = { calm: { rel: 0, kt: 0, gust: 0.3 }, light: { rel: 10, kt: 5, gust: 0.5 }, cross: { rel: 60, kt: 12, gust: 1.2 }, gusty: { rel: 70, kt: 15, gust: 2.5 } }[wind || 'light'];
     S.L = SC.startFree(startId, aircraft, { ...lessonOpts(), assist: S.prefs.assist, wind: W });
     S.recId = null; S.rTrim = 0; S.keys.clear();
-    applyLayout();
+    applyLayout(); lookAhead();
     renderAudio(); renderSoftkeys();
   }
+  // a new flight starts looking ahead (the three.js view: the head turned with the mouse, the chase camera orbited)
+  function lookAhead() { if (scene && scene.resetLook) scene.resetLook(); }
 
   // ---------------------------------------------------------------- the controls (空島フライト's keyboard and gamepad)
   const FLY_HELD = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'PageUp', 'PageDown', 'KeyW', 'KeyS', 'KeyA', 'KeyD', 'KeyQ', 'KeyE', 'KeyR', 'KeyF', 'KeyB'];
@@ -383,8 +386,9 @@
     if (document.body.dataset.screen !== S.screen) document.body.dataset.screen = S.screen;
     const L = S.L; if (!L) return;
     $('#hood').hidden = !(S.screen === 'fly' && L.hood && !L.done);
-    applyLayout(); cockpitHint();                                     // (a step can put the hood on or take it off)
+    applyLayout();                                                    // (a step can put the hood on or take it off)
     renderDialogs(false);
+    cockpitHint();                                                    // (after the dialogs: it waits until none is up)
     const sp = $('#sch-panel'), fp = $('#free-panel');
     sp.hidden = !(S.screen === 'fly' && !L.free);
     fp.hidden = !(S.screen === 'fly' && L.free);
@@ -549,16 +553,19 @@
     if (layoutKey === hgt) return; layoutKey = hgt;
     document.documentElement.style.setProperty('--panelH', hgt);
     $('#panel').hidden = !show; document.body.classList.toggle('nopanel', !show);
+    $('#bLayout').hidden = !show;                                     // (the panel's height: nothing to size while it is away)
   }
   function togglePanel() {
     if (!isThree()) { toast('軽量表示では、2D の計器盤はいつも画面の下に出ています', 1800); return; }
     S.prefs.panel2d = !S.prefs.panel2d; savePrefs(); applyLayout();
     toast(S.prefs.panel2d ? '2D の計器盤を表示（I でしまう）' : panelShown() ? '2D の計器盤：後方視点とフード中はいつも出ます（I は操縦席の視点で効きます）' : '2D の計器盤をしまいました。計器は操縦席の G1000 型パネルで（右ボタンでズーム・I でまた出す）', 2200);
   }
-  // the first time in the 3D cockpit (once per page load): how to look around, zoom, use the controls, the 2D panel
+  // the first time in the 3D cockpit (once per page load): how to look around, zoom, use the controls, the 2D panel.
+  // Not while a checklist, an ATC call or the estimate is up: the toasts would sit over the dialog's lines
   let hinted = false;
   function cockpitHint() {
     if (hinted || !isThree() || !flying() || effView() !== 'cockpit' || hoodOn() || (scene.ready && !scene.ready())) return;
+    if (['#sch-check', '#sch-atc', '#sch-est'].some(id => !$(id).hidden)) return;
     hinted = true;
     toast('3D の操縦席：ドラッグで見回す（ダブルクリックで正面）・右ボタンを押している間ズーム・計器のキーやつまみ、レバーはクリック（ホイールで回す）・I で 2D の計器盤', 7000);
   }

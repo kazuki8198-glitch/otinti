@@ -44,6 +44,7 @@ try {
   for (const [name, st, ac, view, settle] of VIEWS) {
     if (only && !only.includes(name)) continue;
     // a fresh page per view (software WebGL grows the browser's memory over many frames)
+    const t0 = Date.now();
     const ctx = await browser.newContext({ viewport: { width: W, height: H } });
     await ctx.route(/^https?:/, r => r.abort());
     const page = await ctx.newPage(), errors = [];
@@ -60,7 +61,10 @@ try {
     // frames, counted by the page's own animation frames (the app draws once in each)
     if (three) await page.evaluate(n => new Promise(res => { let k = 0; const f = () => (++k >= n ? res() : requestAnimationFrame(f)); requestAnimationFrame(f); }), FRAMES);
     else await page.waitForTimeout(settle * 1000);
-    if (name === VIEWS[0][0] || (only && name === only[0])) await page.screenshot({ path: path.join(outDir, name + '-page.png') });
+    // (a screenshot waits for the next frame the page presents: under the three.js view at the higher presets that
+    // can take a minute in software WebGL, more than Playwright's 30 s)
+    const shotTimeout = three ? 600000 : 30000;
+    if (name === VIEWS[0][0] || (only && name === only[0])) await page.screenshot({ path: path.join(outDir, name + '-page.png'), timeout: shotTimeout });
     // the 3D view alone: hide everything that is not the 3D canvas or one of its ancestors
     await page.evaluate(() => {
       const keep = new Set(); let el = document.getElementById('view3d');
@@ -69,8 +73,8 @@ try {
     });
     await page.waitForTimeout(300);
     const box = await page.locator('#view3d').boundingBox();
-    await page.screenshot({ path: path.join(outDir, name + '.png'), clip: box });
-    console.log(`${name}: ${st} ${ac} ${view} ${three ? 'three.js' : 'light'}${errors.length ? '  ERRORS ' + errors.join(' | ') : ''}`);
+    await page.screenshot({ path: path.join(outDir, name + '.png'), clip: box, timeout: shotTimeout });
+    console.log(`${name}: ${st} ${ac} ${view} ${three ? 'three.js' : 'light'} ${Math.round((Date.now() - t0) / 1000)} s${errors.length ? '  ERRORS ' + errors.join(' | ') : ''}`);
     await ctx.close();
   }
 } finally { await browser.close(); }

@@ -200,10 +200,12 @@ export function createScene(FL, wrap, opt = {}) {
     if (half !== shadowHalf) { shadowHalf = half; sky.setShadowHalf(half); }
   }
   // the hood: everything outside the aircraft hidden (and the aircraft's own wings and tail), a dark visor instead of
-  // the sky; only for the frame being drawn
+  // the sky; only for the frame being drawn. The windshield's glass goes too: it mirrors the sky's light (the image-
+  // based light stays, for the cockpit's own surfaces) and over the dark visor would read as a pale grey haze
+  const glassMesh = cockpit.root.getObjectByName('cockpit-glass');
   function hood(on) {
     if (on) {
-      for (const o of [...world.outside(), sky.sky, hook.mesh]) if (o.visible) { o.visible = false; hidden.push(o); }
+      for (const o of [...world.outside(), sky.sky, hook.mesh, glassMesh]) if (o && o.visible) { o.visible = false; hidden.push(o); }
       for (const o of live.root.children) if (o !== cockpit.root && o.visible) { o.visible = false; hidden.push(o); }
       scene.background = VISOR;
     } else {

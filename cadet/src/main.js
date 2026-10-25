@@ -961,6 +961,20 @@ async function boot() {
     }
     return startDay({ card: true, place: true });
   }
+  // walking out of the front doors ends the day too (at the end of the day: no card, straight to sleep — the card with
+  // the late study stays at the door, with E); before the end of the day, a word (once each time out)
+  let outsideSeen = false, leaving = false;
+  function frontDoorStep(pa, pc) {
+    const out = pc > 278.4 && pa > 640 && pa < 670;
+    if (!out) { outsideSeen = false; return; }
+    if (outsideSeen || leaving || talk || cards.showing) return;
+    outsideSeen = true;
+    const st = career.state, off = planToday().some(x => x.kind === 'off');
+    if (st.slot !== 'evening' && !off) { toast('まだ今日の予定が残っています（Tab でタブレット）', 3000); return; }
+    leaving = true; interactor.closeCard();
+    toast('寮へ帰ります', 1600);
+    Promise.resolve(sleepNow({ late: false })).finally(() => { leaving = false; });
+  }
   interactor.add({ id: 'home', frame: [ENTRANCE.c + 1.6, 1.3, -ENTRANCE.a], radius: 0.9, prompt: () => (career.slot === 'evening' || planToday().some(x => x.kind === 'off') ? '寮へ帰る（今日を終える）' : '正面入口'), use: goHome });
   $('#card .card-choices').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && homeOpen) homeChoose(+b.dataset.k); });
 
@@ -1259,7 +1273,7 @@ async function boot() {
     const [fx, fz] = toFrame(camWorld.x, camWorld.z), pa = -fz, pc = fx;
     academy.update(dt, mode === 'walk' ? walker.framePos : { x: fx, z: fz });
     if (mode === 'fly') { if (fly) fly.draw2D(dt); }
-    if (mode === 'walk' && live && !talk) { interactor.update(camera); showPlace(dt, pa, pc); }
+    if (mode === 'walk' && live && !talk) { interactor.update(camera); showPlace(dt, pa, pc); frontDoorStep(pa, pc); }
     // near today's aircraft: the walk-around's progress; the instructor leaves the room for it once the cadet has gone
     walkEl.hidden = !(mode === 'walk' && Math.hypot(pa - tg.a, pc - tg.c) < 14 && !flownToday());   // (no flight left today: no walk-around)
     updateGuide(dt, pa, pc);

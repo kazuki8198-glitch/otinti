@@ -120,6 +120,8 @@ export function createGlass(FL, makeCanvas) {
     d.eng = s.eng.length > 1 ? ENG : ENG1;
     for (let i = 0; i < d.eng.length && i < s.eng.length; i++) { const e = s.eng[i], o = d.eng[i]; o.run = e.run; o.rpm = e.rpm; o.feather = e.feather; }
     if (eng && s.eng.length === 1) { d.eng[0].rpm = eng.rpm; d.eng[0].run = eng.run; d.o.rpm = eng.rpm; }
+    // (M6) the twin on the ground: each engine as the systems have it (started one by one, the run-up's drops)
+    else if (eng && eng.twin && s.onGround) for (let i = 0; i < 2 && i < d.eng.length; i++) { d.eng[i].rpm = eng.twin[i].rpm; d.eng[i].run = eng.twin[i].eng === 'run'; }
     return d;
   }
   function drawScreen(which, s, av, eng) {

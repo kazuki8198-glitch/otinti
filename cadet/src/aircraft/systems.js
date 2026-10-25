@@ -21,10 +21,10 @@ const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 
 // cold: everything off, as the aircraft is left on the apron (the selector on the left tank)
 export const COLD = { master: false, avionics: false, fuelPump: false, beacon: false, nav: false, strobe: false, landing: false, taxi: false, pitot: false,
-  mag: 'OFF', fuelSel: 'L', mixture: 0, carbHeat: false };
+  mag: 'OFF', fuelSel: 'L', mixture: 0, carbHeat: false, propCycleT: 0, propCycled: false };
 // in the air or lined up: as FLIGHT LAB's lessons start (everything that is on in flight)
 export const RUNNING = { master: true, avionics: true, fuelPump: true, beacon: true, nav: true, strobe: true, landing: false, taxi: false, pitot: false,
-  mag: 'BOTH', fuelSel: 'L', mixture: 1, carbHeat: false };
+  mag: 'BOTH', fuelSel: 'L', mixture: 1, carbHeat: false, propCycleT: 0 };
 
 // createSystems(sw) → the systems for one aircraft; sw: the cockpit's switches (changed here only for the key's spring
 // return). update(dt, s) every frame (or every physics step) returns the events since the last call (the same array,
@@ -141,9 +141,17 @@ export function createSystems(sw) {
     }
     return events;
   }
-  // the twin, engine by engine (the stops — mixture, magnetos, fuel — stop both: the switches are shared)
+  // the twin, engine by engine (the stops — mixture, magnetos, fuel — stop both: the switches are shared). The
+  // propellers cycled in the run-up (the levers pulled back to the feather detent's edge and pushed forward again,
+  // sw.propCycleT counting down): the rpm sags about 400 and comes back
   function twinUpdate(dt, s) {
     const master = !!sw.master;
+    let cyc = 0;
+    if (sw.propCycleT > 0) {
+      sw.propCycleT = Math.max(0, sw.propCycleT - dt);
+      cyc = Math.sin(Math.PI * clamp(1 - sw.propCycleT / 2.6, 0, 1));
+      if (sw.propCycleT === 0 && s.onGround) sw.propCycled = true;
+    }
     if (sw.mag === 'START') {
       const k = twin.findIndex(t => t.eng !== 'run');
       if (k < 0) sw.mag = 'BOTH';
@@ -170,7 +178,7 @@ export function createSystems(sw) {
         // (the constant-speed propeller's governor keeps the physics' rpm up; at low power on the ground the gauge
         // reads as the lever is set: about 1,000 rpm a little open, 2,000 for the run-up)
         const lever = s.thr < 0.045 ? 650 + s.thr / 0.045 * 350 : 1000 + (s.thr - 0.045) / 0.625 * 1000, r = Math.min(e ? e.rpm || 0 : 0, lever), kk = clamp((r - 700) / 1300, 0, 1.25);
-        const drop = (sw.mag === 'L' ? RUNUP.dropL : sw.mag === 'R' ? RUNUP.dropR : 0) * kk + (sw.carbHeat ? RUNUP.carb * kk : 0);
+        const drop = (sw.mag === 'L' ? RUNUP.dropL : sw.mag === 'R' ? RUNUP.dropR : 0) * kk + (sw.carbHeat ? RUNUP.carb * kk : 0) + 400 * cyc * kk;
         t.rpm = Math.max(0, r - drop);
       }
     });
@@ -195,6 +203,7 @@ export function createSystems(sw) {
   return {
     sw, st, setCold, setRunning, adopt, prime, update, catchTime,
     get twin() { return twin.map(t => ({ eng: t.eng, rpm: t.rpm })); }, get runningL() { return twin[0].eng === 'run'; },
+    twinLive: twin,                                          // (read only: the gauges each frame, without copying)
     get running() { return st.eng === 'run'; }, get cranking() { return st.eng === 'crank'; },
     get rpm() { return st.rpm; }, get oil() { return st.oil; }, get primes() { return st.primes; },
     get powered() { return !!sw.master; }, get avionicsOn() { return !!(sw.master && sw.avionics); },

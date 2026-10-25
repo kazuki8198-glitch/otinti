@@ -1,6 +1,7 @@
 // CADET — content/checklists-seminole.js : the twin's ground checklists (M6), the Archer's (content/checklists-archer.js)
 // with what a published PA-44 training checklist adds: the gear lever checked DOWN before the start, the two engines
 // started one after the other (the left first), the propellers cycled (and the feathering checked) in the run-up.
+// (the gear selector and the propeller levers are the Seminole cockpit's own: aircraft/cockpit.js setType('pa44'))
 // Simplified, written for the game; the aircraft's POH and the school's checklist govern.
 import { CHECKLISTS as A } from './checklists-archer.js';
 
@@ -9,7 +10,7 @@ export const CHECKLISTS = {
   ...A,
   before_start: { title: 'エンジン始動前（BEFORE STARTING ENGINES）', items: [
     ...A.before_start.items,
-    ['脚のレバー', 'DOWN', null, null, '引き込み脚の機体です。地上では、脚のレバーが DOWN にあることを必ず確かめます。', null],
+    ['脚のレバー', 'DOWN（緑のランプ 3 つ）', null, 'gear', '引き込み脚の機体です。地上では、脚のレバーが DOWN にあり、緑のランプが 3 つ点いていることを必ず確かめます。', null],
   ] },
   start: { title: 'エンジン始動（STARTING ENGINES・左から）', items: [
     ...A.start.items.filter(it => !['マグネトー', 'スロットル', '油圧'].includes(it[0])).flatMap(it => (it[0] === 'ミクスチャー' ? [['ミクスチャー', 'フル リッチ（左右とも）', it[2], it[3], '赤いレバーを 2 本とも、いちばん前まで。', it[5]],
@@ -21,7 +22,7 @@ export const CHECKLISTS = {
   ] },
   runup: { title: 'ランナップ（RUN-UP）', items: [
     ...A.runup.items.slice(0, 6),
-    ['プロペラ', 'サイクル（定速プロペラ・フェザーの確認）', null, null, 'プロペラのレバーを引いて回転が下がり、戻すと上がることを確かめます。左右とも。', null],
+    ['プロペラ', 'サイクル（定速プロペラ・フェザーの確認）', c => !!c.sw.propCycled, 'prop', '青いプロペラのレバーを引いて回転が下がり、戻すと上がることを確かめます。左右とも。', c => { if (!(c.sw.propCycleT > 0)) c.sw.propCycleT = 2.6; }],
     ...A.runup.items.slice(6),
   ] },
 };

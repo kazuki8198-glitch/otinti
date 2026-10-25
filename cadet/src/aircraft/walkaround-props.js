@@ -8,8 +8,8 @@ import * as THREE from 'three';
 // where things are on each aircraft (M6: the Seminole's too): the apron under its wheels, the wing's root, the pitot
 // mast, the tie-down rings, the tail's ring, the nose wheel
 const GEOM = {
-  pa28: { ground: -1.40, root: 0.55, pitot: [-3.6, -0.72], tieX: 4.2, tieZ: -0.42, tailZ: 3.45, noseZ: -2.3, cap: true },
-  pa44: { ground: -1.47, root: 0.6, pitot: [-3.9, -0.78], tieX: 4.6, tieZ: -0.35, tailZ: 4.4, noseZ: -2.5, cap: false },
+  pa28: { ground: -1.40, root: 0.55, pitot: [-3.6, -0.72], tieX: 4.2, tieZ: -0.42, tailZ: 3.45, noseZ: -2.3, cap: true, main: [-1.6, 0.25] },
+  pa44: { ground: -1.47, root: 0.6, pitot: [-3.9, -0.78], tieX: 4.6, tieZ: -0.35, tailZ: 4.4, noseZ: -2.5, cap: false, main: [-1.6, 0.3] },
 };
 
 function streamerTexture() {
@@ -73,9 +73,13 @@ export function buildWalkaroundProps(type = 'pa28') {
   cap.add(mesh(new THREE.BoxGeometry(0.012, 0.012, 0.07), dark, [3.2, wingY(3.2) + 0.14, -0.55], [0.4, 0, 0]));
   cap.visible = false;
   root.add(cap);
+  // (M6) the brake fluid leaked under the left main wheel (the anomaly 'brake'): a wet, dark red stain on the apron
+  const stain = mesh(new THREE.CircleGeometry(0.2, 20).scale(1, 0.6, 1).rotateX(-Math.PI / 2), mat(0x5c100c, 0.15), [Gm.main[0] - 0.08, GROUND_Y + 0.004, Gm.main[1] + 0.12]);
+  stain.castShadow = false; stain.visible = false;
+  root.add(stain);
 
   function set(p) {
-    cover.visible = !!p.pitot; tieR.visible = !!p.tieR; tieL.visible = !!p.tieL; tieT.visible = !!p.tieT; chocks.visible = !!p.chocks; cap.visible = !!p.capOpen && Gm.cap;
+    cover.visible = !!p.pitot; tieR.visible = !!p.tieR; tieL.visible = !!p.tieL; tieT.visible = !!p.tieT; chocks.visible = !!p.chocks; cap.visible = !!p.capOpen && Gm.cap; stain.visible = !!p.brakeLeak;
   }
   // the streamer moves in the wind (t: seconds; windKt)
   function update(t, windKt = 5) {
@@ -87,5 +91,5 @@ export function buildWalkaroundProps(type = 'pa28') {
     }
     pa.needsUpdate = true;
   }
-  return { root, set, update, parts: { cover, tieR, tieL, tieT, chocks, cap } };
+  return { root, set, update, parts: { cover, tieR, tieL, tieT, chocks, cap, stain } };
 }

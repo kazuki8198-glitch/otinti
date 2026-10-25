@@ -113,7 +113,7 @@ export function createWalkaround({ seed = 1, anomalies, aircraft = 'pa28' } = {}
     const task = (tid) => { const p = POINTS.find(x => x.task && x.task.id === tid); return p ? !st.get(p.id).task : false; };
     const open = (id) => { const g = st.get(id); return !!g && (g.bad === 'open' || g.bad === 'found'); };
     return { lock: task('lock'), tieR: task('tieR'), tieL: task('tieL'), tieT: task('tieT'), chocks: task('chocks'), pitot: task('pitot'),
-      capOpen: open('r_cap'), tireLow: open('r_main') };
+      capOpen: open('r_cap'), tireLow: open('r_main'), brakeLeak: open('l_main') };
   }
   return { points: POINTS, inspect, act, pending, settle, summary, props, isDone, planted: [...bad], get log() { return log.slice(); } };
 }

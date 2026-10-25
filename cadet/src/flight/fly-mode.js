@@ -59,11 +59,12 @@ export function createFlyMode(ctx) {
   }
 
   // ---- the objects (built once, at boot, so their shaders compile with everything else)
-  // (M6) the twin's days fly the Seminole: its own flown model; the cockpit (the Archer's, as M3 made it) moves into
-  // whichever is today's (ctx.aircraft())
-  const lives = { pa28: liveAircraft(FL, A), pa44: liveAircraft(FL, P.AIRCRAFT.find(a => a.id === 'pa44'), { reg: 'N452SY' }) };
+  // (M6) the twin's days fly the Seminole: its own flown model; the cockpit moves into whichever is today's
+  // (ctx.aircraft()) and shows that type's own parts (the Seminole's quadrant, gear selector and nose: cockpit.setType)
+  const A44 = P.AIRCRAFT.find(a => a.id === 'pa44');
+  const lives = { pa28: liveAircraft(FL, A), pa44: liveAircraft(FL, A44, { reg: 'N452SY' }) };
   let live = lives.pa28, liveId = 'pa28';
-  const cockpit = buildCockpit(FL, A, { anisotropy: Math.min(8, ctx.renderer.capabilities.getMaxAnisotropy()) });
+  const cockpit = buildCockpit(FL, A, { anisotropy: Math.min(8, ctx.renderer.capabilities.getMaxAnisotropy()), twin: A44 });
   live.root.add(cockpit.root);
   for (const l of Object.values(lives)) { l.root.visible = false; scene.add(l.root); }
   const todayType = () => (ctx.aircraft ? ctx.aircraft() : 'pa28') || 'pa28';
@@ -73,11 +74,12 @@ export function createFlyMode(ctx) {
     live = lives[id]; liveId = id;
     for (const c of [...was.root.children]) if (c === cockpit.root || c.name === 'cockpit-guide' || (crew && c === crew.root)) live.root.add(c);
     was.root.visible = false; live.root.visible = vis;
+    cockpit.setType(id);
   }
   const seat = seatFromBody(cockpit.instructorSeat, cockpit.instructorSeat.yaw ?? Math.PI);
   // the engine and the electrics behind the switches
   const systems = createSystems(cockpit.switches);
-  const engShow = { rpm: 0, run: false };
+  const engShow = { rpm: 0, run: false, twin: systems.twinLive };
   // the ring round the control to use next (the day's checklists): drawn over everything, pulsing
   const guide = new THREE.Mesh(new THREE.RingGeometry(0.02, 0.0275, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.0, 0.7), transparent: true, opacity: 0.9, depthTest: false, depthWrite: false, side: THREE.DoubleSide }));
   guide.renderOrder = 10; guide.visible = false; guide.name = 'cockpit-guide';
@@ -305,6 +307,7 @@ export function createFlyMode(ctx) {
   // the debrief (in the seat, on the stand), then the logbook signed
   function startDebrief(sum) {
     phase = 'day'; debSum = sum;
+    if (ctx.tem && !sum.tem) sum.tem = ctx.tem();                 // (M6) the threat the cadet named this morning
     // the first solo: no one in the seat to debrief it — the day is signed off outside (ctx.onSolo)
     if (!crew) { if (dayMode.day) dayMode.day.debriefRead(); if (ctx.onSolo) ctx.onSolo(sum); return; }
     startTalk('debrief', seatName(debriefDialogs(sum)));

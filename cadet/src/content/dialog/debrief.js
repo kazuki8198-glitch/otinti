@@ -4,7 +4,10 @@
 // was missed, what was left undone), the radio (right the first time), the taxiing (the hold-short line), the three
 // lessons (FLIGHT LAB's grades and the row furthest outside its standard), then one thing to work on, the trust
 // earned, and the logbook (hook 'logbook': the game opens it, signed).
+// (M6) TEM: when the cadet named a threat this morning (sum.tem: { threat, named }), a line after the lessons: today's
+// threat again, and the day's errors (career/tem.js errorsOf) — seen and caught, or not.
 import { INSTRUCTOR } from './instructor.js';
+import { errorsOf } from '../../career/tem.js';
 
 const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' } };
 export const DEBRIEF_FLAGS = ['day1_done'];
@@ -26,7 +29,7 @@ function lessonLine(l) {
 export function debriefDialogs(sum) {
   const N = {}, say = (text, more = {}) => ({ speaker: 'instructor', text, ...more });
   const w = sum.walk, r = sum.radio;
-  const order = ['open', 'walk', 'radio', 'taxi', ...sum.lessons.map(l => 'lesson:' + l.id), 'next', 'trust', 'sign'];
+  const order = ['open', 'walk', 'radio', 'taxi', ...sum.lessons.map(l => 'lesson:' + l.id), ...(sum.tem ? ['tem'] : []), 'next', 'trust', 'sign'];
   const nx = (k) => order[order.indexOf(k) + 1];
   N.open = say('エンジン停止、お疲れさまでした。今日の 1 日を、順番に振り返りましょう。', { if: { not: { flag: 'day1_done' } }, else: 'again', hook: { name: 'look', arg: 'player' }, next: nx('open') });
   N.again = say('お疲れさまでした。今日の飛行も、順番に振り返りましょう。', { hook: { name: 'look', arg: 'player' }, next: nx('open') });
@@ -45,6 +48,12 @@ export function debriefDialogs(sum) {
     : 'タキシーでは、許可のとおりに A1 の停止線の手前で止まれていました。', { hook: { name: sum.incursion ? 'look' : 'nod', arg: 'player' }, next: nx('taxi') });
   // one line a lesson (the first with the word that the lessons come now)
   sum.lessons.forEach((l, k) => { const id = 'lesson:' + l.id; N[id] = say((k ? '' : '課目です。') + lessonLine(l), { next: nx(id) }); });
+  // TEM: the threat, the errors
+  if (sum.tem) {
+    const errs = errorsOf(sum), th = sum.tem.threat;
+    N.tem = say(`TEM の振り返りです。今日の脅威は${q(th.ja)}でした。${sum.tem.named ? '朝、自分で挙げられましたね。だから、慌てずに対処できていました。' : '朝は別のものを挙げましたが、次は天気と自分の状態から、先に考えてみましょう。'}`
+      + (errs.length ? `エラーは、${errs.join('、')}。エラーはなくせません。早く気づいて、直すことが大事です。` : 'エラーも、今日は目立つものはありませんでした。'), { hook: { name: 'look', arg: 'player' }, next: nx('tem') });
+  }
   // one thing for next time
   const weak = sum.lessons.find(l => l.done && !l.passed);
   const nextTxt = sum.incursion ? '次は、停止線の前で止まる。それだけは、毎回必ず。' : weak ? `次は${q(weak.title)}をもう一度やりましょう。` : missed ? '次は、外部点検をもっとゆっくり、ひとつずつ。' : r.first < r.n ? '次は、無線の復唱を、声に出して練習しておきましょう。' : '次は、今日の課目を少し厳しい基準で飛んでみましょう。';

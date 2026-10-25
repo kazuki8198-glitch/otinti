@@ -86,3 +86,26 @@ test('day: a careless cadet — anomalies missed, a rope left on, a wrong read-b
   assert.match(all, /見落としたのは「オイル（量とふた）」/); assert.match(all, /外し忘れたもの/); assert.match(all, /停止線を越えました/);
   assert.ok(sum.trust < 6);
 });
+
+// (M6) more anomalies on both aircraft: the lens, the brake (its stain on the apron), the nose strut, the trim tab, the
+// papers (the cadet sends for them) — each can be planted, found and put right
+test('day: the walk-around\'s later anomalies — planted on either aircraft, reported or put right, the brake\'s stain shown', async () => {
+  const { createWalkaround, plant } = await import('../src/aircraft/walkaround.js');
+  for (const aircraft of ['pa28', 'pa44']) {
+    const ids = { lens: 'r_tip', brake: 'l_main', strut: 'nose', tab: 'tail', docs: 'docs' };
+    const seen = new Set();
+    for (let seed = 1; seed < 400; seed++) for (const id of plant(seed, { aircraft })) seen.add(id);
+    for (const pid of Object.values(ids)) assert.ok(seen.has(pid), `${aircraft}: ${pid} can be planted`);
+    const w = createWalkaround({ seed: 5, anomalies: Object.values(ids), aircraft });
+    assert.equal(w.props().brakeLeak, true, `${aircraft}: the brake's stain`);
+    for (const pid of Object.values(ids)) {
+      const card = w.inspect(pid);
+      assert.ok(card && card.choices.some(c => c.act === 'report'), `${aircraft} ${pid}: a card`);
+      w.act(pid, 'report');
+      if (w.inspect(pid).choices.some(c => c.act === 'fix')) w.act(pid, 'fix');                  // (the papers: sent for)
+    }
+    const s = w.summary();
+    assert.equal(s.found, 5, `${aircraft}: all five found`);
+    assert.equal(w.props().brakeLeak, false, `${aircraft}: the brake put right, no stain`);
+  }
+});

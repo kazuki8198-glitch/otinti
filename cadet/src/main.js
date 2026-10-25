@@ -46,6 +46,7 @@ import { apronDialogs } from './content/dialog/day1.js';
 import { KITS } from './aircraft/walkaround.js';
 import { createCareer, prologueFlags, STAGE, CHECKS, LATER, SLOT_HOURS, SLOT_NAMES, CHAPTERS, CH2, GROUND, EXAMS, CLASSES, SOLO_TRUST, dateText, dateOf, passedAt, groundPassed } from './career/career.js';
 import { planFor } from './career/day.js';
+import { temFor } from './career/tem.js';
 import { exportArchive, importArchive } from './career/archive.js';
 import { PEOPLE, PEERS } from './content/people.js';
 import { createCast, FAR as CAST_FAR } from './npc/cast.js';
@@ -443,7 +444,9 @@ async function boot() {
   // today's check pilot: the chief instructor (c1, the instrument and multi-engine checks) or the examiner (the final)
   const checkWho = (it) => (it && CHECKS[it.id] && CHECKS[it.id].who) || 'chief';
   const lessonTitle = (id) => { const l = FL.school.lesson(id); return l ? `「${l.title}」` : id; };
-  const cx = { career: {}, today: {}, weather: {}, imsafe: { honest: true }, quiz: { right: 0, n: 0, pct: 0, pass: false } };
+  const cx = { career: {}, today: {}, weather: {}, imsafe: { honest: true }, quiz: { right: 0, n: 0, pct: 0, pass: false }, tem: { on: false, right: false, not: '' } };
+  // (M6) TEM: today's threat from the day (career/tem.js), from chapter 3 on; what the cadet named (the debrief's)
+  let temData = null, temPick = null;
   function refreshCtx() {
     const st = career.state, w = weatherNow(), it = flightItem(), sch = planToday();
     Object.assign(cx.career, { chapter: st.chapter, slot: st.slot, day: st.day, dayMod3: st.day % 3, tired: career.tired(), solo: !!st.solo, flying: flyingChapter(), graduated: !!st.graduated });
@@ -462,6 +465,10 @@ async function boot() {
       lessonTitle: it ? lessonTitle(planOf(it).main) : '', studyTitle: lessonTitle(study), studySection: sec ? sec.id : null,
     });
     Object.assign(cx.weather, { ja: w.ja, metarAm: w.metar.am, metarPm: w.metar.pm, taf: w.taf, why: w.why });
+    const temOn = !!(it && (it.kind === 'flight' || it.kind === 'xc') && STAGE[st.chapter] && !st.graduated && !flownToday());
+    temData = temOn ? temFor({ weather: w.kind, fatigue: st.fatigue, chapter: st.chapter, aircraft: todayType, check: false, xc: it.kind === 'xc', day: st.day }) : null;
+    if (temData) Object.assign(cx.tem, { on: true, o0: temData.options[0], o1: temData.options[1], o2: temData.options[2], threat: temData.threat.ja, why: temData.threat.why, plan: temData.threat.plan });
+    else cx.tem.on = false;
     return cx;
   }
 
@@ -602,6 +609,11 @@ async function boot() {
     else if (name === 'checkride') {
       const who = checkWho(flightItem());
       cast.put(who, CHIEF_APRON); talkState.flags.c1_briefed = true; toast(`${PEOPLE[who].title}が、機体のところで待っています`, 3600);
+    }
+    else if (name === 'tem') {
+      if (!temData) return;
+      const i = +arg; cx.tem.right = i === temData.right; cx.tem.not = temData.others[i] || '';
+      temPick = { day: career.state.day, threat: temData.threat, named: cx.tem.right };
     }
     else if (name === 'imsafe') {
       const tired = career.tired(), honest = (arg === 'tired') === tired;
@@ -748,6 +760,7 @@ async function boot() {
     onSolo: (sum) => (flightItem() && flightItem().kind === 'xc' ? xcLanded(sum) : soloLanded(sum)),
     stand: { a: spec.target.a, c: spec.target.c, hdgTrue: (L.R.trueHdg + 270) % 360 }, wind: DAY_WIND,
     parkedToday: () => todayAc.root, aircraft: () => todayType, toFrame,
+    tem: () => (temPick && temPick.day === career.state.day ? temPick : null),
     todayColliders: (on) => { for (const id of todayIds) world.setEnabled(id, on); },
     // they were in the aircraft: back where the day puts them (the instructor by the aircraft if the cadet was briefed)
     instructorHome: (root, actor) => { if (!actor || actor === instructor) placeInstructor(); else { for (const id of ['chief']) cast.home(id); layoutPeople(); } },
@@ -776,14 +789,14 @@ async function boot() {
   // evening the front door takes them home to sleep, and the next morning begins with its card.
   const cards = createCards();
   const ENTRANCE = { a: 655.0, c: 274.6, face: { a: 655.0, c: 266.0 } };            // inside the front doors, facing the lobby
-  const windNow = () => (career.weather(prog()).kind === 'crosswind' ? XWIND : DAY_WIND);
+  const windNow = () => { const k = career.weather(prog()).kind; return k === 'crosswind' || (k === 'pmWind' && (career.slot === 'pm' || career.slot === 'evening')) ? XWIND : DAY_WIND; };
   // the light and the sky for the time of day and the weather
   function applySlot() {
     if (!(parseFloat(params.get('t')) > 0)) { hours = career.hours; }        // (?t=H keeps the sky at H: the tests, the bench)
     const w = career.weather(prog()), slot = career.slot;
-    const low = w.kind === 'lowCloud';                       // (M6) low cloud: mist under an overcast at 800 ft
+    const low = w.kind === 'lowCloud' || (w.kind === 'amLowCloud' && (slot === 'morning' || slot === 'am'));   // (M6) low cloud: mist under an overcast at 800 ft (600 in the morning)
     const fog = w.kind === 'amFog' && (slot === 'morning' || slot === 'am') ? 0.85 : low ? 0.55 : 0;
-    const overcast = w.kind === 'storm' || low ? 1 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.95 : fog ? 0.9 : w.kind === 'crosswind' ? 0.35 : 0;
+    const overcast = w.kind === 'storm' || low ? 1 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.95 : fog ? 0.9 : w.kind === 'crosswind' || (w.kind === 'pmWind' && (slot === 'pm' || slot === 'evening')) ? 0.35 : 0;
     const grey = w.kind === 'storm' ? 0.7 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.6 : low ? 0.55 : 0;
     sky.setWeather({ overcast });
     const st = sky.setTime(hours);

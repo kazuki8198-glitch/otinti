@@ -90,6 +90,9 @@ export const WEATHER = {
   pmStorm: { ja: '午後に雷雨', fly: { am: true, pm: false }, decision: 'early', why: 'TAF に午後の雷雨（TEMPO TSRA）。午前のうちに飛んで、13 時までに戻ります。' },
   crosswind: { ja: '強い横風', fly: { am: false, pm: false }, decision: 'cancel', why: '横風が 16 kt、突風 24 kt。ソロ前の訓練生の基準（横風 10 kt 以下）を超えています。今日は飛びません。' },
   storm: { ja: '雷雨', fly: { am: false, pm: false }, decision: 'cancel', why: '一日中、雷雨の予報です。飛びません。' },
+  // (M6) a low ceiling in the morning that lifts by noon; a strong crosswind forecast for the afternoon
+  amLowCloud: { ja: '朝の低い雲（昼前に上がる）', fly: { am: false, pm: true }, decision: 'wait', why: '朝は雲の底が 600 ft。予報（TAF）では 11 時ごろに 3,500 ft まで上がります。午後に回すのが正解です。' },
+  pmWind: { ja: '午後に強い横風', fly: { am: true, pm: false }, decision: 'early', why: 'TAF では 15 時から横風が 18 kt、突風 26 kt に強まります。午前のうちに飛んで、早めに戻ります。' },
   // (M6) low cloud all day: no flying by sight; the instrument chapter flies in it with the instructor (the IFR flight
   // plan, the cloud from 800 ft to 4,000 ft)
   lowCloud: { ja: '低い雲（計器気象状態）', fly: { am: false, pm: false }, decision: 'cancel', why: '雲の底が 800 ft、視程 3 SM。有視界では飛べない天気です。',
@@ -108,7 +111,7 @@ export function weatherFor(seed, day, o = {}) {
   const { force } = o;
   const r = rng((seed * 7919 + day * 104729) >>> 0), r2 = rng((seed * 131 + day * 7) >>> 0);
   const x = r();
-  let kind = x < 0.6 ? 'good' : x < 0.72 ? 'amFog' : x < 0.87 ? 'pmStorm' : x < 0.95 ? 'crosswind' : 'storm';
+  let kind = x < 0.54 ? 'good' : x < 0.6 ? 'amLowCloud' : x < 0.71 ? 'amFog' : x < 0.82 ? 'pmStorm' : x < 0.87 ? 'pmWind' : x < 0.95 ? 'crosswind' : 'storm';
   // (M6: the instrument chapter's days bring low cloud too, about one in five)
   if (o.ifr && kind === 'good' && r2() < 0.22) kind = 'lowCloud';
   if (force) kind = force;
@@ -122,6 +125,8 @@ export function weatherFor(seed, day, o = {}) {
     pmStorm: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 10SM FEW040 ${pad2(tempC - 2)}/${pad2(dewC + 3)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} 22018G30KT 3SM +TSRA BKN025CB ${pad2(tempC - 4)}/${pad2(dewC + 2)} ${q}` },
     crosswind: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 10SM SCT035 ${pad2(tempC)}/${pad2(dewC)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 10SM SCT040 ${pad2(tempC + 1)}/${pad2(dewC)} ${q}` },
     lowCloud: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 3SM BR BKN008 OVC015 ${pad2(tempC - 4)}/${pad2(tempC - 5)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 4SM BR OVC009 ${pad2(tempC - 3)}/${pad2(tempC - 4)} ${q}` },
+    amLowCloud: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} 00000KT 5SM BR OVC006 ${pad2(tempC - 4)}/${pad2(tempC - 5)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 10SM SCT035 ${pad2(tempC)}/${pad2(dewC)} ${q}` },
+    pmWind: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 10SM FEW040 ${pad2(tempC - 2)}/${pad2(dewC)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} 09018G26KT 10SM SCT040 ${pad2(tempC + 1)}/${pad2(dewC)} ${q}` },
     storm: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} 18012G22KT 2SM TSRA BKN015CB ${pad2(tempC - 4)}/${pad2(tempC - 5)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} 20015G28KT 1 1/2SM +TSRA OVC012CB ${pad2(tempC - 5)}/${pad2(tempC - 6)} ${q}` },
   }[kind];
   const taf = {
@@ -131,6 +136,8 @@ export function weatherFor(seed, day, o = {}) {
     crosswind: 'TAF KLAB … 09015G24KT P6SM SCT035 FM2000 09012G20KT P6SM SCT040',
     storm: 'TAF KLAB … 18012G22KT 2SM TSRA BKN015CB TEMPO 1622 1SM +TSRA OVC010CB',
     lowCloud: 'TAF KLAB … 03006KT 3SM BR BKN008 OVC015 FM2000 03008KT 5SM BR OVC012',
+    amLowCloud: 'TAF KLAB … 00000KT 5SM BR OVC006 FM1500 01005KT P6SM SCT035',
+    pmWind: 'TAF KLAB … 01005KT P6SM FEW040 FM1900 09018G26KT P6SM SCT040',
   }[kind];
   return { kind, ja: W.ja, fly: { ...W.fly }, decision: W.decision, why: W.why, metar: m, taf, tempC, dewC, qnh, ...(W.ifr ? { ifr: W.ifr } : {}) };
 }

@@ -13,16 +13,29 @@
 //  - xc: the afternoon of the solo cross-country — what to do alone, the diversion that may come;
 //  - checkday: the morning of a check (the chief instructor's, or the examiner's for the final);
 //  - grad: the graduation morning; graduated: after it.
+// (M6) TEM: from chapter 3 on, after the IMSAFE question (and before the cross-country) the cadet names today's threat
+// from three (career/tem.js: hook 'tem' with the index; ctx tem.right says whether it was today's).
 // Hooks: 'imsafe' ('fit' | 'tired': the game checks it against how tired the cadet is and answers through ctx), 'done'
 // ('meet' | 'study'), 'board', 'logbook', 'solo' (the solo's day is signed off), 'look', 'nod', 'point'.
 import { INSTRUCTOR } from './instructor.js';
 
-export const CAREER_HOOKS = ['imsafe', 'done', 'board', 'logbook', 'solo', 'look', 'nod', 'point'];
+export const CAREER_HOOKS = ['imsafe', 'done', 'board', 'logbook', 'solo', 'look', 'nod', 'point', 'tem'];
 export const CAREER_FLAGS = ['met_instructor', 'soloed', 'briefed_today'];
 const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' }, kiryu: { name_ja: '桐生', color: '#c9b6ff' }, asahi: { name_ja: '朝日', color: '#ffc4a8' }, mori: { name_ja: '森', color: '#a8e3ff' } };
 // the context: today { lessonTitle, studyTitle, studySection (a textbook section with a figure, or '') },
 // imsafe { honest (true / false) }, career { tired }
-export const CAREER_SAMPLE = { today: { lessonTitle: '「直線水平飛行」', studyTitle: '「場周経路」', studySection: 'ops.pattern', intro: '', checkTitle: 'ソロ前の審査', checkWho: '真壁さん', checkId: 'c1' }, imsafe: { honest: true }, career: { tired: false, slot: 'morning', chapter: 'ch2' } };
+export const CAREER_SAMPLE = { today: { lessonTitle: '「直線水平飛行」', studyTitle: '「場周経路」', studySection: 'ops.pattern', intro: '', checkTitle: 'ソロ前の審査', checkWho: '真壁さん', checkId: 'c1' }, imsafe: { honest: true }, career: { tired: false, slot: 'morning', chapter: 'ch2' },
+  tem: { on: true, o0: '午後の雷雨', o1: '場周の混雑（ほかの訓練機）', o2: '朝の霧', right: true, threat: '場周の混雑（ほかの訓練機）', why: '今日は天気が良く、ほかの訓練機もたくさん飛んでいます', plan: '見張りを続ける', not: '' } };
+// (M6) TEM's three nodes: the question (skipped when ctx tem.on is false: on to `next`), today's threat named, or not
+const temNodes = (say, p, next) => ({
+  [p]: say('飛ぶ前に、TEM です。今日の「脅威」をひとつ挙げてください。今日いちばん気をつけることは、何ですか。', { if: { ctx: 'tem.on', is: true }, else: next, hook: { name: 'look', arg: 'player' }, choices: [
+    { text: '{tem.o0}', next: p + ':a', effects: [{ hook: 'tem', arg: '0' }] },
+    { text: '{tem.o1}', next: p + ':a', effects: [{ hook: 'tem', arg: '1' }] },
+    { text: '{tem.o2}', next: p + ':a', effects: [{ hook: 'tem', arg: '2' }] },
+  ] }),
+  [p + ':a']: say('そのとおり。{tem.why}。対策は、{tem.plan}。脅威は、先に言葉にしておくと、慌てずに済みます。', { if: { ctx: 'tem.right', is: true }, else: p + ':b', effects: [{ trust: 'instructor', add: 1 }], hook: { name: 'nod' }, next }),
+  [p + ':b']: say('{tem.not}。今日いちばんの脅威は「{tem.threat}」です。{tem.why}。対策は、{tem.plan}。', { next }),
+});
 
 export function careerInstructorDialogs() {
   const say = (text, more = {}) => ({ speaker: 'instructor', text, ...more });
@@ -73,7 +86,8 @@ export function careerInstructorDialogs() {
       { text: '問題ありません。よく眠れました', next: 'd:fit', effects: [{ hook: 'imsafe', arg: 'fit' }] },
       { text: '正直、少し疲れています', next: 'd:tired', effects: [{ hook: 'imsafe', arg: 'tired' }] },
     ] }),
-    'd:fit': say('それならよかった。では、今日の課目です。', { if: { ctx: 'imsafe.honest', is: true }, else: 'd:fit:no', hook: { name: 'nod' }, next: 'brief:menu' }),
+    'd:fit': say('それならよかった。では、今日の課目です。', { if: { ctx: 'imsafe.honest', is: true }, else: 'd:fit:no', hook: { name: 'nod' }, next: 'd:tem' }),
+    ...temNodes(say, 'd:tem', 'brief:menu'),
     'd:fit:no': say('……そうですか？ 顔に疲れが出ていますよ。疲れは、自分ではいちばん気づきにくいものです。今日は飛ぶのをやめて、地上で復習にしましょう。', { effects: [{ trust: 'instructor', add: -3 }], end: true }),
     'd:tired': say('言ってくれてありがとう。それがいちばん大事な判断です。今日は飛ばずに、地上で次の課目の予習をしましょう。今夜は早く寝てください。', { if: { ctx: 'imsafe.honest', is: true }, else: 'd:tired:ok', effects: [{ trust: 'instructor', add: 2 }], hook: { name: 'nod' }, end: true }),
     'd:tired:ok': say('わかりました。無理はしないでおきましょう。今日は地上で予習にします。言ってくれたこと、よかったですよ。', { effects: [{ trust: 'instructor', add: 1 }], end: true }),
@@ -117,7 +131,9 @@ export function careerInstructorDialogs() {
     x1: say('航法ログは、ちゃんとできていましたね。では、単独の野外飛行です。', { hook: { name: 'look', arg: 'player' }, next: 'x2' }),
     x2: say('離陸したら、LAB-A へ。そこから先は、管制か私から目的地の変更を言うかもしれません。言われたら、新しい針路と距離と時間を、落ち着いて見積もってください。', { hook: { name: 'point', arg: 'board' }, next: 'x3' }),
     x3: say('迷ったら、最後に確かだった場所から考える。VOR と DME もあります。それでもわからなければ、正直に管制に聞く。それは恥ずかしいことではありません。', { next: 'x4' }),
-    x4: say('燃料と時間に余裕を。帰ってきたら、航空日誌に「野外飛行」と書きましょう。……いってらっしゃい。', { choices: [{ text: '行ってきます', next: 'x5' }] }),
+    x4: say('燃料と時間に余裕を。帰ってきたら、航空日誌に「野外飛行」と書きましょう。', { next: 'x:tem' }),
+    ...temNodes(say, 'x:tem', 'x4b'),
+    x4b: say('……いってらっしゃい。', { choices: [{ text: '行ってきます', next: 'x5' }] }),
     x5: say('外部点検から。今日も、全部あなたの手で。', { hook: { name: 'nod' }, effects: [{ set: 'briefed_today' }], end: true }),
   };
   // (M6) the graduation morning, and after it

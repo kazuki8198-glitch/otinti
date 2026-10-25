@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node build.mjs",
     "test": "node build.mjs && node --test --test-concurrency=1 test/*.test.mjs",
-    "test:fast": "node --test --test-concurrency=1 test/layout.test.mjs test/collide.test.mjs test/academy.test.mjs test/build.test.mjs test/doors.test.mjs test/walker.test.mjs test/dialog.test.mjs test/content.test.mjs test/actor.test.mjs test/flight.test.mjs test/cockpit.test.mjs test/exterior.test.mjs test/cockpit-talk.test.mjs test/flight-hud.test.mjs test/sfx.test.mjs test/systems.test.mjs test/taxi.test.mjs test/atc.test.mjs test/day.test.mjs test/days.test.mjs test/career.test.mjs test/people.test.mjs test/school.test.mjs test/crowd.test.mjs test/career-run.test.mjs test/guide.test.mjs"
+    "test:fast": "node --test --test-concurrency=1 test/layout.test.mjs test/collide.test.mjs test/academy.test.mjs test/build.test.mjs test/doors.test.mjs test/walker.test.mjs test/dialog.test.mjs test/content.test.mjs test/actor.test.mjs test/flight.test.mjs test/cockpit.test.mjs test/exterior.test.mjs test/cockpit-talk.test.mjs test/flight-hud.test.mjs test/sfx.test.mjs test/systems.test.mjs test/taxi.test.mjs test/atc.test.mjs test/day.test.mjs test/days.test.mjs test/career.test.mjs test/people.test.mjs test/school.test.mjs test/crowd.test.mjs test/career-run.test.mjs test/guide.test.mjs test/tem.test.mjs"
   },
   "devDependencies": {
     "esbuild": "0.28.2",

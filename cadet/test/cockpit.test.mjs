@@ -176,8 +176,7 @@ test('cockpit: the view from the left seat', () => {
 
 const KINDS = new Set(['button', 'knob', 'lever', 'switch', 'handle']);
 const TYPES = new Set(['flight', 'av', 'switch', 'select', 'exit', 'prime', 'info']);
-test('cockpit: every control can be found, picked from the seat, and says what to do', () => {
-  const cp = build(), L = lesson();
+function controlsCheck(cp, L, required) {
   Object.assign(L.s, { elev: 0, trim: 0.1, ail: 0, rud: 0, rudEff: 0 });          // hands off, a little nose-up trim
   run(cp, L, 0.5);
   cp.root.updateMatrixWorld(true);
@@ -213,10 +212,52 @@ test('cockpit: every control can be found, picked from the seat, and says what t
   const anyCtl = cp.controls[0], ray = new THREE.Raycaster(cp.eye.clone(), cp.aimPoint(anyCtl, new THREE.Vector3()).sub(cp.eye).normalize(), 0, 3);
   assert.equal(cp.pick(ray), anyCtl);
   cp.setVisible(false); assert.equal(cp.pick(ray), null, 'nothing picked while hidden'); cp.setVisible(true);
-  for (const id of ['pfd.hdg', 'pfd.alt.inner', 'pfd.alt.outer', 'pfd.crs.outer', 'mfd.range', 'sw.master', 'sw.avionics', 'sw.landing', 'mag', 'throttle',
-    'mixture', 'parkBrake', 'yokeL', 'pedals', 'flaps', 'trim', 'fuelSel', 'door', 'compass', 'stby.att', 'audio.COM1MIC', 'pfd.sk3', 'mfd.sk3']) assert.ok(ids.has(id), id);
+  for (const id of required) assert.ok(ids.has(id), id);
   // a ray at nothing picks nothing
   assert.equal(cp.pick(new THREE.Raycaster(cp.eye.clone(), new THREE.Vector3(0, 1, 0), 0, 3)), null);
+  return ids;
+}
+const COMMON_IDS = ['pfd.hdg', 'pfd.alt.inner', 'pfd.alt.outer', 'pfd.crs.outer', 'mfd.range', 'sw.master', 'sw.avionics', 'sw.landing', 'mag', 'throttle',
+  'mixture', 'parkBrake', 'yokeL', 'pedals', 'flaps', 'trim', 'fuelSel', 'door', 'compass', 'stby.att', 'audio.COM1MIC', 'pfd.sk3', 'mfd.sk3'];
+test('cockpit: every control can be found, picked from the seat, and says what to do', () => {
+  const cp = build();
+  const ids = controlsCheck(cp, lesson(), [...COMMON_IDS, 'carbHeat']);
+  assert.ok(!ids.has('gear') && !ids.has('prop'), 'the Archer: no gear selector, no propeller levers');
+  cp.dispose();
+});
+
+// (M6) the Seminole's own: its quadrant (two of each lever), its gear selector and lights, its nose; the same panel
+test('cockpit: the Seminole\'s — its levers and gear selector found, picked and seen from the seat; within budget', () => {
+  const cp = build({ twin: AC('pa44') });
+  const tri0 = cp.triangles;
+  assert.equal(cp.type, 'pa28');
+  assert.ok(!cp.controls.some(c => c.id === 'gear'), 'the Archer\'s view first');
+  cp.setType('pa44');
+  assert.equal(cp.type, 'pa44');
+  const L = SC.startLesson('m1', 'basic'); for (let i = 0; i < 60; i++) { P.step(L.s, 1 / 120); SC.update(L, 1 / 120); }
+  const ids = controlsCheck(cp, L, [...COMMON_IDS, 'gear', 'prop', 'carbHeat']);
+  assert.equal([...ids].filter(id => id === 'throttle').length, 1, 'one throttle control for the pair');
+  // what is drawn: the Seminole's parts, not the Archer's
+  cp.root.updateMatrixWorld(true);
+  const names = new Set(); let calls = 0, count = 0;
+  cp.root.traverse(o => { let v = true; for (let p = o; p; p = p.parent) v = v && p.visible; if (v && drawn(o)) { calls++; count += tris(o.geometry) * (o.isInstancedMesh ? o.count : 1); names.add(o.name); } });
+  for (const n of ['cockpit-nose', 'cockpit-thrL', 'cockpit-thrR', 'cockpit-propL', 'cockpit-propR', 'cockpit-mixL', 'cockpit-mixR', 'cockpit-gearLever', 'cockpit-shell-pa44', 'cockpit-labels-pa44']) assert.ok(names.has(n), n);
+  for (const n of ['cockpit-cowl', 'cockpit-throttle', 'cockpit-mixture', 'cockpit-shell-pa28']) assert.ok(!names.has(n), `no ${n}`);
+  assert.ok(calls <= 44, `${calls} draw calls`);
+  assert.equal(count, cp.trianglesTwin);
+  assert.ok(cp.trianglesTwin <= 40000 && tri0 === cp.triangles, `${cp.trianglesTwin} triangles`);
+  // the levers and the selector follow the state; the lights: three green down and locked, red in transit
+  const p = cp.parts, s = L.s;
+  Object.assign(s, { thr: 0 }); run(cp, L, 0.3); const t0 = p.thrL.rotation.x;
+  Object.assign(s, { thr: 1 }); run(cp, L, 0.3);
+  assert.ok(p.thrL.rotation.x < t0 - 20 * DEG && p.thrR.rotation.x === p.thrL.rotation.x, 'the throttles forward together');
+  const g0 = p.gearLever.rotation.x;
+  Object.assign(s, { gearDown: false }); run(cp, L, 0.1);
+  assert.ok(p.gearLever.rotation.x < g0 - 30 * DEG, 'the gear selector up');
+  const prop0 = p.propL.rotation.x;
+  cp.switches.propCycleT = 1.3; run(cp, L, 0.05);
+  assert.ok(p.propL.rotation.x > prop0 + 20 * DEG, 'the propeller levers pulled back while cycled');
+  cp.setType('pa28'); assert.equal(cp.type, 'pa28');
   cp.dispose();
 });
 
@@ -275,7 +316,7 @@ test('cockpit: the controls say what the game should do', () => {
   assert.deepEqual(C['parkBrake'].act(1), { type: 'flight', name: 'parkBrake' });
   assert.deepEqual(C['door'].act(1), { type: 'exit' });
   // the switches' defaults: everything on except the landing and taxi lights and the pitot heat
-  assert.deepEqual(Object.entries(cp.switches).filter(([k, v]) => v === false).map(([k]) => k).sort(), ['carbHeat', 'landing', 'pitot', 'taxi']);
+  assert.deepEqual(Object.entries(cp.switches).filter(([k, v]) => v === false).map(([k]) => k).sort(), ['carbHeat', 'landing', 'pitot', 'propCycled', 'taxi']);
   cp.dispose();
 });
 

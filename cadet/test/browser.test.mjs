@@ -930,6 +930,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
   });
 
   test('dusk, presets and the bench', async () => {
+    await restart();                         // (a fresh page: after the later chapters the software renderer is near its memory)
     // dusk: the sun goes down, the airfield lights come on, still a picture
     await ev(() => { window.__cadet.setView(0); window.__cadet.setTime(19.4); });
     const dusk = await analyse(g.page, await ev(() => window.__cadet.snapshot(2)));

@@ -1031,7 +1031,21 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.equal(await ev(() => window.__cadet.ai.keys.has()), false);
     await ev(() => window.__cadet.menu.close());
     assert.ok(![...seen.errors, ...g.errors].some(e => e.includes(KEY)), 'the key in no message');
-    await ev(() => { const C = window.__cadet; C.settings.set('aiTutor', false); C.ai.useFetch(null); C.settings.set('textSpeed', 1); });
+    await ev(() => { const C = window.__cadet; C.settings.set('aiTutor', false); C.ai.useFetch(null); });
+    // (M8) the crew in English: his line in English, the Japanese under it (or not, when that is off)
+    await ev(() => window.__cadet.settings.set('crewEnglish', true));
+    await ev((ins) => { const C = window.__cadet; C.placeWalker(ins.a + 2.4, ins.c - 0.6, { a: ins.a, c: ins.c }); C.lookAt(ins.a, ins.c, 1.5); }, ins);
+    assert.equal(await ev(() => window.__cadet.use()), 'talk');
+    await g.page.waitForFunction(() => !window.__cadet.dialog().typing, null, { timeout: 15000 });
+    const shown = await ev(() => ({ en: document.querySelector('#dlg .dlg-text').textContent, ja: document.querySelector('#dlg .dlg-ja').textContent, jaShown: !document.querySelector('#dlg .dlg-ja').hidden, view: window.__cadet.dialog() }));
+    assert.ok(shown.view.en && shown.en === shown.view.en, `the English on screen: ${shown.en}`);
+    assert.doesNotMatch(shown.en, /[ぁ-ん]/);
+    assert.ok(shown.jaShown && shown.ja === shown.view.text, 'the Japanese under it');
+    await ev(() => window.__cadet.settings.set('crewEnglishJa', false));
+    await ev(() => window.__cadet.dialogChoose(0));
+    await g.page.waitForFunction(() => !window.__cadet.dialog().typing, null, { timeout: 15000 });
+    assert.equal(await ev(() => document.querySelector('#dlg .dlg-ja').hidden), true, 'no Japanese when that is off');
+    await ev(() => { const C = window.__cadet; C.setMode('spectator'); C.setMode('walk'); C.settings.set('crewEnglish', false); C.settings.set('crewEnglishJa', true); C.settings.set('textSpeed', 1); });
   });
 
   test('the pause menu opens and closes; settings apply at once', async () => {

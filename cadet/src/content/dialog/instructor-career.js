@@ -24,8 +24,9 @@ export const CAREER_FLAGS = ['met_instructor', 'soloed', 'briefed_today'];
 const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' }, kiryu: { name_ja: '桐生', color: '#c9b6ff' }, asahi: { name_ja: '朝日', color: '#ffc4a8' }, mori: { name_ja: '森', color: '#a8e3ff' } };
 // the context: today { lessonTitle, studyTitle, studySection (a textbook section with a figure, or '') },
 // imsafe { honest (true / false) }, career { tired }
-export const CAREER_SAMPLE = { today: { lessonTitle: '「直線水平飛行」', studyTitle: '「場周経路」', studySection: 'ops.pattern', intro: '', checkTitle: 'ソロ前の審査', checkWho: '真壁さん', checkId: 'c1' }, imsafe: { honest: true }, career: { tired: false, slot: 'morning', chapter: 'ch2' },
-  tem: { on: true, o0: '午後の雷雨', o1: '場周の混雑（ほかの訓練機）', o2: '朝の霧', right: true, threat: '場周の混雑（ほかの訓練機）', why: '今日は天気が良く、ほかの訓練機もたくさん飛んでいます', plan: '見張りを続ける', not: '' } };
+export const CAREER_SAMPLE = { today: { lessonTitle: '「直線水平飛行」', studyTitle: '「場周経路」', studySection: 'ops.pattern', intro: '', checkTitle: 'ソロ前の審査', checkWho: '真壁さん', checkId: 'c1', en: { checkTitle: 'pre-solo check', checkWho: 'Mr. Makabe' } }, imsafe: { honest: true }, career: { tired: false, slot: 'morning', chapter: 'ch2' },
+  tem: { on: true, o0: '午後の雷雨', o1: '場周の混雑（ほかの訓練機）', o2: '朝の霧', right: true, threat: '場周の混雑（ほかの訓練機）', why: '今日は天気が良く、ほかの訓練機もたくさん飛んでいます', plan: '見張りを続ける', not: '',
+    en: { threat: 'a busy pattern (other trainers)', why: 'The weather is good today and many other trainers are flying', plan: 'keep looking out', not: '' } } };
 // (M6) TEM's three nodes: the question (skipped when ctx tem.on is false: on to `next`), today's threat named, or not
 const temNodes = (say, p, next) => ({
   [p]: say('飛ぶ前に、TEM です。今日の「脅威」をひとつ挙げてください。今日いちばん気をつけることは、何ですか。', { if: { ctx: 'tem.on', is: true }, else: next, hook: { name: 'look', arg: 'player' }, choices: [

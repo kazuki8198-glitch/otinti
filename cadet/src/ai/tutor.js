@@ -107,6 +107,8 @@ export function todayText(t = {}) {
   if (t.weather) out.push(`天気：${t.weather}`);
   if (t.lesson && t.lesson.title) out.push(`今日の課目：${t.lesson.id}「${t.lesson.title}」\n目標：${t.lesson.goal || '―'}\n基準：${t.lesson.std || '―'}`);
   if (t.summary) out.push(`今日の結果\n${typeof t.summary === 'string' ? t.summary : summaryText(t.summary)}`);
+  // (the crew's English mode: he answers in English — plain, spoken English; the line of sources stays as it is)
+  if (t.lang === 'en') out.push('答える言葉：英語（やさしい話し言葉の英語で、2〜5 文。「根拠：」の行はそのままの形で）');
   return out.join('\n');
 }
 

@@ -48,10 +48,11 @@ export function quizNodes(N, questions, { speaker = 'lecturer', then = 'result',
   questions.forEach((x, k) => {
     const id = `q${k}`, nextQ = k < questions.length - 1 ? `q${k + 1}` : 'q:end';
     const more = x.say ? { hook: { name: 'say', arg: x.say } } : x.pfd != null ? { hook: { name: 'pfd', arg: String(x.pfd) } } : {};
-    N[id] = { speaker, text: `${label ? label + '　' : ''}第 ${k + 1} 問（${questions.length} 問中）。${x.q}`, ...more,
+    // (M8: the questions and their reasons are the course's own words: 'material', said as written in the English mode)
+    N[id] = { speaker, text: `${label ? label + '　' : ''}第 ${k + 1} 問（${questions.length} 問中）。${x.q}`, ...more, tag: 'material',
       choices: x.opts.map((t, j) => ({ text: t, next: j === x.ok ? `${id}:ok` : `${id}:ng`, effects: j === x.ok ? [{ set: `qz_${k}` }] : [] })) };
-    N[`${id}:ok`] = { speaker, text: `正解です。${x.why || ''}`.trim(), next: nextQ };
-    N[`${id}:ng`] = { speaker, text: `正しくは${q(x.opts[x.ok])}です。${x.why || ''}`.trim(), next: nextQ };
+    N[`${id}:ok`] = { speaker, text: `正解です。${x.why || ''}`.trim(), next: nextQ, tag: 'material' };
+    N[`${id}:ng`] = { speaker, text: `正しくは${q(x.opts[x.ok])}です。${x.why || ''}`.trim(), next: nextQ, tag: 'material' };
   });
   N['q:end'] = { speaker, text: '以上です。採点しますね。', hook: { name: 'quizEnd', arg: String(questions.length) }, next: then };
 }

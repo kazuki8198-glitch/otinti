@@ -68,6 +68,7 @@ import { installSorajima } from './flight/sorajima.js';
 import { createTutor, DEFAULT_MODEL, REASON_JA } from './ai/tutor.js';
 import { createAiSession } from './ai/session.js';
 import { createKeyStore, KEY_NAME } from './ai/keys.js';
+import { withEnglish, CHECK_EN, WHO_EN } from './content/dialog/en.js';
 
 /* global __BUILD_INFO__ */
 const $ = (s) => document.querySelector(s);
@@ -457,7 +458,7 @@ async function boot() {
   // today's check pilot: the chief instructor (c1, the instrument and multi-engine checks) or the examiner (the final)
   const checkWho = (it) => (it && CHECKS[it.id] && CHECKS[it.id].who) || 'chief';
   const lessonTitle = (id) => { const l = FL.school.lesson(id); return l ? `「${l.title}」` : id; };
-  const cx = { career: {}, today: {}, weather: {}, imsafe: { honest: true }, quiz: { right: 0, n: 0, pct: 0, pass: false }, tem: { on: false, right: false, not: '' }, ai: { on: false } };
+  const cx = { career: {}, today: {}, weather: {}, imsafe: { honest: true }, quiz: { right: 0, n: 0, pct: 0, pass: false }, tem: { on: false, right: false, not: '', en: { threat: '', why: '', plan: '', not: '' } }, ai: { on: false } };
   // (M6) TEM: today's threat from the day (career/tem.js), from chapter 3 on; what the cadet named (the debrief's)
   let temData = null, temPick = null;
   function refreshCtx() {
@@ -471,6 +472,8 @@ async function boot() {
       // (M6) the checks, the solo cross-country, the graduation, today's aircraft, a later chapter's first flying day
       checkId: it && it.kind === 'checkride' ? it.id : '', checkTitle: it && it.kind === 'checkride' ? (CHECKS[it.id] ? CHECKS[it.id].title : 'ソロ前の審査') : '',
       checkWho: it && it.kind === 'checkride' ? (checkWho(it) === 'examiner' ? '審査官の黒田さん' : '真壁さん') : '',
+      // (M8) the same for the crew's English mode
+      en: it && it.kind === 'checkride' ? { checkTitle: CHECK_EN[CHECKS[it.id] ? CHECKS[it.id].title : 'ソロ前の審査'], checkWho: WHO_EN[checkWho(it) === 'examiner' ? '審査官の黒田さん' : '真壁さん'] } : { checkTitle: '', checkWho: '' },
       xc: !!(it && it.kind === 'xc'), graduation: sch.some(x => x.kind === 'graduation') && !career.doneToday('graduation', 'grad'),
       reg: todayType === 'pa44' ? 'N452SY' : 'N738SY', type: todayType === 'pa44' ? 'Seminole' : 'Archer',
       intro: STAGE[st.chapter] && it && it.kind === 'flight' && it.id === STAGE[st.chapter].lessons[0] && !(prog().lessons[it.id] && prog().lessons[it.id].tries) ? st.chapter : '',
@@ -482,7 +485,8 @@ async function boot() {
     const temOn = !!(it && (it.kind === 'flight' || it.kind === 'xc' || (it.kind === 'checkride' && it.id !== 'c1')) && STAGE[st.chapter] && !st.graduated && !flownToday());
     temData = temOn ? temFor({ weather: w.kind, fatigue: st.fatigue, chapter: st.chapter, aircraft: todayType, check: it.kind === 'checkride', xc: it.kind === 'xc', day: st.day }) : null;
     cx.ai.on = !!settings.get('aiTutor');                  // (M8) the free question to the AI instructor is offered
-    if (temData) Object.assign(cx.tem, { on: true, o0: temData.options[0], o1: temData.options[1], o2: temData.options[2], threat: temData.threat.ja, why: temData.threat.why, plan: temData.threat.plan });
+    if (temData) Object.assign(cx.tem, { on: true, o0: temData.options[0], o1: temData.options[1], o2: temData.options[2], threat: temData.threat.ja, why: temData.threat.why, plan: temData.threat.plan,
+      en: { ...temData.threat.en, not: (cx.tem.en && cx.tem.en.not) || '' } });
     else cx.tem.on = false;
     return cx;
   }
@@ -491,18 +495,19 @@ async function boot() {
   const instructorData = () => {
     const it = flightItem(), plan = planOf(it), main = plan.main === 'c1' ? 'c1' : plan.main;
     const d = instructorDialogs(FL, { lessonId: main, day: plan.lessons }), c = careerInstructorDialogs();
-    return { speakers: { ...d.speakers, ...c.speakers }, flags: [...new Set([...d.flags, ...c.flags])], hooks: [...new Set([...d.hooks, ...c.hooks])], dialogs: { ...d.dialogs, ...c.dialogs } };
+    // (M8: with the crew's English, shown when the setting is on)
+    return withEnglish({ speakers: { ...d.speakers, ...c.speakers }, flags: [...new Set([...d.flags, ...c.flags])], hooks: [...new Set([...d.hooks, ...c.hooks])], dialogs: { ...d.dialogs, ...c.dialogs } });
   };
   let runner = null;
   function buildInstructorTalk() { runner = createRunner({ data: instructorData(), state: talkState, ctx: () => cx, hooks: { onHook } }); runner.onChange(onRoomView); }
   // by the aircraft (M4): his word on the walk-around
-  const apronRunner = createRunner({ data: apronDialogs(), state: talkState, hooks: { onHook } });
-  const peopleRunner = createRunner({ data: peopleDialogs(), state: talkState, ctx: () => cx, hooks: { onHook } });
+  const apronRunner = createRunner({ data: withEnglish(apronDialogs()), state: talkState, hooks: { onHook } });
+  const peopleRunner = createRunner({ data: withEnglish(peopleDialogs()), state: talkState, ctx: () => cx, hooks: { onHook } });
   // a lesson or a test (its own state: what is scored is not kept)
   let lessonRun = null, lessonState = null, lessonKind = null, lessonQuestions = null;
   function startLesson(kind, id, data) {
     lessonState = createDialogState(); lessonKind = { kind, id, n: (data.questions || []).length }; lessonQuestions = data.questions || [];
-    lessonRun = createRunner({ data, state: lessonState, ctx: () => cx, hooks: { onHook } });
+    lessonRun = createRunner({ data: withEnglish(data), state: lessonState, ctx: () => cx, hooks: { onHook } });
     lessonRun.onChange(onRoomView);
     return lessonRun;
   }
@@ -541,7 +546,7 @@ async function boot() {
     const s = createAiSession({
       tutor, book, place, speaker: { name: v0.name || INSTRUCTOR.title_ja, color: v0.color || '#5cc8ff' },
       ready: () => aiKeys.has(), today: () => aiToday(place, extra.summary),
-      reasonText: (r) => `AI 教官：${REASON_JA[r] || r}`, notice: (t) => toast(t, 6000),
+      reasonText: (r) => `AI 教官：${REASON_JA[r] || r}`, notice: (t) => toast(t, 6000), english: () => !!settings.get('crewEnglish'),
       onBook: (id) => { const sec = book.section(id); if (sec) dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sec.html }); },
       onEnd: (how) => {
         if (aiRun !== s) return;                              // (closed with the talk itself)
@@ -669,7 +674,7 @@ async function boot() {
     }
     else if (name === 'tem') {
       if (!temData) return;
-      const i = +arg; cx.tem.right = i === temData.right; cx.tem.not = temData.others[i] || '';
+      const i = +arg; cx.tem.right = i === temData.right; cx.tem.not = temData.others[i] || ''; cx.tem.en = { ...(cx.tem.en || {}), not: temData.othersEn[i] || '' };
       temPick = { day: career.state.day, threat: temData.threat, named: cx.tem.right };
     }
     else if (name === 'imsafe') {

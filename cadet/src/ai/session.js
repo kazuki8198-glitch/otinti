@@ -15,30 +15,39 @@ export const AI_LINES = {
   failDebrief: 'すみません、いまはうまく答えがまとまりません。気になるところは、次のブリーフィングで一緒に見ましょう。',
   cut: '……続きは、教科書で確かめてください。',
 };
+// (M8) the same when the crew speak English (the answer itself comes in English then: ai/tutor.js todayText)
+export const AI_LINES_EN = {
+  intro: 'Sure. Ask me anything.', again: 'Go ahead. What else would you like to ask?', think: '（早瀬 教官が考えています…）',
+  declined: 'I can\'t answer that one here. Let\'s get back to training.',
+  failBrief: 'Sorry, I can\'t put an answer together right now. Let\'s look for it in the textbook together.',
+  failDebrief: 'Sorry, I can\'t put an answer together right now. Let\'s look at what\'s on your mind at the next briefing.',
+  cut: ' ...Check the rest in the textbook.',
+};
 
 // opts: tutor (ai/tutor.js), book, speaker { name, color }, today() → the material, place 'brief' | 'debrief',
 // ready() → false when it cannot ask at all (no key), onEnd(how: 'done' | 'cancel' | 'fallback'), onBook(sectionId),
 // notice(text, reason), placeholder
-export function createAiSession({ tutor, book, speaker = { name: '早瀬 教官', color: '#5cc8ff' }, today = () => ({}), place = 'brief', ready = () => true, onEnd = () => {}, onBook = () => {}, notice = () => {}, reasonText = (r) => r } = {}) {
+export function createAiSession({ tutor, book, speaker = { name: '早瀬 教官', color: '#5cc8ff' }, today = () => ({}), place = 'brief', ready = () => true, onEnd = () => {}, onBook = () => {}, notice = () => {}, reasonText = (r) => r, english = () => false } = {}) {
   const fns = new Set();
+  const T = () => (english() ? AI_LINES_EN : AI_LINES);
   let cur = null, seq = 0, running = false, ctrl = null, lastAnswer = null;
   const node = (k) => `${k}:${++seq}`;
   const me = (text, more = {}) => ({ dialog: 'ai', node: node(more.kind || 'say'), speaker: 'instructor', name: speaker.name, color: speaker.color || null, text, choices: [], ends: false, ...more });
   function emit() { const v = view(); for (const f of [...fns]) { try { f(v); } catch (e) { console.error(e); } } }
   function set(v) { cur = v; emit(); }
   function input(first) {
-    set(me(first ? AI_LINES.intro : AI_LINES.again, { kind: 'input', input: { max: QUESTION_MAX, placeholder: '質問を日本語で書いて Enter（例：失速はなぜ起きるのですか）' },
+    set(me(first ? T().intro : T().again, { kind: 'input', input: { max: QUESTION_MAX, placeholder: '質問を日本語で書いて Enter（例：失速はなぜ起きるのですか）' },
       choices: [{ i: 0, text: first ? 'やっぱり、やめておきます' : 'ありがとうございました', act: first ? 'cancel' : 'done' }] }));
   }
   function failed(reason) {
     if (reason && reason !== 'abort') notice(reasonText(reason), reason);
-    set(me(place === 'debrief' ? AI_LINES.failDebrief : AI_LINES.failBrief, { kind: 'fail', choices: [{ i: 0, text: 'はい', act: 'fallback' }] }));
+    set(me(place === 'debrief' ? T().failDebrief : T().failBrief, { kind: 'fail', choices: [{ i: 0, text: 'はい', act: 'fallback' }] }));
   }
   function answered(r, at) {
     const cites = (r.cites || []).filter(id => book.section(id)).slice(0, 2);
     const ch = [{ text: 'もう一つ聞きたいです', act: 'more' }, ...cites.map(id => ({ text: `教科書の「${book.section(id).title}」を開く`, act: 'book:' + id })), { text: 'ありがとうございました', act: 'done' }];
     lastAnswer = r;
-    const text = r.declined ? AI_LINES.declined : r.cut ? `${r.text}${AI_LINES.cut}` : r.text;
+    const text = r.declined ? T().declined : r.cut ? `${r.text}${T().cut}` : r.text;
     // (the streamed line, finished: the same node, so the screen keeps what it has shown and adds the rest)
     set(me(text, { node: at || node('answer'), stream: true, pending: false, choices: ch.map((c, i) => ({ i, ...c })) }));
   }
@@ -46,10 +55,10 @@ export function createAiSession({ tutor, book, speaker = { name: '早瀬 教官'
     const q = String(text || '').trim().slice(0, QUESTION_MAX);
     if (!running || !cur || !cur.input || !q) return false;
     // the question stays on screen while he thinks
-    set({ dialog: 'ai', node: node('asked'), speaker: 'player', name: 'あなた', color: '#f2b632', text: q, choices: [], ends: false, pending: true, cue: AI_LINES.think });
+    set({ dialog: 'ai', node: node('asked'), speaker: 'player', name: 'あなた', color: '#f2b632', text: q, choices: [], ends: false, pending: true, cue: T().think });
     const my = (ctrl = typeof AbortController === 'function' ? new AbortController() : null);
     let streamNode = null;
-    const r = await tutor.ask(q, { ...today(), place }, {
+    const r = await tutor.ask(q, { ...today(), place, lang: english() ? 'en' : 'ja' }, {
       signal: my ? my.signal : null,
       onText: (t) => {
         if (!running || ctrl !== my || !t) return;

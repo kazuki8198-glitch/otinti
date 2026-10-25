@@ -41,6 +41,8 @@ const CSS = `
 #dlg .dlg-text { margin: 0; min-height: 1.7em; font-size: calc(19px * var(--sub-k, 1)); line-height: 1.7; white-space: pre-line; overflow-wrap: anywhere;
   text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
 #dlg .dlg-text .off { visibility: hidden; }
+/* (M8) the crew in English: the Japanese under the English line */
+#dlg .dlg-ja { margin: 4px 0 0; font-size: calc(14px * var(--sub-k, 1)); line-height: 1.6; color: var(--ink-dim, #a9b7c6); white-space: pre-line; overflow-wrap: anywhere; }
 #dlg .dlg-box.narr .dlg-text { color: var(--ink-dim, #a9b7c6); font-style: italic; }
 #dlg .dlg-cue { min-height: 1.5em; margin-top: 2px; text-align: right; font-size: 12px; color: var(--ink-dim, #a9b7c6); }
 #dlg .dlg-cue.wait { animation: dlg-pulse 1.6s ease-in-out infinite; }
@@ -192,7 +194,8 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   // display:none between talks), so the first line of a talk is announced too
   const sr = make('p', 'dlg-sr', { 'aria-live': 'polite' });
   const cue = make('div', 'dlg-cue', { 'aria-hidden': 'true' });
-  box.appendChild(chip); box.appendChild(line); box.appendChild(cue);
+  const jaLine = make('p', 'dlg-ja', { lang: 'ja' }); jaLine.hidden = true;
+  box.appendChild(chip); box.appendChild(line); box.appendChild(jaLine); box.appendChild(cue);
   const askRow = make('div', 'dlg-ask');
   const askInput = make('input', '', { type: 'text', 'aria-label': '教官への質問', autocomplete: 'off', spellcheck: 'false', enterkeyhint: 'send' });
   const askBtn = make('button', '', { type: 'button' }); askBtn.textContent = '聞く';
@@ -323,11 +326,12 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     onNext();
   }
 
-  // ---- the instructor's voice (settings.voice): the browser's speech synthesis, only with a Japanese voice
-  function jaVoice() {
+  // ---- the instructor's voice (settings.voice): the browser's speech synthesis, only with a Japanese voice (M8: an
+  // English one for the crew's English lines)
+  function jaVoice(lang = 'ja') {
     try {
-      const vs = win.speechSynthesis.getVoices() || [];
-      return vs.find(v => /^ja([-_]|$)/i.test(v.lang) && v.localService) || vs.find(v => /^ja([-_]|$)/i.test(v.lang)) || null;
+      const vs = win.speechSynthesis.getVoices() || [], re = lang === 'en' ? /^en([-_]|$)/i : /^ja([-_]|$)/i;
+      return vs.find(v => re.test(v.lang) && v.localService) || vs.find(v => re.test(v.lang)) || null;
     } catch (e) { return null; }
   }
   function hush() { if (!spoke) return; spoke = false; try { win.speechSynthesis.cancel(); } catch (e) { /* nothing to stop */ } }
@@ -335,7 +339,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     hush();
     if (!settings || typeof settings.get !== 'function' || !settings.get('voice')) return;
     if (!v || v.pending || v.speaker === 'player' || v.speaker === 'narrator' || !win.speechSynthesis || typeof win.SpeechSynthesisUtterance !== 'function') return;
-    const voice = jaVoice();
+    const voice = jaVoice(v.lang === 'en' ? 'en' : 'ja');
     if (!voice) return;
     try {
       const u = new win.SpeechSynthesisUtterance(String(v.text).replace(/\s+/g, ' '));
@@ -351,8 +355,10 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   function show(view) {
     if (destroyed) return;
     if (!view) { hide(); return; }
+    // (M8) the crew in English: the line's English shown (and spoken), its Japanese under it when asked for
+    const english = !!(settings && typeof settings.get === 'function' && settings.get('crewEnglish') && typeof view.en === 'string' && view.en);
     const v = { dialog: view.dialog, node: view.node, speaker: view.speaker, name: String(view.name || ''), color: safeColor(view.color),
-      text: String(view.text ?? ''),
+      text: String((english ? view.en : view.text) ?? ''), ja: english && settings.get('crewEnglishJa') !== false ? String(view.text ?? '') : '', lang: english ? 'en' : 'ja',
       choices: Array.isArray(view.choices)
         ? view.choices.map((c, k) => ({ i: Number.isInteger(c && c.i) ? c.i : k, text: String((c && c.text) ?? '') })) : [],
       ends: !!view.ends, stream: !!view.stream, pending: !!view.pending, cue: view.cue ? String(view.cue) : '',
@@ -369,6 +375,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     if (v.color) chip.style.setProperty('--sp', v.color); else chip.style.removeProperty('--sp');
     if (ink) chip.style.setProperty('--sp-ink', ink); else chip.style.removeProperty('--sp-ink');
     sr.textContent = narr ? v.text : `${v.name}：${v.text}`;
+    jaLine.textContent = v.ja; jaLine.hidden = !v.ja; line.setAttribute('lang', v.lang);
     cue.textContent = ''; cue.classList.remove('wait');
     if (list.contains(doc.activeElement)) try { doc.activeElement.blur(); } catch (e) { /* the old buttons go anyway */ }
     buildChoices(v.choices);
@@ -421,7 +428,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     open = false; cur = null; gen++;
     if (wrap.contains(doc.activeElement)) try { doc.activeElement.blur(); } catch (e) { /* nothing focused */ }
     wrap.hidden = true; list.hidden = true; list.textContent = ''; buttons = []; sel = -1; askRow.hidden = true; askInput.value = '';
-    chars = []; at = []; shown = 0; paint(); cue.textContent = ''; sr.textContent = '';
+    chars = []; at = []; shown = 0; paint(); cue.textContent = ''; sr.textContent = ''; jaLine.textContent = ''; jaLine.hidden = true;
   }
 
   // ---- the textbook overlay

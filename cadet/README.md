@@ -11,7 +11,7 @@
 ブラウザで直接開くこともできます：**[CADET を開く（raw.githack）](https://raw.githack.com/kazuki8198-glitch/otinti/f1ec2e9d59f44b517cdcd1ee9cd156cee38d2e85/cadet/outputs/CADET.html)**
 - 最初に raw.githack の確認画面（One more step）が出ます。赤い「Open the page」を押すと、ゲームが始まります。
 - キーボードとマウスのある PC（Chrome など）で開いてください。スマートフォンやタブレットでは操作できません。
-- 起動には数十秒かかることがあります（7.9 MB）。
+- 起動には数十秒かかることがあります（8.2 MB）。
 
 「アカデミーへ」を押すと、2027 年 4 月 1 日の朝、翔洋航空（架空）の訓練所のロビーに立っています。画面をクリックするとマウスで見回せます。
 

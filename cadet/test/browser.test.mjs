@@ -996,7 +996,8 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
   test('(M8) the AI instructor: off, not offered; on with a key set in the menu — a free question, the answer in the subtitles, its textbook section; an error falls back to the textbook\'s questions; the key stays in its one place', async () => {
     const KEY = 'sk-ant-api03-BROWSERTEST-0123456789abcdef';
     await ev((src) => { (0, eval)(`${src}\nwindow.__fakeClaude = fakeClaude;`); window.__calls = []; }, FAKE_SRC);
-    await ev((p) => window.__cadet.career.set({ state: { seed: 2, chapter: 'ch2', day: 12, slot: 'morning', done: { prologue: 1 }, exams: { written1: { tries: 1, best: 90, pass: true } } }, progress: p, flags: { met_instructor: true, has_tablet: true }, place: false }), passed(['a1']));
+    // (career.set merges into the state: the graduation and the checks of the tests before are taken away)
+    await ev((p) => window.__cadet.career.set({ state: { seed: 2, chapter: 'ch2', day: 12, slot: 'morning', done: { prologue: 1 }, exams: { written1: { tries: 1, best: 90, pass: true } }, checks: {}, solo: null, graduated: null }, progress: p, flags: { met_instructor: true, has_tablet: true }, place: false }), passed(['a1']));
     const ins = await ev(() => window.__cadet.instructor());
     const toMenu = async () => {
       await ev((ins) => { const C = window.__cadet; C.setMode('walk'); C.placeWalker(ins.a + 2.4, ins.c - 0.6, { a: ins.a, c: ins.c }); C.lookAt(ins.a, ins.c, 1.5); }, ins);

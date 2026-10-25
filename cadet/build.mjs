@@ -61,7 +61,7 @@ export function build({ quiet = false, dev = false } = {}) {
   fs.mkdirSync(OUT, { recursive: true });
   const out = path.join(OUT, 'CADET.html');
   fs.writeFileSync(out, html);
-  if (!quiet) console.log(`wrote ${path.relative(here, out)} (${(html.length / 1024 / 1024).toFixed(2)} MB, ${info})`);
+  if (!quiet) console.log(`wrote ${path.relative(here, out)} (${(Buffer.byteLength(html) / 1024 / 1024).toFixed(2)} MB, ${info})`);
   return { out, html, info };
 }
 

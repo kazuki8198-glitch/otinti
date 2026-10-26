@@ -92,7 +92,7 @@ export function createScene(FL, wrap, opt = {}) {
     // ---- the sky and its light (the image-based light is made once: setTime rebuilds it)
     sky = createSky(renderer, scene, preset);
     const st0 = sky.setTime(HOURS, DAY);
-    pipe.setHaze({ sunDir: st0.dir, el: st0.el });
+    pipe.setHaze({ sunDir: st0.dir, el: st0.el, horizon: sky.horizon });
     // ---- the flown aircraft (both types, the lesson's shown) and the cockpit, which goes into whichever is flown
     const A28 = P.AIRCRAFT.find(a => a.id === 'pa28'), A44 = P.AIRCRAFT.find(a => a.id === 'pa44');
     lives = parts.lives = { pa28: liveAircraft(FL, A28) };

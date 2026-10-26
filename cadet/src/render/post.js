@@ -1,7 +1,7 @@
 // CADET — render/post.js : the renderer and the image pipeline.
-// scene (HDR, multisampled) → aerial perspective (haze that thickens with distance and thins with height, brighter
-// towards the sun; computed from the depth buffer for every surface at once) → ambient occlusion (GTAO) → bloom →
-// tone mapping (AgX) and sRGB.
+// scene (HDR, multisampled) → aerial perspective (haze that thickens with distance and thins with height, coloured
+// like the sky along the horizon behind it; computed from the depth buffer for every surface at once) → ambient
+// occlusion (GTAO) → bloom → tone mapping (AgX) and sRGB.
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -17,19 +17,30 @@ const AerialShader = {
     uInvProj: { value: new THREE.Matrix4() }, uCamWorld: { value: new THREE.Matrix4() },
     uSunDir: { value: new THREE.Vector3(0, 1, 0) }, uHaze: { value: new THREE.Color(0.55, 0.66, 0.80) }, uSunHaze: { value: new THREE.Color(0.9, 0.75, 0.5) },
     uDensity: { value: 0.000085 }, uFall: { value: 0.00055 }, uGround: { value: 16.8 }, uSkyFog: { value: 0 }, uSkyGrey: { value: 0 },
+    tSkyCube: { value: null }, uSkyMatch: { value: 0 }, uHazeNear: { value: 0.25 }, uEdge: { value: 1 }, uFar: { value: 42000 },
+    uSkyCap: { value: 7.5 },
   },
   vertexShader: /* glsl */`varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: /* glsl */`
     uniform sampler2D tDiffuse, tDepth; uniform mat4 uInvProj, uCamWorld;
     uniform vec3 uSunDir, uHaze, uSunHaze; uniform float uDensity, uFall, uGround, uSkyFog, uSkyGrey;
+    uniform samplerCube tSkyCube; uniform float uSkyMatch, uHazeNear, uEdge, uFar, uSkyCap;
     varying vec2 vUv;
+    // the clear sky kept under the bloom's threshold (8): its brightest part, the horizon towards the sun, crossed it
+    // and the bloom started and stopped along a line down the screen. The haze that takes the sky's colour is kept the
+    // same way, so the two still meet
+    vec3 capSky(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return c * min(1.0, uSkyCap / max(l, 1e-4)); }
     void main() {
-      vec4 col = texture2D(tDiffuse, vUv);
+      vec4 raw = texture2D(tDiffuse, vUv), col = raw;
       // the sun's disc is far brighter than half floats like (and bloom would spread it over the sky): cap it
       col.rgb = clamp(col.rgb, 0.0, 12.0); if (any(isnan(col.rgb))) col.rgb = vec3(12.0);
       float d = texture2D(tDepth, vUv).x;
       if (d >= 1.0) {                                                       // nothing drawn here: the sky has its own atmosphere,
-        if (uSkyFog + uSkyGrey <= 0.0) { gl_FragColor = col; return; }
+        if (uSkyFog + uSkyGrey <= 0.0) {
+          // (the sun's disc, thousands of times brighter than the sky round it, still blooms)
+          if (max(raw.r, max(raw.g, raw.b)) < 500.0) col.rgb = capSky(col.rgb);
+          gl_FragColor = col; return;
+        }
         // under a storm's deck it is grey and darker; in fog it is the fog's colour (as far off as the ground is)
         vec4 sp = uInvProj * vec4(vUv * 2.0 - 1.0, 1.0, 1.0); sp /= sp.w;
         float up = clamp(normalize(mat3(uCamWorld) * sp.xyz).y, 0.0, 1.0);
@@ -51,6 +62,18 @@ const AerialShader = {
       float fog = 1.0 - exp(-od);
       float mu = max(dot(rd, uSunDir), 0.0);
       vec3 haze = uHaze + uSunHaze * (0.35 * pow(mu, 6.0) + 0.65 * pow(mu, 40.0));
+      if (uSkyMatch > 0.0) {
+        // the sky's own colour where this line of sight meets the horizon (or above it, for what stands against the
+        // sky), its glow towards the sun included: distant ground dissolves into the sky behind it instead of ending in
+        // a grey band. A quarter of it near by (uHazeNear: the air's light grows with the path; the sky is several times
+        // brighter than sunlit land, and its full colour there washed the fields out), rising to the sky's full colour
+        // at the edge of the drawn world, which then meets the sky without a line
+        vec3 hd = vec3(rd.x, max(rd.y, 0.0), rd.z);
+        if (dot(hd.xz, hd.xz) < 1e-6) hd.xz = vec2(1.0, 0.0);
+        vec3 skyH = capSky(textureCube(tSkyCube, normalize(hd)).rgb);
+        float edge = uEdge * smoothstep(0.15 * uFar, 0.97 * uFar, dist);
+        haze = mix(haze, skyH * mix(uHazeNear, 1.0, edge), uSkyMatch);
+      }
       gl_FragColor = vec4(mix(col.rgb, haze, fog), col.a);
     }`,
 };
@@ -129,8 +152,9 @@ export function createPipeline(container, quality) {
   let lastHaze = null;               // kept so that a rebuilt pipeline (a new preset) gets the same sky
   // fog (M5's weather): 0 clear … 1 a visibility of a few hundred metres; grey (the overcast's light)
   // (M8) clear: the haze's density scaled (the epilogue's clear winter morning: Mt Fuji far off)
-  function setHaze({ sunDir, el, fog = lastHaze ? lastHaze.fog || 0 : 0, grey = lastHaze ? lastHaze.grey || 0 : 0, clear = 1 }) {
-    lastHaze = { sunDir, el, fog, grey, clear };
+  // horizon: the sky's cube (sky.js) the haze takes its colour from; without it, the fixed colours below
+  function setHaze({ sunDir, el, fog = lastHaze ? lastHaze.fog || 0 : 0, grey = lastHaze ? lastHaze.grey || 0 : 0, clear = 1, horizon = lastHaze ? lastHaze.horizon : null }) {
+    lastHaze = { sunDir, el, fog, grey, clear, horizon };
     // the eye adapts: more exposure as the sun goes down (dusk, then night under the moon)
     const dark = 1 - THREE.MathUtils.smoothstep(el, -10, 8);
     // (M7: a little less at full night — it read as a bright dusk: the apron's floodlit patches should stand out)
@@ -147,12 +171,17 @@ export function createPipeline(container, quality) {
     u.uSkyFog.value = fog > 0 ? Math.min(1, fog * 1.18) : 0; u.uSkyGrey.value = grey;
     if (grey > 0) { u.uHaze.value.lerp(new THREE.Color(0.42, 0.45, 0.5).multiplyScalar(0.03 + 0.97 * day), grey * 0.7); u.uSunHaze.value.multiplyScalar(1 - grey * 0.8); }
     if (fog > 0) u.uHaze.value.lerp(new THREE.Color(0.66, 0.69, 0.72).multiplyScalar(0.03 + 0.97 * day), fog * 0.8);
+    // the sky's colour on a clear day; in fog and under a grey deck the sky is replaced (the shader above), and so is
+    // the haze's colour: the fixed ones. (clear < 1, the epilogue: no forced edge, Mt Fuji stands within it)
+    u.tSkyCube.value = horizon;
+    u.uSkyMatch.value = horizon ? (1 - Math.min(1, fog * 1.5)) * (1 - Math.min(1, grey * 1.5)) : 0;
+    u.uEdge.value = clear < 1 ? 0 : 1;
   }
 
   function render() {
     renderer.info.reset();
     const u = aerial.uniforms;
-    u.uInvProj.value.copy(camera.projectionMatrixInverse); u.uCamWorld.value.copy(camera.matrixWorld);
+    u.uInvProj.value.copy(camera.projectionMatrixInverse); u.uCamWorld.value.copy(camera.matrixWorld); u.uFar.value = camera.far;
     u.tDepth.value = composer.readBuffer.depthTexture;
     // the sun's shadow map once per frame: the AO's normal pass renders the scene again and must not redraw it
     renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true;

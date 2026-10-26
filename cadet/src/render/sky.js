@@ -1,11 +1,14 @@
 // CADET — render/sky.js : the sky (three.js's physical Sky with its clouds), the sun's position for a date and a
 // local time over central Florida, the sunlight's colour through the atmosphere, the image-based light from the sky
-// (PMREM, rebuilt when the time changes), and the sun's shadow that follows the camera (snapped to its texels so it
-// does not shimmer).
+// and the sunlit ground under it (PMREM, rebuilt when the time changes), the sky along the horizon for the aerial
+// perspective (post.js), and the sun's shadow that follows the camera (snapped to its texels so it does not shimmer).
 import * as THREE from 'three';
 import { Sky } from 'three/addons/objects/Sky.js';
 
 const DEG = Math.PI / 180;
+const ENV_INTENSITY = 0.5;                                               // the scene's scale on the image-based light
+// open country round the field seen from above (grass, fields, pines, a little pavement): linear albedo
+const GROUND_ALBEDO = new THREE.Color().setRGB(0.13, 0.135, 0.11);
 export const SITE = { lat: 28.78, lon: -81.24, utcOffset: -4 };   // the airfield's area (EDT); the field itself is fictional
 
 // the sun for a local clock time (hours) on a day of the year; returns elevation, azimuth (deg) and a local direction
@@ -69,8 +72,18 @@ export function createSky(renderer, scene, quality) {
   // the sky for the image-based light (no sun disc: the sun is the directional light)
   const envScene = new THREE.Scene(), envSky = new Sky(); envSky.scale.setScalar(900); addTwilight(envSky.material);
   envScene.add(envSky);
+  // the ground under it: Preetham's sky fills the lower half with the horizon's colour, several times brighter than
+  // sunlit land, so surfaces facing down (a wing's underside, the headliner, a windshield reflecting the panel's way)
+  // were lit as if from a second sky. The lower hemisphere is the land's own radiance instead (setTime)
+  const groundMat = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
+  const ground = new THREE.Mesh(new THREE.SphereGeometry(400, 32, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), groundMat);
+  envScene.add(ground);
   const pmrem = new THREE.PMREMGenerator(renderer);
   let envRT = null;
+  // the sky alone (no sun disc, no ground) in a small cube: the aerial perspective takes the horizon's colour from it,
+  // so the haze over distant ground is the sky's own colour behind it (post.js)
+  const horizonRT = new THREE.WebGLCubeRenderTarget(32, { type: THREE.HalfFloatType, generateMipmaps: false });
+  const horizonCam = new THREE.CubeCamera(0.1, 2000, horizonRT);
 
   const sun = new THREE.DirectionalLight(0xffffff, 3);
   sun.castShadow = true;
@@ -105,11 +118,16 @@ export function createSky(renderer, scene, quality) {
     const EU = envSky.material.uniforms;
     for (const k of Object.keys(U)) if (EU[k] && EU[k].value !== undefined) { if (EU[k].value?.copy) EU[k].value.copy(U[k].value); else EU[k].value = U[k].value; }
     EU.showSunDisc.value = 0;
+    // the ground's radiance: the sun on the horizontal plus the sky's share (more of it under an overcast, where the sun
+    // is dimmed), over pi, divided by the scale the scene puts on the whole environment
+    const eh = sun.intensity * Math.max(0, p.dir.y) * (1.25 + 1.5 * state.overcast) / Math.PI / ENV_INTENSITY;
+    groundMat.color.copy(sun.color).multiply(GROUND_ALBEDO).multiplyScalar(eh);
+    ground.visible = false; horizonCam.update(renderer, envScene); ground.visible = true;
     const rt = pmrem.fromScene(envScene, 0, 0.1, 2000);
     if (envRT) envRT.dispose();
     envRT = rt;
     scene.environment = rt.texture;
-    scene.environmentIntensity = 0.5;
+    scene.environmentIntensity = ENV_INTENSITY;
     return state;
   }
 
@@ -145,5 +163,5 @@ export function createSky(renderer, scene, quality) {
   }
   const applyQ = applyQuality;
   function applyQualityKeep(q) { const custom = state.half !== presetHalf ? state.half : null; applyQ(q); presetHalf = state.half; if (custom != null) setShadowHalf(custom); }
-  return { sky, sun, state, setTime, setWeather, update, applyQuality: applyQualityKeep, setShadowHalf, uniforms: U };
+  return { sky, sun, state, setTime, setWeather, update, applyQuality: applyQualityKeep, setShadowHalf, uniforms: U, horizon: horizonRT.texture };
 }

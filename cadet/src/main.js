@@ -197,7 +197,7 @@ async function boot() {
   let hours = parseFloat(params.get('t')) || career.hours;
   const applyTime = () => {
     const st = sky.setTime(hours);
-    pipe.setHaze({ sunDir: st.dir, el: st.el });
+    pipe.setHaze({ sunDir: st.dir, el: st.el, horizon: sky.horizon });
     buildings.setNight(st.lightsOn); academy.setNight(st.lightsOn);
     $('#time').value = String(hours);
     const hh = Math.floor(hours), mm = Math.round((hours - hh) * 60);
@@ -813,7 +813,7 @@ async function boot() {
     // a clear winter morning: the sun low in the south-east, the haze thin (Mt Fuji shows)
     hours = 8.6; sky.setWeather({ overcast: 0 });
     const st = sky.setTime(hours);
-    pipe.setHaze({ sunDir: st.dir, el: st.el, fog: 0, grey: 0, clear: 0.3 });
+    pipe.setHaze({ sunDir: st.dir, el: st.el, fog: 0, grey: 0, clear: 0.3, horizon: sky.horizon });
     haneda.group.rotation.y = Math.atan2(st.dir.x, st.dir.z) + 0.55;      // (the terminal's front, behind our nose, lit by it)
     haneda.group.visible = true; haneda.showOwn(false); if (haneda.jets) haneda.jets.visible = true; epi.frozen = false;
     epi.hint = $('#hint').innerHTML;                                       // (the hint to click: this place's keys)
@@ -970,7 +970,7 @@ async function boot() {
     const grey = w.kind === 'storm' ? 0.7 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.6 : low ? 0.55 : 0;
     sky.setWeather({ overcast });
     const st = sky.setTime(hours);
-    pipe.setHaze({ sunDir: st.dir, el: st.el, fog, grey });
+    pipe.setHaze({ sunDir: st.dir, el: st.el, fog, grey, horizon: sky.horizon });
     haze0 = { sunDir: st.dir.clone ? st.dir.clone() : st.dir, el: st.el, fog, grey, kind: w.kind }; cloudK = fog;
     buildings.setNight(st.lightsOn); academy.setNight(st.lightsOn);
     $('#time').value = String(hours);

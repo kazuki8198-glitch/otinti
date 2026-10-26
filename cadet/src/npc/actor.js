@@ -571,8 +571,9 @@ function fold(a, s) {
 // on his own side of the cabin's middle), above the panel's top (y 0.465) the student's head and their view of the
 // panel: his hands stay on his side of it (low down, under the PFD, a finger may cross it by up to SEAT_POINT.cross,
 // pointing at the student's PFD from below it; the student still sees the whole screen).
-// (In the seat as cockpit.js draws it the cushion and the back give 1–2 cm under him; a hip 3 cm further back, at
-// z −0.38, would sink the back of his hips 3 cm into the seat back and his head 2 cm into the headrest.)
+// (In the game he sits where cockpit.js's instructorSeat puts his hips, 3 cm further back, at z −0.38 — his knees then
+// clear the right yoke's horns as it rolls — and the seat's back and headrest stand 3 cm further back too; here, at
+// z −0.41, his back would stand about 3 cm clear of them.)
 const ARCHER = { room: { L: 0.45, R: 0.09 }, keepOut: { x: 0.05, y: 0.465 } };   // (room: from the shoulders; keepOut: body frame)
 export const SEATED_PA28 = Object.freeze({
   position: Object.freeze([0.29, -0.40, -0.41]), yaw: Math.PI,

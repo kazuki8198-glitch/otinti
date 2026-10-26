@@ -39,14 +39,18 @@
 - 塗装は Archer と同じ架空の翔洋航空のもの。登録記号（架空の N452SY・N455SY・N457SY）の文字は、スクリプトの中で線で書いた字です。
 - 陰（アンビエントオクルージョン）は頂点の色のアルファに焼き込みます。
 
-## 操縦席の天井まわりの模型（`assets/model/cockpit.glb`）
+## 操縦席の模型（`assets/model/cockpit.glb`）
 
-自作です（素材は使っていません）。`tools/aircraft/build_cockpit.py` を Blender 5.2 でコマンドから動かして作ります（`node tools/aircraft/cockpit-spec.mjs > 寸法.json`、`blender -b --factory-startup -P tools/aircraft/build_cockpit.py -- 寸法.json assets/model/cockpit.glb [見本の絵のフォルダ|-]`）。作る前と後の絵は `docs/cockpit/` にあります（`band-*.jpg`）。
+自作です（素材は使っていません）。`tools/aircraft/build_cockpit.py` を Blender 5.2 でコマンドから動かして作ります（`node tools/aircraft/cockpit-spec.mjs > 寸法.json`、`blender -b --factory-startup -P tools/aircraft/build_cockpit.py -- 寸法.json assets/model/cockpit.glb [見本の絵のフォルダ|-]`）。座席・グレアシールド・操縦輪は、部品ごとのファイル（`tools/aircraft/cockpit_seats.py`・`cockpit_glareshield.py`・`cockpit_yokes.py`）にあり、同じコマンドで一緒に作られます。作る前と後の絵は `docs/cockpit/` にあります（`band-*.jpg`、`parts-*.jpg`）。
 
-- 操縦席（`src/aircraft/cockpit.js`）のうち、天井の内張り（縫い目と、骨の間の布のたるみ）、天井の両端の縁の飾り、風防の上の枠、A ピラーの内張り、風防との間のゴム、サンバイザー（蝶番の棒と 2 つの留め金）だけを模型にしています。ほかの部分は、今までどおりプログラムで作っています。
-- 寸法は `cockpit.js` の客室の配置（目の位置・窓の帯・天井の弧・風防）を `cockpit-spec.mjs` が書き出したものから取り、模型が残りの部分とぴったり合うようにしています。
-- 色は `cockpit.js` の表面の表の色で、ざらつき・金属らしさ・表面の細かい模様も、部品の名前（`headliner.roof` など）で同じ表から取ります。近くの物の陰（5 cm のレイ）を頂点の色のアルファに焼き込み、ゲームが窓から見える空の量の陰を掛けます。
-- 模型がページにないときは、前のプログラムの形（簡単な板と管）で描きます。
+- 操縦席（`src/aircraft/cockpit.js`）のうち、次の部分を模型にしています。ほかの部分（計器盤・壁・ドア・床・ペダルなど）は、今までどおりプログラムで作っています。
+  - 天井まわり：天井の内張り（縫い目と、骨の間の布のたるみ）、天井の両端の縁の飾り、風防の上の枠、A ピラーの内張り、風防との間のゴム、サンバイザー（蝶番の棒と 2 つの留め金）。
+  - 前の 2 席と後ろの席：革の座席（縫い目で区切った中央、パイピングのある盛り上がり、ヘッドレストと柱、枠とレール、リクライニングのレバー）。
+  - グレアシールド：縫い目のある丸いパッドと、風防の下の縁のゴム。
+  - 2 本の操縦輪：中央の台と銘板、握り、スイッチ（動く部品として、操縦に合わせて動きます）。銘板には文字やロゴを入れていません。
+- 寸法は `cockpit.js` の客室の配置（目の位置・窓の帯・天井の弧・風防・計器盤・座席の位置・操縦輪の軸）を `cockpit-spec.mjs` が書き出したものから取り、模型が残りの部分とぴったり合うようにしています。
+- 色は `cockpit.js` の表面の表の色で、ざらつき・金属らしさ・表面の細かい模様（革のしぼなど）も、部品の名前（`headliner.roof`・`seats.seat` など）で同じ表から取ります。近くの物の陰（5 cm のレイ）を頂点の色のアルファに焼き込み、ゲームが窓から見える空の量の陰を掛けます。
+- 模型がページにないとき（または模型にない部分）は、前のプログラムの形（簡単な板・管・箱）で描きます。
 
 ## 737 型の外観の模型（`assets/model/jet737.glb`・終章）
 

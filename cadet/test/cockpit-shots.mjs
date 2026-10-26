@@ -1,6 +1,7 @@
 // CADET — the cockpit from the left seat (docs/cockpit): the Archer's (chapter 2) and the Seminole's (chapter 5), on
 // the stand with the engines off, at 1280×720 (the game's own frame). For comparing the cockpits (before / after).
-//   node test/cockpit-shots.mjs [quality] [outDir] [prefix] [page.html] [pa28|pa44|both] [ahead,quadrant,left,right]
+//   node test/cockpit-shots.mjs [quality] [outDir] [prefix] [page.html] [pa28|pa44|both] [ahead,quadrant,left,right,up,backR]
+// (up: the headliner and the visors; backR: the pilot's own seat back and headrest, close, and the instructor's seat)
 // (in the cloud's software renderer the browser's memory grows by gigabytes with each picture: one view a run there)
 import fs from 'node:fs';
 import path from 'node:path';
@@ -44,7 +45,7 @@ for (const t of types) {
   }
   for (let k = 0; k < 5; k++) await sim(1);                     // (the instructor's lines: the head goes to him while he talks)
   // (yaw + to the left)
-  for (const [name, yaw, pitch] of [['ahead', 0, -8], ['quadrant', -4, -40], ['left', 70, -10], ['right', -60, -6]]) {
+  for (const [name, yaw, pitch] of [['ahead', 0, -8], ['quadrant', -4, -40], ['left', 70, -10], ['right', -60, -6], ['up', 0, 28], ['backR', -145, -14]]) {
     if (ONLY && !ONLY.includes(name)) continue;
     await ev(({ yaw, pitch }) => window.__cadet.fly.look(yaw, pitch), { yaw, pitch }); await sim(0.2);
     await shot(`${t}-${name}.png`);

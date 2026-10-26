@@ -1,8 +1,8 @@
 // CADET — build tests (node --test): one self-contained HTML file.
 //  - no external scripts, styles, images or fonts (it must open from file:// with no network);
 //  - every inline script parses; FLIGHT LAB's modules are inside, read from flight-lab/src;
-//  - the textures are embedded; three.js's licence is kept (M8: and the Anthropic SDK's, with the code inside it); the
-//    file stays within the size budget.
+//  - the textures and the models are embedded; three.js's licence is kept (M8: and the Anthropic SDK's, with the code
+//    inside it); the file stays within the size budget.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -26,6 +26,8 @@ test('build: one file, offline, every script parses, within the size budget', ()
   for (const s of scripts) assert.doesNotThrow(() => new vm.Script(s), 'an inline script does not parse');
   for (const m of FL_MODULES) assert.ok(html.includes(`FLIGHT LAB: ${m}`), m);
   assert.match(html, /globalThis\.CADET_ASSETS = \{"tex\/asphalt_c":"data:image\/webp;base64,/);
+  // every model made in Blender embedded as a glb (a page without one draws its old simple shapes, silently)
+  for (const m of ['actor', 'actor-near', 'archer', 'archer-far', 'seminole', 'seminole-far', 'jet737', 'cockpit']) assert.match(html, new RegExp(`"model/${m}":"Z2xURg`), m);
   assert.match(html, /three\.js licence:[\s\S]*MIT License/);
   // (M8) the SDK and the code inside it, each with its licence; the webhook library left out (src/ai/no-webhooks.js)
   assert.match(html, /@anthropic-ai\/sdk\) licence:[\s\S]*Anthropic, PBC/);

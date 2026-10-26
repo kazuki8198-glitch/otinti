@@ -269,7 +269,7 @@ def cyl(a, b, r, seg=8, col=None):
     ring = lambda c: [c + (t * math.cos(2 * math.pi * k / seg) + bb * math.sin(2 * math.pi * k / seg)) * r for k in range(seg)]
     p = Piece(); r0, r1 = ring(a), ring(b)
     p.grid([r0, r1], col, closed=True)
-    p.fan(list(range(0, seg)), a, col, flip=True); p.fan(list(range(seg, 2 * seg)), b, col)
+    p.fan(list(range(0, seg)), a, col); p.fan(list(range(seg, 2 * seg)), b, col, flip=True)      # (the caps outwards: −axis at a, +axis at b)
     return p
 def box(c, half, axes, col=None):
     # a closed box at c, half sizes along three axes (steel unless col)
@@ -315,7 +315,7 @@ ctx.__dict__.update(S=S, C=C, EYE=EYE, SILL=SILL, WTOP=WTOP, HW=HW, HWT=HWT, ROO
     bandX=bandX, roofY=roofY, wsZ=wsZ, lowX=lowX, clamp=clamp, lerp=lerp, DEG=DEG, math=math, Vector=Vector, Matrix=Matrix,
     BVHTree=BVHTree, bpy=bpy, Piece=Piece, mirror_x=mirror_x, cyl=cyl, box=box, rounded_rect=rounded_rect,
     facing_share=facing_share, volume=volume, gap=gap, tris=tris)
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); sys.dont_write_bytecode = True   # (no __pycache__ in the repo)
 import importlib
 MODULES = {g: importlib.import_module('cockpit_' + g) for g in GROUPS if g != 'band'}
 
@@ -356,9 +356,14 @@ for g, mod in MODULES.items():
 # Rays 5 cm long (cosine-weighted over the hemisphere) against these parts and a proxy of the cabin round them: the
 # top of the window band, the aft bulkhead, the overhead console, the compass case and the windshield's centre post,
 # and what each group adds (proxies). The preview shows the proxy (grey) round the parts.
-occl = bmesh.new(); prox = bmesh.new()
-for ob in objs.values():
-    m2 = ob.data.copy(); occl.from_mesh(m2); bpy.data.meshes.remove(m2)
+# A moving part's occlusion comes from its own pieces only (it moves against everything else), and it shades nothing.
+def moving_of(k): return next((t for t in k.split('.')[2:] if t not in ('pa28', 'pa44')), None)
+def bvh_of(keys):
+    bm = bmesh.new()
+    for k in keys:
+        m2 = objs[k].data.copy(); bm.from_mesh(m2); bpy.data.meshes.remove(m2)
+    return bm
+occl = bvh_of([k for k in objs if not moving_of(k)]); prox = bmesh.new()
 def proxy_quad(a, b, c, d):
     for bm in (occl, prox):
         vs = [bm.verts.new(v) for v in (a, b, c, d)]; bm.faces.new(vs)
@@ -381,12 +386,13 @@ for g, mod in MODULES.items():
         if pr[0] == 'quad': proxy_quad(*pr[1:])
         else: proxy_box(*pr[1:])
 OBVH = BVHTree.FromBMesh(occl)
+MBVH = {m: BVHTree.FromBMesh(bvh_of([k for k in objs if moving_of(k) == m])) for m in sorted({moving_of(k) for k in objs} - {None})}
 NDIR = 32
 DIRS = []
 for i in range(NDIR):                                    # a cosine-weighted hemisphere (local z up)
     u = (i + 0.5) / NDIR; r = math.sqrt(u); a = i * 2.399963
     DIRS.append((r * math.cos(a), r * math.sin(a), math.sqrt(1 - u)))
-def bake_local_ao(ob, reach=0.05, strength=0.6, floor=0.6):
+def bake_local_ao(ob, bvh, reach=0.05, strength=0.6, floor=0.6):
     me = ob.data; vals = []
     for vt in me.vertices:
         n = vt.normal
@@ -394,14 +400,14 @@ def bake_local_ao(ob, reach=0.05, strength=0.6, floor=0.6):
         hit = 0.0
         for dx, dy, dz in DIRS:
             d = t * dx + b * dy + n * dz
-            loc, _, _, dist = OBVH.ray_cast(vt.co + n * 0.002, d, reach)
+            loc, _, _, dist = bvh.ray_cast(vt.co + n * 0.002, d, reach)
             if loc is not None: hit += (1 - dist / reach) ** 0.5
         vals.append(clamp(1 - strength * hit / NDIR, floor, 1))
     col = me.color_attributes['COLOR_0']
     for l in me.loops:
         c = col.data[l.index].color; col.data[l.index].color = (c[0], c[1], c[2], vals[l.vertex_index])
     me.color_attributes.active_color = col
-for ob in objs.values(): bake_local_ao(ob)
+for k, ob in objs.items(): bake_local_ao(ob, MBVH[moving_of(k)] if moving_of(k) else OBVH)
 
 counts = {k: tris(ob) for k, ob in objs.items()}
 print('triangles', counts, 'total', sum(counts.values()))

@@ -42,7 +42,7 @@ Bash の作業フォルダは次の呼び出しに持ち越されるので、コ
   - 機体：`cadet/tools/aircraft/build_archer.py`、`build_seminole.py`
   - 737：`build_737.py`
   - 人物：`cadet/tools/actor/build_actor.py`
-  - 操縦席の天井まわり：`cadet/tools/aircraft/build_cockpit.py`（寸法は `cockpit-spec.mjs` が `cockpit.js` の `CABIN` から書き出す）
+  - 操縦席：`cadet/tools/aircraft/build_cockpit.py`（天井まわり）と、部品ごとのファイル `cockpit_seats.py`・`cockpit_glareshield.py`・`cockpit_yokes.py`。寸法は `cockpit-spec.mjs` が `cockpit.js` の `CABIN` から書き出す
 - 実行は、ウィンドウなしのコマンドで行う。
 
   ```sh
@@ -73,7 +73,7 @@ Bash の作業フォルダは次の呼び出しに持ち越されるので、コ
 
 glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み部分が 2 つある。
 
-- 機体・737・操縦席の天井まわりなど：`cadet/src/aircraft/archer-model.js` の `modelMeshes(file)`。操縦席の分は `cockpit.js` の `addBand` が受け取る（約束が少し違う。下の「操縦席の部品」）。
+- 機体・737・操縦席の部品など：`cadet/src/aircraft/archer-model.js` の `modelMeshes(file)`。操縦席の分は `cockpit.js` の `addBand` が受け取る（約束が少し違う。下の「操縦席の部品」）。
 - 人物：`cadet/src/npc/actor-model.js` の `actorModel(lod)`。約束が違うので、人物を作るときは `build_actor.py` と `actor-model.js` を読むこと。メッシュのデータ名を `部位.種類.色.分類` として読み、口の morph target も読む。COLOR_0 の rgb は AO で、alpha は使わない。
 
 以下は `modelMeshes` で読む素材（人物以外）の決まり。
@@ -100,11 +100,14 @@ glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み
   - 届く距離 0.9 m（プロペラと登録記号は 0.25 m）、strength 0.85、下限 0.35。
   - 遮る物は、機体全体と地面の板。
   - 737 は 36 方向・4 m。
-- **操縦席の部品（`cockpit.glb`）は、約束が少し違う。** `build_cockpit.py` と `cockpit.js` の `addBand` を読むこと。
-  - ノードの名前は `<部品>.<表面>`（例：`headliner.roof`・`pillars.wall`・`seals.rubber`）。表面は `cockpit.js` の表 `S` の名前で、ざらつき・金属らしさ・細かい模様はその表から取る。表にない名前だと例外になる。色の分類（`PAINT_CLASSES`）は使わない。
-  - COLOR_0 の alpha は、近くの物の陰だけにする（5 cm のレイ、strength 0.6、下限 0.6）。ゲームが、窓から見える空の量の陰（`bakeAO`）を上に掛けるので、お手本の 0.9 m で焼くと二重に暗くなる。
-  - 三角形は、Seminole の操縦席の上限（`trianglesTwin` 4 万）の残りに収める（スクリプトの `MAX_TRIS`）。
-  - glb がないときは、前のプログラムの形に戻る（`cp.band` が null）。部品の名前の一覧は `cockpit.test.mjs` が確かめる。
+- **操縦席の部品（`cockpit.glb`）は、約束が少し違う。** `build_cockpit.py` の先頭と `cockpit.js` の `addBand` を読むこと。
+  - ノードの名前は `<グループ>.<表面>[.<動く部品>][.pa28|.pa44]`（例：`headliner.roof`・`seats.seatSide`・`yokes.grip.yokeL`）。表面は `cockpit.js` の表 `S` の名前で、ざらつき・金属らしさ・細かい模様（革のしぼなど）はその表から取る。表にない名前だと例外になる。色の分類（`PAINT_CLASSES`）は使わない。
+  - 動く部品（`yokeL` など）は、休んでいる姿勢のまま、その場所で作る。`cockpit.js` の `PIV` の点を軸に回る（軸の上に作る。`PIV` にない名前は例外になる）。`pa28`・`pa44` は、その型だけの部品（`pa44` は `twin` のときだけ読む）。
+  - 部品ごとのファイル `cockpit_<名前>.py` は、`GROUPS`・`MAX_TRIS`・`parts(ctx)` と、必要なら `proxies`（コードに残る周りの物。陰のため）・`check`（自分の確かめ）・`PREVIEW` を持つ。決まった数字は `ctx.S`（spec）から取る。
+  - COLOR_0 の alpha は、近くの物の陰だけにする（5 cm のレイ、strength 0.6、下限 0.6）。ゲームが、窓から見える空の量の陰（`bakeAO`）を上に掛けるので、お手本の 0.9 m で焼くと二重に暗くなる。動く部品の陰は、自分の部品だけから焼く（スクリプトがする）。
+  - 三角形は、Seminole の操縦席の上限（`trianglesTwin` 4 万）の残りに収める（ファイルごとの `MAX_TRIS`）。
+  - 模型にないグループは、前のプログラムの形に戻る（`cp.fromCode` に出る）。部品の名前の一覧と、模型がないときの形は、`cockpit.test.mjs` と `cockpit-fallback.test.mjs` が確かめる。
+  - 1 グループだけを作るとき（4 番目の引数 `band,seats` など）は、scratchpad に書き出す。`assets/model/cockpit.glb` に書くと、ほかのグループが消える。試しの glb でゲームのテストを動かすには `COCKPIT_GLB=<glb> node --import ./tools/aircraft/trial-glb.mjs --test test/cockpit.test.mjs`（cadet/ から）。
 - **ノードの名前は、コードとの約束になっている。** コードは名前で部品を探す（例：`body`・`cabin`・`ailL`・`prop`（Seminole は `prop.0`・`prop.1`）・`gearN`・`reg.<登録記号>`。737 は `body` 1 つ）。
   - お手本は、オブジェクト名とメッシュのデータ名を同じにしている。
   - 名前を変えるときは、読む側のコードも同じ変更で直す。
@@ -116,12 +119,12 @@ glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み
    理由は 3 つ。今の読み込み部分は UV を読まない。操縦席のテクスチャの上限（6e6 B）は、残り約 14 KB で満杯に近い。`cadet/assets/tex` の画像は FLIGHT LAB と CADET の両方の HTML に自動で入る（1 枚足すだけで `flight-lab/test/flight.test.mjs` の 12 枚の一覧の検査が落ちる）。
    UV やテクスチャが必要になったら、先に読み込み部分とテストを直す作業を、別の段階として行う。
 2. **容量の割り当て。**
-   - FLIGHT LAB の HTML の空きは 5,370,414 B（10 進で約 5.37 MB。操縦席の天井まわりを入れたあと）。glb は base64 で 4/3 倍になるので、元のファイルで使えるのは約 4.0 MB。
+   - FLIGHT LAB の HTML の空きは 5,056,498 B（10 進で約 5.06 MB。操縦席の天井まわり・座席・グレアシールド・操縦輪を入れたあと）。glb は base64 で 4/3 倍になるので、元のファイルで使えるのは約 3.8 MB。
    - 1 三角形あたりのバイト数は形で違う。なめらかで頂点を共有する形（機体）は約 28 B。角の立った箱（建物・キット）は 45〜70 B で見積もる（頂点 1 つ 32 B、インデックスは 1 三角形 6 B）。
 
    | 使い道 | 元の glb の合計（上限） |
    |---|---|
-   | 操縦席 | 1.2 MB（天井まわりの `cockpit.glb` で 74,892 B 使用） |
+   | 操縦席 | 1.2 MB（`cockpit.glb` で 309,392 B 使用：天井まわり・座席・グレアシールド・操縦輪） |
    | 田舎の建物・防風林のキット | 0.4 MB |
    | 飛行場の小物（T ハンガー・地上機材・灯火の器具） | 0.4 MB |
    | 積雲 | 0.3 MB |
@@ -140,10 +143,10 @@ glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み
 
 | 対象 | 上限 | いま |
 |---|---|---|
-| FLIGHT LAB の HTML | 12 MiB（`flight-lab/build.mjs` の `MAX_BYTES`。ビルドが止める） | 7,212,498 B |
-| CADET の HTML | 15 MiB（`cadet/build.mjs` の `MAX_BYTES`。止めるのは `cadet/test/build.test.mjs` だけ） | 8,715,330 B |
+| FLIGHT LAB の HTML | 12 MiB（`flight-lab/build.mjs` の `MAX_BYTES`。ビルドが止める） | 7,526,414 B |
+| CADET の HTML | 15 MiB（`cadet/build.mjs` の `MAX_BYTES`。止めるのは `cadet/test/build.test.mjs` だけ） | 9,029,285 B |
 | 1 フレーム | 描画 400 回未満・90 万三角形未満（`cadet/test/browser.test.mjs`。CADET でだけ確かめている） | 画質「高」で駐機場 約 53 万三角形（`cadet/PLAN.md`） |
-| 操縦席 | 描画 40 回以下（Seminole 44）・4 万三角形以下（Archer も Seminole も）・テクスチャ 6e6 B 以下（`cadet/test/cockpit.test.mjs`） | Archer 36,918 三角形・24 回、Seminole 38,716 三角形（`cp.trianglesTwin`。残りは約 1,300。描画回数は未計測）、テクスチャ 5,985,621 B（`buildCockpit` をメモリ上で動かして測った）。天井まわりの glb は 2,248 三角形・74,892 B |
+| 操縦席 | 描画 40 回以下（Seminole 44）・4 万三角形以下（Archer も Seminole も）・テクスチャ 6e6 B 以下（`cadet/test/cockpit.test.mjs`） | Archer 34,078 三角形・24 回、Seminole 35,876 三角形（`cp.trianglesTwin`。残りは 4,124。描画回数は未計測）、テクスチャ 5,985,621 B（`buildCockpit` をメモリ上で動かして測った）。`cockpit.glb` は 9,464 三角形・309,392 B（天井まわり 2,248・座席 3,552・グレアシールド 870・操縦輪 2,794） |
 | Archer の外観 | 近距離版 24,000 未満・遠距離版 3,000 未満（登録記号を除く。`cadet/test/exterior.test.mjs`） | 20,940 / 2,468 |
 | Seminole の外観 | 近距離版 27,000 未満・遠距離版 3,300 未満 | 25,946 / 3,101 |
 
@@ -178,7 +181,7 @@ glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み
    - 近くから見る絵（CADET）：
      - `(cd cadet && node test/shots.mjs high 1280 720 9.6 1,2,3,4,6)`：駐機場・滑走路・アカデミー・管制塔・上空。出力は決まった場所 `cadet/test-output/view<番号>-high-9.6.png` で、撮るたびに上書きされるので、別の場所へ写しておく。
      - `(cd cadet && node test/aircraft-shots.mjs high <出力フォルダ>)`：Archer の外観だけ（front,side,rear,nose,wing,tail,row）。Seminole の外観は、FLIGHT LAB の 07・08 で見る。
-     - `(cd cadet && node test/cockpit-shots.mjs high <出力フォルダ> "" outputs/CADET.html pa28 ahead)`：5 番目の引数は `pa28`・`pa44`・`both`、6 番目は `ahead`・`quadrant`・`left`・`right`。クラウドではメモリが増えるので、1 回に 1 視点。変更前の CADET.html を別の場所に写しておけば、4 番目の引数に渡して前の版を撮れる。
+     - `(cd cadet && node test/cockpit-shots.mjs high <出力フォルダ> "" outputs/CADET.html pa28 ahead)`：5 番目の引数は `pa28`・`pa44`・`both`、6 番目は `ahead`・`quadrant`・`left`・`right`・`up`（天井）・`backR`（自分の座席の背と、右の席）。クラウドではメモリが増えるので、1 回に 1 視点。絵を書いたあとでブラウザが落ちることがあるが、絵は残る。ほかに重い処理（ワークフローの担当など）が動いていると、1 枚に 15 分以上かかって時間切れになるので、撮るときはほかを止める。変更前の CADET.html を別の場所に写しておけば、4 番目の引数に渡して前の版を撮れる。
    - ここはソフトウェア描画（SwiftShader）。1 場面に約 1 分かかり、フレームレートには意味がない。
    - 動的解像度（`cadet/src/core/quality.js` の `makeDynRes`）で、描画の解像度が画質「高」なら 0.7 倍まで下がる。どこまで下がるかは撮るたびに違うので、`dpr` も比べる。`cadet/test/shots.mjs` は表示し、FLIGHT LAB ではページの中の `__lab.view3d().dpr` で読める。
    - 撮った絵は自分で開いて見る。不自然な点（浮いている、縮尺が違う、のっぺりしている、ちらつく、すき間がある）を挙げて直してから報告する。

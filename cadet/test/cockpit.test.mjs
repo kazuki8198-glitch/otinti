@@ -18,9 +18,11 @@ import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
-import { buildCockpit, PICK_LAYER } from '../src/aircraft/cockpit.js';
+import { buildCockpit, PICK_LAYER, CABIN } from '../src/aircraft/cockpit.js';
 import { BEZEL, SOFTKEYS } from '../src/aircraft/g1000.js';
 import { installSorajima } from '../src/flight/sorajima.js';
+import { createActor, seatFromBody } from '../src/npc/actor.js';
+import { modelMeshes } from '../src/aircraft/archer-model.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'acmesh.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
@@ -81,8 +83,16 @@ test('cockpit: builds within budget', () => {
   // another type's eye: the same cabin round it
   const tw = buildCockpit(FL, AC('pa44'), { makeCanvas: null });
   assert.deepEqual(tw.eye.toArray(), AC('pa44').eye);
-  // the parts made in Blender (assets/model/cockpit.glb): every node read (none of the Seminole's without twin)
-  assert.deepEqual([...cp.band].sort(), ['header.wall', 'headliner.roof', 'pillars.wall', 'roofTrims.trim', 'seals.rubber', 'visorHw.steel', 'visors.wall']);
+  // the parts made in Blender (assets/model/cockpit.glb): every node read (none of the Seminole's without twin), none of
+  // the groups made in code as well
+  assert.deepEqual(cp.fromCode, []);
+  assert.deepEqual([...cp.band].sort(), [
+    'bench.seat', 'bench.seatSide', 'glareshield.glare', 'glareshield.glareLip', 'glareshield.rubber', 'header.wall', 'headliner.roof', 'pillars.wall',
+    'roofTrims.trim', 'seals.rubber', 'seats.alu', 'seats.black', 'seats.chrome', 'seats.seat', 'seats.seatSide', 'visorHw.steel', 'visors.wall',
+    'yokes.alu.yokeL', 'yokes.alu.yokeR', 'yokes.black.yokeL', 'yokes.black.yokeR', 'yokes.chrome.yokeL', 'yokes.chrome.yokeR', 'yokes.grip.yokeL',
+    'yokes.grip.yokeR', 'yokes.red.yokeL', 'yokes.rubber', 'yokes.yoke.yokeL', 'yokes.yoke.yokeR']);
+  // the yokes from the model are moving parts (their own meshes, turned about their pivots); the rest is in the shell
+  for (const k of ['yokeL', 'yokeR']) assert.ok(cp.parts[k].children.some(m => m.isMesh && m.name === 'cockpit-' + k && m.geometry.attributes.position.count > 3000), k);
   cp.dispose(); bare.dispose(); tw.dispose();
 });
 
@@ -122,9 +132,12 @@ test('cockpit: the view from the left seat', () => {
   }
   // over the nose: the glareshield's edge 12–15° under the eye (scanned down the pilot's line of sight), the cowling
   // over it, the windshield in front of it all
-  let edge = null;
-  for (let d = 4; d <= 25 && edge === null; d += 0.1) { const h = firstHit(cp, ahead(d)); if (h && h.object.name !== 'cockpit-cowl') edge = d; }
+  let edge = null, edgeHit = null;
+  for (let d = 4; d <= 25 && edge === null; d += 0.1) { const h = firstHit(cp, ahead(d)); if (h && h.object.name !== 'cockpit-cowl') { edge = d; edgeHit = h; } }
   assert.ok(edge >= 12 && edge <= 15, `the glareshield's edge ${edge && edge.toFixed(1)}° below the eye`);
+  // (the glareshield's lip, over the panel's top and aft of the hood: not the panel's frame or anything under it)
+  const ep = edgeHit.point;
+  assert.ok(ep.y > CABIN.PTOP && ep.z > CABIN.GLARE.lip[1][0] - 0.03 && ep.z < CABIN.GLARE.lip[2][0] + 0.01, `the edge is the lip (${ep.toArray().map(x => x.toFixed(3))})`);
   const hc = firstHit(cp, ahead(edge - 1));
   assert.ok(hc && hc.object.name === 'cockpit-cowl', `the cowling shows over the glareshield (${hc && hc.object.name})`);
   const hs = firstHit(cp, ahead(edge + 0.5));
@@ -173,6 +186,81 @@ test('cockpit: the view from the left seat', () => {
   assert.ok(Math.abs(st.eye[0] + cp.eye.x) < 0.02 && Math.abs(st.eye[1] - cp.eye.y) < 0.03, `eye ${st.eye}`);
   assert.ok(st.ankleL[0] > 0.1 && st.ankleR[0] > st.ankleL[0] && st.ankleL[2] < st.hip[2] - 0.5 && st.ankleL[1] < st.hip[1], 'feet forward, on the right pedals');
   assert.equal(st.yaw, Math.PI);
+  cp.dispose();
+});
+
+// the instructor in the right seat (fly-mode.js: seatFromBody(instructorSeat)) and the right yoke moving in front of his
+// knees: no triangle of the yoke crosses one of his, over the pitch the lessons fly (elevator + trim −0.1 … 0.3) and the
+// whole roll (a crossing, not a vertex inside: the horn is thinner than his legs' triangles)
+test('cockpit: the right yoke clears the instructor\'s knees', () => {
+  const cp = build(), L = lesson(), st = cp.instructorSeat, seat = seatFromBody(st, st.yaw);
+  const a = createActor({ seed: 1 }), scene = new THREE.Group();
+  scene.add(cp.root, a.root); a.root.position.set(...seat.position); a.root.rotation.set(0, seat.yaw, 0);
+  assert.equal(a.setSeated(seat.seat), true);
+  for (let i = 0; i < 60; i++) a.update(1 / 30, { lookAt: cp.eye });
+  scene.updateMatrixWorld(true);
+  const tris = (meshes) => {
+    const out = [];
+    for (const m of meshes) {
+      const p = m.geometry.attributes.position, idx = m.geometry.index, n = idx ? idx.count : p.count;
+      for (let i = 0; i < n; i += 3) {
+        const v = [0, 1, 2].map(k => new THREE.Vector3().fromBufferAttribute(p, idx ? idx.getX(i + k) : i + k).applyMatrix4(m.matrixWorld));
+        out.push({ v, box: new THREE.Box3().setFromPoints(v) });
+      }
+    }
+    return out;
+  };
+  const crosses = (t1, t2) => {                         // an edge of either through the other (Möller–Trumbore)
+    const e1 = new THREE.Vector3(), e2 = new THREE.Vector3(), d = new THREE.Vector3(), pv = new THREE.Vector3(), tv = new THREE.Vector3(), qv = new THREE.Vector3();
+    const seg = (p, q, [a, b, c]) => {
+      d.subVectors(q, p); e1.subVectors(b, a); e2.subVectors(c, a); pv.crossVectors(d, e2);
+      const det = e1.dot(pv); if (Math.abs(det) < 1e-12) return false;
+      tv.subVectors(p, a); const u = tv.dot(pv) / det; if (u < 0 || u > 1) return false;
+      qv.crossVectors(tv, e1); const w = d.dot(qv) / det; if (w < 0 || u + w > 1) return false;
+      const s = e2.dot(qv) / det; return s >= 0 && s <= 1;
+    };
+    for (const [x, y] of [[t1, t2], [t2, t1]]) for (let k = 0; k < 3; k++) if (seg(x.v[k], x.v[(k + 1) % 3], y.v)) return true;
+    return false;
+  };
+  const him = tris(a.meshes.filter(m => m.isMesh && m.visible)), yoke = cp.parts.yokeR.children.filter(m => m.isMesh), bad = [];
+  for (const pc of [-0.1, 0, 0.1, 0.2, 0.3]) for (const ail of [-1, -0.75, -0.5, 0, 0.5, 0.75, 1]) {
+    Object.assign(L.s, { elev: pc, trim: 0, ail }); cp.update(1 / 60, { s: L.s, L }); scene.updateMatrixWorld(true);
+    const yt = tris(yoke), ybox = new THREE.Box3(); for (const t of yt) ybox.union(t.box);
+    const near = him.filter(t => t.box.intersectsBox(ybox));
+    if (near.some(t1 => yt.some(t2 => t1.box.intersectsBox(t2.box) && crosses(t1, t2)))) bad.push(`elev+trim ${pc}, aileron ${ail}`);
+  }
+  assert.deepEqual(bad, [], 'the right yoke through the instructor');
+  cp.dispose();
+});
+
+// and in the right seat made in Blender: his thighs sink a little into the cushion (it gives), nothing else of him goes
+// into the seat (his arms hang beside the back's eased bolster, his head in front of the headrest) — measured against the
+// model's seat parts, closed solids (a point inside: an odd number of crossings along a ray)
+test('cockpit: the instructor sits in the right seat, not through it', () => {
+  const mm = modelMeshes('cockpit'), cp = build(), st = cp.instructorSeat, seat = seatFromBody(st, st.yaw);
+  const geo = new THREE.BufferGeometry(), seatParts = ['seats.seatSide', 'seats.seat'].map(k => mm.get(k));
+  const pos = new Float32Array(seatParts.reduce((n, q) => n + q.pos.length, 0)); let o = 0;
+  for (const q of seatParts) { pos.set(q.pos, o); o += q.pos.length; }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const solid = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })); solid.updateMatrixWorld(true);
+  const rc = new THREE.Raycaster(), up = new THREE.Vector3(0.3, 1, 0.2).normalize();
+  const depth = p => { let d = Infinity; for (const v of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) { rc.set(p, new THREE.Vector3(...v)); const h = rc.intersectObject(solid)[0]; if (h) d = Math.min(d, h.distance); } return d; };
+  const a = createActor({ seed: 1 }); a.root.position.set(...seat.position); a.root.rotation.set(0, seat.yaw, 0);
+  assert.equal(a.setSeated(seat.seat), true);
+  for (let i = 0; i < 60; i++) a.update(1 / 30, { lookAt: cp.eye, talking: i > 30 });
+  a.root.updateMatrixWorld(true);
+  const deep = {}, v = new THREE.Vector3();
+  for (const m of a.meshes) {
+    if (!m.isMesh || !m.visible) continue;
+    const p = m.geometry.attributes.position;
+    for (let k = 0; k < p.count; k += 2) {
+      v.fromBufferAttribute(p, k).applyMatrix4(m.matrixWorld);
+      if (v.x < 0.05 || v.x > 0.53 || v.z > 0) continue;
+      rc.set(v, up); if (rc.intersectObject(solid).length % 2 === 0) continue;
+      deep[m.name] = Math.max(deep[m.name] || 0, depth(v));
+    }
+  }
+  for (const [n, d] of Object.entries(deep)) assert.ok(d < (/thigh/.test(n) ? 0.015 : 0.005), `${n} ${(d * 100).toFixed(1)} cm into the seat`);
   cp.dispose();
 });
 

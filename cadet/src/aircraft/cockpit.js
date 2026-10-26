@@ -37,7 +37,7 @@ const bandX = y => HW + KX * (y - SILL);
 const lowX = y => { const v = clamp((y - FLOOR) / (SILL - FLOOR), 0, 1); return HW - 0.10 * Math.pow(1 - Math.min(1, v / 0.45), 2); };
 const roofY = x => WTOP + (ROOF - WTOP) * Math.sqrt(Math.max(0, 1 - (x / HWT) ** 2));
 const wsZ = (x, y) => WS.z0 + (WS.z1 - WS.z0) * (y - WS.y0) / (WS.y1 - WS.y0) + WS.bow * (x / 0.5) ** 2;
-const PFD = [-0.30, 0.34], MFD = [0.051, 0.34], AUD = [-0.1245, 0.34], STBY_X = 0.255, STBY_Y = [0.410, 0.327, 0.244];
+const PFD = [-0.30, 0.34], MFD = [0.051, 0.34], AUD = [-0.1245, 0.34], STBY_X = 0.245, STBY_Y = [0.410, 0.327, 0.244];   // (the standby stack clear of the right yoke's shaft)
 const SEAT_X = 0.29;
 const YOKE = { x: 0.30, y: 0.218, z: -0.855, travel: 0.07, roll: 42 * DEG };
 const PEDAL_X = [-0.39, -0.21, 0.21, 0.39], PEDAL = { y: -0.27, z: -1.21, travel: 0.045 };
@@ -45,7 +45,8 @@ const LEVER = { y: -0.045, z: -1.24, len: 0.22, idle: -11 * DEG, full: 27 * DEG 
 const FLAP = { y: -0.268, z: -0.40, det: [0, 11 * DEG, 22 * DEG, 33 * DEG] };
 const TRIMW = { y: -0.30, z: -0.64, r: 0.072, turns: 1.6 };
 const SEAT = { z: -0.58, w: 0.44 };               // the front seats (at ±SEAT_X): their cushions' centre z and width
-const INSTRUCTOR = { hip: [SEAT_X, -0.03, -0.38], seatY: -0.15 };   // where the right seat holds the instructor (see instructorSeat)
+const INSTRUCTOR = { hip: [SEAT_X, -0.03, -0.38], seatY: -0.15 };    // where the right seat holds the instructor (see instructorSeat): his knees
+// clear of the right yoke's horns as it rolls; the seats made in Blender are shaped round him there (cockpit_seats.py BACK_AFT)
 // the glareshield's lip in profile ([z, y], from under it to the top of its roll; then the hood falls to the windshield)
 const GLARE = { x: 0.553, lip: [[PZ + 0.004, 0.451], [-1.045, 0.451], [-1.031, 0.457], [-1.027, 0.4665], [-1.032, 0.4765], [-1.05, 0.4795]] };
 // the yokes' hit boxes ([w, h, d] and an offset from the yoke's pivot; the horns' at ±x): a model of a yoke stays in them
@@ -136,9 +137,9 @@ const WINDOWS = [
 ];
 const POSTS = [[y => wsZ(bandX(y) + 0.004, y) - 0.03, zf1], [() => -0.238, () => -0.112], [zr2, () => 0.778], [zr3, () => AFT]];
 const AO_OCC = [
-  [-0.56, 0.56, PBOT - 0.01, PTOP + 0.01, FIRE, PZ], [-0.56, 0.56, 0.44, 0.49, -1.31, -1.03], [-0.08, 0.10, -0.11, 0.07, FIRE, -1.065],
-  [-0.51, -0.07, FLOOR, -0.15, -0.84, -0.31], [-0.51, -0.07, -0.15, 0.48, -0.33, -0.14], [-0.43, -0.15, 0.53, 0.69, -0.17, -0.09],
-  [0.07, 0.51, FLOOR, -0.15, -0.84, -0.31], [0.07, 0.51, -0.15, 0.48, -0.33, -0.14], [0.15, 0.43, 0.53, 0.69, -0.17, -0.09],
+  [-0.56, 0.56, PBOT - 0.01, PTOP + 0.01, FIRE, PZ], [-0.56, 0.56, 0.44, 0.49, -1.31, -1.02], [-0.08, 0.10, -0.11, 0.07, FIRE, -1.065],
+  [-0.51, -0.07, FLOOR, -0.15, -0.84, -0.28], [-0.51, -0.07, -0.15, 0.48, -0.30, -0.06], [-0.43, -0.15, 0.53, 0.69, -0.14, -0.06],
+  [0.07, 0.51, FLOOR, -0.15, -0.84, -0.28], [0.07, 0.51, -0.15, 0.48, -0.30, -0.06], [0.15, 0.43, 0.53, 0.69, -0.14, -0.06],
   [-0.52, 0.52, FLOOR, -0.13, 0.22, 0.78], [-0.52, 0.52, -0.13, 0.50, 0.74, 0.95], [-0.07, 0.07, FLOOR, -0.28, -0.76, 0.10],
   [-0.56, 0.56, FLOOR, -0.22, 0.95, AFT],
 ];
@@ -151,6 +152,7 @@ const CASE = { body: [0.064, 0.056, 0.040, 0, 0, -0.015], hanger: [0.012, 0.03, 
 export const CABIN = {
   EYE0, FLOOR, FIRE, AFT, PZ, PTOP, PBOT, SILL, WTOP, HW, HWT, ROOF, WS, KX, COMPASS, CONSOLE, CASE, SURFACES: S, bandX, roofY, wsZ, lowX,
   SEAT_X, SEAT, INSTRUCTOR, AO_OCC, FLAP, TRIMW, LEVER, PEDAL, PEDAL_X, YOKE, YOKE_HIT, GLARE,
+  PANEL: { PFD, MFD, AUD, STBY_X, STBY_Y, BEZEL: { w: BEZEL.w, h: BEZEL.h, depth: BEZEL.depth } },
 };
 const AO_N = 40, AO_DIRS = new Float32Array(AO_N * 3);
 for (let i = 0; i < AO_N; i++) { const u = (i + 0.5) / AO_N, r = Math.sqrt(u), ph = i * 2.399963; AO_DIRS[i * 3] = r * Math.cos(ph); AO_DIRS[i * 3 + 1] = r * Math.sin(ph); AO_DIRS[i * 3 + 2] = Math.sqrt(1 - u); }
@@ -509,7 +511,7 @@ function withCol(g, hex) {
 }
 
 // ================================================================ buildCockpit
-// buildCockpit(FL, A, opts) → { root, eye, instructorSeat: { hip, ankleL, ankleR, eye, yaw, seatY }, screens: { pfd, mfd },
+// buildCockpit(FL, A, opts) → { root, eye, instructorSeat: { hip, ankleL, ankleR, eye, yaw, seatY }, screens: { pfd, mfd }, band, fromCode,
 //   controls, switches, parts, pick(raycaster), aimPoint(control, out), update(dt, o), setVisible(v), setAnisotropy(n),
 //   markDirty(), triangles, meshes, textureBytes, stats, dispose() }. root goes under the flown aircraft's root (the body
 //   frame); eye and instructorSeat are in that frame. update(dt, { s, L, av = L.av, parkBrake, night 0..1 }) every frame.
@@ -582,7 +584,7 @@ export function buildCockpit(FL, A, opts = {}) {
   const band = addBand(B, twinA), fromModel = group => !!band && band.some(n => n.split('.')[0] === group);
   // floor (carpet), firewall, the plate under the panel
   add(sheet((u, v, o) => o.set(-0.462 + 0.924 * u, FLOOR, FIRE + (AFT - FIRE) * v), 6, 18, true), S.carpet);
-  add(sheet((u, v, o) => o.set(-0.53 + 1.06 * u, FLOOR + (WS.y0 - 0.03 - FLOOR) * v, FIRE), 8, 8, false), S.carpet);   // (its top hidden under the glareshield)
+  add(sheet((u, v, o) => o.set(-0.53 + 1.06 * u, FLOOR + (WS.y0 - 0.06 - FLOOR) * v, FIRE), 8, 8, false), S.carpet);   // (its top under the cowling's sides)
   add(sheet((u, v, o) => o.set(-0.55 + 1.1 * u, PBOT - 0.004, PZ - 0.02 + (FIRE - PZ + 0.02) * v), 6, 4, true), { ...S.black, ao: 0.6 });
   // the lower walls (to the window sill): a soft profile from the floor up
   for (const sd of [-1, 1]) {
@@ -608,8 +610,8 @@ export function buildCockpit(FL, A, opts = {}) {
       add(tube(pil, 0.028, 16, 8), S.trim);
       add(at(rbox(0.04, 0.03, AFT - zp(WTOP) + 0.02, 0.01, 1), [sd * (HWT - 0.005), WTOP + 0.002, (AFT + zp(WTOP)) / 2]), S.trim);
     }
-    // the B-pillar trim between the front and rear windows
-    add(at(rbox(0.024, WTOP - SILL + 0.02, 0.15, 0.010, 2), [sd * (HW - 0.034), (WTOP + SILL) / 2, -0.175], [0, 0, -sd * Math.atan(-KX)]), S.trim);
+    // the B-pillar trim between the front and rear windows (leaning in with the window band: 1 cm proud of it all the way up)
+    add(at(rbox(0.024, WTOP - SILL + 0.02, 0.15, 0.010, 2), [sd * (HW - 0.034), (WTOP + SILL) / 2, -0.175], [0, 0, sd * Math.atan(-KX)]), S.trim);
   }
   // (without the model) the headliner: an arch from window top to window top, from the windshield's top edge to the aft
   // bulkhead; the windshield's top bow
@@ -629,7 +631,7 @@ export function buildCockpit(FL, A, opts = {}) {
   add(at(rbox(1.04, 0.18, AFT - 0.95, 0.02), [0, FLOOR + 0.09, (AFT + 0.95) / 2]), S.carpet);
 
   // ============================================================ the panel, the glareshield
-  add(at(rbox(1.106, PTOP - PBOT, 0.035, 0.008, 2), [0, (PTOP + PBOT) / 2, PZ - 0.018]), S.panel);
+  add(at(rbox(1.106, PTOP - PBOT - 0.008, 0.035, 0.008, 2), [0, (PTOP + PBOT - 0.008) / 2, PZ - 0.018]), S.panel);   // (its top under the sight line over the glareshield's crest)
   add(sheet((u, v, o) => o.set(-0.545 + 1.09 * u, PBOT + 0.008 + (PTOP - PBOT - 0.016) * v, PZ + 0.0002), 22, 9), S.panel);
   // (without the model) the glareshield: a hood from under its lip, over the rounded lip, forward to the windshield's base
   if (!fromModel('glareshield')) add(sheet((u, v, o) => {
@@ -1440,6 +1442,7 @@ export function buildCockpit(FL, A, opts = {}) {
   const bytes = glassPanel.bytes + (atlasCv ? Math.round(atlas.W * atlas.H * 4 / 3) : 0);      // the atlas: one byte a texel, mipmapped
   return {
     root, eye: new THREE.Vector3(A.eye[0], A.eye[1], A.eye[2]), instructorSeat, screens, switches, parts, pick, aimPoint, update, setType, band,
+    fromCode: ['headliner', 'seats', 'bench', 'glareshield', 'yokes'].filter(g => !fromModel(g)),     // (the groups the model lacked: made here)
     get controls() { return byType[type]; }, get type() { return type; }, allControls: controls,
     setVisible(v) { visible = !!v; root.visible = visible; if (visible) { avSeen.powered = null; t.pfd = RATE.pfd; t.mfd = RATE.mfd; t.stby = RATE.stby; } },
     get visible() { return visible; },

@@ -168,7 +168,7 @@ glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み
      (cd flight-lab && node tools/shots.mjs <出力フォルダ> --pref render=three --pref quality=high [--only <名前,…>])
      ```
 
-     `--only` に使える名前は、`01-rwy-cockpit`、`02-rwy-chase`、`03-pattern-cockpit`、`04-final-cockpit`、`05-area-chase`、`06-area-cockpit`、`07-final-pa44-cockpit`、`08-area-pa44-chase`。
+     `--only` に使える名前は、`01-rwy-cockpit`、`02-rwy-chase`、`03-pattern-cockpit`、`04-final-cockpit`、`05-area-chase`、`06-area-cockpit`、`07-final-pa44-cockpit`、`08-area-pa44-chase`。後方視点（02・05・08）では、翼端のストロボが光った瞬間が写ることがある（時計で点滅するため。違いがあっても模型や光の変更のせいとは限らない）。
    - 近くから見る絵（CADET）：
      - `(cd cadet && node test/shots.mjs high 1280 720 9.6 1,2,3,4,6)`：駐機場・滑走路・アカデミー・管制塔・上空。出力は決まった場所 `cadet/test-output/view<番号>-high-9.6.png` で、撮るたびに上書きされるので、別の場所へ写しておく。
      - `(cd cadet && node test/aircraft-shots.mjs high <出力フォルダ>)`：Archer の外観だけ（front,side,rear,nose,wing,tail,row）。Seminole の外観は、FLIGHT LAB の 07・08 で見る。
@@ -186,13 +186,15 @@ glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み
    - README と PLAN の該当する節を直す。
    - `outputs/*.html` を作り直してコミットする。
 
-### 6. 光の状態に注意
+### 6. 光の状態（STEP 1.5 で直したことと、残っていること）
 
-今の描画の設定は、どんな模型も平板に見せる。原因はどれもコード側にあり、Blender では直らない。
+2026-10-26 に、描画の設定（`cadet/src/render/post.js`・`sky.js`・`indoor.js`）を次のように直した。詳しくは `cadet/PLAN.md` の「M8 のあとで直したこと：光と大気」。
 
-- **ブルーム：** しきい値 8.0（`cadet/src/render/post.js` 117 行）。地平線の空の HDR 値は約 2.5〜11 で、太陽の方位側だけがしきい値を超えるため、後方視点の画面に縦の継ぎ目が出る。
-- **霞：** 昼の霞の色 uHaze（`post.js` 143 行の setHaze。約 (0.52, 0.62, 0.78)）が、空の地平線よりずっと暗い。
-- **環境光：** 環境光の元の envScene が空だけで、地面の照り返しがない（`cadet/src/render/sky.js` 69〜71 行、108 行）。three の Sky は下半分を地平線の色で埋めるので、下向きの面が明るすぎる。
-- **映り込み：** `envMap` を指定していないので、three.js が `envMapIntensity` を `scene.environmentIntensity`（0.5。`sky.js` 112 行）で上書きしている（`WebGLRenderer.js` 2736〜2740 行）。材質ごとの `envMapIntensity`（`exterior.js` の 1.1、`materials.js` の 1.4、`cockpit.js` の 1.1 など）は、今はどれも効いていない。いじっても見た目は変わらない。
+- **霞：** 色は空そのもの（`sky.horizon`：空だけを描いた小さなキューブ）から、視線の向きのまま取る。近くは空の色の 4 分の 1（`uHazeNear`）、遠くほど空の色に近づき、描画範囲の端では霞が空そのものになる。霧と灰色の雲の下では、前の固定の色を使う。
+- **ブルーム：** 見える空の散乱の光（太陽の円盤は除く）を、空のシェーダーの中で明るさ 7.5（`SKY_CAP`）に抑え、しきい値 8 をまたがないようにした。霞も同じ順で抑えてあるので、空とつながる。
+- **環境光：** 下半分を、日の当たる地面の明るさにした（反射率 `GROUND_ALBEDO`、太陽の分と空の分）。室内で下を向いた面には、床の照り返しを足す。
 
-この光を直す前に新しい模型の良し悪しを判断するときは、この影響を割り引いて見る。
+残っていること：
+
+- **映り込み：** `envMap` を指定していないので、three.js が `envMapIntensity` を `scene.environmentIntensity`（0.5。`sky.js` の `ENV_INTENSITY`）で上書きしている（`WebGLRenderer.js` 2736〜2740 行）。材質ごとの `envMapIntensity`（`exterior.js` の 1.1、`materials.js` の 1.4、`cockpit.js` の 1.1 など）は、今もどれも効いていない。いじっても見た目は変わらない。
+- 霞・環境光・空の明るさの関係を変えると、どの場面の見え方も変わる。変えたら、FLIGHT LAB の 8 場面と、CADET の昼・朝（7.7）・夕方（18.6）・夜（21）・室内（視点 8・9）を、変更前と並べて見る。

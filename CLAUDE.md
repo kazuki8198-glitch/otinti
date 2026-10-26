@@ -31,7 +31,7 @@ Bash の作業フォルダは次の呼び出しに持ち越されるので、コ
 - テスト・ビルド・撮影は `outputs/*.html` を作り直す。変わったのがビルド情報の文字列 `build YYYY-MM-DD · <git の短い rev>` だけのときは、コミットしないで `git checkout -- flight-lab/outputs/FLIGHT-LAB.html cadet/outputs/CADET.html` で戻す。
   - FLIGHT LAB では `FL.BUILD_INFO` の行がこれにあたり、`git diff --numstat` で `1 1` と出る。CADET では `__BUILD_INFO__` を埋め込んだ行（`build …` の文字列）。
   - この文字列は、日が変わったときだけでなく、コミットのたびにも変わる。
-  - 2026-10-26 の時点で、コミット済みの `cadet/outputs/CADET.html` はソースより古い。作り直すと、ビルド情報のほかに FLIGHT LAB の教材の文（`flight-lab/src/` の課目の説明など）の行も変わる（`git diff --numstat` で `4 4`）。素材の作業でこれをコミットするときは、作り直しだけの別のコミットにする。
+  - `cadet/outputs/CADET.html` には FLIGHT LAB の教材の文（`flight-lab/src/` の課目の説明など）も入る。FLIGHT LAB の文を変えたら、CADET.html も作り直す（2026-10-26 に作り直して、ソースと合わせた）。
 - `npm install` が `package-lock.json` を書き換えたときの差分も、コミットしない。
 
 ## Blender で 3D の素材を作るときの決まり

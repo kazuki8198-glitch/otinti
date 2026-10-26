@@ -1569,6 +1569,41 @@
       s += T(392, 350, '模式図（LAB VOR は架空）・NOT FOR NAVIGATION', { c: C.mut, a: 'end', fs: 12, halo: 1 });
       return svg(400, 430, s, '図：VOR のラジアルと TO / FROM（上から見た模式図・磁北が上）。コース（CRS）を 040 にしたとき、局の手前の側では TO、局を過ぎた側では FROM になります。機首の向きでは変わりません');
     },
+    // ---------------------------------------------------------------- 第 20 章 navd（目的地変更）
+    diversionGeometry() {
+      // lesson n2's diversion, from above (north up): the planned route LAB RWY → LAB-A → LAB-B, weather beyond LAB-A, and the new leg
+      // LAB-A → LAB-F (avionics.js WAYPOINTS, magnetic = true + MAGVAR_W) worked as PHAK chapter 16 does it: turn first, then estimate.
+      // The estimate uses the lesson's wind (school.js: runway true heading + 270 = 264° true / 12 kt), 105 KIAS at 3,000 ft (TAS from
+      // the density) and the model's 10.8 gal/h, worked in true degrees (winds aloft are true) and turned magnetic at the end
+      const PH = FL.physics, AV = FL.avionics, V = PH.MAGVAR_W, g = id => AV.WAYPOINTS.find(w => w.id === id), k = 0.0155;
+      const Q = (n, e) => [12 + (e + 42000) * k, 330 - (n + 4000) * k], ws = ['LABRW', 'LABEA', 'LABEB'].map(id => Q(g(id).n, g(id).e));
+      const WA = g('LABEA'), WF = g('LABEF'), dn = WF.n - WA.n, de = WF.e - WA.e, nm = Math.hypot(dn, de) / 1852, tc = ((Math.atan2(de, dn) / DEG) % 360 + 360) % 360;
+      const tas = 105 / Math.sqrt(PH.atmos(3000 / PH.FT).sigma), wd = (PH.LAB_RWY.trueHdg + 270) % 360, wk = 12, wa = (wd - tc) * DEG, wca = Math.asin(wk * Math.sin(wa) / tas) / DEG, gs = tas * Math.cos(wca * DEG) - wk * Math.cos(wa);
+      const d3 = x => String(Math.round(((x % 360) + 360) % 360)).padStart(3, '0');
+      const [ax, ay] = Q(WA.n, WA.e), [fx, fy] = Q(WF.n, WF.e), vor = AV.NAVAIDS.find(n => n.id === 'LBV'), [vx, vy] = Q(vor.n, vor.e);
+      let s = `<rect x="0" y="0" width="400" height="344" fill="#13202f"/>`;
+      s += P(ws, C.mut, 3) + ws.map(([x, y]) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${C.mut}"/>`).join('');
+      // weather beyond LAB-A on the leg to LAB-B
+      const [cx2, cy2] = [ws[1][0] + (ws[2][0] - ws[1][0]) * 0.55, ws[1][1] + (ws[2][1] - ws[1][1]) * 0.55];
+      s += `<ellipse cx="${cx2.toFixed(1)}" cy="${cy2.toFixed(1)}" rx="52" ry="34" fill="${C.rd}" fill-opacity="0.18" stroke="${C.rd}" stroke-dasharray="5 4"/>` + T(cx2, cy2 + 5, '雷雨', { c: C.rd, b: 1, fs: 13 });
+      // the VOR compass rose (to measure the course roughly)
+      s += `<circle cx="${vx.toFixed(1)}" cy="${vy.toFixed(1)}" r="20" fill="none" stroke="${C.bl}" stroke-width="1.2"/>`;
+      for (let a = 0; a < 360; a += 30) { const t = (a - V) * DEG; s += L((vx + 15 * Math.sin(t)).toFixed(1), (vy - 15 * Math.cos(t)).toFixed(1), (vx + 20 * Math.sin(t)).toFixed(1), (vy - 20 * Math.cos(t)).toFixed(1), C.bl, 1.2); }
+      s += T(vx + 24, vy + 4, 'LAB VOR', { c: C.bl, fs: 12, a: 'start', halo: 1 });
+      // the diversion
+      s += `<path d="M${ax.toFixed(1)} ${ay.toFixed(1)} L${fx.toFixed(1)} ${fy.toFixed(1)}" stroke="${C.vi}" stroke-width="3" stroke-dasharray="8 5" fill="none"/>` + A(fx + (ax - fx) * 0.12, fy + (ay - fy) * 0.12, fx, fy + 4, C.vi, 3);
+      s += `<circle cx="${fx.toFixed(1)}" cy="${fy.toFixed(1)}" r="6" fill="none" stroke="${C.vi}" stroke-width="2.5"/>`;
+      const lab = (x, y, t, c, a = 'start') => T(x, y, t, { c, b: 1, a, fs: 12, halo: 1 });
+      s += lab(ws[0][0] + 10, ws[0][1] + 5, 'LAB RWY', C.mut) + lab(ax - 10, ay - 8, 'LAB-A', C.mut, 'end') + lab(ws[2][0] - 6, ws[2][1] - 10, 'LAB-B', C.mut, 'end') + lab(fx + 12, fy + 4, 'LAB-F（変更先）', C.vi);
+      const tag = (x, y, n) => `<circle cx="${x}" cy="${y}" r="10" fill="${C.am}" stroke="${C.bg}" stroke-width="2"/>` + T(x, y + 4.5, n, { c: C.bg, b: 1, fs: 12 });
+      s += tag(ax + 18, ay + 14, '①') + tag((ax + fx) / 2 + 18, (ay + fy) / 2, '②') + tag(fx - 22, fy - 18, '③');
+      s += A(30, 44, 30 + 40 * Math.sin((wd + 180) * DEG), 44 - 40 * Math.cos((wd + 180) * DEG), C.am, 3) + T(30, 30, `風 ${d3(wd)}°（真）/${wk} kt`, { c: C.am, b: 1, a: 'start', fs: 12 }) + A(380, 330, 380, 300, C.mut, 2) + T(380, 344 - 2, '北', { c: C.mut, fs: 12 });
+      s += T(8, 338, '模式図（訓練点は架空）・NOT FOR NAVIGATION', { c: C.mut, a: 'start', fs: 12, halo: 1 });
+      const rows = [['①', ['まず向きを変える：おおよその向き（南）へすぐ旋回']], ['②', [`見積もる：真航路 ${d3(tc)}°・${nm.toFixed(1)} NM。右からの風で真針路 ${d3(tc + wca)}°`, `→ 磁針路 約 ${d3(tc + wca + V)}°・対地 約 ${Math.round(gs)} kt・約 ${(nm / gs * 60).toFixed(1)} 分・燃料 約 ${(nm / gs * 10.8).toFixed(1)} gal`]], ['③', ['確かめる：最初の目印・到着の時刻で直す。管制に伝える']]];
+      let y = 368;
+      for (const [n, lines] of rows) { s += tag(14, y - 4, n) + TL(30, y, lines, { c: C.ink, a: 'start', fs: 12, lh: 16 }); y += lines.length * 16 + 6; }
+      return svg(400, y + 2, s, '図：目的地変更（課目 n2 の LAB-A → LAB-F に、例として LAB-B への予定の航路と雷雨を描き足した、上から見た模式図）。まず向きを変え、コースに乗ってから時刻を記録し、針路・対地速度・到着の時刻・燃料を計算します（PHAK 第 16 章）。数字は課目の風・105 kt・この教材のフライトモデルの燃料消費で計算した値');
+    },
   };
 
   // ---------------------------------------------------------------- calculators inside the text

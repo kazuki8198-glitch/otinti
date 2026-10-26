@@ -1876,6 +1876,21 @@
       s += A(f.X(92), f.Y(70), f.X(80), f.Y(70), C.mut, 2) + T(f.X(86), f.Y(70) - 8, '速度が下がる', { c: C.mut, fs: 12 });
       return svg(400, 300, s, '図：速度が下がるほど、方向を保つのに必要なラダーが増え、いっぱいになる速度が Vmc です（教材のフライトモデルの Seminole：左エンジン停止・右は全開・バンク 5°）。どちらの高さでも、ラダーがいっぱいになる前に失速警報（約 62 kt）が鳴ります。高い所ほど出力が減り、必要なラダーは少なくなります');
     },
+    // ---------------------------------------------------------------- 第 26 章 jet（ジェット機と自動化への準備）
+    thrustResponse() {
+      // how fast thrust follows the throttle. The course's Archer (physics.js: the propeller thrust is computed from the throttle with
+      // no delay; only the rpm needle lags, at 1.8 /s) against a jet from idle, which AFH 3C chapter 16 says "could take up to 10
+      // seconds" to reach full power. The jet curve is a schematic with that end point, not data of any type
+      const f = frame(400, 290, 0, 12, 0, 100, [0, 2, 4, 6, 8, 10, 12], [0, 25, 50, 75, 100], '時間（秒）：0 秒でスロットルを全開に', '推力（最大に対する %）', { l: 52, r: 14, t: 20, b: 40 });
+      const jet = t => t <= 0 ? 12 : 12 + 88 * (t >= 10 ? 1 : (1 - Math.cos(Math.PI * Math.min(1, t / 10) ** 1.25)) / 2);
+      const pts = []; for (let t = 0; t <= 12.001; t += 0.25) pts.push([f.X(t), f.Y(jet(t))]);
+      let s = f.s + `<path d="M${f.X(0)} ${f.Y(100)} ${pts.map(([x, y]) => `L${x.toFixed(1)} ${y.toFixed(1)}`).join(' ')} L${f.X(12)} ${f.Y(100)} Z" fill="${C.am}" fill-opacity="0.12"/>`;
+      s += P([[f.X(0), f.Y(12)], [f.X(0), f.Y(100)], [f.X(12), f.Y(100)]], C.cy, 3) + P(pts, C.am, 3);
+      s += T(f.X(1.2), f.Y(100) - 8, 'プロペラ機（教材のモデルの Archer）：すぐ増える', { c: C.cy, b: 1, fs: 12, a: 'start' });
+      s += TL(f.X(7.4), f.Y(46), ['ジェット機（アイドルから）：', '全開まで、長いと 10 秒ほど'], { c: C.am, b: 1, fs: 12, a: 'start', lh: 15 });
+      s += TL(f.X(1.2), f.Y(76), ['この差の分だけ、', '早めに出力を使う'], { c: C.ink, fs: 12, a: 'start', lh: 15 });
+      return svg(400, 290, s, '図：スロットルを全開にしてから推力が増えるまで（模式図）。ジェットエンジンはアイドルからの加速が遅く、全開まで、長いと 10 秒ほどかかります（AFH 第 16 章）。だから、出力は早めに・先回りして使います');
+    },
   };
 
   // ---------------------------------------------------------------- calculators inside the text

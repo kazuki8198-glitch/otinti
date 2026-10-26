@@ -52,6 +52,15 @@ export function installIndoorShading(L, A, hangars = HANGARS) {
         // the scene's ambient light is the light the lit rooms bounce off their floors and walls (CADET sets it only
         // when the room lights are on): none outdoors, more the deeper inside (cdIn already scaled the ambient by cdIn)
         irradiance += ambientLightColor * (1.0 - 2.0 * cdIn);
+        // the lower half of the image-based light is the sunlit ground outside (sky.js); a ceiling facing down inside
+        // sees the room's floor instead, lit by the daylight that comes in: the light from above at this place (scaled
+        // like the rest) times a floor's albedo
+        #if defined( USE_ENVMAP ) && defined( ENVMAP_TYPE_CUBE_UV ) && ( defined( STANDARD ) || defined( LAMBERT ) || defined( PHONG ) )
+          if (cdIn < 1.0) {
+            float cdDown = max(0.0, -transformNormalByInverseViewMatrix(geometryNormal, viewMatrix).y);
+            iblIrradiance += cdDown * 0.6 * cdIn * getIBLIrradiance(-geometryNormal);
+          }
+        #endif
       #endif
       #if defined( RE_IndirectSpecular )
         radiance *= cdIn;

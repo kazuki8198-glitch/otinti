@@ -16,7 +16,7 @@ export function loadBook() {
 // the book's fixed numbers (updated with each rewritten chapter: textbook/rewrite/PROGRESS.md)
 //  secs, quiz, terms, examples, cautions, refs (source links in the end matter), lessons (end matter), figs (SVG figures),
 //  photos (bk.photo uses), calcs (calculators), simTags (lesson buttons inside "シミュレータで体験" boxes), details (考えてみよう)
-export const COUNTS = { chapters: 27, secs: 151, quiz: 124, terms: 416, examples: 66, cautions: 63, refs: 187, lessons: 66, figs: 91, photos: 23, calcs: 10, simTags: 58, details: 92 };
+export const COUNTS = { chapters: 27, secs: 152, quiz: 126, terms: 422, examples: 66, cautions: 63, refs: 188, lessons: 66, figs: 93, photos: 24, calcs: 10, simTags: 58, details: 96 };
 export const ORDER = ['intro', 'aero', 'sys', 'perf', 'wx', 'law', 'radio1', 'radio2', 'radio3', 'radio4', 'radio5', 'hf', 'ground', 'ops', 'tl', 'emg', 'solo', 'navp', 'navr', 'navd', 'ifr', 'ifrp', 'me', 'oei', 'crm', 'jet', 'sim'];
 export const NOTICE = [
   'このページは公開情報を基にした非公式の自主学習用教材です。実機訓練、教官の指示、POH/AFM、SOP、航空法規を優先してください。',

@@ -1783,6 +1783,52 @@
       s += T(12, 18, '模式図（高さは架空の値・縦は誇張）', { c: C.mut, fs: 12, a: 'start' });
       return svg(400, 336, s, '図：非精密進入の 2 つの降り方（横から見た模式図）。FAF のあとすぐ MDA まで降りて水平に飛ぶ dive and drive と、一定の角度で MDA まで降り続ける CDFA。CDFA では、MDA に着く（VDP の近く）までに目印が見えなければ、水平にせずに進入復行します');
     },
+    // ---------------------------------------------------------------- 第 23 章 me（Seminole と双発機の基礎）
+    counterRotation() {
+      // AFH chapter 13 (critical engine, P-factor, counter-rotating engines): seen from above, nose up. The descending blade of each
+      // propeller gives more thrust at a positive angle of attack, so each engine's thrust acts a little to one side of its centre.
+      // Seminole (physics.js pa44: counterRotating): left engine clockwise and right engine counter-clockwise seen from behind, both
+      // descending blades inboard, equal arms. A conventional twin (both clockwise): the right engine's descending blade is outboard,
+      // so losing the left engine leaves the longest arm: the left engine is critical
+      const panel = (cy, k, title, cw, lines) => {
+        const ex = 24 * k, pr = 12 * k, py = cy - 26 * k, ya = py - 34 * k - 6;
+        let s = T(200, cy - 62 * k - 28, title, { c: C.ink, b: 1, fs: 13 }) + planeTop(200, cy, k, { twin: true });
+        // per engine: the rotation seen from behind and the side of the descending blade (where the thrust line sits)
+        [[-1, 1], [1, cw ? -1 : 1]].forEach(([side, rot]) => {
+          const x = 200 + side * ex, tx = x + rot * pr * 0.55;
+          s += A(tx, py + 6, tx, py - 30 * k, C.gr, 3) + `<circle cx="${tx.toFixed(1)}" cy="${py.toFixed(1)}" r="3.5" fill="${C.gr}"/>` + L(200, ya, tx, ya, C.am, 1.5, '3 3');
+          s += TL(200 + side * (ex + 36 * k), py - 4, [rot > 0 ? '右回り' : '左回り', '（後ろから）'], { c: C.cy, b: 1, fs: 12, lh: 15 });
+        });
+        s += T(200, ya - 6, '推力の腕', { c: C.am, b: 1, fs: 12 });
+        return s + TL(200, cy + 58 * k, lines, { c: C.ink, fs: 12, lh: 17 });
+      };
+      let s = panel(140, 1.45, 'Seminole：左右のプロペラが逆に回る', true, ['下がる羽根（推力が大きい側）が、左右とも内側', '→ どちらが止まっても、残った推力の腕は同じ', '→ 臨界発動機がない']);
+      s += L(16, 270, 384, 270, C.grid, 1);
+      s += panel(392, 1.2, 'ふつうの双発：どちらも同じ向きに回る', false, ['右エンジンの下がる羽根は外側（腕が長い）', '→ 左が止まると、残った右の推力で大きく振られる', '→ 左エンジンが臨界発動機']);
+      s += T(8, 514, '緑の矢印：下がる羽根の側の推力（P ファクター）', { c: C.gr, a: 'start', fs: 12 });
+      return svg(400, 522, s, '図：左右逆回転のプロペラと臨界発動機（上から見た模式図）。下がる羽根の側の推力が大きいので、推力は少し片寄って働きます。Seminole は左右とも内側なので、どちらのエンジンが止まっても同じです（AFH 第 13 章）');
+    },
+    twinAsi() {
+      // the airspeed indicator of a light twin (AFH Figure 13-1) with the course's Seminole speeds (physics.js pa44.v: Vso, Vs1, Vfe,
+      // Vno, Vne, Vmc, Vyse): white arc Vso–Vfe, green arc Vs1–Vno, yellow arc Vno–Vne, red radial at Vne, and the two marks only
+      // twins have: the red radial at Vmc and the blue radial at Vyse
+      const v = ac('pa44').v, cx = 208, cy = 172, R = 112, v0 = 40, v1 = 220, th = s => (-140 + (s - v0) / (v1 - v0) * 280) * DEG;
+      const pt = (s, r) => [cx + r * Math.sin(th(s)), cy - r * Math.cos(th(s))];
+      const arc = (a, b, r, c, w) => { const [x0, y0] = pt(a, r), [x1, y1] = pt(b, r); return `<path d="M${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 ${(b - a) / (v1 - v0) * 280 > 180 ? 1 : 0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}" stroke="${c}" stroke-width="${w}" fill="none"/>`; };
+      let s = `<circle cx="${cx}" cy="${cy}" r="${R + 14}" fill="#05080d" stroke="${C.mut}" stroke-width="2"/>`;
+      s += arc(v.s0, v.fe, R - 22, '#f2f4f7', 7) + arc(v.s1, v.no, R - 10, C.gr, 8) + arc(v.no, v.ne, R - 10, '#ffd23e', 8);
+      for (let k = v0; k <= v1; k += 10) { const [x0, y0] = pt(k, R + 2), [x1, y1] = pt(k, k % 20 ? R - 4 : R - 10); s += L(x0.toFixed(1), y0.toFixed(1), x1.toFixed(1), y1.toFixed(1), C.ink, k % 20 ? 1 : 2); }
+      for (let k = 40; k <= 220; k += 20) { const [x, y] = pt(k, R - 44); s += T(x.toFixed(1), (y + 4).toFixed(1), k, { c: C.ink, fs: 12, b: 1 }); }
+      const radial = (sp, c, w) => { const [x0, y0] = pt(sp, R - 30), [x1, y1] = pt(sp, R + 12); return L(x0.toFixed(1), y0.toFixed(1), x1.toFixed(1), y1.toFixed(1), c, w); };
+      s += radial(v.ne, '#ff3b30', 4) + radial(v.mc, '#ff3b30', 4) + radial(v.yse, '#3d8bff', 5);
+      s += T(cx, cy + 26, 'KNOTS', { c: C.mut, fs: 12 });
+      // labels outside the dial with short leaders
+      const tag = (sp, r, lines, c, a) => { const [x0, y0] = pt(sp, R + 14), [x1, y1] = pt(sp, r); return L(x0.toFixed(1), y0.toFixed(1), x1.toFixed(1), y1.toFixed(1), c, 1.5) + TL(x1 + (a === 'end' ? -4 : 4), y1 + 4, lines, { c, b: 1, fs: 12, a, lh: 15 }); };
+      s += tag(v.mc, R + 34, ['赤い線', `Vmc ${v.mc} kt`], '#ff6a5a', 'end') + tag(v.yse, R + 30, ['青い線', `Vyse ${v.yse} kt`], '#5fa8ff', 'end') + tag(v.ne, R + 26, ['赤い線', `Vne ${v.ne}`], '#ff6a5a', 'start');
+      const rows = [['#f2f4f7', `白い弧：${v.s0}〜${v.fe} kt（フラップを使える速度）`], [C.gr, `緑の弧：${v.s1}〜${v.no} kt（ふだん使う速度）`], ['#ffd23e', `黄の弧：${v.no}〜${v.ne} kt（穏やかな空気のときだけ）`]];
+      rows.forEach(([c, t], i) => { s += `<rect x="20" y="${330 + i * 20}" width="18" height="6" fill="${c}"/>` + T(46, 337 + i * 20, t, { c: C.ink, fs: 12, a: 'start' }); });
+      return svg(400, 392, s, '図：双発機の速度計（Seminole の速度の模式図）。赤い線（Vmc）は片発で方向を保てる最小の速度、青い線（Vyse）は片発で最もよく上昇できる速度です。双発機だけにある 2 つの目印です（AFH 第 13 章）');
+    },
   };
 
   // ---------------------------------------------------------------- calculators inside the text

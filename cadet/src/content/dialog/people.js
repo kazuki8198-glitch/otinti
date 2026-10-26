@@ -15,7 +15,7 @@ import { PEOPLE } from '../people.js';
 export const SAMPLE_CTX = {
   career: { chapter: 'ch2', slot: 'am', day: 12, dayMod3: 0, tired: false, solo: false, flying: true, graduated: false },
   today: { flight: 'a3', flightTitle: '「上昇・降下・レベルオフ」の飛行', checkride: false, checkId: '', checkTitle: '', graduation: false, solo: false, xc: false, exam: false, needsDecision: true, decided: false, decisionRight: true, reg: 'N738SY', type: 'Archer', stand: 19 },
-  weather: { ja: '晴れ', metarAm: 'KLAB 121353Z 00405KT 10SM FEW035 19/12 A2992', metarPm: 'KLAB 121853Z 00405KT 10SM SCT045 22/12 A2992', taf: 'TAF KLAB … 01005KT P6SM FEW035', why: '視程・雲・風とも基準内です。' },
+  weather: { ja: '晴れ', metarAm: 'KLAB 121353Z 36005KT 10SM FEW035 19/12 A2992', metarPm: 'KLAB 121853Z 36005KT 10SM SCT045 22/12 A2992', taf: 'TAF KLAB … 01005KT P6SM FEW035', why: '視程・雲・風とも基準内です。' },
   tem: { on: true, o0: '午後の雷雨', o1: '審査の緊張', o2: '朝の霧', right: true, threat: '審査の緊張', why: '今日は審査です。緊張すると、いつもの手順が抜けます', plan: '毎日の手順のとおりに', not: '',
     en: { threat: 'check-ride nerves', why: 'Today is a check; nerves make you skip the usual steps', plan: 'do it the everyday way', not: '' } },        // (M8: the crew in English)
 };

@@ -13,7 +13,7 @@ export default {
       'たとえば N738SY は “Archer Seven Three Eight Sierra Yankee” です。S も Y も単語で言います。',
       // src: AIM 4-2-8 (all numbers other than altitudes and airways are said digit by digit)
       'よくある間違いは、738 を “seven thirty-eight” とまとめて読むことです。数字も 1 桁ずつです。',
-      'tree・fife・niner は少し変わった音ですが、雑音の中でまちがえにくくするためです。表のとおりに言いましょう。',
+      { page: 'tab:1', text: 'tree・fife・niner は少し変わった音ですが、雑音の中でまちがえにくくするためです。表のとおりに言いましょう。' },
       '10 は ten ではなく one zero です。大きな例外は、次の節の高度です。',
     ],
     ask: {
@@ -30,7 +30,7 @@ export default {
     notes: [
       'よくある間違いは、まとめて読むことです。120 kt は “one twenty” ではなく “one two zero knots” です。',
       '針路と風向は必ず 3 桁で、無線ではどちらも磁方位です。090 は “heading zero niner zero” と言います。',
-      '風は “wind two two zero at one five” の形です。3 kt 未満なら “wind calm” と言います。',
+      '風向は、風が吹いてくる方向です。“wind two two zero” なら、南西のほうから吹いてくる風です。',
       // src: LAB Tower 118.3 (fictional): the textbook's chapter 9 (comm.arrive) and CADET's own radio (atc.js FREQ)
       '周波数の小数点は “point” です。LAB Tower の 118.3 は “one one eight point three” です。',
       '121 MHz 台の地上管制なら、管制官が 121 を省いて “ground point seven” と言うことがあります。',

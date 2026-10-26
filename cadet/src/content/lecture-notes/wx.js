@@ -5,7 +5,7 @@ export default {
       '天気の話は、気圧と気温と水蒸気から始まります。じつは高度計も、気圧を測って高さを出す気圧計なんです。',
     ],
     notes: [
-      'さっきの図の線は、海面の 15℃ から左上へ上がっていきます。高く上がるほど寒い、ということです。',
+      { page: 'fig:0', text: 'さっきの図の線は、海面の 15℃ から左上へ上がっていきます。高く上がるほど寒い、ということです。' },
       // src: PHAK FAA-H-8083-25 ch. 12 (the standard lapse rate up to about 36,000 ft, the temperature constant above);
       // the figure's tropopause (ISA 36,089 ft)
       '標準大気では、約 36,000 ft の対流圏界面から上は、気温が一定になります。Archer が飛ぶのは、そのずっと下ですね。',
@@ -35,11 +35,11 @@ export default {
     notes: [
       // src: PHAK FAA-H-8083-25 ch. 12 (cloud names: cirro, alto (middle clouds), strato, cumulo, nimbo/nimbus
       // rain-bearing); the figure's Japanese names (巻雲・高積雲・層雲・積雲・乱層雲・積乱雲)
-      '最初の図の雲の名前は、部品で覚えます。cirro は「巻」で上層、alto は「高」ですが中層、strato は「層」、cumulo は「積」です。',
+      { page: 'fig:0', text: '最初の図の雲の名前は、部品で覚えます。cirro は「巻」で上層、alto は「高」ですが中層、strato は「層」、cumulo は「積」です。' },
       'nimbus は「乱」、雨を降らせる雲のことです。Cumulonimbus（CB）は積乱雲、つまり雷雨の雲ですね。',
       // src: AC 00-45 (in a US METAR's sky condition, CB and TCU are the only cloud types reported)
       'METAR の雲の欄で種類まで書かれるのは、CB と TCU だけです。TCU は塔のように高く伸びた積雲で、積乱雲に育つことがあります。',
-      '2 枚目の図は海風です。夏の昼の砂浜は、砂は熱いのに海の水はひんやりしていますね。温まった陸の空気が上がり、海から風が吹き込みます。',
+      { page: 'fig:1', text: '2 枚目の図は海風です。夏の昼の砂浜は、砂は熱いのに海の水はひんやりしていますね。温まった陸の空気が上がり、海から風が吹き込みます。' },
       'フロリダは東と西が海なので、両側からの海風が内陸でぶつかり、空気が押し上げられます。これが雷雨の「持ち上げる力」になります。',
       // src: PHAK FAA-H-8083-25 ch. 12 (cumulus, mature, dissipating stages), as FLIGHT LAB's q_wx bank
       '雷雨には 3 つの段階があります。上昇気流の積雲期、雨が降り始めて上下の気流が両方強い成熟期、下降気流が主の消散期です。',
@@ -88,7 +88,7 @@ export default {
     intro: [
       'METAR と TAF は、操縦士が毎朝読む天気の速記です。飛ぶ朝は、運航管理の画面でも必ず目にします。',
     ],
-    // (the textbook's 8-row METAR table is read in class up to its third row; the notes cover the rest of it but RMK)
+    // (the textbook's 8-row METAR table is read in class row by row; the notes add what the rows do not say)
     notes: [
       // src: AC 00-45 (the METAR's order; the present weather group only when weather is observed)
       'METAR は左から「どこ・いつ・風・視程・天気・雲・気温と露点・高度計」の順です。天気の欄は、雨や霧などがあるときだけ入ります。',
@@ -100,9 +100,11 @@ export default {
       '雲高は、いちばん低い BKN か OVC の層です。FEW と SCT は、いくつ並んでいても雲高になりません。',
       // src: AIM 4-2-8 (other numbers said digit by digit); the textbook's comm.numbers example (Altimeter three zero
       // zero one → 30.01)
-      '32/23 は気温 32℃ と露点 23℃ です。A3001 は高度計 30.01 で、ATIS では “Altimeter three zero zero one” と 1 桁ずつ聞こえます。',
-      // src: LAB in CADET (career.js weatherFor 00405KT; atc.js ATIS in magnetic; variation 6° W: 004 true = 010 magnetic)
-      'LAB の METAR が 00405KT の日も、ATIS は “Wind zero one zero at five” と言います。真方位と磁方位の違いです。',
+      '高度計の A3001 は、ATIS では “Altimeter three zero zero one” と 1 桁ずつ聞こえます。',
+      // src: FMH-1 / AC 00-45 (METAR wind direction in tens of degrees true; 000 only for calm, a north wind is 360): the
+      // day's wind from 004° true is reported 36005KT (career.js weatherFor); the ATIS in magnetic (atc.js), variation
+      // 6° W: 004 true = 010 magnetic
+      'METAR の風向は 10° 単位の真方位で、LAB の 36005KT は北の風です。ATIS は磁方位なので “Wind zero one zero at five” と言います。',
       // src: AC 00-45 (TAF FM: from that time on; TEMPO: temporary fluctuations), as FLIGHT LAB's q_wx bank
       'TAF の FM は「その時刻から変わる」、TEMPO は「一時的に」です。TS や CB が出ている時間帯を避けて、飛ぶ計画を立てます。',
     ],

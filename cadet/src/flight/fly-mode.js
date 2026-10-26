@@ -445,7 +445,10 @@ export function createFlyMode(ctx) {
     // but the talk, during which it looks round as the mouse takes it
     const stop = paused || fading || talkOn || debriefShown || !isLive;
     const stopHead = paused || fading || debriefShown || !isLive;
-    if (wasStop && !stop) flight.controls.clearKeys();
+    // (the first frame after a talk, a fade or the menu: the click or the wheel that ended it is not the panel's — a
+    // talk's last line is closed by a click on the view, with the pointer still captured)
+    const resumed = wasStop && !stop;
+    if (resumed) flight.controls.clearKeys();
     wasStop = stop;
     // the flight (FLIGHT LAB's tick: the keys once, then 1/120 s steps)
     frameOpt.paused = stop || phase === 'board' || phase === 'leaving';
@@ -499,8 +502,8 @@ export function createFlyMode(ctx) {
       hover = cockpit.pick(ray);
       hud.prompt(hover ? hover.label : null, hover ? (hover.kind === 'knob' ? 'ホイール' : hover.kind === 'lever' ? 'クリック・ホイール' : 'クリック') : null);
       if (hover) {
-        if (input.pressed('Mouse0')) applyAct(hover.act(1, false));
-        if (wheel) for (let i = 0; i < Math.abs(wheel); i++) applyAct(hover.act(Math.sign(wheel), true));
+        if (input.pressed('Mouse0') && !resumed) applyAct(hover.act(1, false));
+        if (wheel && !resumed) for (let i = 0; i < Math.abs(wheel); i++) applyAct(hover.act(Math.sign(wheel), true));
       }
     } else if (hover) { hover = null; hud.prompt(null); }
     cockOpt.s = flight.s; cockOpt.L = flight.L; cockOpt.av = flight.av; cockOpt.parkBrake = flight.controls.parkBrake; cockOpt.night = night(); cockOpt.eng = engShow;

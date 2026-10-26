@@ -28,7 +28,8 @@ const KEY_ONLY = new RegExp(`^\\s*${KEY}(?:\\s*[/／]\\s*${KEY})*\\s*$`);       
 const KEY_AT_END = new RegExp(`[ぁ-ん]\\s*${KEY}\\s*$`);                         // （機首が左へ振られたら E）
 const APP_NOTE = /キー|Shift\s*\+|Enter\s*で|長押し|押し続ける|空島|シミュレータ|この教材|教材では|^[\s[\]/−+＋-]*$/;
 // what still names FLIGHT LAB's controls or pages after the clean-up: such a sentence is not said at all
-export const NOT_SPOKEN = /キーボード|キー|Shift\s*\+|Enter\s*で|空島|この教材|教材では|教材用の簡略化|シミュレータ|メニュー/;
+// (ウィスキー and ヤンキー, the alphabet's Whiskey and Yankee, are words, not keys)
+export const NOT_SPOKEN = /キーボード|(?<!ウィス|ヤン)キー|Shift\s*\+|Enter\s*で|空島|この教材|教材では|教材用の簡略化|シミュレータ|メニュー/;
 
 // written (HTML) → what the instructor can say: tags out, key names and app notes out, the instructor's own viewpoint
 export function speakable(html) {
@@ -39,14 +40,15 @@ export function speakable(html) {
   s = s.replace(new RegExp(`${NB}${KEY}（([${JA}][^）]*)）`, 'g'), '$1');            // E（右ラダー） → 右ラダー
   s = s.replace(/[（(]([^（）()]*)[）)]/g, (m, t, at, all) => {
     const before = all.slice(0, at), after = all.slice(at + m.length);
-    const app = KEY_ONLY.test(t) || KEY_AT_END.test(t) || APP_NOTE.test(t) || (t.trim() === 'G' && /脚[^（]{0,6}$/.test(before));
+    // (a key alone in brackets, unless it follows a word in Latin letters: Restricted Area（R） is the area's mark)
+    const app = (KEY_ONLY.test(t) && !/[A-Za-z]$/.test(before.trim())) || KEY_AT_END.test(t) || APP_NOTE.test(t) || (t.trim() === 'G' && /脚[^（]{0,6}$/.test(before));
     if (!app) return m;
     return /[A-Za-z0-9]$/.test(before) && /^[^\s。、）]/.test(after) ? ' ' : '';   // keep "CRS でコースを" apart
   });
   s = s.replace(new RegExp(`\\s?${NB}${KEY} を(少しずつ)?押して\\s?`, 'g'), '$1');   // S を少しずつ押して → 少しずつ
   s = s.replace(new RegExp(`\\s?${NB}${KEY} で\\s?`, 'g'), '');                      // S で少し引いて / B でブレーキ
   s = s.replace(/[[\]＝・左右]+\s*のキーで/g, '');                                   // [＝左・]＝右 のキーで
-  s = s.replace(new RegExp(`\\s?${NB}T${NA}\\s?`, 'g'), 'トリム');                   // 落ち着いたら T → トリム
+  s = s.replace(new RegExp(`\\s?${NB}T${NA}(?!\\s*[：:])\\s?`, 'g'), 'トリム');       // 落ち着いたら T → トリム (T：Tango is a letter)
   return s.replace(/([^\s①-⑩])([②-⑩])/g, '$1 $2').replace(/([^\s])→/g, '$1 →').replace(/→([^\s])/g, '→ $1')
     .replace(/\s+([。、）」])/g, '$1').replace(/\s+/g, ' ').trim();
 }
@@ -130,7 +132,8 @@ export function polite(sentence) {
   const bare = unbracket(core).replace(/「[^」]*」/g, '「」');
   if (!core || /[→①-⑩]/.test(bare) || /[」』…〜、]$/.test(core)) return s;
   // 近づかない・下を通らない・間をすり抜けない: several predicates in a row (止まる・遅れるときは… is one)
-  if (/(?:ない|[うくぐすつぬぶむる])・/.test(bare) && !/は/.test(bare.slice(bare.lastIndexOf('・')))) return s;
+  // (ひょう・雷 is a list of nouns: a noun in ょう / ゅう is not a verb in う)
+  if (/(?:ない|(?<![ょゅ])う|[くぐすつぬぶむる])・/.test(bare) && !/は/.test(bare.slice(bare.lastIndexOf('・')))) return s;
   const noun = !isHira(core.slice(-1)) || NOUN_KANA.test(core);
   const colon = bare.split(/[：:]/);
   // "X：…" reads as a definition: said politely, unless it is a list (a noun at the end, or several 、)

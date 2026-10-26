@@ -7,7 +7,7 @@ export default {
     notes: [
       '電話をかけるときと同じです。『○○さんですか、こちら△△です、いま駅にいます、迎えをお願いします』。順番も同じですね。',
       'LAB なら “LAB Ground” で相手、次に自分のコールサイン、“at the west ramp” で場所、最後に “request taxi” で要求です。',
-      'ATIS を聞いたら “with information Bravo” を入れます。記号を言えば、管制官は風や滑走路を繰り返さずに済みます。',
+      'ATIS の記号を言えば、管制官は風や滑走路を繰り返さずに済みます。',
       // src: AIM 4-2-2 (think before keying the transmitter; jot it down), the textbook's chapter 6 (radio.technique)
       '送信ボタンを押す前に、言うことを頭の中で一度組み立てます。ひざ板に型を書いておくと安心です。',
       '混んでいて相手に届くか分からないときは、まず相手と自分だけを短く呼び、返事が来てから要求を言います。',
@@ -23,9 +23,7 @@ export default {
     },
   },
   'comm.readback': {
-    intro: [
-      '復唱は、管制官とあなたが同じ数字と同じ滑走路を思い浮かべているかを確かめる、その場の二重確認です。',
-    ],
+    intro: [],
     notes: [
       'レストランで店員さんが注文を繰り返すのと同じです。繰り返して言うことで、聞きまちがいがその場で見つかります。',
       '数字は “climb and maintain” や “heading” と一緒に返します。何の数字かが分かると、取り違えに気づきやすくなります。',
@@ -48,7 +46,7 @@ export default {
       '分からないまま動くのが、いちばん危ないことです。聞き直す言葉を持っていれば、迷っても安全なほうへ進めます。',
     ],
     notes: [
-      'この表は、困ったときに使う言葉の一覧です。聞き取れない、自分宛てか分からない、道が分からない、従えない、などの場面ごとです。',
+      { page: 'tab:0', text: 'この表は、困ったときに使う言葉の一覧です。聞き取れない、自分宛てか分からない、道が分からない、従えない、などの場面ごとです。' },
       // src: Pilot/Controller Glossary (Say again: e.g. "Say again all after ABRAM VOR"), the textbook's chapter 7 (comm.words)
       '聞き取れなければ “Say again” です。後半だけなら “Say again all after Charlie” のように、聞けた最後の言葉を言います。',
       // src: AIM 4-2-4 (similar call signs; "Verify clearance for" the full call sign), the textbook's chapter 7 (comm.callsign)
@@ -70,7 +68,7 @@ export default {
   },
   'comm.mistakes': {
     intro: [
-      'この表の 10 個は、無線でよく起きる間違いです。先に知っておけば、同じ穴に落ちずに済みます。',
+      'これから見る 10 個は、無線でよく起きる間違いです。先に知っておけば、同じ穴に落ちずに済みます。',
     ],
     notes: [
       // src: the textbook's comm.pattern (AIM 4-2-3: acknowledge first, or the controller cannot tell it from a radio failure)

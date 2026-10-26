@@ -221,7 +221,7 @@ export function academySpec(FL) {
     { id: 'schedule', room: 'dispatch', a: 675.8, c: 257.5, y: 1.5, prompt_ja: '予定表を見る', title_ja: '本日の割り当て（運航管理）',
       text_ja: today.slice(0, 5).map(r => `${r[0]} ${r[1]} ${r[3]}`).join('\n') + '\n※ 14:30 以降は雷雨の予報：運航管理と相談して判断' },
     { id: 'metar', room: 'dispatch', a: 675.8, c: 252.6, y: 1.6, prompt_ja: '気象を見る', title_ja: '気象（KLAB は架空の飛行場）',
-      text_ja: 'METAR KLAB 121253Z 00405KT 10SM FEW035 SCT250 15/08 A2992\nTAF KLAB 121130Z 1212/1312 00405KT P6SM FEW035\n  TEMPO 1219/1222 4SM TSRA BKN030CB\n読み方：風 004°（真方位）5 kt、視程 10 SM、3,500 ft に少しの雲。気温 15℃・露点 8℃、高度計 29.92。\n午後 3〜6 時（現地時刻。EDT＝Z−4 なので 19〜22Z）は一時的に雷雨。\nATIS は磁方位で伝えるので、風は「010 at 5」と聞こえます。' },
+      text_ja: 'METAR KLAB 121253Z 36005KT 10SM FEW035 SCT250 15/08 A2992\nTAF KLAB 121130Z 1212/1312 36005KT P6SM FEW035\n  TEMPO 1219/1222 4SM TSRA BKN030CB\n読み方：風 360°（真方位）5 kt、視程 10 SM、3,500 ft に少しの雲。気温 15℃・露点 8℃、高度計 29.92。\n午後 3〜6 時（現地時刻。EDT＝Z−4 なので 19〜22Z）は一時的に雷雨。\nATIS は磁方位で伝えるので、風は「010 at 5」と聞こえます。' },
     { id: 'counter', room: 'dispatch', a: 670.0, c: 257.4, y: 1.1, prompt_ja: 'カウンターで尋ねる', title_ja: '運航管理のカウンター',
       text_ja: '飛ぶ前にここで、機体の割り当て・燃料・天気を確かめ、機体の書類と鍵を受け取る。' },
     { id: 'headsets', room: 'pilot', a: 676.4, c: 258.0, y: 1.4, prompt_ja: 'ヘッドセットを見る', title_ja: 'ヘッドセット',

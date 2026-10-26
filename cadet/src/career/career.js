@@ -118,7 +118,7 @@ export function weatherFor(seed, day, o = {}) {
   const W = WEATHER[kind];
   const tempC = 17 + Math.floor(r() * 9), dewC = tempC - 4 - Math.floor(r() * 6), qnh = 29.92;
   const z = (h) => `${pad2(h)}53Z`, q = `A${String(Math.round(qnh * 100))}`;
-  const wind = kind === 'crosswind' ? '09016G24KT' : kind === 'lowCloud' ? '03006KT' : '00405KT';
+  const wind = kind === 'crosswind' ? '09016G24KT' : kind === 'lowCloud' ? '03006KT' : '36005KT';
   const m = {
     good: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 10SM FEW035 ${pad2(tempC - 3)}/${pad2(dewC)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 10SM SCT045 ${pad2(tempC)}/${pad2(dewC)} ${q}` },
     amFog: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} 00000KT 1/2SM FG VV002 ${pad2(tempC - 5)}/${pad2(tempC - 5)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 10SM FEW030 ${pad2(tempC)}/${pad2(dewC)} ${q}` },

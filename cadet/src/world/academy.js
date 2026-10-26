@@ -317,6 +317,8 @@ export function buildAcademy({ L, FL, spec, kit, world, audio = null }) {
       return { x: s.c, y: s.y, z: -s.a };
     },
     surfaceAt(roomId, type) { const s = surfaces.get(roomId + ':' + type); return s ? { x: s.c, y: s.y, z: -s.a } : null; },
+    // (what a board or a screen shows: its canvas, to be read — the tests check what the class put on the screen)
+    surfaceCanvas(roomId, type) { const s = surfaces.get(roomId + ':' + type); return s && s.mat.map ? s.mat.map.image : null; },
     // the floor under a point (for footsteps), null outside
     floorAt(a, c) { const r = roomOf(a, c); return r ? r.floor : null; },
     // on the ground floor's rooms (the window strip included), but not in the recess in front of the lobby's glass

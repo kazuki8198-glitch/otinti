@@ -1629,7 +1629,10 @@ async function boot() {
         const look = input.takeLook();
         if (!menu.isOpen && live) {
           if (look.x || look.y) face = null;
-          if (walker.update(dt, { look, leash: talk.leash, upDown: !dui.choosing })) face = null;
+          // (a panel over the talk — the textbook, the logbook, the report, a card — holds the walk: ← → and W A S D are
+          // not the reader's way of walking away behind it; the look still turns)
+          const still = dui.bookOpen || dayHud.logbookOpen || report.isOpen || cards.showing;
+          if (walker.update(dt, { look, leash: talk.leash, upDown: !dui.choosing, still })) face = null;
           if (face) faceWalk(dt);
         }
       } else if (!menu.isOpen && live) {
@@ -1927,6 +1930,8 @@ async function boot() {
     // talking: start, read the current line, go on, choose (by index or by a regular expression on the text)
     talk: () => startTalk(),
     dialog: () => { const v = talkRunner().view(); return v ? { ...v, typing: dui.typing, bookOpen: dui.bookOpen } : null; },
+    // a textbook section in the overlay, as the 'book' hook opens it (closed with Esc, ✕ or a click outside)
+    readSection: (id) => { openSection(id); return dui.bookOpen; },
     dialogNext: () => { const r = talkRunner(); if (dui.typing) dui.reveal(); r.next(); afterStep(); return r.view(); },
     dialogChoose: (which) => {
       const r = talkRunner(), v = r.view(); if (!v) return null;
@@ -2011,6 +2016,13 @@ async function boot() {
       activity: () => (lessonKind ? { kind: lessonKind.kind, id: lessonKind.id, n: lessonKind.n, questions: (lessonRun && lessonQuestions) || [] } : null),
       // the class's page on briefing room 2's screen (the 'page' hook's arg) and the section on its whiteboard
       lecture: () => ({ page: pageNow, section: pageSec }),
+      // what a room's board or screen shows now: a hash of its canvas's pixels (null: no such surface)
+      screen: (room = 'brief-2', type = 'wall_screen') => {
+        const cv = academy.surfaceCanvas ? academy.surfaceCanvas(room, type) : null; if (!cv || !cv.getContext) return null;
+        const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; let h = 2166136261;
+        for (let i = 0; i < d.length; i += 4 * 7) h = Math.imul(h ^ (d[i] | (d[i + 1] << 8) | (d[i + 2] << 16)), 16777619) >>> 0;
+        return h;
+      },
       home: () => goHome(), homeChoose: (k) => homeChoose(k),
       // (opened as Tab opens it: the card closed, the mouse let go)
       tablet: { open: (p) => { interactor.closeCard(); input.exitLock(); tablet.open(p); }, close: () => tablet.close(), isOpen: () => tablet.isOpen, page: () => tablet.page },

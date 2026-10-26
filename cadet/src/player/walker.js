@@ -47,8 +47,10 @@ export function createWalker({ camera, world, L, input, settings, surfaceAt = ()
     return [ux * lim - ox, uz * lim - oz];
   }
   // opts: look (the mouse's movement, when the caller took it already), leash ({ x, z, r }: a talk's), upDown (false:
-  // ↑↓ do not walk — a talk's choices have them). Returns whether the keys (or the script) ask to move.
-  function update(dt, { look = null, leash = null, upDown = true } = {}) {
+  // ↑↓ do not walk — a talk's choices have them), still (true: no key walks — a panel such as the textbook covers the
+  // talk; the look still turns and the walk dies away as when the keys are let go). Returns whether the keys (or the
+  // script) ask to move.
+  function update(dt, { look = null, leash = null, upDown = true, still = false } = {}) {
     // look
     const lk = look || input.takeLook(), sens = 0.0022 * settings.get('sensitivity');
     st.yaw -= lk.x * sens; st.pitch -= lk.y * sens * (settings.get('invertY') ? -1 : 1);
@@ -56,7 +58,7 @@ export function createWalker({ camera, world, L, input, settings, surfaceAt = ()
     // the wish direction from the keys (or the script)
     let f = 0, s = 0, run = false;
     if (auto) { f = auto.forward || 0; s = auto.strafe || 0; run = !!auto.run; }
-    else {
+    else if (!still) {
       if (input.down('KeyW') || (upDown && input.down('ArrowUp'))) f += 1;
       if (input.down('KeyS') || (upDown && input.down('ArrowDown'))) f -= 1;
       if (input.down('KeyD') || input.down('ArrowRight')) s += 1;

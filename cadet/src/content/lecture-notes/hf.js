@@ -39,7 +39,7 @@ export default {
       '次に、180° 旋回して管制に伝える、と行動を決め、実行し、雲から離れたかを確かめます。これで 6 つです。',
       // (the tem figure as drawn: Threat "天気・他機・不具合…" → Error "操作・手順・交信の誤り" → UAS "高度・速度の逸脱…",
       // and the band "予測（ブリーフィング）→ 気づく（モニター・クロスチェック）→ 対処（立て直す）")
-      'さきほどの TEM の図では、脅威は天気・他機・不具合など外から来るもの、エラーは自分の操作・手順・交信の誤りです。',
+      { page: 'fig:0', text: 'さきほどの TEM の図では、脅威は天気・他機・不具合など外から来るもの、エラーは自分の操作・手順・交信の誤りです。' },
       '脅威を放っておくとエラーを生み、エラーを放っておくと、高度や速度がずれる「望ましくない状態」になります。予測し、気づき、立て直して止めます。',
       // src: CADET career/tem.js (before a flying day the instructor asks for today's threat; the debrief names it and the errors)
       'これから飛ぶ日には、出発前に教官が「今日の脅威は？」と聞きます。これが予測です。飛んだ後は、その日のエラーを一緒に振り返ります。',
@@ -57,7 +57,7 @@ export default {
       '危険な態度は、特別な人だけのものではありません。疲れや焦りで、誰の心にも顔を出します。',
     ],
     notes: [
-      '表の見方です。左が態度の名前、真ん中がそのときの心の声、右がその声に返す言葉、解毒剤です。',
+      { page: 'tab:0', text: '表の見方です。左が態度の名前、真ん中がそのときの心の声、右がその声に返す言葉、解毒剤です。' },
       // src: PHAK FAA-H-8083-25 ch. 2, the five hazardous attitudes and their antidotes (Anti-authority "Don't tell me.";
       // Impulsivity "Do it quickly."; Invulnerability "It could happen to me."; Macho "Taking chances is foolish.")
       '反権威は「規則なんて」という声で、「チェックリストなんて面倒だ」もその一つです。規則や手順には、それぞれ理由があります。',

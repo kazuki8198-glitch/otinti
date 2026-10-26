@@ -9,7 +9,7 @@ export default {
       // src: the textbook's chapter 9 (comm.arrive: ATIS, Approach, Tower, Ground after the runway is cleared)
       '帰りは ATIS を聞いてから Tower、滑走路を出たら Ground です。Tower の前に Approach と話すこともあります。',
       'ATIS は録音を繰り返し流す放送で、話しかけることはできません。Bravo などの記号を書き留めておきます。',
-      '局は「場所の名前と局の種類」で呼びます。LAB の地上管制なら “LAB Ground”、管制塔なら “LAB Tower” です。',
+      'LAB の地上管制なら “LAB Ground”、管制塔なら “LAB Tower” です。',
       // src: AIM 4-2-6 (ground station call signs: a flight service station is "Radio", e.g. "Chicago Radio")
       'Flight Service は “Orlando Radio” のように “Radio” を付けて呼びます。天気や飛行計画を扱う局です。',
       // src: AIM 4-3-14, 4-3-21 (after landing, stay on the tower frequency until told to contact ground), as the
@@ -30,7 +30,7 @@ export default {
     ],
     notes: [
       '無線はトランシーバーと同じしくみです。電話と違って、話せるのは一度に 1 人だけです。',
-      '送信中は相手の声が聞こえません。ほかの機と重なってブロックしても、自分では気づかないことがあります。',
+      'だから、ほかの機と重なってブロックしても、自分では気づかないことがあります。',
       'PTT を押してすぐ話すと、“LAB Tower” の頭が切れがちです。押して、一呼吸おいてから話します。',
       // src: LAB Ground 121.7 and LAB Tower 118.3 (fictional): the textbook's chapter 9 (comm.arrive) and CADET's own
       // radio (content/dialog/atc.js FREQ)
@@ -77,7 +77,7 @@ export default {
     notes: [
       // src: CADET's own call sign (content/dialog/atc.js CALL: N738SY, fictional); AIM 4-2-4 (type + the last three
       // characters once the controller abbreviates)
-      '① 自分のコールサインを耳の目覚ましにします。Archer Seven Three Eight Sierra Yankee、省略なら Archer Eight Sierra Yankee です。',
+      '① 自分のコールサインを耳の目覚ましにします。省略形の Archer Eight Sierra Yankee も聞き逃さないように。',
       '② は駅のアナウンスと同じです。何番線・行き先・時刻が来るとわかっていれば、聞き取れますね。',
       // src: LAB Ground's taxi instruction in the textbook's chapter 9 (comm.dep) and CADET's own radio (atc.js)
       'LAB でタキシーを頼めば、“runway three six, taxi via Alpha, hold short of …” の形で来ると予想できます。',

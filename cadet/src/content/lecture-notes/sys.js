@@ -5,7 +5,7 @@ export default {
       '操縦翼面は、あなたの手と足の動きを機体の動きに変える部分です。どれを動かすと何が起きるか、体で覚えましょう。',
     ],
     notes: [
-      '表を言い直すと、手は操縦輪で「傾き」と「機首の上下」を、足はペダルで「機首の左右」を受け持ちます。',
+      { page: 'tab:0', text: '表を言い直すと、手は操縦輪で「傾き」と「機首の上下」を、足はペダルで「機首の左右」を受け持ちます。' },
       // src: ailerons move in opposite directions: PHAK FAA-H-8083-25 ch. 6
       'エルロンは左右が逆に動きます。操縦輪を左へ回すと、左のエルロンが上がり、右のエルロンが下がって、機体は左へ傾きます。',
       // src: the stabilator is very sensitive; the anti-servo tab adds to the force needed to move it: PHAK FAA-H-8083-25 ch. 6
@@ -31,7 +31,7 @@ export default {
     notes: [
       // src: with a fixed-pitch propeller the rpm also changes with airspeed at a fixed throttle: PHAK FAA-H-8083-25 ch. 7
       '固定ピッチでは回転計が出力の目安です。ただし回転は速度でも変わり、降下で速くなれば、スロットルそのままでも上がります。',
-      'だから「理由なく下がった」とは、スロットルも速度も変えていないのに下がった、という意味です。そこでキャブレターアイスを疑います。',
+      'だから「理由なく下がった」とは、スロットルも速度も変えていないのに下がった、という意味です。',
       // src: magnetos work apart from the electrical system; a broken ground lead leaves a magneto "hot": PHAK FAA-H-8083-25 ch. 7
       'マスタースイッチを切っても、マグネトーの点火は切れません。プロペラはいつでも回り出すものとして扱い、回転面に近づかないでください。',
       // src: the textbook's start procedure (ops chapter: 「Prop clear!」と叫んで周りに人がいないことを確かめる → スターター)
@@ -42,8 +42,9 @@ export default {
       'キャブレターアイスは、湿度が高く気温がおよそ −7〜21℃ の日に特に起きやすいのですが、もっと暖かい日にも起きます。',
       // src: carb heat: the rpm drops, then rises as the ice melts, with roughness while the water goes through: PHAK FAA-H-8083-25 ch. 7
       'よくある間違いは、キャブヒートを入れて荒れたのを見て、すぐ切ってしまうことです。荒れるのは、溶けた氷の水がエンジンを通るためです。',
-      // src: the textbook's start procedure (油圧が上がるのを確認、上がらなければすぐ止める)
-      'エンジンがかかったら、まず油圧の表示を見ます。上がらなければ、すぐにエンジンを止めます。ここだけは迷わないでください。',
+      // src: the textbook's start procedure (油圧が上がるのを確認、上がらなければすぐ止める); the 30-second limit: Archer POH
+      // section 4 / CADET's start checklist (checklists-archer.js 油圧：30 秒以内に上がる)
+      'エンジンがかかったら、まず油圧の表示を見ます。30 秒たっても上がらなければ（寒い日は少し時間がかかります）、すぐにエンジンを止めます。ここだけは迷わないでください。',
     ],
     ask: {
       q: 'キャブヒートを ON にしたら、回転がいったん下がり、さらに荒れました。どう判断しますか？',
@@ -104,11 +105,11 @@ export default {
       'PFD の数字は、どこかのセンサーが測った値です。どこから来た数字かを知っていれば、おかしいときに見抜けます。',
     ],
     notes: [
-      '表を言い直すと、空気の圧力から来るのが速度・高度・昇降率、AHRS から来るのが姿勢と方位、GPS から来るのが位置と対地速度です。',
+      { page: 'tab:0', text: '表を言い直すと、空気の圧力から来るのが速度・高度・昇降率、AHRS から来るのが姿勢と方位、GPS から来るのが位置と対地速度です。' },
       // src: the airspeed indicator compares pitot pressure with static pressure: PHAK FAA-H-8083-25 ch. 8
       'ピトー管は風を正面から受ける口、静圧孔はまわりの空気の圧力を測る小さな穴です。速度計はこの 2 つの差を読んでいます。',
       // src: pitot blocked with the drain hole open: the airspeed indicator drops to zero: PHAK FAA-H-8083-25 ch. 8
-      'ピトー管だけが詰まって排水穴が開いていると、圧力が抜けて速度計は 0 へ下がっていきます。表の例は両方が詰まった場合です。',
+      { page: 'tab:1', text: 'ピトー管だけが詰まって排水穴が開いていると、圧力が抜けて速度計は 0 へ下がっていきます。表の例は両方が詰まった場合です。' },
       // src: the alternate static source uses cabin air, lower in pressure: altimeter and airspeed read higher: PHAK FAA-H-8083-25 ch. 8
       '代替静圧は機内の空気を使います。機内は少し気圧が低いので、高度計と速度計はやや高めに出ます。',
       'TAS の目安は 1,000 ft ごとに約 2% 増しです。5,000 ft で 100 KIAS なら、この目安で TAS はおよそ 110 kt です。',
@@ -169,10 +170,10 @@ export default {
       '夜、赤も緑も見えず、尾部の白い灯だけが見えたら、相手はこちらから遠ざかる向きに進んでいます。',
     ],
     ask: {
-      q: '夜、前方に灯火が見えます。左に緑、右に赤が見えます。相手はどちらを向いていますか？',
-      opts: ['こちらを向いている', 'こちらに背を向けている', '右から左へ横切っている'],
+      q: '夜、前方に赤い灯だけが見え、緑は見えません。相手はどう動いていますか？',
+      opts: ['右から左へ横切っている', '左から右へ横切っている', 'こちらを向いている', 'こちらに背を向けている'],
       ok: 0,
-      why: '相手の右翼端の緑がこちらから見て左、左翼端の赤が右に見えるので、相手はこちらを向いています。',
+      why: '赤は左の翼端です。左側がこちらを向いているので、相手はこちらから見て右から左へ進んでいます。',
     },
   },
 };

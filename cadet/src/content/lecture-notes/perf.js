@@ -6,7 +6,7 @@ export default {
     ],
     notes: [
       // (the atm figure as drawn: 1,000 ft あたり約 −2℃、気圧は 1,000 ft あたり約 1 inHg); src: standard lapse rates: PHAK FAA-H-8083-25 ch. 4 (Atmosphere)
-      '画面の図は標準大気で、海面は 15℃・29.92 inHg です。上へ 1,000 ft ごとに、気温は約 2℃、気圧は約 1 inHg 下がります。',
+      { page: 'fig:0', text: '画面の図は標準大気で、海面は 15℃・29.92 inHg です。上へ 1,000 ft ごとに、気温は約 2℃、気圧は約 1 inHg 下がります。' },
       '式の「× 1,000」は、この「1 inHg で約 1,000 ft」から来ています。規正値が 29.82 なら、気圧高度は標高より約 100 ft 高くなります。',
       '気温の例です。気圧高度 0 ft で 25℃ なら、標準より 10℃ 高いので、120 × 10 で密度高度は約 1,200 ft です。',
       // src: high density altitude reduces engine power, propeller efficiency and lift: PHAK FAA-H-8083-25 ch. 11
@@ -29,7 +29,7 @@ export default {
       '滑走路が足りるかどうかは、離陸してからでは直せません。飛ぶ前の数分の計算で決まります。',
     ],
     notes: [
-      '表を言葉にすると、重い・空気が薄い・追い風・芝や濡れた路面は、離陸も着陸も距離を延ばします。向かい風は両方を縮めます。',
+      { page: 'tab:0', text: '表を言葉にすると、重い・空気が薄い・追い風・芝や濡れた路面は、離陸も着陸も距離を延ばします。向かい風は両方を縮めます。' },
       // src: an upslope lengthens the takeoff and shortens the landing: PHAK FAA-H-8083-25 ch. 11
       '坂だけは離陸と着陸で逆です。上り坂は、離陸では登りながら加速するので延び、着陸では坂がブレーキになるので縮みます。',
       // src: a tailwind raises the groundspeed at liftoff, and the distance grows about with the square of that speed (a 10 % heavier airplane: about 5 % faster liftoff, at least 21 % more distance): PHAK FAA-H-8083-25 ch. 11
@@ -37,7 +37,7 @@ export default {
       // src: pressure altitude is read with 29.92 set (FLIGHT LAB's q_perf bank); charts entered with pressure altitude and temperature: PHAK FAA-H-8083-25 ch. 11
       '性能表には、標高ではなく気圧高度と気温で入ります。標高のまま読むのは、よくある間違いです。',
       '滑走路の先に木や建物があれば「50 ft の障害物を越えるまで」の距離で考えます。地上滑走の数字だけで安心しないでください。',
-      '表の数字は新しい機体と熟練した操縦士の値です。あなたの腕と使い込んだ機体では、もっと長くなると考えます。',
+      { page: 'tab:0', text: '表の数字は新しい機体と熟練した操縦士の値です。あなたの腕と使い込んだ機体では、もっと長くなると考えます。' },
       '中止点は離陸前に目印で決めます。例えば滑走路の半分あたりの誘導路です。そこで Vr の 70% に届いていなければ、迷わずパワーを絞ります。',
       // src: the textbook's wx.metar key point (ATIS・管制の風は磁方位) and its radio chapter (AIM 4-2-10)
       '管制や ATIS の風向きは磁方位なので、そのまま滑走路の番号と比べて、向かい風か追い風かを考えられます。',
@@ -59,7 +59,7 @@ export default {
       'Archer では Vx 64 の方が Vy 76 より遅い速度です。失速に近いので、障害物を越えたら機首を少し下げて Vy へ加速します。',
       '地上 1,000 ft を越えたら、87 KIAS の巡航上昇に移ります。機首が下がって前が見え、空冷のエンジンに風がよく当たって冷えます。',
       'よくある間違いは、Vy のまま長く上り続けることです。機首の陰の機体が見えず、エンジンも熱くなります。',
-      '表で 3,000 ft の上昇率が海面付近より小さいのは、高いほど空気が薄いからです。前の節の密度高度と同じ話です。',
+      { page: 'tab:0', text: '表で 3,000 ft の上昇率が海面付近より小さいのは、高いほど空気が薄いからです。前の節の密度高度と同じ話です。' },
       // src: 14 CFR 91.151 (30 min at normal cruising speed by day; the textbook's law.rules row)
       '燃料の例です。昼の VFR で 1.5 時間、1 時間に 8 gal なら、飛ぶ分 12 gal に予備 30 分の 4 gal、合わせて 16 gal です。',
       // src: the textbook's law.rules key point (訓練生のうちは教官・学校の決まりに従う)
@@ -82,7 +82,7 @@ export default {
       // src: the datum is chosen by the manufacturer; the arm is measured from it: PHAK FAA-H-8083-25 ch. 10
       '基準線はメーカーが決めた位置で、アームはそこからの距離です。後席や荷物室は、アームが長くなります。',
       '計算の例です。合計重量 2,000 lb、合計モーメント 180,000 なら、重心は 180,000 ÷ 2,000 で 90 in です。',
-      '画面の図の見方です。横が重心の位置、縦が重量で、計算した点が枠の中に入っていれば、重量と重心は範囲内です。',
+      { page: 'fig:0', text: '画面の図の見方です。横が重心の位置、縦が重量で、計算した点が枠の中に入っていれば、重量と重心は範囲内です。' },
       // (the wbEnvelope figure as drawn: the forward limit at 82 in up to 2,050 lb, then slanting aft to 88.6 in at the 2,550 lb top edge)
       '左の線が上の方で右へ傾いているのは、重いときほど前の限界が後ろへ移る、という意味です。上の辺が最大重量です。',
       // src: avgas about 6 lb/gal: PHAK FAA-H-8083-25 ch. 10; FLIGHT LAB's q_perf bank

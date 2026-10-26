@@ -3,7 +3,9 @@
 //  - walking: the view turns to the one talked to when the talk begins, for a moment; a drag on the view (the right
 //    button, Alt, the left button past a few pixels) looks round and the look stays, and does not go on to the next
 //    line; the turn is stopped by the mouse, and by a step (also a turn to a point: the lecture's screen, autoFace);
-//  - W A S D walk with the line still up, no further than 3 m from where the talk began;
+//  - a talk begun with the mouse captured keeps it, and the captured mouse looks round while a line is up; a drag out
+//    and back to where it began is still a look;
+//  - W A S D walk with the line still up, no further than 3 m from where the talk began (not behind the textbook);
 //  - E and a click during a talk only go on (the door in front stays shut, captured mouse or not);
 //  - the choices are still picked with 1–9 and with a click (the mouse is let go for them);
 //  - another person's line (the cadets after the first solo) turns the view to them, and a drag stops that turn;
@@ -60,12 +62,21 @@ describe('talk view', { skip: !chromium && 'Playwright not found', timeout: 1800
     // 2.4 m from him, looking away (into the room)
     await ev((ins) => { const C = window.__cadet; C.setMode('walk'); C.placeWalker(ins.a + 2.4, ins.c - 0.6, { a: ins.a + 8, c: ins.c - 0.6 }); }, ins);
     assert.ok(await ev(() => window.__cadet.aim('instructor')) > 120, 'looking away before the talk');
+    // the mouse captured for walking (nothing in front for the click to use; the lock's first movement used up, the view
+    // put back where it was)
+    assert.equal(await ev((ins) => window.__cadet.lookAt(ins.a + 8, ins.c - 0.6, 1.5), ins), null, 'nothing in front');
+    await g.page.mouse.click(300, 90);
+    await g.page.waitForFunction(() => window.__cadet.lock.on(), null, { timeout: 5000 });
+    await g.page.waitForTimeout(200); await sim(0.05);
+    await ev((ins) => window.__cadet.placeWalker(ins.a + 2.4, ins.c - 0.6, { a: ins.a + 8, c: ins.c - 0.6 }), ins);
     await ev(() => window.__cadet.settings.set('textSpeed', 0.5));              // (slow: a line is still typing when it is looked at)
     assert.equal(await ev(() => window.__cadet.career.talkTo('instructor')), 'talk');
     assert.deepEqual(await ev(() => window.__cadet.talkView()), { face: 'person', out: 0 });
     await sim(1);
     let aim = await ev(() => window.__cadet.aim('instructor'));
     assert.ok(aim < 4, `turned to his face: ${aim.toFixed(1)}° off`);
+    await g.page.waitForTimeout(300);
+    assert.equal(await ev(() => window.__cadet.lock.on()), true, 'a talk begun with the mouse captured keeps it');
     assert.equal((await ev(() => window.__cadet.talkView())).face, null, 'the turn is over after a moment');
     // the first line (how the cadet feels) answered; the next one types
     await ev(() => window.__cadet.dialogChoose('問題ありません'));
@@ -98,10 +109,21 @@ describe('talk view', { skip: !chromium && 'Playwright not found', timeout: 1800
     // (the line typed out: the next click goes on to the next one)
     await ev(() => window.__cadet.dialogReveal());
     d0 = await dialog();
+    // a drag out and back to near where it began is still a look, not a click
+    y0 = await yaw();
+    await g.page.mouse.move(300, 90); await g.page.mouse.down();
+    await g.page.mouse.move(450, 90, { steps: 8 }); await g.page.mouse.move(303, 90, { steps: 8 });
+    await g.page.mouse.up();
+    await sim(0.1);
+    assert.notEqual(await yaw(), y0, 'out and back: it looked round');
+    await g.page.waitForTimeout(650);
+    d1 = await dialog();
+    assert.deepEqual([d1.node, d1.typing], [d0.node, d0.typing], 'out and back: the same line');
     // a plain click on the view still is a click: on to the next line
     await g.page.mouse.click(300, 90);
     d1 = await dialog();
     assert.notEqual(d1.node, d0.node, `a click goes on: ${JSON.stringify([d0.node, d0.text, d1.node])}`);
+    await unlock(); await sim(0.05);   // (the lock that click asked for: its first mousemove — the click's place — used up before the turn)
     // the lecture's turn to a point (autoFace): the view goes there for a moment …
     const pt = { a: ins.a + 1.2, c: ins.c + 3.5, y: 1.6 };
     assert.equal(await ev((p) => window.__cadet.faceTo(p.a, p.c, p.y), pt), true);
@@ -142,6 +164,15 @@ describe('talk view', { skip: !chromium && 'Playwright not found', timeout: 1800
     await g.page.keyboard.down('ArrowLeft'); await sim(0.6); await g.page.keyboard.up('ArrowLeft');
     let p2 = await ev(() => window.__cadet.player());
     assert.ok(Math.hypot(p2.a - p1.a, p2.c - p1.c) > 0.3, `← walked ${Math.hypot(p2.a - p1.a, p2.c - p1.c).toFixed(2)} m`);
+    // the textbook over the talk: ← → (a reader turning pages) and W A S D do not walk behind it; Esc closes it
+    await sim(0.5);                                                            // (the step before has died away)
+    assert.equal(await ev(() => window.__cadet.readSection('aero.forces')), true);
+    p1 = await ev(() => window.__cadet.player());
+    await g.page.keyboard.down('ArrowRight'); await g.page.keyboard.down('KeyW'); await sim(0.6); await g.page.keyboard.up('KeyW'); await g.page.keyboard.up('ArrowRight');
+    p2 = await ev(() => window.__cadet.player());
+    assert.ok(Math.hypot(p2.a - p1.a, p2.c - p1.c) < 0.05, `no walk behind the textbook: ${Math.hypot(p2.a - p1.a, p2.c - p1.c).toFixed(3)} m`);
+    await g.page.keyboard.press('Escape');
+    assert.equal((await dialog()).bookOpen, false, 'the textbook closed');
     // E and a click: the conversation's only. Briefing room 1's door in front, looked at (with no talk, E would open it)
     await ev(() => { const C = window.__cadet; C.setMode('spectator'); C.setMode('walk'); C.placeWalker(643.1, 259.6, { a: 643.1, c: 261.0 }); });
     assert.equal(await ev(() => window.__cadet.lookAt(643.1, 261.0, 1.1)), 'door:d-brief-1');
@@ -173,6 +204,14 @@ describe('talk view', { skip: !chromium && 'Playwright not found', timeout: 1800
     await g.page.waitForTimeout(650);
     d0 = await dialog();
     assert.deepEqual([d0.choices.length, await ev(() => window.__cadet.lock.on())], [0, true], 'a line, the mouse captured');
+    // the captured mouse looks round while the line is up (its movement as the browser gives it with the lock on;
+    // no drag factor: sensitivity 1)
+    const yc = await yaw();
+    await ev(() => document.dispatchEvent(new MouseEvent('mousemove', { movementX: 100, movementY: 0 })));
+    await sim(0.1);
+    assert.ok(Math.abs(await yaw() - (yc - 100 * 0.0022)) < 1e-6, 'the captured mouse looks round during a line');
+    assert.equal((await dialog()).node, d0.node, 'the same line');
+    assert.equal(await ev(() => window.__cadet.lock.on()), true, 'still captured');
     await g.page.mouse.click(300, 90); await sim(0.5);
     d1 = await dialog();
     assert.ok(d1.node !== d0.node || d0.typing !== d1.typing, 'a captured click goes on');
@@ -181,7 +220,7 @@ describe('talk view', { skip: !chromium && 'Playwright not found', timeout: 1800
     assert.equal((await ev(() => window.__cadet.player())).place, 'ブリーフィング室 1');
   });
 
-  test('walking: the choices are still picked with 1–9 and with a click (the mouse let go for them, captured again after)', async () => {
+  test('walking: the choices are still picked with 1–9 and with a click (the mouse let go for them, captured again after the 1–9 pick)', async () => {
     let v = await toChoices();
     assert.ok(v && v.choices.length > 1, `a list: ${JSON.stringify(v && v.choices)}`);
     await ev(() => window.__cadet.dialogReveal());
@@ -191,6 +230,8 @@ describe('talk view', { skip: !chromium && 'Playwright not found', timeout: 1800
     await g.page.keyboard.press('Digit1');
     let w = await dialog();
     assert.notEqual(w.node, v.node, `1 picked "${v.choices[0].text}"`);
+    // (a line next: the key that picked took the mouse back)
+    if (!w.choices.length) await g.page.waitForFunction(() => window.__cadet.lock.on(), null, { timeout: 5000 });
     // the next list: a click on its first choice
     v = await toChoices();
     assert.ok(v && v.choices.length, 'another list');

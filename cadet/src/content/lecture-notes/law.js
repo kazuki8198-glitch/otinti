@@ -6,17 +6,16 @@ export default {
       '規則の章は、機長の責任から始まります。ソロの日からは、この機長があなた自身です。',
     ],
     notes: [
-      '91.3 は、その飛行機の運航について、機長が最終的な権限を持つという規則です。船の船長と同じだと思ってください。',
+      '機長は、船の船長と同じだと思ってください。その飛行機の上で、最後に決める人はひとりです。',
       // src: AIM 4-4-1 (a clearance does not relieve the pilot in command of responsibility); 14 CFR 91.3(a)
       '決める権限があるので、結果の責任も機長にあります。「管制がそう言ったから」は、機長の言い訳になりません。',
-      // src: 14 CFR 91.3(b)(c) (an in-flight emergency requiring immediate action; a written report on request)
-      '飛行中の緊急で、すぐに動く必要があるときは、必要な範囲で規則から外れてかまいません。報告は、後で求められたら出します。',
-      // src: 14 CFR 91.103 (all available information concerning that flight; (b) runway lengths and distances for any flight)
-      '91.103 では、その飛行について手に入る情報をすべて確かめます。どの飛行でも、滑走路の長さと、離陸と着陸に要る距離は必ず見ます。',
-      // src: 14 CFR 91.103(a) (IFR or a flight not in the vicinity of an airport)
-      '空港の近くを離れる飛行や IFR では、天気の報告と予報、燃料、行けなかったときの代わりの案、管制から知らされた遅れも調べます。',
+      // src: 14 CFR 91.123(c) (a pilot in command who deviates from an ATC clearance or instruction in an emergency notifies
+      // ATC as soon as possible)
+      '緊急で管制の指示から外れたときは、落ち着いてから、できるだけ早く管制に伝えます。',
+      // src: 14 CFR 91.103(b) (runway lengths and takeoff and landing distances, for any flight); the textbook's perf.tol
+      '場周を回るだけの短い飛行でも、要る距離は省けません。暑い日や重い日は、第 3 章の表のとおり距離が延びます。',
       // src: 14 CFR 91.7(b) (discontinue the flight when unairworthy mechanical, electrical or structural conditions occur)
-      '91.7 で、飛べる状態かどうかを判断するのは機長です。飛行中に機械・電気・構造の不具合で飛べる状態でなくなったら、その飛行はやめます。',
+      '飛行中に機械・電気・構造の不具合で飛べる状態でなくなったら、その飛行はやめます。判断するのは機長です。',
       '機内の書類は ARROW で確かめます。無線局免許は国外へ飛ぶときだけ要るので、ふだんの訓練で見るのは残りの 4 つです。',
       'よくある間違いは、準備を「行けるかどうか」で終えることです。行けなかったときにどこへ向かうかまで決めて、準備完了です。',
     ],
@@ -35,7 +34,7 @@ export default {
     ],
     notes: [
       // src: 14 CFR 1.1 (flight visibility: the average forward horizontal distance from the cockpit of an aircraft in flight)
-      '表は、左の列が空域、真ん中が飛行視程、つまり操縦席から前に見える距離です。右の列が、雲からどれだけ離れるかです。',
+      { page: 'tab:0', text: '表は、左の列が空域、真ん中が飛行視程、つまり操縦席から前に見える距離です。右の列が、雲からどれだけ離れるかです。' },
       'Class C・D と、10,000 ft MSL 未満の Class E は同じで、3 SM、雲の下 500 ft・上 1,000 ft・横 2,000 ft です。これが 3-152 です。',
       // src: 14 CFR 91.117(a) (250 KIAS below 10,000 ft MSL: the textbook's law.rules); the usual teaching of why the minima grow there
       '10,000 ft MSL 以上の Class E は、5 SM、雲の上下 1,000 ft、横 1 SM と厳しくなります。250 kt の制限がなく、速い機体と出会う高さだから、と覚えてください。',
@@ -46,7 +45,7 @@ export default {
       '3-152 の空域では、雲を見えない箱で包んだと考えてください。下へ 500 ft、上へ 1,000 ft、横へ 2,000 ft の箱で、その箱にも入りません。',
       // src: CADET's ATIS on a low-cloud day (content/dialog/atc.js); 14 CFR 1.1 (ceiling: the lowest broken or overcast
       // layer, above the surface); 91.155(c)
-      'ATIS で “Ceiling eight hundred broken” と聞いたら、雲高は地上 800 ft です。地表区域の中では、VFR で雲の下を飛べません。',
+      'ATIS で “Ceiling eight hundred broken” と聞いたら、雲高は地上 800 ft です。1,000 ft に足りない日だ、とすぐに気づけるようにします。',
       // src: 14 CFR 91.155(d) (ground visibility when it is reported, otherwise flight visibility; take-off, landing and the pattern)
       '地上視程は、空港で報告される値です。地表区域で離着陸や場周経路に入るときの 3 SM は、報告があれば地上視程で決まります。',
     ],
@@ -64,10 +63,10 @@ export default {
     notes: [
       // (the airspace figure as drawn: Class A band on top, Class B's steps in the middle, Class C on the right with
       // "5 NM / 10 NM", the dashed Class D on the left, the labels of E and G)
-      'さきほどの図は、空を横から切った断面です。下が地面で、上へ行くほど高く、色ごとに空域が分かれています。',
+      { page: 'fig:0', text: 'さきほどの図は、空を横から切った断面です。下が地面で、上へ行くほど高く、色ごとに空域が分かれています。' },
       'いちばん上の Class A は 18,000 ft MSL から上で、計器飛行だけです。真ん中の段々が大空港の Class B で、上ほど広がります。',
       '右の Class C は中くらいの空港で、半径 5 NM のコアと 10 NM の棚があります。左の小さな Class D は、管制塔のある小さめの空港です。',
-      'A〜D 以外の管制空域が Class E で、多くは地上 700 ft か 1,200 ft から上です。その下の地表付近が、非管制の Class G です。',
+      '図の下のほうの E と G は、そのほかの空です。広い Class E の下、地面に近い所に Class G があります。',
       '入り方は建物にたとえられます。Class C・D は、受付で名前を呼ばれたら入れます。Class B は、入館証を受け取るまで入れません。',
       // src: AIM 3-2-4 / 3-2-5 (answered with the call sign = established; "Aircraft calling ... tower, standby" = not);
       // LAB Tower and the call sign are CADET's own fictional ones (content/dialog/atc.js)
@@ -96,8 +95,9 @@ export default {
       '最低安全高度の第一は、エンジンが止まっても、地上の人や物を危険にさらさずに降りられる高さです。いつも「今止まったらどこに降りるか」を考えます。',
       // src: 14 CFR 91.119(b)(c) (congested areas and open-air assemblies; over open water or sparsely populated areas)
       '町や人の集まりの上は、半径 2,000 ft 以内でいちばん高い障害物より 1,000 ft 上です。水の上や人の少ない所でも、人・船・車・建物から 500 ft 離れます。',
-      // src: 14 CFR 91.113(d) (balloon, glider, airship…: the less manoeuvrable first is the usual way it is taught)
-      '種類の違う機体が近づくときは、よけにくい機体ほど優先、と考えると覚えやすいです。気球がいちばん優先です。',
+      // src: 14 CFR 91.113(d) (balloon; glider; (d)(3) an aircraft towing or refueling other aircraft has the right-of-way
+      // over all other engine-driven aircraft, an airship among them); the less manoeuvrable first is the usual way it is taught
+      '種類の違う機体は、よけにくい順に優先です。規則では気球、グライダー、曳航・給油中の機、飛行船、動力機の順で、曳航中の機は飛行船より先です。',
       // src: 14 CFR 91.113(d) (converging: the aircraft to the other's right); 道路交通法 36 条 (Japan's roads: the car
       // from the left first at an uncontrolled crossing), given only as the contrast
       '同じ種類が交わるときは、右側の機が優先です。相手が自分の右に見えたら、よけるのは自分です。日本の信号のない交差点の「左方優先」とは逆です。',
@@ -134,7 +134,7 @@ export default {
       // src: AIM 3-5-3 / 14 CFR 91.137–91.145 (TFRs issued by NOTAM); the q_law bank (TFRs are not on the chart)
       'TFR の多くは、決まった日時だけの制限なので、航空図には載っていません。NOTAM で確かめます。',
       '災害や大きな催し、ロケットの打ち上げなど、前の日にはなかった制限が、当日に出ることもあります。',
-      'NOTAM には、滑走路や誘導路の閉鎖も載ります。誘導路が閉まっていれば、タキシーの道順が変わります。',
+      '誘導路が NOTAM で閉まっていれば、タキシーの道順が変わります。地上管制の指示をよく聞きます。',
       'よくある間違いは、前の日に読んだ NOTAM で済ませることです。出発の直前に、もう一度最新のものを確かめます。',
     ],
     ask: {

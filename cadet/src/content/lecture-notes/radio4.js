@@ -36,13 +36,13 @@ export default {
       // src: AIM 2-3-5 (runway holding position markings: two solid and two dashed yellow lines, the solid lines on the
       //   side where the aircraft holds)
       '停止線は黄色の 2 本の実線と 2 本の破線です。実線の側が止まる側で、許可なしに越えてはいけません。',
-      '地上走行の指示には “cleared” という言葉が使われません。“taxi” は通ってよい道順で、離陸の許可とはまったく別のものです。',
+      '“taxi” は通ってよい道順で、離陸の許可とはまったく別のものです。',
       'ランナップは決められた場所で行い、終わってから滑走路の手前で Tower に変えます。それまでは Ground を聞いています。',
       // src: the textbook's ground.start (on the ground, when in doubt, stop and ask ATC)
       '道順に自信がなければ、止まって Ground に聞きます。推測で進まないことが、地上の安全の基本です。',
     ],
     ask: {
-      q: 'Ground から “departure frequency one one niner point seven five, squawk four two seven one” と言われました。復唱に入れるのはどれですか。',
+      q: 'Ground に “departure frequency one one niner point seven five, squawk four two seven one” と言われました。復唱に入れるのは？',
       opts: ['周波数だけ', 'コードだけ', 'どちらも入れずに Roger', '周波数とコードの両方'],
       ok: 3,
       why: '周波数とコードは数字なので、必ず復唱します。道順と合わせて言われた順に返し、最後にコールサインです。',
@@ -80,10 +80,10 @@ export default {
       '“radar contact” は、管制官がレーダーの画面であなたの機を識別した、という意味です。',
       // src: Pilot/Controller Glossary (resume own navigation); the textbook's exchange (the service ends with
       //   "radar service terminated")
-      '“Resume own navigation” は、自分で航法を続けよ、です。レーダー業務の終わりは “radar service terminated” です。',
+      'レーダー業務の終わりは “radar service terminated” です。そこからは、自分で見張りと航法をします。',
       '交通情報は時計の文字盤で考えます。機首が 12 時、右の翼が 3 時、尾が 6 時、左の翼が 9 時です。',
       // src: AIM 4-1-15 (the controller sees only the aircraft's track on the display)
-      '管制官の画面に見えるのは進む方向だけです。風で機首がずれているときは、言われた方位から少しずれた所も探します。',
+      '管制官の画面に見えるのは、機首の向きではなく進む方向だけです。言われた時計の方位が少しずれるのは、そのためです。',
       // src: the textbook's comm.readback (Traffic in sight, Looking, Negative contact)
       '見えたら “Traffic in sight”、探している間は “Looking”、見えないままなら “Negative contact” です。',
       '見えていないのに “Traffic in sight” と言ってはいけません。管制官は、それを前提に次の指示を考えます。',

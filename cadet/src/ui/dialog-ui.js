@@ -239,7 +239,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   let cur = null, gen = 0, actedGen = -1, actedAt = 0;
   let chars = [], at = [], shown = 0, progress = 0, last = 0, typing = false, timer = 0, timerIsRaf = false;
   let buttons = [], sel = -1, choicesAt = 0;
-  let armed = false, bookDown = false, prevFocus = null, spoke = false, downX = 0, downY = 0;
+  let armed = false, bookDown = false, prevFocus = null, spoke = false, downX = 0, downY = 0, moved = false;
 
   const speed = () => {
     const v = settings && typeof settings.get === 'function' ? Number(settings.get('textSpeed')) : 1;
@@ -614,7 +614,9 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   }
   // A click goes on only when it also began while the subtitle was up (the click that started the talk does not skip
   // the first line). Clicks elsewhere count only on the bare 3D view (with the pointer locked, the canvas gets them).
-  function onDown(e) { armed = open && !bookOpen && !destroyed && !otherModal(e.target); downX = e.clientX || 0; downY = e.clientY || 0; }
+  function onDown(e) { armed = open && !bookOpen && !destroyed && !otherModal(e.target); downX = e.clientX || 0; downY = e.clientY || 0; moved = false; }
+  // (a drag that looked away and came back near where it began is still a drag: once past DRAG_PX, never a click)
+  function onMove(e) { if (armed && !moved && (e.buttons & 1) && Math.hypot((e.clientX || 0) - downX, (e.clientY || 0) - downY) > DRAG_PX) moved = true; }
   function onWorldClick(e) {
     if (!open || bookOpen || destroyed || (e.button !== undefined && e.button !== 0)) return;
     const t = e.target;
@@ -622,9 +624,9 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     if (!(t === doc.body || t === doc.documentElement || t === doc || t === win || (t && t.tagName === 'CANVAS'))) return;
     if (!armed) return;
     armed = false;
-    // (a drag on the view looked round: Alt held, or the pointer moved with the button down; with the pointer
-    // captured it does not move, so every press there is a click)
-    if (e.altKey || Math.hypot((e.clientX || 0) - downX, (e.clientY || 0) - downY) > DRAG_PX) return;
+    // (a drag on the view looked round: Alt held, or the pointer moved with the button down, at any time during the
+    // press; with the pointer captured it does not move, so every press there is a click)
+    if (e.altKey || moved || Math.hypot((e.clientX || 0) - downX, (e.clientY || 0) - downY) > DRAG_PX) return;
     advance();
   }
   function onWrapClick(e) {
@@ -648,6 +650,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   });
   win.addEventListener('keydown', onKey, true);
   win.addEventListener('pointerdown', onDown, true);
+  win.addEventListener('pointermove', onMove, true);
   win.addEventListener('click', onWorldClick, true);
 
   return {
@@ -672,6 +675,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
       destroyed = true;
       win.removeEventListener('keydown', onKey, true);
       win.removeEventListener('pointerdown', onDown, true);
+      win.removeEventListener('pointermove', onMove, true);
       win.removeEventListener('click', onWorldClick, true);
       if (offSettings) offSettings();
       el.remove();

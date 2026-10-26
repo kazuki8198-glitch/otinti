@@ -137,7 +137,7 @@ test('walker: round a corner a wall that pushes it out of the circle does not ca
   }
 });
 
-test('walker: update takes the caller\'s look, says when the keys ask to move, and leaves ↑↓ to a talk\'s choices', () => {
+test('walker: update takes the caller\'s look, says when the keys ask to move, leaves ↑↓ to a talk\'s choices, and holds still under a panel', () => {
   const keys = new Set();
   const inp = { takeLook: () => { throw new Error('the caller took the look already'); }, down: (c) => keys.has(c) };
   const w = createWalker({ camera: new THREE.PerspectiveCamera(75, 1, 0.1, 100), world: createCollisionWorld(), L: { G: 0, frameYaw: 0 }, input: inp, settings });
@@ -149,4 +149,14 @@ test('walker: update takes the caller\'s look, says when the keys ask to move, a
   assert.equal(w.update(1 / 60, { look: { x: 0, y: 0 } }), true);
   keys.clear(); keys.add('KeyA');
   assert.equal(w.update(1 / 60, { look: { x: 0, y: 0 }, upDown: false }), true, 'A (and ←→) still walk');
+  // (the textbook over a talk: ← → and W A S D do not walk, the walk dies away; the look still turns)
+  keys.clear(); keys.add('ArrowRight'); keys.add('KeyW');
+  for (let k = 0; k < 30; k++) w.update(1 / 60, { look: { x: 0, y: 0 } });
+  const y0 = w.state.yaw, x0 = w.state.x, z0 = w.state.z;
+  assert.equal(w.update(1 / 60, { look: { x: 50, y: 0 }, still: true }), false, 'no key asks to move');
+  for (let k = 0; k < 60; k++) w.update(1 / 60, { look: { x: 0, y: 0 }, still: true });
+  const vx = w.state.vx, vz = w.state.vz;
+  assert.ok(Math.hypot(vx, vz) < 1e-3, `the walk died away (${Math.hypot(vx, vz)})`);
+  assert.ok(Math.hypot(w.state.x - x0, w.state.z - z0) < 0.25, 'a short glide to a stop, no walk');
+  assert.ok(Math.abs(w.state.yaw - (y0 - 50 * 0.0022)) < 1e-12, 'the look still turns');
 });

@@ -381,11 +381,23 @@
       return svg(400, 186, s, '図：静安定のたとえ（くぼみ・平ら・山の上の玉）。飛行機は、縦（ピッチ）と方向（ヨー）に正の静安定を持つように作られています');
     },
     windTriangle() {
-      let s = A(60, 220, 260, 40, C.cy, 3) + T(120, 110, '機首方位・真対気速度（TAS）', { c: C.cy, fs: 11, rot: -42 });
-      s += A(260, 40, 330, 90, C.am, 3) + T(330, 60, '風', { c: C.am, fs: 12, b: 1, a: 'start' });
-      s += A(60, 220, 330, 90, C.gr, 3) + T(220, 190, '実際の航跡（track）・対地速度（GS）', { c: C.gr, fs: 11, rot: -26 });
-      s += `<path d="M 118 168 A 80 80 0 0 1 130 184" stroke="${C.rd}" stroke-width="2" fill="none"/>` + T(144, 196, '偏流修正角（WCA）', { c: C.rd, fs: 11, a: 'start' });
-      return svg(400, 240, s, '図：風の三角形。「行きたい航跡」を飛ぶには、風上側に機首を向ける（偏流修正）');
+      // the wind triangle drawn to scale for the wca calculator's default case (true course 090°, TAS 105 kt, wind 030° / 15 kt), and
+      // the chain from true course to compass heading with the course's variation (MAGVAR_W) and an example deviation of +2°
+      const tc = 90, tas = 105, wd = 30, ws = 15, dev = 2, VAR = FL.physics.MAGVAR_W, a = (wd - tc) * DEG, wca = Math.asin(ws * Math.sin(a) / tas) / DEG, gs = tas * Math.cos(wca * DEG) - ws * Math.cos(a);
+      const th = tc + wca, k = 2.6, O = [36, 128], dir = h => [Math.sin(h * DEG), -Math.cos(h * DEG)];
+      const H = [O[0] + tas * k * dir(th)[0], O[1] + tas * k * dir(th)[1]], G = [H[0] + ws * k * dir(wd + 180)[0], H[1] + ws * k * dir(wd + 180)[1]];
+      let s = A(O[0], O[1], H[0], H[1], C.cy, 3) + A(H[0], H[1], G[0], G[1], C.am, 3) + A(O[0], O[1], G[0], G[1], C.gr, 3);
+      s += T(170, 84, `真対気速度 ${tas} kt・真針路 ${String(Math.round(th)).padStart(3, '0')}°`, { c: C.cy, b: 1, fs: 12, halo: 1 });
+      s += TL(H[0] + 8, H[1] + 4, ['風', `${String(wd).padStart(3, '0')}°/${ws} kt`], { c: C.am, b: 1, a: 'start', fs: 12, lh: 15 });
+      s += T(150, O[1] + 22, `対地速度 ${Math.round(gs)} kt・真航路 ${String(tc).padStart(3, '0')}°`, { c: C.gr, b: 1, fs: 12 });
+      s += `<path d="M ${O[0] + 120} ${O[1]} A 120 120 0 0 0 ${(O[0] + 120 * dir(th)[0]).toFixed(1)} ${(O[1] + 120 * dir(th)[1]).toFixed(1)}" stroke="${C.rd}" stroke-width="2.5" fill="none"/>` + L(O[0] + 120, O[1] - 7, O[0] + 112, O[1] + 30, C.rd, 1);
+      s += T(O[0], O[1] + 44, `偏流修正角 ${Math.round(Math.abs(wca))}°（機首を風上の左へ）`, { c: C.rd, b: 1, a: 'start', fs: 12, halo: 1 });
+      s += A(380, 62, 380, 30, C.mut, 2) + T(380, 76, '北', { c: C.mut, fs: 12 });
+      // the chain: true course → true heading → magnetic heading → compass heading
+      const vals = [['真航路 TC', tc], ['真針路 TH', th], ['磁針路 MH', th + VAR], ['コンパス針路', th + VAR + dev]], steps = [`風 −${Math.round(Math.abs(wca))}°`, `西偏 ＋${VAR}°`, `自差 ＋${dev}°`];
+      vals.forEach(([n, v], i) => { const x = 4 + i * 100; s += `<rect x="${x}" y="182" width="86" height="50" rx="8" fill="${C.cy}" fill-opacity="0.1" stroke="${C.cy}"/>` + T(x + 43, 202, n, { c: C.ink, fs: 12 }) + T(x + 43, 222, `${String(Math.round(v)).padStart(3, '0')}°`, { c: C.ink, b: 1, fs: 14 }); if (i < 3) s += A(x + 88, 207, x + 102, 207, C.ink, 2) + T(x + 93, 250, steps[i], { c: C.am, b: 1, fs: 12 }); });
+      s += T(200, 276, `磁航路 MC ＝ 真航路 ＋ 西偏 ＝ ${String(tc + VAR).padStart(3, '0')}°（VFR の巡航高度の規則に使う）`, { c: C.mut, fs: 12 });
+      return svg(400, 288, s, `図：風の三角形（真航路 ${String(tc).padStart(3, '0')}°・真対気速度 ${tas} kt・風 ${String(wd).padStart(3, '0')}°/${ws} kt の例を縮尺どおりに描いたもの）と、真航路からコンパス針路までの計算の順番。偏差の ${VAR}°W はこの教材の値、自差の ＋${dev}° は例です`);
     },
     holding() {
       let s = `<circle cx="120" cy="120" r="6" fill="${C.am}"/>` + T(120, 142, 'フィックス（VOR 等）', { c: C.am, fs: 11 });
@@ -1488,6 +1500,47 @@
         if (i < steps.length - 1) { s += A(200, y + 1, 200, y + 13, C.mut, 2); y += 14; }
       });
       return svg(400, y + 6, s, '図：初めてのソロまでの道のりと、その先（14 CFR Part 61 の要点。訓練校の段階審査は Part 141）。承認は学生操縦士証明ではなく、ログブックに書きます（61.87(n)）');
+    },
+    // ---------------------------------------------------------------- 第 18 章 navp（地図・飛行計画）
+    sectionalSymbols() {
+      // a schematic sectional around the fictional LAB (north up), drawn with the symbols of the FAA Chart Users' Guide (2026-07-09):
+      // positions from the app's waypoints and navaids (avionics.js), LAB's elevation (GROUND_FT), runway length (LAB_RWY, charted in
+      // hundreds of feet with 70 as the rounding point) and the Class C rings of the radio chapters (5 / 10 NM, 4,000 ft above the field)
+      const PH = FL.physics, AV = FL.avionics, M = '#e05ab4', BL = '#4aa3ff', k = 0.0081, LX = 170, LY = 190;
+      const lab = AV.WAYPOINTS.find(w => w.id === 'LABRW'), P = (n, e) => [LX + (e - lab.e) * k, LY - (n - lab.n) * k];
+      const elev = Math.round(PH.GROUND_FT), lenFt = PH.LAB_RWY.len * 3.2808, rwy = Math.floor((lenFt + 30) / 100), top = Math.round((elev + 4000) / 100), shelf = Math.round((elev + 1200) / 100);
+      const NMk = 1852 * k, tag = (x, y, n) => `<circle cx="${x}" cy="${y}" r="10" fill="${C.am}" stroke="${C.bg}" stroke-width="2"/>` + T(x, y + 4.5, n, { c: C.bg, b: 1, fs: 12 });
+      let s = `<rect x="0" y="0" width="400" height="350" fill="#13202f"/>`;
+      // a lake, the isogonic line, the MEF
+      s += `<ellipse cx="92" cy="276" rx="34" ry="18" fill="#2b5f8a" opacity="0.8"/>`;
+      s += L(14, 4, 60, 346, M, 1.5, '8 6') + T(44, 214, `${PH.MAGVAR_W}°W`, { c: M, b: 1, a: 'start', fs: 12, halo: 1 });
+      s += `<text x="336" y="64" fill="${C.ink}" font-size="34" font-weight="700" text-anchor="middle">2</text><text x="352" y="46" fill="${C.ink}" font-size="18" font-weight="700">5</text>`;
+      // Class C: the 5 NM surface area and the 10 NM shelf, solid magenta, with ceiling / floor in hundreds of feet MSL
+      s += `<circle cx="${LX}" cy="${LY}" r="${(5 * NMk).toFixed(1)}" fill="none" stroke="${M}" stroke-width="2.5"/><circle cx="${LX}" cy="${LY}" r="${(10 * NMk).toFixed(1)}" fill="none" stroke="${M}" stroke-width="2.5"/>`;
+      const box = (x, y, a, b) => `<rect x="${x - 19}" y="${y - 15}" width="38" height="34" rx="3" fill="#13202f"/>` + T(x, y, a, { c: M, b: 1, fs: 12 }) + L(x - 13, y + 3, x + 13, y + 3, M, 1.2) + T(x, y + 15, b, { c: M, b: 1, fs: 12 });
+      s += box(LX - 46, LY - 40, top, 'SFC') + box(LX - 92, LY - 92, top, shelf);
+      // the VOR compass rose and its box
+      const vor = AV.NAVAIDS.find(n => n.id === 'LBV'), [vx, vy] = P(vor.n, vor.e);
+      s += `<circle cx="${vx.toFixed(1)}" cy="${vy.toFixed(1)}" r="26" fill="none" stroke="${BL}" stroke-width="1.2"/>`;
+      for (let a = 0; a < 360; a += 30) { const r0 = a % 90 ? 21 : 17, t = (a - PH.MAGVAR_W) * DEG; s += L((vx + r0 * Math.sin(t)).toFixed(1), (vy - r0 * Math.cos(t)).toFixed(1), (vx + 26 * Math.sin(t)).toFixed(1), (vy - 26 * Math.cos(t)).toFixed(1), BL, 1.2); }
+      s += A(vx, vy, vx + 22 * Math.sin(-PH.MAGVAR_W * DEG), vy - 22 * Math.cos(-PH.MAGVAR_W * DEG), BL, 1.5) + `<circle cx="${vx.toFixed(1)}" cy="${vy.toFixed(1)}" r="3" fill="${BL}"/>`;
+      s += `<rect x="${(vx + 18).toFixed(1)}" y="${(vy + 18).toFixed(1)}" width="92" height="22" fill="#13202f" stroke="${BL}"/>` + T(vx + 64, vy + 33, `LAB ${(vor.freq / 1000).toFixed(1)} LBV`, { c: BL, b: 1, fs: 12 });
+      // the obstacle at LAB-A (the red tower of lesson n2)
+      const wa = AV.WAYPOINTS.find(w => w.id === 'LABEA'), [ax, ay] = P(wa.n, wa.e);
+      s += `<path d="M${(ax - 5).toFixed(1)} ${(ay + 7).toFixed(1)} L${ax.toFixed(1)} ${(ay - 9).toFixed(1)} L${(ax + 5).toFixed(1)} ${(ay + 7).toFixed(1)}" fill="none" stroke="${C.ink}" stroke-width="1.6"/><circle cx="${ax.toFixed(1)}" cy="${(ay + 7).toFixed(1)}" r="1.8" fill="${C.ink}"/>`;
+      const twr = 330;   // the scene's landmark tower at LAB-A is about 100 m tall (scene.js), ≈ 330 ft above the ground
+      s += T(ax + 8, ay - 4, `${elev + twr}`, { c: C.ink, b: 1, a: 'start', fs: 12, halo: 1 }) + T(ax + 8, ay + 11, `(${twr})`, { c: C.ink, a: 'start', fs: 12, halo: 1 });
+      // LAB: a towered airport (blue) with a hard-surfaced runway, a beacon (star on top) and its data block
+      s += `<circle cx="${LX}" cy="${LY}" r="10" fill="${BL}"/>` + L(LX, LY - 8, LX, LY + 8, C.ink, 3) + `<path d="M${LX} ${LY - 21} l2.4 5 5.4 .6 -4 3.7 1.1 5.3 -4.9 -2.7 -4.9 2.7 1.1 -5.3 -4 -3.7 5.4 -.6 Z" fill="${BL}"/>`;
+      s += TL(LX + 14, LY + 26, ['LAB', 'CT – 118.3', `${elev} L ${rwy} 122.95`], { c: BL, b: 1, a: 'start', fs: 12, lh: 16 });
+      s += tag(LX + 22, LY - 14, '①') + tag(LX + 92, LY + 38, '②') + tag(LX + 122, LY + 54, '③') + tag(LX - 124, LY - 92, '④') + tag(ax - 16, ay - 2, '⑤') + tag(314, 30, '⑥') + tag(vx + 36, vy - 8, '⑦') + tag(46, 252, '⑧');
+      s += A(380, 330, 380, 300, C.mut, 2) + T(380, 344, '北', { c: C.mut, fs: 12 }) + T(8, 344, '模式図（LAB は架空）・NOT FOR NAVIGATION', { c: C.mut, a: 'start', fs: 12, halo: 1 });
+      const key = [['①', ['空港の記号。青は管制塔あり（マゼンタはなし）。上の ★ は回転灯台']], ['②', ['CT – 118.3：管制塔の周波数', '（CT の後に ★ があれば、管制塔は時間を限って運用）']],
+        ['③', [`${elev}：標高（ft）・L：夜の滑走路灯・${rwy}：最長の滑走路`, `（${(Math.round(lenFt / 10) * 10).toLocaleString('en-US')} ft を百 ft 単位で）・122.95：UNICOM`]], ['④', [`マゼンタの実線：Class C 空域。上が上限、下が下限`, `（百 ft・MSL。${top}＝${(top * 100).toLocaleString('en-US')} ft、SFC＝地表）`]],
+        ['⑤', [`障害物（LAB-A の塔）：${elev + 330} は海面から、(330) は地面からの高さ（ft）`]], ['⑥', ['MEF：その区画でいちばん高いものに余裕を足した高さ', '（2⁵ ＝ 2,500 ft MSL。図の外に高い塔がある想定）']], ['⑦', ['VOR のコンパスローズ（0° が磁北）と、名前・周波数・識別符号']], ['⑧', [`等偏差線：真北と磁北の差（この教材は ${PH.MAGVAR_W}°W）`]]];
+      let y = 372;
+      for (const [n, lines] of key) { s += tag(14, y - 4, n) + TL(30, y, lines, { c: C.ink, a: 'start', fs: 12, lh: 16 }); y += lines.length * 16 + 5; }
+      return svg(400, y + 4, s, '図：セクショナルチャートの記号（架空の LAB 空港のまわりを描いた模式図。記号は FAA Chart Users\' Guide のもの）。本物のチャートは 56 日ごとに改訂されるので、いつも最新の版を使います');
     },
   };
 

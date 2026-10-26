@@ -393,7 +393,7 @@ ${FIG.patternCalls()}
 <p>帰る前に、LAB の ATIS を聞き直します。記号が B から C に変わっていれば、内容が新しくなっています。</p>
 ${say([['ATIS', 'LAB information Charlie. One five five three Zulu. Wind three six zero at one zero. Visibility one zero. Scattered clouds at four thousand. Temperature three two, dew point two two. Altimeter three zero zero zero. Landing and departing runway three six. Advise on initial contact you have information Charlie.',
   'LAB の情報 C。15:53 UTC。風 360° 10 kt。視程 10 SM。4,000 ft に散在する雲。気温 32℃・露点 22℃。高度計 30.00。滑走路 36。最初の交信で C を聞いたと伝えよ。', '記号が B → C に変わった。新しい高度計 30.00 に合わせる']])}
-<p>帰りは南西へ飛びます。地上 3,000 ft を超える高さで水平に飛ぶなら、南西向き（磁針路 180〜359°）は偶数千 ft＋500 ft（4,500 ft など）です（14 CFR 91.159）。この例では、雲の下に十分に離れて、地上 3,000 ft より低い 2,500 ft で帰ります。</p>
+<p>帰りは南西へ飛びます。地上 3,000 ft を超える高さで水平に飛ぶなら、南西向き（磁航路 180〜359°）は偶数千 ft＋500 ft（4,500 ft など）です（14 CFR 91.159）。この例では、雲の下に十分に離れて、地上 3,000 ft より低い 2,500 ft で帰ります。</p>
 ${say([
   ['P', `LAB Approach, ${CS}, student pilot, one five miles northeast, two thousand five hundred, squawking one two zero zero, with information Charlie, landing LAB.`, 'LAB 進入管制へ。学生操縦士。北東 15 マイル、2,500 ft、コード 1200、ATIS C を聞いた、LAB に着陸したい。', '位置・高度・コード・行き先を言う（AIM 3-2-4 は、Class C の業務を頼むことも挙げている）。Class C の境界より十分手前で呼ぶ'],
   ['Approach', `${CS}, LAB Approach, squawk zero four two five and ident.`, 'コード 0425 にして IDENT ボタンを押せ。', 'コールサインを付けて応えたので、交信が確立した（AIM 3-2-4）。Ident：トランスポンダーの識別の機能（PCG）'],
@@ -442,7 +442,7 @@ ${bk.sim('課目「場周経路」は、着陸許可の復唱から始まりま�
       { q: '着陸して滑走路を出た。Ground に変えるのはいつ？', choices: ['接地したらすぐ', '滑走路を出たらすぐ', '停止線を越えて止まり、管制塔に「contact ground」と言われてから', '駐機場に着いてから'], answer: 2, why: 'AIM 4-3-14・4-3-21：着陸した機は、言われるまで管制塔の周波数にいる。滑走路を出たら、別の指示がなければ停止線を越えて止まる。' },
       { q: '交通情報「traffic, one o\'clock, four miles, westbound」の「one o\'clock」の基準は？', choices: ['北', '機首の方向', '進んでいる方向（航跡）', '滑走路の方向'], answer: 2, why: 'AIM 4-1-15：管制官のレーダーに見えるのは航跡だけなので、航跡が 12 時。クラブしていると、他機は言われた方位からずれて見える。' },
       { q: 'ATIS の information Bravo を聞いた。最初の交信で何と言う？', choices: ['have numbers', 'with information Bravo', 'ATIS の内容を全部読み上げる', '何も言わない'], answer: 1, why: 'AIM 4-1-13：ATIS の記号を言うと、管制官は内容をくり返さずにすむ。“have numbers” は ATIS を聞いた意味にならない。' },
-      { q: '南西へ向かう VFR で、地上 3,000 ft を超える高さを水平に飛ぶ。正しい高度は？（地面は海面の高さとする）', choices: ['3,500 ft', '4,500 ft', '4,000 ft', '5,000 ft'], answer: 1, why: '14 CFR 91.159：磁針路 180〜359° は偶数千 ft＋500 ft。3,500 ft は 0〜179° の高度。' },
+      { q: '南西へ向かう VFR で、地上 3,000 ft を超える高さを水平に飛ぶ。正しい高度は？（地面は海面の高さとする）', choices: ['3,500 ft', '4,500 ft', '4,000 ft', '5,000 ft'], answer: 1, why: '14 CFR 91.159：磁航路 180〜359° は偶数千 ft＋500 ft。3,500 ft は 0〜179° の高度。' },
     ],
     refs: [R.aim41, R.aim42, R.aim43, R.aim44, R.aim32, R.aim52, R.jo71, R.pcg, R.cfr91], lessons: ['t1', 't2', 't4'] });
 

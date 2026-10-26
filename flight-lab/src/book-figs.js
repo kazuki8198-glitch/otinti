@@ -1248,6 +1248,51 @@
       s += T(200, 304, '出発前から着陸まで、何度も回す', { c: C.ink, fs: 12 });
       return svg(400, 316, s, '図：判断の 3P モデル（PHAK 第 2 章）。PAVE で危険に気づき、CARE で評価し、TEAM で対策を選んで実行し、また気づくところに戻ります');
     },
+    // ---------------------------------------------------------------- 第 13 章 ground（飛行前の準備・地上での操作）
+    walkaroundRoute() {
+      // the Archer from above and the walk-around route of the published Archer III checklist (2025): cabin → right wing →
+      // nose → left wing → fuselage and tail, with the few numbers it gives (struts 4.5 / 3.25 in, oil 6 qt)
+      const cx = 200, cy = 180, k = 2.1, dash = d => `<path d="${d}" fill="none" stroke="${C.am}" stroke-width="2.5" stroke-dasharray="6 5"/>`;
+      let s = planeTop(cx, cy, k);
+      const tag = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="13" fill="${c}" stroke="${C.bg}" stroke-width="2"/>` + T(x, y + 5, n, { c: C.bg, b: 1, fs: 13 });
+      // the route, counter-clockwise seen from above (right wing first)
+      s += dash(`M ${cx + 20} ${cy + 4} Q ${cx + 110} ${cy + 40} ${cx + 152} ${cy + 52}`) + A(cx + 140, cy + 49, cx + 152, cy + 52, C.am, 2.5);
+      s += dash(`M ${cx + 172} ${cy + 36} Q ${cx + 176} ${cy - 120} ${cx + 34} ${cy - 136}`) + A(cx + 46, cy - 135, cx + 34, cy - 136, C.am, 2.5);
+      s += dash(`M ${cx - 34} ${cy - 136} Q ${cx - 176} ${cy - 120} ${cx - 172} ${cy + 36}`) + A(cx - 172, cy + 24, cx - 172, cy + 36, C.am, 2.5);
+      s += dash(`M ${cx - 150} ${cy + 120} Q ${cx - 110} ${cy + 156} ${cx - 34} ${cy + 158}`) + A(cx - 46, cy + 158, cx - 34, cy + 158, C.am, 2.5);
+      s += tag(cx, cy - 30, '①', C.cy) + T(cx + 18, cy - 26, '操縦席', { c: C.cy, b: 1, a: 'start', fs: 12, halo: 1 });
+      s += tag(cx + 162, cy + 52, '②', C.gr) + TL(cx + 160, cy + 82, ['右翼', '燃料・サンプ', '主脚 4.5 in'], { c: C.ink, fs: 12, lh: 15 });
+      s += tag(cx, cy - 140, '③', C.gr) + T(cx - 20, cy - 136, '機首', { c: C.ink, a: 'end', fs: 12, halo: 1 }) + TL(cx + 22, cy - 166, ['オイル最少 6 qt', 'プロペラ・前脚 3.25 in'], { c: C.ink, a: 'start', fs: 12, lh: 15 });
+      s += tag(cx - 162, cy + 52, '④', C.gr) + TL(cx - 160, cy + 82, ['左翼', '燃料・サンプ', 'ピトー・静圧管'], { c: C.ink, fs: 12, lh: 15 });
+      s += tag(cx, cy + 158, '⑤', C.gr) + TL(cx, cy + 188, ['胴体・尾翼', 'スタビレーター・ラダー'], { c: C.ink, fs: 12, lh: 15 });
+      s += T(392, 384, 'ドアは右側', { c: C.mut, a: 'end', fs: 12 });
+      return svg(400, 392, s, '図：Archer の外部点検の順番（上から見た模式図）。公開されている訓練校のチェックリスト（2025 年版）の順で、操縦席 → 右翼 → 機首 → 左翼 → 胴体と尾翼と回ります。数字はそのチェックリストの値');
+    },
+    taxiWind() {
+      // control positions while taxiing in a wind (AFH 3C chapter 2, Figure 2-15): the airplane from above, wind from four quarters
+      let s = planeTop(200, 168, 1.15);
+      const box = (x, y, w, title, lines, c) => `<rect x="${x}" y="${y}" width="${w}" height="74" rx="8" fill="${c}" fill-opacity="0.12" stroke="${c}"/>` + T(x + w / 2, y + 19, title, { c, b: 1, fs: 12 }) + TL(x + w / 2, y + 38, lines, { c: C.ink, fs: 12, lh: 15 });
+      s += box(4, 6, 150, '左前からの風', ['操縦輪を左（風の方）へ', '昇降舵は中立'], C.cy) + box(246, 6, 150, '右前からの風', ['操縦輪を右（風の方）へ', '昇降舵は中立'], C.cy);
+      s += box(4, 256, 150, '左後ろからの風', ['操縦輪を右（風と反対）へ', '前へ押す'], C.am) + box(246, 256, 150, '右後ろからの風', ['操縦輪を左（風と反対）へ', '前へ押す'], C.am);
+      s += A(96, 92, 136, 122, C.cy, 3) + A(304, 92, 264, 122, C.cy, 3) + A(96, 244, 136, 214, C.am, 3) + A(304, 244, 264, 214, C.am, 3);
+      s += T(200, 352, '向かい風：風の方へ　追い風：風と反対へ・前へ', { c: C.ink, b: 1, fs: 12 });
+      return svg(400, 364, s, '図：風があるときのタキシーの操縦輪の位置（AFH 第 2 章の図 2-15 をもとにした模式図。前輪式の飛行機）。矢印は風の向き。向かい風では風上のエルロンを上げ、追い風では風上のエルロンを下げて昇降舵を下げます');
+    },
+    magCheck() {
+      // the run-up magneto check at 2,000 rpm with the published Archer III checklist's limits: drop ≤ 175 rpm, difference ≤ 50 rpm
+      const X = rpm => 96 + (rpm - 1700) / 300 * 250, row = (y, label, rpm, c) => `<rect x="96" y="${y}" width="${X(rpm) - 96}" height="20" rx="3" fill="${c}" fill-opacity="0.75"/>` + T(88, y + 15, label, { c: C.ink, b: 1, a: 'end', fs: 12 }) + T(X(rpm) + 6, y + 15, rpm.toLocaleString('en-US'), { c: C.ink, a: 'start', fs: 12 });
+      let s = '';
+      for (const r of [1700, 1800, 1900, 2000]) s += L(X(r), 34, X(r), 280, C.grid, 1) + T(X(r), 296, r.toLocaleString('en-US'), { c: C.mut, fs: 12 });
+      s += L(X(1825), 34, X(1825), 280, C.rd, 1.5, '5 4') + T(X(1825), 26, '2,000 − 175 = 1,825', { c: C.rd, fs: 12 });
+      s += T(8, 54, 'よい例', { c: C.gr, b: 1, a: 'start', fs: 12 });
+      s += row(62, 'BOTH', 2000, C.mut) + row(88, 'L だけ', 1880, C.gr) + row(114, 'R だけ', 1850, C.gr);
+      s += T(392, 156, '落ち 120・150、差 30 → OK', { c: C.gr, a: 'end', fs: 12 });
+      s += T(8, 182, '悪い例', { c: C.rd, b: 1, a: 'start', fs: 12 });
+      s += row(190, 'BOTH', 2000, C.mut) + row(216, 'L だけ', 1900, C.gr) + row(242, 'R だけ', 1800, C.rd);
+      s += T(8, 318, '悪い例：R の落ち 200（175 を超える）、差 100（50 を超える）', { c: C.rd, a: 'start', fs: 12 });
+      s += T(8, 336, '落ちがゼロも異常（スイッチや配線の故障の疑い）', { c: C.ink, a: 'start', fs: 12 });
+      return svg(400, 346, s, '図：ランナップのマグネトーの点検（2,000 rpm）。公開されている訓練校の Archer III チェックリストの限度は、落ちが最大 175 rpm、左右の差が 50 rpm 以内。棒の長さは回転数（rpm）');
+    },
   };
 
   // ---------------------------------------------------------------- calculators inside the text

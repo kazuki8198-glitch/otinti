@@ -25,10 +25,11 @@ import { makeBot, runLesson } from './helpers/bot.mjs';
 import { createFlight, inWorld, H, MAX_STEPS, WINDS } from '../src/flight/flight.js';
 import { createControls, actionForKey, FLY_HELD, PREFS0 } from '../src/flight/controls.js';
 import { installSorajima } from '../src/flight/sorajima.js';
+import { loadFL, CORE } from './helpers/fl.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const FLSRC = path.join(here, '../../flight-lab/src');
-for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js']) vm.runInThisContext(fs.readFileSync(path.join(FLSRC, m), 'utf8'), { filename: m });
+loadFL(CORE);
 installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL, P = FL.physics, SC = FL.school;
 

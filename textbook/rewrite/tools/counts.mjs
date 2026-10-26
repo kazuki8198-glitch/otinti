@@ -1,9 +1,10 @@
 // textbook/rewrite/tools/counts.mjs [srcDir] — prints the book's fixed numbers (as textbook/test/load.mjs COUNTS) for the
 // FLIGHT LAB sources in srcDir (default: ../../../flight-lab/src), so COUNTS can be updated after a chapter is rewritten.
+// The modules are TEXTBOOK's (textbook/build.mjs FL_MODULES: FLIGHT LAB's one list less what TEXTBOOK leaves out).
 import fs from 'node:fs'; import vm from 'node:vm'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
+import { FL_MODULES as MODS } from '../../build.mjs';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SRC = path.resolve(process.argv[2] || path.join(here, '../../../flight-lab/src'));
-const MODS = ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'book-figs.js', 'book-core.js', 'book-photos.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js'];
 const ctx = vm.createContext({ console, URL }); ctx.globalThis = ctx;
 for (const m of MODS) if (fs.existsSync(path.join(SRC, m))) vm.runInContext(fs.readFileSync(path.join(SRC, m), 'utf8'), ctx, { filename: m });
 const BK = ctx.FL.book, secs = BK.CHAPTERS.flatMap(c => c.secs), sum = k => BK.CHAPTERS.reduce((a, c) => a + (c[k] || []).length, 0);

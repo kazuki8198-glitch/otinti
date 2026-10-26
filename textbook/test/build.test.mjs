@@ -1,6 +1,8 @@
 // TEXTBOOK — build tests (node --test): build() returns the page as a string (nothing is written here).
 //  - one file, nothing loaded from outside (FLIGHT LAB's source URLs are strings and <a href> links: not loads);
 //  - every inline script parses; FLIGHT LAB's 14 modules are inside, in FL_MODULES order, read from flight-lab/src;
+//  - FL_MODULES is FLIGHT LAB's one list of modules (flight-lab/src/modules.mjs) less what this page says it leaves out
+//    (FL_LEAVE_OUT, each with its reason), in the list's order (DESIGN 6.2 rule 7); 14 is changed on purpose with a file;
 //  - the notes are there; no FLIGHT LAB source copied into textbook/; the same sources give the same string.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -8,7 +10,8 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { build, FL_MODULES, FL_SRC } from '../build.mjs';
+import { build, FL_MODULES, FL_LEAVE_OUT, FL_SRC } from '../build.mjs';
+import { MODULES, modulePath } from '../../flight-lab/src/modules.mjs';
 import { NOTICE, SEC_NOTE, APP_NOTE } from './load.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url)), TB = path.resolve(here, '..');
@@ -40,9 +43,18 @@ test('build: every script parses; the 14 FLIGHT LAB modules in order, then the p
   assert.ok(html.indexOf('/* ---- TEXTBOOK: page.js ---- */') > html.indexOf('/* ---- TEXTBOOK: render.js ---- */'));
   // read as they are from flight-lab/src
   for (const m of FL_MODULES) {
-    const src = fs.readFileSync(path.join(FL_SRC, m), 'utf8').replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');
+    const src = fs.readFileSync(modulePath(m), 'utf8').replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');
     assert.ok(html.includes(src), `${m} unchanged`);
   }
+});
+
+test('build: FL_MODULES is FLIGHT LAB\'s one list less what this page leaves out, in the list\'s order', () => {
+  assert.deepEqual([...FL_MODULES], MODULES.filter(m => !Object.hasOwn(FL_LEAVE_OUT, m)));
+  for (const [m, why] of Object.entries(FL_LEAVE_OUT)) { assert.ok(MODULES.includes(m), `${m}: not in flight-lab/src/modules.mjs`); assert.ok(why.length >= 10, `${m}: the reason`); }
+  // the photos are read (bk.photo); the basic course and FLIGHT LAB's own pages are not
+  assert.ok(FL_MODULES.includes('book-photos.js'));
+  for (const m of ['kiso/kiso-data.js', 'quiz.js', 'radio.js', 'ui.js', 'pages.js', 'app.js', 'scene.js', 'google3d.js']) assert.ok(!FL_MODULES.includes(m), m);
+  for (const m of FL_MODULES) assert.ok(fs.existsSync(modulePath(m)) && modulePath(m).startsWith(FL_SRC + path.sep), m);
 });
 
 test('build: the notes', () => {

@@ -6,16 +6,12 @@
 // (The browser test walks the same route with the real colliders.)
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import vm from 'node:vm';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { ACADEMY as A } from '../src/world/layout.js';
 import { academySpec } from '../src/content/academy-spec.js';
 import { installSorajima } from '../src/flight/sorajima.js';
+import { loadFL, CORE } from './helpers/fl.mjs';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+loadFL(CORE);
 installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL;
 const S = academySpec(FL);

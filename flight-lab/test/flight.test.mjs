@@ -2,14 +2,15 @@
 // The scripted test pilot (bot.mjs) flies the lessons with the same inputs a keyboard pilot has.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { load, CORE } from './load.mjs';
+import { load, NODE_MODULES, NODE_LEAVE_OUT, CORE } from './load.mjs';
+import { MODULES, modulePath, without, FL_ROOT } from '../src/modules.mjs';
 import { makeBot, runLesson } from './bot.mjs';
 import vm from 'node:vm';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { build } from '../build.mjs';
-const FL = load(...CORE, 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js', 'quiz.js', 'radio.js', 'ui.js');
+import { build, MAX_BYTES } from '../build.mjs';
+const FL = load(...NODE_MODULES);   // src/modules.mjs less what Node leaves out (test/load.mjs)
 const P = FL.physics, A = FL.avionics, SC = FL.school, SY = FL.syllabus, SF = FL.sanford, BK = FL.book, QZ = FL.quiz;
 const DT = 1 / 120, clamp = P.clamp;
 const run = (s, sec, fn) => { for (let i = 0; i < sec * 120; i++) { if (fn) fn(s); P.step(s, DT); } return s; };
@@ -476,4 +477,65 @@ test('ui: key chips are made from every lesson\'s key text, and the keyboard map
     for (const p of U.parseKeys(kt)) { if (!p.keys.length) continue; assert.ok(p.what.length > 1, `${l.id}: "${kt}" has a key with no meaning`); for (const k of p.keys) assert.ok(onMap.has(k.replace(/^Shift\+/, '').toUpperCase()), `${l.id}: key ${k} is not on the keyboard map`); }
   }
   const svg = U.keyboardSvg(['W', 'S']); assert.match(svg, /^<svg/); assert.equal((svg.match(/filter="url\(#kbglow\)"/g) || []).length, 2, 'two keys lit');
+});
+
+// ------------------------------------------------------------------ the product's frame (textbook/rewrite/combined/DESIGN.md 6.2 rules 6–8; W02)
+test('build: the page is at most MAX_BYTES (12 MiB); a page over the limit is refused, not written', () => {
+  assert.equal(MAX_BYTES, 12 * 1024 * 1024);
+  assert.equal(B.bytes, Buffer.byteLength(html));
+  assert.ok(B.bytes <= MAX_BYTES, `${(B.bytes / 1048576).toFixed(2)} MiB (limit ${MAX_BYTES / 1048576} MiB)`);
+  assert.throws(() => build({ quiet: true, maxBytes: 1024 * 1024 }), /over the limit[\s\S]*not written/);
+});
+
+test('modules: one list (src/modules.mjs) — the build reads all of it in order, the dev page lists the same, the tests read it less what Node leaves out', () => {
+  // every name is a file, listed once; every plain script in src/ is in the list (a new file cannot be left out by mistake)
+  assert.equal(new Set(MODULES).size, MODULES.length);
+  for (const m of MODULES) assert.ok(fs.existsSync(modulePath(m)), m);
+  assert.deepEqual(fs.readdirSync(path.join(FL_ROOT, 'src')).filter(f => f.endsWith('.js') && !MODULES.includes(f)), [], 'src/*.js not in the list');
+  // the built page: after the build's own head script, the list's modules, all of them, in its order
+  assert.deepEqual([...html.matchAll(/<script>\n\/\* ---- (\S+) ---- \*\//g)].map(m => m[1]), [...MODULES]);
+  // the dev page (src/index.html, opened from src/): the same files in the same order (book-photos.js among them)
+  const dev = fs.readFileSync(path.join(FL_ROOT, 'src', 'index.html'), 'utf8');
+  assert.deepEqual([...dev.matchAll(/<script src="([^"]+)"><\/script>/g)].map(m => m[1]), MODULES.map(m => (m.includes('/') ? '../' + m : m)));
+  assert.ok(dev.includes('<script src="book-photos.js"></script>'));
+  // the Node tests: the list less NODE_LEAVE_OUT (each with its reason), in its order; CORE is the list's head
+  assert.deepEqual([...NODE_MODULES], MODULES.filter(m => !Object.hasOwn(NODE_LEAVE_OUT, m)));
+  for (const [m, why] of Object.entries(NODE_LEAVE_OUT)) { assert.ok(MODULES.includes(m), m); assert.ok(why.length >= 10, `${m}: the reason`); }
+  assert.deepEqual(MODULES.slice(0, CORE.length), [...CORE]);
+  assert.equal(FL.google3d, undefined); assert.equal(FL.kiso, undefined); assert.equal(FL.bookPhotos, undefined);
+  // a leave-out list that names a file not in the list (renamed, gone) is an error; so is one without a reason
+  assert.throws(() => without({ 'no-such-file.js': 'a reason here' }, 'a test'), /no-such-file\.js: not in flight-lab\/src\/modules\.mjs/);
+  assert.throws(() => without({ 'quiz.js': '' }, 'a test'), /without a reason/);
+  assert.throws(() => load('no-such-file.js'), /not in src\/modules\.mjs/);
+});
+
+test('modules: TEXTBOOK\'s FL_MODULES are the same list less what it says it leaves out', async () => {
+  const TB = await import('../../textbook/build.mjs');
+  assert.deepEqual([...TB.FL_MODULES], MODULES.filter(m => !Object.hasOwn(TB.FL_LEAVE_OUT, m)));
+  for (const m of Object.keys(TB.FL_LEAVE_OUT)) assert.ok(MODULES.includes(m), m);
+  assert.ok(TB.FL_MODULES.includes('book-photos.js') && !TB.FL_MODULES.includes('kiso/kiso-data.js'));
+});
+
+// What the reader sees (the textbook page, the chapters' end matter, the ground-school tests) has no （別の章） (a {ch:} to
+// a chapter that is not in the book) and no {ch: left; every link has a target: a section, a lesson, a calculator, an
+// https page. FLIGHT LAB shows the chapter questions' and the tests' choices as written (not through BK.fix).
+test('book: no （別の章） in what the reader sees, and no link without a target (sections, end matter, tests, lessons, English radio)', () => {
+  const lessons = new Set(SC.lessonOrder()), shown = [];
+  for (const c of BK.CHAPTERS) {
+    shown.push(BK.fix(c.summary || ''), ...(c.examples || []).map(BK.fix), ...(c.cautions || []).map(BK.fix), ...c.quiz.flatMap(q => [BK.fix(q.q), ...q.choices, BK.fix(q.why)]));
+    for (const s of c.secs) {
+      const h = BK.html(s);
+      shown.push(s.t, h);
+      for (const m of h.matchAll(/data-sec="([^"]*)"/g)) assert.ok(BK.findSection(m[1]), `${s.id} → ${m[1]}`);
+      for (const m of h.matchAll(/data-lesson="([^"]*)"/g)) assert.ok(lessons.has(m[1]), `${s.id} → lesson ${m[1]}`);
+      for (const m of h.matchAll(/data-calc="([^"]*)"/g)) assert.equal(typeof FL.bookCalc[m[1]], 'function', `${s.id} → calc ${m[1]}`);
+      for (const m of h.matchAll(/<a\b([^>]*)>/g)) assert.match(m[1], /\shref="https:\/\/[^"\s]+"/, `${s.id}: ${m[0]}`);
+    }
+    for (const id of c.lessons || []) assert.ok(lessons.has(id), `${c.id}: lesson ${id}`);
+    for (const r of c.refs) assert.match(r.url, /^https:\/\/\S+$/, `${c.id}: ${r.label}`);
+  }
+  for (const b of QZ.BANKS) { assert.ok(BK.findSection(b.book), `${b.id} → ${b.book}`); shown.push(...b.qs.flatMap(q => [BK.fix(q[0]), ...q[1], BK.fix(q[3])])); }
+  for (const id of lessons) for (const sid of SC.lesson(id).book || []) assert.ok(BK.findSection(sid), `${id} → ${sid}`);
+  for (const p of RD.FLIGHT) assert.ok(BK.findSection(p.sec), `radio → ${p.sec}`);
+  assert.deepEqual(shown.filter(t => /（別の章）|\{ch:/.test(t)).map(t => String(t).slice(0, 120)), []);
 });

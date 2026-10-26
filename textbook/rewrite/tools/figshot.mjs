@@ -2,9 +2,10 @@
 // every bk-photo) of the given sections at 390 px (phone) and 760 px wide into PNGs, and checks each SVG as a standalone image
 // (data:image/svg+xml, as CADET draws it). Prints the files and problems.
 import fs from 'node:fs'; import path from 'node:path'; import { createRequire } from 'node:module';
-import { load, CORE } from '../../../flight-lab/test/load.mjs';
+import { load } from '../../../flight-lab/test/load.mjs';
+import { FL_MODULES } from '../../build.mjs';
 const require = createRequire(import.meta.url);
-const FL = load(...CORE, 'book-figs.js', 'book-core.js', ...(fs.existsSync(new URL('../../../flight-lab/src/book-photos.js', import.meta.url)) ? ['book-photos.js'] : []), 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js');
+const FL = load(...FL_MODULES);   // the book as TEXTBOOK reads it (FLIGHT LAB's one list less what TEXTBOOK leaves out)
 const [out, ...ids] = process.argv.slice(2); fs.mkdirSync(out, { recursive: true });
 const items = [];
 for (const id of ids) {

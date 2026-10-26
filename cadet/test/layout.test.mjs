@@ -5,16 +5,12 @@
 //  - the drawn origin round-trips, and the runway frame used by the meshes matches FL.physics.rwyToNE.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import vm from 'node:vm';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
 import { makeLayout } from '../src/world/layout.js';
 import { installSorajima } from '../src/flight/sorajima.js';
+import { loadFL } from './helpers/fl.mjs';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-for (const m of ['physics.js', 'avionics.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+loadFL('physics.js', 'avionics.js');
 installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL, P = FL.physics;
 const L = makeLayout(P);

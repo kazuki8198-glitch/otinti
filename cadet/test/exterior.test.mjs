@@ -17,10 +17,6 @@
 //    hinge lines, the lights on its skin, the walk-around's places by it, within its triangle budgets.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import vm from 'node:vm';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
 import { liveAircraft, parkedAircraft, buildAircraftModel, colliderBoxes, splitBody, cabinRear, paintClass, BLADES_OFF, LOD_FAR } from '../src/aircraft/exterior.js';
 import { archerMeshes, exteriorParts } from '../src/aircraft/archer-model.js';
@@ -29,9 +25,9 @@ import { POINTS } from '../src/content/walkaround-archer.js';
 import { POINTS as SEMINOLE_POINTS } from '../src/content/walkaround-seminole.js';
 import { makeLayout } from '../src/world/layout.js';
 import { installSorajima } from '../src/flight/sorajima.js';
+import { loadFL } from './helpers/fl.mjs';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-for (const m of ['physics.js', 'acmesh.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+loadFL('physics.js', 'acmesh.js');
 installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL, P = FL.physics;
 const AC = id => P.AIRCRAFT.find(a => a.id === id);

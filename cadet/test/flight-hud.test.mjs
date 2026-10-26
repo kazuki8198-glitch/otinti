@@ -19,10 +19,11 @@ import { makeBot } from './helpers/bot.mjs';
 import { createFlight } from '../src/flight/flight.js';
 import { parseKeys, gaugeOf, progressOf, advice, adviceTips, debriefOf, fitCanvas, panelText, LW } from '../src/ui/flight-hud.js';
 import { installSorajima } from '../src/flight/sorajima.js';
+import { loadFL, CORE } from './helpers/fl.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const FLSRC = path.join(here, '../../flight-lab/src');
-for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'ui.js']) vm.runInThisContext(fs.readFileSync(path.join(FLSRC, m), 'utf8'), { filename: m });
+loadFL(CORE, 'ui.js');
 installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL, SC = FL.school;
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }

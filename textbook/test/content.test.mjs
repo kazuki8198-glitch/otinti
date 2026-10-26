@@ -3,6 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { loadBook, ORDER, SEC_NOTE, APP_NOTE, COUNTS } from './load.mjs';
+import { FL_MODULES } from '../build.mjs';
+import { modulePath } from '../../flight-lab/src/modules.mjs';
 
 const { FL, R } = loadBook();
 const BK = FL.book;
@@ -130,8 +132,9 @@ test('the photos: data URLs (WebP), each with its alt text, caption and credit (
   }
   for (const id of used.keys()) assert.ok(P[id], `${id}: in book-photos.js`);
   // every bk.photo('…') written in the chapters' source names a photo that is there (a missing one would show nothing)
-  for (const f of ['book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js'])
-    for (const m of fs.readFileSync(new URL(`../../flight-lab/src/${f}`, import.meta.url), 'utf8').matchAll(/bk\.photo\('([^']+)'\)/g)) assert.ok(P[m[1]], `${f}: bk.photo('${m[1]}') is not in book-photos.js`);
+  // (the chapters' files: the book-*.js of FL_MODULES — FLIGHT LAB's one list — less the frame and the photos)
+  for (const f of FL_MODULES.filter(m => /^book-.*\.js$/.test(m) && !['book-figs.js', 'book-core.js'].includes(m) && !m.startsWith('book-photos')))
+    for (const m of fs.readFileSync(modulePath(f), 'utf8').matchAll(/bk\.photo\('([^']+)'\)/g)) assert.ok(P[m[1]], `${f}: bk.photo('${m[1]}') is not in book-photos.js`);
   assert.ok(total <= 5 * 1024 * 1024, `${total} bytes in all`);
   // the credits page lists every photo
   const credits = fs.readFileSync(new URL('../../flight-lab/PHOTO-CREDITS.md', import.meta.url), 'utf8');
@@ -140,4 +143,30 @@ test('the photos: data URLs (WebP), each with its alt text, caption and credit (
   const keep = FL.bookPhotos; FL.bookPhotos = undefined;
   try { assert.equal(BK.bk.photo(Object.keys(keep)[0] || 'x'), ''); } finally { FL.bookPhotos = keep; }
   assert.equal(BK.bk.photo('no-such-photo'), '');
+});
+
+// textbook/rewrite/combined/DESIGN.md 6.2 rule 6 (W02): what the reader sees has no （別の章） (a {ch:} to a chapter that
+// is not in the book) and no link without a target. Read as the page builds it (render.js: the built file carries
+// FLIGHT LAB's code, whose fix() holds the words （別の章） for that case): the whole book (to print), every section with
+// its pager, the contents, the search's results, every check's answer. A target: a section (data-go, data-sec,
+// data-jump, href="#…" to an id on the page), a lesson FLIGHT LAB has (data-lesson: page.js makes it a tag), a
+// calculator (data-calc), an https page (<a href>).
+test('no （別の章） and no link without a target: the whole book, every section with its pager, the contents, the answers', () => {
+  const ids = new Set(SECS.map(s => s.id));
+  const all = R.allHtml(), anchors = new Set([...all.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]));
+  const pages = [all, R.tocHtml([], SECS[0].id), R.resultsHtml('VMC', R.search('VMC')), ...SECS.map(s => R.sectionHtml(s.id, { nav: true }))];
+  const answers = BK.CHAPTERS.flatMap(c => (c.quiz || []).flatMap((q, qi) => q.choices.map((x, k) => R.quizResult(c, qi, k).text)));
+  for (const t of [...pages, ...answers]) assert.doesNotMatch(t, /（別の章）|\{ch:/, t.slice(0, 80));
+  let links = 0;
+  for (const h of pages) {
+    for (const m of h.matchAll(/data-(go|sec|jump)="([^"]*)"/g)) { links++; assert.ok(ids.has(m[2]), m[0]); }
+    for (const m of h.matchAll(/data-lesson="([^"]*)"/g)) { links++; assert.ok(FL.school.lesson(m[1]), m[0]); }
+    for (const m of h.matchAll(/data-calc="([^"]*)"/g)) { links++; assert.equal(typeof FL.bookCalc[m[1]], 'function', m[0]); }
+    for (const m of h.matchAll(/<a\b([^>]*)>/g)) {
+      links++;
+      const href = (m[1].match(/\shref="([^"]*)"/) || [])[1];
+      assert.ok(href && (/^https:\/\/\S+$/.test(href) || (href[0] === '#' && anchors.has(href.slice(1)))), m[0]);
+    }
+  }
+  assert.ok(links > 1000, `${links} links`);
 });

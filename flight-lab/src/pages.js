@@ -20,11 +20,18 @@
     function nextFlight() { return SC.lessonOrder().find(id => { const l = SC.lesson(id), r = S.progress.lessons[id]; return l.steps && !(r && r.pass); }) || null; }
     function nextGround() { const st = SY.STAGES.find(x => x.id === 's0'); const l = st && st.lessons.find(x => !(S.progress.lessons[x.id] && S.progress.lessons[x.id].pass)); return l || null; }
     const stageOf = id => SY.STAGES.find(st => st.lessons.some(l => l.id === id));
+    // the textbook's record, counted against the book as it is now (an id the book no longer has is kept, not counted)
+    const bookRead = () => (BK ? S.progress.read.filter(id => BK.findSection(id)) : []);
+    // the chapters' check questions answered right (bookQuiz: "chapterId.index" → 100), those the book still has
+    const bookQuizRight = () => (BK ? Object.entries(S.progress.bookQuiz).filter(([k, v]) => {
+      const i = k.lastIndexOf('.'), c = BK.CHAPTERS.find(x => x.id === k.slice(0, i)), n = Number(k.slice(i + 1));
+      return v >= 100 && c && Number.isInteger(n) && n >= 0 && n < (c.quiz || []).length;
+    }).length : 0);
     function openMenu() {
       if (!S.L || !S.L.free) app.startFree('area', 'pa28');
       app.openScreen('menu');
       const order = SC.lessonOrder(), flightIds = order.filter(id => SC.lesson(id).steps), passed = flightIds.filter(id => S.progress.lessons[id] && S.progress.lessons[id].pass).length;
-      const chN = BK ? BK.CHAPTERS.length : 0, secN = BK ? BK.CHAPTERS.reduce((a, c) => a + c.secs.length, 0) : 0, read = S.progress.read.length;
+      const chN = BK ? BK.CHAPTERS.length : 0, secN = BK ? BK.CHAPTERS.reduce((a, c) => a + c.secs.length, 0) : 0, read = bookRead().length;
       // the hero: continue with the next lesson
       const hero = $('#menuHero'); hero.textContent = '';
       const nid = nextFlight(), lv = SC.level(S.prefs.level);
@@ -885,6 +892,7 @@
         h('div', { class: 'row' }, btn('JSON に書き出す', () => download(`flight-lab-record-${new Date().toISOString().slice(0, 10)}.json`, SC.exportJSON(SC.loadRecords(store), S.progress)), 'primary'),
           btn('JSON から読み込む（統合）', () => file.click()), file,
           btn('すべて削除', () => { if (confirm('この端末の学習記録（記録・進み具合）をすべて削除しますか？')) { SC.saveRecords(store, []); S.progress = SC.sanitizeProgress({}); save(); renderRecords(); } }, 'danger')));
+      if (BK) pg.append(h('p', { class: 'small', text: `教科書：読んだ節 ${bookRead().length} / ${BK.CHAPTERS.reduce((a, c) => a + c.secs.length, 0)}・正解した章末の確認問題 ${bookQuizRight()} / ${BK.CHAPTERS.reduce((a, c) => a + (c.quiz || []).length, 0)}` }));
       if (KZ) pg.append(h('p', { class: 'small', text: `基礎教材（日本の航空法 前提）：読んだ節 ${kzCount(S.progress.kisoRead, kzIds().secs)} / ${kzSecN()}・解答を開いた確認問題 ${kzCount(S.progress.kisoQa, kzIds().qa)} / ${kzQaN()}（教科書の「読んだ節」とは別に記録します）` }));
       if (!store) pg.append(h('p', { class: 'small', style: 'color:#ffb3b3', text: 'このブラウザでは localStorage が使えないため、記録は保存されません（JSON の書き出しは使えます）。' }));
       if (!recs.length) { pg.append(h('p', { class: 'mute', text: 'まだ記録はありません。課目を終えると自動で保存されます。' })); return; }

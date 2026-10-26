@@ -3,12 +3,13 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
-import { FL_MODULES, FL_SRC } from '../build.mjs';
+import { FL_MODULES } from '../build.mjs';
+import { modulePath } from '../../flight-lab/src/modules.mjs';
 
 const here = path.dirname(new URL(import.meta.url).pathname);
 export function loadBook() {
   if (!globalThis.FL || !globalThis.FL.book) {
-    for (const m of FL_MODULES) vm.runInThisContext(fs.readFileSync(path.join(FL_SRC, m), 'utf8'), { filename: m });
+    for (const m of FL_MODULES) vm.runInThisContext(fs.readFileSync(modulePath(m), 'utf8'), { filename: m });
     vm.runInThisContext(fs.readFileSync(path.join(here, '../src/render.js'), 'utf8'), { filename: 'render.js' });
   }
   return { FL: globalThis.FL, R: globalThis.TB.make(globalThis.FL) };

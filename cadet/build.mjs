@@ -14,13 +14,24 @@ import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import * as esbuild from 'esbuild';
+import { without, modulePath } from '../flight-lab/src/modules.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SRC = path.join(here, 'src'), OUT = path.join(here, 'outputs'), TEX = path.join(here, 'assets', 'tex');
-const FL_SRC = path.join(here, '..', 'flight-lab', 'src');
 // FLIGHT LAB modules the game uses (no DOM in any of them): the flight model, the G1000-type displays, the Sanford
-// material, the school engine and the syllabus, the aircraft's 3D description
-export const FL_MODULES = ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'acmesh.js', 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js', 'quiz.js', 'radio.js'];
+// material, the school engine and the syllabus, the textbook, the test banks, English radio, the aircraft's 3D
+// description — FLIGHT LAB's one list of modules (flight-lab/src/modules.mjs), in its order, less what the game does not
+// read (the tests load the same: test/helpers/fl.mjs):
+export const FL_LEAVE_OUT = Object.freeze({
+  'book-photos.js': 'the textbook\'s photos: not in the game (DESIGN 6.3: no book-photos*.js; the in-game book shows figures only)',
+  'kiso/kiso-data.js': 'the basic course (the original): FLIGHT LAB\'s own page, not the academy\'s',
+  'ui.js': 'FLIGHT LAB\'s app (its controls and icons): the game has its own',
+  'scene.js': 'FLIGHT LAB\'s app (the 3D view): the game has its own',
+  'google3d.js': 'FLIGHT LAB\'s app (Google\'s 3D tiles): not in the fictional world',
+  'pages.js': 'FLIGHT LAB\'s app (its screens, DOM): the game has its own',
+  'app.js': 'FLIGHT LAB\'s app (its start, DOM): the game has its own',
+});
+export const FL_MODULES = without(FL_LEAVE_OUT, 'CADET (cadet/build.mjs)');
 export const MAX_BYTES = 15 * 1024 * 1024;
 
 const read = f => fs.readFileSync(f, 'utf8');
@@ -57,7 +68,7 @@ export function build({ quiet = false, dev = false } = {}) {
   const pjpLicense = read(path.join(here, 'tools', 'licenses', 'partial-json-parser.LICENSE'));
   const scripts = [
     `<script>\n${safeJs(assetsScript())}\n</script>`,
-    ...FL_MODULES.map(m => `<script>\n/* ---- FLIGHT LAB: ${m} ---- */\n${safeJs(read(path.join(FL_SRC, m)))}\n</script>`),
+    ...FL_MODULES.map(m => `<script>\n/* ---- FLIGHT LAB: ${m} ---- */\n${safeJs(read(modulePath(m)))}\n</script>`),
     `<script>\n/* ---- CADET (bundled with three.js and the Anthropic TypeScript SDK with its qs and partial-json-parser; their licences at the end of this file) ---- */\n${safeJs(bundle)}\n</script>`,
   ].join('\n');
   let html = read(path.join(SRC, 'index.html'));

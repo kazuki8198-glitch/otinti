@@ -8,20 +8,14 @@
 //    length and never name FLIGHT LAB's keys or pages; the words come from the data (title, goal, standard, key points).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import vm from 'node:vm';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { gameBook, plain, sentences } from '../src/content/book.js';
 import { INSTRUCTOR, instructorDialogs, sampleCtx, speakable, polite, speechLines } from '../src/content/dialog/instructor.js';
 import { validateDialogs } from '../src/dialog/validate.js';
 import { createDialogState, createRunner, evalCond, applyEffects, resolveTarget, END } from '../src/dialog/engine.js';
 import { installSorajima } from '../src/flight/sorajima.js';
+import { loadFL, GAME } from './helpers/fl.mjs';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js',
-  'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js'])
-  vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+loadFL(GAME);                      // FLIGHT LAB's modules as the game reads them
 installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL;
 const BOOK = gameBook(FL);
@@ -395,4 +389,34 @@ test('instructor: the words come from FLIGHT LAB\'s data', () => {
   // the sample context has what a context would hold
   assert.deepEqual(Object.keys(sampleCtx(FL)).sort(), ['instructor', 'lesson']);
   assert.equal(sampleCtx(FL).lesson.id, 'a1');
+});
+
+// ---------------------------------------------------------------- what the book shows: no dead references, no dead links
+// (textbook/rewrite/combined/DESIGN.md 6.2 rule 6, W02) No （別の章） — a {ch:} to a chapter this book leaves out — and
+// no link without a target, in what the game shows from the book: every section (its HTML, text, summary and key points:
+// the book page, the classes, the instructor's lines and the AI instructor read these), and the written tests'
+// questions and reasons (content/school.js turns a {ch:} it cannot number into 「教科書」, so each must name a chapter
+// here). Known ones, each to be fixed by the unit named; a new one fails, a fixed one only asks to be taken off the list:
+const KNOWN_OTHER_CHAPTER = {
+  'comm.practice': '{ch:sim} (チェアフライング) in FLIGHT LAB\'s book-comm.js: sim is left out here, so it shows （（別の章））. To fix in the text or in content/book.js (W02 report: needs from others)',
+};
+test('book: no （別の章） and no link without a target — every section; the written tests\' {ch:} name chapters of this book', (t) => {
+  const found = [];
+  for (const id of SECTIONS) {
+    const s = BOOK.section(id);
+    if ([s.html, s.text, s.summary, ...s.keyPoints].some(x => /（別の章）|\{ch:/.test(x))) found.push(id);
+    for (const m of s.html.matchAll(/data-sec="([^"]*)"/g)) assert.ok(BOOK.sectionExists(m[1]), `${id} → ${m[1]}`);
+    assert.doesNotMatch(s.html, /<span class="bk-see"(?! data-sec=")/, `${id}: a "→" to a section this book leaves out`);
+    assert.doesNotMatch(s.html, /<button\b|data-lesson=|data-calc=/, `${id}: a FLIGHT LAB control`);
+    for (const m of s.html.matchAll(/<a\b([^>]*)>/g)) assert.match(m[1], /\shref="https:\/\/[^"\s]+"/, `${id}: ${m[0]}`);
+  }
+  assert.deepEqual(found.filter(id => !KNOWN_OTHER_CHAPTER[id]), [], 'sections that show （別の章）');
+  for (const id of Object.keys(KNOWN_OTHER_CHAPTER)) if (!found.includes(id)) t.diagnostic(`${id} no longer shows （別の章）: take it off KNOWN_OTHER_CHAPTER`);
+  const chapters = new Set(BOOK.chapters.map(c => c.id));
+  let refs = 0;
+  for (const b of FL.quiz.BANKS) for (const q of b.qs) for (const x of [q[0], ...q[1], q[3]]) for (const m of String(x).matchAll(/\{ch:([a-z0-9]+)\}/g)) {
+    refs++;
+    assert.ok(chapters.has(m[1]), `${b.id}: {ch:${m[1]}} is not a chapter of this book`);
+  }
+  assert.ok(refs >= 1, 'the written tests point at chapters');
 });

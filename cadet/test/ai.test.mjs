@@ -8,12 +8,8 @@
 //  - the key: kept apart from the settings and the save, remembered in this browser only when asked, erased.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import vm from 'node:vm';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { gameBook } from '../src/content/book.js';
-import { createTutor, buildParams, findSections, parseAnswer, visible, summaryText, stablePrompt, PERSONA, DEFAULT_MODEL, REASON_JA } from '../src/ai/tutor.js';
+import { createTutor, buildParams, findSections, parseAnswer, visible, summaryText, stablePrompt, bookIndex, PERSONA, DEFAULT_MODEL, REASON_JA } from '../src/ai/tutor.js';
 import { createAiSession, AI_LINES } from '../src/ai/session.js';
 import { createKeyStore, KEY_NAME, maskKey } from '../src/ai/keys.js';
 import { createSettings, DEFAULTS } from '../src/ui/settings.js';
@@ -22,11 +18,9 @@ import { debriefDialogs } from '../src/content/dialog/debrief.js';
 import { createRunner, createDialogState } from '../src/dialog/engine.js';
 import { exportArchive } from '../src/career/archive.js';
 import { fakeClaude } from './helpers/fake-claude.mjs';
+import { loadFL, GAME } from './helpers/fl.mjs';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js',
-  'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js'])
-  vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+loadFL(GAME);                      // FLIGHT LAB's modules as the game reads them
 const FL = globalThis.FL;
 const BOOK = gameBook(FL);
 const KEY = 'sk-ant-api03-TESTKEY-0123456789abcdef';
@@ -288,4 +282,19 @@ test('the day\'s results as the instructor reads them', () => {
   assert.match(t, /課目 a2「上昇・降下」：C（もう一度）・不合格。基準の外：速度/);
   assert.match(t, /TEM：今日の脅威は「午後の横風」/);
   assert.equal(summaryText(null), '');
+});
+
+// (textbook/rewrite/combined/DESIGN.md 6.3, W02) the table of contents goes into every request's cached system prompt:
+// the combined book's sections (about 224 by R3) must fit in 25,000 characters with their summaries as they are
+// (src/ai/tutor.js is not changed; if they would not fit, content/book.js leaves the deep sections out of the contents)
+const TOC_MAX = 25000;
+test('the AI instructor\'s table of contents stays within 25,000 characters; every section it names is in the book', () => {
+  const toc = bookIndex(BOOK);
+  assert.ok(toc.length <= TOC_MAX, `${toc.length.toLocaleString('en-US')} characters (at most ${TOC_MAX.toLocaleString('en-US')})`);
+  assert.ok(stablePrompt(BOOK).includes(toc), 'the contents are in the cached prompt');
+  const ids = [...toc.matchAll(/^  ([a-z0-9_.\-]+)：/gm)].map(m => m[1]);
+  assert.ok(ids.length >= 100, `${ids.length} sections`);
+  assert.equal(new Set(ids).size, ids.length, 'each section once');
+  for (const id of ids) assert.ok(BOOK.section(id), id);
+  assert.doesNotMatch(toc, /（別の章）|\{ch:/);
 });

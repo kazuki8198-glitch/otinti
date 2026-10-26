@@ -19,7 +19,19 @@ from PIL import Image, ImageOps
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 JS = os.path.join(ROOT, 'flight-lab', 'src', 'book-photos.js')
 CREDITS = os.path.join(ROOT, 'flight-lab', 'PHOTO-CREDITS.md')
-BOOK = [os.path.join(ROOT, 'flight-lab', 'src', f) for f in ('book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js')]
+
+
+def _book_files():
+    # the chapters' files: the book-*.js names of FLIGHT LAB's one list of modules (flight-lab/src/modules.mjs), in its
+    # order, less the frame (book-figs.js, book-core.js) and the photos (book-photos*.js) — no list of its own here
+    src = open(os.path.join(ROOT, 'flight-lab', 'src', 'modules.mjs'), encoding='utf-8').read()
+    body = src[src.index('export const MODULES'):]
+    body = body[:body.index(']);')]
+    names = re.findall(r"'(book-[a-z0-9-]+\.js)'", body)
+    return [os.path.join(ROOT, 'flight-lab', 'src', f) for f in names if f not in ('book-figs.js', 'book-core.js') and not f.startswith('book-photos')]
+
+
+BOOK = _book_files()
 ALLOWED = re.compile(r'^(Public domain.*|CC0 1\.0|CC BY(-SA)? (1\.0|2\.0|2\.5|3\.0|4\.0)( [A-Za-z]+)?)$')
 START, END = '/*PHOTOS*/', '/*/PHOTOS*/'
 

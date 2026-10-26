@@ -6,10 +6,6 @@
 // quotes of what the course writes), names no real airline or maker; his words in the air too.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import vm from 'node:vm';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { gameBook } from '../src/content/book.js';
 import { withEnglish, missingEnglish, english, airEnglish, EN, AIR_EN, CREW } from '../src/content/dialog/en.js';
 import { instructorDialogs, sampleCtx } from '../src/content/dialog/instructor.js';
@@ -27,10 +23,9 @@ import { NOCATCH } from '../src/aircraft/systems.js';
 import { TASK_MISSED as SEMINOLE_TASKS } from '../src/content/walkaround-seminole.js';
 import { createRunner, createDialogState } from '../src/dialog/engine.js';
 import { installSorajima } from '../src/flight/sorajima.js';
+import { loadFL, GAME } from './helpers/fl.mjs';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js', 'quiz.js', 'radio.js'])
-  vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+loadFL(GAME);                      // FLIGHT LAB's modules as the game reads them
 installSorajima(globalThis.FL);
 const FL = globalThis.FL, BOOK = gameBook(FL);
 const LESSONS = FL.syllabus.STAGES.flatMap(s => s.lessons);

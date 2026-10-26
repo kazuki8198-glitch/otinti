@@ -7,14 +7,26 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { without, modulePath } from '../flight-lab/src/modules.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SRC = path.join(here, 'src'), OUT = path.join(here, 'outputs');
 export const FL_SRC = path.join(here, '..', 'flight-lab', 'src');
-// the textbook and what it needs, in this order: physics.js first (book-1/3/4/5 use it while loading); book-2.js
-// (wx, law, hf) before book-comm.js (its chapters go `before: 'hf'`); book-photos.js after book-core.js (the photos, as
-// data URLs: bk.photo); school.js and syllabus.js for the lessons' names
-export const FL_MODULES = ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'book-figs.js', 'book-core.js', 'book-photos.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js'];
+// the textbook and what it needs: FLIGHT LAB's one list of modules (flight-lab/src/modules.mjs), in its order (physics.js
+// first: book-1/3/4/5 use it while loading; book-photos.js after book-core.js: the photos, as data URLs, for bk.photo;
+// school.js and syllabus.js for the lessons' names), less what this page does not read:
+export const FL_LEAVE_OUT = Object.freeze({
+  'kiso/kiso-data.js': 'the basic course (the original, kept as it is): FLIGHT LAB\'s own page; the combined book takes from it by rewriting, not by loading it',
+  'quiz.js': 'FLIGHT LAB\'s ground-school tests (a page of the app)',
+  'radio.js': 'FLIGHT LAB\'s English radio practice (a page of the app)',
+  'ui.js': 'FLIGHT LAB\'s app: its controls and icons',
+  'acmesh.js': 'FLIGHT LAB\'s app: the aircraft\'s 3D description',
+  'scene.js': 'FLIGHT LAB\'s app: the 3D view',
+  'google3d.js': 'FLIGHT LAB\'s app: Google\'s 3D tiles',
+  'pages.js': 'FLIGHT LAB\'s app: its screens',
+  'app.js': 'FLIGHT LAB\'s app: its start',
+});
+export const FL_MODULES = without(FL_LEAVE_OUT, 'TEXTBOOK (textbook/build.mjs)');
 export const PAGE_SCRIPTS = ['render.js', 'page.js'];
 export const OUT_FILE = path.join(OUT, 'TEXTBOOK.html');
 
@@ -25,7 +37,7 @@ const safeCss = s => s.replace(/<\/style/gi, '<\\/style');
 
 export function build({ quiet = false, write = false } = {}) {
   const scripts = [
-    ...FL_MODULES.map(m => `<script>\n/* ---- FLIGHT LAB: ${m} ---- */\n${safeJs(read(path.join(FL_SRC, m)))}\n</script>`),
+    ...FL_MODULES.map(m => `<script>\n/* ---- FLIGHT LAB: ${m} ---- */\n${safeJs(read(modulePath(m)))}\n</script>`),
     ...PAGE_SCRIPTS.map(m => `<script>\n/* ---- TEXTBOOK: ${m} ---- */\n${safeJs(read(path.join(SRC, m)))}\n</script>`),
   ].join('\n');
   let html = read(path.join(SRC, 'index.html'));

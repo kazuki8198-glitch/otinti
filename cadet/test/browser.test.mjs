@@ -11,14 +11,14 @@ import assert from 'node:assert/strict';
 import { build } from '../build.mjs';
 import { loadChromium, openGame } from './shots.mjs';
 import fs from 'node:fs';
-import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runLesson } from './helpers/bot.mjs';
 import { installSorajima } from '../src/flight/sorajima.js';
+import { loadFL, CORE } from './helpers/fl.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+loadFL(CORE);
 installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's, as in the page)
 const FL = globalThis.FL;
 // FLIGHT LAB's scripted pilot, to run in the page

@@ -113,9 +113,7 @@ test('career: the save — another version or broken data is not read, values of
 });
 
 test('career: one file for everything — written, read back cleaned; a wrong or broken file is refused with the reason', async () => {
-  const fs = await import('node:fs'), vm = await import('node:vm'), path = await import('node:path'), { fileURLToPath } = await import('node:url');
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+  const { loadFL, CORE } = await import('./helpers/fl.mjs'); loadFL(CORE);
   installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
   const FL = globalThis.FL;
   const { exportArchive, importArchive } = await import('../src/career/archive.js');

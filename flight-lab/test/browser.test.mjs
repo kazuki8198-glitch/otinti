@@ -124,6 +124,12 @@ test('browser: offline start, the checklist and ATC by keys, keyboard flight, ke
       const img = await page.evaluate(async () => { const i = document.querySelector('.bk-photo img'); i.loading = 'eager'; await i.decode(); return [i.currentSrc.slice(0, 22), i.naturalWidth, i.closest('figure').querySelectorAll('.bk-credit a[target="_blank"]').length]; });
       assert.deepEqual([img[0], img[1] > 0, img[2]], ['data:image/webp;base64', true, 2]);
     }
+    // the records page has the textbook's line: the sections read that the book has (a stale id is not counted) and
+    // the chapter questions answered right (DESIGN 6.4)
+    const tb = await page.evaluate(() => { const BK = FL.book, p = __lab.progress(); p.read.push('no.such.section'); return { read: p.read.filter(id => BK.findSection(id)).length, secs: BK.CHAPTERS.reduce((a, c) => a + c.secs.length, 0), quiz: BK.CHAPTERS.reduce((a, c) => a + c.quiz.length, 0) }; });
+    assert.ok(tb.read >= 1 && tb.read < (await page.evaluate(() => __lab.progress().read.length)));
+    await page.evaluate(() => __lab.showPage('records'));
+    assert.match(await page.textContent('#pageBody'), new RegExp(`教科書：読んだ節 ${tb.read} / ${tb.secs}・正解した章末の確認問題 1 / ${tb.quiz}`));
     // a ground-school test run to the end
     await page.evaluate(() => __lab.showPage('quiz'));
     await page.click('.qbanks .mission >> nth=0');
@@ -189,6 +195,10 @@ test('browser: offline start, the checklist and ATC by keys, keyboard flight, ke
     await page.evaluate(() => __lab.showPage('g3d'));
     await page.click('#pageBody button:has-text("切断")');
     assert.equal((await page.evaluate(() => __lab.google())).hasKey, false);
+    // the menu's textbook tile counts the sections read that the book has (the stale id above is not counted)
+    await page.evaluate(() => __lab.openMenu());
+    assert.equal(await page.textContent('#mainMenu .tile:has-text("教科書") .t-sub'), await page.evaluate(() => `全 ${FL.book.CHAPTERS.length} 章・${FL.book.CHAPTERS.reduce((a, c) => a + c.secs.length, 0)} 節（読んだ節 ${__lab.progress().read.filter(id => FL.book.findSection(id)).length}）`));
+    assert.ok(await page.evaluate(() => __lab.progress().read.includes('no.such.section')), 'the record keeps it');
     assert.deepEqual(errors, []);
     assert.deepEqual(await page.evaluate(() => __lab.errors), []);
   } finally { await browser.close(); }

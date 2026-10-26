@@ -1,7 +1,8 @@
 // usage: node render-ch.mjs <chapterId> [--text]   prints a chapter's sections (HTML, or text with figures' words) and end matter
 // textbook/rewrite/tools/render-ch.mjs — prints one chapter of FLIGHT LAB's textbook as the app renders it (for reading and reviewing).
-import { load, CORE } from '../../../flight-lab/test/load.mjs';
-const FL = load(...CORE, 'book-figs.js', 'book-core.js', 'book-photos.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js');
+import { load } from '../../../flight-lab/test/load.mjs';
+import { FL_MODULES } from '../../build.mjs';
+const FL = load(...FL_MODULES);   // the book as TEXTBOOK reads it (FLIGHT LAB's one list less what TEXTBOOK leaves out)
 const B = FL.book, id = process.argv[2], asText = process.argv.includes('--text');
 const ch = B.CHAPTERS.find(c => c.id === id);
 if (!ch) { console.error('no chapter', id, B.CHAPTERS.map(c => c.id).join(' ')); process.exit(1); }

@@ -9,10 +9,6 @@
 // passes, the solo is flown, and it all takes a believable number of days.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import vm from 'node:vm';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { createCareer, CH2, GROUND, passedAt, SOLO_TRUST, CLASSES, STAGE, CHECKS, LATER, EXAMS } from '../src/career/career.js';
 import { planFor } from '../src/career/day.js';
 import { peopleDialogs } from '../src/content/dialog/people.js';
@@ -21,10 +17,9 @@ import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, scoreOf } from '.
 import { createRunner, createDialogState, trustOf } from '../src/dialog/engine.js';
 import { playDay } from './helpers/play-day.mjs';
 import { installSorajima } from '../src/flight/sorajima.js';
+import { loadFL, GAME } from './helpers/fl.mjs';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'quiz.js', 'radio.js', 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js'])
-  vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
+loadFL(GAME);                      // FLIGHT LAB's modules as the game reads them
 installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL, SC = FL.school;
 const memStore = () => { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k) }; };

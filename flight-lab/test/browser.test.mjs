@@ -118,7 +118,7 @@ test('browser: offline start, the checklist and ATC by keys, keyboard flight, ke
     const photoSec = await page.evaluate(() => { const s = FL.book.CHAPTERS.flatMap(c => c.secs).find(x => /class="bk-photo"/.test(FL.book.html(x))); return s ? `${FL.book.findSection(s.id).ch.n}.${FL.book.findSection(s.id).ch.secs.indexOf(s) + 1}` : null; });
     if (photoSec) {
       await page.evaluate(n => [...document.querySelectorAll('#bkNav .bk-item')].find(b => b.querySelector('.bk-num').textContent.trim() === n).click(), photoSec);
-      const img = await page.evaluate(async () => { const i = document.querySelector('.bk-photo img'); i.loading = 'eager'; await i.decode(); return [i.currentSrc.slice(0, 23), i.naturalWidth, i.closest('figure').querySelectorAll('.bk-credit a[target="_blank"]').length]; });
+      const img = await page.evaluate(async () => { const i = document.querySelector('.bk-photo img'); i.loading = 'eager'; await i.decode(); return [i.currentSrc.slice(0, 22), i.naturalWidth, i.closest('figure').querySelectorAll('.bk-credit a[target="_blank"]').length]; });
       assert.deepEqual([img[0], img[1] > 0, img[2]], ['data:image/webp;base64', true, 2]);
     }
     // a ground-school test run to the end

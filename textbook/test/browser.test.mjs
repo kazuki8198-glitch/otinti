@@ -158,7 +158,7 @@ test(`the whole book (#all): ${COUNTS.chapters} chapters, ${COUNTS.quiz} questio
   const imgs = await page.evaluate(async () => {
     const list = [...document.querySelectorAll('#tbView .bk-photo img')];
     for (const i of list) { i.loading = 'eager'; try { await i.decode(); } catch (e) { /* counted below */ } }
-    return list.map(i => [i.currentSrc.slice(0, 23), i.naturalWidth, i.closest('figure').querySelectorAll('.bk-credit a[target="_blank"][rel="noopener noreferrer"]').length]);
+    return list.map(i => [i.currentSrc.slice(0, 22), i.naturalWidth, i.closest('figure').querySelectorAll('.bk-credit a[target="_blank"][rel="noopener noreferrer"]').length]);
   });
   assert.equal(imgs.length, COUNTS.photos);
   for (const [src, w, links] of imgs) { assert.equal(src, 'data:image/webp;base64'); assert.ok(w > 0, 'decoded'); assert.equal(links, 2); }

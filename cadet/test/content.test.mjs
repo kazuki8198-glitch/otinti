@@ -371,7 +371,8 @@ test('instructor: the words come from FLIGHT LAB\'s data', () => {
     const n = m[1] ? +m[1] : 1, keys = BOOK.section(id).keyPoints.length;
     assert.equal(n, keys, `${id}: says ${n}, the book has ${keys}`);
   }
-  assert.match(ask['sec:aero.aoa'].text, /大事なところを話します/);
+  // every answer opens in one of the four ways (a count only when the whole box is said)
+  for (const id of SECTIONS) assert.match(ask[`sec:${id}`].text, /かいつまんで話します|大事なところを話します|大事なのは、この一点です|大事なことは \d+ つあります/, id);
   // the check: today's goal and two other lessons' goals
   const goals = new Set(LESSONS.map(l => sentences(l.goal).pop()));
   const check = brief.check.choices;

@@ -29,4 +29,15 @@ v2.4：外部視界を姉妹作 CADET の three.js の景色（芝・舗装・�
 
 写真は GPU のない環境のソフトウェア描画（SwiftShader、画質「高」）で撮ったものです。描画の解像度が自動で下がるため、GPU のある PC で見るより粗く写っています。
 
+v2.4 のあとで（光と大気、2026-10-26）：3D 表示の光を直しました（CADET と共有の描画の部品。詳しくは `../cadet/PLAN.md` の「M8 のあとで直したこと：光と大気」）。
+- 遠くの地面が空の色に溶け込むようにしました。描画範囲の端で地面が灰色の帯になって切れていた、地平線の段差がなくなりました。
+- 後方視点で画面を縦に切っていた明るさの境目（空がブルームのしきい値をまたいでいた）がなくなりました。
+- 操縦席の天井や翼の下面など、下を向いた面は地面の照り返しの明るさになりました。風防にかかっていた白い膜も減りました。
+
+左が前、右が後です。
+
+![](docs/lighting/01-final-cockpit.jpg)
+![](docs/lighting/02-area-chase.jpg)
+![](docs/lighting/03-final-pa44.jpg)
+
 開発：`npm ci`（three.js と esbuild。3D 表示の部品をまとめるのに必要）、`node build.mjs`（ビルド）、`node --test --test-concurrency=1 test/flight.test.mjs test/avionics.test.mjs test/browser.test.mjs`（テスト）。ブラウザのテストは 2 件：従来どおりの一巡（ソフトウェア描画なので「軽量」で動く）と、three.js の表示を強制した確認（`?render=three`・画質「低」。3D の部品のない版では省略）。

@@ -8,9 +8,9 @@ FLIGHT LAB の教科書（全 6 部・27 章・120 節）を、シミュレー�
 
 ## ブラウザで開く
 
-ビルドしたファイル（コミット `0e696c79746f50da6a6961bca7c17574b31a36fb`）を、次のリンクでそのまま開けます。
+ビルドしたファイル（コミット `6a2733733c126b51fc499b76945e66f3a721a9c7`）を、次のリンクでそのまま開けます。
 
-https://raw.githack.com/kazuki8198-glitch/otinti/0e696c79746f50da6a6961bca7c17574b31a36fb/textbook/outputs/TEXTBOOK.html
+https://raw.githack.com/kazuki8198-glitch/otinti/6a2733733c126b51fc499b76945e66f3a721a9c7/textbook/outputs/TEXTBOOK.html
 
 ## 注意書き
 

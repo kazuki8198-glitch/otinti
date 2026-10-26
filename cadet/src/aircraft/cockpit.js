@@ -469,7 +469,7 @@ function textDraw(lines, { weight = 700, align = 'center', font = SANS } = {}) {
 // (M6) variant: while set ('pa28' | 'pa44'), what is added belongs to that type only (its own meshes, shown by setType)
 function makeBuilder() {
   const kit = [], decals = [], glass = [], cowl = [], dynLit = [], unlit = [], moving = new Map();
-  const kitV = { pa28: [], pa44: [] }, decalsV = { pa28: [], pa44: [] }, partV = new Map();
+  const kitV = { pa28: [], pa44: [] }, decalsV = { pa28: [], pa44: [] }, unlitV = { pa28: [], pa44: [] }, partV = new Map();
   const surfOf = s => { const c = new THREE.Color(s.c); return [c.r, c.g, c.b, s.r ?? 0.6, s.m ?? 0, s.k ?? 0]; };
   // a part of the cabin's material: surface s; into the static mesh, or a moving part (name); refine: split big faces
   function add(g, s, part = null, refineLen = 0) {
@@ -485,7 +485,7 @@ function makeBuilder() {
     else (B.variant ? kitV[B.variant] : kit).push(geo);
     return geo;
   }
-  const B = { kit, decals, glass, cowl, dynLit, unlit, moving, add, kitV, decalsV, partV, variant: null };
+  const B = { kit, decals, glass, cowl, dynLit, unlit, moving, add, kitV, decalsV, unlitV, partV, variant: null };
   return B;
 }
 // a quad facing +z (w × h), uv = [u0, v0, u1, v1], placed; attrs for the decal-like materials
@@ -725,7 +725,10 @@ export function buildCockpit(FL, A, opts = {}) {
   // the screens' and strips' textures come later (createGlass); remember the quads
   // ============================================================ the audio panel (GMA type)
   const AUDIO = [['COM1 MIC', 'COM1'], ['COM2 MIC', 'COM2'], ['COM3 MIC', 'COM3'], ['COM1/2', 'TEL'], ['PA', 'SPKR'], ['MKR/MUTE', 'HI SENS'], ['DME', 'ADF'], ['NAV1', 'NAV2'], ['AUX', 'MAN SQ'], ['PLAY', ''], ['PILOT', 'COPLT']];
-  const lamps = [];                                        // { key, verts: [first, count] } in the unlit mesh
+  // a lamp: its quad into the unlit mesh (the type's own while B.variant is set); { key, list, index }, and once the
+  // meshes are made { col, first, count }: its vertices in that mesh's colours
+  const lamps = [];
+  const lamp = (key, g) => { const list = B.variant ? B.unlitV[B.variant] : B.unlit; list.push(g); lamps.push({ key, list, index: list.length - 1 }); };
   {
     const [cx, cy] = AUD, w = 0.062, h = BEZEL.h;
     add(at(rbox(w, h, 0.018, 0.006, 2), [cx, cy, PZ + 0.009]), S.bezel);
@@ -735,8 +738,7 @@ export function buildCockpit(FL, A, opts = {}) {
       add(at(rbox(0.024, 0.0105, 0.006, 0.0018), [x, y, z + 0.002]), S.key);
       label(name, [x, y - 0.0012, z + 0.0051], { size: 1.35, wmm: 22 });
       const lampKey = { 'COM1 MIC': 'micCOM1', 'COM2 MIC': 'micCOM2', COM1: 'monCOM1', COM2: 'monCOM2', NAV1: 'monNAV1', NAV2: 'monNAV2' }[name] || null;
-      B.unlit.push(quad(0.009, 0.0016, dynUV(DYN.white), [x, y + 0.0037, z + 0.0052]));
-      lamps.push({ key: lampKey, index: B.unlit.length - 1 });
+      lamp(lampKey, quad(0.009, 0.0016, dynUV(DYN.white), [x, y + 0.0037, z + 0.0052]));
       const act = name === 'COM1 MIC' || name === 'COM2 MIC' ? () => { const r = name.slice(0, 4); return cur.av && cur.av.audio.mic === r ? info(`送信はすでに ${r} です`) : avc('MIC'); }
         : /^(COM1|COM2|NAV1|NAV2)$/.test(name) ? () => avc('MON', name) : () => info('このボタンはこの飛行では使いません');
       control({ id: 'audio.' + name.replace(/[^A-Z0-9]/g, ''), label: `オーディオ ${name}`, kind: 'button', size: [0.026, 0.0125, 0.016], pos: [x, y, z + 0.004], act });
@@ -920,12 +922,10 @@ export function buildCockpit(FL, A, opts = {}) {
     for (let i = 0; i < 3; i++) {                                                   // nose (middle), left, right
       const dx = [0, -0.0175, 0.0175][i];
       add(at(rbox(0.0125, 0.0095, 0.004, 0.0015), [GEAR.x + dx, GEAR.y + 0.062, PZ + 0.002]), S.caseBlack);
-      B.unlit.push(quad(0.0095, 0.007, dynUV(DYN.white), [GEAR.x + dx, GEAR.y + 0.062, PZ + 0.0043]));
-      lamps.push({ key: ['gearN', 'gearL', 'gearR'][i], index: B.unlit.length - 1 });
+      lamp(['gearN', 'gearL', 'gearR'][i], quad(0.0095, 0.007, dynUV(DYN.white), [GEAR.x + dx, GEAR.y + 0.062, PZ + 0.0043]));
     }
     add(at(rbox(0.03, 0.009, 0.004, 0.0015), [GEAR.x, GEAR.y + 0.086, PZ + 0.002]), S.caseBlack);
-    B.unlit.push(quad(0.027, 0.0065, dynUV(DYN.white), [GEAR.x, GEAR.y + 0.086, PZ + 0.0043]));
-    lamps.push({ key: 'gearRed', index: B.unlit.length - 1 });
+    lamp('gearRed', quad(0.027, 0.0065, dynUV(DYN.white), [GEAR.x, GEAR.y + 0.086, PZ + 0.0043]));
     label('GEAR UNSAFE', [GEAR.x, GEAR.y + 0.097, PZ + 0.0002], { size: 1.2, wmm: 22 });
     control({ id: 'gear', label: () => `脚のレバー（${cur.s && !cur.s.gearDown ? 'UP' : 'DOWN'}・G）`, kind: 'lever', part: 'gearLever', size: [0.03, 0.03, 0.03], pos: [GEAR.x, GEAR.y, PZ + GEAR.len + 0.004],
       act: () => flight('gear') });
@@ -1225,15 +1225,18 @@ export function buildCockpit(FL, A, opts = {}) {
   screens.mfd = mesh(scr.mfd[0], mfdMat, 'cockpit-mfd', { cast: false });
   cabin.add(screens.pfd, screens.mfd);
   // the label strips, the black band over them and the audio panel's lamps: one unlit mesh with vertex colours (lamps
-  // change colour)
-  const unlitGeos = [...strips, ...B.unlit].map(g => { const n = g.attributes.position.count, c = new Float32Array(n * 3).fill(g.userData.black ? 0 : 1); g.setAttribute('color', new THREE.BufferAttribute(c, 3)); if (!g.attributes.normal) g.computeVertexNormals(); return g; });
-  const firstOf = [];
-  let vOff = strips.reduce((a, g) => a + g.attributes.position.count, 0);
-  for (const g of B.unlit) { firstOf.push(vOff); vOff += g.attributes.position.count; }
-  for (const l of lamps) { l.first = firstOf[l.index]; l.count = B.unlit[l.index].attributes.position.count; }
-  const unlitMesh = mesh(mergeGeometries(unlitGeos), unlitMat, 'cockpit-lit', { cast: false });
+  // change colour); (M6) the Seminole's gear lights in one of its own, hidden with its other parts in the Archer's view
+  const unlitMesh = (lead, list, name) => {
+    const geos = [...lead, ...list].map(g => { const n = g.attributes.position.count, c = new Float32Array(n * 3).fill(g.userData.black ? 0 : 1); g.setAttribute('color', new THREE.BufferAttribute(c, 3)); if (!g.attributes.normal) g.computeVertexNormals(); return g; });
+    const m = mesh(mergeGeometries(geos), unlitMat, name, { cast: false }), firstOf = [];
+    let vOff = lead.reduce((a, g) => a + g.attributes.position.count, 0);
+    for (const g of list) { firstOf.push(vOff); vOff += g.attributes.position.count; }
+    for (const l of lamps) if (l.list === list) { l.col = m.geometry.attributes.color; l.first = firstOf[l.index]; l.count = list[l.index].attributes.position.count; }
+    return m;
+  };
   const dialMesh = mesh(mergeGeometries(B.dynLit), dynLitMat, 'cockpit-dials', { cast: false });
-  cabin.add(unlitMesh, dialMesh);
+  cabin.add(unlitMesh(strips, B.unlit, 'cockpit-lit'), dialMesh);
+  for (const t of ['pa28', 'pa44']) if (B.unlitV[t].length) VG[t].add(unlitMesh([], B.unlitV[t], 'cockpit-lit-' + t));
 
   // moving parts: each in a group at its pivot (the geometry was built in place)
   const PIV = {
@@ -1295,7 +1298,7 @@ export function buildCockpit(FL, A, opts = {}) {
   const RK_POS = new THREE.Vector3(), RK_Q = new THREE.Quaternion(), RK_M = new THREE.Matrix4(), RK_E = new THREE.Euler();
   const lastSw = new Array(ROCKERS.length).fill(null);
   const avSeen = { pfdMenu: '', wind: null, baroUnit: '', mfdPage: '', north: null, mic: '', c1: null, c2: null, n1: null, n2: null, powered: null, cdi: '' };
-  const lampCol = unlitMesh.geometry.attributes.color;
+  const lampCols = [...new Set(lamps.map(l => l.col))];     // (the colours of the unlit meshes the lamps are in)
   const comp = { a: 0, v: 0, init: false };
   const t = { pfd: 1, mfd: 1, stby: 1 };
   const RATE = { pfd: 1 / 30, mfd: 1 / 10, stby: 1 / 15 };
@@ -1326,11 +1329,11 @@ export function buildCockpit(FL, A, opts = {}) {
   }
   function setLamps(av, powered) {
     for (let i = 0; i < lamps.length; i++) {
-      const l = lamps[i], on = (powered || (l.key && l.key.startsWith('gear') && switches.master)) && lampOn(l.key, av);
-      if (l.key === 'gearRed') { for (let k = 0; k < l.count; k++) lampCol.setXYZ(l.first + k, on ? 1.0 : 0.05, on ? 0.12 : 0.02, on ? 0.08 : 0.02); continue; }
-      for (let k = 0; k < l.count; k++) lampCol.setXYZ(l.first + k, on ? 0.35 : 0.035, on ? 1.0 : 0.04, on ? 0.45 : 0.035);
+      const l = lamps[i], c = l.col, on = (powered || (l.key && l.key.startsWith('gear') && switches.master)) && lampOn(l.key, av);
+      if (l.key === 'gearRed') { for (let k = 0; k < l.count; k++) c.setXYZ(l.first + k, on ? 1.0 : 0.05, on ? 0.12 : 0.02, on ? 0.08 : 0.02); continue; }
+      for (let k = 0; k < l.count; k++) c.setXYZ(l.first + k, on ? 0.35 : 0.035, on ? 1.0 : 0.04, on ? 0.45 : 0.035);
     }
-    lampCol.needsUpdate = true;
+    for (let i = 0; i < lampCols.length; i++) lampCols[i].needsUpdate = true;
   }
   function poseRockers() {
     let changed = false;

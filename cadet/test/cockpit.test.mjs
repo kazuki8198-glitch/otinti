@@ -228,22 +228,35 @@ test('cockpit: every control can be found, picked from the seat, and says what t
   cp.dispose();
 });
 
-// (M6) the Seminole's own: its quadrant (two of each lever), its gear selector and lights, its nose; the same panel
+// what is drawn now (a type's own parts are hidden with their group: the parents' visibility counts too)
+function shown(cp) {
+  cp.root.updateMatrixWorld(true);
+  const names = new Set(); let calls = 0, count = 0;
+  cp.root.traverse(o => { let v = true; for (let p = o; p; p = p.parent) v = v && p.visible; if (v && drawn(o)) { calls++; count += tris(o.geometry) * (o.isInstancedMesh ? o.count : 1); names.add(o.name); } });
+  return { names, calls, count };
+}
+// (M6) the Seminole's own: its quadrant (two of each lever), its gear selector and lights, its nose; the same panel; in
+// the Archer's view none of it is drawn
 test('cockpit: the Seminole\'s — its levers and gear selector found, picked and seen from the seat; within budget', () => {
   const cp = build({ twin: AC('pa44') });
   const tri0 = cp.triangles;
   assert.equal(cp.type, 'pa28');
   assert.ok(!cp.controls.some(c => c.id === 'gear'), 'the Archer\'s view first');
+  // the Archer's view draws just what the Archer's own cockpit does: not the Seminole's gear lights (in an unlit mesh
+  // of its own) nor any other of its parts
+  const solo = buildCockpit(FL, AC('pa28'), { makeCanvas: null }), seen = shown(cp), litVerts = c => c.meshes.find(m => m.name === 'cockpit-lit').geometry.attributes.position.count;
+  assert.ok(cp.meshes.some(m => m.name === 'cockpit-lit-pa44') && !seen.names.has('cockpit-lit-pa44'), 'the gear lights not drawn in the Archer\'s view');
+  assert.equal(litVerts(cp), litVerts(solo), 'none of the Seminole\'s lamps in the unlit mesh both types draw');
+  assert.equal(seen.calls, solo.meshes.length); assert.equal(seen.count, solo.triangles); assert.equal(tri0, solo.triangles);
+  solo.dispose();
   cp.setType('pa44');
   assert.equal(cp.type, 'pa44');
   const L = SC.startLesson('m1', 'basic'); for (let i = 0; i < 60; i++) { P.step(L.s, 1 / 120); SC.update(L, 1 / 120); }
   const ids = controlsCheck(cp, L, [...COMMON_IDS, 'gear', 'prop', 'carbHeat']);
   assert.equal([...ids].filter(id => id === 'throttle').length, 1, 'one throttle control for the pair');
   // what is drawn: the Seminole's parts, not the Archer's
-  cp.root.updateMatrixWorld(true);
-  const names = new Set(); let calls = 0, count = 0;
-  cp.root.traverse(o => { let v = true; for (let p = o; p; p = p.parent) v = v && p.visible; if (v && drawn(o)) { calls++; count += tris(o.geometry) * (o.isInstancedMesh ? o.count : 1); names.add(o.name); } });
-  for (const n of ['cockpit-nose', 'cockpit-thrL', 'cockpit-thrR', 'cockpit-propL', 'cockpit-propR', 'cockpit-mixL', 'cockpit-mixR', 'cockpit-gearLever', 'cockpit-shell-pa44', 'cockpit-labels-pa44']) assert.ok(names.has(n), n);
+  const { names, calls, count } = shown(cp);
+  for (const n of ['cockpit-nose', 'cockpit-thrL', 'cockpit-thrR', 'cockpit-propL', 'cockpit-propR', 'cockpit-mixL', 'cockpit-mixR', 'cockpit-gearLever', 'cockpit-shell-pa44', 'cockpit-labels-pa44', 'cockpit-lit-pa44']) assert.ok(names.has(n), n);
   for (const n of ['cockpit-cowl', 'cockpit-throttle', 'cockpit-mixture', 'cockpit-shell-pa28']) assert.ok(!names.has(n), `no ${n}`);
   assert.ok(calls <= 44, `${calls} draw calls`);
   assert.equal(count, cp.trianglesTwin);
@@ -256,6 +269,12 @@ test('cockpit: the Seminole\'s — its levers and gear selector found, picked an
   const g0 = p.gearLever.rotation.x;
   Object.assign(s, { gearDown: false }); run(cp, L, 0.1);
   assert.ok(p.gearLever.rotation.x < g0 - 30 * DEG, 'the gear selector up');
+  const col = cp.meshes.find(m => m.name === 'cockpit-lit-pa44').geometry.attributes.color, v0 = col.version;
+  const lights = (gearPos) => { s.gearPos = gearPos; run(cp, L, 0.05); let green = 0, red = 0; for (let i = 0; i < col.count; i++) { if (col.getY(i) > 0.9) green++; else if (col.getX(i) > 0.9) red++; } return [green / 6, red / 6]; };
+  assert.deepEqual(lights(1), [3, 0], 'three green: down and locked');
+  assert.deepEqual(lights(0.5), [0, 1], 'the red one: in transit');
+  assert.deepEqual(lights(0), [0, 0], 'none: up');
+  assert.ok(col.version > v0, 'the lights\' colours sent again'); s.gearPos = 1;
   const prop0 = p.propL.rotation.x;
   cp.switches.propCycleT = 1.3; run(cp, L, 0.05);
   assert.ok(p.propL.rotation.x > prop0 + 20 * DEG, 'the propeller levers pulled back while cycled');

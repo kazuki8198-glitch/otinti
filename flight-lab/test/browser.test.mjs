@@ -3,6 +3,9 @@
 // a textbook question, a ground-school test and an ATC scene, and checks the Google
 // layer with an OFFLINE FIXTURE (test/fixtures: not Google data) served in place of tile.googleapis.com: the tile is
 // decoded in the worker with the embedded Draco, drawn, credited, and the key never reaches storage or the record.
+// The second reads the basic course (kiso/) through its own page: every chapter and section, every figure and photo, the
+// written questions, the glossary, the sources, the progress (apart from the textbook's, kept across a reload), and two
+// pages compared with kiso/preview.html.
 // Needs Playwright (set PLAYWRIGHT to its module path if it is not installed next to this project); skipped otherwise.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -98,7 +101,7 @@ test('browser: offline start, the checklist and ATC by keys, keyboard flight, ke
     await page.evaluate(() => __lab.start('i1', 'intro'));
     assert.equal(await page.isVisible('#hood'), true, 'the hood is up as the lesson starts');
     // every page
-    for (const t of ['book', 'quiz', 'guide', 'tutor', 'readq', 'sfb', 'radio', 'records', 'g3d', 'about']) { await page.evaluate(t => __lab.showPage(t), t); await page.waitForTimeout(120); }
+    for (const t of ['book', 'kiso', 'quiz', 'guide', 'tutor', 'readq', 'sfb', 'radio', 'records', 'g3d', 'about']) { await page.evaluate(t => __lab.showPage(t), t); await page.waitForTimeout(120); }
     await page.evaluate(() => __lab.openSchool('m3')); await page.waitForTimeout(150);
     // the result screen: R starts the lesson again
     await page.evaluate(() => { __lab.start('a1', 'intro'); FL.pages().showDebrief(__lab.lesson()); });
@@ -186,6 +189,132 @@ test('browser: offline start, the checklist and ATC by keys, keyboard flight, ke
     await page.evaluate(() => __lab.showPage('g3d'));
     await page.click('#pageBody button:has-text("切断")');
     assert.equal((await page.evaluate(() => __lab.google())).hasKey, false);
+    assert.deepEqual(errors, []);
+    assert.deepEqual(await page.evaluate(() => __lab.errors), []);
+  } finally { await browser.close(); }
+});
+
+// a page's content in order: its text, each SVG's markup, each image's source and size (the wrappers left out, so the
+// app's frames and the preview's compare)
+function contentTokens(root) {
+  const out = [];
+  const walk = n => { for (const c of n.childNodes) {
+    if (c.nodeType === 3) { const t = c.textContent.replace(/\s+/g, ' ').trim(); if (t) out.push('t:' + t); }
+    else if (c.nodeType === 1) { if (c.tagName.toLowerCase() === 'svg') out.push('svg:' + c.outerHTML); else if (c.tagName === 'IMG') out.push(`img:${c.getAttribute('src')}:${c.getAttribute('width')}x${c.getAttribute('height')}`); else walk(c); }
+  } };
+  walk(root);
+  return out;
+}
+
+test('browser: 基礎教材 — every chapter and section by 次の節, 161 figures and 85 photos with captions and credits, the written questions, the glossary, the sources, the record, as preview.html shows them', { skip: !chromium && 'Playwright not found' }, async () => {
+  const { out } = build({ quiet: true });
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  try {
+    const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+    const page = await ctx.newPage(), errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+    await ctx.route(/^https?:/, r => r.abort());
+    await page.addInitScript(() => { try { localStorage.setItem('flightlab-prefs-v2', JSON.stringify({ ack: true, tour: true })); } catch (e) { /* storage blocked */ } });
+    await page.goto('file://' + out);
+    await page.waitForFunction(() => window.__lab && __lab.sceneOk());
+    const total = await page.evaluate(() => FL.kiso.chapters.reduce((a, c) => a + c.sections.length, 0));
+    // the menu: 基礎教材 next to 教科書; the page says which law it assumes; the contents list the 14 chapters
+    await page.evaluate(() => __lab.openMenu());
+    const tiles = await page.$$eval('#mainMenu .tile .t-title', a => a.map(e => e.textContent));
+    assert.equal(tiles[tiles.indexOf('教科書') + 1], '基礎教材', tiles.join(' '));
+    await page.click('.tile:has-text("基礎教材")');
+    assert.equal(await page.textContent('#pageTitle'), '基礎教材（日本の航空法 前提）');
+    assert.equal(await page.locator('#kzArt .kz-toc-item').count(), 14);
+    await page.click('#kzArt .kz-toc-item >> nth=0');
+    assert.deepEqual(await page.$$eval('#kzArt .kz-tabs button', a => a.map(b => b.textContent.replace(/（.*/, ''))), ['本文', '確認問題', '用語', '出典']);
+    // every section, one after the other with 次の節 →: no placeholder left, each figure's SVG and caption, each photo
+    // decoded with its caption and credit, the text exactly the data's
+    const walk = await page.evaluate(async () => {
+      const K = FL.kiso, figs = new Set(), photos = new Set(), bad = [];
+      const plain = html => { const d = document.createElement('div'); d.innerHTML = html; for (const e of d.querySelectorAll('.kiso-fig, .kiso-photo')) e.remove(); return d.textContent; };
+      let n = 0;
+      for (;;) {
+        const body = document.querySelector('#kzArt .kz-body'), id = body.dataset.kisoSec, c = K.chapters.find(x => id.startsWith(x.id + '.')), s = c.sections.find(x => x.id === id);
+        n++;
+        if (body.querySelector('.kiso-fig, .kiso-photo')) bad.push(`${id}: a placeholder is left`);
+        for (const f of body.querySelectorAll('figure.kz-fig')) {
+          const m = c.figures.find(x => x.id === f.dataset.fig);
+          if (m && f.querySelector('svg') && f.querySelector('svg').outerHTML.length > 200 && f.querySelector('figcaption').textContent === plain(m.caption)) figs.add(m.id); else bad.push(`${id}: figure ${f.dataset.fig}`);
+        }
+        for (const f of body.querySelectorAll('figure.kz-photo')) {
+          const m = c.photos.find(x => x.id === f.dataset.photo), im = f.querySelector('img');
+          await im.decode().catch(() => {});
+          const cap = f.querySelector('figcaption').children;
+          if (m && im.naturalWidth > 0 && cap[0].textContent === plain(m.caption) && cap[1].textContent === plain(m.credit) && cap[1].textContent.trim()) photos.add(m.id); else bad.push(`${id}: photo ${f.dataset.photo}`);
+        }
+        const ours = body.cloneNode(true); for (const e of ours.querySelectorAll('figure')) e.remove();
+        if (ours.textContent !== plain(s.html)) bad.push(`${id}: the text differs from the data`);
+        const next = [...document.querySelectorAll('#kzArt .kz-pane .row button')].find(b => b.textContent === '次の節 →');
+        if (!next) break;
+        next.click();
+      }
+      return { n, figs: figs.size, photos: photos.size, bad, last: document.querySelector('#kzArt .kz-body').dataset.kisoSec };
+    });
+    assert.deepEqual(walk.bad, []);
+    assert.equal(walk.n, total, 'every section'); assert.equal(walk.last, 'kiso13.28');
+    assert.equal(walk.figs, 161, 'figures'); assert.equal(walk.photos, 85, 'photos');
+    await page.click('#kzArt .kz-pane button:has-text("← 前の節")');
+    assert.equal(await page.getAttribute('#kzArt .kz-body', 'data-kiso-sec'), 'kiso13.27');
+    // read sections: the course's own progress, not the textbook's
+    let prog = await page.evaluate(() => __lab.progress());
+    assert.equal(prog.kisoRead.length, total); assert.ok(!prog.read.some(id => /^kiso/.test(id)), 'not in the textbook\'s read');
+    // the written questions of chapter 5: no choices, no grading; the answer opens on the button and is recorded
+    await page.click('#kzNav .kz-ch:has-text("第 5 章")');
+    await page.click('#kzArt .kz-tabs button:has-text("確認問題")');
+    assert.equal(await page.locator('#kzArt .kz-qa').count(), 28);
+    assert.equal(await page.locator('#kzArt .kz-pane input').count(), 0, 'written answers: nothing to choose');
+    assert.equal(await page.isVisible('#kzArt .kz-qa >> nth=0 >> .kz-a'), false);
+    await page.click('#kzArt .kz-qa >> nth=0 >> button:has-text("解答と解説を見る")');
+    assert.equal(await page.isVisible('#kzArt .kz-qa >> nth=0 >> .kz-a'), true);
+    assert.equal(await page.evaluate(() => { const d = document.createElement('div'); d.innerHTML = FL.kiso.chapters[5].qa[0].a; return document.querySelector('#kzArt .kz-qa .kz-a > div:last-child').textContent === d.textContent; }), true, 'the answer as the data has it');
+    prog = await page.evaluate(() => __lab.progress());
+    assert.deepEqual(prog.kisoQa, ['kiso05.q1']); assert.deepEqual(prog.bookQuiz, {}, 'not the textbook\'s questions');
+    // the glossary: the header and the rows, narrowed by the search
+    await page.click('#kzArt .kz-tabs button:has-text("用語")');
+    assert.equal(await page.locator('#kzArt .kz-gl tbody tr').count(), 40);
+    assert.equal(await page.locator('#kzArt .kz-gl thead th').count(), await page.evaluate(() => FL.kiso.chapters[5].glossaryHeader.length));
+    await page.fill('#kzArt .kz-search', '重心');
+    const shown = await page.$$eval('#kzArt .kz-gl tbody tr', a => a.filter(r => !r.hidden).map(r => r.textContent));
+    assert.ok(shown.length > 0 && shown.length < 40 && shown.every(t => t.includes('重心')), `${shown.length} rows`);
+    await page.fill('#kzArt .kz-search', 'zzzz');
+    assert.equal(await page.isVisible('#kzArt .kz-pane p:has-text("見つかりませんでした")'), true);
+    // the sources: the chapter's sources and the photos' credits; the links open outside the app
+    await page.click('#kzArt .kz-tabs button:has-text("出典")');
+    const src = await page.textContent('#kzArt .kz-pane');
+    assert.match(src, /写真の出典/); assert.match(src, /Ptrump16/);
+    assert.ok(await page.$$eval('#kzArt .kz-pane a[href^="http"]', a => a.length > 0 && a.every(x => x.target === '_blank' && /noopener/.test(x.rel))));
+    // the record: kept across a reload (localStorage), in the export, on the records page; the About page's line
+    await page.reload();
+    await page.waitForFunction(() => window.__lab && __lab.sceneOk());
+    prog = await page.evaluate(() => __lab.progress());
+    assert.equal(prog.kisoRead.length, total); assert.deepEqual(prog.kisoQa, ['kiso05.q1']);
+    assert.deepEqual(JSON.parse(await page.evaluate(() => FL.school.exportJSON(__lab.records(), __lab.progress()))).progress.kisoQa, ['kiso05.q1']);
+    await page.evaluate(() => __lab.showPage('records'));
+    assert.match(await page.textContent('#pageBody'), new RegExp(`基礎教材（日本の航空法 前提）：読んだ節 ${total} / ${total}・解答を開いた確認問題 1 / 376`));
+    await page.evaluate(() => __lab.showPage('about'));
+    assert.match(await page.textContent('#pageBody'), /基礎教材（日本の航空法 前提）の写真のクレジット（撮影者・ライセンス・出典）は、各写真の下と、章ごとの「出典」タブ/);
+    // 第 5 章 11 節 (図 5-6) and the cover of 第 0 章 (写真 1): the same content as kiso/preview.html
+    const prev = await ctx.newPage();
+    prev.on('pageerror', e => errors.push('preview: ' + e.message));
+    for (const [no, secNo] of [[5, 11], [0, null]]) {
+      await page.evaluate(() => __lab.showPage('kiso'));
+      const [ci, si] = await page.evaluate(([no, secNo]) => { const i = FL.kiso.chapters.findIndex(c => c.no === no); return [i, FL.kiso.chapters[i].sections.findIndex(s => (secNo == null ? /\.cover$/.test(s.id) : s.no === secNo))]; }, [no, secNo]);
+      await page.evaluate(([i, j]) => FL.pages().openKiso(i, 'sec', j), [ci, si]);
+      const ours = await page.evaluate(`(${contentTokens})(document.querySelector('#kzArt .kz-body'))`);
+      const head = await page.evaluate(() => ['.bk-chap', '.bk-title', '.kz-sec-t'].map(k => document.querySelector('#kzArt ' + k).textContent));
+      await prev.goto(`file://${path.join(here, '..', 'kiso', 'preview.html')}?ch=${ci}&s=${si}`);
+      const theirs = await prev.evaluate(`(() => { const d = document.createElement('div'); d.innerHTML = document.getElementById('main').innerHTML.split('</h3>').slice(1).join('</h3>'); return (${contentTokens})(d); })()`);
+      const theirHead = await prev.evaluate(() => [document.querySelector('#main .note').textContent, document.querySelector('#main h2').textContent, document.querySelector('#main h3').textContent]);
+      assert.deepEqual(head, theirHead, `chapter ${no} section ${secNo}: the headings`);
+      assert.deepEqual(ours, theirs, `chapter ${no} section ${secNo}: the content`);
+      assert.equal(ours.filter(t => /^(svg|img):/.test(t)).length, 1, 'the figure or the photo');
+    }
     assert.deepEqual(errors, []);
     assert.deepEqual(await page.evaluate(() => __lab.errors), []);
   } finally { await browser.close(); }

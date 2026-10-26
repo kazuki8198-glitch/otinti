@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SRC = path.join(here, 'src'), OUT = path.join(here, 'outputs'), VENDOR = path.join(here, 'vendor', 'draco');
-const MODULES = ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'book-figs.js', 'book-core.js', 'book-photos.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js', 'quiz.js', 'radio.js', 'ui.js', 'acmesh.js', 'scene.js', 'google3d.js', 'pages.js', 'app.js'];
+const MODULES = ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'book-figs.js', 'book-core.js', 'book-photos.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js', 'kiso/kiso-data.js', 'quiz.js', 'radio.js', 'ui.js', 'acmesh.js', 'scene.js', 'google3d.js', 'pages.js', 'app.js'];
 
 const read = f => fs.readFileSync(f, 'utf8');
 // inline scripts must not contain "</script" (it would end the element)
@@ -27,7 +27,7 @@ export function build({ quiet = false } = {}) {
   const wasm = fs.readFileSync(path.join(VENDOR, 'draco_decoder.wasm')).toString('base64');
   const lic = read(path.join(VENDOR, 'LICENSE-draco.txt'));
   const head = `(function (FL) { FL.BUILD_INFO = ${JSON.stringify(info)}; FL.DRACO_SRC = ${JSON.stringify(wrapper)}; FL.DRACO_WASM_B64 = ${JSON.stringify(wasm)}; FL.DRACO_LICENSE = ${JSON.stringify(lic)}; })(globalThis.FL = globalThis.FL || {});`;
-  const scripts = [`<script>\n${safeJs(head)}\n</script>`, ...MODULES.map(m => `<script>\n/* ---- ${m} ---- */\n${safeJs(read(path.join(SRC, m)))}\n</script>`)].join('\n');
+  const scripts = [`<script>\n${safeJs(head)}\n</script>`, ...MODULES.map(m => `<script>\n/* ---- ${m} ---- */\n${safeJs(read(m.includes('/') ? path.join(here, m) : path.join(SRC, m)))}\n</script>`)].join('\n');
   html = html.replace(/<!--BUILD:JS-->[\s\S]*?<!--\/BUILD:JS-->/, () => scripts);
   fs.mkdirSync(OUT, { recursive: true });
   const out = path.join(OUT, 'FLIGHT-LAB.html');

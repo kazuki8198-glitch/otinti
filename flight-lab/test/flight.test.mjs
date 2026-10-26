@@ -4,6 +4,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { load, CORE } from './load.mjs';
 import { makeBot, runLesson } from './bot.mjs';
+import vm from 'node:vm';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { build } from '../build.mjs';
 const FL = load(...CORE, 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js', 'quiz.js', 'radio.js', 'ui.js');
 const P = FL.physics, A = FL.avionics, SC = FL.school, SY = FL.syllabus, SF = FL.sanford, BK = FL.book, QZ = FL.quiz;
@@ -17,6 +21,9 @@ const hands = (s, kt, bank = 0) => { if (s.base == null) s.base = s.out.pitch; c
 // ------------------------------------------------------------------ the built single file
 const B = build({ quiet: true });
 const html = B.html;
+// text: the page without the basic course's photos (base64): random letters can spell anything, so the placeholder
+// and key checks read the rest
+const text = html.replace(/data:image\/webp;base64,[A-Za-z0-9+/=]+/g, 'data:image/webp;base64,');
 
 test('build: one HTML file, no external scripts or stylesheets, everything inline; the only remote host is Google\'s tile host', () => {
   assert.doesNotMatch(html, /<script[^>]*\bsrc\s*=/i, 'no <script src>');
@@ -30,8 +37,8 @@ test('build: one HTML file, no external scripts or stylesheets, everything inlin
 });
 
 test('build: no placeholders, no template markers, no API keys', () => {
-  for (const re of [/\bTODO\b/, /\bFIXME\b/, /\bTBD\b/, /lorem ipsum/i, /PLACEHOLDER/, /<!--BUILD:/, /\{\{\s*\w+\s*\}\}/, /XXX/]) assert.doesNotMatch(html, re, String(re));
-  assert.doesNotMatch(html, /sk-ant-api/); assert.doesNotMatch(html, /AIza[0-9A-Za-z_-]{30,}/);
+  for (const re of [/\bTODO\b/, /\bFIXME\b/, /\bTBD\b/, /lorem ipsum/i, /PLACEHOLDER/, /<!--BUILD:/, /\{\{\s*\w+\s*\}\}/, /XXX/]) assert.doesNotMatch(text, re, String(re));
+  assert.doesNotMatch(text, /sk-ant-api/); assert.doesNotMatch(text, /AIza[0-9A-Za-z_-]{30,}/);
 });
 
 test('build: the displays, the instructor panel, the control strip and the required notices are on the page', () => {
@@ -41,6 +48,59 @@ test('build: the displays, the instructor panel, the control strip and the requi
   const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]), seen = new Set(), dup = [];
   for (const i of ids) { if (seen.has(i)) dup.push(i); seen.add(i); }
   assert.deepEqual(dup, [], 'no duplicate element ids');
+});
+
+// ------------------------------------------------------------------ the basic course (kiso/: Japan's aviation law, a separate book)
+// kiso/kiso-data.js is generated (never edited here): read in its own context, as the page reads it (window.FL.kiso),
+// and copied into this one (plain data: the other context's arrays are not this one's for deepEqual)
+const KISO_JS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'kiso', 'kiso-data.js');
+const KZ = (() => { const box = {}; box.window = box; vm.runInNewContext(fs.readFileSync(KISO_JS, 'utf8'), box, { filename: 'kiso-data.js' }); return JSON.parse(JSON.stringify(box.FL.kiso)); })();
+
+test('build: the basic course (kiso/kiso-data.js) inline as it is, after the textbook and before the tests', () => {
+  const at = k => html.indexOf(k);
+  assert.ok(at('/* ---- book-5.js ---- */') < at('/* ---- kiso/kiso-data.js ---- */') && at('/* ---- kiso/kiso-data.js ---- */') < at('/* ---- quiz.js ---- */'), 'script order');
+  assert.ok(html.includes(fs.readFileSync(KISO_JS, 'utf8')), 'kiso-data.js unchanged in the page');
+});
+
+test('basic course: chapters 0–13, the counts its README gives, every figure and photo placed once with its caption and credit, apart from the textbook', () => {
+  assert.deepEqual(KZ.chapters.map(c => c.no), [...Array(14).keys()]);
+  assert.deepEqual(KZ.chapters.map(c => c.qa.length), [20, 24, 24, ...Array(11).fill(28)]);
+  assert.equal(KZ.chapters.reduce((a, c) => a + c.glossary.length, 0), 555);
+  const figs = KZ.chapters.flatMap(c => c.figures), photos = KZ.chapters.flatMap(c => c.photos), used = { fig: [], photo: [] };
+  assert.equal(figs.length, 161); assert.equal(photos.length, 85);
+  assert.deepEqual(Object.keys(KZ.figs).sort(), figs.map(f => f.id).sort()); assert.deepEqual(Object.keys(KZ.photos).sort(), photos.map(p => p.id).sort());
+  const book = new Set(BK.CHAPTERS.flatMap(c => [c.id, ...c.secs.map(s => s.id)])), ids = new Set();
+  for (const c of KZ.chapters) {
+    assert.match(c.id, /^kiso\d\d$/); assert.ok(c.label && c.title && c.sections.length && c.sourcesHtml && c.photoCreditsHtml, c.id);
+    for (const s of c.sections) {
+      assert.ok(s.id.startsWith(c.id + '.') && !ids.has(s.id) && !book.has(s.id), s.id); ids.add(s.id); assert.ok(s.title && s.html, s.id);
+      for (const m of s.html.matchAll(/<div class="kiso-(fig|photo)" data-\1="([^"]+)"><\/div>/g)) used[m[1]].push(m[2]);
+    }
+    for (const q of c.qa) assert.ok(Number.isInteger(q.n) && q.q && q.a, `${c.id} q${q.n}`);
+    assert.ok(c.glossaryHeader.length >= 2 && c.glossary.every(r => r.length === c.glossaryHeader.length && r[0]), `${c.id} glossary`);
+  }
+  assert.deepEqual(used.fig.sort(), figs.map(f => f.id).sort(), 'every figure placed once');
+  assert.deepEqual(used.photo.sort(), photos.map(p => p.id).sort(), 'every photo placed once');
+  for (const f of figs) { assert.match(KZ.figs[f.id], /^<svg[\s\S]*<\/svg>$/, f.id); assert.ok(f.caption, f.id); }
+  for (const p of photos) { assert.match(KZ.photos[p.id], /^data:image\/webp;base64,UklGR/, p.id); assert.ok(p.caption && p.w && p.h, p.id); assert.match(p.credit, /CC BY|CC0|パブリックドメイン|Attribution/, `${p.id} credit`); }
+  // shown with innerHTML: only the tags its README names, no scripts, no handlers
+  const all = KZ.chapters.flatMap(c => [...c.sections.map(s => s.html), ...c.qa.flatMap(q => [q.q, q.a]), ...c.glossaryHeader, ...c.glossary.flat(), c.sourcesHtml, c.photoCreditsHtml, ...c.figures.map(f => f.caption), ...c.photos.flatMap(p => [p.caption, p.credit])]).join('\n');
+  assert.deepEqual([...new Set([...all.matchAll(/<([a-z0-9]+)/g)].map(m => m[1]))].filter(t => !['p', 'b', 'sub', 'sup', 'a', 'br', 'ul', 'li', 'h4', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div'].includes(t)), []);
+  for (const x of [all, ...Object.values(KZ.figs)]) assert.doesNotMatch(x, /<script|<style|<iframe|<foreignObject|\son[a-z]+\s*=|javascript:/i);
+  assert.ok(BK.CHAPTERS.every(c => !/^kiso/.test(c.id)), 'the textbook has no basic-course chapter');
+});
+
+test('basic course progress: its own fields (kisoRead, kisoQa) through the sanitiser, the export and the merge, apart from the textbook\'s read', () => {
+  const p = SC.sanitizeProgress({ read: ['aero.forces'], kisoRead: ['kiso05.11', 'kiso05.11', 'aero.forces', 'kiso<x>', 5], kisoQa: ['kiso05.q1', 'kiso' + 'x'.repeat(80)] });
+  assert.deepEqual(p.read, ['aero.forces']); assert.deepEqual(p.kisoRead, ['kiso05.11']); assert.deepEqual(p.kisoQa, ['kiso05.q1']);
+  assert.deepEqual([SC.sanitizeProgress({}).kisoRead, SC.sanitizeProgress({}).kisoQa], [[], []]);
+  const j = SC.importJSON(SC.exportJSON([], p)); assert.deepEqual([j.progress.kisoRead, j.progress.kisoQa], [['kiso05.11'], ['kiso05.q1']]);
+  const m = SC.mergeProgress(p, { kisoRead: ['kiso00.cover'], kisoQa: ['kiso05.q1', 'kiso00.q2'] });
+  assert.deepEqual([m.read, m.kisoRead, m.kisoQa], [['aero.forces'], ['kiso05.11', 'kiso00.cover'], ['kiso05.q1', 'kiso00.q2']]);
+  // the whole course fits: every section and every question
+  const secs = KZ.chapters.flatMap(c => c.sections.map(s => s.id)), qa = KZ.chapters.flatMap(c => c.qa.map(q => `${c.id}.q${q.n}`));
+  const all = SC.sanitizeProgress({ kisoRead: secs, kisoQa: qa });
+  assert.deepEqual([all.kisoRead.length, all.kisoQa.length], [secs.length, 376]);
 });
 
 // ------------------------------------------------------------------ the flight model (Sorajima's, with the Archer and Seminole data)

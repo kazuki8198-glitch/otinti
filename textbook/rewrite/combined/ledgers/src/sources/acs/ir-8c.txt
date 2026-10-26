@@ -1,0 +1,154 @@
+# FAA Airman Certification Standards: Instrument Rating – Airplane (FAA-S-ACS-8C, November 2023)
+# Source https://www.faa.gov/training_testing/testing/acs/instrument_rating_airplane_acs_8.pdf (a U.S. Government work)
+# Fetched 2026-10-26 (W03). PDF sha256 5facdf8fdb8ed8c85991f2440d5ba2ea50c0c996d5c02c3d9a9fa5dfa5011864. Text made with pdftotext -layout. Kept only: the Area of Operation titles, the Task title lines and the knowledge elements (K codes) with their continuation lines; risk management (R) and skills (S) are not copied.
+Area of Operation I. Preflight Preparation
+Area of Operation II. Preflight Procedures
+Area of Operation III. Air Traffic Control (ATC) Clearances and Procedures
+Area of Operation IV. Flight by Reference to Instruments
+Area of Operation V. Navigation Systems
+Area of Operation VI. Instrument Approach Procedures
+Area of Operation VII. Emergency Operations
+Area of Operation VIII. Postflight Procedures
+Task A. Pilot Qualifications
+   IR.I.A.K1          Certification requirements, recency of experience, and recordkeeping.
+   IR.I.A.K2          Privileges and limitations.
+   IR.I.A.K3          Part 68 BasicMed privileges and limitations.
+Task B. Weather Information
+   IR.I.B.K1          Sources of weather data (e.g., National Weather Service, Flight Service) for flight planning purposes.
+   IR.I.B.K2          Acceptable weather products and resources required for preflight planning, current and forecast
+                      weather for departure, en route, and arrival phases of flight such as:
+   IR.I.B.K2a            a. Airport Observations (METAR and SPECI) and Pilot Observations (PIREP)
+   IR.I.B.K2b            b. Surface Analysis Chart, Ceiling and Visibility Chart (CVA)
+   IR.I.B.K2c            c. Terminal Aerodrome Forecasts (TAF)
+   IR.I.B.K2d            d. Graphical Forecasts for Aviation (GFA)
+   IR.I.B.K2e         e. Wind and Temperature Aloft Forecast (FB)
+   IR.I.B.K2f         f. Convective Outlook (AC)
+   IR.I.B.K2g         g. Inflight Aviation Weather Advisories including Airmen's Meteorological Information (AIRMET),
+                         Significant Meteorological Information (SIGMET), and Convective SIGMET
+   IR.I.B.K3       Meteorology applicable to the departure, en route, alternate, and destination for flights conducted
+                   under Instrument Flight Rules (IFR) to include expected climate and hazardous conditions such as:
+   IR.I.B.K3a         a. Atmospheric composition and stability
+   IR.I.B.K3b         b. Wind (e.g., windshear, mountain wave, factors affecting wind, etc.)
+   IR.I.B.K3c         c. Temperature and heat exchange
+   IR.I.B.K3d         d. Moisture/precipitation
+   IR.I.B.K3e         e. Weather system formation, including air masses and fronts
+   IR.I.B.K3f         f. Clouds
+   IR.I.B.K3g         g. Turbulence
+   IR.I.B.K3h         h. Thunderstorms and microbursts
+   IR.I.B.K3i         i. Icing and freezing level information
+   IR.I.B.K3j         j. Fog/mist
+   IR.I.B.K3k         k. Frost
+   IR.I.B.K3l         l. Obstructions to visibility (e.g., smoke, haze, volcanic ash, etc.)
+   IR.I.B.K4       Flight deck instrument displays of digital weather and aeronautical information.
+Task C. Cross-Country Flight Planning
+   IR.I.C.K1       Route planning, including consideration of:
+   IR.I.C.K1a         a. Available navigational facilities
+   IR.I.C.K1b         b. Special use airspace
+   IR.I.C.K1c         c. Preferred routes
+   IR.I.C.K1d         d. Primary and alternate airports
+   IR.I.C.K1e         e. Enroute charts
+   IR.I.C.K1f         f. Chart Supplements
+   IR.I.C.K1g         g. NOTAMS
+   IR.I.C.K1h         h. Terminal Procedures Publications (TPP)
+   IR.I.C.K2       Altitude selection accounting for terrain and obstacles, glide distance of airplane, IFR cruising
+                   altitudes, effect of wind, and oxygen requirements.
+   IR.I.C.K3       Calculating:
+   IR.I.C.K3a         a. Time, climb and descent rates, course, distance, heading, true airspeed, and groundspeed
+   IR.I.C.K3b         b. Estimated time of arrival, including conversion to universal coordinated time (UTC)
+   IR.I.C.K3c         c. Fuel requirements, including reserve
+   IR.I.C.K4       Elements of an IFR flight plan.
+   IR.I.C.K5       Procedures for activating and closing an IFR flight plan in controlled and uncontrolled airspace.
+Task A. Aircraft Systems Related to Instrument Flight Rules (IFR) Operations
+   IR.II.A.K1      The general operational characteristics and limitations of applicable anti-icing and deicing systems,
+                   including airframe, propeller, intake, fuel, and pitot-static systems.
+   IR.II.A.K2      Flight control systems.
+Task B. Aircraft Flight Instruments and Navigation Equipment
+   IR.II.B.K1      Operation of the aircraft’s applicable flight instrument system(s), including:
+   IR.II.B.K1a        a. Pitot-static instrument system and associated instruments
+   IR.II.B.K1b        b. Gyroscopic/electric/vacuum instrument system and associated instruments
+   IR.II.B.K1c        c. Electrical systems, electronic flight instrument displays [primary flight display (PFD), multi-
+                         function display (MFD)], transponder and automatic dependent surveillance - broadcast
+                         (ADS-B)
+   IR.II.B.K1d        d. Magnetic compass
+   IR.II.B.K2      Operation of the aircraft’s applicable navigation system(s), including:
+   IR.II.B.K2a        a. Very high frequency (VHF) Omnidirectional Range (VOR), distance measuring equipment
+                         (DME), instrument landing system (ILS), marker beacon receiver/indicators
+   IR.II.B.K2b        b. Area navigation (RNAV), global positioning system (GPS), Wide Area Augmentation System
+                         (WAAS), flight management system (FMS), autopilot
+   IR.II.B.K3      Use of an electronic flight bag (EFB), if used.
+Task C. Instrument Flight Deck Check
+   IR.II.C.K1      Purpose of performing an instrument flight deck check and how to detect possible defects.
+   IR.II.C.K2      IFR airworthiness, including aircraft inspection requirements and required equipment for IFR flight.
+   IR.II.C.K3      Required procedures, documentation, and limitations of flying with inoperative equipment.
+Task A. Compliance with Air Traffic Control Clearances
+   IR.III.A.K1     Elements and procedures related to ATC clearances and pilot/controller responsibilities for departure,
+                   en route, and arrival phases of flight, including clearance void times.
+   IR.III.A.K2     Pilot-in-Command (PIC) emergency authority.
+   IR.III.A.K3     Lost communication procedures and procedures for flights outside of radar environments.
+Task B. Holding Procedures
+   IR.III.B.K1      Elements related to holding procedures, including reporting criteria, appropriate speeds, and
+                    recommended entry procedures for standard, nonstandard, published, and non-published holding
+                    patterns.
+Task A. Instrument Flight
+   IR.IV.A.K1      Elements related to attitude instrument flying during straight-and-level flight, climbs, turns, and
+                   descents while conducting various instrument flight procedures.
+   IR.IV.A.K2      Interpretation, operation, and limitations of pitch, bank, and power instruments.
+   IR.IV.A.K3      Normal and abnormal instrument indications and operations.
+Task B. Recovery from Unusual Flight Attitudes
+   IR.IV.B.K1      Procedures for recovery from unusual attitudes in flight.
+   IR.IV.B.K2      Prevention of unusual attitudes, including flight causal, physiological, and environmental factors, and
+                   system and equipment failures.
+   IR.IV.B.K3      Procedures available to safely regain visual meteorological conditions (VMC) after flight into
+                   inadvertent instrument meteorological conditions or unintended instrument meteorological conditions
+                   (IIMC)/(UIMC).
+   IR.IV.B.K4      Appropriate use of automation, if applicable.
+Task A. Intercepting and Tracking Navigational Systems and DME Arcs
+  IR.V.A.K1          Ground-based navigation (orientation, course determination, equipment, tests, and regulations),
+                     including procedures for intercepting and tracking courses and arcs.
+  IR.V.A.K2          Satellite-based navigation (orientation, course determination, equipment, tests, regulations,
+                     interference, appropriate use of databases, Receiver Autonomous Integrity Monitoring (RAIM), and
+                     Wide Area Augmentation System (WAAS)), including procedures for intercepting and tracking courses
+                     and arcs.
+Task B. Departure, En Route, and Arrival Operations
+  IR.V.B.K1       Elements related to ATC routes, including departure procedures (DPs) and associated climb gradients;
+                  standard terminal arrival (STAR) procedures and associated constraints.
+  IR.V.B.K2       Pilot/controller responsibilities, communication procedures, and ATC services available to pilots.
+Task A. Non-precision Approach
+  IR.VI.A.K1         Procedures and limitations associated with a non-precision approach, including the differences
+                     between Localizer Performance (LP) and Lateral Navigation (LNAV) approach guidance.
+  IR.VI.A.K2         Navigation system indications and annunciations expected during an area navigation (RNAV)
+                     approach.
+  IR.VI.A.K3         Ground-based and satellite-based navigation systems used for a non-precision approach.
+  IR.VI.A.K4         A stabilized approach, including energy management concepts.
+Task B. Precision Approach
+  IR.VI.B.K1      Procedures and limitations associated with a precision approach, including determining required
+                  descent rates and adjusting minimums in the case of inoperative equipment.
+  IR.VI.B.K2      Navigation system displays, annunciations, and modes of operation.
+  IR.VI.B.K3      Ground-based and satellite-based navigation systems (orientation, course determination, equipment,
+                  tests and regulations, interference, appropriate use of navigation data, signal integrity).
+  IR.VI.B.K4      A stabilized approach, including energy management concepts.
+Task C. Missed Approach
+  IR.VI.C.K1      Elements related to missed approach procedures and limitations associated with standard instrument
+                  approaches, including while using a flight management system (FMS) or autopilot, if equipped.
+Task D. Circling Approach
+  IR.VI.D.K1         Elements related to circling approach procedures and limitations, including approach categories and
+                     related airspeed restrictions.
+Task E. Landing from an Instrument Approach
+  IR.VI.E.K1      Elements related to the pilot’s responsibilities, and the environmental, operational, and meteorological
+                  factors that affect landing from a straight-in or circling approach.
+  IR.VI.E.K2      Airport signs, markings, and lighting, including approach lighting systems.
+  IR.VI.E.K3      Appropriate landing profiles and aircraft configurations.
+Task A. Loss of Communications
+  IR.VII.A.K1        Procedures to follow in the event of lost communication during various phases of flight, including
+                     techniques for reestablishing communications, when it is acceptable to deviate from an instrument
+                     flight rules (IFR) clearance, and when to begin an approach at the destination.
+Task B. One Engine Inoperative (Simulated) during Straight-and-Level Flight and Turns (AMEL, AMES)
+  IR.VII.B.K1        Procedures used if engine failure occurs during straight-and-level flight and turns while on instruments.
+Task C. Instrument Approach and Landing with an Inoperative Engine (Simulated) (AMEL, AMES)
+  IR.VII.C.K1        Instrument approach procedures with one engine inoperative.
+Task D. Approach with Loss of Primary Flight Instrument Indicators
+  IR.VII.D.K1      Recognizing if primary flight instruments are inaccurate or inoperative, and advising ATC or the
+                   evaluator.
+  IR.VII.D.K2      Possible failure modes of primary instruments and how to correct or minimize the effect of the loss.
+Task A. Checking Instruments and Equipment
+   IR.VIII.A.K1     Procedures for documenting in-flight/postflight discrepancies.

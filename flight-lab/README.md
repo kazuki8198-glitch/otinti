@@ -21,4 +21,6 @@ v2.3：画面を作り直しました（ゲームの画面を参考に）。メ�
 
 v2.4：教科書を一から書き直しました（27 章・154 節）。はじめての訓練生に分かるよう、です・ます の短い文にし、専門用語は「日本語（English）」で書きました。図は 22 から 95 に増やし（すべて SVG。390 px の画面でも読める）、写真を 30 枚入れました（パブリックドメインと CC0・CC BY・CC BY-SA のものだけ。クレジットは [`PHOTO-CREDITS.md`](PHOTO-CREDITS.md)）。章末の確認問題は 83 問から 135 問（4 択・理由つき）。各章は、書いたのとは別のエージェントが、FAA のハンドブック・ACS・AIM・14 CFR と照らして確かめました。アプリ（課目・学科テスト・飛行モデル）は変えていません。食い違いは [`../textbook/rewrite/NOTES.md`](../textbook/rewrite/NOTES.md) にまとめています。
 
+基礎教材と合本（2026-10-26 の所有者の判断）：基礎教材（[`kiso/`](kiso/)）の本文・図・問題は、書き直して教科書の合本に使ってよい。[`kiso/README.md`](kiso/README.md) の決まり 3（文言を変えない）・決まり 4（教科書と混ぜない）は合本については解き、原本のデータと README は変えずに保存する。記録は [`../textbook/rewrite/combined/PROVENANCE.md`](../textbook/rewrite/combined/PROVENANCE.md)。
+
 開発：`node build.mjs`（ビルド）、`node --test --test-concurrency=1 test/flight.test.mjs test/avionics.test.mjs test/browser.test.mjs`（テスト 48 件）。

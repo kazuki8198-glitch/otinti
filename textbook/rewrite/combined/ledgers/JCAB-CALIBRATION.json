@@ -1,0 +1,11 @@
+{
+  "ledger": "JCAB-CALIBRATION",
+  "version": 1,
+  "updated": "2026-10-26",
+  "by": "W03",
+  "about": "JCAB 形式の問題の水準の物差し（DESIGN 5 章の基準 19）。CBT 化の前に国土交通省が公開していた学科試験の問題で、形式・難しさ・論点の分布だけを測る。問題文は写さない。資料の公開の有無・期・利用の条件は W37 が確かめる（UNVERIFIED.json U.cbt-past-papers）。本文と問題には書かない。手に入らなければ「見出しごとに 2 問以上・計算問題 2 割以上」を目安にし、その旨を 1 行書く",
+  "format": { "id": "CAL.<科目>.<期>（例 CAL.jlaw.2019-07）", "subject": "JCAB の科目（航空工学・航空気象・空中航法・航空通信・航空法規・計器飛行一般）", "source": "「形式の参考：国土交通省 航空従事者学科試験（○年○月期）」と URL", "terms": "利用の条件（確かめた文と確認日）", "measured": "{ questions, minutes, calcShare, perHeading: { JCAB-MAP の id: 問の数 } }", "note": "問題文は写さない", "by": "記録した単位", "checkedBy": "確かめ役" },
+  "rows": [
+
+  ]
+}

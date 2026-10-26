@@ -7,8 +7,13 @@ import { Sky } from 'three/addons/objects/Sky.js';
 
 const DEG = Math.PI / 180;
 const ENV_INTENSITY = 0.5;                                               // the scene's scale on the image-based light
+// the visible sky's light (not the sun's disc) is kept under the bloom's threshold (8, post.js): its brightest part, the
+// horizon towards the sun, crossed it and the bloom started and stopped along a line. The haze that takes the sky's
+// colour (post.js) is kept the same way so that the two still meet
+export const SKY_CAP = 7.5;
 // open country round the field seen from above (grass, fields, pines, a little pavement): linear albedo
 const GROUND_ALBEDO = new THREE.Color().setRGB(0.13, 0.135, 0.11);
+const SKY_TINT = new THREE.Color().setRGB(0.75, 0.88, 1.15);             // the sky's light on the ground: bluish
 export const SITE = { lat: 28.78, lon: -81.24, utcOffset: -4 };   // the airfield's area (EDT); the field itself is fictional
 
 // the sun for a local clock time (hours) on a day of the year; returns elevation, azimuth (deg) and a local direction
@@ -39,9 +44,15 @@ function sunlight(el) {
 
 // Preetham's sky is not meant for a sun below the horizon: blend in a twilight sky (deep blue overhead, a glow over
 // the sun's azimuth) and stars, keeping the clouds as silhouettes
+// (cdSkyCap: the luminance the scattered light is kept under, the sun's disc added after it; no cap unless set)
 function addTwilight(mat) {
+  mat.uniforms.cdSkyCap = { value: 1e9 };
   mat.fragmentShader = mat.fragmentShader
-    .replace('void main() {', 'float cdCloudA = 0.0;\nvoid main() {')
+    .replace('void main() {', 'float cdCloudA = 0.0;\nuniform float cdSkyCap;\nvoid main() {')
+    .replace('vec3 texColor = ( Lin + L0 ) * 0.04 + sundiscColor + vec3( 0.0, 0.0003, 0.00075 );', `
+      vec3 cdScat = ( Lin + L0 ) * 0.04 + vec3( 0.0, 0.0003, 0.00075 );
+      cdScat *= min( 1.0, cdSkyCap / max( dot( cdScat, vec3( 0.2126, 0.7152, 0.0722 ) ), 1e-4 ) );
+      vec3 texColor = cdScat + sundiscColor;`)
     .replace('texColor = mix( texColor, cloudAerial, alpha );', 'texColor = mix( texColor, cloudAerial, alpha ); cdCloudA = alpha;')
     .replace('gl_FragColor = vec4( texColor, 1.0 );', `
       float sunH = vSunDirection.y;
@@ -65,6 +76,7 @@ function addTwilight(mat) {
 export function createSky(renderer, scene, quality) {
   const sky = new Sky(); addTwilight(sky.material); sky.scale.setScalar(120000); sky.name = 'sky';      // beyond the far plane: the ambient-occlusion pass does not see it
   const U = sky.material.uniforms;
+  U.cdSkyCap.value = SKY_CAP;
   U.turbidity.value = 3.8; U.rayleigh.value = 1.35; U.mieCoefficient.value = 0.0035; U.mieDirectionalG.value = 0.84;
   U.cloudCoverage.value = 0.34; U.cloudDensity.value = 0.55; U.cloudElevation.value = 0.55; U.cloudScale.value = 0.00018;
   scene.add(sky);
@@ -117,11 +129,15 @@ export function createSky(renderer, scene, quality) {
     // the image-based light from this sky
     const EU = envSky.material.uniforms;
     for (const k of Object.keys(U)) if (EU[k] && EU[k].value !== undefined) { if (EU[k].value?.copy) EU[k].value.copy(U[k].value); else EU[k].value = U[k].value; }
-    EU.showSunDisc.value = 0;
-    // the ground's radiance: the sun on the horizontal plus the sky's share (more of it under an overcast, where the sun
-    // is dimmed), over pi, divided by the scale the scene puts on the whole environment
-    const eh = sun.intensity * Math.max(0, p.dir.y) * (1.25 + 1.5 * state.overcast) / Math.PI / ENV_INTENSITY;
-    groundMat.color.copy(sun.color).multiply(GROUND_ALBEDO).multiplyScalar(eh);
+    EU.showSunDisc.value = 0; EU.cdSkyCap.value = 1e9;               // (the light from the sky itself, uncapped)
+    // the ground's radiance: the sun on the horizontal plus the sky's light, over pi, times the land's albedo, divided
+    // by the scale the scene puts on the whole environment. The sky's part (a quarter of the sun's at mid-morning) does
+    // not fall with the sun's elevation as the direct light does: it stays at a low sun and fades through twilight;
+    // under an overcast, where the sun is dimmed, there is more of it
+    const sunH = sun.intensity * Math.max(0, p.dir.y);
+    const skyH = 10 * (0.06 + 0.19 * Math.max(0, p.dir.y)) * THREE.MathUtils.smoothstep(p.el, -8, 4) * (1 + 1.5 * state.overcast);
+    groundMat.color.copy(sun.color).multiplyScalar(sunH).add(SKY_TINT.clone().multiplyScalar(skyH))
+      .multiply(GROUND_ALBEDO).multiplyScalar(1 / Math.PI / ENV_INTENSITY);
     ground.visible = false; horizonCam.update(renderer, envScene); ground.visible = true;
     const rt = pmrem.fromScene(envScene, 0, 0.1, 2000);
     if (envRT) envRT.dispose();

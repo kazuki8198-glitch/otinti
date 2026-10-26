@@ -9,6 +9,7 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { SKY_CAP } from './sky.js';
 
 const AerialShader = {
   name: 'CadetAerial',
@@ -18,7 +19,7 @@ const AerialShader = {
     uSunDir: { value: new THREE.Vector3(0, 1, 0) }, uHaze: { value: new THREE.Color(0.55, 0.66, 0.80) }, uSunHaze: { value: new THREE.Color(0.9, 0.75, 0.5) },
     uDensity: { value: 0.000085 }, uFall: { value: 0.00055 }, uGround: { value: 16.8 }, uSkyFog: { value: 0 }, uSkyGrey: { value: 0 },
     tSkyCube: { value: null }, uSkyMatch: { value: 0 }, uHazeNear: { value: 0.25 }, uEdge: { value: 1 }, uFar: { value: 42000 },
-    uSkyCap: { value: 7.5 },
+    uSkyCap: { value: SKY_CAP },
   },
   vertexShader: /* glsl */`varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: /* glsl */`
@@ -26,21 +27,16 @@ const AerialShader = {
     uniform vec3 uSunDir, uHaze, uSunHaze; uniform float uDensity, uFall, uGround, uSkyFog, uSkyGrey;
     uniform samplerCube tSkyCube; uniform float uSkyMatch, uHazeNear, uEdge, uFar, uSkyCap;
     varying vec2 vUv;
-    // the clear sky kept under the bloom's threshold (8): its brightest part, the horizon towards the sun, crossed it
-    // and the bloom started and stopped along a line down the screen. The haze that takes the sky's colour is kept the
-    // same way, so the two still meet
-    vec3 capSky(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return c * min(1.0, uSkyCap / max(l, 1e-4)); }
+    // the sky's colour kept as the visible sky keeps it (sky.js SKY_CAP: under the bloom's threshold), then capped as
+    // every pixel is below: the haze that takes the sky's colour then meets the sky exactly
+    vec3 asSky(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return clamp(c * min(1.0, uSkyCap / max(l, 1e-4)), 0.0, 12.0); }
     void main() {
-      vec4 raw = texture2D(tDiffuse, vUv), col = raw;
+      vec4 col = texture2D(tDiffuse, vUv);
       // the sun's disc is far brighter than half floats like (and bloom would spread it over the sky): cap it
       col.rgb = clamp(col.rgb, 0.0, 12.0); if (any(isnan(col.rgb))) col.rgb = vec3(12.0);
       float d = texture2D(tDepth, vUv).x;
       if (d >= 1.0) {                                                       // nothing drawn here: the sky has its own atmosphere,
-        if (uSkyFog + uSkyGrey <= 0.0) {
-          // (the sun's disc, thousands of times brighter than the sky round it, still blooms)
-          if (max(raw.r, max(raw.g, raw.b)) < 500.0) col.rgb = capSky(col.rgb);
-          gl_FragColor = col; return;
-        }
+        if (uSkyFog + uSkyGrey <= 0.0) { gl_FragColor = col; return; }
         // under a storm's deck it is grey and darker; in fog it is the fog's colour (as far off as the ground is)
         vec4 sp = uInvProj * vec4(vUv * 2.0 - 1.0, 1.0, 1.0); sp /= sp.w;
         float up = clamp(normalize(mat3(uCamWorld) * sp.xyz).y, 0.0, 1.0);
@@ -63,16 +59,16 @@ const AerialShader = {
       float mu = max(dot(rd, uSunDir), 0.0);
       vec3 haze = uHaze + uSunHaze * (0.35 * pow(mu, 6.0) + 0.65 * pow(mu, 40.0));
       if (uSkyMatch > 0.0) {
-        // the sky's own colour where this line of sight meets the horizon (or above it, for what stands against the
-        // sky), its glow towards the sun included: distant ground dissolves into the sky behind it instead of ending in
-        // a grey band. A quarter of it near by (uHazeNear: the air's light grows with the path; the sky is several times
-        // brighter than sunlit land, and its full colour there washed the fields out), rising to the sky's full colour
-        // at the edge of the drawn world, which then meets the sky without a line
-        vec3 hd = vec3(rd.x, max(rd.y, 0.0), rd.z);
-        if (dot(hd.xz, hd.xz) < 1e-6) hd.xz = vec2(1.0, 0.0);
-        vec3 skyH = capSky(textureCube(tSkyCube, normalize(hd)).rgb);
+        // the sky's own colour in this direction (its glow towards the sun included; below the horizon the cube holds
+        // the sky as it is drawn past the edge of the world, not the ground): distant ground dissolves into the sky
+        // behind it instead of ending in a grey band. A quarter of it near by (uHazeNear: the air's light grows with the
+        // path; the sky is several times brighter than sunlit land, and its full colour there washed the fields out),
+        // rising to the sky's full colour towards the edge of the drawn world, where the haze itself becomes the sky
+        // (no line left, at any height)
+        vec3 skyH = asSky(textureCube(tSkyCube, rd).rgb);
         float edge = uEdge * smoothstep(0.15 * uFar, 0.97 * uFar, dist);
         haze = mix(haze, skyH * mix(uHazeNear, 1.0, edge), uSkyMatch);
+        fog = mix(fog, 1.0, uEdge * uSkyMatch * smoothstep(0.85 * uFar, 0.99 * uFar, dist));
       }
       gl_FragColor = vec4(mix(col.rgb, haze, fog), col.a);
     }`,
@@ -172,9 +168,9 @@ export function createPipeline(container, quality) {
     if (grey > 0) { u.uHaze.value.lerp(new THREE.Color(0.42, 0.45, 0.5).multiplyScalar(0.03 + 0.97 * day), grey * 0.7); u.uSunHaze.value.multiplyScalar(1 - grey * 0.8); }
     if (fog > 0) u.uHaze.value.lerp(new THREE.Color(0.66, 0.69, 0.72).multiplyScalar(0.03 + 0.97 * day), fog * 0.8);
     // the sky's colour on a clear day; in fog and under a grey deck the sky is replaced (the shader above), and so is
-    // the haze's colour: the fixed ones. (clear < 1, the epilogue: no forced edge, Mt Fuji stands within it)
+    // the haze's colour, at once: the fixed ones. (clear < 1, the epilogue: no forced edge, Mt Fuji stands within it)
     u.tSkyCube.value = horizon;
-    u.uSkyMatch.value = horizon ? (1 - Math.min(1, fog * 1.5)) * (1 - Math.min(1, grey * 1.5)) : 0;
+    u.uSkyMatch.value = horizon ? (1 - THREE.MathUtils.smoothstep(fog, 0, 0.2)) * (1 - THREE.MathUtils.smoothstep(grey, 0, 0.25)) : 0;
     u.uEdge.value = clear < 1 ? 0 : 1;
   }
 

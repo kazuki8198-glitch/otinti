@@ -1,0 +1,27 @@
+{
+  "ref": "kokuho-kisoku:202",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "202",
+  "article": "第二百二条",
+  "label": "第202条",
+  "caption": "",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_202",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_202",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "light",
+    "readback",
+    "comm.nordo",
+    "comm.readback"
+  ],
+  "sha256": "9a78ba04cde62e428401bc504cee77804a416a16da7f9baddcdf92d9000d3d12",
+  "text": "第二百二条　航空機と管制業務を行う機関との間における略号、信号その他の連絡方法は、告示で定める。",
+  "node": {"tag":"Article","attr":{"Num":"202"},"children":[{"tag":"ArticleTitle","attr":{},"children":["第二百二条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["航空機と管制業務を行う機関との間における略号、信号その他の連絡方法は、告示で定める。"]}]}]}]}
+}

@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho:81",
+  "law": "航空法",
+  "lawKey": "kokuho",
+  "lawId": "327AC0000000231",
+  "lawNum": "昭和二十七年法律第二百三十一号",
+  "revisionId": "327AC0000000231_20251201_507AC0000000055",
+  "version": "2025-12-01",
+  "versionLabel": "令和7年12月1日施行",
+  "num": "81",
+  "article": "第八十一条",
+  "label": "第81条",
+  "caption": "（最低安全高度）",
+  "url": "https://laws.e-gov.go.jp/law/327AC0000000231/20251201_507AC0000000055#Mp-Ch_6-Se_1-At_81",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327AC0000000231_20251201_507AC0000000055?response_format=json&law_full_text_format=json&elm=MainProvision-Article_81",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "msa",
+    "law.rules"
+  ],
+  "sha256": "18f99e1a6f6942c13eb7b7d4a00597700e8a4444ca0b04ae80264db62b1d0e25",
+  "text": "（最低安全高度）\n第八十一条　航空機は、離陸又は着陸を行う場合を除いて、地上又は水上の人又は物件の安全及び航空機の安全を考慮して国土交通省令で定める高度以下の高度で飛行してはならない。但し、国土交通大臣の許可を受けた場合は、この限りでない。",
+  "node": {"tag":"Article","attr":{"Num":"81"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（最低安全高度）"]},{"tag":"ArticleTitle","attr":{},"children":["第八十一条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Function":"main","Num":"1","WritingMode":"vertical"},"children":["航空機は、離陸又は着陸を行う場合を除いて、地上又は水上の人又は物件の安全及び航空機の安全を考慮して国土交通省令で定める高度以下の高度で飛行してはならない。"]},{"tag":"Sentence","attr":{"Function":"proviso","Num":"2","WritingMode":"vertical"},"children":["但し、国土交通大臣の許可を受けた場合は、この限りでない。"]}]}]}]}
+}

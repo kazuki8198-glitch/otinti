@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:182",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "182",
+  "article": "第百八十二条",
+  "label": "第182条",
+  "caption": "",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_182",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_182",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "row",
+    "law.rules"
+  ],
+  "sha256": "e444a2115e4454e48a674ea07118dafe6f1779e833a4e21560a070ef69d3fa14",
+  "text": "第百八十二条　正面又はこれに近い角度で接近する飛行中の同順位の航空機相互間にあつては、互に進路を右に変えなければならない。",
+  "node": {"tag":"Article","attr":{"Num":"182"},"children":[{"tag":"ArticleTitle","attr":{},"children":["第百八十二条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["正面又はこれに近い角度で接近する飛行中の同順位の航空機相互間にあつては、互に進路を右に変えなければならない。"]}]}]}]}
+}

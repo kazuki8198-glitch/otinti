@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho:76_2",
+  "law": "航空法",
+  "lawKey": "kokuho",
+  "lawId": "327AC0000000231",
+  "lawNum": "昭和二十七年法律第二百三十一号",
+  "revisionId": "327AC0000000231_20251201_507AC0000000055",
+  "version": "2025-12-01",
+  "versionLabel": "令和7年12月1日施行",
+  "num": "76_2",
+  "article": "第七十六条の二",
+  "label": "第76条の2",
+  "caption": "",
+  "url": "https://laws.e-gov.go.jp/law/327AC0000000231/20251201_507AC0000000055#Mp-Ch_6-Se_1-At_76_2",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327AC0000000231_20251201_507AC0000000055?response_format=json&law_full_text_format=json&elm=MainProvision-Article_76_2",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "accident",
+    "law.pilot"
+  ],
+  "sha256": "52ef250881c46e72ad99f7ed78e48dbaec54d391de4ef7cc834da423434d81b3",
+  "text": "第七十六条の二　機長は、航行中他の航空機との衝突又は接触のおそれがあつたと認めたときその他前条第一項各号に掲げる事故が発生するおそれがあると認められる国土交通省令で定める事態が発生したと認めたときは、国土交通省令で定めるところにより国土交通大臣にその旨を報告しなければならない。",
+  "node": {"tag":"Article","attr":{"Num":"76_2"},"children":[{"tag":"ArticleTitle","attr":{},"children":["第七十六条の二"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["機長は、航行中他の航空機との衝突又は接触のおそれがあつたと認めたときその他前条第一項各号に掲げる事故が発生するおそれがあると認められる国土交通省令で定める事態が発生したと認めたときは、国土交通省令で定めるところにより国土交通大臣にその旨を報告しなければならない。"]}]}]}]}
+}

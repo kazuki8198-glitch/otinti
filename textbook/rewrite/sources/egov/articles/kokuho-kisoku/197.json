@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:197",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "197",
+  "article": "第百九十七条",
+  "label": "第197条",
+  "caption": "（曲技飛行等を行うことができる高度）",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_197",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_197",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "aerobatic",
+    "aero.turn"
+  ],
+  "sha256": "7f59600b62798747f4377de715a2caa0306aa002f69e59d1fd547f474c61f20d",
+  "text": "（曲技飛行等を行うことができる高度）\n第百九十七条　法第九十一条第一項本文の規定により、航空機が曲技飛行等を行うことができる高度は、次の各号に掲げる高度とする。\n一　第百九十七条の三に規定する曲技飛行又は航空機の試験をする飛行（次号の飛行に該当するものを除く。）にあつては、次に掲げる航空機の区分に応じ、それぞれに掲げる高度\nイ　滑空機以外の航空機　当該航空機を中心として半径五百メートルの範囲内の最も高い障害物の上端から五百メートル以上の高度\nロ　滑空機　当該航空機を中心として半径三百メートルの範囲内の最も高い障害物の上端から三百メートル以上の高度\n二　第百九十七条の四に規定する著しい高速の飛行にあつては、当該航空機による衝撃波が地上又は水上の人又は物件に危害を与え、又は損傷を及ぼすおそれのない高度",
+  "node": {"tag":"Article","attr":{"Num":"197"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（曲技飛行等を行うことができる高度）"]},{"tag":"ArticleTitle","attr":{},"children":["第百九十七条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["法第九十一条第一項本文の規定により、航空機が曲技飛行等を行うことができる高度は、次の各号に掲げる高度とする。"]}]},{"tag":"Item","attr":{"Num":"1"},"children":[{"tag":"ItemTitle","attr":{},"children":["一"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["第百九十七条の三に規定する曲技飛行又は航空機の試験をする飛行（次号の飛行に該当するものを除く。）にあつては、次に掲げる航空機の区分に応じ、それぞれに掲げる高度"]}]},{"tag":"Subitem1","attr":{"Num":"1"},"children":[{"tag":"Subitem1Title","attr":{},"children":["イ"]},{"tag":"Subitem1Sentence","attr":{},"children":[{"tag":"Column","attr":{"Num":"1"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["滑空機以外の航空機"]}]},{"tag":"Column","attr":{"Num":"2"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["当該航空機を中心として半径五百メートルの範囲内の最も高い障害物の上端から五百メートル以上の高度"]}]}]}]},{"tag":"Subitem1","attr":{"Num":"2"},"children":[{"tag":"Subitem1Title","attr":{},"children":["ロ"]},{"tag":"Subitem1Sentence","attr":{},"children":[{"tag":"Column","attr":{"Num":"1"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["滑空機"]}]},{"tag":"Column","attr":{"Num":"2"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["当該航空機を中心として半径三百メートルの範囲内の最も高い障害物の上端から三百メートル以上の高度"]}]}]}]}]},{"tag":"Item","attr":{"Num":"2"},"children":[{"tag":"ItemTitle","attr":{},"children":["二"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["第百九十七条の四に規定する著しい高速の飛行にあつては、当該航空機による衝撃波が地上又は水上の人又は物件に危害を与え、又は損傷を及ぼすおそれのない高度"]}]}]}]}]}
+}

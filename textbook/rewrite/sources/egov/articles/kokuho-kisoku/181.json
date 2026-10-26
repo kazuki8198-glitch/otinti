@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:181",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "181",
+  "article": "第百八十一条",
+  "label": "第181条",
+  "caption": "",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_181",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_181",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "row",
+    "law.rules"
+  ],
+  "sha256": "a298f19b9e193e1a793c758b6dc8a812aba17b5cb87c006b9581ce9918364d27",
+  "text": "第百八十一条　飛行中の同順位の航空機相互間にあつては、他の航空機を右側に見る航空機が進路を譲らなければならない。",
+  "node": {"tag":"Article","attr":{"Num":"181"},"children":[{"tag":"ArticleTitle","attr":{},"children":["第百八十一条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["飛行中の同順位の航空機相互間にあつては、他の航空機を右側に見る航空機が進路を譲らなければならない。"]}]}]}]}
+}

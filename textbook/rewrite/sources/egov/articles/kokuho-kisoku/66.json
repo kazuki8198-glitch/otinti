@@ -1,0 +1,27 @@
+{
+  "ref": "kokuho-kisoku:66",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "66",
+  "article": "第六十六条",
+  "label": "第66条",
+  "caption": "（計器航法による飛行の距離及び時間）",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_4-At_66",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_66",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "ir.need",
+    "basics.rules",
+    "intro.cert",
+    "ifr.rules"
+  ],
+  "sha256": "14a5e41f8290cd041a8d5624bddc47a8a0117055e715da68ed11bb33ff43a228",
+  "text": "（計器航法による飛行の距離及び時間）\n第六十六条　法第三十四条第一項第二号の国土交通省令で定める距離は百十キロメートルとし、同号の国土交通省令で定める時間は三十分とする。",
+  "node": {"tag":"Article","attr":{"Num":"66"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（計器航法による飛行の距離及び時間）"]},{"tag":"ArticleTitle","attr":{},"children":["第六十六条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["法第三十四条第一項第二号の国土交通省令で定める距離は百十キロメートルとし、同号の国土交通省令で定める時間は三十分とする。"]}]}]}]}
+}

@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:144_2",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "144_2",
+  "article": "第百四十四条の二",
+  "label": "第144条の2",
+  "caption": "",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_144_2",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_144_2",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "docs",
+    "law.aircraft"
+  ],
+  "sha256": "097ad9e7eefe914cc3872db45105f5fbb532efd7dae0a957f0bb27694eee4872",
+  "text": "第百四十四条の二　法第五十九条第四号の国土交通省令で定める航空の安全のために必要な書類は、次に掲げる書類とする。\n一　運用限界等指定書\n二　飛行規程\n三　飛行の区間、飛行の方式その他飛行の特性に応じて適切な航空図\n四　運航規程（航空運送事業の用に供する場合に限る。）\n２　前項の規定にかかわらず、運航規程に飛行規程に相当する事項が記載されている場合には、飛行規程は法第五十九条第四号の航空の安全のために必要な書類に含まれないものとする。",
+  "node": {"tag":"Article","attr":{"Num":"144_2"},"children":[{"tag":"ArticleTitle","attr":{},"children":["第百四十四条の二"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["法第五十九条第四号の国土交通省令で定める航空の安全のために必要な書類は、次に掲げる書類とする。"]}]},{"tag":"Item","attr":{"Num":"1"},"children":[{"tag":"ItemTitle","attr":{},"children":["一"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["運用限界等指定書"]}]}]},{"tag":"Item","attr":{"Num":"2"},"children":[{"tag":"ItemTitle","attr":{},"children":["二"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["飛行規程"]}]}]},{"tag":"Item","attr":{"Num":"3"},"children":[{"tag":"ItemTitle","attr":{},"children":["三"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["飛行の区間、飛行の方式その他飛行の特性に応じて適切な航空図"]}]}]},{"tag":"Item","attr":{"Num":"4"},"children":[{"tag":"ItemTitle","attr":{},"children":["四"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["運航規程（航空運送事業の用に供する場合に限る。）"]}]}]}]},{"tag":"Paragraph","attr":{"Num":"2"},"children":[{"tag":"ParagraphNum","attr":{},"children":["２"]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["前項の規定にかかわらず、運航規程に飛行規程に相当する事項が記載されている場合には、飛行規程は法第五十九条第四号の航空の安全のために必要な書類に含まれないものとする。"]}]}]}]}
+}

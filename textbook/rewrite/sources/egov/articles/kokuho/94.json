@@ -1,0 +1,26 @@
+{
+  "ref": "kokuho:94",
+  "law": "航空法",
+  "lawKey": "kokuho",
+  "lawId": "327AC0000000231",
+  "lawNum": "昭和二十七年法律第二百三十一号",
+  "revisionId": "327AC0000000231_20251201_507AC0000000055",
+  "version": "2025-12-01",
+  "versionLabel": "令和7年12月1日施行",
+  "num": "94",
+  "article": "第九十四条",
+  "label": "第94条",
+  "caption": "（計器気象状態における飛行）",
+  "url": "https://laws.e-gov.go.jp/law/327AC0000000231/20251201_507AC0000000055#Mp-Ch_6-Se_1-At_94",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327AC0000000231_20251201_507AC0000000055?response_format=json&law_full_text_format=json&elm=MainProvision-Article_94",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "svfr",
+    "law.special",
+    "law.vfr"
+  ],
+  "sha256": "24850e80f12167ed782bac550d79fd02dbc777d06149118f6a0f6af01046bef5",
+  "text": "（計器気象状態における飛行）\n第九十四条　航空機は、計器気象状態においては、航空交通管制区、航空交通管制圏又は航空交通情報圏にあつては計器飛行方式により飛行しなければならず、その他の空域にあつては飛行してはならない。ただし、予測することができない急激な天候の悪化その他のやむを得ない事由がある場合又は国土交通大臣の許可を受けた場合は、この限りでない。",
+  "node": {"tag":"Article","attr":{"Num":"94"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（計器気象状態における飛行）"]},{"tag":"ArticleTitle","attr":{},"children":["第九十四条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Function":"main","Num":"1","WritingMode":"vertical"},"children":["航空機は、計器気象状態においては、航空交通管制区、航空交通管制圏又は航空交通情報圏にあつては計器飛行方式により飛行しなければならず、その他の空域にあつては飛行してはならない。"]},{"tag":"Sentence","attr":{"Function":"proviso","Num":"2","WritingMode":"vertical"},"children":["ただし、予測することができない急激な天候の悪化その他のやむを得ない事由がある場合又は国土交通大臣の許可を受けた場合は、この限りでない。"]}]}]}]}
+}

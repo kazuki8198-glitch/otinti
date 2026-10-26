@@ -1,0 +1,1081 @@
+{
+  "about": "e-Gov 法令検索（API v2）から写した条文の索引。版（施行日）は manifest.json で固定。fetch.mjs が書く（手で直さない）。",
+  "source": "e-Gov 法令検索 https://laws.e-gov.go.jp/ （API v2：https://laws.e-gov.go.jp/api/2/）",
+  "fetched": "2026-10-27",
+  "fetchedAt": "2026-10-26T22:57:22.886Z",
+  "dateNote": "日付（fetched・checked）は日本時間の日付。fetchedAt は UTC の時刻。",
+  "laws": [
+    {
+      "key": "kokuho",
+      "title": "航空法",
+      "lawId": "327AC0000000231",
+      "lawNum": "昭和二十七年法律第二百三十一号",
+      "lawType": "Act",
+      "revisionId": "327AC0000000231_20251201_507AC0000000055",
+      "version": "2025-12-01",
+      "versionLabel": "令和7年12月1日施行",
+      "amendment": "航空法等の一部を改正する法律（令和七年法律第五十五号）",
+      "egovUpdated": "2025-09-01T13:12:44+09:00",
+      "url": "https://laws.e-gov.go.jp/law/327AC0000000231/20251201_507AC0000000055",
+      "checked": "2026-10-27",
+      "statusOnChecked": "CurrentEnforced",
+      "newer": [],
+      "articles": 25,
+      "terms": {
+        "7600": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "酸素": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "左回り": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "左旋回": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "場周": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "ＡＤＳ": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "ADS": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "放送型": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "自動従属": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "トランスポンダ": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "自動応答装置": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "七六〇〇": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "７６００": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "灯火信号": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "アルコール": {
+          "total": 6,
+          "articles": [
+            "70",
+            "132_46",
+            "132_53",
+            "132_86",
+            "148_3"
+          ],
+          "outsideMainProvision": 0
+        },
+        "飲酒": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        }
+      }
+    },
+    {
+      "key": "kokuho-kisoku",
+      "title": "航空法施行規則",
+      "lawId": "327M50000800056",
+      "lawNum": "昭和二十七年運輸省令第五十六号",
+      "lawType": "MinisterialOrdinance",
+      "revisionId": "327M50000800056_20261001_508M60000800082",
+      "version": "2026-10-01",
+      "versionLabel": "令和8年10月1日施行",
+      "amendment": "船員法施行規則等の一部を改正する省令（令和八年国土交通省令第八十二号）",
+      "egovUpdated": "2026-10-16T10:11:49+09:00",
+      "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082",
+      "checked": "2026-10-27",
+      "statusOnChecked": "CurrentEnforced",
+      "newer": [
+        {
+          "revisionId": "327M50000800056_20280401_507M60000800058",
+          "version": "2028-04-01",
+          "status": "UnEnforced",
+          "amendment": "航空法施行規則の一部を改正する省令（令和七年国土交通省令第五十八号）",
+          "changedArticles": [],
+          "comparedOn": "2026-10-27"
+        }
+      ],
+      "articles": 37,
+      "terms": {
+        "7600": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "酸素": {
+          "total": 2,
+          "articles": [
+            "30",
+            "194"
+          ],
+          "outsideMainProvision": 0
+        },
+        "左回り": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "左旋回": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "場周": {
+          "total": 8,
+          "articles": [
+            "69_2",
+            "79"
+          ],
+          "outsideMainProvision": 6
+        },
+        "ＡＤＳ": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "ADS": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "放送型": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "自動従属": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "トランスポンダ": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "自動応答装置": {
+          "total": 4,
+          "articles": [
+            "146",
+            "240_2",
+            "242"
+          ],
+          "outsideMainProvision": 0
+        },
+        "七六〇〇": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "７６００": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "灯火信号": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        },
+        "アルコール": {
+          "total": 4,
+          "articles": [
+            "235_4_4"
+          ],
+          "outsideMainProvision": 3
+        },
+        "飲酒": {
+          "total": 0,
+          "articles": [],
+          "outsideMainProvision": 0
+        }
+      }
+    }
+  ],
+  "articles": [
+    {
+      "ref": "kokuho:2",
+      "law": "航空法",
+      "label": "第2条",
+      "article": "第二条",
+      "caption": "（定義）",
+      "file": "articles/kokuho/2.json",
+      "use": [
+        "vmc",
+        "ir.need",
+        "law.airspace",
+        "law.vfr",
+        "basics.rules"
+      ],
+      "sha256": "66fcdcb5e171a4759ed9abe8a404e14b94aa0e1f00ea9200c2b4779cda12a88f"
+    },
+    {
+      "ref": "kokuho:25",
+      "law": "航空法",
+      "label": "第25条",
+      "article": "第二十五条",
+      "caption": "（技能証明の限定）",
+      "file": "articles/kokuho/25.json",
+      "use": [
+        "multi.rating",
+        "intro.cert"
+      ],
+      "sha256": "9ec001b57edb0158831ccb80fc570fa3f8786389eba60a0ea97dfa631dcf4daf"
+    },
+    {
+      "ref": "kokuho:28",
+      "law": "航空法",
+      "label": "第28条",
+      "article": "第二十八条",
+      "caption": "（業務範囲）",
+      "file": "articles/kokuho/28.json",
+      "use": [
+        "english.radio",
+        "intro.cert"
+      ],
+      "sha256": "78488647aae36ea92e364b09ee31d8bfdaeb447b6f4d28503ddb55297c830ed1"
+    },
+    {
+      "ref": "kokuho:31",
+      "law": "航空法",
+      "label": "第31条",
+      "article": "第三十一条",
+      "caption": "（航空身体検査証明）",
+      "file": "articles/kokuho/31.json",
+      "use": [
+        "medical",
+        "intro.cert",
+        "hf.self"
+      ],
+      "sha256": "5a93751a302df6743a537c1420589554ef29d04b4a4f82834cbeaca67c841b30"
+    },
+    {
+      "ref": "kokuho:33",
+      "law": "航空法",
+      "label": "第33条",
+      "article": "第三十三条",
+      "caption": "（航空英語能力証明）",
+      "file": "articles/kokuho/33.json",
+      "use": [
+        "english.radio",
+        "intro.cert"
+      ],
+      "sha256": "93b6b1238a02c3b3ef58a88abe381d892ba22d57c03b7cccc5f1cf563c4a9b5c"
+    },
+    {
+      "ref": "kokuho:34",
+      "law": "航空法",
+      "label": "第34条",
+      "article": "第三十四条",
+      "caption": "（計器飛行証明及び操縦教育証明）",
+      "file": "articles/kokuho/34.json",
+      "use": [
+        "ir.need",
+        "basics.rules",
+        "intro.cert",
+        "ifr.rules"
+      ],
+      "sha256": "00ff43b4d4e2ce0a462509899974d3d87830d0a8b43676d357009e6463700cfe"
+    },
+    {
+      "ref": "kokuho:35",
+      "law": "航空法",
+      "label": "第35条",
+      "article": "第三十五条",
+      "caption": "（航空機の操縦練習）",
+      "file": "articles/kokuho/35.json",
+      "use": [
+        "solo",
+        "solo.req"
+      ],
+      "sha256": "76ed737e3c230e3735052361d1a929154571451008ff1fbf789a7d2c7861cfdd"
+    },
+    {
+      "ref": "kokuho:59",
+      "law": "航空法",
+      "label": "第59条",
+      "article": "第五十九条",
+      "caption": "（航空機に備え付ける書類）",
+      "file": "articles/kokuho/59.json",
+      "use": [
+        "docs",
+        "law.aircraft"
+      ],
+      "sha256": "df81aa20eca094e7099aa1ea7dd8b56c763f9bf08539d4ad04692fd1e9269597"
+    },
+    {
+      "ref": "kokuho:63",
+      "law": "航空法",
+      "label": "第63条",
+      "article": "第六十三条",
+      "caption": "（航空機の燃料）",
+      "file": "articles/kokuho/63.json",
+      "use": [
+        "fuel.vfr",
+        "perf.fuel",
+        "nav.log",
+        "law.rules"
+      ],
+      "sha256": "681fa7c8466138c7a34b1ce81009a0eeaa21470afbc35ff75a0dcffcc21a267d"
+    },
+    {
+      "ref": "kokuho:64",
+      "law": "航空法",
+      "label": "第64条",
+      "article": "第六十四条",
+      "caption": "（航空機の灯火）",
+      "file": "articles/kokuho/64.json",
+      "use": [
+        "night",
+        "lights.ac",
+        "ops.night",
+        "law.pilot",
+        "sys.lights"
+      ],
+      "sha256": "32a7f892f7c978fdd64eb26d32af35c5f952e303a1fdb7cf51f044a2a5dc93d0"
+    },
+    {
+      "ref": "kokuho:69",
+      "law": "航空法",
+      "label": "第69条",
+      "article": "第六十九条",
+      "caption": "（最近の飛行経験）",
+      "file": "articles/kokuho/69.json",
+      "use": [
+        "ir.recent",
+        "ifr.rules"
+      ],
+      "sha256": "2566a8731d02e77c6876859dcba8ee7b72c5f110189ce44eab2ad0f033bcc4e4"
+    },
+    {
+      "ref": "kokuho:70",
+      "law": "航空法",
+      "label": "第70条",
+      "article": "第七十条",
+      "caption": "（アルコール又は薬物）",
+      "file": "articles/kokuho/70.json",
+      "use": [
+        "alcohol",
+        "hf.self"
+      ],
+      "sha256": "188c9fddbfe58ae9ce2c85995009dbc7d9c0705ab286b05f6f647cf6a3b5e25a"
+    },
+    {
+      "ref": "kokuho:71_2",
+      "law": "航空法",
+      "label": "第71条の2",
+      "article": "第七十一条の二",
+      "caption": "（操縦者の見張り義務）",
+      "file": "articles/kokuho/71_2.json",
+      "use": [
+        "lookout",
+        "hf.vision"
+      ],
+      "sha256": "eee466769772515fbde7df8dda0a7dc1e31fd594c7b9b266dfac2ca4851386b8"
+    },
+    {
+      "ref": "kokuho:73_2",
+      "law": "航空法",
+      "label": "第73条の2",
+      "article": "第七十三条の二",
+      "caption": "（出発前の確認）",
+      "file": "articles/kokuho/73_2.json",
+      "use": [
+        "preflight",
+        "fuel.vfr",
+        "law.pic",
+        "wx.brief"
+      ],
+      "sha256": "31444da6e441895e2c72d5150f11123493ed6dd2835ed059dc87342ff68a8d42"
+    },
+    {
+      "ref": "kokuho:76",
+      "law": "航空法",
+      "label": "第76条",
+      "article": "第七十六条",
+      "caption": "（報告の義務）",
+      "file": "articles/kokuho/76.json",
+      "use": [
+        "accident",
+        "law.pilot"
+      ],
+      "sha256": "3c02f4b50bbc964991deea50a335e79db4e636ac5d17570cb4706dd14ce77056"
+    },
+    {
+      "ref": "kokuho:76_2",
+      "law": "航空法",
+      "label": "第76条の2",
+      "article": "第七十六条の二",
+      "caption": "",
+      "file": "articles/kokuho/76_2.json",
+      "use": [
+        "accident",
+        "law.pilot"
+      ],
+      "sha256": "52ef250881c46e72ad99f7ed78e48dbaec54d391de4ef7cc834da423434d81b3"
+    },
+    {
+      "ref": "kokuho:81",
+      "law": "航空法",
+      "label": "第81条",
+      "article": "第八十一条",
+      "caption": "（最低安全高度）",
+      "file": "articles/kokuho/81.json",
+      "use": [
+        "msa",
+        "law.rules"
+      ],
+      "sha256": "18f99e1a6f6942c13eb7b7d4a00597700e8a4444ca0b04ae80264db62b1d0e25"
+    },
+    {
+      "ref": "kokuho:82",
+      "law": "航空法",
+      "label": "第82条",
+      "article": "第八十二条",
+      "caption": "（巡航高度）",
+      "file": "articles/kokuho/82.json",
+      "use": [
+        "cruise",
+        "nav.log"
+      ],
+      "sha256": "32035dbb693f27567853f7896f312938e9f745b5999e431b1f77b0d3c2145221"
+    },
+    {
+      "ref": "kokuho:82_2",
+      "law": "航空法",
+      "label": "第82条の2",
+      "article": "第八十二条の二",
+      "caption": "（航空交通管制圏等における速度の制限）",
+      "file": "articles/kokuho/82_2.json",
+      "use": [
+        "speed",
+        "law.rules"
+      ],
+      "sha256": "6bd262c628d09929b724feade8957386fdaf665ab4d3ab8f6669a36f63780a02"
+    },
+    {
+      "ref": "kokuho:83",
+      "law": "航空法",
+      "label": "第83条",
+      "article": "第八十三条",
+      "caption": "（衝突予防等）",
+      "file": "articles/kokuho/83.json",
+      "use": [
+        "row",
+        "pattern",
+        "law.rules",
+        "ops.pattern"
+      ],
+      "sha256": "41b16e4a3373b97914541670314ae4f9792f4b550b9a1e821df9ad3779ef6731"
+    },
+    {
+      "ref": "kokuho:91",
+      "law": "航空法",
+      "label": "第91条",
+      "article": "第九十一条",
+      "caption": "（曲技飛行等）",
+      "file": "articles/kokuho/91.json",
+      "use": [
+        "aerobatic",
+        "aero.turn"
+      ],
+      "sha256": "3848273289cb87d5314bbada1d66eee9de295bbc220a296ede56b31b018a5b0a"
+    },
+    {
+      "ref": "kokuho:94",
+      "law": "航空法",
+      "label": "第94条",
+      "article": "第九十四条",
+      "caption": "（計器気象状態における飛行）",
+      "file": "articles/kokuho/94.json",
+      "use": [
+        "svfr",
+        "law.special",
+        "law.vfr"
+      ],
+      "sha256": "24850e80f12167ed782bac550d79fd02dbc777d06149118f6a0f6af01046bef5"
+    },
+    {
+      "ref": "kokuho:96",
+      "law": "航空法",
+      "label": "第96条",
+      "article": "第九十六条",
+      "caption": "（航空交通の指示）",
+      "file": "articles/kokuho/96.json",
+      "use": [
+        "pattern",
+        "readback",
+        "ops.pattern",
+        "comm.readback"
+      ],
+      "sha256": "8d46281c990df47af85951a07f4e5fe08cedf22aa47a9829727c98a818a7991d"
+    },
+    {
+      "ref": "kokuho:97",
+      "law": "航空法",
+      "label": "第97条",
+      "article": "第九十七条",
+      "caption": "（飛行計画及びその承認）",
+      "file": "articles/kokuho/97.json",
+      "use": [
+        "fpl",
+        "nav.xc"
+      ],
+      "sha256": "d6bcb58154414e9b5f0bfb41cbf8d246a3ba721943bf846e25af97a2e174b98c"
+    },
+    {
+      "ref": "kokuho:98",
+      "law": "航空法",
+      "label": "第98条",
+      "article": "第九十八条",
+      "caption": "（到着の通知）",
+      "file": "articles/kokuho/98.json",
+      "use": [
+        "fpl",
+        "nav.xc"
+      ],
+      "sha256": "690640905e5f208a409c5c1bedb732ebd9b8ad25bab3bb003287b5f4c4e66eb7"
+    },
+    {
+      "ref": "kokuho-kisoku:5",
+      "law": "航空法施行規則",
+      "label": "第5条",
+      "article": "第五条",
+      "caption": "（計器気象状態）",
+      "file": "articles/kokuho-kisoku/5.json",
+      "use": [
+        "vmc",
+        "vmc.ad",
+        "law.vfr"
+      ],
+      "sha256": "da6e116897da24b9f0851aced580ee80e78b6a4f9b159c59a2df8d0f2e62ccdd"
+    },
+    {
+      "ref": "kokuho-kisoku:53",
+      "law": "航空法施行規則",
+      "label": "第53条",
+      "article": "第五十三条",
+      "caption": "（技能証明の限定）",
+      "file": "articles/kokuho-kisoku/53.json",
+      "use": [
+        "multi.rating",
+        "intro.cert"
+      ],
+      "sha256": "9df738f547bfbcb0e50e35847c69b128d561ae19449201f6e35610cee7c1df74"
+    },
+    {
+      "ref": "kokuho-kisoku:61_2",
+      "law": "航空法施行規則",
+      "label": "第61条の2",
+      "article": "第六十一条の二",
+      "caption": "（身体検査基準及び航空身体検査証明書）",
+      "file": "articles/kokuho-kisoku/61_2.json",
+      "use": [
+        "medical",
+        "intro.cert",
+        "hf.self"
+      ],
+      "sha256": "18d66796255f94e9652608287d33d12f3c400eb335935c896d78fe604b43c1f5"
+    },
+    {
+      "ref": "kokuho-kisoku:61_3",
+      "law": "航空法施行規則",
+      "label": "第61条の3",
+      "article": "第六十一条の三",
+      "caption": "（航空身体検査証明の有効期間）",
+      "file": "articles/kokuho-kisoku/61_3.json",
+      "use": [
+        "medical",
+        "intro.cert"
+      ],
+      "sha256": "b7f24d6d451814dd733a883ce68bb93262b154531ac21979304e4afde7c69bb5"
+    },
+    {
+      "ref": "kokuho-kisoku:63_3",
+      "law": "航空法施行規則",
+      "label": "第63条の3",
+      "article": "第六十三条の三",
+      "caption": "（航空英語能力証明が必要な航空機の種類）",
+      "file": "articles/kokuho-kisoku/63_3.json",
+      "use": [
+        "english.radio",
+        "intro.cert"
+      ],
+      "sha256": "64ede889c3c0aba6cfc8e158cc648e74e6fa751d2be7254e2eb32f8f69ba9698"
+    },
+    {
+      "ref": "kokuho-kisoku:63_4",
+      "law": "航空法施行規則",
+      "label": "第63条の4",
+      "article": "第六十三条の四",
+      "caption": "（航空英語能力証明が必要な航行）",
+      "file": "articles/kokuho-kisoku/63_4.json",
+      "use": [
+        "english.radio",
+        "intro.cert"
+      ],
+      "sha256": "f87955273ce0682585f2dca57535f55513fe12c536dc4fbdeb86d7c9309557e6"
+    },
+    {
+      "ref": "kokuho-kisoku:66",
+      "law": "航空法施行規則",
+      "label": "第66条",
+      "article": "第六十六条",
+      "caption": "（計器航法による飛行の距離及び時間）",
+      "file": "articles/kokuho-kisoku/66.json",
+      "use": [
+        "ir.need",
+        "basics.rules",
+        "intro.cert",
+        "ifr.rules"
+      ],
+      "sha256": "14a5e41f8290cd041a8d5624bddc47a8a0117055e715da68ed11bb33ff43a228"
+    },
+    {
+      "ref": "kokuho-kisoku:67",
+      "law": "航空法施行規則",
+      "label": "第67条",
+      "article": "第六十七条",
+      "caption": "（航空機の操縦練習）",
+      "file": "articles/kokuho-kisoku/67.json",
+      "use": [
+        "solo",
+        "solo.req"
+      ],
+      "sha256": "b53d84ba9c8d98418da8f91aa535a751ab4c1b1c2fc382a3bbc14cdb6ab65b41"
+    },
+    {
+      "ref": "kokuho-kisoku:68",
+      "law": "航空法施行規則",
+      "label": "第68条",
+      "article": "第六十八条",
+      "caption": "",
+      "file": "articles/kokuho-kisoku/68.json",
+      "use": [
+        "solo",
+        "solo.req"
+      ],
+      "sha256": "c00fa6349058a769ad58ed94c70a06b091022930a6f7796d615d371c76c23db5"
+    },
+    {
+      "ref": "kokuho-kisoku:69_2",
+      "law": "航空法施行規則",
+      "label": "第69条の2",
+      "article": "第六十九条の二",
+      "caption": "",
+      "file": "articles/kokuho-kisoku/69_2.json",
+      "use": [
+        "solo",
+        "solo.req"
+      ],
+      "sha256": "7ca6fd8cd7450f58a80792f786e8d79d711a740c5aadd456633bbdac0d66bc07"
+    },
+    {
+      "ref": "kokuho-kisoku:144",
+      "law": "航空法施行規則",
+      "label": "第144条",
+      "article": "第百四十四条",
+      "caption": "（航空機に備え付ける書類）",
+      "file": "articles/kokuho-kisoku/144.json",
+      "use": [
+        "docs",
+        "law.aircraft"
+      ],
+      "sha256": "860d340fed7b09742c3b9293acef28196311808aa155cd2cf6d2e5c0758dc63c"
+    },
+    {
+      "ref": "kokuho-kisoku:144_2",
+      "law": "航空法施行規則",
+      "label": "第144条の2",
+      "article": "第百四十四条の二",
+      "caption": "",
+      "file": "articles/kokuho-kisoku/144_2.json",
+      "use": [
+        "docs",
+        "law.aircraft"
+      ],
+      "sha256": "097ad9e7eefe914cc3872db45105f5fbb532efd7dae0a957f0bb27694eee4872"
+    },
+    {
+      "ref": "kokuho-kisoku:146",
+      "law": "航空法施行規則",
+      "label": "第146条",
+      "article": "第百四十六条",
+      "caption": "",
+      "file": "articles/kokuho-kisoku/146.json",
+      "use": [
+        "xpdr",
+        "adsb",
+        "comm.xpdr",
+        "nav.efb"
+      ],
+      "sha256": "52f20e14de7dff9c382b4ec076a8fb59b62225ca83cc02350307f89afe65a30f"
+    },
+    {
+      "ref": "kokuho-kisoku:153",
+      "law": "航空法施行規則",
+      "label": "第153条",
+      "article": "第百五十三条",
+      "caption": "",
+      "file": "articles/kokuho-kisoku/153.json",
+      "use": [
+        "fuel.vfr",
+        "fuel.ifr",
+        "perf.fuel",
+        "nav.log",
+        "law.rules",
+        "ifr.rules"
+      ],
+      "sha256": "420fa6f1d3acaca643c281b9feb38492c0f800366782c718ff8be220cf920211"
+    },
+    {
+      "ref": "kokuho-kisoku:154",
+      "law": "航空法施行規則",
+      "label": "第154条",
+      "article": "第百五十四条",
+      "caption": "（航空機の灯火）",
+      "file": "articles/kokuho-kisoku/154.json",
+      "use": [
+        "lights.ac",
+        "sys.lights"
+      ],
+      "sha256": "bb36a55aede06a9fb57065b3d889bf7737cc9418ab019acdc7e12020dba81ca3"
+    },
+    {
+      "ref": "kokuho-kisoku:161",
+      "law": "航空法施行規則",
+      "label": "第161条",
+      "article": "第百六十一条",
+      "caption": "",
+      "file": "articles/kokuho-kisoku/161.json",
+      "use": [
+        "ir.recent",
+        "ifr.rules"
+      ],
+      "sha256": "ca5c33dc82f78ebfd0a44caf81444ca666e0ccc244a1888e147d6cf312dad814"
+    },
+    {
+      "ref": "kokuho-kisoku:164_15",
+      "law": "航空法施行規則",
+      "label": "第164条の15",
+      "article": "第百六十四条の十五",
+      "caption": "（出発前の確認）",
+      "file": "articles/kokuho-kisoku/164_15.json",
+      "use": [
+        "preflight",
+        "fuel.vfr",
+        "law.pic",
+        "wx.brief",
+        "perf.fuel"
+      ],
+      "sha256": "5e837a67435c4331eea26bcb7af83eb97b456c8c84abbe2b8b93b7adf0760f7f"
+    },
+    {
+      "ref": "kokuho-kisoku:174",
+      "law": "航空法施行規則",
+      "label": "第174条",
+      "article": "第百七十四条",
+      "caption": "（最低安全高度）",
+      "file": "articles/kokuho-kisoku/174.json",
+      "use": [
+        "msa",
+        "law.rules"
+      ],
+      "sha256": "477a55b210e462e7db4297712acf4601f8f580b7c9f031bdc1dfddc2a2beeeb9"
+    },
+    {
+      "ref": "kokuho-kisoku:177",
+      "law": "航空法施行規則",
+      "label": "第177条",
+      "article": "第百七十七条",
+      "caption": "（巡航高度）",
+      "file": "articles/kokuho-kisoku/177.json",
+      "use": [
+        "cruise",
+        "nav.log"
+      ],
+      "sha256": "8b9a3d228de8671376b413da8b523cfa58a2e254f79f2b1a450b4d41a0c47e5a"
+    },
+    {
+      "ref": "kokuho-kisoku:178",
+      "law": "航空法施行規則",
+      "label": "第178条",
+      "article": "第百七十八条",
+      "caption": "（気圧高度計の規正）",
+      "file": "articles/kokuho-kisoku/178.json",
+      "use": [
+        "alt.transition",
+        "basics.alt",
+        "wx.atm",
+        "ifr.rules"
+      ],
+      "sha256": "7902d7567a53d30f092ce6bc09a643fb6439f5dafcfed7a356b22fa80d92bac6"
+    },
+    {
+      "ref": "kokuho-kisoku:179",
+      "law": "航空法施行規則",
+      "label": "第179条",
+      "article": "第百七十九条",
+      "caption": "（航空交通管制圏等における速度の制限）",
+      "file": "articles/kokuho-kisoku/179.json",
+      "use": [
+        "speed",
+        "law.rules"
+      ],
+      "sha256": "77b23966256892d188878db63bf687a4ca995e4deb32c11fc55941b223507de5"
+    },
+    {
+      "ref": "kokuho-kisoku:180",
+      "law": "航空法施行規則",
+      "label": "第180条",
+      "article": "第百八十条",
+      "caption": "（進路権）",
+      "file": "articles/kokuho-kisoku/180.json",
+      "use": [
+        "row",
+        "law.rules"
+      ],
+      "sha256": "18016817b9cdef461c8170de3e3227c15beaab5fc4419f6e510e13b5c90ce506"
+    },
+    {
+      "ref": "kokuho-kisoku:181",
+      "law": "航空法施行規則",
+      "label": "第181条",
+      "article": "第百八十一条",
+      "caption": "",
+      "file": "articles/kokuho-kisoku/181.json",
+      "use": [
+        "row",
+        "law.rules"
+      ],
+      "sha256": "a298f19b9e193e1a793c758b6dc8a812aba17b5cb87c006b9581ce9918364d27"
+    },
+    {
+      "ref": "kokuho-kisoku:182",
+      "law": "航空法施行規則",
+      "label": "第182条",
+      "article": "第百八十二条",
+      "caption": "",
+      "file": "articles/kokuho-kisoku/182.json",
+      "use": [
+        "row",
+        "law.rules"
+      ],
+      "sha256": "e444a2115e4454e48a674ea07118dafe6f1779e833a4e21560a070ef69d3fa14"
+    },
+    {
+      "ref": "kokuho-kisoku:183",
+      "law": "航空法施行規則",
+      "label": "第183条",
+      "article": "第百八十三条",
+      "caption": "",
+      "file": "articles/kokuho-kisoku/183.json",
+      "use": [
+        "row",
+        "law.rules"
+      ],
+      "sha256": "eff4c5ba922a1fc6cf5e0793bbdb439d208a6f4f9b39808af54936d6218440f8"
+    },
+    {
+      "ref": "kokuho-kisoku:184",
+      "law": "航空法施行規則",
+      "label": "第184条",
+      "article": "第百八十四条",
+      "caption": "",
+      "file": "articles/kokuho-kisoku/184.json",
+      "use": [
+        "row",
+        "law.rules"
+      ],
+      "sha256": "840d8b95d3b6750cc3542ca7e56cd5d1960d7576feba2210b8fc7c72fbe78a32"
+    },
+    {
+      "ref": "kokuho-kisoku:185",
+      "law": "航空法施行規則",
+      "label": "第185条",
+      "article": "第百八十五条",
+      "caption": "",
+      "file": "articles/kokuho-kisoku/185.json",
+      "use": [
+        "row",
+        "law.rules"
+      ],
+      "sha256": "06322ee3fa866af9e54f97532dd1db2366aaa475c1491fb660e0e2d066a87c1d"
+    },
+    {
+      "ref": "kokuho-kisoku:186",
+      "law": "航空法施行規則",
+      "label": "第186条",
+      "article": "第百八十六条",
+      "caption": "",
+      "file": "articles/kokuho-kisoku/186.json",
+      "use": [
+        "row",
+        "law.rules"
+      ],
+      "sha256": "b587d957bbc716d066beaf3f261ebbc8a8250fea75cc8a5a5848cc2a6683a9cf"
+    },
+    {
+      "ref": "kokuho-kisoku:189",
+      "law": "航空法施行規則",
+      "label": "第189条",
+      "article": "第百八十九条",
+      "caption": "（空港等付近の航行方法）",
+      "file": "articles/kokuho-kisoku/189.json",
+      "use": [
+        "pattern",
+        "appr.ban",
+        "ops.pattern",
+        "ifr.rules"
+      ],
+      "sha256": "f396dc171d958b315a219441a7f1d9353ff736b8ffad32fa633d45389ccb1897"
+    },
+    {
+      "ref": "kokuho-kisoku:197",
+      "law": "航空法施行規則",
+      "label": "第197条",
+      "article": "第百九十七条",
+      "caption": "（曲技飛行等を行うことができる高度）",
+      "file": "articles/kokuho-kisoku/197.json",
+      "use": [
+        "aerobatic",
+        "aero.turn"
+      ],
+      "sha256": "7f59600b62798747f4377de715a2caa0306aa002f69e59d1fd547f474c61f20d"
+    },
+    {
+      "ref": "kokuho-kisoku:197_2",
+      "law": "航空法施行規則",
+      "label": "第197条の2",
+      "article": "第百九十七条の二",
+      "caption": "（曲技飛行等を行うことができる飛行視程）",
+      "file": "articles/kokuho-kisoku/197_2.json",
+      "use": [
+        "aerobatic",
+        "aero.turn"
+      ],
+      "sha256": "2fa148d05e246aee735b6765dad25473380d6566d01b7c9cb2528a5847efdefb"
+    },
+    {
+      "ref": "kokuho-kisoku:197_3",
+      "law": "航空法施行規則",
+      "label": "第197条の3",
+      "article": "第百九十七条の三",
+      "caption": "（曲技飛行）",
+      "file": "articles/kokuho-kisoku/197_3.json",
+      "use": [
+        "aerobatic",
+        "aero.turn"
+      ],
+      "sha256": "773abb3e943087e9bdfe14687a78219a8117933e7a935c08eb73f69acae3711e"
+    },
+    {
+      "ref": "kokuho-kisoku:198_4",
+      "law": "航空法施行規則",
+      "label": "第198条の4",
+      "article": "第百九十八条の四",
+      "caption": "（法第九十四条ただし書の規定による許可を受けて管制区等を飛行する場合の飛行の方法）",
+      "file": "articles/kokuho-kisoku/198_4.json",
+      "use": [
+        "svfr",
+        "law.special"
+      ],
+      "sha256": "da2d4a96f84c11d96ac6b2b386e2b925021a0c710ab8ad326d9ed4f7ccb99842"
+    },
+    {
+      "ref": "kokuho-kisoku:202",
+      "law": "航空法施行規則",
+      "label": "第202条",
+      "article": "第二百二条",
+      "caption": "",
+      "file": "articles/kokuho-kisoku/202.json",
+      "use": [
+        "light",
+        "readback",
+        "comm.nordo",
+        "comm.readback"
+      ],
+      "sha256": "9a78ba04cde62e428401bc504cee77804a416a16da7f9baddcdf92d9000d3d12"
+    },
+    {
+      "ref": "kokuho-kisoku:203",
+      "law": "航空法施行規則",
+      "label": "第203条",
+      "article": "第二百三条",
+      "caption": "（飛行計画等）",
+      "file": "articles/kokuho-kisoku/203.json",
+      "use": [
+        "fpl",
+        "nav.xc"
+      ],
+      "sha256": "a39d6c325fa503108d04d12166b717c8a7e30b2e07db3112c330e87ae51cf522"
+    },
+    {
+      "ref": "kokuho-kisoku:205",
+      "law": "航空法施行規則",
+      "label": "第205条",
+      "article": "第二百五条",
+      "caption": "",
+      "file": "articles/kokuho-kisoku/205.json",
+      "use": [
+        "fpl",
+        "nav.xc"
+      ],
+      "sha256": "3cb4f27565949ed4e2382b823e7aa5a1c290b52c241b5e4e3bcdecc546997a00"
+    },
+    {
+      "ref": "kokuho-kisoku:206",
+      "law": "航空法施行規則",
+      "label": "第206条",
+      "article": "第二百六条",
+      "caption": "（通信機の故障の場合の航行）",
+      "file": "articles/kokuho-kisoku/206.json",
+      "use": [
+        "nordo.vfr",
+        "nordo.ifr",
+        "comm.nordo",
+        "ifr.rules"
+      ],
+      "sha256": "00ce76ebdc7207239049e3f9310f8876d74abd20b1317dee8648d97045c16756"
+    }
+  ]
+}

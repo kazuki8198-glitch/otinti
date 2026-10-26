@@ -1,0 +1,27 @@
+{
+  "ref": "kokuho-kisoku:178",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "178",
+  "article": "第百七十八条",
+  "label": "第178条",
+  "caption": "（気圧高度計の規正）",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_178",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_178",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "alt.transition",
+    "basics.alt",
+    "wx.atm",
+    "ifr.rules"
+  ],
+  "sha256": "7902d7567a53d30f092ce6bc09a643fb6439f5dafcfed7a356b22fa80d92bac6",
+  "text": "（気圧高度計の規正）\n第百七十八条　機長は、次に掲げる方法により気圧高度計を規正しなければならない。\n一　平均海面から一万四千フート未満の高度で飛行する場合は、飛行経路上の地点のＱＮＨの値（出発時において出発地のＱＮＨの値を入手できない場合は、出発点の標高）によつて規正すること。\n二　前号以外の場合は、標準気圧値（一、〇一三・二ヘクトパスカル）によつて規正すること。",
+  "node": {"tag":"Article","attr":{"Num":"178"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（気圧高度計の規正）"]},{"tag":"ArticleTitle","attr":{},"children":["第百七十八条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["機長は、次に掲げる方法により気圧高度計を規正しなければならない。"]}]},{"tag":"Item","attr":{"Num":"1"},"children":[{"tag":"ItemTitle","attr":{},"children":["一"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["平均海面から一万四千フート未満の高度で飛行する場合は、飛行経路上の地点のＱＮＨの値（出発時において出発地のＱＮＨの値を入手できない場合は、出発点の標高）によつて規正すること。"]}]}]},{"tag":"Item","attr":{"Num":"2"},"children":[{"tag":"ItemTitle","attr":{},"children":["二"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["前号以外の場合は、標準気圧値（一、〇一三・二ヘクトパスカル）によつて規正すること。"]}]}]}]}]}
+}

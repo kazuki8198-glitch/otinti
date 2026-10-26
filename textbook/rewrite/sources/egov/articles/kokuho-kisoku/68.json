@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:68",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "68",
+  "article": "第六十八条",
+  "label": "第68条",
+  "caption": "",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_4-At_68",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_68",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "solo",
+    "solo.req"
+  ],
+  "sha256": "c00fa6349058a769ad58ed94c70a06b091022930a6f7796d615d371c76c23db5",
+  "text": "第六十八条　法第三十五条第四項の航空機操縦練習許可書の様式は、第二十七号様式のとおりとする。\n２　前項の許可書の有効期間は、一年以内において国土交通大臣の指定する期間とする。",
+  "node": {"tag":"Article","attr":{"Num":"68"},"children":[{"tag":"ArticleTitle","attr":{},"children":["第六十八条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["法第三十五条第四項の航空機操縦練習許可書の様式は、第二十七号様式のとおりとする。"]}]}]},{"tag":"Paragraph","attr":{"Num":"2"},"children":[{"tag":"ParagraphNum","attr":{},"children":["２"]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["前項の許可書の有効期間は、一年以内において国土交通大臣の指定する期間とする。"]}]}]}]}
+}

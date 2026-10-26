@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:63_4",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "63_4",
+  "article": "第六十三条の四",
+  "label": "第63条の4",
+  "caption": "（航空英語能力証明が必要な航行）",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_4-At_63_4",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_63_4",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "english.radio",
+    "intro.cert"
+  ],
+  "sha256": "f87955273ce0682585f2dca57535f55513fe12c536dc4fbdeb86d7c9309557e6",
+  "text": "（航空英語能力証明が必要な航行）\n第六十三条の四　法第三十三条第一項の国土交通省令で定める航行は、次に掲げるもの（国土交通大臣が航空英語能力証明を受けて行う必要がないと認めたものを除く。）とする。\n一　本邦内の地点と本邦外の地点との間において行う航行\n二　本邦外の各地間において行う航行（本邦以外の国の領域を航行するものに限る。）\n三　本邦内から出発して着陸することなしに本邦以外の国の領域を通過し、本邦内に到達する航行",
+  "node": {"tag":"Article","attr":{"Num":"63_4"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（航空英語能力証明が必要な航行）"]},{"tag":"ArticleTitle","attr":{},"children":["第六十三条の四"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["法第三十三条第一項の国土交通省令で定める航行は、次に掲げるもの（国土交通大臣が航空英語能力証明を受けて行う必要がないと認めたものを除く。）とする。"]}]},{"tag":"Item","attr":{"Num":"1"},"children":[{"tag":"ItemTitle","attr":{},"children":["一"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["本邦内の地点と本邦外の地点との間において行う航行"]}]}]},{"tag":"Item","attr":{"Num":"2"},"children":[{"tag":"ItemTitle","attr":{},"children":["二"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["本邦外の各地間において行う航行（本邦以外の国の領域を航行するものに限る。）"]}]}]},{"tag":"Item","attr":{"Num":"3"},"children":[{"tag":"ItemTitle","attr":{},"children":["三"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["本邦内から出発して着陸することなしに本邦以外の国の領域を通過し、本邦内に到達する航行"]}]}]}]}]}
+}

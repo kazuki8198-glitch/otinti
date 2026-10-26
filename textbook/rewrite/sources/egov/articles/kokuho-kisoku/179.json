@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:179",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "179",
+  "article": "第百七十九条",
+  "label": "第179条",
+  "caption": "（航空交通管制圏等における速度の制限）",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_179",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_179",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "speed",
+    "law.rules"
+  ],
+  "sha256": "77b23966256892d188878db63bf687a4ca995e4deb32c11fc55941b223507de5",
+  "text": "（航空交通管制圏等における速度の制限）\n第百七十九条　法第八十二条の二の国土交通省令で定める速度は、指示対気速度二百五十ノットとする。\n２　前項の規定にかかわらず、自衛隊の使用する航空機又は装備移転航空機であつて同項に規定する速度を超えて飛行することがやむを得ないと認めて国土交通大臣が指定した型式の航空機に係る法第八十二条の二の国土交通省令で定める速度は、国土交通大臣が定める速度とする。ただし、他の航空機の安全に支障を及ぼすおそれがあるときは、この限りでない。\n３　前二項の規定にかかわらず、次の各号に掲げる航空機に係る法第八十二条の二の国土交通省令で定める速度は、当該各号に掲げる速度とする。\n一　法第九十六条第一項の規定により国土交通大臣から前二項に規定する速度を超える速度で飛行することを指示された航空機　当該指示に係る速度\n二　航行の安全上やむを得ないと認められる事由により前二項に規定する速度を超える速度で飛行する必要のある航空機　当該航空機が安全に飛行するために必要と認められる適切な速度",
+  "node": {"tag":"Article","attr":{"Num":"179"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（航空交通管制圏等における速度の制限）"]},{"tag":"ArticleTitle","attr":{},"children":["第百七十九条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["法第八十二条の二の国土交通省令で定める速度は、指示対気速度二百五十ノットとする。"]}]}]},{"tag":"Paragraph","attr":{"Num":"2"},"children":[{"tag":"ParagraphNum","attr":{},"children":["２"]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Function":"main","Num":"1","WritingMode":"vertical"},"children":["前項の規定にかかわらず、自衛隊の使用する航空機又は装備移転航空機であつて同項に規定する速度を超えて飛行することがやむを得ないと認めて国土交通大臣が指定した型式の航空機に係る法第八十二条の二の国土交通省令で定める速度は、国土交通大臣が定める速度とする。"]},{"tag":"Sentence","attr":{"Function":"proviso","Num":"2","WritingMode":"vertical"},"children":["ただし、他の航空機の安全に支障を及ぼすおそれがあるときは、この限りでない。"]}]}]},{"tag":"Paragraph","attr":{"Num":"3"},"children":[{"tag":"ParagraphNum","attr":{},"children":["３"]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["前二項の規定にかかわらず、次の各号に掲げる航空機に係る法第八十二条の二の国土交通省令で定める速度は、当該各号に掲げる速度とする。"]}]},{"tag":"Item","attr":{"Num":"1"},"children":[{"tag":"ItemTitle","attr":{},"children":["一"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Column","attr":{"Num":"1"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["法第九十六条第一項の規定により国土交通大臣から前二項に規定する速度を超える速度で飛行することを指示された航空機"]}]},{"tag":"Column","attr":{"Num":"2"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["当該指示に係る速度"]}]}]}]},{"tag":"Item","attr":{"Num":"2"},"children":[{"tag":"ItemTitle","attr":{},"children":["二"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Column","attr":{"Num":"1"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["航行の安全上やむを得ないと認められる事由により前二項に規定する速度を超える速度で飛行する必要のある航空機"]}]},{"tag":"Column","attr":{"Num":"2"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["当該航空機が安全に飛行するために必要と認められる適切な速度"]}]}]}]}]}]}
+}

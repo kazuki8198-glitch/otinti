@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:197_2",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "197_2",
+  "article": "第百九十七条の二",
+  "label": "第197条の2",
+  "caption": "（曲技飛行等を行うことができる飛行視程）",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_197_2",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_197_2",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "aerobatic",
+    "aero.turn"
+  ],
+  "sha256": "2fa148d05e246aee735b6765dad25473380d6566d01b7c9cb2528a5847efdefb",
+  "text": "（曲技飛行等を行うことができる飛行視程）\n第百九十七条の二　法第九十一条第一項の国土交通省令で定める距離は、次の各号に掲げる距離とする。\n一　次条に規定する曲技飛行又は航空機の試験をする飛行（次号の飛行に該当するものを除く。）を行う場合にあつては、次に掲げる空域の区分に応じ、それぞれに掲げる距離\nイ　三千メートル以上の高さの空域　八千メートル\nロ　三千メートル未満の高さの空域　五千メートル\n二　第百九十七条の四に規定する著しい高速の飛行を行う場合にあつては、一万メートル",
+  "node": {"tag":"Article","attr":{"Num":"197_2"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（曲技飛行等を行うことができる飛行視程）"]},{"tag":"ArticleTitle","attr":{},"children":["第百九十七条の二"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["法第九十一条第一項の国土交通省令で定める距離は、次の各号に掲げる距離とする。"]}]},{"tag":"Item","attr":{"Num":"1"},"children":[{"tag":"ItemTitle","attr":{},"children":["一"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["次条に規定する曲技飛行又は航空機の試験をする飛行（次号の飛行に該当するものを除く。）を行う場合にあつては、次に掲げる空域の区分に応じ、それぞれに掲げる距離"]}]},{"tag":"Subitem1","attr":{"Num":"1"},"children":[{"tag":"Subitem1Title","attr":{},"children":["イ"]},{"tag":"Subitem1Sentence","attr":{},"children":[{"tag":"Column","attr":{"Num":"1"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["三千メートル以上の高さの空域"]}]},{"tag":"Column","attr":{"Num":"2"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["八千メートル"]}]}]}]},{"tag":"Subitem1","attr":{"Num":"2"},"children":[{"tag":"Subitem1Title","attr":{},"children":["ロ"]},{"tag":"Subitem1Sentence","attr":{},"children":[{"tag":"Column","attr":{"Num":"1"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["三千メートル未満の高さの空域"]}]},{"tag":"Column","attr":{"Num":"2"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["五千メートル"]}]}]}]}]},{"tag":"Item","attr":{"Num":"2"},"children":[{"tag":"ItemTitle","attr":{},"children":["二"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["第百九十七条の四に規定する著しい高速の飛行を行う場合にあつては、一万メートル"]}]}]}]}]}
+}

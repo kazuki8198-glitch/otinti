@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:198_4",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "198_4",
+  "article": "第百九十八条の四",
+  "label": "第198条の4",
+  "caption": "（法第九十四条ただし書の規定による許可を受けて管制区等を飛行する場合の飛行の方法）",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_198_4",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_198_4",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "svfr",
+    "law.special"
+  ],
+  "sha256": "da2d4a96f84c11d96ac6b2b386e2b925021a0c710ab8ad326d9ed4f7ccb99842",
+  "text": "（法第九十四条ただし書の規定による許可を受けて管制区等を飛行する場合の飛行の方法）\n第百九十八条の四　航空機は、法第九十四条ただし書の規定による許可を受けて管制区（特別管制空域及び第百九十八条の六に規定する高さ以上の空域を除く。第四号において同じ。）、管制圏（特別管制空域を除く。第五号において同じ。）又は情報圏を飛行するときは、次の各号に掲げる基準に従つて飛行しなければならない。ただし、当該許可に際しこれらの基準と異なる条件が付されたときは、この限りでない。\n一　雲から離れて飛行すること。\n二　飛行視程を千五百メートル以上に維持して飛行すること。\n三　地表又は水面を引き続き視認できる状態で飛行すること。\n四　管制区を飛行する場合にあつては、当該管制区の管制業務を行う機関と常時連絡を保つこと。\n五　情報圏を飛行する場合又は法第九十六条第六項の告示で指定する時間において管制圏を飛行する場合にあつては、当該情報圏又は当該管制圏における航空交通情報の提供に関する業務を行う機関を経由して、当該情報圏又は当該管制圏における飛行について法第九十四条ただし書の規定による許可を行う機関と常時連絡を保つこと。",
+  "node": {"tag":"Article","attr":{"Num":"198_4"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（法第九十四条ただし書の規定による許可を受けて管制区等を飛行する場合の飛行の方法）"]},{"tag":"ArticleTitle","attr":{},"children":["第百九十八条の四"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Function":"main","Num":"1","WritingMode":"vertical"},"children":["航空機は、法第九十四条ただし書の規定による許可を受けて管制区（特別管制空域及び第百九十八条の六に規定する高さ以上の空域を除く。第四号において同じ。）、管制圏（特別管制空域を除く。第五号において同じ。）又は情報圏を飛行するときは、次の各号に掲げる基準に従つて飛行しなければならない。"]},{"tag":"Sentence","attr":{"Function":"proviso","Num":"2","WritingMode":"vertical"},"children":["ただし、当該許可に際しこれらの基準と異なる条件が付されたときは、この限りでない。"]}]},{"tag":"Item","attr":{"Num":"1"},"children":[{"tag":"ItemTitle","attr":{},"children":["一"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["雲から離れて飛行すること。"]}]}]},{"tag":"Item","attr":{"Num":"2"},"children":[{"tag":"ItemTitle","attr":{},"children":["二"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["飛行視程を千五百メートル以上に維持して飛行すること。"]}]}]},{"tag":"Item","attr":{"Num":"3"},"children":[{"tag":"ItemTitle","attr":{},"children":["三"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["地表又は水面を引き続き視認できる状態で飛行すること。"]}]}]},{"tag":"Item","attr":{"Num":"4"},"children":[{"tag":"ItemTitle","attr":{},"children":["四"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["管制区を飛行する場合にあつては、当該管制区の管制業務を行う機関と常時連絡を保つこと。"]}]}]},{"tag":"Item","attr":{"Num":"5"},"children":[{"tag":"ItemTitle","attr":{},"children":["五"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["情報圏を飛行する場合又は法第九十六条第六項の告示で指定する時間において管制圏を飛行する場合にあつては、当該情報圏又は当該管制圏における航空交通情報の提供に関する業務を行う機関を経由して、当該情報圏又は当該管制圏における飛行について法第九十四条ただし書の規定による許可を行う機関と常時連絡を保つこと。"]}]}]}]}]}
+}

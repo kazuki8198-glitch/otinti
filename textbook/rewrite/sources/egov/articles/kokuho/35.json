@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho:35",
+  "law": "航空法",
+  "lawKey": "kokuho",
+  "lawId": "327AC0000000231",
+  "lawNum": "昭和二十七年法律第二百三十一号",
+  "revisionId": "327AC0000000231_20251201_507AC0000000055",
+  "version": "2025-12-01",
+  "versionLabel": "令和7年12月1日施行",
+  "num": "35",
+  "article": "第三十五条",
+  "label": "第35条",
+  "caption": "（航空機の操縦練習）",
+  "url": "https://laws.e-gov.go.jp/law/327AC0000000231/20251201_507AC0000000055#Mp-Ch_4-At_35",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327AC0000000231_20251201_507AC0000000055?response_format=json&law_full_text_format=json&elm=MainProvision-Article_35",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "solo",
+    "solo.req"
+  ],
+  "sha256": "76ed737e3c230e3735052361d1a929154571451008ff1fbf789a7d2c7861cfdd",
+  "text": "（航空機の操縦練習）\n第三十五条　第二十八条第一項及び第二項の規定は、次に掲げる操縦の練習のために行う操縦については、適用しない。\n一　前条第二項第一号に掲げる操縦の練習で、当該練習について国土交通大臣の許可を受け、かつ、操縦教員の監督の下に行うもの\n二　前条第二項第二号に掲げる操縦の練習で、操縦教員の監督の下に行うもの\n三　操縦技能証明及び航空身体検査証明を有する者が当該技能証明について限定をされた種類の航空機のうち当該技能証明について限定をされた等級又は型式以外の等級又は型式のものに乗り組んで行う操縦の練習で、機長として当該航空機を操縦することができる技能証明及び航空身体検査証明を有する者の監督（機長として当該航空機を操縦することができる技能証明を有する者の監督を受けることが困難な場合にあつては、機長として当該航空機を操縦することができる知識及び能力を有すると認めて国土交通大臣が指定した者の監督）の下に行うもの\n２　前項各号の操縦の練習の監督を行なう者は、当該練習の監督を国土交通省令で定めるところにより行なわなければならない。\n３　国土交通大臣は、第一項第一号の許可の申請があつた場合において、申請者が、航空機の操縦の練習を行うのに必要な能力を有すると認めるときは、これを許可しなければならない。\n４　第一項第一号の許可は、申請者に航空機操縦練習許可書を交付することによつて行う。\n５　第三十条及び第六十七条第一項の規定は、第一項第一号の許可を受けた者に準用する。",
+  "node": {"tag":"Article","attr":{"Num":"35"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（航空機の操縦練習）"]},{"tag":"ArticleTitle","attr":{},"children":["第三十五条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["第二十八条第一項及び第二項の規定は、次に掲げる操縦の練習のために行う操縦については、適用しない。"]}]},{"tag":"Item","attr":{"Num":"1"},"children":[{"tag":"ItemTitle","attr":{},"children":["一"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["前条第二項第一号に掲げる操縦の練習で、当該練習について国土交通大臣の許可を受け、かつ、操縦教員の監督の下に行うもの"]}]}]},{"tag":"Item","attr":{"Num":"2"},"children":[{"tag":"ItemTitle","attr":{},"children":["二"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["前条第二項第二号に掲げる操縦の練習で、操縦教員の監督の下に行うもの"]}]}]},{"tag":"Item","attr":{"Num":"3"},"children":[{"tag":"ItemTitle","attr":{},"children":["三"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["操縦技能証明及び航空身体検査証明を有する者が当該技能証明について限定をされた種類の航空機のうち当該技能証明について限定をされた等級又は型式以外の等級又は型式のものに乗り組んで行う操縦の練習で、機長として当該航空機を操縦することができる技能証明及び航空身体検査証明を有する者の監督（機長として当該航空機を操縦することができる技能証明を有する者の監督を受けることが困難な場合にあつては、機長として当該航空機を操縦することができる知識及び能力を有すると認めて国土交通大臣が指定した者の監督）の下に行うもの"]}]}]}]},{"tag":"Paragraph","attr":{"Num":"2"},"children":[{"tag":"ParagraphNum","attr":{},"children":["２"]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["前項各号の操縦の練習の監督を行なう者は、当該練習の監督を国土交通省令で定めるところにより行なわなければならない。"]}]}]},{"tag":"Paragraph","attr":{"Num":"3"},"children":[{"tag":"ParagraphNum","attr":{},"children":["３"]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["国土交通大臣は、第一項第一号の許可の申請があつた場合において、申請者が、航空機の操縦の練習を行うのに必要な能力を有すると認めるときは、これを許可しなければならない。"]}]}]},{"tag":"Paragraph","attr":{"Num":"4"},"children":[{"tag":"ParagraphNum","attr":{},"children":["４"]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["第一項第一号の許可は、申請者に航空機操縦練習許可書を交付することによつて行う。"]}]}]},{"tag":"Paragraph","attr":{"Num":"5"},"children":[{"tag":"ParagraphNum","attr":{},"children":["５"]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["第三十条及び第六十七条第一項の規定は、第一項第一号の許可を受けた者に準用する。"]}]}]}]}
+}

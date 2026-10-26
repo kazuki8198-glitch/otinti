@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:144",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "144",
+  "article": "第百四十四条",
+  "label": "第144条",
+  "caption": "（航空機に備え付ける書類）",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_144",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_144",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "docs",
+    "law.aircraft"
+  ],
+  "sha256": "860d340fed7b09742c3b9293acef28196311808aa155cd2cf6d2e5c0758dc63c",
+  "text": "（航空機に備え付ける書類）\n第百四十四条　法第五十九条第三号の航空日誌は、搭載用航空日誌とする。",
+  "node": {"tag":"Article","attr":{"Num":"144"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（航空機に備え付ける書類）"]},{"tag":"ArticleTitle","attr":{},"children":["第百四十四条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["法第五十九条第三号の航空日誌は、搭載用航空日誌とする。"]}]}]}]}
+}

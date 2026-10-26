@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho:82_2",
+  "law": "航空法",
+  "lawKey": "kokuho",
+  "lawId": "327AC0000000231",
+  "lawNum": "昭和二十七年法律第二百三十一号",
+  "revisionId": "327AC0000000231_20251201_507AC0000000055",
+  "version": "2025-12-01",
+  "versionLabel": "令和7年12月1日施行",
+  "num": "82_2",
+  "article": "第八十二条の二",
+  "label": "第82条の2",
+  "caption": "（航空交通管制圏等における速度の制限）",
+  "url": "https://laws.e-gov.go.jp/law/327AC0000000231/20251201_507AC0000000055#Mp-Ch_6-Se_1-At_82_2",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327AC0000000231_20251201_507AC0000000055?response_format=json&law_full_text_format=json&elm=MainProvision-Article_82_2",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "speed",
+    "law.rules"
+  ],
+  "sha256": "6bd262c628d09929b724feade8957386fdaf665ab4d3ab8f6669a36f63780a02",
+  "text": "（航空交通管制圏等における速度の制限）\n第八十二条の二　航空機は、左に掲げる空域においては、国土交通省令で定める速度をこえる速度で飛行してはならない。ただし、国土交通大臣の許可を受けた場合は、この限りでない。\n一　航空交通管制圏\n二　第九十六条第三項第四号に規定する進入管制区のうち航空交通管制圏に接続する部分の国土交通大臣が告示で指定する空域",
+  "node": {"tag":"Article","attr":{"Num":"82_2"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（航空交通管制圏等における速度の制限）"]},{"tag":"ArticleTitle","attr":{},"children":["第八十二条の二"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Function":"main","Num":"1","WritingMode":"vertical"},"children":["航空機は、左に掲げる空域においては、国土交通省令で定める速度をこえる速度で飛行してはならない。"]},{"tag":"Sentence","attr":{"Function":"proviso","Num":"2","WritingMode":"vertical"},"children":["ただし、国土交通大臣の許可を受けた場合は、この限りでない。"]}]},{"tag":"Item","attr":{"Num":"1"},"children":[{"tag":"ItemTitle","attr":{},"children":["一"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["航空交通管制圏"]}]}]},{"tag":"Item","attr":{"Num":"2"},"children":[{"tag":"ItemTitle","attr":{},"children":["二"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["第九十六条第三項第四号に規定する進入管制区のうち航空交通管制圏に接続する部分の国土交通大臣が告示で指定する空域"]}]}]}]}]}
+}

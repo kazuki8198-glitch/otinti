@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:174",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "174",
+  "article": "第百七十四条",
+  "label": "第174条",
+  "caption": "（最低安全高度）",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_174",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_174",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "msa",
+    "law.rules"
+  ],
+  "sha256": "477a55b210e462e7db4297712acf4601f8f580b7c9f031bdc1dfddc2a2beeeb9",
+  "text": "（最低安全高度）\n第百七十四条　法第八十一条の規定による航空機の最低安全高度は、次のとおりとする。\n一　有視界飛行方式により飛行する航空機にあつては、飛行中動力装置のみが停止した場合に地上又は水上の人又は物件に危険を及ぼすことなく着陸できる高度及び次の高度のうちいずれか高いもの\nイ　人又は家屋の密集している地域の上空にあつては、当該航空機を中心として水平距離六百メートルの範囲内の最も高い障害物の上端から三百メートルの高度\nロ　人又は家屋のない地域及び広い水面の上空にあつては、地上又は水上の人又は物件から百五十メートル以上の距離を保つて飛行することのできる高度\nハ　イ及びロに規定する地域以外の地域の上空にあつては、地表面又は水面から百五十メートル以上の高度\n二　計器飛行方式により飛行する航空機にあつては、告示で定める高度",
+  "node": {"tag":"Article","attr":{"Num":"174"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（最低安全高度）"]},{"tag":"ArticleTitle","attr":{},"children":["第百七十四条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["法第八十一条の規定による航空機の最低安全高度は、次のとおりとする。"]}]},{"tag":"Item","attr":{"Num":"1"},"children":[{"tag":"ItemTitle","attr":{},"children":["一"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["有視界飛行方式により飛行する航空機にあつては、飛行中動力装置のみが停止した場合に地上又は水上の人又は物件に危険を及ぼすことなく着陸できる高度及び次の高度のうちいずれか高いもの"]}]},{"tag":"Subitem1","attr":{"Num":"1"},"children":[{"tag":"Subitem1Title","attr":{},"children":["イ"]},{"tag":"Subitem1Sentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["人又は家屋の密集している地域の上空にあつては、当該航空機を中心として水平距離六百メートルの範囲内の最も高い障害物の上端から三百メートルの高度"]}]}]},{"tag":"Subitem1","attr":{"Num":"2"},"children":[{"tag":"Subitem1Title","attr":{},"children":["ロ"]},{"tag":"Subitem1Sentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["人又は家屋のない地域及び広い水面の上空にあつては、地上又は水上の人又は物件から百五十メートル以上の距離を保つて飛行することのできる高度"]}]}]},{"tag":"Subitem1","attr":{"Num":"3"},"children":[{"tag":"Subitem1Title","attr":{},"children":["ハ"]},{"tag":"Subitem1Sentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["イ及びロに規定する地域以外の地域の上空にあつては、地表面又は水面から百五十メートル以上の高度"]}]}]}]},{"tag":"Item","attr":{"Num":"2"},"children":[{"tag":"ItemTitle","attr":{},"children":["二"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["計器飛行方式により飛行する航空機にあつては、告示で定める高度"]}]}]}]}]}
+}

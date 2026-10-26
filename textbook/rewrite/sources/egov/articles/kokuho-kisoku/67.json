@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:67",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "67",
+  "article": "第六十七条",
+  "label": "第67条",
+  "caption": "（航空機の操縦練習）",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_4-At_67",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_67",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "solo",
+    "solo.req"
+  ],
+  "sha256": "b53d84ba9c8d98418da8f91aa535a751ab4c1b1c2fc382a3bbc14cdb6ab65b41",
+  "text": "（航空機の操縦練習）\n第六十七条　法第三十五条第一項第一号の許可を受けようとする者は、航空機操縦練習許可申請書（航空身体検査指定機関において申請前一月以内に受けた身体検査の結果を記載したもの。第二十六号様式）を国土交通大臣に提出しなければならない。\n２　前項の申請書には、写真二葉及び戸籍抄本若しくは戸籍記載事項証明書又は本籍の記載のある住民票の写しを添付しなければならない。",
+  "node": {"tag":"Article","attr":{"Num":"67"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（航空機の操縦練習）"]},{"tag":"ArticleTitle","attr":{},"children":["第六十七条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["法第三十五条第一項第一号の許可を受けようとする者は、航空機操縦練習許可申請書（航空身体検査指定機関において申請前一月以内に受けた身体検査の結果を記載したもの。第二十六号様式）を国土交通大臣に提出しなければならない。"]}]}]},{"tag":"Paragraph","attr":{"Num":"2"},"children":[{"tag":"ParagraphNum","attr":{},"children":["２"]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["前項の申請書には、写真二葉及び戸籍抄本若しくは戸籍記載事項証明書又は本籍の記載のある住民票の写しを添付しなければならない。"]}]}]}]}
+}

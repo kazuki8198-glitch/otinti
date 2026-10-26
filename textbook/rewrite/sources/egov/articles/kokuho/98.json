@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho:98",
+  "law": "航空法",
+  "lawKey": "kokuho",
+  "lawId": "327AC0000000231",
+  "lawNum": "昭和二十七年法律第二百三十一号",
+  "revisionId": "327AC0000000231_20251201_507AC0000000055",
+  "version": "2025-12-01",
+  "versionLabel": "令和7年12月1日施行",
+  "num": "98",
+  "article": "第九十八条",
+  "label": "第98条",
+  "caption": "（到着の通知）",
+  "url": "https://laws.e-gov.go.jp/law/327AC0000000231/20251201_507AC0000000055#Mp-Ch_6-Se_1-At_98",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327AC0000000231_20251201_507AC0000000055?response_format=json&law_full_text_format=json&elm=MainProvision-Article_98",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "fpl",
+    "nav.xc"
+  ],
+  "sha256": "690640905e5f208a409c5c1bedb732ebd9b8ad25bab3bb003287b5f4c4e66eb7",
+  "text": "（到着の通知）\n第九十八条　前条の規定により、飛行計画の承認を受け、又は飛行計画を通報した航空機の機長は、当該航空機が飛行計画で定めた飛行を終つたときは、遅滞なく国土交通大臣にその旨を通知しなければならない。",
+  "node": {"tag":"Article","attr":{"Num":"98"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（到着の通知）"]},{"tag":"ArticleTitle","attr":{},"children":["第九十八条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["前条の規定により、飛行計画の承認を受け、又は飛行計画を通報した航空機の機長は、当該航空機が飛行計画で定めた飛行を終つたときは、遅滞なく国土交通大臣にその旨を通知しなければならない。"]}]}]}]}
+}

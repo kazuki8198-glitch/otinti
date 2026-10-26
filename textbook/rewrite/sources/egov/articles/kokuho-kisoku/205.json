@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:205",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "205",
+  "article": "第二百五条",
+  "label": "第205条",
+  "caption": "",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_205",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_205",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "fpl",
+    "nav.xc"
+  ],
+  "sha256": "3cb4f27565949ed4e2382b823e7aa5a1c290b52c241b5e4e3bcdecc546997a00",
+  "text": "第二百五条　法第九十七条第二項本文の国土交通省令で定める場合は、航空機が出発地を中心として半径九キロメートル以内の区域の上空を飛行し、かつ、当該区域内の場所に着陸する場合とする。\n２　法第九十七条第二項ただし書の国土交通省令で定める場合は、次に掲げる場合とする。\n一　第百七十六条に規定する航空機が、飛行を開始する前に飛行計画を通報するいとまのない場合\n二　法第七十九条ただし書の許可に係る場所を離陸する同条に規定する航空機が、当該場所において飛行計画を通報する手段のない場合",
+  "node": {"tag":"Article","attr":{"Num":"205"},"children":[{"tag":"ArticleTitle","attr":{},"children":["第二百五条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["法第九十七条第二項本文の国土交通省令で定める場合は、航空機が出発地を中心として半径九キロメートル以内の区域の上空を飛行し、かつ、当該区域内の場所に着陸する場合とする。"]}]}]},{"tag":"Paragraph","attr":{"Num":"2"},"children":[{"tag":"ParagraphNum","attr":{},"children":["２"]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["法第九十七条第二項ただし書の国土交通省令で定める場合は、次に掲げる場合とする。"]}]},{"tag":"Item","attr":{"Num":"1"},"children":[{"tag":"ItemTitle","attr":{},"children":["一"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["第百七十六条に規定する航空機が、飛行を開始する前に飛行計画を通報するいとまのない場合"]}]}]},{"tag":"Item","attr":{"Num":"2"},"children":[{"tag":"ItemTitle","attr":{},"children":["二"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["法第七十九条ただし書の許可に係る場所を離陸する同条に規定する航空機が、当該場所において飛行計画を通報する手段のない場合"]}]}]}]}]}
+}

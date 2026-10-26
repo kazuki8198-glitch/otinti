@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:180",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "180",
+  "article": "第百八十条",
+  "label": "第180条",
+  "caption": "（進路権）",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_180",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_180",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "row",
+    "law.rules"
+  ],
+  "sha256": "18016817b9cdef461c8170de3e3227c15beaab5fc4419f6e510e13b5c90ce506",
+  "text": "（進路権）\n第百八十条　飛行の進路が交差し、又は接近する場合における航空機相互間の進路権の順位は、次に掲げる順序とする。\n一　滑空機\n二　物件を曳航している航空機\n三　飛行船\n四　飛行機、回転翼航空機及び動力で推進している滑空機",
+  "node": {"tag":"Article","attr":{"Num":"180"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（進路権）"]},{"tag":"ArticleTitle","attr":{},"children":["第百八十条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["飛行の進路が交差し、又は接近する場合における航空機相互間の進路権の順位は、次に掲げる順序とする。"]}]},{"tag":"Item","attr":{"Num":"1"},"children":[{"tag":"ItemTitle","attr":{},"children":["一"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["滑空機"]}]}]},{"tag":"Item","attr":{"Num":"2"},"children":[{"tag":"ItemTitle","attr":{},"children":["二"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["物件を",{"tag":"Ruby","attr":{},"children":["曳",{"tag":"Rt","attr":{},"children":["えい"]}]},"航している航空機"]}]}]},{"tag":"Item","attr":{"Num":"3"},"children":[{"tag":"ItemTitle","attr":{},"children":["三"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["飛行船"]}]}]},{"tag":"Item","attr":{"Num":"4"},"children":[{"tag":"ItemTitle","attr":{},"children":["四"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["飛行機、回転翼航空機及び動力で推進している滑空機"]}]}]}]}]}
+}

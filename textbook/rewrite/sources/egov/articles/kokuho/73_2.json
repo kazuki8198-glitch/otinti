@@ -1,0 +1,27 @@
+{
+  "ref": "kokuho:73_2",
+  "law": "航空法",
+  "lawKey": "kokuho",
+  "lawId": "327AC0000000231",
+  "lawNum": "昭和二十七年法律第二百三十一号",
+  "revisionId": "327AC0000000231_20251201_507AC0000000055",
+  "version": "2025-12-01",
+  "versionLabel": "令和7年12月1日施行",
+  "num": "73_2",
+  "article": "第七十三条の二",
+  "label": "第73条の2",
+  "caption": "（出発前の確認）",
+  "url": "https://laws.e-gov.go.jp/law/327AC0000000231/20251201_507AC0000000055#Mp-Ch_6-Se_1-At_73_2",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327AC0000000231_20251201_507AC0000000055?response_format=json&law_full_text_format=json&elm=MainProvision-Article_73_2",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "preflight",
+    "fuel.vfr",
+    "law.pic",
+    "wx.brief"
+  ],
+  "sha256": "31444da6e441895e2c72d5150f11123493ed6dd2835ed059dc87342ff68a8d42",
+  "text": "（出発前の確認）\n第七十三条の二　機長は、国土交通省令で定めるところにより、航空機が航行に支障がないことその他運航に必要な準備が整つていることを確認した後でなければ、航空機を出発させてはならない。",
+  "node": {"tag":"Article","attr":{"Num":"73_2"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（出発前の確認）"]},{"tag":"ArticleTitle","attr":{},"children":["第七十三条の二"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["機長は、国土交通省令で定めるところにより、航空機が航行に支障がないことその他運航に必要な準備が整つていることを確認した後でなければ、航空機を出発させてはならない。"]}]}]}]}
+}

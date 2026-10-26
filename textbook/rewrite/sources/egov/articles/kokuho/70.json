@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho:70",
+  "law": "航空法",
+  "lawKey": "kokuho",
+  "lawId": "327AC0000000231",
+  "lawNum": "昭和二十七年法律第二百三十一号",
+  "revisionId": "327AC0000000231_20251201_507AC0000000055",
+  "version": "2025-12-01",
+  "versionLabel": "令和7年12月1日施行",
+  "num": "70",
+  "article": "第七十条",
+  "label": "第70条",
+  "caption": "（アルコール又は薬物）",
+  "url": "https://laws.e-gov.go.jp/law/327AC0000000231/20251201_507AC0000000055#Mp-Ch_6-Se_1-At_70",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327AC0000000231_20251201_507AC0000000055?response_format=json&law_full_text_format=json&elm=MainProvision-Article_70",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "alcohol",
+    "hf.self"
+  ],
+  "sha256": "188c9fddbfe58ae9ce2c85995009dbc7d9c0705ab286b05f6f647cf6a3b5e25a",
+  "text": "（アルコール又は薬物）\n第七十条　航空機乗組員は、アルコール又は薬物の影響により航空機の正常な運航ができないおそれがある間は、その航空業務を行つてはならない。",
+  "node": {"tag":"Article","attr":{"Num":"70"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（アルコール又は薬物）"]},{"tag":"ArticleTitle","attr":{},"children":["第七十条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["航空機乗組員は、アルコール又は薬物の影響により航空機の正常な運航ができないおそれがある間は、その航空業務を行つてはならない。"]}]}]}]}
+}

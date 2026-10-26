@@ -1,0 +1,27 @@
+{
+  "ref": "kokuho-kisoku:146",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "146",
+  "article": "第百四十六条",
+  "label": "第146条",
+  "caption": "",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_146",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_146",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "xpdr",
+    "adsb",
+    "comm.xpdr",
+    "nav.efb"
+  ],
+  "sha256": "52f20e14de7dff9c382b4ec076a8fb59b62225ca83cc02350307f89afe65a30f",
+  "text": "第百四十六条　法第六十条の規定により、管制区、管制圏、情報圏又は民間訓練試験空域を航行する航空機に装備しなければならない装置は、次の各号に掲げる場合に応じ、それぞれ、当該各号に掲げる装置であつて、当該各号に掲げる数量以上のものとする。\n一　管制区又は管制圏を航行する場合　いかなるときにおいても航空交通管制機関と連絡することができる無線電話　一（航空運送事業の用に供する最大離陸重量が五千七百キログラムを超える飛行機にあつては、二）\n二　管制区又は管制圏のうち、計器飛行方式又は有視界飛行方式の別に国土交通大臣が告示で指定する空域を当該空域の指定に係る飛行の方式により飛行する場合　四千九十六以上の応答符号を有し、かつ、モードＡの質問電波又はモード三の質問電波に対して航空機の識別記号を応答する機能及びモードＣの質問電波に対して航空機の高度を応答する機能を有する航空交通管制用自動応答装置　一\n三　情報圏又は民間訓練試験空域を航行する場合（第二百二条の五第一項第一号又は第二項第一号に該当する場合を除く。）　いかなるときにおいても航空交通管制機関又は当該空域における他の航空機の航行に関する情報（以下「航空交通情報」という。）を提供する機関と連絡することができる無線電話　一",
+  "node": {"tag":"Article","attr":{"Num":"146"},"children":[{"tag":"ArticleTitle","attr":{},"children":["第百四十六条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["法第六十条の規定により、管制区、管制圏、情報圏又は民間訓練試験空域を航行する航空機に装備しなければならない装置は、次の各号に掲げる場合に応じ、それぞれ、当該各号に掲げる装置であつて、当該各号に掲げる数量以上のものとする。"]}]},{"tag":"Item","attr":{"Num":"1"},"children":[{"tag":"ItemTitle","attr":{},"children":["一"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Column","attr":{"Num":"1"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["管制区又は管制圏を航行する場合"]}]},{"tag":"Column","attr":{"Num":"2"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["いかなるときにおいても航空交通管制機関と連絡することができる無線電話"]}]},{"tag":"Column","attr":{"Num":"3"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["一（航空運送事業の用に供する最大離陸重量が五千七百キログラムを超える飛行機にあつては、二）"]}]}]}]},{"tag":"Item","attr":{"Num":"2"},"children":[{"tag":"ItemTitle","attr":{},"children":["二"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Column","attr":{"Num":"1"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["管制区又は管制圏のうち、計器飛行方式又は有視界飛行方式の別に国土交通大臣が告示で指定する空域を当該空域の指定に係る飛行の方式により飛行する場合"]}]},{"tag":"Column","attr":{"Num":"2"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["四千九十六以上の応答符号を有し、かつ、モードＡの質問電波又はモード三の質問電波に対して航空機の識別記号を応答する機能及びモードＣの質問電波に対して航空機の高度を応答する機能を有する航空交通管制用自動応答装置"]}]},{"tag":"Column","attr":{"Num":"3"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["一"]}]}]}]},{"tag":"Item","attr":{"Num":"3"},"children":[{"tag":"ItemTitle","attr":{},"children":["三"]},{"tag":"ItemSentence","attr":{},"children":[{"tag":"Column","attr":{"Num":"1"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["情報圏又は民間訓練試験空域を航行する場合（第二百二条の五第一項第一号又は第二項第一号に該当する場合を除く。）"]}]},{"tag":"Column","attr":{"Num":"2"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["いかなるときにおいても航空交通管制機関又は当該空域における他の航空機の航行に関する情報（以下「航空交通情報」という。）を提供する機関と連絡することができる無線電話"]}]},{"tag":"Column","attr":{"Num":"3"},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["一"]}]}]}]}]}]}
+}

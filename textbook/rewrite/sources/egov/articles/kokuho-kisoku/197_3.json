@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:197_3",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "197_3",
+  "article": "第百九十七条の三",
+  "label": "第197条の3",
+  "caption": "（曲技飛行）",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_197_3",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_197_3",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "aerobatic",
+    "aero.turn"
+  ],
+  "sha256": "773abb3e943087e9bdfe14687a78219a8117933e7a935c08eb73f69acae3711e",
+  "text": "（曲技飛行）\n第百九十七条の三　法第九十一条第一項の国土交通省令で定める曲技飛行は、宙返り、横転、反転、背面、きりもみ、ヒップストールその他航空機の姿勢の急激な変化、航空機の異常な姿勢又は航空機の速度の異常な変化を伴う一連の飛行とする。",
+  "node": {"tag":"Article","attr":{"Num":"197_3"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（曲技飛行）"]},{"tag":"ArticleTitle","attr":{},"children":["第百九十七条の三"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["法第九十一条第一項の国土交通省令で定める曲技飛行は、宙返り、横転、反転、背面、きりもみ、ヒップストールその他航空機の姿勢の急激な変化、航空機の異常な姿勢又は航空機の速度の異常な変化を伴う一連の飛行とする。"]}]}]}]}
+}

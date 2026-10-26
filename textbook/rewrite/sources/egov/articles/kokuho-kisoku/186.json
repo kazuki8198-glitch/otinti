@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:186",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "186",
+  "article": "第百八十六条",
+  "label": "第186条",
+  "caption": "",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_186",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_186",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "row",
+    "law.rules"
+  ],
+  "sha256": "b587d957bbc716d066beaf3f261ebbc8a8250fea75cc8a5a5848cc2a6683a9cf",
+  "text": "第百八十六条　進路権を有する航空機は、その進路及び速度を維持しなければならない。",
+  "node": {"tag":"Article","attr":{"Num":"186"},"children":[{"tag":"ArticleTitle","attr":{},"children":["第百八十六条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["進路権を有する航空機は、その進路及び速度を維持しなければならない。"]}]}]}]}
+}

@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:154",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "154",
+  "article": "第百五十四条",
+  "label": "第154条",
+  "caption": "（航空機の灯火）",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_154",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_154",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "lights.ac",
+    "sys.lights"
+  ],
+  "sha256": "bb36a55aede06a9fb57065b3d889bf7737cc9418ab019acdc7e12020dba81ca3",
+  "text": "（航空機の灯火）\n第百五十四条　法第六十四条の規定により、航空機が、夜間において空中及び地上を航行する場合には、衝突防止灯、右舷灯、左舷灯及び尾灯で当該航空機を表示しなければならない。ただし、航空機が牽引されて地上を航行する場合において牽引車に備え付けられた灯火で当該航空機を表示するとき又は自機若しくは他の航空機の航行に悪影響を及ぼすおそれがある場合において右舷灯、左舷灯及び尾灯で当該航空機を表示するときは、この限りでない。",
+  "node": {"tag":"Article","attr":{"Num":"154"},"children":[{"tag":"ArticleCaption","attr":{},"children":["（航空機の灯火）"]},{"tag":"ArticleTitle","attr":{},"children":["第百五十四条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Function":"main","Num":"1","WritingMode":"vertical"},"children":["法第六十四条の規定により、航空機が、夜間において空中及び地上を航行する場合には、衝突防止灯、右舷灯、左舷灯及び尾灯で当該航空機を表示しなければならない。"]},{"tag":"Sentence","attr":{"Function":"proviso","Num":"2","WritingMode":"vertical"},"children":["ただし、航空機が",{"tag":"Ruby","attr":{},"children":["牽",{"tag":"Rt","attr":{},"children":["けん"]}]},"引されて地上を航行する場合において",{"tag":"Ruby","attr":{},"children":["牽",{"tag":"Rt","attr":{},"children":["けん"]}]},"引車に備え付けられた灯火で当該航空機を表示するとき又は自機若しくは他の航空機の航行に悪影響を及ぼすおそれがある場合において右舷灯、左舷灯及び尾灯で当該航空機を表示するときは、この限りでない。"]}]}]}]}
+}

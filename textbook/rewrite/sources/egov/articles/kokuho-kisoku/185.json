@@ -1,0 +1,25 @@
+{
+  "ref": "kokuho-kisoku:185",
+  "law": "航空法施行規則",
+  "lawKey": "kokuho-kisoku",
+  "lawId": "327M50000800056",
+  "lawNum": "昭和二十七年運輸省令第五十六号",
+  "revisionId": "327M50000800056_20261001_508M60000800082",
+  "version": "2026-10-01",
+  "versionLabel": "令和8年10月1日施行",
+  "num": "185",
+  "article": "第百八十五条",
+  "label": "第185条",
+  "caption": "",
+  "url": "https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082#Mp-Ch_6-At_185",
+  "api": "https://laws.e-gov.go.jp/api/2/law_data/327M50000800056_20261001_508M60000800082?response_format=json&law_full_text_format=json&elm=MainProvision-Article_185",
+  "fetched": "2026-10-27",
+  "checked": "2026-10-27",
+  "use": [
+    "row",
+    "law.rules"
+  ],
+  "sha256": "06322ee3fa866af9e54f97532dd1db2366aaa475c1491fb660e0e2d066a87c1d",
+  "text": "第百八十五条　前方に飛行中の航空機を他の航空機が追い越そうとする場合（上昇又は降下による追越を含む。）には、後者は、前者の右側を通過しなければならない。",
+  "node": {"tag":"Article","attr":{"Num":"185"},"children":[{"tag":"ArticleTitle","attr":{},"children":["第百八十五条"]},{"tag":"Paragraph","attr":{"Num":"1"},"children":[{"tag":"ParagraphNum","attr":{},"children":[]},{"tag":"ParagraphSentence","attr":{},"children":[{"tag":"Sentence","attr":{"Num":"1","WritingMode":"vertical"},"children":["前方に飛行中の航空機を他の航空機が追い越そうとする場合（上昇又は降下による追越を含む。）には、後者は、前者の右側を通過しなければならない。"]}]}]}]}
+}

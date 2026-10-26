@@ -1,0 +1,476 @@
+{
+ "id": "tl",
+ "title": "離陸・場周経路・着陸・ゴーアラウンド（Takeoffs, traffic patterns, landings and go-arounds）",
+ "sections": [
+  {
+   "id": "ops.takeoff",
+   "title": "通常離陸と上昇",
+   "gist": "センターラインに合わせて全開、右ラダーでまっすぐ加速し、Vr 60 kt でローテーション、Vy 76 kt で上昇、地上 1,000 ft から巡航上昇 87 kt へ移る通常離陸。",
+   "issues": [
+    "目的の 1 文も図もなく、いきなり手順の番号リスト（<ol>）で始まる。CADET の要約（最初の 1〜2 文）が手順の 1 行目になってしまう。",
+    "用語が説明なしで出る：「60 kt（Vr）」「76 kt（Vy）」「巡航上昇（87 kt）」「“Airspeed alive”」「プロペラの左偏向」（aero.left へのリンクもない）。初出で「ローテーション速度（rotation speed, Vr）」「最良上昇率速度（best rate of climb, Vy）」と書く。",
+    "「この教材の「基礎」」が何か説明がない（課目の合格の目安＝基礎レベル）。しかも「センターライン ±8 m」は m、ACS の行は kt・ft で、単位が混在。",
+    "ここが大切 2「速度・ボール・センターラインの延長だけを見る」は AFH 第 6 章（速度計を凝視せず、外の水平線に対する姿勢で速度を作る）と逆の印象。「外で姿勢と方向、速度計とボールは時々」に直す。",
+    "AFH 第 6 章の要点が抜けている：滑走中は「滑走路のずっと先の 2 点」を見る、ブレーキで方向を取らない、離陸出力は少なくとも地上 500 ft まで保つ。",
+    "機首上げ「約 8〜10°」の根拠が書かれていない（教材値。FL.physics の定常計算では Vy 76 kt・全開・海面付近で機首上げ約 11°）。",
+    "離陸の流れの横からの図（滑走 → Vr → 浮揚 → Vy → 1,000 ft → 巡航上昇）がないので、速度が 3 つ出てくる意味が分かりにくい。"
+   ],
+   "mainFigure": "新図 takeoffProfile：横から見た離陸の流れ。滑走（全開・右ラダー・横風なら操縦輪を風上へ）→ Vr 60 kt で機首上げ約 8〜10° → 浮揚 → Vy 76 kt で上昇 → 地上 1,000 ft で 87 kt の巡航上昇へ。速度は AR から描く。"
+  },
+  {
+   "id": "ops.pattern",
+   "title": "場周経路（トラフィックパターン）",
+   "gist": "空港の周りを決まった高さ（プロペラ機は地上 1,000 ft）・決まった形（標準は左回り）で回り、着陸の順番と間隔を作る場周経路の各区間と、Archer の速度・フラップ・降下開始の目安。",
+   "issues": [
+    "FIG.pattern は描き直しが必要：「クロスウインド」の文字が viewBox の外（y −7）で切れる。viewBox 幅 520・文字 10〜11 で、390 px の画面では最小 6.6 px。「18」「36」の数字の上を経路の線が通る。「アビーム：パワーを絞りフラップ 10°・降下開始」の文字が滑走路の帯に食い込む。",
+    "図の形が本文と合わない：本文は「進入端が斜め後ろ 45° でベースへ」だが、図ではベースの曲がり角から見た進入端は約 15° 後ろ。クロスウインドへの旋回が滑走路の端ちょうどにある（AIM 4-3-2 の現行の定義は「離陸上昇（Departure）は滑走路の端から少なくとも 1/2 マイル先、場周高度の 300 ft 以内まで」）。ファイナルが極端に短い（AIM の図：ファイナルへの旋回は滑走路から少なくとも 1/4 マイルで終える）。",
+    "「約 1.6 km（1 NM）」は誤り：1 NM＝1.85 km。1.6 km は 1 SM（法定マイル）。AFH 第 8 章は「1/2〜1 マイル」。表の「滑走路から約 1 NM で平行」も直す（シミュレータは 1.6 km）。",
+    "表の「アビーム（接地点の横）」は不正確：AFH 第 8 章と AIM 4-3-3 の図は「着陸滑走路の進入端（approach end）の真横まで場周高度を保ち、そこで降下開始」。図と課目 t2 も「進入端の真横」。",
+    "「アップウインド / 離陸」は現行の AIM 4-3-2 の区間名と違う：離陸後の直線は Departure（離陸上昇）、Upwind leg は管制の指示やゴーアラウンドの後に使う延長部分。図の「離陸・上昇（upwind）」も同じ。",
+    "「場周高度の 300 ft 下で左へ旋回（AIM の目安）」は「滑走路の端を越えてから」が抜けている。",
+    "「ダウンウインドの中央に 45° で合流」は何が 45° か分かりにくい。「場周高度で水平に、滑走路の中央の真横に向かってダウンウインドに 45° の角度で入る」と書く。45° の入り方は AIM 4-3-3 の本文ではなく AFH 第 8 章・AC 90-66C。",
+    "「標準は左回り」は推奨だけでなく規則（管制塔のない空港では 14 CFR 91.126(b)：着陸のための旋回はすべて左）。",
+    "数値が AR から作られていない：表と図の「約 90 kt」「80 kt 前後」「75 kt」「70 kt」は直書き。「約 1,500 rpm」は根拠なし（FL.physics では 80 kt・フラップ 10°・−500 fpm に約 1,660 rpm が必要）。",
+    "ここが大切 1 が約 70 字で、読み上げ用（約 60 字以内）には長い。",
+    "抜けている大切な点：空中衝突の多くはファイナル・ショートファイナルで起きる（AFH 第 8 章）、見張り、各区間での偏流修正の絵、無線の位置通報（comm.tower・comm.ctaf へのリンク）。"
+   ],
+   "mainFigure": "FIG.pattern を作り直す：LAB RWY 36（架空・模式図）の左場周を上から。縦長の viewBox（約 400×440）、文字 12 以上。番号の点 ①45° で入る（滑走路中央の真横）②ダウンウインド 1,000 ft・約 1.6 km（AFH：1/2〜1 マイル）③進入端の真横でパワーを絞りフラップ 10° ④進入端が斜め後ろ 45° でベース・フラップ 25° ⑤ファイナルは 1/4 マイルより外で旋回を終える・フラップ 40°・AR.appr kt ⑥離陸上昇は滑走路の端を越え、場周高度の 300 ft 下以内でクロスウインドへ。各区間に矢印、風の矢印、説明は図の下の凡例表へ。"
+  },
+  {
+   "id": "ops.landing",
+   "title": "安定した進入と着陸",
+   "gist": "決めた 3° の進入角・速度・形態のまま目標点へまっすぐ降りる安定進入の考え方と、AFH の安定進入の要素、PAPI の読み方、フレアと接地、教材と ACS の基準。",
+   "issues": [
+    "最初の SVG が PAPI（FIG.papi）なので、CADET の教室の画面には PAPI だけが映る。この節の主役は「横から見た 3° の進入と 500 ft の判断点」。",
+    "同じ内容の表が 2 つ続く（FIG.stableApproach と「AFH 第 9 章の安定進入の要素」）。進入角・速度・降下率・形態・判断が二重で、しかも食い違う：「70 kt（+10／−5 kt 以内）」と同じ節の「この教材の「基礎」 70 ±5 kt」、「降下率 約 370 fpm」と AFH の「一般に 500〜1,000 fpm」。",
+    "誤り：AFH の表の「降下率 一般に 500〜1,000 fpm。それより大きければ地上 300 ft までに減らす」→ AFH 第 9 章は「500 fpm を超える降下率を使うなら、地上 300 ft より前に減らす」。",
+    "最初の表で「3°（PAPI 白 2・赤 2）」と書くが、PAPI の説明は 2 つ後の図まで出てこない（順番）。",
+    "説明のない語：「AFM」「1.3 Vso」「VMC／IMC」「トリム済み」「形態」。",
+    "「目標点（aiming point）」と「接地点」の違いが書かれていない（AFH：目標点は接地点ではない。フレアで降下を止めるので接地はその先）。シミュレータの採点は目標点（端から 300 m）からの距離。",
+    "単位のわな：ACS「指定点から 400 ft 以内」の直後に教材「目標点の −100〜+400 m」。400 ft は約 120 m、400 m は約 1,310 ft で、初心者は同じ 400 と読み違える。",
+    "「滑走路の端を越えたらスロットルをアイドル」は教材の目安（AFH はフレアの間にアイドルへ絞るのがふつう、と書く）。出典の区別を書く。",
+    "ここが大切 3（バウンド）：AFH は小さいバウンドなら「少し出力を足して次の接地をやわらげ、姿勢を整える」。出力の一言が抜けている。",
+    "抜けている点：滑走路の形の見え方（台形の形が変わらない＝安定。浅いと短く広く、深いと長く細く：AFH 図 9-6・9-7）、PAPI は滑走路にまっすぐ並んでから使う・中心線 ±10°・3.4 NM まで障害物から安全（AIM 2-1-2）、降下率 ≈ 対地速度 × 5 の目安。",
+    "FIG.papi：390 px で文字 9.0 px、滑走路が描かれていないので「左側に並ぶ」が見えない、AIM の 3.2°（やや高い）・2.8°（やや低い）がない。"
+   ],
+   "mainFigure": "新図 approachProfile：横から見たファイナル。3° の線が目標点（端から 300 m）に向かい、地上 500 ft の判断点（VMC。ここで安定していなければゴーアラウンド）、AR.appr kt・約 370 fpm（AR.appr×5.3）、地上 10〜20 ft のフレア、目標点より先の接地、PAPI の位置。模式図。"
+  },
+  {
+   "id": "ops.goaround",
+   "title": "ゴーアラウンド（着陸のやり直し）",
+   "gist": "ゴーアラウンドはふつうの操作で、Power（全開）→ Attitude（押さえて安全な上昇姿勢・右ラダー）→ Configuration（降下が止まってからフラップを少しずつ）の順に行う。",
+   "issues": [
+    "図がない。CADET では画面に何も映らない。",
+    "ACS の基準が書かれていない（自家用 ACS PA.IV.N：すぐに離陸出力、Vx または Vy ＋10／−5 kt、必要なら滑走路の横へずれて他機を避ける、安全な高度まで Vy ＋10／−5 kt）。他の節には ACS の行があるのにここだけない。",
+    "「安全な上昇姿勢」の数字がない（教材の Archer：64 kt・フラップ 25° で機首上げ約 8〜9°。FL.physics の定常計算）。",
+    "チェックリストの「フラップ 25° まで上げる」と AFH の「降下が止まってから」の関係が分からない。FL.physics では 64 kt・全開でフラップ 40° なら約 360 fpm、25° なら約 525 fpm の上昇で、40°→25° が最初の一手である理由を図で示せる。",
+    "ゴーアラウンドする理由の例（AFH：管制の指示、滑走路上の障害、前の機に追いつく、ウインドシア、後方乱気流、不安定な進入）がない。",
+    "ゴーアラウンド後の経路（滑走路の上・横を上昇して場周へ）と無線（“Going around”。comm.option）への言及がない。",
+    "「地面効果」の説明がない（aero.ge にある。リンクする）。"
+   ],
+   "mainFigure": "新図 goAroundProfile：横から見たゴーアラウンド。判断 → ①Power 全開（キャブレターヒーター OFF）②Attitude 機首を押さえて上昇姿勢・右ラダー ③降下が止まったらフラップ 25°・64 kt（AR.ga）④上昇を確認して障害物を越えたら 76 kt（AR.y）・フラップを少しずつ。昇降率の数字は FL.physics.steadyState から。"
+  },
+  {
+   "id": "ops.xwind",
+   "title": "横風の離着陸",
+   "gist": "風を滑走路に沿った成分（向かい風）と直角の成分（横風）に分けて考え、クラブとウイングロー（サイドスリップ）で流されずに離着陸する。",
+   "issues": [
+    "節がパーセントの表（FIG.xwindTable）から始まり、「横風成分とは何か」の説明も図もない。",
+    "用語の不一致：本文「実証横風速度は 17 kt」、計算機は「実証横風成分 17 kt」。チェックリストは MAX DEMONSTRATED CROSSWIND 17 KTS、AFH は demonstrated crosswind velocity（型式証明の試験で 0.2 Vso 以上：Archer の Vso 45 kt なら 9 kt 以上）。「最大実証横風成分（maximum demonstrated crosswind）」に統一する。17 は AR.xwind から書く。",
+    "「多くの教官は「ファイナルはクラブ、短いファイナルでウイングローに移る」組み合わせを教えます」は出典がない。AFH 第 9 章は「多くの場合ウイングローを勧める。組み合わせてもよい（長いファイナルではクラブで始め、フレアの前にウイングローへ移る）。両方できるように」。",
+    "表の丸めが不ぞろい：30° の行は横風「7 kt」、60° の行は向かい風「8 kt」で、どちらも本当は 7.5 kt（浮動小数の丸め）。",
+    "シミュレータの説明「横風 12 kt（突風を伴う）」は不正確：課目 x1 は滑走路から右 60° の方向から 12 kt の風（横風成分 約 10 kt・向かい風 約 6 kt）で、乱気流の強さ 1.3。",
+    "ここが大切 1 が約 75 字で長い。PFD の「マゼンタの菱形（GPS の航跡）」は G1000 型の表示と書く。",
+    "抜けている点：ATIS・管制塔の風は磁方位、METAR は真方位（AIM 7-1）／突風のときの進入速度（ACS：ガストファクターを加える。AFH の短距離：ガストの半分）／横風離陸の浮揚後の偏流修正（浮いたらクラブへ）。"
+   ],
+   "mainFigure": "新図 xwindVector：RWY 36 と風 060°/12 kt（課目 x1 と同じ）を上から描き、風の矢印を横風成分 約 10 kt と向かい風成分 約 6 kt に分ける。角度の目安（30°→約 1/2、45°→約 0.7、60° 以上→ほぼ全部）と AR.xwind 17 kt を添える。2 枚目にクラブとウイングローの比較図。"
+  },
+  {
+   "id": "ops.short",
+   "title": "短距離・不整地の離着陸とスリップ",
+   "gist": "短い滑走路・障害物のある滑走路での短距離離着陸、柔らかい地面での不整地離着陸、速度を増やさずに降下角を深くするフォワードスリップ。",
+   "issues": [
+    "目的の 1 文も図もなく、3 列の大きな表（チェックリスト・ACS）から始まる。1 つのセルに 7 つの手順が入り、スマートフォンでは読めない。",
+    "「訓練校の Archer チェックリスト」の列にチェックリストにない内容が入っている：不整地離陸の「止まらずに滑走路へ」（ACS・AFH の内容）、短距離着陸の「フラップ 40°」（チェックリストは 65 kt だけ）。逆にチェックリストの不整地離陸「Throttle ADVANCE SLOWLY」が抜けている。",
+    "不整地着陸の ACS「接地はできるだけ遅く」は不正確：ACS PA.IV.D は「適切な姿勢で、できるだけ小さい降下率で、横流れなく接地」。AFH は「できるだけ遅い速度で、機首を上げた姿勢で」。",
+    "数値が直書き：「55 kt」「64 kt」「76 kt」（AR.x・AR.y がある。55 kt はチェックリストの値で FL.physics にはない）。課目 x3 はフラップ UP・60 kt で浮揚するので、本と課目が違うことを書く。",
+    "フォワードスリップが最後に付け足しで、図も、サイドスリップ（横風のウイングロー）との違いもない。AFH の注意（スリップ中は速度計に誤差が出ることがある、燃料・フラップの制限は POH）も一部しかない。",
+    "説明のない語：「Vx（または推奨速度）」「障害物（50 ft）」。",
+    "モデルとの関係：FL.physics では 64 kt・全開の上昇角はフラップ UP 約 6.1°、フラップ 25° 約 4.6°。「フラップ 25° の方が急に上がれる」と読める書き方や図は避ける（フラップ 25° の利点は浮揚速度が下がり滑走が短くなること）。",
+    "1 つの節に 5 つの操作（短距離離陸・短距離着陸・不整地離陸・不整地着陸・スリップ）が詰まりすぎ。"
+   ],
+   "mainFigure": "新図 shortFieldProfile：横から見た短距離離陸。ブレーキを踏んで全開 → 55 kt（チェックリスト）で浮揚 → 64 kt（Vx・AR.x）で 50 ft の障害物を越える → 76 kt（Vy・AR.y）へ → フラップを少しずつ。模式図（距離の数字は描かない）。着陸側は新図 touchdownZones で。"
+  }
+ ],
+ "problems": {
+  "unclear": [
+   "ops.takeoff：「“Airspeed alive”」「Vr」「Vy」「巡航上昇」が初出で説明なし。",
+   "全体：「この教材の「基礎」」が何を指すか（課目の基礎レベルの合格の目安）がどこにも書かれていない。",
+   "全体：教材の基準は m（センターライン ±8 m・±6 m、目標点の −100〜+400 m、ファイナル 5 km）、公的な基準は ft・NM・kt で混在。ACS の 400 ft と教材の 400 m が並ぶ（ops.landing）。",
+   "ops.pattern：「ダウンウインドの中央に 45° で合流」の 45° が何と何の角度か分からない。「Chart Supplement」が初出で説明なし（説明は後の navp 章）。",
+   "ops.landing：「AFM」「1.3 Vso」「VMC／IMC」「形態」「トリム済み」が説明なし。目標点と接地点の違いが書かれていない。",
+   "ops.xwind：「実証横風速度」と「実証横風成分」が混在。横風成分とは何かの説明がないまま表が始まる。",
+   "ops.xwind と ops.short：「サイドスリップ（ウイングロー）」と「フォワードスリップ」の違いが説明されていない（どちらもエルロンと反対のラダー）。",
+   "ops.goaround：「安全な上昇姿勢」が数字なし。",
+   "ops.short：「Vx（または推奨速度）」「障害物（50 ft）」が説明なし。"
+  ],
+  "order": [
+   "ops.landing：最初の表で「PAPI 白 2・赤 2」を使い、PAPI の図と説明はその 2 つ後。PAPI は進入の図の後、表の前に。",
+   "ops.landing：最初の SVG が PAPI。主図（横から見た 3° の進入）を最初に置く。",
+   "ops.landing：安定進入・PAPI・フレア・接地・基準が 1 節に詰まりすぎ。フレアと接地・フロート・バウンドは新節 ops.flare へ分ける。",
+   "ops.xwind：パーセントの表が説明より前。「横風成分とは」→ 分解図 → 表 → 計算機 → 2 つのやり方、の順に。",
+   "ops.short：フォワードスリップが短距離・不整地の後ろに付け足し。新節 ops.slip に分け、ops.xwind のサイドスリップと並べて比べる。不整地も新節 ops.soft に。",
+   "ops.takeoff：基準の表が手順の直後に来るが、離陸の流れの図がないので手順の意味がつかみにくい。目的 → 図 → 手順 → 基準の順に。"
+  ],
+  "errors": [
+   "ops.landing（AFH の表）「降下率 一般に 500〜1,000 fpm。それより大きければ地上 300 ft までに減らす」→ AFH 第 9 章：500 fpm を超える降下率を使うなら地上 300 ft より前に減らす（https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/10_afh_ch9.pdf）",
+   "FIG.pattern「約 1.6 km（1 NM）離れて滑走路と平行」・表「滑走路から約 1 NM」→ 1 NM＝1.852 km。1.6 km は 1 SM。AFH 第 8 章はダウンウインドを滑走路から「約 1/2〜1 マイル」（https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/09_afh_ch8.pdf）",
+   "ops.pattern 表「アビーム（接地点の横）でパワーを絞り…降下開始」→ AFH 第 8 章・AIM 4-3-3 の図：着陸滑走路の進入端（approach end）の真横まで場周高度を保ち、そこで降下開始（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html）",
+   "FIG.pattern：クロスウインドへの旋回を滑走路の端ちょうどに描いている → AIM 4-3-2：離陸上昇（Departure）は滑走路の端から少なくとも 1/2 マイル先、場周高度の 300 ft 以内まで続ける。AIM 4-3-3 の図：滑走路の端を越えてからクロスウインドへ（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html）",
+   "FIG.pattern：ベースへの旋回点から見た進入端が約 15° 後ろ → AFH 第 8 章：進入端が約 45° 後ろに見えたらベースへ（本文の説明と図を合わせる）",
+   "ops.short 不整地着陸の ACS「接地はできるだけ遅く」→ 自家用 ACS PA.IV.D.S10：適切な姿勢で、最小の降下率で、横流れなく接地（https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf）",
+   "ops.short「訓練校の Archer チェックリスト」列の「止まらずに滑走路へ」「（短距離着陸）フラップ 40°」→ チェックリストにはない（ACS／教材値）。不整地離陸のチェックリストは Flaps 25°・Elevator TAIL LOW・Throttle ADVANCE SLOWLY・地面効果の中で加速・64／76 kt（https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf）",
+   "ops.xwind「多くの教官は「ファイナルはクラブ、短いファイナルでウイングロー」」→ AFH 第 9 章：多くの場合ウイングローを勧める。組み合わせ（長いファイナルはクラブで始め、フレアの前にウイングローへ）でもよい。両方できるように（https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/10_afh_ch9.pdf）",
+   "ops.xwind の課目説明「横風 12 kt（突風を伴う）」→ 課目 x1 の風は滑走路の右 60° から 12 kt（横風成分 約 10 kt）・乱気流 1.3（syllabus.js:253、school.js:259）"
+  ],
+  "outdated": [
+   "AIM の区間名：本の「アップウインド / 離陸」・図の「離陸・上昇（upwind）」→ 現行 AIM 4-3-2（Basic・Change 3、2026-07-09 発効）は離陸後の直線を Departure、Upwind leg を管制の指示用の延長と定義。AFH 第 8 章も departure leg と upwind leg（ゴーアラウンドの後など）を分ける。",
+   "引用している版はすべて現行：AFH FAA-H-8083-3C（FAA の配布ページに新版なし）、自家用 ACS FAA-S-ACS-6C・事業用 FAA-S-ACS-7B（2024-04 版・2024-05-31 発効、ACS 一覧で現行）、Archer チェックリスト（MGA 2025、URL 生存・速度は手元の写しと同じ）。AIM は版を書いていない → 「AIM（2026 年版 Change 3 で確認）」のように確認した版を書く。",
+   "場周の入り方の資料に AC 90-66C（Non-Towered Airport Flight Operations、2023-06-06、AC 90-66B を廃止）を加える。"
+  ],
+  "duplicates": [
+   "aero.left（左偏向傾向・右ラダー）と ops.takeoff の「プロペラの左偏向で…右ラダー」→ ここは 1 文とリンクだけに。",
+   "aero.ge（地面効果）と ops.goaround・ops.short の地面効果 → 定義は aero.ge、ここはリンク。",
+   "perf.tol・perf.climb（Vx／Vy・離着陸距離・「滑走路の半分で Vr の 70%」の中止の目安）と ops.short・emg.abort → Vx／Vy の定義は perf.climb、ここは使い方だけ。",
+   "emg.abort と ops.takeoff のここが大切 1（離陸中止）→ リンクのまま、重複を増やさない。",
+   "ops.ground（長方形コース＝場周と同じ形）と ops.pattern の偏流修正 → 相互リンク。",
+   "comm.tower・comm.arrive・comm.option（場周の管制交信、“Going around”）と comm.ctaf（場周の位置通報）→ ops.pattern・ops.goaround から交信はリンクで。",
+   "wx の例（09012G20KT と滑走路 36 の横風）と ops.xwind の横風成分 → 計算のしかたはここ、気象の判断は wx。",
+   "hf.body（進入の錯覚・狭い滑走路・ブラックホール・PAPI で確かめる）と ops.landing の PAPI → 錯覚は hf、PAPI の読み方はここ。",
+   "solo.check・solo.first（ゴーアラウンドの判断・場周 3 回）と ops.goaround → 重複は少ない、リンクで。",
+   "quiz.js q_ops（ゴーアラウンドの 3 原則、ウイングローの左右、ACS の接地範囲、短距離離陸の手順）と章末クイズ Q2・Q3・Q4 がほぼ同じ問題（Q3 は左右を入れ替えただけ）。"
+  ],
+  "numbers": [
+   "ダウンウインドの距離：本（book-3.js:130「約 1 NM」、book-figs.js FIG.pattern「約 1.6 km（1 NM）」）と課目（syllabus.js:169「約 1.6 km」、school.js:212 cross −1600 m）。1.6 km は約 0.86 NM＝約 1 SM。本を「約 1.6 km（AFH：1/2〜1 マイル）」に。",
+   "短距離離陸：本・quiz.js q_ops（チェックリスト：フラップ 25°・55 kt でローテーション）と課目 x3（syllabus.js:262 takeoffRoll(AR.rotate)＝60 kt、フラップの設定なし＝v.toFlaps 0）。55 kt は FL.physics の v にない値。本に「課目 x3 はフラップ UP・60 kt で浮揚する簡略版」と明記する。",
+   "短距離離陸の許容幅：本（ACS：Vx ＋10／−5 kt）と課目 x3 の基準（syllabus.js:263「Vx 64 +5/−5 kt」）。",
+   "短距離着陸の接地範囲：本（ACS：指定点から 0〜200 ft＝越えた側のみ）と課目 x2（syllabus.js:41〜54・258：目標点 ±60 m＝手前 60 m も合格）。本に教材の基準も書く。",
+   "フレアの高さ：本 10〜20 ft（AFH 第 9 章どおり）と syllabus.js:41・181、pages.js:459 の「地上 10〜15 ft」。",
+   "アビームの出力：本「約 1,500 rpm」と FL.physics（80 kt・フラップ 10°・−500 fpm の定常に約 1,660 rpm。1,500 rpm ではもっと深く降りる）。教材の目安と書くか「約 1,600〜1,700 rpm」に。",
+   "安定進入の速度幅：FIG.stableApproach「70 kt（+10／−5 kt 以内）」と同じ節の「この教材の「基礎」 70 ±5 kt」（syllabus.js:182 t3 の基準）。公的な目安と課目の合格の目安を列で分けて並べる。",
+   "降下率：FIG.stableApproach「約 370 fpm」（AR.appr×5.3、syllabus.js:35 landingSteps と同じ）と AFH「軽飛行機は一般に 500〜1,000 fpm」。3° の進入なら対地速度 70 kt で約 370 fpm になることを説明して両方を書く。",
+   "Vy：チェックリスト Vy 76 kt（777 fpm）に対し、FL.physics の全開の上昇率が最大になるのは約 84 kt（794 fpm）。差は約 2% で曲線は平ら。最良上昇角は約 60〜64 kt で Vx 64 と合う。「上昇率と速度」の曲線をモデルから描くと頂点が 76 にならないので、その図は描かないか、平らなことを示す。",
+   "フラップと上昇角：FL.physics では 64 kt・全開でフラップ UP 約 6.1°、フラップ 25° 約 4.6°、フラップ 40° でゴーアラウンド時の上昇率は約 360 fpm（25° なら約 525 fpm）。",
+   "課目 x1 の風：本「横風 12 kt」と syllabus.js:253 の wind {rel 60, kt 12, gust 1.3}（横風成分 約 10.4 kt）。",
+   "ゴーアラウンドの速度：本（チェックリスト：64 kt、障害物を越えたら 76 kt）と課目 t4（syllabus.js:185 の説明「64〜76 kt」、採点 AR.x+4＝68 ±12 kt）。矛盾ではないが本に課目の採点の目安を書く。",
+   "FIG.xwindTable の丸め：30° の横風「7 kt」と 60° の向かい風「8 kt」（どちらも 7.5 kt）。",
+   "直書きの数値：FIG.pattern（90・75・70 kt）、FIG.stableApproach（70 kt）、ops.pattern 表（90・80・75 kt）、ops.short（55・64・76 kt）、ops.xwind（17 kt）。AR.appr・AR.x・AR.y・AR.xwind から作る（55・75・80・90 kt は教材値と明記）。",
+   "フラップ 40°（ファイナル）・10°（アビーム）・25°（ベース）はチェックリストにない教材値（v.apprFlaps 3＝40°）。表の出典の列で区別する。"
+  ]
+ },
+ "policy": "章の順番（通常離陸 → 場周経路 → 安定進入と着陸 → ゴーアラウンド → 横風 → 短距離・不整地）は 1 回の飛行と課目 t1〜t4・x1〜x3 の順に合っているので保つ。各節は目的の 1〜2 文 → 最も大切な SVG（離陸・進入・ゴーアラウンド・短距離は横から見た図、場周は上から見た図、横風は風を分ける図）→ 説明 → 「公的な目安（AFH・AIM・ACS）」と「この教材の Archer（AR）・課目の合格の目安」を出典の列つきで 1 つの表に並べる形にし、m と ft の混在をやめる（教材の m の値には ft を併記）。ops.pattern は図を作り直し、現行 AIM の区間名（Departure・Crosswind・Downwind・Base・Final）、「進入端の真横で降下開始」「ダウンウインドは約 1.6 km（1/2〜1 マイル）」「左回りは 14 CFR 91.126 の規則」に直す。ops.landing は重複した 2 つの表を 1 つにまとめて降下率の誤りを直し、フレア・フロート・バウンドを新節 ops.flare（フレアと接地）に移す。ops.xwind は「横風成分とは」から始め、AFH の推奨（多くの場合ウイングロー、長いファイナルはクラブ → フレア前にウイングロー）に直し、用語を「最大実証横風成分」に統一する。ops.short は 3 列の大きな表をやめて短距離離着陸だけにし、不整地は新節 ops.soft、フォワードスリップは新節 ops.slip（サイドスリップとの比較図つき）に分ける。bk.sim は残し、キーは現行の app.js どおり（R／Shift+R 全開、F／Shift+F アイドル、Q／E ラダー、S 機首上げ・W 機首下げ、V フラップを 1 段下げる・Shift+V 1 段上げる、B ブレーキ）で書き、課目 x3 がフラップ UP・60 kt で浮揚するなどチェックリストとの違いをその箱の中で明記する。",
+ "figuresExisting": [
+  {
+   "key": "pattern",
+   "verdict": "redo",
+   "why": "viewBox 520×330・文字 10〜11 で 390 px では最小 6.6 px、「クロスウインド」が viewBox の外（y −7）で切れる、「18」「36」の上を線が通る、「アビーム…」の文字が滑走路に食い込む。形も誤り（ベースの曲がり角から進入端は約 15° 後ろで本文の 45° と違う、クロスウインドへの旋回が滑走路の端ちょうど、ファイナルが 1/4 マイルより短い）。「約 1.6 km（1 NM）」の換算の誤り、「upwind」の呼び方（現行 AIM は Departure）、速度の直書き、45° の入り方と風が描かれていない、模式図・NOT FOR NAVIGATION の表示がない。縦長（約 400×440）で番号の点と凡例表に作り直す。"
+  },
+  {
+   "key": "papi",
+   "verdict": "fix",
+   "why": "見え方の順番（内側＝滑走路に近い灯から赤になる）は AIM 2-1-2 の図と合っている。直す点：viewBox 460・文字 12 で 390 px では 9.0 px → 幅 360〜400 に詰めて文字を大きく。滑走路の台形を描いて灯が左側にあることを見せる。AIM の角度（3.5° より高い／3.2°／3°／2.8°／2.5° より低い）を全部書く。ops.landing の最初の図にしない（approachProfile の後へ）。灯の角度はシミュレータ（scene.js:484：2.5・2.83・3.17・3.5°）と同じと書ける。"
+  },
+  {
+   "key": "xwindTable",
+   "verdict": "fix",
+   "why": "sin・cos から作った表で値は正しいが、30° の横風「7 kt」と 60° の向かい風「8 kt」が同じ 7.5 kt なのに丸めが違う（浮動小数）。小数 1 桁にするか、四捨五入をそろえる。覚え方の列（30°→約 1/2、45°→約 0.7、60° 以上→ほぼ全部）を加え、xwindVector の図の後に置く。AR.xwind（17 kt）を超える行に印を付けてもよい。"
+  },
+  {
+   "key": "stableApproach",
+   "verdict": "fix",
+   "why": "AFH の表と内容が重なり、速度幅（+10／−5 と ±5）・降下率（370 fpm と 500〜1,000 fpm）が食い違う。1 つの表「安定進入のチェック」にまとめ、列を「項目｜AFH の目安（ピストン機）｜この教材の Archer（AR）｜課目の合格の目安」にする。70 kt・370 fpm は AR.appr と AR.appr×5.3 から作る。AFH の降下率の文（500 fpm を超えるなら 300 ft より前に減らす）を正しく。"
+  }
+ ],
+ "figuresNew": [
+  {
+   "name": "takeoffProfile",
+   "section": "ops.takeoff",
+   "what": "横から見た通常離陸の流れ：滑走（全開・右ラダー・横風なら操縦輪を風上いっぱいから少しずつ戻す）→ Vr で機首上げ約 8〜10° → 浮揚 → Vy で上昇（機首上げ約 11°）→ 地上 1,000 ft で巡航上昇 87 kt へ。下に自家用 ACS（Vy ＋10／−5 kt）と課目の目安。",
+   "data": "AR.rotate 60・AR.y 76・AR.climb 87（physics.js:109、Archer チェックリスト）、1,000 ft AGL（チェックリスト ENROUTE CLIMB）、機首上げは FL.physics.steadyState(pa28, 76 kt, 全開) ≈ 10.7°、8〜10° は syllabus.js:70 の教材値",
+   "priority": "must"
+  },
+  {
+   "name": "approachProfile",
+   "section": "ops.landing",
+   "what": "横から見たファイナル：3° の線が目標点（端から 300 m）へ。地上 500 ft の判断点（VMC：ここで安定していなければゴーアラウンド。300 ft より下で不安定になったら直ちに）、進入速度と降下率、地上 10〜20 ft のフレア、目標点より先の接地、PAPI の位置。距離の目安（1 NM で約 320 ft、500 ft は約 1.6 NM）。模式図。",
+   "data": "AR.appr 70・降下率 AR.appr×5.3 ≈ 370 fpm（syllabus.js:35）、目標点 300 m（school.js:216・syllabus.js landingSteps）、PAPI は 300 m・左側（scene.js:224）、500／300 ft・10〜20 ft は AFH 第 9 章、高さは tan 3° から計算",
+   "priority": "must"
+  },
+  {
+   "name": "goAroundProfile",
+   "section": "ops.goaround",
+   "what": "横から見たゴーアラウンド：判断 → ①Power 全開 ②Attitude 機首を押さえて上昇姿勢・右ラダー ③降下が止まってからフラップ 40°→25°・64 kt ④正の上昇を確認・障害物を越えたら 76 kt・フラップを少しずつ。各段の昇降率の数字で「フラップを一度に上げない」理由を見せる。",
+   "data": "AR.ga 64・AR.y 76（チェックリスト）、昇降率は FL.physics.steadyState（64 kt 全開：フラップ 40° ≈ 360 fpm、25° ≈ 525 fpm、76 kt フラップ UP ≈ 780 fpm）、3 原則は AFH 第 9 章",
+   "priority": "must"
+  },
+  {
+   "name": "xwindVector",
+   "section": "ops.xwind",
+   "what": "上から見た RWY 36 と風 060°/12 kt。風の矢印を滑走路に沿った向かい風成分（約 6 kt）と直角の横風成分（約 10 kt）に分ける。角度の覚え方（30°→約 1/2、45°→約 0.7、60° 以上→ほぼ全部）と最大実証横風成分 17 kt。",
+   "data": "課目 x1 の風（syllabus.js:253 rel 60・12 kt）、12×sin60° ≈ 10.4、12×cos60° ＝ 6、AR.xwind 17（チェックリスト MAX DEMONSTRATED CROSSWIND）",
+   "priority": "must"
+  },
+  {
+   "name": "crabWingLow",
+   "section": "ops.xwind",
+   "what": "2 枚並べた上から見た図：左＝クラブ（機首は風上、航跡はセンターライン、接地直前にラダーで機首を平行に）、右＝ウイングロー（風上の翼を下げ、反対のラダーで機首と航跡をセンターラインに、風上の主輪から接地）。風の矢印、航跡と機首の線。",
+   "data": "AFH 第 9 章（図 9-15・9-16 の考え方）。数値なし",
+   "priority": "must"
+  },
+  {
+   "name": "shortFieldProfile",
+   "section": "ops.short",
+   "what": "横から見た短距離離陸：ブレーキを踏んで全開 → 計器確認 → ブレーキを離す → 55 kt で浮揚 → Vx 64 kt で 50 ft の障害物を越える → Vy 76 kt へ → フラップを少しずつ上げる。下に ACS（Vx ＋10／−5 kt を障害物または 50 ft まで、その後 Vy ＋10／−5 kt）。距離は描かない模式図（モデルでは Vx と Vy の上昇角の差が小さく、フラップ 25° の上昇角はフラップ UP より浅いため）。",
+   "data": "チェックリスト SHORT FIELD TAKEOFF（55・64・76 kt、フラップ 25°）、AR.x 64・AR.y 76、ACS PA.IV.E",
+   "priority": "must"
+  },
+  {
+   "name": "aimingPoint",
+   "section": "ops.landing",
+   "what": "前の窓から見た滑走路（台形）3 枚：安定（目標点が窓の中で動かない・形が同じ）／高い（目標点が下へ動く・滑走路が長く細く見える）／低い（目標点が上へ動く・短く広く見える）。",
+   "data": "AFH 第 9 章（図 9-5〜9-7 の考え方）。数値なし",
+   "priority": "should"
+  },
+  {
+   "name": "touchdownZones",
+   "section": "ops.landing",
+   "what": "上から見た滑走路の接地範囲の比較：指定点から自家用 ACS 通常 0〜400 ft（約 120 m）、短距離 0〜200 ft（約 60 m）、事業用 通常 0〜200 ft・短距離 0〜100 ft、この教材の課目 t3（目標点 −100〜+400 m）と x2（±60 m）。ft と m を併記して「400 ft と 400 m は違う」を見せる。",
+   "data": "ACS 6C PA.IV.B.S10・PA.IV.F.S10、ACS 7B CA.IV.B.S10・CA.IV.F.S10、syllabus.js landingSteps の zone（−100〜+400 m、短距離 ±60 m）",
+   "priority": "should"
+  },
+  {
+   "name": "flareSequence",
+   "section": "ops.flare",
+   "what": "横から見たフレア：進入姿勢（機首下げ約 3°）→ 地上 10〜20 ft で少しずつ機首を上げる → 滑走路の数インチ上を水平に → 主輪から接地 → 前輪をゆっくり下ろす。目線（滑走路の先を浅い角度で見る）とフロート・バウンドの吹き出し。",
+   "data": "FL.physics.steadyState(pa28, 70 kt, −371 fpm, フラップ 40°) の機首角 ≈ −3°、10〜20 ft と目線 10〜15° は AFH 第 9 章",
+   "priority": "should"
+  },
+  {
+   "name": "forwardSlip",
+   "section": "ops.slip",
+   "what": "上から見たフォワードスリップとサイドスリップの比較：フォワード＝機首を滑走路から逸らし、航跡は滑走路へ、降下角が深くなる／サイド（ウイングロー）＝機首も航跡も滑走路へ、横風を打ち消す。エルロンとラダーの向き。",
+   "data": "AFH 第 9 章（図 9-14）、ACS PA.IV.M。数値なし",
+   "priority": "should"
+  },
+  {
+   "name": "patternEntry",
+   "section": "ops.pattern",
+   "what": "場周への入り方：45° で滑走路中央の真横のダウンウインドへ（推奨）、反対側から来たときは場周高度より 500 ft 上で中央を横切り、約 2 マイル離れてから降りて 45° で入る。模式図・NOT FOR NAVIGATION。",
+   "data": "AFH 第 8 章（図 8-3）、AC 90-66C、AIM 4-3-3",
+   "priority": "nice"
+  },
+  {
+   "name": "softFieldTakeoff",
+   "section": "ops.soft",
+   "what": "横から見た不整地離陸：止まらずに滑走路へ・操縦輪を引いて前輪を浮かせる → できるだけ遅い速度で浮く → 地面効果の中で加速 → 64 kt（障害物あり）または 76 kt で上昇。",
+   "data": "チェックリスト SOFT FIELD TAKEOFF（フラップ 25°・64／76 kt）、ACS PA.IV.C、AFH 第 6 章",
+   "priority": "nice"
+  }
+ ],
+ "photos": [
+  {
+   "section": "ops.pattern",
+   "subject": "上空から見た小さな一般航空の空港（滑走路・誘導路・セグメントサークルと場周の向きの標識）",
+   "search": "Commons: Category:Segmented circles / Category:Traffic pattern indicators。米国政府の空撮（USGS の航空写真・NAIP：パブリックドメイン）の小空港も候補。Google マップは不可",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "場周の向きを地上の標識で示すことと、上から見た空港の形を実物で見せる"
+  },
+  {
+   "section": "ops.landing",
+   "subject": "PAPI の 4 つの灯（滑走路の左側、白 2・赤 2 に見える写真が理想）",
+   "search": "Commons: Category:Precision approach path indicators（ファイルごとにライセンス確認。CC BY／CC BY-SA が多い）。FAA の空港灯火の資料",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "図だけでは灯の大きさ・位置（滑走路の横）が想像しにくい"
+  },
+  {
+   "section": "ops.landing",
+   "subject": "小型機のファイナルから見た滑走路（台形に見える・計器画面や顔が写っていないもの）",
+   "search": "Commons: Category:Views from aircraft on final approach / Category:Runways from the air（G1000 などの画面が写るものは不可）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "目標点・滑走路の形の見え方（aimingPoint の図）を実物と結びつける"
+  },
+  {
+   "section": "ops.xwind",
+   "subject": "吹き流し（windsock）",
+   "search": "Commons: Category:Windsocks（CC0・パブリックドメインのものが多い）。NOAA Photo Library の airport windsock",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "風向と風の強さを外で読む道具。横風の判断の出発点"
+  },
+  {
+   "section": "ops.xwind",
+   "subject": "クラブで進入中の飛行機（機首が滑走路からずれている）",
+   "search": "Commons: Category:Crosswind landings（航空会社の機体は不可。軍用機・NASA 機・個人の小型機を選ぶ。USAF・NASA の写真はパブリックドメイン）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "クラブの「機首と進む方向がずれる」様子は写真で一目で分かる"
+  },
+  {
+   "section": "ops.takeoff",
+   "subject": "離陸中の Piper PA-28（できれば Archer）",
+   "search": "Commons: Category:Piper PA-28-181 Archer / Category:Piper PA-28 in flight（訓練校のロゴ・塗装の機体は不可、ライセンスはファイルごとに確認）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "教材の機体の離陸姿勢（機首上げ約 8〜10°）を実物で見せる"
+  },
+  {
+   "section": "ops.short",
+   "subject": "芝の滑走路・山あいの短い滑走路（不整地・短距離の例）",
+   "search": "Commons: Category:Grass runways / Category:Backcountry airstrips。米国森林局（USFS）・国立公園局（NPS）の写真はパブリックドメイン（例：Idaho の backcountry airstrip）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "「短い」「柔らかい」滑走路の実物を見ると、手順の理由が分かる"
+  }
+ ],
+ "endMatter": {
+  "terms": [
+   "Rotation speed（Vr）/ ローテーション速度（機首を上げて浮く速度）/ Archer 60 kt",
+   "Best rate of climb（Vy）/ Best angle of climb（Vx）/ 最良上昇率速度・最良上昇角速度 / Archer 76・64 kt",
+   "Traffic pattern / 場周経路 / 標準は左回り（14 CFR 91.126）",
+   "Traffic pattern altitude（TPA）/ 場周高度 / プロペラ機は地上 1,000 ft（AIM 4-3-3）",
+   "Departure / Crosswind / Downwind / Base / Final / 離陸上昇・クロスウインド・ダウンウインド・ベース・ファイナル / Upwind leg は管制の指示やゴーアラウンド後の延長",
+   "Abeam / 真横 / 進入端の真横で降下開始",
+   "Stabilized approach / 安定進入 / VMC は地上 500 ft までに",
+   "Aiming point / Touchdown point / 目標点・接地点 / 接地は目標点より先",
+   "Round out（Flare）/ フレア（引き起こし）/ 地上 10〜20 ft から",
+   "Float / Balloon / Bounce / フロート・浮き上がり・バウンド",
+   "Go-around / Balked landing / Rejected landing / ゴーアラウンド・着陸復行 / チェックリストは BALKED LANDING",
+   "Ground effect / 地面効果",
+   "Crosswind component / Headwind component / 横風成分・向かい風成分",
+   "Maximum demonstrated crosswind / 最大実証横風成分 / Archer 17 kt（限界ではない）",
+   "Crab / Wing-low（Sideslip）/ クラブ・ウイングロー（サイドスリップ）",
+   "Forward slip / フォワードスリップ",
+   "Short-field / Soft-field / 短距離・不整地",
+   "Obstacle（50 ft）/ 障害物（性能表と ACS では高さ 50 ft）",
+   "PAPI（Precision Approach Path Indicator）/ 精密進入角指示灯"
+  ],
+  "examples": [
+   "風 060°/12 kt で滑走路 36 → 角度 60°・横風約 10 kt（右から）・向かい風約 6 kt（課目 x1 と同じ風）。",
+   "ファイナルで地上 500 ft、速度 82 kt（目標 70 kt）→ ＋10 kt を超えて不安定。ゴーアラウンド。",
+   "3° の進入で対地速度 70 kt → 降下率 ≈ 70 × 5.3 ≈ 370 fpm。向かい風 10 kt で対地 60 kt なら約 320 fpm。",
+   "PAPI が白 3・赤 1 → やや高い（約 3.2°）。出力を少し絞り、速度は機首で保つ。白 4 のまま 500 ft を過ぎたらゴーアラウンド。",
+   "ダウンウインドで進入端の真横：1,000 ft・90 kt → パワーを絞りフラップ 10°・80 kt で降下開始。進入端が斜め後ろ 45° でベースへ。"
+  ],
+  "cautions": [
+   "ファイナルへの旋回での行き過ぎを、深いバンク・ラダーで直さない（失速・スピン）。行き過ぎたらゴーアラウンド。",
+   "速度・許容幅は訓練校チェックリストと ACS を参考にした教材値。実機は POH・教官・訓練校の基準が優先。",
+   "ATIS・管制塔・ASOS／AWOS の音声の風は磁方位、METAR・TAF の風は真方位（AIM 7-1）。横風の計算は滑走路と同じ基準で。",
+   "スリップ中は速度計に誤差が出ることがある。スリップの時間・燃料・フラップの制限は POH で確認（AFH 第 9 章）。",
+   "教材の課目の目安（m）と ACS（ft）は別物。ACS の 400 ft は約 120 m。"
+  ],
+  "quizReview": [
+   "Q1（VMC で安定していなければゴーアラウンドする高さ）：keep。AFH 第 9 章どおり。選択肢「地上 300 ft 以下になってから考える」は良い誤答。",
+   "Q2（3 原則の順番）：keep。ただし quiz.js q_ops にも同じ趣旨の問題があるので、章末は「最初の操作は？」より順番の問題のままでよい。",
+   "Q3（右からの横風のウイングロー）：replace。quiz.js q_ops の「左からの横風」と左右を入れ替えただけ。PAPI の読み方か横風成分の計算に替える。",
+   "Q4（ACS の短距離着陸の接地範囲）：keep（fix）。「指定点を越えた側 0〜200 ft（手前は不可）」と why に書き、課目 x2 の教材の目安（±60 m）とは違うことを添える。"
+  ],
+  "quizProposals": [
+   {
+    "q": "ファイナルで PAPI が白 3・赤 1 に見えた。正しい読み方と操作は？",
+    "choices": ["やや高い：出力を少し絞って進入角を戻す", "やや低い：出力を足す", "正しい進入角なのでそのまま", "大きく低い：すぐ急上昇する"],
+    "answer": 0,
+    "why": "AIM 2-1-2：白が多いほど高い。白 3・赤 1 はやや高い（約 3.2°）。安定進入では進入角は出力で、速度は機首で直す。"
+   },
+   {
+    "q": "滑走路 36 に風 030°/14 kt。横風成分はおよそ？",
+    "choices": ["約 7 kt", "約 12 kt", "約 14 kt", "約 3 kt"],
+    "answer": 0,
+    "why": "風と滑走路の角度は 30°。横風成分は風速 × sin30° ＝ 14 × 0.5 ＝ 7 kt（向かい風成分は約 12 kt）。"
+   },
+   {
+    "q": "管制塔のない空港で、プロペラ機の場周高度と旋回の向き（特別な決まりがないとき）は？",
+    "choices": ["地上 1,000 ft・左回り", "地上 1,500 ft・右回り", "地上 500 ft・左回り", "海面から 1,000 ft・右回り"],
+    "answer": 0,
+    "why": "AIM 4-3-3：プロペラ機は地上 1,000 ft。旋回は左が決まり（14 CFR 91.126）。Chart Supplement に別の決まりがあればそれに従う。"
+   },
+   {
+    "q": "場周経路で、場周高度から降下を始める目安の位置は？",
+    "choices": ["ダウンウインドで、着陸滑走路の進入端の真横", "クロスウインドに入ったとき", "ダウンウインドに入ってすぐ", "ファイナルに入ってから"],
+    "answer": 0,
+    "why": "AIM 4-3-3 の図・AFH 第 8 章：進入端の真横まで場周高度を保ち、そこでパワーを絞って降下を始める。進入端が斜め後ろ 45° でベースへ。"
+   },
+   {
+    "q": "短距離離陸で、50 ft の障害物を越えたあとにすることは？",
+    "choices": ["Vy まで加速して上昇を続ける", "Vx のまま場周高度まで上昇する", "すぐにフラップを全部上げる", "スロットルを少し絞る"],
+    "answer": 0,
+    "why": "ACS PA.IV.E：Vx（または推奨速度）＋10／−5 kt で障害物（50 ft）まで、その後 Vy ＋10／−5 kt。Vx のままだと前が見えにくく、エンジンも冷えにくい。"
+   }
+  ],
+  "refs": [
+   "update R.afh：章の PDF を直接示す — 第 6 章 https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/07_afh_ch6.pdf ・第 8 章 https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/09_afh_ch8.pdf ・第 9 章 https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/10_afh_ch9.pdf （FAA-H-8083-3C は現行）",
+   "update R.aim：場周 AIM 4-3 https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html 、PAPI AIM 2-1-2 https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap2_section_1.html 、風の方位 AIM 7-1 https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html （Basic・Change 3、2026-07-09 発効で確認）",
+   "add AC 90-66C Non-Towered Airport Flight Operations（2023） https://www.faa.gov/documentlibrary/media/advisory_circular/ac_90-66c.pdf",
+   "add 14 CFR 91.126（管制塔のない空港の旋回の向き） https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-91/subpart-B/section-91.126",
+   "keep R.acsP（FAA-S-ACS-6C、2024-05-31 発効・現行） https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf ・R.acsC（FAA-S-ACS-7B・現行） https://www.faa.gov/training_testing/testing/acs/commercial_airplane_acs_7.pdf",
+   "keep R.archerCk（MGA 2025・URL 生存） https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf"
+  ]
+ },
+ "appMismatches": [
+  "flight-lab/src/syllabus.js:260-266 — 課目 x3（短距離離陸）は takeoffRoll(AR.rotate)＝60 kt で浮揚、フラップの設定なし（setup runway・v.toFlaps 0）。本 ops.short と quiz.js q_ops はチェックリストのフラップ 25°・55 kt。チェックリストは本が正しい。課目は簡略版なので、本の bk.sim に「課目はフラップ UP・60 kt」と書く。",
+  "flight-lab/src/syllabus.js:263 — 課目 x3 の基準「Vx 64 +5/−5 kt」。本が引く ACS は Vx ＋10／−5 kt。本は ACS のまま、課目の目安を別に書く。",
+  "flight-lab/src/syllabus.js:54・258 — 課目 x2 の接地範囲「目標点 ±60 m」（手前 60 m も合格）。本の ACS「指定点から 0〜200 ft（越えた側）」が公的な基準として正しい。本に課目の目安も書く。",
+  "flight-lab/src/syllabus.js:185 — 課目 t4 の説明「V を押して 1 段ずつ…一周して UP に戻るので注意」。app.js:100 には Shift+V（flapsUp＝1 段上げる）がある。app.js が正しい。本のゴーアラウンドの bk.sim では「Shift+V でフラップを 1 段上げる」と書く。",
+  "flight-lab/src/book-3.js:130・book-figs.js FIG.pattern — 本「約 1 NM」「約 1.6 km（1 NM）」と syllabus.js:169「約 1.6 km」・school.js:212（cross −1600 m）。1.6 km が課目と AFH（1/2〜1 マイル）に合う。本を直す。",
+  "flight-lab/src/book-3.js:131 — 本「アビーム（接地点の横）」と syllabus.js:169・book-figs.js FIG.pattern（進入端の真横の点）。進入端（AFH・AIM）が正しい。",
+  "flight-lab/src/syllabus.js:41・181、pages.js:459 — フレアは「地上 10〜15 ft」、本 book-3.js:142 は「10〜20 ft」。AFH は 10〜20 ft。本はそのままでよい（課目の 10〜15 ft はその範囲の中、と書いてもよい）。",
+  "flight-lab/src/book-3.js:161 — 本の bk.sim「横風 12 kt（突風を伴う）」と syllabus.js:253（右 60° から 12 kt・gust 1.3＝乱気流の強さ）。課目が事実。本を「右 60° から 12 kt の風（横風成分 約 10 kt）・乱気流あり」に。",
+  "flight-lab/src/book-3.js:143 — 本の「この教材の「基礎」」の着陸基準は、syllabus.js:182 の t3 の基準のうち「ファイナルのセンターライン ±30 m」と、landingSteps の「接地の速度 vref−15〜+3 kt」「主輪から接地」を書いていない。本に全部書くか「主な項目」と書く。",
+  "flight-lab/src/syllabus.js:185 — 課目 t4 の採点の速度は AR.x+4＝68 ±12 kt、説明は「64〜76 kt」。本はチェックリスト（64 kt、障害物を越えたら 76 kt）。矛盾はないが、本に課目の目安を一言。"
+ ],
+ "factChecks": [
+  { "claim": "AIM の推奨では、プロペラ機の場周高度は地上 1,000 ft", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html", "note": "AIM 4-3-3 a.1。Chart Supplement に別の高度があればそれ。AFH 第 8 章も「通常は地上 1,000 ft」。" },
+  { "claim": "場周経路は標準で左回り", "verdict": "imprecise", "source": "https://www.law.cornell.edu/cfr/text/14/91.126", "note": "推奨ではなく規則：14 CFR 91.126(b)(1)（管制塔のない Class G の空港では、灯火や標識で右と示されない限りすべて左旋回）。AIM 4-3-2・4-3-3 も「must」。" },
+  { "claim": "入るときはダウンウインドの中央に 45° で合流（AIM の推奨）", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/09_afh_ch8.pdf", "note": "45° で滑走路中央の真横へ向かう入り方は AFH 第 8 章・AC 90-66C。AIM 4-3-3 の図の説明は「水平飛行で、滑走路中央の真横で、場周高度で入る」。" },
+  { "claim": "場周高度の 300 ft 下で左へ旋回（AIM の目安）", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html", "note": "AIM：滑走路の端を越えてから、場周高度の 300 ft 以内でクロスウインドへ。現行 AIM 4-3-2 の Departure の定義は「滑走路の端から少なくとも 1/2 マイル先、場周高度の 300 ft 以内まで」。" },
+  { "claim": "ダウンウインドは滑走路から約 1 NM（図：約 1.6 km（1 NM））", "verdict": "wrong", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/09_afh_ch8.pdf", "note": "AFH 第 8 章：約 1/2〜1 マイル（法定マイル）。1.6 km＝1 SM、1 NM＝1.85 km。" },
+  { "claim": "アビーム（接地点の横）でパワーを絞り降下開始", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/09_afh_ch8.pdf", "note": "AFH 第 8 章・AIM 4-3-3：着陸滑走路の進入端（approach end）の真横まで場周高度を保ち、そこで降下開始。" },
+  { "claim": "滑走路の端が斜め後ろ 45° でベースへ", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/09_afh_ch8.pdf", "note": "AFH 第 8 章：進入端から約 45° の点で中くらいのバンクでベースへ。図の形は合っていない。" },
+  { "claim": "ACS（自家用）の場周経路：場周高度 ±100 ft・速度 ±10 kt", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "PA.III.B.S5。" },
+  { "claim": "自家用 ACS の通常離陸：Vy ＋10／−5 kt を安全な高度まで", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "PA.IV.A.S11・S13。" },
+  { "claim": "AFH 第 9 章の安定進入の要素（3°、ファイナルのバンク 15° まで、AFM の速度または 1.3 Vso の ＋10／−5 kt、着陸形態・トリム）", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/10_afh_ch9.pdf", "note": "AFH はこのほか出力（AFM の最小以上）とブリーフィング・チェックリストの完了も挙げる。" },
+  { "claim": "降下率 一般に 500〜1,000 fpm。それより大きければ地上 300 ft までに減らす", "verdict": "wrong", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/10_afh_ch9.pdf", "note": "AFH：500 fpm を超える降下率を使うなら地上 300 ft より前に減らす。" },
+  { "claim": "VMC は地上 500 ft までに安定しなければゴーアラウンド（IMC は 1,000 ft）、300 ft より下で不安定になったら直ちに", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/10_afh_ch9.pdf", "note": "AFH 第 9 章 Stabilized Approach Concept。" },
+  { "claim": "目標点は近づいても窓の中で動かない。下へ動くなら高い（遠くに着く）、上へ動くなら低い", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/10_afh_ch9.pdf", "note": "AFH：目標点は接地点ではない（フレアで先に延びる）ことも書くとよい。" },
+  { "claim": "地上 10〜20 ft からフレア", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/10_afh_ch9.pdf", "note": "Round Out (Flare)。" },
+  { "claim": "PAPI は滑走路の左側に 4 つ、白が多いと高い・赤が多いと低い（高すぎる 3.5° 以上・低すぎる 2.5° 以下）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap2_section_1.html", "note": "AIM 2-1-2：ふつう左側、2 灯または 4 灯。図は「3.5° より高い／3.2°／3°／2.8°／2.5° より低い」。滑走路にまっすぐ並ぶまで PAPI で降下を始めない、中心線 ±10°・3.4 NM まで障害物から安全。" },
+  { "claim": "自家用 ACS 通常着陸：進入速度 ＋10／−5 kt・指定点から 400 ft 以内・横流れなし；事業用 200 ft", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "PA.IV.B.S7・S10（ガストファクターを加える）、事業用 CA.IV.B.S10。" },
+  { "claim": "ゴーアラウンドの 3 原則（Power・Attitude・Configuration）、キャブレターヒーター OFF、前へ押す・右ラダー、フラップは少しずつ", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/10_afh_ch9.pdf", "note": "Go-Arounds (Rejected Landings)。遅れの原因（着陸への思い込み・プライド）も AFH どおり。" },
+  { "claim": "Archer チェックリスト：Vr 60・Vy 76・地上 1,000 ft で巡航上昇 87・ゴーアラウンドはフラップ 25°・64 kt、障害物の後 76 kt・ファイナル 70（短距離・不整地 65）・最大実証横風 17 kt", "verdict": "correct", "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf", "note": "2025 版。URL は生きていて、速度は手元の写しと同じ。physics.js:109 の v とも一致。" },
+  { "claim": "短距離離陸（チェックリスト）：フラップ 25°・ブレーキを踏んで全開・55 kt でローテーション・障害物まで 64 kt・その後 76 kt", "verdict": "correct", "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf", "note": "課目 x3 はフラップ UP・60 kt（不一致）。" },
+  { "claim": "自家用 ACS 短距離離陸：Vx（または推奨速度）＋10／−5 kt で障害物（50 ft）まで、その後 Vy ＋10／−5 kt", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "PA.IV.E.S9〜S13。" },
+  { "claim": "自家用 ACS 短距離着陸：指定点から 0〜200 ft（事業用 0〜100 ft）", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/commercial_airplane_acs_7.pdf", "note": "PA.IV.F.S10・CA.IV.F.S10（指定点・進入端の標識・滑走路番号のいずれか）。" },
+  { "claim": "不整地着陸の ACS：接地はできるだけ遅く", "verdict": "imprecise", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "PA.IV.D.S10：適切な姿勢で、最小の降下率で、横流れなく接地。「できるだけ遅い速度」は AFH 第 9 章の言い方。" },
+  { "claim": "自家用 ACS の Forward Slip to a Landing は指定点から 400 ft 以内", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "PA.IV.M.S8。S7：横風があればスリップの向きを合わせ、接地前にサイドスリップへ。" },
+  { "claim": "実証横風は「限界」ではなく、メーカーが試験で確かめた値", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/10_afh_ch9.pdf", "note": "AFH：型式証明で 0.2 Vso 以上の 90° の横風で操縦できることを示し、その値を表示。用語は「最大実証横風（成分）」に統一。" },
+  { "claim": "多くの教官は「ファイナルはクラブ、短いファイナルでウイングロー」の組み合わせを教える", "verdict": "unverified", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/10_afh_ch9.pdf", "note": "出典なし。AFH：多くの場合ウイングローを勧める、組み合わせ（長いファイナルはクラブで始め、フレアの前にウイングロー）でもよい、両方できるように。" },
+  { "claim": "横風の離陸では滑走開始時に操縦輪を風上いっぱいへ、速度が付くにつれて戻す", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/07_afh_ch6.pdf", "note": "AFH 第 6 章 Crosswind Takeoff。" },
+  { "claim": "教材が引く版は現行か（AFH 8083-3C・ACS 6C／7B・AIM）", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs", "note": "ACS 6C・7B は 2024-05-31 発効で現行。AFH の配布ページは 8083-3C のまま。AIM は Basic・Change 3（2026-07-09 発効）、段落番号 4-3-3・2-1-2 は変わらず。" },
+  { "claim": "（追加）ATIS・ASOS／AWOS の音声の風は磁方位", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html", "note": "AIM 7-1 の NOTE。METAR・TAF は真方位。横風の計算の注意として加える。" }
+ ],
+ "cadetNotes": [
+  "ops.takeoff・ops.goaround・ops.xwind・ops.short には SVG が 1 つもないので、CADET の教室の画面に何も映らない。各節の最初の <svg> を主図（takeoffProfile・goAroundProfile・xwindVector・shortFieldProfile）にする。",
+  "ops.landing の最初の <svg> は今は PAPI。approachProfile を先に置く（テスト：figure は節の最初の <svg>）。",
+  "ここが大切は読み上げられる（行 120 字以内・90 字超は 2% 未満）。ops.pattern の 1 つ目（約 70 字）と ops.xwind の 1 つ目（約 75 字）は 60 字以内に分ける。",
+  "CADET は intro 章を出さないので、ACS の説明（book-1.js の intro.cert 節）が見えない。tl（または ops）の初出で「ACS（実技試験の基準）」を説明する。",
+  "「この教材の「基礎」」は FLIGHT LAB の課目の採点レベル。CADET でも「この教材」は残るので、「この教材の課目の合格の目安（基礎レベル）」のように、アプリの画面を指さない書き方にする。",
+  "bk.sim と bk.calc('xwind') は CADET で消える。横風の例（060°/12 kt → 横風 約 10 kt）は本文か図に書いておく。",
+  "キーの文字は「日本語（E）」の形だけが消える。「R 長押し」「Shift+V」などはすべて bk.sim の中に入れる。",
+  "CADET の要約は最初の 1〜2 文（140 字以内）。ops.takeoff（番号リスト）と ops.short（表）は文で始まらないので、目的の 1 文を最初に置く。",
+  "表は行ごとにアプリの語（シミュレータ・メニュー など）があると消される。課目の目安の行には「この教材の課目の目安」とだけ書く。",
+  "{ch:emg} は CADET の章番号に直されるので問題なし。参照する Archer チェックリストは MGA（実在の航空会社・訓練提携先ではない）なので名前の制限にかからない。",
+  "新節（ops.flare・ops.soft・ops.slip）を作るときは、どの課目の book にも入っていないので lessonSections のテストには影響しない。ただし各節にも最初の <svg> を用意する（なければ CADET は図なし扱い）。"
+ ]
+}

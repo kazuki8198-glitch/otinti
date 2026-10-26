@@ -1,0 +1,809 @@
+{
+ "id": "sys",
+ "title": "機体と装備（Archer と G1000）",
+ "sections": [
+  {
+   "id": "sys.ctl",
+   "title": "機体の構造・操縦翼面・トリム（提案：機体の各部・操縦翼面・トリムとフラップ）",
+   "gist": "Archer の各部と操縦翼面（エルロン・スタビレーター・ラダー）、3 つの軸、トリムの役割を説明する節。",
+   "issues": [
+    "図がない。3 つの軸と、どの操作でどの翼面がどう動くかを、文と表（bk.t）だけで説明している。初心者には位置関係がつかみにくい",
+    "表の見出し「このシミュレータのキー」：事実の表にアプリのキーが混ざっている（CADET は列を消して対応、content.test.mjs:117-118 がこれをテストしている）。キーは bk.sim の中へ移す方がよい",
+    "「操縦輪を前後 | W / S」：どちらがどちらか書いていない（app.js KEYMAP：S＝引く＝機首上げ、W＝押す＝機首下げ。矢印キーも同じ）",
+    "「アンチサーボタブが動きを重くして過敏さを抑え」：仕組み（タブがスタビレーターの後縁と同じ向きに動く。PHAK 第 6 章）が書かれていない。トリムホイールがどこにあるか（前席の間）も書かれていない",
+    "フラップがまったく出てこない（Archer は前席の間の手動レバーで UP・10°・25°・40°。FL.physics flapLabels、Vfe 102 KIAS）。空力の話は aero.ge にあるが、装置としての説明はどこにもない",
+    "エルロンは左右が逆に動くこと（右に傾けると右エルロンが上がる）が書かれていない",
+    "トリムの手順が 3 か所で別々の言い方になっている：ここは「姿勢を決める → パワーを決める → … トリム」、ops.trim は「見る → 変える → 待つ → 確かめる → トリム」、ops.climb は「APT」。1 つにそろえ、手順は ops.trim に任せる",
+    "key の案（60 字以内）：「操縦輪を引く＝機首が上がる。押す＝下がる」「手を離すと機首が動くのは、トリムが合っていないしるし」"
+   ],
+   "mainFigure": "controlAxes：Archer を上から見た模式図（FL.physics pa28 の形のデータから描く）。縦軸・横軸・垂直軸の 3 本と、それぞれの軸まわりの動き（ロール・ピッチ・ヨー）。その軸を動かす翼面（エルロン・スタビレーター＋アンチサーボタブ・ラダー）と、操縦装置（操縦輪の左右・前後、ペダル）を色で結ぶ"
+  },
+  {
+   "id": "sys.engine",
+   "title": "エンジン・点火・ミクスチャー・キャブレターアイス（提案：エンジン・点火・ミクスチャー）",
+   "gist": "180 hp の水平対向 4 気筒エンジン、固定ピッチプロペラ、2 系統のマグネトー、ミクスチャーとキャブレターアイスを説明する節。",
+   "issues": [
+    "「Archer のエンジンは一般に Lycoming O-360（180 hp）…（燃料噴射式の機体もある…）」：古くなっている。Piper の現行の Archer TX 仕様書（2023・2024 年版）は燃料噴射式の Lycoming IO-360-B4A で、O-360-A4M（キャブレター式）は 2020 年版まで。燃料噴射式にはキャブレターアイスがなく、代わりに Alternate Air を使う。この違いを本文ではっきり書く",
+    "1 つの節に 4 つの話題（エンジン・マグネトー・ミクスチャー・キャブレターアイス）が詰まっていて 772 字、図もない。キャブレターアイスは新しい節 sys.carb に分けることを提案",
+    "key の 1 つめが 72 字：「油圧は最重要。始動後すぐに上がらない・飛行中に下がる → 着陸を考える（チェックリスト：油圧の喪失は「なるべく早く着陸」＋エンジン停止に備える）」。60 字を超え、括弧の中にチェックリストの引用がある。しかも本文ではオイル（潤滑・冷却）と油圧計の説明がない",
+    "「なるべく早く着陸」：チェックリストは \"Land as Soon as Practical\"。as soon as possible（できるだけ早く）と as soon as practical（適当な空港へ早めに）の違いは試験と緊急時に大事なので、訳を 1 つに決める",
+    "「混合気が濃すぎになります」：混合比（燃料と空気の割合）を説明する前に使っている",
+    "スロットル（黒）・ミクスチャー（赤）・キャブヒートのレバーの色と位置、回転計の緑の範囲、エンジン計器（油圧・油温・CHT・EGT）が出てこない",
+    "マグチェックの数値（2,000 rpm・落ち幅 最大 175・左右差 最大 50）は ground.runup と重なる。ここでは「なぜ 2 系統か」だけにし、数値は ground.runup にまとめる",
+    "「このシミュレータでは未実装」のタグが 2 回ある（CADET では消える。本文の事実の文と別の文にしておくこと）"
+   ],
+   "mainFigure": "engineFlow：吸気から排気までの流れの模式図。空気 → エアフィルター（またはキャブヒートの熱い空気）→ キャブレター（燃料が混ざる。スロットル弁＝黒いレバー、ミクスチャー＝赤いレバー）→ 4 つのシリンダー（各シリンダーにプラグ 2 本。左右のマグネトーから別々の配線）→ 排気。マグネトーが電気系統とつながっていないことがわかるように描く。小さな注記：燃料噴射式（IO-360）はキャブレターの代わりに噴射装置"
+  },
+  {
+   "id": "sys.fuel",
+   "title": "燃料系統（左右のタンクとセレクター）",
+   "gist": "左右の主翼のタンク、LEFT / RIGHT / OFF のセレクター、エンジン駆動ポンプと電動ポンプ、サンプの抜き取り、燃料計を信じすぎないことを説明する節。",
+   "issues": [
+    "図がない。タンク → セレクター → ストレーナー → ポンプ → エンジンの流れが文だけでは追えない",
+    "量の数値がない：使える燃料は 48 US gal（片側 24。FL.physics fuelCap 24、Piper の仕様書の 48 gal usable）",
+    "「切り替えるときは電動ポンプ ON（チェックリストの例）」：公開チェックリスト（MGSU 2025）にこの項目はない。あるのは After Start の「Fuel Selector … SWITCH TANKS; Fuel Pump OFF」と LOSS OF FUEL PRESSURE の「Electric Fuel Pump ON・Fuel Selector SWITCH」だけ。出典を POH にするか、「チェックリストの例」を消す",
+    "key の 1 つめが 88 字（再始動の手順）で、emg.engine（book-3.js:205）と重なる。key は「エンジンが止まったら、まず燃料（タンク）を疑う」のように短くし、手順は emg.engine へ移す",
+    "「残量は燃料計だけを信じない」：理由（型式証明で正確さが求められるのは「空」の表示だけ。PHAK 第 7 章）を書けば説得力が出る",
+    "セレクターの場所（左側の壁、操縦席の前）と、OFF にするにはボタンを押しながら回すこと、タンクの通気口（vent）が書かれていない",
+    "bk.sim「MFD の燃料表示（左右の量）を見ながら」：アプリは左右のタンクから同じだけ減る（physics.js:624）。実機のように選んだ側だけ減るわけではないことを書く",
+    "bk.sim のボタン a2 は、章の lessons（book-1.js@HEAD:214 は ['a1','i3']）に入っていない"
+   ],
+   "mainFigure": "fuelSystem：低翼の Archer の燃料系統の模式図。左右のタンク（各 24 US gal 使用可・教材値＝FL.physics fuelCap。通気口とサンプのドレイン）→ セレクター（LEFT / RIGHT / OFF、BOTH はない）→ ストレーナー（機首下のドレイン）→ 電動ポンプ（補助）→ エンジン駆動ポンプ → キャブレター、燃料圧計。横に小さく、高翼機は重力で送る（BOTH あり）との比較"
+  },
+  {
+   "id": "sys.elec",
+   "title": "電気系統と G1000（提案：電気系統：発電機・バッテリー・ブレーカー）",
+   "gist": "オルタネーター・バッテリー・マスタースイッチ・ブレーカー・非常用バッテリーと、電気が止まると G1000 型の画面が消えることを説明する節。",
+   "issues": [
+    "箇条書きだけで図がない。何が電気で動き、何が電気なしで動くか（エンジン＝マグネトー、機械式の予備の速度計・高度計、磁気コンパス）が一目でわからない",
+    "「サーキットブレーカー：過電流で飛び出す。再び飛んだら戻さない（火災のおそれ）」：不正確。FAA（SAIB CE-10-11）は「飛行中は、手順書が求めるとき、または安全な飛行に必要なとき以外は戻さない」。この Archer の ALT の手順には「Alternator Circuit Breaker CHECK AND RESET AS REQUIRED」がある。「何度も戻さない」と書く方が正しい",
+    "ALT の警報の手順（電流計 → ALT OFF → 負荷を最小に → ブレーカー → ALT ON …）が emg.elec（book-3.js:221）とほぼ同じ。key の 2 つめ（電気火災の手順、78 字）も emg.fire（book-3.js:215）と同じ。ここでは仕組みだけを説明し、手順は bk.see で emg へ",
+    "「EMERG BATT：G1000 機の予備計器などのための非常用バッテリー」：予備計器はこのあと sys.compass で初めて説明される（順番が逆）",
+    "節の題「電気系統と G1000」：G1000 型の表示の説明は sys.g1000 にある。題と中身がずれている",
+    "「BATT MASTR / ALTR」「EMERG BATT」「電流計」「バス」：読み方と意味の説明がない。電流計（ammeter）と電圧（低電圧の警報：バス 25 V 未満。チェックリストの NOTE）の見方もない",
+    "G1000 型の警報の文字（ALTR FAIL・LOW VOLTS など。Garmin の CRG）と、チェックリストの「ALT annunciator」が同じものだと書かれていない"
+   ],
+   "mainFigure": "elecSystem：電気系統の模式図。オルタネーター（エンジンで回る）とバッテリー → BATT MASTR・ALTR スイッチ → バス → ブレーカー → 使うもの（G1000 型の PFD・MFD、無線、灯火、ピトーヒーター、電動燃料ポンプ、スターター）。別に EMERG BATT → 予備の姿勢指示器。マグネトー → プラグは電気系統と線がつながっていないことを点線の枠で示す"
+  },
+  {
+   "id": "sys.g1000",
+   "title": "ピトー静圧・AHRS・ADC と G1000 の表示（提案：ピトー静圧・AHRS・ADC と予備計器）",
+   "gist": "速度・高度・昇降率は空気の圧力（ピトー静圧と ADC）から、姿勢・方位は AHRS から求めること、詰まったときの症状、速度の種類を説明する節。",
+   "issues": [
+    "図がない。Archer のピトー管と静圧孔は、左翼の下の 1 本の柱（Pitot Mast）にまとまっている（チェックリスト：左翼の「Pitot Mast REMOVE COVER, HOLES CLEAR」、機内の「Pitot and Static Drains DRAIN, CLOSE」）。この場所が書かれていない",
+    "詰まりの表に「ピトー管だけ詰まり、排水穴は開いている → 速度計は 0 になる」の場合がない（PHAK 第 8 章 Figure 8-9）。ピトーカバーの外し忘れで起きる、離陸中止につながる大事な例",
+    "代替静圧で表示がどう変わるか（機内の気圧は低い → 高度・速度が少し高め、昇降計が一瞬上昇を示す）がない。ifr.instr（book-4.js:138）の表にはこの行があり、2 つの章で内容がそろっていない",
+    "key「高度計は「高い所から低い所へ飛ぶと、実際より高く表示される」」：「高い所」が高度のことに読める。正しくは「気圧（気温）の高い所から低い所へ」。67 字で長すぎる",
+    "key「AHRS が壊れると …（第 4 部・課目「部分パネル」）」：読み上げる key にアプリの課目名が入っている",
+    "bk.sim の説明「G1000 型 PFD の各部を 1 つずつ説明するチュートリアル」なのに、ボタンは i3（部分パネル・AHRS 故障）を始める。チュートリアルは課目 k1（syllabus.js:87、tutor:'g1000'）で、app.startLesson は手順のない課目を開かない（app.js:56）",
+    "冒頭の「姿勢と方位は傾きを感じるセンサーから」：AHRS は回転（角速度）・加速度・地磁気を感じる。「傾きを感じる」は不正確",
+    "速度の種類に CAS（較正対気速度）がない（PHAK の TAS の目安は「CAS に 1,000 ft ごとに 2%」）。PFD・MFD・OAT・GS・TRK の略語の説明もない",
+    "予備計器は sys.compass で説明されている。表示の故障に備えるものなので、この節に移す"
+   ],
+   "mainFigure": "pitotStatic：Archer のピトー静圧系統の模式図。左翼の下の柱（先端の穴＝ピトー管＝全圧、横の小さな穴＝静圧孔、排水穴）→ 配管 → ADC → PFD の速度・高度・昇降率。同じ配管から機械式の予備の速度計・高度計へ。機内の代替静圧のつまみ、ピトーヒーター。凡例：速度計はピトー＋静圧の両方、高度計と昇降計は静圧だけ"
+  },
+  {
+   "id": "sys.compass",
+   "title": "磁気コンパスと予備計器（提案：磁気コンパスと誤差）",
+   "gist": "偏差と自差、北旋誤差（UNOS）と加速誤差（ANDS）、コンパスはまっすぐ・水平・一定の速度のときだけ読めることを説明する節。",
+   "issues": [
+    "図がない。北旋誤差と加速誤差は動きなので、文だけではほぼ理解できない",
+    "北へ向かう旋回をどれだけ手前で止めるかの目安がない。PHAK（第 8 章）の目安は「15° ＋ 緯度の半分」。Sanford（北緯約 29°）なら約 30°",
+    "偏差の説明は nav.plan（book-4.js:29）と重なる。ここでは「真北と磁北がずれている」という考え方だけにし、計算（西偏は足す）は nav.plan に任せる",
+    "「約 6〜7° 西」は、FAA の空港資料ではまだ 2000 年の 05W のまま、モデルでは 2026 年に約 7°W。本文は「約 7°W（年々変わる）、この教材の LAB 空域は 6°W の教材用近似（physics.js:66 MAGVAR_W）」とするのがよい",
+    "誤差が出る理由（磁力線の傾き＝伏角 dip）の説明がないので、UNOS・ANDS が丸暗記になる",
+    "題に「予備計器」とあるのに、予備計器の話は 1 段落だけ。予備計器は sys.g1000 に移し、題を「磁気コンパスと誤差」にする（book-4.js:140 の bk.see のラベル「磁気コンパスと予備計器」も合わせて直す）",
+    "key の 2 つめ「計器が怪しいときは…仲間はずれ」は計器全体の話で、ifr.instr・sys.g1000 に置く方が合う"
+   ],
+   "mainFigure": "compassErrors：2 つの段の図。上：北半球で東から北へ旋回すると、コンパスが実際より遅れる → 約 30° 手前で旋回を止める（UNOS。15°＋緯度の半分、北緯 29°）。南への旋回は先回りする → 行き過ぎてから止める。下：東・西向きで加速すると北へ、減速すると南へ振れる（ANDS）。どちらもコンパスの文字盤と、実際の機首の向きを並べて描く"
+  },
+  {
+   "id": "sys.gear",
+   "title": "降着装置・ブレーキ・灯火（提案：降着装置とブレーキ。灯火は新設の sys.lights へ）",
+   "gist": "前輪式の固定脚、ペダルの前輪操向、トーブレーキ、Seminole の引込脚、航空灯の色と見え方を説明する節。",
+   "issues": [
+    "「ここが大切」の箱がない（章で唯一）。CADET はその代わりに本文の最初の 2 文を keyPoints に使ってしまう",
+    "269 字しかなく、図がない。それなのに脚・ブレーキ・灯火の 3 つの話題を混ぜている",
+    "灯火は夜間飛行と衝突回避の大事な知識（よく試験に出る）なのに、段落の最後に 1 文あるだけ。新しい節 sys.lights を提案",
+    "パーキングブレーキ（計器板の下の手のレバー）、緩衝支柱（オレオ）の伸びの点検値（チェックリスト：主脚 4.5 in・前脚 3.25 in）、タイヤとブレーキディスクが書かれていない",
+    "「着陸滑走では機首を下ろしてから」：理由（前輪が接地して方向を保てる・主輪の荷重が増えブレーキが効く）がない",
+    "衝突防止灯の規則（14 CFR 91.209(b)：付いていれば点灯。安全のために機長が消すことはできる）と、着陸灯の使い方（AFH：空港から 10 マイル以内・10,000 ft 以下では点灯が勧められる）がない",
+    "Seminole の引込脚・GUMPS は Archer の章では脇道。1 行にして me の章へリンクする"
+   ],
+   "mainFigure": "gearBrakes（sys.lights を作る場合）：Archer の横から見た図。固定の前輪と主輪、緩衝支柱（点検値 主脚 4.5 in・前脚 3.25 in＝チェックリスト）、ラダーペダル（上の部分がトーブレーキ、前輪の向きと連動）、パーキングブレーキのレバー。sys.lights を作らない場合は、positionLights（灯火の配置と見え方）を最初の図にする"
+  },
+  {
+   "id": "sys.cockpit",
+   "title": "【新設案】操縦席の配置：計器板・スイッチ・レバー",
+   "gist": "どこに何があるか（PFD・MFD・予備計器・コンパス・スイッチ・スロットル・ミクスチャー・燃料セレクター・トリムホイール・フラップレバー・ブレーキ）を 1 枚の図で示す節。",
+   "issues": [
+    "新設の提案。いまの章では、スイッチやレバーの名前が出てきても、それがどこにあるのか一度も示していない。第 2 部のチェックリストでは場所がわかっていることを前提にしている",
+    "配置は年式と装備で違う（G1000 と G1000 NXi、マグネトーがキー式の機体と左右のスイッチの機体、予備計器が機械式の機体と G5 の機体）。「模式図・機体により異なる」と必ず書く"
+   ],
+   "mainFigure": "cockpitLayout：G1000 型の計器板と操縦席の模式図。PFD（左）・MFD（右）・予備計器・窓の上のコンパス、スイッチの列（BATT MASTR・ALTR・灯火・ピトーヒート・電動燃料ポンプ・マグネトー／スターター・EMERG BATT・アビオニクス）、中央のスロットル（黒）・ミクスチャー（赤）・キャブヒート、左の壁の燃料セレクター、前席の間のトリムホイールとフラップレバー、計器板の下のパーキングブレーキ"
+  },
+  {
+   "id": "sys.carb",
+   "title": "【新設案】キャブレターアイスとキャブヒート（燃料噴射式は代替空気）",
+   "gist": "暖かく湿った日でもキャブレターの中が凍る理由、兆候（回転が落ちる・荒れる）、キャブヒートの使い方を、PHAK の数値で説明する節。",
+   "issues": [
+    "新設の提案（いまは sys.engine の中の 1 段落）。章のクイズ Q3・quiz.js の q_sys（2 問）・examples・emg.elec の「エンジンの不調」がこの話題を使うのに、本文には温度と湿度の数値がない",
+    "PHAK 25C 第 7 章：起きやすいのは気温 21℃（70°F）未満・湿度 80% 超。外の気温 38℃（100°F）・湿度 50% でも起きることがある。キャブレターの中は最大で約 38℃（70°F）下がる。固定ピッチ機の最初の兆候は回転の低下で、そのあと荒れることがある。キャブヒートを入れると、氷があれば回転はいったん下がってからじわじわ上がる（氷がなければ下がったまま）。キャブヒートで出力は最大 15% ほど下がる。パワーを絞った降下の前に入れる",
+    "燃料噴射式（IO-360）の Archer にはこの現象がない。チェックリストの「Carburetor Heat/Alternate Air」は、その両方の機体のための書き方"
+   ],
+   "mainFigure": "carbIce：フロート式キャブレターの断面の模式図。ベンチュリーで空気が速くなり圧力が下がる＋燃料が気化する → 温度が下がる（最大 約 38℃）→ スロットル弁とベンチュリーに氷 → 空気の通り道が狭くなる。キャブヒートの熱い空気の入り口も示す（PHAK Figure 7-11 を参考に描き直す）"
+  },
+  {
+   "id": "sys.lights",
+   "title": "【新設案】灯火：航空灯・衝突防止灯・着陸灯",
+   "gist": "左翼端＝赤、右翼端＝緑、尾部＝白の航空灯と、見え方から相手の向きを知る方法、衝突防止灯・着陸灯を説明する節。",
+   "issues": [
+    "新設の提案（いまは sys.gear の最後の 1 文）。AFH 第 11 章：左翼端は赤、右翼端は緑、尾部は白。右に赤・左に緑が見えたら、相手は衝突する進路にいるかもしれない。14 CFR 91.209：日没から日の出までは航空灯をつける。衝突防止灯は付いていればつける",
+    "チェックリストとの対応：始動前に Strobe ON、離陸前に Landing Light・Strobe ON、夜は NAV ON。Piper の現行仕様書は LED の翼端灯と尾部のストロボ"
+   ],
+   "mainFigure": "positionLights：上から見た Archer の左翼端に赤、右翼端に緑、尾部に白（光の届く範囲を扇形で）。その下に 3 つの小さな絵：赤が左・緑が右に見える＝同じ方向へ飛んでいる、赤が右・緑が左に見える＝こちらへ向かってくる、白だけが見える＝遠ざかっている"
+  }
+ ],
+ "problems": {
+  "unclear": [
+   "sys.g1000 の key「高度計は「高い所から低い所へ飛ぶと、実際より高く表示される」」：「高い所」が高度のことに読める。「気圧（気温）の高い所から低い所へ」とする",
+   "略語が初めて出るときに説明がない：KIAS（sys.fuel の key）、PFD・MFD（sys.g1000。PFD の説明はアプリのチュートリアルにしかない）、BATT MASTR・ALTR・EMERG BATT（sys.elec）、OAT、GS・TRK、rpm",
+   "sys.ctl「アンチサーボタブが動きを重くして過敏さを抑え、トリムタブも兼ねています」：どう動くのか（スタビレーターの後縁と同じ向きに動いて空気の力で戻そうとする）が書かれていない",
+   "sys.engine「（燃料噴射式の機体もある。訓練校のチェックリストには両方の始動手順が載っている版もある＝機体ごとに要確認）」：括弧の中が長く、初心者には読みにくい",
+   "sys.engine「混合気が濃すぎになります」：混合比（燃料と空気の割合）を先に説明する",
+   "sys.g1000「姿勢と方位は傾きを感じるセンサーから」：AHRS は角速度・加速度・地磁気を感じる",
+   "sys.compass「北旋誤差（北半球）：北向きから旋回すると最初は逆に振れて遅れ…」：図と、どれだけ手前で止めるかの目安（15°＋緯度の半分＝Sanford 付近で約 30°）がないと使えない",
+   "「G1000」とだけ書いている所が多い（「G1000 では次の装置が計算し」「G1000 は電気で動く」「G1000 の機体には」）。表示のことは「G1000 型」とする（ただし CADET の APP_ONLY が消すので、「G1000 型表示」とそのまま書くのは避ける）",
+   "「なるべく早く着陸」が land as soon as practical の訳として 3 回使われている（sys.engine・sys.elec 2 回）。as soon as possible と区別した訳語を決める"
+  ],
+  "order": [
+   "予備計器を sys.elec（EMERG BATT）で先に使い、説明は sys.compass にある。予備計器の説明は sys.g1000 に移す",
+   "灯火が sys.gear の最後の 1 文に埋もれている → 新しい節 sys.lights に分ける",
+   "sys.elec の題は「電気系統と G1000」だが、G1000 型の表示の説明は sys.g1000 にある",
+   "sys.engine の key が油圧を「最重要」と言うのに、オイル（潤滑・冷却）と油圧計の説明が本文にない",
+   "3 つの軸は aero.stab（第 2 章、book-1.js@HEAD:118 の表）が先に使い、操縦翼面の説明は sys.ctl（第 3 章）にある。controlAxes の図は sys.ctl に置き、aero.stab からは bk.see でつなぐ。PHAK と同じく「機体の部品 → 空力」の順にするなら、sys を aero の前に移すことも考えられる（{ch:} の参照は自動で番号が直る）",
+   "提案する節の順：sys.ctl → sys.gear → sys.lights（新）→ sys.cockpit（新）→ sys.engine → sys.carb（新）→ sys.fuel → sys.elec → sys.g1000 → sys.compass（機体の外 → 操縦席 → 中の系統 → 計器）"
+  ],
+  "errors": [
+   "sys.engine「Archer のエンジンは一般に Lycoming O-360（180 hp）」→ Piper の現行の Archer TX 仕様書（2024）は燃料噴射式の Lycoming IO-360-B4A・180 hp、固定ピッチ 2 枚の Sensenich。キャブレター式の O-360-A4M は Archer III と 2020 年ごろまでの TX。キャブレターアイスはキャブレター式だけの話（https://piper.com/wp-content/uploads/2024/05/Archer-TX.pdf）",
+   "sys.fuel「切り替えるときは電動ポンプ ON（チェックリストの例）」→ MGSU のチェックリスト（2025）にこの項目はない。あるのは After Start の「SWITCH TANKS; Fuel Pump OFF」と LOSS OF FUEL PRESSURE の「Electric Fuel Pump ON・Fuel Selector SWITCH」だけ。出典を POH に変えるか、確かめられるまで「チェックリストの例」を消す（https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf）",
+   "sys.elec「サーキットブレーカー…再び飛んだら戻さない」→ FAA：飛行中は、承認された手順が求めるとき、または安全な飛行に必要なとき以外は戻さない。この Archer の ALT の手順は ALT のブレーカーを戻すように言っている。「何度も戻さない・原因がわからなければ戻さない」と書く（FAA SAIB CE-10-11 https://www.faasafety.gov/files/notices/2009/Dec/SAIB_CE-10-11.pdf ・PHAK 第 7 章 https://www.faa.gov/sites/faa.gov/files/09_phak_ch7.pdf）",
+   "sys.g1000 の詰まりの表 → 「ピトー管が詰まり、排水穴は開いている → 速度計は 0 になる」の場合が抜けている（PHAK 25C 第 8 章 Figure 8-9 https://www.faa.gov/sites/faa.gov/files/10_phak_ch8.pdf）",
+   "sys.engine の key「油圧の喪失は「なるべく早く着陸」」→ チェックリストは \"Land as Soon as Practical and Investigate the Cause. Prepare for Power off Landing\"（as soon as possible ではない）",
+   "sys.g1000 の bk.sim「G1000 型 PFD の各部を 1 つずつ説明するチュートリアル」→ ボタンが始めるのは i3（部分パネル・AHRS 故障）。チュートリアルは課目 k1 で、data-lesson からは開けない（app.js:56）"
+  ],
+  "outdated": [
+   "参考文献の Garmin G1000 Cockpit Reference Guide 190-01460-00 Rev. A（2013 年 4 月）は、NXi より前の G1000 の Archer III 用。MGSU のチェックリスト（Archer III w/ G1000）には合っているが、いま作られている Archer は G1000 NXi（Pilot's Guide 190-02130-02 Rev. A https://static.garmin.com/pumac/190-02130-02_A.pdf）で、予備計器は電子式の Garmin G5（Piper の仕様書 2024）。参考文献の名前に「NXi 以前」と書き、予備計器の形は年式で違うと本文で書く",
+   "エンジン：O-360（キャブレター式）→ 現行の Archer TX は IO-360-B4A（燃料噴射式）（Piper の仕様書 2024）",
+   "磁気偏差：FAA の空港資料の値は 2000 年の 05W のまま。2026 年のモデルでは約 7°W（https://maps.avnwx.com/airport/KSFB）。本文の「約 6〜7°」は合っているが、「約 7°W（2026 年ごろ）」とする方がよい。教材の 6°W はそのまま教材値として残す",
+   "直さなくてよいもの：PHAK は FAA-H-8083-25C（2023）がいまも最新（faa.gov の PHAK のページ、2026-10-26 に確認）。MGSU のチェックリストもいまも同じ版（09012025.final。2026-10-26 にダウンロードして中身が同じことを確認）"
+  ],
+  "duplicates": [
+   "aero.stab（book-1.js@HEAD:118）の「軸・動き・主な操縦翼面」の表 ↔ sys.ctl の操縦の表。軸の図は sys.ctl に 1 つだけ置き、aero.stab は安定性の話だけにしてリンクでつなぐ",
+   "ops.trim（book-3.js:61-66）のトリムの手順と T キー、課目 a1 ↔ sys.ctl のトリムの段落と bk.sim a1。sys.ctl は「トリムという装置」の説明だけにし、操作の手順は ops.trim に任せる",
+   "aero.ge（book-1.js@HEAD:128-134）フラップの空力 ↔ sys.ctl（フラップがない）。sys.ctl にはレバーと 4 つの位置だけを書き、空力は aero.ge へ",
+   "ground.walk・ground.runup（book-3.js:15-41）のマグチェックの数値・キャブヒートの点検・サンプ・100LL の青 ↔ sys.engine・sys.fuel。数値は ground に、仕組みは sys に",
+   "emg.engine（book-3.js:205）の再始動の手順 ↔ sys.fuel の key 1",
+   "emg.fire（book-3.js:214-215）の電気火災 ↔ sys.elec の key 2。emg.elec（book-3.js:221-223）の ALT の警報・エンジンの不調・油圧の低下 ↔ sys.elec の段落と sys.engine の key 1",
+   "ifr.instr（book-4.js:131-139）の ADC・AHRS の表と詰まりの表（代替静圧の行あり）↔ sys.g1000 の 2 つの表（代替静圧の行なし）。図と系統の説明は sys.g1000 に置き、ifr.instr はクロスチェックの考え方とリンクにする",
+   "ifr.partial（book-4.js:154）の UNOS・ANDS の表 ↔ sys.compass の箇条書き",
+   "nav.plan（book-4.js:29-30）の偏差・自差・「フロリダ中部は約 6〜7°W」↔ sys.compass",
+   "quiz.js の q_sys の 3 問め（キャブレターアイスで回転が落ちる）↔ 章のクイズ Q3（同じ考え）"
+  ],
+  "numbers": [
+   "燃料の消費：perf.climb（book-1.js@HEAD:237）は「巡航で 1 時間に 8〜10 US gal 前後」。教材モデルは 3,000 ft・110 KIAS（スロットル約 76%・約 2,400 rpm）で約 11.5 gal/h（physics.js:622 の 0.078 gal/hp/h。アプリの MFD の FFLOW もこの値）。sys.fuel の燃料の例はどちらの値か書く（教材値なら約 11.5 gal/h → 30 分で片側から約 6 gal）",
+   "左右のタンク：physics.js:624 は左右から半分ずつ減らす（BOTH と同じ動き）。本文の「BOTH の位置はない」「時間を決めて切り替える」と合わない。本文に「教材では左右が同じだけ減る」と書く",
+   "磁気偏差：physics.js:66 の MAGVAR_W＝6（教材用近似）。いまの値は約 7°W。本文は「教材用近似」と書いているので矛盾はない",
+   "quiz.js（q_sys の 2 問め）のキャブレターアイスの温度の範囲「約 −7〜21℃（20〜70℉）」：本文に温度の数値がまったくない。PHAK の数値（21℃ 未満・湿度 80% 超。38℃・湿度 50% でも起きる）を sys.carb に書く。−7℃ は PHAK の図の目盛りの端で、本文の数値ではない",
+   "quiz.js（q_sys）の Vfe 102 kt の問題：答えは aero.vn・aero.ge にあり、sys にはない（このバンクの book は 'sys.engine' だけ）",
+   "合っているもの：使える燃料 48 US gal（Piper の仕様書）＝ FL.physics fuelCap 24×2。再始動 76 KIAS ＝ v.glide 76。マグチェック 2,000 rpm・175・50 は sys.engine・ground.runup・チェックリストで同じ。キャブヒートの点検で約 75 rpm 下がる（チェックリスト「CH-75 RPM / AA-40 RPM」）＝ ground.runup。例の「巡航 2,400 rpm」＝ 教材モデルの 110 KIAS・3,000 ft の回転数",
+   "油圧：CADET の始動のチェックリスト（cadet/src/content/checklists-archer.js:29）は「30 秒以内に上がる」。本文は「始動後すぐに上がらない」。POH の値（30 秒）を確かめて書けばそろう"
+  ]
+ },
+ "policy": "The chapter has 0 figures and only 4 tables. For a beginner who has never seen the airplane, its first job is to show where things are and what moves what, so every section (existing and new) should open with one SVG that answers that, before any table. Proposed order (ids unchanged; 3 new sections): sys.ctl (airplane parts, three axes, control surfaces, anti-servo tab, trim wheel, flap lever) → sys.gear (fixed tricycle gear, strut checks, pedal steering, toe and parking brake) → sys.lights NEW (position, anti-collision and landing lights) → sys.cockpit NEW (one G1000-type panel and cockpit layout figure) → sys.engine (four-cylinder engine, fixed-pitch prop, dual magnetos, mixture, oil and engine gauges) → sys.carb NEW (carburetor ice with PHAK numbers; fuel-injected IO-360 Archers use alternate air instead) → sys.fuel → sys.elec → sys.g1000 (pitot-static on the left-wing mast, ADC/AHRS/GPS, blockages, airspeed types, standby instruments moved here) → sys.compass (compass errors only). Explain how each system works here, and leave procedures to other chapters with bk.see links: emergency checklists to emg.engine/emg.fire/emg.elec, run-up numbers to ground.runup, trim technique to ops.trim, variation arithmetic to nav.plan, flap aerodynamics to aero.ge, Seminole gear to me. Keep one-line checklist examples, labelled as one public school checklist (MGSU 2025) with 実機は POH が優先. Every ここが大切 item should be one short claim of 60 characters or less, with no checklist sequences in brackets and no lesson names; sys.gear needs its first key box. Fix the facts listed in errors: engine model by year, the electric-pump-when-switching attribution, circuit-breaker reset guidance, the missing pitot-blocked/drain-open case, and 'high to low' meaning pressure or temperature. Move all keys (W/S direction, T, V, B) into bk.sim boxes so the fact tables stay clean for CADET. Say plainly that the app does not model mixture, carb heat, tank selection, oil pressure or volts, and that its tanks drain evenly.",
+ "figuresExisting": [
+  {
+   "key": "(none) — sys uses no FIG.* figure",
+   "verdict": "redo",
+   "why": "No SVG in any of the 7 sections. The new figures are listed in figuresNew."
+  },
+  {
+   "key": "bk.t in sys.ctl (操縦装置・動く翼面・機体の動き・このシミュレータのキー)",
+   "verdict": "fix",
+   "why": "Keep it as the reference table after the controlAxes figure, but take the key column out (put the keys in bk.sim). Add flaps (flap lever → flaps → more lift and drag) and the brakes. If a key column stays, its header must keep 'このシミュレータ' so CADET's filterTable drops it (content.test.mjs:118)."
+  },
+  {
+   "key": "bk.t in sys.g1000 (装置・入力・出すもの)",
+   "verdict": "fix",
+   "why": "It overlaps with ifr.instr's table. Make it smaller by drawing g1000Sources instead, or keep it and add the Garmin unit names only as footnotes. Change the first row ('—' output) to say which instruments each pressure feeds."
+  },
+  {
+   "key": "bk.t in sys.g1000 (故障・速度計・高度計・昇降計)",
+   "verdict": "fix",
+   "why": "Add the pitot-blocked/drain-open row (airspeed → 0) and the alternate-static row (altitude and airspeed slightly high, VSI shows a brief climb), so it agrees with ifr.instr and PHAK ch. 8. Or replace it with the pitotBlock figure and keep only one table, in ifr.instr."
+  }
+ ],
+ "figuresNew": [
+  {
+   "name": "controlAxes",
+   "section": "sys.ctl",
+   "what": "Main figure. Archer plan view with the longitudinal, lateral and vertical axes through the CG; roll, pitch and yaw arrows; ailerons (one up, one down), stabilator with anti-servo tab, rudder, colour-linked to yoke left/right, yoke fore/aft and pedals. viewBox about 420×300; labels 日本語（English）.",
+   "data": "Outline from FL.physics AIRCRAFT pa28 geometry (wing b 10.8 m, wing.ail [2.8,5.2], wing.flap [0.6,2.6], hstab span 2.0, vstab); PHAK 25C ch. 6",
+   "priority": "must"
+  },
+  {
+   "name": "cockpitLayout",
+   "section": "sys.cockpit",
+   "what": "Main figure of the new section. G1000-type panel and cockpit schematic: PFD, MFD, standby instruments, compass above the glareshield, switch row (BATT MASTR, ALTR, lights, pitot heat, fuel pump, magnetos/starter, EMERG BATT, avionics), throttle (black) / mixture (red) / carb heat, fuel selector on the left sidewall, trim wheel and flap lever between the seats, parking brake. Label 模式図・機体により配置は異なる.",
+   "data": "Switch names from the MGSU Archer III G1000 checklist (2025); PFD/MFD/standby from Piper's Archer TX spec 2024; keep it consistent with CADET's cockpit (cadet/src/aircraft/cockpit.js: key-type magneto, carb heat lever, fuel selector L/R/OFF, parking brake)",
+   "priority": "must"
+  },
+  {
+   "name": "engineFlow",
+   "section": "sys.engine",
+   "what": "Main figure. Induction and ignition flow: air → filter or carb-heat air → carburetor (throttle valve, mixture) → 4 cylinders with 2 plugs each, left and right magnetos wired separately → exhaust; tachometer. Note that fuel-injected IO-360 engines have an injector instead of a carburetor.",
+   "data": "PHAK 25C ch. 7 (carburetor, ignition system); MGSU checklist (Carburetor Heat/Alternate Air); Piper spec (O-360-A4M / IO-360-B4A, 180 hp, fixed pitch)",
+   "priority": "must"
+  },
+  {
+   "name": "carbIce",
+   "section": "sys.carb",
+   "what": "Main figure of the new section. Float-carburetor cross-section: venturi (higher speed, lower pressure) plus fuel vaporisation → temperature drop up to about 38 °C → ice on the throttle valve and venturi → passage narrows; carb-heat inlet.",
+   "data": "PHAK 25C ch. 7, Figure 7-11 and its text (temperature drop 60–70 °F, about 38 °C)",
+   "priority": "must"
+  },
+  {
+   "name": "carbIceChart",
+   "section": "sys.carb",
+   "what": "Simplified chart: outside air temperature (−7 to 38 °C / 20 to 100 °F) against relative humidity, with the zone 'most likely' (below 21 °C and above 80 %) and 'possible' (up to 38 °C, humidity down to 50 %). Mark today's Sanford-style summer morning as an example point.",
+   "data": "PHAK 25C ch. 7 text and Figure 7-12 axes",
+   "priority": "should"
+  },
+  {
+   "name": "fuelSystem",
+   "section": "sys.fuel",
+   "what": "Main figure. Two wing tanks (24 US gal usable each, with vent and sump drain) → selector LEFT/RIGHT/OFF (no BOTH) → strainer (drain under the nose) → electric boost pump → engine-driven pump → carburetor; fuel pressure gauge; a small inset showing a high-wing gravity system with BOTH for comparison.",
+   "data": "FL.physics pa28 fuelCap 24 (teaching value; matches Piper's 48 US gal usable); PHAK 25C ch. 7 Figures 7-30 and 7-31; MGSU checklist (tank sumps, fuel strainer, fuel vent)",
+   "priority": "must"
+  },
+  {
+   "name": "elecSystem",
+   "section": "sys.elec",
+   "what": "Main figure. Alternator and battery → BATT MASTR / ALTR → bus → circuit breakers → loads (G1000-type PFD/MFD, radios, lights, pitot heat, electric fuel pump, starter); EMERG BATT → standby attitude; magnetos and plugs in a separate dashed box, not connected. Ammeter and low-voltage (below 25 V) note.",
+   "data": "MGSU checklist (switch names, ALT annunciator procedure, the 'bus voltage below 25 Vdc' note, E VOLTS 23.3 V min); PHAK 25C ch. 7 electrical schematic; Garmin CRG 190-01460-00 (ALTR FAIL, EMERG BATT ON)",
+   "priority": "must"
+  },
+  {
+   "name": "pitotStatic",
+   "section": "sys.g1000",
+   "what": "Main figure. Archer pitot-static mast under the left wing (pitot opening = total pressure, static holes, drain) → lines → ADC → airspeed/altitude/VSI on the PFD, plus the mechanical standby airspeed and altimeter; alternate static valve in the cabin; pitot heat. Legend: airspeed uses pitot + static, altimeter and VSI use static only.",
+   "data": "MGSU checklist (Pitot Mast in the left wing, Pitot and Static Drains, Alternate Static Source, Pitot Heat); PHAK 25C ch. 8 Figure 8-1; Garmin CRG (GDC 74A ADC)",
+   "priority": "must"
+  },
+  {
+   "name": "g1000Sources",
+   "section": "sys.g1000",
+   "what": "Block diagram from sensors to the display: pitot/static/OAT → ADC → IAS, TAS, altitude, VS, OAT; AHRS (rate sensors, accelerometers) + magnetometer → attitude, heading, turn rate; GPS → position, GS, TRK. Show which fields get a red X when each box fails, and the standby instruments as the backup.",
+   "data": "Garmin G1000 CRG for the PA-28-181 (GDC 74A, GRS 77, GMU 44; red X); ifr.instr table (book-4.js:131-134)",
+   "priority": "should"
+  },
+  {
+   "name": "pitotBlock",
+   "section": "sys.g1000",
+   "what": "Three small panels: (1) pitot blocked, drain open → airspeed drops to 0 (e.g. pitot cover left on); (2) pitot and drain blocked → airspeed behaves like an altimeter; (3) static blocked → altimeter frozen, VSI 0, airspeed low in a climb and high in a descent. Each panel shows the arrows for the trapped pressure.",
+   "data": "PHAK 25C ch. 8 Figures 8-9 to 8-11 and their text",
+   "priority": "should"
+  },
+  {
+   "name": "altimeterHighLow",
+   "section": "sys.g1000",
+   "what": "'High to low, look out below': an airplane flying from a high-pressure (or warm) area to a low-pressure (or cold) area without resetting the altimeter. The indicated altitude stays the same but the true altitude gets lower. Example: 30.12 → 29.82 inHg is about 300 ft lower (1 inHg ≈ 1,000 ft).",
+   "data": "PHAK 25C ch. 8 (altimeter errors); example values labelled 教材の例",
+   "priority": "should"
+  },
+  {
+   "name": "compassErrors",
+   "section": "sys.compass",
+   "what": "Main figure. Top: turning error. Turning toward north, the compass lags, so roll out about 30° early (15° + half the latitude, 29° N); turning toward south, it leads, so roll out about 30° late (UNOS). Bottom: on east or west headings, accelerating shows a turn toward north and decelerating a turn toward south (ANDS). Draw compass card next to the true nose direction.",
+   "data": "PHAK 25C ch. 8 (northerly/southerly turning errors, 15° + half latitude rule, ANDS); Sanford latitude about 28.8° N (FAA airport data)",
+   "priority": "must"
+  },
+  {
+   "name": "northTypes",
+   "section": "sys.compass",
+   "what": "True north, magnetic north (6° W teaching value) and compass north (deviation) as three arrows, with a small fictional deviation card (FOR / STEER). Reused by nav.plan.",
+   "data": "physics.js MAGVAR_W = 6 (教材用近似); PHAK 25C ch. 8 (variation, deviation, compass correction card); NOAA calculator for the current value",
+   "priority": "should"
+  },
+  {
+   "name": "positionLights",
+   "section": "sys.lights",
+   "what": "Main figure of the new section (or of sys.gear if sys.lights is not created). Plan view: red on the left wingtip, green on the right, white on the tail, coverage as sectors; below it, three 'what you see' panels: red left + green right = same direction; red right + green left = coming toward you; white only = moving away.",
+   "data": "AFH 3C ch. 11 (Figure 11-4 and its text); 14 CFR 91.209. Optional coverage angles 110°/110°/140° from former 14 CFR 23.1387 (verify before drawing them)",
+   "priority": "must"
+  },
+  {
+   "name": "gearBrakes",
+   "section": "sys.gear",
+   "what": "Archer side view: fixed nose and main gear with oleo struts (check values main 4.5 in, nose 3.25 in), rudder pedals (top = toe brakes; linked to nose-wheel steering), parking brake handle; arrow 'land on the mains, then lower the nose'.",
+   "data": "MGSU checklist (Main Gear Strut CHECK 4.5 in, Nose Gear Strut CHECK 3.25 in, Brake Block and Discs); FL.physics pa28 gear (fixed, nose and main positions)",
+   "priority": "should"
+  },
+  {
+   "name": "stabilatorTab",
+   "section": "sys.ctl",
+   "what": "Side view of the stabilator and anti-servo tab: when the trailing edge goes up, the tab goes up further in the same direction and the airflow pushes back (heavier, less sensitive); the trim wheel moves the tab's neutral position.",
+   "data": "PHAK 25C ch. 6 (stabilator, antiservo tab, Figure 6-21); MGSU checklist 'Stabilator and Trim Tab CHECK FOR INTERFERENCE'",
+   "priority": "should"
+  },
+  {
+   "name": "magCheck",
+   "section": "sys.engine",
+   "what": "Bar chart at 2,000 rpm: BOTH, L only and R only, with limits (drop ≤ 175 rpm, difference ≤ 50 rpm); one good and one bad example; a note that no drop at all is also a fault (switch or wiring). It could instead go in ground.runup.",
+   "data": "MGSU checklist RUNUP (2000 RPM, max drop 175, max difference 50); ground.runup text",
+   "priority": "should"
+  },
+  {
+   "name": "fuelColors",
+   "section": "sys.fuel",
+   "what": "Fuel colour coding: 80 red, 100 green, 100LL blue, Jet A colourless/straw; AVGAS decal white on red, JET decal white on black. Shows why sump samples are checked for colour.",
+   "data": "PHAK 25C ch. 7 Figure 7-32 and its text",
+   "priority": "nice"
+  },
+  {
+   "name": "flapPositions",
+   "section": "sys.ctl",
+   "what": "Wing section with flaps UP / 10° / 25° / 40° and the manual flap lever notches between the seats; 'below Vfe 102 KIAS (white band)'; link to aero.ge for the aerodynamics.",
+   "data": "FL.physics pa28 flapLabels ['UP','10°','25°','40°'], v.fe 102; MGSU checklist (Vfe 102, short-field and go-around flaps 25°)",
+   "priority": "nice"
+  },
+  {
+   "name": "mixtureLean",
+   "section": "sys.engine",
+   "what": "Air density ratio falling with altitude (0, 3,000, 6,000, 9,000 ft) while fuel flow stays the same at a fixed mixture, so the mixture gets richer; leaning brings the ratio back. Simple paired bars.",
+   "data": "Standard-atmosphere density ratio from FL.physics atmos (or ISA tables); PHAK 25C ch. 7 Mixture Control",
+   "priority": "nice"
+  },
+  {
+   "name": "airspeedKinds",
+   "section": "sys.g1000",
+   "what": "Ladder IAS → CAS → TAS → GS with one worked example: 100 KIAS at 5,000 ft is about 110 KTAS (2 % per 1,000 ft); with a 20 kt headwind the GS is about 90 kt.",
+   "data": "PHAK 25C ch. 8 (TAS rule of thumb, GS); check the example against the FL.physics atmosphere",
+   "priority": "nice"
+  }
+ ],
+ "photos": [
+  {
+   "section": "sys.ctl",
+   "subject": "A privately owned Piper PA-28-181 Archer (no school or airline livery), three-quarter view, showing the low wing, stabilator and fixed gear",
+   "search": "Commons: Category:Piper PA-28-181 Archer III / Category:Piper PA-28-181 Archer II; search 'PA-28-181 Archer' and filter by licence; avoid school liveries and visible faces",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "The reader has never seen the airplane; one real photo next to the controlAxes schematic."
+  },
+  {
+   "section": "sys.ctl",
+   "subject": "Close-up of a PA-28 stabilator with its anti-servo tab",
+   "search": "Commons search 'Piper stabilator', 'PA-28 stabilator anti-servo tab', 'Cherokee stabilator'",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "The moving tail and its tab are unusual (most trainers have a fixed stabiliser and elevator)."
+  },
+  {
+   "section": "sys.engine",
+   "subject": "Lycoming O-360 / IO-360 four-cylinder engine with the cowling open (museum or maintenance), with no people",
+   "search": "Commons: Category:Lycoming O-360 (also 'Lycoming IO-360'); NASA Image Library 'Lycoming engine'",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "Shows the horizontally opposed cylinders, spark-plug leads and magnetos named in the text."
+  },
+  {
+   "section": "sys.fuel",
+   "subject": "Fuel sample in a clear tester cup showing blue 100LL (optionally with a water bubble at the bottom)",
+   "search": "Commons search 'avgas 100LL sample', 'fuel tester avgas', Category:Avgas; FAA Safety Team image library",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "The colour check and water check are done on every preflight; a photo makes 'blue' and 'water bead' concrete."
+  },
+  {
+   "section": "sys.g1000",
+   "subject": "Pitot-static mast under the wing of a Piper PA-28 (pitot cover removed)",
+   "search": "Commons: Category:Pitot tubes; search 'Piper pitot', 'PA-28 pitot tube', 'pitot static mast wing'",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "The reader needs to recognise the part the pitotStatic figure and the walk-around talk about."
+  },
+  {
+   "section": "sys.compass",
+   "subject": "Liquid-filled magnetic ('whiskey') compass in a light aircraft, ideally with its deviation card visible",
+   "search": "Commons search 'whiskey compass', 'aircraft magnetic compass', 'compass correction card'",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "It is an instrument, not a screen, so it is allowed; it shows the card and the deviation card."
+  },
+  {
+   "section": "sys.lights",
+   "subject": "Wingtip of a light aircraft showing the red (left) position light and strobe; or a night photo of a taxiing light aircraft with its red, green and white lights visible (US government)",
+   "search": "Commons search 'navigation light wingtip', 'position light aircraft wingtip'; DVIDS / af.mil 'night taxi navigation lights Civil Air Patrol' (public domain)",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "Pairs with the positionLights figure; the night photo shows what the pilot actually sees."
+  },
+  {
+   "section": "sys.gear",
+   "subject": "PA-28 nose gear with oleo strut and nose-wheel steering linkage",
+   "search": "Commons search 'Piper Cherokee nose gear', 'PA-28 nose wheel', 'oleo strut aircraft'",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "Shows the strut whose extension is checked on the walk-around."
+  }
+ ],
+ "endMatter": {
+  "terms": [
+   "Aileron / エルロン（補助翼。左右が逆に動いてロールさせる）",
+   "Stabilator / スタビレーター（全体が動く水平尾翼。Archer）",
+   "Anti-servo tab / アンチサーボタブ（スタビレーターの後ろの小さな板。操縦を重くし、トリムも兼ねる）",
+   "Rudder / ラダー（方向舵。ヨー）",
+   "Longitudinal / lateral / vertical axis / 縦軸・横軸・垂直軸（ロール・ピッチ・ヨー）",
+   "Trim wheel / トリムホイール（操縦の力を消す装置）",
+   "Flaps / フラップ（UP・10°・25°・40°、手動レバー）",
+   "Throttle / スロットル（黒いレバー。出力）",
+   "Mixture (rich / lean / idle cut-off) / ミクスチャー（混合比。赤いレバー）",
+   "Tachometer (RPM) / 回転計",
+   "Magneto / マグネトー（エンジンの回転で発電する点火装置。2 系統）",
+   "Carburetor / fuel injection / キャブレター・燃料噴射",
+   "Carburetor ice / carb heat / キャブレターアイス・キャブヒート",
+   "Alternate air / 代替空気（燃料噴射式でフィルターが詰まったとき）",
+   "Oil pressure / oil temperature / 油圧・油温",
+   "Fuel selector (LEFT / RIGHT / OFF) / 燃料セレクター",
+   "Electric (boost) fuel pump / 電動燃料ポンプ（補助）",
+   "Fuel sump / strainer / vent / サンプ・ストレーナー・通気口",
+   "Avgas 100LL / 航空ガソリン 100LL（青）",
+   "Alternator / オルタネーター（発電機）",
+   "Battery master / ALTR switch / バッテリーマスター・オルタネータースイッチ",
+   "Bus / circuit breaker / バス（配電の線）・サーキットブレーカー",
+   "Ammeter / 電流計",
+   "Emergency battery (EMERG BATT) / 非常用バッテリー",
+   "Annunciator / 警報表示",
+   "Pitot tube / static port / drain hole / ピトー管・静圧孔・排水穴",
+   "Alternate static source / 代替静圧源",
+   "Pitot heat / ピトーヒーター",
+   "ADC (air data computer) / エアデータコンピュータ",
+   "AHRS (attitude and heading reference system) / 姿勢方位基準装置",
+   "Magnetometer / 磁気センサー（地磁気から方位）",
+   "IAS / CAS / TAS / GS / 指示・較正・真対気速度・対地速度",
+   "Red X / 赤い ×（その表示が使えない）",
+   "Standby instruments / 予備計器",
+   "Magnetic compass / 磁気コンパス",
+   "Variation / deviation / 偏差・自差",
+   "Northerly turning error / acceleration error / 北旋誤差・加速誤差（UNOS・ANDS）",
+   "Tricycle gear / 前輪式（三輪式）",
+   "Oleo strut / 緩衝支柱（オレオ）",
+   "Toe brakes / parking brake / トーブレーキ・パーキングブレーキ",
+   "Position (navigation) lights / 航空灯（左 赤・右 緑・尾 白）",
+   "Anti-collision light (beacon / strobe) / 衝突防止灯",
+   "Landing light / 着陸灯"
+  ],
+  "examples": [
+   "巡航中に回転が 2,400 → 2,300 rpm へじわじわ下がった → キャブヒートを全開に。いったん下がってから上がれば氷だった（燃料噴射式の機体ではこの現象はない）。",
+   "離陸滑走で速度計が 0 のまま → ピトー管がふさがっている（カバーの外し忘れなど）→ スロットルを閉じて止まる。",
+   "G1000 型の画面に ALTR FAIL → 電流計で確かめる → 手順に従ってオルタネーターをリセット → 戻らなければ電気を節約して、早めに近くの空港へ。",
+   "教材の Archer は 3,000 ft・110 KIAS で約 11.5 gal/h（教材値）→ 片側のタンクで 30 分飛ぶと約 6 gal 減る。時刻と残量を書いておき、決めた時間で切り替える。",
+   "夜、前方に右に赤・左に緑の灯火 → 相手はこちらへ向かっている → すぐに避け、目を離さない。"
+  ],
+  "cautions": [
+   "手順と数値は機体の POH と訓練校のチェックリストが優先。この章の例は、公開されている 1 つのチェックリスト（2025 年）による。",
+   "エンジン（キャブレター式か燃料噴射式か）・予備計器・スイッチの形は、機体の年式で違う。乗る機体で確かめる。",
+   "サーキットブレーカーは何度も戻さない。原因がわからない・必要のない回路なら、飛行中は戻さない。",
+   "燃料計だけを信じない。飛行前にタンクを目で見て、飛行中は時間と消費率で計算する。",
+   "ミクスチャー・キャブヒート・燃料タンクの切り替え・油圧と電圧の表示は、このシミュレータでは未実装。タンクは左右から同じだけ減る（FLIGHT LAB だけの注意。CADET では消える）。"
+  ],
+  "quizReview": [
+   "Q1（燃料セレクター）：残す。選択肢「切り替えは不要」は弱いので「左右の量の差は気にしなくてよい」などに変えてもよい。why は PHAK 第 7 章に合っている",
+   "Q2（静圧孔の詰まり → 高度計は止まる）：残す。why に「昇降計は 0、上昇すると速度計は少なく表示」を足すと sys.g1000 の図とつながる",
+   "Q3（回転がじわじわ下がる → キャブレターアイス）：quiz.js の q_sys の 3 問めと同じ考えなので、「キャブヒートを入れたあとの回転の変化（いったん下がって上がる）」の問題に変えるか、sys.carb を作ったらそちらで出す。燃料噴射式の機体には当てはまらないことを why に書く"
+  ],
+  "quizProposals": [
+   {
+    "q": "夜、前方に他の飛行機の灯火が見えた。自分から見て右に赤、左に緑が見える。相手はどう動いている？",
+    "choices": [
+     "こちらと同じ方向へ飛んでいる",
+     "こちらへ向かってきている",
+     "左から右へ横切っている",
+     "地上に止まっている"
+    ],
+    "answer": 1,
+    "why": "航空灯は左翼端が赤、右翼端が緑。相手の左翼（赤）が自分の右に見えるのは、相手がこちらを向いているとき。衝突する進路かもしれない（AFH 第 11 章）。"
+   },
+   {
+    "q": "離陸滑走で、速度計が 0 のまま動かない。最も考えられる原因と、することは？",
+    "choices": [
+     "静圧孔が詰まった・そのまま離陸して代替静圧に切り替える",
+     "ピトー管がふさがっている（カバーの外し忘れなど）・離陸をやめる",
+     "AHRS の故障・予備の姿勢指示器を見て離陸する",
+     "オルタネーターの故障・ALT をリセットする"
+    ],
+    "answer": 1,
+    "why": "ピトー管がふさがり排水穴が開いていると、全圧が入らず速度計は 0 になる（PHAK 第 8 章）。速度がわからないまま離陸しない。"
+   },
+   {
+    "q": "燃料計について正しいものは？",
+    "choices": [
+     "満タンのときがいちばん正確",
+     "正確さが求められているのは「空」の表示だけ。飛行前に目でタンクの量を確かめる",
+     "いつも 1 gal 単位で正確",
+     "電源を切っても量を表示する"
+    ],
+    "answer": 1,
+    "why": "型式証明の規則で正確さが求められるのは「空」の表示だけ。燃料計だけを信じず、目視と時間×消費率で確かめる（PHAK 第 7 章）。"
+   },
+   {
+    "q": "北半球で、東（090°）から左旋回して北（360°）へ向かう。磁気コンパスだけを見て旋回を止めるのはいつ？",
+    "choices": [
+     "コンパスが 360° を示したとき",
+     "コンパスが 360° になる前（フロリダ付近では約 30° 手前）",
+     "コンパスが 360° を約 30° 過ぎたとき",
+     "コンパスでは旋回を止められない"
+    ],
+    "answer": 1,
+    "why": "北へ向かう旋回ではコンパスが遅れるので、早めに止める（UNOS：Undershoot North）。PHAK の目安は「15° ＋ 緯度の半分」で、北緯 29° なら約 30°。"
+   },
+   {
+    "q": "キャブレターアイスがあるときにキャブヒートを全開にした。固定ピッチの Archer の回転計はどう動く？",
+    "choices": [
+     "すぐに上がる",
+     "いったん下がり、氷がとけるとじわじわ上がる",
+     "まったく変わらない",
+     "0 まで下がる"
+    ],
+    "answer": 1,
+    "why": "熱い空気は薄いので、まず出力が下がる。氷がとけると回転が戻り、エンジンもなめらかになる。氷がなければ下がったまま（PHAK 第 7 章）。"
+   }
+  ],
+  "refs": [
+   "keep R.phak（FAA-H-8083-25C、2023 年版がいまも最新）。add 章の PDF：第 6 章 https://www.faa.gov/sites/faa.gov/files/08_phak_ch6.pdf ・第 7 章 https://www.faa.gov/sites/faa.gov/files/09_phak_ch7.pdf ・第 8 章 https://www.faa.gov/sites/faa.gov/files/10_phak_ch8.pdf",
+   "keep R.archerCk（MGSU Archer III w/ G1000 Pilot's Checklist、版 09012025、2026-10-26 にいまも同じことを確認）https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "update R.g1000 の名前：「Garmin G1000 Cockpit Reference Guide — Piper PA-28-181 Archer（190-01460-00 Rev. A、2013・NXi 以前の G1000）」https://static.garmin.com/pumac/190-01460-00_0A_Web.pdf",
+   "add Garmin G1000 NXi Pilot's Guide — Piper PA-28-181 Archer（190-02130-02 Rev. A）https://static.garmin.com/pumac/190-02130-02_A.pdf",
+   "add Piper Archer TX 仕様書（2024：IO-360-B4A・180 hp・48 US gal usable・G1000 NXi・G5 の予備計器・LED の灯火）https://piper.com/wp-content/uploads/2024/05/Archer-TX.pdf（R.archer の Piper のページ https://www.piper.com/model/archer-tx/ はそのままでよい）",
+   "add FAA Airplane Flying Handbook（FAA-H-8083-3C）第 11 章 Night Operations（航空灯の配置と見え方）https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/12_afh_ch11.pdf",
+   "add 14 CFR 91.151（VFR の燃料の予備）https://www.ecfr.gov/current/title-14/section-91.151 ・91.209（航空灯・衝突防止灯）https://www.ecfr.gov/current/title-14/section-91.209",
+   "add R.mag（NOAA の磁気偏差の計算機）：偏差の値の確かめ方として https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml",
+   "add（確かめてから）FAA SAIB CE-10-11（サーキットブレーカーの扱い）https://www.faasafety.gov/files/notices/2009/Dec/SAIB_CE-10-11.pdf（2026-10-26 は 503 で開けなかった。内容は検索結果の要約による）",
+   "remove R.acron：sys の本文は使っていない。訓練機の機材の話は intro に置く"
+  ]
+ },
+ "appMismatches": [
+  "Line numbers: book-1.js@HEAD:N means commit e1995d7. The sys text in the working tree is the same (same md5), but it sits 46–47 lines lower, because the intro chapter is being rewritten (sys starts at line 197 instead of 150). book-3.js, book-4.js, physics.js, app.js, quiz.js, syllabus.js and pages.js line numbers are from the current working tree, which matches HEAD for those files.",
+  "flight-lab/src/book-1.js@HEAD:192（sys.g1000 の bk.sim）— 説明は「G1000 型 PFD の各部を 1 つずつ説明するチュートリアル」なのに、ボタンは i3（部分パネル・AHRS 故障）を始める。チュートリアルは課目 k1（syllabus.js:87、tutor:'g1000'）で、app.startLesson（app.js:56）は手順のない課目を開かないので、data-lesson='k1' のボタンにはできない — アプリが正しい。本文を「AHRS が故障した中で予備計器で飛ぶ」に直し、チュートリアルは課程表の「G1000 型 PFD の読み方」と文で案内する",
+  "flight-lab/src/physics.js:624 — 燃料は左右のタンクから半分ずつ減る（BOTH と同じ）。book-1.js@HEAD:170 の「BOTH の位置はない」「時間を決めて切り替える」と、sys.fuel の bk.sim「左右の量を見ながら」と合わない — 本文（実機）が正しい。アプリは簡略化なので、本文にそう書く",
+  "flight-lab/src/book-1.js@HEAD:156（sys.ctl の表）— 「操縦輪を前後 | W / S」。app.js の KEYMAP では S＝機首上げ（引く）、W＝機首下げ（押す）、矢印キーも同じ。フラップ V・Shift+V、ブレーキ B / Space、トリムのリセット Shift+T が書かれていない — アプリが正しい。キーは向きをつけて bk.sim に書く",
+  "flight-lab/src/book-1.js@HEAD:175（sys.fuel の bk.sim、課目 a2）— 章の lessons（book-1.js@HEAD:214）は ['a1','i3'] で a2 がない — a2 を足すか、ボタンを a1 にする",
+  "flight-lab/src/book-1.js@HEAD:237（perf.climb「巡航で 1 時間に 8〜10 US gal」）↔ physics.js:622（3,000 ft・110 KIAS で約 11.5 gal/h。MFD の FFLOW もこの値）— 本文で例に使う燃料の消費率は、教材値か POH の目安か書く",
+  "flight-lab/src/quiz.js（q_sys の 2 問め）— キャブレターアイスの温度の範囲を聞くが、sys の本文には数値がない — PHAK の数値を本文（sys.carb）に足す",
+  "flight-lab/src/book-1.js@HEAD:209（cautions「ミクスチャー・キャブヒート・燃料タンク切替はこのシミュレータでは未実装」）は school.js:99,102 と pages.js:845 に合っている。pages.js:845 は油圧・油温・電圧・電流も「—」表示と書いている。sys.engine・sys.elec でも油圧と電流計はアプリでは見られないと書くとよい",
+  "cadet/src/content/checklists-archer.js:27（マグネトーのキー START → BOTH、マスタースイッチ 1 つ、ビーコン）↔ 本文の出典の G1000 の Archer III のチェックリスト（LEFT/RIGHT のマグネトースイッチ＋スターター、BATT MASTR と ALTR、ストロボ）— どちらも実在する形。本文は「機体によりキー式とスイッチ式がある」と書けば両方に合う"
+ ],
+ "factChecks": [
+  {
+   "claim": "水平尾翼は全体が動くスタビレーターで、アンチサーボタブが動きを重くし、トリムタブも兼ねる",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/08_phak_ch6.pdf",
+   "note": "PHAK 25C 第 6 章 Antiservo Tabs：タブはスタビレーターの後縁と同じ向きに動き、トリムの装置も兼ねる。"
+  },
+  {
+   "claim": "Archer のエンジンは一般に Lycoming O-360（180 hp）の空冷水平対向 4 気筒（燃料噴射式の機体もある）",
+   "verdict": "outdated",
+   "source": "https://piper.com/wp-content/uploads/2024/05/Archer-TX.pdf",
+   "note": "Piper の 2024 年の Archer TX 仕様書は Lycoming IO-360-B4A（燃料噴射式）・180 hp・4 気筒。O-360-A4M（キャブレター式）は Archer III と 2020 年ごろまでの TX。"
+  },
+  {
+   "claim": "プロペラは固定ピッチ",
+   "verdict": "correct",
+   "source": "https://piper.com/wp-content/uploads/2024/05/Archer-TX.pdf",
+   "note": "Sensenich の 2 枚の固定ピッチ。"
+  },
+  {
+   "claim": "マグネトーはエンジンの回転で発電する。電気系統が止まってもエンジンは止まらない。2 系統・各シリンダーにプラグ 2 本",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/09_phak_ch7.pdf",
+   "note": "PHAK 第 7 章 Ignition System。"
+  },
+  {
+   "claim": "マグチェック：2,000 rpm、落ち幅 最大 175 rpm・左右差 最大 50 rpm",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "RUNUP の項目。キャブヒートの点検は「CH-75 RPM / AA-40 RPM drop」。"
+  },
+  {
+   "claim": "ミクスチャー：5,000 ft 未満は FULL RICH（チェックリスト）",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "After Start と After Landing の「FULL RICH BELOW 5000FT」。同じチェックリストに、密度高度が高い日の離陸前のリーン（best power）もある。"
+  },
+  {
+   "claim": "キャブレターアイス：兆候は回転がじわじわ落ちる・荒れ。キャブヒート ON で一時的にさらに荒れてから回復",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/09_phak_ch7.pdf",
+   "note": "PHAK：固定ピッチ機の最初の兆候は回転の低下で、そのあと荒れることがある。キャブヒートで回転がいったん下がり、氷がとけるとじわじわ上がる。起きやすいのは 21℃ 未満・湿度 80% 超、38℃・湿度 50% でも起きる。この数値を本文に足す。"
+  },
+  {
+   "claim": "「エンジンの荒れ」の最初の項目はキャブヒート ON",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "ENGINE ROUGHNESS：Carburetor Heat/Alternate Air ON。1 分以上続けば OFF、ミクスチャー、ポンプ ON、タンクの切り替え、マグネトー L → R → BOTH。"
+  },
+  {
+   "claim": "油圧の喪失は「なるべく早く着陸」＋エンジン停止に備える",
+   "verdict": "imprecise",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "原文は \"Land as Soon as Practical and Investigate the Cause. Prepare for Power off Landing\"。practical と possible を訳し分ける。"
+  },
+  {
+   "claim": "燃料セレクターは LEFT / RIGHT / OFF（BOTH はない）。低翼なのでエンジン駆動ポンプと電動ポンプで送る",
+   "verdict": "correct",
+   "source": "https://www.atsb.gov.au/sites/default/files/media/5773975/ao-2017-094-final.pdf",
+   "note": "ATSB の PA-28-181 の報告書：OFF・LEFT・RIGHT の 3 つの位置のセレクターが左下にある。ポンプについては PHAK 第 7 章 Fuel-Pump System（https://www.faa.gov/sites/faa.gov/files/09_phak_ch7.pdf）。"
+  },
+  {
+   "claim": "離陸・着陸前は燃料の多い側・電動ポンプ ON",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "Before Takeoff：Fuel Selector FULLEST TANK・FUEL PUMP ON。Before Landing も同じ。"
+  },
+  {
+   "claim": "タンクを切り替えるときは電動ポンプ ON（チェックリストの例）",
+   "verdict": "unverified",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "MGSU のチェックリストに巡航中の切り替えの項目はない。POH にある可能性はあるが、公開の一次資料では確かめられなかった。"
+  },
+  {
+   "claim": "100LL の航空ガソリンは青い",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/09_phak_ch7.pdf",
+   "note": "PHAK Figure 7-32：80 赤・100 緑・100LL 青。100VLL も青。"
+  },
+  {
+   "claim": "残量は燃料計だけを信じない",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/09_phak_ch7.pdf",
+   "note": "PHAK：規則が燃料計に正確さを求めるのは「空」の表示だけ。飛行前に目で確かめる。この理由を本文に足す。"
+  },
+  {
+   "claim": "再始動の手順：76 KIAS・タンク切替・電動ポンプ ON・ミクスチャー RICH・キャブヒート ON・マグを確認",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "ENGINE FAILURE DURING FLIGHT の RESTART PROCEDURES。マグネトーは「OFF then ON one at a time」。"
+  },
+  {
+   "claim": "VFR では昼 30 分・夜 45 分の予備が規則（14 CFR 91.151）",
+   "verdict": "correct",
+   "source": "https://www.ecfr.gov/current/title-14/section-91.151",
+   "note": "(a)(1) 昼は少なくとも 30 分、(a)(2) 夜は 45 分。"
+  },
+  {
+   "claim": "EMERG BATT は始動前点検で ARM",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "BEFORE START：EMERG BATT Switch ARM・Standby Instruments and PFD operate VERIFY・E VOLTS 23.3 V 以上。G1000 NXi の新しい機体は G5 の予備計器（自分のバッテリー）で、形が違う。"
+  },
+  {
+   "claim": "サーキットブレーカーは再び飛んだら戻さない（火災のおそれ）",
+   "verdict": "imprecise",
+   "source": "https://www.faasafety.gov/files/notices/2009/Dec/SAIB_CE-10-11.pdf",
+   "note": "FAA は「飛行中は、承認された手順が求めるとき、または安全な飛行に必要なとき以外は戻さない」と言っている。この Archer の ALT の手順は ALT のブレーカーを戻す。SAIB の本文は 503 で開けず、検索結果の要約で確認した。"
+  },
+  {
+   "claim": "ALT 灯点灯：電流計を確認 → ALT OFF → 負荷を最小に → ブレーカーを確認・リセット → ALT ON。戻らなければ負荷を減らし着陸",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "G1000 型の警告の文字は ALTR FAIL（Garmin CRG 190-01460-00）。"
+  },
+  {
+   "claim": "電気系統の煙・火災：EMERG BATT ARM 確認 → マスター OFF → ALT OFF → 換気 → 消火 → 着陸",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "チェックリストには Cabin Heat OFF もある。手順そのものは emg.fire に置く。"
+  },
+  {
+   "claim": "ADC はピトー圧・静圧・外気温から速度・高度・昇降率を、AHRS は加速度・角速度・磁気センサーから姿勢・方位・旋回率を出す",
+   "verdict": "correct",
+   "source": "https://static.garmin.com/pumac/190-01460-00_0A_Web.pdf",
+   "note": "GDC 74A（ADC）・GRS 77（AHRS）・GMU 44（磁気センサー）。PHAK 第 8 章 AHRS。"
+  },
+  {
+   "claim": "TAS は高いところでは IAS より大きい（1,000 ft ごとに約 2%）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/10_phak_ch8.pdf",
+   "note": "PHAK の目安は「CAS に 1,000 ft ごとに 2% を足す」。CAS も説明する。"
+  },
+  {
+   "claim": "ピトー管と排水穴の両方が詰まると、速度計は高度計のように動く",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/10_phak_ch8.pdf",
+   "note": "表に足すもの：排水穴が開いていれば速度計は 0 になる（Figure 8-9）。"
+  },
+  {
+   "claim": "静圧孔が詰まると、速度計は上昇で遅く・降下で速く表示、高度計は止まり、昇降計は 0",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/10_phak_ch8.pdf",
+   "note": "代替静圧は機内の低い圧力を使う。POH の補正を見る。"
+  },
+  {
+   "claim": "高度計は高い所から低い所へ飛ぶと実際より高く表示される（気圧・気温とも）",
+   "verdict": "imprecise",
+   "source": "https://www.faa.gov/sites/faa.gov/files/10_phak_ch8.pdf",
+   "note": "中身は正しいが、「高い所」は気圧または気温が高い所のこと（高度ではない）。"
+  },
+  {
+   "claim": "AHRS が壊れると PFD の姿勢・方位に赤い ×",
+   "verdict": "correct",
+   "source": "https://static.garmin.com/pumac/190-01460-00_0A_Web.pdf",
+   "note": "CRG の「Red X」の説明。"
+  },
+  {
+   "claim": "フロリダ中部では磁北が真北より約 6〜7° 西",
+   "verdict": "correct",
+   "source": "https://maps.avnwx.com/airport/KSFB",
+   "note": "KSFB：FAA の資料は 05W（2000 年の値）、モデルでは約 7°W（2026 年）。NOAA の計算機で確かめる（https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml）。教材の 6°W は教材用近似として残す。"
+  },
+  {
+   "claim": "自差は機体の金属・電気の影響で、コンパスのそばの自差カードで補正",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/10_phak_ch8.pdf",
+   "note": "PHAK Deviation と compass correction card（Figure 8-35）。"
+  },
+  {
+   "claim": "北旋誤差：北へは手前でロールアウト（UNOS）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/10_phak_ch8.pdf",
+   "note": "PHAK の目安は「15° ＋ 緯度の半分」（北緯 29° なら約 30°）。南へは同じ角度だけ行き過ぎてから止める。"
+  },
+  {
+   "claim": "加速誤差：東・西向きで加速すると北へ、減速すると南へ振れる（ANDS）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/10_phak_ch8.pdf",
+   "note": "PHAK Acceleration Error。"
+  },
+  {
+   "claim": "始動前点検に「Standby Instruments and PFD operate — VERIFY」がある",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "BEFORE START にある。"
+  },
+  {
+   "claim": "前輪はラダーペダルと連動、Archer は固定脚。トーブレーキは左右別々",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "チェックリストの主脚 4.5 in・前脚 3.25 in、Brakes CHECK・Steering CHECK。FL.physics でも gear.fixed true。"
+  },
+  {
+   "claim": "航空灯は左翼端＝赤、右翼端＝緑、尾部＝白。赤が右に見えたら相手はこちらを向いている",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/12_afh_ch11.pdf",
+   "note": "AFH 第 11 章：赤が右・緑が左なら衝突する進路かもしれない。14 CFR 91.209：日没から日の出までは航空灯、衝突防止灯は付いていればつける（https://www.ecfr.gov/current/title-14/section-91.209）。"
+  },
+  {
+   "claim": "参考文献：PHAK FAA-H-8083-25C",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/phak",
+   "note": "2026-10-26 も 25C（2023）が最新。"
+  },
+  {
+   "claim": "参考文献：Garmin G1000 CRG 190-01460-00（Archer）",
+   "verdict": "outdated",
+   "source": "https://static.garmin.com/pumac/190-02130-02_A.pdf",
+   "note": "Rev. A・2013 年 4 月、NXi より前の G1000。新しい Archer は G1000 NXi（Pilot's Guide 190-02130-02 Rev. A）。両方を、どの機体のものか書いて載せる。"
+  }
+ ],
+ "cadetNotes": [
+  "content.test.mjs:117-118：CADET の sys.ctl の HTML には「スタビレーター」が残り、「このシミュレータのキー」と「<td>W / S</td>」がないこと。キーを bk.sim に移せばこのテストは通る。表にキーの列を残すなら、見出しに「このシミュレータ」を入れて filterTable に消させる",
+  "CADET の APP_ONLY は「G1000 型表示」「未実装」「このシミュレータ」「シミュレータでは」「教材用の簡略化」を含む文を消す。「G1000 型の表示」「G1000 型 PFD」のように書き、アプリについての注意は事実とは別の文（または bk.sim・span.tag）にする。特に、「タンクは左右から同じだけ減る」の注意は、燃料系統の説明の文と混ぜない",
+  "各節の最初の <svg> が教室の画面に映る。新しい節の図（controlAxes・engineFlow・carbIce・fuelSystem・elecSystem・pitotStatic・compassErrors・positionLights・cockpitLayout・gearBrakes）を表より前に置く。content.test.mjs は『最初の図が節の図』を確かめている",
+  "ここが大切の項目は CADET の keyPoints になり、ゲームが読み上げる。60 字以内にし、括弧の中のチェックリストの手順や課目名を入れない。sys.gear には key の箱がないので、いまは本文の最初の 2 文が使われている",
+  "CADET の Archer の操縦席（cadet/src/aircraft/cockpit.js・checklists-archer.js）は、キー式のマグネトー（START → BOTH）、マスタースイッチ 1 つ、ビーコン、キャブヒートのレバー、燃料セレクター L/R/OFF。cockpitLayout と本文は「機体により異なる（キー式・左右のスイッチ式）」とし、CADET の操縦席と矛盾させない",
+  "日本語の語のあとの括弧のキー（例「右ラダー（E）」）は CADET が正規表現で消すが、本文中に「T キー」とそのまま書くと残る。キーは bk.sim の中だけに書く",
+  "新しい節（sys.cockpit・sys.carb・sys.lights）は CADET の教官の質問メニューに自動で入る（instructor.js:384 は節を自動でページに分けるので、12 個の上限は問題にならない）。content.test.mjs の『図があれば「図を画面に映してください」が出る』テストのために、どの節にも図を 1 つ置くのがよい",
+  "参考文献の R.acron は CADET の REAL_NAMES に当たる。sys の参考文献から外す（本文では使っていない）"
+ ]
+}

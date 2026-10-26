@@ -1,0 +1,235 @@
+{
+  "id": "navd",
+  "title": "目的地変更・現在地を見失ったとき（Diversions and lost procedures）",
+  "sections": [
+    {
+      "id": "nav.xc",
+      "title": "クロスカントリー飛行の組み立て",
+      "gist": "離れた空港へ飛ぶ準備を「自分 → 天気 → 空域・NOTAM → 航路と計算 → 性能・燃料 → 代わりの空港 → 飛行計画」の順に組み立て、出発から到着後に飛行計画を閉じるまでを通して見る。",
+      "issues": [
+        "節の形が無い：目的の文・図・ここが大切が無く、表と注意だけ。章のまとめなのに、どこで何をするかの流れ（時間の順）が見えない。",
+        "順番：表の 7 番「自分の体調（IMSAFE）と危険の評価（PAVE）」は最初にすべき（ACS PA.I.D の危険の項目も Pilot が最初、hf 章の PAVE も P が先）。",
+        "「VFR 飛行計画の提出（FSS）と、到着後の終了 — AIM 第 5 章」→ AIM 5-1-5（VFR の飛行計画）と 5-1-14（閉じる）を名指し。米本土の VFR では飛行計画は通常は義務ではないが強く勧められる、FSS に出すときは FAA Form 7233-4（ICAO 形式）を使う、管制塔は自動で開かない・閉じない（AIM 5-1-5・5-1-14）。",
+        "注意「閉じないと捜索が始まる」→ 具体的に「到着予定時刻から 30 分以内に閉じないと捜索救難の手続きが始まる」（AIM 5-1-14）。出発の予定時刻を使って自動で開く方法（assumed departure time）もある（AIM 5-1-5）。",
+        "91.103 の「すべての飛行で滑走路の長さと離着陸距離」（perf 章）と、出発前の NOTAM・TFR が表に入っていない（2 番に空域・NOTAM はあるので、性能の 4 番に滑走路長を足す）。",
+        "飛行中の段階（出発後に飛行計画を開く → flight following → チェックポイントで時刻 → 目的地の ATIS → 着陸 → 飛行計画を閉じる）が無い。ANA の公開情報にある Sanford から Melbourne・Punta Gorda などフロリダの空港へのナビゲーション訓練（ana1）と結べる（ただし ANA の文は CADET で消える）。",
+        "章の最初に置くと、目的地変更（代わりの空港を準備しておく）と迷ったとき（時刻を記録しておく）の前提になる。"
+      ],
+      "mainFigure": "xcTimeline：左から右の時間の帯。準備（PAVE・IMSAFE → 天気 → NOTAM・TFR・空域 → 航路・チェックポイント・高度 → 性能・重量重心・燃料と予備 → 航路沿いの代わりの空港 → 飛行計画を出す）→ 出発（飛行計画を開く・flight following を頼む）→ 巡航（チェックポイントで時刻・燃料）→ 到着（ATIS・着陸）→ 飛行計画を閉じる（ETA から 30 分以内）。各箱に参照する章。"
+    },
+    {
+      "id": "nav.divert",
+      "title": "目的地変更（Diversion）",
+      "gist": "天気・燃料・体調・機体の不具合で目的地を変えるとき、まず新しい目的地へ向きを変え、それから距離・時間・燃料を見積もり、最初の目印で直す。",
+      "issues": [
+        "最初の文「公開情報（ANA）でも、目的地変更に伴う再計算が訓練の一部とされています」は ANA の公開ページと合っている（ana1：『目的地の変更に伴う針路の再計算…自機の現在地を見失った場合の対処』）。ただし CADET ではこの文が消えるので、節の目的の文は別に書く。content.test.mjs は FLIGHT LAB の nav.divert に実名があること（realIn(raw('nav.divert'))）と、CADET 版に「まず向きを変え」が残ることを確かめているので、ANA の文は独立した 1 文で残し、「まず向きを変え」の語も残す。",
+        "「まず向きを変え、それから見積もり、最後に正確に（PHAK の考え方）」は大筋で正しいが不正確：PHAK 16 の Flight Diversion は ①代わりの空港を選ぶ ②VOR のコンパスローズや航空路と定規でおおよその磁航路を出す ③時間があれば目立つ目印の上から始める、緊急なら迷わずすぐ向かう ④コースに乗ったら時刻を記録し、上空の風で針路と対地速度、到着時刻と燃料を出す ⑤高度は雲・風・地形・無線の届き方で選ぶ。ACS PA.VI.C.S6 は『Promptly divert』。この順で書き直す。",
+        "「指で測る」「時計の文字盤で考える」は PHAK には無い訓練の工夫。使うなら「よく使われる方法」と書く（bk.est）。",
+        "代わりの空港の選び方（滑走路の長さ・天気・燃料・空域・近さ：ACS PA.VI.C.K1・R4）が無い。",
+        "表の「60 の法則」は nav.dr と重複。ここは「nav.dr の 60 の法則で」と参照し、表は「時速 → 分速（105 kt ≒ 1.75 NM/分）」と「MFD・Direct-To で答え合わせ」に絞る。",
+        "例「18 NM・105 kt ＝ 約 10 分・燃料 1.6 gal」は 9.5 gal/h で計算した値。教材の飛行モデルでは 105 KIAS で約 10.8 gal/h → 約 1.9 gal。課目 n2 の数字（LAB-A → LAB-F：約 6 NM・磁方位 181°）で作り直す。",
+        "課目 n2 の見積もりの「針路」は新しい目的地への磁方位（航路）で採点され（syllabus.js estimateTruth）、基準は針路 ±15°・距離と時間 ±20%。本の bk.sim にこの基準と「風の修正は飛びながら」を書く。",
+        "管制への連絡は school.js の divert（LAB Approach が「proceed direct LAB-F, maintain …」と言い、生徒が復唱）と合わせて、「変更を伝え、指示を復唱する」と書く。",
+        "図が無い。"
+      ],
+      "mainFigure": "diversionGeometry：北が上の模式図。予定の航路 LAB RWY → LAB-A → LAB-B（灰色）、LAB-A の先に雨雲、LAB-A 付近から LAB-F への新しい線（マゼンタの破線）に「① まず向きを変える」、VOR のコンパスローズに定規を当てて「約 181°」、距離「約 6 NM」、「② 見積もる：6 ÷ 1.75 ≒ 3.5 分・燃料 約 0.6 gal」、最初の目印で「③ 確かめる」。数字は avionics.js（LABEA→LABEF 5.96 NM・MC 180.8°）、GS 105 kt（課目 n2）、燃料 約 11 gal/h（教材モデル）。模式図・NOT FOR NAVIGATION。"
+    },
+    {
+      "id": "nav.lost",
+      "title": "現在地を見失ったとき",
+      "gist": "位置がわからなくなったら、まず姿勢と高度を保って落ち着き、上昇・連絡・正直に伝える・指示に従う・燃料を節約し、使える航法装置と目印で位置を確かめる。",
+      "issues": [
+        "「FAA の教材でよく使われる手順は 4C（または 5C）」は確かめられない：PHAK 25C 第 16 章の Lost Procedures は、上昇（電波・レーダーが届きやすい）、町の給水塔の名前などの目印、2 局以上の VOR / ADF の方位、GPS、使える施設と交信（レーダー誘導・方向探知）、危ないときは 121.5 MHz と 7700 を挙げるが、4C という語は無い。4C / 5C は訓練でよく使われる覚え方として紹介し、手順の根拠は PHAK と AIM 6-2-1（困っている VFR 機へのレーダー援助）・6-3（遭難・緊急通信）にする。",
+        "「Communicate」の行に、PAN-PAN（緊急）で始めてよいこと、最後に分かった位置・時刻・針路を言うこと（AIM 6-3-2）、危ないときは 7700（AIM 6-2-2）が無い。radio5 の comm.xpdr に同じ内容があるので bk.see で結ぶ。",
+        "「Conserve：出力を下げて燃料を節約」→ 根拠のない出力の値は書かず「POH・教官の長く飛べる設定で」。",
+        "迷わないための予防（チェックポイントで時刻を記録：ACS PA.VI.D.R3）と、予防着陸（近くの空港へ降りる判断：ACS PA.VI.D.S5、R4 の緊急の宣言）が「ここが大切」にしか無い。",
+        "例「Orlando Approach を呼んで unsure of position」→ 教材の LAB Approach（school.js:141 の lost の選択肢、radio5 の PAN-PAN の例）に合わせる。",
+        "シミュレーターの箱（課目 n3）：GPS が止まったあと、LAB VOR 113.50 は NAV1 の予備側にある（avionics.js:121 の初期値は NAV1 使用中 109.90）。NAV1 の ⇄ で 113.50 を使用側へ入れ替え、CDI を NAV1 にする手順が必要だが、syllabus.js n3 の brief にも本にも書かれていない。",
+        "cross fix（2 局の交点）は nav.dme と重複。シミュレーターの VOR は 1 局だけなので、課目はラジアル＋DME で位置を出す。",
+        "実機の G1000 は GPS を失うと DR モードで推測の位置を出す（Garmin CRG）ことを書くと、「GPS が使えても手順は同じ」の key と結べる。",
+        "図が無い。"
+      ],
+      "mainFigure": "lostFlow：上から下の流れ図。「① 操縦を続ける（姿勢・高度・燃料を確かめる）」→「② Climb（雲・空域に注意。電波とレーダーが届きやすく、遠くまで見える）」→「③ Communicate・Confess（LAB Approach / FSS / 121.5、PAN-PAN、最後に分かった位置・時刻・針路）」→「④ Comply（指示に従う）」→「⑤ Conserve（燃料を節約）」。横に「自分で位置を出す：最後の位置＋針路×時間 → 範囲 → 大きな目印 → VOR のラジアル＋DME」の枝と、「燃料・日没・天気が厳しければ近くの空港へ予防着陸」の出口。"
+    }
+  ],
+  "problems": {
+    "unclear": [
+      "4C / 5C が FAA の手順のように書かれているが、PHAK・AIM にその語は無い（nav.lost）。",
+      "目的地変更の「針路」と課目 n2 で採点される「磁方位」の違い（nav.divert）。",
+      "VFR 飛行計画を誰が・いつ開き、いつまでに閉じるか（AIM 5-1-5・5-1-14）があいまい（nav.xc）。"
+    ],
+    "order": [
+      "章の順を nav.xc → nav.divert → nav.lost に（準備 → 飛行中の変更 → 迷ったとき）。id は変えない。nav.xc の「代わりの空港を航路沿いに準備」と「時刻を記録」が後の 2 節の前提になる。",
+      "nav.xc の表で PAVE / IMSAFE を 1 番に。",
+      "nav.divert は PHAK の順（選ぶ → おおよその航路 → すぐ向かう → 時刻を記録 → 針路・GS・到着時刻・燃料 → 確かめる → 伝える）に。",
+      "nav.lost は「予防（時刻の記録）→ 落ち着く → 4C/5C → 自分で位置を出す → 予防着陸」の順に。"
+    ],
+    "errors": [
+      "nav.lost「FAA の教材でよく使われる手順は 4C（または 5C）」→ PHAK 25C の Lost Procedures に 4C の語は無い（上昇・目印・VOR の方位・GPS・交信・121.5 と 7700）。4C/5C は訓練の覚え方（https://www.faa.gov/sites/faa.gov/files/18_phak_ch16.pdf 16-34）",
+      "nav.divert「まず向きを変え…（PHAK の考え方）」は一部不正確：PHAK は時間があれば目立つ目印の上から始め、緊急ならすぐ向かう。コースに乗ったら時刻を記録して上空の風で計算（https://www.faa.gov/sites/faa.gov/files/18_phak_ch16.pdf 16-34〜35）"
+    ],
+    "outdated": [
+      "nav.xc：VFR 飛行計画は FSS に出すとき FAA Form 7233-4（ICAO 形式）を使う（7233-1 は国防総省と stereo route だけ）（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_1.html AIM 5-1-5）。PHAK 25C 図 16-27 の「Domestic flight plan form」は古い。"
+    ],
+    "duplicates": [
+      "60 の法則：nav.divert の表 ↔ navp nav.dr ↔ quiz.js q_nav 10 問目。",
+      "cross fix：nav.lost ↔ navr nav.dme。",
+      "PAN-PAN・121.5・7700・伝える順番：nav.lost ↔ radio5 comm.xpdr（AIM 6-3-2）。",
+      "IMSAFE / PAVE：nav.xc ↔ hf 章 hf.self / hf.adm。天気：nav.xc ↔ wx 章 wx.brief。91.151：nav.xc（性能・燃料）↔ law.rules・navp。",
+      "目的地変更は ADM（hf 章）・TEM（crm 章）と key で結んでいる（重複ではなく参照で良い）。"
+    ],
+    "numbers": [
+      "例「18 NM・105 kt ＝ 約 10 分・燃料 1.6 gal」：10 分は正しい（18 ÷ 1.75 ＝ 10.3）。燃料 1.6 gal は 9.5 gal/h 前提で、FL.physics（105 KIAS で約 10.8 gal/h）なら約 1.9 gal。",
+      "表「105 kt ＝ 約 1.75 NM/分、12 NM なら約 7 分」：正しい（6.9 分）。quiz 3 問目（14 NM → 8 分）も正しい。",
+      "課目 n2 の目的地変更（本の例に使う）：LAB-A → LAB-F 5.96 NM・磁方位 180.8°（avionics.js WAYPOINTS、MAGVAR_W 6）。風 270°/12 kt（syllabus.js:281 wind rel 270 → school.js:259 で真 264° ＝ 磁 270°）、TAS 105 kt → WCA 右 約 7°・磁針路 約 188°・GS 約 104 kt・ETE 約 3.4 分・燃料 約 0.6 gal（10.8 gal/h）。",
+      "課目 n3：LAB VOR から LAB RWY へは syllabus.js:291・298 で「約 250°・5.6 NM」。計算では課目の到着判定の点（syllabus.js:22 rwyNm＝滑走路の中央）まで 257°（磁）・5.7 NM、waypoint LABRW まで 249°・6.1 NM。本で使うなら「約 250〜255°・約 6 NM」。",
+      "課目 n3 の出発点：LAB VOR の 030 ラジアル・約 10.8 NM、針路 120°、100 kt（syllabus.js:292）→ 局まで約 6.5 分。"
+    ]
+  },
+  "policy": "navd は「準備（nav.xc）→ 飛行中の目的地変更（nav.divert）→ 現在地を見失ったとき（nav.lost）」の順に並べ替える（id は変えない）。nav.xc は時間の流れの図 xcTimeline を最初に置き、PAVE / IMSAFE を 1 番に、VFR 飛行計画は AIM 5-1-5（FSS に Form 7233-4 で出す・自分で開く）と 5-1-14（ETA から 30 分で捜索）を具体的に書く。nav.divert は図 diversionGeometry と課目 n2 の数字（LAB-A → LAB-F 約 6 NM・181°・約 3.5 分）で、PHAK の手順（選ぶ → おおよその航路 → すぐ向かう → 時刻 → 針路・GS・到着時刻・燃料 → 確かめる → ATC に伝えて復唱）を示し、ANA の公開情報は独立した 1 文（bk.fact）で残して「まず向きを変え」の語を保つ。60 の法則は nav.dr を参照するだけにする。nav.lost は流れ図 lostFlow を最初に置き、4C / 5C を「訓練でよく使う覚え方」として紹介し、根拠は PHAK の Lost Procedures と AIM 6-2-1・6-3 にする。PAN-PAN の言い方は radio5 comm.xpdr へ bk.see し、課目 n3 の bk.sim には NAV1 の周波数の入れ替え（⇄）と CDI の切り替えを書く。例と通話は教材の名前（LAB Approach・Archer Seven Lima Alpha・LAB-F）にそろえ、燃料は教材モデル値（約 11 gal/h）か POH の値かを書く。",
+  "figuresExisting": [],
+  "figuresNew": [
+    {
+      "name": "xcTimeline",
+      "section": "nav.xc",
+      "what": "クロスカントリーの時間の帯：準備（PAVE・IMSAFE → 天気 → NOTAM・TFR・空域 → 航路・高度 → 性能・燃料 → 代わりの空港 → 飛行計画を出す）→ 出発（開く・flight following）→ 巡航（チェックポイントの時刻）→ 到着 → 閉じる（ETA ＋30 分までに）。各箱に章の参照。390 px では 2 段に折り返す。",
+      "data": "ACS PA.I.D（Cross-Country Flight Planning）、AIM 5-1-5・5-1-14、14 CFR 91.103・91.151。",
+      "priority": "should"
+    },
+    {
+      "name": "diversionGeometry",
+      "section": "nav.divert",
+      "what": "目的地変更の模式図：予定の航路、前方の雨雲、LAB-F への新しい線、①向きを変える ②見積もる（距離 6 NM・時間 3.5 分・燃料 0.6 gal）③最初の目印で確かめる、VOR のコンパスローズに定規を当てる絵。NFN。",
+      "data": "avionics.js WAYPOINTS（LABEA 9000/−34000、LABEF −2000/−33000 → 5.96 NM・MC 180.8°）、GS 105 kt（syllabus.js n2）、燃料 約 10.8 gal/h（physics.js fuelFlow、105 KIAS・3,000 ft）。",
+      "priority": "must"
+    },
+    {
+      "name": "lostFlow",
+      "section": "nav.lost",
+      "what": "迷ったときの流れ図：操縦を続ける → Climb → Communicate / Confess → Comply → Conserve、横に「自分で位置を出す」の枝と「予防着陸」の出口。各箱に一言の理由。",
+      "data": "PHAK 16 Lost Procedures、AIM 6-2-1・6-2-2・6-3-2、ACS PA.VI.D、訓練の覚え方 4C/5C（出典は訓練の慣習と明記）。",
+      "priority": "must"
+    },
+    {
+      "name": "lostFixArea",
+      "section": "nav.lost",
+      "what": "平面図：最後に確かめた位置から「針路 × 時間」の扇形の範囲、その中の大きな目印（湖・高速道路・海岸線）、LAB VOR の 030 ラジアルと DME 11 NM の交点で位置が決まる様子、局から LAB RWY への約 250°・約 6 NM。NFN。",
+      "data": "syllabus.js n3 setup（brg 30・km 20・hdg 120・kt 100）、avionics.js LBV と LAB RWY（physics.js LAB_RWY・syllabus.js:22 rwyNm）。",
+      "priority": "should"
+    }
+  ],
+  "photos": [
+    {
+      "section": "nav.divert",
+      "subject": "前方に発達した積乱雲（雷雨）— 迂回・目的地変更の理由",
+      "search": "NOAA Photo Library（photolib.noaa.gov）'cumulonimbus' 'thunderstorm'、NOAA NSSL の画像（米国政府＝パブリックドメイン）",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "「天気が悪くなる前に早めに決める」の具体的なイメージ。フロリダの夏の午後の雷雨（wx 章）とつながる。"
+    },
+    {
+      "section": "nav.lost",
+      "subject": "町の名前が書かれた給水塔（water tower）",
+      "search": "Wikimedia Commons: Category:Water towers in Florida / 'water tower town name'（CC BY / CC BY-SA / CC0 を 1 枚ずつ確認）",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "PHAK 16 の Lost Procedures が挙げる「給水塔の町の名前を読む」をそのまま見せる。"
+    },
+    {
+      "section": "nav.lost",
+      "subject": "宇宙から見たフロリダ半島（海岸線・大きな湖が目印になる）",
+      "search": "NASA Image and Video Library 'ISS Florida peninsula'、NASA Earth Observatory 'Florida'（NASA の画像は原則パブリックドメイン）",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "海岸線や大きな湖（Lake Okeechobee など）のように見失いにくい大きな目印を探す考え方を示す。"
+    }
+  ],
+  "endMatter": {
+    "terms": [
+      "Cross-country / クロスカントリー（離れた空港への飛行） / ",
+      "VFR flight plan / VFR 飛行計画 / FAA Form 7233-4・AIM 5-1-5",
+      "Flight Service Station (FSS) / 飛行情報業務 / 飛行計画の受付・天気",
+      "Activate / Close a flight plan / 飛行計画を開く・閉じる / ETA ＋30 分で捜索（AIM 5-1-14）",
+      "Search and rescue (SAR) / 捜索救難 / ",
+      "Diversion / 目的地変更 / 'Promptly divert'（ACS）",
+      "Alternate airport / 代わりの空港 / ",
+      "Lost procedures / 現在地を見失ったときの手順 / PHAK 16",
+      "4C / 5C / 訓練でよく使う覚え方 / Climb, Communicate, Confess, Comply, Conserve",
+      "PAN-PAN / MAYDAY / 緊急・遭難 / AIM 6-3",
+      "121.5 MHz / 緊急周波数 / ",
+      "Squawk 7700 / 緊急のコード / AIM 6-2-2",
+      "Precautionary landing / 予防着陸 / ",
+      "Cross fix / 2 局のラジアルの交点 / "
+    ],
+    "examples": [
+      "課目 n2：LAB-A 付近で LAB-F へ変更。まず南へ旋回 → 地図で磁方位 約 181°・約 6 NM → GS 105 kt ≒ 1.75 NM/分で 約 3.5 分 → 燃料 約 0.6 gal（教材モデル）。風 270°/12 kt なので機首は 約 188° → 最初の目印で確かめ、LAB Approach の「proceed direct LAB-F」を復唱。",
+      "前方の雷雨で、18 NM 西の空港へ変更 → まず西へ旋回 → 18 ÷ 1.75 ≒ 10 分・燃料 約 1.9 gal（教材モデル 約 11 gal/h）→ 最初の目印で確かめる。",
+      "迷った → 高度と姿勢を保つ → 4,500 ft へ上昇（雲・空域に注意）→ 「Pan-pan ×3, LAB Approach, Archer Seven Lima Alpha, unsure of position …」→ 指示に従う → LAB VOR のラジアルと DME で位置を確かめる。",
+      "到着予定 14:30（現地）で飛行計画を閉じ忘れた → 15:00 ごろから捜索救難の手続きが始まる（AIM 5-1-14）。"
+    ],
+    "cautions": [
+      "この教材の目的地変更・迷ったときの課目は架空の空域・訓練点・LAB VOR で行う（NOT FOR NAVIGATION）。",
+      "迷ったら燃料・天気・日没を最優先に。近くの空港へ降りる（予防着陸）ことは常に選択肢。困ったら早めに PAN-PAN・7700。",
+      "燃料の数字は教材モデルの値。実機は POH の性能表と、訓練校の予備の決まりで。"
+    ],
+    "quizReview": [
+      "Q1（目的地変更でまずすること → おおよその方向へ旋回）：keep（PHAK・ACS PA.VI.C.S6 'Promptly divert' と一致）",
+      "Q2（4C に含まれないもの → Circle until found）：fix（問いを「訓練でよく使われる覚え方 4C / 5C に含まれないものは？」にして、FAA の手順とは書かない）",
+      "Q3（105 kt で 14 NM → 約 8 分）：keep（計算は正しい）"
+    ],
+    "quizProposals": [
+      {
+        "q": "VFR 飛行計画を閉じ忘れると、捜索救難の手続きが始まるのは到着予定時刻のおよそ何分後？",
+        "choices": ["30 分", "5 分", "2 時間", "24 時間"],
+        "answer": 0,
+        "why": "AIM 5-1-14：ETA から 30 分以内に閉じる（または報告する）ことがなければ捜索救難が始まる。管制塔は自動で閉じない。"
+      },
+      {
+        "q": "VFR 飛行計画を開く（activate）のは誰？",
+        "choices": ["パイロットが FSS に連絡して開く（予定時刻で自動にする方法もある）", "離陸すると管制塔が自動で開く", "トランスポンダーを入れると自動で開く", "提出すれば開く必要はない"],
+        "answer": 0,
+        "why": "AIM 5-1-5：飛行計画を開くのはパイロットの責任。管制塔は VFR の飛行計画を自動では開かない。"
+      },
+      {
+        "q": "現在地がわからない。最初の無線として適切なのは？",
+        "choices": ["Pan-pan ×3 で始め、相手局・自機・状況（unsure of position）・最後に分かった位置と針路・高度・燃料を伝える", "黙って探し続ける", "「request flight following」とだけ言う", "トランスポンダーを切る"],
+        "answer": 0,
+        "why": "AIM 6-3：位置に自信がなくなった時点で少なくとも緊急（urgency）。早く正直に伝えるほど助けやすい（radio5 comm.xpdr と同じ）。"
+      }
+    ],
+    "refs": [
+      "update：PHAK 25C 第 16 章（Flight Diversion・Lost Procedures、16-34〜35）https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-16-navigation",
+      "add：AIM 5-1（5-1-5 VFR の飛行計画・5-1-14 閉じる）https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_1.html",
+      "add：AIM 6-2（6-2-1 困っている VFR 機へのレーダー援助・6-2-2 7700）https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_2.html と AIM 6-3（R.aim63）",
+      "add：FAA Private Pilot ACS（FAA-S-ACS-6C）Area I Task D・Area VI Task C / D（R.acsP）",
+      "keep：ANA の公開ページ（R.ana1）— nav.divert の CADET テストが実名を前提にしている。内容（目的地変更の再計算・現在地を見失った場合の対処）は確認済み"
+    ]
+  },
+  "appMismatches": [
+    "syllabus.js:291 n3 の brief「②CDI を NAV1（LAB VOR 113.50）に」 ↔ avionics.js:121（NAV1 の使用中は 109.90、113.50 は予備側。n3 の setup に nav の指定が無い）— NAV1 の ⇄ が必要。本の bk.sim に「NAV1 の ⇄ で 113.50 を使用側へ → CDI を NAV1」と書く（アプリは変えない）",
+    "syllabus.js:291・298「局の西南西 約 5.6 NM」「方位 約 250°・5.6 NM」 ↔ 計算（syllabus.js:22 rwyNm の点まで 257°・5.7 NM、avionics.js LABRW まで 249°・6.1 NM）— 小さなずれ。本では「約 250〜255°・約 6 NM」",
+    "school.js:143 lost の解説「AIM 6-2 の考え方（5C：…）」 ↔ AIM 6-2 に 5C の語は無い（6-2-1 は困っている VFR 機へのレーダー援助）— 本は 5C を訓練の覚え方として書く",
+    "book-4.js navd の例「Orlando Approach を呼んで」 ↔ school.js:141（LAB Approach）・radio5 の PAN-PAN の例（LAB Approach, Archer Seven Lima Alpha）— 本を教材の名前に",
+    "book-4.js navd の例「燃料 1.6 gal」（9.5 gal/h 前提）↔ physics.js:622（105 KIAS で約 10.8 gal/h）— 本の数字を教材モデルか POH の値かで明記",
+    "syllabus.js estimateTruth（n2）の「針路」は磁方位（航路）、ETE は見積もりの瞬間の GS — 本の nav.divert で採点の意味を説明する"
+  ],
+  "factChecks": [
+    {"claim": "ANA の公開情報で、目的地変更に伴う再計算・現在地を見失った場合の対処が訓練の一部", "verdict": "correct", "source": "https://www.ana.co.jp/group/777_30th/20251022_2.html", "note": "『目的地の変更に伴う針路の再計算、飛行中のエンジン停止を想定した訓練、自機の現在地を見失った場合の対処』。"},
+    {"claim": "目的地変更は、まず向きを変え、それから見積もり、最後に正確に（PHAK の考え方）", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/18_phak_ch16.pdf", "note": "PHAK：おおよその磁航路をコンパスローズ・航空路で出す、時間があれば目立つ目印の上から、緊急ならすぐ向かう、コースに乗ったら時刻を記録し上空の風で針路・GS・到着時刻・燃料。ACS PA.VI.C.S6 'Promptly divert'。"},
+    {"claim": "4C（Climb・Communicate・Confess・Comply）＋Conserve は FAA の教材でよく使われる手順", "verdict": "unverified", "source": "https://www.faa.gov/sites/faa.gov/files/18_phak_ch16.pdf", "note": "PHAK 25C の Lost Procedures に 4C の語は無い（上昇・目印・VOR/ADF の方位・GPS・交信・121.5 と 7700）。訓練の覚え方として広く使われる。"},
+    {"claim": "Climb：高い方が遠くまで見え、電波が届きやすい", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/18_phak_ch16.pdf", "note": "PHAK：上昇で無線・航法の受信範囲とレーダーの覆域が広がる（雲と交通に注意）。"},
+    {"claim": "Communicate：管制・FSS・121.5 MHz、トランスポンダーで位置がわかる", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_2.html", "note": "AIM 6-2-1（レーダー援助）・6-2-2（7700）。PHAK も危ないときは 121.5 と 7700。"},
+    {"claim": "VFR 飛行計画は自動では始まらない・終わらない。閉じないと捜索が始まる", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_1.html", "note": "AIM 5-1-5（パイロットが FSS で開く、管制塔は自動で開かない）、5-1-14（ETA から 30 分で捜索救難）。米本土の VFR では通常義務ではないが強く勧められる。FSS には Form 7233-4。"},
+    {"claim": "105 kt ＝ 約 1.75 NM/分", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/18_phak_ch16.pdf", "note": "105 ÷ 60 ＝ 1.75。"},
+    {"claim": "代わりの空港を航路沿いに準備する", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/18_phak_ch16.pdf", "note": "PHAK：出発前に航路沿いの空港・着陸できる場所と、目的地変更に使える航法施設を確かめる。"},
+    {"claim": "ACS の目的地変更・迷ったときの基準（本に未記載）", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "PA.VI.C：見積もり（針路・GS・到着時刻・燃料）、高度 ±200 ft・針路 ±15°、すぐ向かう。PA.VI.D：位置を出す方法、上昇、目印、航法装置か ATC、適切な行動の選択。"}
+  ],
+  "cadetNotes": [
+    "content.test.mjs：FLIGHT LAB の nav.divert の生の HTML に実名（ANA）が必要（realIn(raw('nav.divert'))）、CADET 版に /まず向きを変え/ が必要。ANA の文は独立させ（その文だけ消える）、「まず向きを変え」は ANA を含まない文に入れる。",
+    "nav.divert の最初の文がいまは ANA の文なので、CADET では節が「空の上で…」から始まる。目的の文（bk.aim）を ANA の文の前に置く。",
+    "最初の <svg>：nav.xc は xcTimeline、nav.divert は diversionGeometry、nav.lost は lostFlow。",
+    "COURSE_NOTE（公開情報・bk.fact / bk.est のタグ）を含む文は CADET で消える。PHAK の手順の説明にタグを付けない。",
+    "bk.sim の「1〜3 キー」「⇄」などの操作は CADET で消えるので、本文には一般的な手順（周波数を合わせて識別、CDI の情報源を VOR に）を書く。",
+    "「ここが大切」の 1 項目目（nav.lost）「燃料と日没までの時間を常に把握。暗くなる前・燃料が少なくなる前に、近くの空港へ降りる判断を」は約 50 字で可。"
+  ]
+}

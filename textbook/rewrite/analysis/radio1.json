@@ -1,0 +1,393 @@
+{
+ "id": "radio1",
+ "title": "無線交信のしくみと基本の技術",
+ "sections": [
+  {
+   "id": "radio.why",
+   "title": "交信とは何か・誰と話すのか",
+   "gist": "交信の目的は管制官とパイロットが同じ絵を持つこと（AIM 4-2-1）で、相手の局（ATIS・Ground・Tower・Departure/Approach など）ごとに仕事が違い、「場所の名前＋局の種類」で呼ぶ（AIM 4-2-6）。",
+   "issues": [
+    "図がない。8 行の表「ATIS / Clearance Delivery / Ground / Tower / Departure・Approach / Center / Flight Service / CTAF・UNICOM・MULTICOM」をいきなり全部出すのは初心者には重い。1 回の飛行で実際に話す 4 つ（ATIS → Ground → Tower → Departure/Approach）を先に、ほかの局は後ろの短い表に分けたい。",
+    "見出し「管制の種類と呼び方」だが、ATIS（録音放送）・CTAF/UNICOM は管制ではない。「話す相手（局）」とするほうが正確。",
+    "「AIM（FAA の公式マニュアル）」：FAA がまだ説明されていない。初出で「米国連邦航空局（FAA）」「航空情報マニュアル（AIM）」と書く。",
+    "Clearance Delivery の行「出発の許可・出発周波数・トランスポンダーのコードを出す（ある空港だけ）」「エンジン始動の前後」：AIM 4-3-14 は “prior to starting engines”（エンジン始動の前）に Clearance Delivery / Ground を呼ぶとしている。AIM の表（TBL 4-2-6）は Clearance Delivery を “(IFR)” としており、VFR では Class B/C の空港で出発の指示（VFR departure instructions）を受ける程度。「出発の許可」は VFR の初心者に誤解を与える。",
+    "ATIS の内容「風・視程・雲・気温・高度計規正値・使用滑走路・注意事項」に露点（dew point）がない（AIM 4-1-13 は dew point を含む）。radio.js の ATIS 文は露点を言っている。",
+    "「Flight Service（例：Orlando Radio）」：実在するかのような局名だが確認できなかった。AIM の例 “Chicago Radio” か、架空の “LAB Radio” にする。",
+    "CTAF の行「（第 11 章）」の詳細は radio5 comm.ctaf と重複。ここでは 1 行にし、語 'CTAF' は残す（FLIGHT LAB テストの必須語）。"
+   ],
+   "mainFigure": "radioRelay：1 回の飛行で話す相手のリレーの模式図（駐機場 → 誘導路 → 滑走路 36 → 出発 → 訓練空域 → 帰り → 場周 → 駐機場）。区間ごとに局名と練習用周波数（ATIS、Ground 121.7、Tower 118.3、Departure 119.75、Approach、Tower 118.3、Ground 121.7）。「模式図・架空の LAB 空港・NOT FOR NAVIGATION」。"
+  },
+  {
+   "id": "radio.equip",
+   "title": "無線機・マイク・オーディオパネルの使い方",
+   "gist": "VHF の COM 周波数（118.000〜136.975 MHz、米国は 25 kHz 間隔）、使用中と予備の切り替え、見通し距離、同時に 1 人しか話せないこと、マイクの使い方（AIM 4-2-2）、スタックマイク、オーディオパネルの MIC と受信の選択。",
+   "issues": [
+    "図がない。オーディオパネル（MIC：COM1/COM2、受信：COM1・COM2・NAV1・NAV2）と COM の使用中 ⇄ 予備は、言葉だけでは位置がつかめない。",
+    "「G1000 では使用中（active）と予備（standby）の 2 つを表示し」→ 本書のルールでは「G1000 型の表示では」。",
+    "並び順が「周波数 → 見通し距離 → 同時に 1 人 → 話し方 → スタックマイク → オーディオパネル」。実際の操作順（予備に合わせる → ⇄ → MIC を選ぶ → PTT を押して一呼吸 → 話す → 離して待つ → 返事がなければ確認）に並べ替えたい。",
+    "「2 機が同時に送信すると両方とも聞こえない（「ブロック」）」はやや不正確：周りの機にはキーンという音や強いほうの声だけが聞こえることがあり、送信した 2 機は互いに気づかない。AIM 4-2-2 a は「話している人がいるのに送信すると、その受信をふさぐ（jam）」と書いている。",
+    "「高いほど遠くまで届く（AIM 4-2-2）」に目安の数字がない。電波の見通し距離の近似（約 1.23×√高度ft NM：1,000 ft で約 39 NM、3,500 ft で約 73 NM）を「目安（推定）」として図に入れるとよい。",
+    "「最近の無線機は 25 kHz 間隔で合わせる」：米国の話。欧州（英国を含む）は 8.33 kHz 間隔が広く使われる（ロンドンの座学の前に知っておくとよい補足）。",
+    "bk.key の 1 つ目「返事がないときの確認：①音量 ②周波数（使用中の側か）③MIC の選択 ④ヘッドセットの差し込み ⑤スタックマイク ⑥もう一方の無線機」は約 70 字で ~60 字の上限を超える。6 項目の確認は本文の箇条書き（または図）にし、key は「返事がなければ音量・周波数・MIC を確かめる」程度に短くする。",
+    "「この教材の中央のオーディオパネルも同じ配置です（送信はできません）。」は CADET で削除される文（APP_ONLY 'オーディオパネルも同じ配置'）。独立した 1 文のまま残す。"
+   ],
+   "mainFigure": "radioAudioPanel：G1000 型の COM 窓（COM1 118.300 ⇄ 121.700）とオーディオパネル（MIC COM1 / COM2、受信 COM1・COM2・NAV1・NAV2）。よくある失敗「COM2 に合わせたのに MIC は COM1」を赤で示す。2 枚目に radioLineOfSight（見通し距離）。"
+  },
+  {
+   "id": "radio.technique",
+   "title": "聞く → 考える → 話す",
+   "gist": "送信する前に聞き、言うことを決めてから話す（AIM 4-2-2）。操縦が最優先で、学生操縦士は最初の呼び出しで “student pilot” と名乗るとよい（AIM 4-2-4 c）。",
+   "issues": [
+    "図がない。PTT のタイミング（聞く数秒 → 押す → 一呼吸 → 話す → 離す → 数秒待つ）は時間の流れの図にすると分かりやすい。",
+    "bk.key「「聞く」が 7 割」は出典のない数字。key は読み上げられるので、根拠のない割合は避け「送信の前に必ず聞く」のような事実にする。",
+    "「Aviate → Navigate → Communicate」を日本語（English）で説明していない（初出ルール）。しかも hf（book-2.js の作業の優先順位）・emg.basic・comm.xpdr と重複。ここでは 1 行＋{ch:emg} への参照にする。",
+    "student pilot の段落は正しい（AIM 4-2-4 c の例 “Dayton tower, Fleetwing One Two Three Four, student pilot.”）。AIM は FSS への最初の交信も挙げている（“…or FSS contact”）。語 'student pilot' は FLIGHT LAB テストの必須語なので残す。",
+    "radio.js の 1 回の飛行では student pilot を名乗るのは Ground の最初の呼び出しだけ（radio.js:73）。Tower（radio.js:86）・Departure（:98）・Approach（:112）の最初の呼び出しにはない。本文の「それぞれ最初の交信で言うのがよい」と練習ページが食い違う。"
+   ],
+   "mainFigure": "radioTalkTimeline：横の時間軸「聞く（数秒）→ 考える・メモ → PTT を押す → 一呼吸 → 話す → 離す → 数秒待つ → 相手の応答」。下に「操縦（Aviate）が先」の帯。"
+  },
+  {
+   "id": "radio.listen",
+   "title": "日本語話者のための聞き取りのコツ",
+   "gist": "交信は型が決まっているので、自分のコールサインを待つ・次の言葉を予想する・数字を書き取る・紛らわしい語を知る・聞き直す・声に出す、で聞き取れる量が増える（教材としての学習のコツ）。",
+   "issues": [
+    "図がない。1 つの指示を「コールサイン／滑走路／経路／hold short／周波数／コード」に色分けし、ひざ板の書き方（36 / A / HS C / 119.75 / 4271）を並べた図があると、①②③のコツが一目で分かる。",
+    "④「管制は 15 を「one five」と 1 桁ずつ言うので「fifteen / fifty」の混同は起きにくい」は不正確：管制官は分かりやすくするため数字をまとめた形で言い直してよい（JO 7110.65 2-4-18、例 “One Seven Thousand, Seventeen Thousand”）。エアラインのコールサインもまとめた形（AIM 4-2-4：United Twenty-Five）。",
+    "⑤「Verify, was that for Archer Seven Lima Alpha?」は標準の言い方ではない。AIM 4-2-4 の言い方 “Verify clearance for (complete call sign)” に合わせる（comm.callsign・comm.clarify と同じ言い方に）。",
+    "⑤「Say again, slowly」は PCG の用語ではない（ICAO・英国は “speak slower”）。AIM 4-2-1 の「伝わるのに必要な言葉は使ってよい」の範囲として「標準語ではないが通じる」と書く。",
+    "⑥「この教材の「英語交信」ページの台本を…」は CADET で落ちる（APP_ONLY '「英語交信」ページ'）。表の中に置かず、bk.sim の箱に移す。",
+    "bk.sim の文「英語交信のページで、1 回の飛行の交信を音声つきで…（メニュー → 英語交信）」と、そのボタン（t2「場周経路」を始める）が合っていない。t2 の最初の手順は着陸許可の復唱を 1・2・3 キーで選ぶ問題（school.js:122 ATC_Q.landing、app.js:99）。t1 は離陸許可の復唱（school.js:119）。文で両方を説明するか、ボタンを t1 にする。英語交信ページのタブ名は「1 回の飛行／復唱と応答／数字とアルファベット／聞き取り／用語集」（pages.js:610）。",
+    "「Say again」「cleared for takeoff」（小文字）は FLIGHT LAB テストの必須語。書き直しでも残す。"
+   ],
+   "mainFigure": "radioCallAnatomy：radio.js の Ground の指示 “Archer Seven Lima Alpha, LAB Ground, runway three six, taxi via Alpha, hold short of taxiway Charlie. Departure frequency one one niner point seven five, squawk four two seven one.” を色分けした帯と、その下のひざ板メモ「36 / A / HS C / 119.75 / 4271」。"
+  }
+ ],
+ "problems": {
+  "unclear": [
+   "radio.why：「管制の種類と呼び方」の表に管制でないもの（ATIS・CTAF・UNICOM・MULTICOM）が混ざる。見出しを「話す相手（局）」に。",
+   "radio.why：「AIM（FAA の公式マニュアル）」— FAA の初出説明がない。",
+   "radio.why：Clearance Delivery「出発の許可」— VFR の初心者は「離陸許可」と混同しやすい。VFR では「出発の指示（周波数・コード）」と書く。",
+   "radio.equip：「2 機が同時に送信すると両方とも聞こえない（「ブロック」）」— 何がどう聞こえるのか（キーン音・片方だけ）と、送信した本人は気づかないことを書く。",
+   "radio.technique：Aviate → Navigate → Communicate の日本語がない。",
+   "radio.listen：⑤ の言い方が comm.callsign（Verify clearance for）と違い、どちらを使えばよいか迷う。"
+  ],
+  "order": [
+   "radio.why：図（1 回の飛行のリレー）→ 主な 4 つの局 → ほかの局の短い表 → 呼び方（場所＋局の種類、AIM 4-2-6）の順に。",
+   "radio.equip：実際の操作順（予備に合わせる → ⇄ → MIC を選ぶ → PTT・話し方 → 待つ → 返事がないときの確認 → 見通し距離）に並べ替える。",
+   "radio.technique：student pilot の段落は radio3 comm.pattern の最初の呼び出しの例と結びつけ、{ch:radio3} を参照する。"
+  ],
+  "errors": [
+   "radio.listen ⑤「Verify, was that for Archer Seven Lima Alpha?」→ AIM 4-2-4 a の言い方は “VERIFY CLEARANCE FOR (your complete call sign)” (https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html)",
+   "radio.listen ④「管制は 15 を「one five」と 1 桁ずつ言うので…混同は起きにくい」→ 管制官は数字をまとめた形で言い直すことがある（JO 7110.65 2-4-18 Number Clarification）、エアラインのコールサインはまとめた形（AIM 4-2-4） (https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap2_section_4.html)",
+   "radio.why Clearance Delivery「エンジン始動の前後」→ AIM 4-3-14：出発機は Clearance Delivery / Ground に “prior to starting engines”（エンジン始動の前）に交信する (https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html)"
+  ],
+  "outdated": [
+   "なし（実質的な古さはない）。本文の AIM 段落番号 4-2-1・4-2-2・4-2-4・4-2-6・4-3-2・4-3-14・4-3-21 は、現行の AIM（2026-07-09 発効 Change 3）と一致。現行 AIM では 4-3-20 が新しく「Standard Taxi Routes」になり、「Exiting the Runway After Landing」は 4-3-21（quiz Q2 の 4-3-21 は正しい）。古い版の番号（4-3-20）に戻さないこと。 https://www.faa.gov/air_traffic/publications/atpubs/aim_html/",
+   "参考：refs の ANA のページ（R.ana1）は交信の技術とは関係が薄く、CADET では実名として落ちる。intro 章へ移すか削除。"
+  ],
+  "duplicates": [
+   "radio.why の局の表 ↔ radio4（comm.atis〜comm.arrive）と radio.js FLIGHT（1 回の飛行）。radio1 は「誰と話すか」の全体図だけにし、具体的な交信は radio4 へ。",
+   "radio.technique の Aviate → Navigate → Communicate ↔ hf（book-2.js:119–120）・emg.basic（book-3.js:188–190）・comm.xpdr（book-comm.js:350）。",
+   "radio.technique の student pilot ↔ radio3 comm.pattern・radio4 comm.dep（使い方の例）。radio1 は意味と理由、radio3/4 は例、と役割を分ける。",
+   "radio.listen ⑤（Say again・Verify）↔ radio3 comm.clarify。",
+   "radio.why の CTAF / UNICOM / MULTICOM ↔ radio5 comm.ctaf。"
+  ],
+  "numbers": [
+   "COM の範囲・間隔「118.000〜136.975 MHz・25 kHz」は avionics.js:32（COM_MIN 118000 / COM_MAX 136975 / COM_STEP 25）と一致。",
+   "練習用周波数：avionics.js:120 の初期値 COM1 118.300 ⇄ 121.700 は radio.js の Tower 118.3 / Ground 121.7 と一致。図に使うならこの値を使う。",
+   "student pilot：本文（radio.technique）は Clearance・Ground・Tower・Departure/Approach の各最初の交信で名乗るとするが、radio.js FLIGHT は Ground（radio.js:73）だけ。Tower（:86）・Departure（:98）・Approach（:112）・帰りの Tower（:120）にはない。",
+   "radio.listen の bk.sim は t2 を開くが、文は英語交信ページの説明（pages.js:47 のメニューのタイル「英語交信」、pages.js:610 のタブ）。"
+  ]
+ },
+ "policy": "4 つの節（radio.why → radio.equip → radio.technique → radio.listen）の id と順番はそのままにし、新しい節は作らない。radio.why は最初に「1 回の飛行で話す相手のリレー」の図を置き、主な 4 つの局（ATIS・Ground・Tower・Departure/Approach）を先に説明する。Clearance Delivery・Center・Flight Service・CTAF/UNICOM は短い表にまとめ、CTAF の詳細は radio5 comm.ctaf に任せる（語 'CTAF' は残す）。radio.equip は実際の操作順（予備に合わせる → ⇄ → MIC を選ぶ → PTT・一呼吸・話す → 離して待つ → 返事がないときの確認）に並べ替え、オーディオパネルの図を最初に置く。見通し距離の数字は「目安（推定）」として 2 枚目の図に入れる。radio.technique では出典のない「7 割」を削り、Aviate/Navigate/Communicate は 1 行＋{ch:emg} にする。student pilot（AIM 4-2-4 c）は残す。radio.listen は「教材としての学習のコツ（bk.est）」と明記し、⑤ を AIM の “Verify clearance for …” に直し、bk.sim の文をボタンに合わせる。FLIGHT LAB テスト（flight.test.mjs:342–343）は radio1〜radio5 の本文全体に 'student pilot'・'CTAF'・'Say again'・'cleared for takeoff'（小文字）などを求め、/gusts/i を禁止しているので、radio1 にいまある語は書き直しでも残す。",
+ "figuresExisting": [
+  {
+   "key": "bk.t（radio.why：局の表 8 行）",
+   "verdict": "fix",
+   "why": "SVG の図ではなく表。主な 4 局とそのほかに分ける。見出しを「話す相手（局）」に、露点の追加、Clearance Delivery の説明の修正（AIM 4-3-14・TBL 4-2-6）、“Orlando Radio” を AIM の例か架空の局名に。"
+  },
+  {
+   "key": "bk.t（radio.listen：聞き取りのコツ 6 行）",
+   "verdict": "fix",
+   "why": "表は有効。④（まとめた形の言い直し、JO 7110.65 2-4-18）と ⑤（Verify clearance for）を直し、⑥（英語交信ページ）は CADET で落ちるので bk.sim に移す。"
+  },
+  {
+   "key": "（SVG の図なし）",
+   "verdict": "redo",
+   "why": "radio1 の 4 節には FIG の SVG が 1 枚もない（render-ch.mjs で <svg> 0 個）。CADET の教室の画面に出す最初の図がない。下の新しい図を各節の最初に置く。"
+  }
+ ],
+ "figuresNew": [
+  {
+   "name": "radioRelay",
+   "section": "radio.why",
+   "what": "1 回の飛行の局のリレー（模式図）：駐機場 → 誘導路 A → 滑走路 36 → 出発 → 北東の訓練空域 → 帰り → 左場周 → 駐機場。区間を色分けし、局名と練習用周波数・「いつ切り替えるか」（contact ground は管制塔に言われてから等）を付ける。「模式図・架空の LAB・NOT FOR NAVIGATION」。viewBox 幅 360–440・文字 12 以上。",
+   "data": "radio.js FLIGHT[].freq（LAB Ground 121.7・LAB Tower 118.3・LAB Departure 119.75・LAB ATIS → LAB Approach）と avionics.js:120（COM1 118.300 / 121.700）。book は radio.js より先に読み込まれ、CADET の一部のテストは radio.js を読み込まないので、値は図の中に持つか FL.radio がないときの代わりを用意する。",
+   "priority": "must"
+  },
+  {
+   "name": "radioAudioPanel",
+   "section": "radio.equip",
+   "what": "G1000 型の COM 窓（COM1 118.300 ⇄ 121.700、COM2 126.950 ⇄ 120.100）とオーディオパネル（MIC：COM1 / COM2、受信：COM1・COM2・NAV1・NAV2）。「COM2 に合わせたのに MIC は COM1」の失敗を赤で示し、①予備に合わせる ②⇄ ③MIC を選ぶ の番号を付ける。",
+   "data": "avionics.js:120–122（com1・com2 の初期値、audio.mic 'COM1'、monitor COM1 だけ ON）、app.js:562–576（パネルのボタンの並び）。",
+   "priority": "must"
+  },
+  {
+   "name": "radioLineOfSight",
+   "section": "radio.equip",
+   "what": "地球の丸みと山の陰で VHF が届かない様子。高度 1,000 / 3,500 / 10,000 ft の機の電波の見通し距離の目安（約 39 / 73 / 123 NM）と、山の陰の機は届かないこと。「目安（推定）・地形や地上局で変わる」と書く。",
+   "data": "電波の見通し距離の近似 d[NM] ≈ 1.23×√h[ft]（一般的な近似式、bk.est）。AIM 4-2-2 f（高いほど VHF の見通しの距離が増える）は定性的な根拠。",
+   "priority": "should"
+  },
+  {
+   "name": "radioTalkTimeline",
+   "section": "radio.technique",
+   "what": "送信のタイミングの時間軸：聞く（周波数を変えたら数秒）→ 考える・メモ → PTT を押す → 一呼吸 → 話す（ふつうの声、マイクは唇の近く）→ 離す → 数秒待つ → 応答。下に「操縦が先（Aviate）」の帯と「忙しければ Stand by」。",
+   "data": "AIM 4-2-2 a–d の順番（秒数は書かず「数秒」）。",
+   "priority": "should"
+  },
+  {
+   "name": "radioCallAnatomy",
+   "section": "radio.listen",
+   "what": "Ground の指示 1 本を色分け（コールサイン／局名／滑走路／経路／hold short／出発周波数／コード）し、下にひざ板の書き方「36 / A / HS C / 119.75 / 4271」と、聞き取れなかった部分だけを聞く “Say again all after …” の例。",
+   "data": "radio.js:75（GND の指示）・radio.js:77（復唱）。",
+   "priority": "must"
+  }
+ ],
+ "photos": [
+  {
+   "section": "radio.why",
+   "subject": "空港の管制塔（外観、人の顔なし）",
+   "search": "Wikimedia Commons: Category:Airport traffic control towers in the United States / Category:Orlando Sanford International Airport; FAA の画像（米国政府、パブリックドメイン）",
+   "candidateUrl": "",
+   "candidateLicence": "要確認（PD-USGov-FAA か CC BY / BY-SA のみ）",
+   "why": "Tower（飛行場管制）が「滑走路が見える建物」から管制していることを一目で示す。"
+  },
+  {
+   "section": "radio.equip",
+   "subject": "マイク付きの航空用ヘッドセット（ブームマイクが唇の近く）、顔が写らないもの",
+   "search": "Commons: Category:Aviation headsets; NASA Image and Video Library: \"pilot headset\"",
+   "candidateUrl": "",
+   "candidateLicence": "要確認（メーカーの宣伝写真は不可）",
+   "why": "「マイクは唇のすぐ近く」（AIM 4-2-2 c）を形で見せる。"
+  },
+  {
+   "section": "radio.equip",
+   "subject": "操縦輪の PTT（送信ボタン）のアップ。計器の画面が主役にならないもの",
+   "search": "Commons: Category:Control yokes / Category:Push-to-talk; 小型機の操縦輪（yoke）の写真",
+   "candidateUrl": "",
+   "candidateLicence": "要確認（計器画面の写真・訓練校の写真は不可）",
+   "why": "PTT がどこにあり、親指で押すことを示す。"
+  },
+  {
+   "section": "radio.technique",
+   "subject": "ひざ板（kneeboard）とメモ",
+   "search": "Commons: Category:Kneeboards; DVIDS / U.S. Navy・USAF の kneeboard の写真（PD、顔が写らないもの）",
+   "candidateUrl": "",
+   "candidateLicence": "要確認",
+   "why": "「長い内容は書いておく」（AIM 4-2-2 b：jot it down）の道具を見せる。"
+  }
+ ],
+ "endMatter": {
+  "terms": [
+   "Radiotelephony / 無線電話（音声の交信） — そのまま",
+   "Air traffic control (ATC) / 航空交通管制 — そのまま",
+   "ATIS / 飛行場情報の自動放送 / AIM 4-1-13 — 備考に出典を付ける",
+   "Clearance Delivery / 出発の指示（周波数・コード）の伝達 — 「出発許可の伝達」を直す",
+   "Ground / Tower / 地上管制・飛行場管制 — そのまま",
+   "Departure / Approach / 出発管制・進入管制 / レーダー — そのまま",
+   "Center / 航空路管制 — そのまま",
+   "Flight Service Station (FSS) / \"Radio\" / 飛行情報業務 — 例は “Chicago Radio”（AIM TBL 4-2-6）",
+   "追加：Active / Standby（使用中・予備の周波数）",
+   "追加：Audio panel・MIC（送信機の選択）",
+   "PTT (push-to-talk) / 送信ボタン — そのまま",
+   "追加：Line of sight / 見通し距離 / AIM 4-2-2 f",
+   "Stuck mike / 押しっぱなしのマイク / AIM 4-2-2 e",
+   "追加：Blocked（同時送信で聞こえない）",
+   "Student pilot / 学生操縦士（最初の交信で名乗る） / AIM 4-2-4 c — 段落の小項目まで書く"
+  ],
+  "examples": [
+   "そのまま：離陸前に Tower に変えた → 5 秒ほど聞いてから “LAB Tower, Archer Seven Lima Alpha, holding short runway three six, ready for departure”（学生のうちは student pilot を入れる例にする：AIM 4-2-4 c）。",
+   "そのまま：返事がない → 音量・周波数・MIC・スタックマイクを確認 → もう一度短く呼ぶ（AIM 4-2-3 “keep the next contact short”）。",
+   "追加：COM2 に 119.75 を入れて呼んだが返事がない → オーディオパネルを見ると MIC が COM1 のまま → MIC を COM2 にして呼び直す。"
+  ],
+  "cautions": [
+   "そのまま：周波数・LAB 空港・コールサインは架空。実際の周波数は最新のチャートと Chart Supplement で確認する。",
+   "そのまま（FLIGHT LAB のみ）：この教材は実際の管制につながらず、音声を送信しない。",
+   "追加：実機の無線機・オーディオパネルの操作は、その機体の POH/AFM・機器の説明書と教官の指示が優先。",
+   "追加：Jacksonville Center などの実在の局名は説明のための例。"
+  ],
+  "quizReview": [
+   "Q1：keep（周波数を変えた直後に聞く＝AIM 4-2-2 a “If you have just changed frequencies, pause, listen…”）。",
+   "Q2：keep（Ground。AIM 4-3-14「着陸した機は言われるまで Ground に変えない」と 4-3-21 Exiting the Runway After Landing。現行 AIM の番号どおり）。why に 4-3-14 も添えるとよい。",
+   "Q3：keep（AIM 4-2-4 c Student Pilots Radio Identification）。"
+  ],
+  "quizProposals": [
+   {
+    "q": "地上局の正しい呼び方は？（AIM 4-2-6）",
+    "choices": [
+     "LAB Ground",
+     "Ground LAB",
+     "Ground station, LAB",
+     "LAB airport ground control"
+    ],
+    "answer": 0,
+    "why": "AIM 4-2-6：地上局は「場所の名前＋局の種類」で呼ぶ（例：Miami Ground、St. Louis Departure）。"
+   },
+   {
+    "q": "COM2 に出発管制の周波数を合わせて呼んだのに返事がない。オーディオパネルでまず確かめるのは？",
+    "choices": [
+     "MIC（送信）が COM2 になっているか",
+     "NAV1 の受信ボタン",
+     "トランスポンダーのコード",
+     "高度計の設定"
+    ],
+    "answer": 0,
+    "why": "送信は MIC で選んだ無線機から出る。COM2 に合わせても MIC が COM1 のままなら、COM1 の周波数で送信している。"
+   },
+   {
+    "q": "VHF の無線が届く距離について正しいのは？（AIM 4-2-2）",
+    "choices": [
+     "高く飛ぶほど遠くまで届く",
+     "低く飛ぶほど遠くまで届く",
+     "山の陰でもよく届く",
+     "高度に関係なく同じ"
+    ],
+    "answer": 0,
+    "why": "VHF は見通しの距離でしか届かない。AIM 4-2-2 f：高度が高いほど VHF の見通しの距離が増える。"
+   },
+   {
+    "q": "PTT を押してすぐに話し始めると、何が起こりやすい？（AIM 4-2-2）",
+    "choices": [
+     "最初の言葉が切れて送信されない",
+     "声が大きくなりすぎる",
+     "周波数が変わる",
+     "トランスポンダーが IDENT になる"
+    ],
+    "answer": 0,
+    "why": "AIM 4-2-2 c：ボタンを押したあと一呼吸おくと、最初の言葉が確実に送信される。"
+   }
+  ],
+  "refs": [
+   "keep：FAA AIM 4-2 https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html（現行：2026-07-09 発効 Change 3）",
+   "keep：FAA AIM 4-3 https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html（4-3-2・4-3-14・4-3-21）",
+   "keep：FAA Pilot/Controller Glossary https://www.faa.gov/air_traffic/publications/atpubs/pcg_html/",
+   "add：FAA AIM 4-1（4-1-13 ATIS） https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html",
+   "add：FAA Advisory Circular 90-50D（民間の VHF 管制周波数 118.000–136.975 MHz） https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_90-50D.pdf",
+   "remove：R.ana1（ANA のページ）— 無線の技術の出典ではなく、CADET では実名として落ちる。intro 章へ。"
+  ]
+ },
+ "appMismatches": [
+  "flight-lab/src/book-comm.js:64（radio.listen の bk.sim）— 文は「英語交信のページ（メニュー → 英語交信）」だが、ボタンは飛行課目 t2 を始める（book-core.js:81 → pages.js:353 app.startLesson）。t2 の最初の手順は着陸許可の復唱を 1・2・3 キーで選ぶ（school.js:122、app.js:99）。どちらも正しいが文とボタンが別のもの — 文を書き直して両方を説明するか、離陸許可の復唱がある t1（school.js:119）を勧める。",
+  "flight-lab/src/radio.js:86・98・112・120 — Tower・Departure・Approach の最初の呼び出しに “student pilot” がない。book（radio.technique）と AIM 4-2-4 c は各施設の最初の交信で名乗ることを勧める — AIM・本書が正しい。radio.js は変更しないので、本文で「練習ページの例では Ground だけで名乗っている」と断るか、例文の扱いを合わせる。",
+  "flight-lab/src/book-comm.js:45（radio.equip「この教材の中央のオーディオパネル」）— app.js:562–576 と avionics.js:122 のパネル（COM1 MIC / COM2 MIC、受信 COM1・COM2・NAV1・NAV2、⇄）と一致。問題なし。",
+  "flight-lab/src/book-comm.js:39（「118.000〜136.975 MHz」「25 kHz 間隔」）— avionics.js:32 と一致。問題なし。"
+ ],
+ "factChecks": [
+  {
+   "claim": "交信で最も大切なのは理解。短く、でも伝わらなければ必要な言葉を使う。俗語・CB 無線のような言い方は使わない（AIM 4-2-1）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-1 b・c（“Jargon, chatter, and ‘CB’ slang have no place…”）。"
+  },
+  {
+   "claim": "地上局は「場所の名前＋局の種類」（Miami Ground、St. Louis Departure、Washington Center）（AIM 4-2-6）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "現行の表番号は TBL 4-2-6。FSS の例は “Chicago Radio”。"
+  },
+  {
+   "claim": "到着の最初の呼び出しは 15 NM ほど手前（AIM 4-3-2）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html",
+   "note": "AIM は “about 15 miles from the airport”。"
+  },
+  {
+   "claim": "Clearance Delivery は「エンジン始動の前後」に",
+   "verdict": "imprecise",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html",
+   "note": "AIM 4-3-14 a：出発機は ground control / clearance delivery に “prior to starting engines” 交信する。"
+  },
+  {
+   "claim": "航空機の通信は VHF 118.000〜136.975 MHz、25 kHz 間隔",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_90-50D.pdf",
+   "note": "AC 90-50D は 118.000–136.975 MHz・25 kHz の割り当てを説明（古い AC だが範囲は今も同じ）。欧州は 8.33 kHz 間隔が広く使われる。"
+  },
+  {
+   "claim": "VHF は見通し、高いほど遠くまで届く（AIM 4-2-2）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-2 f “higher altitudes increase the range of VHF ‘line of sight’ communications.”"
+  },
+  {
+   "claim": "マイクは唇の近く、押してから一呼吸、ふつうの声、離したら数秒待つ（AIM 4-2-2）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-2 c・d。"
+  },
+  {
+   "claim": "スタックマイク：音量・周波数・押しっぱなしを確かめる（AIM 4-2-2）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-2 e（“stuck mike”）。"
+  },
+  {
+   "claim": "2 機が同時に送信すると両方とも聞こえない",
+   "verdict": "imprecise",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-2 a は「話している人がいるときに送信すると相手の受信をふさぐ（jam）」。周りにはキーン音や強いほうだけが聞こえることもある。"
+  },
+  {
+   "claim": "送信前に聞く、周波数を変えたら聞く、長い内容は書いておく（AIM 4-2-2）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-2 a・b。"
+  },
+  {
+   "claim": "学生操縦士は最初の呼び出しで “student pilot” と名乗る（AIM 4-2-4）、例 “Dayton tower, Fleetwing One Two Three Four, student pilot.”",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-4 c Student Pilots Radio Identification。clearance delivery・ground・tower・approach/departure・FSS の最初の交信で、と勧めている。"
+  },
+  {
+   "claim": "着陸後は「contact ground」と言われてから Ground に変える（quiz Q2：AIM 4-3-21）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html",
+   "note": "AIM 4-3-14 c（“should not change … until directed”）と 4-3-21 Exiting the Runway After Landing（現行の番号。4-3-20 は Standard Taxi Routes）。"
+  },
+  {
+   "claim": "管制は 15 を one five と 1 桁ずつ言うので fifteen / fifty の混同は起きにくい",
+   "verdict": "imprecise",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap2_section_4.html",
+   "note": "JO 7110.65 2-4-17 は 1 桁ずつだが、2-4-18 はまとめた形での言い直しを認める。エアラインのコールサインはまとめた形（AIM 4-2-4）。"
+  },
+  {
+   "claim": "自分宛てか不安なら “Verify, was that for Archer Seven Lima Alpha?”",
+   "verdict": "wrong",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-4 a の言い方は “VERIFY CLEARANCE FOR (your complete call sign)”。"
+  },
+  {
+   "claim": "Flight Service の例 “Orlando Radio”",
+   "verdict": "unverified",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "Sanford 付近の FSS の呼び名は確認できなかった。AIM の例 “Chicago Radio” か架空の名前を使う。"
+  },
+  {
+   "claim": "AIM の版",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/",
+   "note": "現行は 2026-07-09 発効の Change 3。本文の 4-2・4-3 の段落番号はこの版と一致。"
+  }
+ ],
+ "cadetNotes": [
+  "radio1 の 4 節には <svg> が 1 枚もない（render-ch.mjs で確認）。CADET は各節の最初の <svg> を教室の画面に出す（cadet/test/content.test.mjs:103–107）ので、新しい図はそれぞれの節の最初に一番大切なものを置く（radioRelay・radioAudioPanel・radioTalkTimeline・radioCallAnatomy）。",
+  "CADET の一部のテスト（content.test.mjs:23、english.test.mjs:32、cockpit-talk.test.mjs:90）は radio.js を読み込まずに本を読み込む。図が FL.radio（FLIGHT・ALPHA）を参照するなら、ないときでも描けるようにする。",
+  "radio.equip「この教材の中央のオーディオパネルも同じ配置です（送信はできません）。」は APP_ONLY（cadet/src/content/book.js:15 'オーディオパネルも同じ配置'）で落ちる。前後の文とつなげず、独立した 1 文にする。",
+  "radio.listen の表の ⑥「この教材の「英語交信」ページの台本を…」は APP_ONLY '「英語交信」ページ' に当たる。表の中ではなく bk.sim の箱に移す（bk.sim は CADET で丸ごと消える）。",
+  "radio.listen の bk.sim「（メニュー → 英語交信）」は CADET で消える（'メニュー →'）。消えても文章が成り立つように、本文側に必要なことを書かない。",
+  "refs の R.ana1（ANA）は実名（REAL_NAMES）。radio1 から外す。",
+  "「G1000 では」→「G1000 型の表示では」（本書のルール）。"
+ ]
+}

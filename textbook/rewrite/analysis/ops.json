@@ -1,0 +1,275 @@
+{
+  "id": "ops",
+  "title": "基本操縦：姿勢・出力・トリムと空中操作",
+  "sections": [
+    {
+      "id": "ops.trim",
+      "title": "姿勢＋出力＝性能、そしてトリム",
+      "gist": "Set a pitch attitude and a power setting and the airplane settles at a predictable speed and climb/descent rate; when it has settled, trim removes the control force — trim is the last step, never the steering tool.",
+      "issues": [
+        "The attitude/power table is hard-coded text (only the speeds come from AR) and several values contradict the flight model's own steady states (FL.physics.steadyState, pa28, 3,000 ft = the lessons' altitude): Vy pitch 「約 +7〜9°」 → model +9.7° (+10.7° at sea level); cruise 「スロットル 79%」 is AR.cruiseThr (a propeller-design constant), the model needs 76% (68% at sea level) for 110 kt level — the rpm 「約 2,400」 is right (2,401); cruise descent 「100 kt・約 −2〜−3°・約 2,000 rpm」 → model −1.3°, ≈1,950 rpm, and lesson a3 / pages.js use 90 kt −500 fpm (model −0.4°, 26%, ≈1,760 rpm); approach flaps 40° 70 kt −370 fpm 「約 −2°・約 1,500 rpm」 → model −3.0°, 55%, ≈2,060 rpm. Compute the table from steadyState like book-1.js perf.climb and pages.js:466-475 do.",
+        "No figure: the core idea (same airplane, 4 attitude+power pairs → 4 performances) is visual. CADET shows nothing on the classroom screen.",
+        "Key 1 「速度は主にピッチで、上昇・降下は主に出力で（安定した状態では両方が関係する）」 — the parenthesis confuses beginners; AFH 3C ch. 3 simply says climb at fixed climb power and control airspeed with pitch; in slow flight pitch controls airspeed and power the path (ch. 5). Say it plainly and keep the nuance for ops.slow.",
+        "「見る → 変える → 待つ → 確かめる → トリム」 is good but not tied to AFH: AFH 3C ch. 3 — establish the attitude, hold it with control pressure, then trim the pressure out; 'attempting to fly the airplane with the trim is a common fault'. Cite it.",
+        "Sim paragraph (class mute): mentions only the pitch hold (S / W) and T. Current app defaults (app.js:33 PREFS0): bank hold ON (rhold 'hold', A / D release holds the bank), auto-rudder ON (autoRud true; U toggles), level 導入 (tolerances ×1.5). Students will never feel the right-rudder need described in ops.climb unless they switch auto-rudder OFF — say so in the sim box.",
+        "No bk.aim purpose line; PHAK-style 4 components of attitude control (pitch, bank, power, trim — AFH 3C ch. 3) not named, which is the natural lead-in."
+      ],
+      "mainFigure": "「同じ飛行機・4 つの姿勢と出力」: four small side views of the Archer on one horizon line — 巡航 110 kt: ピッチ +0.6°・出力 76%（≈2,400 rpm）・0 fpm; 上昇 Vy 76 kt: +9.7°・全開・≈+660 fpm; 降下 90 kt: −0.4°・26%（≈1,760 rpm）・−500 fpm; 進入 70 kt フラップ 40°: −3.0°・55%（≈2,060 rpm）・−370 fpm. All numbers computed at draw time from FL.physics.steadyState (altFt 3000); caption 教材モデルの計算値（実機は POH）."
+    },
+    {
+      "id": "ops.sl",
+      "title": "直線水平飛行",
+      "gist": "Hold altitude, heading and airspeed at once by keeping the nose at its usual place on the horizon with wings level, setting cruise power, trimming, and making small corrections checked on the instruments.",
+      "issues": [
+        "「機首（カウリングの上端）と水平線の位置関係を覚えます」 — the whole method is a sight picture, but there is no drawing (AFH 3C Figs. 3-6/3-7/3-8 nose and wingtip references).",
+        "「目の大部分は外へ」 — AFH 3C ch. 3 gives a number: about 90% outside, no more than about 10% inside. Use it (the app's a2 'why' says 「外 8 割・計器 2 割」, syllabus.js:107 — see appMismatches).",
+        "Table row 「この教材の「精度」 ±50 ft・±5°・±5 kt」 is wrong for the app: school.js:28 precision k = 0.6 × basic → ±60 ft, ±6°, ±6 kt. The default level is 導入 (app.js:33) = ×1.5 → ±150 ft, ±15°, ±15 kt, which the table omits.",
+        "「高度 100 ft のずれなら、ピッチを 1〜2° だけ変える」 vs the app's guidance 「高度が 50 ft ずれたら機首を 1〜2° 動かして戻す」 (school.js:47, syllabus a2 brief) — align on one rule.",
+        "The FLIGHT LAB level rows (基礎／精度) are app concepts that CADET will show as if they were standards; move them into the bk.sim box and keep the table to the ACS reference (Private PA.VIII.A ±200 ft/±20°/±10 kt) plus a sentence on why the course practises tighter values.",
+        "Numbered steps are fine; add trim ('速度が落ち着いたらトリム') link back to ops.trim and the rule 'wings level first' already in key 1 (good)."
+      ],
+      "mainFigure": "Sight picture over the cowling (drawing, not a photo of instruments): the horizon line a fixed gap above the cowling top for level flight; small insets for climb (horizon lower on the windshield) and descent (higher), plus a front view showing both wingtips equally above/below the horizon = wings level (AFH 3C Figs. 3-6/3-7 redrawn)."
+    },
+    {
+      "id": "ops.climb",
+      "title": "上昇・降下・レベルオフ",
+      "gist": "Enter a climb by raising the nose to the climb attitude while adding full power, hold Vy 76 kt with pitch (right rudder), level off starting 10% of the vertical speed early, and descend by reducing power, leveling off with the same 10% lead.",
+      "issues": [
+        "「上昇の始め方（PAT）：Pitch → Power → Trim」 — AFH 3C ch. 3 says the pitch is raised 'while simultaneously increasing engine power to the climb power setting'; PAT is an instructor mnemonic. Present it as 「機首を上げながら出力を全開（ほぼ同時）→ 落ち着いたらトリム」.",
+        "No altitude-vs-time picture of the level-off lead — the 10% rule is much easier as a profile drawing.",
+        "Descent speed is not given; lesson a3 uses 90 kt and −500 fpm (syllabus.js:111-118) and pages.js uses the same case. State 「90 kt・約 500 fpm」 as the course value.",
+        "Key 2 「自家用 ACS の通常離陸後の上昇：Vy ＋10／−5 kt」 belongs to ops.takeoff (already in its table, book-3.js:121) — duplicate; replace with a key about the level-off lead.",
+        "「上昇中は高出力・低速なので右ラダーが要ります」 — correct (AFH 3C ch. 3: P-factor and torque; also some right aileron), but in the sim auto-rudder is ON by default (app.js:33) so the effect is hidden; note it in bk.sim.",
+        "Table header 「値（訓練校チェックリスト）」 fine; add that 87 kt is used from 1,000 ft AGL (checklist 'ENROUTE CLIMB (at 1000 AGL)') — already stated; good."
+      ],
+      "mainFigure": "Altitude–time profile: climb at Vy ≈ 660 fpm (steadyState at 3,000 ft) toward 4,000 ft, the level-off starting ≈ 66 ft (10%) below the target, then 'keep climb power until cruise speed → set cruise power → trim'; mirrored descent at −500 fpm with the lead 50 ft above the target. Data: AFH 3C ch. 3 (10% rule, both directions), FL.physics.steadyState."
+    },
+    {
+      "id": "ops.turns",
+      "title": "旋回と急旋回",
+      "gist": "Clear the area, roll in with coordinated aileron and rudder, add a little back pressure (and power in steep turns) to hold altitude, hold the bank against the overbanking tendency at 45°, and roll out half the bank angle before the heading.",
+      "issues": [
+        "FIG.turnTable is the same table that aero.turn already shows (book-1.js aero.turn uses FIG.turnTable) — a duplicate in the middle of a practical section. Link to aero.turn and use the space for a steep-turn figure.",
+        "Va is given only at maximum weight (「Va（Archer 113 kt・最大重量）以下」). The checklist also gives 89 kt at 1,917 lb and the ACS asks for 'maneuvering speed, including the impact of weight changes' (PA.V.A.K2c). Add: lighter airplane → lower Va (aero.vn has both numbers).",
+        "Row 「中程度の旋回 … この教材は ±100 ft・ロールアウト ±10°」 omits the app's bank tolerance (a4 std: バンク 30 ±5°, syllabus.js:124); a5 is flown at 95 kt (syllabus.js:129 setup) — the book should say the course's entry speed.",
+        "Row 「急旋回（事業用）バンク 50°」 is not needed by beginners in a table; one sentence is enough.",
+        "Key 2 「急旋回では外の水平線と機首の位置関係（45° では機首が水平線のどこにあるか）を覚える」 never says where — useless when read aloud. Give it a figure and a concrete key (e.g. 「45° のとき、機首の決めた点を水平線に置き続ける」).",
+        "The AFH correction for a sinking steep turn (reduce bank first, then pull — AFH 3C ch. 3) is only in the end-matter example; it deserves a key point/figure, it is the classic checkride error.",
+        "「バンク 45° を越えるとオーバーバンキング傾向」 — AFH 3C defines steep turns as ≈45° or more and says the airplane keeps rolling unless opposite aileron is held; fine, but explain it with the outside-wing-faster picture already in aero.turn (link).",
+        "bk.sim links a4/a5, but those lessons link aero.turn (and aero.vn), not ops.turns (syllabus.js:124, :129) — see appMismatches."
+      ],
+      "mainFigure": "Steep turn (45°) from the cockpit and from behind: left — the horizon tilted 45° across the cowling with the nose reference point on the horizon; right — rear view with the lift vector (1.41 × weight) split into vertical = weight and horizontal = turning force; boxes: 失速速度 50 → 約 59 kt（√1.41）, Va 113 kt（2,550 lb）・89 kt（1,917 lb）, 高度が下がったら ①バンクを浅く ②引く ③バンクを戻す. Data: FL.physics pa28.v.s1 50, va 113; MGA checklist Va 89 @ 1,917 lb; AFH 3C ch. 3."
+    },
+    {
+      "id": "ops.slow",
+      "title": "低速飛行と失速の練習",
+      "gist": "Fly at a speed just above the stall warning holding altitude and heading (ACS +10/−0 kt), then practise power-off and power-on stalls and the recovery whose first step is always to reduce the angle of attack.",
+      "issues": [
+        "No 「ここが大切」 box at all (the only section of the chapter without bk.key) — CADET falls back to the first two prose sentences, which are long.",
+        "「離着陸の直前・直後はいつもこの速度域」 — overstated: the Archer flies final at 70 kt (checklist) while slow flight in lesson a6 is 58–68 kt. AFH 3C ch. 5: flying at reduced airspeeds is normal in takeoff/departure and approach/landing.",
+        "「ピッチと出力の関係が逆に感じる（後退側）」 — vague. AFH 3C ch. 5: below L/Dmax pitch is the more effective airspeed control and power the path control; speed is unstable (it keeps decaying unless AOA is reduced or power added); more power is needed to fly slower. Use the app's own words 「低速では速度は機首、高度はパワー」 (school.js:52).",
+        "Missing the configuration and target used by the lesson (a6: flaps 25°, 58 kt +10/−0, syllabus.js:131-139) and AFH 3C's target 'about 5–10 knots above the 1G stall speed'.",
+        "Power-on stall row 「離陸・上昇の形態から・同様」 is incomplete: ACS 6C PA.VII.C — takeoff, departure OR cruise configuration and power no less than 65%. Power-off: approach or landing configuration, stabilised descent, heading ±10° straight or bank ≤ 20° ±10° turning, recover promptly after a full stall, then accelerate to Vx/Vy.",
+        "Recovery order in the book (AFH 3C Fig. 5-10: ①迎え角を減らす ②翼を水平 ③出力 ④上昇へ) differs from the app's lesson text (syllabus.js:76-77 and a7 brief :143: ①機首 ②フルパワー ③翼を水平). The book is right per AFH; say that in a trainer roll-level and power come almost together, but the AOA reduction always comes first.",
+        "bk.warn spin: 「FAA の覚え方は PARE（Power idle, Ailerons neutral, Rudder opposite, Elevator forward）」 — wrong attribution: AFH 3C ch. 5 gives a six-step spin-recovery template (Fig. 5-17: idle, ailerons neutral, full opposite rudder, brisk forward elevator, rudder neutral when rotation stops, recover); 'PARE' is an industry mnemonic, not in the AFH. The Archer checklist sequence is quoted correctly. The same spin text is already in aero.stall — keep the procedure in one place.",
+        "The section carries two different lessons' worth of content (slow flight, stalls+spin) with only one table; consider a new section ops.stall (see policy).",
+        "Stall cues (horn, buffet, mushy controls) are only in aero.stall; a one-line reminder helps here."
+      ],
+      "mainFigure": "If ops.stall is created: here a slow-flight speed band (a vertical speed scale, NOT an instrument photo): Vso 45 / Vs1 50 kt (teaching values), the stall-warning zone ≈ 3–4 kt above the stall (model warns at α > α_stall − 0.045 rad), the a6 band 58–68 kt (+10/−0), final 70 kt, Vy 76 kt; label 「失速の 5〜10 kt 上（AFH）」. If ops.slow stays as one section: the stall-recovery template (①機首を下げて迎え角を減らす ②翼を水平（ボールはラダー） ③出力 ④速度が付いたら上昇へ・二次失速に注意) with a side-view airplane."
+    },
+    {
+      "id": "ops.ground",
+      "title": "対地目標操作（風の中で地面に対して飛ぶ）",
+      "gist": "Fly a fixed shape over the ground (rectangular course, S-turns, turns around a point) at 600–1,000 ft AGL by changing bank with groundspeed — steepest downwind, shallowest upwind — while holding ±100 ft and ±10 kt.",
+      "issues": [
+        "Purely geometric maneuvers described only by a 2-column text table — a beginner cannot see why the bank changes; this is the section that most needs figures (AFH 3C Figs. 7-4, 7-5, 7-6).",
+        "Missing the entry rules: ACS 6C PA.V.B.S3 — rectangular course entered 45° to the downwind leg; S-turns entered perpendicular to the reference line; AFH 3C ch. 7: always enter downwind (the steepest bank comes first); avoid banks over 45°; the evaluator chooses at least one of the three maneuvers.",
+        "Safety: 「人家（14 CFR 91.119 の最低安全高度）」 is right; AFH 3C ch. 7 adds concrete numbers (≥ 500 ft above obstructions and 2,000 ft horizontally), avoid congested areas, open-air assemblies and livestock, two 90° clearing turns, a forced-landing field in mind.",
+        "「場周経路（{ch:tl}）で風に合わせて飛ぶ力の基礎」 — good; the rectangular course figure should visibly look like the traffic pattern (link ops.pattern's FIG.pattern).",
+        "The mute note 「この教材にはまだ対地目標操作の課目はありません（未実装）」 is correct (no ground-reference lesson in syllabus.js); keep it in a mute/bk.sim form (CADET drops it)."
+      ],
+      "mainFigure": "Turns around a point, plan view (模式図): a circle of radius 1,200 ft around a point, wind 15 kt from the left, TAS 90 kt; at 4 positions the groundspeed and the bank needed — downwind GS 105 kt → ≈39°, crosswind GS ≈ 89 kt → ≈30°, upwind GS 75 kt → ≈23° (tan φ = GS²/(11.26 r)); entry arrow on the downwind side; 「速いところは深く・遅いところは浅く」."
+    }
+  ],
+  "problems": {
+    "unclear": [
+      "ops.trim key 1 parenthesis 「（安定した状態では両方が関係する）」 leaves a beginner unsure which control does what.",
+      "ops.turns key 2 promises a sight picture 「機首が水平線のどこにあるか」 but never gives it.",
+      "ops.slow 「ピッチと出力の関係が逆に感じる（後退側）」 — 'reversed' what? Explain with the AFH wording or the app's 「速度は機首、高度はパワー」.",
+      "Term 'Back side of the power curve / 出力曲線の後退側' — 「後退側」 is not a common Japanese term; the app says 「バックサイド」 (school.js / syllabus a6). Use 「バックサイド（必要パワー曲線の低速側）」.",
+      "ops.climb 「降下：出力を下げると機首が下がり、速度を保ったまま降下が始まります」 — true only when the airplane is trimmed for that speed; say so (links trim to descent)."
+    ],
+    "order": [
+      "ops.slow mixes slow flight, two stall types, recovery and spin; split stalls into a new section ops.stall (new id) after ops.slow so each has its own first figure.",
+      "Inside ops.turns put the normal-turn technique first, then the steep turn with its figure; drop the duplicated turnTable (link aero.turn).",
+      "The ACS Vy +10/−5 key in ops.climb belongs to ops.takeoff (tl chapter); move/drop."
+    ],
+    "errors": [
+      "ops.slow: 「FAA の覚え方は PARE」 → AFH FAA-H-8083-3C ch. 5 presents a six-step spin recovery template (Fig. 5-17: power idle; ailerons neutral; full opposite rudder; positive, brisk forward elevator; neutralise rudder when rotation stops; return to level flight); 'PARE' does not appear in the AFH (https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf).",
+      "ops.sl table: 「この教材の「精度」 ±50 ft・±5°・±5 kt」 → the app's precision level is 0.6 × basic = ±60 ft・±6°・±6 kt (flight-lab/src/school.js:28; grading at school.js:326-328).",
+      "ops.trim table vs the flight model (FL.physics.steadyState, 3,000 ft): Vy pitch +7〜9° → ≈ +10°; descent 100 kt −2〜−3° → −1.3°; approach flaps 40° 1,500 rpm → ≈ 2,060 rpm (55%); cruise 「スロットル 79%」 → 76% (79% is AR.cruiseThr, not the steady-state throttle)."
+    ],
+    "outdated": [
+      "None: Private ACS FAA-S-ACS-6C and Commercial ACS FAA-S-ACS-7B (both Nov 2023, effective 31 May 2024) are the editions listed on faa.gov on 2026-10-26; AFH FAA-H-8083-3C and PHAK 25C are current. All quoted tolerances were re-checked against the 6C/7B PDFs."
+    ],
+    "duplicates": [
+      "FIG.turnTable shown in both aero.turn and ops.turns (identical).",
+      "Stall recovery steps and the Archer spin-recovery list appear in aero.stall and ops.slow — keep the physics/cues in aero.stall, the procedure in ops.slow/ops.stall.",
+      "Rollout lead 「バンク角の半分」 in aero.turn and ops.turns — fine to repeat once, but keep the same wording.",
+      "ACS Vy +10/−5 in ops.climb key and ops.takeoff table.",
+      "quiz.js:121 (q_ops) 「700 fpm で上昇中、4,500 ft で水平にしたい」 is the same item as chapter quiz Q1 (5,500 ft)."
+    ],
+    "numbers": [
+      "ops.trim (book-3.js:63) vs FL.physics.steadyState pa28 (altFt 3000; sea level in brackets): cruise 110 kt level → thr 76% (68%), 2,401 rpm (2,353), pitch +0.6°; Vy 76 kt full → pitch +9.7° (+10.7°), +663 fpm (+781); 100 kt −500 fpm → thr 37%, 1,947 rpm, pitch −1.3°; 90 kt −500 fpm (a3, pages.js) → 26%, 1,759 rpm, −0.4°; 70 kt flaps idx 3 (label 40°, model 30°) −370 fpm → 55%, 2,063 rpm, −3.0°. Book: Vy +7〜9°, descent −2〜−3°/2,000 rpm at 100 kt, approach −2°/1,500 rpm, cruise 79% — rewrite from the model.",
+      "Vy rotation/climb pitch: syllabus.js takeoffRoll 「機首上げ 約 8〜10°」 and ops.takeoff 「約 8〜10°」 agree with the model (~10°); only ops.trim says +7〜9°.",
+      "ops.sl correction rule 100 ft → 1–2° vs school.js:47 / syllabus a2 brief 50 ft → 1–2°.",
+      "ops.sl table level values vs school.js LEVELS (intro ×1.5 = ±150/±15/±15, basic ±100/±10/±10, precision ×0.6 = ±60/±6/±6).",
+      "Steep turn: book doesn't give the course's 95 kt (syllabus.js:129 a5 setup kt 95; std 45 ±5°, ±100 ft, ±10 kt, rollout ±10°) — consistent with ACS 6C PA.V.A.S5.",
+      "Slow flight: book has no speed; app a6 = flaps 25°, 58 kt +10/−0 (syllabus.js:134). The model's stall speeds (≈50 kt clean, ≈47 kt flaps 25°, ≈45 kt flaps 40°; warning ≈3–4 kt above) agree with FL.physics v.s1 50 / s0 45, so 58 kt is ≈ 11 kt above the flaps-25 stall — near AFH's 5–10 kt.",
+      "Stall at 45° bank: Vs1 50 × √1.414 ≈ 59–60 kt; Va at the sim's mass 1,050 kg (2,315 lb) ≈ 108 kt (113 × √(2315/2550)) — use 'Va 以下' and the checklist pair 113/89.",
+      "Turn table numbers (1.41 G, +19%, 10.9°/s, 888 ft at 100 kt for 45°) are correct (rate = 1,091·tanφ/V, r = V²/(11.26·tanφ)).",
+      "Level-off example 700 fpm → 70 ft is fine; in the lesson (3,000 ft) Vy gives ≈ 660 fpm → ≈ 65 ft."
+    ]
+  },
+  "policy": "Keep the order trim → sl → climb → turns → slow → ground and add one new section ops.stall (失速と回復・スピンの知識) right after ops.slow, so slow flight and stalls each get a first figure; leave ops.slow's id and its bk.sim (a6) in place and move the a7/a8 buttons and the recovery/spin text to ops.stall. Open the chapter with the four components of attitude control (pitch, bank, power, trim — AFH 3C ch. 3) and the 4-state attitude+power figure computed from FL.physics.steadyState at 3,000 ft, so every later number in the chapter comes from the same model the lessons grade. Explain each maneuver as: purpose → figure → 3–6 numbered steps → the ACS tolerance (Private only; one sentence for Commercial) → the course's teaching value (labelled, matching syllabus.js/school.js) → ここが大切. Cut the duplicated turnTable (link aero.turn), the ACS Vy key (lives in ops.takeoff) and the second copy of the spin procedure (keep one, attributed correctly to the checklist and AFH 3C Fig. 5-17; drop 'FAA の覚え方は PARE'). Fix the levels table (±150/±100/±60 …) and move it into the bk.sim box; keep keys and app defaults (pitch/bank hold, auto-rudder ON, level 導入) only in bk.sim / mute paragraphs. In ops.ground add three plan-view figures (turns around a point first, then rectangular course and S-turns) with the ACS entry rules and AFH safety numbers. Keep 「実機は POH/AFM が優先」 for every speed and the note that spins are practised only with an instructor in an approved airplane.",
+  "figuresExisting": [
+    { "key": "turnTable", "verdict": "fix", "why": "Correct numbers but duplicates aero.turn verbatim; in ops.turns replace it by a link to aero.turn and the new steepTurn figure (keep the table in aero.turn only)." },
+    { "key": "(bk.t table) ops.trim 教材の Archer ピッチ／出力／結果", "verdict": "redo", "why": "Hard-coded values contradict the flight model; turn into the attitudePower figure (or a table) computed from FL.physics.steadyState." },
+    { "key": "(bk.t table) ops.sl 基準／高度／針路／速度", "verdict": "fix", "why": "Precision row wrong (±60/±6/±6), intro row missing; keep only the ACS row in the prose and move app levels to bk.sim." },
+    { "key": "(bk.t table) ops.turns 課目／内容／ACS の許容幅", "verdict": "fix", "why": "Add bank ±5° for the 30° turn, the course's 95 kt for the steep turn, Va at two weights; shorten the Commercial row to a sentence." },
+    { "key": "(bk.t table) ops.slow 課目（自家用 ACS）／許容幅・条件", "verdict": "fix", "why": "Complete power-on (65% power; takeoff/departure/cruise) and power-off (bank ≤ 20° ±10°, accelerate to Vx/Vy) conditions; add the course values (flaps 25°, 58 kt)." },
+    { "key": "(bk.t table) ops.ground 操作／内容", "verdict": "replace-by-photo", "why": "Replace by the three plan-view figures (turnsAroundPoint, rectangularCourse, sTurns); a public-domain aerial photo of a field grid can support it." }
+  ],
+  "figuresNew": [
+    { "name": "attitudePower", "section": "ops.trim", "what": "Four side views of the Archer on one horizon: cruise / Vy climb / 90 kt descent / approach flaps 40°, each with pitch°, power % (rpm), speed and vertical speed; arrows 'pitch + power → performance'.", "data": "FL.physics.steadyState(newState pa28, kt, fpm, {altFt:3000, pwr / flaps}) at draw time: 110/0 → +0.6°, 76%, 2,401 rpm; 76 full → +9.7°, +663 fpm; 90/−500 → −0.4°, 26%, 1,759 rpm; 70/−370 flaps 3 → −3.0°, 55%, 2,063 rpm.", "priority": "must" },
+    { "name": "trimSteps", "section": "ops.trim", "what": "Small 5-step strip 見る → 変える → 待つ（数秒）→ 確かめる → トリム, with a yoke-force arrow that disappears at the trim step.", "data": "AFH 3C ch. 3 (establish attitude, hold pressure, then trim; flying with trim is a common fault).", "priority": "nice" },
+    { "name": "levelSightPicture", "section": "ops.sl", "what": "Over-the-cowling view: horizon gap above the cowling for level; insets for climb/descent; wingtips equal for wings level. Drawing only (no instrument screen).", "data": "AFH 3C Figs. 3-6, 3-7, 3-8 (nose and wingtip references); 90% outside / 10% inside.", "priority": "must" },
+    { "name": "levelOffLead", "section": "ops.climb", "what": "Altitude–time profile for climb → level-off (lead 10% of VS) → accelerate → cruise power → trim, and descent → level-off with the same 10% lead.", "data": "AFH 3C ch. 3 p. 3-19 (10% rule, 500 fpm → 50 ft) and descent level-off (1,000 fpm → 100 ft); Vy climb rate from FL.physics.steadyState (≈ 660 fpm at 3,000 ft).", "priority": "must" },
+    { "name": "vxVyPaths", "section": "ops.climb", "what": "Two climb paths over an obstacle: Vx 64 kt (steeper path) and Vy 76 kt (more height per minute); labels in ft per NM and fpm.", "data": "FL.physics.steadyState full power: sea level Vx 694 fpm (≈ 651 ft/NM) vs Vy 781 fpm (≈ 617 ft/NM) — the model's difference is small; coordinate with perf.climb so the figure appears only once.", "priority": "nice" },
+    { "name": "steepTurn", "section": "ops.turns", "what": "Cockpit view at 45° bank (horizon tilted across the cowling, nose reference on the horizon) + rear view with lift split into vertical (= weight) and horizontal; info boxes: 1.41 G, stall 50 → ≈ 59 kt, Va 113 kt (2,550 lb) / 89 kt (1,917 lb), correction order 「①バンクを浅く ②引く ③バンクを戻す」.", "data": "FL.physics pa28.v (s1 50, va 113); MGA checklist (Va 89 @ 1,917 lb); AFH 3C ch. 3 (overbanking, steep-turn recovery sequence).", "priority": "must" },
+    { "name": "rolloutLead", "section": "ops.turns", "what": "Top view of a 360° turn: entry heading, rollout begun 15° early for 30° bank and ≈ 20–22° early for 45° (half the bank), finishing on the entry heading ±10°.", "data": "AFH 3C ch. 3 (lead by one-half the bank angle); ACS 6C PA.V.A.S5 (rollout ±10°); syllabus.js a5 brief 「ロールアウトは 20° 手前から」.", "priority": "should" },
+    { "name": "slowFlightBand", "section": "ops.slow", "what": "Vertical speed scale (drawing, not a PFD photo) for the course Archer: Vso 45 / Vs1 50 (teaching values), stall-warning zone ≈ 3–4 kt above, slow-flight band 58–68 kt (+10/−0), final 70 kt, Vy 76 kt; note 「失速の 5〜10 kt 上（AFH）・速度は機首、高度はパワー」.", "data": "FL.physics pa28.v (s0 45, s1 50, appr 70, y 76); stall warning α > α_stall − 0.045 rad (physics.js:614); syllabus.js:134 a6; AFH 3C ch. 5.", "priority": "must" },
+    { "name": "stallRecoveryTemplate", "section": "ops.stall (new) — or ops.slow", "what": "Four numbered boxes with a side-view airplane: ①機首を下げて迎え角を減らす（警報が止まるまで）②翼を水平（ボールはラダーで）③出力（必要なだけ）④速度が付いたらなめらかに上昇へ（二次失速に注意）; a footnote 「訓練機では ②③ はほぼ同時。いつも ① が先」.", "data": "AFH 3C ch. 5 Fig. 5-10 and text (single-engine trainer uses 4 of the 6 steps); ACS 6C PA.VII.B/C.", "priority": "must" },
+    { "name": "spinRecoverySteps", "section": "ops.stall (new) — or ops.slow", "what": "Six small icons for AFH Fig. 5-17 (idle, ailerons neutral, full opposite rudder, brisk forward elevator, rudder neutral when rotation stops, recover) next to the Archer checklist wording; banner 「スピンの訓練は教官と承認された機体で。実機は POH の手順」.", "data": "AFH 3C ch. 5 (six-step spin recovery); MGA checklist SPIN RECOVERY.", "priority": "should" },
+    { "name": "turnsAroundPoint", "section": "ops.ground", "what": "Plan view, 模式図: circle r = 1,200 ft around a point, wind 15 kt, TAS 90 kt; groundspeed and bank at downwind (105 kt, ≈ 39°), crosswind (≈ 89 kt, ≈ 30°), upwind (75 kt, ≈ 23°); entry from downwind.", "data": "Computed: tanφ = GS²/(11.26·r); AFH 3C ch. 7 (steepest bank downwind, enter downwind, ≤ 45°); ACS 6C PA.V.B (600–1,000 ft AGL, ±100 ft, ±10 kt).", "priority": "must" },
+    { "name": "rectangularCourse", "section": "ops.ground", "what": "Field rectangle with the ground track parallel to its sides, crab angles on the crosswind legs (≈ 10° for 15 kt at 90 kt), entry 45° to the downwind leg, and the matching traffic-pattern leg names (downwind/base/final/crosswind).", "data": "ACS 6C PA.V.B.S3a; AFH 3C Fig. 7-4; WCA = asin(15/90) ≈ 9.6°.", "priority": "should" },
+    { "name": "sTurns", "section": "ops.ground", "what": "Road as reference line, two semicircles of equal radius, bank steepest when heading downwind, reversal directly over the road with wings level; entry perpendicular to the road.", "data": "ACS 6C PA.V.B.S3b/S5; AFH 3C Fig. 7-6.", "priority": "should" }
+  ],
+  "photos": [
+    { "section": "ops.sl", "subject": "View from a light aircraft's cockpit over the cowling to a clear horizon in level flight (glareshield visible, no instrument screen, no faces)", "search": "Commons: 'Category:Views from cockpits of Piper PA-28', 'Category:Views from airplane cockpits' — reject any frame showing displays", "candidateUrl": "", "candidateLicence": "", "why": "The level sight picture is the core of the section; pair it with the levelSightPicture drawing." },
+    { "section": "ops.ground", "subject": "Aerial view of rectangular farm fields and straight country roads (typical ground-reference practice area)", "search": "USDA NAIP / USGS EarthExplorer aerial imagery (public domain); NASA Earth Observatory 'field patterns'; Commons 'Category:Aerial photographs of farmland in the United States'", "candidateUrl": "", "candidateLicence": "", "why": "Shows what 'a field or a road as reference' looks like from 600–1,000 ft." },
+    { "section": "ops.slow", "subject": "Stall-warning lift detector vane on the leading edge of a PA-28 wing (close-up)", "search": "Commons: 'stall warning vane', 'Category:Stall warning devices', 'Piper Cherokee stall warning'", "candidateUrl": "", "candidateLicence": "", "why": "Makes the stall warning concrete (the cadet also sees it on the walk-around)." },
+    { "section": "ops.turns", "subject": "A light single-engine aircraft photographed in a steep bank (air-to-air, no airline/school livery)", "search": "Commons: 'Category:Aircraft in flight — banking', NASA/USAF air-to-air of T-41/T-53 (public domain) e.g. DVIDS 'T-53A Kadet II banking'", "candidateUrl": "", "candidateLicence": "", "why": "Shows what 45° of bank looks like from outside; supports the load-factor idea." }
+  ],
+  "endMatter": {
+    "terms": [
+      "Attitude + Power = Performance / 姿勢＋出力＝性能（keep）",
+      "Pitch attitude / ピッチ姿勢（機首の上げ下げの角度）",
+      "Bank angle / バンク角（翼の傾き）",
+      "Trim / トリム（操縦の力を消す）（keep）",
+      "Coordinated flight / 釣り合い飛行（ボールが中央）",
+      "Level off / レベルオフ（水平に戻す）（keep）",
+      "Clearing turn / 見張りのための旋回（keep）",
+      "Steep turn / 急旋回／45°（自家用）（keep）",
+      "Overbanking tendency / オーバーバンキング傾向（keep）",
+      "Maneuvering speed (Va) / 設計運動速度（重量が軽いほど小さい）",
+      "Slow flight / 低速飛行（keep）",
+      "Stall warning / 失速警報（ホーン・振動）",
+      "Critical angle of attack / 臨界迎え角",
+      "Secondary stall / 二次失速（回復で引きすぎて、もう一度失速）",
+      "Spin / スピン（失速＋横滑りで回りながら落ちる）",
+      "Back side of the power curve / バックサイド（必要パワー曲線の低速側）— replaces 「出力曲線の後退側」",
+      "Ground reference maneuver / 対地目標操作（keep）",
+      "Groundspeed / 対地速度",
+      "Wind correction (crab) / 偏流修正（機首を風上へ向ける）",
+      "Rectangular course / S-turns / Turns around a point / 長方形コース・S 字旋回・1 点の周りの旋回"
+    ],
+    "examples": [
+      "Keep: 700 fpm で上昇中、3,000 ft にレベルオフ → 2,930 ft で機首を下げ始める.",
+      "Keep: 急旋回で高度が 80 ft 下がった → バンクを浅くしてから引く（AFH 3C 第 3 章の順番）.",
+      "Add: 右へバンク 30° で旋回して 090° で止めたい → 075°（30 の半分＝15° 手前）で戻し始める。",
+      "Add: 1 人で燃料も少なく軽い日 → Va も下がる（チェックリスト：2,550 lb で 113 kt、1,917 lb で 89 kt）。急旋回はもっと遅い速度で入る。",
+      "Add: 90 kt・風 15 kt で 1 点の周りを回る → 追い風側は対地速度 105 kt でバンク約 39°、向かい風側は 75 kt で約 23°（半径 1,200 ft の例・模式図）。"
+    ],
+    "cautions": [
+      "Keep: 空中操作の前には必ず周囲を見張る（clearing turns）.",
+      "Keep: 失速の練習は、回復を終えても地上 1,500 ft 以上が残る高さで行う（自家用 ACS）.",
+      "Add: 対地目標操作は低い高度。人家・人の集まり・家畜の上を避け、障害物から上下 500 ft・横 2,000 ft 以上離れる（AFH 3C 第 7 章・14 CFR 91.119）。バンクは 45° まで。",
+      "Add: スピンの訓練は教官と、スピンが認められた機体でだけ。機体の制限（POH の第 2 章）を必ず確認する。"
+    ],
+    "quizReview": [
+      "Q1 (level-off at 5,500 ft from 700 fpm): fix — same item as quiz.js:121 (q_ops, 4,500 ft). Change it to a descent (500 fpm down to 3,000 ft → start at about 3,050 ft) so the descent lead is also tested.",
+      "Q2 (ACS steep-turn tolerances): keep — matches ACS 6C PA.V.A.S5 / 7B CA.V.A.S5.",
+      "Q3 (first action in stall recovery = reduce AOA): keep — AFH 3C Fig. 5-10."
+    ],
+    "quizProposals": [
+      { "q": "バンク 45° の急旋回から、元の針路 360° で翼を水平に戻したい。戻し始める目安は？", "choices": ["360° ちょうど", "針路の約 20〜22° 手前", "針路の約 45° 手前", "針路を 20° 過ぎてから"], "answer": 1, "why": "目安はバンク角の半分だけ手前から（AFH 3C 第 3 章）。45° なら約 22°、30° なら 15°。" },
+      { "q": "Archer が軽いとき（1 人・燃料少なめ）の設計運動速度 Va は？", "choices": ["重いときと同じ", "重いときより大きい", "重いときより小さい", "Va は重さに関係なく 113 kt"], "answer": 2, "why": "軽いほど Va は小さい。チェックリストでは 2,550 lb で 113 kt、1,917 lb で 89 kt。急旋回は Va 以下で入る（ACS は重さの影響の理解も求める）。" },
+      { "q": "風の中で 1 点の周りを一定の半径で回る。バンクが最も深くなるのはどこ？", "choices": ["向かい風の側（対地速度が遅い）", "追い風の側（対地速度が速い）", "真横から風を受ける側", "どこでも同じ"], "answer": 1, "why": "対地速度が速いほど同じ半径に深いバンクが要る。追い風側が最も深く、向かい風側が最も浅い（AFH 3C 第 7 章）。" },
+      { "q": "急旋回の途中で機首が下がり、高度が減り始めた。正しい直し方は？", "choices": ["バンクのまま強く引く", "まずバンクを少し浅くし、それから引き、バンクを戻す", "パワーをアイドルにする", "ラダーで機首を上げる"], "answer": 1, "why": "深いバンクのまま引くと旋回が締まるだけで高度は戻りにくい。先にバンクを浅くしてから引く（AFH 3C 第 3 章）。" }
+    ],
+    "refs": [
+      "Keep R.afh; add chapter links — Ch. 3 Basic Flight Maneuvers https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/04_afh_ch3.pdf ; Ch. 4 Energy Management https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/05_afh_ch4.pdf ; Ch. 5 Maintaining Aircraft Control (slow flight, stalls, spins) https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf ; Ch. 7 Ground Reference Maneuvers https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/08_afh_ch7.pdf",
+      "Keep R.acsP (FAA-S-ACS-6C, current) https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf — cite the task codes used (PA.V.A, PA.V.B, PA.VII.A–C, PA.VIII.A, PA.IV.A).",
+      "Keep R.acsC (FAA-S-ACS-7B, current) but only for the one Commercial sentence.",
+      "Keep R.archerCk (Vx/Vy/87, Va 113/89, spin recovery).",
+      "Add 14 CFR 91.119 Minimum safe altitudes https://www.ecfr.gov/current/title-14/section-91.119",
+      "Keep R.phak (25C current)."
+    ]
+  },
+  "appMismatches": [
+    "syllabus.js:76-77 (stallRecovery g/say) and syllabus.js:143 (a7 brief) — order 「①機首を下げ ②フルパワー ③翼を水平」; book ops.slow (and AFH 3C Fig. 5-10) say ①迎え角 ②翼を水平 ③出力. AFH/book is right; the rewrite keeps the AFH order and notes that in a trainer ②③ are nearly simultaneous.",
+    "syllabus.js:107 (a2 why) 「外 8 割・計器 2 割」 vs AFH 3C ch. 3 'about 90% outside, no more than about 10% inside' — AFH is right; the book should give 9:1 and may note the lesson says 8:2.",
+    "syllabus.js:109 (a2 std) 「自家用 ACS の水平直線飛行の許容幅を参考」 — the only Private ACS straight-and-level task is PA.VIII.A (basic instrument) with ±200 ft/±20°/±10 kt; the lesson's ±100/±10/±10 is a course value. Book table is right; keep calling ±100 a 教材の値.",
+    "school.js:28 (LEVELS precision k 0.6) → ±60 ft/±6°/±6 kt; book ops.sl table says ±50/±5/±5 — app is right. app.js:33 default level 'intro' (×1.5) is not mentioned in the book.",
+    "school.js:47 HOW.level 「高度が 50 ft ずれたら機首を 1〜2°」 vs book ops.sl 「高度 100 ft のずれなら、ピッチを 1〜2°」 — pick the app's 50 ft (smaller, earlier corrections match key 2 of ops.sl).",
+    "syllabus.js:114 (a3 std) and :160 (t1 std) — climb 76 ±10 kt vs ACS Vy +10/−5 quoted in ops.climb; app uses a symmetric course tolerance — book should label which is which.",
+    "syllabus.js:111-118 (a3 descent 90 kt −500 fpm) and pages.js:473 ('降下 500 fpm' at 90 kt) vs book ops.trim 「巡航降下 約 100 kt・−500 fpm」 — app is the reference; use 90 kt.",
+    "syllabus.js:121-129 a4 book ['aero.turn'], a5 book ['aero.turn','aero.vn']; syllabus.js:141-155 a7 book ['aero.stall'], a8 book ['aero.stall','aero.left'] — none links ops.turns / ops.slow although the ops chapter lists a4/a5/a7/a8 and holds their bk.sim buttons. App unchanged → keep the bk.sim buttons in ops.turns / ops.slow (or ops.stall) so the path exists from the book side; mention in the lesson list.",
+    "syllabus.js:124 (a4 std バンク 30 ±5°) — book's turns table omits the bank tolerance; syllabus.js:129 (a5 setup 95 kt) — book omits the course entry speed.",
+    "syllabus.js:134 (a6: flaps 25°, 58 kt +10/−0) — book ops.slow gives neither the configuration nor the speed.",
+    "app.js:33 PREFS0 (hold 'hold', rhold 'hold', autoRud true) and app.js:131-134 (U toggles auto-rudder) — book's sim paragraph (book-3.js:65) mentions only the pitch hold; with auto-rudder ON the 「右ラダーが要ります」 of ops.climb and the a8 brief 「E（右ラダー）でボールを中央に」 are not felt. Book should say: turn auto-rudder OFF (U) to practise the rudder.",
+    "quiz.js:121 (q_ops level-off 4,500 ft) duplicates chapter quiz Q1 (5,500 ft) — change the chapter item."
+  ],
+  "factChecks": [
+    { "claim": "レベルオフは昇降率の 10% 手前から（700 fpm なら 70 ft）。降下も同じ", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/04_afh_ch3.pdf", "note": "AFH 3C p. 3-19: 'Level-off should begin at approximately 10 percent of the rate of climb' (500 fpm → 50 ft); descent: 1,000 fpm → 100 ft. Keep climb power until cruise speed, then cruise power and re-trim." },
+    { "claim": "上昇の始め方 PAT：Pitch → Power → Trim", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/04_afh_ch3.pdf", "note": "AFH: raise pitch 'while simultaneously increasing engine power to the climb power setting', then trim. PAT is an instructor mnemonic." },
+    { "claim": "トリムは姿勢を変える道具ではない（トリムは最後）", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/04_afh_ch3.pdf", "note": "AFH: 'Attempting to fly the airplane with the trim is a common fault'; attitude first, then trim the pressure out." },
+    { "claim": "目の大部分は外へ（有視界飛行）", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/04_afh_ch3.pdf", "note": "AFH gives numbers: ~90% outside, no more than ~10% inside the flight deck." },
+    { "claim": "出力を上げると機首が上がる・左へ向く。上昇中は右ラダー", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/04_afh_ch3.pdf", "note": "AFH: slipstream raises pitch; P-factor/torque roll and yaw left — right rudder (and some aileron)." },
+    { "claim": "自家用 ACS の直線水平（基礎的な計器飛行）±200 ft・±20°・±10 kt", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "PA.VIII.A.S2." },
+    { "claim": "自家用 ACS の通常離陸後の上昇 Vy ＋10／−5 kt", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "PA.IV.A.S11/S13 (to a safe maneuvering altitude)." },
+    { "claim": "Vx 64・Vy 76・巡航上昇 87 kt（地上 1,000 ft 以上）", "verdict": "correct", "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf", "note": "CRUISE CLIMB and ENROUTE CLIMB (at 1000 AGL) 87 KIAS." },
+    { "claim": "ロールアウトは目標の針路のバンク角の半分手前から", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/04_afh_ch3.pdf", "note": "AFH: 'A rule of thumb is to lead by one-half the angle of bank'." },
+    { "claim": "バンク 45° を越えるとオーバーバンキング傾向（反対のエルロンで押さえる）", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/04_afh_ch3.pdf", "note": "AFH turn classes: shallow ≤ ~20°, medium 20–45°, steep ≥ ~45° (keeps rolling unless opposite aileron)." },
+    { "claim": "急旋回で高度が下がったらバンクを浅くしてから引く（例）", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/04_afh_ch3.pdf", "note": "AFH: first reduce bank with coordinated aileron and rudder, then increase pitch; elevator alone only steepens the bank." },
+    { "claim": "自家用 ACS 急旋回：バンク 45°・高度 ±100 ft・速度 ±10 kt・バンク ±5°・ロールアウト ±10°；速度は Va 以下", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "PA.V.A.S2/S3/S5; K2c also asks for the effect of weight on Va." },
+    { "claim": "事業用 ACS 急旋回：バンク 50°・同じ許容幅", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/commercial_airplane_acs_7.pdf", "note": "CA.V.A.S3 'approximately a 50° bank', S5 same tolerances." },
+    { "claim": "Va は Archer 113 kt（最大重量）", "verdict": "imprecise", "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf", "note": "Correct at 2,550 lb, but the same checklist gives 89 kt at 1,917 lb; Va falls with weight." },
+    { "claim": "急旋回（45°）で荷重倍数 1.41 G・失速速度 約 19% 増", "verdict": "correct", "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/phak", "note": "n = 1/cos45° = 1.414; Vs × √n = ×1.19 (PHAK ch. 5 load factor)." },
+    { "claim": "自家用 ACS 低速飛行：高度 ±100 ft・針路 ±10°・速度 ＋10／−0 kt・バンク ±10°・失速警報なし・地上 1,500 ft 以上で終わる", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "PA.VII.A.S2–S5." },
+    { "claim": "事業用 ACS 低速飛行：高度 ±50 ft・針路 ±10°・速度 ＋5／−0 kt・バンク ±5°", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/commercial_airplane_acs_7.pdf", "note": "CA.VII.A.S5." },
+    { "claim": "Power-off stall：地上 1,500 ft 以上・着陸形態・直進なら針路 ±10°・完全に失速してから速やかに回復", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "PA.VII.B: approach or landing configuration, stabilised descent, bank ≤ 20° ±10° if turning, recover per POH, accelerate to Vx/Vy." },
+    { "claim": "Power-on stall：離陸・上昇の形態から・同様", "verdict": "imprecise", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "PA.VII.C: takeoff, departure, or cruise configuration; power no less than 65%." },
+    { "claim": "低速飛行は失速警報が鳴る少し手前の速度。離着陸の直前・直後はいつもこの速度域", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf", "note": "First half correct (AFH: further AOA/load/power reduction would give a stall warning; target ~5–10 kt above 1G stall). 'Always this speed range' overstates — final is 70 kt in the Archer." },
+    { "claim": "失速回復：①機首を下げて迎え角を減らす ②翼を水平 ③出力全開 ④上昇姿勢へ（AFH の考え方）", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf", "note": "AFH 3C Fig. 5-10: pitch nose-down → roll wings level → add thrust as needed → return to flight path (trainer uses 4 of 6 steps). Power 'as needed', not always full." },
+    { "claim": "スピン回復は FAA の覚え方 PARE", "verdict": "wrong", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf", "note": "AFH 3C uses a six-step spin recovery template (Fig. 5-17); 'PARE' is not in the AFH. Follow the manufacturer's procedure first (AFH)." },
+    { "claim": "スピン回復（訓練校チェックリスト）：IDLE・操縦輪を前へ・エルロン中立・反対ラダーいっぱい・止まったらラダー中立・水平へ", "verdict": "correct", "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf", "note": "Quoted in the checklist's order (Throttle IDLE, Control Wheel FULL FORWARD, Ailerons NEUTRAL, Rudder FULL OPPOSITE…)." },
+    { "claim": "Archer で意図的なスピンが承認されているか", "verdict": "unverified", "source": "", "note": "Not stated in the book (good). Public POH text was not found; forum claims say long-body PA-28s prohibit spins. Keep 「認められた機体でのみ・POH の制限を確認」 and do not state either way." },
+    { "claim": "自家用 ACS 対地目標操作：地上 600〜1,000 ft・高度 ±100 ft・速度 ±10 kt", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "PA.V.B.S3/S7; evaluator selects at least one maneuver; rectangular course entered 45° to downwind; S-turns perpendicular to the line." },
+    { "claim": "風下側（対地速度が速い）ではバンクを深く、風上側では浅く", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/08_afh_ch7.pdf", "note": "AFH 3C ch. 7; also enter downwind, avoid banks over 45°, 600–1,000 ft AGL, ≥ 500 ft above / 2,000 ft from obstructions." },
+    { "claim": "低い高度なので人家に注意（14 CFR 91.119 の最低安全高度）", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-91.119", "note": "91.119(a) emergency landing without undue hazard; (b) congested areas 1,000 ft above highest obstacle within 2,000 ft; (c) 500 ft elsewhere." },
+    { "claim": "Cited ACS editions (FAA-S-ACS-6C, 7B) are current", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs", "note": "Listed on faa.gov on 2026-10-26; no newer edition found." }
+  ],
+  "cadetNotes": [
+    "cadet/test/content.test.mjs:134 pins the LAST ops.trim key point to exactly 'トリムは最後。トリムで機首を上げ下げしない', and :363-365 requires ops.trim to have 3–4 key points whose last spoken line is 'トリムは最後です。トリムで機首を上げ下げしません。' — keep 3 or 4 bk.key items in ops.trim and keep that last item verbatim (or update the CADET test in the same change).",
+    "content.test.mjs:151 and :203 expect lesson a1's sections ['aero.forces','ops.trim'] — ids must not change (they will not).",
+    "No ops section has an SVG today (turnTable is a <table>), so CADET's classroom screen is empty for all six; each new main figure must be the FIRST <svg> of its section (content.test.mjs:101-107).",
+    "ops.slow has no bk.key → CADET uses the first two prose sentences as key points (long, not designed to be read aloud). Add a 2–4 item box (≤ ~60 chars each).",
+    "The levels rows in the ops.sl table (この教材の「基礎」「精度」) survive CADET's filter (only table COLUMNS with APP_ONLY headers are dropped) and would appear as standards in the game; put them in the bk.sim box or a mute paragraph that mentions シミュレータ/教材.",
+    "Keep all keys (S / W, T, U, A / D) inside bk.sim or class=mute paragraphs containing 「シミュレータ」 — CADET's test APP regex flags 「キー（」「Shift +」 etc. in visible text.",
+    "The ops.ground mute note with 「未実装」 is dropped by CADET (fine); do not move it into normal prose.",
+    "If ops.stall is added, CADET tests iterate it: needs bk.key, summary ≤ 200 chars, plain text > 40 chars; and lessons still resolve because ids a7/a8 link aero.stall only.",
+    "Avoid the literal 「G1000 型表示」 (APP_ONLY) in prose; write 「G1000 型の画面」."
+  ]
+}

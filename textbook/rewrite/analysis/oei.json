@@ -1,0 +1,457 @@
+{
+ "id": "oei",
+ "title": "片発停止の空力と操作（Vmc・抗力・手順）",
+ "sections": [
+  {
+   "id": "oei.what",
+   "title": "（新設案）片発で起きる 2 つの問題：方向と上昇",
+   "gist": "新設を提案する節（章の最初）。片方のエンジンが止まると、機首が止まった側へ回り（方向の問題＝赤い線 Vmc）、上昇できなくなる（性能の問題＝青い線 Vyse）。AFH の「performance and control」の 2 本立てを最初に示す。",
+   "issues": [
+    "まだない節（新しい ID）。いまの me.oei の最初の図 FIG.oeiForces（作り直し）をここへ移す。臨界発動機の定義と「Seminole にはない」（me.basics の図を参照）もここで。"
+   ],
+   "mainFigure": "oeiForces（作り直し）：上面図（planeTop twin、機首に「前」）。生きている右エンジンの推力（長い緑の矢印）、止まった左の風車状態のプロペラの抗力（赤の矢印）、機首が左へ回る円弧（ヨー）、尾翼に右ラダーで生まれる横向きの力は「左向き」の矢印（機首を右へ戻す）。囲みで「左翼が下がろうとする（ロール）」。"
+  },
+  {
+   "id": "me.oei",
+   "title": "片発停止の手順：特定・確認・フェザー",
+   "gist": "エンジンが止まったときの記憶操作（方向と Vyse → 全部前へ → 脚・フラップ UP → 特定 → 確認 → フェザー → 片付け）と、事業用 ACS の許容幅。",
+   "issues": [
+    "手順が、Vmc（次の節）や抗力（me.drag）の説明より前に来る。「Vyse（88 kt）以上（少なくとも Vmc より上）」の Vmc がまだ説明されていない。",
+    "最初の図 FIG.oeiForces は「力」の図で手順の図ではない。しかもラダーの力の矢印の向きが逆（figuresExisting）。",
+    "「横滑りゼロ」の小節は性能の話（me.drag に合う）。本文は「約 2°」なのに、図のキャプションは「2〜5° バンクすると横滑りが最小」、課目（syllabus m2・m4）・school.js・pages.js も「2〜5°」。AFH は約 2°（1.5〜2.5°）・ボール 1/3〜1/2、POH 系チェックリストは 2〜3°・ボール 1/2。5° は Vmc 認証のときの上限。",
+    "AFH にある大事な点が抜けている：最初は 5〜10° のバンクで一瞬ヨーを止めてから約 2° に戻す（13-31）、回転が約 800 rpm より下がるとフェザーできない（13-6 の anti-feathering lock pins）、「Raise the dead」（13-33）、管制に緊急を宣言（13-33）、少しでも出力が出ているなら安全な高さまで回しておく（13-33）。",
+    "一番重大な誤り（生きているエンジンをフェザーする）を bk.warn で目立たせていない。bk.key もない。",
+    "「事業用 ACS（多発・模擬）」の表は Area IX Task F・Area X Task A・Area IX Task G を名前なしで混ぜている。Task 名を書く。syllabus の m2 の基準（故障直後 ±20°、30 秒以内にフェザー）は教材の課目の基準で ACS ではない、と区別する。",
+    "mute の段落「シミュレータでは：自動ラダーは使えません」は、課目でエンジンが故障したとき（school.js:319）だけ正しい。自由飛行で [ / ] でフェザーしても自動ラダーは設定のまま（初期値 ON、app.js:33）。Shift+[ / Shift+] の再始動も書かれていない。",
+    "me.speeds にある模擬故障の訓練の決まり（50% Vmc・400 ft・3,000 ft）はこの節に移すとよい。"
+   ],
+   "mainFigure": "oeiFlow：記憶操作の流れを 5 つの箱で。①方向（ラダーでヨーを止める）と速度（Vyse 88）②全部前へ（ミクスチャー・プロペラ・スロットル）③脚・フラップ UP ④特定（Dead foot, dead engine）→ 確認（そのスロットルをゆっくり絞る・変化なし）⑤フェザー → 横滑りゼロ（約 2°・ボール 1/3〜1/2）→ 片付け・管制へ。各箱に 1 行の「なぜ」。"
+  },
+  {
+   "id": "me.vmc",
+   "title": "Vmc：方向を保てる最小の速度",
+   "gist": "Vmc の意味（ラダーが足りなくなる速度）、Vmc を上げ下げする要素、失速との違い、Vmc デモンストレーションの手順と回復。",
+   "issues": [
+    "SVG がない（FIG.vmcFactors は表）→ 教室の画面が空。Vmc の仕組み（ラダーの効きは速度の 2 乗で落ち、非対称の推力はほぼ変わらない）が図になっていない。",
+    "「Vmc は、臨界発動機が突然止まったとき、生きているエンジンを最大出力にしたまま、バンク 5° 以内で方向（まっすぐ）を保てる最小の速度です（14 CFR 23 の考え方）」：今の 14 CFR 23.2135(c) は「sudden critical loss of thrust の後に操縦を保てる calibrated airspeed」とだけ定義し、5° バンク・最大出力・風車状態などの条件は旧 23.149 のもの（Seminole のように旧規則で認証された機体には今も当てはまる。AFH 13-2/13-24）。",
+    "「Vmc が失速速度より高い条件では、方向を失った（回り始めた）とき、出力を絞らないとスピンに入る危険があります」：AFH の主な警告は「非対称の出力のまま失速するとスピンに入りやすい。特に Vmc より先に失速速度に達したとき」（13-26/27）。論点がずれている。",
+    "Seminole で大事な事実が抜けている：公表 Vmc 56 kt と Vs1 57 kt がほぼ同じなので、Vmc デモでは失速の兆候が先に来ることが多い。飛行モデルも同じ（5,000 ft・バンク 5°：約 61 kt で失速警報、そのときラダーは約 2/3）。",
+    "手順 2「片方（臨界発動機。Seminole は左で模擬）」：Seminole には臨界発動機がないので混乱する。AFH 13-24「どちらのエンジンでもよい」、ガイドは左を使う、と書く。",
+    "手順に ACS の入り方（Vsse より約 10 kt 速い速度で片発の上昇姿勢、CA.X.B.S2）、「止まった側の出力を足さない」（S6）、付録 3 の「両発で機首を大きく上げてから片方を絞るやり方は危険」が抜けている。",
+    "「地上 3,000 ft 以上（ガイド）」：ACS 付録 3 も「3,000 ft AGL かメーカーの推奨の高い方」。",
+    "FIG.vmcFactors の表：見出し「14 CFR 23 の Vmc 決定条件の考え方」→ 旧 23.149。「脚 UP・フラップ離陸位置」を 1 行にまとめている（脚は高くなる、フラップは「離陸位置で決める条件」）。翼を水平にしたときの大きさ（1° あたり 3 kt 以上、最大で約 20 kt：AFH 13-25）がない。",
+    "bk.key の 2 つ目が 74 字（60 字超）。"
+   ],
+   "mainFigure": "vmcRudder：折れ線「必要なラダーの量（%）と速度」を飛行モデルから（片発・風車状態・最大出力・バンク 5°）。1,000 ft の線は 56 kt で 100%（赤い線）、5,000 ft の線はもっと低い。失速警報が鳴る範囲（約 62 kt 以下）を薄く塗る。見出し「Vmc＝ラダーが足りなくなる速度。高い所では下がり、Seminole では失速警報が先に来やすい」。"
+  },
+  {
+   "id": "me.drag",
+   "title": "抗力のデモンストレーション：何が上昇を奪うか",
+   "gist": "片発では、フラップ・脚・フェザーしていないプロペラ（と横滑り）が上昇を奪う。だから「全部前へ → 脚・フラップ UP → フェザー → 横滑りゼロ」。",
+   "issues": [
+    "表の見出し「降下率」と値「約 200〜250 / 200〜300 / 400〜500 / 500〜600 fpm」があいまい（増えた量か、その形態での降下率か）。ガイドは各段階で「note descent rate (appx. …)」で、その形態での降下率（積み上げ）と読める。そう読むと風車状態で増えるのは約 100 fpm だけで、quiz.js:179 の正答（風車状態が最も降下率を増やす）と合わない。",
+    "「＋フラップ 45°（全開）」は誤り。Seminole のフラップは 0・10・25・40°（POH、MGA チェックリスト「Flaps 0° TO 40°」、physics の flapLabels 40°）。ガイドの「45」の誤記をそのまま写している。",
+    "「この教材の Seminole でも、脚（G）・フラップ（V）・フェザー（[ / ]）で降下率の違いを自由飛行で試せます（値は教材モデルの近似）」：モデルの値はガイドとかなり違う（4,000 ft・Vyse・片発最大出力：フラップ 10 で −117、脚で −273、フラップ全開で −714、風車状態で −104〜−120 fpm）。自由飛行では風車状態を作れない（[ / ] はフェザー＋停止、Shift で再始動のみ）。自由飛行では自動ラダーも ON のまま。",
+    "横滑り（sideslip）も抗力であること、横滑りゼロのやり方（いまは me.oei）がこの節にない。",
+    "図・bk.key がない。",
+    "AFH の「風車状態のプロペラは、機体全体の有害抗力と同じくらいの抗力を出すことがある」（13-3）、「抗力のデモで、フェザー（ゼロ推力）と風車状態の差を教官が見せる」（13-36）を出典にすると、ガイドの数値のあいまいさに頼らずに済む。"
+   ],
+   "mainFigure": "oeiDrag（模式図・数値なし）：「上昇に使える余分なパワー」の棒（両発では長い、片発では短い）から、脚・フラップ・風車状態のプロペラ・横滑りがそれぞれ削っていく。キャプション「片発では余分なパワーが少ないので、抗力が少し増えるだけで上昇できなくなる」。"
+  },
+  {
+   "id": "me.land",
+   "title": "片発の進入と着陸",
+   "gist": "片発の進入：普通の場周と同じ高さ・位置で、Vyse 以上を保ち、性能を見ながら段階的に形態を作り、「着陸すると決めたら降りる」。出力を絞るときのラダーの変化に備える。",
+   "issues": [
+    "「着陸が確実になるまで脚とフラップを出しすぎない（ガイド：着陸が確実になってからフラップを増やす）」はあいまいで、AFH の順番と違う。AFH 13-34：性能が十分なら脚はダウンウインドで下ろし、遅くともアビームで DOWN を確認、フラップはダウンウインドで 10・ベースで 25（性能があれば）、最後のフラップだけ着陸が確実になるまで待つ。Vyse を着陸が確実になるまで保ち、その後 1.3 Vso か POH の速度（Seminole はフラップ全開で 80 kt：pa44.v.apprFull）。",
+    "syllabus m5 の brief「着陸が確実（滑走路に届く）になってから脚 DOWN・フラップ」も同じ問題（脚の下げ忘れの危険）。課目はファイナル 5 km から始まるので、本文で「課目は脚 UP のファイナルから始まる練習」と説明する。",
+    "AFH の点が抜けている：止まった側への旋回も問題ない（13-34）、片発ではよく浮く（float）、フレアで出力を絞るとラダートリムが変わる（13-35）、片発のゴーアラウンドはできないことがあり 500 ft 以上失うのも普通（13-35）。",
+    "「接地は滑走路の最初の 1/3（事業用 ACS）」は正しい（CA.IX.G.S8）が、m5 の採点は目標点（300 m）から −100〜+400 m、つまり 1,200 m の滑走路の 700 m まで合格。",
+    "箇条書きと warn だけで、図・bk.key がない。"
+   ],
+   "mainFigure": "oeiPattern（模式図・NOT FOR NAVIGATION）：LAB RWY 36 への場周。ダウンウインド Vyse 88 以上・脚 DOWN（遅くともアビーム）・フラップ 10、ベース フラップ 25（性能があれば）、ファイナル Vyse 88 を着陸が確実になるまで → フラップ 40・80 kt。「ここから先は着陸する（ゴーアラウンドしない）」の印。止まった側へ曲がってもよい、の注記。"
+  }
+ ],
+ "problems": {
+  "unclear": [
+   "me.oei：「1 方向と速度」で Vmc が説明前に出る。",
+   "me.oei：ACS の表が Task 名なしで 3 つの Task を混ぜている。",
+   "me.vmc：「Vmc が失速速度より高い条件では…スピン」の論理（AFH の警告は非対称の出力のままの失速）。",
+   "me.vmc：「臨界発動機。Seminole は左で模擬」— Seminole には臨界発動機がない。",
+   "me.drag：表の「降下率」が増えた量か、その形態での値かわからない。",
+   "me.land：「脚とフラップを出しすぎない」が具体的でない。",
+   "FIG.oeiForces のキャプション「2〜5° バンクすると横滑りが最小」と本文の「約 2°」が食い違う。"
+  ],
+  "order": [
+   "章の最初に新しい節 oei.what（片発で起きる 2 つの問題：方向と上昇）を置き、FIG.oeiForces（作り直し）を移す。",
+   "節の順番を oei.what → me.vmc（方向の問題）→ me.drag（性能の問題・横滑りゼロを含む）→ me.oei（手順・ACS）→ me.land にする。「なぜ」を先に、記憶操作を後に。",
+   "横滑りゼロの小節を me.oei から me.drag へ移す（性能の話）。me.oei には「フェザーの後で約 2° バンク」の 1 行と参照だけ残す。",
+   "me.speeds（me 章）にある模擬故障の訓練の決まりを me.oei の bk.warn へ移す。"
+  ],
+  "errors": [
+   "FIG.oeiForces：尾翼の「ラダー（右を踏む）の力」の矢印が右向き → 右ラダーで尾翼に生まれる横向きの力は左向き（尾が左へ・機首が右へ戻る）。いまの矢印では機首がさらに左へ回る（AFH Figure 13-12 の考え方）。",
+   "FIG.oeiForces のキャプション「生きている側へ 2〜5° バンクすると横滑りが最小になる」→ 横滑りゼロは約 2°（1.5〜2.5°）・ボール 1/3〜1/2。5° は認証の上限で、横滑りゼロをつくるものではない（https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf p.13-25, 13-28/29）。",
+   "me.drag「＋フラップ 45°（全開）」→ Seminole のフラップ全開は 40°（https://ce.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Seminole_Checklist.pdf 「Flaps 0° TO 40° (BELOW 111 KIAS)」、https://www.thrustflight.com/wp-content/uploads/2026/04/PA44-Maneuver-Guide.pdf 「flaps 40°」、physics.js の flapLabels）。",
+   "me.vmc「バンク 5° 以内で…（14 CFR 23 の考え方）」→ 今の 14 CFR 23.2135(c) は「the calibrated airspeed at which, following the sudden critical loss of thrust, it is possible to maintain control of the airplane」。5° などの条件は旧 23.149（https://www.ecfr.gov/current/title-14/section-23.2135、AFH 13-2）。",
+   "me.land「着陸が確実になるまで脚とフラップを出しすぎない」→ AFH：性能が十分なら脚は遅くともアビームで DOWN、フラップ 10（ダウンウインド）・25（ベース）、最後のフラップだけ着陸が確実になるまで待つ（https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf p.13-34）。",
+   "examples「Vmc デモで速度 62 kt、ラダーいっぱいでも機首が左へ」→ 飛行モデルでは 62 kt（1,000 ft・バンク 5°）でラダー約 78%、いっぱいになるのは約 56 kt。62 kt 付近では先に失速警報が鳴る。",
+   "me.vmc の手順 2「臨界発動機。Seminole は左で模擬」→ 臨界発動機なし。どちらでもよい（AFH 13-24）。ガイドは左。"
+  ],
+  "outdated": [
+   "14 CFR 23 の Vmc の定義は 2017 年（Amdt. 23-64）から 23.2135(c) の性能基準の書き方。本文の「14 CFR 23 の考え方」は旧 23.149 の内容なので、「旧 23.149（Seminole の認証基準）」と書く。",
+   "AFH 3C・ACS 7B はどちらも現行（変更なし）。"
+  ],
+  "duplicates": [
+   "me 章の me.speeds（Vmc・Vyse の説明、bk.key「片発になったら、まず速度」）と me.oei の手順 1 が重なる。",
+   "quiz.js q_me の問題（Dead foot、Vmc の回復、横滑りゼロ、Vmc が高くなる条件、ACS の許容）が章末の確認問題 1〜3 とほぼ同じ。章末は別の観点（Vmc と失速、バンクと Vmc、止まった側への旋回、400 ft の決まり）にする。",
+   "me 章の例（右エンジン故障）と oei 章の例（左エンジン故障）が同じ流れ。oei の例は Vmc デモ・進入の例に替える。",
+   "emg 章（単発のエンジン故障）との違い（双発は「止まる」ではなく「方向と上昇」）を一言参照すると混同を防げる。"
+  ],
+  "numbers": [
+   "横滑りゼロのバンク：本文「約 2°」vs FIG キャプション「2〜5°」、syllabus.js:381・390（tgt bank 3 ±3）・413、school.js:55、pages.js:461 の「2〜5°」。AFH は約 2°（1.5〜2.5°）、MGA は 2〜3°・ボール 1/2。",
+   "抗力のデモ：本文の値（ガイド）vs 飛行モデル（4,000 ft・Vyse 88・片発最大出力・バンク 3°、動的計算）：フェザーで +88 fpm、フラップ 10 で −29（−117）、＋脚で −302（−273）、＋フラップ全開で −1,016（−714）、＋風車状態で −1,120（−104）。きれいな形態で風車状態にすると −32（フェザーとの差 −120）。モデルは風車状態の抗力を小さく（機体の有害抗力の約 4 割）、フラップ全開を大きく出す。",
+   "横滑りゼロの効果：モデル（自動ラダーでボール中央）ではバンク 0° と 3° の上昇率が 86 / 88 fpm でほぼ同じ。シミュレータで横滑りゼロの得を体験できる、とは書かない。",
+   "Vmc とバンク：モデルでは翼を水平にすると全ラダーになる速度は約 59〜60 kt（バンク 5° の 56 kt より 3〜4 kt 高いだけ）。AFH は最大で約 20 kt 高くなると書く。本文は AFH の値を「参考値」として書き、シミュレータの体験とは結びつけない。",
+   "Vmc と失速警報：モデル（バンク 5°・風車状態・最大出力）でラダーの量は 90 kt 32%、80 kt 43%、70 kt 59%、65 kt 70%、62 kt 78%、59 kt 87%、56 kt 100%（1,000 ft）。5,000 ft（m3 の高さ）では 61 kt で失速警報、そのときラダーは 66%。m3 の減速は多くの場合、方向を失う前に失速警報で終わる。",
+   "m3 の結果「方向を失った速度」（syllabus.js:401〜406）は、実際には失速警報が鳴った速度（約 61 kt）を記録することが多い。",
+   "m5：基準「ファイナル 88 ±5 kt」（syllabus.js:429）vs 採点 landingSteps(SM.yse − 4)＝84 ±5 kt（syllabus.js:432）。接地位置の合格範囲は目標点（300 m）から −100〜+400 m（1,200 m の滑走路の 700 m まで）で、本文の「最初の 1/3（400 m）」より広い。",
+   "m4：模擬故障を地上 250 ft で始める（syllabus.js:418〜419）。実機の訓練は 400 ft 以上（ガイド・ACS 付録 3・AFH 13-36）。シミュレータなのでよいが、本文で区別する。",
+   "m3 の基準「回復で失う高度 300 ft 以内」（syllabus.js:396）は ACS の基準ではない（AFH 13-26「Maintaining altitude is not a criterion」）。教材の課目の基準と書く。",
+   "cautions「この教材の Vmc（約 56 kt で方向を失う・バンク 5°・ラダーいっぱい）」はモデルの 1,000 ft の値と一致。5,000 ft では先に失速警報（約 61 kt）が来ることも書く。"
+  ]
+ },
+ "policy": "章の最初に新しい節 oei.what「片発で起きる 2 つの問題：方向と上昇」を置き、AFH の考え方（control＝赤い線 Vmc、performance＝青い線 Vyse）と作り直した oeiForces の図（ヨー・ロール・右ラダーの力は尾翼で左向き）で「何が起きるか」を先に見せます。続けて me.vmc（方向の問題）：vmcRudder の図（飛行モデルのラダー量と失速警報の範囲）→ 今の 23.2135(c) と旧 23.149 の条件の違い → 直した vmcFactors の表（翼を水平にすると最大で約 20 kt 上がる、を追加）→ 失速との違い（Seminole は Vmc 56 と Vs1 57 がほぼ同じなので失速警報が先に来やすい）→ ACS CA.X.B どおりの Vmc デモ（入り Vsse＋約 10 kt、1 kt/秒、最初の兆候で生きている側を絞り機首を下げる、止まった側に出力を足さない、±20°、Vsse / Vyse ±5 kt）。次に me.drag（性能の問題）：oeiDrag の模式図、ガイドの抗力のデモは「その形態での降下率の目安（ガイドの値）」と書いてあいまいさを明記し、フラップ全開は 40° に直し、AFH の「風車状態のプロペラは機体全体の有害抗力と同じくらいになりうる」を出典にします。横滑りゼロ（約 2°・ボール 1/3〜1/2、POH 系は 2〜3°、最初の 5〜10° は一瞬だけ）を zeroSideslip の図とともにこの節へ移します。その後 me.oei（手順）：oeiFlow の図、記憶操作に理由を添え、約 800 rpm より前にフェザー、片付け、管制への緊急の宣言、生きているエンジンをフェザーしない bk.warn、ACS の表（Task 名つき）、模擬故障の訓練の決まり（me.speeds から移す）を置き、bk.sim は最後に正しいキー（E / Q、Z / X、[ / ]、自動ラダーはエンジン故障の課目でだけ OFF）で書きます。最後の me.land は oeiPattern の図と AFH 13-34/35 の順番（脚は遅くともアビーム、フラップ 10 → 25 → 最後は確実になってから、止まった側への旋回も可、フレアでのラダーの変化、片発のゴーアラウンドは 500 ft 以上失う）で書き直します。",
+ "figuresExisting": [
+  {
+   "key": "oeiForces",
+   "verdict": "redo",
+   "why": "①尾翼の「ラダー（右を踏む）の力」の矢印が右向きで物理的に逆（右ラダーで尾翼に生まれる力は左向き）。②390 px で最小 8.6 px（font-size 10・11）。③機首の向きの印がない（胴体が棒だけ）。④キャプション「2〜5° バンクすると横滑りが最小」が AFH（約 2°）と食い違う。⑤ロール（止まった側の翼が下がる）を示していない。planeTop({twin:true}) で描き直し、新しい節 oei.what の最初の図にする。"
+  },
+  {
+   "key": "vmcFactors",
+   "verdict": "fix",
+   "why": "SVG ではなく表（me.vmc の最初の図にならない）。見出し「14 CFR 23 の Vmc 決定条件の考え方」→「旧 14 CFR 23.149 の条件（Seminole の認証基準）と AFH」。「脚 UP・フラップ離陸位置」を脚とフラップの 2 行に分ける。「バンク」の行に「翼を水平にすると 1° あたり 3 kt 以上、最大で約 20 kt 高くなる（AFH 13-25）」。「臨界発動機の停止」の行は表から出して本文（oei.what）へ。重量の理由（重いほどバンクの揚力の横成分が大きい）を短く。表の後の出典の行は残す。"
+  }
+ ],
+ "figuresNew": [
+  {
+   "name": "vmcRudder",
+   "section": "me.vmc",
+   "what": "折れ線：横軸 IAS（50〜95 kt）、縦軸「必要なラダー（%）」。1,000 ft と 5,000 ft の 2 本。100% の線と 56 kt（赤い線）、失速警報の範囲（約 62 kt 以下）を薄い帯で。見出し「ラダーが足りなくなる速度が Vmc」。",
+   "data": "FL.physics（pa44、左エンジン故障・風車状態・thr 1・バンク 5°・脚 UP）で flight.test.mjs の Vmc テストと同じ方法で計算：1,000 ft＝90 kt 32%・80 kt 43%・70 kt 59%・65 kt 70%・62 kt 78%・59 kt 87%・56 kt 100%。5,000 ft＝68 kt 51%・65 kt 57%・63 kt 61%・61 kt 66%（失速警報）。図の点は計算済みの表で持ち、テストでモデルと ±5% を確かめるとよい。",
+   "priority": "must"
+  },
+  {
+   "name": "zeroSideslip",
+   "section": "me.drag",
+   "what": "後ろから見た 3 つの姿（planeFront の bank）と横滑り計のボール：(a) 翼水平・ボール中央 → 止まった側へ横滑り・Vmc は公表値より高い (b) ラダーなし・8〜10° バンク → 生きている側へ大きな横滑り (c) 約 2° バンク・ボールは生きている側へ 1/3〜1/2 → 横滑りゼロ・上昇が最大。",
+   "data": "AFH 13-27〜29（Figure 13-15〜13-17）、MGA チェックリスト「2 TO 3 DEGREES INTO OPERATIVE ENGINE」「1/2 BALL」。",
+   "priority": "must"
+  },
+  {
+   "name": "oeiDrag",
+   "section": "me.drag",
+   "what": "模式図（数値なし）：「上昇に使える余分なパワー」の棒（両発・片発）と、脚・フラップ・風車状態のプロペラ・横滑りが削る分。片発では少し削られるだけでマイナス（降下）になる。",
+   "data": "AFH 13-2/3（余分なパワー）、13-3（風車状態のプロペラ＝機体全体の有害抗力と同じくらいになりうる）。モデルの値は風車状態を小さく出すので使わない。",
+   "priority": "must"
+  },
+  {
+   "name": "oeiFlow",
+   "section": "me.oei",
+   "what": "記憶操作の流れ（5 つの箱と矢印、各 1 行の理由）。最後に「横滑りゼロ → 片付け → 管制へ」。",
+   "data": "AFH 13-31〜33（Figure 13-21・13-22）、ガイドの Engine failure after rotation、MGA の ENGINE FAILURE PROCEDURE。速度は pa44.v.yse。",
+   "priority": "must"
+  },
+  {
+   "name": "deadFoot",
+   "section": "me.oei",
+   "what": "ラダーペダルと両足：右足が強く踏んでいる（working foot）、左足は遊んでいる（dead foot）→ 左エンジンが止まった。下に「確認：左のスロットルをゆっくり絞る → 何も変わらない → 正しい」。",
+   "data": "AFH 13-32/33（dead foot—dead engine、identify は計器でなく操縦の入力で）。数値なし。",
+   "priority": "should"
+  },
+  {
+   "name": "vmcStall",
+   "section": "me.vmc",
+   "what": "模式図：縦軸 高度、横軸 速度。Vmc の線は高いほど左へ（遅く）、失速速度の線はまっすぐ。交わる点より上では失速が先。海面の値に Seminole の 56 / 57 kt。vmcRudder に 2 つの高度の線を入れるなら省略可。",
+   "data": "AFH 13-26（Figure 13-14）、ACS 付録 3（Task X.B の注）、pa44.v.mc 56・s1 57。",
+   "priority": "should"
+  },
+  {
+   "name": "vmcBank",
+   "section": "me.vmc",
+   "what": "棒か折れ線：バンク 5°（公表 Vmc）→ 0°（翼水平）で Vmc が上がる（1° あたり 3 kt 以上、最大で約 20 kt）。",
+   "data": "AFH 13-25 の値（参考値と明記）。モデルでは差が小さい（約 3〜4 kt）ので「実機の値（AFH）」と書く。",
+   "priority": "nice"
+  },
+  {
+   "name": "vmcDemo",
+   "section": "me.vmc",
+   "what": "Vmc デモの流れ（時間の帯）：入る（Vsse＋約 10 kt・止める側アイドル・反対側全開・バンク 5° 以内）→ 1 kt/秒で減速 → 最初の兆候（方向・失速警報・振動）→ 生きている側を絞る＋機首を下げる → 針路 ±20° → 出力を戻して Vsse / Vyse ±5 kt。",
+   "data": "事業用 ACS CA.X.B.S1〜S8、ガイドの VMC demonstration、pa44.v（sse 82・yse 88）。",
+   "priority": "nice"
+  },
+  {
+   "name": "oeiPattern",
+   "section": "me.land",
+   "what": "片発の場周（模式図・NOT FOR NAVIGATION）：各点の速度と形態、「ここから先は着陸する」の点、止まった側への旋回も可。",
+   "data": "AFH 13-34/35、pa44.v（yse 88・apprFull 80、flapLabels 10°/25°/40°）。",
+   "priority": "must"
+  }
+ ],
+ "photos": [
+  {
+   "section": "me.drag",
+   "subject": "風防（キャノピー）に付けた毛糸のヨーストリング（yaw string）",
+   "search": "Commons「Category:Yaw strings」、検索語「yaw string glider canopy」。人の顔がはっきり写っていないもの",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "AFH 13-27：横滑りゼロを確かめる道具。「ボールが中央でも横滑りしている」ことの説明に。"
+  },
+  {
+   "section": "me.oei",
+   "subject": "片方のプロペラをフェザーして飛んでいる双発機",
+   "search": "Commons 検索語「feathered propeller in flight」「single engine feathered Baron / Seminole」。米国政府の写真なら DVIDS「C-12 Huron feathered」「T-44 single engine」（顔・部隊のロゴが目立たないもの）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "止まった側のプロペラが風に平行に止まった姿を見せ、「フェザー＝抗力を最小に」を結びつける。"
+  },
+  {
+   "section": "oei.what",
+   "subject": "双発機の上面か正面（エンジンが胴体から離れて付いていることが分かるもの）",
+   "search": "NASA Image and Video Library「PA-30 Twin Comanche」（ECN-2845 など）。Commons「Category:Piper PA-44 Seminole」",
+   "candidateUrl": "https://images.nasa.gov/details/ECN-2845",
+   "candidateLicence": "Public domain（NASA）",
+   "why": "エンジンが中心線から離れている → 片方だけの推力で機首が回る、を形で理解する。図の後に置く。"
+  }
+ ],
+ "endMatter": {
+  "terms": [
+   "追加：Raise the dead／止まった側の翼を少し上げる（生きている側へ約 2° バンク）覚え方",
+   "追加：Zero thrust／ゼロ推力／訓練でフェザーを模擬する出力（止まったフェザーのプロペラと同じ抗力）",
+   "追加：Yaw string／ヨーストリング／横滑りを見る毛糸",
+   "追加：Anti-feathering lock pins／フェザー防止のピン／約 800 rpm より下がるとフェザーできなくなる",
+   "追加：Single-engine go-around／片発のゴーアラウンド／できないことがある（500 ft 以上失うのも普通）",
+   "追加：Static / dynamic Vmc／静的・動的な Vmc（AFH）は CADET 向けには不要。入れるなら補足だけ。",
+   "既存の 3 列目が空の用語（OEI・Identify, Verify, Feather・Critical engine・Windmilling propeller・Secure など）に短い説明を入れる。Vmc の補足「赤い線」に「決められた条件での公表値」を足す。"
+  ],
+  "examples": [
+   "既存「巡航中に機首が左へ振れ、右足を強く踏んでいる → … → 左をフェザー（[）」：「（[）」を消し（CADET の削除の対象外）、最後に「→ 右へ約 2° バンク・ボールは右へ 1/3〜1/2」を足す。",
+   "既存「Vmc デモで速度 62 kt、ラダーいっぱいでも機首が左へ」→「Vmc デモの減速中、61 kt で失速警報が鳴った → すぐ生きている右エンジンの出力を絞り、機首を下げる（Seminole では失速の兆候が先に来ることが多い）」に替える（飛行モデルと一致）。",
+   "追加：片発の進入「ダウンウインドで脚 DOWN・フラップ 10、ベースでフラップ 25、ファイナルは 88 kt を保ち、滑走路に届くと決まってからフラップ 40・80 kt」。"
+  ],
+  "cautions": [
+   "既存「Vmc デモ・抗力のデモは実機では教官と、決められた高度で行う」：「地上 3,000 ft 以上（ACS 付録 3・ガイド）」を足す。",
+   "既存「この教材の Vmc（約 56 kt で方向を失う・バンク 5°・ラダーいっぱい）は教材モデルの近似値」：「デモの高さ（5,000 ft）では先に失速警報（約 61 kt）が鳴る」と足す。",
+   "追加：実機の模擬エンジン故障は地上 400 ft 以上・Vsse 以上で、3,000 ft 未満はスロットルだけで行う（ACS 付録 3・AFH）。シミュレータの課目はもっと低い高さで体験させるが、実機とは違う。"
+  ],
+  "quizReview": [
+   "Q1（Dead foot, dead engine）：keep。",
+   "Q2（Vmc 付近で方向が保てない → 出力を絞り機首を下げる）：keep。理由に「止まった側の出力は足さない（ACS CA.X.B.S6）」を足す。",
+   "Q3（横滑りゼロ：約 2°・ボール 1/3〜1/2）：keep。理由に AFH 13-29（1.5〜2.5°）と「POH 系は 2〜3°」を足す。課目・アプリの「2〜5°」と食い違わないよう本文側をそろえる。",
+   "Q4（Vmc デモの回復：入った針路の ±20°）：keep（CA.X.B.S7）。"
+  ],
+  "quizProposals": [
+   {
+    "q": "片発で翼を水平にしたまま（バンクなし）飛ぶと、Vmc はどうなる？",
+    "choices": [
+     "公表値より高くなる（最大で約 20 kt）",
+     "公表値より低くなる",
+     "変わらない",
+     "ゼロになる"
+    ],
+    "answer": 0,
+    "why": "公表 Vmc はバンク 5° 以内を使って決めた値。バンクを減らすと 1° あたり 3 kt 以上上がる（AFH 13-25）。"
+   },
+   {
+    "q": "Vmc デモで減速中、方向はまだ保てているのに失速警報が鳴った。どうする？",
+    "choices": [
+     "すぐ回復する（生きている側の出力を絞り、機首を下げる）",
+     "方向を失うまで減速を続ける",
+     "フラップを下げる",
+     "止まった側の出力を足す"
+    ],
+    "answer": 0,
+    "why": "非対称の出力のまま失速するとスピンに入りやすい。Vmc は高い所で失速速度より低くなるので、最初の兆候で回復する（ACS CA.X.B.S5、AFH 13-26）。Seminole は Vmc 56・Vs1 57 でほぼ同じ。"
+   },
+   {
+    "q": "片発の場周で、止まったエンジンの側へ旋回することは？",
+    "choices": [
+     "問題ない（Vyse 以上・浅いバンクで）",
+     "絶対にしてはいけない",
+     "必ず止まった側へ曲がる",
+     "ラダーを使わずに曲がる"
+    ],
+    "answer": 0,
+    "why": "AFH 13-34「It is perfectly acceptable to make turns toward the failed engine」。大事なのは Vyse 以上と浅いバンク。"
+   },
+   {
+    "q": "実機の訓練で、離陸後の模擬エンジン故障を始めてよいのは？",
+    "choices": [
+     "地上 400 ft 以上で、Vsse（または Vxse・Vyse）以上",
+     "浮揚した直後",
+     "地上 100 ft",
+     "滑走中に Vmc を超えてから"
+    ],
+    "answer": 0,
+    "why": "事業用 ACS 付録 3（Multiengine Considerations）、AFH 13-36、ガイドの訓練の決まり。"
+   }
+  ],
+  "refs": [
+   "update：R.afh13 の URL を第 13 章の PDF に https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf（本文で使うページ：13-1、13-3、13-6、13-23〜13-36）。",
+   "update：R.cfr23 に加えて 23.2135 を直接 https://www.ecfr.gov/current/title-14/section-23.2135（今の Vmc の定義）。旧 23.149 は AFH 13-2/13-24 の説明を出典に。",
+   "keep：R.acsC（FAA-S-ACS-7B、現行）。使う Task を注記：Area IX Task F（離陸後の故障）・G（片発の進入と着陸）、Area X Task A（片発での飛行）・B（Vmc デモ）、付録 3（Multiengine Considerations）https://www.faa.gov/training_testing/testing/acs/commercial_airplane_acs_7.pdf",
+   "update：R.seminoleG の注記に「抗力のデモの「Flaps 45」は誤記（全開は 40°）」https://www.se.edu/aviation/wp-content/uploads/sites/4/2023/11/Seminloe-Guide-V1.0.pdf",
+   "add：MGA 2025 Seminole Pilot's Checklist（横滑りゼロ 2〜3°・ボール 1/2、Vmc 回復の手順）https://ce.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Seminole_Checklist.pdf"
+  ]
+ },
+ "appMismatches": [
+  "flight-lab/src/syllabus.js:381・390・413、school.js:55、pages.js:461 — 「生きている側へ 2〜5° バンク」vs 本文の「約 2°」・AFH 13-29（1.5〜2.5°）・MGA（2〜3°）— AFH / POH 系が正しい。5° は認証の上限、5〜10° は故障直後に一瞬だけ（AFH 13-31）。",
+  "flight-lab/src/school.js:319・app.js:33・100・135〜145 — 自動ラダーが OFF になるのは課目でエンジンが failed のときだけ。自由飛行で [ / ] を押すとフェザー＋停止（cut）になり、自動ラダーは設定のまま（初期値 ON）。風車状態は自由飛行では作れず、Shift+[ / Shift+] で再始動 — 本文 me.oei の「自動ラダーは使えません」と me.drag の「自由飛行で試せます」は不正確。本文を直す（U で自動ラダー OFF と書く、風車状態は m2・m4 のフェザー前に体験）。",
+  "flight-lab/src/quiz.js:179 — 抗力のデモの問題（最も降下率を増やしたもの＝風車状態のプロペラ）は、ガイドの値を「増えた量」と読んだときだけ成り立つ。ガイドの書き方はその形態での降下率とも読め、飛行モデルでは風車状態の差は約 100〜120 fpm、フラップ全開は約 700 fpm — 問題文を「AFH：風車状態のプロペラの抗力は機体全体の有害抗力と同じくらいになりうる」に基づくものに直すのが安全（アプリ側は変えない前提なので、本文はあいまいさを明記）。",
+  "flight-lab/src/physics.js（双発の風車状態の抗力）— 動的計算で風車状態とフェザーの差が約 120 fpm（機体の有害抗力の約 4 割）、AFH 13-3 は「機体全体の有害抗力と同じくらいになりうる」。横滑りゼロの得もほぼ出ない（バンク 0° / 3° で 86 / 88 fpm）、翼水平の Vmc は約 3〜4 kt 高いだけ（AFH は最大約 20 kt）— モデルの限界。本文はこれらをシミュレータで確かめられるとは書かない。",
+  "flight-lab/src/syllabus.js:401〜406 — m3 の減速は c.stall（失速警報、school.js:163）でも終わり、その速度を「方向を失った速度」として表示する。モデルでは 5,000 ft で約 61 kt の失速警報が先に来る — 本文で「Seminole では失速警報が先に来ることが多い」と説明する（結果の名前は実際には「回復を始めた速度」）。",
+  "flight-lab/src/syllabus.js:396 — m3 の基準「回復で失う高度 300 ft 以内」は ACS にない（AFH 13-26：高度は基準ではない）— 教材の課目の基準と本文に書く。",
+  "flight-lab/src/syllabus.js:418〜419 — m4 は地上 250 ft で模擬故障を起こす。実機は 400 ft 以上（ガイド・ACS 付録 3・AFH 13-36）— シミュレータとしてはよいが、本文で実機の決まりを区別する。",
+  "flight-lab/src/syllabus.js:428 — m5 の brief「着陸が確実（滑走路に届く）になってから脚 DOWN・フラップ」vs AFH 13-34（脚は遅くともアビームで DOWN、最後のフラップだけ待つ）— AFH が正しい。課目は脚 UP のファイナルから始まる練習だと本文で説明する。",
+  "flight-lab/src/syllabus.js:429・432 — m5 の基準文「ファイナル 88 ±5 kt」vs 採点 landingSteps(SM.yse − 4)＝84 ±5 kt。接地位置の合格範囲（目標点 300 m から −100〜+400 m）は ACS の「最初の 1/3」（1,200 m の滑走路なら 400 m まで）より広い。",
+  "flight-lab/src/syllabus.js:382 — m2 の基準「針路 ±20°（故障直後）・30 秒以内に正しいエンジンをフェザー」は教材の基準。本文の ACS の表（離陸直後 ±10°）と混同しないよう、本文で区別する。"
+ ],
+ "factChecks": [
+  {
+   "claim": "Vmc は臨界発動機が突然止まったとき、生きているエンジンを最大出力にしたまま、バンク 5° 以内で方向を保てる最小の速度（14 CFR 23 の考え方）",
+   "verdict": "imprecise",
+   "source": "https://www.ecfr.gov/current/title-14/section-23.2135",
+   "note": "今の 23.2135(c)：「VMC is the calibrated airspeed at which, following the sudden critical loss of thrust, it is possible to maintain control of the airplane」。5° バンクなどは旧 23.149 の定義で、その規則で認証された機体（Seminole など）には今も当てはまる（AFH 13-2）。"
+  },
+  {
+   "claim": "14 CFR 23.2135（旧 23.149）",
+   "verdict": "correct",
+   "source": "https://www.ecfr.gov/current/title-14/section-23.2135",
+   "note": "eCFR で 23.2135(c) を確認。Amdt. 23-64（81 FR 96689, 2016-12-30）。"
+  },
+  {
+   "claim": "Vmc を高くする：最大出力・風車状態・後方重心・軽い重量・脚 UP。低くする：生きている側へ 5° までのバンク・高い密度高度",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "AFH 13-24/25（旧 23.149 の条件）。フラップは「離陸位置（多くは 0°）で決める条件」で、表の「脚 UP・フラップ離陸位置」の 1 行は不正確。翼水平なら最大約 20 kt 高い。"
+  },
+  {
+   "claim": "横滑りゼロ：生きている側へ約 2° のバンク、ボールは生きている側へ 1/3〜1/2",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "AFH 13-29。機体により 1.5〜2.5°。MGA チェックリストは「2 TO 3 DEGREES」「1/2 BALL」（https://ce.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Seminole_Checklist.pdf）。"
+  },
+  {
+   "claim": "図のキャプション：生きている側へ 2〜5° バンクすると横滑りが最小になる",
+   "verdict": "wrong",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "AFH 13-25「The 5° bank does not inherently establish zero sideslip」、13-31「Climb performance suffers when bank angles exceed approximately 2 or 3°」。"
+  },
+  {
+   "claim": "事業用 ACS：離陸直後のエンジン故障 針路 ±10°・速度 ±5 kt",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/training_testing/testing/acs/commercial_airplane_acs_7.pdf",
+   "note": "CA.IX.F.S9。障害物があれば Vxse か Vmc＋5 kt の大きい方（S2）。"
+  },
+  {
+   "claim": "事業用 ACS：片発での飛行 高度 ±100 ft（または最小の降下率）・速度 ±10 kt・針路 ±10°",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/training_testing/testing/acs/commercial_airplane_acs_7.pdf",
+   "note": "CA.X.A.S7。"
+  },
+  {
+   "claim": "事業用 ACS：片発の進入と着陸 進入速度 ±5 kt・滑走路の最初の 1/3 に接地",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/training_testing/testing/acs/commercial_airplane_acs_7.pdf",
+   "note": "CA.IX.G.S6・S8。"
+  },
+  {
+   "claim": "Vmc デモ：1 秒に約 1 kt で減速、方向を失う最初の兆候・失速警報・バフェットで生きている側の出力を絞り機首を下げる、入った針路の ±20° 以内、Vsse / Vyse ±5 kt",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/training_testing/testing/acs/commercial_airplane_acs_7.pdf",
+   "note": "CA.X.B.S4〜S8。抜けている点：入りは Vsse より約 10 kt 速い速度（S2）、止まった側の出力を足さない（S6）、付録 3 の「両発で機首を上げてから片方を絞らない」。"
+  },
+  {
+   "claim": "Vmc デモは地上 3,000 ft 以上（ガイド）",
+   "verdict": "correct",
+   "source": "https://www.se.edu/aviation/wp-content/uploads/sites/4/2023/11/Seminloe-Guide-V1.0.pdf",
+   "note": "ガイド「This task must be completed no lower than 3,000 AGL」。ACS 付録 3：3,000 ft AGL かメーカーの推奨の高い方。別の学校のガイド（https://www.thrustflight.com/wp-content/uploads/2026/04/PA44-Maneuver-Guide.pdf）は「4,000 ft AGL per POH」と書くが、POH 本体は未確認。"
+  },
+  {
+   "claim": "高い所では出力が減って Vmc が下がり、失速速度に近づく・逆転する。Vmc デモは失速の兆候でも直ちに回復",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "AFH 13-26（Figure 13-14）、ACS 付録 3 の Task X.B の注。"
+  },
+  {
+   "claim": "Vmc が失速速度より高い条件では、方向を失ったとき出力を絞らないとスピンに入る危険",
+   "verdict": "imprecise",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "AFH 13-26/27 の警告は「非対称の出力のまま失速するとスピンに入りやすい。Vs が Vmc より先に来ると急に裏返る」。方向を失うだけでなく、失速と重なることが危ない。"
+  },
+  {
+   "claim": "Seminole は左で模擬（臨界発動機）",
+   "verdict": "imprecise",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "AFH 13-24：逆回転の機体では「No engine is more critical… a VMC demonstration may be performed with either engine windmilling」。ガイドは左を使う。"
+  },
+  {
+   "claim": "抗力のデモ：フラップ 10° 約 200〜250、脚 DOWN 約 200〜300、フラップ 45°（全開）約 400〜500、風車状態 約 500〜600 fpm",
+   "verdict": "imprecise",
+   "source": "https://www.se.edu/aviation/wp-content/uploads/sites/4/2023/11/Seminloe-Guide-V1.0.pdf",
+   "note": "ガイドどおりだが、ガイドは各段階で「note descent rate (appx. …)」で、増えた量かその形態での値かあいまい。「45」は誤記（Seminole の全開は 40°：https://ce.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Seminole_Checklist.pdf）。"
+  },
+  {
+   "claim": "\"Dead foot, dead engine\"：踏んでいない足の側が止まったエンジン。計器は当てにならないことがある",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "AFH 13-32/33「Identification should be primarily through the control inputs… not the engine gauges」。"
+  },
+  {
+   "claim": "確認：止まったと思う側のスロットルをゆっくり絞る。何も変わらなければ正しい",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "AFH 13-32。"
+  },
+  {
+   "claim": "風車のように回るプロペラは大きな抗力（Vmc も上がる）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "AFH 13-3「can produce parasite drag as great as the parasite drag of the entire airframe」、13-24（風車状態で Vmc が最も高い）。"
+  },
+  {
+   "claim": "片発のゴーアラウンドは非常に難しく、ガイドでは Seminole で行わない",
+   "verdict": "correct",
+   "source": "https://www.se.edu/aviation/wp-content/uploads/sites/4/2023/11/Seminloe-Guide-V1.0.pdf",
+   "note": "ガイド「Single-engine go-arounds will not be attempted in the PA-44」。AFH 13-35：できないことがあり、500 ft 以上失うのも普通。"
+  },
+  {
+   "claim": "片発の進入：着陸が確実になるまで脚とフラップを出しすぎない",
+   "verdict": "imprecise",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "AFH 13-34：脚は性能が十分ならダウンウインドで下ろし、遅くともアビームで DOWN を確認。フラップ 10（ダウンウインド）・25（ベース）、最後のフラップだけ確実になるまで待つ。Vyse を確実になるまで保つ。"
+  },
+  {
+   "claim": "例：Vmc デモで速度 62 kt、ラダーいっぱいでも機首が左へ",
+   "verdict": "wrong",
+   "source": "flight-lab/src/physics.js（flight.test.mjs の Vmc テストと同じ方法で計算）",
+   "note": "教材モデル（1,000 ft・バンク 5°）では 62 kt でラダー約 78%、いっぱいになるのは約 56 kt。5,000 ft では約 61 kt で先に失速警報（ラダー約 66%）。"
+  },
+  {
+   "claim": "FIG.oeiForces：右ラダーの力（尾翼で右向きの矢印）",
+   "verdict": "wrong",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "右ラダー（舵の後縁が右）で垂直尾翼に生まれる横向きの力は左向き。尾が左へ、機首が右へ戻る（AFH Figure 13-12 の考え方）。"
+  }
+ ],
+ "cadetNotes": [
+  "各節の最初の <svg> が教室の画面に映る。いまは me.vmc・me.drag・me.land に SVG がない（me.vmc の vmcFactors は表）。oeiForces を oei.what へ移すなら me.oei の最初の図は oeiFlow にする。",
+  "新しい節 oei.what を足すと CADET の章立て（chapters の sections）にも出る。CADET のテストは節の数を固定していないが、figure が section の最初の svg であることを確かめる（content.test.mjs:101〜107）。",
+  "キャプションの最初の 2 文が読み上げられる：「図：左エンジンが止まると、右エンジンの推力で機首が左へ回ります。右ラダーで尾翼に左向きの力をつくって止めます。」のように要点から。「[ / ]」や「E / Q」を入れない。",
+  "me.oei の mute の段落「シミュレータでは：…」と me.drag の「この教材の Seminole でも…」は CADET で消える（APP_ONLY・教材）。消えても意味が通るように、アプリの話は bk.sim か mute の段落だけに書く。",
+  "CADET のキー文字の削除は WASDQERFTVBZXU だけ。「フェザー（[）」「（[ / ]）」は消えないので、本文・キャプション・bk.key・例に書かない。",
+  "bk.key は教官が読み上げる。me.vmc の 2 つ目（74 字）を 60 字以内に。me.oei・me.drag・me.land に bk.key がないので足す（例：「片発になったら、まずラダーで方向、次に青い線」「止まった側の確認はスロットルをゆっくり絞って」「片発では脚・フラップ・風車状態のプロペラが上昇を奪う」「片発の進入は高めに、決めたら着陸」）。",
+  "quiz.js の q_me（抗力のデモの問題を含む）は CADET の座学でも出る。本文の説明をそれと矛盾しないように（あいまいさを明記）。",
+  "「シミュレータでは」で始まる文は文ごと消える。実機の話と混ぜない。"
+ ]
+}

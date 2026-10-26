@@ -1,0 +1,445 @@
+{
+ "id": "law",
+ "title": "規則と空域（14 CFR と米国の空域） / Regulations and airspace",
+ "sections": [
+  {
+   "id": "law.pic",
+   "title": "機長の責任と飛行前の準備",
+   "gist": "機長（PIC）はその飛行に直接責任を持ち最終的な権限があり（91.3）、出発前にその飛行に関する入手できるすべての情報を知り（91.103）、機体が安全に飛べる状態かを判断する（91.7）。",
+   "issues": [
+    "「91.103（飛行前の準備）：すべての飛行で滑走路長と離着陸距離の情報。IFR や空港近辺以外の飛行では、気象の報告と予報・燃料・…」— 名詞止めで何をするのか分からない。条文の本体「出発前に、その飛行に関する入手できるすべての情報を知っておく（become familiar with all available information）」が抜けている。",
+    "「空港近辺以外の飛行」— 初心者には「空港を離れる飛行＝クロスカントリー（cross-country）」と分からない。言い換えが必要。",
+    "「緊急時は必要な範囲で規則から逸脱できる（後で報告を求められることがある）」— 誰が求めるのか不明。正しくは「すぐ行動が必要な飛行中の緊急時（in-flight emergency requiring immediate action）に、必要な範囲で。FAA から求められたら書面で報告する（91.3(b)(c)）」。",
+    "「機長は耐空性を判断する責任がある」— 条文は「安全に飛べる状態か（condition for safe flight）を判断する」と「飛行中に機械・電気・構造の不具合が起きたら飛行をやめる（91.7(b)）」。後半が抜けている。",
+    "「無線局免許（国際線のみ）」— 「国際線」はエアラインの路線に聞こえる。「米国の外へ飛ぶときだけ（FCC の規則で、14 CFR ではない）」に。",
+    "ARROW（機体の書類）は機長の責任とは別の話題で、操縦士自身が持つ書類（操縦士証明・医療証明・写真付き身分証明：61.3、ソロのクロスカントリーではログブックと学生操縦士証明：61.51(i)(2)）が抜けている → ARROW は新設の law.aircraft へ移し、ここには操縦士の書類を。",
+    "「最終的な判断は機長」— 学生にとって誰が機長かの区別がない（ソロでは自分が機長。教官同乗の訓練では通常は教官が機長）。",
+    "図がない（CADET の教室画面に出す最初の SVG がない）。"
+   ],
+   "mainFigure": "「飛行前に知ること」の二重の枠（91.103）：中心に PIC、内側の枠＝すべての飛行（使う空港の滑走路長・POH の離着陸距離）、外側の枠＝IFR・空港を離れる飛行（天気の報告と予報・燃料・行けないときの代替案・ATC から聞いた遅延）。枠の外に「すべての入手できる情報（NOTAM・TFR を含む）」。"
+  },
+  {
+   "id": "law.aircraft",
+   "title": "（新設案）機体の書類・装備・点検",
+   "gist": "飛ぶ前に、機体が書類（ARROW：91.203・91.9）・装備（昼の VFR の必要装備：91.205(b)、故障した装備：91.213）・点検（年次点検 12 か月・有償の訓練機は 100 時間：91.409、ELT：91.207、トランスポンダー 24 か月：91.413）の面で飛べる状態かを確かめる。",
+   "issues": [
+    "新設案（新しい id）。91.205・91.207・91.213・91.409・91.413 はどの章にもない（grep で 0 件）。Private Pilot ACS（FAA-S-ACS-6C）の PA.I.B Airworthiness Requirements（証明書の場所と期限・必要な点検とログ・AD・故障した装備での飛行）に対応する内容。",
+    "law.pic の ARROW をここへ移す（law.pic からは削除せず「機体の書類は次の項」と案内。節は消さない）。",
+    "数字は条文の値だけ。実機の装備・点検の確認は整備記録と POH/AFM が優先、と書く。"
+   ],
+   "mainFigure": "機体の左側ドアと計器盤の模式図：ARROW の書類の置き場所（耐空証明は入口から読めるように掲示：91.203(b)）と、下に点検の期限の帯（年次 12 か月・100 時間（有償の訓練・貸出）・ELT 12 か月・トランスポンダー 24 か月）。"
+  },
+  {
+   "id": "law.airspace",
+   "title": "空域の種類と入る条件",
+   "gist": "米国の空域は管制空域（Class A・B・C・D・E）と非管制空域（Class G）に分かれ、VFR で入るとき Class B は「許可」、Class C・D は「双方向の交信の確立」が必要。",
+   "issues": [
+    "図 FIG.airspace：Class A を 14,500〜18,000 ft の帯に描いている（rect が y(18000)〜y(14500)）のに「Class A：18,000 ft MSL 以上」と書いている。14,500〜18,000 ft は Class E。",
+    "図：左の Class D を、名前のない赤い Class C 形の枠が囲んでいる（何の線か分からない）。viewBox 幅 520 で文字が 390 px 表示で 6.6 px（目安 9.5 px 以上）。高さの目盛り（700/1,200 ft の Class E の床など）がない。",
+    "「多くは地上 700 ft または 1,200 ft から上」— その下が Class G だと書いていない。Class E は 14,500 ft MSL から上（18,000 ft 未満）にもどこでもあること、管制塔のない空港の Class E 地表区域があることがない（AIM 3-2-6）。",
+    "「通常は半径 5 NM の地表〜4,000 ft AGL のコア」— AIM 3-2-4 は「空港の標高から 4,000 ft（チャートは MSL で表示）」。Class D の「地表〜2,500 ft AGL」も同じ（AIM 3-2-5）。",
+    "Class B の行が長い（許可・装備・学生の承認・禁止空港が 1 セル）。「空港によっては禁止」は 91.131(b)(2) と付録 D 第 4 節（例：Miami International。Orlando International は第 4 節に入っていない）。",
+    "AIM の standby の説明に「“remain outside the Class Charlie airspace and standby” と言われたら入らない」（AIM 3-2-4）が抜けている（radio.js:205・book-comm.js:173 にはある）。",
+    "Class C に入るのに特別な資格は要らない（AIM 3-2-4 Pilot Certification）が、Class B では学生操縦士に 61.95 の承認が要る、という対比が書かれていない。",
+    "「上昇・降下の高度に注意」（Sanford の上の Class B）— 何に注意するのか不明。「許可なしに Class B の棚に入らない＝棚の下限より下を飛ぶ」と具体的に。",
+    "30 NM の装備区域（Mode C veil：Class B の主空港から 30 NM 以内・10,000 ft MSL まではトランスポンダー（高度送信）と ADS-B Out。91.215(b)(2)・91.225(d)(2)）がない。Orlando International は付録 D 第 1 節にあり、Sanford はその 30 NM 以内（距離は約 21 NM と推定）。",
+    "Class E：「VFR は特別な条件なし」— 10,000 ft MSL 以上（地上 2,500 ft 以下を除く）ではトランスポンダーと ADS-B Out が必要（91.215(b)(5)・91.225(d)(4)）。"
+   ],
+   "mainFigure": "空域の断面（模式図・NOT FOR NAVIGATION）：縦軸に SFC・700/1,200 ft AGL・2,500 / 4,000 ft（空港の標高から）・10,000・14,500・18,000 ft MSL・FL600（上は省略記号で縮める）。一番下に Class G、700/1,200 ft の Class E の床の線、管制塔のある小さな空港の Class D、中規模空港の Class C（逆ウエディングケーキ）、大空港の Class B、18,000 ft から上に Class A。各 Class の横に入る条件のマーク（B＝許可／C・D＝交信の確立／E・G＝なし）。"
+  },
+  {
+   "id": "law.vfr",
+   "title": "有視界飛行（VFR）の気象条件：14 CFR 91.155",
+   "gist": "VFR では空域と高度ごとに決められた飛行視程と雲からの距離を守り（91.155(a)）、空港の地表区域では雲高 1,000 ft 未満・地上視程 3 SM 未満なら VFR で飛べない（91.155(c)(d)）。",
+   "issues": [
+    "空域の種類（law.airspace）より前にあり、Class B〜G の名前を説明する前に使っている → law.airspace の後へ移す。",
+    "最初の要素が 11 行の表（FIG.vfrMinima は SVG ではない）。CADET の教室画面に図が出ない。390 px では 1 列目の長いラベル（「Class G（地上 1,200 ft 超・10,000 ft MSL 以上）」）が何行にも折り返す。",
+    "SM（法定マイル＝約 1.6 km）・AGL（地上からの高さ）・MSL（平均海面からの高さ）・雲高（ceiling：BKN か OVC の一番低い層。{ch:wx}）が説明されていない。",
+    "「（場周経路の特例あり）」— 中身がない。91.155(b)(2)：夜・視程 1 SM 以上 3 SM 未満でも、滑走路から 1/2 SM 以内の場周経路なら雲に入らなければ飛べる（Class G・地上 1,200 ft 未満）。",
+    "「特別有視界飛行方式（91.157）は別」— 説明がない（ACS PA.I.E.K4 の知識項目）。管制の許可・雲に入らない・飛行視程 1 SM・地表区域の中で 10,000 ft MSL 未満・夜は計器飛行証明と計器飛行の装備が必要・付録 D 第 3 節の空港（例：Tampa）では固定翼は不可。",
+    "ここが大切の 1 項目目が約 95 字（目安 60 字以内。読み上げに長い）。「雲高 1,000 ft 未満」と「地上視程 3 SM 未満」の 2 項目に分ける。",
+    "学生操縦士の 61.89（昼 3 SM・夜 5 SM）が law.rules の表と重複。ここでは「学生はもっと厳しい」の 1 行と bk.see にする。"
+   ],
+   "mainFigure": "雲 1 つと Archer の側面図：雲の下 500 ft・上 1,000 ft・横 2,000 ft の距離の矢印と、前方に飛行視程 3 SM の矢印（覚え方「3-152」：Class C・D・10,000 ft 未満の Class E）。右下に小さく比較の 2 枠：Class B＝3 SM・雲に入らない、Class G 昼・地上 1,200 ft 以下＝1 SM・雲に入らない。"
+  },
+  {
+   "id": "law.special",
+   "title": "特別な空域・NOTAM・TFR",
+   "gist": "特別使用空域（P・R・W・MOA・Alert など）は性質ごとに入れる・入れないが違い、一時的飛行制限（TFR）は NOTAM（Notice to Airmen）で出るので、飛行前に必ず確認する。",
+   "issues": [
+    "「Warning / MOA / Alert」を 1 行にまとめ「危険・軍の訓練・訓練機の多い空域。入れるが注意」— 3 つは性質が違う。Warning Area は海岸から 3 NM より沖の危険な活動（AIM 3-4-4）、MOA は軍の訓練（入る前に管制機関に交通情報を求める。AIM 3-4-5）、Alert Area は訓練機が多い（AIM 3-4-6）。",
+    "Controlled Firing Area・National Security Area（AIM 3-4-7・3-4-8）、軍の低高度訓練ルート（MTR：AIM 3-5-2）、Washington DC の SFRA（AIM 3-5-8、ACS PA.I.E.K3 にある）がない。",
+    "「Restricted Area（R）… 運用中は許可なく入れない」— 91.133 の「使用機関・管理機関の許可」を明記。運用していない時間は ATC の許可で通れることがある（AIM 3-4-3）。",
+    "「NOTAM（航空情報）」— 英語の名前がない。FAA は 2025 年 2 月に名前を Notice to Airmen に戻した（2021 年からの Notice to Air Missions をやめた）。",
+    "「ADIZ 防空識別圏（国境・海岸）」— 何をするのか（飛行計画・トランスポンダー・双方向の無線。14 CFR Part 99、AIM 5-6）がない。",
+    "図がない。架空の LAB の名前で特別使用空域の形と「入れない／許可が要る／入れるが注意」を見せる図が必要。",
+    "「この教材の LAB 空域・訓練点・LAB RWY 36 は架空。実際の空域判定はしない」は CADET のテストで必須（KEEP：/架空/）。残す。"
+   ],
+   "mainFigure": "架空の地域を上から見た模式図（NOT FOR NAVIGATION）：R-LAB1（制限空域・運用時間の表）、LAB MOA、A-LAB3（訓練機が多い）、海岸線から 3 NM 沖の W-LAB2、円形の TFR（NOTAM で公示・地図にない）。各空域に「入れない（許可が要る）／入れるが注意」の印。"
+  },
+  {
+   "id": "law.rules",
+   "title": "速度・高度・優先順位・燃料",
+   "gist": "衝突を避ける義務（see and avoid）と右側優先などの優先順位、最低安全高度、速度の制限、VFR の燃料の予備（昼 30 分・夜 45 分）は、すべての飛行で守る規則。",
+   "issues": [
+    "6 つの規則を 2 列の表に詰め、各セルが 3〜6 文と長い。規則ごとに小見出し＋図＋2〜3 行に分ける。",
+    "「気球＞グライダー＞飛行船＞（曳航・給油中の機）＞動力機」— 2025 年 10 月 22 日施行の改正（MOSAIC 規則、Amdt. 91-381）で 91.113(d) は「曳航・給油中の機はほかのすべての動力機に優先」「飛行船は曳航・給油中の機を除くほかの動力機に優先」と明記。正しい順は 気球＞グライダー＞曳航・給油中の機＞飛行船＞その他の動力機。",
+    "「着陸のための最終進入中の機が優先（低い方が優先）」— 「低い方の優先を使って、最終進入中の機の前に割り込んだり追い越したりしない」（91.113(g)）が抜けている。",
+    "「91.119 … どこでも：…」— 条文の前置き「離着陸に必要な場合を除き（Except when necessary for takeoff or landing）」がない。",
+    "「91.126〜91.131：管制塔のある空港では管制塔と双方向の交信（91.126(d)）」— 91.126 は Class G の空港の規則。普通の管制塔のある空港（Class D）は 91.129(c)（入る前に交信を確立）・91.129(i)（滑走路・誘導路の使用と離着陸には許可）・91.129(f)（左回り）。左旋回の規則（91.126(b)）は Class G（と 91.127 で Class E）の管制塔のない空港。",
+    "「91.117 速度」— 教材の Archer（FL.physics pa28：巡航 110 kt・Vne 154 kt＝教材値）には関係しないことを書いていない。ジェット（{ch:jet}）で効く規則だと一言。",
+    "「61.89 学生操縦士」の行が solo.req（book-3.js:248）・intro（book-1.js:43）と重複。",
+    "ここが大切「燃料の予備は『最低限』。訓練生のうちは教官・学校の決まり（例：1 時間）に従う」— 「1 時間」は規則でなく学校ごとの例だと分かるように（教材の例）。",
+    "図がない。優先順位は位置関係なので図が必須。"
+   ],
+   "mainFigure": "上から見た 3 つの場面（right-of-way）：①収束：相手が右にいる → 相手が優先、自分は相手の後ろへ回る ②正面：両方とも右へ ③追い越し：追い越される側が優先、追い越す側は右へ離れて。下に優先順位のはしご（遭難機＞気球＞グライダー＞曳航・給油中の機＞飛行船＞その他の動力機。91.113、2025 年改正後）。"
+  }
+ ],
+ "problems": {
+  "unclear": [
+   "law.pic：「91.103（飛行前の準備）：すべての飛行で滑走路長と離着陸距離の情報。IFR や空港近辺以外の飛行では、…ATC から知らされた遅延も」— 名詞止めの列挙で動詞がない。「出発前に、その飛行に関する入手できるすべての情報を知る」を先に。",
+   "law.pic：「無線局免許（国際線のみ）」— 「米国の外へ飛ぶときだけ」。",
+   "law.vfr：SM・AGL・MSL・雲高（ceiling）・地上視程と飛行視程の違いが未説明のまま表に出る。",
+   "law.vfr：「（場周経路の特例あり）」「特別有視界飛行方式（91.157）は別」— 中身がない。",
+   "law.airspace：「Class G 非管制空域（地表付近）」— 「地表付近」がどこまでか（多くは地上 700 ft か 1,200 ft まで）を図と一緒に。",
+   "law.airspace：「Sanford（KSFB）は Class C で、その上に Orlando の Class B がかぶっている。上昇・降下の高度に注意」— 何に注意するか（Class B の棚の下限より下を飛ぶ、許可なしに入らない）。",
+   "law.rules：表の 1 セルに「どこでも：…。人口密集地・集会の上：…。それ以外：…」と 3 規則。小見出しと図に分ける。",
+   "law.special：「Warning / MOA / Alert … 入れるが注意（MOA は ATC に情報を求める）」— 3 種類を 1 行で説明しない。",
+   "law.special：「ADIZ 防空識別圏（国境・海岸）」— 何をするのかがない。",
+   "law.pic のここが大切「最終的な判断は機長。教官・管制の指示も、安全でなければ『unable』」— 学生の場合、教官同乗では通常教官が機長、ソロでは自分が機長、を先に。"
+  ],
+  "order": [
+   "law.vfr（雲からの距離の表）が law.airspace より前 → 空域の名前を知る前に Class B〜G の表が出る。law.airspace → law.vfr の順に。",
+   "law.special（空域の話）が law.rules（飛行の規則）の後 → 空域の 3 節（airspace・vfr・special）をまとめ、最後に law.rules。",
+   "law.pic に機長の責任と機体の書類（ARROW）が混在 → 新設 law.aircraft に機体の書類・装備・点検を移す。",
+   "61.89（学生操縦士）が law.vfr のここが大切と law.rules の表の 2 か所 → law.rules の 1 か所＋bk.see('solo.req')。",
+   "提案の順：law.pic → law.aircraft（新設）→ law.airspace → law.vfr → law.special → law.rules。"
+  ],
+  "errors": [
+   "FIG.airspace：Class A の帯を 14,500〜18,000 ft に描き「Class A：18,000 ft MSL 以上」と表示 → Class A は 18,000 ft MSL から FL600 まで。14,500 ft MSL〜18,000 ft 未満は Class E（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_2.html AIM 3-2-2・3-2-6）",
+   "FIG.airspace：左の Class D を名前のない赤い Class C 形の枠が囲み、Class D が Class C の中にあるように見える → 枠を削除（同上）",
+   "law.rules 91.113：「気球＞グライダー＞飛行船＞（曳航・給油中の機）＞動力機」→ 2025-10-22 施行の改正後は 気球＞グライダー＞曳航・給油中の機＞飛行船＞その他の動力機（91.113(d)(3)(4)：an airship has the right-of-way over all other powered aircraft, except for an aircraft towing or refueling other aircraft）（https://www.ecfr.gov/current/title-14/section-91.113、改正：https://www.federalregister.gov/documents/2025/07/24/2025-13972/modernization-of-special-airworthiness-certification）",
+   "law.rules：「管制塔のある空港では管制塔と双方向の交信（91.126(d)）」→ 91.126 は Class G の空港の節。管制塔のある普通の空港（Class D）の根拠は 91.129(c)（入る前に確立・維持）、離着陸・滑走路・誘導路の許可は 91.129(i)（https://www.ecfr.gov/current/title-14/section-91.129）",
+   "law.rules 91.119：前置き「離着陸に必要な場合を除き」がない → 条文は Except when necessary for takeoff or landing（https://www.ecfr.gov/current/title-14/section-91.119）",
+   "law.rules 91.113(g)：「最終進入中の機が優先（低い方が優先）」だけ → 低い方の機はそれを使って最終進入中の機の前に割り込んだり追い越したりしてはいけない（https://www.ecfr.gov/current/title-14/section-91.113）",
+   "law.airspace：Class C「地表〜4,000 ft AGL」・Class D「地表〜2,500 ft AGL」→ AIM は「空港の標高から（above the airport elevation、チャートは MSL）」（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_2.html）",
+   "law.airspace：Class E「VFR は特別な条件なし」→ 10,000 ft MSL 以上（地上 2,500 ft 以下を除く）はトランスポンダー（高度送信）と ADS-B Out が必要（https://www.ecfr.gov/current/title-14/section-91.215、https://www.ecfr.gov/current/title-14/section-91.225）"
+  ],
+  "outdated": [
+   "91.113(d)（優先順位）：2025 年 7 月 24 日公布・10 月 22 日施行の MOSAIC 規則で文言が改正（曳航・給油中の機が飛行船より優先と明記、powered aircraft に統一）。本文の順を更新し、quiz にも入れるなら新しい順で。",
+   "NOTAM の名前：FAA は 2025-02-11 に「Notice to Air Missions」をやめ「Notice to Airmen」に戻した（FAA Notice 7930.114）。本文は「NOTAM（航空情報）」だけなので、英語名を Notice to Airmen と書く。NOTAM のシステムは NMS（NOTAM Management Service）へ移行中（2025-09-29 から段階的）だが、操縦士が NOTAM を確認する義務は同じ（https://www.faa.gov/about/initiatives/notam）。",
+   "PHAK FAA-H-8083-25C は現行（2023 年版）だが、2025 年 10 月に MOSAIC に合わせた Addendum（第 1・3・6 章：スポーツ操縦士・軽スポーツ機など）が出た。この章の内容には影響しない。参考文献の表記に「＋2025 年 10 月 Addendum」を足すかは全書共通で判断。",
+   "AIM：現行は 2026-07-09 発効の Change 3。本文の AIM 3-2・3-2-4 の段落番号はそのまま有効。",
+   "（他章）solo.req（book-3.js:246）「学生操縦士証明とログブックに、その機種での単独飛行の承認」→ 2017 年の改正（Amdt. 61-140）以降、ソロの承認はログブック（61.87(n)）。学生操縦士証明への記入は不要（law の 61.x の記述と合わせるとき注意）。"
+  ],
+  "duplicates": [
+   "comm / radio2（book-comm.js:172–174, 221, 225）と radio.js:203–209（r_standby・r_standby2）：Class C の「コールサイン付きの stand by で交信確立」を詳しく扱う → law.airspace は規則（入る条件）だけを短く、言い方は comm へ bk.see。",
+   "wx（book-2.js:21, 31–36）：91.155 の視程・91.103・NOTAM/TFR の表 → law.vfr / law.special へ bk.see でつなぐ。",
+   "perf（book-1.js:175, 227, 254）：91.151 の予備・91.103 の滑走路長と離着陸距離（quiz も）→ law.pic・law.rules と同じ言い方に揃える。",
+   "navp（book-4.js:20–36, 113）：チャート上の空域の記号・91.151・91.103・91.159・NOTAM → 空域の記号は navp、空域の規則は law。",
+   "solo（book-3.js:241–248, 270）と intro（book-1.js:43, 66）：61.87・61.89 → 61.89 は law.rules に 1 回、solo.req から参照。",
+   "emg（book-3.js:192）91.3(b)、ops（book-3.js:98）91.119、hf（book-2.js:101）91.17 → 内容は一致。言い方を揃える。"
+  ],
+  "numbers": [
+   "navp（book-4.js:35）「14 CFR 91.151 VFR の燃料：目的地まで＋昼は 30 分・夜は 45 分」→ 条文は「最初の着陸予定地（first point of intended landing）まで」。law の書き方が正しい。",
+   "law.rules の速度制限 200 / 250 kt と教材の Archer：FL.physics.AIRCRAFT pa28 の v.cruise 110・v.ne 154（教材値）→ Archer はこの規則に届かない。本文に一言（矛盾ではない）。",
+   "燃料の例を入れるなら FL.bookCalc の fuel の既定値 9.5 gal/h（book-figs.js:369、教材値）：予備 30 分 ≈ 4.8 gal、45 分 ≈ 7.1 gal。",
+   "ここが大切「訓練生のうちは教官・学校の決まり（例：1 時間）」— 規則ではなく例。fuel 計算機の既定の予備は 30 分（book-figs.js:369）なので、「1 時間」を使うなら教材の例と明記。",
+   "61.89 の視程（昼 3 SM・夜 5 SM）は intro（book-1.js:43, 66）・solo.req（book-3.js:248）・quiz.js:72 と一致。",
+   "quiz.js:63 の q_law（10 問）と章末の quiz（3 問）の値（3-152、200 kt、91.119 の 1,000 ft / 2,000 ft、30 分）は本文と一致。q_law の 91.17 の問題（8 時間・0.04%）は hf の内容で、law には 91.17 がない。"
+  ]
+ },
+ "policy": "節の順を law.pic → law.aircraft（新設）→ law.airspace → law.vfr → law.special → law.rules に変える（id は変えない）。最初に law.airspace で、初心者が持っていない 3 つの考え（管制空域と非管制空域、AGL と MSL、入る条件の 2 種類＝「許可」と「交信の確立」）を、直した断面図で説明し、その後で law.vfr を「雲 1 つの図（3-152）」から始め、91.155 の全表は参照用に後ろへ置き、特別有視界（91.157）と 91.155(b)(2) を短く説明する。law.pic は 91.3・91.103・91.7 を正確な言い方にし、学生にとって誰が機長か（ソロ＝自分、教官同乗＝通常は教官）と操縦士の書類（61.3・61.51(i)(2)）を足し、ARROW は新設の law.aircraft（書類・91.205 の装備・91.409 などの点検。ACS PA.I.B）へ移す。law.rules は表をやめて規則ごとの小見出し＋図（優先順位を最初に、最低安全高度、速度、燃料は Archer の教材値の例）にし、91.113(d) を 2025 年改正の順に直し、91.126(d) の行は Class D の 91.129(c)(f)(i) に置き換える。61.89 は law.rules に 1 回だけ書いて solo.req へ bk.see、Class C の「stand by」の説明は law.airspace に規則として短く書き言い方は comm へ bk.see でつなぐ。law.special は Warning・MOA・Alert を分け、CFA・NSA・SFRA を 1 行ずつ足し、NOTAM の英語名（Notice to Airmen）を書き、「LAB 空域は架空」の文は残す。Sanford・Orlando の事実は出典付きの事実として残すが、例と図は LAB の名前（LAB Approach・R-LAB1・LAB MOA）で書き、地図風の図はすべて「模式図・NOT FOR NAVIGATION」とする。",
+ "figuresExisting": [
+  {
+   "key": "vfrMinima",
+   "verdict": "fix",
+   "why": "値は 91.155(a) と完全に一致（eCFR で確認）。ただし表（SVG ではない）なので、新しい SVG vfrCloudClearance の後ろに置く。11 行を 4 つのまとまり（Class B／C・D・E 10,000 ft 未満／E 10,000 ft 以上／Class G の 3 区分×昼夜）に整理し、1 列目のラベルを短く（例「G・地上 1,200 ft 以下・夜」）。「（場周経路の特例あり）」を 91.155(b)(2) の中身に置き換え、特別有視界（91.157）の 1 行と「学生は 61.89 でもっと厳しい」の注を足す。出典行は残す。"
+  },
+  {
+   "key": "airspace",
+   "verdict": "redo",
+   "why": "Class A を 14,500〜18,000 ft の帯に描いている（誤り）、左に名前のない赤い Class C 形の枠、viewBox 520×260 で最小文字 6.6 px（390 px）、Class E の床（700/1,200 ft AGL）と Class G の範囲が描かれていない、高さの目盛りがない。viewBox 400 前後・文字 12 以上で、縦軸の目盛り（SFC・700/1,200 AGL・2,500/4,000（空港から）・10,000・14,500・18,000 MSL・FL600 は省略記号）、Class G→E の床→D・C・B→A を正しく描き、各 Class に入る条件のマークを付けて作り直す。キャプションは短くし、根拠（91.129〜91.131・AIM 3-2）は本文へ。「模式図・NOT FOR NAVIGATION」を図の中に。"
+  }
+ ],
+ "figuresNew": [
+  {
+   "name": "vfrCloudClearance",
+   "section": "law.vfr",
+   "what": "雲 1 つと Archer の側面図。雲の下 500 ft・上 1,000 ft・横 2,000 ft と飛行視程 3 SM の矢印（3-152：Class C・D・10,000 ft 未満の E）。右下に比較の小枠 2 つ：Class B＝3 SM・雲に入らない、Class G 昼・地上 1,200 ft 以下＝1 SM・雲に入らない。この節の最初の SVG。",
+   "data": "14 CFR 91.155(a) の表（https://www.ecfr.gov/current/title-14/section-91.155）。距離は記号的（縮尺なし）と明記。",
+   "priority": "must"
+  },
+  {
+   "name": "surfaceAreaVfr",
+   "section": "law.vfr",
+   "what": "空港の地表区域（Class B・C・D・E の地表区域）の断面：雲高 1,000 ft の線と地上視程 3 SM。「両方満たす → VFR で離着陸・場周経路／満たさない → VFR 不可、特別有視界（管制の許可・雲に入らない・1 SM・昼）か IFR」の 2 段の判断。",
+   "data": "91.155(c)(d)・91.157(b)(c)（eCFR）。",
+   "priority": "should"
+  },
+  {
+   "name": "classCEntry",
+   "section": "law.airspace",
+   "what": "Class C の境界の手前で LAB Approach を呼んだときの 3 つの応答と判断：「Archer Seven Lima Alpha, stand by」→ 入ってよい／「Aircraft calling LAB Approach, stand by」→ 入らない／「…, remain outside the Class Charlie airspace and stand by」→ 入らない。Class B は「cleared into the Class Bravo airspace」と言われるまで入らない、を下に。",
+   "data": "AIM 3-2-4（NOTE と EXAMPLE）・3-2-3、91.130(c)・91.131(a)(1)。コールサインは教材の Archer Seven Lima Alpha（radio.js:15）。",
+   "priority": "should"
+  },
+  {
+   "name": "labUnderBravo",
+   "section": "law.airspace",
+   "what": "架空の LAB（Class C）の上に Class B の棚がかぶる断面：Class C の天井と Class B の棚の下限の間を飛ぶ／許可なしに棚に入らない、30 NM の装備区域（トランスポンダー・ADS-B Out）の範囲。高さは架空の代表値。",
+   "data": "構造は FAA From the Flight Deck（SFB は Class C で Orlando の Class B の下）・91.215(b)(2)・91.225(d)(2)。数値は架空（実際の SFB の高さは描かない）。",
+   "priority": "nice"
+  },
+  {
+   "name": "specialUseAirspace",
+   "section": "law.special",
+   "what": "架空の地域を上から見た模式図：R-LAB1（制限空域・運用中は許可が要る）、LAB MOA（軍の訓練・入る前に交通情報を求める）、A-LAB3（訓練機が多い）、海岸から 3 NM 沖の W-LAB2、円形の TFR（NOTAM で公示・地図にない）。凡例に「入れない（許可が要る）／入れるが注意」。この節の最初の SVG。",
+   "data": "AIM 3-4-2〜3-4-6・3-5-3、91.133・91.137〜91.145。名前と位置は架空。実際のチャートの色・記号は Chart User's Guide で確認、と注記（図はチャートの記号をまねない）。",
+   "priority": "must"
+  },
+  {
+   "name": "rightOfWay",
+   "section": "law.rules",
+   "what": "上から見た 3 場面（収束：相手が右にいれば相手が優先、自分は後ろへ／正面：両方右へ／追い越し：右へ離れて追い越す）と、下に優先順位のはしご（遭難機＞気球＞グライダー＞曳航・給油中の機＞飛行船＞その他の動力機）。この節の最初の SVG。",
+   "data": "91.113(b)〜(g)（eCFR、2025-10-22 施行の文言）。",
+   "priority": "must"
+  },
+  {
+   "name": "minSafeAltitude",
+   "section": "law.rules",
+   "what": "側面図 3 つ：人口密集地・集会の上＝半径 2,000 ft 以内の最も高い障害物から 1,000 ft 上／それ以外＝地表から 500 ft／水上・人の少ない場所＝人・船・車・建物から 500 ft 離れる。上に「どこでも：エンジンが止まっても安全に不時着できる高さ」。",
+   "data": "91.119(a)〜(c)（eCFR）。",
+   "priority": "should"
+  },
+  {
+   "name": "speedLimits",
+   "section": "law.rules",
+   "what": "速度制限の 3 つの範囲：10,000 ft MSL 未満 250 kt、Class C・D の主空港から 4 NM 以内・地上 2,500 ft 以下 200 kt、Class B の下と VFR コリドー 200 kt。横に Archer の巡航 110 kt（教材値）の目盛りを置き「Archer には届かない」。",
+   "data": "91.117（eCFR）、FL.physics.AIRCRAFT pa28 v.cruise 110・v.ne 154（教材値）。",
+   "priority": "nice"
+  },
+  {
+   "name": "fuelReserve",
+   "section": "law.rules",
+   "what": "燃料の棒グラフ：最初の着陸予定地までの燃料＋予備（昼 30 分・夜 45 分）。Archer の例（教材値 9.5 gal/h）：予備 30 分 ≈ 4.8 gal、45 分 ≈ 7.1 gal。タキシー・上昇の分は別、と注記。",
+   "data": "91.151(a)、FL.bookCalc fuel の既定値 9.5 gal/h（book-figs.js:369、教材値）。",
+   "priority": "nice"
+  },
+  {
+   "name": "preflightInfo",
+   "section": "law.pic",
+   "what": "91.103 の二重の枠：中心に PIC、内側＝すべての飛行（滑走路長・離着陸距離）、外側＝IFR・空港を離れる飛行（天気・燃料・代替案・ATC の遅延）、外に「すべての入手できる情報（NOTAM・TFR）」。この節の最初の SVG。",
+   "data": "91.103（eCFR）。",
+   "priority": "should"
+  },
+  {
+   "name": "aircraftDocs",
+   "section": "law.aircraft",
+   "what": "機体のドアと計器盤の模式図に ARROW の書類の場所（耐空証明は入口から読めるよう掲示）と、点検の期限の帯（年次 12 か月・100 時間（有償の訓練・貸出）・ELT 12 か月・トランスポンダー 24 か月）。",
+   "data": "91.203(a)(b)・91.9・91.205(b)・91.207・91.409・91.413（eCFR）。",
+   "priority": "should"
+  }
+ ],
+ "photos": [
+  {
+   "section": "law.airspace",
+   "subject": "管制塔（Class D・C の空港の象徴）。人の顔が写らない外観",
+   "search": "Commons: Category:Air traffic control towers in Florida / Category:Orlando Sanford International Airport（ファイルごとにライセンス確認）; FAA・USAF の写真（PD-USGov）: 'air traffic control tower' DVIDS",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "「交信を確立する相手」が実在の施設だと分かる。Class D＝管制塔のある空港、の説明の横に。"
+  },
+  {
+   "section": "law.vfr",
+   "subject": "積雲の雲底がはっきり見える空（雲から離れて飛ぶイメージ）／低い層雲で雲高が低い日",
+   "search": "NOAA Photo Library（パブリックドメイン）: 'cumulus', 'stratus', 'low ceiling'; Commons: Category:Cumulus humilis clouds（PD-USGov-NOAA のもの）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "雲の下 500 ft・横 2,000 ft の感覚と、雲高 1,000 ft 未満の日の様子を写真で比べられる。"
+  },
+  {
+   "section": "law.special",
+   "subject": "Cape Canaveral / Kennedy Space Center からのロケット打ち上げ（宇宙の運用の TFR：91.143）",
+   "search": "NASA Image and Video Library（images.nasa.gov）: 'launch Kennedy Space Center', 'Cape Canaveral launch'（NASA の写真は原則パブリックドメイン。NASA ロゴの使い方の注意）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "フロリダの東海岸で TFR が多い理由が一目で分かる。"
+  },
+  {
+   "section": "law.special",
+   "subject": "軍の訓練機（MOA・制限空域の利用者）。例：フロリダの Avon Park Air Force Range 周辺の USAF 機",
+   "search": "DVIDS / af.mil（米軍の写真はパブリックドメイン）: 'Avon Park Air Force Range', 'F-16 training Florida'",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "MOA・制限空域で何が行われているか（高速・急な機動）を見せ、見張りと事前確認の理由にする。"
+  },
+  {
+   "section": "law.rules",
+   "subject": "熱気球（優先順位の一番上）",
+   "search": "Commons: Category:Hot air balloons in flight（CC0 / CC BY / CC BY-SA を確認、広告の入った気球は避ける）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "「気球は自分で避けられない → 最優先」を直感的に。"
+  },
+  {
+   "section": "law.rules",
+   "subject": "グライダーの曳航（aerotow：曳航中の機が動力機に優先）",
+   "search": "af.mil / DVIDS: 'US Air Force Academy glider tow', 'TG-16 aerotow'（パブリックドメイン）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "曳航中の機は急に向きを変えられない → 2025 年改正で飛行船より優先、の理由を示す。"
+  },
+  {
+   "section": "law.pic",
+   "subject": "飛行前点検（walkaround）をする操縦士の後ろ姿・手元（顔は写らない）",
+   "search": "af.mil / DVIDS: 'preflight inspection Cessna', 'Civil Air Patrol preflight'（CAP の写真はライセンスが混在するので USAF 撮影のものを選ぶ）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "「機長は安全に飛べる状態かを自分で確かめる（91.7）」を具体的に。"
+  }
+ ],
+ "endMatter": {
+  "terms": [
+   "Pilot in command (PIC) / 機長 / 91.3（ソロでは自分が機長）",
+   "Preflight action / 飛行前の準備 / 91.103",
+   "Airworthiness certificate / Registration certificate / 耐空証明・登録証明 / 91.203",
+   "Controlled airspace / 管制空域 / Class A〜E",
+   "Uncontrolled airspace / 非管制空域 / Class G",
+   "AGL / MSL / 地上からの高さ・平均海面からの高さ / ",
+   "Ceiling / 雲高（BKN・OVC の一番低い層）/ 91.155(c)",
+   "Flight visibility / Ground visibility / 飛行視程・地上視程 / 91.155",
+   "Surface area / 地表区域（地表から始まる管制空域）/ 91.155(c)(d)",
+   "Special VFR / 特別有視界飛行方式 / 91.157",
+   "Two-way radio communications / 双方向の無線交信 / 91.129・91.130",
+   "Clearance / 許可 / Class B：cleared into the Class Bravo airspace（91.131）",
+   "Mode C veil / 30 NM の装備区域（トランスポンダー・ADS-B Out）/ 91.215(b)(2)・91.225(d)(2)",
+   "Special use airspace (SUA) / 特別使用空域（P・R・W・MOA・Alert など）/ AIM 3-4",
+   "Temporary flight restriction (TFR) / 一時的飛行制限 / 91.137〜91.145、AIM 3-5-3",
+   "Notice to Airmen (NOTAM) / 航空情報（ノータム）/ 2025 年に名前が戻った",
+   "Right-of-way / 優先権 / 91.113",
+   "Minimum safe altitudes / 最低安全高度 / 91.119",
+   "Fuel reserve / 燃料の予備 / 91.151"
+  ],
+  "examples": [
+   "LAB（架空・Class C）へ戻る：境界の手前で LAB Approach を呼ぶ。「Archer Seven Lima Alpha, stand by」なら入ってよい。「Aircraft calling LAB Approach, stand by」なら境界の外で待つ。",
+   "左前方から同じ高度の機が近づき、進路が交わりそう：相手から見て自分は右側なので自分が優先。ただし相手が気づかなければ自分が避ける（see and avoid、91.113(b)）。",
+   "METAR で BKN025（雲高 2,500 ft）：雲の 500 ft 下を保つので、地上約 2,000 ft より下を飛ぶ（フロリダは標高が低い）。",
+   "Class D の空港の METAR が BKN008（雲高 800 ft）：雲高 1,000 ft 未満なので VFR では場周経路に入れない（91.155(c)）。",
+   "Archer（教材値 9.5 gal/h）で 1 時間 10 分の飛行（昼）：予備 30 分を足して 1 時間 40 分 ≈ 15.8 gal。タキシー・上昇の分は別に足す（教材の例。実機は POH/AFM）。"
+  ],
+  "cautions": [
+   "規則は改正される（例：優先順位の 91.113 は 2025 年 10 月に文言が変わった）。実際の運航では最新の 14 CFR（eCFR）・AIM・チャート・Chart Supplement・NOTAM で確認する。",
+   "この章は要約。規則の全文・例外は原文で。",
+   "LAB の空域・R-LAB1・LAB MOA などは架空。図は模式図で NOT FOR NAVIGATION。実際の空域の判定はしない。",
+   "機体の書類・装備・点検は実機の整備記録と POH/AFM が優先。"
+  ],
+  "quizReview": [
+   "Q1（Class C に VFR で入る条件）：keep。why に「remain outside と言われたら入らない（AIM 3-2-4）」を足す。",
+   "Q2（Class D・10,000 ft 未満の Class E の VFR の最低条件）：keep。問題文に Class C も入れて quiz.js:64 と揃える。誤答「3 SM・雲に入らない」（Class B）はよい比較。",
+   "Q3（昼間の VFR の燃料の予備）：keep。問題文を「最初の着陸予定地に着いた後、通常の巡航速度で何分飛べる燃料が必要？」にすると条文どおり。"
+  ],
+  "quizProposals": [
+   {
+    "q": "同じ高度で、自機の右側から別の飛行機が近づき、進路が交わりそう。優先権があるのは？（91.113）",
+    "choices": ["右側にいる相手の飛行機", "自機", "速度の速い方", "高度の高い方"],
+    "answer": 0,
+    "why": "同じ種類の航空機が収束するときは、相手の右側にいる機が優先（91.113(d)）。自機は相手の上・下・前を横切らず、十分離れて譲る。"
+   },
+   {
+    "q": "次の 4 つのうち、優先権が最も高いのは？（91.113、2025 年改正後）",
+    "choices": ["熱気球", "グライダー", "グライダーを曳航中の飛行機", "飛行船"],
+    "answer": 0,
+    "why": "気球＞グライダー＞曳航・給油中の機＞飛行船＞その他の動力機。気球は自分で進路をほとんど変えられないので最優先。"
+   },
+   {
+    "q": "Class D の空港の METAR が「BKN008」（雲高 800 ft）、視程 5 SM。VFR で場周経路に入れる？",
+    "choices": ["入れない（雲高 1,000 ft 未満。特別有視界の許可か IFR が必要）", "入れる（雲に入らなければよい）", "入れる（視程が 3 SM 以上だから）", "夜だけ入れない"],
+    "answer": 0,
+    "why": "地表区域では雲高 1,000 ft 未満のとき VFR で雲の下を飛べない（91.155(c)）。地上視程 3 SM 以上（91.155(d)）と両方が必要。"
+   },
+   {
+    "q": "Class B と Class C に VFR で入る条件の違いとして正しいものは？",
+    "choices": ["Class B は ATC の許可が必要、Class C は入る前に双方向の交信の確立が必要", "どちらも許可が必要", "どちらも交信の確立だけでよい", "Class B は交信の確立、Class C は許可が必要"],
+    "answer": 0,
+    "why": "91.131(a)(1)：Class B は ATC の許可（cleared into the Class Bravo airspace）。91.130(c)：Class C は入る前に交信を確立（コールサイン付きの応答）。"
+   },
+   {
+    "q": "運用中の Restricted Area（制限空域）について正しいものは？",
+    "choices": ["使用機関・管理機関の許可がなければ入れない", "注意すれば VFR で入ってよい", "トランスポンダーがあれば入ってよい", "地上 500 ft 以下なら入ってよい"],
+    "answer": 0,
+    "why": "91.133：射撃・ミサイルなど見えない危険がある。許可なしに入らない。運用していない時間は ATC の許可で通れることがある（AIM 3-4-3）。"
+   }
+  ],
+  "refs": [
+   "keep：14 CFR Part 91（R.cfr91）・Part 61（R.cfr61）・AIM（R.aim）・PHAK FAA-H-8083-25C（R.phak）・FAA From the Flight Deck: Orlando Sanford（R.sfb：「The airspace at SFB is Class C and underlies Orlando Class B airspace」を確認）",
+   "add：AIM 3-1-4 Basic VFR Weather Minimums https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_1.html",
+   "add：AIM 3-2 Controlled Airspace（Class A〜E、3-2-4 の stand by の NOTE）https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_2.html（book-core に R.aim32 として追加。radio.js の r_standby も参照できる）",
+   "add：AIM 3-4 Special Use Airspace https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_4.html",
+   "add：AIM 3-5（3-5-3 Temporary Flight Restrictions）https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_5.html",
+   "add：Private Pilot ACS FAA-S-ACS-6C（R.acsP）— PA.I.B Airworthiness Requirements・PA.I.E National Airspace System https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf",
+   "add：FAA Aeronautical Chart User's Guide（R.chartUG、特別使用空域の記号）https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/aero_guide/",
+   "add：FAA TFR の一覧 https://tfr.faa.gov/",
+   "add：FAA NOTAM Management Service https://www.faa.gov/about/initiatives/notam",
+   "add（条文の直リンク例）：https://www.ecfr.gov/current/title-14/section-91.155、https://www.ecfr.gov/current/title-14/section-91.113、https://www.ecfr.gov/current/title-14/section-61.89",
+   "update（全書共通）：R.phak の表記に「2025 年 10 月 Addendum（MOSAIC）」を足すかを検討 https://www.faa.gov/regulations_policies/handbooks_manuals/aviation"
+  ]
+ },
+ "appMismatches": [
+  "flight-lab/src/quiz.js:63 — q_law の book リンクは 'law.vfr' だけだが、問題は law.airspace・law.rules・law.special と 91.17（hf.self：book-2.js:101）に及ぶ。本は正しい。書き直しでも id 'law.vfr' を残すこと（quiz.js が参照）。",
+  "flight-lab/src/quiz.js:73（q_law の 91.17 の問題）— law 章に 91.17 はない（hf にある）。本の側は hf.self を正とし、law では扱わなくてよい。",
+  "flight-lab/src/radio.js:203–206 — r_standby の why は「AIM 3-2-4」で、remain outside の注意まで正しいが、refs は ['aim41','pcg']（AIM 4-1）。book-core.js に AIM 3-2 の参照がない。本の law.airspace に remain outside の注意を足す（radio が正しい）。book-core に R.aim32 を足せば本からも参照できる。",
+  "flight-lab/src/book-comm.js:173 — Class C の stand by の説明（AIM 3-2-4・JO 7110.65）は law.airspace より詳しい。law.airspace は規則だけにして comm.* へ bk.see（どちらも正しい）。",
+  "flight-lab/src/book-2.js:93 — law の lessons ['t2','n2']。syllabus.js:167（t2：book ['ops.pattern']）・syllabus.js:278（n2：book ['nav.dr','nav.divert']）はどちらも law の節を参照しない。リンクは本から一方向だけ（害はない）。t2（場周・Class C の LAB・左回り）と n2（クロスカントリー）は妥当。",
+  "flight-lab/src/book-4.js:25 — nav.chart は bk.see('law.airspace') で参照。id 'law.airspace' を変えないこと。",
+  "flight-lab/src/book-4.js:35 — navp の 91.151「目的地まで」→ 条文は「最初の着陸予定地まで」。law（book-2.js:73）が正しい。",
+  "flight-lab/src/sanford-course.js:31, 39, 43–44 — 「SFB は Class C、その上に Orlando の Class B」「Class C は交信の確立、Class B は許可」は FAA From the Flight Deck・91.130・91.131 と一致。本と同じ。",
+  "flight-lab/src/pages.js:651 — 「架空の LAB 空港（管制塔とレーダー管制のある Class C を想定）」は law.special の「LAB 空域は架空」と一致。"
+ ],
+ "factChecks": [
+  { "claim": "91.3：機長は運航に直接責任を持ち最終的な権限がある。緊急時は必要な範囲で規則から逸脱でき、報告を求められることがある", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-91.3", "note": "(b) は「すぐ行動が必要な飛行中の緊急時」、(c) は「FAA（Administrator）から求められたら書面で報告」。" },
+  { "claim": "91.103：すべての飛行で滑走路長と離着陸距離。IFR や空港近辺以外の飛行では気象・燃料・代替案・ATC の遅延も", "verdict": "imprecise", "source": "https://www.ecfr.gov/current/title-14/section-91.103", "note": "列挙は正しいが、本体の「出発前に、その飛行に関する入手できるすべての情報を知る」が抜けている。" },
+  { "claim": "91.7：耐空性のない飛行機は飛ばせない。機長は耐空性を判断する責任がある", "verdict": "imprecise", "source": "https://www.ecfr.gov/current/title-14/section-91.7", "note": "条文は「安全に飛べる状態か（condition for safe flight）」を判断し、飛行中に耐空性のない不具合が起きたら飛行をやめる。" },
+  { "claim": "機内に必要な書類 ARROW：耐空証明・登録証明・無線局免許（国際線のみ）・運用限界（POH/AFM）・重量重心", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-91.203", "note": "耐空証明・登録証明は 91.203(a)、耐空証明は入口から読めるよう掲示（91.203(b)）、運用限界は 91.9。無線局免許は FCC の規則で米国外へ飛ぶときだけ（14 CFR ではない。ここでは未確認の一般知識）。" },
+  { "claim": "VFR の気象条件の表（Class B 3 SM・雲に入らない、C・D・10,000 ft 未満の E 3 SM・500/1,000/2,000、10,000 ft 以上の E 5 SM・1,000/1,000/1 SM、G の各区分）", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-91.155", "note": "11 行すべて 91.155(a) と一致（ヘリコプターの行は省略で問題なし）。AIM 3-1-4 の表も同じ。" },
+  { "claim": "Class G・地上 1,200 ft 以下・夜は 3 SM・500/1,000/2,000（場周経路の特例あり）", "verdict": "imprecise", "source": "https://www.ecfr.gov/current/title-14/section-91.155", "note": "特例は 91.155(b)(2)：夜、視程 1 SM 以上 3 SM 未満でも、滑走路から 1/2 SM 以内の場周経路なら雲に入らなければよい。中身を書く。" },
+  { "claim": "地表区域では雲高 1,000 ft 未満なら VFR で雲の下を飛べず、地上視程 3 SM 未満なら VFR で離着陸・場周経路に入れない（91.155(c)(d)）", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-91.155", "note": "(d)(2)：地上視程の報告がない空港では飛行視程 3 SM。特別有視界（91.157）は例外。" },
+  { "claim": "学生操縦士は昼 3 SM・夜 5 SM 未満の視程では飛べない（61.89）", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-61.89", "note": "61.89(a)(6)「flight or surface visibility」。(a)(7) 地表を見て飛べないとき不可。61.89 は 2025 年の MOSAIC で (c) などが改正されたが (a) は同じ。" },
+  { "claim": "61.89：乗客を乗せない・報酬を受けない・視程・地表を見ながら飛べないとき不可・教官の制限に従う", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-61.89", "note": "ほかに「有償で物を運ばない」「事業のため（in furtherance of a business）に飛ばない」「国際飛行をしない」もある。" },
+  { "claim": "Class A：18,000 ft MSL〜FL600、IFR のみ", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_2.html", "note": "AIM 3-2-2「from 18,000 feet MSL up to and including FL 600」。ただし図 FIG.airspace は 14,500〜18,000 ft に描いていて誤り。" },
+  { "claim": "Class B：ATC の許可、トランスポンダー（高度報告）・ADS-B Out、学生操縦士は教官の承認（61.95）と空港によっては禁止", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-91.131", "note": "91.131(a)(1)(b)(d)、61.95（90 日以内の承認）、付録 D 第 4 節（Atlanta・Boston・Miami など 12 空港。Orlando International は入っていない）。AIM 3-2-3：上限は通常 10,000 ft MSL、逆ウエディングケーキ形。" },
+  { "claim": "Class C：通常は半径 5 NM の地表〜4,000 ft AGL のコアと、半径 10 NM の 1,200〜4,000 ft AGL の棚", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_2.html", "note": "AIM 3-2-4 は「空港の標高から 4,000 ft（charted in MSL）」。外側に 20 NM の Outer Area（チャートにない）もある。" },
+  { "claim": "Class C・D：入る前に双方向の無線交信を確立（管制官が自機のコールサインで応答した時点）", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-91.130", "note": "91.130(c)・91.129(c)。AIM 3-2-4 の NOTE と同じ。Class C の装備：91.130(d)（91.215・91.225）。" },
+  { "claim": "AIM：「（コールサイン）, standby」なら確立、コールサインなしの応答では確立していない", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_2.html", "note": "正しいが不完全。AIM 3-2-4 には「remain outside the Class C airspace（EXAMPLE：remain outside the Class Charlie airspace and standby）と言われたら入らない」もある。" },
+  { "claim": "Class D：管制塔のある小さめの空港。通常は地表〜2,500 ft AGL", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_2.html", "note": "AIM 3-2-5「surface to 2,500 feet above the airport elevation (charted in MSL)」。管制塔の時間外は Class E か G に変わることがある。" },
+  { "claim": "Class E：A〜D 以外の管制空域（多くは地上 700 ft または 1,200 ft から上）。VFR は特別な条件なし", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_2.html", "note": "700/1,200 ft は正しい（AIM 3-2-5・3-2-6）。14,500 ft MSL〜18,000 ft 未満と FL600 より上も Class E。10,000 ft MSL 以上（地上 2,500 ft 以下を除く）はトランスポンダーと ADS-B Out が必要（91.215(b)(5)・91.225(d)(4)）。" },
+  { "claim": "Sanford（KSFB）は Class C で、その上に Orlando の Class B がかぶっている", "verdict": "correct", "source": "https://www.faa.gov/flight_deck/sfb", "note": "FAA From the Flight Deck：「The airspace at SFB is Class C and underlies Orlando Class B airspace.」" },
+  { "claim": "Orlando International の 30 NM 以内（Mode C veil）ではトランスポンダーと ADS-B Out が必要（本文にない。追加の提案）", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-91.215", "note": "付録 D 第 1 節に Orlando International がある（https://www.ecfr.gov/current/title-14/part-91/appendix-Appendix%20D%20to%20Part%2091）。SFB が 30 NM 以内（約 21 NM）というのは座標からの推定。" },
+  { "claim": "91.117：10,000 ft MSL 未満 250 KIAS、Class C・D の主空港から 4 NM 以内・地上 2,500 ft 以下 200 KIAS、Class B の下・VFR コリドー 200 KIAS", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-91.117", "note": "(b) は Class B の中には適用しない。(d) 最低安全速度がそれより速ければその速度でよい。" },
+  { "claim": "91.119：どこでも不時着できる高度、人口密集地は半径 2,000 ft 以内の最も高い障害物から 1,000 ft、それ以外は 500 ft（水上・人の少ない場所は人・船・車・建物から 500 ft）", "verdict": "imprecise", "source": "https://www.ecfr.gov/current/title-14/section-91.119", "note": "値は正しい。前置き「離着陸に必要な場合を除き」が抜けている。" },
+  { "claim": "91.113：遭難機が最優先、収束は右側の機、正面は互いに右へ、追い越しは右へ避けて十分離れる、see and avoid は全員", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-91.113", "note": "(b)(c)(d)(e)(f)。追い越される機が優先。" },
+  { "claim": "91.113：気球＞グライダー＞飛行船＞（曳航・給油中の機）＞動力機", "verdict": "outdated", "source": "https://www.ecfr.gov/current/title-14/section-91.113", "note": "2025-10-22 施行（Amdt. 91-381、MOSAIC）の (d)(3)(4)：飛行船は曳航・給油中の機を除くほかの動力機に優先、曳航・給油中の機はほかのすべての動力機に優先 → 気球＞グライダー＞曳航・給油中＞飛行船＞その他。改正前の文言でも「曳航中の機は他のすべてのエンジン駆動の航空機に優先」で、本文の順は不正確だった。" },
+  { "claim": "91.113(g)：着陸のための最終進入中の機が優先（低い方が優先）", "verdict": "imprecise", "source": "https://www.ecfr.gov/current/title-14/section-91.113", "note": "低い方はそれを使って最終進入中の機の前に割り込んだり追い越したりしてはいけない。着陸した機を滑走路から追い出すために優先を使ってもいけない。" },
+  { "claim": "91.151：最初の着陸予定地まで＋通常の巡航速度で昼 30 分・夜 45 分（風と予報を考えて）", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-91.151", "note": "「begin a flight」＝出発時の計画の規則。" },
+  { "claim": "管制塔のある空港では管制塔と双方向の交信（91.126(d)）", "verdict": "imprecise", "source": "https://www.ecfr.gov/current/title-14/section-91.126", "note": "91.126(d) は Class G の空港の規則（4 NM・地上 2,500 ft までに確立）。普通の管制塔のある空港（Class D）は 91.129(c)・(i)（https://www.ecfr.gov/current/title-14/section-91.129）。" },
+  { "claim": "Class G の管制塔のない空港へ進入するときは左旋回（表示がなければ）", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-91.126", "note": "91.126(b)(1)（2025 年改正で「powered fixed-wing aircraft」の文言）。91.127 で Class E にも適用。Class D は 91.129(f) で左回り。" },
+  { "claim": "Prohibited Area 飛行禁止、Restricted Area 運用中は許可なく入れない", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_4.html", "note": "AIM 3-4-2・3-4-3、91.133（使用機関・管理機関の許可）。" },
+  { "claim": "Warning / MOA / Alert：危険・軍の訓練・訓練機の多い空域。入れるが注意（MOA は ATC に情報を求める）", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_4.html", "note": "Warning Area は海岸から 3 NM より沖（AIM 3-4-4）。MOA は 100 マイル以内の FSS で運用状況、入る前に管制機関に交通情報（3-4-5）。CFA・NSA（3-4-7・3-4-8）がない。" },
+  { "claim": "TFR：要人の移動・災害・大きな催し・ロケット打ち上げなど。NOTAM で公示", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_5.html", "note": "AIM 3-5-3：91.137（災害）・91.138（ハワイ）・91.141（大統領など）・91.143（宇宙の運用）。大きな催しは 91.145。" },
+  { "claim": "ADIZ：防空識別圏（国境・海岸）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_5.html", "note": "規則は 14 CFR Part 99（飛行計画・トランスポンダー・双方向の無線）。AIM 5-6 で詳しく。中身の説明がない。" },
+  { "claim": "NOTAM（航空情報）", "verdict": "outdated", "source": "https://www.faa.gov/about/initiatives/notam", "note": "英語名を書くなら Notice to Airmen（FAA が 2025-02-11 に名前を戻した。報道：https://avweb.com/aviation-news/notams-back-to-notice-to-airmen/）。システムは NMS に移行中。" },
+  { "claim": "参考文献 PHAK FAA-H-8083-25C", "verdict": "correct", "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation", "note": "現行（2023）。2025 年 10 月に MOSAIC の Addendum（スポーツ操縦士など。空域・規則の章には影響なし）。空域は第 15 章 Airspace。" },
+  { "claim": "参考文献 AIM（R.aim）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/", "note": "現行は 2026-07-09 発効の Change 3。3-1-4・3-2-1〜3-2-6・3-4-1〜3-4-9・3-5-3 の番号を確認。" },
+  { "claim": "図のキャプション：Class B は許可、Class C・D は双方向の交信の確立（14 CFR 91.129〜91.131、AIM 3-2）", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-91.131", "note": "91.129＝Class D、91.130＝Class C、91.131＝Class B。" }
+ ],
+ "cadetNotes": [
+  "cadet/test/content.test.mjs:40 KEEP：law.special の本文に /架空/ が残ること。「LAB 空域…は架空」の文を、APP_ONLY の語（このシミュレータ・本アプリ・メニュー など）と同じ文に入れない（入れると文ごと落ちてテストが失敗）。",
+  "content.test.mjs:36 の APP（キー表記の検出）は s.html 全体（SVG の文字・aria-label も）に適用される。日本語の直後の（R）（W）（A）（S）（E）などは失敗する：「制限空域（R）」「警戒空域（W）」「警報空域（A）」は不可 →「Restricted Area（R）」や「R-LAB1」のように英字の後に括弧を置く。「クラス E（…）」「空域 E（…）」も失敗 → 必ず「Class E（…）」。R（制限）のように 1 文字＋日本語の括弧も不可。",
+  "COURSE_NOTE（content.test.mjs:43）：本文に「公開情報」「推測・要確認」を地の文で書かない（bk.fact / bk.est のタグだけ。CADET はタグを外す）。出典は「FAA の資料では」「eCFR によると」などで。",
+  "CADET は各節の最初の <svg> を教室画面に出す：law.vfr は今 SVG がない（表だけ）→ vfrCloudClearance を表の前に。law.rules は rightOfWay、law.special は specialUseAirspace、law.airspace は作り直した断面図を最初に（classCEntry は後）。law.pic は preflightInfo、新設 law.aircraft は aircraftDocs。",
+  "ここが大切（keyPoints）はゲームが読み上げる：各 60 字以内、括弧の条文番号を減らす。今の law.vfr の 1 項目目（約 95 字）と law.airspace の 2 項目目（Sanford の文）は長い。",
+  "CADET の学科は law → q_law（cadet/src/content/school.js:25）で、学科試験 written1・presolo・final が q_law を使う（cadet/src/career/career.js:60–65）。quiz.js の q_law の内容と本の内容（優先順位の新しい順など）を食い違わせない。",
+  "law に実在のエアライン名・訓練会社名はない。Sanford・Orlando は実在の地名で可（sanford-course.js と同じ事実）だが、交信の例は LAB Approach・Archer Seven Lima Alpha に。",
+  "新設 law.aircraft を追加するときも、節の id の一意性（content.test.mjs:60）と、各節にここが大切 または最初の 2 文があること（keyPoints ≥ 1）を守る。"
+ ]
+}

@@ -1,0 +1,544 @@
+{
+ "id": "ifrp",
+ "title": "計器飛行方式：規則・待機・ILS 進入",
+ "sections": [
+  {
+   "id": "ifr.rules",
+   "title": "IFR の規則の要点",
+   "gist": "IFR で飛ぶための前提（計器飛行証明・飛行計画と許可）、許可の聞き取り（CRAFT）、燃料と代替飛行場（1-2-3 ルール）、最低高度、進入の最低高度、無線故障、最近の経験。",
+   "issues": [
+    "目的の文がなく、6 項目を 1 つの表に詰め込んでいる。『出発前（資格・計画・燃料・代替）／飛行中（許可・最低高度・無線故障）／進入（DA・MDA）』の順に分けないと初学者には使う場面が見えない",
+    "前提が書かれていない：管制空域を IFR で飛ぶには飛行計画と ATC の許可が必要（91.173）、計器飛行証明が必要（61.3(e)）",
+    "IFR で無線が故障したとき（91.185）がない：VFR の天気なら VFR で早く着陸、IMC なら経路（指示された経路 → 誘導中ならその先のフィックスへ直行 → 予告された経路 → 飛行計画の経路）、高度（最後の指示・最低 IFR 高度・予告された高度のうち最も高いもの）。comm.nordo は VFR の場合だけ",
+    "1-2-3 ルールの条件『目的地に計器進入方式（Part 97）があること』（91.169(b)(1)）が抜けている。同じ条件は燃料の 91.167(b) にもある",
+    "「4 NM 以内の最も高い障害物」→ 91.177 は『飛ぶコースから水平 4 NM 以内』",
+    "「6 か月以内に…」→ 61.57(c) は『飛ぶ月の前の 6 暦月以内』。切れたら計器技量審査（IPC、61.57(d)）",
+    "CRAFT の各語が英語のまま。日本語（English）で、例の許可文（架空の LAB）を 1 つ付けると読める",
+    "ここが大切の 2 つ目「この教材は IFR の飛行計画・許可の課目は簡略化している（ILS の進入許可の復唱だけ）」は教材の注意で、読み上げる要点ではない（CADET では APP_ONLY で消える）",
+    "図がない（CADET の教室スクリーンに何も出ない）"
+   ],
+   "mainFigure": "時間軸の模式図：到着予定（ETA）の前後 1 時間の帯に、雲の高さ 2,000 ft・視程 3 SM の線（1-2-3 ルール。下回ると代替飛行場が必要）。下段に IFR の燃料の積み上げ（目的地まで ＋ 代替まで ＋ 通常巡航で 45 分）"
+  },
+  {
+   "id": "ifr.hold",
+   "title": "待機経路（ホールディング）",
+   "gist": "管制の順番待ちで使うレーストラック型の待機経路の形、3 つの入り方、時間・速度・風の修正。",
+   "issues": [
+    "図の誤り：フィックスがアウトバウンド（フィックスから離れる辺）の始まりに描かれ、インバウンド（下の辺）はフィックスに着かない。フィックスはインバウンドの終わり。入り方の区切り線も、インバウンドコースの延長線と『70° の線』ではなく、フィックスを通る縦線と約 42° の斜線（AIM 5-3-8 の FIG 5-3-4 と違う）",
+    "図のラベル「アウトバウンド（1 分）」：最初の 1 回は 1 分、その後はインバウンドが 1 分になるようにアウトバウンドを調整（AIM の NOTE）",
+    "「旋回は標準旋回率（バンク 25° を超えない）」→ AIM：3°/秒・バンク 30°・フライトディレクター使用時 25° のうち最も浅いもの。Archer の 100 kt では標準旋回率で約 15°",
+    "最大速度は KIAS（指示対気速度）。また AIM 5-3-8 は固定翼機に 90 KIAS 以上で待機することを勧める（風の影響を減らすため）。課目 i4 の 100 kt は条件を満たす",
+    "入り方の決め方（フィックスに着いたときの機首方位で決める、±5° は許容）と、VOR では TO/FROM が完全に反転したときにアウトバウンドへの旋回を始めること（AIM、課目 i4 の『局通過（TO→FROM）で右へ』と同じ）が書かれていない",
+    "待機の許可の形（HOLD EAST OF …、EFC＝次の許可の予定時刻）、3 分前から減速、許可がない時は来たコースで標準待機、が一言もない",
+    "課目 i4 は西からインバウンドコースに乗って来る『ダイレクト・エントリー』だけ、と本文に書くと、図と課目がつながる",
+    "図の文字が 11（390 px で 9.5 px）"
+   ],
+   "mainFigure": "北が上の平面模式図：LAB VOR（フィックス）へインバウンド 090°・右回り（パターンはフィックスの西・コースの南側）。正しい 3 つの区域（ダイレクト 180°・ティアドロップ 70°・パラレル 110°）と区切り線（フィックスから東へのインバウンドコースの延長、020°–200° の 70° 線）、各入り方の飛び方の例。課目 i4 の到着（西からのダイレクト）を強調。『模式図・NOT FOR NAVIGATION』"
+  },
+  {
+   "id": "ifr.chart",
+   "title": "（新設の提案）進入図の読み方：架空の LAB ILS RWY 36",
+   "gist": "進入図（instrument approach chart）の平面図・断面図・最低気象条件の欄の見方を、架空の LAB の模式図で ILS と非精密進入の前に教える。",
+   "issues": [
+    "今は節がない。ifr.ils の『進入図（チャート）のブリーフィング（周波数・最終進入コース・FAF の高度・DA・進入復行の手順）』が、図を一度も見せずに出てくる",
+    "MAP の決め方（ILS は DA、非精密は FAF からの時間・フィックス・GPS のウェイポイント：IFH 第 1 章）、MSA、最低気象条件の行（ILS・LOC・LPV・LNAV）を 1 か所で説明できる",
+    "実在の進入図に見えないよう、架空・模式図・NOT FOR NAVIGATION を大きく入れ、FAA の書式をそのまま真似しない"
+   ],
+   "mainFigure": "架空の LAB ILS RWY 36 の模式図：上に平面図（I-LAB 109.90、最終進入コース 360°、LAB VOR 113.50、進入復行の待機）、中に断面図（2,000 ft で GS 会合、DA 255）、下に最低気象条件の欄。『模式図・NOT FOR NAVIGATION・架空』"
+  },
+  {
+   "id": "ifr.ils",
+   "title": "ILS 進入",
+   "gist": "ローカライザー（左右）とグライドスロープ（上下）の電波に乗って決心高度まで降り、見えなければ進入復行する精密進入の準備・会合・追跡・判断。",
+   "issues": [
+    "図は横から見た断面図なのに『ローカライザー：横方向（左右のずれ）』と書いてあり矛盾。縦の縮尺を誇張していないので GS の幅（点線）が重なって見えず、DA の点の高さも合わない。viewBox 500 幅・文字 10〜11（390 px で 6.9 px）",
+    "「約 ±2.5°（滑走路端で幅 700 ft になるよう調整される）」：AIM 1-1-9 は『滑走路端で幅 700 ft』、IFH は『ふつう 5°（±2.5°）』。角度は滑走路ごとに違う。教材の I-LAB は ±2.5° 固定で、LAB の滑走路端では幅約 430 ft（avionics.js）",
+    "「降下率を対地速度 × 5 前後（90 kt なら約 450 fpm）」：課目 i5 は 80 kt・約 430 fpm・フラップ 10°。3° では正確には対地速度 × 5.3。課目の数字を使う",
+    "ここが大切「『出力で降下率、ピッチで速度』ではなく、『姿勢と出力を一緒に』小さく」は、IFH p.9-40（ピッチで降下率、出力で速度）とも課目のヒント（school.js：GS は出力、速度は機首）とも違う言い方で混乱する",
+    "進入許可の復唱（課目 i5：『turn left heading 330, maintain 2,000 until established on the localizer, cleared ILS runway 36 approach』）が本文にない",
+    "グライドスロープは下から会合する（上から会合すると 6°〜12° の偽のグライドスロープに乗る危険：IFH Addendum B 2019・AIM 1-1-9）の注意がない。課目 i5 は 2,000 ft で下から会合している",
+    "HSI・CDI・FAF・DA が説明前に出てくる。DA は MSL の高度で、I-LAB は接地帯（55 ft）＋ 200 ft ＝ 255 ft（教材値）と書くと課目の『地上 200 ft』とつながる",
+    "ACS の『最終進入の前』は CDI 3/4 スケール以内も含む（IR.VI.B.S9）。課目 i5 の基準 ±1 ドットは ACS の 3/4 スケール（1.5 ドット）より厳しい教材値、と書く",
+    "「G1000 の PFD では」→「G1000 型 PFD では」",
+    "針の読み方（菱形が下 ＝ 自分が高い、針が右 ＝ コースは右）が examples にしかない。本文と図で"
+   ],
+   "mainFigure": "上下 2 段：上＝平面模式図（滑走路 36、ローカライザーの扇形 ±2.5°、針路 330° で 30° の角度で会合）、下＝縦を誇張した断面図（GS 3°・±0.7°、2,000 ft で GS に下から会合＝滑走路端から約 5.9 NM、DA 255 ft＝接地帯＋200 ft）。右に G1000 型 CDI と GS の菱形の小図。数値は avionics.js（±2.5°・±0.7°・GS の起点は滑走路端から 300 m）、school.js（2,000 ft・330°）、syllabus i5（80 kt・430 fpm・DA 地上 200 ft）"
+  },
+  {
+   "id": "ifr.np",
+   "title": "非精密進入・進入復行・自動操縦との関係",
+   "gist": "高さの誘導がない非精密進入（VOR・LNAV）と RNAV（GPS）進入の最低気象条件の種類、一定の角度で降りる CDFA、MDA・MAP・進入復行。",
+   "issues": [
+    "4 段落に『非精密進入・LPV・進入復行・自動操縦』を詰め込み、図がない。dive and drive と CDFA の違い（MDA・VDP・MAP）は断面図がないとわからない",
+    "RNAV（GPS）進入の最低気象条件の行（LNAV・LNAV/VNAV・LP・LPV）の説明がない。LPV と LNAV/VNAV は APV（垂直誘導付き進入）で、ICAO の精密進入とは区別（AIM 5-4-5）。LNAV＋V の降下角は助言で、承認された垂直誘導ではない",
+    "「CDFA が推奨されています」：誰が・なぜ（AC 120-108、IPH 第 4 章：安定した進入、CFIT の低減）",
+    "VDP（目視降下点：MDA からの降下を始めてよい点）と MAP の決め方（GPS 進入は滑走路端のウェイポイント、VOR は距離または時間）がない",
+    "WAAS が説明なし（nav.gps へリンク）",
+    "「自動化の使い方の考え方は第 6 部で扱います」→ bk.see('crm.auto') のリンクに",
+    "進入復行の段落：『MAP より前に復行するときも、MAP まで MDA／DA 以上で決められたコースを飛んでから旋回する』（IFH 第 1 章）と『進入復行の障害物からの保護は DA／MAP から 200 ft/NM 以上で上昇する前提』（AIM 5-4-21）の注意がない",
+    "自動操縦の段落は CADET のテストが『自動操縦（オートパイロット）があることが多いです。』の文を必須にしている（形を保つ。cadetNotes 参照）"
+   ],
+   "mainFigure": "断面模式図：FAF から MDA まで早く降りて水平に飛ぶ『dive and drive』（赤）と、一定の角度（約 3°）で VDP まで降りる CDFA（緑）、MAP と進入復行の上昇（破線）。比較のため LPV の DA の位置。『模式図・NOT FOR NAVIGATION』、数値は教材値（LAB 標高 55 ft）"
+  }
+ ],
+ "problems": {
+  "unclear": [
+   "ifr.rules：「代替の標準の最低気象条件は精密進入 600 ft・2 SM、非精密進入 800 ft・2 SM（決まりがあればそれに従う）」— 『代替飛行場として計画に書ける条件』であって、そこへ降りるときの最低気象条件ではないことが伝わらない",
+   "ifr.rules：「進入の最低高度（91.175）」— DA と MDA の違い（DA は降りながら判断する高度、MDA は水平に保つ最低高度）が説明なし",
+   "ifr.hold：「アウトバウンドの偏流修正はインバウンドの約 3 倍が目安」— 例（インバウンドで左 8° → アウトバウンドで右 24°、AIM）があるとわかる",
+   "ifr.ils：「会合：…針が動き出したら旋回して乗る」— どれくらい手前で旋回を始めるか（針が 2 ドットから動き出したら）がない",
+   "ifr.ils：「修正は小さく：滑走路に近いほど針は敏感」— 角度で表示するから、という理由がない",
+   "ifr.ils：ここが大切『「出力で降下率、ピッチで速度」ではなく、「姿勢と出力を一緒に」小さく』— 何をどう動かすのか読み取れない",
+   "ifr.np：「最近は、一定の角度で降りるCDFA（連続降下の最終進入）が推奨されています」— 角度の出どころ（チャートの VDA、対地速度から降下率）がない"
+  ],
+  "order": [
+   "ifr.ils の準備で『進入図（チャート）のブリーフィング』と言うが、進入図をまだ見せていない。新しい節 ifr.chart（進入図の読み方：架空の LAB ILS RWY 36 の模式図）を ifr.hold と ifr.ils の間に置く",
+   "ifr.rules は『出発前 → 飛行中 → 進入』の順に表を分け、91.173（計画と許可）を最初に、91.185（無線故障）を飛行中に入れる",
+   "ifr.np は『非精密進入とは → RNAV（GPS）の最低気象条件の種類 → CDFA と dive and drive（図）→ MDA・VDP・MAP → 進入復行 → 自動操縦の一文』の順にする"
+  ],
+  "errors": [
+   "FIG.holding：フィックスがアウトバウンドの始まりにあり、区切り線が縦線と約 42° の斜線 → フィックスはインバウンドの終わり。区切りはインバウンドコースの延長と、フィックスを通りインバウンドコースと 70° をなす線（AIM 5-3-8 FIG 5-3-4・『70 degree line on the holding side』 https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_3.html）",
+   "ifr.hold「旋回は標準旋回率（バンク 25° を超えない）」→ 3°/秒・バンク 30°・フライトディレクター使用時 25° のうち最も浅いもの（AIM 5-3-8 Bank Angle）",
+   "FIG.ils：断面図に『ローカライザー：横方向（左右のずれ）』と書く → 左右の誘導は平面図でしか示せない。平面図と断面図の 2 段にする（AIM 1-1-9 https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap1_section_1.html）",
+   "ifr.ils「約 ±2.5°（滑走路端で幅 700 ft になるよう調整される）」→ 幅を 700 ft に合わせるので角度は滑走路ごとに変わる。±2.5°（幅 5°）は IFH の『ふつうの値』（IFH p.9-37 https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf）"
+  ],
+  "outdated": [
+   "R.ifh の URL は 404（版は現行の 15B）。PDF の URL に。IFH Addendum B（2019、偽のグライドスロープ）https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/ifh_addendum_b.pdf を ILS の注意に反映",
+   "AIM 5-3-8 は固定翼機の待機を 90 KIAS 以上で行うよう勧めている（本文にない）。AIM は 2026-07-09 発効の Change 3 を確認、段落番号 5-3-8・1-1-9 は変わらない",
+   "IPH は今も FAA-H-8083-16B（2017）。計器飛行 ACS は 8C で現行（2024-05-31 発効の版）。どちらも変更不要",
+   "MM（ミドルマーカー）は新設されない（AIM 1-1-9）。本文はマーカーに触れていないので問題なし。図にマーカーを描かない"
+  ],
+  "duplicates": [
+   "ifr.rules の『VFR は昼 30 分・夜 45 分（91.151）』（quiz の理由）↔ law.vfr",
+   "ifr.rules の CRAFT・復唱 ↔ comm.readback／comm.dep（IFR の許可の復唱の例はどちらか一方に）",
+   "ifr.np の LPV・WAAS ↔ nav.gps（『LPV という精密に近い進入』）",
+   "ifr.np の自動操縦の段落 ↔ crm.auto（どちらも『この教材には自動操縦がない』）",
+   "91.185 の VFR 部分 ↔ comm.nordo（IFR 部分だけを ifr.rules に）",
+   "ifr.ils の CDI の読み方 ↔ nav.vor（『針の方へ直す』）"
+  ],
+  "numbers": [
+   "ILS の降下率：本文『90 kt なら約 450 fpm（対地速度 × 5）』↔ syllabus.js:352 i5『80 kt・約 −430 fpm（フラップ 10°）』。3° では 80 × 5.3 ≈ 425 fpm で課目が正確。本文を課目の 80 kt・430 fpm にそろえる",
+   "ILS の基準：本文の ACS『3/4 スケール以内』↔ syllabus.js:353 i5『LOC・GS ±1 ドット（地上 1,000〜200 ft の 85% 以上）』。±1 ドットは ACS の 3/4 スケール（2 ドット中 1.5）より厳しい教材値と書く",
+   "ローカライザーの幅：本文『滑走路端で幅 700 ft』↔ avionics.js:94-96・204（±2.5° 固定、アンテナは 1,200 m の滑走路の先 300 m）では LAB の滑走路端で幅約 430 ft。本文は『±2.5° は代表値・教材の I-LAB の値』とする",
+   "DA：syllabus i5『決心高度（地上 200 ft）』、physics.js LAB_RWY.elevFt 55 → DA 255 ft MSL（教材値）。本文に DA の数字がない",
+   "GS の会合：school.js（at:'ils'）は 2,000 ft・針路 330°・90 kt で、2,000 ft で GS に乗るのは GS の起点（滑走路端の 300 m 先）から約 6.1 NM、滑走路端から約 5.9 NM（計算）。図の数字に使える",
+   "待機：本文『インバウンド 090° の右回り』＝ syllabus.js:341 i4（インバウンド 090°、局通過で右へ 270°）✓。i4 の基準『アウトバウンド 60 ±15 秒・旋回率 3 ±1 °/秒・高度 ±100 ft』は本文の ACS（±100 ft）と合う",
+   "待機の旋回のバンク：i4 の g.bank 17（syllabus.js:345・348）は ÷10＋7 の値。100 kt の標準旋回は正確には約 15°（ifr.scan の表）"
+  ]
+ },
+ "policy": "節の順は ifr.rules → ifr.hold → （新）ifr.chart → ifr.ils → ifr.np とし、ifr.chart（進入図の読み方：架空の LAB ILS RWY 36 の模式図、NOT FOR NAVIGATION）で平面図・断面図・最低気象条件の見方を先に教えてから ILS と非精密進入へ進む。ifr.rules は最初に『IFR は雲の中も飛べるが、計器飛行証明と飛行計画・管制の許可が必要』を言い、表を出発前（91.173・燃料 91.167・代替 91.169 の 1-2-3 ルールと計器進入方式の条件）／飛行中（CRAFT・最低 IFR 高度 91.177・無線故障 91.185）／進入（91.175 の DA・MDA）に分け、61.57(c) は 1 行に縮め、教材の注意は bk.key から外して caution へ。ifr.hold は図を正しく描き直して最初に置き、形（インバウンドがフィックスで終わる）→ 入り方（到着時の機首方位）→ 時間・速度（KIAS、90 KIAS 以上が望ましい）→ 風（3 倍の修正）→ 旋回（3°/秒・最大 30°）→ ACS の順に書き、VOR の TO/FROM 反転で旋回開始を課目 i4 とつなぐ。ifr.ils は平面＋断面の図と針の読み方の図を置き、準備 → 進入許可の復唱（課目の文と同じ）→ 30° で会合 → GS に下から会合して 80 kt・約 430 fpm → 小さな修正（IFH：ピッチで降下率・出力で速度、いつも組み合わせる）→ DA 255 ft（地上 200 ft）で判断、とし、偽のグライドスロープの注意を加える。ifr.np は非精密進入と RNAV（GPS）の最低気象条件の行、CDFA の断面図、MDA・VDP・MAP、進入復行（MAP までコースを守る：IFH 第 1 章）を説明し、自動操縦の文は CADET の必須の形のまま最後に残し、ほかに『この教材』という語を使わない。タイトルは『計器飛行方式：規則・待機・ILS と非精密進入』に変えてよい。",
+ "figuresExisting": [
+  {
+   "key": "holding",
+   "verdict": "redo",
+   "why": "フィックスの位置（アウトバウンドの始まり）と区切り線（縦線と約 42°）が AIM 5-3-8 と違う。インバウンドがフィックスに着かない。『アウトバウンド（1 分）』も不正確。文字 11 で 390 px 表示 9.5 px。北が上・インバウンド 090°（課目 i4）で、正しい区域と区切り線、各入り方の経路を描き直す"
+  },
+  {
+   "key": "ils",
+   "verdict": "redo",
+   "why": "断面図に左右の誘導を書いている、縦を誇張していないので GS の幅が見えない、距離と高さの数字がない、viewBox 500 幅・最小 6.9 px。平面図＋断面図（縦誇張）＋CDI/GS の小図の 2 段に描き直し、数値は avionics.js／school.js／syllabus i5 から"
+  }
+ ],
+ "figuresNew": [
+  {
+   "name": "ifrAlternate123",
+   "section": "ifr.rules",
+   "what": "時間軸：ETA の前後 1 時間の帯と、雲 2,000 ft・視程 3 SM の線（予報がこれを下回る時間があれば代替飛行場が必要）。下段に燃料の積み上げ棒（目的地まで＋代替まで＋45 分）",
+   "data": "14 CFR 91.167・91.169（数値は規則そのもの）",
+   "priority": "should"
+  },
+  {
+   "name": "lostCommIfr",
+   "section": "ifr.rules",
+   "what": "IFR の無線故障（91.185）の判断図：VFR の天気？→ はい：VFR で早く着陸／いいえ：経路 AVEF（Assigned・Vectored・Expected・Filed）、高度 MEA（最低 IFR 高度・Expected・Assigned の最も高いもの）",
+   "data": "14 CFR 91.185",
+   "priority": "nice"
+  },
+  {
+   "name": "holding",
+   "section": "ifr.hold",
+   "what": "既存キーの描き直し：北が上、LAB VOR へインバウンド 090°・右回り（パターンは西・南側）、ダイレクト 180°・ティアドロップ 70°（30° の涙形）・パラレル 110° の区域と区切り線（東へのコース延長・020°–200° の線）、各入り方の飛び方の例、課目 i4 の到着を強調。旋回の半径はパターンの縦横比に反映（100 kt の標準旋回で半径約 0.53 NM、1 分の直線約 1.7 NM）",
+   "data": "AIM 5-3-8（区域・1 分）、syllabus i4（インバウンド 090°・100 kt）、半径 r ＝ V ÷（3°/秒）",
+   "priority": "must"
+  },
+  {
+   "name": "holdingWind",
+   "section": "ifr.hold",
+   "what": "風の修正：南風のときインバウンドで左 8°、アウトバウンドで右 24°（3 倍）、追い風・向かい風でアウトバウンドの時間を変えてインバウンドを 1 分に",
+   "data": "AIM 5-3-8 の例（8° → 24°）",
+   "priority": "nice"
+  },
+  {
+   "name": "labIlsChart",
+   "section": "ifr.chart",
+   "what": "架空の LAB ILS RWY 36 の進入図の模式図（平面図・断面図・最低気象条件の欄）：I-LAB 109.90、最終進入コース 360°、GS 会合 2,000 ft、DA 255（200 ft 上）、進入復行の手順（例：まっすぐ 2,000 ft へ上昇して LAB VOR で待機）。大きく『模式図・NOT FOR NAVIGATION・架空』",
+   "data": "avionics.js NAVAIDS（I-LAB 109.90、LAB VOR 113.50）、physics.js LAB_RWY（36、標高 55 ft）、school.js（2,000 ft）、syllabus i5（DA 地上 200 ft）。進入復行の手順は教材の架空値と明記",
+   "priority": "should"
+  },
+  {
+   "name": "ils",
+   "section": "ifr.ils",
+   "what": "既存キーの描き直し：上＝平面図（ローカライザー ±2.5° の扇形、30° の会合）、下＝縦を誇張した断面図（GS 3°・±0.7°、2,000 ft の会合点 約 5.9 NM、DA 255 ft）、右に G1000 型 CDI と GS の菱形",
+   "data": "avionics.js（cdiLoc 1.25°/ドット、gsDots 0.35°/ドット、GS 起点 300 m）、school.js（2,000 ft・330°）、physics.js（標高 55 ft）、syllabus i5",
+   "priority": "must"
+  },
+  {
+   "name": "ilsNeedles",
+   "section": "ifr.ils",
+   "what": "針の読み方 4 例：CDI の針と GS の菱形の位置（右・左×上・下）と、そのときの自分の位置（断面と平面の小さな絵）と直し方（針の方へ 2〜5°／降下率を ±100 fpm）",
+   "data": "avionics.js の符号（gsDots ＋ ＝ 経路が上 ＝ 自分が低い）、school.js:374 のヒント（針の方へ）",
+   "priority": "must"
+  },
+  {
+   "name": "npProfile",
+   "section": "ifr.np",
+   "what": "断面図：dive and drive（FAF の後すぐ MDA へ降りて水平）と CDFA（約 3° で VDP まで連続降下）、MDA（＋100／−0 ft）・VDP・MAP、進入復行の上昇、比較の LPV の DA",
+   "data": "AIM 5-4-5（VDP・VDA）、ACS IR.VI.A.S12（MDA ＋100/−0）、AC 120-108。高さは教材値（LAB 標高 55 ft）",
+   "priority": "must"
+  },
+  {
+   "name": "rnavMinima",
+   "section": "ifr.np",
+   "what": "RNAV（GPS）進入の最低気象条件の 4 行の表または図：LPV（WAAS・DA・垂直誘導あり）／LNAV/VNAV（DA）／LP（WAAS・MDA）／LNAV（MDA）、それぞれ『高さの誘導の有無』『必要な装置』",
+   "data": "AIM 5-4-5（RNAV 進入図の説明）、IPH 第 4 章",
+   "priority": "should"
+  }
+ ],
+ "photos": [
+  {
+   "section": "ifr.ils",
+   "subject": "ローカライザーのアンテナの列（滑走路の先にある横一列のアンテナ）",
+   "search": "Commons: Category:Instrument landing system / 'ILS localizer antenna'、FAA の写真（PD）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "電波が滑走路の向こう端から出ていることを実物で見せる"
+  },
+  {
+   "section": "ifr.ils",
+   "subject": "グライドスロープのアンテナ（滑走路の横の柱）",
+   "search": "Commons: 'ILS glide slope antenna'",
+   "candidateUrl": "https://commons.wikimedia.org/wiki/File:ILS_GS_EHAM_18R.jpg",
+   "candidateLicence": "未確認（Commons の API 制限で確認できず。ファイルページで要確認）",
+   "why": "グライドスロープは滑走路の端から少し入った横から出ることを示す"
+  },
+  {
+   "section": "ifr.ils",
+   "subject": "進入灯（approach lighting system）の列（夜または低い雲）",
+   "search": "Commons: Category:Approach lighting systems / 'ALSF-2'、FAA の写真（PD）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "DA で『見えなければならない目印』（91.175）の代表。100 ft ルールの説明にも使える"
+  },
+  {
+   "section": "ifr.np",
+   "subject": "VOR 局（VORTAC）の地上局",
+   "search": "Commons: Category:VOR stations / Category:VORTAC（米空軍・FAA の写真は PD のものがある）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "VOR 進入の電波の出どころ（nav.vor で使っていなければ）"
+  },
+  {
+   "section": "ifr.np",
+   "subject": "GPS 衛星（GPS III など）の画像",
+   "search": "gps.gov の Multimedia（米国政府・多くは PD。クレジット U.S. Air Force を要確認）／Commons: Category:GPS satellites",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "RNAV（GPS）進入・LPV（WAAS）の仕組みの入口"
+  },
+  {
+   "section": "ifr.rules",
+   "subject": "低い雲・霧に覆われた空港（IFR の天気）",
+   "search": "NOAA Photo Library / NWS 'low ceiling airport fog'（PD）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "1-2-3 ルールや代替飛行場が必要になる天気を実感させる"
+  }
+ ],
+ "endMatter": {
+  "terms": [
+   "IFR flight plan / ATC clearance ／ IFR の飛行計画・管制の許可 ／ 91.173",
+   "Clearance limit ／ 許可の限界点（CRAFT の C）",
+   "EFC (Expect Further Clearance) ／ 次の許可の予定時刻 ／ 待機",
+   "Two-way radio communications failure ／ 無線の故障（IFR）／ 91.185",
+   "MEA ／ 最低航空路高度",
+   "Holding fix ／ 待機のフィックス",
+   "Nonstandard pattern ／ 左回りの待機",
+   "Abeam ／ 真横",
+   "Final approach course ／ 最終進入コース",
+   "Glide slope intercept ／ グライドスロープへの会合（下から）",
+   "False glide slope ／ 偽のグライドスロープ",
+   "Decision altitude (DA) / Height above touchdown (HAT) ／ 決心高度（MSL）・接地帯からの高さ",
+   "VDP (Visual Descent Point) ／ 目視降下点",
+   "APV (Approach with Vertical Guidance) ／ 垂直誘導付き進入（LPV・LNAV/VNAV）",
+   "LNAV / LNAV/VNAV / LP / LPV ／ RNAV（GPS）進入の最低気象条件の種類",
+   "WAAS ／ 衛星航法補強システム（nav.gps）",
+   "既存の語（IFR clearance (CRAFT)・Alternate (1-2-3 rule)・Holding/Inbound/Outbound・Direct/Parallel/Teardrop entry・ILS/Localizer/Glide slope・DA・MDA/MAP・Missed approach・Vector・LPV/LNAV/CDFA・FAF）は残す"
+  ],
+  "examples": [
+   "到着予定 15:00：14:00〜16:00 の予報で雲 2,000 ft 以上・視程 3 SM 以上（目的地に計器進入方式あり）なら代替飛行場は不要。予報が雲 1,500 ft なら必要（既存の例を拡張）。",
+   "ILS を 80 kt で：降下率 ≈ 80 × 5 ＝ 400 fpm、正確には 80 × 5.3 ≈ 430 fpm（課目 i5 の値）。",
+   "待機でインバウンドの修正が左 8° → アウトバウンドは右 24°（AIM 5-3-8）。インバウンドが 1 分 15 秒かかった → 次のアウトバウンドを 15 秒短く。",
+   "ILS で針が右 1 ドット・菱形が下 1 ドット → コースは右・自分は高い → 右へ 3〜5°・降下率を 100〜200 fpm 増やす（既存）。",
+   "IMC で無線が故障：最後の指示が 3,000 ft、その区間の最低 IFR 高度が 4,000 ft → 4,000 ft で飛ぶ（91.185 の最も高いもの）。"
+  ],
+  "cautions": [
+   "LAB の ILS（I-LAB 109.90）・LAB VOR・待機・進入図は架空。NOT FOR NAVIGATION。実際の進入はチャートと公式の手順で（既存を拡張）。",
+   "グライドスロープはチャートの高度で下から会合する。上から会合すると偽のグライドスロープ（6°〜12°）に乗ることがある（IFH Addendum B）。",
+   "DA・MDA で滑走路の目印が見えなければ、見えるまで降りない。すぐ進入復行（91.175）。",
+   "MAP より前に進入復行するときも、MAP までは MDA／DA 以上で決められたコースを飛んでから旋回する（IFH 第 1 章）。進入復行の障害物からの保護は DA／MAP から 200 ft/NM 以上で上昇する前提（AIM 5-4-21）。",
+   "この教材は IFR の飛行計画・許可・進入図の読み方を簡略化している（既存。bk.key から caution へ移す）。"
+  ],
+  "quizReview": [
+   "Q1（1-2-3 ルール）：keep。理由に『目的地に計器進入方式があることも条件』を足す",
+   "Q2（DA で目印が見えない → すぐ進入復行）：keep（91.175(c)・(e)）",
+   "Q3（14,000 ft 以下のインバウンド 1 分）：keep（AIM 5-3-8）",
+   "Q4（IFR の燃料 45 分）：keep（91.167(a)(3)。VFR 昼 30 分・夜 45 分は 91.151 で正しい）"
+  ],
+  "quizProposals": [
+   {
+    "q": "待機経路で、インバウンドの時間を 1 分にするために調整するのは？",
+    "choices": [
+     "アウトバウンドの時間",
+     "インバウンドの速度",
+     "旋回のバンク角",
+     "高度"
+    ],
+    "answer": 0,
+    "why": "AIM 5-3-8：最初のアウトバウンドは 1 分、その後はインバウンドが 1 分になるようにアウトバウンドの時間を変える。"
+   },
+   {
+    "q": "ILS で、グライドスロープの菱形が上に 1 ドット、CDI の針が左に 1 ドット。自分の位置は？",
+    "choices": [
+     "経路より低く、コースの右",
+     "経路より高く、コースの左",
+     "経路より低く、コースの左",
+     "経路より高く、コースの右"
+    ],
+    "answer": 0,
+    "why": "菱形・針は『行くべき経路のある方』を示す。菱形が上 ＝ 経路は上 ＝ 自分が低い。針が左 ＝ コースは左 ＝ 自分は右。"
+   },
+   {
+    "q": "非精密進入（LNAV・VOR）で MDA に着いたが滑走路が見えない。正しいのは？",
+    "choices": [
+     "MDA を保って MAP まで進み、見えなければ進入復行",
+     "DA まで降りて探す",
+     "MDA の 100 ft 下まで降りる",
+     "その場で旋回して待つ"
+    ],
+    "answer": 0,
+    "why": "MDA より下へは目印が見えるときだけ（91.175）。見えなければ MAP で進入復行。ACS では MDA を ＋100／−0 ft で保つ。"
+   },
+   {
+    "q": "IFR で雲の中を飛行中に無線が完全に故障した（91.185）。飛ぶ高度は？",
+    "choices": [
+     "最後に指示された高度・最低 IFR 高度・予告された高度のうち最も高いもの",
+     "最後に指示された高度だけ",
+     "最低 IFR 高度だけ",
+     "VFR の巡航高度"
+    ],
+    "answer": 0,
+    "why": "91.185(c)(2)：区間ごとに 3 つのうち最も高いもの。経路は指示 → 誘導 → 予告 → 飛行計画の順（AVEF）。VFR の天気なら VFR で早く着陸。"
+   }
+  ],
+  "refs": [
+   "update: FAA Instrument Flying Handbook（FAA-H-8083-15B）PDF https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf（今の URL は 404）",
+   "add: IFH Addendum B — False Courses（2019）https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/ifh_addendum_b.pdf",
+   "keep: FAA Instrument Procedures Handbook（FAA-H-8083-16B）https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/instrument_procedures_handbook（現行）",
+   "update: AIM は段落の直リンクに：5-3-8 待機 https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_3.html、1-1-9 ILS https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap1_section_1.html、5-4-5／5-4-21 進入図・進入復行 https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_4.html（2026-07-09 発効 Change 3）",
+   "add: 14 CFR の条文の直リンク https://www.ecfr.gov/current/title-14/section-91.167 、-91.169、-91.173、-91.175、-91.177、-91.185、https://www.ecfr.gov/current/title-14/section-61.57",
+   "add: FAA AC 120-108 Continuous Descent Final Approach https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-108.pdf",
+   "keep: FAA Instrument Rating — Airplane ACS（FAA-S-ACS-8C）https://www.faa.gov/training_testing/testing/acs/instrument_rating_airplane_acs_8.pdf（現行）",
+   "add: IFH 第 1 章（進入図の見方・MAP）— 上の IFH の PDF 内（ifr.chart の出典）"
+  ]
+ },
+ "appMismatches": [
+  "school.js:54 ILS のヒント『GS の菱形が下（自分が高い）ならパワーを少し絞り、上（低い）なら足す…速度のずれは機首で』と school.js:358 pitchForSpeed（'ils' を含む）↔ 本文 ifr.ils のここが大切『「出力で降下率、ピッチで速度」ではなく、「姿勢と出力を一緒に」』↔ IFH p.9-40『ピッチで正しい降下率、出力で正しい速度』。3 つとも違う。アプリは変えないので、本文は IFH を基本にしつつ『ピッチと出力はいつも組み合わせて使う。課目のヒントは出力で上下を直す考え方で、どちらも小さく同時に』と矛盾しない書き方にする",
+  "syllabus.js:352 i5『80 kt・約 −430 fpm（フラップ 10°）』↔ 本文『90 kt なら約 450 fpm』— 課目が正確（3° で GS × 5.3）。本文を課目にそろえる",
+  "syllabus.js:353 i5 std『LOC・GS ±1 ドット』↔ 本文の ACS『3/4 スケール』— 矛盾ではないが、本文に『課目は ACS より厳しい教材値』と書く",
+  "avionics.js:94-96・204：ローカライザーは ±2.5° 固定、アンテナは滑走路の先 300 m → LAB の滑走路端の幅は約 430 ft。本文の『滑走路端で幅 700 ft』は実機の説明としては正しい（AIM）が、教材の I-LAB とは違う",
+  "school.js:131 の進入許可『turn left heading 330, maintain 2,000 until established on the localizer, cleared ILS runway 36 approach』が本文 ifr.ils にない。本文に同じ文（と復唱の例）を載せる",
+  "syllabus.js:341 i4『局通過（TO→FROM）で右へ標準旋回』は AIM 5-3-8（TO/FROM の最初の完全な反転で旋回）と一致 ✓ — 本文にこの一文がない（加える）",
+  "syllabus.js:345・348 i4 の g.bank 17（÷10＋7）— 100 kt の標準旋回は正確には約 15°。本文の待機の旋回の説明で目安を書くなら両方",
+  "quiz.js:158 q_ifr は待機・ILS・IFR の規則の問題を含むが、節リンクは 'ifr.scan' だけ（ifrp の節に届かない）",
+  "avionics.js:6・pages.js:845『自動操縦は意図的に未実装』↔ 本文 ifr.np の自動操縦の段落 — 一致 ✓"
+ ],
+ "factChecks": [
+  {
+   "claim": "IFR の許可の覚え方 CRAFT（Clearance limit・Route・Altitude・Frequency・Transponder）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf",
+   "note": "IFH p.2-4〜2-5『One technique for clearance copying is writing C-R-A-F-T』"
+  },
+  {
+   "claim": "IFR の燃料（91.167）：目的地＋（必要なら）代替＋通常巡航で 45 分",
+   "verdict": "correct",
+   "source": "https://www.ecfr.gov/current/title-14/section-91.167",
+   "note": "ヘリコプターは 30 分"
+  },
+  {
+   "claim": "1-2-3 ルール（91.169）：ETA の前後 1 時間、雲 2,000 ft 以上・視程 3 SM 以上なら代替不要",
+   "verdict": "imprecise",
+   "source": "https://www.ecfr.gov/current/title-14/section-91.169",
+   "note": "目的地に Part 97 の計器進入方式（または特別な方式）があることも条件（91.169(b)(1)）。同じ条件が 91.167(b) にもある"
+  },
+  {
+   "claim": "代替飛行場の標準の最低気象条件：精密進入 600 ft・2 SM、非精密進入 800 ft・2 SM",
+   "verdict": "correct",
+   "source": "https://www.ecfr.gov/current/title-14/section-91.169",
+   "note": "91.169(c)(1)(i)。進入方式に代替の最低条件があればそれ。計器進入方式がなければ MEA から VFR で降りられる天気"
+  },
+  {
+   "claim": "最低 IFR 高度（91.177）：4 NM 以内の最も高い障害物から 1,000 ft（山岳地 2,000 ft）",
+   "verdict": "imprecise",
+   "source": "https://www.ecfr.gov/current/title-14/section-91.177",
+   "note": "『飛ぶコースから水平 4 NM 以内』。まず Part 95・97 の最低高度が優先"
+  },
+  {
+   "claim": "DA／MDA より下へは、目印が見え・視程が足り・通常の降下率で降りられるときだけ（91.175）",
+   "verdict": "correct",
+   "source": "https://www.ecfr.gov/current/title-14/section-91.175",
+   "note": "91.175(c)。進入灯だけでは接地帯の 100 ft 上より下へ降りられない（赤い終端灯などが見えれば可）。見えなければ 91.175(e) で直ちに進入復行"
+  },
+  {
+   "claim": "計器飛行の経験（61.57(c)）：6 か月以内に 6 回の進入・待機・コースの会合と追跡",
+   "verdict": "imprecise",
+   "source": "https://www.ecfr.gov/current/title-14/section-61.57",
+   "note": "『飛ぶ月の前の 6 暦月以内』。FFS・FTD・ATD でも可（本文の『認められた装置』）。切れて 6 か月を過ぎたら IPC（61.57(d)）"
+  },
+  {
+   "claim": "待機の標準は右回り（左回りは指示されたとき）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_3.html",
+   "note": "AIM 5-3-8"
+  },
+  {
+   "claim": "インバウンドは 14,000 ft MSL 以下 1 分、それより上 1.5 分",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_3.html",
+   "note": ""
+  },
+  {
+   "claim": "最大の待機速度：6,000 ft 以下 200 kt・6,001〜14,000 ft 230 kt",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_3.html",
+   "note": "単位は KIAS。14,001 ft 以上 265 KIAS、210 KIAS などの制限付きのパターンもある。固定翼機は 90 KIAS 以上が推奨"
+  },
+  {
+   "claim": "入り方は直接・平行・ティアドロップ、来た方向で決まる",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_3.html",
+   "note": "AIM は『フィックス到着時の機首方位で決める、±5° は許容』。区域は 70° の線で分ける"
+  },
+  {
+   "claim": "時間の測り始めはフィックスの真横、わからなければアウトバウンドへの旋回が終わったとき",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_3.html",
+   "note": "『over/abeam the fix, whichever occurs later』"
+  },
+  {
+   "claim": "アウトバウンドの偏流修正はインバウンドの約 3 倍",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_3.html",
+   "note": "例：インバウンド左 8° → アウトバウンド右 24°"
+  },
+  {
+   "claim": "待機の旋回は標準旋回率（バンク 25° を超えない）",
+   "verdict": "imprecise",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_3.html",
+   "note": "3°/秒・バンク 30°・フライトディレクター使用時 25° のうち最も浅いもの"
+  },
+  {
+   "claim": "計器飛行 ACS（Holding）：速度 ±10 kt・高度 ±100 ft・針路 ±10°・CDI 3/4 以内",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/training_testing/testing/acs/instrument_rating_airplane_acs_8.pdf",
+   "note": "IR.III.B.S4"
+  },
+  {
+   "claim": "ローカライザーは 108.10〜111.95 MHz",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap1_section_1.html",
+   "note": "AIM 1-1-9（40 チャンネル）。識別は I＋3 文字（I-LAB の形は正しい）"
+  },
+  {
+   "claim": "グライドスロープは通常 3°",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap1_section_1.html",
+   "note": ""
+  },
+  {
+   "claim": "ローカライザーのいっぱいの振れは約 ±2.5°（滑走路端で幅 700 ft になるよう調整）",
+   "verdict": "imprecise",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf",
+   "note": "IFH p.9-37『ふつう 5°（±2.5°）』、AIM 1-1-9『滑走路端で幅 700 ft』。幅を合わせるので角度は滑走路ごとに違う"
+  },
+  {
+   "claim": "グライドスロープのいっぱいの振れは約 ±0.7°",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap1_section_1.html",
+   "note": "ビームの厚さ 1.4°（AIM 1-1-9・IFH）"
+  },
+  {
+   "claim": "3° のグライドスロープの降下率は対地速度 × 5 前後",
+   "verdict": "imprecise",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_4.html",
+   "note": "正確には × 5.3（80 kt で約 425 fpm）。TPP の降下率表を使う（AIM 5-4-5 の VDA の説明）"
+  },
+  {
+   "claim": "計器飛行 ACS（Precision Approach）：最終進入前 ±100 ft・±10°・±10 kt、最終進入は LOC・GS とも 3/4 スケール以内・±10 kt",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/training_testing/testing/acs/instrument_rating_airplane_acs_8.pdf",
+   "note": "IR.VI.B.S9（3/4 スケールの CDI も含む）・S12・S13"
+  },
+  {
+   "claim": "非精密進入（VOR・LNAV）は高さの誘導がない",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_4.html",
+   "note": "AIM 5-4-5：NPA。VDA は助言で垂直誘導ではない"
+  },
+  {
+   "claim": "計器飛行 ACS では MDA を ＋100／−0 ft で保つ",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/training_testing/testing/acs/instrument_rating_airplane_acs_8.pdf",
+   "note": "IR.VI.A.S12：MDA ＋100/−0 ft を VDP または MAP まで"
+  },
+  {
+   "claim": "CDFA（連続降下の最終進入）が推奨されている",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-108.pdf",
+   "note": "AC 120-108（2011）、IPH 第 4 章（一定の降下率は段階的な降下より安全、国によっては義務）"
+  },
+  {
+   "claim": "GPS の LPV 進入（WAAS）は高さの誘導があり ILS に近い最低高度まで降りられる",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/instrument_procedures_handbook",
+   "note": "IPH 第 4 章『as low as 200 feet』。分類は APV（AIM 5-4-5）"
+  },
+  {
+   "claim": "IPH は FAA-H-8083-16B",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/instrument_procedures_handbook",
+   "note": "2026-10 時点で 16B（2017）が現行"
+  },
+  {
+   "claim": "計器飛行 ACS は FAA-S-ACS-8C",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/training_testing/testing/acs",
+   "note": "2024-05-31 発効の版が現行（ページ更新 2026-09-16）"
+  },
+  {
+   "claim": "進入復行はゴーアラウンドと同じ『出力・姿勢・形態』で始め、チャートの手順（方向・高度・待機のフィックス）に従う",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf",
+   "note": "IFH 第 1 章：MAP は ILS では DA、非精密では FAF からの時間・フィックス・ウェイポイント。早めに復行しても MAP まではコースを飛んでから旋回。AIM 5-4-21：保護は 200 ft/NM 以上の上昇が前提"
+  }
+ ],
+ "cadetNotes": [
+  "ifr.np：cadet/test/content.test.mjs:41 の KEEP が ifr.np の本文に『自動操縦（オートパイロット）があることが多いです。』を必須にしている。『実機の G1000 機には自動操縦（オートパイロット）があることが多いですが、この教材では…実装していません（…）。』の形を保つ（book.js:94 の置換が後半を消す）",
+  "ifr.np：content.test.mjs:114 が ifr.np の html（図の SVG の文字・aria-label も含む）に『この教材』『実装』が残らないことを確かめる。上の一文以外で『この教材』を使わない（『架空の LAB』『教材値』と書く）。npProfile の図のラベルも同じ",
+  "ifr.rules：ここが大切の『この教材は IFR…』は APP_ONLY（'この教材は IFR'）で消え、要点が 1 個になる。教材の注意は bk.key に入れない",
+  "最初の <svg> が教室スクリーンに出る：ifr.hold は描き直した holding、ifr.ils は平面＋断面の ils を最初に（ilsNeedles は 2 番目）。ifr.rules・ifr.np・新しい ifr.chart は今 SVG がないので、提案の図を最初の図に",
+  "方位の英字を 日本語＋（1 文字）で書かない：『東（E）』『南（S）』『西（W）』は CADET でキー表記として消され、テストの APP 正規表現にも当たる（E（東）の形も当たる）。『東向き 090°』と書く",
+  "図・進入図の模式図には『模式図・NOT FOR NAVIGATION』と『架空』を入れる（実在の進入図に見えないように）",
+  "bk.sim の箱は CADET で消える。進入許可の復唱の文（school.js:131 と同じ）は本文に置けば CADET にも残る"
+ ]
+}

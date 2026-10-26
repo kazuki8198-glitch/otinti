@@ -1,0 +1,363 @@
+{
+ "id": "aero",
+ "title": "飛行の原理（Principles of flight / aerodynamics）",
+ "sections": [
+  {
+   "id": "aero.forces",
+   "title": "飛行機に働く 4 つの力",
+   "gist": "水平直線飛行では揚力＝重力・推力＝抗力でつり合い、つり合いが崩れた向きに機体が加速することを示す。",
+   "issues": [
+    "FIG.forces の機体は白い楕円と左上の四角だけで飛行機に見えない（胴体中央の灰色の棒が主翼なのか尾翼なのか不明）。lesson a1 で CADET の教室スクリーンに映る図なのに、章でいちばん弱い図。",
+    "4 本の矢印が同じ長さ。実際は揚力・重力が推力・抗力の約 9 倍（教材モデル 110 KIAS 巡航：揚力≒重力 10,300 N、抗力 約 1,160 N — FL.physics pa28 の CD0・K から計算）。PHAK も「簡単のため同じ長さで描く」と断っている。",
+    "「上昇中も、速度と上昇率が一定なら力はつり合っている（推力の一部が重力の一部を支えている）」は分かりにくく不正確。PHAK ch.5：上昇中は重力の一部が飛行経路に沿って後ろ向きに働き、推力＝抗力＋その成分、揚力は重力より少し小さい。",
+    "節の目的文（bk.aim）がない。考えてみよう の答えで「トリム」が説明なしに出る（トリムは sys.ctl・ops.trim で後から説明）。",
+    "良い点：「つり合い＝止まっているではなく一定の速度で動き続ける」の説明は初心者の誤解を正すので残す。"
+   ],
+   "mainFigure": "横から見た Archer（作業ツリーの planeSide シルエット）に 4 つの力。揚力・重力を長く、推力・抗力を短く描き、教材モデル 110 KIAS の値（揚力 約 10,300 N／抗力 約 1,160 N、比 約 9：1）を数値で添える。注記「速度も高度も一定＝つり合っている」。"
+  },
+  {
+   "id": "aero.lift",
+   "title": "揚力はどうやって生まれるか",
+   "gist": "翼が空気を下へ曲げる反作用と上下面の圧力差で揚力が生まれ、L＝½ρV²SC_L で速度の 2 乗に比例することを説明する。",
+   "issues": [
+    "図が 1 枚もない → CADET の教室スクリーンに何も映らない。作業ツリーで FIG.liftFlow（翼型まわりの流線・上面低圧・下面高圧・吹き下ろし）が作られつつあるので、それを最初の図にする。",
+    "ここが大切（bk.key）がない（節の形のルール違反）。ただし CADET テスト（cadet/test/content.test.mjs:135）は aero.lift の keyPoints が 2 つであることを固定している → 追加するなら 2 項目ちょうど。",
+    "表「S｜翼の面積｜△ フラップで少し増える」：面積が増えるのはファウラー式など一部のフラップだけ。フラップの主な効果は翼の反り（キャンバー）を増やして C_L を上げること（PHAK ch.6 Flight Controls）。",
+    "表「C_L｜○ 操縦桿（エレベーター）」：Archer はスタビレーター（sys.ctl・aero.stab と用語をそろえる）。",
+    "考えてみよう の「重さ 1,050 kg」は教材モデルの重さ（約 2,315 lb）で、最大離陸重量 2,550 lb（1,157 kg）ではないことを書く。N・m²・m/s は FAA の lb・kt と混在するので、教材値であること・lb 併記を。計算自体は正しい（C_L≒0.40、70 kt で 0.82）。",
+    "C_L（揚力係数）の直感的な意味（翼の形と迎え角で決まる「揚力の出しやすさ」）がなく、いきなり記号表になる。",
+    "CADET テスト（content.test.mjs:41）は aero.lift に「この教材の Archer」が残ることを要求する。"
+   ],
+   "mainFigure": "liftFlow：前から来る空気（相対風）、翼型、上面＝圧力が低い・下面＝圧力が高い、後ろで下へ曲げられた空気（吹き下ろし）と上向きの揚力の矢印（作業ツリーの下書きのまま使える）。"
+  },
+  {
+   "id": "aero.aoa",
+   "title": "迎え角と揚力係数",
+   "gist": "迎え角は翼弦線と相対風の角度でピッチ角とは別物であり、迎え角に比例して C_L が増え、臨界迎え角を超えると失速することを示す。",
+   "issues": [
+    "FIG.aoa の角度の弧が翼弦線と相対風の間に描かれていない：弧の上端（y≒118）は翼弦線（その位置で y≒78）に届かず、相対風の矢印は翼の下を通って前縁を通らない。定義図としては誤り。",
+    "本文が正す誤解「迎え角＝ピッチ角」「降下中は機首が下でも迎え角はプラス」を示す図がない。この節でいちばん図にすべき内容。",
+    "「臨界迎え角、一般的な軽飛行機で約 15〜18°」→ PHAK 25C p.5-25 は「約 16〜20°（設計による）」。教材モデルは約 16°（physics.js aStall 0.28 rad、翼端は +1.7° 遅れて失速）。",
+    "FIG.liftCurve：「臨界迎え角 約 17°」のラベルが viewBox の外にはみ出す（figshot: [361,58,449,71]、viewBox 幅 440）。文字 11 px（390 px 幅で 8.6 px）。フラップ 40° の臨界迎え角（モデルで約 13.5°）に印がない。",
+    "ここが大切 3 項目がどれも 60 字前後〜超。CADET テスト（content.test.mjs:374）は aero.aoa で「大事なところを話します」（全部は読みきれない）を前提にしているので、短くするとテストの更新が必要。",
+    "「FAA も強調している点」は出典として曖昧 → PHAK p.5-25「A stall can occur at any pitch attitude or airspeed」と書く。"
+   ],
+   "mainFigure": "迎え角の定義図：翼型の前縁で交わる翼弦線（延長線）と相対風の矢印、その間の角度 α。下に小さく 2 コマ（planeSide）：巡航＝ピッチ≒迎え角、降下＝機首は水平線より下でも迎え角はプラス（ピッチ −2°・経路 −5° → 迎え角 約 +3° の模式例）。"
+  },
+  {
+   "id": "aero.drag",
+   "title": "抗力・揚抗比・最良滑空速度",
+   "gist": "有害抗力と誘導抗力の和が最小になる速度で揚抗比が最大になり、それがエンジン停止時の最良滑空速度（Archer チェックリスト 76 KIAS）の考え方であることを示す。",
+   "issues": [
+    "FIG.dragCurve のキャプション「チェックリストの最良滑空 76 kt は、風車状態のプロペラの抗力などを含む実機の値」は物理的に逆。有害抗力が増えると最小抗力速度は下がる（V_md ∝ (K/C_D0)^¼）。教材モデル自身でも、風車状態のプロペラ抗力（physics.js 0.026·q·S）を入れると最良滑空は約 61 KIAS（steadyState）〜約 66 KIAS（全体シミュレーション）に下がる。",
+    "図の縦軸 0〜3,000 N で上半分が空き、「誘導抗力」のラベルは 2,500 N の高さ（線は 1,000 N 付近）、「有害抗力」のラベルも線から遠い。文字 11 px（390 px で 8.6 px）。",
+    "「最大重量の値」はチェックリストに書かれていない（76 KIAS はエンジン故障・パワーオフ着陸の手順の速度として載るだけ）。出典なしの断定。",
+    "「揚抗比（L/D）」が操縦士にとって何を意味するか（滑空比＝高度 1,000 ft で何 ft 進めるか）の説明がない。",
+    "「降りる場所が決まったら 66 KIAS」の 66 はチェックリストの \"When committed to landing\" の値。何のための速度かを一言（着陸が確実になったら減速して接地速度・浮きを減らす、チェックリストの値）。",
+    "キー 2 項目目「向かい風では少し速く、追い風では少し遅く」は正しい（地面に対する距離の話）が理由が一言ほしい。"
+   ],
+   "mainFigure": "速度と抗力の曲線（教材モデル・海面上・1,050 kg・プロペラなし）：縦軸 0〜1,500 N、有害・誘導・全抗力のラベルを各線の横に、最小抗力（L/D 最大）約 71 kt の点。チェックリストの 76 KIAS は別の印で「実機の値（チェックリスト）」と分けて書き、両者の差の説明はしない（または重量の違いだけ）。"
+  },
+  {
+   "id": "aero.stall",
+   "title": "失速とスピン",
+   "gist": "失速は臨界迎え角を超えたときに起き、回復の第一歩は迎え角を減らすこと、スピンは失速に横滑り（ヨー）が加わって起きることを説明する。",
+   "issues": [
+    "図がない → lesson a6/a7/a8 で CADET の教室スクリーンに何も映らない。",
+    "回復手順「パワーを最大に（機体の手順に従う）」→ AFH 3C p.5-16 は「必要に応じて出力を加える（as needed）」。ops.slow は「③出力を全開」、syllabus a7/a8 のブリーフは「②フルパワー ③翼を水平」と順番まで違う。章をまたいで同じ言い方にする。",
+    "スピンの説明「片方の翼だけが深く失速して回転しながら落ちる」→ AFH 3C p.5-22「すべてのスピンで少なくとも片方の翼が失速している」。「片方の翼だけ」は誤解を招く。",
+    "スピン回復はチェックリスト順（スロットル アイドル → 操縦輪前 → エルロン中立 → ラダー反対）を引用。AFH 3C Figure 5-17 の汎用手順は「出力アイドル → エルロン中立 → ラダーを回転と反対へいっぱい → 昇降舵を前 → 回転が止まったらラダー中立 → 引き起こし」。順番が違うことを書き、POH が優先と明記。",
+    "Archer の失速速度（Vs1 50・Vso 45 KIAS）が章の最後の aero.vn まで出てこない。表「失速速度が上がる／下がる条件」に Archer の数値例（45° で約 60 kt など）を。",
+    "低高度旋回の典型例は良いが、AFH 3C p.5-20 の「オーバーシュートしたらゴーアラウンド」「ベースからファイナルでバンク 30° を超えない」を加えると行動につながる。",
+    "見出し「失速からの回復（基本・FAA の考え方）」→ 出典を AFH 3C ch.5 Stall recovery template と具体的に。"
+   ],
+   "mainFigure": "翼のまわりの流れ 2 コマ：臨界迎え角より小さい＝流れが上面に沿う／超える＝上面で流れがはがれて揚力が急に減る（失速）。下に回復の 4 ステップの帯（①押して迎え角を減らす ②翼を水平 ③出力（必要に応じて） ④ゆるやかに戻す）。"
+  },
+  {
+   "id": "aero.turn",
+   "title": "旋回の物理と荷重倍数",
+   "gist": "バンクで揚力を傾けて曲がり、高度を保つには揚力を増やす必要があるので荷重倍数と失速速度が上がることを説明する。",
+   "issues": [
+    "SVG の図がない（turnTable は表）。lesson a4/a5 の CADET 教室スクリーンに映すものがなく、「なぜ揚力を増やすのか」が言葉だけ。",
+    "表の 75° の行は 3.86 G で、Archer の制限 +3.8 G（普通類・physics.js maxG 3.8・syllabus の異常姿勢課目の基準 3.8 G）を超えるのに注記がない。曲技でない機体の旋回は 60° まで（14 CFR 23.2005(d)）、乗客ありで 60° 超は落下傘が必要（14 CFR 91.307(c)）。",
+    "同じ FIG.turnTable が ops.turns にも入っている（重複）。物理の表は aero.turn に 1 つだけ。",
+    "公式（tan・1,091・11.26）は初心者に重い。表と経験則を本文に、公式は補足に。旋回率・半径は真対気速度（TAS）で計算する（PHAK p.5-38）ことが書かれていない。",
+    "標準旋回の目安「速度（kt）÷ 10 ＋ 7」は IFH 15B p.4-11 の経験則だが、100 kt で 17°（正確には 15.4°）。IFH p.7-19 の「TAS の 15%（÷10 にその半分を足す）」は 100 kt で 15° と近い。どちらも TAS で、と明記（book-4 ifr も同じ規則なので章間でそろえる）。",
+    "オーバーバンキング傾向の理由（外側の翼が速く揚力が大きい）がこの節になく ops.turns にだけある。",
+    "逆ヨーとラダーの使い方が aero.left（後ろの節）より先に出てくる（順番の問題 → 新節 aero.axes へ）。"
+   ],
+   "mainFigure": "前から見た Archer（planeFront、バンク 30°）：傾いた揚力ベクトルと、その縦の成分（＝重さ）と横の成分（曲がる力）、重力。教材モデルで 30° のとき揚力 約 11,900 N（重さ 10,300 N の 1.15 倍）。横に 45°・60° の揚力の長さ（1.41・2.0 倍）を並べる。"
+  },
+  {
+   "id": "aero.stab",
+   "title": "安定性（縦・横・方向）",
+   "gist": "静安定・動安定の意味と、重心が揚力中心より前にあり水平尾翼が下向きの力で支えることで縦（ピッチ）の安定が生まれることを説明する。",
+   "issues": [
+    "用語の混乱：題の「縦・横・方向」の「縦安定」はピッチ（横軸まわり）なのに、表は「縦軸まわり（ロール）」「横軸まわり（ピッチ）」。初心者は「縦＝ロール？ピッチ？」で必ず迷う。PHAK p.5-15：Longitudinal stability (pitching) は lateral axis（横軸）まわり、Lateral stability (rolling) は longitudinal axis（縦軸）まわり。表に「縦安定（ピッチ）＝横軸まわり」と並べて書く。",
+    "最初の図（お椀とボール）は抽象的。この節でいちばん大事な「重心・揚力中心・尾翼の下向きの力」の図がない。",
+    "FIG.stability の副題の文字 10 px（390 px で 8.2 px）。キャプションは「縦（ピッチ）と方向（ヨー）に正の静安定」だけで、表の「上反角（ロール）」と食い違う。",
+    "3 軸と操縦翼面の表は sys.ctl と重複し、しかも aero.turn・aero.stall で先に使う用語。新節 aero.axes へ移し、ここは安定だけに。",
+    "上反角のしくみ（横滑りで下がった側の翼の迎え角が増えて戻す、PHAK p.5-18）と「低翼機は高翼機より大きな上反角が要る（高翼は約 5° 分の効果）」がない — Archer の翼が V 字に見える理由になる。",
+    "「第 4 部」「第 5 部」の直書きは {ch:ifr}・{ch:me} などの参照に（作業ツリーでは部の構成が 6 部に変わりつつある）。"
+   ],
+   "mainFigure": "横から見た Archer に 3 本の矢印：重心（CG）の重力、重心より少し後ろの主翼の揚力、尾翼の下向きの力。「機首が下がろうとする → 尾翼が支える」のつり合いと、小さく「重心が後ろすぎ → 尾翼で支えきれず不安定」の対比。"
+  },
+  {
+   "id": "aero.left",
+   "title": "左偏向傾向と逆ヨー（右ラダーが必要な理由）",
+   "gist": "時計回りプロペラの単発機は高出力・低速・大迎え角で機首が左を向く（トルク・らせん後流・P ファクター・ジャイロ効果）ので右ラダーで打ち消すことを説明する。",
+   "issues": [
+    "FIG.leftTurning のヨーの矢印が逆：機体の下の赤い弧は画面上で時計回り（上から見て機首が右へ回る向き）なのに、ラベルは「機首は左へ振られる」。",
+    "上から見た P ファクター図は「下がるブレード」を前後方向の小さな矢印で描いていて、ブレードの上下の動き・迎え角の違いが読み取れない。",
+    "トルクは空中ではロール、地上では左タイヤの摩擦で左へ曲がる（PHAK p.5-30）、ジャイロ効果は尾輪式で尾を上げるとき左（前輪式の Archer では小さく、機首上げでは右）を一言ずつ。",
+    "逆ヨーはプロペラと無関係なのに同じ節・題に入っている。aero.turn／新節 aero.axes に移し、ここは参照だけに。",
+    "ここが大切に「右ラダー（E）」「このシミュレータはこれらの効果を計算している。自動ラダー（U）を OFF にすると…」：アプリの操作は bk.sim の中へ（CADET が文ごと落とす・テストの APP 正規表現に当たる）。自動ラダーは初期設定 ON（app.js PREFS0 autoRud:true）と書く。",
+    "本文の内容は正しい（PHAK p.5-30〜32）。教材モデルでも確認：Vy 76 KIAS 全開上昇で右ラダー約 6%、巡航 110 KIAS でほぼ 0、アイドル降下でわずかに左（約 2%）。"
+   ],
+   "mainFigure": "4 コマの図：①トルク（後ろから見て機体が左に傾く、地上では左へ）②らせん後流が垂直尾翼の左側に当たる（上から）③P ファクター（横から：大迎え角で右側の下がるブレードの迎え角が大きい → 推力の中心が右）④ジャイロ効果。中央に反時計回りの矢印「機首は左へ → 右ラダー」。"
+  },
+  {
+   "id": "aero.ge",
+   "title": "地面効果とフラップ",
+   "gist": "翼が地面のすぐ近くでは誘導抗力が減り揚力が増える（地面効果）ので、着陸ではフロート、離陸では早すぎる浮揚の危険があることと、Archer のフラップの段階を説明する。",
+   "issues": [
+    "図がない（CADET スクリーンに何も映らない）。",
+    "「おおむね翼幅より低い高さ」は不正確：PHAK p.5-11 では翼幅と同じ高さで誘導抗力の減少は 1.4%、1/4 で 23.5%、1/10 で 47.6%。強く効くのは地面のすぐ近く（Archer の翼幅 約 35 ft → 9 ft 以下）だけ。",
+    "教材モデルの地面効果（physics.js:222 ge＝16h²/(1+16h²)、h＝高さ÷翼幅）は PHAK より強い：1/4 翼幅で −50%、1/10 で −86%、翼幅で −6%。図に PHAK の % を載せるなら「公開資料の値。教材モデルはもっと強く効く」と書く（数字が飛行モデルと矛盾しないように）。",
+    "フラップの表の見出し「主な使い道（チェックリスト）」は誤り：アビーム 10°・ベース 25°・着陸 40° はこの教材の場周手順（syllabus a10 のブリーフ・{ch:tl}・FIG.pattern）。チェックリストにあるのは短距離／軟弱地離陸 25°、ゴーアラウンドで 25° へ、Flaps below 102 KIAS、パワーオフ着陸で AS DESIRED。",
+    "地面効果とフラップは別の話題で、題も 2 つを並べただけ。フラップは新節 aero.flaps に分けると、aero.aoa の揚力曲線（フラップで曲線が上へ）とつながって分かりやすい。",
+    "PHAK p.5-11 の「地面効果の中では速度計・高度計が少なく示すことがある」「離陸で地面効果を出ると抗力が増え機首上げのモーメント」が抜けている（任意）。"
+   ],
+   "mainFigure": "横から見た Archer が滑走路の上を飛ぶ模式図：翼の高さ＝翼幅・1/4・1/10 の 3 つの位置で翼端渦の大きさを変え、誘導抗力の減少（PHAK：1.4%・23.5%・47.6%）を添える。フレアで速すぎると「浮き続ける（フロート）」の矢印。"
+  },
+  {
+   "id": "aero.vn",
+   "title": "速度の制限と V-n 線図",
+   "gist": "機体の強さの限界（荷重倍数と速度）を V-n 線図と速度計の色で示し、Va・Vno・Vne・Vfe の意味を説明する。",
+   "issues": [
+    "図の「Va 約 97」と表・キャプションの「Va 113 KIAS」が同じ節で食い違う。図は Vs1 50 KIAS × √3.8 で計算しているが、V-n の関係は較正対気速度（CAS）で成り立つ。TCDS 2A13 では Archer III の Va は 111 KCAS（2,550 lb）、つまり Vs1 は約 57 KCAS（失速付近では速度計が少なく示す）。",
+    "「89 KIAS（1,917 lb）」：TCDS 2A13 は 89 KCAS を 1,634 lb の値としている。Va は √重量に比例するので 1,917 lb では約 98 KIAS（113 × √(1,917/2,550)）。同じ MGA チェックリストの 2024 年版は 98 だったという情報もあり、2025 年版の誤植の可能性が高い → 「113 KIAS（2,550 lb）、軽いほど小さい（POH で確認）」だけにする。",
+    "Vno 125・Vne 154 は「教材値」とあるが、TCDS 2A13 の 121 / 148 KCAS（POH の KIAS では 125 / 154）と一致 → 出典つきの値として書ける。Vso 45／Vs1 50 KIAS は二次資料と一致（POH で確認）。",
+    "Va の説明「乱気流ではこれ以下」だけでは不十分。PHAK p.5-35：Va 以下でも守られるのは「1 つの舵を 1 回いっぱいに動かす」場合だけで、連続・複数の舵いっぱいは構造を守らない。",
+    "普通類 +3.8 G／−1.52 G は正しい（PHAK p.5-34）。Archer III は実用類（+4.4 G、2,130 lb 以下）でも型式証明されている（TCDS 2A13）。現行 Part 23（23.2005）は新しい機体を Normal category とレベルで分けるので、「普通類・実用類」は Archer の型式証明時の区分と書く。",
+    "速度計の色は文字の説明だけ。初心者が毎回見るのは速度計なので、速度計の模式図を最初の図に（V-n は 2 枚目）。",
+    "V-n 図の文字 11 px（390 px で 8.6 px）。負側の限界線は Vno から Vne にかけて 0 に近づく斜めの線が本来の形（図は水平のまま）。"
+   ],
+   "mainFigure": "アナログ速度計の模式図（写真ではなく SVG）：AR.s0/s1/fe/no/ne から白い弧 45〜102、緑の弧 50〜125、黄の弧 125〜154、赤線 154、Va 113（最大重量）の印。各色の意味を横に。"
+  }
+ ],
+ "problems": {
+  "unclear": [
+   "aero.stab：「縦安定」（ピッチ）と「縦軸まわり（ロール）」が同じ節に並び、縦・横の言葉が逆に聞こえる。縦安定＝ピッチ＝横軸まわり、と表で明示する。",
+   "aero.forces：「上昇中も…推力の一部が重力の一部を支えている」は分かりにくい。上昇中は重力の一部が後ろ向きに働く、と図で。",
+   "aero.lift：C_L の直感的な意味がなく記号表から始まる。ρ・S・C_L の説明より先に「速い・迎え角が大きい・空気が濃い→揚力が大きい」を。",
+   "aero.drag：揚抗比（L/D）を滑空比（1,000 ft で何 ft 進むか）に言い換えていない。76 KIAS と 66 KIAS の違い（滑空用と着陸が確実になってから）の説明がない。",
+   "aero.turn：tan を使う公式が 2 本並ぶ。初心者には表と経験則で十分（公式は補足）。旋回率・半径・標準旋回の目安は TAS であることが書かれていない。",
+   "aero.vn：Va が「重量が軽いほど小さい」理由（軽いと同じ舵で大きな G がかかりやすい）がない。Va を守っても舵の連続使用は守られないことが抜けている。",
+   "aero.left：題が「左偏向傾向と逆ヨー」で、プロペラと関係のない逆ヨーが混ざる。",
+   "aero.ge：題が「地面効果とフラップ」で 2 つの話題が 1 節にある。"
+  ],
+  "order": [
+   "3 軸（ロール・ピッチ・ヨー）と操縦翼面・ボール（釣り合い旋回）が aero.stab の表で初めて出るのに、前の aero.stall（翼を水平・ラダー）と aero.turn（ラダー・ボール）で先に使っている → 新節 aero.axes を aero.drag と aero.stall の間に置く。",
+   "逆ヨーの説明が aero.left（8 番目）にあるのに、aero.turn（6 番目）で「逆ヨーの打ち消し」と先に使う → aero.axes へ移す。",
+   "Archer の失速速度（Vs1 50・Vso 45）が最後の aero.vn まで出ない → aero.stall で先に示す。",
+   "フラップの効果が aero.aoa（キー）と aero.ge（表）に分かれている → 新節 aero.flaps（aero.ge の後）にまとめ、aero.ge は地面効果だけに。",
+   "aero.lift は 2.2 番目のまま（textbook/test/content.test.mjs:86 が 2.2 を固定）、aero.forces は先頭のまま（a1 の教室スクリーン）。"
+  ],
+  "errors": [
+   "FIG.dragCurve のキャプション「チェックリストの最良滑空 76 kt は、風車状態のプロペラの抗力などを含む実機の値」→ 有害抗力（風車プロペラ）が増えると最小抗力速度は下がる（V_md ∝ (K/C_D0)^¼）。教材モデルでも風車プロペラ抗力込みの最良滑空は約 61〜66 KIAS。差の説明として誤り（物理計算・physics.js:500）",
+   "FIG.leftTurning：ヨーの弧（SVG の arc sweep-flag 1、矢じりが左上）は画面上で時計回り＝上から見て機首が右へ回る向き → 左偏向は反時計回りに描く（https://www.faa.gov/sites/faa.gov/files/07_phak_ch5_0.pdf p.5-32「yawing moment toward the left」）",
+   "FIG.aoa：角度の弧が翼弦線と相対風の間に描かれていない（弧の上端が翼弦線より約 40 px 下、相対風の矢印が前縁を通らない）→ 前縁で交わる 2 本の線の間に α を描く（https://www.faa.gov/sites/faa.gov/files/07_phak_ch5_0.pdf）",
+   "FIG.vn「Va 約 97」（= Vs1 50 KIAS × √3.8）→ V-n は CAS で成り立ち、Archer III の Va は 111 KCAS／113 KIAS（2,550 lb）。Vs1 50 KIAS は約 57 KCAS（https://touringmachine.com/Cherokee/PDFs/Cherokee%20Type%20Certificate%20Data%20Sheet%202A13.pdf TCDS 2A13 Archer III、FAA DRS で 2A13 を検索可）",
+   "aero.vn 表「89 KIAS（1,917 lb）」→ TCDS 2A13 は Va 89 KCAS を 1,634 lb の値としている。√W で 1,917 lb は約 98 KIAS（同上 TCDS／https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf 2025 年版の誤植の可能性）",
+   "aero.aoa「臨界迎え角、一般的な軽飛行機で約 15〜18°」→ PHAK 25C p.5-25「approximately 16° to 20° depending on the aircraft's design」（https://www.faa.gov/sites/faa.gov/files/07_phak_ch5_0.pdf）",
+   "aero.ge フラップ表の見出し「主な使い道（チェックリスト）」→ アビーム 10°・ベース 25°・着陸 40° はチェックリストにない（この教材の場周手順）。チェックリストは 25° 離陸（短距離・軟弱地）・ゴーアラウンドで 25° へ・Flaps below 102 KIAS（https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf）",
+   "aero.ge「おおむね翼幅より低い高さ」で地面効果 → 翼幅の高さでは誘導抗力 −1.4% だけ、1/4 翼幅で −23.5%、1/10 で −47.6%（PHAK p.5-11 https://www.faa.gov/sites/faa.gov/files/07_phak_ch5_0.pdf）",
+   "aero.stall「片方の翼だけが深く失速して回転しながら落ちる」→ AFH 3C p.5-22「In all spins at least one of the wings is stalled」（https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf）",
+   "aero.stall 回復「パワーを最大に」→ AFH 3C p.5-16 Stall recovery template「Add thrust/power … as needed」（同上 AFH ch.5）",
+   "aero.drag「76 KIAS（最大重量の値）」→ チェックリストには重量の記載なし（エンジン故障の手順の 76 KIAS、着陸が確実になったら 66 KIAS）。「最大重量の値」は出典なし",
+   "aero.lift「S（翼の面積）△ フラップで少し増える」→ 面積が増えるのはファウラー式など一部のフラップ。主な効果はキャンバー増（PHAK ch.6 https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-6-flight-controls）",
+   "（重複先 ops.slow）「FAA の覚え方は PARE」→ PARE は AFH 3C にない民間の覚え方。AFH 3C は Figure 5-17 Spin recovery template（6 段階）（AFH ch.5 PDF 同上）"
+  ],
+  "outdated": [
+   "PHAK FAA-H-8083-25C（2023）は現行版のまま。ただし 2025-10 に MOSAIC 規則の Addendum（https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/PHAK_Addendum_(MOSAIC).pdf）が出て「現行版の一部」とされた。変更は ch.1・3・6・9・17 で、空力の ch.4・5 には影響なし。",
+   "AFH FAA-H-8083-3C（2021）も現行版。2025-10 の MOSAIC Addendum（https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/AFH_Addendum_(MOSAIC).pdf）は ch.1・2・4・6・17 のみで、失速・スピンの ch.5 は変わらない。",
+   "IFH FAA-H-8083-15B（2012）は現行（Errata 2014・Addendum 2015・Addendum B 2019）。標準旋回の目安はこの版の p.4-11（÷10＋7）と p.7-19（TAS の 15%）。",
+   "「普通類 +3.8 G」などの区分は Archer の型式証明（CAR 3）時のもの。現行 14 CFR 23.2005 は新しい機体を Normal category とレベル 1〜4 で分け、utility／acrobatic の区分はない（https://www.ecfr.gov/current/title-14/chapter-I/subchapter-C/part-23/subpart-A/section-23.2005）。Archer の説明としては正しいので、「Archer の型式証明の区分」と書けばよい。",
+   "Archer チェックリスト（MGA）：URL の現物は 2025 年版（ページ下 09012025.final）。版ごとに数値が変わる（1,917 lb の Va が 2024 年版 98 → 2025 年版 89 との報告）ので、版名を本文に残す。"
+  ],
+  "duplicates": [
+   "ops.turns（第 14 章）：FIG.turnTable がそのまま 2 回目、急旋回の 1.41 G・失速速度 19% 増、オーバーバンキング傾向の説明も重複。aero.turn＝物理（表はここだけ）、ops.turns＝操作の手順と許容幅（表は {ch:aero} 参照）に分ける。",
+   "ops.slow（第 14 章）：失速回復の手順（「③出力を全開」）とスピン回復（PARE）を再掲。言い方を aero.stall と同じ（AFH の順番・出力は必要に応じて・POH 優先）にそろえ、片方は参照に。",
+   "sys.ctl（第 3 章）：操縦翼面とロール・ピッチ・ヨーの表が aero.stab の表と重複。新節 aero.axes に一般の 3 軸、sys.ctl に Archer 固有（スタビレーター・アンチサーボタブ・トリム）を。",
+   "perf.wb（第 4 章）：重心が前・後ろのときの失速速度・安定性の表が aero.stall・aero.stab と重複（内容は一致）。aero.stab に理由、perf.wb に計算と限界を。",
+   "ifr（第 21 章, book-4.js:146・167）：標準旋回の目安「÷10＋7」を再掲。aero.turn と同じ書き方（TAS・IFH の 15% 則も）にそろえる。",
+   "me／oei（第 23〜24 章, book-5.js:56）：逆回転プロペラで P ファクターが対称、の説明が aero.left の最後のキーと重複（内容は一致）。",
+   "tl（第 15 章, book-3.js:152・167）：地面効果の中での浮揚・フロートが aero.ge と重複（内容は一致）。",
+   "emg.engine（第 16 章）：最良滑空 76 KIAS・66 KIAS が aero.drag と重複（数値は一致）。"
+  ],
+  "numbers": [
+   "最良滑空：本文・quiz.js・syllabus e3/e4 は 76 KIAS（チェックリスト）。教材モデルの抗力曲線（FIG.dragCurve、プロペラなし・1,050 kg）の最小抗力は約 71 kt。風車状態のプロペラ抗力を入れた教材モデルの最良滑空は steadyState で約 61 KIAS（滑空比 9.3）、全体シミュレーション（エンジン停止・翼水平・5,000〜7,000 ft）で約 66 KIAS（58 kt 7.85／61 kt 7.99／66 kt 8.06／70 kt 7.98／76 kt 7.71／82 kt 7.30）。シミュレータでは 76 KIAS は最良より約 4% 短い。本文は「76 はチェックリスト（実機）の値、教材モデルの曲線は 60〜76 kt でほぼ平ら」とし、モデルの最良滑空＝76 とは書かない。",
+   "Va：FIG.vn は約 97（AR.s1 50 × √3.8）、表・キャプション・syllabus a5 は 113 KIAS（AR.va）。TCDS 2A13 は 111 KCAS（2,550 lb）。図は AR.va から逆算した失速線（Vs≒113/√3.8≒58 kt CAS）にするか、数値を入れない模式図に。",
+   "Va の軽い重量の値：本文 89 KIAS（1,917 lb、MGA 2025）。TCDS 89 KCAS は 1,634 lb。√W で 1,917 lb → 約 98 KIAS。",
+   "失速速度：教材モデルの 1G 失速（1,050 kg・海面）はフラップ UP 49.8 kt／10° 48.1／25°（モデル内部 20°）46.7／40°（内部 30°）45.3 kt で AR.s1 50・AR.s0 45 と一致。ただしモデルは 1,050 kg（2,315 lb）で、2,550 lb にすると 52／48 kt。失速警報はモデルで臨界迎え角の 2.6° 手前（クリーンで約 53 kt）。",
+   "臨界迎え角：FIG.liftCurve のラベル「約 17°」（aStall＋1 の丸め、線は 17.2°）、モデルの aStall は 16.0°（翼端は +1.7°）、本文「15〜18°」、PHAK「16〜20°」。フラップ 40° でモデル 13.5°。",
+   "turnTable の 75° 行：3.86 G は Archer の +3.8 G（physics.js maxG、syllabus 異常姿勢課目の基準 3.8 G）を超える。60° を上限として示すか、75° 行を赤で「Archer の制限超え」。Vs1 × √n の列を足すと Archer の具体値（45° 59.5 kt、60° 70.7 kt）が出る。",
+   "標準旋回のバンク：「÷10＋7」は 100 kt で 17°、正確には 15.4°（TAS）、IFH の 15% 則で 15°。90 kt：16° vs 13.9°。",
+   "地面効果：physics.js:222 の ge＝16h²/(1+16h²) は PHAK より強い（1/4 翼幅で誘導抗力 −50% vs PHAK −23.5%、1/10 で −86% vs −47.6%、翼幅で −6% vs −1.4%）。図に % を書くなら出典を分ける。",
+   "フラップ：physics.js:89 FLAP_DEG [0,10,20,30] で、表示ラベルは UP/10°/25°/40°（TCDS 2A13 も 10°・25°・40°）。FIG.liftCurve の「フラップ 40°」はモデルのフル（flapF＝1）なので表示は正しいが、モデル内部の角度は実機と違う（教材の注記不要、ただし数値の図を作るときはラベル側を使う）。",
+   "揚力の計算の重さ 1,050 kg は physics の mass（2,315 lb）。ARCHER_WB や perf 章が 2,550 lb を使うなら「教材モデルの重さ」と明記。",
+   "巡航の力（図用）：教材モデル 110 KIAS で C_L 0.33、C_D 0.0375、揚力≒10,300 N、抗力≒1,160 N（L/D≒8.9）。30° バンクで揚力 約 11,900 N、横向き成分 約 5,950 N。",
+   "左偏向：教材モデルの必要ラダー（rudNeed）は Vy 76 KIAS 全開上昇 +0.06（右）、巡航 110 KIAS ≒0、アイドル降下 −0.017（左）— 本文「巡航ではほぼ打ち消され、離陸・上昇では右ラダー、アイドル降下でわずかに左」と一致。",
+   "Vno 125／Vne 154 KIAS（AR、本文「教材値」）は TCDS 2A13 の 121／148 KCAS と一致（POH の KIAS 値）。physics.js:108 のコメント「teaching values」は出典つきにできる。",
+   "フラップの効果（新図用）：physics の flapCL 0.55・flapCD 0.7 から ΔC_L＝10° 0.18／25° 0.37／40° 0.55、ΔC_D＝0.009／0.025／0.049。"
+  ]
+ },
+ "policy": "10 の節の id と順番はそのまま（aero.forces は先頭＝lesson a1 の教室スクリーン、aero.lift は 2.2 のまま＝textbook のテスト）にし、新節を 2 つ足す：aero.axes「3 つの軸・操縦翼面・ボール（釣り合い旋回と逆ヨー）」を aero.drag と aero.stall の間に、aero.flaps「フラップの段階と使い方（10°・25°・40°、Vfe、ゴーアラウンドで 25° へ）」を aero.ge の後に置き、aero.ge は地面効果だけ、aero.left はプロペラだけ、aero.stab は安定だけにする。各節は目的文（bk.aim）→ その節でいちばん大事な 1 枚の図（4 つの力 → 翼のまわりの流れ → 迎え角とピッチ → 抗力曲線 → 3 軸 → 失速の流れ → 傾いた揚力 → 重心と尾翼 → プロペラの 4 つの原因 → 地面効果 → フラップ → 速度計）→ 説明 → ここが大切（2〜4 項目・60 字以内）の順で、最初は言葉と図だけで説明し、公式は L＝½ρV²SC_L と n＝1/cos だけを本文に、C_L の計算・旋回率と半径の公式は考えてみよう／補足に下げる。数値はすべて出典を書き分ける：チェックリスト（MGA 2025）の 76／66／102／113 KIAS、TCDS・POH と一致する 45／50／125／154 KIAS、教材モデル（FL.physics）の曲線・1,050 kg・C_L の計算。風車プロペラで 76 kt を説明する文、89 KIAS／1,917 lb の組、Va 約 97 の図は削除・作り直し、75° の行は「Archer の制限超え」とする。turnTable は aero.turn だけに置き、失速・スピンの回復は ops.slow と同じ言い方（AFH の順番：迎え角 → 翼を水平 → 出力は必要に応じて、スピンは AFH の手順と Archer のチェックリスト、POH 優先）にそろえる。アプリの操作（E・U キー、自動ラダーは初期設定 ON）は bk.sim の中だけに書き、「このシミュレータ」は ここが大切 から外す。",
+ "figuresExisting": [
+  { "key": "forces", "verdict": "redo", "why": "機体が楕円と四角で飛行機に見えず、4 本の矢印が同じ長さ。planeSide シルエットで、揚力・重力を長く推力・抗力を短く（教材モデル 110 KIAS の値）描き直す。a1 の教室スクリーンに映る図なので最優先。文字サイズは 12 px で可。" },
+  { "key": "aoa", "verdict": "redo", "why": "角度の弧が翼弦線と相対風の間にない（定義図として誤り）、相対風の長いラベルが 11 px（390 px で 9.0 px）。前縁で交わる 2 線の間に α、降下中の小コマを追加。" },
+  { "key": "liftCurve", "verdict": "fix", "why": "形とデータ（physics.js CL0・CLa・aStall・flapCL・flapStall）は良い。「臨界迎え角 約 17°」が viewBox の外にはみ出す・文字 11 px（390 px で 8.6 px）・フラップ 40° の臨界迎え角の印がない。ラベルを内側へ、Math.round(aS) で約 16°、失速域を薄く塗る。" },
+  { "key": "dragCurve", "verdict": "fix", "why": "曲線は教材モデルから正しく計算されているが、キャプションの風車プロペラの説明が物理的に逆。縦軸を 0〜1,500 N に、ラベルを線の横に、文字 ≥12、L/D 最大の印、76 KIAS は「実機の値（チェックリスト）」として分ける。" },
+  { "key": "vn", "verdict": "redo", "why": "図の Va 約 97 と表の 113 が食い違う（IAS で計算しているため）。AR.va/√3.8 で失速線を引く（CAS の考え方）か数値なしの模式図に。黄の範囲（Vno〜Vne）を塗る、負側は Vno〜Vne で斜めに、文字 ≥12（現在 390 px で 8.6 px）。速度計の図の後ろ（2 枚目）へ。" },
+  { "key": "turnTable", "verdict": "fix", "why": "値は正しい（公式から計算）。75° 行（3.86 G）に Archer の制限超えの印、Vs1 × √n の列（AR.s1 から）を追加、旋回率・半径は TAS と注記。5 列で 390 px では窮屈なので「100 kt での旋回率／半径」を 1 列にまとめるか列を減らす。ops.turns からは外す。" },
+  { "key": "leftTurning", "verdict": "redo", "why": "ヨーの弧が時計回り（機首右）でラベル「機首は左へ」と逆。上から見た図ではブレードの上下が読めない。4 つの原因の 4 コマ＋反時計回りの矢印に作り直す。" },
+  { "key": "stability", "verdict": "fix", "why": "お椀とボールのたとえ自体は分かりやすいが副題 10 px（390 px で 8.2 px）、キャプションが縦と方向だけ。節の 2 枚目に下げ、最初の図は重心・揚力中心・尾翼の力（cgBalance）にする。" }
+ ],
+ "figuresNew": [
+  { "name": "liftFlow", "section": "aero.lift", "what": "翼型のまわりの流線（相対風・上面低圧・下面高圧・下へ曲げられた空気）と揚力の矢印。作業ツリーの book-figs.js に下書きあり（NACA 2412 形状）— そのまま採用し最初の図に。", "data": "形状のみ（数値なし）。", "priority": "must" },
+  { "name": "aoaPitch", "section": "aero.aoa", "what": "planeSide の 3 コマ：巡航（ピッチ≒迎え角）・上昇（ピッチ大、迎え角は小〜中）・降下（機首が水平線の下でも迎え角はプラス）。各コマに水平線・飛行経路（相対風）・翼弦線と角度。", "data": "模式的な例（ピッチ −2°・経路 −5° → 迎え角 +3°）。必要なら physics.steadyState の pitch／aoa（例：Vy 全開上昇 ピッチ 9.7°・迎え角 4.9°）。", "priority": "must" },
+  { "name": "stallFlow", "section": "aero.stall", "what": "翼のまわりの流れ 2 コマ（臨界迎え角以下＝流れが沿う／超える＝上面ではがれる）＋回復 4 ステップの帯（押す → 翼を水平 → 出力は必要に応じて → ゆるやかに戻す）。節の最初の図。", "data": "臨界迎え角はモデル約 16°（physics aStall）・PHAK 16〜20°。手順は AFH 3C Figure 5-10。", "priority": "must" },
+  { "name": "turnForces", "section": "aero.turn", "what": "前から見た Archer（planeFront、バンク 30°）の揚力ベクトルと縦・横の成分、重力。横に 45°・60° の揚力の長さ（1.41・2.0 倍）。節の最初の図（a4/a5 の教室スクリーン）。", "data": "n＝1/cos φ、教材モデル mass 1,050 kg → 重さ 10,300 N、30° で揚力 11,900 N・横 5,950 N。", "priority": "must" },
+  { "name": "axes3", "section": "aero.axes（新）", "what": "斜め上から見た飛行機に 3 本の軸（縦軸＝ロール・横軸＝ピッチ・垂直軸＝ヨー）と、それを動かす操縦翼面（エルロン・スタビレーター・ラダー）を色分け。縦安定＝ピッチ（横軸まわり）の対応も小さく。", "data": "形状のみ。", "priority": "must" },
+  { "name": "cgBalance", "section": "aero.stab", "what": "横から見た Archer：重心の重力、重心より後ろの主翼の揚力、尾翼の下向きの力のつり合い。小コマで「重心が後ろすぎ → 不安定」。節の最初の図。", "data": "模式（ARCHER_WB の重心範囲 82.0〜93.0 in を添えてもよい：TCDS 2A13 と一致）。", "priority": "must" },
+  { "name": "groundEffect", "section": "aero.ge", "what": "滑走路上の Archer を 3 つの高さ（翼幅・1/4・1/10）に置き、翼端渦の大きさと誘導抗力の減少を表示。フレアで速すぎるとフロート。", "data": "PHAK p.5-11：−1.4%・−23.5%・−47.6%（公開資料の値と明記。教材モデル physics.js:222 はもっと強い）。Archer の翼幅 physics b＝10.8 m（約 35 ft）。", "priority": "must" },
+  { "name": "asiArcs", "section": "aero.vn", "what": "アナログ速度計の模式図：白 45〜102、緑 50〜125、黄 125〜154、赤線 154、Va 113（最大重量）の印。色の意味を横に。節の最初の図。", "data": "FL.physics pa28.v（s0・s1・fe・no・ne・va）。", "priority": "must" },
+  { "name": "adverseYaw", "section": "aero.axes（新）", "what": "上から見た Archer が右へ傾き始める瞬間：下がったエルロン側（左翼）の揚力と抗力が大きく、機首が左へ（反時計回り）→ 右ラダーでボールを中央に。", "data": "形状のみ。", "priority": "should" },
+  { "name": "flapsSide", "section": "aero.flaps（新）／aero.ge", "what": "planeSide（o.flap）で UP・10°・25°・40° の 4 段。それぞれの揚力の増え方・抗力の増え方と失速速度、使う場面（離陸 25°・場周の段階・着陸 40°・Vfe 102）。", "data": "physics flapCL 0.55・flapCD 0.7・FLAP_DEG（ΔC_L 0.18／0.37／0.55、ΔC_D 0.009／0.025／0.049）、モデルの失速速度 49.8／48.1／46.7／45.3 kt、チェックリスト（25° 離陸・ゴーアラウンドで 25°・Vfe 102）。", "priority": "should" },
+  { "name": "dihedral", "section": "aero.stab", "what": "前から見た Archer（planeFront）が横滑りしたとき、下がった側の翼の迎え角が増えて元に戻る（上反角の効果）。", "data": "physics wing.dih 7°（Archer の上反角）、PHAK p.5-18。", "priority": "should" },
+  { "name": "forcesClimb", "section": "aero.forces", "what": "一定の速度で上昇中の 4 つの力：重力を経路に沿う成分（後ろ向き）と垂直成分に分け、推力＝抗力＋後ろ向き成分、揚力は重力より少し小さい。", "data": "教材モデル Vy 76 KIAS 全開上昇（steadyState：約 660 fpm、経路角 約 5°）。", "priority": "nice" },
+  { "name": "spinSkid", "section": "aero.stall", "what": "上から見た場周のベースからファイナル：オーバーシュート → 内側ラダーで機首を回す（横滑り）→ 引く → 失速・スピン、の危険な流れと「ゴーアラウンド」の正しい選択。模式図。", "data": "AFH 3C p.5-20（バンク 30° を超えない）。", "priority": "nice" },
+  { "name": "glideCompare", "section": "aero.drag", "what": "同じ高度からの滑空の道筋 3 本：最良滑空速度・遅すぎ（機首上げ）・速すぎ。どちらにずれても届く距離が短くなる。模式図（距離の数値は入れない）。", "data": "形だけ（モデルと実機の数値が合わないので数値なし）。", "priority": "nice" }
+ ],
+ "photos": [
+  { "section": "aero.forces", "subject": "飛行中の Piper PA-28-181 Archer を真横から（訓練校の塗装・ロゴがない個人機）", "search": "Commons: Category:Piper PA-28-181 Archer III / Category:Piper PA-28-181 in flight（CC BY / CC BY-SA を 1 枚ずつ確認、学校名の入った機体は除く）", "candidateUrl": "", "candidateLicence": "", "why": "教科書全体で扱う機体の形（低翼・固定脚）を最初に見せ、4 つの力の図と対応させる。" },
+  { "section": "aero.drag", "subject": "色付きの煙で見える翼端渦（NASA Langley の農業機の後流試験）", "search": "Commons: File:Airplane vortex edit.jpg（NASA Langley・パブリックドメインのはず、要確認）／images.nasa.gov: \"wake vortex study Wallops\"", "candidateUrl": "https://commons.wikimedia.org/wiki/File:Airplane_vortex_edit.jpg", "candidateLicence": "Public domain（NASA）— ページで要確認", "why": "誘導抗力（翼端渦）は言葉だけでは想像できない。地面効果（aero.ge）でも参照できる。" },
+  { "section": "aero.stall", "subject": "主翼に付けた毛糸（タフト）で流れのはく離を見る風洞・飛行試験", "search": "images.nasa.gov: \"tuft flow visualization wing stall\"／NASA Dryden \"tufts\"（米国政府の著作物）", "candidateUrl": "", "candidateLicence": "", "why": "臨界迎え角を超えると上面の流れがはがれる様子を実物で見せる（stallFlow の図と対応）。" },
+  { "section": "aero.stall", "subject": "PA-28 の主翼前縁の失速警報ベーン（小さな金属片）", "search": "Commons: Category:Stall warning devices／\"stall warning vane Piper\"（CC BY-SA、顔・学校名なし）", "candidateUrl": "", "candidateLicence": "", "why": "失速警報が迎え角で作動することを、点検（walk-around）でも見る部品で示す。" },
+  { "section": "aero.turn", "subject": "大きくバンクして旋回中の単発プロペラ練習機（T-6 Texan II など）", "search": "DVIDS / af.mil: \"T-6A Texan II banking\"（米空軍の写真はパブリックドメイン。顔が写らないもの）", "candidateUrl": "", "candidateLicence": "", "why": "バンクで揚力を傾けて曲がる姿を実機で見せる。" },
+  { "section": "aero.stab", "subject": "正面から見た低翼単発機（上反角が分かる）", "search": "Commons: Category:Dihedral (aircraft) / \"Piper Cherokee front view\"（CC BY-SA）", "candidateUrl": "", "candidateLicence": "", "why": "Archer の翼が V 字（上反角）であることを実物で確認させる。" },
+  { "section": "aero.left", "subject": "PA-28 の 2 枚羽根の固定ピッチプロペラとスピナー（正面）", "search": "Commons: Category:Sensenich propellers / \"Piper PA-28 propeller spinner\"（CC BY-SA）", "candidateUrl": "", "candidateLicence": "", "why": "時計回りに回るプロペラの形を見せ、P ファクター（ブレードの迎え角）の話につなげる。" },
+  { "section": "aero.ge", "subject": "滑走路の直上でフレア中の低翼単発機（横から）", "search": "Commons: \"Piper PA-28 landing flare\" / FAA・NASA の画像ライブラリ \"light aircraft landing\"", "candidateUrl": "", "candidateLicence": "", "why": "地面効果が効く高さ（翼幅の数分の一）を実感させる。" },
+  { "section": "aero.flaps（新）／aero.ge", "subject": "フラップを最大まで下げた PA-28 の主翼後縁", "search": "Commons: Category:Piper PA-28 Cherokee details / \"PA-28 flaps extended\"（CC BY-SA）", "candidateUrl": "", "candidateLicence": "", "why": "フラップの段階と形の変化を実物で見せる。" }
+ ],
+ "endMatter": {
+  "terms": [
+   "Relative wind / 相対風 / 翼に当たる空気の流れ（飛行経路の反対向き）",
+   "Chord line / 翼弦線 / 前縁と後縁を結ぶ線",
+   "Lift coefficient (CL) / 揚力係数 / 翼の形と迎え角で決まる揚力の出しやすさ",
+   "Parasite drag / Induced drag / 有害抗力・誘導抗力 / 速いほど・遅いほど大きい",
+   "Lift-to-drag ratio (L/D) / 揚抗比 / 滑空比と同じ（無風）",
+   "Wingtip vortices / 翼端渦 / 誘導抗力のもと",
+   "Secondary stall / 二次失速 / 回復中に引きすぎて再び失速",
+   "Longitudinal / Lateral / Vertical axis / 縦軸・横軸・垂直軸 / ロール・ピッチ・ヨーの軸",
+   "Longitudinal stability / 縦安定 / ピッチの安定（横軸まわり）",
+   "Static / Dynamic stability / 静安定・動安定",
+   "Dihedral / 上反角 / ロールの安定",
+   "Stabilator / スタビレーター / 全体が動く水平尾翼（Archer）",
+   "Torque, Slipstream (corkscrew), P-factor, Gyroscopic precession / トルク・らせん後流・P ファクター・ジャイロ効果",
+   "Standard-rate turn / 標準旋回 / 毎秒 3°、バンクの目安は TAS の 15%",
+   "Overbanking tendency / オーバーバンキング傾向",
+   "Spiral instability / スパイラル不安定",
+   "Vso / Vs1 / Vfe / Va / Vno / Vne / 速度の記号 / 速度計の色と対応",
+   "Limit load factor / 制限荷重倍数 / 普通類 +3.8 G・−1.52 G",
+   "Best glide speed / 最良滑空速度 / Archer 76 KIAS（チェックリスト）— 本文に英語を出さず、テストの「巻末だけの英語」を 1 つ残す"
+  ],
+  "examples": [
+   "Archer（Vs1 50 KIAS）は 45° バンクで失速速度が約 60 kt、60° で約 71 kt になる（Vs1 × √n、教材値）。",
+   "30° バンクで高度を保つには、揚力を重さの 1.15 倍に：教材モデル（1,050 kg）で 10,300 N → 約 11,900 N。少し引いて、パワーを少し足す。",
+   "降下中、機首が水平線の下 2° でも、飛行経路が 5° 下向きなら迎え角は約 +3°（模式的な例）。",
+   "進入が速すぎると地面効果の中で浮き続け、接地点が先へ延びる → 速度を守る・延びたらゴーアラウンド。",
+   "Vy で全開上昇中、ボールが右に寄る → 右ラダー（ボールを踏む）。"
+  ],
+  "cautions": [
+   "失速は速度ではなく迎え角で起きる。どんな速度・姿勢でも臨界迎え角を超えれば失速する（PHAK）。",
+   "Va 以下でも、舵を何度も・同時にいっぱいに使うと構造は守られない（PHAK）。乱気流では Va 以下、軽い重量ではさらに遅く。",
+   "低高度の旋回でラダーを使って機首を回さない。オーバーシュートしたらゴーアラウンド（AFH）。",
+   "意図的なスピンは、それが認められた機体で教官とだけ。",
+   "数値は教材モデル（FL.physics）とチェックリストの参考値。実機は POH/AFM が優先。"
+  ],
+  "quizReview": [
+   "Q1（失速の直接の条件）: keep — PHAK p.5-25 と一致。why に「どんな姿勢・速度でも」は既にある。",
+   "Q2（60° の荷重倍数）: keep — why に「曲技でない機体の旋回は 60° まで、Archer の制限は +3.8 G」を足すと turnTable の 75° 問題ともつながる。",
+   "Q3（離陸・上昇のラダー）: keep — 正しい。why の「後流・P ファクター等」にトルク・ジャイロも含めて 4 つと書くとよい（quiz.js q_aero の問 8 と同じ内容なので重複は気にしなくてよい）。"
+  ],
+  "quizProposals": [
+   { "q": "降下中、機首が水平線より少し下を向いている。このときの翼の迎え角は？", "choices": ["マイナス（機首が下を向いているから）", "ちょうど 0", "プラス（相対風に対して翼は上を向いている）", "いつもピッチ角と同じ"], "answer": 2, "why": "迎え角は翼弦線と相対風（飛行経路の反対から来る空気）の角度で、水平線に対するピッチ角とは別もの。降下中も揚力を出すため迎え角はプラス（PHAK ch.5）。" },
+   { "q": "Archer（2,550 lb）で乱気流に入った。速度の目安として正しいものは？", "choices": ["Vne 154 KIAS 以下", "Vno 125 KIAS 以下", "Va 113 KIAS 以下（軽いときはさらに遅く）", "Vfe 102 KIAS 以下"], "answer": 2, "why": "チェックリストの Va（最大推奨の乱気流進入速度）は 2,550 lb で 113 KIAS、重量が軽いほど小さい。Va 以下でも舵を何度もいっぱいに使うと構造は守られない（PHAK）。" },
+   { "q": "エンジンが止まった。目の前の畑まで届くか微妙。どうする？", "choices": ["機首を上げて速度を落とし、少しでも長く浮く", "最良滑空速度（76 KIAS）を保ち、確実に届く場所を選ぶ", "速度を上げて早く近づく", "すぐにフラップ 40° を出す"], "answer": 1, "why": "最良滑空速度より遅くても速くても滑空距離は短くなる。機首を上げるのは逆効果。フラップは着陸が確実になってから（チェックリスト）。" },
+   { "q": "地面効果で誘導抗力が大きく減るのは、翼がどのくらいの高さにあるとき？", "choices": ["高度 1,000 ft", "翼幅の 4 倍の高さ", "翼幅と同じ高さ", "翼幅の 1/10 くらい（接地の直前）"], "answer": 3, "why": "PHAK：翼幅の高さで 1.4%、1/4 で 23.5%、1/10 で 47.6% 減る。強く効くのは地面のすぐ近く（接地直前・浮揚直後）。" }
+  ],
+  "refs": [
+   "update: R.phak → 章を指定（ch.4 Principles of Flight https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-4-principles-flight、ch.5 Aerodynamics of Flight https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-5-aerodynamics-flight）。25C は現行、2025-10 の MOSAIC Addendum は空力の章に影響なし。",
+   "update: R.afh → ch.5 Maintaining Aircraft Control（失速・スピンの回復テンプレート）https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf。3C は現行。",
+   "add: FAA Instrument Flying Handbook FAA-H-8083-15B（標準旋回の目安 p.4-11・p.7-19）https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf",
+   "add: FAA Type Certificate Data Sheet 2A13（PA-28-181 Archer III：速度制限 KCAS・フラップ 10/25/40°・普通類／実用類）— FAA DRS https://drs.faa.gov/ で \"2A13\" を検索（写し：https://touringmachine.com/Cherokee/PDFs/Cherokee%20Type%20Certificate%20Data%20Sheet%202A13.pdf）",
+   "add: 14 CFR 91.307(c)（バンク 60°・ピッチ 30°）https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-91/subpart-D/section-91.307 と 14 CFR 23.2005(d)（曲技でない機体の旋回は 60° まで）https://www.ecfr.gov/current/title-14/chapter-I/subchapter-C/part-23/subpart-A/section-23.2005",
+   "keep/update: R.archerCk（MGA 2025）— note を「2025 年版（09012025）。1,917 lb の Va 89 KIAS は TCDS（89 KCAS は 1,634 lb）と合わない」と更新し、本文はチェックリストにある値（76・66・102・113・25° 離陸・ゴーアラウンド 25°）だけを引く。"
+  ]
+ },
+ "appMismatches": [
+  "syllabus.js:143（a7 のブリーフ）— 回復「①機首を下げて迎え角を減らす ②フルパワー ③翼を水平 ④上昇」— 本の aero.stall・ops.slow と AFH 3C（迎え角 → 翼を水平 → 出力は必要に応じて → 戻す）が正しい。",
+  "syllabus.js:151（a8 のブリーフ）— 「迎え角を減らす → 出力（すでに全開）→ 翼水平 → 上昇」— 同上、AFH の順番（翼を水平が先）が正しい。",
+  "syllabus.js:206・217（e3・e4 のブリーフ）— 「76 kt を保つ（速すぎても遅すぎても届かない）」— 実機（チェックリスト）としては正しいが、教材モデルの最良滑空はエンジン停止で約 64〜68 KIAS（76 kt は約 4% 短い）。本はモデルの最良滑空＝76 と書かないこと（モデルの調整はこの書き直しの範囲外）。",
+  "book-figs.js FIG.vn() — Va を v.s1 × √3.8（約 97）で描き、表の v.va 113 と矛盾 — v.va（チェックリスト・TCDS）が正しい。",
+  "book-figs.js FIG.dragCurve() のキャプション — 風車プロペラで 76 kt を説明 — 物理的に逆。physics.js:500 の風車抗力はむしろ最良滑空を下げる。",
+  "physics.js:222 — 地面効果 ge＝16h²/(1+16h²) が PHAK（1/4 翼幅で −23.5%）の約 2 倍強い — 本に % を書くときは PHAK の値と明記し、モデルと同じと言わない。",
+  "physics.js:89 — FLAP_DEG [0,10,20,30] とラベル UP/10°/25°/40°（TCDS も 10/25/40）— 表示ラベルが正しい。本の図はラベルの角度を使う。",
+  "physics.js:108 のコメント — Vno 125／Vne 154 を teaching values としているが TCDS 2A13 の 121／148 KCAS（POH KIAS 125／154）と一致 — 本では出典つきの値として書ける。",
+  "book-3.js:91 ops.slow — 回復「③出力を全開」、book-3.js:92「FAA の覚え方は PARE」— AFH 3C は「出力は必要に応じて」、スピンは Figure 5-17 の 6 段階（PARE は AFH にない）。aero.stall とそろえる。",
+  "book-1.js aero.left のキー（HEAD 125 行／作業ツリー 173 行）「自動ラダー（U）を OFF にすると」— app.js:33 PREFS0.autoRud は初期値 true、app.js:100 KeyU、ui.js・pages.js:429 とも一致。キーは正しいが「初期設定は ON」を書き、キーは bk.sim の中へ。",
+  "book-1.js aero.ge のフラップ表（HEAD 132 行／作業ツリー 179 行）「アビーム 10°・ベース 25°」は syllabus.js:169（a10 のブリーフ）・book-3.js:131・FIG.pattern と一致 — 見出しを「チェックリスト」から「この教材の場周手順（{ch:tl}）」へ直せばよい。"
+ ],
+ "factChecks": [
+  { "claim": "失速は速度ではなく迎え角で起き、どんな速度・姿勢でも臨界迎え角を超えれば失速する", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/07_phak_ch5_0.pdf", "note": "PHAK 25C p.5-25「A stall can occur at any pitch attitude or airspeed」「always stalls at the same AOA regardless of airspeed, weight, load factor, or density altitude」。" },
+  { "claim": "臨界迎え角は一般的な軽飛行機で約 15〜18°", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/07_phak_ch5_0.pdf", "note": "PHAK p.5-25：約 16〜20°（設計による）。教材モデルは約 16°。" },
+  { "claim": "揚力は L＝½ρV²SC_L で速度の 2 乗に比例し、ニュートンの第 3 法則とベルヌーイの定理は同じ現象の別の見方", "verdict": "correct", "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-4-principles-flight", "note": "PHAK ch.4・5 とも両方の説明を使う。翼面積は『フラップで少し増える』はファウラー式などに限る（ch.6）。" },
+  { "claim": "空気の密度は高い所・暑い日・湿った日ほど小さい", "verdict": "correct", "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-4-principles-flight", "note": "PHAK ch.4（密度・湿度）・ch.11（密度高度）。" },
+  { "claim": "荷重倍数 n＝1/cos（バンク角）、60° で 2 G、失速速度は √n 倍", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/07_phak_ch5_0.pdf", "note": "PHAK p.5-34〜35（60° で 2 G、80° で 5.76 G、50 kt の機体は 4 G で 100 kt で失速）。" },
+  { "claim": "旋回率 ≒ 1,091 × tan（バンク）÷ 速度、旋回半径 ≒ 速度² ÷（11.26 × tan（バンク））", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/07_phak_ch5_0.pdf", "note": "PHAK p.5-38〜39。速度は真対気速度（TAS）— 本文に TAS と書く。" },
+  { "claim": "標準旋回のバンクはおおよそ「速度（kt）÷ 10 ＋ 7」度", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf", "note": "IFH 15B p.4-11 にある経験則だが、同じ IFH の p.7-19 は「TAS の 15%（÷10 にその半分を足す）」。100 kt で正確には 15.4°、+7 則は 17°、15% 則は 15°。どちらも TAS。" },
+  { "claim": "左偏向傾向の原因は 4 つ（後流・P ファクター・トルク・ジャイロ効果）、機体は巡航で打ち消されるように作られている", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/07_phak_ch5_0.pdf", "note": "PHAK p.5-30〜32（Torque reaction, Corkscrewing effect, Gyroscopic action, Asymmetric loading）。「compensate for this force at cruising speed」。地上ではトルクで左タイヤの摩擦が増え左へ。" },
+  { "claim": "P ファクター：機首上げでは右側の下がるブレードの推力が大きく、機首が左へ", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/07_phak_ch5_0.pdf", "note": "PHAK p.5-32。ただし FIG.leftTurning の矢印は逆向き（機首右）に描かれている。" },
+  { "claim": "地面効果はおおむね翼幅より低い高さで誘導抗力を減らし揚力を少し増やす", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/07_phak_ch5_0.pdf", "note": "PHAK p.5-11：翼幅の高さで −1.4%、1/4 で −23.5%、1/10 で −47.6%。大きく効くのは地面のすぐ近く。速度計・高度計が少なく示すことがある。" },
+  { "claim": "普通類の制限荷重倍数は +3.8 G／−1.52 G", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/07_phak_ch5_0.pdf", "note": "PHAK p.5-34（実用類 4.4／−1.76、曲技類 6.0／−3.0）。Archer III は普通類と実用類（2,130 lb 以下）で型式証明（TCDS 2A13）。現行 Part 23（23.2005）は新しい機体を Normal category＋レベルで分類。" },
+  { "claim": "Va は設計運動速度で、乱気流ではこれ以下に。重量が軽いほど小さい", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/07_phak_ch5_0.pdf", "note": "PHAK p.5-35：Va 以下で守られるのは 1 つの舵を 1 回いっぱいに動かす場合だけ。連続・複数の舵いっぱいは守られない。チェックリストは \"Max. Recommended Turbulent Air Penetration Speed\"。軽いほど小さいは正しい。" },
+  { "claim": "Va は 113 KIAS（2,550 lb）・89 KIAS（1,917 lb）（チェックリスト）", "verdict": "wrong", "source": "https://touringmachine.com/Cherokee/PDFs/Cherokee%20Type%20Certificate%20Data%20Sheet%202A13.pdf", "note": "113 KIAS（2,550 lb）は正しい（TCDS 111 KCAS）。TCDS の 89 KCAS は 1,634 lb の値で、√W で 1,917 lb は約 98 KIAS。MGA 2025 年版の誤植の可能性（2024 年版は 98 との報告）。FAA DRS で 2A13 を確認のこと。" },
+  { "claim": "Vno 125 kt・Vne 154 kt（教材値）", "verdict": "correct", "source": "https://touringmachine.com/Cherokee/PDFs/Cherokee%20Type%20Certificate%20Data%20Sheet%202A13.pdf", "note": "TCDS 2A13 Archer III：最大構造巡航 121 KCAS、超過禁止 148 KCAS（POH の KIAS では 125／154）。「教材値」ではなく出典つきにできる。" },
+  { "claim": "Vfe 102 KIAS（チェックリスト）、フラップは 10°・25°・40°", "verdict": "correct", "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf", "note": "チェックリスト Vfe 102 KIAS。TCDS 2A13：Flaps Extended 100 KCAS、フラップ 10°・25°・40°。" },
+  { "claim": "Vso 45 / Vs1 50 kt（教材値・POH で確認）", "verdict": "unverified", "source": "https://piperowner.org/talk/discussion/comment/1448118", "note": "POH 本体は未確認。二次資料（Archer III の速度表・オーナー協会の議論）では Vso 45 KIAS、Vs1 50 KIAS（約 57.5 KCAS）。教材モデルの 1G 失速も 49.8／45.3 kt で一致。" },
+  { "claim": "最良滑空 76 KIAS（最大重量の値。降りる場所が決まったら 66 KIAS）", "verdict": "imprecise", "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf", "note": "76 KIAS（エンジン故障・パワーオフ着陸）と 66 KIAS（When committed to landing）はチェックリストどおり。「最大重量の値」はチェックリストにない。" },
+  { "claim": "失速回復の基本（FAA）：前へ → 翼を水平 → パワーを最大に → ゆるやかに上昇", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf", "note": "AFH 3C p.5-15〜16 Stall recovery template：迎え角を減らす → 翼を水平 → 出力を必要に応じて（as needed）→ 戻す。順番は本と一致、「最大」は不正確。" },
+  { "claim": "スピン＝失速＋横滑り、片方の翼だけが深く失速", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf", "note": "AFH 3C p.5-22：スピンは悪化した失速（autorotation）、すべてのスピンで少なくとも片方の翼が失速。ヨーの扱いの誤りが入口になる。" },
+  { "claim": "Archer のチェックリストのスピン回復：スロットル アイドル → 操縦輪前 → エルロン中立 → ラダー反対 → 回転が止まったらラダー中立 → 水平へ", "verdict": "correct", "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf", "note": "引用は正確。AFH 3C Figure 5-17 の汎用手順は「出力アイドル → エルロン中立 → ラダー反対 → 昇降舵を前 → ラダー中立 → 引き起こし」で順番が違う。POH が優先と書く。" },
+  { "claim": "典型的なスピンはファイナルへの旋回でオーバーシュートしそうになり、ラダーで機首を回しながら引くケース", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf", "note": "AFH 3C p.5-20 Cross-control stall。正しい対処は「ゴーアラウンド」、ベースからファイナルでバンク 30° を超えない。" },
+  { "claim": "重心が前だと失速速度が上がり、後ろすぎると安定が失われ失速・スピンから回復できなくなる", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/07_phak_ch5_0.pdf", "note": "PHAK ch.5（縦安定・重心）と ch.10。" },
+  { "claim": "上反角がロールの安定を生む（低翼の Archer は翼が V 字）", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/07_phak_ch5_0.pdf", "note": "PHAK p.5-18：横滑りで風上側の翼の迎え角が増える。高翼は約 5° 分の上反角効果があり、低翼機は大きな上反角が要る。" },
+  { "claim": "逆ヨー：右エルロンで上がる左翼の抗力が増えて機首が一瞬左へ", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf", "note": "IFH 15B p.4-11 にも同じ説明（下がったエルロン側の揚力と誘導抗力）。" },
+  { "claim": "曲技でない機体でも急旋回はできる／バンク 75° の例", "verdict": "imprecise", "source": "https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-91/subpart-D/section-91.307", "note": "14 CFR 23.2005(d)：曲技でない機体の旋回は 60° まで。91.307(c)：乗客ありで 60° 超は全員落下傘（試験・CFI の必修課目は除く）。表の 75° は 3.86 G で Archer の 3.8 G も超える。" },
+  { "claim": "PHAK FAA-H-8083-25C・AFH FAA-H-8083-3C が現行版", "verdict": "correct", "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation", "note": "FAA の一覧（2026-07-31 更新）で 25C（2023）・3C（2021）が現行。どちらも 2025-10 の MOSAIC Addendum あり（空力・失速の章は変更なし）。" }
+ ],
+ "cadetNotes": [
+  "aero.forces の最初の <svg> は lesson a1 の教室スクリーンに映る（content.test.mjs:288 'board' 'aero.forces'）→ 4 つの力の図を必ず最初に。",
+  "aero.forces の ここが大切 は 2 項目ちょうど（content.test.mjs:366 が「大事なことは 2 つ」を固定）。各項目は話して 4 行以内に収まる長さに。",
+  "aero.aoa：テスト（content.test.mjs:374）は「大事なところを話します」＝キーが全部は読みきれない長さを前提。60 字以内に短くして全部読めるようになると「大事なことは 3 つ」になりテストが落ちる → テストの更新が必要と書き直し側に伝える。",
+  "aero.lift：テスト（content.test.mjs:135）は box なし（最初の 2 文）で keyPoints＝2 を固定、KEEP（:41）は「この教材の Archer」を要求。ここが大切 を足すなら 2 項目ちょうど、「この教材の Archer」の文を残す。",
+  "aero.turn（a4・a5）・aero.stall（a6・a7・a8）・aero.ge は今 SVG がなく、教室スクリーンに図が出ない。turnForces・stallFlow・groundEffect を各節の最初に。",
+  "aero.left のキー「右ラダー（E）」「自動ラダー（U）」と examples の「右ラダー（E）で押さえる」はテストの APP 正規表現（和語＋（E））に当たる。「このシミュレータは…」は CADET が文ごと落とし、キーの数が減る。アプリの操作は bk.sim の中だけに。",
+  "図の中の文字にもキーの文字・「シミュレータ」を入れない（CADET は SVG をそのまま映す）。",
+  "textbook のテスト：aero.lift は 2.2 番目（textbook/test/content.test.mjs:86）、巻末の英語の用語のうち本文にない語が 1 つ必要（:95、例：Best glide speed）。新節は aero.lift より後ろに。",
+  "flight-lab/test/browser.test.mjs:110 は aero の最後の節と quiz[0] を使う → quiz[0] は残し、最後の節が変わっても動く（数で探す）ことを確認。",
+  "{ch:perf} などの章参照は CADET で「第 N 章」に置き換わるが、「第 4 部」「第 5 部」の直書きは置き換わらない（CADET の部の構成と食い違うおそれ）→ {ch:ifr}・{ch:me} に。"
+ ]
+}

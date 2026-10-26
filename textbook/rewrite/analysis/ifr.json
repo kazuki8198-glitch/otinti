@@ -1,0 +1,215 @@
+{
+ "id": "ifr",
+ "title": "計器による飛行：計器・スキャン・故障",
+ "sections": [
+  {
+   "id": "ifr.instr",
+   "title": "計器の仕組みと故障の見分け方",
+   "gist": "ピトー静圧・ADC・AHRS・電気の故障が G1000 型 PFD にどう出るかと、クロスチェックで「仲間はずれ」の計器を見つける方法。",
+   "issues": [
+    "目的の文（bk.aim）がなく、いきなり表 2 つで始まる。図もないので CADET の教室スクリーンに何も出ない",
+    "表の行「ピトー管だけ詰まる（排水孔も）」は自己矛盾。PHAK 第 8 章は 2 通りを分ける：入口だけ詰まり排水孔が開いている → 速度計は 0 へ下がる／入口と排水孔の両方が詰まる → 高度計のように動く。前者が抜けている",
+    "「非常用バッテリーで予備計器は動く（第 16 章）」：予備の速度計・高度計は空気圧で動くので電気はいらない。電池が必要なのは電気式の予備姿勢指示器（動く時間は AFM で確認）",
+    "詰まりの表と ADC／AHRS の表は sys.g1000 とほぼ同じ内容（重複）。ここでは『どう気づくか』（クロスチェックの例）に絞り、仕組みは sys.g1000 へリンク",
+    "「G1000 での装置」「赤い × が…」：表示は「G1000 型」と書く規則（出典名を除く）",
+    "「ピトーヒーターは雲の中・氷点下近くでは ON」→ PHAK は『目に見える水分（visible moisture）の中で』。POH の手順に従う、と書く",
+    "クロスチェックの例が 1 つ（静圧の詰まり）だけ。AHRS 故障（姿勢が傾いたままなのに方位も高度も変わらない）など、もう 1 例あると判断の練習になる"
+   ],
+   "mainFigure": "系統の模式図：ピトー管・静圧孔（代替静圧）→ ADC → 速度・高度・昇降率テープ／AHRS（ジャイロ・加速度・磁気センサー）→ 姿勢・方位／GPS → 航跡（TRK）。各装置が故障すると G1000 型 PFD のどこに赤い × が出るかを色分けし、独立して動く予備計器（空気圧の速度・高度、電池の姿勢）を別の色で示す"
+  },
+  {
+   "id": "ifr.scan",
+   "title": "姿勢による計器飛行とスキャン",
+   "gist": "姿勢表示を中心に計器を見て回るクロスチェック、操作の計器と性能の計器、標準旋回率と上昇降下、ACS の許容幅。",
+   "issues": [
+    "図（FIG.scan）は従来の 6 計器（six-pack）の並びで、左下に「旋回率」の箱がある。キャプションは『G1000 では…が並ぶ』と言うが、G1000 型 PFD に独立した旋回率計はない（旋回率は HSI の上の表示、すべりはロール指針の下の三角）",
+    "「Control and Performance」「Primary and Supporting」が英語のまま。初出は 日本語（English）：操作の計器と性能の計器（Control and Performance）、主な計器と補助の計器（Primary and Supporting）",
+    "「バンク角の目安は『速度 ÷ 10 ＋ 7』」の直後の表で 100 kt は正確 15°・目安 17° と食い違う。IFH は p.4-10 で ÷10＋7、p.7-19／7-51 で『真対気速度の 15%（÷10 してその半分を足す）』を挙げ、後者が Archer の速度域（90〜100 kt）でほぼ正確。両方を示し『最後は旋回率表示で 3°/秒に合わせる』と書く",
+    "IFH の G1000 での始め方（中央の黄色い機首記号から始め、上のロール指針・すべり → 左の速度 → 右の高度 → 下の方位、毎回中央に戻る：IFH p.6-24）がない。IFH が『決まったスキャン方法はない』と言うことも一言あるとよい",
+    "課目 i1 の上昇・降下 500 fpm のやり方（どの計器が主か）がない。IFH p.7-14：定率上昇では昇降計がピッチの主、速度計が出力の主",
+    "ACS の表に自家用 ACS の行が混ざっている。『計器飛行 ACS（IR.IV.A）』と『自家用 ACS（PA.VIII）』を分ける",
+    "スキャンの誤り（固着・省略・偏り）の表が標準旋回より前にあり流れが飛ぶ。誤りは bk.warn にまとめて後ろへ",
+    "ここが大切の 2 つ目「小さく直して、待って、確かめる（姿勢 1〜2° の変化で十分なことが多い）」は 60 字を超える。短くする"
+   ],
+   "mainFigure": "G1000 型 PFD の配置模式図（左に速度テープ、中央に姿勢と黄色い機首記号、右に高度テープと昇降率、下に HSI とその上の旋回率表示、MFD 側の回転計＝出力）。中央の姿勢から各計器へ出て戻る矢印。操作の計器（姿勢・出力）と性能の計器（速度・高度・昇降率・方位）を色分け"
+  },
+  {
+   "id": "ifr.partial",
+   "title": "部分パネル（姿勢・方位の故障）",
+   "gist": "AHRS が故障して姿勢・方位が赤い × になったとき、予備計器と時間で測る旋回（コンパスまたは GPS 航跡）で飛び続ける手順。",
+   "issues": [
+    "図がない。赤い × の画面と『使える計器・使えない計器』を 1 枚で示すべき",
+    "「no-gyro の誘導を頼める」が説明なし（No-gyro vector：管制が『turn left』『stop turn』と旋回の開始と停止を指示する誘導）",
+    "本文は磁気コンパス（UNOS／ANDS）が中心だが、課目 i3 は GPS の航跡（TRK）で針路を見る（教材のパネルの予備計器は姿勢・速度・高度だけで、磁気コンパスはない）。実機ではコンパス、課目では TRK、と位置づけを書く",
+    "UNOS／ANDS の表は sys.compass と重複。ここは 1 行の復習とリンクでよい",
+    "「旋回は浅く（10〜15°）」と「標準旋回で 90° ＝ 30 秒」が並ぶだけ。時間で測る旋回（timed turn）の手順（バンクを決める → 秒を数える → 翼を水平 → 落ち着いてから読む）を番号で",
+    "計器飛行 ACS に『主要計器なしの進入』（IR.VII.D）がある、と 1 行あると目的がわかる"
+   ],
+   "mainFigure": "AHRS 故障時の G1000 型 PFD 模式図：姿勢と HSI に赤い ×、生きている速度・高度・昇降率テープ、右下の予備計器（姿勢・速度・高度）と GPS の TRK 表示を強調。横に『90° ＝ 標準旋回で 30 秒』の時間旋回の小図"
+  },
+  {
+   "id": "ifr.upset",
+   "title": "異常姿勢からの回復",
+   "gist": "機首上げ・低速と機首下げ・高速（スパイラル）を計器で見分け、IFH の順番で水平飛行に戻す。",
+   "issues": [
+    "図がない。2 つの状態の計器の見え方と、回復の順番 ①②③ の図がこの節で最も大切",
+    "スパイラルの手順に AFH 3C 第 5 章の『翼を水平にする前に少し押して荷重を約 1G に抜く（unload）』がない（傾いたまま引き起こす rolling pullout で設計の限界を超えやすい）",
+    "「エアラインの訓練（FAA AC 120-111 の UPRT）では…『Push・Roll・Power・Stabilize』」：AC 120-111 の機首上げテンプレートは PITCH（機首下げ）→ THRUST（必要なら調整）→ RECOVER。Roll は押しても機首が下がらないときだけ。Push-Roll-Power-Stabilize は業界の覚え方で AC の言葉ではない。crm.upset（Roll ＝ 翼を水平）とも食い違う。エアラインの話は crm.upset に移す",
+    "Va 113 kt はあるが、課目 i2 の基準（荷重 3.8 G 以下・Vne 154 kt 未満・12 秒以内に水平）が本文にない。FL.physics の値として書く",
+    "IFH は『POH/AFM に回復手順があればそれに従う』と書く。この注意（実機は POH/AFM が優先）がない",
+    "見分け方の列に、高度計と昇降計の動きの向きと速さ（IFH：速度・高度・昇降計で判断し、姿勢表示は極端な姿勢では読みにくい）が足りない",
+    "ここが大切「判断（どちらの状態か）→ 順番（出力・翼・機首）。順番を間違えると失速や構造の破壊」は 60 字を超え、機首上げでは『出力・機首・翼』なので『出力・翼・機首』は不正確"
+   ],
+   "mainFigure": "2 列の模式図：左＝機首上げ・速度減少（姿勢が上・速度テープが下がる・高度増加）→ ①出力を上げる ②機首を下げる ③翼を水平。右＝機首下げ・スパイラル（大きな傾き・速度増加・高度急減）→ ①出力アイドル ②少し押して荷重を抜く ③翼を水平 ④ゆっくり機首上げ。下に Va 113 kt・Vne 154 kt・3.8 G（FL.physics の pa28）"
+  }
+ ],
+ "problems": {
+  "unclear": [
+   "ifr.instr：「ピトー管だけ詰まる（排水孔も）」— 『だけ』と『も』が矛盾",
+   "ifr.instr：「代替静圧（機内）を使う」の理由（機内の圧力は外より低い）がない",
+   "ifr.scan：「Control and Performance」「Primary and Supporting」が訳なし。「例：水平飛行のピッチ ＝ 高度計が主」は説明が短すぎる",
+   "ifr.scan：「バンク角の目安は『速度 ÷ 10 ＋ 7』」と表の正確な値（100 kt で 15°）のどちらを使うのかわからない",
+   "ifr.partial：「no-gyro の誘導」が説明なし",
+   "ifr.upset：「Push（押す）・Roll（必要なら傾けて機首を下げる）」— 小型機の読者には『傾けて機首を下げる』の意味がわからない（大型機の話）",
+   "ifr.upset：「Archer の Va（最大重量で 113 kt）より速いときは、急に大きく舵を使わない」— Va の意味（設計運動速度）が説明なし。重量が軽いと Va は小さくなることもない"
+  ],
+  "order": [
+   "ifr.instr（故障の見分け方）が ifr.scan（基本の見方）より前。課目 i1 は ifr.scan から始まり、故障に気づく方法はクロスチェックを知ってからの方がわかる → ifr.scan → ifr.instr → ifr.partial → ifr.upset",
+   "ifr.scan 内：方法の表 → 誤りの表 → 標準旋回 → 許容幅、と散らかる。スキャン（図）→ 操作の計器と性能の計器 → 標準旋回・上昇降下 → よくある誤り（bk.warn）→ 許容幅、にする",
+   "ifr.upset のエアライン UPRT の段落は crm.upset（第 6 部）へ移し、ここは小型機の IFH／AFH の手順だけにする"
+  ],
+  "errors": [
+   "FIG.scan：左下に独立した「旋回率」計を描き『G1000 では…が並ぶ』とする → G1000 型 PFD では旋回率は HSI の上の表示（trend vector）、すべりはロール指針の下（IFH p.6-24 https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf）",
+   "ifr.instr「ピトー管だけ詰まる（排水孔も）→ 高度計のように動く」→ 入口だけ詰まり排水孔が開いていれば速度計は 0 へ下がる。入口と排水孔の両方が詰まると高度計のように動く（PHAK 第 8 章 https://www.faa.gov/sites/faa.gov/files/10_phak_ch8.pdf）",
+   "ifr.upset「AC 120-111 の UPRT…Push・Roll・Power・Stabilize」→ AC の機首上げテンプレートは AP/AT OFF → PITCH 機首下げ → THRUST 必要なら調整 → RECOVER。Roll は押しても機首下げにならないときだけ（AC 120-111 CHG 1 Table 1・3 https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-111_CHG_1_Ed_Upd_3.pdf）",
+   "ifr.upset ここが大切「順番（出力・翼・機首）」→ 機首上げ・低速では IFH の順は『出力 → 機首を下げる → 翼を水平』。『出力・翼・機首』はスパイラルだけ（IFH p.7-27〜7-28）",
+   "examples「100 kt・標準旋回のバンク ＝ 100 ÷ 10 ＋ 7 ＝ 約 17°」→ 正確には約 15°（同じ章の FIG.standardRate、IFH p.7-19：100 kt で約 15°）"
+  ],
+  "outdated": [
+   "R.ifh の URL https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/instrument_flying_handbook は 404。版は今も FAA-H-8083-15B（2026-10 時点で 15C はない）。PDF：https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf、正誤表（2014）・Addendum（AOA 指示器 2015）・Addendum B（偽のグライドスロープ 2019）あり",
+   "R.upset が AC の一覧ページを指している。AC 120-111 は Change 1（2017-01-04、Editorial Update 3）。直接の URL に",
+   "スパイラルの回復は AFH 3C（2021）第 5 章 UPRT で『unload（少し押す）』の手順が加わった。本文は古い IFH の 3 段階だけ",
+   "ACS：計器飛行 FAA-S-ACS-8C・自家用 FAA-S-ACS-6C は現行（FAA の ACS ページ、2024-05-31 発効の版、2026-09 更新）— 変更不要"
+  ],
+  "duplicates": [
+   "ifr.instr の詰まりの表・ADC／AHRS の表 ↔ sys.g1000（同じ内容。sys.g1000 の方が『ピトー管と排水穴の両方』と正しく書いている）",
+   "ifr.partial の UNOS／ANDS の表 ↔ sys.compass",
+   "ifr.scan の空間識失調の説明 ↔ hf.body（リンクだけでよい）",
+   "ifr.upset の UPRT（AC 120-111）の段落 ↔ crm.upset（しかも Roll の意味が両者で違う）",
+   "ifr.upset と hf.body の bk.sim がどちらも課目 i2（問題ではないが、本文は ifr.upset に集める）",
+   "ifr.instr の電気の故障 ↔ emg.elec（『非常用バッテリーで予備計器は動き続けます』も同じ不正確さ）"
+  ],
+  "numbers": [
+   "標準旋回のバンク：syllabus.js 課目 i1 の brief は『100 kt でバンク約 17°（速度 ÷ 10 ＋ 7）』、目安 g.bank: 17（i1・i4）。FIG.standardRate の正確な値は 100 kt で 15°。3,000 ft の 100 KIAS は TAS 約 105 kt で正確には約 16°。本文は『目安 15〜17°、旋回率表示で 3°/秒に合わせる』とし、両方の出どころを書く",
+   "quiz.js q_ifr の 2 問目：120 kt →『速度 ÷ 10 ＋ 7 ＝ 19°（正確な計算でもほぼ同じ）』。正確は 18°、IFH の 15% 則でも 18°。選択肢（12・15・19・30）では 19 が最も近いので答えは変わらないが、理由の文は IFH 第 7 章と合わない",
+   "Va 113 kt（本文）＝ FL.physics pa28.v.va 113 ✓。Vne 154・最大荷重 3.8 G（phys.maxG、i2 の std）は本文にないので加える",
+   "課目 i3 は 95 kt・バンク 12°（10〜15°）・高度 ±150 ft・航跡 ±15°（教材値）。本文の『旋回は浅く（10〜15°）』は一致 ✓",
+   "課目 i1 の基準『水平 ±100 ft ±10°、旋回率 3 ±1 °/秒、昇降率 500 ±150 fpm（計器飛行 ACS を参考にした教材値）』は本文の ACS 表と合うが、旋回率・昇降率の基準は本文にない"
+  ]
+ },
+ "policy": "節の順を ifr.scan → ifr.instr → ifr.partial → ifr.upset に変える（基本のクロスチェックを先に、その上で故障に気づく方法、部分パネル、異常姿勢）。ifr.scan は最初に『外が見えないと体の感覚は当てにならない → 姿勢表示を中心に見る』を 1〜2 文で言い、G1000 型 PFD の配置図を最初の図にして、操作の計器と性能の計器、IFH の始め方（中央の黄色い機首記号から）、標準旋回（IFH の 15% 則と ÷10＋7 の両方、正確な表は残す）と課目 i1 の 500 fpm 上昇降下を説明し、誤りは bk.warn に。ifr.instr は仕組みの重複を削って sys.g1000 へリンクし、『赤い × がどこに出たらどの装置か』と『仲間はずれ探し』の 2 例に絞る（詰まりの行は PHAK どおり 2 行に分ける）。ifr.partial は赤い × の画面の図を最初に置き、予備計器・時間で測る旋回・GPS の TRK（課目）とコンパス（実機）の使い分けを書き、UNOS／ANDS は sys.compass へのリンク 1 行にする。ifr.upset は 2 つの状態と回復順の図を最初に置き、IFH の順（機首上げ：出力 → 機首 → 翼、スパイラル：出力 → 少し押す（AFH 3C）→ 翼 → 機首）と FL.physics の Va 113 kt・Vne 154 kt・3.8 G を示し、『実機は POH/AFM が優先』を明記、AC 120-111 の段落は crm.upset へ移して 1 行のリンクだけ残す。新しい節は不要。",
+ "figuresExisting": [
+  { "key": "scan", "verdict": "redo", "why": "6 計器の並びで左下に『旋回率』の箱があり、キャプションの『G1000 では…』と合わない。操作の計器と性能の計器の区別もない。G1000 型 PFD の配置（速度テープ・姿勢・高度テープ・昇降率・HSI と旋回率表示）にして、中央から出て戻る矢印と色分けを描き直す。文字 12・viewBox 400 で 390 px 表示 10.3 px は可" },
+  { "key": "standardRate", "verdict": "fix", "why": "計算（atan(3V/1091)）は正しい。『真対気速度の 15%（IFH 第 7 章）』の列を加え、『÷10＋7（IFH 第 4 章）』の列と並べる。見出しに『教材の Archer は 90〜100 kt』と注記。図（SVG の折れ線）にするなら ifr.scan の 2 番目の図にする（最初の SVG は PFD の図）" }
+ ],
+ "figuresNew": [
+  { "name": "pitotStaticAhrs", "section": "ifr.instr", "what": "系統図：ピトー管・静圧孔・代替静圧・排水孔 → ADC → 速度・高度・昇降率／AHRS → 姿勢・方位／GPS → TRK。各装置の故障で G1000 型 PFD のどこに赤い × が出るか、独立して動く予備計器（空気圧の速度・高度、電池の予備姿勢）を色分け", "data": "sys.g1000 の装置表・PHAK 第 8 章・IFH 第 5 章（数値なし）", "priority": "must" },
+  { "name": "crossCheckOddOne", "section": "ifr.instr", "what": "『仲間はずれ探し』の 2 例：①姿勢は水平・出力同じ・速度一定なのに高度計が止まり昇降計 0 → 静圧の詰まり ②昇降計は降下・高度は減るのに姿勢表示は水平のまま → 姿勢の故障。計器の小さな絵に ○ と × を付ける", "data": "PHAK 第 8 章（定性的）", "priority": "should" },
+  { "name": "scan", "section": "ifr.scan", "what": "既存キーの描き直し：G1000 型 PFD 配置の模式図。中央の姿勢（黄色い機首記号）から速度・高度・昇降率・方位・旋回率表示へ出て戻る矢印、MFD 側の回転計（出力）。操作の計器（緑）と性能の計器（水色）。『G1000 型・教材の模式図』と明記", "data": "IFH p.6-24（スキャンの順）、avionics.js の PFD 配置（速度テープ左・高度テープ右・VSI・HSI 下）", "priority": "must" },
+  { "name": "standardRateChart", "section": "ifr.scan", "what": "横軸 真対気速度 60〜160 kt、縦軸 バンク角。正確な標準旋回の曲線、15% 則、÷10＋7 の 3 本と、Archer の巡航 110 kt・課目の 100 kt の縦線", "data": "tanφ ＝ 3V/1091（FIG.standardRate と同じ式）、FL.physics pa28.v.cruise 110", "priority": "nice" },
+  { "name": "ahrsFailPfd", "section": "ifr.partial", "what": "AHRS 故障の G1000 型 PFD 模式図：姿勢と HSI に赤い ×、使える速度・高度・昇降率テープと右下の予備計器（姿勢・速度・高度）、TRK 表示を強調。横に時間旋回の小図（標準旋回 3°/秒 × 30 秒 ＝ 90°）", "data": "avionics.js の AHRS 故障表示（AHRS FAIL・右下の STBY）、3°/秒", "priority": "must" },
+  { "name": "compassTurnErrors", "section": "ifr.partial", "what": "北半球のコンパスの旋回誤差：北へ向かう旋回は手前で止める（UNOS）、南へ向かう旋回は越えてから止める。円形の方位図に止める位置の矢印。加速誤差（ANDS）は小さな表で", "data": "IFH 第 5 章・PHAK 第 8 章（定性的。IFH の図 5-20 は正誤表で取り消し済みなので参考にしない）", "priority": "nice" },
+  { "name": "upsetRecovery", "section": "ifr.upset", "what": "2 列：機首上げ・低速（計器の見え方 → ①出力 ②機首下げ ③翼水平）と機首下げ・スパイラル（→ ①出力アイドル ②少し押す ③翼水平 ④ゆっくり機首上げ）。下に Va・Vne・最大荷重", "data": "IFH p.7-27〜7-28、AFH 3C 第 5 章、FL.physics pa28（v.va 113、v.ne 154、phys.maxG 3.8）", "priority": "must" }
+ ],
+ "photos": [
+  { "section": "ifr.instr", "subject": "小型機の主翼の下のピトー管（できれば排水孔が見えるもの）", "search": "Commons: Category:Pitot tubes / 'pitot tube Piper' 'pitot tube Cessna wing'。FAA の PHAK の写真は PD だが PDF からの切り出しは画質に注意", "candidateUrl": "", "candidateLicence": "", "why": "ピトー管・排水孔を見ると詰まりの 2 通りが理解しやすい" },
+  { "section": "ifr.instr", "subject": "胴体側面の静圧孔（static port）", "search": "Commons: 'static port aircraft' / Category:Static ports", "candidateUrl": "", "candidateLicence": "", "why": "静圧孔が胴体の横の小さな穴であることを見せる（詰まり・代替静圧の話の前提）" },
+  { "section": "ifr.scan", "subject": "雲の中を飛ぶ小型機（または操縦席から見た雲の中・水平線なし）。顔が写らないもの", "search": "NOAA Photo Library 'aircraft in clouds'、NASA Image Library 'flight in clouds'（NASA 機は PD）、Commons: Category:Instrument meteorological conditions", "candidateUrl": "", "candidateLicence": "", "why": "外が見えない状態（IMC）を最初に実感させ、なぜ計器だけで飛ぶのかを示す" },
+  { "section": "ifr.partial", "subject": "小型機の磁気コンパス（whiskey compass）と自差カード", "search": "Commons: Category:Aircraft compasses / 'whiskey compass'", "candidateUrl": "", "candidateLicence": "", "why": "部分パネルの最後の頼りになる計器の実物。画面の写真ではないので可（ブランド・機体番号が目立たないもの）" }
+ ],
+ "endMatter": {
+  "terms": [
+   "Control instruments / Performance instruments ／ 操作の計器・性能の計器 ／ IFH 第 6 章",
+   "Primary / Supporting instruments ／ 主な計器・補助の計器",
+   "Pitot tube / Static port / Drain hole ／ ピトー管・静圧孔・排水孔",
+   "Standby instruments ／ 予備計器（姿勢・速度・高度）",
+   "Turn rate indicator (trend vector) ／ 旋回率表示（G1000 型 PFD の HSI の上）",
+   "Slip/skid indicator ／ すべり表示（ロール指針の下の三角）",
+   "Timed turn ／ 時間で測る旋回（標準旋回で 30 秒 ＝ 90°）",
+   "No-gyro vector ／ ノージャイロ誘導（管制が旋回の開始と停止を指示）",
+   "Unload ／ 荷重を抜く（少し押して約 1G に）",
+   "Design maneuvering speed (Va) ／ 設計運動速度（Archer 113 kt・教材値）",
+   "Load factor ／ 荷重倍数（Archer の上限 3.8 G・教材値）",
+   "既存の語（Attitude instrument flying・Cross-check・Fixation/Omission/Emphasis・Standard-rate turn・Partial panel・AHRS/ADC・Red X・Alternate static source・UNOS/ANDS・Unusual attitude・Spatial disorientation）は残す"
+  ],
+  "examples": [
+   "100 kt の標準旋回：15% 則で 100 × 0.15 ＝ 15°（正確 15°）、÷10＋7 では 17°。最後は旋回率表示で 3°/秒に合わせる。",
+   "時間で測る旋回：右へ 90° 変えたい → 標準旋回のバンクで 30 秒数えて翼を水平。45° なら 15 秒。",
+   "静圧孔が詰まったまま 3,000 ft から 2,000 ft へ降下：高度計は 3,000 のまま、昇降計は 0、速度計は実際より多め。",
+   "雲の中で速度が増え、高度が急に減り、右に 40° 傾いて機首下げ → スパイラル。出力アイドル → 少し押す → 翼を水平 → ゆっくり機首を水平へ（課目 i2 の基準：3.8 G 以下・154 kt 未満）。"
+  ],
+  "cautions": [
+   "異常姿勢からの回復は、機体の POH/AFM に手順があればそれが優先（IFH）。",
+   "Va は『1 つの舵を 1 回いっぱいに使っても壊れない速度』の目安。Va 以下でも、大きな舵を左右に繰り返し使うと構造を壊すことがある。",
+   "この教材の計器の故障（AHRS・GPS）は教材用の近似。実機の故障の表示と手順は G1000 の Pilot's Guide と AFM 補足で確認する（既存）。",
+   "シミュレータは体の感覚（錯覚）を再現しない。実機では計器を信じる練習がもっと大切になる（既存）。"
+  ],
+  "quizReview": [
+   "Q1（静圧孔が詰まった・降下中の速度計）：keep。答えは正しい（PHAK）。理由の『静圧が高い高度のまま閉じ込められ』は『静圧が高い』と読めて逆。『詰まった高度の（低い）静圧が閉じ込められ、降下で外の圧力が上がりピトー側だけ増えるので多めに表示』に直す",
+   "Q2（スパイラルの回復順）：keep。理由に AFH 3C の『翼を水平にする前に少し押して荷重を抜く』を一言足す",
+   "Q3（北へ向かう旋回をコンパスで止める）：keep。UNOS は正しい（IFH・PHAK）"
+  ],
+  "quizProposals": [
+   { "q": "G1000 型 PFD で、姿勢表示と方位（HSI）に赤い × が出た。故障したのは？", "choices": ["ADC（エアデータコンピュータ）", "AHRS（姿勢方位基準装置）", "GPS", "オルタネーター"], "answer": 1, "why": "姿勢と方位は AHRS から来る。ADC の故障なら速度・高度・昇降率に赤い × が出る。予備の姿勢指示器と GPS の航跡（実機では磁気コンパスも）で飛ぶ。" },
+   { "q": "姿勢による計器飛行で、飛行機を『操作する』計器（control instruments）はどれ？", "choices": ["姿勢表示と出力（回転計）", "高度計と昇降計", "速度計と方位", "MFD の地図"], "answer": 0, "why": "IFH の Control and Performance：姿勢と出力を決め、性能の計器（速度・高度・昇降率・方位）で結果を確かめて直す。" },
+   { "q": "真対気速度 100 kt で標準旋回（3°/秒）に必要なバンク角に最も近いのは？（IFH の『速度の 15%』）", "choices": ["10°", "15°", "25°", "30°"], "answer": 1, "why": "100 × 0.15 ＝ 15°（正確な計算でも約 15°）。『÷10＋7』では 17° とやや大きめ。最後は旋回率表示で合わせる。" },
+   { "q": "ピトー管の入口だけが詰まり、排水孔は開いている。速度計はどうなる？", "choices": ["0 に向かって下がる", "高度計のように動く", "正しく表示する", "実際より多く表示する"], "answer": 0, "why": "PHAK：中の空気が排水孔から抜け外の静圧と同じになるので、速度計は 0 に近づく。入口と排水孔の両方が詰まると高度計のように動く。" }
+  ],
+  "refs": [
+   "update: FAA Instrument Flying Handbook（FAA-H-8083-15B）— 版は現行、URL を PDF に https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf（一覧 https://www.faa.gov/regulations_policies/handbooks_manuals/aviation）",
+   "add: IFH 正誤表 https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/ifh_errata.pdf",
+   "update: FAA AC 120-111 Upset Prevention and Recovery Training（Change 1）https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-111_CHG_1_Ed_Upd_3.pdf（または crm.upset へ移す）",
+   "add: FAA Airplane Flying Handbook（FAA-H-8083-3C）第 5 章 UPRT https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf",
+   "add: PHAK 第 8 章 Flight Instruments https://www.faa.gov/sites/faa.gov/files/10_phak_ch8.pdf（R.phak の章リンクとして）",
+   "keep: Garmin G1000 CRG（PA-28-181）https://static.garmin.com/pumac/190-01460-00_0A_Web.pdf、計器飛行 ACS 8C、自家用 ACS 6C（どちらも現行）"
+  ]
+ },
+ "appMismatches": [
+  "syllabus.js:307 i1 brief『100 kt でバンク約 17°（速度 ÷ 10 ＋ 7）』・syllabus.js:311 と 345/348 の g.bank 17 — 本文 FIG.standardRate は 100 kt で 15°。どちらも IFH にある目安（÷10＋7 は p.4-10、15% は p.7-19）だが正確なのは 15°。本文は両方と正確な値を示し、課目の 17° は『少し深めの目安』と書く",
+  "syllabus.js:307 i1 brief『PFD の方位表示の上のマゼンタの線（旋回率の目安）を 3°/秒の印に合わせる』— avionics.js の PFD（HSI 描画 約 322〜351 行）は方位バグ・コース・航跡の菱形だけで旋回率表示（trend vector）を描かない。旋回率は課目パネルの目標表示（school.js:183 arate）にしか出ない。実機 G1000 の説明としては正しいので、本文は実機の機能として書き、課目では数値表示を見ると書く",
+  "school.js:48 『rate』のヒント『昇降率のずれは出力で、速度のずれは機首で直す』— IFH p.7-14 の定率上昇は『昇降計がピッチの主、速度計が出力の主』（ピッチで昇降率、出力で速度）。i1 の上昇・降下で表示される。本文は『ピッチと出力はいつも組み合わせて使う』を基本にし、矛盾する一般則を書かない",
+  "syllabus.js:331 i3 brief は GPS の航跡（TRK）で針路を見る；avionics.js:390〜399 の予備計器は姿勢・速度・高度だけで磁気コンパスはない — 本文 ifr.partial はコンパス中心。本文に『課目では TRK、実機ではコンパス』と書く",
+  "quiz.js:160 q_ifr『120 kt → 19°（正確な計算でもほぼ同じ）』— 正確 18°。答えは選択肢上変わらないが理由の文が IFH 第 7 章と違う",
+  "quiz.js:158 q_ifr は計器飛行全般（待機・ILS・規則も）だが節リンクは ifr.scan だけ",
+  "syllabus.js:319 i2 std『荷重 3.8 G 以下・Vne 超過なし・12 秒以内』・physics.js pa28 phys.maxG 3.8 — 本文 ifr.upset にない（加える）"
+ ],
+ "factChecks": [
+  { "claim": "ADC が故障すると速度・高度・昇降率に赤い ×、AHRS が故障すると姿勢と方位に赤い ×（G1000）", "verdict": "correct", "source": "https://static.garmin.com/pumac/190-01460-00_0A_Web.pdf", "note": "G1000 の一般的な表示。CRG のページはこの確認では読み直していない" },
+  { "claim": "ピトー管だけ詰まる（排水孔も）→ 速度計が高度計のように動く", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/10_phak_ch8.pdf", "note": "入口だけ（排水孔は開）なら 0 へ下がる。入口と排水孔の両方なら高度計のように動く" },
+  { "claim": "静圧孔が詰まる：速度計は上昇で少なく・降下で多く、高度計は止まる、昇降計は 0", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/10_phak_ch8.pdf", "note": "" },
+  { "claim": "代替静圧（機内）：速度少し多め・高度少し高め・昇降計は一瞬上昇", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/10_phak_ch8.pdf", "note": "機内の静圧は外より低いため。補正は AFM/POH" },
+  { "claim": "電気が止まっても非常用バッテリーで予備計器は動く", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/10_phak_ch8.pdf", "note": "予備の速度計・高度計は空気圧式で電気不要。電気式の予備姿勢指示器だけが専用電池で一定時間動く（時間は機体の AFM）" },
+  { "claim": "Control and Performance と Primary and Supporting（IFH 第 6 章）、水平飛行のピッチの主は高度計", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf", "note": "IFH 第 6 章" },
+  { "claim": "スキャンの誤り：固着・省略・偏り", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf", "note": "IFH p.6-27〜6-28" },
+  { "claim": "標準旋回率は 1 秒に 3°、2 分で 360°", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf", "note": "" },
+  { "claim": "標準旋回のバンク角の目安は『速度 ÷ 10 ＋ 7』", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf", "note": "IFH p.4-10 にある目安だが、p.7-19／7-51 は『TAS の 15%（100 kt で 15°・120 kt で 18°）』。Archer の速度では 15% 則が正確で、÷10＋7 は 2° ほど深い" },
+  { "claim": "計器飛行 ACS：高度 ±100 ft・針路 ±10°・速度 ±10 kt・旋回のバンク ±5°", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/instrument_rating_airplane_acs_8.pdf", "note": "IR.IV.A.S1。8C は現行" },
+  { "claim": "自家用 ACS（基礎的な計器飛行）：高度 ±200 ft・針路 ±20°・速度 ±10 kt", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "PA.VIII.A.S2。6C は現行" },
+  { "claim": "時間で測る旋回：標準旋回で 90° ＝ 30 秒", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf", "note": "3°/秒 × 30 秒" },
+  { "claim": "UNOS（北へは手前・南へは越えて止める）、ANDS（加速で北・減速で南）— 北半球", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf", "note": "IFH p.5-13。IFH の図 5-20 は正誤表で取り消し（図を作るときに参照しない）" },
+  { "claim": "機首上げ・速度減少：①出力を上げる ②機首を下げる ③翼を水平（IFH）", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf", "note": "IFH p.7-27『ほぼ同時に、ただしこの順で』。POH/AFM の手順が優先" },
+  { "claim": "スパイラル：①出力を下げる ②先に翼を水平 ③機首をゆっくり上げる", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf", "note": "IFH p.7-28 の順は正しいが、AFH 3C 第 5 章は②の前に『少し押して約 1G に荷重を抜く（unload）』を入れる" },
+  { "claim": "AC 120-111（UPRT）は機首上げからの回復を『Push・Roll・Power・Stabilize』で教える", "verdict": "imprecise", "source": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-111_CHG_1_Ed_Upd_3.pdf", "note": "AC のテンプレート：AP/AT OFF → PITCH 機首下げ → THRUST 必要なら調整 → RECOVER。Roll は押しても機首が下がらないときだけ。PRPS は業界の覚え方。AC は Change 1（2017-01-04）" },
+  { "claim": "Archer の Va は最大重量で 113 kt", "verdict": "correct", "source": "flight-lab/src/physics.js (pa28.v.va 113)", "note": "教材値（公開チェックリスト由来）。実機は POH が優先。重量が軽いと Va は下がる" },
+  { "claim": "ピトーヒーターは雲の中・氷点下近くでは ON", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/10_phak_ch8.pdf", "note": "PHAK：目に見える水分の中で使う装備。具体的な手順は AFM/POH" },
+  { "claim": "IFH は FAA-H-8083-15B が最新", "verdict": "correct", "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation", "note": "2026-10 の FAA 一覧で 15B（＋正誤表・Addendum・Addendum B）。ただし本の URL は 404" }
+ ],
+ "cadetNotes": [
+  "最初の <svg> が教室スクリーンに出る：ifr.scan は PFD の配置図（scan）を最初に、standardRate を SVG にするなら 2 番目に。ifr.instr・ifr.partial・ifr.upset は今 SVG がない（スクリーンに何も出ない）ので、提案の図を節の最初の図として入れる",
+  "『G1000 型表示』は APP_ONLY（cadet/src/content/book.js:16）で文ごと消える。『G1000 型 PFD』『G1000 型の画面』と書く",
+  "課目のキー（R・F・W・S・A・D）を本文に書かない。『全開（R）』のような 日本語＋（キー 1 文字）は CADET で消され、テスト（content.test.mjs の APP）に引っかかる",
+  "bk.sim の箱は CADET で消える。『課目では GPS の航跡を見る』など課目に関わる事実でも、本文に必要なら『この教材の課目「部分パネル」では…』の形で（『このシミュレータ』は使わない）",
+  "ここが大切（bk.key）は読み上げられる：60 字以内・2〜4 個。ifr.upset の 1 つ目・ifr.scan の 2 つ目は今 60 字を超えている",
+  "ANA／Acron の名前はこの章にない（OK）"
+ ]
+}

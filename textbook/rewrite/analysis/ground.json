@@ -1,0 +1,204 @@
+{
+  "id": "ground",
+  "title": "飛行前の準備・点検・地上での操作",
+  "sections": [
+    {
+      "id": "ground.walk",
+      "title": "外部点検（walk-around）",
+      "gist": "Walk around the Archer in the checklist's fixed order (cabin → right wing → nose → left wing → fuselage/tail) and confirm with eyes and hands that it is fit to fly — above all the fuel (look into the tanks, drain the 3 sumps).",
+      "issues": [
+        "The whole section is one dense 3-column table: at 390 px it is ~725 px tall with 30+ items joined by 「・」 (measured with flight-lab/src/style.css). A beginner cannot picture where the sumps, the pitot mast or the struts are. Replace the table by a top-view route figure plus 5 short per-stop lists.",
+        "Row 「ピトー・尾翼」 regroups the checklist wrongly: in the MGA checklist the 'Pitot Mast — REMOVE COVER, HOLES CLEAR' item is under LEFT WING (the PA-28 pitot is under the left wing); antennas, empennage, stabilator/trim tab, rudder, static wicks and tail tie-down are under FUSELAGE. Use the checklist's own 5 groups.",
+        "Key point 「燃料は燃料計だけを信じず、タンクを目で見て確かめる（14 CFR 91.103：飛行前に必要な情報を知る）」 mis-cites the rule: 91.103 is about weather, fuel requirements, runway lengths and takeoff/landing distances; it says nothing about looking into the tanks. The preflight inspection itself rests on 14 CFR 91.7(b) (the PIC determines whether the aircraft is in condition for safe flight) and AFH 3C ch. 2. Move the citation out of the read-aloud key point (it also makes it 53 chars).",
+        "Cabin row 「書類が機内にある・操縦輪が自由」 does not say WHICH documents or that the control lock is removed. Name them simply (耐空証明・登録証明・重量重心・POH; 14 CFR 91.203 / 91.9) and say 「操縦輪のロックを外す」 (CADET's walkaround-archer.js already uses the lock pin).",
+        "Reason cell 「電源を入れて灯火やヒーターを確かめ、外で触って温かいかを見る」 — add a burn caution (the pitot heater gets very hot) and say the battery is switched OFF again before walking out (checklist: BATT Master OFF).",
+        "bk.warn 「サンプを抜いた燃料に水…なくならなければ飛ばない。Archer の燃料は 100LL（青色）。」 is good but mixes two topics; give the fuel colours as a small figure (AFH 3C: 80/87 red, 100LL blue, 100/130 green) and note that 100LL's blue is faint (hold the cup against white).",
+        "No purpose sentence (bk.aim) and no figure: CADET's classroom screen shows nothing for this section."
+      ],
+      "mainFigure": "Top view of the Archer (outline from FL.physics pa28 geometry) with the walk-around route as numbered arrows ①操縦席 → ②右翼 → ③機首 → ④左翼 → ⑤胴体・尾翼, and 1–2 labelled call-outs per stop: fuel cap + sump (both wings), fuel strainer drain (nose), oil 6 qt (school minimum), nose strut ≈3.25 in, main struts ≈4.5 in, pitot mast under the LEFT wing, stabilator + trim tab. Caption: 訓練校のチェックリストの順（例）。実機は POH とその学校のチェックリストに従う。"
+    },
+    {
+      "id": "ground.start",
+      "title": "エンジン始動とタキシー",
+      "gist": "Prepare the cabin, start the engine with the checklist (call CLEAR, brakes held), check oil pressure at 1,000 rpm within 30 s, then taxi slowly with a brake check, steering with the pedals and the controls set for the wind.",
+      "issues": [
+        "Four run-on paragraphs of 「・」-joined items (始動の前／始動／始動後／タキシー) — no numbered steps, no figure. Beginners need a short ordered flow.",
+        "「G1000 機では非常用バッテリー（EMERG BATT）を ARM にして…」 — house rule: displays are 「G1000 型」 (outside source titles). Also do not write the literal string 「G1000 型表示」 (CADET's APP_ONLY filter drops sentences containing it).",
+        "「かかったら 1,000 rpm にして油圧が上がるのを確認（上がらなければすぐ止める）」 lacks the time limit: AFH 3C ch. 2 — oil pressure should reach the lower limit within 30 s; shut down immediately if not. CADET's checklists-archer.js already says 「30 秒以内に上がる」.",
+        "Missing safety items from AFH 3C ch. 2 / the checklist: brakes held (toe brakes) and one hand on the throttle during the start; anti-collision light ON before start; look behind (prop blast); flaps RETRACT before start (they were lowered for the walk-around); after start 'Fuel Selector — SWITCH TANKS' (proves the other tank feeds).",
+        "「人が歩く程度の速さで」 is folklore, not the AFH wording. AFH 3C ch. 2: a speed at which movement depends on the throttle and the airplane can be stopped promptly when the throttle is closed; cautious on busy ramps.",
+        "「曲がりながら旋回計と方位が正しく動くか」 — a G1000-type Archer has no separate turn coordinator. Say: heading (HSI) and magnetic compass turn the right way, the standby attitude stays level, the ball moves outward.",
+        "Wind-taxi rules are only a text table (「前から（向かい風）」「後ろから（追い風）」) — this is exactly what a diagram does better (AFH Figure 2-15).",
+        "Key point 2 is 81 chars and mixes two ideas (「地上で迷ったら止まって管制に確かめる（\"Say again\" は恥ずかしくない）。滑走路の手前の停止線…は管制の許可なしに越えない」). Split; and say 'at an airport with an operating control tower' — the rule is 14 CFR 91.129(i) and AIM 4-3-18 (explicit clearance for every runway crossing; 'taxi to runway 36' is not a clearance to enter or cross it). At a non-towered airport there is no ATC: stop at the line, look both ways and announce. Overlaps book-comm.js:248 (comm.dep).",
+        "bk.warn engine-fire-on-start: 「スロットル全開」 — the checklist says 'Throttle — OPEN'. Minor; keep 「開く（OPEN）」 to match the source.",
+        "The section mixes engine start and taxi; consider a new section ground.taxi (see policy) so each part gets its own first figure."
+      ],
+      "mainFigure": "If the section is split: a start-sequence flow (3 boxes 始動前 → 始動 → 始動後) with the 4 life-saving items highlighted — ブレーキを踏む・「CLEAR!」と周りを見る・1,000 rpm・油圧 30 秒以内. If it is not split: the taxi-wind control diagram (AFH Fig. 2-15 redrawn: wind from 4 quadrants → aileron/elevator positions, 'climb into, dive away')."
+    },
+    {
+      "id": "ground.runup",
+      "title": "ランナップと離陸前の確認",
+      "gist": "At the run-up area, nose into the wind, check the engine at 2,000 rpm (magnetos max drop 175 rpm / max difference 50 rpm, carb heat drop), idle, controls free and correct, then the before-takeoff items and a spoken takeoff briefing.",
+      "issues": [
+        "Table has two empty 「何を見ているか」 cells (rows 「回転」 and 「離陸前」) — fill them (e.g. 回転: 2,000 rpm は点検の基準の回転／離陸前: 離陸の形と燃料を整える).",
+        "「逆に動くのは整備の間違い。最も危険な見落とし」 — opinion stated as fact; write 「重大な事故につながる見落とし」 and say what to look at (左に回すと左のエルロンが上がる).",
+        "Magneto check is the most tested number of the chapter but is buried in a table cell; give it a bar-chart figure with an OK and a NOT-OK example (the chapter example 左 100・右 200 fits).",
+        "「落ちがゼロ（切っても落ちない）も異常（スイッチの故障）」 — imprecise: no drop points to a grounding fault (P-lead or switch); the magneto may be 'hot' (danger when someone moves the propeller by hand). Keep it short but correct.",
+        "Briefing: 「残っていなければ正面 ±30° 以内に降りる場所を選ぶ。引き返さない。」 — ±30° is a common instructor guide, not in the AFH or the checklist. AFH 3C ch. 18: straight ahead or a slight turn; the checklist: 'make only shallow turns to avoid obstructions'. Label it as a 目安 and keep 「低い高度では引き返さない」. Overlaps emg.engine (book-3.js:200) — keep both consistent.",
+        "bk.sim: 「課目「通常離陸と上昇」は、ランナップが終わって滑走路に並んだところから始まります。」 — true (school.js:205 placeOnRunway) but the lesson's first two steps are an in-sim simplified before-takeoff checklist (Enter, school.js:97-100) and the takeoff-clearance read-back (1–3 keys) (syllabus.js:162-163). Say so; keys must stay inside the bk.sim box.",
+        "Missing from AFH 3C ch. 2 / ACS PA.II.F: position the airplane so the prop blast is not aimed at others, firm surface (stones damage the propeller), and divide attention inside/outside during the run-up (the airplane can creep forward)."
+      ],
+      "mainFigure": "Magneto-check bar chart (data: MGA checklist RUNUP at 2,000 rpm, max drop 175, max difference 50): BOTH 2,000 rpm, then two cases — 合格: L −120 / R −150 (差 30); 不合格: L −100 / R −200 (R が 175 を超える). Draw the 175 rpm limit line and the 50 rpm difference bracket; note 「落ちない（0 rpm）も異常」."
+    }
+  ],
+  "problems": {
+    "unclear": [
+      "ground.walk: 30+ checklist items in one table with no picture of the airplane — a cadet who has never seen a PA-28 cannot locate 「主脚の緩衝支柱」「燃料ストレーナー」「スタビレーター」.",
+      "ground.start: 「衝突防止灯 ON」 — say 「衝突防止灯（ストロボ）」; the checklist item is 'Strobe Lights'.",
+      "ground.start: 「前輪の向きはラダーペダルで変える」 is right, but brakes (toe brakes) are never explained — beginners do not know the top of the pedals are the brakes.",
+      "ground.runup: 「キャブレターヒーター ON にして回転が少し落ちる（約 75 rpm）」 — explain what a rise after the first drop means (ice was present) — this links to the carb-ice emergency in emg.",
+      "Terms 'Magneto / マグネトー（エンジンの点火用の発電機）／2 系統' — good; add 'squawk' warning: in this chapter it means a maintenance write-up, not the transponder code (radio chapters use 'squawk' for the code)."
+    ],
+    "order": [
+      "ground.start packs start + taxi + wind table + hold-short rule; split the taxi into a new section ground.taxi (new id) placed between ground.start and ground.runup.",
+      "Inside ground.runup the takeoff briefing comes after the table; keep it, but move the magneto figure to the top (first SVG = most important for CADET)."
+    ],
+    "errors": [
+      "ground.walk key: 燃料のタンク目視の根拠として 「14 CFR 91.103」 → 91.103 covers weather, fuel requirements, runway lengths and takeoff/landing distance data; the PIC's duty to determine the aircraft is in condition for safe flight is 14 CFR 91.7(b) (https://www.ecfr.gov/current/title-14/section-91.7 ; https://www.ecfr.gov/current/title-14/section-91.103); visual fuel check and sumping: AFH 3C ch. 2 (https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/03_afh_ch2.pdf).",
+      "ground.walk table: pitot listed with the tail (「ピトー・尾翼」) → the checklist lists 'Pitot Mast — REMOVE COVER, HOLES CLEAR' under LEFT WING (https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf p.1)."
+    ],
+    "outdated": [
+      "None of the cited editions is outdated: AFH FAA-H-8083-3C, PHAK FAA-H-8083-25C and Private ACS FAA-S-ACS-6C are the editions listed on faa.gov today (checked 2026-10-26). The MGA checklist PDF is unchanged (footer 09012025.final.npc; same file as the one the book was written from).",
+      "Fuel: 100LL is still the standard avgas and the FAA requires airports to keep it during the unleaded transition; unleaded fuels (e.g. GAMI G100UL by STC) exist and the 2030 target is expected to slip (AOPA, 2026-07/08). One sentence is enough: 「使える燃料は POH（と STC）で確かめる。標準は 100LL（青）」."
+    ],
+    "duplicates": [
+      "ground.start hold-short rule overlaps comm.dep (book-comm.js:248 「taxi via Alpha は滑走路の手前まで」) — keep the rule in one place (comm.dep) and cross-reference.",
+      "ground.runup takeoff briefing (engine failure after takeoff: land ahead, no turn back) overlaps emg.abort / emg.engine (book-3.js:193–211) and ops.takeoff — keep the briefing short here and point to emg.",
+      "Fuel colours/100LL also in quiz.js q_sys (line 29) and the sys chapter — keep wording consistent (100LL = blue)."
+    ],
+    "numbers": [
+      "Takeoff briefing uses AR.rotate 60 and AR.y 76 (FL.physics pa28.v) — matches the MGA checklist (Normal takeoff: rotate 60, climb 76). OK.",
+      "Walk-around values (main strut 4.5 in, nose strut 3.25 in, oil minimum 6 qt), runup (2,000 rpm; mags 175/50; carb heat 75 rpm; idle then 1,000 rpm) and after-start 800–1,200 rpm all match the MGA checklist. OK.",
+      "Oil-pressure time missing in the book but present in CADET (cadet/src/content/checklists-archer.js:29 「30 秒以内に上がる」) and in AFH 3C ch. 2 — add 30 s to the book.",
+      "school.js:97-100 before_takeoff (in-sim teaching checklist) says 「トリム 離陸位置（Shift+T でリセット）」 and 「燃料セレクター 燃料の多い側（教材では未実装）」; the book's table says 「トリム中立」 (= MGA 'Trim NEUTRAL'). Not a contradiction, but the bk.sim text should say the sim checklist is a simplified teaching version."
+    ]
+  },
+  "policy": "Keep the three sections in their order and add one new section ground.taxi (タキシー：速さ・ブレーキ・風・停止線) between ground.start and ground.runup, so start and taxi each get a clear first figure. Open every section with a one-line purpose (bk.aim) and put the most important drawing first: the walk-around route (ground.walk), the start flow (ground.start), the wind/control diagram (ground.taxi) and the magneto-check chart (ground.runup). Replace the long 「・」 tables by numbered steps of ≤ 7 items, each with a short 'why'; keep only the checklist values a cadet must remember (6 qt, 4.5/3.25 in, 1,000 rpm + oil pressure within 30 s, 2,000 rpm, 175/50 rpm, carb heat drop) and label them 「訓練校のチェックリストの値（例）・実機は POH と学校のチェックリスト」. Explain first WHY the walk-around matters (the PIC decides the airplane is safe: 14 CFR 91.7) and only then the items; fix the 91.103 citation. Move the hold-short rule wording to match comm.dep (towered airports: 91.129(i), AIM 4-3-18) and keep the takeoff briefing consistent with emg.engine (straight ahead, shallow turns, no low turn-back). Keep the public-checklist disclaimer and the simulator note, but split the ANA/Acron sentence from the POH safety sentence (CADET drops the whole sentence). Do not reproduce the checklist layout itself, so the page never looks like a school's official manual.",
+  "figuresExisting": [
+    { "key": "(bk.t table) ground.walk 場所／主な確認／なぜ", "verdict": "redo", "why": "725 px tall wall of text on a phone; regroup by the checklist's 5 stops and replace by the walkaroundRoute figure + short lists. Fix the pitot grouping." },
+    { "key": "(bk.t table) ground.start 風／タキシー中の操縦輪", "verdict": "redo", "why": "Spatial rule (wind quadrant → control position) is far clearer as the AFH Fig. 2-15 style drawing (taxiWind)." },
+    { "key": "(bk.t table) ground.runup 項目／チェックリスト／何を見ているか", "verdict": "fix", "why": "Fill the two empty cells, shorten, move the magneto numbers into the magCheck figure; replace the opinion 「最も危険な見落とし」." }
+  ],
+  "figuresNew": [
+    { "name": "walkaroundRoute", "section": "ground.walk", "what": "Top view of the Archer with the route ①操縦席 → ②右翼 → ③機首 → ④左翼 → ⑤胴体・尾翼 as numbered arrows (counter-clockwise seen from above, starting at the right-side cabin door) and call-outs: fuel cap/sump on each wing, fuel strainer under the nose, oil dipstick, struts (main ≈4.5 in, nose ≈3.25 in), pitot mast under the left wing, stabilator + trim tab, static wicks, tie-downs/chocks to remove. viewBox ≈ 400×420, labels ≥ 12 px.", "data": "Order and values: MGA Archer III checklist p.1 (R.archerCk). Outline proportions: FL.physics AIRCRAFT pa28 (wing b 10.8 m, wing.tipX 5.4, fuse stations, hstab span 2.0 m, gear positions).", "priority": "must" },
+    { "name": "fuelSample", "section": "ground.walk", "what": "A fuel-tester cup: blue 100LL with clear water beads sitting at the bottom and a speck of sediment; side panel with the three avgas colours (80/87 red, 100LL blue, 100/130 green) and 「水は燃料より重い → 底に玉」「出なくなるまで抜く」. Also mark the Archer's 3 drain points (left tank, right tank, strainer).", "data": "AFH 3C ch. 2 (fuel colours, water beads, keep sampling until clear); MGA checklist (3 drains).", "priority": "should" },
+    { "name": "startSequence", "section": "ground.start", "what": "Three-box flow 始動前 → 始動 → 始動後 with the critical items highlighted: EMERG BATT ARM → 予備計器・PFD 確認 → BATT ON; ブレーキを踏む・ストロボ ON・スロットル 1/4 in・ミクスチャー RICH・「CLEAR!」・スターター; 1,000 rpm → 油圧 30 秒以内（上がらなければ停止）→ 800–1,200 rpm・燃料ポンプ OFF.", "data": "MGA checklist p.2 (BEFORE START / STARTING ENGINE / AFTER STARTING ENGINE); AFH 3C ch. 2 (CLEAR call, brakes, 1,000 rpm, oil pressure within 30 s).", "priority": "must" },
+    { "name": "taxiWind", "section": "ground.taxi (new) — or ground.start if not split", "what": "AFH Figure 2-15 redrawn: the airplane from above in the centre, wind arrows from the 4 quadrants; for each quadrant a small yoke icon: headwind quadrants → yoke turned INTO the wind (upwind aileron up), elevator neutral; tailwind quadrants → yoke turned AWAY from the wind (upwind aileron down) and pushed forward (elevator down). Slogan 「向かい風には向かって（climb into）、追い風からは離れて押す（dive away）」.", "data": "AFH 3C ch. 2 text and Figure 2-15 (control positions of the nosewheel airplane).", "priority": "must" },
+    { "name": "holdShortMarking", "section": "ground.taxi (new) — or ground.start", "what": "Plan view of a taxiway meeting a runway: runway holding position marking (two solid + two dashed yellow lines; the solid side faces the taxiway = stop here), the red sign with white 「36」, and a box: 「管制塔のある空港：許可（cleared to cross / line up）なしに越えない」「管制塔のない空港：止まって左右と進入機を見る」. Label 模式図.", "data": "AIM 2-3-5 (holding position markings), AIM 2-3-8 (mandatory instruction signs), AIM 4-3-18, 14 CFR 91.129(i).", "priority": "should" },
+    { "name": "magCheck", "section": "ground.runup", "what": "Bar chart at 2,000 rpm: BOTH, L, R for an OK case (−120/−150, 差 30) and a NOT-OK case (−100/−200); red line at −175, bracket for the 50 rpm difference; note 「0 rpm（落ちない）も異常＝接地の故障の疑い」.", "data": "MGA checklist RUNUP: 2,000 rpm, max drop 175 rpm, max difference 50 rpm; chapter example 左 100・右 200.", "priority": "must" },
+    { "name": "runupPosition", "section": "ground.runup", "what": "Small plan view of the run-up pad beside the hold line: airplane nose into the wind, prop blast arrow pointing away from other aircraft, 「固い路面・石のない場所」, then the hold-short line ahead.", "data": "AFH 3C ch. 2 (before-takeoff check: into the wind, firm surface, prop blast).", "priority": "nice" },
+    { "name": "takeoffBriefingFlow", "section": "ground.runup", "what": "Decision strip for the spoken briefing: 滑走中の異常 → スロットル アイドル・まっすぐ止まる ／ 浮揚後・滑走路が残る → 降りる ／ 残らない → 76 kt・正面付近へ（浅い旋回だけ）・低い高度で引き返さない.", "data": "MGA checklist ENGINE FAILURE DURING TAKEOFF (76 KIAS, shallow turns); AFH 3C ch. 18; FL.physics pa28.v.glide 76.", "priority": "nice" }
+  ],
+  "photos": [
+    { "section": "ground.walk", "subject": "A light aircraft's fuel being sampled into a clear fuel tester (hands only, no faces), or a close-up of a tester cup with blue avgas", "search": "Commons: 'Category:Fuel testers', 'Category:Avgas', 'aircraft fuel sample'; DVIDS (US military, public domain): 'preflight fuel sample Cessna' (USAF Academy Powered Flight Program, Initial Flight Training)", "candidateUrl": "", "candidateLicence": "", "why": "The single most important walk-around action; a beginner has never seen a sump cup." },
+    { "section": "ground.walk", "subject": "Pitot tube with a red 'REMOVE BEFORE FLIGHT' cover under a low wing", "search": "Commons: 'Category:Pitot tubes', 'Category:Remove before flight tags'", "candidateUrl": "", "candidateLicence": "", "why": "Shows what a blocked pitot looks like and why the cover must come off (links to the sys chapter)." },
+    { "section": "ground.walk", "subject": "AVGAS vs jet-fuel filler nozzles (straight vs flared) — FAA handbook photo", "search": "AFH 3C ch. 2 Figures 2-10 / 2-11", "candidateUrl": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/03_afh_ch2.pdf", "candidateLicence": "US government work (FAA handbook) — public domain; check the figure carries no third-party credit", "why": "Explains why misfuelling is prevented and why the cadet still checks the colour." },
+    { "section": "ground.walk", "subject": "Side view of a Piper PA-28-181 Archer on the ramp (stabilator and low wing visible; no school/airline livery, no faces)", "search": "Commons: 'Category:Piper PA-28-181 Archer' (pick a private aircraft, CC BY / CC BY-SA)", "candidateUrl": "", "candidateLicence": "", "why": "Cadets meet the airplane for the first time in this chapter; the stabilator is unfamiliar." },
+    { "section": "ground.taxi (new) / ground.start", "subject": "Runway holding position marking with the red runway sign at a taxiway", "search": "FAA Runway Safety image library; Commons: 'Category:Runway holding position markings', 'Category:Airport signs in the United States'", "candidateUrl": "", "candidateLicence": "", "why": "Runway incursion prevention; beginners must recognise the marking and the sign on sight." }
+  ],
+  "endMatter": {
+    "terms": [
+      "Airworthy / 耐空性がある（型式どおりで安全に飛べる状態）／14 CFR 3.5・91.7",
+      "Preflight inspection / Walk-around / 飛行前点検・外部点検（keep）",
+      "Fuel sump / Drain / 燃料のサンプ（水の抜き取り）（keep）",
+      "Fuel strainer (gascolator) / 燃料ストレーナー（機首の下の水抜き）",
+      "Strut / 緩衝支柱（脚のショック）",
+      "Stabilator / スタビレーター（全体が動く水平尾翼）",
+      "Control lock / 操縦輪のロック",
+      "Anti-collision light (strobe) / 衝突防止灯（ストロボ）",
+      "Magneto / マグネトー（エンジンの点火用の発電機）／2 系統（keep）",
+      "Brake check / ブレーキの点検（動き出してすぐ）",
+      "Run-up / ランナップ（試運転）（keep）",
+      "Carburetor heat / キャブレターヒーター（keep）",
+      "Hold short line / Runway holding position marking / 滑走路手前の停止線（keep）",
+      "Prop clear / CLEAR / プロペラの周りに人がいない（始動前の掛け声）（keep）",
+      "Takeoff briefing / 離陸ブリーフィング（keep）",
+      "Squawk (maintenance) / 不具合の記録（整備への報告。トランスポンダーのコードの squawk とは別の意味）"
+    ],
+    "examples": [
+      "Keep: マグネトー 左 100・右 200 rpm 低下 → 右が 175 を超える → 手順で直らなければ飛ばない（squawk）.",
+      "Keep: サンプに水の玉 → 出なくなるまで抜く.",
+      "Add: 始動して 30 秒たっても油圧が緑に上がらない → すぐにミクスチャー IDLE CUT-OFF で止め、整備へ（AFH 3C 第 2 章）。",
+      "Add: キャブレターヒーターを入れると 75 rpm 落ち、そのあと少し上がった → キャブレターに氷があった。離陸前に溶かせてよかった（OFF に戻して再確認）。"
+    ],
+    "cautions": [
+      "Split the current first caution into two items: 「この章の手順は、公開されている訓練校のチェックリストの要約です（ある航空会社・訓練会社の SOP ではありません）。」 and 「実機は、その機体の POH とその訓練校のチェックリストに従ってください。」 — so CADET (which drops any sentence naming ANA/Acron) still keeps the POH note. In the CADET-visible sentence do not name ANA/Acron.",
+      "Keep: シミュレータでは外部点検・始動・ランナップは省略（CADET drops it via 「シミュレータでは」, which is fine).",
+      "Add: ピトーヒーターを確かめるときは、やけどに注意（素早く軽く触れる）。",
+      "Add: プロペラは、エンジンが止まっていても回ったり始動したりすることがあるものとして扱う（マグネトーの接地不良）。近づかない・触らない。"
+    ],
+    "quizReview": [
+      "Q1 (magneto limits): keep — matches the MGA checklist; the 'no drop is also abnormal' reason is good (say 'grounding fault' rather than 'switch failure').",
+      "Q2 (tailwind taxi): keep; reason could quote AFH wording 「風上側のエルロンを下げ、昇降舵を下げる（操縦輪を前へ）」.",
+      "Q3 (first instrument after start = oil pressure): keep; add 「30 秒以内」 to the reason (AFH 3C ch. 2)."
+    ],
+    "quizProposals": [
+      { "q": "燃料のサンプで、カップの底に透明な玉がいくつか沈んでいた。正しい対応は？", "choices": ["燃料より軽い泡なので気にしない", "水の玉なので、出なくなるまで抜き取り、なくならなければ飛ばない", "カップを振って混ぜればよい", "燃料計が満タンなら問題ない"], "answer": 1, "why": "水は燃料より重く、底に玉になってたまる。出なくなるまで抜き、多い・なくならないときは整備へ（AFH 3C 第 2 章）。" },
+      { "q": "管制塔のある空港で「Runway 36, taxi via Alpha」と言われた。滑走路 36 の手前の停止線では？", "choices": ["そのまま滑走路に入ってよい", "停止線の手前で止まり、離陸・Line up の許可を待つ", "周りに機体がいなければ横切ってよい", "停止線は管制塔のない空港だけのもの"], "answer": 1, "why": "「taxi to / via」は滑走路の手前まで。滑走路に入る・横切るには、はっきりした許可が要る（14 CFR 91.129(i)・AIM 4-3-18）。" },
+      { "q": "ランナップでキャブレターヒーターを ON にした。回転が少し落ちた理由は？", "choices": ["ヒーターが壊れている", "暖かい空気は薄く、出力が少し下がる（ヒーターが働いている）", "燃料が濃すぎる", "マグネトーが片方止まった"], "answer": 1, "why": "暖かい空気は密度が小さいので出力が下がる。チェックリストでは約 75 rpm の低下。落ちたあと上がるなら、氷があった。" },
+      { "q": "タキシー中に速さを調節する正しい方法は？", "choices": ["スロットルを開けたままブレーキで調節する", "スロットルで調節し、ブレーキは止まるとき・小さく曲がるときに使う", "エルロンで調節する", "フラップを下げて調節する"], "answer": 1, "why": "スロットルを開けたままブレーキで速さを抑えるのはよくある誤り。ブレーキが過熱する（AFH 3C 第 2 章）。" }
+    ],
+    "refs": [
+      "Keep R.archerCk (MGA Archer III G1000 checklist, 2025; file unchanged — footer 09012025.final.npc) https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+      "Keep R.afh but add the chapter link: AFH 3C Chapter 2 Ground Operations https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/03_afh_ch2.pdf",
+      "Add Private Pilot ACS FAA-S-ACS-6C, Area II Preflight Procedures (PA.II.A–F) https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf",
+      "Add 14 CFR 91.7 (airworthiness; PIC determines condition for safe flight) https://www.ecfr.gov/current/title-14/section-91.7",
+      "Add 14 CFR 91.129(i) (taxi clearance at towered airports) https://www.ecfr.gov/current/title-14/section-91.129",
+      "Add AIM 4-3-18 Taxiing (R.aim43) https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html",
+      "Add AC 20-117 (frost/ice roughness like sandpaper can cut lift up to 30% and raise drag 40%) https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_20-117.pdf",
+      "Keep R.phak (25C current) and R.cfr91."
+    ]
+  },
+  "appMismatches": [
+    "syllabus.js:157 (t1 book: ['ops.takeoff','aero.left']) — the ground chapter lists t1 as its lesson and ground.runup's bk.sim links t1, but the lesson does not link ground.runup. Not wrong (the book bridges it); keep the bk.sim box.",
+    "syllabus.js:162-163 + school.js:205 — t1 starts on the runway and its first steps are the simplified in-sim before-takeoff checklist (Enter) and the takeoff-clearance read-back (1–3); the book's bk.sim says only 「ランナップが終わって滑走路に並んだところから始まります」. The app is right; the book should mention the two steps (inside bk.sim).",
+    "school.js:97-100 before_takeoff — teaching checklist (「トリム 離陸位置（Shift+T でリセット）」「燃料セレクター…教材では未実装」) vs book's MGA-based items (「トリム中立」, fuel pump ON, lights). Both fine; the book should call the sim checklist 「簡略版」 in the bk.sim box (do not write 「教材の簡略版」 in normal prose — CADET's APP_ONLY drops it).",
+    "radio.js:72-82 (gnd1) — the radio practice does taxi → run-up → hold short → switch to Tower (AIM 4-3-14); the book never says the run-up is done on the Ground frequency and the switch to Tower happens at the hold line. Add one sentence with a link to comm.dep.",
+    "cadet/src/content/checklists-archer.js:29 — CADET's start checklist says 油圧 「30 秒以内に上がる」; the book lacks the 30 s (AFH supports CADET). Book should add it."
+  ],
+  "factChecks": [
+    { "claim": "外部点検の順番は 操縦席 → 右翼 → 機首 → 左翼 → 胴体と尾翼（訓練校の Archer チェックリスト）", "verdict": "correct", "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf", "note": "p.1 PREFLIGHT INTERIOR, then EXTERIOR: RIGHT WING, NOSE SECTION, LEFT WING, FUSELAGE." },
+    { "claim": "ピトー管は尾翼のグループ（表の行「ピトー・尾翼」）", "verdict": "wrong", "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf", "note": "'Pitot Mast — REMOVE COVER, HOLES CLEAR' is under LEFT WING." },
+    { "claim": "主脚の緩衝支柱 約 4.5 in・前脚 約 3.25 in・オイル最少 6 qt", "verdict": "correct", "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf", "note": "School checklist values ('CHECK (4.5 in)', 'CHECK (3.25 in.)', 'MIN 6 QTS'); POH governs." },
+    { "claim": "燃料をタンクで目視確認するのは 14 CFR 91.103（飛行前に必要な情報を知る）による", "verdict": "imprecise", "source": "https://www.ecfr.gov/current/title-14/section-91.7", "note": "91.103 = weather, fuel requirements, alternatives, runway lengths, takeoff/landing distances. The inspection duty is 91.7(b); the visual fuel check is AFH 3C ch. 2 practice." },
+    { "claim": "Archer の燃料は 100LL（青色）", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/03_afh_ch2.pdf", "note": "AFH 3C ch. 2: 80/87 red, 100LL blue, 100/130 green; blue is faint — view against white. Approved fuels per POH/STC; unleaded G100UL exists by STC (AOPA 2026)." },
+    { "claim": "水は燃料より重く、底に玉になってたまる。なくなるまで抜く", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/03_afh_ch2.pdf", "note": "AFH: bubble/bead-like droplets at the bottom; keep sampling until no water; significant water → maintenance." },
+    { "claim": "翼の表面の霜でも揚力は大きく減る", "verdict": "correct", "source": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_20-117.pdf", "note": "AC 20-117: sandpaper-like frost/ice/snow can reduce lift by as much as 30% and increase drag by 40%." },
+    { "claim": "始動後 1,000 rpm で油圧が上がるのを確認、上がらなければすぐ止める", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/03_afh_ch2.pdf", "note": "Correct but incomplete: AFH — oil pressure to the lower limit within 30 seconds in most conditions; shut down immediately if not." },
+    { "claim": "「Prop clear!」と叫んで周りに人がいないことを確かめる", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/03_afh_ch2.pdf", "note": "AFH: call 'CLEAR' out of the side window and wait for a response; brakes held; anti-collision lights on before start." },
+    { "claim": "タキシーは人が歩く程度の速さで", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/03_afh_ch2.pdf", "note": "AFH 3C: speed such that movement depends on the throttle and the airplane stops promptly when the throttle is closed; cautious on congested ramps." },
+    { "claim": "動き出したらすぐブレーキを試す", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "ACS 6C PA.II.D.S5 'Perform a brake check immediately after the airplane begins moving'; AFH ch. 2." },
+    { "claim": "タキシー中の操縦輪：向かい風は風上へ・昇降舵中立、追い風は風下へ・昇降舵前（climb into, dive away）", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/03_afh_ch2.pdf", "note": "AFH 3C ch. 2 and Figure 2-15 (quartering tailwind: elevator DOWN, upwind aileron DOWN)." },
+    { "claim": "スロットルを開けたままブレーキで速さを調節しない", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/03_afh_ch2.pdf", "note": "AFH: 'a common error to taxi with a power setting that requires controlling taxi speed with the brakes'." },
+    { "claim": "曲がりながら旋回計と方位が正しく動くかを見る", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/03_afh_ch2.pdf", "note": "AFH lists the taxi instrument check for steam gauges; a G1000-type Archer has no separate turn coordinator — check heading/HSI, compass, standby attitude, ball." },
+    { "claim": "滑走路手前の停止線は管制の許可なしに越えない", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html", "note": "True at airports with an operating tower: AIM 4-3-18 (explicit clearance for all runway crossings; taxi to the runway is not a clearance to enter/cross it) and 14 CFR 91.129(i). Non-towered airports have no ATC — say so." },
+    { "claim": "始動時のエンジン火災：スターターを回し続ける・ミクスチャー IDLE CUT-OFF・スロットル全開・燃料ポンプ OFF・燃料セレクター OFF・消えなければ離れる", "verdict": "correct", "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf", "note": "Checklist wording is 'Throttle — OPEN' (book says 全開); order matches." },
+    { "claim": "G1000 機では EMERG BATT を ARM にして予備計器と PFD が動くことを確かめてから BATT ON", "verdict": "correct", "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf", "note": "BEFORE START: EMERG BATT ARM; Standby instruments and PFD operate VERIFY; E VOLTS 23.3 V min; BATT MASTR ON. Write 「G1000 型」." },
+    { "claim": "マグネトー点検 2,000 rpm・最大 175 rpm 低下・左右の差 50 rpm 以内", "verdict": "correct", "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf", "note": "RUNUP: '(max drop 175 rpm, max difference 50 rpm)'; out of limits → lean at 2,000 rpm 20–30 s, enrich, recheck, else SQUAWK (matches the chapter example)." },
+    { "claim": "マグネトーで落ちがゼロも異常（スイッチの故障）", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/03_afh_ch2.pdf", "note": "No drop suggests the magneto is not grounding (P-lead or switch fault) — a 'hot' mag; AFH ch. 2 explains the grounding principle and the mag-off check at shutdown." },
+    { "claim": "キャブレターヒーター ON で約 75 rpm 低下", "verdict": "correct", "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf", "note": "'(CH-75 RPM/AA-40 RPM drop)'." },
+    { "claim": "試運転は風上に機首を向けて止まる", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/03_afh_ch2.pdf", "note": "AFH: headed as nearly as possible into the wind (cooling); firm surface; prop blast clear of others." },
+    { "claim": "浮揚後に滑走路が残っていなければ正面 ±30° 以内に降りる場所を選ぶ。引き返さない", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/19_afh_ch18.pdf", "note": "AFH 3C ch. 18: straight ahead or slight turn; turn-back only with known altitude loss and practice. ±30° is an instructor guideline; checklist says 'make only shallow turns'." },
+    { "claim": "Cited editions (AFH FAA-H-8083-3C, PHAK FAA-H-8083-25C) are current", "verdict": "correct", "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook", "note": "faa.gov lists 3C (full book + chapters) and 25C on 2026-10-26; no errata/addendum shown." }
+  ],
+  "cadetNotes": [
+    "None of the three sections has an SVG today → CADET's section.figure is null and the classroom screen shows nothing. Every new main figure must be the FIRST <svg> of its section (cadet/test/content.test.mjs:101-107 checks the first figure).",
+    "Chapter caution 1 names ANA and Acron Aviation in the same sentence as the POH safety note; CADET drops whole sentences with real names (REAL_NAMES), so the POH note disappears. Split it.",
+    "Caution 2 and any note containing 「シミュレータでは」 are dropped by CADET's APP_ONLY — intended; keep app notes in bk.sim boxes or class=mute paragraphs.",
+    "Do not write 「G1000 型表示」 or 「教材の簡略版」 in prose — both are APP_ONLY patterns and the whole sentence would vanish in CADET; write 「G1000 型の画面」.",
+    "Keys (Enter, 1–3, Shift+T) only inside bk.sim; CADET's test APP regex flags 「キー（」「Shift +」「Enter で」 in the visible book.",
+    "Key points are read aloud by the game: keep each ≤ ~60 chars; ground.start key 2 (81 chars, with 「\"Say again\"」 in ASCII quotes) must be split/shortened; drop regulation numbers from key items.",
+    "If a new section ground.taxi is added: CADET tests iterate over all sections — it needs a bk.key box (or ≥2 prose sentences), plain text > 40 chars and a summary ≤ 200 chars.",
+    "CADET has its own Archer walk-around (cadet/src/content/walkaround-archer.js) and checklists (checklists-archer.js) built from the same MGA checklist; keep the book's numbers identical (6 qt, 4.5/3.25 in, 1,000 rpm + oil pressure 30 s, 2,000 rpm, 175/50 rpm, carb heat drop) and the same 5-group order."
+  ]
+}

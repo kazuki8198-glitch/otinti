@@ -1,0 +1,278 @@
+{
+  "id": "navp",
+  "title": "地図・飛行計画・推測航法（Charts, flight planning and dead reckoning）",
+  "sections": [
+    {
+      "id": "nav.chart",
+      "title": "セクショナルチャート（VFR の航空図）",
+      "gist": "VFR で使うセクショナルチャートの縮尺・改訂周期・主な記号（空港とデータ枠・空域の色・MEF・VOR のコンパスローズ）を読めるようにする。",
+      "issues": [
+        "目的の 1〜2 文（bk.aim）が無く、図も無い。記号を「青の実線 / マゼンタの実線 / 青の破線」「マゼンタのぼかし / 青のぼかし」という言葉だけの表で説明しているので、初心者は形と色を想像できない。",
+        "誤り：空港データの例「LAB CT 118.3 ★ 55 L 60 122.95」で ★ を「飛行場灯台（★）」と説明しているが、FAA Chart Users' Guide では CT 周波数の後の ★ は「管制塔の運用が時間限定（part-time）」。回転灯台（beacon）は空港記号の上に付く別の記号。",
+        "同じ例の「60」（最長滑走路 6,000 ft）が、教材の LAB RWY 36（physics.js LAB_RWY len 1,200 m ≒ 3,940 ft → チャートの表記は「39」）と合わない。標高 55 ft（GROUND_FT）と CT 118.3（radio.js の LAB Tower）は合っている。",
+        "「FAA が定期的に改訂します」はあいまい。VFR チャート（Sectional・TAC）は 56 日ごとに改訂（FAA VFR Charts ページ・Chart Users' Guide）。PHAK 25C 第 16 章は 'revised semiannually' と古いままなので、ここは PHAK を根拠にしない。",
+        "「中の線は滑走路の向き」：円の中に滑走路の形が描かれるのは硬い路面で 1,500〜8,069 ft の空港。8,069 ft を超えると滑走路の形だけ（円なし）、硬い路面でない空港は白抜きの円（CUG）。「必ず線がある」と誤解させない書き方に。",
+        "Class E が地表から始まる区域（マゼンタの破線）、Class G、障害物（塔）の記号、等偏差線（isogonic line）が表に無い。等偏差線は次の nav.plan で使うのに、ここで見せていない。制限空域・MOA は law.special にあるので bk.see で結ぶ。",
+        "NM（海里）と SM（法定マイル）の違いが無い：1 インチ ≒ 6.86 NM ≒ 8 SM。距離・速度は NM と kt、視程（91.155）は SM。初心者が最初につまずく点。",
+        "Sanford・LAB 周辺は Orlando の Class B の下で、TAC（Terminal Area Chart、1:250,000）も使うことが書かれていない（PHAK 16 の VFR Terminal Area Chart）。",
+        "ここが大切の 1 項目目「地図と Chart Supplement（空港の詳しい情報）と NOTAM（臨時の情報）の 3 つで計画する」は 2 文分の情報で約 45 字。読み上げには可。NOTAM は AIM 5-1-3 では現在 'Notice to Airmen'。"
+      ],
+      "mainFigure": "sectionalSymbols：架空の LAB 周辺の模式セクショナル（北が上）。青の LAB 空港記号と正しいデータ枠「LAB / CT 118.3 / 55 L 39 122.95」に引き出し線で意味を付ける、マゼンタの管制塔なし空港（白抜きの円＝未舗装の例）、LAB VOR のコンパスローズ（磁北が上にずれている）と周波数枠「LAB 113.50」、MEF「2⁵」、障害物（塔）、Class C（マゼンタ実線）・Class D（青破線）・Class E の 700 ft ぼかし、等偏差線「6°W」。右下に 模式図・NOT FOR NAVIGATION（NFN）。"
+    },
+    {
+      "id": "nav.plan",
+      "title": "針路の計算：真航路 → 磁針路 → コンパス針路",
+      "gist": "地図に引いた線（真航路）から、風・偏差・自差を順に直して、コンパスで飛ぶ針路を出す手順を学ぶ。",
+      "issues": [
+        "用語の整理が無い：航路（course＝行きたい線）・針路（heading＝機首の向き）・方位（bearing）の違いを最初に説明していない。課目 n2 では「針路（磁方位）」と言いながら新しい目的地への磁方位（航路）で採点している（syllabus.js estimateTruth）ので、ここで区別を教えないと混乱する。",
+        "磁航路（Magnetic Course, MC ＝ TC ± 偏差）が定義されていないのに、規則の表では「磁航路 0〜179°」（91.159）を使っている。91.159 は磁「航路」で決まり、磁「針路」ではない。手順を TC →（偏差）→ MC と TC →（WCA）→ TH →（偏差）→ MH →（自差）→ CH の 2 本で示すべき。",
+        "「真針路 TH ＝ TC ± WCA」の符号の決め方が無い。「風が右から来る → 右へ（＋）、左から → 左へ（−）」と書く。",
+        "用語の誤り：「コンパスの近くの修正表（compass card）」。compass card はコンパスの中で回る目盛り板。修正表は compass deviation card / correction card（PHAK 図 16-12「Compass deviation card」）。sys.compass は「自差カード」と書いており、章の間でも不一致。",
+        "「フロリダ中部はおよそ西偏 6〜7°」：NOAA（WMM-2025）では Sanford 付近は 2026 年 10 月に約 7.1°W、年に約 0.07° ずつ西へ増える。「2026 年で約 7°W。この教材のシミュレーターは 6°W の教材値（physics.js MAGVAR_W）」と分けて書く。",
+        "1 つの節に、針路の計算・ナビゲーションログ・燃料計算・巡航高度・91.151・91.103 が詰め込まれている。初心者には多すぎるので、ログと規則は新しい節 nav.log に分ける。",
+        "図 windTriangle は数字も北も無く、本文の例（TC 090・風 030/15・TAS 105）と形が合わない（図では対地速度が TAS より長く追い風に見えるが、例は向かい風成分で GS 97 kt）。文字 11 px 相当・ラベルが重なる（figshot：390 px で 9.5 px、「実際の航跡」と「偏流修正角」が重なる）。",
+        "計算機 wca と例は TAS 105 kt。教材の Archer の巡航は FL.physics で 110 KIAS（3,000 ft で TAS 約 113 kt）、課目 n2 は 105 kt で飛ぶ。どちらの値か（課目 n2 の速度）を本文に書く。",
+        "ここが大切 1「真 → 磁 → コンパス。足し引きの方向を毎回確かめる（間違えると 12° 以上ずれる）」は良い。理由（偏差 6° を逆にすると 12°）を本文に。"
+      ],
+      "mainFigure": "headingChain：左から右へ「真航路 TC 090° →（風：左へ 7°）→ 真針路 TH 083° →（偏差 6°W：＋6）→ 磁針路 MH 089° →（自差 +2：自差カード）→ コンパス針路 CH 091°」の箱と矢印。上段に別の枝「TC 090° →（＋6）→ 磁航路 MC 096°（巡航高度 91.159 はこれで決める）」。各箱の下に日本語（English）の用語。数字は計算機 wca の既定値（TC 090・風 030/15・TAS 105 → WCA 左 7°・GS 97）と MAGVAR_W 6。"
+    },
+    {
+      "id": "nav.log",
+      "title": "（新）ナビゲーションログ・チェックポイント・高度と燃料の決まり",
+      "gist": "航路をチェックポイントで区切り、区間ごとの距離・磁航路・対地速度・所要時間・燃料をログに書き、巡航高度と燃料の予備の規則を当てはめる。",
+      "issues": [
+        "新しい節（nav.plan の後半を移す）。いまは nav.plan の 1 段落と表 1 つだけで、ログの形（列）が見えない。",
+        "91.151 の要約「目的地まで＋昼は 30 分・夜は 45 分」→ 規則は「最初の着陸予定地（first point of intended landing）まで」（eCFR）。訓練校はもっと多い予備（例 1 時間）を求めることがある（law.rules の key と同じ）。",
+        "91.103 の要約は (a) だけ。(b)「すべての飛行で、使う空港の滑走路の長さと離着陸距離のデータ」が抜けている（eCFR）。",
+        "燃料計算機 fuel の既定値 9.5 gal/h は教材の飛行モデルと合わない：FL.physics（physics.js:622）では 3,000 ft・110 KIAS（巡航）で約 11.5 gal/h、105 KIAS で約 10.8 gal/h。POH の実機値（目安 9〜10 gal/h）を使うなら「POH の値」と明記し、教材の課目の燃料は約 11 gal/h と書く。",
+        "高度の選び方（91.159・空域・91.155 の雲からの距離・MEF・滑空距離・風）は ACS PA.I.D.K2 と同じ並び。巡航高度の図があると覚えやすい。"
+      ],
+      "mainFigure": "navLog：シミュレーターの既定の飛行計画（avionics.js createAvionics の fpl：LAB RWY → LAB-A → LAB-B）を模式の帯地図と、その下のログ表で示す。区間 1：6.4 NM・磁航路 037°、区間 2：7.7 NM・磁航路 071°（avionics.js WAYPOINTS と MAGVAR_W 6 から計算）、対地速度 105 kt（課目 n2）で ETE 3.7 分・4.4 分、燃料は約 11 gal/h（教材モデル）で 0.7・0.8 gal。列は「区間・磁航路・距離・GS・ETE・ATE（実際）・燃料」。模式図・NOT FOR NAVIGATION。"
+    },
+    {
+      "id": "nav.dr",
+      "title": "地文航法と推測航法",
+      "gist": "地図と外の目印を比べる地文航法と、針路・速度・時間で位置を計算する推測航法を組み合わせ、チェックポイントでずれを直す。",
+      "issues": [
+        "図が無い。60 の法則（60 NM で 1 NM ＝ 1°）は幾何の形を見せないと初心者には分かりにくい。",
+        "手順 3 の「（次の項「60 の法則」）」は誤り：60 の法則は次の節ではなく同じ節の計算機と「ここが大切」にある。",
+        "ここが大切 1 は約 85 字で長すぎる（読み上げは ≤ 約 60 字）：「60 の法則：60 NM で 1 NM ずれる ≒ 1°」と「目的地へ向けるには残りの距離の分も足す」の 2 項目に分ける。",
+        "チェックポイントの選び方（大きく・はっきり・左右に挟む目印：PHAK 16 の 'brackets'）と、ACS の基準（PA.VI.A.S5 航路から 3 NM 以内で位置確認・S6 チェックポイントに予定の ±5 分・S7 高度 ±200 ft・針路 ±15°）が無い。課目 n2 の合格基準（高度 ±200 ft・針路 ±15°）もこの ACS と同じなので結べる。",
+        "「GPS が使えても、推測航法の計算は続ける」は良い。実機の G1000 は GPS を失うと航空路フェーズで DR（推測航法）モードになり、黄色の「DR」を出す（Garmin CRG 190-01460-00 Rev A）。この事実を nav.gps / nav.fpl と結ぶとよい。",
+        "例「20 NM 地点で予定より 1 分遅い」は良いが、その結果の対地速度（例：20 NM を 12 分 → 100 kt）まで計算すると練習になる。"
+      ],
+      "mainFigure": "rule60：北が上の平面図。出発点から予定の航路（破線）と実際の航跡（実線）。20 NM 飛んだ所で航路の右 2 NM → 外れた角度 6°、残り 40 NM で目的地へ戻すにはさらに 3°、合計 9° 左へ（計算機 rule60 の既定値）。角度の弧と数字、平行に戻す針路（6°）と目的地へ向かう針路（9°）を色分け。"
+    }
+  ],
+  "problems": {
+    "unclear": [
+      "航路（course）・針路（heading）・方位（bearing）の区別が一度も説明されない（nav.plan）。日本語の「針路」が課目 n2 では磁方位の意味でも使われている。",
+      "磁航路（MC）が未定義のまま 91.159 の表で「磁航路」を使っている（nav.plan）。",
+      "TH ＝ TC ± WCA の ± の決め方が無い（nav.plan）。",
+      "NM と SM の違い、1 インチ ≒ 6.86 NM ≒ 8 SM が無い（nav.chart）。",
+      "nav.chart の空港記号・空域の色は言葉だけで、形が分からない（図が必要）。"
+    ],
+    "order": [
+      "nav.plan に計算・ログ・燃料・規則が詰め込まれている → nav.plan（針路の計算）と新しい nav.log（ログ・チェックポイント・巡航高度・燃料）に分ける。",
+      "nav.plan の最初に「用語をそろえる（航路・針路・方位・真・磁）」を置き、その後に手順。等偏差線は nav.chart の図で先に見せる。",
+      "nav.dr は「地文航法 → 推測航法 → 組み合わせ（チェックポイントで直す）→ 60 の法則」の順。いまは 60 の法則が key の中だけ。"
+    ],
+    "errors": [
+      "nav.chart「★＝飛行場灯台」→ CT 周波数の後の ★ は管制塔の運用が時間限定（part-time）。灯台は空港記号の上の別記号（https://aeronav.faa.gov/user_guide/cug-complete_20260709.pdf「Star indicates operation part-time」「The symbol … indicates the existence of a rotating or flashing airport beacon」）",
+      "nav.plan「修正表（compass card）」→ compass deviation card（自差カード）。compass card はコンパスの目盛り板（https://www.faa.gov/sites/faa.gov/files/18_phak_ch16.pdf 図 16-12 Compass deviation card）",
+      "nav.dr「（次の項「60 の法則」）」→ 同じ節の中にある（本文の内部参照の誤り）"
+    ],
+    "outdated": [
+      "「フロリダ中部はおよそ西偏 6〜7°」→ 2026 年 10 月、Sanford 付近は約 7.1°W（NOAA WMM-2025、年約 0.07° 西へ）（https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml）。教材の 6°W は教材値として残す。",
+      "「FAA が定期的に改訂します」→ 56 日ごと（https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/vfr/）。PHAK 25C の 'semiannually' は古い。",
+      "Chart Users' Guide：FAA は 2025 年 5 月の Charting Notice VIS 25-03 で廃止を予告したが、現在のページは 2026 年 7 月 9 日有効の版を公開している（https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/aero_guide/）。参照先は生きている。"
+    ],
+    "duplicates": [
+      "偏差・自差・6〜7°W・自差カード：sys 章 sys.compass と重複。偏差と自差の計算は nav.plan に集め、sys.compass は北旋誤差・加速誤差と予備計器にして nav.plan へ bk.see。",
+      "91.151 VFR の燃料：law 章 law.rules と重複。nav.log では規則を 1 行で示し law.rules へ。",
+      "60 の法則：nav.dr・navd の nav.divert の表・quiz.js q_nav の 10 問目と重複。説明は nav.dr に 1 回、nav.divert は「nav.dr の 60 の法則で」と参照する。",
+      "MEF・縮尺の問題が quiz.js q_nav と重複（問題は同じ事実で矛盾なし）。"
+    ],
+    "numbers": [
+      "燃料流量：計算機 fuel の既定 9.5 gal/h ↔ FL.physics（physics.js:622 fuelFlow）では 3,000 ft で 110 KIAS（巡航）約 11.5 gal/h、105 KIAS 約 10.8 gal/h、100 KIAS 約 10.1 gal/h（Node で physics を回して確認）。教材の数字は「教材モデル約 11 gal/h」か「POH の値」かを明記。",
+      "TAS：計算機 wca・例の TAS 105 kt ↔ pa28.v.cruise 110 KIAS（3,000 ft で TAS 約 113 kt）。課目 n2 は 105 kt、n1・n3 は 100 kt。例では「課目 n2 の 105 kt」と書けば矛盾しない。",
+      "空港データ例「60」（6,000 ft）↔ LAB_RWY len 1,200 m（physics.js:68）＝約 3,940 ft →「39」。",
+      "偏差：教材 6°W（physics.js MAGVAR_W・quiz.js q_nav の 1 問目も 6°W）で一致。navp quiz 1 問目は 7°W（練習問題として可。本文の実際値約 7°W とも合う）。",
+      "例「TC 090°・風 030°/15 kt・TAS 105 kt → WCA 左 7°・TH 083°・MH 089°」は計算機 wca と一致（WCA −7.1°、GS 96.7 kt）。GS 97 kt も例に足すとよい。"
+    ]
+  },
+  "policy": "navp は「地図を読む → 用語をそろえる → 針路を計算する → ログを作る → 飛んで直す」の順にする。nav.chart は最初に図 sectionalSymbols を置き、縮尺・56 日ごとの改訂・NM と SM・空港データ枠（★ の正しい意味）・空域の色・MEF・等偏差線を図の引き出し線と対応させて短く説明し、制限空域は law.special へ bk.see する。nav.plan は冒頭で航路・針路・方位と真・磁を定義し、TC → WCA → TH → 偏差 → MH → 自差 → CH の鎖と、別枝の磁航路 MC（91.159 で使う）を図 headingChain で示してから、作り直した windTriangle と計算機 wca を置く。ログ・燃料・巡航高度・91.103/91.151 は新しい節 nav.log（id: nav.log）へ移し、既定の飛行計画 LAB RWY → LAB-A → LAB-B の数字（6.4 NM・037°、7.7 NM・071°）で例を作る。nav.dr は地文航法と推測航法の違い → 手順 → 60 の法則の図 rule60 → ACS の基準（±200 ft・±15°・3 NM・±5 分）の順にし、key を 60 字以内に分割する。数値は「教材値（FL.physics：巡航 110 KIAS、燃料約 11 gal/h、偏差 6°W）」か「公開値（NOAA 約 7°W、POH）」かを毎回書く。sys.compass との重複は nav.plan に集約する。",
+  "figuresExisting": [
+    {
+      "key": "windTriangle",
+      "verdict": "redo",
+      "why": "北と数字が無く、本文の例（TC 090・風 030/15・TAS 105 → WCA 左 7°・GS 97）と形が逆（図では追い風で GS が TAS より長い）。「行きたい航跡」（キャプション）と「実際の航跡」（ラベル）が食い違う。WCA の弧と文字が航跡のラベルと重なり、文字は fs 11（390 px で 9.5 px）。作り直し：北が上、TC 090 の破線（行きたい航跡）、TH 083・TAS 105 の矢印、風 030/15 の矢印（風下へ向く）、GS 97 の矢印、WCA 7° の弧。長さは計算機 wca と同じ式で計算。fs ≥ 12、viewBox 400 前後、planeTop（rot 83）を TH の始点に置く。"
+    }
+  ],
+  "figuresNew": [
+    {
+      "name": "sectionalSymbols",
+      "section": "nav.chart",
+      "what": "架空の LAB 周辺の模式セクショナル（北が上）。青い LAB（管制塔あり）とデータ枠「LAB / CT 118.3 / 55 L 39 122.95」の各部に引き出し線（標高・夜間灯火・最長滑走路 百 ft・UNICOM）、★ は「時間限定の管制塔」と注記だけ、マゼンタの管制塔なし空港、LAB VOR のコンパスローズと「LAB 113.50」の枠、MEF「2⁵」、障害物（塔）、Class C（マゼンタ実線）・D（青破線）・E 700 ft のぼかし、等偏差線 6°W。NFN の印。",
+      "data": "FAA Chart Users' Guide（2026-07-09）の記号。LAB 標高 55 ft（physics.js GROUND_FT）、滑走路 1,200 m → 39（physics.js LAB_RWY）、CT 118.3（radio.js / book-comm.js の LAB Tower）、LAB VOR 113.50（avionics.js NAVAIDS）、MAGVAR_W 6。",
+      "priority": "must"
+    },
+    {
+      "name": "chartAirspace",
+      "section": "nav.chart",
+      "what": "平面図で見た空域の描き方の早見：Class B（青の実線・階段の数字「70/SFC」）、Class C（マゼンタの実線）、Class D（青の破線）、Class E 地表（マゼンタの破線）、E 700 ft（マゼンタのぼかし）・E 1,200 ft（青のぼかし、ぼかしの濃い側の外から始まる）。各見本に「地図での見え方 → 意味」。law 章の横から見た FIG.airspace と対にする。",
+      "data": "FAA Chart Users' Guide（Airspace の項）。高度の数字は例（百 ft MSL）で、LAB 空域は架空。",
+      "priority": "should"
+    },
+    {
+      "name": "headingChain",
+      "section": "nav.plan",
+      "what": "針路計算の鎖：TC 090 →（風：左へ 7°）→ TH 083 →（6°W：＋6）→ MH 089 →（自差 +2）→ CH 091。別枝 TC 090 →（＋6）→ MC 096（91.159 はこれ）。小さなコンパス図で真北と磁北（6° 西）の向き。用語は日本語（English）。",
+      "data": "計算機 wca の既定値（TC 090・TAS 105・風 030/15 → WCA −7.1°）、MAGVAR_W 6（physics.js）、自差 +2 は quiz.js q_nav 1 問目と同じ例の値。",
+      "priority": "must"
+    },
+    {
+      "name": "cruisingAltitudes",
+      "section": "nav.log",
+      "what": "コンパスの円を左右に分けた図：磁航路 0〜179°（東向きの半円）＝奇数千＋500 ft（3,500・5,500・7,500）、180〜359°（西向き）＝偶数千＋500 ft（4,500・6,500・8,500）。「地上 3,000 ft より上・18,000 ft MSL 未満」「磁航路で決める（針路ではない）」を明記。",
+      "data": "14 CFR 91.159（eCFR）。",
+      "priority": "should"
+    },
+    {
+      "name": "navLog",
+      "section": "nav.log",
+      "what": "既定の飛行計画 LAB RWY → LAB-A → LAB-B の帯地図とログ表（区間・磁航路・距離・GS・ETE・燃料・実際の時刻の空欄）。チェックポイントの印と「左右に挟む目印」の例。NFN の印。",
+      "data": "avionics.js WAYPOINTS（LABRW −1200/−40000、LABEA 9000/−34000、LABEB 15000/−21000 m）と createAvionics().fpl、MAGVAR_W 6 → 6.39 NM・MC 036.5°、7.73 NM・MC 071.2°。GS 105 kt（syllabus n2）→ ETE 3.7・4.4 分。燃料 約 11 gal/h（physics.js fuelFlow、105〜110 KIAS で 10.8〜11.5）。",
+      "priority": "should"
+    },
+    {
+      "name": "rule60",
+      "section": "nav.dr",
+      "what": "60 の法則の幾何：20 NM で右へ 2 NM → 外れた角度 6°、残り 40 NM で目的地へ戻すなら ＋3° ＝ 9°。平行に戻す線と目的地へ向かう線を色分けし、式「60 × 外れた距離 ÷ 飛んだ距離」を図中に。",
+      "data": "計算機 rule60 の既定値（20 NM・2 NM・40 NM）。",
+      "priority": "must"
+    }
+  ],
+  "photos": [
+    {
+      "section": "nav.chart",
+      "subject": "紙のセクショナルチャートとプロッター・E6B 計算尺（人の顔なし、机の上）",
+      "search": "Wikimedia Commons: Category:E6B flight computers / Category:Aeronautical charts / 'sectional chart plotter'（CC BY / CC BY-SA / CC0 を 1 枚ずつ確認）",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "「紙の地図に線を引き、分度器で測る」道具の実物を見せる（PHAK 図 16-18 と同じ道具）。"
+    },
+    {
+      "section": "nav.plan",
+      "subject": "小型機の磁気コンパスと、その下に貼られた自差カード（deviation card）",
+      "search": "Commons: Category:Aircraft magnetic compasses / 'compass deviation card' / 'compass correction card aircraft'",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "自差カードの実物（FOR / STEER の表）を見ると「コンパス針路」の最後の 1 手が分かる。計器の画面写真ではないので可。"
+    },
+    {
+      "section": "nav.dr",
+      "subject": "上空から見たフロリダの目印（湖・大きな高速道路の交差・川）",
+      "search": "NASA Earth Observatory / NASA Image and Video Library 'Florida aerial' 'Lake Monroe' 'St. Johns River'、USGS aerial photographs（米国政府＝パブリックドメイン）",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "チェックポイントに「大きく・はっきりした目印」を選ぶ理由を写真で示す。"
+    }
+  ],
+  "endMatter": {
+    "terms": [
+      "Sectional chart / セクショナルチャート / 1:500,000・56 日ごとに改訂",
+      "Terminal Area Chart (TAC) / ターミナル・エリア・チャート / 1:250,000（Class B の周り）",
+      "Chart Supplement / チャート・サプリメント（空港の詳しい情報） / 旧 A/FD",
+      "Chart Users' Guide / チャート記号の手引き / FAA",
+      "Maximum Elevation Figure (MEF) / 区画の最大標高 / 30′×30′ の区画、百 ft 単位",
+      "Nautical mile (NM) / Statute mile (SM) / 海里・法定マイル / 1 NM ≒ 1.15 SM",
+      "Course / Heading / Bearing / 航路・針路・方位 / ",
+      "True course (TC) / Magnetic course (MC) / 真航路・磁航路 / MC は 91.159 で使う",
+      "True / Magnetic / Compass heading / 真針路・磁針路・コンパス針路 / TH・MH・CH",
+      "Variation / Isogonic line / 偏差・等偏差線 / East is least, West is best",
+      "Deviation / Deviation card / 自差・自差カード / ",
+      "Wind correction angle (WCA) / 偏流修正角 / 風が右なら右へ",
+      "Groundspeed (GS) / True airspeed (TAS) / 対地速度・真対気速度 / ",
+      "ETE / ETA / ATE / 所要時間・到着予定時刻・実際の所要時間 / ",
+      "Checkpoint / Navigation log / チェックポイント・ナビゲーションログ / ",
+      "Pilotage / Dead reckoning / 地文航法・推測航法 / ",
+      "Rule of 60 / 60 の法則 / 60 NM で 1 NM ≒ 1°",
+      "VFR cruising altitude / VFR の巡航高度 / 91.159"
+    ],
+    "examples": [
+      "TC 090°・風 030°/15 kt・TAS 105 kt（課目 n2 の速度）→ WCA 左へ約 7°・TH 083°・GS 約 97 kt。偏差 6°W（教材値）→ MH 089°。自差 +2° → CH 091°。磁航路 MC は 096° なので、地上 3,000 ft より上なら巡航高度は奇数千＋500（3,500・5,500 ft）。",
+      "LAB RWY → LAB-A：6.4 NM・磁航路 037°。GS 105 kt で約 3.7 分、燃料 約 0.7 gal（教材モデル 約 11 gal/h）。",
+      "20 NM 飛んで 12 分かかった → 実際の GS は 100 kt（予定 105 kt より遅い＝向かい風が強い）→ 残りの ETE と燃料を書き直す。",
+      "20 NM 飛んで航路の右 2 NM、残り 40 NM → 平行に戻すなら左へ 6°、目的地へ向けるなら左へ 9°。"
+    ],
+    "cautions": [
+      "この教材の地図・訓練点・LAB VOR・数値は架空（NOT FOR NAVIGATION）。実際の飛行は最新の航空図（56 日ごと）・Chart Supplement・NOTAM で。",
+      "偏差は場所と年で変わる。2026 年の Sanford 付近は約 7°W（NOAA）。この教材の 6°W は教材値。",
+      "燃料流量・巡航速度は教材モデルの値。実機は必ずその機体の POH / AFM の性能表で計算する。"
+    ],
+    "quizReview": [
+      "Q1（真針路 095°・7°W → 102°）：keep（West is best の練習として良い。本文の実際値約 7°W とも合う）",
+      "Q2（91.159・磁航路 210° → 4,500 ft）：keep（本文で磁航路 MC を定義してから出す）",
+      "Q3（60 の法則：30 NM で 3 NM → 6°）：keep（計算機 rule60 と一致）"
+    ],
+    "quizProposals": [
+      {
+        "q": "セクショナルチャートの空港データ「CT 118.3 ★」の ★ の意味は？",
+        "choices": ["管制塔の運用が時間限定（part-time）", "飛行場灯台がある", "燃料が買える", "国際空港である"],
+        "answer": 0,
+        "why": "FAA Chart Users' Guide：CT 周波数の後の ★ は時間限定の運用。回転灯台は空港記号の上の別の記号。"
+      },
+      {
+        "q": "空港データ「55 L 39 122.95」の「39」は？",
+        "choices": ["最長滑走路が約 3,900 ft", "標高 3,900 ft", "周波数 139", "滑走路が 39 本"],
+        "answer": 0,
+        "why": "滑走路の長さは百 ft 単位（Chart Users' Guide）。55 は標高 ft、L は日没〜日の出の灯火、122.95 は UNICOM。"
+      },
+      {
+        "q": "VFR の巡航高度（91.159）を決めるのに使う方位は？",
+        "choices": ["磁航路（magnetic course）", "真針路（true heading）", "コンパス針路", "風向"],
+        "answer": 0,
+        "why": "91.159 は magnetic course で決まる。風で機首を振っても（針路が変わっても）巡航高度は変わらない。"
+      }
+    ],
+    "refs": [
+      "update：PHAK（FAA-H-8083-25C）は現行。第 16 章の直接リンク https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-16-navigation を併記",
+      "update：Chart Users' Guide は 2026-07-09 有効版 https://aeronav.faa.gov/user_guide/cug-complete_20260709.pdf（ページ https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/aero_guide/）",
+      "add：FAA Private Pilot ACS（FAA-S-ACS-6C, Change 1）Area I Task D・Area VI Task A https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf（R.acsP）",
+      "add：14 CFR 91.159 / 91.151 / 91.103 の条文リンク（https://www.ecfr.gov/current/title-14/section-91.159 など）",
+      "keep：FAA VFR Charts（56 日ごと）・NOAA 磁気偏差計算（WMM-2025）"
+    ]
+  },
+  "appMismatches": [
+    "book-figs.js（CALC.fuel）— 既定 9.5 gal/h ↔ physics.js:622 の燃料流量（3,000 ft・110 KIAS で約 11.5 gal/h、105 KIAS で約 10.8 gal/h）— 本は教材モデル値（約 11 gal/h）を既定にするか「POH の値」と明記する（飛行モデルは変えない）",
+    "book-figs.js（CALC.wca）— 既定 TAS 105 kt ↔ physics.js pa28.v.cruise 110 KIAS（3,000 ft で TAS 約 113 kt）— 課目 n2（syllabus.js:281 kt 105）の速度として 105 を使うなら本文でそう書く",
+    "book-4.js nav.chart の空港データ例「60」 ↔ physics.js:68 LAB_RWY len 1,200 m（約 3,940 ft）— 本を「39」に",
+    "book-4.js nav.chart「★＝飛行場灯台」 ↔ FAA Chart Users' Guide — 本の誤り",
+    "syllabus.js:280/284 — 課目 n2 の見積もりは「針路（磁）」と言うが、syllabus.js estimateTruth は現在地から LAB-F への磁方位（航路）と、いまの GS での時間で採点 — 本の nav.plan / nav.divert で「課目の『針路』は新しい目的地への磁方位。風の修正は飛びながら」と説明する（アプリは変えない）"
+  ],
+  "factChecks": [
+    {"claim": "セクショナルチャートの縮尺 1:500,000、1 インチ ≒ 6.9 NM", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/18_phak_ch16.pdf", "note": "PHAK 16：1 inch = 6.86 NM（≒ 8 SM）。"},
+    {"claim": "FAA が定期的に改訂する", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/vfr/", "note": "VFR チャートは 56 日ごと（Chart Users' Guide も 'updated every 56 days'）。PHAK 25C の 'semiannually' は古い。"},
+    {"claim": "MEF：区画の最も高い地形・障害物に余裕を足した値（百 ft 単位、2⁵ ＝ 2,500 ft MSL）", "verdict": "correct", "source": "https://aeronav.faa.gov/user_guide/cug-complete_20260709.pdf", "note": "区画は緯度 30′×経度 30′。100 ft 単位に切り上げ。"},
+    {"claim": "青は管制塔あり、マゼンタは管制塔なし", "verdict": "correct", "source": "https://aeronav.faa.gov/user_guide/cug-complete_20260709.pdf", "note": ""},
+    {"claim": "空港データの ★ は飛行場灯台", "verdict": "wrong", "source": "https://aeronav.faa.gov/user_guide/cug-complete_20260709.pdf", "note": "CT 周波数の後の ★ は 'Star indicates operation part-time'。灯台は空港記号に付く別の記号。"},
+    {"claim": "空港データ：標高・L（灯火）・最長滑走路（百 ft）・UNICOM", "verdict": "correct", "source": "https://aeronav.faa.gov/user_guide/cug-complete_20260709.pdf", "note": "L は日没〜日の出の灯火、*L は制限あり。滑走路長は 70 を境に四捨五入。"},
+    {"claim": "青実線 B・マゼンタ実線 C・青破線 D、マゼンタ/青のぼかしは E の下限 700/1,200 ft", "verdict": "correct", "source": "https://aeronav.faa.gov/user_guide/cug-complete_20260709.pdf", "note": "E の地表区域（マゼンタ破線）が表に無い。"},
+    {"claim": "西偏は足し、東偏は引く（East is least, West is best）", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/18_phak_ch16.pdf", "note": ""},
+    {"claim": "フロリダ中部はおよそ西偏 6〜7°", "verdict": "outdated", "source": "https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml", "note": "NOAA WMM-2025：Sanford（28.78N, 81.24W）2026-10-26 で 7.09°W、年 −0.07°（西へ増加）。"},
+    {"claim": "自差は compass card で読む", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/18_phak_ch16.pdf", "note": "PHAK 図 16-12 は 'Compass deviation card'。compass card はコンパスの目盛り板。"},
+    {"claim": "91.159：地上 3,000 ft より上、磁航路 0〜179° は奇数千＋500、180〜359° は偶数千＋500", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-91/subpart-B/subject-group-ECFR4d5279ba676bedc/section-91.159", "note": "18,000 ft MSL 未満。磁『航路』で決まる。"},
+    {"claim": "91.151：目的地まで＋昼 30 分・夜 45 分", "verdict": "imprecise", "source": "https://www.ecfr.gov/current/title-14/section-91.151", "note": "正しくは『最初の着陸予定地』まで、通常の巡航速度で。"},
+    {"claim": "91.103：IFR や飛行場の近くを離れる飛行では天気・燃料・代替・遅れを知る", "verdict": "imprecise", "source": "https://www.ecfr.gov/current/title-14/section-91.103", "note": "(b) すべての飛行で滑走路長と離着陸距離のデータも必要。"},
+    {"claim": "60 の法則：60 NM で 1 NM ≒ 1°", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/18_phak_ch16.pdf", "note": "小角近似（tan 1° ≒ 1/57）。教材の計算機 rule60 と一致。"},
+    {"claim": "ACS の航法の基準（参考：本文に未記載）", "verdict": "correct", "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf", "note": "PA.VI.A.S5 航路から 3 NM 以内で位置確認、S6 チェックポイントに ±5 分、S7 高度 ±200 ft・針路 ±15°。ACS 6C（2023 年 11 月、Change 1）が現行。"}
+  ],
+  "cadetNotes": [
+    "content.test.mjs の KEEP：nav.chart はフィルター後も /架空/ と /NOT FOR NAVIGATION/ を含むこと。ANA などの名前や UI の語と同じ文に入れない（文ごと消される）。",
+    "nav.chart・nav.plan・nav.log・nav.dr の最初の <svg> が教室の画面に出る：sectionalSymbols・headingChain・navLog・rule60 をそれぞれ最初に置く（windTriangle は nav.plan の 2 枚目）。",
+    "APP の正規表現：日本語の直後の（W）（E）（S）など 1 文字の括弧は「キー表示」と判定される。「西偏（W）」「東（E）」は書かず「6°W」「西偏（West）」にする。",
+    "bk.calc（wca・fuel・rule60）と bk.sim は CADET で消える。計算の答え（WCA 7°・GS 97 kt・6°/9°）は本文にも書いておく。",
+    "「ここが大切」は 1 項目 60 字以内（ゲームが読み上げる）。nav.dr の 1 項目目（約 85 字）は分ける。"
+  ]
+}

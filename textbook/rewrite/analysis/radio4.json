@@ -1,0 +1,271 @@
+{
+  "id": "radio4",
+  "title": "1 回の飛行の交信：出発から到着まで（A whole flight on the radio: from the ramp to the ramp）— 第 10 章, book-comm.js:230-322",
+  "sections": [
+    {
+      "id": "comm.atis",
+      "title": "① ATIS を聞いて書き取る",
+      "gist": "出発前に LAB の ATIS（information Bravo）を聞いてひざ板に書き取り、高度計を 30.01 に合わせる。最初の交信で “with information Bravo” と言う。",
+      "issues": [
+        "「雲高 5,000 ft 以上・視程 5 SM 以上なら雲と視程は省くことがある」→ AIM 4-1-13 の本文は『雲高が 5,000 ft を超え、視程が 5 マイルを超えるとき（above 5,000 feet / more than 5 miles）』。同じ段落の NOTE には『5,000 ft 以上・5 マイル以上』とあり、AIM 自体が少し食い違っている。本文の言い方に合わせる。",
+        "ATIS の “Few clouds at three thousand five hundred” と、この飛行の巡航高度 3,500 ft が同じ。14 CFR 91.155（Class C・E：雲の下 500 ft、上 1,000 ft、横 2,000 ft）から見て、悪いお手本になる。雲を FEW050 などにする（app の radio.js:68 と CADET の atc.js も同じ文なので、そろえて直す）。",
+        "「ここが大切」がない（radio4 の 6 節すべてにない）。",
+        "「ふつうの情報を録音で繰り返し流して」→ AIM の “recorded noncontrol information”（管制の指示ではない、決まった内容の情報）の訳として、『ふつうの』はあいまい。",
+        "ATIS の周波数が書かれていない。CADET（cadet/src/content/dialog/atc.js:20）は LAB ATIS を 127.65 にしている。この章の最初に、LAB の周波数の表（架空）を置くとよい。",
+        "日本語訳の『使用滑走路 36』は、app の radio.js:69 では『離着陸の滑走路 36』。小さな違い。原文の “Landing and departing runway” は『離着陸の滑走路』の方が近い。"
+      ],
+      "mainFigure": "「ATIS のひざ板メモの図」（atisKneeboard）。記号 B／時刻 1453Z／風 340/08／視程 10／雲／気温・露点 31/22／高度計 30.01／滑走路 36 の欄を書き込んだカードと、『30.01 → 高度計の BARO に合わせる → 表示が 55 ft 前後か確かめる』の矢印。"
+    },
+    {
+      "id": "comm.dep",
+      "title": "② 地上：タキシーの許可（出発周波数とコードも）",
+      "gist": "LAB Ground を呼び、滑走路 36 への地上走行（誘導路 Alpha 経由、誘導路 Charlie の手前で止まる）と、出発周波数 119.75・コード 4271 をもらって、言われた順に復唱する。滑走路の手前では必ず止まる。",
+      "issues": [
+        "「エンジン始動前後に地上管制…と交信し」→ AIM 4-3-14 は『エンジンを始動する前に（prior to starting engines）』。",
+        "いちばん大切な決まり（滑走路の指定は、その滑走路に入る許可でも横切る許可でもない）が bk.warn の中にしかなく、「ここが大切」がない。",
+        "「滑走路の手前の停止線（黄色の実線と破線）で必ず止まる」→『実線の側で止まる』（AIM 2-3-5：“The solid lines are always on the side where the aircraft must hold.”）を足す。",
+        "「終わったら滑走路の手前で管制塔に変える」に、管制塔の周波数（118.3）が書かれていない。app の radio.js:82 には『管制塔 118.3 に変える』とあり、G1000 型の COM1 の初期値も 118.300（予備 121.700、avionics.js:120）。",
+        "パイロットの言葉の日本語の列が、要素を並べただけ（「（相手・自分・場所・ATIS・行き先と高度・要求）」）。app（radio.js:74,78）は意味の全訳と、理由の列（note）を持っている。章の summary では『日本語の意味と理由つきで』と言っているのに、book の say() の表には理由の列がない。",
+        "2 回目の指示 “continue via Alpha to runway three six” は、JO 7110.65 3-7-2 の言い方（“CONTINUE TAXIING VIA (route)”）から少しずれている。間違いではないが、標準の言い方に寄せてもよい。",
+        "ランナップの参照（{ch:ground}）はよい。ランナップする場所（run-up area）が、地図でどこにあるかを示していない（下の図で見せる）。"
+      ],
+      "mainFigure": "「LAB の地上走行の模式図」（labTaxiDiagram）。west ramp → 誘導路 Alpha → 誘導路 Charlie の手前（止まる位置）→ ランナップの場所 → 滑走路 36 の停止線（実線の側）を、通る順に色の線で描く。『模式図・NOT FOR NAVIGATION・架空の空港』と書く。"
+    },
+    {
+      "id": "comm.tower",
+      "title": "③ 管制塔：離陸",
+      "gist": "滑走路 36 の手前で管制塔を呼び、line up and wait（離陸許可ではない）のあと、cleared for takeoff・fly runway heading を復唱して離陸する。上昇中に “contact departure” と言われ、地上でもらっていた 119.75 に変える。",
+      "issues": [
+        "「LUAW と離陸許可のときには、同じ滑走路の最終進入（6 マイル以内）にいる一番近い機が伝えられる（JO 7110.65 3-9-4・3-9-10）」→ FAA の民間の管制塔の決まりは LUAW のときだけ（JO 7110.65 3-9-4、AIM 5-2-5）。3-9-10 で離陸許可のときに 6 マイル以内の機を伝える決まりは、USAF（米空軍）の管制塔だけのもの。離陸許可で交通情報を言うのは、必要なときに言えばよい（決まりではない）。",
+        "「管制官は、パイロットが知っていると思えば周波数を省くことがある（AIM 4-3-14）」→ AIM 4-3-14 が扱うのは Ground と Tower の周波数だけ。出発周波数を省いてよい根拠は JO 7110.65 2-1-17（“Departure frequency if previously given”）。radio.js:94 の note も同じ間違い。",
+        "“Fly runway heading” の説明が『滑走路の方位を保って上昇せよ』だけになっている。PCG の RUNWAY HEADING は『滑走路の中心線を延ばした線の磁方位（塗られた番号ではない）。風で流されても修正しない』。LAB 36 は 360°（真方位 354° に、教材の偏差 6°W を足した値：physics.js:66,68。t1 の文『滑走路の方位 360° を保つ』とも合う）。",
+        "管制塔への最初の呼び出しで student pilot と名乗っていない。radio1 radio.technique と AIM 4-2-4 は、管制塔を含むどの局でも最初の交信で名乗ることを勧めている（radio.js:86 も同じ）。",
+        "LUAW という略語を、箇条書きの中で、つづりを先に書かずに使っている。「ここが大切」もない。",
+        "bk.sim の「課目『通常離陸と上昇』は、この離陸許可の復唱から始まります」→ t1（syllabus.js:157-166）は離陸前点検から始まり、出てくる指示は school.js:119 の “wind …, runway 36, cleared for takeoff.”（LUAW も fly runway heading もない）。『このあと離陸許可を復唱します』くらいに直す。",
+        "1 行目の LUAW の日本語の注は正しい（『滑走路に入り、センターラインに合わせて止まる』）。AIM 5-2-5 の『離陸の向きに合わせて待つ（align … with the correct departure direction）』も添えるとよい。"
+      ],
+      "mainFigure": "「滑走路での 3 つの位置の図」（luawPositions）。上から見た滑走路 36 の端に、①停止線の手前（holding short）②センターライン上で待つ（line up and wait）③離陸滑走（cleared for takeoff）の 3 つの Archer と、それぞれの言葉を描く。最終進入の 5 NM に Cessna を描き、『LUAW の機には、6 NM 以内のいちばん近い機を伝える：AIM 5-2-5』と書く。"
+    },
+    {
+      "id": "comm.radar",
+      "title": "④ 出発管制・レーダー：交通情報と、別れ方",
+      "gist": "LAB Departure に高度を伝え、radar contact と resume own navigation をもらう。交通情報（時計の方位・距離・進む方向・機種・高度）に応え、訓練空域でレーダー業務を終えて squawk VFR（1200）にする。",
+      "issues": [
+        "「時計の方位は機首が 12 時」は AIM 4-1-15 と違う。レーダーで管制官に見えるのは航跡（進んでいる方向）だけなので、時計の方位は航跡が基準になる（“Since the radar controller can only observe aircraft track (course)…, traffic advisories are issued accordingly”）。横風で機首を風上に向けている（クラブ）ときは、他機は言われた方位より風下の側に見える。今の『言われた方位から少しずれた所を探す』では、どちらにずれるかが分からない。",
+        "訓練空域が Class C のどこにあるかが書かれていない。Class C の中（中心 5 NM・棚 10 NM）では交信を続けなければならず、レーダー業務の終了を頼めるのは外側の区域（outer area、ふつう 20 NM まで）での話（AIM 3-2-4、JO 7110.65 7-8-8）。『訓練空域は LAB の北東、10 NM の外』と決めて、図にする。",
+        "出発管制への最初の呼び出しで student pilot と名乗っていない（AIM 4-2-4。radio.js:98 も同じ）。",
+        "パイロットの行が 2 つ続く（“Looking” → “Traffic in sight”）。間に『（しばらくして見えた）』の行（app の ACT 行のような）がないので分かりにくい。",
+        "“Looking” は PCG の用語ではない（よく使われる言い方）。PCG で決まっているのは Traffic in sight と Negative contact。",
+        "「ここが大切」がない。AIM 4-1-15 の『VFR のレーダー業務では、頼まない限り、他機をよけるための針路はもらえない』も足すとよい。"
+      ],
+      "mainFigure": "「時計の方位は航跡が基準の図」（trafficClockTrack）。自分の機を中心に時計の文字盤を描く。航跡（矢印）を 12 時にし、機首は風上に 10〜15° ずれている（クラブ）。管制官の『1 o'clock』は航跡から 30°、パイロットの目には機首から見て少し違う方向に見えることを示す（AIM 4-1-15 の図にならう）。"
+    },
+    {
+      "id": "comm.arrive",
+      "title": "⑤ 帰り：進入管制 → 管制塔 → 着陸 → 地上",
+      "gist": "ATIS Charlie を聞き、LAB Approach を呼んでコード 0425 と ident、radar contact と左ダウンウインドへの指示をもらい、LAB Tower で midfield の報告、着陸順 2 番・着陸許可、誘導路 Charlie で出て Ground 121.7 へ変え、エプロンまで地上走行する。",
+      "issues": [
+        "進入管制への到着の呼び出しが “one five miles northeast, three thousand five hundred, …”。北東から LAB へ向かうのは南西向き（磁方位 180〜359°）の飛行で、地上 3,000 ft を超える水平飛行では、偶数千 ft＋500 ft（2,500 ft・4,500 ft）を使う決まり（14 CFR 91.159）。LAB は標高 55 ft なので、3,500 ft MSL は地上約 3,445 ft にあたり、この決まりに当てはまる。→ “two thousand five hundred” にする（radio.js:112 も同じ）。",
+        "AIM 3-2-4 は、Class C に到着する機の呼び出しで、位置・高度・トランスポンダーのコード（radar beacon code）・目的地を言うことを求めている。book の呼び出しにはコードがない（“squawking one two zero zero” を足す）。student pilot もない（AIM 4-2-4）。",
+        "「到着の最初の呼び出しは空港から 15 マイルほど（AIM 4-3-2）」→ AIM 4-3-2 は管制塔への呼び出しの話。Class C の進入管制には、境界（10 NM）の手前で余裕をもって呼ぶ（AIM 3-2-4）を出典にする。",
+        "帰りの ATIS が『（LAB の ATIS “information Charlie” を聞き、高度計を合わせる）』という説明の行だけになっている。app（radio.js:110）は全文を持っている（ただし時刻の問題がある：下の numbers を参照）。",
+        "進入・管制塔・地上の 3 つの段階が、16 行の 1 つの表に入っている。book は ⑤ で 1 つにまとめているが、app の FLIGHT は ⑤ ATIS と進入管制・⑥ 管制塔：場周経路と着陸・⑦ 地上管制：駐機場へ に分けている。小見出しを app の ⑤⑥⑦ に合わせる。",
+        "「停止線を越えたら止まる」→ AIM 4-3-21：機体の全部が停止線を越えたら、指示がなければ止まる（実線を越えるまでは止まらない）。",
+        "AIM 4-1-18 の大切な注意が抜けている：『前の機に続け（follow）』という指示は、前の機への許可や指示に従ってよいという意味ではない。",
+        "「ここが大切」がない。"
+      ],
+      "mainFigure": "「場周経路でどこで何を言うかの図」（patternCalls）。滑走路 36 の左回りの場周（ダウンウインドは地上 1,000 ft、約 1.6 km 離れて平行：syllabus.js t2）を描き、次の地点に番号の札を立てる：進入管制への呼び出し（北東 15 NM）／管制塔への呼び出し（10 NM）／enter left downwind／midfield の報告／左ベースの Cessna（number two, follow）／cleared to land／誘導路 C で右に出る → contact Ground point seven。模式図・NOT FOR NAVIGATION と書く。"
+    },
+    {
+      "id": "comm.option",
+      "title": "⑥ 場周経路での練習（タッチアンドゴー）",
+      "gist": "closed traffic（場周経路に残って離着陸を繰り返す）を頼み、ダウンウインドで option を頼んで cleared for the option をもらう。go around の指示には、まず操縦してから応答する。",
+      "issues": [
+        "見出しの番号『⑥』が、app の FLIGHT の ⑥（管制塔：場周経路と着陸、radio.js:119）とぶつかる。app は 7 つの段階なので、この節は『⑧』か『練習の場面（番号なし）』にする。",
+        "“request closed traffic” をいつ言うのかが分からない（1 つ前の節でエプロンまで地上走行して、飛行は終わっている）。『別の日の練習』と書き、ふつうは離陸前の呼び出し（“…holding short runway three six, ready for departure, request closed traffic”）で頼む、と書く。",
+        "「（ダウンウインドに入ったところで要求する：AIM 4-3-23）」と書いているのに、例の呼び出しは “midfield left downwind, request the option”（中央で）。AIM は『ダウンウインドに入るとき』。中央の報告と一緒に言ってもよい、と書いて合わせる。",
+        "Go around の説明「滑走路の上を上昇して場周へ（PCG）」→ PCG は『場周の高度まで上昇しながら滑走路の上を飛び、クロスウインドから場周に入る』。クロスウインドを足す。",
+        "bk.sim「課目『場周経路』『ゴーアラウンド』で、管制の指示に復唱しながら飛びます」→ t4（syllabus.js:184-190）には管制の指示の場面がない。t2 にあるのも着陸許可の復唱 1 つだけ（school.js:122）。この文は事実と違う。",
+        "「ここが大切」がない。"
+      ],
+      "mainFigure": "「option の 4 つの選び方とゴーアラウンドの経路の図」（optionAndGoAround）。滑走路 36 の上に、タッチアンドゴー・ストップアンドゴー・ローアプローチ・フルストップの 4 つの経路を描き、別の色でゴーアラウンド（滑走路の上を飛びながら場周の高度へ → クロスウインド）を描く。"
+    }
+  ],
+  "problems": {
+    "unclear": [
+      "chapter：summary では『日本語の意味と理由つきで』と言っているが、say() の表には理由の列がなく、パイロットの行の多くが『（相手・自分・場所…）』のような要素の並びだけ。app の FLIGHT のように、意味（全訳）と理由（note）の列を持たせる。",
+      "chapter：LAB の周波数（ATIS・Ground・Tower・Departure・Approach）がまとまって書かれていない。Tower 118.3 は帰りの段階で初めて出てくる。",
+      "comm.tower：LUAW をつづりなしに使い、“fly runway heading” の意味（PCG：磁方位・風で流されても修正しない）を説明していない。",
+      "comm.radar：時計の方位がどちらにずれるかがあいまい（『少しずれた所を探す』）。",
+      "comm.radar：訓練空域が Class C の外かどうか書かれていない（周波数の変更を頼める条件に関係する）。",
+      "comm.option：closed traffic を頼むのがいつか、分からない。",
+      "chapter：全体が常体（〜する）。です・ます調にそろえる。"
+    ],
+    "order": [
+      "飛行の全体像（地図・周波数・段階の番号）がない。新しい節 comm.flow を章の最初に置く。",
+      "comm.arrive に 3 つの段階が入っている。app の FLIGHT（radio.js:109-135：app・twr2・gnd2 が 3 つとも comm.arrive にリンク）に合わせて、節の中に ⑤⑥⑦ の小見出しを立てる。app が comm.arrive にリンクしているので、節は分けずに小見出しで分ける。",
+      "comm.option は、飛行が終わったあとに場周の練習が出てくるので、時の順番が合わない。『別の日の練習』として最後に置き、番号を ⑧（または番号なし）にする。",
+      "Class C の交信確立（今は radio3 comm.pattern にある）は、使う場面である comm.arrive に置くと分かりやすい。"
+    ],
+    "errors": [
+      "comm.radar「時計の方位は機首が 12 時」と quiz Q3（正解『機首の方向』、不正解『進んでいる方向（航跡）』）→ 管制官はレーダーで見える航跡を基準に時計の方位を言う。クラブしていると、他機は言われた位置より風下の側に見える（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html AIM 4-1-15）",
+      "comm.tower「6 マイル以内の一番近い機…（JO 7110.65 3-9-4・3-9-10）」→ 民間（FAA）は LUAW のとき（3-9-4・AIM 5-2-5）だけ。3-9-10 の離陸許可での決まりは USAF だけ（https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap3_section_9.html）",
+      "comm.tower「周波数を省くことがある（AIM 4-3-14）」を出発周波数に当てはめている → 出発周波数の根拠は JO 7110.65 2-1-17『Departure frequency if previously given』（https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap2_section_1.html）",
+      "comm.arrive の到着高度 3,500 ft（南西向き、地上 3,000 ft を超える水平飛行）→ 14 CFR 91.159(a)(2)：偶数千 ft＋500 ft（2,500 ft・4,500 ft）（https://www.ecfr.gov/current/title-14/section-91.159）",
+      "comm.option の bk.sim『（t2・t4 で）管制の指示に復唱しながら飛びます』→ t4 には管制の場面がない（syllabus.js:184-190）。t2 は着陸許可 1 つだけ（school.js:122）",
+      "comm.dep「エンジン始動前後に」→ AIM 4-3-14『prior to starting engines』（エンジンを始動する前に）（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html）",
+      "comm.atis「雲高 5,000 ft 以上・視程 5 SM 以上なら省く」→ AIM 4-1-13 の本文は『5,000 ft を超え（above）・5 マイルを超える（more than）』（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html）"
+    ],
+    "outdated": [
+      "古くなった内容は見つからなかった。AIM（Change 3、2026-07-09 発効）、JO 7110.65BB（Change 3、2026-07-09 発効）、PCG（GO AROUND・RUNWAY HEADING・CLEARED FOR THE OPTION・RADAR CONTACT・RESUME OWN NAVIGATION）で確認した。"
+    ],
+    "duplicates": [
+      "radio.js FLIGHT（radio.js:65-136）は、この章と同じ台本の app 版。これは意図した重なりで、言葉が一字一句同じでなければならない（下の numbers と appMismatches を参照）。",
+      "radio3 comm.readback（Ground・LUAW・周波数の復唱）と、comm.dep・comm.tower の復唱の説明が重なる。radio3 には『型』を、radio4 には『流れ』を書く。",
+      "book-3 ops.pattern（場周経路の辺の名前・高度）と comm.arrive・comm.option、book-3 ops.goaround（Power・Attitude・Configuration）と comm.option の go around が重なる。→ 操縦は第 14 章（{ch:tl} などの参照）に任せ、ここは交信だけにする。",
+      "book-3 ground.start・ground.runup（タキシーとランナップ）と comm.dep が重なる。",
+      "radio5 comm.sfb（Sanford の LUAW・滑走路の取り違え）と comm.tower が重なる。"
+    ],
+    "numbers": [
+      "radio.js:110 の帰りの ATIS が “LAB information Charlie. One six five three Zulu …”。出発の ATIS は “information Bravo … One four five three Zulu”（radio.js:68／book-comm.js:236）。ATIS は毎時の観測のたびに作り直す（AIM 4-1-13）ので、1453Z の Bravo の次は 1553Z の Charlie、1653Z なら Delta になる。→ Charlie の時刻を “One five five three Zulu” にする（または記号を Delta にする）。book には帰りの ATIS の全文がないので、書き直しでは時刻を直したものを載せる。",
+      "到着の高度 3,500 ft（book-comm.js:280、radio.js:112）は、南西向きの 91.159 に合わない。→ 2,500 ft にする（管制塔への呼び出しの “two thousand” はそのままでよい）。radio.js:272（scene r_panpan）の “heading two two zero, three thousand five hundred” も同じ問題。",
+      "ATIS の雲 FEW035（book-comm.js:236、radio.js:68、cadet/src/content/dialog/atc.js:44）が、巡航高度 3,500 ft（book-comm.js:243、radio.js:73）と同じ。91.155 では雲の下 500 ft 以上離れる → 雲を 5,000 ft 以上にする。帰りの ATIS の “Scattered clouds at four thousand”（radio.js:110）と、帰りの 3,500 ft の差もちょうど 500 ft でぎりぎり。2,500 ft で帰るなら問題はない。",
+      "段階の番号：book は ① ATIS ② 地上 ③ 管制塔 ④ 出発管制 ⑤ 帰り（進入・管制塔・地上）⑥ 場周の練習。app（radio.js:66-130）は ①〜⑦ で、⑥ は『管制塔：場周経路と着陸』、⑦ は『地上管制：駐機場へ』。→ book を app に合わせる。",
+      "Tower 118.3 と Ground 121.7 は、app の FLIGHT の freq の欄（radio.js:72,84）と G1000 型の COM1 の初期値（avionics.js:120：118.300 と 121.700）に合っている。book は出発の段階でこの周波数を書いていない。CADET の ATIS 127.65（atc.js:20）は、FLIGHT LAB 側のどこにも書かれていない。",
+      "LAB の標高 55 ft（examples）は physics.js:64,68 の GROUND_FT・LAB_RWY.elevFt と合っている。滑走路 36 は真方位 354°・教材の偏差 6°W（physics.js:66,68）で磁方位 360°。t1 の『滑走路の方位 360°』と合う。",
+      "地上でもらう出発周波数・コード（119.75・4271）、進入管制のコード 0425、誘導路 Alpha と Charlie、west ramp は、book と radio.js:75-133 で同じ。"
+    ]
+  },
+  "policy": "章の最初に新しい節 comm.flow『この章の飛行の全体図』を置く。LAB の Class C（中心 5 NM・棚 10 NM・外側の区域 20 NM）、出発、北東 10 NM の外の訓練空域、帰りの呼び出し地点を描いた模式図と、架空の周波数の表（ATIS 127.65・Ground 121.7・Tower 118.3・Departure 119.75）を載せ、段階の番号を app の FLIGHT と同じ ①〜⑦ にする。各段階の節は、目的の文 → 最初の図 → 台本の表（誰・英語・意味・理由の 4 列。app の note 列と同じ内容）→「ここが大切」→ 注意、の形にする。今はどの節にも「ここが大切」がない。comm.arrive は節を分けずに、⑤ ATIS と進入管制・⑥ 管制塔：場周経路と着陸・⑦ 地上管制：駐機場へ の小見出しで分ける（app の 3 つの段階が comm.arrive にリンクしているため）。帰りの ATIS の全文（時刻を 1553Z に直したもの）を入れる。comm.option は『別の日の練習（⑧）』にする。事実の誤りを直す：時計の方位は航跡が基準（AIM 4-1-15）、帰りの高度は 2,500 ft（91.159）、ATIS の雲を巡航高度より上に、6 マイルの交通情報と周波数を省く根拠の出典、student pilot を管制塔・出発管制・進入管制の最初の呼び出しにも入れる（AIM 4-2-4）、到着の呼び出しにコードを入れる（AIM 3-2-4）。台本の言葉は radio.js FLIGHT と一字一句同じにする。app の側を直すべきところ（ATIS の時刻・高度・雲・時計の方位・student pilot）は appMismatches に書いたので、そこで報告する。テストで必要な 'AIM 4-4-7'・'AIM 3-2-4'・'AIM 4-3-18'・'line up and wait'・'cleared for takeoff'・'student pilot' は、この章の本文に残す。",
+  "figuresExisting": [],
+  "figuresNew": [
+    { "name": "flightOverviewMap", "section": "comm.flow", "what": "LAB の Class C の模式図：中心 5 NM・棚 10 NM（地上 1,200〜4,000 ft）・外側の区域 20 NM（破線）。出発（北へ）→ 北東 10 NM の外の訓練空域 → 帰り（北東 15 NM で進入管制、10 NM で管制塔）→ 左ダウンウインド 36 の経路に ①〜⑦ の番号と、各段階の周波数を書く。NOT FOR NAVIGATION と書く。", "data": "AIM 3-2-4（5／10／20 NM、1,200〜4,000 ft）、radio.js FLIGHT の freq と台本（radio.js:66-130）、physics.js の LAB_RWY", "priority": "must" },
+    { "name": "atisKneeboard", "section": "comm.atis", "what": "ATIS Bravo を書き取ったひざ板のカードと、高度計を合わせる手順の矢印。", "data": "ATIS の文（radio.js:68）。標高 55 ft は physics.js:64", "priority": "must" },
+    { "name": "labTaxiDiagram", "section": "comm.dep", "what": "LAB の模式図：west ramp・誘導路 Alpha・誘導路 Charlie の手前の止まる位置・ランナップの場所・滑走路 36 の停止線（実線の側）。地上走行の経路を色で示す。模式図・NOT FOR NAVIGATION。", "data": "架空の配置（book と radio.js:75-82 の経路）。滑走路の長さ 1,200 m・幅 30 m・真方位 354° は physics.js:68", "priority": "must" },
+    { "name": "luawPositions", "section": "comm.tower", "what": "滑走路 36 の端を上から見た図：holding short → line up and wait → cleared for takeoff の 3 つの位置と、それぞれの言葉。最終進入の 5 NM に Cessna。", "data": "AIM 5-2-5、JO 7110.65 3-9-4、AIM 2-3-5（停止線）", "priority": "must" },
+    { "name": "trafficClockTrack", "section": "comm.radar", "what": "時計の文字盤の図：12 時＝航跡。機首はクラブで 10〜15° 風上へ。管制官が『1 o'clock』と言った他機が、パイロットの目にはどこに見えるかを示す。", "data": "AIM 4-1-15 の図（Induced Error in Position of Traffic）", "priority": "must" },
+    { "name": "patternCalls", "section": "comm.arrive", "what": "左回りの場周（滑走路 36）に、交信する地点（15 NM の進入管制・10 NM の管制塔・enter left downwind・midfield・number two follow・cleared to land・右に出て Charlie → Ground point seven）を番号の札で描いた図。", "data": "台本（radio.js:112-128）。場周の寸法（地上 1,000 ft・約 1.6 km・90 kt）は syllabus.js の t2", "priority": "must" },
+    { "name": "optionAndGoAround", "section": "comm.option", "what": "option の 4 つの経路（タッチアンドゴー・ストップアンドゴー・ローアプローチ・フルストップ）と、ゴーアラウンドの経路（滑走路の上を飛びながら場周の高度へ → クロスウインド）。", "data": "AIM 4-3-23、PCG の CLEARED FOR THE OPTION と GO AROUND", "priority": "should" },
+    { "name": "freqTable", "section": "comm.flow", "what": "（表で作る）LAB の周波数とコード（架空）：ATIS 127.65・Ground 121.7・Tower 118.3・Departure 119.75・コード 4271（出発）／0425（到着）／1200（VFR）。いつ・誰に使うかの列も付ける。", "data": "radio.js FLIGHT の freq、avionics.js:120、cadet atc.js:20（ATIS）", "priority": "should" }
+  ],
+  "photos": [
+    { "section": "comm.tower", "subject": "空港の管制塔の外観（人の顔が写っていないもの）。", "search": "Commons: Category:Air traffic control towers in the United States ／ Category:Air traffic control towers in Florida。FAA・USAF が撮った写真ならパブリックドメイン（米国政府の作品）。それ以外は CC BY／CC BY-SA を 1 枚ずつ確認する。航空会社の写真は使わない。", "candidateUrl": "", "candidateLicence": "", "why": "Tower が『滑走路と場周を受け持つ場所』だと、目で見て分かるようにする。" },
+    { "section": "comm.radar", "subject": "空港監視レーダー（ASR-9 など）のアンテナ。", "search": "Commons: Category:ASR-9 ／ Category:Airport surveillance radars。FAA・USAF・NOAA の写真（パブリックドメイン）を選ぶ。レーダーの画面の写真は使わない（instrument screens は禁止）。", "candidateUrl": "", "candidateLicence": "", "why": "管制官に見えるのはレーダーの航跡だけ（時計の方位の基準）、という話を実物と結びつける。" },
+    { "section": "comm.dep", "subject": "誘導路から見た、滑走路の停止線と赤い滑走路標識。", "search": "FAA Runway Safety の写真（faa.gov/airports/runway_safety。パブリックドメイン）、Commons: Category:Runway holding position markings", "candidateUrl": "", "candidateLicence": "", "why": "『滑走路の指定は、その滑走路に入る許可ではない』の『どこで止まるか』を見せる。radio3 と同じ写真を使ってもよい。" },
+    { "section": "comm.option", "subject": "小型機のタッチアンドゴーまたは場周経路を飛ぶ様子（顔が分からないもの）。", "search": "Commons: Category:Touch-and-go landings ／ Category:Piper PA-28-181 Archer in flight。CC BY／CC BY-SA を 1 枚ずつ確認する。訓練校の写真は使わない。", "candidateUrl": "", "candidateLicence": "", "why": "option・closed traffic という言葉に、実際の様子を結びつける。あれば入れる程度。" }
+  ],
+  "endMatter": {
+    "terms": [
+      "ATIS / Information (letter)：飛行場の情報の録音放送／その記号（AIM 4-1-13）",
+      "Have numbers：風・滑走路・高度計だけ聞いた。ATIS を聞いた意味にはならない（AIM 4-1-13）",
+      "Taxi via … / Hold short of …：…を経由して地上走行せよ／…の手前で止まれ（JO 7110.65 3-7-2）",
+      "Departure frequency … squawk …：出発周波数とトランスポンダーのコード（JO 7110.65 3-9-3）",
+      "Ready for departure：出発の準備ができた",
+      "Line up and wait（LUAW）：滑走路に入って待て。離陸許可ではない（AIM 5-2-5）",
+      "Cleared for takeoff：離陸を許可する（JO 7110.65 3-9-10）",
+      "Fly runway heading：滑走路の中心線の磁方位を飛べ。風で流されても修正しない（PCG：RUNWAY HEADING）",
+      "Radar contact：レーダーで識別した。業務の終了まで情報を出す（PCG）",
+      "Resume own navigation：（レーダーの誘導を終えた）自分で航法を続けよ（PCG）",
+      "Traffic, (n) o'clock, (n) miles, (direction)-bound, (type), (altitude)：交通情報（JO 7110.65 2-1-21）。時計の方位は航跡が基準（AIM 4-1-15）",
+      "Traffic in sight / Negative contact：伝えられた他機が見えた／見えない（PCG）",
+      "Radar service terminated, squawk VFR：レーダー業務の終了、コードを 1200 に（JO 7110.65 7-6-11）",
+      "Squawk (code) and ident：コードを入れて IDENT ボタンを押せ",
+      "Outer area：Class C の外側の区域（ふつう 20 NM まで。業務を受けるかは任意）（AIM 3-2-4）",
+      "Enter left downwind / Report midfield downwind：左ダウンウインドに入れ／ダウンウインドの中央で報告せよ",
+      "Number two, follow …：着陸順 2 番、…に続け（JO 7110.65 3-8-1）",
+      "Cleared to land：着陸を許可する（JO 7110.65 3-10-5）",
+      "Contact Ground point seven：地上管制 121.7 と交信せよ（JO 7110.65 2-1-17・AIM 4-3-14）",
+      "Closed traffic：場周経路に残って離着陸を繰り返す（PCG・JO 7110.65 3-10-11）",
+      "Cleared for the option：タッチアンドゴー・ローアプローチ・ストップアンドゴー・フルストップなどを選んでよい（AIM 4-3-23）",
+      "Go around：進入をやめよ（VFR は、指示がなければ滑走路の上を飛びながら場周の高度へ上がり、クロスウインドから場周に入る：PCG）"
+    ],
+    "examples": [
+      "ATIS の高度計 30.01 → 地上で高度計を合わせ、表示が LAB の標高 55 ft に近いか確かめる。",
+      "Tower “Archer Seven Lima Alpha, contact departure.” → 周波数は、タキシーのときに Ground からもらった 119.75（JO 7110.65 2-1-17）。分からなければ “Say frequency”。",
+      "着陸して誘導路 Charlie に出た → 機体の全部が停止線（実線）を越えたら止まり、“contact ground” と言われてから 121.7 で呼ぶ（AIM 4-3-21）。",
+      "“Number two, follow the Cessna on left base” → 見えたら “traffic in sight”、見えなければ “negative contact” と言って探す。『続け』は、前の機への許可に従ってよいという意味ではない（AIM 4-1-18）。"
+    ],
+    "cautions": [
+      "この章の交信は、FAA の言い方と方式にならった架空の練習用の台本。実際の空港の手順・周波数・管制官の言い方は、場所と状況で違う。",
+      "VFR のレーダー業務を受けていても、他機を見て避ける責任はパイロットにある（AIM 4-1-15・AIM 4-1-18）。",
+      "Go around と言われたら、まず操縦（出力・姿勢・形態）。無線はそのあと。",
+      "Sanford など実際の空港の手順は、FAA の最新の資料と管制官の指示で確かめる。"
+    ],
+    "quizReview": [
+      "Q1（taxi via で滑走路に入ってよいか）：残す（AIM 4-3-18）。",
+      "Q2（Ground に変えるのはいつ）：残す（AIM 4-3-14・4-3-21）。理由に『機体の全部が停止線を越えて止まってから呼ぶ』を足す。",
+      "Q3（“one o'clock” の基準）：直す。今の正解『機首の方向』は AIM 4-1-15 と違う。正解は『進んでいる方向（航跡）』。理由：管制官のレーダーに見えるのは航跡だけ。クラブしていると、他機は言われた位置より風下の側に見える。"
+    ],
+    "quizProposals": [
+      { "q": "ATIS information Bravo を聞いた。最初の交信で言うことは？", "choices": ["“with information Bravo”（ATIS の記号）", "“have numbers”", "何も言わない（管制官は知っている）", "ATIS の内容を全部読み上げる"], "answer": 0, "why": "AIM 4-1-13：記号を言うと、管制官は ATIS の内容を繰り返さなくてよい。“have numbers” は風・滑走路・高度計だけを聞いた意味で、ATIS を聞いた意味にはならない。" },
+      { "q": "上昇中、Tower「Archer Seven Lima Alpha, contact departure.」周波数は言われなかった。どうする？", "choices": ["タキシーのときに Ground からもらった出発周波数（119.75）に、応答してから変える", "管制塔の周波数のまま待つ", "121.5 に変える", "応答せずに ATIS の周波数に変える"], "answer": 0, "why": "JO 7110.65 2-1-17：前に伝えてある出発周波数は省いてよい。周波数を変える前には応答する（AIM 4-2-3）。分からなければ聞く。" },
+      { "q": "管制官の交通情報「traffic, one o'clock …」の『12 時』は何が基準？", "choices": ["自分の機の進んでいる方向（レーダーで見える航跡）", "機首の方向（風に関係なく）", "北", "滑走路の方向"], "answer": 0, "why": "AIM 4-1-15：管制官のレーダーに見えるのは航跡だけなので、時計の方位は航跡が基準。横風でクラブしていると、他機は言われた位置より風下の側に見える。" },
+      { "q": "着陸して誘導路に出た。管制塔からまだ何も言われていない。どうする？", "choices": ["機体の全部が停止線を越えた所で止まり、指示を待つ", "すぐ Ground に変えて呼ぶ", "そのまま駐機場まで走る", "滑走路の上で止まって待つ"], "answer": 0, "why": "AIM 4-3-21：機体の全部が停止線を越えたら、指示がなければ止まる。Ground に変えるのは、管制塔に言われてから（AIM 4-3-14）。" },
+      { "q": "VFR の場周経路で “the option” を頼むのはいつ？（AIM 4-3-23）", "choices": ["ダウンウインドに入るとき", "接地の直前", "離陸滑走中", "エンジンを始動する前"], "answer": 0, "why": "AIM 4-3-23：VFR の場周ではダウンウインドに入るとき、計器進入では最終進入フィックスを過ぎるときに頼む。option は管制塔のある空港だけで使う。" }
+    ],
+    "refs": [
+      "追加：FAA AIM 4-4（4-4-7 の復唱）https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_4.html（R キー aim44 を新しく作る）",
+      "追加：FAA AIM 3-2（3-2-4 Class C の交信確立・外側の区域・到着の呼び出しの内容）https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_2.html（R キー aim32 を新しく作る）",
+      "追加：FAA AIM 2-3（2-3-5 停止線）https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap2_section_3.html（停止線の図を入れる場合）",
+      "追加：14 CFR 91.155・91.159（雲からの距離・VFR の巡航高度。高度と雲を直す場合）＝既にある R.cfr91 https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-91",
+      "そのまま：R.aim41・R.aim43・R.aim42・R.aim52・R.jo71（現行 7110.65BB）・R.pcg"
+    ]
+  },
+  "appMismatches": [
+    "flight-lab/src/radio.js:110 — 帰りの ATIS が “information Charlie. One six five three Zulu”、出発は “information Bravo. One four five three Zulu”（radio.js:68）。ATIS は毎時の観測ごとに作り直すので（AIM 4-1-13）、1653Z なら Delta のはず → app が間違い。時刻を 1553Z にする。book はこの全文を持っていない（書き直しで、直したものを入れる）。",
+    "flight-lab/src/radio.js:112 と book-comm.js:280 — 南西向きに 3,500 ft で到着。14 CFR 91.159 では 2,500 ft か 4,500 ft → 両方とも間違い。radio.js:272（r_panpan：heading 220・3,500 ft）も同じ。",
+    "flight-lab/src/radio.js:68、book-comm.js:236、cadet/src/content/dialog/atc.js:44 — ATIS の雲 FEW035 が、巡航高度 3,500 ft（radio.js:73・book-comm.js:243）と同じ → 3 つとも雲を巡航高度より上にする（91.155）。",
+    "flight-lab/src/radio.js:101（note）・:197（scene r_clock の why：『時計の方位は機首が 12 時（AIM 4-1-15）』）・:341（GLOSSARY）— AIM 4-1-15 は航跡が基準。今の book（comm.radar と quiz Q3）も同じ間違い → AIM が正しい。book を直すと、app とは食い違うことになる。",
+    "flight-lab/src/radio.js:86,98,112,120 — 管制塔・出発管制・進入管制への最初の呼び出しに student pilot がない（Ground への呼び出し radio.js:73 にはある）。AIM 4-2-4 は、どの局でも最初の交信で名乗ることを勧めている。book も同じ（radio1 radio.technique の説明とも合わない）→ AIM が正しい。",
+    "flight-lab/src/radio.js:112 — 到着の呼び出しにトランスポンダーのコードがない。AIM 3-2-4 は位置・高度・コード・目的地を求めている。book も同じ → AIM が正しい。",
+    "flight-lab/src/radio.js:66-130 — 段階の番号が ①〜⑦（⑥ は管制塔の着陸、⑦ は地上）。book は ⑤ に 3 つをまとめ、⑥ は場周の練習 → book を app に合わせる。",
+    "flight-lab/src/radio.js:65-136 — FLIGHT には closed traffic・option・go around の段階がない。book の comm.option にはある。食い違いではないが、syllabus.js:90（k4 の book: comm.atis…comm.arrive）に comm.option が入っていないのは、この違いに合っている。",
+    "flight-lab/src/radio.js:94（note『管制官は、パイロットが知っている周波数を省くことがある（AIM 4-3-14）』）— 出発周波数については JO 7110.65 2-1-17 が正しい出典（book-comm.js:262 も同じ間違い）。",
+    "flight-lab/src/radio.js:87（note：6 マイルの交通情報を JO 7110.65 3-9-4 とする）— 正しい。book-comm.js:259 の『3-9-4・3-9-10』の方が不正確（3-9-10 の決まりは USAF だけ）。",
+    "flight-lab/src/syllabus.js:157-166（t1）と school.js:119 — 課目は離陸前点検から始まり、指示は “wind …, runway 36, cleared for takeoff.”（LUAW も fly runway heading もない）。book の comm.tower の bk.sim『この離陸許可の復唱から始まります』は言いすぎ → book を直す。",
+    "flight-lab/src/syllabus.js:184-190（t4）と :167-172（t2）— t4 に管制の場面がない。t2 は着陸許可の復唱だけ（school.js:122 “runway 36, wind …, cleared to land.”）。book の comm.option の bk.sim『管制の指示に復唱しながら飛びます』は事実と違う → book を直す。",
+    "flight-lab/src/radio.js:82（ACT『管制塔 118.3 に変える』）と avionics.js:120（COM1 118.300／121.700）— book は出発の段階で周波数を書いていない → book に足す（app が正しい）。"
+  ],
+  "factChecks": [
+    { "claim": "ATIS は、管制の指示ではない決まった情報を録音で繰り返し流して、周波数の混雑を減らす（AIM 4-1-13）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html", "note": "“continuous broadcast of recorded noncontrol information”。" },
+    { "claim": "雲高 5,000 ft 以上・視程 5 SM 以上なら、雲と視程を省くことがある", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html", "note": "本文は “ceiling is above 5,000 feet and the visibility is more than 5 miles”。NOTE には『5,000 ft 以上・5 マイル以上』とあり、AIM の中で食い違っている。本文に合わせる。" },
+    { "claim": "“have numbers” は ATIS を聞いた意味にはならない", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html", "note": "AIM 4-1-13 の最後の段落と、AIM 4-1-8 の NOTE。" },
+    { "claim": "出発する機は、エンジン始動前後に地上管制と交信し、離陸の準備ができたら管制塔に変える（AIM 4-3-14）", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html", "note": "AIM は『エンジンを始動する前に（prior to starting engines）』。それ以外は正しい。" },
+    { "claim": "レーダー業務を受ける VFR 機には、離陸前に “departure frequency …, squawk …” が伝えられる（JO 7110.65）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap3_section_9.html", "note": "JO 7110.65 3-9-3 a。" },
+    { "claim": "滑走路の指定とタキシーの指示は、その滑走路に入る許可でも横切る許可でもない。地上走行に “cleared” は使わない（AIM 4-3-18）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html", "note": "" },
+    { "claim": "滑走路の手前の停止線は黄色の実線と破線", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap2_section_3.html", "note": "AIM 2-3-5：4 本の線（実線 2 本・破線 2 本）。実線の側で止まる。" },
+    { "claim": "LUAW と離陸許可のとき、同じ滑走路の最終進入 6 マイル以内のいちばん近い機が伝えられる（JO 7110.65 3-9-4・3-9-10）", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap3_section_9.html", "note": "民間（FAA）は LUAW のとき（3-9-4、AIM 5-2-5 の例 “Traffic a Boeing 737, six mile final”）。3-9-10 で離陸許可のときに伝える決まりは USAF だけ。" },
+    { "claim": "LUAW のまま 90 秒を超えて待たせないことになっている（JO 7110.65）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap3_section_9.html", "note": "3-9-4 の NOTE：“An aircraft should not be in LUAW status for more than 90 seconds without additional instructions.”（追加の指示なしに）。" },
+    { "claim": "LUAW は、すぐ離陸させたいが、まだ許可を出せないときの指示（AIM 5-2-5）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_2.html", "note": "PCG の LINE UP AND WAIT にも “used when takeoff clearance cannot immediately be issued”。" },
+    { "claim": "離陸許可の復唱には滑走路番号を入れる（AIM 4-4-7）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_4.html", "note": "“Initial read back of a taxi, departure or landing clearance should include the runway assignment”。" },
+    { "claim": "管制官は、パイロットが知っていると思えば周波数を省くことがある（AIM 4-3-14）—出発周波数について", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap2_section_1.html", "note": "AIM 4-3-14 は Ground と Tower の周波数だけ。出発周波数は JO 7110.65 2-1-17（“Departure frequency if previously given”。例 “Contact Departure.”）。" },
+    { "claim": "Fly runway heading＝滑走路の方位を保って上昇", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/pcg_html/glossary-r.html", "note": "PCG の RUNWAY HEADING：滑走路の中心線を延ばした線の磁方位（塗られた番号ではない）。風で流されても修正しない。" },
+    { "claim": "交通情報の型：時計の方位・距離・進む方向・機種・高度（AIM 4-1-15・JO 7110.65）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap2_section_1.html", "note": "JO 7110.65 2-1-21 の言い方：“TRAFFIC, (number) O'CLOCK, (number) MILES, (direction)-BOUND, (type of aircraft and altitude)”。" },
+    { "claim": "時計の方位は機首が 12 時（comm.radar と quiz Q3）", "verdict": "wrong", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html", "note": "AIM 4-1-15：“Since the radar controller can only observe aircraft track (course) on the radar display, traffic advisories are issued accordingly”。12 時は航跡の方向。" },
+    { "claim": "VFR のレーダー業務は見張りの責任をなくさない。業務中は周波数を聞き続け、やめるときは伝えてから周波数を変え、コードを 1200 にする（AIM 4-1-15）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html", "note": "" },
+    { "claim": "“radar service terminated, squawk VFR, frequency change approved”（JO 7110.65）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap7_section_6.html", "note": "JO 7110.65 7-6-11 の言い方。Class C では 7-8-8：外側の区域でパイロットが頼んだときは終了してよい。" },
+    { "claim": "Radar contact／Resume own navigation の意味（PCG）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/pcg_html/glossary-r.html", "note": "Resume own navigation は、レーダーでの誘導（vector）が終わったあとに言われる。管制塔の fly runway heading → この言葉、の流れは合っている。" },
+    { "claim": "到着の最初の呼び出しは空港から 15 マイルほど（AIM 4-3-2）", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_2.html", "note": "AIM 4-3-2 の『約 15 マイル』は管制塔への呼び出しの話。Class C の進入管制には、境界の手前で余裕をもって呼ぶ（AIM 3-2-4）。呼び出しには位置・高度・コード・目的地を入れる。" },
+    { "claim": "Class C は入る前に交信を確立する（AIM 3-2-4）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_2.html", "note": "中心 5 NM・棚 10 NM（地上 1,200〜4,000 ft）・外側の区域ふつう 20 NM。" },
+    { "claim": "着陸後は最初の使える誘導路から速やかに出て、停止線を越えたら止まる。管制塔に言われるまで Ground に変えない。Ground の指示は滑走路の横断を許すものではない（AIM 4-3-21）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html", "note": "正確には『機体の全部が停止線を越えたら、ほかに指示がなければ止まる』。" },
+    { "claim": "“Number (n), follow …”・“Extend downwind”・“Make short approach”（JO 7110.65）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap3_section_8.html", "note": "JO 7110.65 3-8-1 の言い方。着陸許可は 3-10-5 “RUNWAY (number) CLEARED TO LAND”。" },
+    { "claim": "“turn right at Charlie, contact Ground point seven”", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap3_section_10.html", "note": "JO 7110.65 3-10-9 の例 “turn right next taxiway, … contact ground point seven”。121 は省いてよい（2-1-17、AIM 4-3-14）。" },
+    { "claim": "“left closed traffic approved, report midfield downwind”", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap3_section_10.html", "note": "JO 7110.65 3-10-11 の言い方：“LEFT/RIGHT CLOSED TRAFFIC APPROVED. REPORT (position)”。" },
+    { "claim": "option はダウンウインドに入ったところで頼む。訓練用。止まる・遅れるときはすぐ伝える（AIM 4-3-23・PCG）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html", "note": "管制塔のある空港だけで、管制の承認を受けて使う。" },
+    { "claim": "Go around：VFR はほかに指示がなければ滑走路の上を上昇して場周へ（PCG）", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/pcg_html/glossary-g.html", "note": "PCG：“overfly the runway while climbing to traffic pattern altitude and enter the traffic pattern via the crosswind leg”。クロスウインドから入るところが抜けている。" },
+    { "claim": "ATIS Bravo 1453Z の約 2 時間後に、帰りの ATIS が Charlie 1653Z（app の radio.js:110）", "verdict": "wrong", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html", "note": "AIM 4-1-13：毎時の観測と特別観測のたびに更新する。1553Z に Charlie、1653Z には Delta のはず。" },
+    { "claim": "北東から LAB へ 3,500 ft で帰る", "verdict": "wrong", "source": "https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-91", "note": "14 CFR 91.159(a)(2)：磁方位 180〜359° の飛行は、偶数千 ft＋500 ft（地上 3,000 ft を超える水平飛行のとき）。" },
+    { "claim": "ATIS の雲 FEW035 のときに 3,500 ft で巡航する", "verdict": "imprecise", "source": "https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-91", "note": "14 CFR 91.155：Class C・E では雲の下 500 ft、上 1,000 ft、横 2,000 ft。雲の高さと同じ高度で飛ぶのは悪いお手本。" },
+    { "claim": "学生操縦士は、どの局でも最初の交信で “student pilot” と名乗る（radio1。この章では Ground にだけ）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html", "note": "AIM 4-2-4：クリアランス・地上・管制塔・進入／出発管制・FSS のそれぞれで。この章の台本は管制塔・出発管制・進入管制で名乗っていない。" }
+  ],
+  "cadetNotes": [
+    "radio4 には SVG がなく、6 節とも CADET の教室の画面に何も映らない。全体の地図（flightOverviewMap）は新しい節 comm.flow の最初の図にする。comm.radar などの最初の <svg> には、その節の主な図（trafficClockTrack など）を置く。全体の地図を comm.radar に置くと、時計の図より先に映ってしまう。",
+    "6 節とも bk.key がないので、CADET は最初の 2 文を読み上げる。comm.dep の今の最初の文は長く（約 110 字）、comm.tower と comm.arrive は表から始まる。全部の節に key（2〜4 項目・それぞれ 60 字以内）を付ける。",
+    "bk.sim の 2 つの箱（comm.tower・comm.option）は CADET では消える。大切な事実（LUAW は離陸許可ではない、など）は箱の外の本文に書く。",
+    "架空であることの注意 fic（p.small.mute）は CADET でも残る（『教材』を含まないため）。comm.atis と comm.arrive に 2 回出てくる。1 回（comm.flow）にまとめてもよい。",
+    "CADET はキーの表記を消すために『日本語の文字＋（A）・（B）・（E）・（R）…』を取り除く。『ATIS の記号（B）』『誘導路（A）』と書かない。“information Bravo”、『誘導路 A』と書く。",
+    "アプリの UI の言葉（「英語交信」ページ・メニュー → など）は bk.sim の中だけに書く。",
+    "CADET の交信の台本（cadet/src/content/dialog/atc.js）は、この章と同じ ATIS の形（FEW035・“Landing and departing runway three six”）と周波数（ATIS 127.65・Ground 121.7・Tower 118.3）を使っている。book で雲・student pilot・到着の高度を直したら、atc.js の作者にも伝える（CADET のテストには関係しない）。",
+    "CADET の要約は、最初の 1〜2 文（140 字まで、テストは 200 字以下）から作られる。各節の最初の目的文を短くする（例：『離陸の準備ができたら、滑走路の手前で管制塔を呼びます。』）。"
+  ]
+}

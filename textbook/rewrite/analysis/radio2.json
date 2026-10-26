@@ -1,0 +1,466 @@
+{
+ "id": "radio2",
+ "title": "言葉の決まり：アルファベット・数字・標準用語",
+ "sections": [
+  {
+   "id": "comm.basic",
+   "title": "フォネティックアルファベットと数字の発音",
+   "gist": "文字は ICAO のフォネティックアルファベット、数字は 1 桁ずつ AIM の発音（TREE・FIFE・NIN-ER）で言う。最初の交信のコールサイン・1 文字の語・聞き取りにくい語のつづりに使う（AIM 4-2-7）。",
+   "issues": [
+    "図がない。CADET の教室の画面に出す最初の <svg> がない。アルファベットは一覧の図（2 列×13 行＋数字の行）にすると覚えやすい。",
+    "AIM の表（TBL 4-2-7）の綴りは “Xray” で、本書は “X-ray”（JO 7110.65 TBL 2-4-1 と ICAO は “X-ray”）。radio.js:24 は 'Xray'。どちらも FAA の文書にあるが、本と練習ページで揃っていない。「X-ray（AIM の表では Xray）」と書くとよい。",
+    "AIM の表は Uniform を「YOU-NEE-FORM または OO-NEE-FORM」とする。本書と radio.js は YOU-NEE-FORM だけ。",
+    "「9 は「niner」（ドイツ語の nein と区別するため、と説明されることが多い）」は言い伝え。AIM・ICAO に理由は書かれていない。bk.est にするか削る。",
+    "数字の表は 11 列（数字＋10 個）で、390 px の画面では狭い。図に入れるか 2 行×5 に組み替える。",
+    "「ICAO」の初出の説明（国際民間航空機関）がない。強く読む音節（JO 7110.65 TBL 2-4-1 の注：太字の音節を強く）も示していない。"
+   ],
+   "mainFigure": "phoneticBoard：26 文字を 2 列×13 行（文字・言い方・発音、強く読む音節を色で）＋ 0〜9 の発音の行。下に例「N7LA → (Archer) Seven Lima Alfa」。"
+  },
+  {
+   "id": "comm.numbers",
+   "title": "数字の言い方：高度・針路・速度・周波数・時刻・コード",
+   "gist": "数字は原則 1 桁ずつ、高度だけは thousand・hundred を使い（18,000 ft 以上は flight level）、針路は 3 桁、小数点は point（ICAO は decimal）、時刻は UTC（AIM 4-2-8〜4-2-12、JO 7110.65 2-4-17）。",
+   "issues": [
+    "15 行×4 列の表 1 つに全部入っていて初心者には重い。「1 桁ずつ言うもの」「高度だけ特別」「省略・例外（ground point seven、Victor twelve）」の 3 つに分けたい。高度は図（高度のはしご）を最初に。",
+    "「千の位より上は 1 桁ずつ」（book-comm.js:97、:111 の bk.q、quiz.js の q_radio にも同じ言い方）は分かりにくい →「thousand の前の数字を 1 桁ずつ（13,500 → one three thousand five hundred）」。",
+    "針路の行に「北は 360（heading three six zero、000 とは言わない）」がない。JO 7110.65 2-4-17 “Use heading 360 degrees to indicate a north heading.”。radio.js の SAY.heading(0) と drill の説明（radio.js:38・:382）はこの決まりを使っている。",
+    "高度計の行「1 桁ずつ」に出典がない → JO 7110.65 2-4-17（“Altimeter, three zero zero one.”）。滑走路の行も出典なし → JO 7110.65 2-4-17（runway＋1 桁ずつ＋left/right/center）。",
+    "周波数の行に「小数点以下 3 桁目は言わない（135.275 → one three five point two seven）」（JO 7110.65 2-4-17）がない。radio.js の drill は '135.275' を全部の桁で言わせる（radio.js:390）。",
+    "風の行は「JO 7110.65」だけで段落がない → 言い方は 2-4-17、3 kt 未満の calm は 2-6-3。なお 2-4-17 の例には突風の言い方もあるが、FLIGHT LAB のテストは radio 章の本文で /gusts/i を禁止しているので、本文に書かない。",
+    "距離・時計の方位の行「時計の方位は機首（12 時）が基準」（book-comm.js:108）は不正確。AIM 4-1-15：管制官はレーダーで航跡（進んでいる方向）しか見えないので、交通情報の時計の方位は航跡が基準。横風で機首をずらしていると、言われた方位とずれて見える（AIM の例：12 時と言われた機が 2 時に見える）。radio4 の comm.radar（book-comm.js:275）と radio4 の quiz（book-comm.js:320、正解を「機首の方向」とし「航跡」を不正解にしている）も同じ誤り。",
+    "距離の例が “five miles” だけ。JO 7110.65 2-4-17 は 1 桁ずつ＋miles（15 → one five miles）。radio.js の “one five miles northeast”（radio.js:112）と揃える。",
+    "時刻の行「フロリダの標準時（EST）は UTC−5」：フロリダ西部（パンハンドルの一部）は中部時間。「Sanford を含むフロリダの大部分」と書く。",
+    "高度の具体例に 1,200 ft（one thousand two hundred、radio.js:98 で使う）がない。初心者は “twelve hundred” と言いがち。",
+    "管制官は分かりやすくするため数字をまとめた形で言い直すことがある（JO 7110.65 2-4-18：“Altimeter Two Niner Niner Two, Twenty Nine Ninety Two”）。聞き取りの注意として 1 行あるとよい。"
+   ],
+   "mainFigure": "altitudeSayLadder：縦の高度のはしご（0〜20,000 ft）に 500・1,200・4,500・10,000・13,500 の言い方、18,000 ft の線（ここから flight level）と FL190 “flight level one niner zero”。2 枚目に headingRose（360 / 090 / 180 / 270 の言い方と、風 “wind two two zero at one five”）。"
+  },
+  {
+   "id": "comm.callsign",
+   "title": "コールサインの決まり",
+   "gist": "最初の交信ではコールサインを省略しない（機種名を言うときは N を省く）。省略してよいのは管制官が先に「機種名＋最後の 3 文字」で呼んでから。似たコールサインのときは省略せず、疑わしければ “Verify clearance for …”（AIM 4-2-4）。",
+   "issues": [
+    "図がない。コールサインの組み立て（機種名＋登録記号から N を除いたもの）と省略の決まりは図にすると一目で分かる。",
+    "例「「Archer Seven Lima Alpha」→「Archer Seven Lima Alpha（3 文字なのでそのまま）」」は分かりにくい。省略が変わる例（Cessna One Two Three Four Five → Cessna Three Four Five）を主にし、N7LA は「N のあとが 3 文字なので省略しても同じ」と別に書く。",
+    "本書と練習ページで使う書き方「Archer 7LA」（radio3・radio4、quiz Q2、radio.js の CSS）の読み方（Archer Seven Lima Alpha と読む）がどこにも説明されていない。radio.js の tts は “Archer 7LA” を “Archer Seven Lima Alpha” と読ませている（flight.test.mjs の RD.tts の検査）。この節で説明する。",
+    "AIM 4-2-4 a の例（似たコールサイン Cessna 6132F・Cessna 1622F、待機中の 2 機の取り違えの例）を使うと「なぜ」が伝わる。",
+    "「ANA の呼出符号は “All Nippon”」は CADET で落ちる実名。しかも括弧（…）の中の 2 つ目の文なので、文単位で落とすと括弧が閉じなくなるおそれがある。削除するか独立した文に。",
+    "メーカー名で言う形（Piper Seven Lima Alpha）や November で始める形（November Seven Lima Alpha）もある（AIM 4-2-4 a、JO 7110.65 2-4-20）ことを書くと、聞き取りで迷わない。"
+   ],
+   "mainFigure": "callsignAnatomy：登録記号「N7LA」と機種名「Archer」から “Archer Seven Lima Alpha” ができる図（N は省く）。下段に “Cessna One Two Three Four Five” →（管制官が先に省略）→ “Cessna Three Four Five”、似たコールサインの例（Cessna 6132F / 1622F）に「省略しない」の印。"
+  },
+  {
+   "id": "comm.words",
+   "title": "標準用語の正しい意味（Pilot/Controller Glossary）",
+   "gist": "Roger・Wilco・Affirmative・Say again・Stand by・Unable・Verify などの標準用語の意味（PCG）。Roger は「受け取った」だけで「はい」ではない。数字や滑走路を含む指示は Wilco ではなく復唱する（AIM 4-4-7）。",
+   "issues": [
+    "図がない。「何と答えるか」（質問 → 答え、数字・滑走路を含む指示 → 復唱、ほかの指示 → Wilco、従えない → Unable、聞こえない → Say again、情報だけ → Roger）を選ぶ流れ図があると、表を覚えなくても使える。",
+    "20 行の表 1 つは多すぎる。「受け答え」「聞き直し・確認」「指示の言葉」「地上と滑走路の許可」の 4 つに分ける。",
+    "表の見出し「意味（PCG の定義の要約）」だが、“Hold short of … / Hold position” は PCG の用語ではない（PCG に項目なし）。管制方式 JO 7110.65 3-7-2 と AIM 4-3-18 の言い方。出典の列を設ける。",
+    "“Line up and wait” が大文字始まり。FLIGHT LAB のテストは小文字の 'line up and wait' を求める（今は radio3・radio4 にあるので通るが、この節でも小文字の文を 1 つ置くと安全）。",
+    "「I say again / Words twice | もう一度言う / 交信状態が悪いので各句を 2 回言って（言う）」は分かりにくい。PCG の 2 つの意味（頼むとき：Please say every phrase twice、知らせるとき：every phrase will be spoken twice）に分けて書く。",
+    "「俗語・あいまいな言い方（“Ten-four”、“Copy that” など）は使わない（AIM 4-2-1…）」：AIM は “jargon, chatter, and CB slang” と書くだけで、Ten-four・Copy that は本書の例。そう分かる書き方に。",
+    "“Wilco” に受信の意味が含まれるので “Roger, wilco” と重ねない（radio.js:293 の GLOSSARY の注）ことが本書にない。",
+    "Squawk の行に「コードは 0〜7 の 4 桁（8・9 はない）」がない（radio.js の drill の説明にはある）。",
+    "radio3 comm.clarify（Say again・Verify・Unable・Correction・Stand by の使い方）と radio.js の用語集タブ（pages.js:610 '用語集'）と大きく重なる。radio2 は「意味」、radio3 は「使い方」と役割を分ける。"
+   ],
+   "mainFigure": "responseChooser：管制官の送信を聞いたあとの流れ図。自分宛て？→ 分かった？（いいえ → Say again）→ 質問？（はい → Affirmative / Negative / 数字で答える）→ 数字・滑走路・hold short を含む指示？（はい → 復唱＋コールサイン）→ 従える？（はい → Wilco、いいえ → Unable＋理由）→ 情報だけ → Roger（またはコールサイン）。"
+  }
+ ],
+ "problems": {
+  "unclear": [
+   "comm.numbers：「千の位より上は 1 桁ずつ」→「thousand の前の数字を 1 桁ずつ」。",
+   "comm.callsign：「Archer Seven Lima Alpha（3 文字なのでそのまま）」の例と、本書の書き方「Archer 7LA」の読み方の説明がない。",
+   "comm.words：「I say again / Words twice」の行の「（言う）」。",
+   "comm.basic：ICAO の初出説明がない。",
+   "comm.numbers：表が 1 つで 15 行、「どれが 1 桁ずつで、どれが特別か」がすぐ分からない。"
+  ],
+  "order": [
+   "comm.numbers：①「数字は 1 桁ずつ」が基本（周波数・コード・高度計・速度・針路・滑走路・時刻）→ ② 例外は高度（thousand・hundred、flight level）→ ③ 短縮（ground point seven・Victor twelve）の順に。",
+   "comm.words：受け答え → 聞き直し・確認 → 指示の言葉 → 地上と滑走路の許可、の 4 つに分ける。",
+   "（任意）高度の言い方を新しい節 comm.altitude（「高度の言い方」）に分け、comm.numbers を軽くする。ただし syllabus.js:89 の k3 は book: ['comm.basic', 'comm.numbers'] だけを参照するので、分ける場合は comm.numbers から {sec}／参照で案内する。"
+  ],
+  "errors": [
+   "comm.numbers「時計の方位は機首（12 時）が基準」→ AIM 4-1-15：管制官はレーダーで航跡しか見えず、交通情報は航跡を基準に出される。横風で機首をずらしていると、言われた方位とずれて見える（例：12 時と言われた機が 2 時に見える） (https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html)",
+   "quiz Q2 の why「上昇・降下中は 100 ft 単位に丸めた指示高度を言う（PCG：Say altitude）」→ PCG：“the pilot should state the indicated altitude rounded to the nearest 100 feet”。日本語の「指示高度」は「管制に指示された高度（assigned altitude）」と読めるので誤り。「高度計が示している高度（indicated altitude）」 (https://www.faa.gov/air_traffic/publications/atpubs/pcg_html/glossary-s.html)",
+   "comm.words の見出し「意味（PCG の定義の要約）」の “Hold short of … / Hold position” → PCG には項目がない。JO 7110.65 3-7-2（“HOLD POSITION”、“HOLD SHORT OF (location)”）と AIM 4-3-18 (https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap3_section_7.html)",
+   "（radio4・同じ誤りの連鎖）book-comm.js:320 の quiz「one o'clock の基準は？」の正解「機首の方向」→ AIM 4-1-15 では「進んでいる方向（航跡）」。book-comm.js:275 も同じ (https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html)"
+  ],
+  "outdated": [
+   "なし。AIM 4-2-7〜4-2-12、4-2-4 は現行（2026-07-09 発効 Change 3）と一致。PCG（Change 3、2026-07-09）と JO 7110.65BB（Change 3、2026-07-09）も現行。refs の JO 7110.65 の名前は版を書かず「JO 7110.65」のままでよいが、深いリンク（2-4-17）を足す。",
+   "注意（時刻の行）：EST＝UTC−5・EDT＝UTC−4（AIM 4-2-12）は現行。ただし夏時間を通年にする Sunshine Protection Act（H.R. 139）が 2026-07-14 に下院を通過し、2026 年 10 月初め時点で上院は未採決。法律になれば Florida の UTC との差が変わり、radio.js の utc drill（EST +5 / EDT +4）も合わなくなる。公開前に確認。 https://clerk.house.gov/Votes/2026238"
+  ],
+  "duplicates": [
+   "comm.words ↔ radio3 comm.clarify・comm.readback（使い方）と radio.js GLOSSARY（英語交信ページの用語集）。",
+   "comm.numbers の “ground point seven” ↔ radio4 comm.arrive・radio.js FLIGHT（radio.js:127–128）。“decimal” ↔ radio5 comm.icao。",
+   "comm.callsign の “Verify clearance for” ↔ radio3 comm.clarify。",
+   "quiz Q4（119.75 の言い方）↔ quiz.js q_radio の 4 問目（同じ問題）。quiz Q1（13,500）↔ q_radio の 2 問目（10,500）、radio.js の alt drill。",
+   "comm.numbers の時計の方位 ↔ radio4 comm.radar（book-comm.js:275）と radio4 quiz（:320）。直すときは 3 か所を同時に。"
+  ],
+  "numbers": [
+   "radio.js:390 — drill の周波数に '135.275' があり、SAY.freq は “one three five point two seven five” と全部の桁を言わせる。JO 7110.65 2-4-17 は小数点以下 2 桁目より後を言わない（“135.275 MHz — One three five point two seven.”）。本書は 3 桁目の決まりを書いていない。",
+   "radio.js:24 — ALPHA の X は 'Xray'（AIM TBL 4-2-7 と同じ）、book-comm.js:88 は 'X-ray'（JO 7110.65 TBL 2-4-1・ICAO と同じ）。",
+   "radio.js:20 — ALPHA の C は 'CHAR-LEE' だけ、本書は 'CHAR-LEE / SHAR-LEE'（AIM どおり）。本書が正しい。",
+   "radio.js:38・:382 — 北は “heading three six zero”。本書の comm.numbers には書かれていない（足す）。radio.js:38 のコメントは AIM 4-2-10 を出典にしているが、明文の決まりは JO 7110.65 2-4-17。",
+   "radio.js:101・:197・:341 — 「時計の方位は機首が 12 時（AIM 4-1-15）」。本書 comm.numbers と同じく AIM 4-1-15（航跡が基準）と合わない。",
+   "radio.js:398 — 高度計の出典を JO 7110.65 としている。本書の高度計の行は出典なし。",
+   "quiz.js q_radio（quiz.js:91）の説明「10,000 ft 以上は千の位より上を 1 桁ずつ」— 本書と同じ分かりにくい言い方。",
+   "school.js:266 — 課目の ATC の風は 3 kt 未満を 'calm'。本書の「3 kt 未満は calm（JO 7110.65）」と一致。"
+  ]
+ },
+ "policy": "4 つの節（comm.basic → comm.numbers → comm.callsign → comm.words）の id と順番はそのまま。comm.basic はアルファベットの図を最初に置き、26 行の表は図の下に（読み上げ用の代わりとして）短く残すか <details> に入れる。数字の表は図に入れる。comm.numbers は「数字は 1 桁ずつが基本 → 高度だけ特別（図：高度のはしご）→ 短縮・例外」の順に 3 つの表に分け、北は 360、距離の言い方、周波数の 3 桁目、高度計・滑走路・風の JO 7110.65 の段落（2-4-17・2-6-3）を足す。時計の方位は AIM 4-1-15（航跡が基準）に直し、radio4 の 2 か所と同時に直す。'decimal' は残し、突風の言い方は書かない（FLIGHT LAB テストが radio 章で /gusts/i を禁止）。comm.callsign は本書の書き方「Archer 7LA」の読み方をここで説明し、ANA の文は削る。comm.words は流れ図（何と答えるか）を最初に置き、表を 4 つのまとまりに分けて出典の列を付ける（Hold short / Hold position は JO 7110.65 3-7-2）。'Say again'・'Wilco'・'Unable'・'AIM 4-3-18' は残し、小文字の 'line up and wait' の文を 1 つ置く。高度の言い方を新しい節 comm.altitude に分けてもよい（任意）。",
+ "figuresExisting": [
+  {
+   "key": "bk.t（comm.basic：アルファベット 26 行）",
+   "verdict": "fix",
+   "why": "SVG の図ではなく表。phoneticBoard の図を最初に置き、表は短くするか折りたたむ。Uniform の OO-NEE-FORM、X-ray / Xray の注を足す。"
+  },
+  {
+   "key": "bk.t（comm.basic：数字 11 列）",
+   "verdict": "replace-by-photo",
+   "why": "写真ではなく図に置き換える（phoneticBoard の下の行）。11 列は 390 px の画面で狭い。"
+  },
+  {
+   "key": "bk.t（comm.numbers：15 行×4 列）",
+   "verdict": "redo",
+   "why": "3 つの表（1 桁ずつ／高度／短縮・例外）に分け、北は 360・距離・周波数の 3 桁目・出典（JO 7110.65 2-4-17、2-6-3）を足し、時計の方位を直す。"
+  },
+  {
+   "key": "bk.t（comm.words：20 行×3 列）",
+   "verdict": "fix",
+   "why": "4 つのまとまりに分け、出典の列（PCG / JO 7110.65 / AIM）を付ける。Hold short / Hold position を PCG から外す。"
+  },
+  {
+   "key": "（SVG の図なし）",
+   "verdict": "redo",
+   "why": "radio2 の 4 節には FIG の SVG が 1 枚もない（render-ch.mjs で <svg> 0 個）。"
+  }
+ ],
+ "figuresNew": [
+  {
+   "name": "phoneticBoard",
+   "section": "comm.basic",
+   "what": "フォネティックアルファベットの一覧（2 列×13 行：文字・言い方・発音、強く読む音節を色で）＋ 0〜9 の発音の行＋例「N7LA → Archer Seven Lima Alfa（機種名を言うので N は省く）」。viewBox 幅 400 前後・文字 12 以上（行数が多いので縦長に）。",
+   "data": "AIM TBL 4-2-7（radio.js ALPHA・DIGP と同じ値）。book は radio.js より先に読み込まれ、CADET の一部のテストは radio.js を読み込まないので、図の中に同じ値を持つ（radio.js と食い違わないよう、X-ray / Xray の扱いを決める）。",
+   "priority": "must"
+  },
+  {
+   "name": "altitudeSayLadder",
+   "section": "comm.numbers",
+   "what": "縦の高度のはしご：500 “five hundred”、1,200 “one thousand two hundred”、4,500 “four thousand five hundred”、10,000 “one zero thousand”、13,500 “one three thousand five hundred”、18,000 ft の線（ここから flight level、高度計は 29.92）、FL190 “flight level one niner zero”。誤りの例（“forty-five hundred”・“thirteen thousand”）に × 印。",
+   "data": "AIM 4-2-8・4-2-9。言い方は FL.radio.SAY.altitude と同じ結果（flight.test.mjs が 500 / 4500 / 10000 / 13500 / 19000 を検査している）。",
+   "priority": "must"
+  },
+  {
+   "name": "headingRose",
+   "section": "comm.numbers",
+   "what": "方位の円：360 “heading three six zero”（000 とは言わない）・090 “zero niner zero”・180・270。風の矢印 “wind two two zero at one five” と「3 kt 未満は wind calm」。磁方位であること（true を付けるのは真方位のとき）。",
+   "data": "AIM 4-2-10、JO 7110.65 2-4-17（north = 360）・2-6-3（calm）。radio.js SAY.heading・SAY.wind と同じ結果。",
+   "priority": "should"
+  },
+  {
+   "name": "trafficClock",
+   "section": "comm.numbers",
+   "what": "時計の方位：自機のまわりの時計の文字盤。上は「進んでいる方向（航跡）＝12 時」。横風で機首を右にずらしている機では、管制の「12 時」の機が窓の外では 2 時に見える（AIM FIG 4-1-15 の例）。radio4 comm.radar に置いてもよい。",
+   "data": "AIM 4-1-15 c の例（12 時と言われ 2 時に見える／2 時と言われ 3 時に見える）。",
+   "priority": "should"
+  },
+  {
+   "name": "callsignAnatomy",
+   "section": "comm.callsign",
+   "what": "コールサインの組み立て：機種名「Archer」＋登録記号「N7LA」から N を除いて “Archer Seven Lima Alpha”。本書の書き方「Archer 7LA」＝同じ読み。下段：Cessna N12345 → 最初は “Cessna One Two Three Four Five” → 管制官が先に省略したら “Cessna Three Four Five”。似たコールサイン（Cessna 6132F / Cessna 1622F）は省略しない。",
+   "data": "AIM 4-2-4 a（prefix＋最後の 3 文字、似たコールサインの例）。",
+   "priority": "must"
+  },
+  {
+   "name": "responseChooser",
+   "section": "comm.words",
+   "what": "「何と答えるか」の流れ図（自分宛て？→ 分かった？→ 質問？→ 数字・滑走路を含む指示？→ 従える？→ 情報だけ？）。終点は Say again / Affirmative・Negative・値で答える / 復唱＋コールサイン / Wilco / Unable＋理由 / Roger（またはコールサイン）。",
+   "data": "PCG（Roger・Wilco・Affirmative・Unable・Say again）、AIM 4-4-7（復唱するもの）、AIM 4-2-3 c（応答にはコールサインと Wilco・Roger・Affirmative・Negative など）。",
+   "priority": "must"
+  }
+ ],
+ "photos": [
+  {
+   "section": "comm.callsign",
+   "subject": "機体の登録記号（N-number）がはっきり見える Piper PA-28 Archer（個人機。訓練校・航空会社の塗装やロゴがないもの、人の顔がないもの）",
+   "search": "Wikimedia Commons: Category:Piper PA-28-181 Archer / Category:Piper PA-28 Cherokee（ライセンスを 1 枚ずつ確認）",
+   "candidateUrl": "",
+   "candidateLicence": "要確認（CC BY / CC BY-SA / CC0 / PD のみ）",
+   "why": "胴体の “N…” からコールサインができることを、実物で見せる。"
+  }
+ ],
+ "endMatter": {
+  "terms": [
+   "Phonetic alphabet / フォネティックアルファベット / AIM 4-2-7 — そのまま",
+   "Niner / Tree / Fife / 9 / 3 / 5 の発音 — そのまま",
+   "Flight level / フライトレベル / 米国は 18,000 ft 以上（AIM 4-2-9）— 「米国は」を足す",
+   "Altimeter / 高度計規正値 / JO 7110.65 2-4-17 — 出典を足す",
+   "Squawk / トランスポンダーのコード（0〜7 の 4 桁）— 説明を足す",
+   "Zulu (UTC) / 協定世界時 / AIM 4-2-12 — 出典を足す",
+   "Call sign / コールサイン — そのまま",
+   "Abbreviated call sign / 省略したコールサイン / 管制官が先に（AIM 4-2-4）— そのまま",
+   "Roger / Wilco / 受信した / 受信し、理解し、従う — 「了解し従う」を PCG に合わせる",
+   "Affirmative / Negative / はい / いいえ — そのまま",
+   "Unable / 従えない — そのまま",
+   "Stand by / 少し待て（許可でも不許可でもない）— 説明を足す",
+   "追加：Say again / もう一度言ってください / PCG",
+   "追加：Readback / 復唱 / AIM 4-4-7",
+   "追加：Indicated altitude / 高度計が示す高度（Say altitude の答え）/ PCG",
+   "追加：Heading three six zero / 北の針路 / JO 7110.65 2-4-17",
+   "Pilot/Controller Glossary / 管制用語集 / PCG — そのまま"
+  ],
+  "examples": [
+   "そのまま：“Archer Seven Lima Alpha, fly heading one two zero, climb and maintain three thousand five hundred.” → 針路 120°・高度 3,500 ft。",
+   "そのまま：“Altimeter three zero zero one” → 30.01 inHg。“Squawk zero four two five” → 0425。",
+   "追加：“Turn left heading three six zero” → 北（360°）へ。000 とは言わない。",
+   "追加：“Contact Ground point seven” → 121.7（AIM 4-3-14）。",
+   "追加：“Wind calm” → 風速 3 kt 未満（JO 7110.65 2-6-3）。"
+  ],
+  "cautions": [
+   "そのまま：カタカナは目安。実際の音は音声で確かめる。",
+   "そのまま：英国など ICAO の言い方とは一部違う（{ch:radio5}）。",
+   "追加：管制官は分かりやすくするため数字をまとめた形で言い直すことがある（例：Seventeen thousand）。聞き取りでは両方に慣れる（JO 7110.65 2-4-18）。",
+   "追加：時刻は UTC。日本時間（UTC+9）・フロリダの時間（EST −5 / EDT −4）と取り違えない。"
+  ],
+  "quizReview": [
+   "Q1：keep（13,500 → one three thousand five hundred、AIM 4-2-8 b）。ただし quiz.js q_radio の 10,500 の問題とほぼ同じ。",
+   "Q2：fix（why の「100 ft 単位に丸めた指示高度」→「高度計が示している高度（indicated altitude）を 100 ft 単位に丸めて」。PCG SAY ALTITUDE）。",
+   "Q3：keep（PCG STAND BY “is not an approval or denial”）。",
+   "Q4：replace（119.75 は quiz.js q_radio の問題と同じ。下の「北の針路」か「ground point seven」の問題に替える）。"
+  ],
+  "quizProposals": [
+   {
+    "q": "北（360°）へ向けという針路の正しい言い方は？",
+    "choices": [
+     "heading three six zero",
+     "heading zero zero zero",
+     "heading north",
+     "heading three sixty"
+    ],
+    "answer": 0,
+    "why": "針路は 3 桁を 1 桁ずつ。北は 360 と言う（JO 7110.65 2-4-17、AIM 4-2-10）。"
+   },
+   {
+    "q": "管制官の「はい／いいえ」で答える質問に「はい」と答える言葉は？",
+    "choices": [
+     "Affirmative",
+     "Roger",
+     "Wilco",
+     "Copy"
+    ],
+    "answer": 0,
+    "why": "PCG：Roger は「最後の送信を全部受信した」で、Yes/No の答えには使わない。「はい」は Affirmative。"
+   },
+   {
+    "q": "Cessna N12345 のパイロット。“Cessna Three Four Five” と省略して言ってよいのは？",
+    "choices": [
+     "管制官が先にそう呼んでから",
+     "最初の交信から",
+     "似たコールサインの機がいるとき",
+     "いつでも"
+    ],
+    "answer": 0,
+    "why": "AIM 4-2-4 a：最初の交信や似たコールサインがいるときは省略しない。管制官が先に省略したら、パイロットもそれを使ってよい。"
+   },
+   {
+    "q": "“Contact Ground point seven” の周波数は？",
+    "choices": [
+     "121.7",
+     "120.7",
+     "118.7",
+     "122.7"
+    ],
+    "answer": 0,
+    "why": "地上管制の周波数が 121 MHz 台なら、管制官は小数点より前の 121 を省くことがある（AIM 4-3-14）。"
+   },
+   {
+    "q": "フロリダ（Sanford）の夏時間（EDT）14:30 を UTC で言うと？",
+    "choices": [
+     "one eight three zero Zulu",
+     "one niner three zero Zulu",
+     "one four three zero Zulu",
+     "one zero three zero Zulu"
+    ],
+    "answer": 0,
+    "why": "AIM 4-2-12：東部標準時は +5 時間、夏時間は 1 時間少なく +4 時間。14:30 → 18:30 UTC。4 桁を 1 桁ずつ＋Zulu。"
+   }
+  ],
+  "refs": [
+   "keep：FAA AIM 4-2 https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html（4-2-4・4-2-7〜4-2-12。現行：2026-07-09 発効 Change 3）",
+   "keep：FAA Pilot/Controller Glossary https://www.faa.gov/air_traffic/publications/atpubs/pcg_html/（Change 3、2026-07-09）",
+   "update：FAA Order JO 7110.65 → 現行は JO 7110.65BB（Change 3、2026-07-09）https://www.faa.gov/air_traffic/publications/atpubs/atc_html/。数字の言い方は 2-4-17 Numbers Usage（https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap2_section_4.html）、calm は 2-6-3（https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap2_section_6.html）、hold short / hold position は 3-7-2（https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap3_section_7.html）",
+   "add：FAA AIM 4-1（4-1-15 交通情報の時計の方位は航跡が基準） https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html",
+   "add：FAA AIM 4-3（4-3-14 ground point seven、4-3-18 taxi では cleared を使わない） https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html",
+   "add：FAA AIM 4-4（4-4-7 復唱するもの） https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_4.html"
+  ]
+ },
+ "appMismatches": [
+  "flight-lab/src/radio.js:390 — 周波数の drill に '135.275'。SAY.freq（radio.js:40）は全部の桁を言わせるが、JO 7110.65 2-4-17 は 2 桁目より後を言わない（one three five point two seven）。JO 7110.65 が正しい。本書に決まりを書くなら、練習ページの答えと違うことに注意（radio.js は変更しない）。",
+  "flight-lab/src/radio.js:24 — ALPHA の 'Xray' と book-comm.js:88 の 'X-ray'。どちらも FAA の文書にある（AIM TBL 4-2-7 は Xray、JO 7110.65 TBL 2-4-1 は X-ray）。本書で「X-ray（AIM の表では Xray）」と注記して揃える。",
+  "flight-lab/src/radio.js:101・197・341 — 「時計の方位は機首が 12 時（AIM 4-1-15）」。AIM 4-1-15 は航跡が基準 — AIM が正しい。本書（book-comm.js:108、:275、:320）も同じ誤り。本書は直し、radio.js の文とは食い違うことを記録する。",
+  "flight-lab/src/radio.js:38（SAY.heading：北は 360）・:382（drill の説明「北は 360（000 ではない）」）— 本書 comm.numbers に書かれていない。radio.js が正しい（JO 7110.65 2-4-17）。本書に足す。",
+  "flight-lab/src/quiz.js:93（q_radio の 119.75 の問題）— 本書 radio2 quiz Q4 と同じ問題。本書側を替える。",
+  "flight-lab/src/pages.js:723–725 — 「数字とアルファベット」のタブが comm.numbers の節の題名でボタンを作る。節の題名を変えても動くが、短い題名にするとボタンが読みやすい。",
+  "flight-lab/src/syllabus.js:89 — k3 の book: ['comm.basic', 'comm.numbers']。id を変えないので問題なし（新しい節 comm.altitude を作る場合は k3 から参照されない）。"
+ ],
+ "factChecks": [
+  {
+   "claim": "フォネティックは最初の交信のコールサイン、1 文字の語、聞き取りにくい語のつづりに使う（AIM 4-2-7）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-7。"
+  },
+  {
+   "claim": "発音の表（AL-FAH … ZOO-LOO、WUN TOO TREE FOW-ER FIFE SIX SEV-EN AIT NIN-ER ZEE-RO）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM TBL 4-2-7 と一致。ただし AIM の綴りは Xray、Uniform は OO-NEE-FORM も可。"
+  },
+  {
+   "claim": "9 を niner と言うのはドイツ語の nein と区別するため（と説明されることが多い）",
+   "verdict": "unverified",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM・JO 7110.65 に理由は書かれていない。発音 NIN-ER だけが決まり。"
+  },
+  {
+   "claim": "500 five hundred、4,500 four thousand five hundred、10,000 one zero thousand、13,500 one three thousand five hundred（AIM 4-2-8）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-8 a・b、4-2-9 a。"
+  },
+  {
+   "claim": "18,000 ft 以上は flight level（FL190 flight level one niner zero）（AIM 4-2-9）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-9 b。米国の値（日本の転移高度は 14,000 ft）。"
+  },
+  {
+   "claim": "針路・方位は 3 桁の磁方位、真方位なら true（AIM 4-2-10）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-10。北は 360（JO 7110.65 2-4-17）を足すとよい。"
+  },
+  {
+   "claim": "速度は 1 桁ずつ＋knots（AIM 4-2-11）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-11 a。"
+  },
+  {
+   "claim": "周波数の小数点は point、ICAO は decimal（AIM 4-2-8）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-8 e と NOTE。JO 7110.65 2-4-17 は小数点以下 2 桁目より後を省く（135.275 → point two seven）。"
+  },
+  {
+   "claim": "地上管制が 121 MHz 台なら 121 を省くことがある（ground point seven）（AIM 4-3-14）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html",
+   "note": "AIM 4-3-14 “CONTACT GROUND POINT SEVEN.”"
+  },
+  {
+   "claim": "高度計規正値は 1 桁ずつ（altimeter two niner niner two）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap2_section_4.html",
+   "note": "JO 7110.65 2-4-17 “Altimeter, three zero zero one.” 出典を本文に書く。"
+  },
+  {
+   "claim": "風は wind (風向) at (風速)、3 kt 未満は calm（JO 7110.65）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap2_section_6.html",
+   "note": "言い方は JO 7110.65 2-4-17（風向は 10° 単位）、calm は 2-6-3 “less than three knots”。2-4-17 の例には突風の言い方もあるが、radio 章の本文では使わない（FLIGHT LAB テスト）。"
+  },
+  {
+   "claim": "時刻は UTC、EST は UTC−5、EDT は UTC−4（AIM 4-2-12）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-12 と TBL 4-2-12（EST は +5 時間、夏時間は 1 時間引く）。フロリダ西部の一部は中部時間。夏時間の通年化の法案（H.R. 139）が下院通過・上院未採決（2026 年 10 月初め時点）。"
+  },
+  {
+   "claim": "滑走路は 1 桁ずつ＋left / right / center",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap2_section_4.html",
+   "note": "JO 7110.65 2-4-17 Runways。"
+  },
+  {
+   "claim": "航空路 V12 は Victor twelve（AIM 4-2-8）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-8 c。"
+  },
+  {
+   "claim": "時計の方位は機首（12 時）が基準",
+   "verdict": "wrong",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html",
+   "note": "AIM 4-1-15：管制官はレーダーで航跡しか見えないので、交通情報は航跡が基準。横風で機首をずらしているとずれて見える。"
+  },
+  {
+   "claim": "最初の交信では省略しない、機種名を言うときは N を省く（Bonanza Six Five Five Golf）（AIM 4-2-4）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-4 a。"
+  },
+  {
+   "claim": "省略は管制官から（prefix＋最後の 3 文字）、疑わしければ Verify clearance for（AIM 4-2-4）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-4 a。"
+  },
+  {
+   "claim": "エアラインはまとまった数（United Twenty-Five Heavy）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-4 a。"
+  },
+  {
+   "claim": "PCG は JO 7110.65 と同じ用語集",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "note": "AIM 4-2-1 c。"
+  },
+  {
+   "claim": "Roger / Wilco / Affirmative / Negative / Say again / Stand by / Unable / Verify / Correction / Read back / I say again / Words twice / Immediately / Expedite / Go ahead / Over / Out / Contact / Monitor / Traffic in sight / Negative contact / Squawk / Ident / Say altitude / Say heading / Line up and wait / Cleared for takeoff / Cleared to land / Cleared for the option / Go around の意味",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/pcg_html/",
+   "note": "PCG（Change 3）の定義と一致。Cleared for the option は missed approach も含む。Go around は VFR なら滑走路の上を上昇し crosswind leg から場周へ。"
+  },
+  {
+   "claim": "Hold short of … / Hold position は PCG の定義",
+   "verdict": "wrong",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap3_section_7.html",
+   "note": "PCG に項目はない（HOLD SHORT POINT は LAHSO の用語）。言い方は JO 7110.65 3-7-2、復唱は AIM 4-3-18。"
+  },
+  {
+   "claim": "タキシーには “cleared” を使わない（AIM 4-3-18）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html",
+   "note": "AIM 4-3-18 a “ATC will not use the word ‘cleared’ in conjunction with authorization for aircraft to taxi.”"
+  },
+  {
+   "claim": "Line up and wait は離陸許可ではない（AIM 5-2-5）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_2.html",
+   "note": "AIM 5-2-5 Line Up and Wait (LUAW)、PCG。"
+  },
+  {
+   "claim": "滑走路・高度・針路の指示には Wilco ではなく復唱",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_4.html",
+   "note": "AIM 4-4-7 b：altitude assignments・vectors・runway assignments を復唱。"
+  },
+  {
+   "claim": "quiz Q2：Say altitude には上昇・降下中は 100 ft 単位に丸めた「指示高度」を言う",
+   "verdict": "imprecise",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/pcg_html/glossary-s.html",
+   "note": "PCG：indicated altitude（高度計が示す高度）を 100 ft 単位に丸める。「指示高度」は assigned altitude と誤読される。"
+  }
+ ],
+ "cadetNotes": [
+  "radio2 の 4 節には <svg> が 1 枚もない。CADET は各節の最初の <svg> を教室の画面に出す（cadet/test/content.test.mjs:103–107）。phoneticBoard・altitudeSayLadder・callsignAnatomy・responseChooser をそれぞれ最初に置く。",
+  "comm.callsign の「ANA の呼出符号は “All Nippon”」は REAL_NAMES（cadet/src/content/book.js:11）に当たる。括弧（例：United Twenty-Five Heavy。ANA の…）の中の文なので、文単位で落とすと「（」が閉じずに残るおそれがある。書き直しでは削除する。",
+  "図の値を FL.radio（ALPHA・SAY）から取る場合、CADET の content / english / cockpit-talk のテストは radio.js を読み込まないので、ないときの代わり（図の中の値）を用意する。",
+  "CADET の dialog/atc.js は radio.js の言い方（AIM 4-2 の数字の言い方）に従っている。本書で数字の決まり（北は 360、周波数の 3 桁目など）を足すときは radio.js と矛盾しないか確かめる（135.275 は食い違う）。",
+  "comm.words の表にアプリの操作は出てこない（CADET の APP_ONLY には当たらない）。"
+ ]
+}

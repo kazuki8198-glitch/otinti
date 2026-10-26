@@ -1,0 +1,203 @@
+{
+  "id": "radio3",
+  "title": "交信の型：呼び出し・応答・復唱（How a call is built: initial contact, acknowledgement and readback）— 第 9 章, book-comm.js:155-228",
+  "sections": [
+    {
+      "id": "comm.pattern",
+      "title": "最初の呼び出しの型",
+      "gist": "最初の呼び出しは AIM 4-2-3 の順（相手 → 自分 → 地上なら場所 → 用件）で言い、ATIS の記号と student pilot を添える。この節には今、応答・周波数の変更・Class C の交信確立も入っている。",
+      "issues": [
+        "4 つの話題が 1 節に詰め込まれている（最初の呼び出し／『混んでいるとき』の短い呼び出し／管制官への応答と周波数の変更／Class C の交信確立）。「ここが大切」の 3 項目もばらばらの話題になっている。応答・周波数の変更・Class C は新しい節に移す（policy を参照）。",
+        "「地上ではいる場所（at the west ramp）」は読みにくい（『地上では／いる場所』とも『地上で／はいる場所』とも読める）。→「地上にいるときは、いまいる場所（at the west ramp）」。",
+        "「要求（短ければ）」は AIM の 4 番目の項目を半分しか訳していない。AIM 4-2-3 の原文は “The type of message to follow or your request if it is short”（次に言う内容の種類。短ければ要求そのもの）。",
+        "見出し「混んでいるとき」は AIM 4-2-3 の考え方とずれている。AIM は、受信が確かなら（If radio reception is reasonably assured）要求・位置・ATIS の記号を最初の呼び出しに入れると周波数の混雑が減る、と書いている。短い呼び出しを使うのは、相手に届くか分からないときと、返事がなかったあとの呼び直し（keep the next contact short）。→ 見出しを『相手に届くか分からないとき』にする。",
+        "例文 “…VFR to the northeast practice area, request taxi.” には高度がない。radio4 comm.dep と radio.js:73 の同じ呼び出しは “…at three thousand five hundred, request taxi.”。同じ飛行は同じ言葉で言う。",
+        "本文ではずっと “Archer 7LA” と書いているが、声に出すときは常に “Archer Seven Lima Alpha” と言う、という説明がどこにもない（N7LA は文字が 3 つしかないので、AIM 4-2-4 の省略形『機種名＋最後の 3 文字』も完全な形と同じになる。radio2 comm.callsign を参照）。初心者は “seven-L-A” と読んでしまいやすい。",
+        "AIM の例文が計算式用の箱 bk.f に入っている。最初の例 “Columbia Ground, … I-F-R Memphis” は IFR なので、VFR の初心者には分かりにくい。VFR の例 AIM 4-1-18 “Xray ground control, November One Eight Six, Cessna One Seventy Two, ready to taxi, VFR southbound at 2,500, have information bravo and request radar traffic information.” の方が合う。",
+        "常体（「すべての呼び出し・許可に応答する。」「…変える」）と敬体（「…必要があります」）が混ざっている。ルールはです・ます調。",
+        "Class C で外に待たされるときの言い方「remain outside Charlie airspace and stand by」の出典が JO 7110.65 だけになっている。この言い方は AIM 3-2-4 の例文にもある（JO 7110.65 では 7-8-4）。",
+        "Student pilot を「どの局の最初の交信でも」名乗るよう勧める AIM 4-2-4 の考え方は radio1 で説明済み。例文の LAB Ground への呼び出しでは名乗っているが、radio4 の管制塔・出発管制・進入管制への最初の呼び出しでは名乗っていない（radio4 を参照）。"
+      ],
+      "mainFigure": "「呼び出しを 4 つのブロックに分けた図」（callupBlocks）。例文 “LAB Ground | Archer Seven Lima Alpha, student pilot | at the west ramp | with information Bravo | VFR to the northeast practice area at three thousand five hundred, request taxi” を色分けしたブロックに分け、それぞれの下に 相手・自分・場所・ATIS・用件 と日本語で書く。上に Who → Who → Where → What の矢印。"
+    },
+    {
+      "id": "comm.readback",
+      "title": "復唱（readback）：何を・どの順に",
+      "gist": "高度・高度の制限・針路・滑走路の指定、地上での滑走路の指定・滑走路に入る許可・hold short・line up and wait は、言われた順にコールサインを付けて復唱する。交通情報やレーダーでの確認には、内容で応える。",
+      "issues": [
+        "「AIM の決まり：」とあるが、AIM 4-4-7 は “should”（推奨）であり、法律（14 CFR）ではない。管制官側の義務（JO 7110.65 3-7-2：hold short の復唱がなければ求める）とも区別して書く。初心者には『規則（14 CFR）・AIM（推奨される方法）・管制官の方式（JO 7110.65）』の違いを 1 回はっきり説明しておく。",
+        "「ここが大切」の「数字（高度・針路・周波数・コード）と滑走路は必ず復唱」は、すぐ下の表（『風や高度計規正値の通知 → “Archer 7LA.”』）と食い違い、AIM 4-4-7 の範囲（高度・高度の制限・vector・滑走路の指定）も超えている。→『必ず：高度・針路・滑走路・hold short・LUAW。強く勧められる：周波数・コード（間違いに気づける）』と分けて書く。",
+        "例の中に radio4 と違う飛行が混ざっている。Departure の “turn right heading zero niner zero, climb and maintain three thousand five hundred” と Tower の “contact departure one one niner point seven five” は、radio4 と radio.js FLIGHT の流れ（fly runway heading → radar contact → resume own navigation、そして周波数なしの “contact departure”）と違う。『別の場面の例』と書いて区別するか、同じ飛行に合わせる。",
+        "管制官が復唱を聞いて確かめる（hearback）という復唱の仕組みが説明されていない。それが分からないと、なぜ「Roger」では足りないのかが伝わらない。復唱 → 管制官が聞く → 違えば直す、という輪を図にする。",
+        "“hold short of taxiway Charlie” に “hold short of Charlie” と復唱する例は、JO 7110.65 3-7-2 の例文どおりで正しい。ただし誘導路と滑走路を取り違えやすい空港（Sanford の HS1：誘導路 C と滑走路 27C）の話（radio5 comm.sfb）とつなげるなら、“taxiway Charlie” まで言う方が安全、と一言添えてよい。",
+        "LUAW（line up and wait）という略語を、次の節（comm.clarify）で説明なしに使っている。最初に出てくるこの節で『line up and wait（LUAW：滑走路に入って待て。離陸許可ではない）』と説明する。"
+      ],
+      "mainFigure": "「復唱の輪の図」（readbackLoop）。管制官 → 指示（“runway three six, taxi via Alpha, hold short of taxiway Charlie”）→ パイロットが復唱 → 管制官が聞いて確かめる（違えば直す）、という輪を描き、横に『必ず復唱するもの：高度・針路・滑走路・hold short・line up and wait』の札を並べる。"
+    },
+    {
+      "id": "comm.clarify",
+      "title": "わからないとき・従えないとき",
+      "gist": "聞き取れない（Say again）、自分宛てか分からない（Verify）、道が分からない（progressive taxi）、従えない（Unable と理由）、LUAW のまま長く待たされている（holding in position）、言いまちがえた（Correction）ときの言い方。理解できるまで確認するのは機長の責任。",
+      "issues": [
+        "表の「推測で復唱・行動しない（PCG）」：PCG にはそう書かれていない。出典は AIM 4-3-18（“the pilot should obtain clarification of any clearance or instruction which is not understood”）と AIM 5-2-5（“If you are uncertain…, contact ATC immediately”）。",
+        "「LUAW のまま待たされている」の行で、LUAW の説明がない。この行の根拠を足す：AIM 5-2-5 の NOTE（事故やインシデントの多くで、LUAW の指示から 2 分以上たっていた）と、JO 7110.65 3-9-4 の NOTE（LUAW のまま追加の指示なしに 90 秒を超えるべきではない）。",
+        "“Request progressive taxi.” は、app の radio.js:172 では “unfamiliar with the airport, request progressive taxi” になっている。AIM 4-3-18 の書き方（空港に不慣れなとき）に合わせて理由も入れ、book と app をそろえる。",
+        "“Unable, clouds ahead, Archer 7LA.” は正しい。代わりにできること（例：“…can turn left heading two four zero”、radio.js:250 の clarify）も例に入れると、表の「理由と代わりの案」が具体的になる。",
+        "常体で書かれている。最後の段落はよい内容（AIM 4-3-18：機長が最終的な責任を持つ）なので、です・ます調にして節の最初の目的文に回してもよい。"
+      ],
+      "mainFigure": "「迷ったときの流れ図」（clarifyFlow）。指示を聞いた → 全部聞こえた？（いいえ → “Say again (all after …)”）→ 自分宛て？（分からない → “Verify clearance for Archer Seven Lima Alpha”）→ 従える？（いいえ → “Unable, (理由), (代わりの案)”）→ 復唱して実行。地上なら『止まって聞く』、空中なら『安全な状態を保って聞く』の注記を付ける。"
+    },
+    {
+      "id": "comm.mistakes",
+      "title": "よくある間違い",
+      "gist": "hold short に Roger だけ、LUAW を離陸許可と思う、他機への指示の実行、応答せずに周波数を変える、着陸後に早く Ground へ変える、など 10 のよくある間違いと正しいやり方の表。",
+      "issues": [
+        "「ここが大切」がない（CADET は表の最初の 2 行を『間違い → 正しくは』の形で読み上げることになる）。いちばん危ない 3 つに絞って key を付ける：①hold short は滑走路名まで復唱 ②line up and wait は離陸許可ではない ③自分のコールサインか確かめる。",
+        "最後の行「管制塔のない空港で “active runway” と言う」は radio5 comm.ctaf の話題（AIM 4-1-9）。そちらに移すか、『管制塔のない空港（第 11 章）でも』と書いてつなげる。テストで必要な 'AIM 4-1-9' は comm.ctaf にもあるので、移しても大丈夫。",
+        "多くの行が radio2 と重なる（Roger と Affirmative、コールサインの省略、Verify。comm.words・comm.callsign）。重なる行は短くし、『→ 第 8 章』の参照にする。",
+        "LUAW の行の根拠（AIM 5-2-5 の NOTE：LUAW を正しく復唱したのに離陸許可なしで離陸した例が多い）は正しく、そのまま残す価値がある（下の factChecks を参照）。",
+        "図がなく、表だけの節になっている。"
+      ],
+      "mainFigure": "「滑走路の手前の停止線の拡大図」（holdLineCloseup）。黄色の線 4 本（実線 2 本・破線 2 本。実線の側で止まる：AIM 2-3-5）と赤地に白の滑走路標識『36』を描き、その横に 2 つの吹き出し：✗ “Roger.” と ○ “Hold short of runway three six, Archer Seven Lima Alpha.”。"
+    }
+  ],
+  "problems": {
+    "unclear": [
+      "comm.pattern：「地上ではいる場所」は 2 通りに読める。",
+      "comm.pattern：「要求（短ければ）」は AIM 4-2-3 の項目 4 を半分しか訳していない（“The type of message to follow or your request if it is short”）。",
+      "comm.pattern：見出し「混んでいるとき」は誤解を生む。AIM が短い呼び出しを勧めるのは、受信が確かでないときと呼び直すとき。",
+      "chapter：本文で “Archer 7LA” と書いているが、いつも “Archer Seven Lima Alpha” と言う、という説明がない。",
+      "comm.readback：key の「数字は必ず復唱」が、すぐ下の表（高度計規正値はコールサインだけで応える）と矛盾する。",
+      "comm.clarify：LUAW を説明なしに使っている。",
+      "chapter：全体が常体（〜する）と敬体の混在。です・ます調にそろえる。"
+    ],
+    "order": [
+      "comm.pattern に 4 つの話題が詰め込まれている。最初の呼び出しだけを comm.pattern に残し、応答・Contact／Monitor・周波数の変更は新しい節 comm.ack に移す。Class C の交信確立は、使う場面である radio4 comm.arrive に移すか comm.ack に入れる（テストで必要な 'AIM 3-2-4' は comm.arrive にもある）。",
+      "comm.mistakes の “active runway” の行（AIM 4-1-9）は radio5 comm.ctaf に移す。",
+      "LUAW は comm.readback で初めて定義する（今は comm.clarify で説明なしに使い、radio4 comm.tower でようやく説明している）。"
+    ],
+    "errors": [
+      "comm.clarify「推測で復唱・行動しない（PCG）」→ PCG にこの規則はない。出典は AIM 4-3-18（理解できない許可・指示は確認する）と AIM 5-2-5（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html , https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_2.html）",
+      "comm.readback key「数字（高度・針路・周波数・コード）と滑走路は必ず復唱」→ AIM 4-4-7 が求めるのは、高度・高度の制限・vector・滑走路の指定（さらに地上では AIM 4-3-18 の滑走路の指定・滑走路に入る許可・hold short・LUAW）。周波数・コードの復唱はよいやり方だが必須ではない。AIM 4-2-3 の例 “one three four point five, United Two Twenty-Two” を参照（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_4.html）",
+      "comm.pattern：AIM 4-2-3 の扱いが不正確。受信が確かなら、要求・位置・ATIS の記号まで一度に言う方が混雑が減る。短い呼び出しは、届くか分からないときと呼び直すとき（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html）"
+    ],
+    "outdated": [
+      "古くなった内容は見つからなかった。AIM（現行 Change 3、2026-07-09 発効）と FAA Order JO 7110.65BB（Change 3、2026-07-09 発効）で確認した。refs のリンクは現行版の HTML を指している。"
+    ],
+    "duplicates": [
+      "radio2 comm.words（PCG の Roger・Wilco・Say again・Unable・Verify・Correction・Contact／Monitor・Traffic in sight／Negative contact・LUAW・hold short）と、comm.clarify・comm.mistakes・comm.readback の表が重なる。→ 第 8 章を参照させ、ここでは『使う場面』だけを扱う。",
+      "radio2 comm.callsign（省略は管制官から・Verify clearance for）と、comm.mistakes の『コールサインを省略』の行・comm.clarify の『自分宛てか分からない』の行が重なる。",
+      "radio1 radio.technique（送信前に聞く・student pilot・Stand by）と、comm.mistakes の『ブロック』の行・comm.clarify の『Stand by』の行が重なる。",
+      "radio5 comm.sfb（滑走路・誘導路・hold short を同じ送信の中でコールサイン付きで復唱）と comm.readback が重なる。",
+      "law の章（Class C は入る前に双方向の交信が必要）と、comm.pattern の Class C の段落が重なる。",
+      "book-3 ground.start の key（hold short line は許可なしに越えない）と comm.mistakes の 1 行目が重なる。"
+    ],
+    "numbers": [
+      "comm.pattern の例文（book-comm.js:164）には高度がなく、radio4 comm.dep（book-comm.js:243）と radio.js:73 の同じ呼び出しには “at three thousand five hundred” がある。radio.js:144（scene r_first）は “VFR northeast at three thousand five hundred”。→ どれも radio.js:73 の言い方にそろえる。",
+      "comm.readback の Departure の指示 “turn right heading zero niner zero, climb and maintain three thousand five hundred”（book-comm.js:186）は、radio.js FLIGHT（dep の段階：radar contact → resume own navigation）にはない。別の場面の例だと書く。",
+      "comm.readback の Tower “contact departure one one niner point seven five”（book-comm.js:188）に対し、radio4 comm.tower（book-comm.js:257）と radio.js:94 は “contact departure”（周波数なし）。どちらも正しい（JO 7110.65 2-1-17）が、関係を説明する（周波数を省くのは、前にもらっているから）。",
+      "examples の “cross runway two seven, hold short of runway three six” には横断する場所がない。radio.js:163（r_cross）は “cross runway two seven at Bravo”。JO 7110.65 3-7-2 は横断する場所を言うことを求めているので、“at Bravo” を足してそろえる。"
+    ]
+  },
+  "policy": "節の順番は comm.pattern（最初の呼び出しだけ）→ 新しい節 comm.ack『応答と周波数の変更』（応答の型・Contact と Monitor・周波数の変更は応答してから・Class C の交信確立）→ comm.readback → comm.clarify → comm.mistakes にする。最初に、“Archer 7LA” は本の中での書き方で、声に出すときはいつも “Archer Seven Lima Alpha” と言うこと、そして規則（14 CFR）・推奨（AIM）・管制官の方式（JO 7110.65）の違いを説明する。そのあと、1 つの例文を 4 つのブロックに分けた図で呼び出しの型を見せる。例はすべて radio4 と radio.js FLIGHT と同じ飛行の言葉を使う（滑走路 36・誘導路 Alpha と Charlie・119.75・4271・3,500 ft）。違う場面の例（針路 090 など）には『別の場面の例』と書く。radio2 の用語の定義は繰り返さず、第 8 章を参照させる。“active runway” の行は radio5 に移す。各節に、目的の文・最初の図・「ここが大切」（comm.mistakes にも新しく付ける）を置く。テストで必要な言葉（'AIM 4-2-3'・'AIM 4-4-7'・'AIM 3-2-4'・'Wilco'・'Unable'・'Say again'・'line up and wait'・'cleared for takeoff'・'student pilot'）は、この章と radio4 の本文に必ず残す。'AIM 4-2-3' は今は radio3 にしかない。",
+  "figuresExisting": [],
+  "figuresNew": [
+    { "name": "callupBlocks", "section": "comm.pattern", "what": "最初の呼び出しを色分けした 4 つのブロック（＋ATIS・student pilot の小さな札）に分け、それぞれに日本語の名前を付けた図。Who → Who → Where → What の矢印。", "data": "AIM 4-2-3 の項目の並び。例文は radio.js:73（FLIGHT gnd1）の文", "priority": "must" },
+    { "name": "readbackLoop", "section": "comm.readback", "what": "指示 → 復唱 → 管制官が聞いて確かめる → 違えば直す、の輪の図と、『必ず復唱するもの』の札（高度・針路・滑走路・hold short・LUAW）。", "data": "AIM 4-4-7・AIM 4-3-18・JO 7110.65 3-7-2。例は radio.js:75-77", "priority": "must" },
+    { "name": "classCContact", "section": "comm.ack", "what": "Class C の境界の外にいる Archer と、2 つの吹き出しの図：“Archer Seven Lima Alpha, stand by” = 入ってよい（緑）、“Aircraft calling LAB Approach, stand by” = 入ってはいけない（赤）、“remain outside Charlie airspace and stand by” = 外で待つ（赤）。模式図・NOT FOR NAVIGATION。", "data": "AIM 3-2-4 の NOTE と EXAMPLE、JO 7110.65 7-8-4", "priority": "should" },
+    { "name": "clarifyFlow", "section": "comm.clarify", "what": "迷ったときの流れ図：聞こえた？ → 自分宛て？ → 従える？ と進み、それぞれ Say again／Verify／Unable の言い方を示す。", "data": "PCG（SAY AGAIN・VERIFY・UNABLE）、AIM 4-2-4・AIM 4-3-18", "priority": "should" },
+    { "name": "holdLineCloseup", "section": "comm.mistakes", "what": "滑走路の手前の停止線（黄色の線 4 本：実線 2 本・破線 2 本。実線の側で止まる）と赤い標識『36』を描き、✗ “Roger.” と ○ 正しい復唱の吹き出しを並べた図。", "data": "AIM 2-3-5（holding position markings）、AIM 4-3-18", "priority": "must" }
+  ],
+  "photos": [
+    { "section": "comm.mistakes", "subject": "滑走路の手前の停止線と、赤地に白の滑走路標識（mandatory instruction sign）が見える誘導路の写真。", "search": "Commons: Category:Runway holding position markings ／ Category:Mandatory instruction signs (aviation)。FAA Runway Safety のページ（faa.gov/airports/runway_safety）で、FAA が撮った写真（米国政府の作品なのでパブリックドメイン）", "candidateUrl": "", "candidateLicence": "", "why": "hold short の『どこで止まるか』は、言葉では伝わりにくい。図（holdLineCloseup）に実物の写真を添える。" },
+    { "section": "comm.pattern", "subject": "小型機の操縦輪にある送信ボタン（PTT）またはヘッドセット。人の顔が写っていないもの。", "search": "Commons: Category:Push-to-talk ／ Category:Aviation headsets ／ 'Piper PA-28 yoke'。CC BY／CC BY-SA を 1 枚ずつ確認する。メーカーの宣伝写真は使わない。", "candidateUrl": "", "candidateLicence": "", "why": "呼び出しは『押す → 一呼吸 → 話す』の動作から始まる、という実感を持たせる。あれば入れる程度。" }
+  ],
+  "endMatter": {
+    "terms": [
+      "Initial contact / initial callup：最初の呼び出し（その局またはその管制官への最初の送信）（AIM 4-2-3）",
+      "Acknowledge：応答する（コールサインと Wilco・Roger・Affirmative・Negative など）（AIM 4-2-3）",
+      "Readback：復唱（AIM 4-4-7・AIM 4-3-18）",
+      "Hearback：管制官が復唱を聞いて確かめること（FAA の安全資料の用語。PCG の用語ではない）",
+      "Contact / Monitor：交信せよ（新しい周波数で呼ぶ）／聞いて待て（呼ばない）（PCG）",
+      "Two-way radio communications established：双方向の交信が確立した（コールサイン付きの応答があったとき）（AIM 3-2-4）",
+      "Line up and wait（LUAW）：滑走路に入って待て。離陸許可ではない（AIM 5-2-5）",
+      "Hold short of …：…の手前で止まれ（必ず復唱）",
+      "Progressive taxi：一区間ずつの地上走行の案内（PCG・AIM 4-3-18）",
+      "Holding in position：（LUAW で）滑走路上で待っている（AIM 5-2-5 の例）",
+      "Verify clearance for (complete call sign)：…への許可か確認したい（AIM 4-2-4）",
+      "Say again all after …：…より後をもう一度（PCG）",
+      "Correction：言いまちがえた。正しくは次のとおり（PCG）"
+    ],
+    "examples": [
+      "“Archer Seven Lima Alpha, cross runway two seven at Bravo, hold short of runway three six.” → “Cross runway two seven at Bravo, hold short of runway three six, Archer Seven Lima Alpha.”（横断の場所・手前停止の両方を復唱。JO 7110.65 3-7-2）",
+      "“Aircraft calling LAB Approach, stand by.” → コールサインが言われていないので、交信は確立していない。Class C の外で待つ（AIM 3-2-4）。",
+      "“Archer Seven Lima Alpha, contact departure one one niner point seven five.” → “One one niner point seven five, Archer Seven Lima Alpha.”（応答してから、できるだけ早く変える。AIM 4-2-3）"
+    ],
+    "cautions": [
+      "AIM は推奨（should）、14 CFR は規則（must）。実際の交信では、その空港の手順と管制官の指示が優先する。",
+      "交信例は FAA（米国）の言い方。英国など ICAO の国では一部違う（第 11 章）。",
+      "LAB 空港・その周波数・コールサイン Archer Seven Lima Alpha は架空。実際の周波数で使わない。"
+    ],
+    "quizReview": [
+      "Q1（AIM 4-4-7 が復唱すべきとしているもの）：残す。正解の文を『高度・高度の制限・針路・滑走路の指定を含む指示』にして AIM に合わせる。",
+      "Q2（コールサインなしの stand by で Class C に入れるか）：残す（AIM 3-2-4）。Class C の段落を comm.ack か radio4 に移すときは、この問題も一緒に移す。",
+      "Q3（周波数の変更）：残す（AIM 4-2-3）。"
+    ],
+    "quizProposals": [
+      { "q": "最初の呼び出しの正しい順番は？（AIM 4-2-3）", "choices": ["相手の局 → 自分のコールサイン → （地上なら）場所 → 用件", "自分のコールサイン → 相手の局 → 用件 → 場所", "用件 → 相手の局 → 自分のコールサイン", "相手の局 → 用件 → 自分のコールサイン → 場所"], "answer": 0, "why": "AIM 4-2-3 の順番。最初に相手を呼ぶので、ほかの局は聞き流せる。地上では場所を言う（AIM 4-3-18）。" },
+      { "q": "Ground「Archer Seven Lima Alpha, runway three six, taxi via Alpha, hold short of taxiway Charlie.」正しい復唱は？", "choices": ["Runway three six, taxi via Alpha, hold short of taxiway Charlie, Archer Seven Lima Alpha.", "Roger, Archer Seven Lima Alpha.", "Wilco, Archer Seven Lima Alpha.", "Taxi via Alpha, Archer Seven Lima Alpha."], "answer": 0, "why": "滑走路の指定と hold short は必ず復唱する（AIM 4-3-18）。コールサインも付ける（AIM 4-4-7）。Roger や Wilco だけでは、管制官は聞きまちがいに気づけない。" },
+      { "q": "「Runway three six, line up and wait」の意味は？", "choices": ["滑走路に入り、離陸の向きに合わせて待つ（離陸許可ではない）", "離陸してよい", "滑走路の手前で待つ", "滑走路を横切ってから待つ"], "answer": 0, "why": "AIM 5-2-5：LUAW は離陸許可ではない。正しく復唱したのに許可なしで離陸してしまった例が多い、と AIM は注意している。" },
+      { "q": "管制官「Archer Seven Lima Alpha, monitor tower one one eight point three.」正しいのは？", "choices": ["応答してから 118.3 に変え、こちらからは呼ばずに聞いて待つ", "118.3 に変えてすぐ呼ぶ", "応答せずに 118.3 に変える", "今の周波数のまま聞き続ける"], "answer": 0, "why": "Monitor は『聞いて待て、ふつうは呼ばない』（PCG）。周波数を変える前には必ず応答する（AIM 4-2-3）。" },
+      { "q": "指示の後半が雑音で聞こえなかった。正しい言い方は？", "choices": ["Say again all after (聞こえた最後の言葉), Archer Seven Lima Alpha.", "Roger, Archer Seven Lima Alpha.", "Wilco, Archer Seven Lima Alpha.", "Affirmative, Archer Seven Lima Alpha."], "answer": 0, "why": "PCG：Say again は全部でも一部でもよい（例 “Say again all after ABRAM VOR”）。聞こえた所だけ復唱すると、残りも受け取ったと思われてしまう。" }
+    ],
+    "refs": [
+      "追加：FAA AIM 4-4 ATC Clearances and Aircraft Separation（4-4-7 の復唱。この章の中心なのに refs にない）https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_4.html（book-core.js に R キー aim44 がないので、新しく作る）",
+      "追加：FAA AIM 3-2 Controlled Airspace（3-2-4 Class C の交信確立）https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_2.html（R キー aim32 を新しく作る）",
+      "追加：FAA AIM 5-2（5-2-5 Line Up and Wait）＝既にある R.aim52 https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_2.html",
+      "追加：FAA AIM 4-1（4-1-13 ATIS・4-1-9）＝既にある R.aim41 https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html",
+      "追加（図 holdLineCloseup を入れる場合）：FAA AIM 2-3（2-3-5 Holding Position Markings）https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap2_section_3.html",
+      "削除：R.aim（AIM 全体）は、章ごとの AIM の参照と重なる。",
+      "そのまま：R.aim42・R.aim43・R.pcg・R.jo71（JO 7110.65 の現行版は 7110.65BB。ラベルに版を入れなくてよい。リンクは常に現行版を指す）"
+    ]
+  },
+  "appMismatches": [
+    "flight-lab/src/radio.js:144（scene r_first）— 正解の選択肢が “VFR northeast at three thousand five hundred”。book の comm.pattern（book-comm.js:164）は “VFR to the northeast practice area”（高度なし）、radio.js:73 は “VFR to the northeast practice area at three thousand five hundred”。→ どれも radio.js:73 の言い方にそろえる（book 側を直す）。",
+    "flight-lab/src/radio.js:172（scene r_prog）— “unfamiliar with the airport, request progressive taxi”。book の comm.clarify は “Request progressive taxi.” だけ。どちらも正しいが、app の方が AIM 4-3-18 の書き方に近い → book を app に合わせる。",
+    "flight-lab/src/radio.js:186（scene r_luawlong の clarify）— 例が “LAB Tower, Archer 7LA, on runway three six, line up and wait.（教材の例）”。book の comm.clarify（book-comm.js:202）は “Archer 7LA, holding in position runway three six.”。AIM 5-2-5 の例は “Cessna 234AR holding in position Runway 24L.” → book が正しく、app は AIM の言い方からずれている。",
+    "flight-lab/src/radio.js:163（scene r_cross）— “cross runway two seven at Bravo”。book の examples（book-comm.js:221）は横断する場所なし。JO 7110.65 3-7-2 は場所を言うことを求めている → app が正しい。",
+    "flight-lab/src/school.js:119（ATC_Q.takeoff）— “wind …, runway 36, cleared for takeoff”（風が先）。book（radio3 の例と radio4 comm.tower）は “runway three six, wind three four zero at eight, cleared for takeoff”。JO 7110.65 3-9-10 の決まりは『滑走路番号のすぐ後に cleared for takeoff』だけで、どちらの言い方も実際に使われている。復唱の正解（“Runway 36, cleared for takeoff, …”）は同じ → 食い違いではないが、book に『風は前に来ることも後に来ることもある』と一言書くとよい。"
+  ],
+  "factChecks": [
+    { "claim": "最初の呼び出しの順番：相手の局・完全なコールサイン・地上では位置・用件（短ければ要求）・必要なら Over（AIM 4-2-3）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html", "note": "項目 4 の原文は “The type of message to follow or your request if it is short”。book の『要求（短ければ）』は前半を落としている。" },
+    { "claim": "AIM の例文 “Columbia Ground, Cessna Three One Six Zero Foxtrot, south ramp, I-F-R Memphis.” と “Miami Center, Baron Five Six Three Hotel, request V-F-R traffic advisories.”", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html", "note": "AIM 4-2-3 の EXAMPLE のとおり。初心者向けには、AIM 4-1-18 の VFR の地上管制への例の方が合う。" },
+    { "claim": "混んでいるときは、まず短く呼ぶ。受信が確かなら最初から要求まで言う方が周波数の節約になる（AIM 4-2-3）", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html", "note": "AIM の基準は混雑ではなく『受信が確かか』（If radio reception is reasonably assured…）。返事がなければ、次の呼び出しは短くする。" },
+    { "claim": "すべての呼び出し・許可に応答し、コールサインを最初か最後に付けて Wilco・Roger・Affirmative・Negative などで応える（AIM 4-2-3）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html", "note": "Subsequent Contacts and Responses to Callup の項。" },
+    { "claim": "周波数の変更は応答してから。黙って変えると、管制官は無線の故障と区別できない。できるだけ早く変える（AIM 4-2-3）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html", "note": "Acknowledgement of Frequency Changes と Compliance with Frequency Changes の項。" },
+    { "claim": "Contact は新しい周波数で呼ぶ、Monitor は呼ばずに聞く（PCG）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/pcg_html/glossary-m.html", "note": "PCG の MONITOR：“listen on a specific frequency and stand by for instructions. Under normal circumstances do not establish communications.”" },
+    { "claim": "Class C：コールサイン付きの “stand by” なら交信確立。コールサインなしは確立していない。“remain outside … and stand by” なら外で待つ（AIM 3-2-4・JO 7110.65）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_2.html", "note": "AIM 3-2-4 の NOTE と EXAMPLE、JO 7110.65 7-8-4（https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap7_section_8.html）にある。" },
+    { "claim": "高度・高度の制限・vector・滑走路の指定は、言われた順にコールサイン付きで復唱する。最初の復唱には滑走路を（L・R・C まで）入れる（AIM 4-4-7）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_4.html", "note": "“Pilots of airborne aircraft should read back…”。AIM の言葉は should（推奨）。" },
+    { "claim": "地上走行では、滑走路の指定・滑走路に入る許可・hold short・line up and wait を必ず復唱する（AIM 4-3-18）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html", "note": "“pilots should always read back: The runway assignment. Any clearance to enter a specific runway. Any instruction to hold short of a specific runway or line up and wait.”" },
+    { "claim": "管制官は hold short の復唱がなければ求める決まりになっている", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap3_section_7.html", "note": "JO 7110.65 3-7-2：“Request a read back of runway hold short instructions when it is not received”。AIM 4-3-18 の NOTE も同じ。" },
+    { "claim": "“runway three six, taxi via Alpha, hold short of taxiway Charlie” と、その復唱 “…hold short of Charlie”", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap3_section_7.html", "note": "JO 7110.65 3-7-2 の例文が “Runway Three-Six Left, taxi via taxiway Alpha, hold short of taxiway Charlie.” と、短い形の “…via Alpha, hold short of Charlie.”。" },
+    { "claim": "Say again／一部なら “Say again all after …”（PCG）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/pcg_html/glossary-s.html", "note": "" },
+    { "claim": "推測で復唱・行動しない（PCG）", "verdict": "wrong", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html", "note": "内容は正しいが、出典が違う。PCG にこの規則はない。出典は AIM 4-3-18（理解できない許可は確認する）と AIM 5-2-5。" },
+    { "claim": "自分宛てか分からないときは “Verify clearance for (完全なコールサイン)”（AIM 4-2-4）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html", "note": "“Pilots should use the phrase ‘VERIFY CLEARANCE FOR (your complete call sign)’ if doubt exists…”" },
+    { "claim": "Progressive taxi で一区間ずつ案内してもらえる（AIM 4-3-18）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html", "note": "空港に不慣れなとき・経路に迷ったときに頼める。" },
+    { "claim": "LUAW のまま長く待たされたら “… holding in position runway three six” で確認する（AIM 5-2-5）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_2.html", "note": "AIM の例は “Cessna 234AR holding in position Runway 24L.”。NOTE：事故やインシデントの多くで、LUAW の指示から 2 分以上たっていた。" },
+    { "claim": "LUAW を正しく復唱したのに、許可なしで離陸した例が多い（AIM 5-2-5）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_2.html", "note": "NOTE：“a significant number of pilots read back LUAW instructions correctly and departed without a takeoff clearance.”" },
+    { "claim": "着陸後、管制塔に “contact ground” と言われるまで Ground に変えない（AIM 4-3-14・4-3-21）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html", "note": "AIM 4-3-14：“A pilot who has just landed should not change … until directed to do so by the controller.”" },
+    { "claim": "最初の交信でコールサインを省略しない。省略は管制官が先に（AIM 4-2-4）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html", "note": "" },
+    { "claim": "“Roger” を『はい』の意味で使わない（→ Affirmative）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/pcg_html/glossary-r.html", "note": "PCG の ROGER：“It should not be used to answer a question requiring a yes or a no answer.”" },
+    { "claim": "管制塔のない空港では “active runway” と言わず、滑走路の番号を言う（AIM 4-1-9）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html", "note": "“pilots should use the runway number and not use the phrase ‘Active Runway.’”" },
+    { "claim": "学生操縦士は最初の呼び出しで “student pilot” と名乗る（radio1 と例文）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html", "note": "AIM 4-2-4：クリアランス・地上・管制塔・進入／出発管制・FSS のそれぞれ最初の交信で名乗ることを勧めている。radio4 の管制塔・出発管制・進入管制への呼び出しにはないので足す。" }
+  ],
+  "cadetNotes": [
+    "radio3 には SVG が 1 つもないので、CADET の教室の画面には 4 節とも何も映らない。図を足すときは、各節の最初の <svg> を、その節でいちばん大切な図にする（comm.pattern では callupBlocks を最初に。classCContact は comm.ack へ）。",
+    "comm.mistakes に bk.key がないので、CADET は表の最初の 2 行を『間違い → 正しくは』の形で読み上げる。新しい key（3 項目・それぞれ 60 字以内）を付ける。",
+    "架空であることの注意 fic（<p class=\"small mute\">…架空の練習用です…</p>）は、CADET では消えない（『教材』『シミュレータ』を含まないため）。文を変えるときに『この教材の…』を入れると CADET で消えるので、残したいなら入れない。",
+    "CADET はキーの表記を消すために『日本語の文字＋（W A S D Q E R F T V B Z X U のどれか 1 文字）』を取り除く。『ATIS の記号（B）』『誘導路（A）』のような書き方をすると文字が消える。“information Bravo”、『誘導路 A』と書く。",
+    "アプリの UI の言葉（メニュー →、「英語交信」ページ、同じページの、このシミュレータ）は bk.sim の箱の中だけに書く。本文に書くと、CADET ではその文ごと消える。",
+    "CADET の要約は、最初の 1〜2 文（140 字まで、テストは 200 字以下）から作られる。各節の最初の目的文を短くする。",
+    "CADET の交信の台本（cadet/src/content/dialog/atc.js）は、この章の言い方にならっている（“Landing and departing runway three six”、Ground 121.7、Tower 118.3、ATIS 127.65、student pilot）。book の言い方を変えたら、atc.js の作者に伝えると一貫する（テストには関係しない）。"
+  ]
+}

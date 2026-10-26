@@ -1,0 +1,560 @@
+{
+ "id": "emg",
+ "title": "緊急操作（単発機） — Emergency procedures (single-engine)",
+ "sections": [
+  {
+   "id": "emg.basic",
+   "title": "緊急時の考え方：Aviate・Navigate・Communicate",
+   "gist": "優先順位（飛ばす→向かう→伝える）と、すぐやる操作・記憶項目・チェックリストの関係を教える入口の節。",
+   "issues": [
+    "図がない。CADET の教室スクリーンに出す最初の <svg> がこの章に 1 枚もない（章全体で SVG 0 枚、表 3 枚だけ）。",
+    "bk.key「急がない。「時計を巻く（wind the clock）」—— 数秒落ち着いてから…」は 62 字で長すぎ、しかも次の節と矛盾する：emg.abort は「迷わない」、emg.engine は「すぐに機首を下げて」、e1 の基準は「2 秒以内にアイドル」。wind the clock は FAA の資料にない言い伝えで、離陸中止・低高度のエンジン故障のような一刻を争う場面には当てはまらない。『すぐやる 1 動作（機首を下げる・止まる）→ そのあと数秒で状況を確かめる』に分けて書く。",
+    "bk.key「危険な状態から機体を守ることは、規則より優先される（14 CFR 91.3(b)…）」は条文と違う。91.3(b) は『直ちに行動が必要な飛行中の緊急時に、その緊急に対処するのに必要な範囲で Part 91 の規則から逸脱できる』、(c) は『求められたら書面で報告』。law.pic（book-2.js:51）と重複。",
+    "「操作の優先順位は世界中で同じです」は言い過ぎ。『FAA の教材や多くの国の訓練で使われる順番』とする。",
+    "「記憶項目：太字や枠で示されることが多い」— 出典の MGA チェックリストには記憶項目の印がない。『どれを暗記するかは POH と教官が決める』とする。",
+    "「Communicate…\"MAYDAY\" ×3、トランスポンダー 7700」— AIM 6-3-2 は『交信中の周波数でまず通報、すぐに交信できなければ 7700』。管制と交信中ならコードはそのまま（radio.js r_mayday の clarify と同じ）。",
+    "初心者に必要な前提がない：緊急着陸の 3 種類（forced landing＝不時着、precautionary landing＝予防着陸、ditching＝着水：AFH ch.18）、AFH の『心理的な落とし穴』（緊急を認めたくない・恐怖・機体を救いたい気持ち）、ACS の startle response（驚いて固まる反応）。",
+    "目的文は第 1 段落にあるが bk.aim の形になっていない。"
+   ],
+   "mainFigure": "優先順位の図（emgPriority）：縦に Aviate／Navigate／Communicate の 3 段、横軸に時間（0〜数秒：すぐやる 1 動作＝機首を下げる・止まる → 記憶項目 → チェックリストを読む → 通報）。各段に Archer の具体例（76 KIAS・降りる場所・MAYDAY）。"
+  },
+  {
+   "id": "emg.abort",
+   "title": "離陸中止",
+   "gist": "滑走中の異常ではアイドル・まっすぐ・ブレーキで止まり、浮揚直後に滑走路が残っていれば正面に降りる。",
+   "issues": [
+    "2 つの場面が混ざっている：①滑走中の中止（AFH ch.6：アイドル・方向を保って最大のブレーキ）と②浮揚直後のエンジン故障で滑走路が残っている場合（チェックリスト ENGINE FAILURE DURING TAKEOFF：LAND and STOP STRAIGHT AHEAD）。図で 2 つを分ける。",
+    "「例：滑走路の半分で Vr の 70%」は AFH にない経験則（一般には浮揚速度の 70% を滑走路の 50% で＝『70/50 ルール』）。AFH ch.6 は『離陸前に、浮揚しているべき地点を決め、そこで浮いていなければすぐ中止』『POH の離陸滑走距離＋着陸滑走距離が、加速して止まるのに必要な長さの目安』。出典を分けて書く（教材の LAB RWY 36 は 1,200 m：physics.js LAB_RWY.len）。",
+    "中止の理由に AFH が挙げる『加速が足りない・滑走路への進入（runway incursion）・管制の指示や他機との衝突のおそれ』がない。",
+    "bk.key「動き出してから「やっぱり行く」に変えない」の「動き出してから」が離陸滑走のことか中止操作のことか曖昧 → 「中止を始めたら、途中で離陸に戻さない」。",
+    "目的文・図がない。bk.sim は CADET で消えるので、本文だけで手順が分かるようにする（キー Shift+F・B・Q/E は bk.sim の中だけに書く：app.js:100/206/207/230 と一致）。"
+   ],
+   "mainFigure": "滑走路の上面図（emgAbortPoint）：LAB RWY 36（1,200 m・架空・模式図）に『浮揚しているべき地点』と経験則の目安（中間点で 42 kt＝Vr 60 kt の 70%）を描き、手前は『アイドル・まっすぐ・ブレーキ』、浮揚直後で滑走路が残る区間は『正面に着陸して止まる』、残らない区間は emg.engine へ、の 3 色帯。"
+  },
+  {
+   "id": "emg.engine",
+   "title": "エンジン故障：離陸直後・上空・不時着",
+   "gist": "離陸直後は機首を下げて正面付近へ、上空では 76 kt・場所を決める・再始動の手順、だめなら不時着の手順。",
+   "issues": [
+    "1 つの節に 3 つの話題（離陸直後・上空での再始動・不時着の準備と着陸）が詰まっていて長い。滑空距離と不時着は新しい節に分ける（policy 参照）。",
+    "「正面からおおむね ±30° 以内」は出典がない。AFH ch.18 は『真正面（またはわずかに横）の場所』。±30° は教材の課目 e2 の基準（syllabus.js:207『針路 ±30°』）なので『この教材の目安』と書く。",
+    "引き返さない理由は AFH ch.18 の方が具体的：上昇姿勢のまま動力を失うと失速の迎え角に近い（AFH ch.6）、旋回中の加速失速（accelerated stall）、追い風での着陸、『学生操縦士には受け入れられない危険（unacceptable risk for student pilots）』。AFH の例（300 ft AGL・反応 4 秒・標準旋回・65 kt・半径 2,100 ft・合計 225°・約 1,000 fpm → 滑走路より 1,016 ft 下）は図にできる。",
+    "表の見出しが「訓練校の Archer チェックリスト（ENGINE FAILURE DURING FLIGHT）」だが、2『降りる場所を決めて向かう』と 4『無線（121.5 / 7700）・同乗者・ドア』はこのチェックリストにない（AFH・ACS・AIM 由来）。出典を列で分ける。5 は POWER OFF LANDING の『ALTR Switch OFF』『Airspeed MAINTAIN 76 KIAS・Landing Pattern ESTABLISH』を落としている。",
+    "4 の「無線（121.5 / 7700）」は AIM 6-3-2 と違う：交信中の周波数が先、121.5 は必要なとき、7700 はすぐ交信できないとき。",
+    "bk.calc('turn')（速度 100 kt・バンク 30° が初期値の旋回計算機）が説明なしに置かれ、この節の内容（滑空距離・引き返し）と結びつかない。CADET では消える。滑空距離の計算機（高度・風 → 届く距離）に替えるか、引き返しの図の説明に使う。",
+    "bk.key「Archer の滑空比は約 9：1（教材の目安）。1,000 ft で約 1.5 NM」は教材の飛行モデルと合わない：physics.js の steadyState（pa28・pwr 'dead'・76 KIAS）は 8.5：1、1,000 ft あたり 1.40 NM、降下率 約 920 fpm。",
+    "bk.key「最良滑空速度より速くても遅くても、滑空距離は短くなる」は実機（チェックリストの 76 KIAS）では正しいが、教材モデルでは 66 kt（9.2：1）や 60 kt（9.3：1）の方が 76 kt（8.5：1）より遠くへ届く。モデルを直すまでは『実機の POH の値』と明記し、シミュレータの数値は別に示す。",
+    "ACS の知識項目『最良滑空速度と最小沈下速度（minimum sink）の違い』『風が滑空距離に与える影響』『ELT』（PA.IX.B.K2b・K2c・K5）がない。AFH の『接地は最も遅い速度で（対地速度 2 倍でエネルギー 4 倍）』『考えを変えるのは 1 回まで』もない。",
+    "Archer のフラップはレバーで動かす手動式なので、BATT OFF のあとも使える（POH で確認）— 不時着の手順でバッテリーを切る理由と一緒に書くと分かりやすい。"
+   ],
+   "mainFigure": "引き返しと正面着陸の上面図（emgTurnback）：300 ft AGL でエンジン停止 → A 案：正面 ±30°（教材の目安）の扇形に降りる、B 案：引き返し（AFH の例の数字：反応 4 秒・225° 旋回・65 kt・半径 2,100 ft → 滑走路の約 1,000 ft 下で届かない）。"
+  },
+  {
+   "id": "emg.fire",
+   "title": "火災と煙",
+   "gist": "エンジン火災は燃料を断ち、電気火災は電気を断ち、煙なら早く降りる。緊急降下の形と ACS の基準。",
+   "issues": [
+    "目的文・図がなく、表から始まる。",
+    "bk.key「燃料を止める・電気を止める——火のもとを断つ」は 2 種類の火災を混ぜている。チェックリストのエンジン火災にマスター OFF はない。AFH ch.18：電気の火災でなく、不時着が迫っていなければ、マスターを切ると無線とトランスポンダーが使えなくなる。→『エンジン火災は燃料を断つ／電気火災は電気を断つ』。",
+    "「火が消えなければ速度を変えて消す」— チェックリストは『USE AIRSPEED AS REQUIRED TO EXTINGUISH FIRE』。AFH は『速い降下で火が吹き消えることがある』一方で『構造が弱っているおそれ』『空気の流れが変わると再び燃えることがある』『消えても再始動しない』。VNE を超えないことも。",
+    "電気火災：チェックリストは Vents OPEN → Fire EXTINGUISH の順だが、AFH の Cabin Fire は『消火器を使ってから通気口を開ける。開けて煙が強くなったらすぐ閉じる』。両方を書き、実機は POH に従うと明記。",
+    "緊急降下の行がチェックリストの『Bank 30–45°』を落としている（すぐ下の ACS の段落にはある）。",
+    "緊急降下の 120 KIAS は Va（2,550 lb で 113 KIAS、1,917 lb で 89 KIAS：チェックリスト・FL.physics v.va 113）より速い。AFH：乱気流の中では Va を守る。『操縦はなめらかに、急に大きく動かさない』を加える。",
+    "『as soon as practical（なるべく早く）』と『as soon as possible（できるだけすぐ）』の違い（チェックリストで使い分けている）を説明していない。",
+    "客室火災（cabin fire）と、消火器（ハロン系）の使い方・使ったあとの換気がない。始動時の火災は ground.start（book-3.js:31）にあるので参照だけにする。"
+   ],
+   "mainFigure": "『何を断つか』の図（emgFireCut）：Archer の側面の模式図に燃料の流れ（タンク → セレクター → ミクスチャー → エンジン）と電気の流れ（オルタネーター・バッテリー → バス → 機器）を描き、エンジン火災＝燃料側を赤で遮断、電気火災＝電気側を遮断、客室の煙＝消火器 → 通気口。"
+  },
+  {
+   "id": "emg.elec",
+   "title": "電気系統の故障とそのほかの異常",
+   "gist": "オルタネーター故障・エンジンの不調・油圧/燃料圧の低下・ドアが開いたときのチェックリストの要点。",
+   "issues": [
+    "誤り：ドアのラッチの順番が逆。チェックリスト（OPEN DOOR）は『If Both Latches Are Open … LATCH SIDE LATCH THEN TOP』（横 → 上）。本文は「上のラッチ → 横のラッチの順に閉じる」。",
+    "ドアについて AFH ch.18 の主な教えは『ドアは放っておく（Leave the door alone）。ベルトを外して手を伸ばさない。急いで降りようとしない。普通の場周で降りる』。チェックリストの『飛行中に閉める手順（87 KIAS・通気口 CLOSE・小窓 OPEN）』はその後の選択肢として書く。",
+    "「非常用バッテリーで予備計器（姿勢・速度・高度）は動き続けます」は不正確：予備の速度計・高度計は空気の圧力で動く機械式のことが多く電気が要らない。EMERG BATT が何に電気を送るかは装備によって違う（チェックリストの始動前点検は『Standby Instruments and PFD operate — VERIFY』）。『POH の G1000 補足で確認』とする。",
+    "見出しと中身が合わない：電気系統の節に、エンジンの不調・油圧・燃料圧・ドアが同居している。エンジン計器の異常とドアは新しい節に分ける（policy 参照）。",
+    "チェックリストの ELECTRICAL OVERLOAD（オルタネーターが既知の負荷より 20 A 以上多い）と HIGH OIL TEMPERATURE（最寄りの空港に着陸・原因を調べる・エンジン停止の着陸に備える）が抜けている。",
+    "どの電気を切るか（AFH Figure 18-9）とバッテリーがもつ時間の考え方（AFH：25 Ah のバッテリーは 5 A で約 5 時間、10 A で約 2 時間、40 A なら 10〜15 分）がない。",
+    "エンジンの不調の行は『片方のマグネトーで良ければ、出力を下げ full RICH で最初の空港へ』の full RICH を落としている。",
+    "sys.elec（book-1.js:177）が同じ ALT 灯の手順と電気火災の手順をほぼそのまま載せている（重複）。",
+    "bk.sim が i3（AHRS 故障の部分パネル）を指すが、これは電気系統の故障ではない。『電気の故障そのものは練習できないが、主の姿勢表示が使えないときの飛び方を i3 で』と説明する。",
+    "目的文・bk.key・図がない（節の形の決まりに合わない）。"
+   ],
+   "mainFigure": "電気系統の模式図（emgElecLoadShed）：オルタネーター → バス → 機器、バッテリー、EMERG BATT（何に送るかは機体ごとに違う＝点線）を描き、ALT 故障時に残す機器・切る機器を色分け。横に AFH のバッテリー時間の棒（5 A：約 5 時間／10 A：約 2 時間／40 A：10〜15 分）。"
+  }
+ ],
+ "problems": {
+  "unclear": [
+   "emg.basic：「急がない」（wind the clock）と emg.abort「迷わない」・emg.engine「すぐに機首を下げて」が矛盾して読める。『すぐやる 1 動作』と『落ち着いて確かめること』を分ける。",
+   "emg.abort：滑走中の中止と、浮揚直後のエンジン故障（滑走路が残っている）が 1 段落に混ざっている。",
+   "emg.engine：bk.calc('turn') が何のためにあるか書かれていない（初期値 100 kt・30° の一般的な旋回計算機）。",
+   "emg.engine の表の見出し『訓練校の Archer チェックリスト』の下に、チェックリストにない項目（場所を決める・無線・同乗者・ドア）が混ざり、どこまでが公開資料かが分からない。",
+   "emg.fire：bk.key「燃料を止める・電気を止める」はどちらの火災でも両方切るように読める。",
+   "emg.elec：『as soon as practical』『as soon as possible』『最寄りの空港』の違いが説明されていない。",
+   "emg.elec：G1000 の予備計器が何で動くか（機械式か電気式か）が曖昧。",
+   "terms：「Forced landing / Off-airport landing＝不時着」だけで、予防着陸（precautionary landing）・着水（ditching）との違いがない。"
+  ],
+  "order": [
+   "emg.engine に滑空距離と不時着の内容まで詰め込まれている → 新節 emg.glide（滑空距離・風・最小沈下）と emg.forced（場所の選び方・進入・POWER OFF LANDING・MAYDAY/ELT）に分ける。",
+   "emg.elec に電気以外（エンジンの不調・油圧・燃料圧・高油温・ドア）が入っている → 新節 emg.abnormal（エンジン計器の異常・ドアが開いた・ピトー静圧の詰まりは sys.g1000 参照）に移す。",
+   "緊急降下は emg.fire の表の 1 行と ACS の段落に分かれている。火災・煙のあとに『緊急降下』の小見出しをまとめて置き、図を付ける。",
+   "emg.basic で緊急着陸の 3 種類と心理的な落とし穴を先に教えてから、各場面（中止 → 離陸直後 → 上空 → 不時着 → 火災 → 電気 → そのほか）に進む。"
+  ],
+  "errors": [
+   "emg.elec「上のラッチ → 横のラッチの順に閉じる」→ チェックリストは両方開いたとき『横のラッチ → 上のラッチ』（LATCH SIDE LATCH THEN TOP）(https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf p.6 OPEN DOOR)",
+   "emg.basic bk.key「危険な状態から機体を守ることは、規則より優先される（14 CFR 91.3(b)）」→ 91.3(b)：直ちに行動が必要な飛行中の緊急時に、その緊急に対処するのに必要な範囲で Part 91 の規則から逸脱できる。91.3(c)：求められたら書面で報告 (https://www.ecfr.gov/current/title-14/section-91.3)",
+   "emg.engine 表 4「無線（121.5 / 7700）」→ AIM 6-3-2：まず交信中・指定された周波数で通報。すぐに交信できなければ 7700。121.5 MHz は必要なときに使える緊急周波数 (https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_3.html)",
+   "emg.elec「非常用バッテリーで予備計器（姿勢・速度・高度）は動き続けます」→ 予備の速度計・高度計はピトー静圧で動く機械式が多く、EMERG BATT の給電先は装備ごとに違う（チェックリストは『Standby Instruments and PFD operate — VERIFY』）。断定せず POH の G1000 補足で確認と書く (https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf p.2 BEFORE START; https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/19_afh_ch18.pdf Pitot-Static System)",
+   "emg.fire bk.key「燃料を止める・電気を止める」→ エンジン火災のチェックリストにマスター OFF はなく、AFH は電気火災でなければマスターを切ると無線・トランスポンダーを失うと注意している (https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/19_afh_ch18.pdf In-Flight Fire / Engine Fire)"
+  ],
+  "outdated": [
+   "なし（参照している FAA-H-8083-3C・FAA-S-ACS-6C・MGA チェックリスト 2025 版はいずれも 2026-10-26 時点で最新：https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook（ページ更新 2022-03-29）、https://www.faa.gov/training_testing/testing/acs（6C は 2024-05-31 から有効、ページ更新 2026-09-16）、MGA の PDF は 339,087 バイトで分析用の写しと同じ）。"
+  ],
+  "duplicates": [
+   "sys.elec（book-1.js:177–182）：ALT 灯の手順と電気火災の手順がほぼ同文。sys は『しくみ』、emg は『手順』に分け、片方は参照にする。",
+   "radio5 / comm.xpdr（book-comm.js:340–348）：MAYDAY×3・PAN-PAN・7700・121.5・通報の順番を詳しく扱っている。emg.basic は {ch:radio5} への参照だけにする。",
+   "hf.srm（book-2.js:117）：Aviate → Navigate → Communicate を同じく扱う。",
+   "aero.drag（book-1.js:96）：最良滑空 76 KIAS・66 KIAS。ただし aero は『最大重量の値。降りる場所が決まったら 66 KIAS』と書き、チェックリストの『When committed to landing（着陸すると決めたら）66』と言い方が違う（emg は正しい）。",
+   "ops.slow（book-3.js:92）：スピンからの回復（チェックリストと PARE）。quiz.js の q_emg（emg.engine に紐づく）に PARE の問題があるので、emg から ops.slow への参照を置く。",
+   "ground.start（book-3.js:31）：始動時のエンジン火災。emg.fire から参照。",
+   "law.pic（book-2.js:51）：91.3 の機長の権限。",
+   "sys.g1000 / sys.compass / ifr.partial（book-1.js:183–199, book-4.js:151）：予備計器・AHRS 故障・部分パネル。"
+  ],
+  "numbers": [
+   "滑空比：本文「約 9：1・1,000 ft で約 1.5 NM」（教材の目安） vs 飛行モデル（physics.js:342 停止エンジンの抗力 0.026 を含む steadyState, pa28, 76 KIAS, 1,000〜3,000 ft）＝8.5：1・1.40 NM/1,000 ft・降下率 約 920 fpm・3,000 ft AGL から 3.2 分で 4.2 NM。実機の POH の滑空距離図は公開されていないので確認できない。本文は『教材モデルでは 76 kt で約 8.5：1（1,000 ft で約 1.4 NM）』と書く。",
+   "最良滑空速度：チェックリスト 76 KIAS vs 飛行モデルの揚抗比最大は約 60 KIAS（9.3：1）。66 kt で 9.2：1、76 kt で 8.5：1 → シミュレータでは 76 kt より遅く飛ぶ方が遠くへ届き、e3 の『76 kt を保つ（速すぎても遅すぎても届かない）』（syllabus.js:217）と矛盾。physics の調整（本書の範囲外）を報告。",
+   "examples の「3,000 ft …約 9：1 で 4.4 NM」→ 教材モデルでは無風 4.2 NM、向かい風 10 kt で 3.7 NM、追い風 10 kt で 4.7 NM（高度 3,000 ft AGL・76 KIAS）。",
+   "e3 の基準（syllabus.js:218・c1 の模擬エンジン故障）『滑空速度 ±8 kt』 vs 本文の ACS『±10 kt』：教材の方が厳しい（設計）。本文に『この教材の課目は ±8 kt』と書き分ける。",
+   "e2 の基準『針路 ±30°』（syllabus.js:207）と本文の『±30°』は一致。ただし出典は AFH ではなく教材の基準。",
+   "緊急降下 120 KIAS（チェックリスト） > Va 113 KIAS（2,550 lb）・89 KIAS（1,917 lb）、< Vno 125・Vne 154（FL.physics v）。教材モデルではアイドル・120 KIAS・バンク 45° で約 1,900 fpm の降下。",
+   "バンクによる失速速度（Vs1 50 kt の教材値）：30° で 54 kt、45° で 60 kt、60° で 71 kt — 引き返しの危険を示す図に使える（book-figs.js turnTable と同じ式）。"
+  ]
+ },
+ "policy": "章の始め（emg.basic）で、緊急着陸の 3 種類（不時着・予防着陸・着水）と、AFH の心理的な落とし穴・ACS の startle response を先に教え、『すぐやる 1 動作 → 記憶項目 → チェックリストを読む → 伝える』の時間の流れを 1 枚の図で見せる。wind the clock は『一刻を争わない異常のとき』に限定し、離陸中止と低高度のエンジン故障は即座に動くと書き分ける。節の順は emg.basic → emg.abort → emg.engine（離陸直後と上空の再始動だけに絞る）→ 新節 emg.glide（最良滑空・滑空比・風・最小沈下、教材モデルの数値と実機の値を分けて表示）→ 新節 emg.forced（場所の選び方・進入・POWER OFF LANDING・MAYDAY/7700/ELT）→ emg.fire（エンジン・電気・客室の火災と緊急降下）→ emg.elec（電気系統だけ：ALT 灯・過負荷・低電圧・負荷を減らす・予備計器）→ 新節 emg.abnormal（エンジンの不調・油圧・燃料圧・高油温・ドア）。チェックリストの表は『チェックリストの文言』と『AFH/ACS/AIM の補足』を別の列にし、手順は必ず『教材用の要約。実機は POH/AFM と訓練校のチェックリストが優先』と添える。ドアのラッチの順番（横 → 上）と 91.3(b) の言い回しを直し、sys.elec の重複手順は参照に置き換える。数値は FL.physics から計算して埋め込み（滑空 8.5：1・1.4 NM/1,000 ft）、チェックリスト値（76/66 KIAS・120 KIAS・87 KIAS）は出典付きで並べる。",
+ "figuresExisting": [
+  {
+   "key": "bk.t（emg.engine：ENGINE FAILURE DURING FLIGHT の表）",
+   "verdict": "fix",
+   "why": "見出しはチェックリストだが 2・4 行目は別出典、5 行目は ALTR OFF などを落としている。『チェックリスト』『補足（AFH/ACS/AIM）』の 2 列に分け、図 emgEngineFlow を主にする。"
+  },
+  {
+   "key": "bk.t（emg.fire：エンジン火災・電気火災・緊急降下の表）",
+   "verdict": "fix",
+   "why": "緊急降下の行に Bank 30–45° を加え、エンジン火災の『速度を変えて』をチェックリストどおりに。緊急降下は図 emgDescent に分ける。"
+  },
+  {
+   "key": "bk.t（emg.elec：ALT 灯・ラフ・油圧・燃料圧・ドアの表）",
+   "verdict": "fix",
+   "why": "ドアのラッチの順番の誤りを直し、エンジン系とドアは新節 emg.abnormal へ。過負荷・高油温を追加。"
+  },
+  {
+   "key": "bk.calc('turn')（emg.engine）",
+   "verdict": "redo",
+   "why": "説明がなく節の内容と結びつかない。高度と風から届く距離を出す滑空計算機（教材モデル 8.5：1）に替えるか、引き返しの図の数値（バンク → 旋回半径・失速速度）として使う。CADET では消えるので本文に依存させない。"
+  }
+ ],
+ "figuresNew": [
+  {
+   "name": "emgPriority",
+   "section": "emg.basic",
+   "what": "Aviate / Navigate / Communicate の 3 段と時間軸（すぐやる 1 動作 → 記憶項目 → チェックリスト → 通報）。各段に Archer の例。",
+   "data": "AFH ch.18・ACS PA.IX（startle response）・AIM 6-3-1/6-3-2・FL.physics v.glide 76",
+   "priority": "must"
+  },
+  {
+   "name": "emgAbortPoint",
+   "section": "emg.abort",
+   "what": "LAB RWY 36 の上面図に『浮揚しているべき地点』と経験則の目安、滑走中の中止／浮揚直後で滑走路が残る／残らない の 3 区間。模式図・NOT FOR NAVIGATION。",
+   "data": "physics.js LAB_RWY.len 1,200 m・v.rotate 60（70% = 42 kt）・AFH ch.6 Rejected Takeoff・MGA ENGINE FAILURE DURING TAKEOFF",
+   "priority": "must"
+  },
+  {
+   "name": "emgTurnback",
+   "section": "emg.engine",
+   "what": "離陸直後のエンジン停止：正面 ±30° の扇（教材の目安）と、引き返し（AFH の例の数字で滑走路の下に終わる軌跡）を上から見た図。",
+   "data": "AFH 3C ch.18 Figure 18-5 の例（300 ft AGL・4 秒・標準旋回・65 kt・半径 2,100 ft・225°・1,000 fpm → 1,016 ft 下）・syllabus.js e2 std ±30°",
+   "priority": "must"
+  },
+  {
+   "name": "emgEngineFlow",
+   "section": "emg.engine",
+   "what": "上空のエンジン故障の流れ図：76 KIAS → 場所を決める → 再始動（燃料：セレクター・ポンプ・ミクスチャー／空気：キャブヒート／点火：マグネトー）→ だめなら POWER OFF LANDING（66 KIAS・フラップ・燃料と電気を OFF）。",
+   "data": "MGA チェックリスト ENGINE FAILURE DURING FLIGHT / POWER OFF LANDING・FL.physics v.glide 76・v.glideLand 66",
+   "priority": "should"
+  },
+  {
+   "name": "glideRange",
+   "section": "emg.glide",
+   "what": "高度と滑空距離の側面図＋風の影響：1,000/2,000/3,000 ft AGL から 1.4/2.8/4.2 NM（無風）、向かい風・追い風 10 kt で 3.7/4.7 NM（3,000 ft）。上から見た『届く範囲』の卵形も。",
+   "data": "FL.physics.steadyState(pa28, 76, {pwr:'dead'}) を高度ごとに積分（本分析で計算した値）",
+   "priority": "must"
+  },
+  {
+   "name": "glidePolar",
+   "section": "emg.glide",
+   "what": "速度と降下率（または滑空比）のグラフ：最小沈下速度と最良滑空速度の違い（ACS PA.IX.B.K2b）。教材モデルの曲線とチェックリストの 76 KIAS を並べ、ずれがあることを正直に注記。",
+   "data": "FL.physics.steadyState の pwr 'dead' を 55〜100 kt で計算・MGA 76 KIAS",
+   "priority": "should"
+  },
+  {
+   "name": "forcedLandingPlan",
+   "section": "emg.forced",
+   "what": "不時着の進入の上面図：風・畑の長さと向き・障害物の 3 要素、風上に向かう最終進入、まず大まかな地域 → 次に具体的な場所、『考えを変えるのは 1 回まで』。模式図。",
+   "data": "AFH 3C ch.18 Terrain Selection / Approach・ACS PA.IX.B.S3–S4",
+   "priority": "should"
+  },
+  {
+   "name": "touchdownEnergy",
+   "section": "emg.forced",
+   "what": "対地速度と止まるのに必要な距離（9 G 一定で 50 mph → 9.4 ft、100 mph → 37.6 ft）：速度 2 倍でエネルギー 4 倍。風上に降りる理由。",
+   "data": "AFH 3C ch.18 Figure 18-2 の数値",
+   "priority": "nice"
+  },
+  {
+   "name": "emgFireCut",
+   "section": "emg.fire",
+   "what": "燃料の流れと電気の流れの模式図で『エンジン火災＝燃料を断つ／電気火災＝電気を断つ／客室の煙＝消火器 → 換気』。",
+   "data": "MGA ENGINE FIRE / ELECTRICAL FIRE・AFH ch.18 In-Flight Fire",
+   "priority": "must"
+  },
+  {
+   "name": "emgDescent",
+   "section": "emg.fire",
+   "what": "緊急降下の形：バンク 30〜45° の旋回降下・アイドル・フラップ UP・120 KIAS・指定高度 ±100 ft で水平に。Va 113/89 KIAS と Vno 125 の帯を速度計の弧で示す。",
+   "data": "MGA EMERGENCY DESCENT・ACS PA.IX.A.S4–S5・FL.physics v.va 113・v.no 125・v.ne 154",
+   "priority": "should"
+  },
+  {
+   "name": "emgElecLoadShed",
+   "section": "emg.elec",
+   "what": "電気系統の模式図と、ALT 故障時に残す機器・切る機器。バッテリー時間の棒グラフ。",
+   "data": "MGA ELECTRICAL FAILURES・AFH ch.18 Electrical System（25 Ah：5 A で 5 時間・10 A で 2 時間・40 A で 10〜15 分）・Figure 18-9",
+   "priority": "should"
+  },
+  {
+   "name": "doorLatch",
+   "section": "emg.abnormal",
+   "what": "Archer のドアの上ラッチと横ラッチの位置、両方開いたら『横 → 上』。AFH の『まず操縦・ベルトを外さない』を大きく。",
+   "data": "MGA OPEN DOOR（87 KIAS）・AFH ch.18 Door Opening In-Flight",
+   "priority": "nice"
+  }
+ ],
+ "photos": [
+  {
+   "section": "emg.forced",
+   "subject": "上空から見た農地・広い畑（不時着の候補地の見え方）",
+   "search": "USDA NRCS Photo Gallery 'aerial farmland'; Commons 'Aerial photographs of farmland in Florida'（US 政府作品を選ぶ）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "『広くて平らで障害物のない場所』と電線・溝の見え方を実感させる。"
+  },
+  {
+   "section": "emg.forced",
+   "subject": "406 MHz の ELT（航空機用救命無線機）の本体",
+   "search": "NOAA SARSAT image library 'ELT 406 MHz'（sarsat.noaa.gov・PD）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "ACS PA.IX.B.K5（ELT）を本文に加えるときの実物。"
+  },
+  {
+   "section": "emg.fire",
+   "subject": "小型機の客室に取り付けた携帯用消火器",
+   "search": "Commons 'Aircraft fire extinguishers'; US Air Force / US Navy 'handheld Halon extinguisher cockpit'（顔が写らないもの）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "電気火災のチェックリスト『Fire EXTINGUISH』の道具を見せる。"
+  },
+  {
+   "section": "emg.elec",
+   "subject": "Lycoming O-360 系エンジンのオルタネーター（カウルを開けた状態）",
+   "search": "Commons category 'Lycoming O-360'（CC BY / CC BY-SA をファイルごとに確認）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "『エンジンで回る発電機』がどこにあるかを示す。計器画面の写真は不可なので機械側の写真にする。"
+  },
+  {
+   "section": "emg.glide",
+   "subject": "滑空中・アイドルで降下中の PA-28（側面）",
+   "search": "Commons category 'Piper PA-28-181 Archer'（訓練校の塗装・登録記号の宣伝写真は避ける、個人機を選ぶ）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "教材の機体の姿をつかませる（滑空姿勢は機首がやや下）。"
+  }
+ ],
+ "endMatter": {
+  "terms": [
+   "Aviate, Navigate, Communicate / 飛ばす（操縦する）・向かう・伝える / 優先順位",
+   "Best glide speed / 最良滑空速度 / Archer 76 KIAS（チェックリスト）",
+   "Minimum sink speed / 最小沈下速度 / 最も長く空中にいられる速度（最良滑空より遅い）— 追加",
+   "Glide ratio / 滑空比 / 教材モデル 76 kt で約 8.5：1 — 追加",
+   "Forced landing / 不時着（強制着陸） / エンジン停止などで飛び続けられない",
+   "Precautionary landing / 予防着陸 / 飛べるがやめた方がよいときの着陸（AFH）— 追加",
+   "Ditching / 着水 / — 追加",
+   "Rejected takeoff (RTO) / 離陸中止 /",
+   "Impossible turn / 低高度での引き返し旋回 / AFH：学生には受け入れられない危険 — 追加",
+   "Accelerated stall / 加速失速 / 旋回など荷重がかかった状態での失速 — 追加",
+   "Engine fire / Electrical fire / Cabin fire / エンジン火災・電気火災・客室火災 /（cabin fire 追加）",
+   "Emergency descent / 緊急降下 / バンク 30〜45°（ACS）",
+   "Alternator failure / オルタネーター故障 / ALT 灯",
+   "Load shedding / 電気の負荷を減らす / — 追加",
+   "Land as soon as possible / as soon as practical / できるだけすぐ着陸／なるべく早く着陸 / — 追加（定義は POH）",
+   "Memory items / 記憶項目 /",
+   "Startle response / 驚いて固まる反応 / ACS PA.IX.C.R4 — 追加",
+   "ELT (Emergency Locator Transmitter) / 航空機用救命無線機 / — 追加",
+   "MAYDAY / PAN-PAN / 遭難・緊急の呼び出し / 3 回（AIM 6-3-1）"
+  ],
+  "examples": [
+   "3,000 ft AGL でエンジンが止まった → 76 kt → 教材モデルでは無風で約 4.2 NM（3 分少し）届く。最寄りの空港は 4 NM・向かい風 10 kt なら届く距離は約 3.7 NM → 空港は無理と判断し、近くの広い畑を選ぶ（examples の 4.4 NM を差し替え）。",
+   "離陸直後 300 ft でエンジン故障 → 機首を下げて滑空速度 → 正面やや右の空き地へ。引き返さない（AFH の例では引き返すと滑走路の約 1,000 ft 下で終わる）。",
+   "上昇中にドアが開いた → まず操縦（Vy を保つ）→ 普通の場周で降りる。ベルトを外して手を伸ばさない（AFH）。",
+   "電気の焦げる臭いと煙 → EMERG BATT ARM 確認・マスター OFF・オルタネーター OFF・通気口・ヒーター OFF・消火 → なるべく早く着陸。通気口を開けて煙が強くなったら閉じる（AFH）。"
+  ],
+  "cautions": [
+   "ここの手順は公開されている訓練校のチェックリスト（MGA 2025）の要約で、教材用。実機はその機体の POH/AFM と訓練校のチェックリストに従う。",
+   "一刻を争う場面（離陸中止・低高度のエンジン故障）はすぐ動く。『落ち着いて確かめる』のはその 1 動作のあと。",
+   "飛行モデルの滑空（76 kt で約 8.5：1）は教材の近似。実機の滑空距離は POH の図で確かめる。",
+   "シミュレータで練習できる故障はエンジン停止と計器（AHRS・GPS）の故障だけ（school.js failNow）。火災・煙・電気の故障は練習できない。",
+   "緊急降下の 120 KIAS は Va より速い。操縦はなめらかに。乱気流の中では Va 以下（AFH）。"
+  ],
+  "quizReview": [
+   "Q1（300 ft でエンジン停止）：keep。why に AFH ch.18『低高度の引き返しは学生操縦士には受け入れられない危険』を加える。",
+   "Q2（緊急降下のバンク）：keep。ACS PA.IX.A.S4『30〜45°で正の荷重を保つ』と一致。",
+   "Q3（ALT 灯・電流計ゼロ）：keep。チェックリストと一致。選択肢『気にせず飛行を続ける』は良い誤答。"
+  ],
+  "quizProposals": [
+   {
+    "q": "Archer の訓練校チェックリストで、ドアの上と横のラッチが両方とも開いたとき、閉める順番は？",
+    "choices": [
+     "横のラッチ → 上のラッチ",
+     "上のラッチ → 横のラッチ",
+     "どちらからでもよい",
+     "シートベルトを外して手を伸ばし、すぐ両方を閉める"
+    ],
+    "answer": 0,
+    "why": "チェックリスト OPEN DOOR：87 KIAS・通気口 CLOSE・小窓 OPEN、両方開いていたら LATCH SIDE LATCH THEN TOP。AFH はまず操縦、ベルトは外さないと教える。"
+   },
+   {
+    "q": "飛行中のエンジン火災。訓練校の Archer チェックリストに含まれない操作は？",
+    "choices": [
+     "燃料セレクター OFF",
+     "ミクスチャー IDLE CUT-OFF",
+     "マスタースイッチ OFF",
+     "ヒーターとデフロスター OFF"
+    ],
+    "answer": 2,
+    "why": "エンジン火災は燃料を断つ。AFH：電気火災でなく不時着が迫っていなければ、マスターを切ると無線とトランスポンダーが使えなくなる。"
+   },
+   {
+    "q": "3,000 ft AGL でエンジンが止まり 76 kt で滑空。向かい風 10 kt の方向へ飛ぶと、無風のときと比べて届く距離は？（教材モデル）",
+    "choices": [
+     "約 4.2 NM のまま",
+     "約 3.7 NM に短くなる",
+     "約 4.7 NM に長くなる",
+     "約 2 NM に半分になる"
+    ],
+    "answer": 1,
+    "why": "空気に対する滑空は同じでも対地速度が 10 kt 減るので、届く距離は約 13% 短くなる（教材モデル：無風 4.2・向かい風 3.7・追い風 4.7 NM）。"
+   },
+   {
+    "q": "離陸滑走中、『浮揚しているべき地点』を過ぎても速度が足りない。正しい対応は？",
+    "choices": [
+     "アイドルにして、まっすぐ保ちブレーキで止まる",
+     "機首を大きく上げて浮かせる",
+     "フラップを 40° にする",
+     "滑走路の端まで様子を見る"
+    ],
+    "answer": 0,
+    "why": "AFH 第 6 章：離陸前に浮揚すべき地点を決め、そこで浮いていなければすぐ中止。アイドル・方向を保って強くブレーキ。"
+   },
+   {
+    "q": "進入管制と交信中にエンジンが止まった。遭難の通報は？",
+    "choices": [
+     "今の周波数で MAYDAY ×3。コードは指定されたまま（指示があれば変える）",
+     "まず 121.5 MHz に変えてから MAYDAY",
+     "トランスポンダーを 7600 にする",
+     "操縦が忙しいので通報はしない"
+    ],
+    "answer": 0,
+    "why": "AIM 6-3-2：交信中の周波数でまず通報。すぐに交信できないときに 7700・121.5。7600 は無線の故障。操縦（Aviate）を先にしてから伝える。"
+   }
+  ],
+  "refs": [
+   "add: FAA Airplane Flying Handbook（FAA-H-8083-3C）第 18 章 Emergency Procedures https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/19_afh_ch18.pdf",
+   "add: FAA Airplane Flying Handbook 第 6 章 Rejected Takeoff/Engine Failure https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/07_afh_ch6.pdf",
+   "add: AIM 6-3 Distress and Urgency Procedures（6-3-1 MAYDAY×3、6-3-2 通報の順番と 7700） https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_3.html",
+   "update: R.cfr91 を 14 CFR 91.3 の条文に直接リンク https://www.ecfr.gov/current/title-14/section-91.3",
+   "keep: MGA Archer III G1000 Pilot's Checklist 2025 https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf（2026-10 時点で同じ版を確認）",
+   "keep: FAA Private Pilot — Airplane ACS（FAA-S-ACS-6C、2024-05-31 から有効・現行） https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf（Area IX Emergency Operations の Task A〜C を示す）",
+   "keep: R.aim（総論）。必要なら R.rmh（Risk Management Handbook）を startle / SRM の参照に追加"
+  ]
+ },
+ "appMismatches": [
+  "physics.js:102–110, 342（pa28 の CD0 0.032・K 0.05・停止プロペラ抗力 0.026）— 揚抗比最大が約 60 KIAS（9.3：1）になり、チェックリストの最良滑空 76 KIAS（モデルで 8.5：1）とずれる。e3（syllabus.js:217『76 kt を保つ（速すぎても遅すぎても届かない）』）と本文の bk.key『速くても遅くても滑空距離は短くなる』がシミュレータでは成り立たない — 実機の値（チェックリスト）が正しい。physics の調整を報告。",
+  "syllabus.js:218・c1 の模擬エンジン故障 — 基準『滑空速度 ±8 kt』 vs 本文の ACS『±10 kt』— どちらも正しいが別物（教材の課目の方が厳しい）。本文で書き分ける。",
+  "quiz.js:142（q_emg、紐づけ先 emg.engine）— PARE（スピン回復）の問題があるが emg 章にスピンの説明がない（ops.slow book-3.js:92 と aero.stall にある）。emg に参照を置くか、bank の紐づけを考える — 本の内容としては ops.slow が正しい置き場所。",
+  "school.js:140（ATC 'mayday' の why）— 通報の順番の出典を『AIM 6-3-1 の考え方』としているが、要素の順番は AIM 6-3-2（radio.js:269 は 6-3-2 で正しい）。",
+  "emg.elec の bk.sim（i3 部分パネル・AHRS 故障）— 電気系統の故障の練習ではない（school.js:295–302 の failNow は engine / engL / engR / ahrs / gps だけ）。本文で『電気の故障そのものは練習できない』と書く — app が正しい。",
+  "syllabus.js:197（e1 の brief：Shift+F・F・B・Q/E）— app.js:100, 206–207, 230 と一致。本文に書くキーは bk.sim の中だけにする（CADET の APP 正規表現に注意）。"
+ ],
+ "factChecks": [
+  {
+   "claim": "低い高度で滑走路へ引き返さない（AFH）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/19_afh_ch18.pdf",
+   "note": "AFH 3C ch.18 Engine Failure After Takeoff：『A turn back at low altitudes presents an unacceptable risk for student pilots…』。例：300 ft AGL・標準旋回・65 kt → 滑走路の約 1,016 ft 下。"
+  },
+  {
+   "claim": "正面からおおむね ±30° 以内に降りる場所を選ぶ",
+   "verdict": "unverified",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/19_afh_ch18.pdf",
+   "note": "AFH は『directly ahead (or slightly to the side of the takeoff path)』。±30° は教材の課目 e2 の基準（syllabus.js:207）。『教材の目安』と書く。"
+  },
+  {
+   "claim": "上昇姿勢のままだと数秒で失速",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/07_afh_ch6.pdf",
+   "note": "AFH ch.6：動力を失った上昇姿勢は失速の迎え角か、それに近い。右ラダーを踏んだままのことも多い → 機首を下げ、ラダーを戻す。"
+  },
+  {
+   "claim": "離陸中止の判断：滑走路の半分で Vr の 70%",
+   "verdict": "imprecise",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/07_afh_ch6.pdf",
+   "note": "AFH は『浮揚しているべき地点を決める』『離陸滑走＋着陸滑走で加速・停止距離の目安』。70/50 は教官が使う経験則（ふつうは浮揚速度の 70%）。"
+  },
+  {
+   "claim": "自家用 ACS の Emergency Approach and Landing：最良滑空速度 ±10 kt",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf",
+   "note": "PA.IX.B.S1。ほかに K2b（最良滑空と最小沈下の違い）・K2c（風）・K5（ELT）も。"
+  },
+  {
+   "claim": "自家用 ACS の Emergency Descent：バンク 30〜45°・速度 ＋0／−10 kt・指定高度 ±100 ft",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf",
+   "note": "PA.IX.A.S4–S5。FAA-S-ACS-6C は 2026-10 時点で現行（https://www.faa.gov/training_testing/testing/acs）。"
+  },
+  {
+   "claim": "FAA Airplane Flying Handbook は FAA-H-8083-3C",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook",
+   "note": "FAA のページで 3C が現行（章 18 が Emergency Procedures）。"
+  },
+  {
+   "claim": "Archer の最良滑空 76 kt、着陸すると決めたら 66 kt",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "POWER OFF LANDING：Airspeed MAINTAIN 76 KIAS … When committed to landing: Airspeed 66 KIAS。"
+  },
+  {
+   "claim": "Archer の滑空比は約 9：1（1,000 ft で約 1.5 NM）",
+   "verdict": "imprecise",
+   "source": "flight-lab/src/physics.js（steadyState, pa28, pwr 'dead'）",
+   "note": "教材モデルは 76 KIAS で 8.5：1（1.40 NM/1,000 ft）。実機の POH の滑空距離図は公開資料で確認できない。"
+  },
+  {
+   "claim": "ENGINE FAILURE DURING FLIGHT：76 kt・タンク切り替え・燃料ポンプ ON・ミクスチャー RICH・キャブヒート ON・マグネトーを片方ずつ",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "p.4。ただし表の 2・4 行目はこのチェックリストにない。"
+  },
+  {
+   "claim": "POWER OFF LANDING：66 kt・フラップ・スロットル CLOSE・ミクスチャー IDLE CUT-OFF・マグネトー OFF・バッテリー OFF・燃料セレクター OFF",
+   "verdict": "imprecise",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "ALTR Switch OFF と Air Conditioning OFF・Landing Pattern ESTABLISH が抜けている。"
+  },
+  {
+   "claim": "エンジン火災：燃料セレクター OFF・スロットル CLOSED・ミクスチャー IDLE CUT-OFF・燃料ポンプ OFF・ヒーター・デフロスター OFF、消えなければ速度で消す",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "『USE AIRSPEED AS REQUIRED TO EXTINGUISH FIRE』。AFH：消えても再始動しない、空気の流れで再燃することがある。"
+  },
+  {
+   "claim": "電気火災：EMERG BATT ARM 確認・マスター OFF・オルタネーター OFF・通気口 OPEN・キャビンヒーター OFF・消火・なるべく早く着陸",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "AFH の Cabin Fire は『消火器を使ってから換気、煙が増えたら閉じる』— 注意として併記。"
+  },
+  {
+   "claim": "緊急降下：ミクスチャー全開・スロットル IDLE・フラップ UP・120 kt",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "チェックリストには Bank 30–45° もある（表で抜けている）。120 KIAS は Va 113 KIAS より速い。"
+  },
+  {
+   "claim": "ALT 灯：電流計確認 → ゼロならオルタネーター OFF・負荷最小・ブレーカー確認・ON、戻らなければ OFF・負荷を減らし着陸。バス電圧 25 V 未満で低電圧の警報",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "p.5 ELECTRICAL FAILURES と NOTE。"
+  },
+  {
+   "claim": "エンジンの不調：キャブヒート ON、1 分以上続けば OFF・ミクスチャー・燃料ポンプ・タンク・計器・マグネトー L→R→BOTH、片方で良ければその側で最初の空港へ",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "チェックリストは『reduced power and full RICH mixture』。full RICH が抜けている。"
+  },
+  {
+   "claim": "油圧の低下：できるだけ早く着陸して原因を調べる／燃料圧の低下：燃料ポンプ ON・タンク切り替え",
+   "verdict": "correct",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "p.6。HIGH OIL TEMPERATURE（最寄りの空港へ）が本文にない。"
+  },
+  {
+   "claim": "ドアが開いた：87 kt・通気口を閉じ・小窓を開けて、上のラッチ → 横のラッチの順に閉じる",
+   "verdict": "wrong",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "両方開いているときは『LATCH SIDE LATCH THEN TOP』（横 → 上）。上だけ開いていれば上を、横だけなら肘掛けを引きながら横を。"
+  },
+  {
+   "claim": "ドアは危険ではない。気を取られて事故になる",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/19_afh_ch18.pdf",
+   "note": "AFH：『accidents are almost never caused by an open door』。ただし『放っておき、急がず普通の場周で降りる』が AFH の主な教え。"
+  },
+  {
+   "claim": "G1000 機ではオルタネーターが故障するとバッテリーだけで動き、時間とともに表示が消える",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/19_afh_ch18.pdf",
+   "note": "AFH：発電機が止まればバッテリーだけ。負荷を減らし最寄りの空港へ。バッテリー時間の例（25 Ah）。"
+  },
+  {
+   "claim": "非常用バッテリーで予備計器（姿勢・速度・高度）は動き続ける",
+   "verdict": "unverified",
+   "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+   "note": "予備の速度計・高度計は機械式（ピトー静圧）のことが多い。EMERG BATT の給電先は装備ごとに違う（チェックリストは『Standby Instruments and PFD operate — VERIFY』）。POH の G1000 補足で確認。"
+  },
+  {
+   "claim": "14 CFR 91.3(b)：危険な状態から機体を守ることは規則より優先される",
+   "verdict": "imprecise",
+   "source": "https://www.ecfr.gov/current/title-14/section-91.3",
+   "note": "条文は『飛行中の緊急で直ちに行動が必要なとき、必要な範囲で Part 91 から逸脱できる』。(c) 求めがあれば書面で報告。"
+  },
+  {
+   "claim": "MAYDAY ×3",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_3.html",
+   "note": "AIM 6-3-1：MAYDAY（PAN-PAN）は『preferably repeated three times』。"
+  },
+  {
+   "claim": "不時着の準備：無線（121.5 / 7700）",
+   "verdict": "imprecise",
+   "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_3.html",
+   "note": "AIM 6-3-2：交信中の周波数が先。すぐに交信できなければ 7700。121.5 MHz は必要なら使える。"
+  },
+  {
+   "claim": "時計を巻く（wind the clock）：数秒落ち着いてから動く",
+   "verdict": "imprecise",
+   "source": "https://www.flyingmag.com/?p=8133",
+   "note": "FAA の資料にない操縦士の言い伝え。エンジン停止（特に低高度）・離陸中止など一刻を争う場面には当てはまらない（AFH ch.6：浮揚後の動力喪失は数秒で判断）。"
+  }
+ ],
+ "cadetNotes": [
+  "章に SVG が 1 枚もない。CADET は各節の最初の <svg> を教室スクリーンに出すので、各節の最初の図を最重要の図にする（emg.basic=emgPriority、emg.abort=emgAbortPoint、emg.engine=emgTurnback、emg.fire=emgFireCut、emg.elec=emgElecLoadShed）。",
+  "bk.sim（e1・e2・e3・i3）と bk.calc('turn') は CADET で消える。本文が『下の計算機で』『シミュレータで体験』に頼らないようにする（APP_ONLY の『上の計算機』『未実装』『このシミュレータ』を含む文は丸ごと落ちる）。",
+  "キーの名前（Shift+F・B・Q/E など）は bk.sim の中だけに。本文に『スロットル（F）』のような括弧付きキーを書くと content.test.mjs の APP 正規表現に引っかかる。",
+  "bk.key はゲームが読み上げる：2〜4 項目・各 60 字以内（現在 62 字の wind the clock の項目は長い）。英語の略語（KIAS・ALT）が続かないよう、読み上げて分かる日本語に。",
+  "CADET のソロ前の筆記試験（cadet/src/career/career.js:61）は quiz.js の q_emg（quiz.js:132–143）から出題する。ドアの順番・滑空比などを本文で直したら、q_emg の内容と食い違わないか確認（q_emg の door 問題は順番を問わないので今は矛盾しない）。",
+  "cautions の『火災・煙・電気の故障は未実装』は FLIGHT LAB 用。CADET では APP_ONLY（未実装）で落ちる前提で、本文の中には書かない。"
+ ]
+}

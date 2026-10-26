@@ -1,0 +1,352 @@
+{
+ "id": "wx",
+ "title": "航空気象（フロリダの空を中心に） — Aviation weather (book-2.js, ch. 5, part p1)",
+ "sections": [
+  {
+   "id": "wx.atm",
+   "title": "大気・気圧・気温",
+   "gist": "ISA (15 °C / 29.92 inHg, about -2 °C and -1 inHg per 1,000 ft), the altimeter setting (local below 18,000 ft, 29.92 above), highs and lows, plus dewpoint and stability squeezed into one table.",
+   "issues": [
+    "Key 「高度計は「高い所から低い所へ」飛ぶと実際より高く表示される（気圧・気温とも）」: 「高い所」 reads as 'a high place (altitude)'. Write 「気圧の高い所から低い所へ（または暖かい所から寒い所へ）飛ぶと、高度計は実際より高く表示される＝実際は低い」 and add 'High to low, look out below'. The same unclear wording is in sys (book-1.js:191).",
+    "FIG.atm: the label 「気圧は 1,000 ft あたり約 1 inHg 下がる」 runs outside the viewBox and is cut off (figshot: bbox [268,142,441,154] in a 400-wide viewBox). The smallest text is 8.6 px at 390 px (fs 10/11). The figure has no pressure scale, so the caption 「気温も気圧も下がる」 is not shown in the drawing.",
+    "The term table mixes moisture and stability (露点・安定・不安定) into the pressure section. Move it to a new section wx.cloud so this section stays on pressure, temperature and the altimeter.",
+    "「米国では 18,000 ft MSL 未満で現地の規正値」: 14 CFR 91.121(a)(1) says 'the current reported altimeter setting of a station along the route and within 100 NM'. Explain it as 「近くの空港（ATIS など）で聞いた最新の値」. At FL180 and above it is 29.92.",
+    "There is no worked number for the altimeter error. Example: flying from an area set to 30.10 into an area at 29.90 without resetting → about 200 ft lower than indicated (1 inHg ≈ 1,000 ft).",
+    "The opening sentence that says why a pilot cares (altimeter, performance, weather) is missing.",
+    "The cold-temperature error is only 「（気圧・気温とも）」 in brackets. CADET's speech drops bracketed text (cadet/src/content/dialog/instructor.js:40), so it is lost when read aloud."
+   ],
+   "mainFigure": "Fixed FIG.atm: ISA temperature line (15 °C at sea level → -56.5 °C at 36,089 ft) together with a pressure scale computed from the FL.physics ISA model (29.92 inHg at 0 ft, ≈24.9 at 5,000 ft, ≈20.6 at 10,000 ft, ≈14.9 at 18,000 ft = about half). All labels inside the viewBox, font ≥ 12."
+  },
+  {
+   "id": "wx.cloud",
+   "title": "（新）水蒸気・雲・安定 — proposed new section",
+   "gist": "NEW: dewpoint and spread, how clouds form (cooling by lifting), the cloud-base rule of thumb, cloud families and heights, stable vs unstable air, CB/TCU.",
+   "issues": [
+    "NEW section (proposed id wx.cloud), inserted after wx.atm. It takes the 露点 / 安定・不安定 rows from wx.atm and FIG.clouds from wx.ts.",
+    "The chapter summary promises 「雲と前線」, but no section explains clouds; FIG.clouds sits in wx.ts with no text about it."
+   ],
+   "mainFigure": "Temperature/dewpoint lines rising until they meet = cloud base. Spread 9 °C (the METAR example 32/23) → base ≈ 3,600 ft ≈ FEW035 (spread ÷ 2.5 °C × 1,000 ft, PHAK ch. 12 rule of thumb). Second figure: redone FIG.clouds with heights."
+  },
+  {
+   "id": "wx.front",
+   "title": "（新）風・気団・前線 — proposed new section",
+   "gist": "NEW: why wind blows (high → low, turned by Coriolis), air masses, cold and warm fronts. Florida winter cold fronts (squall line, gusty NW wind, then clear and cool) and the June–November hurricane season.",
+   "issues": [
+    "NEW section (proposed id wx.front). The summary says 「雲と前線」, but fronts appear only as one word (「前線」) in the thunderstorm lifting list and in 「前線霧」.",
+    "Florida-specific value: in winter the cadets will meet cold fronts (wind shifts and gusts, a line of storms ahead of the front, low ceilings behind it). That is the main winter weather besides fog."
+   ],
+   "mainFigure": "Cross-section of a cold front (steep, cumuliform clouds/CB, narrow band) beside a warm front (gentle slope, stratiform clouds, wide band of rain and fog ahead), with the surface-map symbols (blue triangles / red half-circles). Teaching drawing based on AWH ch. 11."
+  },
+  {
+   "id": "wx.ts",
+   "title": "雷雨とフロリダの夏",
+   "gist": "The three ingredients of a thunderstorm, Florida's afternoon storms from colliding sea breezes, and a table of hazards (turbulence, microburst, hail/lightning/icing, gust front) with the key 'stay away from CB'.",
+   "issues": [
+    "The first SVG is FIG.clouds (a list of cloud types), not the section topic. CADET puts the first SVG on the classroom screen, so the thunderstorm/sea-breeze figure never reaches the screen.",
+    "FIG.clouds: viewBox 490×270 (target 360–440), smallest text 7.0 px at 390 px. The CB line is a hook drawn over the high-cloud band at the right edge, and the 「Cumulonimbus（CB）」 label sits inside the 上層 band. The caption promises 「高さの目安」 but the figure has no numbers. Abbreviations are missing for Cirrocumulus (CC), Cirrostratus (CS), Altostratus (AS) and Nimbostratus (NS).",
+    "FIG.seaBreeze: the caption says 「両側の海から来る海風がぶつかる内陸」, but the drawing shows only one sea and one sea-breeze arrow. The return flow aloft (grey arrow) has no label. 「海（大西洋・メキシコ湾）」 puts two seas into one box. No time of day is shown.",
+    "The thunderstorm life cycle (積雲期・成熟期・消散期; AWH 28B 22.3 names them towering cumulus, mature and dissipating, about 30 min) is missing, yet quiz.js:54 asks about it.",
+    "Table row 乱気流 「雲から 20 NM 以上離れることが推奨される＝Aviation Weather Handbook の考え方」: the source is AIM 7-1-26/7-1-27 and AWH 28B 22.8.2 #14. Those say avoid by at least 20 miles any thunderstorm identified as severe or giving an intense radar echo, keep at least 40 miles between two such echoes before flying between them, and expect severe turbulence up to 20 miles from severe storms (about 10 miles from less severe ones). The book drops the condition and gives 'NM' instead of 'miles'.",
+    "Row 「ひょう・雷・着氷｜雲の外にも降ることがある」: icing does not 'fall outside the cloud'. Hail can fall several miles from the nearest visible cloud, especially under the anvil (AWH 22.8.1), and lightning can strike an aircraft in clear air near a storm (AIM 7-1-26). Icing happens in cloud or precipitation above the freezing level.",
+    "The microburst gets one table row only. Size, strength and timing (AIM 7-1-24: downdraft < 1 mile wide, up to 6,000 fpm, 45 kt outflow = 90 kt headwind-to-tailwind change, seldom > 15 min, strongest 5 min after it hits the ground) need a figure. Proposed new section wx.shear.",
+    "Key 「ウインドシア（速度が ±15 kt 以上急に変わる、昇降率が大きく変わる）…」: AWH 28B 19.2.4 says airspeed change > 15 kt or vertical-speed change > 500 fpm. Give the 500 fpm. The item is 56 characters and its numbers are inside brackets, which CADET does not read aloud.",
+    "「午後に雷雨が発達し、夕方に弱まる」: NWS Melbourne forecasts often keep inland storms into the late afternoon and evening. Better 「夜には弱まることが多い」.",
+    "When the season is (wet season June–September, July the peak: NWS Melbourne lightning climatology) and the hurricane season (1 June–30 November) are missing.",
+    "Key 「フロリダの夏の訓練は午前中に計画することが多い（教官・学校の方針に従う）」: the bracket is dropped when CADET reads it aloud. Keep the instructor caveat as a separate sentence or in bk.warn."
+   ],
+   "mainFigure": "Redone FIG.seaBreeze: a west–east cross-section of the Florida peninsula: Gulf (west) | inland (Orlando area) | Atlantic (east). Two sea-breeze arrows meet inland, with sea-breeze fronts, a CB at the convergence and the return flow aloft. A small time strip below: 10時 海風が始まる → 15時 内陸でぶつかり雷雨 → 夜 弱まる. Labelled 模式図."
+  },
+  {
+   "id": "wx.shear",
+   "title": "（新）ウインドシアとマイクロバースト — proposed new section",
+   "gist": "NEW: what wind shear is (> 15 kt airspeed or > 500 fpm change), the microburst on approach/takeoff, the gust front and sea-breeze front as low-level shear, recognition, and the escape (full power, go around), plus LLWAS/ATC alerts.",
+   "issues": [
+    "NEW section (proposed id wx.shear). The chapter summary lists 「ウインドシア」 but it has no section; the content is one table row and one key item in wx.ts.",
+    "Must not suggest the simulator can practise it: pages.js:845 lists 「雲・視程の変化・夜間・着氷・ウインドシア」 as not built."
+   ],
+   "mainFigure": "Side view of an approach through a microburst: headwind (IAS up, above the glide path) → downdraft → tailwind (IAS down, below the path), with AIM 7-1-24 numbers (downdraft < 1 mile, outflow ≈ 2.5 miles, up to 6,000 fpm, 45 kt each side)."
+  },
+  {
+   "id": "wx.fog",
+   "title": "霧・低い雲・視程",
+   "gist": "Three fog types (radiation, advection, frontal) with Florida examples, the VFR visibility/cloud rule (91.155 in the law chapter), and keys on not flying into cloud and on deciding a turn-back point.",
+   "issues": [
+    "No figure (the section starts with a table), so CADET shows nothing on the classroom screen.",
+    "The definition of fog is missing. AIM 7-1-28 / AWH 18.1.1: FG = visibility < 5/8 SM, BR (mist) ≥ 5/8 SM. Fog forms when temperature and dewpoint are (nearly) equal, and 'seldom forms when the spread is greater than 2 °C (4 °F)' (AWH 28B 18.1.1).",
+    "Radiation fog: the conditions (clear sky, light wind up to about 5 kt, moist ground, e.g. after rain) and 「昼前には消えることが多い」 are missing. Advection fog: missing that it 'can move in rapidly regardless of the time of day or night' and thickens with wind up to about 15 kt (AWH 18.1.1.1.2). Both matter for Florida mornings.",
+    "Row 「前線霧・雨の霧」 is correct, but add 「温暖前線に多い」 (AWH 18.1.1.1.4).",
+    "Low ceilings (stratus) are covered by one sentence. The flight categories VFR/MVFR/IFR/LIFR (AIM 7-1-7) link fog/low cloud to the METAR, the GFA and personal minimums.",
+    "Key 「VFR の操縦士が雲に入るのは重大事故の典型（空間識失調）…」 repeats hf.body ('VFR で雲に入らない… 180° 旋回'). A bk.see('hf.body') link would do; the second key 「「行ける」と思ったときこそ…」 is decision-making (hf.adm)."
+   ],
+   "mainFigure": "Two panels: radiation fog (clear night, ground cools, calm or ≤ 5 kt, fog in low areas, gone by late morning) and advection fog (warm moist air moving over a cooler surface, wind up to ≈ 15 kt, any time of day). Both panels marked 'spread ≤ 2 °C'."
+  },
+  {
+   "id": "wx.metar",
+   "title": "METAR と TAF の読み方",
+   "gist": "A made-up KSFB METAR decoded group by group (time, true wind, SM, cloud layers, ceiling, temp/dew, altimeter, remarks), the sky-cover table, and a one-paragraph TAF example.",
+   "issues": [
+    "No figure. The METAR string as colour-coded blocks with arrows to their meanings should be the first figure.",
+    "The example METAR contradicts itself: remark TSB45 (thunderstorm began at :45) but no TS in the present-weather group and no CB on any cloud layer. In a real report the storm would appear in the body (e.g. TS, SCT050CB) with location remarks. Either drop TSB45 or put TS/CB in the body and explain them.",
+    "BKN250 next to RMK AO2: an automated ceilometer reports only up to 12,000 ft (the same table says CLR = nothing at or below 12,000 ft), so a 25,000 ft layer looks inconsistent to a beginner. A 25,000 ft ceiling also teaches nothing about VFR. Use a low layer such as BKN035 to practise the ceiling. 「25,000 ft に多い」: 「多い」 is vague; BKN = 5/8–7/8 covered.",
+    "「RMK AO2｜自動観測所（AO2）」: AO2 = an automated station with a precipitation discriminator (it can tell rain from snow), AIM 7-1-10. AO1 has none.",
+    "SLP162 is in the example but not in the table (sea-level pressure 1016.2 hPa). Explain it or remove it.",
+    "The ceiling definition leaves out VV (vertical visibility, when the whole sky is hidden by fog, etc.). AIM 7-1-28 note and AWH 24: the ceiling is the lowest BKN or OVC layer, or the vertical visibility.",
+    "The G (gust) is decoded but not used. The AFH 3C ch. 9 rule 'normal approach speed + half the gust factor' (12G20 → +4 kt → Archer 70 → 74 kt) is what syllabus.js r1 (line 445) marks as the right answer, and r1 flies AR.appr + 4.",
+    "Time: only the summer offset (EDT, -4 h) is given. Add the winter offset (EST, -5 h).",
+    "The TAF is squeezed into one paragraph, and FM, BECMG and PROB are missing. quiz.js:60 asks for the TEMPO definition (< 1 h each time, in total < half the period: AIM 7-1-28). Proposed new section wx.taf.",
+    "Row 「SKC / CLR｜雲なし（自動観測は CLR＝12,000 ft 以下に雲なし）」: separate them. SKC = a human observer saw no cloud. CLR = an automated station detected none at or below 12,000 ft (higher cloud may exist).",
+    "Key 「風向は METAR・TAF では真方位、ATIS・管制の風は磁方位」 is right. ASOS/AWOS voice broadcasts are also magnetic (AIM 7-1-10 note). Written PIREP winds are magnetic too (AWH 28B 24.5.1.9), so the quiz rationale 「文字＝真方位」 has an exception."
+   ],
+   "mainFigure": "METAR decoder: the example string split into coloured blocks (station | day-time Z | wind true + gust | visibility SM | weather | cloud layers | temp/dew | altimeter | RMK) with short Japanese labels and arrows. A small okta strip (FEW/SCT/BKN/OVC) marks which layer is the ceiling."
+  },
+  {
+   "id": "wx.taf",
+   "title": "（新）TAF の読み方（FM・TEMPO・BECMG・PROB） — proposed new section",
+   "gist": "NEW: TAF valid period (24 or 30 h, 4 issues a day), P6SM, FM / TEMPO / BECMG / PROB30-40, converting Z to local time, and planning flights around a TEMPO TSRA.",
+   "issues": [
+    "NEW section (proposed id wx.taf). It moves the TAF paragraph out of wx.metar, which is too dense for beginners.",
+    "Sources: AIM 7-1-28 (key), AIM 7-1-1 (24/30 h), AWH 28B ch. 27 (the PROB30 wording was updated to match NWS changes)."
+   ],
+   "mainFigure": "Timeline 14/12Z → 15/12Z with a local-time (EDT) row under it. Base forecast bar (09010KT P6SM SCT040) with a TEMPO 18–22Z block (3SM TSRA BKN030CB = 14–18時 local) highlighted. An arrow shows 'plan training in the morning'."
+  },
+  {
+   "id": "wx.brief",
+   "title": "気象情報の入手と「行くか・やめるか」",
+   "gist": "91.103 asks for weather information. The AWC products (METAR, TAF, GFA, PIREP, SIGMET), 1800wxbrief, a what-to-check table (incl. NOTAM/TFR), and keys on go/no-go and personal minimums, with a bk.sim link to lesson r1.",
+   "issues": [
+    "No figure.",
+    "Table row 「危険な天気｜SIGMET・AIRMET（乱気流・着氷・IFR 状態・雷雨）」: thunderstorms are covered by the Convective SIGMET. AIRMETs cover IFR, mountain obscuration, turbulence, strong surface winds, icing and freezing levels (AIM 7-1-6). The text AIRMET over the contiguous US was retired on 2025-01-27; only the G-AIRMET remains (on the GFA; NWS SCN 24-92). The CWA (Center Weather Advisory) is missing.",
+    "「1800wxbrief などのフライトサービスで正式なブリーフィングを受けられます」 suggests only Flight Service gives a proper briefing. AIM 7-1-2: 'Pilots can receive a regulatory compliant briefing without contacting Flight Service'. Mention self-briefing (AC 91-92) and the standard / abbreviated / outlook briefing types.",
+    "Missing safety facts: data-linked NEXRAD in the cockpit 'shows where the weather was'; it may be 15–20 min older than the displayed age and must not be used to pick a way through storms (AIM 7-1-27, AWH 22.8.2). Radar does not show clouds or fog (AIM 7-1-11).",
+    "Key 「個人の最低条件（personal minimums）を先に決めておく（例：訓練生のうちは雲高 3,000 ft・視程 5 SM 以上 など、教官と相談して）」 is 78 characters, and the example numbers sit in brackets, which CADET does not read aloud. Note that 3,000 ft / 5 SM is exactly the VFR flight-category boundary of AIM 7-1-7, which makes it easy to remember.",
+    "Row 「風と気温｜Winds and Temperatures Aloft（航法計算に使う）」: add that the winds are true direction (AIM 7-1-5), matching the METAR rule.",
+    "91.103 is also explained in law.pic, perf.tol and nav.xc. Here only the weather part is needed, plus a cross-reference.",
+    "The pilot as a PIREP giver (AIM 7-1-18) is not mentioned."
+   ],
+   "mainFigure": "Ceiling × visibility chart: y = ceiling 0–5,000 ft, x = visibility 0–10 SM. Zones LIFR/IFR/MVFR/VFR (AIM 7-1-7), the 91.155(c)(d) line (ceiling 1,000 ft & 3 SM in a surface area), a dashed box for the personal-minimum example (3,000 ft & 5 SM) and today's example METAR plotted as a dot."
+  }
+ ],
+ "problems": {
+  "unclear": [
+   "wx.atm key 「高度計は「高い所から低い所へ」飛ぶと実際より高く表示される」 — 「高い所」 reads as altitude. Say 気圧の高い所 / 暖かい所. Same in sys (book-1.js:191).",
+   "wx.ts FIG.seaBreeze shows one sea, but the caption speaks of sea breezes from both coasts. 「海（大西洋・メキシコ湾）」 merges two seas into one box.",
+   "wx.ts FIG.clouds caption 「高さの目安」 has no heights. AWH 28B Table 12-3: low clouds surface–6,500 ft; middle 6,500–23,000 ft (temperate); high 16,500–40,000 ft (temperate) / 20,000–60,000 ft (tropical).",
+   "wx.ts key 「ウインドシア（速度が ±15 kt 以上急に変わる、昇降率が大きく変わる）」 — 「昇降率が大きく」 has no number (500 fpm).",
+   "wx.metar 「FEW035 SCT050 BKN250｜…25,000 ft に多い」 — 「多い」 for BKN is vague.",
+   "wx.metar the TAF is crammed into a <p> with <code>; FM/BECMG/PROB are not explained.",
+   "wx.brief 「SIGMET・AIRMET（乱気流・着氷・IFR 状態・雷雨）」 — which product covers what is not clear (thunderstorms → Convective SIGMET).",
+   "wx.brief 「…フライトサービスで正式なブリーフィング」 — implies self-briefing is not proper (AIM 7-1-2 says it is).",
+   "Chapter summary promises 「雲と前線」「ウインドシア」, but there is no section for either."
+  ],
+  "order": [
+   "wx.atm mixes pressure/altimeter with moisture/stability; split them off into a new wx.cloud placed before the thunderstorm section.",
+   "wx.ts starts with the cloud catalogue (FIG.clouds) before the thunderstorm. Its first SVG should be the sea-breeze/thunderstorm figure; the clouds figure moves to wx.cloud.",
+   "Fronts (and Florida's winter cold fronts) are missing between clouds and thunderstorms. Add wx.front.",
+   "Microburst/wind shear is buried in a table row. Add wx.shear after wx.ts.",
+   "TAF is inside wx.metar. Add wx.taf after wx.metar; wx.brief stays last as the synthesis.",
+   "Proposed order: wx.atm → wx.cloud(new) → wx.front(new) → wx.ts → wx.shear(new) → wx.fog → wx.metar → wx.taf(new) → wx.brief."
+  ],
+  "errors": [
+   "wx.metar example 「METAR KSFB 141753Z … 10SM FEW035 SCT050 BKN250 … RMK AO2 TSB45」: a storm that began at :45 and is still going at :53 must appear in the body (TS present weather, CB on the cloud layer); TSB45 without TS in the body contradicts itself → remove TSB45 or add TS/CB (https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html (7-1-28) ; AWH 28B ch. 24 https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/faa-h-8083-28b-aviation-weather-handbook)",
+   "wx.brief 「SIGMET・AIRMET（乱気流・着氷・IFR 状態・雷雨）」 → AIRMETs do not cover thunderstorms. AIRMET = IFR, mountain obscuration, turbulence, strong surface winds, icing, freezing levels; thunderstorms = Convective SIGMET; the CONUS text AIRMET is retired and only the G-AIRMET remains (AIM 7-1-6 https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html ; NWS SCN 24-92 https://weather.gov/media/notification/pdf_2023_24/scn24-92tac_airmet_retirement.pdf)",
+   "wx.ts 「ひょう・雷・着氷｜雲の外にも降ることがある」 → hail can fall several miles from the visible cloud (esp. under the anvil) and lightning can strike in clear air near a storm; icing is in cloud/precipitation above the freezing level and does not 'fall outside the cloud' (AWH 28B 22.8.1, AIM 7-1-26)",
+   "wx.ts 「雲から 20 NM 以上離れることが推奨される＝Aviation Weather Handbook の考え方」 → AIM 7-1-27 / AWH 28B 22.8.2 #14: avoid by at least 20 miles any thunderstorm identified as severe or giving an intense radar echo; keep ≥ 40 miles between such echoes before flying between them; AIM 7-1-26: severe turbulence up to 20 miles from severe storms, about 10 miles from less severe ones (https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html)",
+   "wx.metar 「RMK AO2｜自動観測所（AO2）」 → AO2 = automated station WITH a precipitation discriminator; AO1 = without (AIM 7-1-10)",
+   "wx.ts key wind-shear criterion 「±15 kt…昇降率が大きく変わる」 → 'airspeed changes greater than 15 kt or vertical speed changes greater than 500 fpm' (AWH 28B 19.2.4)"
+  ],
+  "outdated": [
+   "R.wx label 「FAA Aviation Weather Handbook（FAA-H-8083-28A）」 → current edition is FAA-H-8083-28B, signed 2 April 2026 (FAA page last updated 13 April 2026). It supersedes 28A dated 26 Nov 2024. New URL: https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/faa-h-8083-28b-aviation-weather-handbook (the old 28 URL now 301-redirects there). PDF: https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf. Changes that matter here: NOTAM is spelled out again as 'Notice to Airmen'; AWC website figures were deleted (the website changes faster than the book); GFA tool references were removed from ch. 27; PROB30 wording follows NWS changes; HEMS tool → GFA-LA.",
+   "AIRMET: the text (TAC) AIRMET over the contiguous US was retired on 2025-01-27; pilots use the G-AIRMET (Sierra/Tango/Zulu) on aviationweather.gov GFA. The book can keep the word AIRMET but should show it as the G-AIRMET on the GFA (NWS SCN 24-92).",
+   "Do not add the SIGWX Low-Level prog chart: NWS proposed retiring it on or about 15 Dec 2026 in favour of the GFA ceiling/visibility, turbulence and icing views (NWS PNS 26-65, https://www.weather.gov/media/notification/pdf_2026/pns26-65_Proposed_SIGWX_LLFP_retirement.pdf).",
+   "FIG.seaBreeze 「メキシコ湾」: since 2025 FAA/NWS documents (AIM 7-1-6, AWH 28B) say 'Gulf of America'. Keep the Japanese メキシコ湾 but add a note (英語の FAA 資料では Gulf of America) so cadets recognise it in English sources.",
+   "AIM reference: current AIM is Change 3, effective 9 July 2026. Ch. 7 sec. 1 paragraph numbers used here (7-1-2, 7-1-6, 7-1-7, 7-1-10, 7-1-11, 7-1-24, 7-1-26, 7-1-27, 7-1-28) were checked against it."
+  ],
+  "duplicates": [
+   "sys (book-1.js:191) key 「高度計は「高い所から低い所へ飛ぶと、実際より高く表示される」（気圧・気温とも）。High to low, look out below」 = wx.atm key. Explain it once in wx.atm (with a figure) and use bk.see in sys.",
+   "perf.da (book-1.js:222) reuses FIG.atm as its first figure. Once wx.atm owns the ISA figure, perf.da needs its own first figure (density altitude). Report to the perf analyst.",
+   "comm.atis (book-comm.js:235–237) explains the ATIS contents (wind magnetic, visibility, clouds, temp/dew, altimeter). wx.metar should link to it rather than repeat it; the METAR↔ATIS comparison is the bridge.",
+   "law.vfr (91.155, 61.89 student visibility) — wx.fog should only cross-reference it, as it does now.",
+   "hf.body (spatial disorientation, 180° turn) duplicates the wx.fog key 「VFR の操縦士が雲に入るのは重大事故の典型（空間識失調）」.",
+   "hf.adm (PAVE, get-there-itis) and crm.tem (book-5.js:145 example 「脅威：午後の雷雨の予報 → 対策：出発を早める」) overlap wx.brief go/no-go.",
+   "91.103 is explained in law.pic, perf.tol, nav.xc (book-4.js:35, 113) and wx.brief."
+  ],
+  "numbers": [
+   "syllabus.js:445–446 (lesson r1, linked from wx.brief's bk.sim): 「進入速度に突風分の半分を足し」 is the graded right answer, and r1 flies landingSteps(AR.appr + 4). The book never states the rule. Add it (AFH 3C ch. 9: normal approach speed + ½ gust factor; METAR 09012G20KT → +4 kt → 70 + 4 = 74 kt, exactly r1's speed).",
+   "quiz.js:54 asks the thunderstorm life cycle (積雲期・成熟期・消散期); the book has none of it.",
+   "quiz.js:59 asks microburst duration 「通常 15 分程度」 (AIM 7-1-24: seldom longer than 15 min); the book gives no numbers.",
+   "quiz.js:60 asks the TEMPO definition (< 1 h, in total < half the period); the book says only 「一時（TEMPO）」.",
+   "radio.js:68 ATIS 'LAB information Bravo' (340/08, FEW035, 31/22, A3001, RWY 36) vs the wx.metar example (KSFB 09012G20KT … 32/23 A3001). They do not contradict each other, but a matching pair would teach true vs magnetic: with FL.physics MAGVAR_W = 6 (W), ATIS 340° magnetic = 334° true → METAR 33008KT.",
+   "Example 1 (09012G20KT, runway 36): with FL.physics MAGVAR_W = 6, 090° true = 096° magnetic, 96° off runway 36 → crosswind ≈ 11.9 kt steady / ≈ 19.9 kt in gusts, plus ≈ 1–2 kt tailwind. 'Archer 実証横風 17 kt' = FL.physics pa28 v.xwind 17 and R.archerCk ✓. Add that the demonstrated value is not a limitation (syllabus.js x1 'why' says so).",
+   "wx.brief personal-minimum example (3,000 ft / 5 SM) = the VFR flight-category boundary of AIM 7-1-7 (VFR: ceiling > 3,000 ft and visibility > 5 miles). That is consistent and worth stating.",
+   "FIG.atm (tropopause 36,089 ft, -56.5 °C, 2 °C/1,000 ft) agrees with physics.js:295 (6.5 K/km to 11 km) ✓."
+  ]
+ },
+ "policy": "Start the chapter with one purpose sentence: a pilot reads the weather to answer three questions — can I see (ceiling and visibility), will I be thrown around (thunderstorms, wind shear, gusts), and is my altimeter right. Reorder as wx.atm → wx.cloud (new) → wx.front (new) → wx.ts → wx.shear (new) → wx.fog → wx.metar → wx.taf (new) → wx.brief; no ids change, and the four new ids are additions. Explain physics first (pressure → moisture/clouds → fronts → convection), then hazards (thunderstorms, microbursts, fog), then the codes (METAR, TAF), and end with the briefing and go/no-go, where personal minimums are shown on a ceiling × visibility chart. Florida stays the thread: afternoon sea-breeze storms (June–September), winter cold fronts and morning fog, all given with the months/times from NWS Melbourne and AWH 28B. Cut the duplicated altimeter key from sys (link here instead) and keep 91.155/91.103 details in law with cross-references. Fix the METAR example (no TSB45 without TS in the body, use a low BKN layer for the ceiling) and add the gust-factor rule so that the r1 lesson and the quiz banks match the text. Update every product statement to 2026: the AWH 28B edition, G-AIRMET instead of the text AIRMET, Convective SIGMET for thunderstorms, NEXRAD latency 15–20 min, self-briefing allowed (AIM 7-1-2, AC 91-92). Each section should open with an SVG (five sections have none or the wrong one first now) and get one or two public-domain NOAA/NASA photos.",
+ "figuresExisting": [
+  {
+   "key": "atm",
+   "verdict": "fix",
+   "why": "The label 「気圧は 1,000 ft あたり約 1 inHg 下がる」 is clipped outside the 400-wide viewBox; fonts are 10–11 (8.6 px at 390). Add a pressure scale (right axis or tick labels: 29.92 / 24.9 / 20.6 / 14.9 inHg at 0 / 5 / 10 / 18 kft from the FL.physics ISA) and label the sea-level point 「海面 15℃・29.92 inHg」. It is also used by perf.da; give perf.da its own first figure."
+  },
+  {
+   "key": "clouds",
+   "verdict": "redo",
+   "why": "viewBox 490 (> 440), smallest text 7.0 px. The CB is a stray hook over the high band, the label overlaps the band, there are no heights and some abbreviations are missing. Redraw at 400 wide: three bands with AWH 28B Table 12-3 heights (6,500 ft; ≈ 20,000 ft), simple cloud silhouettes, CB spanning all bands with an anvil, TCU marked, ≥ 12 px. Move it to wx.cloud as the second figure. Photos can show real clouds; the figure stays to show heights."
+  },
+  {
+   "key": "seaBreeze",
+   "verdict": "redo",
+   "why": "It contradicts its own caption (one coast only), the return flow is unlabeled, two seas are drawn as one box and the time of day is missing. Redraw as a W–E peninsula cross-section with two converging sea breezes, sea-breeze fronts, a CB at the convergence, the return flow and a morning→afternoon→evening strip. Make it the FIRST figure of wx.ts (AWH 28B 10.6.1.2, Figure 10-15; NWS Melbourne)."
+  }
+ ],
+ "figuresNew": [
+  { "name": "thunderstormLife", "section": "wx.ts", "what": "Three panels: towering cumulus (updraft only, > 3,000 fpm) → mature (rain reaches the ground, updraft + downdraft, gust front ahead, anvil) → dissipating (downdraft only, remnant anvil); 'about 30 min' arrow.", "data": "AWH 28B 22.3 (life ≈ 30 min, updraft > 3,000 fpm, mature begins when precipitation reaches the surface)", "priority": "must" },
+  { "name": "microburst", "section": "wx.shear", "what": "Side view of an approach through a microburst: 1 headwind (IAS up, airplane balloons above the glide path) → 2 downdraft → 3 tailwind (IAS down, sinks below the path); a warning not to cut power at stage 1.", "data": "AIM 7-1-24 (downdraft < 1 mile, outflow ≈ 2.5 miles, up to 6,000 fpm, 45 kt → 90 kt shear, ≤ 15 min, strongest 5 min after touching the ground)", "priority": "must" },
+  { "name": "metarDecode", "section": "wx.metar", "what": "The corrected example METAR as coloured blocks (station / time Z / wind true + gust / visibility / weather / clouds / temp-dew / altimeter / RMK) with arrows to Japanese meanings; the ceiling layer highlighted.", "data": "The book's own (made-up) METAR, AIM 7-1-28 key", "priority": "must" },
+  { "name": "skyCover", "section": "wx.metar", "what": "Four okta circles (FEW 1–2/8, SCT 3–4/8, BKN 5–7/8, OVC 8/8) plus VV; BKN/OVC/VV marked as the 'ceiling' and SKC vs CLR (automated, ≤ 12,000 ft) explained underneath. This can be the second figure, or be merged into metarDecode.", "data": "AIM 7-1-28; AWH 28B Table 24-4", "priority": "must" },
+  { "name": "flightCategory", "section": "wx.brief", "what": "Ceiling (0–5,000 ft) × visibility (0–10 SM) chart with LIFR / IFR / MVFR / VFR zones, the 91.155(c)(d) line (1,000 ft & 3 SM), a personal-minimum example box (3,000 ft & 5 SM) and the example METAR as a dot.", "data": "AIM 7-1-7 categories; 14 CFR 91.155(c)(d); 61.89(a)(6) (student solo, day 3 SM); the book's METAR example", "priority": "must" },
+  { "name": "fogTypes", "section": "wx.fog", "what": "Two panels: radiation fog (clear night, ground cooling, wind ≤ 5 kt, clears by late morning) vs advection fog (moist air over a cooler surface, wind up to ≈ 15 kt, any time of day); a 'spread ≤ 2 °C' marker on both.", "data": "AWH 28B 18.1.1, 18.1.1.1.1, 18.1.1.1.2", "priority": "must" },
+  { "name": "altimeterHighLow", "section": "wx.atm", "what": "Pressure surfaces sloping down toward a Low (and toward cold air). An airplane holding the same indicated altitude descends; the number '30.10 → 29.90 = about 200 ft lower' and 'High to low, look out below'.", "data": "PHAK 25C ch. 8 / AWH 28B ch. 8 (1 inHg ≈ 1,000 ft; Figure 8-14 warm-to-cold reads too high)", "priority": "should" },
+  { "name": "tafTimeline", "section": "wx.taf", "what": "Time bar 14/12Z → 15/12Z with an EDT row below it; base forecast bar and a TEMPO 18–22Z block (= 14–18時 local, TSRA 3SM BKN030CB); the morning training window marked.", "data": "The book's TAF example; AIM 7-1-28 (TEMPO < 1 h each, total < half the period); EDT = UTC-4", "priority": "should" },
+  { "name": "cloudBase", "section": "wx.cloud", "what": "Temperature and dewpoint lines meeting aloft = cumulus base; the example 32/23 (spread 9 °C) → ≈ 3,600 ft ≈ FEW035.", "data": "PHAK 25C ch. 12 rule of thumb (spread ÷ 4.4 °F ≈ ÷ 2.5 °C × 1,000 ft); the book's METAR example", "priority": "should" },
+  { "name": "frontsXsec", "section": "wx.front", "what": "Cold front vs warm front cross-sections with cloud types, the width of the weather band and the surface symbols; the Florida note 'winter cold front: storms/gusts then clear, cool NW wind'.", "data": "AWH 28B ch. 11 (teaching drawing, no numbers needed)", "priority": "should" },
+  { "name": "tsAvoid", "section": "wx.ts", "what": "Top view: a severe storm cell with a 20-mile circle, an anvil extending downwind (do not fly under it), two strong echoes needing ≥ 40 miles between them, the 'do not trust datalink NEXRAD for a gap' note.", "data": "AIM 7-1-26, 7-1-27; AWH 28B 22.8.2 #14", "priority": "nice" },
+  { "name": "goNoGo", "section": "wx.brief", "what": "Flow: gather (METAR/TAF → GFA/G-AIRMET/SIGMET/CWA → PIREP → NOTAM/TFR) → compare with personal minimums and the airplane (crosswind 17 kt demo) → go / delay / change route / cancel.", "data": "AC 91-92; AIM 7-1-5; FL.physics pa28 v.xwind 17", "priority": "nice" }
+ ],
+ "photos": [
+  { "section": "wx.ts", "subject": "Cumulonimbus with an anvil top (developing storm)", "search": "NOAA Photo Library nssl0035 'Anvil of large cumulonimbus thunderhead during early stages of developing storm' (NSSL); alternative wea02032 (Grant W. Goodge, NWS, 1979)", "candidateUrl": "https://www.noaa.gov/noaa-collections/photo-library/nssl0035jpg", "candidateLicence": "Public domain (NOAA Photo Library; check the item's credit line)", "why": "Beginners need to recognise the CB shape and the anvil that hail and turbulence can come from." },
+  { "section": "wx.ts", "subject": "Shelf cloud along a gust front ahead of a thunderstorm", "search": "NOAA Photo Library nssl0041 'Approaching thunderstorm with lead gust front' (NSSL, 1982)", "candidateUrl": "https://www.noaa.gov/noaa-collections/photo-library/nssl0041jpg", "candidateLicence": "Public domain (NOAA/NSSL)", "why": "Shows that the gust front arrives before the rain — the 'do not take off or land with a storm approaching' rule (AIM 7-1-27)." },
+  { "section": "wx.ts", "subject": "Florida peninsula from space: cumulus over land, clear over the sea (sea-breeze effect)", "search": "NASA JSC Gateway to Astronaut Photography STS046-86-64 'USA-FLORIDA' (caption notes the land-sea breeze effect); also the NASA JSC Earth From Space query 'FLORIDA PENINSULA'", "candidateUrl": "https://eol.jsc.nasa.gov/SearchPhotos/photo.pl?mission=STS046&roll=86&frame=64", "candidateLicence": "Public domain (NASA JSC; credit 'Image courtesy of the Earth Science and Remote Sensing Unit, NASA Johnson Space Center')", "why": "Real evidence for the sea-breeze figure: clouds form over the heated land, not over the water." },
+  { "section": "wx.front", "subject": "Line of cumulonimbus (squall line / building storms)", "search": "NOAA Photo Library nssl0036 'Building line of cumulonimbus thunderstorms'; or a GOES visible image of a cold front over Florida (NOAA/NESDIS, public domain)", "candidateUrl": "https://www.noaa.gov/noaa-collections/photo-library/nssl0036jpg", "candidateLicence": "Public domain (NOAA/NSSL)", "why": "Shows the line of storms that comes with a winter cold front." },
+  { "section": "wx.fog", "subject": "Morning radiation fog in low ground / over a lake", "search": "NOAA Photo Library Weather Wonders 'Foggy Days': wea00150 'Fog filling a mountain valley at sunrise', wea00153 'early morning fog on a southern lake' (flat terrain, closer to Florida)", "candidateUrl": "https://www.noaa.gov/noaa-collections/photo-library/wea00153jpg", "candidateLicence": "Public domain unless the item credit names an outside photographer — check per file", "why": "Shows why a clear, calm morning can still be IFR at the airport." },
+  { "section": "wx.shear", "subject": "Microburst (rain foot / dust ring under a storm)", "search": "NASA Langley wind-shear research photos (NASA Image and Video Library 'microburst'); NOAA/NSSL 'microburst'; Commons category 'Microbursts' (only US-government or CC files)", "candidateUrl": "", "candidateLicence": "", "why": "A visual cue pilots can recognise; the NWS spotter guide photos are often by private photographers, so check the licence carefully." },
+  { "section": "wx.metar", "subject": "ASOS automated weather station sensors at an airport", "search": "Commons category 'Automated Surface Observing System' (NOAA/NWS photos); NWS ASOS program page images", "candidateUrl": "", "candidateLicence": "Public domain if NOAA/NWS/FAA author — verify per file", "why": "Makes 'AO2', 'AUTO' and 'CLR = nothing detected below 12,000 ft' concrete: a machine measures the sky over the field." },
+  { "section": "wx.cloud", "subject": "Towering cumulus (TCU) building in the afternoon", "search": "NOAA Photo Library 'towering cumulus' / 'cumulus congestus' (wea / nssl series)", "candidateUrl": "", "candidateLicence": "Public domain (NOAA) — verify per file", "why": "TCU is one of the two cloud types written in a METAR; it is the stage before a CB." },
+  { "section": "wx.ts", "subject": "Lightning from a thunderstorm (night)", "search": "NOAA Photo Library 'lightning' (NSSL series, e.g. nssl0010-range); NOAA JetStream lightning images", "candidateUrl": "", "candidateLicence": "Public domain (NOAA) — verify per file", "why": "Central Florida is the most lightning-active part of the US in summer (NWS Melbourne lightning climatology)." }
+ ],
+ "endMatter": {
+  "terms": [
+   "METAR / SPECI ｜ 定時観測・特別観測 ｜ 毎時の空港の観測。大きく変わると SPECI",
+   "TAF ｜ 飛行場予報 ｜ 24 または 30 時間。FM・TEMPO・BECMG・PROB",
+   "TEMPO ｜ 一時的な変化 ｜ 1 回 1 時間未満、合計で期間の半分未満（AIM 7-1-28）",
+   "Zulu time (UTC) ｜ 協定世界時 ｜ フロリダは夏 −4 時間・冬 −5 時間",
+   "Ceiling ｜ 雲高 ｜ BKN・OVC の最も低い層、または VV（垂直視程）",
+   "Vertical visibility (VV) ｜ 垂直視程 ｜ 空が霧などで全部隠れたとき",
+   "SKC / CLR ｜ 雲なし ｜ CLR は自動観測で 12,000 ft 以下に雲が検出されない",
+   "Visibility (SM) ｜ 視程（法定マイル） ｜ 1 SM ≈ 1.6 km",
+   "Mist (BR) / Fog (FG) ｜ もや・霧 ｜ FG は視程 5/8 SM 未満",
+   "Dewpoint / spread ｜ 露点・気温との差 ｜ 差 2℃ 以下で霧が出やすい",
+   "ISA ｜ 国際標準大気 ｜ 海面 15℃・29.92 inHg・約 2℃/1,000 ft",
+   "Altimeter setting ｜ 高度計規正値 ｜ inHg。18,000 ft 以上は 29.92",
+   "Stable / unstable air ｜ 安定・不安定な大気 ｜ 層状の雲・霧／積雲・にわか雨",
+   "Cold front / warm front ｜ 寒冷前線・温暖前線 ｜ ",
+   "Sea breeze / sea-breeze front ｜ 海風・海風前線 ｜ 晴れた夏の日中、海から陸へ",
+   "Thunderstorm (TS) / CB / TCU ｜ 雷雨・積乱雲・塔状積雲 ｜ METAR で特記される雲は CB と TCU だけ",
+   "Gust front ｜ ガストフロント ｜ 雷雨より先に来る突風",
+   "Microburst / wind shear ｜ マイクロバースト・ウインドシア ｜ 15 kt・500 fpm を超える変化",
+   "Gust factor ｜ 突風の差 ｜ G20 と 12 kt なら 8 kt。進入速度に半分を足す目安（AFH）",
+   "PIREP ｜ 操縦士の気象報告 ｜ 自分も出す。風は磁方位",
+   "SIGMET / Convective SIGMET ｜ シグメット・対流性シグメット ｜ 激しい乱気流・着氷／雷雨",
+   "G-AIRMET ｜ エアメット（図形式） ｜ IFR・山の隠れ・乱気流・強風・着氷",
+   "GFA ｜ 航空用の図形式予報 ｜ aviationweather.gov",
+   "NEXRAD / FIS-B ｜ 気象レーダー・データ放送の気象情報 ｜ 15〜20 分古いことがある",
+   "NOTAM / TFR ｜ ノータム（Notice to Airmen）・一時的飛行制限 ｜ ",
+   "Personal minimums ｜ 個人の最低条件 ｜ 規則より厳しく自分で決める",
+   "Flight category (VFR/MVFR/IFR/LIFR) ｜ 飛行区分 ｜ AIM 7-1-7"
+  ],
+  "examples": [
+   "Keep (and fix): 「METAR の 09012G20KT と滑走路 36」 — add 「METAR は真方位。この教材の偏差 6°W で 096°（磁方位）＝ほぼ真横」, crosswind ≈ 12 kt steady / ≈ 20 kt in gusts > Archer demo 17 kt 「（制限ではないが、超えるなら別の滑走路・時間・中止を考える）」.",
+   "Add: 「09012G20KT → 突風の差 8 kt → 進入速度は 70 + 4 = 74 kt（AFH の目安。POH・教官が優先）」 — the same number lesson r1 flies.",
+   "Add: 「ATIS（磁方位）340° 8 kt ＝ METAR（真方位）33008KT」 using radio.js ATIS Bravo and MAGVAR_W 6.",
+   "Add: 「32/23 → 差 9℃ → 積雲の底は約 3,600 ft（FEW035 と合う）」.",
+   "Add: 「30.10 のまま 29.90 の地域へ → 実際は約 200 ft 低い」.",
+   "Keep: 「夏の朝の TAF に TEMPO 1418/1422 TSRA → 現地 14〜18 時。訓練は午前中に終える計画」 (add the local time)."
+  ],
+  "cautions": [
+   "Keep: the METAR/TAF are made-up examples; real decisions use current official information.",
+   "Keep: thunderstorm distances and personal minimums follow the instructor/school policy.",
+   "Add: 「コクピットのレーダー画像（NEXRAD）は 15〜20 分前の天気。雷雨の間を抜ける判断には使わない（AIM 7-1-27）」.",
+   "Add: 「レーダーに何も映らない＝雲・霧がない、ではない（AIM 7-1-11）」.",
+   "Add: 「突風・横風の値は教材の目安。実機は POH と教官の指示が優先」."
+  ],
+  "quizReview": [
+   "Q1 (BKN012 OVC025 → 1,200 ft): keep. Correct; optionally add VV to the reason.",
+   "Q2 (microburst first effect = headwind, balloon): keep. Matches AIM 7-1-24; the reason (do not cut power for the first 'float') is good.",
+   "Q3 (METAR true / ATIS magnetic): keep the answer; fix the reason 「書かれた報告（METAR・TAF）は真方位」 → 「METAR・TAF・上空の風の予報は真方位、ATIS・ASOS/AWOS の音声・管制の風は磁方位（AIM 7-1-10・7-1-28）」. Written PIREPs are magnetic, so 'written = true' is not a safe rule."
+  ],
+  "quizProposals": [
+   { "q": "フロリダ中部の夏、雷雨が最も発達しやすいのはいつ・どこ？", "choices": ["午後、半島の内陸（両側からの海風がぶつかる所）", "夜明け前、海の上", "正午ごろ、海岸線のすぐ沖", "真夜中、内陸の湖の上"], "answer": 0, "why": "陸が熱せられて海風が入り、両側の海風が内陸でぶつかって空気を持ち上げる（AWH 10.6.1.2・NWS Melbourne）。夏の訓練は午前中に計画することが多い。" },
+   { "q": "激しい雷雨（強いレーダーエコー）から、少なくともどれだけ離れることが勧められている（AIM 7-1-27）？", "choices": ["5 マイル", "10 マイル", "20 マイル", "雲に入らなければ距離は問わない"], "answer": 2, "why": "激しい雷雨・強いエコーからは少なくとも 20 マイル。強いエコー同士の間を抜けるなら 40 マイル以上の間隔が必要（AWH 22.8.2）。かなとこ雲の下も危険。" },
+   { "q": "TAF の「TEMPO 1418/1422 3SM TSRA BKN030CB」の意味として正しいものは？", "choices": ["14 日 18Z〜22Z の間、ときどき（1 回 1 時間未満）雷雨と雨で視程 3 SM、3,000 ft に積乱雲を伴う雲高", "14 日 18Z から天気がずっと変わる", "雷雨の確率が 30%", "14 日 14 時から 18 時まで視程 3 SM が続く"], "answer": 0, "why": "TEMPO は一時的な変化（1 回 1 時間未満、合計で期間の半分未満：AIM 7-1-28）。ずっと変わるのは FM、確率は PROB30/40。18〜22Z は夏のフロリダの 14〜18 時。" },
+   { "q": "METAR が 09012G20KT。Archer の通常の進入速度を 70 kt とすると、広く教えられている目安での進入速度は？", "choices": ["70 kt のまま", "74 kt（突風の差 8 kt の半分を足す）", "78 kt（差をそのまま足す）", "90 kt"], "answer": 1, "why": "突風の差（20 − 12 = 8 kt）の半分を通常の進入速度に足すのが目安（Airplane Flying Handbook 第 9 章）。POH と教官の指示が優先。" },
+   { "q": "飛行中に表示されるデータ放送のレーダー画像（NEXRAD・FIS-B）について正しいものは？", "choices": ["表示の時刻より 15〜20 分古いことがあり、雷雨の間を抜ける判断には使わない", "リアルタイムなので雷雨の間を安全に抜けられる", "雲や霧もはっきり映る", "何も映っていなければ乱気流もない"], "answer": 0, "why": "画像は「天気があった場所」を示す（AIM 7-1-27・AWH 22.8.2）。雷雨を大きく避ける経路選びに使う。レーダーは雲や霧を映さない（AIM 7-1-11）。" }
+  ],
+  "refs": [
+   "UPDATE R.wx → 「FAA Aviation Weather Handbook（FAA-H-8083-28B・2026）」 https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/faa-h-8083-28b-aviation-weather-handbook",
+   "ADD 「FAA AIM 7-1 Meteorology（気象情報・雷雨・マイクロバースト・METAR/TAF の読み方）」 https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html (new R key, e.g. aim71)",
+   "ADD 「FAA AC 91-92 Pilot's Guide to a Preflight Briefing」 https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_91-92.pdf",
+   "ADD 「NWS Melbourne — Florida Lightning Climatology」 https://www.weather.gov/mlb/fl_lightning_climo",
+   "ADD (optional, beginner-friendly, public domain) 「NOAA JetStream（気象の基礎）」 https://www.noaa.gov/jetstream",
+   "ADD R.afh (Airplane Flying Handbook, ch. 9 gusty-air approach speed) when the gust-factor rule is added",
+   "KEEP R.awc https://aviationweather.gov/ , R.phak (FAA-H-8083-25C, still current; Oct 2025 addendum), R.cfr91 (91.103, 91.121, 91.155)"
+  ]
+ },
+ "appMismatches": [
+  "syllabus.js:445–446 — lesson r1 grades 「進入速度に突風分の半分を足し」 as correct and flies AR.appr + 4; the wx chapter (which links r1 via bk.sim) and ops.xwind never teach the rule — the book should add it (AFH 3C ch. 9), the app is right.",
+  "quiz.js:54 — q_wx asks the thunderstorm life cycle (積雲期・成熟期・消散期); the book has no life-cycle text — add it to wx.ts (AWH 28B 22.3). The quiz is right.",
+  "quiz.js:59 — q_wx microburst 「通常 15 分程度」; the book gives no duration — add the AIM 7-1-24 numbers in wx.shear. The quiz is right ('seldom longer than 15 minutes').",
+  "quiz.js:60 — q_wx TEMPO definition and FM/PROB; the book only says 「一時（TEMPO）」 — add them in wx.taf. The quiz is right.",
+  "quiz.js:56 — reason 「文字の天気情報（METAR・TAF）は真方位、声で聞く情報は磁方位」: written PIREP winds are magnetic (AWH 28B 24.5.1.9). This is not wrong for METAR/TAF, but the book and quiz should not state 'written = true' as a general rule.",
+  "quiz.js:50 — the q_wx bank links to book section 'wx.metar' while covering the whole chapter (atmosphere, thunderstorms, fog). It works; after the rewrite 'wx.atm' or the new sections would be the better targets (app not changed — just note it).",
+  "pages.js:845 — the app lists 「雲・視程の変化・夜間・着氷・ウインドシア」 as not built; the rewritten wx bk.sim must offer only the gusty crosswind (r1/x1), never microburst or fog practice. The current text is OK.",
+  "radio.js:68 — ATIS 'LAB information Bravo' (340/08, FEW035, 31/22, A3001) and the wx.metar example use different stations and weather. No contradiction, but a matching METAR (33008KT with MAGVAR_W 6) would tie radio practice to the chapter."
+ ],
+ "factChecks": [
+  { "claim": "ISA at sea level 15 °C, 29.92 inHg (1013.25 hPa); about -2 °C and -1 inHg per 1,000 ft", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf", "note": "AWH 28B ch. 4/5/8 (2 °C per 1,000 ft). 1 inHg/1,000 ft holds only in the lower few thousand feet; at 18,000 ft pressure is about half (≈ 14.9 inHg)." },
+  { "claim": "ISA tropopause 36,089 ft, -56.5 °C (FIG.atm)", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf", "note": "Same as the physics.js ISA (11 km)." },
+  { "claim": "US: below 18,000 ft MSL set the local altimeter setting; at and above, 29.92", "verdict": "imprecise", "source": "https://www.law.cornell.edu/cfr/text/14/91.121", "note": "91.121(a)(1): 'current reported altimeter setting of a station along the route and within 100 NM'; (a)(2) at or above 18,000 ft MSL 29.92. eCFR blocks automated fetches; checked on the LII mirror." },
+  { "claim": "High: sinking air, clockwise outflow (NH); Low: rising air, counterclockwise inflow", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf", "note": "AWH 28B ch. 10." },
+  { "claim": "Temperature–dewpoint spread within 2–3 °C → suspect fog / low cloud", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf", "note": "AWH 28B 18.1.1: 'Fog seldom forms when the temperature-dewpoint spread is greater than 2 °C (4 °F)'. Use '2℃ 前後' to match." },
+  { "claim": "Thunderstorms need moist air, unstable air and a lifting force (heating, sea breeze, front, terrain)", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf", "note": "AWH 28B 22.2 lists sea-breeze circulations among the lifting mechanisms." },
+  { "claim": "Florida peninsula: sea breezes from both coasts meet inland and trigger afternoon storms", "verdict": "correct", "source": "https://www.weather.gov/mlb/fl_lightning_climo", "note": "AWH 28B 10.6.1.2 (narrow peninsula, late morning/early afternoon convection); NWS Melbourne: June–August, July the peak." },
+  { "claim": "Afternoon storms weaken in the evening (夕方に弱まる)", "verdict": "imprecise", "source": "https://forecast.weather.gov/product.php?site=MLB&issuedby=MLB&product=AFD", "note": "Inland storms often last into the late afternoon/evening; 'weaken by night' is safer." },
+  { "claim": "Stay 20 NM or more from thunderstorm clouds (attributed to the Aviation Weather Handbook)", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html", "note": "AIM 7-1-27 / AWH 28B 22.8.2 #14: at least 20 miles from a severe storm or intense echo; ≥ 40 miles between such echoes; AIM 7-1-26: severe turbulence up to 20 miles from severe storms, about 10 from less severe ones." },
+  { "claim": "Microburst on approach: headwind (speed up) → downdraft → tailwind (speed drops)", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html", "note": "AIM 7-1-24, with numbers: < 1 mile downdraft, up to 6,000 fpm, 45 kt outflow (90 kt shear), seldom > 15 min." },
+  { "claim": "Hail, lightning and icing can occur outside the cloud", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf", "note": "Hail: several miles from the visible cloud, esp. under the anvil (AWH 22.8.1); lightning in clear air near the storm (AIM 7-1-26); icing: not outside the cloud." },
+  { "claim": "Gust front reaches the airport before the storm", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf", "note": "AWH 28B 22.3: outflow spreads 'well in advance of the parent thunderstorm cell'." },
+  { "claim": "Wind shear = airspeed changes of ±15 kt or more, large changes in sink rate", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf", "note": "AWH 28B 19.2.4: > 15 kt airspeed or > 500 fpm vertical speed ('severe wind shear' in some references)." },
+  { "claim": "Radiation fog: clear, calm night, ground cools; often clears after sunrise", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf", "note": "AWH 28B 18.1.1.1.1: light wind (≤ ~5 kt), generally clears before noon." },
+  { "claim": "Advection fog: warm moist air flows over a cold surface", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf", "note": "AWH 28B 18.1.1.1.2; can move in quickly at any time; deepens with wind up to ~15 kt." },
+  { "claim": "Frontal (precipitation) fog: warm rain falling into cool air", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf", "note": "AWH 28B 18.1.1.1.4; most common with warm fronts." },
+  { "claim": "METAR/TAF wind is true; ATIS and controller wind is magnetic", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html", "note": "AIM 7-1-28 key ('true-north direction'), 7-1-10 note (ATIS and ASOS/AWOS voice magnetic). PIREP wind (/WV) is magnetic (AWH 28B 24.5.1.9)." },
+  { "claim": "Cloud heights AGL in hundreds of feet; BKN and OVC make the ceiling", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html", "note": "Add vertical visibility (VV): 'lowest broken or overcast layer, or the vertical visibility' (AIM 7-1-28)." },
+  { "claim": "Automated CLR = no cloud at or below 12,000 ft", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/FAA-H-8083-28B.pdf", "note": "AWH 28B ch. 24 / AIM 7-1-28. SKC = human observer." },
+  { "claim": "FEW 1–2/8, SCT 3–4/8, BKN 5–7/8, OVC 8/8", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html", "note": "AIM 7-1-28 (FEW > 0/8–2/8)." },
+  { "claim": "Only CB and TCU are written as cloud types in a METAR", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html", "note": "AIM 7-1-28: TCU or CB in METAR; in TAF only CB." },
+  { "claim": "RMK AO2 = automated station", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html", "note": "AIM 7-1-10: AO2 = automated with precipitation discriminator; AO1 = without." },
+  { "claim": "Example METAR with RMK TSB45 but no TS in the body", "verdict": "wrong", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html", "note": "An ongoing thunderstorm is reported in present weather (TS) with CB on the cloud layer (AIM 7-1-28 / AWH 24). Internal inconsistency in the made-up example." },
+  { "claim": "141753Z = 14th 17:53 UTC = 13:53 Florida summer time; US contiguous ICAO codes start with K", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html", "note": "EDT = UTC-4; add EST = UTC-5 for winter." },
+  { "claim": "TAF: P6SM = more than 6 SM; TEMPO = temporary", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html", "note": "AIM 7-1-28: TEMPO < 1 h each time and in total < half the period; TAFs valid 24 or 30 h (AIM 7-1-1)." },
+  { "claim": "14 CFR 91.103 requires weather reports and forecasts for IFR or flights not in the vicinity of an airport", "verdict": "correct", "source": "https://www.law.cornell.edu/cfr/text/14/91.103", "note": "Also fuel, alternatives, known ATC delays; runway lengths and takeoff/landing data for all flights." },
+  { "claim": "AWC offers METAR, TAF, GFA, PIREP, SIGMET; formal briefing from 1800wxbrief Flight Service", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html", "note": "Products are correct (aviationweather.gov menu checked 2026-10-26). AIM 7-1-2: 1-800-WX-BRIEF / www.1800wxbrief.com (Leidos), but a regulatory-compliant briefing is possible without contacting Flight Service (AC 91-92)." },
+  { "claim": "SIGMET/AIRMET cover turbulence, icing, IFR conditions and thunderstorms", "verdict": "wrong", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html", "note": "AIM 7-1-6: thunderstorms → Convective SIGMET; AIRMET = IFR, mountain obscuration, turbulence, strong surface winds, icing, freezing levels." },
+  { "claim": "AIRMET (as a current product)", "verdict": "outdated", "source": "https://weather.gov/media/notification/pdf_2023_24/scn24-92tac_airmet_retirement.pdf", "note": "The CONUS text AIRMET was retired on 2025-01-27; the G-AIRMET continues on the GFA (Alaska/Hawaii text AIRMETs unaffected)." },
+  { "claim": "Winds and Temperatures Aloft are used for navigation calculations", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html", "note": "AIM 7-1-5: winds aloft referenced to true north, heights MSL." },
+  { "claim": "Reference FAA Aviation Weather Handbook FAA-H-8083-28A", "verdict": "outdated", "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/faa-h-8083-28b-aviation-weather-handbook", "note": "FAA-H-8083-28B published 2 April 2026, supersedes 28A (26 Nov 2024)." },
+  { "claim": "Reference PHAK FAA-H-8083-25C", "verdict": "correct", "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/phak", "note": "Still current (no 25D found); FAA lists an October 2025 addendum." },
+  { "claim": "Personal minimum example: ceiling 3,000 ft, visibility 5 SM", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html", "note": "A teaching example; it equals the AIM 7-1-7 VFR flight-category boundary (ceiling > 3,000 ft and visibility > 5 miles)." },
+  { "claim": "Archer demonstrated crosswind 17 kt (example)", "verdict": "correct", "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf", "note": "Matches FL.physics pa28 v.xwind 17 and R.archerCk; demonstrated, not a limitation." },
+  { "claim": "Half the gust factor added to approach speed (syllabus r1, not yet in the book)", "verdict": "correct", "source": "https://www.faasafety.gov/files/events/SO/SO15/2024/SO15131753/ShortFieldApproachLanding_afh_ch9.pdf", "note": "AFH ch. 9: 'normal approach speed plus one-half of the wind gust factors… conform to the AFM/POH'." },
+  { "claim": "Cockpit NEXRAD imagery age (proposed addition)", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html", "note": "AIM 7-1-27 / AWH 28B 22.8.2: may be 15–20 min older than indicated; not for tactical maneuvering." }
+ ],
+ "cadetNotes": [
+  "First-SVG rule: wx.ts's first SVG is FIG.clouds (wrong figure on the classroom screen). Put the redone seaBreeze (or thunderstormLife) first, and move clouds to wx.cloud.",
+  "wx.fog, wx.metar and wx.brief have no SVG (tables are not figures), so CADET shows no screen there. Add fogTypes, metarDecode and flightCategory as their first SVGs; the new sections need their own first SVGs too.",
+  "Key points are read aloud through speakable() (cadet/src/content/dialog/instructor.js:40), which drops everything in （）/(). Numbers and conditions now in brackets — 「（差 2〜3℃以内）」「（速度が ±15 kt 以上…）」「（例：訓練生のうちは雲高 3,000 ft・視程 5 SM 以上…）」「（教官・学校の方針に従う）」 — vanish. Put the essential part outside brackets.",
+  "Key length ≤ ~60 characters: the wx.brief item 「個人の最低条件（personal minimums）…」 is 78; the wx.ts wind-shear item is 56 with a bracket.",
+  "The instructor says 「大事なことは N つ」 from the key count (content.test.mjs:368–373). Changing the number of key items is fine because it is data-driven, but every section must keep a ここが大切 box.",
+  "Words that make CADET drop a sentence (APP_ONLY / NOT_SPOKEN): avoid 「シミュレータでは」「この教材」「メニュー」「キー」 in body and key text; keep app talk inside bk.sim only. Mentions of cockpit weather displays should say 「G1000 型」 per the rules.",
+  "No ANA/Acron names in this chapter. KSFB (real ICAO) in a made-up METAR is labelled 架空; keep the 「架空の例」 sentence outside brackets so it survives filtering.",
+  "cadet/src/ai/tutor.js:42 uses 'wx.metar' as its sample section id — keep that id (ids never change anyway)."
+ ]
+}

@@ -1,0 +1,548 @@
+{
+  "id": "radio5",
+  "title": "管制塔のない空港・緊急・無線の故障・Sanford・FAA と ICAO の違い（Non-towered airports, emergencies, radio failure, Sanford, FAA and ICAO）",
+  "sections": [
+    {
+      "id": "comm.ctaf",
+      "title": "管制塔のない空港：CTAF で自己通報",
+      "gist": "管制塔のない空港（または管制塔が閉まっている時間）では、全員が共通の周波数 CTAF で自分の位置と意図を決まった地点で知らせ合う（AIM 4-1-9）。",
+      "issues": [
+        "目的の一文と図がない。いきなり 5 行の交信表（「出発：タキシーの前・滑走路に入る前」「到着：10 マイル手前」「ダウンウインド・ベース・ファイナルに入るとき」）で、初心者は場周のどこで言うのかを思い描けない。場周の基本（左回り＝14 CFR 91.126(b)、プロペラ機の場周高度 1,000 ft AGL＝AIM 4-3-3、ダウンウインドの中央へ 45° で進入＝AC 90-66C 11.3）が一言もない。",
+        "「ここが大切」（bk.key）がない。CADET は箱がないと最初の 2 文を要点にするので、表の前置き文が読み上げられる。",
+        "「CTAF は UNICOM・MULTICOM（122.9）・時間外の管制塔の周波数など」— UNICOM（空港の民間の地上局。管制ではない）・MULTICOM・自己通報（返事は来ない前提）が説明されていない。CTAF をどこで調べるか（Chart Supplement・セクショナルチャートの記号）も「チャートと Chart Supplement に載っています」だけ。",
+        "例文は AIM の “Strawn / Queen Air Seven One Five Five Bravo / Apache Two Two Five Zulu”、end matter は “Strawn traffic, Archer Seven Lima Alpha …”、radio.js の練習（r_ctaf_dw・r_ctaf_clear）は架空の “Lakeside”。1 つの架空空港（Lakeside）とコールサイン Archer Seven Lima Alpha に揃えると、本と練習がつながる。",
+        "直進着陸の行「VFR の直進着陸（straight-in）は空中衝突の危険が増えるので FAA は勧めていない（AIM 4-1-9）」は正しいが、AIM の続き（それでも行うなら 8〜10 マイルで自己通報し、場周の機に対して優先権はない＝91.113(g)）が抜けている。",
+        "管制塔が時間で閉まる空港の実例がない。Sanford（KSFB）の管制塔は 0630L–2300L で、閉まっている時間は 120.3 が CTAF（FAA From the Flight Deck: SFB・空港図）— この教材の舞台につながる良い例（NOT FOR NAVIGATION・最新の Chart Supplement で確認、と添える）。",
+        "“full stop / touch-and-go” などの意図の言葉、“remaining in the pattern / departing the pattern to the (方向)” の意味が説明されていない（AIM 4-1-9 の UNICOM の例にある）。"
+      ],
+      "mainFigure": "模式図（架空 Lakeside RWY 17・左場周・NOT FOR NAVIGATION）：場周（場周高度 1,000 ft AGL、ダウンウインドの中央へ 45° で進入）と、自己通報する地点に番号の吹き出し ①10 NM 手前 ②ダウンウインドに入る ③ベース ④ファイナル ⑤滑走路を出た、出発側に ⑥タキシーの前 ⑦離陸・場周を離れる。各吹き出しに短い英語の型（“Lakeside traffic, … Lakeside.”）。"
+    },
+    {
+      "id": "comm.xpdr",
+      "title": "トランスポンダー・MAYDAY と PAN-PAN",
+      "gist": "トランスポンダーのコード（1200・7500・7600・7700）と、不安を感じた時点で MAYDAY／PAN-PAN で早く助けを求める方法（AIM 4-1-20・6-1-2・6-3）。",
+      "issues": [
+        "コード表から始まり、トランスポンダーとは何か（レーダーの質問に 4 桁のコードと気圧高度（100 ft 単位・Mode C/S）で答える装置、ADS-B Out は自分で位置を送る）、“squawk” “ident” の意味（AIM 4-1-20）が書かれていない。squawk は radio2（comm.numbers）・radio4（comm.dep）で先に出てくるのに、説明はこの章にしかない（順番の問題）。",
+        "Class B・C とその上、Class B の主空港から 30 NM 以内の地表〜10,000 ft MSL（Mode C veil）ではトランスポンダー（Mode C）と ADS-B Out が必要（14 CFR 91.215(b)・91.225(d)・AIM 4-1-20）。Sanford は Class C で Orlando の veil の中 — 初心者に関係のある事実が抜けている。",
+        "AIM 4-1-20 の「コードを変えるとき 7500・7600・7700 を通らない（2700→7200 は 2200 を経由）」が本文にない（radio.js r_squawk の clarify にだけある）。",
+        "「ここが大切」（bk.key）がない。",
+        "PAN-PAN の例 “one hour fuel remaining” は、直前の ⑨「残りの燃料（分）」と食い違う。AIM 6-3-2 と PCG “Fuel remaining” は分で言う（例 “six zero minutes of fuel remaining”）。また迷ったときは「最後に分かった位置・時刻・針路」を言うと書きながら、例文にそれがない（radio.js r_panpan は入れている）。",
+        "MAYDAY の例 “two persons on board” と radio.js r_mayday の “two people on board”（AIM 6-3-2 は “Number of people on board”）を揃える。",
+        "トランスポンダー・遭難と緊急の違い・通報の順番・2 つの台本・周波数・上昇まで 1 節に詰め込まれている。通報の部分を新しい節 comm.mayday に分けると読みやすい。",
+        "いつ宣言するかの具体例が少ない：AIM 6-2-1（計器飛行の資格のない操縦士が VFR を保てないときは、資格がないことを伝えて遭難（distress）を宣言する）、ACS PA.III.A.R2「緊急を宣言するかどうか・いつ」— {ch:hf} の雲に入ったときの話とつなげられる。"
+      ],
+      "mainFigure": "トランスポンダーのコード表示を模した 4 枚の色カード（1200 VFR＝灰、7500 不法な干渉＝紫、7600 無線の故障＝黄、7700 緊急＝赤）と、下に小さく「コードを変えるときは 7x00 を通らない：2700 → 2200 → 7200（AIM 4-1-20）」。実機の画面写真ではなく図で。"
+    },
+    {
+      "id": "comm.nordo",
+      "title": "無線が使えないとき・灯火信号",
+      "gist": "まず操作の誤りを確かめ、本当に壊れていれば 7600・VFR を保つ・できるだけ早く着陸し、管制塔の灯火信号に従う（AIM 4-2-13・4-3-13・6-4、14 CFR 91.125・91.129(d)(2)）。",
+      "issues": [
+        "表が 2 つ続くだけで図がない。灯火信号は色・連続／点滅という「見た目」の知識なので絵がいちばん効く。",
+        "根拠の規則がずれている：表の見出しは「AIM 4-2-13・6-4・14 CFR 91.185」だが、91.185 は IFR の無線故障の規則（(b) だけが VFR 状態の扱い）。VFR で Class D／C の空港に無線なしで着陸してよい根拠は 91.129(d)(2)（基本 VFR 気象以上・管制塔を目視・着陸の許可＝灯火信号）で、Class C にも 91.130(a) で適用。灯火信号の意味そのものは規則 91.125 の表。7600 は AIM 6-4-2。",
+        "夜に管制塔の注意を引く方法（使用中の滑走路から離れた場所で着陸灯をつけて待つ、AIM 4-3-13）、灯火信号の弱点（管制塔を見ていないと気づかない・許可か不許可しか伝えられない、AIM 4-3-13）が抜けている。",
+        "灯火信号の表は 91.125・AIM 4-3-13 と一致していて正しい。「応答のしかた」の行（昼は翼を振る／地上はエルロンかラダー、夜は着陸灯か航空灯を点滅）も AIM 4-2-13 と一致。",
+        "クイズ 3 の「14 CFR 91.185 の考え方」は、VFR 飛行の無線故障を IFR の規則の名前で問うている（考え方は同じだが、出典は AIM 6-4-1・91.185(b) と書く方が正確）。"
+      ],
+      "mainFigure": "灯火信号の図：左に管制塔とライトガン、右に 6 行（緑の連続・緑の点滅・赤の連続・赤の点滅・白の点滅・赤緑の交互）。連続＝太い線、点滅＝破線の光で描き、各行に「地上の機」「飛行中の機」の意味（91.125 の表）。下に「応答：昼は翼を振る（地上はエルロン／ラダー）、夜は着陸灯・航空灯を点滅」。"
+    },
+    {
+      "id": "comm.sfb",
+      "title": "Sanford（KSFB）で気をつけること",
+      "gist": "FAA の From the Flight Deck: SFB（2026-06-02 更新）が挙げる注意：段違いの平行滑走路 3 本と交差する 18/36、Hot Spot HS1、hold short などの復唱、LUAW、場周の 1 マイル、Class C の上に Class B。",
+      "issues": [
+        "図がない。「9L/27R・9C/27C・9R/27L の平行滑走路と、交差する 18/36」「HS1」は文字だけでは位置関係がつかめない。sanford-course.js の模式図はあるが、配置が実際と違う（appMismatches 参照）ので、本には正しい模式図が必要。",
+        "HS1 の説明が少し不正確：FAA は「滑走路 18 に着陸した機、または 9L/27R に着陸して滑走路 18 に出るよう指示された機が、誘導路 C へ右折するはずが滑走路 27C へ右折した」と書いている（27C の東端は滑走路 18/36 のすぐそばから始まり、誘導路 C はその南に並ぶ — FAA 空港図 AL-917）。本文の「滑走路 18 から出て誘導路 C へ右折するはずが 27C へ」は「18 から出て」が誤解を招く。",
+        "FAA の SFB ページにある初心者に関係する事実が抜けている：管制塔の運用時間 0630L–2300L（閉まると CTAF 120.3）、9L/27R が主要運用滑走路・9R/27L が主要な飛行訓練用滑走路（場周は 9R が右・27L が左＝Chart Supplement）、誤った滑走路への着陸の危険（目視進入でも計器進入や GPS で滑走路を確かめる）、初回の交信で「SOLO であること」を伝える、LAHSO（交差滑走路の手前で止まる着陸許可）が一般機にも出されることがある — AIM 4-3-11 は学生操縦士は参加しないとしている、鳥が多い、滑走路の進入区域の停止位置標識（“Hold short of Runway 9C approach”）。",
+        "bk.key の 2 つ目「詳しくはメニューの「Sanford の資料」と「英語交信」の練習へ」はアプリの使い方。ゲームが読み上げる要点に入れない（CADET では消える）。bk.sim に移す。",
+        "情報の時点がない：FAA ページの更新日（2026-06-02）と「NOT FOR NAVIGATION・実際は最新の Chart Supplement・NOTAM・管制の指示」を本文に。",
+        "law.airspace の bk.key（「Sanford（KSFB）は Class C で、その上に Orlando の Class B」）と同じ内容の重複。ここでは空域の話を短くして {ch:law} へ。"
+      ],
+      "mainFigure": "模式図（NOT FOR NAVIGATION・北が上）：FAA の滑走路端の座標から描いた 9L/27R（北・11,002 ft）・9C/27C（中・3,578 ft）・9R/27L（南・5,839 ft、進入端が東へずれている）と 18/36（6,002 ft、9L/27R と 9R/27L に交差し、27C の東端に接する）。27C の東端と滑走路 18 の合流点に誘導路 C（27C の南に並ぶ黄色の破線）と HS1 の赤い丸。9R/27L の場周の向き（9R は右、27L は左）を小さな矢印で。"
+    },
+    {
+      "id": "comm.icao",
+      "title": "FAA と ICAO（英国）の言い方の違い・上達の練習法",
+      "gist": "米国（AIM・PCG）と英国（CAP 413・ICAO に沿う）の代表的な言い方の違いと共通点、そして交信の練習法。",
+      "issues": [
+        "2 つの別の話（FAA と ICAO の違い／「上達の練習法（この教材の使い方）」）が 1 節にある。練習法はアプリの使い方が中心（「英語交信」ページ、「同じページの」）で CADET ではほとんど消える。新しい節 comm.practice に分ける。",
+        "「ここが大切」（bk.key）がない。",
+        "「どちらでも共通：… line up and wait」は不正確。CAP 413 第 24 版では ‘LINE UP AND WAIT’ も使うが ‘LINE UP’ だけでもよく、英国には条件付きの指示（例 “… line up Runway 26 behind”）がある。FAA は条件付きの line up を使わない（JO 7110.65 で要確認）。",
+        "「滑走路の手前の待機｜hold short of runway …｜holding point（taxi to holding point runway …）」— 英国にも ‘HOLD SHORT’ はある（停止位置がない場所や、許可の限界を強調するときだけ。CAP 413 第 24 版）。違いの本質は、英国のタキシー許可が停止位置（例 “taxi holding point B1 runway 14”）を限界として名指しするのに対し、FAA は “Runway three six, taxi via Alpha”（滑走路の手前で止まるのが前提）という点。",
+        "「フライトレベルに変わる高度｜英国は空域ごとに決められていて、ずっと低い」— 現時点では妥当だが、英国全体を 18,000 ft にそろえる案が CAA から出ている（2016 年の協議）。実施状況は要確認、と添える。",
+        "CAP 413 は第 24 版（2026 年 7 月 1 日発効）が現行。版を書く。",
+        "冒頭の「公開情報では、ANA の座学はロンドンで英語で行い…」は ANA の公開ページ（ana.co.jp, 2025-10-22）と一致（ロンドンで座学・授業は英語・「航空管制通信のシミュレーション」の写真）。CADET のテストがこの節に実名があることを前提にしているので、文は残す（cadetNotes 参照）。"
+      ],
+      "mainFigure": "同じ場面を左右 2 列で比べるカード（左 FAA・右 英国 CAP 413）：周波数 121.7（point／decimal）、高度計（altimeter two niner niner two／QNH one zero one three）、はい（affirmative／affirm）、どうぞ（go ahead／pass your message）、タキシーの限界（runway 36, taxi via A／taxi holding point A1 runway 27）。違う語だけ色で強調し、共通の語（MAYDAY・PAN-PAN・フォネティック・復唱）を下に。"
+    }
+  ],
+  "problems": {
+    "unclear": [
+      "comm.ctaf：「CTAF は UNICOM・MULTICOM（122.9）・時間外の管制塔の周波数など」— UNICOM・MULTICOM・自己通報を説明しないまま並べている。",
+      "comm.xpdr：トランスポンダー・squawk・ident・Mode C・ADS-B Out の説明がない。",
+      "comm.xpdr：「優先｜すべての交信より優先。その周波数は静かにする」— 誰が静かにするのか（ほかの局）を一文で。AIM 6-3-1：MAYDAY はその周波数の無線封止を命じる。",
+      "comm.nordo：「Class D の地表区域の外か上で」— Class D の地表区域（surface area）を図なしで理解するのは難しい。",
+      "comm.sfb：「滑走路の取り違えが起きやすい」— runway misalignment（違う滑走路・誘導路への着陸）と HS1（地上での取り違え）が区別されていない。",
+      "comm.icao：「フライトレベルに変わる高度」— transition altitude の説明がない（{ch:law} や {ch:ifr} にあるなら参照）。"
+    ],
+    "order": [
+      "squawk・トランスポンダーは radio2（comm.numbers の表）と radio4（comm.dep・comm.radar）で先に使われるのに、何の装置かは radio5 の comm.xpdr まで出てこない。comm.dep に一文と bk.see('comm.xpdr') を置くか、comm.xpdr の冒頭を「最初に読む説明」として書く。",
+      "comm.xpdr の中で、トランスポンダーと遭難通報が混ざっている。comm.xpdr（装置とコード）→ 新 comm.mayday（MAYDAY・PAN-PAN の判断と通報）→ comm.nordo（無線の故障と灯火信号）の順にすると「助けを求める → 無線が使えない」の流れになる。",
+      "comm.icao の「上達の練習法」は内容的に radio1 の radio.listen（聞き取りのコツ）か、章末の新 comm.practice が自然。"
+    ],
+    "errors": [
+      "comm.xpdr：PAN-PAN の例 “one hour fuel remaining” → AIM 6-3-2 と PCG “Fuel remaining” は残りの燃料を分（minutes）で言う：“six zero minutes of fuel remaining”（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_3.html）",
+      "comm.nordo：表の根拠「14 CFR 91.185」→ 91.185 は IFR の無線故障の規則。VFR で管制塔のある空港（Class D、Class C も 91.130(a) で）へ無線なしで着陸できる根拠は 91.129(d)(2)、灯火信号の意味は 91.125、7600 は AIM 6-4-2（https://www.ecfr.gov/current/title-14/section-91.129）",
+      "comm.sfb：HS1「滑走路 18 から出て誘導路 C へ右折するはずが 27C へ」→ FAA：滑走路 18 に着陸した機（または 9L/27R に着陸して 18 に出るよう指示された機）が、18 の上から誘導路 C へ右折するはずが滑走路 27C へ右折した（https://www.faa.gov/flight_deck/sfb）",
+      "comm.icao：「どちらでも共通：… line up and wait」→ 英国では ‘LINE UP’ だけの指示や条件付きの line up もある（CAP 413 Edition 24, 1 July 2026: https://www.caa.co.uk/cap413）",
+      "comm.icao：「滑走路の手前の待機：ICAO・英国は holding point」→ 英国にも ‘HOLD SHORT’ があり、停止位置がない場所や許可の限界の強調に限って使う（CAP 413 Edition 24）"
+    ],
+    "outdated": [
+      "CAP 413 は Edition 24（2026-07-01 発効）が現行。refs のラベルに版を付ける（https://www.caa.co.uk/data-and-publications/publications/documents/content/cap-413/）。",
+      "FAA From the Flight Deck: SFB は 2026-06-02 更新。本文の要約は現行ページと一致（追加すべき項目は issues 参照）。",
+      "英国の transition altitude：18,000 ft への統一案（CAA 2016 年協議）の実施状況は未確認。「ずっと低い」は現時点の記述として残し、「変更の可能性あり・要確認」を添える。"
+    ],
+    "duplicates": [
+      "comm.sfb の「Class C の上に Orlando の Class B」は law.airspace の bk.key と同じ（book-2.js）。ここでは一言にして {ch:law} へ。",
+      "comm.xpdr の 7700・121.5 は emg.basic（book-3.js:190「MAYDAY ×3、トランスポンダー 7700（{ch:radio5}）」）・emg の不時着の表（121.5 / 7700）・nav の迷ったとき（book-4.js:107）と重なる。詳しい説明はここに 1 か所、ほかは参照に。",
+      "comm.icao の「チェアフライング」は sim 章（book-5.js のクイズ「チェアフライングとは？」）と重なる。",
+      "comm.nordo の最初の確認（音量・スケルチ・周波数・MIC・ヘッドセット・スタックマイク・もう一方の無線機）は radio.equip の bk.key と同じ。ここは参照だけでよい。",
+      "灯火信号と 7600 は quiz.js の q_comm・q_radio、radio.js の r_nordo・r_light と内容が一致（重複は問題ないが、言い回しを揃える）。"
+    ],
+    "numbers": [
+      "comm.xpdr：例文 “one hour fuel remaining” と本文 ⑨「残りの燃料（分）」が食い違う（AIM 6-3-2）。",
+      "comm.xpdr：“two persons on board”（本）と “two people on board”（radio.js r_mayday）。AIM 6-3-2 の言葉（people）に揃える。",
+      "comm.ctaf：例の空港名が本は AIM の Strawn、radio.js は架空の Lakeside。",
+      "sanford-course.js の RUNWAYS（n・e・hdg）は FAA の滑走路端座標と合わない：方位 hdg 84 / 174 → 実際は真方位 090 / 180（磁方位 095 / 185、FAA データ・AirNav 2026-10-01）。ARP からの中心位置（東, 北・m）は実際 9L/27R ≈ (−377, +510)、9C/27C ≈ (−485, +143)、9R/27L ≈ (+994, −803)、18/36 ≈ (+14, −239) に対し、ファイルは (0, 520)・(−700, 210)・(250, −150)・(1250, −100)。特に 18/36 が 1.2 km 東にずれ、27C の東端・9R の西端と接していない。",
+      "sanford-course.js：9R/27L の幅 w: 30（m）→ 実際 75 ft ≈ 23 m（9C/27C と同じ）。",
+      "sanford-course.js の場面 ‘pattern’：“make left closed traffic Runway Niner Right” → Chart Supplement では 9R は右場周（27L が左場周）。台本は “right closed traffic Runway 9 Right” か “left closed traffic Runway 2 7 Left” に。",
+      "滑走路長（sanford-course.js：09L/27R 11,002・09R/27L 5,839・18/36 6,002・09C/27C 3,578 ft）は FAA データ（AirNav, FAA information effective 2026-10-01）と一致。"
+    ]
+  },
+  "policy": "章の順番は comm.ctaf → comm.xpdr → 新 comm.mayday → comm.nordo → comm.sfb → comm.icao → 新 comm.practice とする（id は変えない・消さない）。comm.ctaf は「管制塔がない＝誰も指示しない、だから自分で言う」を最初に述べ、場周の図（左回り・1,000 ft AGL・45° 進入）と通報地点を一枚で見せてから交信の型に進む。comm.xpdr はトランスポンダーの役目（コード＋高度、ADS-B Out、Class B・C と Mode C veil で必須）と squawk / ident を先に説明し、遭難・緊急の判断（AIM 6-1-2「不安を感じた時点で少なくとも urgency」）と通報の順番（AIM 6-3-2）は新しい節 comm.mayday（遭難・緊急の通報）に移して、例文の燃料を「分」に直す。comm.nordo は「まず操作の誤りを疑う → 7600 → VFR を保ちできるだけ早く着陸 → 灯火信号」を 1 本の流れ図にし、規則の根拠を 91.129(d)(2)・91.125・AIM 4-2-13・6-4 に正す。comm.sfb は FAA ページ（2026-06-02 更新）の日付を書き、正しい座標から描いた模式図（NOT FOR NAVIGATION）を最初に置き、塔の運用時間と CTAF 120.3・9R/27L の場周の向き・LAHSO（学生は受けない）・誤った滑走路への着陸の危険を加え、アプリ案内は bk.sim へ。comm.icao は違いの表を CAP 413 第 24 版に合わせて直し（line up、hold short、transition altitude の注記）、実名の 1 文と CAP 413 と「両方を知っておくと混乱しません。代表的な例」の文は CADET テストのため残す。練習法は新 comm.practice に移し、アプリ固有の手順は bk.sim に入れて、本文は誰でもできる方法（型の暗記・声に出す・本物の交信を聞く・チェアフライング）で書く。",
+  "figuresExisting": [
+    {
+      "key": "（なし）radio5 には FIG の図・表も写真もない",
+      "verdict": "redo",
+      "why": "5 節すべてが文字と表だけ。場周・灯火信号・Sanford の配置など、形と位置で理解する内容が多い章なので、各節の最初に図が必要（CADET は各節の最初の <svg> を教室の画面に映す）。"
+    },
+    {
+      "key": "FL.sanford.diagramSvg（sanford-course.js、FIG ではなくアプリの「Sanford の資料」ページの図）",
+      "verdict": "redo",
+      "why": "18/36 が 1.2 km 東にずれ、27C の東端・9R の西端と交わらず、誘導路 C が 9C/27C の北に描かれ、HS1 の丸も滑走路 18 との合流点にない。方位も 084°/174°（実際は真方位 090°/180°）。viewBox 640 幅で 390 px では文字が小さい。本の新しい図 sfbLayout と同じデータ（FAA の滑走路端座標）で作り直すべき（アプリは変更しない方針なので、不一致として報告）。"
+    }
+  ],
+  "figuresNew": [
+    {
+      "name": "ctafCalls",
+      "section": "comm.ctaf",
+      "what": "管制塔のない架空空港 Lakeside RWY 17 の左場周（北を上、滑走路は縦）と自己通報の 7 地点（10 NM 手前・ダウンウインド進入・ベース・ファイナル・滑走路を出た・タキシーの前・離陸／場周を離れる）。ダウンウインドの中央へ 45° の進入線、場周高度 1,000 ft AGL のラベル、各地点に短い英語の型。模式図・NOT FOR NAVIGATION。viewBox 400×300 前後、文字 12 以上。",
+      "data": "通報地点：AIM 4-1-9（TBL 4-1-9・Recommended self-announce broadcasts）。場周高度 1,000 ft AGL：AIM 4-3-3。45° 進入・場周を離れるときの 45° 旋回：AC 90-66C 11.3・11.8。左回り：14 CFR 91.126(b)。形は ops.pattern の FIG.pattern と揃える。",
+      "priority": "must"
+    },
+    {
+      "name": "squawkCodes",
+      "section": "comm.xpdr",
+      "what": "4 枚の色カード（1200 VFR・7500 不法な干渉・7600 無線の故障・7700 緊急）と「コードを変えるときは 7x00 を通らない：2700 → 2200 → 7200」の矢印、下に「Mode C：気圧高度を 100 ft 単位で送る」「ADS-B Out」の短い説明。",
+      "data": "AIM 4-1-20（Code 1200・コード変更・自動高度報告）、AIM 6-2-2（7700）、AIM 6-4-2（7600）。",
+      "priority": "must"
+    },
+    {
+      "name": "maydayCall",
+      "section": "comm.mayday（新）",
+      "what": "通報の順番を 1 本の帯にした図：①MAYDAY×3／PAN-PAN×3 ②相手 ③コールサイン・機種 ④状況 ⑤天気 ⑥意図と要求 ⑦位置と針路（迷ったら最後に分かった位置・時刻・針路）⑧高度 ⑨燃料（分）⑩人数。上に「遭難＝重大で差し迫った危険」「緊急＝不安を感じた時点（AIM 6-1-2）」の 2 段の物差し。",
+      "data": "AIM 6-3-1（MAYDAY・PAN-PAN の優先）、6-3-2（要素と順番）、6-1-2（urgency の時点）。",
+      "priority": "must"
+    },
+    {
+      "name": "lightGunSignals",
+      "section": "comm.nordo",
+      "what": "管制塔のライトガンから出る 6 種類の光（緑・赤・白、連続は実線、点滅は破線）と、地上の機／飛行中の機の意味を並べた図。下に応答のしかた（昼：翼を振る・地上はエルロン／ラダー、夜：着陸灯・航空灯の点滅）。",
+      "data": "14 CFR 91.125 の表・AIM 4-3-13（TBL 4-3-13）・AIM 4-2-13。",
+      "priority": "must"
+    },
+    {
+      "name": "nordoArrival",
+      "section": "comm.nordo",
+      "what": "受信機が故障したときの到着：Class D の地表区域（円柱）の外か上で使用滑走路を見極める → 機種・位置・高度・着陸の意図・灯火信号を頼むと送信 → 3〜5 マイルで位置を送り場周に入る → 管制塔を見て緑の連続で着陸。番号付きの平面図。",
+      "data": "AIM 4-2-13（Receiver inoperative・3 to 5 miles）、14 CFR 91.129(d)(2)。",
+      "priority": "should"
+    },
+    {
+      "name": "sfbLayout",
+      "section": "comm.sfb",
+      "what": "Sanford の滑走路の模式図（北が上・NOT FOR NAVIGATION・2026 年の FAA 資料による）：9L/27R・9C/27C・9R/27L・18/36 を実際の位置関係で、27C の東端と滑走路 18 の合流点に誘導路 C と HS1、9R/27L の場周の向き（9R 右・27L 左）、凡例に滑走路長。",
+      "data": "滑走路端の座標と長さ：FAA データ（AirNav, FAA information effective 2026-10-01）。ARP からの位置（東, 北・m）：9L −2053,+507／27R +1298,+513／9C −1030,+142／27C +59,+144／9R +105,−805／27L +1883,−802／18 +12,+680／36 +16,−1158。誘導路 C の位置と HS1：FAA 空港図 AL-917（d-TPP 2610）と Chart Supplement の hot spot 表。場周の向き：Chart Supplement（AirNav の表記）。",
+      "priority": "must"
+    },
+    {
+      "name": "sfbAirspace",
+      "section": "comm.sfb",
+      "what": "断面の模式図：Sanford の Class C（中心の円柱と外側の棚）の上に Orlando の Class B がかぶる様子。高度の数字は入れないか、最新のセクショナルチャートから取った値に「模式図・NOT FOR NAVIGATION」を付ける。",
+      "data": "FAA From the Flight Deck: SFB（Class C underlies Orlando Class B）。高さの値を入れるなら Orlando TAC / Jacksonville セクショナル（要確認）。",
+      "priority": "nice"
+    },
+    {
+      "name": "faaIcaoCompare",
+      "section": "comm.icao",
+      "what": "同じ場面の FAA と英国の言い方を左右 2 列に並べたカード（周波数・高度計・はい・どうぞ・タキシーの限界）。違う語だけ色を変える。",
+      "data": "AIM 4-2-8（POINT／ICAO は DECIMAL）、PCG（affirmative, go ahead）、CAP 413 Edition 24（AFFIRM, PASS YOUR MESSAGE, taxi holding point, QNH）。",
+      "priority": "should"
+    }
+  ],
+  "photos": [
+    {
+      "section": "comm.nordo",
+      "subject": "管制塔の中で管制官がライトガン（信号灯）を構える写真（顔が写っていないもの）",
+      "search": "af.mil の写真ライブラリ “light gun tower”（米空軍の写真はパブリックドメイン）。Commons: Category:Aviation light signals／“light gun air traffic control”",
+      "candidateUrl": "https://www.robins.af.mil/News/Photos/igphoto/2000172985/",
+      "candidateLicence": "Public domain（米空軍の写真・ページに cleared for public release の表示）。顔の写り方は要確認",
+      "why": "灯火信号が実際にどんな道具から出るのかが一目でわかる。"
+    },
+    {
+      "section": "comm.ctaf",
+      "subject": "管制塔のない小さな空港の吹き流しと場周の向きを示すセグメントサークル（segmented circle）",
+      "search": "Commons: Category:Segmented circles／Category:Windsocks at airports（ライセンスを 1 枚ずつ確認）",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "管制塔のない空港では、場周の向きを地上の標識と CTAF の通報で知ることを示せる（AIM 4-3-4）。"
+    },
+    {
+      "section": "comm.sfb",
+      "subject": "Orlando Sanford International Airport の真上からの航空写真（平行滑走路と 18/36 が見えるもの）",
+      "search": "USGS EarthExplorer の NAIP／High Resolution Orthoimagery（パブリックドメイン）で KSFB 付近。Commons: Category:Orlando Sanford International Airport（航空会社の機体が主役でないもの、ライセンス確認）",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "模式図と実際の空港を見比べ、段違いの平行滑走路と交差滑走路の取り違えやすさを実感できる。Google の地図は不可。"
+    },
+    {
+      "section": "comm.icao",
+      "subject": "滑走路の停止位置標識（赤地に白文字の滑走路名の標識と、誘導路の黄色い停止線）",
+      "search": "FAA Runway Safety の写真・AIM 第 2 章の図（米国政府の著作物）／Commons: Category:Runway holding position signs",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "“hold short of runway …”（米国）と “holding point”（英国）が指す地上の目印が同じ場所だとわかる。"
+    }
+  ],
+  "endMatter": {
+    "terms": [
+      "非管制空港（Non-towered airport）：管制塔のない、または管制塔が閉まっている空港",
+      "CTAF（Common Traffic Advisory Frequency）：その空港の共通の交通情報周波数",
+      "UNICOM：空港の民間の地上局（管制ではない）",
+      "MULTICOM 122.9：地上局のない空港の自己通報の周波数",
+      "Self-announce：自己通報（返事を期待しない一方的な通報）",
+      "Traffic pattern altitude：場周高度（プロペラ機は地上 1,000 ft が推奨）",
+      "Straight-in：直進着陸（場周に入らずに着陸）",
+      "Transponder / Squawk / Ident：トランスポンダー／コードを合わせる／識別ボタン",
+      "Mode C / ADS-B Out：高度の自動報告／自分の位置を放送する装置",
+      "Distress（MAYDAY）/ Urgency（PAN-PAN）：遭難／緊急",
+      "Fuel remaining：残りの燃料（分で言う）",
+      "121.5 MHz：緊急周波数",
+      "NORDO / Two-way radio communications failure：無線の故障（7600）",
+      "Light gun signals：管制塔の灯火信号（14 CFR 91.125）",
+      "Hot spot：事故・取り違えが起きやすい場所",
+      "Runway incursion / Wrong-surface landing：滑走路誤進入／違う滑走路・誘導路への着陸",
+      "LAHSO（Land and Hold Short Operations）：交差する滑走路の手前で止まる着陸",
+      "Holding point（英国）：滑走路手前の停止位置",
+      "QNH / Affirm / Pass your message / Decimal：英国（ICAO）の言い方",
+      "Transition altitude：高度計を標準（29.92 inHg・1013 hPa）に変える高度（米国 18,000 ft）"
+    ],
+    "examples": [
+      "架空 Lakeside 空港へ 10 NM：“Lakeside traffic, Archer Seven Lima Alpha, one zero miles north, three thousand five hundred, descending, will enter left downwind runway one seven, full stop, Lakeside.”（AIM 4-1-9 の型・空港とコールサインは架空）",
+      "位置に自信がない：“Pan-pan, Pan-pan, Pan-pan, LAB Approach, Archer Seven Lima Alpha, Piper Archer, uncertain of position, last known position one five miles northeast of LAB at one four three zero, heading two two zero, three thousand five hundred, six zero minutes of fuel remaining, two people on board, request assistance.”（AIM 6-3-2 の順・LAB は架空）",
+      "VFR で無線が完全に故障 → 7600 → Class D の外か上で使用滑走路を見極めて場周に入る → 管制塔を見て緑の連続で着陸 → 昼は翼を振って応答（AIM 4-2-13・91.129(d)(2)・91.125）。",
+      "Sanford で滑走路 18 に着陸し “turn right on Charlie” と言われた → 18 の上で最初に見える右の舗装は滑走路 27C かもしれない。標識（滑走路＝赤地に白、誘導路＝黄色）と方位を確かめ、迷ったら止まって確認（FAA SFB・HS1）。"
+    ],
+    "cautions": [
+      "CTAF・周波数・場周の向き・管制塔の運用時間は空港ごとに違い、変わる。実際は最新の Chart Supplement・NOTAM で確認する。",
+      "Sanford の情報は FAA From the Flight Deck（2026-06-02 更新）と Chart Supplement（2026-10-01〜10-29）による要約で、模式図は NOT FOR NAVIGATION。",
+      "学生操縦士は LAHSO を受けない（AIM 4-3-11）。言われたら “unable” と伝える。",
+      "緊急でも最優先は操縦（Aviate → Navigate → Communicate）。通報は余裕ができてから。",
+      "英国・ICAO の言い方は代表例のみ。詳しくは CAP 413（第 24 版）など各国の公式資料で。"
+    ],
+    "quizReview": [
+      "Q1（“Traffic in the area, please advise”）：keep — AIM 4-1-9 の文言と一致（“is not a recognized Self-Announce … phrase and should not be used under any condition”）。",
+      "Q2（AIM 6-1-2 の urgency の時点）：keep — AIM 6-1-2 と一致。",
+      "Q3（VFR で無線が故障：14 CFR 91.185）：fix — 91.185 は IFR の規則。問いを「VFR の天気で無線が使えなくなった。正しい対応は？（AIM 6-4・91.185(b) と同じ考え方）」にし、why に 7600（AIM 6-4-2）と管制塔のある空港では 91.129(d)(2)・灯火信号を書く。",
+      "Q4（飛行中の緑の点滅）：keep — 91.125・AIM 4-3-13 と一致。"
+    ],
+    "quizProposals": [
+      {
+        "q": "管制と交信している最中にエンジンが故障した。トランスポンダーのコードは？",
+        "choices": ["もらっているコードのまま（指示があれば変える）", "すぐ 7700 にする", "7600 にする", "1200 にする"],
+        "answer": 0,
+        "why": "AIM 6-3-2：交信中はもらっているコードを続ける。交信できないときに 7700。"
+      },
+      {
+        "q": "PAN-PAN の通報で、残りの燃料はどう伝える？",
+        "choices": ["あと何分飛べるか（分）", "ガロン", "ポンド", "タンクの何パーセントか"],
+        "answer": 0,
+        "why": "AIM 6-3-2 の要素「Fuel remaining in minutes」。PCG の Fuel remaining も分で言う。"
+      },
+      {
+        "q": "管制塔のある空港へ向かう途中、受信機だけが故障したらしい。AIM の手順は？",
+        "choices": ["Class D の外か上で交通の流れを見てから、機種・位置・高度・着陸の意図を送り、灯火信号での管制を頼む", "そのまま直進で滑走路へ降りる", "7500 にして近くの空港へ", "管制塔の真上を低く飛んで知らせる"],
+        "answer": 0,
+        "why": "AIM 4-2-13（Receiver inoperative）。3〜5 マイルで位置を送って場周に入り、管制塔の灯火信号を見る。"
+      },
+      {
+        "q": "Sanford（KSFB）の Hot Spot HS1 で取り違えやすいのは？",
+        "choices": ["誘導路 C と滑走路 27C", "滑走路 9L と 9R", "誘導路 A と B", "滑走路 18 と 36"],
+        "answer": 0,
+        "why": "FAA From the Flight Deck: SFB と Chart Supplement の hot spot 表：滑走路 18 から誘導路 C へ右折するはずが、27C へ右折した例がある。"
+      },
+      {
+        "q": "管制塔のない空港で VFR の直進着陸（straight-in）について AIM 4-1-9 が言っていることは？",
+        "choices": ["空中衝突の危険が増えるので勧めない。するなら 8〜10 マイルで通報し、場周の機に対する優先権はない", "場周の機より優先される", "必ず直進で着陸する", "法律で禁止されている"],
+        "answer": 0,
+        "why": "AIM 4-1-9（Straight-in Landings）と 14 CFR 91.113(g)。"
+      }
+    ],
+    "refs": [
+      "add: AIM 4-2（4-2-8 の DECIMAL の注記・4-2-13 無線故障時の管制塔との交信）R.aim42 https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+      "add: AIM 6-1（6-1-2）と 6-2（6-2-1・6-2-2）https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_1.html / https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_2.html",
+      "add: 14 CFR 91.125（灯火信号）・91.129(d)（Class D の無線故障）・91.185 — R.cfr91 https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-91",
+      "add: FAA AC 90-66C Non-Towered Airport Flight Operations（2023-06-06）https://www.faa.gov/regulations_policies/advisory_circulars/index.cfm/go/document.information/documentNumber/90-66C",
+      "add: FAA Chart Supplement（d-CS）https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/dafd/ と d-TPP 空港図の検索 https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/dtpp/search/",
+      "add: FAA Private Pilot ACS（FAA-S-ACS-6C）PA.III.A（交信・灯火信号・トランスポンダー・無線故障・緊急の宣言）R.acsP",
+      "update: R.cap413 のラベルに「Edition 24（2026-07-01 発効）」",
+      "update: R.sfb のラベルに「2026-06-02 更新」",
+      "keep: R.ana1（comm.icao の公開情報の出典。CADET では自動で消える）"
+    ]
+  },
+  "appMismatches": [
+    "sanford-course.js:18-22 — RUNWAYS の n・e・hdg が FAA の滑走路端座標と合わない（hdg 84/174 → 真方位 090/180。18/36 は ARP のほぼ真上の経度で 9L/27R と 9R/27L に交差し、27C の東端に接する。ファイルでは e=1250 m 東）。FAA データ（AirNav, 2026-10-01）と空港図 AL-917 が正しい。",
+    "sanford-course.js:20 — 9R/27L の幅 w: 30（m）→ 75 ft ≈ 23 m が正しい（FAA データ）。",
+    "sanford-course.js:157-160 — diagramSvg の誘導路 C（n=330、9C の北を東へ延びる）と HS1 の位置（n=250, e=120）が、空港図の配置（誘導路 C は 9C/27C の南に並び、HS1 は滑走路 18 と 27C 東端の合流点）と違う。空港図が正しい。",
+    "sanford-course.js:128-131 — 場面 ‘pattern’ の “make left closed traffic Runway Niner Right” → Chart Supplement では 9R は右場周（27L が左）。公開データが正しい（管制官が別の指示をすることはあるが、練習台本は公開の向きに合わせる）。",
+    "sanford-course.js:10 — 滑走路長の出典が Wikipedia（SRC.wiki）。値は正しいが、FAA の Chart Supplement／空港図を出典にする方がよい。",
+    "school.js:137-139 — ‘mayday’ の why が通報の順を「AIM 6-3-1 の考え方」としている → 要素と順番は AIM 6-3-2（MAYDAY×3 と優先は 6-3-1）。本（comm.xpdr）の書き方が正しい。",
+    "school.js:141-143 — ‘lost’ の why「AIM 6-2 の考え方（5C：Climb, Communicate, Confess, Comply, Conserve）」→ AIM 6-2 に 5C はない（6-2-1 は VFR 機へのレーダー支援）。また正解の通報に PAN-PAN がなく、本と radio.js r_panpan の「不安を感じた時点で少なくとも urgency（AIM 6-1-2）→ PAN-PAN」と食い違う。本と radio.js が AIM に沿っている。",
+    "radio.js:267-270 — r_mayday の “two people on board” と本の “two persons on board”。AIM 6-3-2 の “people” に揃える（本を直す）。",
+    "radio.js:259-266 — CTAF の練習は架空の Lakeside、本は AIM の Strawn。本を Lakeside に揃えると練習とつながる。",
+    "book-comm.js:351（comm.xpdr）— bk.sim ['e3','上空でのエンジン故障']：e3 の brief「1〜3 キーで正しい通報を選ぶ」と app.js:99（Digit/Numpad 1〜3 で答える）は一致。問題なし。",
+    "radio5 の lessons ['e3','t2'] — t2（場周経路）は管制塔のある LAB での課目で、CTAF の内容と結びつかない。CTAF の練習は radio.js の場面（g:'ctaf'）なので、bk.sim はそちらを案内する方がよい。"
+  ],
+  "factChecks": [
+    {
+      "claim": "CTAF は UNICOM・MULTICOM（122.9）・時間外の管制塔の周波数などで、チャートと Chart Supplement に載っている（AIM 4-1-9）",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html",
+      "note": "AIM 4-1-9：CTAF may be a UNICOM, MULTICOM, FSS, or tower frequency（FSS は Alaska のみ）。地上局のない空港は MULTICOM 122.9。"
+    },
+    {
+      "claim": "自己通報の時期：出発はタキシー前と滑走路に入る前、到着は 10 マイル手前・ダウンウインド・ベース・ファイナル・滑走路を出たとき",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html",
+      "note": "AIM 4-1-9 の Summary of Recommended Communication Procedures の表と一致。"
+    },
+    {
+      "claim": "空港名を最初と最後に言い、“active runway” ではなく滑走路番号を言う",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html",
+      "note": "AIM 4-1-9 Recommended self-announce broadcasts。"
+    },
+    {
+      "claim": "“Traffic in the area, please advise” は決まった言い方ではなく使わない",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html",
+      "note": "AIM 4-1-9：not a recognized Self-Announce Position and/or Intention phrase and should not be used under any condition。"
+    },
+    {
+      "claim": "VFR の直進着陸は空中衝突の危険が増えるので FAA は勧めていない（AIM 4-1-9）",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html",
+      "note": "AIM 4-1-9 Straight-in Landings：The FAA discourages VFR straight-in approaches … 行うなら 8〜10 マイルで通報、場周の機に対して優先権なし（91.113(g)）。AC 90-66C 9.11.1 も同じ。"
+    },
+    {
+      "claim": "10 マイル以内では CTAF を聞く",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html",
+      "note": "到着は 10 マイルから着陸まで、出発はエンジン始動から 10 マイルまで（AIM 4-1-9）。"
+    },
+    {
+      "claim": "コード 1200＝VFR、7700＝緊急、7600＝無線の故障、7500＝ハイジャック",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html",
+      "note": "AIM 4-1-20（1200・7500/7600/7700）、6-2-2（7700）、6-4-2（7600）。7777 は使わない。"
+    },
+    {
+      "claim": "AIM 6-1-2：位置・燃料・天気などに不安を感じた時点で少なくとも urgency。「遅れが事故を起こしてきた」",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_1.html",
+      "note": "原文 “An aircraft is in at least an urgency condition the moment the pilot becomes doubtful about position, fuel endurance, weather …” “Delay has caused accidents and cost lives.”"
+    },
+    {
+      "claim": "MAYDAY はすべての交信より優先しその周波数は静かにする、PAN-PAN は遭難以外より優先",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_3.html",
+      "note": "AIM 6-3-1。"
+    },
+    {
+      "claim": "通報の要素と順番（AIM 6-3-2）①MAYDAY×3/PAN-PAN×3 … ⑪その他",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_3.html",
+      "note": "11 要素とも一致。ただし本文の PAN-PAN の例は燃料を時間（one hour）で言っていて、⑨の「分」と食い違う。"
+    },
+    {
+      "claim": "ふだんの周波数でよく、つながらなければ 121.5 MHz や “Any station” への呼びかけ（AIM 6-3-1）",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_3.html",
+      "note": "AIM 6-3-1：frequency in use preferable; 121.5 / 243.0; “Any Station (Tower)(Radio)(Radar)”。"
+    },
+    {
+      "claim": "交信中ならもらっているコードのまま、交信できなければ 7700。できれば上昇（AIM 6-3-2）",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_3.html",
+      "note": "IFR 状態での無許可の上昇・降下は禁止（91.3(b) を除く）という但し書きもある。"
+    },
+    {
+      "claim": "VFR で無線が故障：VFR のまま飛び、できるだけ早く着陸（14 CFR 91.185）。7600",
+      "verdict": "imprecise",
+      "source": "https://www.ecfr.gov/current/title-14/section-91.185",
+      "note": "91.185 は “when operating under IFR” の規則。(b) が VFR 状態での扱い（continue VFR and land as soon as practicable）。7600 は AIM 6-4-2。VFR 飛行での管制塔のある空港への着陸は 91.129(d)(2)。"
+    },
+    {
+      "claim": "受信機・送信機・両方の故障時の到着手順、出発前の故障は電話で許可を得る、昼は翼を振り（地上はエルロン／ラダー）夜は灯火を点滅（AIM 4-2-13）",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+      "note": "表の各行が AIM 4-2-13 と一致（3〜5 マイルで位置を送る、も一致）。"
+    },
+    {
+      "claim": "灯火信号の表（緑の連続・緑の点滅・赤の連続・赤の点滅・白の点滅・赤と緑の交互）",
+      "verdict": "correct",
+      "source": "https://www.ecfr.gov/current/title-14/section-91.125",
+      "note": "14 CFR 91.125 と AIM 4-3-13（TBL 4-3-13）に完全に一致。根拠として 91.125 を書き加えるとよい。"
+    },
+    {
+      "claim": "Class D で VFR 飛行中に無線が故障しても着陸してよい条件",
+      "verdict": "unverified",
+      "source": "https://www.ecfr.gov/current/title-14/section-91.129",
+      "note": "本文にない事実（追加を提案）：91.129(d)(2) 基本 VFR 気象以上・管制塔を目視・着陸の許可を受ける。Class C にも 91.130(a) で適用。eCFR で確認済み。"
+    },
+    {
+      "claim": "Sanford：訓練前の学生から旅客機の機長まで経験の違う操縦者が使う",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/flight_deck/sfb",
+      "note": "“Pilot experience varies widely from pre-solo student to seasoned airline captains.” KMCO の北 20 マイル（sanford-course.js の「約 20 マイル」も一致）。"
+    },
+    {
+      "claim": "9L/27R・9C/27C・9R/27L の平行滑走路と交差する 18/36、滑走路の取り違えが起きやすい",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/flight_deck/sfb",
+      "note": "“three parallel runways with staggered thresholds and one intersecting runway make it a prime candidate for runway misalignment.”"
+    },
+    {
+      "claim": "Hot Spot HS1：誘導路 C と滑走路 27C の取り違え（滑走路 18 から出て誘導路 C へ右折するはずが 27C へ）",
+      "verdict": "imprecise",
+      "source": "https://www.faa.gov/flight_deck/sfb",
+      "note": "FAA：Aircraft landing RWY 18, as well as aircraft landing on RWY 9L/27R, instructed to exit onto RWY 18 then turn right onto TWY C, have mistakenly turned right onto RWY 27C。Chart Supplement SE（2026-10-01〜10-29）の hot spot 表にも “HS 1 Maint vigilance Twy C and Rwy 27C markings often confused.”（https://aeronav.faa.gov/afd/03Sep2026/se_hotspot.pdf）"
+    },
+    {
+      "claim": "SFB は Line Up and Wait を使う",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/flight_deck/sfb",
+      "note": "“SFB utilizes ‘Line Up and Wait’ (LUAW) … It is not authorization for takeoff.”"
+    },
+    {
+      "claim": "滑走路の指定・誘導路・hold short の指示はコールサイン付きで同じ送信の中で復唱、足りなければ言い直し",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/flight_deck/sfb",
+      "note": "“… will have to be repeated, even if you believe you are the only aircraft on frequency.”"
+    },
+    {
+      "claim": "空域は Class C、その上に Orlando の Class B",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/flight_deck/sfb",
+      "note": "“The airspace at SFB is Class C and underlies Orlando Class B airspace.”"
+    },
+    {
+      "claim": "訓練の場周は upwind・crosswind・base を約 1 マイルで",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/flight_deck/sfb",
+      "note": "“attempt to fly a 1-mile upwind, crosswind, and base. This helps the TWR plan for departure/sequence gaps.”"
+    },
+    {
+      "claim": "（sanford-course.js）9L/27R は主要運用滑走路、9R/27L は主要な飛行訓練用滑走路。滑走路長 11,002・3,578・5,839・6,002 ft",
+      "verdict": "correct",
+      "source": "https://www.airnav.com/airport/KSFB",
+      "note": "FAA ページと FAA データ（AirNav, FAA information effective 2026-10-01）で一致。9R/27L の幅は 75 ft（ファイルの 30 m は誤り）。9L は 1,000 ft・9R は 839 ft の displaced threshold。"
+    },
+    {
+      "claim": "（sanford-course.js）滑走路の標示は白、離着陸に使わない面の標示は黄",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/flight_deck/sfb",
+      "note": "FAA ページの SFB Cautions と一致。"
+    },
+    {
+      "claim": "（追加候補）SFB の管制塔は 0630L–2300L、閉まると CTAF 120.3",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/flight_deck/sfb",
+      "note": "FAA ページ “SFB ATCT Operates: 0630L – 2300L”、空港図に “SANFORD TOWER 120.3 (CTAF)”。閉まった後の空域クラスは Chart Supplement で確認（未確認）。"
+    },
+    {
+      "claim": "（追加候補）学生操縦士は LAHSO に参加しない",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html",
+      "note": "AIM 4-3-11：Student pilots or pilots not familiar with LAHSO should not participate in the program。FAA SFB ページは LAHSO が一般機にも出されることがあると書いている。"
+    },
+    {
+      "claim": "小数点は FAA が point、ICAO・英国が decimal（AIM 4-2-8 の注記）",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+      "note": "AIM 4-2-8：ICAO procedures require the decimal point be spoken as “DECIMAL.” CAP 413 Ed.24 も “One Two Two Decimal”。"
+    },
+    {
+      "claim": "はい：affirmative（FAA）／affirm（英国）、どうぞ：go ahead／pass your message",
+      "verdict": "correct",
+      "source": "https://www.caa.co.uk/data-and-publications/publications/documents/content/cap-413/",
+      "note": "CAP 413 Edition 24：AFFIRM＝Yes、ATS unit responds with ‘Pass Your Message’。FAA 側は PCG。"
+    },
+    {
+      "claim": "滑走路の手前の待機：FAA hold short／ICAO・英国 holding point",
+      "verdict": "imprecise",
+      "source": "https://www.caa.co.uk/data-and-publications/publications/documents/content/cap-413/",
+      "note": "CAP 413 Ed.24 にも HOLD SHORT がある（停止位置がない場所や許可の限界の強調に限る）。英国の通常のタキシー許可は “taxi holding point B1 runway 14”。"
+    },
+    {
+      "claim": "line up and wait は FAA と英国で共通",
+      "verdict": "imprecise",
+      "source": "https://www.caa.co.uk/data-and-publications/publications/documents/content/cap-413/",
+      "note": "CAP 413 Ed.24：‘LINE UP AND WAIT’ (plus reason) is employed; ‘LINE UP’ (only) may also be used。条件付きの line up（“… line up Runway 26 behind”）の例もある。"
+    },
+    {
+      "claim": "フライトレベルに変わる高度：米国 18,000 ft、英国は空域ごとでずっと低い",
+      "verdict": "unverified",
+      "source": "https://caa.co.uk/our-work/publications/documents/content/cap1349p7",
+      "note": "米国の 18,000 ft は Class A の下限・transition altitude として正しい。英国は現在も低い値が多いが、18,000 ft への統一案（CAA 2016 協議）の実施状況は確認できなかった。"
+    },
+    {
+      "claim": "英国の言い方は CAA の CAP 413 にまとめられている",
+      "verdict": "outdated",
+      "source": "https://www.caa.co.uk/data-and-publications/publications/documents/content/cap-413/",
+      "note": "内容は正しいが版の記載がない。現行は Edition 24（2026-07-01 発効、2026-03-31 までの改訂を含む）。"
+    },
+    {
+      "claim": "公開情報では ANA の座学はロンドンで英語、航空管制通信のシミュレーションもある",
+      "verdict": "correct",
+      "source": "https://www.ana.co.jp/group/777_30th/20251022_2.html",
+      "note": "「現在はロンドンで座学訓練を行っており、授業も全て英語で行う」「航空管制通信のシミュレーション」（写真の説明）。FAA／英国どちらの言い方で教わるかは書かれていない（本の「推測・要確認」は妥当）。"
+    },
+    {
+      "claim": "（追加候補）Class B・C、Mode C veil（Class B 主空港から 30 NM・10,000 ft MSL まで）ではトランスポンダー Mode C と ADS-B Out が必要",
+      "verdict": "correct",
+      "source": "https://www.ecfr.gov/current/title-14/section-91.215",
+      "note": "14 CFR 91.215(b)(1)(2)、91.225(d)、AIM 4-1-20。"
+    }
+  ],
+  "cadetNotes": [
+    "content.test.mjs:67 — comm.icao の元の HTML に実名（ANA）が含まれていることをテストしている。書き直しでも comm.icao の実名の 1 文（「公開情報では、ANA の座学は…」）を残すこと。消すならテストの id リストの更新が必要。",
+    "content.test.mjs:81・85 — comm.icao の CADET 版に “CAP 413” と「両方を知っておくと混乱しません。代表的な例」がそのまま残ることをテストしている。この 2 つの文言を変えない（句点の位置も）。",
+    "comm.icao の「（どちらで教わるかは<span class=\"tag unk\">推測・要確認</span>）」は CADET のフィルタで括弧ごと消える前提（COURSE_NOTE のテスト）。同じ形を保つ。",
+    "練習法を新 comm.practice に移す場合、「「英語交信」ページ」「同じページの」「メニューの「」を含む文や項目は CADET で消える。全部消えて要点（keyPoints）や本文が空にならないよう、アプリ固有の手順は bk.sim に入れ、本文と bk.key は一般的な練習法（型の暗記・声に出す・本物の交信を聞く・チェアフライング）で書く。",
+    "comm.sfb の bk.key「詳しくはメニューの「Sanford の資料」…」は CADET で消え、要点が 1 つになる。bk.key は 2〜4 項目をアプリ名なしで書く。",
+    "radio5 には図がない。CADET は各節の最初の <svg> を教室の画面に映すので、新しい図は各節の最初に、その節で一番大切な図（ctafCalls・squawkCodes・lightGunSignals・sfbLayout・faaIcaoCompare）を置く。写真（book-photos.js）は CADET では表示されないので、写真に頼らない。",
+    "comm.ctaf・comm.xpdr・comm.icao には bk.key がなく、CADET は最初の 2 文を要点にしている（content.test.mjs:128-135）。各節に 2〜4 項目の bk.key を入れる。",
+    "CADET では radio5 の問題は q_radio から出る（cadet/src/content/school.js の BANK_OF）。q_radio の CTAF・MAYDAY・NORDO の問題と本文の言い回しを揃える。"
+  ]
+}

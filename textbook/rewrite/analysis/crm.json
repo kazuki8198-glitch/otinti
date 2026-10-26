@@ -1,0 +1,360 @@
+{
+  "id": "crm",
+  "title": "TEM と CRM：脅威とエラーを管理し、チームで飛ぶ",
+  "sections": [
+    {
+      "id": "crm.tem",
+      "title": "TEM：脅威とエラーの管理",
+      "gist": "運航の安全を「脅威・エラー・望ましくない機体の状態（UAS）」の 3 つで捉え、エラーは起きる前提で「防ぐ・見つける・小さくする」考え方（ICAO Doc 9683・SKYbrary）。",
+      "issues": [
+        "目的の 1〜2 文がなく、いきなり ${FIG.tem()} から始まる。新しい bk.aim で「なぜ TEM を学ぶか（エラーはゼロにできない＝AC 120-51E『pilot errors cannot be entirely eliminated』）」を先に置く。",
+        "FIG.tem は viewBox 520×180 で、390 px では最小文字 6.6 px（figshot）。下の小さな文字「天気・他機・不具合…」「操作・手順・交信の誤り」(fs 10) が読めない。",
+        "FIG.tem は「脅威 → エラー → UAS」の一本道に見える。実際の TEM では、脅威の多くは管理されて何も起きず、エラーは脅威なしでも起き、管理されれば影響なし（inconsequential）、管理に失敗したときだけ UAS へ、UAS も立て直せば安全に戻る（Doc 9683 2.3.16・2.4.1）。結果（事故・インシデント）も描かれていない。",
+        "「望ましくない機体の状態（UAS）」の英語の正式名（Undesired Aircraft State）が本文にも用語にも出てこない（terms は 'Threat / Error / UAS' だけ）。初出で 日本語（English）の規則に合わない。",
+        "UAS の定義「エラーや脅威の結果、安全の余裕が減った状態」は不正確。ICAO/SKYbrary の定義は『乗員が引き起こした位置・速度の逸脱、操縦の誤り、誤ったシステムの形態で、安全の余裕が減ったもの』で、ふつうは管理しそこねたエラーの結果。",
+        "対策の 3 語「予測・気づく・対処」と図の「予測（ブリーフィング）→ 気づく（モニター・クロスチェック）→ 対処（立て直す）」は本書の言い換え。ICAO の言い方（防ぐ avoid・捕まえる trap・小さくする mitigate／計画・実行・見直しの対策）との対応を一言書き、本書の簡略化だと示す。",
+        "「決めた「線」（例：500 ft で安定していなければゴーアラウンド）」— 「線」が何かわかりにくい。用語「ゲート（gate：判断の高さ）」を使い、ops.landing・FIG.stableApproach と同じ「地上 500 ft（VMC）」と書く。",
+        "「もともとは航空会社の運航を観察する調査（LOSA）から生まれました」は正しい（UT/Delta 1994・Continental 1996）が、エアラインの話に寄りすぎ。『テキサス大学の研究者が 1990 年代に運航の観察（LOSA）から作った枠組み』と一般的に書く。",
+        "TEM の具体例が本文になく、巻末 examples にだけある。課目 r1（突風を伴う横風・『runway 18』の食い違い）を短い流れの例として本文に入れると初心者にわかりやすい。",
+        "キャプション「（SKYbrary の TEM の説明を図にしたもの）」— SKYbrary の TEM 記事に「予測→気づく→対処」の図はない。出典は ICAO Doc 9683 第 2 部第 2 章・SKYbrary の定義、とする。"
+      ],
+      "mainFigure": "temFlow（縦長 360 幅）：上から「脅威」「エラー」が入り、多くは管理されて『影響なし』へ。管理に失敗 → 「望ましくない機体の状態（UAS）」→ 立て直せば安全な状態へ／できなければ事故・インシデント。横に 3 つの守り「防ぐ（ブリーフィング）・見つける（モニター・クロスチェック）・小さくする（立て直す・ゴーアラウンド）」。"
+    },
+    {
+      "id": "crm.crm",
+      "title": "CRM：チームで飛ぶための技術",
+      "gist": "CRM は、使える人・機械・情報をすべて使って安全に飛ぶための技術（コミュニケーション・状況認識・意思決定・リーダーシップ・仕事量の管理）で、懸念をはっきり伝えることを含む。",
+      "issues": [
+        "図がない。CADET では各節の最初の <svg> が教室の画面に出るので、この節は何も映らない。権威勾配（authority gradient）の図が最も伝わる（ICAO Doc 9683 の用語）。",
+        "「1970 年代の事故の調査で、多くが技術ではなく乗員の連携の問題だった…（SKYbrary）」— SKYbrary の CRM 記事には年代がない。根拠は FAA AC 120-51E 第 7 項（人のエラーは航空会社の事故・インシデントの 60〜80% に関係。NASA の研究で、問題は技術ではなく集団の意思決定・コミュニケーション・リーダーシップ・資源の管理）と、NASA の 1979 年のワークショップ（NASA CP-2120, 1980）にする。",
+        "CRM の定義の一文がない。SKYbrary：『安全で効率的な運航のために、使えるすべての資源を有効に使うこと』（最初は cockpit resource management と呼ばれ、後に crew へ広がった）を最初に置く。",
+        "「リーダーシップ・フォロワーシップ」— フォロワーシップ（followership：リーダーを支え、意見を言う役割）が説明なしのカタカナ。",
+        "懸念の伝え方の例「機長、速度が 20 kt 速く、500 ft で安定していません。ゴーアラウンドしましょう。よろしいですか？」— 地上 500 ft の不安定進入は時間がない場面で、同意を求める言い方は手本として不適切（AC 120-71B 6.6.2：逸脱のコール → PF の応答と修正、2 回のコールで直らなければ SOP に従い交代を考える）。5 段階の組み立ては時間に余裕がある場面（例：巡航中、目的地の天気が悪くなってきた）の例に替え、時間がない場面は短いコール（「ゴーアラウンド」）と書き分ける。",
+        "5 段階（呼びかけ・懸念・問題・解決案・同意）は FAA の文書にそのままの形では出てこない（AC 120-51E は Inquiry/Advocacy/Assertion＝問いかけ・提案・主張 として扱う）。『よく教えられる一つの型』と明記する。",
+        "「機長」「副操縦士」の場面だけだと、教官と訓練生の関係（訓練中の権威勾配）に結びつかない。訓練生にとって身近な例（教官に質問・懸念を言う）も入れる。",
+        "表の「意思決定：DECIDE・{ch:hf}」は hf.adm と重複。参照だけでよい。",
+        "懸念の伝え方を独立させるなら新しい節 crm.speak（懸念を伝える：権威勾配と声に出す技術）を検討。"
+      ],
+      "mainFigure": "authorityGradient：機長と副操縦士（または教官と訓練生）を結ぶ 3 本の坂。急すぎ（下の人が言い出せない）・ちょうどよい（決める人がいて、意見も言える）・平らすぎ（誰も決めない）。ICAO Doc 9683 の trans-cockpit authority gradient を図にしたもの。"
+    },
+    {
+      "id": "crm.pm",
+      "title": "PF と PM：操縦する人と監視する人",
+      "gist": "2 人で飛ぶときは操縦する人（PF）と監視する人（PM）を決め、PM は経路・速度・形態・モードを見てずれをコールし、必要なら介入する（AC 120-71B・SAFO 15011）。",
+      "issues": [
+        "図も「ここが大切」（bk.key）もない。CADET の keyPoints は本文の最初の文で代用されてしまう。",
+        "目的の 1〜2 文がない。",
+        "SAFO 15011 の大事な点が抜けている：①いつでも PF は 1 人・PM は 1 人 ②PF は自動操縦中も機体を飛ばすことに関わり続ける ③役割の交代は声で渡し、声で受ける ④PM は ATC の指示と機体の状態を常に把握し、必要なら介入する。",
+        "表の「PM のコールに応える（\"Correcting\"）」— Correcting の意味（『いま直しています』という PF の返事）が書かれていない。「逸脱が続けばさらに強くコール」はあいまい。AC 120-71B 6.6.2.1 の『2 回コールして応答・修正がなければ、SOP に従って操縦を代わることを考える』を書く。",
+        "AC 120-71B の PM の定義（『機体の状態とシステムを監視し、意図した経路からのずれやずれそうなことをコールし、必要なら介入する』）を引くと明確。古い資料では PNF（Pilot Not Flying）と呼ばれ、AC 120-71A（2003）で PM に改めるよう勧めた、と一言あると英語の資料を読むときに役立つ。",
+        "訓練生に一番身近な「操縦の受け渡し」（AFH 第 1 章の 3 段階：\"You have the flight controls.\" → \"I have the flight controls.\" → \"You have the flight controls.\"）が本のどこにもない。この節で PF/PM と結びつけて入れる（最初の課目から使う習慣）。",
+        "「この教材の課目は 1 人で飛びますが…『自分で自分にコールする』」は良い。CADET でも残る（『この教材の課目』は許可された言い方）。"
+      ],
+      "mainFigure": "pfPmLoop：PF（飛ばす）→ PM（見る：経路・速度・形態・モード）→ ずれのコール →「Correcting」→ 直った。直らない → 2 回目のコール → それでもだめなら SOP に従い交代、の輪。下に操縦の受け渡し 3 段階の吹き出し。"
+    }
+  ],
+  "problems": {
+    "unclear": [
+      "crm.tem：UAS の英語の正式名（Undesired Aircraft State）がない。",
+      "crm.tem：対策の 3 語（予測・気づく・対処）が ICAO の用語（avoid / trap / mitigate、planning / execution / review）とどう対応するか書かれていない。",
+      "crm.tem：「決めた「線」」→ ゲート（gate）と言い、地上 500 ft（VMC）と明記。",
+      "crm.crm：「フォロワーシップ」「状況認識」の英語（followership / situational awareness）と意味を初出で。",
+      "crm.pm：\"Correcting\" の意味、「さらに強くコール」の具体的な中身（2 回目のコール・交代の判断）。",
+      "章の summary「基礎訓練の後の副操縦士の訓練へつながる考え方」— 特定の会社の訓練課程を思わせる。『2 人で飛ぶ運航（エアラインなど）の基礎になる一般的な考え方』にする。"
+    ],
+    "order": [
+      "crm.tem：図より先に目的（bk.aim）→ 図 → 3 つの定義 → 例（r1 の流れ）→ 対策 → ここが大切。",
+      "crm.crm：CRM の定義 → 5 つの技術 → 懸念の伝え方、の順はよいが、懸念の伝え方は分量が増えるので新節 crm.speak へ分けてもよい。",
+      "crm.pm：PF/PM の定義 → 図（監視とコールの輪）→ 表 → 操縦の受け渡し → 1 人で飛ぶときの「自分へのコール」。"
+    ],
+    "errors": [
+      "crm.crm「1970 年代の事故の調査で…（SKYbrary）」→ SKYbrary の CRM 記事には年代も NASA のワークショップも書かれていない。根拠は FAA AC 120-51E 第 7 項（人のエラーが 60〜80%、NASA の研究）と NASA CP-2120『Resource Management on the Flight Deck』(1979 年のワークショップ、1980 年刊)（https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC120-51e.pdf, https://ntrs.nasa.gov/citations/19800013796）",
+      "crm.tem「望ましくない機体の状態（UAS）：エラーや脅威の結果、安全の余裕が減った状態」→ ICAO/SKYbrary：flight crew-induced aircraft position or speed deviations, misapplication of flight controls, or incorrect systems configuration, associated with a reduction in margins of safety（乗員が引き起こしたもの。ふつうは管理しそこねたエラーの結果）（https://skybrary.aero/articles/threat-and-error-management-tem-flight-operations）",
+      "book-core.js:26 R.rmh の URL https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/risk-management-handbook-faa-h-8083-2a は 404（2026-10-26 確認）→ https://www.faa.gov/regulationspolicies/handbooksmanuals/risk-management-handbook-faa-h-8083-2a",
+      "FIG.tem のキャプション「SKYbrary の TEM の説明を図にしたもの」→ SKYbrary の記事にこの流れ図はない。ICAO Doc 9683 第 2 部第 2 章（2.2.34 の 3 つの守り、2.3.16 UAS）と SKYbrary の定義にもとづく本書の図、と書く。"
+    ],
+    "outdated": [
+      "参照文献はすべて現行（FAA の AC 一覧 CSV で確認：AC 120-71B 2017-01-10 Active、AC 120-51E 2004-01-22 Active）。ただし PF/PM について SAFO 15011（2015）、監視・自動化・手動操縦をまとめた AC 120-123 Flightpath Management（2022-11-21）が後から出ているので、crm.pm の参照に SAFO 15011 を加える。",
+      "R.icaoTEM の URL が https://www.icao.int/（トップページ）だけ。Doc 9683 は 1998 年の第 1 版で、2003 年の改訂（Amendment 1）で TEM の章（第 2 部第 2 章 2.3・2.4）が加わった。版を明記し、無料で読める要約として SKYbrary の TEM in Flight Operations を併記する。",
+      "米国では CRM の訓練は規則で必要（14 CFR 121.404、Amdt. 121-392・2024 年の現行文）。初心者向けには「エアラインでは規則で CRM の訓練が必要」と一言で十分。"
+    ],
+    "duplicates": [
+      "crm.tem のキー「1 人で飛ぶときも同じ（SRM）」と crm.pm の「自分で自分にコールする」は hf.srm（第 12 章）と重なる → 参照にとどめる。",
+      "crm.crm の「意思決定（DECIDE）」は hf.adm と重複 → 参照だけ。",
+      "crm.tem の脅威の例「午後の雷雨」は wx の TAF の例（TEMPO TSRA）と対応 → wx.* への参照ボタンを置くと良い。",
+      "quiz.js の q_crm バンクの PM の問題（quiz.js:190 付近）は章末クイズ Q3 とほぼ同文。"
+    ],
+    "numbers": [
+      "crm.tem「500 ft で安定していなければ」→ ops.landing の表・FIG.stableApproach・syllabus.js:37／180 はすべて「地上 500 ft（VMC）」。「地上」と「VMC（IMC は 1,000 ft）」を足して揃える。",
+      "crm.crm の例「速度が 20 kt 速く」は AFH 第 9 章の安定進入（+10／−5 kt、ops.landing の表）と矛盾しない（20 kt は明らかに外れ）。例を時間に余裕のある場面に替えるなら数値は不要。",
+      "課目 r1（syllabus.js:439〜）の設定：風は滑走路から 70°・10 kt・gust 1.6（physics.js:306 の『乱気流の強さ』の係数で、突風の kt ではない）。本文で例にするなら『横風成分は約 10 × sin70° ≈ 9 kt（Archer の実証横風 17 kt 以内、physics.js pa28 v.xwind）・突風あり』と書く。"
+    ]
+  },
+  "policy": "節の順（crm.tem → crm.crm → crm.pm）は保ち、各節を「目的（bk.aim）→ 最初の図 → 説明 → ここが大切 → よくある間違い → 考えてみよう」に揃える。最初に「エラーはゼロにできないので、防ぐ・見つける・小さくする仕組みを作る」（AC 120-51E・ICAO Doc 9683）を言い、TEM の 3 つの言葉は ICAO の定義に合わせて日本語（English）で示す。例は特定の航空会社の SOP に見えないよう、この教材の課目 r1（架空の LAB 空港・Archer Seven Lima Alpha）と教官・訓練生の場面を使い、「機長／副操縦士」の場面は一般論にとどめる。crm.crm は CRM の定義（SKYbrary）と由来（AC 120-51E・NASA 1979）を正し、懸念の伝え方は「時間がある場面＝5 段階の型」「時間がない場面＝短いコール」に書き分ける。分量が増えるなら新節 crm.speak（懸念を伝える：権威勾配と声に出す技術）を crm.crm の後に作る。crm.pm には SAFO 15011 の役割の定義、AC 120-71B の『2 回のコール』、AFH 第 1 章の操縦の受け渡し 3 段階を入れ、ここが大切を追加する。巻末の cautions から実在の会社名を消し「特定の航空会社・訓練校の手順ではない」という一般的な注意にする。",
+  "figuresExisting": [
+    {
+      "key": "tem",
+      "verdict": "redo",
+      "why": "viewBox 520 幅で 390 px では最小文字 6.6 px（下の説明 fs 10）。一本道の矢印が『脅威 → エラー → UAS』が必ず続くように見え、管理できた場合（影響なし）と結果（事故）がない。縦長 360〜400 幅・fs ≥ 12 で、TEM の分かれ道と 3 つの守りを描き直す（新しい BOX・TL ヘルパーが使える）。crm.tem の最初の図として残す。"
+    }
+  ],
+  "figuresNew": [
+    {
+      "name": "temFlow",
+      "section": "crm.tem",
+      "what": "FIG.tem の作り直し。縦の流れ：脅威（天気・混雑・不具合…）とエラー（操作・手順・交信）→［管理できた］影響なし（ほとんどの飛行）／［管理できない］UAS（速度・高度のずれ、誤った形態、不安定な進入）→［立て直す］安全な状態へ／［できない］事故・インシデント。左側に 3 つの守り：防ぐ（ブリーフィング）・見つける（モニター・クロスチェック・コール）・小さくする（立て直す・ゴーアラウンド）。",
+      "data": "ICAO Doc 9683 第 2 部第 2 章 2.2.34（avoid / trap / mitigate）・2.3.16（UAS の例）、SKYbrary TEM in Flight Operations の定義。数値なし。",
+      "priority": "must"
+    },
+    {
+      "name": "temExample",
+      "section": "crm.tem",
+      "what": "課目 r1 を時間の流れで：出発前ブリーフィング『今日の脅威＝突風を伴う横風・場周の他機 2 機・寝不足』→ ダウンウインドで管制『runway 18』（使用中は 36）＝食い違い（相手か自分のエラー）→『Say again』で確認＝エラーを捕まえた → ファイナルで地上 500 ft のゲート → 安定なら着陸／不安定ならゴーアラウンド。脅威・エラー・UAS の色を temFlow と同じにする。",
+      "data": "syllabus.js:439〜（r1 の setup：wind rel 70°・10 kt・gust 1.6、場周機 2 機、runway 18／36 の場面）。横風成分 10×sin70°≈9 kt、Archer 実証横風 17 kt（physics.js pa28 v.xwind）。架空の LAB 空港。",
+      "priority": "should"
+    },
+    {
+      "name": "authorityGradient",
+      "section": "crm.crm",
+      "what": "左に上の立場（機長・教官）、右に下の立場（副操縦士・訓練生）を置き、3 本の坂：急すぎる（『言えない・聞けない』）・ちょうどよい（『決める人がいて、意見も言える』）・平らすぎる（『誰も決めない』）。下に一言『どの坂でも、安全のことは言う』。",
+      "data": "ICAO Doc 9683（trans-cockpit authority gradient の説明：威圧的な機長と主張しない副操縦士なら急、機長 2 人なら平ら）。数値なし。",
+      "priority": "must"
+    },
+    {
+      "name": "speakUpSteps",
+      "section": "crm.crm",
+      "what": "懸念を伝える 5 段の階段（①呼びかける ②懸念を言う ③問題を具体的に ④解決案 ⑤同意を得る）に、時間に余裕がある場面の例文（巡航中、目的地の天気が悪化 → 代わりの空港の提案）。横に『時間がないとき（地上 500 ft で不安定）＝短いコール「ゴーアラウンド」』の別枠。",
+      "data": "AC 120-51E 付録 1（Inquiry/Advocacy/Assertion）、AC 120-71B 6.6.2（逸脱のコールと応答、2 回のコール）。『よく教えられる型の一つ』と明記。",
+      "priority": "should"
+    },
+    {
+      "name": "pfPmLoop",
+      "section": "crm.pm",
+      "what": "PF と PM の輪：PF が飛ばす → PM が見る（経路・速度・形態・自動操縦のモード）→ ずれをコール（例『Speed, plus 15』）→ PF『Correcting』→ 直った。直らない・返事がない → 2 回目のコール → それでもだめなら SOP に従って交代。PF は自動操縦中も機体から気をそらさない、の注記。",
+      "data": "SAFO 15011（2015）の 6 項目、AC 120-71B 1.4 の PF/PM の定義・6.6.2.1（two challenges）。数値は例のみ（+10／−5 kt は ops.landing と同じ）。",
+      "priority": "must"
+    },
+    {
+      "name": "controlExchange",
+      "section": "crm.pm",
+      "what": "操縦の受け渡し 3 段階の吹き出し：教官『You have the flight controls.』→ 訓練生『I have the flight controls.』→ 教官『You have the flight controls.』＋目で相手が握ったことを確かめる。返すときも同じ。",
+      "data": "FAA AFH（FAA-H-8083-3C）第 1 章 p.1-15 の three-step process。",
+      "priority": "should"
+    }
+  ],
+  "photos": [
+    {
+      "section": "crm.crm",
+      "subject": "NASA Ames の乗員研究用シミュレータ（Crew-Vehicle Systems Research Facility）。CRM・LOFT の研究が行われた場所。人の顔が写っていない外観か、計器画面が主役でないカット。",
+      "search": "images.nasa.gov: \"Crew Vehicle Systems Research Facility\" / \"CVSRF 747\"（例 ARC-2009-ACD09-0031-003）。Commons: Category:Ames Research Center",
+      "candidateUrl": "https://images.nasa.gov/details/ARC-2009-ACD09-0031-003",
+      "candidateLicence": "NASA（米国政府の著作物・パブリックドメイン。NASA のロゴ等の使用規定に注意）— 要確認：コクピット内なら計器が主役になり規則に触れる可能性",
+      "why": "CRM が『研究から生まれた考え方』であることを、航空会社の写真を使わずに示せる。"
+    },
+    {
+      "section": "crm.pm",
+      "subject": "2 人乗りの研究機・官用機のコクピットを後ろから（顔が見えない）。PF と PM が並んで座る位置関係がわかるもの。",
+      "search": "images.nasa.gov: \"DC-8 flight deck\" \"research pilots cockpit\" NASA Armstrong; Commons: Category:Cockpits of NASA aircraft",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "2 人で役割を分ける様子が一目でわかる。顔・計器画面のアップは避ける。"
+    },
+    {
+      "section": "crm.tem",
+      "subject": "脅威の例としての積乱雲・雷雨（空港の近くの遠景）",
+      "search": "NOAA Photo Library: cumulonimbus, thunderstorm; NSSL image library",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "『外から来る脅威』の代表。wx の章で同じ写真を使うなら再利用でよい（nice）。"
+    }
+  ],
+  "endMatter": {
+    "terms": [
+      "TEM / 脅威とエラーの管理 / Threat and Error Management",
+      "Threat / 脅威（乗員の外から来て運航を難しくするもの）",
+      "Error / エラー（乗員の行動・不作為による、意図や期待からのずれ）",
+      "Undesired Aircraft State (UAS) / 望ましくない機体の状態",
+      "Countermeasure / 対策（防ぐ・見つける・小さくする）",
+      "Briefing / ブリーフィング（事前の打ち合わせ）",
+      "Gate / ゲート（判断の高さ。例：地上 500 ft）",
+      "LOSA / 運航の観察調査 / Line Operations Safety Audit",
+      "CRM / 乗員の資源管理 / Crew Resource Management",
+      "Situational awareness / 状況認識",
+      "Authority gradient / 権威勾配",
+      "Assertiveness / 懸念をはっきり伝えること",
+      "Followership / フォロワーシップ（リーダーを支え、意見を言う役割）",
+      "PF / 操縦する人 / Pilot Flying",
+      "PM / 監視する人 / Pilot Monitoring（古い資料では PNF：Pilot Not Flying）",
+      "Callout / コールアウト（決まった声かけ）",
+      "Cross-check / クロスチェック（互いに確かめる）",
+      "Positive exchange of flight controls / 操縦の受け渡し（3 段階）",
+      "SOP / 標準運航手順 / Standard Operating Procedures"
+    ],
+    "examples": [
+      "脅威：午後の雷雨の予報 → 対策：出発を早める・代わりの空港を決める・燃料に余裕を持つ（現行のまま可。『2 つ』は根拠がないので『決めておく』に）。",
+      "エラーを捕まえた例：管制の「runway 18」→ 使用中は 36 のはず →『Say again the runway』で確認（課目 r1 と同じ）。",
+      "UAS の管理：ファイナルで速度 +15 kt・地上 500 ft で安定していない → 原因探しより先にゴーアラウンド（機体を立て直す）。",
+      "操縦の受け渡し：教官『You have the flight controls.』→ 訓練生『I have the flight controls.』→ 教官『You have the flight controls.』（AFH 第 1 章）。"
+    ],
+    "cautions": [
+      "この章は一般的な TEM・CRM の入門で、特定の航空会社・訓練校の手順や訓練内容ではない（現行の『ANA の…』は会社名を出さない一般的な書き方に）。",
+      "コールアウトの言い方・役割の分け方は、運航者ごとの SOP が優先する。",
+      "時間がない場面（低い高度での不安定な進入など）では、長い説明より短く明確なコールを使う。"
+    ],
+    "quizReview": [
+      "Q1（脅威にあたるもの）: keep — 定義どおりで選択肢も妥当。",
+      "Q2（UAS で最優先すること）: keep — SKYbrary の『エラー管理から UAS 管理へ切り替える』と一致。why に『UAS は事故の一歩手前になりやすい（SKYbrary）』と出典を。",
+      "Q3（PM の主な役割）: fix — 選択肢『客室の案内』『何もしない』が明らかに外れで練習にならない。『無線だけを担当し計器は見ない』『PF が忙しいときだけ計器を見る』などに替え、why は AC 120-71B 1.4 の PM の定義・SAFO 15011 を引く。"
+    ],
+    "quizProposals": [
+      {
+        "q": "訓練の飛行中、教官が「You have the flight controls.」と言いました。訓練生の正しい返事は？",
+        "choices": ["\"I have the flight controls.\"", "\"Roger.\"", "\"Wilco.\"", "何も言わずに操縦桿を握る"],
+        "answer": 0,
+        "why": "AFH 第 1 章の 3 段階：教官『You have…』→ 訓練生『I have the flight controls.』→ 教官がもう一度『You have…』。誰が操縦しているか、いつもはっきりさせる。"
+      },
+      {
+        "q": "PM が速度のずれをコールしたが、PF が返事をせず、ずれも直らない。AC 120-71B の考え方に近いものは？",
+        "choices": ["何もしないで様子を見る", "もう一度はっきりコールし、それでも直らなければ SOP に従って操縦を代わることを考える", "着陸後に報告書に書けばよい", "管制に知らせて判断してもらう"],
+        "answer": 1,
+        "why": "AC 120-71B 6.6.2.1：2 回コールしても応答・修正がないとき（気づきにくい体調の急変も含む）は、SOP に従って交代を考える。"
+      },
+      {
+        "q": "権威勾配（authority gradient）が「急すぎる」とき、起きやすいことは？",
+        "choices": ["下の立場の人が懸念を言い出せない", "誰も決めないまま時間が過ぎる", "チェックリストが長くなる", "燃料の消費が増える"],
+        "answer": 0,
+        "why": "上下の差が大きすぎると、気づいた危険を言えない。平らすぎると決める人がいなくなる（ICAO Doc 9683）。"
+      },
+      {
+        "q": "TEM の考え方として正しいものは？",
+        "choices": ["エラーは訓練すればゼロにできる", "エラーは起きる前提で、防ぐ・見つける・小さくする", "脅威は自分では変えられないので考えない", "エラーをした人を罰すればなくなる"],
+        "answer": 1,
+        "why": "AC 120-51E『エラーはすべては防げない』、ICAO Doc 9683 の 3 つの守り（avoid / trap / mitigate）。"
+      }
+    ],
+    "refs": [
+      "update R.icaoTEM：label を『ICAO Doc 9683 Human Factors Training Manual（第 1 版 1998・2003 年の改訂で TEM の章を追加）』に。URL は icao.int のトップではなく、要約として SKYbrary TEM in Flight Operations https://skybrary.aero/articles/threat-and-error-management-tem-flight-operations を併記",
+      "fix R.rmh URL → https://www.faa.gov/regulationspolicies/handbooksmanuals/risk-management-handbook-faa-h-8083-2a（現行は 404）",
+      "update R.automation：正式名 'AC 120-71B Standard Operating Procedures and Pilot Monitoring Duties for Flight Deck Crewmembers (2017)'、URL を PDF へ https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-71B.pdf",
+      "add FAA AC 120-51E Crew Resource Management Training (2004, Active) https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC120-51e.pdf",
+      "add FAA SAFO 15011 Roles and Responsibilities for Pilot Flying (PF) and Pilot Monitoring (PM) (2015) https://www.faa.gov/sites/faa.gov/files/other_visit/aviation_industry/airline_operators/airline_safety/SAFO15011.pdf",
+      "add FAA Airplane Flying Handbook 第 1 章（操縦の受け渡し 3 段階） https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/02_afh_ch1.pdf",
+      "add (optional) NASA CP-2120 Resource Management on the Flight Deck (1980) https://ntrs.nasa.gov/citations/19800013796",
+      "keep R.tem, R.crm（SKYbrary、URL 有効）"
+    ]
+  },
+  "appMismatches": [
+    "quiz.js:184 — バンク q_crm は 'crm.tem' だけにつながっているが、CRM（crm.crm）・PM（crm.pm）・自動化（crm.auto）・ジェット（crm.jet）・SRM（hf.srm）の問題を含む。間違えた問題から本へ戻ると、どれも TEM の節に飛ぶ — 本の側は crm.tem に章全体への入口（他の節への参照）を置くと良い。",
+    "syllabus.js:439〜（r1 の why）『TEM は、事故の多くが「予想できた脅威」や「気づけたエラー」の積み重ねで起きる、という考え方』— 本の ICAO の定義（脅威・エラー・UAS を管理する枠組み）とは言い方がずれる。本の側を正とし、r1 の内容（脅威の予測・食い違いの確認・横風着陸）は本文の例にそのまま使える。",
+    "syllabus.js:442（r1 の book: ['crm.tem']）と crm.tem の bk.sim（['r1', 'TEM：脅威を予測して管理する']）は一致 — 問題なし。",
+    "cadet/src/content/academy-spec.js:239 のポスター『TEM：脅威とエラーを管理する…（第 5 段階：CRM・TEM で詳しく）』は syllabus.js:436 の第 5 段階と一致 — 問題なし。"
+  ],
+  "factChecks": [
+    {
+      "claim": "TEM は運航を観察する調査（LOSA）から生まれた",
+      "verdict": "correct",
+      "source": "https://skybrary.aero/articles/threat-and-error-management-tem",
+      "note": "テキサス大学 Human Factors Research Project と Delta の 1994 年の観察法、1996 年の Continental での最初の TEM 型 LOSA。FAA では AC 120-90 Line Operations Safety Audits（2006, Active）。"
+    },
+    {
+      "claim": "脅威＝乗員の外から来て運航を難しくするもの／エラー＝乗員の行動・不作為による意図・期待からのずれ",
+      "verdict": "correct",
+      "source": "https://skybrary.aero/articles/threat-and-error-management-tem-flight-operations",
+      "note": "ICAO の定義（events or errors that occur beyond the influence of the flight crew, increase operational complexity… / actions or inactions by the flight crew that lead to deviations from organisational or flight crew intentions or expectations）と一致。"
+    },
+    {
+      "claim": "UAS＝エラーや脅威の結果、安全の余裕が減った状態",
+      "verdict": "imprecise",
+      "source": "https://skybrary.aero/articles/threat-and-error-management-tem-flight-operations",
+      "note": "ICAO：乗員が引き起こした位置・速度の逸脱、操縦の誤り、誤ったシステムの形態で、安全の余裕が減ったもの。Doc 9683 2.3.16：管理できなかったエラーの結果として UAS になる（例：誤った形態・不安定な進入・高度・方向・速度のずれ）。"
+    },
+    {
+      "claim": "UAS になったら、まず機体を立て直す（UAS の管理が最優先）",
+      "verdict": "correct",
+      "source": "https://skybrary.aero/articles/threat-and-error-management-tem-flight-operations",
+      "note": "SKYbrary：エラー管理から UAS 管理へ適時に切り替えること、エラー管理に『はまり込む』危険。"
+    },
+    {
+      "claim": "エラーはなくせない。起きる前提で早く見つけて直す",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC120-51e.pdf",
+      "note": "AC 120-51E 12c『pilot errors cannot be entirely eliminated』、防止・発見・回復。ICAO Doc 9683 2.2.34 avoid / trap / mitigate。"
+    },
+    {
+      "claim": "ICAO Doc 9683 Human Factors Training Manual に TEM・CRM の考え方がある",
+      "verdict": "correct",
+      "source": "https://www.bazl.admin.ch/dam/de/sd-web/OT9uxJkwN3-x/icao_doc_9683_human_factors_training_manual.pdf",
+      "note": "第 1 版 1998（Doc 9683-AN/950）。改訂 1（2003）・正誤表で、第 2 部第 2 章に CRM・TEM・TEM を CRM に組み込む指針が入っている（スイス連邦民間航空局が公開する写し）。本の URL は icao.int のトップだけで不十分。"
+    },
+    {
+      "claim": "CRM は 1970 年代の事故の調査で、多くが技術ではなく乗員の連携の問題だったことから取り入れられた（SKYbrary）",
+      "verdict": "imprecise",
+      "source": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC120-51e.pdf",
+      "note": "内容はおおむね正しいが、SKYbrary の CRM 記事には年代がない。AC 120-51E 第 7 項：人のエラーが航空会社の事故・インシデントの 60〜80% に関与、NASA の研究で問題は集団の意思決定・コミュニケーション・リーダーシップ・資源の管理。1979 年の NASA/業界ワークショップの記録は NASA CP-2120（1980, https://ntrs.nasa.gov/citations/19800013796）。"
+    },
+    {
+      "claim": "CRM の技術：コミュニケーション・状況認識・意思決定・リーダーシップ／フォロワーシップ・仕事量の管理",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC120-51e.pdf",
+      "note": "AC 120-51E 付録 1 の 3 つのまとまり（Communications Processes and Decision Behavior / Team Building and Maintenance / Workload Management and Situation Awareness）と対応。SKYbrary：communications, situational awareness, problem solving, decision making, teamwork。"
+    },
+    {
+      "claim": "懸念の伝え方：①呼びかける ②懸念 ③問題 ④解決案 ⑤同意（よく教えられる組み立て）",
+      "verdict": "unverified",
+      "source": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC120-51e.pdf",
+      "note": "FAA の AC にこの 5 段階の形はない（AC 120-51E は Inquiry/Advocacy/Assertion として扱う）。訓練でよく使われる型として紹介するのは可。例の『ゴーアラウンドしましょう。よろしいですか？』は時間がない場面には不向き（AC 120-71B 6.6.2）。"
+    },
+    {
+      "claim": "AC 120-71B は監視（monitoring）を重要な仕事と位置づけ、SOP で PF/PM の役割をはっきりさせることを勧める",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-71B.pdf",
+      "note": "2017-01-10・Active（FAA AC 一覧で確認）。第 6 章：効果的な監視とクロスチェックは事故を防ぐ最後の守りになりうる。1.4：PM の定義。6.6.2.1：2 回のコールで修正がなければ交代を考える。"
+    },
+    {
+      "claim": "PF は操縦（手動または自動操縦の操作）、PM は経路・速度・形態・モードを監視しずれをコール、無線・チェックリスト",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/sites/faa.gov/files/other_visit/aviation_industry/airline_operators/airline_safety/SAFO15011.pdf",
+      "note": "SAFO 15011：PF は自動操縦中も機体を飛ばすことに関わり続ける、経路と関係のない仕事は PF に割り当てない、役割の交代は声で渡し声で受ける、PM は必要なら介入する。"
+    },
+    {
+      "claim": "PM（Pilot Monitoring）という呼び名",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/sites/faa.gov/files/2022-11/AC120-71A.pdf",
+      "note": "AC 120-71A（2003）が『Pilot Not Flying（PNF）を Pilot Monitoring（PM）に改める』ことを勧めた。英語の古い資料では PNF も出てくる。"
+    },
+    {
+      "claim": "（追加提案）操縦の受け渡しの 3 段階",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/02_afh_ch1.pdf",
+      "note": "AFH 3C 第 1 章：\"You have the flight controls.\" → \"I have the flight controls.\" → \"You have the flight controls.\"、目で確認、誰が操縦しているかの誤解による事故が多い。"
+    },
+    {
+      "claim": "VMC では地上 500 ft までに安定しなければゴーアラウンド（crm.tem の例）",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook",
+      "note": "ops.landing（AFH 第 9 章）と同じ。本文は『地上』『VMC』を補う。"
+    },
+    {
+      "claim": "FAA Risk Management Handbook（FAA-H-8083-2A）の URL",
+      "verdict": "wrong",
+      "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/risk-management-handbook-faa-h-8083-2a",
+      "note": "本の URL（…/handbooksmanuals/aviation/risk-management-handbook-faa-h-8083-2a）は 404。版（8083-2A）は現行。"
+    },
+    {
+      "claim": "エアラインの CRM・TEM は会社ごとの SOP と訓練で学ぶ（cautions）",
+      "verdict": "correct",
+      "source": "https://www.ecfr.gov/current/title-14/section-121.404",
+      "note": "米国の Part 121 では CRM の初期訓練が規則で必要（14 CFR 121.404）。内容は各社の承認された訓練プログラム。"
+    }
+  ],
+  "cadetNotes": [
+    "crm.tem の最初の <svg> は temFlow（作り直した TEM 図）にする。temExample を足すなら必ずその後ろ。写真（bk.photo）は <img> なので CADET には出ないが、図より前に置かない。",
+    "crm.crm・crm.pm は今は図がない → CADET の教室の画面に何も出ない。authorityGradient・pfPmLoop を各節の最初の図にする。",
+    "crm.pm には bk.key がなく、CADET の keyPoints は本文の最初の 2 文で代用される。2〜4 項目（各 60 字以内）の bk.key を足す。",
+    "cautions の『ANA の副操縦士訓練や社内の手順の再現ではない』は REAL_NAMES で CADET では消える。会社名を出さない一般的な文にすれば両方で同じ文が使える。",
+    "crm.tem の bk.sim（課目 r1 のボタン）は CADET で丸ごと消える。課目の内容を本文の例に書くときは bk.sim の外の <p> に、アプリの言葉（このシミュレータ・メニュー・キー）を使わずに書く。",
+    "crm.pm の『この教材の課目は 1 人で飛びますが…』は CADET で残る（『この教材の課目』は許可された言い方）。『このシミュレータ』に言い換えると消えるので注意。",
+    "CADET の節の summary は本文の最初の 1〜2 文（140 字以内）。bk.aim（<p class=\"bk-aim\">）は prose として拾われるので、短い目的文を最初に置くとそのまま summary になる。",
+    "flight-lab/test/flight.test.mjs:307 は本のどこかに 'TEM' という語があることを確かめている。TEM の語は残す。"
+  ]
+}

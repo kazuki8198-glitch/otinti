@@ -1,0 +1,353 @@
+{
+ "id": "solo",
+ "title": "ソロ（単独飛行）への準備と審査 — Preparing for the first solo and the stage check",
+ "sections": [
+  {
+   "id": "solo.req",
+   "title": "単独飛行の条件（14 CFR 61.87 の要点）",
+   "gist": "初ソロに必要なもの（学生操縦士証明と医療証明、ソロ前の学科テスト、決められた操作の訓練と技量、型式ごとのログブックの承認）と、学生操縦士の制限（61.89）。",
+   "issues": [
+    "古い：「学生操縦士証明とログブックに、その機種での単独飛行の承認」— 2016 年 4 月 1 日からの規則（Amdt. 61-135, 81 FR 1306）で、承認はログブックだけ。現在の 61.87(n)：『その型式についての承認を、訓練をした教官が飛行の前 90 日以内に学生のログブックに記入』。AC 61-65K 20.1 も『証明書が紙でもプラスチックでも、承認はログブックに』。",
+    "前提が抜けている：学生操縦士証明（61.83：飛行機は 16 歳以上、英語を読み・話し・書き・理解できる）、第 3 種以上の医療証明（61.23(a)(3)(i)）。日本の訓練生には英語の要件（61.83(c)）が特に大切。",
+    "61.87(b) の要約が粗い：『規則』は Part 61 と Part 91 の該当部分、『飛行特性』は飛行特性と運用上の制限。教官がテストを行い、終わったら間違えた問題をすべて一緒に見直してからソロを許可する、まで書く。",
+    "61.87(d) の 15 項目のうち (6) 場周経路（入り方・出方）と (7) 衝突・ウインドシア・後方乱気流の回避、(8) 高抗力/低抗力の形での降下、(9) 巡航から低速までのいろいろな速度が「など」で抜けている。初心者にとって場周経路と見張りは最重要なので、15 項目を表か図で全部見せる。",
+    "61.89 の要約に (a)(7)『地表を目で見ながら飛べないときは飛ばない』と (a)(8)『教官がログブックに書いた制限に従う』、報酬・業務のための飛行の禁止がない（law.rules の表 book-2.js:76 にはある＝重複しつつ不完全）。",
+    "『solo flight』の定義（61.87(a)：学生が機内のただ 1 人の乗員である飛行時間）がない。夜のソロ（61.87(o)）・他の空港への着陸や 25 NM を超える飛行（61.93）には別の訓練と承認が要ることも書かれていない。",
+    "bk.key の 2 項目目「公開情報（ANA）：12 回のレッスンと審査の後にソロ。取材記事では平均 11 回目でファーストソロ」はキーポイントではなく事実の紹介。ゲームが読み上げ、CADET では ANA を含むので落ちる。しかも 2 つの数字は別の記事（ana1：レッスン 12 回と Check Flight に合格するとソロ／ana2：平均 11 回目のフライトでファーストソロ）で、数え方が違う可能性がある。本文の bk.fact に移し、出典を分けて書く（intro.course book-1.js:29 と重複）。",
+    "「承認は90 日ごとに必要」は意味は合っているが、条文の言い方（訓練をした教官が飛行の前 90 日以内に記入し、その後も 90 日ごとに更新：61.87(n)(p)）に合わせる。",
+    "図がない。CADET の教室スクリーン用の最初の <svg> がない。"
+   ],
+   "mainFigure": "初ソロまでの道のり（soloRoadmap）：学生操縦士証明（16 歳・英語：61.83）＋第 3 種医療証明（61.23）→ ソロ前の学科テスト（61.87(b)・承認 A.3）→ 15 項目の飛行訓練と技量の確認（61.87(c)(d)・A.4）→（学校の段階審査）→ 型式ごとの単独飛行の承認・90 日（61.87(n)・A.6）→ 初ソロ → 90 日ごとの更新（61.87(p)・A.7）→ その先（25 NM 以内の他空港 61.93(b)(1)・ソロ XC 61.93・夜 61.87(o)・Class B 61.95）。"
+  },
+  {
+   "id": "solo.check",
+   "title": "ソロ前の審査（Stage check）で見られること",
+   "gist": "ソロの前の段階審査で見られるのは完璧さより、安全の余裕・判断・自分の誤りに気づいて直す力で、教材の課目との対応を示す。",
+   "issues": [
+    "「普段の教官とは別の教官が審査することが一般的です」は出典がない。Part 141 の学校では、段階審査（stage check）を課程どおりに受けさせるのは chief instructor の責任で、assistant chief instructor や check instructor に任せられる（14 CFR 141.85(a)(3)(c)）。Part 61 の訓練には段階審査の決まりはない。『Part 141 の学校では…』と書く。",
+    "表「離着陸｜安定した進入・ゴーアラウンドの判断・横風の修正｜t1・t2・t3・t4」— 横風の課目は x1（syllabus.js:250、第 2 段階＝ソロの後）。61.87(d)(3) は横風の離着陸をソロ前に求めている。『実機ではソロ前に練習する。この教材では x1』と書き分ける。",
+    "表「空中操作｜低速飛行・失速の回復・急旋回」— 急旋回は 61.87(d) の 15 項目にない（自家用 ACS の課目）。この教材の c1 には入っている（syllabus.js:230）ので『この教材の模擬審査の内容』と分ける。",
+    "表「交信｜ATC の場面（課程表）」が曖昧。無線の練習（radio.js の場面）と第 7〜11 章（radio1〜radio5）を指すと書く。学生操縦士は最初の交信で “student pilot” と名乗るとよい（AIM 4-2-4・radio.technique）。",
+    "目的文・bk.key・図がない（節の形の決まりに合わない）。",
+    "見られること（安全の余裕・判断・自己修正）は ACS の『知識・リスク管理・技能』の 3 つの柱と結びつけると具体的になる（FAA-S-ACS-6C の各課目の K/R/S）。",
+    "bk.sim は c1 を開くが、syllabus.js の c1 の book は ['intro.course'] でこの節を指していない（appMismatches）。"
+   ],
+   "mainFigure": "段階審査で見られること（stageCheckAreas）：中央に『安全の余裕・判断・自分で気づいて直す』、周りに準備・離着陸（横風を含む）・空中操作・緊急・交信の 5 分野と、61.87(d) の項目番号・この教材の課目（a5–a8・t1–t4・e1–e3・x1・c1）の対応。"
+  },
+  {
+   "id": "solo.first",
+   "title": "初めてのソロの心得",
+   "gist": "教官がいないと機体が軽くなる、声に出す、迷ったらゴーアラウンド、決めた範囲を超えない — 判断するのは教官。",
+   "issues": [
+    "「教官（約 80 kg）がいないので、上昇が速く、フレアで浮きやすい」は方向は正しいが数字がない。教材モデル（FL.physics pa28 mass 1,050 kg）で 80 kg 減らすと、失速速度 Vs1 50 → 約 48 kt、76 kt・1,000 ft の全開上昇 741 → 846 fpm（約 14% 増）。『教材モデルの値』として示す。",
+    "「声に出す：…（SRM）」— SRM は Single-pilot Resource Management（1 人で操縦するときの資源管理）で、ソロに限らない。terms の『SRM／単独飛行の資源管理』も同じ誤訳（hf.srm book-2.js:117 の見出しも同じ）。『1 人操縦の資源管理』とし、hf.srm を参照。",
+    "「燃料と時間は十分にある」は無条件の断言。『燃料に余裕を持って出発し、教官と決めた残量で戻る』にする。",
+    "「場周 3 回」は規則ではなく例。『例：教官と決めた回数（3 回のことが多い）』とする。",
+    "ソロ中に困ったときの具体策がない：ゴーアラウンド、管制塔に “student pilot” と伝えて助けを求める（AIM 4-2-4）、教官と決めた中止の条件（風・視程・雲）＝61.89(a)(8) のログブックの制限。",
+    "bk.key がない。bk.warn（『…ソロの可否の判断の根拠にはならない。判断するのは教官。』）は CADET のテストが残すことを求めている文なので、言い回しを残す。"
+   ],
+   "mainFigure": "教官あり／ソロの比較図（soloWeight）：同じ Archer（教材モデル）で重量 1,050 kg → 970 kg、失速速度 50 → 48 kt、上昇率 741 → 846 fpm、フレアで浮く（フロート）距離が延びる様子を側面図で。"
+  }
+ ],
+ "problems": {
+  "unclear": [
+   "solo.req：『承認（endorsement）』が何に・誰が・いつ書くのかが分かりにくい（ログブック・訓練をした教官・飛行前 90 日以内・型式ごと）。",
+   "solo.req：bk.key の『12 回のレッスンと審査の後にソロ』と『平均 11 回目でファーストソロ』が矛盾して見える（出典が別で数え方も違う可能性）。",
+   "solo.check：誰が審査するか（Part 141 の chief / assistant chief / check instructor）がぼかされている。",
+   "solo.first：SRM の意味（1 人操縦の資源管理）が説明されないまま略語だけ出る。",
+   "terms：『Supervised solo／教官の監督下の単独飛行』が本文に一度も出てこない。14 CFR の用語でもないので削るか、本文で説明する。"
+  ],
+  "order": [
+   "solo.req の中で、まず『学生操縦士証明・医療証明・英語』（前提）→ 61.87 の 3 本柱（学科テスト・飛行訓練と技量・承認）→ 61.89 の制限 の順にする。",
+   "新節 solo.after（初ソロの後：90 日ごとの更新、練習空域へのソロ、25 NM 以内の他空港 61.93(b)(1)、ソロ XC 61.93、夜 61.87(o)、Class B/C/D 61.94/61.95）を solo.first の後に追加し、第 3 部の航法（navd・nav.xc）へつなぐ。",
+   "ANA の公開情報（12 回・平均 11 回目）は solo.req の本文の bk.fact 1 か所にまとめ、bk.key から外す。"
+  ],
+  "errors": [
+   "solo.req「学生操縦士証明とログブックに、その機種での単独飛行の承認」→ 現在はログブックだけ（61.87(n)：endorsement in the student's logbook for the specific make and model … by an authorized instructor who gave the training within the 90 days preceding the date of the flight。Amdt. 61-135, 81 FR 1306, 2016-01-12） (https://www.ecfr.gov/current/title-14/section-61.87; https://www.faa.gov/documentlibrary/media/advisory_circular/AC_61-65K.pdf 20.1・20.3)",
+   "terms「SRM／単独飛行の資源管理」→ SRM は Single-pilot Resource Management（1 人で操縦するときの資源管理）。ソロ（単独飛行）とは別の概念で、乗客がいても 1 人操縦なら SRM (https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/risk-management-handbook-faa-h-8083-2a; https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf PA.IX.A.S8 など)"
+  ],
+  "outdated": [
+   "solo.req：学生操縦士証明への承認の記入（2016-04-01 で廃止）。",
+   "refs：14 CFR Part 61 の総論リンクだけで、承認の文例の AC 61-65（現行は AC 61-65K、2025-11-14）がない。"
+  ],
+  "duplicates": [
+   "intro.course（book-1.js:29）：ANA の『レッスン 12 回と Check Flight に合格するとソロ。取材記事では平均 11 回目でファーストソロ』と同文。solo.req は参照だけにするか、bk.fact 1 か所に。",
+   "intro.cert（book-1.js:43）：学生操縦士の権限と 61.89（昼 3 SM・夜 5 SM・乗客不可）。",
+   "law.rules（book-2.js:76）：61.89 の表（solo.req より詳しい：地表を見られないとき・ログブックの制限まで）。law.vfr の bk.key（book-2.js:58）にも 3 SM／5 SM。",
+   "hf.srm（book-2.js:117）：SRM・チェックリストを声に出す。",
+   "radio.technique（book-comm.js:52）：“student pilot” と名乗る（AIM 4-2-4）。solo.first から参照。",
+   "law.airspace（book-2.js:62）：学生操縦士の Class B（61.95）。solo.after を作るならそこから参照。"
+  ],
+  "numbers": [
+   "solo.first『教官（約 80 kg）』は教材の値。教材モデル（physics.js pa28 mass 1,050 kg・Vs1 50 kt）では 970 kg で Vs1 約 48 kt、76 kt・1,000 ft の全開上昇 741 → 846 fpm（steadyState で計算）。",
+   "solo.req『90 日』は 61.87(n)(o)(p) と quiz（solo Q1）・intro と一致。",
+   "solo.req の 61.89『昼 3 SM・夜 5 SM』は eCFR・quiz.js:77・intro.cert・law.rules と一致。",
+   "solo.check の課目番号 a5–a8・t1–t4・e1–e3 は syllabus.js の課目と一致。ただし『横風の修正』は x1（syllabus.js:250、ソロの後の第 2 段階）。",
+   "c1（syllabus.js:228）の why『公開情報では、レッスン 12 回の後の審査に合格するとソロへ進む』は ana1 と一致。solo.req の『平均 11 回目』は ana2（別の記事）。"
+  ]
+ },
+ "policy": "solo.req は最初に『初ソロまでの道のり』の図を置き、前提（学生操縦士証明：16 歳・英語〈61.83〉、第 3 種医療証明〈61.23〉）→ 61.87 の 3 本柱（教官が行い間違いを見直す学科テスト、15 項目の飛行訓練と教官が認める技量、型式ごとのログブックの承認〈訓練をした教官・飛行前 90 日以内〉）→ 61.89 の制限（乗客・報酬・視程 3/5 SM・地表が見えない・ログブックの制限）の順で書く。承認がログブックだけになった（2016 年）点を直し、AC 61-65K の承認の番号（A.3・A.4・A.6・A.7）を添える。ANA の公開情報は bk.key から本文の bk.fact に移し、2 つの記事の数字を出典ごとに分けて書く（CADET のテストのため solo.req の中に ANA の名前と『訓練回数の決まりはない』の言い回しは残す）。solo.check は『Part 141 の学校では chief instructor の責任で段階審査がある（141.85）』と事実を書き、表は『61.87(d) の項目』『この教材の課目』の 2 列にして、横風（x1）と急旋回（c1 だけ）を書き分ける。solo.first は教材モデルの数値（失速速度・上昇率）で『軽くなる』を見せ、SRM を正しく訳し、ソロ中に困ったときの行動（ゴーアラウンド・管制に student pilot と伝える・決めた中止条件）を加える。新節 solo.after（初ソロの後の承認と 61.93 の XC・夜・Class B）を追加して第 3 部の航法へつなぐ。",
+ "figuresExisting": [
+  {
+   "key": "bk.t（solo.check：分野・見られることの例・この教材の課目）",
+   "verdict": "fix",
+   "why": "横風（x1 はソロの後）と急旋回（61.87(d) にない）の扱いを直し、61.87(d) の項目番号の列を加える。主の図は stageCheckAreas にし、表は補助に。"
+  }
+ ],
+ "figuresNew": [
+  {
+   "name": "soloRoadmap",
+   "section": "solo.req",
+   "what": "初ソロまでの道のり：前提（証明・医療・英語）→ 学科テスト → 15 項目の訓練 → 段階審査 → ログブックの承認（90 日）→ 初ソロ → 90 日ごとの更新 → その先（25 NM・XC・夜・Class B）。各段に条文番号と AC 61-65K の承認番号。",
+   "data": "eCFR 61.83・61.23・61.87(b)(c)(d)(n)(o)(p)・61.93・61.95、AC 61-65K Appendix A（A.3, A.4, A.6, A.7, A.8）",
+   "priority": "must"
+  },
+  {
+   "name": "presoloManeuvers",
+   "section": "solo.req",
+   "what": "61.87(d) の 15 項目のアイコン付き一覧と、この教材の課目の対応（a1–a8・t1–t4・e1–e3・x1。対地目標操作・スリップ・衝突回避などシミュレータに課目がないものは灰色）。",
+   "data": "eCFR 61.87(d)・syllabus.js の課目一覧",
+   "priority": "should"
+  },
+  {
+   "name": "studentLimits",
+   "section": "solo.req",
+   "what": "学生操縦士ができないこと（61.89）：乗客・報酬や業務・国際飛行・昼 3 SM／夜 5 SM 未満の視程・地表が見えない飛行・ログブックの制限。",
+   "data": "eCFR 61.89(a)",
+   "priority": "should"
+  },
+  {
+   "name": "stageCheckAreas",
+   "section": "solo.check",
+   "what": "段階審査で見られること：中央に『安全の余裕・判断・自己修正』、周りに 5 分野、ACS の K/R/S（知識・リスク管理・技能）の考え方。",
+   "data": "FAA-S-ACS-6C の構成・14 CFR 141.85・syllabus.js c1 の手順",
+   "priority": "should"
+  },
+  {
+   "name": "soloWeight",
+   "section": "solo.first",
+   "what": "教官あり（1,050 kg）とソロ（970 kg）の比較：失速速度 50 → 48 kt、上昇率 741 → 846 fpm、フレアで浮く距離が延びる。",
+   "data": "FL.physics.AIRCRAFT pa28（mass 1,050・v.s1 50）と steadyState（76 kt・full・1,000 ft）を mass 970 で再計算（本分析の値）",
+   "priority": "must"
+  }
+ ],
+ "photos": [
+  {
+   "section": "solo.req",
+   "subject": "パイロットのログブック（白紙のページや表紙。実在の人名・署名が読めないもの）",
+   "search": "Commons 'Pilot logbooks'（CC0 / CC BY をファイルごとに確認）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "承認（endorsement）が『ログブックに書かれる』ことを実物で見せる。公式の書類の偽物に見えないよう、本物の承認文や署名が写ったものは避ける。"
+  },
+  {
+   "section": "solo.first",
+   "subject": "場周経路を飛ぶ／タッチアンドゴーをする PA-28（側面・遠景）",
+   "search": "Commons category 'Piper PA-28-181 Archer'・'Touch-and-go landings'（訓練校の塗装・顔が写るものは避ける）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "初ソロで飛ぶ『場周 3 回』の情景。"
+  },
+  {
+   "section": "solo.check",
+   "subject": "管制塔のある小さな空港の滑走路と誘導路（上空から）",
+   "search": "FAA の空港写真（faa.gov の PD 写真）／Commons 'Aerial photographs of general aviation airports'（実在の空港名を本文で LAB と混同させない）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "審査で見られる場周・交信の舞台を見せる（なくてもよい）。"
+  }
+ ],
+ "endMatter": {
+  "terms": [
+   "Student pilot certificate / 学生操縦士証明 / 16 歳以上・英語（61.83）— 追加",
+   "Medical certificate (third class) / 第 3 種医療証明 / 61.23 — 追加",
+   "Solo flight / 単独飛行 / 学生が機内でただ 1 人の乗員（61.87(a)）— 追加",
+   "Pre-solo knowledge test / ソロ前の学科テスト / Part 61・91、空港の空域と手順、機体の特性と制限",
+   "Endorsement / 承認（ログブックへの記入） / 訓練をした教官が書く",
+   "Solo endorsement / 単独飛行の承認 / 型式ごと・飛行前 90 日以内（61.87(n)）",
+   "Make and model / 型式（メーカーと型） / 例：Piper PA-28-181 — 追加",
+   "Authorized instructor / 認められた教官（CFI） / — 追加",
+   "Stage check / 段階審査 / Part 141 の学校で課程ごと（141.85）",
+   "SRM (Single-pilot Resource Management) / 1 人操縦の資源管理 / 訳を修正",
+   "Solo cross-country / 単独の野外飛行 / 61.93 — 追加",
+   "削除：Supervised solo（本文で使われず 14 CFR の用語でもない）"
+  ],
+  "examples": [
+   "初ソロの場周 3 回 → 1 回目の接地で少し浮いた（教官がいない分 約 80 kg 軽い）→ 2 回目はフレアを少し低く、目線を遠くに。",
+   "風が強くなってきた → 教官がログブックに書いた風の上限を超える前に、フルストップで終わる（61.89(a)(8)）。",
+   "ソロの承認を受けてから 95 日たった → 承認が切れている。訓練をした教官に飛んでもらって、新しい承認をログブックに書いてもらう（61.87(n)(p)）。"
+  ],
+  "cautions": [
+   "規則の要約は学習用。実際の条件は最新の 14 CFR（eCFR）と AC 61-65K、教官の指示で確認する。",
+   "この教材の模擬審査（c1）は実際の訓練校の審査とは関係がない。合格しても実機のソロの可否とは関係しない。",
+   "初ソロの前に、教官と『中止する条件（風・視程・雲・燃料）』を決め、ログブックの制限として確かめる。"
+  ],
+  "quizReview": [
+   "Q1（承認の有効期間 90 日）：fix。『有効期間』より条文どおり『訓練をした教官が飛行の前 90 日以内にログブックに記入』（61.87(n)(p)）に。why に『ログブック（証明書ではない）』を加える。",
+   "Q2（ソロで機体が軽い）：keep。why に教材モデルの数値（失速速度 50 → 48 kt、上昇率 約 14% 増）を加える。"
+  ],
+  "quizProposals": [
+   {
+    "q": "単独飛行の承認（solo endorsement）は、現在の 14 CFR ではどこに書かれる？",
+    "choices": [
+     "学生のログブック",
+     "学生操縦士証明（カード）の裏",
+     "機体の航空日誌",
+     "飛行計画書"
+    ],
+    "answer": 0,
+    "why": "61.87(n)：その型式についての承認を、訓練をした教官が飛行の前 90 日以内に学生のログブックに記入する。2016 年 4 月からは証明書への記入はない（AC 61-65K）。"
+   },
+   {
+    "q": "14 CFR 61.87 で、初めてのソロの前に『必要ない』ものは？",
+    "choices": [
+     "教官が行い、間違いを一緒に見直したソロ前の学科テスト",
+     "決められた操作の飛行訓練と、教官が認めた技量",
+     "その型式についてのログブックの承認",
+     "決められた最低の飛行時間（例：20 時間）"
+    ],
+    "answer": 3,
+    "why": "61.87 には最低の時間や回数の決まりはない。教官が『1 人でも安全に飛べる』と判断したときだけ。"
+   },
+   {
+    "q": "ソロ前の学科テスト（61.87(b)）の範囲に入らないものは？",
+    "choices": [
+     "Part 61 と Part 91 の該当部分",
+     "ソロを行う空港の空域と手順",
+     "その型式の飛行特性と運用上の制限",
+     "ILS 進入の手順"
+    ],
+    "answer": 3,
+    "why": "61.87(b)(1) の 3 つの範囲。ILS は計器飛行の内容で、ソロ前のテストの範囲ではない。"
+   },
+   {
+    "q": "学生操縦士が単独で飛べないのはどれ？（61.89）",
+    "choices": [
+     "昼間・地上の視程 5 SM",
+     "雲の上で地表が見えない",
+     "教官の承認の範囲で場周飛行",
+     "教官が決めた風の上限以内"
+    ],
+    "answer": 1,
+    "why": "61.89(a)(7)：地表を目で見ながら飛べないときは機長として飛べない。ほかに乗客・報酬・昼 3 SM／夜 5 SM 未満の視程・ログブックの制限。"
+   }
+  ],
+  "refs": [
+   "update: R.cfr61 を条文ごとに：61.87 https://www.ecfr.gov/current/title-14/section-61.87 ・61.89 https://www.ecfr.gov/current/title-14/section-61.89 ・61.83 https://www.ecfr.gov/current/title-14/section-61.83 ・61.93 https://www.ecfr.gov/current/title-14/section-61.93",
+   "add: FAA AC 61-65K Certification: Pilots and Flight and Ground Instructors（2025-11-14、承認の文例 A.3〜A.8） https://www.faa.gov/documentlibrary/media/advisory_circular/AC_61-65K.pdf",
+   "add: 14 CFR 141.85 Chief instructor responsibilities（段階審査） https://www.ecfr.gov/current/title-14/section-141.85",
+   "add: AIM 4-2-4（学生操縦士は最初の交信で student pilot と名乗る） https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html",
+   "add: FAA Risk Management Handbook（FAA-H-8083-2A、SRM） https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/risk-management-handbook-faa-h-8083-2a",
+   "keep: ANA の 2 記事（出典ごとに数字を分けて書く。CADET では落ちる） https://www.ana.co.jp/group/777_30th/20251022_2.html / https://www.anahd.co.jp/ana_news/2025/10/28/20251028.html",
+   "keep/optional: FAA-S-ACS-6C（段階審査の考え方の参考。ソロの条件そのものではない） https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf"
+  ]
+ },
+ "appMismatches": [
+  "syllabus.js:230 — c1（ソロ前の審査・模擬 Check Flight）の book が ['intro.course']。solo.check の bk.sim は c1 を開くので、c1 からも solo.check を指すべき — 本の対応（solo.check）が正しい。",
+  "syllabus.js:250 — 横風着陸 x1 が第 2 段階（c1 とソロの後）。14 CFR 61.87(d)(3) は横風の離着陸をソロ前に求める。教材の設計としては可だが、solo.check の表（横風の修正 → t1–t4）と合わない — 規則が正しい。本文で『実機ではソロ前、この教材では x1』と書く。",
+  "syllabus.js:230 — c1 の内容に急旋回（左 45°）があるが、61.87(d) のソロ前の 15 項目には急旋回がない。solo.check の表もそれに合わせて『急旋回』を入れている。『この教材の模擬審査の内容』と書き分ける。",
+  "syllabus.js:228 c1 why『公開情報では、レッスン 12 回の後の審査に合格するとソロへ進む』と solo.req の『平均 11 回目』— どちらも出典どおり（ana1 / ana2）。本文で記事を分けて示す。",
+  "quiz.js:77（q_law の 61.89 の問題）— 本文の 61.89 の要約より詳しい（報酬）。本文を eCFR の全項目に合わせれば一致する。"
+ ],
+ "factChecks": [
+  {
+   "claim": "ソロ前の学科テスト：規則・その空港の空域と手順・その機体の飛行特性。教官が採点・解説",
+   "verdict": "imprecise",
+   "source": "https://www.ecfr.gov/current/title-14/section-61.87",
+   "note": "61.87(b)：Part 61・91 の該当部分、空港の空域と手順、型式の飛行特性と運用上の制限。教官がテストを行い、終わったら間違えた問題をすべて見直してからソロを許可。"
+  },
+  {
+   "claim": "決められた操作の飛行訓練と、教官が安全にできると認めた技量（列挙の 12 項目）",
+   "verdict": "imprecise",
+   "source": "https://www.ecfr.gov/current/title-14/section-61.87",
+   "note": "61.87(c)(d)：単発機は 15 項目。場周経路、衝突・ウインドシア・後方乱気流の回避、高抗力/低抗力の降下、いろいろな速度の飛行が本文から抜けている。"
+  },
+  {
+   "claim": "承認は学生操縦士証明とログブックに、その機種での単独飛行",
+   "verdict": "outdated",
+   "source": "https://www.ecfr.gov/current/title-14/section-61.87",
+   "note": "61.87(n)：ログブックのみ（Amdt. 61-135, 81 FR 1306, 2016-01-12）。AC 61-65K 20.1：証明書が紙でもプラスチックでも承認はログブック。"
+  },
+  {
+   "claim": "承認は 90 日ごとに必要",
+   "verdict": "correct",
+   "source": "https://www.ecfr.gov/current/title-14/section-61.87",
+   "note": "61.87(n)：訓練をした教官が飛行の前 90 日以内に記入。(p)(4)：その後 90 日ごとに更新。AC 61-65K A.6・A.7。"
+  },
+  {
+   "claim": "学生操縦士は乗客を乗せられず、視程が昼 3 SM・夜 5 SM 未満では飛べない（61.89）",
+   "verdict": "correct",
+   "source": "https://www.ecfr.gov/current/title-14/section-61.89",
+   "note": "flight or surface visibility。ほかに報酬・業務・国際飛行・地表が見えないとき・ログブックの制限も (a)(1)–(8)。"
+  },
+  {
+   "claim": "訓練回数の決まりはない",
+   "verdict": "correct",
+   "source": "https://www.ecfr.gov/current/title-14/section-61.87",
+   "note": "61.87 に最低の時間・回数はない（教官の判断）。"
+  },
+  {
+   "claim": "ANA：12 回のレッスンと審査の後にソロ",
+   "verdict": "correct",
+   "source": "https://www.ana.co.jp/group/777_30th/20251022_2.html",
+   "note": "『1回90分から120分のレッスンを12回と審査フライト(通称”Check Flight”)に合格すると…Solo Flight ができるようになります』。"
+  },
+  {
+   "claim": "取材記事では平均 11 回目でファーストソロ",
+   "verdict": "correct",
+   "source": "https://www.anahd.co.jp/ana_news/2025/10/28/20251028.html",
+   "note": "『平均11回目のフライトでファーストソロに出る』（取材した機長の話として）。ana1 とは別の記事で数え方が違う可能性 → 並べて書くなら出典を分ける。"
+  },
+  {
+   "claim": "ソロの前には普段の教官とは別の教官が審査することが一般的",
+   "verdict": "imprecise",
+   "source": "https://www.ecfr.gov/current/title-14/section-141.85",
+   "note": "Part 141：段階審査を受けさせるのは chief instructor の責任で、assistant chief instructor・check instructor に任せられる。Part 61 には段階審査の決まりがない。"
+  },
+  {
+   "claim": "学生操縦士の前提：16 歳以上・英語（本文になし）",
+   "verdict": "correct",
+   "source": "https://www.ecfr.gov/current/title-14/section-61.83",
+   "note": "61.83(a)(c)。AC 61-65K 20.2 も pre-solo の条件として英語の基準（61.83(c)）に触れる。追加を提案。"
+  },
+  {
+   "claim": "学生操縦士は第 3 種以上の医療証明が要る（本文になし）",
+   "verdict": "correct",
+   "source": "https://www.ecfr.gov/current/title-14/section-61.23",
+   "note": "61.23(a)(3)(i)。BasicMed（61.113(i)）の例外は 2006-07-14 以降に医療証明を持っていた人向けで、新しい訓練生には通常当てはまらない。"
+  },
+  {
+   "claim": "ソロで他の空港に着陸する・25 NM を超えるには別の要件（本文になし）",
+   "verdict": "correct",
+   "source": "https://www.ecfr.gov/current/title-14/section-61.93",
+   "note": "61.93(a)(1)：ソロ XC・出発空港から 25 NM を超える飛行・出発空港以外への着陸には 61.93 の訓練と承認。(b)(1)：25 NM 以内の他空港での離着陸練習は別の承認（AC 61-65K A.8）。"
+  },
+  {
+   "claim": "教官（約 80 kg）がいないと上昇が速く、フレアで浮きやすい（失速速度も少し下がる）",
+   "verdict": "correct",
+   "source": "flight-lab/src/physics.js（steadyState, pa28）",
+   "note": "教材モデル：1,050 → 970 kg で Vs1 50 → 48 kt、76 kt 全開上昇 741 → 846 fpm（1,000 ft）。"
+  },
+  {
+   "claim": "SRM＝単独飛行の資源管理",
+   "verdict": "wrong",
+   "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/risk-management-handbook-faa-h-8083-2a",
+   "note": "Single-pilot Resource Management＝1 人で操縦するときの資源管理。ソロに限らない。ACS でも『SRM or CRM, as appropriate』として使う。"
+  },
+  {
+   "claim": "AC 61-65 の現行版（本文の参照になし）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/documentlibrary/media/advisory_circular/AC_61-65K.pdf",
+   "note": "AC 61-65K（2025-11-14）。A.3 ソロ前の学科、A.4 ソロ前の飛行訓練、A.5 夜、A.6 最初の 90 日、A.7 以後の 90 日、A.8 25 NM 以内の他空港。"
+  }
+ ],
+ "cadetNotes": [
+  "cadet/test/content.test.mjs:67 は、FLIGHT LAB の solo.req の生の HTML に ANA（または Acron）の名前があることを確かめている。ANA の事実を bk.key から本文に移すときも、solo.req の中に ANA の名前を残す（CADET 側の filter が文ごと落とす）。",
+  "content.test.mjs:83 は CADET の solo.req の text に『訓練回数の決まりはない』があることを求める。この言い回しを ANA を含まない文（または bk.key）に残す。",
+  "content.test.mjs:40（KEEP）は solo.first に『根拠にはならない』が残ることを求める（現在の bk.warn）。言い回しを変えない。",
+  "COURSE_NOTE（/公開情報|推測・要確認|tag fact|unk/）が CADET の文に残ると失敗する。『公開情報：…』と書く文には必ず ANA の名前を入れて文ごと落ちるようにするか、bk.fact のタグだけにする（文頭の『公開情報では、』は filter が消す）。",
+  "solo.check の bk.sim（c1）は CADET で消える。本文の表だけで内容が分かるようにする。",
+  "各節の最初の <svg> が教室スクリーンに出る：solo.req=soloRoadmap、solo.check=stageCheckAreas、solo.first=soloWeight を各節の先頭に。",
+  "CADET には独自のソロ前筆記試験（cadet/src/career/career.js:61：q_ops・q_emg・q_law から 20 問・80% 合格）があり、61.87(b) の『Part 61/91・空港の空域・機体の特性』に近い。solo.req の説明と矛盾しないように（『教官が行い、間違いを見直す』）。"
+ ]
+}

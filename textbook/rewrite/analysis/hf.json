@@ -1,0 +1,466 @@
+{
+  "id": "hf",
+  "title": "人間の能力と判断（ADM）（Human factors and aeronautical decision-making）",
+  "sections": [
+    {
+      "id": "hf.self",
+      "title": "自分の体調：IMSAFE",
+      "gist": "飛ぶ前に機体と同じように自分も点検する（IMSAFE）。飲酒・薬・病気には規則がある（14 CFR 91.17・61.53、AIM 8-1-1）。",
+      "issues": [
+        "目的の一文がなく、表と bk.key だけ。「なぜ自分を点検するのか」— AIM 8-1-1 の Personal Checklist：事故統計では、操縦士の不調が原因の事故は機体の故障よりずっと多い — を最初に言うと初心者に伝わる。",
+        "「E：Emotion / Eating（感情・食事）」— FAA（AIM 8-1-1・PHAK 第 2 章）の IMSAFE の E は Emotion。Eating は FAA 以外の言い方。E は Emotion と教え、食事と水分は ACS PA.I.H.K1i「Dehydration and nutrition」と PHAK 第 17 章の脱水・熱中症（フロリダの暑い駐機場で特に大切）として別に書く。",
+        "A の行は正しいが、AIM 8-1-1 の数字が抜けている：8 時間たっても影響が残ることがあるので「bottle to throttle は 12〜24 時間」が良い目安、ビール 1 本でも技量が落ち、少なくとも 3 時間は呼気・血液から検出される、二日酔いも危険。本文の「（「bottle to throttle 8 時間」は最低限）」はこの数字を書いて具体的に。",
+        "M の行「眠くなる薬・判断に影響する薬を飲んでいないか（市販薬も）」— 91.17(a)(3)（判断を損なう薬の使用中は乗務できない）と 61.53（自分で知っている病気・治療で身体検査の基準を満たさないときは機長として飛べない）、AIM の「いちばん安全なのは、FAA の承認がない限り薬を飲んでいるときは飛ばないこと」を書く。抗ヒスタミン薬（かぜ薬・酔い止め）が代表例（AIM 8-1-1）。",
+        "F の行「十分眠ったか」だけ。急性の疲労と慢性の疲労（AIM 8-1-1）、ストレスと疲労の組み合わせが特に危険、を一文で。",
+        "bk.key の 1 つ目「体調の不調は「準備に始まり準備に終わる」の最初の確認項目」— 引用元は intro の ANA の記事（book-1.js:65）で、初心者には意味が通らず、intro がない CADET では出典が消える。書き直す。",
+        "図がない（CADET の教室の画面に映すものがない）。"
+      ],
+      "mainFigure": "IMSAFE のカード：6 つの文字と短い問い（I 病気は？ M 薬は？ S ストレスは？ A 飲酒は？ F 疲れは？ E 気持ちは？）。A の横に飲酒のタイムライン（0〜8 時間＝規則で乗務禁止 91.17、8〜24 時間＝AIM は量に応じて 12〜24 時間空けるよう勧める、濃度 0.04 以上・影響下も禁止）。"
+    },
+    {
+      "id": "hf.adm",
+      "title": "危険の評価と判断（PAVE・DECIDE・3P）",
+      "gist": "危険を見つける（PAVE）→ どれほど危ないか考える → 対策を実行して確かめる（3P）、変化に気づいたら DECIDE の手順で判断する（PHAK 第 2 章）。",
+      "issues": [
+        "PAVE の表のあと、3P と DECIDE を 1 つの段落に詰め込んでいる（英単語 9 つが 2 文に並ぶ）。初心者には区別がつかない。",
+        "この節の最初で唯一の図が FIG.tem（TEM）。TEM は crm 章の主題で、同じ図が book-5.js:118（crm.tem）にもある。CADET は節の最初の <svg> を教室の画面に映すので、この節では PAVE／3P ではなく TEM が映る。図の文字は 10 px 指定で、390 px 幅では 6.6 px（figshot）。",
+        "PHAK の 3P は各段階にチェックリストがある：Perceive＝PAVE、Process＝CARE（Consequences・Alternatives・Reality・External factors）、Perform＝TEAM（Transfer・Eliminate・Accept・Mitigate）。本文はこれを書かないので、PAVE と 3P が別々の話に見える。",
+        "危険の大きさ＝起こりやすさ×重大さ（PHAK Figure 2-5 のリスクマトリクス：Probable / Occasional / Remote / Improbable × Catastrophic / Critical / Marginal / Negligible）、個人の最低条件（personal minimums）、「合法」と「安全」の違い（PHAK）が抜けている。5P（Plan・Plane・Pilot・Passengers・Programming）も PHAK にある。",
+        "「E：External pressures … （最も危険なことが多い）」— PHAK の言葉は「外からの圧力の管理はリスク管理で最も大切な鍵。ほかのすべての危険を無視させてしまう唯一の要因で、事故の多くに関わる」。出典どおりに書くと説得力が増す。",
+        "get-there-itis は bk.key にだけ出てくる。PHAK の Operational pitfalls（peer pressure・get-there-itis・scud running・duck-under など）として本文で説明する。"
+      ],
+      "mainFigure": "3P の輪（Perceive → Process → Perform → また Perceive）。各段階の横に使う道具を書く：Perceive＝PAVE（Pilot・Aircraft・enVironment・External pressures の 4 枚）、Process＝CARE、Perform＝TEAM。中央に「飛行中もずっと回し続ける」。"
+    },
+    {
+      "id": "hf.attitude",
+      "title": "5 つの危険な態度",
+      "gist": "事故につながりやすい 5 つの考え方（反権威・衝動・不死身・マッチョ・あきらめ）に気づき、それぞれの「解毒剤」の言葉を言う（PHAK Figure 2-4）。",
+      "issues": [
+        "表の内容は PHAK Figure 2-4 と一致して正しい。ただし英語の原文（“Don't tell me.” → “Follow the rules. They are usually right.” など）がない。英語の座学・試験ではこの英文で問われるので、日本語（English）で併記する。",
+        "「反権威：「規則なんて」」は PHAK の “Don't tell me.”（人に指示されたくない）より狭い。PHAK は「権威に疑問を持つこと自体は正当」とも書いている。",
+        "それぞれの態度の短い例（場面）がない。例：Impulsivity＝チェックリストを飛ばして急いで離陸、Resignation＝エンジンが不調でも「どうせ無理」と何もしない。",
+        "bk.key が 1 項目だけで、出典名が要点に入っている（「（Risk Management Handbook / PHAK）」はゲームで読み上げられる）。",
+        "図がない。"
+      ],
+      "mainFigure": "5 枚のカードを横に並べた図：上に吹き出しの「心の声」（日本語＋英語）、下に緑の「解毒剤」（日本語＋英語）。例：衝動 “Do it quickly.” → “Not so fast. Think first.”"
+    },
+    {
+      "id": "hf.body",
+      "title": "空間識失調・錯覚・低酸素",
+      "gist": "外が見えないと体の感覚はうそをつく（空間識失調）ので計器を信じる。着陸の錯覚、低酸素と一酸化炭素にも注意する（AIM 8-1-2〜8-1-5、PHAK 第 17 章）。",
+      "issues": [
+        "空間識失調・着陸の錯覚・低酸素・一酸化炭素を 1 節に詰め込み、ACS PA.I.H.K1 が求める項目の半分が抜けている：過呼吸（hyperventilation）、中耳・副鼻腔（耳抜き）、乗り物酔い、ストレス、疲労、脱水と栄養、低体温、スキューバの後の窒素。新しい節（hf.altitude・hf.vision など）に分ける。",
+        "「耳の奥の前庭器官は、ゆっくりした回転や傾きを感じられません」— 不正確。前庭器官は「ゆっくり始まった変化」と「同じ速さで続く回転（しばらくすると止まっていると感じる）」を感じにくい（AIM 8-1-5：graveyard spiral は ‘a coordinated constant-rate turn that has ceased stimulating the motion sensing system’）。PHAK の 3 つの感覚（前庭・体性感覚・視覚）と、外が見えると目が勝つ、の説明が先に要る。",
+        "リーンズの説明「ゆっくり傾いたまま気づかず、水平に戻すと逆に傾いたと感じる」— AIM は「急に（abrupt）水平に戻すと」。quiz.js（q_hf）の文は「急に翼を水平に戻したとき」で、本と食い違う。",
+        "体性重力錯覚は加速だけ。急な減速では逆（機首上げの錯覚で失速の危険、AIM 8-1-5）を一言。コリオリ錯覚（旋回中の急な頭の動き、AIM が「最も強烈」とする）・自動運動（autokinesis）・false horizon が抜けているのに、quiz.js の選択肢（コリオリ錯覚・自動運動）と本の章末クイズ（自動運動）に出てくる。",
+        "着陸の錯覚の行は AIM 8-1-5 と一致して正しい（細い・上り坂・暗い地域＝低く進入）。広い滑走路・下り坂（高く進入）、霧（機首上げの錯覚）、もや（遠く見える）を加えると対になる。",
+        "低酸素：91.211 は 1 段目（12,500 ft 超〜14,000 ft で 30 分を超える分）だけ。2 段目（14,000 ft 超は乗員が常に）と 3 段目（15,000 ft 超は全員に供給）は quiz.js の問題に出るのに本文にない。AIM 8-1-2 の推奨（昼 10,000 ft・夜 5,000 ft を超えたら酸素、夜間視力は 5,000 ft から落ちる）、低酸素の 4 つの種類（hypoxic・hypemic・stagnant・histotoxic。一酸化炭素は hypemic＝quiz.js の問題）も本文にない。",
+        "一酸化炭素は一言だけ。症状（頭痛・眠気・めまい・排気のにおい）と対処（ヒーターを切る・通気口を開ける・着陸後も続けば受診、AIM 8-1-4）を書く。",
+        "bk.key の 2 つ目「入ってしまったら計器で翼を水平に、来た方向へ 180° 旋回」は良いが、AIM 6-2-1（計器飛行の資格がなく VFR を保てないときは、資格がないことを伝えて遭難を宣言してよい）と {ch:radio5} につなげると実際的。",
+        "図がない。体の中の仕組み（三半規管）と進入角の錯覚は図でないと分からない。"
+      ],
+      "mainFigure": "三半規管の模式図：旋回が始まるとリンパ液が遅れて毛が倒れる（回っていると感じる）→ 同じ速さで続くと液が追いつき毛が戻る（止まっていると感じる）→ 急に水平に戻すと逆に倒れる（反対に回っていると感じる）の 3 コマ。下に「外が見えないときは計器が正しい」。"
+    },
+    {
+      "id": "hf.srm",
+      "title": "単独飛行の資源管理（SRM）とチェックリスト",
+      "gist": "一人で飛ぶときも、使える資源（管制・FSS・自動化・チェックリスト・知識）を使い、優先順位（Aviate → Navigate → Communicate）と状況認識を保つ（PHAK 第 2 章）。",
+      "issues": [
+        "4 つの箇条書きだけで、SRM が「何の集まりか」が見えない。PHAK の定義（ADM・リスク管理・作業の管理・自動化の管理・CFIT の認識・状況認識をまとめたもの）を一文で。",
+        "「Sterile cockpit：… （エアラインの考え方。単独でも有効）」— PHAK 第 2 章は一般機（GA）にも sterile flight deck を勧めている（出発から最初の中間高度まで、到着は進入の最初のレーダー誘導から）。出典を PHAK にし、エアライン（14 CFR 121.542）は補足に。",
+        "「自動化：…（第 6 部）」は {ch:crm} などの章参照にする（部の番号は読者に伝わりにくい）。",
+        "チェックリストの使い方（読み上げて確かめる、暗記で済ませる項目とそうでない項目、途中で中断したら最初から）が書かれていない。",
+        "Aviate → Navigate → Communicate は emg.basic（book-3.js）と radio1（radio.technique）にもあり重複。ここは「SRM の中の作業の優先」として短く、詳しくは {ch:emg} へ。",
+        "状況認識を失う典型（PHAK：固着・作業の飽和・自動化への頼りすぎ）と、乗客への説明（SAFETY ブリーフィング、PHAK）が抜けている。",
+        "図がない。"
+      ],
+      "mainFigure": "単独の操縦士を中心に、使える資源を周りに並べた図（管制・FSS／Flight Service・チェックリスト・自動化（G1000 型・自動操縦）・POH・自分の知識・同乗者）。外側に優先順位の帯 Aviate → Navigate → Communicate。"
+    }
+  ],
+  "problems": {
+    "unclear": [
+      "hf.self：bk.key「体調の不調は「準備に始まり準備に終わる」の最初の確認項目」— 何を指すか分からない（intro の ANA の記事の引用）。",
+      "hf.adm：「3P：Perceive（危険に気づく）→ Process（…）→ Perform（…）。DECIDE：Detect（…）、Estimate（…）、Choose（…）、Identify（…）、Do（実行）、Evaluate（評価）。」— 2 つのモデルの違い（3P は出発前から飛行中まで続ける危険の管理、DECIDE は変化が起きたときの判断の手順）が説明されていない。",
+      "hf.body：「墓場のスパイラル：ゆっくりした旋回に慣れて水平だと感じ…」— なぜ慣れるのか（三半規管の液が追いつく）が説明されていない。",
+      "hf.body：「14 CFR 91.211 では … 運航乗務員に酸素が必要」— Archer で関係するのか（Archer は普段そこまで上がらない）が分からない。客室の気圧高度（cabin pressure altitude）の意味も。",
+      "hf.srm：「Sterile cockpit」— 和訳がない。"
+    ],
+    "order": [
+      "hf.self（体調）→ hf.adm（危険の評価）→ hf.attitude（態度）→ hf.body（体）→ hf.srm の順で、「体」の話が hf.self と hf.body に分かれている。hf.self → hf.body → 新 hf.altitude → 新 hf.vision →（ここから判断）hf.adm → hf.attitude → hf.srm の順が自然（体と生理を先に、判断を後に）。",
+      "ifr.scan（book-4.js:143）と ifr.upset（book-4.js:163）が hf.body を参照しているので、hf.body の空間識失調の説明は計器飛行の章より前（今の Part 1）に残す。"
+    ],
+    "errors": [
+      "hf.self：IMSAFE の「E：Emotion / Eating」→ FAA の E は Emotion（AIM 8-1-1 Personal Checklist・PHAK 第 2 章）（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap8_section_1.html）",
+      "hf.body：「前庭器官は、ゆっくりした回転や傾きを感じられません」→ 感じにくいのは、ゆっくり始まった変化と、同じ速さで続く回転（しばらくすると止まって感じる）（AIM 8-1-5・PHAK 第 17 章）（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap8_section_1.html）",
+      "hf.body：リーンズ「水平に戻すと逆に傾いたと感じる」→ AIM は「急に（abrupt）戻すと」（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap8_section_1.html）",
+      "refs：R.rmh の URL https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/risk-management-handbook-faa-h-8083-2a は 404 → 正しくは https://www.faa.gov/regulationspolicies/handbooksmanuals/risk-management-handbook-faa-h-8083-2a（FAA の Aviation Handbooks ページのリンク、2026-10-26 確認）"
+    ],
+    "outdated": [
+      "なし（Risk Management Handbook FAA-H-8083-2A（2022）、PHAK FAA-H-8083-25C（2023、追補は MOSAIC 関係のみで第 2・17 章に影響なし）、Private Pilot ACS FAA-S-ACS-6C（2024-05-31 発効）はいずれも現行）。R.rmh の URL だけ古い（errors 参照）。"
+    ],
+    "duplicates": [
+      "hf.adm の FIG.tem は crm.tem（book-5.js:118）と同じ図。hf からは外し、{ch:crm} への参照にする。",
+      "hf.srm の Aviate → Navigate → Communicate は emg.basic（book-3.js:188）・radio.technique（book-comm.js）と重複。",
+      "hf.body の「VFR で雲に入らない」は wx 章の bk.key（book-2.js:22「VFR の操縦士が雲に入るのは重大事故の典型（空間識失調）」）と重複。参照でつなぐ。",
+      "hf.srm のチェックリストを声に出す話は solo 章（book-3.js:261「声に出す…（SRM）」）と重複。"
+    ],
+    "numbers": [
+      "quiz.js:106-117（q_hf）は本文にない数字・用語を問う：91.211 の 14,000 ft 超（常に酸素）と 15,000 ft 超（全員に供給）、暗順応の約 30 分と視野の周辺で見ること、低酸素の種類（hypemic）、コリオリ錯覚（選択肢）。本文に足すか、問題を本文の範囲に合わせる（本文に足す方を勧める：どれも AIM 8-1・PHAK 第 17 章・ACS PA.I.H の内容）。",
+      "hf.self：「bottle to throttle 8 時間は最低限」に AIM 8-1-1 の推奨値（12〜24 時間）が書かれていない。",
+      "hf 章末クイズ Q3 の選択肢「自動運動」は本文で説明されていない。",
+      "FL.physics・チェックリストの数字はこの章には出てこない（矛盾なし）。"
+    ]
+  },
+  "policy": "id は変えずに、体の話を先、判断の話を後にする：hf.self（IMSAFE と飲酒・薬・病気の規則）→ hf.body（3 つの感覚と空間識失調・錯覚）→ 新 hf.altitude（高度と体：低酸素の 4 種類・91.211 の 3 段階と AIM の推奨・過呼吸・一酸化炭素・耳と副鼻腔・スキューバの後の待ち時間）→ 新 hf.vision（見ること：暗順応・視野の周辺で見る・10° ずつ 1 秒の見張り・衝突する機は止まって見える・着陸の錯覚は hf.body から移すか参照）→ hf.adm → hf.attitude → hf.srm。各節の最初に「なぜ大切か」を一文で書き、ACS PA.I.H.K1 の 12 項目（hypoxia から scuba まで）をこの章のどこかで必ず扱う（脱水と熱中症はフロリダの訓練に直結するので hf.self か hf.altitude に）。hf.adm は 3P の輪（PAVE・CARE・TEAM）とリスクマトリクスを図にし、DECIDE は「飛行中に変化が起きたとき」の手順として別の段落に分ける。TEM の図は hf から外して crm.tem だけに残し、ここでは「チームでの考え方は {ch:crm}」と参照する。hf.attitude は英語の原文と短い場面例を表に加え、bk.key を 2〜3 項目に。hf.srm は PHAK の SRM の定義と sterile flight deck（GA でも勧められている）を出典どおりに書き、Aviate → Navigate → Communicate は {ch:emg} を参照して短くする。quiz.js q_hf が問う内容（91.211 の 3 段階、暗順応、hypemic、コリオリ）はすべて本文に入れる。",
+  "figuresExisting": [
+    {
+      "key": "tem",
+      "verdict": "fix",
+      "why": "hf.adm の最初で唯一の <svg> だが内容は TEM（crm 章の主題、book-5.js:118 で同じ図を使用）。CADET では PAVE／3P の代わりに TEM が教室の画面に映る。hf.adm からは外し（crm.tem には残す）、図そのものも直す：viewBox 520 幅（基準 360–440 を超える）、fs 10 の文字が 390 px で 6.6 px（figshot：smallest text 6.6 px）。脅威 → エラー → UAS の一直線の矢印も、脅威から直接 UAS に至る道・脅威なしのエラーを表せていない。"
+    }
+  ],
+  "figuresNew": [
+    {
+      "name": "imsafeCard",
+      "section": "hf.self",
+      "what": "IMSAFE の 6 項目のカード（文字・英語・日本語の問い）と、A の横の飲酒タイムライン（0〜8 h 規則で禁止／〜12〜24 h AIM の推奨／0.04 以上も禁止）。",
+      "data": "14 CFR 91.17(a)、AIM 8-1-1（Personal Checklist・Alcohol：12 to 24 hours、one bottle of beer、at least 3 hours）、PHAK 第 2 章 IMSAFE。",
+      "priority": "must"
+    },
+    {
+      "name": "threePLoop",
+      "section": "hf.adm",
+      "what": "3P の輪（Perceive → Process → Perform）と各段階の道具（PAVE・CARE・TEAM）。PAVE の 4 枚は文字と例（Pilot：IMSAFE・経験、Aircraft：燃料・性能、enVironment：天気・空港・夜、External pressures：予定・人の期待）。",
+      "data": "PHAK 第 2 章（Figure 2-7 PAVE、3P model・CARE・TEAM）。",
+      "priority": "must"
+    },
+    {
+      "name": "riskMatrix",
+      "section": "hf.adm",
+      "what": "4×4 のリスクマトリクス（起こりやすさ：Probable・Occasional・Remote・Improbable × 重大さ：Catastrophic・Critical・Marginal・Negligible）を高・中・低で塗り分け、例「計器飛行の資格なしで悪化する天気＝Occasional × Catastrophic＝高」を 1 つ置く。",
+      "data": "PHAK 第 2 章 Figure 2-5 とその例（likelihood occasional, severity catastrophic → high risk）。",
+      "priority": "should"
+    },
+    {
+      "name": "hazardousAttitudes",
+      "section": "hf.attitude",
+      "what": "5 枚のカード：危険な態度（日本語・英語）、心の声の吹き出し（“Don't tell me.” など）、緑の解毒剤（“Follow the rules. They are usually right.” など）。",
+      "data": "PHAK 第 2 章 Figure 2-4（英文はそのまま）、Risk Management Handbook。",
+      "priority": "should"
+    },
+    {
+      "name": "vestibular",
+      "section": "hf.body",
+      "what": "三半規管の 3 コマ（旋回の始まり：液が遅れて回っていると感じる／一定の旋回：液が追いつき止まっていると感じる／急に水平へ：逆に回っていると感じる＝リーンズ・墓場のスパイラル）。",
+      "data": "PHAK 第 17 章 Figure 17-3（三半規管）と本文、AIM 8-1-5（the leans・graveyard spiral）。",
+      "priority": "must"
+    },
+    {
+      "name": "landingIllusions",
+      "section": "hf.body",
+      "what": "正しい進入角（3°・PAPI）と、錯覚で低くなる進入（細い滑走路・上り坂・暗い地域／水面・雨の風防・もや）、高くなる進入（広い滑走路・下り坂・明るい灯火）を左右に並べた断面図。模式図。",
+      "data": "AIM 8-1-5 Illusions Leading to Landing Errors、PHAK 第 17 章。",
+      "priority": "must"
+    },
+    {
+      "name": "hypoxiaAltitudes",
+      "section": "hf.altitude（新）",
+      "what": "縦の高度の物差し：5,000 ft（夜間視力が落ち始める・夜は酸素を推奨）、10,000 ft（昼は酸素を推奨）、12,500〜14,000 ft（乗員は 30 分を超える分に酸素）、14,000 ft 超（乗員は常に）、15,000 ft 超（全員に供給）、18,000 ft（行動できる時間 20〜30 分）。この教材の課目の高度（2,000〜5,000 ft、多くは 3,000 ft）の帯も薄く示し、普段の訓練は酸素の規則よりずっと低いことを見せる。",
+      "data": "14 CFR 91.211(a)、AIM 8-1-2（5,000 / 10,000 ft の推奨、18,000 ft で 20〜30 分）、PHAK 第 17 章 Figure 17-1（Time of useful consciousness）。課目の高度は syllabus.js の setup.altFt（2000・3000×5・4000・5000）。",
+      "priority": "must"
+    },
+    {
+      "name": "scanPattern",
+      "section": "hf.vision（新）",
+      "what": "前方の空を 10° ずつの区画に分け、各区画を少なくとも 1 秒見る見張りの図。中心窩だけがはっきり見えること、衝突する相手は窓の中で止まって大きくなるだけ、を小さな絵で。",
+      "data": "AIM 8-1-6（10 degrees・at least 1 second・7 miles vs 7/10 mile）、AIM 8-1-8（衝突コースの機は相対位置が動かない）。",
+      "priority": "should"
+    },
+    {
+      "name": "srmResources",
+      "section": "hf.srm",
+      "what": "単独の操縦士を中心に資源（管制・FSS・チェックリスト・POH・自動化・知識・同乗者）を並べ、外側に Aviate → Navigate → Communicate の帯。",
+      "data": "PHAK 第 2 章 Single-Pilot Resource Management。",
+      "priority": "nice"
+    }
+  ],
+  "photos": [
+    {
+      "section": "hf.body",
+      "subject": "空間識失調の体験装置（回転いす・シミュレーター）や FAA CAMI の訓練施設",
+      "search": "FAA Civil Aerospace Medical Institute（CAMI）の写真、faa.gov の Pilot Safety Brochures の画像、af.mil “spatial disorientation trainer”（米国政府の写真はパブリックドメイン。顔が写らないもの）",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "「体の感覚はうそをつく」を体験する訓練があることを見せられる。"
+    },
+    {
+      "section": "hf.vision（新）",
+      "subject": "国際宇宙ステーションから見た夜のフロリダ中部（オーランドの街の灯と真っ暗な大西洋）",
+      "search": "NASA Gateway to Astronaut Photography of Earth（eol.jsc.nasa.gov）で “Orlando night”／NASA Earth Observatory（NASA の写真はパブリックドメイン）",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "海や暗い地域への夜の進入（ブラックホール錯覚）が、訓練地のすぐそばで起こりうることが分かる。"
+    },
+    {
+      "section": "hf.altitude（新）",
+      "subject": "指先に付けるパルスオキシメーター",
+      "search": "Commons: Category:Pulse oximeters（CC0／CC BY／CC BY-SA を 1 枚ずつ確認。画面の数字が主役にならないもの）",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "低酸素は自分では気づきにくく、道具で測れることを示す。"
+    },
+    {
+      "section": "hf.altitude（新）",
+      "subject": "高度訓練室（altitude chamber）での訓練の様子（マスク着用・顔が判別できないもの）",
+      "search": "af.mil “altitude chamber” 写真（パブリックドメイン）／FAA CAMI の physiological training",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "FAA が一日の生理学訓練（高度訓練室）を案内していること（PHAK 第 17 章）と結びつく。"
+    },
+    {
+      "section": "hf.adm",
+      "subject": "フロリダの夏の積乱雲（雷雨）",
+      "search": "NOAA Photo Library（photolib.noaa.gov）“thunderstorm Florida”／NWS の写真（パブリックドメイン）",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "PAVE の enVironment と、「予定どおり帰りたい」外からの圧力がぶつかる典型的な場面を示せる。"
+    }
+  ],
+  "endMatter": {
+    "terms": [
+      "IMSAFE：自分の点検（Illness・Medication・Stress・Alcohol・Fatigue・Emotion）",
+      "ADM（Aeronautical Decision-Making）：航空の意思決定",
+      "PAVE：危険を見つける 4 つの分野（Pilot・Aircraft・enVironment・External pressures）",
+      "3P（Perceive・Process・Perform）：危険に気づく・評価する・対策する",
+      "CARE / TEAM：危険の評価（Consequences・Alternatives・Reality・External factors）／対策（Transfer・Eliminate・Accept・Mitigate）",
+      "DECIDE：変化が起きたときの判断の 6 段階",
+      "Risk matrix：起こりやすさ×重大さの表",
+      "Personal minimums：自分で決める最低条件",
+      "Hazardous attitudes / Antidote：危険な態度／解毒剤",
+      "Get-there-itis：予定どおりに着きたい気持ち",
+      "Spatial disorientation：空間識失調",
+      "Vestibular system：前庭器官（三半規管と耳石器）",
+      "The leans / Graveyard spiral / Somatogravic illusion / Coriolis illusion：リーンズ／墓場のスパイラル／体性重力錯覚／コリオリ錯覚",
+      "Black-hole approach：暗い地域への夜の進入（低くなりやすい）",
+      "Hypoxia（hypoxic・hypemic・stagnant・histotoxic）：低酸素症（4 種類）",
+      "Hyperventilation：過呼吸",
+      "Carbon monoxide：一酸化炭素",
+      "Dark adaptation：暗順応（約 30 分）",
+      "SRM（Single-Pilot Resource Management）：単独飛行の資源管理",
+      "Sterile flight deck：必要なこと以外を話さない時間"
+    ],
+    "examples": [
+      "前の晩にビールを 2 杯飲んだ。朝 9 時の飛行は 8 時間を過ぎていても AIM の目安（12〜24 時間）に足りない → 教官に伝えて時間をずらす（91.17・AIM 8-1-1）。",
+      "かぜ薬（抗ヒスタミン入り）を飲んだ → 眠気と判断の低下。FAA の承認がなければその日は飛ばない（AIM 8-1-1・91.17(a)(3)）。",
+      "友人を待たせているので急いで出発したい（外からの圧力・衝動）→「Not so fast. Think first.」。天気と燃料を確かめ直す（PHAK）。",
+      "夜、海沿いの暗い空港へ進入：実際より高いと感じて低くなりやすい → PAPI と高度計で確かめる（AIM 8-1-5）。",
+      "ヒーターを使っていたら頭痛と眠気 → 一酸化炭素を疑い、ヒーターを切って通気口を開け、近くの空港に降りる（AIM 8-1-4）。"
+    ],
+    "cautions": [
+      "薬・飲酒・病気の判断は航空身体検査医（AME）と規則が優先。迷ったら飛ばない。",
+      "この教材のシミュレーターでは錯覚や低酸素は体験できない。実際の感覚は教官と、FAA の生理学訓練などで学ぶ。",
+      "この章は要約。Risk Management Handbook・PHAK 第 2 章と第 17 章・AIM 第 8 章の原文で詳しく学ぶ。"
+    ],
+    "quizReview": [
+      "Q1（不死身の解毒剤）：keep — PHAK Figure 2-4（“It could happen to me.”）と一致。q_hf の問題とほぼ同じなので、章末は別の態度（例：衝動）にしてもよい。",
+      "Q2（PAVE の E）：keep — why を PHAK の言葉（ほかのすべての危険を無視させてしまう要因）に。",
+      "Q3（リーンズ）：fix — 問いを「ゆっくり傾いたあと、急に翼を水平に戻すと、逆に傾いたように感じる錯覚は？」に（AIM 8-1-5 の abrupt）。選択肢の「自動運動」は本文で説明するか、本文にある「墓場のスパイラル」に替える。"
+    ],
+    "quizProposals": [
+      {
+        "q": "14 CFR 91.17 の飲酒の規則として正しいものは？",
+        "choices": ["飲酒から 8 時間以内、濃度 0.04 以上、影響下のいずれでも乗務できない", "8 時間たてば必ず安全", "濃度 0.08 未満なら飛べる", "ビール 1 本なら問題ない"],
+        "answer": 0,
+        "why": "91.17(a)。8 時間後も影響が残ることがあり、AIM 8-1-1 は量に応じて 12〜24 時間空けるよう勧める。"
+      },
+      {
+        "q": "PHAK の 3P モデルの正しい順番は？",
+        "choices": ["Perceive → Process → Perform", "Plan → Prepare → Proceed", "Pilot → Plane → Passengers", "Perform → Process → Perceive"],
+        "answer": 0,
+        "why": "危険に気づく（PAVE）→ 評価する（CARE）→ 対策して確かめる（TEAM）。飛行中も回し続ける（PHAK 第 2 章）。"
+      },
+      {
+        "q": "ヒーターを使っていたら頭痛と眠気がしてきた。まずすることは？",
+        "choices": ["ヒーターを切り、通気口を開け、着陸を考える", "ヒーターを強くする", "高度を上げる", "そのまま様子を見る"],
+        "answer": 0,
+        "why": "一酸化炭素中毒を疑う（AIM 8-1-4）。症状が重い・続くときは着陸後に受診。"
+      },
+      {
+        "q": "AIM 8-1-6 が勧める見張りのしかたは？",
+        "choices": ["10° 以内の区画ごとに少なくとも 1 秒ずつ見る", "一点を見続ける", "空全体をぼんやり眺める", "計器だけを見る"],
+        "answer": 0,
+        "why": "はっきり見えるのは視野の中心（中心窩）だけなので、短く規則正しく目を動かす（AIM 8-1-6）。"
+      },
+      {
+        "q": "減圧停止の必要がないスキューバダイビングの後、8,000 ft 以下を飛ぶまでの推奨の待ち時間は？",
+        "choices": ["少なくとも 12 時間", "1 時間", "4 時間", "待つ必要はない"],
+        "answer": 0,
+        "why": "AIM 8-1-2：減圧停止なしは 12 時間以上、減圧停止ありや 8,000 ft を超える飛行は 24 時間以上。フロリダでは身近な注意。"
+      }
+    ],
+    "refs": [
+      "fix: R.rmh の URL → https://www.faa.gov/regulationspolicies/handbooksmanuals/risk-management-handbook-faa-h-8083-2a（今の URL は 404）",
+      "add: AIM 第 8 章 Medical Facts for Pilots（8-1-1〜8-1-8）https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap8_section_1.html",
+      "add: PHAK 第 2 章 Aeronautical Decision-Making https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-2-aeronautical-decision-making と 第 17 章 Aeromedical Factors https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-17-aeromedical-factors",
+      "add: 14 CFR 61.53（病気・治療中の乗務の禁止）R.cfr61 https://www.ecfr.gov/current/title-14/section-61.53、14 CFR 91.17・91.211 https://www.ecfr.gov/current/title-14/section-91.17 / https://www.ecfr.gov/current/title-14/section-91.211",
+      "add: FAA Private Pilot ACS（FAA-S-ACS-6C）Area I Task H Human Factors（PA.I.H）R.acsP",
+      "add: FAA Pilot Safety Brochures（空間識失調・低酸素など、米国政府の公開資料）https://www.faa.gov/pilots/safety/pilotsafetybrochures",
+      "keep: R.phak（FAA-H-8083-25C は現行）、R.cfr91"
+    ]
+  },
+  "appMismatches": [
+    "quiz.js:106-117（q_hf）— 本文にない内容を問う：91.211 の 14,000 ft 超・15,000 ft 超、暗順応（約 30 分）と視野の周辺で見ること、hypemic hypoxia、コリオリ錯覚（選択肢）。quiz.js は正しい（AIM・PHAK どおり）ので、本文に足す。",
+    "quiz.js（q_hf のリーンズの問題）— 「急に翼を水平に戻したとき」と書き、AIM 8-1-5 と一致。本の hf.body と章末 Q3 は「急に」が抜けている → 本を直す。",
+    "quiz.js:106 — q_hf の book リンクが 'hf.adm' だが、問題の多くは hf.self・hf.body・hf.attitude の内容。リンク先として誤りではないが、学科テストから開く節としては hf.self（章の最初）の方が自然（アプリは変えない方針なので報告のみ）。",
+    "syllabus.js:439-447（r1 TEM）— ブリーフィングの解説「寝不足も脅威で、IMSAFE で自分を点検する」は本の hf.self と一致。問題なし。",
+    "hf の lessons ['i2','r1'] — i2（異常姿勢からの回復）は hf.body の bk.sim と一致、r1 は TEM（crm）で、hf.adm から TEM の図を外すなら lessons の r1 は crm 章側が主になる（hf に残してもよい）。"
+  ],
+  "factChecks": [
+    {
+      "claim": "14 CFR 91.17：飲酒から 8 時間以内・濃度 0.04 以上・影響下では乗務できない",
+      "verdict": "correct",
+      "source": "https://www.ecfr.gov/current/title-14/section-91.17",
+      "note": "91.17(a)(1)(2)(4)。(a)(3) は判断を損なう薬の使用中も禁止。"
+    },
+    {
+      "claim": "「bottle to throttle 8 時間」は最低限",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap8_section_1.html",
+      "note": "AIM 8-1-1：8 時間後も影響下のことがあり、量に応じて 12〜24 時間空けるのが良い目安。数字を本文に書くべき。"
+    },
+    {
+      "claim": "IMSAFE の E は Emotion / Eating",
+      "verdict": "imprecise",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap8_section_1.html",
+      "note": "AIM 8-1-1 の Personal Checklist と PHAK 第 2 章はどちらも Emotion。食事・水分は ACS PA.I.H.K1i（Dehydration and nutrition）として別に。"
+    },
+    {
+      "claim": "PAVE：Pilot・Aircraft・enVironment・External pressures。外からの圧力が最も危険なことが多い",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-2-aeronautical-decision-making",
+      "note": "PHAK 第 2 章（Figure 2-7）。「Management of external pressure is the single most important key to risk management … figure into a majority of accidents.」"
+    },
+    {
+      "claim": "3P：Perceive → Process → Perform",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-2-aeronautical-decision-making",
+      "note": "PHAK は各段階に PAVE・CARE・TEAM を使う。本文にはこの対応がない。"
+    },
+    {
+      "claim": "DECIDE：Detect・Estimate・Choose・Identify・Do・Evaluate",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-2-aeronautical-decision-making",
+      "note": "PHAK 第 2 章 The DECIDE Model。"
+    },
+    {
+      "claim": "5 つの危険な態度と解毒剤（反権威：規則に従う、衝動：ちょっと待て、不死身：自分にも起きる、マッチョ：危険を冒すのは愚か、あきらめ：自分は無力ではない）",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-2-aeronautical-decision-making",
+      "note": "PHAK Figure 2-4：“Follow the rules. They are usually right.” “Not so fast. Think first.” “It could happen to me.” “Taking chances is foolish.” “I'm not helpless. I can make a difference.”"
+    },
+    {
+      "claim": "前庭器官はゆっくりした回転や傾きを感じられない",
+      "verdict": "imprecise",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap8_section_1.html",
+      "note": "AIM 8-1-5：感覚を刺激しないほどゆっくり入った傾き（the leans）と、刺激しなくなった一定の旋回（graveyard spiral）。PHAK 第 17 章は前庭・体性感覚・視覚の 3 つを説明。"
+    },
+    {
+      "claim": "リーンズ：ゆっくり傾いたまま気づかず、水平に戻すと逆に傾いたと感じる",
+      "verdict": "imprecise",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap8_section_1.html",
+      "note": "AIM：An abrupt correction of a banked attitude, which has been entered too slowly … can create the illusion of banking in the opposite direction。「急に」が要る。"
+    },
+    {
+      "claim": "墓場のスパイラル：ゆっくりした旋回に慣れて水平だと感じ、高度が下がるのを引いて直そうとして螺旋が締まる",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap8_section_1.html",
+      "note": "AIM 8-1-5 Graveyard spiral と一致。"
+    },
+    {
+      "claim": "体性重力錯覚：加速すると機首上げと感じて機首を下げてしまう",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap8_section_1.html",
+      "note": "AIM 8-1-5。急な減速では逆（機首を上げすぎ、失速の危険）も書くとよい。"
+    },
+    {
+      "claim": "細い滑走路・上り坂の滑走路は高いと感じて低く進入、夜の暗い地域でも低く進入しがち",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap8_section_1.html",
+      "note": "AIM 8-1-5 Runway width / Runway and terrain slopes / Featureless terrain illusion。"
+    },
+    {
+      "claim": "14 CFR 91.211：12,500 ft MSL を超えて 14,000 ft までを 30 分を超えて飛ぶ場合など、乗員に酸素が必要",
+      "verdict": "correct",
+      "source": "https://www.ecfr.gov/current/title-14/section-91.211",
+      "note": "客室の気圧高度で判断。14,000 ft 超は乗員が常に、15,000 ft 超は全員に供給（本文に追加を）。AIM 8-1-2 は昼 10,000 ft・夜 5,000 ft を超えたら酸素を勧める。"
+    },
+    {
+      "claim": "一酸化炭素（暖房の排気漏れ）に注意",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap8_section_1.html",
+      "note": "AIM 8-1-4：多くの軽飛行機のヒーターは排気管の熱を使う。頭痛・眠気・めまいならヒーターを切り通気口を開ける。PHAK 第 17 章では hypemic hypoxia の代表例。"
+    },
+    {
+      "claim": "VFR で雲に入ってしまったら計器で翼を水平にし、来た方向へ 180° 旋回",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_2.html",
+      "note": "一般的な教え方（Airplane Flying Handbook の緊急操作の章、Inadvertent VFR flight into IMC）。AIM 6-2-1 は、計器飛行の資格がなく VFR を保てないときは資格がないことを伝えて遭難を宣言するよう書いている。"
+    },
+    {
+      "claim": "SRM：ATC・フライトサービス・自動化・チェックリスト・知識などの資源を使って判断する",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-2-aeronautical-decision-making",
+      "note": "PHAK 第 2 章：SRM は ADM・リスク管理・作業の管理・自動化の管理・CFIT の認識・状況認識を含む。"
+    },
+    {
+      "claim": "Sterile cockpit はエアラインの考え方（単独でも有効）",
+      "verdict": "imprecise",
+      "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-2-aeronautical-decision-making",
+      "note": "PHAK 第 2 章（Managing Risks）は一般機にも sterile flight deck を勧めている：出発から最初の中間高度と空域を出るまで、到着は進入の最初のレーダー誘導（または降下開始）から。エアラインは 14 CFR 121.542。"
+    },
+    {
+      "claim": "（追加候補）スキューバの後の待ち時間：8,000 ft 以下は減圧停止なしで 12 時間、ありで 24 時間、8,000 ft 超は 24 時間",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap8_section_1.html",
+      "note": "AIM 8-1-2。ACS PA.I.H.K1l。"
+    },
+    {
+      "claim": "（追加候補）暗順応は完全に約 30 分、見張りは 10° ずつ各 1 秒以上",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap8_section_1.html",
+      "note": "AIM 8-1-6。quiz.js q_hf の問題の根拠。"
+    },
+    {
+      "claim": "（追加候補）脱水の予防：1 日 2〜4 クォートの水、のどの渇きは遅れて来る",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-17-aeromedical-factors",
+      "note": "PHAK 第 17 章 Dehydration and Heatstroke（1.5 クォート不足・体重の 2% で渇きを感じる）。"
+    },
+    {
+      "claim": "参考資料：Risk Management Handbook（FAA-H-8083-2A）",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/risk-management-handbook-faa-h-8083-2a",
+      "note": "版は現行（2022）だが、book-core.js の R.rmh の URL（…/handbooksmanuals/aviation/risk-management-handbook-faa-h-8083-2a）は 404。"
+    },
+    {
+      "claim": "参考資料：PHAK（FAA-H-8083-25C）",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/phak",
+      "note": "現行。追補（PHAK Addendum (MOSAIC)）は軽スポーツ機関係で、第 2・17 章には影響しない。"
+    },
+    {
+      "claim": "（参考）自家用 ACS の Human Factors が求める項目",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf",
+      "note": "FAA-S-ACS-6C（2024-05-31 発効・現行）PA.I.H.K1：hypoxia, hyperventilation, middle ear and sinus, spatial disorientation, motion sickness, CO, stress, fatigue, dehydration and nutrition, hypothermia, optical illusions, scuba。K2・K3 飲酒と薬、K4 ADM／SRM。本の hf はこの半分ほどしか扱っていない。"
+    }
+  ],
+  "cadetNotes": [
+    "hf.adm の最初の <svg> が FIG.tem なので、CADET の教室では TEM の図が映っている。新しい図（threePLoop）を hf.adm の最初に置き、TEM は crm.tem だけに。",
+    "hf.self の bk.key「体調の不調は「準備に始まり準備に終わる」…」は intro（CADET では出ない章）の引用を前提にしている。要点はゲームで読み上げられるので、引用なしで意味が通る文にする。",
+    "hf.attitude の bk.key は 1 項目で「（Risk Management Handbook / PHAK）」まで読み上げられる。出典は本文か refs へ移し、要点は 2〜3 項目に。",
+    "hf.body の bk.sim（i2）は CADET で消える（問題なし）。新しい節（hf.altitude・hf.vision）を作るときも、アプリの使い方は bk.sim だけに書く。",
+    "CADET の授業では law と hf が同じ日（cadet/src/career/career.js の CLASSES）、問題は q_hf から 2 問。q_hf の内容（暗順応・hypemic・91.211 の 3 段階）が本文にないと、授業の要点と問題がつながらない。",
+    "写真（book-photos.js）は CADET に出ないので、各節の最初の図だけで要点が伝わるようにする。"
+  ]
+}

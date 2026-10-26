@@ -1,0 +1,495 @@
+{
+  "id": "perf",
+  "title": "性能と重量・重心（Performance, weight and balance）",
+  "sections": [
+    {
+      "id": "perf.da",
+      "title": "密度高度：暑い・高い・湿った日は性能が落ちる",
+      "gist": "空気の密度が性能を決めること、気圧高度と密度高度の出し方（概算式）、暑い日・湿った日に性能が落ちることを学ぶ。",
+      "issues": [
+        "最初の図が FIG.atm（ISA の気温のグラフ）で、wx.atm（book-2.js:11）と同じ図。密度高度そのもの（「暑い日の低い空港は、高い空港と同じように飛ぶ」）を見せていない。CADET の教室スクリーンにもこの ISA の図が出る。",
+        "「密度を『標準大気なら何 ft に相当するか』で表したもの」は初学者には抽象的。先に具体例（55 ft の空港でも 33℃ なら、約 2,200 ft の空港と同じ性能）を言うべき。",
+        "式「気圧高度 ≒ 標高 ＋（29.92 − 高度計規正値）× 1,000 ft」「密度高度 ≒ 気圧高度 ＋ 120 ×（気温 − 標準気温）」が、気圧高度（高度計を 29.92 に合わせたときの表示）と標準気温（15℃ − 1,000 ft ごとに 2℃）の説明より前に出る。",
+        "120 ft/℃ の式が公的な式のように書かれている。PHAK と FAA-P-8740-2 は表・計算尺（E6B）を使う。広く使われる概算（FAA の表よりやや大きめに出る）と書き、「性能表には気圧高度と気温を入れる」と添える。",
+        "本文「密度高度は 2,000 ft を超えます」、examples「約 2,300 ft」、同じ条件の計算機の既定表示 2,228 ft が食い違う。",
+        "「湿度も密度を下げます（水蒸気は乾いた空気より軽い）」だけで、式に入らないこと・どうするかがない（PHAK：湿度の目安の式はない／FAA-P-8740-2：湿度が高ければ計算した離陸距離に 10% 足す）。フロリダの夏には大切。",
+        "「性能（エンジンの出力・プロペラの推力・翼の揚力）は空気の密度で決まります」と 3 つ挙げながら、それぞれがどう落ちるかの説明がない。",
+        "「ここが大切」2 つ目「密度高度が高いと、真対気速度は速いが、指示対気速度で見る失速速度・Vr は同じ（IAS で飛ぶ）」は TAS・IAS・Vr の 3 用語を一度に使い、約 60 字。結果（浮く・接地するときの対地速度が速い → 距離が延びる）が書かれていない。",
+        "このシミュレータは常に標準大気で飛ぶ（physics.js の oatDev を app が設定しない）。暑い日の性能低下は体験できず、PFD 型表示の OAT が約 15℃ なのは標準大気だから、という説明がない（radio.js の ATIS は 31℃・32℃）。"
+      ],
+      "mainFigure": "「同じ LAB（55 ft）でも気温で密度高度が変わる」棒グラフ：気温 15 / 25 / 33 / 38℃ の密度高度（本書の概算式で 68 / 1,268 / 2,228 / 2,828 ft）と、その密度での教材モデルの Vy 上昇率（778 / 731 / 693 / 670 fpm、FL.physics.steadyState を altFt＝密度高度で）を並べる。模式図。"
+    },
+    {
+      "id": "perf.tol",
+      "title": "離着陸距離と POH の性能表",
+      "gist": "離着陸距離を変える要素（重量・密度高度・風・路面・勾配）、性能表の「地上滑走」と「50 ft 越え」の違い、余裕と離陸中止点を学ぶ。",
+      "issues": [
+        "図がない（表だけ）。CADET の教室スクリーンに何も出ない。「地上滑走」と「50 ft の障害物を越えるまでの距離」は図で見せるべき。",
+        "「性能表の値は新しい機体と熟練した操縦士で測ったもの」→ PHAK 25C 第 11 章は「新しい機体・通常の運用条件・平均的な操縦技量（average piloting skills）・機体とエンジンが良い状態」。「熟練した」は誤り。",
+        "「追い風成分 10% ごとに距離が大きく延びる」は何の 10% か分からない。PHAK：離陸速度の 10% の追い風で離陸距離が約 21% 延び、10% の向かい風で約 19% 短くなる（着陸も同じ）。Archer の浮揚速度約 60 kt なら約 6 kt。",
+        "「滑走路の半分までに Vr の 70% に達しなければ中止＝広く教えられている目安」→ 出典は AIM 7-6-8 で「浮揚速度（lift-off airspeed）の 70%」。AIM は「小型機の速度計は失速速度より下では正確とは限らない」「路面が一様な場合だけ」と注意している。この key は約 80 字で、音読には長すぎる。",
+        "表は「延びる／短くなる」だけで大きさがない。PHAK の数字（重量 10% 増 → 離陸距離 21% 以上増、風は上記）を入れると初学者にも重さが分かる。",
+        "性能表の読み方の例が一つもない。公開値の例（Archer TX、Piper・AOPA：標準大気・海面・2,550 lb で離陸滑走 1,135 ft／50 ft 越え 1,608 ft、着陸滑走 920 ft／50 ft 越え 1,400 ft）と、LAB RWY 36（1,200 m＝3,937 ft）を比べる例があるとよい。",
+        "「実際には余裕（マージン）を持たせる」の量も根拠もない。数字を出さないなら ACS PA.I.F.R3（計算と実際の性能の違い）を根拠に「教官・訓練校の決まりに従う」と書く。",
+        "bk.sim の短距離離陸（レッスン x3）はフラップ 0・Vr 60（syllabus.js）だが、ops.short の訓練校チェックリストはフラップ 25°・Vr 55。どちらが教材の簡略版か書かれていない。"
+      ],
+      "mainFigure": "LAB RWY 36（1,200 m＝3,937 ft、FL.physics.LAB_RWY.len）の側面図に、地上滑走と 50 ft の障害物を越えるまでの距離（Archer の公開値 1,135 / 1,608 ft、2,550 lb・標準大気）を色分けし、滑走路の中間点に「浮揚速度の 70%（約 42 kt）に達していなければ中止」の確認点（AIM 7-6-8）を描く。模式図。"
+    },
+    {
+      "id": "perf.climb",
+      "title": "上昇・巡航・燃料消費の目安",
+      "gist": "Vx と Vy の使い分け、教材モデルの上昇率と巡航のパワー、燃料計画の基本を学ぶ。",
+      "issues": [
+        "図がない。Vx（距離あたり最も高く）と Vy（時間あたり最も高く）の違いは言葉だけでは分かりにくい。",
+        "ops.climb の表（Vx 64・Vy 76・巡航上昇 87）と内容が重なる。手順は ops.climb に任せ、ここは「なぜ 2 つあるか」に絞る。",
+        "表「この教材の Archer（教材モデルの計算値）」に条件（重量 1,050 kg＝2,315 lb、標準大気、フラップ 0、全開）が書かれていない。公開値（AOPA：2,550 lb・海面・標準大気で 667 fpm）との比較もない。",
+        "「スロットル約 76%」はモデル独自の量（スロットルレバーの位置）で、実機の「出力 %（75% power）」と混同しやすい。",
+        "燃料：「巡航で 1 時間に 8〜10 US gal 前後」と計算機の既定 9.5 gal/h が、教材モデルの燃料流量（3,000 ft・110 KIAS で約 11.5 gal/h、PFD 型表示の FFLOW GPH に出る）と合わない。公開値は 75% 出力で約 10.5 gal/h（AOPA）。",
+        "「燃料消費は出力でおおきく変わります」は表記ゆれ（大きく）。",
+        "燃料の予備「昼 30 分・夜 45 分」に根拠（14 CFR 91.151）と条件（最初の着陸予定地まで飛んだあと、通常の巡航速度で）がない。航空ガソリンの重さ 6 lb/gal（quiz.js q_perf で出題）も本文にない。",
+        "1 節に上昇・巡航・燃料の 3 話題が入っている。燃料計画を新しい節（perf.fuel）に分けるとよい。",
+        "教材モデルでは最良上昇率の速度が約 81〜84 KIAS（海面で 87 KIAS の上昇率 797 fpm ＞ 76 KIAS の 781 fpm）。差は 2% と小さいが、本文で「モデルで Vy が最も速く上がる」と書くと飛行モデルと食い違う。Vy はチェックリストの値として示す。"
+      ],
+      "mainFigure": "側面図：同じ地点から 1 分間全開で上昇した 2 本の経路。Vx 64 KIAS（約 690 ft、1.07 NM 先）と Vy 76 KIAS（約 780 ft、1.27 NM 先）。途中に 50 ft の障害物を置き、同じ距離では Vx が高く、同じ時間では Vy が高いことを示す。数値は FL.physics.steadyState（海面・全開・1,050 kg）。模式図。"
+    },
+    {
+      "id": "perf.wb",
+      "title": "重量と重心（Weight & Balance）",
+      "gist": "重量と重心が性能・安定に与える影響と、重量 × アーム＝モーメント → 重心の計算、許容範囲の確認を学ぶ。",
+      "issues": [
+        "基準線（datum）・アーム・モーメントを式だけで説明している。初学者には「シーソー（てこ）」と機体の側面図が必要。",
+        "警告「上の計算機と図の数値（アーム・許容範囲）は教材用近似です」→ 実際は FAA の型式証明データシート TCDS 2A13（PA-28-181 Archer III）の公開値と同じ（座席 +80.5 / +118.1、燃料 +95、手荷物 200 lb・+142.8、重心範囲 82.0〜93.0 in（2,050 lb 以下）・88.6〜93.0 in（2,550 lb）、最大離陸重量 2,550 lb）。空虚重量 1,640 lb・87.0 in だけが例。「公開値（TCDS）と例」と書き分ける。",
+        "examples「後席に 2 人と手荷物 50 lb を積んだら、重心が後方限界に近づいた → 手荷物を減らす」は、計算機の既定値で計算すると 2,610 lb で最大重量 2,550 lb を 60 lb 超える（重心 92.0 in は範囲内）。例として誤り。",
+        "「燃料が減ると重心が動くので、着陸時も確認」に向きがない。Archer は燃料のアーム（95.0 in）が通常の重心（約 88〜91 in）より後ろなので、燃料が減ると重心は少し前へ動く（既定の積み方で 89.96 → 89.56 in）。",
+        "表「前すぎ」に PHAK の「巡航速度が遅くなる」、「後ろすぎ」に「失速の性質が激しくなる」がない（任意で追加）。",
+        "CADET では計算機（bk.calc）が消え、警告の 1 文目（「上の計算機と…」）も消える。静的な計算例（表）がないので、CADET の読者は数字の例を一つも見られない。",
+        "図 wbEnvelope：下辺 1,600 lb は図の端なのに制限線のように閉じている。最大重量 2,550 lb の線・重心の限界値（82.0 / 88.6 / 93.0）・計算機の既定の点が描かれていない。",
+        "計算機 wb：燃料の行は lb で入力（gal で入れたくなる）、着陸時（燃料を使った後）の欄がない、範囲外のとき「重量超過・前すぎ・後ろすぎ」のどれかを言わない。"
+      ],
+      "mainFigure": "Archer の側面シルエットに基準線（主翼の直線部とテーパー部の境の前縁から 78.4 in 前、TCDS 2A13）と各ステーション（前席 80.5・燃料 95.0・後席 118.1・手荷物 142.8 in）を矢印で示し、主翼の下に許容重心範囲 82.0〜93.0 in の帯、既定の積み方の重心 89.96 in（2,420 lb）を ▲ で描く。数値は FL.bookCalc.ARCHER_WB。"
+    }
+  ],
+  "problems": {
+    "unclear": [
+      "perf.da：「密度を『標準大気なら何 ft に相当するか』で表したもの」— 抽象的。具体例を先に。",
+      "perf.da：「気圧高度」「標準気温」「高度計規正値」が式の中で初めて出る（日本語（English）の説明なし）。",
+      "perf.da の key「真対気速度は速いが、指示対気速度で見る失速速度・Vr は同じ（IAS で飛ぶ）」— 何が起きるか（距離が延びる）が書かれていない。",
+      "perf.tol の key「追い風成分 10% ごとに距離が大きく延びる」— 何の 10% か不明（PHAK：離陸速度の 10%）。",
+      "perf.tol：「性能表は気圧高度・気温・重量・風・滑走路の状態で距離が変わる形で書かれています」— 表の形を見せていないので読み方が分からない。",
+      "perf.climb：「スロットル約 76%」— モデルのレバー位置で、実機の出力 % ではないことが書かれていない。",
+      "perf.climb の key「燃料は『時間 × 消費率 ＋ 予備（昼 30 分・夜 45 分）＋ タキシー・上昇分』で計画」— 予備の消費率が「通常の巡航」で、起点が「最初の着陸予定地」であること（91.151）がない。",
+      "perf.wb：「燃料が減ると重心が動く」— どちらへ動くか書かれていない。",
+      "perf.wb：表の「安定しすぎて操縦が重い」と「操縦が軽すぎて引きすぎやすい」— 初学者には「引きすぎ」が何を壊すのか（機体に大きな荷重がかかる、PHAK：overstress）が分からない。"
+    ],
+    "order": [
+      "perf.da：式が用語（気圧高度・標準気温）の説明より先。用語 → 例 → 式 → 計算機の順に。",
+      "perf.climb：上昇の話の後ろに燃料計画が混ざっている。燃料は新しい節 perf.fuel に分ける。",
+      "perf.wb の「重量が重いと失速速度が上がり、離陸距離が延び…」は perf.tol・perf.climb の前提なのに章の最後。順は保つなら perf.tol の表で「重量」を 1 行で説明し、perf.wb を参照ボタン（bk.see）でつなぐ。",
+      "perf.wb：計算機 → 図 → 警告 の順で、警告が「上の計算機と図」を指す。警告は計算の手順の直後（図・計算機の前）に置き、「上の計算機」という言い方をやめる（CADET で消える）。"
+    ],
+    "errors": [
+      "perf.tol「性能表の値は新しい機体と熟練した操縦士で測ったもの」→ PHAK 25C 第 11 章：test flights in a new aircraft, under normal operating conditions, average piloting skills, aircraft and engine in good working order（https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-11-aircraft-performance）",
+      "perf.tol「滑走路の半分までに Vr の 70%」→ AIM 7-6-8：70 percent of lift-off airspeed by the midpoint of the runway（浮揚速度の 70%）。目安であり、速度計が低速で正確でない・路面が一様でない場合の注意つき（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_6.html）",
+      "examples「夏の Sanford（55 ft・33℃・29.92 inHg）：密度高度は約 2,300 ft」→ 本書の概算式で 2,228 ft（約 2,200 ft、計算機の表示と同じ）、乾燥空気の正確な計算で約 2,120 ft、FAA-P-8740-2 の早見表（海面・90°F）で約 1,900 ft（https://www.faasafety.gov/files/gslac/library/documents/2011/Aug/56396/FAA%20P-8740-02%20DensityAltitude%5Bhi-res%5D%20branded.pdf）",
+      "examples「後席に 2 人と手荷物 50 lb を積んだら、重心が後方限界に近づいた」→ ARCHER_WB の既定値（BEW 1,640・前席 340・燃料 240 lb）に後席 340・手荷物 50 lb で 2,610 lb＝最大離陸重量 2,550 lb を超過、重心 92.0 in は範囲内。後方超過の正しい例：前席 170・後席 340・手荷物 100・燃料 30 gal（180 lb）→ 2,430 lb・93.8 in（TCDS 2A13 の後方限界 93.0 in 超）",
+      "perf.wb「数値（アーム・許容範囲）は教材用近似」→ FAA TCDS 2A13（PA-28-181 Archer III）と同じ公開値。近似なのは空虚重量とその重心だけ（https://drs.faa.gov で 2A13 を検索。確認した写し：Revision 48）",
+      "perf.tol「追い風成分 10% ごとに距離が大きく延びる」→ PHAK：離陸速度の 10% の追い風で約 21% 増（向かい風 10% で約 19% 減、50% の向かい風で約 75% 減）。「10% ごとに」ではない（https://www.faa.gov/sites/faa.gov/files/13_phak_ch11.pdf）"
+    ],
+    "outdated": [
+      "refs の FAA Aircraft Weight and Balance Handbook（R.wb、book-core.js:27）の URL https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/weight_balance_handbook は 404（2026-10-26 確認）。版は今も FAA-H-8083-1B（新版 1C はない）。PDF：https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-1.pdf。MOSAIC 規則に伴う Addendum（2025-10-20 付）が「改訂版が出るまで現行版の一部」とされるが、変更は第 2 章の 1 段落と第 4 章（WSC・動力付きパラシュート・自作機・LSA）だけで、Archer の重量重心には影響しない。",
+      "PHAK FAA-H-8083-25C は現行版。MOSAIC の Addendum（https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/PHAK_Addendum_(MOSAIC).pdf）があるが本章の内容には影響しない。",
+      "MGA の Archer III G1000 チェックリスト（2025、09012025 final）は有効（200）。Vy 76・Vx 64・巡航上昇 87（地上 1,000 ft で）・短距離離陸フラップ 25°・Vr 55 を確認。",
+      "参考：Private Pilot ACS は FAA-S-ACS-6C（2023 年 11 月）が現行。本章は PA.I.F Performance and Limitations（K2a〜f、R3、S1：着陸まで重量重心が範囲内か）に対応するが refs にない。"
+    ],
+    "duplicates": [
+      "FIG.atm と ISA の説明（15℃・29.92 inHg・2℃/1,000 ft・1 inHg/1,000 ft）は wx 章 wx.atm（book-2.js:11–12）と同じ。perf.da では最初の図にせず wx.atm を参照する。",
+      "Vx・Vy・巡航上昇の速度表は ops 章 ops.climb（book-3.js:74–79）と重複。",
+      "短距離離陸の手順は ops 章 ops.short（book-3.js:163–171）。perf.tol の bk.sim と同じレッスン x3。",
+      "VFR の燃料予備（91.151）は law 章（book-2.js:74・章末クイズ）、IFR の 91.167 は ifrp 章（book-4.js:183・222）でも扱う。perf.fuel では計算に使う形だけ示して参照。",
+      "重心と縦の安定は aero 章 aero.stability（book-1.js:119–120「重心位置は安定性そのもの」）と重複。",
+      "章末クイズ Q1 は quiz.js q_perf の 1 問目とほぼ同文、Q2 は q_perf の最後の問題と同じ内容。"
+    ],
+    "numbers": [
+      "perf.climb の表（FLIGHT LAB）：約 780 fpm（モデル 777）・約 660 fpm（663）・スロットル約 76%（0.760）・約 2,400 rpm（2,401）— FL.physics と一致。ただし同じコードを CADET で描くと FL.physics が空島の飛行モデルに置き換わり、約 730 fpm・約 620 fpm・79%・2,400 rpm と表示される。",
+      "表の数字の条件が未記載：モデルの重量 1,050 kg＝2,315 lb（physics.js pa28.phys.mass）、標準大気。公開値は 2,550 lb・海面・標準大気で 667 fpm（AOPA）。",
+      "教材モデルの最良上昇率速度は約 84 KIAS（海面）・81 KIAS（3,000 ft）。87 KIAS（797 fpm）が 76 KIAS（781 fpm）よりわずかに上がる。最良上昇角は 63〜64 KIAS で Vx 64 と一致。",
+      "燃料流量：モデル（physics.js:622、avionics.js:443 の FFLOW GPH）は 3,000 ft・110 KIAS で約 11.5 gal/h（100 KIAS 10.1、90 KIAS 8.9、全開・海面 16.5）。本文「8〜10 gal/h」と計算機の既定 9.5 gal/h より多い。公開値は 75% 出力で 10.5 gal/h（AOPA）。",
+      "physics.js:110 の v.cruiseThr 0.79 と、110 KIAS・3,000 ft の水平飛行に要るスロットル 0.76（steadyState）がわずかに違う（表は 76% と出す）。",
+      "密度高度の例：本文「2,000 ft を超える」・examples「約 2,300 ft」・計算機の既定表示 2,228 ft・正確な計算 約 2,120 ft。「約 2,200 ft（概算式）」にそろえる。",
+      "radio.js:69・111 と book-comm.js:236 の LAB ATIS は気温 31℃・32℃（露点 22℃、高度計 30.01 / 30.00）だが、飛行モデルは常に標準大気（OAT 約 15℃、密度高度＝気圧高度）。perf.da の例に ATIS（31℃・30.01 → 密度高度 約 1,900 ft）を使うなら、モデルは標準大気で飛ぶことを書く。",
+      "ARCHER_WB の燃料 40 gal（240 lb）に対し、シミュレータの初期燃料は fuelCap 24 gal × 2 × 0.8＝38.4 gal（physics.js:457）。使用可能燃料 48 gal（24 × 2）は Piper の公開値と一致。",
+      "モデルの離陸滑走距離（簡単な自動操縦で試算）：標準大気・無風で約 1,000 ft、気温 +18℃（33℃）で約 1,150 ft（+15%）、向かい風 6 kt で約 880 ft（−13%）、追い風 6 kt で約 1,160 ft（+16%）。PHAK の ±19〜21% とおおむね同じ向き・大きさ。公開値（2,550 lb）は 1,135 ft。",
+      "syllabus.js:260–263 のレッスン x3（短距離離陸）はフラップ 0・Vr 60（AR.rotate）。ops.short の訓練校チェックリストはフラップ 25°・Vr 55。",
+      "quiz.js q_perf は 6 lb/gal・91.151・実証横風 17 kt・Va と重量（113 / 89 kt）を出題するが、本章の本文は 6 lb/gal（計算機の行名だけ）・91.151（条文番号なし）を説明していない。"
+    ]
+  },
+  "policy": "節の順（perf.da → perf.tol → perf.climb → perf.wb）は保ち、各節の最初で「性能を決めるのは空気の密度・重量・風・路面」という 1 つの見取り図を示します。perf.da は「暑い日の低い空港は高い空港と同じように飛ぶ」を最初に言い、気圧高度（Pressure altitude）・標準気温を説明してから式を出し、120 ft/℃ は FAA の表に近い概算だと明記し、例は LAB の ATIS（31℃・30.01 → 約 1,900 ft）と夏の 33℃（約 2,200 ft）にそろえます（ISA の図は wx.atm を参照し、最初の図にしない）。perf.tol は距離の図を先に置き、要素の表に PHAK の数字（風 10% で ±19〜21%、重量 10% 増で 21% 以上）、AIM 7-6-8 の「中間点で浮揚速度の 70%」、公開値の読み方の例を入れ、「熟練した操縦士」を直します。perf.climb は Vx/Vy の「なぜ 2 つあるか」と教材モデルの値（1,050 kg・標準大気・FL.physics から計算、決して書き写さない）に絞り、速度表は ops.climb を参照し、燃料計画は新しい節 perf.fuel（91.151 の予備、6 lb/gal、モデルの燃料流量、計算機と静的な計算例、使用可能燃料 48 gal）へ移します。perf.wb はシーソーと機体側面のステーション図で基準線・アーム・モーメントを説明し、アームと許容範囲は TCDS 2A13 の公開値・空虚重量は例と書き分け、燃料が減ると重心が少し前へ動くことを示し、誤った例を直します。新しい節 perf.wbex（計算例と積み方の直し方）に静的な計算表（後方超過 → 後席の人を前席へ移す）と計算機を置きます（CADET では計算機が消えるため）。「このシミュレータは標準大気で飛ぶので暑い日の性能低下は体験できない」は bk.sim の中で 1 回だけ書きます。",
+  "figuresExisting": [
+    {
+      "key": "atm",
+      "verdict": "fix",
+      "why": "perf.da の最初の図だが wx.atm と同じ図で、密度高度を見せていない → perf.da では最初の図をやめ（wx.atm 側に残す）、densityAltitude を先頭に。図自体も直す：「気圧は 1,000 ft あたり約 1 inHg 下がる」が viewBox（幅 400）の外にはみ出す（x 268〜441）、文字 10〜11（390 px で 8.6 px）を 12 以上に。"
+    },
+    {
+      "key": "wbEnvelope",
+      "verdict": "fix",
+      "why": "形は TCDS 2A13 と一致するが、目盛り・ラベルが 11（390 px で 8.6 px）。最大重量 2,550 lb の線、限界値 82.0 / 88.6 / 93.0 in のラベル、計算機の既定の点（2,420 lb・89.96 in）と着陸時の点（2,240 lb・89.56 in）がない。下辺 1,600 lb は図の端なのに閉じた線で制限のように見える（点線か開いた形に）。キャプションの「教材用近似」を「TCDS 2A13 の公開値（Archer III）。実機は各機の重量重心表と POH」に。perf.wb では 2 番目の図に（先頭は wbStations）。"
+    }
+  ],
+  "figuresNew": [
+    {
+      "name": "densityAltitude",
+      "section": "perf.da",
+      "what": "同じ LAB（55 ft）で気温 15 / 25 / 33 / 38℃ のときの密度高度を棒で、教材モデルの Vy 上昇率を折れ線（右軸）で。ATIS の例（31℃・30.01 → 約 1,900 ft）を ▲ で。見出し「暑い日の LAB は、高い空港と同じ」。",
+      "data": "FL.bookCalc.da と同じ式（気圧高度＋120×（気温−標準気温））、上昇率は FL.physics.steadyState(pa28, V.y, pwr full, altFt＝密度高度)：778 / 731 / 693 / 670 fpm",
+      "priority": "must"
+    },
+    {
+      "name": "takeoffDistance",
+      "section": "perf.tol",
+      "what": "滑走路の側面図：地上滑走（ground roll）と、浮いてから 50 ft の障害物を越えるまでの距離を色分け。滑走路の中間点に離陸中止の確認点。LAB RWY 36 の長さと比べる。",
+      "data": "公開値（Piper Archer TX 仕様書・AOPA：2,550 lb・海面・標準大気）1,135 ft / 1,608 ft（bk.fact）、FL.physics.LAB_RWY.len 1,200 m、浮揚速度は FL.physics の AR.rotate 60 kt × 0.7 ≈ 42 kt（AIM 7-6-8）",
+      "priority": "must"
+    },
+    {
+      "name": "windEffect",
+      "section": "perf.tol",
+      "what": "向かい風・追い風（離陸速度に対する割合 −30%〜+30%）と離着陸距離の増減の曲線（PHAK 図 11-19 を教材の模式図に）。Archer の約 6 kt（10%）に印。",
+      "data": "PHAK 25C 第 11 章：距離 ≈ (1 − 風/離陸速度)²（向かい風 10% → −19%、追い風 10% → +21%、向かい風 50% → −75%）、浮揚速度は FL.physics AR.rotate",
+      "priority": "should"
+    },
+    {
+      "name": "climbVxVy",
+      "section": "perf.climb",
+      "what": "同じ点から 1 分間全開上昇した Vx と Vy の経路の側面図と、50 ft の障害物。「同じ距離なら Vx が高い・同じ時間なら Vy が高い」。",
+      "data": "FL.physics.steadyState(pa28, V.x / V.y, pwr full, altFt 100)：Vx 64 KIAS 約 690 fpm（約 650 ft/NM）、Vy 76 KIAS 約 780 fpm（約 615 ft/NM）。速度は AR.x / AR.y",
+      "priority": "must"
+    },
+    {
+      "name": "climbVsAltitude",
+      "section": "perf.climb",
+      "what": "教材モデルの Vy 上昇率と高度（0〜14,000 ft）の折れ線。高いほど・暑いほど上昇率が落ちることを perf.da とつなぐ。",
+      "data": "FL.physics.steadyState(pa28, V.y, pwr full, altFt)：781（0 ft）・741（1,000）・663（3,000）・585（5,000）・467（8,000）・389（10,000）・233（14,000）fpm",
+      "priority": "nice"
+    },
+    {
+      "name": "fuelPlan",
+      "section": "perf.fuel",
+      "what": "積み上げ棒：タキシー・上昇の分 ＋ 巡航（目的地まで）＋ 予備（昼 30 分／夜 45 分、91.151）と、使用可能燃料 48 gal の比較。",
+      "data": "FL.bookCalc.fuel の既定（120 NM・105 kt・30 分）、燃料流量は FL.physics の巡航時の値（3,000 ft・110 KIAS で約 11.5 gal/h：shaft/745.7×0.078）、使用可能燃料は AIRCRAFT.pa28.fuelCap × 2＝48 gal",
+      "priority": "should"
+    },
+    {
+      "name": "wbStations",
+      "section": "perf.wb",
+      "what": "Archer の側面シルエット：基準線（datum）、前席・燃料・後席・手荷物のアーム、許容重心範囲の帯、既定の積み方の重心。上に小さなシーソーで「重量 × アーム＝モーメント」。",
+      "data": "FL.bookCalc.ARCHER_WB（rows のアーム 80.5 / 95.0 / 118.1 / 142.8、env の 82.0〜93.0 in）、基準線は TCDS 2A13（主翼の直線部とテーパー部の境の前縁から 78.4 in 前）",
+      "priority": "must"
+    },
+    {
+      "name": "wbExample",
+      "section": "perf.wbex",
+      "what": "計算例の表（SVG 表か bk.t）：後方超過の積み方（2,430 lb・93.8 in）→ 後席の 1 人を前席へ（2,430 lb・91.2 in）→ 着陸時（燃料 −20 gal）の 3 行と、エンベロープ上の 3 点。",
+      "data": "FL.bookCalc.ARCHER_WB のアームと限界（計算で出す）",
+      "priority": "should"
+    }
+  ],
+  "photos": [
+    {
+      "section": "perf.da",
+      "subject": "高地の空港にある「Check density altitude（密度高度に注意）」の看板",
+      "search": "Commons: \"density altitude sign\", Category:Lake County Airport (Colorado), Category:Airport signs in the United States",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "「暑い・高い」で性能が落ちることを現実の注意喚起として見せる（ファイルごとにライセンス確認）"
+    },
+    {
+      "section": "perf.tol",
+      "subject": "滑走路の残り距離標識（Runway distance remaining sign）",
+      "search": "Commons: Category:Runway distance remaining signs; FAA AC 150/5340-18 の図（米国政府の著作物）",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "滑走路の中間点・残り距離で離陸中止を判断する考え方につなげる"
+    },
+    {
+      "section": "perf.tol",
+      "subject": "芝の滑走路（turf / grass runway）",
+      "search": "Commons: Category:Grass runways, Category:Grass airstrips in the United States",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "芝・柔らかい地面で離陸距離が延びる（FAA-P-8740-2：長い芝は 2 倍になることも）"
+    },
+    {
+      "section": "perf.climb",
+      "subject": "離陸後に上昇する個人所有の Piper PA-28-181 Archer（学校の塗装でないもの）",
+      "search": "Commons: Category:Piper PA-28-181 Archer (in flight), Category:Piper PA-28 Cherokee in flight",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "上昇姿勢と前方視界（巡航上昇 87 KIAS の理由）を見せる。訓練校・航空会社の機体は不可"
+    },
+    {
+      "section": "perf.fuel",
+      "subject": "航空ガソリン（100LL）のセルフ給油機または給油車",
+      "search": "Commons: Category:Avgas, Category:Aircraft refueling (general aviation)",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "燃料の重さ（6 lb/gal）と計画の話の導入"
+    },
+    {
+      "section": "perf.wb",
+      "subject": "機体を秤（はかり）に載せて重量を測っている様子",
+      "search": "images.nasa.gov / NASA Armstrong: \"weight and balance\" test（例：X-57・X-59 の重量重心試験）、DVIDS / af.mil: \"aircraft weighing\"",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "空虚重量と重心は 1 機ずつ測って決まることを見せる（米国政府の著作物は原則パブリックドメイン。顔が写らないもの）"
+    },
+    {
+      "section": "perf.wb",
+      "subject": "PA-28 の手荷物室の扉（機体後方）",
+      "search": "Commons: Category:Piper PA-28 Cherokee (details), \"PA-28 baggage door\"",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "手荷物のアームが長い（142.8 in）ことを位置で実感させる"
+    }
+  ],
+  "endMatter": {
+    "terms": [
+      "追加：International Standard Atmosphere (ISA)／国際標準大気／海面 15℃・29.92 inHg、1,000 ft ごとに約 2℃ 下がる",
+      "追加：Standard temperature／標準気温／その気圧高度での ISA の気温",
+      "追加：Altimeter setting／高度計規正値／ATIS の Altimeter（例 30.01）",
+      "追加：Indicated / True airspeed (IAS / TAS)／指示対気速度・真対気速度／密度高度が高いと同じ IAS でも TAS が速い",
+      "追加：Headwind / Tailwind component／向かい風成分・追い風成分",
+      "追加：Abort point／離陸中止点／AIM 7-6-8：中間点で浮揚速度の 70%",
+      "追加：Rate of climb (fpm)／上昇率（フィート毎分）",
+      "追加：Fuel flow (GPH)／燃料流量（ガロン毎時）",
+      "追加：Fuel reserve／予備燃料／91.151：昼 30 分・夜 45 分",
+      "追加：Basic empty weight / Useful load／基本空虚重量・有効搭載量",
+      "追加：Maximum takeoff weight／最大離陸重量／Archer 2,550 lb",
+      "修正：Pressure altitude の説明を「高度計を 29.92 inHg に合わせたときの表示」に",
+      "修正：Datum の説明に「Archer は主翼前縁（直線部とテーパー部の境）の 78.4 in 前（TCDS）」"
+    ],
+    "examples": [
+      "LAB の ATIS「気温 31℃・高度計 30.01」：気圧高度 ≈ 55 ＋（29.92 − 30.01）× 1,000 ≈ −35 ft、標準気温 約 15℃、密度高度 ≈ −35 ＋ 120 × 16 ≈ 1,900 ft（概算式）。",
+      "夏の LAB（55 ft・33℃・29.92 inHg）：密度高度は概算式で約 2,200 ft。離陸距離が延び、上昇率が下がる（教材モデルで Vy 上昇率 778 → 約 690 fpm）。",
+      "浮揚速度 約 60 kt の Archer で追い風 6 kt（10%）：離陸距離は約 2 割延びる（PHAK）。",
+      "前席は操縦士 1 人（170 lb）、後席 2 人（340 lb）、手荷物 100 lb、燃料 30 gal（180 lb）：2,430 lb・重心 93.8 in で後方限界 93.0 in を超える → 後席の 1 人を前席へ移すと 91.2 in で範囲内。",
+      "既定の積み方（2,420 lb・89.96 in）で燃料を 30 gal 使うと 2,240 lb・89.56 in：燃料が減ると重心は少し前へ動く。"
+    ],
+    "cautions": [
+      "性能表・重量重心表は機体ごとに違う（空虚重量と重心は 1 機ずつ測る）。実機は POH/AFM とその機体の重量重心記録が優先。",
+      "120 ft/℃ の式は目安。性能表には気圧高度と気温を入れて読む。",
+      "追い風・暑さ・湿度・芝・重い重量は重なると距離が大きく延びる（FAA-P-8740-2：湿度が高ければ離陸距離に 10% を足す）。",
+      "この章の教材モデルの数字（上昇率・燃料流量）は標準大気・1,050 kg の計算値で、実機の性能ではない。"
+    ],
+    "quizReview": [
+      "Q1：fix（quiz.js q_perf の 1 問目とほぼ同文で重複。密度高度の計算問題に置き換えるか、理由を問う形に）",
+      "Q2：keep（PHAK 第 10 章と一致。why の「前すぎは…フレアで引ききれない」も正しい）",
+      "Q3：fix（誤答の「燃料価格」「機体の塗装」が明らかすぎる。「気象情報（すべての飛行）」「代替飛行場（すべての飛行）」「ATC の遅延情報だけ」など、91.103(a) と (b) を取り違えやすい選択肢に）"
+    ],
+    "quizProposals": [
+      {
+        "q": "LAB（標高 55 ft）の ATIS：気温 31℃、高度計 30.01。概算式で密度高度はおよそ？",
+        "choices": ["約 −35 ft", "約 1,900 ft", "約 3,700 ft", "約 31,000 ft"],
+        "answer": 1,
+        "why": "気圧高度 ≈ 55 ＋（29.92 − 30.01）× 1,000 ≈ −35 ft。標準気温は約 15℃ なので 16℃ 高い。−35 ＋ 120 × 16 ≈ 1,900 ft。"
+      },
+      {
+        "q": "離陸速度の 10% にあたる追い風（Archer で約 6 kt）で離陸すると、離陸距離はおよそどうなる？",
+        "choices": ["変わらない", "約 10% 延びる", "約 21% 延びる", "約 2 倍になる"],
+        "answer": 2,
+        "why": "PHAK：離陸速度の 10% の追い風で約 21% 延び、10% の向かい風で約 19% 短くなる。着陸も同じ。"
+      },
+      {
+        "q": "合計重量 2,400 lb、合計モーメント 216,000 lb-in のとき、重心は基準線から何 in？",
+        "choices": ["80.0 in", "90.0 in", "111.1 in", "2,400 in"],
+        "answer": 1,
+        "why": "重心＝合計モーメント ÷ 合計重量＝216,000 ÷ 2,400＝90.0 in。"
+      },
+      {
+        "q": "AIM 7-6-8 の目安で、離陸滑走中に滑走路の中間点までに達していなければ離陸を中止するのは？",
+        "choices": ["Vy", "浮揚速度の 70%", "浮揚速度の 50%", "巡航速度"],
+        "answer": 1,
+        "why": "中間点で浮揚速度（lift-off airspeed）の 70% に届かなければ、残りの滑走路で浮けないおそれがある。ただし目安で、低速の速度計の誤差や路面にも注意。"
+      },
+      {
+        "q": "昼の VFR。最初の着陸予定地まで 1 時間 10 分、燃料流量 10 gal/h。91.151 の最低限の燃料は（タキシー・上昇の分を除く）？",
+        "choices": ["11.7 gal", "16.7 gal", "19.2 gal", "21.7 gal"],
+        "answer": 1,
+        "why": "（70 分 ＋ 予備 30 分）÷ 60 × 10 gal/h ≈ 16.7 gal。夜なら予備 45 分で約 19.2 gal。"
+      }
+    ],
+    "refs": [
+      "update：R.wb の URL（404）→ https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-1.pdf（版は FAA-H-8083-1B のまま。一覧：https://www.faa.gov/regulations_policies/handbooks_manuals/aviation 、Addendum（MOSAIC・2025-10-20）は Archer に影響なし）",
+      "keep：PHAK FAA-H-8083-25C。第 10 章 https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-10-weight-and-balance 、第 11 章 https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-11-aircraft-performance を本文の出典に",
+      "add：FAA-P-8740-2 Density Altitude（FAASTeam） https://www.faasafety.gov/files/gslac/library/documents/2011/Aug/56396/FAA%20P-8740-02%20DensityAltitude%5Bhi-res%5D%20branded.pdf （早見表・湿度 +10%・5,000 ft 以上でミクスチャーを最良出力に）",
+      "add：AIM 7-6-7 Mountain Flying（Effects of Density Altitude）・7-6-8 Use of Runway Half-way Signs https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_6.html",
+      "add：14 CFR 91.103 https://www.ecfr.gov/current/title-14/part-91/section-91.103 と 91.151 https://www.ecfr.gov/current/title-14/part-91/section-91.151（Part 91 全体へのリンクより具体的に）",
+      "add：FAA Private Pilot ACS FAA-S-ACS-6C の PA.I.F Performance and Limitations https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf",
+      "add：FAA Type Certificate Data Sheet 2A13（PA-28-181 の座席・燃料・手荷物のアームと重心範囲） https://drs.faa.gov （2A13 で検索。最新の改訂番号を確認）",
+      "add（公開値の出典として任意）：Piper Archer TX 仕様書 https://piper.com/wp-content/uploads/2024/05/Archer-TX.pdf と AOPA Aircraft Fact Sheet https://www.aopa.org/go-fly/aircraft-and-ownership/aircraft-fact-sheets/piper-archer",
+      "keep：Archer III G1000 Pilot's Checklist（MGA 2025）"
+    ]
+  },
+  "appMismatches": [
+    "flight-lab/src/book-core.js:27 — R.wb の URL が 404 — 正しくは https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-1.pdf（版 1B は正しい）",
+    "flight-lab/src/physics.js:622・avionics.js:443 — モデルの燃料流量（FFLOW GPH）は 3,000 ft・110 KIAS で約 11.5 gal/h、book の「8〜10 gal/h」と計算機の既定 9.5 gal/h（book-figs.js の fuel(el)）と食い違う — 飛行モデルは変えないので、book がモデルの値を FL.physics から計算して示し、公開値（75% で約 10.5 gal/h）を別に書く",
+    "flight-lab/src/physics.js:446（oatDev は 0 のまま、app.js・pages.js・school.js で設定されない）— シミュレータは常に標準大気。radio.js:69・111 の ATIS は気温 31℃・32℃、PFD 型表示の OAT は約 15℃ — book に「教材の飛行モデルは標準大気」と書く（ATIS の数字は交信練習用）",
+    "flight-lab/src/syllabus.js:260–263（x3 短距離離陸）— フラップ 0・Vr 60（AR.rotate）。ops.short の訓練校チェックリストはフラップ 25°・Vr 55 — 実機はチェックリスト。perf.tol / ops.short の bk.sim で「教材では簡略化してフラップ 0・Vr 60」と書く",
+    "flight-lab/src/physics.js:110 — v.cruiseThr 0.79。110 KIAS・3,000 ft の水平飛行は steadyState で 0.76（perf.climb の表は 76%）— 表の値は計算で出しているので book 側はこのままでよい（小差）",
+    "flight-lab/src/quiz.js:38 — q_perf 1 問目が章末クイズ Q1 とほぼ同文 — 章末クイズを差し替える",
+    "flight-lab/src/book-figs.js da(el) — 標高の入力が value 55・step 100 で、矢印で 155・255… と動き、1,000 などは step 不一致になる — step 1（または 5）に",
+    "flight-lab/src/book-figs.js fuel(el) — 時間の表示が Math.floor と Math.round の組み合わせで「1 時間 60 分」になる場合がある（例：239 NM・120 kt）— 分を先に丸めてから時間と分に分ける",
+    "flight-lab/src/book-figs.js wb(el) — 燃料の行が lb 入力（行名「燃料（40 gal × 6 lb）」）、着陸時の燃料の欄がない、範囲外の理由（重量超過・前・後ろ）を出さない — gal 入力 × 6、着陸時の行、理由の表示を追加",
+    "flight-lab/src/book-figs.js ARCHER_WB のコメント・キャプション「教材用近似」— 値は FAA TCDS 2A13（Archer III）と同じ — 「公開値（TCDS 2A13）、空虚重量は例」に"
+  ],
+  "factChecks": [
+    {
+      "claim": "気圧高度 ≒ 標高 ＋（29.92 − 高度計規正値）× 1,000 ft",
+      "verdict": "correct",
+      "source": "https://www.faasafety.gov/files/gslac/library/documents/2011/Aug/56396/FAA%20P-8740-02%20DensityAltitude%5Bhi-res%5D%20branded.pdf",
+      "note": "気圧高度＝高度計を 29.92 inHg に合わせたときの表示（FAA-P-8740-2）。1 inHg ≈ 1,000 ft は低高度での近似。"
+    },
+    {
+      "claim": "密度高度 ≒ 気圧高度 ＋ 120 ×（気温 − 標準気温）",
+      "verdict": "imprecise",
+      "source": "https://www.faa.gov/sites/faa.gov/files/13_phak_ch11.pdf",
+      "note": "PHAK・AIM には式としては出てこない（PHAK は図表と計算尺、FAA-P-8740-2 は早見表）。広く使われる概算で、FAA の早見表より 5〜10% 大きめ（海面・90°F：表 1,900 ft、式 2,060 ft）。「概算」と明記すれば教材として可。"
+    },
+    {
+      "claim": "ISA：海面 15℃・29.92 inHg（1013.25 hPa）、約 2℃/1,000 ft、気圧 約 1 inHg/1,000 ft、対流圏界面 36,089 ft",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-4-principles-flight",
+      "note": "FIG.atm の値も同じ。"
+    },
+    {
+      "claim": "湿度も密度を下げる（水蒸気は乾いた空気より軽い）",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/sites/faa.gov/files/13_phak_ch11.pdf",
+      "note": "PHAK：Water vapor is lighter than air。ただし「湿度の影響を計算する目安・表はない」。FAA-P-8740-2：湿度が高ければ計算した離陸距離に 10% を足し、上昇率の低下も見込む。"
+    },
+    {
+      "claim": "Sanford（55 ft）は夏 33℃ で密度高度 2,000 ft を超える",
+      "verdict": "correct",
+      "source": "https://www.faasafety.gov/files/gslac/library/documents/2011/Aug/56396/FAA%20P-8740-02%20DensityAltitude%5Bhi-res%5D%20branded.pdf",
+      "note": "概算式 2,228 ft、乾燥空気の正確な計算 約 2,120 ft、露点 24℃ を入れると約 2,500 ft。夏の平年の最高気温は約 92°F（33℃）（NOAA 平年値：https://www.ncei.noaa.gov/access/us-climate-normals/）。"
+    },
+    {
+      "claim": "examples：夏の Sanford（55 ft・33℃・29.92）で密度高度は約 2,300 ft",
+      "verdict": "imprecise",
+      "source": "https://www.faasafety.gov/files/gslac/library/documents/2011/Aug/56396/FAA%20P-8740-02%20DensityAltitude%5Bhi-res%5D%20branded.pdf",
+      "note": "本書の計算機は 2,228 ft と出す。「約 2,200 ft（概算式）」に。"
+    },
+    {
+      "claim": "密度高度が高いと TAS は速いが、IAS で見る失速速度・Vr は同じ",
+      "verdict": "correct",
+      "source": "https://www.faasafety.gov/files/gslac/library/documents/2011/Aug/56396/FAA%20P-8740-02%20DensityAltitude%5Bhi-res%5D%20branded.pdf",
+      "note": "FAA-P-8740-2：Increased TAS (but same IAS) on approach and landing、着陸滑走も延びる。AIM 7-6-7 も同じ。"
+    },
+    {
+      "claim": "14 CFR 91.103：飛行前に使う空港の滑走路長と離着陸距離の情報を確認（すべての飛行）。IFR・空港近辺以外の飛行では気象・燃料・代替案・ATC の遅延も",
+      "verdict": "correct",
+      "source": "https://www.ecfr.gov/current/title-14/part-91/section-91.103",
+      "note": "(b)(1) AFM が必要な機体はその AFM の離着陸距離データ、(b)(2) それ以外は標高・勾配・重量・風・気温に応じた信頼できる情報。"
+    },
+    {
+      "claim": "性能表の値は新しい機体と熟練した操縦士で測ったもの",
+      "verdict": "wrong",
+      "source": "https://www.faa.gov/sites/faa.gov/files/13_phak_ch11.pdf",
+      "note": "PHAK 25C：new aircraft, normal operating conditions, average piloting skills, aircraft and engine in good working order。「熟練した」ではなく「平均的な技量」。"
+    },
+    {
+      "claim": "滑走路の半分までに Vr の 70% に達しなければ中止（広く教えられている目安）",
+      "verdict": "imprecise",
+      "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_6.html",
+      "note": "AIM 7-6-8：70 percent of lift-off airspeed by the midpoint（浮揚速度の 70%）。FAA の「目安」で、低速の速度計の誤差・路面・浮揚に必要な滑走路だけに当てはまる、などの注意つき。"
+    },
+    {
+      "claim": "追い風成分 10% ごとに距離が大きく延びる",
+      "verdict": "imprecise",
+      "source": "https://www.faa.gov/sites/faa.gov/files/13_phak_ch11.pdf",
+      "note": "PHAK：離陸速度の 10% の追い風で約 21% 増、10% の向かい風で約 19% 減、50% の向かい風で約 75% 減。着陸も同じ。"
+    },
+    {
+      "claim": "表：重量・密度高度・向かい風・追い風・芝/濡れ・上り坂の離着陸距離への影響",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/sites/faa.gov/files/13_phak_ch11.pdf",
+      "note": "PHAK 第 11 章の離着陸性能と一致。重量 10% 増で離陸距離 21% 以上増。FAA-P-8740-2：長い芝・砂・泥は 2 倍にもなる。"
+    },
+    {
+      "claim": "Archer のチェックリスト：Vy 76・Vx 64・巡航上昇 87 KIAS（地上 1,000 ft 以上）",
+      "verdict": "correct",
+      "source": "https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf",
+      "note": "ENROUTE CLIMB (at 1000 AGL) 87 KIAS。短距離離陸はフラップ 25°・Rotate 55・障害物越え 64・その後 76。高い密度高度では離陸前にミクスチャーを最良出力に。"
+    },
+    {
+      "claim": "perf.climb の表：全開・Vy・海面付近 約 780 fpm、3,000 ft 約 660 fpm、3,000 ft・110 KIAS でスロットル約 76%・約 2,400 rpm（教材モデル）",
+      "verdict": "correct",
+      "source": "flight-lab/src/physics.js（steadyState）",
+      "note": "モデルの計算値 777 / 663 fpm、0.760、2,401 rpm と一致（重量 1,050 kg、標準大気）。CADET（空島の飛行モデル）では 730 / 620 fpm・79% と表示される。公開値は 2,550 lb・海面で 667 fpm（https://www.aopa.org/go-fly/aircraft-and-ownership/aircraft-fact-sheets/piper-archer）。"
+    },
+    {
+      "claim": "巡航で 1 時間に 8〜10 US gal 前後が一般的な目安",
+      "verdict": "imprecise",
+      "source": "https://www.aopa.org/go-fly/aircraft-and-ownership/aircraft-fact-sheets/piper-archer",
+      "note": "AOPA：75% 出力・128 kt で 10.5 gph。教材モデルは 3,000 ft・110 KIAS で約 11.5 gph。「約 9〜11 gal/h（POH の表で）」とし、モデルの値は計算で示す。"
+    },
+    {
+      "claim": "VFR の予備燃料 昼 30 分・夜 45 分",
+      "verdict": "correct",
+      "source": "https://www.ecfr.gov/current/title-14/part-91/section-91.151",
+      "note": "最初の着陸予定地まで飛んだあと、通常の巡航速度で（風と予報を考えて）。条文番号を本文に。"
+    },
+    {
+      "claim": "重量重心の計算機と図の数値（アーム・許容範囲）は教材用近似",
+      "verdict": "imprecise",
+      "source": "https://drs.faa.gov",
+      "note": "FAA TCDS 2A13（Archer III）：座席 2 at +80.5・2 at +118.1、燃料 50 gal at +95、手荷物 200 lb at +142.8、重心 (+82.0)〜(+93.0) at 2,050 lb 以下・(+88.6)〜(+93.0) at 2,550 lb（直線で結ぶ）、最大離陸 2,550 lb。ARCHER_WB と同じ。空虚重量 1,640 lb・87.0 in は例（Piper の Archer TX 標準空虚重量は 1,688 lb）。確認した写し：Revision 48。"
+    },
+    {
+      "claim": "重心が前すぎ：フレアで引ききれない・失速速度が上がる・操縦が重い／後ろすぎ：安定を失い失速・スピンからの回復が難しい・操縦が軽すぎる",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-10-weight-and-balance",
+      "note": "PHAK 第 10 章と一致（後ろすぎは violent stall characteristics・very light control forces で overstress しやすい）。"
+    },
+    {
+      "claim": "燃料が減ると重心が動くので着陸時も確認",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-10-weight-and-balance",
+      "note": "向きを書くとよい：Archer の燃料のアーム 95.0 in は通常の重心より後ろなので、燃料が減ると重心は少し前へ。PHAK：主翼の燃料は重心に近く、影響は小さいことが多い。ACS PA.I.F.S1：すべての飛行段階で範囲内か確認。"
+    },
+    {
+      "claim": "航空ガソリン 6 lb/gal（計算機の行「40 gal × 6 lb」、quiz.js q_perf）",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-10-weight-and-balance",
+      "note": "PHAK：Gasoline 6 lb/US gal、Oil 7.5 lb/US gal。"
+    },
+    {
+      "claim": "FAA Aircraft Weight and Balance Handbook FAA-H-8083-1B（refs）",
+      "verdict": "outdated",
+      "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation",
+      "note": "版は今も 1B（1C はない）。ただし book の URL は 404。MOSAIC Addendum（2025-10-20）は現行版の一部とされるが、LSA・WSC・PPC・自作機の記述だけで Archer には影響なし（https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/Weight_Balance_HB_Addendum_(MOSAIC).pdf）。"
+    },
+    {
+      "claim": "PHAK FAA-H-8083-25C（refs）",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/phak",
+      "note": "現行版。MOSAIC の Addendum あり（本章には影響なし）。"
+    },
+    {
+      "claim": "Archer：最大離陸重量 2,550 lb、使用可能燃料 48 gal（教材モデル fuelCap 24 × 2）",
+      "verdict": "correct",
+      "source": "https://piper.com/wp-content/uploads/2024/05/Archer-TX.pdf",
+      "note": "Piper：Maximum Takeoff Weight 2,550 lbs、Fuel 48 US gal usable（全 50 gal、TCDS）。離陸滑走 1,135 ft・50 ft 越え 1,608 ft、着陸滑走 920 ft（50 ft 越えは AOPA で 1,400 ft。Piper の仕様書の「2,008 ft | 427 m」は ft と m が合わない誤記）。"
+    }
+  ],
+  "cadetNotes": [
+    "perf.climb の表は描画のたびに FL.physics から計算される。CADET では FL.physics が空島の飛行モデルに置き換わる（cadet/src/flight/sorajima.js）ため、同じ表が約 730 fpm・約 620 fpm・スロットル約 79% と出る。数字を本文・key・キャプションに書き写さず、計算で出す形を保つ（CADET のテストで数字を固定しない）。",
+    "cadet/test/content.test.mjs の KEEP：'perf.climb' と 'perf.wb' はフィルタ後も /POH/ を含む必要がある。perf.wb の警告は 1 文目が「上の計算機と…」で APP_ONLY により消えるので、POH は図のキャプション以外の本文（消えない文）にも置く。",
+    "bk.calc（da・fuel・wb）は CADET で消える。静的な計算例（表）を本文に置き、CADET の読者にも数字の例が残るようにする（新しい節 perf.wbex・perf.fuel）。",
+    "各節の最初の <svg> が教室スクリーンに出る：perf.da は今 FIG.atm（wx.atm と同じ ISA の図）→ densityAltitude を先頭に。perf.tol・perf.climb は SVG がない → takeoffDistance・climbVxVy を追加。perf.wb は wbStations を wbEnvelope より前に。",
+    "「上の計算機」「このシミュレータ」「シミュレータでは」を含む文は CADET で消える。安全上の注意（実機は POH）をこれらの言い方と同じ文に入れない。標準大気で飛ぶ注意は bk.sim の中に書く（CADET では箱ごと消える）。",
+    "perf.tol の bk.sim（レッスン x3）は CADET で消える。キー名（B・R）を本文に書かない（現状は書いていない）。",
+    "key（ここが大切）は CADET で音読される。perf.tol の 1 つ目（約 80 字）は長すぎるので 2 つに分ける（例「離陸中止の点を決めておく」「中間点で浮揚速度の 70%（AIM）」）。",
+    "CADET の学科テストは quiz.js q_perf を使う（cadet/src/content/school.js の BANK_OF）。章末クイズを直しても CADET の問題は変わらないので、q_perf が問う 6 lb/gal・91.151・Va と重量を本文で説明しておく。"
+  ]
+}

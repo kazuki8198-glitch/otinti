@@ -1,0 +1,417 @@
+{
+  "id": "jet",
+  "title": "ジェット機と自動化への準備",
+  "sections": [
+    {
+      "id": "crm.jet",
+      "title": "プロペラ機とジェット機の違い",
+      "gist": "ジェット機はエンジンの反応が遅く（アイドルから最大まで最大約 10 秒）、プロペラの後流と抗力がなく減速・降下に計画が要り、後退翼と高い高度に特有の性質がある — だから『先回り』が大切（AFH 第 16 章）。",
+      "issues": [
+        "最初の文「公開情報では、基礎訓練の後は副操縦士任用訓練でエアラインの大型機の免許を目指します。」— 特定の会社の訓練課程の話で、この章が航空会社の訓練内容に見える。しかも参照の ANA のページ（R.ana1）は免許の取得までしか書いておらず、副操縦士任用訓練には触れていない（2026-10-26 確認）。削除し、『2 人で飛ぶジェット機へ進む人が、先に知っておくと役立つ一般的な違い』という目的文にする。",
+        "「FAA の Airplane Flying Handbook 第 15 章は…」→ 現行の FAA-H-8083-3C（2021）では第 15 章は Transition to Turbopropeller-Powered Airplanes、ジェットは第 16 章（3B〔2016〕では第 15 章だった）。",
+        "「アイドルから加速するのに数秒かかる」→ AFH 第 16 章は『ピストンより遅く、場合によっては最大出力まで 10 秒かかる』。具体的な数字を出典つきで。",
+        "表のプロペラ機の列の「エネルギーの管理 —」「高い高度 —」は、Archer ではエネルギー管理が要らないように読める。AFH 3C には第 4 章 Energy Management（小型機向け）がある。『Archer でも同じ考え（姿勢＋出力）。ジェットは余裕が小さく変化が遅い』と書く。",
+        "「降下の計画が大切（目安として「1,000 ft 降りるのに 3 NM」）」— AFH 第 16 章は 3 倍に『水平飛行で減速する距離（アイドルで 1 NM に約 10 kt）』を足す。巻末の例 105 NM は減速分がなく、AFH の例では約 120 NM。",
+        "「後退翼：…翼端から失速しやすい」は正しいが、なぜ困るか（翼端が先に失速すると揚力の中心が前に移り、機首が上がって迎え角がさらに増えやすい）が抜けている。高い迎え角で飛ぶのが普通、操作は小さく滑らかに（AFH 第 16 章の要約）も初心者に役立つ。",
+        "「マッハ数・高速側と低速側の余裕が狭くなる（いわゆる coffin corner）」— マッハ数（真対気速度 ÷ 音速）、高速側の限界（MMO・マッハバフェット）と低速側（低速バフェット）の説明がない。初心者には図（coffinCorner）か一文の説明が要る。",
+        "スピードブレーキ（speedbrake）・スポイラー（spoiler）の違い（揚力を減らす板／抗力を増やす板）と『計画がよければ使う量を減らせる』（AFH）が抜けている。",
+        "図がない（CADET の教室の画面に何も出ない）。"
+      ],
+      "mainFigure": "thrustResponse：横軸 0〜12 秒・縦軸 推力 %。Archer（教材モデル）はスロットルを動かすとすぐ推力が変わる線、ジェットはアイドルからゆっくり立ち上がり最大まで最大約 10 秒かかる線（模式図、AFH 第 16 章）。『この差だけ先に出力を使う』の矢印。"
+    },
+    {
+      "id": "crm.auto",
+      "title": "自動操縦とモード：自動化と付き合う",
+      "gist": "自動化（自動操縦・オートスロットル・FMS）は仕事を減らす道具だが、モード（FMA）を読み・声に出し・3 つの問いに答えられないときは、より簡単なモードや手で飛ぶことに切り替える。手で飛ぶ技量がすべての土台（SAFO 13002・17007、AC 120-123）。",
+      "issues": [
+        "目的の文がなく、いきなり「エアラインの機体では」から始まる。『自動化とは何か（人の代わりに経路・速度を保つ装置）』を一言で先に。",
+        "「表示（FMA）」— FMA の英語の正式名（Flight Mode Annunciator）と、何が表示されるか（推力・横・縦のモード、作動中と待機中〔armed〕の違い）が本文にない。AC 120-71B 6.9.2：FMA は『誰が何をしているか』を示す唯一の表示。",
+        "「自動化のレベルを下げる（手で飛ぶ）」— レベルが何かの説明がない（手で飛ぶ／フライトディレクター／自動操縦の基本モード／FMS のモード）。AC 120-123 の例のとおり『より簡単なモードへ切り替える』ことも含む。図（automationLevels）で示す。",
+        "\"Heading select, altitude hold\" のコールは特定の会社の SOP に見えるおそれ。『モードの呼び方・コールの言い方は機種と運航者で違う（例）』と明記する。G1000 型の自動操縦の表示（HDG・ALT・VS など）を例にすると訓練生にも身近。",
+        "「まず機体を飛ばす（Aviate）」— Aviate の意味がこの節では説明されない（hf.srm で説明）。日本語（English）で。",
+        "モードの監視は PF だけでなく 2 人の仕事（AC 120-71B 6.9.2.1）、という PM との結びつきがない（crm.pm への参照）。",
+        "手動操縦の根拠が SAFO 13002（2013）だけ。後の SAFO 17007 Manual Flight Operations Proficiency（2017）と AC 120-123 Flightpath Management（2022：『手で飛ぶことは他の技術の土台』）を加える。",
+        "最後の段落「この教材には針路・高度を保つ自動操縦はありません（意図的）。G1000 の表示と手動の操縦で…練習するためです。」は CADET で消える前提の文（APP_ONLY の 'この教材には[^。]*自動操縦' と 'G1000 の表示と手動の操縦で'）。書き換えるときは cadetNotes を参照。",
+        "図がない。"
+      ],
+      "mainFigure": "automationLevels：はしご（下から）手で飛ぶ → 手で飛ぶ＋フライトディレクター → 自動操縦の基本モード（針路・高度・昇降率）→ 自動操縦＋FMS（経路・高さを自動）。右に 3 つの問い『何をしている？ なぜ？ 次に何をする？』、答えられない・驚いた → 1 段下げる（必要なら手で飛ぶ）の矢印。"
+    },
+    {
+      "id": "crm.upset",
+      "title": "異常な姿勢を防ぐ（UPRT の考え方）",
+      "gist": "異常姿勢（upset：機首上げ 25° 超・機首下げ 10° 超・バンク 45° 超・状況に合わない速度）は飛行中の操縦不能（LOC-I）の入口。中心は防止（エネルギーとモードの把握・早く気づく）で、回復は機首上げと機首下げで手順が違う（AC 120-111・AFH 第 5 章）。",
+      "issues": [
+        "異常姿勢（upset）の定義がない。AC 120-111・AFH 第 5 章の数値（機首上げ 25° 超・機首下げ 10° 超・バンク 45° 超、またはその範囲内でも状況に合わない速度）が一番わかりやすい入口で、図にしやすい。",
+        "回復を「迎え角を減らす（押す）→ 翼を水平 → 出力 → 安定」の 1 つの順番で書いている。AC 120-111 は機首上げ（Table 1：自動操縦・オートスロットルを切る → 機首下げの操作で機首を下げる → 推力を調整 → 速度が増えたら水平へ）と機首下げ（Table 2：切る → 失速なら回復 → 最短方向に翼を水平〔必要なら押して荷重を抜く〕→ 推力と抗力を調整 → 水平へ）の 2 つ。特に機首下げ・高速では出力を『足す』のではなく減らす（AFH 第 5 章のスパイラル：アイドル → 少し押して荷重を抜く → 翼を水平 → ゆっくり機首を上げる）。「出力」だけでは逆の操作を招く。",
+        "ifr.upset（{ch:ifr}）は小型機の順番（IFH：機首上げ＝①出力 ②機首を下げる ③翼を水平）、aero.stall は失速の回復（前へ → 翼を水平 → パワー）、課目 i2 の説明（syllabus.js:318）も IFH の順。この節の書き方では 3 つの章で順番が違って見える。『大型機の型（AC 120-111）と小型機の練習（POH・IFH）は細部が違う。共通の芯は「まず迎え角を減らす・傾いたまま引かない」』と整理する。",
+        "「航空会社の異常姿勢の防止と回復の訓練（UPRT）」— エアラインの訓練の話に寄りすぎ。AC 120-111 は Part 121 向けだが FAA は訓練校を含むすべての運航者に勧めている。小型機向けの説明は AFH 3C 第 5 章 Maintaining Aircraft Control: UPRT にあり、こちらを主な出典にする。",
+        "LOC-I（飛行中の操縦不能）が米国の一般航空と世界の商業航空で死亡事故の一番の原因（AFH 第 5 章）、という『なぜ大切か』がない。",
+        "防止の表に驚き・びっくり（startle / surprise：AC 120-111 の用語）がない。予想外のことで体が固まる・反応が遅れることは防止の大事な話。",
+        "「UPRT」の英語の正式名（Upset Prevention and Recovery Training）、「バフェット（buffet：失速の前の振動）」「エネルギー（速度＝運動、 高度＝位置のエネルギー）」が初出で説明されない。",
+        "bk.key（ここが大切）がない。CADET の keyPoints は本文の最初の文で代用される。",
+        "参照ボタンは ifr.upset と aero.stall だけ。低速飛行と失速の練習 ops.slow も足す。",
+        "図がない。"
+      ],
+      "mainFigure": "upsetBox：横から見た Archer 型の機体（planeSide）に機首上げ 25°・機首下げ 10° の線、前から見た機体（planeFront）にバンク 45° の線、その外側を赤で『異常姿勢（upset）』。下に『範囲内でも、速度が状況に合わなければ upset』。出典 AC 120-111 1-6a・AFH 第 5 章。"
+    }
+  ],
+  "problems": {
+    "unclear": [
+      "crm.jet：coffin corner・マッハ数・MMO の説明がない。",
+      "crm.jet：スピードブレーキとスポイラーの違い（抗力を増やす／揚力を減らす）。",
+      "crm.jet：プロペラ機の列の「—」（エネルギー管理・高い高度）が『関係ない』と読める。",
+      "crm.auto：FMA の正式名と中身、自動化の『レベル』の意味、armed（待機中）と active（作動中）。",
+      "crm.auto：Aviate の意味。",
+      "crm.upset：upset の定義（数値）がない。UPRT・バフェット・エネルギー・荷重を抜く（unload）の初出の説明がない。",
+      "crm.upset：回復の「出力」— 増やすのか減らすのかが状況で逆になることが書かれていない。",
+      "章の summary「副操縦士任用訓練へ進む前の一般的な知識」— 特定の会社の課程を思わせる。『2 人で飛ぶジェット機へ進む前に知っておくと役立つ一般的な知識』に。"
+    ],
+    "order": [
+      "crm.jet：目的 → thrustResponse の図 → 違いの表（プロペラ機の列を埋める）→ 減速と降下の計画（descentPlan）→ 後退翼・高い高度（短く）→ ここが大切。航空会社の課程の話は削除。",
+      "crm.auto：目的 → automationLevels の図 → モードを読む（FMA の模式図）→ 3 つの問い → 驚いたら（まず機体を飛ばす・1 段下げる）→ 手で飛ぶ技量（SAFO 13002/17007・AC 120-123）→ この教材についての一文（CADET で消える形のまま）。",
+      "crm.upset：目的 → upsetBox（定義）→ なぜ大切（LOC-I）→ 防止（エネルギー・自動化のモード・驚き・早く気づく）→ 回復の 2 つの型（upsetRecovery2）→ 小型機の練習は ifr.upset・aero.stall・ops.slow へ → ここが大切。",
+      "章の節の順（crm.jet → crm.auto → crm.upset）はよい：エネルギーの話 → モードの混乱 → それが異常姿勢につながる、と流れる。節の id が 'crm.' で始まるのは変えられないが、読者には見えないので問題なし。"
+    ],
+    "errors": [
+      "crm.jet・R.afh15（book-core.js:21）・章末クイズ Q1「AFH 第 15 章 Transition to Jet-Powered Airplanes」→ FAA-H-8083-3C では第 16 章（第 15 章は Turbopropeller）（https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook）",
+      "crm.upset「回復は『迎え角を減らす（押す）→ 翼を水平 → 出力 → 安定』」→ AC 120-111 は機首上げ（Table 1）と機首下げ（Table 2）で別の型。機首下げは最短方向に翼を水平にしてから引き、推力・抗力を調整（高速なら減らす）（https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-111_CHG_1_Ed_Upd_3.pdf）。AFH 第 5 章のスパイラル：アイドル → 少し押して荷重を抜く → 翼を水平 → ゆっくり機首上げ（https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf）",
+      "巻末 examples「巡航 35,000 ft … 約 105 NM 手前から降下を始める（3 NM / 1,000 ft）」→ AFH 第 16 章の例は 35 × 3 ＋ 段階的な減速の分 約 15 NM ＝ 約 120 NM（水平飛行・アイドルで 1 NM に約 10 kt 減速）（https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/17_afh_ch16.pdf）",
+      "crm.jet「公開情報では、基礎訓練の後は副操縦士任用訓練でエアラインの大型機の免許を目指します」→ 参照の ANA のページ（https://www.ana.co.jp/group/777_30th/20251022_2.html）には免許の取得までしか書かれておらず、裏付けがない。そもそも一般的な準備の章に特定の会社の課程は不要 → 削除。"
+    ],
+    "outdated": [
+      "AFH の章番号が 3B（2016）のまま（R.afh15）。現行 3C（2021）は第 16 章。R.afh13（第 13 章 Multiengine）は 3C で正しい。",
+      "AC 120-111 は現行（Active）だが Change 1（2017-01-04）付き。label を 'AC 120-111 Upset Prevention and Recovery Training (with Change 1)' に、URL を PDF へ。",
+      "手動操縦は SAFO 13002（2013-01-04）だけでなく、SAFO 17007 Manual Flight Operations Proficiency（2017-05-04）と AC 120-123 Flightpath Management（2022-11-21、現行）が後に出ている。米国の Part 121 では手動の低速飛行・異常姿勢の回復などの extended envelope training が規則（14 CFR 121.423）。",
+      "AC 120-71B（2017-01-10）・AC 120-109A（失速の防止と回復、Change 1 付き）は現行（FAA AC 一覧 CSV で確認）。"
+    ],
+    "duplicates": [
+      "crm.upset と ifr.upset（{ch:ifr}）：どちらも AC 120-111 の UPRT と回復の順番を説明し、順番が食い違う。crm.upset は『防止と大型機の型の考え方』、ifr.upset は『この教材の課目 i2 の小型機の手順』と役割を分ける。ifr.upset の「Push・Roll・Power・Stabilize」は AC 120-111 の文言ではない（業界でよく使われる覚え方）点も ifr 担当へ。",
+      "crm.upset の回復と aero.stall の失速回復（前へ → 翼を水平 → パワー）は同じ芯 → 参照でつなぐ。",
+      "crm.auto のモードの話と hf.srm の「自動化：何をしているか（モード）を常に確認する（第 6 部）」、ifr.np の「自動化の使い方の考え方は第 6 部で扱います」→ 参照の向きは正しい。重複は少ない。",
+      "crm.jet の「それでも基本は同じ：姿勢＋出力＝性能」は ops.trim と同じ考え → ops.trim への参照ボタンを置く。",
+      "quiz.js:191〜193 の 3 問（自動操縦がわからない・ジェットの出力・SAFO 13002）は章末クイズとほぼ同文。"
+    ],
+    "numbers": [
+      "AFH の章番号：book-core.js:21（R.afh15 の label）、book-5.js:159（本文）、book-5.js:185（章末クイズ Q1）、quiz.js:192（why の『AFH 第 15 章』）→ すべて第 16 章に。",
+      "スプールアップ『数秒』→ AFH 第 16 章『最大 10 秒』。Archer は教材モデルでは推力がスロットルと同時に変わる（physics.js:497〜505 は遅れなしで推力を計算、回転計だけ約 0.5 秒遅れる：physics.js:619 の 1.8/s）。図にするならこの 2 つの値。",
+      "TOD の例：105 NM → 約 120 NM（AFH 第 16 章）。",
+      "回復の順番：crm.upset（迎え角 → 翼 → 出力）／ifr.upset と syllabus.js:318（i2：機首上げ ①フルパワー ②機首を下げる ③翼を水平、機首下げ ①アイドル ②先に翼を水平 ③機首上げ）／aero.stall（前へ → 翼を水平 → パワー）が一見ばらばら。crm.upset を 2 つの型に直し、小型機の練習は i2 の順（IFH）だと明記すれば、アプリの採点と矛盾しない。",
+      "小型機の例で数値を出すなら FL.physics の教材値：Archer の Va 113 kt・荷重の限界 3.8 G（physics.js pa28 v.va・phys.maxG、i2 の基準『荷重 3.8 G 以下』と同じ）。"
+    ]
+  },
+  "policy": "節の順（crm.jet → crm.auto → crm.upset）は保ち、どの節も特定の航空会社の課程や SOP に見えないよう、FAA の公開資料（AFH 第 16 章・第 5 章・第 4 章、AC 120-111、AC 120-71B、AC 120-123、SAFO 13002・17007）にもとづく一般論として書く。crm.jet は航空会社の課程の文と ANA の参照を削り、『なぜ今知っておくか』の目的文 → エンジンの反応の図（Archer の教材値と AFH の最大 10 秒）→ プロペラ機の列も埋めた違いの表 → 降下の計画（3 倍＋減速＝約 120 NM の例）、の順にする。crm.auto は自動化のレベルの図と FMA の模式図で『モードを読む・声に出す・3 つの問い・わからなければ 1 段下げる』を見せ、手で飛ぶ技量が土台であることを SAFO 17007・AC 120-123 で補い、この教材に自動操縦がない一文は CADET のフィルターに合う形で残す。crm.upset は最初に upset の定義の図、次に LOC-I が死亡事故の一番の原因であること、防止（エネルギー・モード・驚き）、回復を機首上げと機首下げの 2 つの型（AC 120-111）に分けて示し、小型機の練習の順番は ifr.upset と課目 i2（IFH・POH が優先）へ送る。crm.upset と crm.auto の終わりに bk.key を置き（crm.upset は今ない）、考えてみよう（例：スパイラルで先に引くとどうなる？）を足す。新しい節は不要（中身は 3 節に収まる）。",
+  "figuresExisting": [],
+  "figuresNew": [
+    {
+      "name": "thrustResponse",
+      "section": "crm.jet",
+      "what": "推力（%）と時間（0〜12 秒）のグラフ。Archer（教材モデル）＝スロットルとほぼ同時に変わる段の線、ジェット＝アイドルからゆっくり立ち上がり、最大まで最大約 10 秒の S 字の線（模式図）。間に『この差だけ先に出力を使う（先回り）』の矢印。",
+      "data": "AFH 3C 第 16 章 Slow Acceleration of the Jet Engine（up to 10 seconds、Figure 16-4 は形の参考）。Archer は physics.js:497〜505（推力はスロットルから遅れなしで計算）。ジェットの線は模式図と明記。",
+      "priority": "must"
+    },
+    {
+      "name": "descentPlan",
+      "section": "crm.jet",
+      "what": "横から見た降下の模式図：35,000 ft → 降下開始（TOD）約 120 NM 手前（35×3＝105 ＋ 減速 約 15）→ 約 40 NM で 10,000 ft・250 kt へ減速 → 約 35 NM から再び降下 → 約 15 NM で 1,500 ft → 5 NM から最終進入。『水平飛行・アイドルで 1 NM に約 10 kt 減速』の注記。模式図・NOT FOR NAVIGATION。",
+      "data": "AFH 3C 第 16 章 Descent Planning（Figure 16-14 の例の数値）。",
+      "priority": "should"
+    },
+    {
+      "name": "sweptTipStall",
+      "section": "crm.jet",
+      "what": "上から見た後退翼：境界層が翼端の方へ流れる矢印 → 翼端が先に失速（赤）→ 揚力の中心が前へ → 機首上げ（さらに迎え角が増える）。比較として、まっすぐな翼（Archer）は付け根から失速。",
+      "data": "AFH 3C 第 16 章 Figure 16-9 の説明（tip stall、center of lift moves forward）。数値なし。",
+      "priority": "nice"
+    },
+    {
+      "name": "coffinCorner",
+      "section": "crm.jet",
+      "what": "縦軸 高度・横軸 速度（マッハ）の模式図：低速側の限界（低速バフェット）と高速側の限界（MMO・マッハバフェット）が上に行くほど近づき、交わるあたりが coffin corner。旋回や乱気流で荷重が増えると低速側の線が右へ動く（余裕が減る）。",
+      "data": "AFH 3C 第 16 章（51,000 ft・M0.73 で 1.4 G なら低速バフェットの例）。軸の数値は入れず模式図と明記。",
+      "priority": "nice"
+    },
+    {
+      "name": "automationLevels",
+      "section": "crm.auto",
+      "what": "自動化のはしご（下から）：①手で飛ぶ ②手で飛ぶ＋フライトディレクター（指示だけ）③自動操縦の基本モード（針路・高度・昇降率を保つ）④自動操縦＋FMS（経路と高さを計画どおり）。右に 3 つの問い、『答えられない・驚いた → 1 段下げる（必要なら手で飛ぶ）。まず機体を飛ばす』。",
+      "data": "SAFO 17007 の自動化の組み合わせ（FD・AP・AT の on/off）、AC 120-123 5.3.2.2（組み合わせ・レベルの間を移る）、Wiener 1989（3 つの問い, NASA CR-177528）。数値なし。",
+      "priority": "must"
+    },
+    {
+      "name": "fmaSchematic",
+      "section": "crm.auto",
+      "what": "FMA の模式図：横に 4 マス（推力 | 横〔ロール〕| 縦〔ピッチ〕| 自動操縦の状態）。作動中のモードは緑（例 HDG・ALT）、待機中（armed）は白（例 LOC）。下に『変えたら FMA を見る → 声に出す → 機体が思った通りに動くか確かめる』。『表示と呼び方は機種で違う（例）』と明記。",
+      "data": "AC 120-71B 6.9.2（FMA は『誰が何をしているか』を示す、armed から active への遅れ）。G1000 型の自動操縦の表示を例にしてもよい（G1000 型と書く）。",
+      "priority": "should"
+    },
+    {
+      "name": "upsetBox",
+      "section": "crm.upset",
+      "what": "異常姿勢の定義：横から見た機体（planeSide）に機首上げ 25°・機首下げ 10° の扇、前から見た機体（planeFront）にバンク 45° の扇。扇の外が『異常姿勢（upset）』。下に『範囲内でも、速度が状況に合わなければ upset（失速・速度超過）』。",
+      "data": "AC 120-111 1-6a、AFH 3C 第 5 章 Defining an Airplane Upset。新しい planeSide / planeFront ヘルパーで描ける。",
+      "priority": "must"
+    },
+    {
+      "name": "upsetRecovery2",
+      "section": "crm.upset",
+      "what": "回復の 2 つの型を左右に：機首上げ（自動操縦を切る → 機首下げの操作で機首を下げる → 出力を調整 → 速度が増えたら水平へ）／機首下げ（自動操縦を切る → 失速なら回復 → 少し押して荷重を抜き、最短方向に翼を水平 → 出力・抗力を調整〔高速ならアイドル〕→ ゆっくり水平へ）。共通の芯『まず迎え角・傾いたまま引かない』を下に。『小型機の練習は POH と第 N 章（ifr.upset）』の注記。",
+      "data": "AC 120-111 Table 1・Table 2、AFH 3C 第 5 章 Figure 5-3 とスパイラルの 5 段階。",
+      "priority": "must"
+    },
+    {
+      "name": "energyMargin",
+      "section": "crm.upset",
+      "what": "エネルギーの余裕の目安：速度（運動のエネルギー）・高度（位置のエネルギー）・出力（足せる量）の 3 本の棒。『低い・遅い・アイドル』は 3 本とも短い＝余裕が少ない（例：ファイナル）。",
+      "data": "AFH 3C 第 4 章 Energy Management。数値なし（または Archer の例：進入 70 kt・地上 500 ft・出力 30%＝physics.js pa28 v.appr・v.apprThr）。",
+      "priority": "nice"
+    }
+  ],
+  "photos": [
+    {
+      "section": "crm.jet",
+      "subject": "後退翼とつり下げ式のジェットエンジンがよくわかる、飛行中の NASA の DC-8（空中研究機）",
+      "search": "images.nasa.gov: \"DC-8 Airborne Laboratory in flight\"（EC00-0050-001 / EC98-44444-001）",
+      "candidateUrl": "https://images.nasa.gov/details/EC00-0050-001",
+      "candidateLicence": "NASA（米国政府の著作物・パブリックドメイン。NASA の画像利用ガイドラインに従い、NASA の推奨を示唆しない）",
+      "why": "Archer のまっすぐな翼との違い（後退翼・翼の下のエンジン）が一目でわかる。航空会社の塗装でない。"
+    },
+    {
+      "section": "crm.jet",
+      "subject": "地上試験中のターボファンエンジン（前から見たファン）",
+      "search": "images.nasa.gov: \"Refan Engine in the Propulsion Systems Laboratory\"（GRC-1974-C-03151）, \"turbofan\" NASA Glenn",
+      "candidateUrl": "https://images.nasa.gov/details/GRC-1974-C-03151",
+      "candidateLicence": "NASA（パブリックドメイン）— 要確認：人の顔が大きく写っていないか",
+      "why": "『プロペラがない』ジェットのエンジンの姿。メーカーの宣伝写真を避けられる。"
+    },
+    {
+      "section": "crm.upset",
+      "subject": "NASA Langley の操縦不能（LOC-I）研究用の小型無人模型機（AirSTAR / Generic Transport Model）",
+      "search": "images.nasa.gov / Commons: \"AirSTAR\" \"Generic Transport Model\" NASA Langley loss of control",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "異常姿勢と操縦不能が研究されている題材だと示せる。航空会社・訓練校の写真を使わずに済む（images.nasa.gov の検索では見つからず、Commons か NASA Langley の画像庫で要確認）。"
+    },
+    {
+      "section": "crm.auto",
+      "subject": "NASA Langley の自動化・飛行甲板研究機 Boeing 737（NASA 515、TSRV）の外観",
+      "search": "Commons: Category:NASA 515 (aircraft); NASA Langley image library \"Transport Systems Research Vehicle\"",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "自動化と表示の研究の歴史を、計器画面のアップや航空会社の写真なしで示せる（nice）。"
+    }
+  ],
+  "endMatter": {
+    "terms": [
+      "Spool-up / スプールアップ（ジェットエンジンの回転が上がるまでの時間）",
+      "Propeller slipstream / プロペラの後流",
+      "Speedbrake / スピードブレーキ（抗力を増やす）",
+      "Spoiler / スポイラー（揚力を減らす板）",
+      "Energy management / エネルギーの管理",
+      "Top of descent (TOD) / 降下開始点",
+      "Swept wing / 後退翼",
+      "Tip stall / 翼端失速",
+      "Mach number / マッハ数（真対気速度 ÷ 音速）",
+      "VMO / MMO / 最大運用速度（kt／マッハ）",
+      "Coffin corner / 高速と低速の限界が近づく高高度の領域",
+      "Autopilot / Autothrottle / FMS / 自動操縦・自動推力・飛行管理装置（Flight Management System）",
+      "Flight director (FD) / フライトディレクター（操縦の指示を出す表示）",
+      "FMA / 飛行モードの表示 / Flight Mode Annunciator",
+      "Armed / Active / 待機中・作動中（モード）",
+      "Automation surprise / 自動化に驚かされること",
+      "Manual flight operations / 手で飛ぶこと（手動操縦）",
+      "Upset / 異常姿勢（機首上げ 25° 超・機首下げ 10° 超・バンク 45° 超など）",
+      "LOC-I / 飛行中の操縦不能 / Loss of Control In-flight",
+      "UPRT / 異常姿勢の防止と回復の訓練 / Upset Prevention and Recovery Training",
+      "Unload / 荷重を抜く（少し押して迎え角と G を減らす）",
+      "Startle / Surprise / 驚き（体が固まる反応）・予想外",
+      "SAFO / 運航者向けの安全情報 / Safety Alert for Operators"
+    ],
+    "examples": [
+      "35,000 ft から空港へ：35 × 3 ＝ 105 NM ＋ 段階的な減速 約 15 NM ＝ 約 120 NM 手前から降下（AFH 第 16 章の例。風・管制の指示で変わる）。",
+      "ジェットで水平飛行のまま出力をアイドルにしても、10 kt 減速するのに約 1 NM かかる（AFH 第 16 章）→ 減速は早めに計画する。",
+      "自動操縦が思った方向へ曲がらない → FMA を見る（どのモード？）→『何をしている・なぜ・次は』に答えられない → 針路のモードに切り替える、それでもだめなら自動操縦を切って手で飛ぶ（まず機体を飛ばす）。",
+      "雲の中で速度が増え、高度が下がり、右に深く傾いている（機首下げ）→ 出力アイドル → 少し押して荷重を抜く → 翼を水平 → ゆっくり水平へ（AFH 第 5 章・この教材の課目 i2）。"
+    ],
+    "cautions": [
+      "この章は一般的な入門。ジェット機の操作・自動操縦の使い方・回復の手順は、型式ごとの AFM と運航者の SOP が優先する（現行の『ANA の訓練内容の再現ではない』は会社名を出さない書き方に）。",
+      "異常姿勢・失速の実機練習は、資格のある教官と、その練習に適した機体・高度で行う（AFH 第 5 章・AC 120-111）。Archer は普通類（荷重の限界 3.8 G、教材値）で、背面や深いバンクの練習はしない。",
+      "数値の目安（3 NM／1,000 ft、10 kt／1 NM、最大 10 秒など）は AFH の一般的な説明で、機種・重さ・風で変わる。"
+    ],
+    "quizReview": [
+      "Q1（ジェットで出力を使うとき）: fix — 問題文の『AFH 第 15 章』→ 第 16 章。why を『アイドル付近からの加速は遅く、最大まで 10 秒かかることもある（AFH 第 16 章）』に。",
+      "Q2（自動操縦の動きが理解できないとき）: keep（内容は AC 120-123 と合う）— ただし選択肢『すべての電源を切る』『管制に任せる』は明らかに外れ。『別のモードを次々に試し、原因がわかるまで直さない』『自動操縦のまま FMS の入力を見直し続ける』などもっともらしい誤答に。",
+      "問題数が 2 問で、規則（各章 3〜5 問）に足りない → 下の提案から 2〜3 問足す。"
+    ],
+    "quizProposals": [
+      {
+        "q": "FAA の定義で「異常姿勢（upset）」にあたるのは？",
+        "choices": ["バンク 30° の普通の旋回", "意図せずにバンクが 45° を超えた", "機首上げ 10° で上昇している", "標準旋回で待機している"],
+        "answer": 1,
+        "why": "AC 120-111・AFH 第 5 章：意図せずに機首上げ 25° 超・機首下げ 10° 超・バンク 45° 超、またはその範囲内でも状況に合わない速度。"
+      },
+      {
+        "q": "機首下げ・速度が増えている・深く傾いている（スパイラル）。回復でやってはいけないことは？",
+        "choices": ["出力をアイドルにする", "傾いたまま操縦桿を強く引く", "翼を水平に戻す", "少し押して荷重を抜く"],
+        "answer": 1,
+        "why": "傾いたまま引くと旋回が締まり、荷重が急に増える。AFH 第 5 章：アイドル → 荷重を抜く → 翼を水平 → ゆっくり機首を上げる。"
+      },
+      {
+        "q": "巡航 35,000 ft から空港へ降りる。AFH 第 16 章の目安で、降下を始めるのはおよそどこ？",
+        "choices": ["約 35 NM 手前", "約 70 NM 手前", "約 120 NM 手前（3 × 35 ＋ 減速の分）", "約 350 NM 手前"],
+        "answer": 2,
+        "why": "降りる高さ（千 ft）× 3 ＝ 105 NM に、水平飛行で減速する距離（1 NM に約 10 kt）約 15 NM を足す。"
+      },
+      {
+        "q": "後退翼の失速の特徴として、AFH 第 16 章の説明に合うものは？",
+        "choices": ["翼の付け根から失速し、機首が下がる", "翼端から失速しやすく、機首が上がりやすい", "失速しない", "プロペラ機とまったく同じ"],
+        "answer": 1,
+        "why": "後退翼では空気が翼端の方へ流れ、翼端が先に失速しやすい。揚力の中心が前へ動き、機首上げの傾向になる。"
+      },
+      {
+        "q": "FAA の SAFO 13002・17007 が運航者に勧めていることは？",
+        "choices": ["自動化をいつも最大限に使う", "適切な場面で手で飛ぶ機会を作り、手動操縦の技量を保つ", "手で飛ぶのは緊急時だけにする", "自動操縦の点検を毎日行う"],
+        "answer": 1,
+        "why": "自動操縦を使い続けると手動操縦の知識と技量が強化されず、望ましくない状態からすばやく回復する力が落ちうる（SAFO 13002）。"
+      }
+    ],
+    "refs": [
+      "fix R.afh15：label を『FAA Airplane Flying Handbook（FAA-H-8083-3C）第 16 章 Transition to Jet-Powered Airplanes』に（キー名も afh16 に変えるなら book-5.js の refs も）。URL を章の PDF へ https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/17_afh_ch16.pdf",
+      "add AFH 第 5 章 Maintaining Aircraft Control: Upset Prevention and Recovery Training https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf",
+      "add（任意）AFH 第 4 章 Energy Management https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/05_afh_ch4.pdf",
+      "update R.upset：'AC 120-111 Upset Prevention and Recovery Training (with Change 1, 2017)' https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-111_CHG_1_Ed_Upd_3.pdf",
+      "update R.safo：SAFO 13002 の PDF https://www.faa.gov/sites/faa.gov/files/other_visit/aviation_industry/airline_operators/airline_safety/SAFO13002.pdf と add SAFO 17007 Manual Flight Operations Proficiency https://www.faa.gov/sites/faa.gov/files/other_visit/aviation_industry/airline_operators/airline_safety/SAFO17007.pdf",
+      "add FAA AC 120-123 Flightpath Management (2022) https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-123.pdf",
+      "update R.automation：正式名 '…Pilot Monitoring Duties for Flight Deck Crewmembers'、PDF https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-71B.pdf（6.9.2 FMA とモードの把握）",
+      "add（任意）Wiener, E. L. (1989) Human factors of advanced technology (\"glass cockpit\") transport aircraft, NASA CR-177528 https://ntrs.nasa.gov/citations/19890016609（3 つの問いの出典）",
+      "remove R.ana1（特定の会社の課程の話。本文の該当文も削除）"
+    ]
+  },
+  "appMismatches": [
+    "quiz.js:192 — why の『（AFH 第 15 章）』→ 現行 AFH（FAA-H-8083-3C）ではジェットは第 16 章。アプリ側が古い（本も同じ誤り：book-core.js:21・book-5.js:159・185）。",
+    "quiz.js:184 — q_crm バンクは 'crm.tem' だけにつながるが、ジェット（crm.jet）・自動化（crm.auto）の問題（quiz.js:191〜193）を含む。本から見ると、jet 章の内容の問題が TEM の節に結ばれている。",
+    "syllabus.js:318（課目 i2 の brief）— 機首上げ『①フルパワー ②機首を下げる ③翼を水平』（IFH の小型機の順）。crm.upset の『迎え角を減らす → 翼を水平 → 出力』と順番が違う。小型機の課目としてはアプリ（IFH・ifr.upset）が正しく、crm.upset を『大型機の型は 2 つ、小型機の練習は i2 の順』と直す。",
+    "syllabus.js:319（i2 の std『荷重 3.8 G 以下』）は physics.js pa28 phys.maxG 3.8 と一致 — crm.upset で荷重に触れるならこの値。",
+    "pages.js:845『自動操縦（HDG / ALT への追従）— 意図的に未実装』と crm.auto『この教材には針路・高度を保つ自動操縦はありません（意図的）』は一致 — 問題なし。app.js にも自動操縦のキーはない。",
+    "book-5.js:188 jet の lessons: ['i2'] — i2 の book は ['ifr.upset']（syllabus.js:319）。jet 章から課目へのつながりは crm.upset → ifr.upset の参照で足りる。問題なし。"
+  ],
+  "factChecks": [
+    {
+      "claim": "FAA の Airplane Flying Handbook 第 15 章はプロペラ機からジェット機へ移るときの違いを説明している",
+      "verdict": "outdated",
+      "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook",
+      "note": "現行 FAA-H-8083-3C（2021、3B〔2016〕を置き換え）：第 15 章 Transition to Turbopropeller-Powered Airplanes、第 16 章 Transition to Jet-Powered Airplanes。3B では第 15 章がジェットだった。"
+    },
+    {
+      "claim": "ジェットはアイドルから加速するのに数秒かかる（スプールアップ）。早めに・先回りして出力を使う",
+      "verdict": "imprecise",
+      "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/17_afh_ch16.pdf",
+      "note": "AFH 第 16 章：エンジンにより大きく違うが、ふつうピストンよりずっと遅く、最大出力まで 10 秒かかることもある。低出力から出力を足す必要を先読みする。方向は正しい。"
+    },
+    {
+      "claim": "ジェットにはプロペラの後流がなく、低速で出力による揚力の助けがない",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/17_afh_ch16.pdf",
+      "note": "AFH：出力を足しても揚力はすぐには増えない、失速速度も下がらない → 安定した進入が必要。"
+    },
+    {
+      "claim": "ジェットは抗力が小さく減速しにくい。スピードブレーキを使う。降下と減速を同時にするのは難しい",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/17_afh_ch16.pdf",
+      "note": "AFH：アイドルでもジェットは前向きの推力を出す、水平飛行・アイドルで 10 kt 減速するのに約 1 NM、低抗力のため降下・減速に時間と距離がかかり、スポイラー・スピードブレーキを備える。計画がよければスピードブレーキの使用は減らせる。"
+    },
+    {
+      "claim": "降下の目安『1,000 ft 降りるのに 3 NM』、35,000 ft なら約 105 NM 手前から（巻末の例）",
+      "verdict": "imprecise",
+      "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/17_afh_ch16.pdf",
+      "note": "3 倍の目安は AFH にある。ただし減速の距離を足す：35,000 ft（空港標高から）なら 35×3＋約 15 NM ＝ 約 120 NM。"
+    },
+    {
+      "claim": "後退翼は高速に強いが、低速では失速の特性が違う（翼端から失速しやすい）",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/17_afh_ch16.pdf",
+      "note": "AFH：境界層が翼端へ流れ翼端から失速、揚力の中心が前へ動く（機首上げの傾向）。章の要約『Swept wing stalls begin at the tips』。"
+    },
+    {
+      "claim": "高い高度ではマッハ数・高速側と低速側の余裕が狭くなる（coffin corner）",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/17_afh_ch16.pdf",
+      "note": "AFH：MMO で飛ぶ機体がわずかな迎え角の増加でバフェットに入る高度＝空力的な上昇限度、coffin corner。荷重が増えると低速側のバフェット速度が上がる。"
+    },
+    {
+      "claim": "モードを読む：いま自動操縦が何をしているかを表示（FMA）で確かめ、声に出す",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-71B.pdf",
+      "note": "AC 120-71B 6.9.2：FMA は『誰が何をしているか』の情報源。モードを変えたら FMA を確かめる、2 人とも FMA を把握する。モードの呼び方・コールは運航者の SOP で違う。"
+    },
+    {
+      "claim": "3 つの問い：何をしている？ なぜ？ 次に何をする？",
+      "verdict": "correct",
+      "source": "https://ntrs.nasa.gov/citations/19890016609",
+      "note": "Wiener（1989）の glass cockpit の研究で広く知られた問い。AC 120-123 5.3.2.2 も『次に何が起きるか』の理解と automation surprise への対処を訓練に求める。"
+    },
+    {
+      "claim": "答えられなければ、自動化のレベルを下げる（手で飛ぶ）",
+      "verdict": "imprecise",
+      "source": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-123.pdf",
+      "note": "AC 120-123 の介入の例：より簡単な別のモードへ切り替える／自動操縦・オートスロットルを切って手で戻す／（ウインドシアの回避など）装置に任せる。『まず経路を保つことを最優先』。『1 段下げる（必要なら手で飛ぶ）』と書くのが正確。"
+    },
+    {
+      "claim": "SAFO 13002 は、自動化に頼りすぎて手動操縦の技量が落ちることへの注意と、適切な場面で手で飛ぶ練習を推奨している",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/sites/faa.gov/files/other_visit/aviation_industry/airline_operators/airline_safety/SAFO13002.pdf",
+      "note": "2013-01-04。後続の SAFO 17007（2017-05-04）Manual Flight Operations Proficiency と AC 120-123（2022）が『手で飛ぶことは他の技術の土台』と強調。"
+    },
+    {
+      "claim": "AC 120-111 は航空会社の UPRT の考え方を示す。中心は防止",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-111_CHG_1_Ed_Upd_3.pdf",
+      "note": "2015-04-14 発行、Change 1（2017-01-04）、Active（FAA AC 一覧）。『Prevention is the primary goal of UPRT』。Part 121 向けだが、FAA は訓練校を含むすべての運航者に使うよう勧めている。"
+    },
+    {
+      "claim": "回復は『迎え角を減らす（押す）→ 翼を水平 → 出力 → 安定』",
+      "verdict": "imprecise",
+      "source": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-111_CHG_1_Ed_Upd_3.pdf",
+      "note": "AC 120-111 は 2 つの型：機首上げ（AP/AT を切る → 機首下げの操作 → 推力を調整 → 速度が増えたら水平へ）、機首下げ（切る → 失速なら回復 → 最短方向に翼を水平、必要なら押して荷重を抜く → 推力・抗力を調整 → 水平へ）。この順は失速の回復（AC 120-109A・aero.stall）には近いが、機首下げ・高速では出力を減らす。"
+    },
+    {
+      "claim": "（追加提案）異常姿勢の定義：機首上げ 25° 超・機首下げ 10° 超・バンク 45° 超、または状況に合わない速度",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf",
+      "note": "AFH 3C 第 5 章と AC 120-111 1-6a で同じ。"
+    },
+    {
+      "claim": "（追加提案）LOC-I は死亡事故の一番の原因",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf",
+      "note": "AFH 第 5 章：米国の一般航空と世界の商業航空で死亡事故の一番の原因。一般航空では maneuvering（低高度での操縦）中が最も多い。"
+    },
+    {
+      "claim": "（追加提案）スパイラルの回復：アイドル → 少し押して荷重を抜く → 翼を水平 → ゆっくり機首を上げる → 上昇出力",
+      "verdict": "correct",
+      "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf",
+      "note": "AFH 第 5 章 Spiral Dive の 5 段階。傾いたまま引き起こす（rolling pullout）と設計の限界を超えやすい。"
+    },
+    {
+      "claim": "公開情報では、基礎訓練の後は副操縦士任用訓練でエアラインの大型機の免許を目指す",
+      "verdict": "unverified",
+      "source": "https://www.ana.co.jp/group/777_30th/20251022_2.html",
+      "note": "参照のページは『最後の Check Flight に合格すると…ライセンスを取得』で終わり、その後の訓練は書かれていない（2026-10-26 取得）。一般的な準備の章には不要なので削除を推奨。"
+    },
+    {
+      "claim": "米国の航空会社では手動の低速飛行・異常姿勢の回復などが訓練の必須項目",
+      "verdict": "correct",
+      "source": "https://www.ecfr.gov/current/title-14/section-121.423",
+      "note": "14 CFR 121.423 Extended Envelope Training（Level C 以上の FFS で、手動の低速飛行・信頼できない速度・手動の出発到着・異常姿勢の回復・ほか）。本文に入れるなら一言で。"
+    }
+  ],
+  "cadetNotes": [
+    "cadet/test/content.test.mjs:113 は crm.auto の CADET 版に /練習するためです|この教材には/ が残らないことを確かめている。今は APP_ONLY の 'この教材には[^。]*自動操縦' と 'G1000 の表示と手動の操縦で' で 2 文とも消える。書き換えるときは、(a) 1 文にまとめて『この教材には…自動操縦…』の形を保つ、または (b) 理由の文に 'G1000 の表示と手動の操縦で' を残す。『練習するためです』で終わる文が他の言い方になってフィルターをすり抜けるとテストが落ちる。",
+    "APP_ONLY には 'G1000 型表示' も入っている。本文で『G1000 型表示』と書いた文は CADET で丸ごと消えるので、残したい文（FMA の例など）では『G1000 型の表示』『G1000 型の自動操縦』のように別の言い方にする。",
+    "crm.jet の最初の文『公開情報では、…副操縦士任用訓練で…』は CADET で『公開情報では、』だけ消えて残り、架空のアカデミーの課程の説明のように読める → 削除推奨（ANA の名前は出ていないので REAL_NAMES では消えない）。",
+    "jet の 3 節はどれも今は <svg> がない。thrustResponse・automationLevels・upsetBox を各節の最初の図にする（CADET の教室の画面に出る）。",
+    "crm.upset には bk.key がない → CADET の keyPoints が本文の最初の文で代用される。60 字以内の 2〜4 項目を足す（例『まず迎え角を減らす。傾いたまま引かない』『低い・遅い・アイドルは余裕が少ない』）。",
+    "crm.upset の bk.see（ifr.upset・aero.stall）は CADET で <span class=\"bk-see\"> になるので残してよい。ops.slow を足しても CADET に存在する節なので問題なし。",
+    "cautions の『ANA の訓練内容の再現ではない』と refs の R.ana1 は REAL_NAMES に当たる。会社名を出さない一般的な注意に替える。",
+    "jet の章の節 id は 'crm.' で始まる（crm.jet・crm.auto・crm.upset）。変えないこと。CADET の lessonSections や quiz.js のリンクもこの id を使う。"
+  ]
+}

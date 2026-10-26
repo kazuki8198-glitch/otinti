@@ -1,0 +1,399 @@
+{
+ "id": "me",
+ "title": "Piper Seminole と双発機の基礎",
+ "sections": [
+  {
+   "id": "me.basics",
+   "title": "Seminole の構造と操作",
+   "gist": "Archer から Seminole で変わること（左右逆回転の 2 基のエンジン、フェザーできる定速プロペラと 3 組のレバー、電動油圧の引き込み脚、ナセルの燃料タンクとクロスフィード）と、通常の離陸。",
+   "issues": [
+    "1 つの節に「装置 4 行の表」と「操作 3 行の表（通常離陸・通常着陸・ゴーアラウンド）」が詰め込まれ、吸気圧（MP）・rpm・フェザー・GUMP・クロスフィード・Vlo・「速度計が動いたか確認」が説明なしで一度に出る。初学者には多すぎる。",
+    "「定速プロペラ」の行は「プロペラレバーで回転数（rpm）を、スロットルで吸気圧（MP：インチ）を決める」だけで、定速プロペラ（ガバナーが羽根の角度を変えて回転数を一定に保つ）とは何か、なぜ羽根の角度で抗力が変わるかを説明していない。フェザーは括弧の中だけ。羽根の角度の図がない。",
+    "「片方が止まっても、どちらが止まっても同じ程度の扱いにくさ（「臨界発動機」がない）」：臨界発動機（critical engine）の定義が次の章（oei）まで出ない。下がる羽根（P ファクター）が左右とも内側にある図で見せるべき。",
+    "「左右の翼のタンク（合計 110 gal・使用可能 108 gal）」：PA-44 のタンクはエンジンナセルの中（55 gal × 2、各 1 gal 使用不能）。「翼のタンク」は不正確。",
+    "通常離陸「地上 500 ft から巡航上昇 110 kt」は SE Oklahoma のガイドの値。飛行モデル pa44.v.climb は 105（MGA 2025 の Seminole チェックリスト「En Route Climb 105 KIAS」）。どちらの値かを書く。",
+    "ゴーアラウンド「Vx 82 kt」はガイドの値。飛行モデル pa44.v.ga は 88（MGA チェックリスト「Balked landing: Maximum power, Flaps 25°, 88 KIAS」）。教材値と参考値を分けて書く。",
+    "bk.key の 1 つ目は約 75 字（目安 60 字超）。2 つ目「この教材の Seminole はプロペラレバー・ミクスチャーを省略し、スロットル（R / F）で両発を一緒に操作する（教材用の簡略化）」はアプリの説明で、CADET では APP_ONLY（教材用の簡略化）で消え、キーの文字も含む。bk.sim か mute の段落へ移す。",
+    "図が 1 枚もない（CADET の教室スクリーンが空）。",
+    "着陸前の確認を「GUMP」と書くが、book-1 の sys.gear・school.js の点検表・syllabus の m5・app.js のキー説明は「GUMPS」。",
+    "aero.left の bk.key「双発の Seminole は左右のプロペラが逆に回るので、これらの効果が打ち消し合う（第 5 部）」と内容が重なる。ここで図付きで説明し、aero.left からはこの節へ参照させる。",
+    "CADET のテストが「Archer の次に双発機 Piper Seminole」で本文が始まることを確かめている（cadet/test/content.test.mjs:84）。ねらいの文の書き出しを変えないこと。"
+   ],
+   "mainFigure": "counterRotation：Seminole の上面図（planeTop の twin）。後ろから見て左のプロペラは時計回り・右は反時計回りの矢印、下がる羽根（推力が大きい側）を両方とも胴体側（内側）に印 → 左右の推力の線が対称 → 臨界発動機がない。小さな囲みで「普通の双発（両方時計回り）：右エンジンの下がる羽根が外側 → 左エンジンが臨界」。"
+  },
+  {
+   "id": "me.speeds",
+   "title": "双発機の速度の目印：赤い線と青い線",
+   "gist": "双発機の速度（赤い線 Vmc 56 kt・青い線 Vyse 88 kt・Vxse・Vsse、通常の速度と制限速度）を飛行モデルのデータから示す。",
+   "issues": [
+    "速度計の図がない。赤い線（red radial）・青い線（blue radial）は「目で見る目印」なので、図がないと伝わらない（AFH Figure 13-1 と同じ考え方の図が必要）。",
+    "「Vxse 88 kt（この版のガイドの表の値。POH の版で異なることがある）」：POH に基づく公開チェックリスト（MGA 2025・Thrust Flight の PA44 ガイド）はどれも 82 kt。SE Oklahoma のガイドの表の 88 は誤記の可能性が高い。初学者に「値の代わりに言い訳」を見せている。",
+    "「Vfe / Vlo / Vle — 111 / 109 / 140 kt — フラップ / 脚の上げ下げ / 脚を出したまま」は誤り。Vlo は上げ 109 kt・下げ 140 kt（ガイドの表「Vlo (Up) 109」「Vlo (Down) 140」）。",
+    "「Vmc 56 kt — 片発で方向を保てる最小の速度」：決められた条件（最大出力・風車状態・後方重心・バンク 5° 以内など）での公表値であることが書かれていない。翼を水平にすると Vmc は最大で約 20 kt 高くなる（AFH 13-25）。",
+    "8 行の表に片発の速度と失速・制限速度が混ざり、エンジンが止まったときにどれが大事かが見えない。「片発の 4 つの速度」と「通常・制限速度」に分ける。",
+    "段落「ガイドの訓練上の決まり（例）：離陸前の模擬エンジン故障は Vmc の 50%（28 kt）…地上 400 ft より下では…3,000 ft 以上…」は模擬故障の安全の決まりで、この節の話題ではない。oei 章（me.oei）へ移し、ACS の付録 3（Multiengine Considerations）と AFH 13-35/36 も出典にする。",
+    "bk.key 2「青い線で上昇できないなら、青い線を保って降下率を最小にする（その高さの片発の上昇限度より上にいる）」：片発の絶対上昇限度はまだ出ていない（me.perf で初めて出る）。",
+    "Va 135 kt は最大重量（3,800 lb）の値。軽いと小さくなる（MGA：2,700 lb で 112 kt）ことを一言添える。"
+   ],
+   "mainFigure": "twinAsi：速度計の文字盤を FL.physics の pa44.v から描く。白い弧 55〜111（Vso〜Vfe）、緑の弧 57〜169（Vs1〜Vno）、黄の弧 169〜202、赤い線 202（Vne）、赤い線 56（Vmc）、青い線 88（Vyse）。「赤い線＝方向を保てる最小（Vmc）」「青い線＝片発の最良上昇率（Vyse）」と矢印で。"
+  },
+  {
+   "id": "me.perf",
+   "title": "双発の性能と離陸の計画",
+   "gist": "片発では上昇性能が半分ではなく 80〜90% 失われること（AFH）、性能の用語（加速停止距離・加速継続距離・上昇限度）、離陸前のブリーフィング（脚 DOWN で滑走路が残れば止まる／脚 UP なら Vyse で続けるか正面に降りる）。",
+   "issues": [
+    "「80% 以上失われる」：AFH 3C 13-1 は「reduces climb performance 80 to 90 percent」。理由（上昇には「余分なパワー」が必要）は括弧の中だけ。AFH の例（1 基 200 馬力×2、水平飛行に 175 → 余り 225 が 25 に）を図にすると一目でわかる。",
+    "図がない（CADET の教室スクリーンが空）。上昇性能の差と離陸の判断は、どちらも図にしやすい。",
+    "「小型の双発機の片発上昇率は 1 分に数百 ft 程度」：AFH の例は約 150 fpm（13-11）。Seminole の公表値も約 200 fpm（二次資料）。「100〜300 fpm 程度」くらいに。教材モデルの「約 280 fpm」は計算値（281 fpm）と一致。",
+    "用語の表に「片発の絶対上昇限度（single-engine absolute ceiling）」がない（me.speeds の bk.key 2 と AFH 13-34 の drift down の説明に必要）。上昇勾配（climb gradient）も AFH で定義されている。",
+    "「加速停止距離より短い滑走路では、離陸直後の故障で止まれない」：AFH は「規則では必須ではない（多くの POH で参考値）が、慎重なパイロットは加速停止距離以上の滑走路を使う」「加速継続距離は 50 ft に届くだけ」と書いている（13-11/12）。",
+    "ブリーフィングの段落が 1 文に 2 つの引用を入れて長い。箇条書きの 3 つの場合（AFH の 3 つの場面）に分ける。",
+    "bk.calc('da') は perf 章の計算機と同じ（CADET では消える）。参照だけでよい。"
+   ],
+   "mainFigure": "oeiClimbLoss：海面付近の上昇率を 2 本の棒で（FL.physics.steadyState）。両発・Vy 88 kt で約 1,330 fpm、片発（フェザー）・Vyse 88 kt で約 280 fpm →「約 8 割減（教材値）」。AFH の「80〜90%」を注記。"
+  },
+  {
+   "id": "me.pattern",
+   "title": "（新設案）双発の場周経路・着陸・ゴーアラウンド",
+   "gist": "新設を提案する節。me.basics の表から通常着陸と両発のゴーアラウンドを移し、場周の各点での出力・速度・形態を図で示す。",
+   "issues": [
+    "まだない節（新しい ID）。me.speeds の後、me.perf の前に置く。m1 は me.basics だけを参照するので、通常離陸は me.basics に残す。"
+   ],
+   "mainFigure": "twinPattern（模式図・NOT FOR NAVIGATION）：LAB RWY 36 の場周。ダウンウインド 18 inHg・2,300 rpm・約 100 kt・GUMPS、アビームでフラップ 10、ベースで 88 kt（青い線）・フラップ 25、ファイナルは着陸が確実になるまで 88 kt、確実になったらフラップ 40・80 kt。数値は pa44.v（appr 88・apprFull 80）とガイド。"
+  }
+ ],
+ "problems": {
+  "unclear": [
+   "me.basics：吸気圧（MP）・rpm・ガバナー・フェザー・GUMP・クロスフィード・Vlo・「速度計が動いたか確認（airspeed alive）」が初出で説明なし。",
+   "me.basics：「臨界発動機」が定義前に出る（定義は oei 章）。",
+   "me.speeds：Vmc を「片発で方向を保てる最小の速度」とだけ書き、決められた条件での公表値であることが抜けている。",
+   "me.speeds：Vxse の行が値ではなく「この版のガイドの表の値。POH の版で異なることがある」という言い訳になっている。",
+   "me.perf：「80% 以上失われる」理由（余分なパワー）が括弧の中だけ。",
+   "me.perf：ブリーフィングの段落が長い 1 文。"
+  ],
+  "order": [
+   "me.speeds の「ガイドの訓練上の決まり」（模擬故障の安全の決まり）は oei 章の me.oei（bk.warn）へ移す。",
+   "me.basics の「通常着陸」「ゴーアラウンド（両発）」の行は、速度を学んだ後の新しい節 me.pattern へ移す（通常離陸は m1 が参照するので me.basics に残す）。",
+   "順番を me.basics → me.speeds → me.pattern（新）→ me.perf にする。me.perf は片発の性能と離陸の判断で、次の oei 章への橋渡しになる。"
+  ],
+  "errors": [
+   "me.speeds「Vlo 109 kt＝脚の上げ下げ」→ Vlo は上げ 109 kt・下げ 140 kt（https://www.se.edu/aviation/wp-content/uploads/sites/4/2023/11/Seminloe-Guide-V1.0.pdf の表「Vlo (Up) 109 / Vlo (Down) 140」、https://ce.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Seminole_Checklist.pdf 「GEAR Up 109 KIAS / Down <140 KIAS」）",
+   "me.speeds「Vxse 88 kt」→ POH に基づくチェックリストは 82 kt（https://ce.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Seminole_Checklist.pdf 「VXSE 82 KTS」、https://www.thrustflight.com/wp-content/uploads/2026/04/PA44-Maneuver-Guide.pdf 「Pitch for VXSE (82 KIAS)」）。SE Oklahoma のガイドの表の 88 は誤記の可能性が高い。",
+   "me.basics「左右の翼のタンク」→ PA-44 のタンクはエンジンナセルの中（55 gal × 2、使用可能 108 gal）（https://www.piper.com/model/seminole/ 「Usable: 108 US Gal」・PA-44 の燃料系統の説明）",
+   "me.perf「80% 以上失われる」→ AFH 3C は「80 to 90 percent」（https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf p.13-1）"
+  ],
+  "outdated": [
+   "出典の版は現行：AFH は FAA-H-8083-3C（FAA のページ 2022 年更新、新版なし）、事業用 ACS は FAA-S-ACS-7B（2024 年 5 月 31 日発効、変更なし）（https://www.faa.gov/training_testing/testing/acs）。",
+   "参考：現在生産の Seminole は Lycoming IO-360-B1G6（燃料噴射）と G1000 NXi（https://www.piper.com/model/seminole/）。訓練機の多くは O-360 / LO-360（キャブレター）。機体ごとに POH が違うので「実機は POH が優先」を残す。"
+  ],
+  "duplicates": [
+   "aero.left（book-1）の「双発の Seminole は左右のプロペラが逆に回るので、これらの効果が打ち消し合う」と me.basics の表・確認問題 1 が重なる。説明は me.basics（図）に置き、aero.left から参照。",
+   "sys.gear（book-1）の引込脚・GUMPS と me.basics の引き込み脚・GUMP が重なり、呼び方も違う。",
+   "me.perf の bk.calc('da') は perf 章の密度高度の計算機と同じ。",
+   "quiz.js q_me（双発機）の問題（赤い線・臨界発動機・ACS の許容）と章末の確認問題が重なる。章末は別の観点（Vlo の上げ下げ、上昇限度など）にする。"
+  ],
+  "numbers": [
+   "Vxse：本文（SM.xse＝88、physics.js:130 と pages.js:466 の速度表）vs POH 系のチェックリスト 82 kt。教材値を 82 にするか、本文で「参考値 82 kt（POH・公開チェックリスト）、教材モデルのデータは 88」と明記。",
+   "巡航上昇：本文 110 kt（ガイド）vs physics.js:130 pa44.v.climb 105（MGA 2025）。",
+   "ゴーアラウンド：本文 Vx 82 kt（ガイド）vs physics.js:130 pa44.v.ga 88（MGA の Balked landing 88 KIAS・フラップ 25）。",
+   "Vlo：本文の表は SM.lo（109）だけを「上げ下げ」に使う。下げの Vlo 140 は pa44.v に無い（le 140 と同じ値なので le を使える）。",
+   "片発上昇率：本文「約 280 fpm」＝ steadyState(pa44, 88, OEI, 100 ft) の 281 fpm で一致。両発 Vy は 1,332 fpm（公表 1,340 fpm と近い）。モデルでは片発の上昇率が最大になるのは約 80 kt（300 fpm）で、88 kt（281 fpm）ではない（「Vyse が最良」と言うのは公表値として書き、シミュレータで確かめられるとは書かない）。",
+   "モデルの片発上昇限度：50 fpm になる高度 約 6,500 ft、上昇できなくなる高度 約 7,900 ft（Vyse・最大出力）。両発の実用上昇限度は約 22,300 ft で、公表値（15,000〜17,100 ft、二次資料）と大きく違う。上昇限度の数値を本文に入れるなら「教材値」と書き、実機は POH の図を見ると書く（Wikipedia の片発上昇限度 4,100 ft は未確認）。",
+   "着陸前点検：本文 GUMP vs school.js:108・syllabus.js:431・app.js:435・book-1 sys.gear の GUMPS。",
+   "例「離陸後 300 ft・脚 UP で右エンジンの出力が落ちた」：実機の訓練で模擬故障を始めてよいのは 400 ft 以上（ガイド・ACS 付録 3・AFH）。本当の故障の例として書くならよいが、me.speeds の決まりと並ぶと矛盾して見える。"
+  ]
+ },
+ "policy": "節の順番を me.basics → me.speeds → me.pattern（新設・通常の場周と両発のゴーアラウンド）→ me.perf にします。me.basics はねらいの文を「公開情報では、Archer の次に双発機 Piper Seminole（PA-44-180）で…」のまま最初に置き（CADET のテストが確かめる）、counterRotation の図で「左右逆回転 → 臨界発動機がない」を先に見せます。その後、Archer との違いを h4 の小見出しで 1 つずつ（2 基のエンジン／定速プロペラとフェザー＋3 色のレバー／引き込み脚と Vlo 上げ 109・下げ 140／ナセルの燃料タンクとクロスフィード）説明し、通常離陸（m1 が参照）だけを残して、通常着陸とゴーアラウンドは me.pattern へ移します。me.speeds は twinAsi の図から始め、表を「片発の 4 つの速度（Vmc・Vyse・Vxse 82・Vsse）」と「通常・制限速度」に分け、Vmc は「決められた条件での値」と一言添えて oei 章へつなぎます。模擬故障の訓練の決まりは oei 章の me.oei へ移します。me.perf は oeiClimbLoss の図（教材値 1,330 → 280 fpm）と AFH の「余分なパワー」の説明から入り、用語の表に片発の絶対上昇限度を足し、AFH の 3 つの離陸の場面（脚 DOWN・脚 UP で上昇できない・脚 UP で上昇できる）を takeoffDecision の図と箇条書きにします。アプリの操作（R / F、[ / ]、G）の説明は bk.key から外して bk.sim に集めます。",
+ "figuresExisting": [
+  {
+   "key": "calc:da（me.perf の bk.calc('da')）",
+   "verdict": "keep",
+   "why": "perf 章と同じ密度高度の計算機。FLIGHT LAB では残してよい（CADET は自動で消す）。本文は「密度高度：{ch:perf}」の参照で足りる。"
+  }
+ ],
+ "figuresNew": [
+  {
+   "name": "counterRotation",
+   "section": "me.basics",
+   "what": "Seminole の上面図（planeTop twin）。後ろから見た回転方向の矢印（左＝時計回り・右＝反時計回り）、下がる羽根（推力が大きい側）を両方とも内側に印 → 推力の線が左右対称 → 臨界発動機なし。囲みで普通の双発（右の下がる羽根が外側 → 左エンジンが臨界）。",
+   "data": "FL.physics pa44（counterRotating: true、engines x ±1.95 m、phys.engine.P 268 kW＝180 hp × 2）。AFH 13-23/24・Figure 13-12。",
+   "priority": "must"
+  },
+  {
+   "name": "twinLevers",
+   "section": "me.basics",
+   "what": "双発のパワーレバー（左から スロットル 黒×2・プロペラ 青×2・ミクスチャー 赤×2）。前へ出す順番 赤→青→黒、戻す順番 黒→青→赤の矢印。プロペラレバーを後ろいっぱい（止まりを越えて）＝ FEATHER。",
+   "data": "AFH 13-5（To feather the propeller, the propeller control is brought fully aft）、ガイドのゴーアラウンドの順番（Mixtures → Props → Throttles）。数値なし。",
+   "priority": "should"
+  },
+  {
+   "name": "featherBlade",
+   "section": "me.basics",
+   "what": "羽根の先から見た 3 つの角度：低ピッチ（離陸・高回転）／高ピッチ（巡航）／フェザー（約 90°、風に平行）。相対風の矢印と「止まったときの抗力：大／中／最小」。",
+   "data": "AFH Figure 13-2・13-3（考え方）。数値なし。",
+   "priority": "should"
+  },
+  {
+   "name": "seminoleFuel",
+   "section": "me.basics",
+   "what": "左右のナセルタンク（各 55 gal）からそれぞれのエンジンへ。燃料セレクター ON / OFF / X-FEED（反対側のタンクから送る）の流れの矢印。「クロスフィードは片発で長く飛ぶときだけ（AFH）」。",
+   "data": "ガイド（Total 110 / Usable 108 gal）、Piper（Usable 108）、AFH 13-7（Fuel Crossfeed）。",
+   "priority": "nice"
+  },
+  {
+   "name": "twinAsi",
+   "section": "me.speeds",
+   "what": "速度計の文字盤：白い弧・緑の弧・黄の弧・赤い線（Vne）、赤い線（Vmc）と青い線（Vyse）を強調。主要な速度を外側に小さく。",
+   "data": "FL.physics pa44.v：s0 55・s1 57・fe 111・no 169・ne 202・mc 56・yse 88。AFH Figure 13-1。",
+   "priority": "must"
+  },
+  {
+   "name": "twinPattern",
+   "section": "me.pattern",
+   "what": "通常の場周（模式図・NOT FOR NAVIGATION）：各点の出力（18 inHg・2,300 rpm）・速度（約 100 kt → 88 kt → 80 kt）・形態（GUMPS、フラップ 10 → 25 → 40）。",
+   "data": "ガイドの Normal Landing、FL.physics pa44.v（appr 88・apprFull 80、flapLabels UP/10°/25°/40°）。",
+   "priority": "should"
+  },
+  {
+   "name": "oeiClimbLoss",
+   "section": "me.perf",
+   "what": "海面付近の上昇率の棒 2 本：両発（Vy 88）と片発（Vyse 88・フェザー）。差に「約 8 割減」。小さく AFH の「80〜90%」。",
+   "data": "FL.physics.steadyState(pa44, 88, {pwr:full, altFt:100}) ＝ 1,332 fpm、{pwr:full, oei:true} ＝ 281 fpm（教材値）。",
+   "priority": "must"
+  },
+  {
+   "name": "takeoffDecision",
+   "section": "me.perf",
+   "what": "滑走路の横からの図：浮揚 → ①脚 DOWN・滑走路が残る：両方のスロットルを閉じて正面に降りる ②脚 UP・上昇できる：Vyse・全部前へ・脚とフラップ UP・特定・確認・フェザー ③脚 UP・上昇できない：正面に制御して降りる。加速停止距離と加速継続距離（50 ft まで）の線。",
+   "data": "AFH 13-10/11（定義・Figure 13-5A）、13-29〜31（Figure 13-18〜20）、ガイドの離陸前ブリーフィング。数値なし（Vyse は pa44.v.yse）。",
+   "priority": "should"
+  },
+  {
+   "name": "excessPower",
+   "section": "me.perf",
+   "what": "AFH の仮の双発機：使える推力馬力 200＋200、水平飛行に必要 175 → 両発の余り 225、片発の余り 25（約 89% 減）を積み上げ棒で。",
+   "data": "AFH 13-2/13-3 の例（参考値として出典を明記）。",
+   "priority": "nice"
+  }
+ ],
+ "photos": [
+  {
+   "section": "me.basics",
+   "subject": "双発の軽飛行機が飛んでいるところ（2 基のエンジンが見える）",
+   "search": "NASA Image and Video Library「PA-30 Twin Comanche」（NASA 808, ECN-2845）。Seminole そのものなら Commons「Category:Piper PA-44 Seminole」（訓練校・航空会社の塗装やロゴが目立つものは避ける）",
+   "candidateUrl": "https://images.nasa.gov/details/ECN-2845",
+   "candidateLicence": "Public domain（NASA Armstrong/Dryden の写真。images-assets.nasa.gov/image/ECN-2845/ECN-2845~large.jpg）",
+   "why": "「エンジンが翼に 2 つ」の形を最初に見せる。Seminole ではない（PA-30）ので、キャプションに「双発の軽飛行機の例」と書く。"
+  },
+  {
+   "section": "me.basics",
+   "subject": "地上の Seminole（2 基のエンジン・T 字尾翼・引き込み脚）",
+   "search": "Commons「Category:Piper PA-44 Seminole」、検索語「Piper PA-44-180 Seminole ramp」。ライセンス（CC BY / CC BY-SA / CC0）を 1 枚ずつ確認。学校名・航空会社名が読めるものは不可",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "教材の機体そのものの形（T 字尾翼・ナセル・脚）を見せる。"
+  },
+  {
+   "section": "me.basics",
+   "subject": "フェザーしたプロペラ（羽根が風に平行で止まっている）",
+   "search": "Commons「Category:Feathered propellers」、検索語「feathered propeller light twin」。米国政府なら DVIDS の「C-12 / T-44 feathered」（人の顔が写らないもの）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "フェザーの羽根の向きを実物で。featherBlade の図と並べる。"
+  },
+  {
+   "section": "me.perf",
+   "subject": "双発の軽飛行機の離陸（滑走路と機体）",
+   "search": "Commons 検索語「Piper Seminole takeoff」「light twin takeoff runway」（塗装・ロゴに注意）",
+   "candidateUrl": "",
+   "candidateLicence": "",
+   "why": "離陸直後が最も危ない場面であることを、滑走路の長さの話（加速停止距離）と結びつける。"
+  }
+ ],
+ "endMatter": {
+  "terms": [
+   "追加：Critical engine／臨界発動機／止まると方向の操縦が最も難しくなるエンジン（Seminole には無い）",
+   "追加：Propeller governor／ガバナー／羽根の角度を変えてプロペラの回転数を一定に保つ装置",
+   "追加：Nacelle tank／ナセルタンク／エンジンナセルの中の燃料タンク（Seminole は左右 55 gal）",
+   "追加：Vxse／片発の最良上昇角速度／82 kt（参考値：POH 系チェックリスト）",
+   "追加：Vlo / Vle／脚の操作速度・脚下げの最大速度／上げ 109・下げ 140 / 140 kt",
+   "追加：Single-engine absolute ceiling／片発の絶対上昇限度／片発で上昇できなくなる高度（ここから上では Vyse で降下率が最小）",
+   "追加：Climb gradient／上昇勾配／水平 100 ft 進む間に上がる高さ（%）",
+   "追加：Airspeed alive／速度計が動き始めたことの確認",
+   "既存の 3 列目が空の用語（Multi-engine・Counter-rotating・Constant-speed・Crossfeed・Vsse など）に短い説明を入れる。GUMP は「Gas・Undercarriage・Mixture・Props（＋Switches で GUMPS）」と開く。"
+  ],
+  "examples": [
+   "既存の例（離陸後 300 ft で右エンジン故障）は正しい（右が止まる → 左ラダー → 右足が遊ぶ → 右が止まった）。最後に「→ 生きている左へ約 2° バンク・ボールは左へ 1/3〜1/2」を足す。「本当の故障の例」と分かるように書く（実機の模擬故障は 400 ft 以上）。",
+   "追加：離陸前ブリーフィングの例「Vr 75、上昇 88、青い線 88、赤い線 56。脚が下りていて滑走路が残っていれば、両方のスロットルを閉じて正面に降ります。脚が上がっていれば Vyse・全部前へ・脚とフラップ UP・特定・確認・フェザー」。",
+   "既存の GUMP の例はそのまま（GUMPS にそろえるなら S：Switches / Seatbelts を足す）。"
+  ],
+  "cautions": [
+   "既存「この章の値・手順は公開されている訓練校のガイドの要約で、ANA・Acron Aviation の SOP ではない…」は FLIGHT LAB では残す（CADET は自動で消す）。",
+   "既存「この教材の Seminole はプロペラ・ミクスチャー・カウルフラップのレバーを省略している（未実装）。フェザーは [ / ] キー」：Shift+[ / Shift+] で再始動（自由飛行の補助、app.js:100・142）も書く。",
+   "追加：速度の値は機体・年式・重量で違う。実機は POH / AFM の速度と速度計の目印に従う。"
+  ],
+  "quizReview": [
+   "Q1（臨界発動機がない理由）：keep。理由に「後流・トルクも左右対称」「どちらのエンジンが止まっても同じ（AFH 13-24）」を足す。",
+   "Q2（青い線＝Vyse）：keep。",
+   "Q3（片発の上昇性能）：fix。正答を「80〜90% 失われる（AFH 3C）」に。理由に AFH の 200/175 馬力の例を一言。"
+  ],
+  "quizProposals": [
+   {
+    "q": "Seminole の脚の速度の制限（公開チェックリスト）で正しいのは？",
+    "choices": [
+     "上げは 109 kt 以下、下げは 140 kt 以下",
+     "上げも下げも 109 kt 以下",
+     "上げも下げも 140 kt 以下",
+     "上げは 140 kt 以下、下げは 109 kt 以下"
+    ],
+    "answer": 0,
+    "why": "Vlo は上げ 109 kt・下げ 140 kt、Vle 140 kt（ガイドの速度表・MGA のチェックリスト）。上げの方が厳しい。"
+   },
+   {
+    "q": "片発の実用上昇限度（single-engine service ceiling）とは？",
+    "choices": [
+     "片発で毎分 50 ft の上昇ができなくなる高度",
+     "片発で水平飛行ができなくなる高度",
+     "両発で毎分 100 ft の上昇ができなくなる高度",
+     "片発で毎分 500 ft の上昇ができなくなる高度"
+    ],
+    "answer": 0,
+    "why": "AFH 第 13 章の定義。両発の実用上昇限度は 100 fpm。上昇できなくなる高度は絶対上昇限度。"
+   },
+   {
+    "q": "浮揚直後、脚がまだ DOWN で滑走路が十分残っているときに片方のエンジンが止まった。AFH の考え方は？",
+    "choices": [
+     "両方のスロットルを閉じて、残りの滑走路に降りる",
+     "脚を上げて上昇を続ける",
+     "フェザーしてから旋回して戻る",
+     "生きている側へ急旋回する"
+    ],
+    "answer": 0,
+    "why": "AFH 13-30：脚 DOWN（滑走路が残っている）ならスロットルを閉じて正面に着陸。脚を上げるのは使える滑走路がなくなってから。"
+   }
+  ],
+  "refs": [
+   "update：R.afh13 の URL を第 13 章の PDF にする https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf（FAA-H-8083-3C は現行）。",
+   "update：R.seminoleG の注記「Vxse 88（この版の表の値…）」→「表の Vxse 88 は誤記の可能性（POH 系のチェックリストは 82）」。抗力のデモの「フラップ 45」も誤記（全開は 40°）。https://www.se.edu/aviation/wp-content/uploads/sites/4/2023/11/Seminloe-Guide-V1.0.pdf",
+   "add：MGA 2025 Seminole PA-44-180 Pilot's Checklist（Archer の出典と同じ学校の公開チェックリスト。Vxse 82・Vsse 82・En Route Climb 105・Balked landing 88・横滑りゼロ 2〜3°）https://ce.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Seminole_Checklist.pdf",
+   "keep：R.acsC（FAA-S-ACS-7B は現行・2024-05-31 発効）。本文で使う Task（Area IX E・F・G、Area X A・B、付録 3 の Multiengine Considerations）を注記 https://www.faa.gov/training_testing/testing/acs/commercial_airplane_acs_7.pdf",
+   "keep：R.seminole（Piper 公式・現在の仕様：IO-360-B1G6・使用可能燃料 108 gal）https://www.piper.com/model/seminole/",
+   "keep：R.acron（FLIGHT LAB のみ。CADET では消える）。"
+  ]
+ },
+ "appMismatches": [
+  "flight-lab/src/physics.js:130（コメント :129）— pa44.v.xse 88（SE Oklahoma のガイドの表）。POH 系のチェックリスト（MGA 2025・Thrust Flight）は 82。pages.js:466 の速度表と book の me.speeds に 88 が出る。CADET の cadet/src/flight/sorajima.js:136 にも同じ値 — 82 が正しい。",
+  "flight-lab/src/physics.js:130 — pa44.v.climb 105（MGA）vs 本文 me.basics「巡航上昇 110 kt」（ガイド）— どちらも公開値。本文で出典を書き分ける。",
+  "flight-lab/src/physics.js:130 — pa44.v.ga 88（MGA の Balked landing・フラップ 25）vs 本文 me.basics「ゴーアラウンド Vx 82 kt」（ガイド）— 同上。",
+  "flight-lab/src/school.js:108・syllabus.js:431・app.js:435・book-1.js:203 — GUMPS vs 本文 me.basics・examples の GUMP（ガイド）— アプリに合わせて GUMPS にそろえ、ガイドは GUMP と書くことを添える。",
+  "flight-lab/src/syllabus.js:370 — m1 の基準「地上 500 ft までに脚 UP」は本文（「滑走路が残っていない＆上昇を確認したら」）と矛盾しないが、本文にこの基準（課目の基準・教材のもの）を一言書く。"
+ ],
+ "factChecks": [
+  {
+   "claim": "片発になると上昇性能は 50% ではなく 80% 以上失われることが多い（AFH）",
+   "verdict": "imprecise",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "AFH 3C p.13-1：「loss of 50 percent of power, which reduces climb performance 80 to 90 percent」。理由は余分なパワー（13-2/3 の 200/175 thp の例）。"
+  },
+  {
+   "claim": "Seminole は 180 hp × 2、左右逆回転で臨界発動機がない",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "AFH 13-24「Many twins are designed with a counter-rotating right engine… No engine is more critical than the other」。Piper：Lycoming 180 hp × 2（https://www.piper.com/model/seminole/）。"
+  },
+  {
+   "claim": "脚を上げられる速度は 109 kt 以下（Vlo）",
+   "verdict": "correct",
+   "source": "https://www.se.edu/aviation/wp-content/uploads/sites/4/2023/11/Seminloe-Guide-V1.0.pdf",
+   "note": "ガイドの表「Vlo (Up) 109」。MGA チェックリストも「GEAR Up 109 KIAS」。"
+  },
+  {
+   "claim": "Vfe / Vlo / Vle 111 / 109 / 140 kt（フラップ / 脚の上げ下げ / 脚を出したまま）",
+   "verdict": "wrong",
+   "source": "https://www.se.edu/aviation/wp-content/uploads/sites/4/2023/11/Seminloe-Guide-V1.0.pdf",
+   "note": "Vlo は上げ 109・下げ 140（ガイドの表「Vlo (Down) 140」）。Vfe 111・Vle 140 は正しい。"
+  },
+  {
+   "claim": "Vxse 88 kt（ガイドの表）",
+   "verdict": "wrong",
+   "source": "https://ce.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Seminole_Checklist.pdf",
+   "note": "MGA 2025「BEST ANGLE OF CLIMB WITH ONE ENGINE INOP VXSE 82 KTS」、Thrust Flight PA44 ガイド「Pitch for VXSE (82 KIAS)」（https://www.thrustflight.com/wp-content/uploads/2026/04/PA44-Maneuver-Guide.pdf）。SE Oklahoma の表の 88 は誤記と考えられる。POH 本体は公開されておらず未確認。"
+  },
+  {
+   "claim": "Vmc 56（赤い線）・Vyse 88（青い線）・Vsse 82・Vr 75・Vx 82・Vy 88・Vso 55・Vs1 57・Vfe 111・Vno 169・Vne 202・Va 135",
+   "verdict": "correct",
+   "source": "https://www.se.edu/aviation/wp-content/uploads/sites/4/2023/11/Seminloe-Guide-V1.0.pdf",
+   "note": "ガイドの表と MGA 2025 チェックリストが一致（Va 135 は 3,800 lb、2,700 lb では 112）。"
+  },
+  {
+   "claim": "燃料：左右の翼のタンク（合計 110 gal・使用可能 108 gal）",
+   "verdict": "imprecise",
+   "source": "https://www.piper.com/model/seminole/",
+   "note": "容量は正しい（ガイド 110 / 108、Piper「Usable: 108 US Gal」）が、タンクはエンジンナセルの中（55 gal × 2）。"
+  },
+  {
+   "claim": "引き込み脚は電動の油圧ポンプで上げ下げ、非常時は重さで降ろせる",
+   "verdict": "unverified",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "PA-44 の一般的な説明（電動・可逆式の油圧ポンプ、非常時は油圧を抜いて自由落下）と一致するが、POH 本体では確認していない。AFH 13-29/30 は「エンジン駆動の油圧ポンプの機体」との違いを説明。"
+  },
+  {
+   "claim": "模擬エンジン故障：離陸前は Vmc の 50%（28 kt）まで・3,000 ft AGL 未満はスロットルだけ・400 ft AGL 未満では始めない・本当に止めるのは 3,000 ft 以上",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/training_testing/testing/acs/commercial_airplane_acs_7.pdf",
+   "note": "ガイドの Multi Engine Training Considerations と同じ。ACS 7B 付録 3（Multiengine Considerations：400 ft AGL かつ Vsse/Vxse/Vyse 以上、3,000 ft 未満はスロットルでゼロ推力、離陸中は計算 Vmc の 50% まで）、AFH 13-35/36。"
+  },
+  {
+   "claim": "片発の実用上昇限度＝50 fpm、両発の実用上昇限度＝100 fpm",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "AFH 13-11。"
+  },
+  {
+   "claim": "加速停止距離・加速継続距離（50 ft まで、公表されていない機体も多い）",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "AFH 13-10/12。加速停止距離は多くの POH で参考値で、規則上の制限ではない（13-11）。"
+  },
+  {
+   "claim": "AFH は脚 DOWN で滑走路が残れば降りる、脚 UP 後は上昇を続けるか正面に降りるかを離陸前に決めるよう勧めている",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/14_afh_ch13.pdf",
+   "note": "AFH 13-29〜31（Landing Gear Down／Gear Up, Performance Inadequate／Adequate）と 13-30「An emergency contingency plan and safety brief…」。"
+  },
+  {
+   "claim": "この教材のモデルでは Vyse・海面付近で片発上昇率 約 280 fpm",
+   "verdict": "correct",
+   "source": "flight-lab/src/physics.js steadyState(pa44, 88, {pwr:\"full\", oei:true, altFt:100})",
+   "note": "計算値 281 fpm（両発 Vy は 1,332 fpm）。flight.test.mjs も 180〜400 fpm を確かめている。"
+  },
+  {
+   "claim": "通常離陸：Vr 75・88 kt で上昇・滑走路が残っていなければ脚 UP・500 ft から巡航上昇 110 kt（25 inHg・2,500 rpm）",
+   "verdict": "correct",
+   "source": "https://www.se.edu/aviation/wp-content/uploads/sites/4/2023/11/Seminloe-Guide-V1.0.pdf",
+   "note": "ガイドの Normal Takeoff のとおり。MGA 2025 は En Route Climb 105 KIAS（飛行モデルの climb と同じ）。"
+  },
+  {
+   "claim": "ゴーアラウンド（両発）：ミクスチャー・プロペラ・スロットルの順に前へ・Vx 82 kt・フラップを少しずつ・脚 UP。片発のゴーアラウンドは行わない",
+   "verdict": "correct",
+   "source": "https://www.se.edu/aviation/wp-content/uploads/sites/4/2023/11/Seminloe-Guide-V1.0.pdf",
+   "note": "ガイドの Go-Around と「Single-engine go-arounds will not be attempted in the PA-44」。MGA の Balked landing は 88 KIAS・フラップ 25。"
+  },
+  {
+   "claim": "出典：FAA-H-8083-3C、FAA-S-ACS-7B は現行版か",
+   "verdict": "correct",
+   "source": "https://www.faa.gov/training_testing/testing/acs",
+   "note": "ACS 一覧：Commercial Pilot for Airplane Category (FAA-S-ACS-7B) April 2024・変更なし・Effective May 31, 2024。AFH のページは 3C（2022 年更新）。"
+  }
+ ],
+ "cadetNotes": [
+  "cadet/test/content.test.mjs:84 が BOOK.section('me.basics').text が「Archer の次に双発機 Piper Seminole」で始まることを確かめている。CADET は「公開情報では、」を消すので、ねらいの文を「公開情報では、Archer の次に双発機 Piper Seminole（PA-44-180）で…」で始め、図（figcaption の文字は text に入る）より前に置く。bk.aim の出力の形が変わるならテストも確認。",
+  "各節の最初の <svg> が教室の画面に映る。いまは me.basics・me.speeds・me.perf に SVG がない（画面が空）。新しい図をそれぞれの節の最初に置く。",
+  "キャプションの最初の 2 文が読み上げられる：「図：赤い線は Vmc…青い線は Vyse…」のように、要点から書く。キーの文字（R / F、[ / ]、G）をキャプションに入れない。",
+  "bk.key は教官が読み上げる。me.basics の 2 つ目（「この教材の Seminole は…（R / F）…（教材用の簡略化）」）は APP_ONLY で消えるので、最初から bk.sim へ。各項目 60 字以内。",
+  "CADET のキー文字の削除は「（WASDQERFTVBZXU の文字）」だけで、「（[ / ]）」は消えない。本文・キャプションに「[ / ]」を書かない（bk.sim の中だけ）。",
+  "quiz.js の q_me は CADET の座学でもそのまま出る（cadet/src/content/school.js:91）。Vxse・GUMP(S) などの値をそろえる。",
+  "cautions の「ANA・Acron Aviation の SOP ではない」と refs の R.acron は CADET では表示されない（REAL_NAMES）。本文に実在の社名を書かない。",
+  "Vxse を直すなら cadet/src/flight/sorajima.js:136 にも同じデータがある。"
+ ]
+}

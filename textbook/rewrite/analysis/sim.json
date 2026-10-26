@@ -1,0 +1,183 @@
+{
+  "id": "sim",
+  "title": "この教材で練習する：家での予習・復習のしかた",
+  "sections": [
+    {
+      "id": "sim.can",
+      "title": "この教材でできること・できないこと",
+      "gist": "家のパソコンの教材シミュレータで練習に向いていること（手順・計器・目標値・判断・交信の型）と、できないこと（体の感覚・正式な訓練時間・正確な性能・本物の管制）を比べる節。",
+      "issues": [
+        "目的の文がなく、いきなり表と注意書き（bk.warn）だけ。「ここが大切」もない。",
+        "「認定された訓練装置（FTD・FFS）としての飛行時間の記録」は不十分：FAA が認めた ATD（BATD / AATD：14 CFR 61.4(c)、AC 61-136B）も訓練時間に数えられる。訓練校（Acron の機材一覧）にも FAA 認定の FTD と AATD がある。『家のシミュレータ（この教材）→ ATD → FTD → FFS → 実機』の違いを示し、この教材はどれでもない（時間に数えない）と書く。",
+        "FTD・FFS・ATD が 日本語（English）で説明されていない（表の中で略語だけ）。",
+        "「空間識失調などの錯覚（体の感覚がないので起きない）」は不正確：起きないのは内耳（前庭）の錯覚。画面で見える錯覚（滑走路の幅や傾きによる見え方の錯覚など）は一部再現できる。",
+        "bk.warn「本アプリは公開情報を基にした非公式の自主学習用教材です…」は章の注意（cautions）・使い方の冒頭と重複。短くするか、FTD との違いの説明に置き換える。"
+      ],
+      "mainFigure": "deviceLadder：左から右へ『家のパソコン（この教材：手順・計器・目標値の予習。時間には数えない）→ ATD（BATD / AATD：FAA 認定。一部の時間に数えられる）→ FTD（機種の操縦席を再現）→ FFS（動く台・視界。エアラインの訓練）→ 実機』の段。各段に『体の感覚』『正式な時間』の ○ / ×。"
+    },
+    {
+      "id": "sim.how",
+      "title": "効果的な練習の組み立て",
+      "gist": "チェアフライング・目標値を先に決める・1 回に 1 つ・レベルを上げる・講評を読む・教科書に戻るの 6 つで、短い練習を組み立てる節。",
+      "issues": [
+        "数値の誤り：「目標値を先に決める：『上昇：ピッチ 8°・全開・76 kt』」→ 教材の飛行モデルでは Vy 76 kt・全開の上昇姿勢は約 10°（3,000 ft で 9.7°・+650 fpm、海面で 10.8°・+780 fpm：physics.js steadyState / school.js guideText）。教官パネルの目安も『機首上げ 約 10°』と出る。8° は巡航上昇 87 kt に近い（7.1°）。数値はモデルから計算して入れる。",
+        "チェアフライングの説明「プロのパイロットも使う方法です」の出典がない。章の出典は Airplane Flying Handbook（FAA-H-8083-3C）だが、AFH 第 1 章にチェアフライングの記述は見当たらない。AOPA Air Safety Institute の記事（2024-07-23）に説明があるので、そちらを参考として示すか『一般に使われる方法』と書く。",
+        "「ここが大切」の『20〜30 分の練習を毎日の方が、週 1 回の長い練習より身につきやすい』に出典がない。公開資料で確かめられないなら『この教材のすすめ』（教材の考え）と明記する。",
+        "「教科書に戻る：課目の『教科書』のボタンからその節へ」は場所があいまい。実際は『課程表 → 課目の説明 → 折りたたみ「教科書の関連する節」→「教科書 N. 節名」』のボタン（pages.js:155・209）。一時停止画面の「教科書」は課目の節ではなく教科書の最後に読んだ節を開く。",
+        "6 項目の番号リストだけで図がない。実機のレッスンの前の晩の流れ（時間配分つき）は図にするとわかりやすい。",
+        "よくある間違い（bk.warn）がない：例『疲れてから続けると悪い癖が付く』『目標値を決めずに飛び始める』『アシスト（自動ラダー・操縦アシスト）に頼りきる』。"
+      ],
+      "mainFigure": "practicePlan：実機のレッスンの前の晩の 20〜30 分の流れ図『教科書の節（5 分）→ チェアフライング（5 分。目標値を声に出す）→ シミュレータの課目（導入 → 基礎、10〜15 分）→ 講評の × と「次に意識すること」をメモ（5 分）』と、レッスンの後に教科書へ戻る矢印。時間は教材のすすめと明記。"
+    },
+    {
+      "id": "sim.keys",
+      "title": "この教材の操作のまとめ",
+      "gist": "キーボードとゲームパッドの操作を、実機のどの操縦装置に当たるかと一緒にまとめる節。",
+      "issues": [
+        "キーの絵がない。アプリの UI.keyboardSvg（ui.js、幅 705・ラベル 9.2 px）は 390 px の画面では文字が約 5 px になり読めない。教科書用に幅 360〜440・文字 12 以上の図を作る。",
+        "W / S：「離すとその角度を保つ」は空中だけ。地上では普通の操縦桿の動き（離すと中立に戻る：app.js:220-226）。↑ / ↓ でも同じ（app.js:204）。キーの一覧（KEYMAP）とガイドは S＝機首上げを先に書いているので、順番を『S / W：機首を上げる / 下げる』に合わせると混乱しない。",
+        "A / D：標準の設定では離すとそのバンクを保つ（±4° 以内なら水平に戻す）こと、設定で「離すと中立」にできることが書かれていない（app.js:218、index.html:86、pages.js:418）。← / → でも同じ。",
+        "Q / E：標準では自動ラダーが ON（app.js:33 PREFS0.autoRud: true）で、ボールが自動で中央に保たれることが書かれていない。片発の課目では自動ラダーは OFF になる（school.js:319）。",
+        "R / F：Shift+R（全開）・Shift+F（アイドル）、PageUp / PageDown、押し続けると速く動くことが抜けている（app.js:100・230-234）。",
+        "V / Shift+V「フラップを 1 段下げる / 上げる」：アプリでは最大（40°）でもう一度 V を押すと UP に戻る（app.js:111 の (s.flapIdx + 1) % n）。着陸直前の押しすぎは危ない形になるので注意として書く（アプリは変えない）。",
+        "T / Shift+T「トリムを戻す」→ 正しくは『トリムを中立（離陸位置）へ』。地上で T を押すと中立になる（app.js:120）。",
+        "[ / ]：自由飛行では Shift+[ / Shift+] でエンジンを再始動できること（app.js:100・142）が抜けている。",
+        "C / H / P：H は「キーの一覧」（いまの手順で使うキーが光る）。ツールバーの表示も「キー H」（index.html:34）。P のほか Esc でも一時停止。L（水平に戻す・自由飛行のみ：app.js:128）が表にない。",
+        "G1000 型パネルのボタン（HDG・ALT・BARO・CRS・CDI・COM / NAV の周波数・MFD の地図）はマウスで押すこと（app.js:453 の説明）が書かれていない。",
+        "Z / X「ラダートリム」：アプリでは Archer でも動く（app.js:146-148 に機種の判定がない）。主に Seminole の片発で使う。実機の Archer に操縦席で動かすラダートリムがあるかは POH で確認（要確認）。",
+        "ゲームパッドの説明は内容が正しい（app.js:176-194、pages.js:442 と一致）が、PS の名前だけ（× など）。Xbox の名前（A・LB / RB・RT / LT）も併記する。PS / Xbox ボタン（ボタン 16）でキーの一覧が開く（app.js:190）が、ガイドにも使い方にも書かれていない。",
+        "「ここが大切」がない（例：S＝引く＝機首上げ、W＝押す＝機首下げ／困ったら H／T は速度を決めてから）。"
+      ],
+      "mainFigure": "keyMap：教科書用のキーボードの図（幅 400 前後）。使うキーだけを実際の位置に並べ、色で『機首・傾き（W S A D）』『ラダー（Q E Z X）』『出力（R F・Shift）』『トリム・フラップ・脚・フェザー（T V G [ ]）』『ブレーキ（B・Space）』『そのほか（H P/Esc C U L Enter 1〜3）』に分け、キーの横に実機の操縦装置（操縦輪を引く / 押す / 回す、ペダル、スロットル、トリムホイール、フラップレバー）を書く。データは ui.js の KB / GROUPS と app.js:100 の割り当て。"
+    }
+  ],
+  "problems": {
+    "unclear": [
+      "sim.keys：W / S の「離すとその角度を保つ」が空中だけの動きであることが書かれていない（地上の離陸の引き起こしでは、離すと中立に戻る）。",
+      "sim.keys：自動ラダーが標準で ON であることが書かれていないので、『Q / E を使わなくても真っすぐ飛ぶ』理由がわからない。",
+      "sim.can：FTD・FFS（・ATD）が略語のまま。",
+      "sim.how：「課目の『教科書』のボタン」がどこにあるかわからない。",
+      "章の summary に「記録の使い方」とあるが、記録（学習記録のページ・JSON の書き出し）の説明は sim.how の 1 行だけ。"
+    ],
+    "order": [
+      "画面の見方（教官パネル・操作の状態・G1000 型パネル・講評・合否の決まり）を扱う節がない。新しい節 sim.screen を sim.keys の前に置き、intro.study から bk.see で案内する。",
+      "sim.keys の表は『実機の操縦装置ごと』（操縦輪 → ペダル → スロットル → トリム → フラップ → 脚 → ブレーキ → 双発だけ → 教材の補助 → 画面）に並べ替える。ゲームパッドは表の後に別の小さな表（または新しい節 sim.pad）。",
+      "sim.can → sim.how → sim.screen（新）→ sim.keys の順にすると、『何に使うか → どう練習するか → 画面 → キー』の順になる。"
+    ],
+    "errors": [
+      "sim.how「上昇：ピッチ 8°・全開・76 kt」→ 教材の Archer（FL.physics pa28）の全開・76 kt の上昇姿勢は約 10°（3,000 ft で 9.7°、海面で 10.8°）。教官パネルの目安も『機首上げ 約 10°』（physics.js steadyState、school.js:58-68 guideText の計算値）",
+      "sim.can「認定された訓練装置（FTD・FFS）としての飛行時間の記録」→ FAA が認めた BATD / AATD も条件付きで訓練時間に数えられる（14 CFR 61.4(c)、AC 61-136B）（https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_61-136B.pdf）",
+      "sim.keys「V / Shift+V：フラップを 1 段下げる」→ アプリでは最大の位置で V を押すと UP まで戻る（app.js:111）。本文に注意として書く。",
+      "sim.keys「T / Shift+T：トリムを戻す」→『トリムを中立（離陸位置）へ』（app.js:127）。"
+    ],
+    "outdated": [
+      "古くなった版はない：Airplane Flying Handbook FAA-H-8083-3C は 2026-10 時点で FAA のページに現行として載っている（https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook）。ただしこの章の内容（チェアフライング・練習の組み立て）の出典としては合っていない。",
+      "AC 61-136B（2018-09-12）が ATD の承認の現行の AC（新しい版は見つからない）。"
+    ],
+    "duplicates": [
+      "sim.how の 6 段階が intro.study の 4 段階（読む・答える・飛ぶ・振り返る）と重なる。intro.study は最初の 1 回、sim.how は毎日の練習と役割を分ける。",
+      "sim.can の bk.warn が章の cautions、intro の bk.warn、FLIGHT-LAB-使い方.md の冒頭と同じ内容。",
+      "sim.keys の表がアプリの操作ガイド（pages.js:412-435）とキーの一覧（app.js:427-446）と同じ内容で、しかも少ない。本文は『実機との対応』と『初心者がつまずく点』に絞り、全キーの一覧は図で示す。"
+    ],
+    "numbers": [
+      "sim.how の上昇姿勢 8° と飛行モデル（約 10°）が合わない。Vy 76 kt 自体は FL.physics pa28 の v.y と訓練校チェックリスト（R.archerCk）と一致。",
+      "使い方.md:56「操作の状態の『簡潔に』はスロットル・フラップ・トリムだけ」とアプリ（app.js:413：スロットル・フラップ・脚・トリム）が少し違う（本文には出ないが、sim.screen を書くときはアプリに合わせる）。",
+      "使い方.md:178「Share / Back：脚」とガイド pages.js:442「Back / View（クリエイト）」で PS5 のボタン名が違う（PS5 は『クリエイト』）。"
+    ]
+  },
+  "policy": "章の順を sim.can → sim.how → sim.screen（新）→ sim.keys とし、必要なら sim.pad（新：ゲームパッド）を最後に足す。sim.can は目的の文と deviceLadder の図から始め、家のシミュレータ・ATD・FTD・FFS・実機の違いを 日本語（English）で説明し、『この教材の練習は正式な時間に数えない』を「ここが大切」にする。sim.how は上昇姿勢を飛行モデルの値（約 10°）に直し、チェアフライングは AOPA ASI の記事を参考として示し、『毎日 20〜30 分』は教材のすすめと明記して practicePlan の図を付ける。新しい sim.screen では教官パネル（指示・使うキー・目安・目標のゲージ・連続保持）、操作の状態（大きい画面だけ）、G1000 型パネル（マウスで操作）、講評（「項目ごとの採点を見る」の × と「次に意識すること」）、合否の決まり（手順の時間の 85% 以上が基準内・最大のずれが基準の 1.6 倍以内：school.js:386）をアプリの画面の通りに書く。sim.keys は keyMap の図を主図にし、表を実機の操縦装置の順に並べ替えて、空中だけのピッチ保持・標準のバンク保持・標準で ON の自動ラダー・Shift+R / F・V の折り返し・L・Esc・マウスのパネル操作を補う。キーの説明は必ず現在の app.js / pages.js に合わせ、アプリにある言葉（「キーの一覧」「離すと中立」「操作ガイド」）をそのまま使う。",
+  "figuresExisting": [
+    { "key": "（なし：この章に FIG の図はない。以下は本文中の bk.t の表）", "verdict": "keep", "why": "sim には SVG の図が 1 つもない（figshot：対象なし）。" },
+    { "key": "bk.t sim.can できる / できないの表（book-5.js:195-200）", "verdict": "fix", "why": "表は残してよいが、ATD を加え、錯覚の行を『内耳（前庭）の錯覚は起きない』に直す。主図は deviceLadder。" },
+    { "key": "bk.t sim.keys キーの表（book-5.js:211-224）", "verdict": "fix", "why": "抜けているキー（Shift+R / F、PageUp / PageDown、↑↓←→、Esc、L、Shift+[ / ]、マウス）を加え、V の折り返し・自動ラダー標準 ON・バンク保持を書き、実機の操縦装置の順に並べ替える。主図は keyMap。" }
+  ],
+  "figuresNew": [
+    { "name": "deviceLadder", "section": "sim.can", "what": "家のパソコンのシミュレータ（この教材）→ ATD（BATD / AATD）→ FTD → FFS → 実機の段の図。段ごとに『手順・計器の練習』『体の感覚（動き・G）』『正式な訓練時間』を ○ / △ / × で。", "data": "14 CFR 61.4、AC 61-136B（ATD）、14 CFR Part 60（FFS・FTD）。この教材は『どれでもない』", "priority": "should" },
+    { "name": "practicePlan", "section": "sim.how", "what": "実機のレッスンの前の晩の 20〜30 分の練習の流れ（教科書 → チェアフライング → シミュレータの課目 → 講評のメモ）と、レッスン後に教科書へ戻る矢印。時間は『教材のすすめ』。", "data": "教材の設計（出典なしの値と明記）。課目名・レベルは syllabus.js・school.js の LEVELS", "priority": "nice" },
+    { "name": "flightScreenMap", "section": "sim.screen（新）", "what": "飛行画面の配置の模式図：左上＝教官パネル（手順の点・指示・使うキー・目安・目標のゲージ・連続保持のバー・ヒント）、右上＝操作の状態（大きい画面だけ）、右下＝ボタン（一時停止 P・キー H・視点・⚙ 設定・音・計器の大きさ）、下＝PFD・オーディオ・MFD（G1000 型・マウスで操作）。スクリーンショットではなく線画。", "data": "index.html:16-38、style.css:50・81・410-412、pages.js:446-450（画面の見方）", "priority": "must" },
+    { "name": "keyMap", "section": "sim.keys", "what": "教科書用の小さなキーボードの図（使うキーだけ、色で 6 つの組）。各キーに短い日本語のラベルと、組ごとに実機の操縦装置の名前。390 px で文字 12 以上。", "data": "ui.js の KB / GROUPS（キーの位置と色）、app.js:100（キーの割り当て）、app.js:204-234（押している間の操作）", "priority": "must" },
+    { "name": "controlsToKeys", "section": "sim.keys", "what": "実機の操縦装置の線画（操縦輪：引く＝S・押す＝W・回す＝A / D、ラダーペダル＝Q / E とつま先ブレーキ＝B、スロットル＝R / F、トリムホイール＝T、フラップレバー＝V、Seminole の脚レバー＝G・プロペラレバー＝[ / ]）。", "data": "app.js:100・204-234、pages.js:416-428 の『実機では』の列", "priority": "should" },
+    { "name": "padMap", "section": "sim.keys（または新しい sim.pad）", "what": "標準配置のゲームパッドの図：左スティック＝操縦桿、右スティック左右・L1 / R1（LB / RB）＝ラダー、右スティック上下・十字キー上下＝トリム、R2 / L2（RT / LT）＝スロットル、×（A）＝ブレーキ・チェックリストの次、○（B）/ □（X）＝フラップ下げ / 上げ、△（Y）＝視点、クリエイト（Back）＝脚、オプション（Start）＝一時停止、十字キー左右＝フェザー、L3 / R3＝水平に戻す / 自動ラダー。管制の答え：□＝1・○＝2・△＝3。", "data": "app.js:176-194、pages.js:442", "priority": "nice" }
+  ],
+  "photos": [
+    { "section": "sim.can", "subject": "動く台に載った研究用フライトシミュレータの外観（NASA Ames Vertical Motion Simulator の T-cab）", "search": "NASA Image and Video Library：ARC-1997-AC97-0311『Exterior view of the VMS (Vertical Motion Simulator) T-cab』。ほかに Commons: Category:Full flight simulators（licence を 1 枚ずつ確認）", "candidateUrl": "https://images.nasa.gov/details/ARC-1997-AC97-0311", "candidateLicence": "NASA（米国政府の著作物・PD。NASA のメディア利用ガイドラインに従い、ロゴの使い方と人物の写り込みを確認）", "why": "家のパソコンと『体の動きまで再現する本物のシミュレータ』の違いを 1 枚で見せる。" },
+    { "section": "sim.keys", "subject": "小型機の操縦輪（ヨーク）・スロットル・フラップレバーの近接写真（画面の計器が写っていないもの）", "search": "Commons: Category:Piper PA-28 cockpits / Category:Aircraft yokes / Category:Throttle quadrants（CC BY / CC BY-SA / PD、ディスプレイの画面が写らない構図）", "candidateUrl": "", "candidateLicence": "", "why": "キーが実機のどの装置の代わりかを、本物の形で確かめられる。" }
+  ],
+  "endMatter": {
+    "terms": [
+      "修正：FTD / FFS を分ける：FFS（Full Flight Simulator）＝動く台と視界のある最上位の訓練装置、FTD（Flight Training Device）＝機種の操縦席を再現した訓練装置",
+      "追加：ATD（Aviation Training Device：BATD / AATD） / 簡易な認定訓練装置 / FAA が承認したもの（AC 61-136B）",
+      "追加：Pitch hold / ピッチ保持 / この教材の機能：W / S を離すとその機首の角度を保つ（空中）",
+      "追加：Auto rudder / 自動ラダー / この教材の補助（標準 ON、片発の課目では OFF）",
+      "追加：Callout / コールアウト（声に出す確認） / ",
+      "追加：Briefing / ブリーフィング（飛ぶ前の打ち合わせ） / 課程表の課目の説明",
+      "追加：Yoke / Rudder pedals / Throttle / Trim wheel / Flap lever / 操縦輪・ラダーペダル・スロットル・トリムホイール・フラップレバー / キーの対応先",
+      "残す：Chair flying・Flow・Debrief"
+    ],
+    "examples": [
+      "残す：明日の実機は「着陸」→ 今夜：教科書「安定した進入と着陸」→ チェアフライングで場周を 1 周 → 課目「通常着陸」を基礎レベルで 3 回 → 講評のメモ（節名・課目名は現在の book-3.js・syllabus.js と一致）。",
+      "追加：目標値の言い方の例『上昇：全開・76 kt・機首上げ 約 10°。速度が速ければ機首を少し上げる』（数値は教材の Archer のモデル値）。",
+      "追加：つまずいたときの例『先へ進めない → H でキーの一覧を開き、光っているキーと教官パネルの目標のゲージを確かめる』。"
+    ],
+    "cautions": [
+      "残す：この教材の練習は、実機の訓練時間・技能・資格の証明にはならない。",
+      "残す：数値・手順は教材の近似。実機は POH・教官・SOP が優先。",
+      "追加：自動ラダー・操縦アシスト・L（水平に戻す）は教材の補助。実機にはないので、慣れたら OFF で練習する。",
+      "追加：フラップは最大の位置で V をもう一度押すと UP に戻る。着陸の前は押しすぎない。"
+    ],
+    "quizReview": [
+      "Q1：keep（この章の要点。選択肢も妥当）。",
+      "Q2：fix（ほかの選択肢『椅子を揺らして錯覚を体験する』『飛行機の座席を調整する』『自動操縦で飛ぶこと』があり得なさすぎる。『実機の操縦席に座って計器を眺める』『同じ課目をシミュレータで続けて何度も飛ぶ』『教官の飛行を見学する』など、もっともらしい選択肢にする）。"
+    ],
+    "quizProposals": [
+      { "q": "この教材のキーボードで、機首を上げる（操縦輪を引く）キーは？", "choices": ["S（または ↓）", "W（または ↑）", "R", "T"], "answer": 0, "why": "S＝操縦輪を引く＝機首上げ、W＝押す＝機首下げ。R はスロットル、T はトリム。" },
+      { "q": "標準の設定で、空中で W / S から手を離すとどうなる？", "choices": ["そのときの機首の角度を保つ", "機首が水平に戻る", "エンジンの出力がアイドルになる", "トリムが中立に戻る"], "answer": 0, "why": "この教材はピッチ保持が標準（設定で『離すと中立』にもできる）。地上では普通の操縦桿のように、離すと中立に戻る。" },
+      { "q": "家のパソコンのシミュレータでの練習を、正式な訓練時間としてログブックに記録できるか？", "choices": ["できない（数えられるのは FAA が認めた FFS・FTD・ATD など）", "できる", "教官がそばにいればできる", "1 日 1 時間まではできる"], "answer": 0, "why": "14 CFR 61.4：訓練時間に数えられるのは FAA が認めた装置だけ（ATD は AC 61-136B）。この教材はどれでもない。" },
+      { "q": "この教材の Archer で、上昇の目標値として正しい組み合わせは？", "choices": ["全開・76 kt（Vy）・機首上げ 約 10°", "アイドル・76 kt・機首下げ 約 5°", "全開・60 kt・機首上げ 約 20°", "巡航出力・110 kt・機首 0°"], "answer": 0, "why": "教材のモデルでは全開・Vy 76 kt の上昇姿勢は約 10°（教官パネルの目安と同じ）。速度は機首で合わせ、出力は全開のまま。" },
+      { "q": "フラップを 1 段上げるキーは？", "choices": ["Shift+V", "V", "G", "Shift+F"], "answer": 0, "why": "V で 1 段下げ、Shift+V で 1 段上げる。G は脚（Seminole）、Shift+F はスロットルをアイドルへ。" }
+    ],
+    "refs": [
+      "keep：R.afh（FAA-H-8083-3C、現行）。ただし『チェアフライング』の出典にはならないので、本文の基本操縦の参照として残す",
+      "remove：R.ana1（この章は ANA の公開情報を使っていない。sim は CADET では除かれるが、TEXTBOOK に出るので不要な実名を減らす）",
+      "add：14 CFR 61.4（訓練装置の資格と承認）https://www.ecfr.gov/current/title-14/chapter-I/subchapter-D/part-61/subpart-A/section-61.4",
+      "add：FAA AC 61-136B FAA Approval of Basic Aviation Training Devices (BATD) and Advanced Aviation Training Devices (AATD) https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_61-136B.pdf",
+      "add（参考・民間）：AOPA Air Safety Institute『Training and Safety Tip: Master the chair』（2024-07-23）https://www.aopa.org/news-and-media/all-news/2024/july/23/training-and-safety-tip-master-the-chair",
+      "add（参考）：FAA Aviation Instructor's Handbook（FAA-H-8083-9B）の学習の過程の章（練習のしかた）https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/aviation_instructors_handbook （『短く・毎日』を出典つきにするなら内容を確認してから）"
+    ]
+  },
+  "appMismatches": [
+    "book-5.js:212 — W / S「離すとその角度を保つ」：保持は空中だけ（app.js:217-226、地上では離すと中立）。↑ / ↓ も同じ操作（app.js:204）— アプリが正しい。本文に『空中では』と ↑↓ を足す。",
+    "book-5.js:213 — A / D「左 / 右へ傾ける」だけ：標準は『離すとバンクを保つ（±4° 以内は水平へ）』（app.js:218、index.html:86、pages.js:418）、設定で「離すと中立」。← / → も同じ — アプリが正しい。",
+    "book-5.js:214 — Q / E：自動ラダーが標準で ON（app.js:33 autoRud: true）で、片発の課目では強制的に OFF（school.js:319、app.js:131-132）であることが本文にない — アプリが正しい。",
+    "book-5.js:215 — R / F：Shift+R＝全開・Shift+F＝アイドル（app.js:100・124-126）、PageUp / PageDown（app.js:230）、押し続けると速くなる（app.js:231-232）が抜けている — アプリが正しい。",
+    "book-5.js:216 — V「フラップを 1 段下げる」：最大の位置で V を押すと UP に戻る（app.js:111 (s.flapIdx + 1) % n）。ガイド（pages.js:422）・使い方.md:153 も『1 段下げる』としか書いていない — 動きはアプリが基準（アプリは変えない）。本文に注意として書く。",
+    "book-5.js:217 — T / Shift+T「トリムを戻す」：Shift+T は『中立（離陸位置）へ』（app.js:127）、地上の T も中立にする（app.js:120）、操縦アシスト中はトリムは自動（app.js:121）— 本文の言葉をアプリに合わせる。",
+    "book-5.js:220 — [ / ]：自由飛行では Shift+[ / Shift+] で再始動（app.js:100・142-144、訓練中は不可）が抜けている。",
+    "book-5.js:223 — C / H / P「操作の説明」：アプリでは H は「キーの一覧」（app.js:452、index.html:34「キー H」、pages.js:81）。一時停止は P と Esc（app.js:93）。L＝水平に戻す（自由飛行のみ、app.js:128-130）が表にない — アプリの名前に合わせ、Esc と L を足す。",
+    "book-5.js:211-224 — G1000 型パネルのボタンはマウスで操作（app.js:453、pages.js:448）が表にない — 1 行足す。",
+    "book-5.js:225 — ゲームパッドの説明は正しい（app.js:176-194、pages.js:442 と一致：左スティック＝傾きと機首、右スティック左右・L1 / R1＝ラダー、右スティック上下＝トリム、R2 / L2＝スロットル、×＝ブレーキ）。「詳しくはメニューの『操作ガイド』」も一致（pages.js:50、タブ「ゲームパッド」pages.js:404）。",
+    "app.js:190 — ボタン 16（PS / Xbox ボタン）でキーの一覧が開くが、ガイド pages.js:442 と使い方.md:166-181 に書かれていない（アプリ内部の不一致。本文で触れるならアプリの動きに合わせる）。",
+    "book-5.js:212 —「設定で『離すと中立』」はアプリの設定画面（index.html:84「離すと中立」）と一致。ガイド pages.js:416 は『メニューで「離すと中立」に変更可』、pages.js:436 は『メニューの操作の設定』と書いていて言い方が揃っていない（本文は『⚙ 設定』に統一するのがよい）。",
+    "book-5.js:208 — 「課目の『教科書』のボタン」：実際は課程表の課目の説明の折りたたみ「教科書の関連する節」の中の「教科書 N. 節名」ボタン（pages.js:155・209）。一時停止画面の「教科書」（index.html:170、app.js:495）は課目の節ではなく教科書を開くだけ — 本文を具体的に。",
+    "book-5.js:204 — 「上昇：ピッチ 8°・全開・76 kt」：教官パネルの目安（school.js:58-68 guideText）は同じ条件で『機首上げ 約 10°』— 飛行モデルが正しい。",
+    "outputs/FLIGHT-LAB-使い方.md:56 —「操作の状態の『簡潔に』はスロットル・フラップ・トリムだけ」：アプリは脚も残す（app.js:413）。使い方.md:178「Share / Back」：ガイドは「Back / View（クリエイト）」（pages.js:442）。どちらもアプリが正しい（本文に関係するのは sim.screen を書くとき）。"
+  ],
+  "factChecks": [
+    { "claim": "家の教材シミュレータでは、認定された訓練装置（FTD・FFS）としての飛行時間を記録できない", "verdict": "imprecise", "source": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_61-136B.pdf", "note": "結論は正しいが、訓練時間に数えられるのは FFS・FTD（Part 60）だけでなく、FAA が承認した BATD / AATD（14 CFR 61.4(c)、AC 61-136B）もある。この教材はどれでもない。" },
+    { "claim": "チェアフライング（椅子で手順を声に出しながら手を動かす）はプロのパイロットも使う方法", "verdict": "unverified", "source": "https://www.aopa.org/news-and-media/all-news/2024/july/23/training-and-safety-tip-master-the-chair", "note": "FAA の Airplane Flying Handbook（3C）第 1 章には記述が見当たらない。AOPA ASI の記事（民間）は『the best pilots chair fly』と説明している。出典を AOPA にするか『一般に使われる方法』とする。" },
+    { "claim": "20〜30 分の練習を毎日の方が、週 1 回の長い練習より身につきやすい", "verdict": "unverified", "source": "", "note": "公開の FAA 資料で確かめられなかった（学習の一般論としての分散練習）。『教材のすすめ』と明記する。" },
+    { "claim": "上昇の目標値：ピッチ 8°・全開・76 kt", "verdict": "wrong", "source": "flight-lab/src/physics.js（steadyState）・school.js:58-68（guideText）", "note": "教材の Archer では全開・76 kt の上昇姿勢は約 10°（3,000 ft で 9.7°・+650 fpm、海面で 10.8°・+780 fpm）。76 kt（Vy）自体は FL.physics と訓練校チェックリスト（R.archerCk）で一致。" },
+    { "claim": "空間識失調などの錯覚は体の感覚がないので起きない", "verdict": "imprecise", "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/phak", "note": "起きないのは内耳（前庭）による錯覚。目で見る錯覚（PHAK 第 17 章 Aeromedical Factors の視覚の錯覚）は画面でも一部起こりうる。" },
+    { "claim": "Airplane Flying Handbook（FAA-H-8083-3C）", "verdict": "correct", "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook", "note": "2026-10 時点で FAA のページの現行版は 3C。" },
+    { "claim": "フラップレバー（Archer は手動の棒）、トリムホイール、ペダルの上の部分（つま先）でブレーキ、プロペラレバーを後ろいっぱいでフェザー（Seminole）", "verdict": "correct", "source": "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook", "note": "一般的な説明として正しい。機体ごとの細部は POH で確認（AFH 第 13 章：多発のフェザー）。" },
+    { "claim": "Z / X：ラダートリム（Archer でも同じ）", "verdict": "unverified", "source": "", "note": "アプリでは Archer でも動くが、実機の PA-28-181 に操縦席で動かすラダートリムがあるかは POH で確認が必要。本文では『主に Seminole の片発で使う』と書く。" }
+  ],
+  "cadetNotes": [
+    "sim は CADET では章ごと除かれる（cadet/src/content/book.js:9 DROP_CHAPTERS）。新しい節（sim.screen・sim.pad）を sim に足せば CADET には出ないので、アプリの言葉（キーボード・メニュー・本アプリ・キーの文字）を使ってよいのは sim と intro.study だけ。",
+    "cadet/test/content.test.mjs:144 は lesson の book から 'intro.' だけを除外する。syllabus.js の book に 'sim.*' を入れると CADET のテストが落ちる（syllabus は変えないので現状は問題なし）。",
+    "TEXTBOOK は sim の全節に『この節は FLIGHT LAB（アプリ）の使い方の説明です』を自動で付ける（textbook/src/render.js:16、test/content.test.mjs:62）。新しい sim.* の節にも付くのでテストは通る。textbook/test/browser.test.mjs:129 が 'sim.keys' の id を使うので id を変えない。",
+    "TEXTBOOK のテストの数（textbook/test/load.mjs:19 COUNTS：secs 120・quiz 83・terms 271・figs 22・simTags 56 など）は節・問題・用語・図・bk.sim を足すと変わる。",
+    "bk.sim の箱は CADET では正規表現 <div class=\"bk-sim\">[\\s\\S]*?</div> で消される。bk.sim の文に <div> を入れると途中で切れるので、箱の中に div を書かない（他の章の bk.sim を書き直すときも同じ）。",
+    "キーの名前を他の章の本文に書くと、CADET の APP_ONLY と test の APP（キーボード・『キー（』・Shift+・Enter で・括弧の中の W A S D…）に当たって文が消える。キーの説明は sim・intro.study・bk.sim の箱に集める。"
+  ]
+}

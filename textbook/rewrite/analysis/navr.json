@@ -1,0 +1,314 @@
+{
+  "id": "navr",
+  "title": "電波航法と GPS（Radio navigation and GPS）",
+  "sections": [
+    {
+      "id": "nav.vor",
+      "title": "VOR：ラジアルと追跡",
+      "gist": "VOR のラジアル（局から外へ向かう磁方位の線）と TO/FROM・CDI の読み方を理解し、コースに会合して風を修正しながら局まで追跡する。",
+      "issues": [
+        "目的の文も図も無い。「ラジアル＝局から出ていく線」「TO/FROM は位置で決まる」は平面図が無いと初心者には分からない（PHAK 16 も VOR indicator・HSI・追跡の図を 3 枚使う）。",
+        "VOR が今も維持される理由（VOR MON：GPS が使えないとき、米本土のどこでも 100 NM 以内に GPS に頼らない進入のある空港、5,000 ft AGL でほぼ途切れない受信。AIM 1-1-3 f）が無い。syllabus.js の課目 n1 の why は MON に触れているので、本にも 1〜2 文必要。",
+        "「使う前に必ず識別符号（モールス）を聞いて」は正しい（AIM 1-1-3：確かな識別方法はモールスか音声識別だけ）。ただしシミュレーターには識別音が無い（app.js / avionics.js に Morse の処理なし）ので「実機では」と書き、課目では周波数の表示で確かめると分ける。",
+        "表「CDI の針（G1000 の HSI）… 1 ドット 5°・2 ドットで 10°」は G1000 の HSI として正しい（avionics.js cdiVor も ±10°）。昔ながらの VOR 計器は片側 5 ドット・1 ドット約 2°（PHAK 図 16-29）なので、写真や他の機体で混乱しないよう一言。",
+        "「HSI では…TO で飛んでいれば『逆に感じる』ことはありません」は不正確：HSI は飛びたいコースを CRS に入れていれば TO でも FROM でも逆にならない。逆になる（reverse sensing）のは従来の CDI で、選んだコースとほぼ反対向きに飛ぶとき。",
+        "追跡の手順は PHAK・IFH と合っている。局通過は TO→FROM の反転で確かめる（AIM 1-1-3）、局に近づくほど針が敏感になる（課目 n1 の brief にある）を足す。",
+        "VOR は見通し距離（line of sight）で、高いほど遠くまで届く（AIM 1-1-3 a）が無い。nav.lost の Climb の理由とつながる。",
+        "IFR 用の VOR 点検（91.171）の表は VFR の初心者には早い。1 行に縮めて ifrp（ifr.rules）へ bk.see するか、「計器飛行で必要」と明記。いまの quiz 3 問目はこの表に依存。",
+        "シミュレーターの箱「NAV1 を LAB VOR に合わせ」は現在のアプリと違う：課目 n1 は NAV1＝113.50・CDI＝NAV1・CRS を 40° ずらした状態で始まる（school.js:240）。生徒がするのは CRS −/+（Shift で 10°）でコースを合わせ、A / D で旋回すること。",
+        "例「CRS 030・TO・針が右 1 ドット → … 040° 前後で会合」は会合角 10° で、本文の「30°〜45° の角度で会合」と食い違う。課目 n1 の数字（インバウンド 040°、風 080°/12 kt → 針が止まる針路 約 044°）で作り直す。"
+      ],
+      "mainFigure": "vorRadials：北が上の平面図。中央に LAB VOR（コンパスローズ、磁北が上）、ラジアル 040・130・220・310 を「局から外へ」の矢印で描き、220 ラジアル上の自機（課目 n1 の出発点、局の南西 約 12 NM）と、CRS 040 のとき TO の側（局の手前）と FROM の側（局の先）を色分け。「ラジアル 220 の上 → 局へ飛ぶコースは 040（＝220−180）」の吹き出し。模式図・NOT FOR NAVIGATION。"
+    },
+    {
+      "id": "nav.dme",
+      "title": "DME と位置の確かめ方",
+      "gist": "DME の距離は局までの斜めの距離（slant range）であることを知り、ラジアル＋DME（または 2 局のラジアルの交点）で地図上の位置を出す。",
+      "issues": [
+        "図が無い。斜距離は横から見た三角形を見せれば一目で分かる。",
+        "出典の誤り：「AIM では、高度 1,000 ft ごとに局から 1 NM 以上離れていれば誤差は小さい」→ 現在の AIM 1-1-7 にこの文は無い。同じ目安は Instrument Flying Handbook（FAA-H-8083-15B）第 9 章にある。PHAK 16 は「局の真上 6,076 ft AGL で約 1.0 NM」の例。",
+        "「局の真上では高度の分（例えば 6,000 ft ＝ 約 1 NM）」→「局の標高から 6,000 ft 上なら約 1 NM」と書く（AGL ではなく局からの高さ）。",
+        "例「LAB VOR の 030 ラジアル・12 NM」を課目 n3 の出発点（LAB VOR の 030 ラジアル・約 11 NM：syllabus.js n3 setup brg 30・km 20）に合わせると、本と課目がつながる。",
+        "LAB VOR は DME 付き（VOR/DME）として描いていることを書く。実機の G1000 Archer は DME の装備が機体ごと（Garmin CRG に DME の操作の項はあるが装備は要確認）。シミュレーターの DME は CDI が NAV のときだけ表示（avionics.js:356）。",
+        "GPS の距離は水平距離、DME は斜距離（IFH 9 章）。この違いを 1 文足すと nav.gps とつながる。",
+        "cross fix（2 局の交点）は nav.lost でも繰り返される。説明はここに 1 回、nav.lost は参照。シミュレーターの VOR は LAB VOR 1 局だけ。"
+      ],
+      "mainFigure": "dmeSlant：横から見た図。地上の LAB VOR から自機までの斜めの線（DME の距離）と水平の距離。例 1：局の真上・局から 6,000 ft 上 → DME 約 1.0 NM（水平 0）。例 2：水平 5.0 NM・6,000 ft → DME 約 5.1 NM（誤差は小さい）。「1,000 ft ごとに 1 NM 以上離れていれば誤差は小さい（IFH）」の注記。"
+    },
+    {
+      "id": "nav.gps",
+      "title": "GPS と G1000 の航法表示",
+      "gist": "GPS が衛星で位置を出すしくみと限界（衛星の数・RAIM・WAAS・妨害）を知り、G1000 の CDI の目盛りと GPS が止まったときの対処を理解する。",
+      "issues": [
+        "「3 次元の位置には 4 機以上、RAIM にはさらに衛星が必要」は正しい（AIM 1-1-17：RAIM は 5 機、または 4 機＋気圧高度）。VFR 用の携帯 GPS には RAIM の警告が無い（AIM 1-1-17）を足す。",
+        "GPS の妨害・なりすまし（jamming / spoofing）と、気づいたら ATC に報告すること（AIM 1-1-13 User Reports、1-1-17）が「ジャミング」の一語だけ。ACS PA.VI.B.S5「信号の喪失・妨害に気づき対処する」に対応させる。",
+        "CDI の目盛りの表（ENR 2.0・TERM 1.0・APR 0.3 NM）は実機の G1000 として正しい（Garmin：出発空港から 30 NM・目的空港の 31 NM で切り替え。出発手順中は 0.3）。しかしシミュレーターの GPS の CDI は常に 1.0 NM いっぱい（avionics.js cdiGps と navSolve の 1.0）で、ENR / TERM の表示も無い。本に「この教材の課目では 1.0 NM」と書く。",
+        "「PFD の上の欄には次のウェイポイント・DTK・距離・所要時間（ETE）」はアプリと違う：シミュレーターの PFD 上の欄は「FROM → TO・DIS・DTK」だけ（avionics.js:371）、GS と TRK は PFD 左下の箱（avionics.js:374）、ETE は MFD の上の欄と FPL ページ（avionics.js:470・521）。",
+        "実機の G1000 は GPS を失うと航空路のフェーズで DR（推測航法）モードになり、自機の記号と HSI に黄色の「DR」を出す（Garmin CRG 190-01460-00 Rev A、Abnormal Operation）。シミュレーターは「NO GPS」のフラグ（avionics.js navSolve）。この違いを書くと nav.dr の「推測航法を続ける」と結べる。",
+        "「この教材の G1000 型表示でも同じ配置にしています（教材の簡略版）」は CADET では文ごと消える（APP_ONLY）。この文に事実を混ぜない。",
+        "bk.see の行き先 sys.g1000 は「ピトー静圧・AHRS・ADC」の節で、航法表示の説明ではない。行き先を新しい nav.fpl（または ifrp の ifr.np）に。",
+        "WAAS と LPV は ifrp の ifr.np と重複。ここでは「WAAS で精度と完全性が上がる」の 1 文にとどめ、LPV は ifr.np へ。",
+        "図が無い。"
+      ],
+      "mainFigure": "gpsCdiScale：上から見たコースの帯 3 本（ENR：左右 2.0 NM、TERM：1.0 NM、APR：0.3 NM）と、それぞれの CDI（2 ドットいっぱい）を並べた図。「出発空港から 30 NM・目的空港の 31 NM で ENR ⇔ TERM（実機の G1000）」「この教材の課目の GPS の CDI は 1.0 NM」と注記。"
+    },
+    {
+      "id": "nav.fpl",
+      "title": "（新）GPS の飛行計画を飛ぶ：区間・DTK と TRK・Direct-To",
+      "gist": "G1000 の飛行計画（FPL）の区間（マゼンタ＝いまの区間）・希望航路 DTK と実際の航跡 TRK・ずれ（XTK）・Direct-To の使い方を学び、GPS の線をなぞるだけにならないようにする。",
+      "issues": [
+        "新しい節。いまの本には「GPS の飛行計画を飛ぶ」説明が無いが、課目 n2 は飛行計画（fpl: LABRW → LABEA）と D→（MFD の D→ 選択）を使い、シミュレーターの MFD には FPL ページ・PREV LEG / NEXT LEG・D→ がある（app.js:556-557）。",
+        "DTK と TRK の差＝風で流されている量（PFD 左下の TRK はマゼンタ：avionics.js:375）。機首方位を DTK に合わせるのではなく、TRK を DTK に合わせる（風上へ少し機首を向ける）ことを教える。nav.plan の風の三角形と同じ考え。",
+        "実機の G1000 は通過したウェイポイントで次の区間へ自動で進む。シミュレーターは自動で進まず、MFD の NEXT LEG を押す（avionics.js:163）。本に両方を書く。",
+        "飛行計画とウェイポイントは地上で入れておき、飛行中の入力は最小に（PHAK 16 'Any VFR waypoints … should be loaded into the receiver while on the ground'）。見張りが先（Aviate → Navigate → Communicate、hf 章）。",
+        "GPS が止まったら：実機は DR モード（黄色の DR）、シミュレーターは NO GPS → 推測航法と VOR / DME（nav.dr・nav.vor・nav.lost）へ。"
+      ],
+      "mainFigure": "gpsFlightPlan：MFD 風の模式地図（北が上）に既定の飛行計画 LAB RWY → LAB-A → LAB-B（いまの区間 LAB-A→LAB-B をマゼンタ、終わった区間を白）、自機の位置、DTK 071°（区間の線の向き）と TRK 066°（風で左へ流れている例）の 2 本の矢印、XTK（右へ 0.4 NM など）の寸法線、LAB-F への D→ の破線。下に PFD 上の欄の見本「LAB-A → LAB-B  DIS 5.2NM  DTK 071°」。数字は avionics.js WAYPOINTS・MAGVAR_W 6 から計算。模式図・NOT FOR NAVIGATION。"
+    },
+    {
+      "id": "nav.ff",
+      "title": "レーダーによる交通情報（Flight following）",
+      "gist": "VFR でもレーダー管制から他機の情報をもらえる（flight following）が、見張りの責任と空域に入る条件は変わらないことを知る。",
+      "issues": [
+        "AIM の段落番号（4-1-15 Radar Traffic Information Service・4-1-18 Terminal Radar Services for VFR Aircraft）は正しい。業務量で断られる・見張りの責任は残る（4-1-15）も正しい。",
+        "例「Orlando Approach, Cherokee 123AB, 10 miles north of Sanford, 3,500, VFR to Ocala…」は実在の施設名と、教材のコールサイン（Archer Seven Lima Alpha：radio.js:15・book-comm.js:15）と違う機名。教材の LAB Approach / LAB Departure と Archer Seven Lima Alpha で書き直す（数字は言葉で：three thousand five hundred）。",
+        "Class B は flight following を受けていても「cleared into the Class Bravo airspace」と明示の許可が必要（14 CFR 91.131(a)(1)）。Class C は管制官が自機のコールサインで応答した時点で入れる（radio 章）。ここが大切の 2 項目目「C・B クラスに入る条件とは別」は良いので、この違いを本文に。",
+        "radio4 の comm.radar（交通情報の型・radar service terminated・squawk VFR）と重複。言い方は comm.radar へ bk.see し、ここは「何をしてくれる・してくれない」に絞る。",
+        "Safety alert（AIM 4-1-16）と、交通情報の時計の方位は機首が 12 時（風で流れていると少しずれる）を 1 文。",
+        "図が無い（nice）。写真（レーダーのアンテナ）で十分。"
+      ],
+      "mainFigure": "ffServices：左右 2 列の早見「してくれること（交通情報・safety alert・業務量が許せば誘導）」「してくれないこと（見張りの代わり・雲を避ける判断・Class B の許可）」と、真ん中に自機と他機の「1 時の方向・4 マイル」の時計の図。数字は radio4 comm.radar の例（one o'clock, four miles）。"
+    }
+  ],
+  "problems": {
+    "unclear": [
+      "TO/FROM・ラジアル・局へのコース（ラジアル＋180°）が表と文だけで、位置関係の図が無い（nav.vor）。",
+      "HSI と従来の CDI の reverse sensing の説明が「TO で飛んでいれば」と条件を誤っている（nav.vor）。",
+      "GPS の CDI の表が実機の値で、シミュレーターは 1.0 NM 固定であることが書かれていない（nav.gps）。",
+      "DTK と TRK の違い、GPS の飛行計画の進め方が無い（新しい nav.fpl で補う）。"
+    ],
+    "order": [
+      "nav.vor：目的 → 図（ラジアル）→ TO/FROM と CDI（HSI の図）→ 識別 → 会合と追跡（図）→ 局通過 → VOR MON の 1 文。91.171 の点検表は最後に 1 行（または ifrp へ）。",
+      "nav.gps の後に新しい nav.fpl（GPS の飛行計画を飛ぶ）を置き、その後に nav.ff。",
+      "nav.ff は radio4 comm.radar の後に読む前提で、言い方は comm.radar に任せる。"
+    ],
+    "errors": [
+      "nav.dme「AIM では、高度 1,000 ft ごとに局から 1 NM 以上離れていれば誤差は小さい」→ 現在の AIM 1-1-7 に無い。IFH 第 9 章 'Slant range error is negligible if the aircraft is one mile or more from the ground facility for each 1,000 feet of altitude above the elevation of the facility'（https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf）",
+      "nav.vor「HSI では…TO で飛んでいれば逆に感じることはない」→ HSI はコースを正しく入れていれば TO でも FROM でも逆にならない。逆になるのは従来の CDI で選んだコースと反対向きに飛ぶとき（https://www.faa.gov/sites/faa.gov/files/18_phak_ch16.pdf 図 16-30 の説明）",
+      "nav.gps「PFD の上の欄に … 所要時間（ETE）」→ シミュレーターの PFD 上の欄は FROM→TO・DIS・DTK（avionics.js:371）。ETE は MFD（avionics.js:470）"
+    ],
+    "outdated": [
+      "nav.vor に VOR MON（AIM 1-1-3 f）が無い：VOR は削減中で、残す網（MON）の考え方が現在の AIM の中心（https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap1_section_1.html）。",
+      "R.ifh の URL（https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/instrument_flying_handbook）は 404。IFH は FAA-H-8083-15B のまま現行（補遺 A・B と正誤表あり）。PDF https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf または一覧 https://www.faa.gov/regulations_policies/handbooks_manuals/aviation へ。"
+    ],
+    "duplicates": [
+      "nav.ff ↔ radio4 comm.radar（交通情報・AIM 4-1-15・radar service terminated）。",
+      "nav.gps の WAAS / LPV ↔ ifrp の ifr.np。",
+      "nav.dme の cross fix ↔ navd の nav.lost。",
+      "nav.vor の TO/FROM・ラジアルの問題 ↔ quiz.js q_nav（5・6 問目）と navr quiz 2 問目（内容は一致）。"
+    ],
+    "numbers": [
+      "GPS の CDI：本の表 ENR 2.0 / TERM 1.0 / APR 0.3 NM ↔ avionics.js cdiGps(xtk, 1.0)（navSolve で常に 1.0 NM）。quiz.js q_nav の「TERM 1.0 NM」は実機の値として正しい。",
+      "VOR の CDI：本 1 ドット 5°・いっぱい 10° ＝ avionics.js cdiVor（devDeg / 5、±2.5 で止まる）で一致。",
+      "例「DME 5.0 NM・6,000 ft・局の真上へ → 真上で約 1.0 NM」：6,000 ft ＝ 0.99 NM で正しい（PHAK は 6,076 ft で 1.0 NM）。",
+      "課目 n1 の数字（本の例に使う）：LAB VOR の 220 ラジアル上 約 12 NM（syllabus.js:273 brg 220・km 22）、インバウンド 040°、風 080°/12 kt（school.js:259：LAB_RWY trueHdg 354＋rel 80 ＝ 真 074° ＝ 磁 080°）→ TAS 約 104 kt で WCA 右 約 4° → 針が止まる針路 約 044°。",
+      "課目 n3 の出発点：LAB VOR の 030 ラジアル・約 10.8 NM（setup brg 30・km 20）。本の例「030 ラジアル・12 NM」は「約 11 NM」に。"
+    ]
+  },
+  "policy": "navr は「VOR → DME → GPS → GPS の飛行計画（新）→ flight following」の順にする。nav.vor は最初に図 vorRadials でラジアルと TO/FROM の位置関係を見せ、次に G1000 の HSI を描いた hsiCdi で CRS・針・ドット（5°/ドット）・TO/FROM を説明し、会合と bracketing は課目 n1 の数字（インバウンド 040°、風 080°/12 kt、針が止まる針路 約 044°）の図 vorTracking で示す。VOR MON（AIM 1-1-3 f）と見通し距離を 1〜2 文足し、91.171 の点検表は 1 行に縮めて ifrp へ bk.see する。nav.dme は斜距離の図 dmeSlant を最初に置き、出典を IFH 第 9 章に直し、ラジアル＋DME の例を課目 n3 の出発点（030 ラジアル・約 11 NM）にそろえる。nav.gps は衛星・RAIM・WAAS・妨害を短く説明し、CDI の目盛りは実機の値とシミュレーターの 1.0 NM 固定を分けて書き、実機の DR モードに触れる。新しい節 nav.fpl（id: nav.fpl）で FPL・マゼンタの区間・DTK と TRK・XTK・D→・自動で次の区間へ進む実機と NEXT LEG を押すシミュレーターの違いを図 gpsFlightPlan で教える。nav.ff は教材の名前（LAB Approach・Archer Seven Lima Alpha）に直し、Class B は明示の許可が必要（91.131）を足し、言い方は radio4 comm.radar へ任せる。",
+  "figuresExisting": [],
+  "figuresNew": [
+    {
+      "name": "vorRadials",
+      "section": "nav.vor",
+      "what": "LAB VOR のコンパスローズとラジアル 040・130・220・310（局から外への矢印）、220 ラジアル上の自機、CRS 040 のときの TO 側・FROM 側の色分け、「局へのコース＝ラジアル＋180°（220 → 040）」の吹き出し。NFN。",
+      "data": "avionics.js NAVAIDS（LBV 113.50、n 4000 / e −30000）、syllabus.js n1 setup（brg 220・km 22 ≒ 11.9 NM・toward）。",
+      "priority": "must"
+    },
+    {
+      "name": "hsiCdi",
+      "section": "nav.vor",
+      "what": "G1000 型 HSI の線画（画面写真ではない）：コンパスカード、CRS の矢印（040）、CDI の針（右 1 ドット）、左右 2 ドットの目盛り、TO の三角、自機の記号。目盛りの読み方の表：VOR 1 ドット 5°・いっぱい 10°／GPS（この教材の課目）1 ドット 0.5 NM・いっぱい 1.0 NM。「針の方へ飛ぶ」の矢印。",
+      "data": "avionics.js cdiVor（±10° いっぱい、5°/ドット）・cdiGps（1.0 NM いっぱい）。",
+      "priority": "must"
+    },
+    {
+      "name": "vorTracking",
+      "section": "nav.vor",
+      "what": "コース 040（TO）への会合（30°〜45°）と、風 080°/12 kt での bracketing：針路 040 → 流される → 050 → 戻りすぎ → 045 → 044 で針が止まる、を平面図に。局通過で TO→FROM。",
+      "data": "syllabus.js n1（obsOff −40、wind rel 80・12 kt）と school.js:259（風向 ＝ LAB_RWY trueHdg 354＋rel）→ 磁 080°/12 kt。WCA は計算機 wca の式で TAS 104 kt → 約 4°。",
+      "priority": "should"
+    },
+    {
+      "name": "dmeSlant",
+      "section": "nav.dme",
+      "what": "横から見た斜距離の三角形 2 例（局の真上 6,000 ft → DME 約 1.0 NM、水平 5.0 NM・6,000 ft → 約 5.1 NM）と IFH の目安。",
+      "data": "幾何（6,000 ft ＝ 0.99 NM、√(5.0² ＋ 0.99²) ＝ 5.10）。IFH 9 章、PHAK 16（6,076 ft で 1.0 NM）。",
+      "priority": "must"
+    },
+    {
+      "name": "radialDmeFix",
+      "section": "nav.dme",
+      "what": "平面図：LAB VOR の 030 ラジアルと 11 NM の円弧の交点＝位置（課目 n3 の出発点）。小さな枠で、架空の 2 局目とのラジアルの交点（cross fix）の考え方。NFN。",
+      "data": "avionics.js LBV の位置、syllabus.js n3 setup（brg 30・km 20 ≒ 10.8 NM）。2 局目は図だけの架空（シミュレーターには無いと注記）。",
+      "priority": "should"
+    },
+    {
+      "name": "gpsCdiScale",
+      "section": "nav.gps",
+      "what": "GPS の CDI の目盛り：ENR 2.0・TERM 1.0・APR 0.3 NM の帯の幅を同じ縮尺で並べ、切り替わる場所（出発空港から 30 NM、目的空港の 31 NM）を注記。「この教材の課目は 1.0 NM」。",
+      "data": "Garmin G1000 CDI Scaling（https://www8.garmin.com/manuals/webhelp/GUID-1FA95EDE-BA0A-4000-B109-7E73945389F7/EN-US/GUID-F35157A0-1CF4-4AAD-A042-35129CCF5C7D.html）、avionics.js cdiGps。",
+      "priority": "should"
+    },
+    {
+      "name": "gpsSatellites",
+      "section": "nav.gps",
+      "what": "衛星の数と分かること：4 機 → 3 次元の位置、5 機（または 4 機＋気圧高度）→ RAIM で異常に気づける、WAAS → 精度と完全性の補強。地上の受信機の上に衛星のアイコン。",
+      "data": "AIM 1-1-17・1-1-18。",
+      "priority": "nice"
+    },
+    {
+      "name": "gpsFlightPlan",
+      "section": "nav.fpl",
+      "what": "MFD 風の模式地図：LAB RWY → LAB-A → LAB-B（いまの区間マゼンタ）、自機、DTK と TRK の矢印、XTK、LAB-F への D→ の破線、下に PFD 上の欄の見本。NFN。",
+      "data": "avionics.js WAYPOINTS（LABRW→LABEA 6.39 NM・MC 037°、LABEA→LABEB 7.73 NM・MC 071°、LABEA→LABEF 5.96 NM・MC 181°）、createAvionics().fpl、avionics.js:371（PFD 上の欄の書式）、MAGVAR_W 6。TRK・XTK は例の値。",
+      "priority": "must"
+    },
+    {
+      "name": "ffServices",
+      "section": "nav.ff",
+      "what": "flight following で「してくれること／してくれないこと」の 2 列と、時計の方位（1 時・4 マイル）の小さな図。",
+      "data": "AIM 4-1-15・4-1-16・4-1-18、14 CFR 91.131(a)(1)、radio4 comm.radar の交信例。",
+      "priority": "nice"
+    }
+  ],
+  "photos": [
+    {
+      "section": "nav.vor",
+      "subject": "VOR / VORTAC の地上局（白い円盤状のアンテナ群、人の顔なし）",
+      "search": "Wikimedia Commons: Category:VORTAC / Category:VOR-DME stations in the United States / 'VORTAC FAA'（FAA・USAF の写真はパブリックドメイン。CC は 1 枚ずつ確認）",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "地上の施設の形を見ると「局から電波が出ている」が実感できる。"
+    },
+    {
+      "section": "nav.gps",
+      "subject": "GPS 衛星（GPS III など）の想像図または写真",
+      "search": "U.S. Space Force / U.S. Air Force の画像（spaceforce.mil, af.mil の 'GPS III' — クレジットが U.S. Air Force / U.S. Space Force のもの）、Commons: Category:GPS Block III",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "衛星を使う航法であることを示す。製造会社の広報画像（'courtesy Lockheed Martin'）は使わない。"
+    },
+    {
+      "section": "nav.ff",
+      "subject": "空港監視レーダー（ASR-9 / ASR-11）のアンテナ",
+      "search": "Commons: Category:Airport surveillance radars / 'ASR-9 radar' 'ASR-11 FAA'（FAA・USAF の写真はパブリックドメイン）",
+      "candidateUrl": "",
+      "candidateLicence": "",
+      "why": "flight following の情報がどこから来るか（レーダー）を見せる。管制室の写真は顔が写りやすいので避ける。"
+    }
+  ],
+  "endMatter": {
+    "terms": [
+      "VOR / 超短波全方向式無線標識 / 108.00〜117.95 MHz",
+      "VOR MON (Minimum Operational Network) / VOR の最小運用網 / AIM 1-1-3",
+      "Radial / ラジアル（局から外へ向かう磁方位の線） / 局へのコース＝ラジアル＋180°",
+      "Identifier (Morse code) / 識別符号（モールス） / ",
+      "OBS / CRS / コースの選択 / ",
+      "TO / FROM / 局へ／局から / 位置で決まる",
+      "CDI / HSI / コース偏位計・水平状況指示器 / G1000 は片側 2 ドット",
+      "Intercept / Track / Bracketing / 会合・追跡・修正角の絞り込み / ",
+      "Reverse sensing / 逆の振れ / 従来の CDI",
+      "Station passage / 局通過 / TO→FROM",
+      "DME / Slant range / 距離測定装置・斜距離 / ",
+      "Cross fix / 2 局のラジアルの交点 / ",
+      "GPS / RAIM / WAAS / 全地球測位システム・完全性監視・補強 / ",
+      "Jamming / Spoofing / 妨害・なりすまし / ",
+      "Flight plan (FPL) / Active leg / 飛行計画・いまの区間 / マゼンタ",
+      "DTK / TRK / XTK / 希望航路・実際の航跡・横のずれ / ",
+      "Direct-To (D→) / 直行 / ",
+      "Dead reckoning (DR) mode / 推測航法モード / 実機の G1000",
+      "Flight following / Traffic advisory / VFR のレーダー交通情報 / AIM 4-1-15"
+    ],
+    "examples": [
+      "課目 n1：LAB VOR の 220 ラジアル上（局の南西 約 12 NM）。局へ向かうコースは 040°（220 − 180）。CRS 040・TO。風 080°/12 kt なので、針が止まる針路は 約 044°（右へ 約 4°）。",
+      "CRS 040・TO・針が右へ 1 ドット → コースは右へ 約 5°（VOR）。右へ 30° の 070° で会合し、針が動き出したら 040° 前後へ戻す。",
+      "局の標高から 6,000 ft 上で局の真上を通る → DME は 0 ではなく 約 1.0 NM。水平 5 NM なら 約 5.1 NM で、誤差は小さい。",
+      "GPS の区間 LAB-A → LAB-B の DTK は 071°。TRK が 066° なら風で左へ流されている → 機首を少し右へ向け、TRK を 071° に合わせる。"
+    ],
+    "cautions": [
+      "LAB VOR（113.50）・I-LAB（109.90）・訓練点は架空の教材用施設（NOT FOR NAVIGATION）。",
+      "G1000 の表示は「型」を学ぶための線画。実機の操作は G1000 の Pilot's Guide と機体の AFM 補足で。",
+      "GPS は妨害で止まったり、気づかないうちにずれたりすることがある。推測航法と VOR / DME の確かめを続け、おかしいと思ったら ATC に伝える。"
+    ],
+    "quizReview": [
+      "Q1（VOR・左にいっぱい → 左に 10° 以上）：keep（問いを「選んだコースは自機から見てどちら？」に直す）",
+      "Q2（TO/FROM は位置で決まる）：keep（quiz.js q_nav 6 問目と同じ。図 vorRadials と結ぶ）",
+      "Q3（91.171 空中の指定点 ±6°）：fix / replace（IFR 用の細目で、VFR の初心者の章には早い。点検表を ifrp へ移すなら、この問題も ifrp へ。代わりに識別の問題を入れる）"
+    ],
+    "quizProposals": [
+      {
+        "q": "VOR を航法に使う前に必ずすることは？",
+        "choices": ["識別符号（モールス）を聞いて、正しい局か確かめる", "機首を局の方へ向ける", "DME を切る", "トランスポンダーを 7700 にする"],
+        "answer": 0,
+        "why": "AIM 1-1-3：VOR を確実に識別できるのはモールス（または音声の識別）だけ。整備中は識別が止まるか TEST になる。"
+      },
+      {
+        "q": "flight following を受けながら Class B 空域に近づいた。入ってよいのはいつ？",
+        "choices": ["管制官から「cleared into the Class Bravo airspace」と許可されたとき", "レーダーで識別された（radar contact）とき", "交通情報をもらっているとき", "トランスポンダーが付いていれば、いつでも"],
+        "answer": 0,
+        "why": "14 CFR 91.131(a)(1)：Class B は ATC の許可が必要。flight following は交通情報の業務で、許可ではない。"
+      },
+      {
+        "q": "GPS の区間の DTK は 071°。いまの TRK は 066°。どうする？",
+        "choices": ["風で左へ流されているので、機首を少し右へ向けて TRK を 071° に合わせる", "機首方位を 071° に合わせれば十分", "機首を左へ向ける", "GPS を切って VOR だけで飛ぶ"],
+        "answer": 0,
+        "why": "TRK は実際に進んでいる向き。DTK との差は風の影響。風上へ修正して TRK を DTK に合わせる（風の三角形と同じ）。"
+      }
+    ],
+    "refs": [
+      "update：AIM は第 1 章第 1 節に直接リンク https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap1_section_1.html（1-1-3 VOR・MON、1-1-7 DME、1-1-13 報告、1-1-17 GPS、1-1-18 WAAS）と AIM 4-1（R.aim41）",
+      "fix：R.ifh の URL が 404 → https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf（15B が現行、補遺・正誤表あり）",
+      "add：Garmin G1000 CDI Scaling https://www8.garmin.com/manuals/webhelp/GUID-1FA95EDE-BA0A-4000-B109-7E73945389F7/EN-US/GUID-F35157A0-1CF4-4AAD-A042-35129CCF5C7D.html",
+      "add：FAA Private Pilot ACS（FAA-S-ACS-6C）Area VI Task B Navigation Systems and Radar Services（R.acsP）",
+      "add：14 CFR 91.131（Class B の許可）https://www.ecfr.gov/current/title-14/section-91.131、91.171 は ifrp へ移すならそちらへ",
+      "keep：PHAK 25C 第 16 章、Garmin G1000 CRG（PA-28-181、190-01460-00 Rev A：リンク有効）"
+    ]
+  },
+  "appMismatches": [
+    "book-4.js nav.vor の bk.sim「NAV1 を LAB VOR に合わせ」 ↔ school.js:240（課目 n1 は NAV1＝113.50・CDI＝NAV1・CRS を 40° ずらして開始）— アプリが正しい。本は「CRS −/+（Shift で 10°）でコースを合わせ、A / D で旋回」と書く",
+    "syllabus.js:272 n1 の brief「下のパネルの CDI ボタンで NAV1 に切り替え」 ↔ school.js:240 で CDI はすでに NAV1。押すと NAV2 → GPS へ進み（avionics.js:152）、手順の条件 L.av.cdi === 'NAV1'（syllabus.js:275）が満たされなくなる — syllabus の文が古い（アプリは変えないので、本の bk.sim は「CDI はすでに NAV1」と書く）",
+    "book-4.js nav.gps「PFD の上の欄に…ETE」 ↔ avionics.js:371（PFD 上の欄は FROM→TO・DIS・DTK）、ETE は avionics.js:470（MFD）— アプリに合わせて本を直す",
+    "book-4.js nav.gps の CDI の表（ENR 2.0 / TERM 1.0 / APR 0.3）↔ avionics.js cdiGps と navSolve（常に 1.0 NM、表示なし）— 本に「この教材の課目は 1.0 NM」と書く",
+    "実機の G1000 は区間を自動で進める ↔ シミュレーターは MFD の NEXT LEG（avionics.js:163・app.js:556）— 新しい nav.fpl に両方を書く",
+    "実機の G1000 は GPS を失うと DR モード ↔ シミュレーターは NO GPS のフラグ（avionics.js navSolve、school.js:302）— nav.gps / nav.fpl に書く",
+    "VOR の識別音（モールス）はシミュレーターに無い（app.js / avionics.js に処理なし）— 本は「実機では必ず識別」と書き、課目では周波数の表示で確かめる",
+    "book-4.js nav.ff の例「Orlando Approach, Cherokee 123AB」 ↔ 教材の LAB Approach / LAB Departure（radio.js:97・school.js:134）と Archer Seven Lima Alpha（radio.js:15）— 本を教材の名前に",
+    "book-4.js nav.gps の bk.see('sys.g1000') ↔ sys.g1000 はピトー静圧・AHRS・ADC の節 — 行き先を nav.fpl などに",
+    "book-core.js:23 R.ifh の URL が 404 — 参照を直す（アプリ全体で ifr 章も使う）"
+  ],
+  "factChecks": [
+    {"claim": "VOR は 108.00〜117.95 MHz", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap1_section_1.html", "note": "AIM 1-1-3 a。見通し距離で、高いほど遠くまで。"},
+    {"claim": "使う前に必ず識別符号（モールス）を聞いて局を確かめる", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap1_section_1.html", "note": "AIM 1-1-3 c：確かな識別はモールスか 'VOR' の付く音声識別だけ。整備中は T-E-S-T か識別なし。"},
+    {"claim": "VOR MON（syllabus n1 の why）", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap1_section_1.html", "note": "AIM 1-1-3 f：米本土のどこでも 100 NM 以内に GPS に頼らない進入のある MON 空港、5,000 ft AGL でほぼ途切れない受信。本には未記載。"},
+    {"claim": "G1000 の HSI で VOR は 1 ドット 5°・2 ドットで 10°", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/18_phak_ch16.pdf", "note": "いっぱいの振れ 10° は VOR 共通。従来の計器は片側 5 ドット・約 2°（PHAK 図 16-29）。avionics.js cdiVor と一致。"},
+    {"claim": "HSI では TO で飛んでいれば逆に感じない", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/18_phak_ch16.pdf", "note": "HSI はコースを正しく入れていれば TO でも FROM でも逆にならない（図 16-30 の説明）。"},
+    {"claim": "91.171：VOT・地上 ±4°、空中 ±6°、2 台の比較 4°、30 日以内", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-91.171", "note": "AIM 1-1-4 も同じ。IFR で使う場合の規則。"},
+    {"claim": "DME は斜距離、局の真上では高度の分（6,000 ft ≒ 1 NM）", "verdict": "correct", "source": "https://www.faa.gov/sites/faa.gov/files/18_phak_ch16.pdf", "note": "PHAK：6,076 ft AGL で約 1.0 NM。正確には局の標高からの高さ。"},
+    {"claim": "AIM では、1,000 ft ごとに 1 NM 以上離れていれば誤差は小さい", "verdict": "imprecise", "source": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-15B.pdf", "note": "現在の AIM 1-1-7 にこの文は無い（2026 年 10 月に確認）。IFH 第 9 章に同じ目安がある。"},
+    {"claim": "3 次元の位置には 4 機以上、RAIM にはさらに衛星", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap1_section_1.html", "note": "AIM 1-1-17：RAIM は 5 機、または 4 機＋気圧高度（baro-aiding）。VFR の携帯 GPS には RAIM の警告が無い。"},
+    {"claim": "WAAS で精度と完全性が上がり LPV 進入ができる", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap1_section_1.html", "note": "AIM 1-1-18。"},
+    {"claim": "G1000 の GPS の CDI：ENR 2.0・TERM 1.0（30 NM 以内）・APR 0.3", "verdict": "correct", "source": "https://www8.garmin.com/manuals/webhelp/GUID-1FA95EDE-BA0A-4000-B109-7E73945389F7/EN-US/GUID-F35157A0-1CF4-4AAD-A042-35129CCF5C7D.html", "note": "出発空港から 30 NM で ENR、目的空港の 31 NM で TERM。出発手順中は 0.3。LPV などは角度の目盛り。シミュレーターは 1.0 固定。"},
+    {"claim": "実機の G1000 は GPS を失うと DR モード（本に未記載）", "verdict": "correct", "source": "https://static.garmin.com/pumac/190-01460-00_0A_Web.pdf", "note": "Garmin CRG（PA-28-181）Abnormal Operation：航空路・洋上のフェーズだけ。黄色の DR を表示。"},
+    {"claim": "AIM 4-1-15 Radar Traffic Information Service・4-1-18 Terminal Radar Services for VFR Aircraft", "verdict": "correct", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html", "note": "業務量・レーダーの限界で断られる。見張りの責任は残る（4-1-15）。"},
+    {"claim": "flight following は C・B クラスに入る条件とは別", "verdict": "correct", "source": "https://www.ecfr.gov/current/title-14/section-91.131", "note": "Class B は ATC の許可（91.131(a)(1)）。本文に明記するとよい。"},
+    {"claim": "GPS の妨害（本は「ジャミング」の一語）", "verdict": "imprecise", "source": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap1_section_1.html", "note": "AIM 1-1-13 はなりすまし（spoofing）を含む GPS の異常を ATC に報告するよう求める。ACS PA.VI.B.S5 も信号の喪失・妨害への対処を求める。"}
+  ],
+  "cadetNotes": [
+    "nav.vor・nav.dme・nav.gps・nav.fpl・nav.ff の最初の <svg> が教室の画面に出る：vorRadials・dmeSlant・gpsCdiScale・gpsFlightPlan・ffServices（または表）を最初に。",
+    "APP_ONLY の「G1000 型表示」「教材の簡略版」を含む文は CADET で文ごと消える。CDI の目盛りや DTK の説明は「G1000 の HSI」「G1000 型の PFD」と書き、「G1000 型表示」は使わない。",
+    "bk.sim は消えるので、課目 n1・n3 の手順（CRS を合わせる・NAV1 の周波数を入れ替える）だけに頼らず、本文には一般的な手順（周波数を合わせる → 識別 → CRS → 会合）を書く。",
+    "キーの文字：「A / D で旋回」などは bk.sim の中だけに（APP の正規表現は日本語の直後の（A）などを検出する）。",
+    "nav.ff の例を LAB Approach・Archer Seven Lima Alpha にすれば、実在の施設名（Orlando Approach）が CADET に残らない。"
+  ]
+}

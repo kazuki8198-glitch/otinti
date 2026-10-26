@@ -54,8 +54,9 @@ import { createCrowd } from './npc/crowd.js';
 import { peopleDialogs } from './content/dialog/people.js';
 import { careerInstructorDialogs } from './content/dialog/instructor-career.js';
 import { careerBoardDialogs } from './content/dialog/cockpit.js';
-import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, FTD_TITLES, pfdPictures } from './content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, FTD_TITLES, pfdPictures, lecturePage, lecturerNotesHtml } from './content/school.js';
 import { drawPfdPicture } from './world/pfd-picture.js';
+import { drawLecturePage, drawKeyBoard, figureSource } from './world/lecture-screen.js';
 import { createTablet } from './ui/tablet.js';
 import { createCards } from './ui/cards.js';
 import { createCoach } from './ui/coach.js';
@@ -552,7 +553,7 @@ async function boot() {
       // (asked when the talk opens and again before each question: the setting turned off, or the key erased, stops it)
       ready: () => (settings.get('aiTutor') ? aiKeys.has() : 'off'), today: () => aiToday(place, extra.summary),
       reasonText: (r) => `AI 教官：${REASON_JA[r] || r}`, notice: (t) => toast(t, 6000), english: () => !!settings.get('crewEnglish'),
-      onBook: (id) => { const sec = book.section(id); if (sec) dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sec.html }); },
+      onBook: (id) => openSection(id),
       onEnd: (how) => {
         if (aiRun !== s) return;                              // (closed with the talk itself)
         aiRun = null; tutor.reset();
@@ -597,7 +598,12 @@ async function boot() {
     const st = career.state, slot = st.slot, sch = planToday(), due = (k) => sch.find(x => x.kind === k && (x.slot === slot || (slot === 'morning' && x.slot === 'am')));
     if (who === 'lecturer') {
       const cls = due('class'), ftd = due('ftd'), ex = due('exam');
-      if (cls && !career.doneToday('class', cls.id)) return { run: startLesson('class', +cls.id, classDialogs(FL, +cls.id, { seed: st.seed })), dialog: 'class' };
+      if (cls && !career.doneToday('class', cls.id)) {
+        // (a class left midway: it offers to go on from the section it reached)
+        const at = st.done[lectureKey(cls.id)], from = Number.isInteger(at) && at > 0 ? at : null;
+        pageSec = null;                                       // (its first page sets the whiteboard and turns the eyes again)
+        return { run: startLesson('class', +cls.id, classDialogs(FL, +cls.id, { seed: st.seed, from })), dialog: 'class' };
+      }
       if (ftd && !career.doneToday('ftd', ftd.id)) return { run: startLesson('ftd', ftd.id, ftdDialogs(FL, ftd.id, { seed: st.seed + st.day })), dialog: 'ftd' };
       if (ex && ex.id === 'written1' && !career.doneToday('exam', ex.id)) return { run: startLesson('exam', ex.id, examDialogs(FL, ex.id, { seed: st.seed + st.day })), dialog: 'exam' };
       return { run: peopleRunner, dialog: 'lecturer' };
@@ -667,15 +673,15 @@ async function boot() {
       const room = talkWho === 'lecturer' ? (lessonKind && lessonKind.kind === 'ftd' ? 'sim' : 'brief-2') : 'brief-1';
       const s = arg === 'apron' ? { x: 240, y: 1.4, z: -INS.a - 2 } : academy.surfaceAt(room, arg === 'screen' ? 'wall_screen' : 'whiteboard');
       if (s) { actor.pointAt(frameToWorld(s)); actor.gesture('point'); }
-    } else if (name === 'book') {
-      const sec = book.section(arg);
-      if (sec) dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sec.html });
-    } else if (name === 'board' && arg === 'navlog') showNavlog();
+    } else if (name === 'book') openSection(arg);
+    else if (name === 'page') showPage(arg);
+    else if (name === 'progress') lectureAt(arg);
+    else if (name === 'board' && arg === 'navlog') showNavlog();
     else if (name === 'board') showFigure(arg === 'study' ? cx.today.studySection : arg, talkWho === 'lecturer' ? 'brief-2' : 'brief-1');
     else if (name === 'pfd') showPfd(arg);
     else if (name === 'say') speakEnglish(arg);
     else if (name === 'quizEnd') { cx.quiz = scoreOf(lessonState, +arg); }
-    else if (name === 'done') workDone(arg);
+    else if (name === 'done') { if (arg === 'class') lectureOver(); workDone(arg); }
     else if (name === 'decide') { const right = career.decision(arg, weatherNow()); refreshCtx(); cx.today.decisionRight = right; afterTalk.push(() => afterDecision()); }
     else if (name === 'tablet') toast('タブレットを受け取りました。Tab キーで開けます', 4200);
     else if (name === 'help') { career.tire(15); }
@@ -739,7 +745,6 @@ async function boot() {
   // a textbook figure on a room's screen (the figures are FLIGHT LAB's SVG, drawn for a dark background)
   function showFigure(secId, room = 'brief-1') {
     const sec = secId && book.section(secId); if (!sec || !sec.figure) return;
-    const svg = sec.figure.replace(/^<svg(?![^>]*xmlns=)/, '<svg xmlns="http://www.w3.org/2000/svg"').replace(/^<svg /, '<svg width="1200" height="760" ');
     const img = new Image();
     img.onload = () => {
       academy.redraw(room, 'wall_screen', (g, w, h) => {
@@ -752,7 +757,67 @@ async function boot() {
       const s = academy.surfaceAt(room, 'wall_screen'), actor = talkActor || instructor;
       if (s) { actor.pointAt(frameToWorld(s)); actor.gesture('point'); }
     };
-    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    img.src = figureSource(sec.figure);
+  }
+  // ---- the class (content/school.js): its pages on briefing room 2's screen (world/lecture-screen.js) and the section's
+  // ここが大切 on the whiteboard, the place it has reached kept with the career, the textbook with the lecturer's notes
+  const pageImages = new Map();                              // a figure's SVG, loaded once as an image
+  let pageNow = null, pageSec = null, pageTok = 0, pageTimer = 0;
+  // (Part T's autoFace(worldPoint) turns the view to a point, on a timer that any look or move cancels; until it is in
+  // main.js the class only shows its pages — integrator: once it is, this guard can call it directly)
+  const faceTo = (p) => { if (typeof autoFace === 'function') autoFace(p); };
+  function showPage(arg) {
+    const pg = lecturePage(FL, arg); if (!pg) return;
+    const tok = ++pageTok, room = 'brief-2', u = pg.unit, screen = academy.surfaceAt(room, 'wall_screen');
+    clearInterval(pageTimer); pageTimer = 0; pageNow = arg;
+    const point = (s) => { const actor = talkActor; if (s && actor && talkWho === 'lecturer') { actor.pointAt(frameToWorld(s)); actor.gesture('point'); } };
+    // a new section: its key points on the whiteboard, and the eyes to the screen (once a section)
+    if (pg.id !== pageSec) {
+      pageSec = pg.id;
+      academy.redraw(room, 'whiteboard', (g, w, h) => drawKeyBoard(g, w, h, pg.board));
+      if (screen) faceTo(frameToWorld(screen));
+    }
+    const draw = (img, part = 0) => { let r = { parts: 1 }; academy.redraw(room, 'wall_screen', (g, w, h) => { r = drawLecturePage(g, w, h, { ...pg, part }, img); }); return r; };
+    if (u && u.k === 'figure') {
+      // (drawn once loaded, unless another page has been shown since)
+      const show = (img) => { if (tok !== pageTok) return; draw(img); point(screen); };
+      if (pageImages.has(arg)) { show(pageImages.get(arg)); return; }
+      const img = new Image();
+      img.onload = () => { pageImages.set(arg, img); show(img); };
+      img.onerror = () => show(null);
+      img.src = figureSource(u.svg);
+      return;
+    }
+    const r = draw(null);
+    if (u && u.k === 'table') point(screen); else if (u && u.k === 'key') point(academy.surfaceAt(room, 'whiteboard'));
+    // a table too long for one screen: its parts in turn while the page is on (the class still running)
+    if (r.parts > 1) {
+      let part = 0;
+      pageTimer = setInterval(() => { if (tok !== pageTok || talkWho !== 'lecturer') { clearInterval(pageTimer); pageTimer = 0; return; } draw(null, ++part); }, 9000);
+    }
+  }
+  // the section the class has reached (its index in the class): kept in the career's record (done 'lecture:<class>',
+  // a key and a number as cleanCareer keeps them) until the class is over, so a class left midway goes on from there
+  function lectureKey(id) { return `lecture:${id}`; }
+  function lectureAt(arg) {
+    const k = lessonKind, i = Math.round(Number(arg));
+    if (!k || k.kind !== 'class' || !Number.isInteger(i) || i < 0) return;
+    career.state.done[lectureKey(k.id)] = i; career.save();
+  }
+  // the class over: its place forgotten, the room's screen and whiteboard as they were once the cadet has gone
+  function lectureOver() {
+    const k = lessonKind;
+    if (k && k.kind === 'class') delete career.state.done[lectureKey(k.id)];
+    afterTalk.push(() => {
+      clearInterval(pageTimer); pageTimer = 0; pageTok++; pageNow = null; pageSec = null;
+      academy.redraw('brief-2', 'wall_screen', null); academy.redraw('brief-2', 'whiteboard', null);
+    });
+  }
+  // a textbook section in the overlay (the 'book' hook, the tablet's 教科書, the AI instructor's pointer), with the
+  // lecturer's notes on it under it when she has any
+  function openSection(id) {
+    const sec = book.section(id); if (!sec) return;
+    dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sec.html + lecturerNotesHtml(id) });
   }
   // the training device room's screen: a PFD picture (k2: the question's; k1: the tutorial's, a part framed)
   const TUTOR_PIC = { ias: 105, alt: 3500, hdg: 30, vs: 500, bank: 15 };
@@ -1216,7 +1281,7 @@ async function boot() {
     },
     act: {
       logbook: () => showLogbookNow(-1),
-      read: (id) => { const sec = book.section(id); if (sec) dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sec.html }); },
+      read: (id) => openSection(id),
       practice: (bankId) => practice(bankId),
       exportSave: () => exportArchive({ career: career.state, talk: talkState, logbook: logbook.entries, progress: prog(), records: FL.school.loadRecords(fly.flight.store) }),
       importSave: (text) => {
@@ -1851,6 +1916,8 @@ async function boot() {
       sleep: (late = false) => sleepNow({ late }),
       talkTo: (id) => startTalk(id), where: (id) => (id === 'instructor' ? { at: insAt } : cast.where(id)),
       activity: () => (lessonKind ? { kind: lessonKind.kind, id: lessonKind.id, n: lessonKind.n, questions: (lessonRun && lessonQuestions) || [] } : null),
+      // the class's page on briefing room 2's screen (the 'page' hook's arg) and the section on its whiteboard
+      lecture: () => ({ page: pageNow, section: pageSec }),
       home: () => goHome(), homeChoose: (k) => homeChoose(k),
       // (opened as Tab opens it: the card closed, the mouse let go)
       tablet: { open: (p) => { interactor.closeCard(); input.exitLock(); tablet.open(p); }, close: () => tablet.close(), isOpen: () => tablet.isOpen, page: () => tablet.page },

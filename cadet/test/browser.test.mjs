@@ -65,7 +65,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     const C = window.__cadet; const r = who ? C.career.talkTo(who) : 'talk';
     if (r !== 'talk') return { r, lines: [] };
     const lines = [];
-    for (let k = 0; k < 600; k++) {
+    for (let k = 0; k < 3000; k++) {                         // (a class read in full is a few hundred lines)
       const v = C.dialog(); if (!v) break; lines.push(`${v.name}：${v.text}`);
       if (v.choices.length) {
         const act = C.career.activity(), m = /^q(\d+)$/.exec(v.node); let i = 0;
@@ -242,17 +242,44 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => `${x.slot} ${x.kind} ${x.id}`), ['am class 0', 'pm ftd k1']);
   });
 
-  test('chapter 1: a class (its figures on the classroom\'s screen), the training device (k2: the PFD on its screen), the written test', async () => {
+  test('chapter 1: a class (the textbook read in full, its pages on the classroom\'s screen, left midway and taken up again), the training device (k2: the PFD on its screen), the written test', async () => {
     // (in a new browser: the second morning, chapter 1, as the prologue left it)
     await restart();
     await ev(() => window.__cadet.career.set({ state: { chapter: 'ch1', day: 2, slot: 'morning', done: { prologue: 1 } }, flags: { met_instructor: true, has_tablet: true }, place: false }));
     // the class: the lecturer at the whiteboard of briefing room 2
     const w = await ev(() => window.__cadet.career.where('lecturer'));
     assert.ok(w.a > 621 && w.a < 633.6 && w.c < 261, `the lecturer in briefing room 2: ${JSON.stringify(w)}`);
-    let t = await talkThrough('lecturer');
-    assert.match(t.lines[0], /Good morning/); assert.match(t.lines.join('\n'), /See you tomorrow/);
+    // read in full (じっくり) into the second section: the book's pages on the screen (the first section's figure among
+    // them), its place kept; then the class left midway (the talk ended) and taken up again where it was
+    const part = await ev(() => {
+      const C = window.__cadet, lines = [], pages = []; C.career.talkTo('lecturer');
+      for (let k = 0; k < 400; k++) {
+        const v = C.dialog(); if (!v) break; lines.push(v.text);
+        const p = C.career.lecture().page; if (p && pages[pages.length - 1] !== p) pages.push(p);
+        if (/揚力はどうやって/.test(v.text) && !v.choices.length) break;
+        if (v.choices.length) C.dialogChoose(0); else C.dialogNext();
+        C.simulate(0.05);
+      }
+      return { lines, pages };
+    });
+    assert.match(part.lines[0], /Good morning/);
+    assert.match(part.lines[1], /教科書を全部、順に読んでいきますか/);
+    assert.ok(part.pages.includes('aero.forces') && part.pages.includes('aero.forces#1') && part.pages.includes('aero.lift'), `the pages shown: ${part.pages.join(' ')}`);
+    assert.ok(part.lines.some(l => /^画面の図を見てください。/.test(l)), 'the figure, said');
+    const shot = await ev(() => { const C = window.__cadet; C.placeWalker(625.2, 258.0, { a: 621.1, c: 258.4 }); return C.snapshot(2); });
+    assert.ok((await analyse(g.page, shot)).sd > 8, 'the classroom with its screen');
+    assert.equal((await career()).done['lecture:0'], 1, 'the class\'s place: the second section');
+    await ev(() => { window.__cadet.setMode('spectator'); window.__cadet.setMode('walk'); });
+    assert.equal(await ev(() => window.__cadet.dialog()), null, 'the class left midway');
     let st = await career();
-    assert.deepEqual([st.slot, st.done['class:0']], ['pm', 2]);
+    assert.deepEqual([st.slot, st.done['class:0'], st.done['lecture:0']], ['am', undefined, 1], 'not done; its place kept');
+    const again = await ev(() => { const C = window.__cadet; C.career.talkTo('lecturer'); C.dialogNext(); return C.dialog(); });
+    assert.deepEqual(again.choices.map(c => c.text), ['続きから（第 1 章「揚力はどうやって生まれるか」から）', '最初から', '要点だけ']);
+    let t = await talkThrough(null);
+    assert.match(t.lines.join('\n'), /では、「揚力はどうやって生まれるか」から続けます。/); assert.match(t.lines.join('\n'), /See you tomorrow/);
+    assert.ok(!t.lines.some(l => /最初は「飛行機に働く 4 つの力」です。/.test(l)), 'not from the start');
+    st = await career();
+    assert.deepEqual([st.slot, st.done['class:0'], st.done['lecture:0']], ['pm', 2, undefined], 'done: its place forgotten');
     // the device (k2 as the next one: k1 passed): ten PFD pictures to read, every one right — passed
     await ev((p) => window.__cadet.career.set({ progress: { lessons: { k1: p.k1 } }, place: false }), GROUND_OK);
     await ev(() => window.__cadet.career.advance('pm'));

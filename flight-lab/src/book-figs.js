@@ -967,6 +967,47 @@
       s += TL(8, 266, ['着陸の最終進入中・着陸中の機が優先。2 機が着陸に向かうときは', '低いほうが優先（ただし、最終進入中の機の前に割り込まない）'], { c: C.ink, a: 'start', fs: 12, lh: 16 });
       return svg(400, 292, s, '図：衝突を避ける優先の決まり（14 CFR 91.113）。優先権のある機の上・下・前を、十分に離れずに横切ってはいけません。優先権があっても、見張りの義務はみんなにあります');
     },
+    // ---------------------------------------------------------------- 第 7 章 radio1（無線交信のしくみ）
+    radioRelay() {
+      // one training flight at the fictional LAB: who you talk to, in order (frequencies from radio.js; made-up teaching values)
+      const box = (x, y, n, st, fr, what, c) => `<rect x="${x}" y="${y}" width="88" height="70" rx="8" fill="${c}" fill-opacity="0.12" stroke="${c}" stroke-width="1.5"/>`
+        + T(x + 44, y + 18, `${n} ${st}`, { c, b: 1, fs: 12 }) + T(x + 44, y + 36, fr, { c: C.ink, fs: 12 }) + T(x + 44, y + 56, what, { c: C.mut, fs: 12 });
+      let s = T(12, 20, '出発', { c: C.ink, b: 1, a: 'start', fs: 13 }) + T(12, 186, '帰り', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      s += box(8, 30, '①', 'ATIS', '聞くだけ', '出発前に', C.mut) + box(106, 30, '②', 'Ground', '121.7', 'タキシー', C.gr) + box(204, 30, '③', 'Tower', '118.3', '離陸', C.am) + box(302, 30, '④', 'Departure', '119.75', 'レーダー', C.cy);
+      s += A(96, 65, 104, 65, C.ink, 2) + A(194, 65, 202, 65, C.ink, 2) + A(292, 65, 300, 65, C.ink, 2);
+      s += A(346, 102, 346, 128, C.ink, 2) + `<rect x="250" y="130" width="142" height="26" rx="13" fill="none" stroke="${C.vi}" stroke-dasharray="5 4"/>` + T(321, 148, '訓練空域（VFR 1200）', { c: C.vi, fs: 12 });
+      s += A(300, 156, 294, 196, C.ink, 2);
+      s += box(204, 196, '⑤', 'Approach', 'ATIS のあと', '帰り', C.cy) + box(106, 196, '⑥', 'Tower', '118.3', '場周・着陸', C.am) + box(8, 196, '⑦', 'Ground', '121.7', '駐機場へ', C.gr);
+      s += A(202, 231, 196, 231, C.ink, 2) + A(104, 231, 98, 231, C.ink, 2);
+      s += T(392, 210, '周波数は', { c: C.mut, a: 'end', fs: 12 }) + T(392, 226, '架空の練習用', { c: C.mut, a: 'end', fs: 12 });
+      s += L(8, 280, 392, 280, C.grid, 1) + T(8, 300, '周波数を変える合図', { c: C.ink, b: 1, a: 'start', fs: 12 });
+      s += T(8, 320, '② Ground → ③ Tower：準備ができたら自分で変える', { c: C.ink, a: 'start', fs: 12 }) + T(8, 338, '（AIM 4-3-14）', { c: C.mut, a: 'start', fs: 12 });
+      s += T(8, 358, 'ほか：管制官の “contact …” か、自分の要求のあと', { c: C.ink, a: 'start', fs: 12 });
+      return svg(400, 370, s, '図：架空の LAB での 1 回の訓練飛行で話す相手（局）の順番。地上は Ground、滑走路と場周は Tower、空港を離れたら Departure、帰りは ATIS を聞いてから Approach を呼びます');
+    },
+    radioAudioPanel() {
+      // a G1000-type COM window and audio panel (the app's starting values in avionics.js; teaching frequencies)
+      let s = `<rect x="8" y="30" width="384" height="66" rx="8" fill="#06101c" stroke="${C.mut}"/>`;
+      const row = (y, name, act, stby, on) => T(22, y, name, { c: on ? C.cy : C.mut, b: 1, a: 'start', fs: 13 }) + T(150, y, act, { c: on ? C.gr : C.ink, b: 1, fs: 15 }) + T(214, y, '⇄', { c: C.mut, fs: 14 }) + T(280, y, stby, { c: on ? C.cy : C.mut, fs: 15 }) + (on ? `<rect x="236" y="${y - 18}" width="88" height="24" rx="4" fill="none" stroke="${C.cy}"/>` : '');
+      s += row(56, 'COM1', '118.300', '121.700', true) + row(84, 'COM2', '126.950', '120.100', false) + T(150, 22, '使用中', { c: C.mut, fs: 12 }) + T(280, 22, '予備（ここを合わせる）', { c: C.mut, fs: 12 });
+      s += `<rect x="8" y="108" width="384" height="96" rx="8" fill="#141f30" stroke="${C.mut}"/>` + T(22, 128, 'オーディオパネル', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      const btn = (x, y, t, on, c) => `<rect x="${x}" y="${y}" width="66" height="26" rx="5" fill="${on ? c : '#0b1422'}" fill-opacity="${on ? 0.35 : 1}" stroke="${on ? c : C.mut}"/>` + T(x + 33, y + 17, t, { c: on ? C.ink : C.mut, b: on ? 1 : 0, fs: 12 });
+      s += T(22, 156, '送信', { c: C.ink, a: 'start', fs: 12 }) + btn(64, 140, 'COM1 MIC', true, C.am) + btn(136, 140, 'COM2 MIC', false, C.am);
+      s += T(22, 190, '受信', { c: C.ink, a: 'start', fs: 12 }) + btn(64, 174, 'COM1', true, C.gr) + btn(136, 174, 'COM2', false, C.gr) + btn(208, 174, 'NAV1', false, C.gr) + btn(280, 174, 'NAV2', false, C.gr);
+      s += TL(222, 158, ['MIC：どの無線機で話すか'], { c: C.am, a: 'start', fs: 12 });
+      s += `<rect x="8" y="216" width="384" height="44" rx="8" fill="${C.rd}" fill-opacity="0.1" stroke="${C.rd}"/>` + TL(200, 234, ['よくある失敗：COM2 に周波数を合わせたのに、', 'MIC が COM1 のまま（相手に届かない）'], { c: C.ink, fs: 12, lh: 16 });
+      s += T(12, 282, '手順：予備に合わせる → ⇄ → MIC を選ぶ → 聞いてから PTT', { c: C.ink, b: 1, a: 'start', fs: 12 });
+      return svg(400, 292, s, '図：G1000 型の無線の窓とオーディオパネル（模式図。周波数は練習用）。予備の周波数を合わせてから ⇄ で使用中にし、オーディオパネルで送信（MIC）と受信の無線機を選びます');
+    },
+    radioCallAnatomy() {
+      // one ground instruction from radio.js split into its parts, and the kneeboard shorthand
+      const parts = [['Archer Seven Lima Alpha,', '自分', C.gr], ['LAB Ground,', '局の名前', C.mut], ['runway three six,', '滑走路', C.am], ['taxi via Alpha,', '経路', C.cy], ['hold short of taxiway Charlie.', '止まる所', C.rd], ['Departure frequency one one niner point seven five,', '出発周波数', C.vi], ['squawk four two seven one.', 'コード', C.bl]];
+      let s = '', y = 22;
+      parts.forEach(([en, jp, c]) => { s += `<rect x="8" y="${y - 15}" width="6" height="20" fill="${c}"/>` + T(22, y, en, { c: C.ink, a: 'start', fs: 12 }) + T(392, y, jp, { c, b: 1, a: 'end', fs: 12 }); y += 24; });
+      s += `<rect x="8" y="${y + 2}" width="384" height="62" rx="8" fill="#e8e2c8" fill-opacity="0.95"/>` + T(20, y + 22, 'ひざ板のメモ', { c: '#2a2a2a', b: 1, a: 'start', fs: 12 });
+      s += `<text x="20" y="${y + 48}" fill="#1a1a1a" font-size="17" font-family="ui-monospace, Menlo, Consolas, monospace">36  A  HS C  119.75  4271</text>`;
+      return svg(400, y + 74, s, '図：地上管制の指示を部分に分けたもの（架空の LAB）。あなたのコールサイン → 局の名前（最初の交信だけ）→ 滑走路 → 経路 → 止まる所 → 出発周波数 → コードの順。出発周波数とコードを Ground が伝えるのは、LAB のようにレーダーの出発管制がある空港の例です。聞いた順に、短い記号でひざ板に書きます');
+    },
   };
 
   // ---------------------------------------------------------------- calculators inside the text

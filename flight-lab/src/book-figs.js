@@ -407,13 +407,6 @@
       s += T(70, 60, 'パラレル', { c: C.gr, fs: 12, b: 1 }) + T(70, 78, 'エントリー', { c: C.gr, fs: 11 }) + T(175, 50, 'ティアドロップ', { c: C.vi, fs: 12, b: 1 }) + T(60, 250, 'ダイレクト', { c: C.rd, fs: 12, b: 1 }) + T(60, 268, 'エントリー', { c: C.rd, fs: 11 });
       return svg(400, 300, s, '図：右回りの標準待機経路と 3 つの入り方（どの方向からフィックスに来たかで決まる。AIM 5-3-8）');
     },
-    wbEnvelope() {
-      const W = 440, H = 260, env = FL.bookCalc.ARCHER_WB.env;
-      const f = frame(W, H, 80, 95, 1600, 2600, [80, 83, 86, 89, 92, 95], [1700, 2000, 2300, 2600], '重心位置（基準線から in）', '重量（lb）');
-      let s = f.s + `<path d="${env.map((p, i) => (i ? 'L' : 'M') + f.X(p[0]).toFixed(1) + ' ' + f.Y(p[1]).toFixed(1)).join(' ')} Z" fill="rgba(95,212,255,.12)" stroke="${C.cy}" stroke-width="2"/>`;
-      s += T(f.X(89.5), f.Y(1900), '許容範囲', { c: C.cy, b: 1 }) + T(f.X(81.5), f.Y(2450), '前すぎ', { c: C.rd, fs: 11 }) + T(f.X(94), f.Y(2100), '後ろすぎ', { c: C.rd, fs: 11, rot: -90 });
-      return svg(W, H, s, '図：重量・重心の許容範囲（エンベロープ）の形の例。数値は教材用近似で、実機は必ずその機体の POH / 重量重心表で');
-    },
     clouds() {
       const band = (y, hh, lab, col) => `<rect x="60" y="${y}" width="400" height="${hh}" fill="${col}"/>` + T(56, y + hh / 2 + 4, lab, { c: C.mut, fs: 10, a: 'end' });
       let s = band(20, 80, '上層', 'rgba(197,140,255,.07)') + band(100, 70, '中層', 'rgba(95,212,255,.07)') + band(170, 90, '下層', 'rgba(95,212,110,.07)');
@@ -659,14 +652,124 @@
       s += T(200, 238, '衝突防止灯（ビーコン・ストロボ）は、付いていれば', { c: C.am, fs: 12 }) + T(200, 254, 'いつも点灯（14 CFR 91.209）', { c: C.am, fs: 12 });
       return svg(400, 264, s, '図：航空灯（左の翼端が赤、右の翼端が緑、尾が白）。相手の灯火の見え方で、相手の向きがわかります（AFH 第 11 章）');
     },
+    // ---------------------------------------------------------------- 第 4 章 perf（性能と重量・重心）
+    densityAltitude() {
+      // the same field (LAB, 55 ft, altimeter 29.92) on four days: the density altitude by the book's rule of thumb, the model's climb at that density
+      const P = FL.physics, s = P.newState({ aircraft: 'pa28' }), vy = ac('pa28').v.y, elev = P.GROUND_FT, isa = 15 - 2 * elev / 1000;
+      const rows = [15, 25, 33, 38].map(t => { const da = elev + 120 * (t - isa); return { t, da, fpm: P.steadyState(s, vy, null, { pwr: 'full', altFt: Math.max(da, 0) }).fpm }; });
+      const X = ft => 96 + ft / 3000 * 160, r100 = v => (Math.round(v / 100) * 100).toLocaleString(), r10 = v => Math.round(v / 10) * 10;
+      let s0 = T(12, 20, `同じ LAB（標高 ${elev} ft・高度計 29.92）で`, { c: C.ink, b: 1, a: 'start', fs: 13 });
+      s0 += T(96, 44, '密度高度', { c: C.am, b: 1, a: 'start', fs: 12 }) + T(392, 44, '上昇率（fpm）', { c: C.cy, b: 1, a: 'end', fs: 12 });
+      for (const v of [0, 1000, 2000, 3000]) s0 += L(X(v), 52, X(v), 238, C.grid, 1) + T(X(v), 254, v.toLocaleString(), { c: C.mut, fs: 12 });
+      rows.forEach((r, i) => {
+        const y = 62 + i * 44, w = Math.max(X(r.da) - X(0), 3), hot = r.t >= 33;
+        s0 += T(12, y + 21, `気温 ${r.t}℃`, { c: hot ? C.rd : C.ink, b: 1, a: 'start', fs: 12 }) + `<rect x="${X(0)}" y="${y + 6}" width="${w.toFixed(1)}" height="22" rx="4" fill="${C.am}" fill-opacity="${0.25 + i * 0.18}"/>`;
+        s0 += T(X(0) + w + 6, y + 22, `約 ${r100(r.da)} ft`, { c: C.ink, a: 'start', fs: 12 }) + T(392, y + 22, `約 ${r10(r.fpm)}`, { c: C.cy, a: 'end', fs: 12 });
+      });
+      s0 += T(196, 272, '密度高度（ft）＝空気の濃さが同じになる標準大気の高さ', { c: C.mut, fs: 12 });
+      return svg(400, 284, s0, `図：暑い日ほど空気が薄く、密度高度が高くなり、上昇率が下がります。密度高度は本書の概算式、上昇率は教材モデル（${Math.round(s.AC.mass * 2.20462).toLocaleString()} lb・全開・Vy ${vy} KIAS）の計算値です`);
+    },
+    takeoffDistance() {
+      // LAB RWY 36 drawn to scale along the ground (heights exaggerated); the published distance over a 50 ft obstacle; the midpoint check of AIM 7-6-8
+      const len = Math.round(FL.physics.LAB_RWY.len * 3.28084), over50 = 1608, X = ft => 20 + ft / len * 372, yG = 176;
+      let s = `<rect x="${X(0)}" y="${yG}" width="${X(len) - X(0)}" height="10" fill="#3a4656"/>` + L(X(0), yG + 5, X(len), yG + 5, '#f2f2f2', 1.5, '10 8');
+      s += T(X(len / 2), yG + 30, `LAB RWY 36：${len.toLocaleString()} ft（${FL.physics.LAB_RWY.len.toLocaleString()} m）`, { c: C.ink, b: 1, fs: 12 });
+      const lo = over50 * 0.66, xl = X(lo), xo = X(over50);
+      s += A(X(0) + 4, yG - 8, xl - 2, yG - 8, C.am, 3) + T((X(0) + xl) / 2, yG - 16, '地上滑走', { c: C.am, b: 1, fs: 12 });
+      s += `<path d="M${xl} ${yG - 6} Q ${(xl + xo) / 2 + 10} ${yG - 8} ${xo} ${yG - 54} L ${xo + 12} ${yG - 62}" stroke="${C.cy}" stroke-width="3" fill="none"/>` + planeSide(xo + 19, yG - 67, 0.26, { pitch: 28 });
+      s += `<rect x="${xo - 3}" y="${yG - 50}" width="6" height="50" fill="${C.rd}"/>` + T(xo - 8, yG - 58, '50 ft の障害物', { c: C.rd, a: 'end', fs: 12 });
+      s += L(X(0), 66, X(0), yG, C.mut, 1, '3 3') + L(xo, 66, xo, yG - 50, C.mut, 1, '3 3') + A(X(0) + 2, 72, xo - 2, 72, C.cy, 2) + A(xo - 2, 72, X(0) + 2, 72, C.cy, 2);
+      s += T((X(0) + xo) / 2, 64, `約 ${over50.toLocaleString()} ft（公開値の例）`, { c: C.cy, b: 1, fs: 12 });
+      const xm = X(len / 2);
+      s += L(xm, 82, xm, yG + 12, C.vi, 2, '6 4') + TL(xm + 6, 92, ['中間点：浮揚速度の', '70% に届かなければ', '中止（浮くまでの目安）'], { c: C.vi, a: 'start', fs: 12 });
+      s += T(12, 22, '離陸距離＝地上滑走＋50 ft の高さまで', { c: C.ink, b: 1, a: 'start', fs: 13 }) + T(12, 40, '（高さは強調して描いています）', { c: C.mut, a: 'start', fs: 12 });
+      return svg(400, 218, s, `図：離陸距離の 2 つの数字と、滑走路の中間点での確かめ（AIM 7-6-8 の目安。浮くまでの距離だけを見るもので、障害物を越えられるかは別に考えます）。${over50.toLocaleString()} ft は Piper が公開している Archer TX の値で、実際の距離はその日の条件で POH の表から読みます`);
+    },
+    windEffect() {
+      // takeoff distance against wind as a share of the lift-off speed: (1 − w)², which gives PHAK's −19 % / +21 % at 10 %
+      const f = frame(400, 260, -30, 30, 0.4, 1.8, [-30, -20, -10, 0, 10, 20, 30], [0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8], '風の強さ（浮揚速度に対する %）', '離陸距離（無風＝1）', { l: 50, r: 14, t: 34, b: 40 });
+      const pts = []; for (let w = -30; w <= 30; w += 2) pts.push([f.X(w), f.Y((1 - w / 100) ** 2)]);
+      let s = f.s + `<rect x="${f.X(-30)}" y="34" width="${f.X(0) - f.X(-30)}" height="${f.Y(0.4) - 34}" fill="${C.rd}" fill-opacity="0.07"/>` + L(f.X(0), 34, f.X(0), f.Y(0.4), C.mut, 1.5);
+      s += T(f.X(-15), 26, '← 追い風', { c: C.rd, b: 1, fs: 12 }) + T(f.X(15), 26, '向かい風 →', { c: C.gr, b: 1, fs: 12 }) + P(pts, C.cy, 3);
+      for (const [w, c, lab, dx, a] of [[-10, C.rd, '＋21%', 8, 'start'], [10, C.gr, '−19%', 8, 'start']]) { const y = f.Y((1 - w / 100) ** 2); s += `<circle cx="${f.X(w)}" cy="${y}" r="5" fill="${c}"/>` + T(f.X(w) + dx, y - 8, lab, { c, b: 1, fs: 13, a, halo: 1 }); }
+      s += TL(f.X(0) + 8, f.Y(1.62), ['Archer の浮揚速度は約 60 kt', '10% は約 6 kt'], { c: C.ink, a: 'start', fs: 12, halo: 1 });
+      return svg(400, 260, s, '図：風と離陸距離。浮揚速度の 10% の向かい風で約 19% 短く、10% の追い風で約 21% 長くなります（PHAK 第 11 章の数字。曲線はその数字に合う近似を描いた模式図）');
+    },
+    climbVxVy() {
+      // one minute at full power from the same point: Vx and Vy in the teaching model (near sea level)
+      const PH = FL.physics, s = PH.newState({ aircraft: 'pa28' }), V = ac('pa28').v, sig = PH.atmos(100 / PH.FT).sigma;
+      const run = kt => { const fpm = PH.steadyState(s, kt, null, { pwr: 'full', altFt: 100 }).fpm, nm = kt / Math.sqrt(sig) / 60; return { kt, fpm, nm, perNm: fpm / nm }; };
+      const x = run(V.x), y = run(V.y), r10 = v => Math.round(v / 10) * 10;
+      const f = frame(400, 270, 0, 1.4, 0, 900, [0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4], [0, 300, 600, 900], '進んだ距離（NM）', '高さ（ft）', { l: 50, r: 14, t: 16, b: 40 });
+      let s0 = f.s + P([[f.X(0), f.Y(0)], [f.X(x.nm), f.Y(x.fpm)]], C.am, 3) + P([[f.X(0), f.Y(0)], [f.X(y.nm), f.Y(y.fpm)]], C.cy, 3);
+      const yAtX = y.perNm * x.nm;
+      s0 += L(f.X(x.nm), f.Y(0), f.X(x.nm), f.Y(x.fpm), C.mut, 1, '4 3') + `<circle cx="${f.X(x.nm)}" cy="${f.Y(x.fpm)}" r="5" fill="${C.am}"/><circle cx="${f.X(y.nm)}" cy="${f.Y(y.fpm)}" r="5" fill="${C.cy}"/><circle cx="${f.X(x.nm)}" cy="${f.Y(yAtX)}" r="4" fill="none" stroke="${C.cy}" stroke-width="2"/>`;
+      s0 += T(f.X(x.nm) - 9, f.Y(x.fpm) - 6, 'Vx', { c: C.am, b: 1, a: 'end', fs: 13, halo: 1 }) + T(f.X(y.nm) - 9, f.Y(y.fpm) - 6, 'Vy', { c: C.cy, b: 1, a: 'end', fs: 13, halo: 1 });
+      s0 += T(62, 34, `● Vx ${V.x} kt：1 分で約 ${r10(x.fpm)} ft`, { c: C.am, b: 1, a: 'start', fs: 12 }) + T(62, 52, `● Vy ${V.y} kt：1 分で約 ${r10(y.fpm)} ft`, { c: C.cy, b: 1, a: 'start', fs: 12 });
+      s0 += TL(62, 76, ['同じ時間なら Vy が高い', '同じ距離なら Vx が高い'], { c: C.ink, a: 'start', fs: 12, lh: 18 });
+      return svg(400, 270, s0, `図：同じ地点から 1 分間、全開で上昇したとき（教材モデル・海面付近）。Vx は同じ距離でより高く（1 NM あたり約 ${r10(x.perNm)} ft。Vy は約 ${r10(y.perNm)} ft）、Vy は同じ時間でより高く上がります（1 分で約 ${r10(y.fpm)} ft。Vx は約 ${r10(x.fpm)} ft）`);
+    },
+    fuelPlan() {
+      // the fuel calculator's example (120 NM, 105 kt, 9.5 gal/h = the POH's 65 % power) with the day / night reserve of 14 CFR 91.151, against 48 gal usable
+      const gph = 9.5, trip = 120 / 105 * gph, taxi = 2, day = 0.5 * gph, night = 0.75 * gph, X = g => 70 + g / 50 * 316, usable = 48;
+      const bar = (y, lab, res, resLab) => {
+        let s = T(64, y + 19, lab, { c: C.ink, b: 1, a: 'end', fs: 12 }), x0 = X(0);
+        for (const [g, c] of [[taxi, C.mut], [trip, C.cy], [res, C.am]]) { s += `<rect x="${x0.toFixed(1)}" y="${y}" width="${(X(g) - X(0)).toFixed(1)}" height="28" fill="${c}" fill-opacity="0.55" stroke="${C.bg}"/>`; x0 += X(g) - X(0); }
+        return s + T(x0 + 6, y + 19, `計 約 ${(taxi + trip + res).toFixed(0)} gal`, { c: C.ink, b: 1, a: 'start', fs: 12 }) + T(X(taxi + trip + res / 2), y + 44, resLab, { c: C.am, fs: 12 });
+      };
+      let s = T(12, 20, '燃料は「使う分＋予備」を積む', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      for (const v of [0, 10, 20, 30, 40, 50]) s += L(X(v), 40, X(v), 196, C.grid, 1) + T(X(v), 212, v, { c: C.mut, fs: 12 });
+      s += bar(56, '昼', day, '予備 30 分') + bar(122, '夜', night, '予備 45 分');
+      s += L(X(usable), 36, X(usable), 196, C.gr, 2.5) + T(X(usable) - 4, 34, `使える燃料 ${usable} gal`, { c: C.gr, b: 1, a: 'end', fs: 12 });
+      s += `<rect x="70" y="228" width="12" height="12" fill="${C.mut}" fill-opacity="0.55"/>` + T(86, 238, 'タキシー・上昇', { c: C.ink, a: 'start', fs: 12 }) + `<rect x="190" y="228" width="12" height="12" fill="${C.cy}" fill-opacity="0.55"/>` + T(206, 238, '巡航', { c: C.ink, a: 'start', fs: 12 }) + `<rect x="250" y="228" width="12" height="12" fill="${C.am}" fill-opacity="0.55"/>` + T(266, 238, '予備（91.151）', { c: C.ink, a: 'start', fs: 12 });
+      s += T(228, 262, '燃料（US gal）', { c: C.mut, fs: 12 });
+      return svg(400, 272, s, `図：燃料計画の例。120 NM を対地速度 105 kt で飛ぶと約 1 時間 9 分、9.5 gal/h（POH の 65% 出力の値）で巡航に約 ${trip.toFixed(1)} gal。タキシーと上昇の分（${taxi} gal）は例です`);
+    },
+    wbStations() {
+      // the Archer from the side over a ruler of stations (inches aft of the datum): the POH's arms, the CG range, the example's empty-weight CG
+      const W = ARCHER_WB, k = 1.2, X = st => 34 + st * k, yR = 196, arm = i => W.rows[i][2];
+      let s = `<path d="M${X(2)} 132 C${X(6)} 124 ${X(20)} 118 ${X(50)} 116 L${X(62)} 106 C${X(72)} 96 ${X(86)} 92 ${X(104)} 92 L${X(150)} 94 L${X(168)} 108 L${X(250)} 122 L${X(262)} 92 L${X(282)} 92 L${X(286)} 126 L${X(276)} 136 L${X(150)} 146 L${X(60)} 148 C${X(30)} 147 ${X(10)} 142 ${X(2)} 132 Z" fill="${PLANE}" fill-opacity="0.85"/>`;
+      s += `<path d="M${X(66)} 106 L${X(100)} 96 L${X(150)} 98 L${X(160)} 108 Z" fill="${GLASS}"/>` + `<path d="M${X(78.4)} 146 L${X(141)} 146 L${X(141)} 150 L${X(84)} 152 Z" fill="${PLANE2}"/>`;
+      s += `<rect x="${X(250)}" y="124" width="${36 * k}" height="4" rx="2" fill="${PLANE2}"/>` + L(X(2), 116, X(2), 148, C.mut, 2.5) + `<circle cx="${X(31)}" cy="164" r="6" fill="#5b6b7e"/><circle cx="${X(110)}" cy="164" r="7" fill="#5b6b7e"/>` + L(X(31), 148, X(31), 160, PLANE2, 2) + L(X(110), 150, X(110), 158, PLANE2, 2);
+      s += `<rect x="${X(82)}" y="${yR - 6}" width="${(93 - 82) * k}" height="12" fill="${C.cy}" fill-opacity="0.3" stroke="${C.cy}"/>` + L(X(0), yR, X(290), yR, C.mut, 1.5);
+      for (const v of [0, 50, 100, 150, 200, 250]) s += L(X(v), yR, X(v), yR + 6, C.mut, 1.5) + T(X(v), yR + 20, v, { c: C.mut, fs: 12 });
+      s += L(X(0), 30, X(0), yR, C.vi, 2, '6 4') + T(X(0), yR + 40, '基準線（datum）＝主翼前縁の 78.4 in 前', { c: C.vi, a: 'start', fs: 12 });
+      const mark = (st, y, lab, c, a = 'middle') => L(X(st), y + 4, X(st), yR - 6, c, 1.5, '3 3') + `<circle cx="${X(st)}" cy="${yR}" r="4" fill="${c}"/>` + T(X(st) + (a === 'end' ? 8 : a === 'start' ? -8 : 0), y, lab, { c, b: 1, fs: 12, a, halo: 1 });
+      s += mark(arm(2), 46, `後席 ${arm(2)}`, C.gr) + mark(arm(3), 64, `燃料 ${arm(3).toFixed(1)}`, C.am, 'end') + mark(arm(1), 82, `前席 ${arm(1)}`, C.gr, 'end') + mark(arm(4), 82, `手荷物 ${arm(4)}`, C.gr, 'start');
+      s += T(200, yR + 60, '重心の許容範囲 82.0〜93.0 in（重いほど前の限界が後ろへ）', { c: C.cy, fs: 12 }) + T(12, 18, 'アーム＝基準線からの距離（in）', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      return svg(400, 268, s, '図：Archer III の基準線と、席・燃料（主翼の中のタンク）・手荷物のアーム（POH の値）。機体の形と脚の位置は模式図です');
+    },
+    wbEnvelope() {
+      // the Archer III's weight-CG envelope (POH) with the worked example: aft of the limit → one rear passenger to the front → after 20 gal burnt
+      const W = ARCHER_WB, env = W.env, f = frame(400, 280, 80, 95, 1600, 2600, [80, 83, 86, 89, 92, 95], [1600, 1800, 2000, 2200, 2400, 2600], '重心位置（基準線から in）', '重量（lb）', { l: 56, r: 14, t: 16, b: 40 });
+      const ex = W.example(), pt = (p, c) => `<circle cx="${f.X(p.cg).toFixed(1)}" cy="${f.Y(p.w).toFixed(1)}" r="6" fill="${c}" stroke="${C.bg}" stroke-width="1.5"/>`;
+      let s = f.s + `<path d="${env.map((p, i) => (i ? 'L' : 'M') + f.X(p[0]).toFixed(1) + ' ' + f.Y(p[1]).toFixed(1)).join(' ')} Z" fill="rgba(95,212,255,.12)" stroke="${C.cy}" stroke-width="2"/>`;
+      s += L(f.X(80), f.Y(W.max), f.X(95), f.Y(W.max), C.rd, 1.5, '6 4') + T(f.X(80) + 4, f.Y(W.max) - 6, `最大重量 ${W.max.toLocaleString()} lb`, { c: C.rd, a: 'start', fs: 12 });
+      s += T(f.X(88), f.Y(1800), '許容範囲', { c: C.cy, b: 1, fs: 13 }) + T(f.X(94.1), f.Y(1900), '後ろすぎ', { c: C.rd, fs: 12, rot: -90 }) + T(f.X(81.6), f.Y(2350), '前すぎ', { c: C.rd, fs: 12 });
+      const [a, b, c] = ex;
+      s += A(f.X(a.cg) - 6, f.Y(a.w), f.X(b.cg) + 8, f.Y(b.w), C.gr, 2) + A(f.X(b.cg), f.Y(b.w) + 7, f.X(c.cg) + 1, f.Y(c.w) - 9, C.gr, 2);
+      s += pt(a, C.rd) + pt(b, C.gr) + pt(c, C.gr) + T(f.X(a.cg) - 2, f.Y(a.w) - 12, '①', { c: C.rd, b: 1, fs: 13, halo: 1 }) + T(f.X(b.cg) - 12, f.Y(b.w) - 8, '②', { c: C.gr, b: 1, fs: 13, halo: 1 }) + T(f.X(c.cg) - 14, f.Y(c.w) + 16, '③', { c: C.gr, b: 1, fs: 13, halo: 1 });
+      return svg(400, 280, s, `図：Archer III の重量と重心の許容範囲（POH の値）と、計算例の 3 つの点。①後ろすぎ（${a.cg.toFixed(1)} in）→ ②後席の 1 人を前席へ（${b.cg.toFixed(1)} in）→ ③燃料を 20 gal 使った着陸時（${c.cg.toFixed(1)} in）`);
+    },
   };
 
   // ---------------------------------------------------------------- calculators inside the text
   const ARCHER_WB = {
-    // teaching approximations (教材用近似・機体ごとに要確認): arms in inches from the datum, the envelope's shape
+    // the Archer III POH's arms (inches aft of the datum) and CG envelope; the basic empty weight and its arm are an example (each airplane has its own)
     rows: [['空虚重量（BEW）', 1640, 87.0], ['前席（操縦士・同乗者）', 340, 80.5], ['後席', 150, 118.1], ['燃料（40 gal × 6 lb）', 240, 95.0], ['手荷物', 50, 142.8]],
     env: [[82.0, 1600], [82.0, 2050], [88.6, 2550], [93.0, 2550], [93.0, 1600]],
     max: 2550,
+  };
+  // the book's worked example (perf.wbex): the empty weight above, the POH's arms; ① aft of the limit, ② one rear passenger moved to the
+  // front seat, ③ ② after 20 gal burnt. Each: { w, m, cg, items: [[label, lb, arm]] }
+  ARCHER_WB.fwd = w => w <= 2050 ? 82.0 : 82.0 + (w - 2050) / 500 * 6.6;
+  ARCHER_WB.example = () => {
+    const R = ARCHER_WB.rows, load = (front, rear, gal, bag) => {
+      const items = [[R[0][0], R[0][1], R[0][2]], ['前席', front, R[1][2]], ['後席', rear, R[2][2]], [`燃料（${gal} gal）`, gal * 6, R[3][2]], ['手荷物', bag, R[4][2]]];
+      const w = items.reduce((a, r) => a + r[1], 0), m = items.reduce((a, r) => a + r[1] * r[2], 0);
+      return { w, m, cg: m / w, items };
+    };
+    return [load(170, 340, 30, 100), load(340, 170, 30, 100), load(340, 170, 10, 100)];
   };
   const CALC = {
     turn(el) {
@@ -703,7 +806,7 @@
       const f = () => { let tw = 0, tm = 0; ins.forEach((inp, i) => { const w = +inp.value, m = w * R[i][2]; tw += w; tm += m; el.querySelectorAll('.m')[i].textContent = Math.round(m).toLocaleString(); });
         const cg = tm / tw, ok = tw <= ARCHER_WB.max && cg >= fwdAt(tw) && cg <= 93.0;
         el.querySelector('.tw').textContent = Math.round(tw).toLocaleString(); el.querySelector('.tm').textContent = Math.round(tm).toLocaleString(); el.querySelector('.cg').textContent = cg.toFixed(2);
-        out.innerHTML = ok ? `<span style="color:#5fd46a">範囲内</span>：重量 ${Math.round(tw)} lb（最大 ${ARCHER_WB.max}）・重心 ${cg.toFixed(1)} in（許容 ${fwdAt(tw).toFixed(1)}〜93.0、教材用近似）` : `<span style="color:#ff6a5a">範囲外</span>：重量 ${Math.round(tw)} lb・重心 ${cg.toFixed(1)} in。荷物や燃料を減らす・積む位置を変える`; };
+        out.innerHTML = ok ? `<span style="color:#5fd46a">範囲内</span>：重量 ${Math.round(tw)} lb（最大 ${ARCHER_WB.max}）・重心 ${cg.toFixed(1)} in（許容 ${fwdAt(tw).toFixed(1)}〜93.0 in は POH の値。空虚重量は例）` : `<span style="color:#ff6a5a">範囲外</span>：重量 ${Math.round(tw)} lb・重心 ${cg.toFixed(1)} in。荷物や燃料を減らす・積む位置を変える`; };
       ins.forEach(i => i.addEventListener('input', f)); f();
     },
     fuel(el) {

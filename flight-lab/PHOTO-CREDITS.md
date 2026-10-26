@@ -5,7 +5,7 @@ FLIGHT LAB の教科書（TEXTBOOK でも同じ）に入れた写真の一覧で
 写真は縮小（長い辺 1200 px 以下）・WebP に変換し、メタデータを消して `src/book-photos.js` に入れています。
 CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できます。写真の下のキャプションにも作者・ライセンス・出典を出しています。
 
-写真 8 枚・合計 0.61 MB（WebP のバイト数）。
+写真 10 枚・合計 0.83 MB（WebP のバイト数）。
 
 | id | 写真 | 作者 | ライセンス | 出典 | 使っている節 |
 |---|---|---|---|---|---|
@@ -17,3 +17,5 @@ CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できま�
 | `pitot` | 主翼の下のピトー管（セスナ 172 の例）。前を向いた穴に、ぶつかってくる空気の圧力（全圧）が入ります。 | Cjp24 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Cessna_172_Skyhawk_II_-_Pitot_tube.jpg) | sys.g1000 |
 | `staticPort` | 胴体の横の静圧孔（セスナ 172 の例）。小さな穴で、まわりの空気の圧力（静圧）を取ります。機体によって、静圧孔の場所は違います。 | Bin im Garten | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Static_port_C172_7786.JPG) | sys.g1000 |
 | `compass` | 計器板の上の磁気コンパスと、その下の自差カード（セスナ 172 の例）。カードの FOR は飛びたい磁方位、STEER はそのときコンパスで合わせる値です。 | M9matr0902 | [Public domain (PD-self)](https://commons.wikimedia.org/wiki/Template:PD-self) | [元のページ](https://commons.wikimedia.org/wiki/File:Flygplanskompass.JPG) | sys.compass |
+| `distanceSign` | 滑走路の横の残り距離標識（runway distance remaining sign）。黒地に白い数字で、残りの長さを 1,000 ft 単位で示します。「2」は残り約 2,000 ft です。 | LezFraniak | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Runway-Distance_Remaining_Sign_-2.jpg) | perf.tol |
+| `grassRunway` | 芝の滑走路（turf runway）。舗装より車輪が転がりにくく、離陸距離が延びます。長い芝やぬかるみでは、2 倍になることもあります（FAA-P-8740-2）。 | Malcolm Neal | [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Grass_runways_-_geograph.org.uk_-_5465578.jpg) | perf.tol |

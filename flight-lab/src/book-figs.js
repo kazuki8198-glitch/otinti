@@ -399,14 +399,6 @@
       s += T(200, 276, `磁航路 MC ＝ 真航路 ＋ 西偏 ＝ ${String(tc + VAR).padStart(3, '0')}°（VFR の巡航高度の規則に使う）`, { c: C.mut, fs: 12 });
       return svg(400, 288, s, `図：風の三角形（真航路 ${String(tc).padStart(3, '0')}°・真対気速度 ${tas} kt・風 ${String(wd).padStart(3, '0')}°/${ws} kt の例を縮尺どおりに描いたもの）と、真航路からコンパス針路までの計算の順番。偏差の ${VAR}°W はこの教材の値、自差の ＋${dev}° は例です`);
     },
-    holding() {
-      let s = `<circle cx="120" cy="120" r="6" fill="${C.am}"/>` + T(120, 142, 'フィックス（VOR 等）', { c: C.am, fs: 11 });
-      s += `<path d="M120 120 L320 120 A 45 45 0 0 1 320 210 L120 210 A 45 45 0 0 1 120 120" stroke="${C.cy}" stroke-width="2.5" fill="none"/>`;
-      s += A(200, 120, 215, 120, C.cy) + A(240, 210, 225, 210, C.cy) + T(220, 110, 'アウトバウンド（1 分）', { c: C.cy, fs: 11 }) + T(220, 230, 'インバウンド（1 分・14,000 ft 以下）', { c: C.cy, fs: 11 });
-      s += L(120, 30, 120, 290, C.mut, 1, '5 4') + L(120, 120, 200, 30, C.mut, 1, '5 4');
-      s += T(70, 60, 'パラレル', { c: C.gr, fs: 12, b: 1 }) + T(70, 78, 'エントリー', { c: C.gr, fs: 11 }) + T(175, 50, 'ティアドロップ', { c: C.vi, fs: 12, b: 1 }) + T(60, 250, 'ダイレクト', { c: C.rd, fs: 12, b: 1 }) + T(60, 268, 'エントリー', { c: C.rd, fs: 11 });
-      return svg(400, 300, s, '図：右回りの標準待機経路と 3 つの入り方（どの方向からフィックスに来たかで決まる。AIM 5-3-8）');
-    },
     clouds() {
       // cloud levels (AWH Table 12-3, temperate regions) and the main cloud types; CB reaches through all levels
       const Y = ft => 250 - ft / 40000 * 220;
@@ -490,14 +482,6 @@
         ['脚 UP・フラップ離陸位置', '一般に高くなる', '脚の「竜骨効果」がない（機体による）'], ['バンク 5° まで生きている側へ', '低くなる', '揚力の横成分が非対称推力を助ける'],
         ['密度高度が高い（高い・暑い）', '低くなる', '出力が減る（ただし失速速度に近づく）'], ['臨界発動機の停止', '最も高い', 'P ファクター等で生きている側の推力線が外側（Seminole は左右逆回転なので臨界発動機なし）']])
         + '<p class="bk-src">出典：FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章、14 CFR 23.2135（旧 23.149）。数値・条件は機体の AFM が優先。</p>';
-    },
-    ils() {
-      let s = `<rect x="360" y="150" width="120" height="10" fill="#3a4658"/>` + T(420, 176, '滑走路', { c: C.mut, fs: 11 });
-      s += L(40, 150 - Math.tan(3 * DEG) * 340, 380, 150, C.gr, 2.5) + T(120, 112, 'グライドスロープ（3°）', { c: C.gr, fs: 11 });
-      s += L(40, 150 - Math.tan(3.7 * DEG) * 340, 380, 150, C.gr, 1, '4 3') + L(40, 150 - Math.tan(2.3 * DEG) * 340, 380, 150, C.gr, 1, '4 3');
-      s += `<circle cx="300" cy="${150 - Math.tan(3 * DEG) * 80}" r="5" fill="${C.am}"/>` + T(300, 112, '決心高度（DA）', { c: C.am, fs: 11 }) + T(300, 126, 'ここで滑走路が見えなければ進入復行', { c: C.am, fs: 10 });
-      s += T(60, 160, 'ローカライザー：横方向（左右のずれ）', { c: C.cy, fs: 11, a: 'start' });
-      return svg(500, 190, s, '図：ILS（計器着陸装置）。ローカライザーが左右、グライドスロープが上下のずれを示し、PFD の CDI と菱形（GS）に表示される（AIM 1-1-9）');
     },
     scan() {
       // a G1000-type PFD (speed tape left, attitude centre, altitude tape and vertical speed right, HSI below with the turn-rate trend
@@ -1619,6 +1603,185 @@
       let y = 368;
       for (const [n, lines] of rows) { s += tag(14, y - 4, n) + TL(30, y, lines, { c: C.ink, a: 'start', fs: 12, lh: 16 }); y += lines.length * 16 + 6; }
       return svg(400, y + 2, s, '図：目的地変更（課目 n2 の LAB-A → LAB-F に、例として LAB-B への予定の航路と雷雨を描き足した、上から見た模式図）。まず向きを変え、コースに乗ってから時刻を記録し、針路・対地速度・到着の時刻・燃料を計算します（PHAK 第 16 章）。数字は課目の風・105 kt・この教材のフライトモデルの燃料消費で計算した値');
+    },
+    // ---------------------------------------------------------------- 第 22 章 ifrp（計器飛行方式）
+    holding() {
+      // AIM 5-3-8 for lesson i4's hold: the LAB VOR as the fix, inbound course 090 (flying east to the station), right turns, so the
+      // racetrack lies west of the fix on the south side. Its size is the lesson's 100 kt in still air: 1-minute legs (1.67 NM) and
+      // standard-rate turns (radius = V ÷ 3°/s ≈ 0.53 NM). The entry sectors are split by the inbound course extended through the fix
+      // and the 70° line (070° from the inbound leg on the holding side, i.e. the 020–200 line): direct 180°, teardrop 70°, parallel 110°
+      const kt = 100, leg = kt / 60, r = kt / 3600 / (3 * DEG), k = 62, fx = 230, fy = 112, Lp = leg * k, R = r * k;
+      const pt = (b, d) => [fx + d * Math.sin(b * DEG), fy - d * Math.cos(b * DEG)];
+      const wedge = (b0, b1, c, d = 190) => { const [x0, y0] = pt(b0, d), [x1, y1] = pt(b1, d); return `<path d="M${fx} ${fy} L${x0.toFixed(1)} ${y0.toFixed(1)} A${d} ${d} 0 ${b1 - b0 > 180 ? 1 : 0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)} Z" fill="${c}" fill-opacity="0.10"/>`; };
+      let s = `<defs><clipPath id="holdclip"><rect x="0" y="0" width="400" height="236"/></clipPath></defs><g clip-path="url(#holdclip)">`;
+      s += wedge(200, 380, C.gr) + wedge(20, 90, C.am) + wedge(90, 200, C.vi);
+      const [a0, a1] = [pt(20, 190), pt(200, 190)];
+      s += L(a0[0].toFixed(1), a0[1].toFixed(1), a1[0].toFixed(1), a1[1].toFixed(1), C.mut, 1.5, '6 4') + L(fx, fy, fx + 200, fy, C.mut, 1.5, '6 4') + '</g>';
+      // the racetrack: inbound (north side) ends at the fix; right turn south; outbound west along the south side; right turn back
+      const xw = fx - Lp, yS = fy + 2 * R;
+      s += `<path d="M${xw.toFixed(1)} ${fy} L${fx} ${fy} A${R.toFixed(1)} ${R.toFixed(1)} 0 0 1 ${fx} ${yS.toFixed(1)} L${xw.toFixed(1)} ${yS.toFixed(1)} A${R.toFixed(1)} ${R.toFixed(1)} 0 0 1 ${xw.toFixed(1)} ${fy}" stroke="${C.cy}" stroke-width="3" fill="none"/>`;
+      s += A(fx - Lp * 0.62, fy, fx - Lp * 0.38, fy, C.cy, 3) + A(xw + Lp * 0.62, yS, xw + Lp * 0.38, yS, C.cy, 3);
+      // lesson i4 arrives from the west on the inbound course (a direct entry)
+      s += A(10, fy, xw - 6, fy, C.gr, 2.5) + T(12, fy - 8, '課目 i4：西から 090° で', { c: C.gr, b: 1, a: 'start', fs: 12 });
+      // the fix (the VOR) and abeam
+      s += `<circle cx="${fx}" cy="${fy}" r="7" fill="${C.bg}" stroke="${C.bl}" stroke-width="2.5"/>` + T(fx + 10, fy - 24, 'LAB VOR（フィックス）', { c: C.bl, b: 1, a: 'start', fs: 12, halo: 1 });
+      s += L(fx, yS - 7, fx, yS + 7, C.am, 2.5) + TL(fx + 4, yS + 22, ['真横：ここから', 'アウトバウンドの時間'], { c: C.am, a: 'end', fs: 12, lh: 15, halo: 1 });
+      s += T(fx - Lp / 2, fy + 20, 'インバウンド 090°（1 分）', { c: C.cy, b: 1, fs: 12, halo: 1 }) + T(xw + Lp / 2, yS - 9, 'アウトバウンド 270°', { c: C.cy, b: 1, fs: 12, halo: 1 });
+      // the sector names
+      const lab = (b, d, lines, c) => { const [x, y] = pt(b, d); return TL(x, y, lines, { c, b: 1, fs: 12, lh: 15, halo: 1 }); };
+      s += lab(56, 116, ['ティアドロップ', '70°'], C.am) + lab(118, 150, ['パラレル', '110°'], C.vi) + lab(300, 150, ['ダイレクト', '180°'], C.gr);
+      s += T(394, fy - 6, 'コースの延長', { c: C.mut, fs: 12, a: 'end', halo: 1 }) + T(pt(20, 120)[0] + 6, 14, '70° の線', { c: C.mut, fs: 12, a: 'start', halo: 1 });
+      s += A(22, 226, 22, 196, C.mut, 2) + T(36, 214, '北', { c: C.mut, fs: 12, a: 'start' }) + T(394, 230, '模式図・NOT FOR NAVIGATION', { c: C.mut, fs: 12, a: 'end', halo: 1 });
+      // three small drawings of the entries (each fix on its right, the same racetrack, the entry path in its colour)
+      const mini = (ox, c, title, path) => {
+        const m = 0.36, X = x => ox + 104 + (x - fx) * m, Y = y => 290 + (y - fy) * m, rr = R * m;
+        let t = `<rect x="${ox + 2}" y="250" width="128" height="80" rx="6" fill="${c}" fill-opacity="0.08" stroke="${c}"/>` + T(ox + 66, 268, title, { c, b: 1, fs: 12 });
+        t += `<path d="M${X(xw).toFixed(1)} ${Y(fy).toFixed(1)} L${X(fx).toFixed(1)} ${Y(fy).toFixed(1)} A${rr.toFixed(1)} ${rr.toFixed(1)} 0 0 1 ${X(fx).toFixed(1)} ${Y(yS).toFixed(1)} L${X(xw).toFixed(1)} ${Y(yS).toFixed(1)} A${rr.toFixed(1)} ${rr.toFixed(1)} 0 0 1 ${X(xw).toFixed(1)} ${Y(fy).toFixed(1)}" stroke="${C.mut}" stroke-width="1.5" stroke-dasharray="3 3" fill="none"/>`;
+        return t + path(X, Y, rr) + `<circle cx="${X(fx).toFixed(1)}" cy="${Y(fy).toFixed(1)}" r="3.5" fill="${C.bl}"/>`;
+      };
+      const pth = (d, c) => `<path d="${d}" stroke="${c}" stroke-width="2.5" fill="none"/>`;
+      // the entry paths worked in NM from the fix (east, north) at the same 100 kt: e(x, y) gives the drawing's main coordinates
+      const e = (x, y) => [fx + x * k, fy - y * k], f = v => v.toFixed(1);
+      s += mini(4, C.gr, 'ダイレクト', (X, Y, rr) => A(X(fx - 150), Y(fy), X(fx) - 2, Y(fy), C.gr, 2.5) + pth(`M${X(fx)} ${Y(fy)} A${f(rr)} ${f(rr)} 0 0 1 ${X(fx)} ${f(Y(yS))} L${f(X(fx - Lp * 0.5))} ${f(Y(yS))}`, C.gr));
+      s += mini(136, C.am, 'ティアドロップ', (X, Y, rr) => {
+        // fly 240° (30° inside the outbound 270°) until a right turn of 210° rolls out on the inbound course: d = (1 + cos 30°) ÷ sin 30° × r
+        const d = (1 + Math.cos(30 * DEG)) / Math.sin(30 * DEG) * r, p1 = [-d * Math.cos(30 * DEG), -d * Math.sin(30 * DEG)], cx = p1[0] - r * Math.sin(30 * DEG);
+        const [ax, ay] = e(1.4 * Math.sin(50 * DEG), 1.4 * Math.cos(50 * DEG)), [x1, y1] = e(...p1), [x2, y2] = e(cx, 0);
+        return A(X(ax), Y(ay), X(fx) + 2, Y(fy) - 2, C.am, 2.5) + pth(`M${X(fx)} ${Y(fy)} L${f(X(x1))} ${f(Y(y1))} A${f(rr)} ${f(rr)} 0 1 1 ${f(X(x2))} ${f(Y(y2))} L${X(fx) - 4} ${Y(fy)}`, C.am);
+      });
+      s += mini(268, C.vi, 'パラレル', (X, Y, rr) => {
+        // 270° on the outside (north) for a minute, a left turn of 225° to 045°, back to the inbound course and the fix
+        const off = 0.18, [ax, ay] = e(1.4 * Math.sin(140 * DEG), 1.4 * Math.cos(140 * DEG)), [x1, y1] = e(-leg, off), c = [-leg, off - r];
+        const p2 = [c[0] + r * Math.sin(45 * DEG), c[1] - r * Math.cos(45 * DEG)], [x2, y2] = e(...p2), [x3, y3] = e(p2[0] - p2[1] - 0.25, -0.02), [x0, y0] = e(-0.3, off);
+        return A(X(ax), Y(ay), X(fx) + 2, Y(fy) + 2, C.vi, 2.5) + pth(`M${X(fx)} ${Y(fy)} Q${f(X(fx - 0.12 * k))} ${f(Y(y0))} ${f(X(x0))} ${f(Y(y0))} L${f(X(x1))} ${f(Y(y1))} A${f(rr)} ${f(rr)} 0 1 0 ${f(X(x2))} ${f(Y(y2))} L${f(X(x3))} ${f(Y(y3))} L${X(fx) - 4} ${Y(fy)}`, C.vi);
+      });
+      s += TL(8, 352, ['ダイレクト：フィックスで右旋回してアウトバウンドへ', 'ティアドロップ：アウトバウンドから 30° 内側へ 1 分 → 右旋回', 'パラレル：外側をアウトバウンドと平行に 1 分 → 左旋回で戻る'], { c: C.ink, a: 'start', fs: 12, lh: 17 });
+      return svg(400, 396, s, '図：待機経路（課目 i4：LAB VOR へインバウンド 090°・右回り。北が上の模式図）。インバウンドはフィックスで終わります。入り方は、フィックスに着いたときの機首方位で 3 つの区域から選びます（AIM 5-3-8）。大きさは無風・100 kt の 1 分と標準旋回');
+    },
+    labIlsChart() {
+      // a schematic of a fictional approach chart for LAB RWY 36, laid out like the parts an approach chart has (IFH chapter 1):
+      // the briefing strip, the plan view, the profile view and the minimums. Data: avionics.js NAVAIDS (I-LAB 109.90, LAB VOR 113.50),
+      // physics.js LAB_RWY (elevation 55 ft, 354° true = 360° magnetic, 1,200 m), the glide path of avionics.js (3° from 300 m past the
+      // threshold), school.js's 2,000 ft. The missed approach, the minimums and the MSA are made-up values for this drawing
+      const PH = FL.physics, AV = FL.avionics, R = PH.LAB_RWY, vor = AV.NAVAIDS.find(n => n.id === 'LBV'), loc = AV.NAVAIDS.find(n => n.id === 'ILAB');
+      const gsNm = Math.tan(3 * DEG) * 1852 * PH.FT, gp0 = 300 / 1852, faf = (2000 - R.elevFt) / gsNm - gp0, da = 255, daNm = (da - R.elevFt) / gsNm - gp0;
+      const mda = 480, tch = Math.tan(3 * DEG) * 300 * PH.FT;
+      let s = `<rect x="2" y="2" width="396" height="586" rx="6" fill="#101c2c" stroke="${C.mut}"/>`;
+      // the briefing strip
+      s += T(200, 24, '架空の LAB ILS RWY 36（模式図）', { c: C.ink, b: 1, fs: 14 });
+      s += `<rect x="10" y="34" width="380" height="58" fill="none" stroke="${C.grid}"/>` + L(140, 34, 140, 92, C.grid, 1) + L(270, 34, 270, 92, C.grid, 1);
+      s += TL(75, 54, ['LOC I-LAB', `${(loc.freq / 1000).toFixed(2)}`], { c: C.gr, b: 1, fs: 12, lh: 18 }) + TL(205, 54, ['最終進入コース', '360°'], { c: C.ink, b: 1, fs: 12, lh: 18 }) + TL(330, 54, ['GS 3.00°', `TCH ${Math.round(tch)} ft`], { c: C.ink, b: 1, fs: 12, lh: 18 });
+      s += TL(14, 110, ['進入復行：まっすぐ 2,000 ft まで上昇し、LAB VOR へ直行して待機'], { c: C.am, a: 'start', fs: 12 });
+      // the plan view (north up)
+      const k = 22, ox = 96, oy = 200, Q = (e, n) => [ox + e * k, oy - n * k];
+      s += `<rect x="10" y="120" width="380" height="226" fill="none" stroke="${C.grid}"/>` + T(16, 138, '平面図', { c: C.mut, a: 'start', fs: 12 });
+      const [rx, ry] = Q(0, 0), rl = R.len / 1852 * k;
+      s += `<rect x="${rx - 3}" y="${(ry - rl).toFixed(1)}" width="6" height="${rl.toFixed(1)}" fill="${C.ink}"/>`;
+      // the localizer course (a long feather toward the runway) and the final approach fix
+      const [fx0, fy0] = Q(0, -faf), [sx, sy] = Q(0, -6.5), [ax0, ay0] = Q(0, -3.6);
+      s += `<path d="M${rx} ${sy.toFixed(1)} L${rx + 7} ${(sy - 14).toFixed(1)} L${rx + 7} ${(ry + 6).toFixed(1)} L${rx} ${(ry + 2).toFixed(1)} Z" fill="${C.gr}" fill-opacity="0.25" stroke="${C.gr}"/>` + A(rx - 12, ay0 + 24, rx - 12, ay0 - 24, C.gr, 2);
+      s += T(rx - 18, (ay0 + 4).toFixed(1), '360°', { c: C.gr, b: 1, fs: 12, a: 'end' });
+      s += `<circle cx="${rx}" cy="${fy0.toFixed(1)}" r="4" fill="${C.am}"/>` + TL(rx + 14, fy0 - 2, [`GS 会合 ${faf.toFixed(1)} NM`, '（2,000 ft）'], { c: C.am, a: 'start', fs: 12, lh: 15, halo: 1 });
+      // the LAB VOR, the missed approach and its hold (the i4 hold: inbound 090, right turns, west of the station)
+      const dE = (vor.e - R.e) / 1852, dN = (vor.n - R.n) / 1852, [vx, vy] = Q(dE, dN);
+      const hk = k, hl = 100 / 60 * hk, hr = 100 / 3600 / (3 * DEG) * hk;
+      s += `<path d="M${(vx - hl).toFixed(1)} ${vy.toFixed(1)} L${vx.toFixed(1)} ${vy.toFixed(1)} A${hr.toFixed(1)} ${hr.toFixed(1)} 0 0 1 ${vx.toFixed(1)} ${(vy + 2 * hr).toFixed(1)} L${(vx - hl).toFixed(1)} ${(vy + 2 * hr).toFixed(1)} A${hr.toFixed(1)} ${hr.toFixed(1)} 0 0 1 ${(vx - hl).toFixed(1)} ${vy.toFixed(1)}" stroke="${C.am}" stroke-width="2" stroke-dasharray="6 4" fill="none"/>`;
+      const [mx, my] = Q(0, 2.6);
+      s += `<path d="M${rx} ${(ry - rl - 4).toFixed(1)} L${rx} ${(my + 18).toFixed(1)} Q${rx} ${my.toFixed(1)} ${rx + 18} ${my.toFixed(1)} L${(vx - 12).toFixed(1)} ${(vy - 2).toFixed(1)}" stroke="${C.am}" stroke-width="2" stroke-dasharray="6 4" fill="none"/>` + A(vx - 30, vy - 2.5, vx - 10, vy - 1, C.am, 2);
+      s += `<circle cx="${vx.toFixed(1)}" cy="${vy.toFixed(1)}" r="12" fill="none" stroke="${C.bl}" stroke-width="1.5"/><circle cx="${vx.toFixed(1)}" cy="${vy.toFixed(1)}" r="3.5" fill="${C.bl}"/>`;
+      s += TL(vx - 6, vy + 2 * hr + 22, ['LAB VOR', `${(vor.freq / 1000).toFixed(2)}`], { c: C.bl, b: 1, fs: 12, lh: 15 });
+      s += T(rx + 10, ry + 16, 'RWY 36', { c: C.ink, b: 1, fs: 12, a: 'start' });
+      s += `<rect x="214" y="230" width="170" height="40" rx="4" fill="${C.bg}" stroke="${C.mut}"/>` + TL(299, 246, ['MSA（LAB VOR から 25 NM）', '1,600 ft'], { c: C.ink, fs: 12, lh: 16 });
+      s += TL(382, 300, ['模式図・架空', 'NOT FOR NAVIGATION'], { c: C.am, b: 1, fs: 12, a: 'end', lh: 16 });
+      // the profile view (distance from the threshold; heights not to scale)
+      const y0 = 356, X = d => 360 - d * 46, H = h => y0 + 120 - h * 0.046;
+      s += `<rect x="10" y="${y0}" width="380" height="138" fill="none" stroke="${C.grid}"/>` + T(16, y0 + 130, '断面図', { c: C.mut, a: 'start', fs: 12 });
+      s += L(X(0), H(R.elevFt), 386, H(R.elevFt), C.ink, 4) + L(14, H(0) + 6, 386, H(0) + 6, C.grid, 1);
+      s += L(18, H(2000), X(faf), H(2000), C.ink, 2.5) + L(X(faf), H(2000), X(-gp0), H(R.elevFt), C.gr, 2.5);
+      s += `<circle cx="${X(faf).toFixed(1)}" cy="${H(2000).toFixed(1)}" r="4" fill="${C.am}"/>` + T(X(faf) - 4, H(2000) - 10, '2,000', { c: C.am, b: 1, fs: 12, a: 'end' }) + T(X(faf) + 8, H(2000) - 10, 'GS に会合', { c: C.ink, fs: 12, a: 'start' });
+      s += `<circle cx="${X(daNm).toFixed(1)}" cy="${H(da).toFixed(1)}" r="4" fill="${C.rd}"/>` + T(X(daNm) - 8, H(da) - 12, `DA ${da}`, { c: C.rd, b: 1, fs: 12, a: 'end' });
+      s += L(X(daNm), H(da), X(-0.4), H(1200), C.am, 2, '6 4') + A(X(-0.25), H(900), X(-0.42), H(1300), C.am, 2) + T(X(-0.1), H(1500) + 2, '進入復行', { c: C.am, b: 1, fs: 12, a: 'end' });
+      s += L(X(faf) + 30, H(mda), X(0), H(mda), C.mut, 1.5, '4 4') + T(X(3.4), H(mda) - 6, `LOC だけなら MDA ${mda}`, { c: C.mut, fs: 12 });
+      s += T(386, H(R.elevFt) + 18, `接地帯 ${R.elevFt} ft`, { c: C.mut, fs: 12, a: 'end' }) + T(X(faf / 2) - 20, H(1100) - 4, '3°', { c: C.gr, b: 1, fs: 12 });
+      // the minimums
+      const y1 = 502;
+      s += `<rect x="10" y="${y1}" width="380" height="78" fill="none" stroke="${C.grid}"/>` + L(10, y1 + 26, 390, y1 + 26, C.grid, 1) + L(10, y1 + 52, 390, y1 + 52, C.grid, 1) + L(110, y1, 110, y1 + 78, C.grid, 1) + L(250, y1, 250, y1 + 78, C.grid, 1);
+      s += T(60, y1 + 18, '最低気象条件', { c: C.mut, fs: 12 }) + T(180, y1 + 18, '高度（接地帯から）', { c: C.mut, fs: 12 }) + T(320, y1 + 18, '視程', { c: C.mut, fs: 12 });
+      s += T(60, y1 + 44, 'ILS', { c: C.gr, b: 1, fs: 12 }) + T(180, y1 + 44, `DA ${da}（${da - R.elevFt}）`, { c: C.ink, b: 1, fs: 12 }) + T(320, y1 + 44, '3/4 SM', { c: C.ink, b: 1, fs: 12 });
+      s += T(60, y1 + 70, 'LOC', { c: C.mut, b: 1, fs: 12 }) + T(180, y1 + 70, `MDA ${mda}（${mda - R.elevFt}）`, { c: C.ink, b: 1, fs: 12 }) + T(320, y1 + 70, '1 SM', { c: C.ink, b: 1, fs: 12 });
+      return svg(400, 590, s, '図：進入図の読み方（架空の LAB ILS RWY 36 の模式図）。上から、ブリーフィングの欄・平面図・断面図・最低気象条件の欄。周波数と位置はシミュレータのデータ、進入復行・最低気象条件・MSA は説明のための架空の値です');
+    },
+    ils() {
+      // the ILS in two views (AIM 1-1-9, IFH chapter 9) and how the needles read. Plan (north up): the localizer from its antenna past
+      // the far end of runway 36 (avionics.js: ±2.5° full scale, 1.25°/dot), the 30° intercept of lesson i5 (heading 330 from the east).
+      // Profile (heights exaggerated): the glide path 3° ± 0.7° (0.35°/dot) from 300 m past the threshold, met from below at 2,000 ft
+      // (school.js) about 5.9 NM out, DA 255 ft (touchdown zone 55 ft + 200 ft, syllabus i5) and a false course at a steeper angle
+      const PH = FL.physics, R = PH.LAB_RWY, gsNm = Math.tan(3 * DEG) * 1852 * PH.FT, gp0 = 300 / 1852, faf = (2000 - R.elevFt) / gsNm - gp0, daNm = (255 - R.elevFt) / gsNm - gp0;
+      let s = T(14, 18, '上から見る（ローカライザー：左右）', { c: C.gr, b: 1, a: 'start', fs: 12 });
+      // plan view: the runway at the top, the approach from the south; the fan drawn wider than ±2.5° so it can be seen
+      const rx = 150, ay = 36, ry = 50, fan = 10, by = 196;
+      s += `<path d="M${rx} ${ay} L${(rx - (by - ay) * Math.tan(fan * DEG)).toFixed(1)} ${by} L${(rx + (by - ay) * Math.tan(fan * DEG)).toFixed(1)} ${by} Z" fill="${C.gr}" fill-opacity="0.12" stroke="${C.gr}" stroke-dasharray="4 3"/>`;
+      s += L(rx, ay, rx, by, C.gr, 1.5, '6 4') + `<rect x="${rx - 4}" y="${ry}" width="8" height="30" fill="${C.ink}"/>` + L(rx - 14, ay, rx + 14, ay, C.gr, 4);
+      s += T(rx + 20, ay + 4, 'アンテナ（滑走路の先）', { c: C.gr, fs: 12, a: 'start' }) + T(rx + 10, ry + 22, 'RWY 36', { c: C.ink, b: 1, fs: 12, a: 'start' });
+      s += T(rx, by + 16, '±2.5°（角度は誇張）', { c: C.gr, b: 1, fs: 12 });
+      // the intercept on heading 330 from the east: straight, then a turn onto 360° as the needle comes alive
+      const jx = rx, jy = 108, sx = jx + 26, sy = jy + 30, ex = sx + 56 * Math.sin(30 * DEG), ey = sy + 56 * Math.cos(30 * DEG);
+      s += `<path d="M${ex.toFixed(1)} ${ey.toFixed(1)} L${sx.toFixed(1)} ${sy.toFixed(1)} Q${jx} ${jy + 8} ${jx} ${jy - 14}" stroke="${C.cy}" stroke-width="2.5" fill="none"/>` + A(jx, jy - 4, jx, jy - 22, C.cy, 2.5);
+      s += planeTop(ex + 8, ey + 14, 0.24, { rot: -30 }) + TL(ex + 26, ey - 4, ['針路 330°', '30° で会合'], { c: C.cy, b: 1, fs: 12, a: 'start', lh: 15 });
+      s += TL(sx + 18, sy - 8, ['針が動き出したら', '360° へ旋回して乗る'], { c: C.ink, fs: 12, a: 'start', lh: 15 });
+      // profile view
+      const y0 = 236, X = d => 374 - d * 42, H = h => y0 + 138 - h * 0.052;
+      s += T(14, y0, '横から見る（グライドスロープ：上下。高さは誇張）', { c: C.gr, b: 1, a: 'start', fs: 12 });
+      s += L(X(0), H(R.elevFt), 394, H(R.elevFt), C.ink, 4) + T(394, H(R.elevFt) + 16, '滑走路', { c: C.mut, fs: 12, a: 'end' });
+      const gp = (ang, d) => R.elevFt + Math.tan(ang * DEG) * (d + gp0) * 1852 * PH.FT;
+      for (const [a, w, dsh] of [[3.7, 1.2, '4 3'], [2.3, 1.2, '4 3'], [3, 2.5, '']]) { const dm = a === 3 ? faf : Math.min(faf, (2050 - R.elevFt) / (Math.tan(a * DEG) * 1852 * PH.FT) - gp0); s += L(X(-gp0), H(R.elevFt), X(dm), H(gp(a, dm)), C.gr, w, dsh); }
+      const fd = (2150 - R.elevFt) / (Math.tan(9 * DEG) * 1852 * PH.FT) - gp0;
+      s += L(X(-gp0), H(R.elevFt), X(fd), H(2150), C.rd, 1.5, '2 4') + T(X(fd) - 4, H(2150) + 2, '偽の道（例 9°）', { c: C.rd, fs: 12, a: 'end' });
+      s += L(14, H(2000), X(faf), H(2000), C.ink, 2) + planeSide(44, H(2000) - 4, 0.3) + `<circle cx="${X(faf).toFixed(1)}" cy="${H(2000).toFixed(1)}" r="4.5" fill="${C.am}"/>`;
+      s += TL(X(faf) - 6, H(2000) + 20, ['2,000 ft・' + faf.toFixed(1) + ' NM', 'ここで下から会合'], { c: C.am, b: 1, fs: 12, a: 'end', lh: 15 });
+      s += T(X(4.2), H(gp(2.3, 4.2)) + 18, '3°（上下 ±0.7°）', { c: C.gr, b: 1, fs: 12 });
+      s += `<circle cx="${X(daNm).toFixed(1)}" cy="${H(255).toFixed(1)}" r="4.5" fill="${C.rd}"/>` + TL(X(daNm) - 10, H(255) - 22, ['DA 255 ft', '（接地帯から 200 ft）'], { c: C.rd, b: 1, fs: 12, a: 'end', lh: 15 });
+      // how the needles read: the CDI bar and the glide slope diamond point to where the path is
+      const y1 = 400, cases = [[1, -1, 'コースは右・自分は高い', '→ 右へ 2〜5°・降下率を少し増やす'], [-1, 1, 'コースは左・自分は低い', '→ 左へ 2〜5°・降下率を少し減らす'], [0, -1, 'コースに乗っている・自分は高い', '→ 針路はそのまま・降下率を少し増やす'], [1, 0, 'コースは右・高さは正しい', '→ 右へ 2〜5°・降下率はそのまま']];
+      s += T(14, y1, '針の読み方：針と菱形は「行くべき道」のある方を指す', { c: C.ink, b: 1, a: 'start', fs: 12 });
+      cases.forEach(([lc, gc, a, b], i) => {
+        const x = 10, y = y1 + 10 + i * 50, cx = x + 34, cy = y + 23;
+        let u = `<rect x="${x}" y="${y}" width="380" height="44" rx="6" fill="${C.bg}" stroke="${C.grid}"/>`;
+        for (const d of [-2, -1, 1, 2]) u += `<circle cx="${cx + d * 8}" cy="${cy}" r="2.2" fill="none" stroke="${C.ink}"/>` + `<circle cx="${x + 72}" cy="${cy + d * 8}" r="2.2" fill="none" stroke="${C.ink}"/>`;
+        u += L(cx + lc * 8, cy - 15, cx + lc * 8, cy + 15, C.gr, 3) + L(cx - 3, cy, cx + 3, cy, C.mut, 1);
+        const gy = cy - gc * 8;
+        u += `<path d="M${x + 72} ${gy - 6} L${x + 77} ${gy} L${x + 72} ${gy + 6} L${x + 67} ${gy} Z" fill="${C.gr}"/>`;
+        s += u + TL(x + 90, y + 18, [a, b], { c: C.ink, fs: 12, a: 'start', lh: 17 });
+      });
+      s += NFN(392, 222);
+      return svg(400, 614, s, '図：ILS（計器着陸装置）を上と横から見た模式図と、針の読み方。ローカライザーは左右、グライドスロープは上下のずれを示します。数字は架空の I-LAB（シミュレータのデータ）と課目 i5 の値');
+    },
+    npProfile() {
+      // a non-precision approach seen from the side (AIM 5-4-5, AC 120-108): from the final approach fix at 2,000 ft (5.9 NM, as on
+      // the LAB chart) to an MDA of 480 ft, flown "dive and drive" (about 1,000 fpm at 90 kt, then level) or as a CDFA on a 3° angle
+      // that meets the MDA at the VDP; the MAP at the threshold and the missed approach climb; an LPV's DA on the same 3° path for
+      // comparison. Heights are made-up values for the drawing (touchdown zone 55 ft)
+      const PH = FL.physics, z = PH.LAB_RWY.elevFt, gsNm = Math.tan(3 * DEG) * 1852 * PH.FT, gp0 = 300 / 1852, faf = (2000 - z) / gsNm - gp0;
+      const mda = 480, vdp = (mda - z) / gsNm - gp0, da = 255, daNm = (da - z) / gsNm - gp0, dd = faf - (2000 - mda) / (1000 / (90 / 60));
+      const X = d => 336 - d * 47, H = h => 286 - h * 0.115;
+      let s = L(12, H(0) + 4, 392, H(0) + 4, C.grid, 1) + L(X(0), H(z), 392, H(z), C.ink, 4) + T(392, H(z) - 8, '滑走路', { c: C.mut, fs: 12, a: 'end' });
+      for (const d of [0, 1, 2, 3, 4, 5, 6]) s += L(X(d), H(0) + 4, X(d), H(0) + 9, C.mut, 1) + T(X(d), H(0) + 22, d, { c: C.mut, fs: 12 });
+      s += T(200, H(0) + 40, '滑走路端からの距離（NM）', { c: C.mut, fs: 12 });
+      // the MDA band (+100 / -0 ft in the ACS)
+      s += `<rect x="${X(faf)}" y="${H(mda + 100)}" width="${(X(0) - X(faf)).toFixed(1)}" height="${(H(mda) - H(mda + 100)).toFixed(1)}" fill="${C.am}" fill-opacity="0.12"/>` + L(X(faf), H(mda), X(0), H(mda), C.am, 1.5, '6 4');
+      s += TL(X(faf) + 2, H(mda) + 18, [`MDA ${mda} ft`, 'ACS：＋100／−0 ft'], { c: C.am, b: 1, fs: 12, a: 'start', lh: 15 });
+      // dive and drive (red) and CDFA (green)
+      s += P([[16, H(2000)], [X(faf), H(2000)], [X(dd), H(mda)], [X(0), H(mda)]], C.rd, 2.5) + T(118, 170, 'dive and drive', { c: C.rd, b: 1, fs: 12, a: 'end' }) + T(124, 186, '早く降りて水平に', { c: C.rd, fs: 12, a: 'end' });
+      s += P([[X(faf), H(2000)], [X(vdp), H(mda)]], C.gr, 3) + L(X(vdp), H(mda), X(-gp0), H(z), C.gr, 2, '3 3');
+      s += TL(X(3.2), H(1500) - 22, ['CDFA：一定の角度（約 3°）で', '降り続ける'], { c: C.gr, b: 1, fs: 12, a: 'start', lh: 15 });
+      s += `<circle cx="${X(faf).toFixed(1)}" cy="${H(2000).toFixed(1)}" r="4.5" fill="${C.ink}"/>` + T(X(faf), H(2000) - 12, `FAF 2,000 ft`, { c: C.ink, b: 1, fs: 12 });
+      s += `<circle cx="${X(vdp).toFixed(1)}" cy="${H(mda).toFixed(1)}" r="4.5" fill="${C.gr}"/>` + T(X(vdp) - 6, H(mda) + 18, 'VDP', { c: C.gr, b: 1, fs: 12, a: 'end' });
+      s += `<circle cx="${X(daNm).toFixed(1)}" cy="${H(da).toFixed(1)}" r="4" fill="${C.vi}"/>` + TL(X(daNm) + 6, H(da) + 30, [`LPV なら DA ${da} まで`], { c: C.vi, b: 1, fs: 12, a: 'end' });
+      // the MAP and the missed approach
+      s += L(X(0), H(mda) - 12, X(0), H(z) + 2, C.rd, 2) + T(X(0) - 4, H(mda) - 16, 'MAP', { c: C.rd, b: 1, fs: 12, a: 'end' });
+      s += P([[X(0), H(mda)], [X(-0.38), H(1050)]], C.am, 2, 'none', '6 4') + A(X(-0.3), H(950), X(-0.4), H(1100), C.am, 2) + TL(394, H(1180) - 40, ['進入復行', '（200 ft/NM', '以上）'], { c: C.am, b: 1, fs: 12, a: 'end', lh: 15 });
+      s += T(12, 18, '模式図（高さは架空の値・縦は誇張）', { c: C.mut, fs: 12, a: 'start' });
+      return svg(400, 336, s, '図：非精密進入の 2 つの降り方（横から見た模式図）。FAF のあとすぐ MDA まで降りて水平に飛ぶ dive and drive と、一定の角度で MDA まで降り続ける CDFA。CDFA では、MDA に着く（VDP の近く）までに目印が見えなければ、水平にせずに進入復行します');
     },
   };
 

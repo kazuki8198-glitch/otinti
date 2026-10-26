@@ -5,7 +5,7 @@ FLIGHT LAB の教科書（TEXTBOOK でも同じ）に入れた写真の一覧で
 写真は縮小（長い辺 1200 px 以下）・WebP に変換し、メタデータを消して `src/book-photos.js` に入れています。一部の写真は切り抜いています（元の写真から変えています）。
 CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できます。写真の下のキャプションにも作者・ライセンス・出典を出しています。
 
-写真 24 枚・合計 1.79 MB（WebP のバイト数）。
+写真 25 枚・合計 1.87 MB（WebP のバイト数）。
 
 | id | 写真 | 作者 | ライセンス | 出典 | 使っている節 |
 |---|---|---|---|---|---|
@@ -33,3 +33,4 @@ CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できま�
 | `locAntenna` | ローカライザーのアンテナ（ドイツ・ハノーファー空港の滑走路 27R・裏側から見たところ）。滑走路の向こうの端の先に横一列に並び、左右の誘導の電波を出します | Herr-K（de.wikipedia） | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) | [元のページ](https://commons.wikimedia.org/wiki/File:EDDV-ILS_27R_Localizer_(cropped).jpg) | ifr.ils |
 | `gsAntenna` | グライドスロープのアンテナ（オランダ・スキポール空港の滑走路 18R）。接地点の横に立つ鉄塔から、上下の誘導の電波を出します | ElboV2 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [元のページ](https://commons.wikimedia.org/wiki/File:ILS_GS_EHAM_18R.jpg) | ifr.ils |
 | `seminole` | 飛んでいる Piper Seminole（PA-44）。左右の翼にエンジンが 1 基ずつあり、尾翼は T 字の形です。脚は引き込まれています | Kakoula10 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Piper_PA-44_Seminole_F-GBPK.jpg) | me.basics |
+| `twinPa30` | NASA の研究機 Piper PA-30 Twin Comanche（1971 年）。エンジンは胴体から離れて左右の翼に付いています。片方が止まると、推力が中心線からずれます | NASA | [Public domain (PD-USGov-NASA)](https://www.nasa.gov/nasa-brand-center/images-and-media/) | [元のページ](https://images.nasa.gov/details/ECN-2845) | oei.what |

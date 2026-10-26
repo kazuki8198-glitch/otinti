@@ -466,22 +466,14 @@
       s += L(0, g, W, g, C.mut, 1.5) + T(200, g + 18, '模式図・NOT FOR NAVIGATION（高さの目盛りは一様でない）', { c: C.mut, fs: 12 });
       return svg(W, 278, s, '図：米国の空域の断面（模式図・高さは代表例）。目盛りは MSL で、Class C・D の高さ（2,500・4,000 ft）は空港の標高からの高さです（図は標高 0 ft の空港の例）。Class G は多くの場所で地上 1,200 ft（空港の近くでは 700 ft）より下です。Class B は許可、Class C・D は入る前に双方向の無線交信の確立が必要です（14 CFR 91.129〜91.131、AIM 3-2）');
     },
-    oeiForces() {
-      let s = '<g transform="translate(200 150)"><rect x="-6" y="-80" width="12" height="150" rx="6" fill="#dfe6ee"/><rect x="-150" y="-12" width="300" height="20" rx="6" fill="#dfe6ee"/><rect x="-50" y="56" width="100" height="10" rx="4" fill="#dfe6ee"/>';
-      s += `<rect x="-78" y="-40" width="18" height="44" rx="6" fill="#9fb3c8"/><rect x="60" y="-40" width="18" height="44" rx="6" fill="#9fb3c8"/>` + L(-92, -44, -46, -44, C.rd, 4) + T(-69, -52, '停止', { c: C.rd, fs: 11 });
-      s += A(69, -44, 69, -110, C.gr, 4) + T(69, -118, '推力（右エンジン）', { c: C.gr, fs: 11 }) + A(-69, -40, -69, 20, C.rd, 3) + T(-110, 34, '風車状態のプロペラの抗力', { c: C.rd, fs: 10 });
-      s += `<path d="M 40 -90 A 90 90 0 0 0 -60 -70" stroke="${C.am}" stroke-width="3" fill="none"/>` + A(-50, -78, -64, -66, C.am, 3) + T(-10, -100, '機首は止まった側（左）へ', { c: C.am, fs: 12, b: 1 });
-      s += A(0, 70, 30, 70, C.cy, 3) + T(60, 92, 'ラダー（右を踏む）の力', { c: C.cy, fs: 11 });
-      s += '</g>';
-      return svg(400, 260, s, '図：片発停止（左エンジン停止）の力。生きている右エンジンの推力と止まった左のプロペラの抗力で、機首は左へ回ろうとする。右ラダー（生きている側の足）で止め、生きている側へ 2〜5° バンクすると横滑りが最小になる（Airplane Flying Handbook 第 13 章）');
-    },
     vmcFactors() {
-      return table(['条件（14 CFR 23 の Vmc 決定条件の考え方）', 'Vmc への影響', '理由'], [
-        ['生きているエンジンが最大出力', '高くなる', '非対称推力が最大'], ['止まった側のプロペラが風車状態（フェザーしていない）', '高くなる', '止まった側の抗力が大きい'],
-        ['重心が後方（後方限界）', '高くなる', 'ラダーの腕（重心から舵まで）が短くなる'], ['重量が軽い', '高くなる（Vmc の定義上）', 'バンクによる横向きの揚力の助けが小さい'],
-        ['脚 UP・フラップ離陸位置', '一般に高くなる', '脚の「竜骨効果」がない（機体による）'], ['バンク 5° まで生きている側へ', '低くなる', '揚力の横成分が非対称推力を助ける'],
-        ['密度高度が高い（高い・暑い）', '低くなる', '出力が減る（ただし失速速度に近づく）'], ['臨界発動機の停止', '最も高い', 'P ファクター等で生きている側の推力線が外側（Seminole は左右逆回転なので臨界発動機なし）']])
-        + '<p class="bk-src">出典：FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章、14 CFR 23.2135（旧 23.149）。数値・条件は機体の AFM が優先。</p>';
+      return table(['条件と要因（旧 14 CFR 23.149 で Vmc を決めた条件と、Vmc を変える要因）', 'Vmc への影響', '理由'], [
+        ['生きているエンジンが最大出力', '高くなる', '非対称の推力が最大'], ['止まった側のプロペラが風車状態（フェザーしていない）', '高くなる', '止まった側の抗力が大きい'],
+        ['重心が後方（後方の限界）', '高くなる', '重心からラダーまでの腕が短くなる'], ['重量が軽い', '高くなる', 'バンクしたときの揚力の横向きの助けが小さい'],
+        ['脚 UP', '高くなる', '脚の「竜骨」のような安定の助けがない'], ['フラップは離陸の位置', '決める条件の 1 つ', '機体によって影響が違う'],
+        ['生きている側へバンク（5° まで）', '低くなる', '揚力の横向きの成分がラダーの横向きの力とつり合い、ラダーを助ける（横滑りが減る）。翼を水平にすると、1° あたり 3 kt 以上、20 kt 近く高くなることがある'],
+        ['密度高度が高い（高い所・暑い日）', '低くなる（自然吸気のエンジン）', '出力が減る（ただし失速速度に近づく）']])
+        + '<p class="bk-src">出典：FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章。今の 14 CFR 23.2135(c) は性能基準の書き方で、表の条件は旧 23.149 のもの。重量と密度高度は認証の条件ではなく、Vmc を変える要因（古い規則では、Vmc を決める重量は決められていなかった）。数値・条件は機体の AFM が優先。</p>';
     },
     scan() {
       // a G1000-type PFD (speed tape left, attitude centre, altitude tape and vertical speed right, HSI below with the turn-rate trend
@@ -1828,6 +1820,45 @@
       const rows = [['#f2f4f7', `白い弧：${v.s0}〜${v.fe} kt（フラップを使える速度）`], [C.gr, `緑の弧：${v.s1}〜${v.no} kt（ふだん使う速度）`], ['#ffd23e', `黄の弧：${v.no}〜${v.ne} kt（穏やかな空気のときだけ）`]];
       rows.forEach(([c, t], i) => { s += `<rect x="20" y="${330 + i * 20}" width="18" height="6" fill="${c}"/>` + T(46, 337 + i * 20, t, { c: C.ink, fs: 12, a: 'start' }); });
       return svg(400, 392, s, '図：双発機の速度計（Seminole の速度の模式図）。赤い線（Vmc）は片発で方向を保てる最小の速度、青い線（Vyse）は片発で最もよく上昇できる速度です。双発機だけにある 2 つの目印です（AFH 第 13 章）');
+    },
+    // ---------------------------------------------------------------- 第 24 章 oei（片発停止）
+    oeiForces() {
+      // AFH chapter 13: the left engine has failed. The right engine's thrust (offset from the centre line) and the drag of the
+      // windmilling left propeller turn the nose left (yaw) and the left wing goes down (roll: the right wing keeps the propwash).
+      // Right rudder makes a sideways force on the fin to the LEFT, which swings the tail left and the nose back right
+      const cx = 200, cy = 196, k = 1.75;
+      let s = planeTop(cx, cy, k, { twin: true });
+      const ex = 24 * k, py = cy - 26 * k;
+      // the dead left engine: the windmilling propeller and its drag
+      s += `<circle cx="${cx - ex}" cy="${py}" r="${12 * k}" fill="none" stroke="${C.rd}" stroke-width="2" stroke-dasharray="4 3"/>` + A(cx - ex, py + 6, cx - ex, py + 62, C.rd, 4);
+      s += TL(14, py + 82, ['止まった左エンジン：', '風車状態のプロペラの抗力'], { c: C.rd, b: 1, fs: 12, a: 'start', lh: 15 });
+      // the live right engine: thrust
+      s += A(cx + ex, py - 4, cx + ex, py - 66, C.gr, 4) + TL(cx + ex + 14, py - 56, ['生きている右エンジン', 'の推力'], { c: C.gr, b: 1, fs: 12, a: 'start', lh: 15 });
+      // the yaw (nose turns left)
+      s += ARC(cx, cy, 100, -60, -112, C.am, 3) + T(cx, cy - 116, '機首が止まった側（左）へ回る', { c: C.am, b: 1, fs: 12 });
+      // the fin force from right rudder: to the left, at the tail
+      const ty = cy + 46 * k;
+      s += A(cx + 6, ty + 4, cx - 48, ty + 4, C.cy, 4) + TL(cx - 54, ty + 26, ['右ラダー（生きている側の足）で', '尾翼に左向きの力 → 機首が右へ戻る'], { c: C.cy, b: 1, fs: 12, a: 'start', lh: 15 });
+      // the roll seen from behind (small)
+      s += `<g transform="rotate(-12 342 344)"><path d="M306 347 L378 347" stroke="${PLANE2}" stroke-width="4" stroke-linecap="round"/><ellipse cx="342" cy="344" rx="6" ry="7" fill="${PLANE}"/><path d="M340 337 L340 326 L344 326 L344 337 Z" fill="${PLANE}"/><circle cx="325" cy="348" r="4" fill="${PLANE2}"/><circle cx="359" cy="348" r="4" fill="${PLANE2}"/><circle cx="325" cy="348" r="8" fill="none" stroke="${C.rd}" stroke-dasharray="3 2"/><circle cx="359" cy="348" r="8" fill="none" stroke="${C.mut}"/></g>` + T(342, 376, '後ろから見ると：', { c: C.mut, fs: 12 }) + T(342, 392, '左の翼が下がる', { c: C.am, b: 1, fs: 12 });
+      return svg(400, 404, s, '図：左エンジンが止まると、右エンジンの推力と止まった側のプロペラの抗力で、機首が左へ回り（ヨー）、左の翼が下がります（ロール）。右ラダーで尾翼に左向きの力をつくって止めます（AFH 第 13 章。上から見た模式図）');
+    },
+    vmcRudder() {
+      // how much rudder the course's Seminole needs to hold the heading with the left engine failed (windmilling), the right engine at
+      // full power, 5° of bank toward it and the gear up, as the speed falls: computed with FL.physics (pa44) by holding each speed for
+      // 25 s with the method of flight.test.mjs ("the rudder needed grows … full rudder at the red line"). The stall warning (stallWarn)
+      // came on at about 62 kt in both runs. Values in % of full rudder
+      const D1 = [[90, 32], [85, 37], [80, 43], [75, 50], [70, 59], [66, 68], [64, 73], [62, 78], [60, 84], [58, 91], [56, 100]];
+      const D5 = [[90, 25], [85, 29], [80, 34], [75, 40], [70, 47], [66, 55], [64, 59], [62, 64], [60, 69], [58, 75], [56, 82]];
+      const v = ac('pa44').v, f = frame(400, 300, 50, 95, 0, 110, [50, 60, 70, 80, 90], [0, 25, 50, 75, 100], '指示対気速度（kt）', '必要なラダー（%）', { l: 52, r: 14, t: 34, b: 40 });
+      let s = `<rect x="${f.X(50)}" y="34" width="${(f.X(62) - f.X(50)).toFixed(1)}" height="${(f.Y(0) - 34).toFixed(1)}" fill="${C.am}" fill-opacity="0.12"/>` + f.s;
+      s += T(f.X(56), 28, '失速警報（約 62 kt 以下）', { c: C.am, fs: 12 });
+      s += L(f.X(50), f.Y(100), f.X(95), f.Y(100), C.rd, 1.5, '6 4') + T(f.X(94), f.Y(100) - 6, 'ラダーいっぱい', { c: C.rd, fs: 12, a: 'end' });
+      s += L(f.X(v.mc), f.Y(0), f.X(v.mc), f.Y(110), C.rd, 2.5) + T(f.X(v.mc) + 4, f.Y(10), `赤い線 Vmc ${v.mc}`, { c: C.rd, b: 1, fs: 12, a: 'start' });
+      s += P(D1.map(([x, y]) => [f.X(x), f.Y(y)]), C.cy, 3) + P(D5.map(([x, y]) => [f.X(x), f.Y(y)]), C.gr, 3, 'none', '7 4');
+      s += T(f.X(78), f.Y(52), '1,000 ft', { c: C.cy, b: 1, fs: 12 }) + T(f.X(84), f.Y(22), '5,000 ft', { c: C.gr, b: 1, fs: 12 });
+      s += A(f.X(92), f.Y(70), f.X(80), f.Y(70), C.mut, 2) + T(f.X(86), f.Y(70) - 8, '速度が下がる', { c: C.mut, fs: 12 });
+      return svg(400, 300, s, '図：速度が下がるほど、方向を保つのに必要なラダーが増え、いっぱいになる速度が Vmc です（教材のフライトモデルの Seminole：左エンジン停止・右は全開・バンク 5°）。どちらの高さでも、ラダーがいっぱいになる前に失速警報（約 62 kt）が鳴ります。高い所ほど出力が減り、必要なラダーは少なくなります');
     },
   };
 

@@ -101,7 +101,12 @@ code { font-family: var(--mono); font-size: .92em; }
 .tb-note { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 8px; }
 .tb-scroll { overflow-x: auto; max-width: 100%; }
 mark.tb-mark { background: var(--mark); color: var(--mark-ink); border-radius: 2px; padding: 0 1px; }
-.bk-lesson { display: inline-block; margin: 6px 6px 0 0; padding: 2px 9px; border: 1px solid var(--line); border-radius: 12px; font-size: .8rem; color: var(--muted); background: var(--soft); }
+.bk-lesson { display: inline-block; margin: 6px 6px 0 0; padding: 3px 11px; border: 1px solid var(--accent); border-radius: 14px; font-size: .8rem; color: var(--accent); background: var(--panel); cursor: pointer; text-align: left; }
+.bk-lesson::after { content: " ▾"; } .bk-lesson[aria-expanded="true"]::after { content: " ▴"; }
+.bk-lesson:hover { background: var(--hover); }
+.bk-lesson-info { margin: 6px 0 4px; padding: 6px 12px; border-left: 3px solid var(--accent); background: var(--soft); border-radius: 4px; font-size: .85rem; line-height: 1.7; }
+#tbView .bk-lesson-info p { margin: 3px 0; }
+.tb-lessons .bk-lesson-info { flex-basis: 100%; }
 
 /* ------------------------------------------------------------------ FLIGHT LAB's textbook (.bk-*) */
 #tbView { font-size: .94rem; line-height: 1.85; }
@@ -186,7 +191,8 @@ table.terms th { color: var(--muted); font-weight: 600; }
     --key-bg: rgba(29, 122, 62, .08); --warn-bg: rgba(168, 100, 0, .09); --soft: rgba(0, 40, 90, .035);
     --th-bg: rgba(11, 106, 166, .08); --en: #1f5f8b; --tag-fact: #2b7a4f; --tag-unk: #8a6a00;
   }
-  .tb-head, .tb-side, .tb-pager, .tb-skip, .tb-check, .tb-prev { display: none !important; }
+  .tb-head, .tb-side, .tb-pager, .tb-skip, .tb-check, .tb-prev, .bk-lesson-info { display: none !important; }
+  .bk-lesson { color: inherit; border-color: #999; } .bk-lesson::after { content: none; }
   .tb-wrap { display: block; }
   .tb-main { padding: 0; } .tb-main > * { max-width: none; }
   body { background: #fff; }
@@ -4888,13 +4894,34 @@ ${bk.t(['キー', '操作', '本物では'], [
   $('tbBigger').addEventListener('click', () => { S.prefs.size++; applyPrefs(); save(KEY.prefs, S.prefs); });
 
   // ------------------------------------------------------------ what only FLIGHT LAB (the app) has
-  // a lesson button (in the "try it in the simulator" boxes and the chapter's lessons) becomes a tag that cannot be pressed
+  // a lesson button (in the "try it in the simulator" boxes and the chapter's lessons) becomes this page's own button:
+  // it opens the lesson's goal, reason and standard (FL.school) and a link to FLIGHT LAB, where the lesson is flown
+  const APP_URL = '../../flight-lab/outputs/FLIGHT-LAB.html';      // from textbook/outputs/ in the repository
   function lessonTag(id) {
-    const t = document.createElement('span');
+    const t = document.createElement('button');
+    t.type = 'button';
     t.className = 'bk-lesson';
     t.dataset.lessonId = id;
+    t.setAttribute('aria-expanded', 'false');
     t.textContent = `FLIGHT LAB の課目『${R.lessonTitle(id) || id}』`;
     return t;
+  }
+  function lessonInfo(id) {
+    const l = FL.school && FL.school.lesson(id), box = document.createElement('div');
+    box.className = 'bk-lesson-info';
+    const row = (k, v) => { if (!v) return; const p = document.createElement('p'), b = document.createElement('b'); b.textContent = k + '：'; p.append(b, v); box.append(p); };
+    if (l) { row('目的', l.goal); row('なぜ', l.why); row('合格の目安', l.std); }
+    const p = document.createElement('p'), a = document.createElement('a');
+    p.className = 'small';
+    a.href = APP_URL; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = 'FLIGHT LAB（シミュレータ）を開く';
+    p.append(a, '　この課目は FLIGHT LAB のメニュー「課程表」から始めます（このページでは飛べません）。');
+    box.append(p);
+    return box;
+  }
+  function toggleLesson(t) {
+    const next = t.nextElementSibling;
+    if (next && next.classList.contains('bk-lesson-info')) { next.remove(); t.setAttribute('aria-expanded', 'false'); return; }
+    t.after(lessonInfo(t.dataset.lessonId)); t.setAttribute('aria-expanded', 'true');
   }
   function toTags(el) { for (const b of el.querySelectorAll('button[data-lesson]')) b.replaceWith(lessonTag(b.dataset.lesson)); }
   // wide tables scroll sideways (the weight-and-balance calculator scrolls as a whole: .bk-calc)
@@ -5004,7 +5031,8 @@ ${bk.t(['キー', '操作', '本物では'], [
 
   // ------------------------------------------------------------ the clicks (one listener: the views are redrawn)
   document.addEventListener('click', e => {
-    const t = e.target.closest('[data-go], button[data-sec], a[data-jump], .tb-check'); if (!t) return;
+    const t = e.target.closest('[data-go], button[data-sec], a[data-jump], .tb-check, button.bk-lesson'); if (!t) return;
+    if (t.matches('button.bk-lesson')) { toggleLesson(t); return; }
     if (t.matches('a[data-jump]')) { e.preventDefault(); go(t.dataset.jump); return; }
     if (t.matches('[data-go]')) { go(t.dataset.go, t.dataset.q || ''); return; }
     if (t.matches('button[data-sec]')) { go(t.dataset.sec); return; }

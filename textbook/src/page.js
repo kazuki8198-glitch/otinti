@@ -35,13 +35,34 @@
   $('tbBigger').addEventListener('click', () => { S.prefs.size++; applyPrefs(); save(KEY.prefs, S.prefs); });
 
   // ------------------------------------------------------------ what only FLIGHT LAB (the app) has
-  // a lesson button (in the "try it in the simulator" boxes and the chapter's lessons) becomes a tag that cannot be pressed
+  // a lesson button (in the "try it in the simulator" boxes and the chapter's lessons) becomes this page's own button:
+  // it opens the lesson's goal, reason and standard (FL.school) and a link to FLIGHT LAB, where the lesson is flown
+  const APP_URL = '../../flight-lab/outputs/FLIGHT-LAB.html';      // from textbook/outputs/ in the repository
   function lessonTag(id) {
-    const t = document.createElement('span');
+    const t = document.createElement('button');
+    t.type = 'button';
     t.className = 'bk-lesson';
     t.dataset.lessonId = id;
+    t.setAttribute('aria-expanded', 'false');
     t.textContent = `FLIGHT LAB の課目『${R.lessonTitle(id) || id}』`;
     return t;
+  }
+  function lessonInfo(id) {
+    const l = FL.school && FL.school.lesson(id), box = document.createElement('div');
+    box.className = 'bk-lesson-info';
+    const row = (k, v) => { if (!v) return; const p = document.createElement('p'), b = document.createElement('b'); b.textContent = k + '：'; p.append(b, v); box.append(p); };
+    if (l) { row('目的', l.goal); row('なぜ', l.why); row('合格の目安', l.std); }
+    const p = document.createElement('p'), a = document.createElement('a');
+    p.className = 'small';
+    a.href = APP_URL; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = 'FLIGHT LAB（シミュレータ）を開く';
+    p.append(a, '　この課目は FLIGHT LAB のメニュー「課程表」から始めます（このページでは飛べません）。');
+    box.append(p);
+    return box;
+  }
+  function toggleLesson(t) {
+    const next = t.nextElementSibling;
+    if (next && next.classList.contains('bk-lesson-info')) { next.remove(); t.setAttribute('aria-expanded', 'false'); return; }
+    t.after(lessonInfo(t.dataset.lessonId)); t.setAttribute('aria-expanded', 'true');
   }
   function toTags(el) { for (const b of el.querySelectorAll('button[data-lesson]')) b.replaceWith(lessonTag(b.dataset.lesson)); }
   // wide tables scroll sideways (the weight-and-balance calculator scrolls as a whole: .bk-calc)
@@ -151,7 +172,8 @@
 
   // ------------------------------------------------------------ the clicks (one listener: the views are redrawn)
   document.addEventListener('click', e => {
-    const t = e.target.closest('[data-go], button[data-sec], a[data-jump], .tb-check'); if (!t) return;
+    const t = e.target.closest('[data-go], button[data-sec], a[data-jump], .tb-check, button.bk-lesson'); if (!t) return;
+    if (t.matches('button.bk-lesson')) { toggleLesson(t); return; }
     if (t.matches('a[data-jump]')) { e.preventDefault(); go(t.dataset.jump); return; }
     if (t.matches('[data-go]')) { go(t.dataset.go, t.dataset.q || ''); return; }
     if (t.matches('button[data-sec]')) { go(t.dataset.sec); return; }

@@ -93,7 +93,12 @@ code { font-family: var(--mono); font-size: .92em; }
 .tb-note { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 8px; }
 .tb-scroll { overflow-x: auto; max-width: 100%; }
 mark.tb-mark { background: var(--mark); color: var(--mark-ink); border-radius: 2px; padding: 0 1px; }
-.bk-lesson { display: inline-block; margin: 6px 6px 0 0; padding: 2px 9px; border: 1px solid var(--line); border-radius: 12px; font-size: .8rem; color: var(--muted); background: var(--soft); }
+.bk-lesson { display: inline-block; margin: 6px 6px 0 0; padding: 3px 11px; border: 1px solid var(--accent); border-radius: 14px; font-size: .8rem; color: var(--accent); background: var(--panel); cursor: pointer; text-align: left; }
+.bk-lesson::after { content: " ▾"; } .bk-lesson[aria-expanded="true"]::after { content: " ▴"; }
+.bk-lesson:hover { background: var(--hover); }
+.bk-lesson-info { margin: 6px 0 4px; padding: 6px 12px; border-left: 3px solid var(--accent); background: var(--soft); border-radius: 4px; font-size: .85rem; line-height: 1.7; }
+#tbView .bk-lesson-info p { margin: 3px 0; }
+.tb-lessons .bk-lesson-info { flex-basis: 100%; }
 
 /* ------------------------------------------------------------------ FLIGHT LAB's textbook (.bk-*) */
 #tbView { font-size: .94rem; line-height: 1.85; }
@@ -178,7 +183,8 @@ table.terms th { color: var(--muted); font-weight: 600; }
     --key-bg: rgba(29, 122, 62, .08); --warn-bg: rgba(168, 100, 0, .09); --soft: rgba(0, 40, 90, .035);
     --th-bg: rgba(11, 106, 166, .08); --en: #1f5f8b; --tag-fact: #2b7a4f; --tag-unk: #8a6a00;
   }
-  .tb-head, .tb-side, .tb-pager, .tb-skip, .tb-check, .tb-prev { display: none !important; }
+  .tb-head, .tb-side, .tb-pager, .tb-skip, .tb-check, .tb-prev, .bk-lesson-info { display: none !important; }
+  .bk-lesson { color: inherit; border-color: #999; } .bk-lesson::after { content: none; }
   .tb-wrap { display: block; }
   .tb-main { padding: 0; } .tb-main > * { max-width: none; }
   body { background: #fff; }

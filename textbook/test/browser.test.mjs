@@ -105,6 +105,20 @@ test('the sections\' links, the calculators, the check questions, the lesson tag
   const want = await page.evaluate(() => FL.book.CHAPTERS[1].lessons.map(id => `FLIGHT LAB の課目『${FL.school.lesson(id).title}』`));
   assert.deepEqual(tags, want);
   assert.equal(await page.locator('#tbView button[data-lesson]').count(), 0);
+  // a tag opens the lesson's goal, reason and standard, and a link to FLIGHT LAB (in this repository); again closes it
+  const tag = page.locator('#tbView .tb-lessons .bk-lesson').first();
+  await tag.click();
+  const info = page.locator('#tbView .tb-lessons .bk-lesson-info');
+  await info.waitFor();
+  const l = await page.evaluate(() => FL.school.lesson(FL.book.CHAPTERS[1].lessons[0]));
+  const infoText = await info.innerText();
+  for (const t of [l.goal, l.why, l.std]) assert.ok(infoText.includes(t), t);
+  assert.equal(await tag.getAttribute('aria-expanded'), 'true');
+  const href = await info.locator('a').evaluate(a => a.href);
+  assert.ok(href.startsWith('file://') && fs.existsSync(decodeURIComponent(new URL(href).pathname)), href);
+  assert.equal(await info.locator('a').getAttribute('target'), '_blank');
+  await tag.click();
+  assert.equal(await page.locator('#tbView .tb-lessons .bk-lesson-info').count(), 0);
   // a "try it in the simulator" box keeps its words, its buttons become tags
   await page.evaluate(() => { location.hash = FL.book.CHAPTERS.flatMap(c => c.secs).find(s => /data-lesson="t4"/.test(FL.book.html(s))).id; });
   await page.waitForSelector('#tbView .bk-sim .bk-lesson');

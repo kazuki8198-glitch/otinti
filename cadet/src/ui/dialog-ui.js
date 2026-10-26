@@ -112,6 +112,18 @@ const CSS = `
 #dlg .bk-fig svg { display: block; width: 100%; height: auto; margin: 0 auto; font-family: var(--font, system-ui, sans-serif); }
 #dlg .bk-fig figcaption { margin-top: 6px; font-size: 12px; line-height: 1.6; color: #a9b7c6; }
 #dlg .bk-src { font-size: 12.5px; color: #5f6b77; } #dlg .bk-src li { margin: 2px 0; }
+/* (the class) the lecturer's notes on a section, under it in the textbook (content/school.js lecturerNotesHtml); and a
+   line's kind (view.tag): ここが大切, her own note, a question to think about — an edge and a word on the subtitle */
+#dlg .bk-lecturer { margin: 18px 0 6px; padding: 10px 14px; border-left: 4px solid #5a7fb5; border-radius: 4px; background: #edf2f9; }
+#dlg .bk-lecturer b { color: #2b5590; } #dlg .bk-lecturer p { margin: 6px 0 0; }
+#dlg .dlg-box.t-key { box-shadow: inset 4px 0 0 #5fd46a, 0 16px 50px rgba(0, 0, 0, .42); }
+#dlg .dlg-box.t-note { box-shadow: inset 4px 0 0 #9be08a, 0 16px 50px rgba(0, 0, 0, .42); }
+#dlg .dlg-box.t-think { box-shadow: inset 4px 0 0 #c58cff, 0 16px 50px rgba(0, 0, 0, .42); }
+#dlg .dlg-box.t-key::after, #dlg .dlg-box.t-note::after, #dlg .dlg-box.t-think::after { position: absolute; top: 12px; right: 18px;
+  font-size: calc(12px * var(--sub-k, 1)); font-weight: 800; letter-spacing: .05em; }
+#dlg .dlg-box.t-key::after { content: 'ここが大切'; color: #5fd46a; }
+#dlg .dlg-box.t-note::after { content: '講師の補足'; color: #9be08a; }
+#dlg .dlg-box.t-think::after { content: '考えてみよう'; color: #c58cff; }
 
 @media (max-width: 700px) {
   #dlg .dlg-wrap { bottom: 54px; width: calc(100vw - 16px); max-height: calc(100% - 62px); }
@@ -384,6 +396,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     gen++; cur = v;
     const narr = v.speaker === 'narrator' || !v.name;
     box.classList.toggle('narr', narr);
+    for (const t of ['key', 'note', 'think']) box.classList.toggle(`t-${t}`, view.tag === t);   // (the class: the line's kind)
     chip.hidden = narr; chip.textContent = v.name;
     const ink = v.color ? inkOn(v.color) : null;
     if (v.color) chip.style.setProperty('--sp', v.color); else chip.style.removeProperty('--sp');

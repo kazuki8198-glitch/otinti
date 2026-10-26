@@ -33,11 +33,13 @@ test('career run: from the first day to the first solo — every gate in order, 
   const career = createCareer({ store: memStore(), seed: 11 });
   const talk = createDialogState(), prog = SC.sanitizeProgress({});
   const log = [], flown = [];
-  // a talk run to its end: the right answers where there is a question, else the choice matching one of `pick`
+  // a talk run to its end: the right answers where there is a question, else the choice matching one of `pick` (at most
+  // two steps a node: a class read in full goes through each of its nodes once)
   function run(data, id, { pick = [], ctx = {}, state = talk, hooks = () => {} } = {}) {
     const r = createRunner({ data, state, ctx, hooks: { onHook: hooks } });
     r.start(id);
-    for (let k = 0; k < 600 && r.running; k++) {
+    const max = Math.max(600, 2 * Object.values(data.dialogs).reduce((n, d) => n + Object.keys(d.nodes).length, 0));
+    for (let k = 0; k < max && r.running; k++) {
       const v = r.view();
       if (v.choices.length) {
         const m = /^q(\d+)$/.exec(v.node), qs = data.questions || [];

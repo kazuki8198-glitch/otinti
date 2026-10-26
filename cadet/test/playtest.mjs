@@ -73,7 +73,7 @@ async function waitCards() { for (let i = 0; i < 60; i++) { if (!(await ev(() =>
 // a talk, read and answered with the keys: Space for the next line, the number of a choice (the right answer where a
 // lesson asks, else one that goes on with the day)
 const AVOID = /また後で|あとで|やめ|戻る|今はいい/;
-async function talk(maxLines = 400) {
+async function talk(maxLines = 3000) {
   let n = 0, last = ''; const chosen = new Set();
   for (; n < maxLines; n++) {
     const v = await ev(() => { const C = window.__cadet, v = C.dialog(); if (!v) return null; const act = C.career.activity(); return { ...v, act }; });

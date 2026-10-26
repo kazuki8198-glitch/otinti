@@ -48,7 +48,7 @@ const talkTo = async (who, re, pick) => ev(({ who, re, pick }) => {
   }
   return null;
 }, { who, re, pick });
-const closeTalk = () => ev(() => { const C = window.__cadet; for (let k = 0; k < 300 && C.dialog(); k++) { const v = C.dialog(); if (v.choices.length) C.dialogChoose(0); else C.dialogNext(); } });
+const closeTalk = () => ev(() => { const C = window.__cadet; for (let k = 0; k < 3000 && C.dialog(); k++) { const v = C.dialog(); if (v.choices.length) C.dialogChoose(0); else C.dialogNext(); } });
 const ground = Object.fromEntries(['k1', 'k2', 'k3', 'k4', 'k5', 'k6'].map(k => [k, { tries: 1, best: 'S', pass: true, levels: [] }]));
 
 // 01 the welcome: the lobby on the first morning

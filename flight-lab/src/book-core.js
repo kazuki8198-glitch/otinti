@@ -55,6 +55,8 @@
     acsP: { label: 'FAA Private Pilot — Airplane ACS（FAA-S-ACS-6C）', url: 'https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf' },
     acsC: { label: 'FAA Commercial Pilot — Airplane ACS（FAA-S-ACS-7B）', url: 'https://www.faa.gov/training_testing/testing/acs/commercial_airplane_acs_7.pdf' },
     acsI: { label: 'FAA Instrument Rating — Airplane ACS（FAA-S-ACS-8C）', url: 'https://www.faa.gov/training_testing/testing/acs/instrument_rating_airplane_acs_8.pdf' },
+    cfr141: { label: '14 CFR Part 141（訓練校・141.85 主任教官の責任と段階審査）', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-H/part-141' },
+    ac6165: { label: 'FAA AC 61-65K Certification: Pilots and Flight and Ground Instructors（承認の文例・2025-11-14）', url: 'https://www.faa.gov/documentlibrary/media/advisory_circular/AC_61-65K.pdf' },
     cfr61: { label: '14 CFR Part 61（操縦士の資格）', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-D/part-61' },
     cfr91: { label: '14 CFR Part 91（一般運航・飛行規則）', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-91' },
     cfr67: { label: '14 CFR Part 67（航空身体検査の基準）', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-D/part-67' },

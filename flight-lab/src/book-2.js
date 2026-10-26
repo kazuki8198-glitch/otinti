@@ -253,7 +253,7 @@ ${bk.q('同じ高さで、自分の右前から別の単発機が近づいてき
 
   // ======================================================================= 8
   B.add({ id: 'hf', part: 'p1', t: '人間の能力と判断（ADM）', en: 'Human factors and aeronautical decision-making',
-    summary: '自分の点検（IMSAFE と飲酒・薬の規則）、空間識失調と錯覚、高度と体（低酸素・一酸化炭素・耳・ダイビングのあと）、見張りと夜の目、危険の評価と判断（3P・PAVE・CARE・TEAM・DECIDE）、危険な態度、単独飛行の資源管理（SRM）。',
+    summary: '自分の点検（IMSAFE と飲酒・薬の規則）、空間識失調と錯覚、高度と体（低酸素・一酸化炭素・耳・ダイビングのあと）、見張りと夜の目、危険の評価と判断（3P・PAVE・CARE・TEAM・DECIDE）、危険な態度、1 人で操縦するときの資源管理（SRM）。',
     secs: [
       { id: 'hf.self', t: '自分の体調：IMSAFE', h: () => `
 ${bk.aim('飛ぶ前に、機体だけでなく自分も点検します。FAA の航空情報マニュアル（AIM）は、操縦士の不調による事故は、機体の故障による事故よりずっと多いとしています（AIM 8-1-1）。')}
@@ -337,9 +337,9 @@ ${bk.t(['危険な態度', '心の声', '解毒剤（antidote）'], [
   ['あきらめ（Resignation）', '“What\'s the use?”（何をしても無駄）', '“I\'m not helpless. I can make a difference.”（自分は無力ではない。変えられる）']])}
 <p>英語は PHAK 第 2 章の言葉です。危険な態度は、誰にでもあります。規則が本当にまちがっていると思うときに質問するのは、反権威ではありません（PHAK 第 2 章）。</p>
 ${bk.key('危険な態度は誰にでもある。気づいたら、解毒剤を口に出す', '反権威 → 規則に従う。衝動 → まず考える。不死身 → 自分にも起きる', 'マッチョ → 危険を冒すのは愚か。あきらめ → 自分は無力ではない')}` },
-      { id: 'hf.srm', t: '単独飛行の資源管理（SRM）とチェックリスト', h: () => `
+      { id: 'hf.srm', t: '1 人で操縦するときの資源管理（SRM）とチェックリスト', h: () => `
 ${bk.aim('ひとりで飛ぶときも、使える助けを全部使って判断します。その考え方と、作業の優先順位を覚えます。')}
-<p><b>単独飛行の資源管理</b>（SRM：Single-Pilot Resource Management）は、ひとりの操縦士が、使える資源を全部使って安全に飛ぶ考え方です（PHAK 第 2 章）。資源には、管制官・フライトサービス・チェックリスト・POH・自動化された装置（G1000 型の表示や自動操縦）・自分の知識・同乗者があります。</p>
+<p><b>1 人で操縦するときの資源管理</b>（SRM：Single-Pilot Resource Management）は、ひとりの操縦士が、使える資源を全部使って安全に飛ぶ考え方です（PHAK 第 2 章）。資源には、管制官・フライトサービス・チェックリスト・POH・自動化された装置（G1000 型の表示や自動操縦）・自分の知識・同乗者があります。</p>
 <ul><li><b>チェックリスト</b>：記憶に頼らず、決まった場面で必ず読みます（声に出す）。</li>
 <li><b>作業の優先順位</b>：Aviate（飛ぶ）→ Navigate（どこへ行くか）→ Communicate（伝える）。緊急のときも同じです（{ch:emg}）。</li>
 <li><b>自動化</b>：使いこなせば負担が減りますが、いま何をしているか（モード）をいつも確かめます（{ch:jet}）。</li>
@@ -347,7 +347,7 @@ ${bk.aim('ひとりで飛ぶときも、使える助けを全部使って判断�
 <li><b>忙しい場面では話さない</b>：エアラインには、離着陸などの場面で必要なこと以外を話さない決まり（sterile cockpit）があります。ひとりのときも、同乗者に先に頼んでおくと役に立ちます。</li></ul>
 ${bk.key('使える資源は全部使う：管制・チェックリスト・POH・自動化・同乗者', '迷ったら Aviate → Navigate → Communicate', '自動化を使うときは、いまのモードを確かめる')}` },
     ],
-    terms: [['IMSAFE', '自分の点検（病気・薬・ストレス・飲酒・疲労・感情）', 'AIM 8-1-1'], ['ADM (Aeronautical Decision-Making)', '航空の意思決定', 'PHAK 第 2 章'], ['3P (Perceive, Process, Perform)', '気づく・評価する・実行する', 'PHAK 第 2 章'], ['PAVE / CARE / TEAM', '危険に気づく・評価する・対策を選ぶための道具', 'PHAK 第 2 章'], ['DECIDE', '変化に対応する判断の 6 段階', 'PHAK 第 2 章'], ['Hazardous attitudes', '危険な態度', 'PHAK 第 2 章'], ['Spatial disorientation', '空間識失調', 'AIM 8-1-5'], ['Semicircular canals', '三半規管', 'PHAK 第 17 章'], ['The leans / Graveyard spiral', 'リーンズ / 墓場のスパイラル', 'AIM 8-1-5'], ['Coriolis / Somatogravic illusion', 'コリオリ錯覚 / 体性重力錯覚', 'AIM 8-1-5'], ['Hypoxia', '低酸素症（4 種類）', 'AIM 8-1-2・PHAK 第 17 章'], ['Hyperventilation', '過呼吸', 'AIM 8-1-3'], ['Carbon monoxide', '一酸化炭素', 'AIM 8-1-4'], ['Dark adaptation', '暗順応（暗さに目が慣れること）', 'AIM 8-1-6'], ['Empty-field myopia', '見る物がないときの焦点の近づき', 'AIM 8-1-6'], ['Get-there-itis', '予定どおり行きたい気持ち', 'PHAK 第 2 章'], ['SRM', '単独飛行の資源管理', 'PHAK 第 2 章']],
+    terms: [['IMSAFE', '自分の点検（病気・薬・ストレス・飲酒・疲労・感情）', 'AIM 8-1-1'], ['ADM (Aeronautical Decision-Making)', '航空の意思決定', 'PHAK 第 2 章'], ['3P (Perceive, Process, Perform)', '気づく・評価する・実行する', 'PHAK 第 2 章'], ['PAVE / CARE / TEAM', '危険に気づく・評価する・対策を選ぶための道具', 'PHAK 第 2 章'], ['DECIDE', '変化に対応する判断の 6 段階', 'PHAK 第 2 章'], ['Hazardous attitudes', '危険な態度', 'PHAK 第 2 章'], ['Spatial disorientation', '空間識失調', 'AIM 8-1-5'], ['Semicircular canals', '三半規管', 'PHAK 第 17 章'], ['The leans / Graveyard spiral', 'リーンズ / 墓場のスパイラル', 'AIM 8-1-5'], ['Coriolis / Somatogravic illusion', 'コリオリ錯覚 / 体性重力錯覚', 'AIM 8-1-5'], ['Hypoxia', '低酸素症（4 種類）', 'AIM 8-1-2・PHAK 第 17 章'], ['Hyperventilation', '過呼吸', 'AIM 8-1-3'], ['Carbon monoxide', '一酸化炭素', 'AIM 8-1-4'], ['Dark adaptation', '暗順応（暗さに目が慣れること）', 'AIM 8-1-6'], ['Empty-field myopia', '見る物がないときの焦点の近づき', 'AIM 8-1-6'], ['Get-there-itis', '予定どおり行きたい気持ち', 'PHAK 第 2 章'], ['SRM (Single-Pilot Resource Management)', '1 人で操縦するときの資源管理', 'PHAK 第 2 章']],
     examples: ['友だちを待たせているので急いで出発したい（外からの圧力・衝動）→ 「あわてるな。まず考える」。天気と燃料を確かめ直す。', '夜、暗い地域の空港へ進入：低く感じにくいので、PAPI と高度計を必ず確かめる。'],
     cautions: ['薬・飲酒・体調の判断は、航空身体検査医（AME）と規則が優先です。', 'この章は要約です。AIM 第 8 章・PHAK 第 2 章と第 17 章・Risk Management Handbook で詳しく学んでください。'],
     quiz: [

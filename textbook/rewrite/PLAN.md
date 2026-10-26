@@ -1359,6 +1359,7 @@ Keep the order trim → sl → climb → turns → slow → ground and add one n
 - `ops.xwind`：クラブで進入中の飛行機（機首が滑走路からずれている）
 - `ops.takeoff`：離陸中の Piper PA-28（できれば Archer）
 - `ops.short`：芝の滑走路・山あいの短い滑走路（不整地・短距離の例）
+- **入手**（2026-10-26）：吹き流し（`windsock`、`ops.xwind`）・芝の滑走路（`grassStrip`、`ops.soft`）。**未入手**：PAPI の灯（見つかった写真は進入灯で、PAPI ではなかった）・離陸中の PA-28・ファイナルから見た滑走路・クラブで進入中の飛行機・上空から見た小さな空港。PAPI は図 `approachProfile` の右上で代えた。
 
 ### 章末
 
@@ -1443,6 +1444,7 @@ Keep the order trim → sl → climb → turns → slow → ground and add one n
 - `emg.fire`：小型機の客室に取り付けた携帯用消火器
 - `emg.elec`：Lycoming O-360 系エンジンのオルタネーター（カウルを開けた状態）
 - `emg.glide`：滑空中・アイドルで降下中の PA-28（側面）
+- **入手**（2026-10-26）：ELT の本体とスイッチ（`elt`、`emg.forced`）。**未入手**：上空から見た畑・携帯用消火器・オルタネーター・滑空中の PA-28（使える写真が見つからなかった）。
 
 ### 章末
 
@@ -1515,6 +1517,7 @@ solo.req は最初に『初ソロまでの道のり』の図を置き、前提�
 - `solo.req`：パイロットのログブック（白紙のページや表紙。実在の人名・署名が読めないもの）
 - `solo.first`：場周経路を飛ぶ／タッチアンドゴーをする PA-28（側面・遠景）
 - `solo.check`：管制塔のある小さな空港の滑走路と誘導路（上空から）
+- **未入手**（2026-10-26）：ログブック・場周を飛ぶ PA-28・上空から見た小さな空港。図 `soloRoadmap` だけにした。
 
 ### 章末
 
@@ -1591,6 +1594,7 @@ navp は「地図を読む → 用語をそろえる → 針路を計算する �
 - `nav.chart`：紙のセクショナルチャートとプロッター・E6B 計算尺（人の顔なし、机の上）
 - `nav.plan`：小型機の磁気コンパスと、その下に貼られた自差カード（deviation card）
 - `nav.dr`：上空から見たフロリダの目印（湖・大きな高速道路の交差・川）
+- **未入手**（2026-10-26）：紙のチャートとプロッター・自差カード・上空から見たフロリダの目印（使える写真を探す時間を図に回した）。チャートの記号は図 `sectionalSymbols` で代えた。
 
 ### 章末
 
@@ -1668,6 +1672,7 @@ navr は「VOR → DME → GPS → GPS の飛行計画（新）→ flight follow
 - `nav.vor`：VOR / VORTAC の地上局（白い円盤状のアンテナ群、人の顔なし）
 - `nav.gps`：GPS 衛星（GPS III など）の想像図または写真
 - `nav.ff`：空港監視レーダー（ASR-9 / ASR-11）のアンテナ
+- **入手**（2026-10-26）：VOR/DME の地上局（`vorStation`、`nav.vor`）。**未入手**：GPS 衛星（米国政府の画像が検索で見つからず、メーカーの想像図は使わない）。レーダーのアンテナの写真は第 10 章 `asrRadar` にある。
 
 ### 章末
 
@@ -1736,6 +1741,7 @@ navd は「準備（nav.xc）→ 飛行中の目的地変更（nav.divert）→ 
 - `nav.divert`：前方に発達した積乱雲（雷雨）— 迂回・目的地変更の理由
 - `nav.lost`：町の名前が書かれた給水塔（water tower）
 - `nav.lost`：宇宙から見たフロリダ半島（海岸線・大きな湖が目印になる）
+- **未入手**（2026-10-26）：雷雨の写真は第 5 章 `cbFlorida` と重なるので使わない。町の名前が見える給水塔・宇宙から見たフロリダ半島は、使える写真が見つからなかった。図 `diversionGeometry` だけにした。
 
 ### 章末
 
@@ -1817,6 +1823,7 @@ navd は「準備（nav.xc）→ 飛行中の目的地変更（nav.divert）→ 
 - `ifr.instr`：胴体側面の静圧孔（static port）
 - `ifr.scan`：雲の中を飛ぶ小型機（または操縦席から見た雲の中・水平線なし）。顔が写らないもの
 - `ifr.partial`：小型機の磁気コンパス（whiskey compass）と自差カード
+- **未入手**（2026-10-26）：雲の中を飛ぶ小型機（使える写真が見つからなかった）。ピトー管・静圧孔・磁気コンパスは第 2・3 章の写真（`pitot`・`staticPort`・`compass`）と重なるので使わない。図 `scan` だけにした。
 
 ### 章末
 
@@ -1902,6 +1909,7 @@ navd は「準備（nav.xc）→ 飛行中の目的地変更（nav.divert）→ 
 - `ifr.np`：VOR 局（VORTAC）の地上局
 - `ifr.np`：GPS 衛星（GPS III など）の画像
 - `ifr.rules`：低い雲・霧に覆われた空港（IFR の天気）
+- **入手**（2026-10-26）：ローカライザーのアンテナ（`locAntenna`、`ifr.ils`）・グライドスロープのアンテナ（`gsAntenna`、`ifr.ils`）。**未入手**：進入灯（ダウンロードがサーバーの制限で失敗）・GPS 衛星（米国政府の画像が見つからず）・低い雲の空港（第 5 章 `groundFog` と重なる）。VOR 局の写真は第 19 章 `vorStation` にある。
 
 ### 章末
 
@@ -1982,6 +1990,7 @@ navd は「準備（nav.xc）→ 飛行中の目的地変更（nav.divert）→ 
 - `me.basics`：地上の Seminole（2 基のエンジン・T 字尾翼・引き込み脚）
 - `me.basics`：フェザーしたプロペラ（羽根が風に平行で止まっている）
 - `me.perf`：双発の軽飛行機の離陸（滑走路と機体）
+- **入手**（2026-10-26）：飛んでいる Seminole（`seminole`、`me.basics`。学校の塗装のないもの）。**未入手**：地上の Seminole・離陸（見つかった写真は訓練校の塗装やロゴがあった）・フェザーしたプロペラ（ダウンロードがサーバーの制限で失敗）。NASA の PA-30 は確かめる時間がなかった。
 
 ### 章末
 
@@ -2065,6 +2074,7 @@ navd は「準備（nav.xc）→ 飛行中の目的地変更（nav.divert）→ 
 - `me.drag`：風防（キャノピー）に付けた毛糸のヨーストリング（yaw string）
 - `me.oei`：片方のプロペラをフェザーして飛んでいる双発機
 - `oei.what`：双発機の上面か正面（エンジンが胴体から離れて付いていることが分かるもの）（候補：https://images.nasa.gov/details/ECN-2845 Public domain（NASA））
+- **入手**（2026-10-26）：NASA の PA-30 Twin Comanche（`twinPa30`、`oei.what`。候補の ECN-2845）。**未入手**：ヨーストリング・片方をフェザーして飛ぶ双発機（パブリックドメインか CC で、訓練校の塗装のないものが見つからなかった）。`me.drag` と `me.oei` は図と表で説明した。
 
 ### 章末
 
@@ -2140,6 +2150,7 @@ navd は「準備（nav.xc）→ 飛行中の目的地変更（nav.divert）→ 
 - `crm.crm`：NASA Ames の乗員研究用シミュレータ（Crew-Vehicle Systems Research Facility）。CRM・LOFT の研究が行われた場所。人の顔が写っていない外観か、計器画面が主役でないカット。（候補：https://images.nasa.gov/details/ARC-2009-ACD09-0031-003 NASA（米国政府の著作物・パブリックドメイン。NASA のロゴ等の使用規定に注意）— 要確認：コクピット内なら計器が主役になり規則に触れる可能性）
 - `crm.pm`：2 人乗りの研究機・官用機のコクピットを後ろから（顔が見えない）。PF と PM が並んで座る位置関係がわかるもの。
 - `crm.tem`：脅威の例としての積乱雲・雷雨（空港の近くの遠景）
+- **入手**（2026-10-26）：NASA Ames の研究用シミュレータ ACFS の 2 席の操縦席（`crewCab`、`crm.pm`。航空会社の名前がなく、計器は小さく写るだけのもの）。**未入手**：CVSRF の 747 の操縦席（計器が主役で、航空会社の表示もあるので使わない）、`crm.tem` の雷雨（第 7 章の `cbFlorida` があるので、図で説明した）。
 
 ### 章末
 
@@ -2220,6 +2231,7 @@ navd は「準備（nav.xc）→ 飛行中の目的地変更（nav.divert）→ 
 - `crm.jet`：地上試験中のターボファンエンジン（前から見たファン）（候補：https://images.nasa.gov/details/GRC-1974-C-03151 NASA（パブリックドメイン）— 要確認：人の顔が大きく写っていないか）
 - `crm.upset`：NASA Langley の操縦不能（LOC-I）研究用の小型無人模型機（AirSTAR / Generic Transport Model）
 - `crm.auto`：NASA Langley の自動化・飛行甲板研究機 Boeing 737（NASA 515、TSRV）の外観
+- **入手**（2026-10-26）：NASA の DC-8（`dc8`、`crm.jet`）、地上試験中のターボファンエンジン（`turbofan`、`crm.jet`）。**未入手**：AirSTAR の模型機と NASA 515 の 737（時間の都合で確かめられなかった。`crm.upset` と `crm.auto` は表で説明した）。
 
 ### 章末
 
@@ -2292,6 +2304,8 @@ navd は「準備（nav.xc）→ 飛行中の目的地変更（nav.divert）→ 
 
 - `sim.can`：動く台に載った研究用フライトシミュレータの外観（NASA Ames Vertical Motion Simulator の T-cab）（候補：https://images.nasa.gov/details/ARC-1997-AC97-0311 NASA（米国政府の著作物・PD。NASA のメディア利用ガイドラインに従い、ロゴの使い方と人物の写り込みを確認））
 - `sim.keys`：小型機の操縦輪（ヨーク）・スロットル・フラップレバーの近接写真（画面の計器が写っていないもの）
+- **入手**（2026-10-26）：NASA Ames の Vertical Motion Simulator（`motionSim`、`sim.can`）、初期の飛行シミュレータ Link Trainer（`linkTrainer`、`sim.can`。NASA の写真。人の写っていないもの）。**未入手**：操縦輪・スロットルの近接写真（Wikimedia Commons が回数の制限を返したため、確かめられなかった）。
+- **図**：`deviceLadder`・`practicePlan`・`flightScreenMap`・`keyMap`・`controlsToKeys`・`padMap` は描きませんでした。図の数が目標（70〜90）を超えていた（第 21〜24 章で増えた）ので、この章は表で説明しました。画面とキーの絵は、アプリの操作ガイドとキーの一覧（H）にあります。
 
 ### 章末
 

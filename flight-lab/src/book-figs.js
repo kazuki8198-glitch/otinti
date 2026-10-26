@@ -101,7 +101,7 @@
     certLadder() {
       // 14 CFR Part 61 (eCFR, checked 2026-10): the minimum ages, hours, tests and medical classes
       const steps = [['学生操縦士（Student Pilot）', '16 歳から・試験なし（申請）・第 3 種', '61.83'], ['自家用操縦士（Private Pilot）', '17 歳・40 時間以上・学科＋実地・第 3 種', '61.103'],
-        ['計器飛行証明（Instrument Rating）', '機長の野外飛行 50 時間・計器飛行 40 時間など', '61.65'], ['事業用操縦士（Commercial Pilot）', '18 歳・250 時間以上・学科＋実地・第 2 種', '61.123'],
+        ['計器飛行証明（Instrument Rating）', '機長のクロスカントリー 50 時間・計器飛行 40 時間など', '61.65'], ['事業用操縦士（Commercial Pilot）', '18 歳・250 時間以上・学科＋実地・第 2 種', '61.123'],
         ['多発の等級（Multiengine）', '資格に加える限定。実地試験だけ', '61.63'], ['定期運送用操縦士（ATP）', '23 歳・1,500 時間（R-ATP は短縮）・機長は第 1 種', '61.153']];
       let s = T(12, 18, '↑ 下から順に積み上げる', { c: C.gr, b: 1, a: 'start', fs: 13 }) + T(392, 18, '数字は規則の最低限', { c: C.mut, a: 'end', fs: 12 });
       steps.forEach(([t, sub, rule], i) => {
@@ -306,8 +306,8 @@
       return svg(400, 260, s, `図：速度計の色の帯（この教材の Archer の値）。白はフラップを使える範囲、緑は通常の範囲、黄色は穏やかな空気のときだけ使う範囲、赤い線は超えてはいけない速度です。針は進入速度 ${v.appr} kt`);
     },
     vn() {
-      // a normal-category V-n diagram (+3.8 G / −1.52 G), the speeds from the course's Archer (FL.physics)
-      const v = ac('pa28').v, W = 400, H = 280, nP = 3.8, nN = -1.52;
+      // a normal-category V-n diagram (+3.8 G / −1.5 G, the Archer III POH), the speeds from the course's Archer (FL.physics)
+      const v = ac('pa28').v, W = 400, H = 280, nP = 3.8, nN = -1.5;
       const f = frame(W, H, 0, 170, -2, 4.6, [0, 40, 80, 120, 160], [-2, -1, 0, 1, 2, 3, 4], '指示対気速度（kt）', '荷重倍数 n（G）', { l: 44, r: 12, t: 30, b: 38 });
       const va = v.va, vs = va / Math.sqrt(nP), vsN = vs * 1.07;            // the stall line through Va (the maximum weight's), a schematic
       const up = []; for (let x = 0; x <= va; x += 1) up.push([f.X(x), f.Y(Math.min((x / vs) ** 2, nP))]);
@@ -316,8 +316,8 @@
       s += `<path d="M${f.X(0)} ${f.Y(0)} ${up.map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} L${f.X(v.ne)} ${f.Y(nP)} L${f.X(v.ne)} ${f.Y(nN)} L${f.X(xn)} ${f.Y(nN)} ${dn.reverse().map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} Z" fill="rgba(95,212,255,.1)" stroke="${C.cy}" stroke-width="2"/>`;
       s += L(f.X(v.no), f.Y(nP), f.X(v.no), f.Y(nN), C.am, 1.4, '4 3') + T(f.X(v.no) - 4, 20, `Vno ${v.no}`, { c: C.am, fs: 12, b: 1, a: 'end' }) + T(f.X(v.ne) + 6, 20, `Vne ${v.ne}`, { c: C.rd, fs: 12, b: 1, a: 'end' });
       s += L(f.X(va), f.Y(nP), f.X(va), f.Y(0), C.gr, 1.4, '4 3') + T(f.X(va) - 4, f.Y(3.2), `Va ${va}`, { c: C.gr, fs: 12, b: 1, a: 'end', halo: 1 });
-      s += T(f.X(22), f.Y(2.4), '失速', { c: C.ink, fs: 12, b: 1, halo: 1 }) + T(f.X(102), f.Y(1.6), '飛べる範囲', { c: C.cy, b: 1, fs: 13, halo: 1 }) + T(f.X(104), f.Y(nP) - 6, `+${nP} G（構造の限界）`, { c: C.rd, fs: 12, b: 1, halo: 1 }) + T(f.X(112), f.Y(nN) + 18, `${nN} G`, { c: C.rd, fs: 12, b: 1, halo: 1 });
-      return svg(W, H, s, `図：V-n 線図（普通類の制限荷重倍数 +${nP} G／${nN} G。速度は Archer の POH の値）。曲線の左は失速、上と下の線を超えると機体が壊れるおそれがあります。失速の線は最大重量の Va ${v.va} kt から描いた模式図で、Va は軽いほど小さくなります`);
+      s += T(f.X(22), f.Y(2.4), '失速', { c: C.ink, fs: 12, b: 1, halo: 1 }) + T(f.X(102), f.Y(1.6), '飛べる範囲', { c: C.cy, b: 1, fs: 13, halo: 1 }) + T(f.X(104), f.Y(nP) - 6, `+${nP} G（構造の限界）`, { c: C.rd, fs: 12, b: 1, halo: 1 }) + T(f.X(112), f.Y(nN) + 18, `−${-nN} G`, { c: C.rd, fs: 12, b: 1, halo: 1 });
+      return svg(W, H, s, `図：V-n 線図（Archer III の POH の普通類の制限荷重倍数 +${nP} G／−${-nN} G。速度も Archer の値）。曲線の左は失速、上と下の線を超えると機体が壊れるおそれがあります。失速の線は最大重量の Va ${v.va} kt から描いた模式図で、Va は軽いほど小さくなります`);
     },
     turnForces() {
       // seen from behind, banked 30° to the right: the lift tilts with the wings; its upward part holds the weight up,
@@ -1145,7 +1145,7 @@
       const L5 = ['10 マイル手前：位置・高度', 'ダウンウインドに入る', 'ベースに入る', 'ファイナルに入る', '滑走路を出た'];
       L5.forEach((t, i) => { const x = i < 3 ? 8 : 204, y = 344 + (i % 3) * 24; s += pin(x + 10, y - 4, String(i + 1)) + T(x + 26, y, t, { c: C.ink, a: 'start', fs: 12 }); });
       s += T(8, 422, 'どの通報も：“Lakeside traffic, …, Lakeside.”', { c: C.ink, b: 1, a: 'start', fs: 12 }) + NFN(392, 446);
-      return svg(400, 456, s, '図：管制塔のない架空の空港 Lakeside の滑走路 18 の左場周（模式図）と、CTAF で自己通報する所（AIM 4-1-9）。場周の高さはプロペラ機で地上 1,000 ft（AIM 4-3-3）。出発のときは、タキシーの前と滑走路に入る前にも言います');
+      return svg(400, 456, s, '図：管制塔のない架空の空港 Lakeside の滑走路 18 の左場周（模式図）と、CTAF で自己通報する所（AIM 4-1-9）。場周高度はプロペラ機で地上 1,000 ft（AIM 4-3-3）。出発のときは、タキシーの前と滑走路に入る前にも言います');
     },
     lightGunSignals() {
       // the tower's light gun signals and what they mean (14 CFR 91.125, AIM 4-3-13 TBL 4-3-13); how to answer (AIM 4-2-13, 4-3-13)
@@ -1411,7 +1411,7 @@
       s += T(118, 88, '判断！', { c: C.am, b: 1, a: 'start', fs: 13 }) + T(172, 152, '沈みを小さく', { c: C.mut, fs: 12 });
       const [x2, y2] = cub(0.3), [x3, y3] = cub(0.62), y4 = 104 - (290 - 240) * 66 / 152;
       s += tag(110, 100, '①', C.am) + tag(x2, y2, '②', C.cy) + tag(x3, y3, '③', C.vi) + tag(290, y4, '④', C.gr);
-      const key = [['①', C.am, ['Power：決めたらすぐ、なめらかに全開', 'キャブレターヒーターは OFF']], ['②', C.cy, ['Attitude：機首が上がり左へ向くので、', '押さえて上昇の姿勢に。右ラダー']],
+      const key = [['①', C.am, ['Power：決めたらすぐ、なめらかに全開', 'キャブレターヒートは OFF']], ['②', C.cy, ['Attitude：機首が上がり左へ向くので、', '押さえて上昇の姿勢に。右ラダー']],
         ['③', C.vi, [`Configuration：降下が止まったら、`, `フラップを 25° に。${v.ga} kt`]], ['④', C.gr, [`上昇を確かめ、障害物を越えたら ${v.y} kt`, 'フラップを少しずつ上げる']]];
       let y = 222;
       for (const [n, c, lines] of key) { s += tag(16, y - 4, n, c) + TL(34, y, lines, { c: C.ink, a: 'start', fs: 12, lh: 16 }); y += lines.length * 16 + 6; }
@@ -1490,14 +1490,14 @@
       // the road to the first solo and beyond under 14 CFR part 61 (61.83, 61.23, 61.87(a)(b)(c)(d)(n)(o)(p), 61.93, 61.95) and,
       // at a part 141 school, the stage checks of 141.85
       const steps = [
-        ['前提：学生操縦士証明と医療証明', ['16 歳以上・英語を読み・話し・書き・理解できる（61.83）', 'ふつうは第 3 種以上の医療証明も（61.23）'], C.mut],
+        ['前提：学生操縦士証明と航空身体検査証明', ['16 歳以上・英語を読み・話し・書き・理解できる（61.83）', 'ふつうは第 3 種以上の航空身体検査証明も（61.23）'], C.mut],
         ['ソロ前の学科テスト', ['規則・空域・機体の特性。間違いは教官と見直す（61.87(b)）'], C.cy],
         ['15 項目の飛行訓練と、教官が認める技量', ['離着陸・失速・緊急・ゴーアラウンドなど（61.87(c)(d)）'], C.cy],
         ['段階審査（訓練校）', ['学校の課程で決めた審査（Part 141：141.85）'], C.cy],
         ['ログブックへの承認（endorsement）', ['型式ごと・訓練をした教官が・90 日以内（61.87(n)）'], C.am],
         ['初めてのソロ', ['乗っているのは自分 1 人（61.87(a)）'], C.gr],
         ['90 日ごとに承認を更新', ['教官がログブックに書き足す（61.87(p)）'], C.am],
-        ['その先のソロ（それぞれ別の承認）', ['25 NM 以内のほかの空港・野外飛行（61.93）', '夜（61.87(o)）・Class B 空域（61.95）'], C.vi]];
+        ['その先のソロ（それぞれ別の承認）', ['25 NM 以内のほかの空港・クロスカントリー（61.93）', '夜（61.87(o)）・Class B 空域（61.95）'], C.vi]];
       let s = '', y = 6;
       steps.forEach(([title, lines, c], i) => {
         const h = 30 + lines.length * 16;
@@ -1896,7 +1896,7 @@
   // ---------------------------------------------------------------- calculators inside the text
   const ARCHER_WB = {
     // the Archer III POH's arms (inches aft of the datum) and CG envelope; the basic empty weight and its arm are an example (each airplane has its own)
-    rows: [['空虚重量（BEW）', 1640, 87.0], ['前席（操縦士・同乗者）', 340, 80.5], ['後席', 150, 118.1], ['燃料（40 gal × 6 lb）', 240, 95.0], ['手荷物', 50, 142.8]],
+    rows: [['空虚重量（BEW：Basic Empty Weight）', 1640, 87.0], ['前席（操縦士・同乗者）', 340, 80.5], ['後席', 150, 118.1], ['燃料（40 gal × 6 lb）', 240, 95.0], ['手荷物', 50, 142.8]],
     env: [[82.0, 1600], [82.0, 2050], [88.6, 2550], [93.0, 2550], [93.0, 1600]],
     max: 2550,
   };

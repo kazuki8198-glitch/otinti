@@ -98,7 +98,7 @@
   const PARTS = [
     { id: 'p1', title: '第 1 部　地上学科（ロンドン相当・英語の座学）', phase: 'p1' },
     { id: 'p2', title: '第 2 部　Sanford・Piper Archer の基礎操縦', phase: 'p2' },
-    { id: 'p3', title: '第 3 部　航法・横風・目的地変更', phase: 'p3' },
+    { id: 'p3', title: '第 3 部　航法・目的地変更', phase: 'p3' },
     { id: 'p4', title: '第 4 部　計器飛行', phase: 'p4' },
     { id: 'p5', title: '第 5 部　Piper Seminole・多発', phase: 'p5' },
     { id: 'p6', title: '第 6 部　CRM・TEM・ジェットと自動化への準備', phase: 'p6' },

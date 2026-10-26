@@ -1,22 +1,30 @@
-# CADET — tools/aircraft/build_cockpit.py : the top band of the flown aircraft's cabin (aircraft/cockpit.js), made in
+# CADET — tools/aircraft/build_cockpit.py : the parts of the flown aircraft's cabin (aircraft/cockpit.js) made in
 # Blender (run in the background, no window):
 #   node tools/aircraft/cockpit-spec.mjs > /tmp/cockpit.json
-#   blender -b --factory-startup -P tools/aircraft/build_cockpit.py -- /tmp/cockpit.json assets/model/cockpit.glb [preview_dir|-]
-# What it makes (everything else in the cabin stays in code): the headliner (its arch, sewn seams over the bows and
-# down the middle, the cloth sagging a little between the bows), the roof-edge trims over the joint between the window
-# band and the headliner, the windshield header (a moulding from the glass's top edge up to the headliner), the A-pillar
-# trims round the windshield's side edges, the rubber seals where these meet the glass, and the two sun visors (padded,
-# on a hinge rod held by two brackets to the headliner, stowed along its curve).
+#   blender -b --factory-startup -P tools/aircraft/build_cockpit.py -- /tmp/cockpit.json assets/model/cockpit.glb [preview_dir|-] [groups]
+# groups: which parts, comma-separated (all of them when left out: band,seats,glareshield,yokes). The game takes each
+# group from the model when the model has it, and makes its old simple shapes in code when it does not.
+# - band (here): the top band — the headliner (its arch, sewn seams over the bows and down the middle, the cloth
+#   sagging a little between the bows), the roof-edge trims over the joint between the window band and the headliner,
+#   the windshield header (a moulding from the glass's top edge up to the headliner), the A-pillar trims round the
+#   windshield's side edges, the rubber seals where these meet the glass, and the two sun visors (padded, on a hinge rod
+#   held by two brackets to the headliner, stowed along its curve).
+# - the others, each in its own file next to this one (cockpit_<name>.py: seats — the front seats and the rear bench;
+#   glareshield; yokes), given this script's helpers and layout (ctx): MAX_TRIS (its triangle budget), parts(ctx) → {node
+#   name: (Piece, colour function or None)}, and optionally proxies(ctx) (what stays in code round it, for the occlusion),
+#   check(ctx, objs) (its own asserts once the meshes are made) and PREVIEW ({view: (yaw, pitch)} for the preview).
 # Everything is made to the cabin's own layout (cockpit-spec.mjs reads aircraft/cockpit.js's CABIN: the eye, the window
-# band, the roof's arch, the windshield), so the parts meet what stays in code; the script checks its copies of the
-# layout's curves against the spec's sample values.
+# band, the roof's arch, the windshield, the panel, the seats' places, the yokes), so the parts meet what stays in code;
+# the script checks its copies of the layout's curves against the spec's sample values.
 # Coordinates: the cabin's frame (= the Archer's body frame; metres, x = the right wing, y = up, z = aft); written
 # without the exporter's z-up conversion. The Seminole's cockpit is the same cabin (aircraft/cockpit.js moves it).
-# Nodes, named "<part>.<surface>": the game takes each part's roughness, metalness and detail kind from cockpit.js's
-# surface table under that name (roof, trim, rubber, wall, steel). COLOR_0: rgb = the colour (sRGB, the table's colour,
-# darker along the seams), alpha = the occlusion of what is close by (rays 5 cm long against these parts and the cabin
-# round them); the game multiplies it by the cabin's own sky occlusion (cockpit.js bakeAO: how much sky each point sees
-# through the windows), as for every other part of the cabin.
+# Nodes, named "<group>.<surface>[.<moving part>][.pa28|.pa44]" (the band's groups: headliner, roofTrims, header,
+# pillars, seals, visors, visorHw): the game takes each part's roughness, metalness and detail kind from cockpit.js's
+# surface table under that name (roof, trim, rubber, wall, steel, seat, …); a moving part (yokeL …) is made in place at
+# its rest pose and turns about cockpit.js's pivot for it; pa28 / pa44: one type's own. COLOR_0: rgb = the colour (sRGB,
+# the table's colour, darker along seams), alpha = the occlusion of what is close by (rays 5 cm long against these parts
+# and the cabin round them); the game multiplies it by the cabin's own sky occlusion (cockpit.js bakeAO: how much sky
+# each point sees through the windows), as for every other part of the cabin.
 import bpy, bmesh, json, math, sys, os
 from mathutils import Vector, Matrix
 from mathutils.bvhtree import BVHTree
@@ -25,7 +33,8 @@ argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 S = json.load(open(argv[0]))
 OUT = argv[1]
 PREVIEW = argv[2] if len(argv) > 2 and argv[2] != '-' else None
-MAX_TRIS = 2600                       # what the Seminole's cockpit leaves for the band (cockpit.test: trianglesTwin ≤ 40,000)
+GROUPS = argv[3].split(',') if len(argv) > 3 else ['band', 'seats', 'glareshield', 'yokes']
+MAX_TRIS = 2600                       # the band's share of the cockpit's triangles (cockpit.test: trianglesTwin ≤ 40,000)
 
 DEG = math.pi / 180
 def clamp(v, a, b): return a if v < a else b if v > b else v
@@ -33,15 +42,18 @@ def lerp(a, b, t): return a + (b - a) * t
 
 # ---------------------------------------------------------------- the layout (aircraft/cockpit.js, via the spec)
 EYE = Vector(S['eye'])
-SILL, WTOP, HW, HWT, ROOF, AFT, KX = S['sill'], S['wtop'], S['hw'], S['hwt'], S['roof'], S['aft'], S['kx']
+SILL, WTOP, HW, HWT, ROOF, AFT, KX, FLOOR = S['sill'], S['wtop'], S['hw'], S['hwt'], S['roof'], S['aft'], S['kx'], S['floor']
 WS = S['ws']
-# (cockpit.js: bandX, roofY, wsZ — checked against the spec's samples just below)
+# (cockpit.js: bandX, roofY, wsZ, lowX — checked against the spec's samples just below)
 def bandX(y): return HW + KX * (y - SILL)
 def roofY(x): return WTOP + (ROOF - WTOP) * math.sqrt(max(0.0, 1 - (x / HWT) ** 2))
 def wsZ(x, y): return WS['z0'] + (WS['z1'] - WS['z0']) * (y - WS['y0']) / (WS['y1'] - WS['y0']) + WS['bow'] * (x / 0.5) ** 2
+def lowX(y):                          # the lower wall's x at height y (its soft profile up from the floor)
+    v = clamp((y - FLOOR) / (SILL - FLOOR), 0, 1); return HW - 0.10 * (1 - min(1, v / 0.45)) ** 2
 for y, v in S['samples']['bandX']: assert abs(bandX(y) - v) < 2e-6, ('bandX', y)
 for x, v in S['samples']['roofY']: assert abs(roofY(x) - v) < 2e-6, ('roofY', x)
 for x, y, v in S['samples']['wsZ']: assert abs(wsZ(x, y) - v) < 2e-6, ('wsZ', x, y)
+for y, v in S['samples']['lowX']: assert abs(lowX(y) - v) < 2e-6, ('lowX', y)
 
 C = S['colours']
 ROOFC, TRIM, RUBBER, WALL, STEEL = (tuple(C[k]) for k in ('roof', 'trim', 'rubber', 'wall', 'steel'))
@@ -250,20 +262,22 @@ def visor():
     nt = len(p.v); p.v += [Vector(q) for q in top]; p.fan(list(range(nt, nt + len(top))), P(span / 2, VD / 2, VT + 0.002), WALL, flip=True)
     nb = len(p.v); p.v += [Vector(q) for q in bot]; p.fan(list(range(nb, nb + len(bot))), P(span / 2, VD / 2, -0.002), WALL, flip=False)
     return p
-def cyl(a, b, r, seg=8):
-    # a closed cylinder from a to b
+def cyl(a, b, r, seg=8, col=None):
+    # a closed cylinder from a to b (steel unless col)
+    col = col or STEEL
     ax = (b - a).normalized(); t = ax.cross(Vector((0, 1, 0))) if abs(ax.y) < 0.9 else ax.cross(Vector((1, 0, 0))); t.normalize(); bb = ax.cross(t)
     ring = lambda c: [c + (t * math.cos(2 * math.pi * k / seg) + bb * math.sin(2 * math.pi * k / seg)) * r for k in range(seg)]
     p = Piece(); r0, r1 = ring(a), ring(b)
-    p.grid([r0, r1], STEEL, closed=True)
-    p.fan(list(range(0, seg)), a, STEEL, flip=True); p.fan(list(range(seg, 2 * seg)), b, STEEL)
+    p.grid([r0, r1], col, closed=True)
+    p.fan(list(range(0, seg)), a, col, flip=True); p.fan(list(range(seg, 2 * seg)), b, col)
     return p
-def box(c, half, axes):
-    # a closed box at c, half sizes along three axes
+def box(c, half, axes, col=None):
+    # a closed box at c, half sizes along three axes (steel unless col)
+    col = col or STEEL
     p = Piece(); ex, ey, ez = (a * h for a, h in zip(axes, half))
     corners = [c + ex * sx + ey * sy + ez * sz for sx in (-1, 1) for sy in (-1, 1) for sz in (-1, 1)]
     for f in ((0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)):
-        p.v += [corners[i] for i in f]; k = len(p.v) - 4; p.f.append((k, k + 1, k + 2, k + 3)); p.c.append(STEEL)
+        p.v += [corners[i] for i in f]; k = len(p.v) - 4; p.f.append((k, k + 1, k + 2, k + 3)); p.c.append(col)
     return p
 def visor_hardware():
     o, u, v, n, span = visor_frame()
@@ -276,27 +290,13 @@ def visor_hardware():
     return p
 
 # ---------------------------------------------------------------- the objects
-parts = {
-    'headliner.roof': (headliner(), headliner_col),
-    'roofTrims.trim': (Piece().add(roof_trim()).add(mirror_x(roof_trim())), None),
-    'header.wall': (header(), None),
-    'pillars.wall': (Piece().add(pillar()).add(mirror_x(pillar())), None),
-    'seals.rubber': (Piece().add(header_seal()).add(pillar_seal()).add(mirror_x(pillar_seal())), None),
-    'visors.wall': (Piece().add(visor()).add(mirror_x(visor())), None),
-    'visorHw.steel': (Piece().add(visor_hardware()).add(mirror_x(visor_hardware())), None),
-}
-objs = {k: to_object(k, pc, COL, vcol) for k, (pc, vcol) in parts.items()}
-for k, ob in objs.items(): ob.name = k; ob.data.name = k
-
 def triangulate(ob):
     bm = bmesh.new(); bm.from_mesh(ob.data); bmesh.ops.triangulate(bm, faces=bm.faces[:]); bm.to_mesh(ob.data); bm.free(); ob.data.update()
-for ob in objs.values(): triangulate(ob)
-
 # facing: the open surfaces face into the cabin (towards its axis), the closed ones outwards (positive volume)
-def facing_share(ob):
+def facing_share(ob, axis_y=0.5):
     me = ob.data; good = 0
     for pl in me.polygons:
-        c = pl.center; axis = Vector((0, 0.5, c.z))
+        c = pl.center; axis = Vector((0, axis_y, c.z))
         if pl.normal.dot(axis - c) > 0: good += 1
     return good / max(1, len(me.polygons))
 def volume(ob):
@@ -304,24 +304,64 @@ def volume(ob):
     for pl in me.polygons:
         a, b, c = (me.vertices[i].co for i in pl.vertices); vol += a.dot(b.cross(c)) / 6
     return vol
-for k in ('headliner.roof', 'header.wall', 'pillars.wall', 'roofTrims.trim'):
-    assert facing_share(objs[k]) > 0.8, (k, 'faces outwards', facing_share(objs[k]))
-for k in ('visors.wall', 'visorHw.steel'):
-    assert volume(objs[k]) > 0, (k, 'inside out', volume(objs[k]))
-# the visors and their hardware clear the header (they hang from the headliner behind it)
-hdr = BVHTree.FromObject(objs['header.wall'], bpy.context.evaluated_depsgraph_get())
-for k in ('visors.wall', 'visorHw.steel'):
-    gap = min(hdr.find_nearest(v.co)[3] for v in objs[k].data.vertices)
-    assert gap > 0.003, (k, 'touches the header', gap)
+def gap(ob, other):
+    # the smallest distance from ob's vertices to other's surface
+    t = BVHTree.FromObject(other, bpy.context.evaluated_depsgraph_get())
+    return min(t.find_nearest(v.co)[3] for v in ob.data.vertices)
+
+class Ctx: pass
+ctx = Ctx()
+ctx.__dict__.update(S=S, C=C, EYE=EYE, SILL=SILL, WTOP=WTOP, HW=HW, HWT=HWT, ROOF=ROOF, AFT=AFT, KX=KX, FLOOR=FLOOR, WS=WS,
+    bandX=bandX, roofY=roofY, wsZ=wsZ, lowX=lowX, clamp=clamp, lerp=lerp, DEG=DEG, math=math, Vector=Vector, Matrix=Matrix,
+    BVHTree=BVHTree, bpy=bpy, Piece=Piece, mirror_x=mirror_x, cyl=cyl, box=box, rounded_rect=rounded_rect,
+    facing_share=facing_share, volume=volume, gap=gap, tris=tris)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import importlib
+MODULES = {g: importlib.import_module('cockpit_' + g) for g in GROUPS if g != 'band'}
+
+parts, owner = {}, {}
+if 'band' in GROUPS:
+    for k, v in {
+        'headliner.roof': (headliner(), headliner_col),
+        'roofTrims.trim': (Piece().add(roof_trim()).add(mirror_x(roof_trim())), None),
+        'header.wall': (header(), None),
+        'pillars.wall': (Piece().add(pillar()).add(mirror_x(pillar())), None),
+        'seals.rubber': (Piece().add(header_seal()).add(pillar_seal()).add(mirror_x(pillar_seal())), None),
+        'visors.wall': (Piece().add(visor()).add(mirror_x(visor())), None),
+        'visorHw.steel': (Piece().add(visor_hardware()).add(mirror_x(visor_hardware())), None),
+    }.items(): parts[k] = v; owner[k] = 'band'
+for g, mod in MODULES.items():
+    for k, v in mod.parts(ctx).items():
+        assert k not in parts, ('two parts named', k)
+        assert k.split('.')[0] in mod.GROUPS, (g, 'a node outside its groups', k, mod.GROUPS)
+        parts[k] = v; owner[k] = g
+for k in parts:                       # "<group>.<surface>[.<moving part>][.pa28|.pa44]", the surface one of cockpit.js's
+    bits = k.split('.'); assert 2 <= len(bits) <= 4 and bits[1] in C, ('a node name the game cannot read', k)
+objs = {k: to_object(k, pc, COL, vcol) for k, (pc, vcol) in parts.items()}
+for k, ob in objs.items(): ob.name = k; ob.data.name = k
+for ob in objs.values(): triangulate(ob)
+
+if 'band' in GROUPS:
+    for k in ('headliner.roof', 'header.wall', 'pillars.wall', 'roofTrims.trim'):
+        assert facing_share(objs[k]) > 0.8, (k, 'faces outwards', facing_share(objs[k]))
+    for k in ('visors.wall', 'visorHw.steel'):
+        assert volume(objs[k]) > 0, (k, 'inside out', volume(objs[k]))
+    # the visors and their hardware clear the header (they hang from the headliner behind it)
+    for k in ('visors.wall', 'visorHw.steel'):
+        d = gap(objs[k], objs['header.wall']); assert d > 0.003, (k, 'touches the header', d)
+for g, mod in MODULES.items():
+    if hasattr(mod, 'check'): mod.check(ctx, objs)
 
 # ---------------------------------------------------------------- the occlusion of what is close by → alpha
 # Rays 5 cm long (cosine-weighted over the hemisphere) against these parts and a proxy of the cabin round them: the
-# top of the window band, the aft bulkhead, the overhead console, the compass case and the windshield's centre post.
-occl = bmesh.new()
+# top of the window band, the aft bulkhead, the overhead console, the compass case and the windshield's centre post,
+# and what each group adds (proxies). The preview shows the proxy (grey) round the parts.
+occl = bmesh.new(); prox = bmesh.new()
 for ob in objs.values():
     m2 = ob.data.copy(); occl.from_mesh(m2); bpy.data.meshes.remove(m2)
 def proxy_quad(a, b, c, d):
-    vs = [occl.verts.new(v) for v in (a, b, c, d)]; occl.faces.new(vs)
+    for bm in (occl, prox):
+        vs = [bm.verts.new(v) for v in (a, b, c, d)]; bm.faces.new(vs)
 def proxy_box(c, s):
     hx, hy, hz = (v / 2 for v in s); cs = [Vector((c[0] + sx * hx, c[1] + sy * hy, c[2] + sz * hz)) for sx in (-1, 1) for sy in (-1, 1) for sz in (-1, 1)]
     for f in ((0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)): proxy_quad(*(cs[i] for i in f))
@@ -336,6 +376,10 @@ for key in ('body', 'hanger'):
 for k in range(6):
     y0, y1 = lerp(WS['y0'], WS['y1'], k / 6), lerp(WS['y0'], WS['y1'], (k + 1) / 6)
     proxy_quad((-0.011, y0, wsZ(0, y0) + 0.008), (0.011, y0, wsZ(0, y0) + 0.008), (0.011, y1, wsZ(0, y1) + 0.008), (-0.011, y1, wsZ(0, y1) + 0.008))
+for g, mod in MODULES.items():
+    for pr in (mod.proxies(ctx) if hasattr(mod, 'proxies') else []):
+        if pr[0] == 'quad': proxy_quad(*pr[1:])
+        else: proxy_box(*pr[1:])
 OBVH = BVHTree.FromBMesh(occl)
 NDIR = 32
 DIRS = []
@@ -359,9 +403,11 @@ def bake_local_ao(ob, reach=0.05, strength=0.6, floor=0.6):
     me.color_attributes.active_color = col
 for ob in objs.values(): bake_local_ao(ob)
 
-counts = {k: tris(ob) for k, ob in objs.items()}; total = sum(counts.values())
-print('triangles', counts, 'total', total)
-assert total <= MAX_TRIS, ('over the band budget', total)
+counts = {k: tris(ob) for k, ob in objs.items()}
+print('triangles', counts, 'total', sum(counts.values()))
+for g in GROUPS:
+    n, cap = sum(v for k, v in counts.items() if owner[k] == g), MAX_TRIS if g == 'band' else MODULES[g].MAX_TRIS
+    print('group', g, n, 'of', cap); assert n <= cap, ('over the budget of', g, n, cap)
 
 # ---------------------------------------------------------------- a preview (Cycles, from the pilot's eye) and the glTF
 if PREVIEW:
@@ -377,16 +423,25 @@ if PREVIEW:
     nt.links.new(ca.outputs['Color'], gam.inputs['Color']); nt.links.new(gam.outputs['Color'], mul.inputs[6]); nt.links.new(ca.outputs['Alpha'], mul.inputs[7])
     nt.links.new(mul.outputs[2], bsdf.inputs['Base Color']); bsdf.inputs['Roughness'].default_value = 0.7
     for o in objs.values(): o.data.materials.clear(); o.data.materials.append(mat)
+    pm = bpy.data.meshes.new('context'); prox.to_mesh(pm); po = bpy.data.objects.new('context', pm); AUX.objects.link(po)
+    gm = bpy.data.materials.new('context'); gm.diffuse_color = (0.35, 0.35, 0.36, 1); gm.use_nodes = True
+    gm.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (0.25, 0.25, 0.26, 1); pm.materials.append(gm)
+    sun = bpy.data.objects.new('sun', bpy.data.lights.new('sun', 'SUN')); sun.data.energy = 2.5; sc.collection.objects.link(sun)
+    sun.rotation_euler = (math.radians(50), 0, math.radians(-30))
     world = bpy.data.worlds.new('w'); sc.world = world; world.use_nodes = True
     world.node_tree.nodes['Background'].inputs['Color'].default_value = (0.6, 0.7, 0.85, 1); world.node_tree.nodes['Background'].inputs['Strength'].default_value = 1.0
     cam = bpy.data.objects.new('cam', bpy.data.cameras.new('cam')); sc.collection.objects.link(cam); sc.camera = cam
     cam.data.sensor_fit = 'VERTICAL'; cam.data.angle = 75 * DEG; cam.data.clip_start = 0.02
-    for name, (yaw, pitch) in {'ahead': (0, 10), 'up': (0, 40), 'left': (35, 25), 'right': (-40, 20)}.items():
+    views = {}
+    if 'band' in GROUPS: views.update({'band-ahead': (0, 10), 'band-up': (0, 40), 'band-left': (35, 25), 'band-right': (-40, 20)})
+    for g, mod in MODULES.items(): views.update({f'{g}-{k}': v for k, v in getattr(mod, 'PREVIEW', {}).items()})
+    for name, view in views.items():
+        yaw, pitch = view[0], view[1]; eye = Vector(view[2]) if len(view) > 2 else EYE
         d = Vector((-math.sin(yaw * DEG) * math.cos(pitch * DEG), math.sin(pitch * DEG), -math.cos(yaw * DEG) * math.cos(pitch * DEG)))
         rx = d.cross(Vector((0, 1, 0))).normalized(); uy = rx.cross(d)
-        M = Matrix((rx, uy, -d)).transposed().to_4x4(); M.translation = EYE
+        M = Matrix((rx, uy, -d)).transposed().to_4x4(); M.translation = eye
         cam.matrix_world = M
-        sc.render.filepath = os.path.join(PREVIEW, f'band-{name}.png')
+        sc.render.filepath = os.path.join(PREVIEW, f'{name}.png')
         bpy.ops.render.render(write_still=True)
 
 bpy.ops.object.select_all(action='DESELECT')

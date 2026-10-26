@@ -44,6 +44,12 @@ const PEDAL_X = [-0.39, -0.21, 0.21, 0.39], PEDAL = { y: -0.27, z: -1.21, travel
 const LEVER = { y: -0.045, z: -1.24, len: 0.22, idle: -11 * DEG, full: 27 * DEG };
 const FLAP = { y: -0.268, z: -0.40, det: [0, 11 * DEG, 22 * DEG, 33 * DEG] };
 const TRIMW = { y: -0.30, z: -0.64, r: 0.072, turns: 1.6 };
+const SEAT = { z: -0.58, w: 0.44 };               // the front seats (at ±SEAT_X): their cushions' centre z and width
+const INSTRUCTOR = { hip: [SEAT_X, -0.03, -0.38], seatY: -0.15 };   // where the right seat holds the instructor (see instructorSeat)
+// the glareshield's lip in profile ([z, y], from under it to the top of its roll; then the hood falls to the windshield)
+const GLARE = { x: 0.553, lip: [[PZ + 0.004, 0.451], [-1.045, 0.451], [-1.031, 0.457], [-1.027, 0.4665], [-1.032, 0.4765], [-1.05, 0.4795]] };
+// the yokes' hit boxes ([w, h, d] and an offset from the yoke's pivot; the horns' at ±x): a model of a yoke stays in them
+const YOKE_HIT = { hub: [0.11, 0.07, 0.06, 0, 0, 0.004], horn: [0.042, 0.15, 0.045, 0.152, 0.075, 0.008] };
 const COMPASS = [0, 0.737, -0.892];
 const KEYSW = [-0.488, 0.10];                     // the key: just right of where the yoke's left horn hides the panel
 const ROCKERS = [['master', 'MASTER'], ['avionics', 'AVIONICS'], ['fuelPump', 'FUEL PUMP'], ['beacon', 'BEACON'], ['nav', 'NAV'], ['strobe', 'STROBE'],
@@ -140,9 +146,12 @@ const AO_OCC = [
 // offset from COMPASS): built below, and seen by tools/aircraft/build_cockpit.py as what shades the top band
 const CONSOLE = { pos: [0, ROOF - 0.01, -0.45], size: [0.14, 0.03, 0.5] };
 const CASE = { body: [0.064, 0.056, 0.040, 0, 0, -0.015], hanger: [0.012, 0.03, 0.03, 0, 0.038, -0.012] };
-// the cabin's layout and surfaces for tools/aircraft/cockpit-spec.mjs (the top band — headliner, windshield header,
-// A-pillar trims, roof-edge trims, sun visors — is made in Blender to these: assets/model/cockpit.glb)
-export const CABIN = { EYE0, FLOOR, FIRE, AFT, PZ, SILL, WTOP, HW, HWT, ROOF, WS, KX, COMPASS, CONSOLE, CASE, SURFACES: S, bandX, roofY, wsZ };
+// the cabin's layout and surfaces for tools/aircraft/cockpit-spec.mjs (the parts made in Blender — the top band, the
+// seats, the glareshield, the yokes: assets/model/cockpit.glb — are made to these)
+export const CABIN = {
+  EYE0, FLOOR, FIRE, AFT, PZ, PTOP, PBOT, SILL, WTOP, HW, HWT, ROOF, WS, KX, COMPASS, CONSOLE, CASE, SURFACES: S, bandX, roofY, wsZ, lowX,
+  SEAT_X, SEAT, INSTRUCTOR, AO_OCC, FLAP, TRIMW, LEVER, PEDAL, PEDAL_X, YOKE, YOKE_HIT, GLARE,
+};
 const AO_N = 40, AO_DIRS = new Float32Array(AO_N * 3);
 for (let i = 0; i < AO_N; i++) { const u = (i + 0.5) / AO_N, r = Math.sqrt(u), ph = i * 2.399963; AO_DIRS[i * 3] = r * Math.cos(ph); AO_DIRS[i * 3 + 1] = r * Math.sin(ph); AO_DIRS[i * 3 + 2] = Math.sqrt(1 - u); }
 function rayOpen(ox, oy, oz, dx, dy, dz) {
@@ -221,17 +230,20 @@ function refine(g, len) {
   return r;
 }
 
-// the top band made in Blender (tools/aircraft/build_cockpit.py → assets/model/cockpit.glb) into the static shell: each
-// node "<part>.<surface>" with that surface's roughness, metalness and detail kind, its own colours (sRGB) per vertex,
-// and its alpha (the occlusion of what is close by) as the starting occlusion that bakeAO multiplies by the sky's
-// → the parts' names, or null when the model is not there
-function addBand(B) {
+// the parts made in Blender (tools/aircraft/build_cockpit.py → assets/model/cockpit.glb) into the cabin: each node
+// "<group>.<surface>[.<moving part>][.pa28|.pa44]" with that surface's roughness, metalness and detail kind, its own
+// colours (sRGB) per vertex, and its alpha (the occlusion of what is close by) as the starting occlusion that bakeAO
+// multiplies by the sky's; into the static shell, a moving part (made in place: see PIV), or one type's own shell (the
+// Seminole's only with twin) → the nodes' names, or null when the model is not there
+function addBand(B, twin) {
   const m = modelMeshes('cockpit');
   if (!m) return null;
-  const c = new THREE.Color();
+  const c = new THREE.Color(), names = [];
   for (const [name, mm] of m) {
-    const s = S[name.split('.')[1]];
+    const [, surf, ...tags] = name.split('.'), s = S[surf];
     if (!s) throw new Error('cockpit: no surface for ' + name);
+    const v = tags.find(t => t === 'pa28' || t === 'pa44') || null, part = tags.find(t => t !== v) || null;
+    if (v === 'pa44' && !twin) continue;                     // (the Archer alone: none of the Seminole's)
     const n = mm.count, col = new Float32Array(n * 3), mat = new Float32Array(n * 4);
     for (let i = 0; i < n; i++) {
       c.setRGB(mm.col[i * 3], mm.col[i * 3 + 1], mm.col[i * 3 + 2], THREE.SRGBColorSpace);
@@ -241,9 +253,11 @@ function addBand(B) {
     const g = new THREE.BufferGeometry();                    // (the model's arrays are shared: copied)
     g.setAttribute('position', new THREE.BufferAttribute(mm.pos.slice(), 3)); g.setAttribute('normal', new THREE.BufferAttribute(mm.nrm.slice(), 3));
     g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('cdMat', new THREE.BufferAttribute(mat, 4));
-    B.kit.push(g);
+    if (part) { if (!B.moving.has(part)) B.moving.set(part, []); B.moving.get(part).push(g); if (v) B.partV.set(part, v); }
+    else (v ? B.kitV[v] : B.kit).push(g);
+    names.push(name);
   }
-  return [...m.keys()];
+  return names;
 }
 
 // ---------------------------------------------------------------- materials
@@ -564,8 +578,8 @@ export function buildCockpit(FL, A, opts = {}) {
   const avc = (what, dir = 1, big = false) => ({ type: 'av', what, dir, big });
 
   // ============================================================ the shell
-  // the top band from the model (null: the simple shapes below)
-  const band = addBand(B);
+  // the parts made in Blender (null: none; a group missing from the model: its simple shapes made here)
+  const band = addBand(B, twinA), fromModel = group => !!band && band.some(n => n.split('.')[0] === group);
   // floor (carpet), firewall, the plate under the panel
   add(sheet((u, v, o) => o.set(-0.462 + 0.924 * u, FLOOR, FIRE + (AFT - FIRE) * v), 6, 18, true), S.carpet);
   add(sheet((u, v, o) => o.set(-0.53 + 1.06 * u, FLOOR + (WS.y0 - 0.03 - FLOOR) * v, FIRE), 8, 8, false), S.carpet);   // (its top hidden under the glareshield)
@@ -589,7 +603,7 @@ export function buildCockpit(FL, A, opts = {}) {
     add(at(rbox(0.06, 0.05, 0.42, 0.014, 2), [sd * (HW - 0.035), 0.205, -0.62]), S.arm);
     add(at(rbox(0.05, 0.045, 0.36, 0.012, 2), [sd * (HW - 0.03), 0.20, 0.42]), S.arm);
     // (without the model) the A-pillar trim along the windshield's edge, and the upper trim along the roof
-    if (!band) {
+    if (!fromModel('headliner')) {
       const pil = []; for (let i = 0; i <= 8; i++) { const y = WS.y0 - 0.02 + (WTOP + 0.02 - WS.y0) * i / 8; pil.push([sd * (bandX(y) - 0.012), y, wsZ(bandX(y), y) + 0.02]); }
       add(tube(pil, 0.028, 16, 8), S.trim);
       add(at(rbox(0.04, 0.03, AFT - zp(WTOP) + 0.02, 0.01, 1), [sd * (HWT - 0.005), WTOP + 0.002, (AFT + zp(WTOP)) / 2]), S.trim);
@@ -599,7 +613,7 @@ export function buildCockpit(FL, A, opts = {}) {
   }
   // (without the model) the headliner: an arch from window top to window top, from the windshield's top edge to the aft
   // bulkhead; the windshield's top bow
-  if (!band) {
+  if (!fromModel('headliner')) {
     add(sheet((u, v, o) => {
       const ph = Math.PI * u, x = -HWT * Math.cos(ph), y = WTOP + (ROOF - WTOP) * Math.sin(ph), z0 = wsZ(x, Math.min(y, WS.y1)) + 0.004;
       o.set(x, y, z0 + (AFT - z0) * v);
@@ -617,11 +631,11 @@ export function buildCockpit(FL, A, opts = {}) {
   // ============================================================ the panel, the glareshield
   add(at(rbox(1.106, PTOP - PBOT, 0.035, 0.008, 2), [0, (PTOP + PBOT) / 2, PZ - 0.018]), S.panel);
   add(sheet((u, v, o) => o.set(-0.545 + 1.09 * u, PBOT + 0.008 + (PTOP - PBOT - 0.016) * v, PZ + 0.0002), 22, 9), S.panel);
-  // the glareshield: a hood from under its lip, over the rounded lip, forward to the windshield's base
-  add(sheet((u, v, o) => {
-    const x = -0.553 + 1.106 * u, zb = wsZ(x, WS.y0);
+  // (without the model) the glareshield: a hood from under its lip, over the rounded lip, forward to the windshield's base
+  if (!fromModel('glareshield')) add(sheet((u, v, o) => {
+    const x = -GLARE.x + 2 * GLARE.x * u, zb = wsZ(x, WS.y0);
     const z1 = zb - 0.002, y1 = WS.y0 - 0.002, slope = (f) => [-1.05 + (z1 + 1.05) * f, 0.4795 + (y1 - 0.4795) * f];   // the hood falls straight to the windshield
-    const prof = [[PZ + 0.004, 0.451], [-1.045, 0.451], [-1.031, 0.457], [-1.027, 0.4665], [-1.032, 0.4765], [-1.05, 0.4795], slope(0.33), slope(0.67), [z1, y1]];
+    const prof = [...GLARE.lip, slope(0.33), slope(0.67), [z1, y1]];
     const f = v * (prof.length - 1), i = Math.min(prof.length - 2, Math.floor(f)), t = f - i;
     o.set(x, prof[i][1] + (prof[i + 1][1] - prof[i][1]) * t, prof[i][0] + (prof[i + 1][0] - prof[i][0]) * t);
   }, 24, 16, false), S.glare);
@@ -936,19 +950,22 @@ export function buildCockpit(FL, A, opts = {}) {
   for (const sd of [-1, 1]) {
     const part = sd < 0 ? 'yokeL' : 'yokeR', x0 = sd * YOKE.x, y0 = YOKE.y, z0 = YOKE.z;
     const P3 = (x, y, z) => [x0 + x, y0 + y, z0 + z];
-    add(at(rbox(0.078, 0.052, 0.036, 0.013, 2), P3(0, 0, 0)), S.yoke, part);
-    add(at(rbox(0.056, 0.03, 0.004, 0.006, 2), P3(0, 0.002, 0.018)), S.alu, part);
-    add(at(cylZ(0.0135, 0.0135, 0.40, 16), P3(0, 0, -0.20)), S.chrome, part);
-    add(at(cylZ(0.017, 0.017, 0.02, 16), P3(0, 0, -0.027)), S.yoke, part);
-    for (const s of [-1, 1]) {
-      add(tube([P3(s * 0.03, 0, 0), P3(s * 0.085, -0.008, 0.004), P3(s * 0.13, 0.004, 0.01), P3(s * 0.152, 0.036, 0.012)], 0.0115, 12, 8), S.yoke, part);
-      add(tube([P3(s * 0.150, 0.03, 0.012), P3(s * 0.159, 0.068, 0.011), P3(s * 0.158, 0.103, 0.006), P3(s * 0.149, 0.128, 0.0)], 0.0158, 10, 8), S.grip, part);
-      add(at(sphere(0.0158, 8, 6), P3(s * 0.149, 0.128, 0.0)), S.grip, part);
+    if (!fromModel('yokes')) {                                 // (without the model) the yoke and its boot at the panel
+      add(at(rbox(0.078, 0.052, 0.036, 0.013, 2), P3(0, 0, 0)), S.yoke, part);
+      add(at(rbox(0.056, 0.03, 0.004, 0.006, 2), P3(0, 0.002, 0.018)), S.alu, part);
+      add(at(cylZ(0.0135, 0.0135, 0.40, 16), P3(0, 0, -0.20)), S.chrome, part);
+      add(at(cylZ(0.017, 0.017, 0.02, 16), P3(0, 0, -0.027)), S.yoke, part);
+      for (const s of [-1, 1]) {
+        add(tube([P3(s * 0.03, 0, 0), P3(s * 0.085, -0.008, 0.004), P3(s * 0.13, 0.004, 0.01), P3(s * 0.152, 0.036, 0.012)], 0.0115, 12, 8), S.yoke, part);
+        add(tube([P3(s * 0.150, 0.03, 0.012), P3(s * 0.159, 0.068, 0.011), P3(s * 0.158, 0.103, 0.006), P3(s * 0.149, 0.128, 0.0)], 0.0158, 10, 8), S.grip, part);
+        add(at(sphere(0.0158, 8, 6), P3(s * 0.149, 0.128, 0.0)), S.grip, part);
+      }
+      if (sd < 0) add(at(cylZ(0.0048, 0.0048, 0.006, 12), P3(-0.152, 0.112, 0.016)), S.red, part);           // push-to-talk
+      add(at(cylZ(0.032, 0.03, 0.01, 24), [x0, y0, PZ + 0.005]), S.rubber);                                  // the boot at the panel
     }
-    if (sd < 0) add(at(cylZ(0.0048, 0.0048, 0.006, 12), P3(-0.152, 0.112, 0.016)), S.red, part);           // push-to-talk
-    add(at(cylZ(0.032, 0.03, 0.01, 24), [x0, y0, PZ + 0.005]), S.rubber);                                  // the boot at the panel
     control({ id: part, label: sd < 0 ? '操縦輪（W / S・A / D）' : '右席の操縦輪（左と連動）', kind: 'handle', part,
-      size: [0.11, 0.07, 0.06], pos: [x0, y0, z0 + 0.004], more: [[[0.042, 0.15, 0.045], [x0 - 0.152, y0 + 0.075, z0 + 0.008]], [[0.042, 0.15, 0.045], [x0 + 0.152, y0 + 0.075, z0 + 0.008]]], act: () => info('操縦輪：W / S（↑ / ↓）で機首の上げ下げ、A / D（← / →）で傾き') });
+      size: YOKE_HIT.hub.slice(0, 3), pos: [x0 + YOKE_HIT.hub[3], y0 + YOKE_HIT.hub[4], z0 + YOKE_HIT.hub[5]],
+      more: [-1, 1].map(k => [YOKE_HIT.horn.slice(0, 3), [x0 + k * YOKE_HIT.horn[3], y0 + YOKE_HIT.horn[4], z0 + YOKE_HIT.horn[5]]]), act: () => info('操縦輪：W / S（↑ / ↓）で機首の上げ下げ、A / D（← / →）で傾き') });
   }
 
   // ============================================================ rudder pedals (left pair, right pair: they move opposite ways)
@@ -981,14 +998,16 @@ export function buildCockpit(FL, A, opts = {}) {
       for (const k of [-1, 1]) add(at(rbox(0.03, 0.025, 0.62, 0.002), [x + k * 0.15, FLOOR + 0.012, z - 0.05]), S.alu);
     }
   };
-  seat(-SEAT_X, -0.58, 0.44, true); seat(SEAT_X, -0.58, 0.44, true);
-  // the rear bench: two places, one piece
-  add(at(rbox(1.0, 0.14, 0.50, 0.04, 2), [0, -0.205, 0.48], [4 * DEG, 0, 0]), S.seatSide);
-  for (const x of [-0.25, 0.25]) add(at(rbox(0.32, 0.035, 0.42, 0.015, 2), [x, -0.13, 0.48], [4 * DEG, 0, 0]), S.seat);
-  add(at(rbox(1.0, 0.62, 0.11, 0.045, 2), [0, 0.18, 0.86], [16 * DEG, 0, 0]), S.seatSide);
-  for (const x of [-0.25, 0.25]) {
-    add(at(rbox(0.32, 0.48, 0.03, 0.014, 2), [x, 0.19, 0.80], [16 * DEG, 0, 0]), S.seat);
-    add(at(rbox(0.24, 0.14, 0.08, 0.032, 2), [x, 0.60, 0.97], [10 * DEG, 0, 0]), S.seatSide);
+  if (!fromModel('seats')) { seat(-SEAT_X, SEAT.z, SEAT.w, true); seat(SEAT_X, SEAT.z, SEAT.w, true); }     // (without the model)
+  // (without the model) the rear bench: two places, one piece
+  if (!fromModel('bench')) {
+    add(at(rbox(1.0, 0.14, 0.50, 0.04, 2), [0, -0.205, 0.48], [4 * DEG, 0, 0]), S.seatSide);
+    for (const x of [-0.25, 0.25]) add(at(rbox(0.32, 0.035, 0.42, 0.015, 2), [x, -0.13, 0.48], [4 * DEG, 0, 0]), S.seat);
+    add(at(rbox(1.0, 0.62, 0.11, 0.045, 2), [0, 0.18, 0.86], [16 * DEG, 0, 0]), S.seatSide);
+    for (const x of [-0.25, 0.25]) {
+      add(at(rbox(0.32, 0.48, 0.03, 0.014, 2), [x, 0.19, 0.80], [16 * DEG, 0, 0]), S.seat);
+      add(at(rbox(0.24, 0.14, 0.08, 0.032, 2), [x, 0.60, 0.97], [10 * DEG, 0, 0]), S.seatSide);
+    }
   }
 
   // ============================================================ between the seats: console, flap handle, trim wheel
@@ -1089,7 +1108,7 @@ export function buildCockpit(FL, A, opts = {}) {
       if (big) { g.font = `700 ${h * 0.5}px ${SANS}`; const t = { 0: 'N', 90: 'E', 180: 'S', 270: 'W' }[d] || String(d / 10); g.fillText(t, x, h * 0.68); if (x < 20) g.fillText(t, x + w, h * 0.68); }
     }
   }
-  if (!band) for (const sd of [-1, 1]) {                       // (without the model) the sun visors
+  if (!fromModel('headliner')) for (const sd of [-1, 1]) {      // (without the model) the sun visors
     add(at(rbox(0.29, 0.012, 0.14, 0.006), [sd * 0.25, roofY(sd * 0.25) - 0.03, -0.70], [-12 * DEG, 0, 0]), S.trim);
     add(at(cylX(0.005, 0.27, 8), [sd * 0.25, roofY(sd * 0.25) - 0.022, -0.77]), S.steel);
   }
@@ -1225,6 +1244,7 @@ export function buildCockpit(FL, A, opts = {}) {
   };
   const parts = {}, CASTS = new Set(['yokeL', 'yokeR', 'throttle', 'mixture', 'flap', 'thrL', 'thrR']);   // the small ones cast no shadow
   for (const [name, list] of B.moving) {
+    if (!PIV[name]) throw new Error('cockpit: no pivot for the moving part ' + name);
     const p = PIV[name], g = mergeGeometries(list); g.translate(-p[0], -p[1], -p[2]);
     const grp = new THREE.Group(); grp.name = 'cockpit-' + name; grp.position.set(p[0], p[1], p[2]);
     grp.add(mesh(g, kitMat, 'cockpit-' + name, { cast: CASTS.has(name) }));
@@ -1259,7 +1279,7 @@ export function buildCockpit(FL, A, opts = {}) {
 
   // ============================================================ the instructor's seat (right): where his hips, ankles and eyes go
   const v3 = (x, y, z) => [x + off[0], y + off[1], z + off[2]];
-  const instructorSeat = { hip: v3(SEAT_X, -0.03, -0.38), ankleL: v3(0.21, -0.25, -1.06), ankleR: v3(0.39, -0.25, -1.06), eye: v3(0.30, 0.625, -0.40), yaw: Math.PI, seatY: -0.15 + off[1] };
+  const instructorSeat = { hip: v3(...INSTRUCTOR.hip), ankleL: v3(0.21, -0.25, -1.06), ankleR: v3(0.39, -0.25, -1.06), eye: v3(0.30, 0.625, -0.40), yaw: Math.PI, seatY: INSTRUCTOR.seatY + off[1] };
 
   let triangles = 0;
   // (the Archer's view: the Seminole's own parts are hidden then; trianglesTwin the Seminole's)

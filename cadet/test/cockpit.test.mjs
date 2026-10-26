@@ -61,8 +61,6 @@ test('cockpit: builds within budget', () => {
   assert.ok(!cp.atlasFull, 'the labels fit their atlas');
   for (const n of ['cockpit-shell', 'cockpit-labels', 'cockpit-glass', 'cockpit-cowl', 'cockpit-pfd', 'cockpit-mfd', 'cockpit-yokeL', 'cockpit-yokeR',
     'cockpit-pedalsL', 'cockpit-pedalsR', 'cockpit-throttle', 'cockpit-flap', 'cockpit-trim', 'cockpit-compass-card', 'cockpit-rockers']) assert.ok(names.has(n), n);
-  // the top band made in Blender (assets/model/cockpit.glb), in the shell: every part with a surface of the cabin's
-  assert.deepEqual([...cp.band].sort(), ['header.wall', 'headliner.roof', 'pillars.wall', 'roofTrims.trim', 'seals.rubber', 'visorHw.steel', 'visors.wall']);
   // the screens: unlit, the material not tone mapped, 1024 × 640, never mipmapped
   for (const k of ['pfd', 'mfd']) {
     const m = cp.screens[k].material;
@@ -83,6 +81,8 @@ test('cockpit: builds within budget', () => {
   // another type's eye: the same cabin round it
   const tw = buildCockpit(FL, AC('pa44'), { makeCanvas: null });
   assert.deepEqual(tw.eye.toArray(), AC('pa44').eye);
+  // the parts made in Blender (assets/model/cockpit.glb): every node read (none of the Seminole's without twin)
+  assert.deepEqual([...cp.band].sort(), ['header.wall', 'headliner.roof', 'pillars.wall', 'roofTrims.trim', 'seals.rubber', 'visorHw.steel', 'visors.wall']);
   cp.dispose(); bare.dispose(); tw.dispose();
 });
 

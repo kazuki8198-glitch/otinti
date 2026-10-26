@@ -1029,6 +1029,7 @@ Start the chapter with one purpose sentence: a pilot reads the weather to answer
 - `comm.ctaf`：管制塔のない小さな空港の吹き流しと場周の向きを示すセグメントサークル（segmented circle）
 - `comm.sfb`：Orlando Sanford International Airport の真上からの航空写真（平行滑走路と 18/36 が見えるもの）
 - `comm.icao`：滑走路の停止位置標識（赤地に白文字の滑走路名の標識と、誘導路の黄色い停止線）
+- **未入手**（2026-10-26）：管制塔のライトガン・セグメントサークル・Sanford の航空写真は、使える写真が見つからなかった（ライセンスが NC など）。図で代えた：`lightGunSignals`・`ctafCalls`・`sfbLayout`。停止位置の写真は第 9 章 `comm.mistakes` に入れた。
 
 ### 章末
 

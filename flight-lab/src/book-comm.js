@@ -448,77 +448,116 @@ ${bk.sim('課目「場周経路」は、着陸許可の復唱から始まりま�
 
   // ======================================================================= radio 5
   B.add({ id: 'radio5', before: 'hf', part: 'p1', t: '管制塔のない空港・緊急・無線の故障・Sanford・FAA と ICAO の違い', en: 'Non-towered airports, emergencies, radio failure, Sanford, FAA and ICAO',
-    summary: 'CTAF での自己通報、トランスポンダーと MAYDAY・PAN-PAN、無線が使えないときの手順と灯火信号、Sanford で気をつけること、英国（ICAO）との言い方の違い、上達の練習法。',
+    summary: '管制塔のない空港での自己通報、トランスポンダーとコード、MAYDAY と PAN-PAN、無線が使えないときの手順と灯火信号、Sanford（KSFB）で気をつけること、英国（ICAO）との言い方の違い、上達の練習法。',
     secs: [
       { id: 'comm.ctaf', t: '管制塔のない空港：CTAF で自己通報', h: () => `
-<p>管制塔のない空港（または管制塔が閉まっている時間）では、全員が<b>共通の周波数（CTAF）</b>で、自分の位置と意図を知らせ合います（AIM 4-1-9）。CTAF は UNICOM・MULTICOM（122.9）・時間外の管制塔の周波数などで、チャートと Chart Supplement に載っています。</p>
-${bk.t(['いつ（AIM 4-1-9 の表）', '例'], [
-  ['出発：タキシーの前・滑走路に入る前', '“Strawn traffic, Queen Air Seven One Five Five Bravo, (場所) taxiing to runway two six, Strawn.”'],
-  ['出発：離陸・場周を離れる', '“Strawn traffic, Queen Air Seven One Five Five Bravo, departing runway two six, departing the pattern to the (方向), climbing to (高度), Strawn.”'],
-  ['到着：10 マイル手前', '“Strawn traffic, Apache Two Two Five Zulu, (位置), (高度), (descending), Strawn.”'],
-  ['到着：ダウンウインド・ベース・ファイナルに入るとき', '“Strawn traffic, Apache Two Two Five Zulu, entering downwind runway one seven, full stop, Strawn.”'],
-  ['滑走路を出たとき', '“Strawn traffic, Apache Two Two Five Zulu, clear of runway one seven, Strawn.”']])}
-<ul><li><b>空港名を最初と最後に</b>言う（近くの別の空港も同じ周波数を使うことがある）。</li>
-<li>“active runway” ではなく<b>滑走路の番号</b>を言う。</li>
-<li>“Traffic in the area, please advise” は決まった言い方ではなく、使わない（AIM 4-1-9）。</li>
-<li>10 マイル以内では CTAF を聞く。VFR の直進着陸（straight-in）は空中衝突の危険が増えるので FAA は勧めていない（AIM 4-1-9）。</li></ul>` },
-      { id: 'comm.xpdr', t: 'トランスポンダー・MAYDAY と PAN-PAN', h: () => `
-${bk.t(['コード', '意味'], [['1200', 'VFR（管制から指定がないとき）'], ['7700', '緊急'], ['7600', '無線の故障'], ['7500', 'ハイジャック（不法な干渉）']])}
-<p>AIM 6-1-2：<b>位置・燃料・天気などに不安を感じた時点で、少なくとも「緊急（urgency）」の状態</b>です。危険になってからではなく、<b>その時に助けを求める</b>。「遅れが事故を起こしてきた」と AIM は書いています。</p>
-${bk.t(['', '遭難（distress）', '緊急（urgency）'], [['意味', '重大な危険が迫り、直ちに助けが必要', '直ちにではないが、安全に関わる状態'], ['言葉', '<b>MAYDAY</b> を 3 回', '<b>PAN-PAN</b> を 3 回'], ['優先', 'すべての交信より優先。その周波数は静かにする', '遭難以外より優先']])}
-<p><b>伝える順番</b>（AIM 6-3-2。必要なものを、できればこの順に）：①MAYDAY ×3 / PAN-PAN ×3 ②相手の局 ③コールサインと機種 ④状況 ⑤天気 ⑥意図と要求 ⑦現在位置と針路（迷ったら最後に分かった位置・時刻・針路） ⑧高度 ⑨残りの燃料（分） ⑩乗っている人数 ⑪その他。</p>
-${say([['P', `Mayday, Mayday, Mayday, LAB Tower, ${CS}, Piper Archer, engine failure, landing in a field five miles north of LAB, two thousand feet, two persons on board.`, '遭難。LAB 管制塔へ。Archer 7LA、パイパー・アーチャー。エンジン故障。LAB の北 5 マイルの畑に着陸する。2,000 ft。搭乗 2 名。'],
-  ['P', `Pan-pan, Pan-pan, Pan-pan, LAB Approach, ${CS}, unsure of position, one hour fuel remaining, three thousand five hundred, request assistance.`, '緊急。現在位置が不確か。燃料 1 時間分。3,500 ft。助けを求める。']])}
-<ul><li>ふだん使っている周波数でよい。つながらなければ <b>121.5 MHz</b>（緊急周波数）や “<b>Any station</b>” への呼びかけ（AIM 6-3-1）。</li>
-<li>管制と交信中なら、もらっているコードのまま。交信できなければ <b>7700</b>（AIM 6-3-2）。</li>
-<li>できれば上昇すると、無線もレーダーも届きやすい（AIM 6-3-2）。</li>
-<li>それでも<b>最優先は操縦</b>（Aviate → Navigate → Communicate）。{ch:emg}</li></ul>
+${bk.aim('管制塔のない空港では、誰も指示を出しません。自分の位置とすることを、自分で知らせる言い方を覚えます。')}
+${FIG.ctafCalls()}
+<p>管制塔のない空港（または管制塔が閉まっている時間の空港）では、みんなが同じ周波数で、自分の位置と意図を知らせ合います。これを<b>自己通報</b>（self-announce）といい、その周波数を <b>CTAF</b>（共通交通情報周波数）といいます。返事は来ないものと考えて、まわりの機に向けて言います（AIM 4-1-9）。</p>
+<ul><li>CTAF は、空港の UNICOM（政府のものではない空港の無線局。管制はしない）の周波数や、管制塔が閉まっている時間の Tower の周波数などです。地上局のない空港では、MULTICOM の <b>122.9</b> を使います（AIM 4-1-9）。周波数は、セクショナルチャートと Chart Supplement に載っています。</li>
+<li>場周経路は、決められていなければ<b>左回り</b>です。プロペラ機の場周の高さは、ふつう<b>地上 1,000 ft</b> です。ダウンウインドの中央の横から、場周の高さで水平に入ります（AIM 4-3-3）。</li></ul>
+${bk.t(['いつ（AIM 4-1-9）', '例（架空の Lakeside 空港・滑走路 18）'], [
+  ['出発：タキシーの前・滑走路に入る前', `“Lakeside traffic, ${CS}, west ramp, taxiing to runway one eight, Lakeside.”`],
+  ['出発：離陸して場周を離れる', `“Lakeside traffic, ${CSS}, departing runway one eight, departing the pattern to the south, climbing to two thousand five hundred, Lakeside.”`],
+  ['到着：10 マイル手前', `“Lakeside traffic, ${CS}, one zero miles northeast, two thousand five hundred, descending, Lakeside.”`],
+  ['到着：ダウンウインド・ベース・ファイナルに入るとき', `“Lakeside traffic, ${CS}, entering left downwind runway one eight, full stop, Lakeside.”`],
+  ['滑走路を出たとき', `“Lakeside traffic, ${CSS}, clear of runway one eight, Lakeside.”`]])}
+<ul><li><b>空港の名前を最初と最後に</b>言います。近くの別の空港が、同じ周波数を使っていることがあるからです。</li>
+<li>“active runway” ではなく、<b>滑走路の番号</b>を言います。</li>
+<li>“Traffic in the area, please advise” は決まった言い方ではなく、使いません（AIM 4-1-9）。</li>
+<li>到着の機は 10 マイル手前から、出発の機はエンジンをかけてから 10 マイル離れるまで、CTAF を聞いて必要なことを言います（AIM 4-1-9）。</li>
+<li>VFR の直進着陸（straight-in）は、空中衝突の危険が増えるので FAA は勧めていません。直進で入る機に優先はありません（AIM 4-1-9・14 CFR 91.113）。</li></ul>
+<p class="small mute">Lakeside 空港とコールサイン「Archer Seven Lima Alpha（Archer 7LA）」は架空の練習用です。実際の周波数で使わないでください。</p>
+${bk.key('管制塔がない＝自分で言う。空港名を最初と最後に', '言う所：タキシーの前・滑走路に入る前・10 マイル手前・ダウンウインド・ベース・ファイナル・滑走路を出たとき', '“active runway” でなく番号。“Traffic in the area, please advise” は使わない')}
+${bk.q('Lakeside 空港へ向かう途中、CTAF で「Lakeside traffic, Cessna … left base runway one eight」と聞こえた。何がわかる？', '別の機が、滑走路 18 の左場周のベース（ファイナルの手前）にいることです。自分が場周に入るときは、その機の後ろに付けるよう、位置と順番を考えて見張ります。')}` },
+      { id: 'comm.xpdr', t: 'トランスポンダーとコード', h: () => `
+${bk.aim('管制のレーダーに自分の機を知らせる装置、トランスポンダーと、その決まったコードを覚えます。')}
+<p><b>トランスポンダー</b>は、地上のレーダーの問い合わせに、<b>4 けたのコード</b>と<b>高度</b>（Mode C）で答える装置です。管制官の画面に、自分の機がコードと高度つきで映ります。<b>ADS-B Out</b> は、GPS の位置などを自分から送り続ける装置です。Class B・C 空域や、その上などでは、どちらも必要です（14 CFR 91.215・91.225・{ch:law}）。</p>
+<ul><li>“<b>Squawk</b> four two seven one” と言われたら、コードを 4271 にします。</li>
+<li>“<b>Ident</b>” と言われたら、IDENT のボタンを押します。言われたときだけ押します（AIM 4-1-20）。</li></ul>
+${bk.t(['コード', '意味', '出典'], [['1200', 'VFR（管制から指定がないとき）', 'AIM 4-1-20'], ['7500', '不法な干渉（ハイジャック）', 'AIM 4-1-20'], ['7600', '無線の故障', 'AIM 6-4-2'], ['7700', '緊急（遭難・緊急のとき）', 'AIM 6-2-2']])}
+<p>コードを変えるときは、途中で 7500・7600・7700 を通らないようにします。たとえば 2700 から 7200 に変えるときは、2700 → 2200 → 7200 の順にします（7700 を通らない。AIM 4-1-20）。地上の設備で警報が出てしまうからです。</p>
+${bk.key('Squawk ＝コードを入れる。Ident ＝言われたときだけボタンを押す', 'VFR は 1200。7500・7600・7700 は特別なコード', 'コードを変える途中で 7500・7600・7700 を通らない')}` },
+      { id: 'comm.mayday', t: 'MAYDAY と PAN-PAN：助けを求める', h: () => `
+${bk.aim('困ったときに、遅れずに助けを求める言い方を覚えます。遭難（MAYDAY）と緊急（PAN-PAN）の違い、伝える順番、燃料の言い方を学びます。')}
+<p>AIM 6-1-2 は、<b>位置・燃料・天気などに不安を感じた時点で、少なくとも「緊急」（urgency）の状態</b>だとしています。危険になってからではなく、<b>そのときに助けを求めます</b>。AIM は「遅れが事故を起こし、命を奪ってきた」と書いています。</p>
+${bk.t(['', '遭難（distress）', '緊急（urgency）'], [
+  ['どんなとき', '重大で差し迫った危険があり、すぐに助けが必要（エンジン故障・火災など）', 'すぐではないが、安全に関わる状態（位置がわからない・燃料が心配など）'],
+  ['言葉', '<b>MAYDAY</b> を 3 回', '<b>PAN-PAN</b> を 3 回'],
+  ['優先', 'すべての交信より優先。その周波数のほかの局は、送信をやめる', '遭難の交信のほかは、すべてより優先']])}
+<p><b>伝える順番</b>（AIM 6-3-2。必要なものを、できればこの順に）：</p>
+<ol><li>MAYDAY ×3 か PAN-PAN ×3</li><li>呼ぶ相手の局</li><li>コールサインと機種</li><li>何が起きたか</li><li>天気</li><li>意図と要求</li><li>いまの位置と針路（迷ったら、最後にわかっていた位置・時刻と、そこからの針路）</li><li>高度</li><li><b>残りの燃料（分で言う）</b></li><li>乗っている人数</li><li>そのほか役に立つこと</li></ol>
+${say([
+  ['P', `Mayday, Mayday, Mayday, LAB Approach, ${CS}, engine failure, forced landing in a field, one zero miles northeast of LAB, two thousand five hundred, two people on board.`, '遭難。LAB 進入管制へ。Archer 7LA。エンジン故障。畑に不時着する。LAB の北東 10 マイル。2,500 ft。搭乗 2 名。', 'まず操縦（最良滑空速度・着陸する場所）、それから通報'],
+  ['P', `Pan-pan, Pan-pan, Pan-pan, LAB Approach, ${CS}, uncertain of position, request assistance, last known position one five miles northeast of LAB at one six two zero Zulu, heading two two zero, two thousand five hundred, six zero minutes of fuel remaining, two people on board.`, '緊急。位置が不確か。助けを求める。最後にわかった位置は 16:20 UTC に LAB の北東 15 マイル、そこから針路 220、2,500 ft、燃料は残り 60 分、搭乗 2 名。', '燃料は分で（AIM 6-3-2・PCG：Fuel remaining）']])}
+<ul><li>ふだん交信している周波数で言います。返事がなければ <b>121.5 MHz</b>（緊急の周波数）で、または “<b>Any station</b>” と呼びかけて言います（AIM 6-3-1）。</li>
+<li>管制と交信しているなら、もらっているコードのままにします。交信できないときは <b>7700</b> にします（AIM 6-3-2）。</li>
+<li>できれば上昇します。無線もレーダーも届きやすくなります（AIM 6-3-2）。</li>
+<li>それでも、<b>いちばん先は操縦</b>です（Aviate → Navigate → Communicate）。緊急の操作は {ch:emg} で学びます。</li></ul>
+${bk.key('不安を感じたら、その時点で助けを求める（AIM 6-1-2）', '差し迫った危険は MAYDAY、安全に関わる状態は PAN-PAN。どちらも 3 回', '燃料は分で言う。交信できなければ 7700')}
 ${bk.sim('エンジン故障の課目で、正しい遭難通報を選びます。', ['e3', '上空でのエンジン故障'])}` },
       { id: 'comm.nordo', t: '無線が使えないとき・灯火信号', h: () => `
-<p>まず故障か操作の誤りかを確かめる：音量・スケルチ・周波数（使用中の側か）・MIC の選択・ヘッドセットの差し込み・スタックマイク・もう一方の無線機（{ch:radio1}）。</p>
-${bk.t(['状況', 'すること（AIM 4-2-13・6-4・14 CFR 91.185）'], [
-  ['VFR で無線が故障', '<b>VFR のまま飛び、できるだけ早く（as soon as practicable）着陸</b>。トランスポンダー <b>7600</b>'],
-  ['管制塔のある空港へ・受信機が故障', 'Class D の地表区域の外か上で、交通の流れ（使用滑走路）を見てから、管制塔に「機種・位置・高度・着陸したい・灯火信号で管制してほしい」と送信（聞こえていなくても）。3〜5 マイルで位置を送信して場周に入り、灯火信号を見る'],
-  ['送信機が故障', '外か上で流れを見てから場周に入る。管制塔の周波数を聞き、灯火信号を探す'],
-  ['送信も受信も故障', '外か上で流れを見てから場周に入り、管制塔を見て灯火信号を受ける'],
-  ['応答のしかた', '<b>昼は翼を振る</b>（地上ではエルロンやラダーを動かす）、<b>夜は着陸灯や航空灯を点滅</b>'],
-  ['出発前に無線が故障', '直す。直せなければ管制塔に電話して、無線なしで出発してよいか許可を得る']])}
-<h3>管制塔の灯火信号（AIM 4-3-13）</h3>
-${bk.t(['信号', '地上の航空機', '飛行中の航空機'], [['緑の連続', '離陸してよい', '着陸してよい'], ['緑の点滅', 'タキシーしてよい', '着陸のために戻れ（後で緑の連続）'], ['赤の連続', '止まれ', '他機に進路を譲り、旋回を続けよ'], ['赤の点滅', '使用中の滑走路から出よ', '空港は危険、着陸するな'], ['白の点滅', '出発点に戻れ', '—'], ['赤と緑の交互', '十分に注意せよ', '十分に注意せよ']])}
-${bk.key('故障を疑ったら：7600、VFR を保つ、早めに降りる、灯火信号を見る', '「緑の点滅」は空中では「戻れ」、地上では「タキシーしてよい」')}` },
+${bk.aim('無線が使えなくなったときの順番と、管制塔の灯火信号の意味を覚えます。')}
+${FIG.lightGunSignals()}
+<p>まず、本当に故障か、操作の誤りかを確かめます：音量・スケルチ・周波数（使用中の側か）・MIC の選択・ヘッドセットの差し込み・スタックマイク・もう一方の無線機（{ch:radio1}）。</p>
+<p>それでも交信できなければ、トランスポンダーを <b>7600</b> にします（AIM 6-4-2）。VFR の天気なら、VFR のまま飛び、<b>無理のない範囲で早めに</b>（as soon as practicable）着陸します。これは IFR の機の規則（14 CFR 91.185(b)）と同じ考え方です。AIM 6-4-1 は、これは「すぐに」という意味ではなく、ふさわしくない空港に降りたり、目的地の数分手前で降りたりしなくてよい、と説明しています。何をするかは、最後は機長が判断します。</p>
+<p>Class D・C の空港には、無線が壊れても、VFR の気象条件で、管制塔が見えていて、着陸の許可（灯火信号）をもらえれば着陸できます（14 CFR 91.129(d)・91.130）。</p>
+${bk.t(['状況', 'すること（AIM 4-2-13）'], [
+  ['受信機が故障（聞こえない）', 'Class D の地表区域の外か上で、使われている滑走路と流れを見きわめる。管制塔に「機種・位置・高度・着陸したい・灯火信号で管制してほしい」と送信する。3〜5 マイルで位置を送信して場周に入り、灯火信号を見る'],
+  ['送信機が故障（話せない）', '外か上で流れを見きわめてから場周に入る。管制塔の周波数を聞き、自分への灯火信号を探す'],
+  ['送信も受信も故障', '外か上で流れを見きわめてから場周に入り、管制塔を見続けて灯火信号を受ける'],
+  ['出発の前に故障', '直す。直せなければ管制塔に電話して、無線なしで出発してよいか許可をもらう']])}
+<p><b>応え方</b>：飛行中は、昼は<b>翼を振り</b>、夜は<b>着陸灯か航空灯を点滅</b>させます（AIM 4-2-13）。地上では、昼はエルロンかラダーを動かし、夜は着陸灯か航空灯を点滅させます（AIM 4-3-13）。灯火信号の意味は、規則（14 CFR 91.125）に決められています。</p>
+${bk.key('故障を疑ったら：操作を確かめる → 7600 → VFR を保ち、適した空港に早めに着陸', '管制塔のある空港へは、外か上で流れを見てから場周に入り、灯火信号を見る', '緑の点滅は、空中では「戻れ」、地上では「タキシーしてよい」')}` },
       { id: 'comm.sfb', t: 'Sanford（KSFB）で気をつけること', h: () => `
-<p>FAA の「From the Flight Deck: Sanford」は、次のことを説明しています。</p>
-<ul><li>訓練生から旅客機まで経験の違う多くの操縦者が同じ空港を使う。</li>
-<li>9L/27R・9C/27C・9R/27L の平行滑走路と、交差する 18/36。<b>滑走路の取り違え</b>が起きやすい。</li>
-<li>Hot Spot HS1：誘導路 C と滑走路 27C の取り違え（滑走路 18 から出て誘導路 C へ右折するはずが 27C へ）。</li>
-<li>Line Up and Wait を使う。<b>滑走路の指定・誘導路・hold short の指示は、コールサイン付きで同じ送信の中で復唱</b>する。足りなければ言い直しを求められる。</li>
-<li>空域は Class C、その上に Orlando の Class B。訓練の場周は upwind・crosswind・base を約 1 マイルで。</li></ul>
-${bk.key('平行滑走路では L・C・R まで復唱し、入る前に標識と方位で確かめる', '詳しくはメニューの「Sanford の資料」と「英語交信」の練習へ')}` },
-      { id: 'comm.icao', t: 'FAA と ICAO（英国）の言い方の違い・上達の練習法', h: () => `
+${bk.aim('平行な滑走路が 3 本ある Sanford（KSFB）で、取り違えやすい所と、管制塔が求めていることを知ります。')}
+${FIG.sfbLayout()}
+<p>FAA の「From the Flight Deck: Orlando Sanford（SFB）」（2026 年 6 月 2 日更新）は、次のことを説明しています。</p>
+<ul><li>訓練生からエアラインの機長まで、経験の違う多くの操縦者が同じ空港を使います。空港の周りは鳥が多く、バードストライクに注意します。</li>
+<li>滑走路は 9L/27R・9C/27C・9R/27L の平行な 3 本（進入端の位置がずれている）と、交差する 18/36 です。<b>違う滑走路に並んでしまう</b>危険が大きい空港です。目で見る進入も、計器進入や GPS で確かめます。</li>
+<li><b>Hot Spot HS1</b>：誘導路 C と滑走路 27C の標示が取り違えられやすい場所です。滑走路 18 に着陸した機（または 9L/27R に着陸して 18 に出るよう言われた機）が、誘導路 C へ右に曲がるはずが、滑走路 27C へ右に曲がってしまう誤進入が起きています。迷ったら、止まるか進むかを管制官に確かめます。</li>
+<li>滑走路の標示は白、離着陸に使わない所（誘導路の標示など）は黄色です。</li>
+<li>9L/27R はおもな運用の滑走路、9R/27L はおもな飛行訓練の滑走路です。</li>
+<li><b>滑走路の指定・誘導路・hold short の指示は、コールサインを付けて、同じ送信の中で復唱</b>します。足りなければ、周波数にほかの機がいなくても言い直しを求められます。</li>
+<li>Line Up and Wait を使います。離陸の許可ではありません（{ch:radio3}）。</li>
+<li>訓練の場周では、upwind・crosswind・base をそれぞれ約 1 マイルで飛びます。</li>
+<li>ソロのときは、そう伝えます。LAHSO（着陸して、交差する滑走路などの手前で止まる許可）が出ることがあります。学生操縦士は LAHSO を受けないことになっているので、“unable” と伝えます（AIM 4-3-11）。</li>
+<li>管制塔の運用は 6:30〜23:00（現地時間）です。空域は Class C で、その上に Orlando の Class B があります（{ch:law}）。</li></ul>
+<p>管制塔が閉まっている時間は、CTAF で自己通報します（周波数は Chart Supplement で確かめる）。図の配置は FAA の空港データ（2026 年 10 月）によるものです。同じデータでは、滑走路の長さは 9L/27R が 11,002 ft、9C/27C が 3,578 ft、9R/27L が 5,839 ft、18/36 が 6,002 ft です。場周は、9L/27R が北側（9L は左回り・27R は右回り）、9R/27L と 9C/27C が南側（9R・9C は右回り、27L・27C は左回り）、18/36 が東側（18 は左回り・36 は右回り）です。</p>
+${bk.key('平行な滑走路では L・C・R まで復唱し、入る前に標識と方位で確かめる', 'HS1：滑走路 18 から誘導路 C へ出るとき、27C と取り違えない', '学生操縦士は LAHSO を受けない（unable）')}
+${bk.sim('課目「英語交信③：復唱と応答」の場面には、Sanford の場面も入っています。', ['k5', '英語交信③：復唱と応答'])}` },
+      { id: 'comm.icao', t: 'FAA と ICAO（英国）の言い方の違い', h: () => `
+${bk.aim('米国（FAA）と英国（ICAO に沿った言い方）で、違う言葉と同じ言葉を知っておきます。')}
 <p>公開情報では、ANA の座学はロンドンで英語で行い、航空管制通信のシミュレーションもあります。英国の無線の言い方は ICAO に沿った英国の手引き（CAA の <b>CAP 413</b>）にまとめられています。米国（FAA）の言い方と違うところがあるので、両方を知っておくと混乱しません（どちらで教わるかは<span class="tag unk">推測・要確認</span>）。代表的な例：</p>
-${bk.t(['', 'FAA（米国：AIM・PCG）', 'ICAO・英国'], [
-  ['小数点', 'point（one two one point seven）', 'decimal（AIM 4-2-8 の注記）'],
+${bk.t(['', 'FAA（米国：AIM・PCG）', 'ICAO・英国（CAP 413）'], [
+  ['小数点', 'point（one two one point seven）', 'decimal（one two one decimal seven。AIM 4-2-8 の注記にも）'],
   ['高度計規正値', 'altimeter two niner niner two（inHg）', 'QNH one zero one three（hPa）'],
   ['はい', 'affirmative', 'affirm'],
   ['「どうぞ話して」', 'go ahead', 'pass your message'],
-  ['滑走路の手前の待機', 'hold short of runway …', 'holding point（taxi to holding point runway …）'],
-  ['フライトレベルに変わる高度', '18,000 ft（全国共通）', '英国は空域ごとに決められていて、ずっと低い']])}
-<p>どちらでも共通：フォネティックアルファベット、数字の発音（niner など）、MAYDAY・PAN-PAN、line up and wait、復唱の考え方。</p>
-<h3>上達の練習法（この教材の使い方）</h3>
-<ol><li><b>型を覚える</b>：この部の表を見ずに、最初の呼び出しと復唱を言えるようにする。</li>
-<li><b>台本で声に出す</b>：「英語交信」ページの「1 回の飛行」を音声に合わせて言う。次にパイロットの言葉を隠して、自分で言ってから答えを見る。</li>
-<li><b>数字の練習</b>：同じページの「数字とアルファベット」と「聞き取り」で、聞いて書き取る。</li>
-<li><b>本物を聞く</b>：インターネットで公開されている管制交信のライブ配信（例：LiveATC.net）を、空港図とチャートを見ながら聞く。</li>
-<li><b>チェアフライング</b>：椅子に座り、1 回の飛行の交信と操作を最初から最後まで声に出す。</li></ol>` },
+  ['滑走路の手前の待機', 'hold short of runway …', 'ふつうは holding point（taxi holding point runway …）。hold short は、決まった停止位置がないときや、限界を強めるときだけ'],
+  ['滑走路に入って待つ', 'line up and wait', 'line up and wait（理由を添える）、または line up だけ。「着陸機のあとに line up」という条件つきの言い方もある'],
+  ['フライトレベルに変わる高度', '18,000 ft（全国共通）', '空域ごとに決められていて、米国よりずっと低い（英国の AIP で確かめる）']])}
+<p>どちらでも共通：フォネティックアルファベット、数字の発音（niner など）、MAYDAY・PAN-PAN、復唱の考え方。</p>
+${bk.key('point ↔ decimal、altimeter（inHg）↔ QNH（hPa）、affirmative ↔ affirm', '英国では hold short をあまり使わず、holding point を使う', 'どちらで飛ぶかで言い方を切り替える。迷ったら聞き直す')}` },
+      { id: 'comm.practice', t: '上達の練習法', h: () => `
+${bk.aim('英語の交信を、地上で、ひとりで上達させる方法をまとめます。')}
+<ol><li><b>型を覚える</b>：最初の呼び出し（{ch:radio3}）と、1 回の飛行の交信（{ch:radio4}）を、表を見ずに言えるようにします。</li>
+<li><b>声に出す</b>：台本を音声に合わせて言います。次にパイロットの言葉を隠し、自分で言ってから答えを見ます。</li>
+<li><b>数字を書き取る</b>：周波数・高度・針路・コードを聞いて、ひざ板の記号で書く練習をします（{ch:radio2}）。</li>
+<li><b>本物を聞く</b>：インターネットで公開されている管制交信のライブ配信（例：LiveATC.net）を、空港の図とチャートを見ながら聞きます。</li>
+<li><b>チェアフライング</b>：椅子に座り、1 回の飛行の交信と操作を、最初から最後まで声に出してたどります（{ch:sim}）。</li></ol>
+${bk.key('型を覚え、声に出し、数字を書く', '本物の交信を、図とチャートを見ながら聞く', '椅子に座って、1 回の飛行を声に出してたどる')}
+${bk.sim('課目「英語交信②」で 1 回の飛行の交信を通して聞き、「英語交信④」で音声の聞き取りを練習できます。', ['k4', '英語交信②：1 回の飛行'], ['k6', '英語交信④：聞き取り'])}` },
     ],
-    terms: [['CTAF', '共通の交通情報周波数', '管制塔のない空港'], ['UNICOM / MULTICOM (122.9)', '空港の地上局 / 局のない空港の周波数', ''], ['Self-announce', '自己通報', ''], ['Straight-in', '直進着陸', ''], ['Mayday / Pan-pan', '遭難 / 緊急', ''], ['121.5 MHz', '緊急周波数', ''], ['Any station', '聞いているどの局でも', ''], ['NORDO / Radio failure', '無線の故障', '7600'], ['Light gun signals', '灯火信号', ''], ['Hot spot', '事故の起きやすい場所', ''], ['QNH / Affirm / Pass your message', 'ICAO・英国の言い方', ''], ['CAP 413', '英国の無線電話の手引き', 'UK CAA']],
-    examples: ['管制塔のない空港へ 10 マイル：“Strawn traffic, Archer Seven Lima Alpha, ten miles north, three thousand five hundred, descending, will enter left downwind runway one seven, full stop, Strawn.”（AIM の型。空港名・コールサインは例）', '無線が聞こえない → 7600 → 空港の外側で使用滑走路を確かめてから場周に入り、管制塔の緑の連続光で着陸。昼は翼を振って応答。'],
-    cautions: ['CTAF の空港名（Strawn など）は AIM の例。実際の空港の周波数と手順は Chart Supplement で確認する。', '英国・ICAO の言い方は代表例のみ。詳しくは CAP 413 など各国の公式資料で。'],
+    terms: [['CTAF (Common Traffic Advisory Frequency)', '共通交通情報周波数', 'AIM 4-1-9'], ['UNICOM', '政府のものではない空港の無線局', 'PCG'], ['MULTICOM 122.9', '地上局のない空港の自己通報の周波数', 'AIM 4-1-9'], ['Self-announce', '自己通報（返事を期待しない通報）', 'AIM 4-1-9'], ['Traffic pattern altitude', '場周の高さ（プロペラ機は地上 1,000 ft）', 'AIM 4-3-3'], ['Straight-in', '直進着陸', 'AIM 4-1-9'], ['Squawk / Ident', 'コードを入れよ / IDENT を押せ', 'AIM 4-1-20'], ['ADS-B Out', '位置を自分から送る装置', '14 CFR 91.225'], ['Mayday / Pan-pan', '遭難 / 緊急', 'AIM 6-3-1'], ['Fuel remaining', '残りの燃料（分で言う）', 'AIM 6-3-2'], ['121.5 MHz', '緊急の周波数', ''], ['Any station', '聞いているどの局でも', 'AIM 6-3-1'], ['Light gun signals', '灯火信号', '14 CFR 91.125'], ['Hot spot', '衝突や滑走路への誤進入の危険が起きてきた、特に注意する場所', 'PCG'], ['LAHSO', '着陸して、交差する滑走路・誘導路などの手前で止まる許可（学生は受けない）', 'AIM 4-3-11'], ['QNH / Affirm / Pass your message', 'ICAO・英国の言い方', 'CAP 413'], ['CAP 413', '英国の無線電話の手引き', 'UK CAA']],
+    examples: ['管制塔のない空港へ 10 マイル：“Lakeside traffic, Archer Seven Lima Alpha, one zero miles northeast, two thousand five hundred, descending, Lakeside.”（AIM 4-1-9 の型。空港名とコールサインは架空）', '無線が聞こえない → 操作を確かめる → 7600 → 空港の外側で使っている滑走路を見きわめ、管制塔に「機種・位置・高度・着陸したい・灯火信号で管制してほしい」と送信 → 3〜5 マイルで位置を送信して場周に入り、管制塔の緑の連続光で着陸。昼は翼を振って応える。'],
+    cautions: ['Lakeside 空港は架空です。実際の空港の周波数と手順は、Chart Supplement で確かめてください。', 'Sanford の情報は 2026 年の FAA の資料によります。変わることがあるので、飛ぶ前に最新の資料・NOTAM・管制官の指示で確かめてください。', '英国・ICAO の言い方は代表的な例だけです。詳しくは CAP 413 など、その国の公式の資料で確かめてください。'],
     quiz: [
-      { q: '管制塔のない空港での自己通報で、AIM が勧めていないものは？', choices: ['空港名を最初と最後に言う', '滑走路の番号を言う', '“Traffic in the area, please advise” と言う', '10 マイル手前で位置を知らせる'], answer: 2, why: 'AIM 4-1-9：“Traffic in the area, please advise” は決まった言い方ではなく使わない。' },
+      { q: '管制塔のない空港での自己通報で、AIM が勧めていないものは？', choices: ['空港の名前を最初と最後に言う', '滑走路の番号を言う', '“Traffic in the area, please advise” と言う', '10 マイル手前で位置を知らせる'], answer: 2, why: 'AIM 4-1-9：“Traffic in the area, please advise” は決まった言い方ではなく、使わない。' },
       { q: 'AIM 6-1-2 が「少なくとも緊急の状態」とする時点は？', choices: ['エンジンが止まったとき', '位置・燃料・天気などに不安を感じた時点', '着陸できないとき', '管制に言われたとき'], answer: 1, why: '不安を感じた時点で助けを求める。危険になってからでは遅い。' },
-      { q: 'VFR で無線が故障した。14 CFR 91.185 の考え方は？', choices: ['IFR に切り替える', 'VFR のまま飛び、できるだけ早く着陸する', '出発地に必ず戻る', '高度を上げ続ける'], answer: 1, why: 'VFR 状態なら VFR を続けて、できるだけ早く（as soon as practicable）着陸する。トランスポンダーは 7600。' },
-      { q: '飛行中、管制塔から緑の点滅の灯火信号。意味は？', choices: ['着陸してよい', '着陸のために戻れ（後で緑の連続）', '空港は危険', '旋回を続けよ'], answer: 1, why: 'AIM 4-3-13：飛行中の緑の点滅は「戻れ」。着陸の許可は緑の連続。地上の緑の点滅は「タキシーしてよい」。' },
+      { q: 'VFR の天気で、無線がまったく使えなくなった。正しい対応は？', choices: ['7700 にして雲の中を急ぐ', '7600 にし、VFR のまま飛んで、適した空港に早めに着陸する', 'そのまま予定どおり 2 時間飛ぶ', 'トランスポンダーを切る'], answer: 1, why: 'AIM 6-4-2：無線の故障は 7600。VFR の天気なら VFR を続けて、無理のない範囲で早めに（as soon as practicable）着陸する（IFR の規則 14 CFR 91.185(b) と同じ考え方。AIM 6-4-1）。' },
+      { q: '飛行中、管制塔から緑の点滅の灯火信号。意味は？', choices: ['着陸してよい', '着陸のために戻れ（あとで緑の連続）', '空港は危険', '旋回を続けよ'], answer: 1, why: '14 CFR 91.125・AIM 4-3-13：飛行中の緑の点滅は「戻れ」。着陸の許可は緑の連続。地上の緑の点滅は「タキシーしてよい」。' },
+      { q: 'PAN-PAN の通報で、残りの燃料はどう言う？', choices: ['時間で（one hour）', '分で（six zero minutes）', 'ガロンで', 'ポンドで'], answer: 1, why: 'AIM 6-3-2 と PCG（Fuel remaining）：残りの燃料は、分で言う。' },
     ],
-    refs: [R.aim41, R.aim63, R.aim64, R.aim43, R.sfb, R.cap413, R.ana1], lessons: ['e3', 't2'] });
+    refs: [R.aim41, R.aim43, R.aim42, R.aim61, R.aim62, R.aim63, R.aim64, R.cfr91, R.sfb, R.sfbData, R.cap413, R.pcg, R.ana1], lessons: ['e3', 't2'] });
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

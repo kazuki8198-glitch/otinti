@@ -1128,6 +1128,72 @@
       s += NFN(392, 456);
       return svg(400, 466, s, '図：LAB の滑走路 36 の左回りの場周経路と、どこで何を言うか（模式図）。ダウンウインドの高さと速さは教材値。中央（midfield）で報告し、着陸の許可と順番をもらい、着陸したら停止線を越えて止まってから Ground に変えます');
     },
+    // ---------------------------------------------------------------- 第 11 章 radio5（管制塔のない空港・緊急・Sanford）
+    ctafCalls() {
+      // the left traffic pattern to runway 18 at the fictional non-towered Lakeside (radio.js r_ctaf_*), with the
+      // self-announce points of AIM 4-1-9 (TBL 4-1-9) and the pattern altitude of AIM 4-3-3
+      const rx = 150, top = 120, bot = 270, dwx = 290, by = 46, cwy = 300;
+      let s = `<rect x="${rx - 7}" y="${top}" width="14" height="${bot - top}" fill="#3a4658" stroke="${C.mut}"/>` + T(rx, top + 18, '18', { c: C.ink, b: 1, fs: 12 }) + T(rx, bot - 6, '36', { c: C.mut, fs: 12 });
+      s += T(rx - 14, 200, 'Lakeside', { c: C.ink, b: 1, a: 'end', fs: 12 }) + T(rx - 14, 216, '（架空）', { c: C.mut, a: 'end', fs: 12 });
+      // the pattern: downwind north on the east side, base west, final south
+      s += P([[rx, bot + 4], [rx, cwy], [dwx, cwy], [dwx, by], [rx, by], [rx, top - 4]], C.cy, 2.5);
+      s += A(dwx, 170, dwx, 146, C.cy, 2.5) + A(240, by, 216, by, C.cy, 2.5) + A(rx, 80, rx, 102, C.cy, 2.5) + A(220, cwy, 244, cwy, C.cy, 2.5);
+      s += T(dwx + 8, 120, 'ダウンウインド', { c: C.cy, a: 'start', fs: 12 }) + T(dwx + 8, 136, '地上 1,000 ft', { c: C.mut, a: 'start', fs: 12 });
+      s += T(220, by - 10, 'ベース', { c: C.cy, fs: 12 }) + T(rx - 10, 84, 'ファイナル', { c: C.cy, a: 'end', fs: 12 });
+      // the entry at 45° to midfield downwind, from the southeast
+      s += A(386, 286, dwx + 4, 202, C.am, 2.5) + T(392, 304, '45° で入る', { c: C.am, a: 'end', fs: 12 });
+      const pin = (x, y, n) => `<circle cx="${x}" cy="${y}" r="10" fill="${C.am}" stroke="${C.bg}" stroke-width="1.5"/>` + T(x, y + 4, n, { c: C.bg, b: 1, fs: 12 });
+      s += `<rect x="${rx + 7}" y="226" width="30" height="8" fill="#2b3544"/>`;
+      s += pin(370, 240, '1') + pin(dwx, 200, '2') + pin(250, by, '3') + pin(rx, 64, '4') + pin(rx + 24, 230, '5');
+      const L5 = ['10 マイル手前：位置・高度', 'ダウンウインドに入る', 'ベースに入る', 'ファイナルに入る', '滑走路を出た'];
+      L5.forEach((t, i) => { const x = i < 3 ? 8 : 204, y = 344 + (i % 3) * 24; s += pin(x + 10, y - 4, String(i + 1)) + T(x + 26, y, t, { c: C.ink, a: 'start', fs: 12 }); });
+      s += T(8, 422, 'どの通報も：“Lakeside traffic, …, Lakeside.”', { c: C.ink, b: 1, a: 'start', fs: 12 }) + NFN(392, 446);
+      return svg(400, 456, s, '図：管制塔のない架空の空港 Lakeside の滑走路 18 の左場周（模式図）と、CTAF で自己通報する所（AIM 4-1-9）。場周の高さはプロペラ機で地上 1,000 ft（AIM 4-3-3）。出発のときは、タキシーの前と滑走路に入る前にも言います');
+    },
+    lightGunSignals() {
+      // the tower's light gun signals and what they mean (14 CFR 91.125, AIM 4-3-13 TBL 4-3-13); how to answer (AIM 4-2-13, 4-3-13)
+      const G = '#38e07b', Rd = '#ff4d4d', W = '#f4f4f4';
+      const rows = [[[G], 0, '緑の連続', ['離陸してよい'], ['着陸してよい']], [[G], 1, '緑の点滅', ['タキシーしてよい'], ['着陸のため戻れ', '（あとで緑の連続）']],
+        [[Rd], 0, '赤の連続', ['止まれ'], ['ほかの機に譲り、', '旋回を続けよ']], [[Rd], 1, '赤の点滅', ['使っている滑走路', 'から出よ'], ['空港は危険。', '着陸するな']],
+        [[W], 1, '白の点滅', ['出発した所へ', '戻れ'], ['—']], [[Rd, G], 2, '赤と緑の交互', ['十分に注意せよ'], ['十分に注意せよ']]];
+      let s = T(140, 20, '地上の機', { c: C.mut, b: 1, a: 'start', fs: 12 }) + T(272, 20, '飛行中の機', { c: C.mut, b: 1, a: 'start', fs: 12 });
+      rows.forEach(([cs, kind, name, g, f], i) => {
+        const y = 34 + i * 44, cy = y + 18;
+        if (i % 2 === 0) s += `<rect x="4" y="${y}" width="392" height="44" fill="${C.ink}" fill-opacity="0.04"/>`;
+        if (kind === 0) s += `<circle cx="22" cy="${cy}" r="11" fill="${cs[0]}" fill-opacity="0.25"/><circle cx="22" cy="${cy}" r="7" fill="${cs[0]}"/>`;
+        else if (kind === 1) s += `<circle cx="22" cy="${cy}" r="9" fill="none" stroke="${cs[0]}" stroke-width="3" stroke-dasharray="4 3"/><circle cx="22" cy="${cy}" r="3.5" fill="${cs[0]}"/>`;
+        else s += `<path d="M22 ${cy - 8} A8 8 0 0 0 22 ${cy + 8} Z" fill="${cs[0]}"/><path d="M22 ${cy - 8} A8 8 0 0 1 22 ${cy + 8} Z" fill="${cs[1]}"/>`;
+        s += T(40, cy + 4, name, { c: C.ink, b: 1, a: 'start', fs: 12 });
+        s += TL(140, g.length > 1 ? cy - 3 : cy + 4, g, { c: C.ink, a: 'start', fs: 12, lh: 15 }) + TL(272, f.length > 1 ? cy - 3 : cy + 4, f, { c: C.ink, a: 'start', fs: 12, lh: 15 });
+      });
+      s += T(8, 316, '● は連続、破線の輪は点滅', { c: C.mut, a: 'start', fs: 12 });
+      s += `<rect x="4" y="326" width="392" height="58" rx="8" fill="${C.cy}" fill-opacity="0.10" stroke="${C.cy}"/>` + T(14, 346, '応え方', { c: C.cy, b: 1, a: 'start', fs: 12 });
+      s += T(14, 364, '飛行中：昼は翼を振る・夜は着陸灯か航空灯を点滅', { c: C.ink, a: 'start', fs: 12 }) + T(14, 380, '地上：昼はエルロンかラダーを動かす・夜は灯火を点滅', { c: C.ink, a: 'start', fs: 12 });
+      return svg(400, 392, s, '図：管制塔の灯火信号（14 CFR 91.125・AIM 4-3-13）と、応え方（AIM 4-2-13・4-3-13）。同じ色でも、地上と飛行中で意味が違います');
+    },
+    sfbLayout() {
+      // Orlando Sanford (KSFB): the runways drawn from their ends' coordinates in the FAA's airport data (effective
+      // 2026-10-01, as AirNav shows it); hot spot HS1 at runway 18 and 27C (FAA From the Flight Deck: SFB). Schematic.
+      const ends = { '9L': [46.904128, 15.357287], '27R': [46.907332, 13.296698], '9C': [46.707225, 14.728423], '27C': [46.708125, 14.058365],
+        '9R': [46.196700, 14.030183], '27L': [46.198235, 12.936635], '18': [46.997100, 14.087235], '36': [46.006722, 14.085012] };   // N 28° (min), W 081° (min)
+      const kx = 1852 * Math.cos(28.78 * DEG), ky = 1852, sc = 0.085;                                    // metres per minute, px per metre
+      const X = ([, lon]) => 30 + (15.357 - lon) * kx * sc, Y = ([lat]) => 30 + (47.0 - lat) * ky * sc;
+      const rw = (a, b, w, c, la, lb) => { const p = ends[a], q = ends[b]; return `<line x1="${X(p).toFixed(1)}" y1="${Y(p).toFixed(1)}" x2="${X(q).toFixed(1)}" y2="${Y(q).toFixed(1)}" stroke="${c}" stroke-width="${w}"/>`
+        + T(X(p) + la[0], Y(p) + la[1], a, { c: C.ink, b: 1, fs: 12, halo: 1 }) + T(X(q) + lb[0], Y(q) + lb[1], b, { c: C.ink, b: 1, fs: 12, halo: 1 }); };
+      let s = rw('9L', '27R', 6, '#5d6b80', [-14, 4], [16, 4]) + rw('9C', '27C', 4, '#5d6b80', [-14, 4], [22, 20]) + rw('9R', '27L', 4, C.gr, [8, -10], [16, 4]) + rw('18', '36', 6, '#5d6b80', [0, -10], [0, 16]);
+      s += T((X(ends['9L']) + X(ends['27R'])) / 2 - 40, Y(ends['9L']) - 10, '9L/27R：おもな運用', { c: C.mut, fs: 12, halo: 1 });
+      s += T((X(ends['9R']) + X(ends['27L'])) / 2 + 20, Y(ends['9R']) + 20, '9R/27L：おもな飛行訓練', { c: C.gr, fs: 12, halo: 1 });
+      const hx = X(ends['18']), hy = Y(ends['27C']);
+      s += `<circle cx="${hx.toFixed(1)}" cy="${hy.toFixed(1)}" r="13" fill="none" stroke="${C.rd}" stroke-width="2.5"/>` + T(hx + 16, hy - 12, 'HS1', { c: C.rd, b: 1, a: 'start', fs: 12, halo: 1 });
+      // scale and north
+      const m1000 = 1000 * sc;
+      s += L(14, 214, 14 + m1000, 214, C.ink, 2) + L(14, 209, 14, 219, C.ink, 2) + L(14 + m1000, 209, 14 + m1000, 219, C.ink, 2) + T(14 + m1000 + 6, 218, '1,000 m', { c: C.mut, a: 'start', fs: 12 });
+      s += T(388, 24, 'N ↑', { c: C.mut, b: 1, a: 'end', fs: 12 });
+      s += `<rect x="4" y="230" width="392" height="60" rx="8" fill="${C.rd}" fill-opacity="0.08" stroke="${C.rd}"/>` + T(14, 250, 'HS1（FAA）', { c: C.rd, b: 1, a: 'start', fs: 12 });
+      s += T(14, 268, '滑走路 18 から誘導路 C へ右に出るはずが、', { c: C.ink, a: 'start', fs: 12 }) + T(14, 284, '滑走路 27C へ曲がってしまう取り違え', { c: C.ink, a: 'start', fs: 12 });
+      s += NFN(392, 310);
+      return svg(400, 320, s, '図：Orlando Sanford（KSFB）の滑走路の配置（模式図。FAA の空港データの滑走路端の位置から描いたもの。誘導路は省略）。平行な 3 本の進入端がずれていて、交差する 18/36 があります。赤い円は Hot Spot HS1');
+    },
   };
 
   // ---------------------------------------------------------------- calculators inside the text

@@ -140,8 +140,8 @@ glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み
 
 | 対象 | 上限 | いま |
 |---|---|---|
-| FLIGHT LAB の HTML | 12 MiB（`flight-lab/build.mjs` の `MAX_BYTES`。ビルドが止める） | 7,212,498 B |
-| CADET の HTML | 15 MiB（`cadet/build.mjs` の `MAX_BYTES`。止めるのは `cadet/test/build.test.mjs` だけ） | 8,715,330 B |
+| FLIGHT LAB の HTML | 12 MiB（`flight-lab/build.mjs` の `MAX_BYTES`。ビルドが止める） | 7,213,402 B |
+| CADET の HTML | 15 MiB（`cadet/build.mjs` の `MAX_BYTES`。止めるのは `cadet/test/build.test.mjs` だけ） | 8,716,227 B |
 | 1 フレーム | 描画 400 回未満・90 万三角形未満（`cadet/test/browser.test.mjs`。CADET でだけ確かめている） | 画質「高」で駐機場 約 53 万三角形（`cadet/PLAN.md`） |
 | 操縦席 | 描画 40 回以下（Seminole 44）・4 万三角形以下（Archer も Seminole も）・テクスチャ 6e6 B 以下（`cadet/test/cockpit.test.mjs`） | Archer 36,918 三角形・24 回、Seminole 38,716 三角形（`cp.trianglesTwin`。残りは約 1,300）・31 回、テクスチャ 5,985,621 B（`buildCockpit` をメモリ上で動かして測った）。天井まわりの glb は 2,248 三角形・74,892 B |
 | Archer の外観 | 近距離版 24,000 未満・遠距離版 3,000 未満（登録記号を除く。`cadet/test/exterior.test.mjs`） | 20,940 / 2,468 |

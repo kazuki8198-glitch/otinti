@@ -458,16 +458,21 @@
         ['Class G（地上 1,200 ft 超・10,000 ft MSL 以上）', '5 SM', '1,000 ft 下 / 1,000 ft 上 / 1 SM 水平']]) + '<p class="bk-src">出典：14 CFR 91.155(a)。このほか、地表まで設定された管制空域（Class B・C・D・E の地表区域）では、雲高 1,000 ft 未満では雲の下を VFR で飛べず（91.155(c)）、地上視程 3 SM 以上でないと VFR で離着陸・場周経路に入れない（91.155(d)）。特別有視界飛行方式（91.157）は別。</p>';
     },
     airspace() {
-      // a schematic cross-section of US airspace (heights are typical, not universal)
-      const W = 520, H = 260, y = ft => 230 - ft / 18000 * 210;
-      let s = `<rect x="0" y="${y(18000)}" width="${W}" height="${y(14500) - y(18000) + 0}" fill="rgba(197,140,255,.12)"/>` + T(W - 8, y(18000) + 14, 'Class A：18,000 ft MSL 以上（IFR のみ）', { c: C.vi, fs: 11, a: 'end' });
-      s += `<path d="M150 ${y(10000)} L370 ${y(10000)} L370 ${y(6000)} L420 ${y(6000)} L420 ${y(3000)} L330 ${y(3000)} L330 230 L190 230 L190 ${y(3000)} L100 ${y(3000)} L100 ${y(6000)} L150 ${y(6000)} Z" fill="rgba(61,139,255,.18)" stroke="${C.bl}"/>` + T(260, y(8500), 'Class B（大空港・逆ウエディングケーキ形）', { c: C.bl, fs: 11 });
-      s += `<path d="M20 ${y(4000)} L70 ${y(4000)} L70 230 L46 230 L46 ${y(1200)} L20 ${y(1200)} Z" fill="rgba(255,90,79,.0)" stroke="${C.rd}"/>`;
-      s += `<path d="M440 ${y(4000)} L510 ${y(4000)} L510 ${y(1200)} L490 ${y(1200)} L490 230 L460 230 L460 ${y(1200)} L440 ${y(1200)} Z" fill="rgba(255,90,79,.15)" stroke="${C.rd}"/>` + T(475, y(4600), 'Class C', { c: C.rd, fs: 11, b: 1 }) + T(475, y(5600), '5 NM / 10 NM', { c: C.mut, fs: 10 });
-      s += `<rect x="20" y="${y(2500)}" width="40" height="${230 - y(2500)}" fill="rgba(95,212,255,.18)" stroke="${C.cy}" stroke-dasharray="4 3"/>` + T(40, y(3100), 'Class D', { c: C.cy, fs: 11, b: 1 });
-      s += T(260, y(14000), 'Class E（管制空域。多くは地上 700 / 1,200 ft から上）', { c: C.gr, fs: 11 }) + T(260, 222, 'Class G（非管制空域・地表付近）', { c: C.am, fs: 11 });
-      s += L(0, 230, W, 230, C.mut, 1.5);
-      return svg(W, H, s, '図：米国の空域の断面（模式図・高さは代表例）。Class B は許可（cleared into the Class Bravo）が必要、Class C・D は管制との双方向の無線交信の確立が必要（14 CFR 91.129〜91.131、AIM 3-2）');
+      // a schematic cross-section of US airspace for an airport near sea level (heights are typical; each area is drawn on the charts)
+      const W = 400, g = 252, y = ft => ft <= 4000 ? g - ft / 1000 * 20 : ft <= 10000 ? g - 80 - (ft - 4000) / 1000 * 10 : ft <= 18000 ? g - 140 - (ft - 10000) / 1000 * 7.5 : g - 200 - 22;
+      let s = `<rect x="0" y="${y(60000)}" width="${W}" height="${y(18000) - y(60000)}" fill="${C.vi}" fill-opacity="0.2"/>` + T(200, y(18000) - 8, 'Class A：18,000 ft MSL〜FL600（IFR だけ）', { c: C.ink, b: 1, fs: 12 });
+      s += `<rect x="0" y="${y(18000)}" width="${W}" height="${y(1200) - y(18000)}" fill="${C.gr}" fill-opacity="0.08"/>` + T(392, y(16000), 'Class E（管制空域）', { c: C.gr, b: 1, a: 'end', fs: 12 });
+      s += L(0, y(14500), W, y(14500), C.gr, 1, '5 4') + T(392, y(14500) + 14, '14,500 ft MSL から上は E', { c: C.gr, a: 'end', fs: 12 });
+      s += `<rect x="0" y="${y(1200)}" width="${W}" height="${g - y(1200)}" fill="${C.am}" fill-opacity="0.12"/>` + T(135, g - 6, 'Class G', { c: C.am, b: 1, fs: 12 });
+      const B = [[170, 230, 0], [140, 260, 3000], [110, 290, 6000]];
+      let pb = `M${B[2][0]} ${y(10000)} L${B[2][1]} ${y(10000)}`;
+      pb += ` L${B[2][1]} ${y(6000)} L${B[1][1]} ${y(6000)} L${B[1][1]} ${y(3000)} L${B[0][1]} ${y(3000)} L${B[0][1]} ${g} L${B[0][0]} ${g} L${B[0][0]} ${y(3000)} L${B[1][0]} ${y(3000)} L${B[1][0]} ${y(6000)} L${B[2][0]} ${y(6000)} Z`;
+      s += `<path d="${pb}" fill="${C.bl}" fill-opacity="0.3" stroke="${C.bl}" stroke-width="1.5"/>` + T(200, y(8000), 'Class B', { c: C.ink, b: 1, fs: 13 }) + T(200, y(8000) + 16, '許可が要る', { c: C.ink, fs: 12 });
+      s += `<path d="M330 ${y(4000)} L392 ${y(4000)} L392 ${y(1200)} L374 ${y(1200)} L374 ${g} L348 ${g} L348 ${y(1200)} L330 ${y(1200)} Z" fill="${C.rd}" fill-opacity="0.22" stroke="${C.rd}" stroke-width="1.5"/>` + T(361, y(4000) - 20, 'Class C', { c: C.ink, b: 1, fs: 12 }) + T(361, y(4000) - 6, '交信の確立', { c: C.ink, fs: 12 });
+      s += `<rect x="56" y="${y(2500)}" width="44" height="${g - y(2500)}" fill="${C.cy}" fill-opacity="0.18" stroke="${C.cy}" stroke-dasharray="4 3"/>` + T(78, y(2500) - 20, 'Class D', { c: C.ink, b: 1, fs: 12 }) + T(78, y(2500) - 6, '交信の確立', { c: C.ink, fs: 12 });
+      for (const [ft, t] of [[2500, '2,500'], [4000, '4,000'], [10000, '10,000'], [18000, '18,000']]) s += T(4, y(ft) + 4, t, { c: C.mut, fs: 12, a: 'start', halo: 1 });
+      s += L(0, g, W, g, C.mut, 1.5) + T(200, g + 18, '模式図・NOT FOR NAVIGATION（高さの目盛りは一様でない）', { c: C.mut, fs: 12 });
+      return svg(W, 278, s, '図：米国の空域の断面（模式図・高さは代表例）。目盛りは MSL で、Class C・D の高さ（2,500・4,000 ft）は空港の標高からの高さです（図は標高 0 ft の空港の例）。Class G は多くの場所で地上 1,200 ft（空港の近くでは 700 ft）より下です。Class B は許可、Class C・D は入る前に双方向の無線交信の確立が必要です（14 CFR 91.129〜91.131、AIM 3-2）');
     },
     xwindTable() {
       return table(['風と滑走路の角度', '横風成分', '向かい風成分', '風 15 kt なら'], [10, 20, 30, 45, 60, 90].map(a => [`${a}°`, `${Math.round(Math.sin(a * DEG) * 100)}%`, `${Math.round(Math.cos(a * DEG) * 100)}%`, `横 ${Math.round(15 * Math.sin(a * DEG))} kt・向かい ${Math.round(15 * Math.cos(a * DEG))} kt`]));
@@ -907,6 +912,60 @@
       const pt = (v, c, lab, dx) => `<circle cx="${f.X(v[0]).toFixed(1)}" cy="${f.Y(v[1]).toFixed(1)}" r="5" fill="${C.ink}" stroke="${C.bg}" stroke-width="1.5"/>` + T(f.X(v[0]) + dx, f.Y(v[1]) + 4, lab, { c, b: 1, fs: 12, a: dx < 0 ? 'end' : 'start', halo: 1 });
       s += pt([4, 1200], C.ink, '例 B：BKN012・4SM', 8) + pt([9, 4500], C.ink, '例 A', -8);
       return svg(400, 290, s, '図：天気の区分（雲高と視程）。航空気象のサイトは、LIFR を紫、IFR を赤、MVFR を青、VFR を緑で表示します（AWH 第 3 章）。この区分は、14 CFR 91.155 の VFR の最低気象条件とは別のものです');
+    },
+    // ---------------------------------------------------------------- 第 6 章 law（規則と空域）
+    preflightInfo() {
+      // 14 CFR 91.103: all available information; for every flight, runway lengths and takeoff / landing distances; for IFR or away from the airport, weather, fuel, alternatives, ATC delays
+      let s = `<rect x="8" y="8" width="384" height="236" rx="12" fill="none" stroke="${C.mut}" stroke-dasharray="5 4"/>` + T(200, 30, 'その飛行に関する、入手できるすべての情報', { c: C.ink, b: 1, fs: 13 });
+      s += `<rect x="26" y="42" width="348" height="190" rx="10" fill="${C.cy}" fill-opacity="0.06" stroke="${C.cy}"/>` + T(200, 62, 'IFR・空港の近くを離れる飛行（クロスカントリー）', { c: C.cy, b: 1, fs: 12 }) + TL(200, 80, ['天気の報告と予報・必要な燃料', '行けないときの代わり・ATC から聞いた遅れ'], { c: C.ink, fs: 12, lh: 16 });
+      s += `<rect x="62" y="116" width="276" height="104" rx="9" fill="${C.gr}" fill-opacity="0.08" stroke="${C.gr}"/>` + T(200, 136, 'すべての飛行', { c: C.gr, b: 1, fs: 12 }) + TL(200, 154, ['使う空港の滑走路の長さ', '離陸と着陸の距離（POH など）'], { c: C.ink, fs: 12, lh: 16 });
+      s += `<rect x="140" y="188" width="120" height="24" rx="12" fill="${C.am}" fill-opacity="0.2" stroke="${C.am}"/>` + T(200, 205, '機長（PIC）', { c: C.am, b: 1, fs: 12 });
+      return svg(400, 252, s, '図：飛行前の準備（14 CFR 91.103）。機長は出発前に、その飛行に関する入手できるすべての情報を知っておきます。すべての飛行で滑走路の長さと離着陸距離を、IFR や空港の近くを離れる飛行では天気・燃料・代わりの計画・ATC の遅れも確かめます');
+    },
+    vfrCloudClearance() {
+      // 91.155 "3-152": 3 SM visibility, 500 ft below, 1,000 ft above, 2,000 ft horizontal (Class C, D, and E below 10,000 ft MSL)
+      const cx = 262, cy = 124;
+      let s = `<path d="M${cx - 66} ${cy + 22} Q ${cx - 74} ${cy - 4} ${cx - 46} ${cy - 10} Q ${cx - 40} ${cy - 34} ${cx - 10} ${cy - 30} Q ${cx + 10} ${cy - 46} ${cx + 34} ${cy - 26} Q ${cx + 66} ${cy - 28} ${cx + 68} ${cy + 22} Z" fill="#dfe6ee" fill-opacity="0.85"/>`;
+      s += A(cx, cy + 26, cx, cy + 86, C.am, 2.5) + A(cx, cy + 86, cx, cy + 26, C.am, 2.5) + T(cx + 8, cy + 62, '500 ft 下', { c: C.am, b: 1, a: 'start', fs: 13, halo: 1 });
+      s += A(cx, cy - 40, cx, cy - 100, C.cy, 2.5) + A(cx, cy - 100, cx, cy - 40, C.cy, 2.5) + T(cx + 8, cy - 70, '1,000 ft 上', { c: C.cy, b: 1, a: 'start', fs: 13, halo: 1 });
+      s += planeSide(70, cy, 0.42) + A(98, cy, cx - 72, cy, C.gr, 2.5) + A(cx - 72, cy, 98, cy, C.gr, 2.5) + T((98 + cx - 72) / 2, cy - 10, '2,000 ft 横', { c: C.gr, b: 1, fs: 13, halo: 1 });
+      s += A(40, 236, 360, 236, C.vi, 2) + T(200, 228, '飛行視程 3 SM 以上', { c: C.vi, b: 1, fs: 13 });
+      s += T(12, 22, '3-152（Class C・D・10,000 ft MSL 未満の E）', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      s += TL(12, 262, ['Class B は 3 SM・雲に入らない', 'Class G（地上 1,200 ft 以下・昼）は 1 SM・雲に入らない'], { c: C.mut, a: 'start', fs: 12, lh: 16 });
+      return svg(400, 290, s, '図：VFR で守る雲からの距離と視程（14 CFR 91.155）。Class C・D と 10,000 ft MSL 未満の Class E では、視程 3 SM、雲の下 500 ft・上 1,000 ft・横 2,000 ft（覚え方 3-152）');
+    },
+    specialUseAirspace() {
+      // a made-up area seen from above: special use airspace and a TFR (names and places are invented; NOT FOR NAVIGATION)
+      let s = `<rect x="0" y="0" width="400" height="200" fill="#10202f"/><path d="M300 0 Q 290 60 310 110 Q 330 160 316 200 L400 200 L400 0 Z" fill="#163a5e"/>` + T(372, 20, '海', { c: C.cy, fs: 12 });
+      s += L(330, 0, 344, 200, C.cy, 1, '4 4') + T(346, 152, '3 NM', { c: C.cy, fs: 12, a: 'start' });
+      s += `<rect x="350" y="40" width="44" height="90" fill="${C.bl}" fill-opacity="0.25" stroke="${C.bl}"/>` + T(372, 90, 'W', { c: C.ink, b: 1, fs: 13 });
+      s += `<rect x="40" y="24" width="96" height="66" fill="${C.bl}" fill-opacity="0.25" stroke="${C.bl}" stroke-width="2"/>` + T(88, 62, 'R-LAB1', { c: C.ink, b: 1, fs: 13 });
+      s += `<path d="M150 110 L260 100 L280 170 L170 186 Z" fill="${C.vi}" fill-opacity="0.15" stroke="${C.vi}" stroke-width="2"/>` + T(215, 148, 'LAB MOA', { c: C.ink, b: 1, fs: 13 });
+      s += `<circle cx="210" cy="44" r="28" fill="${C.am}" fill-opacity="0.15" stroke="${C.am}" stroke-width="2"/>` + T(210, 48, 'A-LAB3', { c: C.ink, b: 1, fs: 12 });
+      s += `<circle cx="70" cy="150" r="30" fill="${C.rd}" fill-opacity="0.18" stroke="${C.rd}" stroke-width="2" stroke-dasharray="6 3"/>` + T(70, 154, 'TFR', { c: C.ink, b: 1, fs: 13 });
+      s += `<circle cx="268" cy="62" r="5" fill="none" stroke="${C.ink}" stroke-width="2"/>` + T(278, 66, 'LAB', { c: C.ink, fs: 12, a: 'start' });
+      const leg = [['R', '制限空域（Restricted）：使っている時間は、許可なしに入らない', C.bl], ['MOA', '軍の訓練空域：入れるが、ATC に交通情報を求める', C.vi], ['A', '警戒空域（Alert）：訓練機などが多い。注意して飛ぶ', C.am], ['W', '警告空域（Warning）：海岸から 3 NM より沖の危険な空域', C.bl], ['TFR', '一時的な飛行制限：NOTAM で知らされる。飛ぶ前に必ず確かめる', C.rd]];
+      leg.forEach(([k, t, c], i) => { s += T(12, 222 + i * 17, k, { c, b: 1, a: 'start', fs: 12 }) + T(50, 222 + i * 17, t, { c: C.ink, a: 'start', fs: 12 }); });
+      s += T(8, 194, '模式図・NOT FOR NAVIGATION', { c: C.mut, a: 'start', fs: 12, halo: 1 });
+      return svg(400, 306, s, '図：特別な空域と TFR（上から見た模式図。名前と位置は架空で、実際の地図とは違います）。運用中の制限空域や TFR には、許可なしに入りません（AIM 3-4・3-5）');
+    },
+    rightOfWay() {
+      // 91.113: converging (the one on the right has the right-of-way), head-on (both turn right), overtaking (pass on the right); the order of categories (amended 2025)
+      let s = '';
+      const box = (x, t1, t2) => `<rect x="${x}" y="8" width="124" height="150" rx="8" fill="none" stroke="${C.grid}"/>` + T(x + 62, 26, t1, { c: C.ink, b: 1, fs: 12 }) + T(x + 62, 150, t2, { c: C.mut, fs: 12 });
+      s += box(4, '① 交わる', '右の機が優先');
+      s += planeTop(50, 104, 0.28, { rot: 0 }) + planeTop(104, 60, 0.28, { rot: 270 }) + `<path d="M50 86 Q 60 72 92 76 Q 122 78 130 56" stroke="${C.gr}" stroke-width="2" fill="none"/>` + T(104, 88, '相手', { c: C.am, fs: 12 }) + T(22, 130, '自分', { c: C.cy, fs: 12 });
+      s += box(138, '② 正面', '両方とも右へ');
+      s += planeTop(200, 120, 0.26, { rot: 0 }) + planeTop(200, 50, 0.26, { rot: 180 }) + `<path d="M200 104 Q 204 92 222 86" stroke="${C.gr}" stroke-width="2" fill="none"/><path d="M200 66 Q 196 78 178 84" stroke="${C.gr}" stroke-width="2" fill="none"/>`;
+      s += box(272, '③ 追い越し', '右へ離れて抜く');
+      s += planeTop(334, 64, 0.26, { rot: 0 }) + planeTop(334, 126, 0.26, { rot: 0 }) + `<path d="M334 110 Q 360 92 358 66" stroke="${C.gr}" stroke-width="2" fill="none"/>` + T(306, 66, '前', { c: C.am, fs: 12 });
+      s += T(8, 184, '優先の順（左ほど優先・91.113(c)(d)）', { c: C.ink, b: 1, a: 'start', fs: 12 });
+      [['遭難機', '気球', 'グライダー'], ['曳航・給油中の機', '飛行船', 'ほかの動力機']].forEach((row, r) => {
+        let x = 8; const y = 194 + r * 32;
+        row.forEach((t, i) => { const w = t.length * 12 + 14, c = r === 0 && i === 0 ? C.rd : C.cy; s += `<rect x="${x}" y="${y}" width="${w}" height="24" rx="12" fill="${c}" fill-opacity="0.15" stroke="${c}"/>` + T(x + w / 2, y + 16, t, { c: C.ink, fs: 12 }); x += w; if (r === 0 || i < 2) { s += T(x + 9, y + 16, '＞', { c: C.mut, fs: 12 }); } x += 18; });
+      });
+      s += TL(8, 266, ['着陸の最終進入中・着陸中の機が優先。2 機が着陸に向かうときは', '低いほうが優先（ただし、最終進入中の機の前に割り込まない）'], { c: C.ink, a: 'start', fs: 12, lh: 16 });
+      return svg(400, 292, s, '図：衝突を避ける優先の決まり（14 CFR 91.113）。優先権のある機の上・下・前を、十分に離れずに横切ってはいけません。優先権があっても、見張りの義務はみんなにあります');
     },
   };
 

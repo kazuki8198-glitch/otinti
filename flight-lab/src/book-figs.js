@@ -1293,6 +1293,55 @@
       s += T(8, 336, '落ちがゼロも異常（スイッチや配線の故障の疑い）', { c: C.ink, a: 'start', fs: 12 });
       return svg(400, 346, s, '図：ランナップのマグネトーの点検（2,000 rpm）。公開されている訓練校の Archer III チェックリストの限度は、落ちが最大 175 rpm、左右の差が 50 rpm 以内。棒の長さは回転数（rpm）');
     },
+    // ---------------------------------------------------------------- 第 14 章 ops（基本操縦）
+    attitudePower() {
+      // one airplane, four attitude + power pairs → four performances: the course Archer's steady states at 3,000 ft from
+      // the flight model (FL.physics.steadyState), so the book shows what the lessons fly
+      const PH = FL.physics, s = PH.newState({ aircraft: 'pa28' }), v = ac('pa28').v;
+      const at = (name, kt, fpm, o, c) => ({ name, kt, c, full: o.pwr === 'full', ...PH.steadyState(s, kt, fpm, { altFt: 3000, ...o }) });
+      const st = [at('巡航', v.cruise, 0, {}, C.cy), at('上昇（Vy）', v.y, null, { pwr: 'full' }, C.gr), at('降下', 90, -500, {}, C.am), at('進入（フラップ 40°）', v.appr, -370, { flaps: v.apprFlaps }, C.vi)];
+      let s1 = '';
+      st.forEach((r, i) => {
+        const x = 4 + (i % 2) * 198, y = 6 + Math.floor(i / 2) * 176, cx = x + 96, cy = y + 76;
+        s1 += `<rect x="${x}" y="${y}" width="194" height="168" rx="8" fill="${r.c}" fill-opacity="0.08" stroke="${r.c}"/>` + T(x + 10, y + 20, r.name, { c: r.c, b: 1, a: 'start', fs: 13 });
+        s1 += L(x + 8, cy, x + 186, cy, C.mut, 1, '4 4') + planeSide(cx, cy, 0.62, { pitch: r.pitch * 2, flap: i === 3 ? 40 : 0, gear: true });
+        const pitch = `${r.pitch >= 0 ? '+' : '−'}${Math.abs(r.pitch).toFixed(1)}°`, pwr = r.full ? '全開' : `約 ${Math.round(r.thr * 20) * 5}%`;
+        const fpm = Math.abs(r.fpm) < 50 ? '水平' : `${r.fpm > 0 ? '+' : '−'}${Math.round(Math.abs(r.fpm) / 10) * 10} fpm`;
+        s1 += TL(x + 10, y + 108, [`ピッチ ${pitch}`, `スロットル ${pwr}・約 ${(Math.round(r.rpm / 50) * 50).toLocaleString('en-US')} rpm`, `→ ${r.kt} kt・${fpm}`], { c: C.ink, a: 'start', fs: 12, lh: 17 });
+      });
+      return svg(400, 360, s1, '図：同じ Archer でも、姿勢（ピッチ）と出力の組み合わせで、速度と昇降率が決まります（この教材のフライトモデルの値・3,000 ft。スロットルの % はレバーの開きで、エンジンの出力の % ではありません。絵の傾きは見やすく 2 倍にしてあります）');
+    },
+    stallRecovery() {
+      // the stall recovery of AFH 3C chapter 5 (Figure 5-10) as used in a single-engine trainer without an autopilot: 4 of the 6 steps
+      const box = (x, y, n, head, lines, c) => `<rect x="${x}" y="${y}" width="190" height="96" rx="8" fill="${c}" fill-opacity="0.12" stroke="${c}" stroke-width="1.5"/>`
+        + `<circle cx="${x + 20}" cy="${y + 22}" r="12" fill="${c}"/>` + T(x + 20, y + 27, n, { c: C.bg, b: 1, fs: 13 }) + T(x + 40, y + 27, head, { c, b: 1, a: 'start', fs: 13 }) + TL(x + 12, y + 52, lines, { c: C.ink, a: 'start', fs: 12, lh: 16 });
+      let s = box(4, 6, '1', '迎え角を減らす', ['機首を下げる。', '失速警報が止まるまで', '（いちばん大切）'], C.rd);
+      s += box(206, 6, '2', '翼を水平に', ['迎え角を減らしてから。', 'ボールはラダーで中央'], C.am);
+      s += box(4, 118, '3', '出力', ['必要なだけ足す。機首の', '上がりは操縦輪、左への', '向きはラダーで押さえる'], C.cy);
+      s += box(206, 118, '4', '元の経路へ', ['なめらかに戻す。', '急に引くと二次失速'], C.gr);
+      s += A(196, 54, 204, 54, C.ink, 2.5) + A(300, 104, 110, 116, C.ink, 2) + A(196, 166, 204, 166, C.ink, 2.5);
+      s += T(200, 236, '自動操縦のない単発の練習機の場合（AFH の 6 段階のうち 4 つ）', { c: C.mut, fs: 12 });
+      return svg(400, 246, s, '図：失速からの回復の順番（AFH 第 5 章の図 5-10 をもとにしたもの）。最初はいつも、機首を下げて迎え角を減らすことです');
+    },
+    turnsAroundPoint() {
+      // turns around a point in a 10 kt wind, the AFH 3C chapter 7 example: 90 kt airspeed, 890 ft radius, 45° bank downwind;
+      // the bank at the other points from tan φ = GS² / (11.26 · r) (r in ft, GS in kt)
+      const tas = 90, w = 10, r = 890, bank = gs => Math.atan(gs * gs / (11.26 * r)) / DEG;
+      const cx = 200, cy = 190, R = 84;
+      let s = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${C.cy}" stroke-width="2.5"/>` + `<circle cx="${cx}" cy="${cy}" r="5" fill="${C.am}"/>` + T(cx, cy + 20, '目印の点', { c: C.am, fs: 12 });
+      s += ARC(cx, cy, R, 300, 330, C.cy, 2.5) + ARC(cx, cy, R, 120, 150, C.cy, 2.5);
+      // the wind from the left (west), the airplane going round clockwise
+      s += A(14, 40, 74, 40, C.mut, 3) + T(14, 26, `風 ${w} kt`, { c: C.mut, b: 1, a: 'start', fs: 12 });
+      const pts = [[0, '風下へ（追い風）', tas + w], [90, '横風', Math.sqrt(tas * tas - w * w)], [180, '風上へ（向かい風）', tas - w], [270, '横風', Math.sqrt(tas * tas - w * w)]];
+      // positions on the circle: heading east (downwind) at the north point when flying clockwise
+      const pos = [[cx, cy - R, 'middle', -16], [cx + R, cy, 'start', 0], [cx, cy + R, 'middle', 30], [cx - R, cy, 'end', 0]];
+      pts.forEach(([, t, gs], i) => {
+        const [x, y, a, dy] = pos[i], b = Math.round(bank(gs)), xo = a === 'start' ? 12 : a === 'end' ? -12 : 0;
+        s += `<circle cx="${x}" cy="${y}" r="5" fill="${C.ink}"/>` + TL(x + xo, y + dy - (a === 'middle' && dy < 0 ? 16 : a === 'middle' ? 0 : 15), a === 'middle' ? [t, `対地 ${Math.round(gs)} kt・バンク 約 ${b}°`] : [t, `対地 ${Math.round(gs)} kt`, `バンク 約 ${b}°`], { c: i === 0 ? C.rd : i === 2 ? C.gr : C.ink, a, fs: 12, lh: 15 });
+      });
+      s += T(200, 366, `速度 ${tas} kt・半径 ${r} ft（AFH 第 7 章の例）`, { c: C.mut, fs: 12 });
+      return svg(400, 376, s, '図：風の中で 1 点の周りを同じ半径で回る（上から見た模式図。時計回り）。対地速度が速い風下でバンクがいちばん深く、風上でいちばん浅くなります。バンクの値は、AFH 第 7 章の例と同じ条件で計算したもの');
+    },
   };
 
   // ---------------------------------------------------------------- calculators inside the text

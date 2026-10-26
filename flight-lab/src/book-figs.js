@@ -408,27 +408,46 @@
       return svg(400, 300, s, '図：右回りの標準待機経路と 3 つの入り方（どの方向からフィックスに来たかで決まる。AIM 5-3-8）');
     },
     clouds() {
-      const band = (y, hh, lab, col) => `<rect x="60" y="${y}" width="400" height="${hh}" fill="${col}"/>` + T(56, y + hh / 2 + 4, lab, { c: C.mut, fs: 10, a: 'end' });
-      let s = band(20, 80, '上層', 'rgba(197,140,255,.07)') + band(100, 70, '中層', 'rgba(95,212,255,.07)') + band(170, 90, '下層', 'rgba(95,212,110,.07)');
-      const c = (x, y, lab, sub) => T(x, y, lab, { c: C.ink, fs: 12, b: 1 }) + T(x, y + 14, sub, { c: C.mut, fs: 10 });
-      s += c(120, 50, 'Cirrus（CI）', '巻雲') + c(230, 50, 'Cirrocumulus', '巻積雲') + c(350, 50, 'Cirrostratus', '巻層雲');
-      s += c(140, 130, 'Altocumulus（AC）', '高積雲') + c(300, 130, 'Altostratus', '高層雲');
-      s += c(110, 205, 'Stratocumulus（SC）', '層積雲') + c(210, 222, 'Stratus（ST）', '層雲') + c(300, 205, 'Cumulus（CU）', '積雲') + c(380, 228, 'Nimbostratus', '乱層雲');
-      s += `<path d="M 440 255 L 440 60 Q 410 30 480 30" stroke="${C.rd}" stroke-width="2" fill="none"/>` + T(478, 70, 'Cumulonimbus（CB）', { c: C.rd, fs: 12, b: 1, a: 'end' }) + T(478, 84, '雷・乱気流・ひょう・着氷', { c: C.rd, fs: 10, a: 'end' });
-      return svg(490, 270, s, '図：主な雲と高さの目安（METAR では CB・TCU だけが特記される）。操縦士が最も警戒するのは積乱雲（CB）と、視界を奪う層雲・霧');
+      // cloud levels (AWH Table 12-3, temperate regions) and the main cloud types; CB reaches through all levels
+      const Y = ft => 250 - ft / 40000 * 220;
+      let s = '';
+      for (const v of [0, 10000, 20000, 30000, 40000]) s += L(44, Y(v), 300, Y(v), C.grid, 1) + T(40, Y(v) + 4, (v / 1000) + 'k', { c: C.mut, fs: 12, a: 'end' });
+      const bar = (x, a, b, c) => `<rect x="${x}" y="${Y(b)}" width="12" height="${Y(a) - Y(b)}" rx="3" fill="${c}" fill-opacity="0.55"/>`;
+      s += bar(52, 0, 6500, C.gr) + bar(68, 6500, 23000, C.cy) + bar(84, 16500, 40000, C.vi);
+      const name = (y, t, c) => T(108, y, t, { c, a: 'start', fs: 12 });
+      s += name(Y(33000), '巻雲（CI）・巻層雲（CS）', C.vi) + name(Y(29000), '巻積雲（CC）', C.vi);
+      s += name(Y(15000), '高積雲（AC）・高層雲（AS）', C.cy) + name(Y(11000), '乱層雲（NS）：雨や雪を降らせる厚い雲', C.cy);
+      s += name(Y(5200), '層積雲（SC）・積雲（CU）', C.gr) + name(Y(1700), '層雲（ST）', C.gr);
+      s += `<path d="M318 ${Y(1500)} Q 312 ${Y(9000)} 330 ${Y(15000)} Q 326 ${Y(26000)} 340 ${Y(33000)} L312 ${Y(36500)} L398 ${Y(37500)} L372 ${Y(33000)} Q 384 ${Y(24000)} 376 ${Y(14000)} Q 392 ${Y(7000)} 382 ${Y(1500)} Z" fill="${C.rd}" fill-opacity="0.22" stroke="${C.rd}"/>`;
+      s += TL(350, Y(20000), ['積乱雲', '（CB）'], { c: C.rd, b: 1, fs: 12, lh: 15 }) + T(350, Y(0) + 16, '雷雨', { c: C.rd, fs: 12 });
+      s += `<rect x="52" y="266" width="10" height="10" fill="${C.gr}" fill-opacity="0.55"/>` + T(66, 275, '下層 0〜6,500 ft', { c: C.ink, a: 'start', fs: 12 }) + `<rect x="190" y="266" width="10" height="10" fill="${C.cy}" fill-opacity="0.55"/>` + T(204, 275, '中層 6,500〜23,000 ft', { c: C.ink, a: 'start', fs: 12 });
+      s += `<rect x="52" y="284" width="10" height="10" fill="${C.vi}" fill-opacity="0.55"/>` + T(66, 293, '上層 16,500〜40,000 ft（温帯の目安・AWH）', { c: C.ink, a: 'start', fs: 12 });
+      return svg(400, 302, s, '図：雲の高さの目安（地上からの雲の底の高さ）と主な雲。積乱雲（CB）は下層から上層までのびます。METAR では、雲の種類のうち CB と TCU（そびえ立つ積雲）だけが書かれます');
     },
     seaBreeze() {
-      let s = `<rect x="0" y="150" width="200" height="40" fill="rgba(61,139,255,.35)"/><rect x="200" y="150" width="240" height="40" fill="rgba(95,212,110,.25)"/>` + T(100, 176, '海（大西洋・メキシコ湾）', { c: C.ink, fs: 11 }) + T(320, 176, '陸（午後に熱せられる）', { c: C.ink, fs: 11 });
-      s += A(60, 135, 240, 135, C.cy, 3) + T(150, 126, '海風（sea breeze）', { c: C.cy, fs: 11 }) + A(320, 130, 320, 40, C.am, 3) + A(240, 30, 60, 30, C.mut, 2);
-      s += `<path d="M 300 60 Q 310 20 340 30 Q 370 10 380 40 Q 400 50 380 70 L 300 70 Z" fill="rgba(223,230,238,.35)" stroke="${C.ink}"/>` + T(345, 92, '上昇気流 → 積乱雲', { c: C.am, fs: 11 });
-      return svg(440, 200, s, '図：海風と午後の積乱雲。フロリダ半島では夏の午後、両側の海から来る海風がぶつかる内陸で雷雨が発達しやすい（Aviation Weather Handbook の局地風の説明を図にした教材の模式図）');
+      // a west–east cross-section of the Florida peninsula: sea breezes from both coasts meet inland and lift the air (AWH 10.6.1)
+      let s = `<rect x="0" y="190" width="90" height="26" fill="#1d4a7a"/><rect x="310" y="190" width="90" height="26" fill="#1d4a7a"/><rect x="90" y="190" width="220" height="26" fill="#3a3326"/>`;
+      s += T(45, 236, 'メキシコ湾（西）', { c: C.cy, fs: 12 }) + T(355, 236, '大西洋（東）', { c: C.cy, fs: 12 }) + T(200, 236, '陸（オーランドなど内陸）', { c: C.ink, fs: 12 });
+      s += A(40, 176, 170, 176, C.cy, 3) + A(360, 176, 230, 176, C.cy, 3) + T(105, 166, '海風', { c: C.cy, b: 1, fs: 12 }) + T(295, 166, '海風', { c: C.cy, b: 1, fs: 12 });
+      s += A(200, 170, 200, 92, C.am, 3) + T(214, 150, '上昇', { c: C.am, b: 1, a: 'start', fs: 12 });
+      s += `<path d="M150 96 Q 146 70 166 62 Q 164 34 186 28 L176 20 L232 18 L226 28 Q 248 36 244 62 Q 258 74 250 96 Z" fill="#dfe6ee" fill-opacity="0.85"/>`;
+      s += A(150, 40, 60, 60, C.mut, 1.8) + A(250, 40, 340, 60, C.mut, 1.8) + L(50, 66, 50, 150, C.mut, 1.5, '4 3') + L(350, 66, 350, 150, C.mut, 1.5, '4 3');
+      s += T(200, 120, '昼前〜午後に積乱雲', { c: C.rd, b: 1, fs: 12, halo: 1 });
+      s += T(200, 260, '晴れた夏の日：陸が先に温まり、両側の海から海風が入る', { c: C.ink, fs: 12 });
+      return svg(400, 270, s, '図：フロリダ半島の東西の断面（模式図）。夏の晴れた日、両側の海から来た海風が内陸でぶつかり、空気が持ち上げられて、昼前から午後に雷雨が発達しやすくなります（AWH 10.6.1）');
     },
     atm() {
-      const W = 400, H = 240, f = frame(W, H, -60, 20, 0, 40, [-60, -40, -20, 0, 20], [0, 10, 20, 30, 40], '気温（℃）', '高度（1,000 ft）');
-      let s = f.s + P([[f.X(15), f.Y(0)], [f.X(-56.5), f.Y(36.09)], [f.X(-56.5), f.Y(40)]], C.cy, 2.5);
-      s += T(f.X(-8), f.Y(14), '1,000 ft あたり約 −2℃', { c: C.cy, fs: 11, a: 'start' }) + T(f.X(-8), f.Y(11), '気圧は 1,000 ft あたり約 1 inHg 下がる', { c: C.mut, fs: 10, a: 'start' });
-      s += L(f.X(-60), f.Y(36.09), f.X(20), f.Y(36.09), C.am, 1, '4 3') + T(f.X(-20), f.Y(37.6), '対流圏界面（ISA 36,089 ft）', { c: C.am, fs: 10 });
-      return svg(W, H, s, '図：国際標準大気（ISA）。海面 15℃・29.92 inHg（1013.25 hPa）、上に行くほど気温も気圧も下がる');
+      // the International Standard Atmosphere: temperature against height, with the ISA pressure at a few heights (computed)
+      const W = 400, H = 260, f = frame(W, H, -60, 20, 0, 40, [-60, -40, -20, 0, 20], [0, 10, 20, 30, 40], '気温（℃）', '高度（1,000 ft）');
+      const isaT = k => k < 36.089 ? 15 - 1.98 * k : -56.5, isaP = k => 29.92 * Math.pow(1 - 6.8756e-6 * k * 1000, 5.2559);
+      let s = f.s + P([[f.X(15), f.Y(0)], [f.X(-56.5), f.Y(36.089)], [f.X(-56.5), f.Y(40)]], C.cy, 2.5);
+      for (const [k, lab] of [[0, '海面'], [5, '5,000 ft'], [10, '10,000 ft'], [18, '18,000 ft']]) {
+        const x = f.X(isaT(k)), y = f.Y(k);
+        s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${C.cy}"/>` + T(x - 8, y - (k ? 0 : 6), `${lab}：${String(Math.round(isaT(k))).replace('-', '−')}℃・${isaP(k).toFixed(k ? 1 : 2)} inHg`, { c: C.ink, a: 'end', fs: 12, halo: 1 });
+      }
+      s += L(f.X(-60), f.Y(36.089), f.X(20), f.Y(36.089), C.am, 1, '4 3') + T(f.X(-50), f.Y(36.089) - 6, '対流圏界面（約 36,000 ft）：−56.5℃', { c: C.am, a: 'start', fs: 12, halo: 1 });
+      s += T(210, 62, '気温：1,000 ft で約 2℃ 下がる', { c: C.cy, a: 'start', fs: 12, halo: 1 }) + TL(210, 80, ['気圧：低い所では 1,000 ft で', '約 1 inHg 下がる'], { c: C.mut, a: 'start', fs: 12, halo: 1, lh: 16 });
+      return svg(W, H, s, '図：国際標準大気（ISA）。海面で 15℃・29.92 inHg（1013.25 hPa）。上へ行くほど気温も気圧も下がります（数値は ISA の式で計算）');
     },
     vfrMinima() {
       return table(['空域', '飛行視程', '雲からの距離（下 / 上 / 水平）'], [
@@ -750,6 +769,144 @@
       s += A(f.X(a.cg) - 6, f.Y(a.w), f.X(b.cg) + 8, f.Y(b.w), C.gr, 2) + A(f.X(b.cg), f.Y(b.w) + 7, f.X(c.cg) + 1, f.Y(c.w) - 9, C.gr, 2);
       s += pt(a, C.rd) + pt(b, C.gr) + pt(c, C.gr) + T(f.X(a.cg) - 2, f.Y(a.w) - 12, '①', { c: C.rd, b: 1, fs: 13, halo: 1 }) + T(f.X(b.cg) - 12, f.Y(b.w) - 8, '②', { c: C.gr, b: 1, fs: 13, halo: 1 }) + T(f.X(c.cg) - 14, f.Y(c.w) + 16, '③', { c: C.gr, b: 1, fs: 13, halo: 1 });
       return svg(400, 280, s, `図：Archer III の重量と重心の許容範囲（POH の値）と、計算例の 3 つの点。①後ろすぎ（${a.cg.toFixed(1)} in）→ ②後席の 1 人を前席へ（${b.cg.toFixed(1)} in）→ ③燃料を 20 gal 使った着陸時（${c.cg.toFixed(1)} in）`);
+    },
+    // ---------------------------------------------------------------- 第 5 章 wx（航空気象）
+    altimeterHighLow() {
+      // flying from high to low pressure with the altimeter setting not updated: the airplane follows a pressure level that slopes down
+      let s = `<rect x="0" y="214" width="400" height="22" fill="#3a3326"/>` + T(70, 30, '高気圧（High）', { c: C.am, b: 1, fs: 13 }) + T(330, 30, '低気圧（Low）', { c: C.cy, b: 1, fs: 13 });
+      s += L(20, 64, 380, 64, C.gr, 1.5, '6 4') + T(380, 56, '本当の 3,000 ft', { c: C.gr, a: 'end', fs: 12 });
+      s += P([[20, 64], [380, 132]], C.am, 3) + T(200, 116, '高度計が 3,000 ft を示す気圧の面', { c: C.am, fs: 12, rot: 10.7, halo: 1 });
+      s += planeSide(52, 64, 0.32) + planeSide(350, 126, 0.32, { pitch: -4 });
+      s += A(350, 72, 350, 112, C.rd, 2.5) + TL(340, 160, ['本当はこれだけ', '低くなっている'], { c: C.rd, b: 1, a: 'end', fs: 12 });
+      s += `<path d="M300 214 L318 168 L336 214 Z" fill="#6b5a44"/>` + T(200, 196, '高度計の規正値を直さないで飛ぶと…', { c: C.ink, fs: 12 });
+      s += T(200, 254, 'High to low, look out below（暖かい所から寒い所へも同じ）', { c: C.ink, b: 1, fs: 12 });
+      return svg(400, 264, s, '図：気圧の高い所から低い所へ、規正値を直さないまま飛ぶと、高度計は同じ値でも本当の高さは下がっていきます（模式図）。寒い所へ飛んだときも、高度計は実際より高く表示します');
+    },
+    cloudBase() {
+      // a lifted parcel: temperature −3 °C / 1,000 ft, dewpoint −0.5 °C / 1,000 ft (AWH 12.2) → they meet at spread ÷ 2.5 × 1,000 ft
+      const t0 = 32, d0 = 23, base = (t0 - d0) / 2.5, f = frame(400, 270, 15, 35, 0, 5, [15, 20, 25, 30, 35], [0, 1, 2, 3, 4, 5], '温度（℃）', '高さ（1,000 ft）', { l: 50, r: 14, t: 16, b: 40 });
+      const tb = t0 - 3 * base;
+      let s = f.s + P([[f.X(t0), f.Y(0)], [f.X(tb), f.Y(base)]], C.am, 3) + P([[f.X(d0), f.Y(0)], [f.X(tb), f.Y(base)]], C.cy, 3);
+      s += L(f.X(15), f.Y(base), f.X(tb), f.Y(base), C.ink, 1, '5 4') + `<circle cx="${f.X(tb).toFixed(1)}" cy="${f.Y(base).toFixed(1)}" r="5" fill="${C.ink}"/>`;
+      const cx = f.X(tb), cy = f.Y(base);
+      s += `<path d="M${cx - 62} ${cy - 2} Q ${cx - 66} ${cy - 30} ${cx - 36} ${cy - 34} Q ${cx - 26} ${cy - 62} ${cx + 4} ${cy - 56} Q ${cx + 30} ${cy - 74} ${cx + 46} ${cy - 42} Q ${cx + 70} ${cy - 36} ${cx + 64} ${cy - 2} Z" fill="#dfe6ee" fill-opacity="0.85"/>`;
+      s += T(f.X(t0) - 6, f.Y(0) - 10, `気温 ${t0}℃`, { c: C.am, b: 1, a: 'end', fs: 12, halo: 1 }) + T(f.X(d0) - 6, f.Y(0) - 10, `露点 ${d0}℃`, { c: C.cy, b: 1, a: 'end', fs: 12, halo: 1 });
+      s += T(f.X(tb) - 70, f.Y(base) + 18, `雲の底 約 ${(Math.round(base * 10) * 100).toLocaleString()} ft`, { c: C.ink, b: 1, a: 'start', fs: 12, halo: 1 });
+      s += TL(228, 34, ['持ち上げると', '気温は 1,000 ft で約 3℃', '露点は約 0.5℃ 下がる'], { c: C.ink, a: 'start', fs: 12, halo: 1, lh: 16 });
+      s += TL(228, 90, [`差 ${t0 - d0}℃ ÷ 2.5 × 1,000 ft`, `≒ ${(Math.round(base * 10) * 100).toLocaleString()} ft`], { c: C.gr, b: 1, a: 'start', fs: 12, halo: 1, lh: 16 });
+      return svg(400, 270, s, `図：地上の気温と露点から、積雲の底の高さを見積もる（METAR の例 ${t0}/${d0}）。持ち上げられた空気が冷えて、気温と露点が同じになる高さに雲ができます（AWH 第 12 章）`);
+    },
+    frontsXsec() {
+      // a cold front (steep, a narrow band of CB) above a warm front (gentle, wide stratiform cloud and steady rain); arrows: the front's motion
+      const panel = (y0, cold) => {
+        const g = y0 + 116;
+        let s = `<rect x="0" y="${g}" width="400" height="8" fill="#3a3326"/>`;
+        if (cold) {
+          s += `<path d="M0 ${g} L214 ${g} Q 196 ${g - 34} 182 ${y0 + 46} Q 176 ${y0 + 40} 150 ${y0 + 40} L0 ${y0 + 40} Z" fill="${C.cy}" fill-opacity="0.16" stroke="${C.cy}" stroke-opacity="0.5"/>`;
+          s += `<path d="M206 ${g - 50} Q 196 ${g - 74} 214 ${g - 84} Q 212 ${y0 + 22} 236 ${y0 + 16} L222 ${y0 + 8} L318 ${y0 + 6} L290 ${y0 + 18} Q 300 ${g - 82} 296 ${g - 50} Z" fill="#dfe6ee" fill-opacity="0.85"/>`;
+          for (const x of [222, 238, 254, 270]) s += L(x, g - 48, x - 6, g - 4, C.cy, 1.5, '3 3');
+          s += A(70, g - 46, 130, g - 46, C.cy, 2.5) + T(80, g - 18, '冷たい空気', { c: C.cy, b: 1, fs: 12 }) + T(350, g - 18, '暖かい空気', { c: C.am, b: 1, fs: 12 });
+          s += T(12, y0 + 18, '寒冷前線（cold front）', { c: C.ink, b: 1, a: 'start', fs: 13 }) + TL(392, y0 + 40, ['急な傾き', '積乱雲の狭い帯', 'にわか雨・突風・雷'], { c: C.ink, a: 'end', fs: 12, lh: 15 });
+        } else {
+          const sy = x => g - (x - 120) * 0.29;
+          s += `<path d="M120 ${g} L400 ${g} L400 ${sy(400).toFixed(1)} Z" fill="${C.cy}" fill-opacity="0.16" stroke="${C.cy}" stroke-opacity="0.5"/>`;
+          s += `<path d="M126 ${g - 4} L400 ${sy(400) - 2} L400 ${sy(400) - 16} L240 ${sy(240) - 18} L140 ${g - 22} Z" fill="#dfe6ee" fill-opacity="0.7"/>`;
+          for (const x of [136, 156, 176, 196, 216]) s += L(x, sy(x) - 4, x - 4, g - 2, C.cy, 1.5, '3 3');
+          s += A(30, g - 36, 90, g - 36, C.am, 2.5) + T(56, g - 12, '暖かい空気', { c: C.am, b: 1, fs: 12 }) + T(340, g - 14, '冷たい空気', { c: C.cy, b: 1, fs: 12 });
+          s += T(12, y0 + 18, '温暖前線（warm front）', { c: C.ink, b: 1, a: 'start', fs: 13 }) + TL(12, y0 + 38, ['ゆるい傾き・層状の雲が広い', '長い雨・低い雲と霧'], { c: C.ink, a: 'start', fs: 12, lh: 15 });
+        }
+        return s;
+      };
+      return svg(400, 262, panel(4, true) + panel(134, false), '図：寒冷前線と温暖前線の断面（模式図）。寒冷前線は傾きが急で、積乱雲の狭い帯をつくります。温暖前線は傾きがゆるく、層状の雲と長い雨が広がります（AWH 第 11 章）。矢印は前線の進む向き');
+    },
+    thunderstormLife() {
+      // the three stages of a thunderstorm cell (AWH 22.3): towering cumulus → mature → dissipating, about 30 minutes in all
+      const g = 206;
+      const panel = (x, title, lines, body) => T(x + 64, 22, title, { c: C.ink, b: 1, fs: 13 }) + body + TL(x + 64, g + 22, lines, { c: C.ink, fs: 12, lh: 15 });
+      let s = `<rect x="0" y="${g}" width="400" height="6" fill="#3a3326"/>` + L(132, 30, 132, g - 4, C.grid, 1) + L(266, 30, 266, g - 4, C.grid, 1);
+      const cu = `<path d="M30 ${g - 70} Q 26 ${g - 110} 48 ${g - 118} Q 46 ${g - 160} 68 ${g - 166} Q 92 ${g - 168} 94 ${g - 130} Q 110 ${g - 118} 104 ${g - 70} Z" fill="#dfe6ee" fill-opacity="0.85"/>`;
+      s += panel(0, '① 積雲期', ['上昇気流だけ', '3,000 fpm を', '超えることも'], cu + A(66, g - 40, 66, g - 150, C.am, 2.5) + A(50, g - 50, 52, g - 120, C.am, 2));
+      const cb = `<path d="M150 ${g - 62} Q 146 ${g - 110} 168 ${g - 124} L164 ${g - 160} L148 ${g - 168} L250 ${g - 172} L232 ${g - 160} L222 ${g - 122} Q 246 ${g - 104} 240 ${g - 62} Z" fill="#dfe6ee" fill-opacity="0.85"/>`;
+      let mb = cb + A(178, g - 50, 178, g - 150, C.am, 2.5) + A(212, g - 140, 212, g - 20, C.cy, 2.5);
+      for (const x of [196, 206, 220, 230]) mb += L(x, g - 60, x - 4, g - 2, C.cy, 1.5, '3 3');
+      mb += A(232, g - 6, 262, g - 6, C.cy, 2);
+      s += panel(132, '② 成熟期', ['雨が地面に届く', '上昇と下降・突風'], mb);
+      const an = `<path d="M282 ${g - 150} L392 ${g - 156} L374 ${g - 140} L300 ${g - 136} Z" fill="#dfe6ee" fill-opacity="0.6"/><path d="M300 ${g - 136} Q 296 ${g - 110} 312 ${g - 96} Q 350 ${g - 90} 362 ${g - 110} L374 ${g - 140} Z" fill="#dfe6ee" fill-opacity="0.45"/>`;
+      let db = an + A(318, g - 100, 318, g - 30, C.cy, 2.5) + A(344, g - 100, 344, g - 30, C.cy, 2.5);
+      for (const x of [328, 336]) db += L(x, g - 92, x - 3, g - 40, C.cy, 1.2, '2 4');
+      s += panel(266, '③ 消散期', ['下降気流だけ', '雨がやみ、', 'かなとこが残る'], db);
+      s += T(200, g + 72, '1 つの雷雨の一生は全体で約 30 分（AWH）', { c: C.am, b: 1, fs: 12 });
+      return svg(400, 286, s, '図：雷雨（1 つのセル）の一生（模式図）。積雲期は上昇気流だけ、成熟期は雨が地面に届いて上昇と下降の流れがそろい、危険が最も大きくなります。消散期は下降気流だけになります（AWH 22.3）');
+    },
+    microburst() {
+      // an approach through a microburst: headwind (above the path) → downdraft → tailwind (below the path); AWH 22.7 numbers
+      const g = 222, gp = x => 70 + (x - 20) * (g - 70) / 370;
+      let s = `<rect x="0" y="${g}" width="400" height="10" fill="#3a3326"/><rect x="330" y="${g - 3}" width="70" height="4" fill="#9aa7b6"/>` + T(365, g + 26, '滑走路', { c: C.mut, fs: 12 });
+      s += `<path d="M140 52 Q 150 20 190 26 Q 220 10 250 28 Q 280 30 270 56 Z" fill="#dfe6ee" fill-opacity="0.7"/>`;
+      for (const x of [184, 204, 224]) s += A(x, 60, x, g - 44, C.cy, 2.5);
+      s += `<path d="M190 ${g - 30} Q 170 ${g - 6} 120 ${g - 8}" stroke="${C.cy}" stroke-width="2.5" fill="none"/><path d="M218 ${g - 30} Q 238 ${g - 6} 288 ${g - 8}" stroke="${C.cy}" stroke-width="2.5" fill="none"/>` + A(126, g - 8, 112, g - 8, C.cy, 2.5) + A(282, g - 8, 296, g - 8, C.cy, 2.5);
+      s += L(20, gp(20), 390, g, C.gr, 1.5, '6 4') + T(22, gp(20) - 12, '正しい進入の経路', { c: C.gr, a: 'start', fs: 12 });
+      s += `<path d="M20 ${gp(20)} Q 100 ${gp(100) - 4} 140 ${gp(140) - 22} Q 190 ${gp(190) - 26} 222 ${gp(222)} Q 250 ${gp(250) + 34} 286 ${g - 6}" stroke="${C.rd}" stroke-width="3" fill="none"/>`;
+      s += `<circle cx="140" cy="${gp(140) - 22}" r="11" fill="${C.bg}" stroke="${C.am}" stroke-width="2"/>` + T(140, gp(140) - 18, '1', { c: C.am, b: 1, fs: 12 }) + `<circle cx="204" cy="${gp(204) - 70}" r="11" fill="${C.bg}" stroke="${C.cy}" stroke-width="2"/>` + T(204, gp(204) - 66, '2', { c: C.cy, b: 1, fs: 12 }) + `<circle cx="272" cy="${gp(272) + 10}" r="11" fill="${C.bg}" stroke="${C.rd}" stroke-width="2"/>` + T(272, gp(272) + 14, '3', { c: C.rd, b: 1, fs: 12 });
+      s += TL(12, 248, ['1 向かい風：速度が増え、経路より上へ　2 強い下降気流', '3 追い風：速度が急に減り、沈む（墜落の危険）'], { c: C.ink, a: 'start', fs: 12, lh: 16 });
+      s += T(12, 290, '直径 2.5 mi 未満・下降気流は最大 6,000 fpm・5〜15 分（AWH）', { c: C.mut, a: 'start', fs: 12 });
+      return svg(400, 300, s, '図：進入中にマイクロバーストに入ったとき（模式図）。最初は向かい風で浮き上がるので、つい出力を絞りがちです。そのあと下降気流と追い風で急に沈みます');
+    },
+    fogTypes() {
+      // radiation fog (clear, calm night; land) and advection fog (moist air over a colder surface; wind up to about 15 kt) — AWH 18.1
+      const panel = (y0, title, lines, body) => T(12, y0 + 18, title, { c: C.ink, b: 1, a: 'start', fs: 13 }) + body + TL(392, y0 + 18, lines, { c: C.ink, a: 'end', fs: 12, lh: 15 });
+      let s = `<rect x="0" y="0" width="400" height="128" fill="#071022"/>` + `<circle cx="80" cy="44" r="10" fill="#f2efd8"/><circle cx="86" cy="40" r="9" fill="#071022"/>`;
+      for (const [x, y] of [[40, 50], [120, 36], [150, 58], [20, 30]]) s += `<circle cx="${x}" cy="${y}" r="1.5" fill="#f2efd8"/>`;
+      s += `<path d="M0 108 Q 100 96 200 112 Q 280 120 400 104 L400 128 L0 128 Z" fill="#3a3326"/>` + `<path d="M120 112 Q 200 92 280 114 Q 200 120 120 112 Z" fill="#dfe6ee" fill-opacity="0.75"/>`;
+      for (const x of [40, 330, 370]) s += A(x, 104, x, 84, C.am, 1.5);
+      s += T(48, 80, '地面の熱が逃げる', { c: C.am, a: 'start', fs: 12 });
+      s = panel(0, '放射霧（radiation fog）', ['晴れた夜・風が弱い', '地面が冷えて空気を冷やす', '低い所にたまり、朝に消える'], s);
+      let a = `<rect x="0" y="136" width="400" height="128" fill="#0b1a2c"/><rect x="0" y="240" width="160" height="24" fill="#1d4a7a"/><rect x="160" y="240" width="240" height="24" fill="#3a3326"/>` + T(80, 256, '暖かく湿った空気', { c: C.ink, fs: 12 });
+      a += A(30, 222, 150, 222, C.am, 3) + `<path d="M160 240 Q 250 214 400 226 L400 240 Z" fill="#dfe6ee" fill-opacity="0.75"/>` + T(290, 256, '冷たい地面（や海）', { c: C.ink, fs: 12 });
+      s += panel(136, '移流霧（advection fog）', ['湿った空気が冷たい面の上へ', '風 15 kt くらいまでは濃くなる', '広く、昼でも夜でも来る'], a);
+      return svg(400, 264, s, '図：放射霧と移流霧（模式図）。放射霧は晴れて風の弱い夜に陸の上でできます。移流霧は、湿った空気が冷たい地面や海の上へ流れてきてできます（AWH 18.1）');
+    },
+    metarDecode() {
+      // the book's made-up METAR, split into its parts (AWH 24.4; AIM 7-1)
+      const mono = (x, y, t, c) => `<text x="${x}" y="${y}" fill="${c}" font-size="13" font-family="ui-monospace, Menlo, Consolas, monospace" text-anchor="middle">${t}</text>`;
+      const rows = [[['METAR', C.mut], ['KSFB', C.ink], ['141753Z', C.vi], ['09012G20KT', C.cy]], [['10SM', C.gr], ['SCT035', '#dfe6ee'], ['BKN050', '#dfe6ee'], ['32/23', C.am], ['A3001', C.rd]], [['RMK', C.mut], ['AO2', C.mut], ['SLP162', C.mut]]];
+      let s = '', n = 0;
+      const nums = ['①', '②', '③', '④', '⑤', '⑥', '⑥', '⑦', '⑧', '⑨', '⑨', '⑨'];
+      rows.forEach((row, r) => {
+        let x = 12; const y = 14 + r * 50;
+        for (const [t, c] of row) {
+          const w = t.length * 8 + 12;
+          s += `<rect x="${x}" y="${y}" width="${w}" height="26" rx="4" fill="${c}" fill-opacity="0.12" stroke="${c}"/>` + mono(x + w / 2, y + 18, t, c) + T(x + w / 2, y + 42, nums[n++], { c, fs: 12 });
+          x += w + 6;
+        }
+      });
+      const legend = ['① 定時の観測（METAR）　② 空港（ICAO の 4 文字）', '③ 14 日 17:53 UTC（夏のフロリダは −4 時間）', '④ 風：真方位 090° から 12 kt、突風 20 kt', '⑤ 視程 10 SM（statute mile）', '⑥ 雲：3,500 ft に SCT、5,000 ft に BKN（＝雲高）', '⑦ 気温 32℃・露点 23℃　⑧ 高度計 30.01 inHg', '⑨ 備考：自動観測（降水を判別できる AO2）・海面気圧'];
+      s += TL(12, 170, legend, { c: C.ink, a: 'start', fs: 12, lh: 18 }) + T(392, 306, '架空の例', { c: C.mut, a: 'end', fs: 12 });
+      return svg(400, 314, s, '図：METAR の読み方（架空の例）。左から、種類・空港・日時・風・視程・（天気）・雲・気温と露点・高度計規正値・備考の順に並びます。この例では天気（雨や霧など）がないので、その部分がありません');
+    },
+    tafTimeline() {
+      // the book's made-up TAF on a time line: UTC and Florida summer time (EDT = UTC − 4)
+      const X = h => 34 + h * 14, row = 120;
+      let s = `<text x="12" y="20" fill="${C.ink}" font-size="12" font-family="ui-monospace, Menlo, Consolas, monospace">TAF KSFB 141130Z 1412/1512 09010KT P6SM SCT040</text>` + `<text x="24" y="38" fill="${C.am}" font-size="12" font-family="ui-monospace, Menlo, Consolas, monospace">TEMPO 1418/1422 3SM TSRA BKN030CB</text>` + `<text x="24" y="56" fill="${C.gr}" font-size="12" font-family="ui-monospace, Menlo, Consolas, monospace">FM150200 VRB03KT P6SM SKC</text>`;
+      s += `<rect x="${X(0)}" y="${row - 28}" width="${X(14) - X(0)}" height="26" rx="4" fill="${C.cy}" fill-opacity="0.18" stroke="${C.cy}"/>` + T((X(0) + X(14)) / 2, row - 11, '東の風 10 kt・6 SM 超・SCT040', { c: C.cy, fs: 12 });
+      s += `<rect x="${X(14)}" y="${row - 28}" width="${X(24) - X(14)}" height="26" rx="4" fill="${C.gr}" fill-opacity="0.18" stroke="${C.gr}"/>` + T((X(14) + X(24)) / 2, row - 11, 'FM：風が弱まり晴れ', { c: C.gr, fs: 12 });
+      s += `<rect x="${X(6)}" y="${row + 2}" width="${X(10) - X(6)}" height="26" rx="4" fill="${C.am}" fill-opacity="0.25" stroke="${C.am}"/>` + T(X(10) + 6, row + 19, 'TEMPO：一時的に雷雨・3 SM', { c: C.am, b: 1, a: 'start', fs: 12 });
+      s += L(X(0), row + 40, X(24), row + 40, C.mut, 1.5);
+      for (let h = 0; h <= 24; h += 6) { const z = (12 + h) % 24, l = (z + 20) % 24, d = h === 0 ? '14日 ' : h === 12 ? '15日 ' : ''; s += L(X(h), row + 36, X(h), row + 44, C.mut, 1.5) + T(X(h), row + 60, `${d}${String(z).padStart(2, '0')}Z`, { c: C.ink, fs: 12 }) + T(X(h), row + 78, `${String(l).padStart(2, '0')}:00`, { c: C.mut, fs: 12 }); }
+      s += T(X(0) - 4, row + 100, '上：UTC（Z）　下：フロリダ中部の夏時間（EDT）', { c: C.mut, a: 'start', fs: 12 });
+      s += TL(12, row + 138, ['TEMPO：その時間に一時的に（1 回 1 時間以内、合わせて半分未満）', 'FM：その時刻から、天気がすっかり変わる'], { c: C.ink, a: 'start', fs: 12, lh: 17 });
+      return svg(400, 292, s, '図：TAF を時間の帯にしたもの（架空の例）。14 日 12Z から 15 日 12Z までの予報で、14 日 18〜22Z（夏時間で 14〜18 時）に一時的な雷雨、15 日 02Z から晴れ');
+    },
+    flightCategory() {
+      // ceiling × visibility: the flight categories with the colours of aviation weather websites (AWH ch. 3)
+      const f = frame(400, 290, 0, 10, 0, 5000, [0, 1, 3, 5, 10], [0, 500, 1000, 3000, 5000], '視程（SM）', '雲高（ft）', { l: 56, r: 14, t: 16, b: 40 });
+      const R = (x0, x1, y0, y1, c) => `<rect x="${f.X(x0).toFixed(1)}" y="${f.Y(y1).toFixed(1)}" width="${(f.X(x1) - f.X(x0)).toFixed(1)}" height="${(f.Y(y0) - f.Y(y1)).toFixed(1)}" fill="${c}"/>`;
+      const G = '#1e4a2c', B2 = '#1c3a66', R2 = '#5c2428', V = '#4a2b68';
+      let s = R(0, 10, 0, 5000, G) + R(0, 5, 0, 5000, B2) + R(0, 10, 0, 3000, B2) + R(0, 3, 0, 5000, R2) + R(0, 10, 0, 1000, R2) + R(0, 1, 0, 5000, V) + R(0, 10, 0, 500, V) + f.s;
+      s += T(f.X(7.5), f.Y(4200), 'VFR', { c: C.ink, b: 1, fs: 14 }) + T(f.X(7.5), f.Y(2100), 'MVFR', { c: C.ink, b: 1, fs: 13 }) + T(f.X(7.5), f.Y(760), 'IFR', { c: C.ink, b: 1, fs: 12 }) + T(f.X(7.5), f.Y(140), 'LIFR', { c: C.ink, b: 1, fs: 12 });
+      const pt = (v, c, lab, dx) => `<circle cx="${f.X(v[0]).toFixed(1)}" cy="${f.Y(v[1]).toFixed(1)}" r="5" fill="${C.ink}" stroke="${C.bg}" stroke-width="1.5"/>` + T(f.X(v[0]) + dx, f.Y(v[1]) + 4, lab, { c, b: 1, fs: 12, a: dx < 0 ? 'end' : 'start', halo: 1 });
+      s += pt([4, 1200], C.ink, '例 B：BKN012・4SM', 8) + pt([9, 4500], C.ink, '例 A', -8);
+      return svg(400, 290, s, '図：天気の区分（雲高と視程）。航空気象のサイトは、LIFR を紫、IFR を赤、MVFR を青、VFR を緑で表示します（AWH 第 3 章）。この区分は、14 CFR 91.155 の VFR の最低気象条件とは別のものです');
     },
   };
 

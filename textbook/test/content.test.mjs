@@ -121,7 +121,7 @@ test('the photos: data URLs (WebP), each with its alt text, caption and credit (
     assert.ok(p.alt && p.alt.length >= 4 && p.caption && p.caption.length >= 4, `${id}: alt and caption`);
     const c = p.credit;
     assert.ok(c && c.author && c.license && c.licenseUrl && c.source, `${id}: credit`);
-    assert.match(c.license, /^(Public domain.*|CC0 1\.0|CC BY(-SA)? [1-4]\.0( [A-Za-z]+)?)$/, `${id}: licence ${c.license}`);
+    assert.match(c.license, /^(Public domain.*|CC0 1\.0|CC BY(-SA)? (1\.0|2\.0|2\.5|3\.0|4\.0)( [A-Za-z]+)?)$/, `${id}: licence ${c.license}`);
     assert.match(c.licenseUrl, /^https:\/\//, id); assert.match(c.source, /^https:\/\//, id);
   }
   for (const id of used.keys()) assert.ok(P[id], `${id}: in book-photos.js`);

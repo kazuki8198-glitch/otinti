@@ -20,7 +20,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')
 JS = os.path.join(ROOT, 'flight-lab', 'src', 'book-photos.js')
 CREDITS = os.path.join(ROOT, 'flight-lab', 'PHOTO-CREDITS.md')
 BOOK = [os.path.join(ROOT, 'flight-lab', 'src', f) for f in ('book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js')]
-ALLOWED = re.compile(r'^(Public domain.*|CC0 1\.0|CC BY(-SA)? [1-4]\.0( [A-Za-z]+)?)$')
+ALLOWED = re.compile(r'^(Public domain.*|CC0 1\.0|CC BY(-SA)? (1\.0|2\.0|2\.5|3\.0|4\.0)( [A-Za-z]+)?)$')
 START, END = '/*PHOTOS*/', '/*/PHOTOS*/'
 
 

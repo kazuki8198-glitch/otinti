@@ -4,7 +4,7 @@
 // layer with an OFFLINE FIXTURE (test/fixtures: not Google data) served in place of tile.googleapis.com: the tile is
 // decoded in the worker with the embedded Draco, drawn, credited, and the key never reaches storage or the record.
 // The second reads the basic course (kiso/) through its own page: every chapter and section, every figure and photo, the
-// written questions, the glossary, the sources, the progress (apart from the textbook's, kept across a reload), and two
+// written questions, the glossary, the sources, the progress (apart from the textbook's, as the next start reads it), and two
 // pages compared with kiso/preview.html.
 // Needs Playwright (set PLAYWRIGHT to its module path if it is not installed next to this project); skipped otherwise.
 import test from 'node:test';
@@ -289,10 +289,10 @@ test('browser: 基礎教材 — every chapter and section by 次の節, 161 figu
     const src = await page.textContent('#kzArt .kz-pane');
     assert.match(src, /写真の出典/); assert.match(src, /Ptrump16/);
     assert.ok(await page.$$eval('#kzArt .kz-pane a[href^="http"]', a => a.length > 0 && a.every(x => x.target === '_blank' && /noopener/.test(x.rel))));
-    // the record: kept across a reload (localStorage), in the export, on the records page; the About page's line
-    await page.reload();
-    await page.waitForFunction(() => window.__lab && __lab.sceneOk());
-    prog = await page.evaluate(() => __lab.progress());
+    // the record: in localStorage as the next start reads it (SC.loadProgress, as app.js does), in the export, on the
+    // records page; the About page's line. Not by page.reload(): headless Chromium loses a file:// page's localStorage
+    // across a reload in some runs (a bare file:// page with one setItem lost it in 3 to 5 of 20 runs here)
+    prog = await page.evaluate(() => FL.school.loadProgress(localStorage));
     assert.equal(prog.kisoRead.length, total); assert.deepEqual(prog.kisoQa, ['kiso05.q1']);
     assert.deepEqual(JSON.parse(await page.evaluate(() => FL.school.exportJSON(__lab.records(), __lab.progress()))).progress.kisoQa, ['kiso05.q1']);
     await page.evaluate(() => __lab.showPage('records'));

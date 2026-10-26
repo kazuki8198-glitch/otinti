@@ -1,6 +1,6 @@
 // TEXTBOOK — build tests (node --test): build() returns the page as a string (nothing is written here).
 //  - one file, nothing loaded from outside (FLIGHT LAB's source URLs are strings and <a href> links: not loads);
-//  - every inline script parses; FLIGHT LAB's 13 modules are inside, in FL_MODULES order, read from flight-lab/src;
+//  - every inline script parses; FLIGHT LAB's 14 modules are inside, in FL_MODULES order, read from flight-lab/src;
 //  - the notes are there; no FLIGHT LAB source copied into textbook/; the same sources give the same string.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -28,11 +28,11 @@ test('build: one file, nothing from outside', () => {
   assert.doesNotMatch(html, /fonts\.googleapis|fonts\.gstatic/i);
 });
 
-test('build: every script parses; the 13 FLIGHT LAB modules in order, then the page', () => {
+test('build: every script parses; the 14 FLIGHT LAB modules in order, then the page', () => {
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
   assert.equal(scripts.length, FL_MODULES.length + 2);
   for (const s of scripts) assert.doesNotThrow(() => new vm.Script(s), s.slice(0, 60));
-  assert.equal(FL_MODULES.length, 13);
+  assert.equal(FL_MODULES.length, 14);
   const at = FL_MODULES.map(m => html.indexOf(`/* ---- FLIGHT LAB: ${m} ---- */`));
   for (const [i, m] of FL_MODULES.entries()) assert.ok(at[i] > 0, m);
   for (let i = 1; i < at.length; i++) assert.ok(at[i] > at[i - 1], `${FL_MODULES[i]} after ${FL_MODULES[i - 1]}`);

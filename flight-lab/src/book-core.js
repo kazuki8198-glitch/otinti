@@ -1,18 +1,20 @@
 // FLIGHT LAB — book-core.js
 // The textbook's frame: the parts (in the order of the publicly described ANA cadet course), the references (public
 // sources: FAA handbooks, the ACS, the AIM, 14 CFR, ANA's public pages, published training material), the writing
-// helpers (key points, cautions, formulas, self-check questions, "try it in the simulator", calculators), and the
-// lookups the pages use. The chapters themselves are in book-1.js … book-4.js (FL.book.add).
+// helpers (key points, cautions, formulas, self-check questions, "try it in the simulator", calculators, photos), and
+// the lookups the pages use. The chapters themselves are in book-1.js … book-5.js and book-comm.js (FL.book.add); the
+// figures in book-figs.js; the photos in book-photos.js (loaded after this file by FLIGHT LAB and TEXTBOOK, not by CADET).
 (function (FL) {
   'use strict';
   const R = {
-    ana1: { label: 'ANA「ボーイング777 パイロットになるまで Phase2〜基礎訓練編〜」', url: 'https://www.ana.co.jp/group/777_30th/20251022_2.html' },
-    ana2: { label: 'ANA「未来の翼が生まれる場所へ〜フロリダの空で見た、ANAのDNA〜」', url: 'https://www.anahd.co.jp/ana_news/2025/10/28/20251028.html' },
+    ana1: { label: 'ANA「ボーイング777 パイロットになるまで Phase2〜基礎訓練編〜」（2025 年 10 月 22 日）', url: 'https://www.ana.co.jp/group/777_30th/20251022_2.html' },
+    ana2: { label: 'ANA「未来の翼が生まれる場所へ〜フロリダの空で見た、ANAのDNA〜」（2025 年 10 月 29 日）', url: 'https://www.anahd.co.jp/ana_news/2025/10/28/20251028.html' },
     acron: { label: 'Acron Aviation USA — Aircraft fleet', url: 'https://acronaviationacademy.com/usa/about-us/aircraft-fleet/' },
     archer: { label: 'Piper Archer（Piper 公式）', url: 'https://www.piper.com/model/archer-tx/' },
     seminole: { label: 'Piper Seminole（Piper 公式）', url: 'https://www.piper.com/model/seminole/' },
     archerCk: { label: 'Archer III w/ G1000 PA-28-181 Pilot\'s Checklist（Middle Georgia State University・2025・公開資料）', url: 'https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf', note: 'Vr 60・Vx 64・Vy 76・巡航上昇 87・最良滑空 76・進入 70 / 65・Va 113・Vfe 102・実証横風 17 kt など。訓練校ごとに版がある' },
     seminoleG: { label: 'Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料）', url: 'https://www.se.edu/aviation/wp-content/uploads/sites/4/2023/11/Seminloe-Guide-V1.0.pdf', note: 'Vmc 56・Vyse 88・Vsse 82・Vr 75・Vx 82・Vy 88・Vxse 88（この版の表の値。POH の版により異なることがある）・Va 135 など' },
+    tcds: { label: 'FAA Type Certificate Data Sheet 2A13（Piper PA-28 シリーズ：Archer の速度制限・荷重倍数・フラップ）', url: 'https://drs.faa.gov/', note: 'FAA DRS（Dynamic Regulatory System）で「2A13」を検索' },
     g1000: { label: 'Garmin G1000 Cockpit Reference Guide — Piper PA-28-181 Archer', url: 'https://static.garmin.com/pumac/190-01460-00_0A_Web.pdf' },
     phak: { label: "FAA Pilot's Handbook of Aeronautical Knowledge（FAA-H-8083-25C）", url: 'https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/phak' },
     afh: { label: 'FAA Airplane Flying Handbook（FAA-H-8083-3C）', url: 'https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook' },
@@ -39,6 +41,8 @@
     acsI: { label: 'FAA Instrument Rating — Airplane ACS（FAA-S-ACS-8C）', url: 'https://www.faa.gov/training_testing/testing/acs/instrument_rating_airplane_acs_8.pdf' },
     cfr61: { label: '14 CFR Part 61（操縦士の資格）', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-D/part-61' },
     cfr91: { label: '14 CFR Part 91（一般運航・飛行規則）', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-91' },
+    cfr67: { label: '14 CFR Part 67（航空身体検査の基準）', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-D/part-67' },
+    cfr121: { label: '14 CFR Part 121（エアラインの運航規則）— 121.436 操縦士の資格', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-G/part-121/subpart-M/section-121.436' },
     cfr23: { label: '14 CFR Part 23（普通類の飛行機の耐空性）', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-C/part-23' },
     sfb: { label: 'FAA From the Flight Deck: Orlando Sanford（SFB）', url: 'https://www.faa.gov/flight_deck/sfb' },
     vfr: { label: 'FAA VFR Charts（セクショナルチャート）', url: 'https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/vfr/' },
@@ -61,7 +65,18 @@
   ];
   // writing helpers (they return HTML; the textbook is static, trusted content)
   const lst = items => `<ul>${items.map(x => `<li>${x}</li>`).join('')}</ul>`;
+  const attr = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const site = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return '出典'; } };
+  const link = (u, t) => `<a href="${attr(u)}" target="_blank" rel="noopener noreferrer">${t}</a>`;
+  // a photo from book-photos.js (FL.bookPhotos): nothing when that file is not loaded (CADET) or the id is not there
+  const photo = id => {
+    const p = FL.bookPhotos && FL.bookPhotos[id]; if (!p) return '';
+    const c = p.credit;
+    return `<figure class="bk-photo" data-photo="${attr(id)}"><img src="${p.src}" alt="${attr(p.alt)}"${p.w ? ` width="${p.w}" height="${p.h}"` : ''} loading="lazy" decoding="async">`
+      + `<figcaption>写真：${p.caption}<span class="bk-credit">作者：${attr(c.author)}・ライセンス：${link(c.licenseUrl, attr(c.license))}・${link(c.source, '出典（' + site(c.source) + '）')}</span></figcaption></figure>`;
+  };
   const bk = {
+    aim: html => `<p class="bk-aim">${html}</p>`,                       // the section's first lines: what it is for
     key: (...items) => `<div class="bk-key"><b>ここが大切</b>${lst(items)}</div>`,
     warn: html => `<div class="bk-warn">${html}</div>`,
     f: s => `<div class="bk-f">${s}</div>`,
@@ -73,6 +88,7 @@
     src: (...items) => `<p class="bk-src">出典：${items.join('、')}</p>`,
     fact: t => `<span class="tag fact">公開情報</span>${t}`,
     est: t => `<span class="tag unk">推測・要確認</span>${t}`,
+    photo,
   };
   const CHAPTERS = [];
   // a chapter may be inserted before another one (ch.before = its id); the numbers follow the order

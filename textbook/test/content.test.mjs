@@ -1,23 +1,24 @@
 // TEXTBOOK — content tests (node --test, no browser): FLIGHT LAB's textbook as this page loads it, and render.js.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadBook, ORDER, SEC_NOTE, APP_NOTE } from './load.mjs';
+import fs from 'node:fs';
+import { loadBook, ORDER, SEC_NOTE, APP_NOTE, COUNTS } from './load.mjs';
 
 const { FL, R } = loadBook();
 const BK = FL.book;
 const SECS = BK.CHAPTERS.flatMap(c => c.secs);
 const sum = k => BK.CHAPTERS.reduce((a, c) => a + (c[k] || []).length, 0);
 
-test('the book: 6 parts, 27 chapters in this order, 120 sections', () => {
+test(`the book: 6 parts, ${COUNTS.chapters} chapters in this order, ${COUNTS.secs} sections`, () => {
   assert.equal(BK.PARTS.length, 6);
-  assert.equal(BK.CHAPTERS.length, 27);
-  assert.equal(SECS.length, 120);
+  assert.equal(BK.CHAPTERS.length, COUNTS.chapters);
+  assert.equal(SECS.length, COUNTS.secs);
   assert.deepEqual(BK.CHAPTERS.map(c => c.id), ORDER);
   BK.CHAPTERS.forEach((c, i) => {
     assert.equal(c.n, i + 1, c.id);
     assert.ok(BK.PARTS.some(p => p.id === c.part), `${c.id}: part`);
   });
-  assert.equal(new Set(SECS.map(s => s.id)).size, 120, 'section ids are unique');
+  assert.equal(new Set(SECS.map(s => s.id)).size, COUNTS.secs, 'section ids are unique');
 });
 
 test('every section renders with FL.book.html, no {ch: left, the same string each time', () => {
@@ -26,14 +27,17 @@ test('every section renders with FL.book.html, no {ch: left, the same string eac
     assert.doesNotThrow(() => { h = BK.html(s); }, s.id);
     assert.ok(h.length > 50, s.id);
     assert.doesNotMatch(h, /\{ch:/, s.id);
-    assert.doesNotMatch(h, /<script|<a\s/i, s.id);
+    // no scripts; links only in a photo's credit (author, licence, source), each opening a new tab
+    assert.doesNotMatch(h, /<script/i, s.id);
+    assert.doesNotMatch(h.replace(/<span class="bk-credit">[\s\S]*?<\/span>/g, ''), /<a\s/i, s.id);
+    for (const m of h.matchAll(/<a\s[^>]*>/g)) assert.match(m[0], /^<a href="https:\/\/[^"]+" target="_blank" rel="noopener noreferrer">$/, s.id);
     assert.equal(BK.html(s), h, `${s.id}: stable`);
   }
 });
 
-test('the end matter: 83 questions, 271 terms, 55 examples, 55 cautions, 124 sources, 65 lessons', () => {
-  assert.equal(sum('quiz'), 83); assert.equal(sum('terms'), 271); assert.equal(sum('examples'), 55);
-  assert.equal(sum('cautions'), 55); assert.equal(sum('refs'), 124); assert.equal(sum('lessons'), 65);
+test(`the end matter: ${COUNTS.quiz} questions, ${COUNTS.terms} terms, ${COUNTS.examples} examples, ${COUNTS.cautions} cautions, ${COUNTS.refs} sources, ${COUNTS.lessons} lessons`, () => {
+  assert.equal(sum('quiz'), COUNTS.quiz); assert.equal(sum('terms'), COUNTS.terms); assert.equal(sum('examples'), COUNTS.examples);
+  assert.equal(sum('cautions'), COUNTS.cautions); assert.equal(sum('refs'), COUNTS.refs); assert.equal(sum('lessons'), COUNTS.lessons);
   for (const c of BK.CHAPTERS) for (const q of c.quiz || []) {
     assert.equal(q.choices.length, 4, c.id); assert.ok(q.answer >= 0 && q.answer < 4, c.id);
   }
@@ -60,28 +64,31 @@ test('render.js: every section and chapter to HTML; the notes; the end matter es
     assert.equal(h.includes('class="tb-end"'), k === c.secs.length - 1, `${s.id}: the end matter`);
     assert.doesNotMatch(h, /\{ch:/, s.id);
   });
-  assert.equal(n, 120);
+  assert.equal(n, COUNTS.secs);
   const all = R.allHtml();
-  assert.equal((all.match(/<article class="tb-chapter"/g) || []).length, 27);
-  assert.equal((all.match(/<section class="tb-sec"/g) || []).length, 120);
-  assert.equal((all.match(/class="quiz"/g) || []).length, 83);
+  assert.equal((all.match(/<article class="tb-chapter"/g) || []).length, COUNTS.chapters);
+  assert.equal((all.match(/<section class="tb-sec"/g) || []).length, COUNTS.secs);
+  assert.equal((all.match(/class="quiz"/g) || []).length, COUNTS.quiz);
   const ends = [...all.matchAll(/<div class="tb-end">[\s\S]*?<\/table>/g)].map(m => m[0]).join('');
-  assert.equal((ends.match(/<td class="en">/g) || []).length, 271);
-  assert.equal((all.match(/<a href="https?:[^"]+" target="_blank" rel="noopener noreferrer">/g) || []).length, 124);
+  assert.equal((ends.match(/<td class="en">/g) || []).length, COUNTS.terms);
+  // the sources' links, and each photo's two (its licence and its source page)
+  assert.equal((all.match(/<a href="https?:[^"]+" target="_blank" rel="noopener noreferrer">/g) || []).length, COUNTS.refs + 2 * COUNTS.photos);
+  assert.equal((all.match(/<figure class="bk-fig"><svg /g) || []).length, COUNTS.figs);
+  assert.equal((all.match(/<figure class="bk-photo"/g) || []).length, COUNTS.photos);
   assert.equal((all.match(/class="row tb-lessons"/g) || []).length, BK.CHAPTERS.filter(c => (c.lessons || []).length).length);
   // the end matter's strings go in as text (escaped), {ch:} fixed
   const c = BK.CHAPTERS.find(x => x.quiz.some(q => /\{ch:/.test(q.why) || /\{ch:/.test(q.q))) || BK.CHAPTERS[1];
   assert.doesNotMatch(R.endHtml(c), /\{ch:/);
   assert.equal(R.esc('<b>&"'), '&lt;b&gt;&amp;&quot;');
   const toc = R.tocHtml([], 'aero.lift');
-  assert.equal((toc.match(/class="bk-item/g) || []).length, 120);
+  assert.equal((toc.match(/class="bk-item/g) || []).length, COUNTS.secs);
   for (const p of BK.PARTS) assert.ok(toc.includes(p.title), p.id);
   assert.match(toc, /data-go="aero.lift" aria-current="true"><span class="bk-num">2\.2<\/span>/);
 });
 
 test('the search: the body (with the figures\' words), case-insensitive, the end matter → the last section', () => {
   const idx = R.index();
-  assert.equal(idx.length, 120);
+  assert.equal(idx.length, COUNTS.secs);
   const a = R.search('vmc', idx).map(h => h.id), b = R.search('VMC', idx).map(h => h.id);
   assert.ok(a.length > 0); assert.deepEqual(a, b);
   // a word found only in a chapter's end matter (an English term) opens that chapter's last section
@@ -92,4 +99,41 @@ test('the search: the body (with the figures\' words), case-insensitive, the end
   assert.deepEqual(hits.map(h => h.id), [ch.secs.at(-1).id]);
   assert.equal(hits[0].inEnd, true);
   assert.equal(R.search('  ', idx).length, 0);
+});
+
+test('the photos: data URLs (WebP), each with its alt text, caption and credit (author, an allowed licence, links); every one used, sizes', () => {
+  const P = FL.bookPhotos;
+  assert.ok(P && typeof P === 'object', 'book-photos.js is loaded');
+  const used = new Map();
+  for (const s of SECS) for (const m of BK.html(s).matchAll(/<figure class="bk-photo" data-photo="([^"]+)">/g)) used.set(m[1], (used.get(m[1]) || 0) + 1);
+  assert.equal([...used.values()].reduce((a, b) => a + b, 0), COUNTS.photos);
+  let total = 0;
+  for (const [id, p] of Object.entries(P)) {
+    assert.ok(used.has(id), `${id}: used in a section`);
+    assert.match(p.src, /^data:image\/webp;base64,[A-Za-z0-9+/]+=*$/, id);
+    const bytes = Buffer.from(p.src.split(',')[1], 'base64');
+    assert.equal(bytes.subarray(0, 4).toString(), 'RIFF', id); assert.equal(bytes.subarray(8, 12).toString(), 'WEBP', id);
+    assert.ok(bytes.length <= 120 * 1024, `${id}: ${bytes.length} bytes`);
+    const chunks = []; for (let o = 12; o + 8 <= bytes.length; o += 8 + bytes.readUInt32LE(o + 4) + (bytes.readUInt32LE(o + 4) & 1)) chunks.push(bytes.subarray(o, o + 4).toString('latin1'));
+    assert.ok(chunks.length && !chunks.some(c => ['EXIF', 'XMP ', 'ICCP'].includes(c)), `${id}: no metadata chunks (${chunks})`);
+    assert.ok(Math.max(p.w, p.h) <= 1200 && p.w > 0 && p.h > 0, `${id}: ${p.w}x${p.h}`);
+    total += bytes.length;
+    assert.ok(p.alt && p.alt.length >= 4 && p.caption && p.caption.length >= 4, `${id}: alt and caption`);
+    const c = p.credit;
+    assert.ok(c && c.author && c.license && c.licenseUrl && c.source, `${id}: credit`);
+    assert.match(c.license, /^(Public domain.*|CC0 1\.0|CC BY(-SA)? [1-4]\.0( [A-Za-z]+)?)$/, `${id}: licence ${c.license}`);
+    assert.match(c.licenseUrl, /^https:\/\//, id); assert.match(c.source, /^https:\/\//, id);
+  }
+  for (const id of used.keys()) assert.ok(P[id], `${id}: in book-photos.js`);
+  // every bk.photo('…') written in the chapters' source names a photo that is there (a missing one would show nothing)
+  for (const f of ['book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js'])
+    for (const m of fs.readFileSync(new URL(`../../flight-lab/src/${f}`, import.meta.url), 'utf8').matchAll(/bk\.photo\('([^']+)'\)/g)) assert.ok(P[m[1]], `${f}: bk.photo('${m[1]}') is not in book-photos.js`);
+  assert.ok(total <= 5 * 1024 * 1024, `${total} bytes in all`);
+  // the credits page lists every photo
+  const credits = fs.readFileSync(new URL('../../flight-lab/PHOTO-CREDITS.md', import.meta.url), 'utf8');
+  for (const id of Object.keys(P)) assert.ok(credits.includes('`' + id + '`'), `${id}: in PHOTO-CREDITS.md`);
+  // without book-photos.js (CADET) a photo is nothing
+  const keep = FL.bookPhotos; FL.bookPhotos = undefined;
+  try { assert.equal(BK.bk.photo(Object.keys(keep)[0] || 'x'), ''); } finally { FL.bookPhotos = keep; }
+  assert.equal(BK.bk.photo('no-such-photo'), '');
 });

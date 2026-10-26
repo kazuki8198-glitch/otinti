@@ -117,6 +117,7 @@ mark.tb-mark { background: var(--mark); color: var(--mark-ink); border-radius: 2
 .bk-radio td.who.p { color: var(--green); } .bk-radio td.who.a { color: var(--accent); }
 .bk-radio td.en { font: 600 .85rem/1.55 var(--mono); color: var(--ink); width: 46%; }
 @media (max-width: 700px) { .bk-radio td.en { width: auto; font-size: .78rem; } }
+.bk-aim { margin: 4px 0 12px; padding: 6px 12px; border-left: 4px solid var(--accent); background: var(--soft); border-radius: 4px; }
 .bk-key { margin: 14px 0; padding: 10px 14px; border-left: 4px solid var(--green); background: var(--key-bg); border-radius: 4px; }
 #tbView .bk-key > b { color: var(--green); } .bk-key ul { margin: 4px 0 0; }
 .bk-warn { margin: 14px 0; padding: 10px 14px; border-left: 4px solid var(--amber); background: var(--warn-bg); border-radius: 4px; }
@@ -135,7 +136,7 @@ table.terms { border-collapse: collapse; width: 100%; font-size: .82rem; line-he
 table.terms td, table.terms th { border-bottom: 1px solid var(--line); padding: 4px 6px; text-align: left; vertical-align: top; }
 table.terms th { color: var(--muted); font-weight: 600; }
 
-/* the dark boards: figures and calculators (their colours are drawn for #0b1422) */
+/* the dark boards: figures, photos and calculators (their colours are drawn for #0b1422) */
 .bk-fig { margin: 14px 0; padding: 10px; text-align: center; background: var(--board); border: 1px solid var(--board-line); border-radius: 8px; color: var(--board-ink); }
 .bk-fig svg { width: 100%; max-width: 640px; height: auto; background: var(--board); display: block; margin: 0 auto; }
 .bk-fig figcaption { font-size: .75rem; color: var(--board-mut); margin-top: 4px; line-height: 1.5; }
@@ -147,7 +148,13 @@ table.terms th { color: var(--muted); font-weight: 600; }
 .bk-calc .bk-t { min-width: 460px; }
 .bk-calc .bk-t th, .bk-calc .bk-t td { border-color: var(--board-line); color: var(--board-ink); }
 .bk-calc .bk-t th { background: rgba(95, 212, 255, .08); color: #5fd4ff; }
-.bk-fig, .bk-calc { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+/* photos (book-photos.js): on the same dark board, the credit (author, licence, source links) under the caption */
+.bk-photo { margin: 14px 0; padding: 8px; background: var(--board); border: 1px solid var(--board-line); border-radius: 8px; color: var(--board-ink); }
+.bk-photo img { display: block; width: 100%; max-width: 640px; height: auto; margin: 0 auto; border-radius: 4px; }
+.bk-photo figcaption { font-size: .75rem; color: var(--board-mut); margin: 6px auto 0; line-height: 1.5; max-width: 640px; }
+.bk-credit { display: block; font-size: .7rem; overflow-wrap: anywhere; }
+#tbView .bk-credit a { color: #9fd0f0; }
+.bk-fig, .bk-calc, .bk-photo { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
 /* ------------------------------------------------------------------ the whole book (#all) */
 .tb-all-title { font: 700 1.6rem/1.4 var(--jp); margin: 4px 0 10px; }
@@ -190,7 +197,7 @@ table.terms th { color: var(--muted); font-weight: 600; }
   body { background: #fff; }
   .tb-chapter { break-before: page; border-top: 0; margin-top: 0; }
   .tb-all-toc { break-after: page; }
-  .bk-fig, .bk-calc, .quiz, .bk-key, .bk-warn, tr { break-inside: avoid; }
+  .bk-fig, .bk-photo, .bk-calc, .quiz, .bk-key, .bk-warn, tr { break-inside: avoid; }
   .tb-scroll, .bk-calc { overflow: visible; }
   a { color: inherit; }
 }

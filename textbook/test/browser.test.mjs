@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { build } from '../build.mjs';
 import { loadChromium, openPage, PAGE } from './playwright.mjs';
-import { ORDER, NOTICE } from './load.mjs';
+import { ORDER, NOTICE, COUNTS } from './load.mjs';
 
 const chromium = loadChromium();
 const skip = chromium ? false : 'Playwright not found (PLAYWRIGHT, require("playwright"), /opt/node22/lib/node_modules/playwright)';
@@ -21,11 +21,11 @@ test.before(async () => {
 });
 test.after(async () => { if (browser) await browser.close(); });
 
-test('opens: the notes, 120 sections in the contents, the chapters in order, #aero.lift', { skip }, async () => {
+test(`opens: the notes, ${COUNTS.secs} sections in the contents, the chapters in order, #aero.lift`, { skip }, async () => {
   const { ctx, page, errors, requests } = await openPage(browser, { hash: 'aero.lift' });
   const text = await page.locator('.tb-notice').innerText();
   for (const t of NOTICE) assert.ok(text.includes(t), t);
-  assert.equal(await page.locator('#tbToc .bk-item').count(), 120);
+  assert.equal(await page.locator('#tbToc .bk-item').count(), COUNTS.secs);
   assert.deepEqual(await page.evaluate(() => FL.book.CHAPTERS.map(c => c.id)), ORDER);
   assert.equal(await page.evaluate(() => __tb.cur), 'aero.lift');
   assert.equal(await page.evaluate(() => document.getElementById('aero.lift') !== null), true);
@@ -133,33 +133,42 @@ test('the sections\' links, the calculators, the check questions, the lesson tag
   await ctx.close();
 });
 
-test('the whole book (#all): 27 chapters, 83 questions, 271 terms, 124 source links; boards dark', { skip }, async () => {
+test(`the whole book (#all): ${COUNTS.chapters} chapters, ${COUNTS.quiz} questions, ${COUNTS.terms} terms, ${COUNTS.refs} source links, ${COUNTS.figs} figures, ${COUNTS.photos} photos; boards dark`, { skip }, async () => {
   const { ctx, page, errors, requests } = await openPage(browser, { hash: 'all' });
   await page.waitForFunction(() => __tb.mode === 'all');
   const c = await page.evaluate(() => ({
     chapters: document.querySelectorAll('#tbView .tb-chapter').length, secs: document.querySelectorAll('#tbView .tb-sec').length,
     quiz: document.querySelectorAll('#tbView .quiz').length, terms: document.querySelectorAll('#tbView table.terms td.en').length,
     refs: document.querySelectorAll('#tbView .tb-end .bk-src a[target="_blank"][rel="noopener noreferrer"]').length,
-    figs: document.querySelectorAll('#tbView .bk-fig svg').length, calcs: document.querySelectorAll('#tbView .bk-calc').length,
+    figs: document.querySelectorAll('#tbView .bk-fig svg').length, photos: document.querySelectorAll('#tbView .bk-photo img').length, calcs: document.querySelectorAll('#tbView .bk-calc').length,
     calcInputs: document.querySelectorAll('#tbView .bk-calc input').length, lessonButtons: document.querySelectorAll('#tbView button[data-lesson]').length,
     tags: document.querySelectorAll('#tbView .bk-lesson').length, names: new Set([...document.querySelectorAll('#tbView input[type=radio]')].map(i => i.name)).size,
     ids: document.querySelectorAll('[id="aero.lift"]').length, notes: document.querySelectorAll('#tbView .tb-note').length,
   }));
-  assert.deepEqual(c, { chapters: 27, secs: 120, quiz: 83, terms: 271, refs: 124, figs: 22, calcs: 10, calcInputs: c.calcInputs, lessonButtons: 0, tags: 56 + 65, names: 83, ids: 1, notes: 120 });
+  assert.deepEqual(c, { chapters: COUNTS.chapters, secs: COUNTS.secs, quiz: COUNTS.quiz, terms: COUNTS.terms, refs: COUNTS.refs, figs: COUNTS.figs, photos: COUNTS.photos, calcs: COUNTS.calcs, calcInputs: c.calcInputs, lessonButtons: 0, tags: COUNTS.simTags + COUNTS.lessons, names: COUNTS.quiz, ids: 1, notes: COUNTS.secs });
   assert.ok(c.calcInputs >= 10);
-  // the boards: figures and calculators on #0b1422, in the light view and the dark one
+  // the boards: figures, photos and calculators on #0b1422, in the light view and the dark one
   for (const theme of ['light', 'dark']) {
     await page.evaluate(t => { document.documentElement.dataset.theme = t; }, theme);
-    const bg = await page.evaluate(() => [...document.querySelectorAll('#tbView .bk-fig, #tbView .bk-calc')].map(e => getComputedStyle(e).backgroundColor));
-    assert.ok(bg.length === 32 && bg.every(b => b === 'rgb(11, 20, 34)'), `${theme}: ${[...new Set(bg)]}`);
+    const bg = await page.evaluate(() => [...document.querySelectorAll('#tbView .bk-fig, #tbView .bk-photo, #tbView .bk-calc')].map(e => getComputedStyle(e).backgroundColor));
+    const boards = COUNTS.figs + COUNTS.photos + COUNTS.calcs;
+    assert.ok(bg.length === boards && bg.every(b => b === 'rgb(11, 20, 34)'), `${theme}: ${bg.length} / ${boards}: ${[...new Set(bg)]}`);
   }
+  // the photos: shown from their data URLs (decoded, not broken), each with its credit's two links
+  const imgs = await page.evaluate(async () => {
+    const list = [...document.querySelectorAll('#tbView .bk-photo img')];
+    for (const i of list) { i.loading = 'eager'; try { await i.decode(); } catch (e) { /* counted below */ } }
+    return list.map(i => [i.currentSrc.slice(0, 23), i.naturalWidth, i.closest('figure').querySelectorAll('.bk-credit a[target="_blank"][rel="noopener noreferrer"]').length]);
+  });
+  assert.equal(imgs.length, COUNTS.photos);
+  for (const [src, w, links] of imgs) { assert.equal(src, 'data:image/webp;base64'); assert.ok(w > 0, 'decoded'); assert.equal(links, 2); }
   // print: the "考えてみよう" boxes open, then close again
   const closed = await page.evaluate(() => document.querySelectorAll('#tbView details:not([open])').length);
-  assert.equal(closed, 3);
+  assert.equal(closed, COUNTS.details);
   await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
   assert.equal(await page.evaluate(() => document.querySelectorAll('#tbView details:not([open])').length), 0);
   await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
-  assert.equal(await page.evaluate(() => document.querySelectorAll('#tbView details:not([open])').length), 3);
+  assert.equal(await page.evaluate(() => document.querySelectorAll('#tbView details:not([open])').length), COUNTS.details);
   await page.emulateMedia({ media: 'print' });
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.bk-fig')).backgroundColor), BOARD);
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.tb-head')).display), 'none');

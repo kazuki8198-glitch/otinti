@@ -347,6 +347,7 @@ body:not([data-screen="fly"]) #viewBtns, body:not([data-screen="fly"]) #labels, 
 .bk-radio td.who.p { color: var(--green); } .bk-radio td.who.a { color: var(--cyan); }
 .bk-radio td.en { font: 600 13.5px/1.55 var(--mono); color: #e8f0fa; width: 46%; }
 @media (max-width: 700px) { .bk-radio td.en { width: auto; font-size: 12.5px; } }
+.bk-aim { margin: 4px 0 12px; padding: 6px 12px; border-left: 4px solid var(--cyan); background: rgba(95, 212, 255, .06); border-radius: 4px; }
 .bk-key { margin: 14px 0; padding: 10px 14px; border-left: 4px solid var(--green); background: rgba(95, 212, 106, .07); border-radius: 4px; }
 .bk-key b { color: var(--green); } .bk-key ul { margin: 4px 0 0; }
 .bk-warn { margin: 14px 0; padding: 10px 14px; border-left: 4px solid var(--amber); background: rgba(255, 178, 62, .08); border-radius: 4px; }
@@ -358,6 +359,10 @@ body:not([data-screen="fly"]) #viewBtns, body:not([data-screen="fly"]) #labels, 
 .bk-fig { margin: 12px 0; text-align: center; }
 .bk-fig svg { max-width: 100%; height: auto; background: #0b1422; border: 1px solid var(--line); border-radius: 6px; }
 .bk-fig figcaption { font-size: 12px; color: var(--muted); }
+.bk-photo { margin: 12px 0; padding: 8px; background: #0b1422; border: 1px solid var(--line); border-radius: 6px; }
+.bk-photo img { display: block; width: 100%; max-width: 640px; height: auto; margin: 0 auto; border-radius: 4px; }
+.bk-photo figcaption { font-size: 12px; color: var(--muted); margin: 6px auto 0; line-height: 1.5; max-width: 640px; }
+.bk-credit { display: block; font-size: 11px; overflow-wrap: anywhere; } .bk-credit a { color: #9fd0f0; }
 .bk-src { font-size: 12.5px; color: var(--muted); }
 .bk-src li { margin: 2px 0; }
 .quiz { background: rgba(255, 255, 255, .03); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 10px 0; font-size: 14px; }

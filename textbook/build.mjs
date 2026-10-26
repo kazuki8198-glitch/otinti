@@ -12,8 +12,9 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const SRC = path.join(here, 'src'), OUT = path.join(here, 'outputs');
 export const FL_SRC = path.join(here, '..', 'flight-lab', 'src');
 // the textbook and what it needs, in this order: physics.js first (book-1/3/4/5 use it while loading); book-2.js
-// (wx, law, hf) before book-comm.js (its chapters go `before: 'hf'`); school.js and syllabus.js for the lessons' names
-export const FL_MODULES = ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js'];
+// (wx, law, hf) before book-comm.js (its chapters go `before: 'hf'`); book-photos.js after book-core.js (the photos, as
+// data URLs: bk.photo); school.js and syllabus.js for the lessons' names
+export const FL_MODULES = ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'book-figs.js', 'book-core.js', 'book-photos.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js'];
 export const PAGE_SCRIPTS = ['render.js', 'page.js'];
 export const OUT_FILE = path.join(OUT, 'TEXTBOOK.html');
 

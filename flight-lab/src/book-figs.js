@@ -1194,6 +1194,60 @@
       s += NFN(392, 310);
       return svg(400, 320, s, '図：Orlando Sanford（KSFB）の滑走路の配置（模式図。FAA の空港データの滑走路端の位置から描いたもの。誘導路は省略）。平行な 3 本の進入端がずれていて、交差する 18/36 があります。赤い円は Hot Spot HS1');
     },
+    // ---------------------------------------------------------------- 第 12 章 hf（人間の能力と判断）
+    vestibular() {
+      // a semicircular canal in four moments of a turn (PHAK chapter 17, Figure 17-4): the fluid lags, catches up, overshoots
+      const panel = (px, py, n, title, turn, fluid, hair, feel, c) => {
+        const cx = px + 52, cy = py + 74;
+        let s = `<rect x="${px}" y="${py}" width="192" height="150" rx="8" fill="${C.ink}" fill-opacity="0.04" stroke="${C.grid}"/>`;
+        s += T(px + 8, py + 18, `${n} ${title}`, { c: C.ink, b: 1, a: 'start', fs: 12 });
+        s += `<circle cx="${cx}" cy="${cy}" r="30" fill="none" stroke="${C.mut}" stroke-width="9" stroke-opacity="0.45"/><circle cx="${cx}" cy="${cy}" r="30" fill="none" stroke="${C.cy}" stroke-width="5" stroke-opacity="0.5"/>`;
+        // the hair cells (cupula) at the bottom of the ring, bent by the fluid
+        s += `<line x1="${cx}" y1="${cy + 36}" x2="${cx + hair * 9}" y2="${cy + 22}" stroke="${C.am}" stroke-width="4" stroke-linecap="round"/>`;
+        if (turn) s += ARC(cx, cy, 42, 285, 380, C.gr, 2.5);
+        if (fluid) s += ARC(cx, cy, 18, fluid > 0 ? 120 : 60, fluid > 0 ? 20 : 160, C.cy, 2);
+        s += TL(px + 106, py + 52, feel, { c, a: 'start', fs: 12, lh: 16 });
+        return s;
+      };
+      let s = panel(4, 4, '①', '回っていない', 0, 0, 0, ['何も', '感じない'], C.mut);
+      s += panel(204, 4, '②', '回り始め', 1, 1, 1, ['液が遅れて', '毛が倒れる', '→ 回っている', 'と感じる'], C.ink);
+      s += panel(4, 160, '③', '同じ速さで回る', 1, 0, 0, ['液が追いつき', '毛が戻る', '→ 止まって', 'いると感じる'], C.am);
+      s += panel(204, 160, '④', '回るのを止める', 0, -1, -1, ['液が進み続け', '毛が逆に倒れる', '→ 反対に回って', 'いると感じる'], C.rd);
+      s += L(10, 324, 26, 324, C.gr, 2.5) + T(30, 328, '機体の回転', { c: C.gr, a: 'start', fs: 12 }) + L(110, 324, 126, 324, C.cy, 2) + T(130, 328, '耳の中の液', { c: C.cy, a: 'start', fs: 12 }) + L(210, 318, 214, 330, C.am, 4) + T(222, 328, '感じる毛', { c: C.am, a: 'start', fs: 12 });
+      return svg(400, 340, s, '図：三半規管（耳の奥の、液で満ちた輪）が回転を感じるしくみ（PHAK 第 17 章の図 17-4 をもとにした模式図）。③ で「止まっている」と感じ、④ で「反対に回っている」と感じるのが、墓場のスパイラルやリーンズのもとです');
+    },
+    hypoxiaAltitudes() {
+      // altitude and oxygen: the AIM 8-1-2 recommendations and effects, and the 14 CFR 91.211 rules (cabin pressure altitude)
+      const Y = ft => 372 - ft / 20000 * 340;
+      let s = '';
+      s += `<rect x="60" y="${Y(14000)}" width="22" height="${Y(12500) - Y(14000)}" fill="${C.am}" fill-opacity="0.45"/>` + `<rect x="60" y="${Y(20000)}" width="22" height="${Y(14000) - Y(20000)}" fill="${C.rd}" fill-opacity="0.45"/>`;
+      s += L(82, Y(0), 82, Y(20000), C.ink, 2);
+      for (const ft of [0, 5000, 10000, 15000, 20000]) s += L(76, Y(ft), 88, Y(ft), C.ink, 1.5) + T(54, Y(ft) + 4, ft.toLocaleString('en-US'), { c: C.mut, a: 'end', fs: 12 });
+      s += T(8, 22, '機内の高度（ft）', { c: C.mut, a: 'start', fs: 12 });
+      const mark = (ft, ty, lines, c) => L(88, Y(ft), 104, ty - 4, c, 1) + `<circle cx="82" cy="${Y(ft)}" r="3.5" fill="${c}"/>` + TL(108, ty, lines, { c, a: 'start', fs: 12, lh: 15 });
+      s += mark(20000, 42, ['20,000：5〜12 分で対処できなくなる'], C.rd);
+      s += mark(18000, 70, ['18,000：20〜30 分で対処できなくなる'], C.rd);
+      s += mark(15000, 102, ['15,000 を超える：全員に酸素を用意（規則）'], C.rd);
+      s += mark(14000, 134, ['14,000 を超える：乗員はずっと酸素（規則）'], C.rd);
+      s += mark(12500, 166, ['12,500〜14,000：30 分を超える分は', '乗員が酸素（規則）'], C.am);
+      s += mark(10000, 214, ['10,000 を超える：昼も酸素がすすめ'], C.cy);
+      s += mark(5000, 286, ['5,000：夜の目が落ち始める', '5,000 を超える夜は酸素がすすめ'], C.cy);
+      s += mark(3500, 340, ['3,500：この本の訓練空域の高さ'], C.gr);
+      s += T(8, 396, '規則：14 CFR 91.211　すすめ・影響：AIM 8-1-2', { c: C.mut, a: 'start', fs: 12 });
+      return svg(400, 406, s, '図：高度と酸素（機内の高度）。夜は 5,000 ft、昼は 10,000 ft を超えたら酸素がすすめ（AIM 8-1-2）。12,500 ft を超えると、規則で乗員の酸素が必要になります（14,000 ft までは 30 分を超える分。14 CFR 91.211）。対処できなくなるまでの時間は AIM 8-1-2 の値');
+    },
+    threePLoop() {
+      // the 3P model of ADM with its three checklists (PHAK chapter 2): Perceive (PAVE) → Process (CARE) → Perform (TEAM), again and again
+      const node = (x, y, head, tool, items, c) => `<rect x="${x}" y="${y}" width="176" height="92" rx="10" fill="${c}" fill-opacity="0.12" stroke="${c}" stroke-width="1.5"/>`
+        + T(x + 88, y + 20, head, { c, b: 1, fs: 13 }) + T(x + 88, y + 40, tool, { c: C.ink, b: 1, fs: 13 }) + TL(x + 88, y + 58, items, { c: C.mut, fs: 12, lh: 15 });
+      let s = node(112, 6, '① Perceive 気づく', 'PAVE', ['自分・機体・環境', '・外からの圧力'], C.cy);
+      s += node(218, 188, '② Process 評価する', 'CARE', ['結果・ほかの道', '・本当の状況・外の要因'], C.am);
+      s += node(6, 188, '③ Perform 実行する', 'TEAM', ['ゆだねる・なくす', '・受け入れる・減らす'], C.gr);
+      s += A(292, 102, 318, 182, C.ink, 2.5) + A(214, 236, 186, 236, C.ink, 2.5) + A(84, 182, 110, 102, C.ink, 2.5);
+      s += T(200, 150, 'くり返す', { c: C.ink, b: 1, fs: 13 }) + T(200, 168, '（結果を確かめる）', { c: C.mut, fs: 12 });
+      s += T(200, 304, '出発前から着陸まで、何度も回す', { c: C.ink, fs: 12 });
+      return svg(400, 316, s, '図：判断の 3P モデル（PHAK 第 2 章）。PAVE で危険に気づき、CARE で評価し、TEAM で対策を選んで実行し、また気づくところに戻ります');
+    },
   };
 
   // ---------------------------------------------------------------- calculators inside the text

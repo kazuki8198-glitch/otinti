@@ -5,7 +5,7 @@ FLIGHT LAB の教科書（TEXTBOOK でも同じ）に入れた写真の一覧で
 写真は縮小（長い辺 1200 px 以下）・WebP に変換し、メタデータを消して `src/book-photos.js` に入れています。一部の写真は切り抜いています（元の写真から変えています）。
 CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できます。写真の下のキャプションにも作者・ライセンス・出典を出しています。
 
-写真 16 枚・合計 1.29 MB（WebP のバイト数）。
+写真 17 枚・合計 1.40 MB（WebP のバイト数）。
 
 | id | 写真 | 作者 | ライセンス | 出典 | 使っている節 |
 |---|---|---|---|---|---|
@@ -25,3 +25,4 @@ CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できま�
 | `holdShort` | 滑走路の手前の停止線（runway holding position marking）。黄色の実線 2 本と破線 2 本で、実線の側（写真の右）で止まります。破線の側が滑走路です。右の赤地に白の文字は、滑走路の番号を地面に書いた標示です（AIM 2-3-5）。 | Bmurphy380 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Hold_Short.jpg) | comm.mistakes |
 | `towerCab` | 管制塔（control tower）。上のガラス張りの部屋（キャブ）から、管制官が滑走路と空港の周りを目で見て、Tower と Ground の交信をします。 | N801SA | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | [元のページ](https://commons.wikimedia.org/wiki/File:Bedford-Hanscom_Air_Traffic_Control_Tower.JPG) | comm.tower |
 | `asrRadar` | 空港監視レーダー（airport surveillance radar）のアンテナ。回りながら電波を出し、空港の周りの機の位置を進入管制・出発管制の画面に映します。上に載っている細長いアンテナは二次レーダーで、トランスポンダーに問い合わせて、その応答を受けます。 | Dj1997 | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Capital_Region_International_Airport_Radar_Tower_ASR.jpg) | comm.radar |
+| `nightFlorida` | 国際宇宙ステーションから見た夜のフロリダ（2014 年 10 月）。灯は海岸と都市に集まり、湿地や海の上は真っ暗です。暗い地域の上では地面の目印がなく、高さの感じ方がずれやすくなります。 | NASA | [Public domain (PD-USGov-NASA)](https://commons.wikimedia.org/wiki/Template:PD-USGov-NASA) | [元のページ](https://commons.wikimedia.org/wiki/File:Florida_from_ISS_night_2014.jpg) | hf.vision |

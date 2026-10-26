@@ -18,10 +18,12 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SRC = path.join(here, 'src'), OUT = path.join(here, 'outputs'), VENDOR = path.join(here, 'vendor', 'draco');
 const CADET = path.join(here, '..', 'cadet'), CADET_TEX = path.join(CADET, 'assets', 'tex'), CADET_MODEL = path.join(CADET, 'assets', 'model');
-// the plain scripts in page order: the flight model, the displays, the school and the books, the aircraft's 3D
-// description (CORE, before the 3D bundle: it reads FL.physics / FL.avionics / FL.acmesh when a scene is made), then
-// the legacy view, the Google layer, the pages and the app (after it: app.js makes the scene as it starts)
-const CORE = ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js', 'quiz.js', 'radio.js', 'ui.js', 'acmesh.js'];
+// the plain scripts in page order: the flight model, the displays, the school and the books (the textbook, then the
+// basic course: kiso/kiso-data.js, generated, read from kiso/ as it is), the aircraft's 3D description (CORE, before
+// the 3D bundle: it reads FL.physics / FL.avionics / FL.acmesh when a scene is made), then the legacy view, the Google
+// layer, the pages and the app (after it: app.js makes the scene as it starts). A name with a '/' is relative to
+// flight-lab/, the others are in src/.
+const CORE = ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js', 'kiso/kiso-data.js', 'quiz.js', 'radio.js', 'ui.js', 'acmesh.js'];
 const AFTER = ['scene.js', 'google3d.js', 'pages.js', 'app.js'];
 export const MODULES = [...CORE, ...AFTER];
 // CADET's assets the 3D view draws: every texture (12 WebP files), the two aircraft's near and far models. Not the
@@ -101,7 +103,7 @@ export function build({ quiet = false, dev = false } = {}) {
   const threeLicense = read(path.join(here, 'node_modules', 'three', 'LICENSE'));
   const view = bundle3d(esbuild, dev);
   const head = `(function (FL) { FL.BUILD_INFO = ${JSON.stringify(info)}; FL.DRACO_SRC = ${JSON.stringify(wrapper)}; FL.DRACO_WASM_B64 = ${JSON.stringify(wasm)}; FL.DRACO_LICENSE = ${JSON.stringify(lic)}; FL.THREE_LICENSE = ${JSON.stringify(threeLicense)}; FL.ASSET_CREDITS = ${JSON.stringify(ASSET_CREDITS)}; })(globalThis.FL = globalThis.FL || {});`;
-  const mod = m => `<script>\n/* ---- ${m} ---- */\n${safeJs(read(path.join(SRC, m)))}\n</script>`;
+  const mod = m => `<script>\n/* ---- ${m} ---- */\n${safeJs(read(m.includes('/') ? path.join(here, m) : path.join(SRC, m)))}\n</script>`;
   const scripts = [
     `<script>\n${safeJs(head)}\n</script>`,
     `<script>\n/* ---- CADET's assets (textures: ambientCG, CC0; aircraft models: CADET's, made in Blender) ---- */\n${safeJs(assetsScript())}\n</script>`,

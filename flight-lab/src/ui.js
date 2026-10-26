@@ -9,6 +9,7 @@
     school: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2.2 9 2.2 12 0v-5"/><path d="M22 9v6"/>',
     plane: '<path d="M21 15.5v-2l-8-5V3.5a1.5 1.5 0 00-3 0V8.5l-8 5v2l8-2.5V19l-2 1.5v1.5l3.5-1 3.5 1v-1.5L13 19v-6z"/>',
     book: '<path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2z"/><path d="M4 21h15M8 7h7M8 10h5"/>',
+    kiso: '<path d="M12 6.5C9.5 4.8 6.2 4.5 3 5.3v13.4c3.2-.8 6.5-.5 9 1.2 2.5-1.7 5.8-2 9-1.2V5.3c-3.2-.8-6.5-.5-9 1.2z"/><path d="M12 6.5v13.4"/>',
     radio: '<path d="M4 14v-2a8 8 0 0116 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.2"/><rect x="17" y="14" width="4" height="6" rx="1.2"/>',
     quiz: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 12l3 3 5-6"/>',
     gauge: '<circle cx="12" cy="13" r="8"/><path d="M12 13l4-4M8 5.5L7 4M16 5.5l1-1.5"/>',

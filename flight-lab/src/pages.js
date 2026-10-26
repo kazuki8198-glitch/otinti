@@ -1,16 +1,16 @@
 // FLIGHT LAB — pages.js
 // The screens around the flight: the start menu, the school (the syllabus with each lesson's purpose, procedure,
-// keys, standards and steps), the debrief, and the pages: the textbook, the ground-school tests, the guide (keys,
-// gamepad, the screen, how to fly, numbers), the G1000-type PFD tutorial and the reading practice, Sanford, English
-// radio practice (a whole flight, read-backs, number drills, listening, glossary), the learning record, the Google 3D
-// settings, and "about". FL.pages(app) returns them (built once).
+// keys, standards and steps), the debrief, and the pages: the textbook, the basic course (kiso/, Japan's aviation law:
+// a separate book), the ground-school tests, the guide (keys, gamepad, the screen, how to fly, numbers), the G1000-type
+// PFD tutorial and the reading practice, Sanford, English radio practice (a whole flight, read-backs, number drills,
+// listening, glossary), the learning record, the Google 3D settings, and "about". FL.pages(app) returns them (built once).
 (function (FL) {
   'use strict';
   let built = null;
   FL.pages = function (app) {
     if (built) return built;
     const { S, h, $, $$, esc, store, toast } = app, UI = FL.ui;
-    const P = FL.physics, AV = FL.avionics, SC = FL.school, SY = FL.syllabus, BK = FL.book, QZ = FL.quiz, SF = FL.sanford, RD = FL.radio;
+    const P = FL.physics, AV = FL.avionics, SC = FL.school, SY = FL.syllabus, BK = FL.book, KZ = FL.kiso, QZ = FL.quiz, SF = FL.sanford, RD = FL.radio;
     const btn = (label, fn, cls, title) => h('button', { type: 'button', class: cls || '', title: title || null, onclick: fn }, label);
     const save = () => SC.saveProgress(store, S.progress);
     const levelName = id => SC.level(id).name;
@@ -41,10 +41,11 @@
       // the big tiles and the small links
       const m = $('#mainMenu'); m.textContent = '';
       const tile = (icon, title, sub, fn, cls) => h('button', { type: 'button', class: 'tile ' + (cls || ''), onclick: fn }, h('span', { class: 't-ico', html: UI.ico(icon, 28) }), h('span', { class: 't-title', text: title }), h('span', { class: 't-sub', text: sub }));
-      m.append(tile('school', '課程表', `飛行 ${flightIds.length} 課目 × 3 レベル・地上学科`, () => openSchool()),
+      m.append(...[tile('school', '課程表', `飛行 ${flightIds.length} 課目 × 3 レベル・地上学科`, () => openSchool()),
         tile('plane', '自由飛行', '評価なし。好きな場所・機体・風で', openFree),
         tile('book', '教科書', `全 ${chN} 章・${secN} 節（読んだ節 ${read}）`, () => openPage('book')),
-        tile('radio', '英語交信', RD ? `全交信 ${RD.FLIGHT.reduce((a, p) => a + p.lines.length, 0)} 行・${RD.SCENES.length} 場面・聞き取り` : '', () => openRadio('flight')));
+        KZ ? tile('kiso', '基礎教材', `日本の航空法 前提・全 ${KZ.chapters.length} 章・${kzSecN()} 節（読んだ節 ${kzCount(S.progress.kisoRead, kzIds().secs)}）`, () => openPage('kiso')) : null,
+        tile('radio', '英語交信', RD ? `全交信 ${RD.FLIGHT.reduce((a, p) => a + p.lines.length, 0)} 行・${RD.SCENES.length} 場面・聞き取り` : '', () => openRadio('flight'))].filter(Boolean));
       const mini = $('#menuMini'); mini.textContent = '';
       const link = (icon, title, fn) => h('button', { type: 'button', class: 'mini-btn', onclick: fn }, h('span', { html: UI.ico(icon, 18) }), title);
       mini.append(link('quiz', `学科テスト（${QZ ? QZ.BANKS.reduce((a, b) => a + b.qs.length, 0) : 0} 問）`, () => openPage('quiz')), link('gauge', 'PFD の読み方', () => openPage('tutor')), link('keys', '操作ガイド', () => openPage('guide')),
@@ -283,12 +284,12 @@
     function openPage(id) {
       back = S.screen === 'pause' ? 'pause' : S.screen === 'school' ? 'school' : 'menu';
       app.openScreen('page'); pageId = id;
-      const titles = { book: '教科書', quiz: '学科テスト', guide: '操作ガイド', tutor: 'G1000 型 PFD の読み方', readq: 'PFD の読み取り練習', sfb: 'Sanford（KSFB）の資料', radio: '英語交信（無線）の練習', records: '学習記録', g3d: 'Google Photorealistic 3D Tiles（任意）', about: 'このアプリについて' };
+      const titles = { book: '教科書', kiso: '基礎教材（日本の航空法 前提）', quiz: '学科テスト', guide: '操作ガイド', tutor: 'G1000 型 PFD の読み方', readq: 'PFD の読み取り練習', sfb: 'Sanford（KSFB）の資料', radio: '英語交信（無線）の練習', records: '学習記録', g3d: 'Google Photorealistic 3D Tiles（任意）', about: 'このアプリについて' };
       $('#pageTitle').textContent = titles[id] || '';
       $('#pageTools').textContent = '';
       const body = $('#pageBody'); body.textContent = ''; body.className = 'page-body'; body.scrollTop = 0;
       $('#pageClose').onclick = closePage;
-      ({ book: renderBook, quiz: renderQuizList, guide: renderGuide, tutor: renderTutor, readq: renderReadQuiz, sfb: renderSanford, radio: renderRadio, records: renderRecords, g3d: renderG3d, about: renderAbout }[id] || (() => {}))(body);
+      ({ book: renderBook, kiso: renderKiso, quiz: renderQuizList, guide: renderGuide, tutor: renderTutor, readq: renderReadQuiz, sfb: renderSanford, radio: renderRadio, records: renderRecords, g3d: renderG3d, about: renderAbout }[id] || (() => {}))(body);
     }
     function closePage() {
       rStop();
@@ -372,6 +373,123 @@
       for (const b of document.querySelectorAll('#bkNav .bk-item')) b.classList.toggle('sel', b.querySelector('.bk-num') && b.lastChild.textContent === sec.t);
       const nb = [...document.querySelectorAll('#bkNav .bk-item')].find(b => b.classList.contains('sel')); if (nb) { nb.classList.add('done'); nb.scrollIntoView({ block: 'nearest' }); }
     }
+
+    // ------------------------------------------------------------ the basic course (kiso/: Japan's aviation law, a separate book)
+    // FL.kiso as kiso/kiso-data.js holds it: the chapters (sections, written questions, glossary, sources) and the
+    // figures' SVG and the photos' data URLs. Its text is shown as it is (never summarised, never mixed into FL.book);
+    // the figures and photos take their placeholders (div.kiso-fig / div.kiso-photo): a figure on white (its colours
+    // assume a white ground), a photo with its caption and its credit (CC BY / CC BY-SA: always under the photo).
+    // What was read and which answers were opened go in the progress as kisoRead / kisoQa (not the textbook's read).
+    let kz = { ch: -1, tab: 'sec', sec: 0 }, kzIds_ = null;   // ch -1: the contents
+    const kzIds = () => kzIds_ || (kzIds_ = { secs: new Set(KZ.chapters.flatMap(c => c.sections.map(s => s.id))), qa: new Set(KZ.chapters.flatMap(c => c.qa.map(q => `${c.id}.q${q.n}`))), figs: new Map(KZ.chapters.flatMap(c => c.figures.map(f => [f.id, f]))), photos: new Map(KZ.chapters.flatMap(c => c.photos.map(p => [p.id, p]))) });
+    const kzSecN = () => kzIds().secs.size, kzQaN = () => kzIds().qa.size, kzCount = (list, set) => list.filter(x => set.has(x)).length;
+    const kzNote = () => h('p', { class: 'note', text: `パイロット基礎教材 ${KZ.version}。日本の航空法・国内の運航を前提にした座学教材で、FLIGHT LAB の教科書（FAA・14 CFR・Sanford 前提）とは別の本です。実機訓練、教官の指示、POH/AFM、SOP、航空法規を優先してください。` });
+    function kisoFill(root) {
+      const M = kzIds();
+      for (const d of root.querySelectorAll('.kiso-fig')) {
+        const id = d.dataset.fig, svg = KZ.figs[id], f = M.figs.get(id); if (!svg || !f) continue;
+        d.replaceWith(h('figure', { class: 'kz-fig', 'data-fig': id, html: svg }, h('figcaption', { html: f.caption })));
+      }
+      for (const d of root.querySelectorAll('.kiso-photo')) {
+        const id = d.dataset.photo, src = KZ.photos[id], p = M.photos.get(id); if (!src || !p) continue;
+        d.replaceWith(h('figure', { class: 'kz-photo', 'data-photo': id }, h('img', { src, width: p.w, height: p.h, alt: '' }), h('figcaption', {}, h('div', { html: p.caption }), h('div', { class: 'kz-credit', html: p.credit }))));
+      }
+      // the sources open in a new tab (the app is a file:// page: following a link in place would leave it)
+      for (const a of root.querySelectorAll('a[href^="http"]')) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+      return root;
+    }
+    function renderKiso(body) {
+      if (!KZ) { body.append(h('p', { text: '基礎教材のデータがありません。' })); return; }
+      body.className = 'page-body split';
+      $('#pageTools').append(h('span', { class: 'tag kz-tag', text: '日本の航空法・国内の運航が前提（教科書とは別の本）' }), h('span', { class: 'small mute', id: 'kzProg' }));
+      body.append(h('nav', { class: 'bk-nav', id: 'kzNav', 'aria-label': '基礎教材の目次' }), h('article', { class: 'bk-art', id: 'kzArt' }));
+      openKiso(kz.ch, kz.tab, kz.sec);
+    }
+    // a chapter's tab (sec: one section at a time; qa: the written questions; gl: the glossary; src: the sources), or
+    // the contents (ci < 0)
+    function openKiso(ci, tab = 'sec', si = 0) {
+      const art = $('#kzArt'); if (!art) return;
+      const c = KZ.chapters[ci] || null;
+      kz = c ? { ch: ci, tab: ['sec', 'qa', 'gl', 'src'].includes(tab) ? tab : 'sec', sec: Math.max(0, Math.min(si, c.sections.length - 1)) } : { ch: -1, tab: 'sec', sec: 0 };
+      art.textContent = '';
+      if (!c) kisoContents(art);
+      else {
+        const tabs = [['sec', '本文'], ['qa', `確認問題（${c.qa.length}）`], ['gl', `用語（${c.glossary.length}）`], ['src', '出典']];
+        art.append(h('div', { class: 'bk-chap', text: c.label }), h('h2', { class: 'bk-title', text: c.title }));
+        if (c.subtitle) art.append(h('div', { class: 'bk-en', text: c.subtitle }));
+        art.append(h('div', { class: 'tabs kz-tabs', role: 'tablist', 'aria-label': 'この章の中身' }, ...tabs.map(([k, t]) => h('button', { type: 'button', role: 'tab', 'data-t': k, 'aria-selected': String(k === kz.tab), class: k === kz.tab ? 'on' : '', onclick: () => openKiso(ci, k, kz.sec) }, t))));
+        const pane = h('div', { class: 'kz-pane', role: 'tabpanel' }); art.append(pane);
+        ({ sec: kisoSection, qa: kisoQuestions, gl: kisoGlossary, src: kisoSources })[kz.tab](pane, c, ci);
+        art.append(kzNote());
+      }
+      kisoNav(); kisoProg();
+      art.scrollTop = 0;
+    }
+    function kisoContents(art) {
+      art.append(h('div', { class: 'bk-chap', text: `パイロット基礎教材　${KZ.version}` }), h('h2', { class: 'bk-title', text: '基礎教材（日本の航空法 前提）' }),
+        h('p', { text: `日本の航空法・国内の運航を前提にした座学教材です（第 ${KZ.chapters[0].no}〜${KZ.chapters[KZ.chapters.length - 1].no} 章）。FLIGHT LAB の「教科書」（FAA・14 CFR・Sanford 前提）とは前提が違うため、別の本として収めています。` }),
+        h('p', { text: '章を開くと「本文」「確認問題」「用語」「出典」に分かれています。本文は節ごとに読み、前後の節へ移れます。確認問題は記述式で、採点はしません。自分で答えを考えてから「解答と解説を見る」で確かめてください。' }),
+        h('div', { class: 'kz-toc' }, ...KZ.chapters.map((c, i) => h('button', { type: 'button', class: 'kz-toc-item', onclick: () => openKiso(i) },
+          h('span', { class: 'kz-no', text: `第 ${c.no} 章` }), h('span', { class: 'kz-t', text: c.title }), c.subtitle ? h('span', { class: 'kz-sub', text: c.subtitle }) : null,
+          h('span', { class: 'kz-cnt', text: `${c.sections.length} 節（読んだ節 ${c.sections.filter(s => S.progress.kisoRead.includes(s.id)).length}）・確認問題 ${c.qa.length}・用語 ${c.glossary.length}` })))),
+        kzNote());
+    }
+    function kisoSection(pane, c, ci) {
+      const s = c.sections[kz.sec];
+      if (!S.progress.kisoRead.includes(s.id)) { S.progress.kisoRead.push(s.id); save(); }
+      pane.append(h('div', { class: 'small mute', text: `節 ${kz.sec + 1} / ${c.sections.length}` }), h('h3', { class: 'kz-sec-t', text: s.no != null ? `${s.no} ${s.title}` : s.title }),
+        kisoFill(h('div', { class: 'kz-body', 'data-kiso-sec': s.id, html: s.html })));          // static course content (trusted)
+      // the sections before and after (across the chapters), and the chapter's questions after its last section
+      const flat = KZ.chapters.flatMap((x, i) => x.sections.map((_, j) => [i, j])), k = flat.findIndex(([i, j]) => i === ci && j === kz.sec);
+      const go = ([i, j]) => openKiso(i, 'sec', j);
+      pane.append(h('div', { class: 'row', style: 'margin-top:20px' }, k > 0 ? btn('← 前の節', () => go(flat[k - 1])) : null,
+        kz.sec === c.sections.length - 1 && c.qa.length ? btn(`この章の確認問題へ（${c.qa.length} 問）`, () => openKiso(ci, 'qa')) : null,
+        k < flat.length - 1 ? btn('次の節 →', () => go(flat[k + 1]), 'primary') : null));
+    }
+    function kisoQuestions(pane, c) {
+      if (!c.qa.length) { pane.append(h('p', { class: 'mute', text: 'この章には確認問題がありません。' })); return; }
+      const cnt = h('p', { class: 'small mute' }), upd = () => { cnt.textContent = `解答を開いた問題 ${c.qa.filter(q => S.progress.kisoQa.includes(`${c.id}.q${q.n}`)).length} / ${c.qa.length}`; kisoProg(); };
+      pane.append(h('p', { class: 'small', text: '記述式の確認問題です。採点はしません。まず自分で答えを考え（書き出すとなおよい）、それから「解答と解説を見る」で確かめてください。' }), cnt);
+      for (const q of c.qa) {
+        const key = `${c.id}.q${q.n}`, ans = h('div', { class: 'kz-a', hidden: true }, h('div', { class: 'kz-a-h', text: '解答と解説' }), kisoFill(h('div', { html: q.a })));
+        const box = h('div', { class: 'quiz kz-qa' + (S.progress.kisoQa.includes(key) ? ' seen' : ''), 'data-q': key }, h('div', { class: 'kz-qn', text: `問 ${q.n}` }), kisoFill(h('div', { class: 'kz-q', html: q.q })));
+        const b = btn('解答と解説を見る', () => {
+          const open = ans.hidden; ans.hidden = !open; b.textContent = open ? '解答と解説を閉じる' : '解答と解説を見る'; b.setAttribute('aria-expanded', String(open));
+          if (open && !S.progress.kisoQa.includes(key)) { S.progress.kisoQa.push(key); save(); box.classList.add('seen'); upd(); }
+        });
+        b.setAttribute('aria-expanded', 'false');
+        box.append(b, ans); pane.append(box);
+      }
+      upd();
+    }
+    function kisoGlossary(pane, c) {
+      const norm = t => t.normalize('NFKC').toLowerCase();
+      const q = h('input', { type: 'search', class: 'kz-search', placeholder: '用語を検索（日本語・英語・略号）', 'aria-label': 'この章の用語を検索' }), cnt = h('span', { class: 'small mute' });
+      const rows = c.glossary.map(r => h('tr', {}, ...r.map(x => h('td', { html: x }))));
+      const none = h('p', { class: 'mute small', text: '見つかりませんでした。', hidden: true });
+      const draw = () => { const f = norm(q.value.trim()); let n = 0; for (const tr of rows) { const hit = !f || norm(tr.textContent).includes(f); tr.hidden = !hit; if (hit) n++; } cnt.textContent = f ? `${n} / ${rows.length} 項目` : `${rows.length} 項目`; none.hidden = n > 0; };
+      q.addEventListener('input', draw);
+      pane.append(h('div', { class: 'row' }, q, cnt), h('table', { class: 'kiso-t kz-gl' }, h('thead', {}, h('tr', {}, ...(c.glossaryHeader || []).map(x => h('th', { html: x })))), h('tbody', {}, ...rows)), none);
+      draw();
+    }
+    function kisoSources(pane, c) {
+      pane.append(kisoFill(h('div', { class: 'kz-src', html: c.sourcesHtml })), h('h4', { text: '写真の出典' }), kisoFill(h('div', { class: 'kz-src', html: c.photoCreditsHtml })));
+    }
+    // the contents on the left: the chapters (title and subtitle), the open chapter's sections under it
+    function kisoNav() {
+      const nav = $('#kzNav'); if (!nav) return;
+      nav.textContent = '';
+      nav.append(h('h3', { text: '基礎教材（日本の航空法 前提）' }), h('button', { type: 'button', class: 'bk-item kz-ch' + (kz.ch < 0 ? ' sel' : ''), onclick: () => openKiso(-1) }, h('span', { class: 'bk-num', text: '目次' }), h('span', { text: 'この本について・章の一覧' })));
+      KZ.chapters.forEach((c, i) => {
+        const cur = i === kz.ch, done = c.sections.every(s => S.progress.kisoRead.includes(s.id));
+        nav.append(h('button', { type: 'button', class: 'bk-item kz-ch' + (cur ? ' open' : '') + (done ? ' done' : ''), 'aria-expanded': String(cur), onclick: () => openKiso(i, cur ? kz.tab : 'sec', cur ? kz.sec : 0) },
+          h('span', { class: 'bk-num', text: `第 ${c.no} 章` }), h('span', {}, c.title, c.subtitle ? h('span', { class: 'kz-sub', text: c.subtitle }) : null)));
+        if (cur) c.sections.forEach((s, j) => nav.append(h('button', { type: 'button', class: 'bk-item kz-si' + (S.progress.kisoRead.includes(s.id) ? ' done' : '') + (kz.tab === 'sec' && j === kz.sec ? ' sel' : ''), onclick: () => openKiso(i, 'sec', j) },
+          h('span', { class: 'bk-num', text: s.no != null ? `${c.no}.${s.no}` : /\.cover$/.test(s.id) ? '扉' : '—' }), h('span', { text: s.title }))));
+      });
+      const sel = nav.querySelector('.bk-item.sel') || nav.querySelector('.kz-ch.open'); if (sel) sel.scrollIntoView({ block: 'nearest' });
+    }
+    function kisoProg() { const el = $('#kzProg'); if (el) el.textContent = `読んだ節 ${kzCount(S.progress.kisoRead, kzIds().secs)} / ${kzSecN()}・解答を開いた問題 ${kzCount(S.progress.kisoQa, kzIds().qa)} / ${kzQaN()}`; }
 
     // ------------------------------------------------------------ the ground-school tests
     function renderQuizList(body) {
@@ -789,6 +907,7 @@
         h('div', { class: 'row' }, btn('JSON に書き出す', () => download(`flight-lab-record-${new Date().toISOString().slice(0, 10)}.json`, SC.exportJSON(SC.loadRecords(store), S.progress)), 'primary'),
           btn('JSON から読み込む（統合）', () => file.click()), file,
           btn('すべて削除', () => { if (confirm('この端末の学習記録（記録・進み具合）をすべて削除しますか？')) { SC.saveRecords(store, []); S.progress = SC.sanitizeProgress({}); save(); renderRecords(); } }, 'danger')));
+      if (KZ) pg.append(h('p', { class: 'small', text: `基礎教材（日本の航空法 前提）：読んだ節 ${kzCount(S.progress.kisoRead, kzIds().secs)} / ${kzSecN()}・解答を開いた確認問題 ${kzCount(S.progress.kisoQa, kzIds().qa)} / ${kzQaN()}（教科書の「読んだ節」とは別に記録します）` }));
       if (!store) pg.append(h('p', { class: 'small', style: 'color:#ffb3b3', text: 'このブラウザでは localStorage が使えないため、記録は保存されません（JSON の書き出しは使えます）。' }));
       if (!recs.length) { pg.append(h('p', { class: 'mute', text: 'まだ記録はありません。課目を終えると自動で保存されます。' })); return; }
       const res = { pass: '合格', fail: '不合格', abort: '中止', free: '—' };
@@ -870,6 +989,7 @@
         h('p', { class: 'small', text: '学習記録・進み具合・操作の設定はこのブラウザの localStorage にだけ保存します（サーバーへ送りません）。Google 3D を接続したときだけ、Google のタイル配信先へ API キー付きでタイルを要求します。キーは保存しません。外部リンク（参考資料）はクリックしたときだけ開きます。' }),
         h('h3', { text: 'ライセンス' }),
         h('p', { class: 'small', text: 'Draco 3D データ圧縮デコーダー（Google、Apache License 2.0）を同梱しています（Google 3D タイルの展開用）。' }),
+        KZ ? h('p', { class: 'small', text: '基礎教材（日本の航空法 前提）の写真のクレジット（撮影者・ライセンス・出典）は、各写真の下と、章ごとの「出典」タブ（写真の出典）にあります。' }) : null,
         FL.DRACO_LICENSE ? h('details', {}, h('summary', { text: 'Apache License 2.0（全文）' }), h('pre', { class: 'small', style: 'white-space:pre-wrap', text: FL.DRACO_LICENSE })) : null,
         // the three.js view's parts (only in a build that has it)
         FL.view3d ? h('ul', { class: 'small' }, ...['3D 表示：three.js（© three.js authors、MIT License）を同梱しています。',
@@ -880,7 +1000,7 @@
         h('p', { class: 'note', text: `FLIGHT LAB ${FL.BUILD_INFO || '(開発版)'}` }));
     }
 
-    built = { openMenu, openSchool, renderBrief, showDebrief, openPage, closePage, openSection, runQuiz, openRadio, openSettings, openFree, openTour, openModal, closeModal, schoolTab };
+    built = { openMenu, openSchool, renderBrief, showDebrief, openPage, closePage, openSection, openKiso, runQuiz, openRadio, openSettings, openFree, openTour, openModal, closeModal, schoolTab };
     return built;
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

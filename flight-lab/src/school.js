@@ -514,9 +514,10 @@
       memo: txt(r.memo, 2000), note: RECORD_NOTE,
     };
   }
-  // progress: lessons (tries / best grade / passed), training time, landings, read sections, quiz scores, ATC scenes
+  // progress: lessons (tries / best grade / passed), training time, landings, read sections, quiz scores, ATC scenes,
+  // and the basic course's own (kiso/: its sections read, its written questions whose answer was opened)
   function sanitizeProgress(p) {
-    const out = { lessons: {}, time: 0, landings: 0, read: [], quiz: {}, bookQuiz: {}, atc: {} };
+    const out = { lessons: {}, time: 0, landings: 0, read: [], quiz: {}, bookQuiz: {}, atc: {}, kisoRead: [], kisoQa: [] };
     if (!p || typeof p !== 'object') return out;
     if (p.lessons && typeof p.lessons === 'object') for (const [k, v] of Object.entries(p.lessons)) {
       if (!/^[a-z0-9_]{1,12}$/.test(k) || !v || typeof v !== 'object') continue;
@@ -527,6 +528,7 @@
     if (Array.isArray(p.read)) out.read = [...new Set(p.read.filter(x => typeof x === 'string' && /^[a-z0-9_.\-]{1,40}$/.test(x)))].slice(0, 500);
     for (const key of ['quiz', 'bookQuiz']) if (p[key] && typeof p[key] === 'object') for (const [k, v] of Object.entries(p[key])) { if (/^[a-z0-9_.\-]{1,40}$/.test(k) && isNum(v)) out[key][k] = clamp(Math.round(v), 0, 100); }
     if (p.atc && typeof p.atc === 'object') for (const [k, v] of Object.entries(p.atc)) { if (/^[a-z0-9_]{1,20}$/.test(k)) out.atc[k] = v === true; }
+    for (const key of ['kisoRead', 'kisoQa']) if (Array.isArray(p[key])) out[key] = [...new Set(p[key].filter(x => typeof x === 'string' && /^kiso[a-z0-9_.\-]{1,36}$/.test(x)))].slice(0, 1000);
     return out;
   }
   function noteLesson(prog, L) {
@@ -561,7 +563,7 @@
     const lessons = { ...A.lessons };
     for (const [k, v] of Object.entries(B.lessons)) { const x = lessons[k]; lessons[k] = x ? { tries: Math.max(x.tries, v.tries), best: rank[v.best] > rank[x.best] ? v.best : x.best, pass: x.pass || v.pass, levels: [...new Set([...x.levels, ...v.levels])] } : v; }
     const maxMap = (p, q) => { const o = { ...p }; for (const [k, v] of Object.entries(q)) o[k] = Math.max(o[k] || 0, v); return o; };
-    return sanitizeProgress({ lessons, time: Math.max(A.time, B.time), landings: Math.max(A.landings, B.landings), read: [...A.read, ...B.read], quiz: maxMap(A.quiz, B.quiz), bookQuiz: maxMap(A.bookQuiz, B.bookQuiz), atc: { ...A.atc, ...B.atc } });
+    return sanitizeProgress({ lessons, time: Math.max(A.time, B.time), landings: Math.max(A.landings, B.landings), read: [...A.read, ...B.read], quiz: maxMap(A.quiz, B.quiz), bookQuiz: maxMap(A.bookQuiz, B.bookQuiz), atc: { ...A.atc, ...B.atc }, kisoRead: [...A.kisoRead, ...B.kisoRead], kisoQa: [...A.kisoQa, ...B.kisoQa] });
   }
 
   FL.school = {

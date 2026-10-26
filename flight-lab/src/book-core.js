@@ -77,9 +77,15 @@
     awc: { label: 'Aviation Weather Center（METAR・TAF・気象情報）', url: 'https://aviationweather.gov/' },
     tem: { label: 'SKYbrary: Threat and Error Management (TEM)', url: 'https://skybrary.aero/articles/threat-and-error-management-tem' },
     crm: { label: 'SKYbrary: Crew Resource Management (CRM)', url: 'https://skybrary.aero/articles/crew-resource-management-crm' },
-    icaoTEM: { label: 'ICAO Doc 9683 Human Factors Training Manual（TEM・CRM の考え方）', url: 'https://www.icao.int/' },
+    icaoTEM: { label: 'ICAO Doc 9683 Human Factors Training Manual（第 1 版 1998。2003 年の改訂（Amendment 1）で、第 2 部第 2 章「CRM 訓練」に TEM の節を追加。ICAO の販売文書）', url: 'https://www.icao.int/' },
+    authGrad: { label: 'SKYbrary: Authority Gradients（権威勾配が急すぎるとき・平らすぎるとき）', url: 'https://skybrary.aero/articles/authority-gradients' },
+    cfr121404: { label: '14 CFR 121.404 CRM・DRM の訓練（乗員・客室乗務員・運航管理者）', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-G/part-121/subpart-N/section-121.404' },
+    temOps: { label: 'SKYbrary: Threat and Error Management (TEM) in Flight Operations（脅威・エラー・UAS の定義）', url: 'https://skybrary.aero/articles/threat-and-error-management-tem-flight-operations' },
+    ac12051: { label: 'FAA AC 120-51E Crew Resource Management Training（2004）', url: 'https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC120-51e.pdf' },
+    safo15011: { label: 'FAA SAFO 15011 Roles and Responsibilities for Pilot Flying (PF) and Pilot Monitoring (PM)（2015）', url: 'https://www.faa.gov/sites/faa.gov/files/other_visit/aviation_industry/airline_operators/airline_safety/SAFO15011.pdf' },
+    nasaCrm: { label: 'NASA CP-2120 Resource Management on the Flight Deck（1979 年のワークショップ・1980）', url: 'https://ntrs.nasa.gov/citations/19800013796' },
     upset: { label: 'FAA AC 120-111 Upset Prevention and Recovery Training', url: 'https://www.faa.gov/regulations_policies/advisory_circulars/' },
-    automation: { label: 'FAA AC 120-71B Standard Operating Procedures and Pilot Monitoring Duties', url: 'https://www.faa.gov/regulations_policies/advisory_circulars/' },
+    automation: { label: 'FAA AC 120-71B Standard Operating Procedures and Pilot Monitoring Duties for Flight Deck Crewmembers（2017）', url: 'https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-71B.pdf' },
     mag: { label: 'NOAA 磁気偏差計算（Magnetic Field Calculators）', url: 'https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml' },
   };
   const PARTS = [

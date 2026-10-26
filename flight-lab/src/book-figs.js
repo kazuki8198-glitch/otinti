@@ -498,12 +498,28 @@
       return svg(400, 386, s, '図：G1000 型 PFD の配置（模式図）と、放射状のクロスチェック（IFH 第 6 章）。中央の姿勢表示から各計器へ目を動かし、いつも姿勢に戻ります。出力（回転計）は、実機の G1000 型では MFD に出ます');
     },
     tem() {
-      let s = `<rect x="20" y="30" width="140" height="60" rx="8" fill="rgba(255,178,62,.12)" stroke="${C.am}"/>` + T(90, 56, '脅威（Threat）', { c: C.am, b: 1 }) + T(90, 74, '天気・他機・不具合…', { c: C.mut, fs: 10 });
-      s += `<rect x="190" y="30" width="140" height="60" rx="8" fill="rgba(255,106,90,.12)" stroke="${C.rd}"/>` + T(260, 56, 'エラー（Error）', { c: C.rd, b: 1 }) + T(260, 74, '操作・手順・交信の誤り', { c: C.mut, fs: 10 });
-      s += `<rect x="360" y="30" width="140" height="60" rx="8" fill="rgba(197,140,255,.12)" stroke="${C.vi}"/>` + T(430, 52, '望ましくない', { c: C.vi, b: 1 }) + T(430, 68, '機体の状態（UAS）', { c: C.vi, b: 1 }) + T(430, 84, '高度・速度の逸脱…', { c: C.mut, fs: 10 });
-      s += A(160, 60, 188, 60, C.ink, 2) + A(330, 60, 358, 60, C.ink, 2);
-      s += `<rect x="20" y="120" width="480" height="44" rx="8" fill="rgba(95,212,110,.1)" stroke="${C.gr}"/>` + T(260, 147, '管理（Manage）：予測（ブリーフィング）→ 気づく（モニター・クロスチェック）→ 対処（立て直す）', { c: C.gr, fs: 12 });
-      return svg(520, 180, s, '図：TEM（Threat and Error Management）の流れ。脅威とエラーを早く見つけて管理し、望ましくない状態（UAS）に進ませない（SKYbrary の TEM の説明を図にしたもの）');
+      // the TEM framework as ICAO Doc 9683 (Part 2, chapter 2: 2.3.15 errors, 2.3.16 undesired aircraft states, 2.4.1 most flights
+      // end safely) and SKYbrary define it: threats and errors are managed most of the time and lead nowhere; an unmanaged error can
+      // become an undesired aircraft state (UAS), which can still be recovered. On the left, the three defences (avoid, trap, mitigate)
+      let s = '';
+      const box = (x, y, w, h, c, title, lines) => BOX(x, y, w, h, c, title, lines, { fs: 13, ty: 19, ly: 37 });
+      s += BOX(136, 8, 112, 70, C.am, '脅威（Threat）', ['天気・混雑・管制の', '変更・機体の不具合'], { fs: 13, ty: 19, ly: 37, lfs: 12 });
+      s += BOX(280, 8, 112, 70, C.rd, 'エラー（Error）', ['操作・手順・交信の', '誤り'], { fs: 13, ty: 19, ly: 37, lfs: 12 });
+      // a threat can lead to an error
+      s += A(250, 43, 278, 43, C.ink, 2);
+      // managed → no consequence (from both boxes)
+      s += A(192, 80, 192, 108, C.ink, 2) + A(300, 80, 300, 108, C.ink, 2) + T(246, 98, '管理する', { c: C.ink, fs: 12 });
+      s += BOX(136, 110, 180, 50, C.gr, '管理できた → 影響なし', ['ほとんどの飛行はここで終わる'], { fs: 13, ty: 19, ly: 37, lfs: 12 });
+      // not managed → UAS (beside the managed branch, not through it)
+      s += A(360, 80, 360, 188, C.ink, 2) + T(352, 180, '管理できなかった', { c: C.ink, fs: 12, a: 'end' });
+      s += box(136, 190, 256, 70, C.vi, '望ましくない機体の状態（UAS）', ['速度・高度・針路のずれ・誤った形態・', '不安定な進入']);
+      s += A(204, 262, 204, 286, C.gr, 2) + A(324, 262, 324, 286, C.rd, 2) + T(198, 280, '立て直す', { c: C.gr, fs: 12, a: 'end' }) + T(330, 280, 'できない', { c: C.rd, fs: 12, a: 'start' });
+      s += box(136, 288, 124, 36, C.gr, '安全な状態へ', []) + box(268, 288, 124, 36, C.rd, '事故・インシデント', []);
+      // the three defences
+      const d = [[8, '防ぐ（avoid）', ['ブリーフィング', '計画・準備']], [118, '見つける（trap）', ['モニター', 'クロスチェック', 'コール']], [228, '小さくする', ['（mitigate）', '立て直す・', 'ゴーアラウンド']]];
+      d.forEach(([y, t, l]) => { s += BOX(6, y, 122, y === 228 ? 96 : 102, C.cy, t, l, { fs: 12, ty: 19, ly: 38, lfs: 12 }); });
+      s += T(200, 346, '乗員の対策（countermeasures）：防ぐ・見つける・小さくする', { c: C.cy, b: 1, fs: 12 });
+      return svg(400, 356, s, '図：TEM（脅威とエラーの管理）の考え方。脅威とエラーは、ほとんどの場合管理されて何も起きません。管理しそこねたエラーが、望ましくない機体の状態（UAS）になることがあり、そこから立て直します（ICAO Doc 9683・SKYbrary にもとづく模式図）');
     },
     standardRate() {
       // the bank for a standard-rate turn (3°/s): tan φ = 3 · V / 1091 (V true airspeed in kt), and the two rules of thumb in the IFH

@@ -65,6 +65,61 @@
 
 
   const FIG = {
+    // ---------------------------------------------------------------- 第 1 章 intro（はじめに）
+    courseMap() {
+      // the six parts, top to bottom, with the chapters of each (counted from FL.book, so a new chapter keeps it right)
+      const CH = (FL.book && FL.book.CHAPTERS) || [], rng = p => { const n = CH.filter(c => c.part === p).map(c => c.n); return n.length ? (n.length > 1 ? `第 ${n[0]}〜${n[n.length - 1]} 章` : `第 ${n[0]} 章`) : ''; };
+      const rows = [['p1', '地上学科', '飛ぶ前に知ること：原理・機体・気象・規則・交信・人間', C.cy, 'book'], ['p2', '基礎操縦（Archer）', '点検・基本操縦・離着陸・緊急操作・ソロ', C.gr, 'single'],
+        ['p3', '航法', '地図と飛行計画・電波航法と GPS・目的地変更', C.am, 'map'], ['p4', '計器飛行', '計器だけを見て飛ぶ・計器飛行方式（IFR）', C.vi, 'cloud'],
+        ['p5', '多発（Seminole）', 'エンジン 2 つの飛行機・片発停止', C.bl, 'twin'], ['p6', 'チームで飛ぶ', 'TEM・CRM・ジェット機と自動化への準備', C.rd, 'crew']];
+      const icon = (k, x, y, c) => k === 'book' ? `<path d="M${x - 16} ${y - 10} h14 v22 h-14 Z M${x + 2} ${y - 10} h14 v22 h-14 Z" fill="none" stroke="${c}" stroke-width="2"/>`
+        : k === 'single' ? planeSide(x, y + 2, 0.34, { gear: false }) : k === 'twin' ? planeTop(x, y, 0.22, { twin: true })
+          : k === 'map' ? `<path d="M${x - 16} ${y - 10} l10 4 l12 -4 l10 4 v20 l-10 -4 l-12 4 l-10 -4 Z" fill="none" stroke="${c}" stroke-width="2"/>${A(x - 6, y + 6, x + 8, y - 4, c, 2)}`
+            : k === 'cloud' ? `<path d="M${x - 16} ${y + 8} a8 8 0 0 1 4 -15 a10 10 0 0 1 19 -2 a7 7 0 0 1 9 11 Z" fill="none" stroke="${c}" stroke-width="2"/>`
+              : `<circle cx="${x - 8}" cy="${y - 4}" r="6" fill="none" stroke="${c}" stroke-width="2"/><circle cx="${x + 9}" cy="${y - 4}" r="6" fill="none" stroke="${c}" stroke-width="2"/><path d="M${x - 18} ${y + 12} q10 -12 20 0 M${x - 1} ${y + 12} q10 -12 20 0" fill="none" stroke="${c}" stroke-width="2"/>`;
+      let s = '';
+      rows.forEach(([p, t, sub, c, ic], i) => {
+        const y = 8 + i * 56;
+        s += `<rect x="8" y="${y}" width="384" height="46" rx="8" fill="${c}" fill-opacity="0.1" stroke="${c}" stroke-width="1.5"/>`;
+        s += T(22, y + 19, `第 ${i + 1} 部`, { c, b: 1, a: 'start', fs: 13 }) + T(84, y + 19, t, { c: C.ink, b: 1, a: 'start', fs: 13 }) + T(384, y + 19, rng(p), { c: C.mut, a: 'end', fs: 12 });
+        s += T(22, y + 38, sub, { c: C.ink, a: 'start', fs: 12 });
+        if (i < rows.length - 1) s += `<path d="M200 ${y + 47} l-6 0 l6 8 l6 -8 Z" fill="${C.mut}"/>`;
+      });
+      return svg(400, 342, s, '図：この教科書の 6 つの部。上から順に、地上で学ぶこと → 単発機の操縦 → 航法 → 計器飛行 → 双発機 → チームで飛ぶ準備、と進みます');
+    },
+    courseFlow() {
+      // the published basic course, as the public articles describe it (a summary, not an official course chart)
+      const st = [['座学（ロンドン）', '授業はすべて英語。管制通信の練習も', C.cy], ['単発機 Piper Archer（Sanford）', '1 回 90〜120 分のレッスン 12 回 → 審査 → ソロ', C.gr],
+        ['航法（Navigation）', '地図と上空の風から針路を計算して飛ぶ', C.am], ['計器飛行', '計器だけを頼りに飛ぶ', C.vi], ['双発機 Piper Seminole', '片発停止や故障への対応 → 最後の審査', C.bl], ['ライセンス取得 → 副操縦士任用訓練へ', '', C.rd]];
+      let s = L(28, 22, 28, 22 + 5 * 52, C.mut, 2);
+      st.forEach(([t, sub, c], i) => {
+        const y = 22 + i * 52;
+        s += `<circle cx="28" cy="${y}" r="8" fill="${c}"/>` + T(48, y + 5, t, { c, b: 1, a: 'start', fs: 13 }) + (sub ? T(48, y + 24, sub, { c: C.ink, a: 'start', fs: 12 }) : '');
+      });
+      s += `<rect x="8" y="302" width="384" height="26" rx="6" fill="none" stroke="${C.mut}" stroke-dasharray="4 3"/>` + T(200, 320, '期間は全体で約 1 年半〜2 年（公開記事）', { c: C.mut, fs: 12 });
+      return svg(400, 336, s, '図：公開されている記事から読み取れる基礎訓練の流れ（要約）。細かな内容・順番・基準は公開されていません');
+    },
+    certLadder() {
+      // 14 CFR Part 61 (eCFR, checked 2026-10): the minimum ages, hours, tests and medical classes
+      const steps = [['学生操縦士（Student Pilot）', '16 歳から・試験なし（申請）・第 3 種', '61.83'], ['自家用操縦士（Private Pilot）', '17 歳・40 時間以上・学科＋実地・第 3 種', '61.103'],
+        ['計器飛行証明（Instrument Rating）', '機長の野外飛行 50 時間・計器飛行 40 時間など', '61.65'], ['事業用操縦士（Commercial Pilot）', '18 歳・250 時間以上・学科＋実地・第 2 種', '61.123'],
+        ['多発の等級（Multiengine）', '資格に加える限定。実地試験だけ', '61.63'], ['定期運送用操縦士（ATP）', '23 歳・1,500 時間（R-ATP は短縮）・機長は第 1 種', '61.153']];
+      let s = T(12, 18, '↑ 下から順に積み上げる', { c: C.gr, b: 1, a: 'start', fs: 13 }) + T(392, 18, '数字は規則の最低限', { c: C.mut, a: 'end', fs: 12 });
+      steps.forEach(([t, sub, rule], i) => {
+        const y = 300 - (i + 1) * 46, x = 12 + i * 12;
+        s += `<rect x="${x}" y="${y}" width="${392 - x}" height="40" rx="6" fill="${C.cy}" fill-opacity="${0.06 + i * 0.03}" stroke="${C.cy}" stroke-width="1.2"/>`;
+        s += T(x + 8, y + 17, t, { c: C.ink, b: 1, a: 'start', fs: 13 }) + T(x + 8, y + 34, sub, { c: C.ink, a: 'start', fs: 12 }) + T(386, y + 17, rule, { c: C.am, a: 'end', fs: 12 });
+      });
+      s += `<rect x="12" y="306" width="380" height="26" rx="6" fill="${C.am}" fill-opacity="0.12" stroke="${C.am}"/>` + T(202, 324, 'どの資格も：英語を読み・話し・書き・理解できること', { c: C.am, b: 1, fs: 12 });
+      return svg(400, 340, s, '図：米国（FAA）の飛行機の操縦士の資格の段階（14 CFR Part 61 の要点）。年齢・飛行時間は Part 61 の最低限で、「第 N 種」はその資格の権利を使うのに必要な身体検査証明の等級です');
+    },
+    studyCycle() {
+      const n = [['読む', '教科書の節', 200, 46, C.cy], ['答える', '確認問題・学科テスト', 338, 140, C.am], ['飛ぶ', 'シミュレータの課目', 200, 234, C.gr], ['振り返る', '講評とメモ', 62, 140, C.vi]];
+      let s = ARC(200, 140, 74, -60, -30, C.mut, 2) + ARC(200, 140, 74, 30, 60, C.mut, 2) + ARC(200, 140, 74, 120, 150, C.mut, 2) + ARC(200, 140, 74, 210, 240, C.mut, 2);
+      for (const [t, sub, x, y, c] of n) s += `<rect x="${x - 58}" y="${y - 24}" width="116" height="48" rx="10" fill="${c}" fill-opacity="0.12" stroke="${c}" stroke-width="1.5"/>` + T(x, y - 3, t, { c, b: 1, fs: 14 }) + T(x, y + 15, sub, { c: C.ink, fs: 12 });
+      s += T(200, 136, 'くり返す', { c: C.mut, fs: 12 }) + T(200, 152, 'ごとに上達', { c: C.mut, fs: 12 });
+      return svg(400, 280, s, '図：この教材での学び方。読む → 答える → 飛ぶ → 振り返る、をくり返します');
+    },
     forces() {
       let s = '<g transform="translate(170 110)"><ellipse cx="0" cy="0" rx="70" ry="10" fill="#dfe6ee"/><rect x="-66" y="-26" width="12" height="18" fill="#dfe6ee"/><rect x="-14" y="-4" width="40" height="5" fill="#9fb3c8"/>';
       s += A(0, 0, 0, -80, C.gr) + T(0, -88, '揚力（Lift）', { c: C.gr, b: 1 }) + A(0, 0, 0, 80, C.mut) + T(0, 100, '重力（Weight）', { c: C.mut, b: 1 });

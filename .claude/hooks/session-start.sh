@@ -1,11 +1,12 @@
 #!/bin/bash
 # SessionStart hook (Claude Code cloud sessions only): makes the FLIGHT LAB / CADET toolchain ready before the session
 # starts, so builds, tests, screenshots and the Blender asset scripts work at once.
-#   - npm dependencies of flight-lab/ and cadet/ (three.js, esbuild, the Anthropic SDK; pinned by their lockfiles)
 #   - Blender 5.2.3 (the official Linux build, checked against its SHA-256), on PATH as `blender`, for
 #     cadet/tools/**/build_*.py: blender -b --factory-startup -P <script> -- <args>
+#   - npm dependencies of flight-lab/ and cadet/ (three.js, esbuild, the Anthropic SDK; pinned by their lockfiles)
 # Chromium and Playwright come with the cloud image (the shot scripts find them), nothing to do here.
-# Idempotent: what is already there is kept (the container is cached after this hook).
+# Idempotent: what is already there is kept (the container is cached after this hook). Blender is unpacked into a
+# temporary directory and moved into place only when complete, so an interrupted run never leaves a half tree behind.
 set -euo pipefail
 
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
@@ -14,13 +15,6 @@ fi
 
 ROOT="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 
-for pkg in flight-lab cadet; do
-  if [ -f "$ROOT/$pkg/package.json" ]; then
-    echo "npm install in $pkg/"
-    (cd "$ROOT/$pkg" && npm install --no-audit --no-fund --loglevel=error)
-  fi
-done
-
 BLENDER_VERSION=5.2.3
 BLENDER_NAME="blender-${BLENDER_VERSION}-linux-x64"
 BLENDER_SHA256=78486c018b4443efe5e75ab54c290ed8c15abafd249b862c2c9ce2530a918eec
@@ -28,14 +22,17 @@ BLENDER_URL="https://download.blender.org/release/Blender${BLENDER_VERSION%.*}/$
 OPT="${HOME}/.local/opt"
 BLENDER_DIR="$OPT/$BLENDER_NAME"
 
-if [ ! -x "$BLENDER_DIR/blender" ]; then
+if [ ! -f "$BLENDER_DIR/.complete" ]; then
   echo "installing Blender ${BLENDER_VERSION}"
   mkdir -p "$OPT"
-  tmp="$(mktemp -d)"
+  tmp="$(mktemp -d "$OPT/.blender.XXXXXX")"
   trap 'rm -rf "$tmp"' EXIT
-  curl -fsSL --retry 4 --retry-delay 2 -o "$tmp/blender.tar.xz" "$BLENDER_URL"
+  curl -fsSL --retry 4 --retry-delay 2 --retry-all-errors -o "$tmp/blender.tar.xz" "$BLENDER_URL"
   echo "${BLENDER_SHA256}  $tmp/blender.tar.xz" | sha256sum -c --quiet -
-  tar -xJf "$tmp/blender.tar.xz" -C "$OPT"
+  tar -xJf "$tmp/blender.tar.xz" -C "$tmp"
+  touch "$tmp/$BLENDER_NAME/.complete"
+  rm -rf "$BLENDER_DIR"
+  mv "$tmp/$BLENDER_NAME" "$BLENDER_DIR"
   rm -rf "$tmp"
   trap - EXIT
 fi
@@ -50,5 +47,12 @@ else
     echo "export PATH=\"$HOME/.local/bin:\$PATH\"" >> "$CLAUDE_ENV_FILE"
   fi
 fi
+"$BLENDER_DIR/blender" --version | sed -n 1p
 
-"$BLENDER_DIR/blender" --version | head -1
+# npm: a failure is reported but does not stop the session from starting (Blender is already in place)
+for pkg in flight-lab cadet; do
+  if [ -f "$ROOT/$pkg/package.json" ]; then
+    echo "npm install in $pkg/"
+    (cd "$ROOT/$pkg" && npm install --no-audit --no-fund --loglevel=error) || echo "npm install failed in $pkg/" >&2
+  fi
+done

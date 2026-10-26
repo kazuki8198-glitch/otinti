@@ -500,11 +500,26 @@
       return svg(500, 190, s, '図：ILS（計器着陸装置）。ローカライザーが左右、グライドスロープが上下のずれを示し、PFD の CDI と菱形（GS）に表示される（AIM 1-1-9）');
     },
     scan() {
-      const c = (x, y, lab) => `<rect x="${x - 36}" y="${y - 18}" width="72" height="36" rx="6" fill="rgba(95,212,255,.08)" stroke="${C.cy}"/>` + T(x, y + 4, lab, { c: C.ink, fs: 12, b: 1 });
-      let s = c(200, 100, '姿勢') + c(80, 100, '速度') + c(320, 100, '高度') + c(200, 190, '方位') + c(80, 190, '旋回率') + c(320, 190, '昇降率');
-      for (const [x, y] of [[80, 100], [320, 100], [200, 190], [80, 190], [320, 190]]) s += L(200 + (x - 200) * 0.25, 100 + (y - 100) * 0.25, 200 + (x - 200) * 0.6, 100 + (y - 100) * 0.6, C.am, 2);
-      s += T(200, 40, '放射状クロスチェック（radial scan）：姿勢 → 他の計器 → 姿勢 → …', { c: C.am, fs: 12 });
-      return svg(400, 230, s, '図：計器のスキャン。いつも姿勢に戻ってから次の計器へ。G1000 では中央の姿勢表示の周りに速度・高度・昇降率・方位が並ぶ（Instrument Flying Handbook 第 6 章）');
+      // a G1000-type PFD (speed tape left, attitude centre, altitude tape and vertical speed right, HSI below with the turn-rate trend
+      // above it; engine rpm on the MFD. The course's display in avionics.js has the same tapes and HSI but no turn-rate trend, and it
+      // also shows rpm at the PFD's lower left) and the radial cross-check of
+      // IFH chapter 6: out from the attitude indicator to one instrument and back. Green = control instruments, cyan = performance
+      const box = (x, y, w, h, c, lab, sub) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" fill="${C.bg}" stroke="${c}" stroke-width="2"/>` + T(x + w / 2, y + 18, lab, { c, b: 1, fs: 12 }) + (sub ? T(x + w / 2, y + 36, sub, { c: C.ink, fs: 12 }) : '');
+      let s = `<rect x="6" y="6" width="388" height="306" rx="10" fill="#070d16" stroke="${C.grid}"/>`;
+      // the attitude indicator: sky, ground, horizon, the yellow airplane symbol
+      s += `<rect x="78" y="18" width="244" height="164" fill="#1d3550"/><rect x="78" y="104" width="244" height="78" fill="#4a3a26"/>` + L(78, 104, 322, 104, C.ink, 2);
+      s += `<path d="M150 100 L186 100 L190 106 L150 106 Z M250 100 L214 100 L210 106 L250 106 Z M200 100 L186 112 L200 106 L214 112 Z" fill="#ffd400" stroke="#000"/>`;
+      s += `<rect x="78" y="18" width="244" height="164" fill="none" stroke="${C.gr}" stroke-width="2.5"/>` + T(200, 38, '姿勢（いちばん大事）', { c: C.gr, b: 1, fs: 12, halo: 1 });
+      s += box(18, 40, 52, 120, C.cy, '速度', '100') + box(330, 40, 46, 120, C.cy, '高度', '3000') + `<rect x="378" y="60" width="10" height="80" fill="${C.bg}" stroke="${C.cy}" stroke-width="1.5"/>` + T(383, 172, '昇降', { c: C.cy, b: 1, fs: 12 });
+      // the HSI and the turn-rate trend (magenta) above it
+      s += `<circle cx="200" cy="250" r="50" fill="${C.bg}" stroke="${C.cy}" stroke-width="2"/>` + T(200, 255, '方位（HSI）', { c: C.cy, b: 1, fs: 12 });
+      s += `<path d="M 200 200 A 50 50 0 0 1 228 208" stroke="#ff4fd8" stroke-width="4" fill="none"/>` + T(238, 204, '旋回率', { c: '#ff4fd8', b: 1, a: 'start', fs: 12 });
+      // power: the engine rpm on the MFD
+      s += box(296, 236, 88, 50, C.gr, '出力（回転計）', 'MFD に表示');
+      // the radial scan
+      for (const [x, y] of [[72, 100], [328, 100], [377, 128], [200, 198], [294, 252]]) { const d = Math.hypot(x - 200, y - 112), ux = (x - 200) / d, uy = (y - 112) / d; s += A(200 + ux * 30, 112 + uy * 30, x - ux * 3, y - uy * 3, C.am, 2); }
+      s += TL(8, 334, ['緑＝操作の計器（姿勢・出力）：これで飛行機を動かす', '水色＝性能の計器（速度・高度・昇降・方位・旋回率）：結果を確かめる', '橙の矢印：姿勢 → 1 つの計器 → 姿勢 → 次の計器 …'], { c: C.ink, a: 'start', fs: 12, lh: 17 });
+      return svg(400, 386, s, '図：G1000 型 PFD の配置（模式図）と、放射状のクロスチェック（IFH 第 6 章）。中央の姿勢表示から各計器へ目を動かし、いつも姿勢に戻ります。出力（回転計）は、実機の G1000 型では MFD に出ます');
     },
     tem() {
       let s = `<rect x="20" y="30" width="140" height="60" rx="8" fill="rgba(255,178,62,.12)" stroke="${C.am}"/>` + T(90, 56, '脅威（Threat）', { c: C.am, b: 1 }) + T(90, 74, '天気・他機・不具合…', { c: C.mut, fs: 10 });
@@ -515,7 +530,8 @@
       return svg(520, 180, s, '図：TEM（Threat and Error Management）の流れ。脅威とエラーを早く見つけて管理し、望ましくない状態（UAS）に進ませない（SKYbrary の TEM の説明を図にしたもの）');
     },
     standardRate() {
-      return table(['真対気速度', '標準旋回（3°/秒）のバンク', '目安「速度 ÷ 10 ＋ 7」'], [70, 90, 100, 120, 150].map(v => [`${v} kt`, `${(Math.atan(3 * v / 1091) / DEG).toFixed(0)}°`, `${Math.round(v / 10 + 7)}°`]));
+      // the bank for a standard-rate turn (3°/s): tan φ = 3 · V / 1091 (V true airspeed in kt), and the two rules of thumb in the IFH
+      return table(['真対気速度', '標準旋回（3°/秒）のバンク（計算）', '目安①「速度 ÷ 10 ＋ 7」（IFH 第 4 章）', '目安②「速度の 15%」（IFH 第 7 章）'], [70, 90, 100, 120, 150].map(v => [`${v} kt`, `${(Math.atan(3 * v / 1091) / DEG).toFixed(0)}°`, `${Math.round(v / 10 + 7)}°`, `${Math.round(v * 0.15)}°`]));
     },
     // ---------------------------------------------------------------- 第 3 章 sys（機体と装備）
     stabilatorTab() {

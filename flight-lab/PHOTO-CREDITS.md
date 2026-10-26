@@ -5,7 +5,7 @@ FLIGHT LAB の教科書（TEXTBOOK でも同じ）に入れた写真の一覧で
 写真は縮小（長い辺 1200 px 以下）・WebP に変換し、メタデータを消して `src/book-photos.js` に入れています。一部の写真は切り抜いています（元の写真から変えています）。
 CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できます。写真の下のキャプションにも作者・ライセンス・出典を出しています。
 
-写真 19 枚・合計 1.53 MB（WebP のバイト数）。
+写真 20 枚・合計 1.57 MB（WebP のバイト数）。
 
 | id | 写真 | 作者 | ライセンス | 出典 | 使っている節 |
 |---|---|---|---|---|---|
@@ -28,3 +28,4 @@ CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できま�
 | `nightFlorida` | 国際宇宙ステーションから見た夜のフロリダ（2014 年 10 月）。灯は海岸と都市に集まり、湿地や海の上は真っ暗です。暗い地域の上では地面の目印がなく、高さの感じ方がずれやすくなります。 | NASA | [Public domain (PD-USGov-NASA)](https://commons.wikimedia.org/wiki/Template:PD-USGov-NASA) | [元のページ](https://commons.wikimedia.org/wiki/File:Florida_from_ISS_night_2014.jpg) | hf.vision |
 | `grassStrip` | 芝の滑走路（不整地の一例。米国ノースカロライナ州の Lake Ridge 飛行場の滑走路 14）。車輪がめり込みやすいので、前輪に重さをかけない離着陸の技術を使います | Ildar Sagdejev (Specious) | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [元のページ](https://commons.wikimedia.org/wiki/File:2008-08-24_Lake_Ridge_Aero_Park_Airport_Rwy_14.jpg) | ops.soft |
 | `windsock` | 吹き流し（windsock）。筒が伸びる向きへ風が吹いていきます（筒の口の側が風上）。よく伸びるほど風が強い（カナダ・Jasper 飛行場） | Royalbroil | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Jasper_Alberta_Airport_Windsock.jpg) | ops.xwind |
+| `elt` | ELT（航空機用救命無線機）の本体とアンテナ、操縦席に付けるスイッチ。ふだんは ARM にしておき、強い衝撃を受けると自動で電波を出し始めます（AIM 6-2-4） | Mdarcangelo | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Emergency_Locator_Transmitter.jpg) | emg.forced |

@@ -1422,6 +1422,49 @@
       const w = 12, thumb = { 15: '約 1/4', 30: '約 1/2', 45: '約 3/4', 60: 'ほぼ全部', 90: '全部' };
       return table(['風と滑走路の角度', '横風成分', '向かい風成分', '覚え方（目安）', `風 ${w} kt なら`], [15, 30, 45, 60, 90].map(a => [`${a}°`, `${Math.round(Math.sin(a * DEG) * 100)}%`, `${Math.round(Math.cos(a * DEG) * 100)}%`, thumb[a], `横 ${Math.round(w * Math.sin(a * DEG))} kt・向かい ${Math.round(w * Math.cos(a * DEG))} kt`]));
     },
+    // ---------------------------------------------------------------- 第 16 章 emg（緊急操作）
+    emgTurnback() {
+      // an engine failure at 300 ft AGL just after takeoff, from above: A, land within about ±30° of straight ahead (the course's lesson e2);
+      // B, the AFH 3C chapter 18 turn-back example (Figure 18-5): 4 s to react, a standard-rate turn (3°/s) at 65 kt (radius 2,100 ft),
+      // 225° in all, 1,000 fpm → the 300 ft are used up after 300 / (1000 / 60) = 18 s, i.e. 14 s (42°) into the turn
+      const agl = 300, fpm = 1000, react = 4, rate = 3, t0 = agl / (fpm / 60), turned = (t0 - react) * rate, below = Math.floor((react + 225 / rate) * fpm / 60) - agl;
+      const pane = (x0, title, c) => `<rect x="${x0}" y="4" width="192" height="420" rx="8" fill="${C.ink}" fill-opacity="0.04" stroke="${C.grid}"/>` + T(x0 + 96, 25, title, { c, b: 1, fs: 13 });
+      const rwy = (x, y) => `<rect x="${x - 7}" y="${y}" width="14" height="66" fill="#3a4658" stroke="${C.mut}"/>`;
+      const stop = (x, y) => `<circle cx="${x}" cy="${y}" r="6" fill="${C.am}" stroke="${C.bg}" stroke-width="2"/>`;
+      // A: straight ahead
+      let s = pane(4, 'A：正面へ降りる', C.gr) + rwy(100, 250) + L(100, 250, 100, 190, C.cy, 2.5);
+      const fan = (cx, cy, r, a) => `<path d="M${cx} ${cy} L${(cx - r * Math.sin(a * DEG)).toFixed(1)} ${(cy - r * Math.cos(a * DEG)).toFixed(1)} A${r} ${r} 0 0 1 ${(cx + r * Math.sin(a * DEG)).toFixed(1)} ${(cy - r * Math.cos(a * DEG)).toFixed(1)} Z" fill="${C.gr}" fill-opacity="0.18" stroke="${C.gr}" stroke-width="1.5"/>`;
+      s += fan(100, 190, 130, 30) + A(100, 190, 100, 92, C.gr, 2.5) + T(100, 76, '±30°', { c: C.gr, b: 1, fs: 12 }) + stop(100, 190) + TL(112, 206, [`地上 ${agl} ft で`, 'エンジン停止'], { c: C.am, a: 'start', fs: 12, lh: 15 });
+      s += TL(14, 344, ['機首を下げて滑空の速度。', '正面からおよそ ±30° の', '範囲に降りる場所を選ぶ。', '浅い旋回だけで障害物を', '避ける'], { c: C.ink, a: 'start', fs: 12, lh: 16 });
+      // B: the turn back, 4,200 ft wide drawn 120 px (radius 60 px)
+      const rx = 334, fy = 190, ry = fy - 12, R = 60, cx = rx - R, P = a => [cx + R * Math.cos(a * DEG), ry + R * Math.sin(a * DEG)], [gx, gy] = P(-turned), [ex, ey] = P(-225);
+      s += pane(204, 'B：引き返す（危険）', C.rd) + rwy(rx, 250) + L(rx, 250, rx, fy, C.cy, 2.5) + L(rx, fy, rx, ry, C.rd, 2.5);
+      s += ARC(cx, ry, R, 0, -turned, C.rd, 2.5, false) + ARC(cx, ry, R, -turned, -225, C.mut, 1.5, true).replace('stroke-width="1.5"', 'stroke-width="1.5" stroke-dasharray="4 4"');
+      s += stop(rx, fy) + TL(rx - 8, fy + 18, [`${agl} ft で`, 'エンジン停止'], { c: C.am, a: 'end', fs: 12, lh: 15 });
+      s += `<path d="M${(gx - 7).toFixed(1)} ${(gy - 7).toFixed(1)} L${(gx + 7).toFixed(1)} ${(gy + 7).toFixed(1)} M${(gx + 7).toFixed(1)} ${(gy - 7).toFixed(1)} L${(gx - 7).toFixed(1)} ${(gy + 7).toFixed(1)}" stroke="${C.rd}" stroke-width="3.5"/>` + TL(gx + 4, gy - 30, ['約 ' + Math.round(t0) + ' 秒で', '地面'], { c: C.rd, b: 1, a: 'start', fs: 12, lh: 15 });
+      s += T(ex - 4, ey + 22, '計画した旋回', { c: C.mut, fs: 12 });
+      s += TL(214, 344, ['AFH の例：反応 4 秒、', '標準旋回・65 kt（半径', '2,100 ft）、降下 1,000 fpm。', `225° 回り終えると、`, `滑走路より ${below.toLocaleString('en-US')} ft 下`], { c: C.ink, a: 'start', fs: 12, lh: 16 });
+      return svg(400, 428, s, `図：離陸直後、地上 ${agl} ft でエンジンが止まったとき（上から見た模式図）。A：正面へ降りるのが、ふつうはいちばん危険が少ない方法です（±30° はこの教材の課目 e2 の目安）。B：AFH 第 18 章の例のとおり標準旋回で引き返すと、旋回を終える前に地面に着いてしまいます（約 ${Math.round(t0)} 秒・${Math.round(turned)}° 回ったところ）`);
+    },
+    glideRange() {
+      // how far the course Archer glides at the checklist's 76 KIAS from 1,000 / 2,000 / 3,000 ft AGL with the engine stopped (propeller
+      // windmilling): the flight model's steady glide (FL.physics.steadyState, pwr 'dead') summed in 50 ft steps with the true airspeed
+      // from the density, in still air and with a 10 kt headwind or tailwind
+      const PH = FL.physics, s0 = PH.newState({ aircraft: 'pa28' }), kt = ac('pa28').v.glide;
+      const dist = (agl, wind) => { let d = 0; for (let h = agl; h > 0; h -= 50) { const r = PH.steadyState(s0, kt, 0, { pwr: 'dead', altFt: h - 25 }), tas = kt / Math.sqrt(PH.atmos((h - 25) / PH.FT).sigma); d += (tas + wind) * (50 / -r.fpm) / 60; } return d; };
+      const f = frame(400, 300, 0, 5, 0, 3000, [0, 1, 2, 3, 4, 5], [0, 1000, 2000, 3000], '距離（NM）', '高さ（ft、地面から）', { l: 62, r: 14, t: 24, b: 36 });
+      let s = f.s;
+      const ends = [];
+      for (const agl of [1000, 2000, 3000]) { const d = dist(agl, 0); ends.push([d, C.cy]); s += L(f.X(0), f.Y(agl), f.X(d), f.Y(0), C.cy, 2.5); }
+      const dh = dist(3000, -10), dt = dist(3000, 10);
+      s += L(f.X(0), f.Y(3000), f.X(dh), f.Y(0), C.am, 2, '6 4') + L(f.X(0), f.Y(3000), f.X(dt), f.Y(0), C.gr, 2, '2 3');
+      ends.push([dh, C.am], [dt, C.gr]);
+      for (const [d, c] of ends) s += `<circle cx="${f.X(d).toFixed(1)}" cy="${f.Y(0)}" r="3.5" fill="${c}"/>` + T(f.X(d).toFixed(1), f.Y(0) - 8, d.toFixed(1), { c, b: 1, fs: 12, halo: 1 });
+      const ratio = dist(1000, 0) * 6076 / 1000;
+      s += L(214, 40, 236, 40, C.cy, 2.5) + T(242, 44, '無風', { c: C.ink, a: 'start', fs: 12 }) + L(214, 60, 236, 60, C.am, 2, '6 4') + T(242, 64, '向かい風 10 kt', { c: C.ink, a: 'start', fs: 12 }) + L(214, 80, 236, 80, C.gr, 2, '2 3') + T(242, 84, '追い風 10 kt', { c: C.ink, a: 'start', fs: 12 });
+      s += T(214, 108, `${kt} kt・滑空比 約 ${ratio.toFixed(1)}：1`, { c: C.mut, a: 'start', fs: 12 });
+      return svg(400, 300, s, `図：この教材の Archer が ${kt} kt（チェックリストの最良滑空速度）で滑空したときに届く距離（エンジンが止まり、プロペラは風車の状態。教材のフライトモデルで計算した値）。地面から 1,000 ft ごとに約 ${dist(1000, 0).toFixed(1)} NM。向かい風では短く、追い風では長くなります。実機の値は POH で確かめます`);
+    },
   };
 
   // ---------------------------------------------------------------- calculators inside the text

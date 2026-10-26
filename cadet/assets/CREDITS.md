@@ -39,6 +39,15 @@
 - 塗装は Archer と同じ架空の翔洋航空のもの。登録記号（架空の N452SY・N455SY・N457SY）の文字は、スクリプトの中で線で書いた字です。
 - 陰（アンビエントオクルージョン）は頂点の色のアルファに焼き込みます。
 
+## 操縦席の天井まわりの模型（`assets/model/cockpit.glb`）
+
+自作です（素材は使っていません）。`tools/aircraft/build_cockpit.py` を Blender 5.2 でコマンドから動かして作ります（`node tools/aircraft/cockpit-spec.mjs > 寸法.json`、`blender -b --factory-startup -P tools/aircraft/build_cockpit.py -- 寸法.json assets/model/cockpit.glb [見本の絵のフォルダ|-]`）。作る前と後の絵は `docs/cockpit/` にあります（`band-*.jpg`）。
+
+- 操縦席（`src/aircraft/cockpit.js`）のうち、天井の内張り（縫い目と、骨の間の布のたるみ）、天井の両端の縁の飾り、風防の上の枠、A ピラーの内張り、風防との間のゴム、サンバイザー（蝶番の棒と 2 つの留め金）だけを模型にしています。ほかの部分は、今までどおりプログラムで作っています。
+- 寸法は `cockpit.js` の客室の配置（目の位置・窓の帯・天井の弧・風防）を `cockpit-spec.mjs` が書き出したものから取り、模型が残りの部分とぴったり合うようにしています。
+- 色は `cockpit.js` の表面の表の色で、ざらつき・金属らしさ・表面の細かい模様も、部品の名前（`headliner.roof` など）で同じ表から取ります。近くの物の陰（5 cm のレイ）を頂点の色のアルファに焼き込み、ゲームが窓から見える空の量の陰を掛けます。
+- 模型がページにないときは、前のプログラムの形（簡単な板と管）で描きます。
+
 ## 737 型の外観の模型（`assets/model/jet737.glb`・終章）
 
 自作です（素材もフォントも使っていません）。`tools/aircraft/build_737.py` を Blender 5.2 でコマンドから動かして作ります（`blender -b --factory-startup -P tools/aircraft/build_737.py -- assets/model/jet737.glb [見本の絵のフォルダ|-]`）。作る前と後の絵は `docs/737/` にあります（`model-*.jpg` が模型、`01-apron-before.jpg` が並べる前の駐機場、`02-apron-after.jpg` が並べた後、`03`〜`05` が右席からの眺め）。

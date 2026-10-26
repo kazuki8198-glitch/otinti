@@ -24,9 +24,9 @@ const CADET = path.join(here, '..', 'cadet'), CADET_TEX = path.join(CADET, 'asse
 const CORE = ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js', 'quiz.js', 'radio.js', 'ui.js', 'acmesh.js'];
 const AFTER = ['scene.js', 'google3d.js', 'pages.js', 'app.js'];
 export const MODULES = [...CORE, ...AFTER];
-// CADET's assets the 3D view draws: every texture (12 WebP files), the two aircraft's near and far models. Not the
-// people's models (FLIGHT LAB has no people in the cockpit or on the apron).
-export const MODELS = ['archer', 'archer-far', 'seminole', 'seminole-far'];
+// CADET's assets the 3D view draws: every texture (12 WebP files), the two aircraft's near and far models, the cockpit's
+// top band (cockpit.glb). Not the people's models (FLIGHT LAB has no people in the cockpit or on the apron).
+export const MODELS = ['archer', 'archer-far', 'seminole', 'seminole-far', 'cockpit'];
 export const MAX_BYTES = 12 * 1024 * 1024;
 const MIME = { '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png' };
 
@@ -38,9 +38,9 @@ const safeJs = s => s.replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\
 const ASSET_CREDITS = [
   '3D 表示の素材',
   '・地面・舗装・建物のテクスチャ：ambientCG（https://ambientcg.com）の Asphalt031・Concrete048・Concrete031・Grass004・PaintedPlaster017（CC0 1.0）。CADET が WebP に変換したものです。',
-  '・Archer と Seminole の外観の模型：CADET（このリポジトリの cadet/）のスクリプトが Blender で作ったもので、ほかの素材は使っていません。塗装（架空の翔洋航空）と登録記号（N7xxSY・N4xxSY）は架空のものです。',
-  '・操縦席・空・飛行場・木・建物は、CADET のプログラムが起動時に作っています（ファイルはありません）。',
-  'Textures: ambientCG (CC0 1.0). Aircraft models: made in Blender by CADET\'s own scripts, no third-party assets; the livery and the registrations are fictional.',
+  '・Archer と Seminole の外観の模型、操縦席の天井まわり（内張り・風防の上の枠・A ピラー・サンバイザー）：CADET（このリポジトリの cadet/）のスクリプトが Blender で作ったもので、ほかの素材は使っていません。塗装（架空の翔洋航空）と登録記号（N7xxSY・N4xxSY）は架空のものです。',
+  '・操縦席のほかの部分・空・飛行場・木・建物は、CADET のプログラムが起動時に作っています（ファイルはありません）。',
+  'Textures: ambientCG (CC0 1.0). Aircraft models and the cockpit\'s headliner, trims and sun visors: made in Blender by CADET\'s own scripts, no third-party assets; the livery and the registrations are fictional.',
 ].join('\n');
 
 // esbuild and three.js come from flight-lab/node_modules (npm ci), at the versions CADET pins: the bundle compiles

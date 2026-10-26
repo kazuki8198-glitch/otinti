@@ -1,11 +1,14 @@
 // CADET — aircraft/cockpit.js : the cabin of the flown Archer (a PA-28-181 with the G1000-type panel), built at start-up
-// (no model files) in the aircraft's BODY frame (x = right wing, y = up, −z = the nose; metres; origin at the CG), to be
+// (mostly in code) in the aircraft's BODY frame (x = right wing, y = up, −z = the nose; metres; origin at the CG), to be
 // parented to the flown aircraft's root. Seen from the left seat (FLIGHT LAB's eye, A.eye) it is the real layout: the
 // glareshield ~12° below the eye with the white cowling over it, the windshield up to the roof, the PFD in front of
 // the pilot, the audio panel and the MFD to its right, the standby instruments, the switch row, the key, the circuit
 // breakers, the throttle quadrant, two yokes, the rudder pedals, the flap handle and the trim wheel between the seats,
 // the fuel selector on the left wall, the door on the right, the seats, the rear bench and the aft windows.
 // The cabin is larger than the acmesh fuselage (hidden in the outside view, where the cockpit is not drawn).
+// The top band — the headliner, the windshield header, the A-pillar and roof-edge trims, their rubber seals and
+// the sun visors — is made in Blender to this layout (tools/aircraft/build_cockpit.py → assets/model/cockpit.glb, see
+// CABIN below) and goes into the static shell like the rest; without the model, simple shapes made here stand in.
 // Light without new lights: the sun comes in through the window openings (the shell casts shadows; the glass does
 // not), and the sky's light inside is scaled by an occlusion baked per vertex at build time — rays from each vertex
 // against a proxy of the cabin (its box, the window openings and the big occluders: panel, glareshield, seats).
@@ -17,6 +20,7 @@ import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometr
 import { clearGlassMaterial } from '../render/materials.js';
 import { NOISE } from '../render/glsl.js';
 import { createGlass, BEZEL, KNOBS, KEYS, KEY_X, softkeysOf, DYN, dynUV } from './g1000.js';
+import { modelMeshes } from './archer-model.js';
 
 const DEG = Math.PI / 180;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -132,6 +136,13 @@ const AO_OCC = [
   [-0.52, 0.52, FLOOR, -0.13, 0.22, 0.78], [-0.52, 0.52, -0.13, 0.50, 0.74, 0.95], [-0.07, 0.07, FLOOR, -0.28, -0.76, 0.10],
   [-0.56, 0.56, FLOOR, -0.22, 0.95, AFT],
 ];
+// the overhead console, and the compass case on the windshield's centre post (its body, its hanger: [w, h, d] and an
+// offset from COMPASS): built below, and seen by tools/aircraft/build_cockpit.py as what shades the top band
+const CONSOLE = { pos: [0, ROOF - 0.01, -0.45], size: [0.14, 0.03, 0.5] };
+const CASE = { body: [0.064, 0.056, 0.040, 0, 0, -0.015], hanger: [0.012, 0.03, 0.03, 0, 0.038, -0.012] };
+// the cabin's layout and surfaces for tools/aircraft/cockpit-spec.mjs (the top band — headliner, windshield header,
+// A-pillar trims, roof-edge trims, sun visors — is made in Blender to these: assets/model/cockpit.glb)
+export const CABIN = { EYE0, FLOOR, FIRE, AFT, PZ, SILL, WTOP, HW, HWT, ROOF, WS, KX, COMPASS, CONSOLE, CASE, SURFACES: S, bandX, roofY, wsZ };
 const AO_N = 40, AO_DIRS = new Float32Array(AO_N * 3);
 for (let i = 0; i < AO_N; i++) { const u = (i + 0.5) / AO_N, r = Math.sqrt(u), ph = i * 2.399963; AO_DIRS[i * 3] = r * Math.cos(ph); AO_DIRS[i * 3 + 1] = r * Math.sin(ph); AO_DIRS[i * 3 + 2] = Math.sqrt(1 - u); }
 function rayOpen(ox, oy, oz, dx, dy, dz) {
@@ -208,6 +219,31 @@ function refine(g, len) {
   const r = new THREE.BufferGeometry();
   names.forEach((k, j) => r.setAttribute(k, new THREE.BufferAttribute(new Float32Array(out[j]), src[j].itemSize)));
   return r;
+}
+
+// the top band made in Blender (tools/aircraft/build_cockpit.py → assets/model/cockpit.glb) into the static shell: each
+// node "<part>.<surface>" with that surface's roughness, metalness and detail kind, its own colours (sRGB) per vertex,
+// and its alpha (the occlusion of what is close by) as the starting occlusion that bakeAO multiplies by the sky's
+// → the parts' names, or null when the model is not there
+function addBand(B) {
+  const m = modelMeshes('cockpit');
+  if (!m) return null;
+  const c = new THREE.Color();
+  for (const [name, mm] of m) {
+    const s = S[name.split('.')[1]];
+    if (!s) throw new Error('cockpit: no surface for ' + name);
+    const n = mm.count, col = new Float32Array(n * 3), mat = new Float32Array(n * 4);
+    for (let i = 0; i < n; i++) {
+      c.setRGB(mm.col[i * 3], mm.col[i * 3 + 1], mm.col[i * 3 + 2], THREE.SRGBColorSpace);
+      col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+      mat[i * 4] = s.r ?? 0.6; mat[i * 4 + 1] = s.m ?? 0; mat[i * 4 + 2] = s.k ?? 0; mat[i * 4 + 3] = mm.ao[i];
+    }
+    const g = new THREE.BufferGeometry();                    // (the model's arrays are shared: copied)
+    g.setAttribute('position', new THREE.BufferAttribute(mm.pos.slice(), 3)); g.setAttribute('normal', new THREE.BufferAttribute(mm.nrm.slice(), 3));
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('cdMat', new THREE.BufferAttribute(mat, 4));
+    B.kit.push(g);
+  }
+  return [...m.keys()];
 }
 
 // ---------------------------------------------------------------- materials
@@ -528,6 +564,8 @@ export function buildCockpit(FL, A, opts = {}) {
   const avc = (what, dir = 1, big = false) => ({ type: 'av', what, dir, big });
 
   // ============================================================ the shell
+  // the top band from the model (null: the simple shapes below)
+  const band = addBand(B);
   // floor (carpet), firewall, the plate under the panel
   add(sheet((u, v, o) => o.set(-0.462 + 0.924 * u, FLOOR, FIRE + (AFT - FIRE) * v), 6, 18, true), S.carpet);
   add(sheet((u, v, o) => o.set(-0.53 + 1.06 * u, FLOOR + (WS.y0 - 0.03 - FLOOR) * v, FIRE), 8, 8, false), S.carpet);   // (its top hidden under the glareshield)
@@ -550,21 +588,26 @@ export function buildCockpit(FL, A, opts = {}) {
     add(at(rbox(0.035, 0.022, AFT - zp(SILL) - 0.02, 0.008, 1), [sd * (HW - 0.012), SILL + 0.004, (AFT + zp(SILL)) / 2]), S.trim);
     add(at(rbox(0.06, 0.05, 0.42, 0.014, 2), [sd * (HW - 0.035), 0.205, -0.62]), S.arm);
     add(at(rbox(0.05, 0.045, 0.36, 0.012, 2), [sd * (HW - 0.03), 0.20, 0.42]), S.arm);
-    // the A-pillar trim along the windshield's edge, and the upper trim along the roof
-    const pil = []; for (let i = 0; i <= 8; i++) { const y = WS.y0 - 0.02 + (WTOP + 0.02 - WS.y0) * i / 8; pil.push([sd * (bandX(y) - 0.012), y, wsZ(bandX(y), y) + 0.02]); }
-    add(tube(pil, 0.028, 16, 8), S.trim);
-    add(at(rbox(0.04, 0.03, AFT - zp(WTOP) + 0.02, 0.01, 1), [sd * (HWT - 0.005), WTOP + 0.002, (AFT + zp(WTOP)) / 2]), S.trim);
+    // (without the model) the A-pillar trim along the windshield's edge, and the upper trim along the roof
+    if (!band) {
+      const pil = []; for (let i = 0; i <= 8; i++) { const y = WS.y0 - 0.02 + (WTOP + 0.02 - WS.y0) * i / 8; pil.push([sd * (bandX(y) - 0.012), y, wsZ(bandX(y), y) + 0.02]); }
+      add(tube(pil, 0.028, 16, 8), S.trim);
+      add(at(rbox(0.04, 0.03, AFT - zp(WTOP) + 0.02, 0.01, 1), [sd * (HWT - 0.005), WTOP + 0.002, (AFT + zp(WTOP)) / 2]), S.trim);
+    }
     // the B-pillar trim between the front and rear windows
     add(at(rbox(0.024, WTOP - SILL + 0.02, 0.15, 0.010, 2), [sd * (HW - 0.034), (WTOP + SILL) / 2, -0.175], [0, 0, -sd * Math.atan(-KX)]), S.trim);
   }
-  // the headliner: an arch from window top to window top, from the windshield's top edge to the aft bulkhead
-  add(sheet((u, v, o) => {
-    const ph = Math.PI * u, x = -HWT * Math.cos(ph), y = WTOP + (ROOF - WTOP) * Math.sin(ph), z0 = wsZ(x, Math.min(y, WS.y1)) + 0.004;
-    o.set(x, y, z0 + (AFT - z0) * v);
-  }, 16, 18, false), S.roof);
-  // the windshield's top bow and its centre strip
-  { const pts = []; for (let i = 0; i <= 12; i++) { const x = -HWT + 2 * HWT * i / 12, y = Math.min(roofY(x), WS.y1 + 0.01) - 0.01; pts.push([x, y, wsZ(x, Math.min(y, WS.y1)) + 0.025]); }
-    add(tube(pts, 0.026, 24, 8), S.trim); }
+  // (without the model) the headliner: an arch from window top to window top, from the windshield's top edge to the aft
+  // bulkhead; the windshield's top bow
+  if (!band) {
+    add(sheet((u, v, o) => {
+      const ph = Math.PI * u, x = -HWT * Math.cos(ph), y = WTOP + (ROOF - WTOP) * Math.sin(ph), z0 = wsZ(x, Math.min(y, WS.y1)) + 0.004;
+      o.set(x, y, z0 + (AFT - z0) * v);
+    }, 16, 18, false), S.roof);
+    const pts = []; for (let i = 0; i <= 12; i++) { const x = -HWT + 2 * HWT * i / 12, y = Math.min(roofY(x), WS.y1 + 0.01) - 0.01; pts.push([x, y, wsZ(x, Math.min(y, WS.y1)) + 0.025]); }
+    add(tube(pts, 0.026, 24, 8), S.trim);
+  }
+  // the windshield's centre strip
   { const pts = []; for (let i = 0; i <= 6; i++) { const y = WS.y0 + 0.01 + (WS.y1 - WS.y0 - 0.02) * i / 6; pts.push([0, y, wsZ(0, y) + 0.008]); }
     add(tube(pts, 0.011, 8, 6), S.steel); }
   // the aft bulkhead and the baggage floor
@@ -1010,9 +1053,10 @@ export function buildCockpit(FL, A, opts = {}) {
   // ============================================================ the wet compass on the windshield's centre post, the sun visors
   { const [cx, cy, cz] = COMPASS;
     // the case: its body round the back of the card, and its face with the window the card is read through
-    add(at(rbox(0.064, 0.056, 0.040, 0.008, 2), [cx, cy, cz - 0.015]), S.caseBlack);
+    const [bw, bh, bd, bx, by, bz] = CASE.body, [hw, hh, hd, hx, hy, hz] = CASE.hanger;
+    add(at(rbox(bw, bh, bd, 0.008, 2), [cx + bx, cy + by, cz + bz]), S.caseBlack);
     add(slab(rectPts(cx - 0.032, cy - 0.028, cx + 0.032, cy + 0.028), 0.008, [[rectPts(cx - 0.025, cy - 0.0145, cx + 0.025, cy + 0.0145), 0.004]], 0.019, cz + 0.025, 0.002, 3, 1), S.caseBlack);
-    add(at(rbox(0.012, 0.03, 0.03, 0.002), [cx, cy + 0.038, cz - 0.012]), S.caseBlack);
+    add(at(rbox(hw, hh, hd, 0.002), [cx + hx, cy + hy, cz + hz]), S.caseBlack);
     const card = new THREE.CylinderGeometry(0.024, 0.024, 0.014, 48, 1, true);
     const it = atlas.add(151, 14, compassCard), cg = card.toNonIndexed(), a = cg.attributes.uv;
     for (let i = 0; i < a.count; i++) a.setXY(i, a.getX(i), a.getY(i));
@@ -1045,12 +1089,12 @@ export function buildCockpit(FL, A, opts = {}) {
       if (big) { g.font = `700 ${h * 0.5}px ${SANS}`; const t = { 0: 'N', 90: 'E', 180: 'S', 270: 'W' }[d] || String(d / 10); g.fillText(t, x, h * 0.68); if (x < 20) g.fillText(t, x + w, h * 0.68); }
     }
   }
-  for (const sd of [-1, 1]) {
+  if (!band) for (const sd of [-1, 1]) {                       // (without the model) the sun visors
     add(at(rbox(0.29, 0.012, 0.14, 0.006), [sd * 0.25, roofY(sd * 0.25) - 0.03, -0.70], [-12 * DEG, 0, 0]), S.trim);
     add(at(cylX(0.005, 0.27, 8), [sd * 0.25, roofY(sd * 0.25) - 0.022, -0.77]), S.steel);
   }
   // the overhead console: two fresh-air eyeballs and the dome light
-  add(at(rbox(0.14, 0.03, 0.5, 0.012), [0, ROOF - 0.01, -0.45]), S.trim);
+  add(at(rbox(...CONSOLE.size, 0.012), CONSOLE.pos), S.trim);
   for (const sx of [-0.04, 0.04]) { add(at(cylY(0.016, 0.015, 0.008, 18), [sx, ROOF - 0.027, -0.62]), S.black); add(at(sphere(0.011, 12, 8), [sx, ROOF - 0.031, -0.62]), S.knob); }
   add(at(rbox(0.07, 0.008, 0.04, 0.003), [0, ROOF - 0.027, -0.40]), S.lens);
 
@@ -1375,7 +1419,7 @@ export function buildCockpit(FL, A, opts = {}) {
   poseRockers();
   const bytes = glassPanel.bytes + (atlasCv ? Math.round(atlas.W * atlas.H * 4 / 3) : 0);      // the atlas: one byte a texel, mipmapped
   return {
-    root, eye: new THREE.Vector3(A.eye[0], A.eye[1], A.eye[2]), instructorSeat, screens, switches, parts, pick, aimPoint, update, setType,
+    root, eye: new THREE.Vector3(A.eye[0], A.eye[1], A.eye[2]), instructorSeat, screens, switches, parts, pick, aimPoint, update, setType, band,
     get controls() { return byType[type]; }, get type() { return type; }, allControls: controls,
     setVisible(v) { visible = !!v; root.visible = visible; if (visible) { avSeen.powered = null; t.pfd = RATE.pfd; t.mfd = RATE.mfd; t.stby = RATE.stby; } },
     get visible() { return visible; },

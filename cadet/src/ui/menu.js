@@ -134,7 +134,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
     }
     return `<p><b>CADET</b>（パイロット訓練生シミュレーター）${version ? ` <span class="m-val">${esc(version)}</span>` : ''}</p>
       <p>公開情報を基にした非公式のゲームです。航空会社（翔洋航空）・訓練所・人物はすべて架空です。実機訓練の代わりにはならず、航法には使えません（NOT FOR NAVIGATION）。飛行モデル・課目・教科書は FLIGHT LAB（同じリポジトリの自主学習教材）を使っています。</p>
-      <p class="m-note">使っているもの：three.js（MIT License）、Anthropic TypeScript SDK（MIT License。AI 教官を ON にしたときだけ使う）、ambientCG のテクスチャ（CC0）。機体（737 型を含む）と人物の模型は Blender で自作し、家具・木・標識・終章の空港などはプログラムで作っています。音（エンジン・風・足音・無線など）は、音のファイルを使わずにブラウザの中で作っています。終章の羽田空港の形は架空で、実際の空港を写していません。くわしくは assets/CREDITS.md。</p>
+      <p class="m-note">使っているもの：three.js（MIT License）、Anthropic TypeScript SDK（MIT License。AI 教官を ON にしたときだけ使う）、ambientCG のテクスチャ（CC0）。機体（737 型を含む）・操縦席の天井まわり・人物の模型は Blender で自作し、家具・木・標識・終章の空港などはプログラムで作っています。音（エンジン・風・足音・無線など）は、音のファイルを使わずにブラウザの中で作っています。終章の羽田空港の形は架空で、実際の空港を写していません。くわしくは assets/CREDITS.md。</p>
       <p class="m-note">外への通信：AI 教官（Anthropic の API）とマイクで交信（ブラウザの音声認識）は、設定で ON にしたときだけ使います。初めはどちらも OFF で、OFF のあいだはどこにも通信しません。</p>`
       + (onResetProgress ? `<div class="m-big"><button data-act="reset">訓練の記録を消す（教官との会話を最初から）</button></div>
       <p class="m-note">記録はこのブラウザの中だけに保存されています。設定は消えません。</p>` : '');

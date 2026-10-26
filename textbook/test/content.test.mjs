@@ -19,6 +19,10 @@ test(`the book: 6 parts, ${COUNTS.chapters} chapters in this order, ${COUNTS.sec
     assert.ok(BK.PARTS.some(p => p.id === c.part), `${c.id}: part`);
   });
   assert.equal(new Set(SECS.map(s => s.id)).size, COUNTS.secs, 'section ids are unique');
+  // the page's header says how big the book is; it must follow the book
+  const brand = fs.readFileSync(new URL('../src/index.html', import.meta.url), 'utf8').match(/全 (\d+) 部・(\d+) 章・(\d+) 節/);
+  assert.ok(brand, 'the header names the parts, chapters and sections');
+  assert.deepEqual(brand.slice(1).map(Number), [BK.PARTS.length, COUNTS.chapters, COUNTS.secs], 'the header matches the book');
 });
 
 test('every section renders with FL.book.html, no {ch: left, the same string each time', () => {

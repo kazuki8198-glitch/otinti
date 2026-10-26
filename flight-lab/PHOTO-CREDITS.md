@@ -2,10 +2,10 @@
 
 FLIGHT LAB の教科書（TEXTBOOK でも同じ）に入れた写真の一覧です。どれも元のページでライセンスを確かめました。
 使ってよいのは、パブリックドメイン（FAA・NASA・NOAA など米国政府の著作物）、CC0、CC BY、CC BY-SA だけです。
-写真は縮小（長い辺 1200 px 以下）・WebP に変換し、メタデータを消して `src/book-photos.js` に入れています。
+写真は縮小（長い辺 1200 px 以下）・WebP に変換し、メタデータを消して `src/book-photos.js` に入れています。一部の写真は切り抜いています（元の写真から変えています）。
 CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できます。写真の下のキャプションにも作者・ライセンス・出典を出しています。
 
-写真 13 枚・合計 1.03 MB（WebP のバイト数）。
+写真 14 枚・合計 1.15 MB（WebP のバイト数）。
 
 | id | 写真 | 作者 | ライセンス | 出典 | 使っている節 |
 |---|---|---|---|---|---|
@@ -19,6 +19,7 @@ CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できま�
 | `compass` | 計器板の上の磁気コンパスと、その下の自差カード（セスナ 172 の例）。カードの FOR は飛びたい磁方位、STEER はそのときコンパスで合わせる値です。 | M9matr0902 | [Public domain (PD-self)](https://commons.wikimedia.org/wiki/Template:PD-self) | [元のページ](https://commons.wikimedia.org/wiki/File:Flygplanskompass.JPG) | sys.compass |
 | `distanceSign` | 滑走路の横の残り距離標識（runway distance remaining sign）。黒地に白い数字で、残りの長さを 1,000 ft 単位で示します。「2」は残り約 2,000 ft です。 | LezFraniak | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Runway-Distance_Remaining_Sign_-2.jpg) | perf.tol |
 | `grassRunway` | 芝の滑走路（turf runway）。舗装より車輪が転がりにくく、離陸距離が延びます。長い芝やぬかるみでは、2 倍になることもあります（FAA-P-8740-2）。 | Malcolm Neal | [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Grass_runways_-_geograph.org.uk_-_5465578.jpg) | perf.tol |
-| `cbFlorida` | フロリダ東海岸（メリット島の沖）の積乱雲。上が横に広がった「かなとこ雲」になっています。夏の午後によく見られる形です。 | TheAustinMan | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Cumulonimbus_Incus_with_LC-39A.JPG) | （未使用） |
-| `microburst` | 雨を伴うマイクロバースト（wet microburst）。雲の下から落ちた強い下降気流が、地面で横に広がっています（NOAA）。 | NOAA Legacy Photo ERL/WPL | [Public domain (PD-USGov-NOAA)](https://commons.wikimedia.org/wiki/Template:PD-USGov-NOAA) | [元のページ](https://commons.wikimedia.org/wiki/File:Wea02273_-_Flickr_-_NOAA_Photo_Library.jpg) | （未使用） |
-| `groundFog` | 明け方の地面近くの霧（放射霧）。晴れて風の弱い夜に地面が冷えてでき、日が昇ると消えていきます。 | pixelfehler / Matthias Süßen | [CC BY-SA 2.5](https://creativecommons.org/licenses/by-sa/2.5) | [元のページ](https://commons.wikimedia.org/wiki/File:Nebelostfriesland.jpg) | （未使用） |
+| `cbFlorida` | フロリダ東海岸（メリット島の沖）の積乱雲。上が横に広がった「かなとこ雲」になっています。夏の午後によく見られる形です。 | TheAustinMan | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Cumulonimbus_Incus_with_LC-39A.JPG) | wx.ts |
+| `microburst` | 雨を伴うマイクロバースト（wet microburst）。雲の下から落ちた強い下降気流が、地面で横に広がっています（NOAA）。 | NOAA Legacy Photo ERL/WPL | [Public domain (PD-USGov-NOAA)](https://commons.wikimedia.org/wiki/Template:PD-USGov-NOAA) | [元のページ](https://commons.wikimedia.org/wiki/File:Wea02273_-_Flickr_-_NOAA_Photo_Library.jpg) | wx.shear |
+| `groundFog` | 明け方の地面近くの霧（放射霧）。晴れて風の弱い夜に地面が冷えてでき、日が昇ると消えていきます。 | pixelfehler / Matthias Süßen | [CC BY-SA 2.5](https://creativecommons.org/licenses/by-sa/2.5) | [元のページ](https://commons.wikimedia.org/wiki/File:Nebelostfriesland.jpg) | wx.fog |
+| `holdShort` | 滑走路の手前の停止線（runway holding position marking）。黄色の実線 2 本と破線 2 本で、実線の側（写真の右）で止まります。破線の側が滑走路です。右の赤地に白の文字は、滑走路の番号を地面に書いた標示です（AIM 2-3-5）。 | Bmurphy380 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Hold_Short.jpg) | comm.mistakes |

@@ -1025,6 +1025,48 @@
       s += T(10, 344, '例：N7LA → November Seven Lima Alfa', { c: C.gr, b: 1, a: 'start', fs: 12 });
       return svg(400, 354, s, '図：フォネティックアルファベットと数字の発音（AIM の表 TBL 4-2-7 のつづりと読み方）。C は SHAR-LEE、U は OO-NEE-FORM とも読みます。X は X-ray と書く資料もあります。AIM の例文には Alpha とつづるものもあり、この本のコールサインも Alpha と書きます');
     },
+    // ---------------------------------------------------------------- 第 9 章 radio3（交信の型）
+    callupBlocks() {
+      // radio.js FLIGHT gnd1's first call, split into AIM 4-2-3's items: facility → call sign → position → request
+      const rows = [['①', '相手', '誰を呼ぶ', ['LAB Ground,'], '局の名前', C.cy],
+        ['②', '自分', '自分は誰', ['Archer Seven Lima Alpha,'], '＋ student pilot（学生操縦士）', C.gr],
+        ['③', '場所', 'どこにいる', ['at the west ramp'], '＋ with information Bravo（ATIS の記号）', C.am],
+        ['④', '要求', '何をしたい', ['VFR to the northeast practice area', 'at three thousand five hundred,', 'request taxi.'], '', C.vi]];
+      let s = '', y = 8;
+      rows.forEach(([n, jp, sub, en, add, c]) => {
+        const h = en.length > 1 ? 74 : 56;
+        s += `<rect x="8" y="${y}" width="384" height="${h}" rx="8" fill="${c}" fill-opacity="0.10" stroke="${c}" stroke-width="1.5"/>`
+          + `<rect x="8" y="${y}" width="88" height="${h}" rx="8" fill="${c}" fill-opacity="0.30"/>`
+          + T(52, y + h / 2 - 3, `${n} ${jp}`, { c: C.ink, b: 1, fs: 14 }) + T(52, y + h / 2 + 15, sub, { c: C.ink, fs: 12 });
+        if (en.length > 1) s += TL(106, y + 22, en, { c: C.ink, b: 1, a: 'start', fs: 13, lh: 20 });
+        else s += T(106, y + 24, en[0], { c: C.ink, b: 1, a: 'start', fs: 13 }) + T(106, y + 44, add, { c: n === '①' ? C.mut : c, a: 'start', fs: 12 });
+        y += h + 8;
+      });
+      s += T(8, y + 14, '空中では ③ の代わりに、位置と高度を言う', { c: C.ink, a: 'start', fs: 12 });
+      return svg(400, y + 24, s, '図：最初の呼び出しの型（AIM 4-2-3）。誰を呼ぶ → 自分は誰 → どこにいる → 何をしたい、の順に言います。例は架空の LAB の Ground への呼び出しです');
+    },
+    readbackLoop() {
+      // the readback loop with radio.js gnd1's taxi instruction, and what must be read back (AIM 4-4-7 airborne, AIM 4-3-18 on the ground)
+      const bub = (x, y, w, h, c, head, lines) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${c}" fill-opacity="0.12" stroke="${c}" stroke-width="1.5"/>`
+        + T(x + 12, y + 20, head, { c, b: 1, a: 'start', fs: 13 }) + TL(x + 12, y + 40, lines, { c: C.ink, a: 'start', fs: 12, lh: 17 });
+      let s = bub(36, 8, 356, 66, C.cy, '① 管制官の指示', ['Archer Seven Lima Alpha, runway three six,', 'taxi via Alpha, hold short of taxiway Charlie.']);
+      s += bub(36, 88, 356, 66, C.gr, '② あなたの復唱', ['Runway three six, taxi via Alpha,', 'hold short of Charlie, Archer 7LA.']);
+      s += `<rect x="36" y="168" width="356" height="62" rx="10" fill="${C.am}" fill-opacity="0.12" stroke="${C.am}" stroke-width="1.5"/>` + T(48, 188, '③ 管制官が聞いて確かめる', { c: C.am, b: 1, a: 'start', fs: 13 });
+      s += T(48, 210, '合っている → 次へ', { c: C.gr, a: 'start', fs: 12 }) + T(196, 210, '違う → 管制官が直す（① へ）', { c: C.rd, a: 'start', fs: 12 });
+      s += A(214, 74, 214, 86, C.ink, 2) + A(214, 154, 214, 166, C.ink, 2);
+      // back to ① when it was wrong
+      s += P([[36, 220], [18, 220], [18, 40]], C.rd, 2, 'none', '5 4') + A(18, 40, 34, 40, C.rd, 2);
+      // what must be read back
+      s += T(8, 256, '必ず復唱するもの', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      // a row of rounded labels, laid out left to right (width from the text: CJK ≈ 12 px, latin ≈ 7 px at size 12)
+      const chips = (x, y, list, c) => list.map(tx => { const w = [...tx].reduce((a, ch) => a + (ch > '\u3000' ? 12 : 7), 14), r = `<rect x="${x}" y="${y}" width="${w}" height="22" rx="11" fill="${c}" fill-opacity="0.18" stroke="${c}"/>` + T(x + w / 2, y + 15, tx, { c: C.ink, fs: 12 }); x += w + 6; return r; }).join('');
+      s += T(8, 282, '空中', { c: C.cy, b: 1, a: 'start', fs: 12 }) + T(8, 298, 'AIM 4-4-7', { c: C.mut, a: 'start', fs: 12 });
+      s += chips(80, 268, ['高度', '高度の制限', '針路（vector）', '滑走路の指定'], C.cy);
+      s += T(8, 330, '地上', { c: C.gr, b: 1, a: 'start', fs: 12 }) + T(8, 346, 'AIM 4-3-18', { c: C.mut, a: 'start', fs: 12 });
+      s += chips(80, 316, ['滑走路の指定', '滑走路に入る許可'], C.gr) + chips(80, 346, ['滑走路の hold short', 'line up and wait'], C.gr);
+      s += T(8, 392, '“Roger” だけ → 管制官「read back hold instructions」', { c: C.rd, a: 'start', fs: 12 });
+      return svg(400, 404, s, '図：復唱の輪。指示を言われた順に復唱し、管制官が聞いて確かめます。下は、AIM が必ず復唱するとしているもの。hold short に Roger だけで答えると、管制官は復唱を求めます（JO 7110.65 3-7-2）');
+    },
   };
 
   // ---------------------------------------------------------------- calculators inside the text

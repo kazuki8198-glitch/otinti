@@ -27,13 +27,15 @@
     iph: { label: 'FAA Instrument Procedures Handbook（FAA-H-8083-16B）', url: 'https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/instrument_procedures_handbook' },
     wx: { label: 'FAA Aviation Weather Handbook（FAA-H-8083-28B・2026）', url: 'https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/faa-h-8083-28b-aviation-weather-handbook' },
     aim71: { label: 'FAA AIM 7-1 Meteorology（気象情報・雷雨・ウインドシア・METAR と TAF）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html' },
-    rmh: { label: 'FAA Risk Management Handbook（FAA-H-8083-2A）', url: 'https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/risk-management-handbook-faa-h-8083-2a' },
+    rmh: { label: 'FAA Risk Management Handbook（FAA-H-8083-2A）', url: 'https://www.faa.gov/regulationspolicies/handbooksmanuals/risk-management-handbook-faa-h-8083-2a' },
     wb: { label: 'FAA Aircraft Weight and Balance Handbook（FAA-H-8083-1B）', url: 'https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/FAA-H-8083-1.pdf' },
     dalt: { label: 'FAA-P-8740-2 Density Altitude（FAA Safety Team の安全の手引き：密度高度の早見表・湿度）', url: 'https://www.faasafety.gov/files/gslac/library/documents/2011/Aug/56396/FAA%20P-8740-02%20DensityAltitude%5Bhi-res%5D%20branded.pdf' },
+    aim81: { label: 'FAA AIM 8-1 Fitness for Flight（体調・低酸素・過呼吸・一酸化炭素・錯覚・目・衝突の回避）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap8_section_1.html' },
     aim: { label: 'FAA Aeronautical Information Manual（AIM）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/' },
     pcg: { label: 'FAA Pilot/Controller Glossary', url: 'https://www.faa.gov/air_traffic/publications/atpubs/pcg_html/' },
     aim42: { label: 'FAA AIM 4-2 Radio Communications Phraseology and Techniques（交信の言い方と技術）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html' },
     aim43: { label: 'FAA AIM 4-3 Airport Operations（空港での運用・地上走行・灯火信号）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html' },
+    aim44: { label: 'FAA AIM 4-4 ATC Clearances and Aircraft Separation（4-4-7 許可と指示の復唱）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_4.html' },
     aim23: { label: 'FAA AIM 2-3 Airport Marking Aids and Signs（空港の標示と標識・残り距離標識）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap2_section_3.html' },
     aim76: { label: 'FAA AIM 7-6 Potential Flight Hazards（7-6-7 山岳飛行と密度高度・7-6-8 滑走路の中間点の目安）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_6.html' },
     aim31: { label: 'FAA AIM 3-1 General（空域の基本・3-1-4 VFR の基本の気象条件）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_1.html' },
@@ -41,11 +43,13 @@
     aim34: { label: 'FAA AIM 3-4 Special Use Airspace（制限空域・MOA・警告空域・警戒空域）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_4.html' },
     aim35: { label: 'FAA AIM 3-5 Other Airspace Areas（3-5-3 一時的な飛行制限 TFR）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_5.html' },
     aim41: { label: 'FAA AIM 4-1 Services Available to Pilots（ATIS・CTAF・レーダー業務）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_1.html' },
+    aim61: { label: 'FAA AIM 6-1 General（6-1-2 すぐに助けを求める）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_1.html' },
+    aim62: { label: 'FAA AIM 6-2 Emergency Services Available to Pilots（6-2-2 トランスポンダーの 7700）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_2.html' },
     aim63: { label: 'FAA AIM 6-3 Distress and Urgency Procedures（遭難・緊急通信）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_3.html' },
     aim52: { label: 'FAA AIM 5-2 Departure Procedures（出発の手順・Line Up and Wait）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_2.html' },
     aim64: { label: 'FAA AIM 6-4 Two-way Radio Communications Failure（無線の故障）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap6_section_4.html' },
     jo71: { label: 'FAA Order JO 7110.65 Air Traffic Control（管制官の方式基準・管制用語）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/atc_html/' },
-    cap413: { label: 'UK CAA CAP 413 Radiotelephony Manual（英国の無線電話の手引き）', url: 'https://www.caa.co.uk/data-and-publications/publications/documents/content/cap-413/' },
+    cap413: { label: 'UK CAA CAP 413 Radiotelephony Manual（英国の無線電話の手引き。第 24 版・2026-07-01 発効）', url: 'https://www.caa.co.uk/data-and-publications/publications/documents/content/cap-413/' },
     acsP: { label: 'FAA Private Pilot — Airplane ACS（FAA-S-ACS-6C）', url: 'https://www.faa.gov/training_testing/testing/acs/private_airplane_acs_6.pdf' },
     acsC: { label: 'FAA Commercial Pilot — Airplane ACS（FAA-S-ACS-7B）', url: 'https://www.faa.gov/training_testing/testing/acs/commercial_airplane_acs_7.pdf' },
     acsI: { label: 'FAA Instrument Rating — Airplane ACS（FAA-S-ACS-8C）', url: 'https://www.faa.gov/training_testing/testing/acs/instrument_rating_airplane_acs_8.pdf' },
@@ -55,6 +59,7 @@
     cfr121: { label: '14 CFR Part 121（エアラインの運航規則）— 121.436 操縦士の資格', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-G/part-121/subpart-M/section-121.436' },
     cfr23: { label: '14 CFR Part 23（普通類の飛行機の耐空性）', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-C/part-23' },
     sfb: { label: 'FAA From the Flight Deck: Orlando Sanford（SFB）', url: 'https://www.faa.gov/flight_deck/sfb' },
+    sfbData: { label: 'AirNav：KSFB Orlando Sanford International Airport（FAA の空港データ。2026-10-01 有効。滑走路の位置・長さ・場周の向き）', url: 'https://www.airnav.com/airport/KSFB' },
     vfr: { label: 'FAA VFR Charts（セクショナルチャート）', url: 'https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/vfr/' },
     chartUG: { label: 'FAA Aeronautical Chart User\'s Guide', url: 'https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/aero_guide/' },
     awc: { label: 'Aviation Weather Center（METAR・TAF・気象情報）', url: 'https://aviationweather.gov/' },
@@ -83,7 +88,7 @@
     const p = FL.bookPhotos && FL.bookPhotos[id]; if (!p) return '';
     const c = p.credit;
     return `<figure class="bk-photo" data-photo="${attr(id)}"><img src="${p.src}" alt="${attr(p.alt)}"${p.w ? ` width="${p.w}" height="${p.h}"` : ''} loading="lazy" decoding="async">`
-      + `<figcaption>写真：${p.caption}<span class="bk-credit">作者：${attr(c.author)}・ライセンス：${link(c.licenseUrl, attr(c.license))}・${link(c.source, '出典（' + site(c.source) + '）')}</span></figcaption></figure>`;
+      + `<figcaption>写真：${p.caption}<span class="bk-credit">作者：${attr(c.author)}・ライセンス：${link(c.licenseUrl, attr(c.license))}・${link(c.source, '出典（' + site(c.source) + '）')}・縮小などの加工あり</span></figcaption></figure>`;
   };
   const bk = {
     aim: html => `<p class="bk-aim">${html}</p>`,                       // the section's first lines: what it is for

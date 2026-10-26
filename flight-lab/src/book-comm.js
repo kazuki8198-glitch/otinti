@@ -183,78 +183,129 @@ ${bk.q('管制官「Archer 7LA, say altitude.」。上昇中で、高度計は 3
 
   // ======================================================================= radio 3
   B.add({ id: 'radio3', before: 'hf', part: 'p1', t: '交信の型：呼び出し・応答・復唱', en: 'How a call is built: initial contact, acknowledgement and readback',
-    summary: '最初の呼び出しの型、管制官の呼び出しへの応え方、周波数の変更、復唱しなければならないもの・しなくてよいもの、わからないとき・従えないときの言い方、よくある間違い。',
+    summary: '最初の呼び出しの型、管制官への応答と周波数の変え方、Class C 空域に入る前の交信の確立、必ず復唱するもの、わからないとき・従えないときの言い方、よくある間違い。',
     secs: [
       { id: 'comm.pattern', t: '最初の呼び出しの型', h: () => `
-<p>AIM 4-2-3 の決まった順番：</p>
-<ol><li><b>相手の局の名前</b>（LAB Ground）</li><li><b>自分のコールサイン（省略しない）</b>（Archer Seven Lima Alpha）</li><li><b>地上ではいる場所</b>（at the west ramp）</li><li><b>要求（短ければ）</b>（request taxi）</li><li>必要なら “Over”（ふつうは省く）</li></ol>
-<p>覚え方：<b>Who you are calling → Who you are → Where you are → What you want</b>。ATIS を聞いたら “<b>with information Bravo</b>” を入れる（AIM 4-1-13）。AIM の例：</p>
-${bk.f('"Columbia Ground, Cessna Three One Six Zero Foxtrot, south ramp, I-F-R Memphis."<br>"Miami Center, Baron Five Six Three Hotel, request V-F-R traffic advisories."')}
-${say([['P', `LAB Ground, ${CS}, student pilot, at the west ramp with information Bravo, VFR to the northeast practice area, request taxi.`, 'LAB 地上管制へ。こちら Archer 7LA、学生操縦士。西のエプロンにいます。ATIS の B を聞きました。北東の訓練空域へ VFR で。地上走行を要求します。']])}
+${bk.aim('管制官を最初に呼ぶときの決まった順番を覚えます。1 回の送信で、必要なことを短く伝えられるようにします。')}
+${FIG.callupBlocks()}
+<p><b>最初の呼び出し</b>（initial contact）とは、ある局（または同じ局の別の管制官）に初めてする送信のことです。航空情報マニュアル（AIM）4-2-3 は、次の順番を勧めています。</p>
+<ol><li><b>呼ぶ相手の局の名前</b>（LAB Ground）</li>
+<li><b>自分のコールサイン</b>。最初は省略しません（Archer Seven Lima Alpha）</li>
+<li><b>地上にいるときは、いまいる場所</b>（at the west ramp）</li>
+<li><b>このあと伝えることの種類。短ければ、要求そのもの</b>（request taxi）</li>
+<li>必要なときだけ “Over”（ふつうは言いません）</li></ol>
+<p>覚え方は「<b>誰を呼ぶ → 自分は誰 → どこにいる → 何をしたい</b>」です。</p>
+${say([['P', `LAB Ground, ${CS}, student pilot, at the west ramp with information Bravo, VFR to the northeast practice area at three thousand five hundred, request taxi.`, 'LAB 地上管制へ。こちら Archer Seven Lima Alpha、学生操縦士。西のエプロンにいて、ATIS の B を聞きました。北東の訓練空域へ 3,500 ft で VFR。地上走行を要求します。']])}
 ${fic}
-<h3>混んでいるとき</h3>
-<p>周波数が混んでいて、相手が自分の呼び出しを聞けるか分からないときは、まず短く呼ぶ（「LAB Approach, ${CS}」）。管制官が「${CS}, LAB Approach」と応えたら、要求を言う。受信が確かなら最初から要求まで言う方が周波数の節約になる（AIM 4-2-3）。</p>
-<h3>管制官から呼ばれたとき・周波数を変えるとき</h3>
-<ul><li>すべての呼び出し・許可に応答する。コールサインを最初か最後に付けて、Wilco・Roger・Affirmative・Negative など（AIM 4-2-3）。</li>
-<li>周波数を変えるよう言われたら<b>必ず応答してから</b>変える（黙って変えると、管制官には無線の故障と区別できない）。そしてできるだけ早く変える（AIM 4-2-3）。</li>
-<li><b>Contact</b>（交信せよ）なら新しい周波数で呼び出す。<b>Monitor</b>（聞いて待て）なら呼び出さずに聞く（PCG）。</li></ul>
-<h3>Class C 空域に入る前の「交信の確立」</h3>
-<p>Class C は入る前に双方向の交信を確立する必要があります（{ch:law}）。AIM 3-2-4：管制官が<b>こちらのコールサインを言って</b>「${CS}, stand by」と応えたら確立（入ってよい）。<b>コールサインなし</b>の「Aircraft calling LAB Approach, stand by」は確立していない。「remain outside Charlie airspace and stand by」なら外で待つ（JO 7110.65）。</p>
-${bk.key('最初の呼び出し：相手 → 自分 → 場所 → 要求（＋ATIS の記号）', '周波数の変更は「応答してから」変える', 'Class C：コールサイン付きの応答があれば交信確立')}` },
-      { id: 'comm.readback', t: '復唱（readback）：何を・どの順に', h: () => `
-<p>復唱は、聞きまちがい・言いまちがいを<b>その場で見つける</b>ための二重確認です。AIM の決まり：</p>
-<ul><li><b>高度・高度の制限・針路（vector）・滑走路の指定</b>を含む指示は復唱する（AIM 4-4-7）。</li>
-<li><b>与えられた順番どおり</b>に復唱し、<b>すべての復唱と応答にコールサイン</b>を付ける（AIM 4-4-7）。</li>
-<li>タキシー・離陸・着陸の許可の最初の復唱には、<b>滑走路（L・R・C も）</b>を必ず入れる（AIM 4-4-7）。</li>
-<li>地上走行では <b>滑走路の指定・滑走路に入る許可・hold short・line up and wait</b> を必ず復唱（AIM 4-3-18）。管制官は hold short の復唱がないと求める決まりになっている。</li></ul>
+<p>この本では、コールサインを “Archer 7LA” と短く書くことがあります。声に出すときは、どちらも “Archer Seven Lima Alpha” と言います（{ch:radio2}）。</p>
+<h3>1 回で言うか、短く呼ぶか</h3>
+<p>相手に<b>届くことがほぼ確かなら</b>、最初の呼び出しに要求・位置（空中なら高度）・ATIS の記号まで入れます。やり取りの回数が減り、周波数の混雑が減るからです。ただし、必要のないことまで言わないようにします（AIM 4-2-3）。</p>
+<p>返事がないときは、無線の設定を確かめてから、<b>次の呼び出しを短く</b>します（例：“LAB Approach, ${CS}.”）。相手が応えてから、要求を言います（AIM 4-2-3）。</p>
+<h3>呼び出しに入れるもの</h3>
+<ul><li><b>ATIS の記号</b>：ATIS を聞いたら、最初の交信で “with information Bravo” のように記号を言います（AIM 4-1-13）。</li>
+<li><b>student pilot</b>：学生操縦士は、各局への最初の呼び出しで “student pilot” と名乗ります。管制官が必要な手助けをしてくれます（AIM 4-2-4・{ch:radio1}）。</li>
+<li><b>空中では高度</b>：空中では場所の代わりに位置と高度を言います。レーダーの管制官を最初に呼ぶときは、いまの高度を 100 ft 単位で言います（AIM 4-1-20）。</li></ul>
+<p><b>規則と推奨</b>：14 CFR（連邦航空規則）は守らなければならない法律です。AIM は法律ではありませんが、FAA が勧める手順で、法律で決まっていることも含みます。管制官の言い方は、FAA の指示書 JO 7110.65 に決められています。この章では、どれに書いてあるかを（ ）に示します。</p>
+${bk.key('最初の呼び出し：相手 → 自分（省略しない）→ 地上なら場所 → 要求', '届くことが確かなら 1 回で全部言う。返事がなければ、短く呼び直す', 'ATIS の記号と student pilot を、最初の呼び出しに入れる')}
+${bk.q('出発管制を最初に呼ぶ。地上で言った “at the west ramp” の代わりに、何を入れる？', 'いまの高度です。上昇中なら、目標の高度も言います。例：“LAB Departure, Archer Seven Lima Alpha, one thousand two hundred, climbing to three thousand five hundred.”（AIM 4-1-20・{ch:radio4}）')}` },
+      { id: 'comm.ack', t: '応答と周波数の変更', h: () => `
+${bk.aim('管制官からの呼び出しや指示への応え方、周波数の変え方、Class C 空域に入ってよい合図を覚えます。')}
+<p>管制官からの呼び出しや許可には、<b>必ず応答</b>します（管制官が「応答は要らない」と言ったときを除きます）。応答には、自分のコールサインを最初か最後に付けます。そして Wilco・Roger・Affirmative・Negative などの言葉か、内容を言います（AIM 4-2-3）。言葉の意味は {ch:radio2} で確かめてください。</p>
 ${say([
-  ['Ground', `${CSS}, runway three six, taxi via Alpha, hold short of taxiway Charlie.`, '滑走路 36 へ、誘導路 A 経由で地上走行。誘導路 C の手前で止まれ。'],
-  ['P', `Runway three six, taxi via Alpha, hold short of Charlie, ${CSS}.`, '（滑走路・経路・手前停止＋コールサイン）'],
-  ['Tower', `${CSS}, runway three six, line up and wait.`, '滑走路 36 に入って待て（離陸許可ではない）。'],
-  ['P', `Runway three six, line up and wait, ${CSS}.`, ''],
-  ['Departure', `${CSS}, turn right heading zero niner zero, climb and maintain three thousand five hundred.`, '右旋回で針路 090、3,500 ft まで上昇してそれを保て。'],
-  ['P', `Right heading zero niner zero, climb and maintain three thousand five hundred, ${CSS}.`, '（旋回方向も・言われた順に）'],
-  ['Tower', `${CSS}, contact departure one one niner point seven five.`, '出発管制 119.75 と交信せよ。'],
-  ['P', `One one niner point seven five, ${CSS}.`, '（周波数を復唱して応答してから変える）']])}
-<h3>復唱しなくてよいもの（内容で応える）</h3>
-${bk.t(['管制官', 'あなた'], [
-  ['交通情報 “Traffic, two o\'clock, three miles, eastbound, Cessna, two thousand five hundred.”', '見えたら “Traffic in sight, ' + CSS + '.”、探しているなら “Looking, ' + CSS + '.”、見えなければ “Negative contact, ' + CSS + '.”'],
-  ['“Radar contact, five miles north of LAB.”', `“${CSS}.”（受け取ったことをコールサインで）`],
-  ['風や高度計規正値の通知', `“${CSS}.” または必要なら数字を確認`]])}
-${bk.key('数字（高度・針路・周波数・コード）と滑走路は必ず復唱。「Roger」だけでは足りない', '言われた順に、最後にコールサイン')}` },
+  ['Departure', `${CS}, LAB Departure, radar contact two miles north of LAB. Resume own navigation.`, 'レーダーで確認した（LAB の北 2 マイル）。自分で航法を続けよ。'],
+  ['P', `Resume own navigation, ${CSS}.`, '自分で航法を続けます。'],
+  ['Tower', `${CSS}, report two mile final.`, '2 マイルの最終進入で報告せよ。'],
+  ['P', `Wilco, ${CSS}.`, '従います。']])}
+<p>Wilco は「受け取り、理解し、従う」です。滑走路・高度・針路の入った指示には、Wilco だけでなく内容を復唱します（{ch:radio2}・${bk.see('comm.readback', '復唱')}）。</p>
+<p>2 回目からの交信では、呼び出しと用件を 1 回の送信で言います。答えがはっきりしていて誤解のおそれがなければ、局の名前は省いてかまいません（AIM 4-2-3）。</p>
+<h3>周波数を変えるとき</h3>
+<ol><li><b>まず応答する</b>（例：“Contact departure, ${CSS}.”）。黙って変えると、管制官は「指示が届いたのか、無線が壊れたのか」を区別できません（AIM 4-2-3）。</li>
+<li><b>できるだけ早く変える</b>。時刻・地点・高度を決めて変えるよう言われたら、そこまでは今の周波数を聞き続けます（AIM 4-2-3）。</li>
+<li><b>新しい周波数では、まず聞く</b>。誰も話していないことを確かめてから呼びます（AIM 4-2-2・{ch:radio1}）。</li></ol>
+<p><b>Contact</b> と言われたら、新しい周波数で<b>呼び出します</b>。<b>Monitor</b> と言われたら、<b>呼ばずに聞いて</b>待ちます（PCG）。</p>
+<p>レーダーの業務（VFR の交通情報など）を受けていて、区域を離れるときや周波数を変えたいときは、管制官に伝えてから交信を終えます（AIM 4-2-3）。</p>
+${say([
+  ['P', `LAB Departure, ${CSS}, entering the northeast practice area, request frequency change.`, '北東の訓練空域に入ります。周波数の変更を要求します。'],
+  ['Departure', `${CSS}, radar service terminated, squawk VFR, frequency change approved.`, 'レーダー業務を終了。VFR のコード（1200）にせよ。周波数の変更を承認。'],
+  ['P', `Squawk VFR, frequency change approved, ${CSS}.`, '']])}
+<h3>Class C 空域に入る前の「交信の確立」</h3>
+<p>Class C 空域には、入る前に管制機関との<b>双方向の交信</b>（two-way radio communications）を確立し、中にいる間は交信を続けなければなりません（14 CFR 91.130・{ch:law}）。境界の外で余裕をもって呼びます。確立したかどうかは、管制官の応答で決まります（AIM 3-2-4）。</p>
+${bk.t(['管制官の応答', '交信は確立した？', 'あなたは'], [
+  [`“${CS}, stand by.”`, '<b>確立した</b>（コールサインを言った）', 'Class C に入ってよい'],
+  [`“${CS}, remain outside Charlie airspace and stand by.”`, '確立した。ただし入るなという指示', '外で待つ'],
+  ['“Aircraft calling LAB Approach, stand by.”', '<b>確立していない</b>（コールサインがない）', '入ってはいけない']])}
+<p>Class D 空域も同じ考え方です（14 CFR 91.129・AIM 3-2-5）。</p>
+${bk.key('呼び出しと許可には必ず応答する。コールサインを付けて', '周波数は「応答してから」「できるだけ早く」変える', 'Contact は呼ぶ。Monitor は呼ばずに聞く', 'Class C：コールサイン付きの応答があれば、交信の確立')}` },
+      { id: 'comm.readback', t: '復唱（readback）：何を・どの順に', h: () => `
+${bk.aim('復唱（readback）で、何を・どの順に言うかを覚えます。復唱は、聞きまちがいをその場で見つけるための二重の確認です。')}
+${FIG.readbackLoop()}
+<p>あなたが指示を復唱し、管制官がそれを聞いて確かめます。違っていれば、管制官が直します（JO 7110.65 2-4-3）。この輪が、数字の聞きまちがいや言いまちがいを防ぎます（AIM 4-4-7）。</p>
+<h3>必ず復唱するもの</h3>
+<ul><li><b>空中</b>：高度の指定・高度の制限・針路の指示（vector）・滑走路の指定（AIM 4-4-7）。高度・高度の制限・針路は、<b>言われた順に</b>復唱します。</li>
+<li><b>地上</b>：滑走路の指定・滑走路に入る許可・<b>滑走路の手前で止まれ（hold short）</b>・<b>line up and wait</b>（AIM 4-3-18）。管制官は hold short の復唱がないと、復唱を求めます（“read back hold instructions”。JO 7110.65 3-7-2）。</li>
+<li><b>許可の最初の復唱</b>：タキシー・離陸・着陸の許可を最初に復唱するときは、滑走路の番号を入れます。L・R・C があれば、それも言います（AIM 4-4-7）。</li>
+<li>すべての復唱と応答に、<b>自分のコールサイン</b>を付けます（AIM 4-4-7）。</li></ul>
+<p><b>line up and wait</b>（LUAW）は、「滑走路に入り、離陸の向きにそろえて待て」という指示です。<b>離陸の許可ではありません</b>。“cleared for takeoff” を聞くまで離陸しません（AIM 5-2-5）。</p>
+${say([
+  ['Ground', `${CS}, LAB Ground, runway three six, taxi via Alpha, hold short of taxiway Charlie. Departure frequency one one niner point seven five, squawk four two seven one.`, '滑走路 36 へ。誘導路 A を通り、誘導路 C の手前で止まれ。出発管制は 119.75、コードは 4271。'],
+  ['P', `Runway three six, taxi via Alpha, hold short of Charlie, departure one one niner point seven five, squawk four two seven one, ${CSS}.`, '言われた順に復唱し、最後にコールサイン。'],
+  ['Tower', `${CS}, LAB Tower, runway three six, line up and wait. Traffic, a Cessna on five mile final.`, '滑走路 36 に入って待て（離陸の許可ではない）。5 マイルの最終進入に Cessna。'],
+  ['P', `Runway three six, line up and wait, ${CSS}.`, '滑走路の番号を入れる。'],
+  ['Tower', `${CS}, runway three six, wind three four zero at eight, cleared for takeoff. Fly runway heading. Traffic, a Cessna on four mile final.`, '滑走路 36、風 340° 8 kt、離陸を許可。滑走路の方位を保って上昇せよ。4 マイルの最終進入に Cessna。'],
+  ['P', `Runway three six, cleared for takeoff, fly runway heading, ${CSS}.`, '滑走路の番号と、針路の指示を復唱。']])}
+<p>出発の周波数やトランスポンダーのコードは、AIM が「必ず復唱する」としているものではありません。でも数字なので、復唱しておくと確かめになります。この本の例では復唱しています。</p>
+<h4>別の場面の例：針路と高度</h4>
+${say([
+  ['Approach', `${CSS}, turn right heading zero niner zero, climb and maintain three thousand five hundred.`, '右に旋回して針路 090。3,500 ft まで上昇して、それを保て。'],
+  ['P', `Right heading zero niner zero, climb and maintain three thousand five hundred, ${CSS}.`, '旋回の方向も入れ、言われた順に。']])}
+<h3>復唱しなくてよいもの</h3>
+${bk.t(['管制官が言うこと', 'あなたの応え方'], [
+  [`交通情報 “${CSS}, traffic, one o'clock, four miles, westbound, a Cessna, two thousand five hundred.”`, `見えたら “Traffic in sight, ${CSS}.”。探しているなら “Looking, ${CSS}.”。見えないと伝えるなら “Negative contact, ${CSS}.”`],
+  ['“Radar contact …”', `“${CSS}.” のように、受け取ったことを伝える`],
+  ['風や高度計規正値だけの知らせ', `“${CSS}.”。数字を復唱して確かめてもよい`]])}
+${bk.key('空中：高度・高度の制限・針路・滑走路の指定は必ず復唱', '地上：滑走路の指定・入る許可・hold short・line up and wait は必ず復唱', '言われた順に、コールサインを付けて。line up and wait は離陸の許可ではない')}
+${bk.warn('<b>よくある間違い：</b>数字の入った指示に “Roger” だけで答えること。管制官は、あなたが数字を正しく聞いたかを確かめられません。')}
+${bk.q('Ground「Archer 7LA, runway three six, taxi via Alpha, cross runway two seven.」。何を復唱する？', '滑走路の指定（runway three six）と、滑走路を横切る許可（cross runway two seven）です。言われた順に復唱し、コールサインを付けます：“Runway three six, taxi via Alpha, cross runway two seven, Archer 7LA.”（AIM 4-3-18）')}` },
       { id: 'comm.clarify', t: 'わからないとき・従えないとき', h: () => `
+${bk.aim('聞き取れない・自分あてかわからない・従えない、というときの正しい言い方を覚えます。推測で動かないことが、いちばん大切です。')}
+<p>規則（14 CFR 91.123）は、<b>許可の内容がはっきりしないときは、すぐに管制官に確かめる</b>ことを機長に求めています。AIM も、理解できない許可や指示は、理解できるまで確かめるよう勧めています（AIM 4-3-18）。機長は、自分の機の運航に最終的な責任を持つからです（14 CFR 91.3）。</p>
 ${bk.t(['場面', '言い方', 'ポイント'], [
-  ['聞き取れなかった', '“Say again, ' + CSS + '.”／一部だけなら “Say again all after Charlie.”', '推測で復唱・行動しない（PCG）'],
-  ['自分宛てか分からない', '“Verify clearance for Archer Seven Lima Alpha.”', '似たコールサインに注意（AIM 4-2-4）'],
-  ['経路が分からない', '“Request progressive taxi.”', '一区間ずつ案内してもらえる（AIM 4-3-18）'],
-  ['指示に従えない', '“Unable, clouds ahead, ' + CSS + '.”（理由と代わりの案）', 'VFR は雲に入れない。無理に従わない'],
-  ['LUAW のまま待たされている', '“' + CSS + ', holding in position runway three six.”', '長く待たされたら確認（AIM 5-2-5）'],
-  ['自分の言いまちがい', '“Correction, …”', 'PCG'],
-  ['少し待ってほしい（操縦が忙しい）', '“Stand by.”', '操縦が最優先']])}
-<p>AIM 4-3-18 は、機長は自分の機の運航に最終的な責任があるので、<b>理解できない指示は理解できるまで確認する</b>よう求めています。迷ったら止まって聞く（地上）、または安全な状態を保って聞く（空中）。</p>
-${bk.key('Say again・Verify・Unable は、安全のための正しい言葉。使うのをためらわない')}` },
+  ['聞き取れなかった', `“Say again, ${CSS}.”<br>後半だけなら “Say again all after Charlie, ${CSS}.”`, '推測で復唱しない。推測で動かない'],
+  ['自分あてかわからない（似たコールサインがいる）', `“Verify clearance for ${CS}.”`, 'コールサインは省略しない（AIM 4-2-4）'],
+  ['地上で、経路がわからない', `“Request progressive taxi, ${CSS}.”`, '一区間ずつ案内してもらえる（AIM 4-3-18）'],
+  ['指示に従えない', `“Unable, clouds ahead, ${CSS}.”`, '理由を添える。VFR で雲に入るような指示には従わない'],
+  ['line up and wait のまま、長く待たされている', `“${CSS}, holding in position runway three six.”`, '離陸の許可が来なければ確かめる（AIM 5-2-5）'],
+  ['操縦が忙しくて、すぐ答えられない', `“${CSS}, stand by.”`, '操縦が先。落ち着いたら呼ぶ']])}
+<p>聞き直すことは、悪いことではありません。Say again・Verify・Unable は、PCG に決められた正しい言葉です。迷ったら、地上では止まって聞きます。空中では、安全な高度・針路を保ったまま聞きます。</p>
+${bk.key('はっきりしない許可は、すぐ確かめる（14 CFR 91.123）', '聞こえない → Say again。自分あてか不明 → Verify。従えない → Unable', '迷ったら、地上では止まって聞く。空中では安全な状態を保って聞く')}
+${bk.q('line up and wait で滑走路に入って、2 分たっても離陸の許可が来ない。遅れるという知らせもなく、最終進入の機も見えない。どうする？', '管制塔に “Archer 7LA, holding in position runway three six.” と伝えて確かめます。AIM 5-2-5 は、LUAW の指示から 2 分以上たってから事故やインシデントが起きていた、という FAA の分析を挙げて、遅れを知らされていないときは、待っている時間を考えて確かめるよう勧めています。')}` },
       { id: 'comm.mistakes', t: 'よくある間違い', h: () => `
-${bk.t(['間違い', '正しくは'], [
-  ['hold short の指示に “Roger” だけ', '滑走路名まで復唱：“Hold short of runway three six, ' + CSS + '.”'],
-  ['line up and wait を離陸許可と思う', 'cleared for takeoff を待つ（AIM 5-2-5：LUAW を正しく復唱したのに許可なしで離陸した例が多い）'],
-  ['ほかの機への指示を自分のものと思う', 'コールサインを聞く。疑わしければ Verify'],
-  ['応答せずに周波数を変える', '応答してから変える（AIM 4-2-3）'],
-  ['着陸後、言われる前に Ground に変える', '管制塔に “contact ground” と言われるまで変えない（AIM 4-3-14・4-3-21）'],
-  ['最初の交信でコールサインを省略する', '最初は完全に。省略は管制官が先に（AIM 4-2-4）'],
-  ['ほかの交信にかぶせて話す（ブロック）', '聞いてから話す（AIM 4-2-2）'],
-  ['長すぎる呼び出し', '型どおりに短く。不要なことは言わない（AIM 4-2-3）'],
-  ['“Roger” で「はい」と答える', '“Affirmative”'],
-  ['管制塔のない空港で “active runway” と言う', '滑走路の番号を言う（AIM 4-1-9）']])}` },
+${bk.aim('訓練生がよくする交信の間違いと、正しいやり方をまとめて確かめます。')}
+${bk.photo('holdShort')}
+${bk.t(['よくある間違い', '正しいやり方'], [
+  ['hold short の指示に “Roger” だけで答える', `止まる所まで復唱する：“Hold short of runway three six, ${CSS}.”（AIM 4-3-18）`],
+  ['line up and wait を離陸の許可と思う', '“cleared for takeoff” を待つ。LUAW を正しく復唱したのに、許可なしで離陸した例が多くあります（AIM 5-2-5）'],
+  ['ほかの機への指示を、自分への指示と思う', 'コールサインを最後まで聞く。疑わしければ Verify（AIM 4-2-4）'],
+  ['応答しないで周波数を変える', '応答してから変える（AIM 4-2-3）'],
+  ['着陸のあと、言われる前に Ground に変える', '管制塔に “contact ground” と言われるまで変えない（AIM 4-3-14）'],
+  ['最初の交信で、コールサインを省略する', '最初は省略しない。省略は、管制官が先にしてから（AIM 4-2-4）'],
+  ['ほかの交信にかぶせて話す', '送信する前に聞く（AIM 4-2-2・{ch:radio1}）'],
+  ['長すぎる呼び出し', '型どおりに。必要のないことは言わない（AIM 4-2-3）'],
+  ['はい・いいえの質問に “Roger” と答える', '“Affirmative” か “Negative”（{ch:radio2}）']])}
+<p>写真の黄色い線は、滑走路の手前の停止線です。実線の側で止まり、破線の側が滑走路です（AIM 2-3-5）。hold short と言われたら、機体のどこも、この線を越えないように止まります。</p>
+${bk.key('hold short と line up and wait は、いつも復唱する。Roger だけでは足りない', '自分のコールサインを最後まで聞く。迷ったら Verify', '周波数は応答してから変える。着陸のあとは、言われてから Ground へ')}` },
     ],
-    terms: [['Initial contact (callup)', '最初の呼び出し', 'AIM 4-2-3'], ['Readback', '復唱', 'AIM 4-4-7'], ['Acknowledge', '応答する', ''], ['Contact / Monitor', '交信せよ / 聞いて待て', ''], ['Two-way radio communication', '双方向の交信', 'Class C の条件'], ['Progressive taxi', '一区間ずつの地上走行の案内', ''], ['Holding in position', '滑走路上で待機中', 'LUAW'], ['Verify clearance for …', '…への許可か確認', '']],
-    examples: ['“Archer 7LA, cross runway two seven, hold short of runway three six.” → “Cross runway two seven, hold short of runway three six, Archer 7LA.”（横断と手前停止の両方）', '“Aircraft calling LAB Approach, stand by.” → コールサインが言われていないので Class C には入らない。'],
-    cautions: ['交信例は FAA（米国）の言い方。英国などでは一部違う（{ch:radio5}）。', '実際の交信は、その空港の手順・管制官の指示が優先。'],
+    terms: [['Initial contact (initial callup)', '最初の呼び出し', 'AIM 4-2-3'], ['Acknowledge', '応答する', 'AIM 4-2-3'], ['Readback', '復唱', 'AIM 4-4-7・4-3-18'], ['Contact / Monitor', '交信せよ（呼ぶ）/ 聞いて待て（呼ばない）', 'PCG'], ['Two-way radio communications', '双方向の交信', 'Class C・D に入る条件（AIM 3-2-4）'], ['Line up and wait (LUAW)', '滑走路に入って待て', '離陸の許可ではない（AIM 5-2-5）'], ['Progressive taxi', '一区間ずつの地上走行の案内', 'AIM 4-3-18'], ['Holding in position', '滑走路の上で待っている', 'AIM 5-2-5'], ['Verify clearance for …', '…への許可か確かめてください', 'AIM 4-2-4'], ['Runway holding position marking', '滑走路の手前の停止線', 'AIM 2-3-5']],
+    examples: ['“Archer 7LA, hold short of runway three six.” → “Hold short of runway three six, Archer 7LA.”（Roger だけでは足りない）', '“Aircraft calling LAB Approach, stand by.” → コールサインが言われていないので、Class C には入らない（AIM 3-2-4）。'],
+    cautions: ['交信の例は米国（FAA）の言い方です。英国など ICAO の言い方とは一部が違います（{ch:radio5}）。', '実際の交信では、その空港の手順と管制官の指示が優先です。'],
     quiz: [
-      { q: 'AIM 4-4-7 が復唱すべきとしているものは？', choices: ['交通情報', '高度・針路・滑走路の指定を含む指示', '天気', 'ATIS の内容'], answer: 1, why: '高度・高度の制限・針路（vector）・滑走路の指定は、言われた順に、コールサイン付きで復唱する。' },
-      { q: '管制官が「Aircraft calling LAB Approach, stand by.」と応えた。Class C に入ってよい？', choices: ['入ってよい', '入ってはいけない（コールサインがない）', '高度を下げれば入ってよい', 'トランスポンダーを 7700 にして入る'], answer: 1, why: 'AIM 3-2-4：コールサイン付きで応答されたときだけ交信確立。コールサインなしは確立していない。' },
-      { q: '周波数の変更を指示された。正しいのは？', choices: ['黙ってすぐ変える', '応答してから、できるだけ早く変える', '変えずに待つ', '一度ほかの周波数を試す'], answer: 1, why: 'AIM 4-2-3：応答がないと、管制官は無線の故障と区別できない。' },
+      { q: 'AIM 4-4-7 が、空中で復唱すべきとしているものは？', choices: ['交通情報', '高度・高度の制限・針路・滑走路の指定を含む指示', '風と気温', 'ATIS の内容'], answer: 1, why: 'AIM 4-4-7：高度・高度の制限・針路（vector）・滑走路の指定は、言われた順に、コールサインを付けて復唱する。' },
+      { q: '管制官が「Aircraft calling LAB Approach, stand by.」と応えた。Class C 空域に入ってよい？', choices: ['入ってよい', '入ってはいけない（コールサインがない）', '高度を下げれば入ってよい', 'トランスポンダーを 7700 にして入る'], answer: 1, why: 'AIM 3-2-4：コールサインを付けて応答されたときだけ、交信が確立する。コールサインのない応答では確立していない。' },
+      { q: '周波数を変えるよう指示された。正しいのは？', choices: ['黙ってすぐ変える', '応答してから、できるだけ早く変える', '変えずに待つ', '一度ほかの周波数を試す'], answer: 1, why: 'AIM 4-2-3：応答がないと、管制官は指示が届いたのか、無線が壊れたのかを区別できない。' },
+      { q: 'Tower「Archer 7LA, runway three six, line up and wait.」の意味は？', choices: ['離陸してよい', '滑走路に入り、離陸の向きにそろえて待つ（離陸の許可ではない）', '滑走路の手前で待つ', '滑走路を横切ってよい'], answer: 1, why: 'AIM 5-2-5：LUAW は離陸の許可ではない。“cleared for takeoff” を聞いてから離陸する。' },
+      { q: '管制官「Archer 7LA, monitor tower one one eight point three.」。正しいのは？', choices: ['118.3 に変えて、すぐ管制塔を呼ぶ', '応答してから 118.3 に変え、呼ばずに聞いて待つ', '今の周波数のまま待つ', '118.3 に変えて、ATIS の記号を言う'], answer: 1, why: 'Monitor は「その周波数を聞いて待て」で、自分からは呼ばない（PCG）。変える前に応答する（AIM 4-2-3）。' },
     ],
-    refs: [R.aim42, R.aim43, R.pcg, R.jo71, R.aim], lessons: ['t1', 't2'] });
+    refs: [R.aim42, R.aim44, R.aim43, R.aim41, R.aim52, R.aim32, R.aim23, R.cfr91, R.pcg, R.jo71], lessons: ['t1', 't2'] });
 
   // ======================================================================= radio 4
   B.add({ id: 'radio4', before: 'hf', part: 'p1', t: '1 回の飛行の交信：出発から到着まで', en: 'A whole flight on the radio: from the ramp to the ramp',

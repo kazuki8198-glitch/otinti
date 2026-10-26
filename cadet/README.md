@@ -8,7 +8,7 @@
 
 [`outputs/CADET.html`](outputs/CADET.html) をダブルクリックすると Chrome で開きます。インストールは要らず、オフラインでも動きます。WebGL2 が必要です。
 
-ブラウザで直接開くこともできます：**[CADET を開く（raw.githack）](https://raw.githack.com/kazuki8198-glitch/otinti/214638933ad3288e3bec610d4224d3329c3cd2fb/cadet/outputs/CADET.html)**
+ブラウザで直接開くこともできます：**[CADET を開く（raw.githack）](https://raw.githack.com/kazuki8198-glitch/otinti/bc033078e3be35ac52f6c799112783c5f17b65ad/cadet/outputs/CADET.html)**
 - 最初に raw.githack の確認画面（One more step）が出ます。赤い「Open the page」を押すと、ゲームが始まります。
 - キーボードとマウスのある PC（Chrome など）で開いてください。スマートフォンやタブレットでは操作できません。
 - 起動には数十秒かかることがあります（8.2 MB）。
@@ -375,7 +375,7 @@ M1 の画像（歩く）：
 **教科書について質問する**
 - 「質問があります」を選ぶと、教科書の節を選んで質問できます。今日の課目に関係する節が先に出ます。
 - 答えは、その節の要点です。そのあと、教科書でその節を開いたり、図を画面に映してもらったりできます。
-- 質問できる節は、教科書の地上学科から多発・CRM までの全部です（25 章・113 節。FLIGHT LAB の使い方の章は除きます）。
+- 質問できる節は、教科書の地上学科から多発・CRM までの全部です（25 章・145 節。FLIGHT LAB の使い方の章は除きます）。
 
 **記録**
 - 会った・説明を聞いた・確認に答えた、という記録と、教官からの信頼は、ブラウザに保存されます。次に話しかけると、続きから話します。

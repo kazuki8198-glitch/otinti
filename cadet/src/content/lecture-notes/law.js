@@ -97,7 +97,7 @@ export default {
       '町や人の集まりの上は、半径 2,000 ft 以内でいちばん高い障害物より 1,000 ft 上です。水の上や人の少ない所でも、人・船・車・建物から 500 ft 離れます。',
       // src: 14 CFR 91.113(d) (balloon; glider; (d)(3) an aircraft towing or refueling other aircraft has the right-of-way
       // over all other engine-driven aircraft, an airship among them); the less manoeuvrable first is the usual way it is taught
-      '種類の違う機体は、よけにくい順に優先です。規則では気球、グライダー、曳航・給油中の機、飛行船、動力機の順で、曳航中の機は飛行船より先です。',
+      '種類の違う機体は、よけにくい順に優先です。曳航・給油中の機は、つながった相手がいて急には動けないので、飛行船よりも先になります。',
       // src: 14 CFR 91.113(d) (converging: the aircraft to the other's right); 道路交通法 36 条 (Japan's roads: the car
       // from the left first at an uncontrolled crossing), given only as the contrast
       '同じ種類が交わるときは、右側の機が優先です。相手が自分の右に見えたら、よけるのは自分です。日本の信号のない交差点の「左方優先」とは逆です。',

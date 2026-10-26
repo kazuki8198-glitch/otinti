@@ -309,97 +309,142 @@ ${bk.key('hold short と line up and wait は、いつも復唱する。Roger �
 
   // ======================================================================= radio 4
   B.add({ id: 'radio4', before: 'hf', part: 'p1', t: '1 回の飛行の交信：出発から到着まで', en: 'A whole flight on the radio: from the ramp to the ramp',
-    summary: '管制塔とレーダー管制のある空港（Class C を想定した架空の LAB）で、ATIS → 地上 → 管制塔 → 出発管制 → 訓練空域 → 進入管制 → 管制塔（場周・着陸）→ 地上 までの全部の交信を、日本語の意味と理由つきで順に。',
+    summary: '管制塔とレーダーの進入管制がある架空の空港 LAB（Class C を想定）で、ATIS → 地上 → 管制塔 → 出発管制 → 訓練空域 → 進入管制 → 管制塔（場周・着陸）→ 地上 までの交信を、意味と理由つきで順にたどる。最後に、場周経路での練習の交信。',
     secs: [
+      { id: 'comm.flow', t: 'この章の飛行：全体の流れと周波数', h: () => `
+${bk.aim('この章でたどる 1 回の訓練飛行の全体を、地図と周波数の表で先に見ておきます。')}
+${FIG.flightOverviewMap()}
+<p>LAB は、管制塔とレーダーの進入管制がある架空の空港です。Class C 空域を想定しています。Class C 空域は、ふつう空港から半径 5 NM（地上から空港の標高＋4,000 ft まで）と、半径 10 NM までの棚（空港の標高＋1,200 ft から＋4,000 ft まで）でできています（AIM 3-2-4・{ch:law}）。</p>
+<p>この章の飛行は、北東の訓練空域へ行って帰ってくるものです。番号 ①〜⑦ は、この章の見出しの番号です。</p>
+${bk.t(['段階', '局', '周波数（架空）', 'すること'], [
+  ['①', 'LAB ATIS', '127.65', '聞いて書き取る（話しかけない）'],
+  ['②', 'LAB Ground', '121.7', 'タキシーの許可。出発の周波数とコードをもらう'],
+  ['③', 'LAB Tower', '118.3', '離陸'],
+  ['④', 'LAB Departure', '119.75', 'レーダーの業務・交通情報。訓練空域で別れる'],
+  ['⑤', 'LAB ATIS → LAB Approach', '127.65 → チャートで確かめる', '帰りの最初の呼び出し'],
+  ['⑥', 'LAB Tower', '118.3', '場周経路と着陸'],
+  ['⑦', 'LAB Ground', '121.7', '駐機場へ']])}
+<p>トランスポンダーのコード：出発は 4271、訓練空域では 1200（VFR）、帰りは 0425（どれも管制官から言われる架空の値。1200 だけは VFR の決まったコード）。</p>
+${fic}
+${bk.key('地上は Ground、滑走路と場周は Tower、空港を離れたら Departure、帰りは ATIS を聞いてから Approach', '周波数とコードは、ひざ板に書いておく', 'Class C は、入る前に双方向の交信を確立する')}` },
       { id: 'comm.atis', t: '① ATIS を聞いて書き取る', h: () => `
-<p>ATIS は、ふつうの情報を録音で繰り返し流して管制の周波数の混雑を減らす放送です（AIM 4-1-13）。内容：空港名・<b>情報の記号（Alpha, Bravo…）</b>・観測時刻（UTC）・風・視程・天気・雲・気温・露点・<b>高度計規正値</b>・使用滑走路・注意事項。雲高 5,000 ft 以上・視程 5 SM 以上なら雲と視程は省くことがある。</p>
-${say([['ATIS', 'LAB information Bravo. One four five three Zulu. Wind three four zero at eight. Visibility one zero. Few clouds at three thousand five hundred. Temperature three one, dew point two two. Altimeter three zero zero one. Landing and departing runway three six. Advise on initial contact you have information Bravo.', 'LAB の情報 B。14:53 UTC。風 340° 8 kt。視程 10 SM。3,500 ft に少しの雲。気温 31℃・露点 22℃。高度計 30.01。使用滑走路 36。最初の交信で B を聞いたと伝えよ。']])}
-${bk.t(['書き取る欄（ひざ板の例）', '値'], [['記号', 'B'], ['風', '340/08'], ['視程・雲', '10・FEW035'], ['温度・露点', '31/22'], ['高度計', '30.01 → すぐ合わせる'], ['滑走路', '36']])}
-<p>最初の交信で “<b>with information Bravo</b>” と言うと、管制官は ATIS の内容を繰り返さなくてよくなる（AIM 4-1-13）。“have numbers”（風・滑走路・高度計だけ聞いた）は ATIS を聞いた意味にはならない。</p>
-${fic}` },
+${bk.aim('ATIS を聞き、必要な数字を書き取って、最初の交信の準備をします。')}
+<p>ATIS（飛行場情報の自動放送）は、管制の指示ではない決まった情報を、録音でくり返し流す放送です。管制官が同じことを何度も言わなくてよくなり、周波数の混雑が減ります（AIM 4-1-13）。内容は、空港の名前・<b>情報の記号（Alpha, Bravo…）</b>・観測の時刻（UTC）・風・視程・天気・雲・気温・露点・<b>高度計規正値</b>・使う滑走路・注意です。雲高が 5,000 ft を超え、視程が 5 マイルを超えるときは、雲と視程を省くことがあります（AIM 4-1-13）。</p>
+<p>ATIS は、毎時の観測と特別な観測のたびに、また滑走路などが変わったときに新しく録音され、記号が次の文字に変わります（AIM 4-1-13）。</p>
+${say([['ATIS', 'LAB information Bravo. One four five three Zulu. Wind three four zero at eight. Visibility one zero. Few clouds at five thousand. Temperature three one, dew point two two. Altimeter three zero zero one. Landing and departing runway three six. Advise on initial contact you have information Bravo.',
+  'LAB の情報 B。14:53 UTC。風 340° 8 kt。視程 10 SM。5,000 ft に少しの雲。気温 31℃・露点 22℃。高度計 30.01。離着陸の滑走路 36。最初の交信で B を聞いたと伝えよ。', '書き取り：B ／ 1453Z ／ 340/08 ／ 10 ／ FEW050 ／ 31/22 ／ 30.01 ／ RWY 36（AIM 4-1-13）']])}
+${bk.t(['ひざ板に書く欄', '値', 'すること'], [['記号・時刻', 'B・1453Z', '最初の交信で言う'], ['風', '340/08', '滑走路 36 との角度を見る'], ['視程・雲', '10・FEW050', 'VFR で飛べるか確かめる'], ['気温・露点', '31/22', '密度高度を考える（{ch:perf}）'], ['高度計', '30.01', 'すぐ合わせる'], ['滑走路', '36', 'タキシーの経路を考える']])}
+<p>聞いたら、すぐに高度計を 30.01 に合わせ、表示が空港の標高（LAB は 55 ft。教材値）に近いことを確かめます。次に、Ground の周波数を無線機の予備に入れます。</p>
+<p>最初の交信で “<b>with information Bravo</b>” と言うと、管制官は ATIS の内容をくり返さずにすみます（AIM 4-1-13）。“have numbers”（風・滑走路・高度計だけ聞いた）は、ATIS を聞いたという意味にはなりません（AIM 4-1-8）。</p>
+${bk.key('ATIS は聞くだけ。記号・風・雲・高度計・滑走路を書く', '高度計はすぐ合わせ、空港の標高に近いか確かめる', '最初の交信で “with information Bravo”')}
+${bk.q('ATIS で “Few clouds at five thousand”。北東の訓練空域へ 3,500 ft で行ってよい？', 'はい。雲の下 1,500 ft なので、Class C・E 空域の VFR の決まり（雲の下 500 ft・上 1,000 ft・横 2,000 ft。14 CFR 91.155）を満たします。雲が 3,500 ft にあると、雲の下 500 ft を守れません。その高さで飛ぶなら、雲から横に 2,000 ft 以上離れる必要があります（{ch:law}）。')}` },
       { id: 'comm.dep', t: '② 地上：タキシーの許可（出発周波数とコードも）', h: () => `
-<p>出発する機は、エンジン始動前後に地上管制（または Clearance Delivery）と交信し、タキシーとランナップの間はその周波数にいて、<b>離陸の準備ができたら管制塔に変える</b>（AIM 4-3-14）。レーダー業務を受ける VFR 機には、離陸前に<b>出発周波数とトランスポンダーのコード</b>が伝えられる（JO 7110.65：“departure frequency …, squawk …”）。</p>
+${bk.aim('Ground にタキシーを頼み、滑走路・経路・止まる所・出発の周波数・コードを聞き取って、復唱します。')}
+<p>出発する機は、Ground（または Clearance Delivery）を呼んでタキシーの許可をもらいます。AIM は、エンジンをかける前に呼ぶよう勧めています。タキシーとランナップの間は Ground の周波数にいて、<b>離陸の準備ができたら Tower に変えます</b>（AIM 4-3-14）。LAB のようにレーダーの出発管制がある空港では、Ground が出発の周波数とトランスポンダーのコードも伝えます。</p>
 ${say([
-  ['P', `LAB Ground, ${CS}, student pilot, at the west ramp with information Bravo, VFR to the northeast practice area at three thousand five hundred, request taxi.`, '（相手・自分・場所・ATIS・行き先と高度・要求）'],
-  ['Ground', `${CS}, LAB Ground, runway three six, taxi via Alpha, hold short of taxiway Charlie. Departure frequency one one niner point seven five, squawk four two seven one.`, '滑走路 36 へ。誘導路 A 経由、誘導路 C の手前で止まれ。出発管制 119.75、コード 4271。'],
-  ['P', `Runway three six, taxi via Alpha, hold short of Charlie, departure one one niner point seven five, squawk four two seven one, ${CSS}.`, '（滑走路・経路・手前停止・周波数・コードを言われた順に）'],
-  ['Ground', `${CSS}, continue via Alpha to runway three six.`, '誘導路 A をそのまま滑走路 36 へ。'],
-  ['P', `Continue via Alpha to runway three six, ${CSS}.`, '']])}
-${bk.warn('「Runway three six, taxi via Alpha」は滑走路 36 の<b>手前まで</b>行ってよいという意味で、<b>滑走路に入ってよい・横切ってよいという意味ではない</b>（AIM 4-3-18）。滑走路の手前の停止線（黄色の実線と破線）で必ず止まる。地上走行の指示に “cleared” という言葉は使われない。')}
-<p>ランナップ（{ch:ground}）は滑走路の近くの決められた場所で。終わったら滑走路の手前で管制塔に変える。</p>` },
+  ['P', `LAB Ground, ${CS}, student pilot, at the west ramp with information Bravo, VFR to the northeast practice area at three thousand five hundred, request taxi.`, 'LAB 地上管制へ。こちら Archer Seven Lima Alpha、学生操縦士。西のエプロンにいて ATIS B を聞いた。北東の訓練空域へ 3,500 ft で VFR。地上走行を要求。', '型：相手 → 自分（最初は省略しない）→ 位置 → ATIS → 行き先 → 要求（AIM 4-2-3・4-2-4）'],
+  ['Ground', `${CS}, LAB Ground, runway three six, taxi via Alpha, hold short of taxiway Charlie. Departure frequency one one niner point seven five, squawk four two seven one.`, '滑走路 36 へ。誘導路 A 経由、誘導路 C の手前で止まれ。出発管制 119.75、コード 4271。', '「滑走路 36 へ」は、滑走路に入る・横切る許可ではない（AIM 4-3-18）'],
+  ['P', `Runway three six, taxi via Alpha, hold short of Charlie, departure one one niner point seven five, squawk four two seven one, ${CSS}.`, '滑走路 36・A 経由・C の手前で停止・出発 119.75・コード 4271、Archer 7LA。', '滑走路の指定と hold short は必ず復唱（AIM 4-3-18）。コールサインを付ける（AIM 4-4-7・{ch:radio3}）'],
+  ['Ground', `${CSS}, continue via Alpha to runway three six.`, '誘導路 A をそのまま滑走路 36 へ。', ''],
+  ['P', `Continue via Alpha to runway three six, ${CSS}.`, '誘導路 A で滑走路 36 へ、Archer 7LA。', '']])}
+<p>復唱したら、トランスポンダーに 4271、無線機の予備に 119.75 を入れておきます。誘導路 A を走り、C の手前で止まります。</p>
+${bk.warn('<b>よくある間違い：</b>「Runway three six, taxi via Alpha」を、滑走路 36 に入ってよいと思うこと。これは滑走路 36 の<b>手前まで</b>行ってよいという意味です。滑走路に入る・横切る許可ではありません（AIM 4-3-18）。滑走路の手前の停止線で必ず止まります。タキシーの指示に “cleared” という言葉は使われません。')}
+<p>ランナップ（エンジンの点検。{ch:ground}）は、滑走路の近くの決められた場所でします。終わったら滑走路 36 の手前の停止線で止まり、Tower 118.3 に変えます（AIM 4-3-14）。</p>
+${bk.key('タキシーの許可は、滑走路に入る許可ではない', '出発の周波数とコードは、復唱してすぐ機械に入れる', 'ランナップが終わり、準備ができたら Tower に変える')}` },
       { id: 'comm.tower', t: '③ 管制塔：離陸', h: () => `
+${bk.aim('Tower に離陸の準備ができたことを伝え、line up and wait と離陸の許可を正しく聞き分けます。')}
+${bk.photo('towerCab')}
+<p>周波数を変えたら、まず数秒聞きます。誰も話していないことを確かめてから呼びます（AIM 4-2-2）。</p>
 ${say([
-  ['P', `LAB Tower, ${CS}, holding short runway three six, ready for departure, VFR northeast.`, '滑走路 36 の手前で待機中。出発準備よし。北東へ VFR。'],
-  ['Tower', `${CS}, LAB Tower, runway three six, line up and wait. Traffic, a Cessna on five mile final.`, '滑走路 36 に入って待て。5 マイルの最終進入に Cessna。'],
-  ['P', `Runway three six, line up and wait, ${CSS}.`, '（離陸許可ではない。滑走路に入り、センターラインに合わせて止まる）'],
-  ['Tower', `${CS}, runway three six, wind three four zero at eight, cleared for takeoff. Fly runway heading. Traffic, a Cessna on four mile final.`, '滑走路 36、風 340° 8 kt、離陸を許可。滑走路の方位を保って上昇せよ。4 マイルの最終進入に Cessna。'],
-  ['P', `Runway three six, cleared for takeoff, fly runway heading, ${CSS}.`, '（滑走路＋cleared for takeoff＋追加の指示）'],
-  ['Tower', `${CS}, contact departure.`, '出発管制と交信せよ（周波数はタキシー前にもらった 119.75）。'],
-  ['P', `Contact departure, ${CSS}.`, '']])}
-<ul><li>LUAW と離陸許可のときには、同じ滑走路の最終進入（6 マイル以内）にいる一番近い機が伝えられる（JO 7110.65 3-9-4・3-9-10）。</li>
-<li>LUAW は「すぐ離陸させたいが、まだ許可を出せない」ときの指示（AIM 5-2-5）。管制方式では LUAW のまま 90 秒を超えて待たせないことになっている（JO 7110.65）。理由（着陸機など）がなくなったのに何も言われないときは確認する。</li>
-<li>離陸許可の復唱には必ず滑走路番号を入れる（AIM 4-4-7）。平行滑走路では L・R・C まで。</li>
-<li>管制官は、パイロットが知っていると思えば周波数を省くことがある（AIM 4-3-14）。分からなければ聞く。</li></ul>
+  ['P', `LAB Tower, ${CS}, student pilot, holding short runway three six, ready for departure, VFR northeast.`, 'LAB 管制塔へ。学生操縦士。滑走路 36 の手前で待機中、出発の準備よし。北東へ VFR。', 'student pilot は、各局への最初の呼び出しで言う（AIM 4-2-4）'],
+  ['Tower', `${CS}, LAB Tower, runway three six, line up and wait. Traffic, a Cessna on five mile final.`, '滑走路 36 に入って待て。5 マイルの最終進入に Cessna。', 'LUAW は離陸の許可ではない（AIM 5-2-5）。同じ滑走路へ向かう 6 マイル以内の一番近い機が伝えられる（JO 7110.65 3-9-4）'],
+  ['P', `Runway three six, line up and wait, ${CSS}.`, '滑走路 36、入って待つ、Archer 7LA。', ''],
+  ['Tower', `${CS}, runway three six, wind three four zero at eight, cleared for takeoff. Fly runway heading. Traffic, a Cessna on four mile final.`, '滑走路 36、風 340° 8 kt、離陸を許可。滑走路の方位を保って上昇せよ。4 マイルの最終進入に Cessna。', '離陸の許可の復唱には、必ず滑走路の番号（AIM 4-4-7）'],
+  ['P', `Runway three six, cleared for takeoff, fly runway heading, ${CSS}.`, '滑走路 36、離陸許可、滑走路の方位、Archer 7LA。', ''],
+  ['Tower', `${CS}, contact departure.`, '出発管制と交信せよ（周波数はタキシーの前にもらった 119.75）。', '前に伝えた出発の周波数は、管制官が省いてよい（JO 7110.65 2-1-17）'],
+  ['P', `Contact departure, ${CSS}.`, '出発管制へ、Archer 7LA。', '応答してから、できるだけ早く変える（AIM 4-2-3）']])}
+<ul><li><b>line up and wait</b>（LUAW）では、滑走路に入ってセンターラインに合わせて止まり、最終進入の機を目で確かめます。管制官は、ほかの指示なしに LUAW のまま 90 秒を超えて待たせないようにしています（JO 7110.65 3-9-4）。長く待たされたら確かめます（AIM 5-2-5・{ch:radio3}）。</li>
+<li><b>fly runway heading</b> は、滑走路のセンターラインの延長の磁方位で飛べ、という意味です。風で流されても、方位を直しません（PCG）。</li>
+<li>離陸して上昇したら、高度・速度・方位が先です。無線は操縦のあとです（Aviate → Navigate → Communicate）。</li></ul>
+${bk.key('line up and wait は「入って待つ」。cleared for takeoff を聞いてから離陸', '離陸の許可は、滑走路の番号を入れて復唱', 'contact departure で周波数がなければ、前にもらった周波数')}
 ${bk.sim('課目「通常離陸と上昇」は、この離陸許可の復唱から始まります。', ['t1', '通常離陸と上昇'])}` },
       { id: 'comm.radar', t: '④ 出発管制・レーダー：交通情報と、別れ方', h: () => `
+${bk.aim('レーダーで見てもらいながら上昇し、交通情報を聞いて他機を探し、訓練空域で業務を終えるまでの交信を学びます。')}
 ${say([
-  ['P', `LAB Departure, ${CS}, one thousand two hundred, climbing to three thousand five hundred.`, '出発管制へ。いま 1,200 ft、3,500 ft へ上昇中。'],
-  ['Departure', `${CS}, LAB Departure, radar contact two miles north of LAB. Resume own navigation.`, 'レーダーで確認した（LAB の北 2 マイル）。自分で航法を続けよ。'],
-  ['P', `Resume own navigation, ${CSS}.`, ''],
-  ['Departure', `${CSS}, traffic, one o'clock, four miles, westbound, a Cessna, two thousand five hundred.`, '1 時の方向・4 マイル・西向き・Cessna・2,500 ft に他機。'],
-  ['P', `Looking, ${CSS}.`, '探している。'],
-  ['P', `Traffic in sight, ${CSS}.`, '見えた。'],
-  ['P', `LAB Departure, ${CSS}, entering the northeast practice area, request frequency change.`, '北東の訓練空域に入る。周波数の変更を要求。'],
-  ['Departure', `${CSS}, radar service terminated, squawk VFR, frequency change approved.`, 'レーダー業務を終了。VFR コード（1200）に。周波数の変更を承認。'],
-  ['P', `Squawk VFR, frequency change approved, ${CSS}.`, '（コードを 1200 に）']])}
-<ul><li>交通情報の型（AIM 4-1-15・JO 7110.65）：<b>時計の方位・距離・進む方向・機種・高度</b>。時計の方位は<b>機首</b>が 12 時。風で機首と進む方向がずれているときは、言われた方位から少しずれた所を探す。</li>
-<li>VFR のレーダー業務は、見張りの責任をなくすものではない。業務を受けている間は周波数を聞き続ける。やめるときは管制官に伝えてから周波数を変え、コードを 1200 にする（AIM 4-1-15）。</li></ul>` },
-      { id: 'comm.arrive', t: '⑤ 帰り：進入管制 → 管制塔 → 着陸 → 地上', h: () => `
+  ['P', `LAB Departure, ${CS}, student pilot, one thousand two hundred, climbing to three thousand five hundred.`, 'LAB 出発管制へ。学生操縦士。いま 1,200 ft、3,500 ft へ上昇中。', '空中での最初の呼び出しは、いまの高度を言う（AIM 4-1-20）。高度は thousand・hundred で（AIM 4-2-9）'],
+  ['Departure', `${CS}, LAB Departure, radar contact two miles north of LAB. Resume own navigation.`, 'レーダーで確認（LAB の北 2 マイル）。自分で航法を続けよ。', 'Radar contact：レーダーで識別した。業務の終わりまで情報をもらえる（PCG）'],
+  ['P', `Resume own navigation, ${CSS}.`, '自分で航法、Archer 7LA。', ''],
+  ['Departure', `${CSS}, traffic, one o'clock, four miles, westbound, a Cessna, two thousand five hundred.`, '1 時の方向・4 マイル・西向き・Cessna・2,500 ft。', '時計の方位は、進んでいる方向（航跡）が 12 時（AIM 4-1-15）'],
+  ['P', `Looking, ${CSS}.`, '探している、Archer 7LA。', '見えなければ、あとで “negative contact” と伝えてよい（PCG）'],
+  ['P', `Traffic in sight, ${CSS}.`, '見えた、Archer 7LA。', 'Traffic in sight：伝えられた交通が見えた（PCG）'],
+  ['P', `LAB Departure, ${CSS}, entering the northeast practice area, request frequency change.`, '北東の訓練空域に入る。周波数の変更を要求。', 'レーダーの業務をやめるときは、先に管制官に伝える（AIM 4-1-15）'],
+  ['Departure', `${CSS}, radar service terminated, squawk VFR, frequency change approved.`, 'レーダー業務を終了。VFR のコード（1200）に。周波数の変更を承認。', ''],
+  ['P', `Squawk VFR, frequency change approved, ${CSS}.`, 'VFR コード、周波数変更了解、Archer 7LA。', 'トランスポンダーを 1200 にする']])}
+${bk.photo('asrRadar')}
+<ul><li><b>交通情報の型</b>：時計の方位・距離（NM）・進む方向・機種と高度（わかれば）（AIM 4-1-15）。</li>
+<li><b>時計の方位は航跡が基準</b>：管制官のレーダーに見えるのは、機の進む方向（航跡）だけです。横風で機首を風上に向けて（クラブして）いると、他機は言われた方位から少しずれて見えます（AIM 4-1-15）。言われた方位だけでなく、その左右も探します。</li>
+<li>レーダーの業務を受けていても、<b>見張りの責任はなくなりません</b>（AIM 4-1-15）。業務を受けている間は周波数を聞き続け、やめるときは管制官に伝えてから周波数を変え、コードを 1200 にします。</li></ul>
+${bk.key('交通情報：時計の方位・距離・方向・機種・高度', '12 時は航跡。クラブしているときは、言われた方位の左右も探す', 'レーダーの業務を受けていても、見張りは自分の責任')}
+${bk.q('右からの横風で、機首を航跡より 10° 右に向けて飛んでいる。「traffic, twelve o\'clock」と言われた。機首から見て、どちらを探す？', '少し左です。12 時は航跡の方向で、機首は航跡より 10° 右を向いているので、他機は機首から見て 10° ほど左に見えます（AIM 4-1-15）。')}` },
+      { id: 'comm.arrive', t: '⑤〜⑦ 帰り：進入管制 → 管制塔 → 着陸 → 地上', h: () => `
+${bk.aim('帰りに ATIS を聞き直し、Approach・Tower・Ground と順に交信して、駐機場まで戻ります。')}
+${FIG.patternCalls()}
+<h3>⑤ ATIS と進入管制</h3>
+<p>帰る前に、LAB の ATIS を聞き直します。記号が B から C に変わっていれば、内容が新しくなっています。</p>
+${say([['ATIS', 'LAB information Charlie. One five five three Zulu. Wind three six zero at one zero. Visibility one zero. Scattered clouds at four thousand. Temperature three two, dew point two two. Altimeter three zero zero zero. Landing and departing runway three six. Advise on initial contact you have information Charlie.',
+  'LAB の情報 C。15:53 UTC。風 360° 10 kt。視程 10 SM。4,000 ft に散在する雲。気温 32℃・露点 22℃。高度計 30.00。滑走路 36。最初の交信で C を聞いたと伝えよ。', '記号が B → C に変わった。新しい高度計 30.00 に合わせる']])}
+<p>帰りは南西へ飛びます。地上 3,000 ft を超える高さで水平に飛ぶなら、南西向き（磁針路 180〜359°）は偶数千 ft＋500 ft（4,500 ft など）です（14 CFR 91.159）。この例では、雲の下に十分に離れて、地上 3,000 ft より低い 2,500 ft で帰ります。</p>
 ${say([
-  ['P', '（LAB の ATIS “information Charlie” を聞き、高度計を合わせる）', ''],
-  ['P', `LAB Approach, ${CS}, one five miles northeast, three thousand five hundred, with information Charlie, landing LAB.`, '進入管制へ。北東 15 マイル、3,500 ft、ATIS の C を聞いた、LAB に着陸したい。'],
-  ['Approach', `${CS}, LAB Approach, squawk zero four two five and ident.`, 'コード 0425 にして IDENT ボタンを押せ。'],
-  ['P', `Squawk zero four two five, ${CSS}.`, '（コードを入れて IDENT を押す）'],
-  ['Approach', `${CSS}, radar contact one four miles northeast of LAB. Enter left downwind runway three six. Contact LAB Tower one one eight point three.`, 'レーダーで確認。滑走路 36 の左ダウンウインドに入れ。LAB 管制塔 118.3 と交信せよ。'],
-  ['P', `Left downwind runway three six, Tower one one eight point three, ${CSS}.`, ''],
-  ['P', `LAB Tower, ${CS}, one zero miles northeast, two thousand, with Charlie, for left downwind runway three six.`, '管制塔へ。北東 10 マイル・2,000 ft・ATIS C・左ダウンウインドへ向かう。'],
-  ['Tower', `${CSS}, LAB Tower, report midfield left downwind runway three six.`, '左ダウンウインドの中央で報告せよ。'],
-  ['P', `Report midfield left downwind runway three six, ${CSS}.`, ''],
-  ['P', `LAB Tower, ${CSS}, midfield left downwind.`, '（報告）'],
-  ['Tower', `${CSS}, number two, follow the Cessna on left base. Runway three six, cleared to land.`, '着陸順 2 番。左ベースの Cessna に続け。滑走路 36、着陸を許可。'],
-  ['P', `Number two, traffic in sight, runway three six, cleared to land, ${CSS}.`, '（前の機が見えたことも伝える）'],
-  ['Tower', `${CSS}, turn right at Charlie, contact Ground point seven.`, '誘導路 C で右に出よ。地上管制 121.7 と交信せよ。'],
-  ['P', `Right at Charlie, Ground point seven, ${CSS}.`, ''],
-  ['P', `LAB Ground, ${CS}, clear of runway three six at Charlie, taxi to the west ramp.`, '滑走路 36 を誘導路 C で出た。西のエプロンへ。'],
-  ['Ground', `${CSS}, taxi to the west ramp via Charlie, Alpha.`, '誘導路 C・A 経由で西のエプロンへ。'],
-  ['P', `Taxi to the west ramp via Charlie, Alpha, ${CSS}.`, '']])}
-<ul><li>到着の最初の呼び出しは空港から 15 マイルほど（AIM 4-3-2）。Class C なら空域に入る前に交信を確立する（AIM 3-2-4）。</li>
-<li>着陸後は、最初の使える誘導路から速やかに出て、停止線を越えたら止まる。<b>管制塔に言われるまで Ground に変えない</b>。Ground の指示は滑走路の横断を許すものではない（AIM 4-3-21）。</li>
-<li>着陸の順番の指示は「<b>Number（番号）, follow（前の機）</b>」。ほかに「Extend downwind（ダウンウインドを延ばせ）」「Make short approach（短い進入をせよ）」（JO 7110.65）。</li></ul>
-${fic}` },
-      { id: 'comm.option', t: '⑥ 場周経路での練習（タッチアンドゴー）', h: () => `
+  ['P', `LAB Approach, ${CS}, student pilot, one five miles northeast, two thousand five hundred, squawking one two zero zero, with information Charlie, landing LAB.`, 'LAB 進入管制へ。学生操縦士。北東 15 マイル、2,500 ft、コード 1200、ATIS C を聞いた、LAB に着陸したい。', '位置・高度・コード・行き先を言う（AIM 3-2-4 は、Class C の業務を頼むことも挙げている）。Class C の境界より十分手前で呼ぶ'],
+  ['Approach', `${CS}, LAB Approach, squawk zero four two five and ident.`, 'コード 0425 にして IDENT ボタンを押せ。', 'コールサインを付けて応えたので、交信が確立した（AIM 3-2-4）。Ident：トランスポンダーの識別の機能（PCG）'],
+  ['P', `Squawk zero four two five, ${CSS}.`, 'コード 0425、Archer 7LA。', 'コードを入れて IDENT を押す'],
+  ['Approach', `${CSS}, radar contact one four miles northeast of LAB. Enter left downwind runway three six. Contact LAB Tower one one eight point three.`, 'レーダーで確認（LAB の北東 14 マイル）。滑走路 36 の左ダウンウインドに入れ。LAB 管制塔 118.3 と交信せよ。', ''],
+  ['P', `Left downwind runway three six, Tower one one eight point three, ${CSS}.`, '滑走路 36 の左ダウンウインド、管制塔 118.3、Archer 7LA。', '左右と滑走路の番号を必ず入れる']])}
+<h3>⑥ 管制塔：場周経路と着陸</h3>
 ${say([
-  ['P', `LAB Tower, ${CSS}, request closed traffic.`, '場周経路での離着陸の練習を要求。'],
-  ['Tower', `${CSS}, left closed traffic approved, report midfield downwind.`, '左回りの場周を承認。ダウンウインドの中央で報告せよ。'],
-  ['P', `Left closed traffic, report midfield downwind, ${CSS}.`, ''],
-  ['P', `LAB Tower, ${CSS}, midfield left downwind, request the option.`, '（ダウンウインドに入ったところで要求する：AIM 4-3-23）'],
-  ['Tower', `${CSS}, runway three six, cleared for the option.`, '滑走路 36 でタッチアンドゴー・ローアプローチ・ストップアンドゴー・フルストップのどれでもよい。'],
-  ['P', `Runway three six, cleared for the option, ${CSS}.`, ''],
-  ['Tower', `${CSS}, go around.`, 'ゴーアラウンドせよ。'],
-  ['P', `Going around, ${CSS}.`, '（まず操縦：全開・姿勢・形態。そのあとで応答）']])}
-<ul><li>Cleared for the option は訓練のための許可で、教官が学生の判断を見るのに使う（AIM 4-3-23・PCG）。滑走路に止まる・遅れるときはすぐに伝える。</li>
-<li>Go around と言われたら、すぐに操作を始める。VFR は、ほかに指示がなければ滑走路の上を上昇して場周へ（PCG）。{ch:tl}</li></ul>
-${bk.sim('課目「場周経路」「ゴーアラウンド」で、管制の指示に復唱しながら飛びます。', ['t2', '場周経路'], ['t4', 'ゴーアラウンド'])}` },
+  ['P', `LAB Tower, ${CS}, student pilot, one zero miles northeast, two thousand, with Charlie, for left downwind runway three six.`, 'LAB 管制塔へ。学生操縦士。北東 10 マイル・2,000 ft・ATIS C。滑走路 36 の左ダウンウインドへ向かう。', ''],
+  ['Tower', `${CSS}, LAB Tower, report midfield left downwind runway three six.`, '滑走路 36 の左ダウンウインドの中央で報告せよ。', ''],
+  ['P', `Report midfield left downwind runway three six, ${CSS}.`, '左ダウンウインドの中央で報告する、Archer 7LA。', ''],
+  ['P', `LAB Tower, ${CSS}, midfield left downwind.`, '（報告）左ダウンウインドの中央。', ''],
+  ['Tower', `${CSS}, number two, follow the Cessna on left base. Runway three six, cleared to land.`, '着陸の順番は 2 番。左ベースの Cessna に続け。滑走路 36、着陸を許可。', '“Number (n), follow (traffic)” は管制官の決まった言い方（JO 7110.65）'],
+  ['P', `Number two, traffic in sight, runway three six, cleared to land, ${CSS}.`, '2 番、前の機が見えた、滑走路 36 着陸許可、Archer 7LA。', '見えなければ “negative contact” と言って探す'],
+  ['Tower', `${CSS}, turn right at Charlie, contact Ground point seven.`, '誘導路 C で右に出よ。地上管制 121.7 と交信せよ。', '“Ground point seven” は 121.7（AIM 4-3-14）'],
+  ['P', `Right at Charlie, Ground point seven, ${CSS}.`, '右に C、地上管制 121.7、Archer 7LA。', '着陸した機は、言われるまで管制塔の周波数にいる（AIM 4-3-14）']])}
+<p>前の Cessna の後ろに付いてベースへ曲がります。着陸したら、言われた誘導路（言われなければ最初に使える誘導路）からすぐに滑走路を出ます。管制官から別の指示がなければ、機体の全部が停止線を越えたところで止まります（AIM 4-3-21）。</p>
+<h3>⑦ 地上管制：駐機場へ</h3>
+${say([
+  ['P', `LAB Ground, ${CS}, student pilot, clear of runway three six at Charlie, taxi to the west ramp.`, 'LAB 地上管制へ。学生操縦士。滑走路 36 を誘導路 C で出た。西のエプロンへ行きたい。', ''],
+  ['Ground', `${CSS}, taxi to the west ramp via Charlie, Alpha.`, '誘導路 C・A 経由で西のエプロンへ。', ''],
+  ['P', `Taxi to the west ramp via Charlie, Alpha, ${CSS}.`, 'C・A 経由で西のエプロンへ、Archer 7LA。', '']])}
+<p>途中で滑走路を横切るときは、横切る許可が要ります（AIM 4-3-18）。駐機場で止まり、チェックリストでエンジンを止めます。交信はここまでです。</p>
+${bk.key('帰る前に ATIS を聞き直し、新しい高度計に合わせる', 'Approach への最初の呼び出し：位置・高度・コード・ATIS・行き先', '着陸のあとは停止線を越えて止まり、言われてから Ground へ')}` },
+      { id: 'comm.option', t: '⑧ 別の日の練習：場周経路でのタッチアンドゴー', h: () => `
+${bk.aim('別の日の練習で、場周経路を回りながら離着陸をくり返すときの交信を学びます。')}
+${say([
+  ['P', `LAB Tower, ${CS}, student pilot, holding short runway three six, request closed traffic.`, 'LAB 管制塔へ。学生操縦士。滑走路 36 の手前で待機中。場周経路での離着陸の練習を要求。', 'Closed traffic：場周経路から出ずに、離着陸をくり返すこと（PCG）'],
+  ['Tower', `${CSS}, left closed traffic approved, report midfield downwind.`, '左回りの場周を承認。ダウンウインドの中央で報告せよ。', ''],
+  ['P', `Left closed traffic, report midfield downwind, ${CSS}.`, '', ''],
+  ['P', `LAB Tower, ${CSS}, midfield left downwind, request the option.`, '左ダウンウインドの中央。オプションを要求。', 'VFR の場周では、ダウンウインドに入るときに頼む（AIM 4-3-23）'],
+  ['Tower', `${CSS}, runway three six, cleared for the option.`, '滑走路 36、オプションを許可。', 'タッチアンドゴー・ローアプローチ・ストップアンドゴー・フルストップのどれでもよい（PCG）'],
+  ['P', `Runway three six, cleared for the option, ${CSS}.`, '', ''],
+  ['Tower', `${CSS}, go around.`, 'ゴーアラウンドせよ。', ''],
+  ['P', `Going around, ${CSS}.`, 'ゴーアラウンドする、Archer 7LA。', 'まず操縦（出力・姿勢・形態）。そのあとで応答']])}
+<ul><li><b>cleared for the option</b> は、ふつう訓練で使う許可で、教官が学生の判断を見るのに役立ちます（AIM 4-3-23・PCG）。滑走路で止まる・遅れるときは、すぐに伝えます。</li>
+<li><b>go around</b> と言われたら、すぐに操作を始めます。VFR の機は、ほかに指示がなければ、滑走路の上を上昇しながら場周の高度まで上がり、クロスウインドから場周に入ります（PCG）。操作は {ch:tl} で学びます。</li></ul>
+${bk.key('closed traffic は、場周経路での離着陸のくり返し', 'option はダウンウインドに入るときに頼む', 'go around は、操縦が先、応答はあと')}
+${bk.sim('課目「場周経路」は、着陸許可の復唱から始まります。', ['t2', '場周経路'])}` },
     ],
-    terms: [['Information (letter)', 'ATIS の記号', ''], ['Taxi via …', '…を経由して地上走行', ''], ['Departure frequency / Squawk', '出発周波数 / コード', ''], ['Ready for departure', '出発準備よし', ''], ['Fly runway heading', '滑走路の方位で上昇', ''], ['Radar contact', 'レーダーで識別した', ''], ['Resume own navigation', '自分で航法を続けよ', ''], ['Radar service terminated', 'レーダー業務終了', ''], ['Squawk VFR', 'コード 1200 に', ''], ['Enter left downwind', '左ダウンウインドに入れ', ''], ['Number two, follow …', '着陸順 2 番、…に続け', ''], ['Closed traffic', '場周経路での離着陸の練習', ''], ['Cleared for the option', 'オプションの許可', '訓練用']],
-    examples: ['ATIS の高度計 30.01 → 地上で高度計を合わせ、表示が空港の標高（LAB は 55 ft）に近いことを確かめる。', '“Number two, follow the Cessna on left base” → 見えたら “traffic in sight”。見えなければ “negative contact” と言って探す。前の機の後ろに付く。'],
-    cautions: ['この章の交信は FAA の言い方と方式を参考にした架空の練習用台本。実際の空港の手順・周波数・管制官の言い方は場所と状況で違う。', 'Sanford など実際の空港の手順は、FAA の最新資料と管制官の指示で確かめる。'],
+    terms: [['Information (letter)', 'ATIS の記号', 'AIM 4-1-13'], ['Have numbers', '風・滑走路・高度計だけ聞いた（ATIS を聞いた意味ではない）', 'AIM 4-1-8'], ['Taxi via … / Hold short of …', '…を経由して地上走行せよ / …の手前で止まれ', 'JO 7110.65 3-7-2'], ['Departure frequency … squawk …', '出発の周波数とトランスポンダーのコード', ''], ['Ready for departure', '出発の準備ができた', ''], ['Fly runway heading', '滑走路のセンターラインの磁方位で飛べ（風の修正をしない）', 'PCG'], ['Radar contact', 'レーダーで識別した', 'PCG'], ['Resume own navigation', '自分で航法を続けよ', 'PCG'], ['Radar service terminated', 'レーダーの業務の終了', ''], ['Squawk VFR', 'コードを 1200 に', ''], ['Ident', 'トランスポンダーの IDENT ボタンを押せ', 'PCG'], ['Enter left downwind', '左ダウンウインドに入れ', ''], ['Number two, follow …', '着陸の順番は 2 番、…に続け', 'JO 7110.65'], ['Closed traffic', '場周経路での離着陸のくり返し', 'PCG'], ['Cleared for the option', 'オプションの許可', 'AIM 4-3-23'], ['Go around', '進入をやめよ', 'PCG']],
+    examples: ['ATIS の高度計 30.01 → 地上で高度計を合わせ、表示が空港の標高（LAB は 55 ft）に近いことを確かめる。', '“Number two, follow the Cessna on left base” → 見えたら “traffic in sight”。見えなければ “negative contact” と言って探し、前の機の後ろに付く。'],
+    cautions: ['この章の交信は、FAA の言い方と方式をもとにした架空の練習用の台本です。実際の空港の手順・周波数・管制官の言い方は、場所と状況で違います。', '実際の空港の手順は、FAA の最新の資料と管制官の指示で確かめてください。'],
     quiz: [
-      { q: '地上管制の「Runway three six, taxi via Alpha」で、滑走路 36 に入ってよい？', choices: ['入ってよい', '入ってはいけない（手前で止まる）', '横断ならよい', 'LUAW と同じ'], answer: 1, why: 'AIM 4-3-18：出発滑走路の指定とタキシーの指示は、その滑走路に入る・横切る許可ではない。' },
-      { q: '着陸して滑走路を出た。Ground に変えるのはいつ？', choices: ['接地したらすぐ', '滑走路を出たらすぐ', '管制塔に「contact ground」と言われてから', '駐機場に着いてから'], answer: 2, why: 'AIM 4-3-14・4-3-21：着陸した機は、管制官に言われるまで管制塔の周波数にいる。' },
-      { q: '交通情報「traffic, one o\'clock, four miles, westbound」の「one o\'clock」の基準は？', choices: ['北', '機首の方向', '進んでいる方向（航跡）', '滑走路の方向'], answer: 1, why: '時計の方位は機首（12 時）が基準。風で機首と航跡がずれているときは注意。' },
+      { q: '地上管制の「Runway three six, taxi via Alpha」で、滑走路 36 に入ってよい？', choices: ['入ってよい', '入ってはいけない（手前で止まる）', '横切るだけならよい', 'line up and wait と同じ'], answer: 1, why: 'AIM 4-3-18：出発の滑走路の指定とタキシーの指示は、その滑走路に入る・横切る許可ではない。' },
+      { q: '着陸して滑走路を出た。Ground に変えるのはいつ？', choices: ['接地したらすぐ', '滑走路を出たらすぐ', '停止線を越えて止まり、管制塔に「contact ground」と言われてから', '駐機場に着いてから'], answer: 2, why: 'AIM 4-3-14・4-3-21：着陸した機は、言われるまで管制塔の周波数にいる。滑走路を出たら、別の指示がなければ停止線を越えて止まる。' },
+      { q: '交通情報「traffic, one o\'clock, four miles, westbound」の「one o\'clock」の基準は？', choices: ['北', '機首の方向', '進んでいる方向（航跡）', '滑走路の方向'], answer: 2, why: 'AIM 4-1-15：管制官のレーダーに見えるのは航跡だけなので、航跡が 12 時。クラブしていると、他機は言われた方位からずれて見える。' },
+      { q: 'ATIS の information Bravo を聞いた。最初の交信で何と言う？', choices: ['have numbers', 'with information Bravo', 'ATIS の内容を全部読み上げる', '何も言わない'], answer: 1, why: 'AIM 4-1-13：ATIS の記号を言うと、管制官は内容をくり返さずにすむ。“have numbers” は ATIS を聞いた意味にならない。' },
+      { q: '南西へ向かう VFR で、地上 3,000 ft を超える高さを水平に飛ぶ。正しい高度は？（地面は海面の高さとする）', choices: ['3,500 ft', '4,500 ft', '4,000 ft', '5,000 ft'], answer: 1, why: '14 CFR 91.159：磁針路 180〜359° は偶数千 ft＋500 ft。3,500 ft は 0〜179° の高度。' },
     ],
-    refs: [R.aim41, R.aim43, R.aim42, R.aim52, R.jo71, R.pcg], lessons: ['t1', 't2', 't4'] });
+    refs: [R.aim41, R.aim42, R.aim43, R.aim44, R.aim32, R.aim52, R.jo71, R.pcg, R.cfr91], lessons: ['t1', 't2', 't4'] });
 
   // ======================================================================= radio 5
   B.add({ id: 'radio5', before: 'hf', part: 'p1', t: '管制塔のない空港・緊急・無線の故障・Sanford・FAA と ICAO の違い', en: 'Non-towered airports, emergencies, radio failure, Sanford, FAA and ICAO',

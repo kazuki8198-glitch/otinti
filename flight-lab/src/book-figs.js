@@ -1067,6 +1067,67 @@
       s += T(8, 392, '“Roger” だけ → 管制官「read back hold instructions」', { c: C.rd, a: 'start', fs: 12 });
       return svg(400, 404, s, '図：復唱の輪。指示を言われた順に復唱し、管制官が聞いて確かめます。下は、AIM が必ず復唱するとしているもの。hold short に Roger だけで答えると、管制官は復唱を求めます（JO 7110.65 3-7-2）');
     },
+    // ---------------------------------------------------------------- 第 10 章 radio4（1 回の飛行の交信）
+    flightOverviewMap() {
+      // the whole training flight at the fictional LAB (a Class C-type airport): the usual Class C rings (AIM 3-2-4), the
+      // way out to the northeast practice area and the way back, with the stations in order (radio.js FLIGHT; made-up frequencies)
+      const cx = 150, cy = 214, k = 7.2, P2 = (brg, nm) => [cx + nm * k * Math.sin(brg * DEG), cy - nm * k * Math.cos(brg * DEG)];
+      const f = ([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`;
+      let s = `<circle cx="${cx}" cy="${cy}" r="${20 * k}" fill="none" stroke="${C.vi}" stroke-width="1.2" stroke-dasharray="5 5"/>`
+        + `<circle cx="${cx}" cy="${cy}" r="${10 * k}" fill="${C.vi}" fill-opacity="0.06" stroke="${C.vi}" stroke-width="2"/>`
+        + `<circle cx="${cx}" cy="${cy}" r="${5 * k}" fill="${C.vi}" fill-opacity="0.10" stroke="${C.vi}" stroke-width="2"/>`;
+      s += L(cx, cy - 8, cx, cy + 8, C.ink, 4) + T(cx - 22, cy + 4, 'LAB', { c: C.ink, b: 1, a: 'end', fs: 12, halo: 1 });
+      s += T(cx, cy + 5 * k + 16, '5 NM：地上から', { c: C.vi, fs: 12, halo: 1 }) + T(cx, cy + 10 * k + 16, '10 NM：標高＋1,200 ft から', { c: C.vi, fs: 12, halo: 1 });
+      s += T(cx, cy + 20 * k - 6, '20 NM：外側の区域', { c: C.vi, fs: 12, halo: 1 });
+      // the practice area, northeast, outside the 10 NM shelf
+      const [px, py] = P2(45, 22);
+      s += `<rect x="${(px - 50).toFixed(1)}" y="${(py - 24).toFixed(1)}" width="100" height="48" rx="12" fill="${C.gr}" fill-opacity="0.08" stroke="${C.gr}" stroke-dasharray="6 4"/>` + T(px, py - 4, '訓練空域', { c: C.gr, b: 1, fs: 12 }) + T(px, py + 13, 'VFR・1200', { c: C.gr, fs: 12 });
+      // out: north on the runway heading, then a right turn to the northeast; back: from the northeast, round to the west and in at 45° to the left downwind
+      const o1 = [cx + 2, cy - 12], o2 = [cx + 2, cy - 2.5 * k], o3 = P2(55, 9), o4 = [px - 20, py + 24];
+      s += `<path d="M${f(o1)} L${f(o2)} Q${f([cx + 8, cy - 40])} ${f(o3)} L${f(o4)}" fill="none" stroke="${C.cy}" stroke-width="2.5"/>`;
+      const r15 = P2(30, 15), r10 = P2(20, 10), e1 = P2(325, 4), dw = [cx - 16, cy - 4];
+      s += `<path d="M${f([px - 50, py + 6])} L${f(r15)} L${f(r10)} L${f(e1)} L${f(dw)} L${f([cx - 16, cy + 16])}" fill="none" stroke="${C.am}" stroke-width="2.5" stroke-dasharray="7 4"/>`;
+      s += A(cx - 16, cy + 6, cx - 16, cy + 20, C.am, 2.5);
+      const dot = ([x, y], c) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="${c}" stroke="${C.bg}" stroke-width="1.5"/>`;
+      s += dot(r15, C.am) + dot(r10, C.am) + dot(P2(25, 4.5), C.cy);
+      // the stations, in order
+      const tag = (x, y, t, c, a = 'start') => T(x, y, t, { c, b: 1, a, fs: 12, halo: 1 });
+      s += tag(cx - 26, cy + 22, '①ATIS ②Ground', C.ink, 'end') + tag(cx - 26, cy + 38, '③Tower', C.ink, 'end');
+      s += tag(P2(25, 4.5)[0] + 8, P2(25, 4.5)[1] + 16, '④ Departure 119.75', C.cy);
+      s += tag(r15[0] - 8, r15[1] + 4, '⑤ Approach（15 NM）', C.am, 'end') + tag(r10[0] - 8, r10[1] + 4, '⑥ Tower（10 NM）', C.am, 'end');
+      s += tag(cx + 10, cy + 22, '⑦ Ground', C.am);
+      // legend and the stamp
+      s += L(12, 22, 36, 22, C.cy, 2.5) + T(42, 26, '行き', { c: C.ink, a: 'start', fs: 12 }) + L(12, 42, 36, 42, C.am, 2.5, '7 4') + T(42, 46, '帰り', { c: C.ink, a: 'start', fs: 12 });
+      s += T(12, 66, 'N ↑', { c: C.mut, b: 1, a: 'start', fs: 12 }) + NFN(392, 392);
+      return svg(400, 402, s, '図：この章の飛行の全体（架空の LAB。模式図）。紫の円は Class C 空域のふつうの形（半径 5 NM・10 NM と、外側の区域 20 NM。AIM 3-2-4）。行きは Ground → Tower → Departure、帰りは 15 NM で Approach、10 NM で Tower を呼び、左ダウンウインドに入ります');
+    },
+    patternCalls() {
+      // the left traffic pattern to LAB runway 36 and where each call is made on the way in (radio.js FLIGHT app/twr2;
+      // downwind 1,000 ft above the ground, 90 kt, about 1.6 km from the runway: the lesson t2's teaching values)
+      const rx = 270, top = 120, thr = 270, dwx = 120, by = 330;
+      let s = `<rect x="${rx - 7}" y="${top}" width="14" height="${thr - top}" fill="#3a4658" stroke="${C.mut}"/>` + T(rx, thr - 8, '36', { c: C.ink, b: 1, fs: 12 });
+      // taxiway Charlie off to the right (east), and its hold line
+      const cy0 = 210;
+      s += `<rect x="${rx + 7}" y="${cy0 - 5}" width="60" height="10" fill="#2b3544"/>` + L(rx + 22, cy0 - 7, rx + 22, cy0 + 7, C.am, 2) + T(rx + 70, cy0 + 4, 'C', { c: C.am, b: 1, a: 'start', fs: 12 });
+      // the pattern: crosswind, downwind (west), base, final
+      s += P([[rx, top - 6], [rx, 96], [dwx, 96], [dwx, by], [rx, by], [rx, thr + 4]], C.cy, 2.5);
+      s += A(dwx, 150, dwx, 172, C.cy, 2.5) + A(150, by, 174, by, C.cy, 2.5) + A(rx, 300, rx, 280, C.cy, 2.5);
+      s += T(dwx - 8, 226, 'ダウンウインド', { c: C.cy, a: 'end', fs: 12 }) + T(dwx - 8, 242, '地上 1,000 ft', { c: C.mut, a: 'end', fs: 12 }) + T(dwx - 8, 258, '90 kt', { c: C.mut, a: 'end', fs: 12 });
+      s += T(195, by + 18, 'ベース', { c: C.cy, fs: 12 }) + T(rx + 10, 300, 'ファイナル', { c: C.cy, a: 'start', fs: 12 });
+      // the entry at 45° to midfield downwind
+      s += A(36, 132, dwx - 4, 190, C.am, 2.5) + T(14, 120, '45° で入る', { c: C.am, a: 'start', fs: 12 });
+      // the calls
+      const pin = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c}" stroke="${C.bg}" stroke-width="1.5"/>` + T(x, y + 4, n, { c: C.bg, b: 1, fs: 12 });
+      s += pin(dwx, 196, '1', C.am) + pin(dwx, 292, '2', C.am) + pin(rx + 22, cy0, '3', C.gr);
+      // the Cessna ahead on left base
+      s += planeTop(222, by, 0.22, { rot: 90 }) + T(222, by - 16, '前の Cessna', { c: C.mut, fs: 12 });
+      // the list
+      const L3 = [['1', 'midfield で報告：“midfield left downwind”', C.am], ['2', '“number two, follow the Cessna … cleared to land”', C.am], ['3', '滑走路を出て停止線を越えたら止まる → “contact Ground”', C.gr]];
+      L3.forEach(([n, t, c], i) => { s += pin(18, 380 + i * 26, n, c) + T(36, 384 + i * 26, t, { c: C.ink, a: 'start', fs: 12 }); });
+      s += T(392, 22, '10 NM 手前で Tower を呼ぶ', { c: C.ink, a: 'end', fs: 12 }) + T(392, 40, '（北東から）', { c: C.mut, a: 'end', fs: 12 }) + A(352, 52, 306, 88, C.ink, 2);
+      s += NFN(392, 456);
+      return svg(400, 466, s, '図：LAB の滑走路 36 の左回りの場周経路と、どこで何を言うか（模式図）。ダウンウインドの高さと速さは教材値。中央（midfield）で報告し、着陸の許可と順番をもらい、着陸したら停止線を越えて止まってから Ground に変えます');
+    },
   };
 
   // ---------------------------------------------------------------- calculators inside the text

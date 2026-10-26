@@ -5,7 +5,7 @@ FLIGHT LAB の教科書（TEXTBOOK でも同じ）に入れた写真の一覧で
 写真は縮小（長い辺 1200 px 以下）・WebP に変換し、メタデータを消して `src/book-photos.js` に入れています。一部の写真は切り抜いています（元の写真から変えています）。
 CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できます。写真の下のキャプションにも作者・ライセンス・出典を出しています。
 
-写真 14 枚・合計 1.15 MB（WebP のバイト数）。
+写真 16 枚・合計 1.29 MB（WebP のバイト数）。
 
 | id | 写真 | 作者 | ライセンス | 出典 | 使っている節 |
 |---|---|---|---|---|---|
@@ -23,3 +23,5 @@ CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できま�
 | `microburst` | 雨を伴うマイクロバースト（wet microburst）。雲の下から落ちた強い下降気流が、地面で横に広がっています（NOAA）。 | NOAA Legacy Photo ERL/WPL | [Public domain (PD-USGov-NOAA)](https://commons.wikimedia.org/wiki/Template:PD-USGov-NOAA) | [元のページ](https://commons.wikimedia.org/wiki/File:Wea02273_-_Flickr_-_NOAA_Photo_Library.jpg) | wx.shear |
 | `groundFog` | 明け方の地面近くの霧（放射霧）。晴れて風の弱い夜に地面が冷えてでき、日が昇ると消えていきます。 | pixelfehler / Matthias Süßen | [CC BY-SA 2.5](https://creativecommons.org/licenses/by-sa/2.5) | [元のページ](https://commons.wikimedia.org/wiki/File:Nebelostfriesland.jpg) | wx.fog |
 | `holdShort` | 滑走路の手前の停止線（runway holding position marking）。黄色の実線 2 本と破線 2 本で、実線の側（写真の右）で止まります。破線の側が滑走路です。右の赤地に白の文字は、滑走路の番号を地面に書いた標示です（AIM 2-3-5）。 | Bmurphy380 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Hold_Short.jpg) | comm.mistakes |
+| `towerCab` | 管制塔（control tower）。上のガラス張りの部屋（キャブ）から、管制官が滑走路と空港の周りを目で見て、Tower と Ground の交信をします。 | N801SA | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | [元のページ](https://commons.wikimedia.org/wiki/File:Bedford-Hanscom_Air_Traffic_Control_Tower.JPG) | comm.tower |
+| `asrRadar` | 空港監視レーダー（airport surveillance radar）のアンテナ。回りながら電波を出し、空港の周りの機の位置を進入管制・出発管制の画面に映します。上に載っている細長いアンテナは二次レーダーで、トランスポンダーに問い合わせて、その応答を受けます。 | Dj1997 | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Capital_Region_International_Airport_Radar_Tower_ASR.jpg) | comm.radar |

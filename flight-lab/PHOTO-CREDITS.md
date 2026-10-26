@@ -5,7 +5,7 @@ FLIGHT LAB の教科書（TEXTBOOK でも同じ）に入れた写真の一覧で
 写真は縮小（長い辺 1200 px 以下）・WebP に変換し、メタデータを消して `src/book-photos.js` に入れています。一部の写真は切り抜いています（元の写真から変えています）。
 CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できます。写真の下のキャプションにも作者・ライセンス・出典を出しています。
 
-写真 28 枚・合計 2.15 MB（WebP のバイト数）。
+写真 30 枚・合計 2.27 MB（WebP のバイト数）。
 
 | id | 写真 | 作者 | ライセンス | 出典 | 使っている節 |
 |---|---|---|---|---|---|
@@ -35,5 +35,7 @@ CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できま�
 | `seminole` | 飛んでいる Piper Seminole（PA-44）。左右の翼にエンジンが 1 基ずつあり、尾翼は T 字の形です。脚は引き込まれています | Kakoula10 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Piper_PA-44_Seminole_F-GBPK.jpg) | me.basics |
 | `dc8` | NASA の DC-8 空中研究機（2000 年）。翼が後ろへ傾いた後退翼で、ジェットエンジンを翼の下につり下げています | NASA / Jim Ross | [Public domain (PD-USGov-NASA)](https://www.nasa.gov/nasa-brand-center/images-and-media/) | [元のページ](https://images.nasa.gov/details/EC00-0050-001) | crm.jet |
 | `turbofan` | 試験室に取り付けたターボファンエンジン（NASA Lewis 研究所・1974 年）。前で吸い込んだ空気を、後ろへ速く噴き出して推力を出します | NASA | [Public domain (PD-USGov-NASA)](https://www.nasa.gov/nasa-brand-center/images-and-media/) | [元のページ](https://images.nasa.gov/details/GRC-1974-C-03151) | crm.jet |
+| `motionSim` | 体の動きまで再現する研究用のフライトシミュレータ（NASA Ames 研究所の Vertical Motion Simulator・1997 年の写真）。操縦室を載せた台が、上下・左右に大きく動きます | NASA / Dominic Hart | [Public domain (PD-USGov-NASA)](https://www.nasa.gov/nasa-brand-center/images-and-media/) | [元のページ](https://images.nasa.gov/details/ARC-1997-AC97-0311) | sim.can |
 | `twinPa30` | NASA の研究機 Piper PA-30 Twin Comanche（1971 年）。エンジンは胴体から離れて左右の翼に付いています。片方が止まると、推力が中心線からずれます | NASA | [Public domain (PD-USGov-NASA)](https://www.nasa.gov/nasa-brand-center/images-and-media/) | [元のページ](https://images.nasa.gov/details/ECN-2845) | oei.what |
 | `crewCab` | NASA Ames 研究所の研究用フライトシミュレータ（ACFS・2006 年）の操縦席。2 つの席が左右に並び、どちらの席からも操縦できます。2 人で飛ぶときは、この 2 つの席で PF と PM の役割を分けます | NASA / Dominic Hart | [Public domain (PD-USGov-NASA)](https://www.nasa.gov/nasa-brand-center/images-and-media/) | [元のページ](https://images.nasa.gov/details/ARC-2006-ACD09-0031-007) | crm.pm |
+| `linkTrainer` | 初期の飛行シミュレータ Link Trainer（NASA Ames 研究所・1995 年の写真）。台の上で機体が傾き、向きを変え、中の訓練生は計器を見て飛ぶ練習をしました | NASA / Cesar Acosta | [Public domain (PD-USGov-NASA)](https://www.nasa.gov/nasa-brand-center/images-and-media/) | [元のページ](https://images.nasa.gov/details/ARC-1995-AC95-0151-18) | sim.can |

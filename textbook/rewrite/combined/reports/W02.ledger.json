@@ -1,0 +1,11 @@
+{
+  "unit": "W02",
+  "about": "W02 の報告（reports/W02.md の 4・5）から統合役（P1）が書いたパッチ。W02 は台帳ができる前に終えたため。確かめ役の署名（checkedBy）は W12",
+  "patches": [
+    { "id": "APP.max-bytes", "status": "fixed", "where": "flight-lab/build.mjs の MAX_BYTES（12 MiB。超えるページは書かずに止める）・flight-lab/test/flight.test.mjs「build: the page is at most MAX_BYTES (12 MiB)」", "by": "W02", "verified": true, "note": "W02 の報告 4。統合 P1 で差分とテストを確かめた（FLIGHT-LAB.html 9,395,251 バイト）" },
+    { "id": "APP.index-photos", "status": "fixed", "where": "flight-lab/src/index.html（book-photos.js を book-core.js の次に）・flight-lab/test/flight.test.mjs「modules: one list」（開発用ページの列が共有の列と同じ）", "by": "W02", "verified": true, "note": "W02 の報告 4。統合 P1 で確かめた" },
+    { "id": "APP.menu-read-count", "status": "fixed", "where": "flight-lab/src/pages.js の bookRead()（メニューの「読んだ節」は本にある節だけ）・flight-lab/test/browser.test.mjs の 1 つめのテスト", "by": "W02", "verified": true, "note": "W02 の報告 4。統合 P1 で確かめた" },
+    { "id": "APP.record-textbook-row", "status": "fixed", "where": "flight-lab/src/pages.js の renderRecords（「教科書：読んだ節 N / 154・正解した章末の確認問題 n / 135」）・flight-lab/test/browser.test.mjs の 1 つめのテスト", "by": "W02", "verified": true, "note": "W02 の報告 4。統合 P1 で確かめた" },
+    { "op": "add", "id": "APP.cadet-comm-practice-ch-sim", "ref": "W02 の報告 2.3（10 章にない新しい行）", "book": "app", "design": "10.3（新）", "places": ["comm.practice", "flight-lab/src/book-comm.js", "cadet/src/content/book.js"], "section": "`comm.practice`（CADET の表示）", "problem": "CADET の `comm.practice` の最後の項目「チェアフライング」が「（（別の章））」と出る。`book-comm.js` の `（{ch:sim}）` が、CADET の外す章 `sim` を指している", "correction": "`（{ch:sim}）` を CADET が消す入れ物（`bk.sim` など）に移すか消す（W09 が `sim` を p0 へ移すときの `{ch:}` の点検：6.2 の決まり 2）。または CADET の `fixRefs` で、CADET にない章への括弧書きを丸ごと消す。直したら `cadet/test/content.test.mjs` の `KNOWN_OTHER_CHAPTER` から外す", "confidence": "高", "conf": "high", "safety": false, "source": { "report": "reports/W02.md 2.3", "primary": "cadet/test/content.test.mjs「book: no （別の章）…」（KNOWN_OTHER_CHAPTER）" }, "unit": "W09", "alsoUnits": ["W07a"], "rulings": [], "dupOf": null, "verified": false, "status": "open", "where": null, "by": "W02", "checkedBy": null, "reason": null, "note": "W02 が見つけた。テストは既知の 1 件として名前を挙げて通し、ほかの節に出たら失敗する" }
+  ]
+}

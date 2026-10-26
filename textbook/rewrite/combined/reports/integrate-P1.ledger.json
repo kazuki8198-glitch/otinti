@@ -1,0 +1,6 @@
+{
+  "about": "統合 P1：DESIGN.md 3.4 の docs の〔要確認〕を W05 の確認で外したので、COUNTS の数え直しを直す（DESIGN が変わったため。design の欄は変えない）",
+  "patches": [
+    { "id": "jur.unverified", "recount": 12, "by": "W05", "note": "統合 P1（2026-10-26）：DESIGN 3.4 の docs の日本の欄から〔要確認〕を外した（W05 が e-Gov の写しで施行規則第 144 条・第 144 条の 2 の両方と確かめた。UNVERIFIED U.docs-article）。数え直しは 13 → 12" }
+  ]
+}

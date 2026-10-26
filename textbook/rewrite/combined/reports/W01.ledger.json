@@ -1,0 +1,7 @@
+{
+  "unit": "W01",
+  "about": "W01 の報告（reports/W01.md の 2.1）から統合役（P1）が書いたパッチ。W01 は台帳ができる前に終えたため。確かめ役の署名（checkedBy）は W12",
+  "patches": [
+    { "id": "APP.base64-xxx", "status": "fixed", "where": "textbook/rewrite/combined/tools/lib/book.mjs の sectionsOf・endStrings と lib/html.mjs の stripB64（全部の文字の検査は data:image/…;base64,… を消してから）・selftest.mjs「base64 cut first」", "by": "W01", "verified": true, "note": "W01 の報告 2.1。統合 P1 で selftest（29 passed）と check-all を流して確かめた" }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "textbook",
+  "private": true,
+  "description": "FLIGHT LAB の教科書（全 6 部・27 章・120 節）を読むためだけの 1 つの HTML ファイル。非公式の自主学習用教材。",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test --test-concurrency=1 test/*.test.mjs",
+    "shots": "node test/shots.mjs"
+  }
+}

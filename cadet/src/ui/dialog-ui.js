@@ -3,7 +3,10 @@
 // Input: click / Space / Enter / E reveal the rest of a line, then go on; 1–9, ↑↓ + Enter or the mouse pick a choice;
 // Esc closes the textbook (and only the textbook: otherwise it is left to the game's pause menu); while it is open, Tab
 // stays inside it and the line underneath waits. Keys are read in the capture phase and stopped there, so the game does
-// not also act on them; keys the conversation does not use (WASD, F, Esc without the book) still reach the game.
+// not also act on them; keys the conversation does not use (WASD, ←→, ↑↓ without choices, the mouse's movement, F, Esc
+// without the book) still reach the game, which keeps the view and the walk free while a talk goes on. A click on the
+// 3D view goes on only when it is a click: one that moved more than DRAG_PX while the button was down, or one with Alt,
+// was a drag that looked round. `choosing` tells the game the choices are up (it lets the mouse go for them).
 // (M8) A line may ask for a question (view.input: a text field above the subtitle, Enter or 聞く sends it to onAsk) and
 // a line may grow while it shows (view.stream: the same node with more text — the AI instructor's answer as it comes;
 // view.pending: more is coming, so no choices and no "next" yet).
@@ -127,6 +130,7 @@ const CSS = `
 const CPS = 40;                                   // characters per second at text speed ×1
 const MASH_MS = 250;                              // Enter on fresh choices waits this long, so a key held from the line before does not pick
 const ACT_MS = 600;                               // one next / choose per shown line (a double click or two keys do not skip two)
+const DRAG_PX = 6;                                // a press on the view that moves further than this is a look round, not a click (core/input.js)
 
 // a short pause after punctuation, in characters, so the reveal reads like speech
 function pauseAfter(ch) {
@@ -223,7 +227,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   let cur = null, gen = 0, actedGen = -1, actedAt = 0;
   let chars = [], at = [], shown = 0, progress = 0, last = 0, typing = false, timer = 0, timerIsRaf = false;
   let buttons = [], sel = -1, choicesAt = 0;
-  let armed = false, bookDown = false, prevFocus = null, spoke = false;
+  let armed = false, bookDown = false, prevFocus = null, spoke = false, downX = 0, downY = 0;
 
   const speed = () => {
     const v = settings && typeof settings.get === 'function' ? Number(settings.get('textSpeed')) : 1;
@@ -597,7 +601,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   }
   // A click goes on only when it also began while the subtitle was up (the click that started the talk does not skip
   // the first line). Clicks elsewhere count only on the bare 3D view (with the pointer locked, the canvas gets them).
-  function onDown(e) { armed = open && !bookOpen && !destroyed && !otherModal(e.target); }
+  function onDown(e) { armed = open && !bookOpen && !destroyed && !otherModal(e.target); downX = e.clientX || 0; downY = e.clientY || 0; }
   function onWorldClick(e) {
     if (!open || bookOpen || destroyed || (e.button !== undefined && e.button !== 0)) return;
     const t = e.target;
@@ -605,6 +609,9 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     if (!(t === doc.body || t === doc.documentElement || t === doc || t === win || (t && t.tagName === 'CANVAS'))) return;
     if (!armed) return;
     armed = false;
+    // (a drag on the view looked round: Alt held, or the pointer moved with the button down; with the pointer
+    // captured it does not move, so every press there is a click)
+    if (e.altKey || Math.hypot((e.clientX || 0) - downX, (e.clientY || 0) - downY) > DRAG_PX) return;
     advance();
   }
   function onWrapClick(e) {
@@ -638,6 +645,8 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     hideBook() { closeBook('api'); },
     get bookOpen() { return bookOpen; },
     get typing() { return typing; },
+    // the choices are on screen (the line has typed out): the mouse is needed to pick one
+    get choosing() { return choicesShown(); },
     reveal,
     // (M8) the question field: what is typed in it, and sending it (tests; the field's own Enter does the same)
     get asking() { return !askRow.hidden; },

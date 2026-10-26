@@ -3,6 +3,9 @@
 // Positions are kept in world coordinates for the camera; collisions are solved in the runway frame, where every
 // building wall is axis-aligned (collide.js). Walking 1.45 m/s, running 3.6 m/s, with a short acceleration so it
 // feels like a person, not a camera. Steps (for footsteps and the optional head bob) follow the distance walked.
+// While a talk goes on (main.js) the walk is kept on a leash: within r of where the talk began. A step that would leave
+// the circle ends on its rim instead (and the velocity loses its outward part), so the walker slides round the rim;
+// the step still goes through the colliders, and nothing is ever moved without walking.
 import * as THREE from 'three';
 
 export const BODY = { radius: 0.28, height: 1.75, eye: 1.65, step: 0.35 };
@@ -33,17 +36,29 @@ export function createWalker({ camera, world, L, input, settings, surfaceAt = ()
     if (Math.abs(fov - fovNow) > 0.01) { fovNow = fov; camera.fov = fov; camera.updateProjectionMatrix(); }
   }
 
-  function update(dt) {
+  // the step (world x, z) kept inside the leash: a step that would end outside the circle of radius lim round (cx, cz)
+  // ends on its rim instead, straight in towards the centre from where it would have gone — so walking out stops at the
+  // rim and walking round slides along it; the velocity loses its outward part
+  function leashed(sx, sz, cx, cz, lim) {
+    const ox = st.x - cx, oz = st.z - cz, nx = ox + sx, nz = oz + sz, d = Math.hypot(nx, nz);
+    if (!(d > lim)) return [sx, sz];
+    const ux = nx / d, uz = nz / d, vo = st.vx * ux + st.vz * uz;
+    if (vo > 0) { st.vx -= ux * vo; st.vz -= uz * vo; }
+    return [ux * lim - ox, uz * lim - oz];
+  }
+  // opts: look (the mouse's movement, when the caller took it already), leash ({ x, z, r }: a talk's), upDown (false:
+  // ↑↓ do not walk — a talk's choices have them). Returns whether the keys (or the script) ask to move.
+  function update(dt, { look = null, leash = null, upDown = true } = {}) {
     // look
-    const look = input.takeLook(), sens = 0.0022 * settings.get('sensitivity');
-    st.yaw -= look.x * sens; st.pitch -= look.y * sens * (settings.get('invertY') ? -1 : 1);
+    const lk = look || input.takeLook(), sens = 0.0022 * settings.get('sensitivity');
+    st.yaw -= lk.x * sens; st.pitch -= lk.y * sens * (settings.get('invertY') ? -1 : 1);
     st.pitch = THREE.MathUtils.clamp(st.pitch, -1.45, 1.45);
     // the wish direction from the keys (or the script)
     let f = 0, s = 0, run = false;
     if (auto) { f = auto.forward || 0; s = auto.strafe || 0; run = !!auto.run; }
     else {
-      if (input.down('KeyW') || input.down('ArrowUp')) f += 1;
-      if (input.down('KeyS') || input.down('ArrowDown')) f -= 1;
+      if (input.down('KeyW') || (upDown && input.down('ArrowUp'))) f += 1;
+      if (input.down('KeyS') || (upDown && input.down('ArrowDown'))) f -= 1;
       if (input.down('KeyD') || input.down('ArrowRight')) s += 1;
       if (input.down('KeyA') || input.down('ArrowLeft')) s -= 1;
       run = input.down('ShiftLeft') || input.down('ShiftRight');
@@ -55,8 +70,25 @@ export function createWalker({ camera, world, L, input, settings, surfaceAt = ()
     const k = 1 - Math.exp(-(len > 0 ? 9 : 12) * dt);
     st.vx += (wx - st.vx) * k; st.vz += (wz - st.vz) * k;
     // move with collisions, in the frame
-    const [px, pz] = toFrame(st.x, st.z), [dx, dz] = toFrame(st.vx * dt, st.vz * dt);
-    const r = world.move({ x: px, y: 0, z: pz }, dx, dz, BODY);
+    const [px, pz] = toFrame(st.x, st.z);
+    const go = (sx, sz) => { const [dx, dz] = toFrame(sx, sz); return world.move({ x: px, y: 0, z: pz }, dx, dz, BODY); };
+    let r;
+    if (!leash) r = go(st.vx * dt, st.vz * dt);
+    else {
+      // a talk's leash (r round where it began; no further out when outside it already): the step ends inside it. A
+      // wall can still turn the step out of the circle, so what really happened goes through the leash again and is
+      // walked again (at worst, there is no step this frame)
+      const lim = Math.max(leash.r, Math.hypot(st.x - leash.x, st.z - leash.z));
+      let sx = st.vx * dt, sz = st.vz * dt;
+      for (let tries = 1; ; tries++) {
+        [sx, sz] = leashed(sx, sz, leash.x, leash.z, lim);
+        r = go(sx, sz);
+        const [ex, ez] = toWorld(r.x, r.z);
+        if (!(Math.hypot(ex - leash.x, ez - leash.z) > lim + 1e-9)) break;
+        if (tries === 3) { r = { x: px, z: pz, blocked: true, hitNormal: null }; break; }
+        sx = ex - st.x; sz = ez - st.z;
+      }
+    }
     const [nx, nz] = toWorld(r.x, r.z);
     const moved = Math.hypot(nx - st.x, nz - st.z);
     if (dt > 0) {
@@ -77,6 +109,7 @@ export function createWalker({ camera, world, L, input, settings, surfaceAt = ()
     const steps = Math.floor(st.phase * 2);
     if (steps !== st.lastStepPhase) { st.lastStepPhase = steps; if (st.speed > 0.4) onStep(surfaceAt(st.x, st.z), st.speed > 2.4 ? 1 : 0.6, st.foot = 1 - st.foot); }
     apply(dt);
+    return len > 0;
   }
 
   return {

@@ -87,7 +87,7 @@ async function talk(maxLines = 3000) {
       if (v.act && m && v.act.questions[+m[1]]) { const q = v.act.questions[+m[1]]; i = v.choices.findIndex(c => c.text === q.opts[q.ok]); }
       if (i < 0) i = v.choices.findIndex(c => !AVOID.test(c.text) && !chosen.has(c.text));
       if (i < 0) i = v.choices.findIndex(c => !chosen.has(c.text));
-      chosen.add(v.choices[Math.max(0, i)].text);
+      if (v.choices[Math.max(0, i)].text !== '次へ') chosen.add(v.choices[Math.max(0, i)].text);   // (the class's 次へ, at every section's end)
       if (i < 0) i = 0;
       log(`      > ${i + 1}. ${v.choices[i].text}　（ほか：${v.choices.filter((_, j) => j !== i).map(c => c.text).join('／')}）`);
       await key(`Digit${i + 1}`, 0.05);

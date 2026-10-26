@@ -80,17 +80,19 @@ const resultNodes = (N, speaker, passText, failText) => {
 // the book as it comes — paragraphs and list items sentence by sentence, ここが大切 said as such (tag 'key'), 考えてみよう
 // asked (a choice: think first, or hear the answer), cautions, formulas, figures (on the screen, the caption said),
 // tables row by row (a long one: its first rows, the rest on the screen), the radio's English spoken ('say'); then her
-// notes (tag 'note') and a check of her own (not scored); then the choice: on, the section again, or the section in the
-// textbook (hook 'book'). Each chapter ends with two questions from FLIGHT LAB's question bank for it (scored: q<k>
+// notes (tag 'note') and a check of her own (not scored); then the choice: on, the section again, the section in the
+// textbook (hook 'book'), or a break (the class left there, its place the next section: the talk ends, and the next talk
+// offers to go on from it; not after the class's last section). Each chapter ends with two questions from FLIGHT LAB's question bank for it (scored: q<k>
 // are questions[k]). Index 0 of every choice goes on, so a run that always picks the first reaches the end.
 const S = 'lecturer';
 // the textbook's words as the lecturer says them: in です / ます where that is certain, short sentences joined, long ones
 // split (at up to LECTURE_LINE characters: the subtitle box holds three rows), a sentence that names FLIGHT LAB's
 // controls or pages left out (instructor.js speechLines); today's call sign. "この教材の Archer" (FLIGHT LAB's model of
 // it) is the Archer of the book in her hands; the book's example of a call sign too short to shorten (Archer Seven Lima
-// Alpha, three characters) does not hold for today's, so she gives today's shortened as the controller would
+// Alpha, three characters) does not hold for today's, so she gives today's shortened as the controller would; the
+// book's aside on what kind of section it is (radio.listen: "（この節は教材としての…）") is the book's, not hers
 const LECTURE_LINE = 110;
-const inClass = (t) => String(t ?? '').replace(/この教材の(\s*Archer)/g, '教科書の$1')
+const inClass = (t) => String(t ?? '').replace(/この教材の(\s*Archer)/g, '教科書の$1').replace(/（この節は教材としての[^（）]*）/g, '')
   .replace(/「(Archer|Seminole) Seven Lima Alpha」\s*→\s*「\1 Seven Lima Alpha（3 文字なのでそのまま）」/g, () => `「${CALL.full}」 → 「${CALL.spokenShort}」`);
 export const lectureLines = (text, o = {}) => speechLines(inClass(text), { max: LECTURE_LINE, ...o }).map(callFix)
   .map(l => l.replace(/([。！？])([）」』])。$/, '$1$2')).filter(Boolean);       // （…です。） is not closed twice
@@ -162,7 +164,7 @@ function notesOf(n) {
   return { intro: lines(n && n.intro), notes: lines(n && n.notes), ask };
 }
 // the section read in full → its nodes from `base` (its title), going on to `after`
-function sectionNodes(N, { sec, base, after, idx, j, of, notes, r }) {
+function sectionNodes(N, { sec, base, after, idx, j, of, notes, r, next = null }) {
   const us = lectureUnits(sec), nt = notesOf(notes);
   let open = [];                                              // the nodes waiting for the next one
   const put = (id, node) => { const n = { speaker: S, ...node }; N[id] = n; for (const o of open) o.next = id; open = n.choices ? [] : [n]; return n; };
@@ -188,8 +190,10 @@ function sectionNodes(N, { sec, base, after, idx, j, of, notes, r }) {
     N[`${base}:ask:ng`] = { speaker: S, text: `正しくは${q(right)}です。${x.why}`.trim() };
     open = [N[`${base}:ask:ok`], N[`${base}:ask:ng`]];
   }
-  put(`${base}:end`, { text: `${qq(sec.title)}はここまでです。`, choices: [{ text: '次へ', next: after }, { text: 'この節をもう一度', next: base }, { text: '教科書でこの節を読む', next: `${base}:book` }] });
+  const rest = next ? [{ text: 'ここで休憩する（続きはまた後で）', next: `${base}:break` }] : [];
+  put(`${base}:end`, { text: `${qq(sec.title)}はここまでです。`, choices: [{ text: '次へ', next: after }, { text: 'この節をもう一度', next: base }, { text: '教科書でこの節を読む', next: `${base}:book` }, ...rest] });
   N[`${base}:book`] = { speaker: S, text: `教科書の${qq(sec.title)}です。読み終わったら、閉じてください。`, hook: { name: 'book', arg: sec.id }, next: `${base}:end` };
+  if (next) N[`${base}:break`] = { speaker: S, text: `OK. ここで一度区切りましょう。続きは${qq(next.title)}からです。また声をかけてください。`, effects: [{ hook: 'progress', arg: String(idx + 1) }], end: true };
 }
 // the section in its key points (要点だけ): the title and two lines, its figure (or its key points) on the screen
 function quickNodes(N, sec, id, then) {
@@ -243,7 +247,8 @@ export function classDialogs(FL, i, { seed = 1, pace = null, from = null, notes 
     N[`c${k}`] = { speaker: S, text: `${k ? 'Next, ' : 'Let\'s get started. '}第 ${c.n} 章${q(c.title)}。${secs.length} 節あります。順に見ていきましょう。`, next: secs.length ? `c${k}s0` : check };
     secs.forEach((x) => {
       const more = x.j < x.of - 1;
-      sectionNodes(N, { sec: x.sec, base: `c${k}s${x.j}`, after: more ? `c${k}s${x.j + 1}` : check, idx: all.indexOf(x), j: x.j, of: x.of, notes: noteOf(x.sec.id), r: rng(seed * 97 + i * 131 + all.indexOf(x)) });
+      const idx = all.indexOf(x);
+      sectionNodes(N, { sec: x.sec, base: `c${k}s${x.j}`, after: more ? `c${k}s${x.j + 1}` : check, idx, j: x.j, of: x.of, notes: noteOf(x.sec.id), r: rng(seed * 97 + i * 131 + idx), next: all[idx + 1] ? all[idx + 1].sec : null });
       quickNodes(N, x.sec, `r${k}s${x.j}`, more ? `r${k}s${x.j + 1}` : check);
     });
     // (the chapter's first section read in full, unless 要点だけ was chosen)

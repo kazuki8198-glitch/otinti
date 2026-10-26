@@ -3,7 +3,8 @@
 // banks; a quiz answered right passes, answered wrong fails (the score from the quiz's own flags); every line in the
 // world's own words. The classes are lectures: every sentence of the textbook's part 1 said in order, ここが大切 said as
 // such, 考えてみよう asked before it is answered, every page on the screen a real one, the lecturer's notes said where
-// there are any (the tests give their own, so they do not wait for content/lecture-notes), 要点だけ and 続きから too.
+// there are any (a test gives its own, to check how they are said; another checks content/lecture-notes as written:
+// a note for every section, every line sayable and said in its place), 要点だけ and 続きから too.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -14,6 +15,7 @@ import { classDialogs, ftdDialogs, examDialogs, scoreOf, CLASS_CHAPTERS, FTD_TIT
 import { units, lectureUnits, proseOf } from '../src/content/lecture-units.js';
 import { gameBook } from '../src/content/book.js';
 import { NOT_SPOKEN } from '../src/content/dialog/instructor.js';
+import { NOTES } from '../src/content/lecture-notes/index.js';
 import { validateDialogs } from '../src/dialog/validate.js';
 import { createRunner, createDialogState } from '../src/dialog/engine.js';
 import { EXAMS } from '../src/career/career.js';
@@ -142,7 +144,9 @@ test('school: six classes read the textbook\'s part 1 in full — every sentence
     // a section ends with the choice (on; the section again; the textbook), and no ordinary line has one
     for (const v of r.views.filter(v => v.choices.length)) assert.ok(/^(pace|q\d+|.*:end|.*:ask|.*:u\d+(:\d+)?)$/.test(v.node), `${where}: a choice on ${v.node}`);
     // (a title in quotes: its own quotes become 『』)
-    for (const sec of secs) assert.ok(r.views.some(v => /:end$/.test(v.node) && v.text.includes(sec.title.replace(/「/g, '『').replace(/」/g, '』')) && v.choices.map(c => c.text).join('|') === '次へ|この節をもう一度|教科書でこの節を読む'), `${sec.id}: the choice at its end`);
+    // (a break offered at every section's end but the class's last)
+    secs.forEach((sec, j) => assert.ok(r.views.some(v => /:end$/.test(v.node) && v.text.includes(sec.title.replace(/「/g, '『').replace(/」/g, '』'))
+      && v.choices.map(c => c.text).join('|') === `次へ|この節をもう一度|教科書でこの節を読む${j < secs.length - 1 ? '|ここで休憩する（続きはまた後で）' : ''}`), `${sec.id}: the choice at its end`));
     // the same seed, the same class
     assert.deepEqual(classDialogs(FL, i), d, `${where}: the same seed, the same class`);
   }
@@ -196,7 +200,53 @@ test('school: the lecturer\'s notes — her introduction after the title, her no
   assert.equal(lecturerNotesHtml('aero.drag', testNotes), '');
 });
 
-test('school: a class\'s choices — the section again, the section in the textbook, 要点だけ, 続きから', () => {
+test('school: the lecturer\'s notes as written (content/lecture-notes) — one for every section taught, every line sayable, every line said in its place, every check asked', () => {
+  const ids = CLASS_CHAPTERS.flatMap((_, i) => sectionsOf(i).map(sec => sec.id));
+  assert.deepEqual(Object.keys(NOTES).sort(), [...ids].sort(), 'a note for every section of part 1, and none for another');
+  // (the lines as index.js sets them: 2–120 characters, the world's own words, no program words, no markup)
+  const sayable = (t, where) => {
+    assert.ok(typeof t === 'string' && t.length >= 2 && t.length <= 120, `${where}: 2–120 characters (${t && t.length}): ${t}`);
+    clean([t], where); assert.ok(!/教材|[{}<>]/.test(t) && !NOT_SPOKEN.test(t), `${where}: ${t}`);
+    assert.ok(!/TODO|FIXME|XXX|TBD/.test(t), `${where}: ${t}`);
+  };
+  for (const id of ids) {
+    const n = NOTES[id], a = n.ask;
+    assert.ok((n.intro || []).length <= 2 && n.notes.length >= 2 && n.notes.length <= 8, `${id}: intro 0–2 lines, notes 2–8`);
+    [...(n.intro || []), ...n.notes].forEach((t, k) => sayable(t, `${id} line ${k}`));
+    if (!a) continue;
+    assert.ok(a.opts.length >= 3 && a.opts.length <= 4 && new Set(a.opts).size === a.opts.length && Number.isInteger(a.ok) && a.ok >= 0 && a.ok < a.opts.length, `${id}: the check's choices`);
+    for (const t of [a.q, a.why, ...a.opts]) sayable(t, `${id} check`);
+  }
+  // the classes as the game builds them (with these notes): each section's introduction right after its title, its
+  // notes after the book's text (tagged), its check asked before the section's end — on the path that always goes on
+  for (let i = 0; i < CLASS_CHAPTERS.length; i++) {
+    const d = classDialogs(FL, i), N = d.dialogs.class.nodes, r = run(d, 'class'), at = (node) => r.views.findIndex(v => v.node === node);
+    clean(r.lines, `class ${i} with the notes`);
+    CLASS_CHAPTERS[i].forEach((ch, k) => BOOK.chapters.find(c => c.id === ch).sections.forEach((s, j) => {
+      const base = `c${k}s${j}`, n = NOTES[s.id], intro = n.intro || [];
+      assert.ok(N[base].effects.some(e => e.hook === 'page' && e.arg === s.id), `${base} is ${s.id}`);
+      intro.forEach((t, m) => { assert.equal(N[`${base}:i${m}`].text, t, `${s.id}: intro ${m}`); assert.equal(at(`${base}:i${m}`), at(base) + 1 + m, `${s.id}: intro ${m} said after the title`); });
+      let last = at(`${base}:u0`);
+      assert.ok(last > at(base), `${s.id}: the book after the introduction`);
+      n.notes.forEach((t, m) => {
+        const v = r.views[at(`${base}:n${m}`)];
+        assert.ok(v && v.text === t && v.tag === 'note' && at(`${base}:n${m}`) > last, `${s.id}: note ${m} said, tagged, after the book`); last = at(`${base}:n${m}`);
+      });
+      if (n.ask) {
+        const ask = N[`${base}:ask`], v = r.views[at(`${base}:ask`)];
+        assert.ok(v && v.text === `ひとつ確認します。${n.ask.q}` && at(`${base}:ask`) > last, `${s.id}: the check asked after the notes`);
+        assert.deepEqual([...ask.choices.map(c => c.text)].sort(), [...n.ask.opts].sort());
+        for (const c of ask.choices) assert.equal(c.next, c.text === n.ask.opts[n.ask.ok] ? `${base}:ask:ok` : `${base}:ask:ng`, `${s.id}: ${c.text}`);
+        assert.equal(N[`${base}:ask:ok`].text, `That's right. ${n.ask.why}`);
+      } else assert.ok(!N[`${base}:ask`]);
+      assert.ok(at(`${base}:end`) > last, `${s.id}: then its end`);
+      // (the textbook's box under the section: her introduction and notes)
+      assert.equal((lecturerNotesHtml(s.id).match(/<p>/g) || []).length, intro.length + n.notes.length, `${s.id}: the textbook's box`);
+    }));
+  }
+});
+
+test('school: a class\'s choices — the section again, the section in the textbook, a break, 要点だけ, 続きから', () => {
   // at the first section's end: the textbook (hook 'book', then back to the choice), then the section again, then on
   const seen = new Set();
   const pick = (v) => { if (v.node !== 'c0s0:end') return null; for (const k of [2, 1]) if (!seen.has(k)) { seen.add(k); return k; } return 0; };
@@ -204,6 +254,12 @@ test('school: a class\'s choices — the section again, the section in the textb
   assert.deepEqual(r.hooks.filter(h => h[0] === 'book').map(h => h[1]), ['aero.forces']);
   assert.deepEqual(r.hooks.filter(h => h[0] === 'progress').map(h => +h[1]).slice(0, 3), [0, 0, 1], 'the section read again, then the next');
   assert.ok(r.hooks.some(h => h[0] === 'done' && h[1] === 'class'));
+  // a break at the first section's end: the talk ends there, not done, its place the next section's; taken up from it
+  const b = run(classDialogs(FL, 0), 'class', { pick: (v) => (v.node === 'c0s0:end' ? 3 : null) });
+  assert.deepEqual(b.hooks.filter(h => h[0] === 'progress').map(h => +h[1]), [0, 1], 'the break keeps the next section as the place');
+  assert.ok(!b.hooks.some(h => h[0] === 'done'), 'a break is not the class done');
+  assert.equal(b.views[b.views.length - 1].text, 'OK. ここで一度区切りましょう。続きは「揚力はどうやって生まれるか」からです。また声をかけてください。');
+  assert.equal(classDialogs(FL, 0, { from: 1 }).dialogs.class.nodes.pace.choices[0].text, '続きから（第 1 章「揚力はどうやって生まれるか」から）');
   // 要点だけ: each section's title and key points with its figure, the chapters' questions, done
   for (let i = 0; i < CLASS_CHAPTERS.length; i++) {
     const d = classDialogs(FL, i), q = run(d, 'class', { pick: (v) => (v.node === 'pace' ? 1 : null) }), full = run(d, 'class');
@@ -235,7 +291,7 @@ test('school: a class\'s choices — the section again, the section in the textb
   for (const pace of ['full', 'quick']) {
     const dp = classDialogs(FL, 0, { pace }), rp = run(dp, 'class');
     assert.deepEqual(validateDialogs(dp, { sampleCtx: QUIZ, sectionExists: BOOK.sectionExists }).errors, []);
-    assert.ok(!dp.dialogs.class.nodes.pace && !rp.views.some(v => v.choices.length && !/^q\d+$|:end$|:u\d+(:\d+)?$/.test(v.node)), `${pace}: no choice of pace`);
+    assert.ok(!dp.dialogs.class.nodes.pace && !rp.views.some(v => v.choices.length && !/^q\d+$|:end$|:ask$|:u\d+(:\d+)?$/.test(v.node)), `${pace}: no choice of pace (only the questions, the sections' ends, her checks, the 考えてみよう)`);
     assert.equal(rp.hooks.some(h => h[0] === 'progress'), pace === 'full');
     assert.ok(rp.hooks.some(h => h[0] === 'done' && h[1] === 'class'));
   }

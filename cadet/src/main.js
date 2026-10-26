@@ -795,19 +795,17 @@ async function boot() {
   // ここが大切 on the whiteboard, the place it has reached kept with the career, the textbook with the lecturer's notes
   const pageImages = new Map();                              // a figure's SVG, loaded once as an image
   let pageNow = null, pageSec = null, pageTok = 0, pageTimer = 0;
-  // (Part T's autoFace(worldPoint) turns the view to a point, on a timer that any look or move cancels; until it is in
-  // main.js the class only shows its pages — integrator: once it is, this guard can call it directly)
-  const faceTo = (p) => { if (typeof autoFace === 'function') autoFace(p); };
   function showPage(arg) {
     const pg = lecturePage(FL, arg); if (!pg) return;
     const tok = ++pageTok, room = 'brief-2', u = pg.unit, screen = academy.surfaceAt(room, 'wall_screen');
     clearInterval(pageTimer); pageTimer = 0; pageNow = arg;
     const point = (s) => { const actor = talkActor; if (s && actor && talkWho === 'lecturer') { actor.pointAt(frameToWorld(s)); actor.gesture('point'); } };
-    // a new section: its key points on the whiteboard, and the eyes to the screen (once a section)
+    // a new section: its key points on the whiteboard, and the view turned to the screen for a moment (autoFace: a look
+    // or a step of the player's stops it)
     if (pg.id !== pageSec) {
       pageSec = pg.id;
       academy.redraw(room, 'whiteboard', (g, w, h) => drawKeyBoard(g, w, h, pg.board));
-      if (screen) faceTo(frameToWorld(screen));
+      if (screen) autoFace(frameToWorld(screen));
     }
     const draw = (img, part = 0) => { let r = { parts: 1 }; academy.redraw(room, 'wall_screen', (g, w, h) => { r = drawLecturePage(g, w, h, { ...pg, part }, img); }); return r; };
     if (u && u.k === 'figure') {
@@ -1004,7 +1002,7 @@ async function boot() {
     const a = speakerActor(id);
     if (a && a !== faceWho) faceOn(a);
   }
-  // (Part L's lecture: its screen hook turns the head to the classroom's screen once a section) the view turned to a
+  // (the class: its first page of a section turns the head to briefing room 2's screen, showPage) the view turned to a
   // point of the world, in the scene's coordinates, as to a speaker; false when there is no talk to turn it in
   function autoFace(p) {
     if (!talk || !p || ![p.x, p.y, p.z].every(Number.isFinite)) return false;

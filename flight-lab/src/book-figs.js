@@ -1008,6 +1008,23 @@
       s += `<text x="20" y="${y + 48}" fill="#1a1a1a" font-size="17" font-family="ui-monospace, Menlo, Consolas, monospace">36  A  HS C  119.75  4271</text>`;
       return svg(400, y + 74, s, '図：地上管制の指示を部分に分けたもの（架空の LAB）。あなたのコールサイン → 局の名前（最初の交信だけ）→ 滑走路 → 経路 → 止まる所 → 出発周波数 → コードの順。出発周波数とコードを Ground が伝えるのは、LAB のようにレーダーの出発管制がある空港の例です。聞いた順に、短い記号でひざ板に書きます');
     },
+    // ---------------------------------------------------------------- 第 8 章 radio2（言葉の決まり）
+    phoneticBoard() {
+      // the ICAO phonetic alphabet and the figures as the AIM's table spells and pronounces them (TBL 4-2-7)
+      const AB = [['A', 'Alfa', 'AL-FAH'], ['B', 'Bravo', 'BRAH-VOH'], ['C', 'Charlie', 'CHAR-LEE'], ['D', 'Delta', 'DELL-TAH'], ['E', 'Echo', 'ECK-OH'], ['F', 'Foxtrot', 'FOKS-TROT'], ['G', 'Golf', 'GOLF'], ['H', 'Hotel', 'HOH-TEL'], ['I', 'India', 'IN-DEE-AH'], ['J', 'Juliett', 'JEW-LEE-ETT'], ['K', 'Kilo', 'KEY-LOH'], ['L', 'Lima', 'LEE-MAH'], ['M', 'Mike', 'MIKE'],
+        ['N', 'November', 'NO-VEM-BER'], ['O', 'Oscar', 'OSS-CAH'], ['P', 'Papa', 'PAH-PAH'], ['Q', 'Quebec', 'KEH-BECK'], ['R', 'Romeo', 'ROW-ME-OH'], ['S', 'Sierra', 'SEE-AIR-RAH'], ['T', 'Tango', 'TANG-GO'], ['U', 'Uniform', 'YOU-NEE-FORM'], ['V', 'Victor', 'VIK-TAH'], ['W', 'Whiskey', 'WISS-KEY'], ['X', 'Xray', 'ECKS-RAY'], ['Y', 'Yankee', 'YANG-KEY'], ['Z', 'Zulu', 'ZOO-LOO']];
+      let s = '';
+      AB.forEach(([k, w, p], i) => {
+        const col = i < 13 ? 0 : 1, x = 10 + col * 196, y = 22 + (i % 13) * 19;
+        if ((i % 13) % 2 === 0) s += `<rect x="${x - 4}" y="${y - 13}" width="190" height="18" fill="${C.ink}" fill-opacity="0.04"/>`;
+        s += T(x, y, k, { c: C.am, b: 1, a: 'start', fs: 13 }) + T(x + 20, y, w, { c: C.ink, b: 1, a: 'start', fs: 12 }) + T(x + 94, y, p, { c: C.mut, a: 'start', fs: 12 });
+      });
+      const D = [['1', 'WUN'], ['2', 'TOO'], ['3', 'TREE'], ['4', 'FOW-ER'], ['5', 'FIFE'], ['6', 'SIX'], ['7', 'SEV-EN'], ['8', 'AIT'], ['9', 'NIN-ER'], ['0', 'ZEE-RO']];
+      s += L(10, 270, 390, 270, C.grid, 1);
+      D.forEach(([k, p], i) => { const x = 10 + (i % 5) * 78, y = 292 + Math.floor(i / 5) * 20; s += T(x, y, k, { c: C.cy, b: 1, a: 'start', fs: 13 }) + T(x + 14, y, p, { c: C.ink, a: 'start', fs: 12 }); });
+      s += T(10, 344, '例：N7LA → November Seven Lima Alfa', { c: C.gr, b: 1, a: 'start', fs: 12 });
+      return svg(400, 354, s, '図：フォネティックアルファベットと数字の発音（AIM の表 TBL 4-2-7 のつづりと読み方）。C は SHAR-LEE、U は OO-NEE-FORM とも読みます。X は X-ray と書く資料もあります。AIM の例文には Alpha とつづるものもあり、この本のコールサインも Alpha と書きます');
+    },
   };
 
   // ---------------------------------------------------------------- calculators inside the text

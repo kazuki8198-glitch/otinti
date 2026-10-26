@@ -89,82 +89,97 @@ ${bk.q('地上管制の指示の後半、出発周波数が聞き取れなかっ
 
   // ======================================================================= radio 2
   B.add({ id: 'radio2', before: 'hf', part: 'p1', t: '言葉の決まり：アルファベット・数字・標準用語', en: 'Standard words: the phonetic alphabet, numbers and phraseology',
-    summary: 'フォネティックアルファベットと数字の発音、高度・針路・速度・周波数・時刻・高度計規正値・コードの言い方、コールサインの決まり、標準用語（Roger・Wilco・Say again など）の正しい意味。',
+    summary: 'フォネティックアルファベットと数字の発音、数字の言い方（1 けたずつが基本、高度と雲の高さは特別）、コールサインの決まり、標準用語（Roger・Wilco・Say again など）の正しい意味。',
     secs: [
       { id: 'comm.basic', t: 'フォネティックアルファベットと数字の発音', h: () => `
-<p>雑音の中でも 1 文字ずつ確実に伝えるため、文字は ICAO のフォネティックアルファベットで言います。最初の交信のコールサイン、1 文字だけの言葉、聞き取りにくい言葉のつづりに使います（AIM 4-2-7）。発音は AIM の表の読み方とカタカナの目安です。</p>
-${bk.t(['文字', '言い方', '発音（AIM）', '目安'], [
-  ['A', 'Alfa', 'AL-FAH', 'アルファ'], ['B', 'Bravo', 'BRAH-VOH', 'ブラボー'], ['C', 'Charlie', 'CHAR-LEE / SHAR-LEE', 'チャーリー'], ['D', 'Delta', 'DELL-TAH', 'デルタ'],
-  ['E', 'Echo', 'ECK-OH', 'エコー'], ['F', 'Foxtrot', 'FOKS-TROT', 'フォックストロット'], ['G', 'Golf', 'GOLF', 'ゴルフ'], ['H', 'Hotel', 'HOH-TEL', 'ホテル'],
-  ['I', 'India', 'IN-DEE-AH', 'インディア'], ['J', 'Juliett', 'JEW-LEE-ETT', 'ジュリエット'], ['K', 'Kilo', 'KEY-LOH', 'キロ'], ['L', 'Lima', 'LEE-MAH', 'リーマ'],
-  ['M', 'Mike', 'MIKE', 'マイク'], ['N', 'November', 'NO-VEM-BER', 'ノベンバー'], ['O', 'Oscar', 'OSS-CAH', 'オスカー'], ['P', 'Papa', 'PAH-PAH', 'パパ'],
-  ['Q', 'Quebec', 'KEH-BECK', 'ケベック'], ['R', 'Romeo', 'ROW-ME-OH', 'ロミオ'], ['S', 'Sierra', 'SEE-AIR-RAH', 'シエラ'], ['T', 'Tango', 'TANG-GO', 'タンゴ'],
-  ['U', 'Uniform', 'YOU-NEE-FORM', 'ユニフォーム'], ['V', 'Victor', 'VIK-TAH', 'ビクター'], ['W', 'Whiskey', 'WISS-KEY', 'ウィスキー'], ['X', 'X-ray', 'ECKS-RAY', 'エックスレイ'],
-  ['Y', 'Yankee', 'YANG-KEY', 'ヤンキー'], ['Z', 'Zulu', 'ZOO-LOO', 'ズールー']])}
-${bk.t(['数字', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'], [['発音（AIM）', 'WUN', 'TOO', 'TREE', 'FOW-ER', 'FIFE', 'SIX', 'SEV-EN', 'AIT', 'NIN-ER', 'ZEE-RO']])}
-<p><b>9 は「niner」</b>（ドイツ語の nein と区別するため、と説明されることが多い）。<b>3 は「tree」、5 は「fife」</b>のように、雑音の中でも区別しやすい発音にしています。</p>
-${bk.key('最初の交信ではコールサインをフォネティックで全部言う', '数字は原則 1 桁ずつ（10 は one zero）')}` },
+${bk.aim('雑音の中でも、文字や数字を 1 つずつ確実に伝えるための、決まった言い方を覚えます。')}
+${FIG.phoneticBoard()}
+<p>文字は、ICAO（国際民間航空機関）の<b>フォネティックアルファベット</b>で言います。最初の交信で自分のコールサインを名乗るとき、1 文字だけの言葉、聞き取りにくい言葉のつづりに使います（AIM 4-2-7）。</p>
+<p>数字も、雑音の中で区別しやすい読み方が決まっています。3 は <b>TREE</b>、5 は <b>FIFE</b>、9 は <b>NIN-ER（niner）</b>です（AIM の表）。つづりは、AIM の表では Alfa・Juliett・Xray です（X-ray と書く資料もあります）。</p>
+${bk.key('最初の交信では、コールサインをフォネティックで全部言う', '数字は 1 けたずつ。3 は tree、5 は fife、9 は niner', '発音は、カタカナでなく音声で確かめる')}
+${bk.q('登録記号 N12AB の飛行機。文字と数字を 1 つずつ言うと？', '<b>November One Two Alfa Bravo</b>。機種名を言うときは N を省いて、たとえば「Archer One Two Alfa Bravo」と名乗ります（AIM 4-2-4）。')}` },
       { id: 'comm.numbers', t: '数字の言い方：高度・針路・速度・周波数・時刻・コード', h: () => `
-${bk.t(['種類', '書き方', '言い方', '決まり（出典）'], [
-  ['一般の数字', '10', 'one zero', '1 桁ずつ（AIM 4-2-8）'],
-  ['高度（9,900 ft まで）', '500 / 4,500', 'five hundred / four thousand five hundred', '「千・百」で言う（AIM 4-2-8）'],
-  ['高度（10,000 ft 以上）', '10,000 / 13,500', 'one zero thousand / one three thousand five hundred', '千の位より上は 1 桁ずつ（AIM 4-2-8・4-2-9）'],
-  ['フライトレベル（18,000 ft 以上）', 'FL190', 'flight level one niner zero', '米国は 18,000 ft から（AIM 4-2-9）'],
-  ['針路・方位・コース', '090 / 005', 'heading zero niner zero / zero zero five', '3 桁・磁方位（真方位なら “true” を付ける）（AIM 4-2-10）'],
-  ['風', '220° 15 kt / 2 kt', 'wind two two zero at one five / wind calm', '風向は 3 桁・磁方位（AIM 4-2-10）。管制の型は “wind (風向) at (風速)”、3 kt 未満は “calm”（JO 7110.65）'],
-  ['速度', '120 kt', 'one two zero knots', '1 桁ずつ＋knots（AIM 4-2-11）'],
-  ['周波数', '121.7 / 119.75', 'one two one point seven / one one niner point seven five', '小数点は “point”（ICAO は “decimal”）（AIM 4-2-8）'],
-  ['地上管制の周波数（121 MHz 台）', '121.7', 'ground point seven', '管制官が 121 を省くことがある（AIM 4-3-14）'],
-  ['高度計規正値', '29.92 inHg', 'altimeter two niner niner two', '1 桁ずつ'],
-  ['トランスポンダーのコード', '4271', 'squawk four two seven one', '1 桁ずつ'],
-  ['時刻', '14:30 UTC', 'one four three zero Zulu', 'FAA は UTC を使う。フロリダの標準時（EST）は UTC−5、夏時間（EDT）は UTC−4（AIM 4-2-12）'],
-  ['滑走路', '36 / 9R / 27C', 'runway three six / runway niner right / runway two seven center', '1 桁ずつ＋left / right / center'],
-  ['距離・時計の方位', '5 NM・2 時の方向', 'five miles / two o\'clock', '時計の方位は機首（12 時）が基準'],
-  ['航空路', 'V12', 'Victor twelve', 'AIM 4-2-8']])}
-${bk.key('高度だけは「thousand・hundred」を使う。ほかの数字は 1 桁ずつ', '針路は必ず 3 桁（heading zero niner zero）。090 を「ninety」と言わない')}
-${bk.q('“Climb and maintain one zero thousand five hundred” は何 ft？', '10,500 ft。10,000 ft 以上は千の位より上を 1 桁ずつ（one zero）言う。')}` },
+${bk.aim('数字は 1 けたずつ言うのが基本です。高度と雲の高さは、特別な言い方をします。言い方の型を覚えて、聞きまちがいをなくします。')}
+<h4>① 1 けたずつ言うもの（基本）</h4>
+${bk.t(['種類', '書き方', '言い方', '出典'], [
+  ['ふつうの数字', '10', 'one zero', 'AIM 4-2-8'],
+  ['周波数', '121.7 / 119.75', 'one two one point seven / one one niner point seven five', 'AIM 4-2-8。小数点は point（ICAO の言い方は decimal）'],
+  ['高度計規正値', '30.01', 'altimeter three zero zero one', 'JO 7110.65 2-4-17'],
+  ['トランスポンダーのコード', '4271', 'squawk four two seven one', 'JO 7110.65 2-4-17'],
+  ['針路・方位', '005 / 090 / 360', 'heading zero zero five / zero niner zero / three six zero', 'AIM 4-2-10。必ず 3 けた・磁方位（真方位のときは true を付ける）。北は 360（000 とは言わない）'],
+  ['風', '220° 15 kt', 'wind two two zero at one five', 'JO 7110.65 2-4-17。3 kt 未満は calm（JO 7110.65 2-6-3）'],
+  ['速度', '120 kt', 'one two zero knots', 'AIM 4-2-11'],
+  ['滑走路', '36 / 9R / 27C', 'runway three six / runway niner right / runway two seven center', 'JO 7110.65 2-4-17'],
+  ['時刻', '14:30 UTC', 'one four three zero Zulu', 'AIM 4-2-12']])}
+<p>管制官は、周波数の小数点以下 3 けた目を言わない決まりです（135.275 → one three five point two seven）（JO 7110.65 2-4-17）。</p>
+<h4>② 高度と雲の高さは「千・百」で言う</h4>
+${bk.t(['高度', '言い方', '決まり'], [['500 ft', 'five hundred', '9,900 ft までの、きりのよい数（高度・雲の高さ）は「千・百」で言う（AIM 4-2-8）'], ['4,500 ft', 'four thousand five hundred', '同じ'], ['10,000 ft', 'one zero thousand', 'thousand の前の数字を 1 けたずつ（AIM 4-2-8）'], ['13,500 ft', 'one three thousand five hundred', '同じ'], ['FL190（19,000 ft）', 'flight level one niner zero', '米国では 18,000 ft MSL から flight level（AIM 4-2-9）']])}
+<p>聞きまちがいを防ぐため、管制官が高度を「ten thousand」のようにまとめて言い直すこともあります（JO 7110.65 2-4-17・2-4-18）。</p>
+<h4>③ そのほかの決まり</h4>
+<ul><li><b>航空路</b>：V12 は「Victor twelve」と言います（AIM 4-2-8）。</li>
+<li><b>Ground の周波数</b>：多くは 121.6〜121.9 MHz なので（AIM 4-3-14）、「Contact Ground point seven」（121.7）と短く言われることがあります。</li>
+<li><b>時刻</b>：FAA は UTC を使います。フロリダ中部の標準時（EST）は UTC−5、夏時間（EDT）は UTC−4 です（AIM 4-2-12）。</li>
+<li><b>交通情報の時計の方位</b>：「traffic, two o'clock, five miles」の時計の方位は、機首ではなく、<b>進んでいる方向（航跡）が 12 時</b>です。管制官のレーダーには航跡しか見えないからです。横風で機首をずらしているときは、言われた方位と、窓から見える方位がずれます（AIM 4-1-15）。</li></ul>
+${bk.key('数字は 1 けたずつが基本。周波数の小数点は point', '高度と雲の高さは thousand・hundred。10,000 ft 以上は thousand の前を 1 けたずつ', '北は heading three six zero。時計の方位は航跡が 12 時')}
+${bk.q('“Climb and maintain one zero thousand five hundred” は何 ft？ “heading three six zero” はどちら向き？', '<b>10,500 ft</b> と<b>北（360°）</b>です。10,000 ft 以上は thousand の前を 1 けたずつ言い、北は 360 と言います。')}` },
       { id: 'comm.callsign', t: 'コールサインの決まり', h: () => `
-<ul><li><b>最初の交信では省略しない</b>：機種名・型式名またはメーカー名のあとに登録記号の数字と文字。機種名を言うときは<b>先頭の N を省く</b>（例：Bonanza Six Five Five Golf）（AIM 4-2-4）。この教材の「Archer Seven Lima Alpha」は架空。</li>
-<li><b>省略は管制官から</b>：交信が確立したあと、管制官が「機種名＋最後の 3 文字」に省略して呼んだら、パイロットもそれを使ってよい（AIM 4-2-4）。例：「Archer Seven Lima Alpha」→「Archer Seven Lima Alpha（3 文字なのでそのまま）」、「Cessna One Two Three Four Five」→「Cessna Three Four Five」。</li>
-<li><b>似たコールサインがいるとき</b>は省略しない。自分への指示か疑わしいときは「<b>Verify clearance for</b>（完全なコールサイン）」（AIM 4-2-4）。似たコールサインの取り違えは、ほかの機への許可を自分のものとして実行してしまう事故につながる。</li>
-<li><b>エアライン</b>は会社の呼出符号と便名を「まとまった数」で言う（例：United Twenty-Five Heavy。ANA の呼出符号は “All Nippon”）。</li></ul>
-${bk.key('コールサインは「誰への交信か」を決める一番大切な部分。最初は省略しない', '省略してよいのは、管制官が先に省略してから')}` },
+${bk.aim('コールサインは「誰への交信か」を決める、いちばん大切な部分です。省略してよいときと、いけないときを覚えます。')}
+<ul><li><b>最初の交信では省略しない</b>：機種名・型式名かメーカー名のあとに、登録記号の数字と文字を言います。機種名を言うときは、<b>先頭の N を省きます</b>（例：Bonanza Six Five Five Golf）（AIM 4-2-4）。</li>
+<li><b>省略は管制官から</b>：交信が確立したあと、管制官が「機種名＋最後の 3 文字」に省略して呼んだら、操縦士もそれを使ってかまいません（AIM 4-2-4）。例：Cessna One Two Three Four Five → Cessna Three Four Five。</li>
+<li><b>似たコールサインがいるとき</b>は省略しません。自分への指示か疑わしいときは「<b>Verify clearance for</b>（完全なコールサイン）」と言います。似たコールサインの取りちがえは、ほかの機への許可を自分のものとして実行してしまう事故につながります（AIM 4-2-4）。</li>
+<li><b>エアライン</b>は、会社の呼び名と便名を、数字をまとめた形で言います（例：United Twenty-Five Heavy）（AIM 4-2-4）。日本の ANA の呼び名は “All Nippon” です。</li></ul>
+<p>この教材のコールサイン「<b>Archer Seven Lima Alpha</b>」は、練習用に決めた架空の機体（N7LA）のものです。同じ登録記号の実在の機とは関係ありません。登録記号の最後の 3 文字が 7LA なので、省略しても同じ言い方になります。本の中では「Archer 7LA」と短く書きますが、読み方は同じです。</p>
+${fic}
+${bk.key('最初の交信では、コールサインを省略しない', '省略してよいのは、管制官が先に省略してから', '自分あてか迷ったら「Verify clearance for（完全なコールサイン）」')}
+${bk.q('交信が確立したあと、管制官が「Cessna Three Four Five」と呼んできた。自分は Cessna N12345。次の交信で自分も省略してよい？', 'はい。管制官が先に省略したので、そのあとの交信では「Cessna Three Four Five」と言ってかまいません（AIM 4-2-4）。ただし、似たコールサインの機がいるときは省略しません。')}` },
       { id: 'comm.words', t: '標準用語の正しい意味（Pilot/Controller Glossary）', h: () => `
-<p>FAA の Pilot/Controller Glossary（PCG）は、管制官の方式基準（JO 7110.65）と同じ用語集です。意味をまちがえると事故になるものがあります。</p>
-${bk.t(['用語', '意味（PCG の定義の要約）', '使い方の注意'], [
-  ['Roger', '最後の送信を全部受信した', '<b>「はい」の意味ではない</b>。はい / いいえで答える質問に Roger は使わない'],
-  ['Wilco', '受信し、理解し、従う（will comply）', '滑走路・高度・針路の指示には Wilco ではなく<b>内容を復唱</b>する'],
-  ['Affirmative / Negative', 'はい / いいえ（Negative は「許可しない」「それは違う」も）', '「Yes / No」より聞き取りやすい'],
-  ['Say again', '直前の送信をもう一度（部分なら “say again all after …”）', '聞き取れないときは推測せずに使う'],
-  ['Stand by', '少し待って（「許可」でも「不許可」でもない）', '待つ時間が長ければ、もう一度呼んでよい'],
-  ['Unable', '指示・要求・許可に従えない', '理由（雲・性能など）や代わりの案を添える'],
-  ['Verify', '確認してください', '例：Verify assigned altitude'],
-  ['Correction', '言いまちがえた。正しくは次のとおり', '自分の言いまちがいを直すとき'],
-  ['Read back', '私の言ったことを復唱して', '管制官から言われたら全部を復唱'],
-  ['I say again / Words twice', 'もう一度言う / 交信状態が悪いので各句を 2 回言って（言う）', ''],
-  ['Immediately / Expedite', '直ちに（危険を避けるため）/ 速やかに', 'Immediately は今すぐ動く'],
-  ['Go ahead', 'どうぞ話して（PCG：ほかの意味に使わない）', '「どうぞ進んで」の意味ではない'],
-  ['Over / Out', '送信終わり・返事を待つ / 交信終わり・返事不要', 'ふつうの管制交信ではほとんど使わない。“Over and out” は矛盾'],
-  ['Contact / Monitor', '交信を始めよ / 聞いて待て（こちらからは呼ばない）', 'Monitor と言われたら呼び出さない'],
-  ['Traffic in sight / Negative contact', '言われた他機が見えた / 見えない', '見えるまで探す。見えなければ Negative contact'],
-  ['Squawk / Ident', 'トランスポンダーのコードを設定 / IDENT ボタンを押す', ''],
-  ['Say altitude / Say heading', 'いまの高度（上昇・降下中は 100 ft 単位）/ いまの針路を言え', ''],
-  ['Line up and wait', '滑走路に入って待て（<b>離陸許可ではない</b>）', 'AIM 5-2-5'],
-  ['Hold short of … / Hold position', '…の手前で止まれ / その場で止まれ', '必ず復唱'],
-  ['Cleared for takeoff / Cleared to land / Cleared for the option', '離陸許可 / 着陸許可 / タッチアンドゴー・ローアプローチ・ストップアンドゴー・フルストップなどを任意に', 'Cleared は許可。タキシーには “cleared” を使わない（AIM 4-3-18）'],
-  ['Go around', '進入をやめてやり直せ', 'VFR はふつう滑走路の上を上昇して場周へ（PCG）']])}
-${bk.key('Roger は「受け取った」だけ。「はい」は Affirmative、「従う」は Wilco、数字や滑走路は復唱', '俗語・あいまいな言い方（“Ten-four”、“Copy that” など）は使わない（AIM 4-2-1：jargon・CB slang は使わない）')}` },
+${bk.aim('Roger・Wilco・Affirmative などの標準用語は、意味をまちがえると事故になります。正しい意味と使い方を覚えます。')}
+<p>FAA の Pilot/Controller Glossary（PCG）は、管制官の方式基準（JO 7110.65）と同じ用語集です。</p>
+<h4>受け答え</h4>
+${bk.t(['用語', '意味（PCG）', '使い方の注意'], [
+  ['Roger', '最後の送信を全部受け取った', '<b>「はい」の意味ではない</b>。はい・いいえで答える質問には使わない'],
+  ['Wilco', '受け取り、理解し、従う（will comply）', '滑走路・高度・針路などの指示には、Wilco だけでなく<b>内容を復唱</b>する'],
+  ['Affirmative / Negative', 'はい / いいえ（Negative は「許可しない」「それは違う」も）', ''],
+  ['Unable', '指示・要求・許可に従えない', '理由や代わりの案を添える']])}
+<h4>聞き直し・確かめ・待つ</h4>
+${bk.t(['用語', '意味', '使い方の注意'], [
+  ['Say again', 'もう一度言ってください', '聞き取れなければ、推測せずに使う。一部だけなら「Say again all after …」'],
+  ['Verify', '確かめてください（PCG）', '例：Verify assigned altitude'],
+  ['Read back', '私の言ったことを復唱して（PCG）', '言われたら全部を復唱する'],
+  ['Words twice', '交信が悪いので、各句を 2 回言って / 言います（PCG）', ''],
+  ['Stand by', '少し待って（PCG：許可でも不許可でもない）', '長く待たされたら、もう一度呼んでよい'],
+  ['Go ahead', 'どうぞ話して（PCG：ほかの意味に使わない）', '「進んでよい」の意味ではない'],
+  ['Over / Out', '送信終わり・返事を待つ / 交信終わり・返事は要らない（PCG）', 'ふつうの管制の交信では、ほとんど使わない']])}
+<h4>指示の言葉</h4>
+${bk.t(['用語', '意味', '使い方の注意'], [
+  ['Contact / Monitor', '（相手と周波数）と交信を始めよ / その周波数を聞いて待て（自分からは呼ばない）（PCG）', 'Monitor と言われたら、呼ばずに聞く'],
+  ['Immediately / Expedite', '危険を避けるため直ちに / 速やかに（PCG）', 'Immediately は、今すぐ動く'],
+  ['Squawk / Ident', 'トランスポンダーのコードを入れよ / IDENT のボタンを押せ（PCG）', ''],
+  ['Say altitude / Say heading', '今の高度を言え（上昇・降下中は、高度計の示す高度を 100 ft 単位に丸めて）/ 今の針路を言え（PCG）', ''],
+  ['Traffic in sight / Negative contact', '言われた機が見えた / 見えない（PCG）', '見えるまで探す']])}
+<h4>地上と滑走路</h4>
+${bk.t(['用語', '意味', '使い方の注意'], [
+  ['Hold short of …', '…の手前で止まれ（JO 7110.65 3-7-2）', '必ず復唱する（AIM 4-3-18）'],
+  ['Hold position', 'その場で止まれ（JO 7110.65 3-7-2）', ''],
+  ['Line up and wait', '滑走路に入って待て（例：runway three six, line up and wait）。<b>離陸の許可ではない</b>（PCG・AIM 5-2-5）', ''],
+  ['Cleared for takeoff / Cleared to land', '離陸してよい / 着陸してよい', '“cleared” は許可の言葉。タキシーの指示には使わない'],
+  ['Cleared for the option', 'タッチアンドゴー・ローアプローチ・ストップアンドゴー・フルストップなどを、操縦士が選んでよい（PCG）', 'ふつうは訓練で使う'],
+  ['Go around', '進入をやめよ。VFR では、言われなければ滑走路の上を上昇して場周経路へ（PCG）', '']])}
+${bk.key('Roger は「受け取った」だけ。「はい」は Affirmative、「従う」は Wilco', '滑走路・高度・針路・hold short は、Wilco だけでなく内容を復唱', 'line up and wait は離陸の許可ではない')}
+${bk.warn('<b>よくある間違い：</b>はい・いいえで答える質問に「Roger」と答えること。Roger は「受け取った」という意味だけで、「はい」の意味はありません。仲間うちの言葉や、CB 無線のような言い方（Ten-four など）は使いません（AIM 4-2-1）。')}
+${bk.q('管制官「Archer 7LA, say altitude.」。上昇中で、高度計は 3,480 ft。何と答える？', '「Archer 7LA, three thousand five hundred」のように、高度計の示す高度を 100 ft 単位に丸めて答えます（PCG：Say altitude）。Roger や Affirmative では答えになりません。')}` },
     ],
-    terms: [['Phonetic alphabet', 'フォネティックアルファベット', 'AIM 4-2-7'], ['Niner / Tree / Fife', '9 / 3 / 5 の発音', ''], ['Flight level', 'フライトレベル', '18,000 ft 以上'], ['Altimeter', '高度計規正値', ''], ['Squawk', 'トランスポンダーのコード', ''], ['Zulu (UTC)', '協定世界時', ''], ['Call sign', 'コールサイン', ''], ['Abbreviated call sign', '省略したコールサイン', '管制官から'], ['Roger / Wilco', '受信した / 了解し従う', ''], ['Affirmative / Negative', 'はい / いいえ', ''], ['Unable', '従えない', ''], ['Stand by', '待て', ''], ['Pilot/Controller Glossary', '管制用語集', 'PCG']],
-    examples: ['“Archer Seven Lima Alpha, fly heading one two zero, climb and maintain three thousand five hundred.” → 針路 120°・高度 3,500 ft。', '“Altimeter three zero zero one” → 30.01 inHg に合わせる。“Squawk zero four two five” → 0425。'],
-    cautions: ['発音のカタカナは目安。実際の音は音声で確かめる。', '英国など ICAO の言い方とは一部違う（{ch:radio5}）。'],
+    terms: [['Phonetic alphabet', 'フォネティックアルファベット', 'AIM 4-2-7'], ['Niner / Tree / Fife', '9 / 3 / 5 の発音', ''], ['Flight level', 'フライトレベル', '米国は 18,000 ft MSL から'], ['Altimeter', '高度計規正値', 'JO 7110.65 2-4-17'], ['Squawk', 'トランスポンダーのコード（を入れよ）', '4 けた'], ['Zulu (UTC)', '協定世界時', 'AIM 4-2-12'], ['Call sign', 'コールサイン', ''], ['Abbreviated call sign', '省略したコールサイン', '管制官が先に省略してから'], ['Roger / Wilco', '受け取った / 理解して従う', ''], ['Affirmative / Negative', 'はい / いいえ', ''], ['Unable', '従えない', ''], ['Stand by', '少し待って', '許可でも不許可でもない'], ['Say again', 'もう一度言って', ''], ['Hold short of', '…の手前で止まれ', '必ず復唱'], ['Line up and wait', '滑走路に入って待て', '離陸の許可ではない'], ['Pilot/Controller Glossary', '操縦士と管制官の用語集', 'PCG']],
+    examples: ['“Archer Seven Lima Alpha, fly heading one two zero, climb and maintain three thousand five hundred.” → 針路 120°・高度 3,500 ft。', '“Altimeter three zero zero one” → 30.01 inHg に合わせる。“Squawk zero four two five” → 0425。', '“Contact Ground point seven” → 121.7 MHz に変えて Ground を呼ぶ。'],
+    cautions: ['発音のカタカナは目安にしかならない。実際の音は音声で確かめる。', '英国など ICAO の言い方とは、一部が違う（{ch:radio5}）。'],
     quiz: [
-      { q: '高度 13,500 ft の正しい言い方は？（AIM 4-2-8）', choices: ['thirteen thousand five hundred', 'one three thousand five hundred', 'one three five zero zero', 'flight level one three five'], answer: 1, why: '10,000 ft 以上は千の位より上を 1 桁ずつ言う。フライトレベルは 18,000 ft 以上。' },
-      { q: '管制官「Archer 7LA, say altitude.」に対して正しいのは？', choices: ['Roger, Archer 7LA', 'Archer 7LA, three thousand five hundred', 'Wilco', 'Affirmative'], answer: 1, why: '質問には内容で答える。上昇・降下中は 100 ft 単位に丸めた指示高度を言う（PCG：Say altitude）。' },
-      { q: '"Stand by" の意味は？', choices: ['許可する', '許可しない', '少し待って（許可でも不許可でもない）', '周波数を変えよ'], answer: 2, why: 'PCG：Stand by は許可でも拒否でもない。長く待たされたらもう一度呼んでよい。' },
-      { q: '周波数 119.75 の言い方は？', choices: ['one nineteen seventy-five', 'one one niner point seven five', 'one one niner seven five', 'eleven nine point seventy-five'], answer: 1, why: '1 桁ずつ、小数点は point（ICAO は decimal）。9 は niner。' },
+      { q: '高度 13,500 ft の正しい言い方は？（AIM 4-2-8）', choices: ['thirteen thousand five hundred', 'one three thousand five hundred', 'one three five zero zero', 'flight level one three five'], answer: 1, why: '10,000 ft 以上は、thousand の前の数字を 1 けたずつ言う。flight level は 18,000 ft MSL から。' },
+      { q: '管制官「Archer 7LA, say altitude.」に対して正しいのは？', choices: ['Roger, Archer 7LA', 'Archer 7LA, three thousand five hundred', 'Wilco', 'Affirmative'], answer: 1, why: '質問には内容で答える。上昇・降下中は、高度計の示す高度を 100 ft 単位に丸めて言う（PCG：Say altitude）。' },
+      { q: '“Stand by” の意味は？', choices: ['許可する', '許可しない', '少し待って（許可でも不許可でもない）', '周波数を変えよ'], answer: 2, why: 'PCG：Stand by は許可でも不許可でもない。長く待たされたら、もう一度呼んでよい。' },
+      { q: '北（360°）へ向けという針路の、正しい言い方は？', choices: ['heading zero zero zero', 'heading three six zero', 'heading north', 'heading three sixty'], answer: 1, why: '針路は 3 けたを 1 けたずつ言い、北は 360 と言う（AIM 4-2-10・JO 7110.65 2-4-17）。' },
+      { q: '管制官の「はい・いいえ」で答える質問に「はい」と答える言葉は？', choices: ['Roger', 'Wilco', 'Affirmative', 'Copy'], answer: 2, why: 'Affirmative が「はい」。Roger は「受け取った」だけで、はい・いいえの答えには使わない（PCG）。' },
     ],
-    refs: [R.aim42, R.pcg, R.jo71], lessons: ['t1'] });
+    refs: [R.aim42, R.aim41, R.aim43, R.pcg, R.jo71], lessons: ['t1'] });
 
   // ======================================================================= radio 3
   B.add({ id: 'radio3', before: 'hf', part: 'p1', t: '交信の型：呼び出し・応答・復唱', en: 'How a call is built: initial contact, acknowledgement and readback',

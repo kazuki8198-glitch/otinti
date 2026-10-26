@@ -36,6 +36,8 @@
     aim42: { label: 'FAA AIM 4-2 Radio Communications Phraseology and Techniques（交信の言い方と技術）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html' },
     aim43: { label: 'FAA AIM 4-3 Airport Operations（空港での運用・地上走行・灯火信号）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html' },
     aim44: { label: 'FAA AIM 4-4 ATC Clearances and Aircraft Separation（4-4-7 許可と指示の復唱）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_4.html' },
+    aim21: { label: 'FAA AIM 2-1 Airport Lighting Aids（空港の灯火・2-1-2 PAPI などの進入角の灯）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap2_section_1.html' },
+    ac9066: { label: 'FAA AC 90-66C Non-Towered Airport Flight Operations（管制塔のない空港の運用・2023）', url: 'https://www.faa.gov/documentlibrary/media/advisory_circular/ac_90-66c.pdf' },
     aim23: { label: 'FAA AIM 2-3 Airport Marking Aids and Signs（空港の標示と標識・残り距離標識）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap2_section_3.html' },
     aim76: { label: 'FAA AIM 7-6 Potential Flight Hazards（7-6-7 山岳飛行と密度高度・7-6-8 滑走路の中間点の目安）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_6.html' },
     aim31: { label: 'FAA AIM 3-1 General（空域の基本・3-1-4 VFR の基本の気象条件）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap3_section_1.html' },

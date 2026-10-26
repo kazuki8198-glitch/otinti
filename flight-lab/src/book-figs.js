@@ -380,18 +380,6 @@
       let s = cup(68, '正の静安定', ['ずれても', '元に戻る'], 'M16 46 Q68 128 120 46', [68, 78], C.gr) + cup(200, '中立', ['ずれた所に', 'とどまる'], 'M148 96 L252 96', [200, 87], C.am) + cup(332, '負の静安定', ['ずれが', 'どんどん大きく'], 'M280 106 Q332 26 384 106', [332, 57], C.rd);
       return svg(400, 186, s, '図：静安定のたとえ（くぼみ・平ら・山の上の玉）。飛行機は、縦（ピッチ）と方向（ヨー）に正の静安定を持つように作られています');
     },
-    pattern() {
-      // LAB RWY 36: the runway vertical (north up), a LEFT pattern on its west side
-      let s = `<rect x="300" y="40" width="16" height="200" fill="#3a4658" stroke="${C.mut}"/>` + T(308, 254, '36', { c: C.ink, fs: 12, b: 1 }) + T(308, 32, '18', { c: C.mut, fs: 11 });
-      const pts = [[308, 30], [308, 10], [280, 0], [110, 0], [80, 20], [80, 270], [110, 300], [280, 300], [308, 290], [308, 245]];
-      s += P(pts, C.cy, 2.5) + A(308, 270, 308, 252, C.cy, 2.5) + A(150, 300, 200, 300, C.cy, 2);
-      s += T(330, 18, '離陸・上昇（upwind）', { c: C.cy, fs: 11, a: 'start' }) + T(190, -8, 'クロスウインド', { c: C.cy, fs: 11 });
-      s += T(64, 150, 'ダウンウインド：地上 1,000 ft・90 kt・方位 180°', { c: C.cy, fs: 11, rot: -90 }) + T(190, 318, 'ベース：方位 090°・フラップ 25°・75 kt', { c: C.cy, fs: 11 }) + T(330, 276, `ファイナル：70 kt・フラップ 40°`, { c: C.cy, fs: 11, a: 'start' });
-      s += `<circle cx="80" cy="240" r="6" fill="${C.am}"/>` + T(92, 236, 'アビーム：パワーを絞りフラップ 10°・降下開始', { c: C.am, fs: 10, a: 'start' });
-      s += `<circle cx="96" cy="292" r="6" fill="${C.gr}"/>` + T(110, 282, '進入端が斜め後ろ 45° でベースへ', { c: C.gr, fs: 10, a: 'start' });
-      s += T(200, 150, '旋回はすべて左（反時計回り）', { c: C.mut, fs: 11 }) + T(200, 168, '約 1.6 km（1 NM）離れて滑走路と平行', { c: C.mut, fs: 10 });
-      return svg(520, 330, `<g transform="translate(20 10)">${s}</g>`, '図：LAB RWY 36（架空）の左場周経路と、この教材の Archer の目安。場周高度は AIM の推奨（プロペラ機は地上 1,000 ft）が一般的だが、空港ごとに決まりがある（Chart Supplement で確認）');
-    },
     windTriangle() {
       let s = A(60, 220, 260, 40, C.cy, 3) + T(120, 110, '機首方位・真対気速度（TAS）', { c: C.cy, fs: 11, rot: -42 });
       s += A(260, 40, 330, 90, C.am, 3) + T(330, 60, '風', { c: C.am, fs: 12, b: 1, a: 'start' });
@@ -473,17 +461,6 @@
       for (const [ft, t] of [[2500, '2,500'], [4000, '4,000'], [10000, '10,000'], [18000, '18,000']]) s += T(4, y(ft) + 4, t, { c: C.mut, fs: 12, a: 'start', halo: 1 });
       s += L(0, g, W, g, C.mut, 1.5) + T(200, g + 18, '模式図・NOT FOR NAVIGATION（高さの目盛りは一様でない）', { c: C.mut, fs: 12 });
       return svg(W, 278, s, '図：米国の空域の断面（模式図・高さは代表例）。目盛りは MSL で、Class C・D の高さ（2,500・4,000 ft）は空港の標高からの高さです（図は標高 0 ft の空港の例）。Class G は多くの場所で地上 1,200 ft（空港の近くでは 700 ft）より下です。Class B は許可、Class C・D は入る前に双方向の無線交信の確立が必要です（14 CFR 91.129〜91.131、AIM 3-2）');
-    },
-    xwindTable() {
-      return table(['風と滑走路の角度', '横風成分', '向かい風成分', '風 15 kt なら'], [10, 20, 30, 45, 60, 90].map(a => [`${a}°`, `${Math.round(Math.sin(a * DEG) * 100)}%`, `${Math.round(Math.cos(a * DEG) * 100)}%`, `横 ${Math.round(15 * Math.sin(a * DEG))} kt・向かい ${Math.round(15 * Math.cos(a * DEG))} kt`]));
-    },
-    stableApproach() {
-      return table(['項目', '安定進入の目安（この教材の Archer・フラップ 40°）'], [['進入角', '3°（PAPI 白 2・赤 2）'], ['速度', '70 kt（+10／−5 kt 以内）'], ['降下率', '約 370 fpm（1,000 fpm を超えない）'], ['形態', 'フラップ・チェックリスト完了'], ['コース', 'センターラインの延長上。大きな修正が要らない'], ['判断', '地上 500 ft（VMC の目安）で満たさなければ<b>ゴーアラウンド</b>']]);
-    },
-    papi() {
-      const row = (y, cols, lab) => cols.map((c, i) => `<circle cx="${90 + i * 34}" cy="${y}" r="11" fill="${c ? '#f2f2f2' : '#ff4a3a'}"/>`).join('') + T(250, y + 4, lab, { c: C.ink, fs: 12, a: 'start' });
-      const s = row(30, [1, 1, 1, 1], '高すぎる（3.5° 以上）') + row(70, [1, 1, 1, 0], 'やや高い') + row(110, [1, 1, 0, 0], '正しい（3°）') + row(150, [1, 0, 0, 0], 'やや低い') + row(190, [0, 0, 0, 0], '低すぎる（2.5° 以下）');
-      return svg(460, 210, s, '図：PAPI（精密進入角指示灯）の見え方。滑走路の左側に 4 つ並ぶ（LAB RWY 36 も同じ）。白が多いと高い、赤が多いと低い（AIM 2-1-2）');
     },
     oeiForces() {
       let s = '<g transform="translate(200 150)"><rect x="-6" y="-80" width="12" height="150" rx="6" fill="#dfe6ee"/><rect x="-150" y="-12" width="300" height="20" rx="6" fill="#dfe6ee"/><rect x="-50" y="56" width="100" height="10" rx="4" fill="#dfe6ee"/>';
@@ -1341,6 +1318,109 @@
       });
       s += T(200, 366, `速度 ${tas} kt・半径 ${r} ft（AFH 第 7 章の例）`, { c: C.mut, fs: 12 });
       return svg(400, 376, s, '図：風の中で 1 点の周りを同じ半径で回る（上から見た模式図。時計回り）。対地速度が速い風下でバンクがいちばん深く、風上でいちばん浅くなります。バンクの値は、AFH 第 7 章の例と同じ条件で計算したもの');
+    },
+    // ---------------------------------------------------------------- 第 15 章 tl（離陸・場周経路・着陸）
+    pattern() {
+      // LAB RWY 36 (fictional) from above, north up: the left traffic pattern of AFH 3C chapter 8, AIM 4-3-2/4-3-3 and AC 90-66C
+      // with the course Archer's numbers (lesson t2's brief, AR). Not to scale: the base turn is drawn where the approach end is 45° behind
+      const v = ac('pa28').v, rx = 292, r0 = 150, r1 = 250, dx = 150, top = 64, bot = r1 + (rx - dx), mid = (r0 + r1) / 2, rr = 22;
+      const tag = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="11" fill="${c}" stroke="${C.bg}" stroke-width="2"/>` + T(x, y + 4.5, n, { c: C.bg, b: 1, fs: 12 });
+      let s = `<rect x="${rx - 7}" y="${r0}" width="14" height="${r1 - r0}" fill="#3a4658" stroke="${C.mut}"/>` + T(rx + 12, r1 - 4, '36', { c: C.ink, b: 1, a: 'start', fs: 12 }) + T(rx + 12, r0 + 14, '18', { c: C.mut, a: 'start', fs: 12 });
+      // abeam the approach end, and the 45° look back to it from the base turn
+      s += L(dx, r1, rx - 7, r1, C.am, 1.5, '3 4') + L(dx, bot, rx, r1, C.gr, 1.5, '3 4');
+      s += P([[rx, r1 - 24], [rx, top + rr], [rx - rr, top], [dx + rr, top], [dx, top + rr], [dx, bot - rr], [dx + rr, bot], [rx - rr, bot], [rx, bot - rr], [rx, r1 + 2]], C.cy, 2.5);
+      s += A(rx, 140, rx, 122, C.cy, 2.5) + A(232, top, 212, top, C.cy, 2.5) + A(dx, 318, dx, 336, C.cy, 2.5) + A(206, bot, 226, bot, C.cy, 2.5) + A(rx, 362, rx, 344, C.cy, 2.5);
+      // the 45° entry from outside the pattern, level at pattern altitude, to abeam midfield
+      s += `<path d="M ${dx - 96} ${mid - 96} L ${dx - 8} ${mid - 8}" stroke="${C.vi}" stroke-width="2.5" stroke-dasharray="7 5" fill="none"/>` + A(dx - 16, mid - 16, dx - 3, mid - 3, C.vi, 2.5);
+      // the distance between the downwind and the runway
+      s += A(222, 196, dx + 5, 196, C.mut, 1.5) + A(222, 196, rx - 12, 196, C.mut, 1.5) + T(222, 186, '約 1/2〜1 マイル', { c: C.ink, fs: 12 }) + T(222, 214, '（この教材 約 1.6 km）', { c: C.mut, fs: 12 });
+      s += T(222, 116, '旋回はすべて左', { c: C.mut, fs: 12 }) + T(222, 134, '場周高度 地上 1,000 ft', { c: C.mut, fs: 12 });
+      // leg names
+      s += T(dx - 16, 300, 'ダウンウインド', { c: C.cy, fs: 12, rot: -90 }) + T(222, top - 10, 'クロスウインド', { c: C.cy, fs: 12 }) + T(222, bot + 22, 'ベース', { c: C.cy, fs: 12 });
+      s += T(rx + 12, 330, 'ファイナル', { c: C.cy, a: 'start', fs: 12 }) + TL(rx + 12, 104, ['離陸上昇', '（Departure）'], { c: C.cy, a: 'start', fs: 12, lh: 15 });
+      s += A(380, 30, 380, 76, C.am, 3) + T(380, 22, '風', { c: C.am, b: 1, fs: 12 }) + A(22, 60, 22, 30, C.mut, 2) + T(22, 76, '北', { c: C.mut, fs: 12 });
+      s += tag(dx - 48, mid - 48, '①', C.vi) + tag(dx, 116, '②', C.cy) + tag(dx, r1, '③', C.am) + tag(dx + 6, bot - 6, '④', C.gr) + tag(rx, 296, '⑤', C.cy) + tag(rx - 6, top + 6, '⑥', C.cy);
+      s += T(200, bot + 46, '模式図（LAB 空港は架空）・NOT FOR NAVIGATION', { c: C.mut, fs: 12 });
+      // the key under the drawing
+      const key = [['①', C.vi, ['45° で、滑走路の中央の真横へ入る（場周高度で水平に）']], ['②', C.cy, [`ダウンウインド：約 90 kt・着陸前の点検`]],
+        ['③', C.am, ['進入端の真横：出力を絞り、フラップ 10°、降下を始める']], ['④', C.gr, ['進入端が斜め後ろ 45° に見えたらベースへ', 'フラップ 25°・75 kt']],
+        ['⑤', C.cy, [`ファイナル：フラップ 40°・${v.appr} kt・3°`, '旋回は、滑走路から 1/4 マイルより遠くで終える']], ['⑥', C.cy, [`離陸上昇は ${v.y} kt。滑走路の端を越え、`, '場周高度の 300 ft 下まで上がったらクロスウインドへ']]];
+      let y = bot + 78;
+      for (const [n, c, lines] of key) { s += tag(16, y - 4, n, c) + TL(34, y, lines, { c: C.ink, a: 'start', fs: 12, lh: 16 }); y += lines.length * 16 + 6; }
+      s += T(8, y + 4, '速度などは、この教材の Archer の目安（課目 t2）', { c: C.mut, a: 'start', fs: 12 });
+      return svg(400, y + 14, s, '図：LAB 空港（架空）の滑走路 36 の左回りの場周経路（上から見た模式図）。形と高さは AFH 第 8 章・AIM 4-3-3・AC 90-66C の目安です。場周高度や回る向きは空港ごとに決まりがあるので、Chart Supplement で確かめます');
+    },
+    approachProfile() {
+      // the final approach from the side (heights drawn ≈ 14 × the horizontal scale): the 3° path to the aiming point, the AFH 3C chapter 9
+      // gates (stable by 500 ft in VMC; below 300 ft, unstable → go around at once) and the course Archer's numbers (AR.appr, flaps 40°,
+      // ≈ AR.appr × 5.3 fpm as the lessons fly); top right, the PAPI of AIM 2-1-2 (FIG 2-1-2: > 3.5°, 3.2°, 3°, 2.8°, < 2.5°)
+      const v = ac('pa28').v, fpm = Math.round(v.appr * 5.3 / 10) * 10, g = 262, ax = 290, k = 0.2, hx = (ax - 12) / (1000 / Math.tan(3 * DEG));
+      const P3 = ft => [ax - ft / Math.tan(3 * DEG) * hx, g - ft * k], [x1, y1] = P3(1000), [x5, y5] = P3(500), [x3, y3] = P3(300), [xf, yf] = P3(18);
+      let s = L(0, g, 400, g, C.mut, 1.5) + `<rect x="250" y="${g - 3}" width="150" height="6" fill="#3a4658" stroke="${C.mut}"/>` + T(392, g - 10, '滑走路', { c: C.mut, a: 'end', fs: 12 });
+      s += L(x1, y1, ax, g, C.cy, 2.5) + `<path d="M ${xf.toFixed(1)} ${yf.toFixed(1)} Q ${ax + 6} ${g - 1} 334 ${g - 3}" stroke="${C.cy}" stroke-width="2" stroke-dasharray="4 3" fill="none"/>`;
+      s += `<rect x="${ax - 6}" y="${g - 3}" width="12" height="6" fill="${C.am}"/>` + T(ax, g + 18, '目標点', { c: C.am, b: 1, fs: 12 }) + T(ax, g + 34, '（進入端から約 300 m）', { c: C.mut, fs: 12 });
+      s += `<circle cx="334" cy="${g - 3}" r="4" fill="${C.gr}"/>` + T(334, g - 12, '接地', { c: C.gr, fs: 12 });
+      // the 500 ft and 300 ft gates
+      s += L(x5, y5, x5, g, C.am, 1.5, '4 4') + `<circle cx="${x5.toFixed(1)}" cy="${y5.toFixed(1)}" r="5" fill="${C.am}"/>`;
+      s += TL(12, 182, ['地上 500 ft までに安定', 'していなければ', 'ゴーアラウンド'], { c: C.am, a: 'start', fs: 12, lh: 16 });
+      s += L(x3, y3, x3, g, C.rd, 1.5, '4 4') + `<circle cx="${x3.toFixed(1)}" cy="${y3.toFixed(1)}" r="4" fill="${C.rd}"/>`;
+      s += TL(12, g + 18, ['地上 300 ft より下で不安定に', 'なったら、すぐにゴーアラウンド'], { c: C.rd, a: 'start', fs: 12, lh: 16 });
+      const [px, py] = P3(820);
+      s += planeSide(px, py - 1, 0.45, { pitch: -3, flap: 40 }) + T(x1 + 2, y1 - 8, '1,000 ft', { c: C.mut, a: 'start', fs: 12 });
+      s += TL(96, 24, ['この教材の Archer', `${v.appr} kt・フラップ 40°`, `降下率 約 ${fpm} fpm`, '3°（PAPI 白 2・赤 2）'], { c: C.ink, a: 'start', fs: 12, lh: 16 });
+      // PAPI: red lights grow from the runway side
+      s += `<rect x="228" y="8" width="170" height="150" rx="8" fill="${C.ink}" fill-opacity="0.05" stroke="${C.grid}"/>` + T(313, 27, 'PAPI（滑走路の左の灯）', { c: C.ink, b: 1, fs: 12 });
+      [[4, '高い（3.5° 超）'], [3, 'やや高い（3.2°）'], [2, '正しい（3°）'], [1, 'やや低い（2.8°）'], [0, '低い（2.5° 未満）']].forEach(([w, lab], i) => {
+        const y = 50 + i * 22;
+        for (let j = 0; j < 4; j++) s += `<circle cx="${238 + j * 14}" cy="${y}" r="5.5" fill="${j < w ? '#f2f2f2' : '#ff4a3a'}"/>`;
+        s += T(294, y + 4, lab, { c: w === 2 ? C.gr : C.ink, b: w === 2 ? 1 : 0, a: 'start', fs: 12 });
+      });
+      return svg(400, g + 42, s, '図：ファイナル（横から見た模式図。高さは横より大きく描いてあり、滑走路の部分は縮尺どおりではありません）。3° の線で目標点へまっすぐ降り、地上 500 ft までに安定していなければゴーアラウンドします（AFH 第 9 章）。接地はフレアのぶん目標点より少し先になります。右上は PAPI の見え方（AIM 2-1-2）');
+    },
+    goAroundProfile() {
+      // a go-around from short final (side view, not to scale): AFH 3C chapter 9 Power → Attitude → Configuration with the published
+      // Archer III checklist's BALKED LANDING (flaps 25°, 64 kt, 76 kt after the obstacle); the climb rates from the flight model (500 ft)
+      const v = ac('pa28').v, PH = FL.physics, s0 = PH.newState({ aircraft: 'pa28' });
+      const cl = f => Math.round(PH.steadyState(s0, v.ga, null, { altFt: 500, pwr: 'full', flaps: f }).fpm / 10) * 10, c40 = cl(3), c25 = cl(2);
+      const cub = t => { const u = 1 - t, p = [[110, 100], [150, 124], [190, 128], [240, 104]]; return [0, 1].map(i => u * u * u * p[0][i] + 3 * u * u * t * p[1][i] + 3 * u * t * t * p[2][i] + t * t * t * p[3][i]); };
+      const tag = (x, y, n, c) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" fill="${c}" stroke="${C.bg}" stroke-width="2"/>` + T(x.toFixed(1), (y + 4.5).toFixed(1), n, { c: C.bg, b: 1, fs: 12 });
+      let s = L(0, 176, 400, 176, C.mut, 1.5) + `<rect x="200" y="173" width="200" height="6" fill="#3a4658" stroke="${C.mut}"/>` + T(392, 196, '滑走路', { c: C.mut, a: 'end', fs: 12 });
+      s += L(8, 40, 110, 100, C.cy, 2.5) + `<path d="M110 100 C150 124 190 128 240 104 L392 38" stroke="${C.gr}" stroke-width="2.5" fill="none"/>` + A(381, 42.8, 392, 38, C.gr, 2.5);
+      s += planeSide(56, 62, 0.42, { pitch: -3, flap: 40 }) + planeSide(338, 55, 0.42, { pitch: 8, flap: 25 });
+      s += T(8, 24, `${v.appr} kt・フラップ 40°`, { c: C.mut, a: 'start', fs: 12 }) + T(392, 22, `${v.y} kt・フラップを少しずつ UP`, { c: C.mut, a: 'end', fs: 12 });
+      s += T(118, 88, '判断！', { c: C.am, b: 1, a: 'start', fs: 13 }) + T(172, 152, '沈みを小さく', { c: C.mut, fs: 12 });
+      const [x2, y2] = cub(0.3), [x3, y3] = cub(0.62), y4 = 104 - (290 - 240) * 66 / 152;
+      s += tag(110, 100, '①', C.am) + tag(x2, y2, '②', C.cy) + tag(x3, y3, '③', C.vi) + tag(290, y4, '④', C.gr);
+      const key = [['①', C.am, ['Power：決めたらすぐ、なめらかに全開', 'キャブレターヒーターは OFF']], ['②', C.cy, ['Attitude：機首が上がり左へ向くので、', '押さえて上昇の姿勢に。右ラダー']],
+        ['③', C.vi, [`Configuration：降下が止まったら、`, `フラップを 25° に。${v.ga} kt`]], ['④', C.gr, [`上昇を確かめ、障害物を越えたら ${v.y} kt`, 'フラップを少しずつ上げる']]];
+      let y = 222;
+      for (const [n, c, lines] of key) { s += tag(16, y - 4, n, c) + TL(34, y, lines, { c: C.ink, a: 'start', fs: 12, lh: 16 }); y += lines.length * 16 + 6; }
+      s += TL(8, y + 6, [`${v.ga} kt・全開の上昇（この教材のフライトモデル）：`, `フラップ 40° のまま 約 +${c40} fpm → 25° で 約 +${c25} fpm`], { c: C.mut, a: 'start', fs: 12, lh: 16 });
+      return svg(400, y + 32, s, '図：ゴーアラウンド（横から見た模式図）。AFH 第 9 章の 3 つの原則（Power → Attitude → Configuration）と、公開されている訓練校の Archer III チェックリストの BALKED LANDING（フラップ 25°・64 kt、障害物を越えたら 76 kt）。フラップを一度に上げると沈みます');
+    },
+    crabWingLow() {
+      // the two crosswind methods of AFH 3C chapter 9 (Figures 9-15 and 9-16) from above, the wind from the right, and the wings seen from ahead
+      const panel = (x0, title, crab) => {
+        const cx = x0 + 96, py = 176, c = crab ? C.cy : C.gr;
+        let s = `<rect x="${x0}" y="4" width="192" height="346" rx="8" fill="${C.ink}" fill-opacity="0.04" stroke="${C.grid}"/>` + T(cx, 25, title, { c, b: 1, fs: 13 });
+        s += `<rect x="${cx - 9}" y="38" width="18" height="86" fill="#3a4658" stroke="${C.mut}"/>` + L(cx, 124, cx, 252, C.ink, 1.5, '6 5');
+        s += A(x0 + 186, 62, x0 + 130, 62, C.am, 3) + T(x0 + 160, 52, '風', { c: C.am, b: 1, fs: 12 });
+        s += A(cx, 250, cx, 222, C.gr, 2.5) + T(cx + 8, 248, '進む向き', { c: C.gr, a: 'start', fs: 12 });
+        s += planeTop(cx, py, 0.6, { rot: crab ? 15 : 0 });
+        if (crab) s += L(cx + Math.sin(15 * DEG) * 32, py - Math.cos(15 * DEG) * 32, cx + Math.sin(15 * DEG) * 64, py - Math.cos(15 * DEG) * 64, C.cy, 2, '4 3') + T(cx + 22, py - 66, '機首', { c: C.cy, a: 'start', fs: 12 });
+        else s += A(cx + 38, py - 30, cx + 38, py - 8, C.rd, 2.5) + T(cx + 46, py - 30, '下げる', { c: C.rd, b: 1, a: 'start', fs: 12 }) + T(cx - 12, py + 40, '左ラダー', { c: C.am, b: 1, a: 'end', fs: 12 });
+        s += planeFront(cx, 274, 0.5, { bank: crab ? 0 : 10 }) + T(x0 + 186, 296, '後ろから', { c: C.mut, a: 'end', fs: 12 });
+        s += TL(x0 + 10, 316, crab ? ['翼は水平。機首を風上へ向けて、', '進む向きを滑走路に合わせる'] : ['風上の翼を下げて流れを止め、', '反対のラダーで機首をまっすぐ'], { c: C.ink, a: 'start', fs: 12, lh: 16 });
+        return s;
+      };
+      const s = panel(4, '① クラブ（crab）', true) + panel(204, '② ウイングロー（wing-low）', false);
+      return svg(400, 354, s, '図：横風の進入の 2 つのやり方（上から見た模式図。風は右から。下の小さな絵は後ろから見た翼）。① クラブは、接地の直前にラダーで機首を滑走路と平行にします。② ウイングローは、風上の翼を下げたまま、風上の主輪から接地します。AFH 第 9 章は、多くの場合ウイングローをすすめています');
+    },
+    xwindTable() {
+      // the crosswind and headwind components (sin and cos of the angle between the wind and the runway), the clock rule of thumb,
+      // and lesson x1's wind (12 kt at 60°)
+      const w = 12, thumb = { 15: '約 1/4', 30: '約 1/2', 45: '約 3/4', 60: 'ほぼ全部', 90: '全部' };
+      return table(['風と滑走路の角度', '横風成分', '向かい風成分', '覚え方（目安）', `風 ${w} kt なら`], [15, 30, 45, 60, 90].map(a => [`${a}°`, `${Math.round(Math.sin(a * DEG) * 100)}%`, `${Math.round(Math.cos(a * DEG) * 100)}%`, thumb[a], `横 ${Math.round(w * Math.sin(a * DEG))} kt・向かい ${Math.round(w * Math.cos(a * DEG))} kt`]));
     },
   };
 

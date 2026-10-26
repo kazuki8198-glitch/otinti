@@ -132,7 +132,7 @@ table.terms th { color: var(--muted); font-weight: 600; }
 
 /* the dark boards: figures and calculators (their colours are drawn for #0b1422) */
 .bk-fig { margin: 14px 0; padding: 10px; text-align: center; background: var(--board); border: 1px solid var(--board-line); border-radius: 8px; color: var(--board-ink); }
-.bk-fig svg { max-width: 100%; height: auto; background: var(--board); display: block; margin: 0 auto; }
+.bk-fig svg { width: 100%; max-width: 640px; height: auto; background: var(--board); display: block; margin: 0 auto; }
 .bk-fig figcaption { font-size: .75rem; color: var(--board-mut); margin-top: 4px; line-height: 1.5; }
 .bk-calc { background: var(--board); color: var(--board-ink); border: 1px solid var(--board-line); border-radius: 8px; padding: 10px 12px; margin: 12px 0; font-size: .85rem; line-height: 1.7; overflow-x: auto; }
 #tbView .bk-calc b { color: #ffd28a; }
@@ -146,6 +146,7 @@ table.terms th { color: var(--muted); font-weight: 600; }
 
 /* ------------------------------------------------------------------ the whole book (#all) */
 .tb-all-title { font: 700 1.6rem/1.4 var(--jp); margin: 4px 0 10px; }
+.tb-all-toc { line-height: 1.55; font-size: .9rem; }
 .tb-all-toc h2 { font: 700 1rem/1.5 var(--jp); color: var(--part); margin: 16px 0 4px; }
 .tb-all-toc ol { margin: 2px 0; padding-left: 1.2em; list-style: none; } .tb-all-toc li { margin: 2px 0; }
 .tb-all-toc a { text-decoration: none; } .tb-all-toc a:hover { text-decoration: underline; }
@@ -157,11 +158,13 @@ table.terms th { color: var(--muted); font-weight: 600; }
 /* ------------------------------------------------------------------ phones: the contents above the text */
 @media (max-width: 900px) {
   .tb-wrap { grid-template-columns: minmax(0, 1fr); }
-  .tb-side { position: static; height: auto; max-height: 38vh; border-right: 0; border-bottom: 1px solid var(--line); }
+  :root { --headH: 0px; }
+  .tb-head { position: static; padding: 8px 12px; }
+  .tb-brand { flex-basis: 100%; white-space: normal; }
+  .tb-tools { flex-basis: 100%; justify-content: flex-start; }
+  .tb-tools input[type="search"] { flex-basis: 100%; max-width: none; }
+  .tb-side { position: static; height: auto; max-height: 34vh; border-right: 0; border-bottom: 1px solid var(--line); }
   .tb-main { padding: 12px 16px 40px; }
-  .tb-head { position: sticky; padding: 6px 12px; }
-  .tb-tools { justify-content: flex-start; }
-  .tb-tools input[type="search"] { flex-basis: 100%; max-width: none; order: -1; }
   .bk-title { font-size: 1.25rem; }
 }
 

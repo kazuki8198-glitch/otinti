@@ -12,6 +12,7 @@
     acron: { label: 'Acron Aviation USA — Aircraft fleet', url: 'https://acronaviationacademy.com/usa/about-us/aircraft-fleet/' },
     archer: { label: 'Piper Archer（Piper 公式）', url: 'https://www.piper.com/model/archer-tx/' },
     archerPoh: { label: 'Piper PA-28-181 Archer III Pilot\'s Operating Handbook（VB-2266・2013・公開されている写し）', url: 'https://www.andrews.edu/cp/aviation/resources/archeriii-poh.pdf', note: '速度の制限・制限荷重倍数（普通類・実用類）・スピンの禁止と回復の手順。実機はその機体の POH が優先' },
+    piperTrainer: { label: 'Piper Trainer Brochure 2026（Archer TX・Seminole の仕様：エンジン・燃料・最大重量・離着陸距離）', url: 'https://www.piper.com/wp-content/uploads/2019/01/2026_Trainer_Brochure_V2.pdf' },
     seminole: { label: 'Piper Seminole（Piper 公式）', url: 'https://www.piper.com/model/seminole/' },
     archerCk: { label: 'Archer III w/ G1000 PA-28-181 Pilot\'s Checklist（Middle Georgia State University・2025・公開資料）', url: 'https://www.mga.edu/aviation/knight-flight/aircraft-information-procedures/docs/Archer_Checklist.pdf', note: 'Vr 60・Vx 64・Vy 76・巡航上昇 87・最良滑空 76・進入 70 / 65・Va 113・Vfe 102・実証横風 17 kt など。訓練校ごとに版がある' },
     seminoleG: { label: 'Maneuver Guide Seminole (PA-44-180)（Southeastern Oklahoma State University・公開資料）', url: 'https://www.se.edu/aviation/wp-content/uploads/sites/4/2023/11/Seminloe-Guide-V1.0.pdf', note: 'Vmc 56・Vyse 88・Vsse 82・Vr 75・Vx 82・Vy 88・Vxse 88（この版の表の値。POH の版により異なることがある）・Va 135 など' },

@@ -10,7 +10,8 @@ WebP data URL in flight-lab/src/book-photos.js, and write flight-lab/PHOTO-CREDI
 
 The conversion: EXIF orientation applied, RGB, optional crop (fractions 0–1 or pixels), long side ≤ --max px, WebP with
 the highest quality (≤ 88) that fits --kb KB (smaller sizes are tried when quality 40 is not enough); no EXIF / ICC /
-XMP is written. Run it with python3 -I (isolated) — it reads downloaded files.
+XMP is written. A quality whose base64 happens to spell a string the build tests reject (XXX, TODO …) is skipped.
+Run it with python3 -I (isolated) — it reads downloaded files.
 """
 import argparse, base64, io, json, os, re, sys
 from PIL import Image, ImageOps
@@ -48,14 +49,22 @@ def convert(path, crop, maxside, kb):
         k = min(1.0, side / max(im.size))
         cur = im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS) if k < 1 else im.copy()
         cur.info = {}
-        for q in range(88, 39, -4):
+        for q in range(88, 39, -2):
             buf = io.BytesIO()
             cur.save(buf, 'WEBP', quality=q, method=6, exif=b'', icc_profile=None)
-            if buf.tell() <= kb * 1024:
+            if buf.tell() <= kb * 1024 and clean(base64.b64encode(buf.getvalue()).decode()):
                 return buf.getvalue(), cur.size, q
         side = int(side * 0.85)
         if side < 320:
             raise SystemExit('cannot fit %s into %d KB' % (path, kb))
+
+
+# the apps' build tests reject these strings anywhere in the page (flight-lab/test/flight.test.mjs); base64 can spell them by chance
+BAD = [re.compile(x) for x in (r'XXX', r'\bTODO\b', r'\bFIXME\b', r'\bTBD\b', r'PLACEHOLDER', r'AIza[0-9A-Za-z_-]{30,}', r'sk-ant-api')]
+
+
+def clean(b64):
+    return not any(r.search(b64) for r in BAD)
 
 
 def used_in():

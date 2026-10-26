@@ -511,6 +511,154 @@
     standardRate() {
       return table(['真対気速度', '標準旋回（3°/秒）のバンク', '目安「速度 ÷ 10 ＋ 7」'], [70, 90, 100, 120, 150].map(v => [`${v} kt`, `${(Math.atan(3 * v / 1091) / DEG).toFixed(0)}°`, `${Math.round(v / 10 + 7)}°`]));
     },
+    // ---------------------------------------------------------------- 第 3 章 sys（機体と装備）
+    stabilatorTab() {
+      // the Archer's all-moving tail and its anti-servo tab (the tab moves the same way as the trailing edge, so the air
+      // pushes back and the control feels heavier); the trim wheel moves the tab's neutral position
+      const panel = (y, defl, title, sub) => {
+        const px = 150, r = defl * DEG, cx = px + 120 * Math.cos(r), cy = y - 120 * Math.sin(r), tr = (defl * 2.2) * DEG;
+        let s = T(12, y - 46, title, { c: C.ink, b: 1, a: 'start', fs: 13 }) + T(12, y - 29, sub, { c: C.mut, a: 'start', fs: 12 });
+        s += `<path d="M10 ${y - 14} L120 ${y - 6} L120 ${y + 8} L10 ${y + 14} Z" fill="${PLANE}"/>` + T(40, y + 30, '胴体の後ろ', { c: C.mut, fs: 12 });
+        s += `<path d="M${px - 30} ${y} L${px + 14} ${y - 5} L${px + 120} ${y} L${px + 14} ${y + 5} Z" transform="rotate(${-defl} ${px} ${y})" fill="${PLANE2}"/>`;
+        const tx = cx + 34 * Math.cos(r + tr), ty = cy - 34 * Math.sin(r + tr);
+        s += `<line x1="${cx}" y1="${cy}" x2="${tx.toFixed(1)}" y2="${ty.toFixed(1)}" stroke="${C.am}" stroke-width="7" stroke-linecap="round"/>`;
+        s += `<circle cx="${px}" cy="${y}" r="5" fill="${C.ink}"/>` + T(px, y + 26, '回転の軸', { c: C.ink, fs: 12 });
+        s += T(px + 60, y + 26, 'スタビレーター', { c: C.cy, b: 1, a: 'start', fs: 12, halo: 1 }) + T(tx - 4, ty + 22, 'アンチサーボタブ', { c: C.am, b: 1, a: 'start', fs: 12, halo: 1 });
+        if (defl) s += A(tx + 4, ty - 34, tx - 2, ty - 8, C.rd, 2.5) + T(392, ty - 52, '空気が押し返す', { c: C.rd, a: 'end', fs: 12, halo: 1 }) + T(392, ty - 36, '→ 操縦が重くなる', { c: C.rd, a: 'end', fs: 12, halo: 1 });
+        return s;
+      };
+      let s = panel(86, 0, '中立', '水平尾翼全体（スタビレーター）が軸のまわりに動く') + panel(240, 10, '操縦輪を引いた（後ろの縁が上がる）', 'タブは同じ向きに、もっと大きく動く');
+      s += `<rect x="12" y="300" width="376" height="30" rx="6" fill="${C.gr}" fill-opacity="0.1" stroke="${C.gr}"/>` + T(200, 320, 'トリムホイール（前席の間）でタブの位置を変え、力を消す', { c: C.gr, b: 1, fs: 12 });
+      return svg(400, 338, s, '図：Archer の水平尾翼（スタビレーター）とアンチサーボタブ（横から見た模式図）。タブは尾翼の後ろの縁と同じ向きに動いて操縦を重くし、トリムの役目もします');
+    },
+    cockpitLayout() {
+      // a schematic G1000-type Archer cockpit after the public POH's panel (Fig. 7-15 / 7-15A): most switches overhead; years and equipment differ
+      let s = `<rect x="40" y="6" width="320" height="30" rx="6" fill="#141f30" stroke="${C.mut}"/>`;
+      for (let i = 0; i < 5; i++) s += `<rect x="${50 + i * 12}" y="14" width="7" height="14" rx="2" fill="${C.mut}"/><rect x="${290 + i * 12}" y="14" width="7" height="14" rx="2" fill="${C.mut}"/>`;
+      s += T(200, 26, '天井のスイッチパネル', { c: C.ink, b: 1, fs: 12 });
+      s += `<rect x="170" y="42" width="60" height="20" rx="4" fill="#0b1422" stroke="${C.mut}"/>` + T(200, 56, 'コンパス', { c: C.ink, fs: 12 });
+      s += `<rect x="8" y="68" width="384" height="112" rx="10" fill="#141f30" stroke="${C.mut}"/>`;
+      const scr = (x, t, sub) => `<rect x="${x}" y="78" width="116" height="74" rx="6" fill="#06101c" stroke="${C.cy}" stroke-width="1.5"/>` + T(x + 58, 110, t, { c: C.cy, b: 1, fs: 14 }) + T(x + 58, 130, sub, { c: C.ink, fs: 12 });
+      s += `<circle cx="32" cy="106" r="17" fill="#06101c" stroke="${C.am}" stroke-width="1.5"/>` + scr(56, 'PFD', '飛行の計器') + scr(226, 'MFD', '地図・エンジン');
+      s += `<rect x="180" y="78" width="40" height="74" rx="4" fill="#06101c" stroke="${C.mut}"/>`;
+      for (let i = 0; i < 4; i++) s += `<rect x="${186 + i * 8}" y="160" width="5" height="10" rx="1.5" fill="${C.mut}"/>`;
+      for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) s += `<circle cx="${356 + c * 11}" cy="${142 + r * 11}" r="3" fill="${C.mut}"/>`;
+      s += L(32, 124, 32, 190, C.am, 1) + T(32, 202, '予備計器', { c: C.am, b: 1, fs: 12 }) + L(200, 152, 200, 190, C.mut, 1) + T(200, 202, 'オーディオパネル', { c: C.ink, fs: 12 }) + L(367, 170, 367, 190, C.mut, 1) + T(392, 202, 'ブレーカー', { c: C.ink, fs: 12, a: 'end' });
+      for (const x of [70, 330]) s += `<path d="M${x - 32} 214 L${x - 32} 230 L${x + 32} 230 L${x + 32} 214" stroke="${C.ink}" stroke-width="5" fill="none" stroke-linecap="round"/><line x1="${x}" y1="230" x2="${x}" y2="244" stroke="${C.ink}" stroke-width="5"/>` + T(x, 262, '操縦輪', { c: C.mut, fs: 12 });
+      s += `<rect x="176" y="212" width="48" height="58" rx="6" fill="#141f30" stroke="${C.mut}"/><circle cx="190" cy="230" r="7" fill="#2a2a2a" stroke="${C.mut}"/><circle cx="210" cy="230" r="7" fill="${C.rd}"/>`;
+      s += `<rect x="230" y="222" width="12" height="16" rx="2" fill="${C.am}"/>` + TL(248, 228, ['キャブ', 'ヒート'], { c: C.am, a: 'start', fs: 12, lh: 15 });
+      s += T(200, 288, '真ん中の台：スロットル（黒）・ミクスチャー（赤）', { c: C.ink, fs: 12 });
+      s += `<rect x="168" y="300" width="26" height="9" rx="3" fill="${C.gr}"/><rect x="206" y="297" width="40" height="8" rx="3" fill="${C.gr}"/>` + T(200, 326, '前席の間の床：トリムホイール・フラップレバー', { c: C.gr, b: 1, fs: 12 });
+      s += `<circle cx="22" cy="346" r="8" fill="none" stroke="${C.am}" stroke-width="2"/><line x1="22" y1="346" x2="17" y2="340" stroke="${C.am}" stroke-width="2"/>` + T(36, 351, '燃料セレクター（左の壁の下）', { c: C.am, b: 1, a: 'start', fs: 12 });
+      s += T(392, 372, '模式図（年式・装備で違う）', { c: C.mut, a: 'end', fs: 12 });
+      return svg(400, 380, s, '図：G1000 型の計器を付けた Archer の操縦席（模式図。公開されている POH の機体の例）。スターター・マスター・燃料ポンプ・マグネトー・灯火などのスイッチは天井のパネルにあります。年式や装備によって、スイッチや予備計器の形と位置は違います');
+    },
+    engineFlow() {
+      // the carbureted O-360's air, fuel and ignition (a fuel-injected IO-360 has an injection system instead of the carburetor)
+      let s = '';
+      const box = (x, y, w, h, c, t, sub) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="7" fill="${c}" fill-opacity="0.12" stroke="${c}" stroke-width="1.5"/>` + T(x + w / 2, y + 19, t, { c, b: 1, fs: 13 }) + (sub ? TL(x + w / 2, y + 37, sub, { c: C.ink, fs: 12, lh: 15 }) : '');
+      s += box(12, 14, 120, 34, C.cy, '外の空気') + A(72, 48, 72, 66, C.cy, 2);
+      s += box(12, 66, 120, 34, C.cy, 'エアフィルター') + A(72, 100, 72, 118, C.cy, 2);
+      s += box(12, 118, 120, 74, C.am, 'キャブレター', ['空気に燃料を', '混ぜる']) + A(132, 156, 162, 156, C.am, 2.5);
+      s += T(72, 210, 'スロットル（黒）', { c: C.ink, fs: 12 }) + T(72, 226, 'ミクスチャー（赤）', { c: C.ink, fs: 12 });
+      // the engine: 4 cylinders, 2 plugs each
+      s += `<rect x="164" y="104" width="112" height="104" rx="10" fill="${PLANE2}" fill-opacity="0.25" stroke="${C.ink}"/>` + T(220, 98, 'シリンダー 4 つ', { c: C.ink, b: 1, fs: 13 });
+      for (const [cx, cy] of [[192, 132], [248, 132], [192, 180], [248, 180]]) s += `<circle cx="${cx}" cy="${cy}" r="16" fill="#0b1422" stroke="${C.ink}"/><circle cx="${cx - 7}" cy="${cy}" r="3.5" fill="${C.cy}"/><circle cx="${cx + 7}" cy="${cy}" r="3.5" fill="${C.gr}"/>`;
+      s += A(220, 208, 220, 236, C.mut, 2.5) + T(220, 252, '排気', { c: C.mut, b: 1, fs: 13 });
+      // the magnetos, not connected to the battery
+      s += `<rect x="290" y="96" width="102" height="120" rx="8" fill="none" stroke="${C.vi}" stroke-dasharray="5 4"/>`;
+      s += box(298, 108, 86, 34, C.cy, '左マグネトー') + box(298, 156, 86, 34, C.gr, '右マグネトー');
+      s += L(298, 125, 276, 125, C.cy, 1.5) + L(298, 173, 276, 173, C.gr, 1.5);
+      s += TL(341, 232, ['バッテリーとは', 'つながっていない'], { c: C.vi, fs: 12, lh: 15 });
+      s += T(12, 276, '● 点火プラグ：各シリンダーに 2 本（左右のマグネトーから別々に）', { c: C.ink, a: 'start', fs: 12 }) + T(12, 294, '燃料噴射式（IO-360）は、キャブレターの代わりに噴射装置', { c: C.mut, a: 'start', fs: 12 });
+      return svg(400, 304, s, '図：キャブレター式のエンジン（O-360）の空気・燃料・点火の流れ（模式図）。点火はエンジンが回して発電するマグネトーで行い、左右 2 系統あります。電気系統が止まってもエンジンは止まりません');
+    },
+    carbIce() {
+      // a float-type carburetor: the air speeds up in the venturi, the pressure falls and the fuel evaporates — the
+      // temperature can drop as much as 60–70 °F (PHAK 25C ch. 7), so ice forms near the venturi and the throttle valve
+      let s = `<path d="M150 300 L150 210 Q150 186 170 180 L170 150 Q150 144 150 120 L150 20 L250 20 L250 120 Q250 144 230 150 L230 180 Q250 186 250 210 L250 300" fill="#13233a" stroke="${C.ink}" stroke-width="2"/>`;
+      s += A(200, 296, 200, 236, C.cy, 3) + T(200, 316, '外の空気（下から入る）', { c: C.cy, b: 1, fs: 12 });
+      s += `<rect x="60" y="150" width="70" height="70" rx="6" fill="#13233a" stroke="${C.ink}"/><rect x="62" y="186" width="66" height="32" fill="${C.bl}" fill-opacity="0.5"/>` + T(95, 142, '燃料室', { c: C.ink, fs: 12 });
+      s += `<path d="M130 200 L182 200 L192 168" stroke="${C.am}" stroke-width="3" fill="none"/>` + `<circle cx="196" cy="160" r="4" fill="${C.am}"/><circle cx="204" cy="152" r="3" fill="${C.am}"/><circle cx="196" cy="146" r="2.5" fill="${C.am}"/>`;
+      s += `<line x1="160" y1="96" x2="240" y2="84" stroke="${C.ink}" stroke-width="4"/>` + T(262, 82, 'スロットル弁', { c: C.ink, a: 'start', fs: 12 });
+      for (const [x, y] of [[170, 160], [230, 160], [168, 100], [234, 92]]) s += `<path d="M${x - 8} ${y} q4 -10 8 0 q4 -10 8 0" fill="#dff4ff" stroke="#9fd0f0"/>`;
+      s += T(262, 156, '氷（ベンチュリーの', { c: '#9fd0f0', b: 1, a: 'start', fs: 12 }) + T(262, 172, '　くびれと弁のまわり）', { c: '#9fd0f0', b: 1, a: 'start', fs: 12 });
+      s += A(200, 30, 200, 4, C.gr, 2.5) + T(214, 14, 'エンジンへ', { c: C.gr, a: 'start', fs: 12 });
+      s += T(8, 244, 'くびれ（ベンチュリー）：', { c: C.ink, a: 'start', fs: 12 }) + T(8, 260, '空気が速くなり', { c: C.ink, a: 'start', fs: 12 }) + T(8, 276, '圧力が下がる＋燃料の', { c: C.ink, a: 'start', fs: 12 }) + T(8, 292, '気化で温度が下がる', { c: C.ink, a: 'start', fs: 12 });
+      s += T(262, 214, '温度は最大で', { c: C.am, a: 'start', fs: 12 }) + T(262, 230, '約 33〜39℃ 下がる', { c: C.am, b: 1, a: 'start', fs: 12 });
+      return svg(400, 324, s, '図：キャブレターアイス（フロート式キャブレターの断面の模式図）。晴れていても、湿った空気ならキャブレターの中で氷ができ、空気の通り道が狭くなって出力が落ちます（PHAK 第 7 章）');
+    },
+    fuelSystem() {
+      // the low-wing Archer: a tank in each wing, the selector (LEFT / RIGHT / OFF, no BOTH), the pumps
+      const cap = ac('pa28').fuelCap;
+      let s = `<path d="M10 40 L170 40 L170 76 L10 70 Z M390 40 L230 40 L230 76 L390 70 Z" fill="${PLANE}" fill-opacity="0.2" stroke="${C.mut}"/>`;
+      s += `<rect x="40" y="46" width="110" height="22" rx="4" fill="${C.bl}" fill-opacity="0.55" stroke="${C.cy}"/><rect x="250" y="46" width="110" height="22" rx="4" fill="${C.bl}" fill-opacity="0.55" stroke="${C.cy}"/>`;
+      s += T(95, 61, `左タンク ${cap} gal`, { c: C.ink, b: 1, fs: 12 }) + T(305, 61, `右タンク ${cap} gal`, { c: C.ink, b: 1, fs: 12 }) + T(200, 26, '低翼：タンクは翼の中（重力では送れない）', { c: C.mut, fs: 12 });
+      s += P([[95, 68], [95, 116], [160, 116]], C.cy, 2.5) + P([[305, 68], [305, 116], [200, 116]], C.cy, 2.5);
+      s += `<circle cx="180" cy="116" r="20" fill="#13233a" stroke="${C.am}" stroke-width="2"/>` + `<line x1="180" y1="116" x2="166" y2="104" stroke="${C.am}" stroke-width="3"/>` + T(214, 92, '燃料セレクター', { c: C.am, b: 1, a: 'start', fs: 12 }) + T(214, 108, 'LEFT・RIGHT・OFF（BOTH はない）', { c: C.am, a: 'start', fs: 12 });
+      const step = (y, t, c, note) => A(180, y - 22, 180, y - 4, C.cy, 2.5) + `<rect x="96" y="${y - 4}" width="168" height="26" rx="6" fill="${c}" fill-opacity="0.12" stroke="${c}"/>` + T(180, y + 13, t, { c, b: 1, fs: 12 }) + (note ? T(270, y + 13, note, { c: C.mut, a: 'start', fs: 12 }) : '');
+      s += step(158, 'ストレーナー（ろ過）', C.cy, '← 抜き取り検査') + step(206, '電動燃料ポンプ（補助）', C.gr, '← 離着陸で ON') + step(254, 'エンジン駆動の燃料ポンプ', C.ink, '') + step(302, 'キャブレター → エンジン', C.am, '');
+      s += T(12, 146, 'タンクの下でも', { c: C.mut, a: 'start', fs: 12 }) + T(12, 162, '抜き取り検査', { c: C.mut, a: 'start', fs: 12 });
+      return svg(400, 336, s, `図：Archer の燃料系統（模式図）。左右の翼のタンク（使える燃料は片側 ${cap} US gal：教材値）から、セレクターで選んだ側の燃料をポンプで送ります`);
+    },
+    elecSystem() {
+      // what runs on electricity and what does not (the engine's ignition, the magnetic compass, the mechanical standby gauges)
+      const box = (x, y, w, h, c, t, sub) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="7" fill="${c}" fill-opacity="0.12" stroke="${c}" stroke-width="1.5"/>` + T(x + w / 2, y + 18, t, { c, b: 1, fs: 13 }) + (sub ? T(x + w / 2, y + 35, sub, { c: C.ink, fs: 12 }) : '');
+      let s = box(12, 14, 120, 44, C.gr, 'オルタネーター', 'エンジンが回す') + box(12, 74, 120, 44, C.am, 'バッテリー', '始動・非常用');
+      s += A(132, 36, 150, 66, C.gr, 2) + A(132, 96, 150, 84, C.am, 2) + box(150, 50, 72, 50, C.cy, 'マスター', 'BATT・ALTR');
+      s += A(222, 75, 236, 75, C.cy, 2.5) + `<rect x="238" y="20" width="14" height="184" rx="4" fill="${C.cy}" fill-opacity="0.5"/>` + T(245, 220, 'バス', { c: C.cy, b: 1, fs: 12 });
+      const loads = ['PFD・MFD', '無線', '灯火', 'ピトーヒーター', '電動燃料ポンプ', 'スターター'];
+      loads.forEach((t, i) => { const y = 32 + i * 30; s += L(252, y, 266, y, C.cy, 1.5) + `<rect x="266" y="${y - 7}" width="10" height="14" rx="2" fill="${C.mut}"/>` + T(282, y + 4, t, { c: C.ink, a: 'start', fs: 12 }); });
+      s += T(392, 220, '■＝ブレーカー', { c: C.mut, a: 'end', fs: 12 });
+      s += `<rect x="12" y="236" width="376" height="66" rx="8" fill="none" stroke="${C.vi}" stroke-dasharray="5 4"/>` + T(200, 256, '電気がなくても動くもの', { c: C.vi, b: 1, fs: 13 });
+      s += T(200, 276, 'エンジンの点火（マグネトー）・磁気コンパス', { c: C.ink, fs: 12 }) + T(200, 294, '機械式の予備の速度計・高度計（付いている機体）', { c: C.ink, fs: 12 });
+      s += box(12, 136, 120, 44, C.rd, '非常用バッテリー', 'EMERG BATT') + A(72, 180, 72, 194, C.rd, 2) + TL(72, 208, ['予備計器・PFD など', '（30 分以上）'], { c: C.rd, fs: 12, lh: 14 });
+      return svg(400, 310, s, '図：Archer の電気系統（模式図）。オルタネーターとバッテリーの電気がマスタースイッチからバスへ行き、ブレーカーを通って各装置へ届きます。エンジンの点火は電気系統とは別です');
+    },
+    pitotStatic() {
+      // the Archer's pitot-static mast under the left wing, the pipes to the air data computer and the mechanical standby gauges
+      let s = `<path d="M10 36 L250 36 L250 50 L10 46 Z" fill="${PLANE}" fill-opacity="0.25" stroke="${C.mut}"/>` + T(130, 28, '左の主翼（下から見る）', { c: C.mut, fs: 12 });
+      s += `<path d="M150 50 L150 78 L104 82 L104 74 L144 72 L144 50 Z" fill="${PLANE2}"/>` + `<circle cx="104" cy="78" r="3.5" fill="#000" stroke="${C.cy}" stroke-width="1.5"/><circle cx="128" cy="76" r="2" fill="#000" stroke="${C.am}"/><circle cx="134" cy="76" r="2" fill="#000" stroke="${C.am}"/>`;
+      s += T(10, 110, 'ピトー管の穴（全圧）', { c: C.cy, b: 1, a: 'start', fs: 12 }) + A(60, 100, 100, 82, C.cy, 1.5) + T(196, 100, '静圧孔（静圧）', { c: C.am, b: 1, a: 'start', fs: 12 }) + A(194, 94, 136, 80, C.am, 1.5);
+      s += P([[147, 80], [147, 140], [210, 140]], C.cy, 2.5) + P([[141, 80], [141, 156], [210, 156]], C.am, 2.5);
+      s += `<rect x="212" y="124" width="70" height="46" rx="7" fill="${C.vi}" fill-opacity="0.15" stroke="${C.vi}"/>` + T(247, 145, 'ADC', { c: C.vi, b: 1, fs: 13 }) + T(247, 161, '計算機', { c: C.ink, fs: 12 });
+      s += A(282, 147, 300, 147, C.vi, 2) + `<rect x="302" y="112" width="90" height="72" rx="6" fill="#06101c" stroke="${C.cy}"/>` + T(347, 132, 'PFD', { c: C.cy, b: 1, fs: 13 }) + TL(347, 150, ['速度・高度', '昇降率'], { c: C.ink, fs: 12, lh: 15 });
+      s += P([[141, 156], [141, 214], [230, 214]], C.am, 2) + P([[147, 140], [120, 140], [120, 230], [230, 230]], C.cy, 2);
+      s += `<rect x="232" y="200" width="160" height="42" rx="6" fill="${C.ink}" fill-opacity="0.06" stroke="${C.mut}"/>` + T(312, 218, '予備の速度計・高度計', { c: C.ink, b: 1, fs: 12 }) + T(312, 234, '（機械式の機体）', { c: C.mut, fs: 12 });
+      s += T(12, 268, '速度計：全圧と静圧の差で決まる', { c: C.ink, a: 'start', fs: 12 }) + T(12, 286, '高度計・昇降計：静圧だけで決まる', { c: C.ink, a: 'start', fs: 12 }) + T(12, 304, 'ほかに：ピトーヒーター・排水口・機内の代替静圧', { c: C.mut, a: 'start', fs: 12 });
+      s += L(20, 190, 44, 190, C.cy, 2.5) + T(50, 194, '全圧', { c: C.cy, a: 'start', fs: 12 }) + L(20, 208, 44, 208, C.am, 2.5) + T(50, 212, '静圧', { c: C.am, a: 'start', fs: 12 });
+      return svg(400, 314, s, '図：Archer のピトー静圧系統（模式図）。左の主翼の下の 1 本の柱に、前向きのピトー管の穴と横向きの静圧孔があり、管で計算機（ADC）と予備の計器へつながります');
+    },
+    compassErrors() {
+      // northern hemisphere: turning error (UNOS) and acceleration error (ANDS); the roll-out lead from PHAK (15° + half the latitude)
+      const card = (cx, cy, hdg, show, title, sub, note, c) => {
+        let s = T(cx, cy - 66, title, { c, b: 1, fs: 13 }) + TL(cx, cy - 48, sub, { c: C.ink, fs: 12, lh: 15 });
+        s += `<circle cx="${cx}" cy="${cy}" r="34" fill="#06101c" stroke="${C.mut}" stroke-width="1.5"/>`;
+        for (const [d, l] of [[0, 'N'], [90, 'E'], [180, 'S'], [270, 'W']]) { const a = (d - show) * DEG; s += T(cx + 24 * Math.sin(a), cy - 24 * Math.cos(a) + 4, l, { c: d === 0 ? C.rd : C.ink, b: 1, fs: 12 }); }
+        s += `<line x1="${cx}" y1="${cy - 36}" x2="${cx}" y2="${cy - 28}" stroke="${C.am}" stroke-width="3"/>`;
+        return s + TL(cx, cy + 52, note, { c, fs: 12, lh: 15 });
+      };
+      let s = T(12, 18, '北半球の磁気コンパスの誤差', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      s += card(70, 110, 0, 330, '北へ向かう旋回', ['コンパスが', '遅れる'], ['手前で止める', '（約 30° 前）'], C.cy);
+      s += card(200, 110, 180, 210, '南へ向かう旋回', ['コンパスが', '先回りする'], ['行き過ぎて', 'から止める'], C.am);
+      s += card(330, 110, 90, 60, '東・西で加速', ['北へ振れる'], ['減速すると', '南へ振れる'], C.gr);
+      s += `<rect x="12" y="204" width="376" height="48" rx="6" fill="${C.cy}" fill-opacity="0.08" stroke="${C.cy}"/>` + T(200, 224, 'UNOS：北は手前、南は行き過ぎ', { c: C.cy, b: 1, fs: 12 }) + T(200, 242, 'ANDS：加速で北、減速で南', { c: C.gr, b: 1, fs: 12 });
+      s += T(200, 272, 'どれだけ手前か：15° ＋ 緯度の半分（PHAK）。北緯 29° なら約 30°', { c: C.ink, fs: 12 });
+      return svg(400, 282, s, '図：磁気コンパスの誤差（北半球）。旋回すると、北へ向かうときは遅れ、南へ向かうときは先回りします。東・西向きで速度を変えると北や南へ振れます。正しく読めるのは、まっすぐ・水平・一定の速度のときだけです');
+    },
+    positionLights() {
+      // position lights: red on the left wingtip, green on the right, white on the tail; what another airplane's lights tell
+      let s = planeTop(110, 120, 1.1) + T(110, 22, '上から見た図', { c: C.ink, b: 1, fs: 13 });
+      const sector = (x, y, a0, a1, c) => { const r = 60, p = a => [x + r * Math.sin(a * DEG), y - r * Math.cos(a * DEG)], [x0, y0] = p(a0), [x1, y1] = p(a1); return `<path d="M${x} ${y} L${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)} Z" fill="${c}" fill-opacity="0.18"/>`; };
+      s = sector(35, 116, -110, 0, C.rd) + sector(185, 116, 0, 110, C.gr) + sector(110, 172, 110, 250, '#f2f2f2') + s;
+      s += `<circle cx="35" cy="116" r="6" fill="${C.rd}"/><circle cx="185" cy="116" r="6" fill="${C.gr}"/><circle cx="110" cy="172" r="5" fill="#f2f2f2"/>`;
+      s += T(30, 98, '左＝赤', { c: C.rd, b: 1, fs: 12 }) + T(190, 98, '右＝緑', { c: C.gr, b: 1, fs: 12 }) + T(110, 214, '尾＝白', { c: C.ink, b: 1, fs: 12 });
+      const see = (y, l, r, t, c) => `<circle cx="252" cy="${y}" r="7" fill="${l}"/><circle cx="292" cy="${y}" r="7" fill="${r}"/>` + T(306, y - 2, t[0], { c, b: 1, a: 'start', fs: 12 }) + T(306, y + 14, t[1], { c: C.ink, a: 'start', fs: 12 });
+      s += T(252, 46, '夜、相手の灯火が', { c: C.ink, b: 1, a: 'start', fs: 12 }) + T(252, 62, 'こう見えたら', { c: C.ink, b: 1, a: 'start', fs: 12 });
+      s += see(96, C.rd, C.gr, ['左に赤・右に緑', '同じ向きへ'], C.ink) + see(140, C.gr, C.rd, ['左に緑・右に赤', 'こちらへ来る！'], C.rd) + `<circle cx="272" cy="184" r="7" fill="#f2f2f2"/>` + T(306, 182, '白だけ', { c: C.ink, b: 1, a: 'start', fs: 12 }) + T(306, 198, '遠ざかっている', { c: C.ink, a: 'start', fs: 12 });
+      s += T(200, 238, '衝突防止灯（ビーコン・ストロボ）は、付いていれば', { c: C.am, fs: 12 }) + T(200, 254, 'いつも点灯（14 CFR 91.209）', { c: C.am, fs: 12 });
+      return svg(400, 264, s, '図：航空灯（左の翼端が赤、右の翼端が緑、尾が白）。相手の灯火の見え方で、相手の向きがわかります（AFH 第 11 章）');
+    },
   };
 
   // ---------------------------------------------------------------- calculators inside the text

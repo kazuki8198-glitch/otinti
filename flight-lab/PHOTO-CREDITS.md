@@ -5,8 +5,15 @@ FLIGHT LAB の教科書（TEXTBOOK でも同じ）に入れた写真の一覧で
 写真は縮小（長い辺 1200 px 以下）・WebP に変換し、メタデータを消して `src/book-photos.js` に入れています。
 CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できます。写真の下のキャプションにも作者・ライセンス・出典を出しています。
 
-写真 1 枚・合計 0.10 MB（WebP のバイト数）。
+写真 8 枚・合計 0.61 MB（WebP のバイト数）。
 
 | id | 写真 | 作者 | ライセンス | 出典 | 使っている節 |
 |---|---|---|---|---|---|
 | `vortex` | 翼端渦（NASA の試験）。地上から上げた赤い煙が、通り過ぎた飛行機の翼端の渦に巻き込まれています。この渦が誘導抗力のもとです。 | NASA Langley Research Center（Fir0002 による編集） | [Public domain (PD-USGov-NASA)](https://commons.wikimedia.org/wiki/Template:PD-USGov-NASA) | [元のページ](https://commons.wikimedia.org/wiki/File:Airplane_vortex_edit.jpg) | aero.drag |
+| `archer` | Piper PA-28-181 Archer III。翼が胴体の下にある低翼・単発・固定脚の 4 人乗りです。 | Huhu Uet | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Piper_PA-28-181_Archer_III_(D-ETPA)_01.jpg) | sys.ctl |
+| `archerStabilator` | 全体が動く水平尾翼（スタビレーター）の例。胴体のすき間を軸に、尾翼ごと上下に動きます。 | Ricardo Reis from Lisboa, Portugal | [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Trimming_(e_move_o_estabilizador_todo)_(2946652623).jpg) | sys.ctl |
+| `lycoming` | カウリングを開けた Lycoming O-360 エンジン（別の機体の例）。Archer のエンジンと同じ系列の、空冷・水平対向 4 気筒です。 | Nimbus227 | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0) | [元のページ](https://commons.wikimedia.org/wiki/File:LycomingO-360.JPG) | sys.engine |
+| `fuelSample` | 主翼の下の排出口から燃料を抜き取って調べているところ（別の機体の例）。青い色は 100LL の航空ガソリンのしるしです。 | Ahunt | [Public domain (PD-self)](https://commons.wikimedia.org/wiki/Template:PD-self) | [元のページ](https://commons.wikimedia.org/wiki/File:GATS_jar_03.JPG) | sys.fuel |
+| `pitot` | 主翼の下のピトー管（セスナ 172 の例）。前を向いた穴に、ぶつかってくる空気の圧力（全圧）が入ります。 | Cjp24 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Cessna_172_Skyhawk_II_-_Pitot_tube.jpg) | sys.g1000 |
+| `staticPort` | 胴体の横の静圧孔（セスナ 172 の例）。小さな穴で、まわりの空気の圧力（静圧）を取ります。機体によって、静圧孔の場所は違います。 | Bin im Garten | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Static_port_C172_7786.JPG) | sys.g1000 |
+| `compass` | 計器板の上の磁気コンパスと、その下の自差カード（セスナ 172 の例）。カードの FOR は飛びたい磁方位、STEER はそのときコンパスで合わせる値です。 | M9matr0902 | [Public domain (PD-self)](https://commons.wikimedia.org/wiki/Template:PD-self) | [元のページ](https://commons.wikimedia.org/wiki/File:Flygplanskompass.JPG) | sys.compass |

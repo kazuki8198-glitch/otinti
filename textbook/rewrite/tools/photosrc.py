@@ -4,7 +4,7 @@
   python3 -I photosrc.py search "query" [--source wikimedia|flickr|nasa|...] [-n 10]   # Openverse search (licence, title, page, creator)
   python3 -I photosrc.py check URL      # a Wikimedia Commons file page (or ?curid=): title, licences (from the page's licence
                                         # templates), author, source, original file URL, size — as JSON
-  python3 -I photosrc.py get URL DIR [--width 1600]   # downloads the file (a ≤ width px rendition) into DIR (a new, empty folder
+  python3 -I photosrc.py get URL DIR [--width 1280]   # downloads the file (a ≤ width px rendition; Commons serves standard thumbnail widths such as 960 and 1280) into DIR (a new, empty folder
                                         # outside the repository); prints the path
 Downloaded files are data only: convert them with photo.py.
 """
@@ -34,12 +34,13 @@ def check(url):
     links = [text(x) for x in re.findall(r'class="licensetpl' + U + r'link"[^>]*>(.*?)</span>', page, re.S)]
     row = lambda key: text((re.search(r'id="fileinfotpl' + U + key + r'"[^>]*>.*?</td>\s*<td[^>]*>(.*?)</td>', page, re.S) or [None, ''])[1])
     orig = re.search(r'href="(https://upload\.wikimedia\.org/wikipedia/commons/[0-9a-f]/[0-9a-f]{2}/[^"?]+)', page)
-    size = re.search(r'(\d[\d,]*) × (\d[\d,]*) pixels', page)
+    # the original's size (the first 'N × N pixels' on the page is the preview's)
+    size = re.search(r'Original file.*?\((\d[\d,]*) × (\d[\d,]*) pixels', page, re.S) or re.search(r'(\d[\d,]*) × (\d[\d,]*) pixels', page)
     canon = re.search(r'<link rel="canonical" href="([^"]+)"', page)
     pd = sorted(set(re.findall(r'(PD-USGov[-A-Za-z]*|PD-NASA|PD-self|CC-zero|Public domain)', page)))[:8]
     return {'title': title, 'page': canon.group(1) if canon else url, 'licenses': shorts, 'licenseLinks': links, 'pdTemplates': pd,
             'author': row('aut')[:200], 'source': row('src')[:200], 'date': row('dat')[:60], 'description': row('desc')[:300],
-            'file': orig.group(1) if orig else None, 'size': (size.group(1) + 'x' + size.group(2)) if size else None}
+            'file': orig.group(1) if orig else None, 'size': (size.group(1) + 'x' + size.group(2)).replace(',', '') if size else None}
 
 
 def get(url, out, width):
@@ -75,7 +76,7 @@ if __name__ == '__main__':
     ap.add_argument('dir', nargs='?')
     ap.add_argument('--source')
     ap.add_argument('-n', type=int, default=10)
-    ap.add_argument('--width', type=int, default=1600)
+    ap.add_argument('--width', type=int, default=1280)
     o = ap.parse_args()
     if o.cmd == 'search':
         search(o.arg, o.source, o.n)

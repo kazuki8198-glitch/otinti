@@ -13,7 +13,7 @@ const REAL = /(?<![A-Za-z])ANA(?![A-Za-z])|ＡＮＡ|all\s*nippon|全日空|acro
 const ctxFor = (chapter, o = {}) => ({
   career: { chapter, slot: 'am', day: 5, dayMod3: 2, tired: false, solo: false, ...(o.career || {}) },
   today: { flight: '', flightTitle: '今日の飛行', checkride: false, solo: false, exam: false, needsDecision: false, decided: false, decisionRight: true, ...(o.today || {}) },
-  weather: { ja: '晴れ', metarAm: 'KLAB 011353Z 00405KT 10SM FEW035 18/10 A2992', metarPm: 'KLAB 011853Z 00405KT 10SM SCT045 21/10 A2992', taf: 'TAF KLAB …', why: '基準内です。', ...(o.weather || {}) },
+  weather: { ja: '晴れ', metarAm: 'KLAB 011353Z 36005KT 10SM FEW035 18/10 A2992', metarPm: 'KLAB 011853Z 36005KT 10SM SCT045 21/10 A2992', taf: 'TAF KLAB …', why: '基準内です。', ...(o.weather || {}) },
 });
 // one talk from its start to the end (the first choice, or the one matching `pick`) → the lines and the hooks
 function talk(data, state, id, ctx, pick) {

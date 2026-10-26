@@ -73,7 +73,7 @@ async function waitCards() { for (let i = 0; i < 60; i++) { if (!(await ev(() =>
 // a talk, read and answered with the keys: Space for the next line, the number of a choice (the right answer where a
 // lesson asks, else one that goes on with the day)
 const AVOID = /また後で|あとで|やめ|戻る|今はいい/;
-async function talk(maxLines = 400) {
+async function talk(maxLines = 3000) {
   let n = 0, last = ''; const chosen = new Set();
   for (; n < maxLines; n++) {
     const v = await ev(() => { const C = window.__cadet, v = C.dialog(); if (!v) return null; const act = C.career.activity(); return { ...v, act }; });
@@ -87,7 +87,7 @@ async function talk(maxLines = 400) {
       if (v.act && m && v.act.questions[+m[1]]) { const q = v.act.questions[+m[1]]; i = v.choices.findIndex(c => c.text === q.opts[q.ok]); }
       if (i < 0) i = v.choices.findIndex(c => !AVOID.test(c.text) && !chosen.has(c.text));
       if (i < 0) i = v.choices.findIndex(c => !chosen.has(c.text));
-      chosen.add(v.choices[Math.max(0, i)].text);
+      if (v.choices[Math.max(0, i)].text !== '次へ') chosen.add(v.choices[Math.max(0, i)].text);   // (the class's 次へ, at every section's end)
       if (i < 0) i = 0;
       log(`      > ${i + 1}. ${v.choices[i].text}　（ほか：${v.choices.filter((_, j) => j !== i).map(c => c.text).join('／')}）`);
       await key(`Digit${i + 1}`, 0.05);

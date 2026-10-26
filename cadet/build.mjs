@@ -40,7 +40,11 @@ function assetsScript() {
 
 export function build({ quiet = false, dev = false } = {}) {
   let rev = 'dev';
-  try { rev = execSync('git rev-parse --short HEAD', { cwd: here, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch (e) { /* not a git checkout */ }
+  try {
+    rev = execSync('git rev-parse --short HEAD', { cwd: here, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    // (a build made before its source is committed says so: its stamp's commit does not hold what it was built from)
+    if (execSync('git status --porcelain -- src ../flight-lab/src', { cwd: here, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()) rev += '+dirty';
+  } catch (e) { /* not a git checkout */ }
   const info = `build ${new Date().toISOString().slice(0, 10)} · ${rev}`;
   const bundle = esbuild.buildSync({
     entryPoints: [path.join(SRC, 'main.js')], bundle: true, write: false, format: 'iife', target: ['chrome110'],

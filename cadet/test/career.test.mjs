@@ -23,7 +23,7 @@ test('career: the weather — the same for the same seed and day, all five kinds
   assert.deepEqual([...kinds].sort(), Object.keys(WEATHER).filter(k => k !== 'lowCloud').sort());   // (low cloud: the instrument chapter's)
   assert.ok(n.good > 180 && n.good < 300, JSON.stringify(n));
   const g = weatherFor(3, 2, { force: 'good' });
-  assert.match(g.metar.am, /00405KT 10SM/); assert.equal(g.decision, 'go'); assert.deepEqual(g.fly, { am: true, pm: true });
+  assert.match(g.metar.am, /36005KT 10SM/); assert.equal(g.decision, 'go'); assert.deepEqual(g.fly, { am: true, pm: true });
   const f = weatherFor(3, 2, { force: 'amFog' }); assert.match(f.metar.am, /FG/); assert.deepEqual(f.fly, { am: false, pm: true });
   const s = weatherFor(3, 2, { force: 'pmStorm' }); assert.match(s.metar.pm, /TSRA/); assert.match(s.taf, /TSRA/);
   const x = weatherFor(3, 2, { force: 'crosswind' }); assert.match(x.metar.am, /09016G24KT/); assert.equal(x.decision, 'cancel');

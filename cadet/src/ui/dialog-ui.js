@@ -3,7 +3,10 @@
 // Input: click / Space / Enter / E reveal the rest of a line, then go on; 1–9, ↑↓ + Enter or the mouse pick a choice;
 // Esc closes the textbook (and only the textbook: otherwise it is left to the game's pause menu); while it is open, Tab
 // stays inside it and the line underneath waits. Keys are read in the capture phase and stopped there, so the game does
-// not also act on them; keys the conversation does not use (WASD, F, Esc without the book) still reach the game.
+// not also act on them; keys the conversation does not use (WASD, ←→, ↑↓ without choices, the mouse's movement, F, Esc
+// without the book) still reach the game, which keeps the view and the walk free while a talk goes on. A click on the
+// 3D view goes on only when it is a click: one that moved more than DRAG_PX while the button was down, or one with Alt,
+// was a drag that looked round. `choosing` tells the game the choices are up (it lets the mouse go for them).
 // (M8) A line may ask for a question (view.input: a text field above the subtitle, Enter or 聞く sends it to onAsk) and
 // a line may grow while it shows (view.stream: the same node with more text — the AI instructor's answer as it comes;
 // view.pending: more is coming, so no choices and no "next" yet).
@@ -109,6 +112,18 @@ const CSS = `
 #dlg .bk-fig svg { display: block; width: 100%; height: auto; margin: 0 auto; font-family: var(--font, system-ui, sans-serif); }
 #dlg .bk-fig figcaption { margin-top: 6px; font-size: 12px; line-height: 1.6; color: #a9b7c6; }
 #dlg .bk-src { font-size: 12.5px; color: #5f6b77; } #dlg .bk-src li { margin: 2px 0; }
+/* (the class) the lecturer's notes on a section, under it in the textbook (content/school.js lecturerNotesHtml); and a
+   line's kind (view.tag): ここが大切, her own note, a question to think about — an edge and a word on the subtitle */
+#dlg .bk-lecturer { margin: 18px 0 6px; padding: 10px 14px; border-left: 4px solid #5a7fb5; border-radius: 4px; background: #edf2f9; }
+#dlg .bk-lecturer b { color: #2b5590; } #dlg .bk-lecturer p { margin: 6px 0 0; }
+#dlg .dlg-box.t-key { box-shadow: inset 4px 0 0 #5fd46a, 0 16px 50px rgba(0, 0, 0, .42); }
+#dlg .dlg-box.t-note { box-shadow: inset 4px 0 0 #9be08a, 0 16px 50px rgba(0, 0, 0, .42); }
+#dlg .dlg-box.t-think { box-shadow: inset 4px 0 0 #c58cff, 0 16px 50px rgba(0, 0, 0, .42); }
+#dlg .dlg-box.t-key::after, #dlg .dlg-box.t-note::after, #dlg .dlg-box.t-think::after { position: absolute; top: 12px; right: 18px;
+  font-size: calc(12px * var(--sub-k, 1)); font-weight: 800; letter-spacing: .05em; }
+#dlg .dlg-box.t-key::after { content: 'ここが大切'; color: #5fd46a; }
+#dlg .dlg-box.t-note::after { content: '講師の補足'; color: #9be08a; }
+#dlg .dlg-box.t-think::after { content: '考えてみよう'; color: #c58cff; }
 
 @media (max-width: 700px) {
   #dlg .dlg-wrap { bottom: 54px; width: calc(100vw - 16px); max-height: calc(100% - 62px); }
@@ -127,6 +142,7 @@ const CSS = `
 const CPS = 40;                                   // characters per second at text speed ×1
 const MASH_MS = 250;                              // Enter on fresh choices waits this long, so a key held from the line before does not pick
 const ACT_MS = 600;                               // one next / choose per shown line (a double click or two keys do not skip two)
+const DRAG_PX = 6;                                // a press on the view that moves further than this is a look round, not a click (core/input.js)
 
 // a short pause after punctuation, in characters, so the reveal reads like speech
 function pauseAfter(ch) {
@@ -223,7 +239,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   let cur = null, gen = 0, actedGen = -1, actedAt = 0;
   let chars = [], at = [], shown = 0, progress = 0, last = 0, typing = false, timer = 0, timerIsRaf = false;
   let buttons = [], sel = -1, choicesAt = 0;
-  let armed = false, bookDown = false, prevFocus = null, spoke = false;
+  let armed = false, bookDown = false, prevFocus = null, spoke = false, downX = 0, downY = 0, moved = false;
 
   const speed = () => {
     const v = settings && typeof settings.get === 'function' ? Number(settings.get('textSpeed')) : 1;
@@ -380,6 +396,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     gen++; cur = v;
     const narr = v.speaker === 'narrator' || !v.name;
     box.classList.toggle('narr', narr);
+    for (const t of ['key', 'note', 'think']) box.classList.toggle(`t-${t}`, view.tag === t);   // (the class: the line's kind)
     chip.hidden = narr; chip.textContent = v.name;
     const ink = v.color ? inkOn(v.color) : null;
     if (v.color) chip.style.setProperty('--sp', v.color); else chip.style.removeProperty('--sp');
@@ -597,7 +614,9 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   }
   // A click goes on only when it also began while the subtitle was up (the click that started the talk does not skip
   // the first line). Clicks elsewhere count only on the bare 3D view (with the pointer locked, the canvas gets them).
-  function onDown(e) { armed = open && !bookOpen && !destroyed && !otherModal(e.target); }
+  function onDown(e) { armed = open && !bookOpen && !destroyed && !otherModal(e.target); downX = e.clientX || 0; downY = e.clientY || 0; moved = false; }
+  // (a drag that looked away and came back near where it began is still a drag: once past DRAG_PX, never a click)
+  function onMove(e) { if (armed && !moved && (e.buttons & 1) && Math.hypot((e.clientX || 0) - downX, (e.clientY || 0) - downY) > DRAG_PX) moved = true; }
   function onWorldClick(e) {
     if (!open || bookOpen || destroyed || (e.button !== undefined && e.button !== 0)) return;
     const t = e.target;
@@ -605,6 +624,9 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     if (!(t === doc.body || t === doc.documentElement || t === doc || t === win || (t && t.tagName === 'CANVAS'))) return;
     if (!armed) return;
     armed = false;
+    // (a drag on the view looked round: Alt held, or the pointer moved with the button down, at any time during the
+    // press; with the pointer captured it does not move, so every press there is a click)
+    if (e.altKey || moved || Math.hypot((e.clientX || 0) - downX, (e.clientY || 0) - downY) > DRAG_PX) return;
     advance();
   }
   function onWrapClick(e) {
@@ -628,6 +650,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   });
   win.addEventListener('keydown', onKey, true);
   win.addEventListener('pointerdown', onDown, true);
+  win.addEventListener('pointermove', onMove, true);
   win.addEventListener('click', onWorldClick, true);
 
   return {
@@ -638,6 +661,8 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     hideBook() { closeBook('api'); },
     get bookOpen() { return bookOpen; },
     get typing() { return typing; },
+    // the choices are on screen (the line has typed out): the mouse is needed to pick one
+    get choosing() { return choicesShown(); },
     reveal,
     // (M8) the question field: what is typed in it, and sending it (tests; the field's own Enter does the same)
     get asking() { return !askRow.hidden; },
@@ -650,6 +675,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
       destroyed = true;
       win.removeEventListener('keydown', onKey, true);
       win.removeEventListener('pointerdown', onDown, true);
+      win.removeEventListener('pointermove', onMove, true);
       win.removeEventListener('click', onWorldClick, true);
       if (offSettings) offSettings();
       el.remove();

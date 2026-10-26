@@ -54,8 +54,9 @@ import { createCrowd } from './npc/crowd.js';
 import { peopleDialogs } from './content/dialog/people.js';
 import { careerInstructorDialogs } from './content/dialog/instructor-career.js';
 import { careerBoardDialogs } from './content/dialog/cockpit.js';
-import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, FTD_TITLES, pfdPictures } from './content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, FTD_TITLES, pfdPictures, lecturePage, lecturerNotesHtml } from './content/school.js';
 import { drawPfdPicture } from './world/pfd-picture.js';
+import { drawLecturePage, drawKeyBoard, figureSource } from './world/lecture-screen.js';
 import { createTablet } from './ui/tablet.js';
 import { createCards } from './ui/cards.js';
 import { createCoach } from './ui/coach.js';
@@ -397,10 +398,15 @@ async function boot() {
 
   // ---------------------------------------------------------------- the people, and talking
   // 早瀬 教官 (fictional) waits in briefing room 1 between the whiteboard and the screen, facing the room; the academy's
-  // other people (M5: npc/cast.js) are where the time of day puts them. E starts a conversation: the mouse is freed for
-  // the choices, the view turns to whoever is talking, the walk stops. Flags and trust are kept in localStorage
-  // ('cadet.save'). The hooks point at the board, nod, show a figure or a PFD on a screen, speak English, open the
-  // textbook, and move the career on (a class, a test, the go / no-go, …).
+  // other people (M5: npc/cast.js) are where the time of day puts them. E starts a conversation. While it goes on, the
+  // view and the walk stay the player's: the mouse stays captured and looks round (a click, Space or E goes on to the
+  // next line), and WASD / ←→ walk, up to LEASH_M from where the talk began; the mouse is let go only while it is needed
+  // on the screen (the choices, the textbook, the question field, the logbook: talkWantsLock), and comes back with the
+  // click or key that goes on. The view turns to a face by itself only for a moment (FACE_S): when the talk begins, when
+  // another person takes the line, and when a lesson turns it to its screen (autoFace); a look or a step of the player's
+  // stops it. E, a click and the front doors do nothing else while talking (no door, no board, no way home). Flags and
+  // trust are kept in localStorage ('cadet.save'). The hooks point at the board, nod, show a figure or a PFD on a
+  // screen, speak English, open the textbook, and move the career on (a class, a test, the go / no-go, …).
   const book = gameBook(FL);
   const saved = createSave();
   const talkState = createDialogState(saved.load());
@@ -516,9 +522,13 @@ async function boot() {
     return lessonRun;
   }
   // the dialogue UI serves the room's talk and the talk in the aircraft (fly-mode's own runner)
-  let talk = null;                                            // { yaw, pitch } (the view to come back to) while talking
+  const FACE_S = 0.8, LEASH_M = 3;
+  let talk = null;                                            // { leash: { x, z, r } (world; null: seated) } while talking
   let talkEndedAt = -Infinity;                                // the E or click that ended a talk does not start it again
   let talkWho = null, talkRun = null, talkActor = null;
+  // the view turned for a moment: { actor (their face) | point (THREE.Vector3, the world), t (s left) }; null: the
+  // player's own. faceWho: the person it last turned to (a new speaker turns it again)
+  let face = null, faceWho = null;
   // (M8) while the AI instructor's talk is open, it is the one on screen (the talk it came from waits on its 'free' line)
   let aiRun = null;
   const talkRunner = () => aiRun || (fly && fly.talking ? fly.runner : talkRun || runner);
@@ -527,6 +537,8 @@ async function boot() {
     onNext: () => { talkRunner().next(); afterStep(); },
     onChoose: (i) => { talkRunner().choose(i); afterStep(); },
     onAsk: (text) => { if (aiRun) aiRun.submit(text); },
+    // (closed with Esc, ✕ or a click outside: a gesture, so the mouse can be taken back for the talk's next lines)
+    onBookClose: (why) => { if (why !== 'api' && talkingNow() && talkWantsLock()) input.requestLock(); },
   });
   // ---- (M8) the AI instructor: off until the player turns it on and gives their own key (ai/keys.js); nothing is
   // made or sent before a question is asked. aiFetch: the tests' stand-in for the API.
@@ -552,7 +564,7 @@ async function boot() {
       // (asked when the talk opens and again before each question: the setting turned off, or the key erased, stops it)
       ready: () => (settings.get('aiTutor') ? aiKeys.has() : 'off'), today: () => aiToday(place, extra.summary),
       reasonText: (r) => `AI 教官：${REASON_JA[r] || r}`, notice: (t) => toast(t, 6000), english: () => !!settings.get('crewEnglish'),
-      onBook: (id) => { const sec = book.section(id); if (sec) dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sec.html }); },
+      onBook: (id) => openSection(id),
       onEnd: (how) => {
         if (aiRun !== s) return;                              // (closed with the talk itself)
         aiRun = null; tutor.reset();
@@ -569,13 +581,32 @@ async function boot() {
   const closeAi = () => { const a = aiRun; aiRun = null; if (a) a.stop(); tutor.reset(); };
   function onRoomView(view) {
     // dui.show also speaks the line (settings: voice, volume); a line whose hook started a gesture (point, nod) keeps it
-    if (view) { dui.show(view); if (talkActor && view.speaker !== 'player' && !talkActor.gesturing && Math.random() < 0.25) talkActor.gesture('explain'); }
+    if (view) { dui.show(view); faceSpeaker(view.speaker); if (talkActor && view.speaker !== 'player' && !talkActor.gesturing && Math.random() < 0.25) talkActor.gesture('explain'); }
     else endTalk();
     saved.save(talkState);
   }
   apronRunner.onChange(onRoomView); peopleRunner.onChange(onRoomView);
-  // the click (or key) that ended the conversation also takes the mouse back for walking
-  function afterStep() { if (!talk && started && mode === 'walk' && !menu.isOpen && !tablet.isOpen) input.requestLock(); }
+  const talkingNow = () => !!talk || !!(fly && fly.talking);
+  // while a talk goes on the mouse stays captured (it looks round; a click goes on), except while it is needed on the
+  // screen: the choices, the textbook, the question field, a panel over the talk (the logbook, the menu, the tablet, a
+  // report, a card), the debrief's card
+  const talkWantsLock = () => started && !menu.isOpen && !tablet.isOpen && !dayHud.logbookOpen && !report.isOpen && !cards.showing
+    && !dui.bookOpen && !dui.asking && !dui.choosing && !(fly && fly.debrief);
+  // the click (or key) that went on takes the mouse back: for looking round at the talk's next line, or for walking (the
+  // talk is over; in the fly mode its own end does it). Outside a gesture the browser refuses, and nothing changes.
+  // (A moment later — still the player's gesture — so that what a line's hook opens just after it, the AI instructor's
+  // question field, keeps the mouse free instead of taking it and letting it go again.)
+  let relockQueued = false;                                   // (several steps at once — the tests' — ask once)
+  function afterStep() {
+    if (relockQueued) return;
+    relockQueued = true;
+    Promise.resolve().then(() => {
+      relockQueued = false;
+      if (!started || menu.isOpen || tablet.isOpen) return;
+      if (talkingNow()) { if (talkWantsLock()) input.requestLock(); }
+      else if (mode === 'walk' || mode === 'epilogue') input.requestLock();
+    });
+  }
   // who: 'instructor' or one of the cast; the talk chosen by the career (today's work comes first)
   function startTalk(who = 'instructor') {
     if (talk) return 'talking';
@@ -583,10 +614,11 @@ async function boot() {
     refreshCtx();
     const pick = chooseTalk(who);
     if (!pick) return null;
-    talk = { yaw: walker.state.yaw, pitch: walker.state.pitch };
+    // (the mouse is kept: the view and the walk stay free; the view turns to them for a moment)
+    talk = { leash: { x: walker.state.x, z: walker.state.z, r: LEASH_M } };
     talkWho = who; talkRun = pick.run; talkActor = who === 'instructor' ? instructor : cast.actor(who);
+    faceOn(talkActor);
     document.body.classList.add('talking');
-    input.exitLock();
     audio.ui('open');
     // the morning is over once the day's work starts
     if (career.slot === 'morning' && career.chapter !== 'prologue' && !planToday().some(x => x.kind === 'graduation')) { career.advance('am'); applySlot(); }
@@ -597,7 +629,12 @@ async function boot() {
     const st = career.state, slot = st.slot, sch = planToday(), due = (k) => sch.find(x => x.kind === k && (x.slot === slot || (slot === 'morning' && x.slot === 'am')));
     if (who === 'lecturer') {
       const cls = due('class'), ftd = due('ftd'), ex = due('exam');
-      if (cls && !career.doneToday('class', cls.id)) return { run: startLesson('class', +cls.id, classDialogs(FL, +cls.id, { seed: st.seed })), dialog: 'class' };
+      if (cls && !career.doneToday('class', cls.id)) {
+        // (a class left midway: it offers to go on from the section it reached)
+        const at = st.done[lectureKey(cls.id)], from = Number.isInteger(at) && at > 0 ? at : null;
+        pageSec = null;                                       // (its first page sets the whiteboard and turns the eyes again)
+        return { run: startLesson('class', +cls.id, classDialogs(FL, +cls.id, { seed: st.seed, from })), dialog: 'class' };
+      }
       if (ftd && !career.doneToday('ftd', ftd.id)) return { run: startLesson('ftd', ftd.id, ftdDialogs(FL, ftd.id, { seed: st.seed + st.day })), dialog: 'ftd' };
       if (ex && ex.id === 'written1' && !career.doneToday('exam', ex.id)) return { run: startLesson('exam', ex.id, examDialogs(FL, ex.id, { seed: st.seed + st.day })), dialog: 'exam' };
       return { run: peopleRunner, dialog: 'lecturer' };
@@ -629,6 +666,7 @@ async function boot() {
     if (!talk) return;
     closeAi();
     talk = null; dui.hide(); document.body.classList.remove('talking');
+    face = null; faceWho = null;
     talkEndedAt = performance.now();
     const who = talkWho; talkWho = null; talkRun = null; talkActor = null; lessonRun = null;
     // briefed: he goes out to the aircraft (out of sight: while the cadet is still in the room he stays to see them off)
@@ -667,15 +705,15 @@ async function boot() {
       const room = talkWho === 'lecturer' ? (lessonKind && lessonKind.kind === 'ftd' ? 'sim' : 'brief-2') : 'brief-1';
       const s = arg === 'apron' ? { x: 240, y: 1.4, z: -INS.a - 2 } : academy.surfaceAt(room, arg === 'screen' ? 'wall_screen' : 'whiteboard');
       if (s) { actor.pointAt(frameToWorld(s)); actor.gesture('point'); }
-    } else if (name === 'book') {
-      const sec = book.section(arg);
-      if (sec) dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sec.html });
-    } else if (name === 'board' && arg === 'navlog') showNavlog();
+    } else if (name === 'book') openSection(arg);
+    else if (name === 'page') showPage(arg);
+    else if (name === 'progress') lectureAt(arg);
+    else if (name === 'board' && arg === 'navlog') showNavlog();
     else if (name === 'board') showFigure(arg === 'study' ? cx.today.studySection : arg, talkWho === 'lecturer' ? 'brief-2' : 'brief-1');
     else if (name === 'pfd') showPfd(arg);
     else if (name === 'say') speakEnglish(arg);
     else if (name === 'quizEnd') { cx.quiz = scoreOf(lessonState, +arg); }
-    else if (name === 'done') workDone(arg);
+    else if (name === 'done') { if (arg === 'class') lectureOver(); workDone(arg); }
     else if (name === 'decide') { const right = career.decision(arg, weatherNow()); refreshCtx(); cx.today.decisionRight = right; afterTalk.push(() => afterDecision()); }
     else if (name === 'tablet') toast('タブレットを受け取りました。Tab キーで開けます', 4200);
     else if (name === 'help') { career.tire(15); }
@@ -739,7 +777,6 @@ async function boot() {
   // a textbook figure on a room's screen (the figures are FLIGHT LAB's SVG, drawn for a dark background)
   function showFigure(secId, room = 'brief-1') {
     const sec = secId && book.section(secId); if (!sec || !sec.figure) return;
-    const svg = sec.figure.replace(/^<svg(?![^>]*xmlns=)/, '<svg xmlns="http://www.w3.org/2000/svg"').replace(/^<svg /, '<svg width="1200" height="760" ');
     const img = new Image();
     img.onload = () => {
       academy.redraw(room, 'wall_screen', (g, w, h) => {
@@ -752,7 +789,65 @@ async function boot() {
       const s = academy.surfaceAt(room, 'wall_screen'), actor = talkActor || instructor;
       if (s) { actor.pointAt(frameToWorld(s)); actor.gesture('point'); }
     };
-    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    img.src = figureSource(sec.figure);
+  }
+  // ---- the class (content/school.js): its pages on briefing room 2's screen (world/lecture-screen.js) and the section's
+  // ここが大切 on the whiteboard, the place it has reached kept with the career, the textbook with the lecturer's notes
+  const pageImages = new Map();                              // a figure's SVG, loaded once as an image
+  let pageNow = null, pageSec = null, pageTok = 0, pageTimer = 0;
+  function showPage(arg) {
+    const pg = lecturePage(FL, arg); if (!pg) return;
+    const tok = ++pageTok, room = 'brief-2', u = pg.unit, screen = academy.surfaceAt(room, 'wall_screen');
+    clearInterval(pageTimer); pageTimer = 0; pageNow = arg;
+    const point = (s) => { const actor = talkActor; if (s && actor && talkWho === 'lecturer') { actor.pointAt(frameToWorld(s)); actor.gesture('point'); } };
+    // a new section: its key points on the whiteboard, and the view turned to the screen for a moment (autoFace: a look
+    // or a step of the player's stops it)
+    if (pg.id !== pageSec) {
+      pageSec = pg.id;
+      academy.redraw(room, 'whiteboard', (g, w, h) => drawKeyBoard(g, w, h, pg.board));
+      if (screen) autoFace(frameToWorld(screen));
+    }
+    const draw = (img, part = 0) => { let r = { parts: 1 }; academy.redraw(room, 'wall_screen', (g, w, h) => { r = drawLecturePage(g, w, h, { ...pg, part }, img); }); return r; };
+    if (u && u.k === 'figure') {
+      // (drawn once loaded, unless another page has been shown since)
+      const show = (img) => { if (tok !== pageTok) return; draw(img); point(screen); };
+      if (pageImages.has(arg)) { show(pageImages.get(arg)); return; }
+      const img = new Image();
+      img.onload = () => { pageImages.set(arg, img); show(img); };
+      img.onerror = () => show(null);
+      img.src = figureSource(u.svg);
+      return;
+    }
+    const r = draw(null);
+    if (u && u.k === 'table') point(screen); else if (u && u.k === 'key') point(academy.surfaceAt(room, 'whiteboard'));
+    // a table too long for one screen: its parts in turn while the page is on (the class still running)
+    if (r.parts > 1) {
+      let part = 0;
+      pageTimer = setInterval(() => { if (tok !== pageTok || talkWho !== 'lecturer') { clearInterval(pageTimer); pageTimer = 0; return; } draw(null, ++part); }, 9000);
+    }
+  }
+  // the section the class has reached (its index in the class): kept in the career's record (done 'lecture:<class>',
+  // a key and a number as cleanCareer keeps them) until the class is over, so a class left midway goes on from there
+  function lectureKey(id) { return `lecture:${id}`; }
+  function lectureAt(arg) {
+    const k = lessonKind, i = Math.round(Number(arg));
+    if (!k || k.kind !== 'class' || !Number.isInteger(i) || i < 0) return;
+    career.state.done[lectureKey(k.id)] = i; career.save();
+  }
+  // the class over: its place forgotten, the room's screen and whiteboard as they were once the cadet has gone
+  function lectureOver() {
+    const k = lessonKind;
+    if (k && k.kind === 'class') delete career.state.done[lectureKey(k.id)];
+    afterTalk.push(() => {
+      clearInterval(pageTimer); pageTimer = 0; pageTok++; pageNow = null; pageSec = null;
+      academy.redraw('brief-2', 'wall_screen', null); academy.redraw('brief-2', 'whiteboard', null);
+    });
+  }
+  // a textbook section in the overlay (the 'book' hook, the tablet's 教科書, the AI instructor's pointer), with the
+  // lecturer's notes on it under it when she has any
+  function openSection(id) {
+    const sec = book.section(id); if (!sec) return;
+    dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sec.html + lecturerNotesHtml(id) });
   }
   // the training device room's screen: a PFD picture (k2: the question's; k1: the tutorial's, a part framed)
   const TUTOR_PIC = { ias: 105, alt: 3500, hdg: 30, vs: 500, bank: 15 };
@@ -799,7 +894,7 @@ async function boot() {
     haneda.group.add(captain.root); captain.root.position.set(...st.position); captain.root.rotation.set(0, st.yaw, 0);
     if (captain.setSeated) captain.setSeated(st.seat);
   }
-  const epi = { on: false, yaw: 0, pitch: -0.1, hours: null, talkYaw: null };
+  const epi = { on: false, yaw: 0, pitch: -0.1, hours: null };
   const epiRunner = createRunner({ data: withEnglish(epilogueDialogs()), state: talkState, hooks: { onHook } });
   epiRunner.onChange(onRoomView);
   const LAB_GROUPS = () => [ground.group, airfield.group, buildings.group, academy.group, veg.group, landmarks.group, ...parked.map(p => p.root), todays.pa28.ac.root, todays.pa44.ac.root];
@@ -827,29 +922,34 @@ async function boot() {
     _ee.set(epi.pitch, epi.yaw, 0); camera.quaternion.setFromEuler(_ee).premultiply(_eq.setFromEuler(haneda.group.rotation));
     camera.updateMatrixWorld();
   }
-  // the view: the mouse looks round (not through the seat back); while he talks, the head turns to him
+  // the view: the mouse looks round (not through the seat back), while he talks too; when a talk begins the head turns
+  // to him for a moment (a look of the player's stops it)
   const capHead = new THREE.Vector3(), _ev = new THREE.Vector3();
   function updateEpilogue(dt, live) {
-    if (talk) {
-      captain.headWorld(capHead); haneda.group.worldToLocal(_ev.copy(capHead));
-      const dx = _ev.x - HANEDA_EYE[0], dy = _ev.y - HANEDA_EYE[1] - 0.05, dz = _ev.z - HANEDA_EYE[2];
-      const ty = Math.atan2(-dx, -dz), tp = Math.atan2(dy, Math.hypot(dx, dz)), k = 1 - Math.exp(-dt / 0.25);
-      epi.yaw += Math.atan2(Math.sin(ty - epi.yaw), Math.cos(ty - epi.yaw)) * k; epi.pitch += (tp - epi.pitch) * k;
-      input.takeLook();
-    } else {
-      const look = input.takeLook(), sens = 0.0022 * settings.get('sensitivity'), inv = settings.get('invertY') ? -1 : 1;
-      if (live && !menu.isOpen) { epi.yaw -= look.x * sens; epi.pitch -= look.y * sens * inv; }
-      epi.yaw = Math.max(-2.2, Math.min(2.2, epi.yaw)); epi.pitch = Math.max(-0.9, Math.min(0.75, epi.pitch));
-      if (live && !menu.isOpen && (input.pressed('KeyE') || input.pressed('Mouse0')) && performance.now() - talkEndedAt > 500) startEpiTalk('again');
+    const look = input.takeLook(), sens = 0.0022 * settings.get('sensitivity'), inv = settings.get('invertY') ? -1 : 1;
+    if (live && !menu.isOpen) {
+      if (look.x || look.y) face = null;
+      epi.yaw -= look.x * sens; epi.pitch -= look.y * sens * inv;
+      if (face && talk) {
+        if (face.actor) { face.actor.headWorld(capHead); capHead.y -= 0.05; } else capHead.copy(face.point);
+        haneda.group.worldToLocal(_ev.copy(capHead));
+        const dx = _ev.x - HANEDA_EYE[0], dy = _ev.y - HANEDA_EYE[1], dz = _ev.z - HANEDA_EYE[2];
+        const ty = Math.atan2(-dx, -dz), tp = Math.atan2(dy, Math.hypot(dx, dz)), k = 1 - Math.exp(-dt / FACE_TAU);
+        epi.yaw += Math.atan2(Math.sin(ty - epi.yaw), Math.cos(ty - epi.yaw)) * k; epi.pitch += (tp - epi.pitch) * k;
+        if ((face.t -= dt) <= 0) face = null;
+      }
     }
+    epi.yaw = Math.max(-2.2, Math.min(2.2, epi.yaw)); epi.pitch = Math.max(-0.9, Math.min(0.75, epi.pitch));
+    if (!talk && live && !menu.isOpen && (input.pressed('KeyE') || input.pressed('Mouse0')) && performance.now() - talkEndedAt > 500) startEpiTalk('again');
     if (!epi.frozen) placeEpilogueCamera();
     captain.update(dt, { lookAt: talk ? camWorldNow() : null, talking: !!(talk && dui.typing) });
   }
   const camWorldNow = () => camera.getWorldPosition(_ev);
   function startEpiTalk(id) {
     if (talk || !epi.on) return null;
-    talk = { yaw: epi.yaw, pitch: epi.pitch }; talkWho = 'captain'; talkRun = epiRunner; talkActor = captain;
-    document.body.classList.add('talking'); input.exitLock(); audio.ui('open');
+    talk = { leash: null }; talkWho = 'captain'; talkRun = epiRunner; talkActor = captain;
+    faceOn(captain);
+    document.body.classList.add('talking'); audio.ui('open');
     if (!epiRunner.start(id)) { endTalk(); return null; }
     return 'talk';
   }
@@ -886,16 +986,40 @@ async function boot() {
     // after the first solo: the cadets by the aircraft with the instructor
     if (celebrate) PEERS.forEach((id, i) => cast.put(id, { a: APRON.a + 1.3 + i * 0.9, c: APRON.c + 1.6 - i * 0.5, face: { a: tg.a + 0.8, c: tg.c + 1.5 } }));
   }
-  // turn the view smoothly towards the face of whoever is talking
-  const insHead = new THREE.Vector3();
-  function faceTalker(dt) {
-    (talkActor || instructor).headWorld(insHead);
+  // ---- the view turned for a moment (FACE_S): to a face when a talk begins and when another person takes the line,
+  // or to a point (autoFace: a lesson's screen). It eases there (FACE_TAU) and then is the player's again; a look or a
+  // step of the player's stops it at once.
+  const FACE_TAU = 0.16, faceAt = new THREE.Vector3();
+  function faceOn(actor) { faceWho = actor || null; face = actor ? { actor, point: null, t: FACE_S } : null; }
+  // the person a line's speaker is, when they are here to look at (not the player, not a narrator, not the tablet)
+  function speakerActor(id) {
+    if (mode === 'epilogue') return id === 'captain' ? captain : null;
+    if (id === 'instructor') return insAt !== 'away' && instructor.root.visible ? instructor : null;
+    return cast.where(id) ? cast.actor(id) : null;
+  }
+  function faceSpeaker(id) {
+    if (!talk || talkWho === 'tablet') return;
+    const a = speakerActor(id);
+    if (a && a !== faceWho) faceOn(a);
+  }
+  // (the class: its first page of a section turns the head to briefing room 2's screen, showPage) the view turned to a
+  // point of the world, in the scene's coordinates, as to a speaker; false when there is no talk to turn it in
+  function autoFace(p) {
+    if (!talk || !p || ![p.x, p.y, p.z].every(Number.isFinite)) return false;
+    face = { actor: null, point: new THREE.Vector3(p.x, p.y, p.z), t: FACE_S };
+    return true;
+  }
+  // walking: the walker eased towards the face (5 cm under the eyes) or the point; the walk applied it already this
+  // frame, so the camera is only placed again
+  function faceWalk(dt) {
+    if (face.actor) { face.actor.headWorld(faceAt); faceAt.y -= 0.05; } else faceAt.copy(face.point);
     const y0 = walker.state.yaw, p0 = walker.state.pitch;
-    walker.lookAt(insHead.x, insHead.y - 0.05, insHead.z);
-    const y1 = walker.state.yaw, p1 = walker.state.pitch, k = 1 - Math.exp(-dt / 0.18);
+    walker.lookAt(faceAt.x, faceAt.y, faceAt.z);
+    const y1 = walker.state.yaw, p1 = walker.state.pitch, k = 1 - Math.exp(-dt / FACE_TAU);
     let dy = y1 - y0; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
     walker.state.yaw = y0 + dy * k; walker.state.pitch = p0 + (p1 - p0) * k;
-    walker.apply(dt);
+    walker.apply(0);
+    if ((face.t -= dt) <= 0) face = null;
   }
 
   // ---------------------------------------------------------------- flying (today's Archer, with the instructor)
@@ -1086,7 +1210,7 @@ async function boot() {
   }
   function showLogbookNow(fresh = -1) {
     input.exitLock();
-    dayHud.showLogbook(logbook.entries, logbook.totals(), { fresh, onClose: () => { if ((mode === 'walk' || mode === 'fly') && !talk && !(fly && (fly.talking || fly.debrief)) && !tablet.isOpen) input.requestLock(); } });
+    dayHud.showLogbook(logbook.entries, logbook.totals(), { fresh, onClose: () => { if ((mode === 'walk' || mode === 'fly') && !tablet.isOpen && (talkingNow() ? talkWantsLock() : !(fly && fly.debrief))) input.requestLock(); } });
   }
   // a new day (or the game's start): the card, the cadet at the front door, everyone in place
   function startDay({ card = true, place = true } = {}) {
@@ -1216,7 +1340,7 @@ async function boot() {
     },
     act: {
       logbook: () => showLogbookNow(-1),
-      read: (id) => { const sec = book.section(id); if (sec) dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sec.html }); },
+      read: (id) => openSection(id),
       practice: (bankId) => practice(bankId),
       exportSave: () => exportArchive({ career: career.state, talk: talkState, logbook: logbook.entries, progress: prog(), records: FL.school.loadRecords(fly.flight.store) }),
       importSave: (text) => {
@@ -1249,9 +1373,10 @@ async function boot() {
     const E = { title: `練習：${b.title}`, banks: [bankId], n: 10, pass: 80 };
     const data = examDialogs(FL, 'written1', { seed: Date.now() % 100000, speaker: 'lecturer', exam: E });
     data.speakers = { ...data.speakers, lecturer: { name_ja: 'タブレット（練習問題）', color: '#8fd3ff' } };
-    talk = { yaw: walker.state.yaw, pitch: walker.state.pitch }; talkWho = 'tablet'; talkActor = null;
+    // (no one to turn to; the view and the walk stay free as in any talk)
+    talk = { leash: { x: walker.state.x, z: walker.state.z, r: LEASH_M } }; talkWho = 'tablet'; talkActor = null; faceOn(null);
     talkRun = startLesson('practice', bankId, data);
-    document.body.classList.add('talking'); input.exitLock();
+    document.body.classList.add('talking');
     talkRun.start('exam');
   }
 
@@ -1300,7 +1425,7 @@ async function boot() {
   document.body.classList.add('mode-walk');
   const menu = createMenu({
     root: document.body, settings, presets: ORDER.map(id => ({ id, label: PRESETS[id].label })), version: buildInfo,
-    onResume: () => { input.enabled = true; if (!talk && !(fly && (fly.talking || fly.debrief))) input.requestLock(); audio.ui('close'); },
+    onResume: () => { input.enabled = true; if (talkingNow() ? talkWantsLock() : !(fly && fly.debrief)) input.requestLock(); audio.ui('close'); },
     onQuality: (id) => setQuality(id), onMode: (m) => { if (mode === 'epilogue') { finishEpilogue(); return; } if (!(fly && fly.fading)) setMode(m); }, getMode: () => mode, getPreset: () => preset.id,
     onResetProgress: () => resetProgress(),
     // (M8) the API key's field (ai/keys.js), and the bench with its result to copy
@@ -1328,13 +1453,17 @@ async function boot() {
     if (!on && !bySelf) {
       // Esc while reading a card (the browser takes that Esc to free the mouse): just close the card
       if (interactor.cardOpen) { interactor.closeCard(); audio.ui('close'); }
-      else if (talk || (fly && (fly.talking || fly.debrief)) || dayHud.logbookOpen || tablet.isOpen || cards.showing || report.isOpen) { /* talking, the debrief, the logbook, the tablet, a report: the mouse is free */ }
+      // (a talk's lines: Esc pauses, as when walking; with its choices, the textbook or the field up the mouse is free)
+      else if ((talkingNow() && !talkWantsLock()) || (fly && fly.debrief) || dayHud.logbookOpen || tablet.isOpen || cards.showing || report.isOpen) { /* the mouse is needed on the screen: it is free */ }
       else if (started && (mode === 'walk' || mode === 'fly' || mode === 'epilogue') && !menu.isOpen) openMenu();
     }
   });
   renderer.domElement.addEventListener('click', () => {
     audio.unlock();
-    if (talk || (fly && (fly.talking || fly.debrief)) || dayHud.logbookOpen || tablet.isOpen || report.isOpen) return;   // the dialogue UI (or the debrief, the logbook, the tablet) takes the clicks
+    if (input.dragged) return;                                                // (a drag that looked round is not a click)
+    // a talk: the dialogue UI takes the click (the line goes on), and the mouse is captured again for looking round
+    if (talkingNow()) { if (talkWantsLock()) input.requestLock(); return; }
+    if ((fly && fly.debrief) || dayHud.logbookOpen || tablet.isOpen || report.isOpen) return;   // the debrief, the logbook, the tablet take the clicks
     if (started && !menu.isOpen) input.requestLock();
   });
   addEventListener('keydown', (e) => {
@@ -1491,9 +1620,22 @@ async function boot() {
   function simulate(dt) {
     const live = started || scripted > 0;   // behind the start screen nothing moves, and no key does anything
     if (!live) input.takeLook();
+    // a talk keeps the mouse captured for looking round; it is let go while the mouse is needed on the screen
+    if (input.locked && talkingNow() && !talkWantsLock()) input.exitLock();
     if (mode === 'walk') {
-      if (talk) { input.takeLook(); if (talkWho !== 'tablet') faceTalker(dt); }
-      else if (!menu.isOpen && live) {
+      if (talk) {
+        // a talk: the view and the walk stay free (on the leash; ↑↓ are the choices' while they are up), the turn to a
+        // face stopped by a look or a step; E and a click are the conversation's, never what is in front
+        const look = input.takeLook();
+        if (!menu.isOpen && live) {
+          if (look.x || look.y) face = null;
+          // (a panel over the talk — the textbook, the logbook, the report, a card — holds the walk: ← → and W A S D are
+          // not the reader's way of walking away behind it; the look still turns)
+          const still = dui.bookOpen || dayHud.logbookOpen || report.isOpen || cards.showing;
+          if (walker.update(dt, { look, leash: talk.leash, upDown: !dui.choosing, still })) face = null;
+          if (face) faceWalk(dt);
+        }
+      } else if (!menu.isOpen && live) {
         walker.update(dt);
         if ((input.pressed('KeyE') || input.pressed('Mouse0')) && performance.now() - talkEndedAt > 500) { const r = interactor.use(); if (r === 'closed') audio.ui('close'); }
       }
@@ -1530,7 +1672,10 @@ async function boot() {
       if (insAt !== 'away') { const P0 = insAt === 'apron' ? APRON : insAt === 'lobby' ? INS_LOBBY : INS; instructor.root.visible = Math.hypot(pa - P0.a, pc - P0.c) < CAST_FAR || talkWho === 'instructor'; }
       const v = talk ? talkRunner().view() : null;
       instructor.update(dt, { lookAt: (talk && talkWho === 'instructor') || near ? camWorld : null, talking: !!(v && v.speaker === 'instructor' && dui.typing) });
-      cast.update(dt, camWorld, { a: pa, c: pc }, talk ? talkWho : null, !!(v && v.speaker === talkWho && dui.typing));
+      // (the one whose line it is moves their mouth: another of the cast who takes a line — the cadets after the solo,
+      // at the graduation — is the one talked to while it types)
+      const to = talk ? (v && v.speaker !== talkWho && cast.where(v.speaker) ? v.speaker : talkWho) : null;
+      cast.update(dt, camWorld, { a: pa, c: pc }, to, !!(v && v.speaker === to && dui.typing));
     }
     // inside: the eye adapts (exposure), the ceiling lights near the player light the room, the ambience changes
     const k = indoorAt(ACADEMY, pa, pc, camWorld.y - G);
@@ -1785,6 +1930,8 @@ async function boot() {
     // talking: start, read the current line, go on, choose (by index or by a regular expression on the text)
     talk: () => startTalk(),
     dialog: () => { const v = talkRunner().view(); return v ? { ...v, typing: dui.typing, bookOpen: dui.bookOpen } : null; },
+    // a textbook section in the overlay, as the 'book' hook opens it (closed with Esc, ✕ or a click outside)
+    readSection: (id) => { openSection(id); return dui.bookOpen; },
     dialogNext: () => { const r = talkRunner(); if (dui.typing) dui.reveal(); r.next(); afterStep(); return r.view(); },
     dialogChoose: (which) => {
       const r = talkRunner(), v = r.view(); if (!v) return null;
@@ -1794,6 +1941,22 @@ async function boot() {
       r.choose(c.i); afterStep(); return r.view();
     },
     closeBook: () => dui.hideBook(), dialogReveal: () => dui.reveal(),
+    // the view while talking: how far it is from someone's face ('instructor', one of the cast, 'captain': where the view
+    // turns to them — 5 cm under the eyes, the eyes in the cockpit) or from a point of the runway frame ({ a, c, y }), in
+    // degrees; whether it is still turning by itself and how far the walk is from where the talk began; a turn to a
+    // point as the lecture's screen asks (autoFace, the point given in the runway frame); the mouse captured or not, let
+    // go as the game lets it go, the last press a drag
+    aim: (who) => {
+      const at = new THREE.Vector3();
+      if (who && typeof who === 'object') frameToWorld({ x: who.c, y: who.y ?? 1.5, z: -who.a }, at);
+      else { const p = who === 'captain' ? captain : who === 'instructor' ? instructor : cast.actor(who); if (!p) return null; p.headWorld(at); if (mode !== 'fly') at.y -= 0.05; }
+      camera.updateMatrixWorld();
+      const eye = camera.getWorldPosition(new THREE.Vector3());
+      return camera.getWorldDirection(new THREE.Vector3()).angleTo(at.sub(eye)) * 180 / Math.PI;
+    },
+    talkView: () => (talk ? { face: face ? (face.actor ? 'person' : 'point') : null, out: talk.leash ? Math.hypot(walker.state.x - talk.leash.x, walker.state.z - talk.leash.z) : null } : null),
+    faceTo: (a, c, y = 1.5) => autoFace(frameToWorld({ x: c, y, z: -a })),
+    lock: { on: () => input.locked, release: () => input.exitLock(), dragged: () => input.dragged },
     talkState: () => JSON.parse(JSON.stringify(talkState)),
     savedState: () => saved.load(), resetProgress: () => resetProgress(),
     instructor: () => { const w = instructor.root.getWorldPosition(new THREE.Vector3()), [fx, fz] = toFrame(w.x, w.z); return { a: INS.a, c: INS.c, at: { a: -fz, c: fx }, gesture: instructor.gesturing, triangles: instructor.triangles }; },
@@ -1851,6 +2014,15 @@ async function boot() {
       sleep: (late = false) => sleepNow({ late }),
       talkTo: (id) => startTalk(id), where: (id) => (id === 'instructor' ? { at: insAt } : cast.where(id)),
       activity: () => (lessonKind ? { kind: lessonKind.kind, id: lessonKind.id, n: lessonKind.n, questions: (lessonRun && lessonQuestions) || [] } : null),
+      // the class's page on briefing room 2's screen (the 'page' hook's arg) and the section on its whiteboard
+      lecture: () => ({ page: pageNow, section: pageSec }),
+      // what a room's board or screen shows now: a hash of its canvas's pixels (null: no such surface)
+      screen: (room = 'brief-2', type = 'wall_screen') => {
+        const cv = academy.surfaceCanvas ? academy.surfaceCanvas(room, type) : null; if (!cv || !cv.getContext) return null;
+        const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; let h = 2166136261;
+        for (let i = 0; i < d.length; i += 4 * 7) h = Math.imul(h ^ (d[i] | (d[i + 1] << 8) | (d[i + 2] << 16)), 16777619) >>> 0;
+        return h;
+      },
       home: () => goHome(), homeChoose: (k) => homeChoose(k),
       // (opened as Tab opens it: the card closed, the mouse let go)
       tablet: { open: (p) => { interactor.closeCard(); input.exitLock(); tablet.open(p); }, close: () => tablet.close(), isOpen: () => tablet.isOpen, page: () => tablet.page },

@@ -115,7 +115,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
       return `<table>
         <tr><td>W A S D</td><td>移動</td></tr><tr><td>マウス</td><td>見回す（画面をクリックすると操作が始まります）</td></tr>
         <tr><td>Shift（押したまま）</td><td>走る</td></tr><tr><td>E / 左クリック</td><td>調べる・話しかける・扉を開け閉めする・カードを閉じる</td></tr>
-        <tr><td>会話中</td><td>クリック・Space・Enter で次へ。1〜9 か ↑↓ と Enter で選ぶ。Esc で教科書を閉じる。話を切り上げるときは「また後で来ます」（説明を聞き終えたあとは「準備に向かいます」）</td></tr>
+        <tr><td>会話中</td><td>クリック・Space・Enter・E で次へ。マウスで見回し、W A S D で歩ける（話し始めた場所から 3 m まで）。1〜9 か ↑↓ と Enter で選ぶ（マウスが自由なときは、画面のドラッグで見回す）。Esc で教科書を閉じる。話を切り上げるときは「また後で来ます」（説明を聞き終えたあとは「準備に向かいます」、授業は節の終わりの「ここで休憩する」）</td></tr>
         <tr><td>Esc</td><td>一時停止（このメニュー）</td></tr><tr><td>F</td><td>性能の表示</td></tr>
         <tr><td>見学モード</td><td>WASD・Space（上）・C（下）・G（地面に立つ）・1〜9・0（視点）・[ ]（時刻）</td></tr></table>
         <h3>操縦席で（FLIGHT LAB と同じキー）</h3>

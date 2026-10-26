@@ -5,8 +5,11 @@
 // flight from the apron, or getting out again. In flight FLIGHT LAB's lesson runs exactly as in FLIGHT LAB
 // (flight/flight.js), the instructor says each step's instruction and the hints, and a debrief follows the end.
 // The view: the pilot's eye with the mouse (right button held: look closer), or outside behind the aircraft (C); a
-// click on a switch, lever or knob under the crosshair works it, the wheel turns it. Getting out puts the aircraft back
-// on its stand.
+// click on a switch, lever or knob under the crosshair works it, the wheel turns it. While the one in the right seat
+// talks, the flight waits (paused, the keys not the aircraft's) but the head stays the player's: it turns to them when
+// the talk begins, for FACE_S (any look of the mouse's stops that), and looks wherever the mouse takes it; the switches
+// under the crosshair, the closer look and the keys wait for the talk's end. Getting out puts the aircraft back on its
+// stand.
 // M4: the engine and the electrics are aircraft/systems.js behind the cockpit's switches (cold on the stand: the
 // cadet, or the instructor, starts it); the whole first day is flight/day-mode.js (the checklists, the radio, the
 // taxiing, t1 → a2 → t3, the debrief and the logbook).
@@ -32,6 +35,7 @@ const FADE_MS = 420;
 const LOOK = { yaw: 150 * DEG, up: 60 * DEG, down: 70 * DEG };
 const ZOOM_FOV = 30;
 const HOME_PITCH = -4 * DEG;            // the head at rest: a little down, the horizon above the glareshield
+const FACE_S = 0.8;                     // a talk begins: the head turns to the one beside you for this long (main.js's too)
 
 // ctx: { FL, L, scene, camera, renderer, sky, input, settings, audio, toast(text, ms), hud (prompt), dui (the dialogue
 //   UI), talkState, saveTalk(), instructor, instructorHome(root) (puts him back in the briefing room), stand { a, c,
@@ -101,7 +105,7 @@ export function createFlyMode(ctx) {
   let view = 'cockpit', yaw = 0, pitch = 0, chaseYaw = 0, chasePitch = 0.08, psiS = null, fov = null;
   let rpmVisual = null, talkOn = false, talkKind = 'board', lineT = 0, lastChime = -1, lastHint = '', hudT = 0, chosen = null, go = null, lastAtcMsg = '';
   const blend = { t: 0, pos: [0, 0, 0], q: new THREE.Quaternion() };
-  let fading = false, warnedExit = 0, debriefShown = false, lastLevel = settings.get('lessonLevel') || 'basic', homeT = 0;
+  let fading = false, warnedExit = 0, debriefShown = false, lastLevel = settings.get('lessonLevel') || 'basic', homeT = 0, faceT = 0;
   const pose = { pos: [0, 0, 0], q: [0, 0, 0, 1] };
   const qBlend = new THREE.Quaternion(), qBody = new THREE.Quaternion(), qHead = new THREE.Quaternion(), eHead = new THREE.Euler(0, 0, 0, 'YXZ');
   const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), camWorld = new THREE.Vector3(), head = new THREE.Vector3();
@@ -161,10 +165,11 @@ export function createFlyMode(ctx) {
     if (crew) { crew.pointAt(v1); crew.gesture('point'); }
   }
   // which: 'board' (the menu on sitting down), 'transit' / 'return' / 'pattern' (the day's questions in the air), 'debrief'
+  // (the mouse stays captured: the head looks round while he talks; main.js lets it go while the choices are up)
   function startTalk(which = 'board', data = null) {
     talkOn = true; talkKind = which; chosen = null; go = null; ctx.onTalk(true);
     if (fh) fh.show(false);                 // his talk alone on the screen (the flight's panels come back after it)
-    input.exitLock();
+    faceT = crew ? FACE_S : 0; homeT = 0;
     if (which === 'debrief') {
       debRunner = createRunner({ data: withEnglish(data), state: ctx.talkState, ctx: () => ({ ai: { on: !!settings.get('aiTutor') } }), hooks: { onHook } });
       debRunner.onChange(onTalkView);
@@ -173,7 +178,7 @@ export function createFlyMode(ctx) {
   }
   function endTalk() {
     if (!talkOn) return;
-    talkOn = false; ctx.dui.hide(); ctx.onTalk(false);
+    talkOn = false; ctx.dui.hide(); ctx.onTalk(false); faceT = 0;
     const c = chosen, kind = talkKind, g = go; chosen = null; go = null;
     if (!active || phase === 'leaving') return;          // stopped by getting out (the menu): nothing to start
     if (fh) fh.show(true);
@@ -264,7 +269,7 @@ export function createFlyMode(ctx) {
       flight.startLesson(lessonId, level, { autoRud: settings.get('autoRud') });
       systems.setRunning(flight.s);
       phase = 'lesson'; rpmVisual = null; lastChime = -1; lastHint = ''; hintCool = 0; debriefShown = false;
-      yaw = 0; pitch = HOME_PITCH; homeT = 0; psiS = null;
+      yaw = 0; pitch = HOME_PITCH; homeT = 0; faceT = 0; psiS = null;
       if (fh) { fh.hideDebrief(); fh.setMode('lesson'); }
       placeNow();
       toast('訓練空域に着きました', 2600);
@@ -436,8 +441,14 @@ export function createFlyMode(ctx) {
   function update(dt, { live: isLive = true, paused = false } = {}) {
     if (!active) return;
     const look = input.takeLook(), wheel = input.takeWheel ? input.takeWheel() : 0;
+    // the flight's pause (and the hands' on the panel): a talk, the debrief, the menu, the fade; the head's: the same
+    // but the talk, during which it looks round as the mouse takes it
     const stop = paused || fading || talkOn || debriefShown || !isLive;
-    if (wasStop && !stop) flight.controls.clearKeys();
+    const stopHead = paused || fading || debriefShown || !isLive;
+    // (the first frame after a talk, a fade or the menu: the click or the wheel that ended it is not the panel's — a
+    // talk's last line is closed by a click on the view, with the pointer still captured)
+    const resumed = wasStop && !stop;
+    if (resumed) flight.controls.clearKeys();
     wasStop = stop;
     // the flight (FLIGHT LAB's tick: the keys once, then 1/120 s steps)
     frameOpt.paused = stop || phase === 'board' || phase === 'leaving';
@@ -453,18 +464,22 @@ export function createFlyMode(ctx) {
       else if (r.type === 'help' && fh) fh.setHelp(!fh.help);
       else if (r.type === 'pause' && ctx.onPause) ctx.onPause();
     }
-    // the head (or the orbit round the aircraft)
-    if (!stop) {
+    // the head (or the orbit round the aircraft): the mouse's, after a moment turned to the one who talks (when a talk
+    // begins) or back to the front (when it ends); a look of the mouse's stops either
+    if (!stopHead) {
       const sens = 0.0022 * settings.get('sensitivity'), inv = settings.get('invertY') ? -1 : 1;
+      if (look.x || look.y) faceT = 0;
       if (view === 'cockpit') {
         if (look.x || look.y) homeT = 0;
+        else if (faceT > 0) faceInstructor(dt);
         else if (homeT > 0) { homeT -= dt; const k = 1 - Math.exp(-dt / 0.3); yaw += (0 - yaw) * k; pitch += (HOME_PITCH - pitch) * k; }
         yaw = THREE.MathUtils.clamp(yaw - look.x * sens, -LOOK.yaw, LOOK.yaw);
         pitch = THREE.MathUtils.clamp(pitch - look.y * sens * inv, -LOOK.down, LOOK.up);
       } else {
         chaseYaw -= look.x * sens; chasePitch = THREE.MathUtils.clamp(chasePitch - look.y * sens * inv, -0.15, 1.2);
       }
-    } else if (talkOn) faceInstructor(dt);
+      if (faceT > 0) faceT -= dt;
+    }
     // the propeller as the systems turn it (the starter, the run-up's magneto drop: the picture and the sound)
     rpmVisual = systems.rpm; engShow.rpm = systems.rpm; engShow.run = systems.running;
     if (blend.t > 0) blend.t = Math.max(0, blend.t - dt / 1.2);
@@ -487,8 +502,8 @@ export function createFlyMode(ctx) {
       hover = cockpit.pick(ray);
       hud.prompt(hover ? hover.label : null, hover ? (hover.kind === 'knob' ? 'ホイール' : hover.kind === 'lever' ? 'クリック・ホイール' : 'クリック') : null);
       if (hover) {
-        if (input.pressed('Mouse0')) applyAct(hover.act(1, false));
-        if (wheel) for (let i = 0; i < Math.abs(wheel); i++) applyAct(hover.act(Math.sign(wheel), true));
+        if (input.pressed('Mouse0') && !resumed) applyAct(hover.act(1, false));
+        if (wheel && !resumed) for (let i = 0; i < Math.abs(wheel); i++) applyAct(hover.act(Math.sign(wheel), true));
       }
     } else if (hover) { hover = null; hud.prompt(null); }
     cockOpt.s = flight.s; cockOpt.L = flight.L; cockOpt.av = flight.av; cockOpt.parkBrake = flight.controls.parkBrake; cockOpt.night = night(); cockOpt.eng = engShow;
@@ -557,11 +572,12 @@ export function createFlyMode(ctx) {
   const NO_KEYS = { has: () => false };
   const KEYS = { has: (c) => input.down(c) };
   const keysFor = (stop) => (stop ? NO_KEYS : KEYS);
+  // the head eased towards the face of the one in the right seat (while faceT runs)
   function faceInstructor(dt) {
     if (!crew) return;
     crew.headWorld(head);
     v1.copy(head); live.root.worldToLocal(v1); v1.sub(cockpit.eye);
-    const ty = Math.atan2(-v1.x, -v1.z), tp = Math.atan2(v1.y, Math.hypot(v1.x, v1.z)), k = 1 - Math.exp(-dt / 0.25);
+    const ty = Math.atan2(-v1.x, -v1.z), tp = Math.atan2(v1.y, Math.hypot(v1.x, v1.z)), k = 1 - Math.exp(-dt / 0.16);
     yaw += (ty - yaw) * k; pitch += (tp - pitch) * k;
   }
   function night() { const el = sky.state.el; return 1 - THREE.MathUtils.smoothstep(el, -4, 6); }
@@ -685,7 +701,7 @@ export function createFlyMode(ctx) {
     actOn(id, dir = 1, wheel = false) { const c = cockpit.controls.find(x => x.id === id); if (!c) return null; const d = c.act(dir, wheel); applyAct(d); return d; },
     beginLesson, retry, freeFromHere,
     // the head (degrees: yaw + to the left, pitch + up) and looking closer, as the mouse would (for the tests)
-    look(yawDeg, pitchDeg) { yaw = yawDeg * DEG; pitch = pitchDeg * DEG; homeT = 0; },
+    look(yawDeg, pitchDeg) { yaw = yawDeg * DEG; pitch = pitchDeg * DEG; homeT = 0; faceT = 0; },
     setZoom(on) { zoomHold = !!on; },
     // a lesson flown by a scripted pilot (FLIGHT LAB's bot, for the tests), then the same end as a flown one
     runScripted(pilot, maxSec, hook) { const L0 = flight.runScripted(pilot, maxSec, hook); if (L0 && L0.done) onEnded(); return L0; },
@@ -700,7 +716,7 @@ export function createFlyMode(ctx) {
       let seatAt = null;
       if (active && crew && crew.headWorld) { crew.headWorld(v2); live.root.worldToLocal(v2); seatAt = v2.toArray(); }
       const d = dayMode.day;
-      return { active, phase, view, talking: talkOn, talkKind, debrief: debriefShown, flight: flight.L ? flight.status() : null, rpmVisual, yaw, pitch, hover: hover ? hover.id : null, seatAt, eye: cockpit.eye.toArray(),
+      return { active, phase, view, talking: talkOn, talkKind, debrief: debriefShown, flight: flight.L ? flight.status() : null, rpmVisual, yaw, pitch, facing: faceT > 0, hover: hover ? hover.id : null, seatAt, eye: cockpit.eye.toArray(),
         engine: { running: systems.running, cranking: systems.cranking, rpm: systems.rpm, oil: systems.oil, sw: { ...cockpit.switches } }, guide: guideCtl ? guideCtl.id : null,
         day: d ? { phase: d.phase, label: d.label, items: d.items(), radio: d.atc.view(), assisting: dayMode.assisting, flying: dayMode.flying, st: { incursion: d.st.incursion, exit: d.st.exit, crash: d.st.crash || null, obstacle: lastObstacle, memo: { ...d.st.memo, hold: undefined } } } : null };
     },

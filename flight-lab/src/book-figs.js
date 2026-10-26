@@ -1542,6 +1542,33 @@
       for (const [n, lines] of key) { s += tag(14, y - 4, n) + TL(30, y, lines, { c: C.ink, a: 'start', fs: 12, lh: 16 }); y += lines.length * 16 + 5; }
       return svg(400, y + 4, s, '図：セクショナルチャートの記号（架空の LAB 空港のまわりを描いた模式図。記号は FAA Chart Users\' Guide のもの）。本物のチャートは 56 日ごとに改訂されるので、いつも最新の版を使います');
     },
+    // ---------------------------------------------------------------- 第 19 章 navr（電波航法）
+    vorRadials() {
+      // radials leave the station; TO / FROM depends on where the airplane is, not where it points (PHAK chapter 16, AIM 1-1-3).
+      // The fictional LAB VOR (avionics.js NAVAIDS), magnetic north up, the course 040 of lesson n1 and the half-planes it makes
+      const AV = FL.avionics, vor = AV.NAVAIDS.find(n => n.id === 'LBV'), cx = 200, cy = 186, crs = 40, dir = h => [Math.sin(h * DEG), -Math.cos(h * DEG)];
+      const P = (h, r) => [cx + r * dir(h)[0], cy + r * dir(h)[1]];
+      // the TO half (the side the course comes from) and the FROM half, split by the line through the station at right angles to the course
+      const [l0, l1] = [P(crs + 90, 400), P(crs - 90, 400)], [t0, t1] = [P(crs + 180, 400), P(crs, 400)];
+      let s = `<defs><clipPath id="vorclip"><rect x="0" y="0" width="400" height="356"/></clipPath></defs>`;
+      s += `<g clip-path="url(#vorclip)"><path d="M${l0[0].toFixed(0)} ${l0[1].toFixed(0)} L${(l0[0] + t0[0] - cx).toFixed(0)} ${(l0[1] + t0[1] - cy).toFixed(0)} L${(l1[0] + t0[0] - cx).toFixed(0)} ${(l1[1] + t0[1] - cy).toFixed(0)} L${l1[0].toFixed(0)} ${l1[1].toFixed(0)} Z" fill="${C.cy}" fill-opacity="0.08"/>`;
+      s += `<path d="M${l0[0].toFixed(0)} ${l0[1].toFixed(0)} L${(l0[0] + t1[0] - cx).toFixed(0)} ${(l0[1] + t1[1] - cy).toFixed(0)} L${(l1[0] + t1[0] - cx).toFixed(0)} ${(l1[1] + t1[1] - cy).toFixed(0)} L${l1[0].toFixed(0)} ${l1[1].toFixed(0)} Z" fill="${C.am}" fill-opacity="0.08"/>`;
+      s += L(l0[0], l0[1], l1[0], l1[1], C.mut, 1, '5 5') + '</g>';
+      s += T(12, 232, 'CRS 040 なら TO の側', { c: C.cy, b: 1, a: 'start', fs: 12, halo: 1 }) + T(392, 24, 'CRS 040 なら FROM の側', { c: C.am, b: 1, a: 'end', fs: 12, halo: 1 });
+      // the compass rose (magnetic north up) and four radials, drawn outward from the station
+      s += `<circle cx="${cx}" cy="${cy}" r="44" fill="none" stroke="${C.bl}" stroke-width="1.5"/>`;
+      for (let a = 0; a < 360; a += 30) { const [x0, y0] = P(a, a % 90 ? 38 : 32), [x1, y1] = P(a, 44); s += L(x0.toFixed(1), y0.toFixed(1), x1.toFixed(1), y1.toFixed(1), C.bl, 1.5); }
+      s += T(cx, cy - 50, '磁北', { c: C.bl, b: 1, fs: 12 }) + `<circle cx="${cx}" cy="${cy}" r="4" fill="${C.bl}"/>`;
+      [[40, 160], [130, 150], [220, 160], [310, 150]].forEach(([r, len]) => { const [x0, y0] = P(r, 48), [x1, y1] = P(r, len), [tx, ty] = P(r, len + 16); s += A(x0, y0, x1, y1, C.vi, 2.5) + T(tx.toFixed(1), (ty + 4).toFixed(1), `${String(r).padStart(3, '0')}`, { c: C.vi, b: 1, fs: 12, halo: 1 }); });
+      // airplane A on the 220 radial, flying the course 040 to the station; airplane B on the 040 radial, flying 040 away from it
+      const [ax, ay] = P(220, 112), [bx, by] = P(40, 96);
+      s += planeTop(ax, ay, 0.34, { rot: crs }) + TL(ax + 30, ay + 20, ['A：TO', '（局へ近づく）'], { c: C.cy, b: 1, a: 'start', fs: 12, lh: 15 });
+      s += planeTop(bx, by, 0.34, { rot: crs }) + TL(bx + 34, by + 2, ['B：FROM', '（局から離れる）'], { c: C.am, b: 1, a: 'start', fs: 12, lh: 15 });
+      s += `<rect x="${cx + 14}" y="${cy + 18}" width="96" height="22" fill="${C.bg}" stroke="${C.bl}"/>` + T(cx + 62, cy + 33, `LAB ${(vor.freq / 1000).toFixed(1)} LBV`, { c: C.bl, b: 1, fs: 12 });
+      s += TL(8, 376, ['紫の矢印＝ラジアル（局から外へ出る磁方位の線）', 'A も B も機首は 040°。表示が TO か FROM かは、位置で決まる', '220 ラジアルの上から局へ向かうコース ＝ 220 − 180 ＝ 040°'], { c: C.ink, a: 'start', fs: 12, lh: 17 });
+      s += T(392, 350, '模式図（LAB VOR は架空）・NOT FOR NAVIGATION', { c: C.mut, a: 'end', fs: 12, halo: 1 });
+      return svg(400, 430, s, '図：VOR のラジアルと TO / FROM（上から見た模式図・磁北が上）。コース（CRS）を 040 にしたとき、局の手前の側では TO、局を過ぎた側では FROM になります。機首の向きでは変わりません');
+    },
   };
 
   // ---------------------------------------------------------------- calculators inside the text

@@ -5,7 +5,7 @@ FLIGHT LAB の教科書（TEXTBOOK でも同じ）に入れた写真の一覧で
 写真は縮小（長い辺 1200 px 以下）・WebP に変換し、メタデータを消して `src/book-photos.js` に入れています。一部の写真は切り抜いています（元の写真から変えています）。
 CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できます。写真の下のキャプションにも作者・ライセンス・出典を出しています。
 
-写真 20 枚・合計 1.57 MB（WebP のバイト数）。
+写真 21 枚・合計 1.66 MB（WebP のバイト数）。
 
 | id | 写真 | 作者 | ライセンス | 出典 | 使っている節 |
 |---|---|---|---|---|---|
@@ -29,3 +29,4 @@ CC BY-SA の写真は、変換したものも同じ CC BY-SA で利用できま�
 | `grassStrip` | 芝の滑走路（不整地の一例。米国ノースカロライナ州の Lake Ridge 飛行場の滑走路 14）。車輪がめり込みやすいので、前輪に重さをかけない離着陸の技術を使います | Ildar Sagdejev (Specious) | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [元のページ](https://commons.wikimedia.org/wiki/File:2008-08-24_Lake_Ridge_Aero_Park_Airport_Rwy_14.jpg) | ops.soft |
 | `windsock` | 吹き流し（windsock）。筒が伸びる向きへ風が吹いていきます（筒の口の側が風上）。よく伸びるほど風が強い（カナダ・Jasper 飛行場） | Royalbroil | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Jasper_Alberta_Airport_Windsock.jpg) | ops.xwind |
 | `elt` | ELT（航空機用救命無線機）の本体とアンテナ、操縦席に付けるスイッチ。ふだんは ARM にしておき、強い衝撃を受けると自動で電波を出し始めます（AIM 6-2-4） | Mdarcangelo | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [元のページ](https://commons.wikimedia.org/wiki/File:Emergency_Locator_Transmitter.jpg) | emg.forced |
+| `vorStation` | VOR/DME の地上局（米国ミネソタ州 Hibbing・110.8 MHz）。円盤の形の屋根のアンテナから、全方向へ電波を出しています | Tony Webster | [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0) | [元のページ](https://commons.wikimedia.org/wiki/File:VOR-DME_in_Hibbing_Minnesota_(52688384252).jpg) | nav.vor |

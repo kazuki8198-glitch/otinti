@@ -35,7 +35,7 @@ node textbook/rewrite/combined/tools/selftest.mjs               # 道具その�
 | figures | check-figures.mjs | viewBox の幅 360〜440・aria-label＝キャプション・白い板なし・XML・同じ章で id の重なりなし、Chromium の 390 px で文字の箱が図の中・重なりなし・最小 10 px（字の幅の広いフォントでのはみ出しの見込み、切れる図形は warn）（16） |
 | provenance | check-provenance.mjs | 原本 `flight-lab/kiso/` が変わっていない（git と sha256：`data/kiso-sha256.json`）、由来表 PROVENANCE.json が 393 節・376 問・161 図・85 写真を 1 回ずつ、節の from（10・11） |
 | maps | check-maps.mjs | JCAB-MAP.json・ACS-MAP.json の全見出しが節か「対象外（理由）」（12・13） |
-| concepts | check-concepts.mjs | 太字の定義 `<b>語（English）</b>` は本の中で 1 回、概念の住所と「思い出そう」（3 行以内・リンク）。台帳 CONCEPTS.json がなければ DESIGN 3.2 の既知の対（15） |
+| concepts | check-concepts.mjs | 太字の定義 `<b>語（English）</b>`・`<b>正式名（通称、English）</b>`（括弧の中に英語）は本の中で 1 回、概念の住所と「思い出そう」（3 行以内・リンク）。台帳 CONCEPTS.json がなければ DESIGN 3.2 の既知の対（15） |
 | jur | check-jur.mjs | 日米の 47 項目が、囲み（`data-jur="<項目 ID>"`）・部のまとめ・第 7 部の 3 か所にあり、囲みの数字が FL.jur と同じ（9） |
 | calc | calc-check.mjs | 計算の例を式で計算し直し、本にその数字が出ているか（`data/calc-seed.json` と台帳 CALC.json）（5） |
 | path | check-path.mjs | 課目の節は同じか前の部・後ろの部への bk.see は「予告」つきで 40 本まで・部の扉の思い出す節・まとめの問いの 30% が前の部（23） |

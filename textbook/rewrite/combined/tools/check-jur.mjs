@@ -23,10 +23,15 @@ export function elementAt(html, i) {
 const NUM = /\d[\d,]*(?:\.\d+)?/g;
 const nums = s => [...String(s).matchAll(NUM)].map(m => m[0].replace(/,/g, '')).filter(x => x.length >= 2 || Number(x) >= 2);
 
+// every string a box draws for an item (FL.jur.textOf: the title, both sides with their sources and articles, the e-Gov
+// versions under the box), so the source's numbers (14 CFR 91.155) and the article's (第 5 条) are not taken for numbers
+// written by hand; without textOf, the two sides only
+const drawnText = (J, x) => (typeof J.textOf === 'function' ? J.textOf(x) : `${pick(x, ['us', 'usValue', 'US', '米国']) ?? ''} ${pick(x, ['jp', 'jpValue', 'JP', '日本']) ?? ''}`);
+
 export function items(FL) {
   if (FL.jur) {
     const rows = Array.isArray(FL.jur) ? FL.jur : Array.isArray(FL.jur.items) ? FL.jur.items : rowsOf(FL.jur);
-    return { from: 'FL.jur', list: rows.map(x => ({ id: String(pick(x, ['id']) || ''), title: pick(x, ['title', 't', '題']) || '', us: String(pick(x, ['us', 'usValue', 'US', '米国']) ?? ''), jp: String(pick(x, ['jp', 'jpValue', 'JP', '日本']) ?? ''), boxes: asList(pick(x, ['boxes', 'box', 'secs', 'sections', 'at'])).map(String), gates: asList(pick(x, ['gates', 'gate', 'g'])).map(String), part7: asList(pick(x, ['part7', 'p7', 'jp7', 'japan'])).map(String), safety: !!pick(x, ['safety', '安全']), conf: pick(x, ['conf', 'confidence', 'status', '確度']) })) };
+    return { from: 'FL.jur', list: rows.map(x => ({ id: String(pick(x, ['id']) || ''), title: pick(x, ['title', 't', '題']) || '', us: String(pick(x, ['us', 'usValue', 'US', '米国']) ?? ''), jp: String(pick(x, ['jp', 'jpValue', 'JP', '日本']) ?? ''), boxes: asList(pick(x, ['boxes', 'box', 'secs', 'sections', 'at'])).map(String), gates: asList(pick(x, ['gates', 'gate', 'g'])).map(String), part7: asList(pick(x, ['part7', 'p7', 'jp7', 'japan'])).map(String), safety: !!pick(x, ['safety', '安全']), conf: pick(x, ['conf', 'confidence', 'status', '確度']), drawn: drawnText(FL.jur, x) })) };
   }
   return { from: 'DESIGN 3.4', list: jurItems() };
 }
@@ -52,7 +57,7 @@ export async function run(env) {
       if (!box) { tally.box[1]++; r.error('box-missing', `${it.id} → ${sid}`, `「${it.title}」の囲み（data-jur="${it.id}"）がない`); continue; }
       tally.box[0]++;
       if (!/class="[^"]*\bbk-(jur|us|jp|same)\b/.test(box)) r.warn('box-class', `${it.id} → ${sid}`, 'data-jur の要素が bk-jur・bk-us・bk-jp・bk-same のどれでもない');
-      if (from === 'FL.jur') { const allowed = new Set(nums(it.us + ' ' + it.jp)); for (const n of nums(textOf(box))) if (!allowed.has(n)) r.error('box-number', `${it.id} → ${sid}`, `囲みの数字 ${n} がデータ（米国：${clip(it.us, 30)}／日本：${clip(it.jp, 30)}）にない`); }
+      if (from === 'FL.jur') { const allowed = new Set(nums(it.drawn)); for (const n of nums(textOf(box))) if (!allowed.has(n)) r.error('box-number', `${it.id} → ${sid}`, `囲みの数字 ${n} がデータ（米国：${clip(it.us, 30)}／日本：${clip(it.jp, 30)}）にない`); }
       if (/data-sec="(j[a-z]+\.|g\d)/.test(box) && !/class="[^"]*\b(jur-jp|bk-jp|bk-same)\b/.test(box)) r.info('box-link', `${it.id} → ${sid}`, '第 7 部・まとめへのリンクがある（日本の側の入れ物の中か確かめる：決まり 6）');
     }
     if (checking) continue;

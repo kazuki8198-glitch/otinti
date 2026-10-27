@@ -1,0 +1,16 @@
+{
+  "about": "統合 P2：W04 が作った用語の表 FL.terms の語の数を COUNTS の book.terms に書き添える（book.terms の数は用語集（約 800）の数なので built は変えない）。DESIGN 3.4 の表に W06 の確かめで〔要確認〕を 3 つ足したので、COUNTS の jur.unverified の数え直しを直す（design の欄は変えない）",
+  "patches": [
+    {
+      "id": "book.terms",
+      "by": "W04",
+      "note": "統合 P2（2026-10-27）：用語の表 FL.terms は W04 で 297 語（DESIGN 3.5 の「約 150 語」より多い：RULINGS の C の 42 行の語・CADET の通称 68・テストと CADET が決めている語・今の章末の用語の表の語のうち JCAB の資料に名前があるものを全部載せたため。数合わせの行はない：reports/W04.md の 2.6）。用語集（約 800）は W47 が作る"
+    },
+    {
+      "id": "jur.unverified",
+      "recount": 15,
+      "by": "W06",
+      "note": "統合 P2（2026-10-27）：DESIGN 3.4 の time・metar.taf・ws.alert の日本の欄に〔要確認〕を付けた（W06 が一次資料で確かめられなかった：FL.jur と同じ。DESIGN の付記 3）。数え直しは 12 → 15"
+    }
+  ]
+}

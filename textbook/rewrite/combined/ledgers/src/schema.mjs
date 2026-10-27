@@ -52,8 +52,14 @@ export const patchFields = p => { const { ledger: _l, op: _o, ...fields } = p; r
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 // the row an add made is there, every field as the patch has it
 export const alreadyAdded = (row, p) => !!row && Object.entries(patchFields(p)).every(([k, v]) => same(row[k], v));
-// a set whose every field the row already holds (a note: already part of the row's note) was applied before
-export const alreadySet = (row, p) => !!row && Object.entries(patchFields(p)).every(([k, v]) => k === 'id' || (k === 'note' ? String(row.note || '').includes(String(v)) : same(row[k], v)));
+// a set was applied before when the row already holds it. A set with a note is known by its note (already part of the
+// row's note): a later unit's patch may have set the same row's other fields since (by, status…), and applying the
+// earlier patch again must not turn them back nor add its note twice (several units write notes on one row: W05, W04
+// and W06 on U.check-standards). A set without a note: when the row holds every field as the patch has it
+const hasNote = p => typeof p.note === 'string' && p.note.trim() !== '';
+export const alreadySet = (row, p) => !!row && (hasNote(p)
+  ? String(row.note || '').includes(p.note)
+  : Object.entries(patchFields(p)).every(([k, v]) => k === 'id' || same(row[k], v)));
 
 export function checkPatchFile(file, ledgers) {
   const out = [];

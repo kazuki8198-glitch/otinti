@@ -129,7 +129,7 @@ ACS-MAP：`{ id, acs, acsTitle, area, areaTitle, task, taskTitle, text, sub（K2
 - `ledger` は書かなくてよい（`id` の形で決まる）。分からない形の `id` のときだけ `"ledger": "ERRATA"` のように書く。
 - 新しい行は `"op": "add"`（その台帳の必須の項目を全部）。
 - **確かめ役の署名**は、確かめた単位が自分のパッチ（`reports/<確かめた単位>.ledger.json`）で `{ id, checkedBy, note }` を書きます（`by` は書かない。行の `by` と同じ値は不可）。直す単位のパッチは `by` を、確かめる単位のパッチは `checkedBy` を必ず持ちます。
-- パッチの検査：`node validate.mjs`（`reports/*.ledger.json` も調べる）。取り込み：統合役が `node apply-patches.mjs`（見るだけ）→ `node apply-patches.mjs --write`（書いてから `validate.mjs` を流す）。1 つのファイルは全部か何もしないかで取り込む。取り込んだあともパッチのファイルは `reports/` に残す（記録）。取り込みは何度流しても同じ結果になる：台帳がもうパッチのとおりの行（`add` の行がそのままある・`set` の項目と `note` がもう行にある）は、そのままにする。
+- パッチの検査：`node validate.mjs`（`reports/*.ledger.json` も調べる）。取り込み：統合役が `node apply-patches.mjs`（見るだけ）→ `node apply-patches.mjs --write`（書いてから `validate.mjs` を流す）。1 つのファイルは全部か何もしないかで取り込む。取り込んだあともパッチのファイルは `reports/` に残す（記録）。取り込みは何度流しても同じ結果になる：台帳がもうパッチのとおりの行（`add` の行がそのままある・`set` の `note` がもう行の `note` にある・`note` のない `set` は項目がもう行のとおり）は、そのままにする。`note` のある `set` は `note` で見分けるので、あとの単位が同じ行の `by` や `status` を書き換えていても、前のパッチを流し直して戻すことはない（1 つの行に何単位も `note` を書くため）。だから `set` の行には `note` を書く。
 
 ## 6. 確かめ方
 

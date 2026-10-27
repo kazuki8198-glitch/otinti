@@ -10,15 +10,18 @@ import { readLedger, pick, asList } from './lib/ledgers.mjs';
 import { knownConcepts, toc } from './lib/design.mjs';
 
 export const meta = { id: 'concepts', title: '概念の住所（太字の定義は 1 回・呼び戻しは 3 行以内でリンクつき）', criteria: [15] };
-const DEF = /^([^（(<]{1,30}?)\s*[（(]\s*([A-Za-z][^）)]*)[）)]$/;
+// a bold definition: 語（…English…）— the book's first-use form「正式名（通称、English）」(STYLE.md「用語」, DESIGN 3.5) as well
+// as the older「語（English）」: the brackets hold some English. The term must hold Japanese letters: an English-only bold
+// (Vyse（88 kt）) or a value (15℃・29.92 inHg（1013.25 hPa）) is not a Japanese term's definition
+export const DEF = /^([^（(<]{1,30}?)\s*[（(]([^）)]*[A-Za-z][^）)]*)[）)]$/;
+export const defTerm = t => { const d = String(t).match(DEF), key = d ? d[1].trim() : ''; return key && /[\u3041-\u3096\u30a1-\u30fa\u4e00-\u9fff]/.test(key) ? key : null; };
 
 export function boldDefinitions(env) {
   const defs = new Map();
   for (const s of sectionsOf(env, { all: true })) {
     const html = s.html.replace(/<svg[\s\S]*?<\/svg>/g, '');
     for (const m of html.matchAll(/<b>([^<]{2,80})<\/b>/g)) {
-      const t = textOf(m[1]), d = t.match(DEF); if (!d) continue;
-      const key = d[1].trim(); if (!key || /^[A-Za-z0-9\s.\-/]+$/.test(key)) continue;     // an English-only bold is not a Japanese term's definition
+      const t = textOf(m[1]), key = defTerm(t); if (!key) continue;
       defs.set(key, [...(defs.get(key) || []), { sec: s.id, ch: s.ch.id, text: t }]);
     }
   }

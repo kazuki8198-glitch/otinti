@@ -18,6 +18,7 @@ import { kiso } from './lib/kiso.mjs';
 import { rowsOf } from './lib/ledgers.mjs';
 import { extract } from './check-claims.mjs';
 import { citationProblems, bookNumbers } from './check-egov.mjs';
+import { defTerm } from './check-concepts.mjs';
 import * as EGOV_TOOL from '../../sources/egov/check.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -52,6 +53,11 @@ t('e-Gov citations and numbers (基準 4)', () => {
   assert.deepEqual(codes('電波法第 40 条の資格。'), ['other-law']);
   assert.deepEqual(codes('（法第 82 条）'), ['bare-law-name']);
   assert.deepEqual(codes('第 5 条。'), ['citation-without-law']);
+});
+t('bold definitions (基準 15): 語（English） and 正式名（通称、English）', () => {
+  for (const [t, want] of [['迎え角（Angle of Attack, AOA）', '迎え角'], ['地面効果（ground effect）', '地面効果'], ['重心（CG）', '重心'],
+    ['補助翼（エルロン、aileron）', '補助翼'], ['迎え角（迎角、angle of attack）', '迎え角'], ['着陸復行（ゴーアラウンド、go-around）', '着陸復行'],
+    ['50 ft の障害物を越える距離（total distance）', '50 ft の障害物を越える距離'], ['風（ふう）', null], ['Vyse（88 kt）', null], ['ELT（航空機用救命無線機、Emergency Locator Transmitter）', null], ['15℃・29.92 inHg（1013.25 hPa）', null]]) assert.equal(defTerm(t), want, t);
 });
 t('base64 cut first', () => { assert.equal(stripB64('x data:image/webp;base64,AAAXXXTBD= y'), 'x data:image/webp;base64, y'); });
 

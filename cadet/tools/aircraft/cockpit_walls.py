@@ -12,10 +12,10 @@
 #   under the roof-edge trim, from the panel to the aft bulkhead, round the three side windows: each window in a raised
 #   surround (5.5 cm wide, 1 cm high, its inner edge rounded down into the reveal to the glass; along the roof trim it
 #   flattens out under the trim, and in front it runs in under the A-pillar trim), the posts between them flat; white
-#   screw heads along its foot and on the front and rear surrounds' lower edges. The windows' rubber seal (walls.rubber)
-#   where the reveal meets the glass: the openings and the glass are cockpit.js's (WIN: the outlines W1–W3, their corners
-#   rounded as its rounded() draws them, the glass 1.6 cm outboard of the band's plane); the seal covers 4.6 mm round
-#   them, outside the opening.
+#   screw heads along its foot and on the front and rear surrounds' lower edges. The windows' seal (walls.wallDark: a
+#   thin grey edge — the photos show the white surround run to the glass, no black rubber) where the reveal meets the
+#   glass: the openings and the glass are cockpit.js's (WIN: the outlines W1–W3, their corners rounded as its rounded()
+#   draws them, the glass 1.6 cm outboard of the band's plane); the seal covers 2 mm round them, outside the opening.
 # - the lower panels (walls.wallLow, light grey): proud of the band (walls.proud: 6 mm up by the split, 2.5 mm low down,
 #   by the fuel selector and the seats' pans), their top edge a rounded lip along the split, following the lower wall's
 #   soft profile (lowX) to the floor; a joint between the front and rear ones aft of the front seats (walls.joint; on the
@@ -33,27 +33,30 @@
 #   seats). Round the bezel's upper aft edge the wall comes ~2 mm in front of that plane (FUELSEL puts the bezel's
 #   outboard edge 2 mm inside the wall), so the bezel's skirt goes into the wall there. A low air outlet ahead of it (one
 #   on the right too). The pilot's storm window in the front window, standing on its lower edge in its forward half: the
-#   pane's edges do not show in the photos — its hinge strip along its foot with its knuckles' notches, and the
-#   trapezoid wire bail on the strip's ends up to near the pane's top (walls.postAlu — a light alu: a metal renders dark
-#   under the cabin's dim environment light —, walls.black). The game's front window leans back at its front edge (with
-#   the windshield's post), so the storm window (22 × 22 cm) is lower than the photos' (they show it nearly as tall as
-#   the window, close to its front edge).
+#   pane's edges do not show in the photos — its hinge strip along its foot (broad and flat, 4 cm tall, rivets along its
+#   top, its knuckles' 7 square notches along its foot), and the wire bail (a round rod, its legs from the strip's top
+#   ends leaning in a little, its top corners well rounded) up to near the pane's top (walls.postAlu — a light alu: a
+#   metal renders dark under the cabin's dim environment light —, walls.black): 24 × 17 cm, the photos' proportions
+#   (0.72 of its width tall; cockpit.js WALLS.storm), its top 4 cm under the eye.
 # - the door (right): its outline as a dark rubber seal round its inner panel (along the A-pillar trim, under the roof
 #   trim over its window — there it covers the glass's top 4.5 mm, just under the trim's lip —, down its aft edge with big
 #   rounded corners, along the sill and up its low front edge); the inside handle in a black oval cup on its forward part
 #   just behind the panel, between the panel and the right yoke's horn as the pilot sees it: a rubber rim (standing on the
-#   band over the split, on the lower panel under it), the lever on the cup's flat bottom (pivot up, grip down, turned
-#   out), its pivot screw, the white up / down arrows (OPEN is cockpit.js's label); the upper latch a little aft of the
-#   middle of its top edge (the chrome slotted plate under the roof trim, the black lever hooked into it; ENGAGE LATCH
-#   BEFORE FLIGHT is cockpit.js's placard); the black scuff plate under its sill.
+#   band over the split, on the lower panel under it), the bowl matte black, on its flat bottom (panel_right) a screw at
+#   its top, the white up arrow (OPEN over it is cockpit.js's tag), the lever (pivot up with its screw, grip down,
+#   turned out; matte), the down arrow, a screw at its foot; the upper latch a little aft of the middle of its top edge
+#   (the slotted plate on the roof trim's inboard face, facing the cabin as in tx_top, two screws; the black lever under
+#   it, hooked into the slot; ENGAGE LATCH BEFORE FLIGHT is cockpit.js's placard); the black scuff plate under its sill.
 # Made to the cabin's layout (the spec: the window band and the lower wall's curves, WIN, FUELSEL, the walls' own layout
 # walls — the split, the armrests', the pocket's, the door's, its cup's and the storm window's places, the door control's
 # box and aim that cockpit.js keeps with them), and to what other code relies on: the openings and the glass (not moved,
 # not narrowed), the band's A-pillar and roof trims (the surrounds run in under them: build_cockpit.py's pillar_section
 # and TRIM_PROF), the shoulder ray's wall (cockpit.test: ±x from (−0.30, 0.35, −0.40) meets the wall at |x| 0.52–0.60)
-# and the eye-level glass, the fuel selector's and the door handle's sight lines, the door's hit box inside its cup, the
-# seats' pans, the yokes' sweep (fore and aft, rolled both ways), the instructor's arms (actor.test's copies of the right
-# wall and the door armrest's box), the LIMITATIONS placard flat on the band — check() asserts them.
+# and the eye-level glass, the fuel selector's (its handle at L, R and OFF) and the door handle's sight lines, the door's
+# hit box inside its cup, the seats' pans, the yokes' sweep (fore and aft, rolled both ways), the instructor's arms
+# (actor.test's copies of the right wall and the door armrest's box), the LIMITATIONS placard flat on the band, and every
+# face of the walls seen from the eye turned towards it (the game draws front faces only; Cycles' previews draw both
+# sides, so they hide a face turned the wrong way) — check() asserts them.
 # How it is built: the band and the lower panels are surfaces over the wall's (z, y), triangulated (mathutils'
 # constrained Delaunay) round the holes the surrounds sit in and the cup, with rows of vertices where the profile bends
 # and enough in between for the sky's occlusion that cockpit.js bakes per vertex; each window's surround is a loft of
@@ -61,11 +64,11 @@
 # lofts, tubes and boxes. The left side is made on the right (x > 0) and mirrored.
 # Coordinates: the cabin's frame (metres, x = the right wing, y = up, z = aft), as build_cockpit.py.
 # Nodes ("<group>.<surface>", the surfaces cockpit.js's S): walls.wall, walls.wallLow (the lower panels, their lip, the
-# armrests, the pocket's frame lighter, the panels' joint darker), walls.rubber (the windows' and the door's seals, the
-# cup's rim), walls.black (the pocket's mesh, the mic and its cord, the cup and its lever, the USB bezels, the vents, the
-# latch lever, the scuff plate, the hinge strip's notches), walls.chrome (the latch plate, screws), walls.postAlu (the
-# storm window's hinge strip and bail), walls.white (the cup's arrows). COLOR_0 rgb: the table's colours (the joint and
-# the cup's lever shaded); alpha: build_cockpit.py's occlusion of what is close by.
+# armrests, the pocket's frame lighter, the panels' joint darker), walls.wallDark (the windows' seals), walls.rubber (the
+# door's seal, the cup's rim, its bowl and lever: matte), walls.black (the pocket's mesh, the mic and its cord, the USB
+# bezels, the vents, the latch lever, the scuff plate, the hinge strip's notches), walls.chrome (screws), walls.postAlu
+# (the storm window's hinge strip, its rivets and bail, the latch plate), walls.white (the cup's arrows). COLOR_0 rgb: the
+# table's colours (the joint and the cup's lever shaded); alpha: build_cockpit.py's occlusion of what is close by.
 import math
 from mathutils import Vector, geometry
 from mathutils.bvhtree import BVHTree
@@ -172,6 +175,12 @@ def orient(p, i0, ref):
     s = Vector((0, 0, 0))
     for f in p.f[i0:]: s += tri_normal(p, f)
     if s.dot(Vector(ref)) < 0: p.f[i0:] = [tuple(reversed(f)) for f in p.f[i0:]]
+def orient_each(p, i0, ref):
+    # each face from i0 on turned (by itself) so that its normal points along ref(its middle) — for a piece whose faces
+    # look different ways (a bowl's walls round its axis), where one summed normal cannot tell
+    for i in range(i0, len(p.f)):
+        f = p.f[i]; c = sum((p.v[k] for k in f), Vector()) / len(f)
+        if tri_normal(p, f).dot(ref(c)) < 0: p.f[i] = tuple(reversed(f))
 def compact(p):
     used = sorted({i for f in p.f for i in f}); m = {o: k for k, o in enumerate(used)}
     p.v = [p.v[i] for i in used]; p.f = [tuple(m[i] for i in f) for f in p.f]
@@ -244,9 +253,10 @@ def opening(o, k):
         for j in range(es[i]): st.append((b.lerp(a2, j / es[i]), (a2 - b).normalized()))
     return st
 # the surround's profile: (out from the opening, in from the band's plane) — the reveal from behind the glass up, the
-# rounded inner edge, the crown, the outer slope down to the band; the seal on the glass into the reveal's foot
-PROF = [(0.004, -0.0175), (0.0045, 0.0005), (0.0060, 0.0058), (0.0092, 0.0090), (0.0145, 0.0102), (0.034, 0.0095), (0.046, 0.0050), (0.055, 0.0)]
-SEAL = [(0.0, -0.0153), (0.0046, -0.0118)]
+# rounded inner edge, the crown, the outer slope down to the band; the seal on the glass into the reveal's foot: a thin
+# grey edge (2 mm; the photos show the white surround run to the glass with a thin grey line at it, no black rubber)
+PROF = [(0.0019, -0.0175), (0.0024, 0.0005), (0.0060, 0.0058), (0.0092, 0.0090), (0.0145, 0.0102), (0.034, 0.0095), (0.046, 0.0050), (0.055, 0.0)]
+SEAL = [(0.0, -0.0154), (0.0021, -0.0141)]
 def fade(o, y): return 1 - smooth(0.700, 0.728, y)        # (flat under the roof trim: its lower lip at y 0.727)
 def lip_ok(o, k, q):
     if q.y > o.WTOP - 0.002: return False                  # (under the roof trim, inside the band's top edge)
@@ -298,8 +308,8 @@ def armrest(o, A, col, rear=False):
 # ---------------------------------------------------------------- one side, made on the right (x > 0)
 def side(o, left):
     C = o.ctx.C; Piece = o.ctx.Piece
-    WALL, LOW, RUB, BLK, CHR, WHT = (tuple(C[k]) for k in ('wall', 'wallLow', 'rubber', 'black', 'chrome', 'white'))
-    out = {k: Piece() for k in ('wall', 'wallLow', 'rubber', 'black', 'chrome', 'postAlu', 'white')}
+    WALL, LOW, BLK, DRK = (tuple(C[k]) for k in ('wall', 'wallLow', 'black', 'wallDark'))
+    out = {k: Piece() for k in ('wall', 'wallLow', 'wallDark', 'rubber', 'black', 'chrome', 'postAlu', 'white')}
     log = _G.setdefault('count', {}); last = [0]
     def mark(label):                                      # (the triangles each part takes, for the build's printout)
         t = sum(sum(len(f) - 2 for f in p.f) for p in out.values()); log[label] = log.get(label, 0) + t - last[0]; last[0] = t
@@ -312,7 +322,7 @@ def side(o, left):
     for k in range(3):
         rings, seal, edge = surround(o, k)
         p = Piece(); p.grid(rings, WALL, closed=True); orient(p, 0, (-1, 0, 0)); out['wall'].add(p)
-        s = Piece(); s.grid(seal, RUB, closed=True); orient(s, 0, (-1, 0, 0)); out['rubber'].add(s)
+        s = Piece(); s.grid(seal, DRK, closed=True); orient(s, 0, (-1, 0, 0)); out['wallDark'].add(s)
         holes.append(edge)
     mark('surrounds+seals')
     # ---- the cup's outline (the right side): the band's notch over the split, the lower panel's under it
@@ -441,18 +451,28 @@ def left_side(o, out):
     # ---- the pilot's storm window (in the front window, on its lower edge: its clear pane's edges do not show — the
     # photos show its hinge strip and its wire bail only): the hinge strip along its foot, its knuckles' notches along its
     # lower edge, the trapezoid bail standing on the strip's ends, its top bar near the pane's top
+    # (the photos' proportions, each × its width: the strip 0.18 tall, the bail 0.53 over it, 0.72 in all — tx_leftfront,
+    # 19_Archer-TX_Interior_08; the strip broad and flat, rivets along its top, 7 square notches along its foot; the bail a
+    # round rod, its legs from the strip's top ends leaning in a little, its top corners well rounded, near the glass)
     S_ = W['storm']; z0, z1, y0, y1 = S_['z0'], S_['z1'], S_['y0'], S_['y1']
     gpt = lambda z, y, h: band_pt(o, z, y, -o.GLASS / math.sqrt(1 + o.KX ** 2) + h)         # (h in from the glass)
-    hy0, hy1 = y0 + 0.0005, y0 + 0.0195
-    hinge = [gpt(z0, hy0, 0.0005), gpt(z1, hy0, 0.0005), gpt(z1, hy0, 0.0042), gpt(z0, hy0, 0.0042), gpt(z0, hy1, 0.0042), gpt(z1, hy1, 0.0042), gpt(z1, hy1, 0.0005), gpt(z0, hy1, 0.0005)]
-    p = Piece(); p.v = hinge; p.f = [(0, 1, 2, 3), (3, 2, 5, 4), (4, 5, 6, 7)]; p.c = [ALU] * 3; orient(p, 0, (-1, 0, 0)); out['postAlu'].add(p)
+    hy0, hy1, ht = y0 + 0.0005, y0 + 0.040, 0.0035
+    hinge = [gpt(z0, hy0, 0.0005), gpt(z1, hy0, 0.0005), gpt(z1, hy0, ht), gpt(z0, hy0, ht), gpt(z0, hy1, ht), gpt(z1, hy1, ht), gpt(z1, hy1, 0.0005), gpt(z0, hy1, 0.0005)]
+    p = Piece(); p.v = hinge; p.f = [(0, 1, 2, 3), (3, 2, 5, 4), (4, 5, 6, 7)]; p.c = [ALU] * 3; orient(p, 0, (-1, 0, 0))
+    for e, ref in (((1, 6, 5, 2), (0, 0, 1)), ((0, 3, 4, 7), (0, 0, -1))):          # (its ends: the aft one faces the eye)
+        f0 = len(p.f); p.f.append(e); p.c.append(shade(ALU, 0.9)); orient(p, f0, ref)
+    out['postAlu'].add(p)
     for k in range(7):
-        zc = lerp(z0, z1, (k + 0.75) / 7.5); a, b = zc - 0.0065, zc + 0.0065
-        out['black'].add(quad(o, gpt(a, hy0 + 0.0012, 0.0047), gpt(b, hy0 + 0.0012, 0.0047), gpt(b, hy0 + 0.0075, 0.0047), gpt(a, hy0 + 0.0075, 0.0047), shade(BLK, 1.2), (-1, 0, 0)))
-    bz0, bz1, bt = z0 + 0.008, z1 - 0.008, y1 - 0.010
-    bail = [(bz0, hy1 - 0.003, 0.006), (bz0 + 0.009, lerp(hy1, bt, 0.6), 0.011), (bz0 + 0.018, bt - 0.006, 0.0135), (bz0 + 0.034, bt, 0.014),
-            (bz1 - 0.034, bt, 0.014), (bz1 - 0.018, bt - 0.006, 0.0135), (bz1 - 0.009, lerp(hy1, bt, 0.6), 0.011), (bz1, hy1 - 0.003, 0.006)]
-    out['postAlu'].add(tube(o, [gpt(z, y, h) for z, y, h in bail], 0.0030, 5, ALU, per=2))
+        zc = lerp(z0, z1, (k + 0.6) / 7.2); a, b = zc - 0.006, zc + 0.006
+        out['black'].add(quad(o, gpt(a, hy0 + 0.0008, ht + 0.0005), gpt(b, hy0 + 0.0008, ht + 0.0005), gpt(b, hy0 + 0.0078, ht + 0.0005), gpt(a, hy0 + 0.0078, ht + 0.0005), shade(BLK, 1.4), (-1, 0, 0)))
+    nb = band_n(o, hy1)
+    for k in range(5):
+        z = lerp(z0 + 0.014, z1 - 0.014, k / 4); out['postAlu'].add(dome(o, gpt(z, hy1 - 0.006, ht), nb, 0.0019, 0.0009, shade(ALU, 1.08)))
+    R, hb, rr = 0.025, 0.0045, 0.002                       # (the corners' radius, the rod's middle in from the glass, its radius)
+    bz0, bz1, bt, tin = z0 + 0.010, z1 - 0.007, y1 - rr - 0.001, 0.015
+    side_ = lambda zf, zt, s: [(zf, hy1 - 0.003), (zt, bt - R)] + [(zt + s * R * (1 - math.cos(a)), bt - R + R * math.sin(a)) for a in (math.pi / 6, math.pi / 3)] + [(zt + s * R, bt)]
+    bail = side_(bz0, bz0 + tin, 1) + list(reversed(side_(bz1, bz1 - tin, -1)))
+    out['postAlu'].add(tube(o, [gpt(z, y, hb) for z, y in bail], rr, 10, ALU, per=1))
     o.mark('storm window')
 
 def door_side(o, out):
@@ -470,8 +490,13 @@ def door_side(o, out):
     for s_, f in ((1.0, None), (0.94, 0.55), (0.82, 0.95)):
         rows.append([Vector(((xs(E(t, s_).y) + 0.001) if f is None else xb - (1 - f) * dep, E(t, s_).y, E(t, s_).x)) for t in ang])
     rows.append([Vector((xb, q.y, q.z)) for q in rows[-1]])
-    p = Piece(); p.grid(rows, BLK, closed=True); p.fan(list(range(3 * N, 4 * N)), Vector((xb, cy, cz)), BLK)
-    orient(p, 0, (-1, 0, 0)); out['black'].add(p)
+    # (its walls face the cup's axis, each by itself — the grid's winding and the bottom fan's differ, and one summed
+    # normal over both turned the walls outwards: the game draws front faces only, so one saw through the door —; the
+    # bowl and the lever matte, in the rubber's roughness: a glossy black bowl seen at a grazing angle shows the light
+    # outside as a bright crescent)
+    p = Piece(); p.grid(rows, BLK, closed=True); orient_each(p, 0, lambda c: Vector((-0.05, cy - c.y, cz - c.z)))
+    f0 = len(p.f); p.fan(list(range(3 * N, 4 * N)), Vector((xb, cy, cz)), BLK); orient(p, f0, (-1, 0, 0))
+    out['rubber'].add(p)
     tR = math.asin((SB - cy) / cb); tL = math.pi - tR; top = wall_x(o, cy)
     def rim_station(t, x3):
         q0, q1, q2, q3 = E(t, 1.0, -0.004), E(t, 1.0, -0.002), E(t, 1.0, 0.004), E(t, 1.0, 0.009)
@@ -482,15 +507,17 @@ def door_side(o, out):
         elif abs(t - tL) < 1e-9: rim += [rim_station(t, o.HW), rim_station(t, wall_x(o, SB))]
         else: rim.append(rim_station(t, o.HW if tR < t < tL else wall_x(o, E(t, 1.0, 0.009).y)))
     p = Piece(); p.grid([[r[j] for r in rim] for j in range(4)], RUB, closed=True); orient(p, 0, (-1, 0, 0)); out['rubber'].add(p)
-    # the lever on the bottom (its pivot up, its grip down and turned out), its two screws, the arrows
+    # on the bottom (panel_right): the screw at its top, OPEN (cockpit.js's tag) over the up arrow, the lever (its pivot
+    # up with its screw, its grip down and turned out; matte), the down arrow under it, the screw at its foot
     ax = Vector((1, 0, 0)), Vector((0, 1, 0)), Vector((0, 0, 1))
-    out['black'].add(o.ctx.box(Vector((xb - 0.0035, cy - 0.006, cz)), (0.0035, 0.034, 0.011), ax, shade(BLK, 1.7)))
-    out['black'].add(o.ctx.box(Vector((xb - 0.0135, cy - 0.046, cz)), (0.0075, 0.007, 0.0125), ax, shade(BLK, 1.7)))
-    out['chrome'].add(dome(o, Vector((xb - 0.0072, cy + 0.020, cz)), (-1, 0, 0), 0.004, 0.002, CHR))
-    for y, s in ((cy + 0.040, 1), (cy - 0.059, -1)):
+    out['rubber'].add(o.ctx.box(Vector((xb - 0.0035, cy - 0.004, cz)), (0.0035, 0.026, 0.011), ax, shade(BLK, 1.7)))
+    out['rubber'].add(o.ctx.box(Vector((xb - 0.0135, cy - 0.036, cz)), (0.0075, 0.007, 0.0125), ax, shade(BLK, 1.7)))
+    out['chrome'].add(dome(o, Vector((xb - 0.0072, cy + 0.014, cz)), (-1, 0, 0), 0.004, 0.002, CHR))
+    for y in (cy + 0.058, cy - 0.063): out['chrome'].add(dome(o, Vector((xb - 0.0002, y, cz)), (-1, 0, 0), 0.0035, 0.0018, CHR))
+    for y, s in ((cy + 0.040, 1), (cy - 0.058, -1)):     # (y: the tip; the shaft 8 mm, the head 5.5 mm)
         x = xb - 0.0008
-        a = quad(o, (x, y - s * 0.004, cz - 0.0012), (x, y - s * 0.004, cz + 0.0012), (x, y + s * 0.002, cz + 0.0012), (x, y + s * 0.002, cz - 0.0012), WHT, (-1, 0, 0))
-        t = Piece(); t.v = [Vector((x, y + s * 0.002, cz - 0.004)), Vector((x, y + s * 0.002, cz + 0.004)), Vector((x, y + s * 0.0075, cz))]; t.f = [(0, 1, 2)]; t.c = [WHT]; orient(t, 0, (-1, 0, 0))
+        a = quad(o, (x, y - s * 0.0135, cz - 0.0012), (x, y - s * 0.0135, cz + 0.0012), (x, y - s * 0.0055, cz + 0.0012), (x, y - s * 0.0055, cz - 0.0012), WHT, (-1, 0, 0))
+        t = Piece(); t.v = [Vector((x, y - s * 0.0055, cz - 0.004)), Vector((x, y - s * 0.0055, cz + 0.004)), Vector((x, y, cz))]; t.f = [(0, 1, 2)]; t.c = [WHT]; orient(t, 0, (-1, 0, 0))
         out['white'].add(a.add(t))
     o.mark('cup')
     # ---- the door's seal round its inner panel: up its low front edge, along the sill, up its aft edge, along under the
@@ -518,12 +545,16 @@ def door_side(o, out):
     o.mark('door seal')
     # ---- the upper latch: the chrome plate with its slot under the roof trim (the fuselage's top frame), its screws; the
     # black lever on the door's top hooked into it
-    zl = D['latch']; yP = 0.7262; ax3 = (Vector((1, 0, 0)), Vector((0, 1, 0)), Vector((0, 0, 1)))
-    out['chrome'].add(o.ctx.box(Vector((0.479, yP, zl)), (0.011, 0.0015, 0.035), ax3, CHR))
-    out['black'].add(quad(o, (0.4735, yP - 0.0016, zl - 0.014), (0.4735, yP - 0.0016, zl + 0.014), (0.4815, yP - 0.0016, zl + 0.014), (0.4815, yP - 0.0016, zl - 0.014), shade(BLK, 0.4), (0, -1, 0)))
-    for dz in (-0.025, 0.025): out['chrome'].add(dome(o, Vector((0.479, yP - 0.0015, zl + dz)), (0, -1, 0), 0.0033, 0.0015, CHR))
-    out['black'].add(o.ctx.box(Vector((0.4785, 0.7185, zl)), (0.005, 0.0045, 0.024), ax3, shade(BLK, 1.3)))
-    out['black'].add(o.ctx.box(Vector((0.4775, 0.7225, zl + 0.006)), (0.0028, 0.004, 0.005), ax3, shade(BLK, 1.3)))
+    # (the plate on the roof trim's inboard face — build_cockpit.py TRIM_PROF: upright at x 0.478–0.479 over y 0.740,
+    # rounding under to its lip at 0.727 —, standing a little off its rounded foot, facing the cabin as in tx_top, where it
+    # is the part one sees; in the light alu, as a chrome renders dark in the cabin; the lever under it, its hook up in
+    # the slot)
+    zl = D['latch']; xP = 0.4772; ax3 = (Vector((1, 0, 0)), Vector((0, 1, 0)), Vector((0, 0, 1)))
+    out['postAlu'].add(o.ctx.box(Vector((xP, 0.742, zl)), (0.0012, 0.0095, 0.035), ax3, shade(tuple(C['postAlu']), 1.1)))
+    out['black'].add(quad(o, (xP - 0.0013, 0.7375, zl - 0.013), (xP - 0.0013, 0.7375, zl + 0.013), (xP - 0.0013, 0.7465, zl + 0.013), (xP - 0.0013, 0.7465, zl - 0.013), shade(BLK, 0.4), (-1, 0, 0)))
+    for dz in (-0.025, 0.025): out['chrome'].add(dome(o, Vector((xP - 0.0012, 0.742, zl + dz)), (-1, 0, 0), 0.0032, 0.0014, CHR))
+    out['black'].add(o.ctx.box(Vector((0.479, 0.7275, zl)), (0.004, 0.0035, 0.020), ax3, shade(BLK, 1.3)))
+    out['black'].add(o.ctx.box(Vector((0.4755, 0.7355, zl + 0.004)), (0.0018, 0.0045, 0.004), ax3, shade(BLK, 1.3)))
     o.mark('latch')
     # ---- the black scuff plate under the sill
     ys = [o.FLOOR + 0.008, -0.36, -0.33, y0 - 0.014]
@@ -585,6 +616,27 @@ def check(ctx, objs):
         for _ in range(60):                               # (where the ray meets the glass's plane: bandX(y) + GLASS)
             q = eye + d * t; t += (o.bandX(q.y) + o.GLASS - abs(q.x)) / abs(d.x)
         h = cast(eye, d, t); assert h is None, ('the eye-level glass hidden', sx, h)
+    # seen from the eye, every face of the walls faces it (the game draws front faces only: a face turned away is a hole
+    # one sees the outside through — Cycles' previews draw both sides, and hide it): rays over the whole view, 1° apart
+    # (and ½° over the door's cup), the first face met among all the parts made, if it is the walls', turned to the eye
+    av, af, ak = [], [], []
+    for k, ob in objs.items():
+        i0 = len(av); av += [v.co.copy() for v in ob.data.vertices]
+        for f in ob.data.polygons: af.append(tuple(i0 + i for i in f.vertices)); ak.append(k)
+    allb = BVHTree.FromPolygons(av, af, all_triangles=False)
+    def first(d):
+        loc, nrm, i, dist = allb.ray_cast(eye, d, 3.0)
+        return None if loc is None else (ak[i], loc, nrm, dist)
+    cupc = V((o.HW, S['walls']['door']['cup']['y'], S['walls']['door']['cup']['z'])) - eye
+    cyaw, cpit = math.atan2(-cupc.x, -cupc.z) / DEG, math.atan2(cupc.y, math.hypot(cupc.x, cupc.z)) / DEG
+    dirs = [(yw, pt) for yw in range(-180, 180) for pt in range(-80, 61)]
+    dirs += [(cyaw + 0.5 * i, cpit + 0.5 * j) for i in range(-16, 17) for j in range(-24, 25)]
+    back = []
+    for yw, pt in dirs:
+        a, b = yw * DEG, pt * DEG; d = V((-math.sin(a) * math.cos(b), math.sin(b), -math.cos(a) * math.cos(b)))
+        h = first(d)
+        if h and h[0].split('.')[0] in GROUPS and h[2].dot(d) > 0.02: back.append((h[0], yw, pt, tuple(round(v, 3) for v in h[1])))
+    assert not back, ('faces of the walls turned away from the eye', len(back), back[:8])
     # the openings not narrowed: from 0.1 m inside, along the band's normal, nothing over the glass 1 mm in from each
     # opening's edge (round its outline)
     for k in range(3):
@@ -593,7 +645,7 @@ def check(ctx, objs):
             for sx in (-1, 1):
                 g = band_pt(o, q.x, q.y, -o.GLASS / math.sqrt(1 + o.KX ** 2)); n = band_n(o, q.y)
                 g.x *= sx; n.x *= sx
-                h = cast(g + n * 0.10, -n, 0.0995, ('walls.wall', 'walls.rubber'))
+                h = cast(g + n * 0.10, -n, 0.0995, ('walls.wall', 'walls.wallDark', 'walls.rubber'))
                 if h and sx > 0 and k == 0 and h[2] == 'walls.rubber' and h[0].y > S['walls']['door']['top'] - 0.0026: continue   # (the door's top seal, tucked under the roof trim)
                 assert h is None, ('an opening narrowed', k, tuple(q), sx, h)
     # the kick panel in the fuel selector's plane under it (cast along −n): exactly on it (4 mm behind the plate) under the
@@ -611,10 +663,11 @@ def check(ctx, objs):
             else: assert h[1] > 0.0515, ('the kick panel in front of the selector\'s bezel', r, a, h[1] - 0.05)
     _G['kick'] = min(kick.values())
     # the sight lines (cockpit.test controlsCheck: the aim's last 3 cm ignored): the fuel selector's (its aim on the
-    # handle's fin near the hub, cockpit.js), the door handle's (in its cup)
-    fa = c + ey * 0.012 + n * 0.022
-    da = V(S['walls']['door']['cup']['aim'])
-    for name, aim in (('fuelSel', fa), ('door', da)):
+    # handle's fin near the hub, cockpit.js, the handle at each of its positions: turned about n from 12 o'clock to the
+    # clock's), the door handle's (in its cup)
+    aims = [('fuelSel ' + k, c + (ey * math.cos(a * DEG) + ex * math.sin(a * DEG)) * 0.012 + n * 0.022) for k, a in S['fuelSel']['clock'].items()]
+    aims.append(('door', V(S['walls']['door']['cup']['aim'])))
+    for name, aim in aims:
         d = aim - eye; h = cast(eye, d, d.length - 0.03); assert h is None, (name, 'sight line blocked by', h)
     # the door's hit box round the lever, inside the cup (the walls' extent): its corners behind the cup's opening
     hb = S['walls']['door']['cup']['hit']; cp = S['walls']['door']['cup']
@@ -628,7 +681,8 @@ def check(ctx, objs):
         for dy in (-0.5, 0, 0.5):
             p = V((-0.40, L_['y'] + dy * L_['h'], L_['z'] + dz * L_['w'])); h = cast(p, (-1, 0, 0), 0.3)
             assert h and h[2] == 'walls.wall' and abs(h[0].x + o.lowX(p.y)) < 0.0005, ('the LIMITATIONS placard not flat on the band', dz, dy, h)
-    # the seats' pans: the lower panels at least 4 mm outboard of the seats (made with them) — and of lowX − 1 cm anyway
+    # the seats' pans: the lower panels at least 2 mm outboard of the seats (made with them; the nearest are the seats'
+    # tracks, ~3 mm)
     seats = [ob for k, ob in objs.items() if k.startswith('seats.') or k.startswith('bench.')]
     near = 9.0
     for ob in seats:

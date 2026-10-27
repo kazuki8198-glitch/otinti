@@ -6,7 +6,8 @@
 //    (the bezels' lips hide nothing), the glareshield ~12–15° below the eye with the cowling over it, the roof ~0.2 m
 //    over the head, nothing within 0.12 m of the eye;
 //  - every control has a name, a kind, a hit box inside the cabin, is in sight and can be picked from the seat, and
-//    says what to do (descriptors that FLIGHT LAB's own avionics control accepts);
+//    says what to do (descriptors that FLIGHT LAB's own avionics control accepts); the flap handle, the trim wheel, the
+//    fuel selector and the door handle in every position too;
 //  - the yokes, pedals, levers (carb heat: ON down, OFF up), flap handle (its grip forward, up for more flap), trim wheel
 //    and its pointer, fuel selector (L → R clockwise) and compass card follow the state;
 //    the Seminole's gear lights are its own (none drawn in the Archer);
@@ -101,7 +102,7 @@ test('cockpit: builds within budget', () => {
     'glareshield.glare', 'glareshield.glareLip', 'glareshield.rubber', 'header.wall', 'headliner.roof', 'pillars.wall',
     'roofTrims.trim', 'seals.rubber', 'seats.alu', 'seats.belt', 'seats.black', 'seats.chrome', 'seats.red', 'seats.seat', 'seats.seatSide',
     'visorHw.steel', 'visors.wall',
-    'walls.black', 'walls.chrome', 'walls.postAlu', 'walls.rubber', 'walls.wall', 'walls.wallLow', 'walls.white',
+    'walls.black', 'walls.chrome', 'walls.postAlu', 'walls.rubber', 'walls.wall', 'walls.wallDark', 'walls.wallLow', 'walls.white',
     'yokes.alu.yokeL', 'yokes.alu.yokeR', 'yokes.black.yokeL', 'yokes.black.yokeR', 'yokes.chrome.yokeL', 'yokes.chrome.yokeR', 'yokes.grip.yokeL',
     'yokes.grip.yokeR', 'yokes.red.yokeL', 'yokes.rubber', 'yokes.yoke.yokeL', 'yokes.yoke.yokeR']);
   // the yokes from the model are moving parts (their own meshes, turned about their pivots); the rest is in the shell
@@ -337,6 +338,18 @@ test('cockpit: the instructor clear of the right seat\'s belts', () => {
 
 const KINDS = new Set(['button', 'knob', 'lever', 'switch', 'handle']);
 const TYPES = new Set(['flight', 'av', 'switch', 'select', 'exit', 'prime', 'info']);
+// from the eye, along the line to where one aims at a control (where its part is now): is it the control picked, and is
+// it seen there — nothing drawn stands in front of the aim point (picking goes through what is drawn, so a control
+// hidden behind a seat or the yoke could be clicked without being seen)? → [picked, seen, what was picked, what hides it]
+function sightOf(cp, c) {
+  const to = cp.aimPoint(c, new THREE.Vector3());
+  const rc = new THREE.Raycaster(cp.eye.clone(), to.clone().sub(cp.eye).normalize(), 0, 3);
+  const got = cp.pick(rc);
+  assert.equal(rc.layers.mask, new THREE.Layers().mask, 'pick() leaves the raycaster as it was');
+  const front = firstHit(cp, to.clone().sub(cp.eye), cp.eye, n => n === 'cockpit-glass' || n === 'cockpit-labels');
+  const hidden = front && front.distance < to.distanceTo(cp.eye) - 0.03 && front.object.name !== `cockpit-${c.part}`;
+  return [got === c, !hidden, got ? got.id : 'nothing', hidden ? front.object.name : null];
+}
 function controlsCheck(cp, L, required) {
   Object.assign(L.s, { elev: 0, trim: 0.1, ail: 0, rud: 0, rudEff: 0 });          // hands off, a little nose-up trim
   run(cp, L, 0.5);
@@ -355,17 +368,11 @@ function controlsCheck(cp, L, required) {
       assert.ok(r === null || (r && TYPES.has(r.type)), `${c.id}: act(${dir}, ${wheel}) → ${JSON.stringify(r)}`);
       if (r && r.type === 'info') assert.ok(r.text.length > 4, `${c.id}: info text`);
     }
-    // from the eye, along the line to where one aims at it (where its part is now)
+    // from the eye, along the line to where one aims at it (where its part is now): picked, and seen there
     assert.ok(c.at.isVector3, `${c.id}: an aim point`);
-    const to = cp.aimPoint(c, new THREE.Vector3());
-    const rc = new THREE.Raycaster(cp.eye.clone(), to.clone().sub(cp.eye).normalize(), 0, 3);
-    const got = cp.pick(rc);
-    if (got !== c) unpicked.push(`${c.id} (${got ? got.id : 'nothing'})`);
-    assert.equal(rc.layers.mask, new THREE.Layers().mask, 'pick() leaves the raycaster as it was');
-    // and seen there: nothing drawn stands in front of the aim point (picking goes through what is drawn, so a control
-    // hidden behind a seat or the yoke could be clicked without being seen)
-    const front = firstHit(cp, to.clone().sub(cp.eye), cp.eye, n => n === 'cockpit-glass' || n === 'cockpit-labels');
-    if (front && front.distance < to.distanceTo(cp.eye) - 0.03 && front.object.name !== `cockpit-${c.part}`) unseen.push(`${c.id} (${front.object.name})`);
+    const [picked, seen, got, by] = sightOf(cp, c);
+    if (!picked) unpicked.push(`${c.id} (${got})`);
+    if (!seen) unseen.push(`${c.id} (${by})`);
   }
   assert.deepEqual(unpicked, [], 'controls that cannot be picked from the seat');
   assert.deepEqual(unseen, [], 'controls hidden from the seat');
@@ -390,6 +397,24 @@ test('cockpit: every control can be found, picked from the seat, and says what t
   const cp = build();
   const ids = controlsCheck(cp, lesson(), [...COMMON_IDS, ...ARCHER_IDS]);
   for (const id of SEMINOLE_IDS) assert.ok(!ids.has(id), `the Archer: no ${id}`);
+  cp.dispose();
+});
+
+// the controls that move a long way stay in sight and pickable from the seat wherever they are (the yoke centred): the
+// flap handle at each detent, the trim wheel and its pointer at either end, the fuel selector at L, R and OFF, the door
+// handle with them
+test('cockpit: the flap handle, trim wheel, fuel selector and door handle seen and picked in every position', () => {
+  const cp = build(), L = lesson(), s = L.s, bad = [];
+  const ctl = id => cp.controls.find(c => c.id === id);
+  for (const flapIdx of [0, 1, 2, 3]) for (const trim of [-P.TRIM_MAX, 0, P.TRIM_MAX]) for (const fuel of ['L', 'R', 'OFF']) {
+    Object.assign(s, { elev: -trim, ail: 0, rud: 0, rudEff: 0, flapIdx, trim }); cp.switches.fuelSel = fuel;   // (the yoke centred: the elevator against the trim)
+    run(cp, L, 1); cp.root.updateMatrixWorld(true);
+    for (const id of ['flaps', 'trim', 'fuelSel', 'door']) {
+      const [picked, seen, got, by] = sightOf(cp, ctl(id));
+      if (!picked || !seen) bad.push(`${id} at flaps ${flapIdx}, trim ${trim.toFixed(2)}, fuel ${fuel}: ${picked ? '' : `picked ${got} `}${seen ? '' : `hidden by ${by}`}`);
+    }
+  }
+  assert.deepEqual(bad, []);
   cp.dispose();
 });
 

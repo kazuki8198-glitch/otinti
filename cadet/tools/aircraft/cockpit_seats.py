@@ -34,9 +34,10 @@
 #   clipped by a chrome snap hook to the lap belt by its tongue (the chrome latch plate). The rear belts lie buckled across their empty places, as in
 #   Piper's photos (the harness over the back's outboard top and across its face to the buckle by the bench's middle).
 #   The pilot's own lies open on the seat (the camera is the pilot): the harness over the back's outboard top and down
-#   its face to the cushion, the outboard half and its tongue lying in across the cushion, the buckle on the inboard
-#   bolster. The instructor's (cockpit.js's instructorSeat: actor.js seats him there, and he moves — he leans in to point,
-#   turns, gestures — while a belt made here cannot) lies beside him, never through him: the buckle on the inboard
+#   its face to the cushion, the outboard half and its tongue lying forward and in across the cushion's middle (seen
+#   looking ~35° down), the buckle on the inboard bolster. The instructor's (cockpit.js's instructorSeat: actor.js
+#   seats him there, and he moves — he leans in to point, turns, gestures — while a belt made here cannot) lies beside
+#   him, never through him: the buckle on the inboard
 #   bolster under his left elbow, the outboard half and the tongue down the cushion's outboard side, the harness
 #   unclipped and wound up in its reel, its end and snap hook hanging out of the slot behind his seat's top (his every
 #   pose checked against them: cockpit.test, 'the instructor clear of the right seat's belts').
@@ -243,7 +244,8 @@ def elbow_ease(u, a):
     return ELBOW[0] * t * t * (3 - 2 * t) * w * w * (3 - 2 * w)
 BPANEL_HALF = [(0.075, -0.001), (0.149, -0.0065), (0.157, -0.0195)]
 # the headrest moulded on the back's top: its section (h up, d aft of its middle), round from its face's top seam — the
-# face (light) between the seams, its lower front rolled under into the back's face (sunk in it from h −0.086 down), the
+# face between the seams (the shell's colour, as the arch round it: the TX's seats are one colour, seams only), its
+# lower front rolled under into the back's face (sunk in it from h −0.086 down), the
 # bottom and the rear inside the back (the rear flush with the shell above the shoulders: HEAD_REAR, worked out below),
 # the top rounded over to the rear (no turn over 32°)
 HEAD_FACE, HEAD_CROWN = 0.0455, 0.009           # (the face's crown up its middle: 1 cm; across it, 0.9 cm more)
@@ -294,14 +296,16 @@ def channel_rows(t0, t1, n, tuck=0.009):
     return rows + [(t1 + tuck, 'tuck')]
 
 def panel_cols(rings, kinds, col, edge):
-    # the panel's colours: the seams and its rolled ends darker, its tucked edges in the crevice darker still
-    k = {'crown': 1.0, 'seam': 0.78, 'edge': 0.86, 'tuck': 0.62}
-    return [[shade(col, 0.62) if abs(q[0]) > edge else shade(col, k[kind]) for q in r] for r, kind in zip(rings, kinds)]
+    # the panel's colours: the seams and its rolled ends a little darker, its tucked edges in the crevice darker still —
+    # lightly (the TX's seats read near-white even in shade; the baked occlusion darkens the crevices again, and a dark
+    # shade on a seam's row spreads over the faces either side of it: the panel's mean stays ≥ 0.9 of its colour)
+    k = {'crown': 1.0, 'seam': 0.9, 'edge': 0.93, 'tuck': 0.82}
+    return [[shade(col, 0.82) if abs(q[0]) > edge else shade(col, k[kind]) for q in r] for r, kind in zip(rings, kinds)]
 
 def body_cols(half, recess, base, last):
     # a body's ring colours: the recess's edge and the piping darker (unless the recess is closed there), the bottom or
     # rear corner shaded by last
-    h = [shade(base, 0.55 if recess else 0.92), shade(base, 0.8 if recess else 0.95)] + [base] * (len(half) - 3) + [shade(base, last)]
+    h = [shade(base, 0.7 if recess else 0.94), shade(base, 0.88 if recess else 0.96)] + [base] * (len(half) - 3) + [shade(base, last)]
     return list(reversed(h)) + h
 
 def split(p, pick):
@@ -364,12 +368,12 @@ def front_seat(ctx):
             if 0 < k < nf - 1: d -= crown
             ring.append((-0.064 + (h + 0.064) * arch if h > -0.064 else h, d * (0.35 + 0.65 * c), u))
         rings.append(ring)
-        cols.append([shade(BROWN, 0.85) if k in seams else BROWN for k in range(len(HSEC))])
+        cols.append([shade(BROWN, 0.9) if k in seams else BROWN for k in range(len(HSEC))])
     hbody = loft(head, rings, cols)
     n = len(HSEC); i0 = len(ends) + 1                             # (the face: stations ±HEAD_SEAM, ring points 0 … nf − 1)
     face, rest = split(hbody, lambda f: len(f) == 4 and i0 <= min(i // n for i in f) < i0 + 4 and max(i % n for i in f) <= nf - 1)
-    face.vc = [shade(TAN, 0.85) if (o % n in seams or o // n in (i0, i0 + 4)) else TAN for o in face.src]
-    rest.vc = [shade(BROWN, 0.85) if (o % n < nf and o // n in (i0, i0 + 4)) else c for o, c in zip(rest.src, rest.vc)]
+    face.vc = [shade(BROWN, 0.9) if (o % n in seams or o // n in (i0, i0 + 4)) else BROWN for o in face.src]   # (one colour with the arch: seams only)
+    rest.vc = [shade(BROWN, 0.9) if (o % n < nf and o // n in (i0, i0 + 4)) else c for o, c in zip(rest.src, rest.vc)]
     # ---- the pan under the cushion, the frame's side plates standing on the tracks, the recline lever
     hw = Part()
     hw.add(hexa([cushion(u, h, s) for u in (-0.2, 0.2) for h in (-0.113, -0.134) for s in (-0.235, 0.235)], BLACK))
@@ -656,9 +660,11 @@ def front_belts(ctx, seat, cols):
         bp = into(laid(bvh, [(cushion(-0.19, 0.03, s), -N_, None) for s in (-0.298, -0.275, -0.255, -0.24)])); o['belt'].add(band(bp, BELT))
         buckle(o, bvh, cushion(-0.189, 0.03, -0.205), cushion(-0.19, 0, -0.17) - cushion(-0.19, 0, -0.24), -N_, cols)
         if who == 'pilot':
-            # the outboard half: out of the crease on the outboard bolster, in across the cushion to its tongue
-            lap = into(laid(bvh, [(cushion(u, 0.04, s), -N_, None) for u, s in ((0.20, -0.298), (0.198, -0.27), (0.188, -0.215), (0.163, -0.165),
-                                                                          (0.125, -0.13), (0.09, -0.112), (0.06, -0.105))]))
+            # the outboard half: out of the crease on the outboard bolster, forward and in across the cushion's middle to
+            # its tongue (tx_leftfront: the strap across the cushion; seen from the eye looking ~35° down, not only
+            # straight down)
+            lap = into(laid(bvh, [(cushion(u, 0.04, s), -N_, None) for u, s in ((0.20, -0.298), (0.198, -0.26), (0.19, -0.20), (0.172, -0.13),
+                                                                          (0.145, -0.06), (0.112, 0.0), (0.082, 0.045), (0.058, 0.075))]))
             o['belt'].add(band(lap, BELT)); adjuster(o, lap, 0.55, BLACK); tongue(o, bvh, lap, CHROME)
             # the harness: out of its slot, down onto the outboard slope of the back's top (the headrest's arch), over it
             # and down the face along the outboard bolster, into the crease, onto the cushion and over the lap belt to its
@@ -667,7 +673,7 @@ def front_belts(ctx, seat, cols):
                     (back(0.17, -0.01, 0.43), -V_, None), (back(0.17, -0.07, 0.355), (W_ - V_).normalized(), None)]
             keys += [(back(0.17, -0.075, a), W_, None) for a in (0.27, 0.15, 0.03, -0.09, -0.20, -0.27)]
             keys += [(back(0.165, -0.07, -0.315), (W_ - N_).normalized(), None), (cushion(0.155, 0.04, -0.27), -N_, None),
-                     (cushion(0.142, 0.04, -0.215), -N_, None), (cushion(0.128, 0.04, -0.168), -N_, None)]
+                     (cushion(0.142, 0.04, -0.20), -N_, None), (cushion(0.128, 0.04, -0.12), -N_, None), (cushion(0.112, 0.04, -0.05), -N_, None)]
         else:
             # the outboard half: up the cushion's outboard side from the frame under it to its tongue, hanging forward
             lap = laid(bvh, [(cushion(0.245, h, s), -X_, None) for h, s in ((-0.088, -0.29), (-0.080, -0.25), (-0.072, -0.21), (-0.066, -0.17), (-0.064, -0.145))])

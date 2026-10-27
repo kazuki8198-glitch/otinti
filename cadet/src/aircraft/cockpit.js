@@ -64,16 +64,17 @@ const LEVER = { y: -0.045, z: -1.24, len: 0.22, idle: -11 * DEG, full: 27 * DEG 
 // low black cover [w, h] on the floor from the pedestal's foot back to it, under the flap handle
 const FCON = { w: 0.13, y1: -0.27, zt: -0.375, z0: -0.50, z1: 0.10, cover: [0.09, 0.03] };
 // the flap handle (POH VB-2266 7.9; the LX Steel photo, the Just Flight render): its pivot in a boss at the console's
-// forward end, the bar lying FORWARD from it — rest: its angle to level, down towards the nose — len to the silver button
+// forward end, the bar lying FORWARD from it — rest: its angle to level (level: its grip rides high enough between the
+// cushions' fronts to be seen from the seat, over the left cushion's inboard bolster) — len to the silver button
 // at its tip, the black ribbed grip [from, r] along it at the pedestal's foot between the front cushions; pulled up (+x
 // turn) it lowers the flaps, the detents' angles up from rest (UP / 10 / 25 / 40°)
-const FLAP = { y: -0.268, z: -0.40, len: 0.37, rest: -5 * DEG, grip: [0.255, 0.0165], det: [0, 11 * DEG, 22 * DEG, 33 * DEG] };
+const FLAP = { y: -0.268, z: -0.40, len: 0.37, rest: 0 * DEG, grip: [0.255, 0.0165], det: [0, 11 * DEG, 22 * DEG, 33 * DEG] };
 // a point of the flap handle at rest: d along the bar from the pivot, h square to it (up), x across
 const flapAt = (d, h = 0, x = 0) => [x, FLAP.y + d * Math.sin(FLAP.rest) + h * Math.cos(FLAP.rest), FLAP.z - d * Math.cos(FLAP.rest) + h * Math.sin(FLAP.rest)];
 FLAP.aim = flapAt((FLAP.grip[0] + FLAP.len) / 2, 0.014, 0.008);       // (the grip's top, its middle, a little right of its crest: the line clears the left cushion more)
 // the elevator trim wheel (POH VB-2266 7.9: on the floor between the front seats), half sunk in the console AFT of the
-// flap's pivot (its top rolled forward: nose down); its
-// position pointer in a slot on the pilot's side of it (ind: the slot's x and length; DN forward, UP aft)
+// flap's pivot (its top rolled forward: nose down); its position pointer in a slot on the pilot's side of it (ind: the
+// slot's x and length; DN forward, UP aft)
 const TRIMW = { y: -0.30, z: -0.28, r: 0.072, turns: 1.6, ind: { x: -0.044, len: 0.09 } };
 TRIMW.aim = [0, TRIMW.y + TRIMW.r - 0.004, TRIMW.z];                                    // (the wheel's top)
 const SEAT = { z: -0.58, w: 0.44 };               // the front seats (at ±SEAT_X): their cushions' centre z and width
@@ -221,8 +222,11 @@ const S = {
   lens: { c: 0xf2efe6, r: 0.2 }, caseBlack: { c: 0x0c0c0d, r: 0.5 },
   blue: { c: 0x1f4f9a, r: 0.42 }, wheelWhite: { c: 0xdedcd6, r: 0.35 },          // (M6) the Seminole's propeller levers, its gear knob
 };
-// the black ribbed or pebbled grips in code (the hand brake's, the flap handle's, the trim wheel's ribs: S.grip is the yokes')
-const GRIPBLK = { ...S.black, r: 0.55, k: 2 };
+// the black ribbed or pebbled grips in code (the hand brake's, the trim wheel's ribs: S.grip is the yokes'); the flap
+// handle's a lighter satin charcoal (the LX Steel photo: its ribs read by their sheen against the black console); a light
+// satin metal for small bright parts that must read in the cabin's dim light (a full metal there shows only the
+// environment: S.postAlu's note) — the flap handle's button, the dome lights' rings, the outlets' bezels
+const GRIPBLK = { ...S.black, r: 0.55, k: 2 }, FLAPGRIP = { c: 0x2e3033, r: 0.45, k: 2 }, SATIN = { c: 0xc6cacf, r: 0.38, m: 0.25 };
 
 // ---------------------------------------------------------------- geometry helpers (everything ends non-indexed)
 const _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _one = new THREE.Vector3(1, 1, 1);
@@ -299,30 +303,35 @@ const GLASS = 0.016;                               // the side windows' glass: t
 // the aft edge z1, the sill y0, the top along the roof trim) and the inside handle in a black oval cup (its middle,
 // half-sizes a × b, depth: in plain sight from the left seat between the panel and the right yoke's horn), the upper
 // latch's plate (at z latch) on the fuselage's top frame; storm, the pilot's storm window in the left front window (its
-// frame on the glass, standing on the window's lower edge); usb, usbSw, the rear walls' USB bezel and its switch (z, y);
-// vents, the low air outlets on the kick panels ([z, y]: left, right)
+// hinge strip and wire bail on the glass, standing on the window's lower edge; its forward end over the LIMITATIONS
+// placard's aft end as in both photos; 24 cm wide and 17 cm tall, the photos' proportions — 0.72 of its width —, its
+// top 4 cm under the eye, off the horizon); usb, usbSw, the rear walls' USB bezel and its
+// switch (z, y); vents, the low air outlets on the kick panels ([z, y]: left, right). The door's handle sits ahead of
+// the right yoke's horn: with the yoke centred (one gets out with it so) it is in plain sight and picked; with the yoke
+// at full deflection the horn can hide it
 const WALLS = {
   sb: 0.265, proud: [0.006, 0.0025, 0.0, 0.06], joint: -0.17, limits: { y: 0.305, z: -0.96, w: 0.22, h: 0.055 },
   arm: { z0: -0.92, z1: -0.56, y1: 0.166, h: 0.066, d: 0.058 }, armRear: { z0: -0.10, z1: 0.56, y1: 0.12, h: 0.06, d: 0.05 },
   pocket: { z0: -1.00, z1: -0.76, y0: 0.172, y1: 0.252 },
   door: { z0: -1.14, z1: -0.17, y0: -0.30, top: 0.725, cup: { z: -1.035, y: 0.25, a: 0.055, b: 0.085, depth: 0.034 }, latch: -0.43 },
-  storm: { z0: -0.86, z1: -0.64, y0: 0.4055, y1: 0.63 },
+  storm: { z0: -0.86, z1: -0.62, y0: 0.4055, y1: 0.578 },
   usb: [0.40, 0.175], usbSw: [0.10, 0.18], vents: [[-1.22, -0.24], [-1.26, -0.24]],
 };
 // the door's inside handle in its cup (made in Blender: a lever lying on the cup's flat bottom, its pivot up, its grip
 // down and turned out towards the cabin): the 'door' control's box round it and where one aims at it (its grip)
 { const c = WALLS.door.cup, xb = HW - WALLS.proud[0] + c.depth;
-  c.hit = { size: [0.03, 0.12, 0.05], pos: [xb - 0.014, c.y - 0.005, c.z] }; c.aim = [xb - 0.014, c.y - 0.045, c.z]; }
+  c.hit = { size: [0.03, 0.12, 0.05], pos: [xb - 0.014, c.y - 0.005, c.z] }; c.aim = [xb - 0.014, c.y - 0.036, c.z]; }
 // what shades the sky's light in the cabin ([x0, x1, y0, y1, z0, z1]): the panel, the glareshield, the pedestal; each
-// front seat's cushion, back (up to its shoulders) and moulded headrest (the TX's arch, as wide as the back: made with
-// the seats, tools/aircraft/cockpit_seats.py, which checks its parts against these); the bench's cushion and back; the
-// console between the front seats; the baggage floor
+// front seat's cushion (its bolsters' tops, its front roll), back (up to its shoulders) and moulded headrest (the TX's
+// arch, as wide as the back: made with the seats, tools/aircraft/cockpit_seats.py, which checks its parts against these);
+// the bench's cushion and back; the console between the front seats (its full height to where its face slopes down —
+// FCON.zt —, then the face's lower half); the baggage floor
 const AO_OCC = [
   [-0.56, 0.56, PBOT - 0.01, PTOP + 0.01, FIRE, PZ], [-0.56, 0.56, 0.44, 0.49, -1.31, -1.02], [-0.08, 0.10, -0.11, 0.07, FIRE, -1.065],
-  [-0.51, -0.07, FLOOR, -0.15, -0.84, -0.28], [-0.51, -0.07, -0.15, 0.56, -0.30, -0.02], [-0.48, -0.10, 0.49, 0.69, -0.13, 0.01],
-  [0.07, 0.51, FLOOR, -0.15, -0.84, -0.28], [0.07, 0.51, -0.15, 0.56, -0.30, -0.02], [0.10, 0.48, 0.49, 0.69, -0.13, 0.01],
-  [-0.52, 0.52, FLOOR, -0.13, 0.22, 0.78], [-0.52, 0.52, -0.13, 0.54, 0.74, 0.95], [-0.07, 0.07, FLOOR, FCON.y1 - 0.01, -0.45, FCON.z1],
-  [-0.56, 0.56, FLOOR, -0.22, 0.95, AFT],
+  [-0.51, -0.07, FLOOR, -0.095, -0.94, -0.245], [-0.51, -0.07, -0.15, 0.56, -0.30, -0.02], [-0.48, -0.10, 0.49, 0.69, -0.13, 0.01],
+  [0.07, 0.51, FLOOR, -0.095, -0.94, -0.245], [0.07, 0.51, -0.15, 0.56, -0.30, -0.02], [0.10, 0.48, 0.49, 0.69, -0.13, 0.01],
+  [-0.52, 0.52, FLOOR, -0.085, 0.22, 0.78], [-0.52, 0.52, -0.13, 0.54, 0.74, 0.95], [-0.07, 0.07, FLOOR, FCON.y1 - 0.01, FCON.zt - 0.02, FCON.z1],
+  [-0.56, 0.56, FLOOR, -0.22, 0.95, AFT], [-0.065, 0.065, FLOOR, (FLOOR + FCON.y1) / 2, FCON.z0 + 0.03, FCON.zt - 0.02],
 ];
 // the overhead air duct's fairing along the roof's centreline aft of the overhead switch panel (POH VB-2266 7.23: the
 // outlets overhead at each seat, the duct fed by the blower; the brochure photo through the door: a raised centre
@@ -337,11 +346,11 @@ const DOME = { x: 0.17, z: -0.46, r: 0.05, ring: 0.008 };
 const CONSOLE = { pos: [0, ROOF - DUCT.h / 2 + 0.003, (DUCT.z0 + DUCT.z1) / 2], size: [DUCT.w1, DUCT.h + 0.006, DUCT.z1 - DUCT.z0] };
 const CASE = { body: [0.064, 0.056, 0.040, 0, 0, -0.015], hanger: [0.012, 0.03, 0.03, 0, 0.038, -0.012] };
 // the cabin's layout and surfaces for tools/aircraft/cockpit-spec.mjs (the parts made in Blender — the top band, the
-// seats, the glareshield, the yokes: assets/model/cockpit.glb — are made to these)
+// seats and belts, the glareshield, the yokes, the side walls: assets/model/cockpit.glb — are made to these)
 export const CABIN = {
   EYE0, FLOOR, FIRE, AFT, PZ, PTOP, PBOT, SILL, WTOP, HW, HWT, ROOF, WS, KX, COMPASS, CONSOLE, CASE, SURFACES: S, bandX, roofY, wsZ, lowX,
   SEAT_X, SEAT, INSTRUCTOR, AO_OCC, FLAP, TRIMW, FCON, FUELSEL, DUCT, DOME, LEVER, PEDAL, PEDAL_X, YOKE, YOKE_HIT, GLARE, WALLS,
-  WIN: { W: [W1, W2, W3], r: WINDOWS.map(w => w[2]), glass: GLASS, glassR: 0.03 },   // (the side windows: openings, corners, glass)
+  WIN: { W: [W1, W2, W3], r: WINDOWS.map(w => w[2]), glass: GLASS },   // (the side windows: openings, corners, glass)
   PANEL: { PFD, MFD, AUD, G5, BEZEL: { w: BEZEL.w, h: BEZEL.h, depth: BEZEL.depth } },
   OVH, ovhAt,                                      // (the overhead switch panel: not in the spec; the tests' and the tools')
 };
@@ -817,24 +826,24 @@ export function buildCockpit(FL, A, opts = {}) {
   for (const sd of [-1, 1]) {
     const zp = y => wsZ(bandX(y) + 0.004, y) - 0.03;
     if (!walls) {
-    add(sheet((u, v, o) => { const y = FLOOR + (SB - FLOOR) * v; o.set(sd * lowX(y), y, FIRE + (AFT - FIRE) * u); }, 22, 7, sd < 0), S.wallLow);
-    add(sheet((u, v, o) => { const y = SB + (SILL - SB) * v; o.set(sd * lowX(y), y, FIRE + (AFT - FIRE) * u); }, 22, 1, sd < 0), S.wall);
-    // the upholstered side panel (on the right: the door's), a shade darker than the wall, up to the sill band
-    add(sheet((u, v, o) => { const y = -0.27 + (SB - 0.012 + 0.27) * v; o.set(sd * (lowX(y) - 0.0025), y, -1.17 + 1.01 * u); }, 6, 6, sd < 0), S.sidePanel);
-    // the window band (leaning in towards the roof): a ring round each window (its thick, soft-edged reveal) and the
-    // posts between them, all in the band's plane
-    const len = Math.hypot(KX, 1), nx = sd / len, ny = -KX / len;
-    // (sx, sy, sz) → x = sd·bandX(sy) + (0.016 − sz)·n, y = sy + (0.016 − sz)·n.y, z = sd·sx  (sx = sd·z keeps the faces' winding)
-    const M = new THREE.Matrix4().set(0, sd * KX, -nx, sd * (HW - KX * SILL) + 0.016 * nx, 0, 1, -ny, 0.016 * ny, sd, 0, 0, 0, 0, 0, 0, 1);
-    const mir = pts => pts.map(([z, y]) => [sd * z, y]);
-    for (const [win, ring, r] of WINDOWS) add(slab(mir(ring), 0.002, [[mir(win), r]], 0.014, 0.016, 0.005, 5, 1).applyMatrix4(M), S.wall);
-    for (const [z0, z1] of POSTS) add(sheet((u, v, o) => { const y = SILL + (WTOP - SILL) * v, z = z0(y) + (z1(y) - z0(y)) * u; o.set(sd * bandX(y), y, z); }, 4, 6, sd < 0), S.wall);
-    // the sill trim and the armrest
-    add(at(rbox(0.035, 0.022, AFT - zp(SILL) - 0.02, 0.008, 1), [sd * (HW - 0.012), SILL + 0.004, (AFT + zp(SILL)) / 2]), S.trim);
-    add(at(rbox(0.06, 0.05, 0.42, 0.014, 2), [sd * (HW - 0.035), 0.205, -0.62]), S.arm);
-    add(at(rbox(0.05, 0.045, 0.36, 0.012, 2), [sd * (HW - 0.03), 0.20, 0.42]), S.arm);
-    // the B-pillar trim between the front and rear windows (leaning in with the window band: 1 cm proud of it all the way up)
-    add(at(rbox(0.024, WTOP - SILL + 0.02, 0.15, 0.010, 2), [sd * (HW - 0.034), (WTOP + SILL) / 2, -0.175], [0, 0, sd * Math.atan(-KX)]), S.trim);
+      add(sheet((u, v, o) => { const y = FLOOR + (SB - FLOOR) * v; o.set(sd * lowX(y), y, FIRE + (AFT - FIRE) * u); }, 22, 7, sd < 0), S.wallLow);
+      add(sheet((u, v, o) => { const y = SB + (SILL - SB) * v; o.set(sd * lowX(y), y, FIRE + (AFT - FIRE) * u); }, 22, 1, sd < 0), S.wall);
+      // the upholstered side panel (on the right: the door's), a shade darker than the wall, up to the sill band
+      add(sheet((u, v, o) => { const y = -0.27 + (SB - 0.012 + 0.27) * v; o.set(sd * (lowX(y) - 0.0025), y, -1.17 + 1.01 * u); }, 6, 6, sd < 0), S.sidePanel);
+      // the window band (leaning in towards the roof): a ring round each window (its thick, soft-edged reveal) and the
+      // posts between them, all in the band's plane
+      const len = Math.hypot(KX, 1), nx = sd / len, ny = -KX / len;
+      // (sx, sy, sz) → x = sd·bandX(sy) + (0.016 − sz)·n, y = sy + (0.016 − sz)·n.y, z = sd·sx  (sx = sd·z keeps the faces' winding)
+      const M = new THREE.Matrix4().set(0, sd * KX, -nx, sd * (HW - KX * SILL) + 0.016 * nx, 0, 1, -ny, 0.016 * ny, sd, 0, 0, 0, 0, 0, 0, 1);
+      const mir = pts => pts.map(([z, y]) => [sd * z, y]);
+      for (const [win, ring, r] of WINDOWS) add(slab(mir(ring), 0.002, [[mir(win), r]], 0.014, 0.016, 0.005, 5, 1).applyMatrix4(M), S.wall);
+      for (const [z0, z1] of POSTS) add(sheet((u, v, o) => { const y = SILL + (WTOP - SILL) * v, z = z0(y) + (z1(y) - z0(y)) * u; o.set(sd * bandX(y), y, z); }, 4, 6, sd < 0), S.wall);
+      // the sill trim and the armrest
+      add(at(rbox(0.035, 0.022, AFT - zp(SILL) - 0.02, 0.008, 1), [sd * (HW - 0.012), SILL + 0.004, (AFT + zp(SILL)) / 2]), S.trim);
+      add(at(rbox(0.06, 0.05, 0.42, 0.014, 2), [sd * (HW - 0.035), 0.205, -0.62]), S.arm);
+      add(at(rbox(0.05, 0.045, 0.36, 0.012, 2), [sd * (HW - 0.03), 0.20, 0.42]), S.arm);
+      // the B-pillar trim between the front and rear windows (leaning in with the window band: 1 cm proud of it all the way up)
+      add(at(rbox(0.024, WTOP - SILL + 0.02, 0.15, 0.010, 2), [sd * (HW - 0.034), (WTOP + SILL) / 2, -0.175], [0, 0, sd * Math.atan(-KX)]), S.trim);
     }
     // (without the model) the A-pillar trim along the windshield's edge, and the upper trim along the roof
     if (!fromModel('headliner')) {
@@ -1102,11 +1111,11 @@ export function buildCockpit(FL, A, opts = {}) {
       add(onPlate(at(new THREE.CircleGeometry(0.0021, 6), [x, s, 0.0003])), S.screw);
     }
     { const f = frame(0, OVH.row, 0); placard(['NO SMOKING'], 31, 8, f.p, { r: f.r }); }
-    // the LIGHT DOME rheostats (the dome lights' brightness) on the header just outboard of the plate, the light under each
+    // the LIGHT DOME rheostats (the dome lights' brightness: the lights are on the headliner, DOME) on the header just
+    // outboard of the plate
     for (const sd of [-1, 1]) {
       const x = sd * OVH.dome, hd = -OVH.lift;                                           // (hd: the header's face, about)
       add(onPlate(at(knurled(0.0062, 0.009, 16), [x, 0.031, hd + 0.0045]), true), S.knob);
-      add(onPlate(at(rbox(0.012, 0.0075, 0.004, 0.0015), [x, 0.0115, hd + 0.0012])), S.lens);
       const lf = frame(sd * (OVH.dome + 0.0145), 0.031, hd + 0.0017);
       label(['LIGHT', 'DOME'], lf.p, { size: 1.3, r: lf.r, lit: 0, col: 0x2c2f33 });
       const kf = frame(x, 0.031, hd + 0.0045);
@@ -1585,8 +1594,8 @@ export function buildCockpit(FL, A, opts = {}) {
     const prof = [[0.0085, 0], [0.0135, 0.004], [gr, 0.010]];
     for (let k = 0; k < 5; k++) prof.push([gr - 0.0016, 0.016 + 0.017 * k], [gr, 0.0215 + 0.017 * k]);
     prof.push([gr - 0.0012, L - g0 - 0.016], [0.0105, L - g0 - 0.007], [0, L - g0 - 0.005]);
-    add(at(new THREE.LatheGeometry(prof.map(([r, h]) => new THREE.Vector2(r, h)), 10).rotateX(-Math.PI / 2), flapAt(g0), tilt), GRIPBLK, 'flap');
-    add(at(cylZ(0.0075, 0.0072, 0.007, 12), flapAt(L - 0.0035), tilt), S.chrome, 'flap');
+    add(at(new THREE.LatheGeometry(prof.map(([r, h]) => new THREE.Vector2(r, h)), 10).rotateX(-Math.PI / 2), flapAt(g0), tilt), FLAPGRIP, 'flap');
+    add(at(cylZ(0.0075, 0.0072, 0.007, 12), flapAt(L - 0.0035), tilt), SATIN, 'flap');
     // its hit box round the grip (it rides on the handle), aimed at the grip's top
     control({ id: 'flaps', label: 'フラップ レバー（V / Shift+V）', kind: 'lever', part: 'flap', size: [0.044, 0.046, L - g0 + 0.02], pos: flapAt((g0 + L) / 2), rot: tilt, aim: FLAP.aim,
       act: (dir, wheel) => {
@@ -1614,26 +1623,27 @@ export function buildCockpit(FL, A, opts = {}) {
 
   // ============================================================ the fuel selector (FUELSEL: the left kick panel, low)
   // made in the plate's frame (x to the right as one faces it, y up its face, z = n off it, at c): the bezel (a ring, its
-  // skirt back into the kick panel, its inside down to the plate), the black placard plate, its marks (not backlit),
-  // the red pointer handle (made pointing at 12 o'clock; update() turns it about n) — its flat tapered base, the fin one
-  // grips along it, the release button on its tail (pushed to turn it to OFF)
+  // skirt back into the kick panel, its inside down to the plate), the black placard plate, its marks (not backlit; bold
+  // white caps ~6 mm tall, two lines near the rim, as tx_fuel's — they read from the seat), the red pointer handle (made
+  // pointing at 12 o'clock; update() turns it about n) — its flat tapered base (~3.5 cm across, the real wedge's), the
+  // ridged fin one grips along it, the release button on its tail (pushed to turn it to OFF)
   { const F = FUELSEL, R = F.r, rim = F.rim, ez = new THREE.Vector3(...F.n), ey = new THREE.Vector3(0, 1, 0).addScaledVector(ez, -ez.y).normalize();
     const M = new THREE.Matrix4().makeBasis(new THREE.Vector3().crossVectors(ey, ez), ey, ez).setPosition(...F.c);
     const E = new THREE.Euler().setFromRotationMatrix(M), r = [E.x, E.y, E.z], P = (x, y, z) => new THREE.Vector3(x, y, z).applyMatrix4(M).toArray();
     const lathe = (pts, n) => new THREE.LatheGeometry(pts.map(([a, h]) => new THREE.Vector2(a, h)), n).rotateX(Math.PI / 2);
     add(lathe([[R + rim, -0.006], [R + rim - 0.0015, 0.003], [R + rim * 0.5, 0.0066], [R + 0.0012, 0.0052], [R - 0.0005, 0.0012]], 24).applyMatrix4(M), S.black);
     add(new THREE.CircleGeometry(R, 28).translate(0, 0, 0.0012).applyMatrix4(M), { ...S.black, r: 0.5 });
-    // (behind the bezel, back into the wall: the kick panel's moulding round it, in the side panel's grey — inside the kick
-    // panel made in Blender, which is flat in the plate's plane there)
-    add(lathe([[R + rim + 0.014, -0.09], [R + rim + 0.0005, -0.0045]], 24).applyMatrix4(M), S.sidePanel);
-    const mark = (lines, clock, rr) => label(lines, P(Math.sin(clock * DEG) * rr, Math.cos(clock * DEG) * rr, 0.0015), { size: 2.9, r, lit: 0, col: 0xe6e6e0 });
-    mark(['L TANK', '24 GAL'], F.clock.L, 0.053); mark(['R TANK', '24 GAL'], F.clock.R, 0.049); mark(['FUEL', 'OFF'], F.clock.OFF, 0.05);
-    const base = slab([[0, 0.046], [0.012, 0.004], [0.0095, -0.032], [0, -0.038], [-0.0095, -0.032], [-0.012, 0.004]], 0.003, [], 0.005, 0.0092, 0.0015, 1, 1);
+    // (without the model's walls: behind the bezel, back into the wall, the kick panel's moulding round it, in the side
+    // panel's grey; the model's kick panel is flat in the plate's plane there and hides it)
+    if (!walls) add(lathe([[R + rim + 0.014, -0.09], [R + rim + 0.0005, -0.0045]], 24).applyMatrix4(M), S.sidePanel);
+    const mark = (lines, clock, rr) => label(lines, P(Math.sin(clock * DEG) * rr, Math.cos(clock * DEG) * rr, 0.0015), { size: 6.5, r, lit: 0, col: 0xe6e6e0, res: 0.55 });
+    mark(['L TANK', '24 GAL'], F.clock.L, 0.042); mark(['R TANK', '24 GAL'], F.clock.R, 0.042); mark(['FUEL', 'OFF'], F.clock.OFF, 0.044);
+    const base = slab([[0, 0.048], [0.017, 0.004], [0.013, -0.032], [0, -0.039], [-0.013, -0.032], [-0.017, 0.004]], 0.003, [], 0.005, 0.0092, 0.0015, 1, 1);
     const fin = slab([[-0.02, 0.007], [0.034, 0.007], [0.03, 0.013], [0.006, 0.0235], [-0.012, 0.0222], [-0.02, 0.016]], 0.002, [], 0.0041, 0.00325, 0.0012, 1, 1)
       .applyMatrix4(new THREE.Matrix4().set(0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1));               // ([along it, off the plate] → y, z: across it x)
     for (const g of [base, fin]) add(g.applyMatrix4(M), S.red, 'fuel');
     add(cylZ(0.0042, 0.0042, 0.004, 10).translate(0, -0.028, 0.0105).applyMatrix4(M), S.chrome, 'fuel');
-    control({ id: 'fuelSel', label: '燃料セレクター（左 / 右 / OFF）', kind: 'switch', part: 'fuel', size: [0.032, 0.094, 0.03], pos: P(0, 0.004, 0.0125), rot: r, aim: P(0, 0.012, 0.022),
+    control({ id: 'fuelSel', label: '燃料セレクター（左 / 右 / OFF）', kind: 'switch', part: 'fuel', size: [0.04, 0.096, 0.03], pos: P(0, 0.004, 0.0125), rot: r, aim: P(0, 0.012, 0.022),
       act: (dir, wheel) => {
         // a click: the other tank; the wheel: L → R → OFF and back
         const i = FUEL.indexOf(switches.fuelSel), v = wheel ? FUEL[clamp(i + (dir > 0 ? 1 : -1), 0, FUEL.length - 1)] : (switches.fuelSel === 'L' ? 'R' : 'L');
@@ -1643,12 +1653,14 @@ export function buildCockpit(FL, A, opts = {}) {
 
   // ============================================================ the door (right), its handle and latch
   // with the model's walls (WALLS.door): the inside handle's lever in its black cup on the door's forward part — the
-  // control's box round the lever, aimed at its grip; OPEN over it on the cup's flat bottom; ENGAGE LATCH BEFORE FLIGHT on
+  // control's box round the lever, aimed at its grip; OPEN over it on the cup's flat bottom (panel_right: a black tag, a
+  // shade lighter than the cup, its white OPEN ~5 mm tall, over the up arrow); ENGAGE LATCH BEFORE FLIGHT on
   // the roof trim's face aft of the upper latch (Piper's TX photos, the POH). Without them: the old simple door (its seams
   // below the sill, the map pocket, a chrome handle mid-door with its DOOR LATCH label, the top latch over its window)
   if (walls) {
     const c = WALLS.door.cup, xb = HW - WALLS.proud[0] + c.depth;
-    label('OPEN', [xb - 0.0006, c.y + 0.053, c.z], { size: 2.4, r: [0, -Math.PI / 2, 0], lit: 0 });
+    placard(['OPEN'], 20, 10, [xb - 0.0006, c.y + 0.046, c.z], { bg: 0x2a2c2f, r: [0, -Math.PI / 2, 0], res: 0.6,
+      draw: (g, w, h) => { g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `700 ${h * 0.62}px ${SANS}`; g.fillText('OPEN', w / 2, h * 0.54, w * 0.9); } });
     placard(['ENGAGE LATCH', 'BEFORE FLIGHT'], 38, 11, [HWT - 0.0118, WTOP + 0.003, WALLS.door.latch + 0.075], { r: [0, -Math.PI / 2, 0], res: 0.7 });
     control({ id: 'door', label: 'ドア ハンドル（降りる）', kind: 'handle', size: c.hit.size, pos: c.hit.pos, aim: c.aim, act: () => ({ type: 'exit' }) });
   } else {
@@ -1728,20 +1740,22 @@ export function buildCockpit(FL, A, opts = {}) {
     for (const z of DUCT.eyes) for (const sd of [-1, 1]) {
       const c = new THREE.Vector3(sd * DUCT.ex, ROOF - h - 0.0005, z), head = z < 0 ? [sd * SEAT_X, EYE0[1], -0.36] : [sd * 0.25, 0.6, 0.72];
       const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(...head).sub(c).normalize());
-      add(new THREE.LatheGeometry([[0.0118, -0.0015], [0.0145, -0.0027], [0.0175, -0.0015], [0.0185, 0.0015]].map(([r, hh]) => new THREE.Vector2(r, hh)), 10).translate(c.x, c.y + 0.0005, c.z), S.chrome);
+      add(new THREE.LatheGeometry([[0.0118, -0.0015], [0.0145, -0.0027], [0.0175, -0.0015], [0.0185, 0.0015]].map(([r, hh]) => new THREE.Vector2(r, hh)), 10).translate(c.x, c.y + 0.0005, c.z), SATIN);
       add(new THREE.SphereGeometry(0.0125, 8, 4, 0, Math.PI * 2, 1.2, Math.PI - 1.2).translate(c.x, c.y, c.z), S.knob);       // (its part out of the bezel)
       add(new THREE.CylinderGeometry(0.0055, 0.0055, 0.006, 8, 1, true).translate(0, 0.014, 0).applyQuaternion(q).translate(c.x, c.y, c.z), S.black);
       add(new THREE.CircleGeometry(0.0046, 6).rotateX(-Math.PI / 2).translate(0, 0.0165, 0).applyQuaternion(q).translate(c.x, c.y, c.z), S.slot);
     }
   }
-  // the dome lights (DOME): a shallow frosted lens in a chrome ring on the headliner, square to its arch there; set 5.5 mm
-  // under the arch, the ring's skirt going up into it (the cloth sags there: the lens never behind it)
+  // the dome lights (DOME): a shallow frosted lens (near-white, rough) in a chrome ring on the headliner, square to its
+  // arch there; set 5.5 mm under the arch, the ring's skirt going up into it (the cloth sags there: the lens never behind
+  // it). The ring and the outlets' bezels in a light satin metal (SATIN): a full metal reflects only the environment,
+  // which the cabin's dim light turns dark olive with a blue edge (as S.postAlu notes)
   for (const sd of [-1, 1]) {
     const x = sd * DOME.x, y = roofY(x), n = new THREE.Vector3(-x / (HWT * HWT), -(y - WTOP) / (ROOF - WTOP) ** 2, 0).normalize(), R = DOME.r, rise = 0.0065;
     const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), n), c = new THREE.Vector3(x, y, DOME.z).addScaledVector(n, 0.0055);
     const Rs = (R * R + rise * rise) / (2 * rise), th = Math.asin(R / Rs);                      // (the lens: a cap of a sphere, rise high)
-    add(new THREE.LatheGeometry([[R + DOME.ring + 0.001, -0.009], [R + DOME.ring, 0.0005], [R + 0.004, 0.003], [R - 0.0005, 0.0012]].map(([r, h]) => new THREE.Vector2(r, h)), 18).applyQuaternion(q).translate(c.x, c.y, c.z), S.chrome);
-    add(new THREE.SphereGeometry(Rs, 16, 2, 0, Math.PI * 2, 0, th).translate(0, 0.0012 - Rs * Math.cos(th), 0).applyQuaternion(q).translate(c.x, c.y, c.z), { ...S.lens, r: 0.4 });
+    add(new THREE.LatheGeometry([[R + DOME.ring + 0.001, -0.009], [R + DOME.ring, 0.0005], [R + 0.004, 0.003], [R - 0.0005, 0.0012]].map(([r, h]) => new THREE.Vector2(r, h)), 18).applyQuaternion(q).translate(c.x, c.y, c.z), SATIN);
+    add(new THREE.SphereGeometry(Rs, 16, 2, 0, Math.PI * 2, 0, th).translate(0, 0.0012 - Rs * Math.cos(th), 0).applyQuaternion(q).translate(c.x, c.y, c.z), { c: 0xf4f4f2, r: 0.75 });
   }
 
   // ============================================================ the glass: windshield and side windows (no shadows, no AO)

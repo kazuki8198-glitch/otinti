@@ -31,6 +31,7 @@ export const MODULES = Object.freeze([
   'book-4.js',
   'book-5.js',
   'kiso/kiso-data.js',   // the basic course (パイロット基礎教材 第 3 版, the original: never edited here)
+  'kiso-errata.js',      // what the basic course's page shows over the original: the corrections and the written questions rebuilt (FLIGHT LAB only). Data only
   'quiz.js',             // the ground-school test banks
   'radio.js',            // English radio
   'ui.js',               // the app: its controls and icons

@@ -5,7 +5,9 @@
 // decoded in the worker with the embedded Draco, drawn, credited, and the key never reaches storage or the record.
 // The second reads the basic course (kiso/) through its own page: every chapter and section, every figure and photo, the
 // written questions, the glossary, the sources, the progress (apart from the textbook's, as the next start reads it), and two
-// pages compared with kiso/preview.html.
+// pages compared with kiso/preview.html; and what the page adds around the original (kiso-errata.js, DESIGN 6.1): the line
+// under the title, the corrections outside the original's text, the questions rebuilt from the chapter's question pages,
+// each figure's ids its own and each photo's alt from its caption.
 // Needs Playwright (set PLAYWRIGHT to its module path if it is not installed next to this project); skipped otherwise.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -235,15 +237,22 @@ test('browser: 基礎教材 — every chapter and section by 次の節, 161 figu
     assert.equal(tiles[tiles.indexOf('教科書') + 1], '基礎教材', tiles.join(' '));
     await page.click('.tile:has-text("基礎教材")');
     assert.equal(await page.textContent('#pageTitle'), '基礎教材（日本の航空法 前提）');
+    // under the title, one line: this is the original, kept; learn from the textbook (DESIGN 6.1). The corrections are
+    // FL.kisoErrata's (kiso-errata.js), drawn outside the original's text; the contents say how many and where
+    assert.equal(await page.textContent('#kzOrig'), '第 3 版・原本（保存版）です。学習は教科書（合本）で。原理は国を問わず共通、日本の数値は合本の第 7 部');
+    assert.ok(await page.evaluate(() => !!FL.kisoErrata && FL.kisoErrata.items.length >= 20), 'kiso-errata.js is on the page');
+    assert.match(await page.textContent('#kzArt .kz-fix-about'), new RegExp(`訂正と補足 ${await page.evaluate(() => FL.kisoErrata.items.length)} 件`));
     assert.equal(await page.locator('#kzArt .kz-toc-item').count(), 14);
     await page.click('#kzArt .kz-toc-item >> nth=0');
     assert.deepEqual(await page.$$eval('#kzArt .kz-tabs button', a => a.map(b => b.textContent.replace(/（.*/, ''))), ['本文', '確認問題', '用語', '出典']);
     // every section, one after the other with 次の節 →: no placeholder left, each figure's SVG and caption, each photo
-    // decoded with its caption and credit, the text exactly the data's
+    // decoded with its caption and credit, the text exactly the data's. The page's own additions, outside that text: the
+    // section's corrections (FL.kisoErrata.at), each figure's ids its own (no id twice on the page, every url(#…) found
+    // in its own figure) and each photo's alt from its caption (DESIGN 10.3)
     const walk = await page.evaluate(async () => {
-      const K = FL.kiso, figs = new Set(), photos = new Set(), bad = [];
+      const K = FL.kiso, E = FL.kisoErrata, figs = new Set(), photos = new Set(), bad = [];
       const plain = html => { const d = document.createElement('div'); d.innerHTML = html; for (const e of d.querySelectorAll('.kiso-fig, .kiso-photo')) e.remove(); return d.textContent; };
-      let n = 0;
+      let n = 0, fixed = 0, svgIds = 0;
       for (;;) {
         const body = document.querySelector('#kzArt .kz-body'), id = body.dataset.kisoSec, c = K.chapters.find(x => id.startsWith(x.id + '.')), s = c.sections.find(x => x.id === id);
         n++;
@@ -251,40 +260,79 @@ test('browser: 基礎教材 — every chapter and section by 次の節, 161 figu
         for (const f of body.querySelectorAll('figure.kz-fig')) {
           const m = c.figures.find(x => x.id === f.dataset.fig);
           if (m && f.querySelector('svg') && f.querySelector('svg').outerHTML.length > 200 && f.querySelector('figcaption').textContent === plain(m.caption)) figs.add(m.id); else bad.push(`${id}: figure ${f.dataset.fig}`);
+          const svg = f.querySelector('svg');
+          for (const e of svg.querySelectorAll('[id]')) { svgIds++; if (!e.id.startsWith(f.dataset.fig + '--')) bad.push(`${id}: id ${e.id} in ${f.dataset.fig}`); }
+          for (const e of svg.querySelectorAll('*')) for (const a of e.attributes) for (const r of a.value.matchAll(/url\(#([^)]+)\)/g)) if (!svg.querySelector(`[id="${r[1]}"]`)) bad.push(`${id}: ${f.dataset.fig} url(#${r[1]}) not in its figure`);
         }
         for (const f of body.querySelectorAll('figure.kz-photo')) {
           const m = c.photos.find(x => x.id === f.dataset.photo), im = f.querySelector('img');
           await im.decode().catch(() => {});
           const cap = f.querySelector('figcaption').children;
           if (m && im.naturalWidth > 0 && cap[0].textContent === plain(m.caption) && cap[1].textContent === plain(m.credit) && cap[1].textContent.trim()) photos.add(m.id); else bad.push(`${id}: photo ${f.dataset.photo}`);
+          if (!im.alt || im.alt !== cap[0].textContent.replace(/\s+/g, ' ').trim()) bad.push(`${id}: photo ${f.dataset.photo} alt`);
         }
+        const ids = [...document.querySelectorAll('[id]')].map(e => e.id);
+        if (new Set(ids).size !== ids.length) bad.push(`${id}: an id twice on the page`);
         const ours = body.cloneNode(true); for (const e of ours.querySelectorAll('figure')) e.remove();
         if (ours.textContent !== plain(s.html)) bad.push(`${id}: the text differs from the data`);
+        // the corrections: the ones for this section, in a box before the original's text and outside it
+        const want = E.at(id).map(x => x.id), got = [...document.querySelectorAll('#kzArt .kz-pane > aside.kz-fix .kz-fix-item')].map(e => e.dataset.fix);
+        if (want.join() !== got.join()) bad.push(`${id}: corrections ${got} (want ${want})`);
+        if (body.querySelector('.kz-fix') || (want.length && !(document.querySelector('#kzArt aside.kz-fix').compareDocumentPosition(body) & Node.DOCUMENT_POSITION_FOLLOWING))) bad.push(`${id}: the corrections' place`);
+        if (want.length) fixed++;
         const next = [...document.querySelectorAll('#kzArt .kz-pane .row button')].find(b => b.textContent === '次の節 →');
         if (!next) break;
         next.click();
       }
-      return { n, figs: figs.size, photos: photos.size, bad, last: document.querySelector('#kzArt .kz-body').dataset.kisoSec };
+      const secPlaces = [...E.places()].filter(p => K.chapters.some(c => c.sections.some(s => s.id === p))).length;
+      return { n, figs: figs.size, photos: photos.size, bad, fixed, secPlaces, svgIds, last: document.querySelector('#kzArt .kz-body').dataset.kisoSec };
     });
     assert.deepEqual(walk.bad, []);
     assert.equal(walk.n, total, 'every section'); assert.equal(walk.last, 'kiso13.28');
     assert.equal(walk.figs, 161, 'figures'); assert.equal(walk.photos, 85, 'photos');
+    assert.ok(walk.fixed >= 20 && walk.fixed === walk.secPlaces, `${walk.fixed} sections with corrections (${walk.secPlaces})`);
+    assert.ok(walk.svgIds > 132, `${walk.svgIds} ids in the figures, each its own`);
     await page.click('#kzArt .kz-pane button:has-text("← 前の節")');
     assert.equal(await page.getAttribute('#kzArt .kz-body', 'data-kiso-sec'), 'kiso13.27');
     // read sections: the course's own progress, not the textbook's
     let prog = await page.evaluate(() => __lab.progress());
     assert.equal(prog.kisoRead.length, total); assert.ok(!prog.read.some(id => /^kiso/.test(id)), 'not in the textbook\'s read');
-    // the written questions of chapter 5: no choices, no grading; the answer opens on the button and is recorded
+    // the written questions of chapter 5: no choices, no grading; the answer opens on the button and is recorded. They are
+    // rebuilt from the chapter's question pages (FL.kisoErrata.questions): the same 28, numbers and record keys
     await page.click('#kzNav .kz-ch:has-text("第 5 章")');
     await page.click('#kzArt .kz-tabs button:has-text("確認問題")');
     assert.equal(await page.locator('#kzArt .kz-qa').count(), 28);
+    assert.deepEqual(await page.$$eval('#kzArt .kz-qa', a => a.map(e => e.dataset.q)), await page.evaluate(() => FL.kiso.chapters[5].qa.map(q => `kiso05.q${q.n}`)), 'the record keys');
     assert.equal(await page.locator('#kzArt .kz-pane input').count(), 0, 'written answers: nothing to choose');
     assert.equal(await page.isVisible('#kzArt .kz-qa >> nth=0 >> .kz-a'), false);
     await page.click('#kzArt .kz-qa >> nth=0 >> button:has-text("解答と解説を見る")');
     assert.equal(await page.isVisible('#kzArt .kz-qa >> nth=0 >> .kz-a'), true);
-    assert.equal(await page.evaluate(() => { const d = document.createElement('div'); d.innerHTML = FL.kiso.chapters[5].qa[0].a; return document.querySelector('#kzArt .kz-qa .kz-a > div:last-child').textContent === d.textContent; }), true, 'the answer as the data has it');
+    assert.equal(await page.evaluate(() => { const d = document.createElement('div'); d.innerHTML = FL.kisoErrata.questions(FL.kiso.chapters[5]).items.find(i => i.n === 1).a; return document.querySelector('#kzArt .kz-qa .kz-a .kz-a-b').textContent === d.textContent; }), true, 'the answer as the answer page has it');
     prog = await page.evaluate(() => __lab.progress());
     assert.deepEqual(prog.kisoQa, ['kiso05.q1']); assert.deepEqual(prog.bookQuiz, {}, 'not the textbook\'s questions');
+    // chapter 1 (its data lost the headings: <p>翼面積の定義</b></p>): each heading whole and bold, the groups' headings
+    // and words back above their questions, not at the end of the question before (DESIGN 10.2 aero K-1)
+    await page.click('#kzNav .kz-ch:has-text("第 1 章")');
+    await page.click('#kzArt .kz-tabs button:has-text("確認問題")');
+    assert.equal(await page.locator('#kzArt .kz-qa').count(), 24);
+    assert.equal(await page.textContent('#kzArt .kz-qa >> nth=0 >> .kz-q b'), '翼面積の定義');
+    assert.deepEqual(await page.$$eval('#kzArt .kz-qg-h', a => a.map(e => e.textContent)), ['演習 1　原理と定義', '演習 2　計算と条件', '演習 3　状況判断']);
+    assert.doesNotMatch(await page.textContent('#kzArt .kz-qa >> nth=7 >> .kz-q'), /本文を閉じて答えてください/);
+    assert.equal(await page.evaluate(() => [...document.querySelectorAll('#kzArt .kz-qa .kz-q, #kzArt .kz-qa .kz-a-b')].filter(e => !(e.firstElementChild && e.firstElementChild.firstElementChild && e.firstElementChild.firstElementChild.tagName === 'B' && e.firstElementChild.textContent === e.firstElementChild.firstElementChild.textContent)).length), 0, 'every question and answer of chapter 1 starts with its title in bold');
+    // a correction at a written question (kiso08 問 11: the reserve fuel), outside the question and the answer
+    await page.click('#kzNav .kz-ch:has-text("第 8 章")');
+    await page.click('#kzArt .kz-tabs button:has-text("確認問題")');
+    assert.equal(await page.locator('#kzArt [data-q="kiso08.q11"] > aside.kz-fix [data-fix="fuel-vfr"]').count(), 1);
+    assert.equal(await page.locator('#kzArt .kz-q aside, #kzArt .kz-a aside').count(), 0);
+    assert.deepEqual(await page.$$eval('#kzArt aside.kz-fix', a => a.map(e => e.dataset.fixAt)), await page.evaluate(() => FL.kiso.chapters[8].qa.map(q => `kiso08.q${q.n}`).filter(k => FL.kisoErrata.at(k).length)));
+    // a correction at a chapter's sources (kiso11 [11]: the document's name), before the sources
+    await page.click('#kzNav .kz-ch:has-text("第 11 章")');
+    await page.click('#kzArt .kz-tabs button:has-text("出典")');
+    assert.equal(await page.locator('#kzArt .kz-pane > aside.kz-fix:first-child [data-fix="jcab-syllabus-name"]').count(), 1);
+    await page.click('#kzNav .kz-ch:has-text("第 8 章")');
+    // the sections with corrections are marked in the contents
+    assert.deepEqual(await page.$$eval('#kzNav .kz-si', a => a.filter(e => e.querySelector('.kz-fix-mark')).length), await page.evaluate(() => FL.kiso.chapters[8].sections.filter(s => FL.kisoErrata.at(s.id).length).length));
+    await page.click('#kzNav .kz-ch:has-text("第 5 章")');
     // the glossary: the header and the rows, narrowed by the search
     await page.click('#kzArt .kz-tabs button:has-text("用語")');
     assert.equal(await page.locator('#kzArt .kz-gl tbody tr').count(), 40);

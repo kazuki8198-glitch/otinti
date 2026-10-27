@@ -372,29 +372,54 @@
     // the figures and photos take their placeholders (div.kiso-fig / div.kiso-photo): a figure on white (its colours
     // assume a white ground), a photo with its caption and its credit (CC BY / CC BY-SA: always under the photo).
     // What was read and which answers were opened go in the progress as kisoRead / kisoQa (not the textbook's read).
+    // The original is kept as it is (kiso/ is never edited; textbook/rewrite/combined/DESIGN.md 6.1): what the page adds is
+    // drawn around it, never inside its text (.kz-body): the line under the title (this is the original, kept; learn from
+    // the textbook), the corrections over it (FL.kisoErrata.items, kiso-errata.js: safety and Japanese law, each with its
+    // primary source), the written questions rebuilt from the chapter's own question pages (FL.kisoErrata.questions: the
+    // per-question data lost its headings; the numbers, the count and the record keys stay), each figure's ids made its own
+    // (the figures share marker ids such as a-navy) and each photo's alt from its caption. Without kiso-errata.js the page
+    // shows the original as it is.
     let kz = { ch: -1, tab: 'sec', sec: 0 }, kzIds_ = null;   // ch -1: the contents
     const kzIds = () => kzIds_ || (kzIds_ = { secs: new Set(KZ.chapters.flatMap(c => c.sections.map(s => s.id))), qa: new Set(KZ.chapters.flatMap(c => c.qa.map(q => `${c.id}.q${q.n}`))), figs: new Map(KZ.chapters.flatMap(c => c.figures.map(f => [f.id, f]))), photos: new Map(KZ.chapters.flatMap(c => c.photos.map(p => [p.id, p]))) });
     const kzSecN = () => kzIds().secs.size, kzQaN = () => kzIds().qa.size, kzCount = (list, set) => list.filter(x => set.has(x)).length;
     const kzNote = () => h('p', { class: 'note', text: `パイロット基礎教材 ${KZ.version}。日本の航空法・国内の運航を前提にした座学教材で、FLIGHT LAB の教科書（FAA・14 CFR・Sanford 前提）とは別の本です。実機訓練、教官の指示、POH/AFM、SOP、航空法規を優先してください。` });
+    const KZ_ORIG = '第 3 版・原本（保存版）です。学習は教科書（合本）で。原理は国を問わず共通、日本の数値は合本の第 7 部';
+    const kzErr = () => FL.kisoErrata || null;
+    // a figure's SVG with its ids made its own (ch05-fig5-6--a-navy), and the references to them (url(#…), href="#…")
+    const kzSvg = (fid, svg) => svg.replace(/(\sid=")([^"]+)"/g, (m, a, x) => `${a}${fid}--${x}"`)
+      .replace(/url\(#([^)]+)\)/g, (m, x) => `url(#${fid}--${x})`).replace(/(\s(?:xlink:)?href=")#([^"]+)"/g, (m, a, x) => `${a}#${fid}--${x}"`);
+    const kzPlain = html => { const d = document.createElement('div'); d.innerHTML = html; return d.textContent.replace(/\s+/g, ' ').trim(); };
     function kisoFill(root) {
       const M = kzIds();
       for (const d of root.querySelectorAll('.kiso-fig')) {
         const id = d.dataset.fig, svg = KZ.figs[id], f = M.figs.get(id); if (!svg || !f) continue;
-        d.replaceWith(h('figure', { class: 'kz-fig', 'data-fig': id, html: svg }, h('figcaption', { html: f.caption })));
+        d.replaceWith(h('figure', { class: 'kz-fig', 'data-fig': id, html: kzSvg(id, svg) }, h('figcaption', { html: f.caption })));
       }
       for (const d of root.querySelectorAll('.kiso-photo')) {
         const id = d.dataset.photo, src = KZ.photos[id], p = M.photos.get(id); if (!src || !p) continue;
-        d.replaceWith(h('figure', { class: 'kz-photo', 'data-photo': id }, h('img', { src, width: p.w, height: p.h, alt: '' }), h('figcaption', {}, h('div', { html: p.caption }), h('div', { class: 'kz-credit', html: p.credit }))));
+        d.replaceWith(h('figure', { class: 'kz-photo', 'data-photo': id }, h('img', { src, width: p.w, height: p.h, alt: kzPlain(p.caption) }), h('figcaption', {}, h('div', { html: p.caption }), h('div', { class: 'kz-credit', html: p.credit }))));
       }
       // the sources open in a new tab (the app is a file:// page: following a link in place would leave it)
       for (const a of root.querySelectorAll('a[href^="http"]')) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
       return root;
     }
+    // the corrections shown at a place (a section id, a question's record key, '<chapter>.src'), outside the original's text
+    function kisoFixes(place) {
+      const E = kzErr(), list = E ? E.at(place) : [];
+      if (!list.length) return null;
+      return h('aside', { class: 'kz-fix', 'data-fix-at': place, 'aria-label': '原本への訂正と補足' },
+        h('div', { class: 'kz-fix-h', text: `原本への訂正と補足（${list.length} 件）：原本の文はそのまま、正しい内容をここに書きます` }),
+        ...list.map(it => h('div', { class: `kz-fix-item kz-fix-${it.kind}`, 'data-fix': it.id },
+          h('div', { class: 'kz-fix-t' }, h('span', { class: 'kz-fix-k', text: E.KINDS[it.kind] || '' }), it.title),
+          h('p', { class: 'kz-fix-o', text: `原本：${it.says}` }),
+          ...it.fix.map(t => h('p', { text: t })),
+          h('p', { class: 'kz-fix-s' }, '根拠：', ...it.src.flatMap((s, i) => [i ? '／' : null, h('a', { href: s.url, target: '_blank', rel: 'noopener noreferrer', text: s.t })]), `（${it.checked} 確認）`))));
+    }
     function renderKiso(body) {
       if (!KZ) { body.append(h('p', { text: '基礎教材のデータがありません。' })); return; }
-      body.className = 'page-body split';
+      body.className = 'page-body split kz-split';
       $('#pageTools').append(h('span', { class: 'tag kz-tag', text: '日本の航空法・国内の運航が前提（教科書とは別の本）' }), h('span', { class: 'small mute', id: 'kzProg' }));
-      body.append(h('nav', { class: 'bk-nav', id: 'kzNav', 'aria-label': '基礎教材の目次' }), h('article', { class: 'bk-art', id: 'kzArt' }));
+      body.append(h('p', { class: 'kz-orig', id: 'kzOrig', text: KZ_ORIG }), h('nav', { class: 'bk-nav', id: 'kzNav', 'aria-label': '基礎教材の目次' }), h('article', { class: 'bk-art', id: 'kzArt' }));
       openKiso(kz.ch, kz.tab, kz.sec);
     }
     // a chapter's tab (sec: one section at a time; qa: the written questions; gl: the glossary; src: the sources), or
@@ -421,6 +446,7 @@
       art.append(h('div', { class: 'bk-chap', text: `パイロット基礎教材　${KZ.version}` }), h('h2', { class: 'bk-title', text: '基礎教材（日本の航空法 前提）' }),
         h('p', { text: `日本の航空法・国内の運航を前提にした座学教材です（第 ${KZ.chapters[0].no}〜${KZ.chapters[KZ.chapters.length - 1].no} 章）。FLIGHT LAB の「教科書」（FAA・14 CFR・Sanford 前提）とは前提が違うため、別の本として収めています。` }),
         h('p', { text: '章を開くと「本文」「確認問題」「用語」「出典」に分かれています。本文は節ごとに読み、前後の節へ移れます。確認問題は記述式で、採点はしません。自分で答えを考えてから「解答と解説を見る」で確かめてください。' }),
+        ...[kzErr() && h('p', { class: 'kz-fix-about', text: `安全と日本の法令に関わる訂正と補足 ${kzErr().items.length} 件を、該当する ${kzErr().places().size} か所（節・確認問題・出典）に、原本の文の外に重ねて表示しています。原本の本文・図・問題は第 3 版のまま変えていません。目次の「訂正」の印が、訂正のある節です。` })].filter(Boolean),
         h('div', { class: 'kz-toc' }, ...KZ.chapters.map((c, i) => h('button', { type: 'button', class: 'kz-toc-item', onclick: () => openKiso(i) },
           h('span', { class: 'kz-no', text: `第 ${c.no} 章` }), h('span', { class: 'kz-t', text: c.title }), c.subtitle ? h('span', { class: 'kz-sub', text: c.subtitle }) : null,
           h('span', { class: 'kz-cnt', text: `${c.sections.length} 節（読んだ節 ${c.sections.filter(s => S.progress.kisoRead.includes(s.id)).length}）・確認問題 ${c.qa.length}・用語 ${c.glossary.length}` })))),
@@ -430,6 +456,7 @@
       const s = c.sections[kz.sec];
       if (!S.progress.kisoRead.includes(s.id)) { S.progress.kisoRead.push(s.id); save(); }
       pane.append(h('div', { class: 'small mute', text: `節 ${kz.sec + 1} / ${c.sections.length}` }), h('h3', { class: 'kz-sec-t', text: s.no != null ? `${s.no} ${s.title}` : s.title }),
+        ...[kisoFixes(s.id)].filter(Boolean),                                                   // the corrections: outside the original's text
         kisoFill(h('div', { class: 'kz-body', 'data-kiso-sec': s.id, html: s.html })));          // static course content (trusted)
       // the sections before and after (across the chapters), and the chapter's questions after its last section
       const flat = KZ.chapters.flatMap((x, i) => x.sections.map((_, j) => [i, j])), k = flat.findIndex(([i, j]) => i === ci && j === kz.sec);
@@ -442,16 +469,24 @@
       if (!c.qa.length) { pane.append(h('p', { class: 'mute', text: 'この章には確認問題がありません。' })); return; }
       const cnt = h('p', { class: 'small mute' }), upd = () => { cnt.textContent = `解答を開いた問題 ${c.qa.filter(q => S.progress.kisoQa.includes(`${c.id}.q${q.n}`)).length} / ${c.qa.length}`; kisoProg(); };
       pane.append(h('p', { class: 'small', text: '記述式の確認問題です。採点はしません。まず自分で答えを考え（書き出すとなおよい）、それから「解答と解説を見る」で確かめてください。' }), cnt);
-      for (const q of c.qa) {
-        const key = `${c.id}.q${q.n}`, ans = h('div', { class: 'kz-a', hidden: true }, h('div', { class: 'kz-a-h', text: '解答と解説' }), kisoFill(h('div', { html: q.a })));
-        const box = h('div', { class: 'quiz kz-qa' + (S.progress.kisoQa.includes(key) ? ' seen' : ''), 'data-q': key }, h('div', { class: 'kz-qn', text: `問 ${q.n}` }), kisoFill(h('div', { class: 'kz-q', html: q.q })));
+      // a note of the answer pages that goes with an answer (計算問題の確認基準, a group's opening words), apart from it
+      const note = x => h('div', { class: 'kz-a-note' }, x.h ? h('div', { class: 'kz-a-nh', html: x.h }) : null, x.html ? kisoFill(h('div', { html: x.html })) : null);
+      const qbox = (n, qh, ah, pre = [], post = []) => {
+        const key = `${c.id}.q${n}`, ans = h('div', { class: 'kz-a', hidden: true }, h('div', { class: 'kz-a-h', text: '解答と解説' }), ...pre.map(note), kisoFill(h('div', { class: 'kz-a-b', html: ah })), ...post.map(note));
+        const box = h('div', { class: 'quiz kz-qa' + (S.progress.kisoQa.includes(key) ? ' seen' : ''), 'data-q': key }, h('div', { class: 'kz-qn', text: `問 ${n}` }), kisoFill(h('div', { class: 'kz-q', html: qh })));
         const b = btn('解答と解説を見る', () => {
           const open = ans.hidden; ans.hidden = !open; b.textContent = open ? '解答と解説を閉じる' : '解答と解説を見る'; b.setAttribute('aria-expanded', String(open));
           if (open && !S.progress.kisoQa.includes(key)) { S.progress.kisoQa.push(key); save(); box.classList.add('seen'); upd(); }
         });
         b.setAttribute('aria-expanded', 'false');
-        box.append(b, ans); pane.append(box);
-      }
+        box.append(b, ans, ...[kisoFixes(key)].filter(Boolean)); return box;
+      };
+      // rebuilt from the chapter's question pages (the groups' headings and instructions back in place), or c.qa as it is
+      const R = kzErr() && kzErr().questions(c);
+      if (R) for (const it of R.items) {
+        if (it.kind === 'group') pane.append(h('div', { class: 'kz-qg' }, it.h ? h('h4', { class: 'kz-qg-h', html: it.h }) : null, it.html ? kisoFill(h('div', { class: 'kz-qg-t', html: it.html })) : null));
+        else pane.append(qbox(it.n, it.q, it.a, it.pre, it.post));
+      } else for (const q of c.qa) pane.append(qbox(q.n, q.q, q.a));
       upd();
     }
     function kisoGlossary(pane, c) {
@@ -465,7 +500,7 @@
       draw();
     }
     function kisoSources(pane, c) {
-      pane.append(kisoFill(h('div', { class: 'kz-src', html: c.sourcesHtml })), h('h4', { text: '写真の出典' }), kisoFill(h('div', { class: 'kz-src', html: c.photoCreditsHtml })));
+      pane.append(...[kisoFixes(`${c.id}.src`)].filter(Boolean), kisoFill(h('div', { class: 'kz-src', html: c.sourcesHtml })), h('h4', { text: '写真の出典' }), kisoFill(h('div', { class: 'kz-src', html: c.photoCreditsHtml })));
     }
     // the contents on the left: the chapters (title and subtitle), the open chapter's sections under it
     function kisoNav() {
@@ -477,7 +512,7 @@
         nav.append(h('button', { type: 'button', class: 'bk-item kz-ch' + (cur ? ' open' : '') + (done ? ' done' : ''), 'aria-expanded': String(cur), onclick: () => openKiso(i, cur ? kz.tab : 'sec', cur ? kz.sec : 0) },
           h('span', { class: 'bk-num', text: `第 ${c.no} 章` }), h('span', {}, c.title, c.subtitle ? h('span', { class: 'kz-sub', text: c.subtitle }) : null)));
         if (cur) c.sections.forEach((s, j) => nav.append(h('button', { type: 'button', class: 'bk-item kz-si' + (S.progress.kisoRead.includes(s.id) ? ' done' : '') + (kz.tab === 'sec' && j === kz.sec ? ' sel' : ''), onclick: () => openKiso(i, 'sec', j) },
-          h('span', { class: 'bk-num', text: s.no != null ? `${c.no}.${s.no}` : /\.cover$/.test(s.id) ? '扉' : '—' }), h('span', { text: s.title }))));
+          h('span', { class: 'bk-num', text: s.no != null ? `${c.no}.${s.no}` : /\.cover$/.test(s.id) ? '扉' : '—' }), h('span', { text: s.title }), kzErr() && kzErr().at(s.id).length ? h('span', { class: 'kz-fix-mark', title: '原本への訂正と補足があります', text: '訂正' }) : null)));
       });
       const sel = nav.querySelector('.bk-item.sel') || nav.querySelector('.kz-ch.open'); if (sel) sel.scrollIntoView({ block: 'nearest' });
     }

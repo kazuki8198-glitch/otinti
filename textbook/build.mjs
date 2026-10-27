@@ -17,6 +17,7 @@ export const FL_SRC = path.join(here, '..', 'flight-lab', 'src');
 // school.js and syllabus.js for the lessons' names), less what this page does not read:
 export const FL_LEAVE_OUT = Object.freeze({
   'kiso/kiso-data.js': 'the basic course (the original, kept as it is): FLIGHT LAB\'s own page; the combined book takes from it by rewriting, not by loading it',
+  'kiso-errata.js': 'what FLIGHT LAB\'s basic course page shows over the original: TEXTBOOK has no basic course page',
   'quiz.js': 'FLIGHT LAB\'s ground-school tests (a page of the app)',
   'radio.js': 'FLIGHT LAB\'s English radio practice (a page of the app)',
   'ui.js': 'FLIGHT LAB\'s app: its controls and icons',

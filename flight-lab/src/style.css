@@ -432,6 +432,27 @@ table.terms th { color: var(--muted); font-weight: 600; }
 .kz-search { min-width: 260px; }
 .kz-src { font-size: 13.5px; }
 @media (max-width: 700px) { .kz-tag { display: none; } }
+/* the original's page: the line under the title across both columns (this is the original, kept), the corrections over
+   it (outside the original's text, .kz-body), the written questions' groups and an answer's notes apart from it */
+.page-body.kz-split { grid-template-rows: auto minmax(0, 1fr); }
+.kz-orig { grid-column: 1 / -1; margin: 0; padding: 6px 18px; border-bottom: 1px solid var(--line); background: rgba(255, 181, 71, .08); color: #ffd28a; font-size: 12.5px; line-height: 1.5; }
+@media (max-width: 900px) { .page-body.kz-split { grid-template-rows: auto 32vh minmax(0, 1fr); } .kz-orig { padding: 6px 16px; } }
+.kz-fix { margin: 12px 0 16px; padding: 8px 14px 6px; border: 1px solid rgba(255, 181, 71, .45); border-left: 4px solid var(--amber); border-radius: 6px; background: rgba(255, 181, 71, .07); font-size: 14px; line-height: 1.7; }
+.kz-fix-h { font: 700 12px var(--jp); color: var(--amber); }
+.kz-fix-item + .kz-fix-item { margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(255, 181, 71, .35); }
+.kz-fix-t { margin-top: 4px; font: 700 14.5px/1.5 var(--jp); color: var(--ink); }
+.kz-fix-k { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 4px; background: rgba(255, 181, 71, .18); color: var(--amber); font-size: 12px; }
+.kz-fix-safety .kz-fix-k { background: rgba(255, 90, 79, .2); color: #ffb3ad; }
+.bk-art .kz-fix p { margin: 4px 0; overflow-wrap: anywhere; }
+.bk-art .kz-fix .kz-fix-o { color: var(--muted); font-size: 13px; }
+.bk-art .kz-fix .kz-fix-s { color: var(--muted); font-size: 12px; }
+.kz-fix-mark { flex: none; margin-left: auto; padding: 0 5px; border-radius: 4px; background: rgba(255, 181, 71, .16); color: var(--amber); font-size: 10.5px; line-height: 1.6; }
+.bk-art .kz-fix-about { padding: 6px 10px; border-left: 3px solid var(--amber); background: rgba(255, 181, 71, .06); font-size: 13.5px; }
+.kz-qg { margin: 18px 0 6px; }
+.bk-art .kz-qg-h { margin: 0 0 4px; color: var(--cyan); }
+.kz-qg-t { font-size: 13.5px; color: var(--muted); }
+.kz-a-note { margin: 6px 0; padding: 4px 10px; border-left: 2px solid rgba(88, 224, 140, .45); font-size: 13px; color: var(--muted); }
+.kz-a-nh { font: 700 12px var(--jp); color: var(--green); }
 .sq-q { font: 700 17px/1.6 var(--jp); }
 .sq-opts { display: grid; gap: 8px; margin: 10px 0; }
 .sq-opts button { text-align: left; padding: 10px 12px; font: 14px var(--jp); }

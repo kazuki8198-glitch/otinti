@@ -26,6 +26,7 @@ export const FL_LEAVE_OUT = Object.freeze({
   'book-terms.js': 'the table of terms (FL.terms): the game does not use it; a test that needs it reads the file itself (W04 report; DESIGN 3.5, W50)',
   'book-photos.js': 'the textbook\'s photos: not in the game (DESIGN 6.3: no book-photos*.js; the in-game book shows figures only)',
   'kiso/kiso-data.js': 'the basic course (the original): FLIGHT LAB\'s own page, not the academy\'s',
+  'kiso-errata.js': 'what FLIGHT LAB\'s basic course page shows over the original: not the academy\'s',
   'ui.js': 'FLIGHT LAB\'s app (its controls and icons): the game has its own',
   'scene.js': 'FLIGHT LAB\'s app (the 3D view): the game has its own',
   'google3d.js': 'FLIGHT LAB\'s app (Google\'s 3D tiles): not in the fictional world',

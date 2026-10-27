@@ -104,6 +104,142 @@ test('basic course progress: its own fields (kisoRead, kisoQa) through the sanit
   assert.deepEqual([all.kisoRead.length, all.kisoQa.length], [secs.length, 376]);
 });
 
+// The original is kept byte for byte (textbook/rewrite/combined/DESIGN.md 5 章の基準 10, 6.2 rule 12): kiso-data.js and
+// every file of kiso/ by sha256 (the course as it came: commit c454d94), and git sees no change in the folder.
+const KISO_DATA_SHA256 = '7f7373bf5caeffcb6ce321889c2fd4f5a5b79ed82a43000d0412949a1f2d2513';   // kiso/kiso-data.js
+const KISO_FILES = 264, KISO_ALL_SHA256 = 'f49dc4e969ab11baa095277b92c8dbf5a358720a82874fdd24d80644ed7c317c';   // "sha256  path" lines, sorted
+const KISO_GIT_TREE = 'f2038799cb0467ffe607f9966060bae30064b234';   // git's tree of flight-lab/kiso at c454d94
+test('basic course: the original (kiso/) is kept byte for byte — kiso-data.js and every file by sha256, and git sees no change', async t => {
+  const { createHash } = await import('node:crypto'), { execFileSync } = await import('node:child_process');
+  const sha = b => createHash('sha256').update(b).digest('hex'), dir = path.join(FL_ROOT, 'kiso'), files = [];
+  assert.equal(sha(fs.readFileSync(KISO_JS)), KISO_DATA_SHA256, 'kiso/kiso-data.js');
+  const walk = d => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else files.push(p); } };
+  walk(dir);
+  files.sort();
+  assert.equal(files.length, KISO_FILES, 'the number of files');
+  assert.equal(sha(files.map(f => `${sha(fs.readFileSync(f))}  ${path.relative(dir, f).split(path.sep).join('/')}`).join('\n') + '\n'), KISO_ALL_SHA256, 'every file of kiso/');
+  let tree = null;
+  try { tree = execFileSync('git', ['rev-parse', 'HEAD:./kiso'], { cwd: FL_ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch (e) { /* not a git checkout */ }
+  if (tree === null) { t.diagnostic('git not available: the sha256 checks above stand alone'); return; }
+  assert.equal(tree, KISO_GIT_TREE, 'the committed folder');
+  assert.equal(execFileSync('git', ['status', '--porcelain', '--', 'kiso'], { cwd: FL_ROOT, encoding: 'utf8' }).trim(), '', 'git sees a change in kiso/');
+});
+
+// kiso-errata.js (FL.kisoErrata): what the basic course's page shows over the original. Read in a context of its own (the
+// shared module list is the integrator's to change); results are copied into this context (plain data) to compare.
+const KE = (() => { const box = {}; vm.runInNewContext(fs.readFileSync(path.join(FL_ROOT, 'src', 'kiso-errata.js'), 'utf8'), box, { filename: 'kiso-errata.js' }); return box.FL.kisoErrata; })();
+const plainCopy = x => JSON.parse(JSON.stringify(x));
+const strayB = h => /<\/b>/.test(h) && !/<b>/.test(h.split('</b>')[0]);   // a </b> with no <b> before it
+
+test('basic course: the written questions rebuilt from each chapter\'s question pages — 376 with the same numbers and record keys, every heading whole, the groups\' words back in place, every line of the pages kept', () => {
+  assert.equal(KZ.chapters.reduce((a, c) => a + c.qa.filter(q => strayB(q.q)).length, 0), 188, 'the data as it is (c.qa): 188 headings start with a stray </b>');
+  const text = h => h.replace(/<[^>]+>/g, '').replace(/\s+/g, '');
+  // a question's number in the original's forms: alone (dropped: the page shows 問 N) or before its title or text
+  const NUM = [/^<p><b>問題 \d+<\/b><\/p>$/, /^<p><b>問 \d+<\/b><\/p>$/];
+  const OFF = [[/^<p><b>\d{1,2} (.+)<\/b><\/p>$/, '<p><b>$1</b></p>'], [/^<p><b>\d+\.　<\/b>/, '<p>'], [/^<p><b>問 \d+　<\/b>/, '<p>'], [/^<p><b>問 \d+<\/b>　/, '<p>'], [/^<p>問 \d+　/, '<p>']];
+  let n = 0;
+  for (const c of KZ.chapters) {
+    const R = plainCopy(KE.questions(c));
+    assert.ok(R && Array.isArray(R.items), c.id);
+    const qs = R.items.filter(i => i.kind === 'q');
+    assert.deepEqual(qs.map(q => q.n), c.qa.map(q => q.n), `${c.id}: the numbers`);
+    assert.deepEqual(qs.map(q => q.key), c.qa.map(q => `${c.id}.q${q.n}`), `${c.id}: the record keys`);
+    assert.ok(R.items[0].kind === 'group' && R.items[0].h, `${c.id}: the first group's heading`);
+    for (const q of qs) {
+      assert.ok(!strayB(q.q) && !strayB(q.a), `${q.key}: a stray </b>`);
+      // the words are the original's: c.qa has the same text, and sometimes the next group's words after it
+      const o = c.qa.find(x => x.n === q.n);
+      assert.ok(text(q.q) && text(o.q).startsWith(text(q.q)), `${q.key}: the question's text`);
+      assert.ok(text(q.a) && text(o.a).startsWith(text(q.a)), `${q.key}: the answer's text`);
+    }
+    // every line of the two pages is shown once somewhere: as written, or with the question's number taken off; the
+    // answer pages' own group headings (解答と解説 …) mirror the question groups and are not repeated
+    const shown = new Set(R.items.flatMap(i => (i.kind === 'group' ? [i.h && `<h4>${i.h}</h4>`, ...i.html.split('\n')]
+      : [...i.q.split('\n'), ...i.a.split('\n'), ...[...i.pre, ...i.post].flatMap(x => [x.h && `<h4>${x.h}</h4>`, ...x.html.split('\n')])])).filter(Boolean));
+    for (const [page, html] of [['questions', c.questionsHtml], ['answers', c.answersHtml]]) for (const line of html.split('\n').filter(l => l.trim())) {
+      const ok = shown.has(line) || NUM.some(re => re.test(line)) || OFF.some(([re, to]) => re.test(line) && shown.has(line.replace(re, to))) || (page === 'answers' && /^<h4>(\d+ )?解答と解説/.test(line));
+      assert.ok(ok, `${c.id} ${page}: not shown: ${line.slice(0, 60)}`);
+    }
+    n += qs.length;
+  }
+  assert.equal(n, 376);
+  // DESIGN 10.2 overview K1 and aero K-1, as the data had them: the instructions of the next group back under its heading
+  const k0 = plainCopy(KE.questions(KZ.chapters[0])).items, k1 = plainCopy(KE.questions(KZ.chapters[1])).items;
+  assert.deepEqual(k0.filter(i => i.kind === 'group').map(i => i.h), ['17 理解確認問題　基本概念', '18 理解確認問題　数量と計算', '計算の記録', '19 理解確認問題　状況の説明']);
+  assert.ok(KZ.chapters[0].qa[7].q.includes('問題 9〜14 では') && !k0.find(i => i.n === 8).q.includes('問題 9〜14 では'), 'kiso00 問 8');
+  assert.ok(k0.find(i => i.kind === 'group' && i.h.startsWith('18 ')).html.includes('問題 9〜14 では'));
+  assert.deepEqual(k0.find(i => i.n === 14).post.map(x => x.h), ['計算問題の確認基準']);
+  assert.ok(k1.find(i => i.n === 1).q.startsWith('<p><b>翼面積の定義</b></p>') && k1.find(i => i.n === 1).a.startsWith('<p><b>投影面積、AR＝6.25</b></p>'));
+  assert.deepEqual(k1.filter(i => i.kind === 'group').map(i => i.h), ['演習 1　原理と定義', '演習 2　計算と条件', '演習 3　状況判断']);
+  assert.ok(!k1.find(i => i.n === 8).q.includes('本文を閉じて答えてください'), 'kiso01 問 8: the next group\'s words');
+  // a chapter whose pages do not match its questions is shown from c.qa as it is (the page falls back)
+  assert.equal(KE.questions({ ...KZ.chapters[5], questionsHtml: KZ.chapters[5].questionsHtml.replace('<p><b>問 28</b></p>', '') }), null);
+});
+
+test('basic course: the corrections over the original (FL.kisoErrata) — from the ledger\'s overlay rows, at places the original has, plain text with primary sources, Japanese rules as e-Gov and FL.jur have them', () => {
+  const ROOT = path.join(FL_ROOT, '..'), ERR = JSON.parse(fs.readFileSync(path.join(ROOT, 'textbook/rewrite/combined/ledgers/ERRATA.json'), 'utf8')).rows;
+  const items = plainCopy(KE.items), held = plainCopy(KE.HELD), kinds = plainCopy(KE.KINDS);
+  assert.ok(items.length >= 20 && items.length <= 30, `${items.length} corrections (DESIGN 6.1: about 25)`);
+  assert.equal(new Set(items.map(i => i.id)).size, items.length, 'ids');
+  // every ledger row marked for the overlay (safety and Japanese law, DESIGN 10.2) is shown, or held with its reason
+  const overlay = ERR.filter(r => r.book === 'kiso' && r.overlay).map(r => r.id), shown = new Set(items.flatMap(i => i.rows));
+  for (const id of overlay) assert.ok(shown.has(id) !== Object.hasOwn(held, id), `${id}: shown, or held with its reason (not both)`);
+  for (const id of shown) assert.ok(overlay.includes(id), `${id}: not an overlay row of ERRATA.json`);
+  for (const [id, why] of Object.entries(held)) assert.ok(overlay.includes(id) && why.length > 40 && why.includes('〔要確認〕'), `${id}: held`);
+  // the places: a section, a written question (its record key) or a chapter's sources, as the original has them
+  const secs = new Set(KZ.chapters.flatMap(c => c.sections.map(s => s.id))), qkeys = new Set(KZ.chapters.flatMap(c => c.qa.map(q => `${c.id}.q${q.n}`)));
+  const chs = new Set(KZ.chapters.map(c => c.id));
+  for (const it of items) {
+    assert.ok(kinds[it.kind], `${it.id}: kind`);
+    if (it.rows.some(id => ERR.find(r => r.id === id).safety)) assert.equal(it.kind, 'safety', `${it.id}: a 〔安全〕 row`);
+    assert.ok(it.at.length, it.id);
+    for (const p of it.at) assert.ok(secs.has(p) || qkeys.has(p) || (/\.src$/.test(p) && chs.has(p.slice(0, -4))), `${it.id}: ${p}`);
+    // plain text (the page escapes it), whole sentences
+    for (const s of [it.title, it.says, ...it.fix]) assert.doesNotMatch(s, /[<>]/, `${it.id}: plain text`);
+    for (const s of [it.says, ...it.fix]) assert.match(s, /。$/, `${it.id}: a sentence`);
+    assert.equal(it.checked, KE.CHECKED);
+    assert.ok(it.src.length && it.src.every(s => s.t && /^https:\/\//.test(s.url)), `${it.id}: its sources`);
+  }
+  assert.ok(KE.at('kiso08.q11').some(i => i.id === 'fuel-vfr') && KE.at('kiso11.src').length === 1 && KE.at('kiso05.11').length === 0);
+  // a Japanese article in a correction is one it cites; a cited e-Gov article copied by W05 (textbook/rewrite/sources/egov)
+  // is linked at the copy's version and anchor. Two may not be copied yet (read on e-Gov's API at the same versions; W37
+  // adds them to the copies, and then they are checked like the rest): 航空法第 73 条 and 航空法施行規則第 199 条
+  const EGOV = path.join(ROOT, 'textbook/rewrite/sources/egov/articles'), lawKey = u => (u.includes('/327AC0000000231/') ? 'kokuho' : u.includes('/327M50000800056/') ? 'kokuho-kisoku' : null);
+  let copied = 0;
+  const uncopied = new Set();
+  for (const it of items) {
+    const cited = new Set();
+    for (const s of it.src.filter(s => s.url.startsWith('https://laws.e-gov.go.jp/'))) {
+      const key = lawKey(s.url), num = (/At_(\d+(?:_\d+)*)$/.exec(s.url) || [])[1];
+      assert.ok(key && num, `${it.id}: ${s.url}`);
+      cited.add(`${key}:${num}`);
+      const copy = path.join(EGOV, key, `${num}.json`);
+      if (!fs.existsSync(copy)) { uncopied.add(`${key}:${num}`); assert.match(s.url, key === 'kokuho' ? /\/20251201_507AC0000000055#/ : /\/20261001_508M60000800082#/, `${it.id}: the pinned version`); continue; }
+      const a = JSON.parse(fs.readFileSync(copy, 'utf8'));
+      assert.equal(s.url, a.url, `${it.id}: ${a.law}${a.label} as W05's copy links it`);
+      copied++;
+    }
+    for (const m of it.fix.join('').matchAll(/(航空法施行規則|施行規則|航空法)第 (\d+) 条(?:の (\d+))?/g)) {
+      const key = m[1] === '航空法' ? 'kokuho' : 'kokuho-kisoku';
+      assert.ok(cited.has(`${key}:${m[2]}${m[3] ? '_' + m[3] : ''}`), `${it.id}: ${m[0]} is not in its sources`);
+    }
+  }
+  assert.ok(copied >= 15, `${copied} links checked against W05's copies`);
+  assert.deepEqual([...uncopied].filter(k => !['kokuho-kisoku:199', 'kokuho:73'].includes(k)), [], 'e-Gov articles not in W05\'s copies');
+  // the same Japanese rule as FL.jur (book-jur.js) has it: every number of the FL.jur row is in the correction
+  for (const it of items) for (const id of it.jur) {
+    const row = FL.jur.byId(id);
+    assert.ok(row, `${it.id}: FL.jur ${id}`);
+    const all = it.fix.join(' ');
+    for (const num of row.jp.match(/\d[\d,]*(?:\.\d+)?/g) || []) assert.ok(all.includes(num), `${it.id}: FL.jur ${id} says ${num}`);
+  }
+  // every basic-course row of the ledger is in the list for the owner's Word original (DESIGN 10.2), and every correction
+  // drawn over the page is named there
+  const word = fs.readFileSync(path.join(ROOT, 'textbook/rewrite/combined/ERRATA-FOR-WORD.md'), 'utf8');
+  for (const r of ERR.filter(r => r.book === 'kiso')) assert.ok(word.includes(`\`${r.id}\``), `ERRATA-FOR-WORD.md: ${r.id}`);
+  for (const it of items) assert.ok(word.includes(`\`${it.id}\``), `ERRATA-FOR-WORD.md: ${it.id}`);
+});
+
 // ------------------------------------------------------------------ the flight model (Sorajima's, with the Archer and Seminole data)
 test('physics: the Archer trimmed in level flight holds altitude and speed hands-off for a minute', () => {
   const s = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100), a0 = s.out.altTrue;

@@ -103,14 +103,14 @@
       const steps = [['学生操縦士（Student Pilot）', '16 歳から・試験なし（申請）・第 3 種', '61.83'], ['自家用操縦士（Private Pilot）', '17 歳・40 時間以上・学科＋実地・第 3 種', '61.103'],
         ['計器飛行証明（Instrument Rating）', '機長のクロスカントリー 50 時間・計器飛行 40 時間など', '61.65'], ['事業用操縦士（Commercial Pilot）', '18 歳・250 時間以上・学科＋実地・第 2 種', '61.123'],
         ['多発の等級（Multiengine）', '資格に加える限定。実地試験だけ', '61.63'], ['定期運送用操縦士（ATP）', '23 歳・1,500 時間（R-ATP は短縮）・機長は第 1 種', '61.153']];
-      let s = T(12, 18, '↑ 下から順に積み上げる', { c: C.gr, b: 1, a: 'start', fs: 13 }) + T(392, 18, '数字は規則の最低限', { c: C.mut, a: 'end', fs: 12 });
+      let s = T(12, 18, '↑ 下から順に積み上げる', { c: C.gr, b: 1, a: 'start', fs: 13 }) + T(392, 18, '数字は米国の規則の最低限', { c: C.mut, a: 'end', fs: 12 });
       steps.forEach(([t, sub, rule], i) => {
         const y = 300 - (i + 1) * 46, x = 12 + i * 12;
         s += `<rect x="${x}" y="${y}" width="${392 - x}" height="40" rx="6" fill="${C.cy}" fill-opacity="${0.06 + i * 0.03}" stroke="${C.cy}" stroke-width="1.2"/>`;
-        s += T(x + 8, y + 17, t, { c: C.ink, b: 1, a: 'start', fs: 13 }) + T(x + 8, y + 34, sub, { c: C.ink, a: 'start', fs: 12 }) + T(386, y + 17, rule, { c: C.am, a: 'end', fs: 12 });
+        s += T(x + 8, y + 17, t, { c: C.ink, b: 1, a: 'start', fs: 13 }) + T(x + 8, y + 34, sub, { c: C.ink, a: 'start', fs: 12 }) + T(386, y + 17, `米国 ${rule}`, { c: C.am, a: 'end', fs: 12 });
       });
       s += `<rect x="12" y="306" width="380" height="26" rx="6" fill="${C.am}" fill-opacity="0.12" stroke="${C.am}"/>` + T(202, 324, 'どの資格も：英語を読み・話し・書き・理解できること', { c: C.am, b: 1, fs: 12 });
-      return svg(400, 340, s, '図：米国（FAA）の飛行機の操縦士の資格の段階（14 CFR Part 61 の要点）。年齢・飛行時間は Part 61 の最低限で、「第 N 種」はその資格の権利を使うのに必要な身体検査証明の等級です');
+      return svg(400, 340, s, '図：米国（FAA）の飛行機の操縦士の資格の段階（14 CFR Part 61 の要点）。年齢・飛行時間は米国の Part 61 の最低限で、「第 N 種」はその資格の権利を使うのに必要な身体検査証明の等級です');
     },
     studyCycle() {
       const n = [['読む', '教科書の節', 200, 46, C.cy], ['答える', '確認問題・学科テスト', 338, 140, C.am], ['飛ぶ', 'シミュレータの課目', 200, 234, C.gr], ['振り返る', '講評とメモ', 62, 140, C.vi]];
@@ -197,7 +197,7 @@
       s += `<path d="M${tx - 22 * k} ${ty + 38 * k} L${tx + 22 * k} ${ty + 38 * k} L${tx + 21 * k} ${ty + 45 * k} L${tx - 21 * k} ${ty + 45 * k} Z" fill="${C.am}" fill-opacity="0.9"/>`;
       s += L(tx, ty - 92, tx, ty + 92, C.cy, 1.8, '6 4') + L(tx - 112, ty, tx + 112, ty, C.am, 1.8, '6 4');
       s += T(tx + 8, ty - 80, '縦軸', { c: C.cy, b: 1, a: 'start', fs: 13, halo: 1 }) + T(tx + 8, ty - 64, '→ ロール', { c: C.cy, a: 'start', fs: 12, halo: 1 });
-      s += T(tx - 112, ty - 10, '横軸 → ピッチ', { c: C.am, b: 1, a: 'start', fs: 13, halo: 1 });
+      s += T(tx - 112, ty - 26, '横軸 → ピッチ', { c: C.am, b: 1, a: 'start', fs: 13, halo: 1 });
       s += T(tx - 68, ty + 26, 'エルロン', { c: C.cy, b: 1, fs: 12, halo: 1 }) + T(tx + 68, ty + 26, 'エルロン', { c: C.cy, b: 1, fs: 12, halo: 1 }) + T(tx + 34, ty + 76, 'スタビレーター', { c: C.am, b: 1, a: 'start', fs: 12, halo: 1 });
       const sx = 312, sy = 160;
       s += planeSide(sx, sy, 1.15, { gear: false }) + `<path d="M${sx - 50 * 1.15} ${sy - 27 * 1.15} L${sx - 57 * 1.15} ${sy - 27 * 1.15} L${sx - 54 * 1.15} ${sy - 3 * 1.15} L${sx - 46 * 1.15} ${sy - 5 * 1.15} Z" fill="${C.gr}"/>`;
@@ -241,12 +241,12 @@
         return s + T(x0 - 14, y0 + 5, `${a}°`, { c: C.am, b: 1, a: 'end', fs: 13 });
       };
       let s = row(64, 4, '迎え角が小さい', '空気は翼に沿って流れる', C.gr, false) + row(170, 15, '臨界迎え角の少し手前', '揚力が最大に近い', C.am, false) + row(276, 20, '臨界迎え角を超えた＝失速', '上面の流れがはがれ、揚力が急に減る', C.rd, true);
-      return svg(400, 330, s, '図：迎え角と失速。迎え角を大きくすると揚力は増えますが、臨界迎え角を超えると翼の上面から空気の流れがはがれ、揚力が急に減ります。これが失速です（角度は模式的な例）');
+      return svg(400, 340, s, '図：迎え角と失速。迎え角を大きくすると揚力は増えますが、臨界迎え角を超えると翼の上面から空気の流れがはがれ、揚力が急に減ります。これが失速です（角度は模式的な例）');
     },
     dragCurve() {
       // the model's clean airframe drag at sea level and its teaching weight (no windmilling propeller)
       const p = ac('pa28').phys, W = 400, H = 260, Wt = p.mass * 9.81;
-      const f = frame(W, H, 40, 140, 0, 3000, [40, 60, 80, 100, 120, 140], [0, 1000, 2000, 3000], '指示対気速度（kt）', '抗力（N）', { l: 56, r: 12, t: 14, b: 38 });
+      const f = frame(W, H, 40, 140, 0, 3000, [40, 60, 80, 100, 120, 140], [0, 1000, 2000, 3000], '指示対気速度（kt）', '抗力（N）', { l: 56, r: 22, t: 14, b: 38 });
       const ind = [], par = [], tot = []; let best = null;
       for (let v = 44; v <= 140; v += 1) {
         const V = v / 1.94384, q = 0.5 * 1.225 * V * V, CL = Wt / (q * p.S), Dp = p.CD0 * q * p.S, Di = p.K * CL * CL * q * p.S;
@@ -254,9 +254,10 @@
         if (!best || Dp + Di < best[1]) best = [v, Dp + Di];
       }
       let s = f.s + P(par, C.am, 2.2, 'none', '6 4') + P(ind, C.vi, 2.2, 'none', '6 4') + P(tot, C.cy, 3);
-      s += `<circle cx="${f.X(best[0])}" cy="${f.Y(best[1])}" r="5" fill="${C.gr}"/>` + T(f.X(best[0]), f.Y(best[1]) + 22, `抗力が最小 約 ${best[0]} kt`, { c: C.gr, fs: 12, b: 1, halo: 1 });
-      s += T(f.X(124), f.Y(2500), '有害抗力', { c: C.am, fs: 12, b: 1, halo: 1 }) + T(f.X(56), f.Y(2650), '誘導抗力', { c: C.vi, fs: 12, a: 'start', b: 1, halo: 1 }) + T(f.X(112), f.Y(1250), '全抗力', { c: C.cy, fs: 13, b: 1, halo: 1 });
-      s += T(f.X(48), f.Y(180), '← 遅い：誘導抗力が大きい', { c: C.ink, fs: 12, a: 'start', halo: 1 }) + T(f.X(139), f.Y(180), '速い：有害抗力が大きい →', { c: C.ink, fs: 12, a: 'end', halo: 1 });
+      s += `<circle cx="${f.X(best[0])}" cy="${f.Y(best[1])}" r="5" fill="${C.gr}"/>` + T(f.X(best[0]), f.Y(best[1]) - 14, `抗力が最小 約 ${best[0]} kt`, { c: C.gr, fs: 12, b: 1, halo: 1 });
+      // the legend: line samples and what each drag does with speed (the empty band above 2,000 N)
+      const key = (y, c, dash, w, t) => L(f.X(44), y - 4, f.X(51), y - 4, c, w, dash) + T(f.X(52.5), y, t, { c, fs: 12, a: 'start', b: 1, halo: 1 });
+      s += key(f.Y(2780), C.vi, '6 4', 2.2, '誘導抗力：遅い（迎え角が大きい）ほど大きい') + key(f.Y(2520), C.am, '6 4', 2.2, '有害抗力：速いほど大きい') + key(f.Y(2260), C.cy, '', 3, '全抗力＝2 つの和');
       return svg(W, H, s, '図：速度と抗力（この教材の Archer の機体だけの抗力・海面上・教材値）。遅いと誘導抗力、速いと有害抗力が増え、その間に抗力が最小の速度があります');
     },
     groundEffect() {
@@ -306,18 +307,24 @@
       return svg(400, 260, s, `図：速度計の色の帯（この教材の Archer の値）。白はフラップを使える範囲、緑は通常の範囲、黄色は穏やかな空気のときだけ使う範囲、赤い線は超えてはいけない速度です。針は進入速度 ${v.appr} kt`);
     },
     vn() {
-      // a normal-category V-n diagram (+3.8 G / −1.5 G, the Archer III POH), the speeds from the course's Archer (FL.physics)
+      // a normal-category V-n diagram (+3.8 G / −1.5 G, the Archer III POH), the speeds from the course's Archer (FL.physics).
+      // The stall line goes through Vs1 at 1 G (n = (V / Vs1)², the POH's 50 KIAS) and meets +3.8 G at Vs1·√3.8 ≈ 97 kt; the POH's
+      // Va (VO) 113 KIAS lies above that corner — the old 14 CFR 23.335(c) asks only that VA be not less than VS·√n (VS a computed
+      // stalling speed, design speeds in EAS), so the figure marks both and the caption says why
       const v = ac('pa28').v, W = 400, H = 280, nP = 3.8, nN = -1.5;
       const f = frame(W, H, 0, 170, -2, 4.6, [0, 40, 80, 120, 160], [-2, -1, 0, 1, 2, 3, 4], '指示対気速度（kt）', '荷重倍数 n（G）', { l: 44, r: 12, t: 30, b: 38 });
-      const va = v.va, vs = va / Math.sqrt(nP), vsN = vs * 1.07;            // the stall line through Va (the maximum weight's), a schematic
-      const up = []; for (let x = 0; x <= va; x += 1) up.push([f.X(x), f.Y(Math.min((x / vs) ** 2, nP))]);
+      const va = v.va, vs = v.s1, vc = vs * Math.sqrt(nP), vsN = vs * 1.07;   // the stall line through Vs1 at 1 G; the negative side a schematic
+      const up = []; for (let x = 0; x <= vc; x += 1) up.push([f.X(x), f.Y((x / vs) ** 2)]);
       const xn = Math.sqrt(-nN) * vsN, dn = []; for (let x = 0; x <= xn; x += 1) dn.push([f.X(x), f.Y(-((x / vsN) ** 2))]);
       let s = f.s + L(f.X(0), f.Y(0), f.X(170), f.Y(0), C.mut, 1);
-      s += `<path d="M${f.X(0)} ${f.Y(0)} ${up.map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} L${f.X(v.ne)} ${f.Y(nP)} L${f.X(v.ne)} ${f.Y(nN)} L${f.X(xn)} ${f.Y(nN)} ${dn.reverse().map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} Z" fill="rgba(95,212,255,.1)" stroke="${C.cy}" stroke-width="2"/>`;
+      s += `<path d="M${f.X(0)} ${f.Y(0)} ${up.map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} L${f.X(vc).toFixed(1)} ${f.Y(nP)} L${f.X(v.ne)} ${f.Y(nP)} L${f.X(v.ne)} ${f.Y(nN)} L${f.X(xn)} ${f.Y(nN)} ${dn.reverse().map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} Z" fill="rgba(95,212,255,.1)" stroke="${C.cy}" stroke-width="2"/>`;
       s += L(f.X(v.no), f.Y(nP), f.X(v.no), f.Y(nN), C.am, 1.4, '4 3') + T(f.X(v.no) - 4, 20, `Vno ${v.no}`, { c: C.am, fs: 12, b: 1, a: 'end' }) + T(f.X(v.ne) + 6, 20, `Vne ${v.ne}`, { c: C.rd, fs: 12, b: 1, a: 'end' });
-      s += L(f.X(va), f.Y(nP), f.X(va), f.Y(0), C.gr, 1.4, '4 3') + T(f.X(va) - 4, f.Y(3.2), `Va ${va}`, { c: C.gr, fs: 12, b: 1, a: 'end', halo: 1 });
-      s += T(f.X(22), f.Y(2.4), '失速', { c: C.ink, fs: 12, b: 1, halo: 1 }) + T(f.X(102), f.Y(1.6), '飛べる範囲', { c: C.cy, b: 1, fs: 13, halo: 1 }) + T(f.X(104), f.Y(nP) - 6, `+${nP} G（構造の限界）`, { c: C.rd, fs: 12, b: 1, halo: 1 }) + T(f.X(112), f.Y(nN) + 18, `−${-nN} G`, { c: C.rd, fs: 12, b: 1, halo: 1 });
-      return svg(W, H, s, `図：V-n 線図（Archer III の POH の普通類の制限荷重倍数 +${nP} G／−${-nN} G。速度も Archer の値）。曲線の左は失速、上と下の線を超えると機体が壊れるおそれがあります。失速の線は最大重量の Va ${v.va} kt から描いた模式図で、Va は軽いほど小さくなります`);
+      s += L(f.X(va), f.Y(nP), f.X(va), f.Y(0), C.gr, 1.4, '4 3') + T(f.X(va) + 5, f.Y(2.65), `Va ${va}`, { c: C.gr, fs: 12, b: 1, a: 'start', halo: 1 });
+      // Vs1 at 1 G and the corner where the stall line meets the limit load factor
+      s += `<circle cx="${f.X(vs).toFixed(1)}" cy="${f.Y(1)}" r="3.5" fill="${C.ink}"/>` + T(f.X(vs) + 6, f.Y(1) + 15, `1 G で Vs1 ${vs}`, { c: C.ink, fs: 12, a: 'start', halo: 1 });
+      s += `<circle cx="${f.X(vc).toFixed(1)}" cy="${f.Y(nP)}" r="3.5" fill="${C.ink}"/>` + T(f.X(vc) + 6, f.Y(nP) + 16, `約 ${Math.round(vc)} kt`, { c: C.ink, fs: 12, a: 'start', halo: 1 });
+      s += T(f.X(22), f.Y(2.4), '失速', { c: C.ink, fs: 12, b: 1, halo: 1 }) + T(f.X(112), f.Y(1.5), '飛べる範囲', { c: C.cy, b: 1, fs: 13, halo: 1 }) + T(f.X(104), f.Y(nP) - 6, `+${nP} G（制限荷重倍数）`, { c: C.rd, fs: 12, b: 1, halo: 1 }) + T(f.X(112), f.Y(nN) + 18, `−${-nN} G`, { c: C.rd, fs: 12, b: 1, halo: 1 });
+      return svg(W, H, s, `図：V-n 線図（Archer III の POH の普通類の制限荷重倍数 +${nP} G／−${-nN} G。速度も Archer の値）。曲線の左は失速です。失速の線は 1 G で Vs1 ${vs} kt を通り、約 ${Math.round(vc)} kt（${vs}×√${nP}）で +${nP} G に届きます。上と下の線（制限荷重倍数）を超えると、機体が変形・損傷する危険があります（制限の 1.5 倍の終極荷重を超えると壊れる危険）。POH の Va ${va} kt（最大重量）は約 ${Math.round(vc)} kt より大きい値です。米国の設計の規則は、Va を「失速速度×√制限荷重倍数」より小さくしないことだけを求めます（旧 14 CFR 23.335(c)。設計の速度は等価対気速度、失速速度は計算の値）。Va は軽いほど小さくなります`);
     },
     turnForces() {
       // seen from behind, banked 30° to the right: the lift tilts with the wings; its upward part holds the weight up,
@@ -343,7 +350,7 @@
     },
     leftTurning() {
       // seen from above, nose up, at high power and low speed (a climb): why the nose goes left, and the right rudder that stops it
-      const cx = 132, cy = 178, k = 1.35;
+      const cx = 118, cy = 178, k = 1.3;
       let s = planeTop(cx, cy, k);
       const nose = cy - 50 * k, prop = nose - 3, tail = cy + 46 * k;
       // P-factor: the descending blade (pilot's right) makes more thrust at a high angle of attack
@@ -354,12 +361,12 @@
       // the result: the nose yaws left; the right rudder (trailing edge to the right) holds it straight
       s += ARC(cx, cy, 98, -78, -110, C.rd, 3) + `<path d="M${cx} ${tail + 4} l9 15" stroke="${C.am}" stroke-width="4" stroke-linecap="round"/>`;
       s += T(cx - 40, 76, '機首は左へ', { c: C.rd, b: 1, a: 'end', fs: 13, halo: 1 });
-      s += T(cx + 22, prop - 46, '推力 大', { c: C.gr, b: 1, a: 'start', fs: 12, halo: 1 }) + T(cx + 22, prop - 30, '（右側の下がるブレード）', { c: C.gr, a: 'start', fs: 12, halo: 1 });
-      s += T(cx - 34, tail - 18, 'らせん後流が', { c: C.cy, a: 'end', fs: 12, halo: 1 }) + T(cx - 34, tail - 2, '尾翼の左に当たる', { c: C.cy, a: 'end', fs: 12, halo: 1 });
-      s += T(cx + 16, tail + 22, '右ラダーで打ち消す', { c: C.am, b: 1, a: 'start', fs: 13, halo: 1 });
-      const box = [['① P ファクター', '下がるブレードの推力が大きい'], ['② らせん後流（slipstream）', '後流が尾翼の左側を押す'], ['③ トルク', 'プロペラの反作用で左へ傾く'], ['④ ジャイロ効果', '機首の向きを変えたときに出る']];
-      box.forEach(([t, sub], i) => { const y = 34 + i * 62; s += `<rect x="232" y="${y - 18}" width="160" height="50" rx="7" fill="${C.vi}" fill-opacity="0.1" stroke="${C.vi}"/>` + T(240, y, t, { c: C.vi, b: 1, a: 'start', fs: 12 }) + T(240, y + 20, sub, { c: C.ink, a: 'start', fs: 12 }); });
-      s += T(312, 300, '高出力・低速・機首上げで強い', { c: C.am, b: 1, fs: 12 });
+      s += T(cx + 24, prop - 48, '推力 大', { c: C.gr, b: 1, a: 'start', fs: 12, halo: 1 }) + TL(cx + 24, prop - 32, ['右側の下がる', 'ブレード'], { c: C.gr, a: 'start', fs: 12, lh: 15, halo: 1 });
+      s += TL(cx - 24, tail - 36, ['らせん後流が', '尾翼の左へ'], { c: C.cy, a: 'end', fs: 12, lh: 16, halo: 1 });
+      s += TL(cx + 16, tail + 22, ['右ラダーで', '打ち消す'], { c: C.am, b: 1, a: 'start', fs: 13, lh: 17, halo: 1 });
+      const box = [['① P ファクター', ['下がるブレードの', '推力が大きい']], ['② らせん後流', ['（slipstream）', '後流が尾翼の左を押す']], ['③ トルク', ['プロペラの反作用で', '左へ傾く']], ['④ ジャイロ効果', ['機首の向きを', '変えたときに出る']]];
+      box.forEach(([t, sub], i) => { const y = 30 + i * 66; s += `<rect x="226" y="${y - 17}" width="168" height="60" rx="7" fill="${C.vi}" fill-opacity="0.1" stroke="${C.vi}"/>` + T(234, y, t, { c: C.vi, b: 1, a: 'start', fs: 12 }) + TL(234, y + 18, sub, { c: C.ink, a: 'start', fs: 12, lh: 16 }); });
+      s += T(310, 300, '高出力・低速・機首上げで強い', { c: C.am, b: 1, fs: 12 });
       return svg(400, 312, s, '図：左偏向傾向（上から見た図・上昇中）。操縦席から見て時計回りのプロペラでは、4 つの原因で機首が左へ向こうとするので、右ラダーで打ち消します（PHAK。ジャイロ効果は機首の向きを変えている間だけ働く）');
     },
     cgTail() {
@@ -382,7 +389,7 @@
     },
     windTriangle() {
       // the wind triangle drawn to scale for the wca calculator's default case (true course 090°, TAS 105 kt, wind 030° / 15 kt), and
-      // the chain from true course to compass heading with the course's variation (MAGVAR_W) and an example deviation of +2°
+      // the chain from true course to compass heading with the course's variation (MAGVAR_W) and an example deviation of 2°W (added, like a west variation)
       const tc = 90, tas = 105, wd = 30, ws = 15, dev = 2, VAR = FL.physics.MAGVAR_W, a = (wd - tc) * DEG, wca = Math.asin(ws * Math.sin(a) / tas) / DEG, gs = tas * Math.cos(wca * DEG) - ws * Math.cos(a);
       const th = tc + wca, k = 2.6, O = [36, 128], dir = h => [Math.sin(h * DEG), -Math.cos(h * DEG)];
       const H = [O[0] + tas * k * dir(th)[0], O[1] + tas * k * dir(th)[1]], G = [H[0] + ws * k * dir(wd + 180)[0], H[1] + ws * k * dir(wd + 180)[1]];
@@ -394,10 +401,10 @@
       s += T(O[0], O[1] + 44, `偏流修正角 ${Math.round(Math.abs(wca))}°（機首を風上の左へ）`, { c: C.rd, b: 1, a: 'start', fs: 12, halo: 1 });
       s += A(380, 62, 380, 30, C.mut, 2) + T(380, 76, '北', { c: C.mut, fs: 12 });
       // the chain: true course → true heading → magnetic heading → compass heading
-      const vals = [['真航路 TC', tc], ['真針路 TH', th], ['磁針路 MH', th + VAR], ['コンパス針路', th + VAR + dev]], steps = [`風 −${Math.round(Math.abs(wca))}°`, `西偏 ＋${VAR}°`, `自差 ＋${dev}°`];
+      const vals = [['真航路 TC', tc], ['真針路 TH', th], ['磁針路 MH', th + VAR], ['コンパス針路', th + VAR + dev]], steps = [`風 −${Math.round(Math.abs(wca))}°`, `西偏 ＋${VAR}°`, `自差 ${dev}°W`];
       vals.forEach(([n, v], i) => { const x = 4 + i * 100; s += `<rect x="${x}" y="182" width="86" height="50" rx="8" fill="${C.cy}" fill-opacity="0.1" stroke="${C.cy}"/>` + T(x + 43, 202, n, { c: C.ink, fs: 12 }) + T(x + 43, 222, `${String(Math.round(v)).padStart(3, '0')}°`, { c: C.ink, b: 1, fs: 14 }); if (i < 3) s += A(x + 88, 207, x + 102, 207, C.ink, 2) + T(x + 93, 250, steps[i], { c: C.am, b: 1, fs: 12 }); });
       s += T(200, 276, `磁航路 MC ＝ 真航路 ＋ 西偏 ＝ ${String(tc + VAR).padStart(3, '0')}°（VFR の巡航高度の規則に使う）`, { c: C.mut, fs: 12 });
-      return svg(400, 288, s, `図：風の三角形（真航路 ${String(tc).padStart(3, '0')}°・真対気速度 ${tas} kt・風 ${String(wd).padStart(3, '0')}°/${ws} kt の例を縮尺どおりに描いたもの）と、真航路からコンパス針路までの計算の順番。偏差の ${VAR}°W はこの教材の値、自差の ＋${dev}° は例です`);
+      return svg(400, 288, s, `図：風の三角形（真航路 ${String(tc).padStart(3, '0')}°・真対気速度 ${tas} kt・風 ${String(wd).padStart(3, '0')}°/${ws} kt の例を縮尺どおりに描いたもの）と、真航路からコンパス針路までの計算の順番。偏差の ${VAR}°W はこの教材の値、自差の ${dev}°W は例です（偏差も自差も W は足し、E は引く）`);
     },
     clouds() {
       // cloud levels (AWH Table 12-3, temperate regions) and the main cloud types; CB reaches through all levels
@@ -413,13 +420,14 @@
       s += `<path d="M318 ${Y(1500)} Q 312 ${Y(9000)} 330 ${Y(15000)} Q 326 ${Y(26000)} 340 ${Y(33000)} L312 ${Y(36500)} L398 ${Y(37500)} L372 ${Y(33000)} Q 384 ${Y(24000)} 376 ${Y(14000)} Q 392 ${Y(7000)} 382 ${Y(1500)} Z" fill="${C.rd}" fill-opacity="0.22" stroke="${C.rd}"/>`;
       s += TL(350, Y(20000), ['積乱雲', '（CB）'], { c: C.rd, b: 1, fs: 12, lh: 15 }) + T(350, Y(0) + 16, '雷雨', { c: C.rd, fs: 12 });
       s += `<rect x="52" y="266" width="10" height="10" fill="${C.gr}" fill-opacity="0.55"/>` + T(66, 275, '下層 0〜6,500 ft', { c: C.ink, a: 'start', fs: 12 }) + `<rect x="190" y="266" width="10" height="10" fill="${C.cy}" fill-opacity="0.55"/>` + T(204, 275, '中層 6,500〜23,000 ft', { c: C.ink, a: 'start', fs: 12 });
-      s += `<rect x="52" y="284" width="10" height="10" fill="${C.vi}" fill-opacity="0.55"/>` + T(66, 293, '上層 16,500〜40,000 ft（温帯の目安・AWH）', { c: C.ink, a: 'start', fs: 12 });
-      return svg(400, 302, s, '図：雲の高さの目安（地上からの雲の底の高さ）と主な雲。積乱雲（CB）は下層から上層までのびます。METAR では、雲の種類のうち CB と TCU（そびえ立つ積雲）だけが書かれます');
+      s += `<rect x="52" y="284" width="10" height="10" fill="${C.vi}" fill-opacity="0.55"/>` + T(66, 293, '上層 16,500〜40,000 ft', { c: C.ink, a: 'start', fs: 12 });
+      s += TL(52, 314, ['高さは中緯度（温帯）の目安（AWH 表 12-3）。', '極地では低く、熱帯では高くなります'], { c: C.mut, a: 'start', fs: 12, lh: 16 });
+      return svg(400, 340, s, '図：雲の高さの目安（中緯度・温帯の値。地上からの雲の底の高さ）と主な雲。積乱雲（CB）は下層から上層までのびます。METAR では、雲の種類のうち CB と TCU（そびえ立つ積雲）だけが書かれます');
     },
     seaBreeze() {
       // a west–east cross-section of the Florida peninsula: sea breezes from both coasts meet inland and lift the air (AWH 10.6.1)
       let s = `<rect x="0" y="190" width="90" height="26" fill="#1d4a7a"/><rect x="310" y="190" width="90" height="26" fill="#1d4a7a"/><rect x="90" y="190" width="220" height="26" fill="#3a3326"/>`;
-      s += T(45, 236, 'メキシコ湾（西）', { c: C.cy, fs: 12 }) + T(355, 236, '大西洋（東）', { c: C.cy, fs: 12 }) + T(200, 236, '陸（オーランドなど内陸）', { c: C.ink, fs: 12 });
+      s += T(52, 236, 'メキシコ湾（西）', { c: C.cy, fs: 12 }) + T(355, 236, '大西洋（東）', { c: C.cy, fs: 12 }) + T(200, 236, '陸（オーランドなど内陸）', { c: C.ink, fs: 12 });
       s += A(40, 176, 170, 176, C.cy, 3) + A(360, 176, 230, 176, C.cy, 3) + T(105, 166, '海風', { c: C.cy, b: 1, fs: 12 }) + T(295, 166, '海風', { c: C.cy, b: 1, fs: 12 });
       s += A(200, 170, 200, 92, C.am, 3) + T(214, 150, '上昇', { c: C.am, b: 1, a: 'start', fs: 12 });
       s += `<path d="M150 96 Q 146 70 166 62 Q 164 34 186 28 L176 20 L232 18 L226 28 Q 248 36 244 62 Q 258 74 250 96 Z" fill="#dfe6ee" fill-opacity="0.85"/>`;
@@ -467,13 +475,13 @@
       return svg(W, 278, s, '図：米国の空域の断面（模式図・高さは代表例）。目盛りは MSL で、Class C・D の高さ（2,500・4,000 ft）は空港の標高からの高さです（図は標高 0 ft の空港の例）。Class G は多くの場所で地上 1,200 ft（空港の近くでは 700 ft）より下です。Class B は許可、Class C・D は入る前に双方向の無線交信の確立が必要です（14 CFR 91.129〜91.131、AIM 3-2）');
     },
     vmcFactors() {
-      return table(['条件と要因（旧 14 CFR 23.149 で Vmc を決めた条件と、Vmc を変える要因）', 'Vmc への影響', '理由'], [
+      return table(['条件と要因（米国の旧 14 CFR 23.149 で Vmc を決めた条件と、Vmc を変える要因）', 'Vmc への影響', '理由'], [
         ['生きているエンジンが最大出力', '高くなる', '非対称の推力が最大'], ['止まった側のプロペラが風車状態（フェザーしていない）', '高くなる', '止まった側の抗力が大きい'],
         ['重心が後方（後方の限界）', '高くなる', '重心からラダーまでの腕が短くなる'], ['重量が軽い', '高くなる', 'バンクしたときの揚力の横向きの助けが小さい'],
         ['脚 UP', '高くなる', '脚の「竜骨」のような安定の助けがない'], ['フラップは離陸の位置', '決める条件の 1 つ', '機体によって影響が違う'],
         ['生きている側へバンク（5° まで）', '低くなる', '揚力の横向きの成分がラダーの横向きの力とつり合い、ラダーを助ける（横滑りが減る）。翼を水平にすると、1° あたり 3 kt 以上、20 kt 近く高くなることがある'],
         ['密度高度が高い（高い所・暑い日）', '低くなる（自然吸気のエンジン）', '出力が減る（ただし失速速度に近づく）']])
-        + '<p class="bk-src">出典：FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章。今の 14 CFR 23.2135(c) は性能基準の書き方で、表の条件は旧 23.149 のもの。重量と密度高度は認証の条件ではなく、Vmc を変える要因（古い規則では、Vmc を決める重量は決められていなかった）。数値・条件は機体の AFM が優先。</p>';
+        + '<p class="bk-src">出典：FAA Airplane Flying Handbook（FAA-H-8083-3C）第 13 章。米国の今の 14 CFR 23.2135(c) は性能基準の書き方で、表の条件は米国の旧 23.149 のもの。旧 23.149 では、Vmc は最も不利な重量と重心の位置で決める（CAR 3 や初期の Part 23 で認証された機体では、Vmc を決める重量は決められていない）。軽いほど Vmc は高い。密度高度は認証の条件ではなく、いろいろな高度で試験した結果を海面の 1 つの値に直して公表する。数値・条件は機体の AFM が優先。</p>';
     },
     scan() {
       // a G1000-type PFD (speed tape left, attitude centre, altitude tape and vertical speed right, HSI below with the turn-rate trend
@@ -494,13 +502,13 @@
       s += box(296, 236, 88, 50, C.gr, '出力（回転計）', 'MFD に表示');
       // the radial scan
       for (const [x, y] of [[72, 100], [328, 100], [377, 128], [200, 198], [294, 252]]) { const d = Math.hypot(x - 200, y - 112), ux = (x - 200) / d, uy = (y - 112) / d; s += A(200 + ux * 30, 112 + uy * 30, x - ux * 3, y - uy * 3, C.am, 2); }
-      s += TL(8, 334, ['緑＝操作の計器（姿勢・出力）：これで飛行機を動かす', '水色＝性能の計器（速度・高度・昇降・方位・旋回率）：結果を確かめる', '橙の矢印：姿勢 → 1 つの計器 → 姿勢 → 次の計器 …'], { c: C.ink, a: 'start', fs: 12, lh: 17 });
-      return svg(400, 386, s, '図：G1000 型 PFD の配置（模式図）と、放射状のクロスチェック（IFH 第 6 章）。中央の姿勢表示から各計器へ目を動かし、いつも姿勢に戻ります。出力（回転計）は、実機の G1000 型では MFD に出ます');
+      s += TL(8, 334, ['緑＝操作の計器（姿勢・出力）：これで飛行機を動かす', '水色＝性能の計器（速度・高度・昇降・方位・旋回率）：', '　　　結果を確かめる', '橙の矢印：姿勢 → 1 つの計器 → 姿勢 → 次の計器 …'], { c: C.ink, a: 'start', fs: 12, lh: 17 });
+      return svg(400, 402, s, '図：G1000 型 PFD の配置（模式図）と、放射状のクロスチェック（IFH 第 6 章）。中央の姿勢表示から各計器へ目を動かし、いつも姿勢に戻ります。出力（回転計）は、実機の G1000 型では MFD に出ます');
     },
     tem() {
       // the TEM framework as ICAO Doc 9683 (Part 2, chapter 2: 2.3.15 errors, 2.3.16 undesired aircraft states, 2.4.1 most flights
       // end safely) and SKYbrary define it: threats and errors are managed most of the time and lead nowhere; an unmanaged error can
-      // become an undesired aircraft state (UAS), which can still be recovered. On the left, the three defences (avoid, trap, mitigate)
+      // become an undesired aircraft state (UAS), which can still be recovered. On the left, the three countermeasures in the book's one wording (threats predicted and avoided, errors found and fixed, UAS recovered)
       let s = '';
       const box = (x, y, w, h, c, title, lines) => BOX(x, y, w, h, c, title, lines, { fs: 13, ty: 19, ly: 37 });
       s += BOX(136, 8, 112, 70, C.am, '脅威（Threat）', ['天気・混雑・管制の', '変更・機体の不具合'], { fs: 13, ty: 19, ly: 37, lfs: 12 });
@@ -516,10 +524,10 @@
       s += A(204, 262, 204, 286, C.gr, 2) + A(324, 262, 324, 286, C.rd, 2) + T(198, 280, '立て直す', { c: C.gr, fs: 12, a: 'end' }) + T(330, 280, 'できない', { c: C.rd, fs: 12, a: 'start' });
       s += box(136, 288, 124, 36, C.gr, '安全な状態へ', []) + box(268, 288, 124, 36, C.rd, '事故・インシデント', []);
       // the three defences
-      const d = [[8, '防ぐ（avoid）', ['ブリーフィング', '計画・準備']], [118, '見つける（trap）', ['モニター', 'クロスチェック', 'コール']], [228, '小さくする', ['（mitigate）', '立て直す・', 'ゴーアラウンド']]];
+      const d = [[8, '予測して防ぐ', ['脅威：', 'ブリーフィング・', '計画・準備']], [118, '見つけて直す', ['エラー：', 'モニター・クロス', 'チェック・コール']], [228, '立て直す', ['UAS：', 'ゴーアラウンド']]];
       d.forEach(([y, t, l]) => { s += BOX(6, y, 122, y === 228 ? 96 : 102, C.cy, t, l, { fs: 12, ty: 19, ly: 38, lfs: 12 }); });
-      s += T(200, 346, '乗員の対策（countermeasures）：防ぐ・見つける・小さくする', { c: C.cy, b: 1, fs: 12 });
-      return svg(400, 356, s, '図：TEM（脅威とエラーの管理）の考え方。脅威とエラーは、ほとんどの場合管理されて何も起きません。管理しそこねたエラーが、望ましくない機体の状態（UAS）になることがあり、そこから立て直します（ICAO Doc 9683・SKYbrary にもとづく模式図）');
+      s += TL(200, 346, ['乗員の対策（countermeasures）', '脅威は予測して防ぐ・エラーは見つけて直す・UAS は立て直す'], { c: C.cy, b: 1, fs: 12, lh: 16 });
+      return svg(400, 372, s, '図：TEM（脅威とエラーの管理）の考え方。脅威とエラーは、ほとんどの場合管理されて何も起きません。管理しそこねたエラーが、望ましくない機体の状態（UAS）になることがあり、そこから立て直します（ICAO Doc 9683・SKYbrary にもとづく模式図）');
     },
     standardRate() {
       // the bank for a standard-rate turn (3°/s): tan φ = 3 · V / 1091 (V true airspeed in kt), and the two rules of thumb in the IFH
@@ -585,7 +593,7 @@
       s += L(298, 125, 276, 125, C.cy, 1.5) + L(298, 173, 276, 173, C.gr, 1.5);
       s += TL(341, 232, ['バッテリーとは', 'つながっていない'], { c: C.vi, fs: 12, lh: 15 });
       s += T(12, 276, '● 点火プラグ：各シリンダーに 2 本（左右のマグネトーから別々に）', { c: C.ink, a: 'start', fs: 12 }) + T(12, 294, '燃料噴射式（IO-360）は、キャブレターの代わりに噴射装置', { c: C.mut, a: 'start', fs: 12 });
-      return svg(400, 304, s, '図：キャブレター式のエンジン（O-360）の空気・燃料・点火の流れ（模式図）。点火はエンジンが回して発電するマグネトーで行い、左右 2 系統あります。電気系統が止まってもエンジンは止まりません');
+      return svg(400, 304, s, '図：キャブレター式のエンジン（O-360）の空気・燃料・点火の流れ（模式図）。点火はエンジンが回して発電するマグネトーで行い、左右 2 系統あります。2 つのマグネトーで点火する Archer では、電気系統が止まってもエンジンは止まりません（電子点火や FADEC の機体は違います）');
     },
     carbIce() {
       // a float-type carburetor: the air speeds up in the venturi, the pressure falls and the fuel evaporates — the
@@ -609,11 +617,12 @@
       s += `<rect x="40" y="46" width="110" height="22" rx="4" fill="${C.bl}" fill-opacity="0.55" stroke="${C.cy}"/><rect x="250" y="46" width="110" height="22" rx="4" fill="${C.bl}" fill-opacity="0.55" stroke="${C.cy}"/>`;
       s += T(95, 61, `左タンク ${cap} gal`, { c: C.ink, b: 1, fs: 12 }) + T(305, 61, `右タンク ${cap} gal`, { c: C.ink, b: 1, fs: 12 }) + T(200, 26, '低翼：タンクは翼の中（重力では送れない）', { c: C.mut, fs: 12 });
       s += P([[95, 68], [95, 116], [160, 116]], C.cy, 2.5) + P([[305, 68], [305, 116], [200, 116]], C.cy, 2.5);
-      s += `<circle cx="180" cy="116" r="20" fill="#13233a" stroke="${C.am}" stroke-width="2"/>` + `<line x1="180" y1="116" x2="166" y2="104" stroke="${C.am}" stroke-width="3"/>` + T(214, 92, '燃料セレクター', { c: C.am, b: 1, a: 'start', fs: 12 }) + T(214, 108, 'LEFT・RIGHT・OFF（BOTH はない）', { c: C.am, a: 'start', fs: 12 });
+      s += `<circle cx="180" cy="116" r="20" fill="#13233a" stroke="${C.am}" stroke-width="2"/>` + `<line x1="180" y1="116" x2="166" y2="104" stroke="${C.am}" stroke-width="3"/>` + L(180, 136, 180, 160, C.cy, 2.5);
+      s += T(206, 140, '燃料セレクター', { c: C.am, b: 1, a: 'start', fs: 12 }) + TL(206, 156, ['LEFT・RIGHT・OFF', '（BOTH はない）'], { c: C.am, a: 'start', fs: 12, lh: 15 });
       const step = (y, t, c, note) => A(180, y - 22, 180, y - 4, C.cy, 2.5) + `<rect x="96" y="${y - 4}" width="168" height="26" rx="6" fill="${c}" fill-opacity="0.12" stroke="${c}"/>` + T(180, y + 13, t, { c, b: 1, fs: 12 }) + (note ? T(270, y + 13, note, { c: C.mut, a: 'start', fs: 12 }) : '');
-      s += step(158, 'ストレーナー（ろ過）', C.cy, '← 抜き取り検査') + step(206, '電動燃料ポンプ（補助）', C.gr, '← 離着陸で ON') + step(254, 'エンジン駆動の燃料ポンプ', C.ink, '') + step(302, 'キャブレター → エンジン', C.am, '');
+      s += step(198, 'ストレーナー（ろ過）', C.cy, '← 抜き取り検査') + step(246, '電動燃料ポンプ（補助）', C.gr, '← 離着陸で ON') + step(294, 'エンジン駆動の燃料ポンプ', C.ink, '') + step(342, 'キャブレター → エンジン', C.am, '');
       s += T(12, 146, 'タンクの下でも', { c: C.mut, a: 'start', fs: 12 }) + T(12, 162, '抜き取り検査', { c: C.mut, a: 'start', fs: 12 });
-      return svg(400, 336, s, `図：Archer の燃料系統（模式図）。左右の翼のタンク（使える燃料は片側 ${cap} US gal：教材値）から、セレクターで選んだ側の燃料をポンプで送ります`);
+      return svg(400, 376, s, `図：Archer の燃料系統（模式図）。左右の翼のタンク（使える燃料は片側 ${cap} US gal：教材値）から、セレクターで選んだ側の燃料をポンプで送ります`);
     },
     elecSystem() {
       // what runs on electricity and what does not (the engine's ignition, the magnetic compass, the mechanical standby gauges)
@@ -621,13 +630,15 @@
       let s = box(12, 14, 120, 44, C.gr, 'オルタネーター', 'エンジンが回す') + box(12, 74, 120, 44, C.am, 'バッテリー', '始動・非常用');
       s += A(132, 36, 150, 66, C.gr, 2) + A(132, 96, 150, 84, C.am, 2) + box(150, 50, 72, 50, C.cy, 'マスター', 'BATT・ALTR');
       s += A(222, 75, 236, 75, C.cy, 2.5) + `<rect x="238" y="20" width="14" height="184" rx="4" fill="${C.cy}" fill-opacity="0.5"/>` + T(245, 220, 'バス', { c: C.cy, b: 1, fs: 12 });
-      const loads = ['PFD・MFD', '無線', '灯火', 'ピトーヒーター', '電動燃料ポンプ', 'スターター'];
-      loads.forEach((t, i) => { const y = 32 + i * 30; s += L(252, y, 266, y, C.cy, 1.5) + `<rect x="266" y="${y - 7}" width="10" height="14" rx="2" fill="${C.mut}"/>` + T(282, y + 4, t, { c: C.ink, a: 'start', fs: 12 }); });
+      const loads = ['PFD・MFD', '無線', '灯火', 'ピトーヒーター', '電動燃料ポンプ'];
+      loads.forEach((t, i) => { const y = 36 + i * 32; s += L(252, y, 266, y, C.cy, 1.5) + `<rect x="266" y="${y - 7}" width="10" height="14" rx="2" fill="${C.mut}"/>` + T(282, y + 4, t, { c: C.ink, a: 'start', fs: 12 }); });
       s += T(392, 220, '■＝ブレーカー', { c: C.mut, a: 'end', fs: 12 });
+      // the starter: the battery's large current through the starter contactor (solenoid), only while START is held (PHAK ch. 7, POH 7.17)
+      s += A(186, 100, 186, 124, C.am, 2) + box(140, 126, 92, 60, C.am, 'スターター', '') + TL(186, 162, ['接触器を通る', 'START の間だけ'], { c: C.ink, fs: 12, lh: 15 });
       s += `<rect x="12" y="236" width="376" height="66" rx="8" fill="none" stroke="${C.vi}" stroke-dasharray="5 4"/>` + T(200, 256, '電気がなくても動くもの', { c: C.vi, b: 1, fs: 13 });
       s += T(200, 276, 'エンジンの点火（マグネトー）・磁気コンパス', { c: C.ink, fs: 12 }) + T(200, 294, '機械式の予備の速度計・高度計（付いている機体）', { c: C.ink, fs: 12 });
       s += box(12, 136, 120, 44, C.rd, '非常用バッテリー', 'EMERG BATT') + A(72, 180, 72, 194, C.rd, 2) + TL(72, 208, ['予備計器・PFD など', '（30 分以上）'], { c: C.rd, fs: 12, lh: 14 });
-      return svg(400, 310, s, '図：Archer の電気系統（模式図）。オルタネーターとバッテリーの電気がマスタースイッチからバスへ行き、ブレーカーを通って各装置へ届きます。エンジンの点火は電気系統とは別です');
+      return svg(400, 310, s, '図：Archer の電気系統（模式図）。オルタネーターとバッテリーの電気がマスタースイッチからバスへ行き、ブレーカーを通って各装置へ届きます。スターターの大きな電流は、START スイッチを押している間だけ、接触器（ソレノイド）を通して送られます。エンジンの点火は電気系統とは別です');
     },
     pitotStatic() {
       // the Archer's pitot-static mast under the left wing, the pipes to the air data computer and the mechanical standby gauges
@@ -652,26 +663,35 @@
         s += `<line x1="${cx}" y1="${cy - 36}" x2="${cx}" y2="${cy - 28}" stroke="${C.am}" stroke-width="3"/>`;
         return s + TL(cx, cy + 52, note, { c, fs: 12, lh: 15 });
       };
-      let s = T(12, 18, '北半球の磁気コンパスの誤差', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      let s = T(12, 18, '北半球の磁気コンパスの誤差（模式図）', { c: C.ink, b: 1, a: 'start', fs: 13 });
       s += card(70, 110, 0, 330, '北へ向かう旋回', ['コンパスが', '遅れる'], ['手前で止める', '（約 30° 前）'], C.cy);
       s += card(200, 110, 180, 210, '南へ向かう旋回', ['コンパスが', '先回りする'], ['行き過ぎて', 'から止める'], C.am);
       s += card(330, 110, 90, 60, '東・西で加速', ['北へ振れる'], ['減速すると', '南へ振れる'], C.gr);
       s += `<rect x="12" y="204" width="376" height="48" rx="6" fill="${C.cy}" fill-opacity="0.08" stroke="${C.cy}"/>` + T(200, 224, 'UNOS：北は手前、南は行き過ぎ', { c: C.cy, b: 1, fs: 12 }) + T(200, 242, 'ANDS：加速で北、減速で南', { c: C.gr, b: 1, fs: 12 });
       s += T(200, 272, 'どれだけ手前か：15° ＋ 緯度の半分（PHAK）。北緯 29° なら約 30°', { c: C.ink, fs: 12 });
-      return svg(400, 282, s, '図：磁気コンパスの誤差（北半球）。旋回すると、北へ向かうときは遅れ、南へ向かうときは先回りします。東・西向きで速度を変えると北や南へ振れます。正しく読めるのは、まっすぐ・水平・一定の速度のときだけです');
+      // the real compass: the card is read from behind through a window, so its marks run the other way (PHAK ch. 8: flying north,
+      // "33" is to the right of N). The strip shows the window while flying north; 50 px = 30°
+      s += L(12, 290, 388, 290, C.grid, 1) + T(12, 310, '実物のコンパスの見え方（北へ飛んでいるとき）', { c: C.ink, b: 1, a: 'start', fs: 12 });
+      s += `<rect x="40" y="320" width="320" height="40" rx="6" fill="#06101c" stroke="${C.mut}" stroke-width="1.5"/>`;
+      for (let d = -90; d <= 90; d += 10) { const x = 200 - d * 50 / 30; if (x > 44 && x < 356) s += L(x, 322, x, d % 30 ? 328 : 332, C.ink, 1); }
+      for (const [d, l] of [[90, 'E'], [60, '6'], [30, '3'], [0, 'N'], [-30, '33'], [-60, '30'], [-90, 'W']]) { const x = 200 - d * 50 / 30; if (x > 44 && x < 356) s += T(x, 350, l, { c: d === 0 ? C.rd : C.ink, b: 1, fs: 13 }); }
+      s += L(200, 316, 200, 336, C.am, 2.5) + L(200, 355, 200, 364, C.am, 2.5);
+      s += T(200, 382, '目盛りは方位指示器と逆の並び（N の右に 33、左に 3）', { c: C.am, fs: 12 });
+      return svg(400, 392, s, '図：磁気コンパスの誤差（北半球）。上の 3 つの円は、動きを説明するために方位指示器のように描いた模式図です。旋回すると、北へ向かうときは遅れ、南へ向かうときは先回りします。東・西向きで速度を変えると北や南へ振れます。正しく読めるのは、まっすぐ・水平・一定の速度のときだけです。実物のコンパスは目盛りを裏から見るので、並びが方位指示器と逆に見えます（PHAK 第 8 章）');
     },
     positionLights() {
       // position lights: red on the left wingtip, green on the right, white on the tail; what another airplane's lights tell
-      let s = planeTop(110, 120, 1.1) + T(110, 22, '上から見た図', { c: C.ink, b: 1, fs: 13 });
-      const sector = (x, y, a0, a1, c) => { const r = 60, p = a => [x + r * Math.sin(a * DEG), y - r * Math.cos(a * DEG)], [x0, y0] = p(a0), [x1, y1] = p(a1); return `<path d="M${x} ${y} L${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)} Z" fill="${c}" fill-opacity="0.18"/>`; };
-      s = sector(35, 116, -110, 0, C.rd) + sector(185, 116, 0, 110, C.gr) + sector(110, 172, 110, 250, '#f2f2f2') + s;
-      s += `<circle cx="35" cy="116" r="6" fill="${C.rd}"/><circle cx="185" cy="116" r="6" fill="${C.gr}"/><circle cx="110" cy="172" r="5" fill="#f2f2f2"/>`;
-      s += T(30, 98, '左＝赤', { c: C.rd, b: 1, fs: 12 }) + T(190, 98, '右＝緑', { c: C.gr, b: 1, fs: 12 }) + T(110, 214, '尾＝白', { c: C.ink, b: 1, fs: 12 });
+      const px = 118, py = 118, wt = 68, tl = py + 50;           // the airplane (k = 1): wingtips at px ± 68, the tail light at py + 50
+      let s = planeTop(px, py, 1) + T(px, 22, '上から見た図', { c: C.ink, b: 1, fs: 13 });
+      const sector = (x, y, a0, a1, c) => { const r = 46, p = a => [x + r * Math.sin(a * DEG), y - r * Math.cos(a * DEG)], [x0, y0] = p(a0), [x1, y1] = p(a1); return `<path d="M${x} ${y} L${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)} Z" fill="${c}" fill-opacity="0.18"/>`; };
+      s = sector(px - wt, py - 1, -110, 0, C.rd) + sector(px + wt, py - 1, 0, 110, C.gr) + sector(px, tl, 110, 250, '#f2f2f2') + s;
+      s += `<circle cx="${px - wt}" cy="${py - 1}" r="6" fill="${C.rd}"/><circle cx="${px + wt}" cy="${py - 1}" r="6" fill="${C.gr}"/><circle cx="${px}" cy="${tl}" r="5" fill="#f2f2f2"/>`;
+      s += T(px - wt - 4, py - 22, '左＝赤', { c: C.rd, b: 1, fs: 12, halo: 1 }) + T(px + wt + 4, py - 22, '右＝緑', { c: C.gr, b: 1, fs: 12, halo: 1 }) + T(px, tl + 30, '尾＝白', { c: C.ink, b: 1, fs: 12, halo: 1 });
       const see = (y, l, r, t, c) => `<circle cx="252" cy="${y}" r="7" fill="${l}"/><circle cx="292" cy="${y}" r="7" fill="${r}"/>` + T(306, y - 2, t[0], { c, b: 1, a: 'start', fs: 12 }) + T(306, y + 14, t[1], { c: C.ink, a: 'start', fs: 12 });
       s += T(252, 46, '夜、相手の灯火が', { c: C.ink, b: 1, a: 'start', fs: 12 }) + T(252, 62, 'こう見えたら', { c: C.ink, b: 1, a: 'start', fs: 12 });
       s += see(96, C.rd, C.gr, ['左に赤・右に緑', '同じ向きへ'], C.ink) + see(140, C.gr, C.rd, ['左に緑・右に赤', 'こちらへ来る！'], C.rd) + `<circle cx="272" cy="184" r="7" fill="#f2f2f2"/>` + T(306, 182, '白だけ', { c: C.ink, b: 1, a: 'start', fs: 12 }) + T(306, 198, '遠ざかっている', { c: C.ink, a: 'start', fs: 12 });
-      s += T(200, 238, '衝突防止灯（ビーコン・ストロボ）は、付いていれば', { c: C.am, fs: 12 }) + T(200, 254, 'いつも点灯（14 CFR 91.209）', { c: C.am, fs: 12 });
-      return svg(400, 264, s, '図：航空灯（左の翼端が赤、右の翼端が緑、尾が白）。相手の灯火の見え方で、相手の向きがわかります（AFH 第 11 章）');
+      s += TL(200, 236, ['衝突防止灯（ビーコン・ストロボ）は、付いていれば', 'いつも点灯（米国の 14 CFR 91.209。', '安全のために機長が消すときを除く）'], { c: C.am, fs: 12, lh: 16 });
+      return svg(400, 280, s, '図：航空灯（左の翼端が赤、右の翼端が緑、尾が白）。相手の灯火の見え方で、相手の向きがわかります（AFH 第 11 章）');
     },
     // ---------------------------------------------------------------- 第 4 章 perf（性能と重量・重心）
     densityAltitude() {
@@ -703,8 +723,8 @@
       s += T((X(0) + xo) / 2, 64, `約 ${over50.toLocaleString()} ft（公開値の例）`, { c: C.cy, b: 1, fs: 12 });
       const xm = X(len / 2);
       s += L(xm, 82, xm, yG + 12, C.vi, 2, '6 4') + TL(xm + 6, 92, ['中間点：浮揚速度の', '70% に届かなければ', '中止（浮くまでの目安）'], { c: C.vi, a: 'start', fs: 12 });
-      s += T(12, 22, '離陸距離＝地上滑走＋50 ft の高さまで', { c: C.ink, b: 1, a: 'start', fs: 13 }) + T(12, 40, '（高さは強調して描いています）', { c: C.mut, a: 'start', fs: 12 });
-      return svg(400, 218, s, `図：離陸距離の 2 つの数字と、滑走路の中間点での確かめ（AIM 7-6-8 の目安。浮くまでの距離だけを見るもので、障害物を越えられるかは別に考えます）。${over50.toLocaleString()} ft は Piper が公開している Archer TX の値で、実際の距離はその日の条件で POH の表から読みます`);
+      s = T(12, 22, '50 ft を越える距離＝地上滑走＋空中の区間', { c: C.ink, b: 1, a: 'start', fs: 13 }) + T(12, 40, 'POH の 2 つの数字（地上滑走・50 ft を越える距離）は足さない', { c: C.am, a: 'start', fs: 12 }) + T(12, 58, '（高さは強調して描いています）', { c: C.mut, a: 'start', fs: 12 }) + `<g transform="translate(0 24)">${s}</g>`;
+      return svg(400, 242, s, `図：離陸距離の 2 つの数字と、滑走路の中間点での確かめ（米国の AIM 7-6-8 の目安。浮くまでの距離だけを見るもので、障害物を越えられるかは別に考えます）。${over50.toLocaleString()} ft は Piper が公開している Archer TX の値で、実際の距離はその日の条件で POH の表から読みます`);
     },
     windEffect() {
       // takeoff distance against wind as a share of the lift-off speed: (1 − w)², which gives PHAK's −19 % / +21 % at 10 %
@@ -742,7 +762,7 @@
       for (const v of [0, 10, 20, 30, 40, 50]) s += L(X(v), 40, X(v), 196, C.grid, 1) + T(X(v), 212, v, { c: C.mut, fs: 12 });
       s += bar(56, '昼', day, '予備 30 分') + bar(122, '夜', night, '予備 45 分');
       s += L(X(usable), 36, X(usable), 196, C.gr, 2.5) + T(X(usable) - 4, 34, `使える燃料 ${usable} gal`, { c: C.gr, b: 1, a: 'end', fs: 12 });
-      s += `<rect x="70" y="228" width="12" height="12" fill="${C.mut}" fill-opacity="0.55"/>` + T(86, 238, 'タキシー・上昇', { c: C.ink, a: 'start', fs: 12 }) + `<rect x="190" y="228" width="12" height="12" fill="${C.cy}" fill-opacity="0.55"/>` + T(206, 238, '巡航', { c: C.ink, a: 'start', fs: 12 }) + `<rect x="250" y="228" width="12" height="12" fill="${C.am}" fill-opacity="0.55"/>` + T(266, 238, '予備（91.151）', { c: C.ink, a: 'start', fs: 12 });
+      s += `<rect x="70" y="228" width="12" height="12" fill="${C.mut}" fill-opacity="0.55"/>` + T(86, 238, 'タキシー・上昇', { c: C.ink, a: 'start', fs: 12 }) + `<rect x="176" y="228" width="12" height="12" fill="${C.cy}" fill-opacity="0.55"/>` + T(192, 238, '巡航', { c: C.ink, a: 'start', fs: 12 }) + `<rect x="232" y="228" width="12" height="12" fill="${C.am}" fill-opacity="0.55"/>` + T(248, 238, '予備（米国の 91.151）', { c: C.ink, a: 'start', fs: 12 });
       s += T(228, 262, '燃料（US gal）', { c: C.mut, fs: 12 });
       return svg(400, 272, s, `図：燃料計画の例。120 NM を対地速度 105 kt で飛ぶと約 1 時間 9 分、9.5 gal/h（POH の 65% 出力の値）で巡航に約 ${trip.toFixed(1)} gal。タキシーと上昇の分（${taxi} gal）は例です`);
     },
@@ -836,9 +856,9 @@
       const an = `<path d="M282 ${g - 150} L392 ${g - 156} L374 ${g - 140} L300 ${g - 136} Z" fill="#dfe6ee" fill-opacity="0.6"/><path d="M300 ${g - 136} Q 296 ${g - 110} 312 ${g - 96} Q 350 ${g - 90} 362 ${g - 110} L374 ${g - 140} Z" fill="#dfe6ee" fill-opacity="0.45"/>`;
       let db = an + A(318, g - 100, 318, g - 30, C.cy, 2.5) + A(344, g - 100, 344, g - 30, C.cy, 2.5);
       for (const x of [328, 336]) db += L(x, g - 92, x - 3, g - 40, C.cy, 1.2, '2 4');
-      s += panel(266, '③ 消散期', ['下降気流だけ', '雨がやみ、', 'かなとこが残る'], db);
+      s += panel(266, '③ 消散期', ['雨の中に強い', '下降気流（まだ危険）', 'やがてかなとこが残る'], db);
       s += T(200, g + 72, '1 つの雷雨の一生は全体で約 30 分（AWH）', { c: C.am, b: 1, fs: 12 });
-      return svg(400, 286, s, '図：雷雨（1 つのセル）の一生（模式図）。積雲期は上昇気流だけ、成熟期は雨が地面に届いて上昇と下降の流れがそろい、危険が最も大きくなります。消散期は下降気流だけになります（AWH 22.3）');
+      return svg(400, 286, s, '図：雷雨（1 つのセル）の一生（模式図）。積雲期は上昇気流だけ、成熟期は雨が地面に届いて上昇と下降の流れがそろい、危険が最も大きくなります。消散期は上昇気流がなくなりますが、雨の中には強い下降気流があります。やがて雨がやみ、かなとこ雲が残ります（AWH 22.3）');
     },
     microburst() {
       // an approach through a microburst: headwind (above the path) → downdraft → tailwind (below the path); AWH 22.7 numbers
@@ -896,7 +916,7 @@
       s += L(X(0), row + 40, X(24), row + 40, C.mut, 1.5);
       for (let h = 0; h <= 24; h += 6) { const z = (12 + h) % 24, l = (z + 20) % 24, d = h === 0 ? '14日 ' : h === 12 ? '15日 ' : ''; s += L(X(h), row + 36, X(h), row + 44, C.mut, 1.5) + T(X(h), row + 60, `${d}${String(z).padStart(2, '0')}Z`, { c: C.ink, fs: 12 }) + T(X(h), row + 78, `${String(l).padStart(2, '0')}:00`, { c: C.mut, fs: 12 }); }
       s += T(X(0) - 4, row + 100, '上：UTC（Z）　下：フロリダ中部の夏時間（EDT）', { c: C.mut, a: 'start', fs: 12 });
-      s += TL(12, row + 138, ['TEMPO：その時間に一時的に（1 回 1 時間以内、合わせて半分未満）', 'FM：その時刻から、天気がすっかり変わる'], { c: C.ink, a: 'start', fs: 12, lh: 17 });
+      s += TL(12, row + 138, ['TEMPO：その時間に一時的に（1 回 1 時間未満、合わせて半分未満）', 'FM：その時刻から、天気がすっかり変わる'], { c: C.ink, a: 'start', fs: 12, lh: 17 });
       return svg(400, 292, s, '図：TAF を時間の帯にしたもの（架空の例）。14 日 12Z から 15 日 12Z までの予報で、14 日 18〜22Z（夏時間で 14〜18 時）に一時的な雷雨、15 日 02Z から晴れ');
     },
     flightCategory() {
@@ -908,7 +928,7 @@
       s += T(f.X(7.5), f.Y(4200), 'VFR', { c: C.ink, b: 1, fs: 14 }) + T(f.X(7.5), f.Y(2100), 'MVFR', { c: C.ink, b: 1, fs: 13 }) + T(f.X(7.5), f.Y(760), 'IFR', { c: C.ink, b: 1, fs: 12 }) + T(f.X(7.5), f.Y(140), 'LIFR', { c: C.ink, b: 1, fs: 12 });
       const pt = (v, c, lab, dx) => `<circle cx="${f.X(v[0]).toFixed(1)}" cy="${f.Y(v[1]).toFixed(1)}" r="5" fill="${C.ink}" stroke="${C.bg}" stroke-width="1.5"/>` + T(f.X(v[0]) + dx, f.Y(v[1]) + 4, lab, { c, b: 1, fs: 12, a: dx < 0 ? 'end' : 'start', halo: 1 });
       s += pt([4, 1200], C.ink, '例 B：BKN012・4SM', 8) + pt([9, 4500], C.ink, '例 A', -8);
-      return svg(400, 290, s, '図：天気の区分（雲高と視程）。航空気象のサイトは、LIFR を紫、IFR を赤、MVFR を青、VFR を緑で表示します（AWH 第 3 章）。この区分は、14 CFR 91.155 の VFR の最低気象条件とは別のものです');
+      return svg(400, 290, s, '図：天気の区分（雲高と視程）。航空気象のサイトは、LIFR を紫、IFR を赤、MVFR を青、VFR を緑で表示します（AWH 第 3 章）。この区分は、米国の 14 CFR 91.155 の VFR の最低気象条件とは別のものです');
     },
     // ---------------------------------------------------------------- 第 6 章 law（規則と空域）
     preflightInfo() {
@@ -941,7 +961,7 @@
       s += `<circle cx="210" cy="44" r="28" fill="${C.am}" fill-opacity="0.15" stroke="${C.am}" stroke-width="2"/>` + T(210, 48, 'A-LAB3', { c: C.ink, b: 1, fs: 12 });
       s += `<circle cx="70" cy="150" r="30" fill="${C.rd}" fill-opacity="0.18" stroke="${C.rd}" stroke-width="2" stroke-dasharray="6 3"/>` + T(70, 154, 'TFR', { c: C.ink, b: 1, fs: 13 });
       s += `<circle cx="268" cy="62" r="5" fill="none" stroke="${C.ink}" stroke-width="2"/>` + T(278, 66, 'LAB', { c: C.ink, fs: 12, a: 'start' });
-      const leg = [['R', '制限空域（Restricted）：使っている時間は、許可なしに入らない', C.bl], ['MOA', '軍の訓練空域：入れるが、ATC に交通情報を求める', C.vi], ['A', '警戒空域（Alert）：訓練機などが多い。注意して飛ぶ', C.am], ['W', '警告空域（Warning）：海岸から 3 NM より沖の危険な空域', C.bl], ['TFR', '一時的な飛行制限：NOTAM で知らされる。飛ぶ前に必ず確かめる', C.rd]];
+      const leg = [['R', '制限空域（Restricted）：使用中は許可なしで入らない', C.bl], ['MOA', '軍の訓練空域：入れるが、ATC に交通情報を求める', C.vi], ['A', '警戒空域（Alert）：訓練機などが多い。注意して飛ぶ', C.am], ['W', '警告空域（Warning）：海岸から 3 NM より沖の危険な空域', C.bl], ['TFR', '一時的な飛行制限：NOTAM で出る。飛ぶ前に確かめる', C.rd]];
       leg.forEach(([k, t, c], i) => { s += T(12, 222 + i * 17, k, { c, b: 1, a: 'start', fs: 12 }) + T(50, 222 + i * 17, t, { c: C.ink, a: 'start', fs: 12 }); });
       s += T(8, 194, '模式図・NOT FOR NAVIGATION', { c: C.mut, a: 'start', fs: 12, halo: 1 });
       return svg(400, 306, s, '図：特別な空域と TFR（上から見た模式図。名前と位置は架空で、実際の地図とは違います）。運用中の制限空域や TFR には、許可なしに入りません（AIM 3-4・3-5）');
@@ -1230,8 +1250,8 @@
       s += mark(10000, 214, ['10,000 を超える：昼も酸素がすすめ'], C.cy);
       s += mark(5000, 286, ['5,000：夜の目が落ち始める', '5,000 を超える夜は酸素がすすめ'], C.cy);
       s += mark(3500, 340, ['3,500：この本の訓練空域の高さ'], C.gr);
-      s += T(8, 396, '規則：14 CFR 91.211　すすめ・影響：AIM 8-1-2', { c: C.mut, a: 'start', fs: 12 });
-      return svg(400, 406, s, '図：高度と酸素（機内の高度）。夜は 5,000 ft、昼は 10,000 ft を超えたら酸素がすすめ（AIM 8-1-2）。12,500 ft を超えると、規則で乗員の酸素が必要になります（14,000 ft までは 30 分を超える分。14 CFR 91.211）。対処できなくなるまでの時間は AIM 8-1-2 の値');
+      s += T(8, 396, '規則：米国の 14 CFR 91.211　すすめ・影響：米国の AIM 8-1-2', { c: C.mut, a: 'start', fs: 12 });
+      return svg(400, 406, s, '図：高度と酸素（機内の高度）。夜は 5,000 ft、昼は 10,000 ft を超えたら酸素がすすめ（米国の AIM 8-1-2）。米国の規則では、12,500 ft を超えると乗員の酸素が必要になります（14,000 ft までは 30 分を超える分。14 CFR 91.211）。対処できなくなるまでの時間は米国の AIM 8-1-2 の値で、PHAK の有効意識時間の表（図 17-1）とは違う目安です');
     },
     threePLoop() {
       // the 3P model of ADM with its three checklists (PHAK chapter 2): Perceive (PAVE) → Process (CARE) → Perform (TEAM), again and again
@@ -1304,7 +1324,7 @@
         s1 += L(x + 8, cy, x + 186, cy, C.mut, 1, '4 4') + planeSide(cx, cy, 0.62, { pitch: r.pitch * 2, flap: i === 3 ? 40 : 0, gear: true });
         const pitch = `${r.pitch >= 0 ? '+' : '−'}${Math.abs(r.pitch).toFixed(1)}°`, pwr = r.full ? '全開' : `約 ${Math.round(r.thr * 20) * 5}%`;
         const fpm = Math.abs(r.fpm) < 50 ? '水平' : `${r.fpm > 0 ? '+' : '−'}${Math.round(Math.abs(r.fpm) / 10) * 10} fpm`;
-        s1 += TL(x + 10, y + 108, [`ピッチ ${pitch}`, `スロットル ${pwr}・約 ${(Math.round(r.rpm / 50) * 50).toLocaleString('en-US')} rpm`, `→ ${r.kt} kt・${fpm}`], { c: C.ink, a: 'start', fs: 12, lh: 17 });
+        s1 += TL(x + 10, y + 103, [`ピッチ ${pitch}`, `スロットル ${pwr}`, `約 ${(Math.round(r.rpm / 50) * 50).toLocaleString('en-US')} rpm`, `→ ${r.kt} kt・${fpm}`], { c: C.ink, a: 'start', fs: 12, lh: 16 });
       });
       return svg(400, 360, s1, '図：同じ Archer でも、姿勢（ピッチ）と出力の組み合わせで、速度と昇降率が決まります（この教材のフライトモデルの値・3,000 ft。スロットルの % はレバーの開きで、エンジンの出力の % ではありません。絵の傾きは見やすく 2 倍にしてあります）');
     },
@@ -1368,7 +1388,7 @@
       let y = bot + 78;
       for (const [n, c, lines] of key) { s += tag(16, y - 4, n, c) + TL(34, y, lines, { c: C.ink, a: 'start', fs: 12, lh: 16 }); y += lines.length * 16 + 6; }
       s += T(8, y + 4, '速度などは、この教材の Archer の目安（課目 t2）', { c: C.mut, a: 'start', fs: 12 });
-      return svg(400, y + 14, s, '図：LAB 空港（架空）の滑走路 36 の左回りの場周経路（上から見た模式図）。形と高さは AFH 第 8 章・AIM 4-3-3・AC 90-66C の目安です。場周高度や回る向きは空港ごとに決まりがあるので、Chart Supplement で確かめます');
+      return svg(400, y + 14, s, '図：LAB 空港（架空）の滑走路 36 の左回りの場周経路（上から見た模式図）。形と高さは AFH 第 8 章・米国の AIM 4-3-3・AC 90-66C の目安です。場周高度や回る向きは空港ごとに決まりがあるので、Chart Supplement で確かめます');
     },
     approachProfile() {
       // the final approach from the side (heights drawn ≈ 14 × the horizontal scale): the 3° path to the aiming point, the AFH 3C chapter 9
@@ -1392,10 +1412,10 @@
       s += `<rect x="228" y="8" width="170" height="150" rx="8" fill="${C.ink}" fill-opacity="0.05" stroke="${C.grid}"/>` + T(313, 27, 'PAPI（滑走路の左の灯）', { c: C.ink, b: 1, fs: 12 });
       [[4, '高い（3.5° 超）'], [3, 'やや高い（3.2°）'], [2, '正しい（3°）'], [1, 'やや低い（2.8°）'], [0, '低い（2.5° 未満）']].forEach(([w, lab], i) => {
         const y = 50 + i * 22;
-        for (let j = 0; j < 4; j++) s += `<circle cx="${238 + j * 14}" cy="${y}" r="5.5" fill="${j < w ? '#f2f2f2' : '#ff4a3a'}"/>`;
-        s += T(294, y + 4, lab, { c: w === 2 ? C.gr : C.ink, b: w === 2 ? 1 : 0, a: 'start', fs: 12 });
+        for (let j = 0; j < 4; j++) s += `<circle cx="${236 + j * 12}" cy="${y}" r="5.5" fill="${j < w ? '#f2f2f2' : '#ff4a3a'}"/>`;
+        s += T(284, y + 4, lab, { c: w === 2 ? C.gr : C.ink, b: w === 2 ? 1 : 0, a: 'start', fs: 12 });
       });
-      return svg(400, g + 42, s, '図：ファイナル（横から見た模式図。高さは横より大きく描いてあり、滑走路の部分は縮尺どおりではありません）。3° の線で目標点へまっすぐ降り、地上 500 ft までに安定していなければゴーアラウンドします（AFH 第 9 章）。接地はフレアのぶん目標点より少し先になります。右上は PAPI の見え方（AIM 2-1-2）');
+      return svg(400, g + 42, s, '図：ファイナル（横から見た模式図。高さは横より大きく描いてあり、滑走路の部分は縮尺どおりではありません）。3° の線で目標点へまっすぐ降り、地上 500 ft までに安定していなければゴーアラウンドします（AFH 第 9 章）。接地はフレアのぶん目標点より少し先になります。右上は PAPI の見え方（米国の AIM 2-1-2）');
     },
     goAroundProfile() {
       // a go-around from short final (side view, not to scale): AFH 3C chapter 9 Power → Attitude → Configuration with the published
@@ -1490,14 +1510,14 @@
       // the road to the first solo and beyond under 14 CFR part 61 (61.83, 61.23, 61.87(a)(b)(c)(d)(n)(o)(p), 61.93, 61.95) and,
       // at a part 141 school, the stage checks of 141.85
       const steps = [
-        ['前提：学生操縦士証明と航空身体検査証明', ['16 歳以上・英語を読み・話し・書き・理解できる（61.83）', 'ふつうは第 3 種以上の航空身体検査証明も（61.23）'], C.mut],
-        ['ソロ前の学科テスト', ['規則・空域・機体の特性。間違いは教官と見直す（61.87(b)）'], C.cy],
-        ['15 項目の飛行訓練と、教官が認める技量', ['離着陸・失速・緊急・ゴーアラウンドなど（61.87(c)(d)）'], C.cy],
-        ['段階審査（訓練校）', ['学校の課程で決めた審査（Part 141：141.85）'], C.cy],
-        ['ログブックへの承認（endorsement）', ['型式ごと・訓練をした教官が・90 日以内（61.87(n)）'], C.am],
-        ['初めてのソロ', ['乗っているのは自分 1 人（61.87(a)）'], C.gr],
-        ['90 日ごとに承認を更新', ['教官がログブックに書き足す（61.87(p)）'], C.am],
-        ['その先のソロ（それぞれ別の承認）', ['25 NM 以内のほかの空港・クロスカントリー（61.93）', '夜（61.87(o)）・Class B 空域（61.95）'], C.vi]];
+        ['前提：学生操縦士証明と航空身体検査証明', ['16 歳以上・英語を読み・話し・書き・理解できる', 'ふつうは第 3 種以上の航空身体検査証明も', '（米国の 61.83・61.23）'], C.mut],
+        ['ソロ前の学科テスト', ['規則・空域・機体の特性。間違いは教官と見直す', '（米国の 61.87(b)）'], C.cy],
+        ['15 項目の飛行訓練と、教官が認める技量', ['離着陸・失速・緊急・ゴーアラウンドなど', '（米国の 61.87(c)(d)）'], C.cy],
+        ['段階審査（訓練校）', ['学校の課程で決めた審査（米国の Part 141：141.85）'], C.cy],
+        ['ログブックへの承認（endorsement）', ['型式ごと・訓練をした教官が・90 日以内（米国の 61.87(n)）'], C.am],
+        ['初めてのソロ', ['乗っているのは自分 1 人（米国の 61.87(a)）'], C.gr],
+        ['90 日ごとに承認を更新', ['教官がログブックに書き足す（米国の 61.87(p)）'], C.am],
+        ['その先のソロ（それぞれ別の承認）', ['25 NM 以内のほかの空港・クロスカントリー（米国の 61.93）', '夜（米国の 61.87(o)）・Class B 空域（米国の 61.95）'], C.vi]];
       let s = '', y = 6;
       steps.forEach(([title, lines, c], i) => {
         const h = 30 + lines.length * 16;
@@ -1507,7 +1527,7 @@
         y += h;
         if (i < steps.length - 1) { s += A(200, y + 1, 200, y + 13, C.mut, 2); y += 14; }
       });
-      return svg(400, y + 6, s, '図：初めてのソロまでの道のりと、その先（14 CFR Part 61 の要点。訓練校の段階審査は Part 141）。承認は学生操縦士証明ではなく、ログブックに書きます（61.87(n)）');
+      return svg(400, y + 6, s, '図：初めてのソロまでの道のりと、その先（米国の 14 CFR Part 61 の要点。訓練校の段階審査は Part 141）。承認は学生操縦士証明ではなく、ログブックに書きます（米国の 61.87(n)）');
     },
     // ---------------------------------------------------------------- 第 18 章 navp（地図・飛行計画）
     sectionalSymbols() {
@@ -1543,9 +1563,9 @@
       s += TL(LX + 14, LY + 26, ['LAB', 'CT – 118.3', `${elev} L ${rwy} 122.95`], { c: BL, b: 1, a: 'start', fs: 12, lh: 16 });
       s += tag(LX + 22, LY - 14, '①') + tag(LX + 92, LY + 38, '②') + tag(LX + 122, LY + 54, '③') + tag(LX - 124, LY - 92, '④') + tag(ax - 16, ay - 2, '⑤') + tag(314, 30, '⑥') + tag(vx + 36, vy - 8, '⑦') + tag(46, 252, '⑧');
       s += A(380, 330, 380, 300, C.mut, 2) + T(380, 344, '北', { c: C.mut, fs: 12 }) + T(8, 344, '模式図（LAB は架空）・NOT FOR NAVIGATION', { c: C.mut, a: 'start', fs: 12, halo: 1 });
-      const key = [['①', ['空港の記号。青は管制塔あり（マゼンタはなし）。上の ★ は回転灯台']], ['②', ['CT – 118.3：管制塔の周波数', '（CT の後に ★ があれば、管制塔は時間を限って運用）']],
+      const key = [['①', ['空港の記号。青は管制塔あり（マゼンタはなし）。', '上の ★ は回転灯台']], ['②', ['CT – 118.3：管制塔の周波数', '（CT の後に ★ があれば、管制塔は時間を限って運用）']],
         ['③', [`${elev}：標高（ft）・L：夜の滑走路灯・${rwy}：最長の滑走路`, `（${(Math.round(lenFt / 10) * 10).toLocaleString('en-US')} ft を百 ft 単位で）・122.95：UNICOM`]], ['④', [`マゼンタの実線：Class C 空域。上が上限、下が下限`, `（百 ft・MSL。${top}＝${(top * 100).toLocaleString('en-US')} ft、SFC＝地表）`]],
-        ['⑤', [`障害物（LAB-A の塔）：${elev + 330} は海面から、(330) は地面からの高さ（ft）`]], ['⑥', ['MEF：その区画でいちばん高いものに余裕を足した高さ', '（2⁵ ＝ 2,500 ft MSL。図の外に高い塔がある想定）']], ['⑦', ['VOR のコンパスローズ（0° が磁北）と、名前・周波数・識別符号']], ['⑧', [`等偏差線：真北と磁北の差（この教材は ${PH.MAGVAR_W}°W）`]]];
+        ['⑤', [`障害物（LAB-A の塔）：${elev + 330} は海面から、`, '(330) は地面からの高さ（ft）']], ['⑥', ['MEF：その区画でいちばん高いものに余裕を足した高さ', '（2⁵ ＝ 2,500 ft MSL。図の外に高い塔がある想定）']], ['⑦', ['VOR のコンパスローズ（0° が磁北）と、名前・周波数・識別符号']], ['⑧', [`等偏差線：真北と磁北の差（この教材は ${PH.MAGVAR_W}°W）`]]];
       let y = 372;
       for (const [n, lines] of key) { s += tag(14, y - 4, n) + TL(30, y, lines, { c: C.ink, a: 'start', fs: 12, lh: 16 }); y += lines.length * 16 + 5; }
       return svg(400, y + 4, s, '図：セクショナルチャートの記号（架空の LAB 空港のまわりを描いた模式図。記号は FAA Chart Users\' Guide のもの）。本物のチャートは 56 日ごとに改訂されるので、いつも最新の版を使います');
@@ -1664,7 +1684,7 @@
         return A(X(ax), Y(ay), X(fx) + 2, Y(fy) + 2, C.vi, 2.5) + pth(`M${X(fx)} ${Y(fy)} Q${f(X(fx - 0.12 * k))} ${f(Y(y0))} ${f(X(x0))} ${f(Y(y0))} L${f(X(x1))} ${f(Y(y1))} A${f(rr)} ${f(rr)} 0 1 0 ${f(X(x2))} ${f(Y(y2))} L${f(X(x3))} ${f(Y(y3))} L${X(fx) - 4} ${Y(fy)}`, C.vi);
       });
       s += TL(8, 352, ['ダイレクト：フィックスで右旋回してアウトバウンドへ', 'ティアドロップ：アウトバウンドから 30° 内側へ 1 分 → 右旋回', 'パラレル：外側をアウトバウンドと平行に 1 分 → 左旋回で戻る'], { c: C.ink, a: 'start', fs: 12, lh: 17 });
-      return svg(400, 396, s, '図：待機経路（課目 i4：LAB VOR へインバウンド 090°・右回り。北が上の模式図）。インバウンドはフィックスで終わります。入り方は、フィックスに着いたときの機首方位で 3 つの区域から選びます（AIM 5-3-8）。大きさは無風・100 kt の 1 分と標準旋回');
+      return svg(400, 396, s, '図：待機経路（課目 i4：LAB VOR へインバウンド 090°・右回り。北が上の模式図）。インバウンドはフィックスで終わります。入り方は、フィックスに着いたときの機首方位で 3 つの区域から選びます（米国の AIM 5-3-8）。大きさは無風・100 kt の 1 分と標準旋回');
     },
     labIlsChart() {
       // a schematic of a fictional approach chart for LAB RWY 36, laid out like the parts an approach chart has (IFH chapter 1):
@@ -1743,8 +1763,10 @@
       s += L(X(0), H(R.elevFt), 394, H(R.elevFt), C.ink, 4) + T(394, H(R.elevFt) + 16, '滑走路', { c: C.mut, fs: 12, a: 'end' });
       const gp = (ang, d) => R.elevFt + Math.tan(ang * DEG) * (d + gp0) * 1852 * PH.FT;
       for (const [a, w, dsh] of [[3.7, 1.2, '4 3'], [2.3, 1.2, '4 3'], [3, 2.5, '']]) { const dm = a === 3 ? faf : Math.min(faf, (2050 - R.elevFt) / (Math.tan(a * DEG) * 1852 * PH.FT) - gp0); s += L(X(-gp0), H(R.elevFt), X(dm), H(gp(a, dm)), C.gr, w, dsh); }
-      const fd = (2150 - R.elevFt) / (Math.tan(9 * DEG) * 1852 * PH.FT) - gp0;
-      s += L(X(-gp0), H(R.elevFt), X(fd), H(2150), C.rd, 1.5, '2 4') + T(X(fd) - 4, H(2150) + 2, '偽の道（例 9°）', { c: C.rd, fs: 12, a: 'end' });
+      // false courses (IFH Addendum B): a false null near 12° that looks like a steeper glide path, and a signal reversal near 9°
+      const fd = (h, a) => (h - R.elevFt) / (Math.tan(a * DEG) * 1852 * PH.FT) - gp0, f12 = fd(2150, 12), f9 = fd(1700, 9);
+      s += L(X(-gp0), H(R.elevFt), X(f12), H(2150), C.rd, 1.5, '6 4') + T(X(f12) - 4, H(2150) + 2, '12° 付近：本物に似た偽の道', { c: C.rd, fs: 12, a: 'end', halo: 1 });
+      s += L(X(-gp0), H(R.elevFt), X(f9), H(1700), C.rd, 1.2, '2 4') + T(X(f9) - 4, H(1700) + 4, '9° 付近：指示が逆になる', { c: C.rd, fs: 12, a: 'end', halo: 1 });
       s += L(14, H(2000), X(faf), H(2000), C.ink, 2) + planeSide(44, H(2000) - 4, 0.3) + `<circle cx="${X(faf).toFixed(1)}" cy="${H(2000).toFixed(1)}" r="4.5" fill="${C.am}"/>`;
       s += TL(X(faf) - 6, H(2000) + 20, ['2,000 ft・' + faf.toFixed(1) + ' NM', 'ここで下から会合'], { c: C.am, b: 1, fs: 12, a: 'end', lh: 15 });
       s += T(X(4.2), H(gp(2.3, 4.2)) + 18, '3°（上下 ±0.7°）', { c: C.gr, b: 1, fs: 12 });
@@ -1762,7 +1784,7 @@
         s += u + TL(x + 90, y + 18, [a, b], { c: C.ink, fs: 12, a: 'start', lh: 17 });
       });
       s += NFN(392, 222);
-      return svg(400, 614, s, '図：ILS（計器着陸装置）を上と横から見た模式図と、針の読み方。ローカライザーは左右、グライドスロープは上下のずれを示します。数字は架空の I-LAB（シミュレータのデータ）と課目 i5 の値');
+      return svg(400, 614, s, '図：ILS（計器着陸装置）を上と横から見た模式図と、針の読み方。ローカライザーは左右、グライドスロープは上下のずれを示します。グライドスロープの上には約 6°〜12° に偽のコースができ、9° 付近では指示が逆になり、12° 付近では本物に似た急な道になります（6° 付近は両方。IFH 追補 B）。チャートの高度で下から会合すれば出会いません。数字は架空の I-LAB（シミュレータのデータ）と課目 i5 の値');
     },
     npProfile() {
       // a non-precision approach seen from the side (AIM 5-4-5, AC 120-108): from the final approach fix at 2,000 ft (5.9 NM, as on
@@ -1800,14 +1822,16 @@
       // so losing the left engine leaves the longest arm: the left engine is critical
       const panel = (cy, k, title, cw, lines) => {
         const ex = 24 * k, pr = 12 * k, py = cy - 26 * k, ya = py - 34 * k - 6;
-        let s = T(200, cy - 62 * k - 28, title, { c: C.ink, b: 1, fs: 13 }) + planeTop(200, cy, k, { twin: true });
+        let s = T(200, cy - 62 * k - 34, title, { c: C.ink, b: 1, fs: 13 }) + planeTop(200, cy, k, { twin: true });
         // per engine: the rotation seen from behind and the side of the descending blade (where the thrust line sits)
         [[-1, 1], [1, cw ? -1 : 1]].forEach(([side, rot]) => {
           const x = 200 + side * ex, tx = x + rot * pr * 0.55;
-          s += A(tx, py + 6, tx, py - 30 * k, C.gr, 3) + `<circle cx="${tx.toFixed(1)}" cy="${py.toFixed(1)}" r="3.5" fill="${C.gr}"/>` + L(200, ya, tx, ya, C.am, 1.5, '3 3');
+          s += A(tx, py + 6, tx, py - 30 * k, C.gr, 3) + `<circle cx="${tx.toFixed(1)}" cy="${py.toFixed(1)}" r="3.5" fill="${C.gr}"/>`;
+          // the arm: from the centre line to this engine's thrust line (a gap at the centre, a tick at each end)
+          s += L(200 + side * 3, ya, tx, ya, C.am, 2) + L(tx, ya - 5, tx, ya + 5, C.am, 2);
           s += TL(200 + side * (ex + 36 * k), py - 4, [rot > 0 ? '右回り' : '左回り', '（後ろから）'], { c: C.cy, b: 1, fs: 12, lh: 15 });
         });
-        s += T(200, ya - 6, '推力の腕', { c: C.am, b: 1, fs: 12 });
+        s += L(200, ya - 9, 200, ya + 9, C.mut, 1.5) + T(200, ya - 12, cw ? '推力の腕：左右同じ' : '推力の腕：右が長い', { c: C.am, b: 1, fs: 12 });
         return s + TL(200, cy + 58 * k, lines, { c: C.ink, fs: 12, lh: 17 });
       };
       let s = panel(140, 1.45, 'Seminole：左右のプロペラが逆に回る', true, ['下がる羽根（推力が大きい側）が、左右とも内側', '→ どちらが止まっても、残った推力の腕は同じ', '→ 臨界発動機がない']);
@@ -1887,7 +1911,7 @@
       let s = f.s + `<path d="M${f.X(0)} ${f.Y(100)} ${pts.map(([x, y]) => `L${x.toFixed(1)} ${y.toFixed(1)}`).join(' ')} L${f.X(12)} ${f.Y(100)} Z" fill="${C.am}" fill-opacity="0.12"/>`;
       s += P([[f.X(0), f.Y(12)], [f.X(0), f.Y(100)], [f.X(12), f.Y(100)]], C.cy, 3) + P(pts, C.am, 3);
       s += T(f.X(1.2), f.Y(100) - 8, 'プロペラ機（教材のモデルの Archer）：すぐ増える', { c: C.cy, b: 1, fs: 12, a: 'start' });
-      s += TL(f.X(7.4), f.Y(46), ['ジェット機（アイドルから）：', '全開まで、長いと 10 秒ほど'], { c: C.am, b: 1, fs: 12, a: 'start', lh: 15 });
+      s += TL(f.X(6.2), f.Y(46), ['ジェット機（アイドルから）：', '全開まで、長いと 10 秒ほど'], { c: C.am, b: 1, fs: 12, a: 'start', lh: 15 });
       s += TL(f.X(1.2), f.Y(76), ['この差の分だけ、', '早めに出力を使う'], { c: C.ink, fs: 12, a: 'start', lh: 15 });
       return svg(400, 290, s, '図：スロットルを全開にしてから推力が増えるまで（模式図）。ジェットエンジンはアイドルからの加速が遅く、全開まで、長いと 10 秒ほどかかります（AFH 第 16 章）。だから、出力は早めに・先回りして使います');
     },

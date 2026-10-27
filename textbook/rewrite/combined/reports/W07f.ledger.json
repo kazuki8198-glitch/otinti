@@ -1,0 +1,221 @@
+{
+ "unit": "W07f",
+ "patches": [
+  {
+   "id": "T.aero.T-2",
+   "status": "fixed",
+   "where": "flight-lab/src/book-1.js aero.vn（本文。W07a）・flight-lab/src/book-figs.js FIG.vn（キャプションと図の中の「+3.8 G（制限荷重倍数）」。W07f）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：図 vn のキャプションを「上と下の線（制限荷重倍数）を超えると、機体が変形・損傷する危険（制限の 1.5 倍の終極荷重を超えると壊れる危険）」に、図の中の「構造の限界」を「制限荷重倍数」に直した（14 CFR 23.2230。W07a が確かめた）。本文と図がそろったので閉じた"
+  },
+  {
+   "id": "R.vn-line",
+   "status": "fixed",
+   "where": "flight-lab/src/book-1.js aero.vn（W07a）・flight-lab/src/book-figs.js FIG.vn のキャプション（W07f）",
+   "by": "W07f",
+   "note": "W07f：図 vn の説明文も「変形・損傷の危険／1.5 倍の終極荷重で壊れる危険」にそろえた（T.aero.T-2 と同じ）"
+  },
+  {
+   "id": "T.aero.T-8",
+   "status": "fixed",
+   "where": "flight-lab/src/book-figs.js FIG.vn（失速の線を Vs1 から描き、角の約 97 kt と Va の差をキャプションに）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：失速の線を Vs1 50 KIAS（Archer III POH VB-2266 3.3「Stall Speeds 2550 lbs (0° Flaps) 50 KIAS」、教材値 FL.physics の pa28.v.s1 も 50）から n＝(V/50)² で描き、+3.8 G に届く約 97 kt（50×√3.8）に印を付けた。POH の Va（VO）113 KIAS（2.3）がそれより大きい理由をキャプションに書いた：旧 14 CFR 23.335(c)(1)「VA may not be less than VS√n（VS は計算上の失速速度）」・同条の頭書「the selected design airspeeds are equivalent airspeeds (EAS)」（eCFR の 2017-01-01 の版で確かめた）"
+  },
+  {
+   "id": "T.aero.T-6",
+   "status": "fixed",
+   "where": "flight-lab/src/quiz.js q_perf 9 問目（選択肢と理由）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：Archer III POH VB-2266（andrews.edu の公開の写し、2013-04-16 版）2.3「Maximum Operating Maneuvering Speed (VO) At 2550 lbs. G.W. 113 KIAS (111 KCAS)・At 1917 lbs. G.W. 98 KIAS (96 KCAS)」と 3.3 で確かめた。選択肢を「Archer III の POH：2,550 lb で 113 KIAS、1,917 lb で 98 KIAS」に、理由に「POH 2.3。POH は同じ速度を VO と呼ぶ」。MGA の公開チェックリストは 2025-01-08 版が 89 KIAS、2024-03-25 版が 98 KIAS で食い違うので、一次資料の POH を正とした。問の id と順は変えていない"
+  },
+  {
+   "id": "T.aero.T-12",
+   "status": "fixed",
+   "where": "flight-lab/src/book-figs.js FIG.leftTurning（右の 4 つの箱を x 226〜394 に広げ、2 行目を 2 行に。推力の札とらせん後流の札を箱の外へ）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：描画で確かめた：figshot.mjs（390 px）で文字の箱の重なり・はみ出しなし、W01 の check-figures.mjs の text-may-overflow 3 → 0"
+  },
+  {
+   "id": "T.aero.T-13",
+   "status": "fixed",
+   "where": "flight-lab/src/book-figs.js FIG.dragCurve（線の凡例を上の空いた帯へ、「抗力が最小」を点の上へ、右の余白を 22 に）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：描画で確かめた：下の 2 行と破線の重なりがなくなり、check-figures.mjs の text-near-edge（140 の目盛り）1 → 0"
+  },
+  {
+   "id": "T.aero.T-14",
+   "status": "fixed",
+   "where": "flight-lab/src/book-figs.js FIG.axes（「横軸 → ピッチ」を主翼の上へ 16 動かした）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：描画で確かめた：左のエルロンと重ならない"
+  },
+  {
+   "id": "T.systems.T1",
+   "status": "fixed",
+   "where": "flight-lab/src/book-photos.js・flight-lab/PHOTO-CREDITS.md（lycoming のクレジット）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：Commons File:LycomingO-360.JPG の元のページ（2026-10-27）：ライセンスの欄は {{PD-self}}、Permission の欄に {{GFDL|migration=relicense}}。API の extmetadata も LicenseShortName「Public domain」。credit を license「Public domain (PD-self)」・licenseUrl https://commons.wikimedia.org/wiki/Template:PD-self に直し、PHOTO-CREDITS.md を photo.py の credits で作り直した（画像のバイトは変えていない）"
+  },
+  {
+   "id": "R.o360-license",
+   "status": "fixed",
+   "where": "flight-lab/src/book-photos.js・flight-lab/PHOTO-CREDITS.md（lycoming：Public domain (PD-self)）",
+   "by": "W07f",
+   "note": "W07f：T.systems.T1 と同じ。元のページで PD-self を確かめた（2026-10-27）"
+  },
+  {
+   "id": "T.systems.T2",
+   "status": "fixed",
+   "where": "flight-lab/src/book-figs.js FIG.fuelSystem（セレクターの札を 3 行にして管の下へ、下の流れを 40 下げた）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：描画で確かめた：幅 400 の中に収まる（check-figures.mjs の text-may-overflow 1 → 0）。セレクターが OFF・L・R の 3 つ（BOTH なし）は POH VB-2266 7.15 燃料系統の説明「three positions: OFF, L (left tank), and R (right tank)」で確かめた"
+  },
+  {
+   "id": "T.systems.T3",
+   "status": "fixed",
+   "where": "flight-lab/src/book-figs.js FIG.positionLights（機体を右へ動かし扇形の半径を 46 に。衝突防止灯の文に「米国の 14 CFR 91.209」と機長が消せる例外）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：描画で確かめた：赤い扇形が図の中に収まる（check-figures.mjs の shape-outside 1 → 0）。91.209(b) の「need not be lighted when the pilot-in-command determines ... in the interest of safety」を eCFR（2026-10-01 の版）で確かめた"
+  },
+  {
+   "id": "T.systems.T4",
+   "status": "fixed",
+   "where": "flight-lab/src/book-1.js sys.engine（本文。W07a）・flight-lab/src/book-figs.js FIG.engineFlow のキャプション（W07f）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：図のキャプションを「2 つのマグネトーで点火する Archer では、電気系統が止まってもエンジンは止まりません（電子点火や FADEC の機体は違います）」に。PHAK 25C 第 7 章「A magneto ... generate[s] an electrical current completely independent of the aircraft’s electrical system」「FADEC systems eliminate the need for magnetos」で確かめた。本文と図がそろったので閉じた"
+  },
+  {
+   "id": "R.engine-without-electric",
+   "status": "fixed",
+   "where": "flight-lab/src/book-1.js sys.engine（W07a）・flight-lab/src/book-figs.js FIG.engineFlow のキャプション（W07f）",
+   "by": "W07f",
+   "note": "W07f：図の説明文にも範囲（2 つのマグネトーの Archer）を書いた（T.systems.T4 と同じ）"
+  },
+  {
+   "id": "T.systems.T8",
+   "status": "fixed",
+   "where": "flight-lab/src/book-figs.js FIG.elecSystem（スターターをバスの負荷の列から外し、マスターから「スターター：接触器を通る・START の間だけ」の箱に。キャプションも）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：PHAK 25C 第 7 章 Starting System「the starter will not operate until the starting solenoid is energized by the starter switch」、POH VB-2266 7.17「the primary battery supplies electrical power to the starter, as well as all items on the Essential Bus ...」で確かめた。POH には始動の回路のブレーカー ENG START（Row 1, Col. 10）があるので、図に「ブレーカーなし」とは書いていない"
+  },
+  {
+   "id": "T.instruments.E-T3",
+   "status": "fixed",
+   "where": "flight-lab/src/book-figs.js FIG.compassErrors（題に「模式図」、下に実物の見え方の帯「E 6 3 N 33 30 W」と「目盛りは方位指示器と逆の並び」、キャプション）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：PHAK 25C 第 8 章（p.8-27）「When the pilot is flying north ... “33,” which represents 330° (west of north), is to the right of north. The reason for this apparent backward graduation ...」で確かめた。描画で確かめた（390 px）"
+  },
+  {
+   "id": "T.instruments.E-T4",
+   "status": "fixed",
+   "where": "flight-lab/src/book-figs.js FIG.scan（凡例の 2 行目を 2 行に、高さ 386 → 402）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：描画で確かめた：check-figures.mjs の text-may-overflow 1 → 0"
+  },
+  {
+   "id": "T.ifr.E-T6",
+   "status": "fixed",
+   "where": "flight-lab/src/book-figs.js FIG.scan（凡例の 2 行目を 2 行に）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：T.instruments.E-T4 と同じ直し"
+  },
+  {
+   "id": "T.wb-perf.T1",
+   "status": "fixed",
+   "where": "flight-lab/src/book-1.js perf.tol（本文。W07a）・flight-lab/src/book-figs.js FIG.takeoffDistance（見出し「50 ft を越える距離＝地上滑走＋空中の区間」と「POH の 2 つの数字は足さない」。W07f）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：見出しを直し、キャプションの AIM に「米国の」。AIM 7-6-8（現行 HTML）の「70 percent of lift-off airspeed by the midpoint of the runway」で中間点の目安も確かめた。本文と図がそろったので閉じた"
+  },
+  {
+   "id": "T.weather.T4",
+   "status": "fixed",
+   "where": "flight-lab/src/book-figs.js FIG.clouds（凡例の下に「高さは中緯度（温帯）の目安（AWH 表 12-3）。極地では低く、熱帯では高くなります」、キャプションに「中緯度・温帯の値」）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：AWH 2026（FAA-H-8083-28B）表 12-3「Approximate Height of Cloud Bases Above the Surface」の Temperate Regions（下層 Surface–6,500 ft・中層 6,500–23,000 ft・上層 16,500–40,000 ft）と、極地・熱帯の値が違うことを確かめた"
+  },
+  {
+   "id": "T.law.q_radio",
+   "status": "fixed",
+   "where": "flight-lab/src/quiz.js q_radio 13 問目（問・正解の選択肢・理由）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：AIM 6-4-1（現行 HTML）の 91.185(b) の引用と注「it is not intended that the requirement to “land as soon as practicable” be construed to mean “as soon as possible.”」で確かめた。正解を「7600 にし、VFR を続けて、無理のない範囲で早めに（as soon as practicable）着陸する」に、問の括弧を「AIM 6-4・14 CFR 91.185(b) の考え方」に（91.185 は IFR の機の規則）、理由に 7600（AIM 6-4-2）。日本の第 206 条の囲みは R.nordo-landing（W08）。問の id と順は変えていない"
+  },
+  {
+   "id": "T.human.T10",
+   "status": "fixed",
+   "where": "flight-lab/src/quiz.js q_crm 3 問目（問・正解の選択肢・理由）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：問を「TEM の対策で、脅威を予測して「防ぐ」にあたるものは？」に、理由を本文 crm.tem（W07c がそろえた）と同じ「脅威は予測して防ぐ・エラーは見つけて直す・望ましくない機体の状態は立て直す」に。本文の言い方と学科テストの言い方が 1 つになったので閉じた（R.tem-words は W32 の節が残るので W07c の行のまま）"
+  },
+  {
+   "id": "T.ifr.E-T1",
+   "status": "fixed",
+   "where": "flight-lab/src/book-4.js ifr.ils（本文。W07b）・flight-lab/src/book-figs.js FIG.ils（偽のコースを 12° 付近の「本物に似た偽の道」と 9° 付近の「指示が逆になる」に分け、キャプションに 6°〜12° と下から会合すれば出会わないこと。W07f）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：IFH（FAA-H-8083-15B）Addendum B（2019-11）「false courses occur at angles between approximately 6° and 12° ... signal reversals will occur at 9°, false nulls will occur at 12°, and both may occur around 6°」「if the approach is conducted at the altitudes specified on the appropriate approach chart (GS captured from below), these false courses are not encountered」で確かめた。本文と図がそろったので閉じた"
+  },
+  {
+   "id": "T.multi.T-1",
+   "status": "fixed",
+   "where": "flight-lab/src/quiz.js q_me 8 問目（問いを作り直した）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：問いを「AFH によると、低い羽根の角度で速く回される（風車状態の）プロペラの抗力は、どれくらいになることがある？」→ 正解「機体全体の有害抗力と同じくらい」に。AFH 3C 第 13 章「A propeller windmilling at high speed in the low range of blade angles can produce parasite drag as great as the parasite drag of the entire airframe」「the drag from a single, feathered propeller is a small part the airplane’s total drag」で確かめた（本文 me.drag と同じ）。理由に、ガイドの抗力のデモの表は形態を足していった合計の目安と書いた。問の id と順は変えていない"
+  },
+  {
+   "id": "T.multi.T-6",
+   "status": "fixed",
+   "where": "flight-lab/src/book-figs.js FIG.counterRotation（推力の腕を中心線の印から左右の 2 本に分け、端に印。題を「推力の腕：左右同じ／右が長い」に）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：描画で確かめた（390 px）。腕の長さは前と同じ計算（下がる羽根の側の推力線）"
+  },
+  {
+   "id": "T.multi.T-2",
+   "status": "fixed",
+   "where": "flight-lab/src/book-figs.js FIG.vmcFactors（表の注と見出し）",
+   "by": "W07f",
+   "verified": true,
+   "note": "W07f：注を「旧 23.149 では、Vmc は最も不利な重量と重心の位置で決める（CAR 3 や初期の Part 23 で認証された機体では、Vmc を決める重量は決められていない）。軽いほど Vmc は高い。密度高度は認証の条件ではなく、いろいろな高度で試験した結果を海面の 1 つの値に直して公表する」に（W07c の確かめた文）。旧 14 CFR 23.149(b)「VMC must be determined with the most unfavorable weight and center of gravity position」（eCFR 2017-01-01 の版）、AFH 3C 第 13 章「Historically, 14 CFR part 23 calls for VMC to be determined at the most unfavorable weight. For twins certificated under CAR 3 or early 14 CFR part 23, the weight ... was not specified. VMC increases as weight is reduced.」「the results of those tests are then extrapolated to a single, sea level value」で確かめた。見出しと注の 14 CFR に「米国の」"
+  },
+  {
+   "id": "R.dissipating-stage",
+   "status": "fixed",
+   "where": "flight-lab/src/book-2.js wx.ts（本文。W07a）・flight-lab/src/book-figs.js FIG.thunderstormLife（消散期の札「雨の中に強い下降気流（まだ危険）」とキャプション。W07f）",
+   "by": "W07f",
+   "note": "W07f：裁定「図に注意を足す」のとおり、消散期の札とキャプションに「雨の中に強い下降気流」を書いた。AWH 2026 22.3「The dissipating stage is marked by a strong downdraft embedded within the area of precipitation」で確かめた"
+  },
+  {
+   "id": "R.deviation-sign",
+   "status": "fixed",
+   "where": "flight-lab/src/book-4.js nav.plan（本文。W07b）・flight-lab/src/book-figs.js FIG.windTriangle（「自差 2°W」とキャプション）・flight-lab/src/quiz.js q_nav 1 問目（「自差 2°W」。W07f）",
+   "by": "W07f",
+   "note": "W07f：図の「自差 ＋2°」を「自差 2°W」、キャプションに「偏差も自差も W は足し、E は引く」。学科テスト q_nav 1 問目も「自差 2°W」に（答え 258° は同じ）。W07b の頼みのとおり図が直ったので閉じた。navb.north と kiso08.5 から書く節（W18）は FL.terms の deviation と nav.plan の書き方に合わせる"
+  },
+  {
+   "id": "R.tem-words",
+   "by": "W07f",
+   "note": "W07f：図 FIG.tem（flight-lab/src/book-figs.js）の左の 3 つの箱を「予測して防ぐ（脅威）・見つけて直す（エラー）・立て直す（UAS）」に、下の行を「脅威は予測して防ぐ・エラーは見つけて直す・UAS は立て直す」にそろえた。学科テスト q_crm 3 問目も同じ言い方（T.human.T10）。残りは kiso10.23 から書く節（W32）"
+  }
+ ]
+}

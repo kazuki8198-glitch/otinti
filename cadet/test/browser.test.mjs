@@ -377,6 +377,16 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     const hud = await ev(() => { const h = document.querySelector('#fhud'), vis = (q) => { const e = h.querySelector(q); return !!e && getComputedStyle(e).display !== 'none' && !e.hidden; }; return { k4: h.classList.contains('k4'), radio: vis('.dh-radio'), task: vis('.dh-task'), text: h.querySelector('.dh-radio').textContent }; });
     assert.ok(hud.k4 && hud.radio && hud.task, JSON.stringify(hud));
     assert.notEqual(await ev(() => window.__cadet.career.screen('sim')), blank, 'the field drawn on the device room\'s screen');
+    // (its panels at the top alone: no guide, no small copy of the screen — Z shows it large, Z again takes it away)
+    await ev(() => window.__cadet.simulate(0.6));
+    await g.page.waitForFunction(() => !window.__cadet.career.cards());          // (the day's card first: keys wait for it)
+    assert.equal(await ev(() => document.querySelector('#guide').hidden), true, 'k4: no guide over its panels');
+    assert.equal(await ev(() => getComputedStyle(document.querySelector('#hint')).opacity), '0', 'k4: the mouse free for its panel, no "click to begin"');
+    assert.equal((await ev(() => window.__cadet.career.screenCopy())).on, false, 'k4: no small copy');
+    await g.page.keyboard.press('KeyZ');
+    assert.deepEqual(await ev(() => { const c = window.__cadet.career.screenCopy(); return [c.on, c.big]; }), [true, true], 'k4: Z, the screen large');
+    await g.page.keyboard.press('KeyZ');
+    assert.equal((await ev(() => window.__cadet.career.screenCopy())).on, false, 'k4: Z again, away');
     // flown to the first call to Ground; a wrong call: the controller's correction, the same turn again
     const flyTo = (o) => ev((o) => {
       const K = window.__cadet.career.chair; let n = 0;

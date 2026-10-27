@@ -11,8 +11,8 @@ export const FTD_USE = { k1: '午前の 4 つの力が、計器でどう見え�
 // (the class's chapters by their numbers alone: 第 2・3 章)
 const N_OF = { aero: 1, sys: 2, perf: 3, wx: 4, law: 5, radio1: 6, radio2: 7, radio3: 8, radio4: 9, radio5: 10, hf: 11 };
 const classNums = (i) => `第 ${(CLASSES[i] || []).map(id => N_OF[id]).join('・')} 章`;
-// (…and by their names alone: 機体と装備・性能と重量・重心)
-const classWords = (i) => (CLASSES[i] || []).map(id => CHAPTER_SHORT[id]).join('と');
+// (…and by their names alone: 機体と装備・性能と重量・重心 — the day's words that must keep to one line)
+const classWords = (i) => (CLASSES[i] || []).map(id => CHAPTER_SHORT[id]).join('・');
 const classesDone = (st) => CLASSES.filter((_, i) => st.done && st.done[`class:${i}`]).length;
 // the class today (of today's plan), or -1
 const classToday = (sch) => { const c = (sch || []).find(x => x.kind === 'class'); return c ? +c.id : -1; };
@@ -32,8 +32,9 @@ export function dayToast(st, sch, { missed = 0, short = false } = {}) {
     : '今日は日曜、休みです。正面入口から寮に帰れば明日になります';
   const i = classToday(sch);
   if (i >= 0) {
-    const k = CLASS_FTD[i], again = missed ? `　前に間違えた ${missed} 問は、授業の最初にもう一度` : '';
-    return `今日は${classShort(i)}。午後は ${k}「${FTD_TITLES[k]}」${again}（Tab で今日の予定）`;
+    // (a question missed before: said instead of the tablet's hint — one line still)
+    const k = CLASS_FTD[i];
+    return missed ? `今日は${classWords(i)}、午後は ${k}「${FTD_TITLES[k]}」。前の間違い ${missed} 問は、授業の最初に` : `今日は${classShort(i)}。午後は ${k}「${FTD_TITLES[k]}」（Tab で今日の予定）`;
   }
   if ((sch || []).some(x => x.kind === 'exam')) return '今日は第 1 章の学科試験（28 問、80% で合格）。明日は、いよいよ初飛行です（Tab で今日の予定）';
   if ((sch || []).some(x => x.kind === 'ftd')) { const f = sch.find(x => x.kind === 'ftd'); return `今日は訓練装置 ${f.id}「${FTD_TITLES[f.id]}」のやり直しから（Tab で今日の予定）`; }
@@ -54,7 +55,7 @@ export function tomorrowText(st) {
   const n = classesDone(st), next = st.day + 1;
   if (st.chapter !== 'ch1') return '';
   if (isOff(next)) return '明日は日曜、休みです';
-  if (n < CLASSES.length) return `明日は${classShort(n)}、午後は ${CLASS_FTD[n]}`;
+  if (n < CLASSES.length) return `明日は${classWords(n)}、午後は ${CLASS_FTD[n]}`;
   if (!(st.exams && st.exams.written1 && st.exams.written1.pass)) return '明日は学科試験、そして次の日が初飛行です';
   return '明日は、いよいよ初飛行（a1）です';
 }
@@ -87,7 +88,7 @@ export function dormCard(st, sch, { short = false } = {}) {
   // (no class done yet — the first day — nothing to study: to bed, or stay)
   if (!classesDone(st) && (st.chapter === 'prologue' || st.chapter === 'ch1')) return { title: '寮へ帰る', text: short ? shortTomorrow(st) : `${t || '明日から座学です'}。今日はゆっくり休みましょう。`, choices: [{ k: 1, text: '寝る', act: 'early' }, { k: 2, text: 'やっぱり残る', act: 'stay' }] };
   if (short) return { title: '寮へ帰る', text: shortTomorrow(st) || '今日の訓練はここまで', choices: [{ k: 1, text: 'すぐに寝る', act: 'early' }, { k: 2, text: '自習してから寝る（3 問）', act: 'late' }, { k: 3, text: 'やっぱり残る', act: 'stay' }] };
-  const today = i >= 0 ? `今日は${classShort(i)}と ${CLASS_FTD[i]}。` : (sch || []).some(x => x.kind === 'exam') ? '学科試験、おつかれさまでした。' : '';
+  const today = i >= 0 ? `今日は${classWords(i)}と ${CLASS_FTD[i]}。` : (sch || []).some(x => x.kind === 'exam') ? '学科試験、おつかれさまでした。' : '';
   const text = st.chapter === 'ch1' ? `${today}${t ? `${t}。` : ''}自習なら、間違えた問題と期限が来た問題を 3 問（約 3 分）。` : '今日の訓練はここまで。寮に帰って休みます。';
   return { title: '寮へ帰る', text, choices: [{ k: 1, text: 'すぐに寝る', act: 'early' }, { k: 2, text: '少し自習してから寝る（3 問・疲れが少し残る）', act: 'late' }, { k: 3, text: 'やっぱり残る', act: 'stay' }] };
 }

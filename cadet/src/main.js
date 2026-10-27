@@ -842,7 +842,7 @@ async function boot() {
       academy.redraw(room, 'whiteboard', (g, w, h) => drawKeyBoard(g, w, h, pg.board));
       if (screen) autoFace(frameToWorld(screen));
     }
-    const draw = (img, part = 0) => { let r = { parts: 1 }; academy.redraw(room, 'wall_screen', (g, w, h) => { r = drawLecturePage(g, w, h, { ...pg, part }, img); }); return r; };
+    const draw = (img, part = 0) => { let r = { parts: 1 }; academy.redraw(room, 'wall_screen', (g, w, h) => { r = drawLecturePage(g, w, h, { ...pg, part }, img); }); scrT = 0; return r; };
     if (u && u.k === 'figure') {
       // (drawn once loaded, unless another page has been shown since)
       const show = (img) => { if (tok !== pageTok) return; draw(img); point(screen); };
@@ -890,7 +890,7 @@ async function boot() {
     const tut = /^tutor:(\w+)$/.exec(arg || '');
     const q = tut ? null : lessonQuestions[+arg], pic = tut ? TUTOR_PIC : q && q.pic;     // (the lesson's own: its try's)
     if (!pic) return;
-    academy.redraw('sim', 'wall_screen', (g, w, h) => drawPfdPicture(FL, g, w, h, pic, { highlight: tut && tut[1] !== 'all' ? tut[1] : null, title: tut ? 'G1000 型 PFD（主な飛行表示）' : `PFD の読み取り：第 ${+arg + 1} 問` }));
+    academy.redraw('sim', 'wall_screen', (g, w, h) => drawPfdPicture(FL, g, w, h, pic, { highlight: tut && tut[1] !== 'all' ? tut[1] : null, title: tut ? 'G1000 型 PFD（主な飛行表示）' : `PFD の読み取り：第 ${+arg + 1} 問` })); scrT = 0;
     const s = academy.surfaceAt('sim', 'wall_screen'), actor = talkActor;
     if (s && actor && Math.random() < 0.5) { actor.pointAt(frameToWorld(s)); actor.gesture('point'); }
   }
@@ -936,7 +936,7 @@ async function boot() {
     chair = { run, script, stage, practice, atis: {}, screenAt: '', micState: null, mic: null };
     if (!practice && academy.roomOf(walker.framePos.a, walker.framePos.c)?.id === 'sim') placeWalker(DESK.a, DESK.c, DESK.face);
     input.exitLock(); interactor.closeCard(); hud.prompt(null);
-    flightHud.show(true); $('#fhud').classList.add('k4');
+    flightHud.show(true); $('#fhud').classList.add('k4'); document.body.classList.add('k4');      // (body.k4: the walking hint away)
     toast(stage === 1 ? '① 台本を見ながら：印の付いた答えを選んで、流れを覚えます（点数なし）' : stage === 2 ? '② 台詞を隠して：1〜3 で答えます（80% で合格）。H で「なぜ？」' : '③ 本番：時間内に答えます。マイクが ON なら M で声に出せます', 5200);
     stepChair(0);
   }
@@ -947,10 +947,10 @@ async function boot() {
     const v = c.run.view(); if (!v) return;
     const mic = !!settings.get('micRadio');
     dayHud.setRadio(v, { mic }); dayHud.setMic(c.micState);
-    dayHud.setTask({ kicker: `k4 交信のチェアフライト　${v.n} / ${v.of}`, title: v.partJa, text: v.kind === 'op' ? '操作：COM1・高度計・トランスポンダー・呼ぶ前に聞く' : '', keys: [['1〜3', '答える'], ['H', 'なぜ？'], ...(mic ? [['M', '声で答える']] : []), ['Q', 'やめる'], ['Esc', '一時停止']],
+    dayHud.setTask({ kicker: `k4 交信のチェアフライト　${v.n} / ${v.of}`, title: v.partJa, text: v.kind === 'op' ? '操作：COM1・高度計・トランスポンダー・呼ぶ前に聞く' : '', keys: [['1〜3', '答える'], ['H', 'なぜ？'], ...(mic ? [['M', '声で答える']] : []), ['Z', '壁の画面'], ['Q', 'やめる'], ['Esc', '一時停止']],
       flow: c.run.items.map((x, i) => ({ done: i < v.n - 1, cur: i === v.n - 1 })) });
     const at = `${v.id}:${v.com}:${c.atis.letter || ''}:${c.atis.alt || ''}`;
-    if (c.screenAt !== at) { c.screenAt = at; academy.redraw('sim', 'wall_screen', (g, w, h) => drawChairScreen(g, w, h, { v, atis: c.atis, exit: c.script.exit })); }
+    if (c.screenAt !== at) { c.screenAt = at; academy.redraw('sim', 'wall_screen', (g, w, h) => drawChairScreen(g, w, h, { v, atis: c.atis, exit: c.script.exit })); scrT = 0; }
   }
   function chairAnswer(k) {
     const c = chair; if (!c) return;
@@ -985,7 +985,7 @@ async function boot() {
     chair = null;
     if (c.mic) c.mic.stop();
     dayHud.setRadio(null); dayHud.setTask(null); dayHud.setMic(null);
-    $('#fhud').classList.remove('k4'); flightHud.show(false);
+    $('#fhud').classList.remove('k4'); document.body.classList.remove('k4'); flightHud.show(false);
     academy.redraw('sim', 'wall_screen', null);
     return c;
   }
@@ -1807,7 +1807,7 @@ async function boot() {
   // ---- the room's screen, copied small at the top while it is in use — a class (briefing room 2), a device lesson and k4
   // (the device room): the canvas the wall shows (academy.surfaceCanvas), copied twice a second; Z shows it large
   const scr = $('#scrcopy'), scrCv = scr.querySelector('canvas'), scrG = scrCv.getContext('2d');
-  let scrT = 0, scrBig = false;
+  let scrT = 0, scrBig = false, scrRoom = null;
   function screenRoom() {
     if (chair) return 'sim';
     if (!talk || talkWho !== 'lecturer' || !lessonKind) return null;
@@ -1815,16 +1815,18 @@ async function boot() {
   }
   function updateScreenCopy(dt) {
     const room = mode === 'walk' ? screenRoom() : null, cv = room && academy.surfaceCanvas ? academy.surfaceCanvas(room, 'wall_screen') : null;
-    const on = !!cv && !menu.isOpen && !tablet.isOpen && !cards.showing && settings.get('screenCopy') !== false;
-    if (scr.hidden === on) scr.hidden = !on;
-    if (!on) { if (scrBig) { scrBig = false; scr.classList.remove('big'); } return; }
+    // (k4: its panels fill the top — the copy only large, when asked for with Z)
+    const on = !!cv && !menu.isOpen && !tablet.isOpen && !cards.showing && settings.get('screenCopy') !== false && (!chair || scrBig);
+    if (scr.hidden === on) { scr.hidden = !on; document.body.classList.toggle('scr-on', on); }
+    if (!on) { if (scrBig) { scrBig = false; scr.classList.remove('big'); } scrRoom = null; return; }
+    if (room !== scrRoom) { scrRoom = room; scrT = 0; }                   // (another room's screen: copied at once)
     if ((scrT -= dt) > 0) return;
     scrT = 0.5;
     try { scrG.drawImage(cv, 0, 0, scrCv.width, scrCv.height); } catch (e) { /* not drawn yet */ }
   }
-  function toggleScreenCopy() { if (scr.hidden) return false; scrBig = !scrBig; scr.classList.toggle('big', scrBig); scrT = 0; return true; }
+  function toggleScreenCopy() { if (scr.hidden && !(chair && mode === 'walk')) return false; scrBig = !scrBig; scr.classList.toggle('big', scrBig); scrT = 0; return true; }
   function updateGuide(dt, pa, pc) {
-    const on = mode === 'walk' && !talk && !cards.showing && !tablet.isOpen && settings.get('guide') !== false;
+    const on = mode === 'walk' && !talk && !chair && !cards.showing && !tablet.isOpen && settings.get('guide') !== false;
     guideEl.hidden = !on; if (!on) return;
     if ((guideT -= dt) <= 0) { guideT = 0.5; computeGuide(pa, pc); guideEl.querySelector('.g-text').textContent = guideStep.text; jumpOk = !!jumpPlan(); }
     const arrow = guideEl.querySelector('.g-arrow'), dist = guideEl.querySelector('.g-dist');

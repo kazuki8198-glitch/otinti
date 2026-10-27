@@ -95,7 +95,7 @@ async function talk(maxLines = 3000) {
     const line = `${v.name}：${v.text}`;
     if (line !== last) { log(`    ${line.replace(/\n/g, ' ')}`); last = line; }
     if (v.bookOpen) { await key('Escape'); continue; }
-    if (v.typing) { await key('Space', 0.05); }
+    if (v.typing) { await key('Space', 0.05); continue; }                // (the whole line first: then a picture, a choice)
     if (shotIn) for (const [re, name] of shotIn) if (re.test(v.node || '') && !v.typing) await picture(name);
     if (v.choices.length) {
       const m = /^q(\d+)$/.exec(v.node || ''); let i = -1;
@@ -253,7 +253,7 @@ if (which === 'start') {
   await ev((o) => window.__cadet.career.set({ state: { chapter: 'ch1', day: o.day, slot: 'morning', done: o.done, heard: o.heard, walked: o.walked, lastPace: o.pace }, progress: { lessons: o.lessons }, flags: { met_instructor: true, has_tablet: true, met_chief: true, met_dispatcher: true, met_mechanic: true, met_kiryu: true, met_asahi: true, met_mori: true, welcome_done: true, tour_done: true } }), { day, done, heard, walked, lessons, pace });
   const tag = `ch1-${pace}${process.env.SKIP ? '-skip' : ''}-day${day}`;
   if (process.env.SHOT) {
-    shotIn = [[/^c\d+s\d+:u\d+(:\d+)?:(fq|tq)$/, `${tag}-class`], [/^r\d+s\d+/, `${tag}-class-quick`], [/^q0$/, `${tag}-device`], [/^e\d:eq$/, `${tag}-event`]];
+    shotIn = [[/^c\d+s\d+:u\d+(:\d+)?:(fq|tq)$/, `${tag}-class`], [/^r\d+s\d+/, `${tag}-class-quick`], [/^intro$/, `${tag}-device`], [/^e\d:eq$/, `${tag}-event`]];
     shotIn.k4 = `${tag}-k4`;
   }
   log(`# ${day} 日目（第 1 章、${pace}${process.env.SKIP ? '、移動を省く' : ''}）`);

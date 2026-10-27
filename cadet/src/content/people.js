@@ -30,6 +30,8 @@ export const PEERS = ['kiryu', 'asahi', 'mori'];
 const AT = {
   counter: { a: 670.0, c: 254.7, face: { a: 670.0, c: 258.0 } },               // the dispatch counter, behind it
   apron: { a: 640.2, c: 214.6, face: { a: 636.5, c: 208.0 } },                 // on the apron, by today's aircraft's tail
+  // (chapter 1's evening there: the same place, turned to the cadet coming from the academy — the Archer behind him)
+  apronEvent: { a: 640.2, c: 214.6, face: { a: 641.0, c: 222.0 } },
   chiefRoom: { a: 672.6, c: 270.8, face: { a: 668.0, c: 266.0 } },             // the instructors' room
   lobbyFront: { a: 655.0, c: 266.5, face: { a: 655.0, c: 260.0 } },            // the lobby, by the plaque (the welcome)
   classroom: { a: 622.3, c: 256.6, face: { a: 627.0, c: 254.6 } },             // briefing room 2, at the whiteboard
@@ -51,7 +53,7 @@ export const PLACES = AT;
 export function placeOf(id, slot, chapter, what = []) {
   const has = (k) => what.some(x => x.kind === k && (x.slot === slot || (slot === 'morning' && x.slot === 'am')));
   // (chapter 1's evening event: its person stays at their place — career.js CH1_EVENTS)
-  if (slot === 'evening' && !PEERS.includes(id) && what.some(x => x.kind === 'event' && x.who === id)) return id === 'dispatcher' ? AT.counter : id === 'mechanic' ? AT.apron : id === 'chief' ? AT.chiefRoom : null;
+  if (slot === 'evening' && !PEERS.includes(id) && what.some(x => x.kind === 'event' && x.who === id)) return id === 'dispatcher' ? AT.counter : id === 'mechanic' ? AT.apronEvent : id === 'chief' ? AT.chiefRoom : null;
   if (slot === 'evening') return PEERS.includes(id) ? AT[`lounge${PEERS.indexOf(id) + 1}`] : null;
   // (M6) the graduation morning: everyone in the lobby
   if (what.some(x => x.kind === 'graduation')) return id === 'chief' ? AT.lobbyFront : AT[`grad${['kiryu', 'asahi', 'mori', 'lecturer', 'dispatcher', 'mechanic', 'examiner'].indexOf(id) + 1}`] || null;

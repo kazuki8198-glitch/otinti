@@ -14,11 +14,12 @@ export function loadBook() {
   }
   return { FL: globalThis.FL, R: globalThis.TB.make(globalThis.FL) };
 }
-// the book's fixed numbers (updated with each rewritten chapter: textbook/rewrite/PROGRESS.md)
-//  secs, quiz, terms, examples, cautions, refs (source links in the end matter), lessons (end matter), figs (SVG figures),
-//  photos (bk.photo uses), calcs (calculators), simTags (lesson buttons inside "シミュレータで体験" boxes), details (考えてみよう)
-export const COUNTS = { chapters: 27, secs: 154, quiz: 135, terms: 446, examples: 73, cautions: 66, refs: 211, lessons: 66, figs: 95, photos: 30, calcs: 10, simTags: 59, details: 111 };
-export const ORDER = ['intro', 'aero', 'sys', 'perf', 'wx', 'law', 'radio1', 'radio2', 'radio3', 'radio4', 'radio5', 'hf', 'ground', 'ops', 'tl', 'emg', 'solo', 'navp', 'navr', 'navd', 'ifr', 'ifrp', 'me', 'oei', 'crm', 'jet', 'sim'];
+// the book's fixed numbers (updated with each rewritten chapter: textbook/rewrite/PROGRESS.md; each change is logged in
+// textbook/rewrite/combined/TEST-CONSTANTS.md)
+//  parts (FL.book.PARTS: the front part 序部 p0 and parts 1–6), chapters, secs, quiz, terms, examples, cautions,
+//  refs (source links in the end matter), lessons (end matter), figs (SVG figures), photos (bk.photo uses), calcs (calculators), simTags (lesson buttons inside "シミュレータで体験" boxes), details (考えてみよう)
+export const COUNTS = { parts: 7, chapters: 27, secs: 154, quiz: 135, terms: 446, examples: 73, cautions: 66, refs: 211, lessons: 66, figs: 95, photos: 30, calcs: 10, simTags: 59, details: 111 };
+export const ORDER = ['intro', 'sim', 'aero', 'sys', 'perf', 'wx', 'law', 'radio1', 'radio2', 'radio3', 'radio4', 'radio5', 'hf', 'ground', 'ops', 'tl', 'emg', 'solo', 'navp', 'navr', 'navd', 'ifr', 'ifrp', 'me', 'oei', 'crm', 'jet'];
 export const NOTICE = [
   'このページは公開情報を基にした非公式の自主学習用教材です。実機訓練、教官の指示、POH/AFM、SOP、航空法規を優先してください。',
   'ANA の公式ソフトウェア・公式教材ではありません。',

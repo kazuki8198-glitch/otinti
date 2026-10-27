@@ -1,6 +1,6 @@
 # TEXTBOOK — FLIGHT LAB の教科書だけを読むページ
 
-FLIGHT LAB の教科書（全 6 部・27 章・154 節・図 95・写真 30 枚）を、シミュレータやゲームとは別に、**教科書だけを読むための 1 つの HTML ファイル**にしたものです。
+FLIGHT LAB の教科書（全 7 部（序部と第 1〜6 部）・27 章・154 節・図 95・写真 30 枚）を、シミュレータやゲームとは別に、**教科書だけを読むための 1 つの HTML ファイル**にしたものです。
 
 - 出力：`outputs/TEXTBOOK.html`（約 4.4 MB の 1 ファイル。写真は WebP で中に入れています）
 - ダブルクリックで開けて、オフラインですべて読めます。外部のスクリプト・スタイル・フォント・画像は使っていません。
@@ -22,7 +22,7 @@ https://raw.githack.com/kazuki8198-glitch/otinti/bc033078e3be35ac52f6c799112783c
 > NOT FOR NAVIGATION
 
 - 本文の『この教材』『本アプリ』『このシミュレータ』は FLIGHT LAB（シミュレータのアプリ）のことです。キー操作・メニュー・飛行課目・学科テスト・英語交信のページは、このページにはありません。
-- 第 27 章の各節と 1.5「この教材での学び方」の上には「この節は FLIGHT LAB（アプリ）の使い方の説明です。このページでは操作できません。」と出ます。
+- 「この教材で練習する」の章（序部の 2 つめの章）の各節と 1.5「この教材での学び方」の上には「この節は FLIGHT LAB（アプリ）の使い方の説明です。このページでは操作できません。」と出ます。
 - 本文中の「シミュレータで体験」の箱の文はそのまま残しています。課目のボタン「FLIGHT LAB の課目『…』」を押すと、その課目の目的・理由・合格の目安と、FLIGHT LAB（シミュレータ）を開くリンクが出ます（課目を飛ぶのは FLIGHT LAB の「課程表」からです。リンクはこのリポジトリの中で開いたときに `flight-lab/outputs/FLIGHT-LAB.html` を開きます）。章末の「この章に対応する飛行課目」も同じボタンです。
 - 計器は G1000 型です。本文と出典は FLIGHT LAB のものをそのまま載せています。
 
@@ -59,19 +59,20 @@ npm run shots   # 画面の絵を docs/ に撮る（npm test には入ってい�
 - `src/index.html`・`src/style.css`：ページの骨組みと見た目（FLIGHT LAB の `.bk-*` などの見た目を、明るい表示と暗い表示の色で書き直したもの）。
 - `src/render.js`：章・節 → HTML の文字列（DOM を使わないので、Node のテストでも確かめます）。
 - `src/page.js`：目次・検索・札への置き換え・計算機・確認問題・保存・印刷など、DOM につなぐ部分。
-- `test/content.test.mjs`：6 部・27 章・154 節、章の並び、全節が描けること、章末の数（確認問題 135・用語 446・例 73・注意 66・出典 202・飛行課目 66）、図 95・写真 30 など（数は `test/load.mjs` の `COUNTS` に 1 か所でまとめています）。
-- `test/build.test.mjs`：1 ファイル・外部の読み込みなし・全スクリプトの構文・16 ファイルの順番・注意書き・同じ出力になること。
+- `test/content.test.mjs`：7 部（序部 p0 と第 1〜6 部。どの部も空でない）・27 章・154 節、章の並び、全節が描けること、章末の数（確認問題 135・用語 446・例 73・注意 66・出典 211・飛行課目 66）、図 95・写真 30 など（数は `test/load.mjs` の `COUNTS` に 1 か所でまとめています）。
+- `test/build.test.mjs`：1 ファイル・外部の読み込みなし・全スクリプトの構文・17 ファイルの順番・注意書き・同じ出力になること。
 - `test/browser.test.mjs`：すでにこの環境にある Playwright で、`file://` から開いて操作を確かめます（http(s) の要求はすべて止めて数え、0 件であること）。Playwright が見つからないときは skip します。探す順番は、環境変数 `PLAYWRIGHT` → `require('playwright')` → `/opt/node22/lib/node_modules/playwright` です。
 - テストとスクリプトがファイルを書くのは `test-output/`（と、`npm run shots` の `docs/`）だけです。
 
 ## FLIGHT LAB から読み込んでいること
 
-教科書の中身は `../flight-lab/src` のファイルを、ビルドのときにそのまま読み込んでいます（コピーしていません）。列は FLIGHT LAB の共有の列 `flight-lab/src/modules.mjs` から作り、読まないものを `build.mjs` の `FL_LEAVE_OUT` に理由つきで書いています。今は次の 16 ファイルを、この順番で入れます。
+教科書の中身は `../flight-lab/src` のファイルを、ビルドのときにそのまま読み込んでいます（コピーしていません）。列は FLIGHT LAB の共有の列 `flight-lab/src/modules.mjs` から作り、読まないものを `build.mjs` の `FL_LEAVE_OUT` に理由つきで書いています。今は次の 17 ファイルを、この順番で入れます。
 
-`physics.js` → `avionics.js` → `sanford-course.js` → `school.js` → `syllabus.js` → `book-figs.js` → `book-core.js` → `book-terms.js` → `book-jur.js` → `book-photos.js` → `book-1.js` → `book-2.js` → `book-comm.js` → `book-3.js` → `book-4.js` → `book-5.js`
+`physics.js` → `avionics.js` → `sanford-course.js` → `school.js` → `syllabus.js` → `book-figs.js` → `book-core.js` → `book-terms.js` → `book-jur.js` → `book-photos.js` → `book-1.js` → `book-0.js` → `book-2.js` → `book-comm.js` → `book-3.js` → `book-4.js` → `book-5.js`
 
 - `physics.js` が先にないと、book-1/3/4/5 が読み込みのときに止まります。
-- `book-comm.js` の 5 章（無線）は第 12 章（人間の能力）の前に入るので、`book-2.js` の後に読みます。
+- `book-comm.js` の 5 章（無線）は「人間の能力と判断」の章（`hf`）の前に入るので、`book-2.js` の後に読みます。
+- `book-0.js` は序部（p0）を `FL.book.addPart` で第 1 部の前に足します。序部の章は `intro`（`book-1.js`）と `sim`（`book-5.js` が `aero` の前に入れる）です。
 - `school.js`・`syllabus.js` は、飛行課目の名前を出すために入れています。
 - `book-terms.js`（用語の表 `FL.terms`）と `book-jur.js`（日米の対照データ `FL.jur`）はデータだけのファイルです。合本の検査の道具（`textbook/rewrite/combined/tools/`）はこの列で本を読みます。
 

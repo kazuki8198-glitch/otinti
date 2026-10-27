@@ -64,10 +64,12 @@
   const NFN = (x, y, a = 'end') => T(x, y, '模式図・NOT FOR NAVIGATION', { c: C.am, fs: 12, a, b: 1 });
 
   const FIG = {
-    // ---------------------------------------------------------------- 第 1 章 intro（はじめに）
+    // ---------------------------------------------------------------- intro（はじめに）
     courseMap() {
-      // the six parts, top to bottom, with the chapters of each (counted from FL.book, so a new chapter keeps it right)
-      const CH = (FL.book && FL.book.CHAPTERS) || [], rng = p => { const n = CH.filter(c => c.part === p).map(c => c.n); return n.length ? (n.length > 1 ? `第 ${n[0]}〜${n[n.length - 1]} 章` : `第 ${n[0]} 章`) : ''; };
+      // parts 1–6 (after the front part 序部), top to bottom, with the chapters of each: written {ch:id} (the first and the
+      // last chapter of the part, from FL.book), so the numbers come from FL.book.fix when the section is shown and a new
+      // chapter keeps them right (no chapter number is written by hand: DESIGN 6.2 rules 2 and 3)
+      const CH = (FL.book && FL.book.CHAPTERS) || [], rng = p => { const n = CH.filter(c => c.part === p).map(c => c.id); return n.length ? (n.length > 1 ? `{ch:${n[0]}}〜{ch:${n[n.length - 1]}}` : `{ch:${n[0]}}`) : ''; };
       const rows = [['p1', '地上学科', '飛ぶ前に知ること：原理・機体・気象・規則・交信・人間', C.cy, 'book'], ['p2', '基礎操縦（Archer）', '点検・基本操縦・離着陸・緊急操作・ソロ', C.gr, 'single'],
         ['p3', '航法', '地図と飛行計画・電波航法と GPS・目的地変更', C.am, 'map'], ['p4', '計器飛行', '計器だけを見て飛ぶ・計器飛行方式（IFR）', C.vi, 'cloud'],
         ['p5', '多発（Seminole）', 'エンジン 2 つの飛行機・片発停止', C.bl, 'twin'], ['p6', 'チームで飛ぶ', 'TEM・CRM・ジェット機と自動化への準備', C.rd, 'crew']];
@@ -84,7 +86,7 @@
         s += T(22, y + 38, sub, { c: C.ink, a: 'start', fs: 12 });
         if (i < rows.length - 1) s += `<path d="M200 ${y + 47} l-6 0 l6 8 l6 -8 Z" fill="${C.mut}"/>`;
       });
-      return svg(400, 342, s, '図：この教科書の 6 つの部。上から順に、地上で学ぶこと → 単発機の操縦 → 航法 → 計器飛行 → 双発機 → チームで飛ぶ準備、と進みます');
+      return svg(400, 342, s, '図：序部のあとの、この教科書の 6 つの部。上から順に、地上で学ぶこと → 単発機の操縦 → 航法 → 計器飛行 → 双発機 → チームで飛ぶ準備、と進みます');
     },
     courseFlow() {
       // the published basic course, as the public articles describe it (a summary, not an official course chart)
@@ -533,7 +535,7 @@
       // the bank for a standard-rate turn (3°/s): tan φ = 3 · V / 1091 (V true airspeed in kt), and the two rules of thumb in the IFH
       return table(['真対気速度', '標準旋回（3°/秒）のバンク（計算）', '目安①「速度 ÷ 10 ＋ 7」（IFH 第 4 章）', '目安②「速度の 15%」（IFH 第 7 章）'], [70, 90, 100, 120, 150].map(v => [`${v} kt`, `${(Math.atan(3 * v / 1091) / DEG).toFixed(0)}°`, `${Math.round(v / 10 + 7)}°`, `${Math.round(v * 0.15)}°`]));
     },
-    // ---------------------------------------------------------------- 第 3 章 sys（機体と装備）
+    // ---------------------------------------------------------------- sys（機体と装備）
     stabilatorTab() {
       // the Archer's all-moving tail and its anti-servo tab (the tab moves the same way as the trailing edge, so the air
       // pushes back and the control feels heavier); the trim wheel moves the tab's neutral position
@@ -693,7 +695,7 @@
       s += TL(200, 236, ['衝突防止灯（ビーコン・ストロボ）は、付いていれば', 'いつも点灯（米国の 14 CFR 91.209。', '安全のために機長が消すときを除く）'], { c: C.am, fs: 12, lh: 16 });
       return svg(400, 280, s, '図：航空灯（左の翼端が赤、右の翼端が緑、尾が白）。相手の灯火の見え方で、相手の向きがわかります（AFH 第 11 章）');
     },
-    // ---------------------------------------------------------------- 第 4 章 perf（性能と重量・重心）
+    // ---------------------------------------------------------------- perf（性能と重量・重心）
     densityAltitude() {
       // the same field (LAB, 55 ft, altimeter 29.92) on four days: the density altitude by the book's rule of thumb, the model's climb at that density
       const P = FL.physics, s = P.newState({ aircraft: 'pa28' }), vy = ac('pa28').v.y, elev = P.GROUND_FT, isa = 15 - 2 * elev / 1000;
@@ -792,7 +794,7 @@
       s += pt(a, C.rd) + pt(b, C.gr) + pt(c, C.gr) + T(f.X(a.cg) - 2, f.Y(a.w) - 12, '①', { c: C.rd, b: 1, fs: 13, halo: 1 }) + T(f.X(b.cg) - 12, f.Y(b.w) - 8, '②', { c: C.gr, b: 1, fs: 13, halo: 1 }) + T(f.X(c.cg) - 14, f.Y(c.w) + 16, '③', { c: C.gr, b: 1, fs: 13, halo: 1 });
       return svg(400, 280, s, `図：Archer III の重量と重心の許容範囲（POH の値）と、計算例の 3 つの点。①後ろすぎ（${a.cg.toFixed(1)} in）→ ②後席の 1 人を前席へ（${b.cg.toFixed(1)} in）→ ③燃料を 20 gal 使った着陸時（${c.cg.toFixed(1)} in）`);
     },
-    // ---------------------------------------------------------------- 第 5 章 wx（航空気象）
+    // ---------------------------------------------------------------- wx（航空気象）
     altimeterHighLow() {
       // flying from high to low pressure with the altimeter setting not updated: the airplane follows a pressure level that slopes down
       let s = `<rect x="0" y="214" width="400" height="22" fill="#3a3326"/>` + T(70, 30, '高気圧（High）', { c: C.am, b: 1, fs: 13 }) + T(330, 30, '低気圧（Low）', { c: C.cy, b: 1, fs: 13 });
@@ -930,7 +932,7 @@
       s += pt([4, 1200], C.ink, '例 B：BKN012・4SM', 8) + pt([9, 4500], C.ink, '例 A', -8);
       return svg(400, 290, s, '図：天気の区分（雲高と視程）。航空気象のサイトは、LIFR を紫、IFR を赤、MVFR を青、VFR を緑で表示します（AWH 第 3 章）。この区分は、米国の 14 CFR 91.155 の VFR の最低気象条件とは別のものです');
     },
-    // ---------------------------------------------------------------- 第 6 章 law（規則と空域）
+    // ---------------------------------------------------------------- law（規則と空域）
     preflightInfo() {
       // 14 CFR 91.103: all available information; for every flight, runway lengths and takeoff / landing distances; for IFR or away from the airport, weather, fuel, alternatives, ATC delays
       let s = `<rect x="8" y="8" width="384" height="236" rx="12" fill="none" stroke="${C.mut}" stroke-dasharray="5 4"/>` + T(200, 30, 'その飛行に関する、入手できるすべての情報', { c: C.ink, b: 1, fs: 13 });
@@ -984,7 +986,7 @@
       s += TL(8, 266, ['着陸の最終進入中・着陸中の機が優先。2 機が着陸に向かうときは', '低いほうが優先（ただし、最終進入中の機の前に割り込まない）'], { c: C.ink, a: 'start', fs: 12, lh: 16 });
       return svg(400, 292, s, '図：衝突を避ける優先の決まり（14 CFR 91.113）。優先権のある機の上・下・前を、十分に離れずに横切ってはいけません。優先権があっても、見張りの義務はみんなにあります');
     },
-    // ---------------------------------------------------------------- 第 7 章 radio1（無線交信のしくみ）
+    // ---------------------------------------------------------------- radio1（無線交信のしくみ）
     radioRelay() {
       // one training flight at the fictional LAB: who you talk to, in order (frequencies from radio.js; made-up teaching values)
       const box = (x, y, n, st, fr, what, c) => `<rect x="${x}" y="${y}" width="88" height="70" rx="8" fill="${c}" fill-opacity="0.12" stroke="${c}" stroke-width="1.5"/>`
@@ -1025,7 +1027,7 @@
       s += `<text x="20" y="${y + 48}" fill="#1a1a1a" font-size="17" font-family="ui-monospace, Menlo, Consolas, monospace">36  A  HS C  119.75  4271</text>`;
       return svg(400, y + 74, s, '図：地上管制の指示を部分に分けたもの（架空の LAB）。あなたのコールサイン → 局の名前（最初の交信だけ）→ 滑走路 → 経路 → 止まる所 → 出発周波数 → コードの順。出発周波数とコードを Ground が伝えるのは、LAB のようにレーダーの出発管制がある空港の例です。聞いた順に、短い記号でひざ板に書きます');
     },
-    // ---------------------------------------------------------------- 第 8 章 radio2（言葉の決まり）
+    // ---------------------------------------------------------------- radio2（言葉の決まり）
     phoneticBoard() {
       // the ICAO phonetic alphabet and the figures as the AIM's table spells and pronounces them (TBL 4-2-7)
       const AB = [['A', 'Alfa', 'AL-FAH'], ['B', 'Bravo', 'BRAH-VOH'], ['C', 'Charlie', 'CHAR-LEE'], ['D', 'Delta', 'DELL-TAH'], ['E', 'Echo', 'ECK-OH'], ['F', 'Foxtrot', 'FOKS-TROT'], ['G', 'Golf', 'GOLF'], ['H', 'Hotel', 'HOH-TEL'], ['I', 'India', 'IN-DEE-AH'], ['J', 'Juliett', 'JEW-LEE-ETT'], ['K', 'Kilo', 'KEY-LOH'], ['L', 'Lima', 'LEE-MAH'], ['M', 'Mike', 'MIKE'],
@@ -1042,7 +1044,7 @@
       s += T(10, 344, '例：N7LA → November Seven Lima Alfa', { c: C.gr, b: 1, a: 'start', fs: 12 });
       return svg(400, 354, s, '図：フォネティックアルファベットと数字の発音（AIM の表 TBL 4-2-7 のつづりと読み方）。C は SHAR-LEE、U は OO-NEE-FORM とも読みます。X は X-ray と書く資料もあります。AIM の例文には Alpha とつづるものもあり、この本のコールサインも Alpha と書きます');
     },
-    // ---------------------------------------------------------------- 第 9 章 radio3（交信の型）
+    // ---------------------------------------------------------------- radio3（交信の型）
     callupBlocks() {
       // radio.js FLIGHT gnd1's first call, split into AIM 4-2-3's items: facility → call sign → position → request
       const rows = [['①', '相手', '誰を呼ぶ', ['LAB Ground,'], '局の名前', C.cy],
@@ -1084,7 +1086,7 @@
       s += T(8, 392, '“Roger” だけ → 管制官「read back hold instructions」', { c: C.rd, a: 'start', fs: 12 });
       return svg(400, 404, s, '図：復唱の輪。指示を言われた順に復唱し、管制官が聞いて確かめます。下は、AIM が必ず復唱するとしているもの。hold short に Roger だけで答えると、管制官は復唱を求めます（JO 7110.65 3-7-2）');
     },
-    // ---------------------------------------------------------------- 第 10 章 radio4（1 回の飛行の交信）
+    // ---------------------------------------------------------------- radio4（1 回の飛行の交信）
     flightOverviewMap() {
       // the whole training flight at the fictional LAB (a Class C-type airport): the usual Class C rings (AIM 3-2-4), the
       // way out to the northeast practice area and the way back, with the stations in order (radio.js FLIGHT; made-up frequencies)
@@ -1145,7 +1147,7 @@
       s += NFN(392, 456);
       return svg(400, 466, s, '図：LAB の滑走路 36 の左回りの場周経路と、どこで何を言うか（模式図）。ダウンウインドの高さと速さは教材値。中央（midfield）で報告し、着陸の許可と順番をもらい、着陸したら停止線を越えて止まってから Ground に変えます');
     },
-    // ---------------------------------------------------------------- 第 11 章 radio5（管制塔のない空港・緊急・Sanford）
+    // ---------------------------------------------------------------- radio5（管制塔のない空港・緊急・Sanford）
     ctafCalls() {
       // the left traffic pattern to runway 18 at the fictional non-towered Lakeside (radio.js r_ctaf_*), with the
       // self-announce points of AIM 4-1-9 (TBL 4-1-9) and the pattern altitude of AIM 4-3-3
@@ -1211,7 +1213,7 @@
       s += NFN(392, 310);
       return svg(400, 320, s, '図：Orlando Sanford（KSFB）の滑走路の配置（模式図。FAA の空港データの滑走路端の位置から描いたもの。誘導路は省略）。平行な 3 本の進入端がずれていて、交差する 18/36 があります。赤い円は Hot Spot HS1');
     },
-    // ---------------------------------------------------------------- 第 12 章 hf（人間の能力と判断）
+    // ---------------------------------------------------------------- hf（人間の能力と判断）
     vestibular() {
       // a semicircular canal in four moments of a turn (PHAK chapter 17, Figure 17-4): the fluid lags, catches up, overshoots
       const panel = (px, py, n, title, turn, fluid, hair, feel, c) => {
@@ -1265,7 +1267,7 @@
       s += T(200, 304, '出発前から着陸まで、何度も回す', { c: C.ink, fs: 12 });
       return svg(400, 316, s, '図：判断の 3P モデル（PHAK 第 2 章）。PAVE で危険に気づき、CARE で評価し、TEAM で対策を選んで実行し、また気づくところに戻ります');
     },
-    // ---------------------------------------------------------------- 第 13 章 ground（飛行前の準備・地上での操作）
+    // ---------------------------------------------------------------- ground（飛行前の準備・地上での操作）
     walkaroundRoute() {
       // the Archer from above and the walk-around route of the published Archer III checklist (2025): cabin → right wing →
       // nose → left wing → fuselage and tail, with the few numbers it gives (struts 4.5 / 3.25 in, oil 6 qt)
@@ -1310,7 +1312,7 @@
       s += T(8, 336, '落ちがゼロも異常（スイッチや配線の故障の疑い）', { c: C.ink, a: 'start', fs: 12 });
       return svg(400, 346, s, '図：ランナップのマグネトーの点検（2,000 rpm）。公開されている訓練校の Archer III チェックリストの限度は、落ちが最大 175 rpm、左右の差が 50 rpm 以内。棒の長さは回転数（rpm）');
     },
-    // ---------------------------------------------------------------- 第 14 章 ops（基本操縦）
+    // ---------------------------------------------------------------- ops（基本操縦）
     attitudePower() {
       // one airplane, four attitude + power pairs → four performances: the course Archer's steady states at 3,000 ft from
       // the flight model (FL.physics.steadyState), so the book shows what the lessons fly
@@ -1359,7 +1361,7 @@
       s += T(200, 366, `速度 ${tas} kt・半径 ${r} ft（AFH 第 7 章の例）`, { c: C.mut, fs: 12 });
       return svg(400, 376, s, '図：風の中で 1 点の周りを同じ半径で回る（上から見た模式図。時計回り）。対地速度が速い風下でバンクがいちばん深く、風上でいちばん浅くなります。バンクの値は、AFH 第 7 章の例と同じ条件で計算したもの');
     },
-    // ---------------------------------------------------------------- 第 15 章 tl（離陸・場周経路・着陸）
+    // ---------------------------------------------------------------- tl（離陸・場周経路・着陸）
     pattern() {
       // LAB RWY 36 (fictional) from above, north up: the left traffic pattern of AFH 3C chapter 8, AIM 4-3-2/4-3-3 and AC 90-66C
       // with the course Archer's numbers (lesson t2's brief, AR). Not to scale: the base turn is drawn where the approach end is 45° behind
@@ -1462,7 +1464,7 @@
       const w = 12, thumb = { 15: '約 1/4', 30: '約 1/2', 45: '約 3/4', 60: 'ほぼ全部', 90: '全部' };
       return table(['風と滑走路の角度', '横風成分', '向かい風成分', '覚え方（目安）', `風 ${w} kt なら`], [15, 30, 45, 60, 90].map(a => [`${a}°`, `${Math.round(Math.sin(a * DEG) * 100)}%`, `${Math.round(Math.cos(a * DEG) * 100)}%`, thumb[a], `横 ${Math.round(w * Math.sin(a * DEG))} kt・向かい ${Math.round(w * Math.cos(a * DEG))} kt`]));
     },
-    // ---------------------------------------------------------------- 第 16 章 emg（緊急操作）
+    // ---------------------------------------------------------------- emg（緊急操作）
     emgTurnback() {
       // an engine failure at 300 ft AGL just after takeoff, from above: A, land within about ±30° of straight ahead (the course's lesson e2);
       // B, the AFH 3C chapter 18 turn-back example (Figure 18-5): 4 s to react, a standard-rate turn (3°/s) at 65 kt (radius 2,100 ft),
@@ -1505,7 +1507,7 @@
       s += T(214, 108, `${kt} kt・滑空比 約 ${ratio.toFixed(1)}：1`, { c: C.mut, a: 'start', fs: 12 });
       return svg(400, 300, s, `図：この教材の Archer が ${kt} kt（チェックリストの最良滑空速度）で滑空したときに届く距離（エンジンが止まり、プロペラは風車の状態。教材のフライトモデルで計算した値）。地面から 1,000 ft ごとに約 ${dist(1000, 0).toFixed(1)} NM。向かい風では短く、追い風では長くなります。実機の値は POH で確かめます`);
     },
-    // ---------------------------------------------------------------- 第 17 章 solo（ソロ）
+    // ---------------------------------------------------------------- solo（ソロ）
     soloRoadmap() {
       // the road to the first solo and beyond under 14 CFR part 61 (61.83, 61.23, 61.87(a)(b)(c)(d)(n)(o)(p), 61.93, 61.95) and,
       // at a part 141 school, the stage checks of 141.85
@@ -1529,7 +1531,7 @@
       });
       return svg(400, y + 6, s, '図：初めてのソロまでの道のりと、その先（米国の 14 CFR Part 61 の要点。訓練校の段階審査は Part 141）。承認は学生操縦士証明ではなく、ログブックに書きます（米国の 61.87(n)）');
     },
-    // ---------------------------------------------------------------- 第 18 章 navp（地図・飛行計画）
+    // ---------------------------------------------------------------- navp（地図・飛行計画）
     sectionalSymbols() {
       // a schematic sectional around the fictional LAB (north up), drawn with the symbols of the FAA Chart Users' Guide (2026-07-09):
       // positions from the app's waypoints and navaids (avionics.js), LAB's elevation (GROUND_FT), runway length (LAB_RWY, charted in
@@ -1570,7 +1572,7 @@
       for (const [n, lines] of key) { s += tag(14, y - 4, n) + TL(30, y, lines, { c: C.ink, a: 'start', fs: 12, lh: 16 }); y += lines.length * 16 + 5; }
       return svg(400, y + 4, s, '図：セクショナルチャートの記号（架空の LAB 空港のまわりを描いた模式図。記号は FAA Chart Users\' Guide のもの）。本物のチャートは 56 日ごとに改訂されるので、いつも最新の版を使います');
     },
-    // ---------------------------------------------------------------- 第 19 章 navr（電波航法）
+    // ---------------------------------------------------------------- navr（電波航法）
     vorRadials() {
       // radials leave the station; TO / FROM depends on where the airplane is, not where it points (PHAK chapter 16, AIM 1-1-3).
       // The fictional LAB VOR (avionics.js NAVAIDS), magnetic north up, the course 040 of lesson n1 and the half-planes it makes
@@ -1597,7 +1599,7 @@
       s += T(392, 350, '模式図（LAB VOR は架空）・NOT FOR NAVIGATION', { c: C.mut, a: 'end', fs: 12, halo: 1 });
       return svg(400, 430, s, '図：VOR のラジアルと TO / FROM（上から見た模式図・磁北が上）。コース（CRS）を 040 にしたとき、局の手前の側では TO、局を過ぎた側では FROM になります。機首の向きでは変わりません');
     },
-    // ---------------------------------------------------------------- 第 20 章 navd（目的地変更）
+    // ---------------------------------------------------------------- navd（目的地変更）
     diversionGeometry() {
       // lesson n2's diversion, from above (north up): the planned route LAB RWY → LAB-A → LAB-B, weather beyond LAB-A, and the new leg
       // LAB-A → LAB-F (avionics.js WAYPOINTS, magnetic = true + MAGVAR_W) worked as PHAK chapter 16 does it: turn first, then estimate.
@@ -1632,7 +1634,7 @@
       for (const [n, lines] of rows) { s += tag(14, y - 4, n) + TL(30, y, lines, { c: C.ink, a: 'start', fs: 12, lh: 16 }); y += lines.length * 16 + 6; }
       return svg(400, y + 2, s, '図：目的地変更（課目 n2 の LAB-A → LAB-F に、例として LAB-B への予定の航路と雷雨を描き足した、上から見た模式図）。まず向きを変え、コースに乗ってから時刻を記録し、針路・対地速度・到着の時刻・燃料を計算します（PHAK 第 16 章）。数字は課目の風・105 kt・この教材のフライトモデルの燃料消費で計算した値');
     },
-    // ---------------------------------------------------------------- 第 22 章 ifrp（計器飛行方式）
+    // ---------------------------------------------------------------- ifrp（計器飛行方式）
     holding() {
       // AIM 5-3-8 for lesson i4's hold: the LAB VOR as the fix, inbound course 090 (flying east to the station), right turns, so the
       // racetrack lies west of the fix on the south side. Its size is the lesson's 100 kt in still air: 1-minute legs (1.67 NM) and
@@ -1813,7 +1815,7 @@
       s += T(12, 18, '模式図（高さは架空の値・縦は誇張）', { c: C.mut, fs: 12, a: 'start' });
       return svg(400, 336, s, '図：非精密進入の 2 つの降り方（横から見た模式図）。FAF のあとすぐ MDA まで降りて水平に飛ぶ dive and drive と、一定の角度で MDA まで降り続ける CDFA。CDFA では、MDA に着く（VDP の近く）までに目印が見えなければ、水平にせずに進入復行します');
     },
-    // ---------------------------------------------------------------- 第 23 章 me（Seminole と双発機の基礎）
+    // ---------------------------------------------------------------- me（Seminole と双発機の基礎）
     counterRotation() {
       // AFH chapter 13 (critical engine, P-factor, counter-rotating engines): seen from above, nose up. The descending blade of each
       // propeller gives more thrust at a positive angle of attack, so each engine's thrust acts a little to one side of its centre.
@@ -1861,7 +1863,7 @@
       rows.forEach(([c, t], i) => { s += `<rect x="20" y="${330 + i * 20}" width="18" height="6" fill="${c}"/>` + T(46, 337 + i * 20, t, { c: C.ink, fs: 12, a: 'start' }); });
       return svg(400, 392, s, '図：双発機の速度計（Seminole の速度の模式図）。赤い線（Vmc）は片発で方向を保てる最小の速度、青い線（Vyse）は片発で最もよく上昇できる速度です。双発機だけにある 2 つの目印です（AFH 第 13 章）');
     },
-    // ---------------------------------------------------------------- 第 24 章 oei（片発停止）
+    // ---------------------------------------------------------------- oei（片発停止）
     oeiForces() {
       // AFH chapter 13: the left engine has failed. The right engine's thrust (offset from the centre line) and the drag of the
       // windmilling left propeller turn the nose left (yaw) and the left wing goes down (roll: the right wing keeps the propwash).
@@ -1900,7 +1902,7 @@
       s += A(f.X(92), f.Y(70), f.X(80), f.Y(70), C.mut, 2) + T(f.X(86), f.Y(70) - 8, '速度が下がる', { c: C.mut, fs: 12 });
       return svg(400, 300, s, '図：速度が下がるほど、方向を保つのに必要なラダーが増え、いっぱいになる速度が Vmc です（教材のフライトモデルの Seminole：左エンジン停止・右は全開・バンク 5°）。どちらの高さでも、ラダーがいっぱいになる前に失速警報（約 62 kt）が鳴ります。高い所ほど出力が減り、必要なラダーは少なくなります');
     },
-    // ---------------------------------------------------------------- 第 26 章 jet（ジェット機と自動化への準備）
+    // ---------------------------------------------------------------- jet（ジェット機と自動化への準備）
     thrustResponse() {
       // how fast thrust follows the throttle. The course's Archer (physics.js: the propeller thrust is computed from the throttle with
       // no delay; only the rpm needle lags, at 1.8 /s) against a jet from idle, which AFH 3C chapter 16 says "could take up to 10

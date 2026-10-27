@@ -514,9 +514,11 @@ test('works without Google: every lesson runs and its record is written with no 
 });
 
 // ------------------------------------------------------------------ the textbook, the tests, Sanford
-test('textbook: ≥ 16 chapters in the six parts, each with sections, English terms, examples, cautions, ≥ 2 questions with reasons and sources', () => {
+test('textbook: ≥ 16 chapters in the parts p0–p6 (序部 and parts 1–6, none empty), each with sections, English terms, examples, cautions, ≥ 2 questions with reasons and sources', () => {
   assert.ok(BK.CHAPTERS.length >= 16, `${BK.CHAPTERS.length} chapters`);
-  assert.deepEqual([...new Set(BK.CHAPTERS.map(c => c.part))], ['p1', 'p2', 'p3', 'p4', 'p5', 'p6']);
+  // the parts in reading order (the front part p0 from book-0.js: DESIGN 3.1), and the chapters in the parts' order
+  assert.deepEqual(BK.PARTS.map(p => p.id), ['p0', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']);
+  assert.deepEqual([...new Set(BK.CHAPTERS.map(c => c.part))], ['p0', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']);
   const ids = new Set();
   for (const c of BK.CHAPTERS) {
     assert.ok(c.t && c.en && c.summary && c.secs.length >= 2, `${c.id} text`);
@@ -542,6 +544,35 @@ test('textbook: every cross-link resolves (sections, lessons, calculators) and t
   const all = BK.CHAPTERS.flatMap(c => c.secs.map(s => BK.text(s))).join(' ');
   assert.match(all, /本アプリは公開情報を基にした非公式の自主学習用教材です。/);
   for (const w of ['Vmc', 'METAR', '91.155', 'ゴーアラウンド', 'ILS', 'TEM', 'IMSAFE', '偏流修正']) assert.ok(all.includes(w), w);
+});
+
+// DESIGN 3.1 and 6.2 rules 2–3 (W09): a part is added by the file of its chapters (FL.book.addPart); the front part 序部
+// (p0, book-0.js) holds the two chapters that were finished before it ('intro' first, 'sim' last), and the stage titles
+// follow the part numbers (decision 8: 第 1 段階 goes with 第 1 部; ids and phases unchanged)
+test('textbook: FL.book.addPart, the front part 序部 (p0) with intro and sim, no 「ロンドン相当」, the stages numbered as the parts', () => {
+  const p0 = BK.PARTS[0];
+  assert.equal(p0.id, 'p0'); assert.equal(p0.title, '序部　出発の前に（日本で準備する）'); assert.doesNotMatch(p0.title, /第 0 部/);
+  assert.deepEqual(BK.CHAPTERS.filter(c => c.part === 'p0').map(c => c.id), ['intro', 'sim']);
+  assert.deepEqual(BK.CHAPTERS.slice(0, 2).map(c => c.id), ['intro', 'sim'], 'the front part comes first, so its chapters are numbered first');
+  assert.equal(BK.PARTS.find(p => p.id === 'p1').title, '第 1 部　地上学科（英語の座学）');
+  for (const p of BK.PARTS) assert.doesNotMatch(p.title, /ロンドン相当/, p.id);
+  for (const st of SY.STAGES) assert.doesNotMatch(st.title, /ロンドン相当/, st.id);
+  // each stage: 第 N 段階 with N = its phase's part number (s0 → p1 → 第 1 段階)
+  assert.deepEqual(SY.STAGES.map(st => [st.id, st.phase, /^第 (\d+) 段階　/.exec(st.title)?.[1]]),
+    [['s0', 'p1', '1'], ['s1', 'p2', '2'], ['s2', 'p3', '3'], ['s3', 'p4', '4'], ['s4', 'p5', '5'], ['s5', 'p6', '6']]);
+  // addPart: an error for a part that is there, a "before" that names no part, no id or title; nothing changes then
+  const n = BK.PARTS.length;
+  assert.throws(() => BK.addPart({ id: 'p0', title: '二つめ' }), /there already/);
+  assert.throws(() => BK.addPart({ id: 'p9', title: 'x', before: 'p8' }), /not a part/);
+  assert.throws(() => BK.addPart({ id: 'x1', title: 'x' }), /an id/);
+  assert.throws(() => BK.addPart({ id: 'p9' }), /a title/);
+  assert.equal(BK.PARTS.length, n);
+  // in front of a part, or at the end without "before" (taken out again: the book is shared by these tests)
+  try {
+    BK.addPart({ id: 'p8', title: 'テストの部 8' }); BK.addPart({ id: 'p9', title: 'テストの部 9', before: 'p8' });
+    assert.deepEqual(BK.PARTS.slice(-2).map(p => p.id), ['p9', 'p8']);
+  } finally { for (const id of ['p8', 'p9']) { const i = BK.PARTS.findIndex(p => p.id === id); if (i >= 0) BK.PARTS.splice(i, 1); } }
+  assert.equal(BK.PARTS.length, n);
 });
 
 test('ground-school tests: ≥ 12 banks of 4-choice questions with reasons, linked to the textbook', () => {

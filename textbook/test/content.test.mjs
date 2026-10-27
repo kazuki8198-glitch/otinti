@@ -11,8 +11,11 @@ const BK = FL.book;
 const SECS = BK.CHAPTERS.flatMap(c => c.secs);
 const sum = k => BK.CHAPTERS.reduce((a, c) => a + (c[k] || []).length, 0);
 
-test(`the book: 6 parts, ${COUNTS.chapters} chapters in this order, ${COUNTS.secs} sections`, () => {
-  assert.equal(BK.PARTS.length, 6);
+test(`the book: ${COUNTS.parts} parts, ${COUNTS.chapters} chapters in this order, ${COUNTS.secs} sections`, () => {
+  assert.equal(BK.PARTS.length, COUNTS.parts);
+  // the front part 序部 (p0, added by book-0.js) and parts 1–6, in this order; none of them is empty (DESIGN 3.1)
+  assert.deepEqual(BK.PARTS.map(p => p.id), ['p0', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']);
+  for (const p of BK.PARTS) assert.ok(BK.CHAPTERS.some(c => c.part === p.id), `${p.id}: has chapters`);
   assert.equal(BK.CHAPTERS.length, COUNTS.chapters);
   assert.equal(SECS.length, COUNTS.secs);
   assert.deepEqual(BK.CHAPTERS.map(c => c.id), ORDER);
@@ -89,7 +92,9 @@ test('render.js: every section and chapter to HTML; the notes; the end matter es
   const toc = R.tocHtml([], 'aero.lift');
   assert.equal((toc.match(/class="bk-item/g) || []).length, COUNTS.secs);
   for (const p of BK.PARTS) assert.ok(toc.includes(p.title), p.id);
-  assert.match(toc, /data-go="aero.lift" aria-current="true"><span class="bk-num">2\.2<\/span>/);
+  // aero.lift is section 2 of chapter 3 since the front part's two chapters (intro, sim) came before it (W09); 5.2 with
+  // the front part's four (W10), 5.3 with aero.wing (R2): DESIGN 6.1
+  assert.match(toc, /data-go="aero.lift" aria-current="true"><span class="bk-num">3\.2<\/span>/);
 });
 
 test('the search: the body (with the figures\' words), case-insensitive, the end matter → the last section', () => {

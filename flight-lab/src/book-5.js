@@ -1,5 +1,6 @@
-// FLIGHT LAB — book-5.js : Part 5 (the Piper Seminole, multi-engine) and Part 6 (CRM, TEM, jets and automation, how to
-// use this simulator), chapters 19–23.
+// FLIGHT LAB — book-5.js : Part 5 (the Piper Seminole, multi-engine), Part 6 (CRM, TEM, jets and automation) and the
+// chapter on how to use this simulator ('sim': in the front part p0 that book-0.js adds, put in front of 'aero' so that
+// it is the front part's last chapter: textbook/rewrite/combined/DESIGN.md 3.1).
 // Sources: the published PA-44-180 maneuver guide (Southeastern Oklahoma State University) — a school's guide, not the
 // POH; the FAA Airplane Flying Handbook chapters 13 (multi-engine) and 15 (jets); the Commercial Pilot ACS (multi-
 // engine tasks); 14 CFR 23; SKYbrary and ICAO on TEM and CRM; FAA AC 120-71B (SOPs and pilot monitoring), AC 120-111
@@ -350,7 +351,7 @@ ${bk.q('機首下げ・速度が増えている・深く傾いている（スパ
     refs: [R.afh15, R.afh4, R.afh5, R.automation, R.ac120123, R.safo, R.safo17007, R.upset, R.ifh, R.archerPoh], lessons: ['i2'] });
 
   // ======================================================================= 23
-  B.add({ id: 'sim', part: 'p6', t: 'この教材で練習する：家での予習・復習のしかた', en: 'Practising with this tool',
+  B.add({ id: 'sim', before: 'aero', part: 'p0', t: 'この教材で練習する：家での予習・復習のしかた', en: 'Practising with this tool',
     summary: 'この教材でできること・できないこと（ATD・FTD・FFS との違い）、効果的な練習の組み立て（チェアフライング・目標値を先に決める・講評を読む）、飛行中の画面と採点の決まり、キーと実機の操縦装置の対応。',
     secs: [
       { id: 'sim.can', t: 'この教材でできること・できないこと', h: () => `

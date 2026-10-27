@@ -1,9 +1,11 @@
 // FLIGHT LAB — book-core.js
-// The textbook's frame: the parts (in the order of the publicly described ANA cadet course), the references (public
+// The textbook's frame: the parts (parts 1–6 in the order of the publicly described ANA cadet course; the parts before
+// and after them are added by the file of their chapters: FL.book.addPart), the references (public
 // sources: FAA handbooks, the ACS, the AIM, 14 CFR, ANA's public pages, published training material), the writing
 // helpers (key points, cautions, formulas, self-check questions, "try it in the simulator", calculators, photos), and
-// the lookups the pages use. The chapters themselves are in book-1.js … book-5.js and book-comm.js (FL.book.add); the
-// figures in book-figs.js; the photos in book-photos.js (loaded after this file by FLIGHT LAB and TEXTBOOK, not by CADET).
+// the lookups the pages use. The chapters themselves are in book-1.js … book-5.js, book-0.js and book-comm.js
+// (FL.book.add); the figures in book-figs.js; the photos in book-photos.js (loaded after this file by FLIGHT LAB and
+// TEXTBOOK, not by CADET).
 (function (FL) {
   'use strict';
   const R = {
@@ -98,8 +100,11 @@
     automation: { label: 'FAA AC 120-71B Standard Operating Procedures and Pilot Monitoring Duties for Flight Deck Crewmembers（2017）', url: 'https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-71B.pdf' },
     mag: { label: 'NOAA 磁気偏差計算（Magnetic Field Calculators）', url: 'https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml' },
   };
+  // parts 1–6 (phase: the syllabus's stages that go with the part). The front part p0 (序部, book-0.js) and Part 7 (p7,
+  // book-7.js) are not written here: the file that holds a part's chapters adds it (addPart below), so a product that
+  // does not read that file has no such part (textbook/rewrite/combined/DESIGN.md 3.1)
   const PARTS = [
-    { id: 'p1', title: '第 1 部　地上学科（ロンドン相当・英語の座学）', phase: 'p1' },
+    { id: 'p1', title: '第 1 部　地上学科（英語の座学）', phase: 'p1' },
     { id: 'p2', title: '第 2 部　Sanford・Piper Archer の基礎操縦', phase: 'p2' },
     { id: 'p3', title: '第 3 部　航法・目的地変更', phase: 'p3' },
     { id: 'p4', title: '第 4 部　計器飛行', phase: 'p4' },
@@ -222,11 +227,24 @@
     CHAPTERS.forEach((c, k) => { c.n = k + 1; });
     return ch;
   }
+  // a part is added by the file that holds its chapters (DESIGN 3.1: p0 by book-0.js, p7 by book-7.js), in the same
+  // change as its first chapter, so no part is empty: { id: 'p0'…, title, door (optional: the part's door, DESIGN 3.2),
+  // before (the id of the part it goes in front of; none: at the end) }. PARTS is the reading order (the contents list
+  // the parts in it; a chapter's number is its place in CHAPTERS). A part that is there already, or a "before" that
+  // names no part, is an error (a typo must not hide)
+  function addPart(p) {
+    if (!p || !/^p[0-9]+$/.test(p.id) || typeof p.title !== 'string' || !p.title.trim()) throw new Error('FL.book.addPart: a part needs an id (p0, p7 …) and a title');
+    if (PARTS.some(x => x.id === p.id)) throw new Error(`FL.book.addPart: the part "${p.id}" is there already`);
+    const i = p.before === undefined ? PARTS.length : PARTS.findIndex(x => x.id === p.before);
+    if (i < 0) throw new Error(`FL.book.addPart: "${p.before}" (before) is not a part`);
+    PARTS.splice(i, 0, p);
+    return p;
+  }
   function findSection(id) { for (const ch of CHAPTERS) for (const sec of ch.secs) if (sec.id === id) return { ch, sec }; return null; }
   // references to other chapters are written {ch:id} and become 第 N 章 when shown (so inserting a chapter never breaks them)
   function fix(str) { return String(str).replace(/\{ch:([a-z0-9]+)\}/g, (m, id) => { const c = CHAPTERS.find(x => x.id === id); return c ? `第 ${c.n} 章` : '（別の章）'; }); }
   function html(sec) { return fix(typeof sec.h === 'function' ? sec.h() : sec.h); }
   function text(sec) { if (sec._txt === undefined) sec._txt = html(sec).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '); return sec._txt; }
   function wire(root) { for (const el of root.querySelectorAll('[data-calc]')) { const f = FL.bookCalc && FL.bookCalc[el.dataset.calc]; if (f && !el.dataset.done) { el.dataset.done = '1'; f(el); } } }
-  FL.book = { R, PARTS, CHAPTERS, bk, add, findSection, fix, html, text, wire, jurTable, jurAppendix, get FIG() { return FL.bookFigs; } };
+  FL.book = { R, PARTS, CHAPTERS, bk, add, addPart, findSection, fix, html, text, wire, jurTable, jurAppendix, get FIG() { return FL.bookFigs; } };
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

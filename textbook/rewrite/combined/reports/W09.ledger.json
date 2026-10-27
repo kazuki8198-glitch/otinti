@@ -1,0 +1,7 @@
+{
+ "unit": "W09",
+ "about": "W09 構成の変更（DESIGN 7.2・3.1・6.2 の決まり 2・3・11・9 の判断 8）のパッチ。閉じたのは ERRATA APP.london-equivalent（本の p1 と課程表の s0 の題から「ロンドン相当」を外した）。直書きの「第 N 章」を消したこと・序部 p0・章の移動・番号の振り直しは台帳の行を持たない（報告 W09.md と TEST-CONSTANTS.md）。確かめ役の署名（checkedBy）は W12",
+ "patches": [
+  { "id": "APP.london-equivalent", "status": "fixed", "verified": true, "by": "W09", "where": "flight-lab/src/book-core.js PARTS の p1「第 1 部　地上学科（英語の座学）」・flight-lab/src/syllabus.js STAGES の s0「第 1 段階　地上学科（英語の座学）」（段階の番号は判断 8 で部の番号にそろえた）", "note": "W09（2026-10-27）：DESIGN 3.1 の題のとおり「英語の座学」だけにした。s0 の説明（desc）の「公開情報では、座学はロンドンで英語で行う」は公開記事の事実（R.ana1）なので残した。flight-lab/test/flight.test.mjs が、部と段階の題に「ロンドン相当」がないことを確かめる" }
+ ]
+}

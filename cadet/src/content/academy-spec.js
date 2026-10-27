@@ -59,7 +59,7 @@ export function academySpec(FL) {
         { type: 'trash_bin', a: 610.0, c: 263.2, rot: 0 },
       ] },
     // ------------------------------------------------ the south wing, car-park side
-    { id: 'sim', name_ja: '訓練装置室（FTD）', purpose: '地上学科と手順の練習：PFD の読み方、英語交信（第 0 段階の k1〜k6）。', a0: 608.4, a1: 630.0, c0: 263.6, c1: 277.6, floor: 'carpet', ceiling: 3.0, closed: false,
+    { id: 'sim', name_ja: '訓練装置室（FTD）', purpose: '地上学科と手順の練習：PFD の読み方、英語交信（第 1 段階の k1〜k6）。', a0: 608.4, a1: 630.0, c0: 263.6, c1: 277.6, floor: 'carpet', ceiling: 3.0, closed: false,
       lights: lightsGrid(609, 629.5, 264, 277, 3.2),
       furniture: [
         ...rows('sim_station', 611.5, 626.5, 268.0, 268.0, 5.0, 1, 0),
@@ -157,7 +157,7 @@ export function academySpec(FL) {
         { type: 'whiteboard', a: 664.06, c: 271.0, rot: 90, note: 'instructor schedule' },
         { type: 'plant', a: 681.0, c: 276.8, rot: 0 },
       ] },
-    { id: 'planning', name_ja: '計画室', purpose: '航法の計画（第 2 段階）：地図、計算盤、天気。今は静かな自習室。', a0: 682.0, a1: 701.6, c0: 263.6, c1: 277.6, floor: 'carpet', ceiling: 3.0, closed: false,
+    { id: 'planning', name_ja: '計画室', purpose: '航法の計画（第 3 段階）：地図、計算盤、天気。今は静かな自習室。', a0: 682.0, a1: 701.6, c0: 263.6, c1: 277.6, floor: 'carpet', ceiling: 3.0, closed: false,
       lights: lightsGrid(682.5, 701, 264, 277, 3.2),
       furniture: [
         ...rows('table_long', 686.0, 698.0, 270.6, 270.6, 6.0, 1, 0),
@@ -211,13 +211,13 @@ export function academySpec(FL) {
     { id: 'wb-brief-3', room: 'brief-3', a: 608.5, c: 254.6, y: 1.5, prompt_ja: 'ホワイトボードを見る', title_ja: `予習：n2 ${n2.title || '推測航法'}`,
       text_ja: `目的：${n2.goal || ''}\n風を読んで針路を決める（風下に流される分だけ風上に向ける）\n時間＝距離 ÷ 対地速度。途中で行き先が変わったら、新しい針路・距離・時間を見積もり直す。` },
     { id: 'sim-station', room: 'sim', a: 616.5, c: 268.0, y: 1.1, prompt_ja: '訓練装置を見る', title_ja: '訓練装置（FTD 風の練習席）',
-      text_ja: 'G1000 型の画面と操縦輪・スロットルの練習席。\n第 0 段階の地上学科（PFD の読み方 k1・k2、英語交信 k3〜k6）はここで。\n練習席はいま準備中です。' },
+      text_ja: 'G1000 型の画面と操縦輪・スロットルの練習席。\n第 1 段階の地上学科（PFD の読み方 k1・k2、英語交信 k3〜k6）はここで。\n練習席はいま準備中です。' },
     { id: 'status-board', room: 'lobby', a: 646.2, c: 268.5, y: 2.6, prompt_ja: '今日のフライトを見る', title_ja: '本日のフライト（LAB 飛行場）',
       text_ja: today.map(r => `${r[0]}  ${r[1]}  ${r[2]}  ${r[3]}  ${r[4]}`).join('\n') },
     { id: 'plaque', room: 'lobby', a: 663.8, c: 259.6, y: 1.7, prompt_ja: '銘板を読む', title_ja: '翔洋航空 フライトアカデミー',
       text_ja: '翔洋航空の自社養成パイロットが、基礎訓練（単発機・航法・計器・双発）を受ける訓練所です。\nこのゲームの航空会社・訓練所・人物はすべて架空です。公開情報を基にした非公式のゲームで、実機訓練の代わりにはなりません。' },
     { id: 'model-seminole', room: 'lobby', a: 649.0, c: 252.5, y: 1.2, prompt_ja: '模型を見る', title_ja: 'Piper PA-44-180 Seminole（訓練の双発機）',
-      text_ja: `双発・引き込み脚・T 字尾翼。第 4 段階で片発停止の扱いを学ぶ。\n最小操縦速度 Vmc ${SM.v.mc} kt（赤線）、片発での最良上昇率 Vyse ${SM.v.yse} kt（青線）。\n（訓練用の目安の値です。実機はその機体の POH に従います）` },
+      text_ja: `双発・引き込み脚・T 字尾翼。第 5 段階で片発停止の扱いを学ぶ。\n最小操縦速度 Vmc ${SM.v.mc} kt（赤線）、片発での最良上昇率 Vyse ${SM.v.yse} kt（青線）。\n（訓練用の目安の値です。実機はその機体の POH に従います）` },
     { id: 'schedule', room: 'dispatch', a: 675.8, c: 257.5, y: 1.5, prompt_ja: '予定表を見る', title_ja: '本日の割り当て（運航管理）',
       text_ja: today.slice(0, 5).map(r => `${r[0]} ${r[1]} ${r[3]}`).join('\n') + '\n※ 14:30 以降は雷雨の予報：運航管理と相談して判断' },
     { id: 'metar', room: 'dispatch', a: 675.8, c: 252.6, y: 1.6, prompt_ja: '気象を見る', title_ja: '気象（KLAB は架空の飛行場）',
@@ -237,7 +237,7 @@ export function academySpec(FL) {
     { id: 'coffee', room: 'lounge', a: 701.1, c: 258.2, y: 1.2, prompt_ja: 'コーヒーを見る', title_ja: 'コーヒーマシン',
       text_ja: '訓練生の燃料。\nただし飛ぶ前の飲みすぎは禁物：カフェインの取りすぎは手の震えと脱水のもと（IMSAFE の E）。' },
     { id: 'crm', room: 'corridor-n', a: 692.0, c: 263.4, y: 1.5, prompt_ja: 'ポスターを読む', title_ja: 'TEM：脅威とエラーを管理する',
-      text_ja: '出発前に「今日の脅威」を言葉にする：突風、混雑した場周、自分の疲れ…\n気づいたら声に出す。分からなければ聞き返す。\n（第 5 段階：CRM・TEM で詳しく）' },
+      text_ja: '出発前に「今日の脅威」を言葉にする：突風、混雑した場周、自分の疲れ…\n気づいたら声に出す。分からなければ聞き返す。\n（第 6 段階：CRM・TEM で詳しく）' },
   ];
 
   return {

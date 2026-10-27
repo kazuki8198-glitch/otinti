@@ -83,9 +83,12 @@
     result: (L, st) => { const lim = Math.round(300 * L.level.k); return [{ name: '回復で失った高度', val: `${Math.round(st.start - st.min)} ft`, std: `${lim} ft 以内`, pass: st.start - st.min <= lim }, { name: '二次失速', val: st.second ? 'あり' : 'なし', std: 'なし', pass: !st.second }]; } }, extra);
 
   // ---------------------------------------------------------------- the stages
+  // A stage's title has the number of its part of the textbook (phase p1–p6: 第 1 段階 goes with 第 1 部 …; the book's
+  // front part before them is 序部, not 第 0 部: textbook/rewrite/combined/DESIGN.md 3.1 and 9, decision 8). The ids
+  // s0–s5 and the phases do not change (the lessons and the learning record do not use the titles).
   const STAGES = [
     // ======================================================================= 0
-    { id: 's0', title: '第 0 段階　地上学科（ロンドン相当・英語の座学）', phase: 'p1',
+    { id: 's0', title: '第 1 段階　地上学科（英語の座学）', phase: 'p1',
       desc: '公開情報では、座学はロンドンで英語で行う。ここでは G1000 型の計器の読み方、英語の交信（言い方・1 回の飛行の全交信・復唱・聞き取り）、学科の確認テストで準備する。',
       lessons: [
         { id: 'k1', tutor: 'g1000', title: 'G1000 型 PFD の読み方（チュートリアル）', goal: '速度・姿勢・高度・昇降率・方位・CDI の位置と読み方を、実際の表示で 1 つずつ' },
@@ -96,7 +99,7 @@
         { id: 'k6', radio: 'listen', title: '英語交信④：聞き取り（音声）', goal: '英語の指示を音声で聞いて内容を選ぶ 10 問・80% で合格', book: ['radio.listen'] },
       ] },
     // ======================================================================= 1
-    { id: 's1', title: '第 1 段階　Piper Archer の基礎操縦（ソロまで）', phase: 'p2',
+    { id: 's1', title: '第 2 段階　Piper Archer の基礎操縦（ソロまで）', phase: 'p2',
       desc: '公開情報では、Sanford で単発機 Piper Archer を使い、レッスン 12 回と審査を経てソロ（単独飛行）へ。ここでは基本操作・離着陸・緊急操作を練習する。',
       lessons: [
         { id: 'a1', title: '姿勢・出力・トリム', goal: 'トリムを使い、操縦から手を離しても水平飛行が続く状態を作る', aircraft: 'pa28',
@@ -248,7 +251,7 @@
           ] },
       ] },
     // ======================================================================= 2
-    { id: 's2', title: '第 2 段階　航法・横風・目的地変更', phase: 'p3',
+    { id: 's2', title: '第 3 段階　航法・横風・目的地変更', phase: 'p3',
       desc: '公開情報では、地図と上空の風から針路を計算して目的地へ飛ぶ Navigation 訓練、目的地変更、エンジン停止の想定、現在地を見失った場合の対処を訓練する。',
       lessons: [
         { id: 'x1', title: '横風着陸', goal: '横風の中で、機体をまっすぐ滑走路に接地させる', aircraft: 'pa28',
@@ -303,7 +306,7 @@
           ] },
       ] },
     // ======================================================================= 3
-    { id: 's3', title: '第 3 段階　計器飛行の導入', phase: 'p4',
+    { id: 's3', title: '第 4 段階　計器飛行の導入', phase: 'p4',
       desc: '公開情報では、計器のみを頼りに飛ぶ計器飛行の訓練を行う。フード（外が見えない状態）で、PFD だけで飛ぶ。',
       lessons: [
         { id: 'i1', title: '基本計器飛行', goal: '計器だけで水平・標準旋回・上昇降下', aircraft: 'pa28',
@@ -365,7 +368,7 @@
           ] },
       ] },
     // ======================================================================= 4
-    { id: 's4', title: '第 4 段階　Piper Seminole（双発）', phase: 'p5',
+    { id: 's4', title: '第 5 段階　Piper Seminole（双発）', phase: 'p5',
       desc: '公開情報では、双発機 Piper Seminole で片発停止や機材故障の対応を訓練し、最後の Check Flight を経てライセンスを取得する。',
       lessons: [
         { id: 'm1', title: '双発の離陸と上昇', goal: '引き込み脚の双発機で離陸し、脚を上げて Vy で上昇', aircraft: 'pa44',
@@ -437,7 +440,7 @@
           ] },
       ] },
     // ======================================================================= 5
-    { id: 's5', title: '第 5 段階　CRM・TEM（考え方の練習）', phase: 'p6',
+    { id: 's5', title: '第 6 段階　CRM・TEM（考え方の練習）', phase: 'p6',
       desc: '基礎訓練の先（副操縦士の訓練）につながる考え方。ここでは一人で飛びながら、脅威（Threat）を予測し、エラー（Error）に気づいて管理する練習をする（教材の一般的な内容で、ANA の訓練内容の再現ではない）。',
       lessons: [
         { id: 'r1', title: 'TEM：脅威を予測して管理する', goal: '出発前に脅威を挙げ、飛行中の変化に早めに気づいて対処する', aircraft: 'pa28',

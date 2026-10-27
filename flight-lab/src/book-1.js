@@ -1,4 +1,5 @@
-// FLIGHT LAB — book-1.js : Part 1 (ground school), chapters 1–4.
+// FLIGHT LAB — book-1.js : the introduction ('intro', in the front part p0 that book-0.js adds) and Part 1's first chapters
+// (ground school: aero, sys, perf).
 // Sources are listed per chapter. The aerodynamics chapter is carried over from 空島フライト's textbook and moved to the
 // Piper Archer and the FAA's material; numbers that come from the flight model are labelled as teaching values.
 (function (FL) {
@@ -7,7 +8,7 @@
   const AR = FL.physics.AIRCRAFT.find(a => a.id === 'pa28').v, ARP = FL.physics.AIRCRAFT.find(a => a.id === 'pa28').phys;
 
   // ======================================================================= 1
-  B.add({ id: 'intro', part: 'p1', t: 'はじめに：この教科書の使い方と訓練の流れ', en: 'Introduction: how to use this textbook, and the published course',
+  B.add({ id: 'intro', part: 'p0', t: 'はじめに：この教科書の使い方と訓練の流れ', en: 'Introduction: how to use this textbook, and the published course',
     summary: 'この教科書の全体の地図・読み方・約束ごと、公開されている基礎訓練の流れ（事実と推測を分けて）、米国の操縦士の資格の段階、この教材での学び方。',
     secs: [
       { id: 'intro.use', t: '読み方と全体の地図', h: () => `
@@ -15,8 +16,8 @@ ${bk.aim('この教科書が何を、どの順番で教えるのかを知りま�
 ${FIG.courseMap()}
 <p>この教科書は、<b>飛行機のことをほとんど知らない人</b>のための入門書です。米国の連邦航空局（<b>FAA：Federal Aviation Administration</b>）の訓練で学ぶことの入口を、日本語で、最初から順に説明します。</p>
 <p>米国の訓練と試験は英語で行われ、資格を取るには英語の能力も必要です。そこで、専門用語には英語も付けます。初めて出た用語は「<b>日本語（English）</b>」の形で書きます。</p>
-<h4>6 つの部</h4>
-<p>全体は 6 つの部に分かれています。上の図のように、地上で学ぶことから始めて、単発機、航法、計器飛行、双発機へと進みます。第 1〜5 部の順番は、公開されている訓練の流れ（${bk.see('intro.course', '公開されている訓練の流れ')}）に合わせています。第 6 部は、エアラインの副操縦士の訓練につながる考え方をまとめた<b>この教材の設計</b>で、公開されている訓練の段階ではありません。</p>
+<h4>序部と 6 つの部</h4>
+<p>この章と、この教材の使い方の章（{ch:sim}）は、本の最初の<b>序部</b>（出発の前に）にあります。そのあとの本体は 6 つの部に分かれています。上の図のように、地上で学ぶことから始めて、単発機、航法、計器飛行、双発機へと進みます。第 1〜5 部の順番は、公開されている訓練の流れ（${bk.see('intro.course', '公開されている訓練の流れ')}）に合わせています。第 6 部は、エアラインの副操縦士の訓練につながる考え方をまとめた<b>この教材の設計</b>で、公開されている訓練の段階ではありません。</p>
 <h4>1 つの節の読み方</h4>
 <p>どの節も、次の順番で書いてあります。</p>
 <ol><li><b>ねらい</b>：その節で何を学ぶか。最初の青い枠です。</li>
@@ -25,7 +26,7 @@ ${FIG.courseMap()}
 <li><b>ここが大切</b>：覚えておくことを短くまとめた緑の枠です。</li>
 <li><b>考えてみよう</b>：自分の言葉で説明できるかを確かめる問いです。答えは開くと読めます。</li></ol>
 <p>章の終わりには、<b>英語の用語</b>・<b>例</b>・<b>注意</b>・<b>確認問題</b>（4 択・理由つき）・<b>出典</b>があります。出典は、FAA のハンドブックや規則など、だれでも読める公開資料です。</p>
-${bk.key('全体は 6 部。地上学科 → 単発機 → 航法 → 計器 → 双発機 → チームで飛ぶ', '節は「ねらい → 図 → 説明 → ここが大切 → 考えてみよう」の順', '章の終わりに用語・例・注意・確認問題・出典がある')}
+${bk.key('序部のあと、本体は 6 部。地上学科 → 単発機 → 航法 → 計器 → 双発機 → チームで飛ぶ', '節は「ねらい → 図 → 説明 → ここが大切 → 考えてみよう」の順', '章の終わりに用語・例・注意・確認問題・出典がある')}
 ${bk.warn('<b>大切な注意：</b>この教科書は、公開資料をもとにした学習の入口です。規則・試験の基準・機体の数値は、改正されたり機体ごとに違ったりします。実際の訓練・試験・飛行では、<b>教官の指導</b>、<b>その機体の POH / AFM</b>（Pilot\'s Operating Handbook / Airplane Flight Manual：機体の数値と手順を書いた本）、訓練校の <b>SOP</b>（Standard Operating Procedures：標準運航手順）、最新の<b>航空法規</b>（米国では 14 CFR・AIM（Aeronautical Information Manual：航空情報マニュアル））を優先してください。')}` },
       { id: 'intro.marks', t: 'この教科書の約束と記号', h: () => `
 ${bk.aim('本文に出てくる記号や書き方の約束を、先に知っておきます。数字や情報が「どこから来たものか」を見分けるためです。')}
@@ -100,12 +101,12 @@ ${FIG.studyCycle()}
 <h4>飛行中の画面</h4>
 <ul><li>左上の<b>教官パネル</b>：いまの手順、教官の指示、使うキー、目標のゲージ（緑＝余裕あり、黄＝基準ぎりぎり、赤＝基準外）、連続保持のバー（基準内が続くと伸び、外れると 0 に戻る）。</li>
 <li>右上の<b>操作の状態</b>：スロットル・傾き・トリムなどの、いまの状態とキー（大きい画面のとき。設定で隠すこともできます）。</li>
-<li>迷ったら <b>H</b> キーでキーの絵と説明、<b>P</b> キーで一時停止。キーのまとめは ${bk.see('sim.keys', 'この教材の操作のまとめ（第 27 章）')} にあります。</li></ul>
+<li>迷ったら <b>H</b> キーでキーの絵と説明、<b>P</b> キーで一時停止。キーのまとめは ${bk.see('sim.keys', 'この教材の操作のまとめ（{ch:sim}）')} にあります。</li></ul>
 <p>シミュレータの練習は、実機の訓練の<b>予習と復習</b>のためのものです。手順を声に出して言う、目標の値を先に決める、計器の見方を体に覚えさせる――この 3 つに使うと効果があります。</p>
 ${bk.key('読む → 答える → 飛ぶ → 振り返る、をくり返す', '学科テストは 80% 以上で合格。間違えたら教科書に戻る', 'シミュレータは実機の予習・復習のための道具')}
 ${bk.sim('最初の飛行課目「姿勢・出力・トリム」で、操縦とトリムに慣れましょう。', ['a1', '姿勢・出力・トリム'])}` },
     ],
-    terms: [['FAA', '米国連邦航空局', 'Federal Aviation Administration'], ['14 CFR', '連邦規則集 第 14 編（航空）', 'Part 61＝資格、Part 67＝身体検査、Part 91＝飛び方'], ['Cadet pilot', '自社養成パイロット訓練生', ''], ['Ground school', '座学', ''], ['Lesson / Sortie', 'レッスン・1 回の飛行', ''], ['Check flight / Stage check', '審査（Check Flight）・段階審査（Stage check）', '第 17 章'], ['First solo', '初めての単独飛行', ''], ['Endorsement', '教官の承認（ログブックへの記載）', ''], ['Certificate / Rating', '資格・限定', '種類（category）・等級（class）・型式（type）'], ['Instrument Rating', '計器飛行証明', 'IFR で飛ぶのに必要'], ['Type rating', '型式限定', '大型機・ジェット機は機種ごと'], ['Knowledge test / Practical test', '学科試験・実地試験', '実地試験は口述と飛行（checkride）'], ['Medical certificate', '航空身体検査証明', '第 1〜3 種（14 CFR Part 67）'], ['ACS', '実地試験の基準', 'Airman Certification Standards'], ['POH', '操縦士用の機体の手引書', 'Pilot\'s Operating Handbook'], ['AFM', '飛行規程', 'Airplane Flight Manual'], ['SOP', '標準運航手順', 'Standard Operating Procedures']],
+    terms: [['FAA', '米国連邦航空局', 'Federal Aviation Administration'], ['14 CFR', '連邦規則集 第 14 編（航空）', 'Part 61＝資格、Part 67＝身体検査、Part 91＝飛び方'], ['Cadet pilot', '自社養成パイロット訓練生', ''], ['Ground school', '座学', ''], ['Lesson / Sortie', 'レッスン・1 回の飛行', ''], ['Check flight / Stage check', '審査（Check Flight）・段階審査（Stage check）', '第 2 部のソロの章'], ['First solo', '初めての単独飛行', ''], ['Endorsement', '教官の承認（ログブックへの記載）', ''], ['Certificate / Rating', '資格・限定', '種類（category）・等級（class）・型式（type）'], ['Instrument Rating', '計器飛行証明', 'IFR で飛ぶのに必要'], ['Type rating', '型式限定', '大型機・ジェット機は機種ごと'], ['Knowledge test / Practical test', '学科試験・実地試験', '実地試験は口述と飛行（checkride）'], ['Medical certificate', '航空身体検査証明', '第 1〜3 種（14 CFR Part 67）'], ['ACS', '実地試験の基準', 'Airman Certification Standards'], ['POH', '操縦士用の機体の手引書', 'Pilot\'s Operating Handbook'], ['AFM', '飛行規程', 'Airplane Flight Manual'], ['SOP', '標準運航手順', 'Standard Operating Procedures']],
     examples: ['今週の計画：{ch:aero}を読む → 課目「直線水平飛行」を導入レベルで 3 回 → 結果の画面を見て「高度が下がりがち＝トリム不足」とメモする。', '公開情報の「レッスン 12 回」は事実。「各レッスンの内容」は公開されていないので、推測で埋めない。', '資格の順番の例：学生操縦士（教官の承認でソロ）→ 自家用 → 計器飛行証明 → 事業用 → 多発の等級。規則の時間は最低限で、実際の訓練はもっと多くかかるのが普通。'],
     cautions: ['本アプリは ANA や訓練校の公式教材ではありません。実機訓練・教官の指示・POH/AFM・SOP・航空法規を優先してください。', 'アプリの課目に合格しても、ソロや資格の可否とは関係ありません。', '資格の年齢・時間などの条件は改正されることがあります。受験の前に、最新の 14 CFR（eCFR）と FAA の案内で確かめてください。', '公開情報は 2025 年 10 月の記事の内容です。訓練の場所や委託先は、時期によって変わることがあります。'],
     quiz: [

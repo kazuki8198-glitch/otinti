@@ -25,6 +25,7 @@ export const MODULES = Object.freeze([
   'book-jur.js',         // the US–Japan table (FL.jur, DESIGN 3.4): bk.jur・bk.us・bk.jp・bk.same draw from it. Data only
   'book-photos.js',      // the textbook's photos (data URLs, after book-core.js: bk.photo)
   'book-1.js',           // the chapters (book-2.js before book-comm.js: its chapters go before 'hf')
+  'book-0.js',           // the front part p0 (序部, FL.book.addPart) and its new chapters: after book-1.js (they go before 'aero'), before book-5.js (whose 'sim' closes the front part)
   'book-2.js',
   'book-comm.js',
   'book-3.js',

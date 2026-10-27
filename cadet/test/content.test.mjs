@@ -196,10 +196,13 @@ test('instructor: every textbook section can be reached from ask:root; no list h
       if (id.startsWith('ask:')) assert.ok(n.choices.some(c => /^(戻る|質問はもうありません|ほかの質問|ありがとうございました)$/.test(c.text)), `${id}: no way back`);
     }
   }
-  // today's sections first, then one choice per part, then the way out
+  // today's sections first, then one choice per part that has chapters in this book, then the way out. (W09: the front
+  // part 序部 (p0, book-0.js) holds only 'intro' and 'sim' until W10 adds 'basics', and the game leaves both out, so p0
+  // has no chapters here yet and is not listed; p1–p6 are, in FL.book.PARTS order. DESIGN 3.1・6.3, TEST-CONSTANTS.md)
   const root = A1.dialogs.ask.nodes.root.choices.map(c => c.next);
   assert.deepEqual(root.slice(0, 2), ['sec:aero.forces', 'sec:ops.trim']);
-  assert.deepEqual(root.slice(2, -1), FL.book.PARTS.map(p => `part:${p.id}`));
+  assert.deepEqual(root.slice(2, -1), FL.book.PARTS.filter(p => BOOK.chapters.some(c => c.part === p.id)).map(p => `part:${p.id}`));
+  assert.deepEqual(root.slice(2, -1).filter(x => x !== 'part:p0'), ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].map(p => `part:${p}`));
   assert.equal(root[root.length - 1], 'brief:menu');
 });
 

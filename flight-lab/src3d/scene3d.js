@@ -268,10 +268,12 @@ export function createScene(FL, wrap, opt = {}) {
       hidden.length = 0; scene.background = null;
     }
   }
-  // the picture-only parts of the switches: the key springs back from START, the propeller levers come back forward
+  // the picture-only parts of the switches: START (the Archer's momentary rocker, the Seminole's key) springs back after
+  // a second (no engine start here: CADET's aircraft/systems.js lets it go when the engine catches), the propeller
+  // levers come back forward
   function switchesStep(dt) {
     const sw = cockpit.switches;
-    if (sw.mag === 'START') { clock.keyT += dt; if (clock.keyT > 1) { sw.mag = 'BOTH'; clock.keyT = 0; } } else clock.keyT = 0;
+    if (sw.start) { clock.keyT += dt; if (clock.keyT > 1) { sw.start = false; clock.keyT = 0; } } else clock.keyT = 0;
     if (sw.propCycleT > 0) sw.propCycleT = Math.max(0, sw.propCycleT - dt);
   }
 
@@ -296,7 +298,9 @@ export function createScene(FL, wrap, opt = {}) {
     pose(s);
     applyShadow(s);
     // the outside lights from the cockpit's switches, the master first (CADET's fly-mode lights()): clicking NAV,
-    // BEACON, STROBE, LANDING or TAXI turns the aircraft's own light on or off in the picture
+    // STROBE (the Archer's 3 positions: strobes and beacon, off, the fin's beacon alone) or LANDING (the Archer's works
+    // the taxi lamp too; the Seminole's BEACON and TAXI are their own) turns the aircraft's own light on or off in the
+    // picture
     const lt = liveOpt.lights, sw = cockpit.switches, on = sw.master !== false;
     lt.nav = !!(on && sw.nav); lt.beacon = !!(on && sw.beacon); lt.strobe = !!(on && sw.strobe);
     lt.landing = !!(on && sw.landing); lt.taxi = !!(on && sw.taxi);

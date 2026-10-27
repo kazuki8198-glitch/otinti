@@ -5,32 +5,40 @@
 #   blender -b --factory-startup -P tools/aircraft/build_cockpit.py -- /tmp/cockpit.json assets/model/cockpit.glb [preview_dir|-]
 #   (a group alone, for its previews: … -- /tmp/cockpit.json /tmp/trial.glb /tmp/prev band,yokes — never into assets/model,
 #   which must hold every group; tools/aircraft/trial-glb.mjs runs the game's tests against such a trial model)
-# - each yoke (moving parts yokeL, yokeR; the Archer III's 'ram's horn' wheel, the same for both seats): a moulded centre
-#   hub (a rounded block, a little narrower at the top, its faces domed a little) with a raised, bevelled emblem plate
-#   on its aft face (plain: no print on a moving part — a satin field inside a bright bevelled rim); its boss forward of
-#   it, tapering to a collar round the shaft (open at its front, which faces the panel); two horns, each one sweep of an
-#   oval section from inside the hub out and a little down (flaring into the hub's side), round a bend and up into the
-#   grip — thickening into the grip after a shallow groove (the grip's lip), the grip a flattened oval with four finger
-#   hollows down its forward face, a palm swell, leaning a little aft, closed by a rounded top (no ball end); the chrome
-#   shaft straight forward through the panel, open at its front (always behind the panel face).
-#   The switches: on the pilot's (left) horn of the left yoke, the split electric-trim rocker on the grip's top, the
-#   push-to-talk on its aft face under the top on the thumb's (inboard) side, the red autopilot-disconnect / trim-interrupt
-#   button on its inboard face; on the right yoke, the instructor's push-to-talk on the right horn (the left's mirrored).
+# - each yoke (moving parts yokeL, yokeR; the G1000 NXi Archer's M600-style wheel, the same for both seats — Piper's TX,
+#   LX Steel and Seminole NXi photos): a moulded wedge of a hub, widest at its foot where the horns grow out of it and
+#   narrowing to its top, its aft face one plane leaning forward (so that the pilot, looking down at it, sees it nearly
+#   face on), a raised plate on that face a shade lighter than the hub, carrying Piper's chevron (two light-grey
+#   triangles, raised: a large one cut by a diagonal gap from a small one at its lower right — modelled: no print on a
+#   moving part), and a rounded cap on the hub's top jutting aft over the plate's top edge; the boss forward of it round
+#   the shaft (a collar, open at its front, which faces the panel and is never seen); two thick horns, each one sweep of
+#   an oval section out of the hub's lower half (their underside on the hub's foot line), round two bends (horizontal →
+#   45° → upright: the hit boxes leave the bend no other room) into a fat grip, the horn and the grip one moulding (a
+#   pebbled finish), the grip's top hooked aft and inboard so that its top face looks up at the pilot. On the outboard
+#   grips (the left yoke's left, the right yoke's right) a switch pod on that face: a black housing, the split electric-
+#   trim rocker on it, the red autopilot-disconnect / trim-interrupt button at its inboard end (the pilot's yoke only:
+#   the table has no red for the right yoke), the push-to-talk trigger under the hooked top on the grip's forward face;
+#   on the inboard grips a plain black pad on that face. The shaft straight forward through the panel, a black-finished
+#   tube (Piper's NXi photos show no bright metal), open at its front (always behind the panel face).
 # - the boots (yokes.rubber, static): a small rubber grommet round each shaft where it goes into the panel, its lip on it;
 #   no wider than the room under the PFD's bezel (15 mm from the shaft's axis to the bezel's bevelled lower edge).
 # Made in place at the rest pose: cockpit.js turns each yoke's group about the shaft's axis through its pivot
 # (∓yoke.x, yoke.y, yoke.z) (roll ±yoke.roll) and slides it along z (±yoke.travel), so the shaft lies on that axis; the
 # shaft reaches 40 mm behind the panel face (pz) even at full aft travel. Everything else stays inside the yokes' hit
-# boxes (yokeHit: the hub's box and the horns', which stay in code) and the arms' corridor between them, and out of the
-# lines of sight from the eye to the screens' image and to the controls behind the yokes (cockpit.test.mjs: the PFD's and
-# MFD's corners at rest; the aim points with a little nose-up trim — copied below, as the spec does not carry them);
+# boxes (yokeHit: the hub's box and the horns', which stay in code: picking takes the first box a ray meets) and the arms'
+# corridor between them, and out of the lines of sight from the eye to the screens' image, to the controls behind the
+# yokes (cockpit.test.mjs: the PFD's and MFD's corners at rest; the aim points with a little nose-up trim — copied below,
+# as the spec does not carry them), and to what the panel keeps beside and under the yokes (the G5, the dimmers, the
+# alternate static, the quadrant's levers and carb heat, the switch block under the audio panel: at rest and trimmed);
 # check() asserts all of it, with a margin.
 # Coordinates and nodes: build_cockpit.py's (the cabin's frame, metres, x right, y up, z aft); built in each yoke's own
-# frame (its pivot at the origin) and moved there. Nodes "yokes.<surface>.yokeL|yokeR" (yoke: the hub, the arms, the boss
-# and collar, grained vinyl; grip: the grips, leather; alu: the emblem; chrome: the shaft; black: the trim rocker and the
-# push-to-talk; red: the disconnect) and "yokes.rubber" (the boots). COLOR_0: rgb = the table's colour (cockpit.js's S),
-# darker into the grip's groove, in the collar's groove and in the emblem's field (inside its rim); alpha = the local
-# occlusion (build_cockpit.py bakes it: a moving part's from its own pieces only).
+# frame (its pivot at the origin) and moved there. Nodes "yokes.<surface>.yokeL|yokeR" (yoke: the hub, its plate and cap,
+# the boss; grip: the horns and grips, the pebbled moulding; alu: the chevron; chrome: the shaft — the node keeps the
+# table's polished-metal surface for the tube's sheen, cockpit.test.mjs lists it, but its colour is a black finish, not
+# the table's chrome; black: the pod, its rocker, the push-to-talk, the inboard pad; red: the disconnect) and
+# "yokes.rubber" (the boots). COLOR_0: rgb = the table's colour (cockpit.js's S) — the plate's face lighter, its bevelled
+# rim darker (the groove round it), the shaft's the black finish; alpha = the local occlusion (build_cockpit.py bakes it:
+# a moving part's from its own pieces only).
 import math
 
 GROUPS = ('yokes',)
@@ -39,80 +47,89 @@ DEG = math.pi / 180
 
 # the views of the preview: yaw, pitch [, eye] (build_cockpit.py: yaw 0 looks forward, + to the left)
 PREVIEW = {
-    'ahead': (0, -8), 'down': (0, -30),
-    'yokeL': (0, -25, (-0.30, 0.42, -0.62)),             # the left yoke close, from above and behind
-    'yokeR': (-35, -25, (0.1, 0.45, -0.6)),              # the right yoke, from the middle of the cabin
-    'profile': (90, -4, (-0.02, 0.29, -0.845)),          # the left yoke's right horn side on (looking along −x)
-    'front': (180, 2, (-0.24, 0.30, -1.04)),             # the left yoke from the panel (looking aft)
-    'hubSeat': (0, -35, (-0.30, 0.50, -0.62)),           # the left hub and the arms' roots from over the seat
-    'trimL': (32.8, -32, (-0.42, 0.39, -0.80)),          # the left grip's switches close
+    'seat': (0, -38),                                    # the left yoke as the pilot sees it
+    'seatClose': (0, -43, (-0.30, 0.45, -0.58)),         # the same, nearer along his line of sight
+    'right': (-50, -27),                                 # the right yoke from the left seat (Piper's LX Steel close-up)
+    'photo': (0, -14, (0.0, 0.60, -0.30)),               # both, from the middle of the cabin (Piper's TX panel photo)
+    'front': (0, -4, (-0.30, 0.25, -0.58)),              # the left yoke level from behind (the Seminole NXi photo)
+    'hub': (0, -40, (-0.30, 0.36, -0.68)),               # the left hub close
+    'pod': (-22, -42, (-0.47, 0.42, -0.77)),             # the left grip's pod close
+    'profile': (90, -4, (-0.02, 0.29, -0.845)),          # the left yoke side on (looking along −x)
+    'trigger': (160, 10, (-0.40, 0.29, -1.0)),           # the left grip's forward face from the panel (the push-to-talk)
 }
 
 # ---------------------------------------------------------------- the shape (in the yoke's frame: the pivot at the origin)
 N = 12                                # points round the horns' section (every edge round it turns ≤ 32°: smooth)
-SHAFT_R, SHAFT_SEG = 0.013, 16        # the shaft: 26 mm (the old 27), its sides only (its ends are hidden)
-SHAFT_Z0, SHAFT_REACH = -0.034, 0.040  # its back end (inside the collar); how far behind the panel at full aft travel
-# the hub: a rounded block — its outline (x half-width, y half-height, the outline's squareness, its centre's y, how much
-# narrower at the top than at the bottom); along z the rings (z, how far in from the outline) from the front face to the
-# aft: the front edge rounded, the side (a little fuller in the middle), the aft edge rounded — each band turning ≤ 35°
-# from the next (build_cockpit.py keeps them smooth)
-HUB_A, HUB_B, HUB_N, HUB_Y, HUB_TAPER = 0.047, 0.0285, 3.4, -0.003, 0.06
-HUB_RINGS = [(-0.0205, 0.0054), (-0.0185, 0.0022), (-0.0145, 0.0004), (0.0195, 0.0004), (0.0235, 0.0022), (0.0255, 0.0054)]
-HUB_SEG = 20                          # (18° steps, half a step off the axes: each flat side one straight edge, each corner
-                                      # four 18° turns — 16 on the axes showed the corners as facets and the sides as a V)
-HUB_FRONT_DOME, HUB_AFT_DOME = 0.0010, 0.0012
-# the emblem plate on the hub's aft face: a rounded rectangle (w, h, corner), its foot sunk in the face, raised, its side
-# bevelled (the top inset); inside its rim (EMB_RIM wide) the field steps down a little (EMB_STEP) — a framed badge whose
-# field (EMB_FIELD × the alu: a satin finish, where the wordmark would be) is darker than its polished rim
-EMB_W, EMB_H, EMB_R, EMB_Y = 0.046, 0.021, 0.0075, -0.001
-EMB_Z0, EMB_Z2, EMB_IN = 0.0250, 0.0286, 0.0016
-EMB_RIM, EMB_STEP, EMB_FIELD = 0.0018, 0.0003, 0.55
-# the boss and the collar (r, z) from the collar's front edge back into the hub: the collar (open at its front, which
-# faces the panel and is never seen; the shaft fills it), its back step into a groove, the boss widening into the hub
-BOSS = [(0.0170, -0.0446), (0.0172, -0.0352), (0.0164, -0.0346), (0.0196, -0.0170)]
-COLLAR_FRONT, COLLAR_BACK, GROOVE = 0, 1, 2           # (BOSS's rings)
-BOSS_SEG = 12
-# the horn's sweep (the right horn; the left mirrored): stations (x, y, z of the centre line; a: the half-thickness in the
-# sweep's plane, bf / bb: the half-depth forward / aft (z), kind) — the arm ('a') from inside the hub out and a little
-# down, round the bend, to the grip's groove ('g', where the arm's surface ends and the grip's begins) and lip ('l'), the
-# grip (finger hollows 'd' and the ridges between them 'r' on its forward face, a palm swell), and the top ring ('t')
-# before the dome. One sweep (the tangents through the groove are the same for both), cut at the groove. The first three
-# stations flare the arm into the hub's lower side (a moulded root, not a tube pushed into a block): the first inside the
-# hub, 40 × 29 mm; the second where it comes out (the hub's side at x 0.047), 33 × 24 mm; the third 18 mm out, 23 × 18
-# mm, nearly the arm's 20 × 17 — most of the taper close to the hub, as a fillet.
-FD = 0.0015                           # the finger hollows' depth
-HORN = [(0.028, -0.0040, 0.0040, 0.0200, 0.0145, 0.0145, 'a'),
-        (0.046, -0.0058, 0.0040, 0.0165, 0.0122, 0.0122, 'a'),
-        (0.064, -0.0074, 0.0041, 0.0114, 0.0091, 0.0091, 'a'),
-        (0.090, -0.0075, 0.0045, 0.0101, 0.0083, 0.0083, 'a'),
-        (0.1185, -0.0010, 0.0052, 0.0106, 0.0089, 0.0089, 'a'),
-        (0.1335, 0.0105, 0.0059, 0.0114, 0.0096, 0.0096, 'a'),
-        (0.1435, 0.0255, 0.0065, 0.0121, 0.0102, 0.0102, 'a'),
-        (0.1480, 0.0345, 0.0069, 0.0116, 0.0098, 0.0098, 'g'),
-        (0.1494, 0.0392, 0.0071, 0.0140, 0.0118, 0.0118, 'l'),
-        (0.1516, 0.0560, 0.0077, 0.0149, 0.0124 - FD, 0.0124, 'd'),
-        (0.1524, 0.0665, 0.0081, 0.0153, 0.0127, 0.0127, 'r'),
-        (0.1527, 0.0770, 0.0085, 0.0154, 0.0127 - FD, 0.0127, 'd'),
-        (0.1526, 0.0872, 0.0088, 0.0153, 0.0126, 0.0126, 'r'),
-        (0.1521, 0.0972, 0.0092, 0.0151, 0.0124 - FD, 0.0124, 'd'),
-        (0.1513, 0.1070, 0.0095, 0.0147, 0.0121, 0.0121, 'r'),
-        (0.1503, 0.1160, 0.0098, 0.0143, 0.0118 - FD, 0.0118, 'd'),
-        (0.1492, 0.1250, 0.0101, 0.0139, 0.0115, 0.0115, 't')]
-CUT = next(i for i, s in enumerate(HORN) if s[6] == 'g')
-DOME_H = 0.0135                       # the rounded top: how far it rises over the top ring
-DOME = [(38 * DEG,), (68 * DEG,)]     # its rings (the angle up the dome), then the tip
 SUPER = 2.2                           # the section's squareness (a superellipse: 2 an ellipse)
-# the switches on the left yoke's left grip (and the right yoke's right grip: the push-to-talk): where on the grip (the
-# station's height y, the angle round the section from the grip's outboard side, 90° = aft) and their size
-PTT = (0.1085, 125 * DEG, 0.0046, 0.0032, 8)          # y, angle, radius, height out of the grip, sides
-APD = (0.0880, 178 * DEG, 0.0040, 0.0026, 10)         # (178°: the inboard face, a little aft; red, so seen: rounder)
-TRIM = (50 * DEG, 0.0090, 0.0042, 0.0022)             # its place on the dome (the angle up it, towards the aft side); one
-                                                      # half's length (fore and aft), width, height
-# the rocker's housing under the halves: a block a little larger than the pair, standing 0.8 mm proud of the dome's
-# tangent plane at its middle and reaching 4 mm under it, so that its lower corners (where the dome falls away, about 3 mm
-# at its footprint's corners) stay buried in the grip (check() asserts it): (the margin round the halves, its half
-# height, how far its middle sits under the dome)
-TRIM_BASE = (0.0007, 0.0024, 0.0016)
+SHAFT_R, SHAFT_SEG = 0.013, 16        # the shaft: 26 mm, its sides only (its ends are hidden)
+SHAFT_Z0, SHAFT_REACH = -0.034, 0.040  # its back end (inside the collar); how far behind the panel at full aft travel
+# the hub: horizontal rounded-rectangle rings (x across, z fore and aft) up its height; its half-width, its aft face's z
+# and its corners' radius at the foot (HUB_YB) and at the top (HUB_YT), straight between them — so the sides lean in
+# (~25°) and the aft face is one plane leaning forward (~28° off the upright: the plate's) — the front face upright at
+# HUB_ZF; the rings (y, how far in from that outline): the foot's bevel, the side, the top's rounded edge
+HUB_YB, HUB_YT, HUB_ZF = -0.034, 0.024, -0.024
+HUB_A, HUB_ZA, HUB_RC = (0.053, 0.025), (0.031, 0.000), (0.0085, 0.0070)
+HUB_RINGS = [(-0.034, 0.004), (-0.031, 0.0), (0.021, 0.0), (0.0232, 0.0015), (0.024, 0.004)]
+# the plate on the aft face (the face's own frame: x across, s up the slope from PLATE_Y0, n out of it): a rounded
+# trapezoid (its half-widths at the foot and the top, the foot's corner radius, its height), its foot sunk in the face,
+# raised PLATE_H with a bevelled rim PLATE_IN wide; its top hides under the cap. The plate a shade lighter than the hub,
+# its rim (the groove the photos show round it) darker.
+PLATE_Y0, PLATE_HW, PLATE_R, PLATE_S = -0.0265, (0.039, 0.0195), 0.007, 0.0475
+PLATE_SINK, PLATE_H, PLATE_IN = 0.0005, 0.0012, 0.0006
+PLATE_K, PLATE_RIM_K = 1.4, 0.6
+# Piper's chevron (the photos' outline, the base 0…1 across): the large piece (its left foot, the gap's foot, the gap's
+# top on the right edge, the apex) and the small one (the gap's other foot, the right foot, the gap's top) — the gap a
+# band parallel to the large piece's cut; its width across and where its base sits up the plate; raised, its foot sunk
+CHEVRON = ([(0, 0), (0.505, 0), (0.709, 0.3335), (0.534, 0.534)], [(0.592, 0), (1, 0), (0.757, 0.2785)])
+LOGO_W, LOGO_S, LOGO_H, LOGO_SINK = 0.050, 0.0075, 0.0006, 0.0003
+# the cap on the hub's top: rings (y, half-width, front z, aft z, corner radius) from its foot (buried in the hub) up its
+# side (jutting aft of the plate) and round its top edge; a low dome over it
+CAP = [(0.008, 0.018, -0.0175, 0.004, 0.006), (0.0145, 0.0225, -0.0205, 0.0135, 0.0085), (0.0300, 0.0225, -0.0205, 0.0135, 0.0085),
+       (0.0328, 0.0217, -0.0197, 0.0127, 0.0077), (0.0344, 0.0197, -0.0177, 0.0107, 0.0057)]
+CAP_TOP = 0.0349
+# the boss and the collar (r, z) from the collar's front edge back into the hub: the collar (open at its front; the
+# shaft fills it), the boss widening from its back edge into the hub
+BOSS = [(0.0168, -0.0446), (0.0172, -0.0350), (0.0196, -0.0200)]
+COLLAR_FRONT, COLLAR_BACK = 0, 1                      # (BOSS's rings)
+BOSS_SEG = 12
+# the horn (the right one; the left mirrored): its sections along one sweep — (the centre (x, y, z), the sweep's
+# direction there: in the x–y plane at an angle (degrees from +x), or for the hooked top tilted aft and inboard
+# (degrees), the half-thickness across, the half-depth forward / aft) — from inside the hub out along the arm, round the
+# first bend (radius 40 mm about ARC1) onto a 45° run, round the second (35 mm about ARC2) up into the grip, the grip
+# filling out towards its top, and the top tilting until its face looks up, aft and inboard (the last ring, then a low
+# dome). The first two sections flare the arm into the hub's flank (a moulded fillet: the arm's top rises into it, its
+# underside runs on along the hub's foot). The hit boxes shape the bend: the horns' box starts at y 0 (no part of the
+# horn under it outboard of x 0.131) and the corridor stops at y 0.05, so the 45° run crosses x 0.131 between the two
+# with its full 34 mm.
+ARC1, R1, ARC2, R2 = (0.0764, 0.0275), 0.040, (0.1185, 0.0625), 0.035
+def _a1(t): return (ARC1[0] + R1 * math.sin(t * DEG), ARC1[1] - R1 * math.cos(t * DEG))
+def _a2(t): return (ARC2[0] + R2 * math.cos(t * DEG), ARC2[1] + R2 * math.sin(t * DEG))
+HORN = [((0.024, -0.0060, -0.0015), 0, 0.0220, 0.0130, 0.0090),       # (the root, inside the hub: open)
+        ((0.044, -0.0085, 0.0040), 0, 0.0250, 0.0180, 0.0185),         # (the fillet out of the hub's side)
+        (_a1(0) + (0.0045,), 0, 0.0210, 0.0185, 0.0190),
+        (_a1(22.5) + (0.0050,), 22.5, 0.0192, 0.0185, 0.0180),
+        (_a1(45) + (0.0055,), 45, 0.0178, 0.0185, 0.0160),
+        ((0.1240, 0.0185, 0.0060), 45, 0.0172, 0.0185, 0.0150),
+        (_a2(-45) + (0.0065,), 45, 0.0170, 0.0188, 0.0158),
+        (_a2(-22.5) + (0.0070,), 67.5, 0.0172, 0.0192, 0.0175),
+        (_a2(0) + (0.0080,), 90, 0.0175, 0.0198, 0.0190),
+        ((0.1525, 0.0940, 0.0085), 92, 0.0188, 0.0205, 0.0200),
+        ((0.1515, 0.1135, 0.0095), (13, 10), 0.0198, 0.0205, 0.0198),
+        ((0.1510, 0.1225, 0.0110), (26, 20), 0.0193, 0.0198, 0.0190),
+        ((0.1500, 0.1290, 0.0128), (38, 30), 0.0186, 0.0188, 0.0180)]
+DOME_H = 0.0015                       # the top's low dome over the last ring
+# the switch pod on the outboard grip's top face (that face's frame: across, fore and aft, out): a rounded rectangle
+# (half sizes, corner; then out of the face: its foot, sunk under it, its side's top, a bevel in, its flat top) — the
+# inboard grip's pad the same, smaller, thinner and unbevelled
+POD = (0.0145, 0.0120, 0.006, -0.002, 0.0055, 0.0012, 0.0065)          # hu, hw, r, foot, side top, bevel in, top
+PAD = (0.0125, 0.0105, 0.006, -0.0015, 0.0028, 0, 0.0028)
+# on the pod's top: the trim rocker's two halves side by side (its centre across / fore and aft, a half's half sizes
+# across, out, fore and aft, the gap between them; its foot sunk 0.4 mm), the disconnect (across, fore and aft, radius,
+# height out of the top, sides)
+TRIM = (-0.0030, 0.0020, 0.0027, 0.0013, 0.0055, 0.0008)
+APD = (0.0078, -0.0025, 0.0032, 0.0022, 8)
+# the push-to-talk trigger: a block out of the grip's forward face under the hooked top (centre, half sizes)
+PTT = ((0.1508, 0.1040, -0.0108), (0.0060, 0.0045, 0.0035))
 # the boots (in the cabin's frame, round each shaft): (r, z off the panel face) from inside the panel out to the lip; the
 # ring turned half a step (its top a flat edge under the PFD's bezel, at r·cos 15°)
 BOOT = [(0.0149, -0.0010), (0.0147, 0.0040), (0.0138, 0.0072)]
@@ -122,43 +139,68 @@ BOOT_SEG, BOOT_PHASE = 12, 15 * DEG
 # frame): the screens' image points (corners, edge middles, 1 mm in) and the softkey strip's ends, with the yokes at
 # rest — and the aim points of the controls behind or round the yokes (every one whose line of sight comes within 40 mm
 # of the yokes' boxes; with the yokes at controlsCheck's pose: elev 0, trim 0.1 → 7 mm aft), from the PFD's softkeys
-# to the switch row, the key, the primer, the circuit breakers, the park brake, the quadrant and the pedals
+# to the Seminole's switch row, key and primer, the G5, the dimmers, the alternate static, carb heat, the circuit
+# breakers, heat and defrost, the ELT, the park brakes, the quadrants, the rudder trim and the pedals
 SCREENS = [(-0.404, 0.3005, -1.0825), (-0.3, 0.3005, -1.0825), (-0.196, 0.3005, -1.0825), (-0.404, 0.36512, -1.0825),
            (-0.196, 0.36512, -1.0825), (-0.404, 0.42975, -1.0825), (-0.3, 0.42975, -1.0825), (-0.196, 0.42975, -1.0825),
            (-0.404, 0.27981, -1.0825), (-0.196, 0.27981, -1.0825), (-0.053, 0.3005, -1.0825), (0.051, 0.3005, -1.0825),
            (0.155, 0.3005, -1.0825), (-0.053, 0.36512, -1.0825), (0.155, 0.36512, -1.0825), (-0.053, 0.42975, -1.0825),
            (0.051, 0.42975, -1.0825), (0.155, 0.42975, -1.0825), (-0.053, 0.27981, -1.0825), (0.155, 0.27981, -1.0825)]
-AIMS = {}                             # (filled in below from AIMS_TXT: id x y z)
 AIMS_TXT = '''
-cb 0.49 0.13 -1.092 / mag -0.48513 0.1041 -1.078 / mfd.alt.inner -0.069 0.26 -1.065
-mfd.alt.outer -0.07388 0.2676 -1.071 / mfd.sk1 -0.04525 0.25875 -1.078 / parkBrake -0.112 -0.037 -1.087
-pfd.alt.inner -0.42 0.26 -1.065 / pfd.alt.outer -0.41714 0.26857 -1.071 / pfd.fms.inner -0.18 0.252 -1.065
-pfd.fms.outer -0.1828 0.26059 -1.071 / pfd.sk1 -0.39625 0.25875 -1.078 / pfd.sk10 -0.23875 0.25875 -1.078
-pfd.sk11 -0.22125 0.25875 -1.078 / pfd.sk12 -0.20375 0.25875 -1.078 / pfd.sk2 -0.37875 0.25875 -1.078
-pfd.sk3 -0.36125 0.25875 -1.078 / pfd.sk4 -0.34375 0.25875 -1.078 / pfd.sk5 -0.32625 0.25875 -1.078
-pfd.sk6 -0.30875 0.25875 -1.078 / pfd.sk7 -0.29125 0.25875 -1.078 / pfd.sk8 -0.27375 0.25875 -1.078
-pfd.sk9 -0.25625 0.25875 -1.078 / primer -0.468 0.183 -1.088 / sw.avionics -0.392 0.095 -1.092
-sw.beacon -0.326 0.095 -1.092 / sw.fuelPump -0.356 0.095 -1.092 / sw.landing -0.212 0.095 -1.092
-sw.master -0.428 0.095 -1.092 / sw.nav -0.278 0.095 -1.092 / sw.pitot -0.14 0.095 -1.092
-sw.strobe -0.248 0.095 -1.092 / sw.taxi -0.176 0.095 -1.092 / pfd.ent -0.1737 0.2695 -1.077
-pfd.clr -0.1863 0.2695 -1.077 / pfd.proc -0.1737 0.2785 -1.077 / pfd.fpl -0.1863 0.2785 -1.077
-audio.COPLT -0.11 0.28 -1.078 / audio.PILOT -0.139 0.28 -1.078 / pedals -0.3 -0.27 -1.21
-mfd.sk2 -0.02775 0.25875 -1.078 / carbHeat@pa44 -0.0775 -0.05474 -1.0082 / carbHeat -0.05 -0.05474 -1.0082
-pfd.direct -0.1863 0.2875 -1.077 / pfd.menu -0.1737 0.2875 -1.077 / audio.PLAY -0.139 0.2948 -1.078
-mfd.sk3 -0.01025 0.25875 -1.078 / throttle -0.005 0.01532 -1.01598 / pfd.range -0.18 0.304 -1.073
-throttle@pa44 -0.036 -0.08927 -1.01226 / prop 0.012 0.06033 -1.03329 / audio.MANSQ -0.11 0.3096 -1.078
-audio.AUX -0.139 0.3096 -1.078 / mfd.sk4 0.00725 0.25875 -1.078 / stby.alt 0.255 0.244 -1.09
-mfd.sk5 0.02475 0.25875 -1.078 / audio.NAV2 -0.11 0.3244 -1.078 / audio.NAV1 -0.139 0.3244 -1.078
-pfd.crs.inner -0.18 0.336 -1.065
+mag -0.48513 0.1041 -1.078 / mfd.alt.inner -0.069 0.26 -1.065 / mfd.alt.outer -0.07388 0.2676 -1.071
+mfd.sk1 -0.04525 0.25875 -1.078 / pfd.alt.inner -0.42 0.26 -1.065 / pfd.alt.outer -0.41714 0.26857 -1.071
+pfd.fms.inner -0.18 0.252 -1.065 / pfd.fms.outer -0.1828 0.26059 -1.071 / pfd.sk1 -0.39625 0.25875 -1.078
+pfd.sk10 -0.23875 0.25875 -1.078 / pfd.sk11 -0.22125 0.25875 -1.078 / pfd.sk12 -0.20375 0.25875 -1.078
+pfd.sk2 -0.37875 0.25875 -1.078 / pfd.sk3 -0.36125 0.25875 -1.078 / pfd.sk4 -0.34375 0.25875 -1.078
+pfd.sk5 -0.32625 0.25875 -1.078 / pfd.sk6 -0.30875 0.25875 -1.078 / pfd.sk7 -0.29125 0.25875 -1.078
+pfd.sk8 -0.27375 0.25875 -1.078 / pfd.sk9 -0.25625 0.25875 -1.078 / primer -0.468 0.183 -1.088
+sw.avionics -0.392 0.095 -1.092 / sw.beacon -0.326 0.095 -1.092 / sw.fuelPump -0.356 0.095 -1.092
+sw.landing -0.212 0.095 -1.092 / sw.master -0.428 0.095 -1.092 / sw.nav -0.278 0.095 -1.092
+sw.pitot -0.14 0.095 -1.092 / sw.strobe -0.248 0.095 -1.092 / sw.taxi -0.176 0.095 -1.092
+pfd.ent -0.1737 0.2695 -1.077 / pfd.clr -0.1863 0.2695 -1.077 / pfd.proc -0.1737 0.2785 -1.077
+pfd.fpl -0.1863 0.2785 -1.077 / audio.COPLT -0.11 0.28 -1.078 / audio.PILOT -0.139 0.28 -1.078
+pedals -0.3 -0.27 -1.21 / mfd.sk2 -0.02775 0.25875 -1.078 / pfd.direct -0.1863 0.2875 -1.077
+pfd.menu -0.1737 0.2875 -1.077 / audio.PLAY -0.139 0.2948 -1.078 / mfd.sk3 -0.01025 0.25875 -1.078
+throttle -0.005 0.01532 -1.01598 / pfd.range -0.18 0.304 -1.073 / throttle@pa44 -0.036 -0.08927 -1.01226
+prop 0.012 0.06033 -1.03329 / audio.MANSQ -0.11 0.3096 -1.078 / audio.AUX -0.139 0.3096 -1.078
+mfd.sk4 0.00725 0.25875 -1.078 / mfd.sk5 0.02475 0.25875 -1.078 / audio.NAV2 -0.11 0.3244 -1.078
+audio.NAV1 -0.139 0.3244 -1.078 / pfd.crs.inner -0.18 0.336 -1.065 / stby.g5 -0.49 0.3365 -1.0875
+elt 0.345 0.364 -1.09 / cabinHeat 0.2945 0.278 -1.089 / defrost 0.2945 0.256 -1.089 / cb 0.24 0.11 -1.091
+dim.switch -0.215 0.125 -1.089 / dim.panel -0.18 0.125 -1.089 / dim.avionics -0.145 0.125 -1.089
+altStatic -0.415 0.047 -1.083 / carbHeat 0.1 0.1192 -1.0808 / parkBrake -0.11 -0.071 -1.068
+rudderTrim 0.059 -0.3498 -0.9412 / carbHeat@pa44 -0.0775 0.0189 -1.017 / gear@pa44 0.225 0.2305 -1.0576
+parkBrake@pa44 -0.112 -0.037 -1.087
 '''
-# the panel round the boots (the spec's panel: cockpit.js's PFD, MFD, STBY_X, STBY_Y and g1000.js's BEZEL): the displays'
-# bezels (cockpit.js's slab() bevels them by 0.002, and three's ExtrudeGeometry pushes the bevel outwards, so the PFD's
-# lower edge is 2 mm under its outline: 15 mm over the left shaft) and the standby altimeter's (a 0.07 square, its corners
-# rounded 6 mm, from 3 to 15 mm off the panel, beside the right shaft — see check()); worked out in layout()
-BEZEL_BEVEL, STBY_SIZE = 0.002, ((0.07, 0.07, 0.015), 0.006)
+# and what the panel keeps beside and under the yokes, seen at rest (and trimmed): the dimmers' knobs and the alternate
+# static's (their faces: the middle and four points round it), the throttle's knob (its ends and middle, at the aim's
+# pose and at idle), the mixture's (full rich and cut-off), carb heat's (OFF up, ON down) — copied from cockpit.js's
+# panel — and the room kept for the switch block under the audio panel (x −0.15…−0.07, y 0.16…0.22: a grid over it;
+# the points whose line of sight meets a yoke's hit box are left out — picking takes the yoke there whatever its shape
+# — and check() prints where they begin)
+REST_TXT = '''
+dim.switch -0.215 0.125 -1.084 0.0055 / dim.panel -0.18 0.125 -1.084 0.0055 / dim.avionics -0.145 0.125 -1.084 0.0055
+altStatic -0.415 0.047 -1.0795 0.006 / throttle.L -0.035 0.01532 -1.01598 0 / throttle.M -0.005 0.01532 -1.01598 0
+throttle.R 0.011 0.01532 -1.01598 0 / throttle.idleL -0.035 -0.045 -1.008 0 / throttle.idleR 0.011 -0.045 -1.008 0
+mixture.rich 0.045 0.0603 -1.0333 0.004 / mixture.cut 0.045 -0.045 -1.008 0.004 / carbHeat.off 0.1 0.1192 -1.0808 0.004
+carbHeat.on 0.1 0.050 -1.080 0.004
+'''
+SWITCH_AREA = ((-0.15, -0.07), (0.16, 0.22), -1.090)    # x, y, the rockers' faces' z
+SWITCH_GRID = (9, 4)                                     # points across, up
+AIMS, REST = {}, {}                   # (filled in below from AIMS_TXT: id x y z; from REST_TXT: id x y z r)
 for _row in AIMS_TXT.replace('\n', ' / ').split(' / '):
     if _row.strip():
         _k, _x, _y, _z = _row.split(); AIMS[_k] = (float(_x), float(_y), float(_z))
+for _row in REST_TXT.replace('\n', ' / ').split(' / '):
+    if _row.strip():
+        _k, _x, _y, _z, _r = _row.split(); _c = (float(_x), float(_y), float(_z)); _r = float(_r)
+        REST[_k] = _c
+        if _r: REST.update({f'{_k}+{n}': (_c[0] + _r * math.cos(n * 90 * DEG), _c[1] + _r * math.sin(n * 90 * DEG), _c[2]) for n in range(4)})
+# the panel round the boots (the spec's panel: cockpit.js's PFD, MFD and g1000.js's BEZEL): the displays' bezels
+# (cockpit.js's slab() bevels them by 0.002, and three's ExtrudeGeometry pushes the bevel outwards, so the PFD's lower edge
+# is 2 mm under its outline: 15 mm over the left shaft); and the G5 standby at the panel's far left (the spec's panel.G5),
+# which must stay in sight past the left yoke's left horn: its screen's corners (2 mm in) and middle, and its knob, are
+# lines of sight in check(); worked out in layout()
+BEZEL_BEVEL = 0.002
 CHECK_DZ = 0.007                      # controlsCheck's pose: trim 0.1 × the travel (the yokes 7 mm aft of rest)
 MARGIN = 0.0015                       # each line of sight is tested with four more, this far to each side
 
@@ -183,10 +225,37 @@ def layout(ctx):
     L.SHAFT_Z1 = (L.PZ - L.Z0) - L.TRAVEL - SHAFT_REACH   # the shaft's front end (yoke frame): behind the panel at full aft
     P = S['panel']; L.BEZEL = P['BEZEL']; L.BEZELS = (P['PFD'], P['MFD'])
     L.PFD_BEZEL_BOT = P['PFD'][1] - P['BEZEL']['h'] / 2 - BEZEL_BEVEL
-    L.STBY_ALT = ((P['STBY_X'], P['STBY_Y'][2]),) + STBY_SIZE
-    AIMS['stby.alt'] = (P['STBY_X'],) + AIMS['stby.alt'][1:]   # (the standby altimeter's aim: on its centre)
+    G5 = P['G5']; gx, gy, gz = G5['c'][0], G5['c'][1] + G5['screenY'], S['pz'] + G5['depth'] - 0.0035   # (the G5's screen)
+    hw, hh = G5['screenW'] / 2 - 0.002, G5['screenH'] / 2 - 0.002
+    L.G5 = {'stby.g5': (gx, gy, gz), 'G5 knob': (gx + 0.032, G5['c'][1] - 0.0335, S['pz'] + G5['depth'] + 0.009)}
+    L.G5.update({'G5 screen %s%s' % (v, u): (gx + sx * hw, gy + sy * hh, gz) for sx, u in ((-1, 'L'), (1, 'R')) for sy, v in ((-1, 'low'), (1, 'top'))})
+    (x0, x1), (y0, y1), z = SWITCH_AREA; nx, ny = SWITCH_GRID
+    L.SWITCHES = {(round(ctx.lerp(x0, x1, i / (nx - 1)), 4), round(ctx.lerp(y0, y1, j / (ny - 1)), 4)): (ctx.lerp(x0, x1, i / (nx - 1)), ctx.lerp(y0, y1, j / (ny - 1)), z)
+                  for i in range(nx) for j in range(ny)}
+    # the aft face's own frame (x across, s up its slope, n out of it) and the horn's sections
+    s = (HUB_ZA[1] - HUB_ZA[0]) / (HUB_YT - HUB_YB)                   # (dz / dy up the face)
+    L.FACE_O = V((0, PLATE_Y0, hub_at(PLATE_Y0)[1]))
+    L.FACE_X = V((1, 0, 0)); L.FACE_S = V((0, 1, s)).normalized(); L.FACE_N = L.FACE_X.cross(L.FACE_S).normalized()
+    L.STATIONS = [station(ctx, *st) for st in HORN]
     ctx._yokes = L
     return L
+
+
+def hub_at(y):
+    # the hub's outline at height y: (half-width, aft z, corner radius)
+    t = (y - HUB_YB) / (HUB_YT - HUB_YB)
+    return tuple(a + (b - a) * t for a, b in (HUB_A, HUB_ZA, HUB_RC))
+
+
+def station(ctx, c, d, a, bf, bb):
+    # a horn section: its centre, the sweep's direction T (an angle in the x–y plane, or (aft, inboard) degrees of tilt
+    # off the upright), its frame (W the depth: +z made square to T; U = W × T: up along the arm, inboard up the grip, so
+    # that U × W = T and a ring round it faces outwards) and its size
+    V = ctx.Vector
+    if isinstance(d, tuple): T = V((-math.tan(d[1] * DEG), 1, math.tan(d[0] * DEG))).normalized()
+    else: T = V((math.cos(d * DEG), math.sin(d * DEG), 0))
+    Z = V((0, 0, 1)); W = (Z - T * Z.dot(T)).normalized(); U = W.cross(T).normalized()
+    return V(c), T, U, W, a, bf, bb
 
 
 # ---------------------------------------------------------------- helpers
@@ -198,25 +267,10 @@ def oval(phi, a, b, n=2.0):
     return math.copysign(a * abs(a * c) ** (1 / (n - 1)) / S ** (1 / n), c), math.copysign(b * abs(b * s) ** (1 / (n - 1)) / S ** (1 / n), s)
 
 
-def tangents(ctx, cs):
-    # the centre line's tangent at each station (central differences)
-    out = []
-    for i in range(len(cs)):
-        a, b = cs[max(0, i - 1)], cs[min(len(cs) - 1, i + 1)]
-        out.append((b - a).normalized())
-    return out
-
-
-def frame(ctx, t):
-    # the section's frame: U in the sweep's plane (W × T: up along the arm, inboard up the grip), W the depth (aft)
-    Z = ctx.Vector((0, 0, 1)); W = (Z - t * Z.dot(t)).normalized(); U = W.cross(t).normalized()
-    return U, W
-
-
-def section(ctx, c, t, a, bf, bb):
-    # the section's ring: counter-clockwise about the tangent (so a strip of rings faces outwards); bf the depth forward
-    # (−W), bb aft (+W); the first point outboard / down (−U), so that the angle 90° is aft
-    U, W = frame(ctx, t)
+def section(ctx, st):
+    # a station's ring: counter-clockwise about its T (so a strip of rings faces outwards); its first point outboard /
+    # down (−U), the angle 90° aft (+W)
+    c, T, U, W, a, bf, bb = st
     ring = []
     for j in range(N):
         phi = math.pi + 2 * math.pi * j / N
@@ -225,33 +279,14 @@ def section(ctx, c, t, a, bf, bb):
     return ring
 
 
-def surface_point(ctx, st, t, ang):
-    # a point on a station's section at the angle ang from the outboard side (90° aft, 180° inboard) and its normal
-    x, y, z, a, bf, bb, kind = st
-    c = ctx.Vector((x, y, z)); U, W = frame(ctx, t)
-    phi = math.pi + ang
-    u, w = oval(phi, a, bb if math.sin(phi) > 0 else bf, SUPER)
-    return c + U * u + W * w, (U * math.cos(phi) + W * math.sin(phi)).normalized()
-
-
-def horn_rows(ctx):
-    # the horn's sections along its stations (one sweep), then the dome's rings over the top one; and the dome's tip
-    V = ctx.Vector
-    cs = [V(st[:3]) for st in HORN]; ts = tangents(ctx, cs)
-    rows = [section(ctx, c, t, st[3], st[4], st[5]) for c, t, st in zip(cs, ts, HORN)]
-    c, t, st = cs[-1], ts[-1], HORN[-1]
-    for (phi,) in DOME:
-        k = math.cos(phi); rows.append(section(ctx, c + t * (DOME_H * math.sin(phi)), t, st[3] * k, st[4] * k, st[5] * k))
-    return rows, cs[-1] + ts[-1] * DOME_H
-
-
-def horn(ctx, part):
-    # the right horn's arm (from inside the hub to the groove: open at its start) or grip (from the groove over the top)
-    rows, tip = horn_rows(ctx); P = ctx.Piece()
-    if part == 'arm': P.grid(rows[:CUT + 1], ctx.C['yoke'], closed=True); return P
-    P.grid(rows[CUT:], ctx.C['grip'], closed=True)
-    base = len(P.v) - N; P.fan(list(range(base, base + N)), tip, ctx.C['grip'], flip=True)
-    return P
+def rr_ring(ctx, y, hx, zf, za, rc, seg=3):
+    # a horizontal rounded rectangle (x ±hx, z zf…za, corners rc) at height y: its corners' arcs in turn — aft right, front
+    # right, front left, aft left — so that a strip of such rings going up faces outwards
+    V = ctx.Vector; out = []
+    for cx, cz, a0 in ((hx - rc, za - rc, 90), (hx - rc, zf + rc, 0), (-hx + rc, zf + rc, -90), (-hx + rc, za - rc, 180)):
+        for k in range(seg + 1):
+            a = (a0 - 90 * k / seg) * DEG; out.append(V((cx + rc * math.cos(a), y, cz + rc * math.sin(a))))
+    return out
 
 
 def ring_strip(ctx, prof, seg, col, centre=(0.0, 0.0), phase=0.0):
@@ -273,6 +308,20 @@ def rounded_outline(w, h, r, seg):
     return out
 
 
+def slab(ctx, o, eu, ew, en, prof, col, back=False):
+    # a raised rounded-rectangle slab on a surface (origin o, across eu, along ew, out en: eu × ew = en): prof = (half
+    # sizes, corner, then along en its foot, its side's top, the bevel in, its flat top) — its side, the bevel (if any),
+    # its top a fan; back: closed under its foot too (for check()'s seating tests)
+    hu, hw, r, foot, side, bev, top = prof
+    P = ctx.Piece()
+    o1, o2 = rounded_outline(2 * hu, 2 * hw, r, 3), rounded_outline(2 * (hu - bev), 2 * (hw - bev), r - bev, 3)
+    rows = [[o + eu * x + ew * y + en * h for x, y in ol] for ol, h in ((o1, foot), (o1, side), (o2, top))][:3 if bev else 2]
+    base = P.grid(rows, col, closed=True); n = len(o1); last = base + (len(rows) - 1) * n
+    P.fan(list(range(last, last + n)), o + en * top, col, flip=True)
+    if back: P.fan(list(range(base, base + n)), o + en * foot, col, flip=False)
+    return P
+
+
 def button(ctx, base, n, r, h, col, seg=8):
     # a round push button out of a surface: its foot sunk 2 mm (base, outward normal n), its side, its face a low dome
     P = ctx.Piece(); V = ctx.Vector
@@ -285,36 +334,60 @@ def button(ctx, base, n, r, h, col, seg=8):
 
 
 # ---------------------------------------------------------------- the pieces (in the yoke's frame)
-def hub(ctx):
-    # the centre block: a rounded outline (a little wider at the bottom, where the arms come in) along z through its rings,
-    # its front and aft faces domed fans
+def hub_body(ctx):
+    # the wedge: its rings up from the foot's bevel to the top's rounded edge, a flat foot and a low top (under the cap)
     P = ctx.Piece(); V = ctx.Vector; col = ctx.C['yoke']
-    def outline(d, z):
-        pts = []
-        for j in range(HUB_SEG):
-            u, w = oval(2 * math.pi * (j + 0.5) / HUB_SEG, HUB_A - d, HUB_B - d, HUB_N)
-            pts.append(V((u * (1 - HUB_TAPER * w / HUB_B), HUB_Y + w, z)))        # (narrower at the top)
-        return pts
-    rows = [outline(d, z) for z, d in HUB_RINGS]
-    base = P.grid(rows, col, closed=True)
-    P.fan(list(range(base, base + HUB_SEG)), V((0, HUB_Y, HUB_RINGS[0][0] - HUB_FRONT_DOME)), col, flip=False)
-    last = base + (len(rows) - 1) * HUB_SEG
-    P.fan(list(range(last, last + HUB_SEG)), V((0, HUB_Y, HUB_RINGS[-1][0] + HUB_AFT_DOME)), col, flip=True)
+    rows = []
+    for y, d in HUB_RINGS:
+        a, za, rc = hub_at(y); rows.append(rr_ring(ctx, y, a - d, HUB_ZF + d, za - d, max(0.001, rc - d)))
+    base = P.grid(rows, col, closed=True); n = len(rows[0])
+    a, za, rc = hub_at(HUB_YB); P.fan(list(range(base, base + n)), V((0, HUB_YB, (HUB_ZF + za) / 2)), col, flip=False)
+    last = base + (len(rows) - 1) * n; a, za, rc = hub_at(HUB_YT)
+    P.fan(list(range(last, last + n)), V((0, HUB_YT + 0.0004, (HUB_ZF + za) / 2)), col, flip=True)
     return P
 
 
-def emblem(ctx):
-    # the plate: its foot sunk into the hub's aft face, its bevelled side (leaning in) up to the rim, the rim's inner edge
-    # stepping down to the flat field
-    P = ctx.Piece(); V = ctx.Vector; col = ctx.C['alu']
-    o = rounded_outline(EMB_W, EMB_H, EMB_R, 2)
-    oi = rounded_outline(EMB_W - 2 * EMB_IN, EMB_H - 2 * EMB_IN, EMB_R - EMB_IN, 2)
-    k = EMB_IN + EMB_RIM; of = rounded_outline(EMB_W - 2 * k, EMB_H - 2 * k, EMB_R - k, 2)
-    rows = [[V((x, EMB_Y + y, EMB_Z0)) for x, y in o], [V((x, EMB_Y + y, EMB_Z2)) for x, y in oi],
-            [V((x, EMB_Y + y, EMB_Z2 - EMB_STEP)) for x, y in of]]
-    base = P.grid(rows, col, closed=True)
-    last = base + 2 * len(o)
-    P.fan(list(range(last, last + len(o))), V((0, EMB_Y, EMB_Z2 - EMB_STEP)), col, flip=True)
+def plate_point(L, x, s, n):
+    # a point of the aft face's frame: x across, s up the slope from the plate's foot, n out of the face
+    return L.FACE_O + L.FACE_X * x + L.FACE_S * s + L.FACE_N * n
+
+
+def plate(ctx):
+    # the plate on the aft face: a rounded trapezoid (a rounded rectangle narrowed towards its top), its foot sunk in the
+    # face, its bevelled rim (dark: the groove round it), its face lighter than the hub; closed under its foot
+    L = layout(ctx); P = ctx.Piece(); base = ctx.C['yoke']
+    face, rim = tuple(c * PLATE_K for c in base), tuple(c * PLATE_RIM_K for c in base)
+    def outline(inset):
+        out = []
+        for x, y in rounded_outline(2 * (PLATE_HW[0] - inset), PLATE_S - 2 * inset, PLATE_R - inset, 3):
+            s = y + PLATE_S / 2; k = 1 + (PLATE_HW[1] / PLATE_HW[0] - 1) * s / PLATE_S
+            out.append((x * k, s))
+        return out
+    o1, o2 = outline(0), outline(PLATE_IN)
+    rows = [[plate_point(L, x, s, -PLATE_SINK) for x, s in o1], [plate_point(L, x, s, PLATE_H) for x, s in o2]]
+    b = P.grid(rows, rim, closed=True); n = len(o1)
+    P.fan(list(range(b + n, b + 2 * n)), plate_point(L, 0, PLATE_S / 2, PLATE_H), face, flip=True)
+    P.fan(list(range(b, b + n)), plate_point(L, 0, PLATE_S / 2, -PLATE_SINK), rim, flip=False)
+    return P
+
+
+def chevron(ctx):
+    # Piper's two triangles on the plate, raised (each a prism: its side and its flat top; its foot sunk in the plate)
+    L = layout(ctx); P = ctx.Piece(); col = ctx.C['alu']
+    for poly in CHEVRON:
+        pts = [((u - 0.5) * LOGO_W, LOGO_S + v * LOGO_W) for u, v in poly]
+        b = P.grid([[plate_point(L, x, s, PLATE_H - LOGO_SINK) for x, s in pts], [plate_point(L, x, s, PLATE_H + LOGO_H) for x, s in pts]], col, closed=True)
+        n = len(pts); P.f.append(tuple(range(b + n, b + 2 * n))); P.c.append(col)
+    return P
+
+
+def cap(ctx):
+    # the rounded cap on the hub's top: its foot inside the hub, its side jutting aft of the plate, its rounded top edge
+    # and a low dome
+    P = ctx.Piece(); V = ctx.Vector; col = ctx.C['yoke']
+    rows = [rr_ring(ctx, y, hx, zf, za, rc) for y, hx, zf, za, rc in CAP]
+    b = P.grid(rows, col, closed=True); n = len(rows[0]); last = b + (len(rows) - 1) * n
+    y, hx, zf, za, rc = CAP[-1]; P.fan(list(range(last, last + n)), V((0, CAP_TOP, (zf + za) / 2)), col, flip=True)
     return P
 
 
@@ -322,53 +395,50 @@ def boss(ctx): return ring_strip(ctx, BOSS, BOSS_SEG, ctx.C['yoke'])
 
 
 def shaft(ctx):
+    # (the black finish: the table's steel darkened — under the chrome surface's metalness a reflectance like black
+    # paint's, so it reads as a glossy black tube, not a bright rod)
     L = layout(ctx)
-    return ring_strip(ctx, [(SHAFT_R, L.SHAFT_Z1), (SHAFT_R, SHAFT_Z0)], SHAFT_SEG, ctx.C['chrome'])
+    return ring_strip(ctx, [(SHAFT_R, L.SHAFT_Z1), (SHAFT_R, SHAFT_Z0)], SHAFT_SEG, tuple(c * 0.55 for c in ctx.C['steel']))
 
 
-def grip_station(ctx, y):
-    # the horn's station at height y on the grip (interpolated; the aft half is the same at a hollow as at a ridge) and its
-    # tangent
-    cs = [ctx.Vector(st[:3]) for st in HORN]; ts = tangents(ctx, cs)
-    for i in range(CUT, len(HORN) - 1):
-        a, b = HORN[i], HORN[i + 1]
-        if a[1] <= y <= b[1]:
-            t = (y - a[1]) / (b[1] - a[1])
-            return tuple(ctx.lerp(a[k], b[k], t) for k in range(6)) + (a[6],), (ts[i] * (1 - t) + ts[i + 1] * t).normalized()
-    raise ValueError(y)
+def horn(ctx):
+    # the right horn: one sweep of its sections (open at its root inside the hub), the top closed by a low dome
+    L = layout(ctx); P = ctx.Piece(); col = ctx.C['grip']
+    rows = [section(ctx, st) for st in L.STATIONS]
+    P.grid(rows, col, closed=True)
+    c, T = L.STATIONS[-1][:2]; base = len(P.v) - N
+    P.fan(list(range(base, base + N)), c + T * DOME_H, col, flip=True)
+    return P
 
 
-def switches(ctx, which):
-    # the right grip's (mirrored for the left yoke's left grip): the push-to-talk; and with 'pilot' the trim rocker (black)
-    # and the disconnect (red)
-    V = ctx.Vector
+def top_frame(ctx):
+    # the grip's top face: its middle, across (U: inboard and down), fore and aft (W: aft and down), out (T)
+    c, T, U, W = layout(ctx).STATIONS[-1][:4]
+    return c, U, W, T
+
+
+def pod(ctx, which):
+    # the outboard grip's switch pod (the right grip's; mirrored for the left yoke): the housing, the trim rocker's halves
+    # and the push-to-talk trigger (black); the disconnect (red) on the pilot's
+    V = ctx.Vector; c, U, W, T = top_frame(ctx)
     blk, red = ctx.Piece(), ctx.Piece()
-    y, ang, r, h, seg = PTT; st, tg = grip_station(ctx, y); p, n = surface_point(ctx, st, tg, ang)
-    blk.add(button(ctx, p, n, r, h, ctx.C['black'], seg))
+    blk.add(slab(ctx, c, U, W, T, POD, ctx.C['black']))
+    tu, tw, hu, ht, hw, gap = TRIM; top = POD[6]
+    for sd in (-1, 1):
+        q = c + U * (tu + sd * (hu + gap / 2)) + W * tw + T * (top + ht - 0.0004)
+        blk.add(ctx.box(q, (hu, hw, ht), (U, W, T), ctx.C['black']))
+    (px, py, pz), half = PTT
+    blk.add(ctx.box(V((px, py, pz)), half, (V((1, 0, 0)), V((0, 1, 0)), V((0, 0, 1))), ctx.C['black']))
     if which == 'pilot':
-        y, ang, r, h, seg = APD; st, tg = grip_station(ctx, y); p, n = surface_point(ctx, st, tg, ang)
-        red.add(button(ctx, p, n, r, h, ctx.C['red'], seg))
-        # the trim rocker: two halves side by side on their housing, on the dome towards the aft side, rocking fore and aft
-        q, nrm, U, along = trim_place(ctx)
-        phi, ln, wd, ht = TRIM; mg, bh, sink = TRIM_BASE
-        top = -sink + bh                                                        # (the housing's top over the tangent plane)
-        blk.add(ctx.box(q + nrm * (top - bh), (wd + mg, bh, ln / 2 + mg), (U, nrm, along), ctx.C['black']))
-        for sd in (-1, 1):
-            blk.add(ctx.box(q + nrm * (top + ht / 2 - 0.0003) + U * (sd * (wd / 2 + 0.0004)), (wd / 2, ht / 2, ln / 2), (U, nrm, along), ctx.C['black']))
+        au, aw, r, h, seg = APD
+        red.add(button(ctx, c + U * au + W * aw + T * top, T, r, h, ctx.C['red'], seg))
     return blk, red
 
 
-def trim_place(ctx):
-    # the trim rocker's place on the right grip's dome (towards the aft side): the point, the dome's normal there, the
-    # across (U) and the fore-and-aft (up the slope) directions
-    V = ctx.Vector; phi = TRIM[0]
-    s = HORN[-1]; c = V(s[:3]); t = tangents(ctx, [V(q[:3]) for q in HORN])[-1]; U, W = frame(ctx, t)
-    k = math.cos(phi)
-    q = c + t * (DOME_H * math.sin(phi)) + W * (s[5] * k)                      # on the dome's aft slope
-    nrm = (t * math.sin(phi) / DOME_H + W * math.cos(phi) / s[5]).normalized()
-    along = nrm.cross(U).normalized()                                           # (fore and aft, up the slope)
-    if along.dot(W) > 0: along = -along
-    return q, nrm, U, along
+def pad(ctx):
+    # the inboard grip's plain black pad on its top face (the right grip's; mirrored for the right yoke)
+    c, U, W, T = top_frame(ctx)
+    return slab(ctx, c, U, W, T, PAD, ctx.C['black'])
 
 
 def placed(ctx, piece, sd):
@@ -383,18 +453,18 @@ def mirrored(ctx, piece):
 
 
 def yoke_pieces(ctx, sd):
-    # one yoke's nodes ({surface: Piece}) in its own frame; sd: which seat (its switches)
-    arm, grp = horn(ctx, 'arm'), horn(ctx, 'grip')
+    # one yoke's nodes ({surface: Piece}) in its own frame; sd: which seat (its pod: on its outboard grip)
+    hn = horn(ctx)
     out = {
-        'yoke': ctx.Piece().add(hub(ctx)).add(boss(ctx)).add(arm).add(mirrored(ctx, arm)),
-        'grip': ctx.Piece().add(grp).add(mirrored(ctx, grp)),
-        'alu': emblem(ctx),
+        'yoke': ctx.Piece().add(hub_body(ctx)).add(plate(ctx)).add(cap(ctx)).add(boss(ctx)),
+        'grip': ctx.Piece().add(hn).add(mirrored(ctx, hn)),
+        'alu': chevron(ctx),
         'chrome': shaft(ctx),
     }
-    if sd < 0:                                                 # the pilot's: on the left grip (the right one's mirrored)
-        blk, red = switches(ctx, 'pilot'); out['black'] = mirrored(ctx, blk); out['red'] = mirrored(ctx, red)
-    else:                                                      # the instructor's: his push-to-talk on the right grip
-        blk, _ = switches(ctx, 'copilot'); out['black'] = blk
+    if sd < 0:                                                 # the pilot's: the pod on the left grip (the right one's mirrored)
+        blk, red = pod(ctx, 'pilot'); out['black'] = mirrored(ctx, blk).add(pad(ctx)); out['red'] = mirrored(ctx, red)
+    else:                                                      # the instructor's: the pod on the right grip, no disconnect
+        blk, _ = pod(ctx, 'copilot'); out['black'] = blk.add(mirrored(ctx, pad(ctx)))
     return out
 
 
@@ -405,69 +475,23 @@ def boots(ctx):
     return P
 
 
-# ---------------------------------------------------------------- the colours
-def local(ctx, co):
-    L = layout(ctx); sd = -1 if co.x < 0 else 1
-    return ctx.Vector((co.x - sd * L.X0, co.y - L.Y0, co.z - L.Z0))
-
-
-def yoke_col(ctx):
-    # the vinyl's colour; darker into the grip's groove (the arm's last ring) and in the collar's groove
-    base = ctx.C['yoke']; gx, gy = HORN[CUT][0], HORN[CUT][1]
-    def f(co):
-        p = local(ctx, co); k = 1.0
-        d = math.hypot(abs(p.x) - gx, p.y - gy)
-        if d < 0.012: k = min(k, ctx.lerp(0.55, 1.0, ctx.clamp(d / 0.012, 0, 1)))
-        if math.hypot(p.x, p.y) < 0.02 and BOSS[COLLAR_BACK][1] - 0.002 < p.z < BOSS[GROOVE][1] + 0.0025: k = min(k, 0.6)
-        return tuple(c * k for c in base)
-    return f
-
-
-def grip_col(ctx):
-    # the leather's colour, a shade darker in the finger hollows and the groove at the grip's foot
-    base = ctx.C['grip']; dips = [st for st in HORN if st[6] == 'd']; g, l = HORN[CUT], HORN[CUT + 1]
-    def f(co):
-        p = local(ctx, co); k = 1.0
-        for st in dips:
-            if p.z < st[2] - 0.004: k = min(k, ctx.lerp(0.8, 1.0, ctx.clamp(abs(p.y - st[1]) / 0.007, 0, 1)))
-        if p.y < l[1]: k = min(k, ctx.lerp(0.6, 1.0, ctx.clamp((p.y - g[1]) / (l[1] - g[1]), 0, 1)))
-        return tuple(c * k for c in base)
-    return f
-
-
-def emblem_col(ctx):
-    # the plate's metal: a badge, not a window — its bevel and rim bright (polished), the field inside the rim a satin
-    # metal a good deal darker, the bevel's foot a shade darker than the rim
-    base = ctx.C['alu']
-    def f(co):
-        p = local(ctx, co)
-        if p.z > EMB_Z2 - 1e-5: k = 1.0                                        # (the rim)
-        elif p.z < EMB_Z0 + 1e-5: k = 0.85                                     # (the bevel's foot)
-        else: k = EMB_FIELD                                                     # (the field)
-        return tuple(c * k for c in base)
-    return f
-
-
 # ---------------------------------------------------------------- the protocol
 def parts(ctx):
     out = {}
-    cols = {'yoke': yoke_col(ctx), 'grip': grip_col(ctx), 'alu': emblem_col(ctx)}
     for sd, name in ((-1, 'yokeL'), (1, 'yokeR')):
         for surf, pc in yoke_pieces(ctx, sd).items():
-            out[f'yokes.{surf}.{name}'] = (placed(ctx, pc, sd), cols.get(surf))
+            out[f'yokes.{surf}.{name}'] = (placed(ctx, pc, sd), None)
     out['yokes.rubber'] = (boots(ctx), None)
     return out
 
 
 def proxies(ctx):
-    # what stays in code round the boots (cockpit.js): the panel's face, the displays' bezels (the PFD's over the left boot),
-    # the standby altimeter's (beside the right one); and the shaft through each boot (always there, whatever the travel)
+    # what stays in code round the boots (cockpit.js): the panel's face, the displays' bezels (the PFD's over the left
+    # boot); and the shaft through each boot (always there, whatever the travel)
     L = layout(ctx); V = ctx.Vector; z = L.PZ + 0.0002
     out = [('quad', V((-0.545, L.S['pbot'] + 0.008, z)), V((0.545, L.S['pbot'] + 0.008, z)), V((0.545, L.S['ptop'] - 0.008, z)), V((-0.545, L.S['ptop'] - 0.008, z)))]
     B = L.BEZEL
     for cx, cy in L.BEZELS: out.append(('box', (cx, cy, L.PZ + B['depth'] / 2), (B['w'], B['h'], B['depth'])))
-    (cx, cy), (w, h, d), _ = L.STBY_ALT
-    out.append(('box', (cx, cy, L.PZ + 0.003 + (d - 0.003) / 2), (w, h, d - 0.003)))
     for sd in (-1, 1): out.append(('box', (sd * L.X0, L.Y0, L.PZ + 0.03), (2 * SHAFT_R * 0.9, 2 * SHAFT_R * 0.9, 0.06)))
     return out
 
@@ -500,15 +524,15 @@ def check(ctx, objs):
             res.append((pls, sum(pts, V()) / len(pts)))
         return res
     # every piece faces outwards: its signed volume about the centre of its open edges (where the missing caps would add
-    # nothing: the arms' and the grips' first ring, the buttons' feet, the shaft's and the boots' axes) is positive
+    # nothing: the horns' root rings, the buttons', slabs' and chevron's feet, the shaft's and the boots' axes) is positive
     for k, ob in mine.items():
         for pls, o in components(ob):
             vol = 0.0
             for pl in pls:
                 a, b, c = (ob.data.vertices[i].co - o for i in pl.vertices); vol += a.dot(b.cross(c)) / 6
             assert vol > 0, (k, 'a piece inside out', tuple(o), vol)
-    # no slits: every open edge of a piece is on a small loop (the hidden ends: the arms' start inside the hub, the grooves,
-    # the buttons' and the emblem's feet, the shaft's and the boss's ends, the boots')
+    # no slits: every open edge of a piece is on a small loop (the hidden ends: the horns' roots inside the hub, the
+    # buttons', the slabs' and the chevron's feet, the shaft's and the boss's ends, the boots')
     for k, ob in mine.items():
         me = ob.data; cnt = {}
         for pl in me.polygons:
@@ -532,7 +556,7 @@ def check(ctx, objs):
         assert BOSS[COLLAR_FRONT][1] < max(v.z for v in vs) <= BOSS[-1][1], (n, 'the shaft\'s back end not inside the collar and boss')
     # everything else of each yoke inside its hit boxes (the hub's, the horns') or the arms' corridor between them, and the
     # boss and collar round the shaft forward of the hub's box
-    def inside(v, box, eps=1e-6): return all(box[0][i] - eps <= v[i] <= box[1][i] + eps for i in range(3))
+    def inbox(v, box, eps=1e-6): return all(box[0][i] - eps <= v[i] <= box[1][i] + eps for i in range(3))
     room = {}
     for n, p in piv.items():
         for k, ob in mine.items():
@@ -540,11 +564,13 @@ def check(ctx, objs):
             for v in verts(ob):
                 q = v - p
                 if q.z < L.HUB[0].z: assert math.hypot(q.x, q.y) <= BOSS[-1][0] + 1e-6, (k, 'forward of the hub, off the shaft', tuple(q))
-                else: assert any(inside(q, b) for b in (L.HUB, L.HORN_R, L.HORN_L, L.CORR)) or inside(V((-q.x, q.y, q.z)), L.CORR), (k, 'outside the hit boxes', tuple(q))
-        g = [v - p for v in verts(mine[f'yokes.grip.{n}'])]
-        room[n] = (L.HORN_R[1].y - max(v.y for v in g), L.HORN_R[1].x - max(abs(v.x) for v in g), min(abs(v.x) for v in g) - L.HORN_R[0].x)
+                else: assert any(inbox(q, b) for b in (L.HUB, L.HORN_R, L.HORN_L, L.CORR)) or inbox(V((-q.x, q.y, q.z)), L.CORR), (k, 'outside the hit boxes', tuple(q))
+        g = [v - p for k, ob in mine.items() if k.endswith('.' + n) and k.split('.')[1] in ('grip', 'black', 'red') for v in verts(ob) if abs(v.x - p.x) > L.HORN_R[0].x - 0.002]
+        room[n] = (L.HORN_R[1].y - max(v.y for v in g), L.HORN_R[1].x - max(abs(v.x) for v in g),
+                   min(abs(v.x) for v in g if v.y > L.CORR[1].y) - L.HORN_R[0].x)
     # the lines of sight from the eye: the screens' points with the yokes at rest, the controls' aim points with them 7 mm
-    # aft (cockpit.test.mjs: nothing drawn more than 30 mm before the point) — each line and four more 1.5 mm to its sides
+    # aft (cockpit.test.mjs: nothing drawn more than 30 mm before the point), the G5 and what the panel keeps beside and
+    # under the yokes both at rest and trimmed — each line and four more 1.5 mm to its sides
     trees = {}
     for n in piv:
         obs = [ob for k, ob in mine.items() if k.endswith('.' + n)]
@@ -562,13 +588,49 @@ def check(ctx, objs):
             for off in (V((0, 0, 0)), s1 * MARGIN, -s1 * MARGIN, s2 * MARGIN, -s2 * MARGIN):
                 e = EYE + off; d = (tgt + off) - e
                 loc, nrm, i, dist = T[(n, dz)].ray_cast(e, d.normalized(), far)
-                if loc is not None: blocked.append((name, n, tuple(round(c, 4) for c in loc))); return
+                if loc is not None: blocked.append((name, n, dz, tuple(round(c, 4) for c in loc))); return
             # (for the report: how close the line comes to the yoke's surface, sampled along it)
             best = min(T[(n, dz)].find_nearest(EYE + a * (far * i / 60))[3] for i in range(10, 61))
             close[name] = min(close.get(name, 9), best)
+    def behind_box(tgt, dz):
+        # whether the line from the eye meets one of the yokes' hit boxes before tgt (then picking takes the yoke there,
+        # whatever the model: no shape inside the boxes can show it)
+        tgt = V(tgt); d = tgt - EYE; far = d.length - 0.03; d = d / d.length
+        for n, p in piv.items():
+            for box in (L.HUB, L.HORN_R, L.HORN_L):
+                lo, hi = box[0] + p + V((0, 0, dz)), box[1] + p + V((0, 0, dz)); t0, t1 = 0.0, far
+                for i in range(3):
+                    if abs(d[i]) < 1e-12:
+                        if not lo[i] <= EYE[i] <= hi[i]: t0 = 9; break
+                        continue
+                    ta, tb = (lo[i] - EYE[i]) / d[i], (hi[i] - EYE[i]) / d[i]
+                    t0, t1 = max(t0, min(ta, tb)), min(t1, max(ta, tb))
+                if t0 <= t1: return True
+        return False
     for p in SCREENS: look('screen %s' % (p,), p, 0.0)
     for k, p in AIMS.items(): look(k, p, CHECK_DZ)
+    for k, p in list(L.G5.items()) + list(REST.items()): look(k, p, 0.0); look(k, p, CHECK_DZ)
+    hidden_by_box = {}
+    for dz in (0.0, CHECK_DZ):
+        for k, p in L.SWITCHES.items():
+            if behind_box(p, dz): hidden_by_box.setdefault(dz, []).append(k)
+            else: look('switch block %s' % (k,), p, dz)
     assert not blocked, ('the yokes hide', blocked)
+    g5_clear = min(close.get(k, 9) for k in L.G5)
+    rest_clear = min(close.get(k, 9) for k in REST)
+    # (the switch block: per row, the x from which the left yoke's right horn's hit box hides it — at rest and trimmed;
+    # bisected between the grid's points)
+    sw_limit = {}
+    (x0, x1), (y0, y1), zs = SWITCH_AREA
+    for dz in (0.0, CHECK_DZ):
+        for y in sorted({y for x, y in L.SWITCHES}):
+            if not behind_box((x1, y, zs), dz): continue
+            lo, hi = x0, x1
+            for _ in range(30):
+                mid = (lo + hi) / 2
+                if behind_box((mid, y, zs), dz): hi = mid
+                else: lo = mid
+            sw_limit.setdefault(dz, {})[y] = round(hi, 4)
     # the boots: the left one under the PFD's bezel (its bevelled lower edge; the ring's top is a flat edge, so its highest
     # points are vertices), and both clear of their shafts at any roll (points round the shaft's circle — its 16-gon's
     # corners as it turns — tested against the boots' faces, not just their vertices: the ring's edges cut inside its
@@ -581,8 +643,9 @@ def check(ctx, objs):
     lip = min(bt.find_nearest(V((sd * L.X0 + SHAFT_R * math.cos(a * DEG), L.Y0 + SHAFT_R * math.sin(a * DEG), L.PZ + dz)))[3]
               for sd in (-1, 1) for a in range(0, 360, 2) for dz in (BOOT[0][1], 0.0, BOOT[1][1], BOOT[-1][1]))
     assert lip > 0.0001, ('the boots touch the shafts', lip)
-    # the switches seated: the trim rocker's housing's lower corners and the buttons' feet inside the grip (ray parity
-    # against the grip's faces, up and fore and aft — away from its open foot)
+    # what is seated in what (ray parity against the host's faces, along three directions): the horns' roots, the plate's
+    # foot, the cap's foot and the boss's back end inside the hub; the chevron's feet inside the plate; the pod's and the
+    # pad's feet and the trigger's back inside the grip; the rocker's and the disconnect's feet inside the pod
     def inside(tree, p):
         votes = 0
         for d in (V((0.05, 1, 0.08)), V((0.07, 0.1, 1)), V((-0.06, 0.12, -1))):
@@ -593,56 +656,42 @@ def check(ctx, objs):
                 n += 1; o = loc + d.normalized() * 1e-6
             votes += n % 2
         return votes >= 2
-    def feet():
-        # the right grip's (the yoke's frame): the push-to-talk's foot ring, the disconnect's, the housing's lower corners
-        out = {}
-        for nm, (y, ang, r, h, seg) in (('ptt', PTT), ('apd', APD)):
-            st, tg = grip_station(ctx, y); p, n = surface_point(ctx, st, tg, ang)
-            t = n.cross(V((0, 1, 0))) if abs(n.y) < 0.9 else n.cross(V((1, 0, 0))); t.normalize(); b = n.cross(t)
-            out[nm] = [p - n * 0.002 + (t * math.cos(2 * math.pi * k / seg) + b * math.sin(2 * math.pi * k / seg)) * r for k in range(seg)]
-        q, nrm, U, along = trim_place(ctx); phi, ln, wd, ht = TRIM; mg, bh, sink = TRIM_BASE
-        out['trim'] = [q - nrm * (sink + bh) + U * (su * (wd + mg)) + along * (sa * (ln / 2 + mg)) for su in (-1, 1) for sa in (-1, 1)]
-        return out
-    # the hidden ends inside the hub (its own closed piece): the arms' open first rings, the emblem's foot, the boss's back
-    # end — none of them may show at the hub's surface
-    hp = hub(ctx); hub_t = BVHTree.FromPolygons(hp.v, hp.f)
-    rows, _ = horn_rows(ctx)
-    ends = {'arm': rows[0] + [V((-q.x, q.y, q.z)) for q in rows[0]],
-            'emblem': [V((x, EMB_Y + y, EMB_Z0)) for x, y in rounded_outline(EMB_W, EMB_H, EMB_R, 2)],
-            'boss': [V((BOSS[-1][0] * math.cos(2 * math.pi * k / BOSS_SEG), BOSS[-1][0] * math.sin(2 * math.pi * k / BOSS_SEG), BOSS[-1][1])) for k in range(BOSS_SEG)]}
-    buried = {}
-    for nm, pts in ends.items():
-        out = [tuple(round(c, 4) for c in q) for q in pts if not inside(hub_t, q)]
-        assert not out, (nm, 'its hidden end shows out of the hub', out)
-        buried[nm] = round(min(hub_t.find_nearest(q)[3] for q in pts) * 1000, 2)
+    def bvh(pc): return BVHTree.FromPolygons(pc.v, [tuple(f) for f in pc.f])
+    hb, pl, hn = hub_body(ctx), plate(ctx), horn(ctx)
+    c, U, W, Tn = top_frame(ctx)
+    def slab_foot(prof): hu, hw, r, foot = prof[:4]; return [c + U * x + W * y + Tn * foot for x, y in rounded_outline(2 * hu, 2 * hw, r, 3)]
+    tu, tw, hu, ht, hw, gap = TRIM; au, aw, ar, ah, aseg = APD
+    t1 = Tn.cross(V((0, 1, 0))).normalized() if abs(Tn.y) < 0.9 else Tn.cross(V((1, 0, 0))).normalized(); t2 = Tn.cross(t1)
+    (px, py, pz), (hx, hy, hzz) = PTT
+    seats = {
+        ('hub', 'horn roots'): (hb, section(ctx, L.STATIONS[0])),
+        ('hub', 'plate foot'): (hb, pl.v[:len(rounded_outline(1, 1, 0.1, 3))]),
+        ('hub', 'cap foot'): (hb, rr_ring(ctx, *CAP[0])),
+        ('hub', 'boss end'): (hb, [V((BOSS[-1][0] * math.cos(2 * math.pi * k / BOSS_SEG), BOSS[-1][0] * math.sin(2 * math.pi * k / BOSS_SEG), BOSS[-1][1])) for k in range(BOSS_SEG)]),
+        ('plate', 'chevron feet'): (pl, [plate_point(L, (u - 0.5) * LOGO_W, LOGO_S + v * LOGO_W, PLATE_H - LOGO_SINK) for poly in CHEVRON for u, v in poly]),
+        ('grip', 'pod foot'): (hn, slab_foot(POD)),
+        ('grip', 'pad foot'): (hn, slab_foot(PAD)),
+        ('grip', 'trigger back'): (hn, [V((px + sx * hx, py + sy * hy, pz + hzz)) for sx in (-1, 1) for sy in (-1, 1)]),
+        ('pod', 'rocker feet'): (slab(ctx, c, U, W, Tn, POD, (0, 0, 0), back=True), [c + U * (tu + sd * (hu + gap / 2) + su * hu) + W * (tw + sw * hw) + Tn * (POD[6] - 0.0004)
+                                                                       for sd in (-1, 1) for su in (-1, 1) for sw in (-1, 1)]),
+        ('pod', 'disconnect foot'): (slab(ctx, c, U, W, Tn, POD, (0, 0, 0), back=True), [c + U * au + W * aw + Tn * (POD[6] - 0.002) + (t1 * math.cos(2 * math.pi * k / aseg) + t2 * math.sin(2 * math.pi * k / aseg)) * ar for k in range(aseg)]),
+    }
     seated = {}
-    for n, p in piv.items():
-        me = mine[f'yokes.grip.{n}'].data
-        gt = BVHTree.FromPolygons([v.co for v in me.vertices], [tuple(pl.vertices) for pl in me.polygons])
-        sd = -1 if n == 'yokeL' else 1
-        for nm, pts in feet().items():
-            if sd > 0 and nm != 'ptt': continue                                 # (the right yoke: its push-to-talk only)
-            pts = [V((sd * q.x, q.y, q.z)) + p for q in pts]
-            out = [round(gt.find_nearest(q)[3] * 1000, 2) for q in pts if not inside(gt, q)]
-            assert not out, (n, nm, 'not seated in the grip: corners out by (mm)', out)
-            seated[f'{n}.{nm}'] = round(min(gt.find_nearest(q)[3] for q in pts) * 1000, 2)
-    # the right shaft and boot against the standby altimeter's bezel (cockpit.js's rounded square, from 3 to 15 mm off
-    # the panel: the boot reaches 7 mm out, so both meet it): the distance from the shaft's axis to the bezel's outline,
-    # less the shaft's and the boot's radius — at least 2 mm (cockpit.js's STBY_X keeps the stack clear of the shaft)
-    (cx, cy), (w, h, d), rc = L.STBY_ALT
-    qx, qy = abs(L.X0 - cx) - (w / 2 - rc), abs(L.Y0 - cy) - (h / 2 - rc)
-    to_bezel = math.hypot(max(qx, 0), max(qy, 0)) + min(max(qx, qy), 0) - rc
-    alt_gap = (to_bezel - SHAFT_R, to_bezel - max(r for r, z in BOOT))
-    assert min(alt_gap) > 0.002, ('the right shaft or boot against the standby altimeter\'s bezel (cockpit.js STBY_X)', alt_gap)
+    for (host, what), (pc, pts) in seats.items():
+        t = bvh(pc)
+        out = [tuple(round(x, 4) for x in q) for q in pts if not inside(t, q)]
+        assert not out, (what, 'not inside the', host, out)
+        seated[what] = round(min(t.find_nearest(q)[3] for q in pts) * 1000, 2)
     tight = sorted(close.items(), key=lambda kv: kv[1])[:8]
     sharp = {}
     for k, ob in mine.items():
         at = ob.data.attributes.get('sharp_edge')
         sharp[k.split('.', 1)[1]] = sum(1 for d in at.data if d.value) if at else 0
     print('yokes: room in the horns\' boxes (top, outboard, inboard) %s mm; the closest lines of sight (to the surface) %s; '
-          'the left boot %.1f mm under the PFD\'s bezel, the boots\' lips %.2f mm off the shafts; the ends in the hub buried by '
-          '(mm) %s; the switches by %s; '
-          'the right shaft / boot to the standby altimeter\'s bezel %.1f / %.1f mm%s; sharp edges %s'
+          'the left boot %.1f mm under the PFD\'s bezel, the boots\' lips %.2f mm off the shafts; seated by (mm) %s; '
+          'the G5\'s lines of sight %.1f mm from the yokes at the closest, the dimmers\', alternate static\'s, quadrant\'s and '
+          'carb heat\'s %.1f mm; the switch block (x −0.15…−0.07, y 0.16…0.22) seen past the models at %d of %d points, the '
+          'rest behind the left yoke\'s right horn\'s hit box from x %s at rest, %s trimmed (per row y); sharp edges %s'
           % ({n: tuple(round(r * 1000, 1) for r in v) for n, v in room.items()}, [(k, round(v * 1000, 1)) for k, v in tight],
-             (L.PFD_BEZEL_BOT - top) * 1000, lip * 1000, buried, seated, alt_gap[0] * 1000, alt_gap[1] * 1000,
-             ' (INTO IT: cockpit.js\'s STBY_X)' if min(alt_gap) < 0 else '', sharp))
+             (L.PFD_BEZEL_BOT - top) * 1000, lip * 1000, seated, g5_clear * 1000, rest_clear * 1000,
+             len(L.SWITCHES) - len(hidden_by_box.get(0.0, [])), len(L.SWITCHES), sw_limit.get(0.0, {}), sw_limit.get(CHECK_DZ, {}), sharp))

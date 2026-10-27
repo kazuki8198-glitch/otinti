@@ -1,9 +1,10 @@
 // CADET — the engine and electrics behind the switches (aircraft/systems.js), on FLIGHT LAB's physics:
 //  - cold on the apron the engine is stopped and still (no thrust, no rpm), the parking brake holds;
-//  - the published start (fuel, mixture rich, throttle cracked, 2–3 primes, master, START) catches and settles at idle;
-//    not primed, no master, mixture lean or the selector OFF: no start, and the reason is said; primed too much it
-//    floods and starts only with the throttle open;
-//  - running, the idle cut-off, the magnetos OFF and the selector OFF (after the fuel in the lines) stop it;
+//  - the published start (the NXi Archer's: fuel, mixture rich, throttle cracked, 2–3 primes, BATT MASTR, ALTR, MAG
+//    LEFT, START held) catches — START springs back — and settles at idle (MAG RIGHT ON after it);
+//    not primed, no BATT MASTR, mixture lean, the selector OFF or both magnetos OFF: no start, and the reason is said;
+//    primed too much it floods and starts only with the throttle open;
+//  - running, the idle cut-off, both magnetos OFF and the selector OFF (after the fuel in the lines) stop it;
 //  - the run-up: at 2,000 rpm the tachometer drops on each magneto within the published limits, and with carb heat;
 //  - in a lesson (everything on, running) the systems leave the physics alone: FLIGHT LAB's bot flies t1 to the same
 //    bit-identical result with the systems updated every step.
@@ -15,7 +16,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { makeBot, runLesson } from './helpers/bot.mjs';
 import { createFlight } from '../src/flight/flight.js';
-import { createSystems, RUNUP, COLD } from '../src/aircraft/systems.js';
+import { createSystems, RUNUP, COLD, magState } from '../src/aircraft/systems.js';
 import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -35,10 +36,10 @@ function apron() {
 }
 function startUp(A, { primes = 3, thrStep = 1 } = {}) {
   const { fl, sw, sys } = A;
-  sw.fuelSel = 'L'; sw.mixture = 1; sw.master = true; sw.beacon = true; sw.fuelPump = true;
+  sw.fuelSel = 'L'; sw.mixture = 1; sw.master = true; sw.altr = true; sw.fuelPump = true; sw.magL = true; sw.beacon = true;
   for (let i = 0; i < thrStep; i++) fl.action('thrStep', 1);
   for (let i = 0; i < primes; i++) sys.prime();
-  sw.mag = 'START';
+  sw.start = true;                                 // (the right magneto OFF while cranking: the impulse coupling is the left's)
 }
 
 test('systems: cold on the apron — stopped and still; the published start catches and settles at idle', () => {
@@ -52,8 +53,9 @@ test('systems: cold on the apron — stopped and still; the published start catc
   startUp(A);
   const ev = A.run(4);
   assert.deepEqual(ev.map(e => e.type), ['crank', 'catch']);
-  assert.equal(sw.mag, 'BOTH', 'the key sprang back');
+  assert.equal(sw.start, false, 'START sprang back'); assert.equal(magState(sw), 'L');
   assert.ok(sys.running && fl.s.eng[0].run);
+  sw.magR = true;                                  // MAG RIGHT ON after the start
   // idle (the throttle a step open): about 700–1,000 rpm on the gauge, oil pressure up
   fl.action('thrIdle');
   A.run(4);
@@ -66,7 +68,8 @@ test('systems: cold on the apron — stopped and still; the published start catc
 test('systems: no start without priming, master, rich mixture or fuel — and the reason is said; flooding', () => {
   const tries = [
     ['prime', (A) => startUp(A, { primes: 0 }), /プライマー/],
-    ['mixture', (A) => { startUp(A); A.sw.mixture = 0.3; A.sys.st.eng = 'off'; A.sw.mag = 'OFF'; A.run(0.1); A.sw.mag = 'START'; }, /ミクスチャー/],
+    ['mixture', (A) => { startUp(A); A.sw.mixture = 0.3; A.sys.st.eng = 'off'; A.sw.start = false; A.run(0.1); A.sw.start = true; }, /ミクスチャー/],
+    ['mags', (A) => { startUp(A); A.sw.magL = false; }, /マグネトー/],
     ['fuel', (A) => { A.sw.fuelSel = 'OFF'; startUp(A); A.sw.fuelSel = 'OFF'; }, /燃料/],
     ['flooded', (A) => startUp(A, { primes: 8 }), /押しすぎ/],
   ];
@@ -76,7 +79,7 @@ test('systems: no start without priming, master, rich mixture or fuel — and th
     assert.ok(!A.sys.running, name + JSON.stringify(ev));
     const no = ev.find(e => e.type === 'nocatch');
     assert.ok(no && said.test(no.why), `${name}: ${JSON.stringify(ev)}`);
-    assert.equal(A.sw.mag, 'BOTH', `${name}: the starter is let go`);
+    assert.equal(A.sw.start, false, `${name}: the starter is let go`);
   }
   // no master: the starter does not turn at all
   { const A = apron(); startUp(A); A.sw.master = false; const ev = A.run(3); assert.deepEqual(ev.map(e => e.type), ['nostarter']); assert.ok(!A.sys.running); }
@@ -85,7 +88,7 @@ test('systems: no start without priming, master, rich mixture or fuel — and th
 });
 
 test('systems: running — the idle cut-off, the magnetos OFF and the selector OFF stop it', () => {
-  for (const [name, stop, within] of [['mixture', (sw) => { sw.mixture = 0; }, 0.2], ['mags', (sw) => { sw.mag = 'OFF'; }, 0.2], ['fuel', (sw) => { sw.fuelSel = 'OFF'; }, 7]]) {
+  for (const [name, stop, within] of [['mixture', (sw) => { sw.mixture = 0; }, 0.2], ['mags', (sw) => { sw.magL = false; sw.magR = false; }, 0.2], ['fuel', (sw) => { sw.fuelSel = 'OFF'; }, 7]]) {
     const A = apron(); startUp(A); A.run(4);
     assert.ok(A.sys.running);
     stop(A.sw);
@@ -101,15 +104,15 @@ test('systems: running — the idle cut-off, the magnetos OFF and the selector O
 
 test('systems: the run-up — 2,000 rpm, the magneto drops and carb heat inside the published limits', () => {
   const A = apron(), { fl, sw, sys } = A;
-  startUp(A); A.run(3);
+  startUp(A); A.run(3); sw.magR = true;
   // throttle to 2,000 rpm
   let guard = 0; while (fl.s.eng[0].rpm < RUNUP.rpm - 30 && guard++ < 40) { fl.action('thrStep', 1); A.run(1); }
   A.run(3);
   const both = sys.rpm;
   assert.ok(Math.abs(both - 2000) < 120, `run-up rpm ${both}`);
-  sw.mag = 'L'; A.run(0.5); const l = both - sys.rpm;
-  sw.mag = 'R'; A.run(0.5); const r = both - sys.rpm;
-  sw.mag = 'BOTH'; A.run(0.5);
+  sw.magR = false; A.run(0.5); const l = both - sys.rpm;                // MAG RIGHT OFF: on the left alone
+  sw.magR = true; sw.magL = false; A.run(0.5); const r = both - sys.rpm; // then on the right alone
+  sw.magL = true; A.run(0.5);
   assert.ok(Math.abs(sys.rpm - both) < 1);
   assert.ok(l > 50 && l <= RUNUP.maxDrop && r > 50 && r <= RUNUP.maxDrop && Math.abs(l - r) <= RUNUP.maxDiff, `drops ${l} ${r}`);
   sw.carbHeat = true; A.run(0.5); const c = both - sys.rpm; sw.carbHeat = false;
@@ -123,7 +126,7 @@ test('systems: in a lesson everything is on and running, and the physics is FLIG
   const ref = runLesson(FL, 't1', 'basic');
   const fl = createFlight(FL, { store: null }), sw = {}, sys = createSystems(sw);
   fl.startLesson('t1', 'basic', { sens: 'low', autoRud: !!FL.school.lesson('t1').autoRud }); sys.setRunning(fl.s);
-  assert.equal(sw.master, true); assert.equal(sw.mag, 'BOTH'); assert.equal(sw.mixture, 1);
+  assert.equal(sw.master, true); assert.equal(magState(sw), 'BOTH'); assert.equal(sw.mixture, 1); assert.ok(sw.altr && sw.emergBatt && sw.avionics && !sw.start);
   const bot = makeBot(FL);
   const L = fl.runScripted((L, dt) => { bot.fly(L, dt); sys.update(dt, L.s); });
   assert.equal(L.grade, ref.grade); assert.equal(L.score, ref.score); assert.equal(L.t, ref.t);

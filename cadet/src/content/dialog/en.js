@@ -288,7 +288,7 @@ export function missingEnglish(data, speakers = CREW) {
 // ---- the instructor's words in the air (content/dialog/day1.js), for fly-mode's voice
 export const AIR_EN = {
   prestart: 'Let\'s start with the before-start checklist. One item at a time, as on the list on the right. For items you check by eye, press Enter once you\'ve checked.',
-  start: 'Let\'s start the engine. Mixture, throttle, master... in the list\'s order. If you\'re unsure, you can leave it to me.',
+  start: 'Let\'s start the engine. Switches, mixture, throttle... in the list\'s order. If you\'re unsure, you can leave it to me.',
   afterStart: 'It caught. Oil pressure is coming up. Let\'s do the after-start checks.',
   atis: 'We\'ll listen to the ATIS. I\'ll set the frequency today. Listen carefully and tell me the altimeter setting.',
   ground: 'We call Ground. The first call goes: who you\'re calling, who you are, where, the ATIS, and what you want.',
@@ -310,7 +310,7 @@ export const AIR_EN = {
   taxiDone: 'You have control. From here, it\'s yours.',
   recover: 'That\'s far enough for a forced landing. In real training I\'d add power and climb away by 500 ft above the ground. I have control. We\'re heading back to LAB.',
   incursion: 'Stop! You\'re past the hold line. You\'re not cleared onto the runway yet.',
-  nostarter: 'The master switch is OFF, so the starter won\'t turn.',
+  nostarter: 'The battery master (BATT MASTR) is OFF, so the starter won\'t turn.',
   surge: 'Too much throttle. The rpm jumped the moment it caught. Open it only a little to start.',
   noClear: 'Stop short of the hold line.',
 };
@@ -337,6 +337,7 @@ const AIR = new Map([
     prime: 'The engine is cold, so two or three strokes of the primer first, then start.',
     flooded: 'Too much priming: there\'s too much fuel. Open the throttle about halfway and try again (pull it back as soon as it catches).',
     starter: 'Don\'t keep the starter turning for long. Wait a moment, then try again.',
+    mags: 'Both magnetos are OFF. Left magneto (MAG LEFT) ON first, then try again.',
   }).map(([k, en]) => [NOCATCH[k], en]),
 ]);
 // what he found undone on the walk-around (walkaround-*.js TASK_MISSED), and why an engine stopped (aircraft/systems.js)
@@ -347,7 +348,7 @@ const TASK_EN = {
   tieT: 'The tail tie-down was still on. I untied it.', chocks: 'The nose-wheel chocks were still in place. I took them away.',
 };
 const TASK_AIR = Object.entries(TASK_MISSED).map(([k, ja]) => [ja, TASK_EN[k]]);
-const STOP_EN = { 'ミクスチャー アイドル カットオフ': 'mixture at idle cut-off', 'マグネトー OFF': 'magnetos OFF', '燃料セレクター OFF': 'fuel selector OFF', '燃料切れ': 'out of fuel', '故障': 'a failure' };
+const STOP_EN = { 'ミクスチャー アイドル カットオフ': 'mixture at idle cut-off', '左右のマグネトー OFF': 'both magnetos OFF', '燃料セレクター OFF': 'fuel selector OFF', '燃料切れ': 'out of fuel', '故障': 'a failure' };
 export function airEnglish(text) {
   if (AIR.has(text)) return AIR.get(text);
   let m = /^乗る前に、機体の周りを私も見てきました。([\s\S]*)$/.exec(text);

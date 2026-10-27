@@ -3,28 +3,42 @@
 // The one thing it does have is the mixture cut-off (s.eng[i].cut): a cut engine makes no power and winds down. This
 // module owns that one field and nothing else of the physics state, so a lesson flown without touching the switches
 // stays bit-identical to FLIGHT LAB (the tests check it).
-//  - the electrics: MASTER powers the starter, the lights and (with AVIONICS) the G1000 type displays;
-//  - the start (a cold, carburetted engine, as the published PA-28-181 checklists describe it): fuel on a tank, mixture
-//    rich, throttle open about a quarter inch, primed 2–3 strokes, the key to START (the starter turns the propeller
-//    while it is held there); the engine catches, the key springs back to BOTH. Not primed: it does not catch; primed
-//    too much: it floods and catches only with the throttle well open (the instructor says why);
-//  - running: it stops when the mixture is pulled to idle cut-off, the magnetos go OFF, or the selector is OFF (after
+//  - the switches, as the G1000 NXi Archer's overhead panel has them (POH VB-2749 Fig 7-10): BATT MASTR (master),
+//    ALTR, EMERG BATT (OFF / ARM), AVION MASTER (avionics), FUEL PUMP, MAG LEFT and MAG RIGHT (two rockers: no key),
+//    START (momentary: true while the starter turns), the lights (LANDG LIGHT works the landing and the taxi lamps; the
+//    3-position STROBE LIGHTS – OFF – FIN STROBE sets strobe + beacon, neither, or the beacon — the fin's — alone);
+//    magState(sw) reads the magnetos and the starter as a key would show them (the Seminole keeps its key for now: the
+//    cockpit's key turns these same fields);
+//  - the electrics: BATT MASTR powers the starter and the lights; the displays are the cockpit's (the PFD and the G5
+//    on the essential bus — BATT MASTR, or EMERG BATT ARM from the emergency battery —, the MFD with AVION MASTER too);
+//  - the start (a cold, carburetted engine, as the NXi Archer's checklist has it): fuel on a tank, mixture rich,
+//    throttle open about a quarter inch, primed 2–3 times (the PRIMER rocker), MAG LEFT ON (the impulse coupling is on
+//    the left magneto: the right stays OFF while cranking), START held (the starter turns the propeller while it is);
+//    the engine catches and START springs back (or after the starter's limit), then MAG RIGHT ON. Not primed: it does
+//    not catch; primed too much: it floods and catches only with the throttle well open; both magnetos OFF: no spark
+//    (the instructor says why);
+//  - running: it stops when the mixture is pulled to idle cut-off, both magnetos go OFF, or the selector is OFF (after
 //    the fuel left in the lines, about 6 s);
 //  - the run-up readings: the rpm the tachometer shows drops on one magneto (left 120, right 95 at 2,000 rpm: inside
 //    the published limits of 175 and 50 between them) and with carburettor heat on (about 70). These are what the
 //    gauge shows; the thrust stays the physics' own.
 // Pure logic: no three.js, no DOM. The switches are the cockpit's object (cockpit.switches), shared.
-export const MAG = ['OFF', 'R', 'L', 'BOTH', 'START'];
+export const MAG = ['OFF', 'R', 'L', 'BOTH', 'START'];        // (a key's positions: the Seminole's, until its own layout)
+// the magnetos and the starter as a key would show them: 'START' while the starter turns, else 'BOTH' | 'L' | 'R' | 'OFF'
+// (L: the left magneto alone — MAG RIGHT OFF)
+export const magState = (sw) => (sw.start ? 'START' : sw.magL ? (sw.magR ? 'BOTH' : 'L') : sw.magR ? 'R' : 'OFF');
 export const RUNUP = { rpm: 2000, maxDrop: 175, maxDiff: 50, dropL: 120, dropR: 95, carb: 70 };
 const CRANK_RPM = 150, CATCH_RPM = 520, STARTER_MAX = 8, LINE_FUEL_S = 6;
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 
 // cold: everything off, as the aircraft is left on the apron (the selector on the left tank)
-export const COLD = { master: false, avionics: false, fuelPump: false, beacon: false, nav: false, strobe: false, landing: false, taxi: false, pitot: false,
-  mag: 'OFF', fuelSel: 'L', mixture: 0, carbHeat: false, propCycleT: 0, propCycled: false };
+export const COLD = { master: false, altr: false, emergBatt: false, avionics: false, fuelPump: false, beacon: false, nav: false, strobe: false, landing: false, taxi: false,
+  pitot: false, magL: false, magR: false, start: false, fuelSel: 'L', mixture: 0, carbHeat: false, propCycleT: 0, propCycled: false };
 // in the air or lined up: as FLIGHT LAB's lessons start (everything that is on in flight)
-export const RUNNING = { master: true, avionics: true, fuelPump: true, beacon: true, nav: true, strobe: true, landing: false, taxi: false, pitot: false,
-  mag: 'BOTH', fuelSel: 'L', mixture: 1, carbHeat: false, propCycleT: 0 };
+export const RUNNING = { master: true, altr: true, emergBatt: true, avionics: true, fuelPump: true, beacon: true, nav: true, strobe: true, landing: false, taxi: false,
+  pitot: false, magL: true, magR: true, start: false, fuelSel: 'L', mixture: 1, carbHeat: false, propCycleT: 0 };
+// the starter without BATT MASTR (the event's words; content/dialog/day1.js EVENT_LINES.nostarter says the same aloud)
+export const NOSTARTER = 'バッテリー マスター（BATT MASTR）が OFF なので、スターターが回りません。';
 
 // the reason a start did not work, in the instructor's words (M8: exported for its English, content/dialog/en.js)
 export const NOCATCH = {
@@ -32,9 +46,11 @@ export const NOCATCH = {
   prime: 'エンジンが冷えているので、プライマーを 2〜3 回押してからかけます。',
   flooded: 'プライマーの押しすぎで、燃料が多すぎます。スロットルを半分ほど開けて、もう一度かけます（かかったらすぐに戻す）。',
   starter: 'スターターは長く回し続けないようにします。少し待ってから、もう一度。',
+  mags: 'マグネトーが左右とも OFF です。左のマグネトー（MAG LEFT）を ON にしてから、もう一度。',
 };
+const NOSPARK = '左右のマグネトー OFF';                     // (why it stopped: both magnetos off)
 
-// createSystems(sw) → the systems for one aircraft; sw: the cockpit's switches (changed here only for the key's spring
+// createSystems(sw) → the systems for one aircraft; sw: the cockpit's switches (changed here only for START's spring
 // return). update(dt, s) every frame (or every physics step) returns the events since the last call (the same array,
 // emptied each time): { type: 'crank' | 'catch' | 'nocatch' | 'stop' | 'nostarter' | 'surge', why? }.
 export function createSystems(sw) {
@@ -50,8 +66,8 @@ export function createSystems(sw) {
     for (const e of es) { if (!e) continue; e.cut = !!on; }
     s.engStopNoted = !!on;                                     // (this module says why it stopped)
   }
-  // (M6) the twin: the same switches (one key, one primer, the mixtures together); START turns the starter of the
-  // first engine not yet running — the left, then the right; each catches as the Archer's does
+  // (M6) the twin: the same switches (one key — its START, its magnetos —, one primer, the mixtures together); START
+  // turns the starter of the first engine not yet running — the left, then the right; each catches as the Archer's does
   const twin = [{ eng: 'off', crankT: 0, catchAt: Infinity, rpm: 0 }, { eng: 'off', crankT: 0, catchAt: Infinity, rpm: 0 }];
   const twinState = () => (twin.every(t => t.eng === 'run') ? 'run' : twin.some(t => t.eng === 'crank') ? 'crank' : twin.some(t => t.eng === 'run') ? 'half' : twin.some(t => t.eng === 'stopping') ? 'stopping' : 'off');
   // the aircraft as left on the apron: switches off, the engine stopped and still
@@ -83,6 +99,7 @@ export function createSystems(sw) {
   function catchTime(s) {
     if (sw.fuelSel === 'OFF' || tankFuel(s) < 0.2) { st.reason = 'fuel'; return Infinity; }
     if (sw.mixture < 0.7) { st.reason = 'mixture'; return Infinity; }
+    if (!sw.magL && !sw.magR) { st.reason = 'mags'; return Infinity; }
     if (st.primes >= 6) { if (s.thr >= 0.45) { st.reason = ''; return 3.2; } st.reason = 'flooded'; return Infinity; }
     if (st.warm) { st.reason = ''; return 0.9; }
     if (st.primes === 0) { st.reason = 'prime'; return Infinity; }
@@ -96,8 +113,8 @@ export function createSystems(sw) {
     if (s.eng.length > 1) return twinUpdate(dt, s);
     const e = s.eng[0], master = !!sw.master;
     if (st.eng === 'off' || st.eng === 'stopping') {
-      if (sw.mag === 'START') {
-        if (!master) { if (!st.starterTried) { st.starterTried = true; emit('nostarter', 'マスター スイッチが OFF なので、スターターが回りません。'); } }
+      if (sw.start) {
+        if (!master) { if (!st.starterTried) { st.starterTried = true; emit('nostarter', NOSTARTER); } }
         else { st.eng = 'crank'; st.crankT = 0; st.catchAt = catchTime(s); emit('crank'); }
       } else st.starterTried = false;
       // the propeller winds down (the physics' windmilling rpm in the air)
@@ -110,15 +127,15 @@ export function createSystems(sw) {
       st.crankT += dt;
       // the starter drags the propeller round, slowed at each compression
       st.rpm = CRANK_RPM * (0.8 + 0.2 * Math.sin(st.crankT * 2 * Math.PI * 4));
-      if (sw.mag !== 'START' || !master) { st.eng = 'off'; }
+      if (!sw.start || !master) { st.eng = 'off'; }
       else if (st.crankT >= st.catchAt) {
         st.eng = 'run'; st.warm = true; st.primes = 0; st.lineT = LINE_FUEL_S;
         cut(s, false); if (e) e.rpm = CATCH_RPM; st.rpm = CATCH_RPM;
-        sw.mag = 'BOTH';                                     // the key springs back
+        sw.start = false;                                    // START springs back (the hand let go)
         emit('catch');
         if (s.thr > 0.35) emit('surge', 'スロットルが開きすぎています。かかった瞬間に回転が上がりすぎました。');
       } else if (st.crankT >= STARTER_MAX) {
-        sw.mag = 'BOTH'; st.eng = 'off';
+        sw.start = false; st.eng = 'off';
         emit('nocatch', NOCATCH[st.reason] || NOCATCH.starter);
       }
     }
@@ -126,7 +143,7 @@ export function createSystems(sw) {
       st.lineT = sw.fuelSel === 'OFF' ? st.lineT - dt : LINE_FUEL_S;
       let why = '';
       if (sw.mixture < 0.15) why = 'ミクスチャー アイドル カットオフ';
-      else if (sw.mag === 'OFF') why = 'マグネトー OFF';
+      else if (!sw.magL && !sw.magR) why = NOSPARK;
       else if (st.lineT <= 0) why = '燃料セレクター OFF';
       if (why) { st.eng = 'stopping'; cut(s, true); emit('stop', why); }
       else if (e && (e.failed || s.fuel[0] + s.fuel[1] <= 0)) {
@@ -136,9 +153,9 @@ export function createSystems(sw) {
         st.rpm = e.rpm || 0; st.oil = Math.max(0, st.oil - 30 * dt);
       } else {
         st.dead = false;
-        if (sw.mag === 'START') sw.mag = 'BOTH';             // (the starter does not engage while running: the key is let go)
-        const r = e ? e.rpm || 0 : 0, k = clamp((r - 700) / 1300, 0, 1.25);
-        const drop = (sw.mag === 'L' ? (fault && fault.dropL) || RUNUP.dropL : sw.mag === 'R' ? RUNUP.dropR : 0) * k + (sw.carbHeat ? RUNUP.carb * k : 0);
+        if (sw.start) sw.start = false;                      // (the starter does not engage while running: START is let go)
+        const r = e ? e.rpm || 0 : 0, k = clamp((r - 700) / 1300, 0, 1.25), mag = magState(sw);
+        const drop = (mag === 'L' ? (fault && fault.dropL) || RUNUP.dropL : mag === 'R' ? RUNUP.dropR : 0) * k + (sw.carbHeat ? RUNUP.carb * k : 0);
         st.rpm = Math.max(0, r - drop);
         st.oil += (clamp(55 + r * 0.012, 0, 85) - st.oil) * Math.min(1, dt * 1.5);
       }
@@ -156,22 +173,22 @@ export function createSystems(sw) {
       cyc = Math.sin(Math.PI * clamp(1 - sw.propCycleT / 2.6, 0, 1));
       if (sw.propCycleT === 0 && s.onGround) sw.propCycled = true;
     }
-    if (sw.mag === 'START') {
+    if (sw.start) {
       const k = twin.findIndex(t => t.eng !== 'run');
-      if (k < 0) sw.mag = 'BOTH';
-      else if (!master) { if (!st.starterTried) { st.starterTried = true; emit('nostarter', 'マスター スイッチが OFF なので、スターターが回りません。'); } }
+      if (k < 0) sw.start = false;
+      else if (!master) { if (!st.starterTried) { st.starterTried = true; emit('nostarter', NOSTARTER); } }
       else if (twin[k].eng !== 'crank') { twin[k].eng = 'crank'; twin[k].crankT = 0; twin[k].catchAt = catchTime(s); emit('crank', k ? '右エンジン' : '左エンジン'); }
     } else st.starterTried = false;
     twin.forEach((t, k) => {
       const e = s.eng[k];
       if (t.eng === 'crank') {
         t.crankT += dt; t.rpm = CRANK_RPM * (0.8 + 0.2 * Math.sin(t.crankT * 2 * Math.PI * 4));
-        if (sw.mag !== 'START' || !master) t.eng = 'off';
+        if (!sw.start || !master) t.eng = 'off';
         else if (t.crankT >= t.catchAt) {
           t.eng = 'run'; st.warm = true; st.primes = 0; st.lineT = LINE_FUEL_S;
           cut(s, false, k); if (e) e.rpm = CATCH_RPM; t.rpm = CATCH_RPM;
-          sw.mag = 'BOTH'; emit('catch', k ? '右エンジン' : '左エンジン');
-        } else if (t.crankT >= STARTER_MAX) { sw.mag = 'BOTH'; t.eng = 'off'; emit('nocatch', NOCATCH[st.reason] || NOCATCH.starter); }
+          sw.start = false; emit('catch', k ? '右エンジン' : '左エンジン');
+        } else if (t.crankT >= STARTER_MAX) { sw.start = false; t.eng = 'off'; emit('nocatch', NOCATCH[st.reason] || NOCATCH.starter); }
       } else if (t.eng === 'off' || t.eng === 'stopping') {
         if (e && !e.cut && t.eng === 'off') cut(s, true, k);
         const wind = s.onGround ? 0 : e ? e.rpm || 0 : 0;
@@ -182,7 +199,7 @@ export function createSystems(sw) {
         // (the constant-speed propeller's governor keeps the physics' rpm up; at low power on the ground the gauge
         // reads as the lever is set: about 1,000 rpm a little open, 2,000 for the run-up)
         const lever = s.thr < 0.045 ? 650 + s.thr / 0.045 * 350 : 1000 + (s.thr - 0.045) / 0.625 * 1000, r = Math.min(e ? e.rpm || 0 : 0, lever), kk = clamp((r - 700) / 1300, 0, 1.25);
-        const drop = (sw.mag === 'L' ? RUNUP.dropL : sw.mag === 'R' ? RUNUP.dropR : 0) * kk + (sw.carbHeat ? RUNUP.carb * kk : 0) + 400 * cyc * kk;
+        const mag = magState(sw), drop = (mag === 'L' ? RUNUP.dropL : mag === 'R' ? RUNUP.dropR : 0) * kk + (sw.carbHeat ? RUNUP.carb * kk : 0) + 400 * cyc * kk;
         t.rpm = Math.max(0, r - drop);
       }
     });
@@ -190,7 +207,7 @@ export function createSystems(sw) {
       st.lineT = sw.fuelSel === 'OFF' ? st.lineT - dt : LINE_FUEL_S;
       let why = '';
       if (sw.mixture < 0.15) why = 'ミクスチャー アイドル カットオフ';
-      else if (sw.mag === 'OFF') why = 'マグネトー OFF';
+      else if (!sw.magL && !sw.magR) why = NOSPARK;
       else if (st.lineT <= 0) why = '燃料セレクター OFF';
       if (why) { twin.forEach((t, k) => { if (t.eng === 'run') { t.eng = 'stopping'; cut(s, true, k); } }); emit('stop', why); }
     }
@@ -211,6 +228,8 @@ export function createSystems(sw) {
     twinLive: twin,                                          // (read only: the gauges each frame, without copying)
     get running() { return st.eng === 'run'; }, get cranking() { return st.eng === 'crank'; },
     get rpm() { return st.rpm; }, get oil() { return st.oil; }, get primes() { return st.primes; },
-    get powered() { return !!sw.master; }, get avionicsOn() { return !!(sw.master && sw.avionics); },
+    // the buses: the main (BATT MASTR), the essential (the PFD, the G5: BATT MASTR or EMERG BATT ARM), the avionics (the
+    // MFD: AVION MASTER on the main bus)
+    get powered() { return !!sw.master; }, get essentialOn() { return !!(sw.master || sw.emergBatt); }, get avionicsOn() { return !!(sw.master && sw.avionics); },
   };
 }

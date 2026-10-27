@@ -71,8 +71,8 @@ export function playDay(FL, { plan = null, level = 'basic', anomalies = ['oil', 
     for (const ev of sys.update(dt, fl.s)) if (ev.type === 'nocatch') throw new Error('no start: ' + ev.why);
     for (const ev of day.update(ctx(dt))) {
       if (ev.type === 'radio' && ev.kind === 'say') said.push(ev.en);
-      // (the run-up's fault: the cadet's answers in turn; a lean run-up puts the key back to BOTH to try again)
-      if (ev.type === 'fault') { const a = faultChoices[Math.min(ev.tries, faultChoices.length - 1)]; if (day.decideFault(a) === 'again') sw.mag = 'BOTH'; }
+      // (the run-up's fault: the cadet's answers in turn; a lean run-up puts both magnetos back ON to try again)
+      if (ev.type === 'fault') { const a = faultChoices[Math.min(ev.tries, faultChoices.length - 1)]; if (day.decideFault(a) === 'again') { sw.magL = true; sw.magR = true; } }
       if (ev.type !== 'phase') continue;
       phases.push(ev.to); taxi = null;
       const info = day.info(ev.to);

@@ -2,7 +2,7 @@
 // tools/aircraft/build_cockpit.py): the cabin's layout as aircraft/cockpit.js has it (the eye, the window band, the roof's
 // arch, the windshield, the panel, the compass and the overhead console that stay in code; the seats' places and the
 // instructor's hips, the occlusion proxy's boxes, the flap handle, the yokes and their hit boxes, the glareshield's lip,
-// the displays' and the standby instruments' places),
+// the displays' places and the G5 standby's rect: its middle, bezel, screen and depth),
 // the surfaces' colours (sRGB, 0..1: the game reads each part's roughness, metalness and detail kind from the same table
 // by the part's name), and sample values of the layout's curves so that the Blender script can check its own copies.
 //   node tools/aircraft/cockpit-spec.mjs > /tmp/cockpit.json

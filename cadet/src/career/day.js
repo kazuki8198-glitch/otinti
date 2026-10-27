@@ -22,7 +22,7 @@ import { CHECKLISTS as CHECKLISTS_SEMINOLE } from '../content/checklists-seminol
 import { dayRadio, setCall } from '../content/dialog/atc.js';
 import { createAtc } from '../dialog/atc.js';
 import { HOLD, HOLD_STOP, A1 } from '../flight/taxi.js';
-import { RUNUP } from '../aircraft/systems.js';
+import { RUNUP, magState } from '../aircraft/systems.js';
 
 // the first day's lessons (M4); every other day is built the same way from its lesson (planFor)
 export const DAY1 = { id: 'day1', n: 1, title: '最初の 1 日', lessons: ['t1', 'a2', 't3'], aircraft: 'N738SY', type: 'PA-28-181' };
@@ -164,16 +164,17 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     const C = list(); if (!C) return null;
     return { id: st.list, title: C.title, i: st.i, items: C.items.map((it, k) => ({ name: it[0], what: it[1], confirm: !it[2], ctl: it[3], note: it[4], ok: k < st.i, cur: k === st.i })) };
   }
-  // the run-up's readings: the rpm on both magnetos, then the drop on each (held half a second), carb heat, the idle
+  // the run-up's readings: the rpm on both magnetos, then the drop on each alone (held half a second: L — the left
+  // alone, MAG RIGHT OFF; R — the right alone), carb heat, the idle
   function watchRunup(c, dt) {
-    const m = st.memo, rpm = c.rpm;
+    const m = st.memo, rpm = c.rpm, mag = magState(c.sw);
     if (st.phase !== 'runup' || !dt) return;
     // read only when the rpm has settled (the engine takes a few seconds to wind up to a new throttle setting)
-    const steady = m.prev != null && Math.abs(rpm - m.prev) / dt < 25 && m.prevMag === c.sw.mag && m.prevCarb === c.sw.carbHeat;
-    m.prev = rpm; m.prevMag = c.sw.mag; m.prevCarb = c.sw.carbHeat;
+    const steady = m.prev != null && Math.abs(rpm - m.prev) / dt < 25 && m.prevMag === mag && m.prevCarb === c.sw.carbHeat;
+    m.prev = rpm; m.prevMag = mag; m.prevCarb = c.sw.carbHeat;
     m.steadyT = steady ? (m.steadyT || 0) + dt : 0;
-    if (c.sw.mag === 'BOTH' && !c.sw.carbHeat && rpm > 1850 && m.steadyT > 0.3) m.both = rpm;
-    for (const [k, on] of [['L', c.sw.mag === 'L'], ['R', c.sw.mag === 'R'], ['C', c.sw.carbHeat && c.sw.mag === 'BOTH']]) {
+    if (mag === 'BOTH' && !c.sw.carbHeat && rpm > 1850 && m.steadyT > 0.3) m.both = rpm;
+    for (const [k, on] of [['L', mag === 'L'], ['R', mag === 'R'], ['C', c.sw.carbHeat && mag === 'BOTH']]) {
       m.hold[k] = on && m.both && m.steadyT > 0.3 ? m.hold[k] + dt : 0;
       if (m.hold[k] > 0.4) { const d = Math.round(m.both - rpm); if (k === 'L') m.dropL = d; else if (k === 'R') m.dropR = d; else m.carb = d; }
     }

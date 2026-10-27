@@ -534,7 +534,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     await C((tg) => { const W = window.__cadet; W.placeWalker(tg.a + 2.6, tg.c + 1.0, { a: tg.a + 1.0, c: tg.c }); W.lookAt(tg.a + 1.0, tg.c, 1.25); return W.use(); }, tg);
     await g.page.waitForTimeout(900); await C(() => window.__cadet.simulate(0.3));
     let fs = await C(() => window.__cadet.fly.status());
-    assert.deepEqual([fs.engine.running, Math.round(fs.engine.rpm), fs.engine.sw.master, fs.engine.sw.mag], [false, 0, false, 'OFF'], 'cold on the stand');
+    assert.deepEqual([fs.engine.running, Math.round(fs.engine.rpm), fs.engine.sw.master, fs.engine.sw.magL, fs.engine.sw.magR], [false, 0, false, false, false], 'cold on the stand');
     for (let i = 0; i < 12; i++) {
       const d = await C(() => window.__cadet.dialog()); if (!d) break;
       if (d.choices.length) await C((re) => window.__cadet.dialogChoose(re), '^基礎');
@@ -542,26 +542,30 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     }
     let day = await C(() => window.__cadet.fly.day());
     assert.equal(day.phase, 'prestart');
-    // the start by hand: the switches clicked as the checklist asks (the ring shows each), the key to START
+    // the start by hand: the switches clicked as the checklist asks (the ring shows each; the NXi Archer's overhead
+    // panel), START held until it catches
     const act = (id, dir = 1, wheel = false) => C(({ id, dir, wheel }) => window.__cadet.fly.act(id, dir, wheel), { id, dir, wheel });
     const tick = (s = 0.5) => C((s) => window.__cadet.simulate(s, 1 / 30), s);
-    await C(() => window.__cadet.fly.key('Enter')); await C(() => window.__cadet.fly.key('Enter'));         // seat and door, breakers (looked at)
     // the parking brake: set on the stand already (a click would release it — and at 1,000 rpm the Archer rolls)
     assert.equal(await C(() => window.__cadet.fly.flight.controls.parkBrake), true, 'the parking brake set on the stand');
+    for (let k = 0; k < 3; k++) await C(() => window.__cadet.fly.key('Enter'));                             // seat and door, the alternate static, the breakers (looked at)
     await tick();
+    assert.equal((await C(() => window.__cadet.fly.status())).guide, 'sw.emergBatt', 'the ring round EMERG BATT');
+    await act('sw.emergBatt'); await tick();                                                                 // ARM: the PFD and the G5 on the emergency battery
     day = await C(() => window.__cadet.fly.day());
     assert.equal(day.phase, 'start', JSON.stringify(day.items));
-    assert.equal((await C(() => window.__cadet.fly.status())).guide, 'mixture', 'the ring round the mixture');
-    await act('mixture'); await act('throttle', 1, true); await act('sw.master'); await act('sw.beacon'); await act('sw.fuelPump');
+    assert.equal((await C(() => window.__cadet.fly.status())).guide, 'sw.master', 'the ring round BATT MASTR');
+    await act('sw.master'); await act('sw.altr'); await act('sw.fuelPump'); await act('sw.magL'); await act('sw.strobe');   // (the strobe: OFF → FIN STROBE)
+    await act('mixture'); await act('throttle', 1, true);
     await act('primer'); await act('primer'); await act('primer'); await tick();
     await C(() => window.__cadet.fly.key('Enter'));                                                          // the propeller clear
-    for (let k = 0; k < 4; k++) await act('mag');                                                            // OFF → R → L → BOTH → START
+    await act('sw.start');
     await tick(0.1);                                                                                         // (the starter engages on the next frame)
     fs = await C(() => window.__cadet.fly.status());
-    assert.ok(fs.engine.cranking, 'the starter turns it');
+    assert.ok(fs.engine.cranking && fs.engine.sw.beacon && !fs.engine.sw.strobe, 'the starter turns it (FIN STROBE on)');
     await tick(3);
     fs = await C(() => window.__cadet.fly.status());
-    assert.ok(fs.engine.running && fs.engine.sw.mag === 'BOTH', 'it caught, the key sprang back');
+    assert.ok(fs.engine.running && !fs.engine.sw.start && fs.engine.sw.magL && !fs.engine.sw.magR, 'it caught, START sprang back (MAG RIGHT still OFF)');
     assert.ok(fs.engine.rpm > 500, `rpm ${fs.engine.rpm}`);
     // from here the instructor's hands, the radio answered right, the taxi by the instructor, the lessons by the bot
     // (seen from outside: the cockpit's screens are not drawn, which keeps the software renderer quick)

@@ -4,20 +4,21 @@
 #   blender -b --factory-startup -P tools/aircraft/build_cockpit.py -- /tmp/cockpit.json assets/model/cockpit.glb [preview_dir|-]
 #   (a group alone, for its previews: … -- /tmp/cockpit.json /tmp/trial.glb /tmp/prev band,seats — never into assets/model,
 #   which must hold every group; tools/aircraft/trial-glb.mjs runs the game's tests against such a trial model)
-# - the front seats (one made on the right and mirrored): leather, in the old two tones — tan centre panels, dark brown
-#   bolsters and shells. The cushion and the back are separate, each a closed upholstered body (the side bolsters, rolled
-#   round from their piping — a crisp welt along the panel, the one hard edge — over the crown to the side, the sides,
-#   the bottom or the hard rear shell, the cushion's soft front roll with its corners rounded in plan, the back's top
-#   rolled over) with its centre panel laid into a recess between the bolsters — a pillow of its own, its crown 1.2 cm
-#   behind the bolsters' (on the back) or level with the old insert's top (on the cushion), sewn across in channels (5 up
-#   the back, 4 along the cushion; each seam a groove and darker), its edges tucked in under the bolsters' lips. The
-#   back swells a little at the lumbar; its bolsters ease back towards its foot, which goes down behind the cushion; the
-#   cushion's rear is pushed into that foot, so the two panels meet in a closed crease. The headrest: a padded block,
-#   its ends and front corners rounded, its tan face crowned (2 cm in all) and bordered by seams, on two chrome posts out
-#   of the back's top. Under the cushion: the black seat pan and the frame's two side plates, standing on the two
-#   aluminium seat tracks on the floor; outboard at the back's foot, the recline lever (a housing and its handle).
+# - the front seats (one made on the right and mirrored): leather in the Archer TX's light grey (cockpit.js's S: the
+#   centre panels light grey, the bolsters and shells a little darker; no tan or brown). The cushion and the back are
+#   separate, each a closed upholstered body (the side bolsters, rolled round from their piping — a crisp welt along
+#   the panel, the one hard edge — over the crown to the side, the sides, the bottom or the hard rear shell, the
+#   cushion's soft front roll with its corners rounded in plan, the back's top rolled over) with its centre panel laid
+#   into a recess between the bolsters — a pillow of its own, its crown 1.2 cm behind the bolsters' (on the back) or
+#   level with the old insert's top (on the cushion), sewn across in channels (5 up the back, 4 along the cushion;
+#   each seam a groove and darker), its edges tucked in under the bolsters' lips. The back swells a little at the
+#   lumbar; its bolsters ease back towards its foot, which goes down behind the cushion; the cushion's rear is pushed
+#   into that foot, so the two panels meet in a closed crease. The headrest: a padded block, its ends and front
+#   corners rounded, its face crowned (2 cm in all) and bordered by seams, on two chrome posts out of the back's top.
+#   Under the cushion: the black seat pan and the frame's two side plates, standing on the two aluminium seat tracks
+#   on the floor; outboard at the back's foot, the recline lever (a housing and its handle).
 # - the rear bench (one piece, two places): a cushion and a back, each one body lofted across the cabin with raised
-#   rolls at its ends and down the middle and two tan panels laid in between them (the back's sewn in 3 channels); its
+#   rolls at its ends and down the middle and two panels laid in between them (the back's sewn in 3 channels); its
 #   two headrests (hidden from the seats behind the front backs: plain blocks on the back's top). It is seen from 1.1 m
 #   and further, mostly over the front backs (its cushion only as a sliver of its right front corner, looking back right
 #   and down past the instructor's seat), so it is plainer: its cushion's ends square, its panels flat across.
@@ -42,10 +43,10 @@
 #   than the old shapes were, but where noted in check()) — check() asserts them all. The old shapes' numbers that the
 #   spec has not (heights, recline, the bench) are copied from cockpit.js (seat(), the rear bench's lines), each marked.
 # Coordinates: the cabin's frame (metres, x = the right wing, y = up, z = aft), as build_cockpit.py.
-# Nodes ("<group>.<surface>", the surfaces cockpit.js's): seats.seat (the front seats' tan panels: cushions, backs,
+# Nodes ("<group>.<surface>", the surfaces cockpit.js's): seats.seat (the front seats' centre panels: cushions, backs,
 #   headrests' faces), seats.seatSide (their bodies: bolsters, sides, shells, front rolls, headrests), seats.black (the
 #   seat pans, the frames' side plates, the recline levers), seats.alu (the seat tracks), seats.chrome (the headrest
-#   posts); bench.seat (the bench's tan panels), bench.seatSide (its bodies and headrests). COLOR_0 rgb: the table's
+#   posts); bench.seat (the bench's centre panels), bench.seatSide (its bodies and headrests). COLOR_0 rgb: the table's
 #   colour, darker in the seams and the crevices along the panels' edges (alpha: build_cockpit.py's occlusion of what
 #   is close by).
 import math
@@ -205,7 +206,7 @@ def elbow_ease(u, a):
     t = clamp(1 - abs(a - ELBOW[1]) / ELBOW[2], 0, 1); w = clamp((-u - 0.160) / 0.030, 0, 1)
     return ELBOW[0] * t * t * (3 - 2 * t) * w * w * (3 - 2 * w)
 BPANEL_HALF = [(0.075, -0.001), (0.149, -0.0065), (0.157, -0.0195)]
-# the headrest's section (h up, d aft of its middle), round from its face's top seam: the face (tan) between the seams,
+# the headrest's section (h up, d aft of its middle), round from its face's top seam: the face (light) between the seams,
 # the front corners rounded in three steps (none over 32°), the top and bottom round to the back (33°), its back (never
 # seen but on the right one's inboard end) flat
 HEAD_FACE, HEAD_CROWN = 0.0455, 0.009           # (the face's crown up its middle: 1 cm; across it, 0.9 cm more)

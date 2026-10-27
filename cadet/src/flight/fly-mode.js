@@ -251,10 +251,10 @@ export function createFlyMode(ctx) {
     startEngine();
   }
   // the instructor starts the engine (a free flight): everything on as for the flight, primed, the throttle cracked,
-  // the key to START; the systems turn it over until it catches
+  // START held; the systems turn it over until it catches (and let START go)
   function startEngine() {
     if (systems.running || systems.cranking) return;
-    Object.assign(cockpit.switches, RUNNING, { mag: 'START' });
+    Object.assign(cockpit.switches, RUNNING, { start: true });
     for (let i = 0; i < 3; i++) systems.prime();
     if (flight.s && flight.s.thr < 0.03) flight.s.thr = 0.05;
   }
@@ -399,7 +399,7 @@ export function createFlyMode(ctx) {
       cockpit.switches[d.id] = d.on;
       if (audio.click) audio.click();
     } else if (d.type === 'select') {
-      cockpit.switches[d.id] = d.value;              // (the key springs back from START by itself: aircraft/systems.js)
+      cockpit.switches[d.id] = d.value;              // (START springs back by itself: aircraft/systems.js)
       if (audio.click) audio.click();
     } else if (d.type === 'prime') {
       const n = systems.prime();

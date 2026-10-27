@@ -602,7 +602,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
       put(make('div'), make('h4', '', null, '操縦'), keyTable(FLY_KEYS.slice(0, FLY_MAIN), true)),
       put(make('div'), make('h4', '', null, '操縦（そのほか）'), keyTable(FLY_KEYS.slice(FLY_MAIN), true)),
       put(make('div'), make('h4', '', null, '操縦席'), keyTable(CABIN_KEYS, false),
-        make('p', 'fh-hn', null, '燃料セレクター・マグネトー・ライトのスイッチ・ドアは、操縦席でクリックして操作します。'))));
+        make('p', 'fh-hn', null, 'スイッチ（Archer はマグネトーやスターターも、窓の上の天井のパネル）・燃料セレクター・ドアは、操縦席でクリックして操作します。'))));
   help.hidden = true;
 
   // the debrief
@@ -717,7 +717,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     // where it is: on the ground, what holds it; in the air, how far the runway is (FLIGHT LAB's free panel)
     const c = st && st.ctx;
     let w = '';
-    if (pn && pn.onGround) w = pn.parkBrake ? 'パーキングブレーキ中：Shift+B か、パネル下の T ハンドルで解除' : '地上：Q / E で前輪の向き・B / Space でブレーキ';
+    if (pn && pn.onGround) w = pn.parkBrake ? 'パーキングブレーキ中：Shift+B か、パネル下のパーキングブレーキのハンドルで解除' : '地上：Q / E で前輪の向き・B / Space でブレーキ';
     else if (c && Number.isFinite(c.along)) w = `滑走路 36 まで ${(Math.hypot(c.along - 600, c.cross) / 1852).toFixed(1)} NM`;
     text(fWhere, w); shown(fWhere, !!w);
   }

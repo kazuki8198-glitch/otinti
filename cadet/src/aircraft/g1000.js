@@ -1,8 +1,10 @@
 // CADET — aircraft/g1000.js : the G1000-type glass panel of the 3D Archer, drawn on canvases.
 //  - the PFD and the MFD: FLIGHT LAB's own drawPFD / drawMFD (logical 640×400) on 1024×640 textures, redrawn on a
-//    schedule by the cockpit (PFD 30 Hz, MFD 10 Hz) — black when the master or the avionics switch is off;
+//    schedule by the cockpit (PFD 30 Hz, MFD 10 Hz) — black without power (the NXi's buses: the PFD on the essential
+//    bus, BATT MASTR or EMERG BATT ARM; the MFD on the avionics bus, AVION MASTER too: cockpit.js update());
 //  - the softkey labels shown along the bottom of each screen, above the 12 keys of the bezel (redrawn only when the
-//    avionics state changes), and the three standby instruments (airspeed, attitude, altimeter), on one small canvas;
+//    avionics state changes), and the standby's screen (a Garmin G5's attitude page: the attitude, the airspeed and
+//    altitude tapes, the heading), on one small canvas;
 //  - the bezel's layout (where each knob and key sits) and what each softkey does in each menu, so a click turns into
 //    FLIGHT LAB's own avionics control (FL.avionics.control) — the cockpit returns it; the game applies it.
 // The canvases come from a factory (opts.makeCanvas), so the cockpit also builds without a DOM (tests): no factory,
@@ -62,8 +64,9 @@ export const softkeysOf = (which, av) => (which === 'mfd' ? SOFTKEYS.mfd : av &&
 // ---------------------------------------------------------------- the canvases and their textures
 const SCR_W = 1024, SCR_H = 640, LW = 640, LH = 400;
 const DYN_W = 512, DYN_H = 192;
-// regions of the small canvas: the two label strips, the three standby dials, a white patch (lamps take its colour)
-export const DYN = { W: DYN_W, H: DYN_H, strip: { pfd: [0, 0, 512, 32], mfd: [0, 32, 512, 32] }, asi: [0, 64, 128, 128], att: [128, 64, 128, 128], alt: [256, 64, 128, 128], white: [420, 100, 16, 16] };
+// regions of the small canvas: the two label strips, the G5's screen (its 0.072 × 0.060 m at 154 × 128 px), a white
+// patch (lamps take its colour)
+export const DYN = { W: DYN_W, H: DYN_H, strip: { pfd: [0, 0, 512, 32], mfd: [0, 32, 512, 32] }, g5: [0, 64, 154, 128], white: [420, 100, 16, 16] };
 export const dynUV = ([x, y, w, h]) => [x / DYN_W, 1 - (y + h) / DYN_H, (x + w) / DYN_W, 1 - y / DYN_H];   // [u0, v0, u1, v1]
 
 const FONT_S = `700 11px ${SANS}`, FONT_L = `700 14px ${SANS}`;
@@ -76,7 +79,7 @@ function canvasTex(cv, mips) {
 }
 
 // createGlass(FL, makeCanvas) → { pfd, mfd, dyn: { canvas, texture } | null, stats, drawScreen, blankScreen, drawStrips, drawStandby,
-//   setAnisotropy, bytes, dispose }
+//   blankStandby, setAnisotropy, bytes, dispose }
 export function createGlass(FL, makeCanvas) {
   const AV = FL.avionics, P = FL.physics;
   const mk = (w, h, mips) => {
@@ -99,14 +102,19 @@ export function createGlass(FL, makeCanvas) {
   const ENG1 = [ENG[0]];
   const d = { o: {}, av: null, nav: null, varW: P.MAGVAR_W, qnh: 29.92, eng: ENG1, V: null, fuelCap: 24, pos: { n: 0, e: 0 } };
   const stats = { pfd: 0, mfd: 0, blank: 0, strips: 0, standby: 0 };      // draws so far (tests, the perf overlay)
-  // the standby dials, drawn 15 times a second: the gradients, fonts and numerals are made once
-  const grads = new Map(), fonts = new Map(), NUM = [];
-  for (let i = 0; i <= 160; i++) NUM.push(String(i));
+  // the G5's page, drawn 15 times a second: the fonts and every string it shows are made once (speeds and pitch
+  // numerals, the altitude tape's hundreds and the readout's tens, the headings)
+  const fonts = new Map(), NUM = [], ALT100 = [], ALT10 = [], HDG3 = [], HDG10 = [];
+  for (let i = 0; i <= 400; i++) NUM.push(String(i));
+  for (let i = 0; i <= 300; i++) ALT100.push(String(i * 100));
+  for (let i = 0; i <= 3000; i++) ALT10.push(String(i * 10));
+  for (let i = 0; i < 360; i++) HDG3.push(String(i).padStart(3, '0') + '°');
+  for (let i = 0; i < 36; i++) HDG10.push(({ 0: 'N', 9: 'E', 18: 'S', 27: 'W' })[i] || String(i));
   const font = (w, px) => { const k = w * 1000 + px; let f = fonts.get(k); if (!f) { f = `${w} ${px}px ${SANS}`; fonts.set(k, f); } return f; };
-  const BANK_MARKS = [-90, -60, -30, -20, -10, 10, 20, 30, 60, 90];
+  const G5_BANK = [-60, -45, -30, -20, -10, 10, 20, 30, 45, 60];
+  const G5C = { sky: '#2c6fd1', gnd: '#7d512b', tape: 'rgba(14, 16, 20, 0.58)', box: '#000', white: '#f4f5f6', yellow: '#ffd21f', cyan: '#3fd0ff' };
   const baroText = { v: NaN, hpa: false, text: '' };
   const V_DEF = { s0: 45, s1: 50, fe: 102, no: 125, ne: 154 };          // the Archer's, if the type has none
-  const asiAng = kt => (kt <= 40 ? Math.max(0, kt) / 40 * 30 : 30 + (Math.min(kt, 175) - 40) / 120 * 300) * DEG;
 
   // ================================================================ per frame (no allocation below this line; FLIGHT LAB's
   // drawPFD / drawMFD / navSolve allocate inside, the drawing here does not)
@@ -159,122 +167,128 @@ export function createGlass(FL, makeCanvas) {
       if (on) { g.fillStyle = '#33d6ff'; g.fillRect(x0 + i * sw + 4, y0 + h - 4, sw - 8, 2); }
     }
   }
-  function drawStrips(av, powered) {
+  // (pfdOn, mfdOn: each display's power — its bus)
+  function drawStrips(av, pfdOn, mfdOn = pfdOn) {
     if (!dyn) return;
     stats.strips++;
-    strip('pfd', av, powered); strip('mfd', av, powered);
+    strip('pfd', av, pfdOn); strip('mfd', av, mfdOn);
     dyn.texture.needsUpdate = true;
   }
 
-  // ---------------------------------------------------------------- the standby instruments (2¼" dials)
-  function face(g, cx, cy, R) {
-    let gr = grads.get(cx);
-    if (!gr) { gr = g.createRadialGradient(cx, cy - R * 0.3, R * 0.1, cx, cy, R); gr.addColorStop(0, '#1b1d20'); gr.addColorStop(1, '#0a0b0c'); grads.set(cx, gr); }
-    g.fillStyle = '#000'; g.fillRect(cx - R - 2, cy - R - 2, 2 * R + 4, 2 * R + 4);
-    g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill();
+  // ---------------------------------------------------------------- the standby: a Garmin G5's attitude page
+  // the sky and the ground behind the pitch ladder, turning with the bank and moving with the pitch; the bank scale and
+  // its pointer at the top; the yellow aircraft symbol; the airspeed tape on the left (its arcs at its edge), the
+  // altitude tape on the right, each with its readout; the heading along the bottom, its box over it; the baro setting
+  // under the altitude tape (cyan)
+  function band(g, x, w, cy, ref, a, b, k, col) {             // a tape's arc: from a to b (knots), ref at cy, k px a knot
+    g.fillStyle = col; g.fillRect(x, cy - (b - ref) * k, w, (b - a) * k);
   }
-  function needle(g, cx, cy, ang, len, w, tail, col) {
-    g.save(); g.translate(cx, cy); g.rotate(ang);
-    g.fillStyle = col; g.beginPath(); g.moveTo(-w, tail); g.lineTo(-w * 0.55, -len * 0.82); g.lineTo(0, -len); g.lineTo(w * 0.55, -len * 0.82); g.lineTo(w, tail); g.closePath(); g.fill();
-    g.restore();
+  function readout(g, x, y, w, h, text, right) {              // a readout box, its point towards the tape (right or left)
+    g.fillStyle = G5C.box; g.strokeStyle = G5C.white; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(x, y - h / 2); g.lineTo(x + w, y - h / 2);
+    if (right) { g.lineTo(x + w, y - 3); g.lineTo(x + w + 4, y); g.lineTo(x + w, y + 3); }
+    g.lineTo(x + w, y + h / 2); g.lineTo(x, y + h / 2);
+    if (!right) { g.lineTo(x, y + 3); g.lineTo(x - 4, y); g.lineTo(x, y - 3); }
+    g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = G5C.white; g.font = font(700, 11); g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, x + w / 2, y + 0.5, w - 2);
   }
-  // airspeed: knots, 40 at about 1 o'clock, 160 at 11 o'clock; white (flaps), green (normal), yellow (caution) arcs, red line
-  function arcBand(g, cx, cy, r, w, a0, a1, col) {
-    g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.arc(cx, cy, r, a0 - Math.PI / 2, a1 - Math.PI / 2); g.stroke();
-  }
-  function drawASI(g, cx, cy, R, ias, V) {
-    face(g, cx, cy, R);
-    const v = V || V_DEF;
-    arcBand(g, cx, cy, R * 0.80, R * 0.07, asiAng(v.s0), asiAng(v.fe), '#f2f2f2');
-    arcBand(g, cx, cy, R * 0.88, R * 0.08, asiAng(v.s1), asiAng(v.no), '#21b04b');
-    arcBand(g, cx, cy, R * 0.88, R * 0.08, asiAng(v.no), asiAng(v.ne), '#f1c40f');
-    g.lineCap = 'butt';
-    g.strokeStyle = '#e8eaec';
-    for (let kt = 40; kt <= 160; kt += 5) {
-      const a = asiAng(kt) - Math.PI / 2, big = kt % 10 === 0, r0 = R * (big ? 0.80 : 0.85);
-      g.lineWidth = big ? 2.2 : 1.2; g.beginPath(); g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); g.lineTo(cx + Math.cos(a) * R * 0.93, cy + Math.sin(a) * R * 0.93); g.stroke();
-    }
-    { const a = asiAng(v.ne) - Math.PI / 2; g.strokeStyle = '#e02a1f'; g.lineWidth = 3.2; g.beginPath(); g.moveTo(cx + Math.cos(a) * R * 0.74, cy + Math.sin(a) * R * 0.74); g.lineTo(cx + Math.cos(a) * R * 0.95, cy + Math.sin(a) * R * 0.95); g.stroke(); }
-    g.fillStyle = '#f2f2f2'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = font(700, Math.round(R * 0.2));
-    for (let kt = 40; kt <= 160; kt += 20) { const a = asiAng(kt) - Math.PI / 2; g.fillText(NUM[kt], cx + Math.cos(a) * R * 0.58, cy + Math.sin(a) * R * 0.58); }
-    g.font = font(600, Math.round(R * 0.13)); g.fillText('KNOTS', cx, cy - R * 0.28); g.fillText('AIRSPEED', cx, cy + R * 0.32);
-    needle(g, cx, cy, asiAng(ias), R * 0.86, R * 0.05, R * 0.16, '#f4f4f4');
-    g.fillStyle = '#26282b'; g.beginPath(); g.arc(cx, cy, R * 0.09, 0, Math.PI * 2); g.fill();
-  }
-  // altimeter: three pointers (100 ft, 1,000 ft, 10,000 ft), the setting window at 3 o'clock (inHg, or hPa)
-  function drawALT(g, cx, cy, R, alt, baro, hpa) {
-    face(g, cx, cy, R);
-    g.strokeStyle = '#e8eaec';
-    for (let i = 0; i < 50; i++) {
-      const a = i / 50 * Math.PI * 2 - Math.PI / 2, big = i % 5 === 0, r0 = R * (big ? 0.78 : 0.86);
-      g.lineWidth = big ? 2.2 : 1.1; g.beginPath(); g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); g.lineTo(cx + Math.cos(a) * R * 0.94, cy + Math.sin(a) * R * 0.94); g.stroke();
-    }
-    g.fillStyle = '#f2f2f2'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = font(700, Math.round(R * 0.22));
-    for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 - Math.PI / 2; g.fillText(NUM[i], cx + Math.cos(a) * R * 0.62, cy + Math.sin(a) * R * 0.62); }
-    // the setting window
-    const wx = cx + R * 0.30, wy = cy - R * 0.11, ww = R * 0.42, wh = R * 0.22;
-    g.fillStyle = '#000'; g.fillRect(wx, wy, ww, wh); g.strokeStyle = '#555'; g.lineWidth = 1; g.strokeRect(wx, wy, ww, wh);
-    g.fillStyle = '#f2f2f2'; g.font = font(700, Math.round(R * 0.15));
-    if (baroText.v !== baro || baroText.hpa !== hpa) { baroText.v = baro; baroText.hpa = hpa; baroText.text = hpa ? String(Math.round(baro * 33.8639)) : baro.toFixed(2); }
-    g.fillText(baroText.text, wx + ww / 2, wy + wh / 2 + 0.5);
-    g.font = font(600, Math.round(R * 0.12)); g.fillText('ALT', cx, cy - R * 0.30); g.fillText('100 FEET', cx, cy + R * 0.34);
-    const a = Math.max(0, alt);
-    needle(g, cx, cy, (a % 100000) / 100000 * Math.PI * 2, R * 0.92, R * 0.022, 0, '#d8d8d8');             // 10,000 ft (thin)
-    needle(g, cx, cy, (a % 10000) / 10000 * Math.PI * 2, R * 0.52, R * 0.075, R * 0.1, '#f4f4f4');        // 1,000 ft (short)
-    needle(g, cx, cy, (a % 1000) / 1000 * Math.PI * 2, R * 0.84, R * 0.045, R * 0.16, '#f4f4f4');         // 100 ft (long)
-    g.fillStyle = '#26282b'; g.beginPath(); g.arc(cx, cy, R * 0.08, 0, Math.PI * 2); g.fill();
-  }
-  // attitude: the sky / ground card turns with the bank and moves with the pitch; the bank scale and the orange
-  // aircraft symbol are fixed to the case
-  function drawATT(g, cx, cy, R, pitch, bank) {
-    face(g, cx, cy, R);
-    const k = R / 32;                                                       // px per degree of pitch
-    g.save(); g.beginPath(); g.arc(cx, cy, R * 0.96, 0, Math.PI * 2); g.clip();
-    g.translate(cx, cy); g.rotate(-bank * DEG); g.translate(0, clamp(pitch, -40, 40) * k);
-    g.fillStyle = '#2b78c8'; g.fillRect(-R * 2, -R * 3, R * 4, R * 3);
-    g.fillStyle = '#7b4b25'; g.fillRect(-R * 2, 0, R * 4, R * 3);
-    g.strokeStyle = '#ffffff'; g.lineWidth = 2; g.beginPath(); g.moveTo(-R * 2, 0); g.lineTo(R * 2, 0); g.stroke();
-    g.lineWidth = 1.4; g.fillStyle = '#fff'; g.font = font(700, Math.round(R * 0.13)); g.textAlign = 'center'; g.textBaseline = 'middle';
-    for (let p = -30; p <= 30; p += 5) {
-      if (!p) continue;
-      const y = -p * k, w = p % 10 === 0 ? R * 0.30 : R * 0.14;
-      g.beginPath(); g.moveTo(-w, y); g.lineTo(w, y); g.stroke();
-      if (p % 10 === 0) { g.fillText(NUM[Math.abs(p)], -w - R * 0.12, y); g.fillText(NUM[Math.abs(p)], w + R * 0.12, y); }
-    }
-    g.translate(0, -clamp(pitch, -40, 40) * k);
-    g.fillStyle = '#fff'; g.beginPath(); g.moveTo(0, -R * 0.74); g.lineTo(-R * 0.07, -R * 0.62); g.lineTo(R * 0.07, -R * 0.62); g.closePath(); g.fill();
-    g.restore();
-    // the case: bank marks at 10, 20, 30, 60 and 90, the zero index
-    g.strokeStyle = '#f2f2f2';
-    for (let i = 0; i < BANK_MARKS.length; i++) {
-      const b = BANK_MARKS[i];
-      const a = b * DEG - Math.PI / 2, big = Math.abs(b) === 30 || Math.abs(b) === 60 || Math.abs(b) === 90;
-      g.lineWidth = big ? 2.4 : 1.5; g.beginPath(); g.moveTo(cx + Math.cos(a) * R * (big ? 0.78 : 0.84), cy + Math.sin(a) * R * (big ? 0.78 : 0.84)); g.lineTo(cx + Math.cos(a) * R * 0.95, cy + Math.sin(a) * R * 0.95); g.stroke();
-    }
-    g.fillStyle = '#f2f2f2'; g.beginPath(); g.moveTo(cx, cy - R * 0.80); g.lineTo(cx - R * 0.08, cy - R * 0.95); g.lineTo(cx + R * 0.08, cy - R * 0.95); g.closePath(); g.fill();
-    g.strokeStyle = '#ff8a1c'; g.fillStyle = '#ff8a1c'; g.lineWidth = R * 0.06; g.lineCap = 'round'; g.lineJoin = 'round';
-    g.beginPath(); g.moveTo(cx - R * 0.55, cy); g.lineTo(cx - R * 0.18, cy); g.lineTo(cx - R * 0.08, cy + R * 0.09); g.lineTo(cx, cy); g.lineTo(cx + R * 0.08, cy + R * 0.09); g.lineTo(cx + R * 0.18, cy); g.lineTo(cx + R * 0.55, cy); g.stroke();
-    g.beginPath(); g.arc(cx, cy - R * 0.02, R * 0.035, 0, Math.PI * 2); g.fill();
-    g.lineCap = 'butt'; g.lineJoin = 'miter';
-    // the case's black rim (covers the card's edge)
-    g.strokeStyle = '#050505'; g.lineWidth = R * 0.08; g.beginPath(); g.arc(cx, cy, R * 0.98, 0, Math.PI * 2); g.stroke();
-  }
-  // all three at once: o = s.out, alt = indicated altitude (ft), baro (inHg), hpa = the setting shown in hPa
+  // o = s.out, alt = indicated altitude (ft), baro (inHg), hpa = the setting shown in hPa, V = the type's speeds
   function drawStandby(o, alt, baro, hpa, V) {
     if (!dyn) return;
     stats.standby++;
-    const g = dyn.g;
-    const A = DYN.asi, T = DYN.att, H = DYN.alt;
-    drawASI(g, A[0] + A[2] / 2, A[1] + A[3] / 2, A[2] / 2 - 2, o.ias || 0, V);
-    drawATT(g, T[0] + T[2] / 2, T[1] + T[3] / 2, T[2] / 2 - 2, o.pitch || 0, o.bank || 0);
-    drawALT(g, H[0] + H[2] / 2, H[1] + H[3] / 2, H[2] / 2 - 2, alt, baro, hpa);
+    const g = dyn.g, R = DYN.g5, x0 = R[0], y0 = R[1], W = R[2], H = R[3], v = V || V_DEF;
+    const ias = Math.max(0, o.ias || 0), pitch = clamp(o.pitch || 0, -60, 60), bank = o.bank || 0;
+    const hdg = ((AV.trueToMag(o.hdgTrue || 0, P.MAGVAR_W) % 360) + 360) % 360;
+    const cx = x0 + W * 0.5, cy = y0 + H * 0.44, K = 2.3, rb = 44;              // the attitude's centre; px a degree of pitch; the bank scale's radius
+    const tt = y0 + 4, tb = y0 + H - 21, sx = x0 + 1, SW = 28, KT = 1.6;        // the tapes' top and bottom; the airspeed tape, px a knot
+    const ax = x0 + W - 35, AW = 34, FT = 0.16;                                 // the altitude tape, px a foot
+    const hy = y0 + H - 17, hx0 = sx + SW + 2, hx1 = ax - 2, hcx = (hx0 + hx1) / 2, DG = 1.9;   // the heading strip, px a degree
+    g.save(); g.beginPath(); g.rect(x0, y0, W, H); g.clip();
+    g.save(); g.translate(cx, cy); g.rotate(-bank * DEG); g.translate(0, pitch * K);
+    g.fillStyle = G5C.sky; g.fillRect(-W, -H * 3, W * 2, H * 3);
+    g.fillStyle = G5C.gnd; g.fillRect(-W, 0, W * 2, H * 3);
+    g.strokeStyle = G5C.white; g.lineWidth = 1.4; g.beginPath(); g.moveTo(-W, 0); g.lineTo(W, 0); g.stroke();
+    g.restore();
+    // the pitch ladder, in the middle only (inside the bank scale, over the heading box)
+    g.save(); g.beginPath(); g.rect(cx - 42, cy - rb + 9, 84, hy - 14 - (cy - rb + 9)); g.clip();
+    g.translate(cx, cy); g.rotate(-bank * DEG); g.translate(0, pitch * K);
+    g.strokeStyle = G5C.white; g.lineWidth = 1; g.fillStyle = G5C.white; g.font = font(700, 8); g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let p = -30; p <= 30; p += 5) {
+      if (!p) continue;
+      const y = -p * K, w = p % 10 ? 6 : 13;
+      g.beginPath(); g.moveTo(-w, y); g.lineTo(w, y); g.stroke();
+      if (!(p % 10)) { g.fillText(NUM[p < 0 ? -p : p], -w - 7, y); g.fillText(NUM[p < 0 ? -p : p], w + 7, y); }
+    }
+    g.restore();
+    // the bank scale (its zero index fixed) and the pointer under it (turning with the sky)
+    g.strokeStyle = G5C.white; g.fillStyle = G5C.white; g.lineWidth = 1.2;
+    g.beginPath(); g.arc(cx, cy, rb, -150 * DEG, -30 * DEG); g.stroke();
+    for (let i = 0; i < G5_BANK.length; i++) {
+      const b = G5_BANK[i], a = (b - 90) * DEG, r1 = rb + (b === 30 || b === -30 || b === 60 || b === -60 ? 7 : 4);
+      g.beginPath(); g.moveTo(cx + Math.cos(a) * rb, cy + Math.sin(a) * rb); g.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); g.stroke();
+    }
+    g.beginPath(); g.moveTo(cx, cy - rb - 1); g.lineTo(cx - 4.5, cy - rb - 8); g.lineTo(cx + 4.5, cy - rb - 8); g.closePath(); g.fill();
+    g.save(); g.translate(cx, cy); g.rotate(-bank * DEG);
+    g.beginPath(); g.moveTo(0, -rb + 1); g.lineTo(-4.5, -rb + 8); g.lineTo(4.5, -rb + 8); g.closePath(); g.fill();
+    g.restore();
+    // the aircraft symbol
+    g.fillStyle = G5C.yellow; g.strokeStyle = G5C.box; g.lineWidth = 1;
+    g.fillRect(cx - 34, cy - 1.5, 20, 3); g.strokeRect(cx - 34, cy - 1.5, 20, 3); g.fillRect(cx + 14, cy - 1.5, 20, 3); g.strokeRect(cx + 14, cy - 1.5, 20, 3);
+    g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx - 11, cy + 7); g.lineTo(cx - 5, cy + 7); g.lineTo(cx, cy + 4); g.lineTo(cx + 5, cy + 7); g.lineTo(cx + 11, cy + 7); g.closePath(); g.fill(); g.stroke();
+    // the airspeed tape: 5 kt ticks, the tens numbered, the arcs (white: flaps, green: normal, yellow: caution, red: Vne on)
+    g.fillStyle = G5C.tape; g.fillRect(sx, tt, SW, tb - tt);
+    g.save(); g.beginPath(); g.rect(sx, tt, SW, tb - tt); g.clip();
+    band(g, sx + SW - 4, 2, cy, ias, v.s0, v.fe, KT, '#eeeeee'); band(g, sx + SW - 2, 2, cy, ias, v.s1, v.no, KT, '#22b14c');
+    band(g, sx + SW - 2, 2, cy, ias, v.no, v.ne, KT, '#f1c40f'); band(g, sx + SW - 2, 2, cy, ias, v.ne, v.ne + 80, KT, '#e02a1f');
+    g.strokeStyle = G5C.white; g.fillStyle = G5C.white; g.lineWidth = 1; g.font = font(700, 9); g.textAlign = 'right'; g.textBaseline = 'middle';
+    for (let kt = Math.max(0, Math.floor((ias - 40) / 5) * 5); kt <= ias + 40; kt += 5) {
+      const y = cy - (kt - ias) * KT;
+      g.beginPath(); g.moveTo(sx + SW - 5, y); g.lineTo(sx + SW - (kt % 10 ? 8 : 10), y); g.stroke();
+      if (!(kt % 10) && kt >= 20 && kt <= 400) g.fillText(NUM[kt], sx + SW - 11, y);
+    }
+    g.restore();
+    readout(g, sx, cy, SW - 2, 15, NUM[Math.min(400, Math.round(ias))], true);
+    // the altitude tape: 20 ft ticks, the hundreds numbered
+    g.fillStyle = G5C.tape; g.fillRect(ax, tt, AW, tb - tt);
+    g.save(); g.beginPath(); g.rect(ax, tt, AW, tb - tt); g.clip();
+    g.strokeStyle = G5C.white; g.fillStyle = G5C.white; g.font = font(700, 8.5); g.textAlign = 'left';
+    for (let a = Math.floor((alt - 350) / 20) * 20; a <= alt + 350; a += 20) {
+      const y = cy - (a - alt) * FT;
+      g.beginPath(); g.moveTo(ax, y); g.lineTo(ax + (a % 100 ? 3 : 6), y); g.stroke();
+      if (!(a % 100) && a >= 0 && a <= 30000) g.fillText(ALT100[a / 100], ax + 8, y);
+    }
+    g.restore();
+    readout(g, ax + 4, cy, AW - 5, 15, ALT10[clamp(Math.round(alt / 10), 0, 3000)], false);
+    // the heading along the bottom, its box over the strip's middle; the baro setting under the altitude tape
+    g.fillStyle = G5C.tape; g.fillRect(hx0, hy, hx1 - hx0, 17);
+    g.save(); g.beginPath(); g.rect(hx0, hy, hx1 - hx0, 17); g.clip();
+    g.strokeStyle = G5C.white; g.fillStyle = G5C.white; g.font = font(700, 8); g.textAlign = 'center';
+    for (let d = Math.floor((hdg - 30) / 5) * 5; d <= hdg + 30; d += 5) {
+      const x = hcx + (d - hdg) * DG, dd = ((d % 360) + 360) % 360;
+      g.beginPath(); g.moveTo(x, hy); g.lineTo(x, hy + (dd % 10 ? 3 : 5)); g.stroke();
+      if (!(dd % 10)) g.fillText(HDG10[dd / 10], x, hy + 11);
+    }
+    g.restore();
+    g.fillStyle = G5C.box; g.strokeStyle = G5C.white; g.fillRect(hcx - 15, hy - 12, 30, 12); g.strokeRect(hcx - 15, hy - 12, 30, 12);
+    g.fillStyle = G5C.white; g.font = font(700, 10); g.fillText(HDG3[Math.round(hdg) % 360], hcx, hy - 5.5);
+    g.fillStyle = G5C.box; g.fillRect(ax, hy, AW, 17);
+    if (baroText.v !== baro || baroText.hpa !== hpa) { baroText.v = baro; baroText.hpa = hpa; baroText.text = hpa ? String(Math.round(baro * 33.8639)) : baro.toFixed(2); }
+    g.fillStyle = G5C.cyan; g.font = font(700, 9); g.fillText(baroText.text, ax + AW / 2, hy + 9, AW - 2);
+    g.restore();
+    dyn.texture.needsUpdate = true;
+  }
+  // its screen dark (the G5 off with the PFD)
+  function blankStandby() {
+    if (!dyn) return;
+    stats.blank++;
+    const R = DYN.g5; dyn.g.fillStyle = '#000'; dyn.g.fillRect(R[0], R[1], R[2], R[3]);
     dyn.texture.needsUpdate = true;
   }
   // ================================================================ end of the per-frame code
 
   const list = [pfd, mfd, dyn].filter(Boolean);
   return {
-    pfd, mfd, dyn, stats, drawScreen, blankScreen, drawStrips, drawStandby,
+    pfd, mfd, dyn, stats, drawScreen, blankScreen, drawStrips, drawStandby, blankStandby,
     setAnisotropy(n) { for (const c of list) c.texture.anisotropy = n; },
     bytes: list.reduce((b, c) => b + c.w * c.h * 4, 0),
     dispose() { for (const c of list) c.texture.dispose(); },

@@ -81,15 +81,15 @@ N_STRAIGHT, N_TURN = 10, 4            # the roll's columns: across between the t
 # what must stay seen under the roll from the eye (cockpit.test.mjs 'the view from the left seat': the PFD's and MFD's
 # image corners and top middle, 1 mm in, and the ends of the softkey strip; the screens are placed by cockpit.js's PFD,
 # MFD and g1000.js's BEZEL), and the aim points of the controls nearest under the lip (cockpit.js: the volume knobs of
-# the PFD and MFD, the audio panel's top row, the standby airspeed indicator) — copied, as the spec does not carry them
+# the PFD and MFD, the audio panel's top row — copied, as the spec does not carry them — and the G5 standby's screen,
+# its top corners 1 mm in, from the spec's panel.G5 in layout())
 SEEN = [(-0.404, 0.42975, -1.0825), (-0.300, 0.42975, -1.0825), (-0.196, 0.42975, -1.0825), (-0.404, 0.27981, -1.0825), (-0.196, 0.27981, -1.0825),
         (-0.053, 0.42975, -1.0825), (0.051, 0.42975, -1.0825), (0.155, 0.42975, -1.0825), (-0.053, 0.27981, -1.0825), (0.155, 0.27981, -1.0825)]
 AIMS = {'pfd.navVol': (-0.420, 0.426, -1.073), 'pfd.comVol': (-0.180, 0.426, -1.073), 'mfd.navVol': (-0.069, 0.426, -1.073),
-        'mfd.comVol': (0.171, 0.426, -1.073), 'audio.COM1MIC': (-0.139, 0.428, -1.078), 'audio.COM1': (-0.110, 0.428, -1.078),
-        'stby.asi': (None, 0.410, -1.090)}     # (its x: the spec's STBY_X, in layout())
-# the panel round it, for the occlusion (the spec's panel: cockpit.js's PFD, MFD, AUD, STBY_X/STBY_Y[0], g1000.js's
-# BEZEL; the audio panel's and the standby instrument's sizes as cockpit.js makes them): in layout()
-AUD_SIZE, STBY_SIZE = (0.062, 0.018), (0.07, 0.07, 0.015)
+        'mfd.comVol': (0.171, 0.426, -1.073), 'audio.COM1MIC': (-0.139, 0.428, -1.078), 'audio.COM1': (-0.110, 0.428, -1.078)}
+# the panel round it, for the occlusion (the spec's panel: cockpit.js's PFD, MFD, AUD, G5 and g1000.js's BEZEL; the audio
+# panel's size as cockpit.js makes it): in layout()
+AUD_SIZE = (0.062, 0.018)
 
 
 class _L:                             # the layout, worked out once from the spec
@@ -123,10 +123,11 @@ def layout(ctx):
     # the side wall (which leans in: bandX), at its height before the taper (which only lowers it, so the wall is further)
     L.XA = min(bandX(L.YB + h * L.S) - 0.002 - RC - d for d, h in BOL if d > 0)
     L.ZC = L.ZK - RC
-    P = S['panel']; B = P['BEZEL']
+    P = S['panel']; B = P['BEZEL']; G5 = P['G5']
     L.BEZELS = [(tuple(P['PFD']), (B['w'], B['h'], B['depth'])), (tuple(P['MFD']), (B['w'], B['h'], B['depth'])),
-                (tuple(P['AUD']), (AUD_SIZE[0], B['h'], AUD_SIZE[1])), ((P['STBY_X'], P['STBY_Y'][0]), STBY_SIZE)]
-    AIMS['stby.asi'] = (P['STBY_X'],) + AIMS['stby.asi'][1:]
+                (tuple(P['AUD']), (AUD_SIZE[0], B['h'], AUD_SIZE[1])), (tuple(G5['c']), (G5['w'], G5['h'], G5['depth']))]
+    gx, gy = G5['c'][0], G5['c'][1] + G5['screenY'] + G5['screenH'] / 2 - 0.001       # (the G5's screen: its top corners)
+    for k, sx in (('stby.g5.topL', -1), ('stby.g5.topR', 1)): AIMS[k] = (gx + sx * (G5['screenW'] / 2 - 0.001), gy, L.PZ + G5['depth'] - 0.0035)
     ctx._glare = L
     return L
 
@@ -255,8 +256,8 @@ def parts(ctx):
 
 
 def proxies(ctx):
-    # what stays in code round it (cockpit.js): the panel's face, the displays' bezels, the audio panel and the standby
-    # instruments' slab (the panel's frame: inside the hood, more than 5 cm from the roll's face)
+    # what stays in code round it (cockpit.js): the panel's face, the displays' bezels, the audio panel and the G5's
+    # bezel (the panel's frame: inside the hood, more than 5 cm from the roll's face)
     L = layout(ctx); V = ctx.Vector; z = L.PZ + 0.0002
     out = [('quad', V((-0.545, L.PBOT + 0.008, z)), V((0.545, L.PBOT + 0.008, z)), V((0.545, L.PTOP - 0.008, z)), V((-0.545, L.PTOP - 0.008, z)))]
     for (cx, cy), (w, h, dd) in L.BEZELS: out.append(('box', (cx, cy, L.PZ + dd / 2), (w, h, dd)))

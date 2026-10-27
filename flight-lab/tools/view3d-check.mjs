@@ -217,8 +217,8 @@ try {
     sw.master = true; sw.landing = false; __v3.frame('cockpit', false);
     return { on, off, back: T.lights() };
   });
-  check('lights: the outside lights follow the switches (landing on with its switch; master off → all out)',
-    lights.on.landing && lights.on.nav && lights.on.beacon && lights.on.strobe && !lights.on.taxi && Object.values(lights.off).every(v => v === false) && lights.back.nav && !lights.back.landing, lights);
+  check('lights: the outside lights follow the switches (landing on with its switch — the Archer\'s LANDG LIGHT works the taxi lamp too; master off → all out)',
+    lights.on.landing && lights.on.taxi && lights.on.nav && lights.on.beacon && lights.on.strobe && Object.values(lights.off).every(v => v === false) && lights.back.nav && !lights.back.landing && !lights.back.taxi, lights);
   // FLIGHT LAB's own notes on the 3D G1000, as on the 2D panel (CADET's screens would take them out): every text the
   // screens draw over a few frames, read through the context's fillText; the app's own 2D panel (drawn underneath
   // meanwhile, hidden) for comparison

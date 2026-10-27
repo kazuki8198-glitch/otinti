@@ -3,9 +3,11 @@
 // where the next lesson begins — skip the move, or fly it. On the first solo he is on the ground: the cadet's own
 // reminders (SOLO_LINES) take his place.
 // The lines are his own words for CADET's parts of the day (FLIGHT LAB's lessons speak for themselves: flightLine).
+import { NOSTARTER } from '../../aircraft/systems.js';
+
 export const PHASE_LINES = {
   prestart: 'では、エンジン始動前のチェックリストから始めます。右の一覧のとおり、ひとつずつ。目で見て確かめる項目は、確かめたら Enter です。',
-  start: 'エンジンをかけます。ミクスチャー、スロットル、マスター……一覧の順に。わからないところは、私に任せてもいいですよ。',
+  start: 'エンジンをかけます。スイッチ、ミクスチャー、スロットル……一覧の順に。わからないところは、私に任せてもいいですよ。',
   afterStart: 'かかりましたね。油圧も上がっています。始動後の点検をしましょう。',
   atis: 'ATIS を聞きます。今日は周波数を私が合わせます。よく聞いて、高度計の値を答えてください。',
   ground: '地上管制を呼びます。最初の呼び出しは、相手・自分・位置・ATIS・要求の順です。',
@@ -48,7 +50,7 @@ export const SOLO_LINES = {
 };
 export const EVENT_LINES = {
   incursion: '止まって！ 停止線を越えています。滑走路に入る許可はまだです。',
-  nostarter: 'マスター スイッチが OFF なので、スターターが回りません。',
+  nostarter: NOSTARTER,                                      // (aircraft/systems.js: the starter without BATT MASTR)
   surge: 'スロットルが開きすぎです。かかった瞬間に回転が上がりすぎました。始動のときは少しだけ開けます。',
   stopped: (why) => `エンジンが止まりました（${why}）。`,
   noClear: '停止線の手前で止まってください。',

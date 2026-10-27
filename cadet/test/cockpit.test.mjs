@@ -7,9 +7,13 @@
 //    over the head, nothing within 0.12 m of the eye;
 //  - every control has a name, a kind, a hit box inside the cabin, is in sight and can be picked from the seat, and
 //    says what to do (descriptors that FLIGHT LAB's own avionics control accepts);
-//  - the yokes, pedals, levers, flap handle, trim wheel and compass card follow the state;
-//  - the screens are redrawn on schedule (PFD 30 Hz, MFD 10 Hz), only when seen, black without power, and the softkey
-//    labels only when the avionics change;
+//  - the yokes, pedals, levers (carb heat: ON down, OFF up), flap handle, trim wheel and compass card follow the state;
+//    the Seminole's gear lights are its own (none drawn in the Archer);
+//  - the Archer's overhead switch panel sits on the header made in Blender, its rockers follow the switches (their
+//    print with them); the checklists point at controls each type has;
+//  - the screens are redrawn on schedule (PFD 30 Hz, MFD 10 Hz; the G5 standby 15 Hz, lit when the PFD is), only when
+//    seen, black without power (the NXi's buses: the PFD and the G5 with BATT MASTR or EMERG BATT, the MFD with AVION
+//    MASTER too), and the softkey labels only when the avionics change;
 //  - update() works on the same objects every frame (no allocation), and so does the glass panel's drawing it calls.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -23,6 +27,9 @@ import { BEZEL, SOFTKEYS } from '../src/aircraft/g1000.js';
 import { installSorajima } from '../src/flight/sorajima.js';
 import { createActor, seatFromBody } from '../src/npc/actor.js';
 import { modelMeshes } from '../src/aircraft/archer-model.js';
+import { CHECKLISTS as CHECKLISTS_ARCHER } from '../src/content/checklists-archer.js';
+import { CHECKLISTS as CHECKLISTS_SEMINOLE } from '../src/content/checklists-seminole.js';
+const STROBES = ['FIN STROBE', 'OFF', 'STROBE LIGHTS'];
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'acmesh.js']) vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
@@ -62,7 +69,9 @@ test('cockpit: builds within budget', () => {
   assert.ok(cp.textureBytes > 0 && cp.textureBytes <= 6e6, `${(cp.textureBytes / 1e6).toFixed(2)} MB of textures`);
   assert.ok(!cp.atlasFull, 'the labels fit their atlas');
   for (const n of ['cockpit-shell', 'cockpit-labels', 'cockpit-glass', 'cockpit-cowl', 'cockpit-pfd', 'cockpit-mfd', 'cockpit-yokeL', 'cockpit-yokeR',
-    'cockpit-pedalsL', 'cockpit-pedalsR', 'cockpit-throttle', 'cockpit-flap', 'cockpit-trim', 'cockpit-compass-card', 'cockpit-rockers']) assert.ok(names.has(n), n);
+    'cockpit-pedalsL', 'cockpit-pedalsR', 'cockpit-throttle', 'cockpit-mixture', 'cockpit-carb', 'cockpit-brake', 'cockpit-flap', 'cockpit-trim', 'cockpit-compass-card',
+    'cockpit-rockers', 'cockpit-rocker-print', 'cockpit-lit']) assert.ok(names.has(n), n);
+  for (const n of ['cockpit-key', 'cockpit-rockers-pa44']) assert.ok(!names.has(n), `the Archer: no ${n}`);
   // the screens: unlit, the material not tone mapped, 1024 × 640, never mipmapped
   for (const k of ['pfd', 'mfd']) {
     const m = cp.screens[k].material;
@@ -307,12 +316,18 @@ function controlsCheck(cp, L, required) {
   assert.equal(cp.pick(new THREE.Raycaster(cp.eye.clone(), new THREE.Vector3(0, 1, 0), 0, 3)), null);
   return ids;
 }
-const COMMON_IDS = ['pfd.hdg', 'pfd.alt.inner', 'pfd.alt.outer', 'pfd.crs.outer', 'mfd.range', 'sw.master', 'sw.avionics', 'sw.landing', 'mag', 'throttle',
-  'mixture', 'parkBrake', 'yokeL', 'pedals', 'flaps', 'trim', 'fuelSel', 'door', 'compass', 'stby.att', 'audio.COM1MIC', 'pfd.sk3', 'mfd.sk3'];
+const COMMON_IDS = ['pfd.hdg', 'pfd.alt.inner', 'pfd.alt.outer', 'pfd.crs.outer', 'mfd.range', 'sw.master', 'sw.avionics', 'sw.landing', 'sw.fuelPump', 'sw.nav', 'sw.strobe',
+  'sw.pitot', 'primer', 'throttle', 'mixture', 'carbHeat', 'parkBrake', 'yokeL', 'pedals', 'flaps', 'trim', 'fuelSel', 'door', 'compass', 'stby.g5', 'audio.COM1MIC', 'pfd.sk3', 'mfd.sk3',
+  'cb', 'elt', 'altStatic'];
+// the Archer's own: the panel's (A), the overhead switch panel's and the panel block's switches (no key, no BEACON or
+// TAXI: FIN STROBE is the beacon, LANDG LIGHT works the taxi lamp)
+const ARCHER_IDS = ['rudderTrim', 'cabinHeat', 'defrost', 'dim.switch', 'dim.panel', 'dim.avionics', 'sw.start', 'sw.altr', 'sw.magL', 'sw.magR', 'sw.emergBatt', 'sw.fan',
+  'dome.left', 'dome.right'];
+const SEMINOLE_IDS = ['gear', 'prop', 'mag', 'sw.beacon', 'sw.taxi'];
 test('cockpit: every control can be found, picked from the seat, and says what to do', () => {
   const cp = build();
-  const ids = controlsCheck(cp, lesson(), [...COMMON_IDS, 'carbHeat']);
-  assert.ok(!ids.has('gear') && !ids.has('prop'), 'the Archer: no gear selector, no propeller levers');
+  const ids = controlsCheck(cp, lesson(), [...COMMON_IDS, ...ARCHER_IDS]);
+  for (const id of SEMINOLE_IDS) assert.ok(!ids.has(id), `the Archer: no ${id}`);
   cp.dispose();
 });
 
@@ -325,14 +340,16 @@ test('cockpit: the Seminole\'s — its levers and gear selector found, picked an
   cp.setType('pa44');
   assert.equal(cp.type, 'pa44');
   const L = SC.startLesson('m1', 'basic'); for (let i = 0; i < 60; i++) { P.step(L.s, 1 / 120); SC.update(L, 1 / 120); }
-  const ids = controlsCheck(cp, L, [...COMMON_IDS, 'gear', 'prop', 'carbHeat']);
+  const ids = controlsCheck(cp, L, [...COMMON_IDS, ...SEMINOLE_IDS]);
   assert.equal([...ids].filter(id => id === 'throttle').length, 1, 'one throttle control for the pair');
+  for (const id of ARCHER_IDS) assert.ok(!ids.has(id), `the Seminole: no ${id}`);
   // what is drawn: the Seminole's parts, not the Archer's
   cp.root.updateMatrixWorld(true);
   const names = new Set(); let calls = 0, count = 0;
   cp.root.traverse(o => { let v = true; for (let p = o; p; p = p.parent) v = v && p.visible; if (v && drawn(o)) { calls++; count += tris(o.geometry) * (o.isInstancedMesh ? o.count : 1); names.add(o.name); } });
-  for (const n of ['cockpit-nose', 'cockpit-thrL', 'cockpit-thrR', 'cockpit-propL', 'cockpit-propR', 'cockpit-mixL', 'cockpit-mixR', 'cockpit-gearLever', 'cockpit-shell-pa44', 'cockpit-labels-pa44']) assert.ok(names.has(n), n);
-  for (const n of ['cockpit-cowl', 'cockpit-throttle', 'cockpit-mixture', 'cockpit-shell-pa28']) assert.ok(!names.has(n), `no ${n}`);
+  for (const n of ['cockpit-nose', 'cockpit-thrL', 'cockpit-thrR', 'cockpit-propL', 'cockpit-propR', 'cockpit-mixL', 'cockpit-mixR', 'cockpit-gearLever', 'cockpit-shell-pa44', 'cockpit-labels-pa44',
+    'cockpit-rockers-pa44', 'cockpit-key']) assert.ok(names.has(n), n);
+  for (const n of ['cockpit-cowl', 'cockpit-throttle', 'cockpit-mixture', 'cockpit-shell-pa28', 'cockpit-rockers', 'cockpit-rocker-print']) assert.ok(!names.has(n), `no ${n}`);
   assert.ok(calls <= 44, `${calls} draw calls`);
   assert.equal(count, cp.trianglesTwin);
   assert.ok(cp.trianglesTwin <= 40000 && tri0 === cp.triangles, `${cp.trianglesTwin} triangles`);
@@ -344,6 +361,11 @@ test('cockpit: the Seminole\'s — its levers and gear selector found, picked an
   const g0 = p.gearLever.rotation.x;
   Object.assign(s, { gearDown: false }); run(cp, L, 0.1);
   assert.ok(p.gearLever.rotation.x < g0 - 30 * DEG, 'the gear selector up');
+  // the carb heat pair: ON down, OFF up (the knob where one aims at it)
+  const carb = cp.controls.find(c => c.id === 'carbHeat'), knobY = () => { cp.root.updateMatrixWorld(true); return cp.aimPoint(carb, new THREE.Vector3()).y; };
+  cp.switches.carbHeat = true; run(cp, L, 0.05); const yOn = knobY();
+  cp.switches.carbHeat = false; run(cp, L, 0.05); const yOff = knobY();
+  assert.ok(yOn < yOff - 0.03, `the Seminole's carb heat: ON ${yOn.toFixed(3)} below OFF ${yOff.toFixed(3)}`);
   const prop0 = p.propL.rotation.x;
   cp.switches.propCycleT = 1.3; run(cp, L, 0.05);
   assert.ok(p.propL.rotation.x > prop0 + 20 * DEG, 'the propeller levers pulled back while cycled');
@@ -377,12 +399,30 @@ test('cockpit: the controls say what the game should do', () => {
   assert.equal(C['pfd.sk1'].act(1).type, 'info', 'an unused key explains itself');
   // the audio panel: the monitor lamps
   const mon = av.audio.monitor.NAV1; apply(C['audio.NAV1'].act(1)); assert.equal(av.audio.monitor.NAV1, !mon);
-  // switches: a click toggles, the wheel sets (or does nothing)
+  // switches (the overhead panel's rockers): a click toggles, the wheel sets (or does nothing)
   assert.deepEqual(C['sw.landing'].act(1, false), { type: 'switch', id: 'landing', on: true });
   assert.deepEqual(C['sw.master'].act(1, false), { type: 'switch', id: 'master', on: false });
   assert.equal(C['sw.master'].act(1, true), null, 'already on');
-  assert.deepEqual(C['mag'].act(-1, true), { type: 'select', id: 'mag', value: 'L' });
-  assert.equal(C['mag'].act(1, true).value, 'START');
+  for (const id of ['altr', 'magL', 'magR', 'emergBatt']) assert.deepEqual(C['sw.' + id].act(-1, true), { type: 'switch', id, on: false }, id);
+  // START: a click holds it (the systems let it go), PRIMER: a stroke a press
+  assert.deepEqual(C['sw.start'].act(1, false), { type: 'switch', id: 'start', on: true });
+  assert.equal(C['sw.start'].act(-1, true), null, 'START is not held');
+  // the three positions: the strobe (STROBE LIGHTS — strobes and beacon —, OFF, FIN STROBE — the beacon alone), the fan
+  const sw = cp.switches;
+  assert.equal(sw.strobeSel, 'STROBE LIGHTS'); assert.equal(C['sw.strobe'].act(1, true), null, 'at the top');
+  assert.deepEqual(C['sw.strobe'].act(1, false), { type: 'select', id: 'strobeSel', value: 'OFF' }, 'a click: the top → OFF');
+  sw.strobeSel = 'OFF'; assert.ok(!sw.strobe && !sw.beacon, 'OFF: neither');
+  assert.deepEqual(C['sw.strobe'].act(1, false), { type: 'select', id: 'strobeSel', value: 'FIN STROBE' }, 'a click: OFF → FIN STROBE');
+  assert.deepEqual(C['sw.strobe'].act(1, true), { type: 'select', id: 'strobeSel', value: 'STROBE LIGHTS' }, 'the wheel up: the top');
+  sw.strobeSel = 'FIN STROBE'; assert.ok(!sw.strobe && sw.beacon, 'FIN STROBE: the beacon alone');
+  assert.match(C['sw.strobe'].label, /FIN STROBE/);
+  sw.strobeSel = 'STROBE LIGHTS'; assert.ok(sw.strobe && sw.beacon);
+  assert.equal(sw.fan, 'OFF');
+  assert.deepEqual(C['sw.fan'].act(1, false), { type: 'select', id: 'fan', value: 'LOW' }); assert.deepEqual(C['sw.fan'].act(1, true), { type: 'select', id: 'fan', value: 'HIGH' });
+  assert.deepEqual(C['sw.pitot'].act(1, false), { type: 'switch', id: 'pitot', on: true });
+  // the Archer's LANDG LIGHT works the taxi lamp too; the magnetos read as a key would show them
+  sw.landing = true; assert.equal(sw.taxi, true); sw.landing = false; assert.equal(sw.taxi, false);
+  assert.equal(sw.mag, 'BOTH'); sw.magR = false; assert.equal(sw.mag, 'L'); sw.magR = true;
   assert.deepEqual(C['fuelSel'].act(1, false), { type: 'select', id: 'fuelSel', value: 'R' });
   // the engine's controls (M4): the selector's OFF on the wheel, the mixture (cut-off on the ground only), carb heat, the primer
   cp.switches.fuelSel = 'R'; assert.deepEqual(C['fuelSel'].act(1, true), { type: 'select', id: 'fuelSel', value: 'OFF' }); cp.switches.fuelSel = 'L';
@@ -393,6 +433,9 @@ test('cockpit: the controls say what the game should do', () => {
   cp.switches.mixture = 1;
   assert.deepEqual(C['carbHeat'].act(1, false), { type: 'switch', id: 'carbHeat', on: true });
   assert.deepEqual(C['primer'].act(1, false), { type: 'prime' });
+  // what the panel has that the game does not simulate says so (the G5, the ELT, the dimmers, heat and defrost, the
+  // alternate static source, the rudder trim knob: the keys'), the breakers too
+  for (const id of ['stby.g5', 'elt', 'dim.switch', 'dim.panel', 'dim.avionics', 'cabinHeat', 'defrost', 'altStatic', 'rudderTrim', 'cb']) for (const [d, w] of [[1, false], [1, true], [-1, true]]) assert.equal(C[id].act(d, w).type, 'info', id);
   // flight controls: the bridge's own actions
   assert.deepEqual(C['throttle'].act(1, true), { type: 'flight', name: 'thrStep', arg: 1 });
   assert.deepEqual(C['throttle'].act(-1, true), { type: 'flight', name: 'thrStep', arg: -1 });
@@ -405,8 +448,10 @@ test('cockpit: the controls say what the game should do', () => {
   assert.deepEqual(C['flaps'].act(-1, true), { type: 'flight', name: 'flapsUp' });
   assert.deepEqual(C['parkBrake'].act(1), { type: 'flight', name: 'parkBrake' });
   assert.deepEqual(C['door'].act(1), { type: 'exit' });
-  // the switches' defaults: everything on except the landing and taxi lights and the pitot heat
-  assert.deepEqual(Object.entries(cp.switches).filter(([k, v]) => v === false).map(([k]) => k).sort(), ['carbHeat', 'landing', 'pitot', 'propCycled', 'taxi']);
+  // the switches' defaults: everything on except the landing and taxi lights, the pitot heat and START (as aircraft/
+  // systems.js RUNNING), the fan OFF
+  assert.deepEqual(Object.entries(cp.switches).filter(([k, v]) => v === false).map(([k]) => k).sort(), ['carbHeat', 'landing', 'pitot', 'propCycled', 'start', 'taxi']);
+  assert.equal(cp.switches.fan, 'OFF');
   cp.dispose();
 });
 
@@ -438,8 +483,102 @@ test('cockpit: the moving parts follow the state', () => {
   assert.ok(Math.abs(card.rotation.y - 90 * DEG) < 5 * DEG, 'it swings round, not jumps');
   run(cp, L, 8);
   assert.ok(Math.abs(card.rotation.y - 180 * DEG) < 1 * DEG, 'and settles');
-  // the park brake handle
-  const pb = p.brake.rotation.x; cp.update(DT, { s, L, parkBrake: true }); assert.ok(p.brake.rotation.x !== pb);
+  // the park brake handle: its grip swings aft (+z) when set
+  const grip = cp.controls.find(c => c.id === 'parkBrake'), at = () => { cp.root.updateMatrixWorld(true); return cp.aimPoint(grip, new THREE.Vector3()); };
+  const pb = at(); cp.update(DT, { s, L, parkBrake: true }); const pb1 = at();
+  assert.ok(pb1.z > pb.z + 0.02, `the hand brake pulled aft (${pb.z.toFixed(3)} → ${pb1.z.toFixed(3)})`);
+  cp.update(DT, { s, L, parkBrake: false });
+  // carb heat: ON down, OFF up (the knob where one aims at it)
+  const carb = cp.controls.find(c => c.id === 'carbHeat'), knobY = () => { cp.root.updateMatrixWorld(true); return cp.aimPoint(carb, new THREE.Vector3()).y; };
+  cp.switches.carbHeat = true; cp.update(DT, { s, L }); const yOn = knobY();
+  cp.switches.carbHeat = false; cp.update(DT, { s, L }); const yOff = knobY();
+  assert.ok(yOn < yOff - 0.05, `carb heat: ON ${yOn.toFixed(3)} below OFF ${yOff.toFixed(3)}`);
+  cp.dispose();
+});
+
+// the Seminole's gear lights (three green, one red) are its own: none of them is drawn in the Archer's view, even in a
+// cockpit built with the Seminole's parts (FLIGHT LAB builds it so); in the Seminole's view they are
+test('cockpit: the Archer draws no gear lights', () => {
+  const cp = build({ twin: AC('pa44') }), L = lesson();
+  run(cp, L, 0.1);
+  const own = cp.meshes.find(m => m.name === 'cockpit-lit-pa44');
+  assert.ok(own, 'the Seminole\'s lights: a mesh of their own');
+  own.geometry.computeBoundingBox();
+  const box = own.geometry.boundingBox.clone().expandByScalar(0.002), v = new THREE.Vector3();
+  const seen = () => {
+    cp.root.updateMatrixWorld(true);
+    const out = [];
+    cp.root.traverse(o => {
+      let vis = true; for (let q = o; q; q = q.parent) vis = vis && q.visible;
+      if (!vis || !drawn(o) || o.material !== own.material) return;
+      const p = o.geometry.attributes.position;
+      for (let i = 0; i < p.count; i++) if (box.containsPoint(v.fromBufferAttribute(p, i).applyMatrix4(o.matrix))) { out.push(o.name); break; }
+    });
+    return out;
+  };
+  assert.deepEqual(seen(), [], 'a gear light in the Archer');
+  cp.setType('pa44'); run(cp, L, 0.05);
+  assert.deepEqual(seen(), ['cockpit-lit-pa44'], 'the Seminole\'s gear lights');
+  const plain = build();
+  assert.ok(!plain.meshes.some(m => m.name === 'cockpit-lit-pa44'), 'none built without the Seminole');
+  cp.dispose(); plain.dispose();
+});
+
+// the Archer's overhead switch panel (POH VB-2749 Fig 7-10): laid on the windshield header made in Blender (nothing of
+// the band in front of the plate's face; the header right behind every point of it, nearer than the plate's edges reach
+// back: no gap to see through); its rockers posed by the switches (two positions: ON — the lower half in, the upper out;
+// START while held, PRIMER a moment after a press), each one's print turning with it; the checklists point at controls
+// each type has
+test('cockpit: the Archer\'s overhead switch panel — on the header, the rockers follow the switches, the checklists\' controls are there', () => {
+  const O = CABIN.OVH, at = CABIN.ovhAt, mm = modelMeshes('cockpit');
+  const band = ['header.wall', 'headliner.roof', 'seals.rubber', 'visors.wall', 'visorHw.steel'].map(k => {
+    const q = mm.get(k), g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(q.pos, 3));
+    const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })); m.updateMatrixWorld(); return m;
+  });
+  const rc = new THREE.Raycaster(); let front = Infinity, gap = 0, edgeGap = 0;
+  for (let x = -O.x; x <= O.x + 1e-9; x += 0.01) for (let s = 0; s <= O.h + 1e-9; s += O.h / 8) {
+    const p = at(x, s, 0), n = at(x, s, 0.001).sub(p).normalize();
+    rc.set(p.clone().addScaledVector(n, 1e-4), n); rc.far = 0.05;
+    const f = rc.intersectObjects(band)[0]; if (f) front = Math.min(front, f.distance);
+    rc.set(p.clone().addScaledVector(n, 1e-4), n.clone().negate()); rc.far = 0.05;
+    const b = rc.intersectObjects(band)[0], d = b ? b.distance : Infinity;
+    gap = Math.max(gap, d); if (s < 1e-9 || s > O.h - 1e-6 || Math.abs(Math.abs(x) - O.x) < 1e-6) edgeGap = Math.max(edgeGap, d);
+  }
+  assert.equal(front, Infinity, 'nothing of the band in front of the plate');
+  assert.ok(gap < 0.006 && edgeGap < 0.004, `the header behind the plate: ${(gap * 1000).toFixed(1)} mm at most, ${(edgeGap * 1000).toFixed(1)} mm at its edges (they reach 4 mm back)`);
+  // the rockers and their print
+  const cp = build({ twin: AC('pa44') }), L = lesson(), sw = cp.switches;
+  run(cp, L, 0.1);
+  const rk = cp.meshes.find(m => m.name === 'cockpit-rockers'), pr = cp.meshes.find(m => m.name === 'cockpit-rocker-print');
+  const snap = mesh => Array.from({ length: mesh.count }, (_, i) => { const m = new THREE.Matrix4(); mesh.getMatrixAt(i, m); return m; });
+  const changed = (a, b) => a.map((m, i) => (m.equals(b[i]) ? -1 : i)).filter(i => i >= 0);
+  const C = Object.fromEntries(cp.controls.map(c => [c.id, c]));
+  // the rocker's upper end, off the plate (along its control's hit box's normal): out (ON) or in (OFF)
+  const topOut = (m, id) => { const hit = C[id].target, n = new THREE.Vector3().setFromMatrixColumn(hit.matrix, 2).normalize(); return new THREE.Vector3(0, 0.014, 0.0045).applyMatrix4(m).sub(hit.position).dot(n); };
+  for (const [id, key] of [['sw.master', 'master'], ['sw.magL', 'magL'], ['sw.avionics', 'avionics'], ['sw.pitot', 'pitot']]) {
+    const r0 = snap(rk), p0 = snap(pr), on0 = !!sw[key];
+    sw[key] = !on0; run(cp, L, 0.05);
+    const r1 = snap(rk), p1 = snap(pr), dr = changed(r0, r1), dp = changed(p0, p1);
+    assert.equal(dr.length, 1, `${id}: one rocker turned`); assert.ok(dp.length >= 1, `${id}: its print with it`);
+    assert.ok(new THREE.Vector3().setFromMatrixPosition(r1[dr[0]]).distanceTo(C[id].target.position) < 0.012, `${id}: the rocker under its control`);
+    const t0 = topOut(r0[dr[0]], id), t1 = topOut(r1[dr[0]], id);
+    assert.ok(on0 ? t1 < t0 - 0.003 : t1 > t0 + 0.003, `${id}: ${on0 ? 'OFF: the upper half in' : 'ON: the upper half out'} (${(t0 * 1000).toFixed(1)} → ${(t1 * 1000).toFixed(1)} mm)`);
+    for (const j of dp) assert.ok(new THREE.Vector3().setFromMatrixPosition(p1[j]).distanceTo(new THREE.Vector3().setFromMatrixPosition(r1[dr[0]])) < 0.02, `${id}: the print on its rocker`);
+    sw[key] = on0; run(cp, L, 0.05);
+  }
+  // START pressed while the starter is held; PRIMER a moment after a press; the strobe's three positions three poses
+  { const r0 = snap(rk); sw.start = true; run(cp, L, 0.05); assert.equal(changed(r0, snap(rk)).length, 1, 'START pressed'); sw.start = false; run(cp, L, 0.05); assert.equal(changed(r0, snap(rk)).length, 0, 'and let go'); }
+  { const r0 = snap(rk); assert.deepEqual(C.primer.act(1, false), { type: 'prime' }); run(cp, L, 0.1); assert.equal(changed(r0, snap(rk)).length, 1, 'PRIMER pressed'); run(cp, L, 0.5); assert.equal(changed(r0, snap(rk)).length, 0, 'and back'); }
+  { const poses = STROBES.map(v => { sw.strobeSel = v; run(cp, L, 0.05); return snap(rk); });
+    assert.equal(changed(poses[0], poses[1]).length, 1); assert.equal(changed(poses[1], poses[2]).length, 1); assert.equal(changed(poses[0], poses[2]).length, 1); sw.strobeSel = 'STROBE LIGHTS'; }
+  // the rockers and their print are the Archer's: not in the Seminole's view
+  cp.setType('pa44'); cp.root.updateMatrixWorld(true);
+  for (const m of [rk, pr]) { let v = true; for (let q = m; q; q = q.parent) v = v && q.visible; assert.ok(!v, `${m.name}: not in the Seminole`); }
+  // every checklist item's control is one the type's cockpit has (the guidance ring)
+  for (const [t, lists] of [['pa28', CHECKLISTS_ARCHER], ['pa44', CHECKLISTS_SEMINOLE]]) {
+    cp.setType(t); const ids = new Set(cp.controls.map(c => c.id));
+    for (const [k, list] of Object.entries(lists)) for (const it of list.items) if (it[3]) assert.ok(ids.has(it[3]), `${t} ${k}: ${it[0]} → ${it[3]}`);
+  }
   cp.dispose();
 });
 
@@ -467,19 +606,31 @@ test('cockpit: the screens are redrawn on schedule, only when seen and powered',
   assert.equal(cp.root.visible, false);
   cp.setVisible(true); cp.update(DT, { s: L.s, L });
   assert.equal(st.pfd, at2.pfd + 1, 'drawn at once when seen again');
-  // no power: black screens, no drawing (the standby instruments go on)
+  // the power, the G1000 NXi's buses (a black screen is not drawn; the G5 standby lit, and drawn, exactly when the PFD
+  // is): AVION MASTER OFF — the MFD black, the PFD and the G5 on (the essential bus); BATT MASTR OFF with EMERG BATT ARM
+  // — the same, from the emergency battery; both OFF — all black
+  const b0 = st.blank;
   cp.switches.avionics = false; run(cp, L, 0.1);
+  assert.equal(st.blank, b0 + 1, 'the MFD blanked');
   const at3 = { ...st };
-  assert.ok(st.blank >= 2, 'blanked');
   run(cp, L, 1);
-  assert.equal(st.pfd, at3.pfd); assert.equal(st.mfd, at3.mfd);
-  assert.ok(st.standby > at3.standby, 'the standby instruments need no power');
-  cp.switches.avionics = true; run(cp, L, 0.1);
-  assert.ok(st.pfd > at3.pfd, 'back on');
+  assert.equal(st.mfd, at3.mfd, 'no MFD without AVION MASTER');
+  assert.ok(st.pfd > at3.pfd + 25 && st.standby > at3.standby + 12, 'the PFD and the G5 on the essential bus');
+  cp.switches.avionics = true; cp.switches.master = false; run(cp, L, 0.1);
+  const at4 = { ...st };
+  run(cp, L, 1);
+  assert.equal(st.mfd, at4.mfd, 'no MFD without BATT MASTR'); assert.ok(st.pfd > at4.pfd + 25 && st.standby > at4.standby + 12, 'EMERG BATT ARM: the PFD and the G5');
+  cp.switches.emergBatt = false; run(cp, L, 0.1);
+  const at5 = { ...st };
+  run(cp, L, 1);
+  assert.equal(st.pfd, at5.pfd, 'no PFD with neither BATT MASTR nor EMERG BATT'); assert.equal(st.standby, at5.standby, 'nor the G5');
+  cp.switches.master = true; cp.switches.emergBatt = true; run(cp, L, 0.1);
+  assert.ok(st.pfd > at5.pfd && st.mfd > at5.mfd && st.standby > at5.standby, 'back on');
   // night: the labels and dials are backlit
   const lab = cp.meshes.find(m => m.name === 'cockpit-labels').material;
   cp.update(DT, { s: L.s, L, night: 0 }); assert.equal(lab.emissiveIntensity, 0);
   cp.update(DT, { s: L.s, L, night: 1 }); assert.ok(lab.emissiveIntensity > 0.3);
+  assert.equal(cp.meshes.find(m => m.name === 'cockpit-rocker-print').material.emissiveIntensity, lab.emissiveIntensity, 'the rockers\' print backlit with them');
   // bad steps do no harm
   cp.update(NaN, { s: L.s, L }); cp.update(-1, { s: L.s, L }); cp.update(5, { s: L.s, L }); cp.update(DT, null); cp.update(DT, {});
   assert.ok(Number.isFinite(cp.parts.compass.rotation.y) && Number.isFinite(cp.parts.flap.rotation.x));

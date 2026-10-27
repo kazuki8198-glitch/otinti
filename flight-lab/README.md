@@ -23,4 +23,4 @@ v2.4：教科書を一から書き直しました（27 章・154 節）。はじ
 
 基礎教材と合本（2026-10-26 の所有者の判断）：基礎教材（[`kiso/`](kiso/)）の本文・図・問題は、書き直して教科書の合本に使ってよい。[`kiso/README.md`](kiso/README.md) の決まり 3（文言を変えない）・決まり 4（教科書と混ぜない）は合本については解き、原本のデータと README は変えずに保存する。記録は [`../textbook/rewrite/combined/PROVENANCE.md`](../textbook/rewrite/combined/PROVENANCE.md)。
 
-開発：`node build.mjs`（ビルド）、`node --test --test-concurrency=1 test/flight.test.mjs test/avionics.test.mjs test/browser.test.mjs`（テスト 48 件）。
+開発：`node build.mjs`（ビルド）、`npm test`（ビルドと全部のテスト。テストのファイルは `package.json` の `test`）、`npm run test:fast`（ブラウザを使わないテスト）。

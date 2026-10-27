@@ -23,6 +23,7 @@ const SRC = path.join(here, 'src'), OUT = path.join(here, 'outputs'), TEX = path
 // description — FLIGHT LAB's one list of modules (flight-lab/src/modules.mjs), in its order, less what the game does not
 // read (the tests load the same: test/helpers/fl.mjs):
 export const FL_LEAVE_OUT = Object.freeze({
+  'book-terms.js': 'the table of terms (FL.terms): the game does not use it; a test that needs it reads the file itself (W04 report; DESIGN 3.5, W50)',
   'book-photos.js': 'the textbook\'s photos: not in the game (DESIGN 6.3: no book-photos*.js; the in-game book shows figures only)',
   'kiso/kiso-data.js': 'the basic course (the original): FLIGHT LAB\'s own page, not the academy\'s',
   'ui.js': 'FLIGHT LAB\'s app (its controls and icons): the game has its own',

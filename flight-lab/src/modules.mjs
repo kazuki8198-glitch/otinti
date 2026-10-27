@@ -21,6 +21,7 @@ export const MODULES = Object.freeze([
   'syllabus.js',         // the syllabus (stages and lessons)
   'book-figs.js',        // the textbook's figures (SVG) and calculators
   'book-core.js',        // the textbook's frame: parts, references, writing helpers, FL.book
+  'book-terms.js',       // the table of terms (FL.terms: one concept, one name; DESIGN 3.5). Data only
   'book-photos.js',      // the textbook's photos (data URLs, after book-core.js: bk.photo)
   'book-1.js',           // the chapters (book-2.js before book-comm.js: its chapters go before 'hf')
   'book-2.js',

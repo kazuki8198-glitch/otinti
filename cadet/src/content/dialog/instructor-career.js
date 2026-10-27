@@ -73,7 +73,10 @@ export function careerInstructorDialogs() {
     'g1:2': say('ピトー静圧の話、外部点検でピトー管のカバーを外すときに思い出してください。', { if: { ctx: 'career.cls', is: 2 }, else: 'g1:3', hook: { name: 'look', arg: 'player' }, choices: G_ASK }),
     'g1:3': say('数字の言い方は、管制の指示を復唱するときに使います。高度と周波数は、とくに丁寧に。', { if: { ctx: 'career.cls', is: 3 }, else: 'g1:4', hook: { name: 'look', arg: 'player' }, choices: G_ASK }),
     'g1:4': say('チェアフライトで交信の流れが頭に入れば、初飛行の交信は半分できたようなものです。', { if: { ctx: 'career.cls', is: 4 }, else: 'g1:5', hook: { name: 'look', arg: 'player' }, choices: G_ASK }),
-    'g1:5': say('初飛行の朝は、運航管理で天気を見てから飛ぶかを決めます。今日の METAR の読み方を、そのまま使います。', { if: { ctx: 'career.cls', is: 5 }, else: 'g1:6', hook: { name: 'look', arg: 'player' }, choices: G_ASK }),
+    'g1:5': say('初飛行の朝は、運航管理で天気を見てから飛ぶかを決めます。今日の METAR の読み方を、そのまま使います。', { if: { ctx: 'career.cls', is: 5 }, else: 'g1:x1', hook: { name: 'look', arg: 'player' }, choices: G_ASK }),
+    // (the written test's day, and once it is passed: ctx career.exam1)
+    'g1:x1': say('今日は学科試験ですね。明日が初飛行です。今夜はよく寝ること。IMSAFE の F ですね。', { if: { all: [{ ctx: 'career.cls', is: 6 }, { ctx: 'career.exam1', is: 1 }] }, else: 'g1:x2', hook: { name: 'look', arg: 'player' }, choices: G_ASK }),
+    'g1:x2': say('学科試験、合格おめでとう。明日は初飛行、a1 です。朝の天気の判断から、一つずつ確かめていきましょう。', { if: { all: [{ ctx: 'career.cls', is: 6 }, { ctx: 'career.exam1', is: 2 }] }, else: 'g1:6', hook: { name: 'look', arg: 'player' }, choices: G_ASK }),
     'g1:6': say('明後日が初飛行です。前の晩はよく寝ること。IMSAFE の F ですね。わからないところがあれば、今のうちに。', { if: { ctx: 'career.cls', is: 6 }, else: 'g1:0', hook: { name: 'look', arg: 'player' }, choices: G_ASK }),
     'g1:0': say('座学、がんばっていますね。初飛行で使う節は、今日の訓練に要るところのペースでも全部読みます。わからないところがあれば、聞いてください。', { hook: { name: 'look', arg: 'player' }, choices: G_ASK }),
     g2: say('数字の言い方と、交信の型。今のうちに体に入れておくと、飛び始めてから楽になります。', { end: true }),

@@ -54,9 +54,9 @@ import { createCrowd } from './npc/crowd.js';
 import { peopleDialogs } from './content/dialog/people.js';
 import { careerInstructorDialogs } from './content/dialog/instructor-career.js';
 import { careerBoardDialogs } from './content/dialog/cockpit.js';
-import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, FTD_TITLES, pfdPictures, lecturePage, lecturerNotesHtml, classOptions, heardOf, chairDebriefDialogs, reviewQuestions, studyDialogs, reviewFor, sectionMarks, written1Readiness, mixedReview } from './content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, bankTaught, sectionHtml, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, FTD_TITLES, lecturePage, lecturerNotesHtml, classOptions, heardOf, chairDebriefDialogs, reviewQuestions, studyDialogs, reviewFor, sectionMarks, written1Readiness, mixedReview } from './content/school.js';
 import { eventDialogs } from './content/dialog/ch1-events.js';
-import { dayToast, afterClassToast, afterFtdToast, doneLine, dormCard } from './content/day-flow.js';
+import { dayToast, afterClassToast, afterFtdToast, doneLine, dormCard, prologueWord } from './content/day-flow.js';
 import { chairScript } from './content/chair-flight.js';
 import { createChairFlight } from './dialog/chair-flight.js';
 import { drawChairScreen } from './ui/chair-screen.js';
@@ -485,7 +485,9 @@ async function boot() {
   function refreshCtx() {
     const st = career.state, w = weatherNow(), it = flightItem(), sch = planToday();
     Object.assign(cx.career, { chapter: st.chapter, slot: st.slot, day: st.day, dayMod3: st.day % 3, tired: career.tired(), solo: !!st.solo, flying: flyingChapter(), graduated: !!st.graduated,
-      cls: CLASSES.filter((_, i) => st.done[`class:${i}`]).length, veteran: veteran() });
+      cls: CLASSES.filter((_, i) => st.done[`class:${i}`]).length, veteran: veteran(),
+      // (chapter 1's written test: 0 still to come, 1 today, 2 passed — the people's lines of the days after the classes)
+      exam1: st.exams.written1 && st.exams.written1.pass ? 2 : sch.some(x => x.kind === 'exam' && x.id === 'written1') ? 1 : 0 });
     const study = it && it.kind === 'flight' ? it.id : sch.find(x => x.kind === 'study') ? (CH2.find(id => !passedAt(prog(), id)) || 't2') : 't2';
     const sec = book.lessonSections(study).map(x => book.section(x.id)).find(x => x && x.figure);
     Object.assign(cx.today, {
@@ -653,7 +655,7 @@ async function boot() {
         return { run: startLesson('class', +cls.id, classDialogs(FL, +cls.id, { seed: st.seed, ...classOptions(FL, st, +cls.id, { attempt: career.attempt(`class:${cls.id}`) }) })), dialog: 'class' };
       }
       // (a lesson or the written test not passed can be taken again the same day: its questions in another order)
-      // (k4: a run's end first, when one has just ended; else its start — again after a pass too, to practise)
+      // (k4: a run's end first, when one has just ended; else its start — after the pass, the tablet's 練習 flies it again)
       if (chairEnd) { const d = chairEnd; chairEnd = null; return { run: startLesson('ftd', 'k4', d), dialog: 'ftd' }; }
       if (ftd && ftd.id === 'k4' && !(career.doneToday('ftd', 'k4') && groundPassed(prog(), 'k4'))) return { run: startLesson('ftd', 'k4', ftdDialogs(FL, 'k4', { k4: k4State() })), dialog: 'ftd' };
       if (ftd && !(career.doneToday('ftd', ftd.id) && groundPassed(prog(), ftd.id))) return { run: startLesson('ftd', ftd.id, ftdDialogs(FL, ftd.id, { seed: st.seed + st.day, heard: heardOf(FL, st), attempt: career.attempt(`ftd:${ftd.id}`) })), dialog: 'ftd' };
@@ -880,13 +882,13 @@ async function boot() {
   // lecturer's notes on it under it when she has any
   function openSection(id) {
     const sec = book.section(id); if (!sec) return;
-    dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sec.html + lecturerNotesHtml(id) });
+    dui.showBook({ title: sec.title, chapter: `第 ${sec.chapter.n} 章　${sec.chapter.title}`, html: sectionHtml(sec) + lecturerNotesHtml(id) });
   }
   // the training device room's screen: a PFD picture (k2: the question's; k1: the tutorial's, a part framed)
   const TUTOR_PIC = { ias: 105, alt: 3500, hdg: 30, vs: 500, bank: 15 };
   function showPfd(arg) {
     const tut = /^tutor:(\w+)$/.exec(arg || '');
-    const pic = tut ? TUTOR_PIC : pfdPictures(career.state.seed + career.day)[+arg];
+    const q = tut ? null : lessonQuestions[+arg], pic = tut ? TUTOR_PIC : q && q.pic;     // (the lesson's own: its try's)
     if (!pic) return;
     academy.redraw('sim', 'wall_screen', (g, w, h) => drawPfdPicture(FL, g, w, h, pic, { highlight: tut && tut[1] !== 'all' ? tut[1] : null, title: tut ? 'G1000 型 PFD（主な飛行表示）' : `PFD の読み取り：第 ${+arg + 1} 問` }));
     const s = academy.surfaceAt('sim', 'wall_screen'), actor = talkActor;
@@ -1250,9 +1252,9 @@ async function boot() {
   function workDone(arg) {
     const k = lessonKind, slot = career.slot;
     const next = () => { if (slot === 'morning') career.advance('am'); else if (slot === 'am') career.advance('pm'); else if (slot === 'pm') career.advance('evening'); };
-    if (arg === 'ceremony') { career.done('ceremony', 'welcome'); afterTalk.push(() => { career.advance('am'); applySlot(); toast('運航管理の佐伯さんが、訓練所を案内してくれます（ロビーの北、運航管理）', 5200); }); }
-    else if (arg === 'tour') { career.done('tour', 'tour'); afterTalk.push(() => { career.advance('pm'); applySlot(); toast('午後：ブリーフィング室 1 で、担当の早瀬 教官と顔合わせです', 5200); }); }
-    else if (arg === 'meet') { career.done('brief', 'meet'); career.finishPrologue(); try { if (store && !store.getItem(VETERAN)) store.setItem(VETERAN, String(career.state.seed)); } catch (e) { /* not kept */ } afterTalk.push(() => { career.advance('evening'); applySlot(); toast('夕方です。ラウンジで同期と話してみましょう。今日を終えるときは、正面入口から寮へ', 6000); }); }
+    if (arg === 'ceremony') { career.done('ceremony', 'welcome'); afterTalk.push(() => { career.advance('am'); applySlot(); toast(prologueWord('ceremony', { short: shortWords() }), 5200); }); }
+    else if (arg === 'tour') { career.done('tour', 'tour'); afterTalk.push(() => { career.advance('pm'); applySlot(); toast(prologueWord('tour', { short: shortWords() }), 5200); }); }
+    else if (arg === 'meet') { career.done('brief', 'meet'); career.finishPrologue(); try { if (store && !store.getItem(VETERAN)) store.setItem(VETERAN, String(career.state.seed)); } catch (e) { /* not kept */ } afterTalk.push(() => { career.advance('evening'); applySlot(); toast(prologueWord('meet', { short: shortWords() }), 6000); }); }
     else if (arg === 'class' && k) { career.done('class', String(k.id)); career.tire(6); afterTalk.push(() => { next(); applySlot(); if (skipDay !== career.day) toast(afterClassToast(+k.id), 5200); }); }
     else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'ftd') {
       career.done('ftd', k.id); career.tire(6);
@@ -1373,8 +1375,8 @@ async function boot() {
   function greet() {
     const st = career.state, sch = planToday();
     // (chapter 1: the day's own word — its chapters, the afternoon's lesson, a question missed before: content/day-flow.js)
-    const ch1 = st.chapter === 'ch1' ? dayToast(st, sch, { missed: reviewFor(FL, st, CLASSES.filter((_, i) => st.done[`class:${i}`]).length).missed, short: skipping() }) : null;
-    if (st.chapter === 'prologue') toast('入社の日です。ロビーで、主任教官の話が始まります', 5200);
+    const ch1 = st.chapter === 'ch1' ? dayToast(st, sch, { missed: reviewFor(FL, st, CLASSES.filter((_, i) => st.done[`class:${i}`]).length).missed, short: shortWords() }) : null;
+    if (st.chapter === 'prologue') toast(prologueWord('morning', { short: shortWords() }), 5200);
     else if (ch1) toast(ch1, 6400);
     else if (sch.some(x => x.kind === 'off')) toast('今日は休日です。ラウンジで休むのも、自習するのもいい。正面入口から寮に帰れば、明日になります', 6000);
     else toast(`今日の予定：${sch.map(x => `${SLOT_NAMES[x.slot]} ${x.title}`).join('／')}（Tab でタブレット）`, 6000);
@@ -1388,17 +1390,20 @@ async function boot() {
   function goHome() {
     if (!dayIsDone()) { toast('まだ今日の予定が残っています（Tab でタブレット）', 3000); return 'closed'; }
     homeOpen = true;
-    const c = dormCard(career.state, planToday(), { short: skipping() });
+    const c = homeCard = dormCard(career.state, planToday(), { short: shortWords() });
     interactor.showCard(c.title, c.text, c.choices);
     return 'examined';
   }
+  // (the k-th of the dorm card's choices, by what it does: early, late — the study first, once a class is done — stay)
+  let homeCard = null;
   function homeChoose(k) {
-    if (!homeOpen) return false;
+    const ch = homeOpen && homeCard ? homeCard.choices[k] : null;
+    if (!ch) return false;
     homeOpen = false; interactor.closeCard();
-    if (k === 2) return true;
+    if (ch.act === 'stay') return true;
     // (the study: three questions of the classes done, those missed first — then to bed, a little late)
-    if (k === 1 && CLASSES.some((_, i) => career.state.done[`class:${i}`])) { tabletTalk('study', 'night', studyDialogs(FL, career.state, { attempt: career.attempt('study:night') }), 'study', 'タブレット（自習）'); return true; }
-    sleepNow({ late: k === 1 });
+    if (ch.act === 'late' && CLASSES.some((_, i) => career.state.done[`class:${i}`])) { tabletTalk('study', 'night', studyDialogs(FL, career.state, { attempt: career.attempt('study:night') }), 'study', 'タブレット（自習）'); return true; }
+    sleepNow({ late: ch.act === 'late' });
     return true;
   }
   function sleepNow({ late = false } = {}) {
@@ -1467,6 +1472,7 @@ async function boot() {
     model: () => {
       refreshCtx();
       const st = career.state, p = prog(), sch = planToday(), w = career.weather(p), order = ['morning', 'am', 'pm', 'evening'];
+      const ch1 = st.chapter === 'ch1' || st.chapter === 'prologue', heard = ch1 ? heardOf(FL, st) : null;
       const state = (x) => (career.doneToday(x.kind, x.id) || (x.kind === 'class' && career.doneToday('class', x.id)) ? 'done' : order.indexOf(x.slot) < order.indexOf(st.slot) ? 'missed' : x.slot === st.slot ? 'now' : 'later');
       return {
         date: dateText(st.day), chapterTitle: CHAPTERS[st.chapter].title, slotName: SLOT_NAMES[st.slot],
@@ -1481,7 +1487,10 @@ async function boot() {
         lessons: [...CH2, 'c1', ...LATER.filter(c => CHAPTERS[c].n <= CHAPTERS[st.chapter].n).flatMap(c => STAGE[c].lessons)].map(id => ({ id, title: FL.school.lesson(id).title, best: p.lessons[id] ? p.lessons[id].best : '', pass: passedAt(p, id) })),
         trust: [['instructor', INSTRUCTOR.title_ja], ['chief', PEOPLE.chief.title], ['dispatcher', PEOPLE.dispatcher.title], ['mechanic', PEOPLE.mechanic.title]].map(([k, n]) => ({ name: n, v: Math.round(trustOf(talkState, k)) })),
         book: book.chapters.map(c => ({ id: c.id, n: c.n, title: c.title, sections: c.sections.map(x => ({ id: x.id, title: x.title })) })),
-        banks: BANKS.map(b => ({ id: b.id, title: b.title, n: b.qs.length })), k4: { passed: groundPassed(p, 'k4') }, chapter1: st.chapter === 'ch1' || st.chapter === 'prologue',
+        // (in chapter 1: of each bank, the questions whose answers the classes have said; the chair flight once its
+        // class — the calls of one flight — is done)
+        banks: BANKS.map(b => ({ id: b.id, title: b.title, n: b.qs.length, taught: ch1 ? bankTaught(FL, b.id, heard) : b.qs.length })), k4: { passed: groundPassed(p, 'k4') }, chapter1: ch1,
+        chair: !ch1 || st.done['class:3'] != null || groundPassed(p, 'k4'),
         graduated: !!st.graduated, evening: st.slot === 'evening', canWait: st.slot !== 'evening' && !sch.some(x => x.slot === st.slot && state(x) === 'now'),
       };
     },
@@ -1490,6 +1499,8 @@ async function boot() {
       read: (id) => openSection(id),
       practice: (bankId) => practice(bankId),
       chair: (stage) => { if (!talk && !chair && mode === 'walk') startChair(stage, { practice: true }); },
+      // (k4 passed: the textbook's own flight, at another airport, to listen to — school.js k4ListenNodes)
+      chairListen: () => { if (talk || chair || mode !== 'walk') return; const d = ftdDialogs(FL, 'k4', { k4: { ...k4State(), passed: true } }); d.dialogs.ftd.start = 'k4:listen'; tabletTalk('chair', 'listen', d, 'ftd', 'タブレット（交信の例）'); },
       exportSave: () => exportArchive({ career: career.state, talk: talkState, logbook: logbook.entries, progress: prog(), records: FL.school.loadRecords(fly.flight.store) }),
       importSave: (text) => {
         try {
@@ -1629,6 +1640,7 @@ async function boot() {
     if (menu.isOpen) return;
     if (dayHud.logbookOpen || tablet.isOpen || cards.showing || report.isOpen) return;
     if (mode === 'fly') { if (fly) fly.key(e); return; }       // F is the throttle there (perf: the menu's setting)
+    if (e.code === 'KeyZ' && toggleScreenCopy()) return;      // (the room's screen, large: Z again for small)
     if (chair && mode === 'walk') {                            // (k4: its keys only)
       if (/^(Digit|Numpad)[1-3]$/.test(e.code)) chairAnswer(+e.code.slice(-1) - 1);
       else if (e.code === 'KeyH') chair.run.why();
@@ -1637,7 +1649,7 @@ async function boot() {
       return;
     }
     if (mode === 'walk' && walkOpen && /^(Digit|Numpad)[1-4]$/.test(e.code)) { walkChoose(+e.code.slice(-1) - 1); return; }
-    if (mode === 'walk' && e.code === 'KeyG' && !talk && !homeOpen && !interactor.cardOpen) { if (!jumpNext()) toast('G で行けるのは、一度歩いて行ったことのある場所です', 2600); return; }
+    if (mode === 'walk' && e.code === 'KeyG' && !talk && !homeOpen && !interactor.cardOpen) { if (!jumpNext()) { const j = jumpPlan(true); toast(j && j.no ? j.no : 'G で行けるのは、一度歩いて入ったことのある部屋です', 2600); } return; }
     if (mode === 'walk' && homeOpen && /^(Digit|Numpad)[1-3]$/.test(e.code)) { homeChoose(+e.code.slice(-1) - 1); return; }
     if (e.code === 'Tab' && mode === 'walk' && !talk) {
       e.preventDefault();
@@ -1761,14 +1773,19 @@ async function boot() {
   let lastRoom = null, skipDay = -1, jumpOk = false, jumping = false;
   // (the ways skipped before in this career: the day's words said short — content/day-flow.js)
   const skipping = () => career.tries('skip:g') > 0;
+  // (the day's words short: the ways skipped, or a career begun after another — G may go anywhere)
+  const shortWords = () => skipping() || veteran();
   const roomAt = (a, c) => (academy.inside(a, c) ? (academy.roomOf(a, c)?.id || null) : 'outside');
   function noteRoom(a, c) { const r = roomAt(a, c); if (r && r !== lastRoom) { lastRoom = r; career.walkedInto(r); } }
-  function jumpPlan() {
-    const g = guideStep; if (!g || !['person', 'entrance', 'room'].includes(g.at)) return null;
-    const t = guideTarget(g); if (!t) return null;
+  // (why: the reason it may not, for the toast)
+  function jumpPlan(why = false) {
+    const no = (t) => (why ? { no: t } : null);
+    const g = guideStep; if (!g || !['person', 'entrance', 'room'].includes(g.at)) return no('G で行けるのは、案内の次の人・部屋・正面入口までです');
+    const t = guideTarget(g); if (!t) return no('G で行けるのは、案内の次の人・部屋・正面入口までです');
     const room = g.at === 'entrance' ? 'lobby' : roomAt(t.a, t.c);
-    if (!room || room === roomAt(walker.framePos.a, walker.framePos.c)) return null;
-    if (!(veteran() || career.state.walked.includes(room))) return null;
+    if (!room) return no('G で行けるのは、案内の次の人・部屋・正面入口までです');
+    if (room === roomAt(walker.framePos.a, walker.framePos.c)) return no('案内の場所は、この部屋の中です');
+    if (!(veteran() || career.state.walked.includes(room))) return no('G で行けるのは、一度歩いて入ったことのある部屋です');
     return { g, t, room };
   }
   function jumpNext() {
@@ -1787,6 +1804,25 @@ async function boot() {
     const d = Math.hypot(f.a - t.a, f.c - t.c) || 1;
     return { a: t.a + (f.a - t.a) / d * 1.4, c: t.c + (f.c - t.c) / d * 1.4, face: { a: t.a, c: t.c } };
   }
+  // ---- the room's screen, copied small at the top while it is in use — a class (briefing room 2), a device lesson and k4
+  // (the device room): the canvas the wall shows (academy.surfaceCanvas), copied twice a second; Z shows it large
+  const scr = $('#scrcopy'), scrCv = scr.querySelector('canvas'), scrG = scrCv.getContext('2d');
+  let scrT = 0, scrBig = false;
+  function screenRoom() {
+    if (chair) return 'sim';
+    if (!talk || talkWho !== 'lecturer' || !lessonKind) return null;
+    return lessonKind.kind === 'class' ? 'brief-2' : lessonKind.kind === 'ftd' ? 'sim' : null;
+  }
+  function updateScreenCopy(dt) {
+    const room = mode === 'walk' ? screenRoom() : null, cv = room && academy.surfaceCanvas ? academy.surfaceCanvas(room, 'wall_screen') : null;
+    const on = !!cv && !menu.isOpen && !tablet.isOpen && !cards.showing && settings.get('screenCopy') !== false;
+    if (scr.hidden === on) scr.hidden = !on;
+    if (!on) { if (scrBig) { scrBig = false; scr.classList.remove('big'); } return; }
+    if ((scrT -= dt) > 0) return;
+    scrT = 0.5;
+    try { scrG.drawImage(cv, 0, 0, scrCv.width, scrCv.height); } catch (e) { /* not drawn yet */ }
+  }
+  function toggleScreenCopy() { if (scr.hidden) return false; scrBig = !scrBig; scr.classList.toggle('big', scrBig); scrT = 0; return true; }
   function updateGuide(dt, pa, pc) {
     const on = mode === 'walk' && !talk && !cards.showing && !tablet.isOpen && settings.get('guide') !== false;
     guideEl.hidden = !on; if (!on) return;
@@ -1847,7 +1883,7 @@ async function boot() {
     if (mode === 'walk' && live && !talk && !chair) { interactor.update(camera); showPlace(dt, pa, pc); frontDoorStep(pa, pc); noteRoom(pa, pc); }
     // near today's aircraft: the walk-around's progress; the instructor leaves the room for it once the cadet has gone
     walkEl.hidden = !(mode === 'walk' && Math.hypot(pa - tg.a, pc - tg.c) < 14 && !flownToday());   // (no flight left today: no walk-around)
-    updateGuide(dt, pa, pc);
+    updateGuide(dt, pa, pc); updateScreenCopy(dt);
     if (mode !== 'walk') coach.el.hidden = true;
     if (mode === 'walk' && live) {
       const y = walker.state.yaw, p = walker.state.pitch, fp = walker.framePos;
@@ -2114,6 +2150,7 @@ async function boot() {
   step(performance.now());
   requestAnimationFrame(loop);
   let screenCopy = null;                                       // (the tests' screen(): a canvas to read the surfaces through)
+  let screenRead = null;                                       // (…and screenCopy()'s, the small copy's)
   window.__cadet = {
     ready: true, L, FL, VIEWS, spec, world, scene, camera, renderer, setView, setQuality, runBench, walkRoute, placeWalker, followGuide, navPath,
     guide: () => (guideStep ? { ...guideStep, way: guideWay } : null),
@@ -2232,6 +2269,14 @@ async function boot() {
       home: () => goHome(), homeChoose: (k) => homeChoose(k),
       // the way skipped (G): whether it can be now, and the jump
       jump: () => jumpNext(), canJump: () => { computeGuide(walker.framePos.a, walker.framePos.c); return !!jumpPlan(); },
+      // the room's screen's copy: shown, large, a hash of what it shows
+      screenCopy: () => {
+        updateScreenCopy(1);
+        // (read through a canvas of its own, made for reading: the copy's own stays drawn on the GPU)
+        const rd = screenRead || (screenRead = document.createElement('canvas').getContext('2d', { willReadFrequently: true }));
+        rd.canvas.width = scrCv.width; rd.canvas.height = scrCv.height; rd.drawImage(scrCv, 0, 0);
+        const d = rd.getImageData(0, 0, scrCv.width, scrCv.height).data; let h = 0; for (let i = 0; i < d.length; i += 4 * 97) h = (h * 31 + d[i] + d[i + 1] * 7 + d[i + 2] * 13) >>> 0; return { on: !scr.hidden, big: scrBig, hash: h }; },
+      zoomScreen: () => toggleScreenCopy(),
       // (opened as Tab opens it: the card closed, the mouse let go)
       tablet: { open: (p) => { interactor.closeCard(); input.exitLock(); tablet.open(p); }, close: () => tablet.close(), isOpen: () => tablet.isOpen, page: () => tablet.page },
       cards: () => cards.showing, celebrate: () => celebrate, reset: () => resetProgress(), gate: () => career.gate(prog(), trustI()),

@@ -16,10 +16,10 @@ const KEPT = [
   [/^［選択］[^ぁ-ゖァ-ヺ]*$/, 'choices that are the book\'s values alone — numbers, units, words in quotes (the pattern masks them)'],
 ];
 
-test('the classes\' frame: no wording of their own said 8 times or more in chapter 1 read in full — but the book\'s content, listed with its reason', async () => {
-  for (const seed of [1, 2]) {
-    const r = await measureCh1({ pace: 'full', seed });
-    for (const { pattern, count } of framePatterns(r).filter(p => p.count >= 8)) assert.ok(KEPT.some(([re]) => re.test(pattern)), `seed ${seed}: "${pattern}" said ${count} times`);
+test('the classes\' frame: no wording of their own said 8 times or more in chapter 1 at any pace — but the book\'s content, listed with its reason', async () => {
+  for (const pace of ['full', 'need', 'quick']) for (const seed of [1, 2]) {
+    const r = await measureCh1({ pace, seed });
+    for (const { pattern, count } of framePatterns(r).filter(p => p.count >= 8)) assert.ok(KEPT.some(([re]) => re.test(pattern)), `${pace}, seed ${seed}: "${pattern}" said ${count} times`);
   }
 });
 
@@ -84,7 +84,7 @@ test('the review at a class\'s start: of the classes before, their answers heard
 
 test('the ways skipped the second time on (G): the day\'s fixed flow — cards, toasts, the jumps, the dorm\'s card — 20 s or less a day, chapter 1 within 3 minutes', async () => {
   for (const pace of ['need', 'full', 'quick']) for (const seed of [1, 2, 3]) {
-    const r = await measureCh1({ pace, seed, skip: true }), days = r.days.filter(d => d.day >= 2 && d.day <= 9);
+    const r = await measureCh1({ pace, seed, skip: true }), days = r.days;                       // (days 1–10)
     for (const d of days) assert.ok(d.fixedS <= 20, `${pace} seed ${seed} day ${d.day}: ${d.fixedS.toFixed(1)} s (${d.fixed.map(f => f.what).join(' ')})`);
     assert.ok(days.reduce((a, d) => a + d.fixedS, 0) <= 180, `${pace} seed ${seed}: ${(days.reduce((a, d) => a + d.fixedS, 0) / 60).toFixed(2)} min`);
     assert.ok(!days.some(d => d.fixed.some(f => f.what === 'walk')), 'no walking');
@@ -113,6 +113,24 @@ test('days 2–9 each have an event of their own that uses the day\'s class: the
   for (const [id, re] of Object.entries(W)) assert.match(Object.values(L.events.eventDialogs(id).dialogs.ev.nodes).map(n => n.text).join(''), re, id);
 });
 
+test('the evenings\' events ask only what the day\'s class said, at every pace (answer-map.js EVENT_ANSWERS; the week\'s from the banks)', async () => {
+  for (const pace of ['need', 'full', 'quick']) for (const seed of [1, 2, 3]) {
+    const ev = (await measureCh1({ pace, seed })).asked.filter(a => /^event /.test(a.where));
+    assert.ok(ev.length >= 15, `${pace}, seed ${seed}: ${ev.length} questions`);
+    for (const a of ev) assert.ok(a.known && a.inBook && a.said, `${pace}, seed ${seed}: ${a.where} ${a.id} — its answer said before`);
+  }
+});
+
+test('every subtitle of chapter 1 is 2–120 characters: classes, devices, events, the written test, every pace (k4\'s run: test/k4.test.mjs)', async () => {
+  for (const pace of ['need', 'full', 'quick']) for (const seed of [1, 2, 3]) {
+    const r = await measureCh1({ pace, seed });
+    for (const d of r.days) for (const t of d.talks) if (t.label !== 'ftd k4 run') for (const l of t.lines) { const n = Array.from(String(l.text)).length; assert.ok(n >= 2 && n <= 120, `${pace}, seed ${seed}, day ${d.day}, ${t.label} ${l.node}: ${n} characters`); }
+  }
+  // (the week's review with a long reason — a later Sunday's, a bank's: said over lines)
+  const why = '理由はこうです。'.repeat(20), N = L.events.eventDialogs('week', { review: [{ id: 'q_radio#14', q: '問題です。', opts: ['A', 'B', 'C'], ok: 0, why }] }).dialogs.ev.nodes;
+  for (const [id, n] of Object.entries(N)) assert.ok(Array.from(n.text).length <= 120, `week ${id}`);
+});
+
 test('the academy\'s seven: each says three different things or more on days 2–9, one at least about the day\'s class', () => {
   const KEY = [/4 つの力|揚力|迎え角|主翼|翼/, /ピトー|性能|重心|W&B|キャブレター|暑い日/, /Alfa|niner|アルファベット|November|数字|k3/, /交信|k4|チェアフライト|復唱|型/, /METAR|天気|雲高|燃料のサンプ|MAYDAY|気象/, /IMSAFE|学科試験|初飛行/];
   const ppl = L.people.peopleDialogs(), ins = L.insc.careerInstructorDialogs();
@@ -123,6 +141,15 @@ test('the academy\'s seven: each says three different things or more on days 2�
     assert.ok(new Set(lines).size >= 3, `${who}: ${new Set(lines).size} kinds of talk`);
     assert.ok(lines.some((t, k) => KEY[k].test(t)), `${who}: about the day's class: ${lines.join(' / ')}`);
     void say;
+  }
+});
+
+test('the written test\'s day and the day it is passed: no one says it is tomorrow, nor the first flight the day after', () => {
+  const ppl = L.people.peopleDialogs(), ins = L.insc.careerInstructorDialogs();
+  const first = (data, id, exam1) => { const st = L.engine.createDialogState(); for (const f of ['met_chief', 'met_dispatcher', 'met_mechanic', 'met_kiryu', 'met_asahi', 'met_mori', 'welcome_done', 'tour_done']) st.flags[f] = true;
+    return runTalk(L, data, id, { ctx: { career: { chapter: 'ch1', slot: 'evening', day: 9, dayMod3: 0, tired: false, solo: false, flying: false, graduated: false, cls: 6, veteran: false, exam1 }, today: {}, weather: { ja: '晴れ', metarAm: 'KLAB', metarPm: 'KLAB', taf: 'TAF', why: '' }, imsafe: { honest: true } }, state: st, policy: (v) => Math.max(0, v.choices.findIndex(c => /大丈夫/.test(c.text))) }).lines[0].text; };
+  for (const [who, data, id] of [['chief', ppl, 'chief'], ['dispatcher', ppl, 'dispatcher'], ['mechanic', ppl, 'mechanic'], ['kiryu', ppl, 'kiryu'], ['asahi', ppl, 'asahi'], ['mori', ppl, 'mori'], ['lecturer', ppl, 'lecturer'], ['instructor', ins, 'ground']]) {
+    for (const exam1 of [1, 2]) { const t = first(data, id, exam1); assert.doesNotMatch(t, /明日(は|の)?(学科)?試験|明後日/, `${who}, exam1 ${exam1}: ${t}`); if (exam1 === 2) assert.doesNotMatch(t, /今日(は|の)(学科)?試験/, `${who} after the test: ${t}`); }
   }
 });
 

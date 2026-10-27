@@ -36,7 +36,7 @@ function runClass(data, { pace = 'full', resume = false, brk = null } = {}) {
 }
 const answerOf = (id) => { const m = /^(q_[a-z]+)#(\d+)$/.exec(id); if (m) return BANK_ANSWERS[m[1]][+m[2]].a; const n = /^note:(.+)$/.exec(id); return n ? L.answers.NOTE_ANSWERS[n[1]] : undefined; };
 
-test('every scored question of chapter 1 comes after its answer was said — 要るところ, じっくり and 要点だけ, careers of seeds 1–200', { timeout: 600000 }, async () => {
+test('every question of chapter 1 comes after its answer was said (scored, and the classes\' and the evenings\' own) — 要るところ, じっくり and 要点だけ, careers of seeds 1–200', { timeout: 600000 }, async () => {
   for (const pace of ['need', 'full', 'quick']) {
     let n = 0;
     const where = new Set();
@@ -65,7 +65,7 @@ test('every scored question of chapter 1 comes after its answer was said — 要
         }
       }
     }
-    assert.deepEqual([...where].sort(), ['class', 'exam', 'ftd'], `${pace}: the classes, the device and the written test`);
+    assert.deepEqual([...where].sort(), ['class', 'event', 'exam', 'ftd'], `${pace}: the classes, the evenings' events, the device and the written test`);
     assert.ok(n > 200 * 80, `${pace}: ${n} questions judged`);
   }
 });

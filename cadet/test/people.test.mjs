@@ -36,6 +36,10 @@ test('people: nine of them (the examiner with M6), each with a look and a place 
   // the evening: the cadets in the lounge, the staff gone
   for (const id of PEERS) assert.ok(placeOf(id, 'evening', 'ch1').a > 688, id);
   for (const id of ['dispatcher', 'mechanic', 'chief', 'lecturer']) assert.equal(placeOf(id, 'evening', 'ch2'), null, id);
+  // (Sunday in chapter 1: 朝日 in the lounge for the week's review, as the morning's word says; the others as any day)
+  const sunday = [{ slot: 'am', kind: 'off' }, { slot: 'am', kind: 'event', id: 'week', who: 'asahi' }];
+  for (const slot of ['morning', 'am', 'pm']) assert.ok(placeOf('asahi', slot, 'ch1', sunday).a > 688, `asahi in the lounge on Sunday ${slot}`);
+  assert.ok(placeOf('kiryu', 'am', 'ch1', sunday).a < 688, 'kiryu not');
   // the welcome: the chief, the lecturer and the cadets in the lobby
   for (const id of ['chief', 'lecturer', ...PEERS]) { const p = placeOf(id, 'morning', 'prologue'); assert.ok(p.a > 646 && p.a < 664, `${id} in the lobby`); }
   // a class: the lecturer at the whiteboard of briefing room 2, the cadets there too; the device: the sim room

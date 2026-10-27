@@ -58,9 +58,19 @@ export function tomorrowText(st) {
   if (!(st.exams && st.exams.written1 && st.exams.written1.pass)) return '明日は学科試験、そして次の日が初飛行です';
   return '明日は、いよいよ初飛行（a1）です';
 }
+// the first day's words (the prologue: its morning, then after the welcome, the tour and the meeting); short: the
+// cadet skips the ways, or begins a career after another
+export const PROLOGUE_WORDS = {
+  morning: ['入社の日です。ロビーで、主任教官の話が始まります', '入社の日。ロビーで主任教官の話'],
+  ceremony: ['運航管理の佐伯さんが、訓練所を案内してくれます（ロビーの北、運航管理）', '案内：運航管理へ'],
+  tour: ['午後：ブリーフィング室 1 で、担当の早瀬 教官と顔合わせです', '午後：ブリーフィング室 1'],
+  meet: ['夕方です。ラウンジで同期と話してみましょう。今日を終えるときは、正面入口から寮へ', '夕方：寮へは正面入口から'],
+};
+export const prologueWord = (k, { short = false } = {}) => PROLOGUE_WORDS[k][short ? 1 : 0];
 // (tomorrow in a few words: the skipping cadet's dorm card)
 function shortTomorrow(st) {
   const n = classesDone(st);
+  if (st.chapter === 'prologue') return `明日から座学（${classWords(0)}）`;
   if (st.chapter !== 'ch1') return '';
   if (isOff(st.day + 1)) return '明日は休み';
   if (n < CLASSES.length) return `明日は${classWords(n)}`;
@@ -74,7 +84,9 @@ export function doneLine(st) {
 // the dorm's card: the day said back, and what the evening's study is
 export function dormCard(st, sch, { short = false } = {}) {
   const i = classToday(sch), t = tomorrowText(st);
-  if (short) return { title: '寮へ帰る', text: shortTomorrow(st), choices: [{ k: 1, text: 'すぐに寝る', act: 'early' }, { k: 2, text: '自習してから寝る（3 問）', act: 'late' }, { k: 3, text: 'やっぱり残る', act: 'stay' }] };
+  // (no class done yet — the first day — nothing to study: to bed, or stay)
+  if (!classesDone(st) && (st.chapter === 'prologue' || st.chapter === 'ch1')) return { title: '寮へ帰る', text: short ? shortTomorrow(st) : `${t || '明日から座学です'}。今日はゆっくり休みましょう。`, choices: [{ k: 1, text: '寝る', act: 'early' }, { k: 2, text: 'やっぱり残る', act: 'stay' }] };
+  if (short) return { title: '寮へ帰る', text: shortTomorrow(st) || '今日の訓練はここまで', choices: [{ k: 1, text: 'すぐに寝る', act: 'early' }, { k: 2, text: '自習してから寝る（3 問）', act: 'late' }, { k: 3, text: 'やっぱり残る', act: 'stay' }] };
   const today = i >= 0 ? `今日は${classShort(i)}と ${CLASS_FTD[i]}。` : (sch || []).some(x => x.kind === 'exam') ? '学科試験、おつかれさまでした。' : '';
   const text = st.chapter === 'ch1' ? `${today}${t ? `${t}。` : ''}自習なら、間違えた問題と期限が来た問題を 3 問（約 3 分）。` : '今日の訓練はここまで。寮に帰って休みます。';
   return { title: '寮へ帰る', text, choices: [{ k: 1, text: 'すぐに寝る', act: 'early' }, { k: 2, text: '少し自習してから寝る（3 問・疲れが少し残る）', act: 'late' }, { k: 3, text: 'やっぱり残る', act: 'stay' }] };

@@ -150,16 +150,22 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
   }
   function practice(m) {
     // (k4, the chair flight: from anywhere, as often as wanted — a practice, not the lesson's record)
-    if (act.chair) {
+    if (act.chair && m.chair === false) put(scr, make('h2', '', '交信の練習（チェアフライト）'), make('p', 'sub', '4 回目の授業（交信の型と、1 回の飛行の交信）のあとで練習できます。'));
+    else if (act.chair) {
       put(scr, make('h2', '', '交信の練習（チェアフライト）'), make('p', 'sub', '初飛行の日の交信を、ATIS から駐機場まで、自分がパイロットになって通します（毎回少しずつ変わります。記録には残りません）。'));
       const c = make('div', 'tb-card');
       put(c, btn('① 台本を見ながら', () => { close(); act.chair(1); }), btn('② 自分の台詞を隠して', () => { close(); act.chair(2); }));
-      if (m.k4 && m.k4.passed) put(c, btn('③ 本番（時間制限あり）', () => { close(); act.chair(3); }));
+      if (m.k4 && m.k4.passed) put(c, btn('③ 本番（時間制限あり）', () => { close(); act.chair(3); }), btn('教科書の例を通しで聞く（別の空港の交信）', () => { close(); act.chairListen(); }, 'tb-btn ghost'));
       put(scr, c);
     }
-    put(scr, make('h2', '', '学科テストの練習'), make('p', 'sub', m.chapter1 ? '分野を選ぶと、10 問の練習が始まります（成績には入りません。授業でもう話したことだけから出ます）。' : '分野を選ぶと、10 問の練習が始まります（成績には入りません）。'));
+    put(scr, make('h2', '', '学科テストの練習'), make('p', 'sub', m.chapter1 ? '分野を選ぶと、10 問までの練習が始まります（成績には入りません。授業でもう話したことだけから出ます）。' : '分野を選ぶと、10 問の練習が始まります（成績には入りません）。'));
     const g = make('div', 'tb-grid');
-    for (const b of m.banks) put(g, put(make('div', 'tb-card'), make('h3', '', b.title), make('div', 'sub', `${b.n} 問から 10 問`), btn('練習する', () => { close(); act.practice(b.id); })));
+    // (chapter 1: the questions the classes have said; none yet, no practice there)
+    for (const b of m.banks) {
+      const n = b.taught ?? b.n, c = put(make('div', 'tb-card'), make('h3', '', b.title), make('div', 'sub', n ? (n < b.n ? `授業で話した ${n} 問から ${Math.min(10, n)} 問` : `${b.n} 問から 10 問`) : 'まだ授業で話していません'));
+      if (n) put(c, btn('練習する', () => { close(); act.practice(b.id); }));
+      put(g, c);
+    }
     put(scr, g);
   }
   function save() {

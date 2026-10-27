@@ -3,15 +3,18 @@
 // or kept for a gate; each ends with the hook 'done' 'event'. All fictional (content/people.js).
 //   forces  (第 1 章) 大城さん, on the apron by the Archer: where its four forces come from, which way the nose goes on
 //           the take-off roll, and why (left-turning tendencies, aero.left);
-//   pitot   (第 2・3 章) 大城さん: the Archer's pitot tube under the left wing with its cover, the fuel sump's water,
-//           a blocked static port (sys.g1000; the walk-around's own points, content/walkaround-archer.js);
+//   pitot   (第 2・3 章) 大城さん: the Archer's pitot tube under the left wing with its cover, the fuel sump,
+//           a blocked static port (sys.g1000, sys.fuel; the walk-around's own points, content/walkaround-archer.js);
 //   spell   (第 6・7 章) 佐伯さん at dispatch: today's aircraft's registration, a frequency and an altitude said aloud;
 //   readback (第 8・9 章) 桐生, in the lounge, as the controller: the read-backs a hold short and a line up and wait need;
 //   metar   (第 4・10 章) 佐伯さん: today's METAR read with her — if today were the first flight, would it go;
 //   imsafe  (第 5・11 章) 真壁 主任教官: IMSAFE's letters, and the cadet's own today (his third promise);
 //   week    (Sunday) 朝日: the week's questions, if the cadet likes (career's review: those missed first).
-// fromBank: the classes' questions (content/school.js) for the week's review.
+// fromBank: the classes' questions (content/school.js) for the week's review. Each question of the others is on a
+// line its day's class says at every pace: content/answer-map.js EVENT_ANSWERS (its k-th question's), which keeps
+// those lines in 要点だけ too (school.js answerWords).
 import { PEOPLE } from '../people.js';
+import { fit, LINE_MAX } from '../school.js';
 
 const SPEAKERS = Object.fromEntries([...Object.entries(PEOPLE).map(([id, p]) => [id, { name_ja: p.title, color: p.color }]), ['player', { name_ja: 'あなた', color: '#f2b632' }]]);
 export const EVENT_HOOKS = ['done', 'look', 'nod', 'point', 'ans'];
@@ -26,15 +29,16 @@ function scene(who, parts, end, r) {
   let k = 0, open = [];
   const id = () => `e${k++}`;
   const link = (to) => { for (const n of open) n.next = to; };
+  // (a reply too long for a subtitle — the week's review: a bank's reason — said over lines: → its last node)
+  const said = (nid, speaker, text, more = {}) => { const l = fit(text, LINE_MAX); l.forEach((t, j) => { N[j ? `${nid}:${j}` : nid] = { speaker, text: t, ...(j ? {} : more), ...(j < l.length - 1 ? { next: `${nid}:${j + 1}` } : {}) }; }); return N[l.length > 1 ? `${nid}:${l.length - 1}` : nid]; };
   for (const p of parts) {
     if (p.q) {
-      // (a question's node: e<k>:eq — school.js DECISION_NODE counts it a decision)
-      const q = `${id()}:eq`, opts = shuffled(p.opts.map((t, i) => ({ t, ok: i === 0 })), r);
+      // (a question's node: e<k>:eq — school.js DECISION_NODE counts it a decision; a long one's first lines before it)
+      const e = id(), q = `${e}:eq`, opts = shuffled(p.opts.map((t, i) => ({ t, ok: i === 0 })), r), l = fit(p.q, LINE_MAX);
+      l.slice(0, -1).forEach((t, j) => { link(`${e}:p${j}`); N[`${e}:p${j}`] = { speaker: p.who || who, text: t, ...(j || !p.hook ? {} : { hook: p.hook }) }; open = [N[`${e}:p${j}`]]; });
       link(q);
-      N[q] = { speaker: p.who || who, text: p.q, choices: opts.map(o => ({ text: o.t, next: `${q}:${o.ok ? 'ok' : 'ng'}`, ...(p.id ? { effects: [{ hook: 'ans', arg: `${p.id}|${o.ok ? 1 : 0}` }] } : {}) })), ...(p.hook ? { hook: p.hook } : {}) };
-      N[`${q}:ok`] = { speaker: p.who || who, text: p.ok, hook: { name: 'nod' } };
-      N[`${q}:ng`] = { speaker: p.who || who, text: p.ng };
-      open = [N[`${q}:ok`], N[`${q}:ng`]];
+      N[q] = { speaker: p.who || who, text: l[l.length - 1], choices: opts.map(o => ({ text: o.t, next: `${q}:${o.ok ? 'ok' : 'ng'}`, ...(p.id ? { effects: [{ hook: 'ans', arg: `${p.id}|${o.ok ? 1 : 0}` }] } : {}) })), ...(p.hook && l.length === 1 ? { hook: p.hook } : {}) };
+      open = [said(`${q}:ok`, p.who || who, p.ok, { hook: { name: 'nod' } }), said(`${q}:ng`, p.who || who, p.ng)];
     } else {
       const n = id(); link(n);
       N[n] = { speaker: p.who || who, text: p.text, ...(p.hook ? { hook: p.hook } : {}), ...(p.if ? { if: p.if, else: p.else } : {}) };
@@ -53,29 +57,29 @@ export function eventDialogs(id, { seed = 1, weather = null, tired = false, revi
   let N = null;
   if (id === 'forces') N = scene('mechanic', [
     { text: '今日は 4 つの力の授業だったんだってな。せっかくだ、本物で見ていけ。', hook: { name: 'look', arg: 'player' } },
-    { q: 'この Archer で、機体を持ち上げる揚力を生んでいるのはどこだ？', opts: ['主翼', '尾翼だけ', 'プロペラ'], ok: 'そうだ。主翼の形と迎え角で、空気を下へ曲げている。', ng: '主翼だ。尾翼は姿勢を整える側で、持ち上げる主役は主翼だな。' },
+    { q: 'この Archer で、機体を持ち上げる揚力を生んでいるのはどこだ？', opts: ['主翼（翼が空気を押し下げる）', 'プロペラ', '車輪'], ok: 'そうだ。主翼の形と迎え角で、空気を下へ曲げている。', ng: '主翼だ。翼が空気を押し下げて、その反対に機体が持ち上がる。' },
     { q: '推力は？', opts: ['プロペラが前へ引く力', '主翼が押し上げる力', '尾翼が押す力'], ok: 'そう。エンジンがプロペラを回して、機体を前へ引っ張る。', ng: 'プロペラだ。主翼が出すのは揚力のほうだ。' },
     { q: '離陸の滑走で機首を上げていくと、機首はどっちへ向きたがる？', opts: ['左（だから右ラダーを踏む）', '右', 'どっちにも向かない'], ok: 'そのとおり。P ファクターなんかで左に向く。右ラダーだ。', ng: '左だ。プロペラの右側の羽根が強く押すから、機首は左。右ラダーで真っすぐにする。' },
-  ], 'よし。明日からは、外部点検のたびに主翼を見てくれ。へこみや汚れでも、翼の働きは落ちる。', r);
+  ], 'よし。初飛行からは、外部点検のたびに主翼を見てくれ。へこみや汚れでも、翼の働きは落ちる。', r);
   if (id === 'pitot') N = scene('mechanic', [
     { text: '今日はピトー静圧の話か。左の翼の下を見てみな。細い管に、赤いカバーが付いてるだろう。', hook: { name: 'point', arg: 'aircraft' } },
-    { q: 'あのカバーを付けたまま離陸したら、どうなる？', opts: ['速度計が 0 のまま動かない', '高度計が止まる', '何も起きない'], ok: 'そう。だから外部点検で、必ず外して機内にしまう。', ng: '速度計だ。ピトー管がふさがると、速度計は 0 のまま動かない。' },
-    { q: '翼の下の燃料のサンプで取った燃料、カップの底に透明な玉が沈んでいたら？', opts: ['水（燃料と混じらない）。出なくなるまで取る', '空気の泡。気にしない', 'オイル。整備に回す'], ok: 'それだ。水は燃料より重いから底に沈む。出なくなるまで抜く。', ng: '水だよ。燃料と混じらずに底に沈む。出なくなるまで抜くんだ。' },
+    { q: 'あのカバーで、ピトー管も排水穴もふさがったまま離陸したら、速度計は？', opts: ['高度計のように動く（上昇で速度が増えて見える）', '正しく動く', '高度計が止まる'], ok: 'そう。滑走では上がらず、上昇すると増えて見える。だから外部点検で、必ず外して機内にしまう。', ng: '速度計が高度計のように動くんだ。滑走では上がらず、上昇すると増えて見える。' },
+    { q: '翼の下の燃料のサンプから、飛ぶ前に燃料を抜いて見る。何を確かめる？', opts: ['水・ごみ・燃料の種類', '燃料の温度', 'タンクの空気の圧力'], ok: 'それだ。水は燃料より重いから、カップの底に透明な玉になって沈む。出なくなるまで抜く。', ng: '水・ごみ・燃料の種類だ。水は燃料より重いから、カップの底に沈む。出なくなるまで抜くんだ。' },
     { q: '最後にひとつ。静圧孔が詰まったら、高度計は？', opts: ['止まる', '速く動く', '正常に動く'], ok: 'そう。昇降計も 0 だ。代替静圧に切り替える。……授業のとおりだな。', ng: '止まるんだ。昇降計も 0 になる。代替静圧に切り替える。' },
   ], '機体のことで気になったら、いつでも言ってくれ。勘違いでいい。', r);
   if (id === 'spell') N = scene('dispatcher', [
     { text: '今日はアルファベットと数字の授業でしたね。せっかくなので、ここで声に出してみましょう。', hook: { name: 'look', arg: 'player' } },
-    { q: '明日から使う機体、N738SY を無線で言うと？', opts: ['November Seven Three Eight Sierra Yankee', 'November Seventy-Three Eight SY', 'N Seven Thirty-Eight Sierra Yankee'], ok: 'Perfect. 数字は 1 つずつ、文字はフォネティックで。', ng: '数字は 1 けたずつ、文字はフォネティックです。November Seven Three Eight Sierra Yankee。' },
+    { q: '初飛行で使う機体、N738SY を無線で言うと？', opts: ['November Seven Three Eight Sierra Yankee', 'November Seventy-Three Eight SY', 'N Seven Thirty-Eight Sierra Yankee'], ok: 'Perfect. 数字は 1 つずつ、文字はフォネティックで。', ng: '数字は 1 けたずつ、文字はフォネティックです。November Seven Three Eight Sierra Yankee。' },
     { q: 'Ground の周波数、121.7 は？', opts: ['one two one point seven', 'one twenty-one seven', 'twelve one seven'], ok: 'そうです。小数点は point。', ng: '1 けたずつ、小数点は point です。one two one point seven。' },
     { q: '高度 4,500 ft は？', opts: ['four thousand five hundred', 'four five zero zero', 'forty-five hundred'], ok: 'はい。高度は千と百で言います。', ng: '高度は「千・百」で言います。four thousand five hundred。' },
-  ], 'ばっちりです。明日、管制官に言うときも、このとおりで。', r);
+  ], 'ばっちりです。初飛行の日、管制官に言うときも、このとおりで。', r);
   if (id === 'readback') N = scene('kiryu', [
     { text: '今日の交信の型、復習しようぜ。俺が管制官をやるから、復唱してみて。', hook: { name: 'look', arg: 'player' } },
     { text: '“Archer Eight Sierra Yankee, LAB Ground, runway three six, taxi via Alpha, hold short of runway three six at Alpha One.”' },
     { q: 'さあ、復唱は？', opts: ['Runway three six, taxi via Alpha, hold short of runway three six at Alpha One, Archer Eight Sierra Yankee.', 'Roger, Archer Eight Sierra Yankee.', 'Wilco.'], ok: '……正解。hold short は、滑走路の名前まで復唱だよな。', ng: 'それじゃ駄目だ。hold short の指示は、滑走路の名前まで全部復唱する。Roger だけでは足りない。' },
     { text: '“Archer Eight Sierra Yankee, LAB Tower, runway three six, line up and wait.”' },
     { q: 'これは、離陸の許可？', opts: ['いいえ。滑走路に入って待つだけ', 'はい。そのまま離陸してよい', '滑走路を出ろという意味'], ok: 'そう。cleared for takeoff が来るまで待つ。……引っかからないか。やるな。', ng: '違う。line up and wait は、入って待つだけだ。離陸は cleared for takeoff を聞いてから。' },
-  ], 'くそ、もう一回くらい引っかかると思ったのに。……明日の k4 で、本物の管制官にもその調子でな。', r);
+  ], 'くそ、もう一回くらい引っかかると思ったのに。……今日の k4 みたいに、初飛行の本物の管制官にもその調子でな。', r);
   if (id === 'metar') {
     const w = weather || { metar: 'KLAB 121353Z 36005KT 10SM FEW035 19/12 A2992', decision: 'go', why: '視程・雲・風とも基準内です。' };
     const opts = { go: '予定どおり飛ぶ', wait: '午後まで待つ（回復を待つ）', early: '早めに出て、午前のうちに戻る', cancel: '今日は飛ばない' };

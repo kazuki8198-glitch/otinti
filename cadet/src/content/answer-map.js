@@ -130,6 +130,19 @@ export const BANK_ANSWERS = {
   // (not chapter 1's: the later chapters' banks are not tied here)
 };
 // k5: FLIGHT LAB's read-back and response scenes (radio.js SCENES), by id
+// the evenings' events (content/dialog/ch1-events.js): each event's questions in order (its k-th); week's are the
+// banks' own (their ids)
+export const EVENT_ANSWERS = {
+  forces: [one('aero.forces', '揚力（Lift）：翼が空気を押し下げることで生まれる、機体を持ち上げる力'), one('aero.forces', '推力（Thrust）：プロペラが機体を前へ引く力'),
+    one('aero.left', 'P ファクター：機首上げでは右側の下がるブレードの推力が大きく、機首が左へ', '離陸・上昇では右ラダー')],
+  pitot: [one('sys.g1000', 'ピトー管と排水穴の両方が詰まる：速度計は高度計のように動く（上昇で速度が増えて見える）'), one('sys.fuel', '各タンクとストレーナーからサンプリング（水・ごみ・燃料の種類）'),
+    one('sys.g1000', '静圧孔が詰まる：速度計は上昇で遅く、降下で速く表示、高度計は止まる、昇降計は 0')],
+  spell: [[['comm.basic', '文字は ICAO のフォネティックアルファベットで言います'], ...N.digits], N.frq, [N.alt[0]]],
+  readback: [one('comm.readback', '地上走行では 滑走路の指定・滑走路に入る許可・hold short・line up and wait を必ず復唱です'),
+    one('comm.mistakes', 'line up and wait を離陸許可と思う：cleared for takeoff を待ちます')],
+  metar: [one('wx.metar', 'VFR の判断は雲高と視程の両方で'), one('wx.metar', '「BKN / OVC の最も低い層」が雲高です')],
+  imsafe: [one('hf.self', 'M：Medication（薬）'), one('hf.self', 'F：Fatigue（疲労）')],
+};
 export const SCENE_ANSWERS = {
   r_first: [['comm.pattern', '最初の呼び出し：相手 → 自分 → 場所 → 要求（＋ATIS の記号）'], ['comm.callsign', '最初の交信では省略しない'], ['comm.dep', 'student pilot, at the west ramp with information Bravo']],
   r_altim: [N.alts[0]],

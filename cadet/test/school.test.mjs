@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { classDialogs, ftdDialogs, examDialogs, scoreOf, CLASS_CHAPTERS, FTD_TITLES, pfdPictures, lectureLines, lecturePage, lecturerNotesHtml, pathOf, LINE_MAX, noteUnit, needSections, DECISION_NODE } from '../src/content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, scoreOf, CLASS_CHAPTERS, FTD_TITLES, pfdPictures, lectureLines, lecturePage, lecturerNotesHtml, pathOf, LINE_MAX, noteUnit, needSections, DECISION_NODE, sectionHtml } from '../src/content/school.js';
 import * as TALK from '../src/content/class-talk.js';
 import { CLASS_FTD } from '../src/career/career.js';
 import { units, lectureUnits, proseOf } from '../src/content/lecture-units.js';
@@ -32,7 +32,7 @@ installSorajima(globalThis.FL);                    // (the game's flight model: 
 const FL = globalThis.FL;
 const BOOK = gameBook(FL);
 const REAL = /(?<![A-Za-z])ANA(?![A-Za-z])|ＡＮＡ|all\s*nippon|全日空|acron|garmin|Seven Lima Alpha|7LA/i;
-const APP = /ゲーム|ソフト|プレイヤー|FLIGHT LAB|シミュレータ|キーボード|メニュー/;
+const APP = /ゲーム|ソフト|プレイヤー|FLIGHT LAB|シミュレータ|キーボード|メニュー|教材/;
 const QUIZ = { quiz: { right: 1, n: 2, pct: 50, pass: false } };
 
 // run a dialog to its end: right answers (or wrong ones), the score worked out at 'quizEnd' as the game does; other
@@ -419,7 +419,7 @@ test('school: a class\'s choices — the section again, the section in the textb
     assert.ok(q.hooks.some(h => h[0] === 'done' && h[1] === 'class'), `class ${i}: 要点だけ done`);
     assert.equal(q.ctx.quiz.right, d.questions.length);
     assert.ok(q.views.length < full.views.length / 2, `class ${i}: 要点だけ is short (${q.views.length} lines, ${full.views.length} in full)`);
-    for (const sec of sectionsOf(i)) assert.ok(q.views.some(v => v.text.startsWith(`「${sec.title}」。`)), `${sec.id}: its title`);
+    for (const sec of sectionsOf(i)) assert.ok(q.views.some(v => v.text.includes(`「${sec.title}」`)), `${sec.id}: its title`);
     assert.ok(!q.hooks.some(h => h[0] === 'progress'), '(a review keeps no place)');
     for (const [, arg] of q.hooks.filter(h => h[0] === 'page')) assert.ok(lecturePage(FL, arg));
   }
@@ -488,8 +488,23 @@ test('school: the training device — k1 told through, k4 begun (its chair fligh
     if (k === 'k6') assert.ok(d.questions.every(x => x.say && /Archer Seven Three Eight Sierra Yankee|Archer 8SY/.test(x.say) || x.say), 'the English to hear');
   }
   // k2's pictures: what is asked can be read off them
-  const pics = pfdPictures(4), d2 = ftdDialogs(FL, 'k2', { seed: 4 });
-  d2.questions.forEach((x, i) => { assert.equal(x.pfd, i); assert.ok(pics[i]); });
+  // (taken again: its own pictures, each with its question — the screen draws the question's picture)
+  for (const attempt of [0, 1, 2]) {
+    const pics = pfdPictures(4 + attempt * 101), d2 = ftdDialogs(FL, 'k2', { seed: 4, attempt });
+    d2.questions.forEach((x, i) => {
+      assert.equal(x.pfd, i); assert.deepEqual(x.pic, pics[i]);
+      const right = x.opts[x.ok], kind = x.id.slice(4);
+      if (kind === 'ias') assert.equal(right, `${x.pic.ias} kt`);
+      if (kind === 'alt') assert.equal(right, `${x.pic.alt.toLocaleString('en-US')} ft`);
+      if (kind === 'hdg') assert.equal(right, `${String(x.pic.hdg).padStart(3, '0')}°`);
+    });
+  }
+});
+
+test('school: the textbook as it opens (sectionHtml): every section with today\'s call sign, never FLIGHT LAB\'s', () => {
+  let n = 0;
+  for (const c of BOOK.chapters) for (const { id } of c.sections) { const sec = BOOK.section(id), h = sectionHtml(sec); assert.doesNotMatch(h, /Seven Lima Alpha|7LA/, sec.id); if (/Archer 8SY|Archer Seven Three Eight Sierra Yankee/.test(h)) n++; }
+  assert.ok(n >= 10, `${n} sections with the call sign`);
 });
 
 test('school: the written tests — from FLIGHT LAB\'s banks, as many questions as set, 80% to pass', () => {

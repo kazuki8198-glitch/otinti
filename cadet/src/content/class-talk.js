@@ -16,6 +16,11 @@ export const TITLE = [
   (t) => `${t}の節に入ります。`, (t) => `ここから${t}を読みます。`, (t) => `次の節、${t}。`, (t) => `${t}に移りましょう。`,
   (t) => `続けて${t}です。`, (t) => `さて、${t}です。`,
 ];
+// 要点だけ: a section's title, said with its first key point (t: in quotes)
+export const QUICK_TITLE = [
+  (t) => `${t}、要点を言います。`, (t) => `${t}の要点です。`, (t) => `次は${t}。`, (t) => `${t}を短く。`, (t) => `続いて${t}。`,
+  (t) => `${t}について。`, (t) => `${t}、ポイントだけ。`, (t) => `では${t}。`, (t) => `${t}のまとめです。`, (t) => `今度は${t}。`,
+];
 export const TITLE_FIRST = [(t) => `最初は${t}です。`, (t) => `まずは${t}から。`, (t) => `${t}から始めます。`];
 export const TITLE_LAST = [(t) => `最後は${t}です。`, (t) => `最後の節、${t}に入ります。`, (t) => `締めくくりは${t}です。`];
 // a heading inside a section (t: in quotes)

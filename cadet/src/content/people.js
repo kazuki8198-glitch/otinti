@@ -71,6 +71,8 @@ export function placeOf(id, slot, chapter, what = []) {
       if (chapter === 'prologue' && slot === 'morning') return AT[`lobby${PEERS.indexOf(id) + 1}`];
       if (chapter === 'ch1' && has('class')) return { ...AT.classroom, a: 627.4 + PEERS.indexOf(id) * 1.2, c: 257.4, face: AT.classroom };
       if (chapter === 'ch1' && has('ftd')) return { a: 613.0 + PEERS.indexOf(id) * 5, c: 266.2, face: { a: 613.0 + PEERS.indexOf(id) * 5, c: 268.0 } };
+      // (chapter 1's event with one of them — Sunday's review with 朝日: in the lounge, as the day's word says)
+      if (chapter === 'ch1' && what.some(x => x.kind === 'event' && x.who === id)) return AT[`lounge${PEERS.indexOf(id) + 1}`];
       // the rest of the day: two of them planning in the pilot room, one studying in the lounge
       return id === 'kiryu' ? AT.pilot1 : id === 'asahi' ? AT.pilot2 : AT.lounge3;
   }

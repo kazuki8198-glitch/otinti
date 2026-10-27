@@ -284,6 +284,13 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     await g.page.waitForTimeout(1500);
     const figurePage = await screen();
     assert.ok(blank !== titlePage && titlePage !== figurePage && blank !== figurePage, `the screen drawn: ${blank} → ${titlePage} → ${figurePage}`);
+    // (the room's screen, copied small at the top beside the talk; Z shows it large, Z again small)
+    const cp = await ev(() => window.__cadet.career.screenCopy());
+    assert.ok(cp.on && !cp.big && cp.hash !== 0, `the screen's copy: ${JSON.stringify(cp)}`);
+    await g.page.keyboard.press('KeyZ');
+    assert.equal((await ev(() => window.__cadet.career.screenCopy())).big, true, 'Z: large');
+    await g.page.keyboard.press('KeyZ');
+    assert.equal((await ev(() => window.__cadet.career.screenCopy())).big, false, 'Z again: small');
     assert.equal(await step('揚力はどうやって'), 'aero.lift');
     const part = await ev(() => window.__cls);
     // (the day's own start: what it is for, the afternoon's k1; then the pace)

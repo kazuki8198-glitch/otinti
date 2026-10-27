@@ -73,13 +73,15 @@ const placeOfPerson = (L, who, slot, chapter, what) => {
 // ---------------------------------------------------------------- a talk, run as the player runs it
 // policy(view, step) → the index chosen (or null: the default — the first). Returns the lines shown with their times,
 // the decisions, the hooks, the scored questions
-export function runTalk(L, data, dialogId, { policy = () => null, ctx = {}, state = null, onHook = null, node, kind = 'talk' } = {}) {
+export function runTalk(L, data, dialogId, { policy = () => null, ctx = {}, state = null, onHook = null, node, kind = 'talk', eventId = null } = {}) {
   const st = state || L.engine.createDialogState(), hooks = [], lines = [];
   const qs = data.questions || [];
   const r = L.engine.createRunner({ data, state: st, ctx, hooks: { onHook: (n, a) => { hooks.push([n, a, lines.length]); if (onHook) onHook(n, a, ctx, st); } } });
   r.start(dialogId, node);
   const max = 4 * Object.values(data.dialogs).reduce((n, d) => n + Object.keys(d.nodes).length, 0) + 200;
   const N = data.dialogs;
+  // (an evening's event: its k-th question, by its node — answer-map.js EVENT_ANSWERS)
+  const evq = eventId ? Object.keys(N[dialogId].nodes).filter(x => /^e\d+:eq$/.test(x)).sort((a, b) => parseInt(a.slice(1), 10) - parseInt(b.slice(1), 10)) : [];
   for (let k = 0; k < max && r.running; k++) {
     const v = r.view(), n = N[v.dialog].nodes[v.node];
     const say = (n.hook && n.hook.name === 'say') ? n.hook.arg : null;
@@ -92,7 +94,11 @@ export function runTalk(L, data, dialogId, { policy = () => null, ctx = {}, stat
       if (i == null) i = x ? v.choices.findIndex(c => c.text === x.opts[x.ok]) : 0;
       if (x) line.q = { k: +qi[1], id: questionId(L, x, kind), right: v.choices[i] && v.choices[i].text === x.opts[x.ok] };
       // (a question not scored whose answer is kept: the classes' checks and review — hook 'ans' on its choices)
-      else if (line.decision) { const ch = (n.choices || []).filter(c => !c.if)[i], a = ch && (ch.effects || []).find(e => e.hook === 'ans'); if (a) { const [id, ok] = String(a.arg).split('|'); line.q = { id, right: ok === '1', unscored: true }; } }
+      else if (line.decision) {
+        const ch = (n.choices || []).filter(c => !c.if)[i], a = ch && (ch.effects || []).find(e => e.hook === 'ans');
+        if (a) { const [id, ok] = String(a.arg).split('|'); line.q = { id, right: ok === '1', unscored: true }; }
+        else if (evq.includes(v.node)) line.q = { id: `event:${eventId}#${evq.indexOf(v.node)}`, right: /:ok$/.test(ch && ch.next), unscored: true };
+      }
       line.chosen = i;
       r.choose(i);
     } else r.next();
@@ -138,6 +144,7 @@ export function answerOf(L, id) {
   if ((m = /^listen:(\w+)$/.exec(id))) return A.LISTEN_ANSWERS[m[1]];
   if ((m = /^pfd:(\w+)$/.exec(id))) return [['k1', A.PFD_ANSWERS[m[1]]]];
   if ((m = /^note:([\w.]+)$/.exec(id))) return A.NOTE_ANSWERS && A.NOTE_ANSWERS[m[1]] ? A.NOTE_ANSWERS[m[1]] : undefined;
+  if ((m = /^event:(\w+)#(\d+)$/.exec(id))) return A.EVENT_ANSWERS && A.EVENT_ANSWERS[m[1]] ? A.EVENT_ANSWERS[m[1]][+m[2]] : undefined;
   return undefined;
 }
 const squash = (s) => String(s).replace(/\s+/g, '');
@@ -181,7 +188,7 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
     if (d === 10) break;                                                         // (the first flight's morning: here it ends)
     // (chapter 1: the day's own word — content/day-flow.js, as main.js greet says it)
     const own = L.flow && st.chapter === 'ch1' ? L.flow.dayToast(st, sch, { missed: S.reviewFor ? S.reviewFor(FL, st, C.CLASSES.filter((_, i) => st.done[`class:${i}`]).length).missed : 0, short: skip }) : null;
-    const greet = st.chapter === 'prologue' ? '入社の日です。ロビーで、主任教官の話が始まります' : own || (sch.some(x => x.kind === 'off') ? '今日は休日です。ラウンジで休むのも、自習するのもいい。正面入口から寮に帰れば、明日になります'
+    const greet = st.chapter === 'prologue' ? (L.flow ? L.flow.prologueWord('morning', { short: skip }) : '入社の日です。ロビーで、主任教官の話が始まります') : own || (sch.some(x => x.kind === 'off') ? '今日は休日です。ラウンジで休むのも、自習するのもいい。正面入口から寮に帰れば、明日になります'
       : `今日の予定：${sch.map(x => `${C.SLOT_NAMES[x.slot]} ${x.title}`).join('／')}（Tab でタブレット）`);
     fixed('toast', greet, readingSeconds(greet));
     let at = PLACES.entrance, slot = st.slot;
@@ -200,15 +207,16 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
       const ctx = { career: { chapter: 'prologue', slot: 'morning', day: 1, dayMod3: 1, tired: false, solo: false, flying: false, graduated: false }, today: {}, weather: {}, imsafe: { honest: true } };
       walk(placeOfPerson(L, 'chief', 'morning', 'prologue', sch), 'ロビー：主任教官');
       doTalk('ceremony', L.people.peopleDialogs(), 'chief', { ctx, state: talk }); career.done('ceremony', 'welcome'); career.advance('am');
-      const t1 = '運航管理の佐伯さんが、訓練所を案内してくれます（ロビーの北、運航管理）'; fixed('toast', t1, readingSeconds(t1));
+      const pw = (k, t) => (L.flow && L.flow.prologueWord ? L.flow.prologueWord(k, { short: skip }) : t);
+      const t1 = pw('ceremony', '運航管理の佐伯さんが、訓練所を案内してくれます（ロビーの北、運航管理）'); fixed('toast', t1, readingSeconds(t1));
       walk(placeOfPerson(L, 'dispatcher', 'am', 'prologue', sch), '運航管理');
       ctx.career.slot = 'am';
       doTalk('tour', L.people.peopleDialogs(), 'dispatcher', { ctx, state: talk }); career.done('tour', 'tour'); career.advance('pm');
-      const t2 = '午後：ブリーフィング室 1 で、担当の早瀬 教官と顔合わせです'; fixed('toast', t2, readingSeconds(t2));
+      const t2 = pw('tour', '午後：ブリーフィング室 1 で、担当の早瀬 教官と顔合わせです'); fixed('toast', t2, readingSeconds(t2));
       walk(placeOfPerson(L, 'instructor'), 'ブリーフィング室 1');
       doTalk('meet', L.insc.careerInstructorDialogs(), 'meet', { ctx, state: talk, policy: (v) => { const i = v.choices.findIndex(c => /今は大丈夫/.test(c.text)); return i >= 0 ? i : null; } });
       career.done('brief', 'meet'); career.finishPrologue(); career.advance('evening');
-      const t3 = '夕方です。ラウンジで同期と話してみましょう。今日を終えるときは、正面入口から寮へ'; fixed('toast', t3, readingSeconds(t3));
+      const t3 = pw('meet', '夕方です。ラウンジで同期と話してみましょう。今日を終えるときは、正面入口から寮へ'); fixed('toast', t3, readingSeconds(t3));
     } else if (!sch.some(x => x.kind === 'off')) {
       for (const it of sch) {
         if (it.kind === 'class') {
@@ -263,7 +271,8 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
       walk(placeOfPerson(L, it.who, career.state.slot === 'morning' ? 'am' : career.state.slot, st.chapter, sch), it.title);
       const w = career.weather(prog);
       const rv = it.id === 'week' && S.reviewQuestions ? S.reviewQuestions(FL, career.state, {}) : [];
-      doTalk(`event ${it.id}`, L.events.eventDialogs(it.id, { seed: st.seed + st.day, weather: { metar: w.metar.am, decision: w.decision, why: w.why }, tired: career.tired(), review: rv }), 'ev', { kind: 'event', onHook: (n, a) => careerHook(n, a) });
+      const r = doTalk(`event ${it.id}`, L.events.eventDialogs(it.id, { seed: st.seed + st.day, weather: { metar: w.metar.am, decision: w.decision, why: w.why }, tired: career.tired(), review: rv }), 'ev', { kind: 'event', eventId: it.id, onHook: (n, a) => careerHook(n, a) });
+      noteAsked(L, r, asked, d, `event ${it.id}`, heardBefore(heardAll, r), k1Parts);
       career.done('event', it.id);
     }
     // home: the guide's line, the walk to the front door, the dorm's card (read, chosen)

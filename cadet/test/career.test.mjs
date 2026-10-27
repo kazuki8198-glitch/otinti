@@ -108,6 +108,13 @@ test('career: the save — another version or broken data is not read, values of
   assert.deepEqual([c.day, c.slot, c.chapter, c.fatigue], [12, 'pm', 'ch2', 100]);
   assert.deepEqual(c.exams.presolo, { tries: 2, best: 100, pass: true });
   assert.equal(c.decisions.length, 1); assert.deepEqual(c.done, { 'class:0': 2 }); assert.equal(c.solo, null);
+  // (a save from before the sections heard were kept: its classes in the order before — aero | sys perf | wx | law hf |
+  // radio1 radio2 | radio3 radio4 radio5 — read by their chapters; a class left midway begun again)
+  const old = (done) => cleanCareer({ v: 1, seed: 3, day: 8, slot: 'morning', chapter: 'ch1', done: { prologue: 1, ...done } }).done;
+  assert.deepEqual(old({ 'class:0': 2, 'class:1': 3, 'class:2': 5, 'lecture:3': 4 }), { prologue: 1, 'class:0': 2, 'class:1': 3 }, 'wx done before: not its class now (with radio5)');
+  assert.deepEqual(old({ 'class:0': 2, 'class:1': 3, 'class:2': 5, 'class:3': 6, 'class:4': 7, 'lecture:5': 4 }), { prologue: 1, 'class:0': 2, 'class:1': 3, 'class:2': 7, 'class:5': 6 });
+  assert.deepEqual(old(Object.fromEntries([0, 1, 2, 3, 4, 5].map(i => [`class:${i}`, 2 + i]))), { prologue: 1, ...Object.fromEntries([[0, 2], [1, 3], [2, 6], [3, 7], [4, 7], [5, 5]].map(([i, d]) => [`class:${i}`, d])) });
+  assert.deepEqual(cleanCareer({ v: 1, seed: 3, day: 8, chapter: 'ch1', done: { 'class:2': 5, 'lecture:3': 4 }, heard: {} }).done, { 'class:2': 5, 'lecture:3': 4 }, 'a save of this order as it is');
   const broken = memStore(); broken.setItem(CAREER_KEY, '{nope');
   assert.equal(createCareer({ store: broken, seed: 2 }).day, 1, 'broken: a new career');
   assert.equal(createCareer({ store: null, seed: 2 }).slot, SLOTS[0], 'no storage: still a career');

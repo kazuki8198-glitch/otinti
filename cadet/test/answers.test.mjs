@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from '../tools/measure-ch1.mjs';
-import { BANK_ANSWERS, SCENE_ANSWERS, DRILL_ANSWERS, LISTEN_ANSWERS, PFD_ANSWERS } from '../src/content/answer-map.js';
+import { BANK_ANSWERS, SCENE_ANSWERS, DRILL_ANSWERS, LISTEN_ANSWERS, PFD_ANSWERS, EVENT_ANSWERS } from '../src/content/answer-map.js';
 import { CLASS_CHAPTERS } from '../src/content/school.js';
 import { EXAMS } from '../src/career/career.js';
 
@@ -40,11 +40,17 @@ test('answer map: one row for every question of chapter 1\'s banks, each the que
   assert.deepEqual(Object.keys(DRILL_ANSWERS).sort(), Object.keys(FL.radio.DRILLS).sort(), 'every kind of k3');
   assert.deepEqual(Object.keys(LISTEN_ANSWERS).sort(), Object.keys(FL.radio.LISTEN).sort(), 'every kind of k6');
   for (const p of Object.values(PFD_ANSWERS)) assert.ok(TUTOR_PARTS.includes(p), `k2: ${p} is a part k1 shows`);
+  // (the evenings' events: a row for each of their questions, in order — the week's are the banks')
+  for (const ev of L.career.CH1_EVENTS.filter(x => x.id !== 'week')) {
+    const N = L.events.eventDialogs(ev.id).dialogs.ev.nodes;
+    assert.equal(Object.keys(N).filter(k => /^e\d+:eq$/.test(k)).length, (EVENT_ANSWERS[ev.id] || []).length, `event ${ev.id}: a row a question`);
+  }
 });
 
 test('answer map: every answer\'s words are a line of its own section, as the class reads it in full', () => {
   const all = [...Object.entries(BANK_ANSWERS).flatMap(([b, l]) => l.map((x, i) => [`${b}#${i}`, x.a])),
-    ...Object.entries(SCENE_ANSWERS), ...Object.entries(DRILL_ANSWERS), ...Object.entries(LISTEN_ANSWERS)];
+    ...Object.entries(SCENE_ANSWERS), ...Object.entries(DRILL_ANSWERS), ...Object.entries(LISTEN_ANSWERS),
+    ...Object.entries(EVENT_ANSWERS).flatMap(([e, l]) => l.map((a, k) => [`event:${e}#${k}`, a]))];
   let n = 0;
   for (const [id, a] of all) {
     if (a === null) continue;

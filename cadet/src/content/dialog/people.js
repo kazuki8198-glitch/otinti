@@ -29,10 +29,15 @@ const SPEAKERS = Object.fromEntries([...Object.entries(PEOPLE).map(([id, p]) => 
 const ch = (c) => ({ ctx: 'career.chapter', is: c });
 // (chapter 1: a line for each number of classes done, 0–6 — ctx career.cls; the k-th class's day says the k-th's)
 // → nodes id (its entry) … id:0; the last of them, lines[0], said before the first class
-// (guard: a condition for all of them, its else where to go otherwise)
-function byClass(say, id, lines, { guard = null, otherwise = null, ...more } = {}) {
-  const N = {}, cond = (c) => (guard ? { all: [guard, c] } : c);
-  for (let k = 1; k < lines.length; k++) N[k === 1 ? id : `${id}:${k}`] = say(lines[k], { if: cond({ ctx: 'career.cls', is: k }), else: k < lines.length - 1 ? `${id}:${k + 1}` : `${id}:0`, ...more, end: true });
+// (guard: a condition for all of them, its else where to go otherwise; exam: [the written test's day, once it is
+// passed] — the classes all done, ctx career.exam1 1 or 2 — first)
+function byClass(say, id, lines, { guard = null, otherwise = null, exam = null, ...more } = {}) {
+  const N = {}, cond = (c) => (guard ? { all: [guard, c] } : c), done = (j) => cond({ all: [{ ctx: 'career.cls', is: lines.length - 1 }, { ctx: 'career.exam1', is: j }] });
+  if (exam) {
+    N[id] = say(exam[0], { if: done(1), else: `${id}:x2`, ...more, end: true });
+    N[`${id}:x2`] = say(exam[1], { if: done(2), else: `${id}:1`, ...more, end: true });
+  }
+  for (let k = 1; k < lines.length; k++) N[k === 1 ? (exam ? `${id}:1` : id) : `${id}:${k}`] = say(lines[k], { if: cond({ ctx: 'career.cls', is: k }), else: k < lines.length - 1 ? `${id}:${k + 1}` : `${id}:0`, ...more, end: true });
   N[`${id}:0`] = say(lines[0], { ...(guard ? { if: guard, else: otherwise } : {}), ...more, end: true });
   return N;
 }
@@ -112,7 +117,8 @@ export function peopleDialogs() {
         '交信は、聞く、考える、話す。今日の k4 で管制官の声を聞いたなら、初飛行の準備はもう半分できています。',
         '飛ばないと決めるのも、立派な判断です。今日の METAR、自分で読めましたか。',
         '明日は学科試験、その次が初飛行です。IMSAFE の最後の E、気持ちの落ち着きも忘れずに。',
-      ]),
+      ], { exam: ['今日は学科試験ですね。授業で聞いたことしか出ません。落ち着いて、選択肢の理由まで読んでください。',
+        '学科試験、合格おめでとう。明日はいよいよ初飛行です。今夜は早く休んで、朝は正直に IMSAFE を。'] }),
       ch2: say('早瀬教官から聞いています。毎日の点検と交信、手を抜かずに続けてください。審査では、そこを見ます。', { if: ch('ch2'), else: 'pro', hook: { name: 'look', arg: 'player' }, end: true }),
       pro: say('訓練所の中は、佐伯さんが案内します。午後は早瀬教官との顔合わせです。今日は、名前と顔を覚えるだけで十分ですよ。', { if: ch('prologue'), else: 'ch1', end: true }),
     } };
@@ -186,11 +192,11 @@ export function peopleDialogs() {
         '学科試験は、問題集を丸暗記しても駄目だよ。選択肢の「なぜ」を読む。そこに理由が全部書いてある。',
         '迎え角と姿勢は別物、か。わかってるつもりだったけど、図で見るとちょっと違ったな。',
         '重心が後ろすぎると、失速からの回復が難しくなる。……数字で確かめるけど、俺は前寄りのほうが安心だね。',
-        'k3 は満点だった？ 俺は “one zero thousand” で一回迷った。数字は 1 けたずつ、だよな。',
-        'チェアフライト、③の本番でやってみた。管制官の “how do you hear?”、意外と焦るな。',
+        '数字の表、俺は “one zero thousand” で一回迷った。数字は 1 けたずつ、だよな。k3 でも、そこが大事だ。',
+        'チェアフライト、返事が遅れると管制官に “how do you hear?” と聞かれるんだって。……それは焦るな。',
         'METAR の BKN と OVC の一番低い層が雲高だ。そこは絶対に間違えない。',
         '明日の学科試験、28 問。……負けないから。',
-      ]),
+      ], { exam: ['今日の学科試験、28 問。……負けないから。', '試験は通ったか？ 俺も通った。明日の初飛行、どっちの着陸がきれいか、勝負な。'] }),
       tip: say('着陸のフレア、ひとつ教えとく。地面じゃなくて、滑走路の先の端を見るんだ。近くを見ると、引くのが早すぎる。', { if: { all: [ch('ch2'), flag('kiryu_tip', false)] }, else: 'ch2b', effects: [{ set: 'kiryu_tip' }], next: 'tip:2' }),
       'tip:2': say('……俺も早瀬教官に言われたんだけどね。', { end: true }),
       ch2b: say('今日の課目、どうだった？ 評価が S じゃなくても、どこが外れたかを自分で言えれば、次は直せる。', { if: ch('ch2'), else: 'ch3', end: true }),
@@ -218,12 +224,12 @@ export function peopleDialogs() {
       ...byClass(say, 'ch1', [
         'いよいよ授業だね！ ミラー先生、英語と日本語が半分ずつなんだって。',
         '揚力って、速度の 2 乗なんだね。速さが半分になると 4 分の 1。だから着陸ではフラップを使うんだ。',
-        'ピトー管がふさがると、速度計が動かなくなるんだって。外部点検で、カバーは絶対に外さなきゃ。',
+        'ピトー管のカバーを付けたままだと、離陸の滑走で速度計が上がらないんだって。外部点検で、カバーは絶対に外さなきゃ。',
         '英語の交信、最初は速くて全然聞き取れなかったけど、数字の言い方を覚えたら急にわかるようになったよ。niner って、かわいいよね。',
         '最初の交信は「相手、自分、位置、要求」。唱えてたら覚えたよ。',
         '天気の授業のあと、私も佐伯さんと METAR を読んだの。ちゃんと意味がわかって、うれしかった！',
         'IMSAFE、ちゃんと言える？ I、M、S、A、F、E。明日の試験にも、初飛行の朝にも出るよ。',
-      ]),
+      ], { exam: ['今日は試験だね！ IMSAFE、I、M、S、A、F、E。私は朝、3 回唱えてきた。', '試験、おつかれさま！ 明日は初飛行だね。朝の IMSAFE、正直にね。'] }),
       ch2: say('飛ぶ日の朝、運航管理の天気、ちゃんと見てる？ 佐伯さんに「どうする？」って聞かれたとき、理由まで言えると、信頼されるんだって。', { if: ch('ch2'), else: 'ch1', end: true }),
     } };
   }
@@ -270,10 +276,10 @@ export function peopleDialogs() {
         '揚力の式、L ＝ ½ρV²SCL……。記号が多くて、頭がぐるぐるするよ。',
         'キャブレターアイスって、暑い日でも湿っていると起きるんだって。日本語でも難しいのに……。',
         '僕、アルファベットの言い方は得意かも。昔、無線を聞くのが好きだったんだ。',
-        'k4、①の台本を見ながらで、やっと通せたよ。②はまだ少し怖い。',
+        'k4 のチェアフライト、①の台本を見ながらなら、僕でも通せるかな……。②はまだ少し怖い。',
         '気象の問題、まだ半分くらいしか解けないんだ……。夜、ラウンジで復習してるよ。',
         '明日の学科試験、気象が出たらどうしよう……。でも、やるしかないよね。',
-      ], { guard: ch('ch1'), otherwise: 'ch2' }),
+      ], { guard: ch('ch1'), otherwise: 'ch2', exam: ['今日の学科試験、気象が出たらどうしよう……。でも、やるしかないよね。', '試験、通ったよ！ 気象の問題、夜の復習のおかげだ。明日は初飛行だね……緊張するなあ。'] }),
       ch2: say('失速の課目、明日なんだ……。機首を上げていくとき、手に汗かいちゃって。きみはどうだった？', { end: true }),
     } };
   }
@@ -290,7 +296,7 @@ export function peopleDialogs() {
         'チェアフライトは、タブレットの「練習」から何度でもできます。Practice makes perfect.',
         'Weather and emergencies, a big day. MAYDAY は 3 回、忘れずに。',
         '明日は学科試験。28 問、80% で合格です。Good luck — you are ready.',
-      ], { guard: ch('ch1'), otherwise: 'ch2' }),
+      ], { guard: ch('ch1'), otherwise: 'ch2', exam: ['今日は学科試験。28 問、80% で合格です。Good luck — you are ready.', 'Well done! 学科試験は合格です。明日の初飛行、教室で練習した交信をそのまま使ってください。'] }),
       ch2: say('Good to see you! もう飛んでいるんですね。交信、教室で練習したとおりにできていますか？ Read back, always.', { if: { ctx: 'career.graduated', is: false }, else: 'grad', end: true }),
       grad: say('Congratulations! 最初の授業で、niner の言い方に苦労していたのを覚えています。今は、立派なパイロットの英語ですよ。', { hook: { name: 'nod' }, end: true }),
     } };

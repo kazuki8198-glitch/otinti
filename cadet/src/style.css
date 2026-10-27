@@ -148,3 +148,12 @@ body.cvd #fhud .fh-gb .in { background: rgba(79, 179, 255, .55); }
 body.cvd #fhud .fh-badge { background: #c45a00; }
 body.cvd .tb-list .st.ok, body.cvd .tb-les div.ok b { background: #23598a !important; }
 body.cvd .tb-list .st.ng { background: #9a5a12 !important; }
+
+/* the room's screen, copied small at the top while a class, a device lesson or k4 goes on (main.js); Z: large */
+#scrcopy { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); width: min(38vw, 440px); z-index: 7; pointer-events: none;
+  border: 1px solid rgba(255,255,255,.28); border-radius: 8px; background: #0b1422; box-shadow: 0 4px 18px rgba(0,0,0,.45); }
+#scrcopy canvas { display: block; width: 100%; height: auto; border-radius: 8px; }
+#scrcopy small { position: absolute; right: 8px; bottom: 6px; font-size: 11px; color: #e8f0fa; background: rgba(0,0,0,.55); padding: 1px 6px; border-radius: 4px; }
+#scrcopy.big { top: 46%; transform: translate(-50%, -50%); width: min(88vw, 1080px); z-index: 12; }
+#scrcopy.big small::after { content: '（Z：もとに戻す）'; }
+@media (max-width: 720px) { #scrcopy { width: 56vw; } }

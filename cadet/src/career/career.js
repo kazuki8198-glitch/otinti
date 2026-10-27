@@ -58,6 +58,8 @@ export const ALL_CH2 = [...CH2, 'c1'];
 // alphabet (radio2) before k3, the calls of one flight (radio3, radio4) before k4, the scenes' calls, the airports
 // without a tower and the emergencies (radio5) before k5; the weather before Mori asks for help with it
 export const CLASSES = [['aero'], ['sys', 'perf'], ['radio1', 'radio2'], ['radio3', 'radio4'], ['wx', 'radio5'], ['law', 'hf']];
+// (the order before, of the saves without the sections heard: cleanCareer reads their classes by their chapters)
+const CLASSES_BEFORE = [['aero'], ['sys', 'perf'], ['wx'], ['law', 'hf'], ['radio1', 'radio2'], ['radio3', 'radio4', 'radio5']];
 // the training device lesson each class comes before (the same day's afternoon)
 export const CLASS_FTD = ['k1', 'k2', 'k3', 'k4', 'k5', 'k6'];
 // the training device's lessons by name (FLIGHT LAB's stage 0, as CADET teaches them)
@@ -194,7 +196,15 @@ export function cleanCareer(o) {
   if (isObj(o.graduated) && Number.isInteger(o.graduated.day)) s.graduated = { day: o.graduated.day };
   // (saves from before these were kept have none: an empty record, the classes already finished taken as heard in full
   // — the pace they were heard at was not kept)
-  if (isObj(o.heard)) for (const [k, v] of Object.entries(o.heard)) if (SEC_ID.test(k) && (v === 'f' || v === 'q')) s.heard[k] = v;
+  if (isObj(o.heard)) { for (const [k, v] of Object.entries(o.heard)) if (SEC_ID.test(k) && (v === 'f' || v === 'q')) s.heard[k] = v; }
+  // (…and their classes in the order before: a class now done when each of its chapters was; a class left midway begun
+  // again — its place was a section of the class before's)
+  else {
+    const before = Object.keys(s.done).filter(k => /^(class|lecture):\d+$/.test(k)), chapters = new Map();
+    CLASSES_BEFORE.forEach((ids, i) => { const d = s.done[`class:${i}`]; if (d != null) for (const id of ids) chapters.set(id, d); });
+    for (const k of before) delete s.done[k];
+    CLASSES.forEach((ids, i) => { if (ids.every(id => chapters.has(id))) s.done[`class:${i}`] = Math.max(...ids.map(id => chapters.get(id))); });
+  }
   if (PACE_IDS.includes(o.lastPace)) s.lastPace = o.lastPace;
   if (isObj(o.attempts)) for (const [k, v] of Object.entries(o.attempts)) if (ATTEMPT_ID.test(k) && Number.isInteger(v) && v >= 0) s.attempts[k] = Math.min(v, 9999);
   if (isObj(o.answers)) for (const [k, v] of Object.entries(o.answers).slice(0, 400)) {

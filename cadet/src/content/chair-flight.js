@@ -93,7 +93,7 @@ export function chairScript(FL, { seed = 1 } = {}) {
       ex('ground', 'gnd_rb', X('gnd_rb'));
       // src: AIM 4-1-20 (VFR 1200), AIM 6-4-2 (7600, the radio failed), AIM 6-2-2 (7700, an emergency)
       op('ground', 'xpdr', '管制からトランスポンダーのコードの指定はありません。コードは？', [{ t: '1200（VFR）', ok: true }, { t: '7600', why: '7600 は無線の故障のときのコードです。' }, { t: '7700', why: '7700 は緊急のときのコードです。' }],
-        { sec: 'comm.xpdr', note: '指定がなければ VFR は 1200 です。' });
+        { sec: 'comm.radar', note: '指定がなければ VFR は 1200 です（4 回目の授業：レーダー業務を終えたら VFR コード 1200 に戻す）。' });
       continue;
     }
     if (p.seq === 'tower') {

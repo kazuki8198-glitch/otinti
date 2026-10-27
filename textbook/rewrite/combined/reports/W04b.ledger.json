@@ -1,0 +1,13 @@
+{
+  "unit": "W04b",
+  "patches": [
+    {
+      "id": "APP.style-md",
+      "status": "fixed",
+      "where": "textbook/rewrite/STYLE.md（CADET が表示しない章・用語・節の形と囲み・節のデータ・日米の書き分け・主張の札・留保の言い方・基礎教材の写真）、textbook/rewrite/PLAN.md（冒頭の案内）、textbook/rewrite/NOTES.md（4 行目と行末の行き先・5 章）",
+      "by": "W04b",
+      "verified": true,
+      "note": "DESIGN 6.2 の決まり 15 の 4 点（CADET が表示しない章 intro・english・sim・まとめの章・第 7 部、用語の表、節の形と囲み、基礎教材の写真の扱い）を STYLE に入れ、DESIGN と読み合わせた（reports/W04b.md の 3）。図の最小の文字は 10 px にした（textbook/rewrite/tools/figshot.mjs の 9.5 px は別のファイルなので、直しを統合役に頼んだ）。"
+    }
+  ]
+}

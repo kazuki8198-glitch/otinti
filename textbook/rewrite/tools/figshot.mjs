@@ -49,7 +49,7 @@ for (const [name, html] of items) {
     const f = path.join(out, `${name}-${w}.png`);
     await (await page.$('figure') || page).screenshot({ path: f });
     if (r && w === 390) {
-      if (r.min < 9.5) problems.push(`${name}: smallest text ${r.min.toFixed(1)} px at 390`);
+      if (r.min < 10) problems.push(`${name}: smallest text ${r.min.toFixed(1)} px at 390`);
       if (r.role !== 'img' || !r.aria) problems.push(`${name}: role/aria-label missing`);
       for (const b of r.bad) problems.push(`${name}: ${b}`);
     }

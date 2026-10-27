@@ -1,5 +1,11 @@
 # 教科書の書き直しの計画（PLAN）
 
+> **この計画は終わった作業の記録です（2026-10-26 から）。** 27 章の書き直しは終わり（[PROGRESS.md](PROGRESS.md)）、今は教科書とパイロット基礎教材（第 3 版）を 1 冊にする**合本**を作っています。今の計画は [`combined/DESIGN.md`](combined/DESIGN.md)（作業の単位は 7.2、壊さないための決まりは 6.2）、所有者の判断は [`combined/DECISIONS.md`](combined/DECISIONS.md)、進み具合は [`combined/PROGRESS.md`](combined/PROGRESS.md)、書き方の決まりは合本に合わせて直した [STYLE.md](STYLE.md) です。
+>
+> この計画と合本の決まりが食い違うときは、合本の決まりに従います。おもに変わったこと：部と章（6 部・27 章 → 8 部・48 章。章の番号は版ごとに変わるので、章は ID で呼ぶ）、CADET が表示しない章（`intro`・`english`・`sim`・部のまとめの章・第 7 部）、用語（JCAB と航空法の表記を正式名にする。例：迎え角 → 迎角）、節の形（日米の囲み・判断の目などの新しい部品と、節のデータ `scope`・`from` など）、数値（教材値と参考値が違う所は両方を書く。主張には札）、写真（基礎教材の写真はファイルのまま使い、加工の表示は写真ごと）、テストの数の記録（[`combined/TEST-CONSTANTS.md`](combined/TEST-CONSTANTS.md)）、確かめ方（[`combined/tools/`](combined/tools/) の検査と台帳 [`combined/ledgers/`](combined/ledgers/)）。
+>
+> 下の本文は、27 章を書き直したときの計画のまま変えずに残しています（数は当時のもの）。
+
 FLIGHT LAB の教科書（全 6 部・27 章・120 節、図 22 枚）を、初めて学ぶ訓練生にもっとわかりやすい教科書に書き直す計画です。
 進み具合は [PROGRESS.md](PROGRESS.md)、アプリとの食い違いは [NOTES.md](NOTES.md)、書き方の決まりは [STYLE.md](STYLE.md) にあります。
 

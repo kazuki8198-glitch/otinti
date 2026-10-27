@@ -365,6 +365,30 @@ body:not([data-screen="fly"]) #viewBtns, body:not([data-screen="fly"]) #labels, 
 .bk-credit { display: block; font-size: 11px; overflow-wrap: anywhere; } .bk-credit a { color: #9fd0f0; }
 .bk-src { font-size: 12.5px; color: var(--muted); }
 .bk-src li { margin: 2px 0; }
+/* the US–Japan boxes (book-core.js bk.jur・bk.us・bk.jp・bk.same, the chapter-end and appendix tables; data FL.jur) */
+.bk-jur, .bk-us, .bk-jp, .bk-same { margin: 14px 0; padding: 10px 14px; border-radius: 4px; }
+.bk-jur { border: 1px solid var(--line); background: rgba(255, 255, 255, .03); }
+.bk-us { border-left: 4px solid var(--blue); background: rgba(61, 139, 255, .08); }
+.bk-jp, .bk-same { border-left: 4px solid var(--red); background: rgba(255, 90, 79, .07); }
+.jur-h b { color: var(--cyan); } .bk-us .jur-h b { color: #8fb8ff; } .bk-jp .jur-h b, .bk-same .jur-h b { color: #ff9a92; }
+.jur-v { margin-top: 2px; }
+.jur-t { margin: 6px 0 4px; }
+.jur-t th[scope="row"] { width: 17%; }
+.jur-t th.jur-us { color: #8fb8ff; } .jur-t th.jur-jp { color: #ff9a92; }
+.jur-src { color: var(--muted); font-size: 12px; }
+.jur-unk { color: var(--amber); font-weight: 700; }
+.jur-foot { margin-top: 4px; font-size: 12px; color: var(--muted); }
+.jur-ver { display: block; }
+.jur-foot button, .jur-where button { margin: 4px 6px 0 0; padding: 1px 8px; font-size: 12px; }
+.jur-conf { white-space: nowrap; }
+@media (max-width: 700px) {
+  .jur-t, .jur-t tbody, .jur-t tr, .jur-t th, .jur-t td { display: block; width: auto; }
+  .jur-t tr:first-child { display: none; }
+  .jur-t tr { margin: 0 0 8px; border: 1px solid var(--line); border-radius: 4px; }
+  .jur-t th, .jur-t td { border: 0; border-bottom: 1px solid var(--line); }
+  .jur-t th[scope="row"] { width: auto; }
+  .jur-t td[data-label]::before { content: attr(data-label) "　"; font-weight: 700; color: var(--muted); }
+}
 .quiz { background: rgba(255, 255, 255, .03); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 10px 0; font-size: 14px; }
 .quiz .ch { display: block; margin: 4px 0; cursor: pointer; }
 .quiz .res { margin-top: 6px; font-size: 13px; }

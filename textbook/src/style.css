@@ -127,6 +127,30 @@ mark.tb-mark { background: var(--mark); color: var(--mark-ink); border-radius: 2
 .bk-sim { margin: 14px 0; padding: 10px 14px; border: 1px dashed var(--accent); border-radius: 6px; font-size: .85rem; }
 .bk-src { font-size: .78rem; color: var(--muted); }
 .bk-src li { margin: 2px 0; }
+/* the US–Japan boxes (flight-lab/src/book-core.js bk.jur・bk.us・bk.jp・bk.same, the chapter-end and appendix tables) */
+.bk-jur, .bk-us, .bk-jp, .bk-same { margin: 14px 0; padding: 10px 14px; border-radius: 4px; }
+.bk-jur { border: 1px solid var(--line); background: var(--soft); }
+.bk-us { border-left: 4px solid var(--accent); background: var(--th-bg); }
+.bk-jp, .bk-same { border-left: 4px solid var(--red); background: var(--soft); }
+#tbView .jur-h b { color: var(--head); } #tbView .bk-jp .jur-h b, #tbView .bk-same .jur-h b { color: var(--red); }
+.jur-v { margin-top: 2px; }
+.jur-t { margin: 6px 0 4px; }
+.jur-t th[scope="row"] { width: 17%; }
+.jur-t th.jur-jp { color: var(--red); }
+.jur-src { color: var(--muted); font-size: .78rem; }
+.jur-unk { color: var(--amber); font-weight: 700; }
+.jur-foot { margin-top: 4px; font-size: .78rem; color: var(--muted); }
+.jur-ver { display: block; }
+.jur-foot button, .jur-where button { margin: 4px 6px 0 0; padding: 1px 8px; font-size: .78rem; }
+.jur-conf { white-space: nowrap; }
+@media (max-width: 700px) {
+  .jur-t, .jur-t tbody, .jur-t tr, .jur-t th, .jur-t td { display: block; width: auto; }
+  .jur-t tr:first-child { display: none; }
+  .jur-t tr { margin: 0 0 8px; border: 1px solid var(--line); border-radius: 4px; }
+  .jur-t th, .jur-t td { border: 0; border-bottom: 1px solid var(--line); }
+  .jur-t th[scope="row"] { width: auto; }
+  .jur-t td[data-label]::before { content: attr(data-label) "　"; font-weight: 700; color: var(--muted); }
+}
 .quiz { background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 10px 0; font-size: .88rem; line-height: 1.7; }
 .quiz .ch { display: block; margin: 4px 0; cursor: pointer; }
 .quiz .tb-check { margin-top: 4px; }

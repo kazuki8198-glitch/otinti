@@ -8,3 +8,4 @@ DESIGN.md 6.2 の決まり 11：テストが決め打ちしている数や文字
 |---|---|---|---|---|
 | 2026-10-26 | R1・P1（W01・W02・W03・W05） | — | 変更なし | P1 は決め打ちの数を変えていない。足したテストは数を決め打ちしない（W02：読み込みの列・`MAX_BYTES`・「（別の章）」なし・AI 目次 25,000 字。統合：`textbook/test/egov.test.mjs`）。TEXTBOOK の `FL_MODULES.length === 14` は、ファイルを足すコミット（W06 の `book-jur.js` など）で直す |
 | 2026-10-27 | R1・P2・W04 | `textbook/test/build.test.mjs` の `assert.equal(FL_MODULES.length, …)`（とテストの名前・頭の説明の数） | 14 → 15 | TEXTBOOK が W04 の `book-terms.js`（用語の表 `FL.terms`）を読むようになった（合本の検査の道具 `check-style.mjs`・`check-ledgers.mjs` が TEXTBOOK の列で本を読み、表を使うため）。`scripts.length === FL_MODULES.length + 2` は式なので変えない。CADET は `book-terms.js` を `FL_LEAVE_OUT` で外す（CADET の build のテストは共有の列と leave-out から数を作るので、決め打ちの数はない）。FLIGHT LAB は全部を読む（決め打ちの数はない） |
+| 2026-10-27 | R1・P2・W06 | 同じ所 | 15 → 16 | TEXTBOOK が W06 の `book-jur.js`（日米の対照データ `FL.jur`）を読むようになった（3 製品が読む：DESIGN 3.1・6.3） |

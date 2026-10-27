@@ -93,6 +93,10 @@ const CSS = `
 #dlg .bk-key { margin: 14px 0; padding: 10px 14px; border-left: 4px solid #2f9e62; border-radius: 4px; background: #e8f5ed; }
 #dlg .bk-key b { color: #1d7346; } #dlg .bk-key ul { margin: 4px 0 0; }
 #dlg .bk-warn { margin: 14px 0; padding: 10px 14px; border-left: 4px solid #e0a020; border-radius: 4px; background: #fdf2dc; }
+/* 米国の決まり: what is left of FLIGHT LAB's US–Japan boxes (bk.us, bk.jur's US column; content/book.js usSideOnly) */
+#dlg .bk-us, #dlg .bk-jur { margin: 14px 0; padding: 10px 14px; border-left: 4px solid #3d6fb8; border-radius: 4px; background: #eaf1fb; }
+#dlg .jur-h b { color: #1d4f91; } #dlg .jur-src { color: #5f6b77; font-size: 12.5px; }
+#dlg .jur-t { margin: 6px 0 2px; }
 #dlg .bk-f { margin: 12px 0; padding: 8px 14px; border: 1px solid #cfd8e3; border-radius: 8px; background: #eef2f7; color: #13283f;
   text-align: center; font: 600 14.5px/1.7 ui-monospace, "SF Mono", Menlo, Consolas, monospace; overflow-x: auto; }
 #dlg .bk-q { margin: 12px 0; padding: 10px 14px; border: 1px solid #d5dbe2; border-radius: 8px; background: #f3f5f8; }

@@ -115,6 +115,83 @@
     return `<figure class="bk-photo" data-photo="${attr(id)}"><img src="${p.src}" alt="${attr(p.alt)}"${p.w ? ` width="${p.w}" height="${p.h}"` : ''} loading="lazy" decoding="async">`
       + `<figcaption>写真：${p.caption}<span class="bk-credit">作者：${attr(c.author)}・ライセンス：${link(c.licenseUrl, attr(c.license))}・${link(c.source, '出典（' + site(c.source) + '）')}・縮小などの加工あり</span></figcaption></figure>`;
   };
+  // ---- the US–Japan boxes (textbook/rewrite/combined/DESIGN.md 3.4; the data: FL.jur in book-jur.js) ----
+  // bk.jur(...ids): the two countries side by side (stacked on a phone), one row per FL.jur item (data-jur="<id>");
+  // bk.us(x)・bk.jp(x)・bk.same(x): one side — x is an FL.jur item id (drawn from the data) or the box's HTML.
+  // The Japanese side (bk.jp, bk.same, the 日本 column and the line under bk.jur: class jur-jp) is what CADET leaves out;
+  // the US side stays there as 「米国の決まり」 (DESIGN 6.3). A link to Part 7 is drawn only when that section is in the
+  // book now (findSection), and only on the Japanese side: no link without a target (DESIGN 6.2 rules 6 and 13).
+  // Nothing is drawn when book-jur.js is not loaded; an id that FL.jur does not have is an error (a typo must not hide).
+  const JUR_ID = /^[a-z][a-z0-9]*(?:\.[a-z0-9]+)*$/;
+  const jurData = () => (FL.jur && typeof FL.jur.byId === 'function' ? FL.jur : null);
+  function jurItem(id) {
+    const J = jurData(); if (!J) return null;
+    const it = J.byId(id); if (!it) throw new Error(`FL.book.bk: "${id}" is not an item of FL.jur (book-jur.js)`);
+    return it;
+  }
+  const jurUnk = s => attr(s).replace(/〔要確認〕/g, '<span class="jur-unk">〔要確認〕</span>');
+  const jurSrc = s => (s ? `<span class="jur-src">（${attr(s)}）</span>` : '');
+  const jurUs = it => attr(it.us) + jurSrc(it.usSrc);
+  const jurJp = it => jurUnk(it.jp) + jurSrc([it.jpArt, it.jpSrc].filter(Boolean).join('・'));
+  // the versions of the laws the Japanese column cites (e-Gov), and the links to Part 7 that have a target now
+  function jurVersions(items) {
+    const L = jurData().LAWS, keys = [...new Set(items.flatMap(it => it.egov))];
+    if (!keys.length) return '';
+    const dates = [...new Set(keys.map(k => L[k].checked))].join('・');
+    return `<span class="jur-ver">日本の法令は e-Gov 法令検索の版：${keys.map(k => `${attr(L[k].name)}（${attr(L[k].label)}）`).join('・')}。${dates} に確認。</span>`;
+  }
+  function jurLinks(items) {
+    return [...new Set(items.flatMap(it => it.part7))].map(id => {
+      const f = findSection(id);
+      return f ? `<button type="button" class="jur-link" data-sec="${attr(id)}">→ 第 7 部で詳しく：${attr(f.sec.t)}</button>` : '';
+    }).join('');
+  }
+  const jurFoot = (items, cls) => { const s = jurVersions(items) + jurLinks(items); return s ? `<div class="${cls}">${s}</div>` : ''; };
+  const jurRow = it => `<tr class="bk-jur-row" data-jur="${attr(it.id)}"><th scope="row">${attr(it.title)}</th>`
+    + `<td class="jur-us" data-label="米国">${jurUs(it)}</td><td class="jur-jp" data-label="日本">${jurJp(it)}</td></tr>`;
+  function jurBox(items, head, cls) {
+    if (!items.length) return '';
+    return `<div class="${cls}"><div class="jur-h"><b>${head}</b></div><table class="bk-t jur-t">`
+      + `<tr><th>項目</th><th class="jur-us">米国</th><th class="jur-jp">日本</th></tr>${items.map(jurRow).join('')}</table>`
+      + `${jurFoot(items, 'jur-jp jur-foot')}</div>`;
+  }
+  function jurSide(cls, head, x, draw) {
+    if (typeof x === 'string' && JUR_ID.test(x)) {
+      const it = jurItem(x); if (!it) return '';
+      return `<div class="${cls}" data-jur="${attr(it.id)}"><div class="jur-h"><b>${head}</b></div><div class="jur-v"><b>${attr(it.title)}</b>：${draw(it)}</div></div>`;
+    }
+    return `<div class="${cls}"><div class="jur-h"><b>${head}</b></div>${x}</div>`;
+  }
+  const jurJpSide = it => jurJp(it) + jurFoot([it], 'jur-foot');
+  // the chapter-end table: the items whose boxes the chapter shows, in reading order (DESIGN 3.2「章末」)
+  function jurTable(chId) {
+    const ch = CHAPTERS.find(c => c.id === chId), J = jurData();
+    if (!ch || !J) return '';
+    const ids = [];
+    for (const sec of ch.secs) for (const m of html(sec).matchAll(/data-jur="([^"]+)"/g)) if (!ids.includes(m[1])) ids.push(m[1]);
+    return jurBox(ids.map(id => J.byId(id)).filter(Boolean), 'この章の日米の違い', 'bk-jur bk-jur-end');
+  }
+  // the appendix table: all the items, with where the book meets each one (only the places that are in the book now)
+  function jurAppendix() {
+    const J = jurData(); if (!J) return '';
+    const where = it => {
+      const out = [];
+      for (const id of it.boxes) { const f = findSection(id); if (f) out.push(`<button type="button" data-sec="${attr(id)}">${attr(f.sec.t)}</button>`); }
+      for (const g of it.gates) {
+        const c = CHAPTERS.find(x => x.id === g), f = findSection(`${g}.japan`) || (c && c.secs.length ? { sec: c.secs[0] } : null);
+        if (c && f) out.push(`<button type="button" class="jur-link" data-sec="${attr(f.sec.id)}">${attr(c.t)}</button>`);
+      }
+      for (const id of it.part7) { const f = findSection(id); if (f) out.push(`<button type="button" class="jur-link" data-sec="${attr(id)}">第 7 部：${attr(f.sec.t)}</button>`); }
+      return out.join('') || '—';
+    };
+    const rows = J.items.map(it => `<tr class="bk-jur-row" data-jur="${attr(it.id)}"><th scope="row">${attr(it.title)}</th>`
+      + `<td class="jur-us" data-label="米国">${jurUs(it)}</td><td class="jur-jp" data-label="日本">${jurJp(it)}</td>`
+      + `<td class="jur-jp jur-conf" data-label="確度">${J.CONF[it.conf]}</td><td class="jur-where" data-label="本の中で">${where(it)}</td></tr>`).join('');
+    const us = `<span class="jur-ver">米国の欄：${Object.values(J.US).map(s => attr(s.title)).join('・')}。${J.CHECKED} に確認。</span>`;
+    return `<div class="bk-jur bk-jur-all"><div class="jur-h"><b>日米対照表（${J.items.length} 項目）</b></div><table class="bk-t jur-t">`
+      + `<tr><th>項目</th><th class="jur-us">米国</th><th class="jur-jp">日本</th><th class="jur-jp jur-conf">確度</th><th class="jur-where">本の中で</th></tr>${rows}</table>`
+      + `<div class="jur-foot">${us}${jurVersions(J.items)}</div></div>`;
+  }
   const bk = {
     aim: html => `<p class="bk-aim">${html}</p>`,                       // the section's first lines: what it is for
     key: (...items) => `<div class="bk-key"><b>ここが大切</b>${lst(items)}</div>`,
@@ -129,6 +206,10 @@
     fact: t => `<span class="tag fact">公開情報</span>${t}`,
     est: t => `<span class="tag unk">推測・要確認</span>${t}`,
     photo,
+    jur: (...ids) => (jurData() ? jurBox(ids.flat().map(jurItem), '日米の対照', 'bk-jur') : ''),  // 日米の対照 (FL.jur)
+    us: x => jurSide('bk-us', '米国では', x, jurUs),                     // 米国では: an FL.jur id or HTML (CADET keeps it)
+    jp: x => jurSide('bk-jp', '日本では', x, jurJpSide),                  // 日本では (CADET leaves it out)
+    same: x => jurSide('bk-same', '日本も同じ', x, jurJpSide),            // 日本も同じ (CADET leaves it out)
   };
   const CHAPTERS = [];
   // a chapter may be inserted before another one (ch.before = its id); the numbers follow the order
@@ -144,5 +225,5 @@
   function html(sec) { return fix(typeof sec.h === 'function' ? sec.h() : sec.h); }
   function text(sec) { if (sec._txt === undefined) sec._txt = html(sec).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '); return sec._txt; }
   function wire(root) { for (const el of root.querySelectorAll('[data-calc]')) { const f = FL.bookCalc && FL.bookCalc[el.dataset.calc]; if (f && !el.dataset.done) { el.dataset.done = '1'; f(el); } } }
-  FL.book = { R, PARTS, CHAPTERS, bk, add, findSection, fix, html, text, wire, get FIG() { return FL.bookFigs; } };
+  FL.book = { R, PARTS, CHAPTERS, bk, add, findSection, fix, html, text, wire, jurTable, jurAppendix, get FIG() { return FL.bookFigs; } };
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

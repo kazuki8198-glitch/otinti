@@ -4,6 +4,10 @@
 // airline or its training partner; and what belongs to FLIGHT LAB's own pages (the "シミュレータで体験" boxes with their
 // lesson buttons, the calculators, the notes on its keys, menus and pages). Figures (inline SVG) and tables stay.
 // The chapters are numbered for this book, and the cross-references inside the text ({ch:id} → 第 N 章) follow.
+// The US–Japan boxes (FLIGHT LAB's bk.jur・bk.us・bk.jp・bk.same, drawn from FL.jur): the academy flies under the FAA's
+// rules and its written tests ask them, so the US side stays, headed 「米国の決まり」; only the Japanese side goes (bk.jp,
+// bk.same, the 日本 column of bk.jur and the line under it, the links to Part 7 and the summary chapters:
+// textbook/rewrite/combined/DESIGN.md 3.4 and 6.3).
 // A section is filtered the first time it is asked for, then kept.
 
 const DROP_CHAPTERS = new Set(['intro', 'sim']);
@@ -83,8 +87,39 @@ function filterTable(table) {
   return /<td\b/.test(out) ? out : '';                                         // only the heading row left: no table
 }
 
-function filterHtml(html, sectionExists) {
+// ---- the US–Japan boxes: the Japanese side goes, the US side stays as 「米国の決まり」 ----
+
+// classes of what goes: the Japanese boxes, the 日本 column and the line under a bk.jur box (jur-jp), and the links to
+// Part 7 and the summary chapters (jur-link; this book has neither)
+export const JAPAN_SIDE = Object.freeze(['bk-jp', 'bk-same', 'jur-jp', 'jur-link']);
+export const US_HEAD = '米国の決まり';
+// the index just past the element whose start tag is at `start` (elements of the same tag inside it counted)
+function endOf(s, tag, start) {
+  const re = new RegExp(`<(/?)${tag}\\b[^>]*?(/?)>`, 'gi');
+  re.lastIndex = start;
+  let depth = 0;
+  for (let m; (m = re.exec(s));) {
+    if (m[1]) { if (--depth === 0) return re.lastIndex; } else if (!m[2]) depth++;
+  }
+  return s.length;
+}
+// the elements whose class list has one of `classes`, taken out whole
+function dropByClass(html, classes) {
+  const re = new RegExp(`<([a-zA-Z][\\w-]*)\\b[^>]*?\\bclass="(?:[^"]*\\s)?(?:${classes.join('|')})(?:\\s[^"]*)?"[^>]*>`, 'g');
   let h = String(html);
+  for (let m; (m = re.exec(h));) {
+    h = h.slice(0, m.index) + h.slice(endOf(h, m[1].toLowerCase(), m.index));
+    re.lastIndex = m.index;
+  }
+  return h;
+}
+// the Japanese side out; the heads of what is left (bk.jur's 日米の対照, bk.us's 米国では) read 「米国の決まり」
+export function usSideOnly(html) {
+  return dropByClass(html, JAPAN_SIDE).replace(/<div class="jur-h"><b>[^<]*<\/b><\/div>/g, `<div class="jur-h"><b>${US_HEAD}</b></div>`);
+}
+
+function filterHtml(html, sectionExists) {
+  let h = usSideOnly(html);
   // FLIGHT LAB's own pages: "try it in the simulator" boxes, calculators, notes on its keys and its unbuilt parts
   h = h.replace(/<div class="bk-sim">[\s\S]*?<\/div>/g, '').replace(/<div class="bk-calc[^"]*"[^>]*>\s*<\/div>/g, '');
   h = h.replace(/<p class="(?:small )?mute">([\s\S]*?)<\/p>/g, (m, t) => (/シミュレータ|教材/.test(t) ? '' : m));

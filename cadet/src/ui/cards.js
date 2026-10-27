@@ -15,20 +15,20 @@ export function createCards({ doc = document } = {}) {
   const el = doc.createElement('div'); el.className = 'cd'; el.setAttribute('aria-live', 'polite');
   doc.body.appendChild(el);
   let busy = null;
-  // { kicker, title, sub, ms (shown), onDark (while dark) } → a promise
-  function show({ kicker = '', title = '', sub = '', ms = 2200, onDark = null } = {}) {
+  // { kicker, title, sub, ms (shown), onDark (while dark), fade (ms in and out: a way skipped is quicker) } → a promise
+  function show({ kicker = '', title = '', sub = '', ms = 2200, onDark = null, fade = 650 } = {}) {
     const run = async () => {
-      el.innerHTML = '';
+      el.innerHTML = ''; el.style.transitionDuration = fade === 650 ? '' : `${fade}ms`;
       const k = doc.createElement('div'); k.className = 'k'; k.textContent = kicker;
       const h = doc.createElement('h1'); h.textContent = title;
       const p = doc.createElement('p'); p.textContent = sub;
       el.append(k, h, p);
       el.classList.add('on');
-      await new Promise(r => setTimeout(r, 650));
+      await new Promise(r => setTimeout(r, fade));
       try { if (onDark) onDark(); } catch (e) { console.error(e); }
       await new Promise(r => setTimeout(r, ms));
       el.classList.remove('on');
-      await new Promise(r => setTimeout(r, 650));
+      await new Promise(r => setTimeout(r, fade));
     };
     busy = (busy || Promise.resolve()).then(run);
     const p = busy; p.then(() => { if (busy === p) busy = null; });

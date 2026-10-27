@@ -5,6 +5,7 @@
 // node, every placeholder of the English filled from the context); the English is English (Japanese only inside the
 // quotes of what the course writes), names no real airline or maker; his words in the air too.
 import test from 'node:test';
+import { eventDialogs } from '../src/content/dialog/ch1-events.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -59,6 +60,8 @@ function talks() {
   SUMS.forEach((s, i) => { for (const v of ['instructor', 'chief', 'examiner']) out.push([`debrief ${i} ${v}`, debriefDialogs(s, { voice: v }), { ai: { on: true } }]); });
   for (const id of Object.keys(EXAMS)) if (id !== 'written1') out.push([`exam ${id}`, examDialogs(FL, id, {}), { quiz: { right: 18, n: 20, pct: 90, pass: true } }]);
   out.push(['navlog', navlogDialogs(FL, {}), { quiz: { right: 5, n: 5, pct: 100, pass: true } }]);
+  // (chapter 1's evenings: 真壁 主任教官's IMSAFE)
+  for (const id of ['forces', 'pitot', 'spell', 'readback', 'metar', 'imsafe', 'week']) out.push([`event ${id}`, eventDialogs(id, {}), {}]);
   return out;
 }
 

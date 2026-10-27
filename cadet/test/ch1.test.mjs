@@ -81,3 +81,64 @@ test('the review at a class\'s start: of the classes before, their answers heard
   assert.ok(!S.classDialogs(FL, 2, { seed: 3, review: rv, from: 3 }).dialogs.class.nodes.rv0, 'none when taken up midway');
   assert.deepEqual(S.reviewFor(FL, { seed: 1, answers: {}, done: {}, heard: {} }, 0).ids, [], 'none before the first class');
 });
+
+test('the ways skipped the second time on (G): the day\'s fixed flow — cards, toasts, the jumps, the dorm\'s card — 20 s or less a day, chapter 1 within 3 minutes', async () => {
+  for (const pace of ['need', 'full', 'quick']) for (const seed of [1, 2, 3]) {
+    const r = await measureCh1({ pace, seed, skip: true }), days = r.days.filter(d => d.day >= 2 && d.day <= 9);
+    for (const d of days) assert.ok(d.fixedS <= 20, `${pace} seed ${seed} day ${d.day}: ${d.fixedS.toFixed(1)} s (${d.fixed.map(f => f.what).join(' ')})`);
+    assert.ok(days.reduce((a, d) => a + d.fixedS, 0) <= 180, `${pace} seed ${seed}: ${(days.reduce((a, d) => a + d.fixedS, 0) / 60).toFixed(2)} min`);
+    assert.ok(!days.some(d => d.fixed.some(f => f.what === 'walk')), 'no walking');
+  }
+});
+
+test('each day its own words: the toasts, the guide\'s lines and the dorm\'s card never the same on 3 days — walking or skipping', async () => {
+  for (const skip of [false, true]) for (const pace of ['need', 'full', 'quick']) {
+    const r = await measureCh1({ pace, seed: 1, skip });
+    for (const p of dayPatterns(r).filter(x => x.days.length >= 3)) assert.fail(`${pace}${skip ? ' (skipping)' : ''}: "${p.pattern}" on days ${p.days.join(', ')}`);
+  }
+});
+
+test('days 2–9 each have an event of their own that uses the day\'s class: the evenings\' (career.js CH1_EVENTS), Sunday\'s review, the warm-up before the written test', async () => {
+  const want = { 2: 'event forces', 3: 'event pitot', 4: 'event week', 5: 'event spell', 6: 'event readback', 7: 'event metar', 8: 'event imsafe' };
+  for (const pace of ['need', 'quick']) for (const seed of [1, 4]) {
+    const r = await measureCh1({ pace, seed }), seen = new Set();
+    for (const d of r.days.filter(x => x.day >= 2 && x.day <= 9)) {
+      if (want[d.day]) { const t = d.talks.find(x => x.label === want[d.day]); assert.ok(t && t.decisions >= 2, `${pace} day ${d.day}: ${want[d.day]} (${d.talks.map(x => x.label).join(', ')})`); seen.add(t.lines.map(l => l.text).join('')); }
+      else { const ex = d.talks.find(x => x.label === 'exam written1'); assert.ok(ex && ex.lines[0].node === 'wu' && ex.lines.filter(l => /^wu\d$/.test(l.node)).length === 3, `day ${d.day}: the warm-up, chapters mixed`); }
+    }
+    assert.equal(seen.size, 7, 'each its own');
+  }
+  // (each event's questions are on its own class: the words of that day's chapters)
+  const W = { forces: /揚力|推力|ラダー/, pitot: /ピトー|静圧|サンプ/, spell: /November|point|thousand/, readback: /hold short|line up and wait/, metar: /METAR|雲高/, imsafe: /IMSAFE|Medication|Fatigue/ };
+  for (const [id, re] of Object.entries(W)) assert.match(Object.values(L.events.eventDialogs(id).dialogs.ev.nodes).map(n => n.text).join(''), re, id);
+});
+
+test('the academy\'s seven: each says three different things or more on days 2–9, one at least about the day\'s class', () => {
+  const KEY = [/4 つの力|揚力|迎え角|主翼|翼/, /ピトー|性能|重心|W&B|キャブレター|暑い日/, /Alfa|niner|アルファベット|November|数字|k3/, /交信|k4|チェアフライト|復唱|型/, /METAR|天気|雲高|燃料のサンプ|MAYDAY|気象/, /IMSAFE|学科試験|初飛行/];
+  const ppl = L.people.peopleDialogs(), ins = L.insc.careerInstructorDialogs();
+  const say = (data, id, cls) => runTalk(L, data, id, { ctx: { career: { chapter: 'ch1', slot: 'am', day: 2 + cls, dayMod3: 0, tired: false, solo: false, flying: false, graduated: false, cls, veteran: false }, today: {}, weather: { ja: '晴れ', metarAm: 'KLAB', metarPm: 'KLAB', taf: 'TAF', why: '' }, imsafe: { honest: true } }, state: L.engine.createDialogState(), policy: (v) => v.choices.findIndex(c => /大丈夫/.test(c.text)) }).lines[0].text;
+  for (const [who, data, id] of [['chief', ppl, 'chief'], ['dispatcher', ppl, 'dispatcher'], ['mechanic', ppl, 'mechanic'], ['kiryu', ppl, 'kiryu'], ['asahi', ppl, 'asahi'], ['lecturer', ppl, 'lecturer'], ['instructor', ins, 'ground']]) {
+    // (met before: the first meeting's lines past)
+    const lines = [1, 2, 3, 4, 5, 6].map(k => { const st = L.engine.createDialogState(); for (const f of ['met_chief', 'met_dispatcher', 'met_mechanic', 'met_kiryu', 'met_asahi', 'met_mori', 'welcome_done', 'tour_done']) st.flags[f] = true; return runTalk(L, data, id, { ctx: { career: { chapter: 'ch1', slot: 'am', day: 2 + k, dayMod3: 0, tired: false, solo: false, flying: false, graduated: false, cls: k, veteran: false }, today: {}, weather: { ja: '晴れ', metarAm: 'KLAB', metarPm: 'KLAB', taf: 'TAF', why: '' }, imsafe: { honest: true } }, state: st, policy: (v) => Math.max(0, v.choices.findIndex(c => /大丈夫/.test(c.text))) }).lines[0].text; });
+    assert.ok(new Set(lines).size >= 3, `${who}: ${new Set(lines).size} kinds of talk`);
+    assert.ok(lines.some((t, k) => KEY[k].test(t)), `${who}: about the day's class: ${lines.join(' / ')}`);
+    void say;
+  }
+});
+
+test('the evening\'s study: three questions of the classes done, the one missed first; its answers on the tablet\'s ✓ / △', () => {
+  const S2 = L.school, st = { seed: 5, day: 3, answers: { 'q_aero#3': [0, 1, 0, 2] }, done: { 'class:0': 2 }, heard: {}, attempts: {} };
+  const d = S2.studyDialogs(FL, st), N = d.dialogs.study.nodes, qs = Object.keys(N).filter(k => /^sq\d$/.test(k));
+  assert.equal(qs.length, 3);
+  assert.ok(N.sq0.choices.every(c => c.effects.some(e => e.hook === 'ans' && e.arg.startsWith('q_aero#3|'))), 'the one missed first');
+  assert.ok(Object.values(N).some(n => (n.effects || []).some(e => e.hook === 'done' && e.arg === 'night')), 'then to bed');
+  // (answered: the right one now, another wrong — the marks follow the last answers)
+  const marks = (s) => Object.fromEntries(S2.sectionMarks(FL, s).flatMap(c => c.chapters.flatMap(ch => ch.sections.map(x => [x.id, x.mark]))));
+  const sec3 = S2.questionPool(FL).find(x => x.id === 'q_aero#3').home;
+  assert.equal(marks(st)[sec3], '△');
+  const after = { ...st, answers: { ...st.answers, 'q_aero#3': [1, 1, 1, 3] } };
+  assert.equal(marks(after)[sec3], '✓');
+  assert.equal(marks(st)['sys.ctl'], '', 'not heard yet: no mark');
+  const ready = S2.written1Readiness(FL, st);
+  assert.ok(ready.find(b => b.bank === 'q_aero').taught >= 4 && ready.find(b => b.bank === 'q_law').taught === 0, JSON.stringify(ready.map(b => `${b.bank} ${b.taught}`)));
+});

@@ -379,7 +379,12 @@ test('school: the lecturer\'s notes as written (content/lecture-notes) — one f
       // her check: the prediction before the book, its answer after it (at the notes' end or before them)
       if (n.ask) {
         const ask = N[`${base}:pr`], v = r.views[at(`${base}:pr`)], said = (v && v.text) || '', pre = N[`${base}:pr:pre`];
-        assert.ok(v && at(`${base}:pr`) < u0 && TALK.PRED.some(p => `${pre ? r.views[at(`${base}:pr:pre`)].text : ''}${said}` === `${p}${n.ask.q}`), `${s.id}: the prediction asked before the book`);
+        // (asked as one line with its choices; or — 桐生 answering first — the question said, his answer, then the
+        // lecturer's turn to the cadet with the choices)
+        const kiryu = N[`${base}:pr:k`];
+        const asked = kiryu ? TALK.PRED.some(p => r.views.slice(at(`${base}:pr:q`), at(`${base}:pr:k`)).map(x => x.text).join('') === `${p}${n.ask.q}`) && TALK.PRED_YOU.includes(said) && at(`${base}:pr:k`) < at(`${base}:pr`) && kiryu.speaker === 'kiryu'
+          : TALK.PRED.some(p => `${pre ? r.views[at(`${base}:pr:pre`)].text : ''}${said}` === `${p}${n.ask.q}`);
+        assert.ok(v && at(`${base}:pr`) < u0 && asked, `${s.id}: the prediction asked before the book`);
         assert.deepEqual(ask.choices.slice(0, -1).map(c => c.text).sort(), [...n.ask.opts].sort());
         for (const c of ask.choices) assert.ok(/:pr:[ad]$/.test(c.next) && c.effects[0].to === (c.text === n.ask.opts[n.ask.ok] ? 'ok' : TALK.DUNNO.includes(c.text) ? 'dk' : 'ng'), `${s.id}: ${c.text}`);
         const rv = Math.max(at(`${base}:rv`), at(`${base}:rv:ng`), at(`${base}:rv:dk`));

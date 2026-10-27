@@ -63,6 +63,17 @@ export const REVEAL_DK = [
   (x) => `節の初めの問いは、${x}が正解でした。`, (x) => `お待たせしました、答えは${x}です。`, (x) => `${x}、これが最初の問いの答えです。`,
   (x) => `わからなかったところは${x}でした。`, (x) => `答えを言いますね、${x}です。`,
 ];
+// the classmates (P1): 桐生 says his answer to the prediction first (x: in quotes) — the lecturer then asks the cadet; when
+// he was wrong, a word at the answer; 森 asks a beginner's question before the lecturer's note on a common mistake
+export const KIRYU_GUESS = [
+  (x) => `${x}、ですね。`, (x) => `${x}だと思います。`, (x) => `たぶん${x}です。`, (x) => `${x}。迷いませんでした。`, (x) => `答えは${x}でしょう。`,
+  (x) => `${x}……のはずです。`, (x) => `俺は${x}だと思う。`, (x) => `${x}に決まってますよ。`,
+];
+export const PRED_YOU = ['あなたはどう思いますか？', '桐生さんの答えを聞いて、あなたは？', 'では、あなたの予想は？', '同じですか、違いますか？', 'あなたも選んでください。', 'あなたなら、どれにしますか？'];
+export const KIRYU_MISS = ['……そっちか。', 'くそ、引っかかった。', '……次は外さない。', 'なるほど、そういうことか。', '逆だったか。', '今のは悔しいな。'];
+// (b: what the note says is done wrong, as the cadet's friend would say it; x: a belief in quotes)
+export const MORI_DO = [(b) => `先生、${b}のは、だめなんですか？`, (b) => `あの……${b}のって、まずいんでしょうか？`, (b) => `僕、${b}かもしれません……。それって、いけないんですか？`, (b) => `すみません、${b}のは間違いなんですか？`];
+export const MORI_THINK = [(x) => `${x}……じゃないんですか？`, (x) => `僕、${x}と思っていました。違うんですか？`];
 // the end of a section (t: its title in quotes; R / B / Q then say: again, the textbook, a break)
 export const END = [
   (t) => `${t}はここまでです。`, (t) => `${t}は、これでおしまいです。`, (t) => `これで${t}は終わりです。`, (t) => `${t}はここまで。`,
@@ -101,12 +112,21 @@ export const RADIO_ASK = [
 // right and wrong at a question of the screen or a check (v: the right answer, said plainly in the sentence — a word, a
 // phrase or a sentence: so after は or a colon)
 export const RIGHT = [
-  (v) => `そうです、答えは ${v}。`, (v) => `合っています、正解は ${v}。`, (v) => `Good. 正解：${v}。`, (v) => `正しく読めています、答えは ${v}。`,
-  (v) => `That's it. 答え：${v}。`, (v) => `はい、正解は ${v}。`, (v) => `よく見ていますね、答えは ${v}。`, (v) => `そのとおり、${v}。`,
+  (v) => `そうです、答えは ${v}。`, (v) => `合っています、正解は ${v}。`, (v) => `Good. 正解：${v}。`, (v) => `正解です、${v}。`,
+  (v) => `That's it. 答え：${v}。`, (v) => `はい、正解は ${v}。`, (v) => `Right. 答えは ${v}。`, (v) => `そのとおり、${v}。`,
 ];
 export const WRONG = [
-  (v) => `正しくは、${v}。`, (v) => `よく見ると、答えは ${v}。`, (v) => `ここの答えは ${v}。`, (v) => `答えは ${v} でした。`,
-  (v) => `惜しいですね、正解は ${v}。`, (v) => `正しい答えは ${v}。`, (v) => `もう一度見てください、答えは ${v}。`, (v) => `違います、正解は ${v}。`,
+  (v) => `正しくは、${v}。`, (v) => `ここは、答えは ${v}。`, (v) => `ここの答えは ${v}。`, (v) => `答えは ${v} でした。`,
+  (v) => `惜しいですね、正解は ${v}。`, (v) => `正しい答えは ${v}。`, (v) => `覚えておいてください、答えは ${v}。`, (v) => `違います、正解は ${v}。`,
+];
+// (read off the screen: said so)
+export const SEEN_RIGHT = [
+  (v) => `正しく読めています、答えは ${v}。`, (v) => `よく見ていますね、答えは ${v}。`, (v) => `画面のとおり、${v}。`, (v) => `読み取れましたね、${v}。`,
+  (v) => `そうです、画面では ${v}。`, (v) => `Good. 画面の答えは ${v}。`,
+];
+export const SEEN_WRONG = [
+  (v) => `よく見ると、答えは ${v}。`, (v) => `もう一度見てください、答えは ${v}。`, (v) => `画面では、${v} になっています。`, (v) => `見直すと、答えは ${v}。`,
+  (v) => `惜しい、画面の答えは ${v}。`, (v) => `画面をよく見ると ${v} です。`,
 ];
 // a check in the middle of a section, on what was just said (not scored)
 export const CHECK = [

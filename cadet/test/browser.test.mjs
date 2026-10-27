@@ -239,7 +239,8 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     st = await career();
     assert.deepEqual([st.day, st.slot, st.chapter], [2, 'morning', 'ch1']);
     assert.equal((await ev(() => window.__cadet.player())).place, 'ロビー');
-    assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => `${x.slot} ${x.kind} ${x.id}`), ['am class 0', 'pm ftd k1']);
+    // (the evening's event of the day's class: the mechanic, by the Archer — content/dialog/ch1-events.js)
+    assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => `${x.slot} ${x.kind} ${x.id}`), ['am class 0', 'pm ftd k1', 'evening event forces']);
   });
 
   test('chapter 1: a class (the textbook read in full, its pages on the classroom\'s screen, left midway and taken up again), the training device (k2: the PFD on its screen), the written test', async () => {
@@ -413,6 +414,34 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.equal(await ev(() => window.__cadet.career.chair.active()), false, 'Q left it');
     assert.match(await ev(() => document.querySelector('#toast').textContent), /途中でやめました/);
     await ev(() => { window.__cadet.settings.set('micRadio', false); delete window.SpeechRecognition; });
+  });
+
+  test('an evening of chapter 1: the guide to the day\'s event, G to its person (the way walked before), the event talked through, then the dorm\'s study — three questions, the tablet\'s ✓ / △', async () => {
+    // (day 3, its class and k2 done: the evening; the apron walked before)
+    const done = { prologue: 1, 'class:0': 2, 'class:1': 3, 'ftd:k1': 2, 'ftd:k2': 3 }, lessons = { k1: GROUND_OK.k1, k2: GROUND_OK.k2 };
+    await ev(({ done, lessons }) => window.__cadet.career.set({ state: { chapter: 'ch1', day: 3, slot: 'evening', done, walked: ['lobby', 'outside', 'brief-2', 'sim'], answers: { 'q_aero#3': [0, 1, 0, 2] } }, progress: { lessons }, flags: { met_instructor: true, has_tablet: true, met_mechanic: true }, place: false }), { done, lessons });
+    await g.page.waitForFunction(() => !window.__cadet.career.cards(), null, { timeout: 30000 });
+    assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => `${x.slot} ${x.kind} ${x.id}`), ['am class 1', 'pm ftd k2', 'evening event pitot']);
+    await ev(() => { window.__cadet.setMode('walk'); window.__cadet.placeWalker(655.0, 270.0, { a: 655.0, c: 260.0 }); });
+    await ev(() => window.__cadet.followGuide({ maxT: 0.1 }));
+    assert.match(await ev(() => window.__cadet.guide().text), /大城さんと、Archer のピトー管/);
+    assert.equal(await ev(() => window.__cadet.career.canJump()), true, 'G: the apron walked before');
+    assert.equal(await ev(() => window.__cadet.career.jump()), true);
+    await g.page.waitForFunction(() => !!window.__cadet.dialog(), null, { timeout: 10000 });
+    let t = await talkThrough(null);
+    assert.match(t.lines.join('\n'), /ピトー管[\s\S]*サンプ[\s\S]*静圧孔/);
+    assert.equal((await career()).done['event:pitot'], 3, 'the event done');
+    // the dorm: the study — three questions, the one missed first; then to bed, the next morning
+    await ev(() => { const C = window.__cadet; C.placeWalker(655.0, 273.8, { a: 655.0, c: 285 }); });
+    assert.equal(await ev(() => window.__cadet.career.home()), 'examined');
+    await ev(() => window.__cadet.career.homeChoose(1));
+    await g.page.waitForFunction(() => !!window.__cadet.dialog(), null, { timeout: 5000 });
+    t = await talkThrough(null);
+    assert.match(t.lines[0], /今夜の自習：前に間違えた問題と、しばらく答えていない問題から 3 問/);
+    assert.equal(t.lines.filter(l => /^  > /.test(l)).length, 3, 'three answered');
+    await g.page.waitForFunction(() => window.__cadet.career.state().day === 4, null, { timeout: 15000 });
+    const marks = await ev(() => { window.__cadet.career.tablet.open('progress'); const m = document.querySelector('.tb').innerText; window.__cadet.career.tablet.close(); return m; });
+    assert.match(marks, /座学の節/); assert.match(marks, /[✓△]/); assert.match(marks, /学科試験（第 1 章）への準備/);
   });
 
   test('talk: a morning of chapter 2 — how the cadet feels, then today\'s lesson briefed, checked, a question from the textbook, and it is saved', async () => {

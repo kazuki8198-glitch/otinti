@@ -13,7 +13,7 @@ import { PEOPLE } from '../people.js';
 
 // the context the talks read (the game fills it every time one starts; a sample for the checks)
 export const SAMPLE_CTX = {
-  career: { chapter: 'ch2', slot: 'am', day: 12, dayMod3: 0, tired: false, solo: false, flying: true, graduated: false },
+  career: { chapter: 'ch2', slot: 'am', day: 12, dayMod3: 0, tired: false, solo: false, flying: true, graduated: false, cls: 6 },
   today: { flight: 'a3', flightTitle: '「上昇・降下・レベルオフ」の飛行', checkride: false, checkId: '', checkTitle: '', graduation: false, solo: false, xc: false, exam: false, needsDecision: true, decided: false, decisionRight: true, reg: 'N738SY', type: 'Archer', stand: 19 },
   weather: { ja: '晴れ', metarAm: 'KLAB 121353Z 36005KT 10SM FEW035 19/12 A2992', metarPm: 'KLAB 121853Z 36005KT 10SM SCT045 22/12 A2992', taf: 'TAF KLAB … 01005KT P6SM FEW035', why: '視程・雲・風とも基準内です。' },
   tem: { on: true, o0: '午後の雷雨', o1: '審査の緊張', o2: '朝の霧', right: true, threat: '審査の緊張', why: '今日は審査です。緊張すると、いつもの手順が抜けます', plan: '毎日の手順のとおりに', not: '',
@@ -21,12 +21,21 @@ export const SAMPLE_CTX = {
 };
 export const PEOPLE_HOOKS = ['done', 'decide', 'tablet', 'help', 'checkride', 'look', 'nod', 'point', 'tem'];
 // ('done' also takes 'graduation': the ceremony's speech heard)
-export const PEOPLE_FLAGS = ['met_chief', 'met_dispatcher', 'met_mechanic', 'met_kiryu', 'met_asahi', 'met_mori', 'helped_mori', 'kiryu_tip', 'asahi_imsafe', 'has_tablet', 'tour_done', 'welcome_done', 'c1_briefed'];
+export const PEOPLE_FLAGS = ['met_chief', 'met_dispatcher', 'met_mechanic', 'met_kiryu', 'met_asahi', 'met_mori', 'helped_mori', 'kiryu_tip', 'asahi_imsafe', 'has_tablet', 'tour_done', 'welcome_done', 'c1_briefed', 'prologue_short'];
 // the flags set here that the game reads (the tablet, the people met for the prologue's end, the check ride's brief)
 export const GAME_READS = ['met_chief', 'met_dispatcher', 'asahi_imsafe', 'has_tablet', 'c1_briefed'];
 
 const SPEAKERS = Object.fromEntries([...Object.entries(PEOPLE).map(([id, p]) => [id, { name_ja: p.title, color: p.color }]), ['player', { name_ja: 'あなた', color: '#f2b632' }]]);
 const ch = (c) => ({ ctx: 'career.chapter', is: c });
+// (chapter 1: a line for each number of classes done, 0–6 — ctx career.cls; the k-th class's day says the k-th's)
+// → nodes id (its entry) … id:0; the last of them, lines[0], said before the first class
+// (guard: a condition for all of them, its else where to go otherwise)
+function byClass(say, id, lines, { guard = null, otherwise = null, ...more } = {}) {
+  const N = {}, cond = (c) => (guard ? { all: [guard, c] } : c);
+  for (let k = 1; k < lines.length; k++) N[k === 1 ? id : `${id}:${k}`] = say(lines[k], { if: cond({ ctx: 'career.cls', is: k }), else: k < lines.length - 1 ? `${id}:${k + 1}` : `${id}:0`, ...more, end: true });
+  N[`${id}:0`] = say(lines[0], { ...(guard ? { if: guard, else: otherwise } : {}), ...more, end: true });
+  return N;
+}
 const flag = (f, is) => (is === undefined ? { flag: f } : { flag: f, is });
 
 // (M7) TEM's three answers on a check's briefing (the hook 'tem' with the index, as the instructor's briefing)
@@ -36,7 +45,14 @@ export function peopleDialogs() {
   // ---------------------------------------------------------------- 真壁 主任教官
   {
     const say = (text, more = {}) => ({ speaker: 'chief', text, ...more });
-    D.chief = { start: 'w1', nodes: {
+    D.chief = { start: 'wv', nodes: {
+      // (a career begun after another — ctx career.veteran: the welcome in full, or its promises alone; the tour and the
+      // meeting then short too, flag prologue_short)
+      wv: say('みなさん、翔洋航空の自社養成パイロット訓練所へようこそ。主任教官の真壁です。', { if: { all: [ch('prologue'), flag('welcome_done', false), { ctx: 'career.veteran', is: true }] }, else: 'w1', hook: { name: 'look', arg: 'player' }, effects: [{ set: 'met_chief' }], choices: [
+        { text: '（お願いします）', next: 'w2' },
+        { text: '（大事なところだけ聞く）', next: 'ws', effects: [{ set: 'prologue_short' }] },
+      ] }),
+      ws: say('ここでの約束は 3 つだけです。わからないことは、わからないと言う。決められた手順は、省かない。疲れているとき、体調がよくないときは、正直に言う。案内は佐伯さん、午後は早瀬教官です。', { hook: { name: 'nod' }, effects: [{ set: 'welcome_done' }, { hook: 'done', arg: 'ceremony' }], end: true }),
       w1: say('みなさん、翔洋航空の自社養成パイロット訓練所へようこそ。主任教官の真壁です。', { if: { all: [ch('prologue'), flag('welcome_done', false)] }, else: 'c1', hook: { name: 'look', arg: 'player' }, effects: [{ set: 'met_chief' }], next: 'w2' }),
       w2: say('今日からここで、空を飛ぶための基礎を一から身に付けてもらいます。最初は座学、それから単発機の Archer。ひとりで空へ上がる日、ファーストソロが、最初の大きな目標です。', { next: 'w3' }),
       w3: say('ここでの約束は 3 つだけです。わからないことは、わからないと言う。決められた手順は、省かない。疲れているとき、体調がよくないときは、正直に言う。', { hook: { name: 'nod' }, next: 'w4' }),
@@ -88,7 +104,15 @@ export function peopleDialogs() {
       ch5: say('Seminole は重く、速い。そして、エンジンが止まったときに、片方へ強く引かれます。Vmc の赤い線、絶対に忘れないように。', { if: ch('ch5'), else: 'ch4', end: true }),
       ch4: say('計器飛行で大事なのは、体の感覚を疑うことです。体が「傾いている」と言っても、姿勢表示が水平なら、水平です。', { if: ch('ch4'), else: 'ch3', end: true }),
       ch3: say('航法の段階ですね。地図、時計、コンパス。迷ったら、まず落ち着いて、最後に確かだった場所から考える。', { if: ch('ch3'), else: 'ch2', end: true }),
-      ch1: say('座学はどうですか。教科書の数字は、覚えるより、なぜその数字なのかを考えると残ります。ミラー講師に、遠慮なく聞いてください。', { end: true }),
+      ...byClass(say, 'ch1', [
+        '今日から座学ですね。教室でも、わからないことは、わからないと言ってください。それでいいんです。',
+        '4 つの力の授業はどうでしたか。上昇中も力はつり合っている、というところで、たいていの人が一度つまずきます。',
+        '暑い日は空気が薄く、離陸が長くなる。今日の性能の話は、夏の LAB では毎日のことです。',
+        'Alfa、Bravo、Charlie。私も最初は niner がなかなか口から出ませんでした。声に出すのがいちばんです。',
+        '交信は、聞く、考える、話す。今日の k4 で管制官の声を聞いたなら、初飛行の準備はもう半分できています。',
+        '飛ばないと決めるのも、立派な判断です。今日の METAR、自分で読めましたか。',
+        '明日は学科試験、その次が初飛行です。IMSAFE の最後の E、気持ちの落ち着きも忘れずに。',
+      ]),
       ch2: say('早瀬教官から聞いています。毎日の点検と交信、手を抜かずに続けてください。審査では、そこを見ます。', { if: ch('ch2'), else: 'pro', hook: { name: 'look', arg: 'player' }, end: true }),
       pro: say('訓練所の中は、佐伯さんが案内します。午後は早瀬教官との顔合わせです。今日は、名前と顔を覚えるだけで十分ですよ。', { if: ch('prologue'), else: 'ch1', end: true }),
     } };
@@ -97,7 +121,8 @@ export function peopleDialogs() {
   {
     const say = (text, more = {}) => ({ speaker: 'dispatcher', text, ...more });
     const me = (text, next, more = {}) => ({ text, next, ...more });
-    D.dispatcher = { start: 't1', nodes: {
+    D.dispatcher = { start: 'ts', nodes: {
+      ts: say('運航管理の佐伯です。訓練生用のタブレットをどうぞ。予定、天気、教科書、練習問題が入っています。午後は早瀬教官と、ブリーフィング室 1 で。', { if: { all: [ch('prologue'), flag('tour_done', false), flag('prologue_short')] }, else: 't1', hook: { name: 'look', arg: 'player' }, effects: [{ set: 'met_dispatcher' }, { give: 'tablet' }, { set: 'has_tablet' }, { hook: 'tablet' }, { set: 'tour_done' }, { hook: 'done', arg: 'tour' }], end: true }),
       t1: say('運航管理の佐伯です。ここは、その日の予定と機体と天気を決める場所です。訓練生のみなさんも、飛ぶ前に必ず寄ってください。', { if: { all: [ch('prologue'), flag('tour_done', false)] }, else: 'wx1', hook: { name: 'look', arg: 'player' }, effects: [{ set: 'met_dispatcher' }], next: 't2' }),
       t2: say('右の壁が今日の割り当て、隣の画面が天気です。METAR は今の天気、TAF はこれからの予報。飛ぶかどうかは、教官と、ここで一緒に決めます。', { hook: { name: 'point', arg: 'board' }, next: 't3' }),
       t3: say('それから、これを。訓練生用のタブレットです。予定、天気、航空日誌、教科書、学科の練習問題が入っています。毎朝、まずこれで今日の予定を確かめてください。', { effects: [{ give: 'tablet' }, { set: 'has_tablet' }, { hook: 'tablet' }], next: 't4' }),
@@ -114,7 +139,15 @@ export function peopleDialogs() {
       'wx:wrong': say('うーん、私は違う判断です。{weather.why}今日はそれで予定を組み直します。', { effects: [{ trust: 'dispatcher', add: -1 }], end: true }),
       'info:ch2': say('今日の予定はタブレットにも出ています。機体は {today.reg}（{today.type}）、19 番の場所です。天気は「{weather.ja}」。', { if: { ctx: 'career.flying', is: true }, else: 'info:ch1', end: true }),
       'info:grad': say('修了、おめでとうございます。予定表から名前が消えるの、ちょっと寂しいですね。', { if: { ctx: 'career.graduated', is: true }, else: 'info:ch2', end: true }),
-      'info:ch1': say('座学の間は、こちらに用事は少ないですね。でも天気の読み方は、今のうちに慣れておくと楽ですよ。画面の METAR、読んでみてください。', { end: true }),
+      ...byClass(say, 'info:ch1', [
+        '座学の間は、こちらに用事は少ないですね。画面の METAR は、天気の授業が終わるころには読めるようになりますよ。',
+        '揚力は空気の密度で変わる、でしたね。この画面の気温が高い日は、私も滑走路の長さが気になります。',
+        '重さと重心の書類、W&B は、ここで毎朝確かめています。今日の性能の授業は、運航管理の仕事そのものなんですよ。',
+        '登録記号、無線で言えますか。N738SY は November Seven Three Eight Sierra Yankee です。',
+        'ATIS の記号は、だいたい 1 時間ごと、天気が大きく変わればその都度、Alpha、Bravo と進みます。最初の交信では、いつも最新のものを。',
+        'METAR の読み方、もう大丈夫ですね。初飛行の朝も、ここで一緒に読みましょう。',
+        '初飛行の日の朝は、ここで天気を見て、飛ぶかどうかを決めます。今週の授業で習ったことを、そのまま使いますよ。',
+      ]),
     } };
   }
   // ---------------------------------------------------------------- 大城さん（整備士）
@@ -123,7 +156,15 @@ export function peopleDialogs() {
     D.mechanic = { start: 'm1', nodes: {
       m1: say('整備の大城です。……あんたが新しい訓練生か。', { if: flag('met_mechanic', false), else: 'tip:0', hook: { name: 'look', arg: 'player' }, effects: [{ set: 'met_mechanic' }], next: 'm2' }),
       m2: say('ひとつだけ。おかしいと思ったら、言ってくれ。勘違いでいい。言わないで飛ぶのが、いちばん困る。', { hook: { name: 'nod' }, end: true }),
-      pre: say('飛ぶのはまだ先か。機体を見に来るのはいいことだ。外部点検の順番、見て覚えていくといい。', { end: true }),
+      ...byClass(say, 'pre', [
+        '飛ぶのはまだ先か。機体を見に来るのはいいことだ。外部点検の順番、見て覚えていくといい。',
+        '主翼の上の面を見てくれ。揚力はここで生まれる。霜や汚れがあるだけで、翼の働きは落ちるんだ。',
+        'ピトー管のカバー、外し忘れるやつが毎年いる。左の翼の下だ。点検のときに思い出してくれ。',
+        '無線の調子が悪いときは、遠慮なく言ってくれ。ヘッドセットの差し込みが甘いだけ、ってことも多い。',
+        '外部点検でおかしいところを見つけたら、交信と同じで、はっきり言ってくれ。「たぶん大丈夫」は、なしだ。',
+        '雨の次の日は、燃料のサンプに水が出やすい。天気と点検は、つながってるんだ。',
+        '初飛行の機体は 19 番の Archer だ。前の晩に給油しておく。朝の点検、楽しみにしてるよ。',
+      ]),
       'tip:0': say('燃料のサンプは、透明な容器で光に透かして見る。水は青い燃料の下に、丸い玉になって沈む。', { if: { all: [{ ctx: 'today.type', is: 'Archer' }, { ctx: 'career.flying', is: true }, { ctx: 'career.dayMod3', is: 0 }] }, else: 'tip:1', end: true }),
       'tip:1': say('タイヤは、空気の量だけじゃない。溝と、ひび割れ。それから、ブレーキの配管から油が漏れていないか。', { if: { all: [{ ctx: 'today.type', is: 'Archer' }, { ctx: 'career.flying', is: true }, { ctx: 'career.dayMod3', is: 1 }] }, else: 'tip:2', end: true }),
       'tip:2': say('オイルの量は、エンジンが冷えているうちに。ゲージを拭いてから差し直して、もう一度。6 クォートを切っていたら言ってくれ。', { if: { all: [{ ctx: 'today.type', is: 'Archer' }, { ctx: 'career.flying', is: true }] }, else: 'sem:0', end: true }),
@@ -141,7 +182,15 @@ export function peopleDialogs() {
       k1: say('桐生です。……よろしく。', { if: flag('met_kiryu', false), else: 'solo', hook: { name: 'look', arg: 'player' }, effects: [{ set: 'met_kiryu' }], next: 'k2' }),
       k2: say('先に言っておくけど、ソロは誰より早く出るつもりだから。競争じゃないって言われても、目標は高いほうがいい。', { end: true }),
       solo: say('ソロ、おめでとう。……正直、悔しい。でも、あの 3 回目の着陸はきれいだった。次は航法だな。負けないから。', { if: { all: [{ ctx: 'career.solo', is: true }, ch('ch2')] }, else: 'tip', hook: { name: 'nod' }, end: true }),
-      ch1: say('学科試験は、問題集を丸暗記しても駄目だよ。選択肢の「なぜ」を読む。そこに理由が全部書いてある。', { end: true }),
+      ...byClass(say, 'ch1', [
+        '学科試験は、問題集を丸暗記しても駄目だよ。選択肢の「なぜ」を読む。そこに理由が全部書いてある。',
+        '迎え角と姿勢は別物、か。わかってるつもりだったけど、図で見るとちょっと違ったな。',
+        '重心が後ろすぎると、失速からの回復が難しくなる。……数字で確かめるけど、俺は前寄りのほうが安心だね。',
+        'k3 は満点だった？ 俺は “one zero thousand” で一回迷った。数字は 1 けたずつ、だよな。',
+        'チェアフライト、③の本番でやってみた。管制官の “how do you hear?”、意外と焦るな。',
+        'METAR の BKN と OVC の一番低い層が雲高だ。そこは絶対に間違えない。',
+        '明日の学科試験、28 問。……負けないから。',
+      ]),
       tip: say('着陸のフレア、ひとつ教えとく。地面じゃなくて、滑走路の先の端を見るんだ。近くを見ると、引くのが早すぎる。', { if: { all: [ch('ch2'), flag('kiryu_tip', false)] }, else: 'ch2b', effects: [{ set: 'kiryu_tip' }], next: 'tip:2' }),
       'tip:2': say('……俺も早瀬教官に言われたんだけどね。', { end: true }),
       ch2b: say('今日の課目、どうだった？ 評価が S じゃなくても、どこが外れたかを自分で言えれば、次は直せる。', { if: ch('ch2'), else: 'ch3', end: true }),
@@ -166,7 +215,15 @@ export function peopleDialogs() {
       ch5: say('Seminole の右の席、教官がすっごく静かで逆に怖かった（笑）。双発は、手順を声に出すと落ち着くよ。', { if: ch('ch5'), else: 'ch6', end: true }),
       ch6: say('最終審査の前の夜は、早く寝ること！ IMSAFE の F、最後まで忘れないでね。', { if: { all: [ch('ch6'), { ctx: 'career.graduated', is: false }] }, else: 'grad', hook: { name: 'nod' }, end: true }),
       grad: say('修了おめでとう！ 写真、撮ろうよ。みんなで。ここに来た日のロビーで。', { if: { ctx: 'career.graduated', is: true }, else: 'ch2', end: true }),
-      ch1: say('英語の交信、最初は速くて全然聞き取れなかったけど、数字の言い方を覚えたら急にわかるようになったよ。niner って、かわいいよね。', { end: true }),
+      ...byClass(say, 'ch1', [
+        'いよいよ授業だね！ ミラー先生、英語と日本語が半分ずつなんだって。',
+        '揚力って、速度の 2 乗なんだね。速さが半分になると 4 分の 1。だから着陸ではフラップを使うんだ。',
+        'ピトー管がふさがると、速度計が動かなくなるんだって。外部点検で、カバーは絶対に外さなきゃ。',
+        '英語の交信、最初は速くて全然聞き取れなかったけど、数字の言い方を覚えたら急にわかるようになったよ。niner って、かわいいよね。',
+        '最初の交信は「相手、自分、位置、要求」。唱えてたら覚えたよ。',
+        '天気の授業のあと、私も佐伯さんと METAR を読んだの。ちゃんと意味がわかって、うれしかった！',
+        'IMSAFE、ちゃんと言える？ I、M、S、A、F、E。明日の試験にも、初飛行の朝にも出るよ。',
+      ]),
       ch2: say('飛ぶ日の朝、運航管理の天気、ちゃんと見てる？ 佐伯さんに「どうする？」って聞かれたとき、理由まで言えると、信頼されるんだって。', { if: ch('ch2'), else: 'ch1', end: true }),
     } };
   }
@@ -185,15 +242,38 @@ export function peopleDialogs() {
       ch4: say('計器飛行、わりと好きなんだ。順番どおりに見て、順番どおりに直す。学科の勉強と同じだから。……教えようか？', { if: ch('ch4'), else: 'ch5', end: true }),
       ch5: say('Seminole の手順、カードにまとめてみたんだ。片発のときの順番、Mixture、Props、Throttles、Flaps、Gear……。よかったら使って。', { if: ch('ch5'), else: 'ch6', end: true }),
       ch6: say('最終審査、緊張するね。でも、きみが教えてくれたみたいに、ひとつずつやれば大丈夫だと思う。', { if: { all: [ch('ch6'), { ctx: 'career.graduated', is: false }] }, else: 'ask', end: true }),
-      ask: say('ねえ……もし時間があったら、学科、少し教えてくれないかな。気象のところが、どうしても頭に入らなくて。', { if: { all: [ch('ch1'), flag('helped_mori', false), { ctx: 'career.slot', is: 'evening' }] }, else: 'helped', choices: [
+      // (after the weather class: 第 4 章 is the 5th class's — ctx career.cls 5 or 6)
+      ask: say('ねえ……もし時間があったら、学科、少し教えてくれないかな。今日の気象のところが、どうしても頭に入らなくて。', { if: { all: [ch('ch1'), flag('helped_mori', false), { ctx: 'career.slot', is: 'evening' }, { any: [{ ctx: 'career.cls', is: 5 }, { ctx: 'career.cls', is: 6 }] }] }, else: 'helped', choices: [
         { text: '今夜、一緒にやろう', next: 'yes', effects: [{ set: 'helped_mori' }, { trust: 'mori', add: 8 }, { hook: 'help' }] },
         { text: 'ごめん、今日は自分の復習で手一杯なんだ', next: 'no' },
       ] }),
-      yes: say('ほんとに！？ ありがとう……！ METAR の雲の書き方から、お願いします。', { hook: { name: 'nod' }, next: 'yes:2' }),
+      // (the cadet explains, and he answers back)
+      yes: say('ほんとに！？ ありがとう……！ じゃあ METAR の雲から。BKN って、どういう意味？', { hook: { name: 'nod' }, choices: [
+        { text: '空の 5/8〜7/8 が雲。BKN と OVC の一番低い層が雲高になる', next: 'yes:ok' },
+        { text: '雲がまったくないこと', next: 'yes:ng' },
+        { text: '霧が出ていること', next: 'yes:ng' },
+      ] }),
+      'yes:ok': say('そうか、それで BKN からが「雲高」なんだ……！ 説明してもらうと、すっと入るね。', { next: 'yes:q2' }),
+      'yes:ng': say('あれ、教科書の表だと「BKN 5/8〜7/8（雲高）」になってる……。一緒に見直そう。', { next: 'yes:q2' }),
+      'yes:q2': say('もう一つ。METAR の最後の A2992 は？', { choices: [
+        { text: '高度計の規正値。29.92 inHg', next: 'yes:ok2' },
+        { text: '気温と露点', next: 'yes:ng2' },
+        { text: '風の向きと強さ', next: 'yes:ng2' },
+      ] }),
+      'yes:ok2': say('高度計か！ ATIS で聞く数字と同じなんだね。これなら覚えられそう。', { next: 'yes:2' }),
+      'yes:ng2': say('うーん、A で始まるのは高度計（Altimeter）の 29.92 だって、教科書にあるよ。……ふたりで間違えて、ふたりで覚えたね。', { next: 'yes:2' }),
       'yes:2': say('（ふたりで遅くまで教科書を読んだ。人に説明すると、自分のわかっていないところもよく見えた。）', { speaker: 'player', end: true }),
       no: say('そうだよね、ごめん。自分でやってみるよ。', { end: true }),
       helped: say('この前はありがとう。おかげで、気象の問題はだいぶ解けるようになったよ。', { if: flag('helped_mori'), else: 'ch1', end: true }),
-      ch1: say('気象の問題、まだ半分くらいしか解けないんだ……。夜、ラウンジで復習してるよ。', { if: ch('ch1'), else: 'ch2', end: true }),
+      ...byClass(say, 'ch1', [
+        '授業、ついていけるかな……。ミラー先生の英語、ゆっくりだといいんだけど。',
+        '揚力の式、L ＝ ½ρV²SCL……。記号が多くて、頭がぐるぐるするよ。',
+        'キャブレターアイスって、暑い日でも湿っていると起きるんだって。日本語でも難しいのに……。',
+        '僕、アルファベットの言い方は得意かも。昔、無線を聞くのが好きだったんだ。',
+        'k4、①の台本を見ながらで、やっと通せたよ。②はまだ少し怖い。',
+        '気象の問題、まだ半分くらいしか解けないんだ……。夜、ラウンジで復習してるよ。',
+        '明日の学科試験、気象が出たらどうしよう……。でも、やるしかないよね。',
+      ], { guard: ch('ch1'), otherwise: 'ch2' }),
       ch2: say('失速の課目、明日なんだ……。機首を上げていくとき、手に汗かいちゃって。きみはどうだった？', { end: true }),
     } };
   }
@@ -202,7 +282,15 @@ export function peopleDialogs() {
     const say = (text, more = {}) => ({ speaker: 'lecturer', text, ...more });
     D.lecturer = { start: 'p1', nodes: {
       p1: say('Hello! 座学を担当するミラーです。英語と日本語、半分ずつで話しますね。Don\'t worry、すぐに慣れます。', { if: ch('prologue'), else: 'ch1', hook: { name: 'look', arg: 'player' }, end: true }),
-      ch1: say('授業は午前、ブリーフィング室 2。訓練装置は午後、訓練装置室で。Any questions? ……なければ、また教室で。', { if: ch('ch1'), else: 'ch2', end: true }),
+      ...byClass(say, 'ch1', [
+        '授業は午前、ブリーフィング室 2。訓練装置は午後、訓練装置室で。Any questions? ……なければ、また教室で。',
+        '授業でわからなかったところは、いつでも聞いてください。わかりません、は大歓迎です。',
+        '性能の表は、本物の POH で読む練習をしましょう。Numbers matter.',
+        'Your phonetics are getting better. 次の授業で、それを交信の型に入れます。',
+        'チェアフライトは、タブレットの「練習」から何度でもできます。Practice makes perfect.',
+        'Weather and emergencies, a big day. MAYDAY は 3 回、忘れずに。',
+        '明日は学科試験。28 問、80% で合格です。Good luck — you are ready.',
+      ], { guard: ch('ch1'), otherwise: 'ch2' }),
       ch2: say('Good to see you! もう飛んでいるんですね。交信、教室で練習したとおりにできていますか？ Read back, always.', { if: { ctx: 'career.graduated', is: false }, else: 'grad', end: true }),
       grad: say('Congratulations! 最初の授業で、niner の言い方に苦労していたのを覚えています。今は、立派なパイロットの英語ですよ。', { hook: { name: 'nod' }, end: true }),
     } };

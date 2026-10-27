@@ -17,7 +17,8 @@ import { createCareer, CH2, GROUND, passedAt, SOLO_TRUST, CLASSES, STAGE, CHECKS
 import { planFor } from '../src/career/day.js';
 import { peopleDialogs } from '../src/content/dialog/people.js';
 import { careerInstructorDialogs } from '../src/content/dialog/instructor-career.js';
-import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, scoreOf, classOptions, heardOf, chairDebriefDialogs } from '../src/content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, scoreOf, classOptions, heardOf, chairDebriefDialogs, reviewQuestions } from '../src/content/school.js';
+import { eventDialogs } from '../src/content/dialog/ch1-events.js';
 import { chairScript } from '../src/content/chair-flight.js';
 import { runChairFlight } from '../src/dialog/chair-flight.js';
 import { createRunner, createDialogState, trustOf } from '../src/dialog/engine.js';
@@ -93,6 +94,12 @@ test('career run: from the first day to the first solo — every gate in order, 
         career.done(it.kind, it.id);
         if (it.kind === 'solo') career.soloDone();
       } else if (it.kind === 'study') career.done('study', it.id);
+      // (chapter 1's evenings, and its Sunday: the event talked through — content/dialog/ch1-events.js)
+      else if (it.kind === 'event') {
+        let done = false;
+        run(eventDialogs(it.id, { seed: st.seed + st.day, weather: { metar: w.metar.am, decision: w.decision, why: w.why }, review: it.id === 'week' ? reviewQuestions(FL, career.state, {}) : [] }), 'ev', { state: createDialogState(), hooks: (n, a) => { if (n === 'done' && a === 'event') done = true; careerHook(career, n, a); } });
+        assert.ok(done, `event ${it.id} talked through`); career.done('event', it.id);
+      }
     }
     if (!career.state.solo) { career.sleep(); career.advanceChapter(prog, trustOf(talk, 'instructor')); }
   }
@@ -165,6 +172,12 @@ test('career run M6: from the morning after the first solo to the graduation —
         assert.ok(pass, `day ${st.day} ${plan.lessons.join(' ')}: ${r.got.map(L => `${L.def.id} ${L.grade}`).join(', ')}`);
         if (it.kind === 'flight') career.done('flight', it.id); else career.check(it.id, pass);
       } else if (it.kind === 'study') career.done('study', it.id);
+      // (chapter 1's evenings, and its Sunday: the event talked through — content/dialog/ch1-events.js)
+      else if (it.kind === 'event') {
+        let done = false;
+        run(eventDialogs(it.id, { seed: st.seed + st.day, weather: { metar: w.metar.am, decision: w.decision, why: w.why }, review: it.id === 'week' ? reviewQuestions(FL, career.state, {}) : [] }), 'ev', { state: createDialogState(), hooks: (n, a) => { if (n === 'done' && a === 'event') done = true; careerHook(career, n, a); } });
+        assert.ok(done, `event ${it.id} talked through`); career.done('event', it.id);
+      }
     }
     if (!graduated) { career.sleep(); career.advanceChapter(prog, 70); }
   }

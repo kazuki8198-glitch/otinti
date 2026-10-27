@@ -20,7 +20,8 @@ export function nextStep(s) {
   const cur = plan.find(x => x.state === 'now' || x.state === 'later');
   if (!cur) {
     const evening = s.slot === 'evening';
-    return { text: evening ? '今日の予定は終わり。ラウンジで同期と話せます。正面入口から寮に帰ると次の日になります'
+    // (chapter 1: tomorrow said — content/day-flow.js doneLine)
+    return { text: s.doneText ? s.doneText : evening ? '今日の予定は終わり。ラウンジで同期と話せます。正面入口から寮に帰ると次の日になります'
       : '今日の予定は終わりました。正面入口から寮に帰ると、次の日になります', who: null, room: 'outside', at: 'entrance' };
   }
   const later = ORDER.indexOf(cur.slot) > ORDER.indexOf(s.slot) ? `${SLOT_JA[cur.slot]}：` : '';

@@ -13,6 +13,25 @@ import { NOCATCH } from '../../aircraft/systems.js';
 export const CREW = ['instructor', 'chief', 'examiner'];
 
 export const EN = {
+  // ---- 真壁 主任教官 in chapter 1 (content/dialog/people.js: a line for each class done); a second career's welcome
+  '今日から座学ですね。教室でも、わからないことは、わからないと言ってください。それでいいんです。': 'Ground school starts today. In the classroom too, if you don\'t understand, say so. That\'s how it should be.',
+  '4 つの力の授業はどうでしたか。上昇中も力はつり合っている、というところで、たいていの人が一度つまずきます。': 'How was the class on the four forces? Most people stumble once on the idea that the forces are balanced in a climb too.',
+  '暑い日は空気が薄く、離陸が長くなる。今日の性能の話は、夏の LAB では毎日のことです。': 'On a hot day the air is thin and the take-off run is longer. Today\'s talk on performance is every day at LAB in summer.',
+  'Alfa、Bravo、Charlie。私も最初は niner がなかなか口から出ませんでした。声に出すのがいちばんです。': 'Alfa, Bravo, Charlie. At first I couldn\'t get niner out of my mouth either. Saying it aloud is the best way.',
+  '交信は、聞く、考える、話す。今日の k4 で管制官の声を聞いたなら、初飛行の準備はもう半分できています。': 'On the radio: listen, think, speak. If you heard the controller in today\'s k4, you\'re already half ready for the first flight.',
+  '飛ばないと決めるのも、立派な判断です。今日の METAR、自分で読めましたか。': 'Deciding not to fly is a fine decision too. Could you read today\'s METAR yourself?',
+  '明日は学科試験、その次が初飛行です。IMSAFE の最後の E、気持ちの落ち着きも忘れずに。': 'Tomorrow is the written test, and then the first flight. Don\'t forget the last E of IMSAFE: keep your feelings settled.',
+  'ここでの約束は 3 つだけです。わからないことは、わからないと言う。決められた手順は、省かない。疲れているとき、体調がよくないときは、正直に言う。案内は佐伯さん、午後は早瀬教官です。': 'There are only three promises here. If you don\'t understand, say so. Never skip a set procedure. When you\'re tired or unwell, say so honestly. Ms. Saeki will show you around; this afternoon, Mr. Hayase.',
+  '入社の日の 3 つ目の約束、覚えていますか。疲れているとき、体調がよくないときは、正直に言う。今日の授業の IMSAFE は、その約束を形にしたものです。': 'Do you remember the third promise from your first day? When you\'re tired or unwell, say so honestly. Today\'s IMSAFE is that promise put into a form.',
+  'IMSAFE の M は？': 'The M of IMSAFE?',
+  'そうです。市販の薬でも、眠くなるものは飛ぶ前に確かめます。': 'Right. Even an over-the-counter medicine: if it makes you drowsy, check before you fly.',
+  'Medication、薬です。市販の薬でも、眠くなるものは確かめます。': 'Medication. Even an over-the-counter medicine that makes you drowsy: check it.',
+  'F は？': 'And F?',
+  '疲れです。いちばん自分では気づきにくい。': 'Fatigue. The hardest one to notice in yourself.',
+  'Fatigue、疲れです。自分では気づきにくいものです。': 'Fatigue. You hardly notice it in yourself.',
+  '……今日のあなたは、少し疲れているように見えます。明後日の初飛行の前の夜は、早く寝てください。': '…You look a little tired today. The night before the first flight, the day after tomorrow, go to bed early.',
+  '今日のあなたは、顔色もいい。明後日の初飛行の朝も、正直に答えてください。': 'You look well today. On the morning of the first flight, the day after tomorrow, answer honestly too.',
+  'わからないことは、わからないと言う。疲れているときは、そう言う。それができる人を、私は信頼します。': 'If you don\'t understand, say so. When you\'re tired, say so. I trust people who can do that.',
   // ---- 早瀬 教官: the first meeting, the mornings, the chapters (content/dialog/instructor-career.js)
   'はじめまして。今日からあなたの担当教官になる、早瀬 航です。': 'Nice to meet you. I\'m Wataru Hayase, and from today I\'m your instructor.',
   '最初の 1 週間ほどは座学です。教室でミラー講師の授業、午後は訓練装置で計器と交信の練習。学科試験に受かったら、Archer で飛び始めます。': 'The first week or so is ground school: Ms. Miller\'s classes in the classroom, and in the afternoons the training device, for instruments and radio. Pass the written test, and you start flying the Archer.',
@@ -26,6 +45,15 @@ export const EN = {
   'まずはロビーで、真壁さんの歓迎の話を聞いてきてください。もうすぐ始まりますよ。': 'First, go to the lobby and hear Mr. Makabe\'s welcome. It starts soon.',
   '午前は、運航管理の佐伯さんが訓練所を案内してくれます。ロビーの北の部屋です。また午後に。': 'This morning Ms. Saeki from dispatch will show you around. Her room is north of the lobby. See you this afternoon.',
   '座学、がんばっていますね。教科書でわからないところがあれば、聞いてください。': 'You\'re working hard at ground school. If anything in the textbook isn\'t clear, ask me.',
+  // (chapter 1: a line for each class done; a second career's meeting, short)
+  'はじめまして。担当教官の早瀬 航です。明日から座学、ブリーフィング室 2 で。急がなくて大丈夫、わからないことは、いつでも聞いてください。': 'Nice to meet you. I\'m Wataru Hayase, your instructor. Ground school starts tomorrow, in briefing room 2. No need to hurry; ask me anything you don\'t understand, any time.',
+  '座学、がんばっていますね。初飛行で使う節は、今日の訓練に要るところのペースでも全部読みます。わからないところがあれば、聞いてください。': 'You\'re working hard at ground school. The sections the first flight uses are read in full even at the pace for today\'s training. If anything isn\'t clear, ask me.',
+  '4 つの力のつり合いは、初飛行の a1 でそのまま使います。上昇するか降下するかは、主にパワー。覚えておいてください。': 'The balance of the four forces is exactly what you use on the first flight, a1. Whether you climb or descend is mainly the power. Remember that.',
+  'ピトー静圧の話、外部点検でピトー管のカバーを外すときに思い出してください。': 'The pitot-static system: remember it when you take the pitot cover off on the walk-around.',
+  '数字の言い方は、管制の指示を復唱するときに使います。高度と周波数は、とくに丁寧に。': 'How to say numbers is what you use to read back the controller\'s instructions. Altitudes and frequencies especially carefully.',
+  'チェアフライトで交信の流れが頭に入れば、初飛行の交信は半分できたようなものです。': 'Once the chair flight has the flow of the radio in your head, the first flight\'s radio is half done.',
+  '初飛行の朝は、運航管理で天気を見てから飛ぶかを決めます。今日の METAR の読み方を、そのまま使います。': 'On the morning of the first flight we look at the weather at dispatch and decide whether to go. You use today\'s way of reading a METAR just as it is.',
+  '明後日が初飛行です。前の晩はよく寝ること。IMSAFE の F ですね。わからないところがあれば、今のうちに。': 'The first flight is the day after tomorrow. Sleep well the night before: the F of IMSAFE. If anything isn\'t clear, now is the time.',
   '数字の言い方と、交信の型。今のうちに体に入れておくと、飛び始めてから楽になります。': 'How to say numbers, and the shape of a radio call. Get them into your body now, and flying will be easier later.',
   '今日から第 3 章、航法です。場周経路の外へ、もっと遠くへ。横風、短い滑走路、VOR、それから地図と時計で飛ぶ推測航法。': 'From today, chapter 3: navigation. Out of the pattern, and further. Crosswinds, short runways, the VOR, and dead reckoning with a map and a clock.',
   '最後は、ひとりでの野外飛行です。航法ログを自分で作って、ひとりで飛んで、帰ってくる。途中で目的地が変わることもあります。': 'At the end, a solo cross-country. You make your own nav log, fly it alone, and come back. The destination may change on the way.',

@@ -20,7 +20,7 @@
 import { INSTRUCTOR } from './instructor.js';
 
 export const CAREER_HOOKS = ['imsafe', 'done', 'board', 'logbook', 'solo', 'look', 'nod', 'point', 'tem'];
-export const CAREER_FLAGS = ['met_instructor', 'soloed', 'briefed_today'];
+export const CAREER_FLAGS = ['met_instructor', 'soloed', 'briefed_today', 'prologue_short'];
 const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' }, kiryu: { name_ja: '桐生', color: '#c9b6ff' }, asahi: { name_ja: '朝日', color: '#ffc4a8' }, mori: { name_ja: '森', color: '#a8e3ff' } };
 // the context: today { lessonTitle, studyTitle, studySection (a textbook section with a figure, or '') },
 // imsafe { honest (true / false) }, career { tired }
@@ -41,6 +41,8 @@ const temNodes = (say, p, next) => ({
 export function careerInstructorDialogs() {
   const say = (text, more = {}) => ({ speaker: 'instructor', text, ...more });
   const M = {
+    // (a career begun after another, its welcome taken in short: the meeting in short too)
+    ms: say('はじめまして。担当教官の早瀬 航です。明日から座学、ブリーフィング室 2 で。急がなくて大丈夫、わからないことは、いつでも聞いてください。', { if: { flag: 'prologue_short' }, else: 'm1', hook: { name: 'look', arg: 'player' }, effects: [{ set: 'met_instructor' }, { hook: 'done', arg: 'meet' }], end: true }),
     m1: say('はじめまして。今日からあなたの担当教官になる、早瀬 航です。', { hook: { name: 'look', arg: 'player' }, next: 'm2' }),
     m2: say('最初の 1 週間ほどは座学です。教室でミラー講師の授業、午後は訓練装置で計器と交信の練習。学科試験に受かったら、Archer で飛び始めます。', { next: 'm3' }),
     m3: say('飛ぶ日は毎回、この部屋でブリーフィングをして、外部点検、エンジン始動、交信、離陸、課目、着陸、講評。全部の課目を終えて審査に受かったら、ファーストソロです。', { hook: { name: 'point', arg: 'board' }, next: 'm4' }),
@@ -64,11 +66,16 @@ export function careerInstructorDialogs() {
     e2: say('まずはロビーで、真壁さんの歓迎の話を聞いてきてください。もうすぐ始まりますよ。', { if: { ctx: 'career.slot', is: 'morning' }, else: 'e3', hook: { name: 'nod' }, end: true }),
     e3: say('午前は、運航管理の佐伯さんが訓練所を案内してくれます。ロビーの北の部屋です。また午後に。', { hook: { name: 'nod' }, end: true }),
   };
+  const G_ASK = [{ text: '質問があります', next: 'ask:root' }, { text: '大丈夫です', next: 'g2' }];
   const G = {
-    g1: say('座学、がんばっていますね。教科書でわからないところがあれば、聞いてください。', { hook: { name: 'look', arg: 'player' }, choices: [
-      { text: '質問があります', next: 'ask:root' },
-      { text: '大丈夫です', next: 'g2' },
-    ] }),
+    // (a line for each number of classes done: ctx career.cls)
+    'g1': say('4 つの力のつり合いは、初飛行の a1 でそのまま使います。上昇するか降下するかは、主にパワー。覚えておいてください。', { if: { ctx: 'career.cls', is: 1 }, else: 'g1:2', hook: { name: 'look', arg: 'player' }, choices: G_ASK }),
+    'g1:2': say('ピトー静圧の話、外部点検でピトー管のカバーを外すときに思い出してください。', { if: { ctx: 'career.cls', is: 2 }, else: 'g1:3', hook: { name: 'look', arg: 'player' }, choices: G_ASK }),
+    'g1:3': say('数字の言い方は、管制の指示を復唱するときに使います。高度と周波数は、とくに丁寧に。', { if: { ctx: 'career.cls', is: 3 }, else: 'g1:4', hook: { name: 'look', arg: 'player' }, choices: G_ASK }),
+    'g1:4': say('チェアフライトで交信の流れが頭に入れば、初飛行の交信は半分できたようなものです。', { if: { ctx: 'career.cls', is: 4 }, else: 'g1:5', hook: { name: 'look', arg: 'player' }, choices: G_ASK }),
+    'g1:5': say('初飛行の朝は、運航管理で天気を見てから飛ぶかを決めます。今日の METAR の読み方を、そのまま使います。', { if: { ctx: 'career.cls', is: 5 }, else: 'g1:6', hook: { name: 'look', arg: 'player' }, choices: G_ASK }),
+    'g1:6': say('明後日が初飛行です。前の晩はよく寝ること。IMSAFE の F ですね。わからないところがあれば、今のうちに。', { if: { ctx: 'career.cls', is: 6 }, else: 'g1:0', hook: { name: 'look', arg: 'player' }, choices: G_ASK }),
+    'g1:0': say('座学、がんばっていますね。初飛行で使う節は、今日の訓練に要るところのペースでも全部読みます。わからないところがあれば、聞いてください。', { hook: { name: 'look', arg: 'player' }, choices: G_ASK }),
     g2: say('数字の言い方と、交信の型。今のうちに体に入れておくと、飛び始めてから楽になります。', { end: true }),
   };
   // (M6) a later chapter's first day: what it is, then the day as always
@@ -144,7 +151,7 @@ export function careerInstructorDialogs() {
   };
   return {
     speakers: SPEAKERS, flags: [...CAREER_FLAGS], hooks: [...CAREER_HOOKS],
-    dialogs: { meet: { start: 'm1', nodes: M }, early: { start: 'e1', nodes: E }, ground: { start: 'g1', nodes: G }, day: { start: 'i3', nodes: { ...I, ...D } }, study: { start: 's1', nodes: S },
+    dialogs: { meet: { start: 'ms', nodes: M }, early: { start: 'e1', nodes: E }, ground: { start: 'g1', nodes: G }, day: { start: 'i3', nodes: { ...I, ...D } }, study: { start: 's1', nodes: S },
       xc: { start: 'x1', nodes: X }, grad: { start: 'g1', nodes: GR },
       solo: { start: 'o1', nodes: O }, checkday: { start: 'k1', nodes: K }, celebrate: { start: 'c1', nodes: C }, after: { start: 'a1', nodes: A } },
   };

@@ -1,0 +1,106 @@
+// CADET — content/dialog/ch1-events.js : chapter 1's evenings — each class day's own event, with someone of the
+// academy, that uses the day's class (career/career.js CH1_EVENTS): the cadet answers, they answer back. None is scored
+// or kept for a gate; each ends with the hook 'done' 'event'. All fictional (content/people.js).
+//   forces  (第 1 章) 大城さん, on the apron by the Archer: where its four forces come from, which way the nose goes on
+//           the take-off roll, and why (left-turning tendencies, aero.left);
+//   pitot   (第 2・3 章) 大城さん: the Archer's pitot tube under the left wing with its cover, the fuel sump's water,
+//           a blocked static port (sys.g1000; the walk-around's own points, content/walkaround-archer.js);
+//   spell   (第 6・7 章) 佐伯さん at dispatch: today's aircraft's registration, a frequency and an altitude said aloud;
+//   readback (第 8・9 章) 桐生, in the lounge, as the controller: the read-backs a hold short and a line up and wait need;
+//   metar   (第 4・10 章) 佐伯さん: today's METAR read with her — if today were the first flight, would it go;
+//   imsafe  (第 5・11 章) 真壁 主任教官: IMSAFE's letters, and the cadet's own today (his third promise);
+//   week    (Sunday) 朝日: the week's questions, if the cadet likes (career's review: those missed first).
+// fromBank: the classes' questions (content/school.js) for the week's review.
+import { PEOPLE } from '../people.js';
+
+const SPEAKERS = Object.fromEntries([...Object.entries(PEOPLE).map(([id, p]) => [id, { name_ja: p.title, color: p.color }]), ['player', { name_ja: 'あなた', color: '#f2b632' }]]);
+export const EVENT_HOOKS = ['done', 'look', 'nod', 'point', 'ans'];
+
+function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const shuffled = (a, r) => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+
+// a scene: its lines (who, text), its questions ({ who, q, opts (the right one first), ok: the reply when right, ng:
+// when wrong }), its end; → the dialog's nodes from 'e0'
+function scene(who, parts, end, r) {
+  const N = {};
+  let k = 0, open = [];
+  const id = () => `e${k++}`;
+  const link = (to) => { for (const n of open) n.next = to; };
+  for (const p of parts) {
+    if (p.q) {
+      // (a question's node: e<k>:eq — school.js DECISION_NODE counts it a decision)
+      const q = `${id()}:eq`, opts = shuffled(p.opts.map((t, i) => ({ t, ok: i === 0 })), r);
+      link(q);
+      N[q] = { speaker: p.who || who, text: p.q, choices: opts.map(o => ({ text: o.t, next: `${q}:${o.ok ? 'ok' : 'ng'}`, ...(p.id ? { effects: [{ hook: 'ans', arg: `${p.id}|${o.ok ? 1 : 0}` }] } : {}) })), ...(p.hook ? { hook: p.hook } : {}) };
+      N[`${q}:ok`] = { speaker: p.who || who, text: p.ok, hook: { name: 'nod' } };
+      N[`${q}:ng`] = { speaker: p.who || who, text: p.ng };
+      open = [N[`${q}:ok`], N[`${q}:ng`]];
+    } else {
+      const n = id(); link(n);
+      N[n] = { speaker: p.who || who, text: p.text, ...(p.hook ? { hook: p.hook } : {}), ...(p.if ? { if: p.if, else: p.else } : {}) };
+      open = [N[n]];
+    }
+  }
+  const e = id(); link(e);
+  N[e] = { speaker: who, text: end, effects: [{ hook: 'done', arg: 'event' }], end: true };
+  return N;
+}
+
+// eventDialogs(id, { seed, weather: { metar, decision: 'go' | 'wait' | 'early' | 'cancel', why }, tired, review:
+// [{ id, q, opts, ok, why }] }) → the dialog data (dialog 'ev')
+export function eventDialogs(id, { seed = 1, weather = null, tired = false, review = [] } = {}) {
+  const r = rng(seed * 101 + id.length * 7);
+  let N = null;
+  if (id === 'forces') N = scene('mechanic', [
+    { text: '今日は 4 つの力の授業だったんだってな。せっかくだ、本物で見ていけ。', hook: { name: 'look', arg: 'player' } },
+    { q: 'この Archer で、機体を持ち上げる揚力を生んでいるのはどこだ？', opts: ['主翼', '尾翼だけ', 'プロペラ'], ok: 'そうだ。主翼の形と迎え角で、空気を下へ曲げている。', ng: '主翼だ。尾翼は姿勢を整える側で、持ち上げる主役は主翼だな。' },
+    { q: '推力は？', opts: ['プロペラが前へ引く力', '主翼が押し上げる力', '尾翼が押す力'], ok: 'そう。エンジンがプロペラを回して、機体を前へ引っ張る。', ng: 'プロペラだ。主翼が出すのは揚力のほうだ。' },
+    { q: '離陸の滑走で機首を上げていくと、機首はどっちへ向きたがる？', opts: ['左（だから右ラダーを踏む）', '右', 'どっちにも向かない'], ok: 'そのとおり。P ファクターなんかで左に向く。右ラダーだ。', ng: '左だ。プロペラの右側の羽根が強く押すから、機首は左。右ラダーで真っすぐにする。' },
+  ], 'よし。明日からは、外部点検のたびに主翼を見てくれ。へこみや汚れでも、翼の働きは落ちる。', r);
+  if (id === 'pitot') N = scene('mechanic', [
+    { text: '今日はピトー静圧の話か。左の翼の下を見てみな。細い管に、赤いカバーが付いてるだろう。', hook: { name: 'point', arg: 'aircraft' } },
+    { q: 'あのカバーを付けたまま離陸したら、どうなる？', opts: ['速度計が 0 のまま動かない', '高度計が止まる', '何も起きない'], ok: 'そう。だから外部点検で、必ず外して機内にしまう。', ng: '速度計だ。ピトー管がふさがると、速度計は 0 のまま動かない。' },
+    { q: '翼の下の燃料のサンプで取った燃料、カップの底に透明な玉が沈んでいたら？', opts: ['水（燃料と混じらない）。出なくなるまで取る', '空気の泡。気にしない', 'オイル。整備に回す'], ok: 'それだ。水は燃料より重いから底に沈む。出なくなるまで抜く。', ng: '水だよ。燃料と混じらずに底に沈む。出なくなるまで抜くんだ。' },
+    { q: '最後にひとつ。静圧孔が詰まったら、高度計は？', opts: ['止まる', '速く動く', '正常に動く'], ok: 'そう。昇降計も 0 だ。代替静圧に切り替える。……授業のとおりだな。', ng: '止まるんだ。昇降計も 0 になる。代替静圧に切り替える。' },
+  ], '機体のことで気になったら、いつでも言ってくれ。勘違いでいい。', r);
+  if (id === 'spell') N = scene('dispatcher', [
+    { text: '今日はアルファベットと数字の授業でしたね。せっかくなので、ここで声に出してみましょう。', hook: { name: 'look', arg: 'player' } },
+    { q: '明日から使う機体、N738SY を無線で言うと？', opts: ['November Seven Three Eight Sierra Yankee', 'November Seventy-Three Eight SY', 'N Seven Thirty-Eight Sierra Yankee'], ok: 'Perfect. 数字は 1 つずつ、文字はフォネティックで。', ng: '数字は 1 けたずつ、文字はフォネティックです。November Seven Three Eight Sierra Yankee。' },
+    { q: 'Ground の周波数、121.7 は？', opts: ['one two one point seven', 'one twenty-one seven', 'twelve one seven'], ok: 'そうです。小数点は point。', ng: '1 けたずつ、小数点は point です。one two one point seven。' },
+    { q: '高度 4,500 ft は？', opts: ['four thousand five hundred', 'four five zero zero', 'forty-five hundred'], ok: 'はい。高度は千と百で言います。', ng: '高度は「千・百」で言います。four thousand five hundred。' },
+  ], 'ばっちりです。明日、管制官に言うときも、このとおりで。', r);
+  if (id === 'readback') N = scene('kiryu', [
+    { text: '今日の交信の型、復習しようぜ。俺が管制官をやるから、復唱してみて。', hook: { name: 'look', arg: 'player' } },
+    { text: '“Archer Eight Sierra Yankee, LAB Ground, runway three six, taxi via Alpha, hold short of runway three six at Alpha One.”' },
+    { q: 'さあ、復唱は？', opts: ['Runway three six, taxi via Alpha, hold short of runway three six at Alpha One, Archer Eight Sierra Yankee.', 'Roger, Archer Eight Sierra Yankee.', 'Wilco.'], ok: '……正解。hold short は、滑走路の名前まで復唱だよな。', ng: 'それじゃ駄目だ。hold short の指示は、滑走路の名前まで全部復唱する。Roger だけでは足りない。' },
+    { text: '“Archer Eight Sierra Yankee, LAB Tower, runway three six, line up and wait.”' },
+    { q: 'これは、離陸の許可？', opts: ['いいえ。滑走路に入って待つだけ', 'はい。そのまま離陸してよい', '滑走路を出ろという意味'], ok: 'そう。cleared for takeoff が来るまで待つ。……引っかからないか。やるな。', ng: '違う。line up and wait は、入って待つだけだ。離陸は cleared for takeoff を聞いてから。' },
+  ], 'くそ、もう一回くらい引っかかると思ったのに。……明日の k4 で、本物の管制官にもその調子でな。', r);
+  if (id === 'metar') {
+    const w = weather || { metar: 'KLAB 121353Z 36005KT 10SM FEW035 19/12 A2992', decision: 'go', why: '視程・雲・風とも基準内です。' };
+    const opts = { go: '予定どおり飛ぶ', wait: '午後まで待つ（回復を待つ）', early: '早めに出て、午前のうちに戻る', cancel: '今日は飛ばない' };
+    N = scene('dispatcher', [
+      { text: '天気の授業、どうでした？ 画面の今日の METAR、一緒に読んでみましょう。', hook: { name: 'point', arg: 'weather' } },
+      { text: `いまの METAR は「${w.metar}」です。` },
+      { q: 'もし今日が初飛行の日だったら、どうしますか？', opts: [opts[w.decision], ...Object.entries(opts).filter(([k]) => k !== w.decision).map(([, v]) => v).slice(0, 2)], ok: `私もそう思います。${w.why}`, ng: `私なら「${opts[w.decision]}」です。${w.why}` },
+      { q: 'METAR の BKN や OVC の雲の高さを、何と呼ぶでしょう？', opts: ['雲高（シーリング）', '視程', '露点'], ok: 'そうです。BKN と OVC の一番低い層が雲高です。', ng: '雲高（シーリング）です。BKN と OVC の一番低い層のことです。' },
+    ], '初飛行の朝も、ここで同じように決めます。理由まで言えたら、早瀬教官も安心です。', r);
+  }
+  if (id === 'imsafe') N = scene('chief', [
+    { text: '入社の日の 3 つ目の約束、覚えていますか。疲れているとき、体調がよくないときは、正直に言う。今日の授業の IMSAFE は、その約束を形にしたものです。', hook: { name: 'look', arg: 'player' } },
+    { q: 'IMSAFE の M は？', opts: ['Medication（薬）', 'Mission（任務）', 'Maintenance（整備）'], ok: 'そうです。市販の薬でも、眠くなるものは飛ぶ前に確かめます。', ng: 'Medication、薬です。市販の薬でも、眠くなるものは確かめます。' },
+    { q: 'F は？', opts: ['Fatigue（疲れ）', 'Fuel（燃料）', 'Flaps（フラップ）'], ok: '疲れです。いちばん自分では気づきにくい。', ng: 'Fatigue、疲れです。自分では気づきにくいものです。' },
+    { text: tired ? '……今日のあなたは、少し疲れているように見えます。明後日の初飛行の前の夜は、早く寝てください。' : '今日のあなたは、顔色もいい。明後日の初飛行の朝も、正直に答えてください。' },
+  ], 'わからないことは、わからないと言う。疲れているときは、そう言う。それができる人を、私は信頼します。', r);
+  if (id === 'week') {
+    const qs = review.slice(0, 3);
+    N = scene('asahi', [
+      { text: '日曜だね！ よかったら、今週の授業を少しだけ一緒に復習しない？ 間違えたところから。', hook: { name: 'look', arg: 'player' } },
+      ...qs.map((x, k) => ({ who: 'asahi', q: `${k ? 'もう一つ。' : ''}${x.q}`, opts: [x.opts[x.ok], ...x.opts.filter((_, j) => j !== x.ok)], ok: `正解！ ${x.why}`.trim(), ng: `答えは「${x.opts[x.ok]}」だって。${x.why}`.trim(), id: x.id })),
+      ...(qs.length ? [] : [{ text: '……と思ったけど、まだ問題がないね。じゃあ、ゆっくり休もう。' }]),
+    ], 'ありがと！ 人と一緒だと覚えるね。明日からまた授業、がんばろう。', r);
+  }
+  if (!N) throw new Error(`eventDialogs: no event ${id}`);
+  const flags = [];
+  return { speakers: SPEAKERS, flags, hooks: [...EVENT_HOOKS], dialogs: { ev: { start: 'e0', nodes: N } }, questions: [] };
+}

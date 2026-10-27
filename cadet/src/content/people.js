@@ -50,6 +50,8 @@ export const PLACES = AT;
 // so the lecturer is where the class or the device is, the chief where the welcome or the check ride is
 export function placeOf(id, slot, chapter, what = []) {
   const has = (k) => what.some(x => x.kind === k && (x.slot === slot || (slot === 'morning' && x.slot === 'am')));
+  // (chapter 1's evening event: its person stays at their place — career.js CH1_EVENTS)
+  if (slot === 'evening' && !PEERS.includes(id) && what.some(x => x.kind === 'event' && x.who === id)) return id === 'dispatcher' ? AT.counter : id === 'mechanic' ? AT.apron : id === 'chief' ? AT.chiefRoom : null;
   if (slot === 'evening') return PEERS.includes(id) ? AT[`lounge${PEERS.indexOf(id) + 1}`] : null;
   // (M6) the graduation morning: everyone in the lobby
   if (what.some(x => x.kind === 'graduation')) return id === 'chief' ? AT.lobbyFront : AT[`grad${['kiryu', 'asahi', 'mori', 'lecturer', 'dispatcher', 'mechanic', 'examiner'].indexOf(id) + 1}`] || null;

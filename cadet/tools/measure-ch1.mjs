@@ -45,8 +45,9 @@ export async function load() {
   const [school, career, engine, book, people, insc, spec, guide, answers, cast] = await Promise.all([mod('content/school.js'), mod('career/career.js'), mod('dialog/engine.js'), mod('content/book.js'),
     mod('content/dialog/people.js'), mod('content/dialog/instructor-career.js'), mod('content/academy-spec.js'), mod('career/guide.js'), mod('content/answer-map.js'), mod('content/people.js')]);
   let flow = null; try { flow = await mod('content/day-flow.js'); } catch (e) { /* (before the day's own lines) */ }
+  let events = null; try { events = await mod('content/dialog/ch1-events.js'); } catch (e) { /* (before the evenings' events) */ }
   let chair = null; try { chair = { content: await mod('content/chair-flight.js'), runner: await mod('dialog/chair-flight.js') }; } catch (e) { /* (before k4 was rebuilt) */ }
-  LOADED = { FL, school, career, engine, book, people, cast, insc, chair, spec, guide, answers, flow, BOOK: book.gameBook(FL), SPEC: spec.academySpec(FL) };
+  LOADED = { FL, school, career, engine, book, people, cast, insc, chair, spec, guide, answers, flow, events, BOOK: book.gameBook(FL), SPEC: spec.academySpec(FL) };
   return LOADED;
 }
 
@@ -178,12 +179,17 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
     // the morning: the card (0.65 s in, its time, 0.65 s out), the day's toast
     fixed('card', `${C.CHAPTERS[st.chapter].title} ${C.dateText(d)}`, 1.3 + 1.7);
     if (d === 10) break;                                                         // (the first flight's morning: here it ends)
-    const greet = st.chapter === 'prologue' ? '入社の日です。ロビーで、主任教官の話が始まります' : sch.some(x => x.kind === 'off') ? '今日は休日です。ラウンジで休むのも、自習するのもいい。正面入口から寮に帰れば、明日になります'
-      : `今日の予定：${sch.map(x => `${C.SLOT_NAMES[x.slot]} ${x.title}`).join('／')}（Tab でタブレット）`;
+    // (chapter 1: the day's own word — content/day-flow.js, as main.js greet says it)
+    const own = L.flow && st.chapter === 'ch1' ? L.flow.dayToast(st, sch, { missed: S.reviewFor ? S.reviewFor(FL, st, C.CLASSES.filter((_, i) => st.done[`class:${i}`]).length).missed : 0, short: skip }) : null;
+    const greet = st.chapter === 'prologue' ? '入社の日です。ロビーで、主任教官の話が始まります' : own || (sch.some(x => x.kind === 'off') ? '今日は休日です。ラウンジで休むのも、自習するのもいい。正面入口から寮に帰れば、明日になります'
+      : `今日の予定：${sch.map(x => `${C.SLOT_NAMES[x.slot]} ${x.title}`).join('／')}（Tab でタブレット）`);
     fixed('toast', greet, readingSeconds(greet));
     let at = PLACES.entrance, slot = st.slot;
-    const walk = (to, why) => { const m = walkMeters(L, at, to); at = to; fixed('walk', why, m / WALK_MPS); };
-    const guideLine = (text) => fixed('guide', text, readingSeconds(text));
+    // (skip: G jumps to the next place — its card's 0.3 s in, 0.2 s, 0.3 s out — the guide not needed to be read;
+    // the words after the class and the device left out, as main.js does on a day the way is skipped)
+    const walk = (to, why) => { const m = walkMeters(L, at, to); at = to; if (skip) fixed('jump', why, 0.8); else fixed('walk', why, m / WALK_MPS); };
+    const guideLine = (text) => { if (!skip) fixed('guide', text, readingSeconds(text)); };
+    const after = (text) => { if (!skip) fixed('toast', text, readingSeconds(text)); };
     const doTalk = (label, data, id, opts = {}) => {
       const r = runTalk(L, data, id, opts);
       day.talks.push({ label, ...summarize(r.lines), lines: r.lines });
@@ -214,7 +220,7 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
           noteAsked(L, r, asked, d, `class ${it.id}`, heardBefore(heardAll, r), k1Parts);
           career.done('class', it.id); career.tire(6); career.advance('pm');
           classDay[it.id] = { day: d, chapters: S.CLASS_CHAPTERS[+it.id] };
-          const tc = '午後：訓練装置室（FTD）で訓練装置の課目です'; fixed('toast', tc, readingSeconds(tc));
+          const tc = L.flow ? L.flow.afterClassToast(+it.id) : '午後：訓練装置室（FTD）で訓練装置の課目です'; after(tc);
         } else if (it.kind === 'ftd') {
           guideLine(L.guide.nextStep({ chapter: st.chapter, slot: it.slot, plan: sch.map(x => ({ ...x, state: x === it ? 'now' : x.slot === 'am' ? 'done' : 'later' })) }).text);
           walk(placeOfPerson(L, 'lecturer', 'pm', 'ch1', sch.filter(x => x.kind === 'ftd').map(x => ({ ...x, slot: 'pm' }))), '訓練装置室');
@@ -238,28 +244,39 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
           if (result === 'pass') { prog.lessons[it.id] = { tries: 1, best: 'S', pass: true, levels: [] }; }
           ftdDay[it.id] = { day: d, result };
           career.advance(it.slot === 'am' ? 'pm' : 'evening');
-          const tf = `${it.id} 合格。${career.slot === 'evening' ? '今日の予定は終わりです' : ''}`; fixed('toast', tf, readingSeconds(tf));
+          const tf = L.flow && career.slot === 'evening' ? L.flow.afterFtdToast(it.id, sch) : `${it.id} 合格。${career.slot === 'evening' ? '今日の予定は終わりです' : ''}`; after(tf);
         } else if (it.kind === 'exam') {
           guideLine(L.guide.nextStep({ chapter: st.chapter, slot: it.slot, plan: [{ ...it, state: 'now' }] }).text);
           walk(placeOfPerson(L, 'lecturer', it.slot, 'ch1', [it]), '計画室');
           const q = { quiz: {} }, s2 = L.engine.createDialogState();
-          const data = S.examDialogs(FL, it.id, { seed: st.seed + st.day, ...(S.heardOf ? { heard: S.heardOf(FL, career.state), attempt: career.attempt(`exam:${it.id}`) } : {}) });
+          const n = career.attempt(`exam:${it.id}`), data = S.examDialogs(FL, it.id, { seed: st.seed + st.day, ...(S.heardOf ? { heard: S.heardOf(FL, career.state), attempt: n } : {}), ...(S.mixedReview && it.id === 'written1' ? { warm: S.mixedReview(FL, career.state, { attempt: n }) } : {}) });
           const r = doTalk(`exam ${it.id}`, data, 'exam', { state: s2, ctx: q, kind: 'exam', onHook: (n, a) => { if (n === 'quizEnd') q.quiz = S.scoreOf(s2, +a); careerHook(n, a); } });
           noteAsked(L, r, asked, d, `exam ${it.id}`, heardBefore(heardAll, r), k1Parts);
           career.exam(it.id, q.quiz.pct); career.advance('evening');
-        }
+        } else if (it.kind === 'event') doEvent(it);
       }
+    } else if (L.events) for (const it of sch.filter(x => x.kind === 'event')) doEvent(it);
+    // (chapter 1's events: content/dialog/ch1-events.js, part of the day's way)
+    function doEvent(it) {
+      if (!L.events) return;
+      guideLine(L.guide.nextStep({ chapter: st.chapter, slot: career.state.slot, plan: sch.map(x => ({ ...x, state: x === it ? 'now' : x.kind === 'off' ? 'later' : 'done' })) }).text);
+      walk(placeOfPerson(L, it.who, career.state.slot === 'morning' ? 'am' : career.state.slot, st.chapter, sch), it.title);
+      const w = career.weather(prog);
+      const rv = it.id === 'week' && S.reviewQuestions ? S.reviewQuestions(FL, career.state, {}) : [];
+      doTalk(`event ${it.id}`, L.events.eventDialogs(it.id, { seed: st.seed + st.day, weather: { metar: w.metar.am, decision: w.decision, why: w.why }, tired: career.tired(), review: rv }), 'ev', { kind: 'event', onHook: (n, a) => careerHook(n, a) });
+      career.done('event', it.id);
     }
     // home: the guide's line, the walk to the front door, the dorm's card (read, chosen)
-    const done = '今日の予定は終わり。ラウンジで同期と話せます。正面入口から寮に帰ると次の日になります';
+    const done = (L.flow && L.flow.doneLine(career.state)) || '今日の予定は終わり。ラウンジで同期と話せます。正面入口から寮に帰ると次の日になります';
     guideLine(done);
     walk(PLACES.home, '正面入口');
-    const dorm = '寮へ帰る 今日の訓練はここまで。寮に帰って休みます。 すぐに寝る 少し自習してから寝る（疲れが残る） やっぱり残る';
+    const dc = L.flow ? L.flow.dormCard(career.state, sch, { short: skip }) : null;
+    const dorm = dc ? [dc.title, dc.text, ...dc.choices.map(c => c.text)].filter(Boolean).join(' ') : '寮へ帰る 今日の訓練はここまで。寮に帰って休みます。 すぐに寝る 少し自習してから寝る（疲れが残る） やっぱり残る';
     fixed('dorm', dorm, readingSeconds(dorm));
     career.sleep(); career.advanceChapter(prog, 50);
   }
   for (const day of days) {
-    for (const f of day.fixed) { if (f.what === 'walk') day.walkS += f.t; else if (f.what === 'card') day.cardS += f.t; else day.toastS += f.t; }
+    for (const f of day.fixed) { if (f.what === 'walk' || f.what === 'jump') day.walkS += f.t; else if (f.what === 'card') day.cardS += f.t; else day.toastS += f.t; }
     day.talkS = day.talks.reduce((s, t) => s + t.time, 0);
     day.lines = day.talks.reduce((s, t) => s + t.n, 0); day.decisions = day.talks.reduce((s, t) => s + t.decisions, 0);
     day.longestGap = Math.max(0, ...day.talks.map(t => t.longestGap));

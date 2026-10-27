@@ -8,6 +8,7 @@ import { PEOPLE, PEERS, placeOf } from '../src/content/people.js';
 import { peopleDialogs, PEOPLE_HOOKS, SAMPLE_CTX, GAME_READS } from '../src/content/dialog/people.js';
 import { validateDialogs } from '../src/dialog/validate.js';
 import { createRunner, createDialogState } from '../src/dialog/engine.js';
+import { careerInstructorDialogs } from '../src/content/dialog/instructor-career.js';
 
 const REAL = /(?<![A-Za-z])ANA(?![A-Za-z])|ＡＮＡ|all\s*nippon|全日空|acron|garmin/i;
 const ctxFor = (chapter, o = {}) => ({
@@ -100,8 +101,26 @@ test('people: the go / no-go at the counter — the right call agreed (trust up)
 test('people: the friend who struggles — helped in the evening (it tires), thanked afterwards and on the day of the solo', () => {
   const data = peopleDialogs(), st = createDialogState();
   talk(data, st, 'mori', ctxFor('ch1'));                                       // the first meeting
-  const ev = talk(data, st, 'mori', ctxFor('ch1', { career: { slot: 'evening' } }), /一緒にやろう/);
+  // (after the weather class: the 5th — ctx career.cls 5; he asks, the cadet explains)
+  assert.ok(!talk(data, createDialogState(), 'mori', ctxFor('ch1', { career: { slot: 'evening', cls: 2 } })).lines.some(l => /教えてくれないかな/.test(l)), 'not before the weather class');
+  const ev = talk(data, st, 'mori', ctxFor('ch1', { career: { slot: 'evening', cls: 5 } }), /一緒にやろう/);
+  assert.ok(ev.lines.some(l => /BKN って、どういう意味/.test(l)), 'the cadet explains');
   assert.ok(st.flags.helped_mori); assert.ok(ev.hooks.some(h => h[0] === 'help')); assert.equal(st.trust.mori, 58);
   assert.match(talk(data, st, 'mori', ctxFor('ch1')).lines[0], /ありがとう/);
   assert.match(talk(data, st, 'mori', ctxFor('ch2', { career: { solo: true } })).lines[0], /助けてもらった/);
+});
+
+test('people: a career begun after another — the welcome in full or its three promises alone; then the tour and the meeting short too', () => {
+  const data = peopleDialogs(), st = createDialogState();
+  const v = ctxFor('prologue', { career: { slot: 'morning', veteran: true } });
+  const w = talk(data, st, 'chief', v, /大事なところだけ/);
+  assert.ok(w.lines.some(l => /約束は 3 つだけ/.test(l)) && w.hooks.some(h => h[0] === 'done' && h[1] === 'ceremony'), 'the promises, the welcome done');
+  assert.ok(st.flags.prologue_short && st.flags.welcome_done);
+  const t = talk(data, st, 'dispatcher', ctxFor('prologue', { career: { slot: 'am' } }));
+  assert.ok(t.lines.length === 1 && t.hooks.some(h => h[0] === 'tablet') && t.hooks.some(h => h[0] === 'done' && h[1] === 'tour'), 'the tablet handed over in a line');
+  const m = careerInstructorDialogs(), r = createRunner({ data: m, state: st, ctx: {}, hooks: { onHook: () => {} } });
+  r.start('meet'); assert.match(r.view().text, /明日から座学/); 
+  // (the first career: no such choice)
+  const first = talk(data, createDialogState(), 'chief', ctxFor('prologue', { career: { slot: 'morning', veteran: false } }));
+  assert.ok(!first.lines.some(l => /大事なところだけ/.test(l)));
 });

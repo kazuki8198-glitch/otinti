@@ -54,7 +54,9 @@ import { createCrowd } from './npc/crowd.js';
 import { peopleDialogs } from './content/dialog/people.js';
 import { careerInstructorDialogs } from './content/dialog/instructor-career.js';
 import { careerBoardDialogs } from './content/dialog/cockpit.js';
-import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, FTD_TITLES, pfdPictures, lecturePage, lecturerNotesHtml, classOptions, heardOf, chairDebriefDialogs } from './content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, FTD_TITLES, pfdPictures, lecturePage, lecturerNotesHtml, classOptions, heardOf, chairDebriefDialogs, reviewQuestions, studyDialogs, reviewFor, sectionMarks, written1Readiness, mixedReview } from './content/school.js';
+import { eventDialogs } from './content/dialog/ch1-events.js';
+import { dayToast, afterClassToast, afterFtdToast, doneLine, dormCard } from './content/day-flow.js';
 import { chairScript } from './content/chair-flight.js';
 import { createChairFlight } from './dialog/chair-flight.js';
 import { drawChairScreen } from './ui/chair-screen.js';
@@ -110,6 +112,10 @@ async function boot() {
   const settings = createSettings();
   // the cadet's career (M5): the calendar, the time of day, the chapter (kept in localStorage 'cadet.career')
   const store = (() => { try { return globalThis.localStorage || null; } catch (e) { return null; } })();
+  // (a career past its prologue: the next ones may skip the ways at once — the G key)
+  const VETERAN = 'cadet.veteran';
+  // (the career that set it does not count: its seed is kept)
+  const veteran = () => { try { const v = store && store.getItem(VETERAN); return !!v && v !== String(career.state.seed); } catch (e) { return false; } };
   const career = createCareer({ store, seed: params.get('seed') ? +params.get('seed') : undefined });
 
   bootMsg('画像を読み込んでいます…', 0.05);
@@ -478,7 +484,8 @@ async function boot() {
   let temData = null, temPick = null;
   function refreshCtx() {
     const st = career.state, w = weatherNow(), it = flightItem(), sch = planToday();
-    Object.assign(cx.career, { chapter: st.chapter, slot: st.slot, day: st.day, dayMod3: st.day % 3, tired: career.tired(), solo: !!st.solo, flying: flyingChapter(), graduated: !!st.graduated });
+    Object.assign(cx.career, { chapter: st.chapter, slot: st.slot, day: st.day, dayMod3: st.day % 3, tired: career.tired(), solo: !!st.solo, flying: flyingChapter(), graduated: !!st.graduated,
+      cls: CLASSES.filter((_, i) => st.done[`class:${i}`]).length, veteran: veteran() });
     const study = it && it.kind === 'flight' ? it.id : sch.find(x => x.kind === 'study') ? (CH2.find(id => !passedAt(prog(), id)) || 't2') : 't2';
     const sec = book.lessonSections(study).map(x => book.section(x.id)).find(x => x && x.figure);
     Object.assign(cx.today, {
@@ -634,6 +641,9 @@ async function boot() {
   }
   function chooseTalk(who) {
     const st = career.state, slot = st.slot, sch = planToday(), due = (k) => sch.find(x => x.kind === k && (x.slot === slot || (slot === 'morning' && x.slot === 'am')));
+    // (chapter 1's evening event, with its person: content/dialog/ch1-events.js)
+    const ev = due('event');
+    if (ev && ev.who === who && !career.doneToday('event', ev.id)) return { run: startLesson('event', ev.id, eventData(ev.id)), dialog: 'ev' };
     if (who === 'lecturer') {
       const cls = due('class'), ftd = due('ftd'), ex = due('exam');
       if (cls && !career.doneToday('class', cls.id)) {
@@ -647,7 +657,7 @@ async function boot() {
       if (chairEnd) { const d = chairEnd; chairEnd = null; return { run: startLesson('ftd', 'k4', d), dialog: 'ftd' }; }
       if (ftd && ftd.id === 'k4' && !(career.doneToday('ftd', 'k4') && groundPassed(prog(), 'k4'))) return { run: startLesson('ftd', 'k4', ftdDialogs(FL, 'k4', { k4: k4State() })), dialog: 'ftd' };
       if (ftd && !(career.doneToday('ftd', ftd.id) && groundPassed(prog(), ftd.id))) return { run: startLesson('ftd', ftd.id, ftdDialogs(FL, ftd.id, { seed: st.seed + st.day, heard: heardOf(FL, st), attempt: career.attempt(`ftd:${ftd.id}`) })), dialog: 'ftd' };
-      if (ex && ex.id === 'written1' && !(career.doneToday('exam', ex.id) && st.exams.written1 && st.exams.written1.pass)) return { run: startLesson('exam', ex.id, examDialogs(FL, ex.id, { seed: st.seed + st.day, heard: heardOf(FL, st), attempt: career.attempt('exam:written1') })), dialog: 'exam' };
+      if (ex && ex.id === 'written1' && !(career.doneToday('exam', ex.id) && st.exams.written1 && st.exams.written1.pass)) { const n = career.attempt('exam:written1'); return { run: startLesson('exam', ex.id, examDialogs(FL, ex.id, { seed: st.seed + st.day, heard: heardOf(FL, st), attempt: n, warm: mixedReview(FL, st, { attempt: n }) })), dialog: 'exam' }; }
       return { run: peopleRunner, dialog: 'lecturer' };
     }
     if (who !== 'instructor') return { run: peopleRunner, dialog: who };
@@ -672,6 +682,12 @@ async function boot() {
     if (it && it.kind === 'checkride' && !flownToday()) return { run: runner, dialog: 'checkday' };
     if (it && it.kind === 'flight' && !flownToday()) return { run: runner, dialog: talkState.flags.briefed_today ? 'brief' : 'day' };
     return { run: runner, dialog: 'brief', node: 'menu:done' };
+  }
+  // an event's talk: today's weather (the METAR's), how the cadet is, the week's questions (Sunday's)
+  function eventData(id) {
+    const st = career.state, w = career.weather(prog());
+    return eventDialogs(id, { seed: st.seed + st.day, weather: { metar: w.metar.am, decision: w.decision, why: w.why }, tired: career.tired(),
+      review: id === 'week' ? reviewQuestions(FL, st, { attempt: career.attempt('event:week') }) : [] });
   }
   function endTalk() {
     if (!talk) return;
@@ -1236,13 +1252,13 @@ async function boot() {
     const next = () => { if (slot === 'morning') career.advance('am'); else if (slot === 'am') career.advance('pm'); else if (slot === 'pm') career.advance('evening'); };
     if (arg === 'ceremony') { career.done('ceremony', 'welcome'); afterTalk.push(() => { career.advance('am'); applySlot(); toast('運航管理の佐伯さんが、訓練所を案内してくれます（ロビーの北、運航管理）', 5200); }); }
     else if (arg === 'tour') { career.done('tour', 'tour'); afterTalk.push(() => { career.advance('pm'); applySlot(); toast('午後：ブリーフィング室 1 で、担当の早瀬 教官と顔合わせです', 5200); }); }
-    else if (arg === 'meet') { career.done('brief', 'meet'); career.finishPrologue(); afterTalk.push(() => { career.advance('evening'); applySlot(); toast('夕方です。ラウンジで同期と話してみましょう。今日を終えるときは、正面入口から寮へ', 6000); }); }
-    else if (arg === 'class' && k) { career.done('class', String(k.id)); career.tire(6); afterTalk.push(() => { next(); applySlot(); toast('午後：訓練装置室（FTD）で訓練装置の課目です', 4200); }); }
+    else if (arg === 'meet') { career.done('brief', 'meet'); career.finishPrologue(); try { if (store && !store.getItem(VETERAN)) store.setItem(VETERAN, String(career.state.seed)); } catch (e) { /* not kept */ } afterTalk.push(() => { career.advance('evening'); applySlot(); toast('夕方です。ラウンジで同期と話してみましょう。今日を終えるときは、正面入口から寮へ', 6000); }); }
+    else if (arg === 'class' && k) { career.done('class', String(k.id)); career.tire(6); afterTalk.push(() => { next(); applySlot(); if (skipDay !== career.day) toast(afterClassToast(+k.id), 5200); }); }
     else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'ftd') {
       career.done('ftd', k.id); career.tire(6);
       if (arg === 'pass') groundPass(k.id, k.n || k.id === 'k4' ? cx.quiz.pct : 100);
       // (not passed: the time stays, and the lecturer takes it again whenever the cadet is ready)
-      afterTalk.push(() => { if (arg === 'pass') { next(); applySlot(); } toast(arg === 'pass' ? `${k.id} 合格。${career.slot === 'evening' ? '今日の予定は終わりです' : ''}` : 'もう一度受けるときは、ミラー講師に話しかけてください（問題の順番は変わります）', 4200); });
+      afterTalk.push(() => { if (arg === 'pass') { next(); applySlot(); } if (arg !== 'pass' || skipDay !== career.day) toast(arg === 'pass' ? (career.slot === 'evening' ? afterFtdToast(k.id, planToday()) : `${k.id} 合格。`) : 'もう一度受けるときは、ミラー講師に話しかけてください（問題の順番は変わります）', 4200); });
     } else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'exam') {
       career.exam(k.id, cx.quiz.pct);
       afterTalk.push(() => { if (arg === 'pass' || k.id !== 'written1') { next(); applySlot(); } else toast('もう一度受けるときは、ミラー講師に話しかけてください（問題は入れ替わります）', 4200); });
@@ -1258,6 +1274,9 @@ async function boot() {
       });
     } else if (arg === 'epilogue') { afterTalk.push(() => finishEpilogue());
     } else if (arg === 'study') { career.done('study', grounded() ? 'imsafe' : 'weather'); career.tire(4); afterTalk.push(() => { next(); applySlot(); }); }
+    else if (arg === 'event' && k && k.kind === 'event') { career.done('event', k.id); afterTalk.push(() => { applySlot(); const d = doneLine(career.state); if (d && skipDay !== career.day) toast(d, 5200); }); }
+    // (the evening's study over: to bed, a little late)
+    else if (arg === 'night') afterTalk.push(() => sleepNow({ late: true }));
   }
   // a training device lesson passed: into FLIGHT LAB's record (school.js's shape, as FLIGHT LAB's own ground pages write it)
   function groundPass(id, pct) {
@@ -1353,7 +1372,10 @@ async function boot() {
   // a word for the start of a day
   function greet() {
     const st = career.state, sch = planToday();
+    // (chapter 1: the day's own word — its chapters, the afternoon's lesson, a question missed before: content/day-flow.js)
+    const ch1 = st.chapter === 'ch1' ? dayToast(st, sch, { missed: reviewFor(FL, st, CLASSES.filter((_, i) => st.done[`class:${i}`]).length).missed, short: skipping() }) : null;
     if (st.chapter === 'prologue') toast('入社の日です。ロビーで、主任教官の話が始まります', 5200);
+    else if (ch1) toast(ch1, 6400);
     else if (sch.some(x => x.kind === 'off')) toast('今日は休日です。ラウンジで休むのも、自習するのもいい。正面入口から寮に帰れば、明日になります', 6000);
     else toast(`今日の予定：${sch.map(x => `${SLOT_NAMES[x.slot]} ${x.title}`).join('／')}（Tab でタブレット）`, 6000);
   }
@@ -1366,13 +1388,16 @@ async function boot() {
   function goHome() {
     if (!dayIsDone()) { toast('まだ今日の予定が残っています（Tab でタブレット）', 3000); return 'closed'; }
     homeOpen = true;
-    interactor.showCard('寮へ帰る', '今日の訓練はここまで。寮に帰って休みます。', [{ k: 1, text: 'すぐに寝る', act: 'early' }, { k: 2, text: '少し自習してから寝る（疲れが残る）', act: 'late' }, { k: 3, text: 'やっぱり残る', act: 'stay' }]);
+    const c = dormCard(career.state, planToday(), { short: skipping() });
+    interactor.showCard(c.title, c.text, c.choices);
     return 'examined';
   }
   function homeChoose(k) {
     if (!homeOpen) return false;
     homeOpen = false; interactor.closeCard();
     if (k === 2) return true;
+    // (the study: three questions of the classes done, those missed first — then to bed, a little late)
+    if (k === 1 && CLASSES.some((_, i) => career.state.done[`class:${i}`])) { tabletTalk('study', 'night', studyDialogs(FL, career.state, { attempt: career.attempt('study:night') }), 'study', 'タブレット（自習）'); return true; }
     sleepNow({ late: k === 1 });
     return true;
   }
@@ -1450,6 +1475,8 @@ async function boot() {
         fatigue: st.fatigue, tired: career.tired(), gate: career.gate(p, trustI()), solo: !!st.solo,
         ground: GROUND.map(id => ({ id, title: FTD_TITLES[id], pass: groundPassed(p, id) })),
         classes: { done: CLASSES.filter((_, i) => career.isDone('class', String(i))).length, total: CLASSES.length },
+        // (the sections heard and how they were answered; written1's banks taught)
+        marks: sectionMarks(FL, st), written1: written1Readiness(FL, st),
         exams: Object.entries(EXAMS).map(([id, e]) => ({ title: e.title, ...(st.exams[id] || { best: 0, pass: false, tries: 0 }) })),
         lessons: [...CH2, 'c1', ...LATER.filter(c => CHAPTERS[c].n <= CHAPTERS[st.chapter].n).flatMap(c => STAGE[c].lessons)].map(id => ({ id, title: FL.school.lesson(id).title, best: p.lessons[id] ? p.lessons[id].best : '', pass: passedAt(p, id) })),
         trust: [['instructor', INSTRUCTOR.title_ja], ['chief', PEOPLE.chief.title], ['dispatcher', PEOPLE.dispatcher.title], ['mechanic', PEOPLE.mechanic.title]].map(([k, n]) => ({ name: n, v: Math.round(trustOf(talkState, k)) })),
@@ -1610,6 +1637,7 @@ async function boot() {
       return;
     }
     if (mode === 'walk' && walkOpen && /^(Digit|Numpad)[1-4]$/.test(e.code)) { walkChoose(+e.code.slice(-1) - 1); return; }
+    if (mode === 'walk' && e.code === 'KeyG' && !talk && !homeOpen && !interactor.cardOpen) { if (!jumpNext()) toast('G で行けるのは、一度歩いて行ったことのある場所です', 2600); return; }
     if (mode === 'walk' && homeOpen && /^(Digit|Numpad)[1-3]$/.test(e.code)) { homeChoose(+e.code.slice(-1) - 1); return; }
     if (e.code === 'Tab' && mode === 'walk' && !talk) {
       e.preventDefault();
@@ -1718,7 +1746,7 @@ async function boot() {
   function computeGuide(pa, pc) {
     const it = flightItem(), checkride = it && it.kind === 'checkride';
     const sm = today ? today.walk.summary() : null;
-    guideStep = nextStep({ chapter: career.chapter, slot: career.slot, plan: planStates(), decided: !!career.decidedToday(), graduated: !!career.state.graduated,
+    guideStep = nextStep({ chapter: career.chapter, slot: career.slot, plan: planStates(), decided: !!career.decidedToday(), graduated: !!career.state.graduated, doneText: doneLine(career.state),
       briefed: !!(checkride ? talkState.flags.c1_briefed : talkState.flags.briefed_today), walk: sm ? { done: sm.done, total: sm.total } : null, flown: flownToday() });
     const t = guideTarget(guideStep);
     if (!t) { guideWay = null; return; }
@@ -1727,10 +1755,42 @@ async function boot() {
     const step = router.next(roomOf(pa, pc), roomOf(t.a, t.c)), w = step || t;
     guideWay = { a: w.a, c: w.c, door: !!step, doorId: step ? step.door : null, label: step ? step.label : '', d: Math.hypot(w.a - pa, w.c - pc), target: t };
   }
+  // ---- the way skipped, the second time on (G): to the guide's next place — a person (their talk begins), a room, the
+  // front doors (the dorm's card) — once that room has been walked into (career.walkedInto: rooms reached on foot), or
+  // anywhere in a career begun after another one ('cadet.veteran'). Not while flying, nor at the aircraft
+  let lastRoom = null, skipDay = -1, jumpOk = false, jumping = false;
+  // (the ways skipped before in this career: the day's words said short — content/day-flow.js)
+  const skipping = () => career.tries('skip:g') > 0;
+  const roomAt = (a, c) => (academy.inside(a, c) ? (academy.roomOf(a, c)?.id || null) : 'outside');
+  function noteRoom(a, c) { const r = roomAt(a, c); if (r && r !== lastRoom) { lastRoom = r; career.walkedInto(r); } }
+  function jumpPlan() {
+    const g = guideStep; if (!g || !['person', 'entrance', 'room'].includes(g.at)) return null;
+    const t = guideTarget(g); if (!t) return null;
+    const room = g.at === 'entrance' ? 'lobby' : roomAt(t.a, t.c);
+    if (!room || room === roomAt(walker.framePos.a, walker.framePos.c)) return null;
+    if (!(veteran() || career.state.walked.includes(room))) return null;
+    return { g, t, room };
+  }
+  function jumpNext() {
+    const j = jumpPlan(); if (!j || jumping) return false;
+    jumping = true; skipDay = career.day; career.attempt('skip:g');
+    const { g, t } = j;
+    // (by a person: in front of them, as they face; the front doors: inside them; a room: its middle)
+    const at = g.at === 'person' ? standBy(g.who, t) : g.at === 'entrance' ? ENTRANCE : { a: t.a, c: t.c, face: null };
+    cards.show({ kicker: '', title: '移動', sub: g.text.replace(/（.*$/, ''), ms: 200, fade: 300, onDark: () => { placeWalker(at.a, at.c, at.face || null); lastRoom = roomAt(at.a, at.c); } })
+      .then(() => { jumping = false; if (g.at === 'person' && g.who) startTalk(g.who); else if (g.at === 'entrance') goHome(); });
+    return true;
+  }
+  function standBy(who, t) {
+    const p = who === 'instructor' ? null : cast.where(who), f = p && p.face ? p.face : null;
+    if (!f) return { a: t.a + 1.2, c: t.c, face: { a: t.a, c: t.c } };
+    const d = Math.hypot(f.a - t.a, f.c - t.c) || 1;
+    return { a: t.a + (f.a - t.a) / d * 1.4, c: t.c + (f.c - t.c) / d * 1.4, face: { a: t.a, c: t.c } };
+  }
   function updateGuide(dt, pa, pc) {
     const on = mode === 'walk' && !talk && !cards.showing && !tablet.isOpen && settings.get('guide') !== false;
     guideEl.hidden = !on; if (!on) return;
-    if ((guideT -= dt) <= 0) { guideT = 0.5; computeGuide(pa, pc); guideEl.querySelector('.g-text').textContent = guideStep.text; }
+    if ((guideT -= dt) <= 0) { guideT = 0.5; computeGuide(pa, pc); guideEl.querySelector('.g-text').textContent = guideStep.text; jumpOk = !!jumpPlan(); }
     const arrow = guideEl.querySelector('.g-arrow'), dist = guideEl.querySelector('.g-dist');
     if (!guideWay) { arrow.hidden = true; dist.textContent = ''; return; }
     const w = guideWay, step = w.door, d = Math.hypot(w.a - pa, w.c - pc);
@@ -1739,7 +1799,7 @@ async function boot() {
     let rel = yawT - walker.state.yaw; rel = Math.atan2(Math.sin(rel), Math.cos(rel));
     arrow.hidden = false; arrow.classList.toggle('here', !step && d < 2.5);
     arrow.style.transform = `rotate(${(-rel).toFixed(3)}rad)`;
-    dist.textContent = step ? `${w.label ? w.label + 'の扉' : '扉'}まで ${Math.round(d)} m` : d < 2.5 ? 'ここ' : `${Math.round(d)} m`;
+    dist.textContent = (step ? `${w.label ? w.label + 'の扉' : '扉'}まで ${Math.round(d)} m` : d < 2.5 ? 'ここ' : `${Math.round(d)} m`) + (jumpOk ? '　G：歩かずに行く' : '');
   }
 
   // ---------------------------------------------------------------- the loop
@@ -1784,7 +1844,7 @@ async function boot() {
     const [fx, fz] = toFrame(camWorld.x, camWorld.z), pa = -fz, pc = fx;
     academy.update(dt, mode === 'walk' ? walker.framePos : { x: fx, z: fz });
     if (mode === 'fly') { if (fly) fly.draw2D(dt); }
-    if (mode === 'walk' && live && !talk && !chair) { interactor.update(camera); showPlace(dt, pa, pc); frontDoorStep(pa, pc); }
+    if (mode === 'walk' && live && !talk && !chair) { interactor.update(camera); showPlace(dt, pa, pc); frontDoorStep(pa, pc); noteRoom(pa, pc); }
     // near today's aircraft: the walk-around's progress; the instructor leaves the room for it once the cadet has gone
     walkEl.hidden = !(mode === 'walk' && Math.hypot(pa - tg.a, pc - tg.c) < 14 && !flownToday());   // (no flight left today: no walk-around)
     updateGuide(dt, pa, pc);
@@ -2170,6 +2230,8 @@ async function boot() {
         return h;
       },
       home: () => goHome(), homeChoose: (k) => homeChoose(k),
+      // the way skipped (G): whether it can be now, and the jump
+      jump: () => jumpNext(), canJump: () => { computeGuide(walker.framePos.a, walker.framePos.c); return !!jumpPlan(); },
       // (opened as Tab opens it: the card closed, the mouse let go)
       tablet: { open: (p) => { interactor.closeCard(); input.exitLock(); tablet.open(p); }, close: () => tablet.close(), isOpen: () => tablet.isOpen, page: () => tablet.page },
       cards: () => cards.showing, celebrate: () => celebrate, reset: () => resetProgress(), gate: () => career.gate(prog(), trustI()),

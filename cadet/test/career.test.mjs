@@ -36,7 +36,8 @@ test('career: the prologue, then chapter 1 — classes in the morning, the train
   assert.deepEqual(gate(s, {}), ['入社の 1 日']);
   s.done.prologue = 1; s.chapter = 'ch1'; s.day = 2;
   let d = schedule(s, {});
-  assert.deepEqual(d.map(x => [x.slot, x.kind, x.id]), [['am', 'class', '0'], ['pm', 'ftd', 'k1']]);
+  // (the evening's event of the day's class: content/dialog/ch1-events.js)
+  assert.deepEqual(d.map(x => [x.slot, x.kind, x.id]), [['am', 'class', '0'], ['pm', 'ftd', 'k1'], ['evening', 'event', 'forces']]);
   for (let i = 0; i < CLASSES.length; i++) s.done[`class:${i}`] = 1;   // (done on earlier days)
   d = schedule(s, progWith(['k1', 'k2']));
   assert.deepEqual(d.map(x => [x.slot, x.kind, x.id]), [['am', 'ftd', 'k3']]);
@@ -142,7 +143,7 @@ test('career: one file for everything — written, read back cleaned; a wrong or
 test('career: what was done today stays today\'s plan (the class, the device, the flight), not tomorrow\'s', () => {
   const s = newCareer(5); s.chapter = 'ch1'; s.day = 3; s.done['class:0'] = 2; s.done['class:1'] = 3; s.done['ftd:k2'] = 3;
   const p = progWith(['k1', 'k2']);
-  assert.deepEqual(schedule(s, p).map(x => [x.kind, x.id]), [['class', '1'], ['ftd', 'k2']]);
+  assert.deepEqual(schedule(s, p).map(x => [x.kind, x.id]), [['class', '1'], ['ftd', 'k2'], ['event', 'pitot']]);
   s.chapter = 'ch2'; s.day = 12; s.done['flight:a3'] = 12;
   const good = weatherFor(5, 12, { force: 'good' });
   assert.deepEqual(schedule(s, progWith(['a1', 'a2', 'a3']), { weather: good }).map(x => [x.kind, x.id]), [['flight', 'a3']], 'not a4 the same day');

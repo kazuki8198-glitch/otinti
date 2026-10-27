@@ -60,6 +60,25 @@ export const ALL_CH2 = [...CH2, 'c1'];
 export const CLASSES = [['aero'], ['sys', 'perf'], ['radio1', 'radio2'], ['radio3', 'radio4'], ['wx', 'radio5'], ['law', 'hf']];
 // the training device lesson each class comes before (the same day's afternoon)
 export const CLASS_FTD = ['k1', 'k2', 'k3', 'k4', 'k5', 'k6'];
+// the training device's lessons by name (FLIGHT LAB's stage 0, as CADET teaches them)
+export const FTD_TITLES = { k1: 'G1000 型 PFD の読み方', k2: 'PFD の読み取り（10 問）', k3: '数字とアルファベットの言い方（10 問）', k4: '交信のチェアフライト', k5: '復唱と応答（10 問）', k6: '聞き取り（10 問）' };
+// the textbook's part 1 by its chapters, in a few words (the day's plan, the guide, the toasts)
+export const CHAPTER_SHORT = { aero: '飛行の原理', sys: '機体と装備', perf: '性能と重量・重心', radio1: '交信のしくみ', radio2: '言葉の決まり', radio3: '交信の型',
+  radio4: '1 回の飛行の交信', wx: '航空気象', radio5: '管制塔のない空港と緊急', law: '規則と空域', hf: '人間の能力と判断' };
+// (the textbook's chapter numbers of part 1: book.js gameBook's)
+const CHAPTER_N = { aero: 1, sys: 2, perf: 3, wx: 4, law: 5, radio1: 6, radio2: 7, radio3: 8, radio4: 9, radio5: 10, hf: 11 };
+export const classShort = (i) => (CLASSES[i] || []).map(id => `第 ${CHAPTER_N[id]} 章 ${CHAPTER_SHORT[id]}`).join('・');
+// each class day's own event, in the evening, with someone (it uses the day's class; content/dialog/ch1-events.js);
+// Sunday's (the 4th day), at the lounge, is the week's review (it can be left)
+export const CH1_EVENTS = [
+  { id: 'forces', cls: 0, who: 'mechanic', where: 'outside', title: '駐機場の大城さんと、実機で 4 つの力を見る' },
+  { id: 'pitot', cls: 1, who: 'mechanic', where: 'outside', title: '駐機場の大城さんと、Archer のピトー管と燃料のサンプを見る' },
+  { id: 'spell', cls: 2, who: 'dispatcher', where: 'dispatch', title: '運航管理の佐伯さんと、登録記号と周波数を声に出す' },
+  { id: 'readback', cls: 3, who: 'kiryu', where: 'lounge', title: 'ラウンジで、桐生の管制官役に復唱する' },
+  { id: 'metar', cls: 4, who: 'dispatcher', where: 'dispatch', title: '運航管理の佐伯さんと、今日の METAR で飛ぶかを決めてみる' },
+  { id: 'imsafe', cls: 5, who: 'chief', where: 'instructors', title: '教官室の真壁 主任教官と、IMSAFE を確かめる' },
+  { id: 'week', cls: -1, who: 'asahi', where: 'lounge', title: 'ラウンジの朝日と、今週の復習（しなくてもよい）', optional: true },
+];
 // the written tests: FLIGHT LAB's question banks (quiz.js), so many questions drawn, the pass mark
 export const EXAMS = {
   written1: { title: '学科試験（第 1 章）', banks: ['q_aero', 'q_sys', 'q_perf', 'q_wx', 'q_law', 'q_comm', 'q_hf'], n: 28, pass: 80, room: 'planning' },
@@ -153,7 +172,7 @@ export function newCareer(seed = 1) {
     // (chapter 1's classes) the sections heard and how ('f' read in full, 'q' its key points: content/school.js), the
     // pace chosen last, how many times each class, lesson and test was begun (mixed into its questions' order), and each
     // question's answers so far: [right, wrong, the last right (1) or not (0), its day]
-    heard: {}, lastPace: null, attempts: {}, answers: {} };
+    heard: {}, lastPace: null, attempts: {}, answers: {}, walked: [] };
 }
 export const PACE_IDS = ['need', 'full', 'quick'];
 const SEC_ID = /^[a-z0-9]{1,12}\.[a-z0-9]{1,16}$/, Q_ID = /^[a-z0-9_]{1,12}[#:][a-z0-9_.]{1,24}$/, ATTEMPT_ID = /^[a-z0-9]{1,12}:[a-z0-9_]{1,16}$/;
@@ -181,6 +200,8 @@ export function cleanCareer(o) {
   if (isObj(o.answers)) for (const [k, v] of Object.entries(o.answers).slice(0, 400)) {
     if (Q_ID.test(k) && Array.isArray(v) && v.length === 4 && v.every(Number.isInteger)) s.answers[k] = [clamp(v[0], 0, 9999), clamp(v[1], 0, 9999), v[2] ? 1 : 0, clamp(v[3], 0, 9999)];
   }
+  // (the rooms walked into: the second time on, the way there may be skipped — main.js's G)
+  if (Array.isArray(o.walked)) s.walked = [...new Set(o.walked.filter(x => typeof x === 'string' && /^[a-z0-9-]{1,16}$/.test(x)))].slice(0, 40);
   return s;
 }
 
@@ -229,7 +250,11 @@ export function prologueFlags(state) {
 export function schedule(state, prog, { trust = 50, weather = null } = {}) {
   const day = state.day, out = [];
   const W = weather || weatherFor(state.seed, day, forcedWeather(state, prog));
-  if (isOff(day)) return [{ slot: 'am', kind: 'off', title: '休日', where: null, who: null }];
+  if (isOff(day)) {
+    const off = [{ slot: 'am', kind: 'off', title: '休日', where: null, who: null }], w = CH1_EVENTS.find(e => e.id === 'week');
+    // (chapter 1's Sunday: the week's review with 朝日, if the cadet likes)
+    return state.chapter === 'ch1' && Object.keys(state.done).some(k => /^class:/.test(k)) && (!state.done['event:week'] || state.done['event:week'] === day) ? [...off, { slot: 'am', kind: 'event', id: w.id, title: w.title, where: w.where, who: w.who, optional: true }] : off;
+  }
   if (state.chapter === 'prologue') {
     out.push({ slot: 'morning', kind: 'ceremony', id: 'welcome', title: '入社の式（ロビー）', where: 'lobby', who: 'chief' });
     out.push({ slot: 'am', kind: 'tour', id: 'tour', title: '訓練所の案内', where: 'dispatch', who: 'dispatcher' });
@@ -241,8 +266,11 @@ export function schedule(state, prog, { trust = 50, weather = null } = {}) {
     const today = (key) => state.done[key] === day;
     const cls = CLASSES.findIndex((_, i) => !state.done[`class:${i}`] || today(`class:${i}`));
     const k = GROUND.find(id => !groundPassed(prog, id) || today(`ftd:${id}`));
-    if (cls >= 0) out.push({ slot: 'am', kind: 'class', id: String(cls), title: `座学（${cls + 1} / ${CLASSES.length}）`, where: 'brief-2', who: 'lecturer' });
-    if (k) out.push({ slot: cls >= 0 ? 'pm' : 'am', kind: 'ftd', id: k, title: `訓練装置：${k}`, where: 'sim', who: 'lecturer' });
+    if (cls >= 0) out.push({ slot: 'am', kind: 'class', id: String(cls), title: `座学 ${cls + 1} / ${CLASSES.length}（${classShort(cls)}）`, where: 'brief-2', who: 'lecturer' });
+    if (k) out.push({ slot: cls >= 0 ? 'pm' : 'am', kind: 'ftd', id: k, title: `訓練装置 ${k}（${FTD_TITLES[k]}）`, where: 'sim', who: 'lecturer' });
+    // (the evening's event of the day's class)
+    const ev = cls >= 0 && CH1_EVENTS.find(e => e.cls === cls);
+    if (ev && (!state.done[`event:${ev.id}`] || today(`event:${ev.id}`))) out.push({ slot: 'evening', kind: 'event', id: ev.id, title: ev.title, where: ev.where, who: ev.who });
     const ex = state.exams.written1;
     if (cls < 0 && !k && (!(ex && ex.pass) || today('exam:written1'))) out.push({ slot: out.length ? 'pm' : 'am', kind: 'exam', id: 'written1', title: EXAMS.written1.title, where: 'planning', who: 'lecturer' });
     return out;
@@ -375,6 +403,8 @@ export function createCareer({ store = null, seed } = {}) {
     // the sections heard: the record, and the classes finished before it was kept (heard in full: see cleanCareer)
     heardSet: () => heardSet(st),
     setPace(p) { if (PACE_IDS.includes(p)) { st.lastPace = p; save(); } },
+    // a room walked into on foot (kept: the way there may be skipped the next time)
+    walkedInto(room) { if (typeof room === 'string' && /^[a-z0-9-]{1,16}$/.test(room) && !st.walked.includes(room) && st.walked.length < 40) { st.walked.push(room); save(); } },
     // a class, a lesson, a test begun: how many times before (its questions come in another order each time)
     attempt(key) { if (!ATTEMPT_ID.test(key)) return 0; const n = st.attempts[key] || 0; st.attempts[key] = n + 1; save(); return n; },
     tries: (key) => st.attempts[key] || 0,

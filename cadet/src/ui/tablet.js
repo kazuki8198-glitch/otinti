@@ -22,6 +22,7 @@ const CSS = `
 .tb-scr h2 { margin: 0 0 4px; font-size: 19px; } .tb-scr h3 { margin: 14px 0 6px; font-size: 14px; color: #8fd3ff; letter-spacing: .04em; }
 .tb-scr .sub { color: #9fb4c9; font-size: 12.5px; }
 .tb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.tb-marks { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-bottom: 12px; }
 .tb-card { padding: 10px 12px; border-radius: 10px; background: rgba(255, 255, 255, .04); }
 .tb-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .tb-list li { display: flex; gap: 8px; align-items: baseline; }
@@ -111,6 +112,23 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     const tr = put(make('div', 'tb-card'), make('h3', '', '信頼'));
     for (const t of m.trust) { put(tr, make('div', 'sub', `${t.name}　${t.v}`)); const b = make('div', 'tb-bar'); put(b, Object.assign(make('i'), { style: `width:${t.v}%` })); put(tr, b); }
     put(g, gr, tr); put(scr, g);
+    // (chapter 1's sections: heard or not, and the last answers — the classes', the checks', the evening study's)
+    if (m.marks) {
+      put(scr, make('h3', '', '座学の節（✓ 前回合っていた　△ 前回間違えた　・ まだ問われていない　空白 まだ聞いていない）'));
+      const sg = make('div', 'tb-marks');
+      for (const c of m.marks) for (const ch of c.chapters) {
+        const card = put(make('div', 'tb-card'), make('h3', '', `第 ${ch.n} 章　${ch.title}`)), ul = make('ul', 'tb-list');
+        for (const x of ch.sections) put(ul, put(make('li'), make('span', 'st' + (x.mark === '✓' ? ' ok' : x.mark === '△' ? ' ng' : ''), x.mark || '　'), make('span', '', `${x.title}${x.how === 'q' ? '（要点だけ）' : ''}`)));
+        put(card, ul); put(sg, card);
+      }
+      put(scr, sg);
+    }
+    if (m.written1) {
+      const w = put(make('div', 'tb-card'), make('h3', '', '学科試験（第 1 章）への準備：分野ごとに 4 問ずつ出ます'));
+      const ul = make('ul', 'tb-list');
+      for (const b of m.written1) put(ul, put(make('li'), make('span', 'st' + (b.taught >= 4 ? ' ok' : ''), `${b.taught} 問`), make('span', '', `${b.title}：習った問題 ${b.taught} / ${b.total}、前回正解 ${b.right}`)));
+      put(w, ul); put(scr, w);
+    }
     put(scr, make('h3', '', '第 2 章　ソロまでの課目（「基礎」以上で合格したもの）'));
     const les = make('div', 'tb-les');
     for (const l of m.lessons) put(les, put(make('div', l.pass ? 'ok' : ''), make('b', '', l.best || '・'), make('span', '', `${l.id} ${l.title}`)));

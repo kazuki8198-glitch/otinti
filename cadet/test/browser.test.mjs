@@ -348,6 +348,70 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.deepEqual((await ev(() => window.__cadet.career.schedule())).map(x => `${x.kind} ${x.id}`), ['flight a1']);
   });
 
+  test('k4, the chair flight: the lecturer the controller, the cadet at a desk — the field on the wall screen, the radio panel alone, a wrong call corrected, the run scored and passed; then ③ from the tablet with the microphone, a late answer called after, Q to leave', async () => {
+    // (a new browser: day 5 of chapter 1, its class done, the afternoon's k4 to take)
+    await restart();
+    const done = Object.fromEntries([0, 1, 2, 3].map(i => [`class:${i}`, 2])), lessons = { k1: GROUND_OK.k1, k2: GROUND_OK.k2, k3: GROUND_OK.k3 };
+    await ev(({ done, lessons }) => window.__cadet.career.set({ state: { chapter: 'ch1', day: 5, slot: 'pm', done: { prologue: 1, ...done } }, progress: { lessons }, flags: { met_instructor: true, has_tablet: true }, place: false }), { done, lessons });
+    assert.equal((await ev(() => window.__cadet.career.schedule())).find(x => x.kind === 'ftd').id, 'k4');
+    const blank = await ev(() => window.__cadet.career.screen('sim'));
+    let t = await talkThrough('lecturer', ['^② 自分の台詞を隠して']);
+    assert.match(t.lines.join('\n'), /あなたがパイロット、わたしはコンソールで管制官/);
+    assert.ok(t.lines.some(l => /> ② 自分の台詞を隠して/.test(l)), 'the first time: the script hidden');
+    await ev(() => window.__cadet.simulate(0.1));
+    const K = () => ev(() => { const K = window.__cadet.career.chair; return { active: K.active(), v: K.view() }; });
+    let k = await K();
+    assert.ok(k.active && k.v && k.v.stage === 2, `the run begun: ${JSON.stringify(k.v)}`);
+    // the radio panel and the task panel alone (no flight instruments), the field on the wall screen
+    const hud = await ev(() => { const h = document.querySelector('#fhud'), vis = (q) => { const e = h.querySelector(q); return !!e && getComputedStyle(e).display !== 'none' && !e.hidden; }; return { k4: h.classList.contains('k4'), radio: vis('.dh-radio'), task: vis('.dh-task'), text: h.querySelector('.dh-radio').textContent }; });
+    assert.ok(hud.k4 && hud.radio && hud.task, JSON.stringify(hud));
+    assert.notEqual(await ev(() => window.__cadet.career.screen('sim')), blank, 'the field drawn on the device room\'s screen');
+    // flown to the first call to Ground; a wrong call: the controller's correction, the same turn again
+    const flyTo = (o) => ev((o) => {
+      const K = window.__cadet.career.chair; let n = 0;
+      for (let k = 0; k < 40000 && K.active(); k++) {
+        const v = K.view();
+        if (v && v.phase === 'choose') { if (o.stopAt && v.id === o.stopAt && !v.last) return { n, v, active: true }; K.answer(true); n++; } else K.step(0.25);
+      }
+      return { n, active: K.active() };
+    }, o);
+    let r = await flyTo({ stopAt: 'gnd_call' });
+    assert.ok(r.active && r.v.station === 'GND' && r.v.choices.length === 3, JSON.stringify(r));
+    await ev(() => window.__cadet.career.chair.answer(false));
+    r = await ev(() => { const K = window.__cadet.career.chair; for (let k = 0; k < 200 && K.view().phase !== 'choose'; k++) K.step(0.25); return K.view(); });
+    assert.ok(r.id === 'gnd_call' && r.last && r.last.ok === false && r.lines.some(l => l.ja === '（訂正）'), `the correction, the turn again: ${JSON.stringify(r)}`);
+    assert.ok(r.last.why && await ev(() => !document.querySelector('#fhud .fh-ar').hidden), 'after a wrong call, why it was wrong, on the panel');
+    // the rest right: 1 of all missed, passed; the debrief names it and opens nothing unless asked
+    r = await flyTo({});
+    assert.equal(r.active, false, 'the run over');
+    t = await talkThrough(null);
+    const debrief = t.lines.join('\n');
+    assert.match(debrief, /1 回目で合っていたのは \d+ か所、9\d%/);
+    assert.match(debrief, /地上管制：タキシーの許可：[^。]*(が抜けていました|違う言い方でした)/);
+    assert.match(debrief, /k4 は合格です/);
+    assert.ok((await ev(() => window.__cadet.career.progress())).lessons.k4.pass, 'k4 passed');
+    // ③ from the tablet (a practice: nothing recorded): the clock, and the microphone (a stand-in for the browser's
+    // speech recognition: the words given) — once the evening's card has gone (keys wait for a card)
+    await g.page.waitForFunction(() => !window.__cadet.career.cards(), null, { timeout: 30000 });
+    await ev(() => {
+      window.SpeechRecognition = class { start() { setTimeout(() => { const t = window.__micSay; if (t) { if (this.onresult) this.onresult({ results: [[{ transcript: t }]] }); } else if (this.onerror) this.onerror({ error: 'no-speech' }); if (this.onend) this.onend(); }, 30); } stop() {} abort() {} };
+      window.__cadet.settings.set('micRadio', true); window.__cadet.career.chair.start(3, { practice: true });
+    });
+    r = await flyTo({ stopAt: 'gnd_call' });
+    assert.ok(r.active && r.v.stage === 3 && r.v.clock, JSON.stringify(r && r.v));
+    await ev(() => { const K = window.__cadet.career.chair, v = K.view(); window.__micSay = v.choices[K.rightIndex()].en.toLowerCase(); });
+    await g.page.keyboard.press('KeyM');
+    await g.page.waitForFunction(() => { const v = window.__cadet.career.chair.view(); return v && (v.id !== 'gnd_call' || v.phase !== 'choose'); }, null, { timeout: 5000 });
+    assert.equal((await ev(() => window.__cadet.career.chair.view())).last.ok, true, 'said into the microphone, taken as the right call');
+    // no answer in time: the controller asks again
+    r = await ev(() => { const K = window.__cadet.career.chair; for (let k = 0; k < 400 && K.view().phase !== 'choose'; k++) K.step(0.25); const id = K.view().id; for (let k = 0; k < 300 && K.view().id === id && !K.view().lines.some(l => /how do you hear/.test(l.en)); k++) K.step(0.25); return K.view(); });
+    assert.ok(r.lines.some(l => /how do you hear\?/.test(l.en)), `called after: ${JSON.stringify(r.lines)}`);
+    await g.page.keyboard.press('KeyQ');
+    assert.equal(await ev(() => window.__cadet.career.chair.active()), false, 'Q left it');
+    assert.match(await ev(() => document.querySelector('#toast').textContent), /途中でやめました/);
+    await ev(() => { window.__cadet.settings.set('micRadio', false); delete window.SpeechRecognition; });
+  });
+
   test('talk: a morning of chapter 2 — how the cadet feels, then today\'s lesson briefed, checked, a question from the textbook, and it is saved', async () => {
     await ev(() => { window.__cadet.setMode('walk'); window.__cadet.resetProgress(); });
     assert.equal(await ev(() => window.__cadet.savedState()), null, 'the record is erased');

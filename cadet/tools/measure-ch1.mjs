@@ -45,7 +45,8 @@ export async function load() {
   const [school, career, engine, book, people, insc, spec, guide, answers, cast] = await Promise.all([mod('content/school.js'), mod('career/career.js'), mod('dialog/engine.js'), mod('content/book.js'),
     mod('content/dialog/people.js'), mod('content/dialog/instructor-career.js'), mod('content/academy-spec.js'), mod('career/guide.js'), mod('content/answer-map.js'), mod('content/people.js')]);
   let flow = null; try { flow = await mod('content/day-flow.js'); } catch (e) { /* (before the day's own lines) */ }
-  LOADED = { FL, school, career, engine, book, people, cast, insc, spec, guide, answers, flow, BOOK: book.gameBook(FL), SPEC: spec.academySpec(FL) };
+  let chair = null; try { chair = { content: await mod('content/chair-flight.js'), runner: await mod('dialog/chair-flight.js') }; } catch (e) { /* (before k4 was rebuilt) */ }
+  LOADED = { FL, school, career, engine, book, people, cast, insc, chair, spec, guide, answers, flow, BOOK: book.gameBook(FL), SPEC: spec.academySpec(FL) };
   return LOADED;
 }
 
@@ -214,9 +215,19 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
           walk(placeOfPerson(L, 'lecturer', 'pm', 'ch1', sch.filter(x => x.kind === 'ftd').map(x => ({ ...x, slot: 'pm' }))), '訓練装置室');
           const q = { quiz: {} }, s2 = L.engine.createDialogState();
           let result = null;
-          const data = S.ftdDialogs(FL, it.id, { seed: st.seed + st.day, ...(S.heardOf ? { heard: S.heardOf(FL, career.state), attempt: career.attempt(`ftd:${it.id}`) } : {}) });
-          const r = doTalk(`ftd ${it.id}`, data, 'ftd', { state: s2, ctx: q, kind: 'ftd', policy: answerPolicy(ftdPolicy), onHook: (n, a) => { if (n === 'quizEnd') q.quiz = S.scoreOf(s2, +a); if (n === 'done') result = a; careerHook(n, a); } });
+          const data = S.ftdDialogs(FL, it.id, { seed: st.seed + st.day, ...(S.heardOf ? { heard: S.heardOf(FL, career.state), attempt: career.attempt(`ftd:${it.id}`) } : {}), ...(it.id === 'k4' ? { k4: { passed: false, fails: 0, missed: [] } } : {}) });
+          let stage = null;
+          const r = doTalk(`ftd ${it.id}`, data, 'ftd', { state: s2, ctx: q, kind: 'ftd', policy: answerPolicy(ftdPolicy), onHook: (n, a) => { if (n === 'quizEnd') q.quiz = S.scoreOf(s2, +a); if (n === 'done') result = a; if (n === 'chair') stage = +String(a).split(':')[0]; careerHook(n, a); } });
           noteAsked(L, r, asked, d, `ftd ${it.id}`, heardBefore(heardAll, r), k1Parts);
+          // (k4 rebuilt: the chair flight itself at the stage chosen, then its end — the lecturer's)
+          if (stage && L.chair) {
+            const sc = L.chair.content.chairScript(FL, { seed: (st.seed * 31 + 977 + 1) >>> 0 }), res = L.chair.runner.runChairFlight(sc, { stage, seed: st.seed });
+            const lines = L.chair.runner.chairLines(res.run, readingSeconds);
+            day.talks.push({ label: 'ftd k4 run', ...summarize(lines), lines, k4: res.summary });
+            for (const l of lines) { heardAll.push(l.text); heard += squash(l.text); }
+            const q2 = { quiz: { right: res.summary.first, n: res.summary.n, pct: res.summary.pct, pass: res.summary.pass } };
+            doTalk('ftd k4 end', S.chairDebriefDialogs(FL, res.summary, sc, { fails: 0 }), 'ftd', { ctx: q2, kind: 'ftd', onHook: (n, a) => { if (n === 'done') result = a; careerHook(n, a); } });
+          }
           if (it.id === 'k1') for (const h of r.hooks) { const m = /^tutor:(\w+)$/.exec(h[1] || ''); if (h[0] === 'pfd' && m) k1Parts.add(m[1]); }
           career.done('ftd', it.id); career.tire(6);
           if (result === 'pass') { prog.lessons[it.id] = { tries: 1, best: 'S', pass: true, levels: [] }; }
@@ -314,6 +325,8 @@ export async function measureAll({ seeds = [1], paces = null } = {}) {
         byWhere: Object.fromEntries([...new Set(askedAll.map(a => a.where))].map(w => { const x = askedAll.filter(a => a.where === w && a.inBook); return [w, { asked: askedAll.filter(a => a.where === w).length, saidBefore: x.filter(a => a.said).length }]; })),
         notSaid: [...new Set(inBook.filter(a => !a.said).map(a => `${a.where} ${a.id}`))].slice(0, 60) },
       classDay: r.classDay, ftdDay: r.ftdDay,
+      k4: (() => { const t = r.days.flatMap(d => d.talks).filter(x => /^ftd k4/.test(x.label)); const run = t.find(x => x.label === 'ftd k4 run') || t[0];
+        return run ? { decisions: run.decisions, longestGapS: +run.longestGap.toFixed(1), runMin: +(run.time / 60).toFixed(2), allMin: +(t.reduce((a, x) => a + x.time, 0) / 60).toFixed(2), lines: run.n } : null; })(),
       dayPatterns: dayPatterns(r).filter(p => p.days.length >= 3),
       framePatterns: framePatterns(r).filter(p => p.count >= 8),
     };

@@ -69,9 +69,14 @@ const CSS = `
 .dh-page footer button:focus-visible { outline: 2px solid #ffd479; outline-offset: 2px; }
 @media (max-width: 760px) { .dh-page { padding: 14px; } .dh-page table { font-size: 11px; } .dh-page th:nth-child(3), .dh-page td:nth-child(3), .dh-page th:nth-child(4), .dh-page td:nth-child(4) { display: none; } }
 @media (prefers-reduced-motion: reduce) { .dh-sig.write span { animation: none; clip-path: none; } }
+/* (k4, the chair flight in the training device room: the radio and the task panel alone, the flight's own hidden) */
+#fhud.k4 > :not(.fh-left):not(.fh-right), #fhud.k4 .fh-left > :not(.dh-task), #fhud.k4 .fh-right > :not(.dh-radio) { display: none !important; }
+#fhud .fh-ao button.script { box-shadow: inset 0 0 0 2px #f2b632; }
+#fhud .fh-ao button.script::after { content: '台本'; margin-left: auto; padding: 0 6px; border-radius: 4px; font-size: 11px; color: #1b1f22; background: #f2b632; }
+#fhud .dh-why { margin-top: 4px; padding: 5px 8px; border-radius: 6px; font-size: 12.5px; color: #e8f0fa; background: rgba(95, 212, 255, .12); border-left: 3px solid #5fd4ff; }
 `;
-const WHO = { ATIS: 'ATIS', GND: 'GND', TWR: 'TWR', P: 'あなた' };
-const STATION = { ATIS: 'LAB ATIS', GND: 'LAB Ground', TWR: 'LAB Tower' };
+const WHO = { ATIS: 'ATIS', GND: 'GND', TWR: 'TWR', DEP: 'DEP', APP: 'APP', P: 'あなた' };
+const STATION = { ATIS: 'LAB ATIS', GND: 'LAB Ground', TWR: 'LAB Tower', DEP: 'LAB Departure', APP: 'LAB Approach', OPS: '操作（COM1・高度計・トランスポンダー）' };
 
 export function createDayHUD({ doc = document, settings = null } = {}) {
   if (!doc.getElementById('dhud-css')) { const st = doc.createElement('style'); st.id = 'dhud-css'; st.textContent = CSS; doc.head.appendChild(st); }
@@ -99,7 +104,8 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
   const rLines = make('div', 'dh-lines'), rQ = make('div', 'fh-aq'), rOpts = make('div', 'fh-ao'), rClock = make('div', 'dh-clock'), rClockI = make('i'), rRes = make('div', 'fh-ar');
   const rMic = make('div', 'dh-mic'); rMic.hidden = true; rMic.setAttribute('aria-live', 'polite');   // (M8) the microphone
   put(rClock, rClockI);
-  put(radio, rSt, rLines, rQ, rOpts, rMic, rClock, rRes); radio.hidden = true;
+  const rWhy = make('div', 'dh-why'); rWhy.hidden = true;           // (k4: the reason, when asked)
+  put(radio, rSt, rLines, rQ, rOpts, rMic, rClock, rRes, rWhy); radio.hidden = true;
   if (right) { right.insertBefore(radio, right.firstChild); right.insertBefore(check, right.firstChild); }
   let onRadioPick = null, onCheckClick = null;
   rOpts.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && onRadioPick) onRadioPick(+b.dataset.k); });
@@ -139,7 +145,7 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
     radio.hidden = !v;
     if (!v) return;
     const ja = !settings || settings.get('radioJa') !== false;
-    const sig = JSON.stringify([v.id, v.phase, v.lines.length, v.lines.length ? v.lines[v.lines.length - 1].en : '', v.choices.length, v.last && v.last.en, ja, mic]);
+    const sig = JSON.stringify([v.id, v.phase, v.lines.length, v.lines.length ? v.lines[v.lines.length - 1].en : '', v.choices.length, v.last && v.last.en, ja, mic, v.script, v.why, v.n]);
     if (!same(radio, sig)) {
       rStB.textContent = STATION[v.station] || v.station; rStF.textContent = v.freq;
       rLines.textContent = '';
@@ -149,18 +155,19 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
         if (ja && l.ja) put(d, make('span', 'ja', l.ja));
         put(rLines, d);
       }
-      rQ.textContent = v.phase === 'choose' ? `${v.q}　1〜3 キーで選ぶ${mic ? '・M を押して声で言う' : ''}` : v.phase === 'hear' ? '聞いています…' : '';
+      rQ.textContent = v.phase === 'choose' ? `${v.q}　1〜3 キーで選ぶ${mic && v.kind !== 'op' ? '・M を押して声で言う' : ''}${v.n ? '・H：なぜ？' : ''}` : v.phase === 'hear' ? '聞いています…' : '';
       rQ.hidden = !rQ.textContent;
       rOpts.textContent = '';
       for (const c of v.choices) {
-        const b = Object.assign(make('button'), { type: 'button', tabIndex: -1 }); b.dataset.k = String(c.k);
+        const b = Object.assign(make('button', c.k === v.script ? 'script' : ''), { type: 'button', tabIndex: -1 }); b.dataset.k = String(c.k);
         put(rOpts, put(b, make('i', '', String(c.k + 1)), make('span', '', c.en)));
       }
       const L = v.last;
       rRes.hidden = !L || (!L.why && L.ok);
       if (L) { rRes.className = 'fh-ar ' + (L.ok ? 'ok' : 'ng'); rRes.textContent = ''; put(rRes, make('b', '', L.ok ? 'OK。' : 'もう一度。'), doc.createTextNode(L.why || '')); }
+      rWhy.hidden = !v.why; rWhy.textContent = v.why ? `なぜ？　${v.why}` : '';
     }
-    rClock.hidden = v.phase !== 'choose';
+    rClock.hidden = v.phase !== 'choose' || v.clock === false;
     const k = v.time ? Math.max(0, v.timeLeft / v.time) : 0;
     rClockI.style.width = `${(k * 100).toFixed(1)}%`; rClock.classList.toggle('low', k < 0.3);
   }

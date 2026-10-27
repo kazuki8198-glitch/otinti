@@ -11,7 +11,9 @@ const PHON = { alpha: 'a', alfa: 'a', bravo: 'b', charlie: 'c', delta: 'd', echo
 // the instruction's own words (as the radio says them: "straight-in" is "straight in")
 export const PHRASES = ['hold short', 'line up and wait', 'cleared for takeoff', 'cleared to land', 'closed traffic', 'straight in', 'report final', 'report midfield downwind',
   'report returning', 'frequency change approved', 'request taxi', 'ready for departure', 'inbound for landing', 'clear of runway', 'east ramp', 'student pilot', 'first solo',
-  'right at', 'left at', 'left closed', 'right closed', 'downwind', 'final', 'taking off', 'roger', 'bye', 'ready to go', 'landing', 'over'];
+  'right at', 'left at', 'left closed', 'right closed', 'downwind', 'final', 'taking off', 'roger', 'bye', 'ready to go', 'landing', 'over',
+  // (k4, the chair flight: its calls have a word of their own besides the call sign — asking again, the wrong ones)
+  'say again', 'contact departure', 'inbound', 'clear of the runway'];
 
 // text → words: lower case, numbers as digits ("3,000" → "3000"), the alphabet's words as letters, "point" as "."
 export function normalize(text) {

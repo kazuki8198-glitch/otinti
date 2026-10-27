@@ -26,7 +26,7 @@ import { EXAMS, CLASSES, CLASS_FTD, PACE_IDS, heardSet } from '../career/career.
 import { BANK_ANSWERS, SCENE_ANSWERS, DRILL_ANSWERS, LISTEN_ANSWERS, NOTE_ANSWERS } from './answer-map.js';
 import { SUMMARIES } from './lecture-summaries.js';
 
-export const SCHOOL_HOOKS = ['board', 'pfd', 'say', 'quizEnd', 'done', 'look', 'nod', 'point', 'page', 'progress', 'book', 'pace', 'heard', 'ans'];
+export const SCHOOL_HOOKS = ['board', 'pfd', 'say', 'quizEnd', 'done', 'look', 'nod', 'point', 'page', 'progress', 'book', 'pace', 'heard', 'ans', 'chair'];
 const SPEAKERS = { lecturer: { name_ja: PEOPLE.lecturer.title, color: PEOPLE.lecturer.color }, instructor: { name_ja: PEOPLE.instructor.title, color: PEOPLE.instructor.color }, player: { name_ja: 'あなた', color: '#f2b632' } };
 // the textbook's chapters each class covers (part 1; its introduction is not in the game's book) and the question bank
 // that goes with each chapter
@@ -578,7 +578,7 @@ const TUTOR = [
 // ftdDialogs(FL, k, { seed, attempt, heard }) → the lesson's dialog data (dialog 'ftd'). attempt: how many times it was
 // begun before (another order of questions each time; a lesson not passed can be taken again the same day); heard: the
 // sections heard (a Set; null: all of part 1) — k3, k5 and k6 ask only what has been said (content/answer-map.js)
-export function ftdDialogs(FL, k, { seed = 1, attempt = 0, heard = null } = {}) {
+export function ftdDialogs(FL, k, { seed = 1, attempt = 0, heard = null, k4 = null } = {}) {
   const r = rng(seed * 13 + Number(k.slice(1)) + attempt * 7919), R = FL.radio, N = {}, title = FTD_TITLES[k];
   const ok = (a) => !!a && (!heard || allHeard(a, heard));
   if (!title) throw new Error(`ftdDialogs: no training device lesson ${k}`);
@@ -589,15 +589,11 @@ export function ftdDialogs(FL, k, { seed = 1, attempt = 0, heard = null } = {}) 
     TUTOR.forEach(([part, text], i) => { N[`t${i}`] = { speaker: 'lecturer', text, hook: { name: 'pfd', arg: `tutor:${part}` }, next: i < TUTOR.length - 1 ? `t${i + 1}` : 'k1:end' }; });
     N['k1:end'] = { speaker: 'lecturer', text: 'Perfect. 次は、実際の表示を読む練習です。読む順番を、体で覚えてください。', hook: { name: 'nod' }, effects: [{ hook: 'done', arg: 'pass' }], end: true };
   } else if (k === 'k4') {
-    // one whole flight: each call — who says it, what it means, why (FLIGHT LAB's FLIGHT), the English spoken
-    N.intro = { speaker: 'lecturer', text: 'ATIS から駐機場まで、1 回の飛行の交信を全部、順番に聞きます。意味と理由も一緒に。', next: 'f0:0' };
-    const lines = [];
-    for (const g of R.FLIGHT) {
-      lines.push({ text: `${g.t}（${g.freq}）`, say: null });
-      for (const [who, en, ja] of g.lines) if (en) lines.push({ text: `${who === 'P' ? 'あなた' : who}：“${callFix(en)}” ── ${callFix(ja)}`, say: callFix(en) });
-    }
-    lines.forEach((l, i) => { N[`f0:${i}`] = { speaker: 'lecturer', text: l.text, ...(l.say ? { hook: { name: 'say', arg: l.say } } : {}), next: i < lines.length - 1 ? `f0:${i + 1}` : 'k4:end' }; });
-    N['k4:end'] = { speaker: 'lecturer', text: 'That\'s the whole flight. 型が見えてきましたか？ 実際の飛行でも、同じ順番で交信します。', hook: { name: 'nod' }, effects: [{ hook: 'done', arg: 'pass' }], end: true };
+    // k4, 交信のチェアフライト: what it is, then how to fly it (the stage: the runner, its panel and its screen are the
+    // game's, dialog/chair-flight.js; the end, chairDebriefDialogs). k4 is passed only by a run scored 80% or more
+    k4Start(N, k4 || {});
+    if (k4 && k4.passed) { k4ListenNodes(FL, N, 'k4:listen:end'); N['k4:listen:end'] = { speaker: 'lecturer', text: 'That\'s the whole flight. 空港は違っても、交信の型は同じです。', hook: { name: 'nod' }, end: true }; }
+    return { speakers: SPEAKERS, flags: [], hooks: [...SCHOOL_HOOKS], dialogs: { ftd: { start: 'hello', nodes: N } }, questions: [] };
   } else {
     // (k3, k6: ten of the kinds whose rules have been said, each kind in turn; k5: ten of the scenes whose calls have)
     const kinds = (all, map) => { const ks = shuffled(Object.keys(all).filter(x => ok(map[x])), r); return Array.from({ length: 10 }, (_, i) => ks[i % ks.length]); };
@@ -611,6 +607,81 @@ export function ftdDialogs(FL, k, { seed = 1, attempt = 0, heard = null } = {}) 
     flags = questions.map((_, i) => `qz_${i}`);
   }
   return { speakers: SPEAKERS, flags, hooks: [...SCHOOL_HOOKS], dialogs: { ftd: { start: 'hello', nodes: N } }, questions: questions || [] };
+}
+
+// ---- k4: the chair flight's start and its end
+// k4Start(N, { passed, fails, missed }) — passed: k4 passed before; fails: runs not passed in a row; missed: the items a
+// run got wrong (practised alone once two runs in a row did not pass). The choice's hook 'chair' says how to fly it:
+// '2' the script hidden (scored), '1' the script in view (practice), '3' for real (the clock, the microphone),
+// '1:missed' only the items missed, in view
+const K4 = 'lecturer';
+function k4Start(N, { passed = false, fails = 0, missed = [] } = {}) {
+  const say = (id, text, more = {}) => { N[id] = { speaker: K4, text, ...more }; };
+  say('hello', passed ? 'k4、交信のチェアフライトをもう一度やりますね。今日も、あなたがパイロット、わたしが管制官です。' : 'k4 は交信のチェアフライトです。ヘッドセットをつけて、机の席へ。あなたがパイロット、わたしはコンソールで管制官をやります。', { hook: { name: 'look', arg: 'player' }, next: 'k4:2' });
+  say('k4:2', '飛ぶのは、10 日目の初飛行と同じ流れです。ATIS を聞いて、Ground、Tower。訓練空域から帰って着陸し、駐機場に戻るまで。', { hook: { name: 'point', arg: 'screen' }, next: 'k4:3' });
+  say('k4:3', '周波数を合わせる、高度計を合わせる、呼ぶ前に聞く。その操作も一つずつ聞きます。壁の画面に、地図と周波数の表を出します。', { next: 'k4:4' });
+  say('k4:4', '答えは 1〜3 で選びます。マイクが ON なら、M を押して声に出しても答えられます。理由を聞きたいときは H を押してください。', { next: 'k4:stage' });
+  const go = (stage, text) => ({ text, next: 'k4:go', effects: [{ hook: 'chair', arg: stage }] });
+  const choices = passed ? [go('3', '③ 本番（時間制限あり。マイクも使えます）'), go('2', '② 自分の台詞を隠して（80% で合格）'), go('1', '① 台本を見ながら（点数なしの練習）'), { text: '教科書の例を通しで聞く（別の空港の例）', next: 'k4:listen' }]
+    : fails >= 2 && missed.length ? [go('1:missed', `間違えたところ（${missed.length} か所）だけ、台本を見ながら練習する`), go('1', '① 最初から、台本を見ながら練習する')]
+      : fails >= 1 ? [go('1', '① 台本を見ながら練習する（点数なし）'), go('2', '② もう一度、台詞を隠して挑戦する')]
+        : [go('2', '② 自分の台詞を隠して（80% で合格）'), go('1', '① 台本を見ながら（点数なしの練習）')];
+  say('k4:stage', fails >= 2 ? '2 回続けて届きませんでしたね。間違えたところだけ、先に台本を見ながら練習しましょう。' : fails ? 'さっきの続きです。どうしますか？' : passed ? 'どれにしますか？' : '最初は、自分の台詞を隠して通してみましょう。台本を見ながら練習してからでもかまいません。', { choices });
+  say('k4:go', 'では、始めます。席に着いてください。COM1 から合わせていきましょう。', { hook: { name: 'nod' }, end: true });
+  // (after the pass, the textbook's own example, a whole flight at another airport, to listen to: said to be that)
+  if (passed) say('k4:listen', 'これは教科書の例の交信です。別の空港で、西のエプロン、誘導路 Charlie、出発管制と進入管制があります。LAB の手順とは違います。', { next: 'f0:0' });
+}
+// the textbook's whole flight (FLIGHT LAB's FLIGHT, another airport), each call with its meaning, spoken: k4's
+// listening after the pass
+export function k4ListenNodes(FL, N, then) {
+  const lines = [];
+  for (const g of FL.radio.FLIGHT) {
+    lines.push({ text: `${g.t}（${g.freq}）`, say: null });
+    for (const [who, en, ja] of g.lines) if (en) lines.push({ text: `${who === 'P' ? 'あなた' : FL.radio.WHO[who] || who}：“${callFix(en)}” ── ${callFix(ja)}`, say: callFix(en) });
+  }
+  const parts = lines.flatMap(l => fit(l.text).map((t, k) => ({ text: t, say: k ? null : l.say })));
+  parts.forEach((l, i) => { N[`f0:${i}`] = { speaker: K4, text: l.text, ...(l.say ? { hook: { name: 'say', arg: l.say } } : {}), next: i < parts.length - 1 ? `f0:${i + 1}` : then }; });
+}
+// chairDebriefDialogs(FL, summary, script, { fails, practice }) → the end of a run (dialog 'ftd'): the score, each
+// item missed — what was left out of the call (readback.js's words), late, or the wrong switch — with its section of
+// the textbook to open; then passed (hook done 'pass'), or the next try: 'chair' with the stage (no day lost), or the end
+// for today (done 'fail'). practice: a run from the tablet (nothing passed or failed)
+export function chairDebriefDialogs(FL, sum, script, { fails = 0, practice = false } = {}) {
+  const book = gameBook(FL), N = {}, P = script.parts;
+  // (a line too long for the box over two: its hook on the first, its choices or its end on the last)
+  const say = (id, text, more = {}) => {
+    const l = fit(text), { choices, end, ...first } = more;
+    l.forEach((t, k) => { N[k ? `${id}:${k}` : id] = { speaker: K4, text: t, ...(k ? {} : first), ...(k < l.length - 1 ? { next: `${id}:${k + 1}` } : { ...(choices ? { choices } : {}), ...(end ? { end } : {}) }) }; });
+    return l.length > 1 ? `${id}:${l.length - 1}` : id;
+  };
+  const missed = sum.items.filter(x => !x.ok).slice(0, 6);
+  const head = sum.stage === 1 ? `台本を見ながらの練習、おつかれさまでした。${sum.n} か所のうち、${sum.first} か所が 1 回目で合っていました。`
+    : `${sum.n} か所のうち、1 回目で${sum.stage === 3 ? '時間内に' : ''}合っていたのは ${sum.first} か所、${sum.pct}% でした。`;
+  let at = say('d0', head, { hook: { name: 'look', arg: 'player' } }), prev = at;
+  const link = (n, x) => {
+    const sec = book.section(x.sec), part = (P[x.part] || {}).ja || '';
+    const what = x.late ? '返事が遅れて、管制官に呼び直されました' : x.kind === 'op' ? `最初は「${x.said[0]}」でした` : x.missing && x.missing.length ? `${x.missing.join('・')} が抜けていました` : '最初は違う言い方でした';
+    const id = `m${n}`, end = say(id, `${part}：${what}。正しくは${x.kind === 'op' ? `「${x.right}」` : `“${x.right}”`}です。`);
+    N[prev].next = id;
+    N[end].choices = [{ text: '次へ', next: `m${n}:after` }, ...(sec ? [{ text: `教科書の「${sec.title}」を開く`, next: `m${n}:book` }] : [])];
+    N[`m${n}:book`] = { speaker: K4, text: `教科書の「${sec ? sec.title : ''}」です。読み終わったら閉じてください。`, hook: { name: 'book', arg: x.sec }, next: `m${n}:after` };
+    N[`m${n}:after`] = { speaker: K4, text: n < missed.length - 1 ? '次です。' : 'ここまでが、直すところです。' };
+    prev = `m${n}:after`;
+  };
+  missed.forEach((x, n) => link(n, x));
+  const chair = (stage, text) => ({ text, next: 'again', effects: [{ hook: 'chair', arg: stage }] });
+  const endWith = (id, text, choices, more = {}) => { N[prev].next = id; say(id, text, { ...more, ...(choices ? { choices } : { end: true }) }); };
+  N.again = { speaker: K4, text: 'OK. 席はそのままで。始めます。', end: true };
+  if (practice) endWith('last', sum.pass ? 'よくできました。この練習は記録には残りません。' : '練習はここまでです。この練習は記録には残りません。', null);
+  else if (sum.stage === 1) endWith('last', '次は、自分の台詞を隠して通してみましょう。', [chair('2', '② 台詞を隠して挑戦する'), chair('1', '① もう一度、台本を見ながら'), { text: '今日はここまでにする', next: 'stop' }]);
+  else if (sum.pass) endWith('pass', sum.pct === 100 ? 'Perfect. k4 は合格です。初飛行の日も、この順番どおりに交信します。' : 'Excellent. k4 は合格です。初飛行の日も、この順番どおりに交信します。', null, { hook: { name: 'nod' }, effects: [{ hook: 'done', arg: 'pass' }] });
+  else if (fails + 1 >= 2 && sum.missed.length) endWith('last', 'あと少しです。2 回続けて届かなかったので、間違えたところだけ台本を見ながら練習して、それからもう一度挑戦しましょう。', [chair('1:missed', `間違えたところ（${sum.missed.length} か所）だけ練習する`), { text: '今日はここまでにする', next: 'stop' }]);
+  else endWith('last', `あと少しです。合格は 80% から。台本を見ながら練習してもいいし、すぐにもう一度でもかまいません。`, [chair('1', '① 台本を見ながら練習する'), chair('2', '② もう一度、台詞を隠して挑戦する'), { text: '今日はここまでにする', next: 'stop' }]);
+  N.stop = { speaker: K4, text: 'わかりました。準備ができたら、また声をかけてください。今日のうちに、何度でもできます。', effects: [{ hook: 'done', arg: 'fail' }], end: true };
+  // (only the ends a choice leads to)
+  const used = new Set(Object.values(N).flatMap(n => (n.choices || []).map(c => c.next)));
+  for (const id of ['again', 'stop']) if (!used.has(id)) delete N[id];
+  return { speakers: SPEAKERS, flags: [], hooks: [...SCHOOL_HOOKS], dialogs: { ftd: { start: 'd0', nodes: N } }, questions: [] };
 }
 
 // ---------------------------------------------------------------- the written tests

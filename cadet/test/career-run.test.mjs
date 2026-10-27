@@ -17,7 +17,9 @@ import { createCareer, CH2, GROUND, passedAt, SOLO_TRUST, CLASSES, STAGE, CHECKS
 import { planFor } from '../src/career/day.js';
 import { peopleDialogs } from '../src/content/dialog/people.js';
 import { careerInstructorDialogs } from '../src/content/dialog/instructor-career.js';
-import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, scoreOf, classOptions, heardOf } from '../src/content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, scoreOf, classOptions, heardOf, chairDebriefDialogs } from '../src/content/school.js';
+import { chairScript } from '../src/content/chair-flight.js';
+import { runChairFlight } from '../src/dialog/chair-flight.js';
 import { createRunner, createDialogState, trustOf } from '../src/dialog/engine.js';
 import { playDay } from './helpers/play-day.mjs';
 import { installSorajima } from '../src/flight/sorajima.js';
@@ -67,7 +69,16 @@ test('career run: from the first day to the first solo — every gate in order, 
       else if (it.kind === 'ftd' || it.kind === 'exam') {
         const q = { quiz: {} }, s2 = createDialogState(), heard = heardOf(FL, career.state), d = it.kind === 'ftd' ? ftdDialogs(FL, it.id, { seed: st.seed + st.day, heard, attempt: career.attempt(`ftd:${it.id}`) }) : examDialogs(FL, it.id, { seed: st.seed + st.day, heard, attempt: career.attempt(`exam:${it.id}`) });
         let result = null;
-        run(d, it.kind, { state: s2, ctx: q, hooks: (n, a) => { if (n === 'quizEnd') q.quiz = scoreOf(s2, +a); if (n === 'done') result = a; careerHook(career, n, a); } });
+        let stage = null;
+        run(d, it.kind, { state: s2, ctx: q, hooks: (n, a) => { if (n === 'quizEnd') q.quiz = scoreOf(s2, +a); if (n === 'done') result = a; if (n === 'chair') stage = a; careerHook(career, n, a); } });
+        // (k4: the talk begins the chair flight; the run flown with the right answers, as the game's test API's
+        // rightIndex; its debrief passes it)
+        if (it.id === 'k4') {
+          assert.equal(stage, '2', 'k4 begins with the script hidden');
+          const seed = (st.seed * 31 + career.attempt('k4:run') * 977 + 1) >>> 0, script = chairScript(FL, { seed }), { summary } = runChairFlight(script, { stage: 2, seed });
+          q.quiz = { pct: summary.pct };
+          run(chairDebriefDialogs(FL, summary, script, {}), 'ftd', { hooks: (n, a) => { if (n === 'done') result = a; } });
+        }
         if (it.kind === 'ftd') { career.done('ftd', it.id); if (result === 'pass') { const r = prog.lessons[it.id] || { tries: 0, best: '', pass: false, levels: [] }; r.tries++; r.pass = true; r.best = 'S'; prog.lessons[it.id] = r; } }
         else career.exam(it.id, q.quiz.pct);
         assert.equal(result, 'pass', `${it.kind} ${it.id} passed with the right answers`);

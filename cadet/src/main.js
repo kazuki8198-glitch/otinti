@@ -54,7 +54,12 @@ import { createCrowd } from './npc/crowd.js';
 import { peopleDialogs } from './content/dialog/people.js';
 import { careerInstructorDialogs } from './content/dialog/instructor-career.js';
 import { careerBoardDialogs } from './content/dialog/cockpit.js';
-import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, FTD_TITLES, pfdPictures, lecturePage, lecturerNotesHtml, classOptions, heardOf } from './content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, FTD_TITLES, pfdPictures, lecturePage, lecturerNotesHtml, classOptions, heardOf, chairDebriefDialogs } from './content/school.js';
+import { chairScript } from './content/chair-flight.js';
+import { createChairFlight } from './dialog/chair-flight.js';
+import { drawChairScreen } from './ui/chair-screen.js';
+import { createMic, MIC_REASON_JA } from './ui/mic.js';
+import { matchReadback } from './dialog/readback.js';
 import { drawPfdPicture } from './world/pfd-picture.js';
 import { drawLecturePage, drawKeyBoard, figureSource } from './world/lecture-screen.js';
 import { createTablet } from './ui/tablet.js';
@@ -590,7 +595,7 @@ async function boot() {
   // while a talk goes on the mouse stays captured (it looks round; a click goes on), except while it is needed on the
   // screen: the choices, the textbook, the question field, a panel over the talk (the logbook, the menu, the tablet, a
   // report, a card), the debrief's card
-  const talkWantsLock = () => started && !menu.isOpen && !tablet.isOpen && !dayHud.logbookOpen && !report.isOpen && !cards.showing
+  const talkWantsLock = () => started && !chair && !menu.isOpen && !tablet.isOpen && !dayHud.logbookOpen && !report.isOpen && !cards.showing
     && !dui.bookOpen && !dui.asking && !dui.choosing && !(fly && fly.debrief);
   // the click (or key) that went on takes the mouse back: for looking round at the talk's next line, or for walking (the
   // talk is over; in the fly mode its own end does it). Outside a gesture the browser refuses, and nothing changes.
@@ -636,6 +641,9 @@ async function boot() {
         return { run: startLesson('class', +cls.id, classDialogs(FL, +cls.id, { seed: st.seed, ...classOptions(FL, st, +cls.id, { attempt: career.attempt(`class:${cls.id}`) }) })), dialog: 'class' };
       }
       // (a lesson or the written test not passed can be taken again the same day: its questions in another order)
+      // (k4: a run's end first, when one has just ended; else its start — again after a pass too, to practise)
+      if (chairEnd) { const d = chairEnd; chairEnd = null; return { run: startLesson('ftd', 'k4', d), dialog: 'ftd' }; }
+      if (ftd && ftd.id === 'k4' && !(career.doneToday('ftd', 'k4') && groundPassed(prog(), 'k4'))) return { run: startLesson('ftd', 'k4', ftdDialogs(FL, 'k4', { k4: k4State() })), dialog: 'ftd' };
       if (ftd && !(career.doneToday('ftd', ftd.id) && groundPassed(prog(), ftd.id))) return { run: startLesson('ftd', ftd.id, ftdDialogs(FL, ftd.id, { seed: st.seed + st.day, heard: heardOf(FL, st), attempt: career.attempt(`ftd:${ftd.id}`) })), dialog: 'ftd' };
       if (ex && ex.id === 'written1' && !(career.doneToday('exam', ex.id) && st.exams.written1 && st.exams.written1.pass)) return { run: startLesson('exam', ex.id, examDialogs(FL, ex.id, { seed: st.seed + st.day, heard: heardOf(FL, st), attempt: career.attempt('exam:written1') })), dialog: 'exam' };
       return { run: peopleRunner, dialog: 'lecturer' };
@@ -679,6 +687,7 @@ async function boot() {
   let insGoOut = false;
   // the pause menu's "erase the record": a new career, the instructor meets you again for the first time
   function resetProgress() {
+    closeChair(); chairEnd = null; chairMissed = [];
     if (epi.on) leaveEpilogue('walk');          // (M8: out of Haneda first; the epilogue_seen it saves goes with the rest)
     if (talk && talkRun) talkRun.stop();
     const fresh = createDialogState();
@@ -715,6 +724,7 @@ async function boot() {
     else if (name === 'say') speakEnglish(arg);
     else if (name === 'quizEnd') { cx.quiz = scoreOf(lessonState, +arg); }
     // (chapter 1's classes and lessons: the pace chosen, a section heard, a question answered — kept with the career)
+    else if (name === 'chair') { const [st0, only] = String(arg).split(':'); afterTalk.push(() => startChair(+st0, { only: only === 'missed' ? chairMissed : null, practice: talkWho === 'tablet' })); }
     else if (name === 'pace') career.setPace(arg);
     else if (name === 'heard') { const [id, how] = String(arg).split('|'); career.heardSection(id, how); }
     else if (name === 'ans') { const [id, ok] = String(arg).split('|'); career.answered(id, ok === '1'); }
@@ -864,19 +874,116 @@ async function boot() {
     const s = academy.surfaceAt('sim', 'wall_screen'), actor = talkActor;
     if (s && actor && Math.random() < 0.5) { actor.pointAt(frameToWorld(s)); actor.gesture('point'); }
   }
-  // English said aloud (the training device's radio lessons), when the voice is on
-  function speakEnglish(en) {
+  // English said aloud (the training device's radio lessons, the class's examples), when the voice is on: queued, so the
+  // click that goes on to the next line does not cut it short; the controllers and the pilot (who: 'P') in two voices
+  // where there are two (a higher pitch for the pilot), the ATIS a little slower — as FLIGHT LAB's radio page says them
+  // (no voice at all on this machine: nothing said, nothing waited for — the subtitles alone. The list asked for once at
+  // the start: some browsers fill it in a moment later)
+  let voiceQ = 0, voiceT = 0;
+  try { if (globalThis.speechSynthesis) globalThis.speechSynthesis.getVoices(); } catch (e) { /* no speech here */ }
+  function speakEnglish(en, who = 'ATC') {
     if (audio.radio) audio.radio(1.2 + String(en).length / 13);
     const synth = globalThis.speechSynthesis;
     if (!synth || settings.get('atcVoice') === false || typeof SpeechSynthesisUtterance === 'undefined') return;
+    if (voiceQ >= 3) return;                                   // (lines gone through faster than they are said: the rest left out)
     try {
-      synth.cancel();
+      const voices = synth.getVoices(); if (!voices.length) return;
       const u = new SpeechSynthesisUtterance(spoken(en));
-      const v = synth.getVoices().find(x => /^en(-|_)US/i.test(x.lang)) || synth.getVoices().find(x => /^en/i.test(x.lang));
-      if (v) u.voice = v;
-      u.lang = 'en-US'; u.rate = 1.0; u.volume = Math.max(0, Math.min(1, (settings.get('volume') ?? 0.8) * (settings.get('volRadio') ?? 1)));
+      const all = voices.filter(x => /^en(-|_)/i.test(x.lang)), us = all.filter(x => /^en(-|_)US/i.test(x.lang)), pool = us.length ? us : all;
+      if (pool.length) u.voice = pool[who === 'P' ? Math.min(1, pool.length - 1) : 0];
+      u.lang = 'en-US'; u.rate = who === 'ATIS' ? 0.95 : 1.0; u.pitch = who === 'P' ? 1.1 : 0.95;
+      u.volume = Math.max(0, Math.min(1, (settings.get('volume') ?? 0.8) * (settings.get('volRadio') ?? 1)));
+      voiceQ++; voiceT = performance.now();
+      u.onend = u.onerror = () => { voiceQ = Math.max(0, voiceQ - 1); voiceT = performance.now(); };
       synth.speak(u);
     } catch (e) { /* no speech here */ }
+  }
+  // still speaking (k4's clock waits for the voice): not past 15 s of one line, whatever the browser says
+  const voiceBusy = () => voiceQ > 0 && settings.get('atcVoice') !== false && performance.now() - voiceT < 15000;
+  // ---- k4, the chair flight (content/chair-flight.js, dialog/chair-flight.js): the cadet at a desk of the training
+  // device room, the flight HUD's radio and task panels alone (#fhud.k4), the wall screen's map of the field; 1–3 (or a
+  // click) answers, M says it into the microphone, H asks why, Esc pauses (the menu). Its end: the lecturer's debrief
+  // (chairDebriefDialogs) — or, from the tablet, the tablet's (a practice: nothing recorded)
+  let chair = null, chairEnd = null, chairMissed = [];
+  const K4_FAILS = 'k4:fails';
+  const k4State = () => ({ passed: groundPassed(prog(), 'k4'), fails: career.state.attempts[K4_FAILS] || 0, missed: chairMissed });
+  const DESK = { a: 624.2, c: 267.2, face: { a: 629.9, c: 270.6 } };          // (the desk nearest the screen, facing it)
+  function startChair(stage, { only = null, practice = false } = {}) {
+    if (chair || !(stage >= 1 && stage <= 3)) return;
+    const st = career.state, seed = (st.seed * 31 + career.attempt('k4:run') * 977 + 1) >>> 0;
+    const script = chairScript(FL, { seed });
+    const run = createChairFlight(script, { stage, seed, only: only && only.length ? only : null, hold: voiceBusy });
+    chair = { run, script, stage, practice, atis: {}, screenAt: '', micState: null, mic: null };
+    if (!practice && academy.roomOf(walker.framePos.a, walker.framePos.c)?.id === 'sim') placeWalker(DESK.a, DESK.c, DESK.face);
+    input.exitLock(); interactor.closeCard(); hud.prompt(null);
+    flightHud.show(true); $('#fhud').classList.add('k4');
+    toast(stage === 1 ? '① 台本を見ながら：印の付いた答えを選んで、流れを覚えます（点数なし）' : stage === 2 ? '② 台詞を隠して：1〜3 で答えます（80% で合格）。H で「なぜ？」' : '③ 本番：時間内に答えます。マイクが ON なら M で声に出せます', 5200);
+    stepChair(0);
+  }
+  function stepChair(dt) {
+    const c = chair; if (!c) return;
+    for (const e of c.run.update(dt)) if (e.type === 'say') speakEnglish(e.en, e.who);
+    if (c.run.done) { finishChair(); return; }
+    const v = c.run.view(); if (!v) return;
+    const mic = !!settings.get('micRadio');
+    dayHud.setRadio(v, { mic }); dayHud.setMic(c.micState);
+    dayHud.setTask({ kicker: `k4 交信のチェアフライト　${v.n} / ${v.of}`, title: v.partJa, text: v.kind === 'op' ? '操作：COM1・高度計・トランスポンダー・呼ぶ前に聞く' : '', keys: [['1〜3', '答える'], ['H', 'なぜ？'], ...(mic ? [['M', '声で答える']] : []), ['Q', 'やめる'], ['Esc', '一時停止']],
+      flow: c.run.items.map((x, i) => ({ done: i < v.n - 1, cur: i === v.n - 1 })) });
+    const at = `${v.id}:${v.com}:${c.atis.letter || ''}:${c.atis.alt || ''}`;
+    if (c.screenAt !== at) { c.screenAt = at; academy.redraw('sim', 'wall_screen', (g, w, h) => drawChairScreen(g, w, h, { v, atis: c.atis, exit: c.script.exit })); }
+  }
+  function chairAnswer(k) {
+    const c = chair; if (!c) return;
+    const v = c.run.view(); if (!v || v.phase !== 'choose') return;
+    const r = c.run.answer(k); if (!r) return;
+    if (audio.click) audio.click();
+    // (what the cadet said, said in the pilot's voice; the kneeboard filled in as the ATIS is copied)
+    if (v.kind !== 'op' && v.kind !== 'listen') speakEnglish(r.en, 'P');
+    if (r.ok && /^atis:/.test(v.id)) c.atis.letter = r.en.split('（')[0];
+    if (r.ok && v.id === 'atis') { c.atis.alt = r.en; c.atis.wind = `${String(c.script.weather.windMag).padStart(3, '0')}° ${c.script.weather.windKt} kt`; }
+    c.micState = null;
+  }
+  function chairMic() {
+    const c = chair; if (!c || !settings.get('micRadio')) return;
+    const v = c.run.view(); if (!v || v.phase !== 'choose' || v.kind === 'op') return;
+    if (!c.mic) c.mic = createMic();
+    if (c.mic.busy) { c.mic.stop(); return; }
+    const id = `${v.id}:${v.last ? v.last.en : ''}`;
+    c.micState = { on: true };
+    c.mic.listen().then((r) => {
+      const v2 = chair === c ? c.run.view() : null;
+      if (!v2 || v2.phase !== 'choose' || `${v2.id}:${v2.last ? v2.last.en : ''}` !== id) { if (chair === c) c.micState = null; return; }
+      if (!r.ok) { c.micState = { msg: MIC_REASON_JA[r.reason] || MIC_REASON_JA['no-speech'] }; return; }
+      const right = c.run.rightIndex();
+      const m = matchReadback(v2.choices.map((x, i) => ({ en: x.en, ok: i === right })), r.texts, { call: c.script.radio.call, number: v2.kind === 'listen' });
+      if (m.pick >= 0) { chairAnswer(m.pick); c.micState = { heard: m.heard }; }
+      else c.micState = { heard: m.heard, missing: m.missing.map(x => x.ja), msg: 'もう一度 M で言い直すか、1〜3 キーで答えてください' };
+    });
+  }
+  function closeChair() {
+    const c = chair; if (!c) return null;
+    chair = null;
+    if (c.mic) c.mic.stop();
+    dayHud.setRadio(null); dayHud.setTask(null); dayHud.setMic(null);
+    $('#fhud').classList.remove('k4'); flightHud.show(false);
+    academy.redraw('sim', 'wall_screen', null);
+    return c;
+  }
+  // left midway (Q): nothing scored, nothing counted against it; the lesson there to take again
+  function quitChair() {
+    const c = closeChair(); if (!c) return;
+    toast(c.practice ? '交信の練習を途中でやめました。' : 'k4 を途中でやめました。もう一度やるときは、ミラー講師に話しかけてください。', 4200);
+  }
+  // the run over: its score for the lesson's end (cx.quiz), the runs not passed in a row, the debrief
+  function finishChair() {
+    const c = closeChair(); if (!c) return;
+    const sum = c.run.summary(), fails = career.state.attempts[K4_FAILS] || 0;
+    chairMissed = sum.missed;
+    cx.quiz = { right: sum.first, n: sum.n, pct: sum.pct, pass: sum.pass };
+    if (!c.practice && sum.stage >= 2) { career.state.attempts[K4_FAILS] = sum.pass ? 0 : fails + 1; career.save(); }
+    const d = chairDebriefDialogs(FL, sum, c.script, { fails, practice: c.practice });
+    if (c.practice) tabletTalk('chair', 'k4', d, 'ftd', 'タブレット（交信の練習）');
+    else { chairEnd = d; startTalk('lecturer'); }
   }
   interactor.add({ id: 'npc:instructor', frame: [INS.c, 1.5, -INS.a], radius: 0.45, prompt: `${INSTRUCTOR.title_ja}と話す`, use: () => startTalk('instructor') });
   // the academy's other people
@@ -1030,6 +1137,8 @@ async function boot() {
   // ---------------------------------------------------------------- flying (today's Archer, with the instructor)
   const flightHud = createFlightHUD({ root: document.body, settings });
   const dayHud = createDayHUD({ settings });
+  // (a click on the radio panel's choices: k4's, else the flying day's)
+  dayHud.onRadioPick((k) => { if (chair) chairAnswer(k); else if (fly && fly.dayMode && fly.dayMode.active) fly.dayMode.answer(k); });
   fly = createFlyMode({
     FL, L, scene, camera, renderer, sky, input, settings, audio, toast, hud, dui, talkState, world, flightHud,
     saveTalk: () => saved.save(talkState), instructor, instructorName: INSTRUCTOR.title_ja, lessonId: 'a2', dayHud,
@@ -1129,7 +1238,7 @@ async function boot() {
     else if (arg === 'class' && k) { career.done('class', String(k.id)); career.tire(6); afterTalk.push(() => { next(); applySlot(); toast('午後：訓練装置室（FTD）で訓練装置の課目です', 4200); }); }
     else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'ftd') {
       career.done('ftd', k.id); career.tire(6);
-      if (arg === 'pass') groundPass(k.id, k.n ? cx.quiz.pct : 100);
+      if (arg === 'pass') groundPass(k.id, k.n || k.id === 'k4' ? cx.quiz.pct : 100);
       // (not passed: the time stays, and the lecturer takes it again whenever the cadet is ready)
       afterTalk.push(() => { if (arg === 'pass') { next(); applySlot(); } toast(arg === 'pass' ? `${k.id} 合格。${career.slot === 'evening' ? '今日の予定は終わりです' : ''}` : 'もう一度受けるときは、ミラー講師に話しかけてください（問題の順番は変わります）', 4200); });
     } else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'exam') {
@@ -1299,7 +1408,10 @@ async function boot() {
 
   // the day's boards: what the career has today
   function boardCard(t) {
-    const id = t.id.replace(/^ex:/, ''); if (!['schedule', 'metar', 'status-board', 'wb-brief-1'].includes(id)) return null;
+    const id = t.id.replace(/^ex:/, '');
+    // (the desks of the training device room: k4 is flown at one)
+    if (id === 'sim-station') return { title: '訓練装置（FTD 風の練習席）', text: 'G1000 型の画面と操縦輪・スロットルの練習席。\nk4「交信のチェアフライト」は、この席でヘッドセットをつけて行います（ミラー講師に話しかける）。\nタブレットの「練習」からも、交信の練習ができます。' };
+    if (!['schedule', 'metar', 'status-board', 'wb-brief-1'].includes(id)) return null;
     const st = career.state, p = prog(), w = career.weather(p), sch = planToday(), it = flightItem();
     const date = dateText(st.day), plan = it ? planOf(it) : null;
     const reg = todayType === 'pa44' ? 'N452SY  PA-44-180' : 'N738SY  PA-28-181';
@@ -1340,7 +1452,7 @@ async function boot() {
         lessons: [...CH2, 'c1', ...LATER.filter(c => CHAPTERS[c].n <= CHAPTERS[st.chapter].n).flatMap(c => STAGE[c].lessons)].map(id => ({ id, title: FL.school.lesson(id).title, best: p.lessons[id] ? p.lessons[id].best : '', pass: passedAt(p, id) })),
         trust: [['instructor', INSTRUCTOR.title_ja], ['chief', PEOPLE.chief.title], ['dispatcher', PEOPLE.dispatcher.title], ['mechanic', PEOPLE.mechanic.title]].map(([k, n]) => ({ name: n, v: Math.round(trustOf(talkState, k)) })),
         book: book.chapters.map(c => ({ id: c.id, n: c.n, title: c.title, sections: c.sections.map(x => ({ id: x.id, title: x.title })) })),
-        banks: BANKS.map(b => ({ id: b.id, title: b.title, n: b.qs.length })),
+        banks: BANKS.map(b => ({ id: b.id, title: b.title, n: b.qs.length })), k4: { passed: groundPassed(p, 'k4') }, chapter1: st.chapter === 'ch1' || st.chapter === 'prologue',
         graduated: !!st.graduated, evening: st.slot === 'evening', canWait: st.slot !== 'evening' && !sch.some(x => x.slot === st.slot && state(x) === 'now'),
       };
     },
@@ -1348,6 +1460,7 @@ async function boot() {
       logbook: () => showLogbookNow(-1),
       read: (id) => openSection(id),
       practice: (bankId) => practice(bankId),
+      chair: (stage) => { if (!talk && !chair && mode === 'walk') startChair(stage, { practice: true }); },
       exportSave: () => exportArchive({ career: career.state, talk: talkState, logbook: logbook.entries, progress: prog(), records: FL.school.loadRecords(fly.flight.store) }),
       importSave: (text) => {
         try {
@@ -1379,12 +1492,15 @@ async function boot() {
     const E = { title: `練習：${b.title}`, banks: [bankId], n: 10, pass: 80, ok: 'よくできました。練習はここまでです。' };
     // (in chapter 1, only what the classes have said so far)
     const data = examDialogs(FL, 'practice', { seed: career.state.seed, attempt: career.attempt(`practice:${bankId}`), speaker: 'lecturer', exam: E, heard: career.chapter === 'ch1' || career.chapter === 'prologue' ? heardOf(FL, career.state) : null });
-    data.speakers = { ...data.speakers, lecturer: { name_ja: 'タブレット（練習問題）', color: '#8fd3ff' } };
-    // (no one to turn to; the view and the walk stay free as in any talk)
+    tabletTalk('practice', bankId, data, 'exam', 'タブレット（練習問題）');
+  }
+  // a talk the tablet holds (its practices): no one to turn to; the view and the walk stay free as in any talk
+  function tabletTalk(kind, id, data, dialog, name) {
+    data.speakers = { ...data.speakers, lecturer: { name_ja: name, color: '#8fd3ff' } };
     talk = { leash: { x: walker.state.x, z: walker.state.z, r: LEASH_M } }; talkWho = 'tablet'; talkActor = null; faceOn(null);
-    talkRun = startLesson('practice', bankId, data);
+    talkRun = startLesson(kind, id, data);
     document.body.classList.add('talking');
-    talkRun.start('exam');
+    talkRun.start(dialog);
   }
 
   // the walk-around card's choices with the mouse (when it is free)
@@ -1470,7 +1586,7 @@ async function boot() {
     if (input.dragged) return;                                                // (a drag that looked round is not a click)
     // a talk: the dialogue UI takes the click (the line goes on), and the mouse is captured again for looking round
     if (talkingNow()) { if (talkWantsLock()) input.requestLock(); return; }
-    if ((fly && fly.debrief) || dayHud.logbookOpen || tablet.isOpen || report.isOpen) return;   // the debrief, the logbook, the tablet take the clicks
+    if ((fly && fly.debrief) || dayHud.logbookOpen || tablet.isOpen || report.isOpen || chair) return;   // the debrief, the logbook, the tablet, k4's panel take the clicks
     if (started && !menu.isOpen) input.requestLock();
   });
   addEventListener('keydown', (e) => {
@@ -1484,6 +1600,13 @@ async function boot() {
     if (menu.isOpen) return;
     if (dayHud.logbookOpen || tablet.isOpen || cards.showing || report.isOpen) return;
     if (mode === 'fly') { if (fly) fly.key(e); return; }       // F is the throttle there (perf: the menu's setting)
+    if (chair && mode === 'walk') {                            // (k4: its keys only)
+      if (/^(Digit|Numpad)[1-3]$/.test(e.code)) chairAnswer(+e.code.slice(-1) - 1);
+      else if (e.code === 'KeyH') chair.run.why();
+      else if (e.code === 'KeyM') chairMic();
+      else if (e.code === 'KeyQ') quitChair();
+      return;
+    }
     if (mode === 'walk' && walkOpen && /^(Digit|Numpad)[1-4]$/.test(e.code)) { walkChoose(+e.code.slice(-1) - 1); return; }
     if (mode === 'walk' && homeOpen && /^(Digit|Numpad)[1-3]$/.test(e.code)) { homeChoose(+e.code.slice(-1) - 1); return; }
     if (e.code === 'Tab' && mode === 'walk' && !talk) {
@@ -1630,7 +1753,11 @@ async function boot() {
     // a talk keeps the mouse captured for looking round; it is let go while the mouse is needed on the screen
     if (input.locked && talkingNow() && !talkWantsLock()) input.exitLock();
     if (mode === 'walk') {
-      if (talk) {
+      if (chair) {
+        // (k4: at the desk — the view free, the walk held; the run's clock stops while the menu or a card is open)
+        const look = input.takeLook();
+        if (!menu.isOpen && !cards.showing && live) { stepChair(dt); walker.update(dt, { look, still: true }); }
+      } else if (talk) {
         // a talk: the view and the walk stay free (on the leash; ↑↓ are the choices' while they are up), the turn to a
         // face stopped by a look or a step; E and a click are the conversation's, never what is in front
         const look = input.takeLook();
@@ -1655,7 +1782,7 @@ async function boot() {
     const [fx, fz] = toFrame(camWorld.x, camWorld.z), pa = -fz, pc = fx;
     academy.update(dt, mode === 'walk' ? walker.framePos : { x: fx, z: fz });
     if (mode === 'fly') { if (fly) fly.draw2D(dt); }
-    if (mode === 'walk' && live && !talk) { interactor.update(camera); showPlace(dt, pa, pc); frontDoorStep(pa, pc); }
+    if (mode === 'walk' && live && !talk && !chair) { interactor.update(camera); showPlace(dt, pa, pc); frontDoorStep(pa, pc); }
     // near today's aircraft: the walk-around's progress; the instructor leaves the room for it once the cadet has gone
     walkEl.hidden = !(mode === 'walk' && Math.hypot(pa - tg.a, pc - tg.c) < 14 && !flownToday());   // (no flight left today: no walk-around)
     updateGuide(dt, pa, pc);
@@ -2022,6 +2149,10 @@ async function boot() {
       sleep: (late = false) => sleepNow({ late }),
       talkTo: (id) => startTalk(id), where: (id) => (id === 'instructor' ? { at: insAt } : cast.where(id)),
       activity: () => (lessonKind ? { kind: lessonKind.kind, id: lessonKind.id, n: lessonKind.n, questions: (lessonRun && lessonQuestions) || [] } : null),
+      // k4, the chair flight: its view, the right answer (or a wrong one), its time on (tests and bots)
+      chair: { active: () => !!chair, view: () => (chair ? chair.run.view() : null), rightIndex: () => (chair ? chair.run.rightIndex() : -1),
+        answer: (right = true) => { if (!chair) return null; const k = chair.run.rightIndex(); if (k < 0) return null; chairAnswer(right ? k : (k + 1) % chair.run.view().choices.length); return true; },
+        why: () => (chair ? chair.run.why() : ''), start: (stage = 2, o = {}) => startChair(stage, o), summary: () => (chair ? chair.run.summary() : null), step: (dt) => stepChair(dt), quit: () => quitChair(), mic: () => (chair ? chair.micState : null) },
       // the class's page on briefing room 2's screen (the 'page' hook's arg) and the section on its whiteboard
       lecture: () => ({ page: pageNow, section: pageSec }),
       // what a room's board or screen shows now: a hash of its canvas's pixels (null: no such surface)

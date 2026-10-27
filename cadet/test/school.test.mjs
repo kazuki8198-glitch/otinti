@@ -421,7 +421,7 @@ test('school: a class\'s choices — the section again, the section in the textb
   assert.equal(pathOf(classDialogs(FL, 0, { pace: 'quick' }).dialogs.class.nodes, 'hello', { quick: true })[2], 'r0s0');
 });
 
-test('school: the training device — k1 and k4 told through, k2/k3/k5/k6 ten questions each: passed when right, not when wrong', () => {
+test('school: the training device — k1 told through, k4 begun (its chair flight: test/k4.test.mjs), k2/k3/k5/k6 ten questions each: passed when right, not when wrong', () => {
   assert.deepEqual(Object.keys(FTD_TITLES), ['k1', 'k2', 'k3', 'k4', 'k5', 'k6']);
   for (const k of Object.keys(FTD_TITLES)) {
     const d = ftdDialogs(FL, k, { seed: 4 });
@@ -429,9 +429,18 @@ test('school: the training device — k1 and k4 told through, k2/k3/k5/k6 ten qu
     assert.deepEqual(errors, [], k);
     const good = run(d, 'ftd');
     clean(good.lines, k);
+    // (k4's talk only begins the flight — the first time, the script hidden; it is passed by the run's debrief)
+    if (k === 'k4') {
+      assert.deepEqual(good.hooks.filter(h => ['chair', 'done'].includes(h[0])).map(h => h.slice(0, 2)), [['chair', '2']], 'k4 begins the run, the script hidden');
+      const after = ftdDialogs(FL, k, { seed: 4, k4: { passed: true } });
+      assert.deepEqual(validateDialogs(after).errors, [], 'k4 after the pass');
+      const listen = run(after, 'ftd', { pick: (v) => (v.node === 'k4:stage' ? v.choices.findIndex(c => /^教科書の例を通しで聞く/.test(c.text)) : null) });
+      clean(listen.lines, 'k4 listen');
+      assert.ok(listen.hooks.filter(h => h[0] === 'say').length > 10 && listen.lines.some(l => /別の空港/.test(l)), 'after the pass, the textbook\'s flight to listen to, said to be another airport\'s');
+      continue;
+    }
     assert.ok(good.hooks.some(h => h[0] === 'done' && h[1] === 'pass'), `${k} passed`);
     if (k === 'k1') assert.ok(good.hooks.filter(h => h[0] === 'pfd').length >= 7, 'the parts of the PFD on the screen');
-    if (k === 'k4') assert.ok(good.hooks.filter(h => h[0] === 'say').length > 10, 'the calls spoken');
     if (['k2', 'k3', 'k5', 'k6'].includes(k)) {
       assert.equal(d.questions.length, 10); assert.deepEqual(good.ctx.quiz, { right: 10, n: 10, pct: 100, pass: true });
       const bad = run(d, 'ftd', { right: false });

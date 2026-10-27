@@ -131,7 +131,15 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     put(scr, ul);
   }
   function practice(m) {
-    put(scr, make('h2', '', '学科テストの練習'), make('p', 'sub', '分野を選ぶと、10 問の練習が始まります（成績には入りません）。'));
+    // (k4, the chair flight: from anywhere, as often as wanted — a practice, not the lesson's record)
+    if (act.chair) {
+      put(scr, make('h2', '', '交信の練習（チェアフライト）'), make('p', 'sub', '初飛行の日の交信を、ATIS から駐機場まで、自分がパイロットになって通します（毎回少しずつ変わります。記録には残りません）。'));
+      const c = make('div', 'tb-card');
+      put(c, btn('① 台本を見ながら', () => { close(); act.chair(1); }), btn('② 自分の台詞を隠して', () => { close(); act.chair(2); }));
+      if (m.k4 && m.k4.passed) put(c, btn('③ 本番（時間制限あり）', () => { close(); act.chair(3); }));
+      put(scr, c);
+    }
+    put(scr, make('h2', '', '学科テストの練習'), make('p', 'sub', m.chapter1 ? '分野を選ぶと、10 問の練習が始まります（成績には入りません。授業でもう話したことだけから出ます）。' : '分野を選ぶと、10 問の練習が始まります（成績には入りません）。'));
     const g = make('div', 'tb-grid');
     for (const b of m.banks) put(g, put(make('div', 'tb-card'), make('h3', '', b.title), make('div', 'sub', `${b.n} 問から 10 問`), btn('練習する', () => { close(); act.practice(b.id); })));
     put(scr, g);

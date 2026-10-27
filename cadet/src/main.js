@@ -1917,6 +1917,7 @@ async function boot() {
   fly.prepareCompile(false);
   step(performance.now());
   requestAnimationFrame(loop);
+  let screenCopy = null;                                       // (the tests' screen(): a canvas to read the surfaces through)
   window.__cadet = {
     ready: true, L, FL, VIEWS, spec, world, scene, camera, renderer, setView, setQuality, runBench, walkRoute, placeWalker, followGuide, navPath,
     guide: () => (guideStep ? { ...guideStep, way: guideWay } : null),
@@ -2019,7 +2020,11 @@ async function boot() {
       // what a room's board or screen shows now: a hash of its canvas's pixels (null: no such surface)
       screen: (room = 'brief-2', type = 'wall_screen') => {
         const cv = academy.surfaceCanvas ? academy.surfaceCanvas(room, type) : null; if (!cv || !cv.getContext) return null;
-        const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; let h = 2166136261;
+        // (read through a copy made for reading: the surface itself is read back many times otherwise, which the
+        // browser warns about)
+        const rd = screenCopy || (screenCopy = document.createElement('canvas')); rd.width = cv.width; rd.height = cv.height;
+        const g2 = rd.getContext('2d', { willReadFrequently: true }); g2.clearRect(0, 0, rd.width, rd.height); g2.drawImage(cv, 0, 0);
+        const d = g2.getImageData(0, 0, rd.width, rd.height).data; let h = 2166136261;
         for (let i = 0; i < d.length; i += 4 * 7) h = Math.imul(h ^ (d[i] | (d[i + 1] << 8) | (d[i + 2] << 16)), 16777619) >>> 0;
         return h;
       },

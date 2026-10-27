@@ -1,0 +1,11 @@
+{
+  "unit": "W08b",
+  "about": "W08b 囲みを置く（W08 のうち flight-lab/src/book-3.js・book-4.js の分）のパッチ。DESIGN 3.4 の表の「囲みの節」のうち、この 2 つのファイルにある 15 節に、FL.jur（book-jur.js）の 22 項目の囲みを bk.jur・bk.same で置いた（数字は手で書かない。手で書くリンクなし）。囲みだけで閉じる A の行（places の教科書の節がこの 2 ファイル）は fixed。基礎教材の側の直し（wrong: kiso）が残る行は status を変えず note だけ（閉じるのはその行の unit・alsoUnits）。部のまとめ（gN.japan）と第 7 部の節は、その章ができると同じデータから自動で会う（DESIGN 3.4「3 回会わせる」・決まり 13）。確かめ役の署名（checkedBy）は W12",
+  "patches": [
+    {"id": "R.pattern", "status": "fixed", "where": "flight-lab/src/book-3.js ops.pattern（bk.jur('pattern')。「ここに注意」の後・シミュレータの前。米国：14 CFR 91.126(b)・91.127(a)・AIM 4-3-3／日本：航空法施行規則第 189 条・航空法第 96 条を FL.jur から描く）", "by": "W08b", "note": "W08b：囲みを置いた。本文は W07b のとおり「米国では…左回り…米国の規則（14 CFR 91.126(b)・91.127(a)）」で、日本は一般の左回りの定めがなく空港等ごとの方式と管制の指示（FL.jur pattern の日本の欄。W05 の写しで確認済み）。基礎教材 kiso11.20 の「米国の基準を日本に使わない」は裁定と同じ向きで、直す所はない。部のまとめ g2・第 7 部 jair.vfr はその章ができると同じデータから出る"},
+    {"id": "R.nordo-ifr", "status": "fixed", "where": "flight-lab/src/book-4.js ifr.rules（bk.jur('ir.need', 'ir.recent', 'alt.transition', 'nordo.ifr', 'appr.ban') の nordo.ifr の行。米国：14 CFR 91.185(c)／日本：航空法施行規則第 206 条。「大臣が定める時間」は〔要確認〕のまま）", "by": "W08b", "note": "W08b：両方の手順を 1 つの表に並べた（裁定「両方の表を並べる」）。本文の 91.185 の表（W07b）はそのまま。日本の「国土交通大臣が定める時間」は FL.jur のとおり〔要確認〕（W37）。部のまとめ g4・第 7 部 jifr.rules はその章ができると同じデータから出る"},
+    {"id": "R.approach-ban", "status": "fixed", "where": "flight-lab/src/book-4.js ifr.rules（bk.jur(...) の appr.ban の行。米国：Part 91 の一般機にはない（91.175(f)・121.651・135.225 は事業者の規則）／日本：航空法施行規則第 189 条）", "by": "W08b", "note": "W08b：囲みを置いた。FL.jur の囲みの節のもう 1 つ ifr.dep はまだ本にない（R3 の節。その節ができたら同じ項目の囲みを置く）。部のまとめ g4・第 7 部 jifr.minima はその章ができると同じデータから出る"},
+    {"id": "R.fuel-reserve", "by": "W08b", "note": "W08b：日米の囲み bk.jur('cruise', 'fuel.vfr') を flight-lab/src/book-4.js nav.log（「ここが大切」の後）に置いた（米国 91.151／日本は事業と IFR だけで自家用・訓練の VFR に法定量なし。〔安全〕）。基礎教材の解答の直し（K.navigation.K1・K.wb-perf.K4、W18・W23）が残るので閉じていない"},
+    {"id": "R.hold-numbers", "by": "W08b", "note": "W08b：日米の囲み bk.jur('hold') を flight-lab/src/book-4.js ifr.hold（「ここが大切」の後・シミュレータの前）に置いた。日本の欄は FL.jur のとおり速度・バンクも「時間・入り方が同じこと」も〔要確認〕（AIP Japan ENR 1.5、W37）。基礎教材の側（K.ifr.K-4、W30・W41）が残るので閉じていない"}
+  ]
+}

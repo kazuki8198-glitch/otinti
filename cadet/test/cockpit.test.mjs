@@ -7,7 +7,8 @@
 //    over the head, nothing within 0.12 m of the eye;
 //  - every control has a name, a kind, a hit box inside the cabin, is in sight and can be picked from the seat, and
 //    says what to do (descriptors that FLIGHT LAB's own avionics control accepts);
-//  - the yokes, pedals, levers (carb heat: ON down, OFF up), flap handle, trim wheel and compass card follow the state;
+//  - the yokes, pedals, levers (carb heat: ON down, OFF up), flap handle (its grip forward, up for more flap), trim wheel
+//    and its pointer, fuel selector (L → R clockwise) and compass card follow the state;
 //    the Seminole's gear lights are its own (none drawn in the Archer);
 //  - the Archer's overhead switch panel sits on the header made in Blender, its rockers follow the switches (their
 //    print with them); the checklists point at controls each type has;
@@ -25,7 +26,7 @@ import * as THREE from 'three';
 import { buildCockpit, PICK_LAYER, CABIN } from '../src/aircraft/cockpit.js';
 import { BEZEL, SOFTKEYS } from '../src/aircraft/g1000.js';
 import { installSorajima } from '../src/flight/sorajima.js';
-import { createActor, seatFromBody } from '../src/npc/actor.js';
+import { createActor, seatFromBody, GESTURE_NAMES } from '../src/npc/actor.js';
 import { modelMeshes } from '../src/aircraft/archer-model.js';
 import { CHECKLISTS as CHECKLISTS_ARCHER } from '../src/content/checklists-archer.js';
 import { CHECKLISTS as CHECKLISTS_SEMINOLE } from '../src/content/checklists-seminole.js';
@@ -69,7 +70,7 @@ test('cockpit: builds within budget', () => {
   assert.ok(cp.textureBytes > 0 && cp.textureBytes <= 6e6, `${(cp.textureBytes / 1e6).toFixed(2)} MB of textures`);
   assert.ok(!cp.atlasFull, 'the labels fit their atlas');
   for (const n of ['cockpit-shell', 'cockpit-labels', 'cockpit-glass', 'cockpit-cowl', 'cockpit-pfd', 'cockpit-mfd', 'cockpit-yokeL', 'cockpit-yokeR',
-    'cockpit-pedalsL', 'cockpit-pedalsR', 'cockpit-throttle', 'cockpit-mixture', 'cockpit-carb', 'cockpit-brake', 'cockpit-flap', 'cockpit-trim', 'cockpit-compass-card',
+    'cockpit-pedalsL', 'cockpit-pedalsR', 'cockpit-throttle', 'cockpit-mixture', 'cockpit-carb', 'cockpit-brake', 'cockpit-flap', 'cockpit-trim', 'cockpit-trimInd', 'cockpit-fuel', 'cockpit-compass-card',
     'cockpit-rockers', 'cockpit-rocker-print', 'cockpit-lit']) assert.ok(names.has(n), n);
   for (const n of ['cockpit-key', 'cockpit-rockers-pa44']) assert.ok(!names.has(n), `the Archer: no ${n}`);
   // the screens: unlit, the material not tone mapped, 1024 × 640, never mipmapped
@@ -96,8 +97,11 @@ test('cockpit: builds within budget', () => {
   // the groups made in code as well
   assert.deepEqual(cp.fromCode, []);
   assert.deepEqual([...cp.band].sort(), [
-    'bench.seat', 'bench.seatSide', 'glareshield.glare', 'glareshield.glareLip', 'glareshield.rubber', 'header.wall', 'headliner.roof', 'pillars.wall',
-    'roofTrims.trim', 'seals.rubber', 'seats.alu', 'seats.black', 'seats.chrome', 'seats.seat', 'seats.seatSide', 'visorHw.steel', 'visors.wall',
+    'bench.belt', 'bench.black', 'bench.chrome', 'bench.red', 'bench.seat', 'bench.seatSide',
+    'glareshield.glare', 'glareshield.glareLip', 'glareshield.rubber', 'header.wall', 'headliner.roof', 'pillars.wall',
+    'roofTrims.trim', 'seals.rubber', 'seats.alu', 'seats.belt', 'seats.black', 'seats.chrome', 'seats.red', 'seats.seat', 'seats.seatSide',
+    'visorHw.steel', 'visors.wall',
+    'walls.black', 'walls.chrome', 'walls.postAlu', 'walls.rubber', 'walls.wall', 'walls.wallLow', 'walls.white',
     'yokes.alu.yokeL', 'yokes.alu.yokeR', 'yokes.black.yokeL', 'yokes.black.yokeR', 'yokes.chrome.yokeL', 'yokes.chrome.yokeR', 'yokes.grip.yokeL',
     'yokes.grip.yokeR', 'yokes.red.yokeL', 'yokes.rubber', 'yokes.yoke.yokeL', 'yokes.yoke.yokeR']);
   // the yokes from the model are moving parts (their own meshes, turned about their pivots); the rest is in the shell
@@ -270,6 +274,64 @@ test('cockpit: the instructor sits in the right seat, not through it', () => {
     }
   }
   for (const [n, d] of Object.entries(deep)) assert.ok(d < (/thigh/.test(n) ? 0.015 : 0.005), `${n} ${(d * 100).toFixed(1)} cm into the seat`);
+  cp.dispose();
+});
+
+// and the belts made with the seats (tools/aircraft/cockpit_seats.py), which cannot move with him: his lie beside him (the
+// buckle on the inboard bolster, the outboard half down the cushion's side, the harness wound up in its slot), so that no
+// triangle of him crosses one of the right seat's belts (their webbing, buckle, tab, tongue — and what shares their nodes:
+// the seat's pan, frame plates and recline lever) as he sits, talks, points (at the student's PFD, at the pedals) and
+// makes every other gesture
+test('cockpit: the instructor clear of the right seat\'s belts', () => {
+  const mm = modelMeshes('cockpit'), cp = build(), st = cp.instructorSeat, seat = seatFromBody(st, st.yaw);
+  cp.root.updateMatrixWorld(true);
+  const belt = [], bbox = new THREE.Box3();
+  for (const [name, m] of mm) {
+    if (!/^seats\.(belt|black|red|chrome)$/.test(name)) continue;
+    for (let i = 0; i < m.count; i += 3) {
+      const v = [0, 1, 2].map(k => new THREE.Vector3().fromArray(m.pos, (i + k) * 3));
+      if (v.some(p => p.x < 0.03)) continue;                                    // (the right seat's)
+      const box = new THREE.Box3().setFromPoints(v); belt.push({ v, box }); bbox.union(box);
+    }
+  }
+  assert.ok(belt.length > 100, `${belt.length} triangles of the right seat's belts`);
+  const e1 = new THREE.Vector3(), e2 = new THREE.Vector3(), d = new THREE.Vector3(), pv = new THREE.Vector3(), tv = new THREE.Vector3(), qv = new THREE.Vector3();
+  const seg = (p, q, [a, b, c]) => {                    // the segment p–q through the triangle a b c (Möller–Trumbore)
+    d.subVectors(q, p); e1.subVectors(b, a); e2.subVectors(c, a); pv.crossVectors(d, e2);
+    const det = e1.dot(pv); if (Math.abs(det) < 1e-12) return false;
+    tv.subVectors(p, a); const u = tv.dot(pv) / det; if (u < 0 || u > 1) return false;
+    qv.crossVectors(tv, e1); const w = d.dot(qv) / det; if (w < 0 || u + w > 1) return false;
+    const s = e2.dot(qv) / det; return s >= 0 && s <= 1;
+  };
+  const crosses = (t1, t2) => { for (const [x, y] of [[t1, t2], [t2, t1]]) for (let k = 0; k < 3; k++) if (seg(x.v[k], x.v[(k + 1) % 3], y.v)) return true; return false; };
+  const bad = new Set(), v = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+  const look = (a, what) => {
+    a.root.updateMatrixWorld(true);
+    for (const m of a.meshes) {
+      if (!m.isMesh || !m.visible) continue;
+      const p = m.geometry.attributes.position, idx = m.geometry.index, n = idx ? idx.count : p.count;
+      for (let i = 0; i < n; i += 3) {
+        for (let k = 0; k < 3; k++) v[k].fromBufferAttribute(p, idx ? idx.getX(i + k) : i + k).applyMatrix4(m.matrixWorld);
+        const t = { v, box: new THREE.Box3().setFromPoints(v) };
+        if (t.box.intersectsBox(bbox) && belt.some(b => t.box.intersectsBox(b.box) && crosses(t, b))) bad.add(`${what}: ${m.name}`);
+      }
+    }
+  };
+  const seated = () => {
+    const a = createActor({ seed: 1 }); a.root.position.set(...seat.position); a.root.rotation.set(0, seat.yaw, 0);
+    assert.equal(a.setSeated(seat.seat), true);
+    for (let i = 0; i < 60; i++) a.update(1 / 30, { lookAt: cp.eye });
+    return a;
+  };
+  { const a = seated(); look(a, 'sitting'); for (let i = 0; i < 240; i++) { a.update(1 / 30, { lookAt: cp.eye, talking: true }); if (i % 20 === 10) look(a, 'talking'); } }
+  const g = cp.screens.pfd.geometry; g.computeBoundingBox();                   // (fly-mode.js pointAtPanel: the PFD's middle, the pedals' aim)
+  const pfd = cp.screens.pfd.localToWorld(g.boundingBox.getCenter(new THREE.Vector3())), pedals = cp.aimPoint(cp.controls.find(c => c.id === 'pedals'), new THREE.Vector3());
+  for (const name of GESTURE_NAMES) for (const at of name === 'point' ? [pfd, pedals] : [null]) {
+    const a = seated(); if (at) a.pointAt(at);
+    const dur = a.gesture(name);
+    for (let t = 0, k = 0; t < dur; t += 1 / 30, k++) { a.update(1 / 30, { lookAt: cp.eye }); if (k % 4 === 2) look(a, name); }
+  }
+  assert.deepEqual([...bad], [], 'the instructor through the right seat\'s belts');
   cp.dispose();
 });
 
@@ -459,7 +521,7 @@ test('cockpit: the moving parts follow the state', () => {
   const cp = build(), L = lesson(), s = L.s, p = cp.parts;
   const pose = (o) => { Object.assign(s, o); run(cp, L, 1.5); };
   pose({ elev: 0, trim: 0, ail: 0, rud: 0, rudEff: 0, thr: 0, flapIdx: 0 });
-  const yz = p.yokeL.position.z, thr0 = p.throttle.rotation.x, trim0 = p.trim.rotation.x;
+  const yz = p.yokeL.position.z, thr0 = p.throttle.rotation.x, trim0 = p.trim.rotation.x, ind0 = p.trimInd.position.z;
   pose({ elev: 0.5 });
   assert.ok(p.yokeL.position.z > yz + 0.02 && p.yokeR.position.z === p.yokeL.position.z, 'pulled back (aft = +z) with up elevator');
   pose({ elev: -0.5 });
@@ -467,14 +529,26 @@ test('cockpit: the moving parts follow the state', () => {
   pose({ elev: 0, trim: 0.3 });
   assert.ok(p.yokeL.position.z > yz + 0.01, 'the stabilator\'s trimmed position');
   assert.ok(p.trim.rotation.x !== trim0, 'the trim wheel turns');
+  assert.ok(p.trimInd.position.z > ind0 + 0.01, 'its pointer aft (UP) with nose-up trim');
   pose({ trim: 0, ail: 0.8 });
   assert.ok(p.yokeL.rotation.z < -20 * DEG && p.yokeR.rotation.z === p.yokeL.rotation.z, 'turned right (clockwise as the pilot sees it)');
   pose({ ail: 0, rudEff: 0.6 });
   assert.ok(p.pedalsR.position.z < -0.01 && p.pedalsL.position.z > 0.01, 'right rudder: the right pedals forward (−z), the left ones back');
   pose({ rudEff: 0, thr: 1 });
   assert.ok(p.throttle.rotation.x < thr0 - 20 * DEG, 'the throttle forward');
+  // the flap handle: its grip forward at the pedestal's foot, pulled up for more flap (where one aims at it: higher)
+  const flaps = cp.controls.find(c => c.id === 'flaps'), gripY = () => { cp.root.updateMatrixWorld(true); return cp.aimPoint(flaps, new THREE.Vector3()).y; };
+  const fy0 = gripY();
   pose({ thr: 0, flapIdx: 2 });
-  assert.ok(Math.abs(p.flap.rotation.x + 22 * DEG) < 0.5 * DEG, `the flap handle at 25° (${(p.flap.rotation.x / DEG).toFixed(1)})`);
+  assert.ok(Math.abs(p.flap.rotation.x - 22 * DEG) < 0.5 * DEG, `the flap handle at 25° (${(p.flap.rotation.x / DEG).toFixed(1)})`);
+  assert.ok(gripY() > fy0 + 0.1, `its grip up (${fy0.toFixed(3)} → ${gripY().toFixed(3)})`);
+  // the fuel selector's handle turns about its plate's normal: clockwise (as one faces the plate) from L to R
+  const fuelAim = () => { cp.root.updateMatrixWorld(true); return cp.aimPoint(cp.controls.find(c => c.id === 'fuelSel'), new THREE.Vector3()); };
+  const c0 = new THREE.Vector3(...CABIN.FUELSEL.c), nF = new THREE.Vector3(...CABIN.FUELSEL.n), onPlate = v => v.sub(c0).projectOnPlane(nF);
+  cp.switches.fuelSel = 'L'; cp.update(DT, { s, L }); const aL = onPlate(fuelAim());
+  cp.switches.fuelSel = 'R'; cp.update(DT, { s, L }); const aR = onPlate(fuelAim());
+  assert.ok(new THREE.Vector3().crossVectors(aL, aR).dot(nF) < 0 && aL.angleTo(aR) > 100 * DEG, 'L → R: clockwise, ~120°');
+  cp.switches.fuelSel = 'L'; cp.update(DT, { s, L });
   // the compass card turns with the magnetic heading (true + 6°), the reading under the lubber line
   const card = p.compass;
   s.out.hdgTrue = 84; run(cp, L, 6);

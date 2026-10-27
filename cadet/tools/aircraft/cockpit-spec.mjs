@@ -1,8 +1,12 @@
 // CADET — tools/aircraft/cockpit-spec.mjs : what the cockpit's parts made in Blender are built to (for
 // tools/aircraft/build_cockpit.py): the cabin's layout as aircraft/cockpit.js has it (the eye, the window band, the roof's
-// arch, the windshield, the panel, the compass and the overhead console that stay in code; the seats' places and the
-// instructor's hips, the occlusion proxy's boxes, the flap handle, the yokes and their hit boxes, the glareshield's lip,
-// the displays' places and the G5 standby's rect: its middle, bezel, screen and depth),
+// arch, the windshield, the panel, the compass and the overhead duct's box that stay in code; the seats' places and the
+// instructor's hips, the occlusion proxy's boxes, the flap handle and the trim wheel with where one aims at them, the
+// floor console between the seats, the fuel selector's plate on the left kick panel — its middle, normal, radius and
+// bezel —, the yokes and their hit boxes, the glareshield's lip, the displays' places and the G5 standby's rect: its
+// middle, bezel, screen and depth; the side walls' layout — WALLS: the split, the armrests, the map pocket, the door, its
+// handle cup and the 'door' control's box and aim in it, the storm window — and the side windows' openings, corners and
+// glass, WIN),
 // the surfaces' colours (sRGB, 0..1: the game reads each part's roughness, metalness and detail kind from the same table
 // by the part's name), and sample values of the layout's curves so that the Blender script can check its own copies.
 //   node tools/aircraft/cockpit-spec.mjs > /tmp/cockpit.json
@@ -14,8 +18,8 @@ const xs = [-0.49, -0.4, -0.3, -0.12, 0, 0.25, 0.45], ys = [0.38, 0.425, 0.6, 0.
 process.stdout.write(JSON.stringify({
   eye: C.EYE0, floor: C.FLOOR, fire: C.FIRE, aft: C.AFT, pz: C.PZ, ptop: C.PTOP, pbot: C.PBOT, sill: C.SILL, wtop: C.WTOP, hw: C.HW, hwt: C.HWT, roof: C.ROOF,
   ws: C.WS, kx: C.KX, compass: C.COMPASS, console: C.CONSOLE, compassCase: C.CASE,
-  seatX: C.SEAT_X, seat: C.SEAT, instructor: C.INSTRUCTOR, aoOcc: C.AO_OCC, flap: C.FLAP, trimWheel: C.TRIMW, lever: C.LEVER,
-  pedal: C.PEDAL, pedalX: C.PEDAL_X, yoke: C.YOKE, yokeHit: C.YOKE_HIT, glare: C.GLARE, panel: C.PANEL,
+  seatX: C.SEAT_X, seat: C.SEAT, instructor: C.INSTRUCTOR, aoOcc: C.AO_OCC, flap: C.FLAP, trimWheel: C.TRIMW, floorConsole: C.FCON, fuelSel: C.FUELSEL, lever: C.LEVER,
+  pedal: C.PEDAL, pedalX: C.PEDAL_X, yoke: C.YOKE, yokeHit: C.YOKE_HIT, glare: C.GLARE, panel: C.PANEL, walls: C.WALLS, windows: C.WIN,
   colours: Object.fromEntries(Object.entries(C.SURFACES).map(([k, s]) => [k, hex(s.c)])),
   samples: {
     bandX: ys.map(y => [y, r6(C.bandX(y))]),

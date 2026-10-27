@@ -1,5 +1,5 @@
 // CADET — the cockpit without its Blender model (node --test): src/aircraft/cockpit.js builds every group the model would
-// have given it (the top band, the seats, the bench, the glareshield, the yokes) from its own simple shapes, within the
+// have given it (the top band, the seats, the bench, the glareshield, the yokes, the walls) from its own simple shapes, within the
 // same budgets, with the same view from the seat — what a page without assets/model/cockpit.glb, or with an older one,
 // draws, and every control of each type still seen and picked from the seat (the stand-ins hide none: the sun visors
 // folded up behind the overhead switch panel). The model is replaced by an empty glb (no meshes) before cockpit.js is
@@ -32,7 +32,7 @@ const drawn = m => m.isMesh && m.visible && m.layers.test(new THREE.Layers()) &&
 test('cockpit without its model: every group made in code, within budget, the same view', () => {
   const cp = buildCockpit(FL, AC('pa28'), { makeCanvas: null }), tw = buildCockpit(FL, AC('pa28'), { makeCanvas: null, twin: AC('pa44') });
   assert.deepEqual(cp.band, [], 'the model read, empty');
-  assert.deepEqual(cp.fromCode, ['headliner', 'seats', 'bench', 'glareshield', 'yokes']);
+  assert.deepEqual(cp.fromCode, ['headliner', 'seats', 'bench', 'glareshield', 'yokes', 'walls']);
   cp.root.updateMatrixWorld(true);
   let calls = 0; cp.root.traverse(o => { if (drawn(o)) calls++; });
   assert.ok(calls <= 40 && cp.triangles <= 40000 && tw.trianglesTwin <= 40000, `${calls} draw calls, ${cp.triangles} / ${tw.trianglesTwin} triangles`);

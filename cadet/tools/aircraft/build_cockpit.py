@@ -2,17 +2,19 @@
 # Blender (run in the background, no window):
 #   node tools/aircraft/cockpit-spec.mjs > /tmp/cockpit.json
 #   blender -b --factory-startup -P tools/aircraft/build_cockpit.py -- /tmp/cockpit.json assets/model/cockpit.glb [preview_dir|-] [groups]
-# groups: which parts, comma-separated (all of them when left out: band,seats,glareshield,yokes). The game takes each
+# groups: which parts, comma-separated (all of them when left out: band,seats,glareshield,yokes,walls). The game takes each
 # group from the model when the model has it, and makes its old simple shapes in code when it does not.
 # - band (here): the top band — the headliner (its arch, sewn seams over the bows and down the middle, the cloth
 #   sagging a little between the bows), the roof-edge trims over the joint between the window band and the headliner,
 #   the windshield header (a moulding from the glass's top edge up to the headliner), the A-pillar trims round the
 #   windshield's side edges, the rubber seals where these meet the glass, and the two sun visors (padded, on a hinge rod
 #   held by two brackets to the headliner, stowed along its curve).
-# - the others, each in its own file next to this one (cockpit_<name>.py: seats — the front seats and the rear bench;
-#   glareshield; yokes), given this script's helpers and layout (ctx): MAX_TRIS (its triangle budget), parts(ctx) → {node
-#   name: (Piece, colour function or None)}, and optionally proxies(ctx) (what stays in code round it, for the occlusion),
-#   check(ctx, objs) (its own asserts once the meshes are made) and PREVIEW ({view: (yaw, pitch)} for the preview).
+# - the others, each in its own file next to this one (cockpit_<name>.py: seats — the front seats, the rear bench and the
+#   belts; glareshield; yokes; walls — the side walls, the door, the window surrounds, the storm window), given this
+#   script's helpers and layout (ctx; ctx.groups: the groups this run makes): MAX_TRIS (its triangle budget), parts(ctx)
+#   → {node name: (Piece, colour function or None)}, and optionally proxies(ctx) (what stays in code round it, for the
+#   occlusion), check(ctx, objs) (its own asserts once the meshes are made) and PREVIEW ({view: (yaw, pitch)} for the
+#   preview).
 # Everything is made to the cabin's own layout (cockpit-spec.mjs reads aircraft/cockpit.js's CABIN: the eye, the window
 # band, the roof's arch, the windshield, the panel, the seats' places, the yokes), so the parts meet what stays in code;
 # the script checks its copies of the layout's curves against the spec's sample values.
@@ -33,7 +35,7 @@ argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 S = json.load(open(argv[0]))
 OUT = argv[1]
 PREVIEW = argv[2] if len(argv) > 2 and argv[2] != '-' else None
-GROUPS = argv[3].split(',') if len(argv) > 3 else ['band', 'seats', 'glareshield', 'yokes']
+GROUPS = argv[3].split(',') if len(argv) > 3 else ['band', 'seats', 'glareshield', 'yokes', 'walls']
 MAX_TRIS = 2600                       # the band's share of the cockpit's triangles (cockpit.test: trianglesTwin ≤ 40,000)
 
 DEG = math.pi / 180
@@ -314,7 +316,7 @@ ctx = Ctx()
 ctx.__dict__.update(S=S, C=C, EYE=EYE, SILL=SILL, WTOP=WTOP, HW=HW, HWT=HWT, ROOF=ROOF, AFT=AFT, KX=KX, FLOOR=FLOOR, WS=WS,
     bandX=bandX, roofY=roofY, wsZ=wsZ, lowX=lowX, clamp=clamp, lerp=lerp, DEG=DEG, math=math, Vector=Vector, Matrix=Matrix,
     BVHTree=BVHTree, bpy=bpy, Piece=Piece, mirror_x=mirror_x, cyl=cyl, box=box, rounded_rect=rounded_rect,
-    facing_share=facing_share, volume=volume, gap=gap, tris=tris)
+    facing_share=facing_share, volume=volume, gap=gap, tris=tris, groups=tuple(GROUPS))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); sys.dont_write_bytecode = True   # (no __pycache__ in the repo)
 import importlib
 MODULES = {g: importlib.import_module('cockpit_' + g) for g in GROUPS if g != 'band'}
@@ -354,8 +356,8 @@ for g, mod in MODULES.items():
 
 # ---------------------------------------------------------------- the occlusion of what is close by → alpha
 # Rays 5 cm long (cosine-weighted over the hemisphere) against these parts and a proxy of the cabin round them: the
-# top of the window band, the aft bulkhead, the overhead console, the compass case and the windshield's centre post,
-# and what each group adds (proxies). The preview shows the proxy (grey) round the parts.
+# top of the window band, the aft bulkhead, the overhead air duct's fairing (its box), the compass case and the
+# windshield's centre post, and what each group adds (proxies). The preview shows the proxy (grey) round the parts.
 # A moving part's occlusion comes from its own pieces only (it moves against everything else), and it shades nothing.
 def moving_of(k): return next((t for t in k.split('.')[2:] if t not in ('pa28', 'pa44')), None)
 def bvh_of(keys):

@@ -431,12 +431,14 @@ test('actor: the model — every look within budget, faces turned out, the mouth
 // ---------------------------------------------------------------- seated
 // in the Archer's right seat as fly mode puts him: the root in the aircraft's body frame (x the right wing, y up, −z the
 // nose; here the world), turned by π. The student's eye is the pilot's, (−0.30, 0.62, −0.40). The cabin round him as
-// cockpit.js draws it: the right wall (the door) at x 0.56 up to the sill (y 0.38), the window band above it leaning in,
-// the door's armrest, the headliner curving down towards the sides.
+// cockpit.js and its model draw it (tools/aircraft/cockpit_walls.py, cockpit.js WALLS): the right wall (the door) — its lower
+// panel 6 mm proud of x 0.56 up to the split (y 0.265), the band at 0.56 up to the sill (y 0.38), the window band above it
+// leaning in, the front window's raised surround (1 cm, taken all along y 0.35–0.405) —, the door's armrest (its box: in
+// front of the instructor's elbow, as tx_leftfront has it), the headliner curving down towards the sides.
 const PILOT_EYE = new THREE.Vector3(-0.30, 0.62, -0.40);
-const wallX = (y) => (y < 0.38 ? 0.56 : 0.56 - 0.19 * (y - 0.38));
+const wallX = (y) => (y < 0.265 ? 0.554 : y < 0.38 ? 0.56 : 0.56 - 0.19 * (y - 0.38)) - (y > 0.35 && y < 0.405 ? 0.010 : 0);
 const roofY = (x) => 0.75 + 0.095 * Math.sqrt(Math.max(0, 1 - (x / 0.49) ** 2));
-const ARMREST = new THREE.Box3(new THREE.Vector3(0.495, 0.18, -0.83), new THREE.Vector3(0.555, 0.23, -0.41));
+const ARMREST = new THREE.Box3(new THREE.Vector3(0.496, 0.099, -0.94), new THREE.Vector3(0.557, 0.167, -0.56));
 // how far a point of an arm (r: the limb's radius there) goes into the right wall, the armrest or the headliner (m)
 function intoCabin(p, r) { const d = ARMREST.distanceToPoint(p); return Math.max(p.x + r - wallX(p.y), d < r ? r - d : 0, p.y + r - roofY(p.x)); }
 function seatedActor(seed = 1, place = SEATED_PA28) {

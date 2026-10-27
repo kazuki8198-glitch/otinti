@@ -8,12 +8,17 @@
 // G5 at the panel's far left, the PFD in front of the pilot, the audio panel and the MFD to its right, the ELT switch,
 // the hour meters and the heat / defrost sliders right of the MFD, the pitot heat and fan switches under the audio panel,
 // the dimmers, the circuit breakers, the throttle quadrant with the carb heat lever beside it and the pedestal under it,
-// the hand brake, two yokes, the rudder pedals, the flap handle and the trim wheel between the seats, the fuel selector
-// on the left wall, the door on the right, the seats, the rear bench and the aft windows.
+// the hand brake, two yokes, the rudder pedals over the foot wells' mats, the flap handle (its grip forward at the
+// pedestal's foot) and the trim wheel in the black console between the seats, the fuel selector on the left kick panel,
+// the door on the right, the seats, the rear bench and the aft windows; overhead, aft of the switch panel, the air duct's
+// fairing with an eyeball outlet over each seat, and a dome light over each front seat.
 // The cabin is larger than the acmesh fuselage (hidden in the outside view, where the cockpit is not drawn).
 // The top band — the headliner, the windshield header, the A-pillar and roof-edge trims, their rubber seals and
-// the sun visors — is made in Blender to this layout (tools/aircraft/build_cockpit.py → assets/model/cockpit.glb, see
-// CABIN below) and goes into the static shell like the rest; without the model, simple shapes made here stand in.
+// the sun visors —, the seats, the glareshield, the yokes and the side walls (the windows' surrounds and seals, the
+// moulded lower panels and armrests, the map pocket and the hand mic, the kick panel round the fuel selector, the door's
+// seal, handle cup and upper latch, the storm window) are made in Blender to this layout (tools/aircraft/build_cockpit.py
+// → assets/model/cockpit.glb, see CABIN below) and go into the static shell like the rest; without the model, simple
+// shapes made here stand in.
 // Light without new lights: the sun comes in through the window openings (the shell casts shadows; the glass does
 // not), and the sky's light inside is scaled by an occlusion baked per vertex at build time — rays from each vertex
 // against a proxy of the cabin (its box, the window openings and the big occluders: panel, glareshield, seats).
@@ -54,8 +59,23 @@ const SEAT_X = 0.29;
 const YOKE = { x: 0.30, y: 0.218, z: -0.855, travel: 0.07, roll: 42 * DEG };
 const PEDAL_X = [-0.39, -0.21, 0.21, 0.39], PEDAL = { y: -0.27, z: -1.21, travel: 0.045 };
 const LEVER = { y: -0.045, z: -1.24, len: 0.22, idle: -11 * DEG, full: 27 * DEG };
-const FLAP = { y: -0.268, z: -0.40, det: [0, 11 * DEG, 22 * DEG, 33 * DEG] };
-const TRIMW = { y: -0.30, z: -0.64, r: 0.072, turns: 1.6 };
+// the floor console between the front seats (black, as the pedestal; the Just Flight manual's render, Piper's LX Steel
+// photo): w wide, its top y1 from its aft end z1 forward to zt, its face sloping from there down to the floor at z0; the
+// low black cover [w, h] on the floor from the pedestal's foot back to it, under the flap handle
+const FCON = { w: 0.13, y1: -0.27, zt: -0.375, z0: -0.50, z1: 0.10, cover: [0.09, 0.03] };
+// the flap handle (POH VB-2266 7.9; the LX Steel photo, the Just Flight render): its pivot in a boss at the console's
+// forward end, the bar lying FORWARD from it — rest: its angle to level, down towards the nose — len to the silver button
+// at its tip, the black ribbed grip [from, r] along it at the pedestal's foot between the front cushions; pulled up (+x
+// turn) it lowers the flaps, the detents' angles up from rest (UP / 10 / 25 / 40°)
+const FLAP = { y: -0.268, z: -0.40, len: 0.37, rest: -5 * DEG, grip: [0.255, 0.0165], det: [0, 11 * DEG, 22 * DEG, 33 * DEG] };
+// a point of the flap handle at rest: d along the bar from the pivot, h square to it (up), x across
+const flapAt = (d, h = 0, x = 0) => [x, FLAP.y + d * Math.sin(FLAP.rest) + h * Math.cos(FLAP.rest), FLAP.z - d * Math.cos(FLAP.rest) + h * Math.sin(FLAP.rest)];
+FLAP.aim = flapAt((FLAP.grip[0] + FLAP.len) / 2, 0.014, 0.008);       // (the grip's top, its middle, a little right of its crest: the line clears the left cushion more)
+// the elevator trim wheel (POH VB-2266 7.9: on the floor between the front seats), half sunk in the console AFT of the
+// flap's pivot (its top rolled forward: nose down); its
+// position pointer in a slot on the pilot's side of it (ind: the slot's x and length; DN forward, UP aft)
+const TRIMW = { y: -0.30, z: -0.28, r: 0.072, turns: 1.6, ind: { x: -0.044, len: 0.09 } };
+TRIMW.aim = [0, TRIMW.y + TRIMW.r - 0.004, TRIMW.z];                                    // (the wheel's top)
 const SEAT = { z: -0.58, w: 0.44 };               // the front seats (at ±SEAT_X): their cushions' centre z and width
 const INSTRUCTOR = { hip: [SEAT_X, -0.03, -0.38], seatY: -0.15 };    // where the right seat holds the instructor (see instructorSeat): his knees
 // clear of the right yoke's horns as it rolls; the seats made in Blender are shaped round him there (cockpit_seats.py BACK_AFT)
@@ -131,7 +151,22 @@ function ovhMatrix(x, s, h, out = new THREE.Matrix4()) {
   ey.addScaledVector(ex, -ey.dot(ex)).normalize();
   return out.makeBasis(ex, ey, new THREE.Vector3().crossVectors(ex, ey)).setPosition(p);
 }
-const FUEL_ANG = { L: 50 * DEG, R: -50 * DEG, OFF: 180 * DEG };
+// the fuel selector (POH VB-2266 7.15; Piper's TX photos): low on the left wall's kick panel ahead of the pilot's seat,
+// ~0.33 m over the floor — a round black placard plate (r) recessed in a bezel (rim wide round it), facing in, aft and a
+// little up as the kick panel angles in towards the nose (n: turned aft by aft, tilted up by up; seen from the seat ~45°
+// off its face, not edge-on), its rim's outboard edge just inside the wall's side panel: c, the plate's middle, where the
+// red pointer handle turns about n (the kick panel made in Blender must be flat in that plane round it). Its marks as one
+// sees the plate, clockwise from 12 o'clock (L TANK 24 GAL at 11, R TANK 24 GAL at 3, FUEL OFF at 8: tx_fuel, the POH) —
+// L → R clockwise, OFF counter-clockwise (the handle's button pushed)
+const FUELSEL = (() => {
+  const y = -0.07, z = -1.0, r = 0.066, rim = 0.011, aft = 20 * DEG, up = 12 * DEG;
+  const n = new THREE.Vector3(Math.cos(up) * Math.cos(aft), Math.sin(up), Math.cos(up) * Math.sin(aft));
+  const ey = new THREE.Vector3(0, 1, 0).addScaledVector(n, -n.y).normalize(), ex = new THREE.Vector3().crossVectors(ey, n);
+  let x = -Infinity;                                                 // (the rim's points 2 mm inside the side panel, 2.5 mm inside the wall)
+  for (let i = 0; i < 48; i++) { const a = i / 48 * Math.PI * 2, u = ex.clone().multiplyScalar(Math.cos(a)).addScaledVector(ey, Math.sin(a)).multiplyScalar(r + rim); x = Math.max(x, -lowX(y + u.y) + 0.0045 - u.x); }
+  return { c: [x, y, z], n: n.toArray(), r, rim, clock: { L: -30, R: 90, OFF: -120 } };
+})();
+const FUEL_ANG = Object.fromEntries(Object.entries(FUELSEL.clock).map(([k, c]) => [k, -c * DEG])), FUEL_AXIS = new THREE.Vector3(...FUELSEL.n);   // (about n, towards the eye: anticlockwise)
 const FUEL = ['L', 'R', 'OFF'];
 // the circuit breakers (POH VB-2749 Fig 7-8): the first place's x and the pitch, the rows' y (the top row on the panel, the
 // lower two on a sub-panel [x0, x1, y0, y1] subZ proud of it; all clear of the right yoke's shaft), each place's name
@@ -166,15 +201,17 @@ const BRAKE = { x: -0.11, y: 0.024, z: PZ + 0.012, ang: 30 * DEG };
 // photo's exposure: a matte black paint reflects 3–5 %, so the panel is lifted to ~1.4 % linear, or it renders as a void
 // in the shade under the glareshield; the black knobs satin, for an edge highlight); the walls two-tone — near-white
 // above the sill band (wall: the window surrounds, the posts, and the parts made in Blender with it: the header, the
-// A-pillar trims, the visors) over a light cool grey (wallLow) —, the headliner a cool light grey, the carpet charcoal,
-// the seats one light grey (their shells a little darker), the pedals light-grey pads; the yokes dark charcoal, satin
-// (lighter than the panel in the TX photo), their pebbled grips a shade darker.
+// A-pillar trims, the visors) over a light cool grey (wallLow) —, the headliner a cool light grey, the carpet charcoal
+// (the foot wells' mats under the pedals black), the seats one light grey (their shells a little darker), the pedals
+// light-grey pads; the yokes dark charcoal, satin (lighter than the panel in the TX photo), their pebbled grips a shade
+// darker.
 const S = {
   panel: { c: 0x1f2123, r: 0.75, k: 1 }, glare: { c: 0x1c1d20, r: 0.9, k: 1 }, glareLip: { c: 0x232427, r: 0.62, k: 4 },
   bezel: { c: 0x292b2d, r: 0.48 }, key: { c: 0x26282c, r: 0.5 }, knob: { c: 0x1b1c1e, r: 0.35 }, knobRing: { c: 0x2b2d31, r: 0.35 },
   wall: { c: 0xe6e8ea, r: 0.6, k: 4 }, wallLow: { c: 0xb9bdc0, r: 0.64, k: 4 }, sidePanel: { c: 0xaeb2b6, r: 0.66, k: 4 }, wallDark: { c: 0x8c9095, r: 0.6, k: 4 },
   roof: { c: 0xd8dadc, r: 0.95, k: 5 }, trim: { c: 0xd2d5d8, r: 0.55, k: 4 },
-  arm: { c: 0xa4a8ac, r: 0.6, k: 4 }, carpet: { c: 0x2a2b2d, r: 1, k: 3 }, seat: { c: 0xb4b8bb, r: 0.55, k: 2 }, seatSide: { c: 0x9ea2a6, r: 0.5, k: 2 },
+  arm: { c: 0xa4a8ac, r: 0.6, k: 4 }, carpet: { c: 0x2a2b2d, r: 1, k: 3 }, footMat: { c: 0x161718, r: 0.95, k: 3 }, seat: { c: 0xb4b8bb, r: 0.55, k: 2 }, seatSide: { c: 0x9ea2a6, r: 0.5, k: 2 },
+  belt: { c: 0x27292d, r: 0.6, k: 4 },                      // (the belts' charcoal webbing: made with the seats, tools/aircraft/cockpit_seats.py)
   // (postAlu: the windshield strip's light aluminium, mostly diffuse — a metal shows almost no colour of its own under the
   // cabin's dim environment light: sky.js ENV_INTENSITY, and envMapIntensity is not applied)
   pedal: { c: 0xa7aaad, r: 0.75, k: 4 }, postAlu: { c: 0xa9adb1, r: 0.5, m: 0.2 }, screw: { c: 0x3a3d41, r: 0.35, m: 0.7 },
@@ -193,7 +230,6 @@ function at(g, p, r) { _e.set(r ? r[0] : 0, r ? r[1] : 0, r ? r[2] : 0); _q.setF
 const rbox = (w, h, d, r = 0.004, seg = 1) => { const rr = Math.min(r, Math.min(w, h, d) * 0.49); return rr < 0.0025 ? new THREE.BoxGeometry(w, h, d) : new RoundedBoxGeometry(w, h, d, seg, rr); };
 const cylZ = (rFront, rBack, h, seg = 16) => new THREE.CylinderGeometry(rFront, rBack, h, seg).rotateX(Math.PI / 2);   // along z, the front (+z) radius first
 const cylX = (r, h, seg = 16) => new THREE.CylinderGeometry(r, r, h, seg).rotateZ(Math.PI / 2);
-const cylY = (r0, r1, h, seg = 16) => new THREE.CylinderGeometry(r1, r0, h, seg);
 const tube = (pts, r, ts = 12, rs = 8) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(p[0], p[1], p[2]))), ts, r, rs, false);
 const sphere = (r, ws = 12, hs = 8) => new THREE.SphereGeometry(r, ws, hs);
 // a surface over u, v ∈ [0, 1]: fn(u, v, out) sets the point; faces along du × dv (flip turns them round)
@@ -248,22 +284,64 @@ const WINDOWS = [
   [W3, [[0.778, SILL], [zr3(SILL), SILL], [zr3(WTOP), WTOP], [0.778, WTOP]], 0.04],
 ];
 const POSTS = [[y => wsZ(bandX(y) + 0.004, y) - 0.03, zf1], [() => -0.238, () => -0.112], [zr2, () => 0.778], [zr3, () => AFT]];
+const GLASS = 0.016;                               // the side windows' glass: this far outboard of the window band's plane
+// the walls made in Blender (tools/aircraft/cockpit_walls.py, the group 'walls'; without it, the simple shapes made here),
+// to Piper's TX photos (the left wall, the rear wall, the door's handle cup, its top latch) and the POH: sb, the split
+// under the windows — the near-white upper band (the windows' raised surrounds, the posts, and on the left the
+// LIMITATIONS placard: limits, its middle and size) over the light-grey lower panels, these proud of it by proud[0] above
+// y proud[3], by proud[1] below y proud[2] (round the fuel selector's plate and the seats' pans); joint, the lower
+// panels' joint aft of the front seats (on the right the door's aft edge); arm, armRear, the moulded armrests (z from the
+// top's front tip to the aft end, their top y1, h tall with the finger recess under it, d deep) — the front ones where
+// tx_leftfront has them, measured against the split and the window's foot (beside the pilot's knee and forearm, ahead of
+// the instructor's elbow: test/actor.test.mjs has a copy of the door's box), the rear ones under the rear windows from the
+// joint back (tx_leftrear); pocket, the left wall's mesh map pocket on the armrest's forward part (the hand mic in it); door (right,
+// hinged at its front edge, carrying the front window), its outline round its inner panel (the front edge z0 low down,
+// the aft edge z1, the sill y0, the top along the roof trim) and the inside handle in a black oval cup (its middle,
+// half-sizes a × b, depth: in plain sight from the left seat between the panel and the right yoke's horn), the upper
+// latch's plate (at z latch) on the fuselage's top frame; storm, the pilot's storm window in the left front window (its
+// frame on the glass, standing on the window's lower edge); usb, usbSw, the rear walls' USB bezel and its switch (z, y);
+// vents, the low air outlets on the kick panels ([z, y]: left, right)
+const WALLS = {
+  sb: 0.265, proud: [0.006, 0.0025, 0.0, 0.06], joint: -0.17, limits: { y: 0.305, z: -0.96, w: 0.22, h: 0.055 },
+  arm: { z0: -0.92, z1: -0.56, y1: 0.166, h: 0.066, d: 0.058 }, armRear: { z0: -0.10, z1: 0.56, y1: 0.12, h: 0.06, d: 0.05 },
+  pocket: { z0: -1.00, z1: -0.76, y0: 0.172, y1: 0.252 },
+  door: { z0: -1.14, z1: -0.17, y0: -0.30, top: 0.725, cup: { z: -1.035, y: 0.25, a: 0.055, b: 0.085, depth: 0.034 }, latch: -0.43 },
+  storm: { z0: -0.86, z1: -0.64, y0: 0.4055, y1: 0.63 },
+  usb: [0.40, 0.175], usbSw: [0.10, 0.18], vents: [[-1.22, -0.24], [-1.26, -0.24]],
+};
+// the door's inside handle in its cup (made in Blender: a lever lying on the cup's flat bottom, its pivot up, its grip
+// down and turned out towards the cabin): the 'door' control's box round it and where one aims at it (its grip)
+{ const c = WALLS.door.cup, xb = HW - WALLS.proud[0] + c.depth;
+  c.hit = { size: [0.03, 0.12, 0.05], pos: [xb - 0.014, c.y - 0.005, c.z] }; c.aim = [xb - 0.014, c.y - 0.045, c.z]; }
+// what shades the sky's light in the cabin ([x0, x1, y0, y1, z0, z1]): the panel, the glareshield, the pedestal; each
+// front seat's cushion, back (up to its shoulders) and moulded headrest (the TX's arch, as wide as the back: made with
+// the seats, tools/aircraft/cockpit_seats.py, which checks its parts against these); the bench's cushion and back; the
+// console between the front seats; the baggage floor
 const AO_OCC = [
   [-0.56, 0.56, PBOT - 0.01, PTOP + 0.01, FIRE, PZ], [-0.56, 0.56, 0.44, 0.49, -1.31, -1.02], [-0.08, 0.10, -0.11, 0.07, FIRE, -1.065],
-  [-0.51, -0.07, FLOOR, -0.15, -0.84, -0.28], [-0.51, -0.07, -0.15, 0.48, -0.30, -0.06], [-0.43, -0.15, 0.53, 0.69, -0.14, -0.06],
-  [0.07, 0.51, FLOOR, -0.15, -0.84, -0.28], [0.07, 0.51, -0.15, 0.48, -0.30, -0.06], [0.15, 0.43, 0.53, 0.69, -0.14, -0.06],
-  [-0.52, 0.52, FLOOR, -0.13, 0.22, 0.78], [-0.52, 0.52, -0.13, 0.50, 0.74, 0.95], [-0.07, 0.07, FLOOR, -0.28, -0.76, 0.10],
+  [-0.51, -0.07, FLOOR, -0.15, -0.84, -0.28], [-0.51, -0.07, -0.15, 0.56, -0.30, -0.02], [-0.48, -0.10, 0.49, 0.69, -0.13, 0.01],
+  [0.07, 0.51, FLOOR, -0.15, -0.84, -0.28], [0.07, 0.51, -0.15, 0.56, -0.30, -0.02], [0.10, 0.48, 0.49, 0.69, -0.13, 0.01],
+  [-0.52, 0.52, FLOOR, -0.13, 0.22, 0.78], [-0.52, 0.52, -0.13, 0.54, 0.74, 0.95], [-0.07, 0.07, FLOOR, FCON.y1 - 0.01, -0.45, FCON.z1],
   [-0.56, 0.56, FLOOR, -0.22, 0.95, AFT],
 ];
-// the overhead console, and the compass case on the windshield's centre post (its body, its hanger: [w, h, d] and an
-// offset from COMPASS): built below, and seen by tools/aircraft/build_cockpit.py as what shades the top band
-const CONSOLE = { pos: [0, ROOF - 0.01, -0.45], size: [0.14, 0.03, 0.5] };
+// the overhead air duct's fairing along the roof's centreline aft of the overhead switch panel (POH VB-2266 7.23: the
+// outlets overhead at each seat, the duct fed by the blower; the brochure photo through the door: a raised centre
+// fairing): its flat underside w0 across, h under the roof, its sides curving up into the headliner at ±w1/2,
+// from z0 to z1, its ends ramping up into the headliner over ramp; an eyeball outlet each side of its underside (at ±ex)
+// over each row of seats (eyes: z), each turned towards its seat; the two dome lights on the headliner beside it, one
+// over each front seat (at ±x, z: a round frosted lens of r in a chrome ring ring wide; LIGHT DOME on the switch panel)
+const DUCT = { w0: 0.12, w1: 0.19, h: 0.03, z0: -0.71, z1: 1.0, ramp: 0.08, ex: 0.031, eyes: [-0.47, 0.56] };
+const DOME = { x: 0.17, z: -0.46, r: 0.05, ring: 0.008 };
+// the duct's box, and the compass case on the windshield's centre post (its body, its hanger: [w, h, d] and an offset
+// from COMPASS): built below, and seen by tools/aircraft/build_cockpit.py as what shades the top band
+const CONSOLE = { pos: [0, ROOF - DUCT.h / 2 + 0.003, (DUCT.z0 + DUCT.z1) / 2], size: [DUCT.w1, DUCT.h + 0.006, DUCT.z1 - DUCT.z0] };
 const CASE = { body: [0.064, 0.056, 0.040, 0, 0, -0.015], hanger: [0.012, 0.03, 0.03, 0, 0.038, -0.012] };
 // the cabin's layout and surfaces for tools/aircraft/cockpit-spec.mjs (the parts made in Blender — the top band, the
 // seats, the glareshield, the yokes: assets/model/cockpit.glb — are made to these)
 export const CABIN = {
   EYE0, FLOOR, FIRE, AFT, PZ, PTOP, PBOT, SILL, WTOP, HW, HWT, ROOF, WS, KX, COMPASS, CONSOLE, CASE, SURFACES: S, bandX, roofY, wsZ, lowX,
-  SEAT_X, SEAT, INSTRUCTOR, AO_OCC, FLAP, TRIMW, LEVER, PEDAL, PEDAL_X, YOKE, YOKE_HIT, GLARE,
+  SEAT_X, SEAT, INSTRUCTOR, AO_OCC, FLAP, TRIMW, FCON, FUELSEL, DUCT, DOME, LEVER, PEDAL, PEDAL_X, YOKE, YOKE_HIT, GLARE, WALLS,
+  WIN: { W: [W1, W2, W3], r: WINDOWS.map(w => w[2]), glass: GLASS, glassR: 0.03 },   // (the side windows: openings, corners, glass)
   PANEL: { PFD, MFD, AUD, G5, BEZEL: { w: BEZEL.w, h: BEZEL.h, depth: BEZEL.depth } },
   OVH, ovhAt,                                      // (the overhead switch panel: not in the spec; the tests' and the tools')
 };
@@ -728,12 +806,17 @@ export function buildCockpit(FL, A, opts = {}) {
   const band = addBand(B, twinA), fromModel = group => !!band && band.some(n => n.split('.')[0] === group);
   // floor (carpet), firewall, the plate under the panel
   add(sheet((u, v, o) => o.set(-0.462 + 0.924 * u, FLOOR, FIRE + (AFT - FIRE) * v), 6, 18, true), S.carpet);
+  // the foot wells' black mats on it, under the pedals, back to the seats' rails (the LX Steel photo; rounded corners)
+  for (const sd of [-1, 1]) add(slab(rectPts(sd < 0 ? -0.455 : 0.14, 0.95, sd < 0 ? -0.14 : 0.455, 1.30), 0.04, [], 0.003, FLOOR + 0.004, 0, 3).rotateX(-Math.PI / 2), S.footMat, null, 0.3);
   add(sheet((u, v, o) => o.set(-0.53 + 1.06 * u, FLOOR + (WS.y0 - 0.06 - FLOOR) * v, FIRE), 8, 8, false), S.carpet);   // (its top under the cowling's sides)
   add(sheet((u, v, o) => o.set(-0.55 + 1.1 * u, PBOT - 0.004, PZ - 0.02 + (FIRE - PZ + 0.02) * v), 6, 4, true), { ...S.black, ao: 0.6 });
-  // the lower walls (to the window sill): a soft profile from the floor up, light grey up to the sill band, near-white on
-  // it (SB up to the sill: the band under the windows that carries the LIMITATIONS placard on the left)
-  const SB = 0.265;
+  // (without the model's walls) the lower walls (to the window sill): a soft profile from the floor up, light grey up to
+  // the sill band, near-white on it (SB up to the sill: the band under the windows that carries the LIMITATIONS placard on
+  // the left); the window band's rings and posts, the sill trims, the armrests, the B-pillar trims
+  const SB = WALLS.sb, walls = fromModel('walls');
   for (const sd of [-1, 1]) {
+    const zp = y => wsZ(bandX(y) + 0.004, y) - 0.03;
+    if (!walls) {
     add(sheet((u, v, o) => { const y = FLOOR + (SB - FLOOR) * v; o.set(sd * lowX(y), y, FIRE + (AFT - FIRE) * u); }, 22, 7, sd < 0), S.wallLow);
     add(sheet((u, v, o) => { const y = SB + (SILL - SB) * v; o.set(sd * lowX(y), y, FIRE + (AFT - FIRE) * u); }, 22, 1, sd < 0), S.wall);
     // the upholstered side panel (on the right: the door's), a shade darker than the wall, up to the sill band
@@ -746,19 +829,19 @@ export function buildCockpit(FL, A, opts = {}) {
     const mir = pts => pts.map(([z, y]) => [sd * z, y]);
     for (const [win, ring, r] of WINDOWS) add(slab(mir(ring), 0.002, [[mir(win), r]], 0.014, 0.016, 0.005, 5, 1).applyMatrix4(M), S.wall);
     for (const [z0, z1] of POSTS) add(sheet((u, v, o) => { const y = SILL + (WTOP - SILL) * v, z = z0(y) + (z1(y) - z0(y)) * u; o.set(sd * bandX(y), y, z); }, 4, 6, sd < 0), S.wall);
-    const zp = y => wsZ(bandX(y) + 0.004, y) - 0.03;
     // the sill trim and the armrest
     add(at(rbox(0.035, 0.022, AFT - zp(SILL) - 0.02, 0.008, 1), [sd * (HW - 0.012), SILL + 0.004, (AFT + zp(SILL)) / 2]), S.trim);
     add(at(rbox(0.06, 0.05, 0.42, 0.014, 2), [sd * (HW - 0.035), 0.205, -0.62]), S.arm);
     add(at(rbox(0.05, 0.045, 0.36, 0.012, 2), [sd * (HW - 0.03), 0.20, 0.42]), S.arm);
+    // the B-pillar trim between the front and rear windows (leaning in with the window band: 1 cm proud of it all the way up)
+    add(at(rbox(0.024, WTOP - SILL + 0.02, 0.15, 0.010, 2), [sd * (HW - 0.034), (WTOP + SILL) / 2, -0.175], [0, 0, sd * Math.atan(-KX)]), S.trim);
+    }
     // (without the model) the A-pillar trim along the windshield's edge, and the upper trim along the roof
     if (!fromModel('headliner')) {
       const pil = []; for (let i = 0; i <= 8; i++) { const y = WS.y0 - 0.02 + (WTOP + 0.02 - WS.y0) * i / 8; pil.push([sd * (bandX(y) - 0.012), y, wsZ(bandX(y), y) + 0.02]); }
       add(tube(pil, 0.028, 16, 8), S.trim);
       add(at(rbox(0.04, 0.03, AFT - zp(WTOP) + 0.02, 0.01, 1), [sd * (HWT - 0.005), WTOP + 0.002, (AFT + zp(WTOP)) / 2]), S.trim);
     }
-    // the B-pillar trim between the front and rear windows (leaning in with the window band: 1 cm proud of it all the way up)
-    add(at(rbox(0.024, WTOP - SILL + 0.02, 0.15, 0.010, 2), [sd * (HW - 0.034), (WTOP + SILL) / 2, -0.175], [0, 0, sd * Math.atan(-KX)]), S.trim);
   }
   // (without the model) the headliner: an arch from window top to window top, from the windshield's top edge to the aft
   // bulkhead; the windshield's top bow
@@ -1198,7 +1281,7 @@ export function buildCockpit(FL, A, opts = {}) {
   // edge-on from the seat: its print at a lower resolution)
   // (the Archer's: the Seminole's own is round R3's)
   B.variant = 'pa28';
-  placard([], 220, 55, [-lowX(0.305) + 0.0015, 0.305, -0.96], { r: [0, Math.PI / 2, 0], res: 0.5, draw: limitsDraw });
+  { const L = WALLS.limits; placard([], L.w * 1000, L.h * 1000, [-lowX(L.y) + 0.0015, L.y, L.z], { r: [0, Math.PI / 2, 0], res: 0.5, draw: limitsDraw }); }
   B.variant = null;
   function bracketDraw(g, w, h) {
     const y = h * 0.6, tw = w * 0.34;
@@ -1482,45 +1565,75 @@ export function buildCockpit(FL, A, opts = {}) {
     }
   }
 
-  // ============================================================ between the seats: console, flap handle, trim wheel
-  add(at(rbox(0.13, 0.13, 0.86, 0.025, 2), [0, FLOOR + 0.065, -0.33]), S.panel);                                  // (black, as the pedestal)
-  add(at(rbox(0.05, 0.03, 0.06, 0.008), [0, FLAP.y - 0.012, FLAP.z]), S.black);
-  add(tube([[0, FLAP.y, FLAP.z], [0, FLAP.y + 0.004, FLAP.z + 0.15], [0, FLAP.y + 0.006, FLAP.z + 0.32]], 0.009, 10, 8), S.chrome, 'flap');
-  add(at(cylZ(0.016, 0.017, 0.11, 16), [0, FLAP.y + 0.006, FLAP.z + 0.36]), GRIPBLK, 'flap');
-  add(at(cylZ(0.008, 0.008, 0.01, 12), [0, FLAP.y + 0.006, FLAP.z + 0.418]), S.chrome, 'flap');
-  // its hit box: the whole handle (the grip lies beside the seat backs, out of the pilot's sight: one aims at the rod)
-  control({ id: 'flaps', label: 'フラップ レバー（V / Shift+V）', kind: 'lever', part: 'flap', size: [0.045, 0.05, 0.42], pos: [0, FLAP.y + 0.006, FLAP.z + 0.215], aim: [0, FLAP.y + 0.004, FLAP.z + 0.14],
-    act: (dir, wheel) => {
-      const s = cur.s, n = s ? s.A.flapLabels.length : 4, i = s ? s.flapIdx : 0, down = dir > 0;                // up on the handle = more flap
-      if (down) return i < n - 1 ? flight('flaps') : info('フラップはいちばん下（40°）です');
-      return i > 0 ? flight('flapsUp') : info('フラップは上がっています（UP）');
-    } });
-  // the trim wheel (rolls fore and aft; forward = nose down), half sunk in the console
-  { const g = new THREE.CylinderGeometry(TRIMW.r, TRIMW.r, 0.022, 36).rotateZ(Math.PI / 2);
+  // ============================================================ between the seats: the console, the flap handle, the trim wheel
+  // the console (FCON; black, as the pedestal): its profile — the top from its aft end forward, the face sloping down to
+  // the floor — across its width, soft edges; the low cover on the floor from the pedestal's foot back to its face, its
+  // screws along its edges (the LX Steel photo)
+  { const { w, y1, zt, z0, z1, cover: [cw, ch] } = FCON, b = 0.004;
+    const prof = [[b - z1, FLOOR - 0.01], [b - z1, y1 - b], [-zt, y1 - b], [-z0, FLOOR - 0.01]];   // ([−z, y], inside the bevel b: turned below so that it runs across)
+    add(slab(prof, 0.02, [], w - 2 * b, w / 2, b, 4, 1).rotateY(Math.PI / 2), S.panel, null, 0.2);
+    const c0 = PED.foot - 0.005, c1 = z0 + 0.03, top = FLOOR + ch - 0.004;
+    add(at(rbox(cw, ch, c1 - c0, 0.008, 1), [0, top - ch / 2, (c0 + c1) / 2]), S.panel);
+    for (const sx of [-1, 1]) for (let i = 0; i < 4; i++) add(at(new THREE.CircleGeometry(0.0021, 6), [sx * (cw / 2 - 0.009), top + 0.0004, c0 + 0.03 + i * (c1 - c0 - 0.07) / 3], [-Math.PI / 2, 0, 0]), S.screw);
+  }
+  // the flap handle (FLAP; made at rest, turned about its pivot): the boss over the pivot on the console's forward edge,
+  // the bar forward from it, the ribbed grip (a lathe: the bar's end flaring into it, five ribs, its end rounded under
+  // the button), the silver button at its tip
+  { const [g0, gr] = FLAP.grip, L = FLAP.len, tilt = [FLAP.rest, 0, 0];
+    add(at(rbox(0.05, 0.036, 0.062, 0.008), [0, FLAP.y + 0.002, FLAP.z]), S.black);
+    add(at(cylZ(0.0085, 0.0085, g0 + 0.012, 10), flapAt((g0 + 0.012) / 2), tilt), S.black, 'flap');
+    const prof = [[0.0085, 0], [0.0135, 0.004], [gr, 0.010]];
+    for (let k = 0; k < 5; k++) prof.push([gr - 0.0016, 0.016 + 0.017 * k], [gr, 0.0215 + 0.017 * k]);
+    prof.push([gr - 0.0012, L - g0 - 0.016], [0.0105, L - g0 - 0.007], [0, L - g0 - 0.005]);
+    add(at(new THREE.LatheGeometry(prof.map(([r, h]) => new THREE.Vector2(r, h)), 10).rotateX(-Math.PI / 2), flapAt(g0), tilt), GRIPBLK, 'flap');
+    add(at(cylZ(0.0075, 0.0072, 0.007, 12), flapAt(L - 0.0035), tilt), S.chrome, 'flap');
+    // its hit box round the grip (it rides on the handle), aimed at the grip's top
+    control({ id: 'flaps', label: 'フラップ レバー（V / Shift+V）', kind: 'lever', part: 'flap', size: [0.044, 0.046, L - g0 + 0.02], pos: flapAt((g0 + L) / 2), rot: tilt, aim: FLAP.aim,
+      act: (dir, wheel) => {
+        const s = cur.s, n = s ? s.A.flapLabels.length : 4, i = s ? s.flapIdx : 0, down = dir > 0;                // up on the handle = more flap
+        if (down) return i < n - 1 ? flight('flaps') : info('フラップはいちばん下（40°）です');
+        return i > 0 ? flight('flapsUp') : info('フラップは上がっています（UP）');
+      } });
+  }
+  // the trim wheel (TRIMW: rolls fore and aft; forward = nose down) through a slot in a bezel on the console's top; its
+  // pointer in a slot on the pilot's side, the ticks beside it, DN at its forward end, UP at its aft end (upright as the
+  // pilot looks down at them), the pointer moving with the trim (a part of its own: update())
+  { const g = new THREE.CylinderGeometry(TRIMW.r, TRIMW.r, 0.022, 36).rotateZ(Math.PI / 2), y1 = FCON.y1, { x: ix, len: il } = TRIMW.ind, flat = [-Math.PI / 2, 0, 0];
     add(at(g, [0, TRIMW.y, TRIMW.z]), S.black, 'trim');
     for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; add(at(new THREE.BoxGeometry(0.024, 0.009, 0.006), [0, TRIMW.y + Math.sin(a) * TRIMW.r, TRIMW.z + Math.cos(a) * TRIMW.r], [-a, 0, 0]), i % 6 === 0 ? S.white : GRIPBLK, 'trim'); }
-    add(at(rbox(0.05, 0.012, 0.18, 0.004), [0, FLOOR + 0.132, TRIMW.z]), S.black);
-    // on the console's top, on the pilot's side of the wheel
-    label(['NOSE', 'DN'], [-0.033, FLOOR + 0.1305, TRIMW.z - 0.07], { size: 1.9, r: [-Math.PI / 2, 0, 0] });
-    label(['NOSE', 'UP'], [-0.033, FLOOR + 0.1305, TRIMW.z + 0.07], { size: 1.9, r: [-Math.PI / 2, 0, 0] });
+    add(at(rbox(0.05, 0.008, 0.18, 0.003), [0, y1 + 0.002, TRIMW.z]), S.black);
+    add(at(new THREE.PlaneGeometry(0.03, 0.166), [0, y1 + 0.0062, TRIMW.z], flat), S.slot);
+    add(at(new THREE.PlaneGeometry(0.0055, il + 0.008), [ix, y1 + 0.0004, TRIMW.z], flat), S.slot);
+    for (let k = 0; k <= 4; k++) add(at(new THREE.PlaneGeometry(0.006, 0.0012), [ix - 0.008, y1 + 0.0004, TRIMW.z + (k - 2) * il / 4], flat), S.white);
+    label('DN', [ix - 0.002, y1 + 0.0005, TRIMW.z - il / 2 - 0.008], { size: 2.2, r: flat, lit: 0 });
+    label('UP', [ix - 0.002, y1 + 0.0005, TRIMW.z + il / 2 + 0.008], { size: 2.2, r: flat, lit: 0 });
+    add(at(new THREE.BoxGeometry(0.011, 0.0028, 0.0026), [ix - 0.0015, y1 + 0.0014, TRIMW.z]), S.white, 'trimInd');
     // (its hit box stays put: the wheel turns about its own axle, the part above the console is always there)
-    control({ id: 'trim', label: 'トリム ホイール（前へ回すと機首下げ）', kind: 'lever', size: [0.04, 0.06, 0.16], pos: [0, TRIMW.y + 0.04, TRIMW.z], aim: [0, TRIMW.y + TRIMW.r - 0.004, TRIMW.z], act: (dir) => flight('trimStep', dir >= 0 ? -1 : 1) });
+    control({ id: 'trim', label: 'トリム ホイール（前へ回すと機首下げ）', kind: 'lever', size: [0.04, 0.06, 0.16], pos: [0, TRIMW.y + 0.04, TRIMW.z], aim: TRIMW.aim, act: (dir) => flight('trimStep', dir >= 0 ? -1 : 1) });
   }
 
-  // ============================================================ the fuel selector (left wall, low)
-  { const x = -lowX(-0.13) + 0.004, y = -0.13, z = -1.0, r = [0, Math.PI / 2, 0];
-    add(at(new THREE.CircleGeometry(0.0298, 28), [x - 0.0004, y, z], r), { ...S.black, r: 0.45 });
-    decal(62, 62, (g, w, h) => {
-      g.lineWidth = w * 0.012; g.beginPath(); g.arc(w / 2, h / 2, w * 0.45, 0, Math.PI * 2); g.stroke();
-      g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `700 ${w * 0.085}px ${SANS}`;
-      g.save(); g.translate(w / 2, h / 2);
-      for (const [t, a] of [['L TANK', -50], ['R TANK', 50], ['OFF', 180]]) { g.save(); g.rotate(a * DEG); g.fillText(t, 0, -h * 0.33); g.restore(); }
-      g.restore(); g.font = `700 ${w * 0.07}px ${SANS}`; g.fillText('FUEL', w / 2, h * 0.72); g.font = `600 ${w * 0.05}px ${SANS}`; g.fillText('24 GAL USABLE EACH', w / 2, h * 0.80);
-    }, [x, y, z], r, { lit: 0, col: 0xdcdcd6 });
-    add(at(cylX(0.011, 0.008, 16), [x + 0.004, y, z]), S.black, 'fuel');
-    add(at(rbox(0.012, 0.062, 0.016, 0.005), [x + 0.012, y + 0.015, z]), S.black, 'fuel');
-    add(at(rbox(0.008, 0.016, 0.01, 0.003), [x + 0.012, y + 0.044, z]), S.white, 'fuel');
-    control({ id: 'fuelSel', label: '燃料セレクター（左 / 右 / OFF）', kind: 'switch', part: 'fuel', size: [0.03, 0.08, 0.04], pos: [x + 0.012, y + 0.015, z],
+  // ============================================================ the fuel selector (FUELSEL: the left kick panel, low)
+  // made in the plate's frame (x to the right as one faces it, y up its face, z = n off it, at c): the bezel (a ring, its
+  // skirt back into the kick panel, its inside down to the plate), the black placard plate, its marks (not backlit),
+  // the red pointer handle (made pointing at 12 o'clock; update() turns it about n) — its flat tapered base, the fin one
+  // grips along it, the release button on its tail (pushed to turn it to OFF)
+  { const F = FUELSEL, R = F.r, rim = F.rim, ez = new THREE.Vector3(...F.n), ey = new THREE.Vector3(0, 1, 0).addScaledVector(ez, -ez.y).normalize();
+    const M = new THREE.Matrix4().makeBasis(new THREE.Vector3().crossVectors(ey, ez), ey, ez).setPosition(...F.c);
+    const E = new THREE.Euler().setFromRotationMatrix(M), r = [E.x, E.y, E.z], P = (x, y, z) => new THREE.Vector3(x, y, z).applyMatrix4(M).toArray();
+    const lathe = (pts, n) => new THREE.LatheGeometry(pts.map(([a, h]) => new THREE.Vector2(a, h)), n).rotateX(Math.PI / 2);
+    add(lathe([[R + rim, -0.006], [R + rim - 0.0015, 0.003], [R + rim * 0.5, 0.0066], [R + 0.0012, 0.0052], [R - 0.0005, 0.0012]], 24).applyMatrix4(M), S.black);
+    add(new THREE.CircleGeometry(R, 28).translate(0, 0, 0.0012).applyMatrix4(M), { ...S.black, r: 0.5 });
+    // (behind the bezel, back into the wall: the kick panel's moulding round it, in the side panel's grey — inside the kick
+    // panel made in Blender, which is flat in the plate's plane there)
+    add(lathe([[R + rim + 0.014, -0.09], [R + rim + 0.0005, -0.0045]], 24).applyMatrix4(M), S.sidePanel);
+    const mark = (lines, clock, rr) => label(lines, P(Math.sin(clock * DEG) * rr, Math.cos(clock * DEG) * rr, 0.0015), { size: 2.9, r, lit: 0, col: 0xe6e6e0 });
+    mark(['L TANK', '24 GAL'], F.clock.L, 0.053); mark(['R TANK', '24 GAL'], F.clock.R, 0.049); mark(['FUEL', 'OFF'], F.clock.OFF, 0.05);
+    const base = slab([[0, 0.046], [0.012, 0.004], [0.0095, -0.032], [0, -0.038], [-0.0095, -0.032], [-0.012, 0.004]], 0.003, [], 0.005, 0.0092, 0.0015, 1, 1);
+    const fin = slab([[-0.02, 0.007], [0.034, 0.007], [0.03, 0.013], [0.006, 0.0235], [-0.012, 0.0222], [-0.02, 0.016]], 0.002, [], 0.0041, 0.00325, 0.0012, 1, 1)
+      .applyMatrix4(new THREE.Matrix4().set(0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1));               // ([along it, off the plate] → y, z: across it x)
+    for (const g of [base, fin]) add(g.applyMatrix4(M), S.red, 'fuel');
+    add(cylZ(0.0042, 0.0042, 0.004, 10).translate(0, -0.028, 0.0105).applyMatrix4(M), S.chrome, 'fuel');
+    control({ id: 'fuelSel', label: '燃料セレクター（左 / 右 / OFF）', kind: 'switch', part: 'fuel', size: [0.032, 0.094, 0.03], pos: P(0, 0.004, 0.0125), rot: r, aim: P(0, 0.012, 0.022),
       act: (dir, wheel) => {
         // a click: the other tank; the wheel: L → R → OFF and back
         const i = FUEL.indexOf(switches.fuelSel), v = wheel ? FUEL[clamp(i + (dir > 0 ? 1 : -1), 0, FUEL.length - 1)] : (switches.fuelSel === 'L' ? 'R' : 'L');
@@ -1529,15 +1642,24 @@ export function buildCockpit(FL, A, opts = {}) {
   }
 
   // ============================================================ the door (right), its handle and latch
-  { const x = HW - 0.004, D = { z0: -1.20, z1: -0.13, y0: -0.30 };
+  // with the model's walls (WALLS.door): the inside handle's lever in its black cup on the door's forward part — the
+  // control's box round the lever, aimed at its grip; OPEN over it on the cup's flat bottom; ENGAGE LATCH BEFORE FLIGHT on
+  // the roof trim's face aft of the upper latch (Piper's TX photos, the POH). Without them: the old simple door (its seams
+  // below the sill, the map pocket, a chrome handle mid-door with its DOOR LATCH label, the top latch over its window)
+  if (walls) {
+    const c = WALLS.door.cup, xb = HW - WALLS.proud[0] + c.depth;
+    label('OPEN', [xb - 0.0006, c.y + 0.053, c.z], { size: 2.4, r: [0, -Math.PI / 2, 0], lit: 0 });
+    placard(['ENGAGE LATCH', 'BEFORE FLIGHT'], 38, 11, [HWT - 0.0118, WTOP + 0.003, WALLS.door.latch + 0.075], { r: [0, -Math.PI / 2, 0], res: 0.7 });
+    control({ id: 'door', label: 'ドア ハンドル（降りる）', kind: 'handle', size: c.hit.size, pos: c.hit.pos, aim: c.aim, act: () => ({ type: 'exit' }) });
+  } else {
+    const x = HW - 0.004, D = { z0: -1.20, z1: -0.13, y0: -0.30 };
     // its outline (dark seams following the wall), the upholstered panel inside it, the map pocket
     const seam = (y0, y1, z0, z1) => add(sheet((u, v, o) => { const y = y0 + (y1 - y0) * v; o.set(lowX(y) - 0.0035, y, z0 + (z1 - z0) * u); }, 1, 6), { ...S.wallDark, c: 0x2b2d30, ao: 0.6 });
     seam(D.y0, SILL, D.z0 - 0.003, D.z0 + 0.003); seam(D.y0, SILL, D.z1 - 0.003, D.z1 + 0.003); seam(D.y0 - 0.003, D.y0 + 0.003, D.z0, D.z1);
     add(at(rbox(0.02, 0.10, 0.34, 0.006), [lowX(-0.15) - 0.011, -0.15, -0.86]), { ...S.arm, c: 0x3b3e42 });
     add(at(rbox(0.03, 0.022, 0.12, 0.006), [x - 0.02, 0.27, -0.76]), S.chrome);
     add(at(rbox(0.012, 0.016, 0.03, 0.004), [x - 0.012, 0.27, -0.685]), S.black);
-    // the top latch: hanging from the window ring's top edge over the door's window, against the wall's plane (it was at z
-    // −0.98, outside the windshield; round R2 reshapes the door)
+    // the top latch: hanging from the window ring's top edge over the door's window, against the wall's plane
     add(at(rbox(0.022, 0.03, 0.09, 0.006), [bandX(0.73) - 0.0105, 0.722, -0.60]), S.chrome);
     label(['DOOR', 'LATCH'], [x - 0.0005, 0.302, -0.76], { size: 1.8, r: [0, -Math.PI / 2, 0], lit: 0 });
     control({ id: 'door', label: 'ドア ハンドル（降りる）', kind: 'handle', size: [0.05, 0.05, 0.16], pos: [x - 0.02, 0.27, -0.74], act: () => ({ type: 'exit' }) });
@@ -1588,17 +1710,46 @@ export function buildCockpit(FL, A, opts = {}) {
     add(at(rbox(0.25, 0.012, 0.13, 0.006), [sd * 0.25, roofY(sd * 0.25) - 0.016, -0.67], [0, 0, -sd * 6.6 * DEG]), S.trim);
     add(at(cylX(0.005, 0.24, 8), [sd * 0.25, roofY(sd * 0.25) - 0.012, -0.74], [0, 0, -sd * 6.6 * DEG]), S.steel);
   }
-  // the overhead console (its front 9 cm aft of the overhead switch panel): two fresh-air eyeballs and the dome light
-  add(at(rbox(...CONSOLE.size, 0.012), CONSOLE.pos), S.trim);
-  for (const sx of [-0.04, 0.04]) { add(at(cylY(0.016, 0.015, 0.008, 18), [sx, ROOF - 0.027, -0.62]), S.black); add(at(sphere(0.011, 12, 8), [sx, ROOF - 0.031, -0.62]), S.knob); }
-  add(at(rbox(0.07, 0.008, 0.04, 0.003), [0, ROOF - 0.027, -0.40]), S.lens);
+  // the overhead duct's fairing (DUCT): its section swept along the roof's centreline — the flat underside, the sides
+  // curving up to edges 6 mm over the roof's arch (behind the headliner made in Blender: its cloth sags ≤ 6 mm between
+  // the bows, its seams go 2.5 mm up; and behind the one made here) —, its ends ramping up flush into the headliner
+  { const { w0, w1, h, z0, z1, ramp } = DUCT, f0 = w0 / w1, ss = [-1, -0.9, -0.8, -0.7, -f0, f0, 0.7, 0.8, 0.9, 1], zs = [];
+    for (const t of [0, 0.15, 0.35, 0.6]) zs.push(z0 + ramp * t);
+    for (let k = 0; k <= 9; k++) zs.push(z0 + ramp + (z1 - z0 - 2 * ramp) * k / 9);
+    for (const t of [0.6, 0.35, 0.15, 0]) zs.push(z1 - ramp * t);
+    const duct = (s, z, o) => {
+      const x = s * w1 / 2, t = Math.abs(s), yb = roofY(x) + 0.006, e = Math.sin(Math.PI / 2 * clamp(Math.min(z - z0, z1 - z) / ramp, 0, 1));
+      const f = t <= f0 ? 1 : 0.5 + 0.5 * Math.cos(Math.PI * (t - f0) / (1 - f0));
+      return o.set(x, yb + (ROOF - h * e - yb) * f, z);
+    };
+    add(sheet((u, v, o) => duct(ss[Math.round(u * (ss.length - 1))], zs[Math.round(v * (zs.length - 1))], o), ss.length - 1, zs.length - 1), S.trim);
+    // the eyeball outlets on its underside: a chrome bezel, the black ball in it, its nozzle turned towards the head of
+    // the seat under it (the front seats' eyes, the rear passengers' heads), the nozzle's dark mouth
+    for (const z of DUCT.eyes) for (const sd of [-1, 1]) {
+      const c = new THREE.Vector3(sd * DUCT.ex, ROOF - h - 0.0005, z), head = z < 0 ? [sd * SEAT_X, EYE0[1], -0.36] : [sd * 0.25, 0.6, 0.72];
+      const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(...head).sub(c).normalize());
+      add(new THREE.LatheGeometry([[0.0118, -0.0015], [0.0145, -0.0027], [0.0175, -0.0015], [0.0185, 0.0015]].map(([r, hh]) => new THREE.Vector2(r, hh)), 10).translate(c.x, c.y + 0.0005, c.z), S.chrome);
+      add(new THREE.SphereGeometry(0.0125, 8, 4, 0, Math.PI * 2, 1.2, Math.PI - 1.2).translate(c.x, c.y, c.z), S.knob);       // (its part out of the bezel)
+      add(new THREE.CylinderGeometry(0.0055, 0.0055, 0.006, 8, 1, true).translate(0, 0.014, 0).applyQuaternion(q).translate(c.x, c.y, c.z), S.black);
+      add(new THREE.CircleGeometry(0.0046, 6).rotateX(-Math.PI / 2).translate(0, 0.0165, 0).applyQuaternion(q).translate(c.x, c.y, c.z), S.slot);
+    }
+  }
+  // the dome lights (DOME): a shallow frosted lens in a chrome ring on the headliner, square to its arch there; set 5.5 mm
+  // under the arch, the ring's skirt going up into it (the cloth sags there: the lens never behind it)
+  for (const sd of [-1, 1]) {
+    const x = sd * DOME.x, y = roofY(x), n = new THREE.Vector3(-x / (HWT * HWT), -(y - WTOP) / (ROOF - WTOP) ** 2, 0).normalize(), R = DOME.r, rise = 0.0065;
+    const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), n), c = new THREE.Vector3(x, y, DOME.z).addScaledVector(n, 0.0055);
+    const Rs = (R * R + rise * rise) / (2 * rise), th = Math.asin(R / Rs);                      // (the lens: a cap of a sphere, rise high)
+    add(new THREE.LatheGeometry([[R + DOME.ring + 0.001, -0.009], [R + DOME.ring, 0.0005], [R + 0.004, 0.003], [R - 0.0005, 0.0012]].map(([r, h]) => new THREE.Vector2(r, h)), 18).applyQuaternion(q).translate(c.x, c.y, c.z), S.chrome);
+    add(new THREE.SphereGeometry(Rs, 16, 2, 0, Math.PI * 2, 0, th).translate(0, 0.0012 - Rs * Math.cos(th), 0).applyQuaternion(q).translate(c.x, c.y, c.z), { ...S.lens, r: 0.4 });
+  }
 
   // ============================================================ the glass: windshield and side windows (no shadows, no AO)
   B.glass.push(sheet((u, v, o) => { const y = WS.y0 + (WS.y1 - WS.y0) * v, x = (-1 + 2 * u) * (bandX(y) + 0.006); o.set(x, y, wsZ(x, y) - 0.004); }, 16, 6, true));
   for (const sd of [-1, 1]) {
     for (const [w] of WINDOWS) {
       const sh = rounded(new THREE.Shape(), w.map(([z, y]) => [z, y]), 0.03), g = new THREE.ShapeGeometry(sh, 6), p = g.attributes.position;
-      for (let i = 0; i < p.count; i++) { const z = p.getX(i), y = p.getY(i); p.setXYZ(i, sd * (bandX(y) + 0.016), y, z); }
+      for (let i = 0; i < p.count; i++) { const z = p.getX(i), y = p.getY(i); p.setXYZ(i, sd * (bandX(y) + GLASS), y, z); }
       g.computeVertexNormals(); B.glass.push(g);
     }
   }
@@ -1718,7 +1869,8 @@ export function buildCockpit(FL, A, opts = {}) {
     yokeL: [-YOKE.x, YOKE.y, YOKE.z], yokeR: [YOKE.x, YOKE.y, YOKE.z], pedalsL: [0, 0, 0], pedalsR: [0, 0, 0],
     throttle: [-0.005, LEVER.y, LEVER.z], mixture: [0.045, LEVER.y, LEVER.z], carb: [CARB.x, CARB.y, CARB.z],
     ...Object.fromEntries(Object.entries(TWIN_LV).map(([k, x]) => [k, [x, LEVER.y, LEVER.z]])), gearLever: [GEAR.x, GEAR.y, PZ],
-    flap: [0, FLAP.y, FLAP.z], trim: [0, TRIMW.y, TRIMW.z], key: [KEYSW[0], KEYSW[1], PZ], fuel: [-lowX(-0.13) + 0.004, -0.13, -1.0], brake: [BRAKE.x, BRAKE.y, BRAKE.z], brakeT: [-0.135, 0.036, PZ - 0.012],
+    flap: [0, FLAP.y, FLAP.z], trim: [0, TRIMW.y, TRIMW.z], trimInd: [TRIMW.ind.x, FCON.y1, TRIMW.z], key: [KEYSW[0], KEYSW[1], PZ], fuel: FUELSEL.c, brake: [BRAKE.x, BRAKE.y, BRAKE.z],
+    brakeT: [-0.135, 0.036, PZ - 0.012],
   };
   const parts = {}, CASTS = new Set(['yokeL', 'yokeR', 'throttle', 'mixture', 'flap', 'thrL', 'thrR']);   // the small ones cast no shadow
   for (const [name, list] of B.moving) {
@@ -1728,6 +1880,7 @@ export function buildCockpit(FL, A, opts = {}) {
     grp.add(mesh(g, kitMat, 'cockpit-' + name, { cast: CASTS.has(name) }));
     (B.partV.has(name) ? VG[B.partV.get(name)] : cabin).add(grp); parts[name] = grp;
   }
+  parts.fuel.quaternion.setFromAxisAngle(FUEL_AXIS, FUEL_ANG[switches.fuelSel] || 0);      // (as update() poses it)
   // the compass card (labels material, turns about y)
   { const uv = atlas.uv(B.cardGeo.userData.it), a = B.cardGeo.attributes.uv;
     for (let i = 0; i < a.count; i++) a.setXY(i, uv[0] + a.getX(i) * (uv[2] - uv[0]), uv[1] + a.getY(i) * (uv[3] - uv[1]));
@@ -1878,7 +2031,8 @@ export function buildCockpit(FL, A, opts = {}) {
     if (!s) return;
     // the controls: the yokes ride fore and aft with the stabilator (elevator + trim; aft = nose up) and turn with
     // the ailerons; the pedals with the rudder after the auto-rudder; the levers, the flap handle (eased between its
-    // detents), the trim wheel, the key, the fuel selector, the park brake handle; carb heat ON is down, OFF up
+    // detents; its grip forward, up for more flap), the trim wheel and its pointer (forward: nose down), the key, the fuel
+    // selector (about its plate's normal), the park brake handle; carb heat ON is down, OFF up
     const pc = clamp((s.elev || 0) + (s.trim || 0), -1, 1), roll = -clamp(s.ail || 0, -1, 1) * YOKE.roll;
     parts.yokeL.position.z = YOKE.z + pc * YOKE.travel; parts.yokeL.rotation.z = roll;
     parts.yokeR.position.z = YOKE.z + pc * YOKE.travel; parts.yokeR.rotation.z = roll;
@@ -1901,10 +2055,11 @@ export function buildCockpit(FL, A, opts = {}) {
     }
     const fi = clamp(s.flapIdx | 0, 0, FLAP.det.length - 1);
     flapAng += (FLAP.det[fi] - flapAng) * (1 - Math.exp(-dt * 12));
-    parts.flap.rotation.x = -flapAng;
-    parts.trim.rotation.x = (s.trim || 0) / P.TRIM_MAX * TRIMW.turns * Math.PI * 2;
+    parts.flap.rotation.x = flapAng;
+    const tr = clamp((s.trim || 0) / P.TRIM_MAX, -1, 1);
+    parts.trim.rotation.x = tr * TRIMW.turns * Math.PI * 2; parts.trimInd.position.z = TRIMW.z + tr * TRIMW.ind.len / 2;
     if (parts.key) parts.key.rotation.z = -MAG_ANG[Math.max(0, MAG.indexOf(switches.mag))];
-    parts.fuel.rotation.x = FUEL_ANG[switches.fuelSel] || 0;
+    parts.fuel.quaternion.setFromAxisAngle(FUEL_AXIS, FUEL_ANG[switches.fuelSel] || 0);
     parts.brake.rotation.x = o.parkBrake ? -BRAKE.ang : 0;                                // (the grip swings aft)
     if (parts.brakeT) parts.brakeT.rotation.x = o.parkBrake ? -38 * DEG : 0;
     // the wet compass: the card follows the magnetic heading, a little behind and swinging (damped)
@@ -1962,7 +2117,7 @@ export function buildCockpit(FL, A, opts = {}) {
   const bytes = glassPanel.bytes + (atlasCv ? Math.round(atlas.W * atlas.H * 4 / 3) : 0);      // the atlas: one byte a texel, mipmapped
   return {
     root, eye: new THREE.Vector3(A.eye[0], A.eye[1], A.eye[2]), instructorSeat, screens, switches, parts, pick, aimPoint, update, setType, band,
-    fromCode: ['headliner', 'seats', 'bench', 'glareshield', 'yokes'].filter(g => !fromModel(g)),     // (the groups the model lacked: made here)
+    fromCode: ['headliner', 'seats', 'bench', 'glareshield', 'yokes', 'walls'].filter(g => !fromModel(g)),     // (the groups the model lacked: made here)
     get controls() { return byType[type]; }, get type() { return type; }, allControls: controls,
     setVisible(v) { visible = !!v; root.visible = visible; if (visible) { avSeen.powered = null; g5On = null; t.pfd = RATE.pfd; t.mfd = RATE.mfd; t.stby = RATE.stby; } },
     get visible() { return visible; },

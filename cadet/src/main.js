@@ -54,7 +54,7 @@ import { createCrowd } from './npc/crowd.js';
 import { peopleDialogs } from './content/dialog/people.js';
 import { careerInstructorDialogs } from './content/dialog/instructor-career.js';
 import { careerBoardDialogs } from './content/dialog/cockpit.js';
-import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, FTD_TITLES, pfdPictures, lecturePage, lecturerNotesHtml } from './content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, FTD_TITLES, pfdPictures, lecturePage, lecturerNotesHtml, classOptions, heardOf } from './content/school.js';
 import { drawPfdPicture } from './world/pfd-picture.js';
 import { drawLecturePage, drawKeyBoard, figureSource } from './world/lecture-screen.js';
 import { createTablet } from './ui/tablet.js';
@@ -630,13 +630,14 @@ async function boot() {
     if (who === 'lecturer') {
       const cls = due('class'), ftd = due('ftd'), ex = due('exam');
       if (cls && !career.doneToday('class', cls.id)) {
-        // (a class left midway: it offers to go on from the section it reached)
-        const at = st.done[lectureKey(cls.id)], from = Number.isInteger(at) && at > 0 ? at : null;
+        // (a class left midway: it offers to go on from the section it reached; what has been heard, the pace chosen
+        // last time, how many times it was begun — the career's)
         pageSec = null;                                       // (its first page sets the whiteboard and turns the eyes again)
-        return { run: startLesson('class', +cls.id, classDialogs(FL, +cls.id, { seed: st.seed, from })), dialog: 'class' };
+        return { run: startLesson('class', +cls.id, classDialogs(FL, +cls.id, { seed: st.seed, ...classOptions(FL, st, +cls.id, { attempt: career.attempt(`class:${cls.id}`) }) })), dialog: 'class' };
       }
-      if (ftd && !career.doneToday('ftd', ftd.id)) return { run: startLesson('ftd', ftd.id, ftdDialogs(FL, ftd.id, { seed: st.seed + st.day })), dialog: 'ftd' };
-      if (ex && ex.id === 'written1' && !career.doneToday('exam', ex.id)) return { run: startLesson('exam', ex.id, examDialogs(FL, ex.id, { seed: st.seed + st.day })), dialog: 'exam' };
+      // (a lesson or the written test not passed can be taken again the same day: its questions in another order)
+      if (ftd && !(career.doneToday('ftd', ftd.id) && groundPassed(prog(), ftd.id))) return { run: startLesson('ftd', ftd.id, ftdDialogs(FL, ftd.id, { seed: st.seed + st.day, heard: heardOf(FL, st), attempt: career.attempt(`ftd:${ftd.id}`) })), dialog: 'ftd' };
+      if (ex && ex.id === 'written1' && !(career.doneToday('exam', ex.id) && st.exams.written1 && st.exams.written1.pass)) return { run: startLesson('exam', ex.id, examDialogs(FL, ex.id, { seed: st.seed + st.day, heard: heardOf(FL, st), attempt: career.attempt('exam:written1') })), dialog: 'exam' };
       return { run: peopleRunner, dialog: 'lecturer' };
     }
     if (who !== 'instructor') return { run: peopleRunner, dialog: who };
@@ -713,6 +714,10 @@ async function boot() {
     else if (name === 'pfd') showPfd(arg);
     else if (name === 'say') speakEnglish(arg);
     else if (name === 'quizEnd') { cx.quiz = scoreOf(lessonState, +arg); }
+    // (chapter 1's classes and lessons: the pace chosen, a section heard, a question answered — kept with the career)
+    else if (name === 'pace') career.setPace(arg);
+    else if (name === 'heard') { const [id, how] = String(arg).split('|'); career.heardSection(id, how); }
+    else if (name === 'ans') { const [id, ok] = String(arg).split('|'); career.answered(id, ok === '1'); }
     else if (name === 'done') { if (arg === 'class') lectureOver(); workDone(arg); }
     else if (name === 'decide') { const right = career.decision(arg, weatherNow()); refreshCtx(); cx.today.decisionRight = right; afterTalk.push(() => afterDecision()); }
     else if (name === 'tablet') toast('タブレットを受け取りました。Tab キーで開けます', 4200);
@@ -1125,10 +1130,11 @@ async function boot() {
     else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'ftd') {
       career.done('ftd', k.id); career.tire(6);
       if (arg === 'pass') groundPass(k.id, k.n ? cx.quiz.pct : 100);
-      afterTalk.push(() => { next(); applySlot(); toast(arg === 'pass' ? `${k.id} 合格。${career.slot === 'evening' ? '今日の予定は終わりです' : ''}` : 'もう一度、別の日に受けられます', 4200); });
+      // (not passed: the time stays, and the lecturer takes it again whenever the cadet is ready)
+      afterTalk.push(() => { if (arg === 'pass') { next(); applySlot(); } toast(arg === 'pass' ? `${k.id} 合格。${career.slot === 'evening' ? '今日の予定は終わりです' : ''}` : 'もう一度受けるときは、ミラー講師に話しかけてください（問題の順番は変わります）', 4200); });
     } else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'exam') {
       career.exam(k.id, cx.quiz.pct);
-      afterTalk.push(() => { next(); applySlot(); });
+      afterTalk.push(() => { if (arg === 'pass' || k.id !== 'written1') { next(); applySlot(); } else toast('もう一度受けるときは、ミラー講師に話しかけてください（問題は入れ替わります）', 4200); });
     } else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'navlog') {
       // (M6) the navigation log made: the afternoon's solo cross-country (or another try after lunch)
       if (arg === 'pass') { career.done('navlog', 'xc'); afterTalk.push(() => { next(); applySlot(); toast('午後：単独の野外飛行。早瀬 教官のブリーフィングを受けて、外部点検から', 5200); }); }
@@ -1370,8 +1376,9 @@ async function boot() {
   // a practice test (the tablet): ten questions from one bank, said by the tablet itself (not scored)
   function practice(bankId) {
     const b = FL.quiz.BANKS.find(x => x.id === bankId); if (!b) return;
-    const E = { title: `練習：${b.title}`, banks: [bankId], n: 10, pass: 80 };
-    const data = examDialogs(FL, 'written1', { seed: Date.now() % 100000, speaker: 'lecturer', exam: E });
+    const E = { title: `練習：${b.title}`, banks: [bankId], n: 10, pass: 80, ok: 'よくできました。練習はここまでです。' };
+    // (in chapter 1, only what the classes have said so far)
+    const data = examDialogs(FL, 'practice', { seed: career.state.seed, attempt: career.attempt(`practice:${bankId}`), speaker: 'lecturer', exam: E, heard: career.chapter === 'ch1' || career.chapter === 'prologue' ? heardOf(FL, career.state) : null });
     data.speakers = { ...data.speakers, lecturer: { name_ja: 'タブレット（練習問題）', color: '#8fd3ff' } };
     // (no one to turn to; the view and the walk stay free as in any talk)
     talk = { leash: { x: walker.state.x, z: walker.state.z, r: LEASH_M } }; talkWho = 'tablet'; talkActor = null; faceOn(null);

@@ -189,3 +189,10 @@ export const LISTEN_ANSWERS = {
 };
 // k2: the PFD's readings, each taught by a line of k1 (content/school.js TUTOR: its part)
 export const PFD_ANSWERS = { ias: 'ias', alt: 'alt', hdg: 'hsi', vs: 'vs', bank: 'att' };
+// the lecturer's own checks (content/lecture-notes) a chapter's questions fall back on where its sections answer too
+// few of the banks' (radio1: one), each tied to the book's line that answers it as the banks' are
+export const NOTE_ANSWERS = {
+  'radio.why': [['radio.why', '地上を動くのは Ground、滑走路と場周は Tower です']],
+  'radio.equip': [['radio.equip', 'よくある失敗は「COM2 に周波数を合わせたのに MIC が COM1 のまま」']],
+  'radio.technique': [['radio.technique', '操縦が最優先です（Aviate → Navigate → Communicate）'], ['radio.technique', '忙しいときは「Stand by」（少し待って）と言ってよいです']],
+};

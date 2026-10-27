@@ -22,14 +22,15 @@ import { notesFor } from './lecture-notes/index.js';
 import { evalCond } from '../dialog/engine.js';
 import { ourCall, CALL } from './dialog/atc.js';
 import { PEOPLE } from './people.js';
-import { EXAMS, CLASSES } from '../career/career.js';
+import { EXAMS, CLASSES, CLASS_FTD, PACE_IDS, heardSet } from '../career/career.js';
+import { BANK_ANSWERS, SCENE_ANSWERS, DRILL_ANSWERS, LISTEN_ANSWERS, NOTE_ANSWERS } from './answer-map.js';
+import { SUMMARIES } from './lecture-summaries.js';
 
-export const SCHOOL_HOOKS = ['board', 'pfd', 'say', 'quizEnd', 'done', 'look', 'nod', 'point', 'page', 'progress', 'book'];
+export const SCHOOL_HOOKS = ['board', 'pfd', 'say', 'quizEnd', 'done', 'look', 'nod', 'point', 'page', 'progress', 'book', 'pace', 'heard', 'ans'];
 const SPEAKERS = { lecturer: { name_ja: PEOPLE.lecturer.title, color: PEOPLE.lecturer.color }, instructor: { name_ja: PEOPLE.instructor.title, color: PEOPLE.instructor.color }, player: { name_ja: 'あなた', color: '#f2b632' } };
 // the textbook's chapters each class covers (part 1; its introduction is not in the game's book) and the question bank
 // that goes with each chapter
 export const CLASS_CHAPTERS = CLASSES;
-const BANK_OF = { aero: 'q_aero', sys: 'q_sys', perf: 'q_perf', wx: 'q_wx', law: 'q_law', hf: 'q_hf', radio1: 'q_comm', radio2: 'q_comm', radio3: 'q_radio', radio4: 'q_radio', radio5: 'q_radio' };
 export const FTD_TITLES = { k1: 'G1000 型 PFD の読み方', k2: 'PFD の読み取り（10 問）', k3: '数字とアルファベットの言い方（10 問）', k4: '1 回の飛行の交信', k5: '復唱と応答（10 問）', k6: '聞き取り（10 問）' };
 export const PASS = 80;
 
@@ -41,7 +42,7 @@ const q = (s) => `「${s}」`;
 const callFix = (s) => ourCall(String(s || ''));
 // FLIGHT LAB's question banks point at chapters as {ch:id}: the game's book numbers them
 const refsIn = (book) => (t) => String(t || '').replace(/\{ch:([a-z0-9]+)\}/g, (m, id) => { const c = book.chapters.find(x => x.id === id); return c ? `第 ${c.n} 章` : '教科書'; });
-const fromBank = (book, r) => ([text, opts, ok, why]) => { const fx = (t) => callFix(refsIn(book)(t)), o = shuffled(opts.map((t, j) => ({ t: fx(t), ok: j === ok })), r); return { q: fx(text), opts: o.map(x => x.t), ok: o.findIndex(x => x.ok), why: fx(why) }; };
+const fromBank = (book, r, id) => ([text, opts, ok, why]) => { const fx = (t) => callFix(refsIn(book)(t)), o = shuffled(opts.map((t, j) => ({ t: fx(t), ok: j === ok })), r); return { ...(id ? { id } : {}), q: fx(text), opts: o.map(x => x.t), ok: o.findIndex(x => x.ok), why: fx(why) }; };
 
 // a chain of lines (one node each) → its first node's id; the last goes on to `then`
 function chain(N, id, lines, then, speaker = 'lecturer', firstMore = {}) {
@@ -61,7 +62,7 @@ export function quizNodes(N, questions, { speaker = 'lecturer', then = 'result',
     const more = x.say ? { hook: { name: 'say', arg: x.say } } : x.pfd != null ? { hook: { name: 'pfd', arg: String(x.pfd) } } : {};
     // (M8: the questions and their reasons are the course's own words: 'material', said as written in the English mode)
     N[id] = { speaker, text: `${label ? label + '　' : ''}第 ${k - from + 1} 問（${to - from} 問中）。${x.q}`, ...more, tag: 'material',
-      choices: x.opts.map((t, j) => ({ text: t, next: j === x.ok ? `${id}:ok` : `${id}:ng`, effects: j === x.ok ? [{ set: `qz_${k}` }] : [] })) };
+      choices: x.opts.map((t, j) => ({ text: t, next: j === x.ok ? `${id}:ok` : `${id}:ng`, effects: [...(j === x.ok ? [{ set: `qz_${k}` }] : []), ...(x.id ? [{ hook: 'ans', arg: `${x.id}|${j === x.ok ? 1 : 0}` }] : [])] })) };
     say(`${id}:ok`, `正解です。${x.why || ''}`.trim(), nextQ);
     say(`${id}:ng`, `正しくは${q(x.opts[x.ok])}です。${x.why || ''}`.trim(), nextQ);
   }
@@ -74,18 +75,26 @@ const resultNodes = (N, speaker, passText, failText) => {
 };
 
 // ---------------------------------------------------------------- a class (index into CLASS_CHAPTERS)
-// The class reads the day's chapters with the cadet, in the textbook's order (じっくり), or goes over each section's key
-// points (要点だけ, a review). Read in full, each section is: its page on briefing room 2's screen (hook 'page': the
-// section, or secId#k for its k-th unit of content/lecture-units.js, drawn by world/lecture-screen.js; the whiteboard
-// shows its ここが大切) and the class's place in the course kept (hook 'progress': the section's index in the class, so a
-// class left midway goes on from there); the title; ミラー 講師's own introduction (content/lecture-notes); every unit of
-// the book as it comes — paragraphs and list items sentence by sentence, ここが大切 said as such (tag 'key'), 考えてみよう
-// asked (a choice: think first, or hear the answer), cautions, formulas, figures (on the screen, the caption said),
-// tables row by row (a long one: its first rows, the rest on the screen), the radio's English spoken ('say'); then her
-// notes (tag 'note') and a check of her own (not scored); then the choice: on, the section again, the section in the
-// textbook (hook 'book'), or a break (the class left there, its place the next section: the talk ends, and the next talk
-// offers to go on from it; not after the class's last section). Each chapter ends with two questions from FLIGHT LAB's question bank for it (scored: q<k>
-// are questions[k]). Index 0 of every choice goes on, so a run that always picks the first reaches the end.
+// The class reads the day's chapters with the cadet, in the textbook's order, at the pace the cadet chooses:
+//   need  (今日の訓練に要るところ): the sections of the afternoon's training device lesson and of the first flight's
+//         lessons (t1, a1, t3: the book's sections FLIGHT LAB's syllabus gives them) read in full, the rest as in quick;
+//   full  (じっくり): the whole textbook;
+//   quick (要点だけ): each section's key points — every ここが大切 (a short summary where the book has none), its figure
+//         in a line, and every line that answers a question chapter 1 can ask from it (content/answer-map.js: so what
+//         is asked later has been said, whatever the pace).
+// A section read in full is: its page on briefing room 2's screen (hook 'page': the section, or secId#k for its k-th
+// unit of content/lecture-units.js, drawn by world/lecture-screen.js; the whiteboard shows its ここが大切) and the class's
+// place in the course kept (hook 'progress': the section's index in the class, so a class left midway goes on from
+// there); the title; ミラー 講師's own introduction (content/lecture-notes); every unit of the book as it comes —
+// paragraphs and list items sentence by sentence, ここが大切 said as such (tag 'key'), 考えてみよう asked (a choice:
+// think first, or hear the answer), cautions, formulas, figures (on the screen, the caption said), tables row by row,
+// the radio's English spoken ('say'); then her notes (tag 'note') and a check of her own (not scored); then the choice:
+// on, the section again, the section in the textbook (hook 'book'), or a break (the class left there, its place the
+// next section: the talk ends, and the next talk offers to go on from it; not after the class's last section). Every
+// section, at either pace, says when it is over that it was heard (hook 'heard': secId|f in full, secId|q its key
+// points). Each chapter ends with two questions on its own sections (scored: q<k> are questions[k]; each choice says
+// what was answered: hook 'ans' id|1 or id|0); the questions come in another order each time the class is begun again.
+// Index 0 of every choice goes on, so a run that always picks the first reaches the end.
 const S = 'lecturer';
 // the textbook's words as the lecturer says them: in です / ます where that is certain, short sentences joined, long ones
 // split (at up to LECTURE_LINE characters), a sentence that names FLIGHT LAB's controls or pages left out (instructor.js
@@ -118,9 +127,12 @@ export function fit(line, max = LINE_MAX) {
   }
   return [s.slice(0, max), ...fit(s.slice(max), max)];                // (nowhere to cut: never in the book)
 }
-export const lectureLines = (text, o = {}) => speechLines(inClass(text), { max: LECTURE_LINE, ...o }).map(callFix)
-  .map(l => l.replace(/([。！？.!?])([）」』”])。$/, '$1$2')).flatMap(l => fit(l));   // （…です。）, “….” are not closed twice
-const JA = /[\u3040-\u30ff\u4e00-\u9fff]/;
+// the lines of a text, in groups: one group for each of speechLines' lines (a sentence or a few joined), the parts
+// fit cut it into (a quick summary keeps a group whole)
+export const lectureGroups = (text, o = {}) => speechLines(inClass(text), { max: LECTURE_LINE, ...o }).map(callFix)
+  .map(l => l.replace(/([。！？.!?])([）」』”])。$/, '$1$2')).map(l => fit(l)).filter(g => g.length);   // （…です。）, “….” are not closed twice
+export const lectureLines = (text, o = {}) => lectureGroups(text, o).flat();
+const JA = /[぀-ヿ一-鿿]/;
 // (a line in English alone is the textbook's mnemonic: said as one)
 const mnemonic = (l) => (JA.test(l) ? l : `英語の覚え方もあります。“${l.replace(/[.。]$/, '')}”。`);
 const first = (lines, p) => (lines.length ? [...fit(p + lines[0]), ...lines.slice(1)] : lines);
@@ -189,50 +201,107 @@ function callsIn(line) {
 // sentences; in a long table of short rows (the alphabet) a few whole rows to a line
 function tableLines(u) {
   const long = u.rows.length > 6;
-  const lines = u.rows.flatMap((row, k) => { const l = lectureLines(rowText(u.head, row, k)); return l.map(text => ({ text, say: callsIn(text), whole: l.length === 1 })); });
+  const lines = u.rows.flatMap((row, k) => { const l = lectureLines(rowText(u.head, row, k)); return l.map(text => ({ text, say: callsIn(text), whole: l.length === 1, row: k })); });
   const joined = lines.reduce((o, l) => {
     const p = o[o.length - 1], a = p ? p.text.length : 0, b = l.text.length;
-    if (p && (((a < 20 || b < 16) && a + b <= 60) || (long && p.whole && l.whole && b <= 56 && a + b <= LECTURE_LINE))) o[o.length - 1] = { text: p.text + l.text, say: [p.say, l.say].filter(Boolean).join(' ') || null, whole: p.whole && l.whole };
+    if (p && (((a < 20 || b < 16) && a + b <= 60) || (long && p.whole && l.whole && b <= 56 && a + b <= LECTURE_LINE))) o[o.length - 1] = { text: p.text + l.text, say: [p.say, l.say].filter(Boolean).join(' ') || null, whole: p.whole && l.whole, row: p.row };
     else o.push({ ...l });
     return o;
   }, []);
-  return joined.map(l => (l.say ? { text: l.text, hook: { name: 'say', arg: l.say } } : l.text));
+  // (a row cut over two lines keeps its two lines together: one group)
+  return joined.map(l => ({ text: l.text, g: `t${l.row}`, ...(l.say ? { hook: { name: 'say', arg: l.say } } : {}) }));
 }
-// what one unit of the book becomes: lines ({ text, tag?, hook? }), or { think } for a question to ask
+// a table at the quick pace: only its rows that hold an answer's words, each said up to the last column an answer needs
+// ("A：言い方は Alfa" without the pronunciation columns), short ones a few to a line as tableLines joins them
+function quickTable(u, want) {
+  const has = (t) => want.some(w => squash(t).includes(w) || w.includes(squash(t)));
+  const rows = [];
+  u.rows.forEach((row, k) => {
+    const whole = lectureLines(rowText(u.head, row, k)).join('');
+    if (!want.some(w => squash(whole).includes(w))) return;
+    let cut = 1;
+    for (let c = row.length - 1; c >= 1; c--) { const part = lectureLines(cutRow(u.head, row, k, c + 1)).join(''); if (!want.filter(w => squash(whole).includes(w)).every(w => squash(part).includes(w))) { cut = c + 1; break; } cut = c; }
+    rows.push({ text: lectureLines(cutRow(u.head, row, k, cut + 1)).join(''), row: k });
+  });
+  void has;
+  const joined = rows.reduce((o, l) => { const p = o[o.length - 1]; if (p && p.text.length + l.text.length <= LECTURE_LINE && (p.text.length <= 56 || l.text.length <= 56) && u.rows.length > 6) p.text += l.text; else o.push({ ...l }); return o; }, []);
+  return joined.flatMap(l => fit(l.text).map(text => ({ text, g: `q${l.row}`, ...(callsIn(text) ? { hook: { name: 'say', arg: callsIn(text) } } : {}) })));
+}
+// a row said up to its n-th column (n ≥ 2: "first：heading は value"; a table of two columns as the book has it)
+const cutRow = (head, row, k, n) => (n >= row.length ? rowText(head, row, k) : head && head.length > 2 && n === 2
+  ? `${String(row[0]).trim()}：${(k > 0 && String(head[1]).replace(/\s*[（(][^（）()]*[）)]$/, '')) || head[1]}は ${cellWords(String(row[1]).trim().replace(/。$/, ''))}。` : rowText(head.slice(0, n), row.slice(0, n), k));
+// what one unit of the book becomes: lines ({ text, g (its group within the unit), tag?, hook? }), or { think } for a
+// question to ask
 function unitSteps(u) {
-  const out = [], add = (lines, more = {}) => { for (const t of lines) out.push(typeof t === 'string' ? { text: t, ...more } : t); };
-  if (u.sub) add(fit(callFix(`ここからは${qq(u.sub)}です。`)));
-  if (u.lead) add(leadLines(u.lead));
+  const out = [], add = (lines, g, more = {}) => { for (const t of lines) out.push(typeof t === 'string' ? { text: t, g, ...more } : { g, ...t, ...more }); };
+  const groups = (gs, g, more = {}) => gs.forEach((lines, k) => add(lines, `${g}${k}`, more));
+  if (u.sub) add(fit(callFix(`ここからは${qq(u.sub)}です。`)), 'h');
+  if (u.lead) add(leadLines(u.lead), 'lead');
   switch (u.k) {
-    case 'para': add(u.heading ? fit(callFix(`ここからは${qq(u.text)}です。`)) : lectureLines(u.text)); break;
+    case 'para': if (u.heading) add(fit(callFix(`ここからは${qq(u.text)}です。`)), 'h'); else groups(lectureGroups(u.text), 'p'); break;
     case 'list': u.items.forEach((it, i) => {
-      const l = lectureLines(it.text), n = u.items.length;
-      add(u.ordered && n > 1 ? first(l, i === 0 ? 'まず、' : i === n - 1 ? '最後に、' : '次に、') : l);
+      const gs = lectureGroups(it.text), n = u.items.length;
+      if (u.ordered && n > 1 && gs.length) gs[0] = first(gs[0], i === 0 ? 'まず、' : i === n - 1 ? '最後に、' : '次に、');
+      gs.forEach((lines, k) => add(lines, `i${i}.${k}`));
     }); break;
     // every row (the radio's exchanges, the English spoken; the screen shows the table meanwhile)
     case 'table':
-      add([u.radio ? '画面の交信の例を聞いてください。' : '画面の表を見てください。']);
-      if (u.radio) for (const row of u.rows) add(radioSteps(row));
-      else add(tableLines(u));
+      add([u.radio ? '画面の交信の例を聞いてください。' : '画面の表を見てください。'], 'ann');
+      if (u.radio) u.rows.forEach((row, k) => add(radioSteps(row), `r${k}`));
+      else for (const l of tableLines(u)) out.push(l);
       break;
-    case 'key': add(first(u.items.flatMap(kp => lectureLines(kp, { whole: true }).map(mnemonic)), 'ここが大切です。'), { tag: 'key' }); break;
+    case 'key': u.items.forEach((kp, i) => { const l = lectureLines(kp, { whole: true }).map(mnemonic); add(i === 0 ? first(l, 'ここが大切です。') : l, `k${i}`, { tag: 'key' }); }); break;
     // (a question's setting said as one: "…上げたい。操作は？" → "…上げたいとします。操作は？", not "…上げたいです")
-    case 'think': { const qt = lectureLines(u.q).join('').replace(/たいです。(?=.)/g, 'たいとします。'); if (qt) out.push({ think: { q: qt, a: lectureLines(u.a) } }); break; }
-    case 'caution': add(first(lectureLines(u.text), `注意です。${u.label ? u.label + '：' : ''}`)); break;
+    case 'think': { const qt = lectureLines(u.q).join('').replace(/たいです。(?=.)/g, 'たいとします。'); if (qt) out.push({ think: { q: qt, a: lectureLines(u.a) }, g: 'q' }); break; }
+    case 'caution': add(first(lectureLines(u.text), `注意です。${u.label ? u.label + '：' : ''}`), 'c'); break;
     case 'formula': {
       const lines = u.lines && u.lines.length ? u.lines : [u.text];
-      if (lines.some(l => /[＝=≒]/.test(l))) add(lines.flatMap((l, i) => fit(callFix(`${i ? 'もう一つ、' : '式で書くと、'}${l}。`))));
+      if (lines.some(l => /[＝=≒]/.test(l))) lines.forEach((l, i) => add(fit(callFix(`${i ? 'もう一つ、' : '式で書くと、'}${l}。`)), `f${i}`));
       else if (lines.every(l => /^["“]/.test(l))) {          // example calls: spoken
-        add(['画面の例を聞いてください。']);
-        for (const l of lines) for (const en of enParts(callFix(l.replace(/^["“]\s*|\s*["”]$/g, '')), LINE_MAX - 2)) out.push({ text: `“${en}”`, hook: { name: 'say', arg: en } });
-      } else add(fit(callFix(`画面の例を見てください。${lines.join(' ')}`)));   // a literal string (a METAR)
+        add(['画面の例を聞いてください。'], 'ann');
+        lines.forEach((l, i) => { for (const en of enParts(callFix(l.replace(/^["“]\s*|\s*["”]$/g, '')), LINE_MAX - 2)) out.push({ text: `“${en}”`, hook: { name: 'say', arg: en }, g: `e${i}` }); });
+      } else add(fit(callFix(`画面の例を見てください。${lines.join(' ')}`)), 'f0');   // a literal string (a METAR)
       break;
     }
-    case 'figure': { const l = first(lectureLines(String(u.caption || '').replace(/^図[：:]\s*/, '')), '画面の図を見てください。'); add(l.length ? l : ['画面の図を見てください。']); break; }
-    case 'source': add(first(lectureLines(u.text), '出典：')); break;
-    case 'see': add(fit(`関連して、${u.to.map(x => qq(x.label)).join('と')}も教科書で読んでおいてください。`)); break;
+    case 'figure': { const l = first(lectureLines(String(u.caption || '').replace(/^図[：:]\s*/, '')), '画面の図を見てください。'); add(l.length ? l : ['画面の図を見てください。'], 'fig'); break; }
+    case 'source': add(first(lectureLines(u.text), '出典：'), 's'); break;
+    case 'see': add(fit(`関連して、${u.to.map(x => qq(x.label)).join('と')}も教科書で読んでおいてください。`), 'see'); break;
   }
   return out.filter(s => s.think || (s.text && !NOT_SPOKEN.test(s.text)));
+}
+// a section's book as the class says it in full: [{ text, tag?, hook?, m (its unit), g (its group in the unit), think? }]
+export function sectionSteps(sec) {
+  return lectureUnits(sec).flatMap((u, m) => unitSteps(u).map(s => ({ ...s, m, key: `${m}:${s.g}` })));
+}
+// a section's key points (the quick pace): every ここが大切, or the summary where the book has none (lecture-summaries);
+// the first line said of each figure; every line holding the words of an answer (content/answer-map.js) — the whole
+// group it is in (a row, a sentence cut in two); in the book's order
+export function quickSteps(sec) {
+  const steps = sectionSteps(sec), want = answerWords(sec.id), keep = new Set(), figs = new Set(), us = lectureUnits(sec);
+  for (const s of steps) if (s.tag === 'key') keep.add(s.key);
+  for (const w of want) for (const s of steps) if (!s.think && squash(s.text).includes(w)) keep.add(s.key);
+  const out = [], tables = new Set();
+  for (const s of steps) {
+    if (s.think) continue;
+    const u = us[s.m];
+    // (a table's answers: its rows that hold them, each cut after the last column an answer needs)
+    if (u && u.k === 'table' && !u.radio && keep.has(s.key)) { if (!tables.has(s.m)) { tables.add(s.m); out.push(...quickTable(u, want).map(t => ({ ...t, m: s.m, key: `${s.m}:${t.g}` }))); } continue; }
+    if (keep.has(s.key)) out.push(s);
+    else if (s.g === 'fig' && !figs.has(s.m)) { figs.add(s.m); out.push(s); }
+  }
+  const sum = steps.some(s => s.tag === 'key') ? [] : (SUMMARIES[sec.id] || []).flatMap(t => fit(callFix(t))).map((text, k) => ({ text, tag: 'key', m: null, g: `sum${k}`, key: `sum:${k}` }));
+  return [...sum, ...out];
+}
+const squash = (s) => String(s ?? '').replace(/\s+/g, '');
+// the words of every answer said in a section (all of chapter 1's questions that the section answers)
+const WORDS = new Map();
+export function answerWords(secId) {
+  if (!WORDS.size) {
+    const put = (a) => { if (a) for (const [s, w] of a) { if (!WORDS.has(s)) WORDS.set(s, new Set()); WORDS.get(s).add(squash(w)); } };
+    for (const list of Object.values(BANK_ANSWERS)) for (const x of list) put(x.a);
+    for (const a of [...Object.values(SCENE_ANSWERS), ...Object.values(DRILL_ANSWERS), ...Object.values(LISTEN_ANSWERS), ...Object.values(NOTE_ANSWERS)]) put(a);
+  }
+  return [...(WORDS.get(secId) || [])];
 }
 // the lecturer's notes for a section (content/lecture-notes), as far as they can be used: lines that are text (a line
 // may be { text, page: 'fig:k' | 'tab:k' }: it is about the section's k-th figure or table, put on the screen while it
@@ -269,16 +338,15 @@ function sectionNodes(N, { sec, base, after, idx, j, of, notes, r, next = null }
   const title = of === 1 ? `${qq(sec.title)}です。` : j === 0 ? `最初は${qq(sec.title)}です。` : j === of - 1 ? `最後は${qq(sec.title)}です。` : `次は${qq(sec.title)}です。`;
   put(base, { text: title, effects: [{ hook: 'page', arg: sec.id }, { hook: 'progress', arg: String(idx) }] });
   nt.intro.forEach((t, k) => put(`${base}:i${k}`, { text: t.text, ...pageOf(t) }));
-  us.forEach((u, m) => {
-    const id = `${base}:u${m}`, page = { hook: 'page', arg: `${sec.id}#${m}` };
-    unitSteps(u).forEach((s, k) => {
-      const more = k === 0 ? { effects: [page] } : {};
-      if (!s.think) { put(k ? `${id}:${k}` : id, { text: s.text, ...(s.tag ? { tag: s.tag } : {}), ...(s.hook ? { hook: s.hook } : {}), ...more }); return; }
-      const qid = k ? `${id}:${k}` : id, a0 = `${qid}:a0`;
-      ask(qid, `考えてみましょう。${s.think.q}`, { tag: 'think', ...more, choices: [{ text: '考えてみます', next: `${qid}:wait` }, { text: '答えを聞きます', next: a0 }] });
-      put(`${qid}:wait`, { text: 'では、少し考えてみてください。……いいですか？' });
-      (s.think.a.length ? first(s.think.a, '答えです。') : ['答えは、教科書のこの節にあります。']).forEach((t, n) => put(`${qid}:a${n}`, { text: t }));
-    });
+  const steps = sectionSteps(sec), seenUnit = new Set();
+  steps.forEach((s, n) => {
+    const m = s.m, u = `${base}:u${m}`, k = steps.slice(0, n).filter(x => x.m === m).length, id = k ? `${u}:${k}` : u;
+    const more = seenUnit.has(m) ? {} : { effects: [{ hook: 'page', arg: `${sec.id}#${m}` }] }; seenUnit.add(m);
+    if (!s.think) { put(id, { text: s.text, ...(s.tag ? { tag: s.tag } : {}), ...(s.hook ? { hook: s.hook } : {}), ...more }); return; }
+    const a0 = `${id}:a0`;
+    ask(id, `考えてみましょう。${s.think.q}`, { tag: 'think', ...more, choices: [{ text: '考えてみます', next: `${id}:wait` }, { text: '答えを聞きます', next: a0 }] });
+    put(`${id}:wait`, { text: 'では、少し考えてみてください。……いいですか？' });
+    (s.think.a.length ? first(s.think.a, '答えです。') : ['答えは、教科書のこの節にあります。']).forEach((t, q) => put(`${id}:a${q}`, { text: t }));
   });
   nt.notes.forEach((t, k) => put(`${base}:n${k}`, { text: t.text, tag: 'note', ...pageOf(t) }));
   if (nt.ask) {
@@ -287,17 +355,22 @@ function sectionNodes(N, { sec, base, after, idx, j, of, notes, r, next = null }
     open = [reply(`${base}:ask:ok`, `That's right. ${x.why}`.trim(), { hook: { name: 'nod' } }), reply(`${base}:ask:ng`, `正しくは${q(right)}です。${x.why}`.trim())];
   }
   const rest = next ? [{ text: 'ここで休憩する（続きはまた後で）', next: `${base}:break` }] : [];
-  put(`${base}:end`, { text: `${qq(sec.title)}はここまでです。`, choices: [{ text: '次へ', next: after }, { text: 'この節をもう一度', next: base }, { text: '教科書でこの節を読む', next: `${base}:book` }, ...rest] });
+  put(`${base}:end`, { text: `${qq(sec.title)}はここまでです。`, effects: [{ hook: 'heard', arg: `${sec.id}|f` }], choices: [{ text: '次へ', next: after }, { text: 'この節をもう一度', next: base }, { text: '教科書でこの節を読む', next: `${base}:book` }, ...rest] });
   N[`${base}:book`] = { speaker: S, text: `教科書の${qq(sec.title)}です。読み終わったら、閉じてください。`, hook: { name: 'book', arg: sec.id }, next: `${base}:end` };
   if (next) N[`${base}:break`] = { speaker: S, text: `OK. ここで一度区切りましょう。続きは${qq(next.title)}からです。また声をかけてください。`, effects: [{ hook: 'progress', arg: String(idx + 1) }], end: true };
 }
-// the section in its key points (要点だけ): the title and two lines, its figure (or its key points) on the screen
+// the section in its key points (quickSteps), its unit on the screen with each line; the last says it was heard
 function quickNodes(N, sec, id, then) {
-  const pts = []; for (const kp of sec.keyPoints) { const l = lectureLines(kp, { whole: true }); if (pts.length + l.length > 2) break; pts.push(...l); }
-  const body = pts.length ? pts : lectureLines(sec.summary || '').slice(0, 2);
-  const lines = (body.length ? [`${q(sec.title)}。${body[0]}`, ...body.slice(1)] : [`${q(sec.title)}。`]).map(callFix).map(mnemonic).flatMap(l => fit(l));
-  const us = lectureUnits(sec), m = [us.findIndex(u => u.k === 'figure'), us.findIndex(u => u.k === 'key')].find(x => x >= 0);
-  chain(N, id, lines, then, S, { effects: [{ hook: 'page', arg: m === undefined ? sec.id : `${sec.id}#${m}` }] });
+  const steps = quickSteps(sec), lines = [{ text: `${q(sec.title)}。`, m: null }, ...steps];
+  // (the title and a short first line together, as before)
+  if (steps.length && `${q(sec.title)}。${steps[0].text}`.length <= LINE_MAX && !steps[0].hook) lines.splice(0, 2, { ...steps[0], text: `${q(sec.title)}。${steps[0].text}` });
+  let shown = null;
+  lines.forEach((l, k) => {
+    const nid = k ? `${id}:${k}` : id, page = l.m === null || l.m === undefined ? (k === 0 ? sec.id : null) : `${sec.id}#${l.m}`;
+    const eff = [...(page && page !== shown ? [{ hook: 'page', arg: page }] : []), ...(k === lines.length - 1 ? [{ hook: 'heard', arg: `${sec.id}|q` }] : [])];
+    if (page) shown = page;
+    N[nid] = { speaker: S, text: l.text, ...(l.tag ? { tag: l.tag } : {}), ...(l.hook ? { hook: l.hook } : {}), ...(eff.length ? { effects: eff } : {}), next: k < lines.length - 1 ? `${id}:${k + 1}` : then };
+  });
 }
 // how long a line takes: typed at text speed ×1 (the subtitles' typewriter, ui/dialog-ui.js: 40 characters a second, a
 // pause after punctuation); read by the cadet, who keeps up with the typing only on short lines (about 10 characters a
@@ -305,7 +378,7 @@ function quickNodes(N, sec, id, then) {
 const TYPE_CPS = 40, READ_CPS = 10, LINE_S = 1;
 const pauseAfter = (c) => ('。！？!?'.includes(c) ? 6 : '、，,：'.includes(c) ? 3 : c === '\n' ? 4 : '…―—'.includes(c) ? 1.5 : 0);
 export const typingSeconds = (text) => Array.from(String(text ?? '')).reduce((s, c) => s + 1 + pauseAfter(c), 0) / TYPE_CPS;
-const readingSeconds = (text) => Math.max(typingSeconds(text), Array.from(String(text ?? '')).length / READ_CPS) + LINE_S;
+export const readingSeconds = (text) => Math.max(typingSeconds(text), Array.from(String(text ?? '')).length / READ_CPS) + LINE_S;
 // the nodes a run that always picks the first choice goes through from `start` (flags: the class's own, as set)
 export function pathOf(nodes, start, flags = {}) {
   const out = [], seen = new Set(), st = { flags };
@@ -319,36 +392,90 @@ export function pathOf(nodes, start, flags = {}) {
 }
 export const minutesOf = (nodes, start, flags) => pathOf(nodes, start, flags).reduce((s, id) => s + readingSeconds(nodes[id].text), 0) / 60;
 
-// classDialogs(FL, i, { seed, pace, from, notes }) → the class's dialog data (dialog 'class'). seed: the career's (the same
-// questions each time the class is taken); pace: 'full' | 'quick' to begin without the choice; from: the index of the
-// section a class left midway reached (the choice then offers to go on from it); notes: id → the lecturer's notes
-// (content/lecture-notes; the tests give their own)
-export function classDialogs(FL, i, { seed = 1, pace = null, from = null, notes = notesFor } = {}) {
-  const book = gameBook(FL), ids = CLASS_CHAPTERS[i], r = rng(seed * 31 + i);
+// ---- the questions a class, a lesson or a test can ask (content/answer-map.js), and what has been heard
+export const PACES = PACE_IDS;
+const PACE_FLAG = { need: 'need', quick: 'quick' };
+const chapterOfSec = (book, id) => { const s = book.section(id); return s ? s.chapter.id : null; };
+// every scored question chapter 1 can ask: { id, home (its section), secs (every section its answer needs), raw }
+// (FLIGHT LAB's bank questions as [text, choices, right, why]; the lecturer's own checks where a chapter has too few)
+const POOLS = new WeakMap();
+export function questionPool(FL) {
+  if (POOLS.has(FL)) return POOLS.get(FL);
+  const out = [];
+  for (const [b, list] of Object.entries(BANK_ANSWERS)) {
+    const bank = FL.quiz.BANKS.find(x => x.id === b); if (!bank) continue;
+    list.forEach((x, i) => { if (x.a && bank.qs[i]) out.push({ id: `${b}#${i}`, home: x.a[0][0], secs: [...new Set(x.a.map(p => p[0]))], raw: bank.qs[i] }); });
+  }
+  for (const [sec, a] of Object.entries(NOTE_ANSWERS)) {
+    const n = notesFor(sec), k = n && n.ask; if (!k) continue;
+    out.push({ id: `note:${sec}`, home: sec, secs: [...new Set(a.map(p => p[0]))], raw: [k.q, k.opts, k.ok, k.why], note: true });
+  }
+  POOLS.set(FL, out);
+  return out;
+}
+// the sections of the classes before class i (what a cadet who took them in order has heard)
+export function sectionsBefore(FL, i) { const book = gameBook(FL); return CLASS_CHAPTERS.slice(0, i).flat().flatMap(id => (book.chapters.find(c => c.id === id) || { sections: [] }).sections.map(s => s.id)); }
+const allHeard = (answer, known) => answer.every(([s]) => s === 'k1' || known.has(s));
+// the sections the 'need' pace reads in full: those of the afternoon's lesson and of the first flight's (t1, a1, t3)
+export function needSections(FL, i, afternoon = CLASS_FTD[i]) {
+  const book = gameBook(FL), mine = new Set(CLASS_CHAPTERS[i].flatMap(id => (book.chapters.find(c => c.id === id) || { sections: [] }).sections.map(s => s.id)));
+  return new Set([afternoon, 't1', 'a1', 't3'].filter(Boolean).flatMap(l => book.lessonSections(l).map(s => s.id)).filter(id => mine.has(id)));
+}
+// what main.js (and the tools) give a class from the career: where it was left, what has been heard, how many times it
+// was begun, the pace chosen last, the afternoon's lesson
+export function classOptions(FL, state, i, { attempt } = {}) {
+  const at = state.done && state.done[`lecture:${i}`];
+  return { from: Number.isInteger(at) && at > 0 ? at : null, heard: heardOf(FL, state), attempt: attempt ?? ((state.attempts || {})[`class:${i}`] || 0), last: state.lastPace || null, afternoon: CLASS_FTD[i] };
+}
+// the sections a career has heard (its record, and the classes it finished before the record was kept)
+export function heardOf(FL, state) { return heardSet(state, CLASS_CHAPTERS.map((_, k) => sectionsBefore(FL, k + 1).slice(sectionsBefore(FL, k).length))); }
+
+// the class's sections in order ({ k (its chapter), j, of, sec }; the index is the class's progress), where it begins
+// (from), and its questions: two after each chapter, on that chapter's own sections, of those whose every answer has
+// been said by then (before this class, or in it: a class taken up midway said the sections before its place last
+// time) — runs: [first, end) of each chapter's in qs. r: the class's random numbers (seed and attempt)
+export function classQuestions(FL, i, { from = null, heard = null, r = null, seed = 1, attempt = 0 } = {}) {
+  const book = gameBook(FL), chs = CLASS_CHAPTERS[i].map(id => book.chapters.find(c => c.id === id)).filter(Boolean);
+  const rr = r || rng(seed * 31 + i + attempt * 7919);
+  const all = chs.flatMap((c, k) => c.sections.map(s => book.section(s.id)).filter(Boolean).map((sec, j, a) => ({ k, j, of: a.length, sec })));
+  const start = Number.isInteger(from) && from > 0 && from < all.length ? from : 0;
+  const known = new Set(heard ? [...heard] : sectionsBefore(FL, i));
+  for (const x of all.slice(0, start)) known.add(x.sec.id);
+  const pool = questionPool(FL), qs = [], runs = [];
+  chs.forEach((c, k) => {
+    for (const x of all.filter(y => y.k === k)) known.add(x.sec.id);
+    const fits = pool.filter(x => chapterOfSec(book, x.home) === c.id && allHeard(x.secs.map(s => [s]), known));
+    const pick2 = [...shuffled(fits.filter(x => !x.note), rr), ...shuffled(fits.filter(x => x.note), rr)].slice(0, 2);
+    const at = qs.length; qs.push(...pick2.map(x => fromBank(book, rr, x.id)(x.raw))); runs.push([at, qs.length]);
+  });
+  return { all, start, qs, runs };
+}
+// classDialogs(FL, i, { seed, pace, from, notes, attempt, last, heard, afternoon }) → the class's dialog data (dialog
+// 'class'). seed: the career's; attempt: how many times this class was begun before (its questions come in another
+// order); pace: 'need' | 'full' | 'quick' to begin without the choice; from: the index of the section a class left
+// midway reached (the choice then offers to go on from it); last: the pace chosen the time before (offered first);
+// heard: the sections heard before (a Set; default: those of the classes before this one); afternoon: the day's
+// training device lesson; notes: id → the lecturer's notes (content/lecture-notes; the tests give their own)
+export function classDialogs(FL, i, { seed = 1, pace = null, from = null, notes = notesFor, attempt = 0, last = null, heard = null, afternoon = CLASS_FTD[i] } = {}) {
+  const book = gameBook(FL), ids = CLASS_CHAPTERS[i], r = rng(seed * 31 + i + attempt * 7919);
   if (!ids) throw new Error(`classDialogs: no class ${i}`);
   const chs = ids.map(id => book.chapters.find(c => c.id === id)).filter(Boolean);
   const noteOf = typeof notes === 'function' ? notes : () => null;
-  const N = {}, data = () => ({ speakers: SPEAKERS, flags: [...qs.map((_, k) => `qz_${k}`), 'quick', 'resumed'], hooks: [...SCHOOL_HOOKS], dialogs: { class: { start: 'hello', nodes: N } }, questions: qs });
-  // two questions after each chapter, from FLIGHT LAB's bank for it (chapters that share a bank get different ones)
-  const decks = new Map(), qs = [], runs = [];
-  for (const c of chs) {
-    const b = BANK_OF[c.id];
-    if (!decks.has(b)) decks.set(b, shuffled((FL.quiz.BANKS.find(x => x.id === b) || { qs: [] }).qs, r));
-    const at = qs.length; qs.push(...decks.get(b).splice(0, 2).map(fromBank(book, r))); runs.push([at, qs.length]);
-  }
-  // every section of the day, in order (its index: the class's progress)
-  const all = chs.flatMap((c, k) => c.sections.map(s => book.section(s.id)).filter(Boolean).map((sec, j, a) => ({ k, j, of: a.length, sec })));
+  const need = needSections(FL, i, afternoon);
+  const N = {}, data = () => ({ speakers: SPEAKERS, flags: [...qs.map((_, k) => `qz_${k}`), 'quick', 'need', 'resumed'], hooks: [...SCHOOL_HOOKS], dialogs: { class: { start: 'hello', nodes: N } }, questions: qs });
+  const { all, start, qs, runs } = classQuestions(FL, i, { from, heard, r });
   chs.forEach((c, k) => {
     const secs = all.filter(x => x.k === k), check = `c${k}:check`, nextC = k < chs.length - 1 ? `c${k + 1}` : 'q:end';
     N[`c${k}`] = { speaker: S, text: `${k ? 'Next, ' : 'Let\'s get started. '}第 ${c.n} 章${q(c.title)}。${secs.length} 節あります。順に見ていきましょう。`, next: secs.length ? `c${k}s0` : check };
     secs.forEach((x) => {
-      const more = x.j < x.of - 1;
+      const more = x.j < x.of - 1, after = more ? `c${k}s${x.j + 1}` : check;
       const idx = all.indexOf(x);
-      sectionNodes(N, { sec: x.sec, base: `c${k}s${x.j}`, after: more ? `c${k}s${x.j + 1}` : check, idx, j: x.j, of: x.of, notes: noteOf(x.sec.id), r: rng(seed * 97 + i * 131 + idx), next: all[idx + 1] ? all[idx + 1].sec : null });
-      quickNodes(N, x.sec, `r${k}s${x.j}`, more ? `r${k}s${x.j + 1}` : check);
+      sectionNodes(N, { sec: x.sec, base: `c${k}s${x.j}`, after, idx, j: x.j, of: x.of, notes: noteOf(x.sec.id), r: rng(seed * 97 + i * 131 + idx + attempt * 15485), next: all[idx + 1] ? all[idx + 1].sec : null });
+      quickNodes(N, x.sec, `r${k}s${x.j}`, after);
+      // (each section read in full or as its key points: at the quick pace, its key points; at the pace for today's
+      // training, in full only the sections today's lessons need)
+      Object.assign(N[`c${k}s${x.j}`], { if: need.has(x.sec.id) ? { not: { flag: 'quick' } } : { not: { any: [{ flag: 'quick' }, { flag: 'need' }] } }, else: `r${k}s${x.j}` });
     });
-    // (the chapter's first section read in full, unless 要点だけ was chosen)
-    if (secs.length) Object.assign(N[`c${k}s0`], { if: { not: { flag: 'quick' } }, else: `r${k}s0` });
     const [a, b] = runs[k];
     N[check] = { speaker: S, text: b > a ? `第 ${c.n} 章の確認です。${b - a} 問、答えてください。` : `第 ${c.n} 章はここまでです。`, next: b > a ? `q${a}` : nextC };
     quizNodes(N, qs, { from: a, to: b, end: false, then: nextC, fitTo: LINE_MAX });
@@ -360,21 +487,25 @@ export function classDialogs(FL, i, { seed = 1, pace = null, from = null, notes 
   N.bye = { speaker: S, text: 'Great job today. 教科書の同じ章を、今夜もう一度読んでおいてください。See you tomorrow!', hook: { name: 'nod' }, effects: [{ hook: 'done', arg: 'class' }], end: true };
   // the start: the day's chapters, then how to go through them
   const titles = chs.map(c => `第 ${c.n} 章${q(c.title)}`).join('と'), hi = `Good morning, everyone. 今日は${titles}です。`;
-  N.hello = { speaker: S, text: hi.length <= LINE_MAX ? hi : `Good morning, everyone. 今日は第 ${chs[0].n} 章から第 ${chs[chs.length - 1].n} 章まで、${chs.length} つの章です。`, hook: { name: 'look', arg: 'player' }, next: pace ? 'c0' : 'pace', ...(pace === 'quick' ? { effects: [{ set: 'quick' }] } : {}) };
-  const quick = (text) => ({ text, next: 'c0', effects: [{ set: 'quick' }] });
-  const at = Number.isInteger(from) && from > 0 && from < all.length ? all[from] : null;
+  const paceSet = (p) => [...(PACE_FLAG[p] ? [{ set: PACE_FLAG[p] }] : []), { hook: 'pace', arg: p }];
+  N.hello = { speaker: S, text: hi.length <= LINE_MAX ? hi : `Good morning, everyone. 今日は第 ${chs[0].n} 章から第 ${chs[chs.length - 1].n} 章まで、${chs.length} つの章です。`, hook: { name: 'look', arg: 'player' }, next: pace ? 'c0' : 'pace', ...(pace && PACE_FLAG[pace] ? { effects: [{ set: PACE_FLAG[pace] }] } : {}) };
   if (pace) return data();                                            // (begun without the choice)
+  // the paces, each with the time it takes (the reading time of its lines), the one chosen last time first
+  const mins = (p) => { const m = minutesOf(N, 'c0', PACE_FLAG[p] ? { [PACE_FLAG[p]]: true } : {}); return m < 12 ? Math.max(1, Math.round(m)) : Math.round(m / 5) * 5; };
+  const label = { need: need.size ? `今日の訓練に要るところ（約 ${mins('need')} 分）` : `今日の訓練に要るところ（約 ${mins('need')} 分・今日は要点だけと同じ）`,
+    full: `じっくり（教科書を全部、約 ${mins('full')} 分）`, quick: `要点だけ（約 ${mins('quick')} 分）` };
+  const order = PACES.includes(last) ? [last, ...PACES.filter(p => p !== last)] : PACES;
+  const paceChoices = order.map(p => ({ text: label[p], next: 'c0', effects: paceSet(p) }));
+  const at = start ? all[start] : null;
   if (at) {
     N.pace = { speaker: S, text: '前回は途中まででしたね。どこから始めましょうか？',
-      choices: [{ text: `続きから（第 ${at.sec.chapter.n} 章${q(at.sec.title)}から）`, next: 'resume' }, { text: '最初から', next: 'c0' }, quick('要点だけ')] };
+      choices: [{ text: `続きから（第 ${at.sec.chapter.n} 章${q(at.sec.title)}から）`, next: 'resume', effects: paceSet(PACES.includes(last) ? last : 'full') }, ...paceChoices.map(c => ({ ...c, text: `最初から：${c.text}` }))] };
     // (a place at a chapter's first section: the chapter before it ended there, its questions not yet asked — taken up
     // from them, which go on to the chapter)
     const back = at.j === 0 && at.k > 0;
     N.resume = { speaker: S, text: back ? `では、第 ${chs[at.k - 1].n} 章の確認から続けます。` : 'では、続きから始めます。', effects: [{ set: 'resumed' }], next: back ? `c${at.k - 1}:check` : `c${at.k}s${at.j}` };
   } else {
-    const m = minutesOf(N, 'c0'), mins = m < 12 ? Math.max(1, Math.round(m)) : Math.round(m / 5) * 5;
-    N.pace = { speaker: S, text: '教科書を全部、順に読んでいきますか？ それとも、今日は要点だけにしますか？',
-      choices: [{ text: `じっくり（教科書を全部、約 ${mins} 分）`, next: 'c0' }, quick('要点だけ（復習）')] };
+    N.pace = { speaker: S, text: '今日はどのように進めますか？ 時間は、読む速さの目安です。', choices: paceChoices };
   }
   return data();
 }
@@ -444,8 +575,12 @@ const TUTOR = [
   ['hsi', '下の円が HSI。上端の窓が機首の方位です。真ん中の針（CDI）は、選んだコースからどれだけずれているかを示します。'],
   ['baro', '高度テープの下の数字が高度計の設定値（BARO）。ATIS で聞いた値に合わせないと、高度が正しく出ません。'],
 ];
-export function ftdDialogs(FL, k, { seed = 1 } = {}) {
-  const r = rng(seed * 13 + Number(k.slice(1))), R = FL.radio, N = {}, title = FTD_TITLES[k];
+// ftdDialogs(FL, k, { seed, attempt, heard }) → the lesson's dialog data (dialog 'ftd'). attempt: how many times it was
+// begun before (another order of questions each time; a lesson not passed can be taken again the same day); heard: the
+// sections heard (a Set; null: all of part 1) — k3, k5 and k6 ask only what has been said (content/answer-map.js)
+export function ftdDialogs(FL, k, { seed = 1, attempt = 0, heard = null } = {}) {
+  const r = rng(seed * 13 + Number(k.slice(1)) + attempt * 7919), R = FL.radio, N = {}, title = FTD_TITLES[k];
+  const ok = (a) => !!a && (!heard || allHeard(a, heard));
   if (!title) throw new Error(`ftdDialogs: no training device lesson ${k}`);
   N.hello = { speaker: 'lecturer', text: `Welcome to the training device room. 今日は ${k}：${title}です。`, hook: { name: 'look', arg: 'player' }, next: 'intro' };
   let questions = null, flags = [];
@@ -464,13 +599,15 @@ export function ftdDialogs(FL, k, { seed = 1 } = {}) {
     lines.forEach((l, i) => { N[`f0:${i}`] = { speaker: 'lecturer', text: l.text, ...(l.say ? { hook: { name: 'say', arg: l.say } } : {}), next: i < lines.length - 1 ? `f0:${i + 1}` : 'k4:end' }; });
     N['k4:end'] = { speaker: 'lecturer', text: 'That\'s the whole flight. 型が見えてきましたか？ 実際の飛行でも、同じ順番で交信します。', hook: { name: 'nod' }, effects: [{ hook: 'done', arg: 'pass' }], end: true };
   } else {
-    if (k === 'k2') questions = pfdPictures(seed).map((p, i) => readQuestion(p, i, r));
-    if (k === 'k3') questions = R.drill(10, r, 'all').map(x => ({ q: callFix(x.q), opts: x.opts.map(callFix), ok: x.opts.indexOf(x.ok), why: callFix(x.why), say: x.say ? callFix(x.say) : undefined }));
-    if (k === 'k5') questions = pick(R.SCENES, 10, r).map(sc => { const o = shuffled(sc.options.map((t, j) => ({ t: callFix(t), ok: j === sc.answer })), r); return { q: `${sc.title}：${sc.situation}${sc.atc ? `　聞こえた：“${callFix(sc.atc)}”` : ''}　${sc.q}`, opts: o.map(x => x.t), ok: o.findIndex(x => x.ok), why: sc.why, say: sc.atc ? callFix(sc.atc) : undefined }; });
-    if (k === 'k6') questions = R.listen(10, r).map(x => ({ q: `（英語を聞いて）${callFix(x.q)}`, opts: x.opts.map(callFix), ok: x.opts.indexOf(x.ok), why: callFix(x.why), say: callFix(x.say) }));
+    // (k3, k6: ten of the kinds whose rules have been said, each kind in turn; k5: ten of the scenes whose calls have)
+    const kinds = (all, map) => { const ks = shuffled(Object.keys(all).filter(x => ok(map[x])), r); return Array.from({ length: 10 }, (_, i) => ks[i % ks.length]); };
+    if (k === 'k2') questions = pfdPictures(seed + attempt * 101).map((p, i) => ({ ...readQuestion(p, i, r), id: `pfd:${['ias', 'alt', 'hdg', 'vs', 'bank'][i % 5]}` }));
+    if (k === 'k3') questions = shuffled(kinds(R.DRILLS, DRILL_ANSWERS).map(kind => ({ kind, ...R.DRILLS[kind].make(r) })), r).map(x => ({ id: `drill:${x.kind}`, q: callFix(x.q), opts: x.opts.map(callFix), ok: x.opts.indexOf(x.ok), why: callFix(x.why), say: x.say ? callFix(x.say) : undefined }));
+    if (k === 'k5') questions = pick(R.SCENES.filter(sc => ok(SCENE_ANSWERS[sc.id])), 10, r).map(sc => { const o = shuffled(sc.options.map((t, j) => ({ t: callFix(t), ok: j === sc.answer })), r); return { id: `scene:${sc.id}`, q: `${sc.title}：${callFix(sc.situation)}${sc.atc ? `　聞こえた：“${callFix(sc.atc)}”` : ''}　${callFix(sc.q)}`, opts: o.map(x => x.t), ok: o.findIndex(x => x.ok), why: callFix(sc.why), say: sc.atc ? callFix(sc.atc) : undefined }; });
+    if (k === 'k6') questions = shuffled(kinds(R.LISTEN, LISTEN_ANSWERS).map(kind => { const x = R.LISTEN[kind](r); x.opts = shuffled([...new Set(x.opts)], r); return { kind, ...x }; }), r).map(x => ({ id: `listen:${x.kind}`, q: `（英語を聞いて）${callFix(x.q)}`, opts: x.opts.map(callFix), ok: x.opts.indexOf(x.ok), why: callFix(x.why), say: callFix(x.say) }));
     N.intro = { speaker: 'lecturer', text: k === 'k2' ? '画面の PFD を読んで答えてください。10 問、80% で合格です。' : k === 'k6' ? '英語の指示が流れます。聞いて、内容を選んでください。10 問、80% で合格です。' : '10 問です。80% で合格。Take your time.', next: 'q0' };
     quizNodes(N, questions, {});
-    resultNodes(N, 'lecturer', `Excellent! ${k} は合格です。`, 'Not yet. 大丈夫、間違えたところを見直して、もう一度やりましょう。明日また来てください。');
+    resultNodes(N, 'lecturer', `Excellent! ${k} は合格です。`, 'Not yet. 大丈夫、間違えたところを見直して、もう一度やりましょう。準備ができたら、また声をかけてください。');
     flags = questions.map((_, i) => `qz_${i}`);
   }
   return { speakers: SPEAKERS, flags, hooks: [...SCHOOL_HOOKS], dialogs: { ftd: { start: 'hello', nodes: N } }, questions: questions || [] };
@@ -478,13 +615,17 @@ export function ftdDialogs(FL, k, { seed = 1 } = {}) {
 
 // ---------------------------------------------------------------- the written tests
 // (exam: another test's settings — the tablet's practice: one bank, ten questions)
-export function examDialogs(FL, id, { seed = 1, speaker, exam = null } = {}) {
+// (written1, and a practice in chapter 1: heard — the sections heard, a Set — keeps to the questions whose answers
+// have been said; null for written1: all of part 1; attempt: another order each time)
+export function examDialogs(FL, id, { seed = 1, speaker, exam = null, attempt = 0, heard = null } = {}) {
   const E = exam || EXAMS[id]; if (!E) throw new Error(`examDialogs: no test ${id}`);
-  const r = rng(seed * 17 + id.length), who = speaker || (id === 'written1' ? 'lecturer' : 'instructor'), book = gameBook(FL);
+  const r = rng(seed * 17 + id.length + attempt * 7919), who = speaker || (id === 'written1' ? 'lecturer' : 'instructor'), book = gameBook(FL);
+  const taught = id === 'written1' || heard ? (heard || new Set(sectionsBefore(FL, CLASS_CHAPTERS.length))) : null;
+  const usable = (b, k) => { if (!taught || !BANK_ANSWERS[b]) return true; const a = BANK_ANSWERS[b][k] && BANK_ANSWERS[b][k].a; return !!a && allHeard(a, taught); };
   // drawn evenly from the banks
   const per = Math.ceil(E.n / E.banks.length), pool = [];
-  for (const b of E.banks) pool.push(...pick((FL.quiz.BANKS.find(x => x.id === b) || { qs: [] }).qs, per, r));
-  const qs = pick(pool, E.n, r).map(fromBank(book, r));
+  for (const b of E.banks) pool.push(...pick((FL.quiz.BANKS.find(x => x.id === b) || { qs: [] }).qs.map((x, k) => ({ x, id: `${b}#${k}` })).filter(o => usable(o.id.split('#')[0], +o.id.split('#')[1])), per, r));
+  const qs = pick(pool, E.n, r).map(o => fromBank(book, r, o.id)(o.x));
   const N = {};
   N.hello = { speaker: who, text: `${E.title}です。${E.n} 問、${E.pass}% 以上で合格。答えを選ぶと、すぐに正解と理由を言います。`, hook: { name: 'look', arg: 'player' }, next: 'q0' };
   quizNodes(N, qs, { speaker: who });

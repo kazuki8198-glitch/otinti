@@ -17,7 +17,7 @@ import { createCareer, CH2, GROUND, passedAt, SOLO_TRUST, CLASSES, STAGE, CHECKS
 import { planFor } from '../src/career/day.js';
 import { peopleDialogs } from '../src/content/dialog/people.js';
 import { careerInstructorDialogs } from '../src/content/dialog/instructor-career.js';
-import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, scoreOf } from '../src/content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, navlogDialogs, scoreOf, classOptions, heardOf } from '../src/content/school.js';
 import { createRunner, createDialogState, trustOf } from '../src/dialog/engine.js';
 import { playDay } from './helpers/play-day.mjs';
 import { installSorajima } from '../src/flight/sorajima.js';
@@ -62,11 +62,12 @@ test('career run: from the first day to the first solo — every gate in order, 
       if (it.kind === 'ceremony') { run(people, 'chief', { ctx }); career.done('ceremony', 'welcome'); }
       else if (it.kind === 'tour') { run(people, 'dispatcher', { ctx }); career.done('tour', 'tour'); }
       else if (it.kind === 'brief') { run(ins, 'meet', { ctx, pick: [/今は大丈夫/] }); career.done('brief', 'meet'); career.finishPrologue(); }
-      else if (it.kind === 'class') { const q = { quiz: {} }, s2 = createDialogState(), d = classDialogs(FL, +it.id, { seed: st.seed }); run(d, 'class', { state: s2, ctx: q, hooks: (n, a) => { if (n === 'quizEnd') q.quiz = scoreOf(s2, +a); } }); career.done('class', it.id); }
+      // (the class's pace by its name: the whole textbook; the career keeps what was heard and answered, as the game does)
+      else if (it.kind === 'class') { const q = { quiz: {} }, s2 = createDialogState(), d = classDialogs(FL, +it.id, { seed: st.seed, ...classOptions(FL, career.state, +it.id, { attempt: career.attempt(`class:${it.id}`) }) }); run(d, 'class', { state: s2, ctx: q, pick: [/^じっくり/], hooks: (n, a) => { if (n === 'quizEnd') q.quiz = scoreOf(s2, +a); careerHook(career, n, a); } }); career.done('class', it.id); }
       else if (it.kind === 'ftd' || it.kind === 'exam') {
-        const q = { quiz: {} }, s2 = createDialogState(), d = it.kind === 'ftd' ? ftdDialogs(FL, it.id, { seed: st.seed + st.day }) : examDialogs(FL, it.id, { seed: st.seed + st.day });
+        const q = { quiz: {} }, s2 = createDialogState(), heard = heardOf(FL, career.state), d = it.kind === 'ftd' ? ftdDialogs(FL, it.id, { seed: st.seed + st.day, heard, attempt: career.attempt(`ftd:${it.id}`) }) : examDialogs(FL, it.id, { seed: st.seed + st.day, heard, attempt: career.attempt(`exam:${it.id}`) });
         let result = null;
-        run(d, it.kind, { state: s2, ctx: q, hooks: (n, a) => { if (n === 'quizEnd') q.quiz = scoreOf(s2, +a); if (n === 'done') result = a; } });
+        run(d, it.kind, { state: s2, ctx: q, hooks: (n, a) => { if (n === 'quizEnd') q.quiz = scoreOf(s2, +a); if (n === 'done') result = a; careerHook(career, n, a); } });
         if (it.kind === 'ftd') { career.done('ftd', it.id); if (result === 'pass') { const r = prog.lessons[it.id] || { tries: 0, best: '', pass: false, levels: [] }; r.tries++; r.pass = true; r.best = 'S'; prog.lessons[it.id] = r; } }
         else career.exam(it.id, q.quiz.pct);
         assert.equal(result, 'pass', `${it.kind} ${it.id} passed with the right answers`);
@@ -98,6 +99,12 @@ test('career run: from the first day to the first solo — every gate in order, 
   assert.ok(log.some(l => / off/.test(l) || /off:/.test(l)), 'Sundays off');
 });
 const FLY_KINDS = ['flight', 'checkride', 'solo'];
+// what the game does with a lesson's hooks to the career (main.js onHook): the pace, a section heard, an answer
+function careerHook(career, n, a) {
+  if (n === 'pace') career.setPace(a);
+  else if (n === 'heard') { const [id, how] = String(a).split('|'); career.heardSection(id, how); }
+  else if (n === 'ans') { const [id, ok] = String(a).split('|'); career.answered(id, ok === '1'); }
+}
 
 // M6's goal: "最初から修了式まで通して遊べる（bot.mjs で各章の関門を通る）" — from the morning after the first solo to the
 // graduation: each later chapter's lessons flown by the bot in whole days (the twin's in the Seminole, from its own

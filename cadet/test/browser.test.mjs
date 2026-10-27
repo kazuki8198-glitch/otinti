@@ -257,7 +257,8 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.ok(Number.isInteger(blank), 'briefing room 2 has its screen');
     await ev(() => { window.__cls = { lines: [], pages: [], faces: [], held: false }; window.__cadet.career.talkTo('lecturer'); });
     const step = (stop) => ev((stop) => {
-      const C = window.__cadet, o = window.__cls, go = (v) => { if (v.choices.length) C.dialogChoose(0); else C.dialogNext(); C.simulate(0.05); };
+      // (the pace by its name: じっくり, the whole textbook; any other choice: the first)
+      const C = window.__cadet, o = window.__cls, go = (v) => { if (v.choices.length) C.dialogChoose(Math.max(0, v.node === 'pace' ? v.choices.findIndex(c => /^じっくり/.test(c.text)) : 0)); else C.dialogNext(); C.simulate(0.05); };
       for (let k = 0; k < 400; k++) {
         const v = C.dialog(); if (!v) return null;
         if (o.held) { o.held = false; go(v); continue; }
@@ -285,7 +286,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.equal(await step('揚力はどうやって'), 'aero.lift');
     const part = await ev(() => window.__cls);
     assert.match(part.lines[0], /Good morning/);
-    assert.match(part.lines[1], /教科書を全部、順に読んでいきますか/);
+    assert.match(part.lines[1], /今日はどのように進めますか/);
     assert.ok(part.pages.includes('aero.forces') && part.pages.includes('aero.forces#1') && part.pages.includes('aero.lift'), `the pages shown: ${part.pages.join(' ')}`);
     assert.deepEqual(part.faces, ['point', 'point'], 'each section\'s first page turns the view to the screen');
     assert.ok(part.lines.some(l => /^画面の図を見てください。/.test(l)), 'the figure, said');
@@ -297,7 +298,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     let st = await career();
     assert.deepEqual([st.slot, st.done['class:0'], st.done['lecture:0']], ['am', undefined, 1], 'not done; its place kept');
     const again = await ev(() => { const C = window.__cadet; C.career.talkTo('lecturer'); C.dialogNext(); return C.dialog(); });
-    assert.deepEqual(again.choices.map(c => c.text), ['続きから（第 1 章「揚力はどうやって生まれるか」から）', '最初から', '要点だけ']);
+    assert.deepEqual(again.choices.map(c => c.text.replace(/約 \d+ 分/, '約 N 分')), ['続きから（第 1 章「揚力はどうやって生まれるか」から）', '最初から：じっくり（教科書を全部、約 N 分）', '最初から：今日の訓練に要るところ（約 N 分）', '最初から：要点だけ（約 N 分）'], 'the pace chosen last time first');
     let t = await talkThrough(null);
     assert.match(t.lines.join('\n'), /では、続きから始めます。\n[^\n]*：次は「揚力はどうやって生まれるか」です。/); assert.match(t.lines.join('\n'), /See you tomorrow/);
     assert.ok(!t.lines.some(l => /最初は「飛行機に働く 4 つの力」です。/.test(l)), 'not from the start');

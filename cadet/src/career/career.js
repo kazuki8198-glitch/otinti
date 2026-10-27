@@ -53,8 +53,13 @@ export const GROUND = ['k1', 'k2', 'k3', 'k4', 'k5', 'k6'];
 // along the way; the instructor schedules them on their own only if they are not)
 export const CH2 = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 't2', 't4', 'e1', 'e2', 'e3', 't1', 't3'];
 export const ALL_CH2 = [...CH2, 'c1'];
-// the classes of chapter 1: the textbook's part 1 (its chapters by id), a class a day (the lecturer: content/school.js)
-export const CLASSES = [['aero'], ['sys', 'perf'], ['wx'], ['law', 'hf'], ['radio1', 'radio2'], ['radio3', 'radio4', 'radio5']];
+// the classes of chapter 1: the textbook's part 1 (its chapters by id), a class a day (the lecturer: content/school.js).
+// In this order each afternoon's training device lesson comes after the class that teaches it: the numbers and the
+// alphabet (radio2) before k3, the calls of one flight (radio3, radio4) before k4, the scenes' calls, the airports
+// without a tower and the emergencies (radio5) before k5; the weather before Mori asks for help with it
+export const CLASSES = [['aero'], ['sys', 'perf'], ['radio1', 'radio2'], ['radio3', 'radio4'], ['wx', 'radio5'], ['law', 'hf']];
+// the training device lesson each class comes before (the same day's afternoon)
+export const CLASS_FTD = ['k1', 'k2', 'k3', 'k4', 'k5', 'k6'];
 // the written tests: FLIGHT LAB's question banks (quiz.js), so many questions drawn, the pass mark
 export const EXAMS = {
   written1: { title: '学科試験（第 1 章）', banks: ['q_aero', 'q_sys', 'q_perf', 'q_wx', 'q_law', 'q_comm', 'q_hf'], n: 28, pass: 80, room: 'planning' },
@@ -144,8 +149,14 @@ export function weatherFor(seed, day, o = {}) {
 
 // ---- the state
 export function newCareer(seed = 1) {
-  return { v: CAREER_VERSION, seed: seed >>> 0 || 1, day: 1, slot: 'morning', chapter: 'prologue', fatigue: 20, exams: {}, ground: {}, decisions: [], done: {}, solo: null, checks: {}, graduated: null, started: true };
+  return { v: CAREER_VERSION, seed: seed >>> 0 || 1, day: 1, slot: 'morning', chapter: 'prologue', fatigue: 20, exams: {}, ground: {}, decisions: [], done: {}, solo: null, checks: {}, graduated: null, started: true,
+    // (chapter 1's classes) the sections heard and how ('f' read in full, 'q' its key points: content/school.js), the
+    // pace chosen last, how many times each class, lesson and test was begun (mixed into its questions' order), and each
+    // question's answers so far: [right, wrong, the last right (1) or not (0), its day]
+    heard: {}, lastPace: null, attempts: {}, answers: {} };
 }
+export const PACE_IDS = ['need', 'full', 'quick'];
+const SEC_ID = /^[a-z0-9]{1,12}\.[a-z0-9]{1,16}$/, Q_ID = /^[a-z0-9_]{1,12}[#:][a-z0-9_.]{1,24}$/, ATTEMPT_ID = /^[a-z0-9]{1,12}:[a-z0-9_]{1,16}$/;
 // a saved state that can be used: this version, the parts of the right kind (a cleaned copy), else null
 export function cleanCareer(o) {
   if (!isObj(o) || o.v !== CAREER_VERSION) return null;
@@ -162,6 +173,14 @@ export function cleanCareer(o) {
   if (isObj(o.solo) && Number.isInteger(o.solo.day)) s.solo = { day: o.solo.day };
   if (isObj(o.checks)) for (const [id, v] of Object.entries(o.checks)) if (CHECKS[id] && isObj(v)) s.checks[id] = { tries: clamp(Math.round(+v.tries || 0), 0, 999), pass: !!v.pass, day: Number.isInteger(v.day) ? v.day : 0 };
   if (isObj(o.graduated) && Number.isInteger(o.graduated.day)) s.graduated = { day: o.graduated.day };
+  // (saves from before these were kept have none: an empty record, the classes already finished taken as heard in full
+  // — the pace they were heard at was not kept)
+  if (isObj(o.heard)) for (const [k, v] of Object.entries(o.heard)) if (SEC_ID.test(k) && (v === 'f' || v === 'q')) s.heard[k] = v;
+  if (PACE_IDS.includes(o.lastPace)) s.lastPace = o.lastPace;
+  if (isObj(o.attempts)) for (const [k, v] of Object.entries(o.attempts)) if (ATTEMPT_ID.test(k) && Number.isInteger(v) && v >= 0) s.attempts[k] = Math.min(v, 9999);
+  if (isObj(o.answers)) for (const [k, v] of Object.entries(o.answers).slice(0, 400)) {
+    if (Q_ID.test(k) && Array.isArray(v) && v.length === 4 && v.every(Number.isInteger)) s.answers[k] = [clamp(v[0], 0, 9999), clamp(v[1], 0, 9999), v[2] ? 1 : 0, clamp(v[3], 0, 9999)];
+  }
   return s;
 }
 
@@ -304,6 +323,16 @@ function forcedWeather(state, prog) {
   return {};
 }
 
+// the sections heard (a Set of ids): the record, and the sections of every class finished (a save from before the
+// record was kept)
+export function heardSet(st, chapters = CLASS_SECTIONS) {
+  const out = new Set(Object.keys(st.heard || {}));
+  CLASSES.forEach((_, i) => { if (st.done && st.done[`class:${i}`] != null) for (const id of (chapters[i] || [])) out.add(id); });
+  return out;
+}
+// the sections of each class (filled by content/school.js from the book: the career itself has no book)
+export const CLASS_SECTIONS = CLASSES.map(() => []);
+
 // createCareer({ store, seed }) → the career with its save; the game asks it and tells it what happened
 export function createCareer({ store = null, seed } = {}) {
   let st = null;
@@ -341,6 +370,21 @@ export function createCareer({ store = null, seed } = {}) {
       save(); return true;
     },
     finishPrologue() { st.done.prologue = st.day; save(); },
+    // (chapter 1) a section heard: in full ('f') or its key points ('q'); in full stays in full
+    heardSection(id, how) { if (!SEC_ID.test(String(id)) || (how !== 'f' && how !== 'q')) return; if (st.heard[id] !== 'f') st.heard[id] = how; save(); },
+    // the sections heard: the record, and the classes finished before it was kept (heard in full: see cleanCareer)
+    heardSet: () => heardSet(st),
+    setPace(p) { if (PACE_IDS.includes(p)) { st.lastPace = p; save(); } },
+    // a class, a lesson, a test begun: how many times before (its questions come in another order each time)
+    attempt(key) { if (!ATTEMPT_ID.test(key)) return 0; const n = st.attempts[key] || 0; st.attempts[key] = n + 1; save(); return n; },
+    tries: (key) => st.attempts[key] || 0,
+    // a question answered (id: content/answer-map.js's): right or not, today
+    answered(id, right) {
+      if (!Q_ID.test(String(id))) return;
+      const r = st.answers[id] || [0, 0, 0, 0]; if (right) r[0]++; else r[1]++; r[2] = right ? 1 : 0; r[3] = st.day; st.answers[id] = r;
+      const ks = Object.keys(st.answers); if (ks.length > 400) delete st.answers[ks[0]];
+      save();
+    },
     soloDone() { st.solo = { day: st.day }; save(); },
     // a check flown (M6): passed or not; the graduation
     check(id, pass) { const r = st.checks[id] || { tries: 0, pass: false, day: 0 }; r.tries++; if (pass) { r.pass = true; r.day = st.day; } st.checks[id] = r; st.done[`${CHECKS[id].kind}:${id}`] = st.day; save(); return r; },

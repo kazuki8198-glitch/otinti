@@ -130,6 +130,7 @@ export function answerOf(L, id) {
   if ((m = /^drill:(\w+)$/.exec(id))) return A.DRILL_ANSWERS[m[1]];
   if ((m = /^listen:(\w+)$/.exec(id))) return A.LISTEN_ANSWERS[m[1]];
   if ((m = /^pfd:(\w+)$/.exec(id))) return [['k1', A.PFD_ANSWERS[m[1]]]];
+  if ((m = /^note:([\w.]+)$/.exec(id))) return A.NOTE_ANSWERS && A.NOTE_ANSWERS[m[1]] ? A.NOTE_ANSWERS[m[1]] : undefined;
   return undefined;
 }
 const squash = (s) => String(s).replace(/\s+/g, '');
@@ -159,7 +160,10 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
   const pacePick = (v) => { if (v.node !== 'pace' && v.node !== 'pace:2') return null; const i = v.choices.findIndex(c => PACE_LABEL[pace].test(c.text)); return i >= 0 ? i : null; };
   let wrongLeft = wrong;
   const answerPolicy = (base) => (v, k, x) => { const p = base ? base(v, k, x) : null; if (p != null) return p; if (x && wrongLeft > 0) { wrongLeft--; const ok = v.choices.findIndex(c => c.text === x.opts[x.ok]); return (ok + 1) % v.choices.length; } return null; };
-  const flowOf = (day) => (L.flow && L.flow.dayFlow ? L.flow.dayFlow : null);
+  // (what the game does with the talks' hooks to the career: the sections heard, the pace, the answers)
+  const careerHook = (n, a) => { if (n === 'heard' && career.heardSection) { const [id, how] = String(a).split('|'); career.heardSection(id, how); } else if (n === 'pace' && career.setPace) career.setPace(a); else if (n === 'ans' && career.answered) { const [id, ok] = String(a).split('|'); career.answered(id, ok === '1'); } };
+  // (k4 rebuilt: its own player — the right call each time, on time)
+  const ftdPolicy = null;
   while (career.state.day <= 10 && days.length < 14) {
     const st = career.state, d = st.day, w = career.weather(prog), sch = career.schedule(prog, { trust: 50, weather: w });
     const day = { day: d, date: C.dateText(d), chapter: st.chapter, plan: sch.map(x => `${x.slot}:${x.kind}:${x.id || ''}`), talks: [], fixed: [], walkS: 0, cardS: 0, toastS: 0, lines: 0, decisions: 0, longestGap: 0, time: 0 };
@@ -199,8 +203,8 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
           guideLine(L.guide.nextStep({ chapter: st.chapter, slot: it.slot, plan: sch.map(x => ({ ...x, state: x === it ? 'now' : 'later' })) }).text);
           walk(placeOfPerson(L, 'lecturer', 'am', 'ch1', sch), 'ブリーフィング室 2');
           const q = { quiz: {} }, s2 = L.engine.createDialogState();
-          const data = S.classDialogs(FL, +it.id, { seed: st.seed, ...(S.CLASS_OPTIONS ? S.CLASS_OPTIONS(career.state, prog) : {}) });
-          const r = doTalk(`class ${it.id}`, data, 'class', { state: s2, ctx: q, policy: answerPolicy(pacePick), kind: 'class', onHook: (n, a) => { if (n === 'quizEnd') q.quiz = S.scoreOf(s2, +a); } });
+          const data = S.classDialogs(FL, +it.id, { seed: st.seed, ...(S.classOptions ? S.classOptions(FL, career.state, +it.id, { attempt: career.attempt ? career.attempt(`class:${it.id}`) : 0 }) : {}) });
+          const r = doTalk(`class ${it.id}`, data, 'class', { state: s2, ctx: q, policy: answerPolicy(pacePick), kind: 'class', onHook: (n, a) => { if (n === 'quizEnd') q.quiz = S.scoreOf(s2, +a); careerHook(n, a); } });
           noteAsked(L, r, asked, d, `class ${it.id}`, heardBefore(heardAll, r), k1Parts);
           career.done('class', it.id); career.tire(6); career.advance('pm');
           classDay[it.id] = { day: d, chapters: S.CLASS_CHAPTERS[+it.id] };
@@ -210,8 +214,8 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
           walk(placeOfPerson(L, 'lecturer', 'pm', 'ch1', sch.filter(x => x.kind === 'ftd').map(x => ({ ...x, slot: 'pm' }))), '訓練装置室');
           const q = { quiz: {} }, s2 = L.engine.createDialogState();
           let result = null;
-          const data = S.ftdDialogs(FL, it.id, { seed: st.seed + st.day });
-          const r = doTalk(`ftd ${it.id}`, data, 'ftd', { state: s2, ctx: q, kind: 'ftd', policy: answerPolicy(null), onHook: (n, a) => { if (n === 'quizEnd') q.quiz = S.scoreOf(s2, +a); if (n === 'done') result = a; } });
+          const data = S.ftdDialogs(FL, it.id, { seed: st.seed + st.day, ...(S.heardOf ? { heard: S.heardOf(FL, career.state), attempt: career.attempt(`ftd:${it.id}`) } : {}) });
+          const r = doTalk(`ftd ${it.id}`, data, 'ftd', { state: s2, ctx: q, kind: 'ftd', policy: answerPolicy(ftdPolicy), onHook: (n, a) => { if (n === 'quizEnd') q.quiz = S.scoreOf(s2, +a); if (n === 'done') result = a; careerHook(n, a); } });
           noteAsked(L, r, asked, d, `ftd ${it.id}`, heardBefore(heardAll, r), k1Parts);
           if (it.id === 'k1') for (const h of r.hooks) { const m = /^tutor:(\w+)$/.exec(h[1] || ''); if (h[0] === 'pfd' && m) k1Parts.add(m[1]); }
           career.done('ftd', it.id); career.tire(6);
@@ -223,8 +227,8 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
           guideLine(L.guide.nextStep({ chapter: st.chapter, slot: it.slot, plan: [{ ...it, state: 'now' }] }).text);
           walk(placeOfPerson(L, 'lecturer', it.slot, 'ch1', [it]), '計画室');
           const q = { quiz: {} }, s2 = L.engine.createDialogState();
-          const data = S.examDialogs(FL, it.id, { seed: st.seed + st.day });
-          const r = doTalk(`exam ${it.id}`, data, 'exam', { state: s2, ctx: q, kind: 'exam', onHook: (n, a) => { if (n === 'quizEnd') q.quiz = S.scoreOf(s2, +a); } });
+          const data = S.examDialogs(FL, it.id, { seed: st.seed + st.day, ...(S.heardOf ? { heard: S.heardOf(FL, career.state), attempt: career.attempt(`exam:${it.id}`) } : {}) });
+          const r = doTalk(`exam ${it.id}`, data, 'exam', { state: s2, ctx: q, kind: 'exam', onHook: (n, a) => { if (n === 'quizEnd') q.quiz = S.scoreOf(s2, +a); careerHook(n, a); } });
           noteAsked(L, r, asked, d, `exam ${it.id}`, heardBefore(heardAll, r), k1Parts);
           career.exam(it.id, q.quiz.pct); career.advance('evening');
         }
@@ -246,7 +250,7 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
     day.fixedS = day.walkS + day.cardS + day.toastS;
     day.time = day.talkS + day.fixedS;
   }
-  return { pace, seed, days, asked, classDay, ftdDay };
+  return { pace, seed, days, asked, classDay, ftdDay, heard: S.heardOf ? [...S.heardOf(FL, career.state)] : [], state: career.state };
 }
 // the text heard before each line of a talk: what was heard before the talk, then its own lines in order
 function heardBefore(all, r) { const before = squash(all.slice(0, all.length - r.lines.length).join('')); return (k) => before + squash(r.lines.slice(0, k).map(l => l.text).join('')); }

@@ -97,6 +97,24 @@ test('render.js: every section and chapter to HTML; the notes; the end matter es
   assert.match(toc, /data-go="aero.lift" aria-current="true"><span class="bk-num">3\.2<\/span>/);
 });
 
+// DESIGN 3.2「章末」(W08): the chapter's 日米の違い, drawn from FL.jur (FL.book.jurTable), on its last section after the
+// check questions and before the lessons; none on a chapter without a US–Japan box
+test('the end matter: the chapter\'s 日米の違い on the chapters with US–Japan boxes, and only there', () => {
+  let n = 0;
+  for (const c of BK.CHAPTERS) {
+    const end = R.endHtml(c), jt = BK.jurTable(c.id);
+    assert.equal(Boolean(jt), c.secs.some(s => BK.html(s).includes('data-jur="')), `${c.id}: a table when the chapter has a box`);
+    if (!jt) { assert.doesNotMatch(end, /bk-jur-end/, c.id); continue; }
+    n++;
+    const at = end.indexOf(jt);
+    assert.ok(at > 0 && end.indexOf('bk-jur-end') === end.lastIndexOf('bk-jur-end'), `${c.id}: the table, once`);
+    if (c.quiz.length) assert.ok(end.lastIndexOf('class="quiz"') < at, `${c.id}: after the check questions`);
+    if ((c.lessons || []).length) assert.ok(at < end.indexOf('tb-lessons'), `${c.id}: before the lessons`);
+    assert.match(R.sectionHtml(c.secs[c.secs.length - 1].id), /<div class="bk-jur bk-jur-end">/, `${c.id}: on the last section`);
+  }
+  assert.ok(n > 0);
+});
+
 test('the search: the body (with the figures\' words), case-insensitive, the end matter → the last section', () => {
   const idx = R.index();
   assert.equal(idx.length, COUNTS.secs);

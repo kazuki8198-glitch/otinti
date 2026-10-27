@@ -9,6 +9,8 @@
 //  - drawing equals the data: every box, the chapter-end table and the appendix show the item's strings and nothing
 //    else, the Japanese side only in class jur-jp / bk-jp / bk-same (what CADET leaves out: cadet/test/jur.test.mjs);
 //  - a link to Part 7 or a summary chapter only when that section is in the book (DESIGN 6.2 rules 6 and 13): none in R1.
+//  - the boxes in the book (W08, DESIGN 3.4 ①): every section of an item's boxes that the book has shows the item, and
+//    no box is anywhere else.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -250,6 +252,22 @@ test('FL.book.jurTable: the chapter\'s items in reading order, once each, drawn 
     assert.deepEqual(r.map(x => x.id), ['vmc', 'vmc.ad', 'alcohol', 'fuel.ifr']);
     for (const x of r) { const it = J.byId(x.id); assert.deepEqual([x.title, x.us, x.jp], [it.title, usText(it), jpText(it)], x.id); }
   });
+});
+
+// DESIGN 3.4 ① (W08): the box is where the US number is taught. Every section in an item's boxes that is in the book now
+// shows that item (a section still to be written gets its box in the change that registers it: DESIGN 6.2 rule 13), and
+// a box is only in a section its item lists (FL.jur says where the boxes are: the appendix's 「本の中で」 reads it)
+test('the boxes in the book: each item in every section of its boxes that the book has, and only there (DESIGN 3.4 ①)', () => {
+  let placed = 0;
+  for (const it of J.items) for (const id of it.boxes) {
+    const f = B.findSection(id); if (!f) continue;
+    assert.ok(B.html(f.sec).includes(`data-jur="${it.id}"`), `${it.id} → ${id}: no box`);
+    placed++;
+  }
+  assert.ok(placed > 0);
+  for (const sec of B.CHAPTERS.flatMap(c => c.secs)) for (const [, id] of B.html(sec).matchAll(/data-jur="([^"]+)"/g)) {
+    assert.ok(J.byId(id).boxes.includes(sec.id), `${sec.id}: the box ${id} is not in FL.jur's boxes of that item`);
+  }
 });
 
 test('FL.book.jurAppendix: all 47 items in the table\'s order, each drawn as in the box, with 確度 and the sources\' editions', () => {

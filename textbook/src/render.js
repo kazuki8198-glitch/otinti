@@ -1,7 +1,8 @@
 // TEXTBOOK — render.js
 // Chapters and sections → HTML strings (no DOM here, so the Node tests can run it in vm). The section bodies are
 // FLIGHT LAB's (FL.book.html, unchanged); the chapter's end matter (terms, examples, cautions, the check questions,
-// the lessons, the sources) is plain text in FLIGHT LAB's data, so it is escaped here (the same as textContent).
+// the lessons, the sources) is plain text in FLIGHT LAB's data, so it is escaped here (the same as textContent); the
+// chapter's 日米の違い table is FLIGHT LAB's own HTML (FL.book.jurTable, drawn from FL.jur and escaped there).
 // Lessons are written as FLIGHT LAB writes them (button[data-lesson]); page.js turns every one into a tag.
 (function (G) {
   'use strict';
@@ -36,6 +37,11 @@
             + '<div class="res" aria-live="polite"></div></div>';
         });
       }
+      // the chapter's 日米の違い: the FL.jur items of the boxes in its sections, in reading order (DESIGN 3.2「章末」:
+      // drawn from the data; a chapter without a box has none). After the terms: content.test.mjs reads the terms table
+      // as the end matter's first table
+      const jt = BK.jurTable ? BK.jurTable(ch.id) : '';
+      if (jt) s += jt;
       if (ch.lessons && ch.lessons.length) s += '<h3>この章に対応する飛行課目</h3><div class="row tb-lessons">'
         + ch.lessons.map(id => `<button type="button" data-lesson="${esc(id)}">${esc(lessonTitle(id) || id)}</button>`).join('') + '</div>';
       if (ch.refs && ch.refs.length) s += '<h3>出典・参考資料（外部リンク・オンライン時）</h3><ul class="bk-src">'

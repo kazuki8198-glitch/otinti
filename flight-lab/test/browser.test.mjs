@@ -119,6 +119,14 @@ test('browser: offline start, the checklist and ATC by keys, keyboard flight, ke
     await page.click('.quiz >> nth=0 >> button:has-text("答え合わせ")');
     assert.match(await page.textContent('.quiz >> nth=0 >> .res'), /正解/);
     assert.equal((await page.evaluate(() => __lab.progress())).bookQuiz['aero.0'], 100);
+    // the chapter's 日米の違い at its end (DESIGN 3.2「章末」, from FL.jur): once, after the check questions, the rows of FL.book.jurTable
+    const jt = await page.evaluate(() => {
+      const t = document.querySelector('#bkArt .bk-jur-end'), q = document.querySelector('#bkArt .quiz');
+      return { n: document.querySelectorAll('#bkArt .bk-jur-end').length, rows: t ? [...t.querySelectorAll('tr[data-jur]')].map(r => r.dataset.jur) : [],
+        want: [...FL.book.jurTable('aero').matchAll(/data-jur="([^"]+)"/g)].map(m => m[1]), after: !!(t && q && (t.compareDocumentPosition(q) & Node.DOCUMENT_POSITION_PRECEDING)) };
+    });
+    assert.ok(jt.want.length >= 1, 'the aero chapter has a box');
+    assert.deepEqual([jt.n, jt.rows, jt.after], [1, jt.want, true]);
     // a photo in the textbook (book-photos.js): shown from its data URL with its credit's links (when there are photos)
     const photoSec = await page.evaluate(() => { const s = FL.book.CHAPTERS.flatMap(c => c.secs).find(x => /class="bk-photo"/.test(FL.book.html(x))); return s ? `${FL.book.findSection(s.id).ch.n}.${FL.book.findSection(s.id).ch.secs.indexOf(s) + 1}` : null; });
     if (photoSec) {

@@ -59,7 +59,7 @@ npm run shots   # 画面の絵を docs/ に撮る（npm test には入ってい�
 - `src/index.html`・`src/style.css`：ページの骨組みと見た目（FLIGHT LAB の `.bk-*` などの見た目を、明るい表示と暗い表示の色で書き直したもの）。
 - `src/render.js`：章・節 → HTML の文字列（DOM を使わないので、Node のテストでも確かめます）。
 - `src/page.js`：目次・検索・札への置き換え・計算機・確認問題・保存・印刷など、DOM につなぐ部分。
-- `test/content.test.mjs`：7 部（序部 p0 と第 1〜6 部。どの部も空でない）・27 章・154 節、章の並び、全節が描けること、章末の数（確認問題 135・用語 446・例 73・注意 66・出典 211・飛行課目 66）、図 95・写真 30 など（数は `test/load.mjs` の `COUNTS` に 1 か所でまとめています）。
+- `test/content.test.mjs`：7 部（序部 p0 と第 1〜6 部。どの部も空でない）・27 章・154 節、章の並び、全節が描けること、章末の数（確認問題 135・用語 446・例 73・注意 66・出典 211・飛行課目 66）、章末の「この章の日米の違い」（日米の囲みのある章だけ）、図 95・写真 30 など（数は `test/load.mjs` の `COUNTS` に 1 か所でまとめています）。
 - `test/build.test.mjs`：1 ファイル・外部の読み込みなし・全スクリプトの構文・17 ファイルの順番・注意書き・同じ出力になること。
 - `test/browser.test.mjs`：すでにこの環境にある Playwright で、`file://` から開いて操作を確かめます（http(s) の要求はすべて止めて数え、0 件であること）。Playwright が見つからないときは skip します。探す順番は、環境変数 `PLAYWRIGHT` → `require('playwright')` → `/opt/node22/lib/node_modules/playwright` です。
 - テストとスクリプトがファイルを書くのは `test-output/`（と、`npm run shots` の `docs/`）だけです。

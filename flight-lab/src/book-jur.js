@@ -110,7 +110,7 @@
       jpArt: '航空法第 81 条・航空法施行規則第 174 条', jpRefs: ['kokuho:81', 'kokuho-kisoku:174'], w05: 'confirmed',
       boxes: ['law.rules'], gates: ['g1'], part7: ['jair.rules'] }),
     item('cruise', 'VFR の巡航高度', {
-      us: '地表から 3,000 ft を超え 18,000 ft MSL 未満：磁針路 0〜179° は奇数千 ft＋500 ft、180〜359° は偶数千 ft＋500 ft',
+      us: '地表から 3,000 ft を超え 18,000 ft MSL 未満：磁航路 0〜179° は奇数千 ft＋500 ft、180〜359° は偶数千 ft＋500 ft',
       usSrc: '14 CFR 91.159', usUrl: ECFR('14:91.159'),
       jp: '地表か水面から 900 m 以上で巡航するとき（29,000 ft 未満）。磁方位 0° 以上 180° 未満は 1,000 ft の奇数倍＋500 ft、180° 以上 360° 未満は偶数倍＋500 ft',
       jpArt: '航空法第 82 条・航空法施行規則第 177 条', jpRefs: ['kokuho:82', 'kokuho-kisoku:177'], w05: 'confirmed',
@@ -333,9 +333,9 @@
       boxes: ['nav.gps', 'navb.north', 'sys.compass'], gates: ['g3'], part7: ['jifr.chart', 'jair.vfr'],
       note: '偏差は NOAA NCEI の計算機（WMM-2025、2026-10-27）：Sanford 7.09°W、那覇 5.87°W、羽田 7.88°W、新千歳 9.79°W、稚内 10.54°W' }),
     item('multi.rating', '多発の資格', {
-      us: '多発の級の限定（AMEL）。級を足すときは実地試験だけで、学科試験は要らない',
+      us: '多発の級の限定（AMEL）。級を足すときは、教官の裏書きを受けて実地試験に合格する。同じ資格の水準で飛行機の限定を持っていれば、学科試験は要らない',
       usSrc: '14 CFR 61.63(c)', usUrl: ECFR('14:61.63'),
-      jp: '陸上多発ピストン機の等級の限定。限定は実地試験に使った航空機で決まる',
+      jp: '陸上多発の等級の限定。限定は実地試験に使った航空機で決まり、操縦士は陸上多発ピストン機で受けても、陸上多発ピストン機と陸上多発タービン機の両方の限定になる',
       jpArt: '航空法第 25 条・航空法施行規則第 53 条', jpRefs: ['kokuho:25', 'kokuho-kisoku:53'], w05: 'confirmed',
       boxes: ['intro.cert', 'me.perf'], gates: ['g5'], part7: ['jlaw.license'] }),
     item('ws.alert', 'ウィンドシャーの警報', {

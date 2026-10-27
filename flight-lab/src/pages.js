@@ -330,7 +330,8 @@
       if (i === 0 && ch.en) art.append(h('div', { class: 'bk-en', text: ch.en }));
       if (i === 0 && ch.summary) art.append(h('p', { html: '<b>この章で学ぶこと：</b>' + esc(BK.fix(ch.summary)) }));
       art.append(h('div', { html: BK.html(sec) }));                      // static textbook content (trusted)
-      // the chapter's end matter on its last section: terms, examples, cautions, the check questions, lessons, sources
+      // the chapter's end matter on its last section: terms, examples, cautions, the check questions, the chapter's
+      // 日米の違い, lessons, sources
       if (i === ch.secs.length - 1) {
         if (ch.terms && ch.terms.length) art.append(h('h3', { text: '英語の用語（English terms）' }), h('table', { class: 'terms' }, h('tr', {}, h('th', { text: 'English' }), h('th', { text: '日本語' }), h('th', { text: '補足' })), ...ch.terms.map(([en, jp, note]) => h('tr', {}, h('td', { class: 'en', text: en }), h('td', { text: jp }), h('td', { class: 'mute', text: note || '' })))));
         if (ch.examples && ch.examples.length) art.append(h('h3', { text: '例' }), h('ul', {}, ...ch.examples.map(t => h('li', { text: BK.fix(t) }))));
@@ -350,6 +351,9 @@
             art.append(box);
           });
         }
+        // the chapter's 日米の違い: the FL.jur items of the boxes in its sections, in reading order (DESIGN 3.2「章末」:
+        // drawn from the data, nothing written by hand; a chapter without a box has none)
+        { const jt = BK.jurTable ? BK.jurTable(ch.id) : ''; if (jt) art.append(h('div', { class: 'bk-end-jur', html: jt })); }
         if (ch.lessons && ch.lessons.length) art.append(h('h3', { text: 'この章に対応する飛行課目' }), h('div', { class: 'row' }, ...ch.lessons.map(id => SC.lesson(id)).filter(Boolean).map(l => btn(l.title, () => app.startLesson(l.id, S.prefs.level)))));
         if (ch.refs && ch.refs.length) art.append(h('h3', { text: '出典・参考資料（外部リンク・オンライン時）' }), h('ul', { class: 'bk-src' }, ...ch.refs.map(r => h('li', {}, h('a', { href: r.url, target: '_blank', rel: 'noopener noreferrer' }, r.label), r.note ? ` — ${r.note}` : ''))));
       }

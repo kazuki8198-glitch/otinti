@@ -49,6 +49,7 @@ t('rule words', () => { const x = findRules('14 CFR 91.155 と AIM 4-3-3、121.5
 t('第 N 章', () => { assert.equal(findHardRefs('PHAK 第 11 章と AWH 第 3 章・第 24〜27 章').length, 0); assert.equal(findHardRefs('詳しくは第 5 章。').length, 1); });
 t('e-Gov citations and numbers (基準 4)', () => {
   assert.deepEqual(bookNumbers('14,000 ft 未満、1013.2 hPa、180 日に 6 時間、第 178 条、日本').map(x => [x.value, x.unit]), [[14000, 'ft'], [1013.2, 'hPa'], [180, 'd'], [6, 'h']]);
+  assert.deepEqual(bookNumbers('8 時間（航空法第 70 条・局長通達（平成 31 年 1 月 31 日）、2019 年 1 月の通達）、180 日').map(x => [x.value, x.unit]), [[8, 'h'], [180, 'd']], 'a date is not a value');
   const codes = s => citationProblems(EGOV_TOOL, s).map(p => p.code);
   assert.deepEqual(codes('平均海面から 14,000 ft 未満は QNH、以上は 1013.2 hPa（航空法施行規則第 178 条）。'), []);
   assert.deepEqual(codes('施行規則第 180〜186 条（第 186 条：進路と速度の維持）。'), []);

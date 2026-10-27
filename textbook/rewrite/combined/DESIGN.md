@@ -552,7 +552,7 @@
 | metar.taf | METAR と TAF の書き方 | 毎時・SM・G は最大と最小の差 10 kt 以上。TAF は FM・TEMPO（1 回 1 時間未満）・PROB30/40（最初の 9 時間は使わない）、BECMG なし（AIM 7-1-28） | 例：毎正時と 30 分・m（9999）・CAVOK・NOSIG、TAF に BECMG・TEMPO（実際の報）。G と TEMPO の基準・FM と PROB の扱い・着陸用飛行場予報は〔要確認〕 | wx.metar・wx.taf | g1 | jwx.report |
 | charts | 航空図と情報の入手 | セクショナル・Chart Supplement・1800wxbrief | 区分航空図・AIP・SWIM・飛行援助センター | nav.chart・nav.ff・wx.brief | g3 | jair.vfr・jair.fpl・jatc.ats |
 | sbas | SBAS・偏差 | WAAS、Sanford 約 7°W | MSAS、日本 約 6〜10°W | nav.gps・navb.north・sys.compass | g3 | jifr.chart・jair.vfr |
-| multi.rating | 多発の資格 | AMEL（多発は実地試験だけ。61.63(c)） | 陸上多発ピストン機（第 25 条・施行規則第 53 条） | intro.cert・me.perf | g5 | jlaw.license |
+| multi.rating | 多発の資格 | AMEL（教官の裏書きと実地試験。同じ資格の水準で飛行機の限定があれば学科試験なし。61.63(c)） | 陸上多発の等級。操縦士は陸上多発ピストン機で受けても、陸上多発ピストン機と陸上多発タービン機の両方の限定（第 25 条・施行規則第 53 条第 1 項・第 2 項） | intro.cert・me.perf | g5 | jlaw.license |
 | ws.alert | ウィンドシャーの警報 | LLWAS・TDWR | 空港気象ドップラーレーダー・ドップラーライダー・METAR の WS 群〔要確認〕 | wx.shear | g1 | jwx.local |
 
 **推測で埋めないもの**（台帳 `UNVERIFIED.json`。確かめるまで〔要確認〕の札で書くか、書かない）：AIP Japan の待機速度（ENR 1.5）・VFR のトランスポンダーのコード・管制と ATIS で QNH を言う単位・復唱要領（ENR 1.5-8）・代替飛行場の基準（ENR 1.10）、施行規則第 206 条の「大臣が定める時間」、日本の酸素の規則、ADS-B Out の義務、ICAO の空域のクラスとの対応、操縦士実地試験実施細則の科目と許容幅、Seminole の POH の片発性能、羽田の事故の最終報告の有無、ANA の手続き・学科の受験の時期、ANA の訓練生が FAA の学科試験を受けるか、ロンドンの座学が英国（ICAO）の書き方を使うか、JCAB 学科の「1 科目 20 問・70%」、日本の耐空類別の正確な名前、O-360 の写真の PD-self（元のページで再確認）。
@@ -712,7 +712,7 @@
 | JCAB 形式の問題（新しい 6 分野） | `quiz-jcab.js`（FLIGHT LAB だけ）に `q_jeng`・`q_jwx`・`q_jnav`・`q_jcomm`・`q_jlaw`・`q_jifr`（12 文字以内・課目 ID とぶつからない）。リンク先は第 7 部と第 1 部の節。科目別の模擬試験の画面 | 分野・問のテスト |
 | 段階テスト（FLIGHT LAB） | `SY.GATES` を CADET の `EXAMS` と同じ分野・問の数・合格点 80% で定義（止めない） | CADET のテストで `EXAMS` と `SY.GATES` の分野が同じことを確かめる |
 | 英語交信（`RD.FLIGHT` 7 段階・`comm.numbers`・`FL.book.R` の 9 キー） | 変えない（出典は足すだけ） | 既存のテスト |
-| TEXTBOOK.html | 全 289 節（第 7 部とまとめの章を含む）。読み込みは 20 ファイル。`COUNTS`・`ORDER`・見出し（「全 8 部・48 章・289 節」）・外部リンクの数を版ごとに意図して直す。`#aero.lift` の番号は **2 回変わる**：R1 で序部の 4 章が前に入って 2.2 → 5.2、R2 で ★`aero.wing` が `aero.forces` と `aero.lift` の間に入って 5.3（`textbook/test/content.test.mjs:101` の正規表現をその都度直す）。`textbook/test/build.test.mjs:33-35` の `FL_MODULES.length === 14` と `scripts.length === FL_MODULES.length + 2` は、ファイルを足すコミットで直す。`APP_SECTIONS` と `sim` の扱いは今のまま。囲み・札・折りたたみの CSS（印刷では開く）。本文の `<a>` は写真のクレジットだけ（e-Gov などの URL は章の出典へ） | TEXTBOOK のテスト |
+| TEXTBOOK.html | 全 289 節（第 7 部とまとめの章を含む）。読み込みは 20 ファイル。`COUNTS`・`ORDER`・見出し（「全 8 部・48 章・289 節」）・外部リンクの数を版ごとに意図して直す。`#aero.lift` の番号は **2 回変わる**：R1 で序部の 4 章が前に入って 2.2 → 5.2（W09 で `intro`・`sim` の 2 章が前に来て 3.2、W10 で 5.2。付記 5）、R2 で ★`aero.wing` が `aero.forces` と `aero.lift` の間に入って 5.3（`textbook/test/content.test.mjs:101` の正規表現をその都度直す）。`textbook/test/build.test.mjs:33-35` の `FL_MODULES.length === 14` と `scripts.length === FL_MODULES.length + 2` は、ファイルを足すコミットで直す。`APP_SECTIONS` と `sim` の扱いは今のまま。囲み・札・折りたたみの CSS（印刷では開く）。本文の `<a>` は写真のクレジットだけ（e-Gov などの URL は章の出典へ） | TEXTBOOK のテスト |
 | 課目のブリーフ（`syllabus.js`）と CADET の教官 | 教科書と食い違う所を直す（10.5）：a7・a8 のブリーフと `stallRecovery` の `say`・`g` の失速からの回復の順番を AFH の型（迎え角を減らす → 翼を水平 → 出力を必要なだけ → 元の経路へ）にする〔安全〕。CADET の教官はこのブリーフを読み上げる（`cadet/src/content/dialog/instructor.js:253`）ので、合本の〔安全〕⑤の直しと同じコミットで直す。x3（短距離離陸）のフラップ 0・Vr 60 は教材の簡略化として `ops.short`・`perf.tol` の `bk.sim` に書く。`comm.tower`・`comm.option` の `bk.sim` の言いすぎを課目の実際に合わせる | FLIGHT LAB の課目のテスト、CADET の台詞のテスト（決め打ちがあれば意図して直す） |
 | CADET | 下の 6.3 | CADET のテスト |
 | 学習記録 `flightlab-progress-v2` | 下の 6.4 | 消毒・統合・書き出しのテスト |
@@ -730,7 +730,7 @@
 8. **容量**：`flight-lab/build.mjs` に `MAX_BYTES = 12 MiB` とテストを最初の作業で戻し、版ごとに確かめる（8 章）。
 9. **CADET が文字で決めている所を変えない**：`aero.lift` の「この教材の Archer」と要点 2 つ、`aero.forces` が `lessonSections('a1')` の先頭で「大事なことは 2 つ」、`ops.trim` の最後の要点「トリムは最後。トリムで機首を上げ下げしない」、`me.basics` の書き出し「Archer の次に双発機 Piper Seminole」、`ifr.np` の「自動操縦（オートパイロット）があることが多いです。」、`nav.divert` の「まず向きを変え」、`comm.callsign`・`comm.icao`・`solo.req`・`nav.divert` の実名の文と消したあとに残る文、`crm.auto`・`ifr.np` のソフトの説明、`sys.ctl` のキーの列、`perf.wb`・`perf.climb` の POH、`law.special`・`nav.chart` の架空・NOT FOR NAVIGATION、`solo.first`、`wx.metar`、`aero.stall`（AI の検索）。変えるときは同じコミットでテストを意図して直す。
 10. **本文に実名と FLIGHT LAB の操作の言葉を書かない**（第 1〜6 部）。書くなら `bk.sim` の中か序部・第 7 部。
-11. **テストの決め打ちの数は、変える理由になったコミットで意図して直す**：TEXTBOOK の `COUNTS`・`ORDER`・見出し・`#aero.lift` の番号（R1 で 5.2、R2 で 5.3）・外部リンクの数・`build.test.mjs:33-35` の `FL_MODULES.length`（14 → 20。P2 で 16）と `scripts.length`、FLIGHT LAB の部の列（`flight.test.mjs:342`。p0〜p7）と基礎教材の問題の表示（`browser.test.mjs` の問 28 の部分。タイル・題・記録・about の文字は変えないので直さない）、CADET の README「25 章・145 節」と `CLASS_CHAPTERS.flat()`。CADET の質問メニューの部の比較（`content.test.mjs:204`）は、p7 を `book-7.js` が足す形（3.1）にするので直さずに通る。何をなぜ変えたかを `textbook/rewrite/combined/TEST-CONSTANTS.md` に 1 行ずつ残す。
+11. **テストの決め打ちの数は、変える理由になったコミットで意図して直す**：TEXTBOOK の `COUNTS`・`ORDER`・見出し・`#aero.lift` の番号（R1 で 5.2。W09 のあとは 3.2：付記 5。R2 で 5.3）・外部リンクの数・`build.test.mjs:33-35` の `FL_MODULES.length`（14 → 20。P2 で 16）と `scripts.length`、FLIGHT LAB の部の列（`flight.test.mjs:342`。p0〜p7）と基礎教材の問題の表示（`browser.test.mjs` の問 28 の部分。タイル・題・記録・about の文字は変えないので直さない）、CADET の README「25 章・145 節」と `CLASS_CHAPTERS.flat()`。CADET の質問メニューの部の比較（`content.test.mjs:204`）は、p7 を `book-7.js` が足す形（3.1）にするので直さずに通る（ただし W09〜W10 の間は CADET の本の p0 に章がないので、W09 が「ゲームの本に章がある部」と比べる形に直した。付記 5）。何をなぜ変えたかを `textbook/rewrite/combined/TEST-CONSTANTS.md` に 1 行ずつ残す。
 12. **原本 `flight-lab/kiso/` には触らない**（README も）。原本の README の決まり 3・4 を合本について解くという所有者の判断と、書き直してよい権利の確認は、`textbook/rewrite/combined/PROVENANCE.md` と `flight-lab/README.md` に記録する（判断 2）。訂正依頼書などの新しいファイルは `textbook/rewrite/combined/` に置く。
 13. **リンクは行き先ができてから**：手で書く `{ch:}`・`bk.see`・課目の `review` は、行き先の章・節が登録されたコミットか、それより後のコミットで足す。R1 の日米の囲みは数字だけを持ち、「第 7 部で詳しく」のリンクは部品が行き先を確かめて自動で出す（R4 で第 7 部が入ると、囲みを書き直さずにリンクが現れる）。
 14. **今の 14 分野の学科テストには日本の法令の問を入れない**（CADET の筆記試験が読む。3.4・5 章の基準 18）。
@@ -788,8 +788,8 @@
 | W06 日米の対照データと部品 | `book-jur.js`（47 項目）、`bk.jur`・`bk.jp`・`bk.us`・`bk.same` と章末の表・付録の対照表の描画、行き先を確かめて描くリンク、CADET では日本の側だけを消す | 30 | W05 | 描いた数字がデータと同じ。CADET に米国の列が出て日本の列が出ない |
 | W07a〜c 教科書の誤り | 約 80 件＋図 12＋学科テスト 4 問を、第 1 部／第 2〜3 部／第 4〜6 部の 3 つに分けて直す（R1 では、図・写真・学科テストのファイル `book-figs.js`・`book-photos.js`・`PHOTO-CREDITS.md`・`quiz.js` を 4 つめの単位 W07f に分けた。付記 4）。共通の節にある 14 CFR の引用（約 14 節）を `bk.us` に入れるか文に国を書く | 66（22×3） | W03・W06 | 台帳の教科書の行が閉じる。CADET の決め打ちの文が変わらない |
 | W07d 課目と教科書の食い違い | a7・a8 のブリーフと `stallRecovery` の回復の順番〔安全〕、x3 の簡略化の注記、`comm.tower`・`comm.option` の `bk.sim`（10.5） | 12 | W07a | FLIGHT LAB の課目のテストと CADET の台詞のテスト |
-| W08 囲みを置く | 取り違えの項目の囲みを既存の節に（約 60 か所）。手で書くリンクは置かない（決まり 13） | 25 | W06 | 取り違えのテスト（囲みの分）が通る。行き先のないリンクがゼロ |
-| W09 構成の変更 | `FL.book.addPart`、直書きの「第 N 章」を直す → `book-0.js` が p0 を足し、できあがっている `intro`・`sim` を移す（p0 は空にならない）→ p1 と s0 の題から「ロンドン相当」を外す → 章の番号の振り直しとテストの定数を 3 製品で直す（`#aero.lift` は 5.2） | 18 | W02 | 3 製品の全テスト（定数を意図して直したことをメッセージと `TEST-CONSTANTS.md` に） |
+| W08 囲みを置く | 取り違えの項目の囲みを既存の節に（約 60 か所）。手で書くリンクは置かない（決まり 13）。R1 ではファイルの持ち主を 1 つにするため W08a（`book-0/1/2.js`・`book-comm.js`）・W08b（`book-3/4.js`）・W08c（`book-5.js`）に分けた（付記 5） | 25 | W06 | 取り違えのテスト（囲みの分）が通る。行き先のないリンクがゼロ |
+| W09 構成の変更 | `FL.book.addPart`、直書きの「第 N 章」を直す → `book-0.js` が p0 を足し、できあがっている `intro`・`sim` を移す（p0 は空にならない）→ p1 と s0 の題から「ロンドン相当」を外す → 章の番号の振り直しとテストの定数を 3 製品で直す（`#aero.lift` は 5.2。W09 の時点の序部は 2 章なので 3.2、W10 で 5.2：付記 5） | 18 | W02 | 3 製品の全テスト（定数を意図して直したことをメッセージと `TEST-CONSTANTS.md` に） |
 | W10 序部 | `intro` の新 2 節と直し、`basics` 9 節（出典を新しく選ぶ）、`english` 2 節（**`DROP_CHAPTERS` に `english` を同じコミットで足す**）、図 約 6 | 62 | W04・W06・W09 | 1 単位の流れ（7.1）のすべて |
 | W11 原本の保存と表示 | 原本のハッシュのテスト、題の下の 1 行（タイル・題・記録・about の文字は変えない）、訂正の重ね表示（約 25 件）、問題の表示を `questionsHtml` から、図の ID と `alt`、`ERRATA-FOR-WORD.md`（章・節・元の文・直した文・根拠） | 33 | W03 | 原本の差分ゼロ、`preview.html` との比較、ブラウザのテスト |
 | W12 R1 の確かめ | 事実の二人目、安全レビュー（直した〔安全〕の項目と a7・a8）、序部の初学者の読み、出力を作り直す | 25 | 全部 | 5 章の基準のうち R1 で対象になる分（台帳は教科書の行と序部、取り違えは囲みの分、由来表は序部の分。1・3〜8・10・16〜18・21・24〜26） |
@@ -1156,7 +1156,7 @@ HTML の大きさは MB（10<sup>6</sup> バイト）、写真は「デコード
 | 10% 速い着陸 | 数字なし | 21% と決まらない | C・B | 少なくとも 21%（PHAK）、理由は運動エネルギー | 高 |
 | 燃料と重心の移動 | Archer では前へ | 常に前とは限らない | C | Archer は前（93.0＜95.0）、一般には機体による | 高 |
 | 計画の余裕 | 数字なし | 係数 1.30 の例 | C | 学校・教官の決まり。小型機の VFR に法令の係数はない | 高 |
-| TEMPO の長さ | 1 時間以内 | 1 時間未満 | A | NWS と気象庁（ICAO）の違い | 高 |
+| TEMPO の長さ | 1 時間以内 | 1 時間未満 | A | NWS と気象庁（ICAO）の違い（付記 3・5：米国も 1 回 1 時間未満（AIM 7-1-28）で、違いではなかった。囲みは `FL.jur` の値だけを描く） | 高 |
 | TAF の変化群 | FM・TEMPO・PROB30 | TEMPO・BECMG | A | 米国は BECMG なし、日本は FM・PROB なし | 高 |
 | 単一セルの段階の名前 | 積雲期・成熟期・消散期 | 発達期・成熟期・衰弱期 | C | 用語の表で 1 つに（併記） | 高 |
 | ウインドシアの書き方 | ウインドシア | ウィンドシアー | C | 正式名ウィンドシャー（出題範囲）、気象庁の情報名を併記 | 中 |
@@ -1323,3 +1323,15 @@ HTML の大きさは MB（10<sup>6</sup> バイト）、写真は「デコード
 - **米国の TEMPO**：教科書の本文（`wx.taf` の 3 か所、W07a）と図 `tafTimeline`（W07f）を「1 回 1 時間未満」に直した（NWSI 10-813 の付録 A・AIM 7-1-28）。台帳 `R.tempo-length` の裁定の見直しは W08（付記 3）。
 - **課目と教科書の食い違いの残り**（10.5 の外）：NOTES.md 1 の「アプリ側」の食い違いを、W07d が ERRATA に 30 行足した（`SYNC.a7-entry` など。〔安全〕は `SYNC.e3-glide-entry`・`SYNC.i2-upset`。どれも open）。課目の段階・採点・`school.js`・`physics.js`・CADET のチェックリストと ATIS にまたがるので、統合役の判断で `unit` は W07d のまま（W07d の 2 回目）とし、R1 の確かめ（W12：台帳は教科書の行と序部）の対象には入れない。〔安全〕の 2 行は R3 の安全レビュー（W36）までに直す。
 
+
+## 付記 5：R1 の P4 の統合での直し（2026-10-27）
+
+- **序部の形**（3.1・W09）：`book-0.js` は p0 を `FL.book.addPart({ before: 'p1' })` で足すが、今は章を持たない。序部の章は、できあがっていた `intro`（`book-1.js` の中で部を p0 に）と `sim`（`book-5.js` の中で `before: 'aero'`）の 2 つで、p0 は空にならない。新しい章 `basics`・`english` は W10 が `book-0.js` に `before: 'aero'` で書く（`intro`・`basics`・`english`・`sim` の順になる）。p1 と課程表の s0 の題から「ロンドン相当」を外した（ERRATA `APP.london-equivalent`）。
+- **`#aero.lift` の番号**（6.1・6.2 の決まり 11・7.2 の W09）：W09 の時点の序部は 2 章なので 3.2（2.2 → 3.2）。「R1 で 5.2」は W10 が `basics`・`english` を登録したあと（そのコミットで 3.2 → 5.2）。
+- **CADET の質問メニューのテスト**（3.1・6.2 の決まり 11・6.3。`cadet/test/content.test.mjs:204`）：W09〜W10 の間、CADET の本の p0 には章がない（`intro`・`sim` はゲームが外す）。教官のメニューはもともと章のある部だけを出すので中身は p1〜p6 のままだが、`FL.book.PARTS` の全部と比べるテストは落ちる。W09 がテストを「ゲームの本に章がある部」と比べる形に直した（W10 のあとも直さずに通る。`TEST-CONSTANTS.md`）。
+- **判断 8**（9 章。推奨の「そろえる」で進めた）：課程表の段階の題の番号を部の番号に（s0「第 1 段階」… s5「第 6 段階」。id・`phase`・記録は同じ）。CADET のゲームの中の掲示 5 か所と `FLIGHT-LAB-使い方.md` の段階の表も同じ番号にした。所有者が別の形を選べば、題の文字だけを直す。
+- **W08 の分け方**（7.2）：ファイルの持ち主を 1 つにするため、W08a（`book-1.js`・`book-2.js`・`book-comm.js`。`book-0.js` には今ある節がない）・W08b（`book-3.js`・`book-4.js`）・W08c（`book-5.js`）に分けた。3.4 の「囲みの節」のうち今の本にある 60 か所（項目 × 節）に、`bk.jur`（`fuel.ifr` だけ `bk.same`）で置いた。まだない 13 か所（`basics.*`・`inst.alt`・`navb.north`・`law.pilot`・`ops.night`・`nav.efb`・`ifr.dep`・`ifr.circle`）は、その節を登録する単位が同じコミットで置く。3.4 のテスト ①（囲みの節にその項目の囲みがあり、ほかの節にはない）を `flight-lab/test/jur.test.mjs` に入れた（統合）。
+- **章末の「この章の日米の違い」**（3.2「章末」）：FLIGHT LAB の `pages.js` と TEXTBOOK の `render.js` が、章末の確認問題の後・対応する課目の前で `FL.book.jurTable(章ID)` を出す（囲みのない章には出ない。統合。テストは TEXTBOOK の `content.test.mjs` と FLIGHT LAB の `browser.test.mjs`）。CADET は章末を描かないので出ない。
+- **3.4 の表と `FL.jur` の直し**（統合。W08b・W08c が一次資料で見つけた）：`cruise` の米国の欄を「磁針路」→「**磁航路**」（14 CFR 91.159(a) の「magnetic course」。この表はもとから磁航路で、`FL.jur` の語が違っていた）。`multi.rating` の日本の欄に航空法施行規則第 53 条**第 2 項**（操縦士の技能証明は、陸上多発ピストン機か陸上多発タービン機で実地試験を受けると、両方の等級の限定になる。e-Gov の写し）、米国の欄に 14 CFR 61.63(c) の (1) 教官の裏書きと (4) 学科試験が要らない条件（eCFR、2026-10-27 に読んだ）。上の表の行も直した。
+- **10.4 の TEMPO の長さ**：米国も「1 回 1 時間未満」（AIM 7-1-28）で、日米の違いではなかった（付記 3）。W08a が裁定を見直して `R.tempo-length` を閉じた（囲みは `FL.jur` の値だけを描く）。表の行に書き足した。
+- **3.3 の `emg.basic`「危難の場合の日本の決まりは囲み」**：航空法第 74 条・第 75 条は 47 項目にも e-Gov の写しにもない（W08b）。数字のない日本の決まりなので、W37 が写したあとで `bk.jp` の文にするか `FL.jur` に項目を足すかを決める（それまで置かない）。

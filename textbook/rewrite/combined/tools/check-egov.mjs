@@ -27,9 +27,13 @@ const UNIT_OF = [
   [/^\s?(?:°|度)/, '°'], [/^\s?(?:%|％|パーセント)/, '%'],
 ];
 const NUM = /(?<![\d.,])(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?/g;
+// a date is not a value of the rule: 「平成 31 年 1 月 31 日」「2019 年 1 月 31 日」 (the date of a 通達 in a source) is blanked
+// before the numbers are read (W08a: the alcohol box's source made 「31 年」「31 日」 look like numbers of 第 70 条)
+const DATE = /(?:(?:明治|大正|昭和|平成|令和)\s?(?:\d+|元)|\d{4})\s?年(?:\s?\d{1,2}\s?月(?:\s?\d{1,2}\s?日)?)?/g;
 export function bookNumbers(text) {
   const out = [];
-  for (const m of String(text).matchAll(NUM)) {
+  text = String(text).replace(DATE, m => ' '.repeat(m.length));
+  for (const m of text.matchAll(NUM)) {
     const after = text.slice(m.index + m[0].length);
     const u = UNIT_OF.find(([re]) => re.test(after));
     if (u) out.push({ value: Number((m[1] + (m[2] || '')).replace(/,/g, '')), unit: u[1], raw: m[0] + after.match(u[0])[0] });

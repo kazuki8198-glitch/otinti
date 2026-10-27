@@ -47,8 +47,9 @@ const wsZ = (x, y) => WS.z0 + (WS.z1 - WS.z0) * (y - WS.y0) / (WS.y1 - WS.y0) + 
 const PFD = [-0.30, 0.34], MFD = [0.051, 0.34], AUD = [-0.1245, 0.34];
 // the standby, a Garmin G5 (a 3.5" unit, near-square, one knob at its lower right): at the panel's far left (POH VB-2749
 // Fig 7-9 item 1, ~0.08 of the panel's width; the game's displays sit ~4.5 cm left of the real cluster), its screen
-// (screenW × screenH) screenY above the bezel's middle, the bezel depth proud of the panel; seen past the left yoke's horn
-const G5 = { c: [-0.49, 0.33], w: 0.086, h: 0.086, screenW: 0.072, screenH: 0.060, screenY: 0.0065, depth: 0.016 };
+// (screenW × screenH: 4:3, the unit's 320 × 240 display) screenY above the bezel's middle, the bezel depth proud of the
+// panel; seen past the left yoke's horn
+const G5 = { c: [-0.49, 0.33], w: 0.086, h: 0.086, screenW: 0.072, screenH: 0.054, screenY: 0.0095, depth: 0.016 };
 const SEAT_X = 0.29;
 const YOKE = { x: 0.30, y: 0.218, z: -0.855, travel: 0.07, roll: 42 * DEG };
 const PEDAL_X = [-0.39, -0.21, 0.21, 0.39], PEDAL = { y: -0.27, z: -1.21, travel: 0.045 };
@@ -60,14 +61,18 @@ const INSTRUCTOR = { hip: [SEAT_X, -0.03, -0.38], seatY: -0.15 };    // where th
 // clear of the right yoke's horns as it rolls; the seats made in Blender are shaped round him there (cockpit_seats.py BACK_AFT)
 // the glareshield's lip in profile ([z, y], from under it to the top of its roll; then the hood falls to the windshield)
 const GLARE = { x: 0.553, lip: [[PZ + 0.004, 0.451], [-1.045, 0.451], [-1.031, 0.457], [-1.027, 0.4665], [-1.032, 0.4765], [-1.05, 0.4795]] };
-// the yokes' hit boxes ([w, h, d] and an offset from the yoke's pivot; the horns' at ±x): a model of a yoke stays in them
-const YOKE_HIT = { hub: [0.11, 0.07, 0.06, 0, 0, 0.004], horn: [0.042, 0.15, 0.045, 0.152, 0.075, 0.008] };
+// the yokes' hit boxes ([w, h, d] and an offset from the yoke's pivot; the horns' at ±x; top: the tall hub's narrower upper
+// part, over the hub's box — one box as wide as the hub's foot would take the clicks on the dimmers): a model of a yoke
+// stays in them
+const YOKE_HIT = { hub: [0.118, 0.07, 0.06, 0, 0, 0.004], top: [0.074, 0.044, 0.05, 0, 0.056, -0.001], horn: [0.042, 0.15, 0.045, 0.152, 0.075, 0.008] };
 const COMPASS = [0, 0.737, -0.892];
-// (the Seminole's, until its own layout — round R3: its panel switch row with the red master, its key, its plunger primer)
+// (the Seminole's, until its own layout — round R3: its panel switch row with the red master, its key, its plunger primer;
+// the row seen over the left yoke's hub — the NXi's tall hub hides the panel up to ~y 0.15 behind it — and under the
+// shaft's boot)
 const KEYSW = [-0.488, 0.10];                     // the key: just right of where the yoke's left horn hides the panel
 const ROCKERS = [['master', 'MASTER'], ['avionics', 'AVIONICS'], ['fuelPump', 'FUEL PUMP'], ['beacon', 'BEACON'], ['nav', 'NAV'], ['strobe', 'STROBE'],
   ['landing', 'LANDING'], ['taxi', 'TAXI'], ['pitot', 'PITOT HEAT']];
-const ROCKER = { x0: -0.428, dx: 0.036, y: 0.095, tilt: 12 * DEG };
+const ROCKER = { x0: -0.428, dx: 0.036, y: 0.16, tilt: 12 * DEG };
 const SWITCH_JA = { master: 'マスター', avionics: 'アビオニクス', fuelPump: '燃料ポンプ', beacon: 'ビーコン', nav: '航法灯', strobe: 'ストロボ', landing: '着陸灯', taxi: 'タキシー灯', pitot: 'ピトー ヒート' };
 const MAG = ['OFF', 'R', 'L', 'BOTH', 'START'], MAG_ANG = [-70 * DEG, -35 * DEG, 0, 35 * DEG, 70 * DEG];
 // the Archer's overhead switch panel (POH VB-2749 Fig 7-10, the Archer III's since 1995: every engine, electrical, light
@@ -157,23 +162,30 @@ const BRAKE = { x: -0.11, y: 0.024, z: PZ + 0.012, ang: 30 * DEG };
 // ---------------------------------------------------------------- surfaces (sRGB colour, roughness, metalness, detail kind)
 // kinds: 0 smooth, 1 textured paint, 2 leather, 3 carpet, 4 grained vinyl, 5 woven headliner
 // The Archer TX's light scheme (Piper's TX photos: cool greys, no warm cast): the panel, the quadrant, the pedestal and
-// the console matte black, the display bezels a shade lighter (the TX panel photo: panel #141614, bezel #1b1d1c); the
-// walls two-tone — near-white above the sill band (wall: the window surrounds, the posts, and the parts made in Blender
-// with it: the header, the A-pillar trims, the visors) over a light cool grey (wallLow) —, the headliner a cool light
-// grey, the carpet charcoal, the seats one light grey (their shells a little darker), the pedals light-grey pads.
+// the console matte black, the display bezels a shade lighter (the TX panel photo: panel #141614, bezel #1b1d1c — that
+// photo's exposure: a matte black paint reflects 3–5 %, so the panel is lifted to ~1.4 % linear, or it renders as a void
+// in the shade under the glareshield; the black knobs satin, for an edge highlight); the walls two-tone — near-white
+// above the sill band (wall: the window surrounds, the posts, and the parts made in Blender with it: the header, the
+// A-pillar trims, the visors) over a light cool grey (wallLow) —, the headliner a cool light grey, the carpet charcoal,
+// the seats one light grey (their shells a little darker), the pedals light-grey pads; the yokes dark charcoal, satin
+// (lighter than the panel in the TX photo), their pebbled grips a shade darker.
 const S = {
-  panel: { c: 0x141517, r: 0.8, k: 1 }, glare: { c: 0x1c1d20, r: 0.9, k: 1 }, glareLip: { c: 0x232427, r: 0.62, k: 4 },
-  bezel: { c: 0x1c1e1f, r: 0.48 }, key: { c: 0x26282c, r: 0.5 }, knob: { c: 0x101113, r: 0.42 }, knobRing: { c: 0x2b2d31, r: 0.35 },
+  panel: { c: 0x1f2123, r: 0.75, k: 1 }, glare: { c: 0x1c1d20, r: 0.9, k: 1 }, glareLip: { c: 0x232427, r: 0.62, k: 4 },
+  bezel: { c: 0x292b2d, r: 0.48 }, key: { c: 0x26282c, r: 0.5 }, knob: { c: 0x1b1c1e, r: 0.35 }, knobRing: { c: 0x2b2d31, r: 0.35 },
   wall: { c: 0xe6e8ea, r: 0.6, k: 4 }, wallLow: { c: 0xb9bdc0, r: 0.64, k: 4 }, sidePanel: { c: 0xaeb2b6, r: 0.66, k: 4 }, wallDark: { c: 0x8c9095, r: 0.6, k: 4 },
   roof: { c: 0xd8dadc, r: 0.95, k: 5 }, trim: { c: 0xd2d5d8, r: 0.55, k: 4 },
   arm: { c: 0xa4a8ac, r: 0.6, k: 4 }, carpet: { c: 0x2a2b2d, r: 1, k: 3 }, seat: { c: 0xb4b8bb, r: 0.55, k: 2 }, seatSide: { c: 0x9ea2a6, r: 0.5, k: 2 },
-  pedal: { c: 0xa7aaad, r: 0.75, k: 4 }, postAlu: { c: 0xa9adb1, r: 0.45, m: 0.6 }, screw: { c: 0x3a3d41, r: 0.35, m: 0.7 },
+  // (postAlu: the windshield strip's light aluminium, mostly diffuse — a metal shows almost no colour of its own under the
+  // cabin's dim environment light: sky.js ENV_INTENSITY, and envMapIntensity is not applied)
+  pedal: { c: 0xa7aaad, r: 0.75, k: 4 }, postAlu: { c: 0xa9adb1, r: 0.5, m: 0.2 }, screw: { c: 0x3a3d41, r: 0.35, m: 0.7 },
   chrome: { c: 0xc8ccd1, r: 0.16, m: 1 }, alu: { c: 0x9ba1a7, r: 0.34, m: 0.9 }, steel: { c: 0x5d6268, r: 0.4, m: 0.8 },
-  black: { c: 0x121315, r: 0.5 }, rubber: { c: 0x151515, r: 0.9 }, red: { c: 0xb3231c, r: 0.42 }, white: { c: 0xe8e9ea, r: 0.4 },
-  yoke: { c: 0x1b1c1f, r: 0.4, k: 4 }, grip: { c: 0x141416, r: 0.55, k: 2 }, cbBody: { c: 0x0e0e0f, r: 0.45 }, slot: { c: 0x050506, r: 0.9 },
+  black: { c: 0x1b1c1e, r: 0.35 }, rubber: { c: 0x151515, r: 0.9 }, red: { c: 0xb3231c, r: 0.42 }, white: { c: 0xe8e9ea, r: 0.4 },
+  yoke: { c: 0x2a2c2f, r: 0.45, k: 4 }, grip: { c: 0x26282b, r: 0.6, k: 2 }, cbBody: { c: 0x0e0e0f, r: 0.45 }, slot: { c: 0x050506, r: 0.9 },
   lens: { c: 0xf2efe6, r: 0.2 }, caseBlack: { c: 0x0c0c0d, r: 0.5 },
   blue: { c: 0x1f4f9a, r: 0.42 }, wheelWhite: { c: 0xdedcd6, r: 0.35 },          // (M6) the Seminole's propeller levers, its gear knob
 };
+// the black ribbed or pebbled grips in code (the hand brake's, the flap handle's, the trim wheel's ribs: S.grip is the yokes')
+const GRIPBLK = { ...S.black, r: 0.55, k: 2 };
 
 // ---------------------------------------------------------------- geometry helpers (everything ends non-indexed)
 const _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _one = new THREE.Vector3(1, 1, 1);
@@ -426,11 +438,13 @@ function kitMaterial() {
   return m;
 }
 // labels and placards' ink: the atlas holds only the ink's coverage (one channel), the colour comes from the vertices;
-// roughness / metalness / backlight / occlusion per vertex; at night only the backlit labels glow (cdMat.z). base: an
-// opaque variant, the ink over a ground of that colour (the compass card); inst: for an instanced mesh of one quad, each
-// instance's place in the atlas its own (an instanced attribute uvRect: u0, v0, u1, v1 — the rockers' print)
+// roughness / metalness / backlight / occlusion per vertex; at night only the backlit labels glow (cdMat.z ≥ 1: in their
+// own colour, the emissive white), and those lit by day too a little (cdMat.z − 1 of their colour: the panel's cyan-green
+// print, whose backlight shows in the shade under the glareshield — the TX photo). base: an opaque variant, the ink over
+// a ground of that colour (the compass card); inst: for an instanced mesh of one quad, each instance's place in the atlas
+// its own (an instanced attribute uvRect: u0, v0, u1, v1 — the rockers' print)
 function decalMaterial(map, key, base = null, inst = false) {
-  const m = new THREE.MeshStandardMaterial({ map, vertexColors: true, emissive: 0xffe6c4, emissiveIntensity: 0, roughness: 1, metalness: 1,
+  const m = new THREE.MeshStandardMaterial({ map, vertexColors: true, emissive: 0xffffff, emissiveIntensity: 0, roughness: 1, metalness: 1,
     transparent: !base, depthWrite: !!base, polygonOffset: !base, polygonOffsetFactor: -2, polygonOffsetUnits: -4 });
   const ground = base ? new THREE.Color(base) : null;
   m.onBeforeCompile = (sh) => {
@@ -445,7 +459,7 @@ function decalMaterial(map, key, base = null, inst = false) {
         : 'diffuseColor.a *= cdCov;'))
       .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = vMat.x;')
       .replace('#include <metalnessmap_fragment>', 'float metalnessFactor = vMat.y;')
-      .replace('#include <emissivemap_fragment>', 'totalEmissiveRadiance *= vColor.rgb * cdCov * vMat.z;')
+      .replace('#include <emissivemap_fragment>', 'totalEmissiveRadiance = vColor.rgb * cdCov * (totalEmissiveRadiance * min(vMat.z, 1.0) + max(vMat.z - 1.0, 0.0));')
       .replace('#include <aomap_fragment>', AO_FRAG);
   };
   m.customProgramCacheKey = () => 'cadet-cockpit-decal-' + key;
@@ -520,6 +534,8 @@ function cowlMaterial(twin = false) {
 // to be read from the seat even zoomed in — the breakers' labels, the wall's placard seen edge-on — at fewer pixels).
 const SANS = '"Arial Narrow", "Helvetica Neue", Arial, Helvetica, sans-serif';
 const ATLAS_W = 1024, ATLAS_H = 256, INK = 0xeeeeea;
+// the panel's own backlit print (the dimmers, the breakers, carb heat: Piper's TX photo — cyan-green, lit by day too)
+const GLOW = { col: 0x6fe6cf, lit: 1.12 };
 class Atlas {
   constructor(W, H) { this.W = W; this.H = H; this.k = 4; this.used = 0; this.items = []; }
   // a region of w × h millimetres; draw(g, w, h) in pixels
@@ -897,20 +913,22 @@ export function buildCockpit(FL, A, opts = {}) {
   }
 
   // ============================================================ the standby: a Garmin G5 at the panel's far left
-  // its bezel (a rounded square, the screen's opening in its upper part, the knob at its lower right), the screen (the
-  // attitude page drawn on the small canvas, g1000.js drawStandby: lit when the PFD is lit), the placard over it
+  // its bezel (a rounded square, the screen's opening in its upper part, the knob at its lower right, the small power
+  // button at its lower left), the screen (the attitude page drawn on the small canvas, g1000.js drawStandby: lit when
+  // the PFD is lit), the speeds printed over it (white straight on the panel: the TX photo)
   { const [x, y] = G5.c, hw = G5.w / 2, hh = G5.h / 2, sw = G5.screenW / 2, sh = G5.screenH / 2, sy = y + G5.screenY, zf = PZ + G5.depth, bev = 0.0015;
     add(slab(rectPts(x - hw, y - hh, x + hw, y + hh), 0.007, [[rectPts(x - sw - 0.001, sy - sh - 0.001, x + sw + 0.001, sy + sh + 0.001), 0.002]], G5.depth - 2 * bev, zf, bev, 3, 1), S.bezel);
     add(at(new THREE.PlaneGeometry(G5.screenW + 0.006, G5.screenH + 0.006), [x, sy, zf - 0.0045]), S.caseBlack);
     B.unlit.push(quad(G5.screenW, G5.screenH, dynUV(DYN.g5), [x, sy, zf - 0.0035]));
     add(at(knurled(0.0062, 0.009, 16), [x + 0.032, y - 0.0335, zf + 0.0045]), S.knob);
+    add(at(cylZ(0.0028, 0.0028, 0.002, 10), [x - 0.032, y - 0.0335, zf + 0.001]), S.key);
     control({ id: 'stby.g5', label: '予備の計器 G5（姿勢・速度・高度・方位）', kind: 'button', size: [G5.w + 0.004, G5.h + 0.004, 0.024], pos: [x, y, PZ + 0.012], aim: [x, sy, zf - 0.0035],
       act: () => info('予備の計器（G5）：PFD が使えないときの姿勢・速度・高度・方位。PFD と同じ気圧設定で読みます') });
     // the maneuvering speeds and the demonstrated crosswind (the Archer's; the Seminole's: Va, and Vmc / Vyse one engine out)
     B.variant = 'pa28';
-    placard(['VO 113 KIAS AT 2550 LBS', 'VO 98 KIAS AT 1917 LBS', 'DEMO X-WIND 17 KTS'], 60, 14, [x, y + hh + 0.032, PZ]);
+    label(['VO 113 KIAS AT 2550 LBS', 'VO 98 KIAS AT 1917 LBS', 'DEMO X-WIND 17 KTS'], [x, y + hh + 0.032, PZ + 0.0002], { size: 2.6, wmm: 50, lit: 0 });
     B.variant = twinA ? 'pa44' : null;
-    if (twinA) placard(['MANEUVERING SPEED 135 KIAS AT 3800 LBS', 'ONE ENGINE INOP: VMC 56 KIAS  VYSE 88 KIAS'], 64, 11, [x, y + hh + 0.032, PZ]);
+    if (twinA) label(['MANEUVERING SPEED 135 KIAS AT 3800 LBS', 'ONE ENGINE INOP: VMC 56 KIAS  VYSE 88 KIAS'], [x, y + hh + 0.032, PZ + 0.0002], { size: 2.4, wmm: 62, lit: 0 });
     B.variant = null;
   }
 
@@ -921,9 +939,16 @@ export function buildCockpit(FL, A, opts = {}) {
   const pressT = { primer: 0 };                              // (the picture only: PRIMER shown pressed a moment after a press)
   // a rocker's act: a click toggles, the wheel sets (or does nothing); three positions: the wheel steps, a click cycles
   // OFF → the bottom → the top → OFF; START is held by a click (a click again lets it go; it springs back when the engine
-  // catches: aircraft/systems.js); PRIMER: one stroke a press
+  // catches: aircraft/systems.js); PRIMER: one stroke a click
   function rockerAct(key, kind) {
-    if (key === 'primer') return (dir, wheel) => { if (!wheel) pressT.primer = 0.35; return { type: 'prime' }; };
+    // (the electric primer — VB-2266 7.15: its solenoid after the electric fuel pump — primes only with BATT MASTR and
+    // the pump on; the wheel does nothing)
+    if (key === 'primer') return (dir, wheel) => {
+      if (wheel) return null;
+      pressT.primer = 0.35;
+      if (!switches.master) return info('バッテリー マスター（BATT MASTR）が OFF なので、プライマーが働きません');
+      return switches.fuelPump ? { type: 'prime' } : info('燃料ポンプ（FUEL PUMP）が OFF なので、プライマーから燃料が送られません');
+    };
     if (kind === 3) {
       const P = key === 'strobe' ? STROBE_POS : FAN_POS, id = key === 'strobe' ? 'strobeSel' : 'fan';
       return (dir, wheel) => { const i = P.indexOf(switches[id]), j = wheel ? clamp(i + (dir > 0 ? 1 : -1), 0, 2) : [2, 0, 1][i]; return j === i ? null : { type: 'select', id, value: P[j] }; };
@@ -1071,20 +1096,23 @@ export function buildCockpit(FL, A, opts = {}) {
     control({ id: 'elt', label: 'ELT（非常用の位置発信機）のスイッチ', kind: 'switch', size: [0.032, 0.048, 0.02], pos: [x, y, PZ + 0.009], aim: [x, y - 0.006, z + 0.007],
       act: () => info('ELT のスイッチ：ふだんは ARM のまま。強い衝撃を受けると自分で発信します（ON は試験と非常のとき）') });
   }
-  // the hour meters, BILLING over MAINTENANCE, at the far upper right
-  for (const [y, name, digits] of [[0.367, 'BILLING', '0 4 7 1 2'], [0.335, 'MAINTENANCE', '0 4 6 9 3']]) {
-    add(at(new THREE.BoxGeometry(0.03, 0.015, 0.004), [0.42, y, PZ + 0.002]), S.caseBlack);
-    decal(24, 7.5, (g, w, h) => { g.font = `700 ${h * 0.7}px ${SANS}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(digits, w / 2, h * 0.55); }, [0.42, y + 0.0005, PZ + 0.0042], null, { lit: 0, col: 0xf0f0f0 });
-    label(name, [0.42, y - 0.0112, PZ + 0.0002], { size: 1.15 });
+  // the hour meters, BILLING over MAINTENANCE, at the far upper right (electro-mechanical counters ~38 × 23 mm, a screw
+  // each side: the TX photo)
+  for (const [y, name, digits] of [[0.372, 'BILLING', '0 4 7 1 2'], [0.334, 'MAINTENANCE', '0 4 6 9 3']]) {
+    add(at(new THREE.BoxGeometry(0.038, 0.023, 0.004), [0.42, y, PZ + 0.002]), S.caseBlack);
+    for (const sx of [-1, 1]) screw(0.42 + sx * 0.0245, y + 0.002);
+    decal(28, 8, (g, w, h) => { g.font = `700 ${h * 0.7}px ${SANS}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(digits, w / 2, h * 0.55); }, [0.42, y + 0.001, PZ + 0.0042], null, { lit: 0, col: 0xf0f0f0 });
+    label(name, [0.42, y - 0.0155, PZ + 0.0002], { size: 1.3 });
   }
   // cabin heat and defrost (the Archer's: the Seminole has a combustion heater): two short sliders, chrome knobs, OFF at
-  // the left end (where they rest: neither is modelled)
+  // the left end (where they rest: neither is modelled); one legend between them — OFF at the left, HEAT over DEF, ON at
+  // the right (the TX photo)
   B.variant = 'pa28';
+  label('OFF', [0.2815, 0.267, PZ + 0.0002], { size: 1.6 }); label('ON', [0.348, 0.267, PZ + 0.0002], { size: 1.6 });
+  label(['HEAT', 'DEF'], [0.3045, 0.267, PZ + 0.0002], { size: 1.3, align: 'left', wmm: 9 });
   for (const [y, name, id, ja] of [[0.278, 'HEAT', 'cabinHeat', 'キャビン ヒート'], [0.256, 'DEFROST', 'defrost', 'デフロスター']]) {
     add(at(new THREE.BoxGeometry(0.048, 0.0035, 0.0015), [0.315, y, PZ + 0.0008]), S.slot);
     add(at(cylZ(0.0042, 0.0045, 0.009, 10), [0.2945, y, PZ + 0.0065]), S.chrome);
-    label(name, [0.315, y + 0.0068, PZ + 0.0002], { size: 1.2 });
-    label('OFF', [0.2835, y, PZ + 0.0002], { size: 1.05 }); label('ON', [0.3455, y, PZ + 0.0002], { size: 1.05 });
     control({ id, label: `${ja}（${name === 'HEAT' ? '暖房' : '窓の曇り取り'}）`, kind: 'lever', size: [0.054, 0.012, 0.018], pos: [0.315, y, PZ + 0.007], aim: [0.2945, y, PZ + 0.011],
       act: () => info(`${ja}：この飛行では使いません（OFF のまま）`) });
   }
@@ -1094,7 +1122,7 @@ export function buildCockpit(FL, A, opts = {}) {
   // three rows of 14 at a 0.025 pitch, the lower two rows on a raised sub-panel, each row's names (and its buses) on a
   // strip under it; ALTR and BATT, bigger with hex collars, at the top row's right end; the bottom row's last four
   // places plugged. In the shell (an instanced mesh would be the same triangles and one more draw call); the strips'
-  // print at a low resolution (about a millimetre high: not readable from the seat, as in the aircraft)
+  // print at a low resolution (about a millimetre high: not readable from the seat, as in the aircraft), backlit (GLOW)
   { const sx0 = CB.sub[0], sx1 = CB.sub[1], sy0 = CB.sub[2], sy1 = CB.sub[3], cbx = i => CB.x0 + i * CB.dx;
     add(at(new THREE.BoxGeometry(sx1 - sx0, sy1 - sy0, CB.subZ), [(sx0 + sx1) / 2, (sy0 + sy1) / 2, PZ + CB.subZ / 2]), S.panel);
     for (const [x, y] of [[sx0 + 0.0045, sy0 + 0.0045], [sx1 - 0.0045, sy0 + 0.0045], [sx1 - 0.0045, sy1 - 0.0045], [sx0 + 0.0045, sy1 - 0.0045]]) screw(x, y, PZ + CB.subZ + 0.0002);
@@ -1108,7 +1136,7 @@ export function buildCockpit(FL, A, opts = {}) {
           add(at(button(0.0042, 0.0075, 8), [x, y + 0.006, z + 0.0034]), S.cbBody);
         } else { add(at(new THREE.CircleGeometry(0.0054, 6), [x, y, z]), S.screw); add(at(button(0.0033, 0.007, 6), [x, y, z]), S.cbBody); }
       });
-      decal(352, 5.2, (g, w, h) => cbStrip(g, w, h, row, CB_BUS[j]), [(cbx(0) + cbx(13)) / 2, y - 0.0118, z - 0.0004], null, { res: 0.55 });
+      decal(352, 5.2, (g, w, h) => cbStrip(g, w, h, row, CB_BUS[j]), [(cbx(0) + cbx(13)) / 2, y - 0.0118, z - 0.0004], null, { res: 0.55, ...GLOW });
     });
     control({ id: 'cb', label: 'サーキット ブレーカー', kind: 'button', size: [sx1 - sx0 + 0.004, 0.13, 0.022], pos: [(sx0 + sx1) / 2, 0.107, PZ + 0.009], aim: [cbx(4), CB.y[1], PZ + CB.subZ + 0.005],
       act: () => info('サーキット ブレーカー：飛び出しているもの（切れた回路）がないか、目で確かめます') });
@@ -1135,17 +1163,17 @@ export function buildCockpit(FL, A, opts = {}) {
   }
 
   // ============================================================ the lower panel: the dimmers, the alternate static source, the jacks
-  // the Archer's dimmers: SWITCH, PANEL and AVIONICS under one bracket, under the PFD's right part (POH VB-2749 7.23: the
+  // the Archer's dimmers: SWITCH, PANEL and AVIONICS under one backlit bracket, under the PFD's right part (POH VB-2749 7.23: the
   // switches' and placards' backlight, the LED strip under the glareshield, the displays) — info controls (the lights
   // here follow the time of day)
   B.variant = 'pa28';
   { const y = DIM.y;
-    decal(80, 6, bracketDraw, [(DIM.x[0] + DIM.x[2]) / 2, y + 0.0155, PZ + 0.0002], null);
+    decal(88, 6, bracketDraw, [(DIM.x[0] + DIM.x[2]) / 2, y + 0.0165, PZ + 0.0002], null, GLOW);
     [['SWITCH', 'switch', 'スイッチと文字の照明'], ['PANEL', 'panel', 'パネルの照明'], ['AVIONICS', 'avionics', '画面の明るさ']].forEach(([name, id, ja], i) => {
       const x = DIM.x[i];
-      add(at(knurled(0.0068, 0.011, 18), [x, y, PZ + 0.0055]), S.knob);
-      label(name, [x, y + 0.0105, PZ + 0.0002], { size: 1.25, wmm: 12 });
-      control({ id: 'dim.' + id, label: `${ja}の調光（DIMMING ${name}）`, kind: 'knob', cyl: [0.0085, 0.014], pos: [x, y, PZ + 0.007], aim: [x, y, PZ + 0.011],
+      add(at(knurled(0.0085, 0.012, 20), [x, y, PZ + 0.006]), S.knob);
+      label(name, [x, y + 0.0118, PZ + 0.0002], { size: 1.25, wmm: 12, ...GLOW });
+      control({ id: 'dim.' + id, label: `${ja}の調光（DIMMING ${name}）`, kind: 'knob', cyl: [0.0105, 0.015], pos: [x, y, PZ + 0.0075], aim: [x, y, PZ + 0.012],
         act: () => info(`${ja}の調光：この飛行では変えません（明るさは時刻に合わせてあります）`) });
     });
   }
@@ -1168,7 +1196,10 @@ export function buildCockpit(FL, A, opts = {}) {
   }
   // the LIMITATIONS placard on the left wall's sill band, just aft of the panel, facing in (Piper's TX photos; seen nearly
   // edge-on from the seat: its print at a lower resolution)
+  // (the Archer's: the Seminole's own is round R3's)
+  B.variant = 'pa28';
   placard([], 220, 55, [-lowX(0.305) + 0.0015, 0.305, -0.96], { r: [0, Math.PI / 2, 0], res: 0.5, draw: limitsDraw });
+  B.variant = null;
   function bracketDraw(g, w, h) {
     const y = h * 0.6, tw = w * 0.34;
     g.lineWidth = Math.max(1, h * 0.09);
@@ -1207,15 +1238,16 @@ export function buildCockpit(FL, A, opts = {}) {
   }
 
   // ============================================================ the throttle quadrant, the carb heat, the pedestal, the hand brake
-  // the Archer's quadrant (POH VB-2749 Fig 7-9, Piper's TX photo): a black face with two slots — THROTTLE (a black
-  // cylinder lying across its lever's end; no TO/GA button on it: the game has no autopilot) and MIXTURE (a red star
-  // knob) — and the friction lever out of its right side
+  // the Archer's quadrant (POH VB-2749 Fig 7-9, Piper's TX photo): a black face with two slots, each named up its left
+  // side (OPEN / CLOSE, RICH / LEAN at its ends) — THROTTLE (a black cylinder ~Ø29 × 62 mm lying across its lever's end;
+  // no TO/GA button on it: the game has no autopilot) and MIXTURE (a red star knob ~Ø32) — and the friction lever out of
+  // its right side
   B.variant = 'pa28';
   { const qz = PZ + 0.035, qy0 = QUAD.y0, qy1 = QUAD.y1, fx = QUAD.x + QUAD.w / 2;
     add(at(rbox(QUAD.w, qy1 - qy0, 0.05, 0.008, 2), [QUAD.x, (qy0 + qy1) / 2, qz - 0.025]), S.panel);
     for (const [x, name, sub] of [[-0.005, 'THROTTLE', ['OPEN', 'CLOSE']], [0.045, 'MIXTURE', ['RICH', 'LEAN']]]) {
       add(at(rbox(0.009, 0.16, 0.004, 0.003), [x, -0.017, qz + 0.0005]), S.slot);
-      label(name, [x, qy1 - 0.008, qz + 0.0021], { size: 1.5, wmm: 19 });
+      label(name, [x - 0.0105, 0.022, qz + 0.0021], { size: 2.6, r: [0, 0, Math.PI / 2] });
       label(sub[0], [x + 0.013, 0.045, qz + 0.0021], { size: 1.25 }); label(sub[1], [x + 0.013, -0.085, qz + 0.0021], { size: 1.25 });
     }
     add(at(new THREE.BoxGeometry(0.016, 0.005, 0.006), [fx + 0.007, -0.043, qz - 0.012], [0, 0, 0.35]), S.steel);
@@ -1226,30 +1258,32 @@ export function buildCockpit(FL, A, opts = {}) {
       add(at(new THREE.BoxGeometry(0.006, 0.006, LEVER.len), [x, LEVER.y, LEVER.z + LEVER.len / 2]), S.steel, part);
       add(at(knob, [kx, LEVER.y, LEVER.z + LEVER.len + 0.012]), s, part);
     };
-    lever(-0.005, 'throttle', cylX(0.0115, 0.05, 16), S.black, -0.012);
-    lever(0.045, 'mixture', star(0.0135, 0.013, 8), S.red);
+    lever(-0.005, 'throttle', cylX(0.0145, 0.062, 18), S.black, -0.012);
+    lever(0.045, 'mixture', star(0.016, 0.014, 8), S.red);
     const lp = (x, a) => [x, LEVER.y + Math.sin(a) * (LEVER.len + 0.012), LEVER.z + Math.cos(a) * (LEVER.len + 0.012)];
-    control({ id: 'throttle', label: 'スロットル（R / F）', kind: 'lever', part: 'throttle', size: [0.054, 0.03, 0.032], pos: lp(-0.012, 0), aim: lp(-0.005, 0), act: (dir) => flight('thrStep', dir >= 0 ? 1 : -1) });
+    control({ id: 'throttle', label: 'スロットル（R / F）', kind: 'lever', part: 'throttle', size: [0.066, 0.034, 0.034], pos: lp(-0.012, 0), aim: lp(-0.005, 0), act: (dir) => flight('thrStep', dir >= 0 ? 1 : -1) });
     // the mixture: a click, full rich or (on the ground only) idle cut-off; the wheel, a tenth at a time
-    control({ id: 'mixture', label: () => `ミクスチャー（${switches.mixture >= 0.95 ? 'リッチ' : switches.mixture < 0.15 ? 'アイドル カットオフ' : 'リーン'}）`, kind: 'lever', part: 'mixture', size: [0.032, 0.032, 0.03], pos: lp(0.045, 0),
+    control({ id: 'mixture', label: () => `ミクスチャー（${switches.mixture >= 0.95 ? 'リッチ' : switches.mixture < 0.15 ? 'アイドル カットオフ' : 'リーン'}）`, kind: 'lever', part: 'mixture', size: [0.036, 0.036, 0.032], pos: lp(0.045, 0),
       act: (dir, wheel) => {
         if (wheel) { const v = clamp(Math.round((switches.mixture + (dir > 0 ? 0.1 : -0.1)) * 10) / 10, 0, 1); return v === switches.mixture ? null : { type: 'select', id: 'mixture', value: v }; }
         if (switches.mixture < 0.95) return { type: 'select', id: 'mixture', value: 1 };
         return cur.s && !cur.s.onGround ? info('飛んでいる間は、ミクスチャーはリッチのままにします') : { type: 'select', id: 'mixture', value: 0 };
       } });
-    // carb heat (VB-2749 Supplement 6): its own slot right of the quadrant, a small lever with a round knob, OFF up and ON
-    // down (update() turns it by ∓CARB.ang about its pivot behind the panel), its placard over the slot
+    // carb heat (VB-2749 Supplement 6): its own slot right of the quadrant, a small lever with a round light-grey knob, OFF
+    // up and ON down (update() turns it by ∓CARB.ang about its pivot behind the panel), the backlit column OFF / CARB HEAT
+    // / ON right of the slot (the TX photo's ALT AIR slot: CLOSE / ALT AIR / OPEN)
     add(at(new THREE.BoxGeometry(0.008, 0.077, 0.0015), [CARB.x, CARB.y, PZ + 0.0008]), S.slot);
     add(at(new THREE.BoxGeometry(0.004, 0.004, 0.03), [CARB.x, CARB.y, CARB.z + CARB.len - 0.02]), S.steel, 'carb');
-    add(at(cylZ(0.0065, 0.0068, 0.009, 14), [CARB.x, CARB.y, CARB.z + CARB.len]), S.knob, 'carb');
-    placard(['CARB HEAT'], 19, 5, [CARB.x, CARB.y + 0.047, PZ]);
-    label('OFF', [CARB.x + 0.011, CARB.y + 0.031, PZ + 0.0002], { size: 1.15 }); label('ON', [CARB.x + 0.0105, CARB.y - 0.031, PZ + 0.0002], { size: 1.15 });
+    add(at(cylZ(0.0065, 0.0068, 0.009, 14), [CARB.x, CARB.y, CARB.z + CARB.len]), S.white, 'carb');
+    label('OFF', [CARB.x + 0.0135, CARB.y + 0.031, PZ + 0.0002], { size: 2.1, ...GLOW });
+    label(['CARB', 'HEAT'], [CARB.x + 0.0135, CARB.y, PZ + 0.0002], { size: 1.9, ...GLOW });
+    label('ON', [CARB.x + 0.0135, CARB.y - 0.031, PZ + 0.0002], { size: 2.1, ...GLOW });
     control({ id: 'carbHeat', label: () => `キャブレター ヒート（${switches.carbHeat ? 'ON' : 'OFF'}）`, kind: 'lever', part: 'carb', size: [0.02, 0.02, 0.02], pos: [CARB.x, CARB.y, CARB.z + CARB.len], aim: [CARB.x, CARB.y, CARB.z + CARB.len + 0.004],
       act: (dir, wheel) => { const on = wheel ? dir > 0 : !switches.carbHeat; return on === switches.carbHeat ? null : { type: 'switch', id: 'carbHeat', on }; } });
   }
   // the pedestal: a black plate from the quadrant's foot curving down to the floor between the pedals, its edges (5 mm)
-  // seen, its screws along them; the rudder trim low on its right — a knurled wheel through a slot in the plate, its
-  // indicator up the slope from it (an info control: the rudder trim is the keys' Z / X)
+  // seen, its screws along them; the rudder trim on its right just under the quadrant (the LX Steel photo) — a knurled
+  // wheel through a slot in the plate, its indicator over it (an info control: the rudder trim is the keys' Z / X)
   { const hw = PED.w / 2, pr = PED.prof, n = pr.length - 1, T = 0.005;
     const N = pr.map((p, j) => { const a = pr[Math.max(0, j - 1)], b = pr[Math.min(n, j + 1)], dz = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dz, dy); return [-dy / l, dz / l]; });
     const prof = (v, inset) => { const j = Math.round(v * n); return [pr[j][0] - N[j][0] * inset, pr[j][1] - N[j][1] * inset]; };
@@ -1260,12 +1294,12 @@ export function buildCockpit(FL, A, opts = {}) {
     }
     // (on the plate, turned to its slope at profile point j: off its face by d)
     const onPlate = (g, j, x, d) => at(g, [x, pr[j][1] + N[j][1] * d, pr[j][0] + N[j][0] * d], [Math.atan2(-N[j][1], N[j][0]), 0, 0]);
-    const wx = PED.x + hw - 0.016, kj = 6;
+    const wx = PED.x + hw - 0.016, kj = 3;
     add(at(knurled(0.019, 0.012, 24).rotateY(Math.PI / 2), [wx, pr[kj][1] - N[kj][1] * 0.008, pr[kj][0] - N[kj][0] * 0.008]), S.knob);
     add(onPlate(new THREE.PlaneGeometry(0.018, 0.046), kj, wx, 0.0005), S.slot);
-    add(onPlate(new THREE.BoxGeometry(0.014, 0.026, 0.008), 4, wx, 0.004), S.caseBlack);
-    add(onPlate(new THREE.PlaneGeometry(0.009, 0.0016), 4, wx, 0.0082), S.white);
-    decal(14, 5, textDraw(['L   R']), [wx, pr[3][1] + N[3][1] * 0.0006, pr[3][0] + N[3][0] * 0.0006], [Math.atan2(-N[3][1], N[3][0]), 0, 0]);
+    add(onPlate(new THREE.BoxGeometry(0.014, 0.026, 0.008), 1, wx, 0.004), S.caseBlack);
+    add(onPlate(new THREE.PlaneGeometry(0.009, 0.0016), 1, wx, 0.0082), S.white);
+    decal(14, 5, textDraw(['L   R']), [wx, pr[1][1] + 0.0185, pr[1][0] + N[1][0] * 0.0006], [Math.atan2(-N[1][1], N[1][0]), 0, 0]);
     control({ id: 'rudderTrim', label: 'ラダー トリム（Z / X で動かします）', kind: 'knob', size: [0.022, 0.044, 0.044], pos: [wx, pr[kj][1] - N[kj][1] * 0.008, pr[kj][0] - N[kj][0] * 0.008],
       aim: [wx, pr[kj][1] + N[kj][1] * 0.009, pr[kj][0] + N[kj][0] * 0.009], act: () => info('ラダー トリム：キーボードの Z / X で動かします（右へ回すと機首が右へ）') });
   }
@@ -1276,7 +1310,7 @@ export function buildCockpit(FL, A, opts = {}) {
     add(at(new THREE.BoxGeometry(0.012, 0.05, 0.007), [x, y - 0.025, z]), S.black, 'brake');
     const grip = [rbox(0.022, 0.078, 0.028, 0.008, 1)];
     for (let i = 0; i < 4; i++) grip.push(at(new THREE.BoxGeometry(0.02, 0.003, 0.0295), [0, -0.024 + i * 0.016, 0]));
-    add(at(mergeGeometries(grip.map(g => { const q = g.index ? g.toNonIndexed() : g; q.deleteAttribute('uv'); return q; })), [x, y - 0.088, z + 0.006], [0.15, 0, 0]), S.grip, 'brake');
+    add(at(mergeGeometries(grip.map(g => { const q = g.index ? g.toNonIndexed() : g; q.deleteAttribute('uv'); return q; })), [x, y - 0.088, z + 0.006], [0.15, 0, 0]), GRIPBLK, 'brake');
     add(at(cylX(0.0062, 0.004, 14), [x - 0.0125, y - 0.058, z + 0.004]), { c: 0xc4c7cb, r: 0.4 }, 'brake');
     label('PARK BRAKE', [x, PBOT + 0.007, PZ + 0.0002], { size: 1.4, wmm: 22 });
     control({ id: 'parkBrake', label: 'パーキングブレーキ', kind: 'lever', part: 'brake', size: [0.036, 0.1, 0.04], pos: [x, y - 0.075, z + 0.006], aim: [x, y - 0.095, z + 0.02], act: () => flight('parkBrake') });
@@ -1394,7 +1428,8 @@ export function buildCockpit(FL, A, opts = {}) {
     }
     control({ id: part, label: sd < 0 ? '操縦輪（W / S・A / D）' : '右席の操縦輪（左と連動）', kind: 'handle', part,
       size: YOKE_HIT.hub.slice(0, 3), pos: [x0 + YOKE_HIT.hub[3], y0 + YOKE_HIT.hub[4], z0 + YOKE_HIT.hub[5]],
-      more: [-1, 1].map(k => [YOKE_HIT.horn.slice(0, 3), [x0 + k * YOKE_HIT.horn[3], y0 + YOKE_HIT.horn[4], z0 + YOKE_HIT.horn[5]]]), act: () => info('操縦輪：W / S（↑ / ↓）で機首の上げ下げ、A / D（← / →）で傾き') });
+      more: [...[-1, 1].map(k => [YOKE_HIT.horn.slice(0, 3), [x0 + k * YOKE_HIT.horn[3], y0 + YOKE_HIT.horn[4], z0 + YOKE_HIT.horn[5]]]),
+        [YOKE_HIT.top.slice(0, 3), [x0 + YOKE_HIT.top[3], y0 + YOKE_HIT.top[4], z0 + YOKE_HIT.top[5]]]], act: () => info('操縦輪：W / S（↑ / ↓）で機首の上げ下げ、A / D（← / →）で傾き') });
   }
 
   // ============================================================ rudder pedals (left pair, right pair: they move opposite ways)
@@ -1451,7 +1486,7 @@ export function buildCockpit(FL, A, opts = {}) {
   add(at(rbox(0.13, 0.13, 0.86, 0.025, 2), [0, FLOOR + 0.065, -0.33]), S.panel);                                  // (black, as the pedestal)
   add(at(rbox(0.05, 0.03, 0.06, 0.008), [0, FLAP.y - 0.012, FLAP.z]), S.black);
   add(tube([[0, FLAP.y, FLAP.z], [0, FLAP.y + 0.004, FLAP.z + 0.15], [0, FLAP.y + 0.006, FLAP.z + 0.32]], 0.009, 10, 8), S.chrome, 'flap');
-  add(at(cylZ(0.016, 0.017, 0.11, 16), [0, FLAP.y + 0.006, FLAP.z + 0.36]), S.grip, 'flap');
+  add(at(cylZ(0.016, 0.017, 0.11, 16), [0, FLAP.y + 0.006, FLAP.z + 0.36]), GRIPBLK, 'flap');
   add(at(cylZ(0.008, 0.008, 0.01, 12), [0, FLAP.y + 0.006, FLAP.z + 0.418]), S.chrome, 'flap');
   // its hit box: the whole handle (the grip lies beside the seat backs, out of the pilot's sight: one aims at the rod)
   control({ id: 'flaps', label: 'フラップ レバー（V / Shift+V）', kind: 'lever', part: 'flap', size: [0.045, 0.05, 0.42], pos: [0, FLAP.y + 0.006, FLAP.z + 0.215], aim: [0, FLAP.y + 0.004, FLAP.z + 0.14],
@@ -1463,7 +1498,7 @@ export function buildCockpit(FL, A, opts = {}) {
   // the trim wheel (rolls fore and aft; forward = nose down), half sunk in the console
   { const g = new THREE.CylinderGeometry(TRIMW.r, TRIMW.r, 0.022, 36).rotateZ(Math.PI / 2);
     add(at(g, [0, TRIMW.y, TRIMW.z]), S.black, 'trim');
-    for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; add(at(new THREE.BoxGeometry(0.024, 0.009, 0.006), [0, TRIMW.y + Math.sin(a) * TRIMW.r, TRIMW.z + Math.cos(a) * TRIMW.r], [-a, 0, 0]), i % 6 === 0 ? S.white : S.grip, 'trim'); }
+    for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; add(at(new THREE.BoxGeometry(0.024, 0.009, 0.006), [0, TRIMW.y + Math.sin(a) * TRIMW.r, TRIMW.z + Math.cos(a) * TRIMW.r], [-a, 0, 0]), i % 6 === 0 ? S.white : GRIPBLK, 'trim'); }
     add(at(rbox(0.05, 0.012, 0.18, 0.004), [0, FLOOR + 0.132, TRIMW.z]), S.black);
     // on the console's top, on the pilot's side of the wheel
     label(['NOSE', 'DN'], [-0.033, FLOOR + 0.1305, TRIMW.z - 0.07], { size: 1.9, r: [-Math.PI / 2, 0, 0] });
@@ -1501,7 +1536,9 @@ export function buildCockpit(FL, A, opts = {}) {
     add(at(rbox(0.02, 0.10, 0.34, 0.006), [lowX(-0.15) - 0.011, -0.15, -0.86]), { ...S.arm, c: 0x3b3e42 });
     add(at(rbox(0.03, 0.022, 0.12, 0.006), [x - 0.02, 0.27, -0.76]), S.chrome);
     add(at(rbox(0.012, 0.016, 0.03, 0.004), [x - 0.012, 0.27, -0.685]), S.black);
-    add(at(rbox(0.022, 0.03, 0.09, 0.006), [bandX(0.72) - 0.02, 0.715, -0.98]), S.chrome);
+    // the top latch: hanging from the window ring's top edge over the door's window, against the wall's plane (it was at z
+    // −0.98, outside the windshield; round R2 reshapes the door)
+    add(at(rbox(0.022, 0.03, 0.09, 0.006), [bandX(0.73) - 0.0105, 0.722, -0.60]), S.chrome);
     label(['DOOR', 'LATCH'], [x - 0.0005, 0.302, -0.76], { size: 1.8, r: [0, -Math.PI / 2, 0], lit: 0 });
     control({ id: 'door', label: 'ドア ハンドル（降りる）', kind: 'handle', size: [0.05, 0.05, 0.16], pos: [x - 0.02, 0.27, -0.74], act: () => ({ type: 'exit' }) });
   }
@@ -1545,9 +1582,11 @@ export function buildCockpit(FL, A, opts = {}) {
       if (big) { g.font = `700 ${h * 0.5}px ${SANS}`; const t = { 0: 'N', 90: 'E', 180: 'S', 270: 'W' }[d] || String(d / 10); g.fillText(t, x, h * 0.68); if (x < 20) g.fillText(t, x + w, h * 0.68); }
     }
   }
-  if (!fromModel('headliner')) for (const sd of [-1, 1]) {      // (without the model) the sun visors
-    add(at(rbox(0.29, 0.012, 0.14, 0.006), [sd * 0.25, roofY(sd * 0.25) - 0.03, -0.70], [-12 * DEG, 0, 0]), S.trim);
-    add(at(cylX(0.005, 0.27, 8), [sd * 0.25, roofY(sd * 0.25) - 0.022, -0.77]), S.steel);
+  // (without the model) the sun visors, folded up flat under the headliner (along its arch) aft of the overhead switch
+  // panel: down, they would hide its switches from the seat
+  if (!fromModel('headliner')) for (const sd of [-1, 1]) {
+    add(at(rbox(0.25, 0.012, 0.13, 0.006), [sd * 0.25, roofY(sd * 0.25) - 0.016, -0.67], [0, 0, -sd * 6.6 * DEG]), S.trim);
+    add(at(cylX(0.005, 0.24, 8), [sd * 0.25, roofY(sd * 0.25) - 0.012, -0.74], [0, 0, -sd * 6.6 * DEG]), S.steel);
   }
   // the overhead console (its front 9 cm aft of the overhead switch panel): two fresh-air eyeballs and the dome light
   add(at(rbox(...CONSOLE.size, 0.012), CONSOLE.pos), S.trim);

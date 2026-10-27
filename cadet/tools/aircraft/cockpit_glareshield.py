@@ -337,14 +337,14 @@ def check(ctx, objs):
     for ob in (hd, rb):
         for v in ob.data.vertices:
             if v.co.y >= L.YF - 1e-6: assert v.co.z >= ctx.wsZ(v.co.x, v.co.y) + 1e-4, (ob.name, 'through the glass', tuple(v.co))
-    # the windshield's centre strip (cockpit.js: a tube r 0.011 up the glass's middle, 8 mm off it, from y ws.y0 + 0.01):
-    # its lower end goes out of sight behind the crest (the lowest point of its open end's ring); the hood under it
-    # cannot reach higher (it stays under the line of sight over the crest), so the top of the open end still shows
-    ys = ctx.WS['y0'] + 0.01; zt = ctx.wsZ(0, ys) + 0.008
-    ax = V((0, 1, (ctx.WS['z1'] - ctx.WS['z0']) / (ctx.WS['y1'] - ctx.WS['y0']))).normalized()
-    low = V((0, ys, zt)) - V((0, ax.z, -ax.y)) * 0.011
-    d = low - EYE; h = first(EYE, d, d.length)
-    assert h and h[0] == 'glareshield.glareLip', ('the centre strip\'s end shows under the crest', tuple(low), h)
+    # the windshield's centre strip (cockpit.js: a flat double strip ±9.5 mm wide on the glass's middle, its flanges 1.6
+    # mm off it, from y ws.y0 − 0.004 — under where the hood meets the glass): its lower end (its middle and its corners)
+    # is out of sight behind the crest
+    ys = ctx.WS['y0'] - 0.004; zt = ctx.wsZ(0, ys) + 0.0016
+    for x in (-0.0095, 0.0, 0.0095):
+        low = V((x, ys, ctx.wsZ(x, ys) + 0.0016))
+        d = low - EYE; h = first(EYE, d, d.length)
+        assert h and h[0] == 'glareshield.glareLip', ('the centre strip\'s end shows under the crest', tuple(low), h)
     y_top = 0.6 - first(V((0, 0.6, zt)), V((0, -1, 0)))[1]
     # the margins (for the report): the roll's underside over the lines of sight to the screens' top, in the section
     def line_y(p, z): return EYE.y + (p[1] - EYE.y) * (EYE.z - z) / (EYE.z - p[2])

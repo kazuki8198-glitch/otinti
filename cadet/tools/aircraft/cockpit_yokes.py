@@ -6,15 +6,17 @@
 #   (a group alone, for its previews: … -- /tmp/cockpit.json /tmp/trial.glb /tmp/prev band,yokes — never into assets/model,
 #   which must hold every group; tools/aircraft/trial-glb.mjs runs the game's tests against such a trial model)
 # - each yoke (moving parts yokeL, yokeR; the G1000 NXi Archer's M600-style wheel, the same for both seats — Piper's TX,
-#   LX Steel and Seminole NXi photos): a moulded wedge of a hub, widest at its foot where the horns grow out of it and
-#   narrowing to its top, its aft face one plane leaning forward (so that the pilot, looking down at it, sees it nearly
-#   face on), a raised plate on that face a shade lighter than the hub, carrying Piper's chevron (two light-grey
-#   triangles, raised: a large one cut by a diagonal gap from a small one at its lower right — modelled: no print on a
-#   moving part), and a rounded cap on the hub's top jutting aft over the plate's top edge; the boss forward of it round
-#   the shaft (a collar, open at its front, which faces the panel and is never seen); two thick horns, each one sweep of
-#   an oval section out of the hub's lower half (their underside on the hub's foot line), round two bends (horizontal →
-#   45° → upright: the hit boxes leave the bend no other room) into a fat grip, the horn and the grip one moulding (a
-#   pebbled finish), the grip's top hooked aft and inboard so that its top face looks up at the pilot. On the outboard
+#   LX Steel and Seminole NXi photos): a moulded wedge of a hub, a tall shield (~0.11 m: as tall as the Seminole's
+#   temporary switch row, seen over it from the seat, lets it be; the aircraft's is ~0.15 m), widest at its foot where
+#   the horns grow out of it and narrowing to its top, its aft face one plane leaning forward (so that the pilot, looking
+#   down at it, sees it nearly face on), a raised plate on that face a shade lighter than the hub, carrying Piper's
+#   chevron in its lower half (two light-grey triangles, raised: a large one cut by a diagonal gap from a small one at
+#   its lower right — modelled: no print on a moving part), and a rounded cap on the hub's top jutting aft over the
+#   plate's top edge; the boss forward of it round the shaft (a collar, open at its front, which faces the panel and is
+#   never seen); two thick horns, each one sweep of an oval section out of the hub's lower half (their underside on the
+#   hub's foot line), round two bends (horizontal → 45° → upright: the hit boxes leave the bend no other room) into a
+#   fat grip, the horn and the grip one moulding (a pebbled finish), the grip's top hooked aft and inboard so that its
+#   top face looks up at the pilot. On the outboard
 #   grips (the left yoke's left, the right yoke's right) a switch pod on that face: a black housing, the split electric-
 #   trim rocker on it, the red autopilot-disconnect / trim-interrupt button at its inboard end (the pilot's yoke only:
 #   the table has no red for the right yoke), the push-to-talk trigger under the hooked top on the grip's forward face;
@@ -25,9 +27,10 @@
 # Made in place at the rest pose: cockpit.js turns each yoke's group about the shaft's axis through its pivot
 # (∓yoke.x, yoke.y, yoke.z) (roll ±yoke.roll) and slides it along z (±yoke.travel), so the shaft lies on that axis; the
 # shaft reaches 40 mm behind the panel face (pz) even at full aft travel. Everything else stays inside the yokes' hit
-# boxes (yokeHit: the hub's box and the horns', which stay in code: picking takes the first box a ray meets) and the arms'
-# corridor between them, and out of the lines of sight from the eye to the screens' image, to the controls behind the
-# yokes (cockpit.test.mjs: the PFD's and MFD's corners at rest; the aim points with a little nose-up trim — copied below,
+# boxes (yokeHit: the hub's box, its top's — the hub's narrower upper part — and the horns', which stay in code: picking
+# takes the first box a ray meets) and the arms' corridor between them, and out of the lines of sight from the eye to
+# the screens' image, to the controls behind the yokes (cockpit.test.mjs: the PFD's and MFD's corners at rest; the aim
+# points with a little nose-up trim — copied below,
 # as the spec does not carry them), and to what the panel keeps beside and under the yokes (the G5, the dimmers, the
 # alternate static, the quadrant's levers and carb heat, the switch block under the audio panel: at rest and trimmed);
 # check() asserts all of it, with a margin.
@@ -65,28 +68,30 @@ SHAFT_R, SHAFT_SEG = 0.013, 16        # the shaft: 26 mm, its sides only (its en
 SHAFT_Z0, SHAFT_REACH = -0.034, 0.040  # its back end (inside the collar); how far behind the panel at full aft travel
 # the hub: horizontal rounded-rectangle rings (x across, z fore and aft) up its height; its half-width, its aft face's z
 # and its corners' radius at the foot (HUB_YB) and at the top (HUB_YT), straight between them — so the sides lean in
-# (~25°) and the aft face is one plane leaning forward (~28° off the upright: the plate's) — the front face upright at
-# HUB_ZF; the rings (y, how far in from that outline): the foot's bevel, the side, the top's rounded edge
-HUB_YB, HUB_YT, HUB_ZF = -0.034, 0.024, -0.024
-HUB_A, HUB_ZA, HUB_RC = (0.053, 0.025), (0.031, 0.000), (0.0085, 0.0070)
-HUB_RINGS = [(-0.034, 0.004), (-0.031, 0.0), (0.021, 0.0), (0.0232, 0.0015), (0.024, 0.004)]
+# (~17°) and the aft face is one plane leaning forward (~19° off the upright: the plate's) — the front face upright at
+# HUB_ZF; the rings (y, how far in from that outline): the foot's bevel, the side, the top's rounded edge. Its height:
+# the lines of sight from the eye to the Seminole's switch row (cockpit.js ROCKER, y 0.16) pass ~6 mm over its cap.
+HUB_YB, HUB_YT, HUB_ZF = -0.034, 0.064, -0.024
+HUB_A, HUB_ZA, HUB_RC = (0.056, 0.026), (0.031, -0.002), (0.0085, 0.0070)
+HUB_RINGS = [(-0.034, 0.004), (-0.031, 0.0), (0.061, 0.0), (0.0632, 0.0015), (0.064, 0.004)]
 # the plate on the aft face (the face's own frame: x across, s up the slope from PLATE_Y0, n out of it): a rounded
 # trapezoid (its half-widths at the foot and the top, the foot's corner radius, its height), its foot sunk in the face,
 # raised PLATE_H with a bevelled rim PLATE_IN wide; its top hides under the cap. The plate a shade lighter than the hub,
 # its rim (the groove the photos show round it) darker.
-PLATE_Y0, PLATE_HW, PLATE_R, PLATE_S = -0.0265, (0.039, 0.0195), 0.007, 0.0475
+PLATE_Y0, PLATE_HW, PLATE_R, PLATE_S = -0.0265, (0.042, 0.019), 0.007, 0.089
 PLATE_SINK, PLATE_H, PLATE_IN = 0.0005, 0.0012, 0.0006
 PLATE_K, PLATE_RIM_K = 1.4, 0.6
 # Piper's chevron (the photos' outline, the base 0…1 across): the large piece (its left foot, the gap's foot, the gap's
 # top on the right edge, the apex) and the small one (the gap's other foot, the right foot, the gap's top) — the gap a
-# band parallel to the large piece's cut; its width across and where its base sits up the plate; raised, its foot sunk
+# band parallel to the large piece's cut; its width across and where its base sits up the plate (its lower half, as on
+# the aircraft); raised, its foot sunk
 CHEVRON = ([(0, 0), (0.505, 0), (0.709, 0.3335), (0.534, 0.534)], [(0.592, 0), (1, 0), (0.757, 0.2785)])
-LOGO_W, LOGO_S, LOGO_H, LOGO_SINK = 0.050, 0.0075, 0.0006, 0.0003
+LOGO_W, LOGO_S, LOGO_H, LOGO_SINK = 0.054, 0.018, 0.0006, 0.0003
 # the cap on the hub's top: rings (y, half-width, front z, aft z, corner radius) from its foot (buried in the hub) up its
 # side (jutting aft of the plate) and round its top edge; a low dome over it
-CAP = [(0.008, 0.018, -0.0175, 0.004, 0.006), (0.0145, 0.0225, -0.0205, 0.0135, 0.0085), (0.0300, 0.0225, -0.0205, 0.0135, 0.0085),
-       (0.0328, 0.0217, -0.0197, 0.0127, 0.0077), (0.0344, 0.0197, -0.0177, 0.0107, 0.0057)]
-CAP_TOP = 0.0349
+CAP = [(0.048, 0.018, -0.0175, 0.002, 0.006), (0.0545, 0.0225, -0.0205, 0.0115, 0.0085), (0.0700, 0.0225, -0.0205, 0.0115, 0.0085),
+       (0.0728, 0.0217, -0.0197, 0.0107, 0.0077), (0.0744, 0.0197, -0.0177, 0.0087, 0.0057)]
+CAP_TOP = 0.0749
 # the boss and the collar (r, z) from the collar's front edge back into the hub: the collar (open at its front; the
 # shaft fills it), the boss widening from its back edge into the hub
 BOSS = [(0.0168, -0.0446), (0.0172, -0.0350), (0.0196, -0.0200)]
@@ -147,16 +152,17 @@ SCREENS = [(-0.404, 0.3005, -1.0825), (-0.3, 0.3005, -1.0825), (-0.196, 0.3005, 
            (0.155, 0.3005, -1.0825), (-0.053, 0.36512, -1.0825), (0.155, 0.36512, -1.0825), (-0.053, 0.42975, -1.0825),
            (0.051, 0.42975, -1.0825), (0.155, 0.42975, -1.0825), (-0.053, 0.27981, -1.0825), (0.155, 0.27981, -1.0825)]
 AIMS_TXT = '''
-mag -0.48513 0.1041 -1.078 / mfd.alt.inner -0.069 0.26 -1.065 / mfd.alt.outer -0.07388 0.2676 -1.071
+mag@pa44 -0.48513 0.1041 -1.078 / mfd.alt.inner -0.069 0.26 -1.065 / mfd.alt.outer -0.07388 0.2676 -1.071
 mfd.sk1 -0.04525 0.25875 -1.078 / pfd.alt.inner -0.42 0.26 -1.065 / pfd.alt.outer -0.41714 0.26857 -1.071
 pfd.fms.inner -0.18 0.252 -1.065 / pfd.fms.outer -0.1828 0.26059 -1.071 / pfd.sk1 -0.39625 0.25875 -1.078
 pfd.sk10 -0.23875 0.25875 -1.078 / pfd.sk11 -0.22125 0.25875 -1.078 / pfd.sk12 -0.20375 0.25875 -1.078
 pfd.sk2 -0.37875 0.25875 -1.078 / pfd.sk3 -0.36125 0.25875 -1.078 / pfd.sk4 -0.34375 0.25875 -1.078
 pfd.sk5 -0.32625 0.25875 -1.078 / pfd.sk6 -0.30875 0.25875 -1.078 / pfd.sk7 -0.29125 0.25875 -1.078
-pfd.sk8 -0.27375 0.25875 -1.078 / pfd.sk9 -0.25625 0.25875 -1.078 / primer -0.468 0.183 -1.088
-sw.avionics -0.392 0.095 -1.092 / sw.beacon -0.326 0.095 -1.092 / sw.fuelPump -0.356 0.095 -1.092
-sw.landing -0.212 0.095 -1.092 / sw.master -0.428 0.095 -1.092 / sw.nav -0.278 0.095 -1.092
-sw.pitot -0.14 0.095 -1.092 / sw.strobe -0.248 0.095 -1.092 / sw.taxi -0.176 0.095 -1.092
+pfd.sk8 -0.27375 0.25875 -1.078 / pfd.sk9 -0.25625 0.25875 -1.078 / primer@pa44 -0.468 0.183 -1.088
+sw.avionics@pa44 -0.392 0.16 -1.092 / sw.beacon@pa44 -0.326 0.16 -1.092 / sw.fuelPump@pa44 -0.356 0.16 -1.092
+sw.landing@pa44 -0.212 0.16 -1.092 / sw.master@pa44 -0.428 0.16 -1.092 / sw.nav@pa44 -0.278 0.16 -1.092
+sw.pitot@pa44 -0.14 0.16 -1.092 / sw.strobe@pa44 -0.248 0.16 -1.092 / sw.taxi@pa44 -0.176 0.16 -1.092
+sw.pitot -0.1385 0.197 -1.086 / sw.fan -0.1195 0.197 -1.086
 pfd.ent -0.1737 0.2695 -1.077 / pfd.clr -0.1863 0.2695 -1.077 / pfd.proc -0.1737 0.2785 -1.077
 pfd.fpl -0.1863 0.2785 -1.077 / audio.COPLT -0.11 0.28 -1.078 / audio.PILOT -0.139 0.28 -1.078
 pedals -0.3 -0.27 -1.21 / mfd.sk2 -0.02775 0.25875 -1.078 / pfd.direct -0.1863 0.2875 -1.077
@@ -166,9 +172,9 @@ prop 0.012 0.06033 -1.03329 / audio.MANSQ -0.11 0.3096 -1.078 / audio.AUX -0.139
 mfd.sk4 0.00725 0.25875 -1.078 / mfd.sk5 0.02475 0.25875 -1.078 / audio.NAV2 -0.11 0.3244 -1.078
 audio.NAV1 -0.139 0.3244 -1.078 / pfd.crs.inner -0.18 0.336 -1.065 / stby.g5 -0.49 0.3365 -1.0875
 elt 0.345 0.364 -1.09 / cabinHeat 0.2945 0.278 -1.089 / defrost 0.2945 0.256 -1.089 / cb 0.24 0.11 -1.091
-dim.switch -0.215 0.125 -1.089 / dim.panel -0.18 0.125 -1.089 / dim.avionics -0.145 0.125 -1.089
+dim.switch -0.215 0.125 -1.088 / dim.panel -0.18 0.125 -1.088 / dim.avionics -0.145 0.125 -1.088
 altStatic -0.415 0.047 -1.083 / carbHeat 0.1 0.1192 -1.0808 / parkBrake -0.11 -0.071 -1.068
-rudderTrim 0.059 -0.3498 -0.9412 / carbHeat@pa44 -0.0775 0.0189 -1.017 / gear@pa44 0.225 0.2305 -1.0576
+rudderTrim 0.059 -0.2681 -1.0367 / carbHeat@pa44 -0.0775 0.0189 -1.017 / gear@pa44 0.225 0.2305 -1.0576
 parkBrake@pa44 -0.112 -0.037 -1.087
 '''
 # and what the panel keeps beside and under the yokes, seen at rest (and trimmed): the dimmers' knobs and the alternate
@@ -178,9 +184,9 @@ parkBrake@pa44 -0.112 -0.037 -1.087
 # the points whose line of sight meets a yoke's hit box are left out — picking takes the yoke there whatever its shape
 # — and check() prints where they begin)
 REST_TXT = '''
-dim.switch -0.215 0.125 -1.084 0.0055 / dim.panel -0.18 0.125 -1.084 0.0055 / dim.avionics -0.145 0.125 -1.084 0.0055
-altStatic -0.415 0.047 -1.0795 0.006 / throttle.L -0.035 0.01532 -1.01598 0 / throttle.M -0.005 0.01532 -1.01598 0
-throttle.R 0.011 0.01532 -1.01598 0 / throttle.idleL -0.035 -0.045 -1.008 0 / throttle.idleR 0.011 -0.045 -1.008 0
+dim.switch -0.215 0.125 -1.088 0.007 / dim.panel -0.18 0.125 -1.088 0.007 / dim.avionics -0.145 0.125 -1.088 0.007
+altStatic -0.415 0.047 -1.0795 0.006 / throttle.L -0.040 0.01532 -1.01598 0 / throttle.M -0.005 0.01532 -1.01598 0
+throttle.R 0.016 0.01532 -1.01598 0 / throttle.idleL -0.040 -0.045 -1.008 0 / throttle.idleR 0.016 -0.045 -1.008 0
 mixture.rich 0.045 0.0603 -1.0333 0.004 / mixture.cut 0.045 -0.045 -1.008 0.004 / carbHeat.off 0.1 0.1192 -1.0808 0.004
 carbHeat.on 0.1 0.050 -1.080 0.004
 '''
@@ -215,9 +221,10 @@ def layout(ctx):
     L = _L(); Y = S['yoke']; H = S['yokeHit']
     L.X0, L.Y0, L.Z0, L.TRAVEL = Y['x'], Y['y'], Y['z'], Y['travel']
     L.PZ, L.EYE, L.S = S['pz'], ctx.EYE, S
-    # the hit boxes in the yoke's frame: (min, max) — the hub's, the right horn's, the left horn's, and the arms' corridor
+    # the hit boxes in the yoke's frame: (min, max) — the hub's, its top's, the right horn's, the left horn's, and the arms' corridor
     # between them (as deep as the horns' box, from the hub's box to the horns', up to a third of the horns' box)
     hw, hh, hd, ox, oy, oz = H['hub']; L.HUB = (V((ox - hw / 2, oy - hh / 2, oz - hd / 2)), V((ox + hw / 2, oy + hh / 2, oz + hd / 2)))
+    hw, hh, hd, ox, oy, oz = H['top']; L.TOP = (V((ox - hw / 2, oy - hh / 2, oz - hd / 2)), V((ox + hw / 2, oy + hh / 2, oz + hd / 2)))
     w, h, d, ox, oy, oz = H['horn']
     L.HORN_R = (V((ox - w / 2, oy - h / 2, oz - d / 2)), V((ox + w / 2, oy + h / 2, oz + d / 2)))
     L.HORN_L = (V((-ox - w / 2, oy - h / 2, oz - d / 2)), V((-ox + w / 2, oy + h / 2, oz + d / 2)))
@@ -564,7 +571,7 @@ def check(ctx, objs):
             for v in verts(ob):
                 q = v - p
                 if q.z < L.HUB[0].z: assert math.hypot(q.x, q.y) <= BOSS[-1][0] + 1e-6, (k, 'forward of the hub, off the shaft', tuple(q))
-                else: assert any(inbox(q, b) for b in (L.HUB, L.HORN_R, L.HORN_L, L.CORR)) or inbox(V((-q.x, q.y, q.z)), L.CORR), (k, 'outside the hit boxes', tuple(q))
+                else: assert any(inbox(q, b) for b in (L.HUB, L.TOP, L.HORN_R, L.HORN_L, L.CORR)) or inbox(V((-q.x, q.y, q.z)), L.CORR), (k, 'outside the hit boxes', tuple(q))
         g = [v - p for k, ob in mine.items() if k.endswith('.' + n) and k.split('.')[1] in ('grip', 'black', 'red') for v in verts(ob) if abs(v.x - p.x) > L.HORN_R[0].x - 0.002]
         room[n] = (L.HORN_R[1].y - max(v.y for v in g), L.HORN_R[1].x - max(abs(v.x) for v in g),
                    min(abs(v.x) for v in g if v.y > L.CORR[1].y) - L.HORN_R[0].x)
@@ -597,7 +604,7 @@ def check(ctx, objs):
         # whatever the model: no shape inside the boxes can show it)
         tgt = V(tgt); d = tgt - EYE; far = d.length - 0.03; d = d / d.length
         for n, p in piv.items():
-            for box in (L.HUB, L.HORN_R, L.HORN_L):
+            for box in (L.HUB, L.TOP, L.HORN_R, L.HORN_L):
                 lo, hi = box[0] + p + V((0, 0, dz)), box[1] + p + V((0, 0, dz)); t0, t1 = 0.0, far
                 for i in range(3):
                     if abs(d[i]) < 1e-12:

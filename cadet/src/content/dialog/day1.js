@@ -94,7 +94,7 @@ export function dayDialogs() {
       { text: '少しなので、このまま離陸する', next: 'go', effects: [{ hook: 'go', arg: 'go' }] },
     ] }),
     ret: say('いい判断です。制限を超えたら、飛ばない。地上管制には私が連絡します。駐機場へ戻りましょう。大城さんに見てもらいます。', { hook: { name: 'nod' }, end: true }),
-    burn: say('それも手順のひとつです。1,800 rpm くらいで、ミクスチャーを少し絞って 30 秒。そのあと、もう一度 L と R を確かめてください。', { hook: { name: 'point', arg: 'pfd' }, end: true }),
+    burn: say('それも手順のひとつです。1,800 rpm くらいで、ミクスチャーを少し絞って 30 秒。そのあと、もう一度、左右のマグネトーを 1 つずつ確かめてください。', { hook: { name: 'point', arg: 'pfd' }, end: true }),
     go: say('いいえ、それはだめです。制限を超えたマグネトーで離陸すると、上空で片方の点火が止まったとき、もう余裕がありません。今日は戻ります。', { hook: { name: 'look', arg: 'player' }, end: true }),
   };
   const F2 = {

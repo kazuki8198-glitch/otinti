@@ -142,7 +142,7 @@ export const EN = {
   'では、左旋回でクロスウインド、ダウンウインドへ。地上 1,000 ft・90 kt です。課目の始まるところで私が言います。': 'Then turn left onto crosswind and downwind. 1,000 ft above the ground, 90 kt. I\'ll tell you where the lesson starts.',
   '左のマグネトーで、回転の下がり方が制限の 175 rpm を超えました。エンジンも少し荒れていますね。どうしますか。': 'On the left magneto the drop went past the 175 rpm limit. The engine is running a little rough, too. What will you do?',
   'いい判断です。制限を超えたら、飛ばない。地上管制には私が連絡します。駐機場へ戻りましょう。大城さんに見てもらいます。': 'Good decision. Past a limit, we don\'t fly. I\'ll tell Ground. Let\'s go back to the stand; Mr. Oshiro will look at it.',
-  'それも手順のひとつです。1,800 rpm くらいで、ミクスチャーを少し絞って 30 秒。そのあと、もう一度 L と R を確かめてください。': 'That\'s one of the procedures. About 1,800 rpm, lean the mixture a little for 30 seconds. Then check L and R again.',
+  'それも手順のひとつです。1,800 rpm くらいで、ミクスチャーを少し絞って 30 秒。そのあと、もう一度、左右のマグネトーを 1 つずつ確かめてください。': 'That\'s one of the procedures. About 1,800 rpm, lean the mixture a little for 30 seconds. Then check each magneto again, one at a time.',
   'いいえ、それはだめです。制限を超えたマグネトーで離陸すると、上空で片方の点火が止まったとき、もう余裕がありません。今日は戻ります。': 'No, we can\'t do that. Take off on a magneto past its limit, and if the other ignition fails up there, there\'s no margin left. We\'re going back.',
   '焼いても、まだ制限を超えて落ちますね。プラグの汚れではなく、マグネトーそのものかもしれません。': 'Even after burning it off, it still drops past the limit. It may be the magneto itself, not a fouled plug.',
   '今日は飛ぶ予定はありません。': 'There\'s no flight planned today.',
@@ -310,7 +310,7 @@ export const AIR_EN = {
   taxiDone: 'You have control. From here, it\'s yours.',
   recover: 'That\'s far enough for a forced landing. In real training I\'d add power and climb away by 500 ft above the ground. I have control. We\'re heading back to LAB.',
   incursion: 'Stop! You\'re past the hold line. You\'re not cleared onto the runway yet.',
-  nostarter: 'The battery master (BATT MASTR) is OFF, so the starter won\'t turn.',
+  nostarter: 'The master switch (BATT MASTR) is OFF, so the starter won\'t turn.',
   surge: 'Too much throttle. The rpm jumped the moment it caught. Open it only a little to start.',
   noClear: 'Stop short of the hold line.',
 };
@@ -323,7 +323,7 @@ const AIR = new Map([
   ['滑走路から外れました。ラダーでセンターラインを保ちましょう。', 'We left the runway. Keep the centreline with the rudder.'],
   ['尾部を擦りました。機首の上げすぎです。', 'The tail scraped. Too much nose-up.'],
   ['止まって！……ぶつけてしまいましたね。今日の飛行はここまでにします。', 'Stop! ...We hit something. That\'s the end of today\'s flight.'],
-  ['1,800 rpm で、ミクスチャーを少し絞って 30 秒。それから L と R を、もう一度。', 'At 1,800 rpm, lean the mixture a little for 30 seconds. Then L and R, once more.'],
+  ['1,800 rpm で、ミクスチャーを少し絞って 30 秒。それから左右のマグネトーを 1 つずつ、もう一度。', 'At 1,800 rpm, lean the mixture a little for 30 seconds. Then each magneto, one at a time, once more.'],
   ['駐機場へ戻ります。地上管制には連絡しました。タキシーは、いつもどおりに。', 'We\'re going back to the stand. I\'ve told Ground. Taxi as usual.'],
   [debriefLine({ crashed: true }), 'Are you all right? That\'s enough for today. We\'ll go over what happened together on the ground.'],
   [debriefLine({ done: true, grade: '―' }), 'Let\'s stop here for today. We\'ll carry on next time.'],
@@ -338,6 +338,7 @@ const AIR = new Map([
     flooded: 'Too much priming: there\'s too much fuel. Open the throttle about halfway and try again (pull it back as soon as it catches).',
     starter: 'Don\'t keep the starter turning for long. Wait a moment, then try again.',
     mags: 'Both magnetos are OFF. Left magneto (MAG LEFT) ON first, then try again.',
+    magL: 'The left magneto (MAG LEFT) is OFF. The starting device (the impulse coupling) is on the left one, so MAG LEFT ON (the right still OFF), then try again.',
   }).map(([k, en]) => [NOCATCH[k], en]),
 ]);
 // what he found undone on the walk-around (walkaround-*.js TASK_MISSED), and why an engine stopped (aircraft/systems.js)

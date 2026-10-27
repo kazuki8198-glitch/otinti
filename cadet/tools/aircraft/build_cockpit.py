@@ -378,9 +378,9 @@ proxy_box(S['console']['pos'], S['console']['size'])
 cc = S['compass']
 for key in ('body', 'hanger'):
     w, h, d, ox, oy, oz = S['compassCase'][key]; proxy_box((cc[0] + ox, cc[1] + oy, cc[2] + oz), (w, h, d))
-for k in range(6):
-    y0, y1 = lerp(WS['y0'], WS['y1'], k / 6), lerp(WS['y0'], WS['y1'], (k + 1) / 6)
-    proxy_quad((-0.011, y0, wsZ(0, y0) + 0.008), (0.011, y0, wsZ(0, y0) + 0.008), (0.011, y1, wsZ(0, y1) + 0.008), (-0.011, y1, wsZ(0, y1) + 0.008))
+for k in range(6):                                       # (the windshield's centre strip: cockpit.js's flat double strip)
+    y0, y1 = lerp(WS['y0'] - 0.004, WS['y1'] - 0.01, k / 6), lerp(WS['y0'] - 0.004, WS['y1'] - 0.01, (k + 1) / 6)
+    proxy_quad((-0.0095, y0, wsZ(0, y0) + 0.0016), (0.0095, y0, wsZ(0, y0) + 0.0016), (0.0095, y1, wsZ(0, y1) + 0.0016), (-0.0095, y1, wsZ(0, y1) + 0.0016))
 for g, mod in MODULES.items():
     for pr in (mod.proxies(ctx) if hasattr(mod, 'proxies') else []):
         if pr[0] == 'quad': proxy_quad(*pr[1:])

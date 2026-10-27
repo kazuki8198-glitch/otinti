@@ -107,6 +107,7 @@ glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み
   - COLOR_0 の alpha は、近くの物の陰だけにする（5 cm のレイ、strength 0.6、下限 0.6）。ゲームが、窓から見える空の量の陰（`bakeAO`）を上に掛けるので、お手本の 0.9 m で焼くと二重に暗くなる。動く部品の陰は、自分の部品だけから焼く（スクリプトがする）。
   - 三角形は、Seminole の操縦席の上限（`trianglesTwin` 4 万）の残りに収める（ファイルごとの `MAX_TRIS`）。
   - 模型にないグループは、前のプログラムの形に戻る（`cp.fromCode` に出る）。部品の名前の一覧と、模型がないときの形は、`cockpit.test.mjs` と `cockpit-fallback.test.mjs` が確かめる。
+  - コードの側に、模型の形を写している所がある。天井のスイッチの板（`cockpit.js` の `ovhAt`）は、`build_cockpit.py` の `header_section`（`HDR`）の形に載せている。操縦輪は、`YOKE_HIT` の 3 つの箱（`hub`・`top`・`horn`）の中に収める（クリックはその箱で取る）。片方を変えたら、もう片方も直す（`cockpit.test.mjs` が確かめる）。
   - 1 グループだけを作るとき（4 番目の引数 `band,seats` など）は、scratchpad に書き出す。`assets/model/cockpit.glb` に書くと、ほかのグループが消える。試しの glb でゲームのテストを動かすには `COCKPIT_GLB=<glb> node --import ./tools/aircraft/trial-glb.mjs --test test/cockpit.test.mjs`（cadet/ から）。
 - **ノードの名前は、コードとの約束になっている。** コードは名前で部品を探す（例：`body`・`cabin`・`ailL`・`prop`（Seminole は `prop.0`・`prop.1`）・`gearN`・`reg.<登録記号>`。737 は `body` 1 つ）。
   - お手本は、オブジェクト名とメッシュのデータ名を同じにしている。
@@ -119,12 +120,12 @@ glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み
    理由は 3 つ。今の読み込み部分は UV を読まない。操縦席のテクスチャの上限（6e6 B）は、残り約 14 KB で満杯に近い。`cadet/assets/tex` の画像は FLIGHT LAB と CADET の両方の HTML に自動で入る（1 枚足すだけで `flight-lab/test/flight.test.mjs` の 12 枚の一覧の検査が落ちる）。
    UV やテクスチャが必要になったら、先に読み込み部分とテストを直す作業を、別の段階として行う。
 2. **容量の割り当て。**
-   - FLIGHT LAB の HTML の空きは 5,056,498 B（10 進で約 5.06 MB。操縦席の天井まわり・座席・グレアシールド・操縦輪を入れたあと）。glb は base64 で 4/3 倍になるので、元のファイルで使えるのは約 3.8 MB。
+   - FLIGHT LAB の HTML の空きは 5,031,031 B（10 進で約 5.03 MB。操縦席を本物の G1000 NXi の Archer に合わせたあと）。glb は base64 で 4/3 倍になるので、元のファイルで使えるのは約 3.8 MB。
    - 1 三角形あたりのバイト数は形で違う。なめらかで頂点を共有する形（機体）は約 28 B。角の立った箱（建物・キット）は 45〜70 B で見積もる（頂点 1 つ 32 B、インデックスは 1 三角形 6 B）。
 
    | 使い道 | 元の glb の合計（上限） |
    |---|---|
-   | 操縦席 | 1.2 MB（`cockpit.glb` で 309,392 B 使用：天井まわり・座席・グレアシールド・操縦輪） |
+   | 操縦席 | 1.2 MB（`cockpit.glb` で 312,096 B 使用：天井まわり・座席・グレアシールド・操縦輪） |
    | 田舎の建物・防風林のキット | 0.4 MB |
    | 飛行場の小物（T ハンガー・地上機材・灯火の器具） | 0.4 MB |
    | 積雲 | 0.3 MB |
@@ -136,6 +137,7 @@ glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み
    - FLIGHT LAB にしか要らない物（遠景のキットなど）も、ファイルは `cadet/assets/model/` に置く。登録は `flight-lab/build.mjs` の `MODELS` だけにする（`flight.test.mjs` は `MODELS` そのものと比べるので、テストを直す必要はない）。
    - FLIGHT LAB の景色に足す物は、`flight-lab/src3d/world3d.js` の `createWorld` / `w.load` の中で作って scene に加え、`w.outside()` にも入れる（フードの間は隠れる）。
 4. **テストの上限は勝手に上げない。** 上げる必要があるときは理由と数字を示し、ユーザーに確かめる。
+5. **操縦席の手本は本物の機体。** Archer は PA-28-181 Archer TX（G1000 NXi・予備計器は Garmin G5・キャブレター式・明るいグレーの内装。取扱説明書 VB-2749）、Seminole は PA-44-180 Seminole NXi（VB-2636）。部品の位置・形・色・スイッチの動き・手順は、これに合わせる。磁気コンパスは本物ではオプションだが、FLIGHT LAB の教材が教えるので残す。何を合わせて何が残っているかは `cadet/PLAN.md` の「本物の G1000 NXi の Archer TX に合わせる」。
 
 ### 4. 予算（テストとビルドが守っているもの）
 
@@ -143,10 +145,10 @@ glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み
 
 | 対象 | 上限 | いま |
 |---|---|---|
-| FLIGHT LAB の HTML | 12 MiB（`flight-lab/build.mjs` の `MAX_BYTES`。ビルドが止める） | 7,526,414 B |
-| CADET の HTML | 15 MiB（`cadet/build.mjs` の `MAX_BYTES`。止めるのは `cadet/test/build.test.mjs` だけ） | 9,029,285 B |
+| FLIGHT LAB の HTML | 12 MiB（`flight-lab/build.mjs` の `MAX_BYTES`。ビルドが止める） | 7,551,881 B |
+| CADET の HTML | 15 MiB（`cadet/build.mjs` の `MAX_BYTES`。止めるのは `cadet/test/build.test.mjs` だけ） | 9,060,523 B |
 | 1 フレーム | 描画 400 回未満・90 万三角形未満（`cadet/test/browser.test.mjs`。CADET でだけ確かめている） | 画質「高」で駐機場 約 53 万三角形（`cadet/PLAN.md`） |
-| 操縦席 | 描画 40 回以下（Seminole 44）・4 万三角形以下（Archer も Seminole も）・テクスチャ 6e6 B 以下（`cadet/test/cockpit.test.mjs`） | Archer 34,078 三角形・24 回、Seminole 35,876 三角形（`cp.trianglesTwin`。残りは 4,124。描画回数は未計測）、テクスチャ 5,985,621 B（`buildCockpit` をメモリ上で動かして測った）。`cockpit.glb` は 9,464 三角形・309,392 B（天井まわり 2,248・座席 3,552・グレアシールド 870・操縦輪 2,794） |
+| 操縦席 | 描画 40 回以下（Seminole 44）・4 万三角形以下（Archer も Seminole も）・テクスチャ 6e6 B 以下（`cadet/test/cockpit.test.mjs`） | Archer 31,658 三角形・23 回、Seminole 33,334 三角形・30 回（`cp.trianglesTwin`。残りは 6,666）、テクスチャ 5,985,621 B（`buildCockpit` をメモリ上で動かして測った）。`cockpit.glb` は 9,248 三角形・312,096 B（天井まわり 2,248・座席 3,552・グレアシールド 870・操縦輪 2,578） |
 | Archer の外観 | 近距離版 24,000 未満・遠距離版 3,000 未満（登録記号を除く。`cadet/test/exterior.test.mjs`） | 20,940 / 2,468 |
 | Seminole の外観 | 近距離版 27,000 未満・遠距離版 3,300 未満 | 25,946 / 3,101 |
 

@@ -567,6 +567,9 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     fs = await C(() => window.__cadet.fly.status());
     assert.ok(fs.engine.running && !fs.engine.sw.start && fs.engine.sw.magL && !fs.engine.sw.magR, 'it caught, START sprang back (MAG RIGHT still OFF)');
     assert.ok(fs.engine.rpm > 500, `rpm ${fs.engine.rpm}`);
+    await act('sw.magR'); await act('sw.avionics'); await tick();                                            // the start checklist's last clicks: MAG RIGHT ON, AVION MASTER ON
+    fs = await C(() => window.__cadet.fly.status());
+    assert.ok(fs.engine.sw.magL && fs.engine.sw.magR && fs.engine.sw.avionics, 'both magnetos on, the avionics on');
     // from here the instructor's hands, the radio answered right, the taxi by the instructor, the lessons by the bot
     // (seen from outside: the cockpit's screens are not drawn, which keeps the software renderer quick)
     await C(() => window.__cadet.fly.view('chase'));

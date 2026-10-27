@@ -127,7 +127,7 @@ export function createDayMode(h) {
   function onFault(arg) {
     if (!day) return;
     const r = day.decideFault(arg);
-    if (r === 'again') { say('1,800 rpm で、ミクスチャーを少し絞って 30 秒。それから L と R を、もう一度。', 6000); return; }
+    if (r === 'again') { say('1,800 rpm で、ミクスチャーを少し絞って 30 秒。それから左右のマグネトーを 1 つずつ、もう一度。', 6000); return; }
     if (r) { h.routeLine.set(routeBack(h.stand)); say('駐機場へ戻ります。地上管制には連絡しました。タキシーは、いつもどおりに。', 6000); }
   }
   // where the next lesson begins, and what the screen says on arriving there

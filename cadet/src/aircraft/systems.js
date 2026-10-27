@@ -15,17 +15,16 @@
 //    throttle open about a quarter inch, primed 2–3 times (the PRIMER rocker), MAG LEFT ON (the impulse coupling is on
 //    the left magneto: the right stays OFF while cranking), START held (the starter turns the propeller while it is);
 //    the engine catches and START springs back (or after the starter's limit), then MAG RIGHT ON. Not primed: it does
-//    not catch; primed too much: it floods and catches only with the throttle well open; both magnetos OFF: no spark
-//    (the instructor says why);
+//    not catch; primed too much: it floods and catches only with the throttle well open; both magnetos OFF: no spark;
+//    the left one OFF (the right alone, no impulse coupling): it does not catch either (the instructor says why);
 //  - running: it stops when the mixture is pulled to idle cut-off, both magnetos go OFF, or the selector is OFF (after
 //    the fuel left in the lines, about 6 s);
 //  - the run-up readings: the rpm the tachometer shows drops on one magneto (left 120, right 95 at 2,000 rpm: inside
 //    the published limits of 175 and 50 between them) and with carburettor heat on (about 70). These are what the
 //    gauge shows; the thrust stays the physics' own.
 // Pure logic: no three.js, no DOM. The switches are the cockpit's object (cockpit.switches), shared.
-export const MAG = ['OFF', 'R', 'L', 'BOTH', 'START'];        // (a key's positions: the Seminole's, until its own layout)
 // the magnetos and the starter as a key would show them: 'START' while the starter turns, else 'BOTH' | 'L' | 'R' | 'OFF'
-// (L: the left magneto alone — MAG RIGHT OFF)
+// (L: the left magneto alone — MAG RIGHT OFF; the Seminole's key, until its own layout: cockpit.js MAG)
 export const magState = (sw) => (sw.start ? 'START' : sw.magL ? (sw.magR ? 'BOTH' : 'L') : sw.magR ? 'R' : 'OFF');
 export const RUNUP = { rpm: 2000, maxDrop: 175, maxDiff: 50, dropL: 120, dropR: 95, carb: 70 };
 const CRANK_RPM = 150, CATCH_RPM = 520, STARTER_MAX = 8, LINE_FUEL_S = 6;
@@ -37,8 +36,9 @@ export const COLD = { master: false, altr: false, emergBatt: false, avionics: fa
 // in the air or lined up: as FLIGHT LAB's lessons start (everything that is on in flight)
 export const RUNNING = { master: true, altr: true, emergBatt: true, avionics: true, fuelPump: true, beacon: true, nav: true, strobe: true, landing: false, taxi: false,
   pitot: false, magL: true, magR: true, start: false, fuelSel: 'L', mixture: 1, carbHeat: false, propCycleT: 0 };
-// the starter without BATT MASTR (the event's words; content/dialog/day1.js EVENT_LINES.nostarter says the same aloud)
-export const NOSTARTER = 'バッテリー マスター（BATT MASTR）が OFF なので、スターターが回りません。';
+// the starter without the master (the event's words; content/dialog/day1.js EVENT_LINES.nostarter says the same aloud;
+// both types': the Archer's BATT MASTR, the Seminole's MASTER)
+export const NOSTARTER = 'マスター スイッチ（BATT MASTR）が OFF なので、スターターが回りません。';
 
 // the reason a start did not work, in the instructor's words (M8: exported for its English, content/dialog/en.js)
 export const NOCATCH = {
@@ -47,6 +47,7 @@ export const NOCATCH = {
   flooded: 'プライマーの押しすぎで、燃料が多すぎます。スロットルを半分ほど開けて、もう一度かけます（かかったらすぐに戻す）。',
   starter: 'スターターは長く回し続けないようにします。少し待ってから、もう一度。',
   mags: 'マグネトーが左右とも OFF です。左のマグネトー（MAG LEFT）を ON にしてから、もう一度。',
+  magL: '左のマグネトー（MAG LEFT）が OFF です。始動の仕掛け（インパルス カップリング）は左にあるので、左を ON（右は OFF のまま）にしてから、もう一度。',
 };
 const NOSPARK = '左右のマグネトー OFF';                     // (why it stopped: both magnetos off)
 
@@ -100,6 +101,7 @@ export function createSystems(sw) {
     if (sw.fuelSel === 'OFF' || tankFuel(s) < 0.2) { st.reason = 'fuel'; return Infinity; }
     if (sw.mixture < 0.7) { st.reason = 'mixture'; return Infinity; }
     if (!sw.magL && !sw.magR) { st.reason = 'mags'; return Infinity; }
+    if (!sw.magL) { st.reason = 'magL'; return Infinity; }
     if (st.primes >= 6) { if (s.thr >= 0.45) { st.reason = ''; return 3.2; } st.reason = 'flooded'; return Infinity; }
     if (st.warm) { st.reason = ''; return 0.9; }
     if (st.primes === 0) { st.reason = 'prime'; return Infinity; }
@@ -228,8 +230,8 @@ export function createSystems(sw) {
     twinLive: twin,                                          // (read only: the gauges each frame, without copying)
     get running() { return st.eng === 'run'; }, get cranking() { return st.eng === 'crank'; },
     get rpm() { return st.rpm; }, get oil() { return st.oil; }, get primes() { return st.primes; },
-    // the buses: the main (BATT MASTR), the essential (the PFD, the G5: BATT MASTR or EMERG BATT ARM), the avionics (the
-    // MFD: AVION MASTER on the main bus)
-    get powered() { return !!sw.master; }, get essentialOn() { return !!(sw.master || sw.emergBatt); }, get avionicsOn() { return !!(sw.master && sw.avionics); },
+    // the buses: the main (BATT MASTR), the avionics (the MFD: AVION MASTER on the main bus); the essential bus (the PFD,
+    // the G5) is the cockpit's to work out (cockpit.js update(): EMERG BATT on the Archer only)
+    get powered() { return !!sw.master; }, get avionicsOn() { return !!(sw.master && sw.avionics); },
   };
 }

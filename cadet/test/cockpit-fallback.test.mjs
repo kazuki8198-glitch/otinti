@@ -1,8 +1,10 @@
 // CADET — the cockpit without its Blender model (node --test): src/aircraft/cockpit.js builds every group the model would
 // have given it (the top band, the seats, the bench, the glareshield, the yokes) from its own simple shapes, within the
 // same budgets, with the same view from the seat — what a page without assets/model/cockpit.glb, or with an older one,
-// draws. The model is replaced by an empty glb (no meshes) before cockpit.js is loaded (archer-model.js reads the page's
-// CADET_ASSETS first); the full checks on the cockpit with its model are cockpit.test.mjs's.
+// draws, and every control of each type still seen and picked from the seat (the stand-ins hide none: the sun visors
+// folded up behind the overhead switch panel). The model is replaced by an empty glb (no meshes) before cockpit.js is
+// loaded (archer-model.js reads the page's CADET_ASSETS first); the full checks on the cockpit with its model are
+// cockpit.test.mjs's.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -23,7 +25,7 @@ for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 
 const { installSorajima } = await import('../src/flight/sorajima.js');
 installSorajima(globalThis.FL);
 const { buildCockpit, CABIN } = await import('../src/aircraft/cockpit.js');
-const FL = globalThis.FL, P = FL.physics, AC = id => P.AIRCRAFT.find(a => a.id === id);
+const FL = globalThis.FL, P = FL.physics, SC = FL.school, AC = id => P.AIRCRAFT.find(a => a.id === id);
 const DEG = Math.PI / 180;
 const drawn = m => m.isMesh && m.visible && m.layers.test(new THREE.Layers()) && m.material.visible !== false;
 
@@ -45,4 +47,28 @@ test('cockpit without its model: every group made in code, within budget, the sa
   const top = first(new THREE.Vector3(0, 1, 0));
   assert.ok(top && top.distance >= 0.17 && top.distance <= 0.25, 'the headliner over the eye');
   cp.dispose(); tw.dispose();
+});
+
+test('cockpit without its model: every control seen and picked from the seat', () => {
+  const tw = buildCockpit(FL, AC('pa28'), { makeCanvas: null, twin: AC('pa44') });
+  const L = SC.startLesson('a1', 'basic');
+  for (let i = 0; i < 60; i++) { P.step(L.s, 1 / 120); SC.update(L, 1 / 120); }
+  const bad = [];
+  for (const t of ['pa28', 'pa44']) {
+    tw.setType(t);
+    Object.assign(L.s, { elev: 0, trim: 0.1, ail: 0, rud: 0, rudEff: 0 });          // (as cockpit.test.mjs's controlsCheck)
+    for (let i = 0; i < 30; i++) tw.update(1 / 60, { s: L.s, L });
+    tw.root.updateMatrixWorld(true);
+    const vis = o => { for (let q = o; q; q = q.parent) if (!q.visible) return false; return true; };
+    for (const c of tw.controls) {
+      const to = tw.aimPoint(c, new THREE.Vector3()), dir = to.clone().sub(tw.eye).normalize();
+      const got = tw.pick(new THREE.Raycaster(tw.eye.clone(), dir, 0, 3));
+      if (got !== c) bad.push(`${t} ${c.id}: picks ${got ? got.id : 'nothing'}`);
+      const f = new THREE.Raycaster(tw.eye.clone(), dir, 0, 5).intersectObject(tw.root, true)
+        .filter(h => drawn(h.object) && vis(h.object) && h.object.name !== 'cockpit-glass' && !h.object.name.startsWith('cockpit-labels'))[0];
+      if (f && f.distance < to.distanceTo(tw.eye) - 0.03 && f.object.name !== `cockpit-${c.part}`) bad.push(`${t} ${c.id}: hidden by ${f.object.name}`);
+    }
+  }
+  assert.deepEqual(bad, [], 'controls hidden or not picked without the model');
+  tw.dispose();
 });

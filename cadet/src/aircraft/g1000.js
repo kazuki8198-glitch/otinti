@@ -64,9 +64,9 @@ export const softkeysOf = (which, av) => (which === 'mfd' ? SOFTKEYS.mfd : av &&
 // ---------------------------------------------------------------- the canvases and their textures
 const SCR_W = 1024, SCR_H = 640, LW = 640, LH = 400;
 const DYN_W = 512, DYN_H = 192;
-// regions of the small canvas: the two label strips, the G5's screen (its 0.072 × 0.060 m at 154 × 128 px), a white
-// patch (lamps take its colour)
-export const DYN = { W: DYN_W, H: DYN_H, strip: { pfd: [0, 0, 512, 32], mfd: [0, 32, 512, 32] }, g5: [0, 64, 154, 128], white: [420, 100, 16, 16] };
+// regions of the small canvas: the two label strips, the G5's screen (its 0.072 × 0.054 m — 4:3, the unit's 320 × 240
+// display — at 160 × 120 px), a white patch (lamps take its colour)
+export const DYN = { W: DYN_W, H: DYN_H, strip: { pfd: [0, 0, 512, 32], mfd: [0, 32, 512, 32] }, g5: [0, 64, 160, 120], white: [420, 100, 16, 16] };
 export const dynUV = ([x, y, w, h]) => [x / DYN_W, 1 - (y + h) / DYN_H, (x + w) / DYN_W, 1 - y / DYN_H];   // [u0, v0, u1, v1]
 
 const FONT_S = `700 11px ${SANS}`, FONT_L = `700 14px ${SANS}`;
@@ -112,7 +112,7 @@ export function createGlass(FL, makeCanvas) {
   for (let i = 0; i < 36; i++) HDG10.push(({ 0: 'N', 9: 'E', 18: 'S', 27: 'W' })[i] || String(i));
   const font = (w, px) => { const k = w * 1000 + px; let f = fonts.get(k); if (!f) { f = `${w} ${px}px ${SANS}`; fonts.set(k, f); } return f; };
   const G5_BANK = [-60, -45, -30, -20, -10, 10, 20, 30, 45, 60];
-  const G5C = { sky: '#2c6fd1', gnd: '#7d512b', tape: 'rgba(14, 16, 20, 0.58)', box: '#000', white: '#f4f5f6', yellow: '#ffd21f', cyan: '#3fd0ff' };
+  const G5C = { sky: '#2c6fd1', gnd: '#9a6b2c', tape: 'rgba(14, 16, 20, 0.58)', box: '#000', white: '#f4f5f6', yellow: '#ffd21f', cyan: '#3fd0ff', magenta: '#ff40ff' };
   const baroText = { v: NaN, hpa: false, text: '' };
   const V_DEF = { s0: 45, s1: 50, fe: 102, no: 125, ne: 154 };          // the Archer's, if the type has none
 
@@ -176,10 +176,11 @@ export function createGlass(FL, makeCanvas) {
   }
 
   // ---------------------------------------------------------------- the standby: a Garmin G5's attitude page
-  // the sky and the ground behind the pitch ladder, turning with the bank and moving with the pitch; the bank scale and
-  // its pointer at the top; the yellow aircraft symbol; the airspeed tape on the left (its arcs at its edge), the
-  // altitude tape on the right, each with its readout; the heading along the bottom, its box over it; the baro setting
-  // under the altitude tape (cyan)
+  // (the TX panel photo) the sky and the ochre ground behind the pitch ladder, turning with the bank and moving with the
+  // pitch; the heading tape across the top, its readout boxed in its middle; the bank scale under it with its pointer
+  // and the slip / skid bar under the pointer; the yellow aircraft symbol; the airspeed tape on the left (its arcs at its
+  // edge), the altitude tape on the right, each with its readout; along the bottom the ground speed in a box at the left
+  // (magenta) and the baro setting under the altitude tape (cyan)
   function band(g, x, w, cy, ref, a, b, k, col) {             // a tape's arc: from a to b (knots), ref at cy, k px a knot
     g.fillStyle = col; g.fillRect(x, cy - (b - ref) * k, w, (b - a) * k);
   }
@@ -199,18 +200,18 @@ export function createGlass(FL, makeCanvas) {
     const g = dyn.g, R = DYN.g5, x0 = R[0], y0 = R[1], W = R[2], H = R[3], v = V || V_DEF;
     const ias = Math.max(0, o.ias || 0), pitch = clamp(o.pitch || 0, -60, 60), bank = o.bank || 0;
     const hdg = ((AV.trueToMag(o.hdgTrue || 0, P.MAGVAR_W) % 360) + 360) % 360;
-    const cx = x0 + W * 0.5, cy = y0 + H * 0.44, K = 2.3, rb = 44;              // the attitude's centre; px a degree of pitch; the bank scale's radius
-    const tt = y0 + 4, tb = y0 + H - 21, sx = x0 + 1, SW = 28, KT = 1.6;        // the tapes' top and bottom; the airspeed tape, px a knot
-    const ax = x0 + W - 35, AW = 34, FT = 0.16;                                 // the altitude tape, px a foot
-    const hy = y0 + H - 17, hx0 = sx + SW + 2, hx1 = ax - 2, hcx = (hx0 + hx1) / 2, DG = 1.9;   // the heading strip, px a degree
+    const cx = x0 + W * 0.5, cy = y0 + 66, K = 2.2, rb = 40;                    // the attitude's centre; px a degree of pitch; the bank scale's radius
+    const tt = y0 + 1, tb = y0 + H - 16, sx = x0 + 1, SW = 28, KT = 1.6;        // the tapes' top and bottom; the airspeed tape, px a knot
+    const ax = x0 + W - 35, AW = 34, FT = 0.16, by = y0 + H - 15;               // the altitude tape, px a foot; the bottom row's top
+    const hy = y0 + 1, hx0 = sx + SW + 2, hx1 = ax - 2, hcx = (hx0 + hx1) / 2, DG = 1.9;      // the heading strip (13 px tall), px a degree
     g.save(); g.beginPath(); g.rect(x0, y0, W, H); g.clip();
     g.save(); g.translate(cx, cy); g.rotate(-bank * DEG); g.translate(0, pitch * K);
     g.fillStyle = G5C.sky; g.fillRect(-W, -H * 3, W * 2, H * 3);
     g.fillStyle = G5C.gnd; g.fillRect(-W, 0, W * 2, H * 3);
     g.strokeStyle = G5C.white; g.lineWidth = 1.4; g.beginPath(); g.moveTo(-W, 0); g.lineTo(W, 0); g.stroke();
     g.restore();
-    // the pitch ladder, in the middle only (inside the bank scale, over the heading box)
-    g.save(); g.beginPath(); g.rect(cx - 42, cy - rb + 9, 84, hy - 14 - (cy - rb + 9)); g.clip();
+    // the pitch ladder, in the middle only (inside the bank scale, over the bottom row)
+    g.save(); g.beginPath(); g.rect(cx - 42, cy - rb + 13, 84, by - 3 - (cy - rb + 13)); g.clip();
     g.translate(cx, cy); g.rotate(-bank * DEG); g.translate(0, pitch * K);
     g.strokeStyle = G5C.white; g.lineWidth = 1; g.fillStyle = G5C.white; g.font = font(700, 8); g.textAlign = 'center'; g.textBaseline = 'middle';
     for (let p = -30; p <= 30; p += 5) {
@@ -230,6 +231,7 @@ export function createGlass(FL, makeCanvas) {
     g.beginPath(); g.moveTo(cx, cy - rb - 1); g.lineTo(cx - 4.5, cy - rb - 8); g.lineTo(cx + 4.5, cy - rb - 8); g.closePath(); g.fill();
     g.save(); g.translate(cx, cy); g.rotate(-bank * DEG);
     g.beginPath(); g.moveTo(0, -rb + 1); g.lineTo(-4.5, -rb + 8); g.lineTo(4.5, -rb + 8); g.closePath(); g.fill();
+    g.fillRect(-4.5 + clamp(o.slip || 0, -1.5, 1.5) * 4, -rb + 9.5, 9, 2.5);                    // (the slip / skid bar)
     g.restore();
     // the aircraft symbol
     g.fillStyle = G5C.yellow; g.strokeStyle = G5C.box; g.lineWidth = 1;
@@ -259,21 +261,24 @@ export function createGlass(FL, makeCanvas) {
     }
     g.restore();
     readout(g, ax + 4, cy, AW - 5, 15, ALT10[clamp(Math.round(alt / 10), 0, 3000)], false);
-    // the heading along the bottom, its box over the strip's middle; the baro setting under the altitude tape
-    g.fillStyle = G5C.tape; g.fillRect(hx0, hy, hx1 - hx0, 17);
-    g.save(); g.beginPath(); g.rect(hx0, hy, hx1 - hx0, 17); g.clip();
+    // the heading across the top (its ticks up from the tape's foot, the tens numbered), its readout boxed in the middle
+    g.fillStyle = G5C.tape; g.fillRect(hx0, hy, hx1 - hx0, 13);
+    g.save(); g.beginPath(); g.rect(hx0, hy, hx1 - hx0, 13); g.clip();
     g.strokeStyle = G5C.white; g.fillStyle = G5C.white; g.font = font(700, 8); g.textAlign = 'center';
     for (let d = Math.floor((hdg - 30) / 5) * 5; d <= hdg + 30; d += 5) {
       const x = hcx + (d - hdg) * DG, dd = ((d % 360) + 360) % 360;
-      g.beginPath(); g.moveTo(x, hy); g.lineTo(x, hy + (dd % 10 ? 3 : 5)); g.stroke();
-      if (!(dd % 10)) g.fillText(HDG10[dd / 10], x, hy + 11);
+      g.beginPath(); g.moveTo(x, hy + 13); g.lineTo(x, hy + 13 - (dd % 10 ? 3 : 5)); g.stroke();
+      if (!(dd % 10)) g.fillText(HDG10[dd / 10], x, hy + 5);
     }
     g.restore();
-    g.fillStyle = G5C.box; g.strokeStyle = G5C.white; g.fillRect(hcx - 15, hy - 12, 30, 12); g.strokeRect(hcx - 15, hy - 12, 30, 12);
-    g.fillStyle = G5C.white; g.font = font(700, 10); g.fillText(HDG3[Math.round(hdg) % 360], hcx, hy - 5.5);
-    g.fillStyle = G5C.box; g.fillRect(ax, hy, AW, 17);
+    g.fillStyle = G5C.box; g.strokeStyle = G5C.white; g.fillRect(hcx - 15, hy, 30, 15); g.strokeRect(hcx - 15, hy, 30, 15);
+    g.fillStyle = G5C.white; g.font = font(700, 10); g.fillText(HDG3[Math.round(hdg) % 360], hcx, hy + 8);
+    // along the bottom: the ground speed (left), the baro setting (under the altitude tape)
+    g.fillStyle = G5C.box; g.fillRect(sx, by, SW + 10, 14); g.fillRect(ax, by, AW, 14);
+    g.fillStyle = G5C.white; g.font = font(700, 7); g.textAlign = 'left'; g.fillText('GS', sx + 2, by + 7.5);
+    g.fillStyle = G5C.magenta; g.font = font(700, 9); g.textAlign = 'right'; g.fillText(NUM[clamp(Math.round(o.gs || 0), 0, 400)], sx + SW + 8, by + 7.5);
     if (baroText.v !== baro || baroText.hpa !== hpa) { baroText.v = baro; baroText.hpa = hpa; baroText.text = hpa ? String(Math.round(baro * 33.8639)) : baro.toFixed(2); }
-    g.fillStyle = G5C.cyan; g.font = font(700, 9); g.fillText(baroText.text, ax + AW / 2, hy + 9, AW - 2);
+    g.fillStyle = G5C.cyan; g.font = font(700, 9); g.textAlign = 'center'; g.fillText(baroText.text, ax + AW / 2, by + 7.5, AW - 2);
     g.restore();
     dyn.texture.needsUpdate = true;
   }

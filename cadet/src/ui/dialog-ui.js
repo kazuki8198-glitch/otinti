@@ -49,6 +49,11 @@ const CSS = `
 #dlg .dlg-box.narr .dlg-text { color: var(--ink-dim, #a9b7c6); font-style: italic; }
 #dlg .dlg-cue { min-height: 1.5em; margin-top: 2px; text-align: right; font-size: 12px; color: var(--ink-dim, #a9b7c6); }
 #dlg .dlg-cue.wait { animation: dlg-pulse 1.6s ease-in-out infinite; }
+#dlg .dlg-keys { display: flex; flex-wrap: wrap; gap: 6px 10px; justify-content: flex-end; margin-top: 4px; }
+#dlg .dlg-keys[hidden] { display: none; }
+#dlg .dlg-key { font: inherit; font-size: 12px; line-height: 1.5; padding: 1px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.06); color: var(--ink-dim, #a9b7c6); cursor: pointer; }
+#dlg .dlg-key b { color: var(--ink, #e8f0fa); margin-right: 5px; font-weight: 700; }
+#dlg .dlg-key:hover, #dlg .dlg-key:focus-visible { background: rgba(255,255,255,.14); color: var(--ink, #e8f0fa); }
 @keyframes dlg-pulse { 50% { opacity: .45; } }
 /* (M8) the question typed to the AI instructor: a field over the subtitle */
 #dlg .dlg-ask { flex: none; display: flex; gap: 8px; padding: 0 4px; pointer-events: auto; }
@@ -181,7 +186,7 @@ function chapterLabel(ch) {
 const sameView = (a, b) => !!a && !!b && a.dialog === b.dialog && a.node === b.node && a.text === b.text && a.name === b.name && a.color === b.color
   && a.choices.length === b.choices.length && a.choices.every((c, k) => c.text === b.choices[k].text && c.i === b.choices[k].i);
 
-export function createDialogUI({ root = document.body, onNext = () => {}, onChoose = () => {}, onBookClose = () => {}, onAsk = () => {}, settings = null } = {}) {
+export function createDialogUI({ root = document.body, onNext = () => {}, onChoose = () => {}, onKeyPick = () => {}, onBookClose = () => {}, onAsk = () => {}, settings = null } = {}) {
   const doc = root.ownerDocument || document;
   const win = doc.defaultView || globalThis;
   if (!doc.getElementById('dlg-css')) { const st = doc.createElement('style'); st.id = 'dlg-css'; st.textContent = CSS; doc.head.appendChild(st); }
@@ -211,7 +216,9 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   const sr = make('p', 'dlg-sr', { 'aria-live': 'polite' });
   const cue = make('div', 'dlg-cue', { 'aria-hidden': 'true' });
   const jaLine = make('p', 'dlg-ja', { lang: 'ja' }); jaLine.hidden = true;
-  box.appendChild(chip); box.appendChild(line); box.appendChild(jaLine); box.appendChild(cue);
+  // (a line's other ways on, by a letter's key or a click: the class's section end — R again, B the textbook, Q a break)
+  const keysRow = make('div', 'dlg-keys', { role: 'group', 'aria-label': 'ほかの進み方' }); keysRow.hidden = true;
+  box.appendChild(chip); box.appendChild(line); box.appendChild(jaLine); box.appendChild(keysRow); box.appendChild(cue);
   const askRow = make('div', 'dlg-ask');
   const askInput = make('input', '', { type: 'text', 'aria-label': '教官への質問', autocomplete: 'off', spellcheck: 'false', enterkeyhint: 'send' });
   const askBtn = make('button', '', { type: 'button' }); askBtn.textContent = '聞く';
@@ -284,10 +291,18 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     paint();
     if (typing) schedule(); else finishTyping();
   }
+  function buildKeys(keys) {
+    keysRow.textContent = '';
+    for (const k of keys) { const b = make('button', 'dlg-key', { type: 'button', 'data-key': k.key }); const n = make('b'); n.textContent = k.key; b.appendChild(n); b.appendChild(doc.createTextNode(k.text)); keysRow.appendChild(b); }
+    keysRow.hidden = true;
+  }
+  const keyShown = (k) => !!cur && !typing && !cur.choices.length && cur.keys.some(x => x.key === k);
+  function pressKey(k) { if (!keyShown(k) || acting()) return; markActed(); onKeyPick(k); }
   function finishTyping() {
     unschedule();
     typing = false; shown = chars.length; paint();
     if (!cur) return;
+    keysRow.hidden = !(cur.keys.length && !cur.choices.length && !cur.pending);
     if (cur.pending) { cue.textContent = cur.cue || '…'; cue.classList.add('wait'); return; }
     if (cur.choices.length) {
       list.hidden = false; choicesAt = now();
@@ -379,6 +394,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
       choices: Array.isArray(view.choices)
         ? view.choices.map((c, k) => ({ i: Number.isInteger(c && c.i) ? c.i : k, text: String((c && c.text) ?? '') })) : [],
       ends: !!view.ends, stream: !!view.stream, pending: !!view.pending, cue: view.cue ? String(view.cue) : '',
+      keys: Array.isArray(view.keys) ? view.keys.filter(k => k && /^[A-Z]$/.test(k.key)).map(k => ({ key: k.key, text: String(k.text ?? '') })) : [],
       input: view.input && typeof view.input === 'object' ? { max: Number(view.input.max) || 300, placeholder: String(view.input.placeholder || '') } : null };
     // (M8) more of a line that is still coming in: added to what is already shown
     if (open && cur && v.stream && cur.dialog === v.dialog && cur.node === v.node && v.text.startsWith(cur.text)) { extend(v); return; }
@@ -405,7 +421,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     jaLine.textContent = v.ja; jaLine.hidden = !v.ja; line.setAttribute('lang', v.lang);
     cue.textContent = ''; cue.classList.remove('wait');
     if (list.contains(doc.activeElement)) try { doc.activeElement.blur(); } catch (e) { /* the old buttons go anyway */ }
-    buildChoices(v.choices);
+    buildChoices(v.choices); buildKeys(v.keys);
     if (!open) {
       open = true; wrap.hidden = false;
       wrap.classList.remove('in'); void wrap.offsetWidth; wrap.classList.add('in');   // restart the entrance
@@ -595,6 +611,9 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     const eKey = code === 'KeyE';
     const arrow = code === 'ArrowUp' || code === 'ArrowDown' ? (code === 'ArrowUp' ? -1 : 1) : 0;
     const d = digitOf(e);
+    // (a line's own letter key: its other way on — only once the line is all shown and it has no choices)
+    const kk = /^Key([A-Z])$/.exec(code);
+    if (kk && !eKey && keyShown(kk[1])) { e.preventDefault(); e.stopPropagation(); held.add(e.code); if (!e.repeat) pressKey(kk[1]); return; }
     if (!confirm && !space && !eKey && !arrow && !d) return;
     // a focused control elsewhere on the page keeps its own Enter / Space
     const t = e.target, mine = inside(wrap, t);
@@ -637,6 +656,8 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     // choice and on the subtitle box (the click that started the talk never lands here: it began before the box was up)
     if (!armed && e.detail !== 0) return;
     armed = false;
+    const kb = e.target && e.target.closest ? e.target.closest('.dlg-key') : null;
+    if (kb && keysRow.contains(kb)) { pressKey(kb.getAttribute('data-key')); return; }
     if (k >= 0) { pick(k); return; }
     if (inside(box, e.target)) advance();
   }

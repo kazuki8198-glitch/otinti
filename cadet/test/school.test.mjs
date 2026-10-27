@@ -13,7 +13,9 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { classDialogs, ftdDialogs, examDialogs, scoreOf, CLASS_CHAPTERS, FTD_TITLES, pfdPictures, lectureLines, lecturePage, lecturerNotesHtml, pathOf, LINE_MAX, noteUnit, needSections } from '../src/content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, scoreOf, CLASS_CHAPTERS, FTD_TITLES, pfdPictures, lectureLines, lecturePage, lecturerNotesHtml, pathOf, LINE_MAX, noteUnit, needSections, DECISION_NODE } from '../src/content/school.js';
+import * as TALK from '../src/content/class-talk.js';
+import { CLASS_FTD } from '../src/career/career.js';
 import { units, lectureUnits, proseOf } from '../src/content/lecture-units.js';
 import { gameBook } from '../src/content/book.js';
 import { NOT_SPOKEN } from '../src/content/dialog/instructor.js';
@@ -39,7 +41,8 @@ const QUIZ = { quiz: { right: 1, n: 2, pct: 50, pass: false } };
 // a node (computed from the data)
 const PACE_NAME = { need: /^(最初から：)?今日の訓練に要る/, full: /^(最初から：)?じっくり/, quick: /^(最初から：)?要点だけ/ };
 export const paceIndex = (v, pace = 'full') => v.choices.findIndex(c => PACE_NAME[pace].test(c.text));
-function run(data, id, { right = true, pick = null, pace = 'full' } = {}) {
+// (press: (view, k) → a letter for a line's other way on — the section's end: R again, B the textbook, Q a break)
+function run(data, id, { right = true, pick = null, pace = 'full', press = null } = {}) {
   const st = createDialogState(), ctx = { quiz: null }, hooks = [], lines = [], views = [];
   const qs = data.questions || [], max = 3 * Object.values(data.dialogs).reduce((n, d) => n + Object.keys(d.nodes).length, 0) + 50;
   const r = createRunner({ data, state: st, ctx, hooks: { onHook: (n, a) => { hooks.push([n, a, views.length]); if (n === 'quizEnd') ctx.quiz = scoreOf(st, +a); } } });
@@ -53,7 +56,7 @@ function run(data, id, { right = true, pick = null, pace = 'full' } = {}) {
       const chosen = pick ? pick(v, k) : null, byPace = v.node === 'pace' && !resume && chosen == null && paceIndex(v, pace) >= 0 ? paceIndex(v, pace) : null;
       const okText = x ? x.opts[x.ok] : null, i = okText != null ? v.choices.findIndex(c => c.text === okText) : chosen ?? byPace ?? 0;
       r.choose(right || okText == null ? i : (i + 1) % v.choices.length);
-    } else r.next();
+    } else { const key = press && v.keys && v.keys.length ? press(v, k) : null; if (!(key && r.press(key))) r.next(); }
   }
   assert.equal(r.running, false, `${id}: the talk ends within ${max} steps`);
   return { st, ctx, hooks, lines, views };
@@ -74,6 +77,10 @@ const TEST_NOTES = {
   'aero.lift': { notes: ['速度が 2 倍なら揚力は 4 倍。ここは試験にも出ます。'] },
 };
 const testNotes = (id) => TEST_NOTES[id] || null;
+// (an answer said over a few lines: its last part ends the reason)
+const fit0 = (r, k, why) => r.views.slice(k, k + 4).some(v => norm(v.text).endsWith(norm(why).slice(-10)));
+// (a question scored: its choices set a qz_ flag)
+const d0q = (v) => /^q\d+$/.test(v.node);
 // how much of a sentence's pairs of characters (punctuation and spaces left out) another line has: 0–1
 const pairs = (t) => { const c = Array.from(String(t).replace(/[\s。、，,．.！？!?「」“”"'（）()・：:…—―\-]/g, '')), o = new Set(); for (let k = 0; k + 1 < c.length; k++) o.add(c[k] + c[k + 1]); return o; };
 const overlap = (a, b) => { const A = pairs(a), B = pairs(b); if (A.size < 6) return 0; let n = 0; for (const x of A) if (B.has(x)) n++; return n / A.size; };
@@ -111,20 +118,23 @@ test('school: six classes read the textbook\'s part 1 in full — every sentence
     const { errors, warnings } = validateDialogs(d, { sampleCtx: QUIZ, sectionExists: BOOK.sectionExists });
     assert.deepEqual(errors, [], where);
     assert.deepEqual(warnings.filter(w => !/flag "qz_\d+" is declared but never read/.test(w)), [], `${where}: only the score's flags (read by scoreOf)`);
-    // the start: Good morning, then how to go through it — the three paces, each with its time (none a "review": the
-    // first time is not one; the pace for today's training says when it is the key points alone)
-    assert.match(N.hello.text, /^Good morning/);
+    // the start: the day's own (what it is for, naming the afternoon's lesson), then how to go through it — the three
+    // paces, each with its time (none a "review": the first time is not one; the pace for today's training says when it
+    // is the key points alone)
+    assert.equal(N.hello.text, TALK.CLASS_DAY[i].hello[0]);
+    assert.ok(TALK.CLASS_DAY[i].hello.join('').includes(CLASS_FTD[i]), `${where}: the start names the afternoon's ${CLASS_FTD[i]}`);
     assert.deepEqual(N.pace.choices.map(c => c.text.replace(/約 \d+ 分/, '約 N 分')), [needSections(FL, i).size ? '今日の訓練に要るところ（約 N 分）' : '今日の訓練に要るところ（約 N 分・今日は要点だけと同じ）', 'じっくり（教科書を全部、約 N 分）', '要点だけ（約 N 分）'], where);
     const r = run(d, 'class');
     clean(r.lines, where);
-    assert.match(r.views[0].text, /^Good morning/); assert.match(r.views[r.views.length - 1].text, /See you tomorrow/);
+    assert.equal(r.views[0].text, TALK.CLASS_DAY[i].hello[0]); assert.equal(r.views[r.views.length - 1].text, TALK.CLASS_DAY[i].bye);
     assert.ok(r.hooks.some(h => h[0] === 'done' && h[1] === 'class'), `${where} done`);
     // the questions: two a chapter, ids aligned with questions[k], scored at the end
     assert.equal(d.questions.length, 2 * CLASS_CHAPTERS[i].length, where);
     assert.deepEqual(r.ctx.quiz, { right: d.questions.length, n: d.questions.length, pct: 100, pass: true }, where);
-    // (the score said, then the goodbye)
+    // (the score said, then what the afternoon uses of today, then the goodbye)
     const sc = r.views.findIndex(v => v.node === 'score');
-    assert.ok(sc > 0 && r.views[sc].text === `${d.questions.length} / ${d.questions.length} 問、100% でした。` && r.views[sc + 1].node === 'bye', `${where}: the score said`);
+    assert.ok(sc > 0 && r.views[sc].text === `${d.questions.length} / ${d.questions.length} 問、100% でした。` && r.views[sc + 1].node === 'preview', `${where}: the score said`);
+    assert.ok(r.views.slice(sc + 1, -1).some(v => v.text.includes(CLASS_FTD[i])), `${where}: the afternoon's ${CLASS_FTD[i]} previewed`);
     d.questions.forEach((x, k) => assert.equal(N[`q${k}`].choices.length, x.opts.length));
     assert.equal(new Set(d.questions.map(x => x.q)).size, d.questions.length, `${where}: chapters sharing a bank get different questions`);
     // every section, in order: its progress and its page; every page a real one
@@ -159,13 +169,14 @@ test('school: six classes read the textbook\'s part 1 in full — every sentence
     const stem = (c) => String(c).trim().replace(/。$/, '').replace(/^[—–]\s*（(.+)）$/, '$1').replace(/^[○△×](?![\d.])\s*/, '').split('。')[0]
       .replace(/[（(][^）)]*[）)]$/, '').replace(/[ぁ-ゖ]+$/, '').replace(/（.*$/, '').slice(0, 6);
     for (const sec of secs) for (const u of lectureUnits(sec)) {
-      if (u.sub) said2(`ここからは${qq(u.sub)}です。`, `${sec.id} heading`);
+      // (a heading in one of the class's ways of saying it: its title in quotes)
+      if (u.sub) said2(qq(u.sub), `${sec.id} heading`);
       if (u.k === 'caution') said2(`注意です。${u.label ? u.label + '：' : ''}${lectureLines(u.text)[0]}`, `${sec.id} caution`);
       if (u.k === 'formula' && u.lines.some(l => /[＝=≒]/.test(l))) u.lines.forEach((l, j) => said2(`${j ? 'もう一つ、' : '式で書くと、'}${l}。`, `${sec.id} formula`));
       if (u.k === 'figure') { const l = lectureLines(String(u.caption).replace(/^図[：:]\s*/, '')); if (l.length) said2(l[0], `${sec.id} caption`); }
       if (u.k === 'source') said2(`出典：${lectureLines(u.text)[0]}`, `${sec.id} source`);
       if (u.k === 'table') {
-        said2(u.radio ? '画面の交信の例を聞いてください。' : '画面の表を見てください。', `${sec.id} table`);
+        // (announced, or asked about first: a question read off the table — its rows read all the same)
         for (const row of u.rows) for (const c of u.radio ? [row[1]] : row) {
           const v = u.radio ? String(c).split(/[.,!?]/)[0].replace(/Seven Lima Alpha|7LA/, '') : stem(c);
           if (v && !/^[—–-]$/.test(v)) said2(v, `${sec.id} table cell`);
@@ -177,22 +188,25 @@ test('school: six classes read the textbook\'s part 1 in full — every sentence
     for (const sec of secs) for (const u of lectureUnits(sec).filter(x => x.k === 'key')) {
       for (const kp of u.items) for (const l of said(kp)) assert.ok(r.views.some(v => v.tag === 'key' && norm(v.text).includes(norm(l))), `${sec.id}: key point "${l}" said as one`);
       const first = u.items.flatMap(said)[0];
-      if (first) assert.ok(r.views.some(v => v.tag === 'key' && v.text === `ここが大切です。${first}`), `${sec.id}: introduced as such`);
+      if (first) assert.ok(r.views.some(v => v.tag === 'key' && TALK.KEY.some(k => v.text === `${k}${first}`)), `${sec.id}: introduced as such`);
     }
-    // every 考えてみよう asked (a choice) before its answer
+    // every 考えてみよう asked (a choice) before its answer; thinking first, the answers to choose from
     for (const sec of secs) for (const u of lectureUnits(sec).filter(x => x.k === 'think')) {
       // (a setting said as a supposition: …上げたいとします。操作は？)
       const q = r.views.findIndex(v => v.tag === 'think' && v.choices.length === 2 && norm(v.text).includes(norm(lectureLines(u.q).join('').replace(/たいです。(?=.)/g, 'たいとします。'))));
-      const a = r.views.findIndex(v => /^答えです。/.test(v.text) && norm(v.text).includes(norm(lectureLines(u.a)[0])));
+      const a = r.views.findIndex(v => TALK.THINK_ANSWER.some(p => v.text.startsWith(p)) && norm(v.text).includes(norm(lectureLines(u.a)[0])));
       assert.ok(q >= 0 && a > q, `${sec.id}: "${u.q}" asked, then answered`);
       assert.deepEqual(r.views[q].choices.map(c => c.text), ['考えてみます', '答えを聞きます']);
+      const tc = r.views[q + 1];
+      assert.ok(tc && /:tc$/.test(tc.node) && tc.choices.length === 3 && tc.choices.some(c => c.text === TALK.THINK_CHOICES[sec.id].opts[0]), `${sec.id}: thinking first, the answers to choose from`);
     }
-    // a section ends with the choice (on; the section again; the textbook), and no ordinary line has one
-    for (const v of r.views.filter(v => v.choices.length)) assert.ok(/^(pace|q\d+|.*:end|.*:ask|.*:u\d+(:\d+)?)$/.test(v.node), `${where}: a choice on ${v.node}`);
+    // the choices: the pace, the questions (the chapters', the screen's, the checks, the review), 考えてみよう; no
+    // ordinary line has one — a section ends with a line of its own, its other ways on by key
+    for (const v of r.views.filter(v => v.choices.length)) assert.ok(v.node === 'pace' || DECISION_NODE.test(v.node) || /:u\d+(:\d+)?$/.test(v.node), `${where}: a choice on ${v.node}`);
     // (a title in quotes: its own quotes become 『』)
     // (a break offered at every section's end but the class's last)
-    secs.forEach((sec, j) => assert.ok(r.views.some(v => /:end$/.test(v.node) && v.text.includes(sec.title.replace(/「/g, '『').replace(/」/g, '』'))
-      && v.choices.map(c => c.text).join('|') === `次へ|この節をもう一度|教科書でこの節を読む${j < secs.length - 1 ? '|ここで休憩する（続きはまた後で）' : ''}`), `${sec.id}: the choice at its end`));
+    secs.forEach((sec, j) => assert.ok(r.views.some(v => /:end$/.test(v.node) && v.text.includes(sec.title.replace(/「/g, '『').replace(/」/g, '』')) && !v.choices.length
+      && v.keys.map(k => `${k.key} ${k.text}`).join('|') === `R この節をもう一度|B 教科書でこの節を読む${j < secs.length - 1 ? '|Q ここで休憩する（続きはまた後で）' : ''}`), `${sec.id}: its end, and its keys`));
     // the same seed, the same class
     assert.deepEqual(classDialogs(FL, i), d, `${where}: the same seed, the same class`);
   }
@@ -200,8 +214,11 @@ test('school: six classes read the textbook\'s part 1 in full — every sentence
 });
 
 test('school: a class\'s tables — every row read (short rows joined), the marks in words, the radio\'s English on a line of its own and spoken, then its meaning', () => {
-  const r = run(classDialogs(FL, 0), 'class'), i = r.views.findIndex((v, k) => v.text === '画面の表を見てください。' && r.views[k + 1].text.startsWith('10°'));
-  assert.ok(i > 0, 'aero.turn\'s table announced');
+  // (aero.turn's table: a question read off it first — not scored — then its rows)
+  const r = run(classDialogs(FL, 0), 'class'), i = r.views.findIndex(v => v.text.startsWith('10°')) - 1;
+  const tq = r.views.findIndex(v => /^c0s5:u\d+:tq$/.test(v.node));
+  assert.ok(i > 0 && tq > 0 && tq < i && r.views[tq].choices.length === 3, 'aero.turn\'s table asked about');
+  assert.ok(TALK.TABLE_ASK.some(f => r.views[tq].text.includes(f('「X」', '「Y」').split('「X」')[0])) && !d0q(r.views[tq]), 'read off the table (no score)');
   assert.deepEqual(r.views.slice(i + 1, i + 7).map(v => v.text.split('：')[0]), ['10°', '20°', '30°', '45°', '60°', '75°'], 'its six rows read');
   assert.match(r.views[i + 1].text, /失速速度の増加は×1\.01（\+1%）/, '(×1.01 is a number, not a mark)');
   // (aero.lift: ○ △ × in words; a cell's second sentence keeps the next heading off it)
@@ -268,30 +285,36 @@ test('school: every line of every class fits the subtitle box (at most 120 chara
 test('school: the lecturer\'s notes — her introduction after the title, her notes after the book (tagged), her check unscored; the textbook shows them', () => {
   const d = classDialogs(FL, 0, { notes: testNotes }), N = d.dialogs.class.nodes;
   assert.deepEqual(validateDialogs(d, { sampleCtx: QUIZ, sectionExists: BOOK.sectionExists }).errors, []);
-  const r = run(d, 'class'), texts = r.views.map(v => v.text);
+  const r = run(d, 'class'), texts = r.views.map(v => v.text), at = (node) => r.views.findIndex(v => v.node === node);
   const title = texts.indexOf('最初は「飛行機に働く 4 つの力」です。');
-  assert.equal(texts[title + 1], TEST_NOTES['aero.forces'].intro[0], 'the introduction right after the title');
-  assert.equal(texts[title + 2], '空を飛んでいる飛行機には、いつも次の 4 つの力が働いています。', 'then the book');
+  // (the introduction after the title — the prediction before it or after it: the section's order)
+  assert.ok(title >= 0 && at('c0s0:i0') > title && at('c0s0:i0') <= title + 3 && texts[at('c0s0:i0')] === TEST_NOTES['aero.forces'].intro[0], 'the introduction just after the title');
+  assert.equal(texts[at('c0s0:u0')], '空を飛んでいる飛行機には、いつも次の 4 つの力が働いています。', 'then the book');
+  assert.ok(at('c0s0:u0') > at('c0s0:i0') && at('c0s0:u0') > at('c0s0:pr'), 'the book after the introduction and the prediction');
   const n0 = texts.indexOf(TEST_NOTES['aero.forces'].notes[0]), n1 = texts.indexOf(TEST_NOTES['aero.forces'].notes[1]);
-  assert.ok(n0 > texts.findIndex(t => /^答えです。パワーを上げます/.test(t)) && n1 === n0 + 1, 'her notes after the book\'s own text');
+  assert.ok(n0 > texts.findIndex(t => /パワーを上げます/.test(t) && TALK.THINK_ANSWER.some(p => t.startsWith(p))) && n1 > n0 && n1 <= n0 + 2, 'her notes after the book\'s own text');
   assert.ok(r.views[n0].tag === 'note' && r.views[n1].tag === 'note');
   assert.ok(r.views.some(v => v.tag === 'note' && v.text === TEST_NOTES['aero.lift'].notes[0]), 'and in the next section');
-  // the check: every choice goes on; the right one → That's right. + why, a wrong one → the right answer + why
-  const ask = N['c0s0:ask'];
-  assert.match(ask.text, /^ひとつ確認します。水平直線飛行で/);
-  assert.deepEqual([...ask.choices.map(c => c.text)].sort(), [...TEST_NOTES['aero.forces'].ask.opts].sort());
-  assert.ok(!ask.choices.some(c => c.effects), 'not scored');
-  assert.equal(N['c0s0:ask:ok'].text, 'That\'s right. つり合っていれば加速しません。');
-  assert.equal(N['c0s0:ask:ng'].text, '正しくは「揚力＝重力、推力＝抗力」です。つり合っていれば加速しません。');
-  for (const c of ask.choices) assert.equal(c.next, c.text === '揚力＝重力、推力＝抗力' ? 'c0s0:ask:ok' : 'c0s0:ask:ng');
-  assert.equal(N['c0s0:ask:ok'].next, 'c0s0:end'); assert.equal(N['c0s0:ask:ng'].next, 'c0s0:end');
-  // a section without notes is read all the same; the class is longer with them
-  assert.ok(!N['c0s2:ask'] && N['c0s2'] && N['c0s2:end']);
+  // the check: the prediction at the section's start — its choices and わかりません, every one going on, none scored,
+  // the choice kept (flag pr); the answer at the end, as it was chosen: right, wrong, わかりません
+  const ask = N['c0s0:pr'], x = TEST_NOTES['aero.forces'].ask, right = x.opts[x.ok];
+  assert.ok(TALK.PRED.some(p => ask.text === `${p}${x.q}`) || (N['c0s0:pr:pre'] && TALK.PRED.some(p => `${N['c0s0:pr:pre'].text}${ask.text}` === `${p}${x.q}`)), ask.text);
+  assert.deepEqual(ask.choices.slice(0, -1).map(c => c.text).sort(), [...x.opts].sort());
+  assert.ok(TALK.DUNNO.includes(ask.choices[ask.choices.length - 1].text), 'わかりません among them, last');
+  assert.ok(ask.choices.every(c => c.effects.length === 1 && c.effects[0].set === 'pr'), 'not scored: only the choice kept');
+  for (const c of ask.choices) assert.equal(c.effects[0].to, c.text === right ? 'ok' : TALK.DUNNO.includes(c.text) ? 'dk' : 'ng');
+  assert.ok(TALK.PRAISE.includes(N[ask.choices[ask.choices.length - 1].next].text), 'わかりません praised');
+  const rv = N['c0s0:rv'];
+  assert.deepEqual([rv.if, N['c0s0:rv:ng'].if, N['c0s0:rv:dk'].if], [{ flag: 'pr', is: 'ok' }, { flag: 'pr', is: 'ng' }, undefined]);
+  for (const [n, list] of [['c0s0:rv', TALK.REVEAL_OK], ['c0s0:rv:ng', TALK.REVEAL_NG], ['c0s0:rv:dk', TALK.REVEAL_DK]]) assert.ok(list.some(f => N[n].text === `${f('「揚力＝重力、推力＝抗力」')}つり合っていれば加速しません。`), `${n}: ${N[n].text}`);
+  assert.ok(at('c0s0:rv') > at('c0s0:u0') || at('c0s0:rv:ng') > at('c0s0:u0') || at('c0s0:rv:dk') > at('c0s0:u0'), 'answered after the book');
+  // a section without notes is read all the same (no prediction); the class is longer with them
+  assert.ok(!N['c0s2:pr'] && N['c0s2'] && N['c0s2:end']);
   assert.ok(Object.keys(N).length > Object.keys(classDialogs(FL, 0, { notes: () => null }).dialogs.class.nodes).length);
   // bad notes are left out rather than breaking the class
   const bad = classDialogs(FL, 0, { notes: (id) => (id === 'aero.forces' ? { intro: 'x', notes: [3, ''], ask: { q: 'Q', opts: ['a', 'a'], ok: 0 } } : null) });
   assert.deepEqual(validateDialogs(bad, { sampleCtx: QUIZ, sectionExists: BOOK.sectionExists }).errors, []);
-  assert.ok(!bad.dialogs.class.nodes['c0s0:ask'] && !bad.dialogs.class.nodes['c0s0:i0'] && !bad.dialogs.class.nodes['c0s0:n0']);
+  assert.ok(!bad.dialogs.class.nodes['c0s0:pr'] && !bad.dialogs.class.nodes['c0s0:i0'] && !bad.dialogs.class.nodes['c0s0:n0']);
   // the textbook overlay: her box under the section, only where she has notes
   const html = lecturerNotesHtml('aero.forces', testNotes);
   assert.match(html, /^<div class="bk-lecturer"><b>講師の補足（ミラー 講師）<\/b><p>この 4 つの力は/);
@@ -331,31 +354,37 @@ test('school: the lecturer\'s notes as written (content/lecture-notes) — one f
     CLASS_CHAPTERS[i].forEach((ch, k) => BOOK.chapters.find(c => c.id === ch).sections.forEach((s, j) => {
       const base = `c${k}s${j}`, n = NOTES[s.id], intro = n.intro || [];
       assert.ok(N[base].effects.some(e => e.hook === 'page' && e.arg === s.id), `${base} is ${s.id}`);
-      intro.forEach((t, m) => { assert.equal(N[`${base}:i${m}`].text, textOf(t), `${s.id}: intro ${m}`); assert.equal(at(`${base}:i${m}`), at(base) + 1 + m, `${s.id}: intro ${m} said after the title`); });
-      let last = at(`${base}:u0`);
+      // (the book's first view: its first line, or the question on its first unit; the introduction after the title,
+      // the prediction — which may come first — between them)
+      const u0 = r.views.findIndex(v => v.node.startsWith(`${base}:u`));
+      const pre = at(`${base}:pr`) > at(base) && at(`${base}:pr`) < u0 && (at(`${base}:i0`) < 0 || at(`${base}:pr`) < at(`${base}:i0`)) ? r.views.slice(at(base) + 1).findIndex(v => !/:pr(:|$)/.test(v.node)) : 0;
+      intro.forEach((t, m) => { assert.equal(N[`${base}:i${m}`].text, textOf(t), `${s.id}: intro ${m}`); assert.equal(at(`${base}:i${m}`), at(base) + 1 + pre + m, `${s.id}: intro ${m} said after the title`); });
+      let last = u0;
       assert.ok(last > at(base), `${s.id}: the book after the introduction`);
       const us = lectureUnits(BOOK.section(s.id));
       n.notes.forEach((t, m) => {
         const v = r.views[at(`${base}:n${m}`)];
-        assert.ok(v && v.text === textOf(t) && v.tag === 'note' && at(`${base}:n${m}`) > last, `${s.id}: note ${m} said, tagged, after the book`); last = at(`${base}:n${m}`);
+        assert.ok(v && v.text === textOf(t) && v.tag === 'note' && at(`${base}:n${m}`) > last, `${s.id}: note ${m} said, tagged, after the book`); last = Math.max(last, at(`${base}:n${m}`));
         // (one about a figure or a table: that page on the screen while it is said)
         const pg = typeof t === 'string' ? null : `${s.id}#${noteUnit(us, t.page)}`;
         assert.deepEqual((N[`${base}:n${m}`].effects || []).filter(e => e.hook === 'page').map(e => e.arg), pg ? [pg] : [], `${s.id}: note ${m}'s page`);
       });
       // (her lines add to the book rather than say its lines again: no sentence of hers of 8 characters or more shares
       // 80% of its pairs of characters with a line the class read from the book in the section)
-      const book = r.views.filter(v => v.node.startsWith(`${base}:u`)).map(v => v.text);
+      const book = r.views.filter(v => v.node.startsWith(`${base}:u`) && !/:(tq|fq|rq|tc|ck)(:|$)/.test(v.node)).map(v => v.text);
       for (const t of [...intro, ...n.notes].map(textOf)) for (const sen of t.split(/(?<=[。！？])/).filter(x => norm(x).length >= 8)) {
         const o = Math.max(0, ...book.map(b => overlap(sen, b)));
         assert.ok(o < 0.8, `${s.id}: "${sen}" says a line of the book again (${o.toFixed(2)})`);
       }
+      // her check: the prediction before the book, its answer after it (at the notes' end or before them)
       if (n.ask) {
-        const ask = N[`${base}:ask`], v = r.views[at(`${base}:ask`)];
-        assert.ok(v && v.text === `ひとつ確認します。${n.ask.q}` && at(`${base}:ask`) > last, `${s.id}: the check asked after the notes`);
-        assert.deepEqual([...ask.choices.map(c => c.text)].sort(), [...n.ask.opts].sort());
-        for (const c of ask.choices) assert.equal(c.next, c.text === n.ask.opts[n.ask.ok] ? `${base}:ask:ok` : `${base}:ask:ng`, `${s.id}: ${c.text}`);
-        assert.equal(N[`${base}:ask:ok`].text, `That's right. ${n.ask.why}`);
-      } else assert.ok(!N[`${base}:ask`]);
+        const ask = N[`${base}:pr`], v = r.views[at(`${base}:pr`)], said = (v && v.text) || '', pre = N[`${base}:pr:pre`];
+        assert.ok(v && at(`${base}:pr`) < u0 && TALK.PRED.some(p => `${pre ? r.views[at(`${base}:pr:pre`)].text : ''}${said}` === `${p}${n.ask.q}`), `${s.id}: the prediction asked before the book`);
+        assert.deepEqual(ask.choices.slice(0, -1).map(c => c.text).sort(), [...n.ask.opts].sort());
+        for (const c of ask.choices) assert.ok(/:pr:[ad]$/.test(c.next) && c.effects[0].to === (c.text === n.ask.opts[n.ask.ok] ? 'ok' : TALK.DUNNO.includes(c.text) ? 'dk' : 'ng'), `${s.id}: ${c.text}`);
+        const rv = Math.max(at(`${base}:rv`), at(`${base}:rv:ng`), at(`${base}:rv:dk`));
+        assert.ok(rv > u0 && (r.views[rv].text.endsWith(n.ask.why.slice(-12)) || fit0(r, rv, n.ask.why)), `${s.id}: answered after the book, with why`);
+      } else assert.ok(!N[`${base}:pr`]);
       assert.ok(at(`${base}:end`) > last, `${s.id}: then its end`);
       // (the textbook's box under the section: her introduction and notes)
       assert.equal((lecturerNotesHtml(s.id).match(/<p>/g) || []).length, intro.length + n.notes.length, `${s.id}: the textbook's box`);
@@ -364,15 +393,16 @@ test('school: the lecturer\'s notes as written (content/lecture-notes) — one f
 });
 
 test('school: a class\'s choices — the section again, the section in the textbook, a break, 要点だけ, 続きから', () => {
-  // at the first section's end: the textbook (hook 'book', then back to the choice), then the section again, then on
+  // at the first section's end (a line of its own, its other ways on by key): the textbook (B: hook 'book', then back
+  // to the end), then the section again (R), then on
   const seen = new Set();
-  const pick = (v) => { if (v.node !== 'c0s0:end') return null; for (const k of [2, 1]) if (!seen.has(k)) { seen.add(k); return k; } return 0; };
-  const r = run(classDialogs(FL, 0), 'class', { pick });
+  const press = (v) => { if (v.node !== 'c0s0:end') return null; for (const k of ['B', 'R']) if (!seen.has(k)) { seen.add(k); return k; } return null; };
+  const r = run(classDialogs(FL, 0), 'class', { press });
   assert.deepEqual(r.hooks.filter(h => h[0] === 'book').map(h => h[1]), ['aero.forces']);
   assert.deepEqual(r.hooks.filter(h => h[0] === 'progress').map(h => +h[1]).slice(0, 3), [0, 0, 1], 'the section read again, then the next');
   assert.ok(r.hooks.some(h => h[0] === 'done' && h[1] === 'class'));
   // a break at the first section's end: the talk ends there, not done, its place the next section's; taken up from it
-  const b = run(classDialogs(FL, 0), 'class', { pick: (v) => (v.node === 'c0s0:end' ? 3 : null) });
+  const b = run(classDialogs(FL, 0), 'class', { press: (v) => (v.node === 'c0s0:end' ? 'Q' : null) });
   assert.deepEqual(b.hooks.filter(h => h[0] === 'progress').map(h => +h[1]), [0, 1], 'the break keeps the next section as the place');
   assert.ok(!b.hooks.some(h => h[0] === 'done'), 'a break is not the class done');
   assert.equal(b.views[b.views.length - 1].text, 'OK. ここで一度区切りましょう。続きは「揚力はどうやって生まれるか」からです。また声をかけてください。');
@@ -399,13 +429,14 @@ test('school: a class\'s choices — the section again, the section in the textb
   assert.ok(run(d, 'class', { pick: (v) => (v.node === 'pace' ? paceIndex(v, 'quick') : null) }).hooks.some(h => h[0] === 'done' && h[1] === 'class'), '要点だけ');
   // (from a later chapter's first section — a break at the chapter before's last: that chapter's questions first, then
   // the chapter, done; a class taken up midway does not say a score for questions it did not ask)
-  const d1 = classDialogs(FL, 1, { from: 7 }), on1 = run(d1, 'class'), nodes1 = on1.views.map(v => v.node);
-  assert.equal(on1.views[2].text, 'では、第 2 章の確認から続けます。');
-  assert.deepEqual(nodes1.slice(3, 5), ['c0:check', 'q0']);
+  const d1 = classDialogs(FL, 1, { from: 7 }), on1 = run(d1, 'class'), nodes1 = on1.views.map(v => v.node), rs = nodes1.indexOf('resume');
+  assert.equal(on1.views[rs].text, 'では、第 2 章の確認から続けます。');
+  assert.deepEqual(nodes1.slice(rs + 1, rs + 3), ['c0:check', 'q0']);
   assert.ok(nodes1.indexOf('q1') > 0 && nodes1.indexOf('q1') < nodes1.indexOf('c1'), 'its two questions before the next chapter');
-  assert.match(on1.views[nodes1.indexOf('c1')].text, /^Next, 第 3 章「性能と重量・重心」/);
+  assert.match(on1.views[nodes1.indexOf('c1')].text, /第 3 章は?「性能と重量・重心」/);
   assert.ok(!nodes1.includes('score') && nodes1.includes('bye'));
-  assert.equal(on.views[2].text, 'では、続きから始めます。');
+  assert.ok(!nodes1.some(n => /^rv/.test(n)), '(a class taken up midway goes on: no review first)');
+  assert.equal(on.views[on.views.findIndex(v => v.node === 'resume')].text, 'では、続きから始めます。');
   assert.deepEqual(on1.hooks.filter(h => h[0] === 'progress').map(h => +h[1]), [7, 8, 9, 10]);
   assert.ok(on1.hooks.some(h => h[0] === 'done' && h[1] === 'class'));
   // (no place, the first section's, or one past the end: the usual choice)
@@ -414,11 +445,13 @@ test('school: a class\'s choices — the section again, the section in the textb
   for (const pace of ['full', 'quick', 'need']) {
     const dp = classDialogs(FL, 0, { pace }), rp = run(dp, 'class');
     assert.deepEqual(validateDialogs(dp, { sampleCtx: QUIZ, sectionExists: BOOK.sectionExists }).errors, []);
-    assert.ok(!dp.dialogs.class.nodes.pace && !rp.views.some(v => v.choices.length && !/^q\d+$|:end$|:ask$|:u\d+(:\d+)?$/.test(v.node)), `${pace}: no choice of pace (only the questions, the sections' ends, her checks, the 考えてみよう)`);
+    assert.ok(!dp.dialogs.class.nodes.pace && !rp.views.some(v => v.choices.length && !DECISION_NODE.test(v.node) && !/:u\d+(:\d+)?$/.test(v.node)), `${pace}: no choice of pace (only the questions, the predictions, the checks, the 考えてみよう)`);
     assert.equal(rp.hooks.some(h => h[0] === 'progress'), pace === 'full' || (pace === 'need' && needSections(FL, 0).size > 0), `${pace}: a place kept where sections are read in full`);
     assert.ok(rp.hooks.some(h => h[0] === 'done' && h[1] === 'class'));
   }
-  assert.equal(pathOf(classDialogs(FL, 0, { pace: 'quick' }).dialogs.class.nodes, 'hello', { quick: true })[2], 'r0s0');
+  // (at the quick pace the first section is its key points: the full one skipped)
+  const qp = pathOf(classDialogs(FL, 0, { pace: 'quick' }).dialogs.class.nodes, 'hello', { quick: true });
+  assert.ok(qp.includes('r0s0') && !qp.includes('c0s0') && qp.indexOf('r0s0') < 6, qp.slice(0, 6).join(' '));
 });
 
 test('school: the training device — k1 told through, k4 begun (its chair flight: test/k4.test.mjs), k2/k3/k5/k6 ten questions each: passed when right, not when wrong', () => {

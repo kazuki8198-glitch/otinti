@@ -15,7 +15,10 @@ const short = (v) => {
 };
 // (M8: en, the line in English for the crew's English mode; tag, what kind of line it is — 'material': read from the
 // course's material, said as written)
-const NODE_KEYS = new Set(['speaker', 'text', 'if', 'else', 'effects', 'hook', 'next', 'choices', 'end', 'en', 'tag']);
+const NODE_KEYS = new Set(['speaker', 'text', 'if', 'else', 'effects', 'hook', 'next', 'choices', 'end', 'en', 'tag', 'keys']);
+// keys: other ways on from a line that goes on (next), each a letter's key (the class's section end: R again, B the
+// textbook, Q a break): { key: 'A'–'Z', text, next, if?, effects? }
+const KEY_KEYS = new Set(['key', 'text', 'next', 'if', 'effects']);
 const CHOICE_KEYS = new Set(['text', 'next', 'if', 'effects']);
 const LESSON_PATH = /(^|\.)(lesson\.id|lessonId)$/;                            // ctx conditions that name a lesson
 
@@ -145,6 +148,22 @@ export function validateDialogs(data, opts = {}) {
         if (n.next !== undefined) target(did, n.next, at, 'next');
         if (n.else !== undefined) { target(did, n.else, at, 'else'); if (n.if === undefined) warn(`${at}: else without if is never used`); }
         if (n.if !== undefined && n.else === undefined && n.next === undefined) err(`${at}: an if node needs else or next (where to go when it is skipped)`);
+        if (n.keys !== undefined) {
+          if (!Array.isArray(n.keys) || !n.keys.length) err(`${at}: keys must be a list`);
+          else {
+            if (n.next === undefined) err(`${at}: keys need a next (the line goes on as well)`);
+            const seen = new Set();
+            n.keys.forEach((kk, i) => {
+              const w = `${at} key ${i + 1}`;
+              if (!isObj(kk)) { err(`${w}: not an object`); return; }
+              for (const k of Object.keys(kk)) if (!KEY_KEYS.has(k)) warn(`${w}: unknown field "${k}"`);
+              if (typeof kk.key !== 'string' || !/^[A-Z]$/.test(kk.key) || 'EWASD'.includes(kk.key)) err(`${w}: key must be a letter A–Z the talk does not use (not E, W, A, S, D)`);
+              else if (seen.has(kk.key)) err(`${at}: key ${kk.key} twice`); else seen.add(kk.key);
+              text(kk.text, w); cond(kk.if, `${w} if`); effects(kk.effects, w);
+              if (kk.next === undefined) err(`${w}: no next`); else target(did, kk.next, w, 'next');
+            });
+          }
+        }
         if (n.choices !== undefined) {
           if (!Array.isArray(n.choices)) { err(`${at}: choices must be a list`); continue; }
           if (n.choices.length === 0 || n.choices.length > CHOICES_MAX) err(`${at}: ${n.choices.length} choices (1–${CHOICES_MAX} can be shown)`);
@@ -173,6 +192,7 @@ export function validateDialogs(data, opts = {}) {
     if (n.next !== undefined) ts.push(n.next);
     if (n.else !== undefined) ts.push(n.else);
     if (Array.isArray(n.choices)) for (const ch of n.choices) if (isObj(ch) && ch.next !== undefined) ts.push(ch.next);
+    if (Array.isArray(n.keys)) for (const kk of n.keys) if (isObj(kk) && kk.next !== undefined) ts.push(kk.next);
     const r = ts.map(t => resolveTarget(data, p.dialog, t));
     return { to: r.filter(x => x && x !== END), ends: n.end === true || r.includes(END) };
   }

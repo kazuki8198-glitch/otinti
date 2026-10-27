@@ -23,12 +23,12 @@ function runClass(data, { pace = 'full', resume = false, brk = null } = {}) {
   r.start('class');
   for (let k = 0; k < 6000 && r.running; k++) {
     const v = r.view(); lines.push({ node: v.node, text: v.text });
-    if (!v.choices.length) { r.next(); continue; }
+    // (the break: Q at the section's end, a line of its own)
+    if (!v.choices.length) { if (!(brk !== null && v.node === brk && r.press('Q'))) r.next(); continue; }
     const m = /^q(\d+)$/.exec(v.node), x = m ? data.questions[+m[1]] : null;
     let i = 0;
     if (x) i = v.choices.findIndex(c => c.text === x.opts[x.ok]);
     else if (v.node === 'pace') i = resume ? 0 : v.choices.findIndex(c => PACE[pace].test(c.text) && !/^続きから/.test(c.text));
-    else if (brk !== null && v.node === brk) i = v.choices.findIndex(c => /休憩/.test(c.text));
     r.choose(i);
   }
   assert.equal(r.running, false, 'the class ends');

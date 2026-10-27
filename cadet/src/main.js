@@ -541,6 +541,8 @@ async function boot() {
     root: document.body, settings,
     onNext: () => { talkRunner().next(); afterStep(); },
     onChoose: (i) => { talkRunner().choose(i); afterStep(); },
+    // (a line's other way on by its key: the class's section end, R / B / Q)
+    onKeyPick: (k) => { const r = talkRunner(); if (r && r.press && r.press(k)) afterStep(); },
     onAsk: (text) => { if (aiRun) aiRun.submit(text); },
     // (closed with Esc, ✕ or a click outside: a gesture, so the mouse can be taken back for the talk's next lines)
     onBookClose: (why) => { if (why !== 'api' && talkingNow() && talkWantsLock()) input.requestLock(); },
@@ -2068,6 +2070,7 @@ async function boot() {
     // a textbook section in the overlay, as the 'book' hook opens it (closed with Esc, ✕ or a click outside)
     readSection: (id) => { openSection(id); return dui.bookOpen; },
     dialogNext: () => { const r = talkRunner(); if (dui.typing) dui.reveal(); r.next(); afterStep(); return r.view(); },
+    dialogKey: (k) => { const r = talkRunner(); if (dui.typing) dui.reveal(); const ok = !!(r.press && r.press(k)); if (ok) afterStep(); return ok; },
     dialogChoose: (which) => {
       const r = talkRunner(), v = r.view(); if (!v) return null;
       const c = typeof which === 'number' ? v.choices[which] : v.choices.find(x => new RegExp(which).test(x.text));

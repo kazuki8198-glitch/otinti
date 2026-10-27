@@ -158,6 +158,8 @@ export function createRunner({ data, state, ctx = {}, hooks = {} } = {}) {
   let quiet = true;                                                            // listeners last heard null (or nothing yet)
   const nodeOf = (p) => data.dialogs[p.dialog].nodes[p.node];
   const visible = (n) => (Array.isArray(n.choices) ? n.choices.filter(ch => evalCond(ch.if, st, getCtx())) : []);
+  // (a line's other ways on, each by a letter's key: keys)
+  const keysOf = (n) => (Array.isArray(n.keys) ? n.keys.filter(k => evalCond(k.if, st, getCtx())) : []);
 
   // from `target` (seen from dialog `from`), skip the nodes whose `if` is false → the node to show, or END
   function settle(from, target, why) {
@@ -206,7 +208,7 @@ export function createRunner({ data, state, ctx = {}, hooks = {} } = {}) {
     if (Array.isArray(n.choices)) ends = choices.length === 0;
     else if (n.end !== true && n.next !== undefined) { try { ends = settle(cur.dialog, n.next, '') === END; } catch (e) { ends = false; } }
     return { dialog: cur.dialog, node: cur.node, speaker: n.speaker, name: sp ? sp.name_ja ?? '' : '', color: sp ? sp.color ?? null : null,
-      text: fill(n.text, c), choices, ends,
+      text: fill(n.text, c), choices, ends, ...(Array.isArray(n.keys) ? { keys: keysOf(n).map(k => ({ key: k.key, text: fill(k.text, c) })) } : {}),
       // (M8) the line in English (the crew's English mode), and what kind of line it is
       ...(n.en !== undefined ? { en: fill(n.en, c) } : {}), ...(n.tag !== undefined ? { tag: n.tag } : {}) };
   }
@@ -242,6 +244,15 @@ export function createRunner({ data, state, ctx = {}, hooks = {} } = {}) {
       if (!Number.isInteger(i) || i < 0 || i >= vis.length) return false;
       const ch = vis[i], from = cur.dialog, at = `${cur.dialog}:${cur.node} (choice ${i + 1})`;
       step(() => { applyEffects(ch.effects, st, hooks); go(from, ch.next, at); });
+      return true;
+    },
+    // a line's other way on by its key (keys: 'R', …) → true when there was one
+    press(key) {
+      if (!cur) return false;
+      const n = nodeOf(cur), k = keysOf(n).find(x => x.key === key);
+      if (!k || visible(n).length) return false;
+      const from = cur.dialog, at = `${cur.dialog}:${cur.node} (key ${key})`;
+      step(() => { applyEffects(k.effects, st, hooks); go(from, k.next, at); });
       return true;
     },
     stop() { finish(); },

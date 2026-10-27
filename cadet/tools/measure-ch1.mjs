@@ -90,6 +90,8 @@ export function runTalk(L, data, dialogId, { policy = () => null, ctx = {}, stat
       let i = policy(v, k, x);
       if (i == null) i = x ? v.choices.findIndex(c => c.text === x.opts[x.ok]) : 0;
       if (x) line.q = { k: +qi[1], id: questionId(L, x, kind), right: v.choices[i] && v.choices[i].text === x.opts[x.ok] };
+      // (a question not scored whose answer is kept: the classes' checks and review — hook 'ans' on its choices)
+      else if (line.decision) { const ch = (n.choices || []).filter(c => !c.if)[i], a = ch && (ch.effects || []).find(e => e.hook === 'ans'); if (a) { const [id, ok] = String(a.arg).split('|'); line.q = { id, right: ok === '1', unscored: true }; } }
       line.chosen = i;
       r.choose(i);
     } else r.next();
@@ -102,6 +104,9 @@ export function isDecision(v, n) {
   if (n && n.kind) return n.kind === 'decision';
   if (/^q\d+$/.test(v.node)) return true;
   if (/:ask$/.test(v.node)) return true;
+  // (the classes' own: the prediction, the questions read off the screen, 考えてみよう's answers, the checks, the review
+  // — school.js DECISION_NODE)
+  if (LOADED && LOADED.school.DECISION_NODE && LOADED.school.DECISION_NODE.test(v.node)) return true;
   return false;
 }
 // a scored question's id: its own (the classes' since the map), else found from its text
@@ -266,7 +271,24 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
 // the text heard before each line of a talk: what was heard before the talk, then its own lines in order
 function heardBefore(all, r) { const before = squash(all.slice(0, all.length - r.lines.length).join('')); return (k) => before + squash(r.lines.slice(0, k).map(l => l.text).join('')); }
 function noteAsked(L, r, asked, day, where, upTo, k1Parts) {
-  r.lines.forEach((l, k) => { if (!l.q || !l.decision) return; const h = answerHeard(L, l.q.id, upTo(k), k1Parts); asked.push({ day, where, id: l.q.id, right: l.q.right, ...h }); });
+  r.lines.forEach((l, k) => { if (!l.q || !l.decision) return; const h = answerHeard(L, l.q.id, upTo(k), k1Parts); asked.push({ day, where, id: l.q.id, right: l.q.right, ...(l.q.unscored ? { unscored: true, node: l.node } : {}), ...h }); });
+}
+// the moments a cadet answers something tied to a section (the brief's "思い出す機会"): a prediction in the section, a
+// check, the review or a scored question whose answer is in it; reading again is not one → { secId: [days] }
+export function answerScenes(L, run, secs) {
+  const out = Object.fromEntries(secs.map(s => [s, []]));
+  for (const d of run.days) for (const t of d.talks) {
+    const cls = /^class (\d+)/.exec(t.label), all = cls ? L.school.classQuestions(L.FL, +cls[1], {}).all : [];
+    for (const l of t.lines) {
+      if (!l.decision) continue;
+      const tied = new Set();
+      const p = /^(c|r)(\d+)s(\d+):pr$/.exec(l.node);
+      if (p && cls) { const x = all.find(y => y.k === +p[2] && y.j === +p[3]); if (x) tied.add(x.sec.id); }
+      if (l.q) { const a = answerOf(L, l.q.id); if (a) for (const [s] of a) tied.add(s); }
+      for (const s of tied) if (out[s]) out[s].push(d.day);
+    }
+  }
+  return out;
 }
 // a talk's lines: how many, how long, the decisions, the longest stretch without one
 export function summarize(lines) {
@@ -299,6 +321,24 @@ export function framePatterns(run) {
     for (const c of l.choices) { const p = `［選択］${patternOf(c)}`; n[p] = (n[p] || 0) + 1; }
   }
   return Object.entries(n).map(([pattern, count]) => ({ pattern, count })).sort((a, b) => b.count - a.count);
+}
+
+// the parts each section of a class went through, in order (题 the title, 予想 the prediction, 導入 her introduction,
+// 本文 the book, 大切 its ここが大切, 確認 a question on the way, 補足 her notes, 答え the prediction's answer, 区切り the
+// end), a part said twice in a row once → [{ base, stages }] in the order read
+export function sectionStages(lines) {
+  const out = [];
+  for (const l of lines) {
+    const m = /^(c\d+s\d+)(.*)$/.exec(l.node); if (!m) continue;
+    const [, base, rest] = m;
+    const st = rest === '' || /^:\d+$/.test(rest) ? '題' : /^:pr(:|$)/.test(rest) ? '予想' : /^:i\d/.test(rest) ? '導入' : /:(tq|fq|rq|tc|ck)(:|$)/.test(rest) ? '確認'
+      : /^:u\d/.test(rest) ? (l.tag === 'key' ? '大切' : '本文') : /^:n\d/.test(rest) ? '補足' : /^:rv(:|$)/.test(rest) ? '答え' : /^:end$/.test(rest) ? '区切り' : null;
+    if (!st) continue;
+    let cur = out[out.length - 1];
+    if (!cur || cur.base !== base || (st === '題' && cur.stages[cur.stages.length - 1] === '区切り')) { cur = { base, stages: [] }; out.push(cur); }
+    if (cur.stages[cur.stages.length - 1] !== st) cur.stages.push(st);
+  }
+  return out.map(x => ({ base: x.base, stages: x.stages.join(' ') }));
 }
 
 // ---------------------------------------------------------------- the whole picture

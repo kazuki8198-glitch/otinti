@@ -40,7 +40,7 @@
 | COUNTS | `<種類>.<名>` | `toc.sections` |
 
 - **節の書き方**：節 ID は DESIGN 3.3 の目次の ID（まだない節も書いてよい）。PROVENANCE の行き先には、ほかに `door:pN`（部の扉）・`summary:<章ID>`（章のねらい）・`written:<章ID>`（章末の説明してみよう・課題）を使う。
-- **単位**：`unit` は閉じる単位（DESIGN 7.2 の `W01`〜`W51`、`W07a` など）。`alsoUnits`／`units`／`writers` は一緒に手を入れる単位。
+- **単位**：`unit` は閉じる単位（DESIGN 7.2 の `W01`〜`W51`、`W07a` など。形は `W` と 2 桁の数字と、`a`〜`f` の 1 字まで。`W07f` は R1 の P3 で W07a〜c から図・写真・学科テストのファイルを分けた単位で、閉じた行の `unit` は元の単位のまま、`by` が `W07f`）。`alsoUnits`／`units`／`writers` は一緒に手を入れる単位。
 
 ## 3. 台帳ごとの項目と状態
 
@@ -129,7 +129,7 @@ ACS-MAP：`{ id, acs, acsTitle, area, areaTitle, task, taskTitle, text, sub（K2
 - `ledger` は書かなくてよい（`id` の形で決まる）。分からない形の `id` のときだけ `"ledger": "ERRATA"` のように書く。
 - 新しい行は `"op": "add"`（その台帳の必須の項目を全部）。
 - **確かめ役の署名**は、確かめた単位が自分のパッチ（`reports/<確かめた単位>.ledger.json`）で `{ id, checkedBy, note }` を書きます（`by` は書かない。行の `by` と同じ値は不可）。直す単位のパッチは `by` を、確かめる単位のパッチは `checkedBy` を必ず持ちます。
-- パッチの検査：`node validate.mjs`（`reports/*.ledger.json` も調べる）。取り込み：統合役が `node apply-patches.mjs`（見るだけ）→ `node apply-patches.mjs --write`（書いてから `validate.mjs` を流す）。1 つのファイルは全部か何もしないかで取り込む。取り込んだあともパッチのファイルは `reports/` に残す（記録）。取り込みは何度流しても同じ結果になる：台帳がもうパッチのとおりの行（`add` の行がそのままある・`set` の `note` がもう行の `note` にある・`note` のない `set` は項目がもう行のとおり）は、そのままにする。`note` のある `set` は `note` で見分けるので、あとの単位が同じ行の `by` や `status` を書き換えていても、前のパッチを流し直して戻すことはない（1 つの行に何単位も `note` を書くため）。だから `set` の行には `note` を書く。
+- パッチの検査：`node validate.mjs`（`reports/*.ledger.json` も調べる）。取り込み：統合役が `node apply-patches.mjs`（見るだけ）→ `node apply-patches.mjs --write`（書いてから `validate.mjs` を流す）。1 つのファイルは全部か何もしないかで取り込む。取り込んだあともパッチのファイルは `reports/` に残す（記録）。取り込みは何度流しても同じ結果になる：台帳がもうパッチのとおりの行（`add` の行がある：`note` のある `add` は行の `note` がその `note` で始まること、`note` のない `add` は行が全部の項目でパッチのとおりのこと・`set` の `note` がもう行の `note` にある・`note` のない `set` は項目がもう行のとおり）は、そのままにする。`note` のある `set` は `note` で見分けるので、あとの単位が同じ行の `by` や `status` を書き換えていても、前のパッチを流し直して戻すことはない（1 つの行に何単位も `note` を書くため）。`add` の行も同じで、あとの単位がその行を閉じても（例：W02 が足した `APP.cadet-comm-practice-ch-sim` を W07a が閉じた）、流し直して同じ id の 2 つめの行と見なすことはない（R1 の P3 の統合で直した）。だから `set` と `add` の行には `note` を書く。
 
 ## 6. 確かめ方
 

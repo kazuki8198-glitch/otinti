@@ -367,7 +367,7 @@ ${say([
 <li><b>fly runway heading</b> は、滑走路のセンターラインの延長の磁方位で飛べ、という意味です。風で流されても、方位を直しません（PCG）。</li>
 <li>離陸して上昇したら、高度・速度・方位が先です。無線は操縦のあとです（Aviate → Navigate → Communicate）。</li></ul>
 ${bk.key('line up and wait は「入って待つ」。cleared for takeoff を聞いてから離陸', '離陸の許可は、滑走路の番号を入れて復唱', 'contact departure で周波数がなければ、前にもらった周波数')}
-${bk.sim('課目「通常離陸と上昇」は、この離陸許可の復唱から始まります。', ['t1', '通常離陸と上昇'])}` },
+${bk.sim('課目「通常離陸と上昇」では、離陸前点検のあと、離陸の許可を復唱してから離陸します。課目の許可は “wind …, runway 36, cleared for takeoff.” です。line up and wait と fly runway heading は出てきません。', ['t1', '通常離陸と上昇'])}` },
       { id: 'comm.radar', t: '④ 出発管制・レーダー：交通情報と、別れ方', h: () => `
 ${bk.aim('レーダーで見てもらいながら上昇し、交通情報を聞いて他機を探し、訓練空域で業務を終えるまでの交信を学びます。')}
 ${say([
@@ -422,10 +422,10 @@ ${bk.key('帰る前に ATIS を聞き直し、新しい高度計に合わせる'
 ${bk.aim('別の日の練習で、場周経路を回りながら離着陸をくり返すときの交信を学びます。')}
 ${say([
   ['P', `LAB Tower, ${CS}, student pilot, holding short runway three six, request closed traffic.`, 'LAB 管制塔へ。学生操縦士。滑走路 36 の手前で待機中。場周経路での離着陸の練習を要求。', 'Closed traffic：場周経路から出ずに、離着陸をくり返すこと（PCG）'],
-  ['Tower', `${CSS}, left closed traffic approved, report midfield downwind.`, '左回りの場周を承認。ダウンウインドの中央で報告せよ。', ''],
-  ['P', `Left closed traffic, report midfield downwind, ${CSS}.`, '', ''],
-  ['P', `LAB Tower, ${CSS}, midfield left downwind, request the option.`, '左ダウンウインドの中央。オプションを要求。', 'VFR の場周では、ダウンウインドに入るときに頼む（AIM 4-3-23）'],
-  ['Tower', `${CSS}, runway three six, cleared for the option.`, '滑走路 36、オプションを許可。', 'タッチアンドゴー・ローアプローチ・ストップアンドゴー・フルストップのどれでもよい（PCG）'],
+  ['Tower', `${CSS}, left closed traffic approved.`, '左回りの場周を承認。', ''],
+  ['P', `Left closed traffic, ${CSS}.`, '', ''],
+  ['P', `LAB Tower, ${CSS}, entering left downwind, request the option.`, '左ダウンウインドに入る。オプションを要求。', 'VFR の場周では、ダウンウインドに入るときに頼む（AIM 4-3-23）'],
+  ['Tower', `${CSS}, runway three six, cleared for the option.`, '滑走路 36、オプションを許可。', 'タッチアンドゴー・ローアプローチ・ミストアプローチ・ストップアンドゴー・フルストップのどれでもよい（AIM 4-3-23）'],
   ['P', `Runway three six, cleared for the option, ${CSS}.`, '', ''],
   ['Tower', `${CSS}, go around.`, 'ゴーアラウンドせよ。', ''],
   ['P', `Going around, ${CSS}.`, 'ゴーアラウンドする、Archer 7LA。', 'まず操縦（出力・姿勢・形態）。そのあとで応答']])}
@@ -492,7 +492,7 @@ ${say([
   ['P', `Pan-pan, Pan-pan, Pan-pan, LAB Approach, ${CS}, uncertain of position, request assistance, last known position one five miles northeast of LAB at one six two zero Zulu, heading two two zero, two thousand five hundred, six zero minutes of fuel remaining, two people on board.`, '緊急。位置が不確か。助けを求める。最後にわかった位置は 16:20 UTC に LAB の北東 15 マイル、そこから針路 220、2,500 ft、燃料は残り 60 分、搭乗 2 名。', '燃料は分で（AIM 6-3-2・PCG：Fuel remaining）']])}
 <ul><li>ふだん交信している周波数で言います。返事がなければ <b>121.5 MHz</b>（緊急の周波数）で、または “<b>Any station</b>” と呼びかけて言います（AIM 6-3-1）。</li>
 <li>管制と交信しているなら、もらっているコードのままにします。交信できないときは <b>7700</b> にします（AIM 6-3-2）。</li>
-<li>できれば上昇します。無線もレーダーも届きやすくなります（AIM 6-3-2）。</li>
+<li>できれば上昇します。無線もレーダーも届きやすくなります（AIM 6-3-2）。ただし、IFR の気象状態の管制空域では、許可なく上昇・降下してはいけません（緊急のときの 14 CFR 91.3(b) の場合を除く。AIM 6-3-2）。</li>
 <li>それでも、<b>いちばん先は操縦</b>です（Aviate → Navigate → Communicate）。緊急の操作は {ch:emg} で学びます。</li></ul>
 ${bk.key('不安を感じたら、その時点で助けを求める（AIM 6-1-2）', '差し迫った危険は MAYDAY、安全に関わる状態は PAN-PAN。どちらも 3 回', '燃料は分で言う。交信できなければ 7700')}
 ${bk.sim('エンジン故障の課目で、正しい遭難通報を選びます。', ['e3', '上空でのエンジン故障'])}` },
@@ -537,7 +537,7 @@ ${bk.t(['', 'FAA（米国：AIM・PCG）', 'ICAO・英国（CAP 413）'], [
   ['滑走路の手前の待機', 'hold short of runway …', 'ふつうは holding point（taxi holding point runway …）。hold short は、決まった停止位置がないときや、限界を強めるときだけ'],
   ['滑走路に入って待つ', 'line up and wait', 'line up and wait（理由を添える）、または line up だけ。「着陸機のあとに line up」という条件つきの言い方もある'],
   ['フライトレベルに変わる高度', '18,000 ft（全国共通）', '空域ごとに決められていて、米国よりずっと低い（英国の AIP で確かめる）']])}
-<p>どちらでも共通：フォネティックアルファベット、数字の発音（niner など）、MAYDAY・PAN-PAN、復唱の考え方。</p>
+<p>どちらでも共通：フォネティックアルファベット、数字の発音（niner など）、MAYDAY・PAN-PAN。復唱の考え方も同じです。ただし、必ず復唱する項目は ICAO の方が多くあります。トランスポンダーのコード・高度計規正値・速度の指示なども入ります（ICAO Annex 11 の 3.7.3。米国は AIM 4-4-7）。</p>
 ${bk.key('point ↔ decimal、altimeter（inHg）↔ QNH（hPa）、affirmative ↔ affirm', '英国では hold short をあまり使わず、holding point を使う', 'どちらで飛ぶかで言い方を切り替える。迷ったら聞き直す')}` },
       { id: 'comm.practice', t: '上達の練習法', h: () => `
 ${bk.aim('英語の交信を、地上で、ひとりで上達させる方法をまとめます。')}
@@ -545,9 +545,9 @@ ${bk.aim('英語の交信を、地上で、ひとりで上達させる方法を�
 <li><b>声に出す</b>：台本を音声に合わせて言います。次にパイロットの言葉を隠し、自分で言ってから答えを見ます。</li>
 <li><b>数字を書き取る</b>：周波数・高度・針路・コードを聞いて、ひざ板の記号で書く練習をします（書き方は {ch:radio1}、数字の言い方は {ch:radio2}）。</li>
 <li><b>本物を聞く</b>：インターネットで公開されている管制交信のライブ配信（例：LiveATC.net）を、空港の図とチャートを見ながら聞きます。</li>
-<li><b>チェアフライング</b>：椅子に座り、1 回の飛行の交信と操作を、最初から最後まで声に出してたどります（{ch:sim}）。</li></ol>
+<li><b>チェアフライング</b>：椅子に座り、1 回の飛行の交信と操作を、最初から最後まで声に出してたどります。</li></ol>
 ${bk.key('型を覚え、声に出し、数字を書く', '本物の交信を、図とチャートを見ながら聞く', '椅子に座って、1 回の飛行を声に出してたどる')}
-${bk.sim('課目「英語交信②」で 1 回の飛行の交信を通して聞き、「英語交信④」で音声の聞き取りを練習できます。', ['k4', '英語交信②：1 回の飛行'], ['k6', '英語交信④：聞き取り'])}` },
+${bk.sim('課目「英語交信②」で 1 回の飛行の交信を通して聞き、「英語交信④」で音声の聞き取りを練習できます。チェアフライングと、この教材を使った練習の組み立ては {ch:sim} にあります。', ['k4', '英語交信②：1 回の飛行'], ['k6', '英語交信④：聞き取り'])}` },
     ],
     terms: [['CTAF (Common Traffic Advisory Frequency)', '共通交通情報周波数', 'AIM 4-1-9'], ['UNICOM', '政府のものではない空港の無線局', 'PCG'], ['MULTICOM 122.9', '地上局のない空港の自己通報の周波数', 'AIM 4-1-9'], ['Self-announce', '自己通報（返事を期待しない通報）', 'AIM 4-1-9'], ['Traffic pattern altitude', '場周高度（プロペラ機は地上 1,000 ft）', 'AIM 4-3-3'], ['Straight-in', '直進着陸', 'AIM 4-1-9'], ['Squawk / Ident', 'コードを入れよ / IDENT を押せ', 'AIM 4-1-20'], ['ADS-B Out', '位置を自分から送る装置', '14 CFR 91.225'], ['Mayday / Pan-pan', '遭難 / 緊急', 'AIM 6-3-1'], ['Fuel remaining', '残りの燃料（分で言う）', 'AIM 6-3-2'], ['121.5 MHz', '緊急の周波数', ''], ['Any station', '聞いているどの局でも', 'AIM 6-3-1'], ['Light gun signals', '灯火信号', '14 CFR 91.125'], ['Hot spot', '衝突や滑走路への誤進入の危険が起きてきた、特に注意する場所', 'PCG'], ['LAHSO', '着陸して、交差する滑走路・誘導路などの手前で止まる許可（学生は受けない）', 'AIM 4-3-11'], ['QNH / Affirm / Pass your message', 'ICAO・英国の言い方', 'CAP 413'], ['CAP 413', '英国の無線電話の手引き', 'UK CAA']],
     examples: ['管制塔のない空港へ 10 マイル：“Lakeside traffic, Archer Seven Lima Alpha, one zero miles northeast, two thousand five hundred, descending, Lakeside.”（AIM 4-1-9 の型。空港名とコールサインは架空）', '無線が聞こえない → 操作を確かめる → 7600 → 空港の外側で使っている滑走路を見きわめ、管制塔に「機種・位置・高度・着陸したい・灯火信号で管制してほしい」と送信 → 3〜5 マイルで位置を送信して場周に入り、管制塔の緑の連続光で着陸。昼は翼を振って応える。'],

@@ -67,6 +67,11 @@ test('cockpit talk: the lesson\'s instructions without keyboard keys, for every 
     }
   }
   assert.ok(n > 60, `${n} instructions`);
+  // (W07d, DESIGN 10.5〔安全〕) the stall recovery in the air, in the AFH order the textbook teaches (a7, a8 and the check c1)
+  for (const id of ['a7', 'a8', 'c1']) {
+    const line = flightLine(SC.lesson(id).steps.find(S => S.name === '失速からの回復').say);
+    assert.match(line, /^回復！①機首を下げて迎え角を減らす（警報が止まるまで） ②翼を水平 ③出力を必要なだけ（ここでは全開） ④速度が付いたら元の経路（上昇）へ。$/, `${id}: "${line}"`);
+  }
   assert.equal(flightLine('W / S で高度 3,000 ft を保ち、昇降率が 0 付近になったら T。手を離して保つ'), '機首の上げ下げで高度 3,000 ft を保ち、昇降率が 0 付近になったらトリム。手を離して保ちます。');
   assert.equal(flightLine('高度が 60 ft 高い：機首を 1〜2° 下げる（W を軽く）'), '高度が 60 ft 高い：機首を 1〜2° 下げます。');
   assert.equal(flightLine('何も操作せず、PFD の姿勢表示・速度・高度・昇降率がどう動くか 10 秒観察'), '何も操作せず、PFD の姿勢表示・速度・高度・昇降率がどう動くか 10 秒観察します。');

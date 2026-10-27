@@ -230,6 +230,46 @@ test('syllabus: the lessons follow the published course order, each says what, w
   assert.ok(L.filter(l => l.aircraft === 'pa44').length >= 5, 'Seminole lessons');
 });
 
+// the stall recovery the lessons teach is the textbook's (AFH FAA-H-8083-3C ch. 5 p. 5-16, the template of AC 120-109A
+// appendix 1): the autopilot off first where there is one, then ① reduce the angle of attack ② wings level ③ power as needed
+// ④ back to the desired flightpath — in a7's and a8's briefs (CADET's instructor reads them aloud: cadet/test/content.test.mjs)
+// and in the recovery step's words (DESIGN 10.5, ERRATA SYNC.stall-recovery). c1 links the pre-solo check (DESIGN 6.1)
+test('syllabus: the stall lessons teach the AFH recovery order, as the textbook does; c1 links the pre-solo check', () => {
+  const inOrder = (s, words, what) => {
+    let at = -1;
+    for (const w of words) { const i = s.indexOf(w, at + 1); assert.ok(i > at, `${what}: "${w}" not after the step before it: ${s}`); at = i; }
+  };
+  const plain = s => s.replace(/<[^>]+>/g, '');
+  const steps = ['①機首を下げて迎え角を減らす（失速警報が止まるまで）', '②翼を水平にする', '③出力', '④速度が付いたら元の経路'];
+  const recovery = id => SC.lesson(id).steps.find(s => s.name === '失速からの回復');   // the name the scripted pilots look for
+  for (const id of ['a7', 'a8']) {
+    const l = SC.lesson(id), brief = plain(l.brief.join(''));
+    inOrder(brief, ['まず自動操縦を切る', ...steps], `${id} brief`);
+    assert.doesNotMatch(brief, /②フルパワー|出力（すでに全開）→ 翼水平|迎え角を減らす → 出力/, `${id}: the old order is gone`);
+    assert.equal(l.book[0], 'aero.stall', `${id}: CADET still shows aero.stall's figure first`);
+    assert.ok(l.book.includes('ops.stall'), `${id}: the section with the recovery figure`);
+  }
+  assert.match(plain(SC.lesson('a7').brief.join('')), /③出力を必要なだけ足す（ここではフルパワーでゴーアラウンド）/);
+  assert.match(plain(SC.lesson('a8').brief.join('')), /③出力は必要なだけ足す（もう全開なので、全開を確かめる）/);
+  // the recovery step (a7, a8 and the check c1): the same words in the same order, the same grading as before
+  for (const id of ['a7', 'a8', 'c1']) {
+    const r = recovery(id);
+    assert.ok(r, `${id}: a recovery step`);
+    inOrder(r.say, ['①機首を下げて迎え角を減らす', '②翼を水平', '③出力を必要なだけ', '④速度が付いたら元の経路'], `${id} say`);
+    inOrder(r.g, ['W で機首を水平線付近', '失速警報が止まるまで', 'A / D で翼を水平', 'R で出力を足す', '上昇姿勢'], `${id} g`);
+    const rows = r.result({ level: { k: 1 } }, { start: 3000, min: 2750, second: false });
+    assert.deepEqual(rows.map(x => [x.name, x.std, x.pass]), [['回復で失った高度', '300 ft 以内', true], ['二次失速', 'なし', true]], `${id}: grading`);
+    assert.equal(r.result({ level: { k: 1 } }, { start: 3000, min: 2650, second: true }).some(x => x.pass), false, `${id}: 350 ft and a secondary stall fail`);
+  }
+  // the textbook says the same order (the lesson links these sections)
+  inOrder(BK.text(BK.findSection('aero.stall').sec), ['まず自動操縦を切', '迎え角を減ら', '翼を水平', '出力を必要'], 'aero.stall');
+  inOrder(BK.text(BK.findSection('ops.stall').sec), ['迎え角を減ら', '翼を水平', '出力を必要', '元の飛行経路'], 'ops.stall');
+  // c1 (the pre-solo check) links the section on what the check looks at, not the introduction
+  assert.deepEqual(SC.lesson('c1').book, ['solo.check']);
+  assert.deepEqual(SC.lesson('a4').book, ['aero.turn', 'ops.turns']);
+  assert.deepEqual(SC.lesson('a5').book, ['aero.turn', 'aero.vn', 'ops.turns']);
+});
+
 test('school: every flight lesson starts at all three levels and runs without NaN', () => {
   for (const l of flightLessons()) for (const lv of SC.LEVELS) {
     const L = SC.startLesson(l.id, lv.id);

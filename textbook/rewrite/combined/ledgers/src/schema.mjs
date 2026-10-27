@@ -44,19 +44,25 @@ export function ledgerOfId(id) {
   if (/^(toc|origin|kiso|prov|errata|rulings|jur|book)\./.test(id)) return 'COUNTS';
   return null;
 }
-export const UNIT = /^W\d\d[a-d]?$/;
+export const UNIT = /^W\d\d[a-f]?$/;
 
 
 // a patch row's fields (without op and ledger) as a row would hold them
 export const patchFields = p => { const { ledger: _l, op: _o, ...fields } = p; return fields; };
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-// the row an add made is there, every field as the patch has it
-export const alreadyAdded = (row, p) => !!row && Object.entries(patchFields(p)).every(([k, v]) => same(row[k], v));
+// a patch row with a note (the notes are what tell the patches of several units on one row apart)
+const hasNote = p => typeof p.note === 'string' && p.note.trim() !== '';
+// an add was applied before when its row is there. An add with a note is known by its note, which starts the row's note
+// (later patches only append to it): a later unit's patch may have set the row's other fields since (status, where, by…:
+// W07a closing W02's APP.cadet-comm-practice-ch-sim, W11 writing notes on W06's rows), and that must not make the add
+// look like a second row with the same id. An add without a note: when the row holds every field as the patch has it
+export const alreadyAdded = (row, p) => !!row && (hasNote(p)
+  ? String(row.note || '').startsWith(p.note)
+  : Object.entries(patchFields(p)).every(([k, v]) => same(row[k], v)));
 // a set was applied before when the row already holds it. A set with a note is known by its note (already part of the
 // row's note): a later unit's patch may have set the same row's other fields since (by, status…), and applying the
 // earlier patch again must not turn them back nor add its note twice (several units write notes on one row: W05, W04
 // and W06 on U.check-standards). A set without a note: when the row holds every field as the patch has it
-const hasNote = p => typeof p.note === 'string' && p.note.trim() !== '';
 export const alreadySet = (row, p) => !!row && (hasNote(p)
   ? String(row.note || '').includes(p.note)
   : Object.entries(patchFields(p)).every(([k, v]) => k === 'id' || same(row[k], v)));

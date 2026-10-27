@@ -143,6 +143,10 @@ test('book: every lesson\'s textbook sections resolve (except the left-out intro
   }
   assert.ok(n >= 40, `${n} lesson references`);
   assert.deepEqual(BOOK.lessonSections('a1').map(s => s.id), ['aero.forces', 'ops.trim']);
+  // (W07d, DESIGN 6.1) c1, the pre-solo check, links the section on what the check looks at (it linked the left-out
+  // introduction, intro.course, so the game showed it no section); the stall lessons add the recovery section after aero.stall
+  assert.deepEqual(BOOK.lessonSections('c1').map(s => s.id), ['solo.check']);
+  assert.deepEqual(BOOK.lessonSections('a7').map(s => s.id), ['aero.stall', 'ops.stall']);
   assert.deepEqual(BOOK.lessonSections('nope'), []);
 });
 
@@ -302,6 +306,26 @@ test('instructor: a run through with the real engine — first meeting, lesson, 
   r.next(); assert.ok(r.view().choices.some(c => c.text === '準備に向かいます'));
 });
 
+// (W07d, DESIGN 10.5〔安全〕) the instructor reads FLIGHT LAB's brief of the stall lessons aloud: the recovery in the AFH
+// order the textbook teaches (the autopilot off first where there is one; ① the angle of attack ② wings level ③ power as
+// needed ④ back to the path), not the old "full power before the wings"; FLIGHT LAB's note on its own Archer unsaid; the
+// figure on the screen still aero.stall's
+test('instructor: the stall lessons\' recovery is said in the AFH order', () => {
+  for (const id of ['a7', 'a8']) {
+    const nodes = instructorDialogs(FL, { lessonId: id }).dialogs.brief.nodes, lines = [];
+    for (let k = 'lesson'; k && k.startsWith('lesson'); k = nodes[k].next) lines.push(nodes[k]);
+    const talk = lines.map(n => n.text).join('\n');
+    let at = -1;
+    for (const w of ['まず自動操縦を切ります', '① 機首を下げて迎え角を減らします（失速警報が止まるまで）', '② 翼を水平にします', '③ 出力', '④ 速度が付いたら元の経路']) {
+      const i = talk.indexOf(w, at + 1);
+      assert.ok(i > at, `${id}: "${w}" not in order:\n${talk}`);
+      at = i;
+    }
+    assert.doesNotMatch(talk, /② フルパワー|出力（すでに全開）|この教材/, `${id}: the old order, or FLIGHT LAB's own note`);
+    assert.ok(lines.some(n => n.hook && n.hook.name === 'board' && n.hook.arg === 'aero.stall'), `${id}: aero.stall's figure on the screen`);
+  }
+});
+
 test('instructor: lines are sayable — length, no FLIGHT LAB controls or pages, no real names, です/ます', () => {
   let n = 0, long = 0;
   for (const l of LESSONS) {
@@ -398,7 +422,7 @@ test('instructor: the words come from FLIGHT LAB\'s data', () => {
 // questions and reasons (content/school.js turns a {ch:} it cannot number into 「教科書」, so each must name a chapter
 // here). Known ones, each to be fixed by the unit named; a new one fails, a fixed one only asks to be taken off the list:
 const KNOWN_OTHER_CHAPTER = {
-  'comm.practice': '{ch:sim} (チェアフライング) in FLIGHT LAB\'s book-comm.js: sim is left out here, so it shows （（別の章））. To fix in the text or in content/book.js (W02 report: needs from others)',
+  // none now: comm.practice's {ch:sim} went into its bk.sim, which this book drops (W07a, ERRATA APP.cadet-comm-practice-ch-sim)
 };
 test('book: no （別の章） and no link without a target — every section; the written tests\' {ch:} name chapters of this book', (t) => {
   const found = [];

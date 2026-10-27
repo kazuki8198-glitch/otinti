@@ -72,9 +72,13 @@
       check: (c, L, st) => { if (c.onGround) st.lastKias = c.kias; },
       result: (L, st) => { const tol = Math.round(5 * L.level.k) + 2; return [{ name: '浮揚速度', val: `${Math.round(st.lastKias || 0)} kt`, std: `${vr} ±${tol} kt`, pass: Math.abs((st.lastKias || 0) - vr) <= tol }]; } };
   }
-  const stallRecovery = (vMin, extra = {}) => Object.assign({ name: '失速からの回復', keys: k('pitch', 'thr', 'roll', 'rud'),
-    g: '目安：W で機首を水平線付近（0〜+5°）まで下げる → R で全開 → A / D で翼を水平。速度が付いたら上昇姿勢（約 +8°）へ。直し方：失速警報がまた鳴ったら引きすぎ。少し戻す',
-    say: '回復！ ①機首を下げて迎え角を減らす ②フルパワー ③翼を水平 ④速度が付いたら上昇へ', until: (c, L, st) => c.vs > 100 && c.kias > vMin && st.t > 2, max: 45, grade: true, tgt: { hdg: T_HDG(20) },
+  // the stall recovery in the order of the AFH (FAA-H-8083-3C ch. 5, p. 5-16: the template of AC 120-109A appendix 1):
+  // (autopilot off, if engaged — this Archer has none) → reduce the angle of attack until the stall warning stops → wings
+  // level → power as needed → back to the desired flightpath; as in the textbook (aero.stall, ops.stall, FIG.stallRecovery).
+  // The name is what the scripted pilots and CADET's HUD look for; the grading (altitude lost, a secondary stall) is the same
+  const stallRecovery = (vMin, extra = {}) => Object.assign({ name: '失速からの回復', keys: k('pitch', 'roll', 'rud', 'thr'),
+    g: '目安：W で機首を水平線付近（0〜+5°）まで下げ、失速警報が止まるまで押さえる → A / D で翼を水平（ボールは Q / E で中央）→ R で出力を足す（この課目では全開。パワーオン失速ではもう全開）→ 速度が付いたら上昇姿勢（約 +8°）へなめらかに。直し方：失速警報がまた鳴ったら引きすぎ。少し戻す',
+    say: '回復！ ①機首を下げて迎え角を減らす（警報が止まるまで） ②翼を水平 ③出力を必要なだけ（ここでは全開） ④速度が付いたら元の経路（上昇）へ', until: (c, L, st) => c.vs > 100 && c.kias > vMin && st.t > 2, max: 45, grade: true, tgt: { hdg: T_HDG(20) },
     onStart: (L, c, st) => { st.min = c.alt; st.start = c.alt; }, check: (c, L, st) => { st.min = Math.min(st.min, c.alt); if (st.t > 4 && c.stall) st.second = true; },
     result: (L, st) => { const lim = Math.round(300 * L.level.k); return [{ name: '回復で失った高度', val: `${Math.round(st.start - st.min)} ft`, std: `${lim} ft 以内`, pass: st.start - st.min <= lim }, { name: '二次失速', val: st.second ? 'あり' : 'なし', std: 'なし', pass: !st.second }]; } }, extra);
 
@@ -121,12 +125,12 @@
         { id: 'a4', title: '中程度の旋回（30°）', goal: 'バンク 30° で高度を保って 360° 旋回し、元の針路で止める', aircraft: 'pa28',
           why: '旋回では揚力の一部が横向きになるので、少し引いてパワーを足さないと沈む。ボール（横滑り計）を中央に保つ釣り合い旋回は、失速・スピン事故の予防の基本。',
           brief: ['バンクを取ると揚力の一部が横向きになり沈みます。<b>S で少し引いて機首をわずかに上げ</b>、パワーを少し足す。', 'ロールアウトはバンク角の半分（30° なら約 15°）手前から始める。', 'ボール（PFD の姿勢表示上部の三角の下の台形）を中央に。ずれたらずれた側のラダー（Q / E）：「ボールを踏む」。'],
-          std: 'バンク 30 ±5°・高度 ±100 ft・ロールアウト ±10°', setup: { at: 'area', kt: 100, hdg: 90 }, book: ['aero.turn'],
+          std: 'バンク 30 ±5°・高度 ±100 ft・ロールアウト ±10°', setup: { at: 'area', kt: 100, hdg: 90 }, book: ['aero.turn', 'ops.turns'],
           steps: [...stepTurn(-1, 30, '左 360° 旋回'), ...stepTurn(1, 30, '右 360° 旋回')] },
         { id: 'a5', title: '急旋回（45°）', goal: '実地試験の定番。バンク 45° で高度と速度を保つ', aircraft: 'pa28',
           why: '荷重倍数（G）と失速速度の関係を体で知る。45° では 1.41 G で失速速度が約 19% 上がる。自家用 ACS の課目（Steep Turns）。',
           brief: ['45° では荷重 1.4 G。<b>しっかり引いて機首を上げ、パワーを足す</b>。', '高度が下がり始めたら、<b>バンクを少し浅くしてから引く</b>（深いバンクのまま引いても旋回が締まるだけ）。', `速度は Va（${AR.va} kt：設計運動速度）以下で。ロールアウトは 20° 手前から。`],
-          std: 'バンク 45 ±5°・高度 ±100 ft・速度 ±10 kt・ロールアウト ±10°（自家用 ACS の Steep Turns を参考）', setup: { at: 'area', kt: 95, hdg: 90 }, book: ['aero.turn', 'aero.vn'],
+          std: 'バンク 45 ±5°・高度 ±100 ft・速度 ±10 kt・ロールアウト ±10°（自家用 ACS の Steep Turns を参考）', setup: { at: 'area', kt: 95, hdg: 90 }, book: ['aero.turn', 'aero.vn', 'ops.turns'],
           steps: [...stepTurn(-1, 45, '左急旋回', { kt: 95, tgt: { spd: T_SPD(95) } }), ...stepTurn(1, 45, '右急旋回', { kt: 95, tgt: { spd: T_SPD(95) } })] },
         { id: 'a6', title: '低速飛行', goal: '失速警報を鳴らさずに、失速に近い速度で操縦する', aircraft: 'pa28',
           why: '離着陸は失速に近い低速で行う。低速では舵の効きが鈍く、「速度は機首・高度はパワー」になる（バックサイド）。失速の兆候を知り、近づかずに操縦する力をつける。',
@@ -140,16 +144,16 @@
           ] },
         { id: 'a7', title: 'パワーオフ失速と回復', goal: '着陸形態での失速を体験し、高度の損失を少なく回復する', aircraft: 'pa28',
           why: '着陸進入中の失速（ベースからファイナルの旋回など）は重大事故の典型。兆候（警報・振動・舵の軽さ）を知り、迷わず「機首を下げる」を体に覚えさせる。',
-          brief: ['フラップ 25°、パワーアイドル。高度を保つように機首をゆっくり上げ続けると失速します（警報と振動）。', '<b>回復：①機首を下げて迎え角を減らす ②フルパワー ③翼を水平 ④速度が付いたら上昇へ</b>。フラップは上昇を確認してから段階的に上げる。', '回復中に引きすぎると 2 回目の失速（二次失速）。'],
-          std: '回復で失う高度 300 ft 以内・二次失速なし・針路 ±20°', setup: { at: 'area', kt: 75, hdg: 90, flaps: 2, thr: 0.2 }, book: ['aero.stall'],
+          brief: ['フラップ 25°、パワーアイドル。高度を保つように機首をゆっくり上げ続けると失速します（警報と振動）。', '<b>回復の順番（AFH の型）</b>：自動操縦のある機体では、まず自動操縦を切る（この教材の Archer にはない）。そのあとは、<b>①機首を下げて迎え角を減らす（失速警報が止まるまで） ②翼を水平にする ③出力を必要なだけ足す（ここではフルパワーでゴーアラウンド） ④速度が付いたら元の経路（上昇）へなめらかに戻す</b>。', 'フラップは上昇に移ってから段階的に上げる。', '迎え角を減らす前に出力やエルロンで直そうとするのは、AFH が挙げるよくある間違い。回復中に引きすぎると 2 回目の失速（二次失速）。'],
+          std: '回復で失う高度 300 ft 以内・二次失速なし・針路 ±20°', setup: { at: 'area', kt: 75, hdg: 90, flaps: 2, thr: 0.2 }, book: ['aero.stall', 'ops.stall'],
           steps: [
             { name: '失速への進入', keys: k('thr', 'pitch'), g: '目安：スロットル アイドル（F）。高度を保つように、1 秒に 1° くらいのペースで S を短く押して機首を上げ続ける。失速警報 → 振動（バフェット）→ 機首や片翼が落ちる、の順に来る', say: 'アイドルにし、高度を保つように機首をゆっくり上げ続けて失速させる', until: c => c.stall && c.kias < 52, max: 100 },
             stallRecovery(AR.x - 4),
           ] },
         { id: 'a8', title: 'パワーオン失速と回復', goal: '離陸・上昇中の失速を体験し回復する', aircraft: 'pa28',
           why: '離陸直後に機首を上げすぎた失速は低高度で起きるため致命的。高出力ではプロペラの影響で機首が左へ振られ、片翼から落ちやすい（ラダーの大切さ）。',
-          brief: ['クリーン形態、フルパワーで機首を 15〜20° 上げ続けると失速します。高出力なので機首が左へ振られやすい → <b>E（右ラダー）でボールを中央</b>に。', '回復は同じ：<b>迎え角を減らす → 出力（すでに全開）→ 翼水平 → 上昇</b>。'],
-          std: '回復で失う高度 300 ft 以内・針路 ±20°', setup: { at: 'area', kt: 75, hdg: 90, thr: 1 }, book: ['aero.stall', 'aero.left'],
+          brief: ['クリーン形態、フルパワーで機首を 15〜20° 上げ続けると失速します。高出力なので機首が左へ振られやすい → <b>E（右ラダー）でボールを中央</b>に。', '回復の順番は、パワーオフ失速と同じです。自動操縦のある機体では、まず自動操縦を切る。そのあとは、<b>①機首を下げて迎え角を減らす（失速警報が止まるまで） ②翼を水平にする（ボールはラダーで中央） ③出力は必要なだけ足す（もう全開なので、全開を確かめる） ④速度が付いたら元の経路（上昇の姿勢）へなめらかに戻す</b>。'],
+          std: '回復で失う高度 300 ft 以内・針路 ±20°', setup: { at: 'area', kt: 75, hdg: 90, thr: 1 }, book: ['aero.stall', 'aero.left', 'ops.stall'],
           steps: [
             { name: '失速への進入', keys: k('pitch', 'rud'), g: '目安：全開のまま、機首上げ 約 15〜20°（PFD の目盛り「10」と「20」の間）で保つ。ボールが右に寄ったら E（右ラダー）', say: 'フルパワーのまま機首を 15〜20° に上げ、失速するまで保つ', until: c => c.stall && c.kias < 55, max: 100 },
             stallRecovery(AR.x),
@@ -227,7 +231,7 @@
         { id: 'c1', title: 'ソロ前の審査（模擬 Check Flight）', goal: '離陸・空中操作・失速・緊急・着陸を通しで審査', aircraft: 'pa28',
           why: '公開情報では、レッスン 12 回の後の審査に合格するとソロへ進む。ここではその「通し」の練習を、これまでの課目の基準で行う（実際の審査基準ではない）。',
           brief: ['審査官の指示に従って飛びます。<b>1 項目でも基準外なら不合格</b>。', '内容：離陸 → 直線水平 → 急旋回（左）→ パワーオフ失速 → 模擬エンジン故障（滑走路へ滑空・着陸）。', '各項目の前に目標値を声に出して確認しましょう（教官に伝えるつもりで）。'],
-          std: '各課目の基準と同じ', setup: { at: 'runway' }, book: ['intro.course'],
+          std: '各課目の基準と同じ', setup: { at: 'runway' }, book: ['solo.check'],
           steps: [
             { name: '離陸前点検', checklist: 'before_takeoff' },
             { name: '離陸許可の復唱', atc: 'takeoff' },

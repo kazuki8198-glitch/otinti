@@ -6,13 +6,18 @@
 #   (a group alone, for its previews: … -- /tmp/cockpit.json /tmp/trial.glb /tmp/prev band,yokes — never into assets/model,
 #   which must hold every group; tools/aircraft/trial-glb.mjs runs the game's tests against such a trial model)
 # - each yoke (moving parts yokeL, yokeR; the G1000 NXi Archer's M600-style wheel, the same for both seats — Piper's TX,
-#   LX Steel and Seminole NXi photos): a moulded wedge of a hub, a tall shield (~0.11 m: as tall as the Seminole's
-#   temporary switch row, seen over it from the seat, lets it be; the aircraft's is ~0.15 m), widest at its foot where
-#   the horns grow out of it and narrowing to its top, its aft face one plane leaning forward (so that the pilot, looking
-#   down at it, sees it nearly face on), a raised plate on that face a shade lighter than the hub, carrying Piper's
-#   chevron in its lower half (two light-grey triangles, raised: a large one cut by a diagonal gap from a small one at
-#   its lower right — modelled: no print on a moving part), and a rounded cap on the hub's top jutting aft over the
-#   plate's top edge; the boss forward of it round the shaft (a collar, open at its front, which faces the panel and is
+#   LX Steel and Seminole NXi photos): a moulded wedge of a hub, a tall shield (0.134 m from its foot to its cap's top;
+#   the aircraft's ~0.15 m — round R3: the Seminole's old switch row, which held it to 0.11 m, is gone; its last 1.5 cm
+#   would put the right yoke's hub, its hit box, over the line of sight from the left seat to the door's handle),
+#   widest at its foot where the horns grow out of it, narrowing fast up its flanks to where the arms leave them and
+#   then gently to its top (the TX photo's tall plate: its sides nearly straight above the arms, its top ~half its
+#   foot's width), its
+#   aft face one plane leaning forward 15° (towards the pilot, who looks down at it ~40°), a raised plate covering that
+#   face a shade lighter than the hub, carrying Piper's chevron in its lower half (two light-grey triangles, raised: a
+#   large one cut by a diagonal gap from a small one at its lower right — modelled: no print on a moving part; its base
+#   ~a quarter of the way up the hub, its apex under the half, ~2/3 of the plate's width there, as in the TX photo),
+#   and a rounded cap on the hub's top, narrower than it (its shoulders either side), jutting aft over the plate's top
+#   edge; the boss forward of it round the shaft (a collar, open at its front, which faces the panel and is
 #   never seen); two thick horns, each one sweep of an oval section out of the hub's lower half (their underside on the
 #   hub's foot line), round two bends (horizontal → 45° → upright: the hit boxes leave the bend no other room) into a
 #   fat grip, the horn and the grip one moulding (a pebbled finish), the grip's top hooked aft and inboard so that its
@@ -32,7 +37,8 @@
 # the screens' image, to the controls behind the yokes (cockpit.test.mjs: the PFD's and MFD's corners at rest; the aim
 # points with a little nose-up trim — copied below,
 # as the spec does not carry them), and to what the panel keeps beside and under the yokes (the G5, the dimmers, the
-# alternate static, the quadrant's levers and carb heat, the switch block under the audio panel: at rest and trimmed);
+# alternate static, the quadrant's levers and carb heat, the switch block under the audio panel, the Seminole's engine
+# switches and left bank: at rest and trimmed), and the hit boxes out of the controls' lines of sight;
 # check() asserts all of it, with a margin.
 # Coordinates and nodes: build_cockpit.py's (the cabin's frame, metres, x right, y up, z aft); built in each yoke's own
 # frame (its pivot at the origin) and moved there. Nodes "yokes.<surface>.yokeL|yokeR" (yoke: the hub, its plate and cap,
@@ -66,19 +72,25 @@ N = 12                                # points round the horns' section (every e
 SUPER = 2.2                           # the section's squareness (a superellipse: 2 an ellipse)
 SHAFT_R, SHAFT_SEG = 0.013, 16        # the shaft: 26 mm, its sides only (its ends are hidden)
 SHAFT_Z0, SHAFT_REACH = -0.034, 0.040  # its back end (inside the collar); how far behind the panel at full aft travel
-# the hub: horizontal rounded-rectangle rings (x across, z fore and aft) up its height; its half-width, its aft face's z
-# and its corners' radius at the foot (HUB_YB) and at the top (HUB_YT), straight between them — so the sides lean in
-# (~17°) and the aft face is one plane leaning forward (~19° off the upright: the plate's) — the front face upright at
-# HUB_ZF; the rings (y, how far in from that outline): the foot's bevel, the side, the top's rounded edge. Its height:
-# the lines of sight from the eye to the Seminole's switch row (cockpit.js ROCKER, y 0.16) pass ~6 mm over its cap.
-HUB_YB, HUB_YT, HUB_ZF = -0.034, 0.064, -0.024
-HUB_A, HUB_ZA, HUB_RC = (0.056, 0.026), (0.031, -0.002), (0.0085, 0.0070)
-HUB_RINGS = [(-0.034, 0.004), (-0.031, 0.0), (0.061, 0.0), (0.0632, 0.0015), (0.064, 0.004)]
+# the hub: horizontal rounded-rectangle rings (x across, z fore and aft) up its height; its outline (HUB_W: y, half-width,
+# corners' radius) at the foot (HUB_YB), where the arms leave its flanks and at the top (HUB_YT), straight between them —
+# the sides lean in ~18° beside the arms, ~6° above them, kept inside the hit boxes: the hub's (±0.059 up to y 0.035)
+# and its top's (±0.037 over it) —, its aft face's z at the foot and the top (HUB_ZA: one plane leaning forward 15°),
+# the front face upright at HUB_ZF; the rings (y, how far in from that outline): the foot's bevel, the side (a ring where
+# its lean changes), the top's rounded edge. Its height: the aircraft's (above); from the seat its cap hides the panel up
+# to y ~0.17 behind it (x −0.34…−0.26: blank on both types — the Seminole's engine switches, fuel pumps and left bank
+# stand round that window, cockpit.js SEM); its top's hit box (to y 0.103) passes 3 mm under the line from the eye to
+# the door's handle (cockpit.js WALLS.door.cup.aim) over the right yoke's hub.
+HUB_YB, HUB_YT, HUB_ZF = -0.034, 0.089, -0.024
+HUB_W = [(-0.034, 0.056, 0.0085), (0.030, 0.0365, 0.0078), (0.089, 0.031, 0.0068)]
+HUB_ZA = (0.031, -0.002)
+HUB_RINGS = [(-0.034, 0.004), (-0.031, 0.0), (0.030, 0.0), (0.086, 0.0), (0.0872, 0.0015), (0.089, 0.004)]
 # the plate on the aft face (the face's own frame: x across, s up the slope from PLATE_Y0, n out of it): a rounded
-# trapezoid (its half-widths at the foot and the top, the foot's corner radius, its height), its foot sunk in the face,
+# outline (its foot's corner radius, its height up the slope) whose sides follow the face's flat part (the hub's outline
+# less its corners' radius) PLATE_EDGE in from it (PLATE_EXTRA more points up each side), its foot sunk in the face,
 # raised PLATE_H with a bevelled rim PLATE_IN wide; its top hides under the cap. The plate a shade lighter than the hub,
 # its rim (the groove the photos show round it) darker.
-PLATE_Y0, PLATE_HW, PLATE_R, PLATE_S = -0.0265, (0.042, 0.019), 0.007, 0.089
+PLATE_Y0, PLATE_R, PLATE_S, PLATE_EDGE, PLATE_EXTRA = -0.0265, 0.007, 0.109, 0.0025, 4
 PLATE_SINK, PLATE_H, PLATE_IN = 0.0005, 0.0012, 0.0006
 PLATE_K, PLATE_RIM_K = 1.4, 0.6
 # Piper's chevron (the photos' outline, the base 0…1 across): the large piece (its left foot, the gap's foot, the gap's
@@ -86,12 +98,12 @@ PLATE_K, PLATE_RIM_K = 1.4, 0.6
 # band parallel to the large piece's cut; its width across and where its base sits up the plate (its lower half, as on
 # the aircraft); raised, its foot sunk
 CHEVRON = ([(0, 0), (0.505, 0), (0.709, 0.3335), (0.534, 0.534)], [(0.592, 0), (1, 0), (0.757, 0.2785)])
-LOGO_W, LOGO_S, LOGO_H, LOGO_SINK = 0.054, 0.018, 0.0006, 0.0003
-# the cap on the hub's top: rings (y, half-width, front z, aft z, corner radius) from its foot (buried in the hub) up its
-# side (jutting aft of the plate) and round its top edge; a low dome over it
-CAP = [(0.048, 0.018, -0.0175, 0.002, 0.006), (0.0545, 0.0225, -0.0205, 0.0115, 0.0085), (0.0700, 0.0225, -0.0205, 0.0115, 0.0085),
-       (0.0728, 0.0217, -0.0197, 0.0107, 0.0077), (0.0744, 0.0197, -0.0177, 0.0087, 0.0057)]
-CAP_TOP = 0.0749
+LOGO_W, LOGO_S, LOGO_H, LOGO_SINK = 0.048, 0.026, 0.0006, 0.0003
+# the cap on the hub's top: rings (y, half-width, front z, aft z — over the aft face's z there —, corner radius) from its
+# foot (buried in the hub) up its side (jutting ~1 cm aft of the plate) and round its top edge; a low dome over it
+CAP = [(0.0731, 0.015, -0.0175, -0.0014, 0.005), (0.0796, 0.020, -0.0205, 0.0105, 0.0075), (0.0951, 0.020, -0.0205, 0.0105, 0.0075),
+       (0.0979, 0.0192, -0.0197, 0.0097, 0.0067), (0.0995, 0.0172, -0.0177, 0.0077, 0.0047)]
+CAP_TOP = 0.1000
 # the boss and the collar (r, z) from the collar's front edge back into the hub: the collar (open at its front; the
 # shaft fills it), the boss widening from its back edge into the hub
 BOSS = [(0.0168, -0.0446), (0.0172, -0.0350), (0.0196, -0.0200)]
@@ -144,38 +156,45 @@ BOOT_SEG, BOOT_PHASE = 12, 15 * DEG
 # frame): the screens' image points (corners, edge middles, 1 mm in) and the softkey strip's ends, with the yokes at
 # rest — and the aim points of the controls behind or round the yokes (every one whose line of sight comes within 40 mm
 # of the yokes' boxes; with the yokes at controlsCheck's pose: elev 0, trim 0.1 → 7 mm aft), from the PFD's softkeys
-# to the Seminole's switch row, key and primer, the G5, the dimmers, the alternate static, carb heat, the circuit
-# breakers, heat and defrost, the ELT, the park brakes, the quadrants, the rudder trim and the pedals
+# to the Seminole's engine switches (its four magnetos, the L / R start rocker), its left bank and EMERG BATT, the right
+# bank's first two, its fuel pumps, dimmers, heater levers and rockers, gear selector and emergency gear and park brake
+# knobs (round R3: POH VB-2636 Fig 7-33), the G5, the Archer's dimmers, the alternate static, carb heat, the circuit
+# breakers, heat and defrost, the ELT, the Archer's park brake, the quadrants, the rudder trim and the pedals
 SCREENS = [(-0.404, 0.3005, -1.0825), (-0.3, 0.3005, -1.0825), (-0.196, 0.3005, -1.0825), (-0.404, 0.36512, -1.0825),
            (-0.196, 0.36512, -1.0825), (-0.404, 0.42975, -1.0825), (-0.3, 0.42975, -1.0825), (-0.196, 0.42975, -1.0825),
            (-0.404, 0.27981, -1.0825), (-0.196, 0.27981, -1.0825), (-0.053, 0.3005, -1.0825), (0.051, 0.3005, -1.0825),
            (0.155, 0.3005, -1.0825), (-0.053, 0.36512, -1.0825), (0.155, 0.36512, -1.0825), (-0.053, 0.42975, -1.0825),
            (0.051, 0.42975, -1.0825), (0.155, 0.42975, -1.0825), (-0.053, 0.27981, -1.0825), (0.155, 0.27981, -1.0825)]
 AIMS_TXT = '''
-mag@pa44 -0.48513 0.1041 -1.078 / mfd.alt.inner -0.069 0.26 -1.065 / mfd.alt.outer -0.07388 0.2676 -1.071
-mfd.sk1 -0.04525 0.25875 -1.078 / pfd.alt.inner -0.42 0.26 -1.065 / pfd.alt.outer -0.41714 0.26857 -1.071
-pfd.fms.inner -0.18 0.252 -1.065 / pfd.fms.outer -0.1828 0.26059 -1.071 / pfd.sk1 -0.39625 0.25875 -1.078
-pfd.sk10 -0.23875 0.25875 -1.078 / pfd.sk11 -0.22125 0.25875 -1.078 / pfd.sk12 -0.20375 0.25875 -1.078
-pfd.sk2 -0.37875 0.25875 -1.078 / pfd.sk3 -0.36125 0.25875 -1.078 / pfd.sk4 -0.34375 0.25875 -1.078
-pfd.sk5 -0.32625 0.25875 -1.078 / pfd.sk6 -0.30875 0.25875 -1.078 / pfd.sk7 -0.29125 0.25875 -1.078
-pfd.sk8 -0.27375 0.25875 -1.078 / pfd.sk9 -0.25625 0.25875 -1.078 / primer@pa44 -0.468 0.183 -1.088
-sw.avionics@pa44 -0.392 0.16 -1.092 / sw.beacon@pa44 -0.326 0.16 -1.092 / sw.fuelPump@pa44 -0.356 0.16 -1.092
-sw.landing@pa44 -0.212 0.16 -1.092 / sw.master@pa44 -0.428 0.16 -1.092 / sw.nav@pa44 -0.278 0.16 -1.092
-sw.pitot@pa44 -0.14 0.16 -1.092 / sw.strobe@pa44 -0.248 0.16 -1.092 / sw.taxi@pa44 -0.176 0.16 -1.092
-sw.pitot -0.1385 0.197 -1.086 / sw.fan -0.1195 0.197 -1.086
+mfd.alt.inner -0.069 0.26 -1.065 / mfd.alt.outer -0.07388 0.2676 -1.071 / mfd.sk1 -0.04525 0.25875 -1.078
+pfd.alt.inner -0.42 0.26 -1.065 / pfd.alt.outer -0.41714 0.26857 -1.071 / pfd.fms.inner -0.18 0.252 -1.065
+pfd.fms.outer -0.1828 0.26059 -1.071 / pfd.sk1 -0.39625 0.25875 -1.078 / pfd.sk10 -0.23875 0.25875 -1.078
+pfd.sk11 -0.22125 0.25875 -1.078 / pfd.sk12 -0.20375 0.25875 -1.078 / pfd.sk2 -0.37875 0.25875 -1.078
+pfd.sk3 -0.36125 0.25875 -1.078 / pfd.sk4 -0.34375 0.25875 -1.078 / pfd.sk5 -0.32625 0.25875 -1.078
+pfd.sk6 -0.30875 0.25875 -1.078 / pfd.sk7 -0.29125 0.25875 -1.078 / pfd.sk8 -0.27375 0.25875 -1.078
+pfd.sk9 -0.25625 0.25875 -1.078 / sw.pitot -0.1385 0.197 -1.086 / sw.fan -0.1195 0.197 -1.086
 pfd.ent -0.1737 0.2695 -1.077 / pfd.clr -0.1863 0.2695 -1.077 / pfd.proc -0.1737 0.2785 -1.077
 pfd.fpl -0.1863 0.2785 -1.077 / audio.COPLT -0.11 0.28 -1.078 / audio.PILOT -0.139 0.28 -1.078
 pedals -0.3 -0.27 -1.21 / mfd.sk2 -0.02775 0.25875 -1.078 / pfd.direct -0.1863 0.2875 -1.077
 pfd.menu -0.1737 0.2875 -1.077 / audio.PLAY -0.139 0.2948 -1.078 / mfd.sk3 -0.01025 0.25875 -1.078
-throttle -0.005 0.01532 -1.01598 / pfd.range -0.18 0.304 -1.073 / throttle@pa44 -0.036 -0.08927 -1.01226
-prop 0.012 0.06033 -1.03329 / audio.MANSQ -0.11 0.3096 -1.078 / audio.AUX -0.139 0.3096 -1.078
-mfd.sk4 0.00725 0.25875 -1.078 / mfd.sk5 0.02475 0.25875 -1.078 / audio.NAV2 -0.11 0.3244 -1.078
-audio.NAV1 -0.139 0.3244 -1.078 / pfd.crs.inner -0.18 0.336 -1.065 / stby.g5 -0.49 0.3365 -1.0875
-elt 0.345 0.364 -1.09 / cabinHeat 0.2945 0.278 -1.089 / defrost 0.2945 0.256 -1.089 / cb 0.24 0.11 -1.091
+throttle -0.005 0.01532 -1.01598 / pfd.range -0.18 0.304 -1.073 / prop 0.012 0.06033 -1.03329
+audio.MANSQ -0.11 0.3096 -1.078 / audio.AUX -0.139 0.3096 -1.078 / mfd.sk4 0.00725 0.25875 -1.078
+mfd.sk5 0.02475 0.25875 -1.078 / audio.NAV2 -0.11 0.3244 -1.078 / audio.NAV1 -0.139 0.3244 -1.078
+pfd.crs.inner -0.18 0.336 -1.065 / stby.g5 -0.49 0.3365 -1.0875 / elt 0.345 0.364 -1.09
+cabinHeat 0.2945 0.278 -1.089 / defrost 0.2945 0.256 -1.089 / cb 0.24 0.11 -1.091
 dim.switch -0.215 0.125 -1.088 / dim.panel -0.18 0.125 -1.088 / dim.avionics -0.145 0.125 -1.088
 altStatic -0.415 0.047 -1.083 / carbHeat 0.1 0.1192 -1.0808 / parkBrake -0.11 -0.071 -1.068
-rudderTrim 0.059 -0.2681 -1.0367 / carbHeat@pa44 -0.0775 0.0189 -1.017 / gear@pa44 0.225 0.2305 -1.0576
-parkBrake@pa44 -0.112 -0.037 -1.087
+rudderTrim 0.059 -0.2681 -1.0367 / sw.magL@pa44 -0.482 0.119 -1.086 / sw.magR@pa44 -0.463 0.119 -1.086
+sw.rMagL@pa44 -0.392 0.119 -1.086 / sw.rMagR@pa44 -0.373 0.119 -1.086 / sw.startL@pa44 -0.435 0.12 -1.089
+sw.startR@pa44 -0.419 0.12 -1.089 / sw.master@pa44 -0.227 0.215 -1.086 / sw.altr@pa44 -0.208 0.215 -1.086
+sw.rAltr@pa44 -0.189 0.215 -1.086 / sw.avionics@pa44 -0.17 0.215 -1.086 / sw.emergBatt@pa44 -0.143 0.215 -1.086
+sw.pitot@pa44 0.036 0.215 -1.086 / sw.nav@pa44 0.055 0.215 -1.086 / sw.fuelPump@pa44 -0.228 0.112 -1.086
+sw.rFuelPump@pa44 -0.209 0.112 -1.086 / dim.switch@pa44 -0.215 0.158 -1.088 / dim.panel@pa44 -0.18 0.158 -1.088
+dim.avionics@pa44 -0.145 0.158 -1.088 / heatAir@pa44 0.2815 0.291 -1.089 / heatTemp@pa44 0.2815 0.272 -1.089
+heatDef@pa44 0.2815 0.253 -1.089 / sw.heater@pa44 0.369 0.281 -1.086 / sw.ventFan@pa44 0.388 0.281 -1.086
+throttle@pa44 -0.036 -0.08927 -1.01226 / gear@pa44 -0.13 0.078 -1.07056 / emergGear@pa44 -0.172 0.06 -1.0855
+parkBrake@pa44 -0.44 0.08 -1.0778 / prop@pa44 0.012 0.06033 -1.03329 / fuelSel -0.50903 -0.05526 -0.98774
+door 0.574 0.214 -1.035
 '''
 # and what the panel keeps beside and under the yokes, seen at rest (and trimmed): the dimmers' knobs and the alternate
 # static's (their faces: the middle and four points round it), the throttle's knob (its ends and middle, at the aim's
@@ -192,6 +211,13 @@ carbHeat.on 0.1 0.050 -1.080 0.004
 '''
 SWITCH_AREA = ((-0.15, -0.07), (0.16, 0.22), -1.090)    # x, y, the rockers' faces' z
 SWITCH_GRID = (9, 4)                                     # points across, up
+# and the Seminole's switch banks round the left yoke (cockpit.js SEM; round R3, POH VB-2636 Fig 7-33): its engine
+# switches under the left horn's arm (the four magnetos and the L / R start rocker, with their guards) and its left bank
+# beside the left yoke's right horn (BATT MASTR, the two ALTRs, AVION MASTER, the guarded EMERG BATT) — grids over them,
+# tried the same way (each point seen past the models unless a hit box is before it, at rest and trimmed): {name: (x, y,
+# the rockers' faces' z), (points across, up)}
+SEM_AREAS = {'engine switches': (((-0.492, -0.363), (0.10, 0.13), -1.086), (8, 3)),
+             'left bank': (((-0.237, -0.133), (0.20, 0.225), -1.086), (7, 2))}
 AIMS, REST = {}, {}                   # (filled in below from AIMS_TXT: id x y z; from REST_TXT: id x y z r)
 for _row in AIMS_TXT.replace('\n', ' / ').split(' / '):
     if _row.strip():
@@ -239,6 +265,10 @@ def layout(ctx):
     (x0, x1), (y0, y1), z = SWITCH_AREA; nx, ny = SWITCH_GRID
     L.SWITCHES = {(round(ctx.lerp(x0, x1, i / (nx - 1)), 4), round(ctx.lerp(y0, y1, j / (ny - 1)), 4)): (ctx.lerp(x0, x1, i / (nx - 1)), ctx.lerp(y0, y1, j / (ny - 1)), z)
                   for i in range(nx) for j in range(ny)}
+    L.SEM = {}
+    for name, (((x0, x1), (y0, y1), z), (nx, ny)) in SEM_AREAS.items():
+        L.SEM[name] = {(round(ctx.lerp(x0, x1, i / (nx - 1)), 4), round(ctx.lerp(y0, y1, j / (ny - 1)), 4)): (ctx.lerp(x0, x1, i / (nx - 1)), ctx.lerp(y0, y1, j / (ny - 1)), z)
+                       for i in range(nx) for j in range(ny)}
     # the aft face's own frame (x across, s up its slope, n out of it) and the horn's sections
     s = (HUB_ZA[1] - HUB_ZA[0]) / (HUB_YT - HUB_YB)                   # (dz / dy up the face)
     L.FACE_O = V((0, PLATE_Y0, hub_at(PLATE_Y0)[1]))
@@ -249,9 +279,17 @@ def layout(ctx):
 
 
 def hub_at(y):
-    # the hub's outline at height y: (half-width, aft z, corner radius)
-    t = (y - HUB_YB) / (HUB_YT - HUB_YB)
-    return tuple(a + (b - a) * t for a, b in (HUB_A, HUB_ZA, HUB_RC))
+    # the hub's outline at height y: (half-width, aft z, corner radius) — HUB_W's piecewise straight sides, the aft
+    # face's plane (both carried on past the ends: the cap's foot is over the top)
+    k = 0 if y < HUB_W[1][0] else 1
+    (y0, a0, r0), (y1, a1, r1) = HUB_W[k], HUB_W[k + 1]; t = (y - y0) / (y1 - y0)
+    return a0 + (a1 - a0) * t, HUB_ZA[0] + (HUB_ZA[1] - HUB_ZA[0]) * (y - HUB_YB) / (HUB_YT - HUB_YB), r0 + (r1 - r0) * t
+
+
+def plate_half(s):
+    # the plate's half-width a share s of its height up the slope: the face's flat part there, less PLATE_EDGE
+    a, za, rc = hub_at(PLATE_Y0 + s * math.cos(math.atan((HUB_ZA[0] - HUB_ZA[1]) / (HUB_YT - HUB_YB))))
+    return a - rc - PLATE_EDGE
 
 
 def station(ctx, c, d, a, bf, bb):
@@ -359,21 +397,35 @@ def plate_point(L, x, s, n):
     return L.FACE_O + L.FACE_X * x + L.FACE_S * s + L.FACE_N * n
 
 
+def plate_outline(w, h, r, seg, extra):
+    # rounded_outline with extra points along its two long sides (each side cut in extra + 1), counter-clockwise from the
+    # top right corner: that corner, the top left, down the left side, the bottom left, the bottom right, up the right side
+    # → the points, and the right side's and the left side's indices from the foot up (each point and its mirror)
+    pts = rounded_outline(w, h, r, seg); c = seg + 1
+    side = lambda sx, a, b: [(sx * w / 2, a + (b - a) * (k + 1) / (extra + 1)) for k in range(extra)]
+    out = pts[:2 * c] + side(-1, h / 2 - r, -h / 2 + r) + pts[2 * c:4 * c] + side(1, -h / 2 + r, h / 2 - r)
+    e = extra
+    right = [2 * c + e + c + k for k in range(c)] + [4 * c + e + k for k in range(e)] + list(range(c))
+    left = [2 * c + e + c - 1 - k for k in range(c)] + [2 * c + e - 1 - k for k in range(e)] + [2 * c - 1 - k for k in range(c)]
+    return out, right, left
+
+
 def plate(ctx):
-    # the plate on the aft face: a rounded trapezoid (a rounded rectangle narrowed towards its top), its foot sunk in the
-    # face, its bevelled rim (dark: the groove round it), its face lighter than the hub; closed under its foot
+    # the plate on the aft face: a rounded outline narrowing towards its top (the face's), its foot sunk in the face, its
+    # bevelled rim (dark: the groove round it), its face lighter than the hub — a strip of quads across it from its foot
+    # to its top (the occlusion the cap casts on its top and the arms on its foot then shades it up its height, not in
+    # long slivers out of one middle point); closed under its foot
     L = layout(ctx); P = ctx.Piece(); base = ctx.C['yoke']
     face, rim = tuple(c * PLATE_K for c in base), tuple(c * PLATE_RIM_K for c in base)
     def outline(inset):
-        out = []
-        for x, y in rounded_outline(2 * (PLATE_HW[0] - inset), PLATE_S - 2 * inset, PLATE_R - inset, 3):
-            s = y + PLATE_S / 2; k = 1 + (PLATE_HW[1] / PLATE_HW[0] - 1) * s / PLATE_S
-            out.append((x * k, s))
-        return out
-    o1, o2 = outline(0), outline(PLATE_IN)
+        # (a rounded rectangle as wide as the plate's foot, each point's x then scaled to the plate's width at its height)
+        w0 = plate_half(0.0); pts, right, left = plate_outline(2 * (w0 - inset), PLATE_S - 2 * inset, PLATE_R - inset, 3, PLATE_EXTRA)
+        return [(x * (plate_half(y + PLATE_S / 2) - inset) / (w0 - inset), y + PLATE_S / 2) for x, y in pts], right, left
+    (o1, _, _), (o2, right, left) = outline(0), outline(PLATE_IN)
     rows = [[plate_point(L, x, s, -PLATE_SINK) for x, s in o1], [plate_point(L, x, s, PLATE_H) for x, s in o2]]
     b = P.grid(rows, rim, closed=True); n = len(o1)
-    P.fan(list(range(b + n, b + 2 * n)), plate_point(L, 0, PLATE_S / 2, PLATE_H), face, flip=True)
+    for j in range(len(right) - 1):
+        P.f.append(tuple(b + n + i for i in (right[j], right[j + 1], left[j + 1], left[j]))); P.c.append(face)
     P.fan(list(range(b, b + n)), plate_point(L, 0, PLATE_S / 2, -PLATE_SINK), rim, flip=False)
     return P
 
@@ -392,10 +444,16 @@ def cap(ctx):
     # the rounded cap on the hub's top: its foot inside the hub, its side jutting aft of the plate, its rounded top edge
     # and a low dome
     P = ctx.Piece(); V = ctx.Vector; col = ctx.C['yoke']
-    rows = [rr_ring(ctx, y, hx, zf, za, rc) for y, hx, zf, za, rc in CAP]
+    rows = [rr_ring(ctx, *cap_ring(k)) for k in range(len(CAP))]
     b = P.grid(rows, col, closed=True); n = len(rows[0]); last = b + (len(rows) - 1) * n
-    y, hx, zf, za, rc = CAP[-1]; P.fan(list(range(last, last + n)), V((0, CAP_TOP, (zf + za) / 2)), col, flip=True)
+    y, hx, zf, za, rc = cap_ring(len(CAP) - 1); P.fan(list(range(last, last + n)), V((0, CAP_TOP, (zf + za) / 2)), col, flip=True)
     return P
+
+
+def cap_ring(k):
+    # CAP's ring k with its aft z over the aft face's (at the cap's side: the face carried up to there)
+    y, hx, zf, za, rc = CAP[k]
+    return y, hx, zf, za + hub_at(CAP[1][0])[1], rc
 
 
 def boss(ctx): return ring_strip(ctx, BOSS, BOSS_SEG, ctx.C['yoke'])
@@ -622,7 +680,18 @@ def check(ctx, objs):
         for k, p in L.SWITCHES.items():
             if behind_box(p, dz): hidden_by_box.setdefault(dz, []).append(k)
             else: look('switch block %s' % (k,), p, dz)
+    sem_seen = {}
+    for name, pts in L.SEM.items():
+        for dz in (0.0, CHECK_DZ):
+            for k, p in pts.items():
+                if behind_box(p, dz): continue
+                look('%s %s' % (name, k), p, dz); sem_seen[(name, dz)] = sem_seen.get((name, dz), 0) + 1
     assert not blocked, ('the yokes hide', blocked)
+    # (and the hit boxes themselves, which picking takes first: no control's line meets one — the hub's top box, the
+    # taller hub's, under the door handle's line over the right yoke)
+    boxed = [k for k, p in AIMS.items() if behind_box(p, CHECK_DZ)]
+    assert not boxed, ('the yokes\' hit boxes before', boxed)
+    sem_clear = {name: round(min([close.get('%s %s' % (name, k), 9) for k in pts]) * 1000, 1) for name, pts in L.SEM.items()}
     g5_clear = min(close.get(k, 9) for k in L.G5)
     rest_clear = min(close.get(k, 9) for k in REST)
     # (the switch block: per row, the x from which the left yoke's right horn's hit box hides it — at rest and trimmed;
@@ -672,8 +741,8 @@ def check(ctx, objs):
     (px, py, pz), (hx, hy, hzz) = PTT
     seats = {
         ('hub', 'horn roots'): (hb, section(ctx, L.STATIONS[0])),
-        ('hub', 'plate foot'): (hb, pl.v[:len(rounded_outline(1, 1, 0.1, 3))]),
-        ('hub', 'cap foot'): (hb, rr_ring(ctx, *CAP[0])),
+        ('hub', 'plate foot'): (hb, pl.v[:len(plate_outline(1, 1, 0.1, 3, PLATE_EXTRA)[0])]),
+        ('hub', 'cap foot'): (hb, rr_ring(ctx, *cap_ring(0))),
         ('hub', 'boss end'): (hb, [V((BOSS[-1][0] * math.cos(2 * math.pi * k / BOSS_SEG), BOSS[-1][0] * math.sin(2 * math.pi * k / BOSS_SEG), BOSS[-1][1])) for k in range(BOSS_SEG)]),
         ('plate', 'chevron feet'): (pl, [plate_point(L, (u - 0.5) * LOGO_W, LOGO_S + v * LOGO_W, PLATE_H - LOGO_SINK) for poly in CHEVRON for u, v in poly]),
         ('grip', 'pod foot'): (hn, slab_foot(POD)),
@@ -698,7 +767,9 @@ def check(ctx, objs):
           'the left boot %.1f mm under the PFD\'s bezel, the boots\' lips %.2f mm off the shafts; seated by (mm) %s; '
           'the G5\'s lines of sight %.1f mm from the yokes at the closest, the dimmers\', alternate static\'s, quadrant\'s and '
           'carb heat\'s %.1f mm; the switch block (x −0.15…−0.07, y 0.16…0.22) seen past the models at %d of %d points, the '
-          'rest behind the left yoke\'s right horn\'s hit box from x %s at rest, %s trimmed (per row y); sharp edges %s'
+          'rest behind the left yoke\'s right horn\'s hit box from x %s at rest, %s trimmed (per row y); the Seminole\'s banks '
+          'seen past the models at (rest, trimmed) %s of %s points, %s mm from them at the closest; sharp edges %s'
           % ({n: tuple(round(r * 1000, 1) for r in v) for n, v in room.items()}, [(k, round(v * 1000, 1)) for k, v in tight],
              (L.PFD_BEZEL_BOT - top) * 1000, lip * 1000, seated, g5_clear * 1000, rest_clear * 1000,
-             len(L.SWITCHES) - len(hidden_by_box.get(0.0, [])), len(L.SWITCHES), sw_limit.get(0.0, {}), sw_limit.get(CHECK_DZ, {}), sharp))
+             len(L.SWITCHES) - len(hidden_by_box.get(0.0, [])), len(L.SWITCHES), sw_limit.get(0.0, {}), sw_limit.get(CHECK_DZ, {}),
+             {n: (sem_seen.get((n, 0.0), 0), sem_seen.get((n, CHECK_DZ), 0)) for n in L.SEM}, {n: len(p) for n, p in L.SEM.items()}, sem_clear, sharp))

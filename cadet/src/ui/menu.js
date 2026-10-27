@@ -124,7 +124,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         <tr><td>Q / E</td><td>ラダー（地上では前輪の向き）</td></tr><tr><td>R / F</td><td>スロットル（Shift+R で全開・Shift+F でアイドル）</td></tr>
         <tr><td>T</td><td>いまの速度でトリム（Shift+T で戻す）</td></tr><tr><td>V / Shift+V</td><td>フラップを下げる / 上げる</td></tr>
         <tr><td>B / Space（押したまま）</td><td>ブレーキ</td></tr><tr><td>Shift+B</td><td>パーキングブレーキ（かける・外す）</td></tr>
-        <tr><td>G</td><td>脚の上げ下げ（Seminole：緑のランプ 3 つで DOWN、赤は作動中）</td></tr><tr><td>Z / X</td><td>ラダートリム 左 / 右</td></tr><tr><td>U</td><td>自動ラダー</td></tr><tr><td>L</td><td>翼を水平に戻す（自由飛行だけ）</td></tr>
+        <tr><td>G</td><td>脚の上げ下げ（Seminole：MFD の LANDING GEAR が緑の丸 3 つで DOWN、斜線の四角は作動中）</td></tr><tr><td>Z / X</td><td>ラダートリム 左 / 右</td></tr><tr><td>U</td><td>自動ラダー</td></tr><tr><td>L</td><td>翼を水平に戻す（自由飛行だけ）</td></tr>
         <tr><td>Enter / 1〜3</td><td>チェックリストを進める / 無線の復唱を選ぶ</td></tr>
         <tr><td>マウス</td><td>見回す。右ボタンを押したままで近くを見る</td></tr><tr><td>左クリック / ホイール</td><td>照準の先のスイッチ・レバー・つまみを操作する</td></tr>
         <tr><td>C</td><td>操縦席 ⇄ 外からの視点</td></tr><tr><td>Tab</td><td>画面の計器盤（PFD・MFD）</td></tr><tr><td>H</td><td>操作の説明</td></tr>

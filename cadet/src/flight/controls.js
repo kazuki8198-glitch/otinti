@@ -104,7 +104,7 @@ export function createControls(FL, { prefs, savePrefs = () => {}, getGamepads = 
       if (A.gear.fixed) return say('この機体（Archer）の脚は固定式で、上げ下げできません');
       if (s.onGround && s.gearDown) return say('地上では脚を上げられません');
       s.gearDown = !s.gearDown;
-      return say(s.gearDown ? '脚 DOWN：着陸に備える（緑のランプ 3 つで確認）。抗力が増える' : '脚 UP：抗力が減って上昇・加速しやすくなる（正の上昇を確認してから）');
+      return say(s.gearDown ? '脚 DOWN：着陸に備える（MFD の LANDING GEAR、緑の丸 3 つで確認）。抗力が増える' : '脚 UP：抗力が減って上昇・加速しやすくなる（正の上昇を確認してから）');
     } else if (a === 'trim') {
       if (s.onGround) { s.trim = 0; s.trimHold = 0; return say('地上ではトリムを離陸位置（中立）にしました'); }
       if (s.opts.assist) return say('操縦アシスト中はトリムは自動です');

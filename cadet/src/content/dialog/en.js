@@ -8,7 +8,7 @@
 import { PHASE_LINES, ASSIST_LINES, RECOVER_LINE, EVENT_LINES } from './day1.js';
 import { debriefLine } from './cockpit.js';
 import { TASK_MISSED } from '../walkaround-archer.js';          // (the Seminole's table says the same)
-import { NOCATCH } from '../../aircraft/systems.js';
+import { NOCATCH, NOADVANCE, SIDE_JA } from '../../aircraft/systems.js';
 
 export const CREW = ['instructor', 'chief', 'examiner'];
 
@@ -339,6 +339,11 @@ const AIR = new Map([
     starter: 'Don\'t keep the starter turning for long. Wait a moment, then try again.',
     mags: 'Both magnetos are OFF. Left magneto (MAG LEFT) ON first, then try again.',
     magL: 'The left magneto (MAG LEFT) is OFF. The starting device (the impulse coupling) is on the left one, so MAG LEFT ON (the right still OFF), then try again.',
+    twinFuel: 'No fuel is getting through. That engine\'s fuel selector to ON.',
+    twinPrime: 'The engine is cold and it hasn\'t had enough prime. With the fuel pump ON, push the mixture forward for about three seconds, back to cut-off, then try again.',
+    twinFlooded: 'Too much prime: there\'s too much fuel. Leave the mixture at cut-off, open the throttle wide and try again (pull it back as soon as it catches).',
+    twinMags: 'Both of that engine\'s magnetos are OFF. MAG LEFT and MAG RIGHT both ON, then try again.',
+    twinMagL: 'That engine\'s MAG LEFT is OFF. The starting device (the impulse coupling) is on the left magneto, so both ON, then try again.',
   }).map(([k, en]) => [NOCATCH[k], en]),
 ]);
 // what he found undone on the walk-around (walkaround-*.js TASK_MISSED), and why an engine stopped (aircraft/systems.js)
@@ -349,7 +354,10 @@ const TASK_EN = {
   tieT: 'The tail tie-down was still on. I untied it.', chocks: 'The nose-wheel chocks were still in place. I took them away.',
 };
 const TASK_AIR = Object.entries(TASK_MISSED).map(([k, ja]) => [ja, TASK_EN[k]]);
-const STOP_EN = { 'ミクスチャー アイドル カットオフ': 'mixture at idle cut-off', '左右のマグネトー OFF': 'both magnetos OFF', '燃料セレクター OFF': 'fuel selector OFF', '燃料切れ': 'out of fuel', '故障': 'a failure' };
+const STOP_EN = { 'ミクスチャー アイドル カットオフ': 'mixture at idle cut-off', '左右のマグネトー OFF': 'both magnetos OFF', '燃料セレクター OFF': 'fuel selector OFF', '燃料切れ': 'out of fuel', '故障': 'a failure',
+  [NOADVANCE]: 'the mixture not pushed forward as it fired' };
+// (the twin's: which engine — aircraft/systems.js SIDE_JA — before the reason)
+const SIDE_EN = { [SIDE_JA[0]]: 'left engine', [SIDE_JA[1]]: 'right engine' };
 export function airEnglish(text) {
   if (AIR.has(text)) return AIR.get(text);
   let m = /^乗る前に、機体の周りを私も見てきました。([\s\S]*)$/.exec(text);
@@ -360,7 +368,7 @@ export function airEnglish(text) {
     if (rest.trim()) out.push(`And this: “${rest.trim()}”`);
     return `Before we got in, I had a look round the aircraft too. ${out.join(' ')}`;
   }
-  m = /^エンジンが止まりました（(.+)）。$/.exec(text);
-  if (m) return `The engine has stopped (${STOP_EN[m[1]] || `“${m[1]}”`}).`;
+  m = /^エンジンが止まりました（(?:(左エンジン|右エンジン)：)?(.+)）。$/.exec(text);
+  if (m) return `The engine has stopped (${m[1] ? `${SIDE_EN[m[1]]}: ` : ''}${STOP_EN[m[2]] || `“${m[2]}”`}).`;
   return null;
 }

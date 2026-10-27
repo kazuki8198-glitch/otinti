@@ -156,6 +156,29 @@ test('MFD engine strip: unimplemented engine values are shown as "—", not as m
   assert.ok(texts.some(t => /NOT FOR NAVIGATION/.test(t)));
 });
 
+// the twin's LANDING GEAR box (the G1000 Seminole's, POH VB-2636 Fig 7-13) at the MFD's engine strip foot: three solid
+// green circles down and locked, hollow white circles up, crosshatched squares in transit, red circles with no reading;
+// none on a single's MFD; on the PFD only when asked (d.gearRev: CADET's twin with its MFD dark — the reversionary display)
+test('MFD landing gear: the twin\'s three symbols by the gear\'s position; none for a single; on the PFD only with gearRev', () => {
+  const rec = () => {
+    const log = [], g = new Proxy({}, { get: (t, k) => (k in t ? t[k] : (...a) => { log.push({ k, a, fill: t.fillStyle, stroke: t.strokeStyle }); }), set: (t, k, v) => { t[k] = v; return true; } });
+    return { g, log, has: (txt) => log.some(e => e.k === 'fillText' && e.a[0] === txt), arcs: (how, col) => log.filter((e, i) => e.k === how && log[i - 1] && log[i - 1].k === 'arc' && (how === 'fill' ? e.fill : e.stroke) === col).length };
+  };
+  const C = A.COLORS, tw = P.placeInAir(P.newState({ aircraft: 'pa44' }), 0, -40000, 3000, 354, 130), av = A.createAvionics();
+  const at = (pos) => { const o = { ...tw.out, gearPos: pos }, r = rec(); A.drawMFD(r.g, 640, 420, panel(tw, av, o)); return r; };
+  const down = at(1), up = at(0), moving = at(0.5), unknown = at(NaN);
+  for (const r of [down, up, moving, unknown]) assert.ok(r.has('LANDING GEAR'));
+  assert.equal(down.arcs('fill', C.green), 3, 'down and locked: three green circles');
+  assert.equal(up.arcs('stroke', C.white), 3, 'up: three hollow white circles'); assert.equal(up.arcs('fill', C.green), 0);
+  assert.equal(moving.log.filter(e => e.k === 'strokeRect' && e.stroke === C.white).length, 3, 'in transit: three crosshatched squares'); assert.equal(moving.arcs('fill', C.green), 0);
+  assert.equal(unknown.arcs('fill', C.red), 3, 'unknown: three red circles');
+  for (const r of [down, up, moving, unknown]) for (const e of r.log) for (const v of e.a) if (typeof v === 'number') assert.ok(Number.isFinite(v), `${e.k} ${e.a}`);
+  // a single: none; the PFD: only with gearRev
+  const single = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100), r1 = rec(); A.drawMFD(r1.g, 640, 420, panel(single, av)); assert.ok(!r1.has('LANDING GEAR'), 'the Archer\'s MFD');
+  const r2 = rec(); A.drawPFD(r2.g, 640, 420, panel(tw, av)); assert.ok(!r2.has('LANDING GEAR'), 'the PFD by default');
+  const r3 = rec(); A.drawPFD(r3.g, 640, 420, { ...panel(tw, av, { ...tw.out, gearPos: 1 }), gearRev: true }); assert.ok(r3.has('LANDING GEAR') && r3.arcs('fill', C.green) === 3, 'the PFD as the reversionary display');
+});
+
 test('failures on the displays: AHRS failure flags the attitude and heading, GPS failure flags the GPS course', () => {
   const s = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100), av = A.createAvionics();
   av.fail = { gps: true }; av.cdi = 'GPS'; A.control(av, 'DIRECT', 'LABEF');

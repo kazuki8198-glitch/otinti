@@ -1,5 +1,6 @@
-# CADET — tools/aircraft/cockpit_seats.py : the two front seats, the rear bench and their belts in the flown aircraft's
-# cabin, a part module of tools/aircraft/build_cockpit.py (run by it, never alone; see its header):
+# CADET — tools/aircraft/cockpit_seats.py : the two front seats, the rear seats (the Archer's bench, the Seminole's two
+# seats) and their belts in the flown aircraft's cabin, a part module of tools/aircraft/build_cockpit.py (run by it,
+# never alone; see its header):
 #   node tools/aircraft/cockpit-spec.mjs > /tmp/cockpit.json
 #   blender -b --factory-startup -P tools/aircraft/build_cockpit.py -- /tmp/cockpit.json assets/model/cockpit.glb [preview_dir|-]
 #   (a group alone, for its previews: … -- /tmp/cockpit.json /tmp/trial.glb /tmp/prev band,seats — never into assets/model,
@@ -25,14 +26,25 @@
 #   one seam across them) and a back of two sections (each lofted across with raised rolls at its ends and down the
 #   middle, its panel sewn in 3 channels), no headrests. It is seen from 1.1 m and further, mostly over and between the
 #   front backs (its cushion only as a sliver of its right front corner, looking back right and down past the
-#   instructor's seat), so it is plainer: its cushion's ends square, its panels flat across.
+#   instructor's seat), so it is plainer: its cushion's ends square, its panels flat across. The Archer's only (pa28).
+# - the Seminole's rear seats (round R3; POH VB-2636 §7: four seats in two rows, the rear ones removable — plungers behind
+#   each leg —, three-point belts on all four; Piper's NXi interior photo, Seminole-Interior_FX): two separate seats side
+#   by side, 3 cm apart, each like the front ones — one colour, bolsters round a recessed centre panel, a front roll, a
+#   tall back rolled over at its rounded top — and lofted from their sections, but plainer, as the bench is (seen from
+#   1.1 m and further): fewer stations, each panel in two long channels (the cushion's seam across its middle, the
+#   back's ~2/3 up — the photo's: the band above it reads as a headrest; no headrest moulded on, no posts), the black pan
+#   and the frame's two side plates under the cushion, down to the floor (no tracks). In the bench's place, within its
+#   occlusion boxes and old shapes, the back a little more upright (14°) and taller (to y 0.64). The Seminole's only
+#   (pa44).
 # - the belts (TX: dark charcoal webbing, a black push-button buckle with a red tab; the photos and audit-1): on every seat
 #   a lap belt — its buckle half on a short strap from the inboard rear of the cushion, its outboard half from the
 #   outboard rear, with a black adjuster — and an inertia-reel shoulder harness out of a black slot cover in the
 #   headliner above and behind the seat (the front ones just behind the backs' tops, above the forward part of the rear
 #   side window — on the right, aft of the door's rear edge —, the rear ones above the small aft windows), its end
-#   clipped by a chrome snap hook to the lap belt by its tongue (the chrome latch plate). The rear belts lie buckled across their empty places, as in
-#   Piper's photos (the harness over the back's outboard top and across its face to the buckle by the bench's middle).
+#   clipped by a chrome snap hook to the lap belt by its tongue (the chrome latch plate). The rear belts lie buckled
+#   across their empty places, as in Piper's TX photos (the harness over the back's outboard top and across its face to
+#   the buckle by the bench's middle; on the Seminole's seats, by each seat's inboard bolster, the buckle's strap along
+#   it out of the crease).
 #   The pilot's own lies open on the seat (the camera is the pilot): the harness over the back's outboard top and down
 #   its face to the cushion, the outboard half and its tongue lying forward and in across the cushion's middle (seen
 #   looking ~35° down), the buckle on the inboard bolster. The instructor's (cockpit.js's instructorSeat: actor.js
@@ -59,27 +71,36 @@
 #   behind it at his hips; the headrest's face behind the old one's insert moved back so, behind his head); the flap
 #   handle's and the trim wheel's sight lines past the left seat (FLAP, TRIMW: clear by ≥ 2 cm); the console between
 #   the seats (inner edges at |x| ≥ 0.07); the lower walls outboard (lowX) and the window band and the headliner above
-#   them (the belts); the eye (nothing nearer than 0.2 m); the bench behind (the cabin within 2.2 m); the occlusion
-#   proxy's boxes for the seats (AO_OCC: each part within its box or no further out than the old shapes were, but where
-#   noted in check()) — check() asserts them all, and that no belt goes into a seat. The old shapes' numbers that the
+#   them (the belts); the eye (nothing nearer than 0.2 m); the bench and the Seminole's rear seats behind (the cabin
+#   within 2.2 m); the occlusion proxy's boxes for the seats (AO_OCC: each part within its box or no further out than
+#   the old shapes were, but where noted in check(); the Seminole's rear seats in the bench's) — check() asserts them
+#   all, that no belt goes into a seat, and each type's share of the triangles. The old shapes' numbers that the
 #   spec has not (heights, recline, the bench) are copied from cockpit.js (seat(), the rear bench's lines), each marked.
 # Coordinates: the cabin's frame (metres, x = the right wing, y = up, z = aft), as build_cockpit.py.
-# Nodes ("<group>.<surface>", the surfaces cockpit.js's): seats.seat (the front seats' centre panels: cushions, backs,
-#   headrests' faces), seats.seatSide (their bodies: bolsters, sides, shells, front rolls, headrests), seats.black (the
-#   seat pans, the frames' side plates, the recline levers; the front belts' buckles, adjusters and slot covers),
+# Nodes ("<group>.<surface>[.pa28|.pa44]", the surfaces cockpit.js's): seats.seat (the front seats' centre panels:
+#   cushions, backs, headrests' faces), seats.seatSide (their bodies: bolsters, sides, shells, front rolls, headrests),
+#   seats.black (the seat pans, the frames' side plates, the recline levers; the front belts' buckles, adjusters and slot
+#   covers),
 #   seats.alu (the seat tracks), seats.chrome (the front belts' tongues and snap hooks), seats.red (the buckles' tabs),
-#   seats.belt (the front belts' webbing); bench.seat (the bench's centre panels), bench.seatSide (its bodies), and its
-#   belts' bench.belt, bench.black, bench.chrome, bench.red. (The webbing's surface is cockpit.js's S.belt; a spec
-#   without it — a cockpit.js older than the belts — gets S.grip's, the yokes' dark leather, instead.) COLOR_0 rgb: the
-#   table's colour, darker in the seams and the crevices along the panels' edges, the webbing's own charcoal (alpha:
-#   build_cockpit.py's occlusion of what is close by).
+#   seats.belt (the front belts' webbing); the rear seats, each type its own (cockpit.js draws only its type's: the group
+#   'bench' is the rear seats, the Archer TX's bench and the Seminole's two): bench.seat.pa28 (the bench's centre
+#   panels), bench.seatSide.pa28 (its bodies), and its belts' bench.belt.pa28, bench.black.pa28, bench.chrome.pa28,
+#   bench.red.pa28; bench.seat.pa44 (the Seminole's seats' panels), bench.seatSide.pa44 (their bodies), bench.black.pa44
+#   (their pans and frames, their belts' buckles, adjusters and slot covers), bench.belt.pa44, bench.chrome.pa44,
+#   bench.red.pa44. (The webbing's surface is cockpit.js's S.belt; a spec without it — a cockpit.js older than the
+#   belts — gets S.grip's, the yokes' dark leather, instead.) COLOR_0 rgb: the table's colour, darker in the seams and
+#   the crevices along the panels' edges, the webbing's own charcoal (alpha: build_cockpit.py's occlusion of what is
+#   close by).
 import math
 from mathutils import Vector
 from mathutils.kdtree import KDTree
 from mathutils.bvhtree import BVHTree
 
 GROUPS = ('seats', 'bench')
-MAX_TRIS = 4600                       # (they replace 6,440 triangles of rounded boxes in code; ~1,000 of it the belts)
+MAX_TRIS = 7000                       # (both types' rear seats: the bench and the Seminole's two seats, each type drawing one —)
+MAX_TYPE = 5750                       # (— so each type's share, checked in check(): they replace 6,440 triangles of rounded
+                                      # boxes in code; ~1,000 of it the front belts; the Seminole's rear seats ~1,100 more
+                                      # than the bench)
 
 DEG = math.pi / 180
 # ---------------------------------------------------------------- the old shapes' numbers (cockpit.js) that the spec has not
@@ -102,6 +123,16 @@ TRACK_X, TRACK_Z = 0.15, (-0.36, 0.26)
 # z 0.86, reclined 16°, 0.11 thick, x ±0.5 (the TX's taller than the old one: no headrests on it)
 BENCH = {'z': 0.48, 'top': -0.1125, 'rake': 4 * DEG, 'x': 0.5, 'place': 0.255,
          'backY': 0.18, 'backZ': 0.86, 'recline': 16 * DEG, 'backHalf': 0.055}
+# the Seminole's rear seats (cockpit.js has none of its own: its rear bench, without the model, is both types'): each
+# seat's middle x (the right one's; a narrow gap between them, as in Piper's photo), its cushion's panel crown at top, z,
+# raked; its back at backY, backZ, reclined — the bench's places, its back stood a little more upright and taller (to
+# y ~0.64, as high as the photo's backs reach against the windows), within the bench's occlusion boxes (AO_OCC) and its
+# old shapes; the stations along the cushion (s forward: from inside the back's foot) and its front roll (from, over),
+# up the back (a: from behind the cushion; the seam's three stations added) and its top roll (from, over, the corners
+# drawn in to); the seam across the back and its panel (a)
+REAR = {'x': 0.235, 'z': 0.482, 'top': -0.115, 'rake': 4 * DEG, 'backY': 0.18, 'backZ': 0.862, 'recline': 14 * DEG}
+REAR_CUSH, REAR_ROLL = (-0.29, -0.16, -0.04, 0.08, 0.186), (0.198, 0.061)
+REAR_BACK, REAR_TOP, REAR_SEAM = (-0.36, -0.10, 0.40), (0.41, 0.065, 0.15), 0.17
 # the belts: the webbing's width and thickness (2 in, as Piper's lap belts and harnesses), how far a strap lies off what
 # it rests on (where it is tried across its width: ACROSS); the harnesses' slots in the headliner (x, z: over the front
 # seats, just behind their backs' tops — 12 cm aft of the rear window's forward edge, 16–19 cm aft of the door's rear
@@ -272,11 +303,12 @@ def head_sec(ctx):
 
 def panel_rings(rows, half, depth_sign, top_of):
     # a channelled panel's rings: rows [(t, kind)] with kind 'tuck' (its end, thin), 'edge' (rolled down at an end),
-    # 'crown' (a channel's middle) or 'seam'; half: its right half from the middle out (crown points, its edge, its
-    # tucked edge) as (a, b), b its height over the crown (depth_sign −1: b measured forwards, for a back); top_of(t, a,
-    # b) shapes the crown along the panel (the lumbar) → rings (tuck R … the middle … tuck L), the rows' kinds
+    # 'crown' (a channel's middle), 'side' (a long channel's full end, just short of its seam) or 'seam'; half: its
+    # right half from the middle out (crown points, its edge, its tucked edge) as (a, b), b its height over the crown
+    # (depth_sign −1: b measured forwards, for a back); top_of(t, a, b) shapes the crown along the panel (the lumbar) →
+    # rings (tuck R … the middle … tuck L), the rows' kinds
     rings, kinds = [], []
-    drop = {'crown': 0.0, 'seam': 0.007, 'edge': 0.009}
+    drop = {'crown': 0.0, 'side': 0.0015, 'seam': 0.007, 'edge': 0.009}
     for t, kind in rows:
         r = []
         for k, (a, b) in enumerate([(0.0, 0.0)] + half):
@@ -299,7 +331,7 @@ def panel_cols(rings, kinds, col, edge):
     # the panel's colours: the seams and its rolled ends a little darker, its tucked edges in the crevice darker still —
     # lightly (the TX's seats read near-white even in shade; the baked occlusion darkens the crevices again, and a dark
     # shade on a seam's row spreads over the faces either side of it: the panel's mean stays ≥ 0.9 of its colour)
-    k = {'crown': 1.0, 'seam': 0.9, 'edge': 0.93, 'tuck': 0.82}
+    k = {'crown': 1.0, 'side': 1.0, 'seam': 0.9, 'edge': 0.93, 'tuck': 0.82}
     return [[shade(col, 0.82) if abs(q[0]) > edge else shade(col, k[kind]) for q in r] for r, kind in zip(rings, kinds)]
 
 def body_cols(half, recess, base, last):
@@ -463,7 +495,7 @@ def bench(ctx):
         pr = [[(a, d - b['backHalf'] + 0.011, t) for a, d, t in r] for r in pr]
         bpanels.add(loft(lambda u, d, a, o=sx * P0: back(u + o, d, a), pr, panel_cols(pr, kinds, TAN, 0.156)))
     _G['bench'] = {'cushion': [cbody, cpanels], 'back': [bbody, bpanels]}
-    return {'bench.seatSide': Part().add(cbody).add(bbody), 'bench.seat': Part().add(cpanels).add(bpanels)}
+    return {'bench.seatSide.pa28': Part().add(cbody).add(bbody), 'bench.seat.pa28': Part().add(cpanels).add(bpanels)}
 
 # ---------------------------------------------------------------- the belts
 def both_ways(f):
@@ -751,6 +783,91 @@ def bench_belts(ctx, seat, cols):
     hp = laid(bvh_of(seat + [band(lap, BELT)]), keys); o['belt'].add(band(hp, BELT)); snap(o, hp, CHROME)
     return o
 
+# ---------------------------------------------------------------- the Seminole's rear seats
+def rear_frames():
+    r = REAR
+    cr, sr = math.cos(r['rake']), math.sin(r['rake'])
+    O = Vector((r['x'], r['top'], r['z'])); n = Vector((0, cr, sr)); f = Vector((0, sr, -cr))
+    cush = lambda u, h, s: O + Vector((u, 0, 0)) + n * h + f * s                # u across, h up, s forward
+    cb, sb = math.cos(r['recline']), math.sin(r['recline'])
+    Bc = Vector((r['x'], r['backY'], r['backZ'])); v = Vector((0, cb, sb)); w = Vector((0, -sb, cb))
+    back = lambda u, d, a: Bc + Vector((u, 0, 0)) + w * d + v * a              # u across, d aft, a up
+    return cush, back, n, v, w
+
+def seamed_rows(t0, ts, t1, tuck=0.008, side=0.016):
+    # a panel's rows in two long channels from t0 (its end inside the next part: not tucked) to t1 (tucked), sewn across
+    # at ts: each channel's middle crowned, its full ends side either side of the seam
+    return [(t0, 'edge'), ((t0 + ts) / 2, 'crown'), (ts - side, 'side'), (ts, 'seam'), (ts + side, 'side'), ((ts + t1) / 2, 'crown'),
+            (t1, 'edge'), (t1 + tuck, 'tuck')]
+
+def rear_seat(ctx):
+    # one rear seat (the right one; the left mirrored): its cushion's and back's bodies and panels lofted as the front
+    # seats' (their sections), fewer stations, and the black pan and frame under the cushion → its nodes' parts
+    C, S = ctx.C, ctx.S; TAN, BROWN, BLACK = (tuple(C[k]) for k in ('seat', 'seatSide', 'black'))
+    cush, back, n, v, w = rear_frames(); F = S['floor']
+    # ---- the cushion: its rear pushed into the back's foot, the recess along the middle, the front roll (as the front
+    # seats': the recess closed, rounded down over 6 cm, its corners drawn in)
+    st = [(s, CUSH_HALF, 0) for s in REAR_CUSH] + [(REAR_ROLL[0] + REAR_ROLL[1] * math.sin(th * DEG), CUSH_ROLL, th) for th in (0, 30, 60, 85)]
+    rings = [end_rounding([(a, b, s) for a, b in sym_ring(half)], th * DEG, -0.050, 0.15) for s, half, th in st]
+    body = loft(cush, rings, [body_cols(half, half is not CUSH_ROLL, BROWN, 0.85) for s, half, th in st])
+    # (its panel in two channels, the seam across its middle — the channels' full ends either side of it, so that the seam
+    # shows as a groove between two pillows, not a dip across 11 cm —; its rear end inside the back's panel, not tucked)
+    prings, kinds = panel_rings(seamed_rows(REAR_CUSH[0] + 0.01, (REAR_CUSH[0] + REAR_ROLL[0] - 0.01) / 2, REAR_ROLL[0] - 0.02), PANEL_HALF, 1, lambda t, a, b: b)
+    panel = loft(cush, prings, panel_cols(prings, kinds, TAN, 0.155))
+    # ---- the back: its foot behind the cushion's rear, the recess, up to its shoulders, the top rolled over (corners
+    # drawn in) — no headrest moulded on, no easing for the arms; across it at REAR_SEAM, as across its panel, the seam
+    # that sets the headrest's band off (the photo's: right across the back, the bolsters too — a groove of 4 mm in their
+    # front, darker, between two stations 12 mm either side)
+    sa = (REAR_SEAM - 0.012, REAR_SEAM, REAR_SEAM + 0.012)
+    bst = [(a, BACK_SEC, 0) for a in sorted(REAR_BACK + sa)] + [(REAR_TOP[0] + REAR_TOP[1] * math.sin(th * DEG), BACK_ROLL, th) for th in (0, 35, 65, 85)]
+    rings, cols = [], []
+    for a, half, th in bst:
+        c = math.cos(th * DEG); uc = REAR_TOP[2]; g = 0.004 if a == REAR_SEAM else 0.0
+        ring = sym_ring(half)
+        rings.append([(math.copysign(uc + (abs(u) - uc) * c, u) if abs(u) > uc else u, (d + (g if d < 0 else 0.0)) * c, a) for u, d in ring])
+        bc = body_cols(half, half is BACK_SEC, BROWN, 0.9)
+        cols.append([shade(q, 0.86) if g and d < 0 else q for q, (u, d) in zip(bc, ring)])
+    bbody = loft(back, rings, cols)
+    # (its panel in two, the seam across it REAR_SEAM up the back; its foot inside the cushion, not tucked)
+    prings, kinds = panel_rings(seamed_rows(REAR_BACK[0] + 0.02, REAR_SEAM, REAR_BACK[-1] - 0.007, 0.007), BPANEL_HALF, -1, lambda t, a, b: b)
+    prings = [[(u, d - BACK_HALF + BACK_RECESS, a) for u, d, a in r] for r in prings]
+    bpanel = loft(back, prings, panel_cols(prings, kinds, TAN, 0.155))
+    # ---- under the cushion: the black pan, and the frame's two side plates from it down to the floor (the legs' frame;
+    # the real seat's plungers hold its legs in the floor's sockets)
+    hw = Part()
+    hw.add(hexa([cush(u, h, s) for u in (-0.19, 0.19) for h in (-0.113, -0.134) for s in (-0.235, 0.17)], BLACK))
+    for sx in (-1, 1):
+        pe = [cush(sx * 0.15, -0.133, s) for s in (-0.215, 0.15)]
+        hw.add(hexa([Vector((REAR['x'] + sx * 0.15 + du, F + 0.002 if yy else q.y + 0.004, q.z)) for du in (-0.004, 0.004) for yy in (1, 0) for q in pe], BLACK))
+    _G['rear'] = {'cushion': [body, panel], 'back': [bbody, bpanel], 'frame': [hw]}
+    return {'bench.seatSide.pa44': Part().add(body).add(bbody), 'bench.seat.pa44': Part().add(panel).add(bpanel), 'bench.black.pa44': hw}
+
+def rear_belts(ctx, seat, cols):
+    # the right rear seat's belts, buckled across it as the bench's (mirrored onto the left seat), laid on its parts
+    # (seat) → {surface: Part}
+    cush, back, n, v, w = rear_frames(); FWD = Vector((0, 0, -1)); bvh = bvh_of(seat)
+    BELT, BLACK, RED, CHROME = cols
+    o = {k: Part() for k in ('belt', 'black', 'red', 'chrome')}
+    sl, top = slot(ctx, SLOT_R[0], SLOT_R[1], BLACK); o['black'].add(sl)
+    # the buckle's strap out of the crease (where the cushion's bolsters meet the back's: s −0.253) along the inboard
+    # bolster's crown, the buckle on its end turned forward and a little outboard, onto the panel's edge
+    bp = into(laid(bvh, [(cush(-0.19, 0.03, s), -n, None) for s in (-0.244, -0.225, -0.205, -0.19)])); o['belt'].add(band(bp, BELT))
+    fwd = cush(0, 0, 1) - cush(0, 0, 0)
+    mouth = buckle(o, bvh, cush(-0.178, 0.03, -0.155), Vector((0.30, 0, 0)) + fwd * 0.95, -n, cols)
+    # the outboard half: from the buckle (its tongue in it) across the panel to the outboard crease, its adjuster on it
+    lap = laid(bvh, [(mouth.copy(), -n, None)] + [(cush(u, 0.03, s), -n, None) for u, s in ((-0.10, -0.095), (-0.01, -0.08), (0.08, -0.095),
+                                                                                          (0.145, -0.14), (0.18, -0.195), (0.19, -0.243))])
+    lap = list(reversed(into(list(reversed(lap)))))
+    o['belt'].add(band(lap, BELT)); adjuster(o, lap, 0.55, BLACK)
+    # the harness: out of its slot onto the back's outboard top, across its face to the buckle, over the lap belt to its
+    # snap hook by the tongue
+    keys = [(top, None, FWD), (Vector((SLOT_R[0] - 0.005, 0.66, SLOT_R[1] - 0.02)), None, FWD),
+            (back(0.165, 0.0, REAR_TOP[0] + 0.04), -v, None), (back(0.15, -0.06, REAR_TOP[0] - 0.02), (w - v).normalized(), None)]
+    keys += [(back(u, -0.07, a), w, None) for u, a in ((0.115, 0.29), (0.065, 0.17), (0.015, 0.05), (-0.035, -0.07), (-0.08, -0.18), (-0.105, -0.26))]
+    keys += [(cush(-0.115, 0.03, -0.19), -n, None), (cush(-0.11, 0.03, -0.14), -n, None), (cush(-0.105, 0.03, -0.10), -n, None)]
+    hp = laid(bvh_of(seat + [band(lap, BELT)]), keys); o['belt'].add(band(hp, BELT)); snap(o, hp, CHROME)
+    return o
+
 # ---------------------------------------------------------------- the nodes
 def to_piece(ctx, part):
     # a Part → build_cockpit.py's Piece and its colour function (each vertex's own colour, found by position)
@@ -765,16 +882,19 @@ def parts(ctx):
     C = ctx.C
     nodes = {k: Part().add(p).add(p.mirrored()) for k, p in front_seat(ctx).items()}
     nodes.update(bench(ctx))
+    nodes.update({k: Part().add(p).add(p.mirrored()) for k, p in rear_seat(ctx).items()})
     # the belts, laid on the seats (the front ones on the right seat; the pilot's then mirrored onto the left)
     surf = 'belt' if 'belt' in C else 'grip'
     cols = (tuple(C['belt']) if 'belt' in C else BELT_C, tuple(C['black']), tuple(C['red']), tuple(C['chrome']))
     fb = front_belts(ctx, _G['front']['cushion'] + _G['front']['back'] + _G['front']['head'], cols)
     bb = bench_belts(ctx, _G['bench']['cushion'] + _G['bench']['back'], cols)
+    rb = rear_belts(ctx, _G['rear']['cushion'] + _G['rear']['back'], cols)
     _G['belts'] = {'pilot': [p.mirrored() for p in fb['pilot'].values()], 'instructor': list(fb['instructor'].values()),
-                   'bench': [q for p in bb.values() for q in (p, p.mirrored())]}
+                   'bench': [q for p in bb.values() for q in (p, p.mirrored())], 'rear': [q for p in rb.values() for q in (p, p.mirrored())]}
     for k, name in (('belt', surf), ('black', 'black'), ('red', 'red'), ('chrome', 'chrome')):
         nodes['seats.' + name] = nodes.get('seats.' + name, Part()).add(fb['instructor'][k]).add(fb['pilot'][k].mirrored())
-        nodes['bench.' + name] = Part().add(bb[k]).add(bb[k].mirrored())
+        nodes['bench.' + name + '.pa28'] = Part().add(bb[k]).add(bb[k].mirrored())
+        nodes['bench.' + name + '.pa44'] = nodes.get('bench.' + name + '.pa44', Part()).add(rb[k]).add(rb[k].mirrored())
     _G['nodes'] = nodes
     return {k: to_piece(ctx, p) for k, p in nodes.items()}
 
@@ -799,10 +919,12 @@ def proxies(ctx):
 # the preview: as the shots see the seats (the quadrant, the right, looking back right and left — the pilot's own back
 # and headrest from 0.2 m), the pilot's own headrest, looking down at the pilot's own seat, the right seat's inboard
 # side from the left, and the cabin from in front of the seats looking aft; the belts: straight down at the pilot's own
-# cushion, the instructor's from the left seat, between the backs at the bench
+# cushion, the instructor's from the left seat, between the backs at the bench; the rear seats from the door (Piper's
+# Seminole interior photo) and from the side. (Both types' rear seats are drawn, in the same place: to see one type's,
+# render a copy of the scripts with the other's nodes left out.)
 PREVIEW = {'quadrant': (-4, -40), 'right': (-60, -10), 'backR': (-145, -14), 'backL': (145, -14), 'headL': (165, -8), 'downL': (150, -45),
            'sideR': (-105, -38), 'inboardR': (-80, -42), 'aft': (180, -20, (0.0, 0.45, -1.0)), 'bench': (180, -28, (0.0, 0.35, 0.05)),
-           'lap': (0, -75), 'beltR': (-100, -12), 'between': (-165, -22)}
+           'lap': (0, -75), 'beltR': (-100, -12), 'between': (-165, -22), 'door': (115, -30, (0.75, 0.95, -0.75)), 'rearSide': (100, -25, (0.45, 0.55, 0.1))}
 
 # ---------------------------------------------------------------- the checks
 def check(ctx, objs):
@@ -918,13 +1040,17 @@ def check(ctx, objs):
     for k, co in verts([k for k in mine if k.startswith('bench.')]):
         assert abs(co.x) <= BENCH['x'] + 1e-6, (k, 'wider than the bench', tuple(co))
         in_cabin(k, co, 0.01)
-    # the belts on the seats, not in them: no triangle of a strap or its hardware crosses one of a seat's
-    seats = _G['front']['cushion'] + _G['front']['back'] + _G['front']['head']
-    seat_parts = seats + [p.mirrored() for p in seats] + _G['bench']['cushion'] + _G['bench']['back']
-    seats = bvh_of(seat_parts); seat_t = [[p.v[k] for k in t] for p in seat_parts for g in p.f for t in both_ways(g)]   # (its triangles, as in the tree)
+    # the belts on the seats, not in them: no triangle of a strap or its hardware crosses one of a seat's (each type's
+    # rear belts against its own rear seats: the bench and the Seminole's two seats stand in the same place)
+    front = _G['front']['cushion'] + _G['front']['back'] + _G['front']['head']
+    front = front + [p.mirrored() for p in front]
+    rear = _G['rear']['cushion'] + _G['rear']['back']; rear = rear + [p.mirrored() for p in rear]
+    against = {'pilot': front, 'instructor': front, 'bench': front + _G['bench']['cushion'] + _G['bench']['back'], 'rear': front + rear}
     # (but a strap's end anchored in the crease between a cushion and its back, which goes into the crease by up to 2.5 cm)
-    _G['belt_tris'] = 0
+    _G['belt_tris'] = {}
     for who, ps in _G['belts'].items():
+        seat_parts = against[who]
+        seats = bvh_of(seat_parts); seat_t = [[p.v[k] for k in t] for p in seat_parts for g in p.f for t in both_ways(g)]   # (its triangles, as in the tree)
         for p in ps:
             if not p.f: continue
             own = []; tree = bvh_of([p], own)
@@ -932,27 +1058,41 @@ def check(ctx, objs):
                 i = own[i]; c = sum((p.v[k] for k in p.f[i]), Vector()) / len(p.f[i])
                 ok = min((c - a).length for a in _G['anchors']) < 0.025
                 assert ok, (who, 'a belt through a seat', [tuple(round(v, 4) for v in p.v[k]) for k in p.f[i]], 'the seat\'s triangle', [tuple(round(v, 4) for v in q) for q in seat_t[j]])
-            _G['belt_tris'] += sum(len(f) - 2 for f in p.f)
-    # the cabin behind (cockpit.test: a ray from the eye along (0.6, −0.3, 1) meets something within 2.2 m): the bench
-    h = cast(['bench.seat', 'bench.seatSide'], eye, (0.6, -0.3, 1)); assert h and h[1] < 2.2, ('the bench behind', h)
+            _G['belt_tris'][who] = _G['belt_tris'].get(who, 0) + sum(len(f) - 2 for f in p.f)
+    # the cabin behind (cockpit.test: a ray from the eye along (0.6, −0.3, 1) meets something within 2.2 m): the bench, or
+    # the Seminole's right rear seat
+    for v in ('pa28', 'pa44'):
+        h = cast([f'bench.seat.{v}', f'bench.seatSide.{v}'], eye, (0.6, -0.3, 1)); assert h and h[1] < 2.2, ('the rear seats behind', v, h)
+        _G['behind_' + v] = round(h[1], 3)
+    # each type's share of the module's triangles (the bench is the Archer's, the two rear seats the Seminole's: a type
+    # draws the front seats and its own) within the share the module had before the Seminole's rear seats
+    for v in ('pa28', 'pa44'):
+        n = sum(ctx.tris(ob) for k, ob in mine.items() if not k.endswith('.pa44' if v == 'pa28' else '.pa28'))
+        assert n <= MAX_TYPE, ('over its share', v, n, MAX_TYPE); _G['tris_' + v] = n
     # the occlusion proxy's boxes for the seats (cockpit.js AO_OCC: the right seat's cushion, back, headrest; the bench's
-    # cushion, back): each part's extent within its box, or as far out as the old shapes were (+5 mm); but the cushions'
-    # bolsters and rolls stand 1.2–2 cm over the old inserts' tops at their fronts (the panels keep those), the front
-    # cushions' rears go 4.5 cm further aft, into the backs' feet, and the backs' feet go down behind the cushions' rears,
-    # 5 cm lower than the old backs, which stopped at the cushions' tops; the TX's back rises to its shoulders (y 0.56,
-    # where the old one's posts were; its shell there 5 cm further aft) and its moulded headrest, an arch nearly as wide
-    # as the back (±0.19, the old one ±0.125), has the shell's rear, 6 cm behind the old headrest's, and is sunk in the
-    # back from y 0.49 (the recline lever, outboard of the cushion's box, and the belts, thin, are left out)
+    # cushion, back — the Seminole's rear seats' too): each part's extent within its box, or as far out as the old shapes
+    # were (+5 mm); but the cushions' bolsters and rolls stand 1.2–2 cm over the old inserts' tops at their fronts (the
+    # panels keep those), the front cushions' rears go 4.5 cm further aft, into the backs' feet, and the backs' feet go
+    # down behind the cushions' rears, 5 cm lower than the old backs, which stopped at the cushions' tops; the TX's back
+    # rises to its shoulders (y 0.56, where the old one's posts were; its shell there 5 cm further aft) and its moulded
+    # headrest, an arch nearly as wide as the back (±0.19, the old one ±0.125), has the shell's rear, 6 cm behind the old
+    # headrest's, and is sunk in the back from y 0.49 (the recline lever, outboard of the cushion's box, and the belts,
+    # thin, are left out)
     OLD = [((0.07, 0.51), (S['floor'], -0.095), (-0.94, -0.274 + BACK_AFT)), ((0.07, 0.51), (-0.185, 0.560), (-0.30 + BACK_AFT, -0.045 + BACK_AFT)),
            ((0.095, 0.485), (0.48, 0.693), (-0.18 + BACK_AFT, -0.015 + BACK_AFT)),
            ((-0.5, 0.5), (-0.289, -0.085), (0.229, 0.731)), ((-0.5, 0.5), (-0.185, 0.67), (0.715, 1.016))]
     groups = [_G['front']['cushion'] + _G['front']['frame'], _G['front']['back'], _G['front']['head'], _G['bench']['cushion'], _G['bench']['back']]
+    # (the Seminole's rear seats in the bench's boxes: both seats — the right one's parts and their mirrors —, the pans
+    # and frames with the cushions)
+    both = lambda ps: ps + [p.mirrored() for p in ps]
+    groups += [both(_G['rear']['cushion'] + _G['rear']['frame']), both(_G['rear']['back'])]
     _G['extents'] = []
-    for row, old, g in zip(S['aoOcc'][6:11], OLD, groups):
+    for row, old, g in zip(S['aoOcc'][6:11] + S['aoOcc'][9:11], OLD + OLD[3:5], groups):
         pts = [p for part in g for p in part.v]
         ext = [(min(p[a] for p in pts), max(p[a] for p in pts)) for a in range(3)]
         _G['extents'].append(ext)
         for a in range(3):
             lo, hi = min(row[2 * a], old[a][0]) - 0.005, max(row[2 * a + 1], old[a][1]) + 0.005
             assert lo <= ext[a][0] and ext[a][1] <= hi, ('outside the occlusion box', row, 'xyz'[a], ext[a], (lo, hi))
-    print('seats:', _G['parts'], 'closed parts; belts', _G['belt_tris'], 'triangles; sight lines clear the seats by', {k: (round(_G[k][0], 4),) + _G[k][1:] for k in ('flaps', 'trim')}, 'extents', [[tuple(round(v, 3) for v in e) for e in ex] for ex in _G['extents']])
+    print('seats:', _G['parts'], 'closed parts; belts', _G['belt_tris'], 'triangles; the Archer\'s', _G['tris_pa28'], 'triangles, the Seminole\'s', _G['tris_pa44'],
+          'of', MAX_TYPE, '; the ray behind meets the bench at', _G['behind_pa28'], 'm, the rear seats at', _G['behind_pa44'], 'm; sight lines clear the seats by', {k: (round(_G[k][0], 4),) + _G[k][1:] for k in ('flaps', 'trim')}, 'extents', [[tuple(round(v, 3) for v in e) for e in ex] for ex in _G['extents']])

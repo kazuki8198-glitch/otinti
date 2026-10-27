@@ -225,6 +225,29 @@
   function line(g, x1, y1, x2, y2, col = C.white, lw = 2) { g.strokeStyle = col; g.lineWidth = lw; g.beginPath(); g.moveTo(fin(x1), fin(y1)); g.lineTo(fin(x2), fin(y2)); g.stroke(); }
   function poly(g, pts, fill, stroke, lw = 1.5) { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(fin(x), fin(y)) : g.moveTo(fin(x), fin(y)))); g.closePath(); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw; g.stroke(); } }
 
+  // the landing gear (a retractable gear's: the Seminole's G1000, POH VB-2636 Fig 7-13) in a box w wide at (x, y): its
+  // title over three symbols — solid green circles: down and locked; hollow white circles: up; crosshatched white squares:
+  // in transit; solid red circles under a red title: the position unknown (no reading) — from the physics' gear position
+  // (0 up … 1 down). Its height: GEAR_BOX_H
+  const GEAR_BOX_H = 34;
+  function gearBox(g, x, y, w, gearPos) {
+    const known = Number.isFinite(gearPos), down = known && gearPos >= 0.999, up = known && gearPos <= 0.001, r = 5.5;
+    box(g, x, y, w, GEAR_BOX_H, '#000', C.line, 1);
+    if (!known) { box(g, x + w * 0.12, y + 3, w * 0.76, 12, C.white, null); txt(g, 'LANDING GEAR', x + w / 2, y + 9.5, 10, C.red, 'center', 700); }
+    else txt(g, 'LANDING GEAR', x + w / 2, y + 9.5, 10, C.white, 'center', 700);
+    for (let i = 0; i < 3; i++) {
+      const cx = x + w * (0.25 + 0.25 * i), cy = y + 24;
+      if (down || !known) { g.fillStyle = known ? C.green : C.red; g.beginPath(); g.arc(fin(cx), fin(cy), r, 0, Math.PI * 2); g.fill(); }
+      else if (up) { g.strokeStyle = C.white; g.lineWidth = 1.5; g.beginPath(); g.arc(fin(cx), fin(cy), r, 0, Math.PI * 2); g.stroke(); }
+      else {
+        g.strokeStyle = C.white; g.lineWidth = 1.2;
+        g.save(); g.beginPath(); g.rect(fin(cx - r), fin(cy - r), r * 2, r * 2); g.clip();
+        g.beginPath(); for (let k = -2; k <= 2; k++) { g.moveTo(fin(cx - r + k * r * 0.7), fin(cy + r)); g.lineTo(fin(cx + r + k * r * 0.7), fin(cy - r)); } g.stroke();
+        g.restore(); g.strokeRect(fin(cx - r), fin(cy - r), r * 2, r * 2);
+      }
+    }
+  }
+
   // ---------------------------------------------------------------- PFD (left screen)
   // d: { o (physics outputs), av, nav, varW, qnh, engine: { running }, hood }
   function drawPFD(g, W, H, d) {
@@ -413,6 +436,9 @@
     if (o.stallWarn) { box(g, cx - 60, cy + 70, 120, 26, C.red, null); txt(g, 'STALL', cx, cy + 83, 18, '#fff', 'center', 800); }
     if (!run && !o.onGround) { box(g, cx - 90, cy + 100, 180, 22, '#3a0d0d', C.red); txt(g, 'ENGINE STOP — 滑空', cx, cy + 111, 13, C.red, 'center', 700, jp); }
     else if (!allRun) { box(g, cx - 100, cy + 100, 200, 22, '#3a2a0d', C.yellow); txt(g, `${engs[0].run ? 'R' : 'L'} ENGINE INOP — 片発`, cx, cy + 111, 13, C.yellow, 'center', 700, jp); }
+    // (the twin with its MFD dark — AVION MASTER OFF: the G1000 shows the engine page's landing gear on the PFD, as its
+    // reversionary display; CADET's cockpit sets d.gearRev)
+    if (d.gearRev) gearBox(g, 8, 32, 112, o.gearPos);
     // the teaching label
     txt(g, 'G1000型 教材表示 · NOT FOR NAVIGATION', W / 2, H - 8, 10, C.grey, 'center', 600, jp);
     g.restore();
@@ -449,13 +475,15 @@
       ['VOLTS', '—', null, '未実装'],
       ['AMPS', '—', null, '未実装'],
     ];
-    let y = 124; const dy = Math.max(26, Math.min(38, (H - 150) / rows.length));
+    // (a twin: the landing gear box at the strip's foot, the rows closer to make room for it)
+    let y = 124; const dy = twin ? Math.max(21, Math.min(38, (H - 156 - GEAR_BOX_H) / rows.length)) : Math.max(26, Math.min(38, (H - 150) / rows.length));
     for (const [lab, val, frac, note] of rows) {
       txt(g, lab, 8, y, 11, C.grey, 'left', 600, jp); txt(g, val, ew - 8, y, 13, val === '—' ? C.grey : C.white, 'right', 700);
       if (frac != null) { box(g, 8, y + 9, ew - 16, 6, '#1b222b', null); g.fillStyle = C.green; g.fillRect(8, y + 9, (ew - 16) * clamp(frac, 0, 1), 6); }
       else txt(g, note, ew - 8, y + 12, 9, C.grey, 'right', 500, jp);
       y += dy;
     }
+    if (twin) gearBox(g, 6, Math.min(y - dy + 20, H - 24 - GEAR_BOX_H), ew - 12, o.gearPos);
     txt(g, '— = 未実装（架空値は出しません）', ew / 2, H - 12, 9, C.grey, 'center', 500, jp);
     // --- the page area ---
     const px = ew, pw = W - ew;

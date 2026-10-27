@@ -7,7 +7,7 @@
 //   object; 'switch' / 'select' are already applied to the cockpit's own switches, which change only the picture),
 //   canAct() (asked before a click or a wheel notch acts: the app says whether the pilot may act now) }
 // scene: { kind: 'three', gl, ready(), render(st), resize(), project(p), labels, camera(), setQuality(id), quality(),
-//   info(), glass(), resetLook(), pause() }; st = { s, L, view: 'cockpit' | 'chase', hood, screen, hole, extra }.
+//   info(), glass(), resetLook(), pause() }; st = { s, L, view: 'cockpit' | 'chase', hood, screen, hole, extra, rTrim }.
 //   pause(): the app stops drawing for a while (an opaque page over the view): the next frame is timed as a normal one,
 //   so the gap neither counts as one slow frame for the dynamic resolution nor moves anything at once.
 //
@@ -269,7 +269,7 @@ export function createScene(FL, wrap, opt = {}) {
       hidden.length = 0; scene.background = null;
     }
   }
-  // the picture-only parts of the switches: START (the Archer's momentary rocker, the Seminole's key) springs back after
+  // the picture-only parts of the switches: START (the Archer's momentary rocker, the Seminole's L / R rocker) springs back after
   // a second (no engine start here: CADET's aircraft/systems.js lets it go when the engine catches), the propeller
   // levers come back forward
   function switchesStep(dt) {
@@ -299,9 +299,8 @@ export function createScene(FL, wrap, opt = {}) {
     pose(s);
     applyShadow(s);
     // the outside lights from the cockpit's switches, the master first (CADET's fly-mode lights()): clicking NAV,
-    // STROBE (the Archer's 3 positions: strobes and beacon, off, the fin's beacon alone) or LANDING (the Archer's works
-    // the taxi lamp too; the Seminole's BEACON and TAXI are their own) turns the aircraft's own light on or off in the
-    // picture
+    // STROBE (3 positions on both types: strobes and beacon, off, the fin's beacon alone) or LANDING (both types' works
+    // the taxi lamp too) turns the aircraft's own light on or off in the picture
     const lt = liveOpt.lights, sw = cockpit.switches, on = sw.master !== false;
     lt.nav = !!(on && sw.nav); lt.beacon = !!(on && sw.beacon); lt.strobe = !!(on && sw.strobe);
     lt.landing = !!(on && sw.landing); lt.taxi = !!(on && sw.taxi);
@@ -312,7 +311,7 @@ export function createScene(FL, wrap, opt = {}) {
     sky.update(camera, t, live.root.position);
     world.update(t, camWorld, s.wind || { fromDeg: 0, kt: 0 }, sky.state.lightsOn);
     switchesStep(dt);
-    cockOpt.s = s; cockOpt.L = st.L || null; cockOpt.av = st.L ? st.L.av : null;
+    cockOpt.s = s; cockOpt.L = st.L || null; cockOpt.av = st.L ? st.L.av : null; cockOpt.rTrim = st.rTrim || 0;
     cockOpt.night = 1 - THREE.MathUtils.smoothstep(sky.state.el, -4, 6);
     cockpit.update(dt, cockOpt);
     input.refresh();

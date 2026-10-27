@@ -250,12 +250,14 @@ export function createFlyMode(ctx) {
     if (fh) fh.setMode('free');
     startEngine();
   }
-  // the instructor starts the engine (a free flight): everything on as for the flight, primed, the throttle cracked,
-  // START held; the systems turn it over until it catches (and let START go)
+  // the instructor starts the engine (a free flight): everything on as for the flight, primed (the Archer's primer; the
+  // twin's mixtures forward with its pumps on feed it as it cranks), the throttle cracked, START held — the twin's left
+  // half, then its right; the systems turn each over until it catches (and let START go)
   function startEngine() {
     if (systems.running || systems.cranking) return;
-    Object.assign(cockpit.switches, RUNNING, { start: true });
+    Object.assign(cockpit.switches, RUNNING);
     for (let i = 0; i < 3; i++) systems.prime();
+    systems.autoStart();
     if (flight.s && flight.s.thr < 0.03) flight.s.thr = 0.05;
   }
   function beginLesson(level, { instant = false, lessonId = ctx.lessonId || 'a2' } = {}) {
@@ -491,7 +493,7 @@ export function createFlyMode(ctx) {
         if (wheel) for (let i = 0; i < Math.abs(wheel); i++) applyAct(hover.act(Math.sign(wheel), true));
       }
     } else if (hover) { hover = null; hud.prompt(null); }
-    cockOpt.s = flight.s; cockOpt.L = flight.L; cockOpt.av = flight.av; cockOpt.parkBrake = flight.controls.parkBrake; cockOpt.night = night(); cockOpt.eng = engShow;
+    cockOpt.s = flight.s; cockOpt.L = flight.L; cockOpt.av = flight.av; cockOpt.parkBrake = flight.controls.parkBrake; cockOpt.night = night(); cockOpt.eng = engShow; cockOpt.rTrim = flight.controls.rTrim;
     cockpit.update(dt, cockOpt);
     placeGuide(dt, stop);
     // the instructor: looks at you while he speaks, otherwise round the panel and outside (unseen from outside: left be)

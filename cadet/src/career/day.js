@@ -22,7 +22,8 @@ import { CHECKLISTS as CHECKLISTS_SEMINOLE } from '../content/checklists-seminol
 import { dayRadio, setCall } from '../content/dialog/atc.js';
 import { createAtc } from '../dialog/atc.js';
 import { HOLD, HOLD_STOP, A1 } from '../flight/taxi.js';
-import { RUNUP, magState } from '../aircraft/systems.js';
+import { RUNUP, magState, magStateOf } from '../aircraft/systems.js';
+import { XFEED_S } from '../content/checklists-seminole.js';
 
 // the first day's lessons (M4); every other day is built the same way from its lesson (planFor)
 export const DAY1 = { id: 'day1', n: 1, title: '最初の 1 日', lessons: ['t1', 'a2', 't3'], aircraft: 'N738SY', type: 'PA-28-181' };
@@ -138,7 +139,7 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
   const AIRCRAFT = PLAN.aircraft || 'pa28', CHECKLISTS = AIRCRAFT === 'pa44' ? CHECKLISTS_SEMINOLE : CHECKLISTS_ARCHER;
   const walk = createWalkaround({ seed, anomalies, aircraft: AIRCRAFT });
   const st = {
-    phase: 'walk', step: 0, list: null, i: 0, flown: [], ticked: [], skipped: [], memo: { both: 0, dropL: 0, dropR: 0, carb: 0, idle: false, hold: { L: 0, R: 0, C: 0 } },
+    phase: 'walk', step: 0, list: null, i: 0, flown: [], ticked: [], skipped: [], memo: { both: 0, dropL: 0, dropR: 0, carb: 0, idle: false, hold: { L: 0, R: 0, C: 0 }, rBoth: 0, rDropL: 0, rDropR: 0, alt: 0, xfeed: false, xfeedT: 0 },
     lessons: {}, incursion: false, overHold: false, exit: '', stopAt: null, transit: 'skip', t: 0, airT: 0, blockT: 0, started: false, shutdown: false,
     trust: 0, notes: [], auto: { list: 0, taxi: 0 }, leftOn: [],
     fault: fault === 'mag' ? { kind: 'mag', asked: false, tries: 0, decided: null, drop: 0 } : null,
@@ -165,10 +166,14 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     return { id: st.list, title: C.title, i: st.i, items: C.items.map((it, k) => ({ name: it[0], what: it[1], confirm: !it[2], ctl: it[3], note: it[4], ok: k < st.i, cur: k === st.i })) };
   }
   // the run-up's readings: the rpm on both magnetos, then the drop on each alone (held half a second: L — the left
-  // alone, MAG RIGHT OFF; R — the right alone), carb heat, the idle
+  // alone, MAG RIGHT OFF; R — the right alone), carb heat, the idle; the twin's each engine's own (twinRunup), and before
+  // its taxi the time both fuel selectors are on XFEED with both engines running (the crossfeed's check)
   function watchRunup(c, dt) {
     const m = st.memo, rpm = c.rpm, mag = magState(c.sw);
-    if (st.phase !== 'runup' || !dt) return;
+    if (!dt) return;
+    if (AIRCRAFT === 'pa44' && c.sw.fuelSelL === 'XFEED' && c.sw.fuelSelR === 'XFEED' && c.sys && c.sys.running && (m.xfeedT += dt) >= XFEED_S) m.xfeed = true;
+    if (st.phase !== 'runup') return;
+    if (AIRCRAFT === 'pa44' && c.sys && c.sys.twinLive) { twinRunup(c, dt); return; }
     // read only when the rpm has settled (the engine takes a few seconds to wind up to a new throttle setting)
     const steady = m.prev != null && Math.abs(rpm - m.prev) / dt < 25 && m.prevMag === mag && m.prevCarb === c.sw.carbHeat;
     m.prev = rpm; m.prevMag = mag; m.prevCarb = c.sw.carbHeat;
@@ -179,6 +184,23 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
       if (m.hold[k] > 0.4) { const d = Math.round(m.both - rpm); if (k === 'L') m.dropL = d; else if (k === 'R') m.dropR = d; else m.carb = d; }
     }
     if (rpm > 300 && rpm < 820 && m.both) m.idle = true;
+  }
+  // (the twin) each engine on its own gauge (the MFD's two): both magnetos' rpm (both, rBoth), each magneto alone (the
+  // left engine's dropL / dropR, the right's rDropL / rDropR), the left engine's drop with the alternate air open (alt)
+  function twinRunup(c, dt) {
+    const m = st.memo, T = c.sys.twinLive, alt = !!c.sw.altAir;
+    if (!m.eng) m.eng = [{ prev: null, mag: '', alt: false, steadyT: 0 }, { prev: null, mag: '', alt: false, steadyT: 0 }];
+    for (let k = 0; k < 2; k++) {
+      const e = m.eng[k], rpm = T[k].rpm, mag = magStateOf(c.sw, k), both = k ? 'rBoth' : 'both';
+      const steady = e.prev != null && Math.abs(rpm - e.prev) / dt < 25 && e.mag === mag && e.alt === alt;
+      e.prev = rpm; e.mag = mag; e.alt = alt; e.steadyT = steady ? e.steadyT + dt : 0;
+      if (mag === 'BOTH' && !alt && rpm > 1850 && e.steadyT > 0.3) m[both] = rpm;
+      for (const [h, on, out] of k ? [['rL', mag === 'L', 'rDropL'], ['rR', mag === 'R', 'rDropR']] : [['L', mag === 'L', 'dropL'], ['R', mag === 'R', 'dropR'], ['A', alt && mag === 'BOTH', 'alt']]) {
+        m.hold[h] = on && m[both] && e.steadyT > 0.3 ? (m.hold[h] || 0) + dt : 0;
+        if (m.hold[h] > 0.4) m[out] = Math.round(m[both] - rpm);
+      }
+    }
+    if (c.rpm > 300 && c.rpm < 820 && m.both) m.idle = true;
   }
   // the checklist: items tick in order as they become true; a confirm item waits for confirm()
   function tick(c) {
@@ -224,7 +246,7 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     const dt = c.dt || 0; st.t += dt;
     prep(c);
     // the time from the start to the shutdown (the lessons' own time is added when each ends: FLIGHT LAB's clock)
-    if (c.sys && c.sys.running && !info(st.phase).lesson) { st.started = true; st.blockT += dt; if (c.onGround === false) st.airT += dt; }
+    if (c.sys && (c.sys.anyRunning ?? c.sys.running) && !info(st.phase).lesson) { st.started = true; st.blockT += dt; if (c.onGround === false) st.airT += dt; }
     // across the hold-short line without a clearance (before the tower's line up and wait)
     if (['taxiOut', 'runup', 'tower'].includes(st.phase) && c.pos && c.pos.c < HOLD.c - 0.5 && c.pos.a < A1.a + 30 && !st.incursion) {
       st.incursion = true; st.trust -= 8; emit({ type: 'incursion' });

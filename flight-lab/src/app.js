@@ -125,7 +125,7 @@
       if (A.gear.fixed) { toast('この機体（Archer）の脚は固定式で、上げ下げできません', 1800); return; }
       if (s.onGround && s.gearDown) { toast('地上では脚を上げられません', 1600); return; }
       s.gearDown = !s.gearDown;
-      toast(s.gearDown ? '脚 DOWN：着陸に備える（緑のランプ 3 つで確認）。抗力が増える' : '脚 UP：抗力が減って上昇・加速しやすくなる（正の上昇を確認してから）', 2400);
+      toast(s.gearDown ? '脚 DOWN：着陸に備える（MFD の LANDING GEAR、緑の丸 3 つで確認）。抗力が増える' : '脚 UP：抗力が減って上昇・加速しやすくなる（正の上昇を確認してから）', 2400);
     } else if (a === 'trim') {
       if (s.onGround) { s.trim = 0; s.trimHold = 0; toast('地上ではトリムを離陸位置（中立）にしました', 1500); return; }
       if (s.opts.assist) { toast('操縦アシスト中はトリムは自動です', 1500); return; }
@@ -158,8 +158,8 @@
     }
   }
   // the 3D cockpit's controls: FL.view3d hands over what a click or a wheel notch on a knob, key or lever asked for, in
-  // CADET's words (aircraft/cockpit.js). The G1000's keys and knobs are the 2D panel's ctl(); the flap lever and the gear
-  // selector are the keys' doAction(); the throttle and the trim wheel move one notch (CADET's steps: 5 % of the throttle,
+  // CADET's words (aircraft/cockpit.js). The G1000's keys and knobs are the 2D panel's ctl(); the flap lever, the gear
+  // selector and the Seminole's rudder trim wheel are the keys' doAction(); the throttle and the trim wheel move one notch (CADET's steps: 5 % of the throttle,
   // 4 % of the trim's range, as Sorajima's trim wheel). The electrical switches, the magnetos, the mixture and the fuel
   // selector change only the picture (the view has already moved them; the light switches, under the master, also
   // turn the aircraft's own outside lights on and off): FLIGHT LAB's engine model has no such systems, so the toast
@@ -170,7 +170,7 @@
     const s = L.s, label = c && c.label ? String(c.label) : '';
     if (r.type === 'av') ctl(r.what, r.dir, r.big);
     else if (r.type === 'flight') {
-      if (r.name === 'flaps' || r.name === 'flapsUp' || r.name === 'gear') doAction(r.name);
+      if (r.name === 'flaps' || r.name === 'flapsUp' || r.name === 'gear' || r.name === 'rtrimL' || r.name === 'rtrimR') doAction(r.name);
       else if (r.name === 'thrStep') { s.thr = clamp(s.thr + (r.arg < 0 ? -0.05 : 0.05), 0, 1); toast(`スロットル ${Math.round(s.thr * 100)}%（R / F で連続して動かせます）`, 1400); }
       else if (r.name === 'trimStep') {
         if (s.opts.assist) { toast('操縦アシスト中はトリムは自動です', 1500); return; }
@@ -602,7 +602,7 @@
     if (three && (S.screen === 'page' || S.screen === 'school')) { if (scene.pause) scene.pause(); return; }
     if (hood && !three) { $('#labels').textContent = ''; return; }
     const gHole = G && G.hole ? G.hole() : null, gOn = !!(G && G.active()) && !hood;
-    scene.render({ s: L.s, L, view: effView(), hood, screen: S.screen, hole: gHole, extra: gOn ? (gl, c) => G.draw(gl, c) : null });
+    scene.render({ s: L.s, L, view: effView(), hood, screen: S.screen, rTrim: S.rTrim, hole: gHole, extra: gOn ? (gl, c) => G.draw(gl, c) : null });
     if (gOn) G.update(scene.camera(), L.s);
     const box = $('#labels'); let html = '';
     if (hood) { box.textContent = ''; $('#gattr').hidden = true; return; }

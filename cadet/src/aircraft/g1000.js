@@ -100,7 +100,7 @@ export function createGlass(FL, makeCanvas) {
   // FLIGHT LAB's panelData (app.js), into objects made once
   const ENG = [{ run: true, rpm: 0, feather: false }, { run: true, rpm: 0, feather: false }];
   const ENG1 = [ENG[0]];
-  const d = { o: {}, av: null, nav: null, varW: P.MAGVAR_W, qnh: 29.92, eng: ENG1, V: null, fuelCap: 24, pos: { n: 0, e: 0 } };
+  const d = { o: {}, av: null, nav: null, varW: P.MAGVAR_W, qnh: 29.92, eng: ENG1, V: null, fuelCap: 24, pos: { n: 0, e: 0 }, gearRev: false };
   const stats = { pfd: 0, mfd: 0, blank: 0, strips: 0, standby: 0 };      // draws so far (tests, the perf overlay)
   // the G5's page, drawn 15 times a second: the fonts and every string it shows are made once (speeds and pitch
   // numerals, the altitude tape's hundreds and the readout's tens, the headings)
@@ -120,8 +120,9 @@ export function createGlass(FL, makeCanvas) {
   // drawPFD / drawMFD / navSolve allocate inside, the drawing here does not)
   // eng (optional): the engine as the cockpit's systems have it ({ rpm, run }: the tachometer's reading, the run-up's
   // magneto drop included; aircraft/systems.js), in place of the physics' own for a single engine
-  function fill(s, av, eng) {
-    Object.assign(d.o, s.out); d.o.onGround = s.onGround;
+  // rev: the Seminole's MFD dark (its PFD shows the landing gear: FLIGHT LAB's drawPFD d.gearRev)
+  function fill(s, av, eng, rev = false) {
+    Object.assign(d.o, s.out); d.o.onGround = s.onGround; d.gearRev = !!rev;
     d.av = av; d.pos.n = -s.pos[2]; d.pos.e = s.pos[0];
     d.nav = AV.navSolve(av, d.pos, s.out, P.MAGVAR_W, P.LAB_RWY);
     d.qnh = s.qnh; d.V = s.A.v; d.fuelCap = s.A.fuelCap;
@@ -132,12 +133,12 @@ export function createGlass(FL, makeCanvas) {
     else if (eng && eng.twin && s.onGround) for (let i = 0; i < 2 && i < d.eng.length; i++) { d.eng[i].rpm = eng.twin[i].rpm; d.eng[i].run = eng.twin[i].eng === 'run'; }
     return d;
   }
-  function drawScreen(which, s, av, eng) {
+  function drawScreen(which, s, av, eng, rev = false) {
     const sc = which === 'mfd' ? mfd : pfd;
     if (!sc || !s || !av) return;
     stats[which]++;
     sc.g.setTransform(SCR_W / LW, 0, 0, SCR_H / LH, 0, 0);
-    if (which === 'mfd') AV.drawMFD(sc.g, LW, LH, fill(s, av, eng)); else AV.drawPFD(sc.g, LW, LH, fill(s, av, eng));
+    if (which === 'mfd') AV.drawMFD(sc.g, LW, LH, fill(s, av, eng)); else AV.drawPFD(sc.g, LW, LH, fill(s, av, eng, rev));
     sc.g.setTransform(1, 0, 0, 1, 0, 0);
     sc.texture.needsUpdate = true;
   }

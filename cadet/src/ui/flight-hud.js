@@ -602,7 +602,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
       put(make('div'), make('h4', '', null, '操縦'), keyTable(FLY_KEYS.slice(0, FLY_MAIN), true)),
       put(make('div'), make('h4', '', null, '操縦（そのほか）'), keyTable(FLY_KEYS.slice(FLY_MAIN), true)),
       put(make('div'), make('h4', '', null, '操縦席'), keyTable(CABIN_KEYS, false),
-        make('p', 'fh-hn', null, 'スイッチ（Archer はマグネトーやスターターも、窓の上の天井のパネル）・燃料セレクター・ドアは、操縦席でクリックして操作します。'))));
+        make('p', 'fh-hn', null, 'スイッチ（Archer はマグネトーやスターターも窓の上の天井のパネル、Seminole はパネルの下の段）・燃料セレクター・ドアは、操縦席でクリックして操作します。'))));
   help.hidden = true;
 
   // the debrief
@@ -731,8 +731,9 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     else { text(tPitch.v, Math.abs(pn.pIn) < 0.005 ? '中立' : `${pn.pIn > 0 ? '引き' : '押し'} ${pct(Math.abs(pn.pIn))}`); text(tPitch.s, `いま ${signed(pn.pitch, 1)}°`); }
     text(tTrim.v, pn.trimPct === 0 ? '中立' : `${pn.trimPct > 0 ? '機首上げ' : '機首下げ'} ${Math.abs(pn.trimPct)}%`);
     text(tTrim.s, '');
-    // (the Seminole: the gear in words under the flaps, not only as the panel's green and red lights)
-    const gearTxt = pn.gear === 'down' ? '脚 DOWN（緑 3）' : pn.gear === 'up' ? '脚 UP' : pn.gear === 'moving' ? '脚 作動中（赤）' : '';
+    // (the Seminole: the gear in words under the flaps, not only as the MFD's LANDING GEAR symbols — three green circles
+    // down and locked, crosshatched in transit)
+    const gearTxt = pn.gear === 'down' ? '脚 DOWN（緑 3）' : pn.gear === 'up' ? '脚 UP' : pn.gear === 'moving' ? '脚 作動中' : '';
     text(tFlap.v, pn.flapLabel); text(tFlap.s, pn.flapMoving ? '作動中' : gearTxt); klass(tFlap.t, 'move', !!pn.flapMoving || pn.gear === 'moving');
     text(tBrake.v, pn.parkBrake ? 'PARK' : pn.brake ? 'ON' : '—'); text(tBrake.s, pn.parkBrake ? 'パーキング' : '');
     klass(tBrake.t, 'warn', !!(pn.brake || pn.parkBrake));

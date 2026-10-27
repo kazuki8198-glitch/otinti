@@ -4,7 +4,8 @@
 //  outside「ここに注意」(bk-warn), a space between a number and its unit (STYLE), and — when FL.terms exists — the
 //  first use of a term in a chapter written「正式名（通称、English）」.
 // Left out of the Japanese checks: figures and their captions, photos, tables, ここが大切, formulas, calculators,
-// sources, buttons, tags, headings, the「考えてみよう」question line, and mostly-English sentences.
+// sources, buttons, tags, headings (a US–Japan box's heading and its foot too), the「考えてみよう」question line, and
+// mostly-English sentences.
 import { Result, cli } from './lib/report.mjs';
 import { blocks, sentences, jlen, isEnglish, inCls, inTag, clip, textOf } from './lib/html.mjs';
 import { sectionsOf, chaptersOf } from './lib/book.mjs';
@@ -19,7 +20,7 @@ const PLAIN = /(である|であった|だ|だった|ない|なかった|る|た
 const UNIT_RE = /(?<![A-Za-z0-9.,])\d[\d,]*(?:\.\d+)?(kt|KIAS|KTAS|KCAS|ft|fpm|NM|SM|inHg|hPa|lb|lbs|gal|rpm|MHz|kHz)(?![A-Za-z])/g;
 
 export const skipForStyle = path => inTag(path, 'figure', 'svg', 'table', 'summary', 'button', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'code', 'pre', 'a')
-  || inCls(path, 'bk-key', 'bk-src', 'bk-f', 'bk-calc', 'bk-credit', 'tag', 'bk-photo', 'bk-t');
+  || inCls(path, 'bk-key', 'bk-src', 'bk-f', 'bk-calc', 'bk-credit', 'tag', 'bk-photo', 'bk-t', 'jur-h', 'jur-foot');   // jur-h: a US–Japan box's heading (「米国では」); jur-foot: its versions and links
 
 // the end of a sentence: 'polite' | 'plain' | 'noun' (体言止め) | 'skip'
 export function ending(sentence) {

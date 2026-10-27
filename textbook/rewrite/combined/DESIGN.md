@@ -149,6 +149,7 @@
   - `book-7.js`：第 7 部。FLIGHT LAB と TEXTBOOK だけ。
   - `book-photos-k.js`：基礎教材から使う写真（ファイルのままの base64 と、教科書の形のクレジット `{author, license, licenseUrl, source}`・加工の表示。4.2 の「写真」）。TEXTBOOK は常に読む。FLIGHT LAB は原本の入口を外したあとに読む（それまでは `FL.kiso.photos` のデータ URL を使い、同じ写真を 2 回入れない。8.2）。CADET は読まない。
   - `quiz-jcab.js`：JCAB 形式の問題 6 科目。FLIGHT LAB だけ。
+  - `kiso-errata.js`：原本のページ（6.1）に重ねる訂正と、章の問題のページから作り直した確認問題（`FL.kisoErrata`。データと純粋な関数だけ）。FLIGHT LAB だけ（TEXTBOOK と CADET は `FL_LEAVE_OUT` で外す）。共有の列では `kiso/kiso-data.js` の次（R1 の P3 で登録。付記 4）。
 - 第 1〜6 部の新しい章は、その部の既存のファイルに `before:` で入れる。読み込みの列は 1 か所にまとめる（6.2 の決まり 7）。TEXTBOOK の読み込みは 14 → 20 ファイル（`book-terms`・`book-jur`・`book-0`・`book-gates`・`book-7`・`book-photos-k`。R1 の P2 で `book-terms`・`book-jur` を足して 16）になり、`textbook/test/build.test.mjs:33-35` の決め打ち（`FL_MODULES.length === 14`、`scripts.length === FL_MODULES.length + 2`）を、ファイルを足すコミットで直す。
 
 ### 3.2 部・章・節の形
@@ -362,7 +363,7 @@
 | | `nav.ff` | T | 日米（charts） |
 | 29 `navd` 目的地変更・迷ったとき（3） | `nav.xc` | T | 日米（fpl） |
 | | `nav.divert` | T（緊急はまず向きを変える）＋K08.26（時間があれば比べてから）［C3］〔CADET：「まず向きを変え」〕 | 共通 |
-| | `nav.lost` | K08.27 を入口に＋T（上昇は「必要なら」［C2］・出典 AIM 6-3-1［T2］）。章末課題：K08.28 | 共通 |
+| | `nav.lost` | K08.27 を入口に＋T（上昇は「必要なら」［C2］・出典 AIM 6-3-2［T2］）。章末課題：K08.28 | 共通 |
 | 30 ★`night` 夜間の飛行（2） | ★`ops.night` 夜の空港・灯火・夜の目と錯覚・夜の準備 | K11.26（写真 ch11-photo7）・K10.5＋AFH 第 11 章 | 日米（night） |
 | | ★`ops.nightld` 夜の離着陸と夜の緊急 | 新（AFH 第 11 章：暗い所への離陸・PAPI・夜のエンジン故障） | 共通 |
 | 31 ★`g3` 第 3 部のまとめ（2） | ★`g3.review`（K08.28「計画を説明する」を口述の練習に）・★`g3.japan` | 新＋kiso08 の記述問題 | 日米の表 |
@@ -785,7 +786,7 @@
 | W04b 作業の決まりの文書 | `textbook/rewrite/STYLE.md`・`PLAN.md`・`NOTES.md` をこの設計に合わせる（6.2 の決まり 15） | 8 | W04 | STYLE の文がこの設計と食い違わない（読み合わせの記録） |
 | W05 日本の法令の写し（1） | `sources/egov/`：R1 で使う約 30 条（法令名・施行日・確認日）、写しのテスト | 20 | — | 写しのテストが通る |
 | W06 日米の対照データと部品 | `book-jur.js`（47 項目）、`bk.jur`・`bk.jp`・`bk.us`・`bk.same` と章末の表・付録の対照表の描画、行き先を確かめて描くリンク、CADET では日本の側だけを消す | 30 | W05 | 描いた数字がデータと同じ。CADET に米国の列が出て日本の列が出ない |
-| W07a〜c 教科書の誤り | 約 80 件＋図 12＋学科テスト 4 問を、第 1 部／第 2〜3 部／第 4〜6 部の 3 つに分けて直す。共通の節にある 14 CFR の引用（約 14 節）を `bk.us` に入れるか文に国を書く | 66（22×3） | W03・W06 | 台帳の教科書の行が閉じる。CADET の決め打ちの文が変わらない |
+| W07a〜c 教科書の誤り | 約 80 件＋図 12＋学科テスト 4 問を、第 1 部／第 2〜3 部／第 4〜6 部の 3 つに分けて直す（R1 では、図・写真・学科テストのファイル `book-figs.js`・`book-photos.js`・`PHOTO-CREDITS.md`・`quiz.js` を 4 つめの単位 W07f に分けた。付記 4）。共通の節にある 14 CFR の引用（約 14 節）を `bk.us` に入れるか文に国を書く | 66（22×3） | W03・W06 | 台帳の教科書の行が閉じる。CADET の決め打ちの文が変わらない |
 | W07d 課目と教科書の食い違い | a7・a8 のブリーフと `stallRecovery` の回復の順番〔安全〕、x3 の簡略化の注記、`comm.tower`・`comm.option` の `bk.sim`（10.5） | 12 | W07a | FLIGHT LAB の課目のテストと CADET の台詞のテスト |
 | W08 囲みを置く | 取り違えの項目の囲みを既存の節に（約 60 か所）。手で書くリンクは置かない（決まり 13） | 25 | W06 | 取り違えのテスト（囲みの分）が通る。行き先のないリンクがゼロ |
 | W09 構成の変更 | `FL.book.addPart`、直書きの「第 N 章」を直す → `book-0.js` が p0 を足し、できあがっている `intro`・`sim` を移す（p0 は空にならない）→ p1 と s0 の題から「ロンドン相当」を外す → 章の番号の振り直しとテストの定数を 3 製品で直す（`#aero.lift` は 5.2） | 18 | W02 | 3 製品の全テスト（定数を意図して直したことをメッセージと `TEST-CONSTANTS.md` に） |
@@ -1003,7 +1004,7 @@ HTML の大きさは MB（10<sup>6</sup> バイト）、写真は「デコード
 | weather T6 | `wx.front` | 前線の速さが mph だけ | kt を併記 | 高（表記） |
 | weather T7 | `wx.taf` | 発表時刻の出典が AWH 27.4（本文に記述なし） | NWSI 10-813 を足す | 中 |
 | navigation T1 | `nav.log`（ここが大切も） | VFR の燃料が「目的地まで」 | 「最初の着陸予定地まで」（91.151(a)） | 高 |
-| navigation T2 | `nav.lost` | 「番号はそのまま」の出典がない | AIM 6-3-1 | 高（軽微） |
+| navigation T2 | `nav.lost` | 「番号はそのまま」の出典がない | AIM 6-3-2（付記 4） | 高（軽微） |
 | navigation T3 | `nav.vor` | 風 080°/12 kt の真・磁が書いていない | 「（磁）」 | 中 |
 | law q_radio | 学科テスト q_radio | 正答の「できるだけ早く着陸」は as soon as possible。AIM 6-4-1 と本文は as soon as practicable | 「無理のない範囲で早めに」。91.185 の扱いを直す | 高 |
 | law comm.option | `comm.option` | 本文は「ダウンウインドに入るとき」、台本は中央で頼む。中身に missed approach がない | 合わせる・足す | 中 |
@@ -1087,7 +1088,7 @@ HTML の大きさは MB（10<sup>6</sup> バイト）、写真は「デコード
 | ifr K-1 | kiso12.19（写真 3・4） | 説明とクレジットだけで画像がない | 合本では教科書の写真で置き換え、クレジットは載せない | 高 |
 | ifr K-2 | kiso12.25・Q25 | 周回進入で目視を失ったときの原則（滑走路へ向かって上昇旋回）を書かない〔安全〕 | 原則を書き、左右を決めて覚えるのではないと続ける | 中 |
 | ifr K-3 | kiso12.2 | 最近の飛行経験を第 34 条の話にする | 第 69 条・施行規則第 161 条（180 日に 6 時間） | 中 |
-| ifr K-4 | kiso12.16 | 待機の時間も国で違うと読める | 時間（1 分／1.5 分）は ICAO と FAA で同じ | 中 |
+| ifr K-4 | kiso12.16 | 待機の時間も国で違うと読める | 時間（1 分／1.5 分）は ICAO と FAA で同じ〔要確認〕（付記 4：計る脚が違う可能性がある） | 中 |
 | ifr K-5 | kiso12.3 | 「米国の予備燃料の数値を流用しない」 | 一般の IFR の飛行機は日本も 45 分 | 中 |
 | ifr K-6 | kiso12 の扉 | 版の行の順番と書き方がそろわない | 原本の体裁（Word で直す） | 高（体裁） |
 | multi K-1 | kiso13.22・13.3 | 故障側を「足だけで決めない」「計器と照合」と書く〔安全〕 | 特定は主に足、確認はスロットル、計器は補助（AFH 13-32〜33） | 中 |
@@ -1208,7 +1209,7 @@ HTML の大きさは MB（10<sup>6</sup> バイト）、写真は「デコード
 
 | 中身 | 場所 | 直し方 | 確度 |
 |---|---|---|---|
-| 失速からの回復の順番：課目 a7 のブリーフは「①機首を下げる ②フルパワー ③翼を水平 ④上昇」、a8 は「迎え角を減らす → 出力 → 翼水平 → 上昇」。教科書（`aero.stall`・`ops.slow`・図 `stallRecovery`）は AFH の型（迎え角を減らす → 翼を水平 → 出力を必要なだけ → 元の経路へ）。**CADET の教官はこのブリーフを読み上げる**〔安全〕 | `flight-lab/src/syllabus.js` の a7・a8 の `brief`、`stallRecovery` の `say`・`g`（NOTES 17・112・377・378 行）、`cadet/src/content/dialog/instructor.js:253` | ブリーフと課目の言葉を AFH の型に。課目の採点（失った高度・二次失速）は変えない | 高 |
+| 失速からの回復の順番：課目 a7 のブリーフは「①機首を下げる ②フルパワー ③翼を水平 ④上昇」、a8 は「迎え角を減らす → 出力 → 翼水平 → 上昇」。教科書（`aero.stall`・`ops.stall`・図 `stallRecovery`）は AFH の型（迎え角を減らす → 翼を水平 → 出力を必要なだけ → 元の経路へ）。**CADET の教官はこのブリーフを読み上げる**〔安全〕 | `flight-lab/src/syllabus.js` の a7・a8 の `brief`、`stallRecovery` の `say`・`g`（NOTES 17・112・377・378 行）、`cadet/src/content/dialog/instructor.js:253` | ブリーフと課目の言葉を AFH の型に。課目の採点（失った高度・二次失速）は変えない | 高 |
 | 課目 x3（短距離離陸）はフラップ 0・Vr 60、教科書 `ops.short` の訓練校のチェックリストはフラップ 25°・Vr 55 | `syllabus.js` 260〜263 行（NOTES 406 行） | `ops.short`・`perf.tol` の `bk.sim` に「教材では簡略化してフラップ 0・Vr 60」と書く（実機はチェックリスト） | 高 |
 | `comm.tower` の `bk.sim`「この離陸許可の復唱から始まります」は言いすぎ（課目 t1 は離陸前点検から始まり、指示は “wind …, runway 36, cleared for takeoff.” だけ） | 教科書 `comm.tower`（NOTES 474 行） | 課目の実際に合わせて書き直す | 高 |
 | `comm.option` の `bk.sim`「管制の指示に復唱しながら飛びます」は事実と違う（t4 に管制の場面がなく、t2 は着陸許可の復唱だけ） | 教科書 `comm.option`（NOTES 475 行） | 同上 | 高 |
@@ -1309,3 +1310,16 @@ HTML の大きさは MB（10<sup>6</sup> バイト）、写真は「デコード
 - **用語の表のファイル**（3.1・6.1・6.2 の決まり 11・6.3）：W04 は `FL.terms` を `book-jur.js` に入れず、別のファイル `flight-lab/src/book-terms.js` にした（データだけ。表のテストが単独で読める。CADET に 85 KB を足さない）。共有の列（`flight-lab/src/modules.mjs`）では `book-core.js` の次に `book-terms.js`・`book-jur.js` の順。FLIGHT LAB と TEXTBOOK が読み、CADET は `FL_LEAVE_OUT` で外す（理由つき）。このため TEXTBOOK の読み込みは最後に 20 ファイル（P2 で 14 → 16。`TEST-CONSTANTS.md`）。
 - **用語の数と例**（3.5）：表は 297 語（RULINGS の C の語・CADET の通称 68・テストが決める語を全部載せた。`reports/W04.md` の 2.6）。JCAB の資料の表記を当てると、3.5・判断 3 の例のうち 2 つが別の語になった：angle of attack は「迎え角」（学科試験例題集の操縦士・整備士・運航管理者のすべて。「迎角」は基礎教材の表記）、carburetor heat は「キャブレターヒーター」（実地試験実施細則の科目の名前。「気化器加熱」は JCAB の資料に見当たらない）。表は原則どおりこの 2 語を正式名にし、所有者の確認待ちの印（`owner: true`、台帳 `R.aoa-term`・`U.jcab-term-names`）を付けた。例の語を選ぶなら、表のその行の正式名と通称を入れ替える。最小操縦速度・加速継続距離は〔要確認〕（`status: unverified`）のまま、教科書の語を仮の正式名にした。
 - **3.4 の表**：値と確度の正は `FL.jur`（W06 が 2026-10-27 に eCFR・AIM・ACS・FMH-1・e-Gov の写しで確かめた）と表の頭に書いた。表の中で直した所：`metar.taf` の米国の TEMPO は「1 回 1 時間未満」（AIM 7-1-28。「1 時間以内」は誤り。RULINGS `R.tempo-length` の「米国は 1 時間以内」も支えがない：W08 が囲みを置くときに裁定を見直す）、PROB は「PROB30/40（最初の 9 時間は使わない）」。日本の METAR・TAF の決まり（G の基準・TEMPO の長さ・FM と PROB）と、日本に夏時間がないこと（`time`）、日本のウィンドシャーの警報（`ws.alert`）は、一次資料で確かめられなかったので〔要確認〕を付けた（`FL.jur` と同じ。台帳 `U.metar-japan`・`U.jst-dst`・`U.ws-alert-japan`）。`nordo.vfr` の米国の出典に AIM 6-4-2（7600）を足した。題は用語の表に合わせて `ws.alert` を「ウィンドシャーの警報」、`lights.ac` を「航空機の灯火（航空灯）」（施行規則第 154 条の見出し）にした。〔要確認〕を含む項目の数え直しは 12 → 15（`COUNTS.json` の `jur.unverified`）。実地試験の 4 項目（`check.*`）の日本の数字は〔要確認〕のままで、`FL.jur` には書いていない。
+
+## 付記 4：R1 の P3 の統合での直し（2026-10-27）
+
+- **`kiso-errata.js` の登録**（3.1・6.2 の決まり 7）：W11 の新しいファイルを共有の列 `flight-lab/src/modules.mjs` の `kiso/kiso-data.js` の次と開発用 `flight-lab/src/index.html` に入れ、TEXTBOOK（`textbook/build.mjs`）と CADET（`cadet/build.mjs`）の `FL_LEAVE_OUT` に理由つきで書いた。TEXTBOOK は読まないので `FL_MODULES.length`（16）は変わらない。
+- **単位 W07f**（7.2）：W07a〜c の「図 12＋学科テスト 4 問」と、3 つの単位が見つけた図・写真の直しは、ファイルの持ち主を 1 つにするため、4 つめの単位 W07f（`book-figs.js`・`book-photos.js`・`PHOTO-CREDITS.md`・`quiz.js`）が直した。台帳の行の `unit` は元の単位（W07a・W07c・W17）のままで、`by` が `W07f`。台帳の道具は単位の形を `W\d\d[a-f]?` にした（`ledgers/README.md`）。
+- **〔安全〕⑤のコミット**（6.1・基準 7）：失速からの回復の順番は、教科書の `aero.stall`（W07a：自動操縦を最初に切る）と課目 a7・a8 のブリーフと `stallRecovery`（W07d）を同じコミットに入れた（CADET の教官がブリーフを読み上げるため）。
+- **10.5 の 1 行目**：教科書の回復の図と 4 段階の文は `ops.slow` ではなく `ops.stall` にある（W07d が確かめた）。上の表を直した。
+- **10.1 の navigation T2・3.3 の `nav.lost`**：「番号はそのまま」（Continue squawking assigned … unless instructed to do otherwise）は AIM 6-3-1 ではなく **6-3-2**（Obtaining Emergency Assistance）にある（W07b。統合で FAA の AIM の HTML を取り直して確かめた）。上の 2 か所と台帳 `T.navigation.T2` の一次資料の欄を直した。
+- **10.1 の human T3・human T11 は誤りではなかった**：AIM 8-1-2 は「An ear block / A sinus block is prevented by not flying with an upper respiratory infection」と書き、出典として正しい（W07a。台帳 `T.human.T3` は not-error）。「ICAO Doc 9683 の avoid・trap・mitigate」は Doc 9683 第 2 部第 2 章（2.2.34・2.3.16・2.4）にある（W07c。`T.human.T11` は not-error）。表の行は記録として残す。
+- **10.2 の ifr K-4 の直し方**（「待機の時間は ICAO と FAA で同じ」）は確かめられていない：米国の AIM 5-3-8 は**インバウンドの脚**を 14,000 ft MSL 以下で 1 分・それより上で 1 分 30 秒と決めるが、ICAO の PANS-OPS（Doc 8168）は二次資料では**アウトバウンドの脚**の時間で、ICAO の本文と AIP Japan は読めていない（W11）。この文をそのまま本に書かない（W30・W41）。原本のページには重ねず（`kiso-errata.js` の `HELD`）、`ERRATA-FOR-WORD.md` には〔要確認〕で書いた。
+- **米国の TEMPO**：教科書の本文（`wx.taf` の 3 か所、W07a）と図 `tafTimeline`（W07f）を「1 回 1 時間未満」に直した（NWSI 10-813 の付録 A・AIM 7-1-28）。台帳 `R.tempo-length` の裁定の見直しは W08（付記 3）。
+- **課目と教科書の食い違いの残り**（10.5 の外）：NOTES.md 1 の「アプリ側」の食い違いを、W07d が ERRATA に 30 行足した（`SYNC.a7-entry` など。〔安全〕は `SYNC.e3-glide-entry`・`SYNC.i2-upset`。どれも open）。課目の段階・採点・`school.js`・`physics.js`・CADET のチェックリストと ATIS にまたがるので、統合役の判断で `unit` は W07d のまま（W07d の 2 回目）とし、R1 の確かめ（W12：台帳は教科書の行と序部）の対象には入れない。〔安全〕の 2 行は R3 の安全レビュー（W36）までに直す。
+

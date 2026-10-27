@@ -6,7 +6,7 @@
   "about": "この設計の数（DESIGN 1.2・3.1・3.3・4.2・8.1・10）を目次と原本の JSON から数え直したもの（DESIGN 5 章の終わり）。design は設計書の値、recount は W03 が今数えた値、built は作った本の値（版の確かめの単位が記入）。match:false は設計書の中の食い違い",
   "counts": { "rows": 86, "exact": 64, "mismatch": 3 },
   "mismatches": [ "origin.kiso: design 67 / recount 75", "origin.written.other: design 16 / recount 8", "rulings.rows: design 74 / recount 80" ],
-  "applied": [ "integrate-P1.ledger.json", "integrate-P2.ledger.json" ],
+  "applied": [ "integrate-P1.ledger.json", "integrate-P2.ledger.json", "integrate-P3.ledger.json" ],
   "rows": [
     {"id":"toc.p0.chapters","what":"p0 の章の数","design":4,"recount":4,"match":true,"source":"DESIGN 3.3 の部の見出し","built":null,"builtBy":null,"builtOn":null,"note":""},
     {"id":"toc.p0.sections","what":"p0 の節の数","design":22,"recount":22,"match":true,"source":"DESIGN 3.3 の部の見出し","built":null,"builtBy":null,"builtOn":null,"note":""},
@@ -71,7 +71,7 @@
     {"id":"errata.textbook","what":"教科書の誤り（10.1）","design":79,"recount":79,"match":true,"source":"DESIGN 10.1 の見出し・2.4","built":null,"builtBy":null,"builtOn":null,"note":""},
     {"id":"errata.kiso","what":"基礎教材の誤り・欠落（10.2）","design":53,"recount":53,"match":true,"source":"DESIGN 10.2 の見出し・2.4","built":null,"builtBy":null,"builtOn":null,"note":""},
     {"id":"errata.app","what":"アプリとデータの不具合（10.3 の表の行）","design":15,"recount":15,"match":true,"source":"DESIGN 10.3","built":null,"builtBy":null,"builtOn":null,"note":"ERRATA.json の行は 16：W03 が 1 行（課目 c1 と k1・k2）を 2 行に分けた"},
-    {"id":"errata.sync","what":"教科書と課目・ゲームの食い違い（10.5）","design":5,"recount":5,"match":true,"source":"DESIGN 10.5","built":null,"builtBy":null,"builtOn":null,"note":""},
+    {"id":"errata.sync","what":"教科書と課目・ゲームの食い違い（10.5）","design":5,"recount":5,"match":true,"source":"DESIGN 10.5","built":null,"builtBy":null,"builtOn":null,"note":"統合 P3（2026-10-27）：W07d が NOTES.md 1 の「アプリ側」の食い違いを 31 行（SYNC.lesson-links-ops と open の 30 行）足したので、ERRATA の SYNC の行は 5 → 36（design・recount の 5 は DESIGN 10.5 の数のまま）","by":"W07d"},
     {"id":"errata.safety","what":"〔安全〕の誤りの行","design":null,"recount":9,"match":null,"source":"DESIGN 10","built":null,"builtBy":null,"builtOn":null,"note":"命に関わる 7 項目（基準 7）は ERRATA 9 行と RULINGS の〔安全〕の行にまたがる"},
     {"id":"rulings.rows","what":"食い違い（10.4 の見出しの件数と表の行）","design":74,"recount":80,"match":false,"source":"DESIGN 10.4 の見出し・2.4","built":null,"builtBy":null,"builtOn":null,"note":"見出しは 74 件、表は 80 行（DESIGN 自身が「行は少し細かく分けた」と書く）。RULINGS.json は表の 80 行"},
     {"id":"rulings.A","what":"食い違い A（国の違い。混合を含む）","design":"約 30","recount":18,"match":null,"source":"DESIGN 2.4","built":null,"builtBy":null,"builtOn":null,"note":"主の分類が A の行は 17"},
@@ -93,6 +93,6 @@
     {"id":"book.size","what":"容量","design":"FLIGHT-LAB.html 12 MiB 以下（R1 のあと 約 9.6 MB）、CADET 15 MiB 以下、教科書の写真はデコード後 1 枚 120 KB 以下・合計 4.0 MiB 以下、CADET の AI 教官の目次 2.5 万字以下（約 224 節）","recount":null,"match":null,"source":"DESIGN 8.2・基準 25・6.3","built":null,"builtBy":null,"builtOn":null,"note":"作った本で数える（built に記入）"},
     {"id":"book.textbookModules","what":"TEXTBOOK の読み込みファイル","design":"14 → 19","recount":null,"match":null,"source":"DESIGN 3.1・6.2 の決まり 11","built":null,"builtBy":null,"builtOn":null,"note":"作った本で数える（built に記入）"},
     {"id":"book.aeroLiftNumber","what":"#aero.lift の章・節の番号","design":"R1 で 5.2、R2 で 5.3","recount":null,"match":null,"source":"DESIGN 6.1・6.2 の決まり 11","built":null,"builtBy":null,"builtOn":null,"note":"作った本で数える（built に記入）"},
-    {"id":"book.lessons","what":"課目とそのリンク","design":"37 課目・book 51 本（後ろに足すだけ。k1・k2 に inst.pfd、c1 は solo.check）","recount":null,"match":null,"source":"DESIGN 6.1","built":null,"builtBy":null,"builtOn":null,"note":"作った本で数える（built に記入）"}
+    {"id":"book.lessons","what":"課目とそのリンク","design":"37 課目・book 51 本（後ろに足すだけ。k1・k2 に inst.pfd、c1 は solo.check）","recount":null,"match":null,"source":"DESIGN 6.1","built":null,"builtBy":null,"builtOn":null,"note":"作った本で数える（built に記入） ／ 統合 P3（2026-10-27）：W07d が a4・a5 に ops.turns、a7・a8 に ops.stall を book の後ろに足し、c1 を intro.course → solo.check にした。syllabus.js の book は 51 → 55 本（built は版の確かめで記入）","by":"W07d"}
   ]
 }

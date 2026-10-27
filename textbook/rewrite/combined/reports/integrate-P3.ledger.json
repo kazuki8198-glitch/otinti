@@ -1,0 +1,42 @@
+{
+  "about": "統合 P3：W07b が報告に書いた W07a の閉じた行への書き足し（where）、ERRATA T.navigation.T2 の一次資料の欄の直し、W07d の行の数の note",
+  "patches": [
+    {
+      "id": "T.instruments.E-T2",
+      "by": "W07a",
+      "where": "flight-lab/src/book-1.js sys.compass（同じ情報源の計器は多数決にならない、姿勢と出力から予想される動き・GPS の対地速度と比べる）と sys.g1000（詰まりは予備計器にも同じように出る：POH 7.21）。flight-lab/src/book-4.js ifr.instr（Archer III の POH では 1 本のピトー静圧管が ADC と予備計器の両方につながるので、詰まりは PFD と予備計器に同じように出る・クロスチェックは多数決にしない・「ここが大切」2 項目。W07b）",
+      "note": "統合 P3（2026-10-27）：W07b が直した ifr.instr の分を where に足した（W07b の報告 7 の 3。W07b は行の by を変えないようパッチに入れず報告に書いた）。〔安全〕の安全レビュー（W12）は ifr.instr の分も見る"
+    },
+    {
+      "id": "R.cross-check",
+      "by": "W07a",
+      "where": "flight-lab/src/book-1.js sys.compass（多数決にならない、別の情報源と比べる）と sys.g1000（詰まりは予備計器にも出る）。flight-lab/src/book-4.js ifr.instr（詰まりは PFD と予備計器に同じように出る・多数決にしない。W07b）",
+      "note": "統合 P3（2026-10-27）：W07b の ifr.instr の分を where に足した（W07b の報告 7 の 3）"
+    },
+    {
+      "id": "T.systems.T9",
+      "by": "W07a",
+      "where": "flight-lab/src/book-1.js sys.elec（ブレーカーを戻すのは必要な系統だけ・1 分待つ・煙やにおいがない・1 回だけ。出典 SAIB CE-10-11。「ここが大切」も）。flight-lab/src/book-3.js ground.start（ブレーカーは確かめ、飛び出しているものは原因を確かめてから。整備の不具合なら戻さない）・emg.elec（飛行中に戻すのは必要な系統だけ・1 分以上待つ・煙やにおいがない・1 回だけ）（W07b）。出典の R.saib1011（FAA SAIB CE-10-11）を sys・ground・emg の章の refs に入れた（統合 P3）",
+      "note": "統合 P3（2026-10-27）：W07b の ground.start・emg.elec の分を where に足し、SAIB CE-10-11 を R（book-core.js の saib1011）と 3 章の refs に入れた（W07a の報告 6・W07b の報告 7 の 3。PDF を faasafety.gov で取り直し、題と日付 2009-12-23・勧め 2 の a〜c を確かめた）"
+    },
+    {
+      "id": "T.navigation.T2",
+      "by": "W07b",
+      "source": {
+        "report": "understand/navigation.md §6（教科書） T2",
+        "primary": "AIM 6-3-2 \"Continue squawking assigned Mode A/3 discrete code/VFR code and Mode C altitude encoding when in radio contact with an air traffic facility or other agency providing air traffic services, unless instructed to do otherwise\""
+      },
+      "note": "統合 P3（2026-10-27）：source.primary の「AIM 6-3-1」を 6-3-2 に直した（W07b の報告 6。FAA の AIM の HTML を取り直し、この文が 6-3-2 Obtaining Emergency Assistance の a.2 にあることを確かめた）。DESIGN 3.3 と 10.1 の同じ記述は DESIGN の付記 4"
+    },
+    {
+      "id": "errata.sync",
+      "by": "W07d",
+      "note": "統合 P3（2026-10-27）：W07d が NOTES.md 1 の「アプリ側」の食い違いを 31 行（SYNC.lesson-links-ops と open の 30 行）足したので、ERRATA の SYNC の行は 5 → 36（design・recount の 5 は DESIGN 10.5 の数のまま）"
+    },
+    {
+      "id": "book.lessons",
+      "by": "W07d",
+      "note": "統合 P3（2026-10-27）：W07d が a4・a5 に ops.turns、a7・a8 に ops.stall を book の後ろに足し、c1 を intro.course → solo.check にした。syllabus.js の book は 51 → 55 本（built は版の確かめで記入）"
+    }
+  ]
+}

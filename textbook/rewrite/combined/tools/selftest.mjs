@@ -8,8 +8,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { toc, jurItems, photoPlan, knownConcepts, kRefs } from './lib/design.mjs';
 import { evaluate } from './lib/expr.mjs';
-import { sentences, stripB64 } from './lib/html.mjs';
-import { ending } from './check-style.mjs';
+import { sentences, stripB64, blocks } from './lib/html.mjs';
+import { ending, skipForStyle } from './check-style.mjs';
 import { findRules } from './check-jurisdiction.mjs';
 import { findHardRefs } from './check-chapter-refs.mjs';
 import { loadBook } from './lib/load.mjs';
@@ -40,6 +40,10 @@ t('expr', () => { assert.ok(Math.abs(evaluate('1/cosd(60)') - 2) < 1e-12); asser
 t('sentences and endings', () => {
   assert.deepEqual(sentences('A です。「B。」と書きます。C').map(x => x.t), ['A です。', '「B。」と書きます。', 'C']);
   assert.equal(ending('高度を保ちます（14 CFR 23.2005(d)）。'), 'polite'); assert.equal(ending('高度を保つ。'), 'plain'); assert.equal(ending('差は 4℃。'), 'noun');
+});
+t('a US–Japan box: its heading and foot are not sentences (style)', () => {
+  const html = '<p>本文です。</p><div class="bk-us"><div class="jur-h"><b>米国では</b></div><div class="jur-v"><b>題</b>：値です。</div><div class="jur-foot"><span class="jur-ver">版：x。</span></div></div>';
+  assert.deepEqual(blocks(html, { skip: skipForStyle }).map(b => b.text), ['本文です。', '題：値です。']);
 });
 t('rule words', () => { const x = findRules('14 CFR 91.155 と AIM 4-3-3、121.5 MHz、航空法第 2 条'); assert.deepEqual(x.us.map(m => m.s), ['14 CFR 91.155', 'AIM 4-3-3']); assert.deepEqual(x.jp.map(m => m.s), ['航空法', '第 2 条']); });
 t('第 N 章', () => { assert.equal(findHardRefs('PHAK 第 11 章と AWH 第 3 章・第 24〜27 章').length, 0); assert.equal(findHardRefs('詳しくは第 5 章。').length, 1); });

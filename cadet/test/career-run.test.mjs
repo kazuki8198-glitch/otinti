@@ -6,7 +6,8 @@
 // with FLIGHT LAB's bot flying every lesson, each lesson noted in FLIGHT LAB's progress (school.noteLesson) as the game's
 // flight bridge notes it; the check ride with the chief instructor; the solo; a night's sleep between days.
 // Checked: the chapters open in order through their gates, every lesson of chapter 2 is passed at the basic level, c1
-// passes, the solo is flown, and it all takes a believable number of days.
+// passes, the solo is flown, and it all takes a believable number of days; the first afternoon's introductory flight,
+// flown in a second run instead of declined, changes none of it.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -24,6 +25,8 @@ import { runChairFlight } from '../src/dialog/chair-flight.js';
 import { createRunner, createDialogState, trustOf } from '../src/dialog/engine.js';
 import { playDay } from './helpers/play-day.mjs';
 import { installSorajima } from '../src/flight/sorajima.js';
+import { createFlight } from '../src/flight/flight.js';
+import { runIntroScripted } from '../src/flight/intro-flight.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js', 'quiz.js', 'radio.js', 'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js'])
@@ -32,7 +35,9 @@ installSorajima(globalThis.FL);                    // (the game's flight model: 
 const FL = globalThis.FL, SC = FL.school;
 const memStore = () => { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k) }; };
 
-test('career run: from the first day to the first solo — every gate in order, every lesson flown by FLIGHT LAB\'s bot', { timeout: 1800000 }, () => {
+// the career from its first day to the first solo; intro: the first afternoon's introductory flight flown ('fly': the
+// scripted cadet, flight/intro-flight.js) or declined ('no')
+function careerToSolo(intro) {
   const career = createCareer({ store: memStore(), seed: 11 });
   const talk = createDialogState(), prog = SC.sanitizeProgress({});
   const log = [], flown = [];
@@ -64,7 +69,19 @@ test('career run: from the first day to the first solo — every gate in order, 
     for (const it of sch) {
       if (it.kind === 'ceremony') { run(people, 'chief', { ctx }); career.done('ceremony', 'welcome'); }
       else if (it.kind === 'tour') { run(people, 'dispatcher', { ctx }); career.done('tour', 'tour'); }
-      else if (it.kind === 'brief') { run(ins, 'meet', { ctx, pick: [/今は大丈夫/] }); career.done('brief', 'meet'); career.finishPrologue(); }
+      else if (it.kind === 'brief') {
+        // (the meeting, and the flight it offers: taken — the calls answered right —, or declined as before)
+        let done = null;
+        run(ins, 'meet', { ctx, pick: intro === 'fly' ? [/今は大丈夫/, /^乗ります$/, /^I have control$/] : [/今は大丈夫/, /やめておきます/], hooks: (n, a) => { if (n === 'done') done = a; } });
+        career.done('brief', 'meet'); career.finishPrologue();
+        if (intro === 'fly') {
+          assert.equal(done, 'meet:fly');
+          const store = memStore(), r = runIntroScripted(FL, createFlight, { hands: 'cadet', store });
+          assert.ok(r.sum && !r.sum.cut, 'the flight flown to its end'); r.flight.discard();
+          assert.equal(store.getItem(`cadet.${SC.PROG_KEY}`), null, 'nothing of FLIGHT LAB\'s kept');
+          career.done('intro', 'flight');
+        } else { assert.equal(done, 'meet'); career.done('intro', 'no'); }
+      }
       // (the class's pace by its name: the whole textbook; the career keeps what was heard and answered, as the game does)
       else if (it.kind === 'class') { const q = { quiz: {} }, s2 = createDialogState(), d = classDialogs(FL, +it.id, { seed: st.seed, ...classOptions(FL, career.state, +it.id, { attempt: career.attempt(`class:${it.id}`) }) }); run(d, 'class', { state: s2, ctx: q, pick: [/^じっくり/], hooks: (n, a) => { if (n === 'quizEnd') q.quiz = scoreOf(s2, +a); careerHook(career, n, a); } }); career.done('class', it.id); }
       else if (it.kind === 'ftd' || it.kind === 'exam') {
@@ -104,6 +121,11 @@ test('career run: from the first day to the first solo — every gate in order, 
     if (!career.state.solo) { career.sleep(); career.advanceChapter(prog, trustOf(talk, 'instructor')); }
   }
   if (process.env.DBG) console.log(log.join('\n'), '\n', flown.join(' '));
+  return { career, talk, prog, log, flown, days };
+}
+
+test('career run: from the first day to the first solo — every gate in order, every lesson flown by FLIGHT LAB\'s bot', { timeout: 1800000 }, () => {
+  const { career, talk, prog, log, flown, days } = careerToSolo('no');
   const st = career.state;
   assert.ok(st.solo, `the solo was flown (after ${days} days)\n${log.join('\n')}`);
   assert.equal(st.chapter, 'ch2');
@@ -115,6 +137,12 @@ test('career run: from the first day to the first solo — every gate in order, 
   // a believable length: about a week of ground school, three to five weeks of flying (Sundays off, the weather)
   assert.ok(days >= 18 && days <= 60, `${days} days`);
   assert.ok(log.some(l => / off/.test(l) || /off:/.test(l)), 'Sundays off');
+  // the introductory flight flown on the first afternoon changes nothing after it: the same plan every day, the same
+  // lessons, the solo the same day (FLIGHT LAB's record never sees it)
+  const f = careerToSolo('fly');
+  assert.equal(f.career.state.done['intro:flight'], 1); assert.equal(st.done['intro:no'], 1);
+  assert.deepEqual(f.log, log); assert.deepEqual(f.flown, flown);
+  assert.equal(f.career.state.solo.day, st.solo.day);
 });
 const FLY_KINDS = ['flight', 'checkride', 'solo'];
 // what the game does with a lesson's hooks to the career (main.js onHook): the pace, a section heard, an answer

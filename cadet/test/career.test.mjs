@@ -272,3 +272,27 @@ test('career: chapter 1\'s plan from a save of the classes\' order before — a 
   const done = schedule({ ...st, slot: 'pm', done: { ...st.done, 'class:2': 6 } }, progWith(['k1', 'k2'], ['basic']));
   assert.deepEqual(done.map(x => `${x.kind}:${x.id}`), ['class:2', 'ftd:k3', 'event:spell']);
 });
+
+test('career: the first day\'s introductory flight — its record kept (flown or declined), the prologue\'s plan, gate and flags as before, FLIGHT LAB\'s a1 still the next lesson, day 2 the class and k1 its lines promise', () => {
+  const C = createCareer({ store: memStore(), seed: 3 });
+  C.done('ceremony', 'welcome'); C.done('tour', 'tour');
+  for (const k of ['flight', 'no']) {
+    const s = cleanCareer(JSON.parse(JSON.stringify({ ...C.state, done: { ...C.state.done, [`intro:${k}`]: 1 } })));
+    assert.equal(s.done[`intro:${k}`], 1, `intro:${k} kept`);
+    // (the plan, the gate and the flags of the prologue do not know it: it is the meeting's end, not an item)
+    assert.deepEqual(schedule(s, {}).map(x => x.kind), ['ceremony', 'tour', 'brief']);
+    assert.deepEqual(gate(s, {}), ['入社の 1 日']);
+    assert.deepEqual(prologueFlags(s), { welcome_done: true, tour_done: true, met_instructor: false });
+  }
+  assert.deepEqual(schedule(C.state, {}).map(x => x.kind), ['ceremony', 'tour', 'brief']);
+  C.done('brief', 'meet'); C.finishPrologue(); C.done('intro', 'flight');
+  assert.deepEqual(gate(C.state, {}), []);
+  assert.deepEqual(prologueFlags(C.state), { welcome_done: true, tour_done: true, met_instructor: true });
+  // (no lesson of FLIGHT LAB's flown: a1 next, as before)
+  assert.equal(nextLesson({}), 'a1'); assert.equal(nextLesson({ lessons: {} }), 'a1');
+  // (its lines say tomorrow is the class of the flight's principles and the afternoon's k1: day 2's plan —
+  // content/dialog/intro.js d:a–d:c)
+  C.sleep(); assert.ok(C.advanceChapter({}, 50));
+  assert.deepEqual(C.schedule({}).map(x => `${x.slot} ${x.kind} ${x.id}`), ['am class 0', 'pm ftd k1', 'evening event forces']);
+  assert.ok(!isOff(C.day));
+});

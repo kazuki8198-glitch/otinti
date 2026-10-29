@@ -9,7 +9,10 @@
 //  - a decision: a choice of two or more where what is chosen changes what comes next (right or wrong, a reason, the
 //    state); not a choice only of "go on / again", the pace, the end of a section's menu. In k4: an operation whose
 //    value is checked (the frequency, the altimeter, the code) counts too;
-//  - a stretch without a decision: the reading time of the lines from one decision to the next, within a talk;
+//    The first day's introductory flight: each of its flying tasks (the 20 s straight and level, the look, the turn,
+//    LAB ahead) counts as one checked operation too (k4's rule), its flown seconds its line's time;
+//  - a stretch without a decision: the reading time of the lines from one decision to the next, within a talk (the
+//    introductory flight's flown seconds included);
 //  - k4's stretch without input: the controller's transmissions (LINE_S of dialog/atc.js) plus the subtitles' reading;
 //  - a pattern (型): a line with what its 「…」 hold and its numbers masked;
 //  - time: reading by school.js's formula, English transmissions by LINE_S, walking at 1.45 m/s, the day's cards and
@@ -47,7 +50,8 @@ export async function load() {
   let flow = null; try { flow = await mod('content/day-flow.js'); } catch (e) { /* (before the day's own lines) */ }
   let events = null; try { events = await mod('content/dialog/ch1-events.js'); } catch (e) { /* (before the evenings' events) */ }
   let chair = null; try { chair = { content: await mod('content/chair-flight.js'), runner: await mod('dialog/chair-flight.js') }; } catch (e) { /* (before k4 was rebuilt) */ }
-  LOADED = { FL, school, career, engine, book, people, cast, insc, chair, spec, guide, answers, flow, events, BOOK: book.gameBook(FL), SPEC: spec.academySpec(FL) };
+  let intro = null; try { intro = { flight: await mod('flight/flight.js'), run: await mod('flight/intro-flight.js'), talk: await mod('content/dialog/intro.js') }; } catch (e) { /* (before the introductory flight) */ }
+  LOADED = { FL, school, career, engine, book, people, cast, insc, chair, intro, spec, guide, answers, flow, events, BOOK: book.gameBook(FL), SPEC: spec.academySpec(FL) };
   return LOADED;
 }
 
@@ -63,7 +67,7 @@ export function walkMeters(L, from, to) {
   }
   return m + Math.hypot(to.a - p.a, to.c - p.c);
 }
-export const PLACES = { entrance: { a: 655.0, c: 274.6 }, home: { a: 655.0, c: 276.2 } };
+export const PLACES = { entrance: { a: 655.0, c: 274.6 }, home: { a: 655.0, c: 276.2 }, apronDoor: { a: 655.0, c: 253.0 } };    // (apronDoor: main.js AUTO_DOOR)
 const placeOfPerson = (L, who, slot, chapter, what) => {
   if (who === 'instructor') return { a: 634.9, c: 256.7 };
   const at = L.cast.placeOf(who, slot, chapter, what) || L.cast.PLACES.classroom;
@@ -116,6 +120,27 @@ export function isDecision(v, n) {
   if (LOADED && LOADED.school.DECISION_NODE && LOADED.school.DECISION_NODE.test(v.node)) return true;
   return false;
 }
+// ---------------------------------------------------------------- the first day's introductory flight
+// flown by flight/intro-flight.js's scripted cadet (hands: 'cadet', or 'none' — the one who never touches the yoke),
+// then told as lines: the card, each talk as the cadet reads it (its context as the flight had it), each flying task one
+// checked line of its flown seconds (a takeover's recovery: a line of his, not a decision), the landing's card
+export const INTRO_CARD_S = { start: 0.65 + 1.5 + 0.65, end: 0.65 + 1.2 + 0.65 };    // (main.js beginIntro, onIntroDone: in, shown, out)
+// the right answer where one of its checks asks (content/dialog/intro.js INTRO_RIGHT), else the first choice
+export const introRight = (v) => { const re = LOADED && LOADED.intro ? LOADED.intro.talk.INTRO_RIGHT[v.node] : null, i = re ? v.choices.findIndex(c => re.test(c.text)) : -1; return i >= 0 ? i : null; };
+export function introLines(L, { hands = 'cadet', state = null } = {}) {
+  const I = L.intro, m = new Map(), store = { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k) };
+  const r = I.run.runIntroScripted(L.FL, I.flight.createFlight, { hands, store, policy: introRight });
+  const data = I.talk.introAirDialogs(), st = state || L.engine.createDialogState(), C = I.talk.INTRO_CARDS, HUD = I.talk.INTRO_HUD;
+  const pseudo = (node, text, t, decision = false) => ({ node, speaker: 'narrator', text, tag: '', choices: [], say: null, t, decision, q: null, chosen: null });
+  const lines = [pseudo('card:start', `${C.start.title}　${C.start.sub}`, INTRO_CARD_S.start)];
+  for (const s of r.steps) {
+    if (s.talk) lines.push(...runTalk(L, data, s.id, { ctx: { intro: s.ctx }, state: st, policy: introRight }).lines);
+    else lines.push(pseudo(`task:${s.id}`, (HUD[s.id] || HUD.watch).title, s.secs, !!HUD[s.id] && s.id !== 'watch'));
+  }
+  lines.push(pseudo('card:end', `${C.end.title}　${C.end.sub}`, INTRO_CARD_S.end));
+  return { lines, sum: r.sum };
+}
+
 // a scored question's id: its own (the classes' since the map), else found from its text
 export function questionId(L, x, kind) {
   if (x.id) return x.id;
@@ -161,8 +186,9 @@ export function answerHeard(L, id, heard, k1Parts) {
 // pace: 'need' | 'full' | 'quick' (the class's choice, by its label); seed: the career's; skip: the moves skipped when
 // the game offers it (the second time on)
 const PACE_LABEL = { need: /^今日の訓練に要る/, full: /^じっくり/, quick: /^要点だけ/ };
-// think: at a 考えてみよう, 'try' (考えてみます: its candidates asked — the default, the first choice) or 'hear' (答えを聞きます)
-export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong = 0, think = 'try' } = {}) {
+// think: at a 考えてみよう, 'try' (考えてみます: its candidates asked — the default, the first choice) or 'hear' (答えを聞きます);
+// intro: the first day's introductory flight 'fly' (taken, flown by the scripted cadet: introHands) or 'no' (declined)
+export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong = 0, think = 'try', intro = 'fly', introHands = 'cadet' } = {}) {
   const L = await load(), C = L.career, S = L.school, FL = L.FL;
   const store = (() => { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k) }; })();
   const career = C.createCareer({ store, seed });
@@ -218,9 +244,21 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
       doTalk('tour', L.people.peopleDialogs(), 'dispatcher', { ctx, state: talk }); career.done('tour', 'tour'); career.advance('pm');
       const t2 = pw('tour', '午後：ブリーフィング室 1 で、担当の早瀬 教官と顔合わせです'); fixed('toast', t2, readingSeconds(t2));
       walk(placeOfPerson(L, 'instructor'), 'ブリーフィング室 1');
-      doTalk('meet', L.insc.careerInstructorDialogs(), 'meet', { ctx, state: talk, policy: (v) => { const i = v.choices.findIndex(c => /今は大丈夫/.test(c.text)); return i >= 0 ? i : null; } });
-      career.done('brief', 'meet'); career.finishPrologue(); career.advance('evening');
-      const t3 = pw('meet', '夕方です。ラウンジで同期と話してみましょう。今日を終えるときは、正面入口から寮へ'); fixed('toast', t3, readingSeconds(t3));
+      // (the meeting ends with the introductory flight offered: taken — the calls checked right —, or declined)
+      const meetPolicy = (v) => { for (const re of [/今は大丈夫/, intro === 'no' ? /やめておきます/ : /^乗ります$/]) { const i = v.choices.findIndex(c => re.test(c.text)); if (i >= 0) return i; } return introRight(v); };
+      const m = doTalk('meet', L.insc.careerInstructorDialogs(), 'meet', { ctx, state: talk, policy: meetPolicy });
+      career.done('brief', 'meet'); career.finishPrologue();
+      if (L.intro && m.hooks.some(h => h[0] === 'done' && h[1] === 'meet:fly')) {
+        // (its lines are none of the classes': not counted as heard; its cards are in the talk)
+        const x = introLines(L, { hands: introHands, state: talk });
+        day.talks.push({ label: 'intro', ...summarize(x.lines), lines: x.lines, intro: x.sum });
+        career.done('intro', 'flight'); career.advance('evening'); at = PLACES.apronDoor;
+        const t3 = pw('intro', '空から戻りました。夕方です。ラウンジで同期と話せます。今日を終えるときは、正面入口から寮へ'); fixed('toast', t3, readingSeconds(t3));
+      } else {
+        if (L.intro) career.done('intro', 'no');
+        career.advance('evening');
+        const t3 = pw('meet', '夕方です。ラウンジで同期と話してみましょう。今日を終えるときは、正面入口から寮へ'); fixed('toast', t3, readingSeconds(t3));
+      }
     } else if (!sch.some(x => x.kind === 'off')) {
       for (const it of sch) {
         if (it.kind === 'class') {
@@ -399,7 +437,7 @@ export async function measureAll({ seeds = [1], paces = null } = {}) {
     out.paces[pace] = {
       totalMin: by(d => d.time) / 60,
       breakdownMin: { classes: talkBy(/^class/) / 60, ftd: talkBy(/^ftd/) / 60, k4: talkBy(/^ftd k4/) / 60, exam: talkBy(/^exam/) / 60, prologue: talkBy(/^(ceremony|tour|meet)/) / 60,
-        events: talkBy(/^event/) / 60, study: talkBy(/^study/) / 60, walk: by(d => d.walkS) / 60, fixedNoWalk: by(d => d.cardS + d.toastS) / 60 },
+        intro: talkBy(/^intro/) / 60, events: talkBy(/^event/) / 60, study: talkBy(/^study/) / 60, walk: by(d => d.walkS) / 60, fixedNoWalk: by(d => d.cardS + d.toastS) / 60 },
       days: r.days.map(d => ({ day: d.day, plan: d.plan, minutes: +(d.time / 60).toFixed(1), talkMin: +(d.talkS / 60).toFixed(1), fixedS: Math.round(d.fixedS), walkS: Math.round(d.walkS), lines: d.lines, decisions: d.decisions, longestGapMin: +(d.longestGap / 60).toFixed(2),
         talks: d.talks.map(t => ({ label: t.label, lines: t.n, minutes: +(t.time / 60).toFixed(1), decisions: t.decisions, longestGapMin: +(t.longestGap / 60).toFixed(2) })) })),
       questions: { asked: askedAll.length, known: askedAll.filter(a => a.known).length, inBook: inBook.length, saidBefore: inBook.filter(a => a.said).length,
@@ -409,6 +447,10 @@ export async function measureAll({ seeds = [1], paces = null } = {}) {
       classDay: r.classDay, ftdDay: r.ftdDay,
       k4: (() => { const t = r.days.flatMap(d => d.talks).filter(x => /^ftd k4/.test(x.label)); const run = t.find(x => x.label === 'ftd k4 run') || t[0];
         return run ? { decisions: run.decisions, longestGapS: +run.longestGap.toFixed(1), runMin: +(run.time / 60).toFixed(2), allMin: +(t.reduce((a, x) => a + x.time, 0) / 60).toFixed(2), lines: run.n } : null; })(),
+      // (the first day's introductory flight: its time, decisions, longest stretch, seconds at the controls; and the
+      // longest stretch of a cadet who never touches the yoke)
+      intro: (() => { const t = r.days[0].talks.find(x => x.label === 'intro'); if (!t || !L.intro) return null; const none = summarize(introLines(L, { hands: 'none' }).lines);
+        return { min: +(t.time / 60).toFixed(2), decisions: t.decisions, longestGapS: +t.longestGap.toFixed(1), handsS: +t.intro.handsS.toFixed(1), noInputLongestGapS: +none.longestGap.toFixed(1) }; })(),
       dayPatterns: dayPatterns(r).filter(p => p.days.length >= 3),
       framePatterns: framePatterns(r).filter(p => p.count >= 8),
     };

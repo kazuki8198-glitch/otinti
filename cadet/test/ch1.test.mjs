@@ -2,10 +2,10 @@
 // count the same way): the classes' frame (no wording of the class's own said 8 times or more, but those kept here
 // with their reason), each day's own start and end, the parts of the sections not going the same way three in a row,
 // no long stretch without a choice, the first flight's sections asked about again and again, the review at a class's
-// start, a day at the pace for today's training within 40 minutes.
+// start, a day at the pace for today's training within 40 minutes; the first day's introductory flight.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { load, measureCh1, framePatterns, dayPatterns, daySentencePatterns, answerScenes, sectionStages, runTalk } from '../tools/measure-ch1.mjs';
+import { load, measureCh1, framePatterns, dayPatterns, daySentencePatterns, answerScenes, sectionStages, runTalk, summarize, introLines } from '../tools/measure-ch1.mjs';
 import * as TALK from '../src/content/class-talk.js';
 import fs from 'node:fs';
 
@@ -55,6 +55,25 @@ test('no long stretch without a choice: at most 2 minutes at the pace for today\
       if (pace === 'need') assert.ok(d.time <= 40 * 60, `need seed ${seed} (${think}) day ${d.day}: ${(d.time / 60).toFixed(1)} min`);
     }
   }
+});
+
+test('the first day\'s introductory flight: a talk of its own with 8 decisions or more at every pace, no long stretch (hands off too), the day within 40 minutes; declined, the day as before with the offer; what is heard and asked the same', async () => {
+  for (const pace of ['need', 'full', 'quick']) for (const seed of [1, 2, 3]) {
+    const r = await measureCh1({ pace, seed }), d = r.days[0], t = d.talks.find(x => x.label === 'intro');
+    assert.ok(t && t.decisions >= 8, `${pace} seed ${seed}: ${t ? t.decisions : 'no'} decisions in the flight`);
+    assert.ok(d.longestGap <= 120, `${pace} seed ${seed}: ${(d.longestGap / 60).toFixed(2)} min without a choice on day 1`);
+    if (pace === 'need') assert.ok(d.time <= 40 * 60, `${(d.time / 60).toFixed(1)} min`);
+  }
+  // (a cadet who never touches the yoke: the hints, his lines and the tasks' ends still come within 2 minutes)
+  assert.ok(summarize(introLines(L, { hands: 'none' }).lines).longestGap <= 120);
+  // declined: no flight; the offer its one decision and its one line more (the day was 3.4 min before it)
+  const fly = await measureCh1({ pace: 'need', seed: 1 }), no = await measureCh1({ pace: 'need', seed: 1, intro: 'no' }), d = no.days[0];
+  const ask = d.talks.find(x => x.label === 'meet').lines.find(l => l.node === 'fly:ask');
+  assert.ok(!d.talks.some(x => x.label === 'intro')); assert.equal(d.decisions, 1);
+  assert.ok(ask && ask.t <= 12, `the offer: ${ask && ask.t} s`); assert.ok(d.time <= 3.4 * 60 + 12, `${(d.time / 60).toFixed(2)} min`);
+  // (its lines are no class's: what is heard, and every question with what was said before it, the same either way)
+  assert.deepEqual(fly.asked, no.asked); assert.deepEqual(fly.heard, no.heard);
+  assert.deepEqual(fly.days.slice(1).map(x => x.time), no.days.slice(1).map(x => x.time));
 });
 
 test('the first flight\'s sections asked about again: aero.forces and aero.left each answered at least twice on days 2–9 (reading again does not count), every pace', async () => {

@@ -29,6 +29,20 @@ export function entryFrom(sum, { date, remarks = '', dayN = 1, skippedSec = 0, x
     ...(endorsement ? { endorsement } : solo && !xc ? { endorsement: '単独飛行（ファーストソロ）を認める。LAB 飛行場の場周経路、昼間・有視界' } : xc ? { endorsement: '単独の野外飛行を認める。LAB 訓練空域、昼間・有視界' } : {}),
   };
 }
+// the first day's introductory flight (体験飛行): the cadet's minutes at the controls over the practice area, and what
+// the instructor flew behind the cards — the start, the taxi, the take-off, the 4 NM out and back, the pattern, the
+// landing and the taxi in — added as skipped (the HUD says so). src: 14 CFR 1.1 (flight time: from moving under its
+// own power for flight to rest after landing)
+export const INTRO_SKIPPED_S = 1500;
+// its line: dual (he is the pilot in command and the instructor), no lesson, no landing of the cadet's; src: 14 CFR
+// 61.51(b) (what a logbook entry holds), 61.51(h)(2) (training time endorsed by the instructor: the training described,
+// its length, the instructor's signature and certificate number)
+export function introEntry({ date, dayN = 1, airSec = 0, cut = false, watched = false, trust = 0 } = {}) {
+  const remarks = cut ? '体験飛行（途中で切り上げ、早瀬 教官が LAB へ）。'
+    : watched ? '体験飛行（操縦は早瀬 教官、同乗して見学）。訓練空域 3,000 ft で、直線水平飛行と右旋回。'
+      : '体験飛行（離着陸と往復は早瀬 教官）。訓練空域 3,000 ft で、操縦の受け渡し、直線水平飛行、右旋回（約 15°）。';
+  return entryFrom({ lessons: [], blockT: airSec, landings: 0, trust }, { date, dayN, remarks, skippedSec: INTRO_SKIPPED_S });
+}
 // an entry read back (a saved book, an imported file): the parts of the right kind, else null
 const str = (x, n) => (typeof x === 'string' ? x.slice(0, n) : '');
 const num = (x) => (Number.isFinite(x) ? Math.max(0, Math.round(x * 10) / 10) : 0);

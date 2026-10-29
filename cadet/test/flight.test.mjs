@@ -596,3 +596,13 @@ test('records: a finished lesson is noted once in CADET\'s own keys (cadet.…),
   const g = createFlight(FL, { store: null }); g.startLesson('a1', 'intro'); g.abort();
   assert.equal(g.finish().result, 'abort'); assert.equal(g.records().length, 0);
 });
+
+test('records: a flight discarded (the introductory flight\'s) keeps nothing — its time and landings dropped before the progress is saved', () => {
+  const base = memStore(), f = createFlight(FL, { store: base });
+  f.startFree('area'); for (let i = 0; i < 60 * 10; i++) f.frame(1 / 60, NOKEYS);
+  f.discard(); f.finish();
+  assert.equal(f.progress().time, 0); assert.equal(f.progress().landings, 0); assert.equal(f.records().length, 0);
+  // (and the next flight's own time is its own)
+  f.startFree('area'); for (let i = 0; i < 60 * 2; i++) f.frame(1 / 60, NOKEYS); f.finish();
+  assert.ok(Math.abs(f.progress().time - 2) < 0.05, `${f.progress().time}`);
+});

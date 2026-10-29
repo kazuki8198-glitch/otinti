@@ -1,5 +1,7 @@
 // CADET — content/dialog/instructor-career.js : 早瀬 教官's talks outside the day's briefing (M5).
-//  - meet: the prologue's afternoon — who he is, how the training goes, the cadet's first questions;
+//  - meet: the prologue's afternoon — who he is, how the training goes, the cadet's first questions, then the
+//    introductory flight offered (体験飛行: the exchange of the controls taught and checked on the ground first);
+//  - meetAgain: the flight offered again (a reload in the air: the meeting is done, the flight neither flown nor declined);
 //  - early: the prologue's morning, before the meeting — where to go first (the welcome, the tour);
 //  - ground: during chapter 1 (classes and the training device) — a word, the textbook to ask about;
 //  - day: on a flying day, before the briefing: how the cadet feels (IMSAFE: tired or not — the honest answer is the
@@ -16,7 +18,8 @@
 // (M6) TEM: from chapter 3 on, after the IMSAFE question (and before the cross-country) the cadet names today's threat
 // from three (career/tem.js: hook 'tem' with the index; ctx tem.right says whether it was today's).
 // Hooks: 'imsafe' ('fit' | 'tired': the game checks it against how tired the cadet is and answers through ctx), 'done'
-// ('meet' | 'study'), 'board', 'logbook', 'solo' (the solo's day is signed off), 'look', 'nod', 'point'.
+// ('meet' | 'meet:fly' (met, and the introductory flight next) | 'study'), 'board', 'logbook', 'solo' (the solo's day
+// is signed off), 'look', 'nod', 'point'.
 import { INSTRUCTOR } from './instructor.js';
 
 export const CAREER_HOOKS = ['imsafe', 'done', 'board', 'logbook', 'solo', 'look', 'nod', 'point', 'tem'];
@@ -42,23 +45,59 @@ export function careerInstructorDialogs() {
   const say = (text, more = {}) => ({ speaker: 'instructor', text, ...more });
   const M = {
     // (a career begun after another, its welcome taken in short: the meeting in short too)
-    ms: say('はじめまして。担当教官の早瀬 航です。明日から座学、ブリーフィング室 2 で。急がなくて大丈夫、わからないことは、いつでも聞いてください。', { if: { flag: 'prologue_short' }, else: 'm1', hook: { name: 'look', arg: 'player' }, effects: [{ set: 'met_instructor' }, { hook: 'done', arg: 'meet' }], end: true }),
+    ms: say('はじめまして。担当教官の早瀬 航です。明日から座学、ブリーフィング室 2 で。急がなくて大丈夫、わからないことは、いつでも聞いてください。', { if: { flag: 'prologue_short' }, else: 'm1', hook: { name: 'look', arg: 'player' }, next: 'fly:s:ask' }),
     m1: say('はじめまして。今日からあなたの担当教官になる、早瀬 航です。', { hook: { name: 'look', arg: 'player' }, next: 'm2' }),
-    m2: say('最初の 1 週間ほどは座学です。教室でミラー講師の授業、午後は訓練装置で計器と交信の練習。学科試験に受かったら、Archer で飛び始めます。', { next: 'm3' }),
+    m2: say('最初の 1 週間ほどは座学です。教室でミラー講師の授業、午後は訓練装置で計器と交信の練習。学科試験に受かったら、Archer の課目が始まります。', { next: 'm3' }),
     m3: say('飛ぶ日は毎回、この部屋でブリーフィングをして、外部点検、エンジン始動、交信、離陸、課目、着陸、講評。全部の課目を終えて審査に受かったら、ファーストソロです。', { hook: { name: 'point', arg: 'board' }, next: 'm4' }),
     m4: say('急がなくて大丈夫。一日ずつ、できることを増やしていきましょう。何か聞いておきたいことはありますか。', { choices: [
       { text: 'ソロまで、どのくらいかかりますか', next: 'm:q1' },
       { text: '疲れているときは、どうすればいいですか', next: 'm:q2' },
-      { text: '今は大丈夫です。よろしくお願いします', next: 'm:end' },
+      { text: '今は大丈夫です。よろしくお願いします', next: 'fly:ask' },
     ] }),
     'm:q1': say('人によりますが、天気がよければ、飛び始めてから 3 週間くらいです。日数より、毎回の飛行の中身が大事ですよ。', { next: 'm4b' }),
     'm:q2': say('正直に言ってください。疲れているのに飛ぶのが、いちばん危ない。言ってくれたら、その日は地上の勉強に切り替えます。それは減点ではありません。', { hook: { name: 'nod' }, next: 'm4b' }),
     m4b: say('ほかには？', { choices: [
       { text: 'ソロまで、どのくらいかかりますか', next: 'm:q1' },
       { text: '疲れているときは、どうすればいいですか', next: 'm:q2' },
-      { text: 'ありがとうございます。よろしくお願いします', next: 'm:end' },
+      { text: 'ありがとうございます。よろしくお願いします', next: 'fly:ask' },
     ] }),
-    'm:end': say('こちらこそ。夕方はラウンジで同期と話してみてください。今日はゆっくり休んで、明日の授業に備えましょう。', { effects: [{ set: 'met_instructor' }, { hook: 'done', arg: 'meet' }], hook: { name: 'nod' }, end: true }),
+    // (the introductory flight, 体験飛行: offered once, on the first afternoon — flown or not; content/dialog/intro.js
+    // has what is said in the air. He is the pilot in command and flies the take-off, the way and the landing; src:
+    // 14 CFR 91.3. Dual instruction needs no student pilot certificate — only solo does: 14 CFR 61.87)
+    'fly:ask': say('こちらこそ。それと、せっかくの初日です。座学の前に、少しだけ一緒に飛びませんか。今日は風も弱くて、空がきれいです。操縦輪を持つのは 2 分ほどです。', { hook: { name: 'look', arg: 'player' }, choices: [
+      { text: '乗ります', next: 'fly:x1' },
+      { text: '今日はやめておきます', next: 'm:end' },
+    ] }),
+    'fly:s:ask': say('その前に、少しだけ一緒に飛びませんか。操縦輪を持つのは 2 分ほど。受け渡しは、空の上でいつもの 3 回で。', { choices: [
+      { text: '乗ります', next: 'fly:s' },
+      { text: '今日はやめておきます', next: 'm:end' },
+    ] }),
+    'fly:x1': say('離陸と着陸は、私がします。訓練空域の上で、操縦を交代しましょう。', { next: 'fly:x2' }),
+    // src: FAA-H-8083-3C Airplane Flying Handbook ch.1 "Positive Exchange of Flight Controls" (the three-step exchange
+    // — "You have the flight controls." / "I have the flight controls." / "You have the flight controls." — both ways,
+    // so that there is never a moment when neither or both fly); FAA-H-8083-9B Aviation Instructor's Handbook. Said
+    // short, as content/dialog/day1.js ASSIST_LINES says it
+    'fly:x2': say('交代するときは、声で 3 回確かめます。私が You have control、あなたが I have control、私がもう一度 You have control。', { hook: { name: 'look', arg: 'player' }, next: 'fly:x3' }),
+    'fly:x3': say('返すときは逆です。私が I have control と言ったら、あなたは You have control と返します。2 人とも手を離している時間を作らないためです。', { next: 'fly:ex:ck' }),
+    'fly:ex:ck': say('確かめます。空の上で私が You have control と言ったら、あなたは何と言いますか。', { choices: [
+      { text: 'I have control', next: 'fly:ex:ok' },
+      { text: 'OK です', next: 'fly:ex:ng' },
+      { text: 'わかりません', next: 'fly:ex:dk' },
+    ] }),
+    'fly:ex:ok': say('そのとおり。いま誰が操縦しているかを、2 人ともはっきりわかるようにするためです。', { hook: { name: 'nod' }, next: 'fly:go' }),
+    'fly:ex:ng': say('OK だけでは、どちらが持っているのかあいまいです。I have control と、はっきり言い切ってください。', { next: 'fly:go' }),
+    'fly:ex:dk': say('わからないと言えるのは、大事なことです。答えは I have control。空の上で、もう一度やりましょう。', { next: 'fly:go' }),
+    // (a second career: the calls in one line)
+    'fly:s': say('私が You have control、あなたが I have control、私がもう一度。返すときは逆です。', { next: 'fly:go' }),
+    'fly:go': say('では、行きましょう。外部点検と離陸は、今日は私がやります。隣の席で見ていてください。', { effects: [{ set: 'met_instructor' }, { hook: 'done', arg: 'meet:fly' }], hook: { name: 'nod' }, end: true }),
+    'm:end': say('わかりました。空は逃げません。夕方はラウンジで同期と話してみてください。今日はゆっくり休んで、明日の授業に備えましょう。', { effects: [{ set: 'met_instructor' }, { hook: 'done', arg: 'meet' }], hook: { name: 'nod' }, end: true }),
+  };
+  // (the meeting over but the flight neither flown nor declined — a reload in the air: offered again)
+  const MA = {
+    'fly:re': say('まだ午後は時間があります。少しだけ、空に上がってみますか。', { hook: { name: 'look', arg: 'player' }, choices: [
+      { text: '乗ります', next: 'meet:fly:x1' },
+      { text: '今日はやめておきます', next: 'meet:m:end' },
+    ] }),
   };
   // (the prologue's morning: the meeting is in the afternoon; the welcome and the tour come first)
   const E = {
@@ -154,7 +193,7 @@ export function careerInstructorDialogs() {
   };
   return {
     speakers: SPEAKERS, flags: [...CAREER_FLAGS], hooks: [...CAREER_HOOKS],
-    dialogs: { meet: { start: 'ms', nodes: M }, early: { start: 'e1', nodes: E }, ground: { start: 'g1', nodes: G }, day: { start: 'i3', nodes: { ...I, ...D } }, study: { start: 's1', nodes: S },
+    dialogs: { meet: { start: 'ms', nodes: M }, meetAgain: { start: 'fly:re', nodes: MA }, early: { start: 'e1', nodes: E }, ground: { start: 'g1', nodes: G }, day: { start: 'i3', nodes: { ...I, ...D } }, study: { start: 's1', nodes: S },
       xc: { start: 'x1', nodes: X }, grad: { start: 'g1', nodes: GR },
       solo: { start: 'o1', nodes: O }, checkday: { start: 'k1', nodes: K }, celebrate: { start: 'c1', nodes: C }, after: { start: 'a1', nodes: A } },
   };

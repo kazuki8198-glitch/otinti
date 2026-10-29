@@ -273,6 +273,8 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
     }
     return SC.addRecord(db, rec);
   }
+  // a flight that is not FLIGHT LAB's to keep (the introductory flight): its time and landings dropped, nothing saved
+  function discard() { tally.time = 0; tally.landings = 0; }
   const progress = () => SC.loadProgress(db);
   const records = () => SC.loadRecords(db);
 
@@ -340,7 +342,7 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
 
   return {
     startLesson, startFree, startOnGround, continueFree, frame, runScripted, action, key, checklistNext, answerAtc, abort, crash,
-    finish, progress, records, status, panel, pose,
+    finish, discard, progress, records, status, panel, pose,
     get L() { return L; }, get s() { return L ? L.s : null; }, get av() { return L ? L.av : null; }, get free() { return !!(L && L.free); },
     get acc() { return acc; }, get controls() { return ctl; }, get prefs() { return ctl.prefs; }, get store() { return db; },
   };

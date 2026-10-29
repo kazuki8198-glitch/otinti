@@ -5,7 +5,8 @@
 //    lesson's textbook sections resolve; chapter references follow this book's numbering;
 //  - the dialogues pass the validator for every lesson, every textbook section can be reached from 'ask:root', no list
 //    has more than 12 choices, every way through 'brief' that ends sets briefed_today, the lines are of a sayable
-//    length and never name FLIGHT LAB's keys or pages; the words come from the data (title, goal, standard, key points).
+//    length and never name FLIGHT LAB's keys or pages (the introductory flight's too); the words come from the data
+//    (title, goal, standard, key points).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -14,6 +15,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gameBook, plain, sentences } from '../src/content/book.js';
 import { INSTRUCTOR, instructorDialogs, sampleCtx, speakable, polite, speechLines } from '../src/content/dialog/instructor.js';
+import { careerInstructorDialogs } from '../src/content/dialog/instructor-career.js';
+import { introAirDialogs, INTRO_AIR } from '../src/content/dialog/intro.js';
 import { validateDialogs } from '../src/dialog/validate.js';
 import { createDialogState, createRunner, evalCond, applyEffects, resolveTarget, END } from '../src/dialog/engine.js';
 import { installSorajima } from '../src/flight/sorajima.js';
@@ -355,6 +358,22 @@ test('instructor: lines are sayable — length, no FLIGHT LAB controls or pages,
   assert.deepEqual(speechLines('正の上昇率（VSI がプラス・高度が増えている）を確認したら脚を上げる。使える滑走路が残っていない高さで。'),
     ['正の上昇率（VSI がプラス・高度が増えている）を確認したら脚を上げます。使える滑走路が残っていない高さで。'], 'a phrase that leans on its sentence stays with it');
   assert.deepEqual(speechLines('この教材の地図は架空。実際の空域判定はしない', { whole: true }), [], 'a key point that loses its context is not said');
+});
+
+test('instructor: the introductory flight\'s lines and the meeting\'s offer — sayable, no FLIGHT LAB controls or pages, no real names, every choice short', () => {
+  const air = introAirDialogs(), meet = careerInstructorDialogs().dialogs;
+  const all = [...Object.entries(air.dialogs), ['meet', meet.meet], ['meetAgain', meet.meetAgain]].flatMap(([d, dd]) => Object.entries(dd.nodes).map(([id, n]) => [`${d}:${id}`, n]));
+  assert.ok(all.length > 60);
+  for (const [id, node] of all) {
+    for (const t of [node.text, ...(node.choices || []).map(c => c.text)]) {
+      assert.ok(t.length >= 2 && t.length <= 120, `${id}: ${t.length} characters`);
+      assert.ok(!APP.test(t), `${id}: names FLIGHT LAB's controls: ${t}`);
+      assert.ok(!realIn(t) && !COURSE_NOTE.test(t), `${id}: ${t}`);
+      assert.ok(!/[{}<>]|undefined|null|NaN/.test(t), `${id}: ${t}`);
+    }
+    for (const c of node.choices || []) assert.ok(c.text.length <= 60, `${id}: a long choice: ${c.text}`);
+  }
+  for (const t of Object.values(INTRO_AIR)) assert.ok(!APP.test(t) && !realIn(t) && t.length <= 120, t);
 });
 
 test('instructor: the words come from FLIGHT LAB\'s data', () => {

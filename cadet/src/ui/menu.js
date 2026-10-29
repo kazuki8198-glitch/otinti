@@ -43,7 +43,8 @@ const CSS = `
 `;
 
 // ai: { keys (ai/keys.js), keyName, defaultModel } — the M8 tab's API key field
-export function createMenu({ root = document.body, settings, presets = [], onResume = () => {}, onQuality = () => {}, onMode = () => {}, getMode = () => 'walk', getPreset = () => null, onResetProgress = null, onLogbook = null, version = '', ai = null, onBench = null }) {
+// modeLabel() → the mode button's own words for now (the introductory flight's), or null
+export function createMenu({ root = document.body, settings, presets = [], onResume = () => {}, onQuality = () => {}, onMode = () => {}, getMode = () => 'walk', getPreset = () => null, onResetProgress = null, onLogbook = null, version = '', ai = null, onBench = null, modeLabel = () => null }) {
   if (!document.getElementById('menu-css')) { const st = document.createElement('style'); st.id = 'menu-css'; st.textContent = CSS; document.head.appendChild(st); }
   const el = document.createElement('div'); el.id = 'menu'; el.hidden = true; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', '一時停止メニュー');
   root.appendChild(el);
@@ -57,7 +58,7 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
       const walk = getMode() === 'walk';
       return `<div class="m-big">
         <button class="primary" data-act="resume">再開する</button>
-        <button data-act="mode">${walk ? '見学モードに切り替える（自由なカメラ・視点 1〜9・0）' : getMode() === 'fly' ? '機体を降りる（機体は駐機場に戻ります）' : getMode() === 'epilogue' ? '終章を終える（アカデミーに戻ります）' : '歩くモードに戻る'}</button>
+        <button data-act="mode">${walk ? '見学モードに切り替える（自由なカメラ・視点 1〜9・0）' : getMode() === 'fly' ? modeLabel() || '機体を降りる（機体は駐機場に戻ります）' : getMode() === 'epilogue' ? '終章を終える（アカデミーに戻ります）' : '歩くモードに戻る'}</button>
         ${onLogbook ? '<button data-act="logbook">航空日誌を見る</button>' : ''}
         <button data-tab="settings">設定</button><button data-tab="keys">操作</button><button data-tab="about">このゲームについて</button></div>`;
     }

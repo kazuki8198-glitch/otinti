@@ -2,8 +2,10 @@
 // Walking is the guide's way (followGuide: the path a player would take towards the arrow); everything else is a
 // key pressed in the page (E, Tab, Space, 1–9, Enter, Esc). After each move it notes the guide's line, the toast, the
 // subtitles and every pair of text boxes on the screen that overlap, to test-output/playtest-<name>.log.
-//   node test/playtest.mjs [start|ch2|seminole|epilogue] [days=4]
-// start: a new career, the prologue → chapter 1 → chapter 2's first flying day (until the cadet is in the seat).
+//   node test/playtest.mjs [start|intro|ch2|seminole|epilogue] [days=4]
+// start: a new career, the prologue → chapter 1 → chapter 2's first flying day (until the cadet is in the seat); the
+// first afternoon's introductory flight declined.
+// intro: the first afternoon, the introductory flight taken and flown (the scripted cadet's yoke), back in the lobby.
 // seminole: a chapter 5 day, from the walk-around to both engines running.
 // epilogue (M8): the evening of the graduation — out of the front doors, the 737's right seat at Haneda, the captain
 // (E to talk to him again, Esc for the menu), his goodbye, the academy's next morning.
@@ -100,6 +102,8 @@ async function talk(maxLines = 3000) {
     if (v.choices.length) {
       const m = /^q(\d+)$/.exec(v.node || ''); let i = -1;
       if (v.node === 'pace' && PACE) i = v.choices.findIndex(c => PACE.test(c.text));
+      // (the first afternoon's introductory flight: declined on the way to chapter 2 — flown in 'intro')
+      if (/^fly:(ask|s:ask|re)$/.test(v.node || '')) i = v.choices.findIndex(c => (which === 'intro' ? /^乗ります$/ : /やめておきます/).test(c.text));
       if (v.act && m && v.act.questions[+m[1]]) { const q = v.act.questions[+m[1]]; i = v.choices.findIndex(c => c.text === q.opts[q.ok]); }
       if (i < 0) i = v.choices.findIndex(c => !AVOID.test(c.text) && !chosen.has(c.text));
       if (i < 0) i = v.choices.findIndex(c => !chosen.has(c.text));
@@ -264,6 +268,28 @@ if (which === 'start') {
     if (r === 'home' || st2.day !== day) { log(`# ${st2.day} 日目 ${st2.slot}（次の朝）`); break; }
     if (r === 'stuck' || r === 'fly') break;
   }
+} else if (which === 'intro') {
+  // the first afternoon: to the instructor as the guide says, the flight he offers taken; in the air his talks with the
+  // number keys and Space, the yoke by the scripted cadet (fly.intro.auto) — a picture in the turn with SHOT=1
+  await ev(() => window.__cadet.career.set({ state: { day: 1, slot: 'pm', chapter: 'prologue', done: { 'ceremony:welcome': 1, 'tour:tour': 1 } }, flags: { has_tablet: true, welcome_done: true, tour_done: true } }));
+  log('# 1 日目の午後（体験飛行）'); await sleep(1500); await look('午後');
+  const r = await stepOnce();
+  if (r !== 'fly') issue(`体験飛行が始まらない（${r}）`);
+  for (let k = 0; k < 40 && await ev(() => window.__cadet.mode() === 'fly'); k++) {
+    await waitCards();
+    const s = await ev(() => window.__cadet.fly.status());
+    if (s.talking) { await talk(); continue; }
+    if (s.intro && s.intro.task) {
+      log(`- [${s.intro.task}] 方位の印 ${s.intro.bug}　${JSON.stringify(s.intro.results)}`);
+      if (s.intro.task === 'turn' && process.env.SHOT && !shots.has('intro')) { await ev(() => window.__cadet.fly.intro.auto(16)); await look('旋回'); await picture('intro'); }
+      await ev(() => window.__cadet.fly.intro.auto(90)); await look('体験飛行');
+    } else await sleep(500);
+  }
+  await waitCards(); await sleep(800);
+  const st = await ev(() => ({ st: window.__cadet.career.state(), p: window.__cadet.player(), lb: window.__cadet.logbook().entries }));
+  log(`== 体験飛行のあと：${st.p.place}、${st.st.slot}、航空日誌 ${st.lb.length} 行（${st.lb.map(e => `${e.total} h ${e.remarks}`).join('／')}）`);
+  if (st.p.place !== 'ロビー' || st.st.slot !== 'evening' || !st.st.done['intro:flight']) issue('体験飛行のあと、夕方のロビーに戻らない');
+  await look('夕方のロビー');
 } else if (which === 'ch2' || which === 'seminole') {
   // a day from the morning, as the browser test sets one up (the chapter's first lessons passed for the Seminole)
   const d = await ev((which) => {

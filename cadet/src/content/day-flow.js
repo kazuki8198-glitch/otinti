@@ -74,6 +74,8 @@ export const PROLOGUE_WORDS = {
   ceremony: ['運航管理の佐伯さんが、訓練所を案内してくれます（ロビーの北、運航管理）', '案内：運航管理へ'],
   tour: ['午後：ブリーフィング室 1 で、担当の早瀬 教官と顔合わせです', '午後：ブリーフィング室 1'],
   meet: ['夕方です。ラウンジで同期と話してみましょう。今日を終えるときは、正面入口から寮へ', '夕方：寮へは正面入口から'],
+  // (back from the introductory flight, at the lobby's apron doors)
+  intro: ['空から戻りました。夕方です。ラウンジで同期と話せます。今日を終えるときは、正面入口から寮へ', '夕方：寮へは正面入口から'],
 };
 export const prologueWord = (k, { short = false } = {}) => PROLOGUE_WORDS[k][short ? 1 : 0];
 // (tomorrow in a few words: the skipping cadet's dorm card)

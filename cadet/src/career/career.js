@@ -11,6 +11,9 @@
 // flight's store); the career reads it, it does not keep a copy. What the career keeps itself: the chapter, the day,
 // the time, the fatigue, the tests' scores, the go / no-go decisions and the day's work done. The flags and the trust
 // are the conversations' state (dialog/engine.js), kept beside it.
+// The first afternoon's introductory flight (体験飛行) is not on the plan: it is the meeting's end (main.js). Its record
+// is done['intro:flight'] (flown, or cut short) or done['intro:no'] (declined), each the day it was; neither is ever
+// offered again once one is kept.
 // Pure logic: no three.js, no DOM.
 
 export const CAREER_KEY = 'cadet.career';

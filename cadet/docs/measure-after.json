@@ -2,17 +2,18 @@
  "built": "2026-10-29",
  "paces": {
   "need": {
-   "totalMin": 133.32906442038401,
+   "totalMin": 137.15660595178684,
    "breakdownMin": {
     "classes": 81.24333333333335,
     "ftd": 17.57233333333333,
     "k4": 5.601333333333331,
     "exam": 5.948333333333333,
-    "prologue": 1.8283333333333331,
+    "prologue": 2.523333333333333,
+    "intro": 3.1808333333333163,
     "events": 4.44,
     "study": 0,
-    "walk": 15.878397753717348,
-    "fixedNoWalk": 6.418333333333333
+    "walk": 15.811772618453519,
+    "fixedNoWalk": 6.4366666666666665
    },
    "days": [
     {
@@ -22,12 +23,12 @@
       "am:tour:tour",
       "pm:brief:meet"
      ],
-     "minutes": 3.4,
-     "talkMin": 1.8,
-     "fixedS": 95,
-     "walkS": 65,
-     "lines": 16,
-     "decisions": 0,
+     "minutes": 7.2,
+     "talkMin": 5.7,
+     "fixedS": 91,
+     "walkS": 61,
+     "lines": 46,
+     "decisions": 10,
      "longestGapMin": 0.69,
      "talks": [
       {
@@ -46,10 +47,17 @@
       },
       {
        "label": "meet",
-       "lines": 5,
-       "minutes": 0.5,
-       "decisions": 0,
-       "longestGapMin": 0.55
+       "lines": 11,
+       "minutes": 1.2,
+       "decisions": 2,
+       "longestGapMin": 0.59
+      },
+      {
+       "label": "intro",
+       "lines": 24,
+       "minutes": 3.2,
+       "decisions": 8,
+       "longestGapMin": 0.68
       }
      ]
     },
@@ -514,6 +522,13 @@
     "allMin": 5.6,
     "lines": 58
    },
+   "intro": {
+    "min": 3.18,
+    "decisions": 8,
+    "longestGapS": 40.8,
+    "handsS": 88.6,
+    "noInputLongestGapS": 60.4
+   },
    "dayPatterns": [],
    "framePatterns": [
     {
@@ -527,17 +542,18 @@
    ]
   },
   "full": {
-   "totalMin": 256.14573108705065,
+   "totalMin": 259.9732726184535,
    "breakdownMin": {
     "classes": 204.11666666666665,
     "ftd": 17.57233333333333,
     "k4": 5.601333333333331,
     "exam": 5.891666666666666,
-    "prologue": 1.8283333333333331,
+    "prologue": 2.523333333333333,
+    "intro": 3.1808333333333163,
     "events": 4.44,
     "study": 0,
-    "walk": 15.878397753717348,
-    "fixedNoWalk": 6.418333333333333
+    "walk": 15.811772618453519,
+    "fixedNoWalk": 6.4366666666666665
    },
    "days": [
     {
@@ -547,12 +563,12 @@
       "am:tour:tour",
       "pm:brief:meet"
      ],
-     "minutes": 3.4,
-     "talkMin": 1.8,
-     "fixedS": 95,
-     "walkS": 65,
-     "lines": 16,
-     "decisions": 0,
+     "minutes": 7.2,
+     "talkMin": 5.7,
+     "fixedS": 91,
+     "walkS": 61,
+     "lines": 46,
+     "decisions": 10,
      "longestGapMin": 0.69,
      "talks": [
       {
@@ -571,10 +587,17 @@
       },
       {
        "label": "meet",
-       "lines": 5,
-       "minutes": 0.5,
-       "decisions": 0,
-       "longestGapMin": 0.55
+       "lines": 11,
+       "minutes": 1.2,
+       "decisions": 2,
+       "longestGapMin": 0.59
+      },
+      {
+       "label": "intro",
+       "lines": 24,
+       "minutes": 3.2,
+       "decisions": 8,
+       "longestGapMin": 0.68
       }
      ]
     },
@@ -774,7 +797,7 @@
       "pm:ftd:k5",
       "evening:event:metar"
      ],
-     "minutes": 41.7,
+     "minutes": 41.8,
      "talkMin": 39.2,
      "fixedS": 153,
      "walkS": 102,
@@ -1039,6 +1062,13 @@
     "allMin": 5.6,
     "lines": 58
    },
+   "intro": {
+    "min": 3.18,
+    "decisions": 8,
+    "longestGapS": 40.8,
+    "handsS": 88.6,
+    "noInputLongestGapS": 60.4
+   },
    "dayPatterns": [],
    "framePatterns": [
     {
@@ -1068,17 +1098,18 @@
    ]
   },
   "quick": {
-   "totalMin": 104.79239775371734,
+   "totalMin": 108.61993928512017,
    "breakdownMin": {
     "classes": 52.66666666666668,
     "ftd": 17.57233333333333,
     "k4": 5.601333333333331,
     "exam": 5.9883333333333315,
-    "prologue": 1.8283333333333331,
+    "prologue": 2.523333333333333,
+    "intro": 3.1808333333333163,
     "events": 4.44,
     "study": 0,
-    "walk": 15.878397753717348,
-    "fixedNoWalk": 6.418333333333333
+    "walk": 15.811772618453519,
+    "fixedNoWalk": 6.4366666666666665
    },
    "days": [
     {
@@ -1088,12 +1119,12 @@
       "am:tour:tour",
       "pm:brief:meet"
      ],
-     "minutes": 3.4,
-     "talkMin": 1.8,
-     "fixedS": 95,
-     "walkS": 65,
-     "lines": 16,
-     "decisions": 0,
+     "minutes": 7.2,
+     "talkMin": 5.7,
+     "fixedS": 91,
+     "walkS": 61,
+     "lines": 46,
+     "decisions": 10,
      "longestGapMin": 0.69,
      "talks": [
       {
@@ -1112,10 +1143,17 @@
       },
       {
        "label": "meet",
-       "lines": 5,
-       "minutes": 0.5,
-       "decisions": 0,
-       "longestGapMin": 0.55
+       "lines": 11,
+       "minutes": 1.2,
+       "decisions": 2,
+       "longestGapMin": 0.59
+      },
+      {
+       "label": "intro",
+       "lines": 24,
+       "minutes": 3.2,
+       "decisions": 8,
+       "longestGapMin": 0.68
       }
      ]
     },
@@ -1579,6 +1617,13 @@
     "runMin": 4.78,
     "allMin": 5.6,
     "lines": 58
+   },
+   "intro": {
+    "min": 3.18,
+    "decisions": 8,
+    "longestGapS": 40.8,
+    "handsS": 88.6,
+    "noInputLongestGapS": 60.4
    },
    "dayPatterns": [],
    "framePatterns": [

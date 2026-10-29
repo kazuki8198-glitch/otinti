@@ -1,6 +1,6 @@
 // CADET — the crew in English (M8, content/dialog/en.js), in Node: every line 早瀬 教官, 真壁 主任教官 and 黒田 審査官
 // say in every talk — the briefings of all 39 lessons, the career's talks, the people's, the seat's, the debrief in
-// their three voices, the later written tests and the navigation log — has its English, or is the course's own
+// their three voices, the later written tests and the navigation log, the introductory flight's in the air — has its English, or is the course's own
 // material (tagged, said as written); the data with the English still passes the validator (no dead end, no missing
 // node, every placeholder of the English filled from the context); the English is English (Japanese only inside the
 // quotes of what the course writes), names no real airline or maker; his words in the air too.
@@ -15,6 +15,7 @@ import { gameBook } from '../src/content/book.js';
 import { withEnglish, missingEnglish, english, airEnglish, EN, AIR_EN, CREW } from '../src/content/dialog/en.js';
 import { instructorDialogs, sampleCtx } from '../src/content/dialog/instructor.js';
 import { careerInstructorDialogs, CAREER_SAMPLE } from '../src/content/dialog/instructor-career.js';
+import { introAirDialogs, INTRO_SAMPLE, INTRO_AIR } from '../src/content/dialog/intro.js';
 import { peopleDialogs, SAMPLE_CTX } from '../src/content/dialog/people.js';
 import { cockpitDialogs, careerBoardDialogs } from '../src/content/dialog/cockpit.js';
 import { apronDialogs, dayDialogs, PHASE_LINES, ASSIST_LINES, RECOVER_LINE, EVENT_LINES } from '../src/content/dialog/day1.js';
@@ -54,6 +55,8 @@ function talks() {
     out.push([`brief ${l.id} (a day)`, instructorDialogs(FL, { lessonId: l.id, day: ['t1', l.id, 't3'] }), sampleCtx(FL)]);
   }
   out.push(['career', careerInstructorDialogs(), CAREER_SAMPLE], ['people', peopleDialogs(), SAMPLE_CTX], ['seat', cockpitDialogs(FL, {}), {}], ['apron', apronDialogs(), {}], ['day', dayDialogs(), {}]);
+  // (the first day's introductory flight, in the air: content/dialog/intro.js)
+  out.push(['intro air', introAirDialogs(), INTRO_SAMPLE]);
   for (const r of ['none', 'done', 'weather', 'tired', 'brief']) out.push([`board ${r}`, careerBoardDialogs(FL, { reason: r, lessons: ['t1', 'a2', 't3'] }), {}]);
   out.push(['board ready', careerBoardDialogs(FL, { lessons: ['t1', 'a2', 't3'], ready: true }), {}]);
   for (const c of [{ title: 'ソロ前の審査', lessons: ['t1', 'a2', 't3'] }, ...Object.values(CHECKS).filter(c => c.kind === 'checkride')]) out.push([`board check ${c.title}`, careerBoardDialogs(FL, { lessons: c.lessons, checkride: true, checkTitle: c.title }), {}]);
@@ -115,7 +118,8 @@ test('the course\'s words in a line keep their quotes; the threats, the checks a
 
 test('his words in the air: every line of the day in English', () => {
   const lines = [...Object.values(PHASE_LINES), ...Object.values(ASSIST_LINES), RECOVER_LINE, EVENT_LINES.incursion, EVENT_LINES.nostarter, EVENT_LINES.surge, EVENT_LINES.noClear,
-    EVENT_LINES.walkFound(TASK_MISSED.pitot + TASK_MISSED.tieR), EVENT_LINES.stopped('燃料切れ'), EVENT_LINES.stopped('ミクスチャー アイドル カットオフ'), ...Object.values(NOCATCH)];
+    EVENT_LINES.walkFound(TASK_MISSED.pitot + TASK_MISSED.tieR), EVENT_LINES.stopped('燃料切れ'), EVENT_LINES.stopped('ミクスチャー アイドル カットオフ'), ...Object.values(NOCATCH),
+    ...Object.values(INTRO_AIR)];
   for (const l of lines) { const e = airEnglish(l); assert.ok(e, l); assert.ok(plainEnglish(e), e); }
   // what he found undone, in English; an anomaly in the walk-around's own words, quoted
   assert.equal(airEnglish(EVENT_LINES.walkFound(TASK_MISSED.lock + 'ピトー管：カバーが破れています。')),

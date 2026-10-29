@@ -40,7 +40,8 @@ import { createFlyMode } from './flight/fly-mode.js';
 import { createFlightHUD } from './ui/flight-hud.js';
 import { createDayHUD } from './ui/day-hud.js';
 import { createDay, DAY1 } from './career/day.js';
-import { createLogbook, entryFrom } from './career/logbook.js';
+import { createLogbook, entryFrom, introEntry } from './career/logbook.js';
+import { INTRO_CARDS } from './content/dialog/intro.js';
 import { buildWalkaroundProps } from './aircraft/walkaround-props.js';
 import { apronDialogs } from './content/dialog/day1.js';
 import { KITS } from './aircraft/walkaround.js';
@@ -670,7 +671,8 @@ async function boot() {
     if (insAt === 'apron' && !celebrate) return { run: apronRunner, dialog: 'apron' };
     if (celebrate) return { run: runner, dialog: 'celebrate' };
     // (the prologue: the meeting is the afternoon's — before it, a word on where to go first; the career's record
-    // decides, not the flag)
+    // decides, not the flag. Met, the introductory flight neither flown nor declined — a reload in the air: offered again)
+    if (st.chapter === 'prologue' && career.isDone('brief', 'meet') && slot === 'pm' && !career.isDone('intro', 'flight') && !career.isDone('intro', 'no')) return { run: runner, dialog: 'meetAgain' };
     if (st.chapter === 'prologue') return { run: runner, dialog: career.isDone('brief', 'meet') ? 'ground' : slot === 'pm' || slot === 'evening' ? 'meet' : 'early' };
     if (st.chapter === 'ch1') return { run: runner, dialog: 'ground' };
     // (M6) the graduation morning and after; the navigation log; the solo cross-country's brief
@@ -718,6 +720,7 @@ async function boot() {
     if (epi.on) leaveEpilogue('walk');          // (M8: out of Haneda first; the epilogue_seen it saves goes with the rest)
     // (what the talk left to do afterwards — a chair flight to begin — is the old career's: not done)
     afterTalk.length = 0;
+    introAt = null;                             // (an introductory flight in the air: the old career's — no line, no key)
     if (talk && talkRun) talkRun.stop();
     forgetWays();
     const fresh = createDialogState();
@@ -1219,9 +1222,13 @@ async function boot() {
       walkEl.hidden = true;
       setMode('fly');
     },
-    onLeave: (then) => {
+    // (the introductory flight over in the air: he lands it behind the card, and the cadet is out of the aircraft)
+    onIntroDone: () => { const c = INTRO_CARDS.end; cards.show({ ...c, ms: 1200, onDark: () => fly.leave({ instant: true }) }); },
+    onLeave: (then, o = {}) => {
       if (pendingNewDay) { pendingNewDay = false; newDay(); }
       setMode(then === 'spectator' ? 'spectator' : 'walk');
+      // (back from the introductory flight — flown, or cut short: the evening, at the lobby's apron doors)
+      if (o.intro) { introOver(o.intro); if (then !== 'spectator' && !menu.isOpen) input.requestLock(); return; }
       // beside the right wing, behind its trailing edge, facing the cabin
       const tg = spec.target; placeWalker(tg.a + 1.4, tg.c + 2.6, { a: tg.a, c: tg.c });
       if (then !== 'spectator' && !menu.isOpen) input.requestLock();
@@ -1277,7 +1284,12 @@ async function boot() {
     const next = () => { if (slot === 'morning') career.advance('am'); else if (slot === 'am') career.advance('pm'); else if (slot === 'pm') career.advance('evening'); };
     if (arg === 'ceremony') { career.done('ceremony', 'welcome'); afterTalk.push(() => { career.advance('am'); applySlot(); toast(prologueWord('ceremony', { short: shortWords() }), 5200); }); }
     else if (arg === 'tour') { career.done('tour', 'tour'); afterTalk.push(() => { career.advance('pm'); applySlot(); toast(prologueWord('tour', { short: shortWords() }), 5200); }); }
-    else if (arg === 'meet') { career.done('brief', 'meet'); career.finishPrologue(); try { if (store && !store.getItem(VETERAN)) store.setItem(VETERAN, String(career.state.seed)); } catch (e) { /* not kept */ } afterTalk.push(() => { career.advance('evening'); applySlot(); toast(prologueWord('meet', { short: shortWords() }), 6000); }); }
+    else if (arg === 'meet' || arg === 'meet:fly') {
+      career.done('brief', 'meet'); career.finishPrologue(); try { if (store && !store.getItem(VETERAN)) store.setItem(VETERAN, String(career.state.seed)); } catch (e) { /* not kept */ }
+      // (the introductory flight: declined — kept, not offered again — or flown now, the afternoon staying the afternoon)
+      if (arg === 'meet:fly') afterTalk.push(beginIntro);
+      else { if (career.chapter === 'prologue') career.done('intro', 'no'); afterTalk.push(() => { career.advance('evening'); applySlot(); toast(prologueWord('meet', { short: shortWords() }), 6000); }); }
+    }
     else if (arg === 'class' && k) {
       career.done('class', String(k.id)); career.tire(6);
       // (the time moves on with the record, as the hook comes — a page closed on the last line keeps both; no afternoon
@@ -1308,6 +1320,27 @@ async function boot() {
     else if (arg === 'event' && k && k.kind === 'event') { career.done('event', k.id); afterTalk.push(() => { applySlot(); const d = doneLine(career.state, { nextFtd: nextGround() }); if (d && skipDay !== career.day) toast(d, 5200); }); }
     // (the evening's study over: to bed, a little late)
     else if (arg === 'night') afterTalk.push(() => sleepNow({ late: true }));
+  }
+  // the first afternoon's introductory flight (体験飛行): the card, the aircraft set over the practice area behind it
+  // (fly-mode introFlight: he flew the take-off and the way), then his first words. introAt: the career it belongs to
+  // (a record erased in the air: no line, no key — introOver)
+  const AUTO_DOOR = { a: 655.0, c: 253.0, face: { a: 655.0, c: 262.0 } };          // inside the lobby's apron doors
+  let introAt = null;
+  function beginIntro() {
+    introAt = { seed: career.state.seed, day: career.day };
+    const c = INTRO_CARDS.start;
+    return cards.show({ ...c, ms: 1500, onDark: () => fly.introFlight() }).then(() => fly.introBegin());
+  }
+  // out of the aircraft after it (sum: fly-mode's intro summary): kept in the career and the logbook, then the evening
+  // as after the meeting — the cadet in at the lobby's apron doors
+  function introOver(sum) {
+    const was = introAt; introAt = null;
+    if (!was || was.seed !== career.state.seed || was.day !== career.day) { startDay({ card: true, place: true }); return; }
+    career.done('intro', 'flight');
+    logbook.add(introEntry({ date: dateOf(career.day).iso, dayN: career.day, airSec: sum.airSec || 0, cut: !!sum.cut, watched: !!sum.watched, trust: 0 }));
+    career.advance('evening'); applySlot();                  // (the instructor gone home, the classmates in the lounge)
+    placeWalker(AUTO_DOOR.a, AUTO_DOOR.c, AUTO_DOOR.face);
+    toast(prologueWord('intro', { short: shortWords() }), 6000);
   }
   // a training device lesson passed: into FLIGHT LAB's record (school.js's shape, as FLIGHT LAB's own ground pages write it)
   function groundPass(id, pct) {
@@ -1623,6 +1656,8 @@ async function boot() {
     root: document.body, settings, presets: ORDER.map(id => ({ id, label: PRESETS[id].label })), version: buildInfo,
     onResume: () => { input.enabled = true; if (talkingNow() ? talkWantsLock() : !(fly && fly.debrief) && !chair) input.requestLock(); audio.ui('close'); },
     onQuality: (id) => setQuality(id), onMode: (m) => { if (mode === 'epilogue') { finishEpilogue(); return; } if (!(fly && fly.fading)) setMode(m); }, getMode: () => mode, getPreset: () => preset.id,
+    // (the introductory flight: getting out is ending it)
+    modeLabel: () => (mode === 'fly' && fly && fly.intro ? '体験飛行を終える（早瀬 教官が LAB へ戻ります）' : null),
     onResetProgress: () => resetProgress(),
     // (M8) the API key's field (ai/keys.js), and the bench with its result to copy
     ai: { keys: aiKeys, keyName: KEY_NAME, defaultModel: DEFAULT_MODEL },
@@ -2264,6 +2299,8 @@ async function boot() {
       mic: () => fly.dayMode.mic,                              // (M8) what the microphone heard on the radio
       // the radio's clock (a lesson run by a scripted pilot has no frames: its hook moves the radio on)
       radioTick: (dt) => { const d = fly.dayMode.day; if (d) d.atc.update(dt); },
+      // the introductory flight: its state, flown by the scripted cadet for some seconds (until a talk begins)
+      intro: { status: () => fly.status().intro, auto: (s) => fly.introAuto(s) },
     },
     // the walk-around (M4): where its places are (runway frame), a decision on the open card, the result so far
     walk: {

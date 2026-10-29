@@ -7,7 +7,8 @@
 //  - enTriple (en.terms): one part, three names. The names are read from the table of terms (FL.terms, book-terms.js:
 //    the entry 'aileron') when the figure is drawn, so the figure follows the table; without FL.terms (a product that
 //    does not load it: CADET, which leaves the chapter out anyway) it falls back to the same three names.
-//  - enTalk (en.class): three places, three ways of speaking (the class, the instructor in the cockpit, ATC on the radio).
+//  - enTalk (en.class): three places, three ways of speaking (the class, the flight instructor (操縦教員) in the cockpit,
+//    ATC on the radio).
 //    The radio words are the standard words of the FAA Pilot/Controller Glossary and the UK CAA CAP 413 (SAY AGAIN,
 //    UNABLE); the other sentences are examples of plain English, not rules.
 (function (FL) {
@@ -35,12 +36,12 @@
     // law), the common name (everyday talk, katakana material) and the English (FAA material, the English classes)
     enTriple() {
       const n = names('aileron');
-      // the right wing seen from above (leading edge at the top), the aileron at the outer trailing edge
+      // the right wing seen from above (leading edge at the top: the title says 上が前), the aileron at the outer trailing
+      // edge. The flap is not drawn (revise-english: the reader asked what the unnamed grey part was)
       const wing = `<path d="M64 62 L336 62 L352 70 L352 104 L64 104 Z" fill="${PLANE}"/>`
         + `<rect x="40" y="58" width="26" height="50" rx="6" fill="${PLANE2}"/>`
-        + `<path d="M262 104 L352 104 L352 92 L262 92 Z" fill="${C.am}"/>`
-        + `<path d="M110 104 L186 104 L186 94 L110 94 Z" fill="${PLANE2}"/>`;
-      let s = T(200, 18, '色を付けた部分の名前（翼を上から見た図）', { c: C.mut, fs: 12 });
+        + `<path d="M262 104 L352 104 L352 92 L262 92 Z" fill="${C.am}"/>`;
+      let s = T(200, 18, '色を付けた部分の名前（右の主翼を上から見た図。上が前）', { c: C.mut, fs: 12 });
       s += wing + T(53, 50, '胴体', { c: C.mut, fs: 12 }) + T(200, 87, '主翼', { c: '#0b1422', fs: 12, b: 1 });
       // three boxes and their lines from the coloured part
       const bx = [
@@ -57,7 +58,7 @@
         s += TL(b.x + w / 2, top + 64, b.sub, { c: C.mut, fs: 12, lh: 16 });
       }
       s += `<circle cx="307" cy="104" r="4" fill="${C.am}"/>`;
-      const cap = `図：1 つのものに 3 つの名前。色を付けた部分は、日本の学科試験と法令では「${esc(n.formal)}」、ふだんの言い方では「${esc(n.common)}」、英語の授業では「${esc(n.en)}」です。この本は、各章で初めて出るところで ${esc(n.formal)}（${esc(n.common)}、${esc(n.en)}）と書きます`;
+      const cap = `図：1 つのものに 3 つの名前。色を付けた部分は、日本の学科試験と法令では「${esc(n.formal)}」、ふだんの言い方では「${esc(n.common)}」、英語の授業では「${esc(n.en)}」です。この本は、各章で初めて出るところで${esc(n.formal)}（${esc(n.common)}、${esc(n.en)}）と書きます`;
       return svg(400, 252, s, cap);
     },
 
@@ -65,10 +66,10 @@
     enTalk() {
       const rows = [
         { c: C.cy, place: ['授業', '（教室）'], how: ['ふつうの英語', 'ていねいに'], ex: ['“Could you say that', 'again, please?”'] },
-        { c: C.gr, place: ['操縦席で', '教官と'], how: ['短く', 'はっきり'], ex: ['“Sorry, say again?”', '“Can you show me?”'] },
+        { c: C.gr, place: ['操縦席で', '操縦教員と'], how: ['短く', 'はっきり'], ex: ['“Sorry, say again?”', '“Can you show me?”'] },
         { c: C.am, place: ['無線で', '管制と'], how: ['意味の決まった', '言葉（標準用語）'], ex: ['“Say again.”', '従えないときは “Unable.”'] },
       ];
-      let s = T(62, 18, '相手と場面', { c: C.mut, fs: 12 }) + T(176, 18, '話し方', { c: C.mut, fs: 12 }) + T(314, 18, '聞き直す言い方の例', { c: C.mut, fs: 12 });
+      let s = T(62, 18, '相手と場面', { c: C.mut, fs: 12 }) + T(176, 18, '話し方', { c: C.mut, fs: 12 }) + T(314, 18, '言い方の例', { c: C.mut, fs: 12 });
       const y0 = 28, hgt = 64, gap = 8;
       rows.forEach((r, i) => {
         const y = y0 + i * (hgt + gap);
@@ -78,7 +79,7 @@
       });
       const yb = y0 + 3 * (hgt + gap) + 6;
       s += T(200, yb + 12, '下へ行くほど短く、使う言葉が決まっている', { c: C.mut, fs: 12 });
-      return svg(400, yb + 22, s, '図：3 つの場面と話し方の例。授業ではふつうの英語でていねいに、操縦席の教官には短くはっきり、管制との無線では意味の決まった言葉（標準用語）で話します。どの場面でも、分からないときは推測せずに聞き直します');
+      return svg(400, yb + 22, s, '図：3 つの場面と話し方の例。授業ではふつうの英語でていねいに、操縦席の操縦教員には短くはっきり、管制との無線では意味の決まった言葉（標準用語）で話します。どの場面でも、分からないときは推測せずに聞き直します');
     },
   });
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

@@ -18,8 +18,8 @@ export function loadBook() {
 // textbook/rewrite/combined/TEST-CONSTANTS.md)
 //  parts (FL.book.PARTS: the front part 序部 p0 and parts 1–6), chapters, secs, quiz, terms, examples, cautions,
 //  refs (source links in the end matter), lessons (end matter), figs (SVG figures), photos (bk.photo uses), calcs (calculators), simTags (lesson buttons inside "シミュレータで体験" boxes), details (考えてみよう)
-export const COUNTS = { parts: 7, chapters: 28, secs: 165, quiz: 141, terms: 495, examples: 79, cautions: 70, refs: 251, lessons: 67, figs: 107, photos: 30, calcs: 10, simTags: 61, details: 124 };
-export const ORDER = ['intro', 'basics', 'sim', 'aero', 'sys', 'perf', 'wx', 'law', 'radio1', 'radio2', 'radio3', 'radio4', 'radio5', 'hf', 'ground', 'ops', 'tl', 'emg', 'solo', 'navp', 'navr', 'navd', 'ifr', 'ifrp', 'me', 'oei', 'crm', 'jet'];
+export const COUNTS = { parts: 7, chapters: 29, secs: 167, quiz: 145, terms: 504, examples: 82, cautions: 72, refs: 270, lessons: 69, figs: 109, photos: 30, calcs: 10, simTags: 63, details: 126 };
+export const ORDER = ['intro', 'basics', 'english', 'sim', 'aero', 'sys', 'perf', 'wx', 'law', 'radio1', 'radio2', 'radio3', 'radio4', 'radio5', 'hf', 'ground', 'ops', 'tl', 'emg', 'solo', 'navp', 'navr', 'navd', 'ifr', 'ifrp', 'me', 'oei', 'crm', 'jet'];
 export const NOTICE = [
   'このページは公開情報を基にした非公式の自主学習用教材です。実機訓練、教官の指示、POH/AFM、SOP、航空法規を優先してください。',
   'ANA の公式ソフトウェア・公式教材ではありません。',

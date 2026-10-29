@@ -71,6 +71,14 @@
   const plane = (x, y, k = 1, pitch = 0) => planeSide(x, y, k, { pitch, gear: false });
   const fmt = n => n.toLocaleString('en-US');
   const pad3 = n => String(Math.round(n)).padStart(3, '0');
+  // the chapter english's figures: text escaped for SVG, and the three names of one entry of FL.terms (the official name,
+  // the first common name, the English; FL.terms is read when the figure is drawn, and a product without it gets the same names)
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const names = id => {
+    const e = FL.terms && typeof FL.terms.byId === 'function' ? FL.terms.byId(id) : null;
+    if (e) return { formal: e.formal, common: e.common[0] || '', en: e.en };
+    return { aileron: { formal: '補助翼', common: 'エルロン', en: 'aileron' } }[id];
+  };
 
   const FIG = {
     // ---------------------------------------------------------------- intro（はじめに。序部 第 1 章：R1・W10）
@@ -369,6 +377,56 @@
       s += T(20, 218, `${dist} ÷ ${gs} × 60 ＝ ${min} 分`, { c: C.ink, a: 'start', fs: 12 });
       s += T(20, 238, `${zulu(dep)}（${edt(dep)}）に出ると、${zulu(arr)}（${edt(arr)}）`, { c: C.ink, a: 'start', fs: 12 });
       return svg(400, 256, s, `図：総合例題の区間（架空）。LAB から真東へ ${dist} NM、真東からの風 ${wind} kt。計算できるのは GS と時間と時刻で、雲の予報だけでは VFR で行けるかは決まりません`);
+    },
+    // ---------------------------------------------------------------- english（英語で学ぶ準備。序部 第 3 章：R1・W10）
+    // en.terms — one part (the aileron, coloured) and its three names: the official name (JCAB's written tests and the
+    // law), the common name (everyday talk, katakana material) and the English (FAA material, the English classes)
+    enTriple() {
+      const n = names('aileron');
+      // the right wing seen from above (leading edge at the top: the title says 上が前), the aileron at the outer trailing
+      // edge. The flap is not drawn (revise-english: the reader asked what the unnamed grey part was)
+      const wing = `<path d="M64 62 L336 62 L352 70 L352 104 L64 104 Z" fill="${PLANE}"/>`
+        + `<rect x="40" y="58" width="26" height="50" rx="6" fill="${PLANE2}"/>`
+        + `<path d="M262 104 L352 104 L352 92 L262 92 Z" fill="${C.am}"/>`;
+      let s = T(200, 18, '色を付けた部分の名前（右の主翼を上から見た図。上が前）', { c: C.mut, fs: 12 });
+      s += wing + T(53, 50, '胴体', { c: C.mut, fs: 12 }) + T(200, 87, '主翼', { c: '#0b1422', fs: 12, b: 1 });
+      // three boxes and their lines from the coloured part
+      const bx = [
+        { x: 8, c: C.cy, h: '正式名', name: n.formal, sub: ['日本の学科試験', 'と法令の書き方'] },
+        { x: 139, c: C.gr, h: '通称', name: n.common, sub: ['ふだんの会話や', 'カタカナの資料'] },
+        { x: 270, c: C.vi, h: '英語', name: n.en, sub: ['英語の授業と', '米国の FAA の資料'] },
+      ];
+      const top = 150, w = 122, hgt = 94;
+      for (const b of bx) {
+        s += L(307, 104, b.x + w / 2, top, b.c, 1.5, '4 3');
+        s += BOX(b.x, top, w, hgt, b.c);
+        s += T(b.x + w / 2, top + 20, b.h, { c: b.c, fs: 12, b: 1 });
+        s += T(b.x + w / 2, top + 44, esc(b.name), { c: C.ink, fs: 16, b: 1 });
+        s += TL(b.x + w / 2, top + 64, b.sub, { c: C.mut, fs: 12, lh: 16 });
+      }
+      s += `<circle cx="307" cy="104" r="4" fill="${C.am}"/>`;
+      const cap = `図：1 つのものに 3 つの名前。色を付けた部分は、日本の学科試験と法令では「${esc(n.formal)}」、ふだんの言い方では「${esc(n.common)}」、英語の授業では「${esc(n.en)}」です。この本は、各章で初めて出るところで${esc(n.formal)}（${esc(n.common)}、${esc(n.en)}）と書きます`;
+      return svg(400, 252, s, cap);
+    },
+
+    // en.class — three places and the way of speaking in each (examples), from the class to the radio
+    enTalk() {
+      const rows = [
+        { c: C.cy, place: ['授業', '（教室）'], how: ['ふつうの英語', 'ていねいに'], ex: ['“Could you say that', 'again, please?”'] },
+        { c: C.gr, place: ['操縦席で', '操縦教員と'], how: ['短く', 'はっきり'], ex: ['“Sorry, say again?”', '“Can you show me?”'] },
+        { c: C.am, place: ['無線で', '管制と'], how: ['意味の決まった', '言葉'], ex: ['“Say again.”', '従えないときは “Unable.”'] },
+      ];
+      let s = T(62, 18, '相手と場面', { c: C.mut, fs: 12 }) + T(176, 18, '話し方', { c: C.mut, fs: 12 }) + T(314, 18, '言い方の例', { c: C.mut, fs: 12 });
+      const y0 = 28, hgt = 64, gap = 8;
+      rows.forEach((r, i) => {
+        const y = y0 + i * (hgt + gap);
+        s += BOX(8, y, 108, hgt, r.c) + TL(62, y + 27, r.place, { c: r.c, fs: 13, b: 1, lh: 18 });
+        s += BOX(122, y, 108, hgt, r.c) + TL(176, y + 27, r.how, { c: C.ink, fs: 12, lh: 18 });
+        s += BOX(236, y, 156, hgt, r.c) + TL(314, y + 27, r.ex.map(esc), { c: C.ink, fs: 12, lh: 18 });
+      });
+      const yb = y0 + 3 * (hgt + gap) + 6;
+      s += T(200, yb + 12, '下へ行くほど短く、使う言葉が決まっている', { c: C.mut, fs: 12 });
+      return svg(400, yb + 22, s, '図：3 つの場面と話し方の例。授業ではふつうの英語でていねいに、操縦席の操縦教員には短くはっきり、管制との無線では意味の決まった言葉で話します。どの場面でも、分からないときは推測せずに聞き直します');
     },
     forces() {
       // the course's Archer in cruise (110 KIAS, sea level): lift = weight ≈ 10,300 N, drag ≈ 1,160 N — drawn about 9 : 1 would hide

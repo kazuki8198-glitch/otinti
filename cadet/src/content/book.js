@@ -1,6 +1,7 @@
 // CADET — content/book.js : the in-game textbook: FLIGHT LAB's (FL.book), filtered for the fictional academy (pure JS).
-// Left out: the introduction (it is about the real airline's published course and about FLIGHT LAB itself) and the
-// chapter on practising with FLIGHT LAB; every sentence, list item, table row and source line that names the real
+// Left out: the introduction (it is about the real airline's published course and about FLIGHT LAB itself), the front
+// part's chapter on getting ready to learn in English (english: the real course's classes in London and FLIGHT LAB's
+// lessons; textbook/rewrite/combined/DESIGN.md 6.3) and the chapter on practising with FLIGHT LAB; every sentence, list item, table row and source line that names the real
 // airline or its training partner; and what belongs to FLIGHT LAB's own pages (the "シミュレータで体験" boxes with their
 // lesson buttons, the calculators, the notes on its keys, menus and pages). Figures (inline SVG) and tables stay.
 // The chapters are numbered for this book, and the cross-references inside the text ({ch:id} → 第 N 章) follow.
@@ -10,7 +11,7 @@
 // textbook/rewrite/combined/DESIGN.md 3.4 and 6.3).
 // A section is filtered the first time it is asked for, then kept.
 
-const DROP_CHAPTERS = new Set(['intro', 'sim']);
+const DROP_CHAPTERS = new Set(['intro', 'english', 'sim']);
 // the real airline, its call sign, its training partner and their sites (the game's airline and school are fictional)
 export const REAL_NAMES = /(?<![A-Za-z])ANA(?![A-Za-z])|ＡＮＡ|All\s*Nippon|全日空|全日本空輸|Acron|ana\.co\.jp|anahd\.co\.jp|acronaviation/i;
 // FLIGHT LAB's own user interface: its keys, menus, pages, calculators and simulator notes (the game has its own), and

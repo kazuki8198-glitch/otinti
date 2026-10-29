@@ -126,6 +126,16 @@
     usAip: { label: 'FAA United States Aeronautical Information Publication（AIP）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aip_html/' },
     jmaQnh: { label: '気象庁 東京航空地方気象台「羽田空港 WEATHER TOPICS 第 54 号 気圧の観測について」（QNH を hPa と inHg で通報・METAR の Q 群と国内記事の A 群）', url: 'https://www.data.jma.go.jp/haneda-airport/weather_topics/file/rjtt_wt20151030.pdf' },
     jmaCode: { label: '気象庁「航空気象通報式」第 3 版（改正 第 17 号、令和 7 年 8 月 7 日。国内記事は RMK の後に国内のみに通報、A 群は QNH の inHg）', url: 'https://www.jma.go.jp/jma/kishou/books/tsuhoshiki/koukuu/koukuu3_17.pdf' },
+    // the front part 序部, chapter english (W10, registered in R1 P5; each opened by W10 or revise-english, 2026-10-27・29)
+    ac6028b: { label: 'FAA AC 60-28B FAA English Language Standard for an FAA Certificate Issued Under 14 CFR Parts 61, 63, 65, and 107（2017-06-02。2025-05-19 の編集の更新 2）', url: 'https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_60-28B_Ed_Upd_2_(5-19-25).pdf' },
+    skySocio: { label: 'SKYbrary: Socio-Culture (OGHFA BN)（国の文化と操縦室：権力格差の定義と例）', url: 'https://skybrary.aero/articles/socio-culture-oghfa-bn' },
+    cfr12: { label: '14 CFR 1.2 Abbreviations and symbols（V で始まる速度の記号：VX・VY・VA・VNE・VMC など）', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-A/part-1/section-1.2' },
+    unSystem: { label: 'United Nations: The UN System（国連の専門機関の一覧。ICAO は世界の航空の標準を決める）', url: 'https://www.un.org/en/about-us/un-system' },
+    caaRole: { label: 'UK Civil Aviation Authority: Roles and responsibilities（英国の航空の規制機関）', url: 'https://www.caa.co.uk/about-us/the-civil-aviation-authority/roles-and-responsibilities/' },
+    jcabElp: { label: '国土交通省 航空局「航空英語能力証明実地試験実施基準」別添 1（ICAO の言語習熟度評価基準。令和 4 年 3 月 29 日最終改正）', url: 'https://safetyp.cab.mlit.go.jp/wp-content/uploads/2023/06/4-020A_R040329_航空英語能力証明実地試験実施基準.pdf' },
+    skyAbout: { label: 'SKYbrary: About SKYbrary（航空の安全の知識の電子の資料集。EUROCONTROL が始めた）', url: 'https://skybrary.aero/about-skybrary' },
+    cambridgeDates: { label: 'Cambridge Dictionary, English Grammar Today: Dates（英国と米国の日付の書き方）', url: 'https://dictionary.cambridge.org/grammar/british-grammar/dates' },
+    cambridgeMeas: { label: 'Cambridge Dictionary, English Grammar Today: Measurements（速さ・重さなどの言い方）', url: 'https://dictionary.cambridge.org/grammar/british-grammar/measurements' },
   };
   // parts 1–6 (phase: the syllabus's stages that go with the part). The front part p0 (序部, book-0.js) and Part 7 (p7,
   // book-7.js) are not written here: the file that holds a part's chapters adds it (addPart below), so a product that

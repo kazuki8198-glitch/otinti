@@ -92,9 +92,9 @@ test('render.js: every section and chapter to HTML; the notes; the end matter es
   const toc = R.tocHtml([], 'aero.lift');
   assert.equal((toc.match(/class="bk-item/g) || []).length, COUNTS.secs);
   for (const p of BK.PARTS) assert.ok(toc.includes(p.title), p.id);
-  // aero.lift is section 2 of chapter 4 since the front part's three chapters (intro, basics, sim) came before it (W09,
-  // W10); 5.2 with the front part's four (english, W10), 5.3 with aero.wing (R2): DESIGN 6.1
-  assert.match(toc, /data-go="aero.lift" aria-current="true"><span class="bk-num">4\.2<\/span>/);
+  // aero.lift is section 2 of chapter 5 since the front part's four chapters (intro, basics, english, sim) came before it
+  // (W09, W10): R1's number. 5.3 with aero.wing (R2): DESIGN 6.1
+  assert.match(toc, /data-go="aero.lift" aria-current="true"><span class="bk-num">5\.2<\/span>/);
 });
 
 // DESIGN 3.2「章末」(W08): the chapter's 日米の違い, drawn from FL.jur (FL.book.jurTable), on its last section after the

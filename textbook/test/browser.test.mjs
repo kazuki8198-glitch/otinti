@@ -29,7 +29,7 @@ test(`opens: the notes, ${COUNTS.secs} sections in the contents, the chapters in
   assert.deepEqual(await page.evaluate(() => FL.book.CHAPTERS.map(c => c.id)), ORDER);
   assert.equal(await page.evaluate(() => __tb.cur), 'aero.lift');
   assert.equal(await page.evaluate(() => document.getElementById('aero.lift') !== null), true);
-  assert.equal(await page.locator('#tbToc .bk-item.sel .bk-num').innerText(), '4.2');   // the front part's chapters first (W09, W10; DESIGN 6.1)
+  assert.equal(await page.locator('#tbToc .bk-item.sel .bk-num').innerText(), '5.2');   // the front part's four chapters first (W09, W10; DESIGN 6.1)
   assert.match(await page.locator('#tbToc .bk-item.sel').innerText(), /✓|揚力/);
   assert.ok(await page.locator('#tbView .tb-note').count() === 1);
   // the next section, the URL follows (replaceState)

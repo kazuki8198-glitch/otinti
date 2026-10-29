@@ -280,6 +280,7 @@
           brief: ['最初は LAB-A（架空の訓練点・赤い塔）へ。MFD の地図で方位と距離を確認し、風で流される分だけ風上へ針路を修正する。', '途中で「目的地変更」：LAB-F へ。<b>針路（磁方位）・距離（NM）・所要時間（分）</b>を見積もって入力し、すぐに新しい針路へ。', '見積もりのコツ：MFD の地図のレンジ環で距離、対地速度 GS で時間（距離 ÷ GS × 60）。'],
           std: '高度 ±200 ft・各目標の 1 NM 以内に到達・見積もり：針路 ±15°、距離と時間 ±20%', setup: { at: 'away', from: 'rwy', brg: 10, km: 2, altFt: 3000, hdg: 50, kt: 105, fpl: ['LABRW', 'LABEA'], wind: { rel: 270, kt: 12, gust: 0.6 } }, book: ['nav.dr', 'nav.divert'],
           steps: [
+            { name: '巡航点検', checklist: 'cruise' },
             { name: 'LAB-A へ', g: { kt: 105, how: 'level' }, keys: k('roll', 'pitch', 'thr', 'trim'), say: 'LAB-A（架空の訓練点）へ向かう。MFD の地図と GPS の DTK を見て、風上へ修正', tgt: { alt: [L => L.alt0, 200] }, until: (c, L) => distNm(L, 'LABEA') < 1.0 * L.level.k, max: 900, grade: true },
             { name: '目的地変更：見積もり', estimate: 'LABEF', keys: '下の入力欄に針路・距離・時間 → 「見積もりを確定」', say: '目的地変更！ LAB-F へ。針路（磁）・距離（NM）・所要時間（分）を見積もって入力し、すぐに旋回', until: (c, L) => !!L.estimate, max: 150,
               result: (L) => estimateRows(L) },

@@ -260,7 +260,11 @@ export function buildHaneda({ quality = null } = {}) {
     jets.castShadow = true; jets.receiveShadow = true; jets.name = 'jets'; jets.count = spots.length - 1;
     group.add(jets);
   }
-  const deck = flightDeck(); group.add(deck);
+  const deck = flightDeck();
+  // our aircraft as one piece: the deck (and, in main.js, the captain in his seat) rides in this group, and the
+  // departure moves it — pushback, taxi, the take-off and the climb — in the set's frame. At rest (the gate) it is
+  // the identity, so the parked scene is exactly what it was. Its yaw-pitch-roll order is the flying one.
+  const jet = new THREE.Group(); jet.name = 'b737-jet'; jet.rotation.order = 'YXZ'; jet.add(deck); group.add(jet);
   const showOwn = (on) => { if (jets) jets.count = jets.instanceMatrix.count - (on ? 0 : 1); deck.visible = !on; };
-  return { group, deck, jets, showOwn, triangles: () => { let n = 0; group.traverse(o => { if (o.isMesh && o.geometry) n += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3 * (o.isInstancedMesh ? o.count : 1); }); return Math.round(n); } };
+  return { group, deck, jet, jets, showOwn, triangles: () => { let n = 0; group.traverse(o => { if (o.isMesh && o.geometry) n += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3 * (o.isInstancedMesh ? o.count : 1); }); return Math.round(n); } };
 }

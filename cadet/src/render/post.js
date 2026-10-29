@@ -9,6 +9,7 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { hazeDensity } from './haze.js';
 
 const AerialShader = {
   name: 'CadetAerial',
@@ -16,7 +17,7 @@ const AerialShader = {
     tDiffuse: { value: null }, tDepth: { value: null },
     uInvProj: { value: new THREE.Matrix4() }, uCamWorld: { value: new THREE.Matrix4() },
     uSunDir: { value: new THREE.Vector3(0, 1, 0) }, uHaze: { value: new THREE.Color(0.55, 0.66, 0.80) }, uSunHaze: { value: new THREE.Color(0.9, 0.75, 0.5) },
-    uDensity: { value: 0.000085 }, uFall: { value: 0.00055 }, uGround: { value: 16.8 }, uSkyFog: { value: 0 }, uSkyGrey: { value: 0 },
+    uDensity: { value: 0.000055 }, uFall: { value: 0.00055 }, uGround: { value: 16.8 }, uSkyFog: { value: 0 }, uSkyGrey: { value: 0 },
   },
   vertexShader: /* glsl */`varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: /* glsl */`
@@ -143,7 +144,7 @@ export function createPipeline(container, quality) {
     u.uHaze.value.setRGB(0.52 - 0.1 * low, 0.62 - 0.12 * low, 0.78 - 0.25 * low).multiplyScalar(0.03 + 0.97 * day);
     u.uSunHaze.value.setRGB(1.0, 0.72 - 0.25 * low, 0.42 - 0.25 * low).multiplyScalar((0.4 + 0.8 * low) * day);
     // (fog 0.85: a visibility of about 800 m, the METAR's 1/2 SM; the sky hidden as with VV002)
-    u.uDensity.value = 0.000085 * (1 + 80 * fog * fog) * (1 + grey) * clear;
+    u.uDensity.value = hazeDensity(fog, grey, clear);
     u.uSkyFog.value = fog > 0 ? Math.min(1, fog * 1.18) : 0; u.uSkyGrey.value = grey;
     if (grey > 0) { u.uHaze.value.lerp(new THREE.Color(0.42, 0.45, 0.5).multiplyScalar(0.03 + 0.97 * day), grey * 0.7); u.uSunHaze.value.multiplyScalar(1 - grey * 0.8); }
     if (fog > 0) u.uHaze.value.lerp(new THREE.Color(0.66, 0.69, 0.72).multiplyScalar(0.03 + 0.97 * day), fog * 0.8);

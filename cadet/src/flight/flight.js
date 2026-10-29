@@ -79,9 +79,9 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
 
   // ---------------------------------------------------------------- starts (as app.js startLesson / startFree)
   // the stick sensitivity and the automatic rudder come from the player's preferences unless given
-  function startLesson(id, levelId = 'intro', { sens = ctl.prefs.sens, autoRud = ctl.prefs.autoRud } = {}) {
+  function startLesson(id, levelId = 'intro', { sens = ctl.prefs.sens, autoRud = ctl.prefs.autoRud, wind = null } = {}) {
     const def = SC.lesson(id); if (!def || !def.steps) return null;
-    const nl = SC.startLesson(id, levelId, { sens, autoRud });
+    const nl = SC.startLesson(id, levelId, { sens, autoRud, ...(wind ? { wind } : {}) });
     nl.s.opts.assist = false;
     return begin(nl);
   }
@@ -130,8 +130,10 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
 
   // ---------------------------------------------------------------- the realtime path (app.js tick)
   // keys: { has(code) } (CADET's input.keys, or { has: input.down }); opts.paused stops everything; opts.pilot(L, H), in a
-  // free flight only (CADET's taxi pilot), writes the controls before each step as FLIGHT LAB's bot does
-  function frame(dt, keys, { paused = false, pilot = null } = {}) {
+  // free flight only (CADET's taxi pilot), writes the controls before each step as FLIGHT LAB's bot does;
+  // opts.airPilot lets the same hook run in a lesson (CADET's autopilot: flight/autopilot.js) — the default
+  // path, and every test of FLIGHT LAB parity, is exactly as before
+  function frame(dt, keys, { paused = false, pilot = null, airPilot = false } = {}) {
     res.steps = 0; res.events.length = 0; res.pad.length = 0; res.ended = false;
     if (!L) return res;
     const dtr = Math.min(0.1, Math.max(0, dt || 0)), wasDone = L.done;
@@ -153,7 +155,7 @@ export function createFlight(FL, { store = defaultStore(), prefs, savePrefs, get
     while (acc >= H && n < MAX_STEPS) {
       prev.pos[0] = s.pos[0]; prev.pos[1] = s.pos[1]; prev.pos[2] = s.pos[2];
       prev.q[0] = s.q[0]; prev.q[1] = s.q[1]; prev.q[2] = s.q[2]; prev.q[3] = s.q[3];
-      if (pilot && L.free) pilot(L, H);
+      if (pilot && (L.free || airPilot)) pilot(L, H);
       P.step(L.s, H); parkHold(L.s);
       if (L.free) SC.freeUpdate(L, H); else SC.update(L, H);
       acc -= H; n++;

@@ -467,7 +467,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.match(r.toast, /予定が残っています/);
     await ev(() => window.__cadet.walkRoute([{ a: 655.0, c: 276.5 }, { a: 655.0, c: 272.0 }]));
     t = await talkThrough('lecturer');
-    assert.match(t.lines.join('\n'), /28 \/ 28 問、100%/);
+    assert.match(t.lines.join('\n'), /30 \/ 30 問、100%/);
     st = await career();
     assert.ok(st.exams.written1.pass);
     // (M7) the day's plan done before the evening: the guide says to go home, and the front doors agree — walking out is
@@ -1424,6 +1424,76 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     await ev(() => window.__cadet.dialogReveal());
     assert.equal(await ev(() => document.querySelector('#dlg .dlg-ja').hidden), true, 'no Japanese when that is off');
     await ev(() => { const C = window.__cadet; C.setMode('spectator'); C.setMode('walk'); C.settings.set('crewEnglish', false); C.settings.set('crewEnglishJa', true); C.settings.set('textSpeed', 1); });
+  });
+
+  // (M8) dictating the question to the AI instructor: a stand-in recognizer (as in the k4 test) — what it hears
+  // fills the field and is NOT sent; the player sends it; a failure is a notice, and the field stays for typing
+  test('(M8) the AI instructor, dictated to: the microphone fills the question field (in Japanese), Enter sends it; nothing heard is a notice, not a question', async () => {
+    const KEY = '<redacted>';
+    await ev((src) => { (0, eval)(`${src}\nwindow.__fakeClaude = fakeClaude;`); window.__calls = []; }, FAKE_SRC);
+    await ev((p) => window.__cadet.career.set({ state: { seed: 2, chapter: 'ch2', day: 12, slot: 'morning', done: { prologue: 1 }, exams: { written1: { tries: 1, best: 90, pass: true } }, checks: {}, solo: null, graduated: null }, progress: p, flags: { met_instructor: true, has_tablet: true }, place: false }), passed(['a1']));
+    await ev(() => {
+      const C = window.__cadet;
+      C.ai.useFetch(window.__fakeClaude({ calls: window.__calls, answer: 'いい質問です。迎え角に気をつけましょう。\n根拠：aero.stall' }));
+      C.ai.keys.set('<redacted>'); C.settings.set('aiTutor', true); C.settings.set('micRadio', true); C.settings.set('textSpeed', 3);
+      window.__micSay = ''; window.__micLang = '';
+      window.SpeechRecognition = class { start() { window.__micLang = this.lang; setTimeout(() => { const t = window.__micSay; if (t) { if (this.onresult) this.onresult({ results: [[{ transcript: t }]] }); } else if (this.onerror) this.onerror({ error: 'no-speech' }); if (this.onend) this.onend(); }, 30); } stop() {} abort() {} };
+    });
+    const ins = await ev(() => window.__cadet.instructor());
+    const toMenu = async () => {
+      await ev((ins) => { const C = window.__cadet; C.setMode('walk'); C.placeWalker(ins.a + 2.4, ins.c - 0.6, { a: ins.a, c: ins.c }); C.lookAt(ins.a, ins.c, 1.5); }, ins);
+      assert.equal(await ev(() => window.__cadet.use()), 'talk');
+      for (let k = 0; k < 30; k++) {
+        const v = await ev(() => window.__cadet.dialog());
+        if (v.choices.some(c => /また後で来ます|準備に向かいます/.test(c.text))) return v;
+        await ev((v) => { const C = window.__cadet; C.simulate(0.1); if (v.choices.length) C.dialogChoose(v.choices.findIndex(c => /問題ありません/.test(c.text)) >= 0 ? '問題ありません' : 0); else C.dialogNext(); }, v);
+      }
+      throw new Error('no menu');
+    };
+    const openField = async () => {
+      await toMenu();
+      await ev(() => window.__cadet.dialogChoose('自由に質問'));
+      await g.page.waitForFunction(() => window.__cadet.ai.open() && window.__cadet.ai.asking(), null, { timeout: 5000 });
+    };
+    // (again, within the talk that is still open: on from the thanks to the offer, as the error segment above does)
+    const againField = async () => {
+      for (let k = 0; k < 10 && !(await ev(() => window.__cadet.dialog())).choices.some(c => /自由に質問/.test(c.text)); k++) await ev(() => window.__cadet.dialogNext());
+      await ev(() => window.__cadet.dialogChoose('自由に質問'));
+      await g.page.waitForFunction(() => window.__cadet.ai.open() && window.__cadet.ai.asking(), null, { timeout: 5000 });
+    };
+    const field = () => ev(() => document.querySelector('#dlg .dlg-ask input').value);
+    // the button is there (the microphone is on in the settings); what it hears fills the field — and goes nowhere
+    await openField();
+    assert.equal(await ev(() => { const b = document.querySelector('#dlg .dlg-ask .dlg-mic'); return !!b && !b.hidden; }), true, 'the field has its microphone');
+    await ev(() => { window.__micSay = '失速のときに気をつけることは'; });
+    await g.page.click('#dlg .dlg-ask .dlg-mic');
+    await g.page.waitForFunction(() => document.querySelector('#dlg .dlg-ask input').value === '失速のときに気をつけることは', null, { timeout: 5000 });
+    assert.equal(await ev(() => window.__micLang), 'ja-JP', 'the game in Japanese: Japanese recognition');
+    assert.equal(await ev(() => window.__cadet.ai.mic()), false, 'listening over');
+    assert.equal(await ev(() => window.__calls.length), 0, 'dictated is not sent');
+    // the player sends it, as typed questions are sent
+    await g.page.press('#dlg .dlg-ask input', 'Enter');
+    await g.page.waitForFunction(() => { const v = window.__cadet.dialog(); return v && v.speaker === 'instructor' && v.choices.length === 3; }, null, { timeout: 15000 });
+    assert.match((await ev(() => window.__calls.at(-1))).body.messages.at(-1).content, /訓練生の質問：失速のときに気をつけることは/);
+    await ev(() => window.__cadet.dialogChoose('ありがとうございました'));
+    assert.equal(await ev(() => window.__cadet.ai.open()), false);
+    // M, with the typing out of the field, dictates too
+    await againField();
+    await g.page.waitForFunction(() => !window.__cadet.dialog().typing, null, { timeout: 15000 });
+    await ev(() => { window.__micSay = '着陸のしかたを教えてください'; document.querySelector('#dlg .dlg-ask input').blur(); });
+    await g.page.keyboard.press('m');
+    await g.page.waitForFunction(() => document.querySelector('#dlg .dlg-ask input').value === '着陸のしかたを教えてください', null, { timeout: 5000 });
+    assert.equal(await ev(() => window.__calls.length), 1, 'still not sent');
+    // nothing heard: a notice in the dictation's own words, the field left empty and open for typing
+    await ev(() => { window.__micSay = ''; });
+    await g.page.click('#dlg .dlg-ask .dlg-mic');
+    await g.page.waitForFunction(() => /聞き取れませんでした/.test(document.getElementById('toast').textContent), null, { timeout: 5000 });
+    assert.equal(await field(), '着陸のしかたを教えてください', 'what was there stays');
+    assert.equal(await ev(() => window.__cadet.ai.asking()), true, 'the field is still up');
+    await ev(() => window.__cadet.dialogChoose('やっぱり、やめておきます'));
+    assert.equal(await ev(() => window.__cadet.ai.open()), false);
+    await ev(() => { const C = window.__cadet; C.settings.set('micRadio', false); C.settings.set('aiTutor', false); C.ai.useFetch(null); delete window.SpeechRecognition; C.setMode('spectator'); C.setMode('walk'); });
+    assert.equal(await ev(() => window.__cadet.dialog()), null);
   });
 
   test('the pause menu opens and closes; settings apply at once', async () => {

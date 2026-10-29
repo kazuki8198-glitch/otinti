@@ -581,7 +581,8 @@ test('records: a finished lesson is noted once in CADET\'s own keys (cadet.…),
   assert.deepEqual(base.keys().sort(), ['cadet.' + SC.PROG_KEY, 'cadet.' + SC.STORE_KEY].sort());
   assert.equal(base.getItem(SC.STORE_KEY), null); assert.equal(base.getItem(SC.PROG_KEY), null);
   const prog = f.progress();
-  assert.deepEqual(prog.lessons.a1, { tries: 1, best: 'S', pass: true, levels: ['intro'] });
+  // (growth design v1 §4.2: the record now also keeps the lesson's best score — this flight's was perfect)
+  assert.deepEqual(prog.lessons.a1, { tries: 1, best: 'S', pass: true, score: 100, levels: ['intro'] });
   assert.ok(Math.abs(prog.time - f.L.s.t) < 1e-6, `training time ${prog.time}`);
   assert.equal(f.records().length, 1);
   // an aborted lesson: a record of the abort when the integrator asks for it
@@ -605,4 +606,68 @@ test('records: a flight discarded (the introductory flight\'s) keeps nothing —
   // (and the next flight's own time is its own)
   f.startFree('area'); for (let i = 0; i < 60 * 2; i++) f.frame(1 / 60, NOKEYS); f.finish();
   assert.ok(Math.abs(f.progress().time - 2) < 0.05, `${f.progress().time}`);
+});
+test('powerplant (Sorajima): leaning moves the EGT and the flow, the selected tank alone burns, a dry one stops the engine, the twin has manifold pressure', () => {
+  const step = (s, sec) => { for (let i = 0; i < sec * 120; i++) P.step(s, 1 / 120); return s; };
+  const air = (ac, altFt, kias, thr) => { const s = P.placeInAir(P.newState({ aircraft: ac }), 0, -40000, altFt, 354, kias, 0, 0, thr); s.wind = { fromDeg: 0, kt: 0, gust: 0 }; return s; };
+  const rich = step(Object.assign(air('pa28', 3000, 100, 0.72), { mix: 1 }), 20), lean = step(Object.assign(air('pa28', 3000, 100, 0.72), { mix: 0.86 }), 20);
+  assert.ok(lean.out.egt > rich.out.egt + 80, `EGT ${rich.out.egt} → ${lean.out.egt}`);
+  assert.ok(lean.fuelFlow < rich.fuelFlow - 0.5, `flow ${rich.fuelFlow.toFixed(1)} → ${lean.fuelFlow.toFixed(1)}`);
+  const gnd = P.placeOnRunway(P.newState(), P.LAB_RWY, 30); gnd.brake = true; gnd.thr = 0.5; gnd.fuelSel = 'R';
+  const f0 = [...gnd.fuel]; step(gnd, 60);
+  assert.equal(gnd.fuel[0], f0[0]); assert.ok(gnd.fuel[1] < f0[1] - 0.05, 'only the selected tank falls');
+  const dry = air('pa28', 3000, 100, 0.7); dry.fuel = [5, 0]; dry.fuelSel = 'R'; step(dry, 10);
+  assert.equal(dry.eng[0].run, false); assert.equal(dry.fuel[0], 5);
+  const twin = step(air('pa44', 60, 100, 1), 5);
+  assert.ok(twin.out.manIn > 27 && twin.out.manIn < 30 && twin.out.powerPct === 100, `MAN IN ${twin.out.manIn}, PWR ${twin.out.powerPct}%`);
+});
+
+test('wb (Sorajima): the loading model is FLIGHT LAB\'s — same masses, same centres of gravity', () => {
+  const LAB = FL.physicsLab;
+  for (const id of ['pa28', 'pa44']) {
+    const A = P.AIRCRAFT.find(a => a.id === id), B = LAB.AIRCRAFT.find(a => a.id === id);
+    for (const ld of [undefined, { front: 1 }, { fuel: 'full', rear: 2, bagKg: 30 }, { fuel: 'tabs', rear: 1, bagKg: 15 }]) {
+      const x = P.computeWB(A, ld), y = LAB.computeWB(B, ld);
+      assert.equal(x.kg, y.kg, `${id} ${JSON.stringify(ld)}: the mass agrees`);
+      assert.equal(x.cgIn, y.cgIn, `${id} ${JSON.stringify(ld)}: the CG agrees`);
+      assert.deepEqual(x.problems, y.problems);
+    }
+    assert.equal(P.computeWB(A, P.stdLoading()).kg, A.phys.mass, `${id}: the standard load is the reference mass`);
+  }
+});
+
+test('wb (Sorajima): a lesson through the bridge flies at the standard load; solo is one instructor lighter', () => {
+  const f = createFlight(FL, { store: null });
+  f.startLesson('t1', 'intro');
+  assert.equal(f.s.AC.mass, f.s.A.phys.mass, 'the default load is the reference mass, to the kilogram');
+  assert.equal(f.s.AC.Cm0, f.s.A.phys.Cm0, 'and its trim is the book trim');
+  assert.ok(f.s.wb && f.s.wb.ok, 'the load is on the state, inside the limits');
+  // the before-takeoff checklist (the W&B item among it) passes as it does in FLIGHT LAB
+  let r; for (let n = 0; n < 20 && f.L.check; n++) { r = f.checklistNext(); assert.ok(r.ok, `checklist refused: ${r.text}`); }
+  assert.equal(f.L.check, null, 'the checklist completes');
+  // the solo load, as fly-mode applies it when no instructor sits in the right seat
+  const dual = P.newState({ aircraft: 'pa28' }); P.applyLoading(dual, { front: 2 });
+  const solo = P.newState({ aircraft: 'pa28' }); P.applyLoading(solo, { front: 1 });
+  assert.equal(dual.AC.mass - solo.AC.mass, P.PERSON_KG, 'the instructor\'s weight is what a solo flight leaves behind');
+  assert.equal(dual.AC.mass, dual.A.phys.mass);
+  // and it climbs the better for it: the same Vy climb, flown by the same hand
+  const climb = (s) => {
+    const dt = 1 / 120, wS = Math.sqrt(s.AC.mass / s.A.phys.mass), kt = s.A.v.y * wS;
+    P.placeInAir(s, 7000, -37500, 3000, 90, kt, 0, 0, null);
+    s.thr = 1; s.opts.autoRud = true;
+    let pBase = null, lastIas = null, vsSum = 0, n = 0;
+    for (let i = 0; i < 120 * 35; i++) {
+      const o = s.out, a = P.attitude(s), dv = lastIas == null ? 0 : (o.ias - lastIas) / dt;
+      if (pBase == null) pBase = a.pitch;
+      pBase = P.clamp(pBase + (o.ias - kt) * 0.05 * dt, -15, 18);
+      s.keyHold = true; s.pTgt = pBase + 0.35 * (o.ias - kt) + 1.5 * dv; s.pRate = 0;
+      const p = -s.w[2] / (Math.PI / 180); s.rIn = P.clamp(0.045 * (0 - o.bank) - 0.012 * p, -1, 1);
+      lastIas = o.ias;
+      P.step(s, dt);
+      if (s.t > 10) { vsSum += s.out.vsi; n++; }
+    }
+    return vsSum / n;
+  };
+  const cDual = climb(dual), cSolo = climb(solo);
+  assert.ok(cSolo > cDual + 50, `solo climbs better: ${Math.round(cSolo)} vs ${Math.round(cDual)} fpm`);
 });

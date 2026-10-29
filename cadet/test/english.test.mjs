@@ -61,7 +61,7 @@ function talks() {
   out.push(['board ready', careerBoardDialogs(FL, { lessons: ['t1', 'a2', 't3'], ready: true }), {}]);
   for (const c of [{ title: 'ソロ前の審査', lessons: ['t1', 'a2', 't3'] }, ...Object.values(CHECKS).filter(c => c.kind === 'checkride')]) out.push([`board check ${c.title}`, careerBoardDialogs(FL, { lessons: c.lessons, checkride: true, checkTitle: c.title }), {}]);
   SUMS.forEach((s, i) => { for (const v of ['instructor', 'chief', 'examiner']) out.push([`debrief ${i} ${v}`, debriefDialogs(s, { voice: v }), { ai: { on: true } }]); });
-  for (const id of Object.keys(EXAMS)) if (id !== 'written1') out.push([`exam ${id}`, examDialogs(FL, id, {}), { quiz: { right: 18, n: 20, pct: 90, pass: true } }]);
+  for (const id of Object.keys(EXAMS)) if (id !== 'written1') out.push([`exam ${id}`, examDialogs(FL, id, {}), { quiz: { right: 18, n: 20, pct: 90, pass: true, weakText: '' } }]);
   out.push(['navlog', navlogDialogs(FL, {}), { quiz: { right: 5, n: 5, pct: 100, pass: true } }]);
   // (chapter 1's evenings: 真壁 主任教官's IMSAFE)
   for (const id of ['forces', 'pitot', 'spell', 'readback', 'metar', 'imsafe', 'week']) out.push([`event ${id}`, eventDialogs(id, {}), {}]);
@@ -97,6 +97,8 @@ test('a talk run in English: the views carry the English, filled from the contex
   let v = r.view();
   assert.match(v.en, /^Good morning\. Before we start/); assert.match(v.text, /^おはようございます/);
   r.choose(0); v = r.view(); assert.equal(v.en, 'Good. Then, today\'s lesson.');
+  r.next(); v = r.view(); assert.match(v.en, /^Before that, one thing from yesterday's debrief/);   // yesterday's miss first
+  r.choose(0); v = r.view(); assert.match(v.en, /^That's it: “/);                                    // (the sample's right answer)
   r.next(); v = r.view(); assert.match(v.en, /^Before we fly, TEM/);
   r.choose((t.right + 1) % 3); v = r.view();
   assert.equal(v.en, `${t.othersEn[(t.right + 1) % 3]}. Today's biggest threat is "afternoon thunderstorms". ${THREATS_EN.storm.why}. The plan: ${THREATS_EN.storm.plan}.`);

@@ -83,9 +83,29 @@
       $('#renderLater').hidden = !r.pending;
       $('#optQuality').classList.toggle('dim', r.kind !== 'three');
     }
+    // the load for the next flight (weight and balance), kept in the preferences and chosen in the briefing
+    // and the free-flight dialog: the fuel, the baggage and the rear seats (the front is the instructor and
+    // the student). The readout is the physics' own computation; a load outside the limits is refused by
+    // the before-takeoff checklist, in the airframe's own words (school.js' wbText)
+    function loadSpec() { const l = (S.prefs && S.prefs.load) || {}; return { fuel: l.fuel || 'std', front: 2, rear: l.rear || 0, bagKg: l.bagKg || 0 }; }
+    function loadCard(A, rerender) {
+      const spec = loadSpec(), wb = P.computeWB(A, spec);
+      const seg = (label, key, opts) => h('div', { class: 'field' }, h('span', { class: 'f-label', text: label }),
+        h('span', { class: 'seg', role: 'group', 'aria-label': label }, ...opts.map(([v, t]) => h('button', { type: 'button', class: String(spec[key]) === String(v) ? 'on' : '', onclick: () => { S.prefs.load = { ...spec, [key]: v }; app.savePrefs(); rerender(); } }, t))));
+      const prob = wb && !wb.ok ? wb.problems.map(k => k === 'over' ? `最大離陸重量 ${wb.mtowLb.toLocaleString('en-US')} lb を超過` : k === 'nose' ? `重心が前限界 ${wb.fwdIn} in より前` : `重心が後限界 ${wb.aftIn} in より後`).join('・') : '';
+      return h('section', { class: 'br-card' }, h('h3', { text: '搭載（重量と重心）' }),
+        seg('燃料', 'fuel', [['std', '標準（8 割）'], ['full', '満タン'], ['tabs', 'タブス'], ['half', '半分']]),
+        seg('荷物', 'bagKg', [[0, 'なし'], [15, '15 kg'], [30, '30 kg']]),
+        seg('後席', 'rear', [[0, 'なし'], [1, '1 人'], [2, '2 人']]),
+        wb ? h('p', { class: wb.ok ? 'small' : 'small wb-ng', text: `総重量 ${Math.round(wb.lb).toLocaleString('en-US')} lb（最大 ${wb.mtowLb.toLocaleString('en-US')} lb）・重心 ${wb.cgIn.toFixed(1)} in（範囲 ${wb.fwdIn}〜${wb.aftIn} in）${wb.ok ? '— 範囲内' : `— ${prob}：この搭載では離陸できません`}` }) : null,
+        h('p', { class: 'small mute', text: '重さで離陸の滑走と上昇が変わり、ソロ（教官なし）では軽くなります。数値は教材値です。' }));
+    }
     function openFree() {
       const ac = $('#freeAc'); if (!ac.options.length) for (const a of P.AIRCRAFT) ac.append(h('option', { value: a.id }, a.name));
       const st = $('#freeStart'); if (!st.options.length) for (const f of SC.FREE_STARTS) st.append(h('option', { value: f.id }, f.name));
+      // the load card, for the aircraft chosen above (rebuilt when the choice or the load changes)
+      const drawLoad = () => { const A = P.AIRCRAFT.find(a => a.id === ac.value) || P.AIRCRAFT[0], c = loadCard(A, drawLoad); c.id = 'freeLoad'; const old = $('#freeLoad'); if (old) old.replaceWith(c); else $('#freeBox').insertBefore(c, $('#freeGo')); };
+      ac.onchange = drawLoad; drawLoad();
       $('#freeGo').onclick = () => { closeModal(); app.startFree(st.value, ac.value, $('#freeWind').value); app.closeScreens(); S.screen = 'fly'; S.paused = false; app.applyLayout(); toast('自由飛行：評価はありません。H でキーの一覧、P で一時停止', 3200); };
       $('#freeClose').onclick = closeModal;
       openModal('freeDlg');
@@ -206,6 +226,7 @@
         h('section', { class: 'br-card' }, h('h3', { text: 'やること' }), steps),
         h('section', { class: 'br-card' }, h('h3', { text: '使うキー' }), h('div', { class: 'br-keys', html: uniq.map(p => `<span class="kc">${p.keys.map(k => `<kbd>${esc(k)}</kbd>`).join('')}<span>${esc(p.what)}</span></span>`).join('') || '<span class="mute small">（観察・説明のみ）</span>' })),
         h('section', { class: 'br-card' }, h('h3', { text: '合格の基準（基礎）' }), h('p', { class: 'sch-std', text: l.std }), h('p', { class: 'small mute', text: `いまのレベル：${lv.name}（${lv.desc}）` }))));
+      box.append(h('div', { class: 'br-cards' }, loadCard(A, () => renderBrief(id))));
       const det = (title, open, ...kids) => h('details', { class: 'br-det', open: open || null }, h('summary', { text: title }), ...kids);
       if (l.why) box.append(det('なぜこの課目を練習するのか', true, h('p', { class: 'sch-why', text: l.why })));
       box.append(det('知識と手順', false, h('ul', {}, ...l.brief.map(t => h('li', { html: t })))));
@@ -984,7 +1005,7 @@
           FL.view3d ? '標準の 3D 表示：姉妹作 CADET の three.js の景色（芝・舗装・建物・木・空）と、計器まで 3D の操縦席（G1000 型の画面・キー・つまみ・レバーをマウスで操作）。GPU のない PC では軽い表示（軽量）に自動で切り替え' : '',
           'Sanford の資料、学習記録（JSON 書き出し・読み込み）、Google Photorealistic 3D Tiles による外部景観（任意・キーはメモリのみ）'].filter(Boolean).map(t => h('li', { text: t }))),
         h('h3', { text: '実装していないもの（未実装）' }),
-        h('ul', { class: 'small' }, ...['自動操縦（HDG / ALT への追従）— 意図的に未実装', '油圧・油温・EGT・電圧・電流・吸気圧（MFD では「—」表示）', `エンジンの始動手順、混合比・キャブヒート・燃料タンク切替（チェックリストでは「教材では未実装」と表示${FL.view3d ? '。3D の操縦席のスイッチ・レバーは絵だけが動く' : ''}）`, '双発の左右別のスロットル（共通の 1 本）・プロペラレバー（フェザーはキー）', '実在空港の滑走路・誘導路での離着陸、Google の建物・地形との衝突', '実空域・NOTAM・飛行計画・実際の管制、音声認識・録音・送信', '英語交信の練習は台本と選択式だけ（自分の声の採点・自由な会話・ほかの機の交信が重なる混雑・雑音は未実装）', '雲・視程の変化・夜間・着氷・ウインドシア', 'G1000 の全機能（地形警報・トラフィック・タイマー・インセット地図など）'].map(t => h('li', { text: t }))),
+        h('ul', { class: 'small' }, ...['自動操縦（HDG / ALT への追従）— 意図的に未実装', 'エンジンの始動手順（課程はエンジンが回った状態で始まります。マグネトー・混合比・燃料タンク切替・キャブヒートは、操縦席のキーとレバーで物理モデルに効きます）', '双発の左右別のスロットル（共通の 1 本）・プロペラレバー（フェザーはキー）', '実在空港の滑走路・誘導路での離着陸、Google の建物・地形との衝突', '実空域・NOTAM・飛行計画・実際の管制、音声認識・録音・送信', '英語交信の練習は台本と選択式だけ（自分の声の採点・自由な会話・ほかの機の交信が重なる混雑・雑音は未実装）', '雲・視程の変化・夜間・着氷・ウインドシア', 'G1000 の全機能（地形警報・トラフィック・タイマー・インセット地図など）'].map(t => h('li', { text: t }))),
         h('h3', { text: 'データとプライバシー' }),
         h('p', { class: 'small', text: '学習記録・進み具合・操作の設定はこのブラウザの localStorage にだけ保存します（サーバーへ送りません）。Google 3D を接続したときだけ、Google のタイル配信先へ API キー付きでタイルを要求します。キーは保存しません。外部リンク（参考資料）はクリックしたときだけ開きます。' }),
         h('h3', { text: 'ライセンス' }),

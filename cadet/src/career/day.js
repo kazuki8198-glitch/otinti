@@ -125,9 +125,12 @@ const w180 = (a) => ((a % 360) + 540) % 360 - 180;
 // (M7) fault: 'mag' — the left magneto drops beyond the limit in the run-up (the game sets it in aircraft/systems.js):
 // the day stops at that item and asks the cadet (decideFault: 'return' to the stand and the mechanic, 'burn' — a lean
 // run-up to clear a fouled plug, tried once; it stays out — or 'go', which the instructor will not let happen)
-export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { a: 636.5, c: 207.6 }, plan = null, weather = {}, fault = null } = {}) {
+export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { a: 636.5, c: 207.6 }, plan = null, weather = {}, fault = null, elecFault = false } = {}) {
   const P = FL.physics, SC = FL.school, R = P.LAB_RWY;
   const PLAN = plan || { main: 'a2', solo: false, lessons: DAY1.lessons };
+  // the level the day is actually flown at: chosen in the seat when the day begins (the game says it with
+  // setLevel) — the summary reports it, and the growth of the day's lessons is read off it
+  let flownLevel = ['intro', 'basic', 'precision'].includes(level) ? level : 'basic';
   setCall(PLAN.aircraft || 'pa28');                          // (today's aircraft is the radio's call sign)
   const steps = stepsFor(FL, PLAN.lessons);
   const intent = PLAN.lessons.some(id => startKind(FL, id) === 'area') ? 'area' : 'pattern';
@@ -141,7 +144,10 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     phase: 'walk', step: 0, list: null, i: 0, flown: [], ticked: [], skipped: [], memo: { both: 0, dropL: 0, dropR: 0, carb: 0, idle: false, hold: { L: 0, R: 0, C: 0 } },
     lessons: {}, incursion: false, overHold: false, exit: '', stopAt: null, transit: 'skip', t: 0, airT: 0, blockT: 0, started: false, shutdown: false,
     trust: 0, notes: [], auto: { list: 0, taxi: 0 }, leftOn: [],
-    fault: fault === 'mag' ? { kind: 'mag', asked: false, tries: 0, decided: null, drop: 0 } : null,
+    fault: fault === 'mag' ? { kind: 'mag', asked: false, tries: 0, decided: null, drop: 0 } : fault === 'carb' ? { kind: 'carb' } : null,   // 'carb': a humid day — carburettor ice in flight, found on the instruments, not in the run-up
+    // an alternator-failure day: nothing to find on the ground — the bus sags in flight (systems.setElecFault);
+    // the day only carries the flag, fly-mode watches the voltage and the logbook notes it
+    elecFault: !!elecFault,
   };
   // what happened since the last update() (a phase entered from outside it — a lesson ended, the cadet boarded —
   // is told at the next one)
@@ -301,10 +307,11 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     if (st.crash) trust -= 6;
     const landings = lessons.filter(l => l.done && !l.crashed && l.end === 'stopped').length;
     return { walk: w, radio: r, lessons, plan: { main: PLAN.main, solo: !!PLAN.solo, xc: !!PLAN.xc, check: !!PLAN.check, aircraft: PLAN.aircraft || 'pa28', lessons: PLAN.lessons.slice() }, solo: !!PLAN.solo, landings,
-      incursion: st.incursion, crash: st.crash || '', fault: st.fault && st.fault.decided ? { ...st.fault } : null, transit: st.transit, blockT: st.blockT, airT: st.airT, autoItems: st.auto.list, leftOn: st.leftOn.slice(), trust: Math.max(-10, Math.min(12, trust)), level };
+      incursion: st.incursion, crash: st.crash || '', fault: st.fault && st.fault.decided ? { ...st.fault } : null, transit: st.transit, blockT: st.blockT, airT: st.airT, autoItems: st.auto.list, leftOn: st.leftOn.slice(), trust: Math.max(-10, Math.min(12, trust)), level: flownLevel };
   }
   return {
     radio, atc, walk, st, steps, plan: PLAN, info, nextLesson, update, confirm, assist, items, boarded, lessonEnded, lessonStarted, transitFlown, debriefRead, abortTo, summary, next, decideFault,
-    get phase() { return st.phase; }, get label() { return info(st.phase).label; }, get level() { return level; },
+    setLevel(lv) { if (['intro', 'basic', 'precision'].includes(lv)) flownLevel = lv; },
+    get phase() { return st.phase; }, get label() { return info(st.phase).label; }, get level() { return flownLevel; },
   };
 }

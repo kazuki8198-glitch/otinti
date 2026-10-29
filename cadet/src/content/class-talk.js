@@ -200,7 +200,7 @@ export const CLASS_DAY = [
   { hello: ['Good morning. 座学の最後は、第 5 章の規則と空域、第 11 章の人間の能力と判断です。', '午後の k6 は英語の聞き取りです。座学が終わったら学科試験、そのあとが初飛行です。'],
     review: '最後の授業の前に、これまでの問題から少し。',
     pace: '最後の授業です。進め方を選んでください。',
-    preview: ['午後の k6 は聞き取りの 10 問です。そのあとに学科試験の 28 問、そして初飛行。今日の IMSAFE は、その朝にも使います。'],
+    preview: ['午後の k6 は聞き取りの 10 問です。そのあとに学科試験の 30 問、そして初飛行。今日の IMSAFE は、その朝にも使います。'],
     bye: 'That\'s the end of ground school. 座学はこれでおしまいです、学科試験は落ち着いていきましょう。' },
 ];
 // the review's lines: a question missed before asked again first (said so)

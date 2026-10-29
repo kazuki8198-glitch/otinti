@@ -15,6 +15,7 @@ import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createDay, ORDER, planFor, stepsFor } from '../src/career/day.js';
+import { lessonGrowth } from '../src/career/career.js';
 import { debriefDialogs, DEBRIEF_HOOKS } from '../src/content/dialog/debrief.js';
 import { createRunner, createDialogState } from '../src/dialog/engine.js';
 import { validateDialogs } from '../src/dialog/validate.js';
@@ -89,6 +90,16 @@ test('day: a careless cadet — anomalies missed, a rope left on, a wrong read-b
   assert.ok(sum.trust < 6);
 });
 
+test('day: the debrief names the fatigue when the cadet flew tired (§4.5), whoever gives it', () => {
+  const base = { walk: { found: 0, missed: [], tasksLeft: [], anomalies: 0 }, radio: { n: 0, first: 0, wrong: 0, late: 0 }, lessons: [{ id: 'a1', title: '上昇・降下・レベルオフ', done: true, passed: true, grade: 'A', rows: [] }], trust: 3, incursion: false, crash: '', fault: null, tem: null };
+  const linesOf = (sum, voice) => { const lines = []; const r = createRunner({ data: debriefDialogs(sum, voice ? { voice } : {}), state: createDialogState() }); r.start('debrief'); for (let k = 0; k < 30 && r.running; k++) { const v = r.view(); lines.push(v.text); if (v.choices.length) r.choose(0); else r.next(); } return lines.join('\n'); };
+  assert.match(linesOf({ ...base, tired: true }), /疲労が判断と操縦に出ていました/);
+  assert.doesNotMatch(linesOf({ ...base, tired: false }), /疲労が判断と操縦に出ていました/, 'not tired: not said');
+  assert.doesNotMatch(linesOf({ ...base, tired: true, lessons: [{ ...base.lessons[0], done: false }] }), /疲労が判断と操縦に出ていました/, 'nothing flown: not said');
+  for (const voice of ['chief', 'examiner']) assert.match(linesOf({ ...base, tired: true }, voice), /疲労が判断と操縦に出ていました/, `${voice} says it too`);
+  assert.deepEqual(validateDialogs(debriefDialogs({ ...base, tired: true }), {}).errors, []);
+});
+
 // (M6) more anomalies on both aircraft: the lens, the brake (its stain on the apron), the nose strut, the trim tab, the
 // papers (the cadet sends for them) — each can be planted, found and put right
 test('day: the walk-around\'s later anomalies — planted on either aircraft, reported or put right, the brake\'s stain shown', async () => {
@@ -146,4 +157,25 @@ test('day (M7): the debrief in three voices — the instructor, the chief instru
   }
   assert.match(exam.join(''), /記録/); assert.match(chief.join(''), /審査/);
   assert.notEqual(chief.join(''), exam.join(''));
+});
+
+test('day: a carb day is a fault of its own kind — nothing for the run-up to find or decide', () => {
+  const d = createDay(FL, { fault: 'carb' });
+  assert.equal(d.st.fault.kind, 'carb');
+  assert.equal(d.st.fault.decided, undefined);
+  assert.equal(createDay(FL, {}).st.fault, null);
+});
+
+test('day: the level the day is flown at is the level its summary reports — the growth reads it off the summary', () => {
+  const day = createDay(FL, { seed: 5, plan: planFor(FL, 'a1') });
+  assert.equal(day.level, 'basic'); assert.equal(day.summary().level, 'basic', 'the default, as before');
+  // the level chosen in the seat (fly-mode's beginDay says it with setLevel): the summary — what main.js's
+  // applyFlightGrowth reads — goes by it, so a precision day grows at precision, an intro day at intro
+  day.setLevel('precision');
+  assert.equal(day.level, 'precision'); assert.equal(day.summary().level, 'precision');
+  day.setLevel('bogus'); assert.equal(day.summary().level, 'precision', 'an unknown level is not taken');
+  const hand = (lv) => lessonGrowth('A', lv, 'a1').find(([a]) => a === 'hand')[1];
+  assert.ok(Math.abs(hand(day.summary().level) - hand('basic') * 1.3) < 1e-9, 'a precision A grows the hand at 1.3 of a basic one');
+  day.setLevel('intro');
+  assert.ok(Math.abs(hand(day.summary().level) - hand('basic') * 0.5) < 1e-9, 'an intro A at half');
 });

@@ -146,14 +146,98 @@ test('drawing: the PFD and MFD give no NaN / Infinity to the canvas (both aircra
   }
 });
 
-test('MFD engine strip: unimplemented engine values are shown as "—", not as made-up normal values', () => {
+test('MFD engine strip: every value with a model is shown real — oil, EGT, the twin\'s manifold pressure, volts and amps; nothing is made up', () => {
+  // (changed twice over: OIL PSI / OIL °F / VOLTS / AMPS used to be pinned to '—' here until the electrical model
+  // landed — oil pressure off rpm, oil temperature lagging power, a battery + alternator — and EGT / MAN IN until
+  // the powerplant model landed. With both in, the whole strip is real; the '—' convention stays for any value a
+  // caller does not provide.)
   const texts = [];
   const g = new Proxy({}, { get: (t, k) => (k in t ? t[k] : (...a) => { if (k === 'fillText') texts.push(String(a[0])); }), set: (t, k, v) => { t[k] = v; return true; } });
   const av = A.createAvionics(), s = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100);
+  for (let t = 0; t < 20; t += 1 / 30) P.step(s, 1 / 30);          // (let the oil pressure come up)
   A.drawMFD(g, 640, 420, panel(s, av));
-  for (const lab of ['OIL PSI', 'OIL °F', 'EGT °F']) { const i = texts.indexOf(lab); assert.ok(i >= 0, lab); assert.equal(texts[i + 1], '—', `${lab} shows —`); }
-  assert.ok(texts.some(t => /未実装/.test(t)));
+  const after = lab => { const i = texts.indexOf(lab); assert.ok(i >= 0, lab); return texts[i + 1]; };
+  const oilP = Number(after('OIL PSI')); assert.ok(oilP >= 40 && oilP <= 90, `OIL PSI ${oilP}`);
+  assert.ok(Number(after('OIL °F')) > s.out.oat * 9 / 5 + 32, 'OIL °F above the day\'s air, and warming');
+  assert.match(after('EGT °F'), /^\d+$/, 'EGT shows its real value');
+  const volts = Number(after('VOLTS')); assert.ok(volts > 13.5 && volts < 14.6, `VOLTS ${volts}`);
+  assert.notEqual(after('AMPS'), '—', 'AMPS shows its real value');
+  assert.ok(texts.some(t => /未実装/.test(t)), 'the footer still explains the — convention');
   assert.ok(texts.some(t => /NOT FOR NAVIGATION/.test(t)));
+  // the twin: stepped a few seconds so the gauges settle — MAN IN reads L/R manifold pressures, EGT reads L/R
+  const t2 = P.placeInAir(P.newState({ aircraft: 'pa44' }), 0, -40000, 3000, 354, 110);
+  for (let i = 0; i < 600; i++) P.step(t2, 1 / 120);
+  const texts2 = [];
+  const g2 = new Proxy({}, { get: (t, k) => (k in t ? t[k] : (...a) => { if (k === 'fillText') texts2.push(String(a[0])); }), set: (t, k, v) => { t[k] = v; return true; } });
+  A.drawMFD(g2, 640, 420, panel(t2, A.createAvionics()));
+  { const i = texts2.indexOf('MAN IN'); assert.ok(i >= 0, 'MAN IN'); assert.match(texts2[i + 1], /^\d+\.\d\/\d+\.\d$/, 'MAN IN shows L/R'); }
+  { const i = texts2.indexOf('EGT °F'); assert.ok(i >= 0, 'EGT °F'); assert.match(texts2[i + 1], /^\d+\/\d+$/, 'EGT shows L/R'); }
+});
+
+test('GPS CDI full scale follows the phase: 2.0 en route, 1.0 terminal, 0.3 on the final leg to an airport', () => {
+  const av = A.createAvionics(), o = { gs: 100, trk: 0, hdgTrue: 0, altTrue: 3000 };
+  // the default plan's active leg ends at LABEA (a waypoint): far is en route, near is terminal, never approach
+  assert.equal(A.navSolve(av, { n: 9000, e: -34000 - 40 * 1852 }, o, 6, P.LAB_RWY).cdiScale, 2.0);
+  assert.equal(A.navSolve(av, { n: 9000, e: -34000 - 10 * 1852 }, o, 6, P.LAB_RWY).cdiScale, 1.0);
+  assert.equal(A.navSolve(av, { n: 9000, e: -34000 - 3 * 1852 }, o, 6, P.LAB_RWY).cdiScale, 1.0, 'a waypoint final is still terminal scale');
+  // the final leg into the airport waypoint (LABRW): within 5 NM the scale tightens to 0.3
+  av.fpl.wps = ['LABEA', 'LABRW']; av.fpl.active = 1;
+  assert.equal(A.navSolve(av, { n: -1200 - 3 * 1852, e: -40000 }, o, 6, P.LAB_RWY).cdiScale, 0.3);
+  assert.equal(A.navSolve(av, { n: -1200 - 20 * 1852, e: -40000 }, o, 6, P.LAB_RWY).cdiScale, 1.0);
+  // the same half-mile cross-track deflects the needle twice as far at terminal scale as en route
+  const av2 = A.createAvionics();
+  const enr = A.navSolve(av2, { n: -51506, e: -70667 }, o, 6, P.LAB_RWY), ter = A.navSolve(av2, { n: -3612, e: -42494 }, o, 6, P.LAB_RWY);
+  assert.equal(enr.cdiScale, 2.0); assert.equal(ter.cdiScale, 1.0);
+  near(Math.abs(ter.dots), Math.abs(enr.dots) * 2, 0.05, 'needle deflection follows the scale');
+});
+
+test('transponder: the code is set from the XPDR menu, digit by digit, and the mode cycles', () => {
+  const av = A.createAvionics();
+  assert.deepEqual(av.xpdr, { code: 1200, mode: 'ALT', entry: '' });
+  A.control(av, 'XPDR'); assert.equal(av.pfdMenu, 'XPDR');
+  for (const d of [4, 2, 1]) { A.control(av, 'XPDR_DIGIT', d); assert.equal(av.xpdr.code, 1200, 'not set until the fourth digit'); }
+  assert.equal(av.xpdr.entry, '421');
+  A.control(av, 'XPDR_BKSP'); assert.equal(av.xpdr.entry, '42');
+  A.control(av, 'XPDR_DIGIT', 1); A.control(av, 'XPDR_DIGIT', 5);
+  assert.equal(av.xpdr.code, 4215); assert.equal(av.xpdr.entry, '');
+  A.control(av, 'XPDR_MODE'); assert.equal(av.xpdr.mode, 'ON');
+  A.control(av, 'XPDR_MODE'); assert.equal(av.xpdr.mode, 'STBY');
+  A.control(av, 'XPDR_MODE'); assert.equal(av.xpdr.mode, 'ALT');
+  A.control(av, 'XPDR'); assert.equal(av.pfdMenu, 'TOP');
+  A.control(av, 'XPDR'); A.control(av, 'XPDR_DIGIT', 9); assert.equal(av.xpdr.entry, '7', 'a squawk digit is 0–7');
+});
+
+test('electrics and oil: the alternator charges, a failed one drains, oil and the Hobbs follow the engines', () => {
+  const step = (s, sec) => { for (let t = 0; t < sec; t += 1 / 30) P.step(s, 1 / 30); };
+  const s = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100), h0 = s.hobbs;
+  step(s, 12);
+  assert.ok(s.out.volts > 13.5 && s.out.volts < 14.6, `volts ${s.out.volts}`);
+  assert.ok(s.out.oilP[0] >= 40 && s.out.oilP[0] <= 90, `oilP ${s.out.oilP}`);
+  assert.ok(s.out.oilT[0] > s.out.oat * 9 / 5 + 32, 'the oil is warming');
+  near(s.hobbs, h0 + 12 / 3600, 0.002, 'the Hobbs turns with the engine');
+  // the alternator failed and the battery is tired: negative amps, a sagging bus
+  s.elec.altFail = true; s.elec.batt = 0.5; step(s, 5);
+  assert.ok(s.out.amps < 0, `amps ${s.out.amps}`); assert.ok(s.out.volts < 12.2, `volts ${s.out.volts}`);
+  // on the ground with the engines cut: the battery drains on the panel load, the Hobbs and the oil stop
+  const s2 = P.placeOnRunway(P.newState());
+  step(s2, 10); assert.ok(s2.out.oilP[0] > 30, `oil up at idle ${s2.out.oilP}`);
+  s2.eng.forEach(e => { e.cut = true; }); const b0 = s2.elec.batt, h1 = s2.hobbs;
+  step(s2, 30);
+  assert.ok(s2.elec.batt < b0, 'draining'); assert.equal(s2.hobbs, h1, 'the Hobbs is stopped'); assert.ok(s2.out.oilP[0] < 5, 'oil pressure gone');
+  // the twin: two oil readings, one per engine
+  const s3 = P.placeInAir(P.newState({ aircraft: 'pa44' }), 0, -40000, 3000, 354, 130);
+  step(s3, 12);
+  assert.equal(s3.out.oilP.length, 2); assert.ok(s3.out.oilP.every(p => p >= 40 && p <= 90), `twin oilP ${s3.out.oilP}`);
+  assert.equal(s3.out.oilT.length, 2);
+});
+
+test('PFD altitude readout: the drum turns in 20 ft steps (the tape itself stays smooth)', () => {
+  const texts = [];
+  const g = new Proxy({}, { get: (t, k) => (k in t ? t[k] : (...a) => { if (k === 'fillText') texts.push(String(a[0])); }), set: (t, k, v) => { t[k] = v; return true; } });
+  const av = A.createAvionics(), s = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100);
+  A.drawPFD(g, 640, 420, panel(s, av, { ...s.out, altTrue: 3013 }));
+  assert.ok(!texts.includes('3013') && !texts.includes('3010'), 'no 1 ft (or 10 ft) readout');
+  assert.ok(texts.includes('3000'), 'reads the nearest 20');
 });
 
 test('failures on the displays: AHRS failure flags the attitude and heading, GPS failure flags the GPS course', () => {

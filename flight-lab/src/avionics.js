@@ -123,7 +123,8 @@
       comSel: 'COM1', navSel: 'NAV1',
       hdgBug: 360, altSel: 3000, baro: 29.92, baroUnit: 'IN', crs: 360,
       cdi: 'GPS',                 // GPS → VOR1/LOC1 → VOR2/LOC2 → GPS (the CDI softkey)
-      pfdMenu: 'TOP',             // the PFD's softkey level: TOP / PFD / ALTUNIT
+      xpdr: { code: 1200, mode: 'ALT', entry: '' },   // the transponder: the code ATC assigns, set from the XPDR menu
+      pfdMenu: 'TOP',             // the PFD's softkey level: TOP / PFD / ALTUNIT / XPDR
       wind: true, mfdPage: 'MAP', mfdRangeIdx: 4, mapNorthUp: true,
       fpl: { wps: ['LABRW', 'LABEA', 'LABEB'], active: 1 },
       direct: null, directFrom: null,   // D→ target id (overrides the flight plan leg) and where the D→ leg starts
@@ -158,6 +159,11 @@
       case 'RANGE': av.mfdRangeIdx = clamp(av.mfdRangeIdx + dir, 0, RANGES.length - 1); return `RANGE ${RANGES[av.mfdRangeIdx]} NM`;
       case 'NORTH_UP': av.mapNorthUp = !av.mapNorthUp; return av.mapNorthUp ? 'MAP NORTH UP' : 'MAP TRACK UP';
       case 'PFD_MENU': av.pfdMenu = dir; return `PFD ${dir}`;
+      case 'XPDR': av.pfdMenu = av.pfdMenu === 'XPDR' ? 'TOP' : 'XPDR'; av.xpdr.entry = ''; return `XPDR ${String(av.xpdr.code).padStart(4, '0')}`;
+      case 'XPDR_DIGIT': { const x = av.xpdr; if (x.entry.length >= 4) x.entry = ''; x.entry += clamp(dir | 0, 0, 7);
+        if (x.entry.length === 4) { x.code = parseInt(x.entry, 10); x.entry = ''; return `XPDR ${String(x.code).padStart(4, '0')} セット`; } return `XPDR ${x.entry}`; }
+      case 'XPDR_BKSP': av.xpdr.entry = av.xpdr.entry.slice(0, -1); return `XPDR ${av.xpdr.entry || String(av.xpdr.code).padStart(4, '0')}`;
+      case 'XPDR_MODE': { const modes = ['ALT', 'ON', 'STBY']; av.xpdr.mode = modes[(modes.indexOf(av.xpdr.mode) + 1) % modes.length]; return `XPDR ${av.xpdr.mode}`; }
       case 'WIND': av.wind = !av.wind; return `WIND ${av.wind ? 'ON' : 'OFF'}`;
       case 'DIRECT': av.direct = dir || null; av.directFrom = null; return dir ? `D→ ${dir}` : 'D→ 解除';
       case 'FPL_NEXT': av.fpl.active = clamp(av.fpl.active + dir, 1, av.fpl.wps.length - 1); av.direct = null; return `ACTIVE LEG → ${av.fpl.wps[av.fpl.active]}`;
@@ -173,7 +179,7 @@
   // ---------------------------------------------------------------- navigation solution for the displays
   // pos: { n, e } (metres), o: the physics outputs (gs, trk, hdgTrue, altTrue), magvar W
   function navSolve(av, pos, o, varW, rwy) {
-    const out = { src: cdiName(av), dots: 0, toFrom: '', dtk: null, dis: null, ete: null, xtk: null, gsDots: null, brg: null, from: '', to: '', flag: '', crs: av.crs };
+    const out = { src: cdiName(av), dots: 0, toFrom: '', dtk: null, dis: null, ete: null, xtk: null, gsDots: null, brg: null, from: '', to: '', flag: '', crs: av.crs, cdiScale: null };
     // the GPS leg: direct-to, or the flight plan's active leg
     let A = null, B = null;
     if (av.direct) {
@@ -190,7 +196,12 @@
     }
     if (av.cdi === 'GPS') {
       out.crs = out.dtk ?? av.crs;
-      out.dots = out.xtk != null ? cdiGps(out.xtk, 1.0) : 0; out.toFrom = 'TO'; out.flag = gpsFail ? 'NO GPS' : B ? '' : 'NO LEG';
+      // the GPS CDI's full scale follows the flight phase, as the real G1000's does: 2.0 NM en route (more than
+      // 30 NM from the leg's destination), 1.0 NM terminal (within 30 NM), 0.3 NM on the final leg into an
+      // airport waypoint within 5 NM (a direct-to counts as a final leg)
+      const finalLeg = av.direct ? true : av.fpl.active >= av.fpl.wps.length - 1;
+      out.cdiScale = B && B.kind === 'apt' && finalLeg && out.dis != null && out.dis <= 5 ? 0.3 : out.dis != null && out.dis > 30 ? 2.0 : 1.0;
+      out.dots = out.xtk != null ? cdiGps(out.xtk, out.cdiScale) : 0; out.toFrom = 'TO'; out.flag = gpsFail ? 'NO GPS' : B ? '' : 'NO LEG';
     } else {
       const r = av[av.cdi.toLowerCase()], aid = NAVAIDS.find(x => x.freq === r.act);
       if (!aid) { out.flag = 'NO SIGNAL'; out.dots = 0; out.toFrom = ''; }
@@ -307,7 +318,7 @@
     poly(g, [[ax, clamp(ySel, ty0, ty0 + th) - 8], [ax + 10, clamp(ySel, ty0, ty0 + th) - 8], [ax + 10, clamp(ySel, ty0, ty0 + th) + 8], [ax, clamp(ySel, ty0, ty0 + th) + 8], [ax + 5, clamp(ySel, ty0, ty0 + th)]], C.cyan);
     g.restore();
     poly(g, [[ax + aw - 2, cy - 15], [ax + 12, cy - 15], [ax + 2, cy], [ax + 12, cy + 15], [ax + aw - 2, cy + 15]], '#000', C.white, 2);
-    txt(g, Math.round(altInd), ax + aw * 0.55, cy, 20, C.white, 'center', 700);
+    txt(g, Math.round(altInd / 20) * 20, ax + aw * 0.55, cy, 20, C.white, 'center', 700);   // (the drum reads in 20 ft steps, as the real one)
     box(g, ax, ty0 - 24, aw, 22, '#000', C.line); txt(g, av.altSel, ax + aw / 2, ty0 - 13, 15, C.cyan);
     box(g, ax, ty0 + th, aw, 22, '#000', C.line);
     txt(g, av.baroUnit === 'IN' ? `${av.baro.toFixed(2)}IN` : `${Math.round(inhgToHpa(av.baro))}HPA`, ax + aw / 2, ty0 + th + 11, 14, C.cyan);
@@ -354,6 +365,11 @@
     box(g, hx + hr + 6, hy - hr - 10, 86, 22, '#000', C.line); txt(g, `CRS ${hdgFmt(fin(nav.crs, av.crs))}°`, hx + hr + 49, hy - hr + 1, 14, av.cdi === 'GPS' ? C.magenta : C.green);
     txt(g, nav.src, hx - hr * 0.55, hy - hr * 0.3, 14, ccol);
     if (nav.dme != null && av.cdi !== 'GPS') { box(g, hx - hr - 92, hy - hr + 16, 86, 22, '#000', C.line); txt(g, `DME ${nav.dme.toFixed(1)}NM`, hx - hr - 49, hy - hr + 27, 13, C.green); }
+    // the transponder: the code in use (cyan while a new one is being typed in the XPDR menu), the mode when not ALT
+    if (av.xpdr) { const editing = av.xpdr.entry.length > 0;
+      box(g, hx + hr + 6, hy - hr + 16, 92, 22, '#000', C.line);
+      txt(g, `XPDR ${editing ? (av.xpdr.entry + '---').slice(0, 4) : String(av.xpdr.code).padStart(4, '0')}`, hx + hr + 52, hy - hr + 27, 13, editing ? C.cyan : C.green);
+      if (av.xpdr.mode !== 'ALT') txt(g, av.xpdr.mode, hx + hr + 104, hy - hr + 27, 10, C.yellow, 'left'); }
     if (nav.flag) txt(g, nav.flag, hx, hy + hr * 0.55, 13, C.yellow);
     // --- the glide slope (LOC with a glide path) ---
     if (nav.gsDots != null && av.cdi !== 'GPS') {
@@ -397,7 +413,7 @@
     g.restore();
     line(g, sx + 24, sy + 58, sx + 34, sy + 58, C.yellow, 3); line(g, sx + 46, sy + 58, sx + 56, sy + 58, C.yellow, 3);
     txt(g, `${ias < 20 ? '---' : Math.round(ias)}`, sx + 96, sy + 36, 14); txt(g, 'KT', sx + 96, sy + 50, 9, C.grey);
-    txt(g, `${Math.round(altInd / 10) * 10}`, sx + 96, sy + 72, 14); txt(g, 'FT', sx + 96, sy + 86, 9, C.grey);
+    txt(g, `${Math.round(altInd / 20) * 20}`, sx + 96, sy + 72, 14); txt(g, 'FT', sx + 96, sy + 86, 9, C.grey);
     // --- the engine status (this teaching layout shows it on the PFD too) ---
     const engs = d.eng && d.eng.length ? d.eng : [{ run: true, rpm: o.rpm }], run = engs.some(e => e.run), allRun = engs.every(e => e.run);
     const ey = H - 136;
@@ -413,6 +429,8 @@
     if (o.stallWarn) { box(g, cx - 60, cy + 70, 120, 26, C.red, null); txt(g, 'STALL', cx, cy + 83, 18, '#fff', 'center', 800); }
     if (!run && !o.onGround) { box(g, cx - 90, cy + 100, 180, 22, '#3a0d0d', C.red); txt(g, 'ENGINE STOP — 滑空', cx, cy + 111, 13, C.red, 'center', 700, jp); }
     else if (!allRun) { box(g, cx - 100, cy + 100, 200, 22, '#3a2a0d', C.yellow); txt(g, `${engs[0].run ? 'R' : 'L'} ENGINE INOP — 片発`, cx, cy + 111, 13, C.yellow, 'center', 700, jp); }
+    // the bus is sagging and nothing is charging it (an alternator failure, or everything off a tired battery)
+    if (fin(o.volts, 99) < 12.2 && fin(o.amps, 0) < -0.5) { box(g, cx - 80, cy + 130, 160, 22, '#3a2a0d', C.yellow); txt(g, 'LOW VOLTS — 電圧低下', cx, cy + 141, 13, C.yellow, 'center', 700, jp); }
     // the teaching label
     txt(g, 'G1000型 教材表示 · NOT FOR NAVIGATION', W / 2, H - 8, 10, C.grey, 'center', 600, jp);
     g.restore();
@@ -438,20 +456,28 @@
       txt(g, Math.round(rpm), rx, ry + 22, twin ? 13 : 16, e.run ? C.white : C.red, 'center', 700); txt(g, twin ? (i ? 'R RPM' : 'L RPM') : 'RPM', rx, ry + 38, 11, C.grey);
     });
     const run = engs.some(e => e.run);
+    // the engine's own gauges, all from the models now: the oil (per engine: the twin reads L/R) and the bus from
+    // the electrical model (physics' own, or CADET's systems through the glass), the manifold pressure (the twin)
+    // and the exhaust temperatures from the powerplant model — leaning is flown by the EGT, and the Seminole's
+    // power is set by the manifold pressure
+    const egts = o.egts && o.egts.length ? o.egts : [o.egt || 0], manIns = o.manIns && o.manIns.length ? o.manIns : [o.manIn || 0];
+    const oilP = o.oilP || [], oilT = o.oilT || [];
+    const pair = (a, fmt) => (a.length > 1 ? `${fmt(a[0])}/${fmt(a[1])}` : a.length ? fmt(a[0]) : '—');
     const rows = [
       ['出力 PWR', run ? `${fin(o.powerPct)} %` : '0 %', run ? fin(o.powerPct) / 100 : 0, '教材モデルの出力'],
       ['FFLOW GPH', fin(o.fuelFlow).toFixed(1), fin(o.fuelFlow) / (twin ? 24 : 12), ''],
-      [twin ? 'MAN IN' : 'OIL PSI', '—', null, '未実装'],
-      ['OIL °F', '—', null, '未実装'],
-      ['EGT °F', '—', null, '未実装'],
+      ...(twin ? [['MAN IN', pair(manIns, v => fin(v).toFixed(1)), Math.max(fin(manIns[0]), fin(manIns[1] || 0)) / 30, '']] : []),
+      ['OIL PSI', pair(oilP, v => `${Math.round(fin(v))}`), twin || !oilP.length ? null : fin(oilP[0]) / 85, oilP.length ? '' : '未実装'],
+      ['OIL °F', pair(oilT, v => `${Math.round(fin(v))}`), null, oilT.length ? '' : '未実装'],
+      ['EGT °F', pair(egts, v => `${Math.round(fin(v))}`), Math.max(fin(egts[0]), fin(egts[1] || 0)) / 1700, ''],
       ['FUEL L GAL', fin(o.fuel && o.fuel[0]).toFixed(1), fin(o.fuel && o.fuel[0]) / cap, ''],
       ['FUEL R GAL', fin(o.fuel && o.fuel[1]).toFixed(1), fin(o.fuel && o.fuel[1]) / cap, ''],
-      ['VOLTS', '—', null, '未実装'],
-      ['AMPS', '—', null, '未実装'],
+      ['VOLTS', o.volts == null ? '—' : fin(o.volts).toFixed(1), null, o.volts == null ? '未実装' : '', o.volts != null && fin(o.volts) < 11.5 ? C.red : o.volts != null && fin(o.volts) < 12.2 ? C.yellow : null],
+      ['AMPS', o.amps == null ? '—' : `${fin(o.amps) > 0 ? '+' : ''}${Math.round(fin(o.amps))}`, null, o.amps == null ? '未実装' : '', o.amps != null && fin(o.amps) < 0 ? C.yellow : null],
     ];
     let y = 124; const dy = Math.max(26, Math.min(38, (H - 150) / rows.length));
-    for (const [lab, val, frac, note] of rows) {
-      txt(g, lab, 8, y, 11, C.grey, 'left', 600, jp); txt(g, val, ew - 8, y, 13, val === '—' ? C.grey : C.white, 'right', 700);
+    for (const [lab, val, frac, note, vcol] of rows) {
+      txt(g, lab, 8, y, 11, C.grey, 'left', 600, jp); txt(g, val, ew - 8, y, 13, val === '—' ? C.grey : vcol || C.white, 'right', 700);
       if (frac != null) { box(g, 8, y + 9, ew - 16, 6, '#1b222b', null); g.fillStyle = C.green; g.fillRect(8, y + 9, (ew - 16) * clamp(frac, 0, 1), 6); }
       else txt(g, note, ew - 8, y + 12, 9, C.grey, 'right', 500, jp);
       y += dy;

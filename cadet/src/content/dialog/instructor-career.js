@@ -5,7 +5,9 @@
 //  - early: the prologue's morning, before the meeting — where to go first (the welcome, the tour);
 //  - ground: during chapter 1 (classes and the training device) — a word, the textbook to ask about;
 //  - day: on a flying day, before the briefing: how the cadet feels (IMSAFE: tired or not — the honest answer is the
-//    right one), then the day's briefing (instructorDialogs' 'brief');
+//    right one), then one question about yesterday's debrief (its main missed item, kept by the career: ctx miss,
+//    hook 'miss' with the choice's index — the game says whether it was yesterday's, and clears the record), then
+//    the day's briefing (instructorDialogs' 'brief');
 //  - study: a day the weather keeps them on the ground — the next lesson's reading, its figure on the screen;
 //  - solo: the morning of the first solo — what is allowed, what to do if anything is not right;
 //  - celebrate: by the aircraft after the solo — the shirt tail, the logbook's endorsement;
@@ -22,14 +24,26 @@
 // is signed off), 'look', 'nod', 'point'.
 import { INSTRUCTOR } from './instructor.js';
 
-export const CAREER_HOOKS = ['imsafe', 'done', 'board', 'logbook', 'solo', 'look', 'nod', 'point', 'tem'];
+export const CAREER_HOOKS = ['imsafe', 'done', 'board', 'logbook', 'solo', 'look', 'nod', 'point', 'tem', 'miss'];
 export const CAREER_FLAGS = ['met_instructor', 'soloed', 'briefed_today', 'prologue_short'];
 const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' }, kiryu: { name_ja: '桐生', color: '#c9b6ff' }, asahi: { name_ja: '朝日', color: '#ffc4a8' }, mori: { name_ja: '森', color: '#a8e3ff' } };
 // the context: today { lessonTitle, studyTitle, studySection (a textbook section with a figure, or '') },
-// imsafe { honest (true / false) }, career { tired }
+// imsafe { honest (true / false) }, career { tired }, miss { on, label, o0..o2, right } (yesterday's debrief)
 export const CAREER_SAMPLE = { today: { lessonTitle: '「直線水平飛行」', studyTitle: '「場周経路」', studySection: 'ops.pattern', intro: '', checkTitle: 'ソロ前の審査', checkWho: '真壁さん', checkId: 'c1', en: { checkTitle: 'pre-solo check', checkWho: 'Mr. Makabe' } }, imsafe: { honest: true }, career: { tired: false, slot: 'morning', chapter: 'ch2' },
+  miss: { on: true, label: '「直線水平飛行」の高度', o0: '「直線水平飛行」の高度', o1: '無線の復唱', o2: '停止線の手前で止まること', right: true },
   tem: { on: true, o0: '午後の雷雨', o1: '場周の混雑（ほかの訓練機）', o2: '朝の霧', right: true, threat: '場周の混雑（ほかの訓練機）', why: '今日は天気が良く、ほかの訓練機もたくさん飛んでいます', plan: '見張りを続ける', not: '',
     en: { threat: 'a busy pattern (other trainers)', why: 'The weather is good today and many other trainers are flying', plan: 'keep looking out', not: '' } } };
+// yesterday's debrief asked about once, before the briefing (skipped when ctx miss.on is false: on to `next`):
+// which of the three was its main point — the record is cleared by the answer's hook, so it is asked only once
+const missNodes = (say, p, next) => ({
+  [p]: say('その前に、昨日の講評から一つ。昨日の飛行で、いちばんの反省点はどれでしたか。', { if: { ctx: 'miss.on', is: true }, else: next, hook: { name: 'look', arg: 'player' }, choices: [
+    { text: '{miss.o0}', next: p + ':a', effects: [{ hook: 'miss', arg: '0' }] },
+    { text: '{miss.o1}', next: p + ':a', effects: [{ hook: 'miss', arg: '1' }] },
+    { text: '{miss.o2}', next: p + ':a', effects: [{ hook: 'miss', arg: '2' }] },
+  ] }),
+  [p + ':a']: say('そう、それです。「{miss.label}」。今日は、そこを意識して飛びましょう。', { if: { ctx: 'miss.right', is: true }, else: p + ':b', hook: { name: 'nod' }, next }),
+  [p + ':b']: say('昨日のいちばんは「{miss.label}」でした。今日は、そこを意識して飛びましょう。', { next }),
+});
 // (M6) TEM's three nodes: the question (skipped when ctx tem.on is false: on to `next`), today's threat named, or not
 const temNodes = (say, p, next) => ({
   [p]: say('飛ぶ前に、TEM です。今日の「脅威」をひとつ挙げてください。今日いちばん気をつけることは、何ですか。', { if: { ctx: 'tem.on', is: true }, else: next, hook: { name: 'look', arg: 'player' }, choices: [
@@ -136,7 +150,8 @@ export function careerInstructorDialogs() {
       { text: '問題ありません。よく眠れました', next: 'd:fit', effects: [{ hook: 'imsafe', arg: 'fit' }] },
       { text: '正直、少し疲れています', next: 'd:tired', effects: [{ hook: 'imsafe', arg: 'tired' }] },
     ] }),
-    'd:fit': say('それならよかった。では、今日の課目です。', { if: { ctx: 'imsafe.honest', is: true }, else: 'd:fit:no', hook: { name: 'nod' }, next: 'd:tem' }),
+    'd:fit': say('それならよかった。では、今日の課目です。', { if: { ctx: 'imsafe.honest', is: true }, else: 'd:fit:no', hook: { name: 'nod' }, next: 'd:miss' }),
+    ...missNodes(say, 'd:miss', 'd:tem'),
     ...temNodes(say, 'd:tem', 'brief:menu'),
     'd:fit:no': say('……そうですか？ 顔に疲れが出ていますよ。疲れは、自分ではいちばん気づきにくいものです。今日は飛ぶのをやめて、地上で復習にしましょう。', { effects: [{ trust: 'instructor', add: -3 }], end: true }),
     'd:tired': say('言ってくれてありがとう。それがいちばん大事な判断です。今日は飛ばずに、地上で次の課目の予習をしましょう。今夜は早く寝てください。', { if: { ctx: 'imsafe.honest', is: true }, else: 'd:tired:ok', effects: [{ trust: 'instructor', add: 2 }], hook: { name: 'nod' }, end: true }),

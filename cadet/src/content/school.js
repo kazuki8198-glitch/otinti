@@ -22,7 +22,7 @@ import { notesFor } from './lecture-notes/index.js';
 import { evalCond } from '../dialog/engine.js';
 import { ourCall, CALL } from './dialog/atc.js';
 import { PEOPLE } from './people.js';
-import { EXAMS, CLASSES, CLASS_FTD, PACE_IDS, heardSet, FTD_TITLES } from '../career/career.js';
+import { EXAMS, CLASSES, CLASS_FTD, PACE_IDS, heardSet, FTD_TITLES, weatherFor } from '../career/career.js';
 import { BANK_ANSWERS, SCENE_ANSWERS, DRILL_ANSWERS, LISTEN_ANSWERS, NOTE_ANSWERS, EVENT_ANSWERS } from './answer-map.js';
 import { SUMMARIES } from './lecture-summaries.js';
 import * as TALK from './class-talk.js';
@@ -1151,7 +1151,7 @@ export function examDialogs(FL, id, { seed = 1, speaker, exam = null, attempt = 
     N.hello = { speaker: who, text: `${E.title}：この分野は、まだ授業で話していません。授業で聞いたあとに、また開いてください。`, end: true };
     return { speakers: SPEAKERS, flags: [], hooks: [...SCHOOL_HOOKS], dialogs: { exam: { start: 'hello', nodes: N } }, questions: [] };
   }
-  N.hello = { speaker: who, text: `${E.title}です。${qs.length} 問、${E.pass}% 以上で合格。答えを選ぶと、すぐに正解と理由を言います。`, hook: { name: 'look', arg: 'player' }, next: 'q0' };
+  N.hello = { speaker: who, text: `${E.title}です。${qs.length} 問、${E.pass}% 以上で合格${exam ? '' : '（分野ごとに 6 割以上も必要です）'}。答えを選ぶと、すぐに正解と理由を言います。`, hook: { name: 'look', arg: 'player' }, next: 'q0' };
   // (a warm-up of chapters mixed, before the test: not scored, its answers kept)
   if (warm && warm.length) {
     const E2 = [{ k: 'line', id: 'wu', text: '始める前に、章をまぜて 3 問だけ肩ならしをしましょう。点数には入りません。' },
@@ -1162,8 +1162,30 @@ export function examDialogs(FL, id, { seed = 1, speaker, exam = null, attempt = 
   }
   quizNodes(N, qs, { speaker: who, fitTo: LINE_MAX, fitQ: true });
   resultNodes(N, who, E.ok || (id === 'presolo' ? '合格です。これで、ソロ前の審査に進めます。' : '合格です。おめでとうございます。次は、いよいよ初飛行です。'),
-    '今回は届きませんでした。間違えた問題の理由を、教科書でもう一度確かめてください。また受けられます。');
+    // (a real test: the weak banks are named, and the next try is tomorrow — a practice keeps the old words)
+    exam ? '今回は届きませんでした。間違えた問題の理由を、教科書でもう一度確かめてください。また受けられます。'
+      : '今回は届きませんでした。{quiz.weakText}間違えた問題の理由を、教科書でもう一度確かめてください。また明日、受けられます。');
   return { speakers: SPEAKERS, flags: qs.map((_, k) => `qz_${k}`), hooks: [...SCHOOL_HOOKS], dialogs: { exam: { start: warm && warm.length ? 'wu' : 'hello', nodes: N } }, questions: qs };
+}
+// (growth design v1 §4.4) the judgement drill: ten mornings of weather to read — career.js's own sky, its
+// kinds in turn — each asked as the day's question is asked: fly, wait for the afternoon, fly in the
+// morning only, or not today. The right answer is the weather's own decision. Not a test: the count is
+// said at the end, and the career grows the judgement a little for finishing (twice a day at most)
+export const DRILL_CHOICES = [['go', '飛ぶ'], ['wait', '午後まで待つ'], ['early', '午前だけ飛ぶ'], ['cancel', '今日は飛ばない']];
+export function drillDialogs(FL, state, { attempt = 0 } = {}) {
+  const kinds = ['good', 'amFog', 'pmStorm', 'crosswind', 'storm', 'amLowCloud', 'pmWind', 'lowCloud'];
+  const r = rng((state.seed || 1) * 131 + (state.day || 1) * 17 + attempt * 7919);
+  const order = shuffled(kinds, r), qs = [];
+  for (let i = 0; i < 10; i++) {
+    const w = weatherFor(state.seed || 1, (state.day || 1) * 40 + i * 3 + attempt * 11, { force: order[i % order.length] });
+    const opts = shuffled(DRILL_CHOICES.slice(), r);
+    qs.push({ q: `朝の天気です。METAR（午前）「${w.metar.am}」／METAR（午後）「${w.metar.pm}」／TAF「${w.taf}」。今日の訓練は、どうしますか。`, opts: opts.map(([, ja]) => ja), ok: opts.findIndex(([d]) => d === w.decision), why: w.why });
+  }
+  const N = {};
+  N.hello = { speaker: 'lecturer', text: '判断ドリル：朝の天気（METAR と TAF）を 10 回読みます。飛ぶか、午後まで待つか、午前だけ飛ぶか、今日は飛ばないか。試験ではなく、判断の練習です。', hook: { name: 'look', arg: 'player' }, next: 'q0' };
+  quizNodes(N, qs, { speaker: 'lecturer', fitTo: LINE_MAX, fitQ: true });
+  resultNodes(N, 'lecturer', 'よく判断できていました。ドリルはここまでです。', 'ドリルはここまでです。迷った天気は、教科書の気象の節でもう一度確かめてみてください。');
+  return { speakers: SPEAKERS, flags: qs.map((_, k) => `qz_${k}`), hooks: [...SCHOOL_HOOKS], dialogs: { drill: { start: 'hello', nodes: N } }, questions: qs };
 }
 // a bank's questions whose answers have been said (heard: a Set of sections): what a practice in chapter 1 draws from
 export function bankTaught(FL, bankId, heard) {
@@ -1173,6 +1195,19 @@ export function bankTaught(FL, bankId, heard) {
 }
 // the score of a finished quiz from its state's flags
 export const scoreOf = (state, n) => { let right = 0; for (let k = 0; k < n; k++) if (state.flags[`qz_${k}`]) right++; const pct = n ? Math.round(right / n * 100) : 0; return { right, n, pct, pass: pct >= PASS }; };
+// (growth design v1 §4.3) a written test's score, bank by bank: passing takes the whole test's line and no
+// bank under the floor — a weak field named for the result, so the review can be aimed at it. A question
+// carries its bank in its id (`bank#k`); titles names the banks for that line
+export const EXAM_BANK_FLOOR = 60;
+export function examScoreOf(state, questions, titles = {}) {
+  const per = {};
+  (questions || []).forEach((q, k) => { const b = String(q && q.id || '').split('#')[0] || '?'; const e = per[b] || (per[b] = { right: 0, n: 0 }); e.n++; if (state.flags[`qz_${k}`]) e.right++; });
+  const banks = {}; for (const [b, e] of Object.entries(per)) banks[b] = { right: e.right, n: e.n, pct: e.n ? Math.round(e.right / e.n * 100) : 0 };
+  const weak = Object.keys(banks).filter(b => banks[b].pct < EXAM_BANK_FLOOR);
+  const base = scoreOf(state, (questions || []).length);
+  const weakText = weak.length ? `弱い分野は ${weak.map(b => `${titles[b] || b}（${banks[b].pct}%）`).join('・')} で、6 割に届いていません。` : '';
+  return { ...base, pass: base.pass && !weak.length, banks, weak, weakText };
+}
 
 // ---------------------------------------------------------------- the navigation log (M6: the solo cross-country's morning)
 // 早瀬 教官 and the cadet plan the leg the solo cross-country is planned on (LAB → LAB-B, by LAB-A: FLIGHT LAB's n2,
@@ -1189,8 +1224,10 @@ export function navlogNumbers(FL, o = NAVLOG) {
   const gs = o.tas * Math.cos(wca * DEG) - o.windKt * Math.cos(rel), ete = dist / gs * 60, fuel = (ete + o.reserveMin) / 60 * o.gph;
   return { tc, dist, mc, wca, mh, gs, ete, fuel, from: a, to: b };
 }
-export function navlogDialogs(FL, { seed = 1 } = {}) {
-  const r = rng(seed * 41 + 7), x = navlogNumbers(FL), o = NAVLOG, d3 = (v) => String(Math.round((v + 360) % 360) || 360).padStart(3, '0');
+// (the given wind: the day's winds aloft (the career's aloft field, magnetic) when the game asks — the log is
+// planned from the wind the cross-country will actually fly in. Without one, the textbook example of NAVLOG)
+export function navlogDialogs(FL, { seed = 1, wind = null } = {}) {
+  const r = rng(seed * 41 + 7), o = wind ? { ...NAVLOG, windFrom: wind.from, windKt: wind.kt } : NAVLOG, x = navlogNumbers(FL, o), d3 = (v) => String(Math.round((v + 360) % 360) || 360).padStart(3, '0');
   const opts = (right, wrong) => { const all = shuffled([right, ...wrong.filter(w => w !== right)].slice(0, 4), r); return { opts: all, ok: all.indexOf(right) }; };
   const Q = [];
   const mcO = opts(`${d3(x.mc)}°`, [`${d3(x.tc)}°`, `${d3(x.tc - o.varW)}°`, `${d3(x.mc + 180)}°`]);
@@ -1211,5 +1248,5 @@ export function navlogDialogs(FL, { seed = 1 } = {}) {
   N['hello:2'] = { speaker: 'instructor', text: '途中で目的地が変わることもあります。そのときに慌てないように、最初の計算をきちんと。', hook: { name: 'board', arg: 'navlog' }, next: 'q0' };
   quizNodes(N, Q, { speaker: 'instructor' });
   resultNodes(N, 'instructor', '航法ログは、これで大丈夫。午後、外部点検から始めてください。私は乗りません。無線は、ここで聞いています。', 'もう一度、計算を見直しましょう。午後までに直せば、今日飛べます。');
-  return { speakers: SPEAKERS, flags: Q.map((_, k) => `qz_${k}`), hooks: [...SCHOOL_HOOKS], dialogs: { navlog: { start: 'hello', nodes: N } }, questions: Q, numbers: x };
+  return { speakers: SPEAKERS, flags: Q.map((_, k) => `qz_${k}`), hooks: [...SCHOOL_HOOKS], dialogs: { navlog: { start: 'hello', nodes: N } }, questions: Q, numbers: x, given: o };
 }

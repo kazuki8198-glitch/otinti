@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { classDialogs, ftdDialogs, examDialogs, scoreOf, CLASS_CHAPTERS, FTD_TITLES, pfdPictures, lectureLines, lecturePage, lecturerNotesHtml, pathOf, LINE_MAX, noteUnit, needSections, DECISION_NODE, sectionHtml } from '../src/content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, drillDialogs, DRILL_CHOICES, scoreOf, examScoreOf, CLASS_CHAPTERS, FTD_TITLES, pfdPictures, lectureLines, lecturePage, lecturerNotesHtml, pathOf, LINE_MAX, noteUnit, needSections, DECISION_NODE, sectionHtml } from '../src/content/school.js';
 import * as TALK from '../src/content/class-talk.js';
 import { CLASS_FTD } from '../src/career/career.js';
 import { units, lectureUnits, proseOf } from '../src/content/lecture-units.js';
@@ -22,7 +22,7 @@ import { NOT_SPOKEN } from '../src/content/dialog/instructor.js';
 import { NOTES } from '../src/content/lecture-notes/index.js';
 import { validateDialogs } from '../src/dialog/validate.js';
 import { createRunner, createDialogState } from '../src/dialog/engine.js';
-import { EXAMS } from '../src/career/career.js';
+import { EXAMS, weatherFor, createCareer } from '../src/career/career.js';
 import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -516,10 +516,13 @@ test('school: the textbook as it opens (sectionHtml): every section with today\'
 });
 
 test('school: the written tests — from FLIGHT LAB\'s banks, as many questions as set, 80% to pass', () => {
+  // (thirty set for every test, and every test's banks now hold at least that many, so all draw the full thirty;
+  // a test whose banks held fewer would give all they hold)
+  const held = (id) => EXAMS[id].banks.reduce((n, b) => n + (FL.quiz.BANKS.find(x => x.id === b) || { qs: [] }).qs.length, 0);
   for (const id of Object.keys(EXAMS)) {
     const d = examDialogs(FL, id, { seed: 2 });
-    assert.equal(d.questions.length, EXAMS[id].n);
-    const { errors } = validateDialogs(d, { sampleCtx: { quiz: { right: 8, n: 10, pct: 80, pass: true } } });
+    assert.equal(d.questions.length, Math.min(EXAMS[id].n, held(id)), id);
+    const { errors } = validateDialogs(d, { sampleCtx: { quiz: { right: 8, n: 10, pct: 80, pass: true, weakText: '' } } });
     assert.deepEqual(errors, []);
     const good = run(d, 'exam'); clean(good.lines, id);
     assert.equal(good.ctx.quiz.pct, 100); assert.ok(good.hooks.some(h => h[0] === 'done' && h[1] === 'pass'));
@@ -565,4 +568,90 @@ test('school, as the review\'s second pass found it: a resumed class greets as a
   // (the textbook's page on call signs as the class says it: today's shortened, not "3 文字なのでそのまま")
   const cs = sectionHtml(BOOK.section('comm.callsign'));
   assert.doesNotMatch(cs, /3 文字なのでそのまま/); assert.match(cs, /Archer Eight Sierra Yankee/);
+});
+test('school: nav, instr and multi — each bank holds twenty, the draw is thirty different questions, the floor counts on a real draw', () => {
+  for (const id of ['nav', 'instr', 'multi']) for (const b of EXAMS[id].banks)
+    assert.ok((FL.quiz.BANKS.find(x => x.id === b) || { qs: [] }).qs.length >= 20, `${id}: ${b} holds at least twenty`);
+  for (const id of ['nav', 'instr', 'multi']) {
+    const d = examDialogs(FL, id, { seed: 7 });
+    assert.equal(d.questions.length, EXAMS[id].n, `${id}: the full thirty drawn`);
+    assert.equal(new Set(d.questions.map(x => x.id)).size, d.questions.length, `${id}: no question twice`);
+    for (const b of EXAMS[id].banks) assert.equal(d.questions.filter(x => x.id.startsWith(`${b}#`)).length, 15, `${id}: fifteen of ${b}`);
+  }
+  // (the floor on a real draw: every nav question right and 8 of 15 weather right — the weather bank is named weak)
+  const d = examDialogs(FL, 'nav', { seed: 7 }), seen = {}, flags = {};
+  d.questions.forEach((x, k) => { const b = x.id.split('#')[0]; seen[b] = (seen[b] || 0) + 1; flags[`qz_${k}`] = b === 'q_nav' || seen[b] <= 8; });
+  const s = examScoreOf({ flags }, d.questions, { q_nav: '航法', q_wx: '航空気象' });
+  assert.equal(s.banks.q_wx.n, 15); assert.ok(s.banks.q_wx.pct < 60, `weather at ${s.banks.q_wx.pct}%`);
+  assert.deepEqual(s.weak, ['q_wx']); assert.equal(s.pass, false);
+  const all = {}; d.questions.forEach((_, k) => { all[`qz_${k}`] = 1; });
+  assert.equal(examScoreOf({ flags: all }, d.questions).pass, true, 'all right: a pass');
+});
+
+test('school: an exam\'s bank floor (§4.3) — over the line as a whole is not enough with a weak bank', () => {
+  const qs = [...Array(5)].map((_, k) => ({ id: `q_wx#${k}` })).concat([...Array(25)].map((_, k) => ({ id: `q_law#${k}` })));
+  const stateWith = (rightWx, rightLaw) => { const flags = {}; qs.forEach((q, k) => { flags[`qz_${k}`] = q.id.startsWith('q_wx') ? +q.id.split('#')[1] < rightWx : +q.id.split('#')[1] < rightLaw; }); return { flags }; };
+  const titles = { q_wx: '航空気象', q_law: '規則と空域' };
+  // 24 / 30 = 80% overall, but the weather bank at 40%: no pass, and the bank is named for the review
+  const over = examScoreOf(stateWith(2, 22), qs, titles);
+  assert.equal(over.pct, 80); assert.equal(over.pass, false, '80% overall, weather at 40%: the floor fails it');
+  assert.deepEqual(over.weak, ['q_wx']); assert.match(over.weakText, /航空気象（40%）/);
+  // every bank at the floor or over, and the whole over the line: a pass
+  const ok = examScoreOf(stateWith(4, 20), qs, titles);
+  assert.equal(ok.pct, 80); assert.equal(ok.pass, true); assert.deepEqual(ok.weak, []); assert.equal(ok.weakText, '');
+  // a bank exactly at 60% is not weak
+  const edge = examScoreOf(stateWith(3, 25), qs, titles);
+  assert.equal(edge.banks.q_wx.pct, 60); assert.deepEqual(edge.weak, []); assert.equal(edge.pass, true);
+});
+
+test('school: a test over the line with a weak bank ends in a fail — and the career records that fail (§4.3)', () => {
+  const d = examDialogs(FL, 'written1', { seed: 2 }), qs = d.questions;
+  assert.equal(qs.length, 30);
+  const weakBank = String(qs[0].id).split('#')[0];
+  // run it as the game does (main.js's quizEnd): the score is the test's own — examScoreOf, bank floor and all —
+  // answering everything right except the one bank, which is answered wrong throughout
+  const st = createDialogState(), cx = { quiz: null }, hooks = [];
+  const titles = Object.fromEntries(FL.quiz.BANKS.map(b => [b.id, b.title]));
+  const r = createRunner({ data: d, state: st, ctx: cx, hooks: { onHook: (n, a) => { hooks.push([n, a]); if (n === 'quizEnd') cx.quiz = examScoreOf(st, qs, titles); } } });
+  r.start('exam');
+  for (let k = 0; k < 400 && r.running; k++) {
+    const v = r.view();
+    if (v.choices.length) {
+      const qi = /^q(\d+)$/.exec(v.node), x = qi ? qs[+qi[1]] : null;
+      if (x) { const rightText = x.opts[x.ok], weak = String(x.id).split('#')[0] === weakBank; const i = v.choices.findIndex(c => weak ? c.text !== rightText : c.text === rightText); r.choose(i >= 0 ? i : 0); }
+      else r.choose(0);
+    } else r.next();
+  }
+  assert.equal(r.running, false, 'the test ends');
+  const quiz = cx.quiz;
+  assert.ok(quiz && quiz.pct >= 80, `over the line as a whole: ${quiz && quiz.pct}%`);
+  assert.deepEqual(quiz.weak, [weakBank]); assert.equal(quiz.pass, false, 'the floor fails it');
+  assert.ok(hooks.some(h => h[0] === 'done' && h[1] === 'fail'), 'the dialog ends in a fail');
+  assert.ok(!hooks.some(h => h[0] === 'done' && h[1] === 'pass'), 'and never in a pass');
+  // and the career, told the same score the way main.js tells it (career.exam(id, pct, pass)), records the fail:
+  // the percent kept as the best, the try counted, no pass — where the percent alone would have passed it
+  const C = createCareer({ seed: 23 }), rec = C.exam('written1', quiz.pct, quiz.pass);
+  assert.equal(rec.pass, false); assert.equal(rec.best, quiz.pct); assert.equal(rec.tries, 1);
+});
+
+test('school: the judgement drill (§4.4) — ten weathers, and the right choice is each weather\'s own decision', () => {
+  const KINDS = ['good', 'amFog', 'pmStorm', 'crosswind', 'storm', 'amLowCloud', 'pmWind', 'lowCloud'];
+  const label = Object.fromEntries(DRILL_CHOICES);
+  for (const [seed, day, attempt] of [[7, 5, 0], [7, 5, 1], [3, 12, 0], [9, 30, 2]]) {
+    const d = drillDialogs(FL, { seed, day }, { attempt });
+    assert.equal(d.questions.length, 10, 'ten questions');
+    assert.deepEqual(validateDialogs(d, { sampleCtx: { quiz: { right: 8, n: 10, pct: 80, pass: true } } }).errors, []);
+    d.questions.forEach((q, i) => {
+      assert.equal(q.opts.length, 4); assert.equal(new Set(q.opts).size, 4, 'four different choices');
+      assert.ok(q.why && q.why.length > 5, 'a reason is said');
+      // the weather this question shows is one of the day's forced kinds: find it by its three reports,
+      // and the marked answer must be that weather's decision
+      const shown = KINDS.map(k => weatherFor(seed, day * 40 + i * 3 + attempt * 11, { force: k }))
+        .find(w => q.q.includes(w.metar.am) && q.q.includes(w.metar.pm) && q.q.includes(w.taf));
+      assert.ok(shown, `question ${i}: its weather is a real one`);
+      assert.equal(q.opts[q.ok], label[shown.decision], `question ${i}: the answer is the weather's decision (${shown.decision})`);
+    });
+    // the same day and try again: the same drill
+    assert.deepEqual(drillDialogs(FL, { seed, day }, { attempt }).questions, d.questions);
+  }
 });

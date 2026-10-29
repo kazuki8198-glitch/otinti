@@ -130,7 +130,7 @@ export function createControls(FL, { prefs, savePrefs = () => {}, getGamepads = 
       return say(`${side}のプロペラをフェザー：羽根を風に平行にして回転を止め、抗力を大きく減らしました`, 'good');
     } else if (a === 'restart0' || a === 'restart1') {
       if (!A.twin) return ''; if (!L.free) return say('訓練中はエンジンの再始動はできません');
-      const e = s.eng[a === 'restart0' ? 0 : 1]; Object.assign(e, { feather: false, cut: false, failed: false }); return say('エンジンを再始動（自由飛行の補助）');
+      const e = s.eng[a === 'restart0' ? 0 : 1]; Object.assign(e, { feather: false, cut: false, failed: false, on: true }); return say('エンジンを再始動（自由飛行の補助）');
     } else if (a === 'rtrimL' || a === 'rtrimR') {
       st.rTrim = clamp(st.rTrim + (a === 'rtrimR' ? 0.05 : -0.05), -0.6, 0.6);
       return say(`ラダートリム ${st.rTrim === 0 ? '中立' : `${st.rTrim > 0 ? '右' : '左'} ${Math.round(Math.abs(st.rTrim) * 100)}%`}：ラダーを踏み続けなくてよいように`);

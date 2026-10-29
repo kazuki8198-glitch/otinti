@@ -23,7 +23,8 @@ import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 for (const m of ['physics.js', 'avionics.js', 'sanford-course.js', 'school.js', 'syllabus.js',
-  'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js'])
+  'book-figs.js', 'book-core.js', 'book-1.js', 'book-2.js', 'book-comm.js', 'book-3.js', 'book-4.js', 'book-5.js',
+  'quiz.js', 'radio.js'])          // (the question bank too: the briefing's prediction and check are drawn from it)
   vm.runInThisContext(fs.readFileSync(path.join(here, '../../flight-lab/src', m), 'utf8'), { filename: m });
 installSorajima(globalThis.FL);                    // (the game's flight model: Sorajima's)
 const FL = globalThis.FL;
@@ -282,18 +283,26 @@ test('instructor: a run through with the real engine — first meeting, lesson, 
   assert.equal(r.view().name, '早瀬 教官');
   until(v => v.choices.length > 0); choose('よろしくお願いします');
   until(v => v.choices.length > 0); assert.equal(r.view().node, 'menu'); choose('今日の課目を教えてください');
+  // the class's shape: a prediction first (a1's own question, from its sections' pool), then the teaching
+  until(v => v.choices.length > 0);
+  assert.equal(r.view().node, 'predict:q');
+  assert.ok(said.some(t => /まず、予想です/.test(t)), 'the prediction is asked');
+  choose('わかりません');
   until(v => v.node === 'check');
   const lesson = LESSONS.find(l => l.id === 'a1');
   const talk = said.join('\n');
   assert.ok(talk.includes(lesson.title), 'the title');
-  assert.ok(talk.includes('トリムを使い、操縦から手を離しても水平飛行が続く状態を作る'), 'the goal');
+  assert.ok(talk.includes('揚力＝重力、推力＝抗力でつり合っています'), 'the question\'s own textbook line, taught before the check');
   assert.ok(talk.includes(lesson.std), 'the standard');
   assert.ok(hooks.some(([n, a]) => n === 'board' && a === 'aero.forces'), 'the figure on the screen');
   assert.ok(hooks.some(([n, a]) => n === 'point' && a === 'screen'), 'pointing at the screen');
   assert.ok(hooks.some(([n, a]) => n === 'point' && a === 'board'), 'pointing at the board');
-  choose('トリムを使い、操縦から手を離しても水平飛行が続く状態を作る');
+  // the check asks the lesson's own question again; the goal is said last, as the day's phrase
+  choose(A1.dialogs.brief.nodes.check.choices.find(c => c.next === 'check:ok').text);
   assert.equal(state.trust.instructor, 53); assert.equal(state.flags.brief_checked, true);
-  until(v => v.node === 'post'); choose('質問があります');
+  until(v => v.node === 'post');
+  assert.ok(said.join('\n').includes('トリムを使い、操縦から手を離しても水平飛行が続く状態を作る'), 'the goal, as the day\'s phrase');
+  choose('質問があります');
   assert.equal(r.view().dialog, 'ask');
   choose('飛行機に働く 4 つの力（今日の課目）');
   until(v => v.choices.length > 0); choose('教科書で読む');
@@ -309,6 +318,35 @@ test('instructor: a run through with the real engine — first meeting, lesson, 
   r.start('brief');
   assert.match(r.view().text, /おかえりなさい/);
   r.next(); assert.ok(r.view().choices.some(c => c.text === '準備に向かいます'));
+});
+
+test('instructor: the prediction is not scored, and a repeated lesson is briefed in short', () => {
+  for (const l of LESSONS) {
+    const data = l.id === 'a1' ? A1 : instructorDialogs(FL, { lessonId: l.id });
+    const B = data.dialogs.brief.nodes;
+    assert.ok(B.predict && B.phrase, `${l.id}: a prediction and the day's phrase`);
+    // the prediction changes nothing: no choice of it carries an effect (the check is what sets brief_checked)
+    for (const id of ['predict', 'predict:q']) if (B[id]) for (const c of B[id].choices || []) assert.ok(!c.effects || !c.effects.length, `${l.id} ${id}: the prediction is not scored`);
+    // a lesson flown before: no prediction, no teaching chain — the title, the standard, the check, the phrase
+    const rep = instructorDialogs(FL, { lessonId: l.id, repeat: true });
+    const RB = rep.dialogs.brief.nodes;
+    assert.ok(!RB.predict && !RB.teach && !RB['predict:q'], `${l.id}: a repeat has no prediction or teaching`);
+    assert.ok(RB.check && RB.phrase, `${l.id}: a repeat keeps the check and the phrase`);
+    assert.ok(Object.keys(RB).length < Object.keys(B).length, `${l.id}: a repeat is shorter`);
+    assert.deepEqual(validateDialogs(rep, OPTS).errors, [], `${l.id}: a repeat passes the validator`);
+  }
+  // a run at a repeat: menu → the short lesson → the check (still scored) → the phrase → on
+  const data = instructorDialogs(FL, { lessonId: 'n1', repeat: true });
+  const state = createDialogState({ v: 1, flags: { met_instructor: true } });
+  const r = createRunner({ data, state, ctx: sampleCtx(FL) });
+  r.start('brief');
+  for (let i = 0; i < 10 && r.view().node !== 'menu'; i++) r.next();
+  r.choose(r.view().choices.findIndex(c => c.text === '今日の課目を教えてください'));
+  const seen = [];
+  for (let i = 0; i < 30 && r.running && r.view().node !== 'check'; i++) { seen.push(r.view().node); assert.equal(r.view().choices.length, 0, 'nothing to answer before the check'); r.next(); }
+  assert.ok(!seen.includes('predict') && seen.length <= 4, `the short way: ${seen}`);
+  r.choose(data.dialogs.brief.nodes.check.choices.findIndex(c => c.next === 'check:ok'));
+  assert.equal(state.flags.brief_checked, true); assert.equal(state.trust.instructor, 53);
 });
 
 test('instructor: lines are sayable — length, no FLIGHT LAB controls or pages, no real names, です/ます', () => {
@@ -391,19 +429,23 @@ test('instructor: the words come from FLIGHT LAB\'s data', () => {
     assert.equal(n, keys, `${id}: says ${n}, the book has ${keys}`);
   }
   assert.match(ask['sec:aero.aoa'].text, /大事なところを話します/);
-  // the check: today's goal and two other lessons' goals
+  // the check: a1's own question (its sections have one in the pool — the course's words, tagged material);
+  // a lesson with none is asked its goal, against two other lessons' goals
   const goals = new Set(LESSONS.map(l => sentences(l.goal).pop()));
-  const check = brief.check.choices;
-  assert.equal(check.length, 3);
-  for (const c of check) assert.ok(goals.has(c.text), c.text);
-  assert.equal(check.filter(c => c.next === 'check:ok').length, 1);
-  // in every lesson: one right answer, and no wrong one worded almost like it (shared pairs of characters)
+  assert.equal(brief.check.tag, 'material', 'a1: its own question');
+  assert.ok(brief.check.choices.length >= 3 && brief.check.choices.length <= 4, 'a1: its answers');
+  assert.equal(brief.check.choices.filter(c => c.next === 'check:ok').length, 1, 'a1: one right answer');
+  // in every lesson: one right answer; a goal check's wrong answers are never worded almost like the right one
+  // (shared pairs of characters — the check asks what was said, not how closely it was heard)
   const pairs = (s) => { const c = [...s]; return new Set(c.slice(1).map((ch, k) => c[k] + ch)); };
   const alike = (a, b) => { const A = pairs(a), B = pairs(b), n = [...A].filter(x => B.has(x)).length; return n / (A.size + B.size - n); };
   for (const l of LESSONS) {
-    const cs = (l.id === 'a1' ? A1 : instructorDialogs(FL, { lessonId: l.id })).dialogs.brief.nodes.check.choices;
-    const right = cs.filter(c => c.next === 'check:ok');
-    assert.equal(cs.length, 3, `${l.id}: 3 answers`); assert.equal(right.length, 1, `${l.id}: one right answer`);
+    const node = (l.id === 'a1' ? A1 : instructorDialogs(FL, { lessonId: l.id })).dialogs.brief.nodes.check;
+    const cs = node.choices, right = cs.filter(c => c.next === 'check:ok');
+    assert.equal(right.length, 1, `${l.id}: one right answer`);
+    if (node.tag === 'material') { assert.ok(cs.length >= 3 && cs.length <= 4, `${l.id}: its own answers`); continue; }
+    assert.equal(cs.length, 3, `${l.id}: 3 answers`);
+    for (const c of cs) assert.ok(goals.has(c.text), `${l.id}: ${c.text}`);
     for (const c of cs) if (c !== right[0]) assert.ok(alike(c.text, right[0].text) < 0.4, `${l.id}: "${c.text}" is worded almost like "${right[0].text}"`);
   }
   // aircraft numbers said in a briefing are FLIGHT LAB's (here the Archer's Vr / Vy for t1)

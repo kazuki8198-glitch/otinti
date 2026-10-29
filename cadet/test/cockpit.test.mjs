@@ -19,7 +19,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
 import { buildCockpit, PICK_LAYER } from '../src/aircraft/cockpit.js';
-import { BEZEL, SOFTKEYS } from '../src/aircraft/g1000.js';
+import { BEZEL, SOFTKEYS, softkeysOf, asiTop, createGlass } from '../src/aircraft/g1000.js';
 import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -175,7 +175,7 @@ test('cockpit: the view from the left seat', () => {
 });
 
 const KINDS = new Set(['button', 'knob', 'lever', 'switch', 'handle']);
-const TYPES = new Set(['flight', 'av', 'switch', 'select', 'exit', 'prime', 'info']);
+const TYPES = new Set(['flight', 'av', 'switch', 'select', 'exit', 'prime', 'info', 'view']);
 function controlsCheck(cp, L, required) {
   Object.assign(L.s, { elev: 0, trim: 0.1, ail: 0, rud: 0, rudEff: 0 });          // hands off, a little nose-up trim
   run(cp, L, 0.5);
@@ -218,7 +218,7 @@ function controlsCheck(cp, L, required) {
   return ids;
 }
 const COMMON_IDS = ['pfd.hdg', 'pfd.alt.inner', 'pfd.alt.outer', 'pfd.crs.outer', 'mfd.range', 'sw.master', 'sw.avionics', 'sw.landing', 'mag', 'throttle',
-  'mixture', 'parkBrake', 'yokeL', 'pedals', 'flaps', 'trim', 'fuelSel', 'door', 'compass', 'stby.att', 'audio.COM1MIC', 'pfd.sk3', 'mfd.sk3'];
+  'mixture', 'parkBrake', 'yokeL', 'pedals', 'flaps', 'trim', 'fuelSel', 'door', 'compass', 'stby.att', 'audio.COM1MIC', 'pfd.sk3', 'mfd.sk3', 'view.pfd', 'view.mfd'];
 test('cockpit: every control can be found, picked from the seat, and says what to do', () => {
   const cp = build();
   const ids = controlsCheck(cp, lesson(), [...COMMON_IDS, 'carbHeat']);
@@ -285,6 +285,11 @@ test('cockpit: the controls say what the game should do', () => {
   apply(sk('pfd', 'BACK').act(1)); assert.equal(av.pfdMenu, 'TOP');
   apply(sk('mfd', 'FPL').act(1)); assert.equal(av.mfdPage, 'FPL');
   assert.equal(C['pfd.sk1'].act(1).type, 'info', 'an unused key explains itself');
+  // the displays' faces: a click asks the game to put the eye in front of that unit (flight/panel-view.js)
+  assert.deepEqual(C['view.pfd'].act(1), { type: 'view', focus: 'pfd' });
+  assert.deepEqual(C['view.mfd'].act(-1, true), { type: 'view', focus: 'mfd' });
+  // the glass's own canvases are the cockpit's (the 2D panel copies these, it does not draw its own)
+  assert.ok(cp.glass.pfd && cp.glass.mfd && cp.glass.pfd !== cp.glass.mfd, 'the two screens canvases');
   // the audio panel: the monitor lamps
   const mon = av.audio.monitor.NAV1; apply(C['audio.NAV1'].act(1)); assert.equal(av.audio.monitor.NAV1, !mon);
   // switches: a click toggles, the wheel sets (or does nothing)
@@ -294,10 +299,11 @@ test('cockpit: the controls say what the game should do', () => {
   assert.deepEqual(C['mag'].act(-1, true), { type: 'select', id: 'mag', value: 'L' });
   assert.equal(C['mag'].act(1, true).value, 'START');
   assert.deepEqual(C['fuelSel'].act(1, false), { type: 'select', id: 'fuelSel', value: 'R' });
-  // the engine's controls (M4): the selector's OFF on the wheel, the mixture (cut-off on the ground only), carb heat, the primer
+  // the engine's controls (M4): the selector's OFF on the wheel, the mixture (a click: rich or cut-off — in the air
+  // too, now that leaning and stopping are the physics' own), carb heat, the primer
   cp.switches.fuelSel = 'R'; assert.deepEqual(C['fuelSel'].act(1, true), { type: 'select', id: 'fuelSel', value: 'OFF' }); cp.switches.fuelSel = 'L';
   assert.equal(C['fuelSel'].act(-1, true), null, 'L is the first');
-  cp.switches.mixture = 1; assert.equal(C['mixture'].act(1, false).type, 'info', 'no cut-off in the air');
+  cp.switches.mixture = 1; assert.deepEqual(C['mixture'].act(1, false), { type: 'select', id: 'mixture', value: 0 }, 'cut-off in the air too');
   assert.deepEqual(C['mixture'].act(-1, true), { type: 'select', id: 'mixture', value: 0.9 });
   cp.switches.mixture = 0.4; assert.deepEqual(C['mixture'].act(1, false), { type: 'select', id: 'mixture', value: 1 }, 'a click: full rich');
   cp.switches.mixture = 1;
@@ -430,6 +436,57 @@ test('cockpit: update() works on the same objects every frame (no allocation)', 
     }
   }
   cp.dispose();
+});
+
+// a canvas that records the text it is given (for the glass panel's own drawing, below)
+function recCanvas(w, h) {
+  const texts = [];
+  const grad = { addColorStop() {} };
+  const g = new Proxy({}, {
+    get: (t, k) => (k in t ? t[k] : k === 'createRadialGradient' || k === 'createLinearGradient' || k === 'createPattern' ? () => grad
+      : k === 'measureText' ? s => ({ width: String(s).length * 6 }) : (...a) => { if (k === 'fillText') texts.push(String(a[0])); }),
+    set: (t, k, v) => { t[k] = v; return true; },
+  });
+  return { width: w, height: h, getContext: () => g, texts };
+}
+
+test('cockpit: the transponder softkeys set the code ATC assigned', () => {
+  const av = AV.createAvionics();
+  const xp = softkeysOf('pfd', av).find(k => k.label === 'XPDR');
+  assert.ok(xp && xp.act, 'the XPDR key works now (it was a dim placeholder)');
+  const press = (keys, label) => { const k = keys.find(kk => kk.label === label); assert.ok(k && k.act, label); const [w, d] = k.act(av); AV.control(av, w, d); };
+  press(softkeysOf('pfd', av), 'XPDR'); assert.equal(av.pfdMenu, 'XPDR');
+  for (const d of ['4', '2', '1', '5']) press(softkeysOf('pfd', av), d);
+  assert.equal(av.xpdr.code, 4215, 'the code the tower assigned, set on the panel');
+  press(softkeysOf('pfd', av), 'BACK'); assert.equal(av.pfdMenu, 'TOP');
+});
+
+test('cockpit: the standby airspeed dial is scaled to the type (the Seminole\'s Vne lands on it)', () => {
+  assert.equal(asiTop(AC('pa28').v), 175, 'the Archer keeps its dial');
+  assert.equal(asiTop(AC('pa44').v), 220, 'the Seminole gets the wider one');
+  const standbyTexts = V => {
+    const made = [];
+    const glass = createGlass(FL, (w, h) => { const c = recCanvas(w, h); made.push(c); return c; });
+    glass.drawStandby({ ias: 100, pitch: 0, bank: 0 }, 3000, 29.92, false, V);
+    glass.dispose();
+    return made.find(c => c.width === 512).texts;
+  };
+  assert.ok(standbyTexts(AC('pa44').v).includes('200'), 'the Seminole dial is numbered to 200');
+  assert.ok(!standbyTexts(AC('pa28').v).includes('200'), 'the Archer dial is not');
+});
+
+test('cockpit: the systems\' oil and bus values reach the MFD through the glass', () => {
+  const L = lesson();
+  const made = [];
+  const glass = createGlass(FL, (w, h) => { const c = recCanvas(w, h); made.push(c); return c; });
+  const eng = { rpm: 2400, run: true, oil: 78, oilT: 190, elec: { volts: 14.1, amps: 3 }, twin: null };
+  glass.drawScreen('mfd', L.s, L.av, eng);
+  const texts = made[1].texts;                       // (the second canvas made is the MFD's)
+  const after = lab => { const i = texts.indexOf(lab); assert.ok(i >= 0, lab); return texts[i + 1]; };
+  assert.equal(after('OIL PSI'), '78', 'the oil pressure the systems computed');
+  assert.equal(after('OIL °F'), '190');
+  assert.equal(after('VOLTS'), '14.1');
+  glass.dispose();
 });
 
 test('cockpit: dispose() frees it', () => {

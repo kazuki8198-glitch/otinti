@@ -40,7 +40,7 @@ export function dayToast(st, sch, { missed = 0, short = false } = {}) {
     // (the hints — Tab for the plan — on the first days only: after them the cadet knows)
     return missed ? `今日は${classWords(i)}${pm ? `、${pm}` : ''}。前の間違い ${missed} 問は、授業の最初に` : `今日は${classShort(i)}。${pm || '午後の訓練装置はありません'}${st.day <= 3 ? '（Tab で今日の予定）' : ''}`;
   }
-  if ((sch || []).some(x => x.kind === 'exam')) return `今日は第 1 章の学科試験（28 問、80% で合格）。${isOff(st.day + 1) ? '合格すれば、休みの次の日が初飛行です' : '明日は、いよいよ初飛行です'}（Tab で今日の予定）`;
+  if ((sch || []).some(x => x.kind === 'exam')) return `今日は第 1 章の学科試験（30 問、80% で合格）。${isOff(st.day + 1) ? '合格すれば、休みの次の日が初飛行です' : '明日は、いよいよ初飛行です'}（Tab で今日の予定）`;
   if ((sch || []).some(x => x.kind === 'ftd')) { const f = sch.find(x => x.kind === 'ftd'); return `今日は訓練装置 ${f.id}「${FTD_TITLES[f.id]}」のやり直しから（Tab で今日の予定）`; }
   return null;
 }

@@ -1,7 +1,9 @@
 // CADET — career/tem.js : TEM, threat and error management (M6). Before a flying day (from chapter 3 on) the instructor
 // asks for today's threat: the one that matters most today, from what the day is — the weather (a storm in the
 // afternoon, low cloud, a crosswind, the morning fog), the cadet's fatigue, the check, flying alone cross-country, the
-// new twin, the instrument flying — or, when nothing stands out, the other aircraft in the pattern. The cadet picks
+// new twin, the instrument flying — or the other aircraft in the pattern, on the days the pattern actually has
+// them (flight/traffic.js: o.traffic is the day's count, and a briefing never claims congestion of an empty
+// sky). When truly nothing stands out, the threat is the quiet day itself: complacency. The cadet picks
 // one of three: today's, and two that are real threats on other days but not today (the instructor says why not).
 // After the flight the debrief names the threat again and the errors of the day (career/day.js's summary: the
 // checklist items left to the instructor, the read-backs said again, the hold line crossed, the rows outside their
@@ -33,8 +35,10 @@ export const THREATS = [
     plan: '片発になったら「パワー、ピッチ、足」。Vmc より速く、ブルーラインの速度を保つ', not: '今日は Archer です' },
   { id: 'sd', ja: '空間識失調（体の感覚）', when: o => o.chapter === 'ch4', why: 'フードの中では、体の感覚が計器と食い違います',
     plan: '体の感覚ではなく計器を信じる。姿勢指示器に目を戻しながら、スキャンを続ける', not: '今日は外を見て飛ぶ課目です' },
-  { id: 'traffic', ja: '場周の混雑（ほかの訓練機）', when: () => true, why: '今日は天気が良く、ほかの訓練機もたくさん飛んでいます',
-    plan: '交信をよく聞いて、ほかの機体の位置を頭に描く。見張りを続ける', not: '' },
+  { id: 'traffic', ja: '場周の混雑（ほかの訓練機）', when: o => (o.traffic | 0) > 0, why: 'ほかの訓練機が場周を飛んでいます。同じ高度、同じ経路です',
+    plan: '交信をよく聞いて、ほかの機体の位置を頭に描く。見張りを続ける', not: '今日はほかの訓練機は飛んでいません' },
+  { id: 'calm', ja: '静かな日の油断', when: () => true, why: '天気も体調も問題なく、目立つ脅威がありません。そういう日ほど、注意は静かに落ちていきます',
+    plan: 'チェックリストはいつもどおり声に出す。見張りは「何も見えない」ことも言葉にして、確認したことにする', not: '今日は目立つ脅威があります。それが今日の脅威です' },
 ];
 // (M8) the same in English (the crew's English mode): the threat's name, why, the plan, why not today
 export const THREATS_EN = {
@@ -49,11 +53,13 @@ export const THREATS_EN = {
   nav: { ja: 'navigating alone (getting lost)', why: 'Today you fly alone to places you don\'t know', plan: 'start from the last place you were sure of; use the VOR and DME; keep a margin of fuel and time', not: 'Today we stay in the pattern and the practice area' },
   twin: { ja: 'an unfamiliar twin (one engine out)', why: 'The Seminole is fast and heavy, and pulls hard to one side when an engine stops', plan: 'one engine out: power, pitch, feet; stay faster than Vmc, hold blue-line speed', not: 'Today it\'s the Archer' },
   sd: { ja: 'spatial disorientation', why: 'Under the hood your body\'s sense disagrees with the instruments', plan: 'trust the instruments, not your body; keep scanning, back to the attitude indicator', not: 'Today\'s lesson is flown looking outside' },
-  traffic: { ja: 'a busy pattern (other trainers)', why: 'The weather is good today and many other trainers are flying', plan: 'listen to the radio and keep a picture of where the others are; keep looking out', not: '' },
+  traffic: { ja: 'a busy pattern (other trainers)', why: 'Other trainers are flying the pattern today, at the same altitude on the same circuit', plan: 'listen to the radio and keep a picture of where the others are; keep looking out', not: 'No other trainers are flying today' },
+  calm: { ja: 'complacency on a quiet day', why: 'The weather is fine, you are rested, and nothing stands out — those are the days attention quietly fades', plan: 'use the checklist out loud as always; call the scan: "nothing seen" is a check made, not skipped', not: 'Today something does stand out; that is today\'s threat' },
 };
 const byId = Object.fromEntries(THREATS.map(t => [t.id, t]));
 
-// o: { weather (WEATHER's kind), fatigue 0..100, chapter, aircraft ('pa28' | 'pa44'), check, xc, day } → today's TEM:
+// o: { weather (WEATHER's kind), fatigue 0..100, chapter, aircraft ('pa28' | 'pa44'), check, xc, day,
+// traffic (the day's pattern traffic count, flight/traffic.js; 0 or absent = an empty pattern) } → today's TEM:
 // { threat: { id, ja, why, plan }, options: [three names], right (the index of today's), others: [the two not today's,
 // each with why not] } — the order of the options from the day (the same day, the same order)
 export function temFor(o) {

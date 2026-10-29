@@ -469,7 +469,8 @@ function withCol(g, hex) {
 //   { type: 'av', what, dir, big } (FL.avionics.control(L.av, what, dir, big); the softkey labels and the lamps follow
 //   av by themselves), { type: 'switch', id, on } and { type: 'select', id, value } (set cockpit.switches[id]; the
 //   lights and the engine are the game's to apply: aircraft/systems.js), { type: 'prime' } (one stroke of the primer),
-//   { type: 'exit' }, { type: 'info', text }.
+//   { type: 'exit' }, { type: 'info', text }, { type: 'view', focus } (a display's face: the game moves the eye in
+//   front of that unit — flight/panel-view.js; the display is not a control to work, only a place to look from).
 // pick(raycaster): the control whose hit box the ray meets first (what is drawn does not block it, so every aim point
 //   is kept in plain sight from the eye: see the tests), null while the cockpit is hidden.
 // The screens are unlit and toneMapped: false, but CADET's composer tone maps the whole image in its OutputPass (AgX),
@@ -602,6 +603,10 @@ export function buildCockpit(FL, A, opts = {}) {
     strips.push(quad(BEZEL.screenW, BEZEL.stripH, dynUV(DYN.strip[which]), [C[0], C[1] + sy0 + BEZEL.stripH / 2, zS]));
     const band = sy1 - BEZEL.imageH - sy0 - BEZEL.stripH;
     if (band > 1e-4) { const q = quad(BEZEL.screenW, band, dynUV(DYN.white), [C[0], C[1] + sy0 + BEZEL.stripH + band / 2, zS]); q.userData.black = true; B.unlit.push(q); }
+    // the display's face itself: a click moves the eye in front of this unit (and back, on the unit in focus). Its
+    // hit box sits on the glass, behind every knob's and key's own box, so aiming at a control still finds it first.
+    control({ id: `view.${which}`, label: `${which === 'pfd' ? 'PFD' : 'MFD'} を大きく見る`, kind: 'button', size: [BEZEL.screenW, BEZEL.screenH, 0.004], pos: [C[0], C[1] + BEZEL.screenY, zS],
+      act: () => ({ type: 'view', focus: which }) });
     // softkeys
     for (let i = 0; i < 12; i++) {
       const x = C[0] + KEY_X(i), y = C[1] + BEZEL.keyY;
@@ -771,7 +776,8 @@ export function buildCockpit(FL, A, opts = {}) {
   placard(['NO SMOKING'], 30, 9, [0.424, 0.300, PZ], { bg: 0xe8e4da, fg: 0xb3231c });
   // the hour meter
   add(at(rbox(0.032, 0.016, 0.004, 0.002), [0.47, 0.255, PZ + 0.002]), S.caseBlack);
-  decal(26, 9, (g, w, h) => { g.font = `700 ${h * 0.62}px ${SANS}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('0 4 7 1 2', w / 2, h * 0.55); }, [0.47, 0.255, PZ + 0.0042], null, { lit: 0, col: 0xf0f0f0 });
+  const hobbsText = { s: '0 4 7 1 2' };                    // (the Hobbs meter's drums: redrawn in place as it runs — refreshHobbs below)
+  const hobbsItem = decal(26, 9, (g, w, h) => { g.font = `700 ${h * 0.62}px ${SANS}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(hobbsText.s, w / 2, h * 0.55); }, [0.47, 0.255, PZ + 0.0042], null, { lit: 0, col: 0xf0f0f0 });
   label('HOURS', [0.47, 0.268, PZ + 0.0002], { size: 1.4 });
   function placardDraw(lines) {
     return (g, w, h) => {
@@ -803,12 +809,12 @@ export function buildCockpit(FL, A, opts = {}) {
     lever(-0.05, 'carb', rbox(0.02, 0.016, 0.014, 0.003), S.black);
     const lp = (x, a) => [x, LEVER.y + Math.sin(a) * (LEVER.len + 0.012), LEVER.z + Math.cos(a) * (LEVER.len + 0.012)];
     control({ id: 'throttle', label: 'スロットル（R / F）', kind: 'lever', part: 'throttle', size: [0.04, 0.032, 0.04], pos: lp(-0.005, 0), act: (dir) => flight('thrStep', dir >= 0 ? 1 : -1) });
-    // the mixture: a click, full rich or (on the ground only) idle cut-off; the wheel, a tenth at a time
+    // the mixture: a click, full rich or idle cut-off — in flight too: leaning is the wheel's work, and cut-off stops the engine, as the real lever does; the wheel, a tenth at a time
     control({ id: 'mixture', label: () => `ミクスチャー（${switches.mixture >= 0.95 ? 'リッチ' : switches.mixture < 0.15 ? 'アイドル カットオフ' : 'リーン'}）`, kind: 'lever', part: 'mixture', size: [0.032, 0.03, 0.036], pos: lp(0.045, 0),
       act: (dir, wheel) => {
         if (wheel) { const v = clamp(Math.round((switches.mixture + (dir > 0 ? 0.1 : -0.1)) * 10) / 10, 0, 1); return v === switches.mixture ? null : { type: 'select', id: 'mixture', value: v }; }
         if (switches.mixture < 0.95) return { type: 'select', id: 'mixture', value: 1 };
-        return cur.s && !cur.s.onGround ? info('飛んでいる間は、ミクスチャーはリッチのままにします') : { type: 'select', id: 'mixture', value: 0 };
+        return { type: 'select', id: 'mixture', value: 0 };
       } });
     control({ id: 'carbHeat', label: () => `キャブレター ヒート（${switches.carbHeat ? 'ON' : 'OFF'}）`, kind: 'lever', part: 'carb', size: [0.026, 0.024, 0.026], pos: lp(-0.05, 0),
       act: (dir, wheel) => { const on = wheel ? dir > 0 : !switches.carbHeat; return on === switches.carbHeat ? null : { type: 'switch', id: 'carbHeat', on }; } });
@@ -848,7 +854,7 @@ export function buildCockpit(FL, A, opts = {}) {
       act: (dir, wheel) => {
         if (wheel) { const v = clamp(Math.round((switches.mixture + (dir > 0 ? 0.1 : -0.1)) * 10) / 10, 0, 1); return v === switches.mixture ? null : { type: 'select', id: 'mixture', value: v }; }
         if (switches.mixture < 0.95) return { type: 'select', id: 'mixture', value: 1 };
-        return cur.s && !cur.s.onGround ? info('飛んでいる間は、ミクスチャーはリッチのままにします') : { type: 'select', id: 'mixture', value: 0 };
+        return { type: 'select', id: 'mixture', value: 0 };
       } });
     control({ id: 'carbHeat', label: () => `キャブレター ヒート 左右（${switches.carbHeat ? 'ON' : 'OFF'}）`, kind: 'lever', part: 'carbL', size: [0.026, 0.024, 0.026], pos: lp(mid(TWIN_LV.carbL, TWIN_LV.carbR), 0),
       act: (dir, wheel) => { const on = wheel ? dir > 0 : !switches.carbHeat; return on === switches.carbHeat ? null : { type: 'switch', id: 'carbHeat', on }; } });
@@ -1128,6 +1134,22 @@ export function buildCockpit(FL, A, opts = {}) {
     atlasTex.generateMipmaps = true; atlasTex.minFilter = THREE.LinearMipmapLinearFilter; atlasTex.anisotropy = opts.anisotropy || 8; texs.push(atlasTex);
   }
   for (const g of [...B.decals, ...B.decalsV.pa28, ...B.decalsV.pa44]) { const uv = atlas.uv(g.userData.it), a = g.attributes.uv; for (let i = 0; i < a.count; i++) a.setXY(i, uv[0] + a.getX(i) * (uv[2] - uv[0]), uv[1] + a.getY(i) * (uv[3] - uv[1])); }
+  // the Hobbs meter is the one decal that changes: when its tenth turns over, its atlas slot is redrawn (the
+  // same clip-and-draw the atlas itself used) and the texture re-uploaded — no mesh of its own
+  let hobbsShown = -1;
+  function refreshHobbs(h) {
+    if (!atlasCv || !hobbsItem || !(h >= 0)) return;
+    const t10 = Math.floor(h * 10 + 1e-9);
+    if (t10 === hobbsShown) return;
+    hobbsShown = t10;
+    hobbsText.s = String(Math.floor(t10 / 10)).padStart(4, '0').split('').join(' ') + ' ' + (t10 % 10);
+    const g = atlasCv.getContext('2d');
+    g.save(); g.translate(hobbsItem.x, hobbsItem.y); g.beginPath(); g.rect(0, 0, hobbsItem.w, hobbsItem.h); g.clip();
+    g.fillStyle = '#000'; g.fillRect(0, 0, hobbsItem.w, hobbsItem.h); g.fillStyle = '#fff'; g.strokeStyle = '#fff';
+    hobbsItem.draw(g, hobbsItem.w, hobbsItem.h);
+    g.restore();
+    if (atlasTex) atlasTex.needsUpdate = true;
+  }
   const decalMat = decalMaterial(atlasTex, 'labels'); mats.push(decalMat);
   const decalMesh = mesh(mergeGeometries(B.decals), decalMat, 'cockpit-labels', { cast: false }); decalMesh.renderOrder = 1; decalMesh.userData.noAO = true;
   cabin.add(decalMesh);
@@ -1141,7 +1163,7 @@ export function buildCockpit(FL, A, opts = {}) {
   }
 
   // glass
-  const glassMat = clearGlassMaterial({ tint: 0x0b1216, env: 1.2 }); mats.push(glassMat);
+  const glassMat = clearGlassMaterial({ tint: 0x0b1216, env: 1.2, alpha: 0.045 }); mats.push(glassMat);      // (a cleaner windscreen: the world outside is the lesson)
   const glassGeo = mergeGeometries(B.glass.map(g => { const n = g.index ? g.toNonIndexed() : g; for (const k of Object.keys(n.attributes)) if (k !== 'position' && k !== 'normal') n.deleteAttribute(k); return n; }));
   const glassMesh = mesh(glassGeo, glassMat, 'cockpit-glass', { cast: false, receive: false }); glassMesh.renderOrder = 2; glassMesh.userData.noAO = true;
   cabin.add(glassMesh);
@@ -1230,7 +1252,7 @@ export function buildCockpit(FL, A, opts = {}) {
   // what update() works with (made here, once)
   const RK_POS = new THREE.Vector3(), RK_Q = new THREE.Quaternion(), RK_M = new THREE.Matrix4(), RK_E = new THREE.Euler();
   const lastSw = new Array(ROCKERS.length).fill(null);
-  const avSeen = { pfdMenu: '', wind: null, baroUnit: '', mfdPage: '', north: null, mic: '', c1: null, c2: null, n1: null, n2: null, powered: null, cdi: '' };
+  const avSeen = { pfdMenu: '', wind: null, baroUnit: '', mfdPage: '', north: null, mic: '', c1: null, c2: null, n1: null, n2: null, powered: null, cdi: '', xpCode: null, xpEntry: null, xpMode: '', ap: -2 };
   const lampCol = unlitMesh.geometry.attributes.color;
   const comp = { a: 0, v: 0, init: false };
   const t = { pfd: 1, mfd: 1, stby: 1 };
@@ -1239,11 +1261,13 @@ export function buildCockpit(FL, A, opts = {}) {
 
   // ================================================================ per frame (no allocation below this line)
   function avChanged(av, powered) {
-    const a = av.audio, m = a.monitor;
+    const a = av.audio, m = a.monitor, x = av.xpdr, ap = av.ap ? (av.ap.on ? 4 : 0) + (av.ap.hdg ? 2 : 0) + (av.ap.alt ? 1 : 0) : -1;   // (the AP's state as a number: no string is built per frame)
     if (avSeen.pfdMenu === av.pfdMenu && avSeen.wind === av.wind && avSeen.baroUnit === av.baroUnit && avSeen.mfdPage === av.mfdPage && avSeen.north === av.mapNorthUp
-      && avSeen.mic === a.mic && avSeen.c1 === m.COM1 && avSeen.c2 === m.COM2 && avSeen.n1 === m.NAV1 && avSeen.n2 === m.NAV2 && avSeen.powered === powered && avSeen.cdi === av.cdi) return false;
+      && avSeen.mic === a.mic && avSeen.c1 === m.COM1 && avSeen.c2 === m.COM2 && avSeen.n1 === m.NAV1 && avSeen.n2 === m.NAV2 && avSeen.powered === powered && avSeen.cdi === av.cdi
+      && avSeen.xpCode === (x ? x.code : null) && avSeen.xpEntry === (x ? x.entry : null) && avSeen.xpMode === (x ? x.mode : '') && avSeen.ap === ap) return false;
     avSeen.pfdMenu = av.pfdMenu; avSeen.wind = av.wind; avSeen.baroUnit = av.baroUnit; avSeen.mfdPage = av.mfdPage; avSeen.north = av.mapNorthUp;
     avSeen.mic = a.mic; avSeen.c1 = m.COM1; avSeen.c2 = m.COM2; avSeen.n1 = m.NAV1; avSeen.n2 = m.NAV2; avSeen.powered = powered; avSeen.cdi = av.cdi;
+    avSeen.xpCode = x ? x.code : null; avSeen.xpEntry = x ? x.entry : null; avSeen.xpMode = x ? x.mode : ''; avSeen.ap = ap;
     return true;
   }
   function lampOn(key, av) {
@@ -1334,9 +1358,11 @@ export function buildCockpit(FL, A, opts = {}) {
       comp.v += (da * 9 - comp.v * 3.6) * h; comp.a += comp.v * h; da -= comp.v * h;
     }
     parts.compass.rotation.y = comp.a;
-    // the displays: on a schedule, only when seen; black without power
+    // the displays: on a schedule, only when seen; black without power (or on a bus the battery has given up:
+    // fly-mode passes elecDead when the systems' voltage is gone)
+    refreshHobbs(o.eng && o.eng.hobbs != null ? o.eng.hobbs : s.hobbs);
     if (!visible) return;
-    const powered = !!(switches.master && switches.avionics);
+    const powered = !!(switches.master && switches.avionics && !o.elecDead);
     t.pfd += dt; t.mfd += dt; t.stby += dt;
     if (av && avChanged(av, powered)) {
       glassPanel.drawStrips(av, powered); setLamps(av, powered);
@@ -1376,6 +1402,8 @@ export function buildCockpit(FL, A, opts = {}) {
   const bytes = glassPanel.bytes + (atlasCv ? Math.round(atlas.W * atlas.H * 4 / 3) : 0);      // the atlas: one byte a texel, mipmapped
   return {
     root, eye: new THREE.Vector3(A.eye[0], A.eye[1], A.eye[2]), instructorSeat, screens, switches, parts, pick, aimPoint, update, setType,
+    // the glass's own canvases (the 2D panel, Tab, shows these very screens: fly-mode blits them, no second drawing)
+    glass: { pfd: glassPanel.pfd ? glassPanel.pfd.canvas : null, mfd: glassPanel.mfd ? glassPanel.mfd.canvas : null },
     get controls() { return byType[type]; }, get type() { return type; }, allControls: controls,
     setVisible(v) { visible = !!v; root.visible = visible; if (visible) { avSeen.powered = null; t.pfd = RATE.pfd; t.mfd = RATE.mfd; t.stby = RATE.stby; } },
     get visible() { return visible; },

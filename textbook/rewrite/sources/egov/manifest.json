@@ -25,6 +25,7 @@
         { "num": "69", "use": ["ir.recent", "ifr.rules"] },
         { "num": "70", "use": ["alcohol", "hf.self"] },
         { "num": "71_2", "use": ["lookout", "hf.vision"] },
+        { "num": "73", "use": ["basics.crew", "law.pic", "jlaw.pic"] },
         { "num": "73_2", "use": ["preflight", "fuel.vfr", "law.pic", "wx.brief"] },
         { "num": "76", "use": ["accident", "law.pilot"] },
         { "num": "76_2", "use": ["accident", "law.pilot"] },

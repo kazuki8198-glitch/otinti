@@ -115,6 +115,17 @@
     faaAih: { label: 'FAA Aviation Instructor\'s Handbook（FAA-H-8083-9B）第 3 章 The Learning Process', url: 'https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/aviation_instructors_handbook/aviation_instructors_handbook.pdf' },
     newsAscii: { label: '週刊アスキー（ASCII.jp）「ANA のパイロット訓練、実はフロリダでやってた！」（2025 年 10 月 8 日。取材記事）', url: 'https://ascii.jp/elem/000/004/323/4323328/2/' },
     newsTraffic: { label: '乗りものニュース「ANA のパイロットになるための訓練」最前線に密着（2025 年 10 月 14 日。取材記事）', url: 'https://trafficnews.jp/post/594833' },
+    // the front part 序部, chapter basics (W10, registered in R1 P5; each opened by W10 or revise-basics, 2026-10-27・29)
+    cfr1: { label: '14 CFR 1.1 General definitions（機長・フライトレベル・各種の対気速度・マッハ数の定義）', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-A/part-1/section-1.1' },
+    phak8: { label: "FAA Pilot's Handbook of Aeronautical Knowledge（FAA-H-8083-25C）第 8 章 Flight Instruments（高度の種類・対気速度の種類・高度計の規正と誤差）", url: 'https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/phak/10_phak_ch8.pdf' },
+    phak9: { label: "FAA Pilot's Handbook of Aeronautical Knowledge（FAA-H-8083-25C）第 9 章 Flight Manuals and Other Documents（AFM・POH）", url: 'https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/phak/11_phak_ch9.pdf' },
+    phak16: { label: "FAA Pilot's Handbook of Aeronautical Knowledge（FAA-H-8083-25C）第 16 章 Navigation（24 時間制と UTC・方位・針路と航跡・対地速度）", url: 'https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/phak/18_phak_ch16.pdf' },
+    aim72: { label: 'FAA AIM 7-2 Barometric Altimeter Errors and Setting Procedures（高度計の誤差と規正の手順）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_2.html' },
+    nist811: { label: 'NIST SP 811 Guide for the Use of the International System of Units, Appendix B.9（換算係数：ft・mile・nautical mile・lb・gal・inHg・°F）', url: 'https://www.nist.gov/pml/special-publication-811/nist-guide-si-appendix-b-conversion-factors/nist-guide-si-appendix-b9' },
+    usc260a: { label: '15 U.S.C. 260a Advancement of time or changeover dates（米国の夏時間の期間）', url: 'https://www.law.cornell.edu/uscode/text/15/260a' },
+    usAip: { label: 'FAA United States Aeronautical Information Publication（AIP）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aip_html/' },
+    jmaQnh: { label: '気象庁 東京航空地方気象台「羽田空港 WEATHER TOPICS 第 54 号 気圧の観測について」（QNH を hPa と inHg で通報・METAR の Q 群と国内記事の A 群）', url: 'https://www.data.jma.go.jp/haneda-airport/weather_topics/file/rjtt_wt20151030.pdf' },
+    jmaCode: { label: '気象庁「航空気象通報式」第 3 版（改正 第 17 号、令和 7 年 8 月 7 日。国内記事は RMK の後に国内のみに通報、A 群は QNH の inHg）', url: 'https://www.jma.go.jp/jma/kishou/books/tsuhoshiki/koukuu/koukuu3_17.pdf' },
   };
   // parts 1–6 (phase: the syllabus's stages that go with the part). The front part p0 (序部, book-0.js) and Part 7 (p7,
   // book-7.js) are not written here: the file that holds a part's chapters adds it (addPart below), so a product that

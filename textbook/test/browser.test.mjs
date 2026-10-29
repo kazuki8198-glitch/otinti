@@ -29,7 +29,7 @@ test(`opens: the notes, ${COUNTS.secs} sections in the contents, the chapters in
   assert.deepEqual(await page.evaluate(() => FL.book.CHAPTERS.map(c => c.id)), ORDER);
   assert.equal(await page.evaluate(() => __tb.cur), 'aero.lift');
   assert.equal(await page.evaluate(() => document.getElementById('aero.lift') !== null), true);
-  assert.equal(await page.locator('#tbToc .bk-item.sel .bk-num').innerText(), '3.2');   // the front part's chapters first (W09; DESIGN 6.1)
+  assert.equal(await page.locator('#tbToc .bk-item.sel .bk-num').innerText(), '4.2');   // the front part's chapters first (W09, W10; DESIGN 6.1)
   assert.match(await page.locator('#tbToc .bk-item.sel').innerText(), /✓|揚力/);
   assert.ok(await page.locator('#tbView .tb-note').count() === 1);
   // the next section, the URL follows (replaceState)
@@ -86,10 +86,11 @@ test('the sections\' links, the calculators, the check questions, the lesson tag
   await page.locator('#tbView .bk-calc[data-calc="xwind"] input').nth(2).fill('30');
   await page.waitForFunction(b => document.querySelector('#tbView .bk-calc[data-calc="xwind"] output').innerText !== b, before);
   assert.notEqual(await out.innerText(), before);
-  // a check question (the last section of chapter 2)
-  await page.evaluate(() => { location.hash = FL.book.CHAPTERS[1].secs.at(-1).id; });
+  // a check question (the last section of the chapter sim: chapter 2 until the front part's chapter basics came before
+  // it (W10). Picked by id: its lesson a1 has a goal, a reason and a standard, which the lesson tag below opens)
+  await page.evaluate(() => { location.hash = FL.book.CHAPTERS.find(c => c.id === 'sim').secs.at(-1).id; });
   await page.waitForSelector('#tbView .quiz');
-  const q = await page.evaluate(() => FL.book.CHAPTERS[1].quiz[0]);
+  const q = await page.evaluate(() => FL.book.CHAPTERS.find(c => c.id === 'sim').quiz[0]);
   const box = page.locator('#tbView .quiz').first();
   await box.locator('.tb-check').click();
   assert.equal(await box.locator('.res').innerText(), '選択肢を選んでください。');
@@ -102,7 +103,7 @@ test('the sections\' links, the calculators, the check questions, the lesson tag
   assert.equal(await box.locator('.res.ok').count(), 1);
   // the lessons: tags with the lesson's name, no buttons left
   const tags = await page.locator('#tbView .tb-lessons .bk-lesson').allInnerTexts();
-  const want = await page.evaluate(() => FL.book.CHAPTERS[1].lessons.map(id => `FLIGHT LAB の課目『${FL.school.lesson(id).title}』`));
+  const want = await page.evaluate(() => FL.book.CHAPTERS.find(c => c.id === 'sim').lessons.map(id => `FLIGHT LAB の課目『${FL.school.lesson(id).title}』`));
   assert.deepEqual(tags, want);
   assert.equal(await page.locator('#tbView button[data-lesson]').count(), 0);
   // a tag opens the lesson's goal, reason and standard, and a link to FLIGHT LAB (in this repository); again closes it
@@ -110,7 +111,7 @@ test('the sections\' links, the calculators, the check questions, the lesson tag
   await tag.click();
   const info = page.locator('#tbView .tb-lessons .bk-lesson-info');
   await info.waitFor();
-  const l = await page.evaluate(() => FL.school.lesson(FL.book.CHAPTERS[1].lessons[0]));
+  const l = await page.evaluate(() => FL.school.lesson(FL.book.CHAPTERS.find(c => c.id === 'sim').lessons[0]));
   const infoText = await info.innerText();
   for (const t of [l.goal, l.why, l.std]) assert.ok(infoText.includes(t), t);
   assert.equal(await tag.getAttribute('aria-expanded'), 'true');

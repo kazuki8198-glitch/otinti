@@ -282,7 +282,9 @@ test('FL.book.jurAppendix: all 47 items in the table\'s order, each drawn as in 
   }
   const vmc = a.match(/<tr class="bk-jur-row" data-jur="vmc">[\s\S]*?<\/tr>/)[0];
   assert.match(vmc, /<td class="jur-where" data-label="本の中で"><button type="button" data-sec="law\.vfr">/, 'law.vfr is in the book: linked');
-  assert.match(a.match(/<tr class="bk-jur-row" data-jur="time">[\s\S]*?<\/tr>/)[0], /<td class="jur-where" data-label="本の中で">—<\/td>/, 'basics.time is not yet: no link');
+  // basics.time came with the front part's chapter basics (W10, R1 P5): linked. nav.efb (adsb's only box) is R3's: no link
+  assert.match(a.match(/<tr class="bk-jur-row" data-jur="time">[\s\S]*?<\/tr>/)[0], /<td class="jur-where" data-label="本の中で"><button type="button" data-sec="basics\.time">/, 'basics.time is in the book: linked');
+  assert.match(a.match(/<tr class="bk-jur-row" data-jur="adsb">[\s\S]*?<\/tr>/)[0], /<td class="jur-where" data-label="本の中で">—<\/td>/, 'nav.efb is not yet: no link');
   for (const s of Object.values(J.US)) assert.ok(a.includes(s.title), s.title);
   for (const L of Object.values(J.LAWS)) assert.ok(a.includes(`${L.name}（${L.label}）`), L.name);
   assert.ok(a.includes(`${J.CHECKED} に確認`));

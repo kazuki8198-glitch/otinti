@@ -3,9 +3,9 @@
  "draft": "textbook/rewrite/combined/drafts/basics.js",
  "unit": "W10",
  "chapter": "basics",
- "updated": "2026-10-27",
+ "updated": "2026-10-29",
  "by": "W10・revise-basics",
- "about": "序部の章 basics（下書き）の主張の札（DESIGN 5 章の基準 3）。行は check-chapter.mjs --claims-out（check-claims.mjs の claimId）が抜き出した文ごと。章を登録するコミットで、統合役が CLAIMS.json に op: add で足す（id は登録の後も同じ：節の ID と文から作る）。checkedBy は事実確認役（W10 と別）が付ける。kind: 例題 は、この本で決めた仮定の値の計算の文（札は 参考値。仮定の値そのものに出典はなく、計算を検算した）。revise-basics（2026-10-27）が事実確認と初学者の読みの直しのあとで抜き出し直した：文が変わらない行は W10 の札のまま、新しい行と文が変わった行は by: revise-basics",
+ "about": "序部の章 basics（下書き）の主張の札（DESIGN 5 章の基準 3）。行は check-chapter.mjs --claims-out（check-claims.mjs の claimId）が抜き出した文ごと。章を登録するコミットで、統合役が CLAIMS.json に op: add で足す（id は登録の後も同じ：節の ID と文から作る）。checkedBy は事実確認役（W10 と別）が付ける。kind: 例題 は、この本で決めた仮定の値の計算の文（札は 参考値。仮定の値そのものに出典はなく、計算を検算した）。revise-basics（2026-10-27）が事実確認と初学者の読みの直しのあとで抜き出し直した：文が変わらない行は W10 の札のまま、新しい行と文が変わった行は by: revise-basics。revise-basics の 2 回目（2026-10-29）が初学者の 2 回目の読みの直しのあとで抜き出し直した（同じ決まり）",
  "format": {
   "id": "<節ID>#<8 桁>",
   "sec": "節 ID",
@@ -18,14 +18,14 @@
   "checkedOn": "確認日"
  },
  "counts": {
-  "rows": 105,
+  "rows": 113,
   "byTag": {
    "教材値": 3,
-   "参考値": 85,
-   "条文": 17,
+   "参考値": 92,
+   "条文": 18,
    "推測・要確認": 0
   },
-  "examples": 53
+  "examples": 58
  },
  "rows": [
   {
@@ -181,9 +181,9 @@
    "checkedOn": null
   },
   {
-   "id": "basics.units#68a09912",
+   "id": "basics.units#ede20799",
    "sec": "basics.units",
-   "text": "その海面の気圧は 29.92 inHg で、約 1013.2 hPa です。",
+   "text": "国際標準大気の海面の気圧は 29.92 inHg で、約 1013.2 hPa です。",
    "tag": "参考値",
    "source": "PHAK（FAA-H-8083-25C）第 4 章 p.4-3（https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/phak/06_phak_ch4.pdf。revise-basics が 2026-10-27 に PDF を読んだ）：The standard atmosphere at sea level is a surface temperature of 59 °F or 15 °C and a surface pressure of 29.92 inches of mercury (\"Hg) or 1,013.2 mb。ICAO の International Standard Atmosphere（ISA）。換算は NIST SP 811 Appendix B.9（https://www.nist.gov/pml/special-publication-811/nist-guide-si-appendix-b-conversion-factors/nist-guide-si-appendix-b9。2026-10-27 に読んだ）：foot → m 0.3048（正確）、mile → km 1.609344（正確）、nautical mile → m 1852（正確）、mi/h → km/h 1.609344（正確）、gal (U.S.) → L 3.785412、inch of mercury, conventional → Pa 3386.389、t/°C ＝（t/°F − 32）/1.8（32 と 1.8 は正確）。lb の正確な値 0.45359237 kg は同じ付録の脚注 22（29.92 × 33.86389 ＝ 1013.21）",
    "by": "revise-basics",
@@ -232,6 +232,37 @@
    "checkedOn": null
   },
   {
+   "id": "basics.units#7e5a152f",
+   "sec": "basics.units",
+   "text": "Q1014 は 1014 hPa、A2997 は 29.97 inHg です。",
+   "tag": "参考値",
+   "source": "気象庁「航空気象通報式」第 3 版（改正 第 17 号、令和 7 年 8 月 7 日。https://www.jma.go.jp/jma/kishou/books/tsuhoshiki/koukuu/koukuu3_17.pdf。revise-basics が 2026-10-29 に読んだ）：国内記事の A 群「QNH の値に水銀柱のインチを使用する。…QNH29.91 インチは A2991」、「国内記事は国内のみに通報する」。例は 気象庁 東京航空地方気象台「羽田空港 WEATHER TOPICS 第 54 号」（https://www.data.jma.go.jp/haneda-airport/weather_topics/file/rjtt_wt20151030.pdf）：「Q1014」は 1014hPa、「A2997」は 29.97inHg。米国の A 群は AIM 7-1-28（A2992）",
+   "by": "revise-basics",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "basics.units#1cd5bb87",
+   "sec": "basics.units",
+   "text": "表の「＝」の値は、定義で決まった正確な値です（1 NM ＝ 1,852 m、1 ft ＝ 0.3048 m、1 lb ＝ 0.45359237 kg など）。",
+   "tag": "参考値",
+   "source": "NIST SP 811 Appendix B.9（https://www.nist.gov/pml/special-publication-811/nist-guide-si-appendix-b-conversion-factors/nist-guide-si-appendix-b9。revise-basics が 2026-10-29 に読み直した）：「Factors in boldface are exact」。foot → meter 3.048 E-01（太字）、mile, nautical → meter 1.852 E+03（太字）。脚注 20（https://www.nist.gov/pml/special-publication-811/nist-guide-si-footnotes。2026-10-29）：1 nautical mile = 1852 m。脚注 22：pound (avoirdupois) → kg の正確な係数は 4.535 923 7 E-01",
+   "by": "revise-basics",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "basics.units#cdcc149a",
+   "sec": "basics.units",
+   "text": "たとえば 166.68 km/h は、約 167 km/h です。",
+   "tag": "参考値",
+   "source": "例題（この本で決めた仮定の値）。計算は revise-basics が検算した（2026-10-29）（166.68 を 1 の位に丸めて 167）",
+   "kind": "例題",
+   "by": "revise-basics",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
    "id": "basics.units#786f18dd",
    "sec": "basics.units",
    "text": "1 NM ＝ 1,852 m、1 kt ＝ 1.852 km/h、1 ft ＝ 0.3048 m",
@@ -248,6 +279,17 @@
    "tag": "参考値",
    "source": "NIST SP 811 Appendix B.9（https://www.nist.gov/pml/special-publication-811/nist-guide-si-appendix-b-conversion-factors/nist-guide-si-appendix-b9。2026-10-27 に読んだ）：foot → m 0.3048（正確）、mile → km 1.609344（正確）、nautical mile → m 1852（正確）、mi/h → km/h 1.609344（正確）、gal (U.S.) → L 3.785412、inch of mercury, conventional → Pa 3386.389、t/°C ＝（t/°F − 32）/1.8（32 と 1.8 は正確）。lb の正確な値 0.45359237 kg は同じ付録の脚注 22。29.92 inHg は PHAK（FAA-H-8083-25C）第 8 章 p.8-3〜8-9（https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/phak/10_phak_ch8.pdf。2026-10-27 に PDF を読んだ）：高度の 5 種類、IAS・CAS・TAS・GS の定義、TAS は CAS に 1,000 ft ごとに 2% を足す目安、標準の海面 29.92 inHg・15℃（59°F）、寒い日は実際の高度が表示より低い、規正値は観測所の気圧を海面に直した値、昇降計は fpm",
    "by": "W10",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "basics.units#5369a12a",
+   "sec": "basics.units",
+   "text": "60 km は約 32.4 NM なので、120 kt なら約 16 分です。",
+   "tag": "参考値",
+   "source": "例題（この本で決めた仮定の値）。計算は revise-basics が検算した（2026-10-29）（60 ÷ 1.852 ＝ 32.397 NM、32.397 ÷ 120 × 60 ＝ 16.2 分）。係数は NIST SP 811 Appendix B.9（https://www.nist.gov/pml/special-publication-811/nist-guide-si-appendix-b-conversion-factors/nist-guide-si-appendix-b9。revise-basics が 2026-10-29 に読み直した）：「Factors in boldface are exact」。foot → meter 3.048 E-01（太字）、mile, nautical → meter 1.852 E+03（太字）。脚注 20（https://www.nist.gov/pml/special-publication-811/nist-guide-si-footnotes。2026-10-29）：1 nautical mile = 1852 m。脚注 22：pound (avoirdupois) → kg の正確な係数は 4.535 923 7 E-01",
+   "kind": "例題",
+   "by": "revise-basics",
    "checkedBy": null,
    "checkedOn": null
   },
@@ -599,6 +641,17 @@
    "kind": "例題"
   },
   {
+   "id": "basics.speed#fa967a27",
+   "sec": "basics.speed",
+   "text": "角度は、風の速さと TAS の比の tan から求めます（20 ÷ 100 ＝ 0.2 で、約 11°）。",
+   "tag": "参考値",
+   "source": "基礎教材 kiso00.10 の図 5 の例（TAS 100 kt・北からの風 20 kt）を書き直した。√(100²＋20²)＝101.98 kt、arctan(20/100)＝11.31°（W10 が検算。understand/overview.md の検算とも一致）。考え方は PHAK 第 16 章 p.16-5〜16-6・16-11（https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/phak/18_phak_ch16.pdf。2026-10-27 に読んだ）：24 時間制と UTC（Zulu・経度 0° の線の時刻）、方位は北から時計回りに度で測る、針路・航跡・偏流角、120 kt で飛び 20 kt の風を受ける例",
+   "kind": "例題",
+   "by": "revise-basics",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
    "id": "basics.speed#94191363",
    "sec": "basics.speed",
    "text": "TAS 120 kt で飛ぶときの風 ｜ GS ｜",
@@ -936,6 +989,16 @@
    "checkedOn": null
   },
   {
+   "id": "basics.rules#bede5032",
+   "sec": "basics.rules",
+   "text": "この 3 つは、第 2 条が定める空域の種類です。",
+   "tag": "条文",
+   "source": "航空法第 2 条第 12 項・第 13 項・第 14 項（W05 の写し textbook/rewrite/sources/egov/articles/kokuho/2.json、令和 7 年 12 月 1 日施行の版）：「航空交通管制区」「航空交通管制圏」「航空交通情報圏」の定義（どれも国土交通大臣が告示で指定する空域）",
+   "by": "revise-basics",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
    "id": "basics.docs#169d1915",
    "sec": "basics.docs",
    "text": "米国の 14 CFR 91.9 は、承認された飛行規程と、機体の標示（markings）・表示板（placard）にある運用限界を守って運航することを求めています。",
@@ -1031,6 +1094,28 @@
    "checkedBy": null,
    "checkedOn": null,
    "kind": "例題"
+  },
+  {
+   "id": "basics.case#977a5b83",
+   "sec": "basics.case",
+   "text": "時刻：7 月 10 日 10:00 EDT は、7 月 10 日 1400Z です。",
+   "tag": "参考値",
+   "source": "例題（この本で決めた仮定の値）。計算は W10 が検算した。時差は FL.jur の time（米国：15 U.S.C. 260a・261、49 CFR 71.2・71.4。日本：明治十九年勅令第五十一号。日本に夏時間がないことは〔要確認〕：UNVERIFIED U.jst-dst）。W10 は 15 U.S.C. 260a（夏時間の期間）を Cornell LII で読み直した（2026-10-27）（7 月 10 日 10:00 EDT ＋ 4 時間 ＝ 7 月 10 日 1400Z）",
+   "kind": "例題",
+   "by": "revise-basics",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "basics.case#7e2e9c3c",
+   "sec": "basics.case",
+   "text": "区間の終わりは 7 月 10 日 1440Z（10:40 EDT）です。",
+   "tag": "参考値",
+   "source": "例題（この本で決めた仮定の値）。計算は W10 が検算した。時差は FL.jur の time（米国：15 U.S.C. 260a・261、49 CFR 71.2・71.4。日本：明治十九年勅令第五十一号。日本に夏時間がないことは〔要確認〕：UNVERIFIED U.jst-dst）。W10 は 15 U.S.C. 260a（夏時間の期間）を Cornell LII で読み直した（2026-10-27）（1400Z ＋ 40 分 ＝ 1440Z ＝ 10:40 EDT）",
+   "kind": "例題",
+   "by": "revise-basics",
+   "checkedBy": null,
+   "checkedOn": null
   },
   {
    "id": "basics.case#75bf0141",

@@ -75,9 +75,10 @@
     item('alt.unit', '規正値の単位', {
       us: 'inHg。METAR の規正値は A と 4 けた（A2992 は 29.92 inHg）',
       usSrc: 'AIM 7-1-28・7-1-29', usUrl: AIM(7, 1),
-      jp: 'METAR の規正値は Q 群（hPa）。RMK の A 群（inHg）と、管制・ATIS で言う単位は〔要確認〕', w05: 'not-egov',
+      jp: 'METAR の規正値は Q 群（hPa）。国内記事（RMK）に A 群（inHg）も書く。管制・ATIS で言う単位は〔要確認〕',
+      jpSrc: '気象庁「航空気象通報式」第 3 版（改正第 17 号）の国内記事', w05: 'not-egov',
       boxes: ['basics.units', 'perf.da', 'inst.alt', 'wx.metar'], gates: ['g1'], part7: ['jwx.report', 'jatc.phrase'],
-      note: 'Q 群は aviationweather.gov が配る RJTT・RJAA・RJCC の METAR（2026-10-27）で確かめた。RMK の A 群はその配信に出ていない（UNVERIFIED U.qnh-unit）' }),
+      note: 'Q 群は aviationweather.gov が配る RJTT・RJAA・RJCC の METAR（2026-10-27）で確かめた。国内記事の A 群（QNH を水銀柱のインチで。例 A2991）は気象庁「航空気象通報式」第 3 版（改正第 17 号、令和 7 年 8 月 7 日）https://www.jma.go.jp/jma/kishou/books/tsuhoshiki/koukuu/koukuu3_17.pdf の国内記事の規則 2.1 で確かめた（R1 の P5 の統合、2026-10-29。factcheck-basics S5）。国内記事は国内のみに通報する（同じ資料の解説 (5)）ので、aviationweather.gov の配信には出ない。管制・ATIS で言う単位は確かめていない（UNVERIFIED U.qnh-unit）' }),
     item('time', '時刻', {
       us: '東部標準時 EST＝UTC−5。夏時間 EDT＝UTC−4（3 月の第 2 日曜日から 11 月の第 1 日曜日まで）',
       usSrc: '15 U.S.C. 260a・261、49 CFR 71.2・71.4', usUrl: US.usc.url,

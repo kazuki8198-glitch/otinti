@@ -1339,6 +1339,10 @@ async function boot() {
   });
   addEventListener('keydown', (e) => {
     if (!started || input.typing()) return;
+    // the tablet closes with Tab or Esc (tablet.js) — also when the key comes before its first button has the focus (the
+    // tablet moves the focus in a moment after it opens: a Tab pressed at once reached only this listener, which kept
+    // the tablet open, and an Esc opened the pause menu over it)
+    if (tablet.isOpen && (e.code === 'Tab' || e.code === 'Escape')) { e.preventDefault(); tablet.close(); return; }
     if (e.code === 'Escape') {
       if (menu.isOpen) menu.close(true);
       else if (interactor.cardOpen) interactor.closeCard();

@@ -39,7 +39,7 @@
         [['出発前'], ['天気・燃料', '代わりの案'], C.cy],
         [['地上滑走', 'と離陸'], ['位置・許可', '周りの機体'], C.gr],
         [['上昇と', '巡航'], ['経路・高度', '燃料・天気'], C.am],
-        [['降下と', '進入'], ['到着の情報', 'やり直しの計画'], C.vi],
+        [['降下と', '進入'], ['到着地の情報', 'やり直しの計画'], C.vi],
         [['着陸と', '到着後'], ['駐機・機体', '記録'], C.bl],
       ];
       const G = 140, x0 = 8, w = 72, gap = 6;
@@ -126,15 +126,17 @@
     // basics.speed (1) — the speeds in order, and what is corrected between them (14 CFR 1.1, PHAK ch. 8)
     basicsSpeedChain() {
       const rows = [['IAS', '速度計が示す値', C.cy], ['CAS', '誤差を直した対気速度', C.cy], ['EAS', '圧縮性を直した対気速度', C.cy], ['TAS', '空気に対する本当の速さ', C.am], ['GS', '地面に対する速さ', C.gr]];
-      const fix = ['取り付け位置と計器の誤差を直す', '空気の圧縮性の影響を直す', '空気の密度（高度と気温）を直す', '風を矢印として足す'];
+      // the compressibility step is tiny at a trainer's speeds (PHAK ch. 5: about 260 kt or less, air can be treated as
+      // incompressible), so the text goes from CAS to TAS; the figure says so on that step
+      const fix = ['取り付け位置と計器の誤差を直す', '空気の圧縮性を直す（訓練機ではごく小さい）', '空気の密度（高度と気温）を直す', '風を矢印として足す'];
       let s = '';
       rows.forEach(([ab, note, c], i) => {
         const y = 10 + i * 52;
         s += `<rect x="12" y="${y}" width="76" height="34" rx="8" fill="${c}" fill-opacity="0.14" stroke="${c}" stroke-width="1.5"/>` + T(50, y + 22, ab, { c, b: 1, fs: 14 });
         s += T(100, y + 22, note, { c: C.ink, a: 'start', fs: 12 });
-        if (i < fix.length) s += A(50, y + 36, 50, y + 50, C.mut, 2) + T(70, y + 47, `↓ ${fix[i]}`, { c: C.am, a: 'start', fs: 12 });
+        if (i < fix.length) s += A(50, y + 36, 50, y + 50, C.mut, 2) + T(70, y + 47, fix[i], { c: C.am, a: 'start', fs: 12 });
       });
-      return svg(400, 262, s, '図：速度の 5 つの種類と、順に直すもの。速度計の値から始めて、誤差・圧縮性・空気の密度を直すと空気に対する本当の速さに、風を足すと地面に対する速さになります');
+      return svg(400, 262, s, '図：速度の 5 つの種類と、順に直すもの。速度計の値から始めて、誤差・圧縮性・空気の密度を直すと空気に対する本当の速さに、風を足すと地面に対する速さになります。訓練機の速さでは、圧縮性の直しはごく小さく、EAS は CAS とほとんど同じです');
     },
 
     // basics.speed (2) — ch00-fig5 redrawn: TAS 100 kt heading 090°, wind from the north 20 kt (drawn to scale)
@@ -149,7 +151,7 @@
       s += `<path d="M ${O[0] + 70} ${O[1]} A 70 70 0 0 1 ${(O[0] + 70 * Math.cos(drift * DEG)).toFixed(1)} ${(O[1] + 70 * Math.sin(drift * DEG)).toFixed(1)}" stroke="${C.rd}" stroke-width="2.5" fill="none"/>`;
       s += T(O[0] + 2, O[1] + 40, `偏流角 約 ${Math.round(drift)}°`, { c: C.rd, b: 1, a: 'start', fs: 12, halo: 1 });
       s += A(370, 60, 370, 26, C.mut, 2) + T(370, 74, '北', { c: C.mut, fs: 12 });
-      s += T(200, 196, `GS ＝ √（${tas}² ＋ ${ws}²）≈ ${gs.toFixed(1)} kt（${tas} − ${ws} ではない）`, { c: C.ink, fs: 12 });
+      s += T(200, 196, `GS ＝ √（${tas}² ＋ ${ws}²）≈ ${Math.round(gs)} kt（${tas} − ${ws} ではない）`, { c: C.ink, fs: 12 });
       return svg(400, 208, s, `図：真東（090°）に機首を向け、TAS ${tas} kt で飛ぶ飛行機が、北から ${ws} kt の風を受けたときの速度の矢印（縮尺どおり）。地面の上では南へ流されます`);
     },
 

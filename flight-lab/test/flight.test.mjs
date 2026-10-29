@@ -549,11 +549,12 @@ test('textbook: every cross-link resolves (sections, lessons, calculators) and t
 // DESIGN 3.1 and 6.2 rules 2–3 (W09): a part is added by the file of its chapters (FL.book.addPart); the front part 序部
 // (p0, book-0.js) holds the two chapters that were finished before it ('intro' first, 'sim' last), and the stage titles
 // follow the part numbers (decision 8: 第 1 段階 goes with 第 1 部; ids and phases unchanged)
-test('textbook: FL.book.addPart, the front part 序部 (p0) with intro and sim, no 「ロンドン相当」, the stages numbered as the parts', () => {
+test('textbook: FL.book.addPart, the front part 序部 (p0) with intro, basics and sim, no 「ロンドン相当」, the stages numbered as the parts', () => {
   const p0 = BK.PARTS[0];
   assert.equal(p0.id, 'p0'); assert.equal(p0.title, '序部　出発の前に（日本で準備する）'); assert.doesNotMatch(p0.title, /第 0 部/);
-  assert.deepEqual(BK.CHAPTERS.filter(c => c.part === 'p0').map(c => c.id), ['intro', 'sim']);
-  assert.deepEqual(BK.CHAPTERS.slice(0, 2).map(c => c.id), ['intro', 'sim'], 'the front part comes first, so its chapters are numbered first');
+  // W09 moved intro and sim here; W10 wrote basics (book-0.js, before: 'aero', so between them)
+  assert.deepEqual(BK.CHAPTERS.filter(c => c.part === 'p0').map(c => c.id), ['intro', 'basics', 'sim']);
+  assert.deepEqual(BK.CHAPTERS.slice(0, 3).map(c => c.id), ['intro', 'basics', 'sim'], 'the front part comes first, so its chapters are numbered first');
   assert.equal(BK.PARTS.find(p => p.id === 'p1').title, '第 1 部　地上学科（英語の座学）');
   for (const p of BK.PARTS) assert.doesNotMatch(p.title, /ロンドン相当/, p.id);
   for (const st of SY.STAGES) assert.doesNotMatch(st.title, /ロンドン相当/, st.id);

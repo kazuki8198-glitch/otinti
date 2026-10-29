@@ -20,7 +20,7 @@
       "checked": "2026-10-27",
       "statusOnChecked": "CurrentEnforced",
       "newer": [],
-      "articles": 25,
+      "articles": 26,
       "terms": {
         "7600": {
           "total": 0,
@@ -411,6 +411,20 @@
         "hf.vision"
       ],
       "sha256": "eee466769772515fbde7df8dda0a7dc1e31fd594c7b9b266dfac2ca4851386b8"
+    },
+    {
+      "ref": "kokuho:73",
+      "law": "航空法",
+      "label": "第73条",
+      "article": "第七十三条",
+      "caption": "（機長の権限）",
+      "file": "articles/kokuho/73.json",
+      "use": [
+        "basics.crew",
+        "law.pic",
+        "jlaw.pic"
+      ],
+      "sha256": "e096e0cc8d8c6c9d8107d546c65b2506fc0b1c611bb6e51bf433668d5e47bd24"
     },
     {
       "ref": "kokuho:73_2",

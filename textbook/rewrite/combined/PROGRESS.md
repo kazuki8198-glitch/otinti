@@ -6,9 +6,9 @@
 
 ## 今の状態（2026-10-29）
 
-- **版**：R1（誤りの修正・日米の違い・序部）の途中。P1（W01・W02・W03・W05）、P2（W04・W04b・W06）、P3（W07a・W07b・W07c・W07f・W07d・W11）、P4（W09・W08a・W08b・W08c）、P5（W10：書き手・事実確認・初学者の読み・直し役の 3 章分）を統合してコミットした。**序部ができた**：本の構成は **7 部（序部 p0 と第 1〜6 部）・29 章・167 節**、序部は `intro`・`basics`・`english`・`sim` の 4 章・22 節（DESIGN 3.3 のとおり）、`#aero.lift` は 5.2（R1 の番号）。CADET のゲームの本は `basics` を足して 26 章・154 節（`english` は `DROP_CHAPTERS`）。P3 までに、教科書の誤り（DESIGN 10.1 の教科書の 79 行のうち 77 行・図・写真・学科テスト 4 問）と課目の失速の回復の順番〔安全〕を直し、基礎教材の原本のページに訂正の重ね表示と作り直した問題を出した。P4 で序部 p0 を足し（そのときは `intro`・`sim` の 2 章で 27 章・154 節、`#aero.lift` は 3.2）、日米の囲みを今ある節の 60 か所（項目 × 節）に置いた（章末に「この章の日米の違い」が出る）。P5 で序部の節の囲みが 4 か所増えた（`basics.units`・`basics.time`・`basics.alt`・`basics.rules`：64 か所）。
-- **テスト**（`textbook/rewrite/tools/testall.sh`、P5 の統合のとき。3 つの章のコミットのどれも）：FLIGHT LAB 82/82・TEXTBOOK 22/22・CADET 266/266（数は [`reports/integrate-P5.md`](reports/integrate-P5.md)。P4 のときも 82・22・266、P3 のときは 80・21・266、P2 のときは 76・21・265、P1 のときは 56・21・259）。
-- **出力**（`FLIGHT-LAB.html`・`TEXTBOOK.html`・`CADET.html`）：テストを流すと作り直されるが、コミットはしていない。版の最後（W12）に作り直してコミットする（DESIGN 7.3）。
+- **版**：**R1（誤りの修正・日米の違い・序部）を閉じた**。P1（W01・W02・W03・W05）、P2（W04・W04b・W06）、P3（W07a・W07b・W07c・W07f・W07d・W11）、P4（W09・W08a・W08b・W08c）、P5（W10：序部の 3 章）、W12（R1 の確かめ：事実の二人目 factcheck2-R1・安全レビュー safety-R1・二人の must と should の直し・出力の作り直し）を統合してコミットした。本は **7 部（序部 p0 と第 1〜6 部）・29 章・167 節**、序部は `intro`・`basics`・`english`・`sim` の 4 章・22 節（DESIGN 3.3）、`#aero.lift` は 5.2。CADET のゲームの本は 26 章・154 節（`intro`・`english`・`sim` を外す）。R1 で、教科書の誤り（DESIGN 10.1 の 79 行のうち 78 行）・図・写真・学科テスト 4 問と課目の失速の回復の順番〔安全〕を直し、日米の囲みを 64 か所に置き、序部を書き、基礎教材の原本のページに訂正の重ね表示を出した。W12 で、日米の対照データ `FL.jur` の 4 項目（`metar.taf` の PROB・`solo` の承認の 90 日・`sbas` の MSAS・`ws.alert` の気象庁の探知）と `fuel.vfr`、〔安全〕の③（VFR で雲に入ったとき：`hf.body`）・②（周回で目視を失ったとき：`ifr.np`）の R1 のつなぎ、④ の失速警報との関係、課目 e3・i2 の手順、a7 の目標を直し、命に関わる 7 項目の文をテストにした（`reports/integrate-R1.md`）。
+- **テスト**（`textbook/rewrite/tools/testall.sh`、R1 の締めの木）：FLIGHT LAB 83/83・TEXTBOOK 22/22・CADET 266/266（数は [`reports/integrate-R1.md`](reports/integrate-R1.md)。P5 のとき 82・22・266、P4 も同じ、P3 は 80・21・266、P2 は 76・21・265、P1 は 56・21・259）。
+- **出力**（`FLIGHT-LAB.html`・`TEXTBOOK.html`・`CADET.html`）：R1 の締めで作り直してコミットした（R1 の締めのコミットの後の 1 コミット。README の raw.githack のリンクはそのコミットを指す）。
 
 ## できたこと
 
@@ -31,6 +31,7 @@
 | W11 原本の保存と表示 | `kiso-errata.js`（新）：原本のページに重ねる訂正 25 項目（安全と日本の法令。重ねない 2 行は理由つき）と、章の問題のページから作り直した確認問題。`pages.js`：題の下の 1 行・訂正の囲み（`.kz-body` の外）・図の id を図ごとに・写真の `alt`。原本のハッシュのテスト。`ERRATA-FOR-WORD.md`（DESIGN 10.2 の全 53 行）。統合で共有の列に登録（FLIGHT LAB だけ） | [W11](reports/W11.md) | `flight.test.mjs`・`browser.test.mjs` の基礎教材のテスト、`check-provenance.mjs` |
 
 | W10 序部（P5） | 書き手 3（`intro`・`basics`・`english` の下書き `drafts/`）→ 事実確認 3 → 初学者の読み（`basics` は 2 回）→ 直し役 3 → 統合役が登録（章ごとに 1 コミット）。`intro`：`book-1.js` の中で置き換え（新 2 節 `intro.japan`・`intro.exams`、図 6 枚、出典 15）。`basics`：`book-0.js` に 9 節（基礎教材 第 0 章を書き直し、`from` つき、日米の囲み 4、図 10 枚、出典 10）。`english`：`book-0.js` に 2 節（用語の三つ組みを `FL.terms` から描く、英語の授業と教官との話し方、図 2 枚、出典 9）と CADET の `DROP_CHAPTERS`。統合で、航空法第 73 条の e-Gov の写し、`FL.jur` の `alt.unit` の日本の欄（気象庁の航空気象通報式の国内記事の A 群）、`FL.terms` に 5 語、写真 `ch00-photo5` は W22 まで外した、TEXTBOOK のブラウザのテストの章の選び方を id に、CADET のタブレットが開いた直後の Tab・Esc でも閉じるように（`cadet/src/main.js`。`basics` で表に出た競合）、テストの定数（`COUNTS`・`ORDER`・見出し・`#aero.lift` 3.2 → 4.2 → 5.2・FLIGHT LAB の序部の章の列・付録の表の見本の項目・CADET の README）、DESIGN の付記 6 | [W10-intro](reports/W10-intro.md)・[W10-basics](reports/W10-basics.md)・[W10-english](reports/W10-english.md)、[factcheck-intro](reports/factcheck-intro.md)・[factcheck-basics](reports/factcheck-basics.md)・[factcheck-english](reports/factcheck-english.md)、[reader-intro](reports/reader-intro.md)・[reader-basics](reports/reader-basics.md)・[reader-english](reports/reader-english.md)、[revise-intro](reports/revise-intro.md)・[revise-basics](reports/revise-basics.md)・[revise-english](reports/revise-english.md)、[integrate-P5](reports/integrate-P5.md) | `check-chapter.mjs intro`・`basics`・`english`（error 0。warn は図の札の初出の形 7・`basics` の初出 1 と概念 4）、3 製品のテスト |
+| W12 R1 の確かめ | 事実の二人目（factcheck2-R1：R1 の差分の事実・`FL.jur` の 47 項目・閉じた ERRATA 101 行と RULINGS 35 行を一次資料と照らした。must 1・should 2・nit 4）と安全レビュー（safety-R1：命に関わる 7 項目を緊急・片発・異常姿勢・ウインドシア・雲・周回の節と課目・CADET で。must 1・should 13・nit 9）。統合役が二人の must と should を直し（`FL.jur` の `metar.taf`・`solo`・`sbas`・`ws.alert`・`fuel.vfr`、`hf.body`・`ifr.np`・`wx.shear`・`ops.stall`・`hf.self`・`wx.taf`・`sys.carb`・`law.rules`、学科テスト q_wx、課目 a7・a8・e3・i2、Shift+R の案内、CADET の IMSAFE の掲示）、7 項目の文のテスト、台帳の署名（ERRATA 101 行・RULINGS 35 行に `checkedBy`）と作った本の数、出力の作り直し | [factcheck2-R1](reports/factcheck2-R1.md)・[safety-R1](reports/safety-R1.md)・[integrate-R1](reports/integrate-R1.md) | 3 製品のテスト（`flight.test.mjs`「textbook: the seven safety items…」）、`validate.mjs`（warning 172 → 38）、`check-ledgers.mjs` |
 
 台帳で閉じた行（P1）：ERRATA `APP.max-bytes`・`APP.index-photos`・`APP.menu-read-count`・`APP.record-textbook-row`（W02）・`APP.base64-xxx`（W01）、UNVERIFIED `U.docs-article`・`U.egov-version`（W05）。どれも確かめ役の署名（`checkedBy`）は W12 が付ける（`validate.mjs` の warning 7 件）。新しい行：ERRATA `APP.cadet-comm-practice-ch-sim`（W02 が見つけた。P3 で W07a が閉じた）。
 
@@ -42,11 +43,38 @@
 
 台帳（P5）：W10-intro → W10-basics → W10-english → integrate-P5 のパッチをこの順に取り込んだ（`apply-patches.mjs --write` → `validate.mjs` ok）。CLAIMS に 393 行（`intro` 193・`basics` 113・`english` 87。抜き出した主張はどれも札つき。事実確認役の報告が許した、文の変わらない行には `checkedBy`：`basics` 66 行・`english` 21 行）。閉じた行：ERRATA `K.overview.K2`・`K3`・`K4`・`K6`（`basics`）、`T.overview.T2`（not-error：AC 61-136B は現行）、RULINGS `R.pic-meaning`・`R.ifr-terms`・`R.pressure-unit`、PROVENANCE の 32 行（`kiso00.01`・`02`・`07`〜`16`、問 16、図 3、`kiso09.q3`）、CONCEPTS `C.pic-vs-captain`、UNVERIFIED `U.ac61-136`（resolved）。note だけ：`kiso00.cover`（`to` に `intro.marks`・`intro.study`）・`kiso00.x1`・`kiso09.3`・`kiso09.8`・`kiso12.1`・`ch00-photo5`、`APP.kiso-cover-airline`（序部の扉 `door:p0` を待つ）、`R.pf-term`（`crm.pm`＝W32）、`C.flight-rules-conditions`・`C.speed-kinds`・`C.time`・`C.pressure-altitude`、`U.qnh-unit`・`U.london-icao`、JCAB-MAP 8 行の `missing`。署名（`checkedBy`）待ちは 172 行（`validate.mjs` の warning 172。W12）。
 
-## 次（R1 の残り。DESIGN 7.2 の依存の順）
+台帳（R1 の W12）：`reports/W12.ledger.json` を取り込んだ（`apply-patches.mjs --write` → `validate.mjs` ok、warning 172 → 38）。署名：R1 で閉じた ERRATA 101 行・RULINGS 35 行に `checkedBy: W12`（事実の二人目が場所の今の文を一次資料と照らした。〔安全〕の行 ERRATA 4・RULINGS 2 と `R.stall-recovery`・`R.microburst`・`R.vfr-fuel-law` は安全レビューも）。`R.taf-groups` は M1、`T.human.T1` は N1 を直してから。`SYNC.stall-recovery` の `places` の `ops.slow` を `ops.stall` に。閉じた行：ERRATA `SYNC.e3-glide-entry`・`SYNC.i2-upset`（統合役が直した。二人目は R3 の W36）。note だけ：RULINGS `R.vfr-into-imc`・`R.circling-lost-visual`（R1 のつなぎ。本番の節は W28・W30）、UNVERIFIED `U.msas`（使える進入の種類が残る）・`U.ws-alert-japan`（管制の伝え方が残る）。CLAIMS に統合役が書いた文の 14 行（札つき・署名待ち）。COUNTS に R1 の作った本の数（`built`：部 7・章 29・節 167・序部 4 章 22 節・`FL.jur` 47 項目・TEXTBOOK の読み込み 17・`#aero.lift` 5.2・課目の book 55 本・出力の大きさ）。残る署名待ち 38 行：PROVENANCE 32（序部の行き先）・UNVERIFIED 3・CONCEPTS 1・ERRATA 2（上の 2 行）。
 
-1. **序部の描く部品**（W12 の前に。DESIGN 3.2「節のデータ」「章末」・5 章の基準 24。単位の名前は統合役の提案：W10b）：①節の `scope`（範囲の札）と `from`（由来の行「パイロット基礎教材（第 3 版）第 N 章 x 節をもとに改稿」）を FLIGHT LAB の `pages.js` と TEXTBOOK の `render.js` が同じ形で描く共有の部品 `FL.book.secMarks(sec)`（`book-core.js`。この名前の関数があると `intro.marks` の約束の表に 2 行が出る：下書きの取り決め）。②章末の `written`（説明してみよう。答えは開いて見る。今は序部の 22 問がデータとしてあるだけで、どの製品も描かない。初学者の読み手はこの問いを画面で確かめられない）。③CADET は描かない（範囲の札と由来の行は本文の外、章末は描かない）。TEXTBOOK の `COUNTS.details` などの決め打ちが変わる（`TEST-CONSTANTS.md`）。
-2. 最後に **W12** R1 の確かめ：P1〜P5 で閉じた行の `checkedBy`（172 行。CLAIMS の序部の行のうち署名のない 306 行：`intro` の 193 行全部（事実確認役の報告は署名を W12 に任せた）・`basics` と `english` の直し役が直したか足した行も）、序部の初学者の読み（3 章を登録のあとの順で）、〔安全〕の行の安全レビュー（`T.aero.T-3`・`T.instruments.E-T2`・`T.weather.T2`・`R.cross-check`・`SYNC.stall-recovery` と a7・a8 のブリーフ・CADET の教官の台詞、`R.failed-engine-id` の教科書の側、`kiso-errata.js` の〔安全〕の 9 項目、`R.alcohol` と `fuel.vfr` の囲み）、日本の法令レビュー（`kiso-errata.js` の日本の法令の項目）、変えた図 30 枚の目視の記録、出力の作り直し。
-3. R1 の確かめの対象の外で、いつでもできるもの：**W07d の 2 回目**（W07d が足した ERRATA の open の 30 行。課目の段階・採点・`school.js`・`physics.js`・`sanford-course.js`・CADET の `checklists-archer.js`・`atc.js`。統合役の判断で `unit` は W07d のまま。〔安全〕の `SYNC.e3-glide-entry`・`SYNC.i2-upset` は R3 の安全レビュー W36 までに）。
+## R1 の締め：DESIGN 5 章の基準（7.2 の W12「R1 で対象になる分」：1・3〜8・10・16〜18・21・24〜26）
+
+R1 の範囲（台帳は教科書の行と序部、取り違えは囲みの分、由来表は序部の分）で見た。「満たす」は道具かテストかレビューの記録がある所だけ。
+
+| # | 基準 | R1 の結果 | 確かめたもの | 残り（行き先） |
+|---|---|---|---|---|
+| 1 | 誤りと食い違いを閉じ、別の人が署名 | **満たす（R1 の分）**：教科書の行 79 のうち 78 が閉じて署名つき（`T.human.T8` は後方乱気流を R3 の節 `ops.wake` へ移す構成の行）。序部の行（`K.overview.*`）は K1〜K4・K6 が閉じて署名つき（K5 は R2 の W13）。RULINGS は閉じた 35 行が全部署名つき | `check-ledgers.mjs`（ERRATA 閉じた 103・RULINGS 35、署名のない閉じた行は統合役が直した 2 行だけ）、`validate.mjs`（warning 38）、`reports/factcheck2-R1.md` の 6 | 基礎教材の行 46・アプリ 16・課目 19 と RULINGS 45 は R2〜R5 の各単位。`SYNC.e3-glide-entry`・`SYNC.i2-upset` の二人目は W36 |
+| 3 | 主張の台帳（札のない未確認の主張ゼロ、二人目が確かめる） | **一部**：序部の抜き出した主張は全部札つき（序部の `claim-untagged` 0）。署名は未 | `check-claims.mjs`（札つき 239・序部の札なし 0）、CLAIMS 407 行 | CLAIMS の署名のない 320 行（序部 306・W12 の 14）を R2 の始めに事実確認役が確かめる。第 1〜6 部の 1,419 文は、各章を書き直す単位が札を付ける |
+| 4 | 日本の条文が e-Gov の写しにあり、数字が条文にある | **満たす** | `check-egov.mjs`（写しの検査 1,471・error 0・warn 1）、`textbook/test/egov.test.mjs`、`flight-lab/test/jur.test.mjs` | 写しにない条（施行規則第 97・145・166 条の 4 など）は W37 |
+| 5 | 計算の例はすべて検算済み | **一部**：W01 の見本 30 行は検算が合う | `calc-check.mjs`（30 行・error 0、台帳 `CALC.json` がない：pending 1） | 序部と各章の例を `CALC.json` に（R2 の各章の単位と W27） |
+| 6 | 教材値と参考値を並べる | **一部**：序部は合う（`teaching-value-alone` なし） | `check-claims.mjs` の info（第 1・2 部の 12 節で「教材値」だけ） | 12 節は R2・R3 の章の単位。Seminole の公表値は W31 |
+| 7 | 命に関わる 7 項目と独立した安全レビュー | **一部**：安全レビューで ①④⑤⑥⑦ 合格。③（must）と②（should）は統合役がレビューの案で R1 のつなぎを書き、7 項目の文をテストにした。直した文の 2 回目の安全レビューはまだ | `reports/safety-R1.md`、`flight-lab/test/flight.test.mjs`「textbook: the seven safety items…」と「the stall lessons teach the AFH recovery order」、`cadet/test/jur.test.mjs`（91.17・91.151） | ③ の本番の節 `emg.imc`（W28）・② の `ifr.circle`（W30）と、そのときの安全レビュー（W36）。失速の課目の採点は所有者の判断 11 |
+| 8 | 全節に `scope`、規則の言葉は国の範囲だけ | **満たさない**：`scope` のない節 149（序部の 18 節は付けた）、共通の節の米国の規則 25 | `check-jurisdiction.mjs`（error 174） | 各章を書き直す単位（R2・R3）。hf の AIM 8-1-x の出典は W20 |
+| 10 | 原本は変わらない | **満たす** | `flight-lab/test/flight.test.mjs`（`kiso-data.js` の sha256・264 ファイルの一覧・git の木）、`check-provenance.mjs` | — |
+| 16 | 図 | **一部**：109 枚が道具の検査を通る（既知のはみ出し 7 枚も直っている）。W07f が直した図の目視の記録はまだ | `check-figures.mjs`（Chromium、error 0）、TEXTBOOK のテスト | W07f が直した図 30 枚の目視の記録は R2 の始め（W21 の前。序部の図は直し役の報告 revise-* の 3 に記録がある） |
+| 17 | 写真のライセンス | **一部**：教科書の 30 枚はテストの形を満たし、`lycoming` を直した。写真ごとの加工の表示 `mod` がない（30） | TEXTBOOK の写真のテスト、`check-photos.mjs`（warn 30） | W22（基礎教材の写真・`mod`・`ch00-photo5`） |
+| 18 | 4 択 | **一部**：誤り 4 問を直し、問の分野・数・並びは同じ。理由に根拠がない問 153、章末の問の正解の位置が B に偏る（62%）。全問を二人目が解いた記録はない | `check-questions.mjs`（error 0・warn 154） | W23（第 1 部）・W34・W50 |
+| 21 | 文体 | **満たさない**：体言止め 16・常体 6 の error（第 1〜4 部の既存の文）、80 字を超える文 98。序部は error 0 | `check-style.mjs` | 各章の書き直し（R2・R3）、初出の形は W24 |
+| 24 | 3 製品で正しく出る | **一部**：日米の囲み（64 か所）・章末の日米の表・CADET の「米国の決まり」・「（別の章）」と行き先のないリンクのゼロはテストで確かめた。範囲の札・由来の行・説明してみよう（`written`）を描く部品がまだない | 3 製品のテスト（`jur.test.mjs` ①、TEXTBOOK・CADET の「（別の章）」なし） | R2 の始め：描く部品（統合役の提案 W10b） |
+| 25 | 全テストと容量 | **満たす** | `testall.sh`（83/83・22/22・266/266）、FLIGHT-LAB.html 約 9.8 MB（12 MiB 以下）・CADET.html 約 9.5 MB（15 MiB 以下）、教科書の写真 2,384,474 バイト（4.0 MiB 以下）、CADET の AI 目次 2.5 万字以下（`cadet/test/ai.test.mjs`） | — |
+| 26 | 学習記録 | **満たす**（R1 は記録の形を変えていない。W02 のメニューと記録の画面の直しもテストで確かめた） | FLIGHT LAB の消毒・統合・書き出しのテスト | `bookWritten` は描く部品と一緒に、`readAt`・`review` は R5 |
+
+ほかの基準（2・9・11〜15・19・20・22・23）は R1 の対象の外（2 と 9 は囲みの分だけ：`check-jur.mjs` の ① found 64・missing 0、11 は序部の分：序部の `from` 12 節）。
+
+## 次（R2 の始め。DESIGN 7.2 の R2 の前に済ませる R1 の残り）
+
+1. **描く部品**（統合役の提案：W10b。DESIGN 3.2「節のデータ」「章末」・5 章の基準 24）：節の `scope`（範囲の札）と `from`（由来の行「パイロット基礎教材（第 3 版）第 N 章 x 節をもとに改稿」）を FLIGHT LAB の `pages.js` と TEXTBOOK の `render.js` が同じ形で描く共有の部品 `FL.book.secMarks(sec)`（`book-core.js`。この名前の関数があると `intro.marks` の約束の表に 2 行が出る）と、章末の `written`（説明してみよう。答えは開いて見る。序部の 22 問）。CADET は描かない。TEXTBOOK の `COUNTS.details` などの決め打ちが変わる（`TEST-CONSTANTS.md`）。
+2. **R1 の確かめの残り**（W12 の役のうち、この版で走らなかったもの）：CLAIMS の署名のない 320 行（序部 306・W12 の 14）の事実確認、序部の初学者の 2 回目の読み（`intro`・`english`。`basics` は 2 回読んだ）、日本の法令レビュー（`kiso-errata.js` の日本の法令の項目と全部の日本の囲み：DESIGN 7.1）、W07f が直した図 30 枚の目視の記録、PROVENANCE の序部の 32 行と CONCEPTS `C.pic-vs-captain`・UNVERIFIED の 3 行（`U.docs-article`・`U.egov-version`・`U.ac61-136`）の署名、統合役が直した〔安全〕の文（`hf.body`・`ifr.np`・`wx.shear`・課目 e3・i2・a7）の 2 回目の安全レビュー。
+3. **所有者の判断**：11（失速の課目の採点 300 ft を参考の行にするか：`DECISIONS.md`）、3 の補足（「迎え角」と「キャブレターヒーター」）。
+4. そのあと R2（第 1 部：W13〜W27）。依存は DESIGN 7.2 のとおり。**W07d の 2 回目**（W07d が足した ERRATA の open の 28 行：課目の段階・採点・`school.js`・`physics.js`・`sanford-course.js`・CADET の `checklists-archer.js`・`atc.js`。CADET の m2・m4 のバンク角の言い方は safety-R1 の 5 の 4）はいつでもできる。
 
 書く単位は、用語を `FL.terms`（`find`・`firstUse`）から、日米の数字を `FL.jur` から取る（STYLE の「用語」「日米の書き分け」）。節を書く単位は、その節が 3.4 の「囲みの節」なら、登録するコミットで囲みを `bk.jur(...ids)`（違いがないときは `bk.same(id)`）で置く（数字を手で書かない。`flight-lab/test/jur.test.mjs` の ① が、本にある囲みの節に項目の囲みがあり、ほかの節にないことを確かめる）。章末の「この章の日米の違い」は FLIGHT LAB の `pages.js` と TEXTBOOK の `render.js` が自動で出す。付録の対照表 `FL.book.jurAppendix()` のページは W47。
 
@@ -54,7 +82,8 @@
 
 ## 未解決のこと
 
-- **確かめ役の署名待ち**：172 行（W12）。CLAIMS の序部の行のうち署名のない 306 行も W12 が確かめる。〔安全〕の行は安全レビューが、日本の法令の項目（`kiso-errata.js`）は日本の法令レビューが署名する。
+- **確かめ役の署名待ち**：38 行（`validate.mjs` の warning：PROVENANCE 32・UNVERIFIED 3・CONCEPTS 1・ERRATA 2）と CLAIMS の 320 行。「次」の 2。
+- **R1 の W12 で残ったこと**（[`reports/integrate-R1.md`](reports/integrate-R1.md) の 6）：失速の課目の採点（所有者の判断 11）、`sbas` の MSAS で使える進入の種類と AIP Japan GEN 3.4（`U.msas`）、日本の管制のウィンドシャーの伝え方（`U.ws-alert-japan`）、AIM 7-1-29 が NWSI 10-813 の 2024 年版に追いついたら `FL.jur` `metar.taf` の note の 1 文を消す、`wx.shear` の「機首を保つのは失速警報が鳴らない範囲で」を小型機の一次資料（POH・AFH）で書けるか（今は後半の「警報が鳴ったら迎え角が先」だけ：AFH 第 5 章）、CADET の航法ログの問いと黒板の「予備 30 分」に国の名前がない（`school.js`・`main.js`。CADET は米国の決まりの世界なので誤りではない）、学科テスト q_ifr の機首上げの問の理由に「押す」がない（IFH の 3 段階。`ifr.upset` が説明済み）、`hf.body` の「AIM 8-1-5」が共通の節の本文にある（`check-jurisdiction` の error 1。W20 が hf の出典をまとめるとき）。
 - **所有者に確かめること**（`DECISIONS.md` の「3 の補足」）：用語の表の正式名「迎え角」（例は「迎角」）と「キャブレターヒーター」（例は「気化器加熱」）。例の語を選ぶなら `book-terms.js` の `aoa`・`carb-heat` の `formal` と `common` を入れ替え、`terms.test.mjs` の 2 行を直す。あわせて `U.jcab-term-names`（耐空性審査要領での V<sub>MC</sub> と accelerate-go distance の日本語名）。
 - **用語の表が引く条で、写していないもの**：施行規則第 97 条・第 145 条・第 166 条の 4（8 か所。表のテストは「写しなし」と数えるだけ）。W37 が写しに足す。
 - **各章の初出の検査の範囲**（W04 の報告 5 の 6）：`check-style.mjs` の初出の形の warning 574 は、通称のない語（離陸・失速など）も数える。W24・W50 の前に、どこまでを初出の形にするかを決める（W01 の道具の持ち主と W24）。
@@ -86,6 +115,6 @@
   - 用語の表にない語（W07a）：逆転錯覚・エレベーター錯覚・墓場のスピン・ブラックホール錯覚・デトネーション・最大運用運動速度（VO）・終極荷重・動圧。JCAB の表記を確かめて `FL.terms` に足す（W04 の持ち物。W24 の前に）。
   - 一次資料で確かめきれていないもの：Seminole の片発の上昇率と実用上昇限度（参考値・二次資料。W31 が POH で）、PA-44-180 の型式証明の FAR 23 の改正の版（W31）、AC 61-136B が現行か（`T.overview.T2`。W10）、待機の時間の ICAO と FAA の比べ方（`K.ifr.K-4`、DESIGN の付記 4。W30・W41）、`kiso-errata.js` の〔要確認〕（日本の AIP の周回進入・告示の空港・7600 と灯火信号・飲酒の通達の改正・技能発揮訓練の適用時期・日本の耐空性の基準の値。W37）。
   - 写していない条（W11）：航空法第 73 条・施行規則第 199 条（e-Gov の API で同じ版を読んだ。W37 が写しに足すと、`flight.test.mjs` の訂正のテストがリンクも照らす）。
-  - AC 120-109A と課目の採点（W07d の 5 の 1）：AC は失速の手前からの回復の評価に決めた高度の損失を使わないことを勧めるが、課目 a7・a8・c1 は「失った高度 300 ft 以内」で採点する（DESIGN 10.5 は採点を変えない）。W12 の安全レビューか所有者が決める。
+  - AC 120-109A と課目の採点（W07d の 5 の 1）：安全レビュー（safety-R1）の答えは「参考の行にする」。DESIGN 10.5 が「採点は変えない」としているので、所有者の判断 11（`DECISIONS.md`）に上げた。
   - 出典の候補（W07c）：`me.perf` の公表値の出どころ（Aviation Consumer 誌・Jane's）は本文に名前だけ。二次資料なので `R` に足さなかった（W31 が POH に替える）。
 

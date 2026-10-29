@@ -1,0 +1,981 @@
+{
+ "unit": "W12",
+ "about": "R1 の W12（統合 R1）：事実の二人目（factcheck2-R1）と安全レビュー（safety-R1）の署名、二人の must と should を統合役が直した行、R1 の作った本の数",
+ "patches": [
+  {
+   "id": "T.overview.T1",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.overview.T2",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.overview.T3",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.aero.T-1",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.aero.T-2",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.aero.T-3",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた。〔安全〕の行として、安全レビュー（reports/safety-R1.md の 4・8）も一次資料（AFH・AWH・AIM・14 CFR・e-Gov の写し・通達）と照らした"
+  },
+  {
+   "id": "T.aero.T-4",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.aero.T-5",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.aero.T-6",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.aero.T-7",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.aero.T-8",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.aero.T-9",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.aero.T-10",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.aero.T-11",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.aero.T-12",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.aero.T-13",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.aero.T-14",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.systems.T1",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.systems.T2",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.systems.T3",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.systems.T4",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.systems.T5",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.systems.T6",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.systems.T7",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.systems.T8",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.systems.T9",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.systems.T10",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.systems.T11",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.instruments.E-T1",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.instruments.E-T2",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた。〔安全〕の行として、安全レビュー（reports/safety-R1.md の 4・8）も一次資料（AFH・AWH・AIM・14 CFR・e-Gov の写し・通達）と照らした"
+  },
+  {
+   "id": "T.instruments.E-T3",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.instruments.E-T4",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.wb-perf.T1",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.wb-perf.T2",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.wb-perf.T3",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.wb-perf.T4",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.wb-perf.T5",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.wb-perf.T6",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.weather.T1",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.weather.T2",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた。〔安全〕の行として、安全レビュー（reports/safety-R1.md の 4・8）も一次資料（AFH・AWH・AIM・14 CFR・e-Gov の写し・通達）と照らした。safety-R1 の 4 の④ should 1 により、W12 の統合で wx.shear に「失速警報が鳴ったら、警報が止まるまで迎え角を減らすのが先（AFH 第 5 章 p.5-15：the most important action to an impending stall or a full stall is to reduce the AOA）」を足した（AWH には機首の上限の言い方がない。AC 00-54 の stick shaker は輸送機の手順なので使わなかった）"
+  },
+  {
+   "id": "T.weather.T3",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.weather.T4",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.weather.T5",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.weather.T6",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.weather.T7",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.navigation.T1",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.navigation.T2",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.navigation.T3",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.law.q_radio",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.law.comm-option",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.law.law-special",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.law.comm-mayday",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.law.comm-icao",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.human.T1",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた。factcheck2-R1 の nit N1（PHAK 第 17 章は black hole approach と「も呼ばれる」と書く）は、W12 の統合で案のとおり hf.body の文を直してから署名した"
+  },
+  {
+   "id": "T.human.T2",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.human.T3",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.human.T4",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.human.T5",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.human.T6",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.human.T7",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.human.T9",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.human.T10",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.human.T11",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.vfr.E1",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.vfr.E2",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.ifr.E-T1",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.ifr.E-T2",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.ifr.E-T3",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.ifr.E-T4",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.ifr.E-T5",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.ifr.E-T6",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.ifr.E-T7",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.multi.T-1",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.multi.T-2",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.multi.T-3",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.multi.T-4",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.multi.T-5",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "T.multi.T-6",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "K.overview.K1",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "K.overview.K2",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "K.overview.K3",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "K.overview.K4",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "K.overview.K6",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "K.aero.K-1",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "K.ifr.K-6",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "APP.max-bytes",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "APP.index-photos",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "APP.menu-read-count",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "APP.record-textbook-row",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "APP.lesson-c1",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "APP.kiso-svg-ids-alt",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "APP.base64-xxx",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "APP.style-md",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "APP.london-equivalent",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "SYNC.stall-recovery",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた。〔安全〕の行として、安全レビュー（reports/safety-R1.md の 4・8）も一次資料（AFH・AWH・AIM・14 CFR・e-Gov の写し・通達）と照らした。places の ops.slow を ops.stall に（図 stallRecovery と 4 段階は ops.stall。safety-R1 の 4 の⑤ nit）。safety-R1 の 4 の⑤ should 1 により、W12 の統合で a7 の goal を「着陸形態での失速を体験し、迎え角を先に減らして確実に回復する」に、a7・a8 の std と aero.stall・ops.stall の bk.sim に「300 ft は目安・ACS の基準ではない・高度より迎え角が先」を足した。採点（300 ft・二次失速）は DESIGN 10.5 のとおり変えず、所有者の判断 11（DECISIONS.md）に上げた。Shift+R の案内（flight-lab/src/app.js・cadet/src/flight/controls.js）から「失速の回復で一気に」を外した（should 2）",
+   "places": [
+    "syllabus a7 brief",
+    "syllabus a8 brief",
+    "syllabus stallRecovery（say・g）",
+    "cadet/src/content/dialog/instructor.js",
+    "aero.stall",
+    "ops.stall",
+    "FIG.stallRecovery"
+   ]
+  },
+  {
+   "id": "SYNC.x3-short-field",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "SYNC.comm-tower-sim",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "SYNC.comm-option-sim",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "SYNC.glide-model",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "APP.cadet-comm-practice-ch-sim",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "SYNC.lesson-links-ops",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.pic-meaning",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.ifr-terms",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.pressure-unit",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.lift-lower-surface",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.load-factor-unit",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.dihedral",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.vn-line",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.stall-recovery",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた。〔安全〕の行として、安全レビュー（reports/safety-R1.md の 4・8）も一次資料（AFH・AWH・AIM・14 CFR・e-Gov の写し・通達）と照らした"
+  },
+  {
+   "id": "R.base-final-stall",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.o360-license",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.engine-without-electric",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.fixed-pitch-rpm",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.cross-check",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた。〔安全〕の行として、安全レビュー（reports/safety-R1.md の 4・8）も一次資料（AFH・AWH・AIM・14 CFR・e-Gov の写し・通達）と照らした"
+  },
+  {
+   "id": "R.cas",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.static-block-vsi",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.tempo-length",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.taf-groups",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた。factcheck2-R1 の must M1：囲みの米国の欄の「PROB30/40（最初の 9 時間は使わない）」は NWS の今の指示書と合わなかった。W12 の統合で案のとおり FL.jur metar.taf の us を「PROB30（PROB40 は使わない）」に、usSrc に NWSI 10-813（2024-10-30）付録 B 2.9.4 を足し、note に AIM 7-1-29 との食い違いを書いてから署名した（NWSI 10-813 の B2.9.4「PROB30 is the only PROB group used in NWS TAFs」と変更点の一覧「Removed 9-hour PROB30 constraint in the first 9 hours」を 2026-10-29 に読んだ）。DESIGN 3.4 の metar.taf の行も同じに。米国の PROB は PROB30 だけ（NWSI 10-813 の 2024 年版）"
+  },
+  {
+   "id": "R.microburst",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた。〔安全〕の行として、安全レビュー（reports/safety-R1.md の 4・8）も一次資料（AFH・AWH・AIM・14 CFR・e-Gov の写し・通達）と照らした。wx.shear の失速警報の 1 文は T.weather.T2 の note"
+  },
+  {
+   "id": "R.dissipating-stage",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.metar-frequency",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.gust-criterion",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.deviation-sign",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.lost-climb",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.divert-order",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.readback",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.notam-term",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.hold-short",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.nordo-landing",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.vfr-fuel-law",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた。〔安全〕の行として、安全レビュー（reports/safety-R1.md の 4・8）も一次資料（AFH・AWH・AIM・14 CFR・e-Gov の写し・通達）と照らした。safety-R1 の 4 の⑦ should により、W12 の統合で FL.jur fuel.vfr の日本の欄に「訓練では、学校の規程の量に従う」を足し、law.rules の「ここが大切」を「米国の VFR の燃料（91.151）は…」にした（nit）"
+  },
+  {
+   "id": "R.right-of-way",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.alcohol",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた。〔安全〕の行として、安全レビュー（reports/safety-R1.md の 4・8）も一次資料（AFH・AWH・AIM・14 CFR・e-Gov の写し・通達）と照らした。safety-R1 の 4 の⑥ should により、W12 の統合で hf.self の考えてみようの答えを「この朝は飛びません」と言い切る形にした（21 時から 6 時は 9 時間。AIM 8-1-1 の 12〜24 時間に足りない）"
+  },
+  {
+   "id": "R.trust-instruments",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.pattern",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.nordo-ifr",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "R.approach-ban",
+   "checkedBy": "W12",
+   "note": "W12（2026-10-29）：事実の二人目（reports/factcheck2-R1.md の 6）が、where の場所の今の文を一次資料と照らして確かめた"
+  },
+  {
+   "id": "SYNC.e3-glide-entry",
+   "status": "fixed",
+   "verified": true,
+   "by": "W12",
+   "source": {
+    "report": "textbook/rewrite/NOTES.md 138 行",
+    "primary": "AFH FAA-H-8083-3C 第 9 章 p.9-28「Emergency Approaches and Landings (Simulated)」"
+   },
+   "where": "flight-lab/src/syllabus.js e3 の brief の 1 つめ（巡航のように速いときは、高度を保って 76 kt まで減速してから滑空の姿勢にする。すぐに機首を下げない）と、段階「エンジン故障：滑空開始」の say（エンジン停止！ 高度を保って 76 kt まで減速し、それから滑空の姿勢。LAB RWY 36 へ向けて旋回）。CADET の教官は brief を読み上げ、操縦席では say を言う。段階の名前・g・採点（滑空速度 76 ±8 kt を 8 秒後から）は変えていない。テスト：flight-lab/test/flight.test.mjs「textbook: the seven safety items…」",
+   "note": "W12（統合、2026-10-29）：safety-R1 の 5 の 1（should。R1 の中で本の emg.basic と課目が食い違って見えるので R1 で直すことを勧める）。AFH 第 9 章 p.9-28「If the simulated power failure occurs while above best glide speed, the pilot allows the airplane to slow (or may even bleed off speed by climbing) until reaching best glide speed. When reaching that speed, the nose can be lowered」を読んで確かめた（一次資料は第 18 章ではなく第 9 章）。100 kt から高度を保って減速しても、8 秒後の採点の幅（76 ±8 kt）にはおおむね入る見込み（エンジン停止の Archer の減速は毎秒 2 kt 前後：揚抗比から見積もった。確かめていない）。二人目の確かめは R3 の W36"
+  },
+  {
+   "id": "SYNC.i2-upset",
+   "status": "fixed",
+   "verified": true,
+   "by": "W12",
+   "where": "flight-lab/src/syllabus.js i2 の brief（機首上げ・低速：①出力を足す（減速の程度に合わせて。ここでは全開）②機首を下げる（失速させない）③翼を水平。スパイラル：①パワー アイドル ②少し押して荷重を抜く（約 1 G）③翼を水平 ④それから機首をゆっくり上げる）と 2 つの段階の g（同じ順。押すのは W を軽く）。教科書 ifr.upset と同じ順。採点（翼を先に水平・アイドル 3 秒以内・荷重 3.8 G 以下・Vne 未満・12 秒以内）は変えていない：押す段階があっても通る形（翼を水平にする前に機首は上がらない）",
+   "note": "W12（統合、2026-10-29）：safety-R1 の 5 の 2（should）。AFH 第 5 章 p.5-26 の 5 段階（「Apply some forward-elevator. Prior to rolling the wings level, it is important to unload the G-load … to return to about +1G」）と IFH FAA-H-8083-15B p.7-27（Nose-High Attitudes：「increase power (as necessary in proportion to the observed deceleration), apply forward elevator pressure to lower the nose …, and correct the bank」）を読んで確かめた。correction の「採点を手順に合わせて見直す」は、今の採点が押す段階を妨げないので変えていない（W36 で見直す）。二人目の確かめは R3 の W36"
+  },
+  {
+   "id": "U.msas",
+   "by": "W12",
+   "says": "SBAS は MSAS（国土交通省 航空局。補強の信号はみちびき 3 号機から）。MSAS で飛べる進入の種類は〔要確認〕（FL.jur sbas）",
+   "note": "W12（統合、2026-10-29）：factcheck2-R1 の S2 により、FL.jur sbas の日本の欄を W11 が確かめた中身（国土交通省 航空局の資料 3-10・報道発表 平成 29 年 8 月 25 日）にそろえた。資料 3-10 は 2026-10-29 に取り直して読んだ（題「MSAS（衛星航法補強システム）」、みちびき 3 号機（静止衛星）を利用、導入実績は国土交通省航空局。PDF の sha256 ab8f10ef…）。残るのは「扱い」のうち、MSAS で使える進入の種類（LPV など）と AIP Japan GEN 3.4（読めていない）なので、行は開いたまま"
+  },
+  {
+   "id": "U.ws-alert-japan",
+   "by": "W12",
+   "says": "空港気象ドップラーレーダーとドップラーライダーで、低層ウィンドシャーとマイクロバーストを探知し、パイロットに伝える。METAR は WS の群で報じる。管制がどう伝えるかは〔要確認〕（FL.jur ws.alert）",
+   "note": "W12（統合、2026-10-29）：factcheck2-R1 の S2 により、FL.jur ws.alert の日本の欄を W11 が確かめた中身にそろえた（気象庁 中部航空地方気象台のページを 2026-10-29 に読み直した：低層ウィンドシアーは地表から概ね 500 m（1,600 ft）まで、リアルタイムでパイロットに伝える）。残るのは管制がどんな言い方で伝えるか"
+  },
+  {
+   "id": "R.vfr-into-imc",
+   "by": "W12",
+   "note": "W12（統合、2026-10-29）：R1 のつなぎ（safety-R1 の 4 の③ must：R1 だけを使う人に基準 7 の③が足りない）。hf.body に段落「それでも VFR で雲に入ってしまったら…」（AFH 第 18 章 p.18-17〜18-20：認める → 操縦を保つ（最初は翼を水平だけ）→ 助けを得る、旋回は 10° 以下、上昇は 1 目盛り、上昇しながらの旋回をしない）と「ここが大切」の 2 項目（翼を水平・地形から離れる、180° は浅く来た方が確実に晴れて地形が許すときだけ・管制に助けを求める）を書いた。地形と 180° の条件は裁定の言い方（AFH は 180° 旋回を決まった手順にしない）。テスト：flight-lab/test/flight.test.mjs「textbook: the seven safety items…」。本番の節 emg.imc（W28）で閉じる"
+  },
+  {
+   "id": "R.circling-lost-visual",
+   "by": "W12",
+   "note": "W12（統合、2026-10-29）：R1 のつなぎ（safety-R1 の 4 の② should）。ifr.np の進入復行の段落の後に「周回進入（circling approach）の途中で滑走路の目印を見失ったときは、別です。…まず着陸する滑走路へ向かって上昇旋回し、進入復行のコースに乗るまで旋回を続けます（米国の AIM 5-4-21）」と、「ここが大切」に 1 項目。AIM 5-4-21 の文（「make an initial climbing turn toward the landing runway and continue the turn until established on the missed approach course」）を確かめた。本番の節 ifr.circle（W30）で閉じる"
+  },
+  {
+   "op": "add",
+   "id": "aero.stall#3c6bdaae",
+   "sec": "aero.stall",
+   "text": "採点の「300 ft 以内」はこの教材の目安で、実地試験（ACS）の基準ではありません。",
+   "tag": "教材値",
+   "source": "flight-lab/src/syllabus.js stallRecovery の result（300 ft × 難易度）。自家用 ACS（FAA-S-ACS-6C）の PA.VII.B・C に高度の損失の基準はない。AC 120-109A は失速の手前からの回復の評価に決めた高度の損失を入れないことを勧める（safety-R1 の 3）",
+   "by": "W12",
+   "note": "W12（統合、2026-10-29）：R1 の事実の二人目・安全レビューの must と should を直した文"
+  },
+  {
+   "op": "add",
+   "id": "ops.stall#3c6bdaae",
+   "sec": "ops.stall",
+   "text": "採点の「300 ft 以内」はこの教材の目安で、実地試験（ACS）の基準ではありません。",
+   "tag": "教材値",
+   "source": "同上（aero.stall#3c6bdaae）",
+   "by": "W12",
+   "note": "W12（統合、2026-10-29）：R1 の事実の二人目・安全レビューの must と should を直した文"
+  },
+  {
+   "op": "add",
+   "id": "sys.carb#8a993d2c",
+   "sec": "sys.carb",
+   "text": "また、ヒートを入れたまま全開で飛ぶと、デトネーション（detonation：異常な燃え方）を起こすおそれがあります（POH 4.5m）。",
+   "tag": "参考値",
+   "source": "Archer III POH（VB-2266）4.5m Approach and Landing「Full throttle operation with carburetor heat on can cause detonation.」",
+   "by": "W12",
+   "note": "W12（統合、2026-10-29）：R1 の事実の二人目・安全レビューの must と should を直した文"
+  },
+  {
+   "op": "add",
+   "id": "wx.taf#2c77151c",
+   "sec": "wx.taf",
+   "text": "定時の TAF は 1 日 4 回、00・06・12・18Z の分が出ます。",
+   "tag": "参考値",
+   "source": "NWSI 10-813（2024-10-30）4.10 の表「Scheduled Issuance」0000・0600・1200・1800 UTC",
+   "by": "W12",
+   "note": "W12（統合、2026-10-29）：R1 の事実の二人目・安全レビューの must と should を直した文"
+  },
+  {
+   "op": "add",
+   "id": "wx.taf#cbb14d49",
+   "sec": "wx.taf",
+   "text": "発表はその 20〜40 分前です（例：00Z の TAF は 23:20〜23:40Z。NWS の指示書 NWSI 10-813 の 4.10）。",
+   "tag": "参考値",
+   "source": "NWSI 10-813（2024-10-30）4.10 の表「Issuance Window」2320 to 2340 UTC など",
+   "by": "W12",
+   "note": "W12（統合、2026-10-29）：R1 の事実の二人目・安全レビューの must と should を直した文"
+  },
+  {
+   "op": "add",
+   "id": "law.rules#f71d58f7",
+   "sec": "law.rules",
+   "text": "米国の VFR の燃料（91.151）は、最初の着陸予定地まで＋昼 30 分・夜 45 分",
+   "tag": "条文",
+   "source": "14 CFR 91.151(a)(1)(2)（eCFR、2026-10-23 の版）",
+   "by": "W12",
+   "note": "W12（統合、2026-10-29）：R1 の事実の二人目・安全レビューの must と should を直した文"
+  },
+  {
+   "op": "add",
+   "id": "hf.self#f0ab73ab",
+   "sec": "hf.self",
+   "text": "21 時から 6 時までは 9 時間で、米国の規則の 8 時間（14 CFR 91.17）はぎりぎり過ぎます。",
+   "tag": "条文",
+   "source": "14 CFR 91.17(a)(1)「Within 8 hours after the consumption of any alcoholic beverage」。21:00〜06:00 は 9 時間（計算）",
+   "by": "W12",
+   "note": "W12（統合、2026-10-29）：R1 の事実の二人目・安全レビューの must と should を直した文"
+  },
+  {
+   "op": "add",
+   "id": "hf.self#975525ba",
+   "sec": "hf.self",
+   "text": "でも米国の AIM は、8 時間たっても影響が残ることがあるとして、12〜24 時間あけるよう勧めています。",
+   "tag": "参考値",
+   "source": "AIM 8-1-1 の Alcohol（a minimum of 12 to 24 hours）",
+   "by": "W12",
+   "note": "W12（統合、2026-10-29）：R1 の事実の二人目・安全レビューの must と should を直した文"
+  },
+  {
+   "op": "add",
+   "id": "hf.self#bc843bab",
+   "sec": "hf.self",
+   "text": "9 時間は、その 12 時間に足りません。",
+   "tag": "参考値",
+   "source": "計算（9 < 12）。AIM 8-1-1",
+   "by": "W12",
+   "note": "W12（統合、2026-10-29）：R1 の事実の二人目・安全レビューの must と should を直した文"
+  },
+  {
+   "op": "add",
+   "id": "hf.body#7c45f4dd",
+   "sec": "hf.body",
+   "text": "PHAK 第 17 章と AIM 8-1-5 はこれを featureless terrain illusion と呼び、PHAK は black hole approach とも呼ばれると書いています。",
+   "tag": "参考値",
+   "source": "PHAK（FAA-H-8083-25C）第 17 章 Featureless Terrain Illusion（「sometimes referred to as the \"black hole approach\"」）、AIM 8-1-5（factcheck2-R1 の N1）",
+   "by": "W12",
+   "note": "W12（統合、2026-10-29）：R1 の事実の二人目・安全レビューの must と should を直した文"
+  },
+  {
+   "op": "add",
+   "id": "hf.body#340a75af",
+   "sec": "hf.body",
+   "text": "旋回はバンク 10° 以下、上昇は姿勢指示器の 1 目盛りまでにし、上昇と旋回を同時にしません（AFH 第 18 章）。",
+   "tag": "参考値",
+   "source": "AFH（FAA-H-8083-3C）第 18 章 Inadvertent VFR Flight Into IMC p.18-19「no more than 10° bank angle」・p.18-20「no more than one bar width」・Combined Maneuvers「should be avoided」",
+   "by": "W12",
+   "note": "W12（統合、2026-10-29）：R1 の事実の二人目・安全レビューの must と should を直した文"
+  },
+  {
+   "op": "add",
+   "id": "hf.body#b80278d7",
+   "sec": "hf.body",
+   "text": "来た方が確実に晴れていて地形が許すときは、浅いバンクで 180° 旋回して雲から出ます。",
+   "tag": "参考値",
+   "source": "RULINGS R.vfr-into-imc の裁定（understand/vfr-flying.md 7 節 C6：翼を水平 → 地形から離れる → 浅い 180° → 援助）。AFH 第 18 章は 180° 旋回を決まった手順にしない",
+   "by": "W12",
+   "note": "W12（統合、2026-10-29）：R1 の事実の二人目・安全レビューの must と should を直した文"
+  },
+  {
+   "op": "add",
+   "id": "hf.body#9e862111",
+   "sec": "hf.body",
+   "text": "雲の中の 180° 旋回は浅く（10° 以下）、来た方が確実に晴れて地形が許すときだけ。",
+   "tag": "参考値",
+   "source": "同上（hf.body#b80278d7・hf.body#340a75af）",
+   "by": "W12",
+   "note": "W12（統合、2026-10-29）：R1 の事実の二人目・安全レビューの must と should を直した文"
+  },
+  {
+   "op": "add",
+   "id": "ifr.np#f77ab93a",
+   "sec": "ifr.np",
+   "text": "まず着陸する滑走路へ向かって上昇旋回し、進入復行のコースに乗るまで旋回を続けます（米国の AIM 5-4-21）。",
+   "tag": "参考値",
+   "source": "AIM 5-4-21「If visual reference is lost while circling-to-land … the pilot should make an initial climbing turn toward the landing runway and continue the turn until established on the missed approach course」",
+   "by": "W12",
+   "note": "W12（統合、2026-10-29）：R1 の事実の二人目・安全レビューの must と should を直した文"
+  },
+  {
+   "id": "toc.p0.chapters",
+   "built": 4,
+   "builtBy": "W12",
+   "builtOn": "2026-10-29",
+   "by": "W12",
+   "note": "W12（2026-10-29）：R1 の終わりの本で数えた"
+  },
+  {
+   "id": "toc.p0.sections",
+   "built": 22,
+   "builtBy": "W12",
+   "builtOn": "2026-10-29",
+   "by": "W12",
+   "note": "W12（2026-10-29）：R1 の終わりの本で数えた。intro 7・basics 9・english 2・sim 4"
+  },
+  {
+   "id": "toc.p0.existing",
+   "built": 9,
+   "builtBy": "W12",
+   "builtOn": "2026-10-29",
+   "by": "W12",
+   "note": "W12（2026-10-29）：R1 の終わりの本で数えた。intro の今の 5 節と sim の 4 節"
+  },
+  {
+   "id": "toc.p0.new",
+   "built": 13,
+   "builtBy": "W12",
+   "builtOn": "2026-10-29",
+   "by": "W12",
+   "note": "W12（2026-10-29）：R1 の終わりの本で数えた。intro.japan・intro.exams・basics の 9 節・english の 2 節"
+  },
+  {
+   "id": "toc.parts",
+   "built": 7,
+   "builtBy": "W12",
+   "builtOn": "2026-10-29",
+   "by": "W12",
+   "note": "W12（2026-10-29）：R1 の終わりの本で数えた。序部と第 1〜6 部。第 7 部は R4"
+  },
+  {
+   "id": "toc.chapters",
+   "built": 29,
+   "builtBy": "W12",
+   "builtOn": "2026-10-29",
+   "by": "W12",
+   "note": "W12（2026-10-29）：R1 の終わりの本で数えた。序部 4・教科書の 25"
+  },
+  {
+   "id": "toc.sections",
+   "built": 167,
+   "builtBy": "W12",
+   "builtOn": "2026-10-29",
+   "by": "W12",
+   "note": "W12（2026-10-29）：R1 の終わりの本で数えた。序部 22・第 1〜6 部 145（R1 は今の節だけ。新しい節は R2・R3）"
+  },
+  {
+   "id": "jur.items",
+   "built": 47,
+   "builtBy": "W12",
+   "builtOn": "2026-10-29",
+   "by": "W12",
+   "note": "W12（2026-10-29）：R1 の終わりの本で数えた"
+  },
+  {
+   "id": "jur.safety",
+   "built": 2,
+   "builtBy": "W12",
+   "builtOn": "2026-10-29",
+   "by": "W12",
+   "note": "W12（2026-10-29）：R1 の終わりの本で数えた。fuel.vfr・alcohol"
+  },
+  {
+   "id": "jur.unverified",
+   "built": 23,
+   "builtBy": "W12",
+   "builtOn": "2026-10-29",
+   "by": "W12",
+   "note": "W12（2026-10-29）：R1 の終わりの本で数えた。FL.jur の日本の欄に〔要確認〕がある項目（確度が要確認の 20 項目と、確認済みの 3 項目に残る〔要確認〕：vmc.ad の告示の空港・nordo.vfr の 7600 の扱い・nordo.ifr の大臣が定める時間）。recount の 15 は DESIGN 3.4 の表の数え方"
+  },
+  {
+   "id": "book.textbookModules",
+   "built": 17,
+   "builtBy": "W12",
+   "builtOn": "2026-10-29",
+   "by": "W12",
+   "note": "W12（2026-10-29）：R1 の終わりの本で数えた。textbook/test/build.test.mjs の FL_MODULES.length"
+  },
+  {
+   "id": "book.aeroLiftNumber",
+   "built": "5.2",
+   "builtBy": "W12",
+   "builtOn": "2026-10-29",
+   "by": "W12",
+   "note": "W12（2026-10-29）：R1 の終わりの本で数えた"
+  },
+  {
+   "id": "book.lessons",
+   "built": "39 課目（課程表の全部）・book 55 本",
+   "builtBy": "W12",
+   "builtOn": "2026-10-29",
+   "by": "W12",
+   "note": "W12（2026-10-29）：R1 の終わりの本で数えた。R1 で a4・a5・a7・a8 の後ろに ops.turns・ops.stall、c1 は solo.check"
+  }
+ ]
+}

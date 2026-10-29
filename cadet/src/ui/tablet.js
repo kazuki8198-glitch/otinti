@@ -110,8 +110,15 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     for (const e of m.exams) put(ul, put(make('li'), make('span', 'st' + (e.pass ? ' ok' : e.tries ? ' ng' : ''), e.pass ? '合格' : e.tries ? `${e.best}%` : '未'), make('span', '', e.title)));
     put(gr, ul);
     const tr = put(make('div', 'tb-card'), make('h3', '', '信頼'));
-    for (const t of m.trust) { put(tr, make('div', 'sub', `${t.name}　${t.v}`)); const b = make('div', 'tb-bar'); put(b, Object.assign(make('i'), { style: `width:${t.v}%` })); put(tr, b); }
-    put(g, gr, tr); put(scr, g);
+    for (const t of m.trust) { put(tr, make('div', 'sub', `${t.name}　${t.v}${t.band ? `（${t.band}）` : ''}`)); const b = make('div', 'tb-bar'); put(b, Object.assign(make('i'), { style: `width:${t.v}%` })); put(tr, b); }
+    // (growth design v1 §4.7) the four abilities, as bars with their whole numbers
+    const ab = put(make('div', 'tb-card'), make('h3', '', '能力'));
+    for (const [name, v] of m.abilities || []) { put(ab, make('div', 'sub', `${name}　${v}`)); const b = make('div', 'tb-bar'); put(b, Object.assign(make('i'), { style: `width:${v}%` })); put(ab, b); }
+    put(g, gr, tr, ab); put(scr, g);
+    // (growth design v1 §4.6) after the graduation: how the rank was reached
+    if (m.gradRank) put(scr, put(make('div', 'tb-card'), make('h3', '', `卒業評価　${m.gradRank.rank}`),
+      make('div', 'sub', `総合 ${m.gradRank.total}（操縦 35%・知識 25%・交信 15%・判断 25%）`),
+      make('div', 'sub', `一発合格率 ${m.gradRank.firstRate}%（課目・審査の初回）　筆記試験の受験 ${m.gradRank.examTries} 回　飛行の平均スコア ${m.gradRank.avgScore}`)));
     // (chapter 1's sections: heard or not, and the last answers — the classes', the checks', the evening study's)
     if (m.marks) {
       put(scr, make('h3', '', '座学の節（✓ 前回合っていた　△ 前回間違えた　・ まだ問われていない　空白 まだ聞いていない）'));
@@ -124,7 +131,7 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
       put(scr, sg);
     }
     if (m.written1) {
-      const w = put(make('div', 'tb-card'), make('h3', '', '学科試験（第 1 章）への準備：分野ごとに 4 問ずつ出ます'));
+      const w = put(make('div', 'tb-card'), make('h3', '', '学科試験（第 1 章）への準備：30 問、分野ごとに最大 5 問出ます'));
       const ul = make('ul', 'tb-list');
       for (const b of m.written1) put(ul, put(make('li'), make('span', 'st' + (b.taught >= 4 ? ' ok' : ''), `${b.taught} 問`), make('span', '', `${b.title}：習った問題 ${b.taught} / ${b.total}、前回正解 ${b.right}`)));
       put(w, ul); put(scr, w);
@@ -149,6 +156,14 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     put(scr, ul);
   }
   function practice(m) {
+    // (the judgement drill, §4.4: read the morning's weather ten times; the judgement grows, twice a day)
+    if (act.drill) {
+      put(scr, make('h2', '', '判断ドリル'), make('p', 'sub', '朝の天気（METAR と TAF）を読んで、飛ぶ・午後まで待つ・午前だけ飛ぶ・今日は飛ばない、を選びます（10 問）。ソロに要る判断が、少し育ちます。'));
+      const dc = make('div', 'tb-card');
+      if (m.drillsLeft > 0) { put(dc, make('div', 'sub', `今日はあと ${m.drillsLeft} 回できます`)); put(dc, btn('ドリルを始める', () => { close(); act.drill(); })); }
+      else put(dc, make('div', 'sub', '今日の分は終わりました。また明日。'));
+      put(scr, dc);
+    }
     // (k4, the chair flight: from anywhere, as often as wanted — a practice, not the lesson's record)
     if (act.chair && m.chair === false) put(scr, make('h2', '', '交信の練習（チェアフライト）'), make('p', 'sub', '4 回目の授業（交信の型と、1 回の飛行の交信）のあとで練習できます。'));
     else if (act.chair) {

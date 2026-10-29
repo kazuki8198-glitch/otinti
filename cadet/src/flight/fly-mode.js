@@ -318,6 +318,7 @@ export function createFlyMode(ctx) {
   function startDebrief(sum) {
     phase = 'day'; debSum = sum;
     if (ctx.tem && !sum.tem) sum.tem = ctx.tem();                 // (M6) the threat the cadet named this morning
+    if (ctx.tired && sum.tired === undefined) sum.tired = !!ctx.tired();   // (growth §4.5) flown tired: the debrief says so
     // the first solo: no one in the seat to debrief it — the day is signed off outside (ctx.onSolo)
     if (!crew) { if (dayMode.day) dayMode.day.debriefRead(); if (ctx.onSolo) ctx.onSolo(sum); return; }
     startTalk('debrief', seatName(debriefDialogs(sum, { voice: crewId || 'instructor' })));

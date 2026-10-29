@@ -514,14 +514,14 @@
       memo: txt(r.memo, 2000), note: RECORD_NOTE,
     };
   }
-  // progress: lessons (tries / best grade / passed), training time, landings, read sections, quiz scores, ATC scenes,
+  // progress: lessons (tries / best grade / passed / best score), training time, landings, read sections, quiz scores, ATC scenes,
   // and the basic course's own (kiso/: its sections read, its written questions whose answer was opened)
   function sanitizeProgress(p) {
     const out = { lessons: {}, time: 0, landings: 0, read: [], quiz: {}, bookQuiz: {}, atc: {}, kisoRead: [], kisoQa: [] };
     if (!p || typeof p !== 'object') return out;
     if (p.lessons && typeof p.lessons === 'object') for (const [k, v] of Object.entries(p.lessons)) {
       if (!/^[a-z0-9_]{1,12}$/.test(k) || !v || typeof v !== 'object') continue;
-      out.lessons[k] = { tries: isNum(v.tries) ? clamp(Math.round(v.tries), 0, 99999) : 0, best: ['S', 'A', 'B', 'C', '―'].includes(v.best) ? v.best : '', pass: !!v.pass, levels: Array.isArray(v.levels) ? v.levels.filter(x => LEVELS.some(l => l.id === x)).slice(0, 3) : [] };
+      out.lessons[k] = { tries: isNum(v.tries) ? clamp(Math.round(v.tries), 0, 99999) : 0, best: ['S', 'A', 'B', 'C', '―'].includes(v.best) ? v.best : '', pass: !!v.pass, score: isNum(v.score) ? clamp(Math.round(v.score), 0, 100) : 0, levels: Array.isArray(v.levels) ? v.levels.filter(x => LEVELS.some(l => l.id === x)).slice(0, 3) : [] };
     }
     if (isNum(p.time)) out.time = clamp(p.time, 0, 1e8);
     if (isNum(p.landings)) out.landings = clamp(Math.round(p.landings), 0, 1e6);
@@ -533,10 +533,12 @@
   }
   function noteLesson(prog, L) {
     if (!L || L.free || !L.done) return prog;
-    const rec = prog.lessons[L.id] || { tries: 0, best: '', pass: false, levels: [] };
+    const rec = prog.lessons[L.id] || { tries: 0, best: '', pass: false, score: 0, levels: [] };
     rec.tries++; if (L.passed) { rec.pass = true; if (!rec.levels.includes(L.level.id)) rec.levels.push(L.level.id); }
     const rank = { S: 4, A: 3, B: 2, C: 1, '―': 0, '': -1 };
     if ((rank[L.grade] ?? -1) > (rank[rec.best] ?? -1)) rec.best = L.grade;
+    // (the lesson's continuous score, 0..1 at the end of endLesson: the best of them is kept, as a percent)
+    if (isNum(L.score)) rec.score = Math.max(rec.score || 0, clamp(Math.round(L.score * 100), 0, 100));
     prog.lessons[L.id] = rec;
     return prog;
   }
@@ -561,7 +563,7 @@
   function mergeProgress(a, b) {
     const A = sanitizeProgress(a), B = sanitizeProgress(b), rank = { S: 4, A: 3, B: 2, C: 1, '―': 0, '': -1 };
     const lessons = { ...A.lessons };
-    for (const [k, v] of Object.entries(B.lessons)) { const x = lessons[k]; lessons[k] = x ? { tries: Math.max(x.tries, v.tries), best: rank[v.best] > rank[x.best] ? v.best : x.best, pass: x.pass || v.pass, levels: [...new Set([...x.levels, ...v.levels])] } : v; }
+    for (const [k, v] of Object.entries(B.lessons)) { const x = lessons[k]; lessons[k] = x ? { tries: Math.max(x.tries, v.tries), best: rank[v.best] > rank[x.best] ? v.best : x.best, pass: x.pass || v.pass, score: Math.max(x.score || 0, v.score || 0), levels: [...new Set([...x.levels, ...v.levels])] } : v; }
     const maxMap = (p, q) => { const o = { ...p }; for (const [k, v] of Object.entries(q)) o[k] = Math.max(o[k] || 0, v); return o; };
     return sanitizeProgress({ lessons, time: Math.max(A.time, B.time), landings: Math.max(A.landings, B.landings), read: [...A.read, ...B.read], quiz: maxMap(A.quiz, B.quiz), bookQuiz: maxMap(A.bookQuiz, B.bookQuiz), atc: { ...A.atc, ...B.atc }, kisoRead: [...A.kisoRead, ...B.kisoRead], kisoQa: [...A.kisoQa, ...B.kisoQa] });
   }

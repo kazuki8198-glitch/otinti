@@ -89,6 +89,16 @@ test('day: a careless cadet — anomalies missed, a rope left on, a wrong read-b
   assert.ok(sum.trust < 6);
 });
 
+test('day: the debrief names the fatigue when the cadet flew tired (§4.5), whoever gives it', () => {
+  const base = { walk: { found: 0, missed: [], tasksLeft: [], anomalies: 0 }, radio: { n: 0, first: 0, wrong: 0, late: 0 }, lessons: [{ id: 'a1', title: '上昇・降下・レベルオフ', done: true, passed: true, grade: 'A', rows: [] }], trust: 3, incursion: false, crash: '', fault: null, tem: null };
+  const linesOf = (sum, voice) => { const lines = []; const r = createRunner({ data: debriefDialogs(sum, voice ? { voice } : {}), state: createDialogState() }); r.start('debrief'); for (let k = 0; k < 30 && r.running; k++) { const v = r.view(); lines.push(v.text); if (v.choices.length) r.choose(0); else r.next(); } return lines.join('\n'); };
+  assert.match(linesOf({ ...base, tired: true }), /疲労が判断と操縦に出ていました/);
+  assert.doesNotMatch(linesOf({ ...base, tired: false }), /疲労が判断と操縦に出ていました/, 'not tired: not said');
+  assert.doesNotMatch(linesOf({ ...base, tired: true, lessons: [{ ...base.lessons[0], done: false }] }), /疲労が判断と操縦に出ていました/, 'nothing flown: not said');
+  for (const voice of ['chief', 'examiner']) assert.match(linesOf({ ...base, tired: true }, voice), /疲労が判断と操縦に出ていました/, `${voice} says it too`);
+  assert.deepEqual(validateDialogs(debriefDialogs({ ...base, tired: true }), {}).errors, []);
+});
+
 // (M6) more anomalies on both aircraft: the lens, the brake (its stain on the apron), the nose strut, the trim tab, the
 // papers (the cadet sends for them) — each can be planted, found and put right
 test('day: the walk-around\'s later anomalies — planted on either aircraft, reported or put right, the brake\'s stain shown', async () => {

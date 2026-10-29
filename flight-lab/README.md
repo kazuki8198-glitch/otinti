@@ -21,6 +21,8 @@ v2.3：画面を作り直しました（ゲームの画面を参考に）。メ�
 
 v2.4：教科書を一から書き直しました（27 章・154 節）。はじめての訓練生に分かるよう、です・ます の短い文にし、専門用語は「日本語（English）」で書きました。図は 22 から 95 に増やし（すべて SVG。390 px の画面でも読める）、写真を 30 枚入れました（パブリックドメインと CC0・CC BY・CC BY-SA のものだけ。クレジットは [`PHOTO-CREDITS.md`](PHOTO-CREDITS.md)）。章末の確認問題は 83 問から 135 問（4 択・理由つき）。各章は、書いたのとは別のエージェントが、FAA のハンドブック・ACS・AIM・14 CFR と照らして確かめました。アプリ（課目・学科テスト・飛行モデル）は変えていません。食い違いは [`../textbook/rewrite/NOTES.md`](../textbook/rewrite/NOTES.md) にまとめています。
 
+v2.5：教科書を、教科書と基礎教材の合本の R1 にしました（全 7 部・29 章・167 節）。序部「出発の前に（日本で準備する）」（はじめに・飛行の基本量・英語で学ぶ準備・この教材で練習する）を足し、教科書の誤りを一次資料で直し、日米で取り違えやすい決まりを「米国では／日本では」の囲みで並べました。基礎教材（原本）のページには、安全と日本の法令の訂正を重ねて表示します。設計と進み具合は [`../textbook/rewrite/combined/`](../textbook/rewrite/combined/)（`DESIGN.md`・`PROGRESS.md`）。
+
 基礎教材と合本（2026-10-26 の所有者の判断）：基礎教材（[`kiso/`](kiso/)）の本文・図・問題は、書き直して教科書の合本に使ってよい。[`kiso/README.md`](kiso/README.md) の決まり 3（文言を変えない）・決まり 4（教科書と混ぜない）は合本については解き、原本のデータと README は変えずに保存する。記録は [`../textbook/rewrite/combined/PROVENANCE.md`](../textbook/rewrite/combined/PROVENANCE.md)。
 
 開発：`node build.mjs`（ビルド）、`npm test`（ビルドと全部のテスト。テストのファイルは `package.json` の `test`）、`npm run test:fast`（ブラウザを使わないテスト）。

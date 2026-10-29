@@ -8,10 +8,10 @@
 
 [`outputs/CADET.html`](outputs/CADET.html) をダブルクリックすると Chrome で開きます。インストールは要らず、オフラインでも動きます。WebGL2 が必要です。
 
-ブラウザで直接開くこともできます：**[CADET を開く（raw.githack）](https://raw.githack.com/kazuki8198-glitch/otinti/bc033078e3be35ac52f6c799112783c5f17b65ad/cadet/outputs/CADET.html)**
+ブラウザで直接開くこともできます：**[CADET を開く（raw.githack）](https://raw.githack.com/kazuki8198-glitch/otinti/2097b599911e31f5f2104d526fe99c103056c422/cadet/outputs/CADET.html)**
 - 最初に raw.githack の確認画面（One more step）が出ます。赤い「Open the page」を押すと、ゲームが始まります。
 - キーボードとマウスのある PC（Chrome など）で開いてください。スマートフォンやタブレットでは操作できません。
-- 起動には数十秒かかることがあります（8.2 MB）。
+- 起動には数十秒かかることがあります（9.0 MB）。
 
 「アカデミーへ」を押すと、2027 年 4 月 1 日の朝、翔洋航空（架空）の訓練所のロビーに立っています。画面をクリックするとマウスで見回せます。
 

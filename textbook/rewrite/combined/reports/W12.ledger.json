@@ -976,6 +976,14 @@
    "builtOn": "2026-10-29",
    "by": "W12",
    "note": "W12（2026-10-29）：R1 の終わりの本で数えた。R1 で a4・a5・a7・a8 の後ろに ops.turns・ops.stall、c1 は solo.check"
+  },
+  {
+   "id": "book.size",
+   "built": "FLIGHT-LAB.html 9,791,707 バイト（9.34 MiB）・CADET.html 9,458,671 バイト（9.02 MiB）・TEXTBOOK.html 4,759,132 バイト",
+   "builtBy": "W12",
+   "builtOn": "2026-10-29",
+   "by": "W12",
+   "note": "W12（2026-10-29）：R1 の終わりの本で数えた。出力を作り直したコミット 2097b59 の大きさ（12 MiB・15 MiB の上限の内）。教科書の写真（デコード後 2,384,474 バイト）と AI 教官の目次（2.5 万字以下）はテストが確かめる（TEXTBOOK の写真のテスト・cadet/test/ai.test.mjs）"
   }
  ]
 }

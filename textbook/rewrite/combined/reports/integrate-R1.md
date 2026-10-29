@@ -62,10 +62,10 @@ R1 の確かめの 2 つの役（事実の二人目 `factcheck2-R1`、安全レ�
 | `bash textbook/rewrite/tools/testall.sh …/scratchpad/testall-R1`（ソースの全部の木） | FLIGHT LAB **83/83**・TEXTBOOK **22/22**・CADET **266/266**（コミット 2 の木との違いは、コミット 3 の台帳と文書だけ。コミット 2 の木では速いテスト 81/81・22/22・245/245：台帳と DESIGN を読むテストを含む） |
 | 前の基準（8382341、`testall-base`）・P1（`testall-P1b`）・P5（`testall-P5`） | 51/52・18/18・256/256（ブラウザのテスト 15 は P1 から通っている）、56/56・21/21・259/259、82/82・22/22・266/266 |
 | 速いテスト（直しの途中に何度も）：FLIGHT LAB `npm run -s test:fast`・TEXTBOOK `npm test`・CADET `npm run -s test:fast` | 81/81・22/22・245/245 |
-| `node textbook/rewrite/combined/ledgers/apply-patches.mjs ../reports/W12.ledger.json --write` → `validate.mjs` | 169 行 → ok（0 error、warning 172 → 38）。流し直すと 0 行（943 行はもう台帳にある） |
+| `node textbook/rewrite/combined/ledgers/apply-patches.mjs ../reports/W12.ledger.json --write` → `validate.mjs` | 169 行 → ok（0 error、warning 172 → 38）。出力のあとに `book.size` の 1 行。流し直すと 0 行（944 行はもう台帳にある） |
 | `node textbook/rewrite/combined/tools/check-all.mjs --no-browser`（報告だけ） | error の合計 475（直す前と同じ）・warn 1,439（同じ）。直す前と比べて：`key-item-long` は同じ 2（報告の案のままだと 4）、`first-use-form` +2（上の 2）、主張の抜き出し 1,649 → 1,658 文・札つき 225 → 239・札なし 1,424 → 1,419（統合役の 14 文は CLAIMS に札つきで入れた。札なしで残る新しい文は、`FL.jur` から描く囲みの文：囲みの文は R1 の CLAIMS の対象の外）、`us-rule-outside-us` 同じ（`hf.body` の文を直したが「AIM 8-1-5」が残る）、`avg-length` は `ops.stall` 50.9 → 47.7・`ifr.np` 51.5 → 50.7・`wx.taf` は 40 字以下に |
 | `node textbook/rewrite/combined/tools/check-ledgers.mjs` | ERRATA 閉じた 103（署名待ち 2：統合役が閉じた `SYNC.e3-glide-entry`・`SYNC.i2-upset`）・RULINGS 閉じた 35（全部署名つき） |
-| 出力のコミットのあと：3 製品のテスト（作り直した出力の木） | （コミット 4 のあとに書く） |
+| 出力のコミットのあと：3 製品のテスト（作り直した出力の木） | FLIGHT LAB **83/83**・TEXTBOOK **22/22**・CADET **266/266**（`…/scratchpad/testall-R1out`。コミット 4 の木） |
 
 増えたテスト：FLIGHT LAB 1（上の 7 項目のテスト）。決め打ちの数は変えていない（`TEST-CONSTANTS.md` に 1 行）。
 
@@ -73,13 +73,13 @@ R1 の確かめの 2 つの役（事実の二人目 `factcheck2-R1`、安全レ�
 
 1. `4f2389d` factcheck2-R1 の直し：`book-jur.js`（`metar.taf`・`solo`・`sbas`・`ws.alert`）・`book-1.js`（N3）・`book-2.js`（N1・N2）・`quiz.js`（N4）・DESIGN 3.4 の 4 行・factcheck2-R1 の報告。82/82・22/22・266/266（この木で）
 2. `a8819ec` safety-R1 の直し：`book-1.js`〜`book-4.js`・`book-jur.js`（`fuel.vfr`）・`syllabus.js`・`app.js`・CADET の `controls.js`・`academy-spec.js`・7 項目のテスト・`DECISIONS.md`（判断 11）・`TEST-CONSTANTS.md`・safety-R1 の報告。83/83・22/22・266/266
-3. 統合（R1 を閉じる）：台帳（`W12.ledger.json` を当てた ERRATA・RULINGS・UNVERIFIED・CLAIMS・COUNTS）、DESIGN の付記 7、PROGRESS.md（R1 の締め）、この報告
-4. 出力の作り直し（3 つの HTML）
-5. README の raw.githack のリンク（コミット 4）と、PROGRESS・この報告のコミットの番号
+3. `5abd643` 統合（R1 を閉じる）：台帳（`W12.ledger.json` を当てた ERRATA・RULINGS・UNVERIFIED・CLAIMS・COUNTS）、DESIGN の付記 7、PROGRESS.md（R1 の締め）、この報告
+4. `2097b59` 出力の作り直し（3 つの HTML。5abd643 から `node build.mjs`）：FLIGHT-LAB.html 9,791,707 バイト（9.34 MiB / 12 MiB）・TEXTBOOK.html 4,759,132 バイト・CADET.html 9,458,671 バイト（9.02 MiB / 15 MiB）。83/83・22/22・266/266
+5. README の raw.githack のリンクを 2097b59 に（`textbook/README.md`・`cadet/README.md`）、README の数（29 章・167 節・図 109、TEXTBOOK.html 約 4.8 MB、CADET.html 9.0 MB、`flight-lab/README.md` に v2.5 の 1 行）、PROGRESS・この報告のコミットの番号、COUNTS の `book.size`（`W12.ledger.json` に 1 行足して取り込んだ）
 
 コミット 1 は、テストを流した木の写し（`…/scratchpad/r1Atree`）から `git hash-object -w` と `git update-index --cacheinfo` で index に入れた（作業の木はコミット 2 の中身まで進めていたため。流した木とコミットが同じ）。
 
-## 5. 台帳の行（パッチ `reports/W12.ledger.json`、169 行）
+## 5. 台帳の行（パッチ `reports/W12.ledger.json`、170 行）
 
 - **署名**（`checkedBy: W12`）：R1 で閉じた ERRATA 101 行（教科書 78・基礎教材 7・アプリ 10・課目 6）と RULINGS 35 行。note は「事実の二人目（factcheck2-R1 の 6）が where の場所の今の文を一次資料と照らした」。〔安全〕の行（ERRATA `T.aero.T-3`・`T.instruments.E-T2`・`T.weather.T2`・`SYNC.stall-recovery`、RULINGS `R.cross-check`・`R.alcohol`）と `R.stall-recovery`・`R.microburst`・`R.vfr-fuel-law` は安全レビュー（safety-R1 の 8）も。`T.human.T1`（N1）と `R.taf-groups`（M1）は、報告の案のとおり直してから署名した（同じ note に書いた）。
 - **閉じた**（`by: W12`、二人目は R3 の W36）：ERRATA `SYNC.e3-glide-entry`（一次資料を AFH 第 9 章 p.9-28 に）・`SYNC.i2-upset`。

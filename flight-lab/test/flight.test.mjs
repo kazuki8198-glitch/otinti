@@ -406,6 +406,47 @@ test('syllabus: the stall lessons teach the AFH recovery order, as the textbook 
   assert.deepEqual(SC.lesson('a5').book, ['aero.turn', 'aero.vn', 'ops.turns']);
 });
 
+// (DESIGN 5 criterion 7「①〜⑦の文はテストで確かめる」, the safety review reports/safety-R1.md) the seven items, as the
+// review checked them against the AFH, the AIM, the AWH and 14 CFR: ① the failed engine found by the feet and checked by
+// the throttle, slowly (me.oei) ② a lost visual reference while circling: a climbing turn toward the landing runway (ifr.np,
+// AIM 5-4-21; the section ifr.circle comes in R3) ③ VFR into cloud: wings level, away from terrain, a shallow 180° only
+// when the way back is clear, help (hf.body, AFH ch. 18; the section emg.imc comes in R3) ④ a microburst: the nose not
+// lowered too far, but the stall warning first (wx.shear) ⑤ the stall recovery (the test above) ⑥ alcohol: 91.17 and the
+// AIM's 12–24 hours (hf.self; the box is FL.jur's: jur.test.mjs) ⑦ VFR fuel to the first point of intended landing
+// (91.151), and Japan's law fixes no amount for a private or training VFR flight (FL.jur). With them the two lessons the
+// review read: e3 slows to the best glide speed before the glide (AFH ch. 9), i2's spiral unloads before the wings level
+// (AFH ch. 5); and a7's goal puts the angle of attack before the altitude (AC 120-109A)
+test('textbook: the seven safety items (DESIGN 5 criterion 7) are said as the safety review checked them', () => {
+  const inOrder = (s, words, what) => {
+    let at = -1;
+    for (const w of words) { const i = s.indexOf(w, at + 1); assert.ok(i > at, `${what}: "${w}" not after the words before it: ${s}`); at = i; }
+  };
+  const T = id => BK.text(BK.findSection(id).sec), plain = s => s.replace(/<[^>]+>/g, '');
+  // ①
+  inOrder(T('me.oei'), ['特定（Identify）', 'Dead foot, dead engine', '確認（Verify）', 'ゆっくり絞る', 'フェザー'], 'me.oei');
+  // ②
+  inOrder(T('ifr.np'), ['周回進入（circling approach）の途中で滑走路の目印を見失ったとき', '着陸する滑走路へ向かって上昇旋回', '進入復行のコースに乗るまで', '周回進入で滑走路の目印を見失ったら、着陸する滑走路へ向かって上昇旋回する'], 'ifr.np');
+  // ③
+  const body = T('hf.body');
+  inOrder(body, ['VFR で雲に入ってしまったら', '翼を水平に保つ', 'バンク 10° 以下', '上昇と旋回を同時にしません', '地形が許すとき', '180° 旋回', '助けを求めます'], 'hf.body');
+  inOrder(body, ['まず計器で翼を水平に保ち、地形から離れる', '180° 旋回は浅く（10° 以下）、来た方が確実に晴れて地形が許すときだけ', '管制に助けを求める'], 'hf.body: key points');
+  // ④
+  inOrder(T('wx.shear'), ['機首を下げすぎません', '失速警報（stall warning）が鳴ったら、警報が止まるまで迎え角（angle of attack）を減らすのが先'], 'wx.shear');
+  // ⑥
+  const self = T('hf.self');
+  for (const w of ['14 CFR 91.17', '8 時間以内', '0.04', '12〜24 時間', 'この朝は飛びません']) assert.ok(self.includes(w), `hf.self: ${w}`);
+  // ⑦
+  for (const id of ['perf.fuel', 'nav.log']) assert.ok(T(id).includes('最初の着陸予定地'), `${id}: the first point of intended landing`);
+  assert.ok(T('law.rules').includes('米国の VFR の燃料（91.151）は、最初の着陸予定地まで'), 'law.rules: the key point names its country');
+  inOrder(FL.jur.byId('fuel.vfr').jp, ['航空運送事業の機と計器飛行方式の飛行だけ', '法定の最低量はない', '学校の規程の量'], 'FL.jur fuel.vfr');
+  // the lessons
+  const e3 = SC.lesson('e3'), glide = e3.steps.find(s => s.name === 'エンジン故障：滑空開始');
+  assert.match(glide.say, /^エンジン停止！ 高度を保って \d+ kt まで減速し、それから滑空の姿勢/, 'e3: slow down first');
+  assert.match(plain(e3.brief[0]), /高度を保って \d+ kt まで減速してから滑空の姿勢/, 'e3: the briefing');
+  inOrder(plain(SC.lesson('i2').brief.join('')), ['出力を足す（減速の程度に合わせて', '機首を下げる', '翼を水平', 'パワー アイドル', '少し押して荷重を抜く', '翼を水平', '機首をゆっくり上げる'], 'i2 brief');
+  assert.equal(SC.lesson('a7').goal, '着陸形態での失速を体験し、迎え角を先に減らして確実に回復する');
+});
+
 test('school: every flight lesson starts at all three levels and runs without NaN', () => {
   for (const l of flightLessons()) for (const lv of SC.LEVELS) {
     const L = SC.startLesson(l.id, lv.id);

@@ -112,7 +112,7 @@ export function createControls(FL, { prefs, savePrefs = () => {}, getGamepads = 
       return say(`トリム ${s.trim >= 0 ? '機首上げ' : '機首下げ'} ${Math.abs(Math.round(s.trim / P.TRIM_MAX * 100))}%：いまの速度で、手を離してもこの姿勢が続くように合わせました`);
     } else if (a === 'thrFull' || a === 'thrIdle') {
       s.thr = a === 'thrFull' ? 1 : 0;
-      return say(a === 'thrFull' ? 'スロットル全開（Shift+R）：離陸・ゴーアラウンド・失速の回復で一気に出力を出す' : 'スロットル アイドル（Shift+F）：離陸中止・エンジン故障の模擬・着陸の接地前に一気に絞る');
+      return say(a === 'thrFull' ? 'スロットル全開（Shift+R）：離陸・ゴーアラウンドで一気に出力を出す（失速の回復では、迎え角を減らしてから必要なだけ）' : 'スロットル アイドル（Shift+F）：離陸中止・エンジン故障の模擬・着陸の接地前に一気に絞る');
     } else if (a === 'trimReset') { s.trim = 0; s.trimHold = 0; return say('トリムを中立（離陸位置）に戻しました'); }
     else if (a === 'level') {
       if (!L.free) return say('L（水平に戻すアシスト）は自由飛行だけで使えます。訓練では自分で回復します');

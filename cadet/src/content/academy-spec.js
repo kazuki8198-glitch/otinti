@@ -231,11 +231,11 @@ export function academySpec(FL) {
     { id: 'map', room: 'pilot', a: 683.6, c: 260.8, y: 1.6, prompt_ja: '地図を見る', title_ja: 'LAB 訓練空域図（架空・NOT FOR NAVIGATION）',
       text_ja: 'LAB 飛行場（滑走路 36/18）、LAB VOR、訓練点 LAB-A〜F（色の塔が目印）、湖。\n空中操作の課目は訓練空域（飛行場の北東）で行います。' },
     { id: 'imsafe', room: 'pilot', a: 687.8, c: 251.2, y: 1.5, prompt_ja: 'ポスターを読む', title_ja: 'IMSAFE：飛ぶ前の自分の点検',
-      text_ja: 'I 病気（Illness）\nM 薬（Medication）\nS ストレス（Stress）\nA アルコール（Alcohol）\nF 疲労（Fatigue）\nE 食事・水分（Eating）\nひとつでも不安があれば、教官に言って飛ばない判断を。' },
+      text_ja: 'I 病気（Illness）\nM 薬（Medication）\nS ストレス（Stress）\nA アルコール（Alcohol）\nF 疲労（Fatigue）\nE 感情（Emotion）\nひとつでも不安があれば、教官に言って飛ばない判断を。' },
     { id: 'notices', room: 'lounge', a: 688.2, c: 257.0, y: 1.5, prompt_ja: '掲示板を見る', title_ja: '訓練生のお知らせ',
       text_ja: '第 1 段階の学科試験：来週月曜 9:00（計画室）\n午後は雷雨が多い季節。飛行は午前中心に組んでいます\n英語交信の自主練：毎晩 19:00 訓練装置室\nヘッドセットは使ったら元の場所へ\n冷蔵庫の中身には名前を！' },
     { id: 'coffee', room: 'lounge', a: 701.1, c: 258.2, y: 1.2, prompt_ja: 'コーヒーを見る', title_ja: 'コーヒーマシン',
-      text_ja: '訓練生の燃料。\nただし飛ぶ前の飲みすぎは禁物：カフェインの取りすぎは手の震えと脱水のもと（IMSAFE の E）。' },
+      text_ja: '訓練生の燃料。\nただし飛ぶ前の飲みすぎは禁物：カフェインの取りすぎは手の震えと脱水のもと。水も一緒に。' },
     { id: 'crm', room: 'corridor-n', a: 692.0, c: 263.4, y: 1.5, prompt_ja: 'ポスターを読む', title_ja: 'TEM：脅威とエラーを管理する',
       text_ja: '出発前に「今日の脅威」を言葉にする：突風、混雑した場周、自分の疲れ…\n気づいたら声に出す。分からなければ聞き返す。\n（第 6 段階：CRM・TEM で詳しく）' },
   ];

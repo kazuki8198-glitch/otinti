@@ -36,7 +36,7 @@ export function dayToast(st, sch, { missed = 0, short = false } = {}) {
     const k = CLASS_FTD[i];
     return missed ? `今日は${classWords(i)}、午後は ${k}「${FTD_TITLES[k]}」。前の間違い ${missed} 問は、授業の最初に` : `今日は${classShort(i)}。午後は ${k}「${FTD_TITLES[k]}」（Tab で今日の予定）`;
   }
-  if ((sch || []).some(x => x.kind === 'exam')) return '今日は第 1 章の学科試験（28 問、80% で合格）。明日は、いよいよ初飛行です（Tab で今日の予定）';
+  if ((sch || []).some(x => x.kind === 'exam')) return '今日は第 1 章の学科試験（30 問、80% で合格）。明日は、いよいよ初飛行です（Tab で今日の予定）';
   if ((sch || []).some(x => x.kind === 'ftd')) { const f = sch.find(x => x.kind === 'ftd'); return `今日は訓練装置 ${f.id}「${FTD_TITLES[f.id]}」のやり直しから（Tab で今日の予定）`; }
   return null;
 }

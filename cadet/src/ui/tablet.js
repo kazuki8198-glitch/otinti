@@ -88,6 +88,7 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
     if (m.graduated && act.epilogue) put(plan, btn('終章：羽田の 737（もう一度）', () => { close(); act.epilogue(); }, 'tb-btn ghost'));
     const wx = put(make('div', 'tb-card'), make('h3', '', `天気：${m.weather.ja}`),
       make('div', 'tb-mono', m.weather.metarAm), make('div', 'tb-mono', m.weather.metarPm), make('div', 'tb-mono', m.weather.taf),
+      ...(m.weather.fd ? [make('div', 'tb-mono', m.weather.fd)] : []),
       make('div', 'tb-note', `ソロ前の訓練生の基準：雷雨なし・視程 5 SM 以上・雲高 3,000 ft 以上・横風 10 kt 以下。飛べる時間：午前 ${m.weather.flyAm ? '○' : '×'}・午後 ${m.weather.flyPm ? '○' : '×'}`));
     const f = m.fatigue, me = put(make('div', 'tb-card'), make('h3', '', '体調（IMSAFE）'), make('div', 'sub', `疲れ ${f} / 100`));
     const bar = make('div', 'tb-bar' + (f >= 65 ? ' bad' : f >= 45 ? ' warn' : '')); put(bar, Object.assign(make('i'), { style: `width:${f}%` })); put(me, bar);

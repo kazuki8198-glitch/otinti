@@ -35,7 +35,7 @@ export function graduationRank(state, prog) {
   const examTries = Object.values((state && state.exams) || {}).reduce((n, e) => n + (e.tries || 0), 0);
   const scores = Object.values((prog && prog.lessons) || {}).map(r => (r && r.score) || 0).filter(s => s > 0);
   const avgScore = scores.length ? Math.round(scores.reduce((x, y) => x + y, 0) / scores.length) : 0;
-  const rank = total >= 68 && rate >= 0.75 && examTries <= 9 ? '優等' : total >= 62 && rate >= 0.6 ? '優秀' : '通常';
+  const rank = total >= 68 && rate >= 0.88 && examTries <= 6 ? '優等' : total >= 62 && rate >= 0.6 ? '優秀' : '通常';
   return { rank, total: Math.round(total * 10) / 10, firstRate: Math.round(rate * 100), examTries, avgScore };
 }
 // (growth design v1 §4.1) what one finished flight lesson teaches, as [axis, base] pairs for C.grow():
@@ -61,6 +61,24 @@ export function classGrowth(pace) {
   return [['know', 6.0 * (pace === 'need' ? 0.7 : pace === 'quick' ? 0.45 : 1.0)]];
 }
 export const judgeOf = (state) => (state && state.abilities && Number.isFinite(state.abilities.judge)) ? state.abilities.judge : ABILITY_START.judge;
+// (the briefing's shape, PLAN's ch2 proposal) the debrief's main missed item, kept overnight and asked about at the
+// next morning's briefing (content/dialog/instructor-career.js's 'day'): a stable key, a short label. The labels a
+// cadet can be asked to tell apart — yesterday's own, and these other points a debrief can make.
+export const MISS_LABELS = ['停止線の手前で止まること', 'ランナップで制限を超えたときの判断', 'タキシーの速さと周りを見ること', '外部点検の外し忘れ', '無線の復唱',
+  '高度を基準に保つこと', '速度を基準に保つこと', '着陸のフレア', '場周経路の形', '外部点検で見落とした異常'];
+const MISS_KEY = /^[a-z][a-z0-9:_-]{0,31}$/;
+// the morning's question about yesterday's miss: yesterday's label and two of the others, the right one's place
+// turning with the day (null: nothing was missed, or nothing is kept)
+export function missAsk(state) {
+  const m = state && state.miss;
+  if (!m || typeof m.label !== 'string' || !m.label) return null;
+  const pool = MISS_LABELS.filter(x => x !== m.label);
+  const i = ((m.day * 7 + m.label.length) % pool.length + pool.length) % pool.length;
+  const options = [pool[i], pool[(i + 4) % pool.length]];
+  const right = ((m.day + m.key.length) % 3 + 3) % 3;
+  options.splice(right, 0, m.label);
+  return { label: m.label, options, right };
+}
 export const START_DATE = '2027-04-01';
 export const SLOTS = ['morning', 'am', 'pm', 'evening'];
 export const SLOT_NAMES = { morning: '朝', am: '午前', pm: '午後', evening: '夜' };
@@ -214,6 +232,27 @@ export function weatherFor(seed, day, o = {}) {
   return { kind, ja: W.ja, fly: { ...W.fly }, decision: W.decision, why: W.why, metar: m, taf, tempC, dewC, qnh, ...(W.ifr ? { ifr: W.ifr } : {}) };
 }
 
+// ---- the day's wind, at the surface and aloft: ONE field for the day (the nav log planned in the morning is
+// flown in the afternoon). The METARs give the surface wind, magnetic, as the tower says it; the winds aloft at
+// the nav cruise altitude come by the friction layer's rule of thumb every student is taught: by 3,000 ft the
+// wind has veered 30° and doubled (the northern hemisphere). Between the ground and 3,000 ft the flight model
+// blends the two linearly (the physics' windAt: the wind's topFrom / topKt / topFt). Scored lessons keep their
+// own wind (their scores stay comparable); this field is for the cross-country, the solo and free flying, and
+// for the log that plans them.
+export const NAV_ALT_FT = 3000;
+// the surface wind in a METAR (magnetic): { from (1–360), kt } — calm when the METAR says so or has none
+export function surfaceWindOf(metar) {
+  const m = /(\d{3})(\d{2,3})(?:G\d{2,3})?KT/.exec(String(metar || ''));
+  if (!m) return { from: 360, kt: 0 };
+  return { from: +m[1] || 360, kt: +m[2] };
+}
+// windsAloftFor(W) → the day's field (all magnetic): the surface wind (the afternoon METAR's — the flight of
+// the day is the afternoon's) and the wind at NAV_ALT_FT above it
+export function windsAloftFor(W) {
+  const surf = surfaceWindOf(W && W.metar && W.metar.pm);
+  return { surfFrom: surf.from, surfKt: surf.kt, from: (surf.from + 30) % 360 || 360, kt: surf.kt >= 1 ? surf.kt * 2 : 10, altFt: NAV_ALT_FT };
+}
+
 // ---- the state
 export function newCareer(seed = 1) {
   return { v: CAREER_VERSION, seed: seed >>> 0 || 1, day: 1, slot: 'morning', chapter: 'prologue', fatigue: 20, exams: {}, ground: {}, decisions: [], done: {}, solo: null, checks: {}, graduated: null, started: true,
@@ -222,8 +261,13 @@ export function newCareer(seed = 1) {
     abilities: { ...ABILITY_START }, firstTry: { pass: 0, total: 0 }, growth: {},
     // (growth design v1 §4.3) the day each written test was last taken: a test is not taken twice in a day
     examDay: {},
+    // the day's wind field (windsAloftFor), kept for the day it was worked out for: { day, surfFrom, surfKt,
+    // from, kt, altFt } (the nav log and the cross-country read the same numbers)
+    aloft: null,
     // (growth design v1 §4.4) the judgement drills done today (at most two grow the judgement)
     drills: { day: 0, n: 0 },
+    // (the debrief's main missed item, asked about at the next morning's briefing; null: nothing kept)
+    miss: null,
     // (chapter 1's classes) the sections heard and how ('f' read in full, 'q' its key points: content/school.js), the
     // pace chosen last, how many times each class, lesson and test was begun (mixed into its questions' order), and each
     // question's answers so far: [right, wrong, the last right (1) or not (0), its day]
@@ -241,6 +285,11 @@ export function cleanCareer(o) {
   if (isObj(o.growth)) for (const [k, v] of Object.entries(o.growth).slice(0, 200)) if (ATTEMPT_ID.test(k) && Number.isInteger(v) && v >= 0) s.growth[k] = Math.min(v, 999);
   if (isObj(o.examDay)) for (const [k, v] of Object.entries(o.examDay)) if (EXAMS[k] && Number.isInteger(v) && v >= 1 && v < 10000) s.examDay[k] = v;
   if (isObj(o.drills) && Number.isInteger(o.drills.day) && Number.isInteger(o.drills.n)) s.drills = { day: clamp(o.drills.day, 0, 9999), n: clamp(o.drills.n, 0, 99) };
+  if (isObj(o.aloft) && Number.isInteger(o.aloft.day) && o.aloft.day >= 1 && o.aloft.day < 10000
+    && [o.aloft.surfFrom, o.aloft.surfKt, o.aloft.from, o.aloft.kt].every(Number.isFinite))
+    s.aloft = { day: o.aloft.day, surfFrom: clamp(o.aloft.surfFrom, 0, 360), surfKt: clamp(o.aloft.surfKt, 0, 99), from: clamp(o.aloft.from, 0, 360), kt: clamp(o.aloft.kt, 0, 99), altFt: NAV_ALT_FT };
+  // (a save from before the miss was kept has none: null, nothing asked)
+  if (isObj(o.miss) && typeof o.miss.key === 'string' && MISS_KEY.test(o.miss.key) && typeof o.miss.label === 'string' && o.miss.label.length >= 1 && o.miss.label.length <= 80 && Number.isInteger(o.miss.day) && o.miss.day >= 1 && o.miss.day < 10000) s.miss = { day: o.miss.day, key: o.miss.key, label: o.miss.label };
   if (Number.isInteger(o.day) && o.day >= 1 && o.day < 10000) s.day = o.day;
   if (SLOTS.includes(o.slot)) s.slot = o.slot;
   if (CHAPTERS[o.chapter]) s.chapter = o.chapter;
@@ -278,6 +327,17 @@ export function cleanCareer(o) {
 const lessonRec = (prog, id) => (prog && prog.lessons && prog.lessons[id]) || null;
 export const passedAt = (prog, id, levels = COUNTS) => { const r = lessonRec(prog, id); return !!(r && r.pass && (r.levels || []).some(l => levels.includes(l))); };
 export const groundPassed = (prog, id) => { const r = lessonRec(prog, id); return !!(r && r.pass); };
+// one try at a training device lesson, in FLIGHT LAB's progress record (its shape, as its own ground pages
+// write it): every try counts — a fail too, or the tries would count only the passes and every first try at
+// the device would read as a success. A pass grades by the percent (100 S, 90 A, else B) and keeps the best.
+// → { rec, first }: first says the try was the lesson's first ever (the caller counts it for the first-try rate)
+export function noteGround(rec, pass, pct = 100) {
+  const r = rec || { tries: 0, best: '', pass: false, levels: [] };
+  const first = r.tries === 0;
+  r.tries++;
+  if (pass) { r.pass = true; const g = pct >= 100 ? 'S' : pct >= 90 ? 'A' : 'B'; if (!r.best || 'SAB'.indexOf(g) < 'SAB'.indexOf(r.best)) r.best = g; }
+  return { rec: r, first };
+}
 // the next lesson of chapter 2 to fly (null: all 15 are passed)
 export const nextLesson = (prog) => CH2.find(id => !passedAt(prog, id)) || null;
 // the gates: what is still missing (an empty list: the gate is open)
@@ -352,13 +412,16 @@ export function schedule(state, prog, { trust = 50, weather = null } = {}) {
   const flown = Object.entries(state.done).find(([k, v]) => v === day && /^(flight|checkride|solo):/.test(k));
   const id = flown && flown[0].startsWith('flight:') ? flown[0].slice(7) : nextLesson(prog), ex = state.exams.presolo;
   const flySlot = W.fly.am ? 'am' : W.fly.pm ? 'pm' : null;
-  const ground = (slot) => { if (!(ex && ex.pass) && id && CH2.indexOf(id) >= 9) out.push({ slot, kind: 'exam', id: 'presolo', title: EXAMS.presolo.title, where: 'planning', who: 'instructor' }); };
+  const ground = (slot) => { if (!(ex && ex.pass) && (state.examDay || {}).presolo !== day && id && CH2.indexOf(id) >= 9) out.push({ slot, kind: 'exam', id: 'presolo', title: EXAMS.presolo.title, where: 'planning', who: 'instructor' }); };
   if (state.solo && !(flown && flown[0] === 'solo:solo')) return [{ slot: 'am', kind: 'study', id: 'after', title: '自習（次の段階の予習）', where: 'planning', who: null }];
   if (flown && flown[0] === 'checkride:c1') return [{ slot: W.fly.am ? 'am' : 'pm', kind: 'checkride', id: 'c1', title: 'ソロ前の審査（c1・主任教官）', where: 'apron', who: 'chief' }];
   if (flown && flown[0] === 'solo:solo') return [{ slot: W.fly.am ? 'am' : 'pm', kind: 'solo', id: 'solo', title: 'ファーストソロ', where: 'apron', who: 'instructor' }];
   if (!flySlot) { out.push({ slot: 'am', kind: 'study', id: 'weather', title: '天気で飛べない日：地上で復習', where: 'brief-1', who: 'instructor' }); ground('pm'); return out; }
   if (id) out.push({ slot: flySlot, kind: 'flight', id, title: `飛行：${id}`, where: 'apron', who: 'instructor' });
-  else if (!(ex && ex.pass) || state.done['exam:presolo'] === day) out.push({ slot: flySlot, kind: 'exam', id: 'presolo', title: EXAMS.presolo.title, where: 'planning', who: 'instructor' });
+  // (a test taken today is not offered again today (§4.3, as written1): passed, it stays as the day's record;
+  // failed, the day is a finishing flight instead and the test comes back tomorrow)
+  else if ((!(ex && ex.pass) && (state.examDay || {}).presolo !== day) || (ex && ex.pass && state.done['exam:presolo'] === day)) out.push({ slot: flySlot, kind: 'exam', id: 'presolo', title: EXAMS.presolo.title, where: 'planning', who: 'instructor' });
+  else if (!(ex && ex.pass)) out.push({ slot: flySlot, kind: 'flight', id: 't2', title: '飛行：場周経路の仕上げ（t2）', where: 'apron', who: 'instructor' });
   else if (!passedAt(prog, 'c1')) out.push({ slot: flySlot, kind: 'checkride', id: 'c1', title: 'ソロ前の審査（c1・主任教官）', where: 'apron', who: 'chief' });
   else if (trust >= SOLO_TRUST && judgeOf(state) >= SOLO_JUDGE) out.push({ slot: flySlot, kind: 'solo', id: 'solo', title: 'ファーストソロ', where: 'apron', who: 'instructor' });
   else out.push({ slot: flySlot, kind: 'flight', id: 't2', title: '飛行：場周経路の仕上げ（t2）', where: 'apron', who: 'instructor' });
@@ -381,15 +444,18 @@ function laterSchedule(state, prog, W, out) {
   const flySlot = W2.fly.am ? 'am' : W2.fly.pm ? 'pm' : null;
   let id = flown && flown[0].startsWith('flight:') ? flown[0].slice(7) : nextIn(prog, S.lessons);
   if (flown && !flown[0].startsWith('flight:')) id = null;
-  const written = (slot) => { if (!(ex && ex.pass) && id && S.lessons.indexOf(id) >= Math.floor(S.lessons.length / 2)) out.push({ slot, kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' }); };
+  const written = (slot) => { if (!(ex && ex.pass) && (state.examDay || {})[S.exam] !== day && id && S.lessons.indexOf(id) >= Math.floor(S.lessons.length / 2)) out.push({ slot, kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' }); };
   if (flown && flown[0] === `${C.kind}:${S.check}`) return checkItems(state, C, S.check, W, out, true);
   if (!flySlot) {
     out.push({ slot: 'am', kind: 'study', id: 'weather', title: '天気で飛べない日：地上で復習', where: 'brief-1', who: 'instructor' });
-    if (!(ex && ex.pass) && (!id || S.lessons.indexOf(id) >= Math.floor(S.lessons.length / 2))) out.push({ slot: 'pm', kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' });
+    if (!(ex && ex.pass) && (state.examDay || {})[S.exam] !== day && (!id || S.lessons.indexOf(id) >= Math.floor(S.lessons.length / 2))) out.push({ slot: 'pm', kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' });
     return out;
   }
   if (id) { out.push({ slot: flySlot, kind: 'flight', id, title: `飛行：${id}`, where: 'apron', who: 'instructor' }); written(flySlot === 'am' ? 'pm' : 'am'); return out; }
-  if (!(ex && ex.pass) || today(`exam:${S.exam}`)) { out.push({ slot: flySlot, kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' }); return out; }
+  // (a test taken today is not offered again today (§4.3, as written1): passed, it stays as the day's record;
+  // failed, nothing more is due today and the test comes back tomorrow)
+  if ((!(ex && ex.pass) && (state.examDay || {})[S.exam] !== day) || (ex && ex.pass && today(`exam:${S.exam}`))) { out.push({ slot: flySlot, kind: 'exam', id: S.exam, title: EXAMS[S.exam].title, where: 'planning', who: 'instructor' }); return out; }
+  if (!(ex && ex.pass)) return out;
   return checkItems(state, C, S.check, W2, out, false);
 }
 function checkItems(state, C, id, W, out, flown) {
@@ -465,12 +531,15 @@ export function createCareer({ store = null, seed } = {}) {
     done(kind, id) { st.done[`${kind}:${id}`] = st.day; if (kind === 'ceremony' || kind === 'brief') { /* the prologue's parts */ } save(); },
     isDone: (kind, id) => st.done[`${kind}:${id}`] != null,
     doneToday: (kind, id) => st.done[`${kind}:${id}`] === st.day,
-    exam(id, pct) {
+    // (passed, when the game says it: the test's own score with its bank floor (§4.3) — the record, and the
+    // knowledge grown, are what the cadet was told at the result, not the raw percent alone)
+    exam(id, pct, passed) {
       const E = EXAMS[id]; if (!E) return null;
+      const ok = typeof passed === 'boolean' ? passed : pct >= E.pass;
       const r = st.exams[id] || { tries: 0, best: 0, pass: false };
-      r.tries++; r.best = Math.max(r.best, Math.round(pct)); if (pct >= E.pass) r.pass = true;
+      r.tries++; r.best = Math.max(r.best, Math.round(pct)); if (ok) r.pass = true;
       st.exams[id] = r; st.done[`exam:${id}`] = st.day; st.examDay[id] = st.day; st.fatigue = clamp(st.fatigue + 8, 0, 100);
-      applyGrow('know', pct >= E.pass ? 4.0 : 1.2, `exam:${id}`); save(); return r;
+      applyGrow('know', ok ? 4.0 : 1.2, `exam:${id}`); save(); return r;
     },
     // a written test may be begun today (not taken yet today: §4.3, the next try is tomorrow or later)
     examReady: (id) => !!EXAMS[id] && st.examDay[id] !== st.day,
@@ -481,6 +550,10 @@ export function createCareer({ store = null, seed } = {}) {
       st.drills.n++; applyGrow('judge', 1.0, `drill:${st.day}:${st.drills.n}`); save(); return true;
     },
     drillsLeft: () => (st.drills.day === st.day ? Math.max(0, 2 - st.drills.n) : 2),
+    // the debrief's main missed item, kept for the next morning's briefing (a later debrief replaces it);
+    // asked about once, it is cleared (the game calls clearMiss when the question is answered)
+    noteMiss(key, label) { if (typeof key === 'string' && MISS_KEY.test(key) && typeof label === 'string' && label.length >= 1 && label.length <= 80) { st.miss = { day: st.day, key, label }; save(); } },
+    clearMiss() { if (st.miss) { st.miss = null; save(); } },
     decision(choice, weather) { const right = choice === weather.decision; st.decisions.push({ day: st.day, choice, right }); applyGrow('judge', right ? 1.8 : 0.5, `decision:${st.day}`); save(); return right; },
     decidedToday: () => st.decisions.find(d => d.day === st.day) || null,
     // the chapter moves on when its gate is open (the game calls it at the end of the work that opens it)
@@ -518,16 +591,24 @@ export function createCareer({ store = null, seed } = {}) {
     graduate(prog) { st.graduated = { day: st.day, ...graduationRank(st, prog) }; st.done['graduation:grad'] = st.day; save(); },
     // today's weather as it counts for today's flying (the instrument chapter flies in low cloud)
     flyingWeather: (prog, kind = 'flight') => weatherFor2(weatherFor(st.seed, st.day, forcedWeather(st, prog)), st.chapter, kind),
+    // the day's wind field (surface + the winds aloft at the nav altitude), kept with the day it belongs to:
+    // the morning's nav log is planned from these numbers and the afternoon's cross-country flies in them
+    aloft(prog) {
+      if (!st.aloft || st.aloft.day !== st.day) { st.aloft = { day: st.day, ...windsAloftFor(C.weather(prog)) }; save(); }
+      return { ...st.aloft };
+    },
     // the time moves on (the next slot; the evening stays the evening until the cadet goes to bed)
     advance(to) {
       const i = SLOTS.indexOf(st.slot), j = to ? SLOTS.indexOf(to) : i + 1;
       if (j > i && j < SLOTS.length) { st.slot = SLOTS[j]; save(); return true; }
       return false;
     },
-    // work tires (a flight 15, a class or the device 6, a test 8); a night's sleep rests: early 50, late (studying) 25
+    // work tires (a flight 15, a class or the device 6, a test 8); a night's sleep rests: early 50, late (studying)
+    // 15, and the studying itself tires 10 back — a late night nets only 5, so a run of them under flying days
+    // climbs to the IMSAFE line (65) instead of hovering below it
     tire(n) { st.fatigue = clamp(st.fatigue + n, 0, 100); save(); },
     sleep({ late = false } = {}) {
-      st.fatigue = clamp(st.fatigue - (late ? 25 : 50) + (late ? 10 : 0), 0, 100);
+      st.fatigue = clamp(st.fatigue - (late ? 15 : 50) + (late ? 10 : 0), 0, 100);
       st.day++; st.slot = 'morning'; save();
       return { day: st.day, date: dateText(st.day), off: isOff(st.day) };
     },

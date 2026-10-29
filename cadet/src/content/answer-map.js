@@ -73,6 +73,16 @@ export const BANK_ANSWERS = {
     { q: '気温と露点の差が', a: one('wx.atm', '気温と露点の差が小さいほど雲・霧ができやすいです') },
     { q: 'マイクロバースト（AIM）', a: one('wx.ts', '進入中に入ると、まず向かい風（速度が増える） → 下降気流 → 追い風（速度が急に減る）') },
     { q: 'TAF の「TEMPO」', a: one('wx.metar', '18〜22Z の間に一時（TEMPO）雷雨') },
+    { q: '標準大気で、高度が上がると', a: one('wx.atm', '上に行くほど気温は約 2℃／1,000 ft、気圧は約 1 inHg／1,000 ft 下がります') },
+    { q: '北半球の低気圧について', a: one('wx.atm', '低気圧（Low）：上昇気流。雲や雨。北半球では反時計回りに風が吹き込みます') },
+    { q: '安定した大気で', a: one('wx.atm', '戻るなら安定（層雲・霧・視程が悪い）') },
+    { q: 'METAR で特記される雲は', a: one('wx.ts', 'METAR では CB・TCU だけが特記される') },
+    { q: '雷雨の乱気流について', a: one('wx.ts', '雲から 20 NM 以上離れることが推奨される') },
+    { q: 'ガストフロントとは', a: one('wx.ts', 'ガストフロント：雷雨から吹き出す突風。雷雨より先に空港に届きます') },
+    { q: '飛行中にウインドシア', a: one('wx.ts', 'ウインドシア（速度が ±15 kt 以上急に変わる、昇降率が大きく変わる）を感じたら、迷わず全開・ゴーアラウンド') },
+    { q: '移流霧ができるのは', a: one('wx.fog', '移流霧：でき方は暖かく湿った空気が冷たい地面・海の上へ流れてくる') },
+    { q: 'METAR の末尾の', a: one('wx.metar', 'A3001：高度計規正値 30.01 inHg') },
+    { q: '教科書が例に挙げる', a: one('wx.brief', '訓練生のうちは雲高 3,000 ft・視程 5 SM 以上') },
   ],
   q_law: [
     { q: 'Class C・D・10,000 ft', a: one('law.vfr', '覚え方として「3 SM・500 ft 下・1,000 ft 上・2,000 ft 横（3-152）」') },
@@ -97,6 +107,16 @@ export const BANK_ANSWERS = {
     { q: '14 CFR 91.211', a: null },                                 // (oxygen at all times above 14,000 ft: part 1 says only 12,500–14,000)
     { q: '夜に小さな灯火', a: null },                               // (off-centre viewing at night: not in part 1)
     { q: 'DECIDE モデルの', a: one('hf.adm', 'DECIDE：Detect（変化を見つける）') },
+    { q: 'IMSAFE の M（Medication）', a: one('hf.self', '眠くなる薬・判断に影響する薬を飲んでいないか（市販薬も）') },
+    { q: '疲れ・寝不足が操縦に', a: one('hf.self', '疲れ・寝不足は判断を遅らせ、ミスを増やします') },
+    { q: 'PAVE の V（enVironment）', a: one('hf.adm', 'V：enVironment：天気、空港、地形、夜') },
+    { q: '3P モデルの', a: one('hf.adm', 'Process（どれほど危ないか評価する）') },
+    { q: '「予定どおりに帰りたい」', a: one('hf.adm', '「予定どおり」へのこだわり（get-there-itis）は事故の典型です') },
+    { q: '危険な態度「衝動', a: one('hf.attitude', '心の声は「早くやらなきゃ」、解毒剤はちょっと待て。考えてから') },
+    { q: '危険な態度「あきらめ', a: one('hf.attitude', '解毒剤は自分は無力ではありません。できることがあります') },
+    { q: '「墓場のスパイラル', a: one('hf.body', '墓場のスパイラル：ゆっくりした旋回に慣れて水平だと感じ、高度が下がるのを引いて直そうとして螺旋が締まります') },
+    { q: '14 CFR 91.211：12,500', a: one('hf.body', '12,500 ft MSL を超えて 14,000 ft までを 30 分を超えて飛ぶ場合') },
+    { q: '「Sterile cockpit', a: one('hf.srm', '離着陸などの忙しい場面では、必要なこと以外は話しません') },
   ],
   q_comm: [
     { q: '"N123AB" を', a: [['comm.basic', 'N：言い方は November'], ['comm.basic', 'A：言い方は Alfa'], ['comm.basic', 'B：言い方は Bravo'], ...N.digits] },

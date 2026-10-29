@@ -280,6 +280,73 @@ test('physics: feathering the dead engine\'s propeller reduces drag (better clim
   assert.ok(f > w + 100, `feathered ${f.toFixed(0)} fpm vs windmilling ${w.toFixed(0)} fpm`);
 });
 
+test('physics: the engine systems — a fresh engine is in the running configuration, and the instruments read it', () => {
+  const s = P.newState({}); P.placeOnRunway(s); run(s, 1);
+  assert.ok(P.engineRunning(s), 'running from the start, as the lessons begin');
+  assert.equal(s.eng[0].mag, 'BOTH'); assert.equal(s.eng[0].mix, 1); assert.equal(s.eng[0].sel, 'L'); assert.equal(s.eng[0].on, true);
+  assert.equal(s.out.mag, 'BOTH'); assert.equal(s.out.mix, 1); assert.equal(s.out.fuelSel, 'L');
+  assert.deepEqual(s.out.mags, ['BOTH']); assert.deepEqual(s.out.mixs, [1]); assert.deepEqual(s.out.fuelSels, ['L']);
+  assert.equal(s.out.cranking, false);
+  const t = P.newState({ aircraft: 'pa44' }); P.placeOnRunway(t); run(t, 1);
+  assert.deepEqual(t.out.fuelSels, ['L', 'R'], 'the twin: each engine on its own tank');
+  assert.ok(P.engineRunning(t));
+});
+
+test('physics: the magnetos — OFF stops the engine (and says so), BOTH alone does not restart it, START cranks and catches, one magneto still runs it', () => {
+  const s = P.newState({}); P.placeOnRunway(s); run(s, 1);
+  s.eng[0].mag = 'OFF'; run(s, 0.5);
+  assert.ok(!P.engineRunning(s) && s.dead, 'magnetos OFF: stopped');
+  assert.ok(s.events.some(e => e.type === 'engine_stop' && e.why === 'マグネトー OFF'), 'the stop is told as the magnetos');
+  s.eng[0].mag = 'BOTH'; run(s, 2);
+  assert.ok(!P.engineRunning(s), 'back to BOTH is not a start: it has to be cranked');
+  s.eng[0].mag = 'START'; run(s, 0.5);
+  assert.ok(!P.engineRunning(s) && s.out.cranking, 'cranking, not yet caught');
+  run(s, 1.5);
+  assert.ok(P.engineRunning(s), 'caught at START');
+  s.eng[0].mag = 'L'; run(s, 1); assert.ok(P.engineRunning(s), 'the left magneto alone runs it');
+  s.eng[0].mag = 'R'; run(s, 1); assert.ok(P.engineRunning(s), 'the right magneto alone runs it');
+});
+
+test('physics: the mixture — idle cut-off stops it (in the air too), a lean mixture will not catch, full rich will', () => {
+  const s = P.newState({}); P.placeInAir(s, 0, -40000, 4000, 354, 100); run(s, 2);
+  assert.ok(P.engineRunning(s));
+  s.eng[0].mix = 0; run(s, 0.5);
+  assert.ok(!P.engineRunning(s) && s.dead, 'mixture at idle cut-off: stopped in flight');
+  assert.ok(s.events.some(e => e.type === 'engine_stop' && e.why === 'ミクスチャー カットオフ'), 'the stop is told as the mixture');
+  s.eng[0].mag = 'START'; run(s, 3);
+  assert.ok(!P.engineRunning(s), 'no catch at cut-off, however long it cranks');
+  s.eng[0].mix = 0.4; run(s, 3);
+  assert.ok(!P.engineRunning(s), 'no catch leaned out (a start needs it rich)');
+  s.eng[0].mix = 1; run(s, 0.5);
+  assert.ok(!P.engineRunning(s) && s.out.cranking, 'rich again: cranking');
+  run(s, 1.5);
+  assert.ok(P.engineRunning(s), 'caught rich');
+});
+
+test('physics: the fuel selector — OFF stops the engine only after the fuel in the lines, an empty selected tank starves it, the other tank restarts it, and each tank burns only its own engine\'s share', () => {
+  const s = P.newState({}); P.placeOnRunway(s); run(s, 1);
+  s.eng[0].sel = 'OFF'; run(s, 3);
+  assert.ok(P.engineRunning(s), 'still running on the fuel in the lines');
+  run(s, 5);
+  assert.ok(!P.engineRunning(s), 'starved once the lines are used');
+  assert.ok(s.events.some(e => e.type === 'engine_stop' && e.why === '燃料セレクター OFF'), 'the stop is told as the selector');
+  s.eng[0].sel = 'R'; s.eng[0].mag = 'START'; run(s, 2.5);
+  assert.ok(P.engineRunning(s), 'cranked back on the other tank');
+  // the burn comes out of the selected tank only
+  const b = P.newState({}); P.placeInAir(b, 0, -40000, 4000, 354, 110, 0, 0, 0.79); const f0 = b.fuel[0], f1 = b.fuel[1];
+  run(b, 60, x => hands(x, 110));
+  assert.ok(b.fuel[0] < f0 - 0.05, `the left tank burned (${f0} → ${b.fuel[0]})`);
+  assert.equal(b.fuel[1], f1, 'the right tank untouched on the left selector');
+  b.eng[0].sel = 'R'; const g0 = b.fuel[0], g1 = b.fuel[1]; run(b, 60, x => hands(x, 110));
+  assert.ok(b.fuel[1] < g1 - 0.05, 'and the right tank burns once it is selected');
+  assert.equal(b.fuel[0], g0, 'the left tank untouched on the right selector');
+  // an empty selected tank starves the engine although the other is full
+  const c = P.newState({}); P.placeOnRunway(c); c.fuel[0] = 0; run(c, 3);
+  assert.ok(P.engineRunning(c), 'the lines again');
+  run(c, 5);
+  assert.ok(!P.engineRunning(c) && c.fuel[1] > 0, 'starved on the empty tank with fuel in the other');
+});
+
 // ------------------------------------------------------------------ the school (Sorajima's instructor engine)
 test('syllabus: the lessons follow the published course order, each says what, why, how (keys) and the standard', () => {
   const L = flightLessons();
@@ -542,4 +609,195 @@ test('ui: key chips are made from every lesson\'s key text, and the keyboard map
     for (const p of U.parseKeys(kt)) { if (!p.keys.length) continue; assert.ok(p.what.length > 1, `${l.id}: "${kt}" has a key with no meaning`); for (const k of p.keys) assert.ok(onMap.has(k.replace(/^Shift\+/, '').toUpperCase()), `${l.id}: key ${k} is not on the keyboard map`); }
   }
   const svg = U.keyboardSvg(['W', 'S']); assert.match(svg, /^<svg/); assert.equal((svg.match(/filter="url\(#kbglow\)"/g) || []).length, 2, 'two keys lit');
+});
+
+// ------------------------------------------------------------------ the powerplant model (mixture, tanks, carburettor ice, manifold pressure)
+const airAt = (ac, altFt, kias, thr) => { const s = P.placeInAir(P.newState({ aircraft: ac }), 0, -40000, altFt, 354, kias, 0, 0, thr); s.wind = { fromDeg: 0, kt: 0, gust: 0 }; return s; };
+
+test('powerplant: leaning toward peak EGT raises the EGT and cuts the fuel flow; over-leaning runs rough and loses power', () => {
+  const fly = mix => { const s = airAt('pa28', 3000, 100, 0.72); s.mix = mix; return run(s, 20); };
+  const rich = fly(1), peak = fly(0.86), lean = fly(0.7), over = fly(0.5);
+  assert.ok(peak.out.egt > rich.out.egt + 80, `EGT rises toward the peak (${rich.out.egt} → ${peak.out.egt})`);
+  assert.ok(peak.fuelFlow < rich.fuelFlow - 0.5, `the flow falls (${rich.fuelFlow.toFixed(1)} → ${peak.fuelFlow.toFixed(1)} gal/h)`);
+  assert.ok(lean.out.egt < peak.out.egt - 50, `past the peak the EGT falls again (${lean.out.egt})`);
+  assert.ok(over.out.rough > 0.5 && over.out.powerPct < peak.out.powerPct - 20, `over-lean: rough (${over.out.rough}) and weak (${over.out.powerPct}%)`);
+  // up high, full rich is over-rich: leaning back to the plateau recovers the power the density took
+  const hi = mix => { const s = airAt('pa28', 8000, 95, 0.85); s.mix = mix; return run(s, 20); };
+  const hiRich = hi(1), hiLean = hi(0.8);
+  assert.ok(hiLean.eng[0].mixK > hiRich.eng[0].mixK + 0.005, `leaning recovers the mixture factor (${hiRich.eng[0].mixK.toFixed(3)} → ${hiLean.eng[0].mixK.toFixed(3)})`);
+  assert.ok(hiLean.out.egt > hiRich.out.egt + 100 && hiLean.fuelFlow < hiRich.fuelFlow, 'and the EGT and the flow agree');
+});
+
+test('powerplant: idle cut-off stops the engine', () => {
+  const s = airAt('pa28', 3000, 100, 0.7); s.mix = 0.05; run(s, 3);
+  assert.equal(s.eng[0].run, false);
+  assert.ok(s.events.some(e => e.type === 'engine_stop'), 'the stop is an event, as before');
+});
+
+test('powerplant: the engine drinks from the selected tank only, and a dry selected tank stops it', () => {
+  const burn = sel => { const s = P.placeOnRunway(P.newState(), P.LAB_RWY, 30); s.brake = true; s.thr = 0.5; s.fuelSel = sel; const f = [...s.fuel]; run(s, 60); return { f, now: [...s.fuel] }; };
+  const r = burn('R'); assert.equal(r.now[0], r.f[0], 'the left tank is untouched'); assert.ok(r.now[1] < r.f[1] - 0.05, 'the right tank falls');
+  const l = burn('L'); assert.equal(l.now[1], l.f[1]); assert.ok(l.now[0] < l.f[0] - 0.05, 'the left tank falls');
+  const dry = airAt('pa28', 3000, 100, 0.7); dry.fuel = [5, 0]; dry.fuelSel = 'R'; run(dry, 10);
+  assert.equal(dry.eng[0].run, false, 'the engine stops with the other tank still holding 5 gal');
+  assert.equal(dry.fuel[0], 5);
+  assert.ok(dry.events.some(e => e.type === 'engine_stop' && /燃料切れ/.test(e.why || '')), 'and the log says why');
+  const off = airAt('pa28', 3000, 100, 0.7); off.fuelSel = 'OFF'; run(off, 3);
+  assert.equal(off.eng[0].run, true, 'the fuel in the lines keeps it running a few seconds');
+  run(off, 8); assert.equal(off.eng[0].run, false, 'then it stops');
+});
+
+test('powerplant: carburettor ice builds on a humid day, sags the rpm, and the heat melts it (the injected twin is immune)', () => {
+  const mk = risk => { const s = airAt('pa28', 3000, 95, 0.6); s.carbRisk = risk; return s; };
+  const iced = mk(1), clean = mk(0); run(iced, 200); run(clean, 200);
+  assert.equal(clean.eng[0].carbIce, 0, 'a dry day never ices');
+  assert.ok(iced.eng[0].carbIce > 0.45, `ice builds (${iced.eng[0].carbIce.toFixed(2)})`);
+  assert.ok(iced.events.some(e => e.type === 'carb_ice'), 'it is noted once, for the debrief');
+  assert.ok(iced.rpm < clean.rpm - 40, `the rpm sags (${Math.round(clean.rpm)} → ${Math.round(iced.rpm)}) — the only announcement`);
+  const sagged = iced.rpm; iced.carbHeat = true; run(iced, 30);
+  assert.ok(iced.eng[0].carbIce < 0.05, 'the heat melts it');
+  assert.ok(iced.rpm > sagged + 40, 'and the rpm comes back');
+  const twin = airAt('pa44', 3000, 110, 0.6); twin.carbRisk = 1; run(twin, 120);
+  assert.equal(twin.eng[0].carbIce, 0, 'fuel injection has no venturi to ice');
+});
+
+test('powerplant: manifold pressure is plausible, and % power comes from the shaft, not the lever', () => {
+  const mp = (altFt, thr, sec = 5) => { const s = airAt('pa44', altFt, 100, thr); run(s, sec); return s; };
+  const slFull = mp(60, 1), slIdle = mp(60, 0), hiFull = mp(8000, 1);
+  assert.ok(slFull.out.manIn > 27 && slFull.out.manIn < 30, `sea level, full throttle ≈ ambient (${slFull.out.manIn})`);
+  assert.ok(slIdle.out.manIn < 14, `idle is low (${slIdle.out.manIn})`);
+  assert.ok(hiFull.out.manIn < 24 && hiFull.out.manIn < slFull.out.manIn - 4, `it falls with altitude (${hiFull.out.manIn})`);
+  assert.equal(slFull.out.powerPct, 100, 'sea level, full rich, full throttle is 100 %');
+  assert.ok(hiFull.out.powerPct < 85, `% power falls with altitude too (${hiFull.out.powerPct})`);
+  const dead = mp(3000, 0.3); dead.eng[0].failed = true; run(dead, 3);
+  assert.ok(dead.out.manIns[0] > dead.out.manIns[1] + 3, `a stopped engine's gauge reads ambient (${dead.out.manIns[0]} vs ${dead.out.manIns[1]})`);
+});
+
+// ---------------------------------------------------------------- weight and balance
+test('wb: the standard load is the reference mass exactly; a solo load is one instructor lighter', () => {
+  const P = FL.physics;
+  for (const id of ['pa28', 'pa44']) {
+    const A = P.AIRCRAFT.find(a => a.id === id), std = P.computeWB(A, P.stdLoading());
+    assert.equal(std.kg, A.phys.mass, `${id}: the standard load is the model's reference mass`);
+    assert.ok(std.ok && std.lb < std.mtowLb, `${id}: the standard load is inside the limits (${Math.round(std.lb)} lb)`);
+    assert.ok(std.cgIn > std.fwdIn && std.cgIn < std.aftIn, `${id}: its CG is inside (${std.cgIn.toFixed(1)} in)`);
+    const solo = P.computeWB(A, { front: 1 });
+    assert.equal(std.kg - solo.kg, P.PERSON_KG, `${id}: solo is lighter by exactly one standard adult`);
+    assert.ok(solo.ok, `${id}: solo is still inside the limits`);
+    const full = P.computeWB(A, { fuel: 'full' }), tabs = P.computeWB(A, { fuel: 'tabs' }), half = P.computeWB(A, { fuel: 'half' });
+    assert.ok(full.kg > std.kg && tabs.kg < std.kg && half.kg < tabs.kg, `${id}: the fuel choices order the weight (full > std > tabs > half)`);
+    assert.equal(P.cleanLoading(A, { fuel: 'bogus', front: 9, rear: -1, bagKg: 999 }).bagKg, P.WB[id].bagMaxKg, `${id}: a nonsense load is clamped, not trusted`);
+    assert.equal(P.cleanLoading(A, { fuel: 'bogus' }).fuel, 'std');
+  }
+});
+
+test('wb: out-of-envelope loads are named — overweight, tail-heavy', () => {
+  const P = FL.physics, AR = P.AIRCRAFT[0], SM = P.AIRCRAFT[1];
+  const over = P.computeWB(AR, { fuel: 'full', rear: 2, bagKg: 30 });
+  assert.ok(!over.ok && over.problems.includes('over'), `an Archer with everyone and everything is overweight (${Math.round(over.lb)} lb)`);
+  assert.ok(P.computeWB(SM, { fuel: 'full', rear: 2, bagKg: 30 }).problems.includes('over'), 'the Seminole too, fuller still');
+  const tail = P.computeWB(AR, { front: 1, rear: 2, bagKg: 90 }, [2, 2]);
+  assert.deepEqual(tail.problems, ['tail'], `a light nose and a heavy tail is tail-heavy only (${tail.cgIn.toFixed(1)} in)`);
+  assert.ok(P.computeWB(AR, { front: 1, rear: 2, bagKg: 15 }).ok, 'the same people with a sane baggage load are fine');
+});
+
+test('wb: applyLoading — the default changes nothing; a chosen load re-derives the state and fills the tanks', () => {
+  const P = FL.physics;
+  const s = P.newState({ aircraft: 'pa28' }), before = { mass: s.AC.mass, Cm0: s.AC.Cm0, I: s.AC.I.slice() };
+  const wb = P.applyLoading(s);
+  assert.equal(s.AC.mass, before.mass); assert.equal(s.AC.Cm0, before.Cm0); assert.deepEqual(s.AC.I, before.I);
+  assert.equal(wb.kg, s.A.phys.mass); assert.equal(s.wb, wb);
+  const solo = P.newState({ aircraft: 'pa28' }); P.applyLoading(solo, { front: 1 });
+  assert.equal(solo.AC.mass, solo.A.phys.mass - P.PERSON_KG);
+  assert.ok(solo.AC.I[0] < before.I[0], 'the inertia follows the mass');
+  const full = P.newState({ aircraft: 'pa28' }); P.applyLoading(full, { fuel: 'full' });
+  assert.deepEqual(full.fuel, [full.A.fuelCap, full.A.fuelCap]);
+  const half = P.newState({ aircraft: 'pa44' }); P.applyLoading(half, { fuel: 'half' });
+  assert.deepEqual(half.fuel, [half.A.fuelCap / 2, half.A.fuelCap / 2]);
+  // the stall speeds the instruments quote scale with √weight
+  const heavy = P.newState({ aircraft: 'pa28' }); P.applyLoading(heavy, { fuel: 'full', rear: 1 });
+  P.derive(s); P.derive(heavy);
+  assert.ok(heavy.out.vs0 > s.out.vs0 + 1.5, `Vs0 ${s.out.vs0} → ${heavy.out.vs0} kt at the heavier weight`);
+  // an aft CG asks for a different trim (Cm0 moves, a little, and only a little)
+  const aft = P.newState({ aircraft: 'pa28' }); P.applyLoading(aft, { front: 1, rear: 2, bagKg: 30 });
+  assert.ok(aft.AC.Cm0 > before.Cm0 && aft.AC.Cm0 - before.Cm0 <= 0.015, `the CG's trim shift (${before.Cm0} → ${aft.AC.Cm0})`);
+});
+
+// a takeoff and a Vy climb flown the bot's way (the nose holds the speed), at the weight's own speeds:
+// the roll to liftoff (m past the threshold) and the climb that follows (fpm at Vy)
+function wbFlight(P, id, loading) {
+  const DEG = Math.PI / 180, dt = 1 / 120, s = P.newState({ aircraft: id, seed: 7 });
+  s.wind = { fromDeg: P.LAB_RWY.trueHdg + 10, kt: 5, gust: 0.5 };
+  P.applyLoading(s, loading);
+  const wS = Math.sqrt(s.AC.mass / s.A.phys.mass);
+  P.placeOnRunway(s);
+  let lift = null, pBase = null, lastIas = null, vsSum = 0, n = 0;
+  for (let i = 0; i < 120 * 100; i++) {
+    const o = s.out, a = P.attitude(s), rc = P.rwyCoords(P.LAB_RWY, -s.pos[2], s.pos[0]);
+    s.thr = 1; s.opts.autoRud = true;
+    if (lift == null) {
+      s.pIn = o.ias > s.A.v.rotate * wS - 1 ? 0.65 : 0;
+      s.rud = P.clamp(-0.06 * P.wrap180(a.hdg - P.LAB_RWY.trueHdg) - 0.02 * rc.cross, -1, 1);
+      if (!s.onGround && o.agl > 3) lift = rc.along;
+    } else {
+      const kt = s.A.v.y * wS, dv = lastIas == null ? 0 : (o.ias - lastIas) / dt;
+      if (pBase == null) pBase = a.pitch;
+      pBase = P.clamp(pBase + (o.ias - kt) * 0.05 * dt, -15, 18);
+      s.keyHold = true; s.pTgt = pBase + 0.35 * (o.ias - kt) + 1.5 * dv; s.pRate = 0; s.pIn = 0;
+      const p = -s.w[2] / DEG; s.rIn = P.clamp(0.045 * (0 - o.bank) - 0.012 * p, -1, 1);
+      lastIas = o.ias;
+    }
+    P.step(s, dt);
+    assert.ok(!s.crashed, `no crash at this load (${s.crashReason})`);
+    if (lift != null) return { lift, mass: s.AC.mass };
+  }
+  throw new Error('never lifted off');
+}
+function wbClimb(P, id, loading) {
+  const DEG = Math.PI / 180, dt = 1 / 120, s = P.newState({ aircraft: id, seed: 7 });
+  s.wind = { fromDeg: P.LAB_RWY.trueHdg + 10, kt: 5, gust: 0.5 };
+  P.applyLoading(s, loading);
+  const wS = Math.sqrt(s.AC.mass / s.A.phys.mass), kt = s.A.v.y * wS;
+  P.placeInAir(s, 7000, -37500, 3000, 90, kt, 0, 0, null);
+  s.thr = 1; s.opts.autoRud = true;
+  let pBase = null, lastIas = null, vsSum = 0, n = 0;
+  for (let i = 0; i < 120 * 35; i++) {
+    const o = s.out, a = P.attitude(s), dv = lastIas == null ? 0 : (o.ias - lastIas) / dt;
+    if (pBase == null) pBase = a.pitch;
+    pBase = P.clamp(pBase + (o.ias - kt) * 0.05 * dt, -15, 18);
+    s.keyHold = true; s.pTgt = pBase + 0.35 * (o.ias - kt) + 1.5 * dv; s.pRate = 0;
+    const p = -s.w[2] / DEG; s.rIn = P.clamp(0.045 * (0 - o.bank) - 0.012 * p, -1, 1);
+    lastIas = o.ias;
+    P.step(s, dt);
+    assert.ok(!s.crashed, `no crash at this load (${s.crashReason})`);
+    if (s.t > 10) { vsSum += s.out.vsi; n++; }
+  }
+  return vsSum / n;
+}
+
+test('wb: the mass reaches the flight — heavier rolls further and climbs slower, solo climbs better', () => {
+  const P = FL.physics;
+  const std = wbFlight(P, 'pa28'), solo = wbFlight(P, 'pa28', { front: 1 }), heavy = wbFlight(P, 'pa28', { fuel: 'full', rear: 1 });
+  assert.ok(solo.lift < std.lift - 15, `liftoff: solo ${Math.round(solo.lift)} m < standard ${Math.round(std.lift)} m`);
+  assert.ok(heavy.lift > std.lift + 40, `liftoff: heavy ${Math.round(heavy.lift)} m > standard ${Math.round(std.lift)} m`);
+  const cStd = wbClimb(P, 'pa28'), cSolo = wbClimb(P, 'pa28', { front: 1 }), cHeavy = wbClimb(P, 'pa28', { fuel: 'full', rear: 1 });
+  assert.ok(cSolo > cStd + 50, `climb at Vy: solo ${Math.round(cSolo)} > standard ${Math.round(cStd)} fpm`);
+  assert.ok(cHeavy < cStd - 80, `climb at Vy: heavy ${Math.round(cHeavy)} < standard ${Math.round(cStd)} fpm`);
+  const tStd = wbClimb(P, 'pa44', undefined), tSolo = wbClimb(P, 'pa44', { front: 1 });
+  assert.ok(tSolo > tStd + 50, `the twin too: solo ${Math.round(tSolo)} > dual ${Math.round(tStd)} fpm`);
+});
+
+test('wb: the before-takeoff checklist refuses an out-of-envelope load, and passes the standard one', () => {
+  const SC = FL.school;
+  const passAll = L => { let guard = 0; while (L.check && guard++ < 30) { const r = SC.checklistNext(L); assert.ok(r.ok, `item refused: ${r.item} (${L.hint})`); } assert.equal(L.check, null, 'the checklist completes'); };
+  passAll(SC.startLesson('t1', 'intro'));
+  const L = SC.startLesson('t1', 'intro', { loading: { fuel: 'full', rear: 2, bagKg: 30 } });
+  assert.ok(L.s.wb && !L.s.wb.ok && L.s.AC.mass > L.s.A.phys.mass, 'the lesson starts with the chosen load on board');
+  let refused = null, guard = 0;
+  while (L.check && guard++ < 30) { const r = SC.checklistNext(L); if (!r.ok) { refused = r; break; } }
+  assert.ok(refused && refused.item === '重量と重心', `the load is the item that refuses (got ${refused && refused.item})`);
+  assert.ok(/超過/.test(L.hint), `the refusal names the problem: ${L.hint}`);
+  assert.ok(!SC.checklistNext(L).ok, 'and it keeps refusing until the load is fixed');
+  const M = SC.startLesson('m1', 'intro', { loading: { fuel: 'full', rear: 2, bagKg: 30 } });
+  assert.ok(M.s.wb && !M.s.wb.ok, 'the twin lesson carries the load too');
 });

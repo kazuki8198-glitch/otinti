@@ -51,7 +51,7 @@ ${bk.key('暑い日・高い所では片発の性能はさらに落ちる（密�
     ],
     terms: [['Multi-engine (AMEL)', '多発（陸上）', ''], ['Counter-rotating propellers', '左右逆回転のプロペラ', ''], ['Constant-speed propeller', '定速プロペラ', ''], ['Manifold pressure (MP)', '吸気圧', 'インチ水銀柱'], ['Feather / Unfeather', 'フェザー（羽根を風に平行に）・戻す', ''], ['Retractable gear / GUMP', '引き込み脚・着陸前の確認', ''], ['Crossfeed', 'クロスフィード', ''], ['Red line (Vmc) / Blue line (Vyse)', '赤い線・青い線', ''], ['Vsse', '意図的なエンジン停止の最小速度', ''], ['Accelerate-stop / Accelerate-go distance', '加速停止距離・加速継続距離', ''], ['Single-engine service ceiling', '片発の実用上昇限度', '']],
     examples: ['離陸後 300 ft・脚 UP で右エンジンの出力が落ちた → 速度 88 kt を保つ → 全部前へ → 脚とフラップ UP を確認 → 左足を強く踏んでいる（右足が遊んでいる）＝ 右が止まった → 右のスロットルを絞っても変化なし → 右をフェザー。', '着陸前：GUMP — 燃料ポンプ ON・脚 DOWN（緑 3 つ）・ミクスチャー全開・プロペラ前。'],
-    cautions: ['この章の値・手順は公開されている訓練校のガイドの要約で、ANA・Acron Aviation の SOP ではない。実機はその機体の POH / AFM と訓練校のチェックリストに従う。', 'この教材の Seminole はプロペラ・ミクスチャー・カウルフラップのレバーを省略している（未実装）。フェザーは [ / ] キー。'],
+    cautions: ['この章の値・手順は公開されている訓練校のガイドの要約で、ANA・Acron Aviation の SOP ではない。実機はその機体の POH / AFM と訓練校のチェックリストに従う。', 'この教材の Seminole はプロペラとカウルフラップのレバーを省略している（ミクスチャーは操縦席のレバーで効き、吸気圧は MFD の MAN IN に出ます）。フェザーは [ / ] キー。'],
     quiz: [
       { q: 'Seminole に「臨界発動機」がないのはなぜ？', choices: ['エンジンが胴体の中にあるから', '左右のプロペラが逆に回るから', 'ラダーが大きいから', '自動でフェザーするから'], answer: 1, why: '左右逆回転なので、P ファクターによる推力線の偏りが左右対称になり、どちらが止まっても影響が同程度になる。' },
       { q: '速度計の青い線（ブルーライン）が示すのは？', choices: ['Vmc', 'Vyse（片発の最良上昇率）', 'Vne', 'Vfe'], answer: 1, why: '赤い線が Vmc、青い線が Vyse。片発になったらまず青い線。' },

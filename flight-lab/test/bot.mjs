@@ -39,8 +39,9 @@ export function makeBot(FL) {
     if (L.step !== st.lastStep) { st.lastStep = L.step; reset(); }
     // dialogs: the checklist (set up what it checks, then confirm), the ATC read-back (the right answer)
     if (S.checklist && L.check) {
-      if (S.checklist.includes('landing')) { s.flapIdx = Math.max(s.flapIdx, s.A.twin ? 1 : 3); if (!s.A.gear.fixed) s.gearDown = true; }
-      if (S.checklist.includes('takeoff')) { s.flapIdx = 0; s.trim = 0; s.thr = 0; }
+      if (S.checklist.includes('landing')) { s.flapIdx = Math.max(s.flapIdx, s.A.twin ? 1 : 3); if (!s.A.gear.fixed) s.gearDown = true; s.mix = 1; s.fuelSel = s.fuel[1] > s.fuel[0] ? 'R' : 'L'; }   // (enrich, and feed from the fuller tank, as the checklist asks)
+      if (S.checklist.includes('takeoff')) { s.flapIdx = 0; s.trim = 0; s.thr = 0; s.fuelSel = s.fuel[1] > s.fuel[0] ? 'R' : 'L'; }
+      if (S.checklist.includes('cruise')) { s.mix = 0.85; }   // (leaned for the cruise, as the checklist asks)
       if (S.checklist.includes('engine_failure')) { s.flapIdx = 0; s.gearDown = false; }
       SC.checklistNext(L); return;
     }

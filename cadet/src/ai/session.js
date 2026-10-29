@@ -27,8 +27,10 @@ export const AI_LINES_EN = {
 // opts: tutor (ai/tutor.js), book, speaker { name, color }, today() → the material, place 'brief' | 'debrief',
 // ready() → true, or why it cannot ask at all: false (no key) or a reason ('off': the setting turned off) — asked when
 // the talk opens and again before each question, onEnd(how: 'done' | 'cancel' | 'fallback'), onBook(sectionId),
-// notice(text, reason), placeholder
-export function createAiSession({ tutor, book, speaker = { name: '早瀬 教官', color: '#5cc8ff' }, today = () => ({}), place = 'brief', ready = () => true, onEnd = () => {}, onBook = () => {}, notice = () => {}, reasonText = (r) => r, english = () => false } = {}) {
+// notice(text, reason), placeholder, micLang() → the language the question may be dictated in ('ja-JP' / 'en-US'),
+// or null: no microphone on this field (the words heard only ever fill the field — submit() is still the only way
+// a question leaves, and it is still the player's)
+export function createAiSession({ tutor, book, speaker = { name: '早瀬 教官', color: '#5cc8ff' }, today = () => ({}), place = 'brief', ready = () => true, onEnd = () => {}, onBook = () => {}, notice = () => {}, reasonText = (r) => r, english = () => false, micLang = () => null } = {}) {
   const fns = new Set();
   const T = () => (english() ? AI_LINES_EN : AI_LINES);
   let cur = null, seq = 0, running = false, ctrl = null, lastAnswer = null;
@@ -39,7 +41,7 @@ export function createAiSession({ tutor, book, speaker = { name: '早瀬 教官'
   function emit() { const v = view(); for (const f of [...fns]) { try { f(v); } catch (e) { console.error(e); } } }
   function set(v) { cur = v; emit(); }
   function input(first) {
-    set(me(first ? T().intro : T().again, { kind: 'input', input: { max: QUESTION_MAX, placeholder: '質問を日本語で書いて Enter（例：失速はなぜ起きるのですか）' },
+    set(me(first ? T().intro : T().again, { kind: 'input', input: { max: QUESTION_MAX, placeholder: '質問を日本語で書いて Enter（例：失速はなぜ起きるのですか）', mic: micLang() || null },
       choices: [{ i: 0, text: first ? 'やっぱり、やめておきます' : 'ありがとうございました', act: first ? 'cancel' : 'done' }] }));
   }
   function failed(reason) {

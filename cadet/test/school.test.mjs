@@ -22,7 +22,7 @@ import { NOT_SPOKEN } from '../src/content/dialog/instructor.js';
 import { NOTES } from '../src/content/lecture-notes/index.js';
 import { validateDialogs } from '../src/dialog/validate.js';
 import { createRunner, createDialogState } from '../src/dialog/engine.js';
-import { EXAMS, weatherFor } from '../src/career/career.js';
+import { EXAMS, weatherFor, createCareer } from '../src/career/career.js';
 import { installSorajima } from '../src/flight/sorajima.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -508,7 +508,8 @@ test('school: the textbook as it opens (sectionHtml): every section with today\'
 });
 
 test('school: the written tests — from FLIGHT LAB\'s banks, as many questions as set, 80% to pass', () => {
-  // (thirty set for every test; a test whose banks hold fewer gives all they hold — nav, instr and multi today)
+  // (thirty set for every test, and every test's banks now hold at least that many, so all draw the full thirty;
+  // a test whose banks held fewer would give all they hold)
   const held = (id) => EXAMS[id].banks.reduce((n, b) => n + (FL.quiz.BANKS.find(x => x.id === b) || { qs: [] }).qs.length, 0);
   for (const id of Object.keys(EXAMS)) {
     const d = examDialogs(FL, id, { seed: 2 });
@@ -522,6 +523,25 @@ test('school: the written tests — from FLIGHT LAB\'s banks, as many questions 
     assert.deepEqual(examDialogs(FL, id, { seed: 2 }).questions, d.questions);
     assert.notDeepEqual(examDialogs(FL, id, { seed: 3 }).questions, d.questions);
   }
+});
+
+test('school: nav, instr and multi — each bank holds twenty, the draw is thirty different questions, the floor counts on a real draw', () => {
+  for (const id of ['nav', 'instr', 'multi']) for (const b of EXAMS[id].banks)
+    assert.ok((FL.quiz.BANKS.find(x => x.id === b) || { qs: [] }).qs.length >= 20, `${id}: ${b} holds at least twenty`);
+  for (const id of ['nav', 'instr', 'multi']) {
+    const d = examDialogs(FL, id, { seed: 7 });
+    assert.equal(d.questions.length, EXAMS[id].n, `${id}: the full thirty drawn`);
+    assert.equal(new Set(d.questions.map(x => x.id)).size, d.questions.length, `${id}: no question twice`);
+    for (const b of EXAMS[id].banks) assert.equal(d.questions.filter(x => x.id.startsWith(`${b}#`)).length, 15, `${id}: fifteen of ${b}`);
+  }
+  // (the floor on a real draw: every nav question right and 8 of 15 weather right — the weather bank is named weak)
+  const d = examDialogs(FL, 'nav', { seed: 7 }), seen = {}, flags = {};
+  d.questions.forEach((x, k) => { const b = x.id.split('#')[0]; seen[b] = (seen[b] || 0) + 1; flags[`qz_${k}`] = b === 'q_nav' || seen[b] <= 8; });
+  const s = examScoreOf({ flags }, d.questions, { q_nav: '航法', q_wx: '航空気象' });
+  assert.equal(s.banks.q_wx.n, 15); assert.ok(s.banks.q_wx.pct < 60, `weather at ${s.banks.q_wx.pct}%`);
+  assert.deepEqual(s.weak, ['q_wx']); assert.equal(s.pass, false);
+  const all = {}; d.questions.forEach((_, k) => { all[`qz_${k}`] = 1; });
+  assert.equal(examScoreOf({ flags: all }, d.questions).pass, true, 'all right: a pass');
 });
 
 test('school: an exam\'s bank floor (§4.3) — over the line as a whole is not enough with a weak bank', () => {
@@ -538,6 +558,36 @@ test('school: an exam\'s bank floor (§4.3) — over the line as a whole is not 
   // a bank exactly at 60% is not weak
   const edge = examScoreOf(stateWith(3, 25), qs, titles);
   assert.equal(edge.banks.q_wx.pct, 60); assert.deepEqual(edge.weak, []); assert.equal(edge.pass, true);
+});
+
+test('school: a test over the line with a weak bank ends in a fail — and the career records that fail (§4.3)', () => {
+  const d = examDialogs(FL, 'written1', { seed: 2 }), qs = d.questions;
+  assert.equal(qs.length, 30);
+  const weakBank = String(qs[0].id).split('#')[0];
+  // run it as the game does (main.js's quizEnd): the score is the test's own — examScoreOf, bank floor and all —
+  // answering everything right except the one bank, which is answered wrong throughout
+  const st = createDialogState(), cx = { quiz: null }, hooks = [];
+  const titles = Object.fromEntries(FL.quiz.BANKS.map(b => [b.id, b.title]));
+  const r = createRunner({ data: d, state: st, ctx: cx, hooks: { onHook: (n, a) => { hooks.push([n, a]); if (n === 'quizEnd') cx.quiz = examScoreOf(st, qs, titles); } } });
+  r.start('exam');
+  for (let k = 0; k < 400 && r.running; k++) {
+    const v = r.view();
+    if (v.choices.length) {
+      const qi = /^q(\d+)$/.exec(v.node), x = qi ? qs[+qi[1]] : null;
+      if (x) { const rightText = x.opts[x.ok], weak = String(x.id).split('#')[0] === weakBank; const i = v.choices.findIndex(c => weak ? c.text !== rightText : c.text === rightText); r.choose(i >= 0 ? i : 0); }
+      else r.choose(0);
+    } else r.next();
+  }
+  assert.equal(r.running, false, 'the test ends');
+  const quiz = cx.quiz;
+  assert.ok(quiz && quiz.pct >= 80, `over the line as a whole: ${quiz && quiz.pct}%`);
+  assert.deepEqual(quiz.weak, [weakBank]); assert.equal(quiz.pass, false, 'the floor fails it');
+  assert.ok(hooks.some(h => h[0] === 'done' && h[1] === 'fail'), 'the dialog ends in a fail');
+  assert.ok(!hooks.some(h => h[0] === 'done' && h[1] === 'pass'), 'and never in a pass');
+  // and the career, told the same score the way main.js tells it (career.exam(id, pct, pass)), records the fail:
+  // the percent kept as the best, the try counted, no pass — where the percent alone would have passed it
+  const C = createCareer({ seed: 23 }), rec = C.exam('written1', quiz.pct, quiz.pass);
+  assert.equal(rec.pass, false); assert.equal(rec.best, quiz.pct); assert.equal(rec.tries, 1);
 });
 
 test('school: the judgement drill (§4.4) — ten weathers, and the right choice is each weather\'s own decision', () => {

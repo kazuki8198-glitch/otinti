@@ -6,6 +6,8 @@
 // Hooks the game acts out: look 'player'; point 'board' | 'screen' | 'apron'; nod; board <section id> (shows that
 // section's figure on the briefing room's screen); book <section id> (opens the textbook there).
 import { gameBook, sentences } from '../book.js';
+import { BANK_ANSWERS } from '../answer-map.js';
+import { ourCall } from './atc.js';
 
 export const INSTRUCTOR = { id: 'instructor', name_ja: '早瀬 航', title_ja: '早瀬 教官', role_ja: '担当教官' };
 const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' } };
@@ -228,11 +230,46 @@ function goalCheck(lessons, lesson) {
   return opts;
 }
 
+// one question of the pool the classes keep (content/answer-map.js: FLIGHT LAB's bank questions tied to the
+// textbook line that answers them), for this lesson: the first question tied to one of its sections that can be
+// said here whole — its words, its answers and its reason within a line each, nothing in them the instructor
+// would not say, and for a lesson on the ground nothing about flying. The fixes school.js's fromBank makes are
+// made here too (a chapter named {ch:id} is the game's chapter; the call sign is today's).
+// → { q, opts, ok, why, sec (its section), teach (the lines that say its answer, as the class says them) }
+function sectionQuestion(book, FL, lesson) {
+  const secs = book.lessonSections(lesson.id).map(s => s.id);
+  if (!secs.length || !(FL.quiz && Array.isArray(FL.quiz.BANKS))) return null;
+  const refs = (t) => String(t || '').replace(/\{ch:([a-z0-9]+)\}/g, (m, id) => { const c = book.chapters.find(x => x.id === id); return c ? `第 ${c.n} 章` : '教科書'; });
+  const fx = (t) => ourCall(refs(t));
+  for (const sec of secs) for (const [b, list] of Object.entries(BANK_ANSWERS)) {
+    const bank = FL.quiz.BANKS.find(x => x.id === b); if (!bank) continue;
+    for (let i = 0; i < list.length; i++) {
+      const x = list[i];
+      if (!x.a || x.a[0][0] !== sec || !bank.qs[i]) continue;
+      const [t, opts, ok, why] = bank.qs[i];
+      const qq = fx(t), os = (opts || []).map(fx), w = fx(why || '');
+      if (os.length < 3 || os.length > 4 || qq.length < 2 || qq.length > 110 || os.some(o => o.length < 2 || o.length > 55)) continue;
+      if (w.length > 95 || NOT_SPOKEN.test(qq) || os.some(o => NOT_SPOKEN.test(o)) || NOT_SPOKEN.test(w)) continue;
+      if (!lesson.aircraft && [qq, w, ...os].some(t => /飛ぶ|エプロン|運航管理/.test(t))) continue;   // a ground lesson does not fly
+      const teach = x.a.flatMap(([, words]) => speechLines(words)).slice(0, 4);
+      if (!teach.length) continue;
+      return { q: qq, opts: os, ok, why: w, sec, teach };
+    }
+  }
+  return null;
+}
+
 // ---- the dialogs ----
 
 // day: the day's lessons in order, when today's lesson is flown inside a whole day (M4: t1 → a2 → t3); the briefing
-// then says where it sits in the day and the wrap-up sends the cadet to the walk-around
-export function instructorDialogs(FL, { lessonId = 'a1', day = null } = {}) {
+// then says where it sits in the day and the wrap-up sends the cadet to the walk-around.
+// repeat: the lesson has been flown before (its record's tries) — the usual flow in short (PLAN's ch2 proposal):
+// no prediction, no teaching over again; the title, the standard, the check, the day's phrase.
+// A first briefing is made like chapter 1's classes (the same proposal): a prediction (about the lesson's own
+// question where its sections have one in the pool, else about its goal), the teaching (the question's own
+// textbook lines first, then why, the figure, the points, the standard), the check (that question again, or the
+// goal's), and the day's phrase (the goal, said last, to carry into the flight).
+export function instructorDialogs(FL, { lessonId = 'a1', day = null, repeat = false } = {}) {
   const book = gameBook(FL);
   const all = lessonsOf(FL);
   const lesson = all.find(l => l.id === lessonId);
@@ -292,45 +329,93 @@ export function instructorDialogs(FL, { lessonId = 'a1', day = null } = {}) {
   // from 'ask:thanks' (or, when no answer could come, from the textbook's questions: 'ask:root')
   B.free = say('いいですよ。何でも聞いてください。', { hook: { name: 'ai', arg: 'brief' }, next: 'ask:thanks' });
 
-  // today's lesson: title → goal → why (with the figure on the board) → the points → the standard
+  // today's lesson, in its parts: the head (title → the goal's words), then the teaching — the lesson's own
+  // question's textbook lines (where it has one), why (with the figure on the board), the points, the standard,
+  // its place in the day. The goal's one line is not among them: it is the day's phrase, said after the check.
   // (M8: the lines read out of the course's material are tagged 'material': the English mode says them as written)
-  const steps = [], MAT = { tag: 'material' };                                // [text, extra]
-  steps.push([`ホワイトボードを見てください。今日の課目は${q(title)}です。`, { hook: { name: 'point', arg: 'board' } }]);
-  for (const g of goalParts) steps.push(...speechLines(g).map(t => [t, MAT]));
-  steps.push([goalLine, {}]);
+  const MAT = { tag: 'material' };                                            // steps are [text, extra]
+  const head = [[`ホワイトボードを見てください。今日の課目は${q(title)}です。`, { hook: { name: 'point', arg: 'board' } }]];
+  for (const g of goalParts) head.push(...speechLines(g).map(t => [t, MAT]));
+  const sq = sectionQuestion(book, FL, lesson);
+  const teachSteps = [];
+  if (sq) {
+    const sec = book.section(sq.sec);
+    teachSteps.push([`教科書の${q(sec.title)}から、今日の大事なところを言います。`, sec.figure ? { hook: { name: 'board', arg: sq.sec } } : { hook: { name: 'point', arg: 'board' } }]);
+    teachSteps.push(...sq.teach.map(t => [t, MAT]));
+  }
+  const rest = [];
   if (why.length) {
-    steps.push(['まず、この課目の考え方からお話しします。', { hook: { name: 'look', arg: 'player' } }]);
-    steps.push(...why.map(t => [t, MAT]));
+    rest.push(['まず、この課目の考え方からお話しします。', { hook: { name: 'look', arg: 'player' } }]);
+    rest.push(...why.map(t => [t, MAT]));
   }
   if (figSec) {
-    steps.push([`図にすると、こうなります。教科書の${q(figSec.title)}にある図です。`, { hook: { name: 'board', arg: figSec.id } }]);
-    steps.push(...figLines.map((t, k) => [t, k ? MAT : { ...MAT, hook: { name: 'point', arg: 'screen' } }]));
+    rest.push([`図にすると、こうなります。教科書の${q(figSec.title)}にある図です。`, { hook: { name: 'board', arg: figSec.id } }]);
+    rest.push(...figLines.map((t, k) => [t, k ? MAT : { ...MAT, hook: { name: 'point', arg: 'screen' } }]));
   }
   if (points.length) {
-    steps.push(['では、飛び方のポイントです。', { hook: { name: 'point', arg: 'board' } }]);
-    steps.push(...points.map(t => [t, MAT]));
+    rest.push(['では、飛び方のポイントです。', { hook: { name: 'point', arg: 'board' } }]);
+    rest.push(...points.map(t => [t, MAT]));
   }
-  if (std && std.length <= LINE - 12) steps.push([`今日の基準は${q(std)}です。`, { hook: { name: 'look', arg: 'player' } }]);
-  else if (std) steps.push(['今日の基準は、こうです。', { hook: { name: 'look', arg: 'player' } }], [/[。」）]$/.test(std) ? std : std + '。', MAT]);
+  const stdSteps = [];
+  if (std && std.length <= LINE - 12) stdSteps.push([`今日の基準は${q(std)}です。`, { hook: { name: 'look', arg: 'player' } }]);
+  else if (std) stdSteps.push(['今日の基準は、こうです。', { hook: { name: 'look', arg: 'player' } }], [/[。」）]$/.test(std) ? std : std + '。', MAT]);
+  rest.push(...stdSteps);
   if (Array.isArray(day) && day.length > 1) {
     const T = (id) => { const l = all.find(x => x.id === id); if (!l) throw new Error(`instructorDialogs: no lesson "${id}"`); return q(speakable(l.title)); };
     const at = day.indexOf(lesson.id), before = day.slice(0, Math.max(0, at)).map(T), after = day.slice(at + 1).map(T);
-    steps.push([`今日はこの課目を、1 日の飛行の中でやります。${before.length ? `まず${before.join('と')}で離陸して、` : ''}訓練空域でこの課目、${after.length ? `戻って${after.join('と')}です。` : 'それで戻ります。'}`, { hook: { name: 'point', arg: 'board' } }]);
+    rest.push([`今日はこの課目を、1 日の飛行の中でやります。${before.length ? `まず${before.join('と')}で離陸して、` : ''}訓練空域でこの課目、${after.length ? `戻って${after.join('と')}です。` : 'それで戻ります。'}`, { hook: { name: 'point', arg: 'board' } }]);
   }
-  chain(B, 'lesson', steps.map(x => x[0]), 'check', steps.map(x => x[1]));
-
-  // the check: one question, three answers
   const opts = goalCheck(all, lesson);
-  B.check = say('では、ひとつ確認させてください。今日の課目の目標は、次のうちどれでしょう。', {
-    if: { not: { flag: 'brief_checked' } }, else: 'post',
-    choices: opts.map((o, k) => ({ text: o.goal, next: o.right ? 'check:ok' : `check:ng${k}`,
-      effects: o.right ? [{ set: 'brief_checked' }, { trust: 'instructor', add: 3 }] : [{ set: 'brief_checked' }] })),
-  });
+  if (repeat) {
+    const short = [head[0], ['この課目は、もう一度ですね。前回のポイントは省いて、短く済ませます。', {}], ...stdSteps];
+    chain(B, 'lesson', short.map(x => x[0]), 'check', short.map(x => x[1]));
+  } else {
+    chain(B, 'lesson', head.map(x => x[0]), 'predict', head.map(x => x[1]));
+    // the prediction: the lesson's own question where it has one, else its goal — not scored, and "I don't
+    // know" is a good answer; what answers it is taught next, and the check asks it again
+    const PREDICT = 'まず、予想です。今日の課目について、一つ聞きます。当てずっぽうでも大丈夫です。';
+    const taught = [...teachSteps, ...rest];
+    const taughtFirst = taught.length ? 'teach' : 'check';                   // (a lesson with nothing to teach goes straight to the check)
+    if (sq) {
+      B.predict = say(PREDICT, { if: { not: { flag: 'brief_checked' } }, else: taughtFirst, next: 'predict:q' });
+      B['predict:q'] = { speaker: 'instructor', text: sq.q, tag: 'material', choices: [
+        ...sq.opts.map(t => ({ text: t, next: 'predict:ack' })),
+        { text: 'わかりません', next: 'predict:dk' },
+      ] };
+    } else {
+      B.predict = say(PREDICT, { if: { not: { flag: 'brief_checked' } }, else: taughtFirst, choices: [
+        ...opts.map(o => ({ text: o.goal, next: 'predict:ack' })),
+        { text: 'わかりません', next: 'predict:dk' },
+      ] });
+    }
+    B['predict:ack'] = say('その予想、覚えておいてください。では、課目の中身に入ります。', { next: taughtFirst });
+    B['predict:dk'] = say('正直でいいですよ。わからないところが、今日覚えるところです。では、課目の中身に入ります。', { next: taughtFirst });
+    if (taught.length) chain(B, 'teach', taught.map(x => x[0]), 'check', taught.map(x => x[1]));
+  }
+
+  // the check: one question — the lesson's own, asked again after its teaching, where it has one; else the
+  // goal's, as before. A right answer is the trust's +3, either way the check is done for today.
+  if (sq) {
+    B.check = { speaker: 'instructor', text: sq.q, tag: 'material',
+      if: { not: { flag: 'brief_checked' } }, else: 'post',
+      choices: sq.opts.map((t, k) => ({ text: t, next: k === sq.ok ? 'check:ok' : `check:ng${k}`,
+        effects: k === sq.ok ? [{ set: 'brief_checked' }, { trust: 'instructor', add: 3 }] : [{ set: 'brief_checked' }] })) };
+    sq.opts.forEach((t, k) => { if (k !== sq.ok) B[`check:ng${k}`] = say('そこは違います。', { next: 'check:fix' }); });
+    B['check:fix'] = { speaker: 'instructor', text: `正しくは${q(sq.opts[sq.ok])}。${sq.why}`, tag: 'material', hook: { name: 'point', arg: 'board' }, next: 'check:fix:2' };
+  } else {
+    B.check = say('では、ひとつ確認させてください。今日の課目の目標は、次のうちどれでしょう。', {
+      if: { not: { flag: 'brief_checked' } }, else: 'post',
+      choices: opts.map((o, k) => ({ text: o.goal, next: o.right ? 'check:ok' : `check:ng${k}`,
+        effects: o.right ? [{ set: 'brief_checked' }, { trust: 'instructor', add: 3 }] : [{ set: 'brief_checked' }] })),
+    });
+    opts.forEach((o, k) => { if (!o.right) B[`check:ng${k}`] = say(`それは${q(speakable(o.title))}の課目の目標ですね。`, { next: 'check:fix' }); });
+    B['check:fix'] = say(`今日の${goalLine}`, { hook: { name: 'point', arg: 'board' }, next: 'check:fix:2' });
+  }
   B['check:ok'] = say('そのとおりです。よく聞いていましたね。', { hook: { name: 'nod' }, next: 'check:ok:2' });
-  B['check:ok:2'] = say('目標がはっきりしていれば、何に集中すればいいかが決まります。', { next: 'post' });
-  opts.forEach((o, k) => { if (!o.right) B[`check:ng${k}`] = say(`それは${q(speakable(o.title))}の課目の目標ですね。`, { next: 'check:fix' }); });
-  B['check:fix'] = say(`今日の${goalLine}`, { hook: { name: 'point', arg: 'board' }, next: 'check:fix:2' });
-  B['check:fix:2'] = say(`大丈夫。${lesson.aircraft ? '飛ぶ' : '始める'}前に確かめられて、よかったです。`, { next: 'post' });   // ground lessons do not fly
+  B['check:ok:2'] = say('目標がはっきりしていれば、何に集中すればいいかが決まります。', { next: 'phrase' });
+  B['check:fix:2'] = say(`大丈夫。${lesson.aircraft ? '飛ぶ' : '始める'}前に確かめられて、よかったです。`, { next: 'phrase' });   // ground lessons do not fly
+  // the day's phrase: the goal, said last — the one line to carry into the flight
+  B.phrase = say(`今日の言い方は、これです。${goalLine}`, { hook: { name: 'point', arg: 'board' }, next: 'post' });
 
   B.post = say('ここまでで、質問はありますか。', { choices: [
     { text: '質問があります', next: 'ask:root' },

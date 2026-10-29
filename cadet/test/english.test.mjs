@@ -94,6 +94,8 @@ test('a talk run in English: the views carry the English, filled from the contex
   let v = r.view();
   assert.match(v.en, /^Good morning\. Before we start/); assert.match(v.text, /^おはようございます/);
   r.choose(0); v = r.view(); assert.equal(v.en, 'Good. Then, today\'s lesson.');
+  r.next(); v = r.view(); assert.match(v.en, /^Before that, one thing from yesterday's debrief/);   // yesterday's miss first
+  r.choose(0); v = r.view(); assert.match(v.en, /^That's it: “/);                                    // (the sample's right answer)
   r.next(); v = r.view(); assert.match(v.en, /^Before we fly, TEM/);
   r.choose((t.right + 1) % 3); v = r.view();
   assert.equal(v.en, `${t.othersEn[(t.right + 1) % 3]}. Today's biggest threat is "afternoon thunderstorms". ${THREATS_EN.storm.why}. The plan: ${THREATS_EN.storm.plan}.`);

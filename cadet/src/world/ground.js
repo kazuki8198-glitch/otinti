@@ -96,6 +96,9 @@ export function buildGround(L, FL, { quality }) {
         float crown = mix(0.8, 0.55 + 0.6 * (1.0 - smoothstep(0.0, 0.5, dmin)), crownK);
         vec3 woods = lin(vec3(0.16, 0.25, 0.12)) * crown * (0.8 + 0.4 * cdNoise(w * 0.05)) * (0.85 + 0.3 * cdNoise(w * 0.011));
         c = mix(c, woods, wood);
+        // a little more chroma in the patchwork: from altitude the neighbouring fields sit within a fifth of each
+        // other's luminance, and under the haze they merged into one green (the pattern is the student's map)
+        c = max(mix(vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), c, 1.22), 0.0);
         // the photo grass shows through the fields close by
         float gl = dot(gc.rgb, vec3(0.3, 0.5, 0.2));
         vec3 fields = c * mix(1.0, clamp(gl / 0.10, 0.6, 1.5), 1.0 - smoothstep(60.0, 400.0, dist));

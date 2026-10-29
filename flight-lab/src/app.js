@@ -33,7 +33,9 @@
   const PREF_KEY = 'flightlab-prefs-v2';
   // render: 'auto' | 'three' | 'legacy' (read once at start-up), quality: 'auto' or a three.js preset id, panel2d: the 2D
   // panel shown under the 3D cockpit as well (I)
-  const PREFS0 = { sens: 'low', hold: 'hold', rhold: 'hold', autoRud: true, assist: false, sound: false, level: 'intro', ack: false, layout: 0, hud: 'full', strip: 'full', tour: false, render: 'auto', quality: 'auto', panel2d: false };
+  // load: the weight-and-balance load chosen in the briefing (physics' cleanLoading reads it: fuel 'std' |
+  // 'full' | 'tabs' | 'half', front (the front seats filled), rear, bagKg) — the standard training load by default
+  const PREFS0 = { sens: 'low', hold: 'hold', rhold: 'hold', autoRud: true, assist: false, sound: false, level: 'intro', ack: false, layout: 0, hud: 'full', strip: 'full', tour: false, render: 'auto', quality: 'auto', panel2d: false, load: { fuel: 'std', front: 2, rear: 0, bagKg: 0 } };
   function loadPrefs() { try { const p = JSON.parse((store && store.getItem(PREF_KEY)) || '{}'); const o = { ...PREFS0 }; for (const k of Object.keys(PREFS0)) if (typeof p[k] === typeof PREFS0[k]) o[k] = p[k]; return o; } catch (e) { return { ...PREFS0 }; } }
   function savePrefs() { try { store && store.setItem(PREF_KEY, JSON.stringify(S.prefs)); } catch (e) { /* storage unavailable */ } }
 
@@ -55,7 +57,7 @@
   }
 
   // ---------------------------------------------------------------- starting a lesson / free flight
-  function lessonOpts() { return { sens: S.prefs.sens, autoRud: S.prefs.autoRud }; }
+  function lessonOpts() { return { sens: S.prefs.sens, autoRud: S.prefs.autoRud, loading: S.prefs.load }; }
   function startLesson(id, levelId = S.prefs.level) {
     const def = SC.lesson(id); if (!def || !def.steps) return;
     S.L = SC.startLesson(id, levelId, lessonOpts());
@@ -151,7 +153,7 @@
       else toast(`${side}のプロペラをフェザー：羽根を風に平行にして回転を止め、抗力を大きく減らしました`, 2600, 'good');
     } else if (a === 'restart0' || a === 'restart1') {
       if (!A.twin) return; if (!L.free) { toast('訓練中はエンジンの再始動はできません', 1600); return; }
-      const e = s.eng[a === 'restart0' ? 0 : 1]; Object.assign(e, { feather: false, cut: false, failed: false }); toast('エンジンを再始動（自由飛行の補助）', 1400);
+      const e = s.eng[a === 'restart0' ? 0 : 1]; Object.assign(e, { feather: false, cut: false, failed: false, on: true }); toast('エンジンを再始動（自由飛行の補助）', 1400);
     } else if (a === 'rtrimL' || a === 'rtrimR') {
       S.rTrim = clamp(S.rTrim + (a === 'rtrimR' ? 0.05 : -0.05), -0.6, 0.6);
       toast(`ラダートリム ${S.rTrim === 0 ? '中立' : `${S.rTrim > 0 ? '右' : '左'} ${Math.round(Math.abs(S.rTrim) * 100)}%`}：ラダーを踏み続けなくてよいように`, 1400);
@@ -160,11 +162,15 @@
   // the 3D cockpit's controls: FL.view3d hands over what a click or a wheel notch on a knob, key or lever asked for, in
   // CADET's words (aircraft/cockpit.js). The G1000's keys and knobs are the 2D panel's ctl(); the flap lever and the gear
   // selector are the keys' doAction(); the throttle and the trim wheel move one notch (CADET's steps: 5 % of the throttle,
-  // 4 % of the trim's range, as Sorajima's trim wheel). The electrical switches, the magnetos, the mixture and the fuel
-  // selector change only the picture (the view has already moved them; the light switches, under the master, also
-  // turn the aircraft's own outside lights on and off): FLIGHT LAB's engine model has no such systems, so the toast
-  // says so once per lesson. The primer and the parking brake do not move at all: they only toast. Kept apart from
-  // doAction so CADET's tests, which cut doAction, updateControls and tick out of this file, see no new names.
+  // 4 % of the trim's range, as Sorajima's trim wheel). The magnetos, the mixture and the fuel selector go into the
+  // physics' engine systems (each engine's mag / mix / sel: the mixture to cut-off, the magnetos OFF or the selector
+  // OFF stop it, and a stopped engine is cranked back at START with the mixture rich), and the mixture, the fuel
+  // selector and the carburettor heat are also set on the state's shared controls, which the powerplant model
+  // reads (leaning and EGT, the feeding tank, carburettor ice). The electrical switches change only the picture
+  // (the view has already moved them; the light switches, under the master, also turn the aircraft's own outside
+  // lights on and off), so the toast says so once per lesson. The primer and the parking brake do not move at
+  // all: they only toast. Kept apart from doAction so CADET's tests, which cut doAction, updateControls and
+  // tick out of this file, see no new names.
   function cockpitAction(r, c) {
     const L = S.L; if (!r || !L) return;
     const s = L.s, label = c && c.label ? String(c.label) : '';
@@ -182,8 +188,15 @@
       const x = r.value, name = label.replace(/（.*$/, '') || r.id;
       const v = r.type === 'switch' ? (r.on ? 'ON' : 'OFF') : typeof x === 'string' ? x : r.id === 'mixture' && Number.isFinite(x) ? (x >= 0.95 ? 'リッチ' : x < 0.15 ? 'アイドル カットオフ' : `リーン ${Math.round(x * 100)}%`) : '';
       toast(`${name}${v ? ' ' + v : ''}`, 1400);
-      if (!L.switchNoted) { L.switchNoted = true; toast('FLIGHT LAB では、スイッチ・マグネトー・ミクスチャー・燃料の切替は絵だけが変わります（灯火のスイッチは機体の外の灯りも点け消しします）。エンジンと電気系の動きは変わりません（エンジンは回った状態で始まります）', 4600); }
-    } else if (r.type === 'prime') toast('プライマー：FLIGHT LAB ではエンジンの始動手順を省いています（エンジンは回った状態で始まります）', 2600);
+      // the engine's own switches go into the physics, on both of its surfaces (the one set of switches drives
+      // every engine, as in CADET): each engine's own mag / mix / sel, and the shared controls the powerplant
+      // model reads — the mixture lever, the tank the selector feeds, the carburettor heat
+      if (r.id === 'mag' && P.MAG_POS.includes(x)) s.eng.forEach(e => { e.mag = x; });
+      else if (r.id === 'mixture' && Number.isFinite(x)) { const m = clamp(x, 0, 1); s.mix = m; s.eng.forEach(e => { e.mix = m; }); }
+      else if (r.id === 'fuelSel' && (x === 'L' || x === 'R' || x === 'OFF')) { s.fuelSel = x; s.eng.forEach(e => { e.sel = x; }); }
+      else if (r.id === 'carbHeat') s.carbHeat = !!r.on;
+      else if (!L.switchNoted) { L.switchNoted = true; toast('FLIGHT LAB では、電気系のスイッチは絵だけが変わります（灯火のスイッチは機体の外の灯りも点け消しします）。マグネトー・ミクスチャー・燃料セレクター・キャブヒートはエンジンに効きます：止めたら、ミクスチャー リッチ・セレクターをタンクに・マグネトーを START にしてかけ直します', 4600); }
+    } else if (r.type === 'prime') toast('プライマー：FLIGHT LAB の始動にプライマーは要りません（ミクスチャー リッチ・セレクターをタンクに・マグネトーを START）。実機の冷えたエンジンではプライマーを 2〜3 回押します', 2600);
     else if (r.type === 'exit') toast('飛行をやめるときは Esc / P（一時停止）からメニューや課程表へ', 2400);
     else if (r.type === 'info' && r.text) toast(r.text, 2600);
   }
@@ -626,7 +639,7 @@
   }
   function panelData(L) {
     const s = L.s, nav = AV.navSolve(L.av, P.ne(s), s.out, P.MAGVAR_W, P.LAB_RWY);
-    return { o: s.out, av: L.av, nav, varW: P.MAGVAR_W, qnh: s.qnh, eng: s.eng.map(e => ({ run: e.run, rpm: e.rpm, feather: e.feather })), V: s.A.v, fuelCap: s.A.fuelCap, pos: P.ne(s) };
+    return { o: s.out, av: L.av, nav, varW: P.MAGVAR_W, qnh: s.qnh, eng: s.eng.map(e => ({ run: e.run, rpm: e.rpm, feather: e.feather, mag: e.mag, mix: e.mix, sel: e.sel, on: e.on })), V: s.A.v, fuelCap: s.A.fuelCap, pos: P.ne(s) };
   }
   function drawPanels() {
     if (!S.L || $('#panel').hidden) return;                          // (hidden under the 3D cockpit: its own G1000 draws)
@@ -644,7 +657,10 @@
     const av = S.L.av, pk = $('#pfdKeys'), pn = $('#pfdKnobs'), mk = $('#mfdKeys'), mn = $('#mfdKnobs');
     pk.textContent = ''; pn.textContent = ''; mk.textContent = ''; mn.textContent = '';
     if (av.pfdMenu === 'PFD') pk.append(btn('WIND', () => ctl('WIND'), '風の表示', 'soft' + (av.wind ? ' on' : '')), btn('ALT UNIT', () => ctl('ALT_UNIT'), 'BARO の単位（IN / HPA）', 'soft'), btn('STD BARO', () => ctl('STD_BARO'), '29.92 inHg', 'soft'), btn('BACK', () => ctl('PFD_MENU', 'TOP'), '', 'soft'));
-    else pk.append(btn('PFD', () => ctl('PFD_MENU', 'PFD'), 'PFD の設定', 'soft'), btn('CDI', () => ctl('CDI'), 'コースの針の情報源：GPS → NAV1 → NAV2', 'soft'), h('span', { class: 'lab', style: 'align-self:center' }, `CDI: ${AV.cdiName(av)}`));
+    else if (av.pfdMenu === 'XPDR') pk.append(...[0, 1, 2, 3, 4, 5, 6, 7].map(d => btn(`${d}`, () => ctl('XPDR_DIGIT', d), 'スコークの数字（0–7）', 'soft')),
+      btn('MODE', () => ctl('XPDR_MODE'), `モード：${av.xpdr.mode}`, 'soft'), btn('⌫', () => ctl('XPDR_BKSP'), '1 桁消す', 'soft'), btn('BACK', () => ctl('XPDR'), '', 'soft'),
+      h('span', { class: 'lab', style: 'align-self:center' }, `XPDR: ${av.xpdr.entry || String(av.xpdr.code).padStart(4, '0')}`));
+    else pk.append(btn('PFD', () => ctl('PFD_MENU', 'PFD'), 'PFD の設定', 'soft'), btn('CDI', () => ctl('CDI'), 'コースの針の情報源：GPS → NAV1 → NAV2', 'soft'), btn('XPDR', () => ctl('XPDR'), 'トランスポンダーのコード入力', 'soft'), h('span', { class: 'lab', style: 'align-self:center' }, `CDI: ${AV.cdiName(av)}`));
     const hdgMag = () => Math.round(AV.trueToMag(S.L.s.out.hdgTrue, P.MAGVAR_W));
     pn.append(
       grp('HDG', btn('−', e => ctl('HDG', -1, e.shiftKey), 'Shift で 10°'), btn('SYNC', () => ctl('HDG_SYNC', hdgMag()), '現在の針路に合わせる'), btn('+', e => ctl('HDG', 1, e.shiftKey), 'Shift で 10°')),

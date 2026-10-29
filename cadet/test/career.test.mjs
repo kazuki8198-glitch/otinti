@@ -2,7 +2,7 @@
 // chapter, the gates between the chapters, the time of day and the night's sleep, the save (versioned and cleaned).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { STAGE, CHECKS, LATER, weatherFor2, nextIn, createCareer, newCareer, cleanCareer, prologueFlags, PROLOGUE_FLAGS, weatherFor, dateOf, dateText, isOff, schedule, gate, nextLesson, passedAt, CH2, GROUND, CLASSES, EXAMS, WEATHER, SOLO_TRUST, SOLO_JUDGE, CAREER_KEY, SLOTS, lessonGrowth, ftdGrowth, classGrowth, trustBand, graduationRank } from '../src/career/career.js';
+import { STAGE, CHECKS, LATER, weatherFor2, nextIn, createCareer, newCareer, cleanCareer, prologueFlags, PROLOGUE_FLAGS, weatherFor, dateOf, dateText, isOff, schedule, gate, nextLesson, passedAt, noteGround, CH2, GROUND, CLASSES, EXAMS, WEATHER, SOLO_TRUST, SOLO_JUDGE, CAREER_KEY, SLOTS, lessonGrowth, ftdGrowth, classGrowth, trustBand, graduationRank, missAsk, MISS_LABELS } from '../src/career/career.js';
 import { installSorajima } from '../src/flight/sorajima.js';
 
 const memStore = () => { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k), m }; };
@@ -89,8 +89,8 @@ test('career: the time of day, the night, the tiredness; the chapter moves on on
   assert.ok(c.advance()); assert.equal(c.slot, 'am'); assert.ok(c.advance('evening')); assert.equal(c.slot, 'evening');
   assert.ok(!c.advance(), 'the evening lasts until bed');
   c.tire(60); assert.ok(c.tired());
-  const n = c.sleep({ late: true }); assert.equal(n.day, 2); assert.equal(c.slot, 'morning'); assert.ok(c.state.fatigue > 40, 'a late night rests less');
-  c.sleep(); assert.ok(c.state.fatigue < 20);
+  const n = c.sleep({ late: true }); assert.equal(n.day, 2); assert.equal(c.slot, 'morning'); assert.equal(c.state.fatigue, 75, 'a late night rests little: 15 back, 10 of it spent studying');
+  c.sleep(); assert.equal(c.state.fatigue, 25, 'a full night rests 50');
   assert.equal(c.advanceChapter({}), false, 'the prologue is not done');
   c.finishPrologue(); assert.equal(c.advanceChapter({}), true); assert.equal(c.chapter, 'ch1');
   assert.equal(c.advanceChapter(progWith(GROUND)), false, 'the written test');
@@ -359,15 +359,18 @@ test('career graduation: the rank\'s three conditions, each one able to cost the
   const state = (abilities, firstTry, exams) => ({ abilities, firstTry, exams });
   const examsOf = (tries) => Object.fromEntries(tries.map((n, i) => [`e${i}`, { tries: n, best: 90, pass: true }]));
   const prog = { lessons: { a1: { score: 80 }, a2: { score: 60 }, a3: { score: 0 }, k1: {} } };
-  // all four at 70: the composite is 70; a 75% first-try rate; nine sittings in all — honours
-  const top = graduationRank(state({ hand: 70, know: 70, comm: 70, judge: 70 }, { pass: 3, total: 4 }, examsOf([3, 2, 1, 1, 1, 1])), prog);
-  assert.deepEqual(top, { rank: '優等', total: 70, firstRate: 75, examTries: 9, avgScore: 70 });
+  // all four at 70: the composite is 70; a diligent profile — an 88% first-try rate, six sittings in all — honours
+  const top = graduationRank(state({ hand: 70, know: 70, comm: 70, judge: 70 }, { pass: 22, total: 25 }, examsOf([1, 1, 1, 1, 1, 1])), prog);
+  assert.deepEqual(top, { rank: '優等', total: 70, firstRate: 88, examTries: 6, avgScore: 70 });
+  // a standard profile — the same abilities, a 79% first-try rate and seven sittings: excellent, not honours
+  const std = graduationRank(state({ hand: 70, know: 70, comm: 70, judge: 70 }, { pass: 15, total: 19 }, examsOf([2, 1, 1, 1, 1, 1])), prog);
+  assert.deepEqual([std.rank, std.firstRate, std.examTries], ['優秀', 79, 7]);
   // the composite short of 68 (all at 67): excellent, not honours
-  assert.equal(graduationRank(state({ hand: 67, know: 67, comm: 67, judge: 67 }, { pass: 3, total: 4 }, examsOf([3, 2, 1, 1, 1, 1])), prog).rank, '優秀');
-  // the first-try rate short of 75%: excellent
-  assert.equal(graduationRank(state({ hand: 70, know: 70, comm: 70, judge: 70 }, { pass: 37, total: 50 }, examsOf([3, 2, 1, 1, 1, 1])), prog).rank, '優秀');
-  // ten sittings of the tests: excellent, however clean the rest
-  assert.equal(graduationRank(state({ hand: 70, know: 70, comm: 70, judge: 70 }, { pass: 3, total: 4 }, examsOf([4, 2, 1, 1, 1, 1])), prog).rank, '優秀');
+  assert.equal(graduationRank(state({ hand: 67, know: 67, comm: 67, judge: 67 }, { pass: 22, total: 25 }, examsOf([1, 1, 1, 1, 1, 1])), prog).rank, '優秀');
+  // the first-try rate short of 88%: excellent
+  assert.equal(graduationRank(state({ hand: 70, know: 70, comm: 70, judge: 70 }, { pass: 37, total: 50 }, examsOf([1, 1, 1, 1, 1, 1])), prog).rank, '優秀');
+  // seven sittings of the tests: excellent, however clean the rest
+  assert.equal(graduationRank(state({ hand: 70, know: 70, comm: 70, judge: 70 }, { pass: 22, total: 25 }, examsOf([2, 1, 1, 1, 1, 1])), prog).rank, '優秀');
   // the composite short of 62, or the rate short of 60%: the plain rank
   assert.equal(graduationRank(state({ hand: 61, know: 61, comm: 61, judge: 61 }, { pass: 3, total: 4 }, examsOf([1])), prog).rank, '通常');
   assert.equal(graduationRank(state({ hand: 70, know: 70, comm: 70, judge: 70 }, { pass: 1, total: 2 }, examsOf([1])), prog).rank, '通常');
@@ -375,10 +378,128 @@ test('career graduation: the rank\'s three conditions, each one able to cost the
   assert.equal(graduationRank(state({ hand: 100, know: 0, comm: 0, judge: 0 }, { pass: 0, total: 0 }, {}), {}).total, 35);
   // graduate() keeps the rank with the day, and the save keeps both
   const st = memStore(), C = createCareer({ store: st, seed: 21 });
-  Object.assign(C.state.abilities, { hand: 70, know: 70, comm: 70, judge: 70 }); C.state.firstTry = { pass: 3, total: 4 };
+  Object.assign(C.state.abilities, { hand: 70, know: 70, comm: 70, judge: 70 }); C.state.firstTry = { pass: 22, total: 25 };
   C.graduate(prog);
   assert.equal(C.state.graduated.rank, '優等'); assert.equal(C.state.graduated.avgScore, 70);
   assert.deepEqual(createCareer({ store: st, seed: 21 }).state.graduated, C.state.graduated, 'the rank survives the save');
   // the bands of trust
   assert.deepEqual([0, 39, 40, 59, 60, 79, 80, 100].map(trustBand), ['まだ距離がある', 'まだ距離がある', '通常', '通常', '信頼されている', '信頼されている', '深い信頼', '深い信頼']);
+});
+
+test('career fatigue: flying days and late nights climb to the IMSAFE line; full nights never do (§4.5)', () => {
+  const C = createCareer({ store: memStore(), seed: 31 });
+  // a flight a day (+15) and a late night (a net 5 back): the tiredness climbs 10 a day, over the line in five
+  for (let d = 0; d < 5; d++) { C.tire(15); C.sleep({ late: true }); }
+  assert.ok(C.state.fatigue >= 65, `five late nights under flying days: ${C.state.fatigue}`);
+  assert.ok(C.tired(), 'tired enough to say so');
+  // the same days with a full night's sleep: it never builds up
+  const D = createCareer({ store: memStore(), seed: 31 });
+  for (let d = 0; d < 5; d++) { D.tire(15); D.sleep(); assert.ok(!D.tired(), `a full night rests it away (day ${d + 1})`); }
+});
+
+test('career exams: the bank floor the cadet was told is the result recorded (§4.3)', () => {
+  const C = createCareer({ store: memStore(), seed: 17 });
+  // over the line as a whole, a bank under the floor: the dialog says fail, and the record says fail — the
+  // best percent is kept, the try counted, and the knowledge grows by the fail's amount, not the pass's
+  const k0 = C.abilities.know;
+  const r = C.exam('nav', 85, false);
+  assert.equal(r.pass, false); assert.equal(r.best, 85); assert.equal(r.tries, 1);
+  assert.ok(C.abilities.know > k0 && C.abilities.know < k0 + 2, `a fail's growth: ${C.abilities.know - k0}`);
+  // the same percent with the floor met: a pass, and the pass's growth
+  const k1 = C.abilities.know;
+  const r2 = C.exam('instr', 85, true);
+  assert.equal(r2.pass, true); assert.equal(r2.tries, 1);
+  assert.ok(C.abilities.know > k1 + 3, `a pass's growth: ${C.abilities.know - k1}`);
+  // no word from the dialog: the percent alone decides, as before
+  assert.equal(C.exam('multi', 85).pass, true);
+  assert.equal(C.exam('final', 50).pass, false);
+});
+
+test('career exams: the same-day rule holds for the other tests too (§4.3) — presolo and a later chapter\'s', () => {
+  const good = weatherFor(9, 10, { force: 'good' });
+  // chapter 2: all the lessons passed, the pre-solo test is the day
+  const C = createCareer({ store: memStore(), seed: 9 }), s = C.state;
+  s.chapter = 'ch2'; s.day = 10; s.done.prologue = 1;
+  const all = progWith(CH2);
+  assert.deepEqual(C.schedule(all, { weather: good }).map(x => [x.kind, x.id]), [['exam', 'presolo']]);
+  C.exam('presolo', 50);   // (failed today)
+  assert.equal(C.examReady('presolo'), false);
+  const after = C.schedule(all, { weather: good });
+  assert.ok(!after.some(x => x.kind === 'exam'), 'failed today: the test is not offered again today');
+  assert.deepEqual(after.map(x => [x.kind, x.id]), [['flight', 't2']], 'the day is a finishing flight instead');
+  s.day = 12;   // (day 11 is the Sunday off)
+  assert.equal(C.examReady('presolo'), true);
+  assert.deepEqual(C.schedule(all, { weather: weatherFor(9, 12, { force: 'good' }) }).map(x => [x.kind, x.id]), [['exam', 'presolo']], 'and it is offered again on a later day');
+  // passed today: the test stays in the plan as the day's record, and cannot be begun again
+  C.exam('presolo', 90);
+  assert.deepEqual(C.schedule(all, { weather: weatherFor(9, 12, { force: 'good' }) }).map(x => [x.kind, x.id]), [['exam', 'presolo']], 'passed today: it stays as the day\'s record');
+  assert.equal(C.examReady('presolo'), false, 'but it cannot be begun again today');
+  s.day = 13;
+  assert.deepEqual(C.schedule(all, { weather: weatherFor(9, 13, { force: 'good' }) }).map(x => [x.kind, x.id]), [['checkride', 'c1']], 'tomorrow, the check ride');
+  // late in the syllabus the test rides along with the flight — and a fail there ends it for the day too
+  const C2 = createCareer({ store: memStore(), seed: 9 }), s2 = C2.state;
+  s2.chapter = 'ch2'; s2.day = 10; s2.done.prologue = 1;
+  const late = progWith(CH2.slice(0, 10));
+  assert.deepEqual(C2.schedule(late, { weather: good }).map(x => [x.slot, x.kind, x.id]), [['am', 'flight', CH2[10]], ['pm', 'exam', 'presolo']]);
+  C2.exam('presolo', 50);
+  assert.deepEqual(C2.schedule(late, { weather: good }).map(x => [x.slot, x.kind, x.id]), [['am', 'flight', CH2[10]]], 'failed in the afternoon: no second sitting that day');
+  // a later chapter: its test alone on the day once the lessons are done
+  const C3 = createCareer({ store: memStore(), seed: 9 }), s3 = C3.state;
+  s3.chapter = 'ch3'; s3.day = 20; s3.done.prologue = 1;
+  const done3 = progWith(STAGE.ch3.lessons), g20 = weatherFor(9, 20, { force: 'good' });
+  assert.deepEqual(C3.schedule(done3, { weather: g20 }).map(x => [x.kind, x.id]), [['exam', 'nav']]);
+  C3.exam('nav', 40);
+  assert.equal(C3.examReady('nav'), false);
+  assert.deepEqual(C3.schedule(done3, { weather: g20 }), [], 'failed today: nothing more is due, and the check does not jump the test');
+  s3.day = 21;
+  assert.deepEqual(C3.schedule(done3, { weather: weatherFor(9, 21, { force: 'good' }) }).map(x => [x.kind, x.id]), [['exam', 'nav']], 'tomorrow it is offered again');
+  // with lessons left, the test rides along from halfway — a fail today takes it off the plan too
+  s3.day = 20;
+  const half = progWith(STAGE.ch3.lessons.slice(0, 3));
+  assert.deepEqual(C3.schedule(half, { weather: g20 }).map(x => [x.kind, x.id]), [['flight', 'n1']], 'a test failed today no longer rides along');
+});
+
+test('career ground records: a device lesson\'s tries count its fails too (noteGround)', () => {
+  const C = createCareer({ store: memStore(), seed: 41 });
+  // a first try at a device lesson, failed: the try is in the record, the lesson is not passed, and the
+  // career's first-try record takes the fail (as main.js's groundFail does with the record)
+  let r = noteGround(undefined, false);
+  assert.equal(r.first, true); assert.deepEqual(r.rec, { tries: 1, best: '', pass: false, levels: [] });
+  if (r.first) C.firstTry(false);
+  assert.deepEqual(C.state.firstTry, { pass: 0, total: 1 });
+  // the second try passes at 95: no longer a first try, the grade kept
+  r = noteGround(r.rec, true, 95);
+  assert.equal(r.first, false); assert.deepEqual(r.rec, { tries: 2, best: 'A', pass: true, levels: [] });
+  assert.deepEqual(C.state.firstTry, { pass: 0, total: 1 }, 'a pass on the second try is not a first-try pass');
+  // a first-try pass elsewhere counts the other way, and a later, better pass lifts the best grade
+  r = noteGround(undefined, true, 80);
+  assert.equal(r.first, true); assert.equal(r.rec.best, 'B');
+  if (r.first) C.firstTry(true);
+  assert.deepEqual(C.state.firstTry, { pass: 1, total: 2 });
+  r = noteGround(r.rec, true, 100);
+  assert.equal(r.rec.best, 'S'); assert.equal(r.rec.tries, 2);
+});
+
+test('career miss: the debrief\'s main missed item is kept overnight, asked about once, and old saves load without one', () => {
+  const st = memStore(), C = createCareer({ store: st, seed: 9 });
+  assert.equal(C.state.miss, null, 'a new career has none');
+  C.noteMiss('lesson:a3', '「場周経路」の高度');
+  assert.deepEqual(C.state.miss, { day: C.state.day, key: 'lesson:a3', label: '「場周経路」の高度' });
+  assert.deepEqual(createCareer({ store: st, seed: 9 }).state.miss, C.state.miss, 'it is in the save');
+  // the morning's question: the item itself among two others, the same for the same record
+  const a = missAsk(C.state);
+  assert.deepEqual(a, missAsk(C.state), 'deterministic');
+  assert.equal(a.options.filter(x => x === a.label).length, 1, 'the item appears once');
+  assert.equal(a.options[a.right], a.label, 'the right choice is the item');
+  assert.ok(a.options.every(x => x === a.label || MISS_LABELS.includes(x)), 'the others are the generic points');
+  C.clearMiss();
+  assert.equal(C.state.miss, null); assert.equal(missAsk(C.state), null);
+  assert.equal(createCareer({ store: st, seed: 9 }).state.miss, null, 'cleared in the save too');
+  // a bad record is refused, and a save carrying one loads without it; a save without the field loads as none
+  C.noteMiss('Bad Key', 'x'); assert.equal(C.state.miss, null, 'a bad key is refused');
+  C.noteMiss('walk', 'x'.repeat(81)); assert.equal(C.state.miss, null, 'an over-long label is refused');
+  assert.equal(cleanCareer({ v: 2, seed: 1, miss: { day: 3, key: 'walk', label: '外部点検の外し忘れ' } }).miss.label, '外部点検の外し忘れ');
+  assert.equal(cleanCareer({ v: 2, seed: 1, miss: { day: 3, key: 'BAD KEY', label: 'x' } }).miss, null);
+  assert.equal(cleanCareer({ v: 2, seed: 1, miss: { day: 3, key: 'walk', label: 42 } }).miss, null);
+  assert.equal(cleanCareer({ v: 1, seed: 1, day: 5 }).miss, null, 'a v1 save has none');
 });

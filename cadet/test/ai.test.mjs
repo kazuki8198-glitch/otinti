@@ -235,6 +235,23 @@ test('the talk when no answer can come: no key at once, an error after the quest
   await pf; assert.equal(f.s.view().lang, 'en');
 });
 
+test('the talk: the question field offers the microphone in the language it is told — and dictation is not in the talk at all', async () => {
+  const tutor = createTutor({ book: BOOK, getKey: () => KEY, fetchImpl: fakeClaude({}) });
+  // (told a language: the field carries it, on the first question and on the next one alike)
+  const ja = talk({ tutor, micLang: () => 'ja-JP' });
+  ja.s.start(); assert.equal(ja.s.view().input.mic, 'ja-JP');
+  await ja.s.submit('失速はなぜ起きるのですか');
+  ja.s.choose(0); assert.equal(ja.s.view().input.mic, 'ja-JP', 'again, on the next question');
+  ja.s.choose(0); assert.deepEqual(ja.ends, ['done'], 'thanks, on the field itself');
+  const en = talk({ tutor, micLang: () => 'en-US', english: () => true });
+  en.s.start(); assert.equal(en.s.view().input.mic, 'en-US', 'the game in English: English recognition');
+  en.s.stop();
+  // (told nothing — the microphone off in the settings: no offer on the field)
+  const off = talk({ tutor });
+  off.s.start(); assert.equal(off.s.view().input.mic, null);
+  off.s.stop();
+});
+
 test('the scripted talk offers the free question only while the setting is on; it comes back to thanks', () => {
   const data = instructorDialogs(FL, { lessonId: 'a2' });
   const ctx = { ai: { on: false } }, st = createDialogState();

@@ -9,7 +9,9 @@
 // was a drag that looked round. `choosing` tells the game the choices are up (it lets the mouse go for them).
 // (M8) A line may ask for a question (view.input: a text field above the subtitle, Enter or 聞く sends it to onAsk) and
 // a line may grow while it shows (view.stream: the same node with more text — the AI instructor's answer as it comes;
-// view.pending: more is coming, so no choices and no "next" yet).
+// view.pending: more is coming, so no choices and no "next" yet). The field may carry a microphone (view.input.mic:
+// the language to listen in): its button, or M while the field is up and the typing is not in it, asks onMicRequest;
+// what is heard comes back through setAskText and only fills the field — sending is still the player's own Enter.
 // Works with a mouse, a keyboard or a touch screen, at phone width. The CSS is injected once and scoped under #dlg, so
 // it cannot leak into the game's HUD.
 const CSS = `
@@ -62,6 +64,11 @@ const CSS = `
 #dlg .dlg-ask input:focus-visible { outline: 2px solid #ffd479; outline-offset: 2px; }
 #dlg .dlg-ask button { flex: none; font: inherit; font-weight: 800; padding: 0 18px; border-radius: 12px; border: 0; cursor: pointer;
   background: var(--accent, #5cc8ff); color: var(--accent-ink, #04121c); }
+#dlg .dlg-ask .dlg-mic { font-size: calc(13px * var(--sub-k, 1)); font-weight: 700; padding: 0 12px;
+  border: 1px solid var(--glass-line, rgba(255,255,255,.25)); background: rgba(255,255,255,.07); color: var(--ink, #eef3f8); }
+#dlg .dlg-ask .dlg-mic:hover { background: rgba(255,255,255,.15); }
+#dlg .dlg-ask .dlg-mic:focus-visible { outline: 2px solid #ffd479; outline-offset: 2px; }
+#dlg .dlg-ask .dlg-mic.on { border-color: #ff7a6b; color: #ffb3ab; animation: dlg-pulse 1.2s ease-in-out infinite; }
 #dlg .dlg-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden;
   clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 
@@ -186,7 +193,7 @@ function chapterLabel(ch) {
 const sameView = (a, b) => !!a && !!b && a.dialog === b.dialog && a.node === b.node && a.text === b.text && a.name === b.name && a.color === b.color
   && a.choices.length === b.choices.length && a.choices.every((c, k) => c.text === b.choices[k].text && c.i === b.choices[k].i);
 
-export function createDialogUI({ root = document.body, onNext = () => {}, onChoose = () => {}, onKeyPick = () => {}, onBookClose = () => {}, onAsk = () => {}, settings = null } = {}) {
+export function createDialogUI({ root = document.body, onNext = () => {}, onChoose = () => {}, onKeyPick = () => {}, onBookClose = () => {}, onAsk = () => {}, onMicRequest = () => {}, settings = null } = {}) {
   const doc = root.ownerDocument || document;
   const win = doc.defaultView || globalThis;
   if (!doc.getElementById('dlg-css')) { const st = doc.createElement('style'); st.id = 'dlg-css'; st.textContent = CSS; doc.head.appendChild(st); }
@@ -221,8 +228,9 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   box.appendChild(chip); box.appendChild(line); box.appendChild(jaLine); box.appendChild(keysRow); box.appendChild(cue);
   const askRow = make('div', 'dlg-ask');
   const askInput = make('input', '', { type: 'text', 'aria-label': '教官への質問', autocomplete: 'off', spellcheck: 'false', enterkeyhint: 'send' });
+  const askMic = make('button', 'dlg-mic', { type: 'button', 'aria-label': '声で質問を入れる', title: '声で入れる（M）' }); askMic.textContent = '声で入れる'; askMic.hidden = true;
   const askBtn = make('button', '', { type: 'button' }); askBtn.textContent = '聞く';
-  askRow.appendChild(askInput); askRow.appendChild(askBtn); askRow.hidden = true;
+  askRow.appendChild(askInput); askRow.appendChild(askMic); askRow.appendChild(askBtn); askRow.hidden = true;
   wrap.appendChild(list); wrap.appendChild(askRow); wrap.appendChild(box);
   const book = make('div', 'dlg-book', { role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'dlg-book-title' });
   const paper = make('article', 'dlg-paper');
@@ -395,7 +403,7 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
         ? view.choices.map((c, k) => ({ i: Number.isInteger(c && c.i) ? c.i : k, text: String((c && c.text) ?? '') })) : [],
       ends: !!view.ends, stream: !!view.stream, pending: !!view.pending, cue: view.cue ? String(view.cue) : '',
       keys: Array.isArray(view.keys) ? view.keys.filter(k => k && /^[A-Z]$/.test(k.key)).map(k => ({ key: k.key, text: String(k.text ?? '') })) : [],
-      input: view.input && typeof view.input === 'object' ? { max: Number(view.input.max) || 300, placeholder: String(view.input.placeholder || '') } : null };
+      input: view.input && typeof view.input === 'object' ? { max: Number(view.input.max) || 300, placeholder: String(view.input.placeholder || ''), mic: typeof view.input.mic === 'string' && view.input.mic ? view.input.mic : null } : null };
     // (M8) more of a line that is still coming in: added to what is already shown
     if (open && cur && v.stream && cur.dialog === v.dialog && cur.node === v.node && v.text.startsWith(cur.text)) { extend(v); return; }
     // the same line again with nothing done in between (a second call for one change): keep the reveal where it is
@@ -447,9 +455,26 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
   }
   function showAsk(inp) {
     askRow.hidden = !inp;
-    if (!inp) { if (askRow.contains(doc.activeElement)) try { doc.activeElement.blur(); } catch (e) { /* nothing focused */ } return; }
+    askMic.hidden = !(inp && inp.mic);
+    if (!inp) { setAskMic(false); if (askRow.contains(doc.activeElement)) try { doc.activeElement.blur(); } catch (e) { /* nothing focused */ } return; }
     askInput.maxLength = inp.max; askInput.placeholder = inp.placeholder; askInput.value = '';
     setTimeout(() => { if (!askRow.hidden && !bookOpen) try { askInput.focus({ preventScroll: true }); } catch (e) { /* focus is a nicety */ } }, 30);
+  }
+  // (M8) the field's microphone: lit while it listens (the game starts and stops it — ui/mic.js by way of onMicRequest)
+  function setAskMic(on) {
+    askMic.classList.toggle('on', !!on);
+    askMic.textContent = on ? '聞き取り中…' : '声で入れる';
+  }
+  // what the microphone heard, into the field (after what is already there, in the field's own words): the player
+  // reads it, mends it and sends it — this never sends
+  function setAskText(text) {
+    if (askRow.hidden || !cur || !cur.input) return false;
+    const t = String(text || '').trim(); if (!t) return false;
+    const had = askInput.value;
+    const sep = had && !/\s$/.test(had) ? ((cur.input.mic || '').startsWith('en') ? ' ' : '') : '';
+    askInput.value = (had + sep + t).slice(0, askInput.maxLength || 300);
+    try { askInput.focus({ preventScroll: true }); askInput.setSelectionRange(askInput.value.length, askInput.value.length); } catch (e) { /* focus is a nicety */ }
+    return true;
   }
   function sendAsk() {
     const t = askInput.value.trim();
@@ -464,13 +489,14 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); try { askInput.blur(); } catch (err) { /* gone */ } }
   });
   askBtn.addEventListener('click', (e) => { e.stopPropagation(); sendAsk(); });
+  askMic.addEventListener('click', (e) => { e.stopPropagation(); if (!askRow.hidden && cur && cur.input && cur.input.mic) onMicRequest(); });
   function hide() {
     unschedule(); hush();
     typing = false; armed = false;
     if (!open) { cur = null; return; }
     open = false; cur = null; gen++;
     if (wrap.contains(doc.activeElement)) try { doc.activeElement.blur(); } catch (e) { /* nothing focused */ }
-    wrap.hidden = true; list.hidden = true; list.textContent = ''; buttons = []; sel = -1; askRow.hidden = true; askInput.value = '';
+    wrap.hidden = true; list.hidden = true; list.textContent = ''; buttons = []; sel = -1; askRow.hidden = true; askInput.value = ''; askMic.hidden = true; setAskMic(false);
     chars = []; at = []; shown = 0; paint(); cue.textContent = ''; sr.textContent = ''; jaLine.textContent = ''; jaLine.hidden = true;
   }
 
@@ -611,6 +637,8 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     const eKey = code === 'KeyE';
     const arrow = code === 'ArrowUp' || code === 'ArrowDown' ? (code === 'ArrowUp' ? -1 : 1) : 0;
     const d = digitOf(e);
+    // (M8) M while the question field is up (the typing is not in it — that case returned above): dictate the question
+    if (code === 'KeyM' && cur && cur.input && cur.input.mic && !typing) { e.preventDefault(); e.stopPropagation(); held.add(e.code); if (!e.repeat) onMicRequest(); return; }
     // (a line's own letter key: its other way on — only once the line is all shown and it has no choices)
     const kk = /^Key([A-Z])$/.exec(code);
     if (kk && !eKey && keyShown(kk[1])) { e.preventDefault(); e.stopPropagation(); held.add(e.code); if (!e.repeat) pressKey(kk[1]); return; }
@@ -688,6 +716,10 @@ export function createDialogUI({ root = document.body, onNext = () => {}, onChoo
     // (M8) the question field: what is typed in it, and sending it (tests; the field's own Enter does the same)
     get asking() { return !askRow.hidden; },
     ask(text) { askInput.value = String(text ?? ''); sendAsk(); },
+    // (M8) its microphone: what was heard goes in (setAskText — never sent from here), and whether it is listening
+    setAskText, setAskMic,
+    get askText() { return askInput.value; },
+    get micListening() { return askMic.classList.contains('on'); },
     get el() { return el; },
     destroy() {
       if (destroyed) return;

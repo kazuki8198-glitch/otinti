@@ -93,20 +93,41 @@
   }
 
   // ---------------------------------------------------------------- checklists (teaching versions; the POH / the school's checklist governs)
+  // (the selector items accept either tank within a quarter gallon — less than the gauge can show; a real imbalance still refuses)
+  // the lever / selector a checklist reads is the one the physics answers to: a shared control (s.mix / s.fuelSel)
+  // that has just moved commands every engine at the next step; until then it is the live value, else the engine's own
+  const mixNow = (s, e) => (s.mix != null && s._mixCmd !== s.mix) ? s.mix : (e.mix ?? 1);
+  const selNow = (s, e) => (s.fuelSel != null && s._selCmd !== s.fuelSel) ? s.fuelSel : (e.sel || 'L');
+  const fullerSide = s => { const sel = selNow(s, s.eng[0]); return sel !== 'OFF' && (s.fuel[sel === 'R' ? 1 : 0] || 0) >= (s.fuel[sel === 'R' ? 0 : 1] || 0) - 0.25; };
+  // the weight-and-balance line of the before-takeoff checklists: the load the flight started with (the
+  // physics' applyLoading, kept on the state as s.wb), its total and its centre of gravity — and, when it is
+  // outside the limits, what is wrong. The item refuses until the load is inside: the fix is on the ground
+  // (end the lesson and choose the load again in the briefing, which shows the same numbers before the start)
+  const wbText = s => {
+    const w = s.wb; if (!w) return '標準の搭載';
+    const head = `総重量 ${Math.round(w.lb).toLocaleString('en-US')} lb・重心 ${w.cgIn.toFixed(1)} in`;
+    if (w.ok) return `${head}（範囲内）`;
+    const why = w.problems.map(k => k === 'over' ? `最大離陸重量 ${w.mtowLb.toLocaleString('en-US')} lb を超過` : k === 'nose' ? `重心が前限界 ${w.fwdIn} in より前` : `重心が後限界 ${w.aftIn} in より後`).join('・');
+    return `${head}：${why}。搭載を直してから出発（課目を終了し、ブリーフィングで搭載を選び直す）`;
+  };
+  const wbOk = s => !s.wb || s.wb.ok;
   const CHECKLISTS = {
     before_takeoff: { title: '離陸前点検（BEFORE TAKEOFF・教材の簡略版）', items: [
       ['ドア・シートベルト', '閉・着用'], ['操縦舵面', '自由・正しい向きに動く（W / S / A / D / Q / E で確認）'], ['計器（G1000 型）', 'PFD・MFD 異常なし、高度計規正（BARO）'],
-      ['燃料セレクター', '燃料の多い側（教材では未実装）'], ['フラップ', 'UP（通常離陸）', s => s.flapIdx === 0], ['トリム', '離陸位置（Shift+T でリセット）', s => Math.abs(s.trim) < 0.05],
+      ['重量と重心', wbText, wbOk],
+      ['燃料セレクター', '燃料の多い側', s => fullerSide(s)], ['フラップ', 'UP（通常離陸）', s => s.flapIdx === 0], ['トリム', '離陸位置（Shift+T でリセット）', s => Math.abs(s.trim) < 0.05],
       ['スロットル', 'アイドル', s => s.thr < 0.1], ['離陸の計画', s => `Vr ${s.A.v.rotate}・Vy ${s.A.v.y}。浮揚前の異常は止まる、浮揚後のエンジン故障は正面へ`] ] },
     before_landing: { title: '着陸前点検（BEFORE LANDING・教材の簡略版）', items: [
-      ['燃料セレクター', '燃料の多い側（教材では未実装）'], ['ミクスチャー', 'RICH（教材では未実装）'], ['フラップ', '進入に合わせて下げる（V キー）', s => s.flapIdx >= 1],
+      ['燃料セレクター', '燃料の多い側', s => fullerSide(s)], ['ミクスチャー', 'RICH（降下前に戻す）', s => s.eng.every(e => mixNow(s, e) >= 0.95)], ['フラップ', '進入に合わせて下げる（V キー）', s => s.flapIdx >= 1],
       ['進入速度', s => `${s.A.v.appr} kt（短距離 ${s.A.v.apprShort || s.A.v.appr - 5} kt）`], ['着陸許可', '受領・復唱'] ] },
+    cruise: { title: '巡航点検（CRUISE・教材の簡略版）', items: [
+      ['ミクスチャー', s => `リーン：密度高度 ${Math.round(s.out.densAlt)} ft。操縦席のミクスチャーをホイールで少しずつ引き、MFD の EGT が上がってピークに近づいたら少し戻す（絞りすぎは粗さと出力低下）`, s => mixNow(s, s.eng[0]) <= 0.97] ] },
     ms_before_takeoff: { title: '離陸前点検・双発（BEFORE TAKEOFF・教材の簡略版）', items: [
-      ['ドア・シートベルト', '閉・着用'], ['操縦舵面', '自由・正しい向きに動く'], ['フラップ', 'UP', s => s.flapIdx === 0], ['トリム', '離陸位置（Shift+T）', s => Math.abs(s.trim) < 0.05],
-      ['燃料・ミクスチャー・プロペラ', '両方 ON・前（教材では自動）'], ['スロットル', 'アイドル', s => s.thr < 0.1],
+      ['ドア・シートベルト', '閉・着用'], ['操縦舵面', '自由・正しい向きに動く'], ['重量と重心', wbText, wbOk], ['フラップ', 'UP', s => s.flapIdx === 0], ['トリム', '離陸位置（Shift+T）', s => Math.abs(s.trim) < 0.05],
+      ['燃料・ミクスチャー・プロペラ', 'タンクに・リッチ・前（プロペラは教材では自動）', s => s.eng.every(e => selNow(s, e) !== 'OFF' && mixNow(s, e) >= 0.95)], ['スロットル', 'アイドル', s => s.thr < 0.1],
       ['離陸ブリーフィング', s => `Vr ${s.A.v.rotate}・Vyse ${s.A.v.yse}（青線）・Vmc ${s.A.v.mc}（赤線）。浮揚前の故障は止まる。浮揚後は Vyse・脚 UP・Identify → Verify → Feather`] ] },
     ms_before_landing: { title: '着陸前点検・双発（GUMPS）', items: [
-      ['G：Gas（燃料）', '両方 ON（教材では自動）'], ['U：Undercarriage（脚）', 'DOWN・緑 3 つ（G キー）', s => s.gearDown && s.gearPos > 0.98], ['M：Mixture', 'RICH（教材では自動）'],
+      ['G：Gas（燃料）', '両方 ON', s => s.eng.every(e => selNow(s, e) !== 'OFF')], ['U：Undercarriage（脚）', 'DOWN・緑 3 つ（G キー）', s => s.gearDown && s.gearPos > 0.98], ['M：Mixture', 'RICH', s => s.eng.every(e => mixNow(s, e) >= 0.95)],
       ['P：Props', '前（教材では自動）'], ['S：Switches / Seatbelts', '着陸灯 ON・ベルト着用'] ] },
     ms_engine_failure: { title: '片発停止の記憶操作（教材の簡略版・機体の POH が優先）', items: [
       ['ピッチ', s => `機首を下げて Vyse ${s.A.v.yse} kt（青線）を保つ`], ['出力', 'ミクスチャー・プロペラ・スロットル 前（全開）'], ['外形', 'フラップ UP・脚 UP（G）', s => s.flapIdx === 0 && !s.gearDown],
@@ -258,12 +279,21 @@
     const R = ph.LAB_RWY;
     if (su.wind) { const from = w360(R.trueHdg + su.wind.rel); s.wind = { fromDeg: from, kt: su.wind.kt, gust: su.wind.gust ?? 1 }; }
     else s.wind = { fromDeg: R.trueHdg + 10, kt: su.calm ? 0 : 5, gust: 0.5 };
+    // (a day's own wind field, given from outside (CADET's solo cross-country): the surface wind (true) and, at
+    // its top, the day's winds aloft — in place of the lesson's own wind. The tower's wind below is the surface one)
+    if (opt.wind) {
+      s.wind = { fromDeg: w360(opt.wind.fromDeg), kt: opt.wind.kt, gust: opt.wind.gust ?? s.wind.gust ?? 0.5 };
+      if (opt.wind.topKt != null) { s.wind.topFrom = w360(opt.wind.topFrom); s.wind.topKt = opt.wind.topKt; s.wind.topFt = opt.wind.topFt || 3000; }
+    }
     s.qnh = su.qnh || 29.92;
     const av = AV().createAvionics(), lv = level(levelId), call = callOf(s.A);
     const L = { id, def, level: lv, s, av, A: s.A, V: s.A.v, step: -1, results: [], t: 0, call: call.spoken, callShort: call.short, fail: {}, hood: !!su.hood, prevHdg: null, rateF: 0,
       hist: { alt: [], ias: [] }, nextSample: 0, done: false, passed: false, grade: '', reason: '', events: [], evSeen: 0, landings: 0 };
     const windMag = Math.round(AV().trueToMag(s.wind.fromDeg, ph.MAGVAR_W) / 10) * 10 || 360;
     L.windStr = s.wind.kt < 3 ? 'calm' : `${String(windMag).padStart(3, '0')} at ${Math.round(s.wind.kt)}`;
+    // the day's load (weight and balance): the standard training load unless the start says otherwise
+    // (opt.loading) — before the placing, so the trim it computes is the loaded aircraft's
+    ph.applyLoading(s, opt.loading);
     place(L, su);
     if (su.onStart) su.onStart(L);
     L.last = ctx(L);
@@ -455,8 +485,11 @@
     s.opts.sens = opt.sens || 'low'; s.opts.autoRud = !!opt.autoRud; s.opts.assist = !!opt.assist;
     const W = opt.wind || { rel: 10, kt: 5, gust: 0.5 };
     s.wind = { fromDeg: w360(ph.LAB_RWY.trueHdg + W.rel), kt: W.kt, gust: W.gust ?? 0.5 };
+    // (the day's winds aloft on top of the surface wind, as in startLesson's given field)
+    if (W.topRel != null && W.topKt != null) { s.wind.topFrom = w360(ph.LAB_RWY.trueHdg + W.topRel); s.wind.topKt = W.topKt; s.wind.topFt = W.topFt || 3000; }
     const L = { id: 'free', free: true, def: { title: '自由飛行', steps: [] }, level: LEVELS[0], s, av: AV().createAvionics(), A: s.A, V: s.A.v, step: 0, results: [], t: 0, fail: {}, hood: false,
       call: callOf(s.A).spoken, callShort: callOf(s.A).short, hist: { alt: [], ias: [] }, nextSample: 0, done: false, events: [], evSeen: 0 };
+    ph.applyLoading(s, opt.loading);   // (the load, as in a lesson: the standard training load unless said)
     if (st.id === 'sfb') { ph.placeInAir(s, -9000, -2000, 1500, AV().magToTrue(360, ph.MAGVAR_W), 100, 0, 0, null); L.alt0 = 1500; L.hdg0 = 360; L.av.baro = s.qnh; }
     else place(L, st.su);
     L.last = ctx(L);

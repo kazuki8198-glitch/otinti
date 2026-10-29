@@ -1,9 +1,13 @@
 // CADET — content/dialog/epilogue.js : the epilogue (M8): a few months after the graduation, the right seat of SHOYO
 // AIRWAYS' 737 at a gate at Haneda, and the training captain in the left seat — 柏木 機長 (fictional), who will take
 // the cadet through the type rating. His first words when the cadet sits down ('meet'), then, when the cadet turns
-// to him again, a word on what is out there and the goodbye ('again'). Hooks the game acts out: look, nod, point
-// ('outside'), done ('epilogue': the epilogue is over, back to the academy). Every line has its English (the crew's
-// English mode: en). ('again' before 'meet' was heard to its end — the talk closed early — begins with 'meet'.)
+// to him again, a word on what is out there and the goodbye ('again') — or the departure ('again' → 'go' → the game
+// acts out the pushback, the taxi, the take-off and the first climb: 'depart', whose lines the game starts at their
+// moments on the way out, epilogue/departure.js; the two that belong in the air wait for the climb — their `if`,
+// on the game's word of where the aircraft is — and are a holding line until then). Hooks the game acts out: look,
+// nod, point ('outside'), done ('epilogue': the epilogue is over, back to the academy; 'depart': the talk is over,
+// the departure begins). Every line has its English (the crew's English mode: en). ('again' before 'meet' was heard
+// to its end — the talk closed early — begins with 'meet'.)
 export const CAPTAIN = { id: 'captain', name_ja: '柏木 機長', color: '#ffd27a' };
 const SPEAKERS = { captain: { name_ja: CAPTAIN.name_ja, color: CAPTAIN.color }, player: { name_ja: 'あなた', color: '#f2b632' } };
 export const EPILOGUE_FLAGS = ['epilogue_met'];
@@ -28,10 +32,25 @@ export function epilogueDialogs(rank = '') {
   const A = {
     a1: say('見えるかい。正面がターミナル、右の奥が滑走路と海。天気のいい朝は、君の側の窓の遠くに富士山も見える。', 'Can you see? The terminal ahead, the runway and the sea far to the right. On a clear morning you can see Mt Fuji far off through your side window.',
       { if: { flag: 'epilogue_met' }, else: 'meet:m1', hook: { name: 'point', arg: 'outside' }, choices: [
-        { text: 'もう少し見ています', next: 'stay' }, { text: 'そろそろ行きます', next: 'bye' },
+        { text: 'もう少し見ています', next: 'stay' }, { text: '出発を見る', next: 'go' }, { text: 'そろそろ行きます', next: 'bye' },
       ] }),
     stay: say('ゆっくりでいい。急がなくて大丈夫だ。', 'Take your time. There\'s no hurry.', { end: true }),
+    go: say('では、出発しようか。ちょうど出発の時間だ。……右席からの出発を、見ていくといい。', 'Then let\'s be off. It is just departure time. ...Watch a departure from the right seat.', { effects: [{ hook: 'done', arg: 'depart' }], end: true }),
     bye: say('次は、シミュレーターで会おう。……ようこそ、翔洋航空へ。', 'See you in the simulator next. ...Welcome to SHOYO AIRWAYS.', { hook: { name: 'nod' }, effects: [{ hook: 'done', arg: 'epilogue' }], end: true }),
   };
-  return { speakers: SPEAKERS, flags: [...EPILOGUE_FLAGS], hooks: [...EPILOGUE_HOOKS], dialogs: { meet: { start: 'm1', nodes: M }, again: { start: 'a1', nodes: A } } };
+  // the departure: his words on the way out (the game starts each at its moment; d4 and d5 belong in the air, so
+  // until the aircraft is climbing they are a holding line and the talk closes — the game offers them again aloft)
+  const farewell = rank === '優等' ? ['優等でアカデミーを出た君だ。……思い出すかい。初めて一人で飛んだ、あの朝を。あの日の場周経路の先に、今日の上昇があったんだ。ようこそ、本当の空へ。', 'You left the academy with honours. ...Do you remember the morning you first flew alone? Beyond that day\'s circuit lay today\'s climb. Welcome to the real sky.']
+    : rank === '優秀' ? ['優秀な成績でアカデミーを出た君だ。……思い出すかい。初めて一人で飛んだ、あの朝を。あの日の場周経路の先に、今日の上昇があったんだ。ようこそ、本当の空へ。', 'You left the academy with a fine record. ...Do you remember the morning you first flew alone? Beyond that day\'s circuit lay today\'s climb. Welcome to the real sky.']
+    : ['思い出すかい。初めて一人で飛んだ、あの朝を。あの日の場周経路の先に、今日の上昇があったんだ。……ようこそ、本当の空へ。', 'Do you remember the morning you first flew alone? Beyond that day\'s circuit lay today\'s climb. ...Welcome to the real sky.'];
+  const D = {
+    d1: say('プッシュバックだ。牽引車に押されて、機体が動き出す。地上の係員が、翼の先を見張ってくれている。', 'Pushback. The tug pushes, and the aircraft begins to move. The ground crew is watching our wingtips.', { next: 'd2' }),
+    d2: say('タキシーに入る。中心の線から、外れないように。……アカデミーで君がしたことと、同じだ。止まるべきところでは、止まる。', 'We taxi now. Stay on the centreline. ...It is the same as what you did at the academy. Stop where you must stop.', { next: 'd3' }),
+    d3: say('滑走路に入る許可が出た。……ここからは早いよ。心の準備を。', 'We are cleared to line up. ...From here it goes quickly. Ready yourself.', { next: 'd4' }),
+    d4: say('浮いた。……車輪の上がる音が、聞こえたね。ほら、君の窓の外だ。東京湾が広がっている。', 'We are airborne. ...You heard the wheels come up. Look — out of your window. Tokyo Bay is opening out below.', { if: { ctx: 'epi.phase', is: 'climb' }, else: 'hold', next: 'd5' }),
+    d5: say(farewell[0], farewell[1], { if: { ctx: 'epi.phase', is: 'climb' }, else: 'hold2', hook: { name: 'nod' }, effects: [{ hook: 'done', arg: 'epilogue' }], end: true }),
+    hold: say('少し待ってくれ。……交信が入っている。', 'One moment. ...There is a call coming in.', { end: true }),
+    hold2: say('もう少しだ。……上昇に入ったら、また話そう。', 'Not long now. ...We will talk again once we are climbing.', { end: true }),
+  };
+  return { speakers: SPEAKERS, flags: [...EPILOGUE_FLAGS], hooks: [...EPILOGUE_HOOKS], dialogs: { meet: { start: 'm1', nodes: M }, again: { start: 'a1', nodes: A }, depart: { start: 'd1', nodes: D } } };
 }

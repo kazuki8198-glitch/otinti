@@ -1174,8 +1174,10 @@ export function navlogNumbers(FL, o = NAVLOG) {
   const gs = o.tas * Math.cos(wca * DEG) - o.windKt * Math.cos(rel), ete = dist / gs * 60, fuel = (ete + o.reserveMin) / 60 * o.gph;
   return { tc, dist, mc, wca, mh, gs, ete, fuel, from: a, to: b };
 }
-export function navlogDialogs(FL, { seed = 1 } = {}) {
-  const r = rng(seed * 41 + 7), x = navlogNumbers(FL), o = NAVLOG, d3 = (v) => String(Math.round((v + 360) % 360) || 360).padStart(3, '0');
+// (the given wind: the day's winds aloft (the career's aloft field, magnetic) when the game asks — the log is
+// planned from the wind the cross-country will actually fly in. Without one, the textbook example of NAVLOG)
+export function navlogDialogs(FL, { seed = 1, wind = null } = {}) {
+  const r = rng(seed * 41 + 7), o = wind ? { ...NAVLOG, windFrom: wind.from, windKt: wind.kt } : NAVLOG, x = navlogNumbers(FL, o), d3 = (v) => String(Math.round((v + 360) % 360) || 360).padStart(3, '0');
   const opts = (right, wrong) => { const all = shuffled([right, ...wrong.filter(w => w !== right)].slice(0, 4), r); return { opts: all, ok: all.indexOf(right) }; };
   const Q = [];
   const mcO = opts(`${d3(x.mc)}°`, [`${d3(x.tc)}°`, `${d3(x.tc - o.varW)}°`, `${d3(x.mc + 180)}°`]);
@@ -1196,5 +1198,5 @@ export function navlogDialogs(FL, { seed = 1 } = {}) {
   N['hello:2'] = { speaker: 'instructor', text: '途中で目的地が変わることもあります。そのときに慌てないように、最初の計算をきちんと。', hook: { name: 'board', arg: 'navlog' }, next: 'q0' };
   quizNodes(N, Q, { speaker: 'instructor' });
   resultNodes(N, 'instructor', '航法ログは、これで大丈夫。午後、外部点検から始めてください。私は乗りません。無線は、ここで聞いています。', 'もう一度、計算を見直しましょう。午後までに直せば、今日飛べます。');
-  return { speakers: SPEAKERS, flags: Q.map((_, k) => `qz_${k}`), hooks: [...SCHOOL_HOOKS], dialogs: { navlog: { start: 'hello', nodes: N } }, questions: Q, numbers: x };
+  return { speakers: SPEAKERS, flags: Q.map((_, k) => `qz_${k}`), hooks: [...SCHOOL_HOOKS], dialogs: { navlog: { start: 'hello', nodes: N } }, questions: Q, numbers: x, given: o };
 }

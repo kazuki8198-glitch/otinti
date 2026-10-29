@@ -6,8 +6,9 @@
 //  - The control strip (bottom left): throttle and rpm, the pitch hold, trim, flaps, brakes, the rudder, warnings.
 //  - The instructor's subtitle (top centre): never takes a key or a click.
 //  - The checklist and ATC dialogs (top right), drawn from status().check / .atc; a click goes to a callback.
-//  - The debrief card (FLIGHT LAB pages.js showDebrief / advice), the key help (H), the big 2D G1000 (Tab: two
-//    canvases the game draws into with FL.avionics) and the hood of the instrument lessons.
+//  - The debrief card (FLIGHT LAB pages.js showDebrief / advice), the key help (H), the big 2D G1000 (Tab: the
+//    cockpit glass's own canvases copied across — blitPanel2D; FL.avionics draws them only from behind the
+//    aircraft, where the glass itself is not drawn) and the hood of the instrument lessons.
 // The left and right columns keep clear of the middle of the view and of the panel's G1000 below it. Only the
 // dialogs, the debrief, the help and the panel's fold button take the mouse; everything else lets clicks through to
 // the cockpit. update() is cheap: it writes only the nodes whose text, class or size changed. The CSS is injected once
@@ -461,9 +462,12 @@ const FLY_MAIN = 8;
 const CABIN_KEYS = [
   ['マウス', '見回す', '画面をクリックで開始。マウスが自由なときは右ドラッグ'],
   ['右ボタン（長押し）', 'ズーム', '計器や外の目標を拡大して見る'],
+  ['ホイール / ＋ −', 'ズーム（連続）', '操作の上にないとき、なめらかに拡大・縮小。操作の上ではそのつまみを回す'],
   ['クリック / ホイール', '操縦席の操作', '中央の点を合わせる。ホイールで両方向、クリックで 1 段（レバーは前・下げ側）'],
+  ['I', '計器に寄る', 'PFD → MFD → 予備計器・オーディオ → 元の視点。寄った先でも、その画面のつまみとキーを操作できる'],
+  ['画面をクリック', 'その計器に寄る', 'PFD か MFD の画面をクリック。寄っている画面をもう一度クリックで戻る'],
   ['C', '視点', '操縦席 ⇄ 機体の後ろから'],
-  ['Tab', '計器を大きく', 'PFD と MFD を画面の下に大きく表示'],
+  ['Tab', '計器を大きく', 'PFD と MFD を画面の下に大きく表示（操縦席の画面そのもの）'],
   ['H', 'このキー一覧', '開く / 閉じる'],
   ['Esc', '一時停止メニュー', '設定・操作・降りる'],
 ];
@@ -533,7 +537,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   const fIas = num('速度', 'IAS', 'kt'), fAlt = num('高度', 'ALT', 'ft'), fHdg = num('針路', 'HDG', '°'), fVs = num('昇降率', 'VS', 'fpm');
   const fWhere = make('div', 'fh-where');
   const fKeys = make('div', 'fh-keys');
-  for (const [k, w] of [[['W', 'S'], 'ピッチ'], [['A', 'D'], 'バンク'], [['R', 'F'], '出力'], [['T'], 'トリム'], [['V'], 'フラップ'], [['B'], 'ブレーキ'], [['H'], 'キー一覧']]) {
+  for (const [k, w] of [[['W', 'S'], 'ピッチ'], [['A', 'D'], 'バンク'], [['R', 'F'], '出力'], [['T'], 'トリム'], [['V'], 'フラップ'], [['B'], 'ブレーキ'], [['I'], '計器に寄る'], [['Tab'], '計器拡大'], [['H'], 'キー一覧']]) {
     put(fKeys, put(kbds(make('span', k[0] === 'H' ? 'fh-kc help' : 'fh-kc'), k), make('span', '', null, w)));
   }
   put(free, fHead, nums, fWhere, fKeys);
@@ -934,11 +938,22 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     }
     return fitCanvas(cv, sizes[which === 'mfd' ? 'mfd' : 'pfd'], Math.min(win.devicePixelRatio || 1, 2));
   }
-  // both screens with FLIGHT LAB's own drawing (AV = FL.avionics, d = app.js panelData); false when not shown
-  function drawPanel2D(AV, d) {
+  // both screens with FLIGHT LAB's own drawing (AV = FL.avionics, d = app.js panelData); false when not shown.
+  // overlay(g, W), when given, draws over the PFD in its own coordinates (CADET's autopilot annunciation)
+  function drawPanel2D(AV, d, overlay) {
     if (!p2dOn || el.hidden || destroyed) return false;
     const a = fitPanel('pfd'); AV.drawPFD(a.g, a.W, a.H, d);
+    if (overlay) overlay(a.g, a.W);
     const b = fitPanel('mfd'); AV.drawMFD(b.g, b.W, b.H, d);
+    return true;
+  }
+  // the same screens, copied from the cockpit glass's own canvases (the 3D panel's very screens, at their native
+  // 1024 × 640): no second drawing of the instruments — what the panel below shows is what the panel in front of
+  // the pilot shows. false when not shown or a canvas is missing (the caller falls back to drawPanel2D)
+  function blitPanel2D(pfdCv, mfdCv) {
+    if (!p2dOn || el.hidden || destroyed || !pfdCv || !mfdCv) return false;
+    const a = fitPanel('pfd'); a.g.drawImage(pfdCv, 0, 0, a.W, a.H);
+    const b = fitPanel('mfd'); b.g.drawImage(mfdCv, 0, 0, b.W, b.H);
     return true;
   }
   function setHood(v) { shown(hood, !!v); }
@@ -955,7 +970,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   }
 
   return {
-    el, show, setMode, update, say, flashChecklist, showDebrief, hideDebrief, setHelp, setPanel2D, fitPanel, drawPanel2D, setHood, setCompact, setFreeTitle,
+    el, show, setMode, update, say, flashChecklist, showDebrief, hideDebrief, setHelp, setPanel2D, fitPanel, drawPanel2D, blitPanel2D, setHood, setCompact, setFreeTitle,
     onChecklistClick(fn) { onCheck = typeof fn === 'function' ? fn : null; },
     onAtcClick(fn) { onAtc = typeof fn === 'function' ? fn : null; },
     destroy,

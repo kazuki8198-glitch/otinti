@@ -65,8 +65,8 @@ export function glassMaterial({ map = null, mask = null, tint = 0x9fb6c6, emissi
 
 // clear glass for real windows: what is behind shows through, and the sky's reflection grows towards grazing angles
 // (Fresnel) — the blend keeps the full reflection and dims what is behind by the same amount. Not in the AO pass.
-export function clearGlassMaterial({ tint = 0x0b1216, env = 1.4 } = {}) {
-  const mat = new THREE.MeshPhysicalMaterial({ color: tint, roughness: 0.03, metalness: 0, transparent: true, opacity: 0.08, depthWrite: false, envMapIntensity: env, side: THREE.DoubleSide });
+export function clearGlassMaterial({ tint = 0x0b1216, env = 1.4, alpha = 0.08 } = {}) {
+  const mat = new THREE.MeshPhysicalMaterial({ color: tint, roughness: 0.03, metalness: 0, transparent: true, opacity: alpha, depthWrite: false, envMapIntensity: env, side: THREE.DoubleSide });
   mat.onBeforeCompile = (sh) => {
     sh.fragmentShader = sh.fragmentShader.replace('#include <opaque_fragment>', /* glsl */`
       float gF = 0.04 + 0.96 * pow(1.0 - abs(dot(normalize(vViewPosition), normal)), 5.0);

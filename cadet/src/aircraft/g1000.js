@@ -9,6 +9,7 @@
 // no drawing. Generic bezels, no maker's name or logo ("G1000 型").
 import * as THREE from 'three';
 import { panelText } from '../ui/flight-hud.js';
+import { drawApStrip } from '../flight/autopilot.js';
 
 const DEG = Math.PI / 180;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -49,15 +50,25 @@ export const KEYS = [
 const K = (label, act = null, on = null) => ({ label, act, on });
 const DIM = l => K(l);
 export const SOFTKEYS = {
-  pfdTop: [K(''), DIM('INSET'), K('PFD', () => ['PFD_MENU', 'PFD']), DIM('OBS'), K('CDI', () => ['CDI', 1]), DIM('DME'), DIM('XPDR'),
+  pfdTop: [K(''), DIM('INSET'), K('PFD', () => ['PFD_MENU', 'PFD']), DIM('OBS'), K('CDI', () => ['CDI', 1]), DIM('DME'), K('XPDR', () => ['XPDR', 1], av => av.pfdMenu === 'XPDR'),
     DIM('IDENT'), DIM('TMR/REF'), DIM('NRST'), K(''), DIM('ALERTS')],
-  pfdMenu: [DIM('SYN VIS'), DIM('DFLTS'), K('WIND', () => ['WIND', 1], av => av.wind), DIM('DME'), DIM('BRG1'), DIM('HSI FRMT'), DIM('BRG2'), K(''),
+  pfdMenu: [DIM('SYN VIS'), DIM('DFLTS'), K('WIND', () => ['WIND', 1], av => av.wind),
+    K('AP', () => ['AP', 1], av => !!(av.ap && av.ap.on)), K('HDG', () => ['AP_HDG', 1], av => !!(av.ap && av.ap.on && av.ap.hdg)),
+    K('ALT', () => ['AP_ALT', 1], av => !!(av.ap && av.ap.on && av.ap.alt)), DIM('BRG2'), K(''),
     K('ALT UNIT', () => ['ALT_UNIT', 1], av => av.baroUnit === 'HPA'), K('STD BARO', () => ['STD_BARO', 1]), K('BACK', () => ['PFD_MENU', 'TOP']), DIM('ALERTS')],
+  // the transponder's own row: the code's digits (0–7, four set it), the mode, backspace, back; the last slot
+  // shows what is being typed, or the code in use
+  xpdr: [...[0, 1, 2, 3, 4, 5, 6, 7].map(d => K(`${d}`, () => ['XPDR_DIGIT', d])), K('MODE', () => ['XPDR_MODE', 1], av => av.xpdr && av.xpdr.mode !== 'ALT'),
+    K('⌫', () => ['XPDR_BKSP', 1]), K('BACK', () => ['XPDR', 1]), K(av => (av.xpdr ? (av.xpdr.entry || String(av.xpdr.code).padStart(4, '0')) : '----'))],
   mfd: [DIM('ENGINE'), K(''), K('MAP', () => ['MFD_MAP', 1], av => av.mfdPage === 'MAP'), K('FPL', () => ['MFD_FPL', 1], av => av.mfdPage === 'FPL'), K(''),
     K(av => (av.mapNorthUp ? 'NORTH UP' : 'TRACK UP'), () => ['NORTH_UP', 1]), K(''), K('PREV LEG', () => ['FPL_NEXT', -1]), K('NEXT LEG', () => ['FPL_NEXT', 1]),
     K(''), DIM('DCLTR'), DIM('SHW CHRT')],
 };
-export const softkeysOf = (which, av) => (which === 'mfd' ? SOFTKEYS.mfd : av && av.pfdMenu === 'PFD' ? SOFTKEYS.pfdMenu : SOFTKEYS.pfdTop);
+export const softkeysOf = (which, av) => (which === 'mfd' ? SOFTKEYS.mfd : av && av.pfdMenu === 'XPDR' ? SOFTKEYS.xpdr : av && av.pfdMenu === 'PFD' ? SOFTKEYS.pfdMenu : SOFTKEYS.pfdTop);
+
+// the standby airspeed dial's full scale for a type: the Archer's ends at 175 kt; a faster type (the Seminole,
+// Vne 202) needs 220 for its caution arc and red line to land on the dial at all
+export const asiTop = V => (V && V.ne > 175 ? 220 : 175);
 
 // ---------------------------------------------------------------- the canvases and their textures
 const SCR_W = 1024, SCR_H = 640, LW = 640, LH = 400;
@@ -97,16 +108,19 @@ export function createGlass(FL, makeCanvas) {
   // FLIGHT LAB's panelData (app.js), into objects made once
   const ENG = [{ run: true, rpm: 0, feather: false }, { run: true, rpm: 0, feather: false }];
   const ENG1 = [ENG[0]];
+  const OILP1 = [0], OILP2 = [0, 0], OILT1 = [0], OILT2 = [0, 0];   // (the systems' oil, handed to the MFD in place of the physics'; one array per engine count — the MFD reads a pair as L/R)
   const d = { o: {}, av: null, nav: null, varW: P.MAGVAR_W, qnh: 29.92, eng: ENG1, V: null, fuelCap: 24, pos: { n: 0, e: 0 } };
   const stats = { pfd: 0, mfd: 0, blank: 0, strips: 0, standby: 0 };      // draws so far (tests, the perf overlay)
   // the standby dials, drawn 15 times a second: the gradients, fonts and numerals are made once
   const grads = new Map(), fonts = new Map(), NUM = [];
-  for (let i = 0; i <= 160; i++) NUM.push(String(i));
+  for (let i = 0; i <= 240; i++) NUM.push(String(i));
   const font = (w, px) => { const k = w * 1000 + px; let f = fonts.get(k); if (!f) { f = `${w} ${px}px ${SANS}`; fonts.set(k, f); } return f; };
   const BANK_MARKS = [-90, -60, -30, -20, -10, 10, 20, 30, 60, 90];
   const baroText = { v: NaN, hpa: false, text: '' };
   const V_DEF = { s0: 45, s1: 50, fe: 102, no: 125, ne: 154 };          // the Archer's, if the type has none
-  const asiAng = kt => (kt <= 40 ? Math.max(0, kt) / 40 * 30 : 30 + (Math.min(kt, 175) - 40) / 120 * 300) * DEG;
+  // (the Archer's dial: 2.5° a knot above 40, the needle pegging just past the top at 175; a faster type's dial
+  // spreads the same 300° sweep over its own range instead — see asiTop)
+  const asiAng = (kt, top) => (kt <= 40 ? Math.max(0, kt) / 40 * 30 : 30 + (Math.min(kt, top) - 40) * (top > 175 ? 300 / (top - 40) : 2.5)) * DEG;
 
   // ================================================================ per frame (no allocation below this line; FLIGHT LAB's
   // drawPFD / drawMFD / navSolve allocate inside, the drawing here does not)
@@ -119,9 +133,15 @@ export function createGlass(FL, makeCanvas) {
     d.qnh = s.qnh; d.V = s.A.v; d.fuelCap = s.A.fuelCap;
     d.eng = s.eng.length > 1 ? ENG : ENG1;
     for (let i = 0; i < d.eng.length && i < s.eng.length; i++) { const e = s.eng[i], o = d.eng[i]; o.run = e.run; o.rpm = e.rpm; o.feather = e.feather; }
-    if (eng && s.eng.length === 1) { d.eng[0].rpm = eng.rpm; d.eng[0].run = eng.run; d.o.rpm = eng.rpm; }
+    if (eng && eng.elec) { d.o.volts = eng.elec.volts; d.o.amps = eng.elec.amps; }
+    if (eng && s.eng.length === 1) { d.eng[0].rpm = eng.rpm; d.eng[0].run = eng.run; d.o.rpm = eng.rpm;
+      // the systems' oil, in place of the physics' (the physics does not model the start: its pressure would
+      // follow rpm the cadet never turned)
+      if (eng.oil != null) { OILP1[0] = eng.oil; d.o.oilP = OILP1; if (eng.oilT != null) { OILT1[0] = eng.oilT; d.o.oilT = OILT1; } } }
     // (M6) the twin on the ground: each engine as the systems have it (started one by one, the run-up's drops)
-    else if (eng && eng.twin && s.onGround) for (let i = 0; i < 2 && i < d.eng.length; i++) { d.eng[i].rpm = eng.twin[i].rpm; d.eng[i].run = eng.twin[i].eng === 'run'; }
+    else if (eng && eng.twin && s.onGround) { for (let i = 0; i < 2 && i < d.eng.length; i++) { d.eng[i].rpm = eng.twin[i].rpm; d.eng[i].run = eng.twin[i].eng === 'run'; }
+      OILP2[0] = eng.twin[0].oil || 0; OILP2[1] = eng.twin[1].oil || 0; d.o.oilP = OILP2;
+      if (eng.twin[0].oilT != null && eng.twin[1].oilT != null) { OILT2[0] = eng.twin[0].oilT; OILT2[1] = eng.twin[1].oilT; d.o.oilT = OILT2; } }
     return d;
   }
   function drawScreen(which, s, av, eng) {
@@ -129,7 +149,7 @@ export function createGlass(FL, makeCanvas) {
     if (!sc || !s || !av) return;
     stats[which]++;
     sc.g.setTransform(SCR_W / LW, 0, 0, SCR_H / LH, 0, 0);
-    if (which === 'mfd') AV.drawMFD(sc.g, LW, LH, fill(s, av, eng)); else AV.drawPFD(sc.g, LW, LH, fill(s, av, eng));
+    if (which === 'mfd') AV.drawMFD(sc.g, LW, LH, fill(s, av, eng)); else { AV.drawPFD(sc.g, LW, LH, fill(s, av, eng)); drawApStrip(sc.g, LW, av); }
     sc.g.setTransform(1, 0, 0, 1, 0, 0);
     sc.texture.needsUpdate = true;
   }
@@ -184,21 +204,21 @@ export function createGlass(FL, makeCanvas) {
   }
   function drawASI(g, cx, cy, R, ias, V) {
     face(g, cx, cy, R);
-    const v = V || V_DEF;
-    arcBand(g, cx, cy, R * 0.80, R * 0.07, asiAng(v.s0), asiAng(v.fe), '#f2f2f2');
-    arcBand(g, cx, cy, R * 0.88, R * 0.08, asiAng(v.s1), asiAng(v.no), '#21b04b');
-    arcBand(g, cx, cy, R * 0.88, R * 0.08, asiAng(v.no), asiAng(v.ne), '#f1c40f');
+    const v = V || V_DEF, top = asiTop(v), tickMax = Math.floor((top - 1) / 20) * 20;
+    arcBand(g, cx, cy, R * 0.80, R * 0.07, asiAng(v.s0, top), asiAng(v.fe, top), '#f2f2f2');
+    arcBand(g, cx, cy, R * 0.88, R * 0.08, asiAng(v.s1, top), asiAng(v.no, top), '#21b04b');
+    arcBand(g, cx, cy, R * 0.88, R * 0.08, asiAng(v.no, top), asiAng(v.ne, top), '#f1c40f');
     g.lineCap = 'butt';
     g.strokeStyle = '#e8eaec';
-    for (let kt = 40; kt <= 160; kt += 5) {
-      const a = asiAng(kt) - Math.PI / 2, big = kt % 10 === 0, r0 = R * (big ? 0.80 : 0.85);
+    for (let kt = 40; kt <= tickMax; kt += 5) {
+      const a = asiAng(kt, top) - Math.PI / 2, big = kt % 10 === 0, r0 = R * (big ? 0.80 : 0.85);
       g.lineWidth = big ? 2.2 : 1.2; g.beginPath(); g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); g.lineTo(cx + Math.cos(a) * R * 0.93, cy + Math.sin(a) * R * 0.93); g.stroke();
     }
-    { const a = asiAng(v.ne) - Math.PI / 2; g.strokeStyle = '#e02a1f'; g.lineWidth = 3.2; g.beginPath(); g.moveTo(cx + Math.cos(a) * R * 0.74, cy + Math.sin(a) * R * 0.74); g.lineTo(cx + Math.cos(a) * R * 0.95, cy + Math.sin(a) * R * 0.95); g.stroke(); }
+    { const a = asiAng(v.ne, top) - Math.PI / 2; g.strokeStyle = '#e02a1f'; g.lineWidth = 3.2; g.beginPath(); g.moveTo(cx + Math.cos(a) * R * 0.74, cy + Math.sin(a) * R * 0.74); g.lineTo(cx + Math.cos(a) * R * 0.95, cy + Math.sin(a) * R * 0.95); g.stroke(); }
     g.fillStyle = '#f2f2f2'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = font(700, Math.round(R * 0.2));
-    for (let kt = 40; kt <= 160; kt += 20) { const a = asiAng(kt) - Math.PI / 2; g.fillText(NUM[kt], cx + Math.cos(a) * R * 0.58, cy + Math.sin(a) * R * 0.58); }
+    for (let kt = 40; kt <= tickMax; kt += 20) { const a = asiAng(kt, top) - Math.PI / 2; g.fillText(NUM[kt], cx + Math.cos(a) * R * 0.58, cy + Math.sin(a) * R * 0.58); }
     g.font = font(600, Math.round(R * 0.13)); g.fillText('KNOTS', cx, cy - R * 0.28); g.fillText('AIRSPEED', cx, cy + R * 0.32);
-    needle(g, cx, cy, asiAng(ias), R * 0.86, R * 0.05, R * 0.16, '#f4f4f4');
+    needle(g, cx, cy, asiAng(ias, top), R * 0.86, R * 0.05, R * 0.16, '#f4f4f4');
     g.fillStyle = '#26282b'; g.beginPath(); g.arc(cx, cy, R * 0.09, 0, Math.PI * 2); g.fill();
   }
   // altimeter: three pointers (100 ft, 1,000 ft, 10,000 ft), the setting window at 3 o'clock (inHg, or hPa)

@@ -98,7 +98,7 @@
       vstab: { y0: 0.25, y1: 1.5, rootLE: 2.35, topLE: 3.2, te: 3.95, hinge: 3.55, t: 0.1 },
       engines: [{ type: 'nose', z: -3.34, y: 0.02, r: 0.94, blades: 2 }],
       gear: { fixed: true, wheelR: 0.25, nose: [0, -1.15, -2.3], mains: [[1.6, -1.15, 0.25]] },
-      eye: [-0.3, 0.62, -0.4], flapLabels: ['UP', '10°', '25°', '40°'], fuelCap: 24,
+      eye: [-0.3, 0.62, -0.4], flapLabels: ['UP', '10°', '25°', '40°'], fuelCap: 24, carb: true,   // (the O-360 is carburetted; the Seminole's engines are injected)
       phys: {
         mass: 1050, S: 15.8, b: 10.8, c: 1.6, L: 7.25, CL0: 0.28, CLa: 4.8, aStall: 0.28, CD0: 0.032, K: 0.05, CDgear: 0,
         Cm0: 0.015, Cma: -1.1, Cmde: 0.34, Cmq: -15, Clda: 0.055, Clp: -0.5, Clb: -0.12, Cnb: 0.1, Cndr: 0.03, Cnr: -0.14, CYb: -0.6,
@@ -304,9 +304,17 @@
   }
   function windGradient(agl) { const h = clamp(agl, 1, 400); return clamp(Math.log(h / 0.03) / Math.log(10 / 0.03), 0.55, 1.35); }
   // s.wind: { fromDeg (true), kt, gust (turbulence scale: 0.4 still, 1 normal, 2–5 gusty) }
+  // (a wind field with a top (topFrom / topKt at topFt AGL — a day's winds aloft) blends from the surface wind
+  // to the top wind between the ground and topFt instead of the log profile: the two given winds are the profile)
   function windAt(s, t, agl) {
-    const W = s.wind || { fromDeg: 0, kt: 0, gust: 0.4 }, from = W.fromDeg * DEG, sp = W.kt / KT, k = W.gust ?? 1;
-    const gust = Math.min(1, Math.max(agl, 0) / 300 + 0.4) * k, wg = windGradient(agl);
+    const W = s.wind || { fromDeg: 0, kt: 0, gust: 0.4 }, k = W.gust ?? 1;
+    const gust = Math.min(1, Math.max(agl, 0) / 300 + 0.4) * k;
+    let from = W.fromDeg * DEG, sp = W.kt / KT, wg = windGradient(agl);
+    if (W.topKt != null && W.topFt > 0) {
+      const f = clamp(agl / (W.topFt / FT), 0, 1);
+      let d = (W.topFrom - W.fromDeg) % 360; if (d > 180) d -= 360; else if (d < -180) d += 360;
+      from = (W.fromDeg + d * f) * DEG; sp = (W.kt + (W.topKt - W.kt) * f) / KT; wg = 1;
+    }
     const w = [-Math.sin(from) * sp, 0, Math.cos(from) * sp];
     return [w[0] * wg + perlin(t * 0.35, 1.7) * 1.4 * gust, perlin(t * 0.5, 4.4) * 0.5 * gust, w[2] * wg + perlin(t * 0.31, 8.2) * 1.1 * gust];
   }
@@ -320,6 +328,9 @@
   }
   // ---------------------------------------------------------------- trim and the steady states the instructor quotes
   const TRIM_MAX = 0.45;
+  // the powerplant model's constants: the fuel left in the lines when the feed runs dry or is shut off (seconds of
+  // running), and the mixture lever's idle cut-off detent (at or below it, no fuel is metered at all)
+  const LINE_FUEL_S = 6, MIX_CUT = 0.12;
   function trimFor(s, V, flapF, n = 1, rho = 1.225) {
     const AC = s.AC, qd = 0.5 * rho * V * V, cl0 = AC.CL0 + AC.flapCL * flapF;
     const alpha = (n * AC.mass * G / (qd * AC.S) - cl0) / AC.CLa;
@@ -434,6 +445,83 @@
     if (holdP) pitchHold(s, alpha, qd, qdc, aS);
   }
 
+  // ---------------------------------------------------------------- the engine systems (the start, the magnetos, the mixture, the fuel selector)
+  // Each engine carries the switches' state beside the failure state: mag (OFF / R / L / BOTH / START), mix (the
+  // mixture lever: 0 pulled to idle cut-off, 1 full rich), sel (the fuel selector: 'L' / 'R' / 'OFF') and on (it
+  // has been started and nothing has stopped it since). The defaults are the running configuration, so a lesson
+  // that never touches them flies exactly as before. A stopped engine starts again only by cranking — the key
+  // held at START with fuel reaching it and the mixture rich — and catches after CATCH_S. One magneto (R or L)
+  // still runs it, and so does START (BOTH with the starter turning). It stops at once on a failure or the
+  // mixture cut (cut, or the lever at idle cut-off), at once on the magnetos OFF, and when no fuel reaches it —
+  // the selector OFF or its tank empty — after the fuel left in the lines (LINE_FUEL_S) is used.
+  const MAG_POS = ['OFF', 'R', 'L', 'BOTH', 'START'];
+  const MIX_OFF = MIX_CUT, MIX_RICH = 0.7, CATCH_S = 1.2;   // (the cut-off detent is the powerplant model's MIX_CUT, above)
+
+  // ---------------------------------------------------------------- weight and balance (teaching values)
+  // The load the aircraft carries: the people, the baggage and the fuel in the tanks, on the arms of the
+  // type's loading graph (inches from the datum, as the POH's graph is drawn; weights in kilograms here, at
+  // 6 lb to the gallon of avgas). The model's reference mass (A.phys.mass) IS the standard training load —
+  // two in front, no one behind, no baggage, the tanks at the 80 % a day begins with — so the equipped empty
+  // weight below is the teaching value that makes that true, and a lesson that never chooses a load flies
+  // exactly as before. What a different load changes: the mass the integrator carries (the inertia, the
+  // wheel loads and the elements' tuning all follow it — a heavier aircraft rolls further and climbs
+  // slower, a solo one, without the instructor's weight, climbs better), and the trim: a centre of gravity
+  // away from the standard load's asks for a different elevator trim (AC.Cm0 shifted by the same amount
+  // everywhere trim is quoted; a nudge, never more, inside the envelope). The stall speeds derive() quotes
+  // (vs0 / vs1) scale with √weight. Outside the limits the before-takeoff checklist refuses (school.js):
+  // overweight, nose-heavy or tail-heavy is a load to fix on the ground, not a flight to make.
+  const LB_KG = 0.45359237, PERSON_KG = 77, FUEL_KG_GAL = 6 * LB_KG;   // a standard adult (170 lb); avgas at 6 lb/US gal
+  const WB = {
+    // mtowLb and the CG limits (a simplified constant envelope); arms: empty / front seats / rear seats /
+    // baggage / fuel; tabsGal: the fuel at the filler tabs, per tank (the Seminole's is a teaching value)
+    pa28: { mtowLb: 2550, fwdIn: 82, aftIn: 93, emptyArm: 85.5, frontArm: 80.5, rearArm: 118.1, bagArm: 142.8, bagMaxKg: 90, fuelArm: 95, tabsGal: 17 },
+    pa44: { mtowLb: 3800, fwdIn: 84, aftIn: 94, emptyArm: 89, frontArm: 84, rearArm: 118.9, bagArm: 142, bagMaxKg: 90, fuelArm: 95.7, tabsGal: 40 },
+  };
+  // the standard training load (what every lesson has flown with until now)
+  const stdLoading = () => ({ fuel: 'std', front: 2, rear: 0, bagKg: 0 });
+  function cleanLoading(A, ld) {
+    const W = WB[A.id]; if (!W) return stdLoading();
+    const o = (ld && typeof ld === 'object') ? ld : {}, num = v => (Number.isFinite(+v) ? +v : NaN);
+    return { fuel: ['std', 'full', 'tabs', 'half'].includes(o.fuel) ? o.fuel : 'std',
+      front: clamp(Math.round(Number.isNaN(num(o.front)) ? 2 : num(o.front)), 0, 2), rear: clamp(Math.round(Number.isNaN(num(o.rear)) ? 0 : num(o.rear)), 0, 2),
+      bagKg: clamp(Number.isNaN(num(o.bagKg)) ? 0 : num(o.bagKg), 0, W.bagMaxKg) };
+  }
+  // the fuel in each tank for a load's fuel choice ('std' is the 80 % the state begins with)
+  function fuelPerTank(A, mode) { const W = WB[A.id]; return mode === 'full' ? A.fuelCap : mode === 'tabs' ? W.tabsGal : mode === 'half' ? A.fuelCap / 2 : A.fuelCap * 0.8; }
+  // the weight and balance of a load: the total mass, the CG (inches from the datum) and what is wrong with
+  // it, if anything ('over' / 'nose' / 'tail'). fuelGal: the gallons actually in the tanks (default: the
+  // load's own fuel choice, the same in both tanks)
+  function computeWB(A, ld, fuelGal) {
+    const W = WB[A.id]; if (!W) return null;
+    const L = cleanLoading(A, ld);
+    const fg = (Array.isArray(fuelGal) && fuelGal.length === 2 && fuelGal.every(Number.isFinite)) ? fuelGal : [fuelPerTank(A, L.fuel), fuelPerTank(A, L.fuel)];
+    const emptyKg = A.phys.mass - 2 * PERSON_KG - 2 * A.fuelCap * 0.8 * FUEL_KG_GAL;   // (the equipped empty weight that makes the standard load come to the reference mass)
+    let kg = emptyKg + L.front * PERSON_KG + L.rear * PERSON_KG + L.bagKg + (fg[0] + fg[1]) * FUEL_KG_GAL;
+    const mom = emptyKg * W.emptyArm + L.front * PERSON_KG * W.frontArm + L.rear * PERSON_KG * W.rearArm + L.bagKg * W.bagArm + (fg[0] + fg[1]) * FUEL_KG_GAL * W.fuelArm;
+    // (the standard load is the reference mass, exactly — not the components' sum to within float dust)
+    if (L.front === 2 && !L.rear && !L.bagKg && Math.abs(fg[0] - A.fuelCap * 0.8) < 1e-9 && Math.abs(fg[1] - A.fuelCap * 0.8) < 1e-9) kg = A.phys.mass;
+    const cgIn = mom / kg, lb = kg / LB_KG, problems = [];
+    if (lb > W.mtowLb) problems.push('over');
+    if (cgIn < W.fwdIn) problems.push('nose'); else if (cgIn > W.aftIn) problems.push('tail');
+    return { kg, lb, cgIn, mtowLb: W.mtowLb, fwdIn: W.fwdIn, aftIn: W.aftIn, ok: !problems.length, problems, fuelGal: fg.slice(), loading: L, emptyKg };
+  }
+  const refCgOf = A => { const w = computeWB(A, stdLoading()); return w ? w.cgIn : 0; };
+  // put a load on the aircraft: the tanks filled as the load says ('std' leaves them as they are), the state
+  // re-derived at the real mass (inertia, wheel springs, the elements' tuning), the trim shifted for the CG.
+  // Returns the computeWB result; the state keeps it as s.wb (and the load as s.loading).
+  function applyLoading(s, ld) {
+    const A = s.A, W = WB[A.id]; if (!W) return null;
+    const L = cleanLoading(A, ld);
+    if (L.fuel !== 'std') { const per = fuelPerTank(A, L.fuel); s.fuel = [per, per]; }
+    const wb = computeWB(A, L, s.fuel);
+    s.loading = L; s.wb = wb;
+    const d = deriveAircraft(A, wb.kg);
+    d.AC.Cm0 = A.phys.Cm0 + clamp((wb.cgIn - refCgOf(A)) * 0.0025, -0.015, 0.015);   // the CG's trim: ≈ 0.03 of elevator per 4 in at cruise (the trim helpers quote the same Cm0, so they agree)
+    Object.assign(s, { AC: d.AC, WHEELS: d.WHEELS, WHEEL_BOTTOM: d.WHEEL_BOTTOM, HARDPTS: d.HARDPTS, TAILSKID: d.TAILSKID });
+    if (!s.contacts || s.contacts.length !== d.WHEELS.length) s.contacts = d.WHEELS.map(() => false);
+    return wb;
+  }
+
   // ---------------------------------------------------------------- the state
   function newState(o = {}) {
     const s = {
@@ -443,8 +531,14 @@
       alpha: 0, beta: 0, ias: 0, tas: 0, gLoad: 1, stallW: 0, stallWarn: false, agl: 0, vs: 0, contacts: [],
       keyHold: true, pTgt: null, pRate: 0, dead: false,
       opts: { sens: 'low', assist: false, autoRud: false, levelT: 0 },
-      wind: { fromDeg: 0, kt: 0, gust: 0.4 }, qnh: 29.92, oatDev: 0, fuel: [0, 0], fuelFlow: 0,
+      wind: { fromDeg: 0, kt: 0, gust: 0.4 }, qnh: 29.92, oatDev: 0,
+      mix: 1, fuelSel: 'L', carbHeat: false, carbRisk: 0,   // the engine's own controls: the mixture lever (1 = full rich), the tank selector, the carburettor heat, and how humid the day is (0 = carburettor ice cannot form; a lesson sets it)
+      _mixCmd: 1, _selCmd: 'L',   // the shared controls as last followed by every engine's own switches (see the engine systems in step): moving s.mix / s.fuelSel moves them all; an engine's own mag / mix / sel can still be set one by one
+      fuel: [0, 0], fuelFlow: 0,
       eng: [], events: [], td: null, out: {}, wasOnRunway: false, lastRwyT: -99, seed: o.seed || 1,
+      // the minimal electrical system (battery + alternator) and the Hobbs meter: session state on the airframe;
+      // resetState/placeOnRunway do not touch them, so they carry across lessons of one sitting
+      elec: { batt: 1, volts: 12.6, amps: 0, altFail: false }, hobbs: 471.2,
     };
     setAircraft(s, o.aircraft || 'pa28', o.mass);
     return s;
@@ -455,7 +549,7 @@
     Object.assign(s, { A, AC: d.AC, WHEELS: d.WHEELS, WHEEL_BOTTOM: d.WHEEL_BOTTOM, HARDPTS: d.HARDPTS, TAILSKID: d.TAILSKID });
     s.contacts = d.WHEELS.map(() => false);
     s.fuel = [A.fuelCap * 0.8, A.fuelCap * 0.8];
-    s.eng = Array.from({ length: A.engines1 || 1 }, () => ({ run: true, failed: false, feather: false, cut: false, thr: null, rpm: 0 }));
+    s.eng = Array.from({ length: A.engines1 || 1 }, (_, i) => ({ run: true, failed: false, feather: false, cut: false, thr: null, rpm: 0, mag: 'BOTH', mix: 1, sel: i ? 'R' : 'L', on: true, crankT: 0, lineT: LINE_FUEL_S, egt: 70, carbIce: 0, feed: i ? 1 : 0, feedOk: true, mixK: 1, powK: 1, rough: 0, manIn: 0, ff: 0, ffK: 1, shaftW: 0, lev: 1, iceNoted: false, oilP: 0, oilT: null }));
     s.gearDown = true; s.gearPos = 1;
     return s;
   }
@@ -479,9 +573,30 @@
     const V = vlen(vb), u = -vb[2];
     const alpha = Math.atan2(-vb[1], u), beta = V > 0.5 ? Math.asin(clamp(vb[0] / V, -1, 1)) : 0;
     const qd = 0.5 * rho * V * V;
-    // engines: each one's state (failure, mixture cut-off, feather), its own throttle when set
-    for (const e of s.eng) e.run = !e.failed && !e.cut && s.fuel[0] + s.fuel[1] > 0;
-    if (!s.eng[0].run && !s.engStopNoted && (A.engines1 || 1) === 1) { s.engStopNoted = true; s.events.push({ t: s.t, type: 'engine_stop', why: s.eng[0].failed ? '故障（教材の想定）' : s.eng[0].cut ? 'ミクスチャー カットオフ' : '燃料切れ' }); }
+    // engines: each one's state (the systems above, a failure, the mixture cut-off, feather), its own throttle when set.
+    // The shared controls (s.mix / s.fuelSel) are the cockpit's one set of switches: when they move, every engine's
+    // own lever / selector follows (the cockpits have one set, and the twin's selector is its crossfeed valve — one
+    // feed for both engines while it is the thing being moved); an engine's own switches can still be set one by
+    // one, and then they are what the engine answers to until the shared controls move again.
+    if (s.mix !== s._mixCmd) { s._mixCmd = s.mix; for (const e of s.eng) e.mix = s.mix; }
+    if (s.fuelSel !== s._selCmd) { s._selCmd = s.fuelSel; for (const e of s.eng) e.sel = s.fuelSel; }
+    // The fuel feed and the mixture, the powerplant model: an engine drinks from the tank its selector names. A dry
+    // feed, or OFF, leaves the fuel in the lines — about six seconds — then the engine stops, however full the other
+    // tank is. The mixture lever (e.lev; 1 = full rich) meters the fuel-air ratio: an engine runs above the cut-off
+    // detent only, and how well it runs on the mixture is worked out with the thrust, below.
+    for (const e of s.eng) {
+      e.lev = e.mix ?? 1;
+      const mag = e.mag || 'BOTH', sel = e.sel || 'L';
+      e.feed = sel === 'OFF' ? -1 : sel === 'R' ? 1 : 0;
+      if (e.feed >= 0 && s.fuel[e.feed] > 0) e.lineT = LINE_FUEL_S; else e.lineT = Math.max(0, (e.lineT ?? LINE_FUEL_S) - dt);
+      e.feedOk = (e.feed >= 0 && s.fuel[e.feed] > 0) || e.lineT > 0;
+      const stop = e.failed || e.cut ? 1 : mag === 'OFF' ? 2 : e.lev <= MIX_CUT ? 3 : !e.feedOk ? 4 : 0;
+      if (stop) { e.on = false; e.crankT = 0; }
+      else if (e.on === false && mag === 'START' && e.lev >= MIX_RICH) { e.crankT = (e.crankT || 0) + dt; if (e.crankT >= CATCH_S) { e.on = true; e.crankT = 0; } }
+      else e.crankT = 0;
+      e.run = e.on !== false && !stop;
+    }
+    if (!s.eng[0].run && !s.engStopNoted && (A.engines1 || 1) === 1) { const e0 = s.eng[0]; s.engStopNoted = true; s.events.push({ t: s.t, type: 'engine_stop', why: e0.failed ? '故障（教材の想定）' : e0.cut || e0.lev <= MIX_CUT ? 'ミクスチャー カットオフ' : e0.mag === 'OFF' ? 'マグネトー OFF' : e0.sel === 'OFF' ? '燃料セレクター OFF' : '燃料切れ' }); }
     s.dead = !engineRunning(s);
     const thrOf = e => (e.thr != null ? e.thr : s.thr);
     const nE = s.eng.length, runShare = s.eng.reduce((a, e) => a + (e.run ? thrOf(e) : 0), 0) / nE;
@@ -494,13 +609,57 @@
     const Eng = AC.engine, pw = Math.max(0, 1.132 * atm.sigma - 0.132), ua = Math.max(u, 0);
     let T = 0, Tasym = 0, shaft = 0;
     const xe = A.engines[0].x || 0;
+    // The mixture, worked per engine (teaching numbers, from the POH's leaning pages): the strength m is the lever
+    // against sea-level full rich — the air thins with density altitude and a plain carburettor does not, so full rich
+    // grows richer as you climb. Power is whole at m ≈ 0.93–1.06 (full rich is made to be right up to about 4,500 ft
+    // density altitude, so a lesson that never touches the lever is unchanged), falls away rich of it (2.2 per unit²
+    // of excess — the high-altitude take-off case: about 2 % at 8,000 ft, 7 % at 12,000 ft) and faster lean of it
+    // (1.6 per unit²), and below m ≈ 0.62 the charge will not burn evenly at all: the smoothstep fades the power
+    // out and `rough` (felt in the thrust, and in the rpm) rises. Leaning back toward the plateau is best power, and
+    // at the plateau the EGT peaks (below).
+    const pAmbIn = atm.p / 3386.39;                                 // ambient pressure, inHg — what a stopped engine's manifold gauge reads
     s.eng.forEach((e, i) => {
       const th = thrOf(e), P1 = Eng.P / nE;
       let Ti;
-      if (!e.run) Ti = -(e.feather ? 0.003 : 0.026 / nE) * qd * AC.S * (AC.mass / 1050 / nE) ** 0.3;          // windmilling (or feathered) propeller drag
-      else {
-        Ti = propThrust(AC, th, ua, pw, nE) - (1 - th) * 2.5 * ua * AC.mass / 1000 / nE;
-        shaft += (0.04 + 0.96 * th) * pw * P1 / 0.85;
+      if (!e.run) {
+        Ti = -(e.feather ? 0.003 : 0.026 / nE) * qd * AC.S * (AC.mass / 1050 / nE) ** 0.3;          // windmilling (or feathered) propeller drag
+        e.mixK = 0; e.powK = 0; e.rough = 0; e.ff = 0; e.shaftW = 0; e.manIn = pAmbIn;
+        e.egt = (e.egt == null ? 70 : e.egt) + ((atm.T * 9 / 5 - 459.67) - (e.egt == null ? 70 : e.egt)) * Math.min(1, dt / 6);   // a stopped engine's exhaust cools toward the outside air
+      } else {
+        const mStr = e.lev / Math.sqrt(Math.max(atm.sigma, 0.35));
+        let mixK = 1 - 2.2 * Math.max(0, mStr - 1.06) ** 2 - 1.6 * Math.max(0, 0.93 - mStr) ** 2;
+        if (mStr < 0.62) mixK *= smoothstep(0.45, 0.62, mStr);
+        e.mixK = clamp(mixK, 0, 1);
+        e.rough = clamp((0.74 - mStr) / 0.12, 0, 1);
+        // Carburettor ice (the Archer; the Seminole is injected): it builds when the day is humid (s.carbRisk, set by
+        // the lesson — never at random) and the venturi is in its band, about −7…+26 °C, worst near +12 °C and at
+        // low power, over minutes. Half the power is gone when it is full; above about half it runs rough. The heat
+        // melts it in tens of seconds, costing power while it is on and a little more while the melt water goes
+        // through — the drop, then the rise, of the run-up check.
+        let carbK = 1;
+        if (A.carb) {
+          const oatC = atm.T - 273.15, band = clamp((oatC + 7) / 19, 0, 1) * clamp((26 - oatC) / 14, 0, 1);
+          if (s.carbHeat) e.carbIce = Math.max(0, (e.carbIce || 0) - dt / 14);
+          else if (s.carbRisk > 0 && band > 0) e.carbIce = Math.min(1, (e.carbIce || 0) + dt * s.carbRisk * band * (1.3 - 0.8 * th) / 200);
+          if ((e.carbIce || 0) > 0.45 && !e.iceNoted) { e.iceNoted = true; s.events.push({ t: s.t, type: 'carb_ice' }); }
+          carbK = (1 - 0.5 * (e.carbIce || 0)) * (s.carbHeat ? 0.94 - 0.08 * (e.carbIce || 0) : 1);
+          if ((e.carbIce || 0) > 0.45) e.rough = Math.max(e.rough, 0.7);
+        }
+        e.powK = e.mixK * carbK;
+        Ti = propThrust(AC, th, ua, pw, nE) * e.powK - (1 - th) * 2.5 * ua * AC.mass / 1000 / nE;
+        if (e.rough > 0) Ti *= 1 + e.rough * 0.05 * Math.sin(s.t * 39 + i * 2.4);   // an over-lean or iced engine shakes its thrust
+        e.shaftW = (0.04 + 0.96 * th) * pw * P1 / 0.85 * e.powK;
+        shaft += e.shaftW;
+        // EGT (°F): it peaks at a strength of about 0.86 — lean of best power, as the POH's graph shows — and falls
+        // away rich (unburned fuel cooling the charge) and leaner (less to burn); a first-order lag, seconds.
+        const pf = (0.04 + 0.96 * th) * pw * e.mixK;
+        const egtT = 980 + 300 * pf + 330 * Math.pow(Math.max(pf, 0), 0.7) * Math.exp(-(((mStr - 0.86) / 0.15) ** 2));
+        e.egt = (e.egt == null ? egtT : e.egt) + (egtT - (e.egt == null ? egtT : e.egt)) * Math.min(1, dt / 2.5);
+        // Manifold pressure (inHg): the ambient pressure less what the throttle plate holds back — nearly ambient at
+        // full throttle, about 10 inHg at idle; it falls with altitude because the ambient does.
+        e.manIn = Math.min(pAmbIn * (0.30 + 0.68 * th), pAmbIn - 0.3);
+        // The fuel flow the mixture meters: the lever's share of the rich flow (cut-off meters none)
+        e.ffK = clamp(0.15 + 0.85 * Math.pow(e.lev, 1.2), 0, 1);
       }
       e.T = Ti; T += Ti;
       if (nE === 2) Tasym += (i === 1 ? 1 : -1) * Ti * xe;      // eng[0] = left, eng[1] = right: right thrust yaws left
@@ -616,12 +775,42 @@
     s.agl = agl; s.vs = s.vel[1];
     // engine rpm, fuel
     let rpmSum = 0;
-    s.eng.forEach(e => { const rt = e.run ? rpmFor(A, thrOf(e), u, pw) : e.feather ? 0 : rpmFor(A, 0, u, 1, true); e.rpm = (e.rpm || 0) + (rt - (e.rpm || 0)) * Math.min(1, dt * 1.8); e.ang = ((e.ang || 0) + e.rpm / 60 * Math.PI * 2 * dt) % (Math.PI * 2); rpmSum += e.rpm; });
+    s.eng.forEach(e => { const rt = e.run ? rpmFor(A, thrOf(e), u, pw * (0.3 + 0.7 * (e.powK == null ? 1 : e.powK))) : e.feather ? 0 : rpmFor(A, 0, u, 1, true); e.rpm = (e.rpm || 0) + (rt - (e.rpm || 0)) * Math.min(1, dt * 1.8); e.ang = ((e.ang || 0) + e.rpm / 60 * Math.PI * 2 * dt) % (Math.PI * 2); rpmSum += e.rpm; });   // a fixed-pitch prop turns slower on a weak mixture or an iced carburettor (a governed one holds its rpm and shows it in the manifold pressure instead)
     s.rpm = rpmSum / nE;
     s.propAng = (s.propAng + s.rpm / 60 * Math.PI * 2 * dt) % (Math.PI * 2);
-    s.fuelFlow = shaft / 745.7 * 0.078;                       // US gal/h (about 0.47 lb/hp/h, teaching value)
-    const used = s.fuelFlow * dt / 3600;
-    s.fuel[0] = Math.max(0, s.fuel[0] - used / 2); s.fuel[1] = Math.max(0, s.fuel[1] - used / 2);
+    // fuel: each running engine burns its own flow — its shaft power at BSFC, metered by its mixture — out of the
+    // tank that feeds it (its selector's tank), so the two gauges fall as the tanks really are (the total flow is
+    // unchanged at full rich)
+    let ffT = 0;
+    for (const e of s.eng) {
+      e.ff = e.run ? (e.shaftW || 0) / 745.7 * 0.078 * (e.ffK == null ? 1 : e.ffK) : 0;   // US gal/h (about 0.47 lb/hp/h, teaching value)
+      ffT += e.ff;
+      if (e.ff > 0 && e.feed >= 0 && s.fuel[e.feed] > 0) s.fuel[e.feed] = Math.max(0, s.fuel[e.feed] - e.ff * dt / 3600);
+    }
+    s.fuelFlow = ffT;
+    // oil and electrics (what the MFD's engine strip shows): pressure follows rpm within a second or two,
+    // temperature lags minutes behind power and cools slowly stopped; the alternator (55 A from about 1,000 rpm)
+    // charges the battery against a fixed panel load while an engine turns, and the battery alone carries the
+    // panel — and drains — when none does
+    const oatF = (atm.T - 273.15) * 9 / 5 + 32;
+    let maxRpm = 0, anyRun = false;
+    for (const e of s.eng) {
+      if (e.oilT == null) e.oilT = oatF;
+      const pTgt = e.run ? clamp(55 + e.rpm * 0.012, 0, 85) : 0;
+      e.oilP = (e.oilP || 0) + (pTgt - (e.oilP || 0)) * Math.min(1, dt * 1.5);
+      const tTgt = e.run ? 130 + 70 * clamp(thrOf(e), 0, 1) : oatF;
+      e.oilT += (tTgt - e.oilT) * dt / (e.run ? 240 : 600);
+      if (e.run) { anyRun = true; if (e.rpm > maxRpm) maxRpm = e.rpm; }
+    }
+    const el = s.elec;
+    const gen = el.altFail ? 0 : clamp((maxRpm - 500) / 500, 0, 1) * 55;
+    let net = gen - 11;                                      // (the panel load: avionics and lights, A)
+    if (net > 0 && el.batt >= 1) net *= 0.06;                // (a full battery takes only a trickle)
+    el.batt = clamp(el.batt + net * dt / (20 * 3600), 0, 1);
+    const deadBus = el.batt <= 0.001 && gen <= 1;
+    el.volts = deadBus ? 0 : gen > 1 ? 13.9 + 0.3 * (gen / 55) : 11.3 + 1.5 * el.batt;
+    el.amps = deadBus ? 0 : Math.round(net);
+    if (anyRun) s.hobbs += dt / 3600;
     runwayChecks(s);
     derive(s);
     return s;
@@ -678,11 +867,27 @@
     o.slip = clamp(o.beta * 0.35, -1.5, 1.5);
     o.windFrom = s.wind.fromDeg; o.windKt = Math.hypot(wnd[0], wnd[2]) * KT;
     o.rpm = s.rpm; o.rpms = s.eng.map(e => e.rpm || 0); o.fuelFlow = s.fuelFlow || 0; o.fuel = s.fuel.slice();
-    o.powerPct = engineRunning(s) ? Math.round((0.04 + 0.96 * s.thr) * 100) : 0;
+    o.mag = s.eng[0] ? s.eng[0].mag || 'BOTH' : 'BOTH'; o.mix = s.eng[0] ? s.eng[0].lev ?? s.eng[0].mix ?? 1 : 1; o.fuelSel = s.eng[0] ? s.eng[0].sel || 'L' : 'L';   // the systems of the first engine (the mixture as the lever the engine answers to); every engine's in the arrays
+    o.mags = s.eng.map(e => e.mag || 'BOTH'); o.mixs = s.eng.map(e => e.lev ?? e.mix ?? 1); o.fuelSels = s.eng.map(e => e.sel || 'L'); o.cranking = s.eng.some(e => e.on === false && e.mag === 'START');
+    // % power from the shaft power the model actually makes (throttle × the density factor × the mixture), not from
+    // the lever's position: it falls with altitude and with a bad mixture, as the real gauge story does. At sea level,
+    // full rich, it is the old number.
+    const pwD = Math.max(0, 1.132 * atm.sigma - 0.132);
+    o.powerPct = engineRunning(s) ? Math.round(s.eng.reduce((a, e) => a + (e.run ? (0.04 + 0.96 * (e.thr != null ? e.thr : s.thr)) * pwD * (e.mixK == null ? 1 : e.mixK) : 0), 0) / s.eng.length * 100) : 0;
+    o.egts = s.eng.map(e => Math.round(e.egt || 0)); o.egt = o.egts[0];
+    o.manIns = s.eng.map(e => Math.round((e.manIn || 0) * 10) / 10); o.manIn = o.manIns[0];
+    o.rough = Math.max(0, ...s.eng.map(e => e.rough || 0));
+    o.carbIce = Math.max(0, ...s.eng.map(e => e.carbIce || 0));
+    o.oilP = s.eng.map(e => Math.round(e.oilP || 0));
+    o.oilT = s.eng.map(e => Math.round(e.oilT == null ? (atm.T - 273.15) * 9 / 5 + 32 : e.oilT));
+    o.volts = Math.round(s.elec.volts * 10) / 10; o.amps = s.elec.amps; o.hobbs = Math.round(s.hobbs * 10) / 10;
     o.oat = atm.T - 273.15; o.g = s.gLoad; o.densAlt = (s.densAlt || 0) * FT;
     const n = -s.pos[2], e = s.pos[0];
     o.onRunway = onRunway(LAB_RWY, n, e);
     const rc = rwyCoords(LAB_RWY, n, e); o.rwyAlong = rc.along; o.rwyCross = rc.cross;
+    // the stall speeds at today's weight (the book's numbers are at the reference load): they grow with √weight
+    const wSqrt = Math.sqrt(s.AC.mass / A.phys.mass);
+    o.vs0 = Math.round(A.v.s0 * wSqrt * 10) / 10; o.vs1 = Math.round(A.v.s1 * wSqrt * 10) / 10;
     o.flapLabel = A.flapLabels[s.flapIdx]; o.gearDown = s.gearDown; o.gearPos = s.gearPos;
     return o;
   }
@@ -693,7 +898,8 @@
     s.vel = [0, 0, 0]; s.w = [0, 0, 0]; s.onGround = false; s.mainContact = false; s.crashed = false; s.crashReason = '';
     s.events = []; s.td = null; s.tailTouch = false; s.firstWheel = -1; s.gLoad = 1; s.pTgt = null; s.pHI = 0; s.gI = 0; s.bI = 0;
     s.trimHold = 0; s.engStopNoted = false; s.wasOnRunway = false; s._excursion = false; s.pIn = 0; s.rIn = 0; s.rud = 0; s.ovr = null;
-    for (const e of s.eng) Object.assign(e, { failed: false, feather: false, cut: false, thr: null });
+    s.eng.forEach((e, i) => Object.assign(e, { failed: false, feather: false, cut: false, thr: null, mag: 'BOTH', mix: 1, sel: i ? 'R' : 'L', on: true, crankT: 0, lineT: LINE_FUEL_S, carbIce: 0, iceNoted: false }));
+    s._mixCmd = s.mix; s._selCmd = s.fuelSel;   // the reset engines are in the running configuration above; the shared controls command them again when they next move
   }
   // on the runway, stopped, `along` metres past the threshold
   function placeOnRunway(s, rwy = LAB_RWY, along = 30) {
@@ -734,5 +940,7 @@
     clamp, lerp, wrap360, wrap180, qrot, qconj, qmul, qFromHPB, vadd, vsub, vscale, vnorm, vcross, vdot, vlen,
     rwyCoords, rwyToNE, onRunway, pavedAt, inLake, groundAt, atmos, rpmFor, windAt, windNow,
     newState, setAircraft, step, derive, attitude, trimFor, trimLevel, steadyState, placeOnRunway, placeInAir, ne, engineRunning,
+    MAG_POS, MIX_OFF, MIX_RICH, CATCH_S, LINE_FUEL_S,
+    WB, stdLoading, cleanLoading, computeWB, applyLoading, PERSON_KG, FUEL_KG_GAL, LB_KG,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

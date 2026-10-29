@@ -7,11 +7,11 @@ import { careerInstructorDialogs, CAREER_SAMPLE } from '../src/content/dialog/in
 import { debriefDialogs } from '../src/content/dialog/debrief.js';
 import { createRunner, createDialogState } from '../src/dialog/engine.js';
 
-const base = { weather: 'good', fatigue: 20, chapter: 'ch3', aircraft: 'pa28', check: false, xc: false, day: 50 };
+const base = { weather: 'good', fatigue: 20, chapter: 'ch3', aircraft: 'pa28', check: false, xc: false, day: 50, traffic: 2 };
 
 test('tem: today\'s threat — the day\'s most pressing, three options with today\'s among them, the others not today\'s', () => {
   const cases = [
-    [{}, 'traffic'], [{ weather: 'pmStorm' }, 'storm'], [{ weather: 'lowCloud', chapter: 'ch4' }, 'cloud'], [{ weather: 'crosswind' }, 'wind'],
+    [{}, 'traffic'], [{ traffic: 0 }, 'calm'], [{ traffic: 0, weather: 'crosswind' }, 'wind'], [{ weather: 'pmStorm' }, 'storm'], [{ weather: 'lowCloud', chapter: 'ch4' }, 'cloud'], [{ weather: 'crosswind' }, 'wind'],
     [{ weather: 'amFog' }, 'fog'], [{ fatigue: 60 }, 'tired'], [{ xc: true }, 'nav'], [{ aircraft: 'pa44', chapter: 'ch5' }, 'twin'],
     [{ chapter: 'ch4' }, 'sd'], [{ weather: 'pmWind' }, 'pmwind'], [{ weather: 'amLowCloud' }, 'ceiling'], [{ check: true }, 'check'], [{ weather: 'pmStorm', fatigue: 70, aircraft: 'pa44' }, 'storm'],
   ];
@@ -79,4 +79,32 @@ test('tem: the debrief names the threat and the day\'s errors', () => {
   const th = temFor({ ...base, weather: 'pmStorm' }).threat;
   assert.match(text({ ...sum, tem: { threat: th, named: true } }), /TEM の振り返りです。今日の脅威は「午後の雷雨」でした。朝、自分で挙げられました[\s\S]*エラーは、無線の復唱の言い直し（1 回）/);
   assert.match(text({ ...sum, tem: { threat: th, named: false } }), /朝は別のものを挙げました/);
+});
+
+test('miss: yesterday\'s main missed item is asked once at the morning briefing, before TEM', () => {
+  const runMiss = (miss, pick) => {
+    const data = careerInstructorDialogs(), state = createDialogState(), hooked = [];
+    data.dialogs.day.nodes['brief:menu'] = { speaker: 'instructor', text: '（今日の課目のブリーフィング）', end: true };
+    const ctx = { ...CAREER_SAMPLE, career: { ...CAREER_SAMPLE.career, chapter: 'ch3' },
+      tem: { on: false, right: false, not: '', en: { threat: '', why: '', plan: '', not: '' } }, miss };
+    const r = createRunner({ data, state, ctx, hooks: { onHook: (n, a) => { hooked.push([n, a]); if (n === 'miss') ctx.miss.right = +a === 1; } } });
+    r.start('day');
+    const lines = [];
+    for (let k = 0; k < 40 && r.running; k++) {
+      const v = r.view(); lines.push(`${v.node}:${v.text}`);
+      if (v.node === 'brief:menu') break;
+      if (v.choices.length) r.choose(v.node === 'd:miss' ? pick : 0); else r.next();
+    }
+    return { lines: lines.join('\n'), hooked, node: r.view() && r.view().node };
+  };
+  const miss = { on: true, label: '「直線水平飛行」の高度', o0: '無線の復唱', o1: '「直線水平飛行」の高度', o2: '停止線の手前で止まること', right: false };
+  let r = runMiss(miss, 1);                                   // (the item itself: the second choice here)
+  assert.deepEqual(r.hooked.filter(h => h[0] === 'miss'), [['miss', '1']], 'asked once, the answer reported');
+  assert.match(r.lines, /昨日の講評から一つ[\s\S]*そう、それです。「「直線水平飛行」の高度」/);
+  assert.equal(r.node, 'brief:menu');
+  r = runMiss({ ...miss }, 0);                                // (another point named: he says which it was)
+  assert.match(r.lines, /昨日のいちばんは「「直線水平飛行」の高度」でした/);
+  r = runMiss({ ...miss, on: false }, 0);                     // (nothing kept: no question)
+  assert.ok(!/昨日の講評/.test(r.lines)); assert.deepEqual(r.hooked.filter(h => h[0] === 'miss'), []);
+  assert.equal(r.node, 'brief:menu');
 });

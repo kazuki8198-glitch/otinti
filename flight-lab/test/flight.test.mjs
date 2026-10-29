@@ -154,6 +154,21 @@ test('basic course progress: its own fields (kisoRead, kisoQa) through the sanit
   assert.deepEqual([all.kisoRead.length, all.kisoQa.length], [secs.length, 376]);
 });
 
+test('progress: a lesson keeps its best score (noteLesson, the sanitiser, the merge)', () => {
+  // (the score is endLesson's 0..1, kept as a percent; an old save without one reads as 0)
+  const prog = SC.sanitizeProgress({});
+  SC.noteLesson(prog, { id: 'a1', done: true, passed: true, grade: 'A', score: 0.72, level: { id: 'basic' } });
+  assert.equal(prog.lessons.a1.score, 72);
+  SC.noteLesson(prog, { id: 'a1', done: true, passed: false, grade: 'C', score: 0.4, level: { id: 'basic' } });
+  assert.equal(prog.lessons.a1.score, 72, 'a worse try does not lower the best score');
+  SC.noteLesson(prog, { id: 'a1', done: true, passed: true, grade: 'S', score: 0.95, level: { id: 'basic' } });
+  assert.equal(prog.lessons.a1.score, 95);
+  assert.equal(SC.sanitizeProgress({ lessons: { a1: { tries: 1, best: 'A', pass: true } } }).lessons.a1.score, 0, 'no score in the save, none invented');
+  assert.equal(SC.sanitizeProgress({ lessons: { a1: { score: 250 } } }).lessons.a1.score, 100, 'clamped to a percent');
+  const m = SC.mergeProgress({ lessons: { a1: { tries: 1, best: 'A', pass: true, score: 60 } } }, { lessons: { a1: { tries: 2, best: 'B', pass: true, score: 88 } } });
+  assert.equal(m.lessons.a1.score, 88, 'the merge keeps the larger score');
+});
+
 // ------------------------------------------------------------------ the flight model (Sorajima's, with the Archer and Seminole data)
 test('physics: the Archer trimmed in level flight holds altitude and speed hands-off for a minute', () => {
   const s = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100), a0 = s.out.altTrue;

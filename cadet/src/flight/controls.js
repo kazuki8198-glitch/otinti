@@ -1,0 +1,207 @@
+// CADET — flight/controls.js : the pilot's hands. An exact port of FLIGHT LAB's keyboard and gamepad controls
+// (app.js updateControls / doAction / padInput), so the same keys fly the same way: W / S move the pitch hold's target
+// attitude (released, the nose stays there), A / D the roll stick (released, the bank hold keeps the bank), Q / E the
+// rudder, R / F the throttle (fine at first, faster when held), B / Space the brakes. The stick and rudder ramp with the
+// frame dt, as in FLIGHT LAB. An action returns the instructor's short explanation instead of showing a toast.
+// CADET adds what a hand does in the cockpit: a trim-wheel notch, a throttle notch, and a latched parking brake.
+// Pure logic: no three.js, no DOM (the gamepad is read through navigator.getGamepads when the browser has it).
+
+// the keys held for flying (the integrator stops the browser from scrolling with them)
+export const FLY_HELD = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'PageUp', 'PageDown', 'KeyW', 'KeyS', 'KeyA', 'KeyD', 'KeyQ', 'KeyE', 'KeyR', 'KeyF', 'KeyB'];
+// key → action as FLIGHT LAB's keydown has it: [without Shift, with Shift]
+const KEY_ACTS = {
+  KeyV: ['flaps', 'flapsUp'], KeyR: [null, 'thrFull'], KeyF: [null, 'thrIdle'], KeyG: ['gear', 'gear'], KeyT: ['trim', 'trimReset'],
+  KeyL: ['level', 'level'], KeyU: ['autoRud', 'autoRud'], BracketLeft: ['feather0', 'restart0'], BracketRight: ['feather1', 'restart1'],
+  KeyZ: ['rtrimL', 'rtrimL'], KeyX: ['rtrimR', 'rtrimR'],
+};
+export const actionForKey = (code, shift) => { const a = KEY_ACTS[code]; return a ? a[shift ? 1 : 0] : null; };
+// FLIGHT LAB's defaults: the keyboard pitch and bank holds, low stick sensitivity, the automatic rudder on
+export const PREFS0 = { hold: 'hold', rhold: 'hold', sens: 'low', autoRud: true, assist: false };
+
+const NOKEYS = { has: () => false, shift: false };
+const NOPADS = [];
+const navPads = () => (typeof navigator !== 'undefined' && navigator && navigator.getGamepads ? navigator.getGamepads() : NOPADS);
+// keys move the stick gradually and it springs back to the centre when released (an analog stick follows quickly)
+const ramp = (clamp, cur, tgt, dt, analog) => (analog ? cur + (tgt - cur) * Math.min(1, 12 * dt) : cur + clamp(tgt - cur, -(tgt === 0 ? 3.5 : 0.67) * dt, (tgt === 0 ? 3.5 : 0.67) * dt));
+const curve = v => Math.sign(v) * Math.pow(Math.abs(v), 1.3);
+const expo = v => Math.sign(v) * Math.pow(Math.abs(v), 1.2);
+// the gamepad's dead zone (rescaled so the travel outside it still reaches 1) and a button's value
+const dz = (v, z = 0.12) => Math.abs(v || 0) < z ? 0 : (v - Math.sign(v) * z) / (1 - z);
+const btn = (gp, i) => (gp.buttons[i] ? gp.buttons[i].value : 0);
+
+// opts: prefs (merged over PREFS0), savePrefs(prefs) when the player changes one, getGamepads() (default: the browser's),
+// readPad(L, dt) → a pad reading { stick, tr, tp, ty, brake } | null in place of the gamepad (tests)
+export function createControls(FL, { prefs, savePrefs = () => {}, getGamepads = navPads, readPad = null } = {}) {
+  const P = FL.physics, clamp = P.clamp;
+  const st = {
+    prefs: { ...PREFS0, ...(prefs || {}) },
+    rTrim: 0, thrHeld: 0, parkBrake: false, kind: '',
+    // the gamepad: its id, the buttons held last frame, this frame's new presses, the reading handed to update()
+    pad: { known: null, prev: [], edge: [], out: { stick: false, tr: 0, tp: 0, ty: 0, brake: false } },
+    // what the gamepad asks of the cockpit this frame: { type: 'checklist' | 'atc' (i) | 'view' | 'pause' | 'help' | 'toast' (text, kind) }
+    padOut: [],
+  };
+  // keys still held from before a start are ignored until they are released (FLIGHT LAB clears its key set)
+  const muted = new Set();
+  let arm = false;
+  let keys = NOKEYS;
+  const held = (code) => keys.has(code) && !(muted.size && muted.has(code));
+  const pressed = (a, b) => held(a) || (b !== undefined && held(b));
+
+  // every frame: the keys / pad → the pilot's inputs on s (FLIGHT LAB updateControls, line for line)
+  function update(L, dt, k, flying) {
+    keys = k || NOKEYS;
+    if (arm) { arm = false; for (const c of FLY_HELD) if (keys.has(c)) muted.add(c); }
+    if (muted.size) for (const c of muted) if (!keys.has(c)) muted.delete(c);
+    if (!L) return; const s = L.s;
+    if (!flying) { s.pIn = 0; s.rIn = 0; s.rud = st.rTrim; s.brake = st.parkBrake; return; }
+    let tp = (pressed('KeyS', 'ArrowDown') ? 1 : 0) - (pressed('KeyW', 'ArrowUp') ? 1 : 0);
+    let tr = (pressed('KeyD', 'ArrowRight') ? 1 : 0) - (pressed('KeyA', 'ArrowLeft') ? 1 : 0);
+    let ty = (pressed('KeyE') ? 1 : 0) - (pressed('KeyQ') ? 1 : 0);
+    let analog = false, brake = pressed('KeyB', 'Space');
+    let gp = null; try { gp = readPad ? readPad(L, dt) : padInput(L, dt); } catch (e) { gp = null; }
+    if (gp) { if (gp.stick) { tr = gp.tr; tp = gp.tp; analog = true; } if (gp.ty) ty = gp.ty; if (gp.brake) brake = true; }
+    if (analog) { tr = expo(tr); tp = expo(tp); }
+    if (analog) { s.pKey = tp; s.rKey = tr; s.pIn = ramp(clamp, s.pIn, tp, dt, true); s.rIn = ramp(clamp, s.rIn, tr, dt, true); }
+    else { s.pKey = ramp(clamp, s.pKey || 0, tp, dt, false); s.rKey = ramp(clamp, s.rKey || 0, tr, dt, false); s.pIn = curve(s.pKey); s.rIn = curve(s.rKey); }
+    // the keyboard pitch hold: in the air W / S move the nose attitude to hold; released, it stays there
+    s.keyHold = !analog && st.prefs.hold === 'hold';
+    s.rollHold = !P.SORAJIMA && !analog && st.prefs.rhold !== 'spring';    // the keyboard bank hold (FLIGHT LAB's; Sorajima's stick springs back)
+    const thNow = P.attitude(s).pitch;
+    if (!s.keyHold || (s.opts.levelT || 0) > 0 || s.pTgt == null || s.onGround) { s.pTgt = thNow; s.pHeld = 0; }
+    if (s.keyHold && tp && !s.onGround) {
+      s.pHeld = (s.pHeld || 0) + dt; const p0 = s.pTgt;
+      s.pTgt = clamp(s.pTgt + tp * (s.pHeld < 0.5 ? 1.5 : 3) * dt, -20, 22);
+      s.pRate = dt > 0 ? (s.pTgt - p0) / dt : 0;
+    } else { s.pHeld = 0; s.pRate = 0; }
+    if (s.keyHold && !s.onGround) s.pIn = 0;
+    s.rudKey = (s.rudKey || 0) + clamp(ty - (s.rudKey || 0), -3 * dt, 3 * dt);
+    s.rud = clamp(s.rudKey + st.rTrim, -1, 1);
+    // the throttle: fine at first, faster the longer the key is held (a real hand moves the lever in under a second)
+    const thU = pressed('KeyR', 'PageUp'), thD = pressed('KeyF', 'PageDown');
+    st.thrHeld = thU || thD ? (st.thrHeld || 0) + dt : 0;
+    const thRate = P.SORAJIMA || st.thrHeld < 0.4 ? 0.45 : 1.6;             // (Sorajima's: one steady speed)
+    if (thU) s.thr = clamp(s.thr + thRate * dt, 0, 1);
+    if (thD) s.thr = clamp(s.thr - thRate * dt, 0, 1);
+    // the parking brake holds both mains until the player releases it
+    s.brake = brake || st.parkBrake;
+  }
+
+  const say = (text, kind = '') => { st.kind = kind; return text; };
+  const pct = v => Math.round(Math.abs(v) * 100);
+  const trimTxt = s => { const t = Math.round(s.trim / P.TRIM_MAX * 100); return t === 0 ? '中立' : `${t > 0 ? '機首上げ' : '機首下げ'} ${Math.abs(t)}%`; };
+  // the actions (FLIGHT LAB doAction, same state changes), each with a short explanation of what it did and why
+  function action(L, a, arg) {
+    st.kind = '';
+    if (!L) return ''; const s = L.s, A = s.A;
+    if (a === 'flaps' || a === 'flapsUp') {
+      if (!A.wing.flap) return '';
+      const n = A.flapLabels.length;
+      s.flapIdx = a === 'flaps' ? (s.flapIdx + 1) % n : Math.max(0, s.flapIdx - 1);
+      const lab = A.flapLabels[s.flapIdx], fe = A.v.fe, over = s.flapIdx > 0 && s.out.ias > fe;
+      return say(`フラップ ${lab}${s.flapIdx === 0 ? '：揚力と抗力が減り、速く飛べる（巡航・上昇）' : '：揚力と抗力が増え、遅く・深い角度で降りられる'}${over ? `　⚠ 白い帯の上限 Vfe ${fe} kt を超えています` : ''}`, over ? 'bad' : '');
+    } else if (a === 'gear') {
+      if (A.gear.fixed) return say('この機体（Archer）の脚は固定式で、上げ下げできません');
+      if (s.onGround && s.gearDown) return say('地上では脚を上げられません');
+      s.gearDown = !s.gearDown;
+      return say(s.gearDown ? '脚 DOWN：着陸に備える（緑のランプ 3 つで確認）。抗力が増える' : '脚 UP：抗力が減って上昇・加速しやすくなる（正の上昇を確認してから）');
+    } else if (a === 'trim') {
+      if (s.onGround) { s.trim = 0; s.trimHold = 0; return say('地上ではトリムを離陸位置（中立）にしました'); }
+      if (s.opts.assist) return say('操縦アシスト中はトリムは自動です');
+      s.trimHold = s.elev; s.trim = P.trimLevel(s);
+      return say(`トリム ${s.trim >= 0 ? '機首上げ' : '機首下げ'} ${Math.abs(Math.round(s.trim / P.TRIM_MAX * 100))}%：いまの速度で、手を離してもこの姿勢が続くように合わせました`);
+    } else if (a === 'thrFull' || a === 'thrIdle') {
+      s.thr = a === 'thrFull' ? 1 : 0;
+      return say(a === 'thrFull' ? 'スロットル全開（Shift+R）：離陸・ゴーアラウンド・失速の回復で一気に出力を出す' : 'スロットル アイドル（Shift+F）：離陸中止・エンジン故障の模擬・着陸の接地前に一気に絞る');
+    } else if (a === 'trimReset') { s.trim = 0; s.trimHold = 0; return say('トリムを中立（離陸位置）に戻しました'); }
+    else if (a === 'level') {
+      if (!L.free) return say('L（水平に戻すアシスト）は自由飛行だけで使えます。訓練では自分で回復します');
+      s.opts.levelT = 4; return say('数秒間、自動で翼を水平・水平飛行に戻します（自由飛行の補助）');
+    } else if (a === 'autoRud') {
+      if (!L.free && A.twin && s.eng.some(e => e.failed)) return say('片発の課目では自動ラダーは使えません。生きているエンジン側のラダー（Q / E）とラダートリム（Z / X）で、自分の足で方向を保つ練習です');
+      s.opts.autoRud = !s.opts.autoRud; st.prefs.autoRud = s.opts.autoRud; try { savePrefs(st.prefs); } catch (e) { /* storage unavailable */ }
+      return say(s.opts.autoRud ? '自動ラダー ON：ボールを自動で中央に保ちます' : '自動ラダー OFF：Q / E でボールを中央に（離陸・上昇は右ラダー E。片発では生きている側の足）');
+    } else if (a === 'feather0' || a === 'feather1') {
+      if (!A.twin) return say('フェザーは双発機（Seminole）のプロペラ操作です');
+      const i = a === 'feather0' ? 0 : 1, e = s.eng[i], side = i ? '右' : '左';
+      if (e.feather) return say(`${side}のプロペラはすでにフェザーです`);
+      e.feather = true; e.cut = true;
+      if (!e.failed) return say(`⚠ ${side}エンジンは動いていました。生きているエンジンを止めました（重大な誤り）。Identify → Verify → Feather の順で`, 'bad');
+      return say(`${side}のプロペラをフェザー：羽根を風に平行にして回転を止め、抗力を大きく減らしました`, 'good');
+    } else if (a === 'restart0' || a === 'restart1') {
+      if (!A.twin) return ''; if (!L.free) return say('訓練中はエンジンの再始動はできません');
+      const e = s.eng[a === 'restart0' ? 0 : 1]; Object.assign(e, { feather: false, cut: false, failed: false, on: true }); return say('エンジンを再始動（自由飛行の補助）');
+    } else if (a === 'rtrimL' || a === 'rtrimR') {
+      st.rTrim = clamp(st.rTrim + (a === 'rtrimR' ? 0.05 : -0.05), -0.6, 0.6);
+      return say(`ラダートリム ${st.rTrim === 0 ? '中立' : `${st.rTrim > 0 ? '右' : '左'} ${Math.round(Math.abs(st.rTrim) * 100)}%`}：ラダーを踏み続けなくてよいように`);
+    }
+    // CADET's cockpit: one notch of the trim wheel (as the gamepad's D-pad), of the throttle, and the parking brake
+    else if (a === 'trimStep') {
+      if (s.opts.assist) return say('操縦アシスト中はトリムは自動です');
+      // (Sorajima's trim wheel: 4 % of the range a notch; the stick held now is not counted twice)
+      s.trim = clamp(s.trim + (arg < 0 ? -1 : 1) * P.TRIM_MAX * 0.04, -P.TRIM_MAX, P.TRIM_MAX); s.trimHold = s.elev;
+      return say(`トリム ${trimTxt(s)}`);
+    } else if (a === 'thrStep') {
+      s.thr = clamp(s.thr + (arg < 0 ? -0.05 : 0.05), 0, 1);
+      return say(`スロットル ${pct(s.thr)}%`);
+    } else if (a === 'parkBrake') {
+      st.parkBrake = arg == null ? !st.parkBrake : !!arg;
+      if (st.parkBrake) s.brake = true;
+      return say(st.parkBrake ? 'パーキングブレーキ セット：止まっている間は機体をここに保つ（動き出す前に解除）' : 'パーキングブレーキ 解除：B / Space で必要なときだけブレーキ');
+    }
+    return '';
+  }
+
+  // the gamepad (standard mapping; a PS5 DualSense or an Xbox pad), in flight. FLIGHT LAB padInput: the left stick is
+  // the yoke (it turns the keyboard holds off), the right stick x + the bumpers the rudder, the right stick y the trim,
+  // the triggers the throttle; the buttons as in FLIGHT LAB's guide. What the cockpit has to do goes to padOut.
+  // One difference: FLIGHT LAB answers a checklist item (A) or the tower (X / B / Y) at once, so the same press also
+  // brakes (A, last item) or works the flaps / the view (B / X / Y) once the dialog has closed; here the dialogs are
+  // answered by the bridge after this frame's controls, and a press does one thing.
+  const padAct = (L, a) => { const text = action(L, a); if (text) st.padOut.push({ type: 'toast', text, kind: st.kind }); };
+  function padInput(L, dt) {
+    const pads = getGamepads() || NOPADS;
+    let gp = null; for (let i = 0; i < pads.length; i++) { const p = pads[i]; if (p && p.connected) { gp = p; break; } }
+    const pad = st.pad;
+    if (!gp) { pad.known = null; return null; }
+    if (pad.known !== gp.id) { pad.known = gp.id; st.padOut.push({ type: 'toast', text: `コントローラーを認識しました${gp.mapping === 'standard' ? '' : '：このブラウザでは配置が標準ではないため、一部のボタンが違う場合があります'}`, kind: '' }); }
+    const ax = gp.axes;
+    const E = pad.edge; for (let i = 0; i < 18; i++) { const now = btn(gp, i) > 0.5, was = !!pad.prev[i]; pad.prev[i] = now; E[i] = now && !was; }
+    const out = pad.out; out.stick = false; out.tr = 0; out.tp = 0; out.ty = 0; out.brake = false;
+    if (!L) return out;
+    const s = L.s;
+    if (L.check && E[0]) st.padOut.push({ type: 'checklist' });
+    if (L.atc) { if (E[2]) st.padOut.push({ type: 'atc', i: 0 }); else if (E[1]) st.padOut.push({ type: 'atc', i: 1 }); else if (E[3]) st.padOut.push({ type: 'atc', i: 2 }); }
+    const lx = dz(ax[0]), ly = dz(ax[1]), rx = dz(ax[2]), ry = dz(ax[3], 0.2);
+    if (lx || ly) { out.stick = true; out.tr = lx; out.tp = ly; }
+    out.ty = clamp(rx + (btn(gp, 5) - btn(gp, 4)), -1, 1);
+    if (ry && !s.opts.assist) s.trim = clamp(s.trim + ry * 0.12 * dt, -P.TRIM_MAX, P.TRIM_MAX);
+    s.thr = clamp(s.thr + (btn(gp, 7) - btn(gp, 6)) * 0.5 * dt, 0, 1);
+    if (btn(gp, 0) > 0.5 && !L.check) out.brake = true;
+    if (!L.atc) { if (E[1]) padAct(L, 'flaps'); if (E[2]) padAct(L, 'flapsUp'); if (E[3]) st.padOut.push({ type: 'view' }); }
+    if (E[8]) padAct(L, 'gear');
+    if (E[9]) { st.padOut.push({ type: 'pause' }); return out; }
+    if (E[12] || E[13]) s.trim = clamp(s.trim + (E[13] ? 0.02 : -0.02), -P.TRIM_MAX, P.TRIM_MAX);
+    if (E[10]) padAct(L, 'level');
+    if (E[11]) padAct(L, 'autoRud');
+    if (E[14]) padAct(L, 'feather0');
+    if (E[15]) padAct(L, 'feather1');
+    if (E[16]) st.padOut.push({ type: 'help' });
+    return out;
+  }
+
+  return {
+    update, action, padInput,
+    // a new flight: no rudder trim, no held throttle, the parking brake off, keys held now ignored until released
+    reset() { st.rTrim = 0; st.thrHeld = 0; st.parkBrake = false; st.padOut.length = 0; this.clearKeys(); },
+    clearKeys() { muted.clear(); arm = true; },
+    get prefs() { return st.prefs; },
+    get rTrim() { return st.rTrim; }, set rTrim(v) { st.rTrim = v; },
+    get thrHeld() { return st.thrHeld; },
+    get parkBrake() { return st.parkBrake; },
+    // 'bad' | 'good' | '' for the last action's text
+    get kind() { return st.kind; },
+    get padOut() { return st.padOut; },
+    get padId() { return st.pad.known; },
+  };
+}

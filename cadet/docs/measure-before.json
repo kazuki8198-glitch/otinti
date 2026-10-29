@@ -1,0 +1,1278 @@
+{
+ "built": "2026-10-27",
+ "paces": {
+  "full": {
+   "totalMin": 221.62477151202702,
+   "breakdownMin": {
+    "classes": 177.37666666666664,
+    "ftd": 22.46966666666667,
+    "k4": 10.893333333333336,
+    "exam": 5.243333333333331,
+    "prologue": 1.8283333333333331,
+    "events": 0,
+    "study": 0,
+    "walk": 10.041771512027049,
+    "fixedNoWalk": 4.665
+   },
+   "days": [
+    {
+     "day": 1,
+     "plan": [
+      "morning:ceremony:welcome",
+      "am:tour:tour",
+      "pm:brief:meet"
+     ],
+     "minutes": 3.4,
+     "talkMin": 1.8,
+     "fixedS": 97,
+     "walkS": 65,
+     "lines": 16,
+     "decisions": 0,
+     "longestGapMin": 0.69,
+     "talks": [
+      {
+       "label": "ceremony",
+       "lines": 6,
+       "minutes": 0.7,
+       "decisions": 0,
+       "longestGapMin": 0.69
+      },
+      {
+       "label": "tour",
+       "lines": 5,
+       "minutes": 0.6,
+       "decisions": 0,
+       "longestGapMin": 0.59
+      },
+      {
+       "label": "meet",
+       "lines": 5,
+       "minutes": 0.5,
+       "decisions": 0,
+       "longestGapMin": 0.55
+      }
+     ]
+    },
+    {
+     "day": 2,
+     "plan": [
+      "am:class:0",
+      "pm:ftd:k1"
+     ],
+     "minutes": 28.4,
+     "talkMin": 26.5,
+     "fixedS": 111,
+     "walkS": 78,
+     "lines": 294,
+     "decisions": 12,
+     "longestGapMin": 3.12,
+     "talks": [
+      {
+       "label": "class 0",
+       "lines": 284,
+       "minutes": 25.5,
+       "decisions": 12,
+       "longestGapMin": 3.12
+      },
+      {
+       "label": "ftd k1",
+       "lines": 10,
+       "minutes": 1,
+       "decisions": 0,
+       "longestGapMin": 1.03
+      }
+     ]
+    },
+    {
+     "day": 3,
+     "plan": [
+      "am:class:1",
+      "pm:ftd:k2"
+     ],
+     "minutes": 31.6,
+     "talkMin": 29.8,
+     "fixedS": 111,
+     "walkS": 78,
+     "lines": 327,
+     "decisions": 25,
+     "longestGapMin": 3.22,
+     "talks": [
+      {
+       "label": "class 1",
+       "lines": 302,
+       "minutes": 28.2,
+       "decisions": 15,
+       "longestGapMin": 3.22
+      },
+      {
+       "label": "ftd k2",
+       "lines": 25,
+       "minutes": 1.6,
+       "decisions": 10,
+       "longestGapMin": 0.25
+      }
+     ]
+    },
+    {
+     "day": 4,
+     "plan": [
+      "am:off:"
+     ],
+     "minutes": 0.4,
+     "talkMin": 0,
+     "fixedS": 22,
+     "walkS": 1,
+     "lines": 0,
+     "decisions": 0,
+     "longestGapMin": 0,
+     "talks": []
+    },
+    {
+     "day": 5,
+     "plan": [
+      "am:class:2",
+      "pm:ftd:k3"
+     ],
+     "minutes": 18.7,
+     "talkMin": 16.8,
+     "fixedS": 111,
+     "walkS": 78,
+     "lines": 165,
+     "decisions": 17,
+     "longestGapMin": 3.36,
+     "talks": [
+      {
+       "label": "class 2",
+       "lines": 140,
+       "minutes": 14.3,
+       "decisions": 7,
+       "longestGapMin": 3.36
+      },
+      {
+       "label": "ftd k3",
+       "lines": 25,
+       "minutes": 2.5,
+       "decisions": 10,
+       "longestGapMin": 0.33
+      }
+     ]
+    },
+    {
+     "day": 6,
+     "plan": [
+      "am:class:3",
+      "pm:ftd:k4"
+     ],
+     "minutes": 39.9,
+     "talkMin": 38,
+     "fixedS": 111,
+     "walkS": 78,
+     "lines": 316,
+     "decisions": 14,
+     "longestGapMin": 10.89,
+     "talks": [
+      {
+       "label": "class 3",
+       "lines": 267,
+       "minutes": 27.1,
+       "decisions": 14,
+       "longestGapMin": 4.07
+      },
+      {
+       "label": "ftd k4",
+       "lines": 49,
+       "minutes": 10.9,
+       "decisions": 0,
+       "longestGapMin": 10.89
+      }
+     ]
+    },
+    {
+     "day": 7,
+     "plan": [
+      "am:class:4",
+      "pm:ftd:k5"
+     ],
+     "minutes": 34.5,
+     "talkMin": 32.7,
+     "fixedS": 111,
+     "walkS": 78,
+     "lines": 293,
+     "decisions": 22,
+     "longestGapMin": 4.79,
+     "talks": [
+      {
+       "label": "class 4",
+       "lines": 268,
+       "minutes": 28.5,
+       "decisions": 12,
+       "longestGapMin": 4.79
+      },
+      {
+       "label": "ftd k5",
+       "lines": 25,
+       "minutes": 4.1,
+       "decisions": 10,
+       "longestGapMin": 0.53
+      }
+     ]
+    },
+    {
+     "day": 8,
+     "plan": [
+      "am:class:5",
+      "pm:ftd:k6"
+     ],
+     "minutes": 57.9,
+     "talkMin": 56,
+     "fixedS": 111,
+     "walkS": 78,
+     "lines": 545,
+     "decisions": 31,
+     "longestGapMin": 5.69,
+     "talks": [
+      {
+       "label": "class 5",
+       "lines": 520,
+       "minutes": 53.7,
+       "decisions": 21,
+       "longestGapMin": 5.69
+      },
+      {
+       "label": "ftd k6",
+       "lines": 25,
+       "minutes": 2.3,
+       "decisions": 10,
+       "longestGapMin": 0.29
+      }
+     ]
+    },
+    {
+     "day": 9,
+     "plan": [
+      "am:exam:written1"
+     ],
+     "minutes": 6.8,
+     "talkMin": 5.2,
+     "fixedS": 93,
+     "walkS": 70,
+     "lines": 60,
+     "decisions": 28,
+     "longestGapMin": 0.3,
+     "talks": [
+      {
+       "label": "exam written1",
+       "lines": 60,
+       "minutes": 5.2,
+       "decisions": 28,
+       "longestGapMin": 0.3
+      }
+     ]
+    },
+    {
+     "day": 10,
+     "plan": [
+      "am:flight:a1"
+     ],
+     "minutes": 0.1,
+     "talkMin": 0,
+     "fixedS": 3,
+     "walkS": 0,
+     "lines": 0,
+     "decisions": 0,
+     "longestGapMin": 0,
+     "talks": []
+    }
+   ],
+   "questions": {
+    "asked": 4500,
+    "known": 4500,
+    "inBook": 4323,
+    "saidBefore": 3212,
+    "saidBeforePct": 74.3,
+    "notInBook": 177,
+    "byWhere": {
+     "class 0": {
+      "asked": 100,
+      "saidBefore": 95
+     },
+     "class 1": {
+      "asked": 200,
+      "saidBefore": 171
+     },
+     "ftd k2": {
+      "asked": 500,
+      "saidBefore": 500
+     },
+     "class 2": {
+      "asked": 100,
+      "saidBefore": 92
+     },
+     "ftd k3": {
+      "asked": 500,
+      "saidBefore": 0
+     },
+     "class 3": {
+      "asked": 200,
+      "saidBefore": 161
+     },
+     "class 4": {
+      "asked": 200,
+      "saidBefore": 49
+     },
+     "ftd k5": {
+      "asked": 500,
+      "saidBefore": 124
+     },
+     "class 5": {
+      "asked": 300,
+      "saidBefore": 229
+     },
+     "ftd k6": {
+      "asked": 500,
+      "saidBefore": 500
+     },
+     "exam written1": {
+      "asked": 1400,
+      "saidBefore": 1291
+     }
+    },
+    "notSaid": [
+     "ftd k3 drill:alts",
+     "ftd k3 drill:frq",
+     "ftd k3 drill:alt",
+     "ftd k3 drill:fl",
+     "ftd k3 drill:hdg",
+     "ftd k3 drill:letter",
+     "ftd k3 drill:sqk",
+     "ftd k3 drill:rwy",
+     "ftd k3 drill:wnd",
+     "ftd k3 drill:utc",
+     "class 4 q_comm#3",
+     "class 4 q_comm#8",
+     "ftd k5 scene:r_extend",
+     "ftd k5 scene:r_rwyentry",
+     "ftd k5 scene:r_verify",
+     "ftd k5 scene:r_vector",
+     "ftd k5 scene:r_ctaf_dw",
+     "ftd k5 scene:r_option",
+     "ftd k5 scene:r_first",
+     "class 5 q_radio#4",
+     "class 5 q_radio#12",
+     "ftd k3 drill:call",
+     "ftd k3 drill:spd",
+     "class 3 q_law#7",
+     "class 4 q_comm#2",
+     "class 4 q_comm#7",
+     "class 4 q_comm#6",
+     "ftd k5 scene:r_panpan",
+     "ftd k5 scene:r_luawlong",
+     "ftd k5 scene:r_prog",
+     "ftd k5 scene:r_contact",
+     "class 5 q_radio#13",
+     "class 5 q_radio#11",
+     "class 4 q_comm#4",
+     "class 4 q_comm#0",
+     "ftd k5 scene:r_unable",
+     "ftd k5 scene:r_exit",
+     "ftd k5 scene:r_term",
+     "ftd k5 scene:r_nordo",
+     "ftd k5 scene:notus",
+     "class 5 q_radio#6",
+     "class 5 q_radio#14",
+     "class 4 q_comm#5",
+     "ftd k5 scene:r_ctaf_clear",
+     "ftd k5 scene:r_cross",
+     "ftd k5 scene:sayagain",
+     "ftd k5 scene:r_standby2",
+     "class 0 q_aero#8",
+     "ftd k5 scene:r_light",
+     "ftd k5 scene:r_standby",
+     "ftd k5 scene:r_partial",
+     "ftd k5 scene:holdshort",
+     "ftd k5 scene:r_info",
+     "ftd k5 scene:r_correct",
+     "class 4 q_comm#1",
+     "ftd k5 scene:pattern",
+     "ftd k5 scene:r_mayday",
+     "ftd k5 scene:r_takeoff",
+     "class 5 q_radio#10"
+    ]
+   },
+   "classDay": {
+    "0": {
+     "day": 2,
+     "chapters": [
+      "aero"
+     ]
+    },
+    "1": {
+     "day": 3,
+     "chapters": [
+      "sys",
+      "perf"
+     ]
+    },
+    "2": {
+     "day": 5,
+     "chapters": [
+      "wx"
+     ]
+    },
+    "3": {
+     "day": 6,
+     "chapters": [
+      "law",
+      "hf"
+     ]
+    },
+    "4": {
+     "day": 7,
+     "chapters": [
+      "radio1",
+      "radio2"
+     ]
+    },
+    "5": {
+     "day": 8,
+     "chapters": [
+      "radio3",
+      "radio4",
+      "radio5"
+     ]
+    }
+   },
+   "ftdDay": {
+    "k1": {
+     "day": 2,
+     "result": "pass"
+    },
+    "k2": {
+     "day": 3,
+     "result": "pass"
+    },
+    "k3": {
+     "day": 5,
+     "result": "pass"
+    },
+    "k4": {
+     "day": 6,
+     "result": "pass"
+    },
+    "k5": {
+     "day": 7,
+     "result": "pass"
+    },
+    "k6": {
+     "day": 8,
+     "result": "pass"
+    }
+   },
+   "dayPatterns": [
+    {
+     "pattern": "guide｜今日の予定は終わり。ラウンジで同期と話せます。正面入口から寮に帰ると次の日になります",
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+     ]
+    },
+    {
+     "pattern": "dorm｜寮へ帰る 今日の訓練はここまで。寮に帰って休みます。 すぐに寝る 少し自習してから寝る（疲れが残る） やっぱり残る",
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+     ]
+    },
+    {
+     "pattern": "class:last｜Great job today. 教科書の同じ章を、今夜もう一度読んでおいてください。See you tomorrow!",
+     "days": [
+      2,
+      3,
+      5,
+      6,
+      7,
+      8
+     ]
+    },
+    {
+     "pattern": "toast｜今日の予定：午前 座学（# / #）／午後 訓練装置：k#（Tab でタブレット）",
+     "days": [
+      2,
+      3,
+      5,
+      6,
+      7,
+      8
+     ]
+    },
+    {
+     "pattern": "guide｜ブリーフィング室 # で、ミラー講師の授業を受ける（座学（# / #））",
+     "days": [
+      2,
+      3,
+      5,
+      6,
+      7,
+      8
+     ]
+    },
+    {
+     "pattern": "toast｜午後：訓練装置室（FTD）で訓練装置の課目です",
+     "days": [
+      2,
+      3,
+      5,
+      6,
+      7,
+      8
+     ]
+    },
+    {
+     "pattern": "guide｜訓練装置室で、ミラー講師と訓練装置：k#",
+     "days": [
+      2,
+      3,
+      5,
+      6,
+      7,
+      8
+     ]
+    },
+    {
+     "pattern": "toast｜k# 合格。今日の予定は終わりです",
+     "days": [
+      2,
+      3,
+      5,
+      6,
+      7,
+      8
+     ]
+    },
+    {
+     "pattern": "class:first｜Good morning, everyone. 今日は第 # 章「…」と第 # 章「…」です。",
+     "days": [
+      3,
+      6,
+      7
+     ]
+    }
+   ],
+   "framePatterns": [
+    {
+     "pattern": "ひとつ確認します。",
+     "count": 59
+    },
+    {
+     "pattern": "「…」はここまでです。",
+     "count": 59
+    },
+    {
+     "pattern": "［選択］次へ",
+     "count": 59
+    },
+    {
+     "pattern": "［選択］この節をもう一度",
+     "count": 59
+    },
+    {
+     "pattern": "［選択］教科書でこの節を読む",
+     "count": 59
+    },
+    {
+     "pattern": "［選択］ここで休憩する（続きはまた後で）",
+     "count": 53
+    },
+    {
+     "pattern": "ここが大切です。",
+     "count": 45
+    },
+    {
+     "pattern": "画面の表を見てください。",
+     "count": 42
+    },
+    {
+     "pattern": "正しくは「…」です。",
+     "count": 39
+    },
+    {
+     "pattern": "次は「…」です。",
+     "count": 37
+    },
+    {
+     "pattern": "あなた：“…”",
+     "count": 35
+    },
+    {
+     "pattern": "第 # 問（# 問中）。",
+     "count": 22
+    },
+    {
+     "pattern": "正解です。",
+     "count": 22
+    },
+    {
+     "pattern": "“…”",
+     "count": 21
+    },
+    {
+     "pattern": "ここからは「…」です。",
+     "count": 17
+    },
+    {
+     "pattern": "画面の図を見てください。",
+     "count": 14
+    },
+    {
+     "pattern": "# 節あります。",
+     "count": 11
+    },
+    {
+     "pattern": "順に見ていきましょう。",
+     "count": 11
+    },
+    {
+     "pattern": "最初は「…」です。",
+     "count": 11
+    },
+    {
+     "pattern": "最後は「…」です。",
+     "count": 11
+    },
+    {
+     "pattern": "第 # 章の確認です。",
+     "count": 11
+    },
+    {
+     "pattern": "# 問、答えてください。",
+     "count": 11
+    },
+    {
+     "pattern": "Tower：“…”",
+     "count": 11
+    },
+    {
+     "pattern": "画面の交信の例を聞いてください。",
+     "count": 9
+    }
+   ]
+  },
+  "quick": {
+   "totalMin": 64.24977151202705,
+   "breakdownMin": {
+    "classes": 20.001666666666665,
+    "ftd": 22.46966666666667,
+    "k4": 10.893333333333336,
+    "exam": 5.243333333333331,
+    "prologue": 1.8283333333333331,
+    "events": 0,
+    "study": 0,
+    "walk": 10.041771512027049,
+    "fixedNoWalk": 4.665
+   },
+   "days": [
+    {
+     "day": 1,
+     "plan": [
+      "morning:ceremony:welcome",
+      "am:tour:tour",
+      "pm:brief:meet"
+     ],
+     "minutes": 3.4,
+     "talkMin": 1.8,
+     "fixedS": 97,
+     "walkS": 65,
+     "lines": 16,
+     "decisions": 0,
+     "longestGapMin": 0.69,
+     "talks": [
+      {
+       "label": "ceremony",
+       "lines": 6,
+       "minutes": 0.7,
+       "decisions": 0,
+       "longestGapMin": 0.69
+      },
+      {
+       "label": "tour",
+       "lines": 5,
+       "minutes": 0.6,
+       "decisions": 0,
+       "longestGapMin": 0.59
+      },
+      {
+       "label": "meet",
+       "lines": 5,
+       "minutes": 0.5,
+       "decisions": 0,
+       "longestGapMin": 0.55
+      }
+     ]
+    },
+    {
+     "day": 2,
+     "plan": [
+      "am:class:0",
+      "pm:ftd:k1"
+     ],
+     "minutes": 5.4,
+     "talkMin": 3.5,
+     "fixedS": 111,
+     "walkS": 78,
+     "lines": 40,
+     "decisions": 2,
+     "longestGapMin": 2.08,
+     "talks": [
+      {
+       "label": "class 0",
+       "lines": 30,
+       "minutes": 2.5,
+       "decisions": 2,
+       "longestGapMin": 2.08
+      },
+      {
+       "label": "ftd k1",
+       "lines": 10,
+       "minutes": 1,
+       "decisions": 0,
+       "longestGapMin": 1.03
+      }
+     ]
+    },
+    {
+     "day": 3,
+     "plan": [
+      "am:class:1",
+      "pm:ftd:k2"
+     ],
+     "minutes": 7.3,
+     "talkMin": 5.4,
+     "fixedS": 111,
+     "walkS": 78,
+     "lines": 64,
+     "decisions": 14,
+     "longestGapMin": 2.03,
+     "talks": [
+      {
+       "label": "class 1",
+       "lines": 39,
+       "minutes": 3.9,
+       "decisions": 4,
+       "longestGapMin": 2.03
+      },
+      {
+       "label": "ftd k2",
+       "lines": 25,
+       "minutes": 1.6,
+       "decisions": 10,
+       "longestGapMin": 0.25
+      }
+     ]
+    },
+    {
+     "day": 4,
+     "plan": [
+      "am:off:"
+     ],
+     "minutes": 0.4,
+     "talkMin": 0,
+     "fixedS": 22,
+     "walkS": 1,
+     "lines": 0,
+     "decisions": 0,
+     "longestGapMin": 0,
+     "talks": []
+    },
+    {
+     "day": 5,
+     "plan": [
+      "am:class:2",
+      "pm:ftd:k3"
+     ],
+     "minutes": 6.2,
+     "talkMin": 4.4,
+     "fixedS": 111,
+     "walkS": 78,
+     "lines": 46,
+     "decisions": 12,
+     "longestGapMin": 1.4,
+     "talks": [
+      {
+       "label": "class 2",
+       "lines": 21,
+       "minutes": 1.8,
+       "decisions": 2,
+       "longestGapMin": 1.4
+      },
+      {
+       "label": "ftd k3",
+       "lines": 25,
+       "minutes": 2.5,
+       "decisions": 10,
+       "longestGapMin": 0.33
+      }
+     ]
+    },
+    {
+     "day": 6,
+     "plan": [
+      "am:class:3",
+      "pm:ftd:k4"
+     ],
+     "minutes": 16.1,
+     "talkMin": 14.2,
+     "fixedS": 111,
+     "walkS": 78,
+     "lines": 83,
+     "decisions": 4,
+     "longestGapMin": 10.89,
+     "talks": [
+      {
+       "label": "class 3",
+       "lines": 34,
+       "minutes": 3.3,
+       "decisions": 4,
+       "longestGapMin": 1.41
+      },
+      {
+       "label": "ftd k4",
+       "lines": 49,
+       "minutes": 10.9,
+       "decisions": 0,
+       "longestGapMin": 10.89
+      }
+     ]
+    },
+    {
+     "day": 7,
+     "plan": [
+      "am:class:4",
+      "pm:ftd:k5"
+     ],
+     "minutes": 9,
+     "talkMin": 7.2,
+     "fixedS": 111,
+     "walkS": 78,
+     "lines": 57,
+     "decisions": 14,
+     "longestGapMin": 1.31,
+     "talks": [
+      {
+       "label": "class 4",
+       "lines": 32,
+       "minutes": 3,
+       "decisions": 4,
+       "longestGapMin": 1.31
+      },
+      {
+       "label": "ftd k5",
+       "lines": 25,
+       "minutes": 4.1,
+       "decisions": 10,
+       "longestGapMin": 0.53
+      }
+     ]
+    },
+    {
+     "day": 8,
+     "plan": [
+      "am:class:5",
+      "pm:ftd:k6"
+     ],
+     "minutes": 9.6,
+     "talkMin": 7.7,
+     "fixedS": 111,
+     "walkS": 78,
+     "lines": 77,
+     "decisions": 16,
+     "longestGapMin": 1.9,
+     "talks": [
+      {
+       "label": "class 5",
+       "lines": 52,
+       "minutes": 5.4,
+       "decisions": 6,
+       "longestGapMin": 1.9
+      },
+      {
+       "label": "ftd k6",
+       "lines": 25,
+       "minutes": 2.3,
+       "decisions": 10,
+       "longestGapMin": 0.29
+      }
+     ]
+    },
+    {
+     "day": 9,
+     "plan": [
+      "am:exam:written1"
+     ],
+     "minutes": 6.8,
+     "talkMin": 5.2,
+     "fixedS": 93,
+     "walkS": 70,
+     "lines": 60,
+     "decisions": 28,
+     "longestGapMin": 0.3,
+     "talks": [
+      {
+       "label": "exam written1",
+       "lines": 60,
+       "minutes": 5.2,
+       "decisions": 28,
+       "longestGapMin": 0.3
+      }
+     ]
+    },
+    {
+     "day": 10,
+     "plan": [
+      "am:flight:a1"
+     ],
+     "minutes": 0.1,
+     "talkMin": 0,
+     "fixedS": 3,
+     "walkS": 0,
+     "lines": 0,
+     "decisions": 0,
+     "longestGapMin": 0,
+     "talks": []
+    }
+   ],
+   "questions": {
+    "asked": 4500,
+    "known": 4500,
+    "inBook": 4323,
+    "saidBefore": 835,
+    "saidBeforePct": 19.3,
+    "notInBook": 177,
+    "byWhere": {
+     "class 0": {
+      "asked": 100,
+      "saidBefore": 0
+     },
+     "class 1": {
+      "asked": 200,
+      "saidBefore": 42
+     },
+     "ftd k2": {
+      "asked": 500,
+      "saidBefore": 500
+     },
+     "class 2": {
+      "asked": 100,
+      "saidBefore": 19
+     },
+     "ftd k3": {
+      "asked": 500,
+      "saidBefore": 0
+     },
+     "class 3": {
+      "asked": 200,
+      "saidBefore": 0
+     },
+     "class 4": {
+      "asked": 200,
+      "saidBefore": 0
+     },
+     "ftd k5": {
+      "asked": 500,
+      "saidBefore": 39
+     },
+     "class 5": {
+      "asked": 300,
+      "saidBefore": 20
+     },
+     "ftd k6": {
+      "asked": 500,
+      "saidBefore": 100
+     },
+     "exam written1": {
+      "asked": 1400,
+      "saidBefore": 115
+     }
+    },
+    "notSaid": [
+     "class 0 q_aero#3",
+     "class 0 q_aero#4",
+     "class 1 q_sys#5",
+     "class 1 q_sys#4",
+     "class 2 q_wx#8",
+     "class 2 q_wx#9",
+     "ftd k3 drill:alts",
+     "ftd k3 drill:frq",
+     "ftd k3 drill:alt",
+     "ftd k3 drill:fl",
+     "ftd k3 drill:hdg",
+     "ftd k3 drill:letter",
+     "ftd k3 drill:sqk",
+     "ftd k3 drill:rwy",
+     "ftd k3 drill:wnd",
+     "ftd k3 drill:utc",
+     "class 3 q_law#4",
+     "class 3 q_law#5",
+     "class 3 q_hf#4",
+     "class 4 q_comm#9",
+     "class 4 q_comm#3",
+     "class 4 q_comm#7",
+     "class 4 q_comm#8",
+     "ftd k5 scene:r_extend",
+     "ftd k5 scene:r_holdpos",
+     "ftd k5 scene:r_rwyentry",
+     "ftd k5 scene:r_altim",
+     "ftd k5 scene:r_verify",
+     "ftd k5 scene:r_vector",
+     "ftd k5 scene:r_ctaf_dw",
+     "ftd k5 scene:r_option",
+     "ftd k5 scene:r_first",
+     "class 5 q_radio#4",
+     "class 5 q_radio#12",
+     "class 5 q_radio#0",
+     "class 5 q_radio#6",
+     "class 5 q_radio#2",
+     "class 5 q_radio#11",
+     "ftd k6 listen:notme",
+     "ftd k6 listen:contact",
+     "ftd k6 listen:vector",
+     "ftd k6 listen:altim",
+     "ftd k6 listen:takeoff",
+     "exam written1 q_aero#2",
+     "exam written1 q_hf#9",
+     "exam written1 q_hf#3",
+     "exam written1 q_law#3",
+     "exam written1 q_comm#0",
+     "exam written1 q_aero#1",
+     "exam written1 q_hf#1",
+     "exam written1 q_sys#3",
+     "exam written1 q_aero#4",
+     "exam written1 q_comm#5",
+     "exam written1 q_perf#1",
+     "exam written1 q_perf#3",
+     "exam written1 q_perf#0",
+     "exam written1 q_sys#6",
+     "exam written1 q_wx#8",
+     "exam written1 q_comm#2",
+     "exam written1 q_comm#6"
+    ]
+   },
+   "classDay": {
+    "0": {
+     "day": 2,
+     "chapters": [
+      "aero"
+     ]
+    },
+    "1": {
+     "day": 3,
+     "chapters": [
+      "sys",
+      "perf"
+     ]
+    },
+    "2": {
+     "day": 5,
+     "chapters": [
+      "wx"
+     ]
+    },
+    "3": {
+     "day": 6,
+     "chapters": [
+      "law",
+      "hf"
+     ]
+    },
+    "4": {
+     "day": 7,
+     "chapters": [
+      "radio1",
+      "radio2"
+     ]
+    },
+    "5": {
+     "day": 8,
+     "chapters": [
+      "radio3",
+      "radio4",
+      "radio5"
+     ]
+    }
+   },
+   "ftdDay": {
+    "k1": {
+     "day": 2,
+     "result": "pass"
+    },
+    "k2": {
+     "day": 3,
+     "result": "pass"
+    },
+    "k3": {
+     "day": 5,
+     "result": "pass"
+    },
+    "k4": {
+     "day": 6,
+     "result": "pass"
+    },
+    "k5": {
+     "day": 7,
+     "result": "pass"
+    },
+    "k6": {
+     "day": 8,
+     "result": "pass"
+    }
+   },
+   "dayPatterns": [
+    {
+     "pattern": "guide｜今日の予定は終わり。ラウンジで同期と話せます。正面入口から寮に帰ると次の日になります",
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+     ]
+    },
+    {
+     "pattern": "dorm｜寮へ帰る 今日の訓練はここまで。寮に帰って休みます。 すぐに寝る 少し自習してから寝る（疲れが残る） やっぱり残る",
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+     ]
+    },
+    {
+     "pattern": "class:last｜Great job today. 教科書の同じ章を、今夜もう一度読んでおいてください。See you tomorrow!",
+     "days": [
+      2,
+      3,
+      5,
+      6,
+      7,
+      8
+     ]
+    },
+    {
+     "pattern": "toast｜今日の予定：午前 座学（# / #）／午後 訓練装置：k#（Tab でタブレット）",
+     "days": [
+      2,
+      3,
+      5,
+      6,
+      7,
+      8
+     ]
+    },
+    {
+     "pattern": "guide｜ブリーフィング室 # で、ミラー講師の授業を受ける（座学（# / #））",
+     "days": [
+      2,
+      3,
+      5,
+      6,
+      7,
+      8
+     ]
+    },
+    {
+     "pattern": "toast｜午後：訓練装置室（FTD）で訓練装置の課目です",
+     "days": [
+      2,
+      3,
+      5,
+      6,
+      7,
+      8
+     ]
+    },
+    {
+     "pattern": "guide｜訓練装置室で、ミラー講師と訓練装置：k#",
+     "days": [
+      2,
+      3,
+      5,
+      6,
+      7,
+      8
+     ]
+    },
+    {
+     "pattern": "toast｜k# 合格。今日の予定は終わりです",
+     "days": [
+      2,
+      3,
+      5,
+      6,
+      7,
+      8
+     ]
+    },
+    {
+     "pattern": "class:first｜Good morning, everyone. 今日は第 # 章「…」と第 # 章「…」です。",
+     "days": [
+      3,
+      6,
+      7
+     ]
+    }
+   ],
+   "framePatterns": [
+    {
+     "pattern": "「…」。",
+     "count": 59
+    },
+    {
+     "pattern": "第 # 問（# 問中）。",
+     "count": 22
+    },
+    {
+     "pattern": "正解です。",
+     "count": 22
+    },
+    {
+     "pattern": "# 節あります。",
+     "count": 11
+    },
+    {
+     "pattern": "順に見ていきましょう。",
+     "count": 11
+    },
+    {
+     "pattern": "第 # 章の確認です。",
+     "count": 11
+    },
+    {
+     "pattern": "# 問、答えてください。",
+     "count": 11
+    }
+   ]
+  }
+ }
+}

@@ -44,7 +44,7 @@ import { createLogbook, entryFrom } from './career/logbook.js';
 import { buildWalkaroundProps } from './aircraft/walkaround-props.js';
 import { apronDialogs } from './content/dialog/day1.js';
 import { KITS } from './aircraft/walkaround.js';
-import { createCareer, prologueFlags, STAGE, CHECKS, LATER, SLOT_HOURS, SLOT_NAMES, CHAPTERS, CH2, GROUND, EXAMS, CLASSES, SOLO_TRUST, dateText, dateOf, passedAt, groundPassed } from './career/career.js';
+import { createCareer, prologueFlags, STAGE, CHECKS, LATER, SLOT_HOURS, SLOT_NAMES, CHAPTERS, CH2, GROUND, EXAMS, CLASSES, SOLO_TRUST, dateText, dateOf, passedAt, groundPassed, lessonGrowth, ftdGrowth, classGrowth, trustBand, graduationRank } from './career/career.js';
 import { planFor } from './career/day.js';
 import { temFor } from './career/tem.js';
 import { exportArchive, importArchive } from './career/archive.js';
@@ -54,7 +54,7 @@ import { createCrowd } from './npc/crowd.js';
 import { peopleDialogs } from './content/dialog/people.js';
 import { careerInstructorDialogs } from './content/dialog/instructor-career.js';
 import { careerBoardDialogs } from './content/dialog/cockpit.js';
-import { classDialogs, ftdDialogs, examDialogs, bankTaught, sectionHtml, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, FTD_TITLES, lecturePage, lecturerNotesHtml, classOptions, heardOf, chairDebriefDialogs, reviewQuestions, studyDialogs, reviewFor, sectionMarks, written1Readiness, mixedReview } from './content/school.js';
+import { classDialogs, ftdDialogs, examDialogs, drillDialogs, bankTaught, sectionHtml, navlogDialogs, navlogNumbers, NAVLOG, scoreOf, examScoreOf, FTD_TITLES, lecturePage, lecturerNotesHtml, classOptions, heardOf, chairDebriefDialogs, reviewQuestions, studyDialogs, reviewFor, sectionMarks, written1Readiness, mixedReview } from './content/school.js';
 import { eventDialogs } from './content/dialog/ch1-events.js';
 import { dayToast, afterClassToast, afterFtdToast, doneLine, dormCard, prologueWord } from './content/day-flow.js';
 import { chairScript } from './content/chair-flight.js';
@@ -485,6 +485,9 @@ async function boot() {
   function refreshCtx() {
     const st = career.state, w = weatherNow(), it = flightItem(), sch = planToday();
     Object.assign(cx.career, { chapter: st.chapter, slot: st.slot, day: st.day, dayMod3: st.day % 3, tired: career.tired(), solo: !!st.solo, flying: flyingChapter(), graduated: !!st.graduated,
+      // (growth design v1 §4.6) the graduation's rank: the stored one, or — on the morning itself, before it
+      // is stored — the same count made now (nothing that feeds it changes between the check and the ceremony)
+      rank: (st.graduated && st.graduated.rank) || (st.checks.final && st.checks.final.pass ? graduationRank(st, prog()).rank : ''),
       cls: CLASSES.filter((_, i) => st.done[`class:${i}`]).length, veteran: veteran(),
       // (chapter 1's written test: 0 still to come, 1 today, 2 passed — the people's lines of the days after the classes)
       exam1: st.exams.written1 && st.exams.written1.pass ? 2 : sch.some(x => x.kind === 'exam' && x.id === 'written1') ? 1 : 0 });
@@ -528,8 +531,9 @@ async function boot() {
   const apronRunner = createRunner({ data: withEnglish(apronDialogs()), state: talkState, hooks: { onHook } });
   const peopleRunner = createRunner({ data: withEnglish(peopleDialogs()), state: talkState, ctx: () => cx, hooks: { onHook } });
   // a lesson or a test (its own state: what is scored is not kept)
-  let lessonRun = null, lessonState = null, lessonKind = null, lessonQuestions = null;
+  let lessonRun = null, lessonState = null, lessonKind = null, lessonQuestions = null, studyAnswered = false;
   function startLesson(kind, id, data) {
+    studyAnswered = false;
     lessonState = createDialogState(); lessonKind = { kind, id, n: (data.questions || []).length }; lessonQuestions = data.questions || [];
     lessonRun = createRunner({ data: withEnglish(data), state: lessonState, ctx: () => cx, hooks: { onHook } });
     lessonRun.onChange(onRoomView);
@@ -659,7 +663,7 @@ async function boot() {
       if (chairEnd) { const d = chairEnd; chairEnd = null; return { run: startLesson('ftd', 'k4', d), dialog: 'ftd' }; }
       if (ftd && ftd.id === 'k4' && !(career.doneToday('ftd', 'k4') && groundPassed(prog(), 'k4'))) return { run: startLesson('ftd', 'k4', ftdDialogs(FL, 'k4', { k4: k4State() })), dialog: 'ftd' };
       if (ftd && !(career.doneToday('ftd', ftd.id) && groundPassed(prog(), ftd.id))) return { run: startLesson('ftd', ftd.id, ftdDialogs(FL, ftd.id, { seed: st.seed + st.day, heard: heardOf(FL, st), attempt: career.attempt(`ftd:${ftd.id}`) })), dialog: 'ftd' };
-      if (ex && ex.id === 'written1' && !(career.doneToday('exam', ex.id) && st.exams.written1 && st.exams.written1.pass)) { const n = career.attempt('exam:written1'); return { run: startLesson('exam', ex.id, examDialogs(FL, ex.id, { seed: st.seed + st.day, heard: heardOf(FL, st), attempt: n, warm: mixedReview(FL, st, { attempt: n }) })), dialog: 'exam' }; }
+      if (ex && ex.id === 'written1' && career.examReady('written1')) { const n = career.attempt('exam:written1'); return { run: startLesson('exam', ex.id, examDialogs(FL, ex.id, { seed: st.seed + st.day, heard: heardOf(FL, st), attempt: n, warm: mixedReview(FL, st, { attempt: n }) })), dialog: 'exam' }; }
       return { run: peopleRunner, dialog: 'lecturer' };
     }
     if (who !== 'instructor') return { run: peopleRunner, dialog: who };
@@ -742,12 +746,13 @@ async function boot() {
     else if (name === 'board') showFigure(arg === 'study' ? cx.today.studySection : arg, talkWho === 'lecturer' ? 'brief-2' : 'brief-1');
     else if (name === 'pfd') showPfd(arg);
     else if (name === 'say') speakEnglish(arg);
-    else if (name === 'quizEnd') { cx.quiz = scoreOf(lessonState, +arg); }
+    // (a written test is scored bank by bank too: §4.3's floor — the others keep the plain score)
+    else if (name === 'quizEnd') { cx.quiz = (lessonKind && (lessonKind.kind === 'exam' || lessonKind.kind === 'practice')) ? examScoreOf(lessonState, lessonQuestions, Object.fromEntries(FL.quiz.BANKS.map(b => [b.id, b.title]))) : scoreOf(lessonState, +arg); }
     // (chapter 1's classes and lessons: the pace chosen, a section heard, a question answered — kept with the career)
     else if (name === 'chair') { const [st0, only] = String(arg).split(':'); afterTalk.push(() => startChair(+st0, { only: only === 'missed' ? chairMissed : null, practice: talkWho === 'tablet' })); }
     else if (name === 'pace') career.setPace(arg);
     else if (name === 'heard') { const [id, how] = String(arg).split('|'); career.heardSection(id, how); }
-    else if (name === 'ans') { const [id, ok] = String(arg).split('|'); career.answered(id, ok === '1'); }
+    else if (name === 'ans') { const [id, ok] = String(arg).split('|'); career.answered(id, ok === '1'); if (lessonKind && lessonKind.kind === 'study') studyAnswered = true; }
     else if (name === 'done') { if (arg === 'class') lectureOver(); workDone(arg); }
     else if (name === 'decide') { const right = career.decision(arg, weatherNow()); refreshCtx(); cx.today.decisionRight = right; afterTalk.push(() => afterDecision()); }
     else if (name === 'tablet') toast('タブレットを受け取りました。Tab キーで開けます', 4200);
@@ -764,6 +769,9 @@ async function boot() {
     else if (name === 'imsafe') {
       const tired = career.tired(), honest = (arg === 'tired') === tired;
       cx.imsafe.honest = honest;
+      // (growth design v1 §4.5) saying "I am tired" honestly, once a day: the judgement grows (the trust is
+      // the dialog's own effect); the day's flight is swapped for ground study by the grounded flag below
+      if (honest && arg === 'tired' && !career.doneToday('grounded', 'imsafe')) career.grow('judge', 2.0, `imsafe:${career.day}`);
       if (arg === 'tired' || tired) { career.done('grounded', 'imsafe'); afterTalk.push(() => { buildInstructorTalk(); toast('今日は飛ばずに、地上で予習します。もう一度、早瀬 教官と話してください', 4200); }); }
     } else if (name === 'logbook') showLogbookNow(logbook.entries.length - 1);
     // (M8) the free question: once the line that offers it is on screen, the AI instructor's talk takes over
@@ -1000,6 +1008,8 @@ async function boot() {
     const sum = c.run.summary(), fails = career.state.attempts[K4_FAILS] || 0;
     chairMissed = sum.missed;
     cx.quiz = { right: sum.first, n: sum.n, pct: sum.pct, pass: sum.pass };
+    // (growth design v1 §4.1) a chair-flight practice finished: the calls grow a little, once a day
+    if (c.practice && !career.doneToday('chairp', 'comm')) { career.grow('comm', 1.0, `chairp:${career.day}`); career.done('chairp', 'comm'); }
     if (!c.practice && sum.stage >= 2) { career.state.attempts[K4_FAILS] = sum.pass ? 0 : fails + 1; career.save(); }
     const d = chairDebriefDialogs(FL, sum, c.script, { fails, practice: c.practice });
     if (c.practice) tabletTalk('chair', 'k4', d, 'ftd', 'タブレット（交信の練習）');
@@ -1027,7 +1037,7 @@ async function boot() {
     if (captain.setSeated) captain.setSeated(st.seat);
   }
   const epi = { on: false, yaw: 0, pitch: -0.1, hours: null };
-  const epiRunner = createRunner({ data: withEnglish(epilogueDialogs()), state: talkState, hooks: { onHook } });
+  const epiRunner = createRunner({ data: withEnglish(epilogueDialogs(career.state.graduated ? career.state.graduated.rank : '')), state: talkState, hooks: { onHook } });
   epiRunner.onChange(onRoomView);
   const LAB_GROUPS = () => [ground.group, airfield.group, buildings.group, academy.group, veg.group, landmarks.group, ...parked.map(p => p.root), todays.pa28.ac.root, todays.pa44.ac.root];
   function enterEpilogue() {
@@ -1187,6 +1197,8 @@ async function boot() {
     stand: { a: spec.target.a, c: spec.target.c, hdgTrue: (L.R.trueHdg + 270) % 360 }, wind: DAY_WIND,
     parkedToday: () => todayAc.root, aircraft: () => todayType, toFrame,
     tem: () => (temPick && temPick.day === career.state.day ? temPick : null),
+    // (growth design v1 §4.5) the debrief says it when the cadet flew tired (the fatigue as the flight ended)
+    tired: () => career.tired(),
     todayColliders: (on) => { for (const id of todayIds) world.setEnabled(id, on); },
     // they were in the aircraft: back where the day puts them (the instructor by the aircraft if the cadet was briefed)
     instructorHome: (root, actor) => { if (!actor || actor === instructor) placeInstructor(); else { for (const id of ['chief']) cast.home(id); layoutPeople(); } },
@@ -1255,7 +1267,7 @@ async function boot() {
     if (arg === 'ceremony') { career.done('ceremony', 'welcome'); afterTalk.push(() => { career.advance('am'); applySlot(); toast(prologueWord('ceremony', { short: shortWords() }), 5200); }); }
     else if (arg === 'tour') { career.done('tour', 'tour'); afterTalk.push(() => { career.advance('pm'); applySlot(); toast(prologueWord('tour', { short: shortWords() }), 5200); }); }
     else if (arg === 'meet') { career.done('brief', 'meet'); career.finishPrologue(); try { if (store && !store.getItem(VETERAN)) store.setItem(VETERAN, String(career.state.seed)); } catch (e) { /* not kept */ } afterTalk.push(() => { career.advance('evening'); applySlot(); toast(prologueWord('meet', { short: shortWords() }), 6000); }); }
-    else if (arg === 'class' && k) { career.done('class', String(k.id)); career.tire(6); afterTalk.push(() => { next(); applySlot(); if (skipDay !== career.day) toast(afterClassToast(+k.id), 5200); }); }
+    else if (arg === 'class' && k) { career.done('class', String(k.id)); career.tire(6); for (const [axis, v] of classGrowth(career.state.lastPace)) career.grow(axis, v, `class:${k.id}`); afterTalk.push(() => { next(); applySlot(); if (skipDay !== career.day) toast(afterClassToast(+k.id), 5200); }); }
     else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'ftd') {
       career.done('ftd', k.id); career.tire(6);
       if (arg === 'pass') groundPass(k.id, k.n || k.id === 'k4' ? cx.quiz.pct : 100);
@@ -1269,7 +1281,7 @@ async function boot() {
       if (arg === 'pass') { career.done('navlog', 'xc'); afterTalk.push(() => { next(); applySlot(); toast('午後：単独の野外飛行。早瀬 教官のブリーフィングを受けて、外部点検から', 5200); }); }
       else afterTalk.push(() => toast('航法ログを見直して、もう一度、早瀬 教官と', 4200));
     } else if (arg === 'graduation') {
-      career.graduate();
+      career.graduate(prog());
       afterTalk.push(() => {
         cards.show({ kicker: '修了', title: '翔洋航空 フライトアカデミー', sub: '基礎訓練課程　修了おめでとう', ms: 4200, onDark: () => { career.advance('evening'); applySlot(); layoutPeople(); placeInstructor(); } })
           .then(() => toast('修了です。ラウンジで同期と話すことも、航空日誌を見返すこともできます（Tab）', 7000));
@@ -1277,15 +1289,29 @@ async function boot() {
     } else if (arg === 'epilogue') { afterTalk.push(() => finishEpilogue());
     } else if (arg === 'study') { career.done('study', grounded() ? 'imsafe' : 'weather'); career.tire(4); afterTalk.push(() => { next(); applySlot(); }); }
     else if (arg === 'event' && k && k.kind === 'event') { career.done('event', k.id); afterTalk.push(() => { applySlot(); const d = doneLine(career.state); if (d && skipDay !== career.day) toast(d, 5200); }); }
-    // (the evening's study over: to bed, a little late)
-    else if (arg === 'night') afterTalk.push(() => sleepNow({ late: true }));
+    // (the evening's study over: to bed, a little late; a review set answered counts as the day's review)
+    else if (arg === 'night') { if (studyAnswered) reviewDone(); afterTalk.push(() => sleepNow({ late: true })); }
+    // (a practice test on the tablet finished: the day's review too — pass or not, the set was worked through)
+    else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'practice') reviewDone();
+    // (a judgement drill finished: the career counts it — the judgement grows, twice a day at most)
+    else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'drill') career.drill();
+  }
+  // (growth design v1 §4.1) a review set finished: a little knowledge, once a day at most
+  function reviewDone() {
+    if (career.doneToday('review', 'know')) return;
+    career.grow('know', 1.5, `review:${career.day}`);
+    career.done('review', 'know');
   }
   // a training device lesson passed: into FLIGHT LAB's record (school.js's shape, as FLIGHT LAB's own ground pages write it)
   function groundPass(id, pct) {
     const p = prog(), r = p.lessons[id] || { tries: 0, best: '', pass: false, levels: [] };
+    const first = r.tries === 0;
     r.tries++; r.pass = true; const g = pct >= 100 ? 'S' : pct >= 90 ? 'A' : 'B';
     if (!r.best || 'SAB'.indexOf(g) < 'SAB'.indexOf(r.best)) r.best = g;
     p.lessons[id] = r; FL.school.saveProgress(fly.flight.store, p);
+    // (growth design v1 §4.1) a passed device lesson teaches too; a first-ever pass counts for the first-try rate
+    if (first) career.firstTry(true);
+    for (const [axis, v] of ftdGrowth(id)) career.grow(axis, v, `ftd:${id}`);
   }
   // the go / no-go given: a morning of fog waits for the afternoon
   function afterDecision() {
@@ -1309,6 +1335,18 @@ async function boot() {
     if (it && it.kind === 'checkride' && !reason) { const who = checkWho(it); return careerBoardDialogs(FL, { lessons: plan.lessons, checkride: true, checkTitle: CHECKS[it.id] ? CHECKS[it.id].title : 'ソロ前の審査', who: PEOPLE[who].title, color: PEOPLE[who].color }); }
     return careerBoardDialogs(FL, { lessons: plan.lessons, ready: !reason, reason: reason || 'none' });
   }
+  // (growth design v1 §4.1) a flying day's lessons teach: by each lesson's grade and the day's level, halved
+  // when the cadet flew tired (the fatigue before this flight's own +15); a lesson's first-ever try is counted
+  function applyFlightGrowth(sum) {
+    if (!sum || !sum.lessons) return;
+    const tired = career.tired(), p = prog();
+    for (const l of sum.lessons) {
+      if (!l.done) continue;
+      for (const [axis, v] of lessonGrowth(l.grade, sum.level, l.id, tired)) career.grow(axis, v, `lesson:${l.id}`);
+      const rec = p.lessons[l.id];
+      if (rec && rec.tries === 1) career.firstTry(!!l.passed);
+    }
+  }
   // out of the aircraft after a flying day: what was flown counts (FLIGHT LAB's record already has the lessons)
   function dayOver(d) {
     const it = dayItem && dayItem.day === career.day && dayItem.it ? dayItem.it : flightItem();
@@ -1316,6 +1354,7 @@ async function boot() {
     if (it.kind === 'xc') return;                            // (signed off outside: xcLanded)
     // (M6) a later check: passed when every lesson of the day was
     const sum = d.summary ? d.summary() : null, all = !!(sum && sum.lessons.length && sum.lessons.every(l => l.done && l.passed));
+    applyFlightGrowth(sum);
     if (it.kind === 'checkride' && CHECKS[it.id]) career.check(it.id, all); else career.done(it.kind, it.id);
     career.tire(15);
     talkState.flags.briefed_today = false;
@@ -1333,6 +1372,7 @@ async function boot() {
   // the first solo landed: its line in the logbook (solo time, the instructor's endorsement); they wait by the aircraft
   function soloLanded(sum) {
     logbook.add(entryFrom(sum, { remarks: 'ファーストソロ。場周経路 3 回、いずれも停止まで着陸。', date: dateOf(career.day).iso, dayN: career.day }));
+    applyFlightGrowth(sum);
     career.done('solo', 'solo'); career.tire(15);
     celebrate = true; talkState.flags.briefed_today = false;
     placeInstructor('apron'); layoutPeople();
@@ -1341,6 +1381,7 @@ async function boot() {
   function xcLanded(sum) {
     const pass = sum.lessons.length > 0 && sum.lessons.every(l => l.done && l.passed);
     logbook.add(entryFrom(sum, { remarks: pass ? '単独の野外飛行（LAB → LAB-A、目的地変更あり）。航法ログどおり。' : '単独の野外飛行。基準に届かない区間あり、再訓練。', date: dateOf(career.day).iso, dayN: career.day, xc: true }));
+    applyFlightGrowth(sum);
     career.check('xc', pass); career.tire(15);
     talkState.flags.briefed_today = false;
     if (career.slot === 'morning' || career.slot === 'am') career.advance('pm'); else career.advance('evening');
@@ -1485,11 +1526,15 @@ async function boot() {
         marks: sectionMarks(FL, st), written1: written1Readiness(FL, st),
         exams: Object.entries(EXAMS).map(([id, e]) => ({ title: e.title, ...(st.exams[id] || { best: 0, pass: false, tries: 0 }) })),
         lessons: [...CH2, 'c1', ...LATER.filter(c => CHAPTERS[c].n <= CHAPTERS[st.chapter].n).flatMap(c => STAGE[c].lessons)].map(id => ({ id, title: FL.school.lesson(id).title, best: p.lessons[id] ? p.lessons[id].best : '', pass: passedAt(p, id) })),
-        trust: [['instructor', INSTRUCTOR.title_ja], ['chief', PEOPLE.chief.title], ['dispatcher', PEOPLE.dispatcher.title], ['mechanic', PEOPLE.mechanic.title]].map(([k, n]) => ({ name: n, v: Math.round(trustOf(talkState, k)) })),
+        trust: [['instructor', INSTRUCTOR.title_ja], ['chief', PEOPLE.chief.title], ['dispatcher', PEOPLE.dispatcher.title], ['mechanic', PEOPLE.mechanic.title]].map(([k, n]) => { const v = Math.round(trustOf(talkState, k)); return { name: n, v, band: trustBand(v) }; }),
+        // (growth design v1 §4.7) the four abilities, whole numbers; after the graduation, its rank's record
+        abilities: [['操縦', Math.floor(st.abilities.hand)], ['知識', Math.floor(st.abilities.know)], ['交信', Math.floor(st.abilities.comm)], ['判断', Math.floor(st.abilities.judge)]],
+        gradRank: st.graduated && st.graduated.rank ? { rank: st.graduated.rank, total: st.graduated.total, firstRate: st.graduated.firstRate, examTries: st.graduated.examTries, avgScore: st.graduated.avgScore } : null,
         book: book.chapters.map(c => ({ id: c.id, n: c.n, title: c.title, sections: c.sections.map(x => ({ id: x.id, title: x.title })) })),
         // (in chapter 1: of each bank, the questions whose answers the classes have said; the chair flight once its
         // class — the calls of one flight — is done)
         banks: BANKS.map(b => ({ id: b.id, title: b.title, n: b.qs.length, taught: ch1 ? bankTaught(FL, b.id, heard) : b.qs.length })), k4: { passed: groundPassed(p, 'k4') }, chapter1: ch1,
+        drillsLeft: career.drillsLeft(),
         chair: !ch1 || st.done['class:3'] != null || groundPassed(p, 'k4'),
         graduated: !!st.graduated, evening: st.slot === 'evening', canWait: st.slot !== 'evening' && !sch.some(x => x.slot === st.slot && state(x) === 'now'),
       };
@@ -1498,6 +1543,8 @@ async function boot() {
       logbook: () => showLogbookNow(-1),
       read: (id) => openSection(id),
       practice: (bankId) => practice(bankId),
+      // (the judgement drill: ten mornings of weather, the tablet asking — §4.4)
+      drill: () => { if (!talk && !chair && mode === 'walk' && career.drillsLeft() > 0) tabletTalk('drill', 'drill', drillDialogs(FL, career.state, { attempt: career.attempt('drill') }), 'drill', 'タブレット（判断ドリル）'); },
       chair: (stage) => { if (!talk && !chair && mode === 'walk') startChair(stage, { practice: true }); },
       // (k4 passed: the textbook's own flight, at another airport, to listen to — school.js k4ListenNodes)
       chairListen: () => { if (talk || chair || mode !== 'walk') return; const d = ftdDialogs(FL, 'k4', { k4: { ...k4State(), passed: true } }); d.dialogs.ftd.start = 'k4:listen'; tabletTalk('chair', 'listen', d, 'ftd', 'タブレット（交信の例）'); },

@@ -1,0 +1,1261 @@
+{
+ "ledger": "CLAIMS (draft rows for the chapter intro)",
+ "unit": "W10-intro",
+ "by": "W10-intro",
+ "updated": "2026-10-27",
+ "about": "drafts/intro.js の主張（数字と単位・条番号・法令名を含む文。check-claims.mjs が抜き出す全部と、抜き出されないが事実を言う文）。id は check-claims.mjs の claimId（節 ID と文の sha1）。tag は 教材値・参考値・条文・推測・要確認。登録のコミットで CLAIMS.json にパッチ（op: add）で入れ、別の確かめ役が署名する（checkedBy）。",
+ "counts": {
+  "rows": 123,
+  "extracted": 80,
+  "byTag": {
+   "条文": 60,
+   "参考値": 45,
+   "推測・要確認": 11,
+   "教材値": 7
+  }
+ },
+ "rows": [
+  {
+   "id": "intro.use#d8757292",
+   "sec": "intro.use",
+   "text": "最新の法令と航空情報（米国では 14 CFR と AIM（Aeronautical Information Manual：航空情報マニュアル）、日本では国の法令と AIP）",
+   "kinds": [
+    "14 CFR",
+    "AIM"
+   ],
+   "tag": "条文",
+   "source": "法令と資料の名前を挙げるだけ（数字なし）：米国の 14 CFR（eCFR）・AIM（FAA）、日本の法令（e-Gov）と AIP"
+  },
+  {
+   "id": "intro.marks#c2452f11",
+   "sec": "intro.marks",
+   "text": "AWH 22.8.2・米国の 14 CFR 61.89 など ｜ 出典（FAA のハンドブック、米国の AIM と 14 CFR）の章や条の番号です。",
+   "kinds": [
+    "14 CFR",
+    "AIM"
+   ],
+   "tag": "条文",
+   "source": "出典の番号の書き方の例（AWH 22.8.2・14 CFR 61.89 は今の教科書が引く番号）"
+  },
+  {
+   "id": "intro.course#ec1d2da0",
+   "sec": "intro.course",
+   "text": "ANA は、自社養成パイロットの基礎訓練の流れを、自社のウェブサイトと取材記事で公開しています（2025 年 10 月の記事）。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.ana1（ANA、2025-10-22）・R.ana2（ANA HD、2025-10-29。2026-10-27 に読んだ）"
+  },
+  {
+   "id": "intro.course#c8a6d521",
+   "sec": "intro.course",
+   "text": "期間と委託先 ｜ 基礎訓練は約 1 年半〜2 年。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.ana1（ANA「ボーイング777 パイロットになるまで Phase2〜基礎訓練編〜」2025-10-22）",
+   "note": "2026-10-27 は ana.co.jp が接続のタイムアウトで読み直せなかった。今の教科書の intro.course の表（前の単位の確認）と flight-lab/outputs/ANA-SANFORD-調査と設計.md の記録（2026-10-08〜09）のまま。W12 で読み直す"
+  },
+  {
+   "id": "intro.course#8a316d06",
+   "sec": "intro.course",
+   "text": "1 回 90〜120 分のレッスンを 12 回受け、審査（Check Flight）に合格すると単独飛行（ソロ、solo flight）へ進む。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.ana1（同上）",
+   "note": "同上（2026-10-27 は読み直せなかった）"
+  },
+  {
+   "id": "intro.course#3aaeec02",
+   "sec": "intro.course",
+   "text": "別の取材記事には「平均 11 回目のフライトでファーストソロ」とあります。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.ana2（ANA HD「未来の翼が生まれる場所へ」2025-10-29。2026-10-27 に読んだ：「平均11回目のフライトでファーストソロに出る」）"
+  },
+  {
+   "id": "intro.course#f165e0ed",
+   "sec": "intro.course",
+   "text": "上の表の「12 回のレッスンと審査の後にソロ」とは別の記事です。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.ana1（同上）"
+  },
+  {
+   "id": "intro.course#f2ede500",
+   "sec": "intro.course",
+   "text": "米国の FAA の資料は、Airplane Flying Handbook、実地試験の基準 ACS（Airman Certification Standards）、AIM です。",
+   "kinds": [
+    "AIM"
+   ],
+   "tag": "参考値",
+   "source": "この教材が参考にした資料の名前（R.afh・R.acsP・R.aim）"
+  },
+  {
+   "id": "intro.course#ebbf8c4f",
+   "sec": "intro.course",
+   "text": "公開情報には時点がある（この表は 2025 年 10 月の記事）",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.ana1・R.ana2 の日付"
+  },
+  {
+   "id": "intro.cert#54a93612",
+   "sec": "intro.cert",
+   "text": "左は米国（FAA、米国の 14 CFR Part 61）、右は日本（国土交通省航空局、JCAB）。",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "14 CFR Part 61（eCFR）・航空法施行規則（e-Gov）"
+  },
+  {
+   "id": "intro.cert#78b2f451",
+   "sec": "intro.cert",
+   "text": "日本の事業用操縦士の 200 時間は、指定養成施設の課程では飛行訓練 150 時間です",
+   "kinds": [
+    "number"
+   ],
+   "tag": "条文",
+   "source": "航空法施行規則 別表第二 事業用操縦士 一 イ（200 時間以上の飛行時間、または指定航空従事者養成施設などで 150 時間以上の飛行訓練）。e-Gov の令和 8 年 10 月 1 日施行の版（327M50000800056_20261001_508M60000800082）を 2026-10-27 に読んだ",
+   "note": "別表第二は textbook/rewrite/sources/egov/ の写しにまだない（W37 に写しを頼む）"
+  },
+  {
+   "id": "intro.cert#bb0d341d",
+   "sec": "intro.cert",
+   "text": "米国の規則は 14 CFR（Code of Federal Regulations：連邦規則集の第 14 編）にあります。",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "14 CFR（Code of Federal Regulations Title 14。eCFR）"
+  },
+  {
+   "id": "intro.cert#354962f3",
+   "sec": "intro.cert",
+   "text": "Part 61：米国の操縦士の資格（何をすれば、どの資格が取れるか）",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "14 CFR Part 61（Certification: Pilots, Flight Instructors, and Ground Instructors）"
+  },
+  {
+   "id": "intro.cert#e98ca4c8",
+   "sec": "intro.cert",
+   "text": "Part 91：米国の飛び方の規則（天気の条件、高度、燃料 など）",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "14 CFR Part 91（General Operating and Flight Rules）"
+  },
+  {
+   "id": "intro.cert#775b1131",
+   "sec": "intro.cert",
+   "text": "Part 67：米国の身体検査（航空身体検査証明（medical certificate）の基準）",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "14 CFR Part 67（Medical Standards and Certification）"
+  },
+  {
+   "id": "intro.cert#0c7baad9",
+   "sec": "intro.cert",
+   "text": "米国の資格・限定 ｜ できること（要点） ｜ 米国の規則（14 CFR） ｜",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "表の見出し（14 CFR）"
+  },
+  {
+   "id": "intro.cert#9a5f1caa",
+   "sec": "intro.cert",
+   "text": "学生操縦士（student pilot） ｜ 操縦教員の承認（logbook endorsement）の範囲で、1 人で飛ぶ練習ができる。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "条文",
+   "source": "14 CFR 61.87（学生の単独飛行の要件）・61.89（学生操縦士の制限：乗客を乗せない）。今の教科書の intro.cert の表のまま（W07a が確かめた）"
+  },
+  {
+   "id": "intro.cert#98ac380d",
+   "sec": "intro.cert",
+   "text": "乗客は乗せられない ｜ 米国 61.83・61.87・61.89 ｜",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "14 CFR 61.83・61.87・61.89"
+  },
+  {
+   "id": "intro.cert#ec1bfd17",
+   "sec": "intro.cert",
+   "text": "報酬を受けて機長（pilot in command）はできない（燃料・オイル・空港の料金・機体の借り賃を、乗客と頭割りで分けるのは認められている） ｜ 米国 61.103・61.113 ｜",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "14 CFR 61.103（自家用の資格の要件）・61.113（自家用の権利と制限：費用の頭割り 61.113(c)）"
+  },
+  {
+   "id": "intro.cert#9828b8c1",
+   "sec": "intro.cert",
+   "text": "外が見えない天気（IMC）でも、IFR なら飛べる ｜ 米国 61.65 ｜",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "14 CFR 61.65（計器飛行証明）・61.3(e)"
+  },
+  {
+   "id": "intro.cert#12349a9e",
+   "sec": "intro.cert",
+   "text": "事業用操縦士（Commercial Pilot） ｜ 報酬を受けて操縦できる（その運航の規則の条件も満たすとき） ｜ 米国 61.123・61.133 ｜",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "14 CFR 61.123（事業用の資格の要件）・61.133（事業用の権利と制限）"
+  },
+  {
+   "id": "intro.cert#d06f7c65",
+   "sec": "intro.cert",
+   "text": "持っている資格に加える限定（足し方は下の日米の対照） ｜ 米国 61.63 ｜",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "14 CFR 61.63（限定を足す。(c) 等級：教官の裏書きと実地試験、同じ水準の飛行機の限定があれば学科試験なし。FL.jur multi.rating・W08b が eCFR で確かめた）"
+  },
+  {
+   "id": "intro.cert#4100f99b",
+   "sec": "intro.cert",
+   "text": "米国のエアライン（Part 121）では副操縦士にも必要 ｜ 米国 61.153・121.436 ｜",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "14 CFR 61.153（ATP の資格の要件）・121.436（Part 121 の操縦士の資格：副操縦士も ATP）。今の教科書の値"
+  },
+  {
+   "id": "intro.cert#d477ecbf",
+   "sec": "intro.cert",
+   "text": "図の米国の飛行時間は、米国の 14 CFR Part 61 の最低限です。",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "14 CFR Part 61（61.109・61.65(d)・61.129・61.159 の最低時間。図の値は今の教科書の certLadder（W07f）と同じ）"
+  },
+  {
+   "id": "intro.cert#3f523756",
+   "sec": "intro.cert",
+   "text": "米国の FAA が認めた訓練課程（Part 141）には、Part 61 より少ない最低時間が決まっています。",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "14 CFR Part 141 Appendix B 4(a)(1)（自家用の課程は 35 hours of training）と 14 CFR 61.109(a)（40 時間）。Cornell LII で 2026-10-27 に読んだ"
+  },
+  {
+   "id": "intro.cert#bdf5e97d",
+   "sec": "intro.cert",
+   "text": "自家用操縦士 ｜ 報酬を受けないで、無償の運航をする航空機を操縦する ｜ 17 歳以上。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "条文",
+   "source": "業務範囲：航空法 別表（自家用操縦士：報酬を受けないで、無償の運航を行う航空機の操縦。航空法第 28 条の別表、e-Gov の令和 7 年 12 月 1 日施行の版を 2026-10-27 に読んだ）。年齢：航空法施行規則 第 43 条第 1 項（自家用操縦士は 17 歳）。e-Gov の令和 8 年 10 月 1 日施行の版を 2026-10-27 に読んだ",
+   "note": "第 43 条は e-Gov の写しにまだない（W37）。本文には条番号を書かない"
+  },
+  {
+   "id": "intro.cert#3541a3ca",
+   "sec": "intro.cert",
+   "text": "飛行時間 40 時間以上など ｜",
+   "kinds": [
+    "number"
+   ],
+   "tag": "条文",
+   "source": "航空法施行規則 別表第二 自家用操縦士 一 イ（40 時間以上。指定養成施設などでは 35 時間以上の飛行訓練）。e-Gov、2026-10-27",
+   "note": "別表第二は写しにまだない（W37）"
+  },
+  {
+   "id": "intro.cert#145d5b8e",
+   "sec": "intro.cert",
+   "text": "エアラインの航空機を、機長以外の操縦者（副操縦士）として操縦する ｜ 18 歳以上。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "条文",
+   "source": "業務範囲：航空法 別表（事業用操縦士 二〜四。航空法第 28 条の別表、e-Gov の令和 7 年 12 月 1 日施行の版を 2026-10-27 に読んだ）。年齢：航空法施行規則 第 43 条（18 歳）"
+  },
+  {
+   "id": "intro.cert#66024ed9",
+   "sec": "intro.cert",
+   "text": "飛行時間 200 時間以上など（指定養成施設では、飛行訓練 150 時間以上など） ｜",
+   "kinds": [
+    "number"
+   ],
+   "tag": "条文",
+   "source": "航空法施行規則 別表第二 事業用操縦士 一 イ（200 時間以上、指定航空従事者養成施設などでは 150 時間以上の飛行訓練）。e-Gov、2026-10-27"
+  },
+  {
+   "id": "intro.cert#f8a7b883",
+   "sec": "intro.cert",
+   "text": "准定期運送用操縦士（MPL） ｜ 2 人で操縦する航空機を、機長以外の操縦者として操縦する ｜ 18 歳以上 ｜",
+   "kinds": [
+    "number"
+   ],
+   "tag": "条文",
+   "source": "業務範囲：航空法 別表（准定期運送用操縦士 一・二）。年齢：航空法施行規則 第 43 条（18 歳）。MPL の呼び名は国土交通省 資料 1（2025、R.mlitPilotBasics）"
+  },
+  {
+   "id": "intro.cert#bbd614a0",
+   "sec": "intro.cert",
+   "text": "定期運送用操縦士 ｜ エアラインの、2 人で操縦する航空機の機長になる ｜ 21 歳以上。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "条文",
+   "source": "業務範囲：航空法 別表（定期運送用操縦士 二）。年齢：航空法施行規則 第 43 条（21 歳）"
+  },
+  {
+   "id": "intro.cert#e0362213",
+   "sec": "intro.cert",
+   "text": "飛行時間 1,500 時間以上など ｜",
+   "kinds": [
+    "number"
+   ],
+   "tag": "条文",
+   "source": "航空法施行規則 別表第二 定期運送用操縦士 一（飛行機：1,500 時間以上の飛行時間）。e-Gov、2026-10-27"
+  },
+  {
+   "id": "intro.cert#29aa8a10",
+   "sec": "intro.cert",
+   "text": "計器飛行証明 ｜ 計器飛行・計器飛行方式による飛行などをする（要る飛行は下の日米の対照） ｜ 機長としての野外飛行（クロスカントリー、cross-country）50 時間以上・計器飛行等の練習 40 時間以上など ｜",
+   "kinds": [
+    "number"
+   ],
+   "tag": "条文",
+   "source": "航空法施行規則 別表第二 計器飛行証明 一（機長としての野外飛行 50 時間以上）・二（計器飛行等の練習 40 時間以上）。e-Gov、2026-10-27"
+  },
+  {
+   "id": "intro.cert#e84a06e4",
+   "sec": "intro.cert",
+   "text": "自家用・学生は第 3 種以上か、条件を満たせば BasicMed（14 CFR 61.23） ｜ 第一種・第二種。",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "FL.jur medical（14 CFR 61.23・航空法第 31 条・航空法施行規則第 61 条の 2。W06・W05 が確かめた）。数字は FL.jur から描く"
+  },
+  {
+   "id": "intro.cert#910e9fd2",
+   "sec": "intro.cert",
+   "text": "自家用操縦士は第一種か第二種、事業用操縦士は第一種（航空法第 31 条・航空法施行規則第 61 条の 2） ｜",
+   "kinds": [
+    "日本の法令"
+   ],
+   "tag": "条文",
+   "source": "FL.jur medical（同上）"
+  },
+  {
+   "id": "intro.cert#5d23bf3a",
+   "sec": "intro.cert",
+   "text": "計器飛行証明が要る飛行 ｜ IFR で飛ぶとき、または VFR の最低気象条件より悪い天気で機長をするとき（14 CFR 61.3(e)） ｜ 計器飛行、110 km か 30 分を超える計器航法による飛行、計器飛行方式による飛行（事業用・自家用の技能証明の人）（航空法第 34 条・航空法施行規則第 66 条） ｜",
+   "kinds": [
+    "number",
+    "14 CFR",
+    "日本の法令"
+   ],
+   "tag": "条文",
+   "source": "FL.jur ir.need（14 CFR 61.3(e)・航空法第 34 条・航空法施行規則第 66 条）"
+  },
+  {
+   "id": "intro.cert#f0cfd01f",
+   "sec": "intro.cert",
+   "text": "同じ資格の水準で飛行機の限定を持っていれば、学科試験は要らない（14 CFR 61.63(c)） ｜ 陸上多発の等級の限定。",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "FL.jur multi.rating（14 CFR 61.63(c)）"
+  },
+  {
+   "id": "intro.cert#b46ff5f5",
+   "sec": "intro.cert",
+   "text": "限定は実地試験に使った航空機で決まり、操縦士は陸上多発ピストン機で受けても、陸上多発ピストン機と陸上多発タービン機の両方の限定になる（航空法第 25 条・航空法施行規則第 53 条） ｜",
+   "kinds": [
+    "日本の法令"
+   ],
+   "tag": "条文",
+   "source": "FL.jur multi.rating（航空法第 25 条・航空法施行規則第 53 条第 1 項・第 2 項。e-Gov の写し）"
+  },
+  {
+   "id": "intro.cert#60b7ad65",
+   "sec": "intro.cert",
+   "text": "国内の飛行で VHF の無線電話を使うのに無線の資格は要らない（14 CFR 61.83(c)・61.103(c)、47 CFR 87.89(d)） ｜ 航空英語能力証明は、本邦内と本邦外の間の航行など省令で決める航行で要る（国内だけの飛行には要らない）。",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "FL.jur english.radio（14 CFR 61.83(c)・61.103(c)、47 CFR 87.89(d)、航空法第 33 条・航空法施行規則第 63 条の 4）"
+  },
+  {
+   "id": "intro.cert#011a4b1d",
+   "sec": "intro.cert",
+   "text": "無線の送信に要る資格（電波法の無線従事者）は〔要確認〕（航空法第 33 条・航空法施行規則第 63 条の 4・航空法第 28 条ただし書） ｜",
+   "kinds": [
+    "日本の法令"
+   ],
+   "tag": "推測・要確認",
+   "source": "FL.jur english.radio の〔要確認〕（UNVERIFIED U.radio-license。W37）"
+  },
+  {
+   "id": "intro.cert#70635bb8",
+   "sec": "intro.cert",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）・航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "kinds": [
+    "number",
+    "日本の法令"
+   ],
+   "tag": "条文",
+   "source": "FL.jur LAWS（e-Gov の版と確認日。bk.jur が描く）"
+  },
+  {
+   "id": "intro.cert#1373a137",
+   "sec": "intro.cert",
+   "text": "日本の技能証明の決まりは、航空法の次の条にあります。",
+   "kinds": [
+    "日本の法令"
+   ],
+   "tag": "条文",
+   "source": "航空法（e-Gov の写し、令和 7 年 12 月 1 日施行の版）"
+  },
+  {
+   "id": "intro.cert#5028924c",
+   "sec": "intro.cert",
+   "text": "限定は航空法第 25 条、業務範囲は航空法第 28 条とその別表、航空身体検査証明は航空法第 31 条です。",
+   "kinds": [
+    "日本の法令"
+   ],
+   "tag": "条文",
+   "source": "航空法第 25 条・第 28 条（と別表）・第 31 条（e-Gov の写し kokuho:25・28・31）"
+  },
+  {
+   "id": "intro.cert#779b5e03",
+   "sec": "intro.cert",
+   "text": "航空英語能力証明は航空法第 33 条、計器飛行証明は航空法第 34 条、操縦の練習は航空法第 35 条です。",
+   "kinds": [
+    "日本の法令"
+   ],
+   "tag": "条文",
+   "source": "航空法第 33 条・第 34 条・第 35 条（e-Gov の写し kokuho:33・34・35）"
+  },
+  {
+   "id": "intro.cert#3af0a875",
+   "sec": "intro.cert",
+   "text": "等級の決まりは航空法施行規則第 53 条です。",
+   "kinds": [
+    "日本の法令"
+   ],
+   "tag": "条文",
+   "source": "航空法施行規則第 53 条（e-Gov の写し kokuho-kisoku:53）"
+  },
+  {
+   "id": "intro.cert#6eb25206",
+   "sec": "intro.cert",
+   "text": "年齢と飛行時間は、航空法施行規則の技能証明の要件の条と、その別表第二にあります。",
+   "kinds": [
+    "日本の法令"
+   ],
+   "tag": "条文",
+   "source": "航空法施行規則 第 43 条・別表第二（e-Gov、2026-10-27。写しにまだない：W37）"
+  },
+  {
+   "id": "intro.japan#7bf6d1e7",
+   "sec": "intro.japan",
+   "text": "試験は学科試験と実地試験で、学科試験に合格してから実地試験を受けます（航空法）。",
+   "kinds": [
+    "日本の法令"
+   ],
+   "tag": "条文",
+   "source": "航空法第 29 条第 2 項（試験は学科試験と実地試験）・第 3 項（学科試験に合格した者でなければ実地試験を受けられない）。e-Gov の令和 7 年 12 月 1 日施行の版を 2026-10-27 に読んだ",
+   "note": "第 29 条は写しにまだない（W37）。本文には条番号を書かない"
+  },
+  {
+   "id": "intro.japan#6fdca314",
+   "sec": "intro.japan",
+   "text": "課程を終えた日から 1 年を過ぎると、この扱いは受けられません。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "条文",
+   "source": "航空法施行規則 第 50 条の 2 第 3 項ただし書（修了の日から 1 年を経過した場合は除く）。e-Gov、2026-10-27"
+  },
+  {
+   "id": "intro.japan#99fc9631",
+   "sec": "intro.japan",
+   "text": "公開情報国土交通省の一覧（令和 8 年 2 月現在）では、全日本空輸株式会社は操縦士の課程の指定養成施設です。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitSchool（国土交通省「指定航空従事者養成施設について」4-1 の一覧、令和 8 年 2 月現在。全日本空輸株式会社の行に、定期運送用操縦士・事業用操縦士・准定期運送用操縦士の欄の ○。pdftotext の座標で列を確かめた）"
+  },
+  {
+   "id": "intro.japan#fd3af3ed",
+   "sec": "intro.japan",
+   "text": "公開情報国土交通省航空局は、2024 年 10 月 1 日から Integrated System を取り入れました。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.jcabExamTable（事務処理要領の改正表 18：国空安政第 700 号、令和 6 年 9 月 25 日、「飛行機の事業用操縦士（多発）と計器飛行証明資格を一連の訓練で取得する手法（Integrated System）導入に伴う改訂」、令和 6 年 10 月 1 日から適用）"
+  },
+  {
+   "id": "intro.japan#e31dc866",
+   "sec": "intro.japan",
+   "text": "実地試験は、指定養成施設の中で 1 回だけです。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitPilotBasics 4 頁：実地試験回数「指定養成施設内における試験１回のみ」"
+  },
+  {
+   "id": "intro.japan#c4c1199b",
+   "sec": "intro.japan",
+   "text": "従来の手法より、3 か月程度短くなるとしています。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitPilotBasics 4 頁：「従来手法より３ヶ月程度短縮」"
+  },
+  {
+   "id": "intro.japan#eb79364e",
+   "sec": "intro.japan",
+   "text": "取材記事は、2024 年 10 月の通達改正で、国内でも Integrated CPL/IR の方式で資格を出せるようになったと書いています。",
+   "kinds": [
+    "number",
+    "日本の法令"
+   ],
+   "tag": "参考値",
+   "source": "R.newsAscii（ASCII.jp 2025-10-08、2026-10-27 に読んだ：「2024年10月の通達改正により、日本国内でもIntegrated CPL／IR訓練方式によるライセンス発給が可能となった」）。二次資料（取材記事）"
+  },
+  {
+   "id": "intro.japan#684de95c",
+   "sec": "intro.japan",
+   "text": "この節は、2026 年 10 月に読んだ国の資料と、2025 年 10 月の記事によります。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "この節の出典の日付（国の資料は 2026-10-27 に読んだ。記事は 2025 年 10 月）"
+  },
+  {
+   "id": "intro.exams#3b3093c7",
+   "sec": "intro.exams",
+   "text": "公開情報日本の学科試験は、2023 年 11 月期から CBT（Computer Based Testing）になりました。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitExam（「2023年11月期試験から…CBT（Computer Based Testing）化」）・R.mlitCbt 2 頁"
+  },
+  {
+   "id": "intro.exams#b5f096a3",
+   "sec": "intro.exams",
+   "text": "試験は年 6 回で、1 回の試験期間は 10 日間程度です。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitCbt 4〜6 頁（CBT 化される資格は年 6 回、試験期間は毎回 10 日間程度）"
+  },
+  {
+   "id": "intro.exams#bc09d574",
+   "sec": "intro.exams",
+   "text": "どの科目も 40 分です。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.jcabExamTable（同上）・R.mlitCbt 8 頁（2023 年 11 月から事業用操縦士の 5 科目は各 40 分）"
+  },
+  {
+   "id": "intro.exams#80013be1",
+   "sec": "intro.exams",
+   "text": "計器飛行証明の学科試験は「計器飛行一般」の 1 科目で、40 分です。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.jcabExamTable（計器飛行証明：計器飛行一般 40 分）・R.mlitCbt 8 頁（計証 40 分）"
+  },
+  {
+   "id": "intro.exams#e29b1034",
+   "sec": "intro.exams",
+   "text": "一部の科目だけに合格した人は、科目合格として、1 年以内の試験でその科目を免除されます。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitExam（「科目合格の有効期限は最初に科目合格した結果通知書の日付から1年」）・航空法施行規則 第 48 条の 2（e-Gov、2026-10-27）"
+  },
+  {
+   "id": "intro.exams#95e91dc2",
+   "sec": "intro.exams",
+   "text": "実地試験は、Integrated System では指定養成施設の中で 1 回です（国の資料）。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitPilotBasics 4 頁（実地試験回数「指定養成施設内における試験１回のみ」）"
+  },
+  {
+   "id": "intro.exams#53c523ca",
+   "sec": "intro.exams",
+   "text": "推測・要確認この訓練でも、課程の最後に 1 回と推測します（確からしさ：中〜高）。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "推測・要確認",
+   "source": "推測・中〜高（curriculum.md 2.3 D）"
+  },
+  {
+   "id": "intro.exams#65e6f193",
+   "sec": "intro.exams",
+   "text": "取材記事は、審査が 2 日で終わると書いています。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.newsTraffic 2 頁（乗りものニュース 2025-10-14、2026-10-27 に読んだ：「審査も、従来は4日から5日かかっていたものが2日で完了します」）。二次資料（取材記事）"
+  },
+  {
+   "id": "intro.exams#36249ef8",
+   "sec": "intro.exams",
+   "text": "学科試験（航空英語の聞き取り、40 分）と実地試験があります。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.jcabExamTable（航空英語能力証明：航空英語の聞き取り 40 分）。実地試験の科目は航空法施行規則 別表第三（航空英語による英会話。e-Gov、2026-10-27）"
+  },
+  {
+   "id": "intro.exams#85dfd902",
+   "sec": "intro.exams",
+   "text": "米国の規則では、米国の登録の飛行機で単独飛行をする学生に、学生操縦士の資格が要ります（米国の 14 CFR 61.3(a)・61.87）。",
+   "kinds": [
+    "14 CFR"
+   ],
+   "tag": "条文",
+   "source": "14 CFR 61.3(a)（米国の民間航空機の必要な乗員は Part 61 の操縦士の資格を持つ）・61.87(a)（学生の単独飛行の要件）。Cornell LII で 61.3(a) を 2026-10-27 に読んだ。FL.jur solo"
+  },
+  {
+   "id": "intro.exams#d5c6dd31",
+   "sec": "intro.exams",
+   "text": "米国のこの 3 つの試験の合格点は 70% です。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.faaKtTable（Passing Score 70：PAR・IRA・CAX）"
+  },
+  {
+   "id": "intro.exams#1d8743d9",
+   "sec": "intro.exams",
+   "text": "FLIGHT LAB の学科テストは練習用で、80% 以上で合格です。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "教材値",
+   "source": "FLIGHT LAB の学科テストの合格点（flight-lab/src/pages.js）"
+  },
+  {
+   "id": "intro.exams#93821dfa",
+   "sec": "intro.exams",
+   "text": "米国の FAA の事業用の飛行課目（Chandelle・Lazy Eight・Steep Spiral・Eights on Pylons・Power-Off 180° Accuracy Approach）は扱いません。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.acsC（FAA-S-ACS-7B の課目の名前：IV.M Power-Off 180° Accuracy Approach and Landing、V Chandelles・Lazy Eights・Steep Spiral・Eights on Pylons）。DESIGN 3.6"
+  },
+  {
+   "id": "intro.exams#c67d7e07",
+   "sec": "intro.exams",
+   "text": "各 40 分の CBT",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.jcabExamTable・R.mlitCbt"
+  },
+  {
+   "id": "intro.exams#24e9b2b7",
+   "sec": "intro.exams",
+   "text": "アプリの学科テストの 80% は練習の目安",
+   "kinds": [
+    "number"
+   ],
+   "tag": "教材値",
+   "source": "FLIGHT LAB の学科テストの合格点（flight-lab/src/pages.js）"
+  },
+  {
+   "id": "intro.exams#c65a826d",
+   "sec": "intro.exams",
+   "text": "この節は、2026 年 6 月 30 日から適用の科目の表と、2025 年度の CBT の手引きによります。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.jcabExamTable（改正 19：令和 8 年 6 月 30 日から適用）・R.mlitCbt（2025 年度）"
+  },
+  {
+   "id": "intro.exams#fccec30c",
+   "sec": "intro.exams",
+   "text": "航空英語能力証明は航空法第 33 条に、計器飛行証明は航空法第 34 条にあります。",
+   "kinds": [
+    "日本の法令"
+   ],
+   "tag": "条文",
+   "source": "航空法第 33 条・第 34 条（e-Gov の写し kokuho:33・34）"
+  },
+  {
+   "id": "intro.exams#79ace4d2",
+   "sec": "intro.exams",
+   "text": "学科試験の科目は、航空法施行規則の別表第三にあります。",
+   "kinds": [
+    "日本の法令"
+   ],
+   "tag": "条文",
+   "source": "航空法施行規則 第 46 条・別表第三（試験の科目）。e-Gov、2026-10-27（写しにまだない：W37）"
+  },
+  {
+   "id": "intro.exams#9b6625d8",
+   "sec": "intro.exams",
+   "text": "無線従事者は電波法の資格で、操縦士が無線を操作できる場合は航空法第 28 条ただし書にあります。",
+   "kinds": [
+    "日本の法令"
+   ],
+   "tag": "条文",
+   "source": "航空法第 28 条第 1 項ただし書（e-Gov の写し kokuho:28）・電波法 第 40 条（e-Gov、2026-10-27）"
+  },
+  {
+   "id": "intro.exams#863d7f03",
+   "sec": "intro.exams",
+   "text": "CBT になってから、同じ試験期に一緒に受けられます（2025 年度の CBT の手引き）。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitCbt 3 頁"
+  },
+  {
+   "id": "intro.exams#20c6d977",
+   "sec": "intro.exams",
+   "text": "どちらも、1 科目 40 分です。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "参考値",
+   "source": "R.jcabExamTable・R.mlitCbt 8 頁"
+  },
+  {
+   "id": "intro.study#1a500f51",
+   "sec": "intro.study",
+   "text": "図：この教材での 1 回の学び方。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "教材値",
+   "source": "この教材の学び方（DESIGN 3.3 序部の扉：読む → 答える → 飛ぶ → ふり返る → 間隔をあけて思い出す）"
+  },
+  {
+   "id": "intro.study#25e4e907",
+   "sec": "intro.study",
+   "text": "1 回は 30〜45 分が目安です。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "教材値",
+   "source": "この教科書の目安（DESIGN 3.3 序部の扉。基礎教材 第 0 章の扉の「学習は 1 回 30〜45 分に分け」を書き直した：PROVENANCE kiso00.cover・kiso00.x1）"
+  },
+  {
+   "id": "intro.study#d80f7db4",
+   "sec": "intro.study",
+   "text": "学科テストは 80% 以上で合格です。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "教材値",
+   "source": "FLIGHT LAB の学科テストの合格点（flight-lab/src/pages.js）"
+  },
+  {
+   "id": "intro.study#2c5b14d7",
+   "sec": "intro.study",
+   "text": "1 回は 20〜30 分が目安です。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "教材値",
+   "source": "この教科書の目安（DESIGN 3.3 序部の扉「飛ぶ 20〜30 分」）"
+  },
+  {
+   "id": "intro.study#cdb00a8e",
+   "sec": "intro.study",
+   "text": "学科テストは 80% 以上で合格。",
+   "kinds": [
+    "number"
+   ],
+   "tag": "教材値",
+   "source": "FLIGHT LAB の学科テストの合格点（flight-lab/src/pages.js）"
+  },
+  {
+   "id": "intro.use#290071fc",
+   "sec": "intro.use",
+   "text": "一方、推測・要確認日本の学科試験は日本語で受けると推測します。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "推測・要確認",
+   "source": "curriculum.md 2.3 B（推測・中〜高）：CBT の手引き（国土交通省、2025 年度）の英文受験は外切の法規など一部だけ。UNVERIFIED U.jcab-exam-language"
+  },
+  {
+   "id": "intro.course#0ae7a1f3",
+   "sec": "intro.course",
+   "text": "推測・要確認取る資格を、ANA が「日本の資格」と書いた文は見つかっていません。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "推測・要確認",
+   "source": "curriculum.md 0.1（ANA 自身が「日本の資格」と明言した文は見つからなかった）。UNVERIFIED U.ana-jcab-route"
+  },
+  {
+   "id": "intro.cert#1b6ccd9e",
+   "sec": "intro.cert",
+   "text": "米国の学生操縦士の資格は、申請だけで取れます。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "条文",
+   "source": "14 CFR 61.83・61.85（学生操縦士の資格の申請。学科・実地の試験はない）。今の教科書の intro.cert の文"
+  },
+  {
+   "id": "intro.cert#ef3585f1",
+   "sec": "intro.cert",
+   "text": "米国のどの資格にも、英語を読み・話し・書き・理解できることという条件があります。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "条文",
+   "source": "14 CFR 61.83(c)・61.103(c)・61.123(b)・61.153(b)"
+  },
+  {
+   "id": "intro.cert#73970c6f",
+   "sec": "intro.cert",
+   "text": "英語・無線の資格 ｜ 学生・自家用などの操縦士の資格には、英語を読み・話し・書き・理解できることが要る。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "条文",
+   "source": "14 CFR 61.83(c)・61.103(c)・61.123(b)・61.153(b)"
+  },
+  {
+   "id": "intro.cert#7c164da7",
+   "sec": "intro.cert",
+   "text": "操縦練習許可（航空機操縦練習許可書、student pilot permit） ｜ 技能証明を持たない人が、操縦の練習をするための国の許可。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "条文",
+   "source": "航空法第 34 条第 2 項第 1 号・第 35 条第 1 項第 1 号（操縦練習許可・操縦教員の監督。e-Gov の写し kokuho:34・kokuho:35）"
+  },
+  {
+   "id": "intro.cert#7a37fbdc",
+   "sec": "intro.cert",
+   "text": "航空英語能力証明（English language proficiency） ｜ 本邦内と本邦外を結ぶ航行などで要る（下の日米の対照） ｜ — ｜",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "条文",
+   "source": "航空法第 33 条第 1 項（e-Gov の写し kokuho:33）。FL.jur english.radio"
+  },
+  {
+   "id": "intro.japan#1b5c0db9",
+   "sec": "intro.japan",
+   "text": "日本の技能証明は、国土交通大臣が行う試験に合格して受けます。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "条文",
+   "source": "航空法第 22 条・第 29 条第 1 項（e-Gov、2026-10-27）"
+  },
+  {
+   "id": "intro.japan#37354302",
+   "sec": "intro.japan",
+   "text": "国の資料では、多くの人が事業用操縦士（多発）の前に、自家用操縦士や事業用操縦士（単発）を取ります。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "国土交通省 資料 1（2025、R.mlitPilotBasics）4 頁の表：従来手法は「CPL(多発)の前に CPL(単発)、PPL 等のライセンスを取得することが多い」「国家試験（学科・実地）を順に受験する必要がある」"
+  },
+  {
+   "id": "intro.japan#7ef4fdee",
+   "sec": "intro.japan",
+   "text": "指定航空従事者養成施設（指定養成施設）は、国土交通大臣が指定した、操縦士などの養成施設です。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "条文",
+   "source": "航空法第 29 条第 4 項（国土交通大臣が申請により指定した航空従事者の養成施設）。e-Gov、2026-10-27"
+  },
+  {
+   "id": "intro.japan#e03ab0cf",
+   "sec": "intro.japan",
+   "text": "課程を終えた人が申請すると、国は実地試験の全部か一部を行いません。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "条文",
+   "source": "航空法施行規則 第 50 条の 2 第 3 項（指定航空従事者養成施設の課程を修了した者に対する試験は、申請により実地試験の全部又は一部を行わない）。e-Gov の令和 8 年 10 月 1 日施行の版、2026-10-27。R.mlitSchool 1 頁も同じ"
+  },
+  {
+   "id": "intro.japan#30fa1b76",
+   "sec": "intro.japan",
+   "text": "操縦士の資格と計器飛行証明の学科試験は、免除されません。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "条文",
+   "source": "航空法施行規則 第 50 条の 2 第 3 項（免除は実地試験だけ）・第 4 項（学科試験の免除は航空通信士と航空英語能力証明の課程だけ）。R.mlitSchool の交付の流れ（学科教育 → 国の学科試験 → 合格）"
+  },
+  {
+   "id": "intro.japan#4d23f769",
+   "sec": "intro.japan",
+   "text": "課程の最後には、施設の技能審査員が行う技能審査に合格します。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "条文",
+   "source": "航空法施行規則 第 50 条の 4 第 5 号・第 50 条の 11（修了証明書は技能審査員の技能審査に合格した者に交付）。R.mlitSchool の流れ図"
+  },
+  {
+   "id": "intro.japan#dfd71b6e",
+   "sec": "intro.japan",
+   "text": "定期運送用操縦士・事業用操縦士・准定期運送用操縦士の課程が載っています。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitSchool（同上）"
+  },
+  {
+   "id": "intro.japan#66c76d9a",
+   "sec": "intro.japan",
+   "text": "取れる資格は、事業用操縦士（多発）と計器飛行証明です。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitPilotBasics（資料 1、2025）4 頁の表：Integrated System の取得可能な資格「CPL(多発)、IR」"
+  },
+  {
+   "id": "intro.japan#84b55246",
+   "sec": "intro.japan",
+   "text": "行えるのは、指定養成施設だけです。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitPilotBasics 4 頁：養成場所「指定養成施設のみ」"
+  },
+  {
+   "id": "intro.japan#2a01a563",
+   "sec": "intro.japan",
+   "text": "単発の事業用操縦士は取れません。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitPilotBasics 4 頁：特徴「CPL（単発）を取得できない」「訓練中断時には他ライセンスを取得できない」"
+  },
+  {
+   "id": "intro.japan#78b7cdcf",
+   "sec": "intro.japan",
+   "text": "大型機の訓練は、別に要ります。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitPilotBasics 4 頁：大型機の訓練「別途必要」"
+  },
+  {
+   "id": "intro.japan#ef067517",
+   "sec": "intro.japan",
+   "text": "欧州で使われている手法を参考にしたものです。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitPilotBasics 5 頁：「欧州においては…Integrated System と呼ばれる手法が採用されている」「欧州の Integrated System のような手法を我が国で採用し」"
+  },
+  {
+   "id": "intro.japan#9251e8ee",
+   "sec": "intro.japan",
+   "text": "国際民間航空条約の締約国が出した資格を持つ人は、申請すると、学科試験と実地試験の全部か一部が行われません。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "条文",
+   "source": "航空法第 29 条第 4 項・航空法施行規則 第 50 条第 1 項（学科試験（別表第三の国内航空法規に係るものを除く）と実地試験の全部又は一部を行わない）。e-Gov、2026-10-27"
+  },
+  {
+   "id": "intro.japan#622067b5",
+   "sec": "intro.japan",
+   "text": "ただし、国内航空法規の学科試験は必ず受けます。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "条文",
+   "source": "航空法施行規則 第 50 条第 1 項（同上）。国土交通省「外国政府の発行したライセンスの切替手続について」（curriculum.md S12）も同じ"
+  },
+  {
+   "id": "intro.japan#6b280d32",
+   "sec": "intro.japan",
+   "text": "これを外国ライセンスの切替（略して外切）と呼びます。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitCbt（CBT の手引き 4 頁「※外切＝外国ライセンスの切替」）"
+  },
+  {
+   "id": "intro.japan#1160e971",
+   "sec": "intro.japan",
+   "text": "国の資料には、米国で FAA の資格を取ってから、日本の資格を取る大学の例が載っています。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitPilotBasics（資料 1、2025）の私立大学の表（東海大学：米国ノースダコタ大学で FAA の資格など）"
+  },
+  {
+   "id": "intro.japan#36ffed3e",
+   "sec": "intro.japan",
+   "text": "推測・要確認この教材が扱う訓練は、ANA の指定養成施設の Integrated System の課程だと推測します（確からしさ：高）。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "推測・要確認",
+   "source": "推測・高（curriculum.md 2.3 A）：R.ana2（事業用操縦士と計器飛行証明を取る）・R.newsAscii（ANA Phase で日本の指定養成の認可、2024 年 10 月の通達改正で Integrated CPL/IR）・R.jcabExamTable・R.mlitPilotBasics・R.mlitSchool。UNVERIFIED U.ana-jcab-route"
+  },
+  {
+   "id": "intro.japan#2f6b21ee",
+   "sec": "intro.japan",
+   "text": "訓練生は、日本の事業用操縦士（陸上多発）と計器飛行証明を直接取ることになります。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "推測・要確認",
+   "source": "同上（推測・高）"
+  },
+  {
+   "id": "intro.japan#d7cd3912",
+   "sec": "intro.japan",
+   "text": "ANA は、基礎訓練で事業用操縦士と計器飛行証明を取ると公表しています。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.ana2（2026-10-27 に読んだ：「事業用操縦士と計器飛行証明という免許を取得する訓練」）"
+  },
+  {
+   "id": "intro.japan#7ba5765c",
+   "sec": "intro.japan",
+   "text": "推測・要確認ただし、ANA が「日本の資格」と書いた文は見つかっていません。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "推測・要確認",
+   "source": "curriculum.md 0.1（未確認）"
+  },
+  {
+   "id": "intro.japan#0c245a93",
+   "sec": "intro.japan",
+   "text": "単発の等級が付かないことも、制度の一般の説明からの推測です（確からしさ：中）。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "推測・要確認",
+   "source": "推測・中（curriculum.md 2.3 C）：R.mlitPilotBasics「CPL（単発）を取得できない」は制度の一般の説明"
+  },
+  {
+   "id": "intro.exams#1fbafc98",
+   "sec": "intro.exams",
+   "text": "会場のパソコンで答える方式です。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitExam・R.mlitCbt 2 頁（会場の PC で受験する試験方式）"
+  },
+  {
+   "id": "intro.exams#71b8c44f",
+   "sec": "intro.exams",
+   "text": "会場は、全国の約 260 か所です。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitCbt 5・7 頁（毎回 全国で約 260 会場。2025 年 3 月時点で 261）"
+  },
+  {
+   "id": "intro.exams#3d3d515c",
+   "sec": "intro.exams",
+   "text": "公開情報事業用操縦士（飛行機）の学科試験は、航空気象・航空工学・航空法規・航空通信・空中航法の 5 科目です。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.jcabExamTable（航空従事者学科試験科目及び試験時間：事業用操縦士（飛回船）航空気象・航空工学・航空法規・航空通信・空中航法、各 40 分。令和 8 年 7 月期より適用の表）。科目は航空法施行規則 別表第三 の事業用操縦士の欄と同じ（e-Gov、2026-10-27）"
+  },
+  {
+   "id": "intro.exams#af24400a",
+   "sec": "intro.exams",
+   "text": "同じ試験期に、事業用操縦士と計器飛行証明を一緒に受けられます。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitCbt 3 頁（「同一試験期に複数資格（例：事業用操縦士と計器飛行証明）の同時受験が可能」）"
+  },
+  {
+   "id": "intro.exams#da008775",
+   "sec": "intro.exams",
+   "text": "出題の範囲は、国が「出題範囲参考」として公開しています。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.mlitSyllabus（国土交通省「航空従事者等学科試験解答及び過去問」のシラバスと例題集）"
+  },
+  {
+   "id": "intro.exams#26d427e6",
+   "sec": "intro.exams",
+   "text": "推測・要確認この教材が扱う訓練の訓練生は、この 6 科目に日本語で合格すると推測します（確からしさ：中〜高）。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "推測・要確認",
+   "source": "推測・中〜高（curriculum.md 2.3 B）。UNVERIFIED U.jcab-exam-language・U.ana-procedure"
+  },
+  {
+   "id": "intro.exams#30c742a6",
+   "sec": "intro.exams",
+   "text": "航空英語能力証明は、本邦内と本邦外を結ぶ航行などで要る国の証明です。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "条文",
+   "source": "航空法第 33 条第 1 項（e-Gov の写し kokuho:33）"
+  },
+  {
+   "id": "intro.exams#97bd9498",
+   "sec": "intro.exams",
+   "text": "航空無線通信士は、無線を扱う人の国家資格（無線従事者）の 1 つで、総務大臣が免許します。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "条文",
+   "source": "電波法 第 40 条第 1 項第 3 号（無線従事者（航空）：航空無線通信士・航空特殊無線技士）・第 41 条第 1 項（総務大臣の免許）。e-Gov の電波法（令和 8 年 9 月 3 日施行の版）を 2026-10-27 に読んだ"
+  },
+  {
+   "id": "intro.exams#4fa56f80",
+   "sec": "intro.exams",
+   "text": "航空機の無線設備で、通信の操作ができます。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "条文",
+   "source": "電波法施行令 第 3 条（無線従事者の操作の範囲：航空無線通信士「航空機に施設する無線設備…の通信操作（モールス符号による通信操作を除く。）」）。e-Gov（令和 8 年 9 月 3 日施行の版）、2026-10-27（R.egovDenpaRei）"
+  },
+  {
+   "id": "intro.exams#f3c86ecf",
+   "sec": "intro.exams",
+   "text": "航空特殊無線技士という資格では、エアライン（航空運送事業）の航空機の無線は扱えません。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "条文",
+   "source": "電波法施行令 第 3 条（航空特殊無線技士：「航空機（航空運送事業の用に供する航空機を除く。）に施設する無線設備…の国内通信のための通信操作」）。e-Gov、2026-10-27"
+  },
+  {
+   "id": "intro.exams#1753ed83",
+   "sec": "intro.exams",
+   "text": "推測・要確認Sanford で単独飛行をする訓練生も、この資格を持つと推測します（確からしさ：中）。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "推測・要確認",
+   "source": "推測・中（curriculum.md 2.3 E）。UNVERIFIED U.us-student-cert"
+  },
+  {
+   "id": "intro.exams#ade1517f",
+   "sec": "intro.exams",
+   "text": "米国の FAA の学科試験には、自家用（PAR：Private Pilot Airplane）・計器（IRA：Instrument Rating Airplane）・事業用（CAX：Commercial Pilot Airplane）などがあります。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.faaKtTable（FAA「ACS Knowledge Test Table: Correct Allotted Times」2024 年 10 月更新：PAR Private Pilot Airplane・IRA Instrument Rating Airplane・CAX Commercial Pilot Airplane）"
+  },
+  {
+   "id": "intro.exams#81662a1d",
+   "sec": "intro.exams",
+   "text": "推測・要確認訓練生がこれらを受けるかは公表されていません。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "推測・要確認",
+   "source": "未確認（curriculum.md 2.6）。UNVERIFIED U.faa-written・U.london-icao"
+  },
+  {
+   "id": "intro.study#5c3cea98",
+   "sec": "intro.study",
+   "text": "試験の前の詰め込みより、短い勉強を間隔をあけてくり返す方が、ずっとよく残ります。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.faaAih（FAA-H-8083-9B 第 3 章 3-41「shorter and regularly spaced study sessions produce memory results that far exceed those obtained from cramming」、3-37〜3-38 frequency and recency of use）。2026-10-27 に読んだ"
+  },
+  {
+   "id": "intro.study#9244ebfa",
+   "sec": "intro.study",
+   "text": "よく使い、最近も使った知識ほど、思い出しやすいからです。",
+   "kinds": [
+    "extra"
+   ],
+   "tag": "参考値",
+   "source": "R.faaAih 第 3 章（How Usage Affects Memory：frequency and recency）"
+  }
+ ]
+}

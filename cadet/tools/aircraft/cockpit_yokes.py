@@ -6,9 +6,10 @@
 #   (a group alone, for its previews: … -- /tmp/cockpit.json /tmp/trial.glb /tmp/prev band,yokes — never into assets/model,
 #   which must hold every group; tools/aircraft/trial-glb.mjs runs the game's tests against such a trial model)
 # - each yoke (moving parts yokeL, yokeR; the G1000 NXi Archer's M600-style wheel, the same for both seats — Piper's TX,
-#   LX Steel and Seminole NXi photos): a moulded wedge of a hub, a tall shield (0.134 m from its foot to its cap's top;
-#   the aircraft's ~0.15 m — round R3: the Seminole's old switch row, which held it to 0.11 m, is gone; its last 1.5 cm
-#   would put the right yoke's hub, its hit box, over the line of sight from the left seat to the door's handle),
+#   LX Steel and Seminole NXi photos): a moulded wedge of a hub, a tall shield (0.134 m from its foot to its cap's top,
+#   ~72 % of the grips' height as in Piper's TX and Seminole NXi panel photos, where the cap's top is ~70–73 % of the
+#   way from the hub's foot to the grips' tops — round R3: the Seminole's old switch row, which held it to 0.11 m, is
+#   gone),
 #   widest at its foot where the horns grow out of it, narrowing fast up its flanks to where the arms leave them and
 #   then gently to its top (the TX photo's tall plate: its sides nearly straight above the arms, its top ~half its
 #   foot's width), its
@@ -79,7 +80,7 @@ SHAFT_Z0, SHAFT_REACH = -0.034, 0.040  # its back end (inside the collar); how f
 # the front face upright at HUB_ZF; the rings (y, how far in from that outline): the foot's bevel, the side (a ring where
 # its lean changes), the top's rounded edge. Its height: the aircraft's (above); from the seat its cap hides the panel up
 # to y ~0.17 behind it (x −0.34…−0.26: blank on both types — the Seminole's engine switches, fuel pumps and left bank
-# stand round that window, cockpit.js SEM); its top's hit box (to y 0.103) passes 3 mm under the line from the eye to
+# stand round that window, cockpit.js SEM); its top's hit box (to y 0.103) passes well under the line from the eye to
 # the door's handle (cockpit.js WALLS.door.cup.aim) over the right yoke's hub.
 HUB_YB, HUB_YT, HUB_ZF = -0.034, 0.089, -0.024
 HUB_W = [(-0.034, 0.056, 0.0085), (0.030, 0.0365, 0.0078), (0.089, 0.031, 0.0068)]
@@ -192,9 +193,9 @@ sw.pitot@pa44 0.036 0.215 -1.086 / sw.nav@pa44 0.055 0.215 -1.086 / sw.fuelPump@
 sw.rFuelPump@pa44 -0.209 0.112 -1.086 / dim.switch@pa44 -0.215 0.158 -1.088 / dim.panel@pa44 -0.18 0.158 -1.088
 dim.avionics@pa44 -0.145 0.158 -1.088 / heatAir@pa44 0.2815 0.291 -1.089 / heatTemp@pa44 0.2815 0.272 -1.089
 heatDef@pa44 0.2815 0.253 -1.089 / sw.heater@pa44 0.369 0.281 -1.086 / sw.ventFan@pa44 0.388 0.281 -1.086
-throttle@pa44 -0.036 -0.08927 -1.01226 / gear@pa44 -0.13 0.078 -1.07056 / emergGear@pa44 -0.172 0.06 -1.0855
-parkBrake@pa44 -0.44 0.08 -1.0778 / prop@pa44 0.012 0.06033 -1.03329 / fuelSel -0.50903 -0.05526 -0.98774
-door 0.574 0.214 -1.035
+throttle@pa44 -0.041 -0.01927 -1.01226 / gear@pa44 -0.13 0.078 -1.07056 / emergGear@pa44 -0.172 0.06 -1.0855
+parkBrake@pa44 -0.44 0.083 -1.0778 / prop@pa44 0.01 0.13033 -1.03329 / fuelSel -0.50903 -0.05526 -0.98774
+door 0.5805 0.258 -1.035
 '''
 # and what the panel keeps beside and under the yokes, seen at rest (and trimmed): the dimmers' knobs and the alternate
 # static's (their faces: the middle and four points round it), the throttle's knob (its ends and middle, at the aim's

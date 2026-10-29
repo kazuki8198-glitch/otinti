@@ -217,6 +217,9 @@ test('systems (R3): the twin\'s starts that do not work — said with the engine
     assert.ok(!A.sys.runningL); twinPrep(A, 0, { prime: 0 }); const ev = A.run(2); A.sw.mixture = 1; ev.push(...A.run(2)); assert.ok(A.sys.runningL, JSON.stringify(ev)); }
   // no BATT MASTR: the starter does not turn
   { const A = twinApron(); twinPrep(A, 0); assert.deepEqual(A.run(2).map(e => e.type), ['nostarter']); }
+  // not primed, cranked at cut-off, the mixture pushed forward once it turns (the pump on): fed then, it catches
+  { const A = twinApron(); A.sw.master = true; A.fl.action('thrStep', 1); twinPrep(A, 0, { prime: 0 }); const ev = A.run(1); A.sw.mixture = 1; ev.push(...A.run(3));
+    assert.deepEqual(ev.map(e => `${e.type}:${e.why}`), ['crank:左エンジン', 'catch:左エンジン'], 'the mixture advanced while it cranks feeds it'); assert.ok(A.sys.runningL); }
 });
 
 test('systems (R3): the twin\'s run-up — each engine\'s magneto drops and the alternate air on its own gauge; the instructor\'s start; m1 bit-identical', () => {

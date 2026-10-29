@@ -35,6 +35,11 @@ import { createActor, seatFromBody, GESTURE_NAMES } from '../src/npc/actor.js';
 import { modelMeshes } from '../src/aircraft/archer-model.js';
 import { CHECKLISTS as CHECKLISTS_ARCHER } from '../src/content/checklists-archer.js';
 import { CHECKLISTS as CHECKLISTS_SEMINOLE } from '../src/content/checklists-seminole.js';
+import { createDay, planFor } from '../src/career/day.js';
+import { createFlight } from '../src/flight/flight.js';
+import { createSystems } from '../src/aircraft/systems.js';
+import { routeOut, createTaxiPilot } from '../src/flight/taxi.js';
+import { KITS } from '../src/aircraft/walkaround.js';
 const STROBES = ['FIN STROBE', 'OFF', 'STROBE LIGHTS'];
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -456,7 +461,7 @@ test('cockpit: the Seminole\'s — its levers and gear selector found, picked an
   assert.equal(count, cp.trianglesTwin);
   assert.ok(cp.trianglesTwin <= 40000 && tri0 === cp.triangles, `${cp.trianglesTwin} triangles`);
   // the levers and the selector follow the state: the throttles together, each mixture its own
-  const p = cp.parts, s = L.s, sw = cp.switches;
+  const p = cp.parts, s = L.s, sw = cp.switches, C0 = Object.fromEntries(cp.controls.map(c => [c.id, c]));
   Object.assign(s, { thr: 0 }); run(cp, L, 0.3); const t0 = p.thrL.rotation.x;
   Object.assign(s, { thr: 1 }); run(cp, L, 0.3);
   assert.ok(p.thrL.rotation.x < t0 - 20 * DEG && p.thrR.rotation.x === p.thrL.rotation.x, 'the throttles forward together');
@@ -481,7 +486,24 @@ test('cockpit: the Seminole\'s — its levers and gear selector found, picked an
   const prop0 = p.propL.rotation.x;
   sw.propCycleT = 1.3; run(cp, L, 0.05);
   assert.ok(p.propL.rotation.x > prop0 + 20 * DEG, 'the propeller levers pulled back while cycled');
+  // (the feather check: into the feather detent, the slots' aft end — where a mixture is at cut-off —; the alternate air
+  // seen and picked under them then)
+  sw.mixtureR = 0; run(cp, L, 0.02);
+  assert.ok(Math.abs(p.propL.rotation.x - p.mixR.rotation.x) < 0.5 * DEG, `the propeller levers at the feather end (${(p.propL.rotation.x / DEG).toFixed(1)}° against the cut-off mixture's ${(p.mixR.rotation.x / DEG).toFixed(1)}°)`);
+  { const [picked, seen, got, by] = sightOf(cp, C0.altAir); assert.ok(picked && seen, `the alternate air while the propellers are cycled: ${picked ? '' : 'picked ' + got} ${seen ? '' : 'hidden by ' + by}`); }
   sw.propCycleT = 0;
+  // every lever at its aft end (the throttles idle, the propellers feathered, the mixtures at idle cut-off) clear of the
+  // alternate air's knobs (≥ 5 mm), the alternate air CLOSE (up) or OPEN
+  Object.assign(s, { thr: 0 }); sw.mixture = 0; sw.mixtureR = 0;
+  for (const open of [false, true]) {
+    sw.altAir = open; sw.propCycleT = 1.3; run(cp, L, 0.02); cp.root.updateMatrixWorld(true);
+    const box = n => new THREE.Box3().setFromObject(cp.root.getObjectByName(n), true), alt = box('cockpit-altAir');
+    for (const n of ['cockpit-mixL', 'cockpit-mixR', 'cockpit-propL', 'cockpit-propR', 'cockpit-thrL', 'cockpit-thrR']) {
+      const b = box(n), gap = Math.max(alt.min.x - b.max.x, b.min.x - alt.max.x, alt.min.y - b.max.y, b.min.y - alt.max.y, alt.min.z - b.max.z, b.min.z - alt.max.z);
+      assert.ok(gap >= 0.005, `${n} at the aft end ${(gap * 1000).toFixed(1)} mm from the alternate air (${open ? 'OPEN' : 'CLOSE'})`);
+    }
+  }
+  sw.altAir = false; sw.propCycleT = 0; sw.mixture = 1; sw.mixtureR = 1; run(cp, L, 0.05);
   // what the controls do: the START rocker's halves (held, let go), the right engine's switches, the alternate air, the
   // cowl flaps a notch at a time (the wheel forward opens), each mixture, the heater's and the vent fan's three positions
   const C = Object.fromEntries(cp.controls.map(c => [c.id, c]));
@@ -544,6 +566,14 @@ test('cockpit: no Archer-only parts in the Seminole\'s view, no Seminole-only pa
   const mid = CABIN.ovhAt(0, CABIN.OVH.h / 2, 0.003), shown = o => { for (let q = o; q; q = q.parent) if (!q.visible) return false; return true; };
   const hit = new THREE.Raycaster(cp.eye.clone(), mid.clone().sub(cp.eye).normalize(), 0, 5).intersectObject(cp.root, true).filter(h => drawn(h.object) && shown(h.object) && h.object.name !== 'cockpit-glass')[0];
   assert.ok(hit && !/rocker|pa28/.test(hit.object.name) && hit.distance > mid.distanceTo(cp.eye) - 0.001, `up at the header: ${hit && hit.object.name}`);
+  // each type's own LIMITATIONS placard on the left wall's sill band (its print in the type's labels), the Seminole's
+  // emergency exit (the handle's cover on the post between the first and second left windows, its placard over it)
+  const W = CABIN.WALLS, Lp = new THREE.Vector3(-CABIN.lowX(W.limits.y), W.limits.y, W.limits.z);
+  const near = (name, p, d) => { const m = cp.meshes.find(x => x.name === name), a = m.geometry.attributes.position, v = new THREE.Vector3(); for (let i = 0; i < a.count; i++) if (v.fromBufferAttribute(a, i).distanceTo(p) < d) return true; return false; };
+  for (const t of ['pa28', 'pa44']) assert.ok(near(`cockpit-labels-${t}`, Lp, W.limits.w * 0.6), `${t}: its LIMITATIONS placard`);
+  const ex = W.exit, onBand = (y, z) => new THREE.Vector3(-CABIN.bandX(y), y, z);
+  assert.ok(near('cockpit-shell-pa44', onBand((ex.cover.y[0] + ex.cover.y[1]) / 2, (ex.cover.z[0] + ex.cover.z[1]) / 2), 0.02) && !near('cockpit-shell-pa28', onBand((ex.cover.y[0] + ex.cover.y[1]) / 2, (ex.cover.z[0] + ex.cover.z[1]) / 2), 0.02), 'the Seminole\'s emergency exit cover');
+  assert.ok(near('cockpit-labels-pa44', onBand(ex.placard.y, ex.placard.z), 0.025), 'its EMERGENCY EXIT placard');
   cp.dispose();
 });
 
@@ -581,8 +611,10 @@ test('cockpit: the Seminole\'s console — its trims, flap handle and fuel selec
   Object.assign(s, { flapIdx: 2, elev: -0.3, trim: 0.3 }); run(cp, L, 1.5, { rTrim: 0.6 });
   assert.ok(Math.abs(p.flap44.rotation.x - 22 * DEG) < 0.5 * DEG && aim('flaps').y > f0 + 0.1, 'the flap handle at 25°, its grip up');
   assert.ok(p.trim44.rotation.x !== w0 && p.trimInd44.position.z > i0 + 0.01, 'the trim wheel turns, its pointer aft (UP)');
-  assert.ok(Math.abs(p.rudTrim.rotation.y - CABIN.CON44.rud.ang) < 1e-6, 'the rudder trim\'s index to the right (R) at full right trim');
-  run(cp, L, 0.1); assert.equal(p.rudTrim.rotation.y, 0, 'neutral without the game\'s rudder trim');
+  // (the rudder trim's wheel stands across the console, turned about the fore-aft axis: clockwise seen from aft is R)
+  assert.ok(Math.abs(p.rudTrim.rotation.z + CABIN.CON44.rud.ang) < 1e-6, 'the rudder trim wheel turned clockwise (seen from aft), its index to R, at full right trim');
+  assert.ok(new THREE.Vector3(0, 1, 0).applyQuaternion(p.rudTrim.quaternion).x > 0.5, 'its top to the right');
+  run(cp, L, 0.1); assert.equal(p.rudTrim.rotation.z, 0, 'neutral without the game\'s rudder trim');
   const zOf = (id, v) => { sw[id] = v; run(cp, L, 0.05); return aim(id).z; };
   for (const id of ['fuelSelL', 'fuelSelR']) {
     const z = { ON: zOf(id, 'ON'), OFF: zOf(id, 'OFF'), XFEED: zOf(id, 'XFEED') };
@@ -654,9 +686,8 @@ test('cockpit: the controls say what the game should do', () => {
   assert.equal(sw.fan, 'OFF');
   assert.deepEqual(C['sw.fan'].act(1, false), { type: 'select', id: 'fan', value: 'LOW' }); assert.deepEqual(C['sw.fan'].act(1, true), { type: 'select', id: 'fan', value: 'HIGH' });
   assert.deepEqual(C['sw.pitot'].act(1, false), { type: 'switch', id: 'pitot', on: true });
-  // the Archer's LANDG LIGHT works the taxi lamp too; the magnetos read as a key would show them
+  // the Archer's LANDG LIGHT works the taxi lamp too
   sw.landing = true; assert.equal(sw.taxi, true); sw.landing = false; assert.equal(sw.taxi, false);
-  assert.equal(sw.mag, 'BOTH'); sw.magR = false; assert.equal(sw.mag, 'L'); sw.magR = true;
   assert.deepEqual(C['fuelSel'].act(1, false), { type: 'select', id: 'fuelSel', value: 'R' });
   // the engine's controls (M4): the selector's OFF on the wheel, the mixture (cut-off on the ground only), carb heat, the primer
   cp.switches.fuelSel = 'R'; assert.deepEqual(C['fuelSel'].act(1, true), { type: 'select', id: 'fuelSel', value: 'OFF' }); cp.switches.fuelSel = 'L';
@@ -818,8 +849,73 @@ test('cockpit: the Archer\'s overhead switch panel — on the header, the rocker
   // every checklist item's control is one the type's cockpit has (the guidance ring)
   for (const [t, lists] of [['pa28', CHECKLISTS_ARCHER], ['pa44', CHECKLISTS_SEMINOLE]]) {
     cp.setType(t); const ids = new Set(cp.controls.map(c => c.id));
-    for (const [k, list] of Object.entries(lists)) for (const it of list.items) if (it[3]) assert.ok(ids.has(it[3]), `${t} ${k}: ${it[0]} → ${it[3]}`);
+    // (an item of several switches rings them in turn: its function's ids — content/checklists-seminole.js ring)
+    for (const [k, list] of Object.entries(lists)) for (const it of list.items) for (const id of typeof it[3] === 'function' ? it[3].ids : it[3] ? [it[3]] : []) assert.ok(ids.has(id), `${t} ${k}: ${it[0]} → ${id}`);
   }
+  cp.dispose();
+});
+
+// (round R3's fix) a cadet who does only what the guidance ring shows: the Seminole's day from the walk-around through
+// its checklists — before start, both engines' start, before taxi with the crossfeed, the taxi out, the ground check
+// with each engine's magnetos — and then the shutdown, each item done by clicking the control it rings (through the
+// control's own act(), as the game applies it; an item of several switches moves its ring along them), the throttle by
+// clicks and the wheel towards the item's rpm, an item to look at confirmed: every item ticks, the instructor is never
+// needed, and the run-up's readings are each engine's own
+test('cockpit: the Seminole\'s checklists done by clicking only the ringed controls', () => {
+  const P_ = FL.physics, STAND = { a: 636.5, c: 207.6 }, NOKEYS = { has: () => false };
+  const day = createDay(FL, { seed: 3, level: 'basic', anomalies: [], stand: STAND, plan: planFor(FL, 'm1') });
+  for (const p of KITS.pa44.POINTS) { const card = day.walk.inspect(p.id); if (card.choices.some(c => c.act === 'task')) day.walk.act(p.id, 'task'); day.walk.act(p.id, 'ok'); }
+  const cp = build({ twin: AC('pa44') }); cp.setType('pa44');
+  const C = Object.fromEntries(cp.controls.filter(c => c.type !== 'pa28').map(c => [c.id, c]));
+  const fl = createFlight(FL, { store: null }), sw = cp.switches, sys = createSystems(sw);
+  const [n, e] = P_.rwyToNE(P_.LAB_RWY, STAND.a, STAND.c);
+  fl.startOnGround(n, e, (P_.LAB_RWY.trueHdg + 270) % 360, 'pa44', { wind: { rel: 10, kt: 5, gust: 0.5 } });
+  sys.setCold(fl.s); day.boarded();
+  const pos = () => { const p = P_.ne(fl.s), rc = P_.rwyCoords(P_.LAB_RWY, p.n, p.e); return { a: rc.along, c: rc.cross }; };
+  const ctx = (dt) => ({ dt, sw, sys, s: fl.s, park: fl.controls.parkBrake, av: fl.av, rpm: sys.rpm, pos: pos(), v: Math.hypot(fl.s.vel[0], fl.s.vel[2]), hdg: P_.attitude(fl.s).hdg,
+    onGround: fl.s.onGround, act: (a, x) => fl.action(a, x), setThr: (x) => { fl.s.thr = x; }, setFlaps: (i) => { fl.s.flapIdx = i; }, prime: () => sys.prime() });
+  const apply = (d) => { if (!d) return; if (d.type === 'flight') fl.action(d.name, d.arg); else if (d.type === 'switch') sw[d.id] = d.on; else if (d.type === 'select') sw[d.id] = d.value; else if (d.type === 'av') AV.control(fl.av, d.what, d.dir, d.big); };
+  const stuck = [], ticked = [];
+  let key = '', wait = 0, clicks = 0, taxi = null, shut = false, T = 0;
+  for (let f = 0; f < 60 * 60 * 20 && !(shut && day.phase !== 'shutdown'); f++) {
+    const dt = 1 / 60; T += dt;
+    if ((day.phase === 'tower' || day.phase === 'lineup') && !shut) { shut = true; day.abortTo('shutdown'); fl.s.thr = 0.045; continue; }
+    const L = day.items(), it = L && L.items[L.i];
+    if (it) {
+      const k = `${L.id}:${L.i}`;
+      if (k !== key) { key = k; wait = 0; clicks = 0; }
+      if ((wait -= dt) <= 0) {
+        wait = it.ctl === 'throttle' ? 1.5 : 3;                    // (a look at what it did before the next click)
+        if (it.confirm) day.confirm(ctx(0));
+        else if (++clicks > 24) { stuck.push(`${k} ${it.name} — ${it.what}: '${it.ctl}' clicked, never true`); day.assist(ctx(0)); clicks = 0; }
+        else if (!it.ctl || !C[it.ctl]) { if (clicks > 10) stuck.push(`${k} ${it.name}: no ring (${it.ctl})`); }   // (one that ticks by itself: the walk-around done, the oil pressure)
+        else if (sys.cranking) clicks--;                             // (START held: let it catch)
+        else if (it.ctl === 'throttle') {
+          // the throttle: up by a click, down by the wheel, towards the item's rpm (idle first where it says so)
+          const m = /([\d,]+) rpm/.exec(it.what), idle = /アイドル/.test(it.what) && (!m || !day.st.memo.idle), want = idle ? 0 : m ? +m[1].replace(',', '') : null;
+          if (want === 0 || (want != null && sys.rpm > want + 60)) apply(C.throttle.act(-1, true)); else apply(C.throttle.act(1, false));
+        } else apply(C[it.ctl].act(1, false));
+      }
+    }
+    { const v = day.atc.view(); if (v && v.phase === 'choose') day.atc.answer(day.atc.rightIndex()); }
+    if (day.phase === 'taxiOut' && !taxi) { fl.action('parkBrake', false); taxi = createTaxiPilot(FL, routeOut(STAND)); }
+    fl.frame(dt, NOKEYS, { pilot: taxi ? taxi.fly : null });
+    sys.update(dt, fl.s);
+    cp.update(dt, { s: fl.s, L: null, av: fl.av, parkBrake: fl.controls.parkBrake });
+    for (const ev of day.update(ctx(dt))) {
+      if (ev.type === 'tick') ticked.push(`${ev.list}:${ev.i}`);
+      if (ev.type === 'phase') { taxi = null; if (ev.to === 'runup') fl.action('parkBrake', true); }
+    }
+  }
+  assert.deepEqual(stuck, [], 'items the ring alone could not do');
+  assert.equal(day.st.auto.list, 0, 'the instructor never needed');
+  for (const [list, C_] of Object.entries({ before_start: 0, start: 0, after_start: 0, runup: 0, shutdown: 0 })) {
+    const nItems = CHECKLISTS_SEMINOLE[list].items.length;
+    for (let i = 0; i < nItems; i++) assert.ok(ticked.includes(`${list}:${i}`), `${list}:${i} ${CHECKLISTS_SEMINOLE[list].items[i][0]} ticked`);
+  }
+  const m = day.st.memo;
+  assert.ok(m.dropL > 100 && m.dropL < 125 && m.dropR > 80 && m.dropR < 100 && m.rDropL > 90 && m.rDropL < 110 && m.rDropR > 115 && m.rDropR < 135, `each engine's own drops ${JSON.stringify({ dL: m.dropL, dR: m.dropR, rL: m.rDropL, rR: m.rDropR })}`);
+  assert.ok(m.xfeed && !sys.anyRunning, 'the crossfeed seen; both engines stopped at the end');
   cp.dispose();
 });
 

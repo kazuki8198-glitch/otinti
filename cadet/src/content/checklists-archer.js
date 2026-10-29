@@ -10,7 +10,10 @@
 // set(c): what the instructor's hands do for it when the cadet leaves it to him (null: nothing to set)]. c: { sw, sys, s,
 // park, av, rpm (the engine's own rpm), memo (what the run-up saw), walk (the walk-around done), act(name, arg) (the
 // flight bridge's action), setThr(x), setFlaps(i), prime() }. sw's fields are aircraft/systems.js's (the strobe's three
-// positions are its lamps: STROBE LIGHTS = strobe + beacon, FIN STROBE = the beacon alone).
+// positions are its lamps: STROBE LIGHTS = strobe + beacon, FIN STROBE = the beacon alone). The run-up's magneto drops are
+// read against both magnetos' rpm at the same throttle (memo.fresh: career/day.js watchRunup); the instructor's hands go
+// back to both magnetos for that reading when it is missing, and read the left one alone again if the two drops came out
+// too far apart.
 const near = (x, v, d) => Math.abs(x - v) <= d;
 export const CHECKLISTS = {
   before_start: { title: 'エンジン始動前（BEFORE STARTING ENGINE）', items: [
@@ -49,10 +52,11 @@ export const CHECKLISTS = {
   ] },
   runup: { title: 'ランナップ（RUN-UP）', items: [
     ['パーキングブレーキ', 'セット', c => c.park, 'parkBrake', '止まって、機首を風上へ。プロペラの後ろに人や機体がないこと。', c => c.act('parkBrake', true)],
-    ['スロットル', '2,000 rpm', c => c.rpm >= 1900 && c.rpm <= 2120 && c.memo.both > 0, 'throttle', '', c => c.setThr(0.67)],
-    ['右マグネトー', 'OFF（左だけ）：回転の低下 175 rpm 以内', c => c.memo.dropL > 20 && c.memo.dropL <= 175, 'sw.magR', '右を OFF にすると、左のマグネトーだけで回ります。回転がどれだけ下がるか見ます。', c => { c.sw.magL = true; c.sw.magR = false; }],
+    ['スロットル', '2,000 rpm', c => c.rpm >= 1900 && c.rpm <= 2120 && !!c.memo.fresh, 'throttle', '', c => c.setThr(0.67)],
+    ['右マグネトー', 'OFF（左だけ）：回転の低下 175 rpm 以内', c => c.memo.dropL > 20 && c.memo.dropL <= 175, 'sw.magR', '右を OFF にすると、左のマグネトーだけで回ります。回転がどれだけ下がるか見ます。', c => { c.sw.magL = true; c.sw.magR = !c.memo.fresh; if (!c.memo.fresh && !(c.rpm >= 1900)) c.setThr(0.67); }],
     ['右マグネトー', 'ON に戻す', c => c.sw.magR, 'sw.magR', '先に右を ON に戻します。左を切るのはそのあと（両方 OFF にするとエンジンが止まります）。', c => { c.sw.magR = true; }],
-    ['左マグネトー', 'OFF（右だけ）：低下 175 rpm 以内・左右の差 50 rpm 以内', c => c.memo.dropR > 20 && c.memo.dropR <= 175 && Math.abs(c.memo.dropL - c.memo.dropR) <= 50, 'sw.magL', '今度は左を OFF。右のマグネトーだけで回ります。', c => { c.sw.magR = true; c.sw.magL = false; }],
+    ['左マグネトー', 'OFF（右だけ）：低下 175 rpm 以内・左右の差 50 rpm 以内', c => c.memo.dropR > 20 && c.memo.dropR <= 175 && Math.abs(c.memo.dropL - c.memo.dropR) <= 50, 'sw.magL', '今度は左を OFF。右のマグネトーだけで回ります。',
+      c => { const apart = c.memo.dropR > 20 && Math.abs(c.memo.dropL - c.memo.dropR) > 50; c.sw.magL = apart || !c.memo.fresh; c.sw.magR = !apart || !c.memo.fresh; if (!c.memo.fresh && !(c.rpm >= 1900)) c.setThr(0.67); }],
     ['マグネトー', '左右とも ON', c => c.sw.magL && c.sw.magR && c.memo.dropR > 0, 'sw.magL', '必ず両方 ON に戻します。', c => { c.sw.magL = true; c.sw.magR = true; }],
     ['キャブレター ヒート', 'ON で回転が下がる → OFF', c => c.memo.carb > 20 && !c.sw.carbHeat, 'carbHeat', '気化器の暖め。レバーを下げる（ON）と少し回転が下がります。確かめたら上（OFF）に戻します。', c => { c.sw.carbHeat = !(c.memo.carb > 20); }],
     ['エンジン計器', '緑の範囲', null, null, '油圧・油温・燃料の圧力。MFD で見ます。', null],

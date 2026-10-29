@@ -437,8 +437,9 @@
     if (!run && !o.onGround) { box(g, cx - 90, cy + 100, 180, 22, '#3a0d0d', C.red); txt(g, 'ENGINE STOP — 滑空', cx, cy + 111, 13, C.red, 'center', 700, jp); }
     else if (!allRun) { box(g, cx - 100, cy + 100, 200, 22, '#3a2a0d', C.yellow); txt(g, `${engs[0].run ? 'R' : 'L'} ENGINE INOP — 片発`, cx, cy + 111, 13, C.yellow, 'center', 700, jp); }
     // (the twin with its MFD dark — AVION MASTER OFF: the G1000 shows the engine page's landing gear on the PFD, as its
-    // reversionary display; CADET's cockpit sets d.gearRev)
-    if (d.gearRev) gearBox(g, 8, 32, 112, o.gearPos);
+    // reversionary display; CADET's cockpit sets d.gearRev) — under the engine box at the lower left, where nothing else
+    // is drawn (clear of the airspeed tape and its TAS box above, and of the HSI's disc to its right)
+    if (d.gearRev) gearBox(g, 8, ey + 46, 112, o.gearPos);
     // the teaching label
     txt(g, 'G1000型 教材表示 · NOT FOR NAVIGATION', W / 2, H - 8, 10, C.grey, 'center', 600, jp);
     g.restore();

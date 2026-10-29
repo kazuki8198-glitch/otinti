@@ -177,6 +177,13 @@ test('MFD landing gear: the twin\'s three symbols by the gear\'s position; none 
   const single = P.placeInAir(P.newState(), 0, -40000, 3000, 354, 100), r1 = rec(); A.drawMFD(r1.g, 640, 420, panel(single, av)); assert.ok(!r1.has('LANDING GEAR'), 'the Archer\'s MFD');
   const r2 = rec(); A.drawPFD(r2.g, 640, 420, panel(tw, av)); assert.ok(!r2.has('LANDING GEAR'), 'the PFD by default');
   const r3 = rec(); A.drawPFD(r3.g, 640, 420, { ...panel(tw, av, { ...tw.out, gearPos: 1 }), gearRev: true }); assert.ok(r3.has('LANDING GEAR') && r3.arcs('fill', C.green) === 3, 'the PFD as the reversionary display');
+  // (there clear of the airspeed tape and its TAS box — x 0.07…0.19 W, down to 0.58 H + 22 — and of the engine box over
+  // it: its title under both, in CADET's 640 × 400 frame too)
+  for (const [w, h] of [[640, 400], [640, 420]]) {
+    const r = rec(); A.drawPFD(r.g, w, h, { ...panel(tw, av, { ...tw.out, gearPos: 1 }), gearRev: true });
+    const t = r.log.find(e => e.k === 'fillText' && e.a[0] === 'LANDING GEAR'), eng = r.log.find(e => e.k === 'fillText' && /^L (RUN|STOP|FTHR)/.test(e.a[0]));
+    assert.ok(t.a[2] - 9.5 > h * 0.58 + 22 && t.a[2] - 9.5 > eng.a[2] - 12 + 40 && t.a[2] - 9.5 + 34 < h - 16, `the PFD's LANDING GEAR box at y ${t.a[2] - 9.5} of ${h}`);
+  }
 });
 
 test('failures on the displays: AHRS failure flags the attitude and heading, GPS failure flags the GPS course', () => {

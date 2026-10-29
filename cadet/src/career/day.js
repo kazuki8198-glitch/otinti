@@ -160,16 +160,22 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     emit({ type: 'phase', from, to: phase });
   }
   const list = () => (st.list ? CHECKLISTS[st.list] : null);
+  // the control an item points at: its id, or (an item of several switches: content/checklists-seminole.js ring) the
+  // first of them not yet set, from what the last update() saw (before any: the first)
+  let lastC = null;
+  const ctlOf = (it) => (typeof it[3] === 'function' ? (lastC ? it[3](lastC) : it[3].ids[0]) : it[3]);
   // the current checklist item, as the HUD shows it
   function items() {
     const C = list(); if (!C) return null;
-    return { id: st.list, title: C.title, i: st.i, items: C.items.map((it, k) => ({ name: it[0], what: it[1], confirm: !it[2], ctl: it[3], note: it[4], ok: k < st.i, cur: k === st.i })) };
+    return { id: st.list, title: C.title, i: st.i, items: C.items.map((it, k) => ({ name: it[0], what: it[1], confirm: !it[2], ctl: k === st.i ? ctlOf(it) : (typeof it[3] === 'function' ? it[3].ids[0] : it[3]), note: it[4], ok: k < st.i, cur: k === st.i })) };
   }
   // the run-up's readings: the rpm on both magnetos, then the drop on each alone (held half a second: L — the left
   // alone, MAG RIGHT OFF; R — the right alone), carb heat, the idle; the twin's each engine's own (twinRunup), and before
-  // its taxi the time both fuel selectors are on XFEED with both engines running (the crossfeed's check)
+  // its taxi the time both fuel selectors are on XFEED with both engines running (the crossfeed's check). A drop is read
+  // only against both magnetos' rpm at the same throttle (fresh: that reference taken since the throttle last moved — a
+  // reading against the last setting's would be wrong, and could never pass the check of the two drops' difference)
   function watchRunup(c, dt) {
-    const m = st.memo, rpm = c.rpm, mag = magState(c.sw);
+    const m = st.memo, rpm = c.rpm, mag = magState(c.sw), thr = c.s ? c.s.thr : 0;
     if (!dt) return;
     if (AIRCRAFT === 'pa44' && c.sw.fuelSelL === 'XFEED' && c.sw.fuelSelR === 'XFEED' && c.sys && c.sys.running && (m.xfeedT += dt) >= XFEED_S) m.xfeed = true;
     if (st.phase !== 'runup') return;
@@ -178,28 +184,35 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
     const steady = m.prev != null && Math.abs(rpm - m.prev) / dt < 25 && m.prevMag === mag && m.prevCarb === c.sw.carbHeat;
     m.prev = rpm; m.prevMag = mag; m.prevCarb = c.sw.carbHeat;
     m.steadyT = steady ? (m.steadyT || 0) + dt : 0;
-    if (mag === 'BOTH' && !c.sw.carbHeat && rpm > 1850 && m.steadyT > 0.3) m.both = rpm;
+    if (mag === 'BOTH' && !c.sw.carbHeat && rpm > 1850 && m.steadyT > 0.3) { m.both = rpm; m.bothThr = thr; }
+    m.fresh = m.both > 0 && m.bothThr === thr;
     for (const [k, on] of [['L', mag === 'L'], ['R', mag === 'R'], ['C', c.sw.carbHeat && mag === 'BOTH']]) {
-      m.hold[k] = on && m.both && m.steadyT > 0.3 ? m.hold[k] + dt : 0;
+      m.hold[k] = on && m.fresh && m.steadyT > 0.3 ? m.hold[k] + dt : 0;
       if (m.hold[k] > 0.4) { const d = Math.round(m.both - rpm); if (k === 'L') m.dropL = d; else if (k === 'R') m.dropR = d; else m.carb = d; }
     }
     if (rpm > 300 && rpm < 820 && m.both) m.idle = true;
   }
   // (the twin) each engine on its own gauge (the MFD's two): both magnetos' rpm (both, rBoth), each magneto alone (the
-  // left engine's dropL / dropR, the right's rDropL / rDropR), the left engine's drop with the alternate air open (alt)
+  // left engine's dropL / dropR, the right's rDropL / rDropR), the left engine's drop with the alternate air open (alt).
+  // The twin's gauges follow the throttle at once (aircraft/systems.js): both magnetos' rpm is taken on every steady
+  // frame at an unchanged throttle (not while the propellers are cycled), so a magneto switched OFF just after the
+  // throttle moved is read against the new setting; freshK: each engine's reference at this throttle, fresh: both
   function twinRunup(c, dt) {
-    const m = st.memo, T = c.sys.twinLive, alt = !!c.sw.altAir;
-    if (!m.eng) m.eng = [{ prev: null, mag: '', alt: false, steadyT: 0 }, { prev: null, mag: '', alt: false, steadyT: 0 }];
+    const m = st.memo, T = c.sys.twinLive, alt = !!c.sw.altAir, thr = c.s ? c.s.thr : 0, cyc = c.sw.propCycleT > 0;
+    if (!m.eng) m.eng = [0, 1].map(() => ({ prev: null, mag: '', alt: false, thr: null, refThr: null, steadyT: 0 }));
+    m.freshK = m.freshK || [false, false];
     for (let k = 0; k < 2; k++) {
       const e = m.eng[k], rpm = T[k].rpm, mag = magStateOf(c.sw, k), both = k ? 'rBoth' : 'both';
-      const steady = e.prev != null && Math.abs(rpm - e.prev) / dt < 25 && e.mag === mag && e.alt === alt;
-      e.prev = rpm; e.mag = mag; e.alt = alt; e.steadyT = steady ? e.steadyT + dt : 0;
-      if (mag === 'BOTH' && !alt && rpm > 1850 && e.steadyT > 0.3) m[both] = rpm;
+      const steady = e.prev != null && Math.abs(rpm - e.prev) / dt < 25 && e.mag === mag && e.alt === alt && e.thr === thr;
+      e.prev = rpm; e.mag = mag; e.alt = alt; e.thr = thr; e.steadyT = steady ? e.steadyT + dt : 0;
+      if (mag === 'BOTH' && !alt && !cyc && rpm > 1850 && steady) { m[both] = rpm; e.refThr = thr; }
+      const fresh = m.freshK[k] = m[both] > 0 && e.refThr === thr;
       for (const [h, on, out] of k ? [['rL', mag === 'L', 'rDropL'], ['rR', mag === 'R', 'rDropR']] : [['L', mag === 'L', 'dropL'], ['R', mag === 'R', 'dropR'], ['A', alt && mag === 'BOTH', 'alt']]) {
-        m.hold[h] = on && m[both] && e.steadyT > 0.3 ? (m.hold[h] || 0) + dt : 0;
+        m.hold[h] = on && fresh && !cyc && e.steadyT > 0.3 ? (m.hold[h] || 0) + dt : 0;
         if (m.hold[h] > 0.4) m[out] = Math.round(m[both] - rpm);
       }
     }
+    m.fresh = m.freshK[0] && m.freshK[1];
     if (c.rpm > 300 && c.rpm < 820 && m.both) m.idle = true;
   }
   // the checklist: items tick in order as they become true; a confirm item waits for confirm()
@@ -211,7 +224,7 @@ export function createDay(FL, { seed = 1, level = 'basic', anomalies, stand = { 
       st.ticked.push(`${st.list}:${st.i}`); st.i++; emit({ type: 'tick', list: st.list, i: st.i - 1 });
     }
   }
-  const prep = (c) => { c.memo = st.memo; c.walk = true; c.qnh = radio.weather.qnh; return c; };
+  const prep = (c) => { c.memo = st.memo; c.walk = true; c.qnh = radio.weather.qnh; lastC = c; return c; };
   function confirm(c) {
     prep(c); tick(c);                                    // (the items already set tick first: Enter is for the one waiting)
     const C = list(); if (!C || st.i >= C.items.length) return false;

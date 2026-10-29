@@ -34,8 +34,9 @@
 //    its electric pump on, BATT MASTR on, fuel at its selector and the engine stopped (≥ PRIME.min s; a short one
 //    catches late; ≥ PRIME.flood s floods it: then only with the throttle well open) —, ENG START held, the mixture
 //    advanced as it fires: it runs on the prime for FIRE_S s, and stops if the mixture is still at cut-off then; a warm
-//    engine (stopped since it last ran) needs no prime. A mixture left forward while it cranks (the pump on) feeds it
-//    as a prime would. Its magnetos both OFF or the left one OFF (the impulse coupling's): it does not catch;
+//    engine (stopped since it last ran) needs no prime. A mixture forward while it cranks (the pump on) feeds it as a
+//    prime would — left forward from the start, or pushed forward once it is turning (it catches a moment later, as a
+//    primed engine). Its magnetos both OFF or the left one OFF (the impulse coupling's): it does not catch;
 //  - running: it stops when the mixture is pulled to idle cut-off, both magnetos go OFF, or the selector is OFF (after
 //    the fuel left in the lines, about 6 s) — on the twin each engine by its own switches and levers;
 //  - the run-up readings: the rpm the tachometer shows drops on one magneto (left 120, right 95 at 2,000 rpm: inside
@@ -262,6 +263,9 @@ export function createSystems(sw) {
         // with it well open, as VB-2636's flooded start has it — until it can catch)
         if (mix < 0.5) t.prime = Math.max(0, t.prime - (s.thr >= 0.45 ? 1.5 : 0.1) * dt);
         if (t.reason === 'twinFlooded' && t.prime < PRIME.flood) { t.reason = ''; t.catchAt = t.crankT + 1.5; }
+        // (not primed as the starter engaged: fed since — its mixture pushed forward with the pump on, or the prime
+        // grown enough — it catches as a primed engine would, counted from now)
+        if (t.reason === 'twinPrime') { const w = twinCatch(s, k); if (w < Infinity) t.catchAt = t.crankT + w; }
         if (want !== k || !master) t.eng = 'off';
         else if (t.crankT >= t.catchAt) {
           t.eng = 'run'; t.warm = true; t.prime = 0; t.lineT = LINE_FUEL_S; t.fireT = mix < 0.15 ? FIRE_S : 0;

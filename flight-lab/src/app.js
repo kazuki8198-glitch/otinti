@@ -180,7 +180,7 @@
       } else if (r.name === 'parkBrake') toast('FLIGHT LAB にパーキングブレーキはありません。止めておくときは B / Space（押している間ブレーキ）', 2600);
     } else if (r.type === 'switch' || r.type === 'select') {
       const x = r.value, name = label.replace(/（.*$/, '') || r.id;
-      const v = r.type === 'switch' ? (r.on ? 'ON' : 'OFF') : typeof x === 'string' ? x : r.id === 'mixture' && Number.isFinite(x) ? (x >= 0.95 ? 'リッチ' : x < 0.15 ? 'アイドル カットオフ' : `リーン ${Math.round(x * 100)}%`) : '';
+      const v = r.type === 'switch' ? (r.on ? 'ON' : 'OFF') : typeof x === 'string' ? x : (r.id === 'mixture' || r.id === 'mixtureR') && Number.isFinite(x) ? (x >= 0.95 ? 'リッチ' : x < 0.15 ? 'アイドル カットオフ' : `リーン ${Math.round(x * 100)}%`) : '';
       toast(`${name}${v ? ' ' + v : ''}`, 1400);
       if (!L.switchNoted) { L.switchNoted = true; toast('FLIGHT LAB では、スイッチ・マグネトー・ミクスチャー・燃料の切替は絵だけが変わります（灯火のスイッチは機体の外の灯りも点け消しします）。エンジンと電気系の動きは変わりません（エンジンは回った状態で始まります）', 4600); }
     } else if (r.type === 'prime') toast('プライマー：FLIGHT LAB ではエンジンの始動手順を省いています（エンジンは回った状態で始まります）', 2600);

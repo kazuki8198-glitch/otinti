@@ -9,14 +9,18 @@ const SPEAKERS = { captain: { name_ja: CAPTAIN.name_ja, color: CAPTAIN.color }, 
 export const EPILOGUE_FLAGS = ['epilogue_met'];
 export const EPILOGUE_HOOKS = ['look', 'nod', 'point', 'done'];
 
-export function epilogueDialogs() {
+export function epilogueDialogs(rank = '') {
   const say = (text, en, more = {}) => ({ speaker: 'captain', text, en, ...more });
+  // (growth design v1 §4.6) what the captain has heard of the cadet depends on the graduation's rank
+  const heard = rank === '優等' ? ['早瀬さんから聞いている。アカデミーを優等で出たそうだね。毎日の点検を、一度も省かなかった、とも。', 'I\'ve heard from Mr. Hayase. You finished the academy with honours, he says. And never once skipped your daily checks.']
+    : rank === '優秀' ? ['早瀬さんから聞いている。アカデミーでは優秀な成績で、毎日の点検を一度も省かなかったそうだね。', 'I\'ve heard from Mr. Hayase. A fine record at the academy, and you never once skipped your daily checks.']
+    : ['早瀬さんから聞いている。毎日の点検を、一度も省かなかったそうだね。', 'I\'ve heard from Mr. Hayase. He says you never once skipped your daily checks.'];
   const M = {
     m1: say('おはよう。今日からこの機体の型式の訓練に入る、右席の訓練生だね。機長の柏木です。', 'Good morning. You\'re the trainee starting the type rating on this aircraft, in the right seat. I\'m Captain Kashiwagi.',
       { hook: { name: 'look', arg: 'player' }, effects: [{ set: 'epilogue_met' }], next: 'm2' }),
     m2: say('ここは羽田。訓練センターのシミュレーターで型式限定を取る前に、まず本物の操縦席に座ってもらうことにしている。', 'This is Haneda. Before the simulator and the type rating at the training centre, we have you sit in a real flight deck first.', { next: 'm3' }),
     m3: say('画面は大きいのが 6 枚、エンジンはジェットが 2 つ。でも、やることはアカデミーと同じだよ。点検し、確かめ、声に出す。', 'Six big display units, two jet engines. But the work is the same as at the academy. Check, confirm, say it out loud.', { hook: { name: 'point', arg: 'panel' }, next: 'm4' }),
-    m4: say('早瀬さんから聞いている。毎日の点検を、一度も省かなかったそうだね。', 'I\'ve heard from Mr. Hayase. He says you never once skipped your daily checks.', { choices: [
+    m4: say(heard[0], heard[1], { choices: [
       { text: 'はい', next: 'm5' }, { text: 'まだまだです', next: 'm5' },
     ] }),
     m5: say('それが、いちばん大事なことだ。……さあ、外を見てごらん。ここが、これからの君の職場だ。', 'That is what matters most. ...Now, look outside. This is where you\'ll be working from now on.', { hook: { name: 'nod' }, end: true }),

@@ -281,7 +281,7 @@ if (which === 'start') {
     if (s.talking) { await talk(); continue; }
     if (s.intro && s.intro.task) {
       log(`- [${s.intro.task}] 方位の印 ${s.intro.bug}　${JSON.stringify(s.intro.results)}`);
-      if (s.intro.task === 'turn' && process.env.SHOT && !shots.has('intro')) { await ev(() => window.__cadet.fly.intro.auto(16)); await look('旋回'); await picture('intro'); }
+      if (/^(look|turn)$/.test(s.intro.task) && process.env.SHOT && !shots.has('intro')) { await ev((sec) => window.__cadet.fly.intro.auto(sec), s.intro.task === 'look' ? 8 : 16); await look('旋回'); await picture('intro'); }
       await ev(() => window.__cadet.fly.intro.auto(90)); await look('体験飛行');
     } else await sleep(500);
   }

@@ -533,9 +533,13 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   const fIas = num('速度', 'IAS', 'kt'), fAlt = num('高度', 'ALT', 'ft'), fHdg = num('針路', 'HDG', '°'), fVs = num('昇降率', 'VS', 'fpm');
   const fWhere = make('div', 'fh-where');
   const fKeys = make('div', 'fh-keys');
-  for (const [k, w] of [[['W', 'S'], 'ピッチ'], [['A', 'D'], 'バンク'], [['R', 'F'], '出力'], [['T'], 'トリム'], [['V'], 'フラップ'], [['B'], 'ブレーキ'], [['H'], 'キー一覧']]) {
-    put(fKeys, put(kbds(make('span', k[0] === 'H' ? 'fh-kc help' : 'fh-kc'), k), make('span', '', null, w)));
+  // (the keys under the free panel: all of them, or a flight's own — the introductory flight's, the yoke only)
+  const FREE_KEYS = [[['W', 'S'], 'ピッチ'], [['A', 'D'], 'バンク'], [['R', 'F'], '出力'], [['T'], 'トリム'], [['V'], 'フラップ'], [['B'], 'ブレーキ'], [['H'], 'キー一覧']];
+  function setFreeKeys(list = null) {
+    fKeys.textContent = '';
+    for (const [k, w] of list || FREE_KEYS) put(fKeys, put(kbds(make('span', k[0] === 'H' ? 'fh-kc help' : 'fh-kc'), k), make('span', '', null, w)));
   }
+  setFreeKeys();
   put(free, fHead, nums, fWhere, fKeys);
   free.hidden = true;
 
@@ -631,7 +635,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   root.appendChild(el);
 
   // ---- state
-  let mode = 'lesson', status = null, panel = null, compact = false, helpOn = false, p2dOn = false, debOpen = false, destroyed = false;
+  let mode = 'lesson', status = null, panel = null, stripOn = true, compact = false, helpOn = false, p2dOn = false, debOpen = false, destroyed = false;
   let lastHold = 0, subTimer = 0, flashTimer = 0, footTimer = 0, sizeDirty = true, layoutN = 0, fitSig = '';
   let onCheck = null, onAtc = null, debCb = null;
   const G = {}, PR = {};
@@ -842,7 +846,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
     if (pn) panel = pn;
     if (status && status.mode && status.mode !== mode) setMode(status.mode);
     const on = !!status;
-    shown(lesson, on && mode === 'lesson'); shown(free, mode === 'free'); shown(strip, !!panel);
+    shown(lesson, on && mode === 'lesson'); shown(free, mode === 'free'); shown(strip, stripOn && !!panel);
     if (!on) { shown(check, false); shown(atc, false); return; }
     if (mode === 'lesson') renderLesson(status); else renderFree(status, panel);
     if (panel) renderStrip(panel, status);
@@ -944,6 +948,8 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   function setHood(v) { shown(hood, !!v); }
   // the free-flight panel's heading (the day's own flying between its lessons is not a free flight)
   function setFreeTitle(title = '自由飛行', sub = '採点なし・H でキーの一覧') { text(fTitle, title); text(fSub, sub); }
+  // (the control strip off: a flight whose throttle, flaps and trim are the instructor's)
+  function setStrip(on = true) { stripOn = !!on; shown(strip, stripOn && !!panel); }
   function setCompact(v) { compact = !!v; text(fold, compact ? '詳しく' : '簡潔に'); if (status && mode === 'lesson') renderLesson(status); }
   function destroy() {
     if (destroyed) return;
@@ -955,7 +961,7 @@ export function createFlightHUD({ root = document.body, settings = null, keys = 
   }
 
   return {
-    el, show, setMode, update, say, flashChecklist, showDebrief, hideDebrief, setHelp, setPanel2D, fitPanel, drawPanel2D, setHood, setCompact, setFreeTitle,
+    el, show, setMode, update, say, flashChecklist, showDebrief, hideDebrief, setHelp, setPanel2D, fitPanel, drawPanel2D, setHood, setCompact, setFreeTitle, setFreeKeys, setStrip,
     onChecklistClick(fn) { onCheck = typeof fn === 'function' ? fn : null; },
     onAtcClick(fn) { onAtc = typeof fn === 'function' ? fn : null; },
     destroy,

@@ -269,6 +269,10 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     s = await ev(() => window.__cadet.fly.status());
     assert.equal(s.intro.task, 'level'); assert.ok(s.intro.hands);
     assert.match(await ev(() => document.querySelector('.dh-task').innerText), /まっすぐ・同じ高さ/);
+    // (the panel shows the yoke's keys only, no control strip: the throttle, the flaps, the trim and the brakes are his)
+    const hud = await ev(() => { const f = document.querySelector('#fhud .fh-free .fh-keys'), st = document.querySelector('#fhud .fh-strip'); return { keys: f ? f.innerText : '', strip: !!st && !st.hidden }; });
+    assert.ok(/ピッチ/.test(hud.keys) && /バンク/.test(hud.keys) && !/出力|トリム|フラップ|ブレーキ/.test(hud.keys), `the keys shown: ${hud.keys}`);
+    assert.equal(hud.strip, false, 'no control strip');
     // the yoke only: R (the throttle) does nothing — his word instead; D held banks it
     const thr = await ev(() => window.__cadet.fly.flight.s.thr);
     await g.page.keyboard.press('KeyR'); await g.page.keyboard.down('KeyR'); await ev(() => window.__cadet.simulate(0.5)); await g.page.keyboard.up('KeyR');

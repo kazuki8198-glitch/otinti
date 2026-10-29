@@ -123,6 +123,7 @@ export function createFlyMode(ctx) {
   // the introductory flight (flight/intro-flight.js) while it goes on, the last talk's 'intro' hook, the last refused
   // key's time, the scripted cadet's keys (introAuto: the tests)
   let intro = null, introGo = null, refusedAt = -1e9, auto = null;
+  const INTRO_FREE_KEYS = [[['W', 'S'], 'ピッチ'], [['A', 'D'], 'バンク'], [['H'], 'キー一覧']];
 
   // ---- the fade (a black sheet over everything; the work happens while it is opaque)
   const sheet = document.createElement('div');
@@ -228,7 +229,7 @@ export function createFlyMode(ctx) {
       yaw = 0; pitch = HOME_PITCH;
       ctx.onEnter();
       placeNow();
-      if (fh) { fh.show(true); fh.setMode('free'); if (fh.setFreeTitle) fh.setFreeTitle(); if (settings.get('panel2D') !== fh.panel2D) fh.setPanel2D(!!settings.get('panel2D')); }
+      if (fh) { fh.show(true); fh.setMode('free'); if (fh.setFreeTitle) fh.setFreeTitle(); if (fh.setFreeKeys) { fh.setFreeKeys(); fh.setStrip(true); } if (settings.get('panel2D') !== fh.panel2D) fh.setPanel2D(!!settings.get('panel2D')); }
       // alone: no one to ask — the day begins at once
       if (crew) startTalk(); else { phase = 'day'; beginDay('basic'); }
     }, instant);
@@ -249,7 +250,7 @@ export function createFlyMode(ctx) {
     if (runner.running) runner.stop();
     // (the introductory flight: how it went, for main.js; its time and landings not FLIGHT LAB's — dropped, no record)
     let sum = null;
-    if (intro) { sum = intro.summary({ cut: !intro.done }); intro = null; introGo = null; flight.discard(); }
+    if (intro) { sum = intro.summary({ cut: !intro.done }); intro = null; introGo = null; flight.discard(); if (fh && fh.setFreeKeys) { fh.setFreeKeys(); fh.setStrip(true); } }
     else if (flight.L && !flight.free && !flight.L.done) { flight.abort('中止'); flight.finish(); }
     else if (flight.L && flight.free) flight.finish();
     fade(() => {
@@ -288,7 +289,8 @@ export function createFlyMode(ctx) {
     yaw = 0; pitch = HOME_PITCH;
     ctx.onEnter();
     placeNow();
-    if (fh) { fh.show(true); fh.setMode('free'); if (fh.setFreeTitle) fh.setFreeTitle('体験飛行', '採点なし・H でキーの一覧'); if (settings.get('panel2D') !== fh.panel2D) fh.setPanel2D(!!settings.get('panel2D')); }
+    // (the yoke's keys only, and no control strip: the throttle, the flaps and the trim are his today)
+    if (fh) { fh.show(true); fh.setMode('free'); if (fh.setFreeTitle) fh.setFreeTitle('体験飛行', '採点なし・H でキーの一覧'); if (fh.setFreeKeys) { fh.setFreeKeys(INTRO_FREE_KEYS); fh.setStrip(false); } if (settings.get('panel2D') !== fh.panel2D) fh.setPanel2D(!!settings.get('panel2D')); }
     flight.av.hdgBug = flight.L.hdg0;
     return true;
   }

@@ -581,7 +581,8 @@ test('records: a finished lesson is noted once in CADET\'s own keys (cadet.…),
   assert.deepEqual(base.keys().sort(), ['cadet.' + SC.PROG_KEY, 'cadet.' + SC.STORE_KEY].sort());
   assert.equal(base.getItem(SC.STORE_KEY), null); assert.equal(base.getItem(SC.PROG_KEY), null);
   const prog = f.progress();
-  assert.deepEqual(prog.lessons.a1, { tries: 1, best: 'S', pass: true, levels: ['intro'] });
+  // (growth design v1 §4.2: the record now also keeps the lesson's best score — this flight's was perfect)
+  assert.deepEqual(prog.lessons.a1, { tries: 1, best: 'S', pass: true, score: 100, levels: ['intro'] });
   assert.ok(Math.abs(prog.time - f.L.s.t) < 1e-6, `training time ${prog.time}`);
   assert.equal(f.records().length, 1);
   // an aborted lesson: a record of the abort when the integrator asks for it

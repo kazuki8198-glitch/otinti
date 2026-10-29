@@ -341,7 +341,7 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.match(r.toast, /予定が残っています/);
     await ev(() => window.__cadet.walkRoute([{ a: 655.0, c: 276.5 }, { a: 655.0, c: 272.0 }]));
     t = await talkThrough('lecturer');
-    assert.match(t.lines.join('\n'), /28 \/ 28 問、100%/);
+    assert.match(t.lines.join('\n'), /30 \/ 30 問、100%/);
     st = await career();
     assert.ok(st.exams.written1.pass);
     // (M7) the day's plan done before the evening: the guide says to go home, and the front doors agree — walking out is

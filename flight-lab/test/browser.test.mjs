@@ -385,3 +385,92 @@ test('browser: 基礎教材 — every chapter and section by 次の節, 161 figu
     assert.deepEqual(await page.evaluate(() => __lab.errors), []);
   } finally { await browser.close(); }
 });
+
+// W10b (textbook/rewrite/combined/DESIGN.md 3.2「節のデータ」「章末」, 5 criterion 24, 6.4): the textbook page draws the
+// section's marks beside its title (FL.book.secMarks: the scope badge, 発展, the provenance line) and the chapter-end
+// 説明してみよう (FL.book.writtenHtml): an answer opens with its button, is kept in the progress (bookWritten), printed open;
+// a question rewritten from the basic course says so when its original was opened there (kisoQa, never read as ours).
+test('browser: 教科書 — the scope badge and the provenance line beside the title, 発展 in the contents, 説明してみよう with its answers and its record', { skip: !chromium && 'Playwright not found' }, async () => {
+  const { out } = build({ quiet: true });
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  try {
+    const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+    const page = await ctx.newPage(), errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+    await ctx.route(/^https?:/, r => r.abort());
+    await page.addInitScript(() => { try { localStorage.setItem('flightlab-prefs-v2', JSON.stringify({ ack: true, tour: true })); } catch (e) { /* storage blocked */ } });
+    await page.goto('file://' + out);
+    await page.waitForFunction(() => window.__lab && __lab.sceneOk());
+    await page.evaluate(() => __lab.showPage('book'));
+    // a section through its item in the contents (N.M)
+    const open = id => page.evaluate(id => {
+      const f = FL.book.findSection(id), n = `${f.ch.n}.${f.ch.secs.indexOf(f.sec) + 1}`;
+      [...document.querySelectorAll('#bkNav .bk-item')].find(b => b.querySelector('.bk-num').textContent.trim() === n).click();
+    }, id);
+    // the marks: the badge beside the title (on its line), the provenance line under it
+    await open('basics.rules');
+    const m = await page.evaluate(() => {
+      const t = document.querySelector('#bkArt .bk-head .bk-title'), s = document.querySelector('#bkArt .bk-head .bk-scope'), f = document.querySelector('#bkArt .bk-head .bk-from');
+      const r = e => e.getBoundingClientRect();
+      return { title: t.textContent, scope: s && s.textContent, from: f && f.textContent, beside: !!s && r(s).left > r(t).right - 1 && r(s).top < r(t).bottom && r(s).bottom > r(t).top, under: !!f && r(f).top >= r(t).bottom - 1 };
+    });
+    assert.deepEqual(m, { title: '飛行方式と気象状態は別の軸', scope: '共通', from: 'パイロット基礎教材（第 3 版）第 0 章 14 節、第 9 章 8 節、第 12 章 1 節をもとに改稿', beside: true, under: true });
+    await open('intro.japan');
+    assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#bkArt .bk-head .bk-scope, #bkArt .bk-head .bk-from')].map(e => e.textContent)), ['日本の決まり', 'パイロット基礎教材（第 3 版）第 9 章 3 節をもとに改稿']);
+    await open('aero.forces');                     // no section data yet: nothing is guessed
+    assert.equal(await page.locator('#bkArt .bk-scope, #bkArt .bk-from').count(), 0);
+    await open('intro.marks');                     // the promises explain the badge, the line and 発展, now drawn
+    const marks = await page.textContent('#bkArt');
+    for (const t of ['範囲の札', '由来の行', '発展']) assert.ok(marks.includes(t), t);
+    // 発展: a deep section has its badge in the contents and beside its title (none is deep yet: one is made so here)
+    await page.evaluate(() => { FL.book.findSection('aero.lift').sec.deep = true; __lab.showPage('book'); });
+    await open('aero.lift');
+    assert.deepEqual(await page.evaluate(() => { const b = document.querySelector('#bkNav .bk-item.sel'); return [b && b.querySelector('.bk-deep-tag') && b.querySelector('.bk-deep-tag').textContent, b && b.lastChild.textContent, document.querySelector('#bkArt .bk-head .bk-deep-tag').textContent]; }),
+      ['発展', '揚力はどうやって生まれるか', '発展']);
+    await page.evaluate(() => { delete FL.book.findSection('aero.lift').sec.deep; __lab.showPage('book'); });
+    // 説明してみよう on the chapter's last section: after the check questions, before the chapter's 日米の違い
+    await open('basics.case');
+    const n = await page.evaluate(() => FL.book.writtenItems(FL.book.CHAPTERS.find(c => c.id === 'basics')).length);
+    assert.ok(n >= 14);
+    const w = await page.evaluate(() => {
+      const box = document.querySelector('#bkArt .bk-written'), q = [...document.querySelectorAll('#bkArt .quiz')].pop(), jt = document.querySelector('#bkArt .bk-jur-end');
+      return { n: box.querySelectorAll('.bk-w').length, hidden: [...box.querySelectorAll('.bk-w-a')].every(a => a.hidden && a.offsetHeight === 0), head: box.querySelector('h3').textContent, cnt: box.querySelector('.bk-w-cnt').textContent,
+        afterQuiz: !!(q.compareDocumentPosition(box) & Node.DOCUMENT_POSITION_FOLLOWING), beforeJur: !jt || !!(box.compareDocumentPosition(jt) & Node.DOCUMENT_POSITION_FOLLOWING) };
+    });
+    assert.deepEqual(w, { n, hidden: true, head: '説明してみよう', cnt: `答えを開いた問題 0 / ${n}`, afterQuiz: true, beforeJur: true });
+    const first = page.locator('#bkArt .bk-w[data-w="basics.w0"]');
+    await first.locator('.bk-w-btn').click();
+    assert.equal(await first.locator('.bk-w-a').isVisible(), true);
+    assert.deepEqual([await first.locator('.bk-w-btn').textContent(), await first.locator('.bk-w-btn').getAttribute('aria-expanded')], ['答えを閉じる', 'true']);
+    assert.deepEqual((await page.evaluate(() => __lab.progress())).bookWritten, ['basics.w0']);
+    assert.equal(await page.textContent('#bkArt .bk-w-cnt'), `答えを開いた問題 1 / ${n}`);
+    assert.match(await first.getAttribute('class'), /\bseen\b/);
+    await first.locator('.bk-w-btn').click();
+    assert.equal(await first.locator('.bk-w-a').isVisible(), false);
+    // printed open, without the buttons
+    await page.emulateMedia({ media: 'print' });
+    assert.deepEqual(await page.evaluate(() => [getComputedStyle(document.querySelector('#bkArt .bk-w-a')).display, getComputedStyle(document.querySelector('#bkArt .bk-w-btn')).display]), ['block', 'none']);
+    await page.emulateMedia({ media: 'screen' });
+    // the answer's link opens its section; coming back, the opened one is marked; the record is where the next start reads it
+    await first.locator('.bk-w-btn').click();
+    await first.locator('.bk-w-a button[data-sec]').first().click();
+    assert.equal(await page.textContent('#bkArt .bk-title'), '一便の流れと、訓練の 1 回のフライト（予告）');
+    await open('basics.case');
+    assert.match(await page.locator('#bkArt .bk-w[data-w="basics.w0"]').getAttribute('class'), /\bseen\b/);
+    assert.doesNotMatch(await page.locator('#bkArt .bk-w[data-w="basics.w1"]').getAttribute('class'), /\bseen\b/);
+    assert.deepEqual((await page.evaluate(() => FL.school.loadProgress(localStorage))).bookWritten, ['basics.w0']);
+    assert.deepEqual(JSON.parse(await page.evaluate(() => FL.school.exportJSON([], __lab.progress()))).progress.bookWritten, ['basics.w0']);
+    // a question rewritten from the basic course, whose original was opened there: said, not recorded as ours (one is
+    // added here for the test, then taken away)
+    await page.evaluate(() => { FL.book.CHAPTERS.find(c => c.id === 'intro').written.push({ q: '（テスト）', a: `（テスト）${FL.book.bk.see('intro.cert', '資格')}`, from: ['kiso09.q3'] }); __lab.progress().kisoQa.push('kiso09.q3'); });
+    await open('intro.study');
+    const added = await page.evaluate(() => `intro.w${FL.book.CHAPTERS.find(c => c.id === 'intro').written.length - 1}`);
+    assert.equal(await page.textContent(`#bkArt .bk-w[data-w="${added}"] .bk-w-from`), 'パイロット基礎教材（第 3 版）第 9 章 問 3 をもとに改稿 原本で開いた問題');
+    assert.equal(await page.locator('#bkArt .bk-w[data-w="intro.w0"] .bk-w-from, #bkArt .bk-w[data-w="intro.w0"] .bk-w-kiso').count(), 0);
+    assert.deepEqual((await page.evaluate(() => __lab.progress())).bookWritten, ['basics.w0']);
+    await page.evaluate(() => { FL.book.CHAPTERS.find(c => c.id === 'intro').written.pop(); __lab.progress().kisoQa.pop(); });
+    assert.deepEqual(errors, []);
+    assert.deepEqual(await page.evaluate(() => __lab.errors), []);
+  } finally { await browser.close(); }
+});

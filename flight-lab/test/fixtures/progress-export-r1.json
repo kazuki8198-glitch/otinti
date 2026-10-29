@@ -1,0 +1,90 @@
+{
+ "app": "FLIGHT LAB",
+ "kind": "learning-record",
+ "version": 2,
+ "exported": "2026-10-29T12:00:00.000Z",
+ "note": "本記録は教材シミュレータの練習記録です。正式な飛行日誌（logbook）ではなく、飛行時間として扱えません。",
+ "records": [
+  {
+   "v": 2,
+   "id": "r1old",
+   "lessonId": "a1",
+   "lessonTitle": "姿勢・出力・トリム",
+   "level": "basic",
+   "levelName": "基礎",
+   "aircraft": "pa28",
+   "datetime": "2026-10-20T09:30:00.000Z",
+   "result": "pass",
+   "grade": "A",
+   "reason": "",
+   "passPct": 92,
+   "practiceSec": 540,
+   "steps": [
+    {
+     "step": "水平直線飛行",
+     "pass": true,
+     "rows": [
+      {
+       "name": "高度",
+       "val": "±40 ft",
+       "std": "±100 ft",
+       "pass": true
+      }
+     ]
+    }
+   ],
+   "sampleSec": 2,
+   "altHist": [
+    3000,
+    3010,
+    2990
+   ],
+   "spdHist": [
+    100,
+    101,
+    99
+   ],
+   "events": [],
+   "td": null,
+   "memo": "トリムを最後に",
+   "note": "本記録は教材シミュレータの練習記録です。正式な飛行日誌（logbook）ではなく、飛行時間として扱えません。"
+  }
+ ],
+ "progress": {
+  "lessons": {
+   "a1": {
+    "tries": 3,
+    "best": "A",
+    "pass": true,
+    "levels": [
+     "intro",
+     "basic"
+    ]
+   }
+  },
+  "time": 1800,
+  "landings": 2,
+  "read": [
+   "intro.use",
+   "basics.units",
+   "aero.forces"
+  ],
+  "quiz": {
+   "q_aero": 80
+  },
+  "bookQuiz": {
+   "aero.0": 100,
+   "basics.1": 100
+  },
+  "atc": {
+   "sfb1": true
+  },
+  "kisoRead": [
+   "kiso00.01",
+   "kiso05.14"
+  ],
+  "kisoQa": [
+   "kiso05.q1"
+  ]
+ }
+}

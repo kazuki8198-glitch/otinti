@@ -308,7 +308,8 @@
           nav.append(h('h3', { text: part.title }));
           for (const c of chs) for (const s of c.secs) {
             if (f && !(s.t + ' ' + BK.text(s)).toLowerCase().includes(f) && !c.t.toLowerCase().includes(f)) continue;
-            nav.append(h('button', { type: 'button', class: 'bk-item' + (S.progress.read.includes(s.id) ? ' done' : '') + (s.id === curSec ? ' sel' : ''), onclick: () => openSection(s.id) }, h('span', { class: 'bk-num', text: `${c.n}.${c.secs.indexOf(s) + 1}` }), h('span', { text: s.t })));
+            // a deep section (発展, DESIGN 3.2) has its badge before the title (openSection finds the item by its last child)
+            nav.append(h('button', { type: 'button', class: 'bk-item' + (S.progress.read.includes(s.id) ? ' done' : '') + (s.id === curSec ? ' sel' : ''), onclick: () => openSection(s.id) }, h('span', { class: 'bk-num', text: `${c.n}.${c.secs.indexOf(s) + 1}` }), s.deep ? h('span', { class: 'tag bk-deep-tag', text: '発展' }) : null, h('span', { text: s.t })));
           }
         }
         if (!nav.querySelector('.bk-item')) nav.append(h('p', { class: 'mute small', text: '見つかりませんでした。' }));
@@ -326,7 +327,11 @@
       const art = $('#bkArt'); if (!art) return;
       const { ch, sec } = x, i = ch.secs.indexOf(sec);
       art.innerHTML = '';
-      art.append(h('div', { class: 'bk-chap', text: `第 ${ch.n} 章　${ch.t}（${i + 1} / ${ch.secs.length}）` }), h('h2', { class: 'bk-title', text: sec.t }));
+      // the title with the section's marks beside it (FL.book.secMarks: the scope badge, 発展, the provenance line of a
+      // section written from the basic course; DESIGN 3.2「節のデータ」— the same HTML as TEXTBOOK's)
+      const head = h('div', { class: 'bk-head' }, h('h2', { class: 'bk-title', text: sec.t }));
+      if (BK.secMarks) head.insertAdjacentHTML('beforeend', BK.secMarks(sec));   // static textbook data (trusted)
+      art.append(h('div', { class: 'bk-chap', text: `第 ${ch.n} 章　${ch.t}（${i + 1} / ${ch.secs.length}）` }), head);
       if (i === 0 && ch.en) art.append(h('div', { class: 'bk-en', text: ch.en }));
       if (i === 0 && ch.summary) art.append(h('p', { html: '<b>この章で学ぶこと：</b>' + esc(BK.fix(ch.summary)) }));
       art.append(h('div', { html: BK.html(sec) }));                      // static textbook content (trusted)
@@ -351,6 +356,10 @@
             art.append(box);
           });
         }
+        // 説明してみよう (DESIGN 3.2「章末」): FL.book.writtenHtml, the same as TEXTBOOK's. An answer opened is kept in the
+        // progress (bookWritten: "chapterId.wN", DESIGN 6.4); a question rewritten from the basic course says so when its
+        // original was opened there (kisoQa: shown, never read as this book's record)
+        { const wh = BK.writtenHtml ? BK.writtenHtml(ch) : ''; if (wh) art.append(writtenBox(wh)); }
         // the chapter's 日米の違い: the FL.jur items of the boxes in its sections, in reading order (DESIGN 3.2「章末」:
         // drawn from the data, nothing written by hand; a chapter without a box has none)
         { const jt = BK.jurTable ? BK.jurTable(ch.id) : ''; if (jt) art.append(h('div', { class: 'bk-end-jur', html: jt })); }
@@ -368,6 +377,24 @@
       art.scrollTop = 0;
       for (const b of document.querySelectorAll('#bkNav .bk-item')) b.classList.toggle('sel', b.querySelector('.bk-num') && b.lastChild.textContent === sec.t);
       const nb = [...document.querySelectorAll('#bkNav .bk-item')].find(b => b.classList.contains('sel')); if (nb) { nb.classList.add('done'); nb.scrollIntoView({ block: 'nearest' }); }
+    }
+    // the chapter's 説明してみよう with its buttons: the answer shows and hides; opening it the first time stores its key
+    function writtenBox(wh) {
+      const wrap = h('div', { html: wh }), all = [...wrap.querySelectorAll('.bk-w')];
+      const cnt = h('p', { class: 'small mute bk-w-cnt' }), upd = () => { cnt.textContent = `答えを開いた問題 ${all.filter(b => S.progress.bookWritten.includes(b.dataset.w)).length} / ${all.length}`; };
+      const how = wrap.querySelector('.bk-w-how'); if (how) how.after(cnt);
+      for (const box of all) {
+        const key = box.dataset.w, b = box.querySelector('.bk-w-btn'), ans = box.querySelector('.bk-w-a');
+        if (S.progress.bookWritten.includes(key)) box.classList.add('seen');
+        b.addEventListener('click', () => {
+          const open = ans.hidden; ans.hidden = !open; b.textContent = open ? '答えを閉じる' : '答えを見る'; b.setAttribute('aria-expanded', String(open));
+          if (open && !S.progress.bookWritten.includes(key)) { S.progress.bookWritten.push(key); save(); box.classList.add('seen'); upd(); }
+        });
+        const from = box.querySelector('.bk-w-from');
+        if (from && from.dataset.kiso.split(' ').some(id => S.progress.kisoQa.includes(id))) from.append(' ', h('span', { class: 'tag bk-w-kiso', text: '原本で開いた問題' }));
+      }
+      upd();
+      return wrap;
     }
 
     // ------------------------------------------------------------ the basic course (kiso/: Japan's aviation law, a separate book)

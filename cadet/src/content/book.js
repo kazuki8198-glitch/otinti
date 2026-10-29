@@ -9,6 +9,12 @@
 // rules and its written tests ask them, so the US side stays, headed 「米国の決まり」; only the Japanese side goes (bk.jp,
 // bk.same, the 日本 column of bk.jur and the line under it, the links to Part 7 and the summary chapters:
 // textbook/rewrite/combined/DESIGN.md 3.4 and 6.3).
+// The section's marks (FLIGHT LAB's FL.book.secMarks: the scope badge, 発展, the provenance line 「パイロット基礎教材
+// （第 3 版）… をもとに改稿」) and the chapter-end 説明してみよう (ch.written, FL.book.writtenHtml) are drawn by FLIGHT LAB's
+// and TEXTBOOK's pages from the data, not written in the sections' bodies: this book takes the bodies only, so neither is
+// shown here nor read aloud (DESIGN 6.3). The boxes of the section form stay in the book (もっと深く・計算演習 folded,
+// 判断の目, ここを混同しない, 思い出そう), filtered as the rest; the instructor's words (summary, key points) leave them out,
+// as they leave out the cautions.
 // A section is filtered the first time it is asked for, then kept.
 
 const DROP_CHAPTERS = new Set(['intro', 'english', 'sim']);
@@ -151,11 +157,12 @@ function filterHtml(html, sectionExists) {
   // course plainly (公開情報では、Archer の次に… → Archer の次に…; （どちらで教わるかは推測・要確認） goes)
   h = h.replace(/（[^（）<]*<span class="tag unk">[^<]*<\/span>[^（）<]*）/g, '').replace(/<span class="tag (?:fact|unk)">[^<]*<\/span>/g, '')
     .replace(/(^|[>。])公開情報では、/g, '$1');
-  // what emptied out
+  // what emptied out (a box with only its heading left, a fold with nothing in it)
   for (let prev = ''; prev !== h; ) {
     prev = h;
     h = h.replace(/<(ul|ol)\b[^>]*>\s*<\/\1>/g, '').replace(/<p\b[^>]*>\s*<\/p>/g, '')
-      .replace(/<div class="bk-key"><b>[^<]*<\/b>\s*<\/div>/g, '');
+      .replace(/<div class="bk-(?:key|judge|dont|recall|drill-a)"><b>[^<]*<\/b>\s*<\/div>/g, '')
+      .replace(/<details class="bk-(?:deep|drill)"><summary>(?:(?!<\/summary>)[\s\S])*<\/summary><div class="bk-fold">\s*<\/div><\/details>/g, '');
   }
   // FLIGHT LAB's links to other sections: kept as marked text (the reader may follow it), only to sections of this book
   h = h.replace(/<button type="button" data-sec="([^"]+)">([\s\S]*?)<\/button>/g,
@@ -164,10 +171,13 @@ function filterHtml(html, sectionExists) {
   return h.replace(/\u0000(\d+)\u0000/g, (m, i) => figs[+i]).replace(/\n{3,}/g, '\n\n').trim();
 }
 
+// the boxes of the section form that are not the section's own explanation in reading order: the folds (もっと深く・
+// 計算演習, read later or skipped), 判断の目 and ここを混同しない (boxes, as the cautions), 思い出そう (another section's)
+export const NOT_PROSE = Object.freeze(['bk-deep', 'bk-drill', 'bk-judge', 'bk-dont', 'bk-recall']);
 // the sentences of the section's prose in reading order (paragraphs and list items; not tables, figures, questions,
-// cautions or sources)
+// cautions, sources or the boxes above)
 function proseSentences(html) {
-  const h = html.replace(/<table\b[\s\S]*?<\/table>|<figure\b[\s\S]*?<\/figure>|<details\b[\s\S]*?<\/details>/g, ' ')
+  const h = dropByClass(html, NOT_PROSE).replace(/<table\b[\s\S]*?<\/table>|<figure\b[\s\S]*?<\/figure>|<details\b[\s\S]*?<\/details>/g, ' ')
     .replace(/<div class="bk-(?:warn|f|key)">[\s\S]*?<\/div>/g, ' ').replace(/<p class="[^"]*(?:bk-src|mute)[^"]*">[\s\S]*?<\/p>/g, ' ');
   const out = [];
   for (const m of h.matchAll(/<(p|li)\b[^>]*>([\s\S]*?)<\/\1>/g))

@@ -1,7 +1,8 @@
 // TEXTBOOK — page.js
 // The DOM: the table of contents, one section at a time (#節ID) or the whole book (#all), the search (marks on the
 // shown text nodes only), FLIGHT LAB's lesson buttons turned into tags, the calculators (FL.book.wire), the check
-// questions, the read marks and the settings (this browser's localStorage only, keys "textbook.*"), the print.
+// questions, the answers of 説明してみよう (shown and hidden here; not recorded: FLIGHT LAB keeps that record), the read
+// marks and the settings (this browser's localStorage only, keys "textbook.*"), the print.
 (function () {
   'use strict';
   const FL = globalThis.FL, BK = FL.book, R = globalThis.TB.make(FL);
@@ -99,10 +100,13 @@
     return count;
   }
   // a hit in the chapter's end matter opens its last section (search() says which section); a hit inside a closed
-  // "考えてみよう" opens it
+  // "考えてみよう" (or a fold: もっと深く・計算演習) opens it, and a hit inside a hidden answer of 説明してみよう shows it
   function showMarks(el) {
     const ms = el.querySelectorAll('mark.tb-mark');
-    for (const m of ms) { const d = m.closest('details'); if (d) d.open = true; }
+    for (const m of ms) {
+      for (let d = m.closest('details'); d; d = d.parentElement && d.parentElement.closest('details')) d.open = true;
+      const a = m.closest('.bk-w-a[hidden]'); if (a) showAnswer(a.closest('.bk-w'), true);
+    }
     if (ms[0]) ms[0].scrollIntoView({ block: 'center' });
   }
 
@@ -170,10 +174,17 @@
   window.addEventListener('hashchange', () => route(false));
   $('tbAll').addEventListener('click', () => { if (S.mode === 'all') showSection(S.cur || S.last || FIRST); else showAll(); });
 
+  // ------------------------------------------------------------ 説明してみよう: an answer shows and hides with its button
+  function showAnswer(box, open) {
+    const b = box.querySelector('.bk-w-btn'), a = box.querySelector('.bk-w-a');
+    a.hidden = !open; b.textContent = open ? '答えを閉じる' : '答えを見る'; b.setAttribute('aria-expanded', String(open));
+  }
+
   // ------------------------------------------------------------ the clicks (one listener: the views are redrawn)
   document.addEventListener('click', e => {
-    const t = e.target.closest('[data-go], button[data-sec], a[data-jump], .tb-check, button.bk-lesson'); if (!t) return;
+    const t = e.target.closest('[data-go], button[data-sec], a[data-jump], .tb-check, button.bk-lesson, button.bk-w-btn'); if (!t) return;
     if (t.matches('button.bk-lesson')) { toggleLesson(t); return; }
+    if (t.matches('button.bk-w-btn')) { const box = t.closest('.bk-w'); showAnswer(box, box.querySelector('.bk-w-a').hidden); return; }
     if (t.matches('a[data-jump]')) { e.preventDefault(); go(t.dataset.jump); return; }
     if (t.matches('[data-go]')) { go(t.dataset.go, t.dataset.q || ''); return; }
     if (t.matches('button[data-sec]')) { go(t.dataset.sec); return; }
@@ -187,7 +198,8 @@
     S.quiz[key] = r.ok; save(KEY.quiz, S.quiz);
   });
 
-  // ------------------------------------------------------------ print: the "考えてみよう" boxes open
+  // ------------------------------------------------------------ print: the "考えてみよう" boxes and the folds (もっと深く・
+  // 計算演習) open; the answers of 説明してみよう are printed open by the style sheet (.bk-w-a[hidden] in @media print)
   let opened = [];
   window.addEventListener('beforeprint', () => { opened = [...view.querySelectorAll('details:not([open])')]; for (const d of opened) d.open = true; });
   window.addEventListener('afterprint', () => { for (const d of opened) d.open = false; opened = []; });

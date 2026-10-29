@@ -515,9 +515,13 @@
     };
   }
   // progress: lessons (tries / best grade / passed), training time, landings, read sections, quiz scores, ATC scenes,
-  // and the basic course's own (kiso/: its sections read, its written questions whose answer was opened)
+  // the textbook's 説明してみよう whose answer was opened (bookWritten: "chapterId.wN", N from 0 as bookQuiz's
+  // "chapterId.N"; optional, added in version 2 — an older export without it reads as none: textbook/rewrite/combined/
+  // DESIGN.md 6.4), and the basic course's own (kiso/: its sections read, its written questions whose answer was opened;
+  // never read as the textbook's)
+  const BOOK_WRITTEN = /^[a-z0-9]{1,30}\.w[0-9]{1,3}$/, MAX_BOOK_WRITTEN = 1000;
   function sanitizeProgress(p) {
-    const out = { lessons: {}, time: 0, landings: 0, read: [], quiz: {}, bookQuiz: {}, atc: {}, kisoRead: [], kisoQa: [] };
+    const out = { lessons: {}, time: 0, landings: 0, read: [], quiz: {}, bookQuiz: {}, bookWritten: [], atc: {}, kisoRead: [], kisoQa: [] };
     if (!p || typeof p !== 'object') return out;
     if (p.lessons && typeof p.lessons === 'object') for (const [k, v] of Object.entries(p.lessons)) {
       if (!/^[a-z0-9_]{1,12}$/.test(k) || !v || typeof v !== 'object') continue;
@@ -527,6 +531,7 @@
     if (isNum(p.landings)) out.landings = clamp(Math.round(p.landings), 0, 1e6);
     if (Array.isArray(p.read)) out.read = [...new Set(p.read.filter(x => typeof x === 'string' && /^[a-z0-9_.\-]{1,40}$/.test(x)))].slice(0, 500);
     for (const key of ['quiz', 'bookQuiz']) if (p[key] && typeof p[key] === 'object') for (const [k, v] of Object.entries(p[key])) { if (/^[a-z0-9_.\-]{1,40}$/.test(k) && isNum(v)) out[key][k] = clamp(Math.round(v), 0, 100); }
+    if (Array.isArray(p.bookWritten)) out.bookWritten = [...new Set(p.bookWritten.filter(x => typeof x === 'string' && BOOK_WRITTEN.test(x)))].slice(0, MAX_BOOK_WRITTEN);
     if (p.atc && typeof p.atc === 'object') for (const [k, v] of Object.entries(p.atc)) { if (/^[a-z0-9_]{1,20}$/.test(k)) out.atc[k] = v === true; }
     for (const key of ['kisoRead', 'kisoQa']) if (Array.isArray(p[key])) out[key] = [...new Set(p[key].filter(x => typeof x === 'string' && /^kiso[a-z0-9_.\-]{1,36}$/.test(x)))].slice(0, 1000);
     return out;
@@ -563,7 +568,7 @@
     const lessons = { ...A.lessons };
     for (const [k, v] of Object.entries(B.lessons)) { const x = lessons[k]; lessons[k] = x ? { tries: Math.max(x.tries, v.tries), best: rank[v.best] > rank[x.best] ? v.best : x.best, pass: x.pass || v.pass, levels: [...new Set([...x.levels, ...v.levels])] } : v; }
     const maxMap = (p, q) => { const o = { ...p }; for (const [k, v] of Object.entries(q)) o[k] = Math.max(o[k] || 0, v); return o; };
-    return sanitizeProgress({ lessons, time: Math.max(A.time, B.time), landings: Math.max(A.landings, B.landings), read: [...A.read, ...B.read], quiz: maxMap(A.quiz, B.quiz), bookQuiz: maxMap(A.bookQuiz, B.bookQuiz), atc: { ...A.atc, ...B.atc }, kisoRead: [...A.kisoRead, ...B.kisoRead], kisoQa: [...A.kisoQa, ...B.kisoQa] });
+    return sanitizeProgress({ lessons, time: Math.max(A.time, B.time), landings: Math.max(A.landings, B.landings), read: [...A.read, ...B.read], quiz: maxMap(A.quiz, B.quiz), bookQuiz: maxMap(A.bookQuiz, B.bookQuiz), bookWritten: [...A.bookWritten, ...B.bookWritten], atc: { ...A.atc, ...B.atc }, kisoRead: [...A.kisoRead, ...B.kisoRead], kisoQa: [...A.kisoQa, ...B.kisoQa] });
   }
 
   FL.school = {

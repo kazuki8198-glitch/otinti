@@ -788,3 +788,135 @@ test('book: no （別の章） in what the reader sees, and no link without a ta
   for (const p of RD.FLIGHT) assert.ok(BK.findSection(p.sec), `radio → ${p.sec}`);
   assert.deepEqual(shown.filter(t => /（別の章）|\{ch:/.test(t)).map(t => String(t).slice(0, 120)), []);
 });
+
+// ------------------------------------------------------------------ W10b: what the pages draw from the book's data
+// (textbook/rewrite/combined/DESIGN.md 3.2「節のデータ」「節の形」「章末」, 5 criterion 24, 6.4): the section's marks
+// (FL.book.secMarks), the boxes of the section form (bk.deep・bk.drill・bk.judge・bk.dont・bk.recall), the chapter-end
+// 説明してみよう (FL.book.writtenHtml) and its record (bookWritten). The pages themselves: browser.test.mjs.
+const KISO_PLACES = (() => {
+  const s = new Set();
+  for (const c of KZ.chapters) { for (const x of c.sections) s.add(x.id); for (const q of c.qa) s.add(`${c.id}.q${q.n}`); }
+  return s;
+})();
+test('book: FL.book.secMarks — the scope badge on every section that has a scope, 発展 on a deep one, the provenance line from the original\'s own ids', () => {
+  const SCOPE = { common: '共通', us: '米国の決まり', jp: '日本の決まり', mixed: '米国と日本の決まり' };
+  assert.deepEqual({ ...BK.SCOPE }, SCOPE);
+  let scoped = 0, from = 0;
+  for (const c of BK.CHAPTERS) for (const s of c.secs) {
+    const m = BK.secMarks(s);
+    assert.equal(BK.secMarks(s.id), m, `${s.id}: by id or by section, the same`);
+    if (s.scope === undefined && s.from === undefined && !s.deep) { assert.equal(m, '', s.id); continue; }
+    assert.match(m, /^<div class="bk-marks">[\s\S]*<\/div>$/, s.id);
+    if (s.scope !== undefined) { scoped++; assert.ok(m.includes(`<span class="bk-scope bk-scope-${s.scope}" data-scope="${s.scope}">${SCOPE[s.scope]}</span>`), s.id); }
+    else assert.doesNotMatch(m, /data-scope=/, `${s.id}: no badge is guessed`);
+    assert.equal(m.includes('>発展</span>'), !!s.deep, `${s.id}: 発展`);
+    if (s.from !== undefined) {
+      from++;
+      for (const id of s.from) assert.ok(KISO_PLACES.has(id), `${s.id}: ${id} is a section of the original (kiso/)`);
+      assert.match(m, new RegExp(`<span class="bk-from" data-from="${s.from.join(' ').replace(/\./g, '\\.')}">パイロット基礎教材（第 3 版）第 \\d+ 章 .+をもとに改稿</span>`), s.id);
+    } else assert.doesNotMatch(m, /bk-from|改稿/, s.id);
+  }
+  // the front part: its sections have their scope, 12 of them their provenance (R1); the lines as the reader sees them
+  const p0 = BK.CHAPTERS.filter(c => c.part === 'p0' && c.id !== 'sim').flatMap(c => c.secs);
+  assert.ok(p0.length >= 18 && p0.every(s => /data-scope=/.test(BK.secMarks(s))), 'every front-part section written in R1 shows its scope');
+  assert.ok(scoped >= 18 && from >= 12, `${scoped} scoped, ${from} with from`);
+  const line = id => BK.secMarks(id).match(/<span class="bk-from"[^>]*>([^<]*)<\/span>/)[1];
+  assert.equal(line('intro.marks'), 'パイロット基礎教材（第 3 版）第 0 章 扉をもとに改稿');
+  assert.equal(line('intro.study'), 'パイロット基礎教材（第 3 版）第 0 章 導入の節と扉をもとに改稿');
+  assert.equal(line('basics.speed'), 'パイロット基礎教材（第 3 版）第 0 章 9・10・11 節をもとに改稿');
+  assert.equal(line('basics.rules'), 'パイロット基礎教材（第 3 版）第 0 章 14 節、第 9 章 8 節、第 12 章 1 節をもとに改稿');
+  assert.equal(line('intro.japan'), 'パイロット基礎教材（第 3 版）第 9 章 3 節をもとに改稿');
+  assert.match(BK.secMarks('intro.cert'), />米国と日本の決まり</);
+  assert.match(BK.secMarks('intro.japan'), />日本の決まり</);
+  // a typo does not hide; a section that is not there has no marks
+  assert.throws(() => BK.secMarks({ id: 'x.y', scope: 'japan' }), /scope "japan"/);
+  assert.throws(() => BK.secMarks({ id: 'x.y', scope: 'common', from: ['kiso5.14'] }), /basic course/);
+  assert.throws(() => BK.secMarks({ id: 'x.y', from: [] }), /from must be a list/);
+  assert.equal(BK.secMarks('no.such.section'), '');
+  assert.equal(BK.secMarks({ id: 'x.y', scope: 'jp', from: ['kiso05.14', 'kiso05.16', 'kiso09.q3'] }).match(/>(パイロット[^<]*)</)[1], 'パイロット基礎教材（第 3 版）第 5 章 14・16 節、第 9 章 問 3 をもとに改稿');
+  // intro.marks explains the badge, the line and 発展 now that the pages draw them (its rows wait for the parts)
+  const marks = BK.html(BK.findSection('intro.marks').sec);
+  for (const t of ['範囲の札', '由来の行', 'パイロット基礎教材（第 3 版）第 N 章 x 節をもとに改稿', '<b>発展</b>']) assert.ok(marks.includes(t), t);
+});
+
+test('book: the boxes of the section form — もっと深く・計算演習 fold, 判断の目・ここを混同しない take items or a block, 思い出そう needs its link', () => {
+  const b = BK.bk;
+  assert.equal(b.deep('揚力係数と迎え角', '<p>本文</p>'), '<details class="bk-deep"><summary>もっと深く：揚力係数と迎え角</summary><div class="bk-fold"><p>本文</p></div></details>');
+  assert.equal(b.drill('単位の換算', '<p>70 NM は何 km？</p>', '<p>70 × 1.852 ＝ 129.64 km</p>'),
+    '<details class="bk-drill"><summary>計算演習：単位の換算</summary><div class="bk-fold"><p>70 NM は何 km？</p><div class="bk-drill-a"><b>答えと解き方</b><p>70 × 1.852 ＝ 129.64 km</p></div></div></details>');
+  assert.equal(b.drill('問だけ', '<p>問</p>'), '<details class="bk-drill"><summary>計算演習：問だけ</summary><div class="bk-fold"><p>問</p></div></details>');
+  assert.throws(() => b.deep('', '<p>x</p>'), /needs a title/);
+  assert.equal(b.judge('雲が下がってきたら引き返す', '<b>燃料</b>が予定より減っていたら降りる'), '<div class="bk-judge"><b>判断の目</b><ul><li>雲が下がってきたら引き返す</li><li><b>燃料</b>が予定より減っていたら降りる</li></ul></div>');
+  assert.equal(b.dont('<p>IAS と TAS</p>'), '<div class="bk-dont"><b>ここを混同しない</b><p>IAS と TAS</p></div>');
+  assert.match(b.dont(b.t(['語', '意味'], [['IAS', '指示対気速度']])), /^<div class="bk-dont"><b>ここを混同しない<\/b><table class="bk-t">/);
+  const r = b.recall('高度計は静圧の差で高さを示します。', ['basics.alt', '高度の種類と高度計の基準']);
+  assert.equal(r, '<div class="bk-recall"><b>思い出そう</b><p>高度計は静圧の差で高さを示します。 <button type="button" data-sec="basics.alt">→ 高度の種類と高度計の基準</button></p></div>');
+  // the checks read a recall to its first </div> (check-concepts.mjs): the link is inside
+  assert.match(r.match(/<div class="bk-recall"[\s\S]*?<\/div>/)[0], /data-sec="basics\.alt"/);
+  assert.throws(() => b.recall('リンクのない呼び戻し。'), /needs a link/);
+  assert.throws(() => b.recall('x', 'basics.alt'), /needs a link/);
+  assert.throws(() => b.recall('<div>x</div>', ['basics.alt', 'y']), /no <div>/);
+  // the classes are the ones the section form's order is checked by (check-form.mjs: bk-deep … bk-recall)
+  for (const [k, cls] of [['deep', 'bk-deep'], ['drill', 'bk-drill'], ['judge', 'bk-judge'], ['dont', 'bk-dont']]) assert.match(b[k]('題', '<p>x</p>'), new RegExp(`^<(details|div) class="${cls}">`), k);
+});
+
+test('book: 説明してみよう — FL.book.writtenHtml on the chapters with written (the front part\'s 22 first), each answer hidden behind its button with its record key; links resolve, no （別の章）', () => {
+  let n = 0;
+  for (const c of BK.CHAPTERS) {
+    const items = BK.writtenItems(c), w = BK.writtenHtml(c);
+    assert.equal(BK.writtenHtml(c.id), w, c.id);
+    if (!items.length) { assert.equal(w, '', c.id); continue; }
+    n += items.length;
+    assert.ok(w.startsWith(`<div class="bk-written" data-ch="${c.id}"><h3>説明してみよう</h3>`), c.id);
+    assert.equal((w.match(/<div class="bk-w" data-w="/g) || []).length, items.length, c.id);
+    items.forEach((it, i) => {
+      assert.equal(it.key, `${c.id}.w${i}`);
+      assert.ok(w.includes(`<div class="bk-w" data-w="${c.id}.w${i}"><div class="bk-w-q"><b class="bk-w-n">問 ${i + 1}.</b> `), `${c.id} ${i}`);
+      assert.ok(w.includes(`<button type="button" class="bk-w-btn" aria-expanded="false" aria-controls="bkw-${c.id}-${i}">答えを見る</button><div class="bk-w-a" id="bkw-${c.id}-${i}" hidden><b>答えの例</b>`), `${c.id} ${i}: hidden behind its button`);
+      assert.ok(it.q.trim() && it.a.trim(), `${c.id} ${i}`);
+      assert.match(it.a, /data-sec="/, `${c.id} ${i}: the answer links its section (criterion 20)`);
+    });
+    for (const m of w.matchAll(/data-sec="([^"]*)"/g)) assert.ok(BK.findSection(m[1]), `${c.id} → ${m[1]}`);
+    assert.doesNotMatch(w, /（別の章）|\{ch:/, c.id);
+  }
+  const front = ['intro', 'basics', 'english'].map(id => BK.writtenItems(BK.CHAPTERS.find(c => c.id === id)).length);
+  assert.ok(front[0] >= 1 && front[1] >= 14 && front[2] >= 7, `the front part's written: ${front}`);
+  assert.ok(n >= 22, `${n}`);
+  // { q, a, from }: the original's question it was rewritten from, as the reader sees it; a malformed one is an error
+  const ch = { id: 'zz', written: [['問い', '答え'], { q: '問い 2', a: '答え 2（{ch:aero}）', from: ['kiso09.q3'] }] };
+  const w = BK.writtenHtml(ch), aero = BK.CHAPTERS.find(c => c.id === 'aero').n;
+  assert.ok(w.includes('<div class="bk-w-from" data-kiso="kiso09.q3">パイロット基礎教材（第 3 版）第 9 章 問 3 をもとに改稿</div>'));
+  assert.ok(w.includes(`答え 2（第 ${aero} 章）`) && BK.writtenItems(ch)[1].key === 'zz.w1');
+  assert.throws(() => BK.writtenHtml({ id: 'zz', written: [['問いだけ']] }), /question and an answer/);
+  assert.throws(() => BK.writtenHtml({ id: 'zz', written: [{ q: 'q', a: 'a', from: ['kiso09.3'] }] }), /kisoNN\.qM/);
+  assert.throws(() => BK.writtenHtml({ id: 'zz', written: 'x' }), /must be a list/);
+});
+
+test('progress: bookWritten (the 説明してみよう answers opened) through the sanitiser, the export and the merge; an R1 export (version 2, no bookWritten) still imports', () => {
+  const p = SC.sanitizeProgress({ bookWritten: ['basics.w0', 'basics.w0', 'intro.w0', 'basics.0', 'Basics.w1', 'basics.w1000', 'kiso05.q1', 5, null] });
+  assert.deepEqual(p.bookWritten, ['basics.w0', 'intro.w0']);
+  assert.deepEqual(SC.sanitizeProgress({}).bookWritten, []);
+  assert.deepEqual(SC.sanitizeProgress({ bookWritten: 'basics.w0' }).bookWritten, []);
+  const many = Array.from({ length: 1200 }, (_, i) => `c${i}.w0`);
+  assert.equal(SC.sanitizeProgress({ bookWritten: many }).bookWritten.length, 1000, 'at most 1,000');
+  const e = JSON.parse(SC.exportJSON([], p));
+  assert.equal(e.version, 2, 'the export stays version 2');
+  assert.deepEqual(e.progress.bookWritten, ['basics.w0', 'intro.w0']);
+  assert.deepEqual(SC.importJSON(JSON.stringify(e)).progress.bookWritten, ['basics.w0', 'intro.w0']);
+  const m = SC.mergeProgress(p, { bookWritten: ['english.w2', 'basics.w0'], kisoQa: ['kiso00.q1'] });
+  assert.deepEqual([m.bookWritten, m.kisoQa], [['basics.w0', 'intro.w0', 'english.w2'], ['kiso00.q1']]);
+  // never read from the basic course's own record (DESIGN 6.4), nor the other way round
+  assert.deepEqual(SC.sanitizeProgress({ kisoQa: ['kiso09.q3'] }).bookWritten, []);
+  assert.deepEqual(SC.sanitizeProgress({ bookWritten: ['intro.w0'] }).kisoQa, []);
+  // an export written by R1's FLIGHT LAB (test/fixtures/progress-export-r1.json: before bookWritten): read as it was
+  const old = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures', 'progress-export-r1.json'), 'utf8');
+  const oj = JSON.parse(old);
+  assert.equal(oj.version, 2); assert.equal('bookWritten' in oj.progress, false);
+  const j = SC.importJSON(old);
+  assert.equal(j.records.length, 1); assert.equal(j.records[0].lessonId, 'a1');
+  assert.deepEqual([j.progress.read, j.progress.bookQuiz, j.progress.kisoRead, j.progress.kisoQa, j.progress.bookWritten],
+    [oj.progress.read, oj.progress.bookQuiz, oj.progress.kisoRead, oj.progress.kisoQa, []]);
+  assert.deepEqual(j.progress.lessons, oj.progress.lessons);
+  const merged = SC.mergeProgress(j.progress, p);
+  assert.deepEqual([merged.read, merged.bookWritten], [oj.progress.read, ['basics.w0', 'intro.w0']]);
+});

@@ -2,7 +2,9 @@
 // Chapters and sections → HTML strings (no DOM here, so the Node tests can run it in vm). The section bodies are
 // FLIGHT LAB's (FL.book.html, unchanged); the chapter's end matter (terms, examples, cautions, the check questions,
 // the lessons, the sources) is plain text in FLIGHT LAB's data, so it is escaped here (the same as textContent); the
-// chapter's 日米の違い table is FLIGHT LAB's own HTML (FL.book.jurTable, drawn from FL.jur and escaped there).
+// chapter's 日米の違い table is FLIGHT LAB's own HTML (FL.book.jurTable, drawn from FL.jur and escaped there), and so are
+// the section's marks beside its title (FL.book.secMarks: the scope badge, 発展, the provenance line) and the chapter's
+// 説明してみよう (FL.book.writtenHtml: its answers open with their buttons, page.js) — the same HTML as FLIGHT LAB's.
 // Lessons are written as FLIGHT LAB writes them (button[data-lesson]); page.js turns every one into a tag.
 (function (G) {
   'use strict';
@@ -18,6 +20,9 @@
     const partOf = ch => BK.PARTS.find(p => p.id === ch.part);
     const lessonTitle = id => { const l = FL.school && FL.school.lesson(id); return l ? l.title : null; };
     const num = (ch, k) => `${ch.n}.${k + 1}`;
+    // a deep section (発展: DESIGN 3.2「節のデータ」) has its badge in the contents
+    const deepTag = sec => (sec.deep ? ' <span class="tag bk-deep-tag">発展</span>' : '');
+    const plainOf = html => String(html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
     // the chapter's end matter (on its last section)
     function endHtml(ch, quizResults) {
@@ -37,6 +42,8 @@
             + '<div class="res" aria-live="polite"></div></div>';
         });
       }
+      // 説明してみよう (DESIGN 3.2「章末」): after the check questions (FLIGHT LAB's HTML; no table before the terms')
+      if (BK.writtenHtml) s += BK.writtenHtml(ch);
       // the chapter's 日米の違い: the FL.jur items of the boxes in its sections, in reading order (DESIGN 3.2「章末」:
       // drawn from the data; a chapter without a box has none). After the terms: content.test.mjs reads the terms table
       // as the end matter's first table
@@ -63,7 +70,8 @@
       const h = 'h' + level;
       let s = `<section class="tb-sec" id="${esc(sec.id)}" data-sec-id="${esc(sec.id)}">`;
       s += `<div class="bk-chap">${esc(partOf(ch) ? partOf(ch).title : '')}　／　第 ${ch.n} 章　${esc(ch.t)}（${k + 1} / ${ch.secs.length}）</div>`;
-      s += `<${h} class="bk-title"><span class="tb-num">${num(ch, k)}</span> ${esc(sec.t)}</${h}>`;
+      // the title with the section's marks beside it (DESIGN 3.2「節のデータ」: FLIGHT LAB's HTML, the same as its page's)
+      s += `<div class="bk-head"><${h} class="bk-title"><span class="tb-num">${num(ch, k)}</span> ${esc(sec.t)}</${h}>${BK.secMarks ? BK.secMarks(sec) : ''}</div>`;
       if (k === 0 && ch.en) s += `<div class="bk-en">${esc(ch.en)}</div>`;
       if (k === 0 && ch.summary) s += `<p class="tb-summary"><b>この章で学ぶこと：</b>${esc(BK.fix(ch.summary))}</p>`;
       if (isApp(ch, sec)) s += `<p class="tb-appnote" role="note">${esc(APP_NOTE)}</p>`;
@@ -89,7 +97,7 @@
         const chs = BK.CHAPTERS.filter(c => c.part === p.id); if (!chs.length) continue;
         s += `<h2>${esc(p.title)}</h2><ol class="tb-toc-ch">`;
         for (const c of chs) s += `<li><a href="#${esc(c.secs[0].id)}" data-jump="${esc(c.secs[0].id)}">第 ${c.n} 章　${esc(c.t)}</a><ol>`
-          + c.secs.map((x, k) => `<li><a href="#${esc(x.id)}" data-jump="${esc(x.id)}">${num(c, k)} ${esc(x.t)}</a></li>`).join('') + '</ol></li>';
+          + c.secs.map((x, k) => `<li><a href="#${esc(x.id)}" data-jump="${esc(x.id)}">${num(c, k)} ${esc(x.t)}</a>${deepTag(x)}</li>`).join('') + '</ol></li>';
         s += '</ol>';
       }
       s += '</nav>';
@@ -109,7 +117,7 @@
         s += `<h3 class="tb-part">${esc(p.title)}</h3>`;
         for (const c of chs) {
           s += `<div class="tb-toc-chap"><div class="tb-toc-ct">第 ${c.n} 章　${esc(c.t)}</div>`;
-          s += c.secs.map((x, k) => `<button type="button" class="bk-item${r.has(x.id) ? ' done' : ''}${x.id === cur ? ' sel' : ''}" data-go="${esc(x.id)}"${x.id === cur ? ' aria-current="true"' : ''}><span class="bk-num">${num(c, k)}</span><span>${esc(x.t)}</span></button>`).join('');
+          s += c.secs.map((x, k) => `<button type="button" class="bk-item${r.has(x.id) ? ' done' : ''}${x.id === cur ? ' sel' : ''}" data-go="${esc(x.id)}"${x.id === cur ? ' aria-current="true"' : ''}><span class="bk-num">${num(c, k)}</span><span>${esc(x.t)}${deepTag(x)}</span></button>`).join('');
           s += '</div>';
         }
       }
@@ -123,6 +131,7 @@
         (ch.terms || []).map(t => t.filter(Boolean).join(' ')),
         (ch.examples || []).map(BK.fix), (ch.cautions || []).map(BK.fix),
         (ch.quiz || []).map(q => [q.q, ...q.choices, q.why].map(BK.fix).join(' ')),
+        (BK.writtenItems ? BK.writtenItems(ch) : []).map(w => plainOf(w.q + ' ' + w.a)),
         (ch.lessons || []).map(id => lessonTitle(id) || id),
         (ch.refs || []).map(r => r.label + (r.note ? ' ' + r.note : '')),
       ).join(' ');

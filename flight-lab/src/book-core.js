@@ -2,8 +2,10 @@
 // The textbook's frame: the parts (parts 1–6 in the order of the publicly described ANA cadet course; the parts before
 // and after them are added by the file of their chapters: FL.book.addPart), the references (public
 // sources: FAA handbooks, the ACS, the AIM, 14 CFR, ANA's public pages, published training material), the writing
-// helpers (key points, cautions, formulas, self-check questions, "try it in the simulator", calculators, photos), and
-// the lookups the pages use. The chapters themselves are in book-1.js … book-5.js, book-0.js and book-comm.js
+// helpers (key points, cautions, formulas, self-check questions, "try it in the simulator", calculators, photos, the
+// US–Japan boxes, the boxes of the section form: もっと深く・計算演習・判断の目・ここを混同しない・思い出そう), the
+// lookups the pages use, and what the pages draw from the data (the scope badge and the provenance line of a section:
+// secMarks; the chapter-end 説明してみよう: writtenHtml). The chapters themselves are in book-1.js … book-5.js, book-0.js and book-comm.js
 // (FL.book.add); the figures in book-figs.js; the photos in book-photos.js (loaded after this file by FLIGHT LAB and
 // TEXTBOOK, not by CADET).
 (function (FL) {
@@ -237,6 +239,24 @@
       + `<tr><th>項目</th><th class="jur-us">米国</th><th class="jur-jp">日本</th><th class="jur-jp jur-conf">確度</th><th class="jur-where">本の中で</th></tr>${rows}</table>`
       + `<div class="jur-foot">${us}${jurVersions(J.items)}</div></div>`;
   }
+  // ---- the boxes of the section form (DESIGN 3.2「節の形」, textbook/rewrite/STYLE.md「節の形」5–7 and 11) ----
+  // bk.deep(title, html) もっと深く and bk.drill(title, problem, answer?) 計算演習 are folds (<details>: closed on the
+  // screen, opened to print — TEXTBOOK's page.js); bk.judge(...) 判断の目 and bk.dont(...) ここを混同しない take list
+  // items, or one block of HTML (a table, paragraphs: it starts with a block tag); bk.recall(text, [secId, label], …)
+  // 思い出そう is ≤ 3 lines with at least one link to the concept's address (bk.see, so a link without a target fails
+  // the tests: DESIGN 6.2 rules 6 and 13). A recall has no <div> inside (check-concepts.mjs reads it to its first
+  // </div>). CADET keeps these boxes in its book (the folds folded) and leaves them out of what the instructor reads.
+  const BLOCK = /^\s*<(?:p|ul|ol|table|div|figure|h4|dl|details)\b/i;
+  const listOrBlock = items => (items.length === 1 && BLOCK.test(items[0]) ? items[0] : lst(items));
+  const fold = (cls, head, title, body) => {
+    if (typeof title !== 'string' || !title.trim()) throw new Error(`FL.book.bk: ${head} needs a title (bk.${cls.slice(3)}(title, …))`);
+    return `<details class="${cls}"><summary>${head}：${title}</summary><div class="bk-fold">${body}</div></details>`;
+  };
+  function recall(text, ...links) {
+    if (!links.length || !links.every(l => Array.isArray(l) && typeof l[0] === 'string' && typeof l[1] === 'string')) throw new Error('FL.book.bk.recall(text, [secId, label], …): a recall needs a link to the concept\'s address');
+    if (/<div\b/i.test(text)) throw new Error('FL.book.bk.recall: no <div> inside a recall');
+    return `<div class="bk-recall"><b>思い出そう</b><p>${text} ${links.map(([id, label]) => `<button type="button" data-sec="${attr(id)}">→ ${label}</button>`).join('')}</p></div>`;
+  }
   const bk = {
     aim: html => `<p class="bk-aim">${html}</p>`,                       // the section's first lines: what it is for
     key: (...items) => `<div class="bk-key"><b>ここが大切</b>${lst(items)}</div>`,
@@ -255,6 +275,12 @@
     us: x => jurSide('bk-us', '米国では', x, jurUs),                     // 米国では: an FL.jur id or HTML (CADET keeps it)
     jp: x => jurSide('bk-jp', '日本では', x, jurJpSide),                  // 日本では (CADET leaves it out)
     same: x => jurSide('bk-same', '日本も同じ', x, jurJpSide),            // 日本も同じ (CADET leaves it out)
+    deep: (title, html) => fold('bk-deep', 'もっと深く', title, html),     // もっと深く (a fold)
+    drill: (title, problem, answer) => fold('bk-drill', '計算演習', title,   // 計算演習 (a fold): the problem, then the answer
+      problem + (answer ? `<div class="bk-drill-a"><b>答えと解き方</b>${answer}</div>` : '')),
+    judge: (...items) => `<div class="bk-judge"><b>判断の目</b>${listOrBlock(items)}</div>`,       // 判断の目
+    dont: (...items) => `<div class="bk-dont"><b>ここを混同しない</b>${listOrBlock(items)}</div>`,  // ここを混同しない
+    recall,                                                              // 思い出そう (≤ 3 lines and a link)
   };
   const CHAPTERS = [];
   // a chapter may be inserted before another one (ch.before = its id); the numbers follow the order
@@ -283,5 +309,78 @@
   function html(sec) { return fix(typeof sec.h === 'function' ? sec.h() : sec.h); }
   function text(sec) { if (sec._txt === undefined) sec._txt = html(sec).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '); return sec._txt; }
   function wire(root) { for (const el of root.querySelectorAll('[data-calc]')) { const f = FL.bookCalc && FL.bookCalc[el.dataset.calc]; if (f && !el.dataset.done) { el.dataset.done = '1'; f(el); } } }
-  FL.book = { R, PARTS, CHAPTERS, bk, add, addPart, findSection, fix, html, text, wire, jurTable, jurAppendix, get FIG() { return FL.bookFigs; } };
+
+  // ---- what the pages draw from the section's and the chapter's data (DESIGN 3.2「節のデータ」「章末」, 5 criterion 24) ----
+  // FLIGHT LAB (pages.js) and TEXTBOOK (render.js) draw the same HTML from here; CADET draws neither (DESIGN 6.3).
+  // The scope badge (scope: common・us・jp・mixed), 「発展」 on a deep section, and the provenance line of a section
+  // written from the basic course (from: its section ids) — 「パイロット基礎教材（第 3 版）第 5 章 14・16 節をもとに改稿」.
+  const SCOPE = Object.freeze({ common: '共通', us: '米国の決まり', jp: '日本の決まり', mixed: '米国と日本の決まり' });
+  const KISO_BOOK = 'パイロット基礎教材（第 3 版）';
+  // a section or question of the basic course: kisoNN.M (section M of chapter NN), kisoNN.cover (the chapter's door),
+  // kisoNN.x1 (the chapter's opening section: chapters 0–2), kisoNN.qM (written question M; its record key in kisoQa)
+  const KISO_ID = /^kiso(\d{2})\.(cover|x(\d+)|q(\d+)|(\d+))$/;
+  // ['kiso05.14', 'kiso05.16'] → 第 5 章 14・16 節; ['kiso00.14', 'kiso09.8'] → 第 0 章 14 節、第 9 章 8 節;
+  // ['kiso00.x1', 'kiso00.cover'] → 第 0 章 導入の節と扉; ['kiso09.q3'] → 第 9 章 問 3 (in the order given)
+  function kisoPlace(ids) {
+    const chs = [];
+    for (const id of ids) {
+      const m = String(id).match(KISO_ID);
+      if (!m) throw new Error(`FL.book: "${id}" is not a section or question of the basic course (kisoNN.M, kisoNN.cover, kisoNN.x1, kisoNN.qM)`);
+      let c = chs.find(x => x.n === Number(m[1])); if (!c) chs.push(c = { n: Number(m[1]), parts: [] });
+      const kind = m[2] === 'cover' ? 'cover' : m[3] ? 'x' : m[4] ? 'q' : 'sec', num = Number(m[3] || m[4] || m[5] || 0);
+      let p = c.parts.find(x => x.kind === kind); if (!p) c.parts.push(p = { kind, nums: [] });
+      if (!p.nums.includes(num)) p.nums.push(num);
+    }
+    const say = p => (p.kind === 'cover' ? '扉' : p.kind === 'x' ? '導入の節' : p.kind === 'q' ? `問 ${p.nums.join('・')}` : `${p.nums.join('・')} 節`);
+    return chs.map(c => `第 ${c.n} 章 ${c.parts.map(say).join('と')}`).join('、');
+  }
+  const kisoFrom = ids => { const p = kisoPlace(ids); return `${KISO_BOOK}${p}${/\d$/.test(p) ? ' ' : ''}をもとに改稿`; };
+  const secOf = x => (typeof x === 'string' ? (findSection(x) || {}).sec : x) || null;
+  // → '<div class="bk-marks">…</div>', or '' when the section has none of them. A section without scope gets no badge
+  // (none is guessed); a scope or a from that is not of the right form is an error (a typo must not hide)
+  function secMarks(x) {
+    const sec = secOf(x); if (!sec) return '';
+    const out = [];
+    if (sec.scope !== undefined) {
+      if (!Object.prototype.hasOwnProperty.call(SCOPE, sec.scope)) throw new Error(`FL.book.secMarks: ${sec.id}: scope "${sec.scope}" is not one of ${Object.keys(SCOPE).join('・')}`);
+      out.push(`<span class="bk-scope bk-scope-${sec.scope}" data-scope="${sec.scope}">${SCOPE[sec.scope]}</span>`);
+    }
+    if (sec.deep) out.push('<span class="bk-scope bk-deep-tag">発展</span>');
+    if (sec.from !== undefined) {
+      if (!Array.isArray(sec.from) || !sec.from.length) throw new Error(`FL.book.secMarks: ${sec.id}: from must be a list of the basic course's section ids`);
+      out.push(`<span class="bk-from" data-from="${attr(sec.from.join(' '))}">${kisoFrom(sec.from)}</span>`);
+    }
+    return out.length ? `<div class="bk-marks">${out.join('')}</div>` : '';
+  }
+  // The chapter-end 説明してみよう: ch.written = [[question, answer], …] or [{ q, a, from }, …] — HTML (static, trusted
+  // content, as the sections' bodies; the answer links its section with bk.see), {ch:} fixed; from: the basic course's
+  // written questions it was rewritten from (kisoNN.qM). The answer is opened with its button (hidden until then; open in
+  // print: the pages' style sheets). Each has its record key "<chapter id>.w<index>" (0-based, as bookQuiz's
+  // "<chapter id>.<index>"): FLIGHT LAB keeps the answers opened in the progress (bookWritten); the list only grows at
+  // its end (DESIGN 6.2 rule 4, 6.4). The basic course's own record (kisoQa) is never read as these (DESIGN 6.4).
+  function writtenItems(ch) {
+    const list = ch && ch.written;
+    if (list === undefined) return [];
+    if (!Array.isArray(list)) throw new Error(`FL.book: ${ch.id}: written must be a list`);
+    return list.map((w, i) => {
+      const it = Array.isArray(w) ? { q: w[0], a: w[1], from: w[2] } : w && typeof w === 'object' ? w : {};
+      if (typeof it.q !== 'string' || !it.q.trim() || typeof it.a !== 'string' || !it.a.trim()) throw new Error(`FL.book: ${ch.id}: written ${i + 1} needs a question and an answer`);
+      if (it.from !== undefined && (!Array.isArray(it.from) || !it.from.length || it.from.some(id => !/^kiso\d{2}\.q\d+$/.test(id)))) throw new Error(`FL.book: ${ch.id}: written ${i + 1}: from is a list of the basic course's questions (kisoNN.qM)`);
+      return { key: `${ch.id}.w${i}`, n: i + 1, q: fix(it.q), a: fix(it.a), from: it.from || null };
+    });
+  }
+  function writtenHtml(x) {
+    const ch = typeof x === 'string' ? CHAPTERS.find(c => c.id === x) : x, items = writtenItems(ch);
+    if (!items.length) return '';
+    return `<div class="bk-written" data-ch="${attr(ch.id)}"><h3>説明してみよう</h3>`
+      + '<p class="bk-w-how">まず自分の言葉で説明してから（書き出すとなおよい）、答えを開いて確かめます。採点はしません。</p>'
+      + items.map(w => {
+        const id = `bkw-${ch.id}-${w.n - 1}`;
+        return `<div class="bk-w" data-w="${attr(w.key)}"><div class="bk-w-q"><b class="bk-w-n">問 ${w.n}.</b> ${w.q}</div>`
+          + (w.from ? `<div class="bk-w-from" data-kiso="${attr(w.from.join(' '))}">${kisoFrom(w.from)}</div>` : '')
+          + `<button type="button" class="bk-w-btn" aria-expanded="false" aria-controls="${id}">答えを見る</button>`
+          + `<div class="bk-w-a" id="${id}" hidden><b>答えの例</b>${w.a}</div></div>`;
+      }).join('') + '</div>';
+  }
+  FL.book = { R, PARTS, CHAPTERS, bk, add, addPart, findSection, fix, html, text, wire, jurTable, jurAppendix, secMarks, writtenItems, writtenHtml, SCOPE, get FIG() { return FL.bookFigs; } };
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

@@ -151,6 +151,38 @@ mark.tb-mark { background: var(--mark); color: var(--mark-ink); border-radius: 2
   .jur-t th[scope="row"] { width: auto; }
   .jur-t td[data-label]::before { content: attr(data-label) "　"; font-weight: 700; color: var(--muted); }
 }
+/* the section's marks beside its title (flight-lab/src/book-core.js FL.book.secMarks: the scope badge, 発展, the
+   provenance line of a section written from the basic course) */
+.bk-head { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 10px; }
+.bk-head .bk-marks { display: contents; }
+.bk-marks { margin: 0 0 8px; }
+.bk-scope { display: inline-block; margin-right: 6px; padding: 0 8px; border: 1px solid var(--line); border-radius: 9px; font: 700 .72rem/1.6 var(--jp); color: var(--muted); white-space: nowrap; }
+.bk-scope-common { color: var(--accent); border-color: var(--accent); }
+.bk-scope-us { color: var(--head); border-color: var(--head); }
+.bk-scope-jp { color: var(--red); border-color: var(--red); }
+.bk-scope-mixed, .bk-deep-tag { color: var(--part); border-color: var(--part); }
+.bk-from { display: block; flex-basis: 100%; margin: 0 0 8px; font-size: .78rem; line-height: 1.5; color: var(--muted); }
+/* the boxes of the section form (bk.deep・bk.drill folds, bk.judge, bk.dont, bk.recall) */
+.bk-deep, .bk-drill { margin: 12px 0; padding: 8px 14px; background: var(--soft); border: 1px solid var(--line); border-radius: 6px; }
+.bk-deep summary, .bk-drill summary { cursor: pointer; font: 700 .85rem var(--jp); color: var(--accent); }
+.bk-deep summary { color: var(--part); }
+.bk-fold { margin-top: 6px; }
+.bk-drill-a { margin-top: 8px; padding: 6px 12px; border-left: 3px solid var(--green); background: var(--key-bg); border-radius: 4px; }
+#tbView .bk-drill-a > b { display: block; color: var(--green); font-size: .8rem; }
+.bk-judge { margin: 14px 0; padding: 10px 14px; border-left: 4px solid var(--part); background: var(--warn-bg); border-radius: 4px; }
+.bk-dont { margin: 14px 0; padding: 10px 14px; border-left: 4px solid var(--head); background: var(--th-bg); border-radius: 4px; }
+.bk-recall { margin: 14px 0; padding: 8px 14px; border-left: 4px solid var(--dim); background: var(--soft); border-radius: 4px; font-size: .9rem; }
+#tbView .bk-judge > b { color: var(--part); } #tbView .bk-dont > b { color: var(--head); } #tbView .bk-recall > b { color: var(--muted); }
+.bk-judge ul, .bk-dont ul { margin: 4px 0 0; } #tbView .bk-recall p { margin: 2px 0 0; }
+.bk-recall button { margin-left: 4px; padding: 1px 8px; font-size: .78rem; }
+/* the chapter-end 説明してみよう (FL.book.writtenHtml): the answer opens with its button (page.js); printed open */
+#tbView .bk-w-how { font-size: .82rem; color: var(--muted); }
+.bk-w { background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 10px 0; font-size: .88rem; line-height: 1.7; }
+#tbView .bk-w-n { color: var(--head); }
+.bk-w-from { margin-top: 2px; font-size: .76rem; color: var(--muted); }
+.bk-w-btn { margin-top: 6px; }
+.bk-w-a { margin-top: 8px; padding: 6px 12px; border-left: 3px solid var(--green); background: var(--key-bg); border-radius: 4px; }
+#tbView .bk-w-a > b:first-child { display: block; color: var(--green); font-size: .8rem; }
 .quiz { background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 10px 0; font-size: .88rem; line-height: 1.7; }
 .quiz .ch { display: block; margin: 4px 0; cursor: pointer; }
 .quiz .tb-check { margin-top: 4px; }
@@ -222,6 +254,10 @@ table.terms th { color: var(--muted); font-weight: 600; }
   .tb-chapter { break-before: page; border-top: 0; margin-top: 0; }
   .tb-all-toc { break-after: page; }
   .bk-fig, .bk-photo, .bk-calc, .quiz, .bk-key, .bk-warn, tr { break-inside: avoid; }
+  /* 説明してみよう: the answers printed open, without their buttons (the folds are opened by page.js on beforeprint) */
+  .bk-w-a[hidden] { display: block !important; }
+  .bk-w-btn { display: none !important; }
+  .bk-judge, .bk-dont, .bk-recall, .bk-w { break-inside: avoid; }
   .tb-scroll, .bk-calc { overflow: visible; }
   a { color: inherit; }
 }

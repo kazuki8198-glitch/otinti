@@ -389,6 +389,41 @@ body:not([data-screen="fly"]) #viewBtns, body:not([data-screen="fly"]) #labels, 
   .jur-t th[scope="row"] { width: auto; }
   .jur-t td[data-label]::before { content: attr(data-label) "　"; font-weight: 700; color: var(--muted); }
 }
+/* the section's marks beside its title (book-core.js FL.book.secMarks: the scope badge, 発展, the provenance line) */
+.bk-head { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 10px; }
+.bk-head .bk-marks { display: contents; }
+.bk-marks { margin: 0 0 8px; }
+.bk-scope { display: inline-block; margin-right: 6px; padding: 0 8px; border: 1px solid var(--line); border-radius: 9px; font: 700 11.5px/1.6 var(--jp); color: var(--muted); white-space: nowrap; }
+.bk-scope-common { color: var(--cyan); border-color: rgba(95, 212, 255, .45); }
+.bk-scope-us { color: #8fb8ff; border-color: rgba(61, 139, 255, .55); }
+.bk-scope-jp { color: #ff9a92; border-color: rgba(255, 90, 79, .55); }
+.bk-scope-mixed { color: var(--amber); border-color: rgba(255, 181, 71, .5); }
+.bk-deep-tag { color: var(--magenta); border-color: rgba(227, 107, 220, .5); }
+.bk-from { display: block; flex-basis: 100%; margin: 0 0 8px; font-size: 12px; line-height: 1.5; color: var(--muted); }
+.bk-item .bk-deep-tag { margin: 0; align-self: center; }
+/* the boxes of the section form (bk.deep・bk.drill folds, bk.judge, bk.dont, bk.recall) */
+.bk-deep, .bk-drill { margin: 12px 0; padding: 8px 14px; background: rgba(255, 255, 255, .03); border: 1px solid var(--line); border-radius: 6px; }
+.bk-deep summary, .bk-drill summary { cursor: pointer; font: 700 13.5px var(--jp); }
+.bk-deep summary { color: var(--magenta); } .bk-drill summary { color: var(--cyan); }
+.bk-fold { margin-top: 6px; }
+.bk-drill-a { margin-top: 8px; padding: 6px 12px; border-left: 3px solid var(--green); background: rgba(88, 224, 140, .06); border-radius: 4px; }
+.bk-art .bk-drill-a > b { display: block; color: var(--green); font-size: 12.5px; }
+.bk-judge { margin: 14px 0; padding: 10px 14px; border-left: 4px solid var(--magenta); background: rgba(227, 107, 220, .07); border-radius: 4px; }
+.bk-dont { margin: 14px 0; padding: 10px 14px; border-left: 4px solid #9fd0f0; background: rgba(159, 208, 240, .07); border-radius: 4px; }
+.bk-recall { margin: 14px 0; padding: 8px 14px; border-left: 4px solid var(--dim); background: rgba(255, 255, 255, .03); border-radius: 4px; font-size: 14px; }
+.bk-art .bk-judge > b { color: var(--magenta); } .bk-art .bk-dont > b { color: #9fd0f0; } .bk-art .bk-recall > b { color: var(--muted); }
+.bk-judge ul, .bk-dont ul { margin: 4px 0 0; } .bk-recall p { margin: 2px 0 0; }
+.bk-recall button { margin-left: 4px; padding: 1px 8px; font-size: 12.5px; }
+/* the chapter-end 説明してみよう (FL.book.writtenHtml): the answer opens with its button; printed open */
+.bk-w-how { font-size: 13px; color: var(--muted); }
+.bk-w { background: rgba(255, 255, 255, .03); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 10px 0; font-size: 14px; }
+.bk-art .bk-w-n { color: var(--cyan); }
+.bk-w.seen .bk-w-n::after { content: " ✓"; color: var(--green); }
+.bk-w-from { margin-top: 2px; font-size: 12px; color: var(--muted); }
+.bk-w-btn { margin-top: 6px; }
+.bk-w-a { margin-top: 8px; padding: 6px 12px; border-left: 3px solid var(--green); background: rgba(88, 224, 140, .06); border-radius: 4px; }
+.bk-art .bk-w-a > b:first-child { display: block; color: var(--green); font-size: 12.5px; }
+@media print { .bk-w-a[hidden] { display: block !important; } .bk-w-btn { display: none !important; } }
 .quiz { background: rgba(255, 255, 255, .03); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 10px 0; font-size: 14px; }
 .quiz .ch { display: block; margin: 4px 0; cursor: pointer; }
 .quiz .res { margin-top: 6px; font-size: 13px; }

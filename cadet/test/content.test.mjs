@@ -447,3 +447,53 @@ test('book: no （別の章） and no link without a target — every section; t
   }
   assert.ok(refs >= 1, 'the written tests point at chapters');
 });
+
+// ---------------------------------------------------------------- W10b: what FLIGHT LAB's and TEXTBOOK's pages draw
+// from the book's data (textbook/rewrite/combined/DESIGN.md 3.2, 6.3): the section's marks (FL.book.secMarks: the scope
+// badge, 発展, 「パイロット基礎教材（第 3 版）… をもとに改稿」) and the chapter-end 説明してみよう (ch.written) are not
+// in this book, nor in anything the instructor says; the boxes of the section form (bk.deep・bk.drill・bk.judge・bk.dont・
+// bk.recall) stay in the book, filtered as the rest, and out of the instructor's words.
+const NOT_HERE = /をもとに改稿|パイロット基礎教材|bk-scope|bk-from|bk-marks|bk-written|bk-w-|説明してみよう/;
+test('book: no scope badge, provenance line or 説明してみよう — in no section, summary or key point; the written questions are not read out', () => {
+  assert.equal(typeof FL.book.secMarks, 'function', 'FLIGHT LAB draws the marks (book-core.js)');
+  let fromSecs = 0;
+  for (const id of SECTIONS) {
+    const s = BOOK.section(id), src = FL.book.findSection(id).sec;
+    for (const x of [s.html, s.text, s.summary, ...s.keyPoints]) assert.doesNotMatch(x, NOT_HERE, id);
+    if (src.from) fromSecs++;
+  }
+  assert.ok(fromSecs >= 9, `the front part's basics has its provenance in the data (${fromSecs}), not in this book`);
+  for (const c of BOOK.chapters) assert.deepEqual(Object.keys(c).filter(k => /written|scope|from|marks/i.test(k)), [], `${c.id}: no written, no marks`);
+  // the basics chapter is in this book; its written questions and their answers are nowhere in it
+  const basics = FL.book.CHAPTERS.find(c => c.id === 'basics');
+  assert.ok(BOOK.chapters.some(c => c.id === 'basics') && FL.book.writtenItems(basics).length >= 14);
+  const all = SECTIONS.map(id => BOOK.section(id).text).join('\n');
+  for (const w of FL.book.writtenItems(basics)) assert.ok(!all.includes(plain(w.q)), w.key);
+});
+
+test('book: the boxes of the section form — kept in the book (the folds folded), filtered as the rest, out of the instructor\'s words', () => {
+  const b = FL.book.bk;
+  const body = b.aim('ねらいの文です。') + '<p>説明の文です。</p>'
+    + b.deep('深い話', '<p>発展の文です。</p>') + b.drill('計算', '<p>問の文です。</p>', '<p>答えの文です。</p>')
+    + b.judge('判断の文です。') + b.dont('混同の文です。') + b.key('要点の文', '二つめの要点')
+    + b.recall('呼び戻しの文です。', ['zz.b', 'ほかの節'], ['nowhere.sec', 'ない節'])
+    + b.judge('ANA の訓練では引き返します。') + b.deep('日本の話', b.jp('<p>日本の決まりの文です。</p>'));
+  const fake = { book: { CHAPTERS: [{ id: 'zz', part: 'p1', t: '試しの章', summary: '試しの章です。', secs: [{ id: 'zz.a', t: '箱の節', h: () => body }, { id: 'zz.b', t: 'ほかの節', h: () => b.aim('ほかの節のねらいです。') + b.recall('戻る文です。', ['zz.a', '箱の節']) }] }] }, syllabus: FL.syllabus };
+  const gb = gameBook(fake), s = gb.section('zz.a');
+  // in the book: the folds (still folded), the boxes; the link to a section of this book stays a link, the other is text
+  for (const cls of ['bk-deep', 'bk-drill', 'bk-judge', 'bk-dont', 'bk-recall']) assert.ok(s.html.includes(`class="${cls}"`), cls);
+  assert.match(s.html, /<details class="bk-deep"><summary>もっと深く：深い話<\/summary>/);
+  assert.doesNotMatch(s.html, /<details[^>]*\sopen/);
+  assert.ok(s.html.includes('<span class="bk-see" data-sec="zz.b">→ ほかの節</span>') && s.html.includes('<span class="bk-see">→ ない節</span>'));
+  // filtered as the rest: the real name's box goes whole, the Japanese side goes and its fold with it
+  assert.doesNotMatch(s.html, /ANA|日本の決まりの文|日本の話/);
+  assert.equal((s.html.match(/class="bk-judge"/g) || []).length, 1);
+  assert.equal((s.html.match(/class="bk-deep"/g) || []).length, 1);
+  // the instructor's words: the opening lines and the key points, not the boxes
+  assert.equal(s.summary, 'ねらいの文です。説明の文です。');
+  assert.deepEqual(s.keyPoints, ['要点の文', '二つめの要点']);
+  for (const t of ['発展の文', '問の文', '答えの文', '判断の文', '混同の文', '呼び戻しの文']) assert.ok(!s.summary.includes(t) && s.text.includes(t), t);
+  const o = gb.section('zz.b');
+  assert.deepEqual([o.summary, o.keyPoints], ['ほかの節のねらいです。', ['ほかの節のねらいです。']]);
+  assert.match(o.html, /<span class="bk-see" data-sec="zz.a">→ 箱の節<\/span>/);
+});

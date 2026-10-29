@@ -166,8 +166,8 @@
       jpArt: '航空法第 64 条', jpRefs: ['kokuho:64'], w05: 'confirmed',
       boxes: ['ops.night', 'law.pilot'], gates: ['g3'], part7: ['jlaw.ops'] }),
     item('solo', '学生の単独飛行', {
-      us: '学生操縦士の資格（16 歳以上・英語）。単独飛行の前に、教官の学科の試験・決められた訓練・その型式の承認（90 日以内に訓練した教官）',
-      usSrc: '14 CFR 61.83・61.87', usUrl: ECFR('14:61.87'),
+      us: '学生操縦士の資格（16 歳以上・英語）。単独飛行の前に、教官の学科の試験・決められた訓練・その型式の承認（訓練をした教官が、飛ぶ日の前 90 日以内にログブックに書く。そのあとは 90 日ごとに書き足す）',
+      usSrc: '14 CFR 61.83・61.87(b)(c)(n)(p)', usUrl: ECFR('14:61.87'),
       jp: '国土交通大臣の操縦練習許可（有効期間は 1 年以内）を受け、操縦教員の監督の下で練習する。初めての単独飛行は、監督者が同乗した離着陸の練習に続く昼間の場周飛行',
       jpArt: '航空法第 35 条・航空法施行規則第 68 条・航空法施行規則第 69 条の 2', jpRefs: ['kokuho:35', 'kokuho-kisoku:68', 'kokuho-kisoku:69_2'], w05: 'confirmed',
       boxes: ['solo.req'], gates: ['g2'], part7: ['jlaw.license'] }),
@@ -315,12 +315,12 @@
       jp: 'PANS-OPS（ICAO）の基準〔要確認〕', w05: 'not-egov',
       boxes: ['ifr.circle'], gates: ['g4'], part7: ['jifr.appr'] }),
     item('metar.taf', 'METAR と TAF の書き方', {
-      us: 'METAR は毎時。視程は SM。G は最大瞬間風速（山と谷の差が 10 kt 以上のとき）。NWS の TAF は FM・TEMPO（1 回 1 時間未満）・PROB30/40（最初の 9 時間は使わない）で、BECMG を使わない',
-      usSrc: 'AIM 7-1-28・7-1-29、FMH-1 5.4.4', usUrl: AIM(7, 1),
+      us: 'METAR は毎時。視程は SM。G は最大瞬間風速（山と谷の差が 10 kt 以上のとき）。NWS の TAF は FM・TEMPO（1 回 1 時間未満）・PROB30（PROB40 は使わない）で、BECMG を使わない',
+      usSrc: 'AIM 7-1-28・7-1-29、FMH-1 5.4.4、NWSI 10-813（2024-10-30）付録 B 2.9.4', usUrl: AIM(7, 1),
       jp: '例（RJTT・RJAA・RJCC）：METAR は毎正時と 30 分に出て、視程は m（9999）か CAVOK、NOSIG・TEMPO の予報が付く。TAF には BECMG・TEMPO が出る。G と TEMPO の基準と、FM・PROB を使うかは〔要確認〕',
       w05: 'not-egov',
       boxes: ['wx.metar', 'wx.taf'], gates: ['g1'], part7: ['jwx.report'],
-      note: 'METAR と TAF の例は aviationweather.gov の配信（2026-10-27）。AIM 7-1-28 の TEMPO は「<1 hour」（DESIGN 3.4 と RULINGS R.tempo-length の「米国は 1 時間以内」とは違う：報告の 6）' }),
+      note: 'METAR と TAF の例は aviationweather.gov の配信（2026-10-27）。AIM 7-1-28 の TEMPO は「<1 hour」（DESIGN 3.4 と RULINGS R.tempo-length の「米国は 1 時間以内」とは違う：報告の 6）。AIM 7-1-29 の表はまだ PROB30/40 と「最初の 9 時間は使わない」を書くが、NWS の指示書 NWSI 10-813（2024-10-30）https://www.weather.gov/media/directives/010_pdfs/pd01008013curr.pdf は付録 B 2.9.4 で「PROB30 is the only PROB group used in NWS TAFs」とし、変更点の一覧に「Removed 9-hour PROB30 constraint in the first 9 hours」と書く（R1 の W12、factcheck2-R1 の M1。2026-10-29 に読んだ）。AIM が直ったら、この 1 文を消す' }),
     item('charts', '航空図と情報の入手', {
       us: 'セクショナルチャート・Chart Supplement（空港の情報）・1800wxbrief.com（気象・ノータム・飛行計画）',
       usSrc: 'AIM 9-1・7-1-2', usUrl: AIM(9, 1),
@@ -329,10 +329,10 @@
     item('sbas', 'SBAS・偏差', {
       us: 'SBAS は WAAS。Sanford の磁気偏差は約 7°W（2026 年）',
       usSrc: 'AIM 1-1-18・NOAA WMM-2025', usUrl: US.noaa.url,
-      jp: 'SBAS は MSAS〔要確認〕。磁気偏差は約 6°W（那覇）〜約 10.5°W（稚内）（2026 年）',
-      jpSrc: 'NOAA WMM-2025', w05: 'not-egov',
+      jp: 'SBAS は MSAS（国土交通省 航空局。補強の信号はみちびき 3 号機から）。MSAS で飛べる進入の種類は〔要確認〕。磁気偏差は約 6°W（那覇）〜約 10.5°W（稚内）（2026 年）',
+      jpSrc: '国土交通省 航空局「MSAS（衛星航法補強システム）」（資料 3-10）・NOAA WMM-2025', w05: 'not-egov',
       boxes: ['nav.gps', 'navb.north', 'sys.compass'], gates: ['g3'], part7: ['jifr.chart', 'jair.vfr'],
-      note: '偏差は NOAA NCEI の計算機（WMM-2025、2026-10-27）：Sanford 7.09°W、那覇 5.87°W、羽田 7.88°W、新千歳 9.79°W、稚内 10.54°W' }),
+      note: '偏差は NOAA NCEI の計算機（WMM-2025、2026-10-27）：Sanford 7.09°W、那覇 5.87°W、羽田 7.88°W、新千歳 9.79°W、稚内 10.54°W。MSAS は国土交通省 航空局の資料 3-10 https://www.mlit.go.jp/koku/cidai/assets/pdf/3-10_JPN.pdf（題「MSAS（衛星航法補強システム）」、みちびき 3 号機（静止衛星）を使う、導入は国土交通省航空局）と、国土交通省の報道発表（平成 29 年 8 月 25 日）https://www.mlit.go.jp/report/press/kouku16_hh_000008.html（みちびき 3 号機は SBAS の信号を送る静止衛星）で確かめた（R1 の W12、factcheck2-R1 の S2。2026-10-29 に読んだ。原本の重ね表示 kiso-errata.js の msas と同じ資料）。MSAS で使える進入の種類（LPV など）は確かめていない' }),
     item('multi.rating', '多発の資格', {
       us: '多発の級の限定（AMEL）。級を足すときは、教官の裏書きを受けて実地試験に合格する。同じ資格の水準で飛行機の限定を持っていれば、学科試験は要らない',
       usSrc: '14 CFR 61.63(c)', usUrl: ECFR('14:61.63'),
@@ -342,8 +342,10 @@
     item('ws.alert', 'ウィンドシャーの警報', {
       us: 'LLWAS（ウィンドシャーとガストフロント）や TDWR（マイクロバーストも）などの警報を、管制官が伝える',
       usSrc: 'AIM 4-3-7', usUrl: AIM(4, 3),
-      jp: '空港気象ドップラーレーダー・ドップラーライダー・METAR の WS 群〔要確認〕', w05: 'not-egov',
-      boxes: ['wx.shear'], gates: ['g1'], part7: ['jwx.local'] }),
+      jp: '空港気象ドップラーレーダーとドップラーライダーで、低層ウィンドシャーとマイクロバーストを探知し、パイロットに伝える。METAR は WS の群で報じる。管制がどう伝えるかは〔要確認〕',
+      jpSrc: '気象庁 中部航空地方気象台「空港気象ドップラーレーダー」・気象庁「航空気象通報式」', w05: 'not-egov',
+      boxes: ['wx.shear'], gates: ['g1'], part7: ['jwx.local'],
+      note: '日本の欄は、気象庁 中部航空地方気象台のページ https://www.data.jma.go.jp/chubu-airport/ymyx/draw.html（空港気象ドップラーレーダーで低層ウィンドシアー（地表から概ね 500 m（1,600 ft）まで）を探知し、リアルタイムでパイロットに伝える）と、気象庁「航空気象通報式」の WS の群で確かめた（R1 の W12、factcheck2-R1 の S2。2026-10-29 に読んだ。原本の重ね表示 kiso-errata.js の llws-japan と同じ資料）。管制がどんな言い方で伝えるかは確かめていない（UNVERIFIED U.ws-alert-japan）' }),
   ];
 
   const byIdMap = new Map(items.map(x => [x.id, x]));

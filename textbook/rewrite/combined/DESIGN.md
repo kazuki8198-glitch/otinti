@@ -523,7 +523,7 @@
 | lookout | 見張り | 91.113(b) | 第 71 条の 2（練習は監督者） | hf.vision | g1 | jlaw.pic |
 | pattern | 場周経路 | 管制塔のない空港は左回り（91.126(b)・91.127(a)）、1,000 ft AGL（AIM 4-3-3） | 一般の左回りの定めはない。飛行場ごとの方式と管制の指示（施行規則第 189 条） | ops.pattern | g2 | jair.vfr |
 | night | 夜の定義 | 市民薄明の終わりから始まりまで（14 CFR 1.1） | 日没から日出まで（第 64 条） | ops.night・law.pilot | g3 | jlaw.ops |
-| solo | 学生の単独飛行 | 61.83・61.87 | 操縦練習許可（第 35 条）・施行規則第 69 条の 2 | solo.req | g2 | jlaw.license |
+| solo | 学生の単独飛行 | 61.83・61.87（型式の承認は 90 日以内、そのあと 90 日ごと） | 操縦練習許可（第 35 条）・施行規則第 69 条の 2 | solo.req | g2 | jlaw.license |
 | check.slow | 実地試験：低速飛行 | ACS（失速警報を鳴らさない速度） | 操縦可能な最小速度・±50 ft〔要確認〕 | ops.slow | g2 | jexam.check |
 | check.stall | 実地試験：失速 | ACS | 失速の組み合わせと回復の基準が違う〔要確認〕 | ops.stall | g2 | jexam.check |
 | check.short | 実地試験：短距離離陸 | ACS | Vx で浮揚し 200 ft まで Vx〔要確認〕 | ops.short | g2 | jexam.check |
@@ -549,11 +549,11 @@
 | appr.ban | 進入の継続の禁止・IFR の離陸の最低気象条件 | Part 91 の一般機にはない | ある（施行規則第 189 条） | ifr.rules・ifr.dep | g4 | jifr.minima |
 | hold | 待機の速度とバンク | 200/230/265 KIAS、バンク 3°/秒・30°・FD 25° の浅い方（AIM 5-3-8） | ICAO（速度・バンクは〔要確認〕）。時間・入り方・風の考え方は同じ | ifr.hold | g4 | jifr.hold |
 | circle | 周回進入の区域 | TERPS | PANS-OPS | ifr.circle | g4 | jifr.appr |
-| metar.taf | METAR と TAF の書き方 | 毎時・SM・G は最大と最小の差 10 kt 以上。TAF は FM・TEMPO（1 回 1 時間未満）・PROB30/40（最初の 9 時間は使わない）、BECMG なし（AIM 7-1-28） | 例：毎正時と 30 分・m（9999）・CAVOK・NOSIG、TAF に BECMG・TEMPO（実際の報）。G と TEMPO の基準・FM と PROB の扱い・着陸用飛行場予報は〔要確認〕 | wx.metar・wx.taf | g1 | jwx.report |
+| metar.taf | METAR と TAF の書き方 | 毎時・SM・G は最大と最小の差 10 kt 以上。TAF は FM・TEMPO（1 回 1 時間未満）・PROB30（PROB40 は使わない。NWSI 10-813 の 2024 年版は 9 時間の制限も外した）、BECMG なし（AIM 7-1-28・NWSI 10-813 付録 B 2.9.4） | 例：毎正時と 30 分・m（9999）・CAVOK・NOSIG、TAF に BECMG・TEMPO（実際の報）。G と TEMPO の基準・FM と PROB の扱い・着陸用飛行場予報は〔要確認〕 | wx.metar・wx.taf | g1 | jwx.report |
 | charts | 航空図と情報の入手 | セクショナル・Chart Supplement・1800wxbrief | 区分航空図・AIP・SWIM・飛行援助センター | nav.chart・nav.ff・wx.brief | g3 | jair.vfr・jair.fpl・jatc.ats |
-| sbas | SBAS・偏差 | WAAS、Sanford 約 7°W | MSAS、日本 約 6〜10°W | nav.gps・navb.north・sys.compass | g3 | jifr.chart・jair.vfr |
+| sbas | SBAS・偏差 | WAAS、Sanford 約 7°W | MSAS（国土交通省 航空局。みちびき 3 号機から。使える進入の種類は〔要確認〕）、日本 約 6〜10.5°W | nav.gps・navb.north・sys.compass | g3 | jifr.chart・jair.vfr |
 | multi.rating | 多発の資格 | AMEL（教官の裏書きと実地試験。同じ資格の水準で飛行機の限定があれば学科試験なし。61.63(c)） | 陸上多発の等級。操縦士は陸上多発ピストン機で受けても、陸上多発ピストン機と陸上多発タービン機の両方の限定（第 25 条・施行規則第 53 条第 1 項・第 2 項） | intro.cert・me.perf | g5 | jlaw.license |
-| ws.alert | ウィンドシャーの警報 | LLWAS・TDWR | 空港気象ドップラーレーダー・ドップラーライダー・METAR の WS 群〔要確認〕 | wx.shear | g1 | jwx.local |
+| ws.alert | ウィンドシャーの警報 | LLWAS・TDWR | 空港気象ドップラーレーダー・ドップラーライダーで探知（気象庁）・METAR の WS 群。管制の伝え方は〔要確認〕 | wx.shear | g1 | jwx.local |
 
 **推測で埋めないもの**（台帳 `UNVERIFIED.json`。確かめるまで〔要確認〕の札で書くか、書かない）：AIP Japan の待機速度（ENR 1.5）・VFR のトランスポンダーのコード・管制と ATIS で QNH を言う単位・復唱要領（ENR 1.5-8）・代替飛行場の基準（ENR 1.10）、施行規則第 206 条の「大臣が定める時間」、日本の酸素の規則、ADS-B Out の義務、ICAO の空域のクラスとの対応、操縦士実地試験実施細則の科目と許容幅、Seminole の POH の片発性能、羽田の事故の最終報告の有無、ANA の手続き・学科の受験の時期、ANA の訓練生が FAA の学科試験を受けるか、ロンドンの座学が英国（ICAO）の書き方を使うか、JCAB 学科の「1 科目 20 問・70%」、日本の耐空類別の正確な名前、O-360 の写真の PD-self（元のページで再確認）。
 

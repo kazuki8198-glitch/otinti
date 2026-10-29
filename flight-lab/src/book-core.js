@@ -99,6 +99,22 @@
     safo17007: { label: 'FAA SAFO 17007 Manual Flight Operations Proficiency（2017）', url: 'https://www.faa.gov/sites/faa.gov/files/other_visit/aviation_industry/airline_operators/airline_safety/SAFO17007.pdf' },
     automation: { label: 'FAA AC 120-71B Standard Operating Procedures and Pilot Monitoring Duties for Flight Deck Crewmembers（2017）', url: 'https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_120-71B.pdf' },
     mag: { label: 'NOAA 磁気偏差計算（Magnetic Field Calculators）', url: 'https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml' },
+    // the front part 序部, chapter intro (W10, registered in R1 P5; each opened by W10 or revise-intro, 2026-10-27・29)
+    mlitSchool: { label: '国土交通省「指定航空従事者養成施設について」（制度の概要・技能証明書の交付の流れ・操縦士課程の指定養成施設の一覧（令和 8 年 2 月現在））', url: 'https://www.mlit.go.jp/koku/content/002001714.pdf' },
+    mlitPilotBasics: { label: '国土交通省「資料 1 操縦士養成に係る基礎情報（前回からの追加分）」（航空大学校の養成に関する検討会、2025 年。Integrated System・従来手法・MPL の比べ方）', url: 'https://www.mlit.go.jp/koku/content/001904431.pdf' },
+    jcabExamTable: { label: '国土交通省航空局「『航空従事者技能証明等に関する事務処理要領』の一部改正案 新旧対照表」（改正第 19 号・令和 8 年 6 月 30 日から適用。航空従事者学科試験科目及び試験時間は令和 8 年 7 月期から適用。改正表 18 は Integrated System の導入）', url: 'https://safetyp.cab.mlit.go.jp/wp-content/uploads/2026/06/%E3%80%90260630%E6%94%B9%E6%AD%A3%E6%96%B0%E6%97%A7%E5%AF%BE%E7%85%A7%E8%A1%A8%E3%80%91%E8%88%AA%E7%A9%BA%E5%BE%93%E4%BA%8B%E8%80%85%E6%8A%80%E8%83%BD%E8%A8%BC%E6%98%8E%E7%AD%89%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E4%BA%8B%E5%8B%99%E5%87%A6%E7%90%86%E8%A6%81%E9%A0%98.pdf' },
+    mlitCbt: { label: '国土交通省航空局乗員政策室「①CBT 化後の航空従事者等の学科試験 申請・受験の手引き（概要）」（2025 年度）', url: 'https://www.mlit.go.jp/koku/content/001633009.pdf' },
+    mlitExam: { label: '国土交通省「航空従事者技能証明等学科試験」（CBT 化・申込み先・科目合格の有効期限）', url: 'https://www.mlit.go.jp/koku/koku_tk12_000005.html' },
+    mlitSyllabus: { label: '国土交通省「航空従事者等学科試験解答及び過去問」（学科試験の出題範囲参考（シラバス）と例題集）', url: 'https://www.mlit.go.jp/koku/koku_fr10_000025.html' },
+    mlitConvert: { label: '国土交通省「外国政府の発行したライセンスの切替手続について」（免除の範囲・資格ごとに行う試験・申請先）', url: 'https://www.mlit.go.jp/common/001394466.pdf' },
+    egovKoku: { label: 'e-Gov 法令検索：航空法（昭和二十七年法律第二百三十一号。令和 7 年 12 月 1 日施行の版）', url: 'https://laws.e-gov.go.jp/law/327AC0000000231/20251201_507AC0000000055' },
+    egovKokuKisoku: { label: 'e-Gov 法令検索：航空法施行規則（昭和二十七年運輸省令第五十六号。令和 8 年 10 月 1 日施行の版）', url: 'https://laws.e-gov.go.jp/law/327M50000800056/20261001_508M60000800082' },
+    egovDenpa: { label: 'e-Gov 法令検索：電波法（昭和二十五年法律第百三十一号。令和 8 年 9 月 3 日施行の版。第 39 条〜第 41 条：無線設備の操作・無線従事者の資格・免許）', url: 'https://laws.e-gov.go.jp/law/325AC0000000131/20260903_508AC0000000027' },
+    egovDenpaRei: { label: 'e-Gov 法令検索：電波法施行令（平成十三年政令第二百四十五号。令和 8 年 9 月 3 日施行の版。第 3 条：無線従事者の操作の範囲）', url: 'https://laws.e-gov.go.jp/law/413CO0000000245/20260903_508CO0000000255' },
+    faaKtTable: { label: 'FAA ACS Knowledge Test Table: Correct Allotted Times（学科試験の記号・問題数・合格点。2024 年 10 月更新）', url: 'https://www.faa.gov/training_testing/testing/acs/acs_knowledge_test_table.pdf' },
+    faaAih: { label: 'FAA Aviation Instructor\'s Handbook（FAA-H-8083-9B）第 3 章 The Learning Process', url: 'https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/aviation_instructors_handbook/aviation_instructors_handbook.pdf' },
+    newsAscii: { label: '週刊アスキー（ASCII.jp）「ANA のパイロット訓練、実はフロリダでやってた！」（2025 年 10 月 8 日。取材記事）', url: 'https://ascii.jp/elem/000/004/323/4323328/2/' },
+    newsTraffic: { label: '乗りものニュース「ANA のパイロットになるための訓練」最前線に密着（2025 年 10 月 14 日。取材記事）', url: 'https://trafficnews.jp/post/594833' },
   };
   // parts 1–6 (phase: the syllabus's stages that go with the part). The front part p0 (序部, book-0.js) and Part 7 (p7,
   // book-7.js) are not written here: the file that holds a part's chapters adds it (addPart below), so a product that

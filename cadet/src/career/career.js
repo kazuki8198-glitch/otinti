@@ -9,12 +9,58 @@
 // pre-solo written test, the check ride c1 with the chief instructor, the first solo).
 // Progress in FLIGHT LAB's lessons is FLIGHT LAB's own record (school.saveProgress's shape: the game keeps it with the
 // flight's store); the career reads it, it does not keep a copy. What the career keeps itself: the chapter, the day,
-// the time, the fatigue, the tests' scores, the go / no-go decisions and the day's work done. The flags and the trust
+// the time, the fatigue, the tests' scores, the go / no-go decisions and the day's work done. Since v2 it also keeps
+// the cadet's four abilities (操縦・知識・交信・判断), grown by the work itself. The flags and the trust
 // are the conversations' state (dialog/engine.js), kept beside it.
 // Pure logic: no three.js, no DOM.
 
 export const CAREER_KEY = 'cadet.career';
-export const CAREER_VERSION = 1;
+export const CAREER_VERSION = 2;
+// the cadet's abilities (the growth system): four axes, 0–100, grown by the work itself (see grow())
+export const ABILITIES = ['hand', 'know', 'comm', 'judge'];
+export const ABILITY_NAMES = { hand: '操縦', know: '知識', comm: '交信', judge: '判断' };
+export const ABILITY_START = { hand: 10, know: 5, comm: 5, judge: 10 };
+// the judgement the first solo needs, beside the instructor's trust (SOLO_TRUST)
+export const SOLO_JUDGE = 30;
+// (growth design v1 §4.7) the words that go with a trust value, beside its number on the tablet
+export function trustBand(v) { return v >= 80 ? '深い信頼' : v >= 60 ? '信頼されている' : v >= 40 ? '通常' : 'まだ距離がある'; }
+// (growth design v1 §4.6) the graduation's rank: the abilities weighted, but never the abilities alone —
+// the first-try rate and the number of written tests taken count too, so retakes cannot buy the top rank.
+// firstRate comes back as a percent, avgScore from FLIGHT LAB's lesson scores (only the lessons that have one)
+export function graduationRank(state, prog) {
+  const a = (state && state.abilities) || ABILITY_START;
+  const total = a.hand * 0.35 + a.know * 0.25 + a.comm * 0.15 + a.judge * 0.25;
+  const ft = (state && state.firstTry) || { pass: 0, total: 0 };
+  const rate = ft.total ? ft.pass / ft.total : 0;
+  const examTries = Object.values((state && state.exams) || {}).reduce((n, e) => n + (e.tries || 0), 0);
+  const scores = Object.values((prog && prog.lessons) || {}).map(r => (r && r.score) || 0).filter(s => s > 0);
+  const avgScore = scores.length ? Math.round(scores.reduce((x, y) => x + y, 0) / scores.length) : 0;
+  const rank = total >= 68 && rate >= 0.75 && examTries <= 9 ? '優等' : total >= 62 && rate >= 0.6 ? '優秀' : '通常';
+  return { rank, total: Math.round(total * 10) / 10, firstRate: Math.round(rate * 100), examTries, avgScore };
+}
+// (growth design v1 §4.1) what one finished flight lesson teaches, as [axis, base] pairs for C.grow():
+// the grade's hand base, weighted by the lesson's level; a sub-axis by the id's lesson letter (n/x/e the
+// judgement of navigation and emergencies, i the knowledge of instruments, the rest more hand); the
+// calls a fixed crumb. Flown tired (fatigue ≥ 65 at the lesson's end): half of it, and no judgement.
+export function lessonGrowth(grade, levelId, lessonId, tired = false) {
+  const base = { S: 5.0, A: 4.0, B: 3.0, C: 1.5 }[grade] || 0;
+  if (!base) return [];
+  const w = base * (levelId === 'precision' ? 1.3 : levelId === 'intro' ? 0.5 : 1.0);
+  const kind = String(lessonId || '').charAt(0);
+  const sub = kind === 'i' ? 'know' : (kind === 'n' || kind === 'x' || kind === 'e') ? 'judge' : 'hand';
+  const out = [['hand', w], ['comm', 0.6]];
+  if (sub === 'hand') out[0][1] += w * 0.35; else out.push([sub, w * 0.35]);
+  return tired ? out.filter(([a]) => a !== 'judge').map(([a, v]) => [a, v * 0.5]) : out;
+}
+// (growth design v1 §4.1) a passed ground lesson (FTD): the radio ones teach the calls, the others knowledge
+export function ftdGrowth(id) {
+  return (id === 'k3' || id === 'k4' || id === 'k5' || id === 'k6') ? [['comm', 2.4], ['hand', 0.6]] : [['know', 1.6], ['hand', 0.6]];
+}
+// (growth design v1 §4.1) a class done: knowledge by the pace it was taken at (full / as needed / 要点だけ)
+export function classGrowth(pace) {
+  return [['know', 6.0 * (pace === 'need' ? 0.7 : pace === 'quick' ? 0.45 : 1.0)]];
+}
+export const judgeOf = (state) => (state && state.abilities && Number.isFinite(state.abilities.judge)) ? state.abilities.judge : ABILITY_START.judge;
 export const START_DATE = '2027-04-01';
 export const SLOTS = ['morning', 'am', 'pm', 'evening'];
 export const SLOT_NAMES = { morning: '朝', am: '午前', pm: '午後', evening: '夜' };
@@ -83,12 +129,12 @@ export const CH1_EVENTS = [
 ];
 // the written tests: FLIGHT LAB's question banks (quiz.js), so many questions drawn, the pass mark
 export const EXAMS = {
-  written1: { title: '学科試験（第 1 章）', banks: ['q_aero', 'q_sys', 'q_perf', 'q_wx', 'q_law', 'q_comm', 'q_hf'], n: 28, pass: 80, room: 'planning' },
-  presolo: { title: 'ソロ前の筆記試験', banks: ['q_ops', 'q_emg', 'q_law'], n: 20, pass: 80, room: 'planning' },
-  nav: { title: '航法の筆記試験', banks: ['q_nav', 'q_wx'], n: 20, pass: 80, room: 'planning', ok: '合格です。航法ログを作って、ひとりで遠くまで飛ぶ準備ができました。' },
-  instr: { title: '計器飛行の筆記試験', banks: ['q_ifr', 'q_hf'], n: 20, pass: 80, room: 'planning', ok: '合格です。計器の審査に進めます。' },
-  multi: { title: '双発の筆記試験', banks: ['q_me', 'q_emg'], n: 20, pass: 80, room: 'planning', ok: '合格です。双発の審査に進めます。' },
-  final: { title: '最終の筆記試験', banks: ['q_crm', 'q_law', 'q_ops', 'q_radio'], n: 24, pass: 80, room: 'planning', ok: '合格です。残るは、最終審査の Check Flight だけです。' },
+  written1: { title: '学科試験（第 1 章）', banks: ['q_aero', 'q_sys', 'q_perf', 'q_wx', 'q_law', 'q_comm', 'q_hf'], n: 30, pass: 80, room: 'planning' },
+  presolo: { title: 'ソロ前の筆記試験', banks: ['q_ops', 'q_emg', 'q_law'], n: 30, pass: 80, room: 'planning' },
+  nav: { title: '航法の筆記試験', banks: ['q_nav', 'q_wx'], n: 30, pass: 80, room: 'planning', ok: '合格です。航法ログを作って、ひとりで遠くまで飛ぶ準備ができました。' },
+  instr: { title: '計器飛行の筆記試験', banks: ['q_ifr', 'q_hf'], n: 30, pass: 80, room: 'planning', ok: '合格です。計器の審査に進めます。' },
+  multi: { title: '双発の筆記試験', banks: ['q_me', 'q_emg'], n: 30, pass: 80, room: 'planning', ok: '合格です。双発の審査に進めます。' },
+  final: { title: '最終の筆記試験', banks: ['q_crm', 'q_law', 'q_ops', 'q_radio'], n: 30, pass: 80, room: 'planning', ok: '合格です。残るは、最終審査の Check Flight だけです。' },
 };
 // the trust the first solo needs (the cadet's instructor's)
 export const SOLO_TRUST = 60;
@@ -171,6 +217,13 @@ export function weatherFor(seed, day, o = {}) {
 // ---- the state
 export function newCareer(seed = 1) {
   return { v: CAREER_VERSION, seed: seed >>> 0 || 1, day: 1, slot: 'morning', chapter: 'prologue', fatigue: 20, exams: {}, ground: {}, decisions: [], done: {}, solo: null, checks: {}, graduated: null, started: true,
+    // (the growth system, v2) the four abilities, how many first tries at a lesson or a check passed, and how often
+    // each kind of work has already grown an ability (the growth of a repeated key counts for less)
+    abilities: { ...ABILITY_START }, firstTry: { pass: 0, total: 0 }, growth: {},
+    // (growth design v1 §4.3) the day each written test was last taken: a test is not taken twice in a day
+    examDay: {},
+    // (growth design v1 §4.4) the judgement drills done today (at most two grow the judgement)
+    drills: { day: 0, n: 0 },
     // (chapter 1's classes) the sections heard and how ('f' read in full, 'q' its key points: content/school.js), the
     // pace chosen last, how many times each class, lesson and test was begun (mixed into its questions' order), and each
     // question's answers so far: [right, wrong, the last right (1) or not (0), its day]
@@ -178,10 +231,16 @@ export function newCareer(seed = 1) {
 }
 export const PACE_IDS = ['need', 'full', 'quick'];
 const SEC_ID = /^[a-z0-9]{1,12}\.[a-z0-9]{1,16}$/, Q_ID = /^[a-z0-9_]{1,12}[#:][a-z0-9_.]{1,24}$/, ATTEMPT_ID = /^[a-z0-9]{1,12}:[a-z0-9_]{1,16}$/;
-// a saved state that can be used: this version, the parts of the right kind (a cleaned copy), else null
+// a saved state that can be used: this version, the parts of the right kind (a cleaned copy), else null.
+// (a v1 save is read as a migration: everything it kept is kept, the growth system's record starts fresh)
 export function cleanCareer(o) {
-  if (!isObj(o) || o.v !== CAREER_VERSION) return null;
+  if (!isObj(o) || (o.v !== CAREER_VERSION && o.v !== 1)) return null;
   const s = newCareer(o.seed);
+  if (isObj(o.abilities)) for (const a of ABILITIES) if (Number.isFinite(o.abilities[a])) s.abilities[a] = clamp(o.abilities[a], 0, 100);
+  if (isObj(o.firstTry)) { if (Number.isInteger(o.firstTry.pass) && o.firstTry.pass >= 0) s.firstTry.pass = Math.min(o.firstTry.pass, 9999); if (Number.isInteger(o.firstTry.total) && o.firstTry.total >= 0) s.firstTry.total = Math.min(o.firstTry.total, 9999); if (s.firstTry.pass > s.firstTry.total) s.firstTry.pass = s.firstTry.total; }
+  if (isObj(o.growth)) for (const [k, v] of Object.entries(o.growth).slice(0, 200)) if (ATTEMPT_ID.test(k) && Number.isInteger(v) && v >= 0) s.growth[k] = Math.min(v, 999);
+  if (isObj(o.examDay)) for (const [k, v] of Object.entries(o.examDay)) if (EXAMS[k] && Number.isInteger(v) && v >= 1 && v < 10000) s.examDay[k] = v;
+  if (isObj(o.drills) && Number.isInteger(o.drills.day) && Number.isInteger(o.drills.n)) s.drills = { day: clamp(o.drills.day, 0, 9999), n: clamp(o.drills.n, 0, 99) };
   if (Number.isInteger(o.day) && o.day >= 1 && o.day < 10000) s.day = o.day;
   if (SLOTS.includes(o.slot)) s.slot = o.slot;
   if (CHAPTERS[o.chapter]) s.chapter = o.chapter;
@@ -193,7 +252,7 @@ export function cleanCareer(o) {
   if (isObj(o.done)) for (const [k, v] of Object.entries(o.done)) if (/^[a-z0-9_:]{1,24}$/.test(k) && Number.isInteger(v)) s.done[k] = v;
   if (isObj(o.solo) && Number.isInteger(o.solo.day)) s.solo = { day: o.solo.day };
   if (isObj(o.checks)) for (const [id, v] of Object.entries(o.checks)) if (CHECKS[id] && isObj(v)) s.checks[id] = { tries: clamp(Math.round(+v.tries || 0), 0, 999), pass: !!v.pass, day: Number.isInteger(v.day) ? v.day : 0 };
-  if (isObj(o.graduated) && Number.isInteger(o.graduated.day)) s.graduated = { day: o.graduated.day };
+  if (isObj(o.graduated) && Number.isInteger(o.graduated.day)) { s.graduated = { day: o.graduated.day }; if (['優等', '優秀', '通常'].includes(o.graduated.rank)) { s.graduated.rank = o.graduated.rank; for (const k of ['total', 'firstRate', 'examTries', 'avgScore']) if (Number.isFinite(o.graduated[k])) s.graduated[k] = clamp(o.graduated[k], 0, 9999); } }
   // (saves from before these were kept have none: an empty record, the classes already finished taken as heard in full
   // — the pace they were heard at was not kept)
   if (isObj(o.heard)) { for (const [k, v] of Object.entries(o.heard)) if (SEC_ID.test(k) && (v === 'f' || v === 'q')) s.heard[k] = v; }
@@ -240,6 +299,7 @@ export function gate(state, prog, trust = 50) {
   if (!(state.exams.presolo && state.exams.presolo.pass)) miss.push(EXAMS.presolo.title);
   if (!passedAt(prog, 'c1')) miss.push('ソロ前の審査（c1）');
   if (trust < SOLO_TRUST) miss.push(`担当教官の信頼（${SOLO_TRUST} 以上）`);
+  if (judgeOf(state) < SOLO_JUDGE) miss.push(`判断（${SOLO_JUDGE} 以上）`);
   return miss;
 }
 
@@ -282,7 +342,8 @@ export function schedule(state, prog, { trust = 50, weather = null } = {}) {
     const ev = cls >= 0 && CH1_EVENTS.find(e => e.cls === cls);
     if (ev && (!state.done[`event:${ev.id}`] || today(`event:${ev.id}`))) out.push({ slot: 'evening', kind: 'event', id: ev.id, title: ev.title, where: ev.where, who: ev.who });
     const ex = state.exams.written1;
-    if (cls < 0 && !k && (!(ex && ex.pass) || today('exam:written1'))) out.push({ slot: out.length ? 'pm' : 'am', kind: 'exam', id: 'written1', title: EXAMS.written1.title, where: 'planning', who: 'lecturer' });
+    // (taken and failed today, the test is not offered again until tomorrow; passed today, it stays as the day's record)
+    if (cls < 0 && !k && ((!(ex && ex.pass) && (state.examDay || {}).written1 !== state.day) || (ex && ex.pass && today('exam:written1')))) out.push({ slot: out.length ? 'pm' : 'am', kind: 'exam', id: 'written1', title: EXAMS.written1.title, where: 'planning', who: 'lecturer' });
     return out;
   }
   if (STAGE[state.chapter]) return laterSchedule(state, prog, W, out).sort((a, b) => SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot));
@@ -299,7 +360,7 @@ export function schedule(state, prog, { trust = 50, weather = null } = {}) {
   if (id) out.push({ slot: flySlot, kind: 'flight', id, title: `飛行：${id}`, where: 'apron', who: 'instructor' });
   else if (!(ex && ex.pass) || state.done['exam:presolo'] === day) out.push({ slot: flySlot, kind: 'exam', id: 'presolo', title: EXAMS.presolo.title, where: 'planning', who: 'instructor' });
   else if (!passedAt(prog, 'c1')) out.push({ slot: flySlot, kind: 'checkride', id: 'c1', title: 'ソロ前の審査（c1・主任教官）', where: 'apron', who: 'chief' });
-  else if (trust >= SOLO_TRUST) out.push({ slot: flySlot, kind: 'solo', id: 'solo', title: 'ファーストソロ', where: 'apron', who: 'instructor' });
+  else if (trust >= SOLO_TRUST && judgeOf(state) >= SOLO_JUDGE) out.push({ slot: flySlot, kind: 'solo', id: 'solo', title: 'ファーストソロ', where: 'apron', who: 'instructor' });
   else out.push({ slot: flySlot, kind: 'flight', id: 't2', title: '飛行：場周経路の仕上げ（t2）', where: 'apron', who: 'instructor' });
   if (id) ground(flySlot === 'am' ? 'pm' : 'am');
   return out;
@@ -377,7 +438,22 @@ export function createCareer({ store = null, seed } = {}) {
   const read = () => { try { const raw = store && store.getItem(CAREER_KEY); return raw ? cleanCareer(JSON.parse(raw)) : null; } catch (e) { return null; } };
   const save = () => { try { if (store) store.setItem(CAREER_KEY, JSON.stringify(st)); return !!store; } catch (e) { return false; } };
   st = read() || newCareer(seed ?? Math.floor(Math.random() * 2 ** 31));
+  // the growth of an ability: less the higher it already is, and less for the same work repeated
+  // (a key's first time counts in full, its second half, from its third a quarter). Returns the new value.
+  const applyGrow = (axis, base, key) => {
+    if (!ABILITIES.includes(axis) || !(base > 0)) return st.abilities[axis];
+    const rep = key && ATTEMPT_ID.test(key) ? (st.growth[key] || 0) : 0;
+    const f = rep === 0 ? 1 : rep === 1 ? 0.5 : 0.25;
+    st.abilities[axis] = clamp(st.abilities[axis] + base * (1 - st.abilities[axis] / 130) * f, 0, 100);
+    if (key && ATTEMPT_ID.test(key)) st.growth[key] = rep + 1;
+    return st.abilities[axis];
+  };
   const C = {
+    // the abilities as they stand, and the growth itself (the game calls it for the work the cadet did)
+    get abilities() { return { ...st.abilities }; },
+    grow(axis, base, key) { const v = applyGrow(axis, base, key); save(); return v; },
+    // a lesson's or a check's first try, counted once per try at it (the game says whether it was a first try)
+    firstTry(pass) { st.firstTry.total++; if (pass) st.firstTry.pass++; save(); return { ...st.firstTry }; },
     get state() { return st; },
     get day() { return st.day; }, get slot() { return st.slot; }, get chapter() { return st.chapter; },
     get hours() { return SLOT_HOURS[st.slot]; },
@@ -393,9 +469,19 @@ export function createCareer({ store = null, seed } = {}) {
       const E = EXAMS[id]; if (!E) return null;
       const r = st.exams[id] || { tries: 0, best: 0, pass: false };
       r.tries++; r.best = Math.max(r.best, Math.round(pct)); if (pct >= E.pass) r.pass = true;
-      st.exams[id] = r; st.done[`exam:${id}`] = st.day; st.fatigue = clamp(st.fatigue + 8, 0, 100); save(); return r;
+      st.exams[id] = r; st.done[`exam:${id}`] = st.day; st.examDay[id] = st.day; st.fatigue = clamp(st.fatigue + 8, 0, 100);
+      applyGrow('know', pct >= E.pass ? 4.0 : 1.2, `exam:${id}`); save(); return r;
     },
-    decision(choice, weather) { const right = choice === weather.decision; st.decisions.push({ day: st.day, choice, right }); save(); return right; },
+    // a written test may be begun today (not taken yet today: §4.3, the next try is tomorrow or later)
+    examReady: (id) => !!EXAMS[id] && st.examDay[id] !== st.day,
+    // (growth design v1 §4.4) a judgement drill finished: the judgement grows a little, twice a day at most
+    drill() {
+      if (st.drills.day !== st.day) st.drills = { day: st.day, n: 0 };
+      if (st.drills.n >= 2) { save(); return false; }
+      st.drills.n++; applyGrow('judge', 1.0, `drill:${st.day}:${st.drills.n}`); save(); return true;
+    },
+    drillsLeft: () => (st.drills.day === st.day ? Math.max(0, 2 - st.drills.n) : 2),
+    decision(choice, weather) { const right = choice === weather.decision; st.decisions.push({ day: st.day, choice, right }); applyGrow('judge', right ? 1.8 : 0.5, `decision:${st.day}`); save(); return right; },
     decidedToday: () => st.decisions.find(d => d.day === st.day) || null,
     // the chapter moves on when its gate is open (the game calls it at the end of the work that opens it)
     advanceChapter(prog, trust) {
@@ -428,7 +514,8 @@ export function createCareer({ store = null, seed } = {}) {
     soloDone() { st.solo = { day: st.day }; save(); },
     // a check flown (M6): passed or not; the graduation
     check(id, pass) { const r = st.checks[id] || { tries: 0, pass: false, day: 0 }; r.tries++; if (pass) { r.pass = true; r.day = st.day; } st.checks[id] = r; st.done[`${CHECKS[id].kind}:${id}`] = st.day; save(); return r; },
-    graduate() { st.graduated = { day: st.day }; st.done['graduation:grad'] = st.day; save(); },
+    // (the graduation: its day, and its rank with the record it was judged by — §4.6)
+    graduate(prog) { st.graduated = { day: st.day, ...graduationRank(st, prog) }; st.done['graduation:grad'] = st.day; save(); },
     // today's weather as it counts for today's flying (the instrument chapter flies in low cloud)
     flyingWeather: (prog, kind = 'flight') => weatherFor2(weatherFor(st.seed, st.day, forcedWeather(st, prog)), st.chapter, kind),
     // the time moves on (the next slot; the evening stays the evening until the cadet goes to bed)

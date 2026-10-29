@@ -120,12 +120,12 @@ glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み
    理由は 3 つ。今の読み込み部分は UV を読まない。操縦席のテクスチャの上限（6e6 B）は、残り約 14 KB で満杯に近い。`cadet/assets/tex` の画像は FLIGHT LAB と CADET の両方の HTML に自動で入る（1 枚足すだけで `flight-lab/test/flight.test.mjs` の 12 枚の一覧の検査が落ちる）。
    UV やテクスチャが必要になったら、先に読み込み部分とテストを直す作業を、別の段階として行う。
 2. **容量の割り当て。**
-   - FLIGHT LAB の HTML の空きは 4,765,987 B（10 進で約 4.77 MB。操縦席の壁・ドア・座席とベルトを Blender で作ったあと）。glb は base64 で 4/3 倍になるので、元のファイルで使えるのは約 3.8 MB。
+   - FLIGHT LAB の HTML の空きは 4,621,215 B（10 進で約 4.62 MB。Seminole の操縦席を本物の G1000 NXi に合わせたあと）。glb は base64 で 4/3 倍になるので、元のファイルで使えるのは約 3.8 MB。
    - 1 三角形あたりのバイト数は形で違う。なめらかで頂点を共有する形（機体）は約 28 B。角の立った箱（建物・キット）は 45〜70 B で見積もる（頂点 1 つ 32 B、インデックスは 1 三角形 6 B）。
 
    | 使い道 | 元の glb の合計（上限） |
    |---|---|
-   | 操縦席 | 1.2 MB（`cockpit.glb` で 505,848 B 使用：天井まわり・座席とベルト・グレアシールド・操縦輪・壁とドア） |
+   | 操縦席 | 1.2 MB（`cockpit.glb` で 601,788 B 使用：天井まわり・座席とベルト（Archer と Seminole の後席）・グレアシールド・操縦輪・壁とドア） |
    | 田舎の建物・防風林のキット | 0.4 MB |
    | 飛行場の小物（T ハンガー・地上機材・灯火の器具） | 0.4 MB |
    | 積雲 | 0.3 MB |
@@ -145,10 +145,10 @@ glb を読むのは three.js の GLTFLoader ではなく、自前の読み込み
 
 | 対象 | 上限 | いま |
 |---|---|---|
-| FLIGHT LAB の HTML | 12 MiB（`flight-lab/build.mjs` の `MAX_BYTES`。ビルドが止める） | 7,816,925 B |
-| CADET の HTML | 15 MiB（`cadet/build.mjs` の `MAX_BYTES`。止めるのは `cadet/test/build.test.mjs` だけ） | 9,324,162 B |
+| FLIGHT LAB の HTML | 12 MiB（`flight-lab/build.mjs` の `MAX_BYTES`。ビルドが止める） | 7,961,697 B |
+| CADET の HTML | 15 MiB（`cadet/build.mjs` の `MAX_BYTES`。止めるのは `cadet/test/build.test.mjs` だけ） | 9,483,077 B |
 | 1 フレーム | 描画 400 回未満・90 万三角形未満（`cadet/test/browser.test.mjs`。CADET でだけ確かめている） | 画質「高」で駐機場 約 53 万三角形（`cadet/PLAN.md`） |
-| 操縦席 | 描画 40 回以下（Seminole 44）・4 万三角形以下（Archer も Seminole も）・テクスチャ 6e6 B 以下（`cadet/test/cockpit.test.mjs`） | Archer 31,913 三角形・24 回、Seminole 33,613 三角形・31 回（`cp.trianglesTwin`。残りは 6,387）、テクスチャ 5,985,621 B（`buildCockpit` をメモリ上で動かして測った）。`cockpit.glb` は 14,405 三角形・505,848 B（天井まわり 2,248・座席とベルト 4,512・グレアシールド 870・操縦輪 2,578・壁とドア 4,197） |
+| 操縦席 | 描画 40 回以下（Seminole 44）・4 万三角形以下（Archer も Seminole も）・テクスチャ 6e6 B 以下（`cadet/test/cockpit.test.mjs`） | Archer 32,037 三角形・24 回、Seminole 35,419 三角形・33 回（`cp.trianglesTwin`。残りは 4,581）、テクスチャ 5,985,621 B（`buildCockpit` をメモリ上で動かして測った）。`cockpit.glb` は 16,873 三角形・601,788 B（天井まわり 2,248・座席とベルト 6,856（そのうち Archer の後席の分と Seminole の後席の分は、それぞれの型でだけ描く）・グレアシールド 870・操縦輪 2,702・壁とドア 4,197） |
 | Archer の外観 | 近距離版 24,000 未満・遠距離版 3,000 未満（登録記号を除く。`cadet/test/exterior.test.mjs`） | 20,940 / 2,468 |
 | Seminole の外観 | 近距離版 27,000 未満・遠距離版 3,300 未満 | 25,946 / 3,101 |
 

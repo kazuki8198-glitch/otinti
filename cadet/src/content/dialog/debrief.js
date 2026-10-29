@@ -90,7 +90,10 @@ export function debriefDialogs(sum, { voice = 'instructor' } = {}) {
   const V = VOICES[voice] || null, VE = V ? V.en : null;
   const N = {}, say = (text, en, more = {}) => ({ speaker: 'instructor', text, en, ...more });
   const w = sum.walk, r = sum.radio;
-  const order = ['open', 'walk', 'radio', 'taxi', ...(sum.fault ? ['fault'] : []), ...sum.lessons.map(l => 'lesson:' + l.id), ...(sum.tem ? ['tem'] : []), 'next', 'trust', 'sign'];
+  // (growth design v1 §4.5) flown tired (the fatigue at the flight's end was 65 or more) and something was
+  // flown: after the lessons, the fatigue is named — the same words whoever gives the debrief
+  const tiredFlown = !!(sum.tired && sum.lessons.some(l => l.done));
+  const order = ['open', 'walk', 'radio', 'taxi', ...(sum.fault ? ['fault'] : []), ...sum.lessons.map(l => 'lesson:' + l.id), ...(sum.tem ? ['tem'] : []), ...(tiredFlown ? ['tired'] : []), 'next', 'trust', 'sign'];
   const nx = (k) => order[order.indexOf(k) + 1];
   N.open = say('エンジン停止、お疲れさまでした。今日の 1 日を、順番に振り返りましょう。', 'Engine off. Well done. Let\'s go over today, step by step.', { if: { not: { flag: 'day1_done' } }, else: 'again', hook: { name: 'look', arg: 'player' }, next: nx('open') });
   N.again = say('お疲れさまでした。今日の飛行も、順番に振り返りましょう。', 'Well done. Let\'s go over today\'s flight, step by step.', { hook: { name: 'look', arg: 'player' }, next: nx('open') });
@@ -141,6 +144,8 @@ export function debriefDialogs(sum, { voice = 'instructor' } = {}) {
         + (errsEn.length ? ` The errors: ${errsEn.join(', ')}. Errors can't be eliminated; noticing them early and putting them right is what matters.` : ' No errors stood out today either.'), { hook: { name: 'look', arg: 'player' }, next: nx('tem') });
     }
   }
+  if (tiredFlown) N.tired = say('疲労が判断と操縦に出ていました。飛ぶ前に疲れていると気づいたら、正直に言ってください。それも、操縦のうちです。',
+    'The fatigue showed in your judgement and your handling. When you notice you are tired before a flight, say so honestly. That is part of flying, too.', { hook: { name: 'look', arg: 'player' }, next: nx('tired') });
   // one thing for next time
   const weak = sum.lessons.find(l => l.done && !l.passed);
   const nextTxt = sum.fault ? (sum.fault.decided === 'return' ? '次は、整備が終わった機体で、今日の課目を。' : '次は、制限を超えたら、迷わず止める。') : sum.incursion ? '次は、停止線の前で止まる。それだけは、毎回必ず。' : weak ? `次は${q(weak.title)}をもう一度やりましょう。` : missed ? '次は、外部点検をもっとゆっくり、ひとつずつ。' : r.first < r.n ? '次は、無線の復唱を、声に出して練習しておきましょう。' : '次は、今日の課目を少し厳しい基準で飛んでみましょう。';

@@ -8,7 +8,7 @@
 //  - introC: how the turn went (ctx intro.turn), where LAB is (ctx intro.labSide: worked out from the real geometry),
 //    the heading mark set on it — 'toward';
 //  - introD: the controls handed back (the three calls the other way), how it felt (each answer pointing at tomorrow's
-//    class or k1), the logbook — 'back';
+//    class or k1; the one who watched: what was seen), the logbook — 'back';
 //  - introTake: after a takeover (he levels it: I have control), the calls both ways, then the controls again — 'resume';
 //  - introEnd: a second takeover: he keeps them; on to introD's question.
 // Also the lines he says while the cadet flies (INTRO_AIR, by key: the HUD's subtitle, the flight not paused), the
@@ -19,7 +19,8 @@ import { INSTRUCTOR } from './instructor.js';
 export const INTRO_HOOKS = ['look', 'nod', 'point', 'intro'];
 const SPEAKERS = { instructor: { name_ja: INSTRUCTOR.title_ja, color: '#5cc8ff' }, player: { name_ja: 'あなた', color: '#f2b632' } };
 // the context: intro { level: 'good' | 'drift' | 'took' | 'watch', watch, turn: 'good' | 'low' | 'high' | 'nolook' |
-// 'none' | 'took' | 'watch', labSide: 'r' | 'rb' | 'f' | 'l' | 'lb', toward: 'good' | 'time' | 'watch' }
+// 'none' | 'time' (banked, not rolled out on 180) | 'took' | 'watch', labSide: 'r' | 'rb' | 'f' | 'l' | 'lb', toward:
+// 'good' | 'time' | 'watch' }
 export const INTRO_SAMPLE = { intro: { level: 'good', watch: false, turn: 'good', labSide: 'r', toward: 'good' } };
 // the choices that are right where a check asks (the measure's cadet, the tests)
 export const INTRO_RIGHT = { 'fly:ex:ck': /^I have control$/, 'a:yhc:ask': /^I have control\.$/, 'b:pr': /^少し下がる$/, 'd:ihc:ck': /^You have control\.$/, 'tk:ck': /^You have control\.$/ };
@@ -31,7 +32,7 @@ export function introAirDialogs() {
   const back = (ok, ng) => [{ text: 'You have control.', next: ok }, { text: 'I have control.', next: ng }, { text: 'はい', next: ng }];
   const A = {
     // (a second career: the attitude in one line)
-    as: say('訓練空域、3,000 ft です。機首と地平線の見え方は、いつもと同じです。', { if: { flag: 'prologue_short' }, else: 'a1', hook: { name: 'look', arg: 'player' }, next: 'a:yhc:ask' }),
+    as: say('訓練空域、3,000 ft です。機首と地平線の、この見え方が水平飛行の姿勢です。', { if: { flag: 'prologue_short' }, else: 'a1', hook: { name: 'look', arg: 'player' }, next: 'a:yhc:ask' }),
     a1: say('着きました。ここが訓練空域、高度 3,000 ft です。離陸とここまでの移動は、私が操縦してきました。', { hook: { name: 'look', arg: 'player' }, next: 'a2' }),
     // src: FAA-H-8083-3C Airplane Flying Handbook ch.3 "Integrated Flight Instruction", "Straight-and-Level Flight"
     // (the nose's place on the horizon is the attitude; the instruments confirm it)
@@ -46,7 +47,7 @@ export function introAirDialogs() {
     'a:yhc:ok': say('You have control. ……いま操縦しているのは、あなたです。私の手は、ほら、膝の上。', { hook: { name: 'nod' }, next: 'a4' }),
     // (the rudder is his: the automatic rudder kept on)
     a4: say('まず 20 秒、まっすぐ同じ高さで。機首を地平線のその位置に。操縦輪は指先で軽く。足は私が手伝います。', { effects: go('level'), end: true }),
-    'a:w': say('わかりました。最初は私が操縦します。機首と地平線、それから計器を見ていてください。', { effects: go('watch'), end: true }),
+    'a:w': say('わかりました。今日は私が操縦します。機首と地平線、それから計器を見ていてください。', { effects: go('watch'), end: true }),
   };
   const B = {
     // src: the book's aero.stab key point (「トリムを取れば手を離しても飛ぶ」のは縦の静安定のおかげ)
@@ -76,7 +77,8 @@ export function introAirDialogs() {
     'c1:lo': say('旋回で高さが少し下がりましたね。予想のとおりです。引く量は、これから体に入れていきます。', { if: { ctx: 'intro.turn', is: 'low' }, else: 'c1:hi', next: 'c2' }),
     'c1:hi': say('旋回で少し上がりましたね。引く量は、ほんの少しで足ります。', { if: { ctx: 'intro.turn', is: 'high' }, else: 'c1:nl', next: 'c2' }),
     'c1:nl': say('旋回の前は、曲がる側を見る。これだけは毎回、忘れずに。', { if: { ctx: 'intro.turn', is: 'nolook' }, else: 'c1:no', next: 'c2' }),
-    'c1:no': say('今日は大きく傾けるところまで、いきませんでしたね。大丈夫、これから何度でも練習します。', { if: { ctx: 'intro.turn', is: 'none' }, else: 'c1:t', next: 'c2' }),
+    'c1:no': say('今日は大きく傾けるところまで、いきませんでしたね。大丈夫、これから何度でも練習します。', { if: { ctx: 'intro.turn', is: 'none' }, else: 'c1:tm', next: 'c2' }),
+    'c1:tm': say('傾けて曲がるところまでは、できましたね。180 でぴたりと翼を戻すのは、これから練習していきます。', { if: { ctx: 'intro.turn', is: 'time' }, else: 'c1:t', next: 'c2' }),
     'c1:t': say('大きく動いたところは、私が戻しました。動かすのは、小さく、ゆっくりで十分です。', { if: { ctx: 'intro.turn', is: 'took' }, else: 'c1:w', next: 'c2' }),
     'c1:w': say('南を向きました。曲がっている間、私はほんの少し引いて、高さを保っていました。', { next: 'c2' }),
     // (where LAB is, as the flight finds it: intro-flight.js relLab)
@@ -89,7 +91,7 @@ export function introAirDialogs() {
     'c3:w': say('PFD の方位の印を、LAB の方向に合わせました。私が機首を向けます。', { hook: { name: 'point', arg: 'pfd' }, effects: go('toward'), end: true }),
   };
   const D = {
-    d1: say('LAB が正面に来ました。最初の 1 回は、見ているだけで十分です。', { if: { ctx: 'intro.watch', is: true }, else: 'd1:g', hook: { name: 'look', arg: 'player' }, next: 'd:feel:ask' }),
+    d1: say('LAB が正面に来ました。最初の 1 回は、見ているだけで十分です。', { if: { ctx: 'intro.watch', is: true }, else: 'd1:g', hook: { name: 'look', arg: 'player' }, next: 'd:seen:ask' }),
     'd1:g': say('LAB が正面です。座学と学科試験のあと、初飛行で降りる滑走路です。', { if: { ctx: 'intro.toward', is: 'good' }, else: 'd1:n', hook: { name: 'look', arg: 'player' }, next: 'd:ihc:ck' }),
     'd1:n': say('LAB はあの方向です。座学と学科試験のあと、初飛行で降りる滑走路です。', { hook: { name: 'look', arg: 'player' }, next: 'd:ihc:ck' }),
     // src: AFH ch.1 "Positive Exchange of Flight Controls" (the instructor takes them back the same way: "I have the
@@ -103,6 +105,12 @@ export function introAirDialogs() {
       { text: '手を離しても、まっすぐ飛んでいた', next: 'd:a' },
       { text: '傾けると、高さが下がった', next: 'd:b' },
       { text: '外を見る余裕がなかった', next: 'd:c' },
+    ] }),
+    // (the one who watched: what was seen — the same three answers)
+    'd:seen:ask': say('どうでしたか、初めての空は。', { choices: [
+      { text: '操縦輪にほとんど触れずに、まっすぐ飛んでいた', next: 'd:a' },
+      { text: '曲がっている間、少し引いていた', next: 'd:b' },
+      { text: 'どこを見ればいいか、わからなかった', next: 'd:c' },
     ] }),
     // src: the book's aero.stab key point (縦の静安定); PHAK ch.5 "Forces in Turns"; AFH ch.3 "Integrated Flight
     // Instruction" (outside first, the instruments cross-checked)
@@ -155,12 +163,8 @@ export const INTRO_AIR = {
   T_high: '少し引きすぎです。機首をほんの少し戻します。',
   T_near: '180 が近づいてきました。傾きの半分くらい手前で、翼を水平に戻し始めます。',
   T_roll: 'はい、ここで翼を水平に。',
-  T_ok: 'きれいに南を向きました。そのまま、まっすぐ。',
-  T_time: 'ここで翼を水平に戻しましょう。旋回の練習は、これから何度でもします。',
   // (toward LAB)
   W_how: 'LAB を機首の正面に。傾けて回し、正面に来る少し手前で戻します。',
-  W_ok: '正面に来ました。そのまま、まっすぐ。',
-  W_time: 'このくらいで大丈夫です。',
   // (soft limits, not more than one every 8 s; src: PHAK (FAA-H-8083-25C) ch.8 "Airspeed Indicator Markings" — the
   // yellow arc above Vno, for smooth air only)
   G_bank: '傾きが 30° を超えました。少し戻しましょう。',
@@ -195,11 +199,7 @@ export const INTRO_AIR_EN = {
   T_high: 'Pulling a bit too much. Ease the nose back just a touch.',
   T_near: '180 is coming up. Start levelling the wings about half the bank before it.',
   T_roll: 'Now, wings level here.',
-  T_ok: 'Nicely onto south. Hold it straight.',
-  T_time: 'Let\'s level the wings here. We\'ll practise turns many more times.',
   W_how: 'Put LAB right in front of the nose. Bank to come round, and level out a little before it\'s ahead.',
-  W_ok: 'It\'s straight ahead. Hold it straight.',
-  W_time: 'That\'s about right.',
   G_bank: 'The bank is past 30°. Let\'s ease it back a little.',
   G_fast: 'The airspeed is into the yellow arc. Raise the nose just a touch.',
   G_alt: 'The height is off by 150 ft or more. Bring it back slowly with the nose.',

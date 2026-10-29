@@ -10,7 +10,8 @@
 //    state); not a choice only of "go on / again", the pace, the end of a section's menu. In k4: an operation whose
 //    value is checked (the frequency, the altimeter, the code) counts too;
 //    The first day's introductory flight: each of its flying tasks (the 20 s straight and level, the look, the turn,
-//    LAB ahead) counts as one checked operation too (k4's rule), its flown seconds its line's time;
+//    LAB ahead) counts as one checked operation too (k4's rule) when the cadet made one (the yoke moved, the head turned
+//    to the right: a task left alone is not), its flown seconds its line's time;
 //  - a stretch without a decision: the reading time of the lines from one decision to the next, within a talk (the
 //    introductory flight's flown seconds included);
 //  - k4's stretch without input: the controller's transmissions (LINE_S of dialog/atc.js) plus the subtitles' reading;
@@ -123,7 +124,8 @@ export function isDecision(v, n) {
 // ---------------------------------------------------------------- the first day's introductory flight
 // flown by flight/intro-flight.js's scripted cadet (hands: 'cadet', or 'none' — the one who never touches the yoke),
 // then told as lines: the card, each talk as the cadet reads it (its context as the flight had it), each flying task one
-// checked line of its flown seconds (a takeover's recovery: a line of his, not a decision), the landing's card
+// line of its flown seconds, checked when the cadet acted in it (a takeover's recovery: a line of his, not a decision),
+// the landing's card
 export const INTRO_CARD_S = { start: 0.65 + 1.5 + 0.65, end: 0.65 + 1.2 + 0.65 };    // (main.js beginIntro, onIntroDone: in, shown, out)
 // the right answer where one of its checks asks (content/dialog/intro.js INTRO_RIGHT), else the first choice
 export const introRight = (v) => { const re = LOADED && LOADED.intro ? LOADED.intro.talk.INTRO_RIGHT[v.node] : null, i = re ? v.choices.findIndex(c => re.test(c.text)) : -1; return i >= 0 ? i : null; };
@@ -135,7 +137,7 @@ export function introLines(L, { hands = 'cadet', state = null } = {}) {
   const lines = [pseudo('card:start', `${C.start.title}　${C.start.sub}`, INTRO_CARD_S.start)];
   for (const s of r.steps) {
     if (s.talk) lines.push(...runTalk(L, data, s.id, { ctx: { intro: s.ctx }, state: st, policy: introRight }).lines);
-    else lines.push(pseudo(`task:${s.id}`, (HUD[s.id] || HUD.watch).title, s.secs, !!HUD[s.id] && s.id !== 'watch'));
+    else lines.push(pseudo(`task:${s.id}`, (HUD[s.id] || HUD.watch).title, s.secs, !!HUD[s.id] && s.id !== 'watch' && !!s.acted));
   }
   lines.push(pseudo('card:end', `${C.end.title}　${C.end.sub}`, INTRO_CARD_S.end));
   return { lines, sum: r.sum };

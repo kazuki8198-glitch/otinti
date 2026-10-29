@@ -538,7 +538,7 @@ export function createFlyMode(ctx) {
       if (view === 'cockpit') {
         if (look.x || look.y) homeT = 0;
         else if (faceT > 0) faceInstructor(dt);
-        else if (homeT > 0) { homeT -= dt; const k = 1 - Math.exp(-dt / 0.3); yaw += (0 - yaw) * k; pitch += (HOME_PITCH - pitch) * k; }
+        else if (homeT > 0) homeHead(dt);
         yaw = THREE.MathUtils.clamp(yaw - look.x * sens, -LOOK.yaw, LOOK.yaw);
         pitch = THREE.MathUtils.clamp(pitch - look.y * sens * inv, -LOOK.down, LOOK.up);
       } else {
@@ -546,8 +546,9 @@ export function createFlyMode(ctx) {
       }
       if (faceT > 0) faceT -= dt;
     }
-    // the introductory flight: its tasks with what was flown and where the head looks
+    // the introductory flight: its tasks with what was flown and where the head looks; his talks' time (in the air too)
     if (intro && phase === 'intro' && !stop) handle(intro.update(res.steps * H, flight.L.last, P.ne(flight.s), yaw / DEG));
+    else if (intro && talkOn && !stopHead) intro.talked(dt);
     // the propeller as the systems turn it (the starter, the run-up's magneto drop: the picture and the sound)
     rpmVisual = systems.rpm; engShow.rpm = systems.rpm; engShow.run = systems.running;
     if (blend.t > 0) blend.t = Math.max(0, blend.t - dt / 1.2);
@@ -651,6 +652,8 @@ export function createFlyMode(ctx) {
     auto.keys = scriptedKeys('cadet', v.task, flight.L.last, v.handsS, auto.mem, flight.L.alt0);
     return AUTO_KEYS;
   }
+  // the head eased back to the front (while homeT runs)
+  function homeHead(dt) { homeT -= dt; const k = 1 - Math.exp(-dt / 0.3); yaw += (0 - yaw) * k; pitch += (HOME_PITCH - pitch) * k; }
   // the head eased towards the face of the one in the right seat (while faceT runs)
   function faceInstructor(dt) {
     if (!crew) return;
@@ -785,8 +788,9 @@ export function createFlyMode(ctx) {
     systems, dayMode, routeLine, beginDay, get crewId() { return crewId; },
     board, leave, setView, update, key, draw2D, canExit,
     // the introductory flight: set (behind the card), begun, the one going on; flown by the scripted cadet for `sec`
-    // seconds — until a talk begins (the tests: the flight and its tasks stepped as frames do, the head to the right in
-    // the look; the cockpit and the HUD drawn once at the end, as runScripted leaves a lesson)
+    // seconds — until a talk begins (the tests: the flight and its tasks stepped as frames do, the head as a talk left it
+    // eased to the front, then turned to the right two seconds into the look; the cockpit and the HUD drawn once at the
+    // end, as runScripted leaves a lesson)
     introFlight, introBegin, get intro() { return intro; },
     introAuto(sec = 1) {
       if (!intro) return null;
@@ -795,7 +799,9 @@ export function createFlyMode(ctx) {
         for (let i = 0; i < sec * 60 && intro && !intro.done && active && !talkOn && phase === 'intro'; i++) {
           const res = flight.frame(1 / 60, intro.cadetHands ? autoKeys() : NO_KEYS, autoOpt);
           for (const ev of res.events) onEvent(ev);
-          if (intro) handle(intro.update(res.steps * H, flight.L.last, P.ne(flight.s), intro.view().task === 'look' ? -60 : yaw / DEG));
+          const v = intro && intro.view();
+          if (v && v.task === 'look' && v.t >= 2) { yaw = -60 * DEG; homeT = 0; faceT = 0; } else if (homeT > 0) homeHead(1 / 60);
+          if (intro) handle(intro.update(res.steps * H, flight.L.last, P.ne(flight.s), yaw / DEG));
         }
       } finally { auto = null; }
       if (active) placeNow();

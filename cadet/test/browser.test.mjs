@@ -280,7 +280,12 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     // the rest flown by the scripted cadet: the 20 s, the prediction, the look and the turn, LAB, the hand-back
     await ev(() => window.__cadet.fly.intro.auto(30)); assert.equal((await ev(() => window.__cadet.fly.status())).talkKind, 'introB');
     t = await talkThrough(null, ['^少し下がる$']); assert.ok(t.lines.some(l => /> 少し下がる/.test(l)));
+    // (the look is the cadet's own: the head his talk turned to him, eased back to the front, is none — a second on, the
+    // mouse not moved, it is still to do)
+    await ev(() => window.__cadet.simulate(1)); s = await ev(() => window.__cadet.fly.status());
+    assert.deepEqual([s.intro.task, s.intro.results.look], ['look', null], JSON.stringify(s.intro));
     await ev(() => window.__cadet.fly.intro.auto(90)); s = await ev(() => window.__cadet.fly.status());
+    assert.equal(s.intro.results.look, 'ok');
     assert.equal(s.talkKind, 'introC'); assert.equal(s.intro.results.turn !== null, true); assert.ok(s.intro.lab, JSON.stringify(s.intro));
     t = await talkThrough(null, []); assert.ok(t.lines.some(l => /LAB 飛行場/.test(l)));
     assert.equal((await ev(() => window.__cadet.fly.status())).intro.task, 'toward');
@@ -301,9 +306,10 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.deepEqual(await ev(() => window.__cadet.fly.flight.records()), []);
     // the logbook's first line; the instructor gone home; N738SY back on its stand; the task panel gone
     let lb = await ev(() => window.__cadet.logbook());
-    // (the 25 minutes he flew, said, and the seconds flown here: 0.4 h under 2 minutes at the controls, else 0.5)
+    // (the 25 minutes he flew, said, and the seconds in the air here — his talks too: 0.5 h when they are read, 0.4 when
+    // clicked through at once, as here)
     assert.equal(lb.entries.length, 1); assert.ok([0.4, 0.5].includes(lb.entries[0].total), lb.entries[0].total); assert.equal(lb.entries[0].dual, lb.entries[0].total);
-    assert.equal(lb.entries[0].skipped, 25); assert.match(lb.entries[0].remarks, /体験飛行/);
+    assert.equal(lb.entries[0].skipped, 25); assert.match(lb.entries[0].remarks, /^体験飛行.*直線水平飛行、右旋回。$/);
     assert.equal((await ev(() => window.__cadet.career.where('instructor'))).at, 'away');
     assert.equal((await ev(() => window.__cadet.fly.status())).parked, true); assert.ok(await todayColliders() > 0);
     assert.equal(await ev(() => document.querySelector('.dh-task').hidden), true);

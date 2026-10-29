@@ -68,7 +68,7 @@ export function careerInstructorDialogs() {
       { text: '乗ります', next: 'fly:x1' },
       { text: '今日はやめておきます', next: 'm:end' },
     ] }),
-    'fly:s:ask': say('その前に、少しだけ一緒に飛びませんか。操縦輪を持つのは 2 分ほど。受け渡しは、空の上でいつもの 3 回で。', { choices: [
+    'fly:s:ask': say('その前に、少しだけ一緒に飛びませんか。操縦輪を持つのは 2 分ほど。受け渡しは、空の上で声で 3 回確かめます。', { choices: [
       { text: '乗ります', next: 'fly:s' },
       { text: '今日はやめておきます', next: 'm:end' },
     ] }),

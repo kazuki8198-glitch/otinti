@@ -2,14 +2,14 @@
  "built": "2026-10-29",
  "paces": {
   "need": {
-   "totalMin": 137.15660595178684,
+   "totalMin": 137.12827261845354,
    "breakdownMin": {
     "classes": 81.24333333333335,
     "ftd": 17.57233333333333,
     "k4": 5.601333333333331,
     "exam": 5.948333333333333,
     "prologue": 2.523333333333333,
-    "intro": 3.1808333333333163,
+    "intro": 3.1524999999999834,
     "events": 4.44,
     "study": 0,
     "walk": 15.811772618453519,
@@ -523,11 +523,11 @@
     "lines": 58
    },
    "intro": {
-    "min": 3.18,
+    "min": 3.15,
     "decisions": 8,
-    "longestGapS": 40.8,
-    "handsS": 88.6,
-    "noInputLongestGapS": 60.4
+    "longestGapS": 41,
+    "handsS": 86.9,
+    "noInputLongestGapS": 114.1
    },
    "dayPatterns": [],
    "framePatterns": [
@@ -542,14 +542,14 @@
    ]
   },
   "full": {
-   "totalMin": 259.9732726184535,
+   "totalMin": 259.94493928512014,
    "breakdownMin": {
     "classes": 204.11666666666665,
     "ftd": 17.57233333333333,
     "k4": 5.601333333333331,
     "exam": 5.891666666666666,
     "prologue": 2.523333333333333,
-    "intro": 3.1808333333333163,
+    "intro": 3.1524999999999834,
     "events": 4.44,
     "study": 0,
     "walk": 15.811772618453519,
@@ -1063,11 +1063,11 @@
     "lines": 58
    },
    "intro": {
-    "min": 3.18,
+    "min": 3.15,
     "decisions": 8,
-    "longestGapS": 40.8,
-    "handsS": 88.6,
-    "noInputLongestGapS": 60.4
+    "longestGapS": 41,
+    "handsS": 86.9,
+    "noInputLongestGapS": 114.1
    },
    "dayPatterns": [],
    "framePatterns": [
@@ -1098,14 +1098,14 @@
    ]
   },
   "quick": {
-   "totalMin": 108.61993928512017,
+   "totalMin": 108.59160595178686,
    "breakdownMin": {
     "classes": 52.66666666666668,
     "ftd": 17.57233333333333,
     "k4": 5.601333333333331,
     "exam": 5.9883333333333315,
     "prologue": 2.523333333333333,
-    "intro": 3.1808333333333163,
+    "intro": 3.1524999999999834,
     "events": 4.44,
     "study": 0,
     "walk": 15.811772618453519,
@@ -1619,11 +1619,11 @@
     "lines": 58
    },
    "intro": {
-    "min": 3.18,
+    "min": 3.15,
     "decisions": 8,
-    "longestGapS": 40.8,
-    "handsS": 88.6,
-    "noInputLongestGapS": 60.4
+    "longestGapS": 41,
+    "handsS": 86.9,
+    "noInputLongestGapS": 114.1
    },
    "dayPatterns": [],
    "framePatterns": [

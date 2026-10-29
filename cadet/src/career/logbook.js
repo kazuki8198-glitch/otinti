@@ -36,11 +36,13 @@ export function entryFrom(sum, { date, remarks = '', dayN = 1, skippedSec = 0, x
 export const INTRO_SKIPPED_S = 1500;
 // its line: dual (he is the pilot in command and the instructor), no lesson, no landing of the cadet's; src: 14 CFR
 // 61.51(b) (what a logbook entry holds), 61.51(h)(2) (training time endorsed by the instructor: the training described,
-// its length, the instructor's signature and certificate number)
-export function introEntry({ date, dayN = 1, airSec = 0, cut = false, watched = false, trust = 0 } = {}) {
+// its length, the instructor's signature and certificate number). The training as it was flown (flight/intro-flight.js
+// summary): level / turn the tasks' results (null: not reached; 'none': no turn made), takes his takeovers
+export function introEntry({ date, dayN = 1, airSec = 0, cut = false, watched = false, level = null, turn = null, takes = 0, trust = 0 } = {}) {
+  const flown = ['操縦の受け渡し', ...(level ? ['直線水平飛行'] : []), ...(turn && turn !== 'none' ? ['右旋回'] : [])].join('、');
   const remarks = cut ? '体験飛行（途中で切り上げ、早瀬 教官が LAB へ）。'
     : watched ? '体験飛行（操縦は早瀬 教官、同乗して見学）。訓練空域 3,000 ft で、直線水平飛行と右旋回。'
-      : '体験飛行（離着陸と往復は早瀬 教官）。訓練空域 3,000 ft で、操縦の受け渡し、直線水平飛行、右旋回（約 15°）。';
+      : `体験飛行（離着陸と往復は早瀬 教官）。訓練空域 3,000 ft で、${flown}。${takes ? `教官が操縦を引き継ぎ ${takes} 回。` : ''}`;
   return entryFrom({ lessons: [], blockT: airSec, landings: 0, trust }, { date, dayN, remarks, skippedSec: INTRO_SKIPPED_S });
 }
 // an entry read back (a saved book, an imported file): the parts of the right kind, else null

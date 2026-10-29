@@ -1337,7 +1337,7 @@ async function boot() {
     const was = introAt; introAt = null;
     if (!was || was.seed !== career.state.seed || was.day !== career.day) { startDay({ card: true, place: true }); return; }
     career.done('intro', 'flight');
-    logbook.add(introEntry({ date: dateOf(career.day).iso, dayN: career.day, airSec: sum.airSec || 0, cut: !!sum.cut, watched: !!sum.watched, trust: 0 }));
+    logbook.add(introEntry({ date: dateOf(career.day).iso, dayN: career.day, airSec: sum.airSec || 0, cut: !!sum.cut, watched: !!sum.watched, level: sum.level, turn: sum.turn, takes: sum.takes || 0, trust: 0 }));
     career.advance('evening'); applySlot();                  // (the instructor gone home, the classmates in the lounge)
     placeWalker(AUTO_DOOR.a, AUTO_DOOR.c, AUTO_DOOR.face);
     toast(prologueWord('intro', { short: shortWords() }), 6000);

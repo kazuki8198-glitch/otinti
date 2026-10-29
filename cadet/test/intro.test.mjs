@@ -8,7 +8,9 @@
 //  - the physics (FLIGHT LAB through flight/flight.js, Sorajima's Archer): the practice area's start, a cadet with hands
 //    off, a scripted cadet, the cadet who watches (his hands win over a stick held), wild hands (taken back twice, then
 //    he keeps them), random hands (never damaged, never low, always over);
-//  - FLIGHT LAB's record untouched (discard, no finish); the logbook's line.
+//  - the look before the turn is the cadet's own (the head his talk turned to him is none); a turn not settled on 180
+//    says what was flown (banked, or taken back); his line never in the frame a talk begins (the talk would hide it);
+//  - FLIGHT LAB's record untouched (discarded: a finish after it keeps nothing); the logbook's line, as it was flown.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -23,8 +25,8 @@ import { PROLOGUE_WORDS } from '../src/content/day-flow.js';
 import { gameBook } from '../src/content/book.js';
 import { validateDialogs } from '../src/dialog/validate.js';
 import { createRunner, createDialogState } from '../src/dialog/engine.js';
-import { createFlight } from '../src/flight/flight.js';
-import { createIntro, runIntroScripted, INTRO_STEPS, INTRO_LIMITS, INTRO_TASKS } from '../src/flight/intro-flight.js';
+import { createFlight, H } from '../src/flight/flight.js';
+import { createIntro, runIntroScripted, scriptedKeys, INTRO_STEPS, INTRO_LIMITS, INTRO_TASKS } from '../src/flight/intro-flight.js';
 import { introEntry, cleanEntry, INSTRUCTOR_SIG, INTRO_SKIPPED_S } from '../src/career/logbook.js';
 import { installSorajima } from '../src/flight/sorajima.js';
 
@@ -96,7 +98,7 @@ test('data: the air talks and the meeting pass the validator with their English;
 test('flow: every way through each air talk ends with one \'intro\' hook, its step\'s; the calls taught before they are checked; wrong answers asked again; nothing scored', () => {
   const data = introAirDialogs();
   const ctxs = [];
-  for (const watch of [false, true]) for (const level of ['good', 'drift', 'took', 'watch']) for (const turn of ['good', 'low', 'high', 'nolook', 'none', 'took', 'watch'])
+  for (const watch of [false, true]) for (const level of ['good', 'drift', 'took', 'watch']) for (const turn of ['good', 'low', 'high', 'nolook', 'none', 'time', 'took', 'watch'])
     for (const labSide of ['r', 'rb', 'f', 'l', 'lb']) for (const toward of ['good', 'time', 'watch']) if (turn === 'good' || labSide === 'r') ctxs.push({ intro: { watch, level, turn, labSide, toward } });
   const want = { intro: ['level', 'watch'], introB: ['look'], introC: ['toward'], introD: ['back'], introTake: ['resume'], introEnd: ['back'] };
   const seen = new Set();
@@ -173,6 +175,9 @@ test('physics: the practice area\'s start; hands off holds it; a scripted cadet 
   let r = runIntroScripted(FL, createFlight, { hands: 'none', store: memStore() });
   assert.equal(task(r, 'level').result, 'good'); assert.equal(r.sum.takes, 0); assert.ok(r.sum && !r.sum.cut);
   assert.equal(task(r, 'look').result, 'time'); assert.equal(task(r, 'turn').result, 'none');
+  // (LAB ahead left alone: over at 30 s, as the turn with no bank; no task of his counted as done by the cadet)
+  assert.equal(task(r, 'toward').result, 'time'); assert.ok(Math.abs(task(r, 'toward').secs - INTRO_TASKS.toward.idle) < 0.1, `${task(r, 'toward').secs} s`);
+  assert.deepEqual(r.steps.filter(s => s.task).map(s => s.acted), [false, false, false, false]);
   // the scripted cadet
   let lastHdg = null;
   r = runIntroScripted(FL, createFlight, { hands: 'cadet', store: memStore(), onFrame: (cc, v) => { if (v.task === 'turn') lastHdg = cc.hdg; } });
@@ -182,6 +187,7 @@ test('physics: the practice area\'s start; hands off holds it; a scripted cadet 
   assert.equal(r.sum.labSide, 'r'); assert.ok(r.sum.labRel >= 30 && r.sum.labRel <= 70, `LAB at ${r.sum.labRel}`);
   assert.equal(task(r, 'toward').result, 'good'); assert.equal(task(r, 'level').result, 'good'); assert.equal(task(r, 'look').result, 'ok');
   assert.ok(r.sum.handsS >= 70 && r.sum.handsS <= 150, `${r.sum.handsS} s at the controls`);
+  assert.deepEqual(r.steps.filter(s => s.task).map(s => s.acted), [true, true, true, true]);
   assert.deepEqual(r.steps.filter(s => s.talk).map(s => s.id), ['intro', 'introB', 'introC', 'introD']);
   // (the talks' context as the steps had it)
   assert.deepEqual(r.steps.find(s => s.id === 'introC').ctx, { level: 'good', watch: false, turn: 'good', labSide: 'r', toward: null });
@@ -215,28 +221,36 @@ test('physics: random hands (seeds 1–50) — never damaged, never below 2,400 
   }
 });
 
-test('FLIGHT LAB\'s record untouched: the intro\'s time dropped (discard, no finish) — no progress, no record, nothing in the store', () => {
+test('FLIGHT LAB\'s record untouched: the intro\'s time dropped (discard) — a finish after it keeps no time, no landing, no record', () => {
   const store = memStore();
   const r = runIntroScripted(FL, createFlight, { hands: 'cadet', store });
-  r.flight.discard();
+  assert.deepEqual(store.keys(), [], 'nothing written while it flew');
+  // (fly-mode's leave discards it; a finish after that — anything that ends the flight later — must find nothing)
+  r.flight.discard(); r.flight.finish();
   assert.deepEqual(r.flight.progress(), SC.sanitizeProgress({}));
   assert.deepEqual(r.flight.records(), []);
-  assert.deepEqual(store.keys(), []);
   // (the free flight's own finish would have kept its time: the intro never calls it)
   const s2 = memStore(), f = createFlight(FL, { store: s2 }); f.startFree('area', 'pa28');
   for (let i = 0; i < 600; i++) f.frame(1 / 60, { has: () => false });
   f.finish(); assert.ok(f.progress().time > 9);
 });
 
-test('the logbook\'s line: 0.5 h dual with the 25 minutes he flew said, no landing, no lesson, his signature; cut and watched remarks; kept as written', () => {
-  const e = introEntry({ date: '2027-04-01', dayN: 1, airSec: 150 });
+test('the logbook\'s line: 0.5 h dual with the 25 minutes he flew said (his talks in the air counted), no landing, no lesson, his signature; what was flown; cut and watched remarks; kept as written', () => {
+  // (the time as a scripted flight has it: the tasks flown and his talks read)
+  const flown = (hands) => { const x = runIntroScripted(FL, createFlight, { hands, store: memStore() }).sum; return introEntry({ date: '2027-04-01', dayN: 1, airSec: x.airSec, cut: x.cut, watched: x.watched, level: x.level, turn: x.turn, takes: x.takes }); };
+  const e = flown('cadet');
   assert.equal(e.total, 0.5); assert.equal(e.dual, 0.5); assert.equal(e.solo, 0); assert.equal(e.landings, 0); assert.deepEqual(e.lessons, []);
+  assert.match(e.remarks, /操縦の受け渡し、直線水平飛行、右旋回。$/);
+  for (const hands of ['none', 'watch']) assert.equal(flown(hands).total, 0.5, hands);
+  // (only what was flown: no turn made — no turn written; taken back twice — his, said)
+  assert.doesNotMatch(flown('none').remarks, /右旋回/);
+  const w = flown('wild'); assert.doesNotMatch(w.remarks, /直線水平飛行|右旋回/); assert.match(w.remarks, /引き継ぎ 2 回/);
   assert.equal(e.skipped, INTRO_SKIPPED_S / 60); assert.equal(e.skipped, 25); assert.deepEqual(e.sig, INSTRUCTOR_SIG);
   assert.match(e.remarks, /^体験飛行/); assert.equal(e.xc + e.inst + e.me, 0); assert.equal(e.aircraft, 'PA-28-181');
   assert.deepEqual(cleanEntry(JSON.parse(JSON.stringify(e))), e);
   assert.match(introEntry({ airSec: 40, cut: true }).remarks, /途中で切り上げ/);
   assert.match(introEntry({ airSec: 90, watched: true }).remarks, /見学/);
-  for (const x of [e, introEntry({ cut: true }), introEntry({ watched: true })]) assert.ok(Array.from(x.remarks).length <= 120 && !BAN.test(x.remarks));
+  for (const x of [e, w, introEntry({ cut: true }), introEntry({ watched: true }), introEntry({ level: 'took', turn: 'took', takes: 1 })]) assert.ok(Array.from(x.remarks).length <= 120 && !BAN.test(x.remarks), x.remarks);
 });
 
 test('the intro alone: the events in order, its clocks physics seconds, the panel and the heading mark for each task', () => {
@@ -259,4 +273,91 @@ test('the intro alone: the events in order, its clocks physics seconds, the pane
   const end = I.crashed('x');
   assert.deepEqual(end.map(e => e.type), ['say', 'hud', 'end']); assert.equal(end[0].key, 'X_crash'); assert.equal(end[2].delay, 2);
   assert.ok(I.done && !I.cadetHands);
+});
+
+test('the look before the turn is the cadet\'s own: the head his talk turned to him (eased back to the front) is none; a turn to the right from the front, or on from where it was, is', () => {
+  const f = createFlight(FL, { store: memStore() });
+  f.startFree('area', 'pa28', { sens: 'low', autoRud: true, assist: false });
+  const c = f.L.last, pos = FL.physics.ne(f.s);
+  // (to the look: the 20 s, then the talk; head(t) the yaw, t the task's seconds) → the look's result and K_ok said
+  const look = (head) => {
+    const I = createIntro({ FL, thr0: f.s.thr, alt0: f.L.alt0, hdg0: f.L.hdg0 });
+    I.begin(); I.onTalkEnd('level');
+    for (let k = 0; k < 41 && I.view().task === 'level'; k++) I.update(0.5, c, pos);
+    assert.equal(I.view().task, null); I.onTalkEnd('look'); assert.equal(I.view().task, 'look');
+    let said = false;
+    for (let t = 0; t < 16 && I.view().task === 'look'; t += 1 / 60) said = I.update(1 / 60, c, pos, head(t)).some(e => e.key === 'K_ok') || said;
+    return { result: I.view().results.look, said };
+  };
+  // (fly-mode: his talk turns the head to him in the right seat, about 90° right; at its end it eases back, 0.3 s)
+  const eased = (t) => -93 * Math.exp(-t / 0.3);
+  assert.deepEqual(look(eased), { result: 'time', said: false }, 'nothing touched: no look');
+  assert.deepEqual(look(() => -93), { result: 'time', said: false }, 'held on him: no look');
+  assert.deepEqual(look((t) => (t < 1 ? eased(t) : -60)), { result: 'ok', said: true });
+  // (the mouse stopped the ease where it was: a further turn of 20° to the right is a look)
+  assert.deepEqual(look((t) => (t < 1 ? -80 : -80 - Math.min(25, (t - 1) * 50))), { result: 'ok', said: true });
+  assert.deepEqual(look((t) => (t < 1 ? -80 : -80 - Math.min(15, (t - 1) * 50))), { result: 'time', said: false }, '15° is not');
+});
+
+test('the turn not settled on 180 in its minute: banked but not rolled out there — said so, not "no bank"; taken back — his; no bank — none', () => {
+  const run = (keys) => {
+    const mems = {};
+    const r = runIntroScripted(FL, createFlight, { hands: 'cadet', store: memStore(), keys: (task, c, t) => {
+      const m = mems[task] || (mems[task] = { t0: t });
+      return task === 'turn' ? keys(c, t - m.t0) : scriptedKeys('cadet', task, c, t, m);
+    } });
+    const st = createDialogState(), v = createRunner({ data: introAirDialogs(), state: st, ctx: { intro: r.steps.find(s => s.talk === 'introC').ctx } });
+    v.start('introC');
+    return { turn: r.steps.find(s => s.task === 'turn'), c1: v.view().node, sum: r.sum };
+  };
+  // (rolled in to about 20°, wings level only past 215°: the 60 s run out)
+  let x = run((c, t) => { const k = new Set(); if (t < 0.3) return k; if (c.hdg < 215 && c.hdg > 60) { if (c.bank < 18) k.add('KeyD'); } else if (c.bank > 2) k.add('KeyA'); else if (c.bank < -2) k.add('KeyD'); return k; });
+  assert.equal(x.turn.result, 'time'); assert.ok(x.turn.peak >= 15, `peak ${x.turn.peak}`); assert.equal(x.c1, 'c1:tm');
+  // (D held 3 s: past 45°, taken back; nothing after it)
+  x = run((c, t) => new Set(t > 0.3 && t < 3.3 ? ['KeyD'] : []));
+  assert.equal(x.sum.takes, 1); assert.equal(x.turn.result, 'took'); assert.equal(x.c1, 'c1:t');
+  // (nothing at all: no bank)
+  x = run(() => new Set());
+  assert.equal(x.turn.result, 'none'); assert.equal(x.c1, 'c1:no');
+  // (the minutes at the controls run out in the turn before any bank: none too — the logbook writes no turn)
+  const f = createFlight(FL, { store: memStore() });
+  f.startFree('area', 'pa28', { sens: 'low', autoRud: true, assist: false });
+  const I = createIntro({ FL, thr0: f.s.thr, alt0: f.L.alt0, hdg0: f.L.hdg0 }), c = f.L.last, pos = FL.physics.ne(f.s);
+  I.begin(); I.onTalkEnd('level');
+  for (let k = 0; k < 41 && I.view().task === 'level'; k++) I.update(0.5, c, pos);
+  I.onTalkEnd('look'); I.update(1, c, pos, 0); I.update(1 / 60, c, pos, -60);
+  assert.equal(I.view().task, 'turn');
+  I.update(INTRO_LIMITS.handsMax, c, pos);
+  assert.deepEqual([I.view().task, I.view().results.turn], [null, 'none']);
+  assert.doesNotMatch(introEntry({ ...I.summary() }).remarks, /右旋回/);
+});
+
+test('his line never in the frame a talk begins (fly-mode\'s talk hides the flight\'s screen, the line with it: the talk says how it went)', () => {
+  const GO = { intro: 'level', introB: 'look', introC: 'toward', introD: 'back', introTake: 'resume', introEnd: 'back' };
+  for (const hands of ['cadet', 'none', 'wild']) {
+    const f = createFlight(FL, { store: memStore() });
+    f.startFree('area', 'pa28', { sens: 'low', autoRud: true, assist: false });
+    const I = createIntro({ FL, thr0: f.s.thr, alt0: f.L.alt0, hdg0: f.L.hdg0 });
+    let pend = I.begin(), mem = {}, task = null, talks = 0, since = 0;
+    for (let i = 0; i < 60 * 400 && !I.done; i++) {
+      assert.ok(!(pend.some(e => e.type === 'talk') && pend.some(e => e.type === 'say')), `${hands}: ${pend.map(e => e.key || e.id).join(' ')}`);
+      for (const e of pend) if (e.type === 'task' && e.id !== task) { task = e.id; mem = { bug: e.bug }; since = 0; }
+      const tk = pend.find(e => e.type === 'talk');
+      if (tk) { talks++; f.controls.clearKeys(); pend = I.onTalkEnd(GO[tk.id]); continue; }
+      const v = I.view(), held = I.cadetHands ? scriptedKeys(hands, v.task, f.L.last, v.handsS, mem, f.L.alt0) : new Set();
+      const r = f.frame(1 / 60, { has: (k) => held.has(k) }, { pilot: I.pilot });
+      since += r.steps * H;
+      pend = I.update(r.steps * H, f.L.last, FL.physics.ne(f.s), v.task === 'look' && hands !== 'none' && since >= 2 ? -60 : 0);
+    }
+    assert.ok(I.done && talks >= 3, `${hands}: ${talks} talks`);
+  }
+  // (a line due in the very frame the task ends — the 20 s at +70 ft, in steps of 4 s: L_hi each time — is dropped)
+  const f = createFlight(FL, { store: memStore() });
+  f.startFree('area', 'pa28', { sens: 'low', autoRud: true, assist: false });
+  const I = createIntro({ FL, thr0: f.s.thr, alt0: f.L.alt0, hdg0: f.L.hdg0 }), high = { ...f.L.last, alt: f.L.alt0 + 70 };
+  I.begin(); I.onTalkEnd('level');
+  const said = [];
+  for (let k = 0; k < 4; k++) said.push(...I.update(4, high, FL.physics.ne(f.s)).map(e => e.key));
+  assert.deepEqual(said, ['L_hi', 'L_hi', 'L_hi', 'L_hi']);
+  assert.deepEqual(I.update(4, high, FL.physics.ne(f.s)).map(e => e.type), ['talk']);
 });

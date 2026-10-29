@@ -16,23 +16,26 @@
 // Pure logic: no three.js, no DOM.
 import { introAirDialogs, INTRO_AIR, INTRO_RIGHT, introPanel } from '../content/dialog/intro.js';
 import { createRunner, createDialogState } from '../dialog/engine.js';
+import { readingSeconds } from '../content/school.js';
 import { H } from './flight.js';
 
 export const INTRO_STEPS = [{ talk: 'intro' }, { task: 'level' }, { talk: 'introB' }, { task: 'look' }, { task: 'turn' }, { talk: 'introC' }, { task: 'toward' }, { talk: 'introD' }];
 // the tasks: the course's own for a first flight (not a standard to pass)
-// src: level — AFH (FAA-H-8083-3C) ch.3 "Straight-and-Level Flight" (the nose on the horizon, wings level; ±100 ft is the
-//   private pilot ACS's own for straight and level, FAA-S-ACS-6C, given here only as a target);
+// src: level — AFH (FAA-H-8083-3C) ch.3 "Straight-and-Level Flight" (the nose on the horizon, wings level); ±100 ft is
+//   the course's own target, tighter than the private pilot ACS's ±200 ft for straight-and-level flight (FAA-S-ACS-6C,
+//   PA.VIII.A, by the instruments; its ±100 ft is the steep turn's, PA.V.A);
 // src: turn — 115 KIAS is about 120 KTAS at 3,000 ft (σ ≈ 0.915); rate ≈ 1,091 × tan(bank) ÷ TAS: 15° gives 2.4°/s, 20°
 //   3.3°/s, so 90° takes about 27–37 s plus the roll in and out (the book's aero.turn has the formula); the roll-out led
 //   by about half the bank (AFH ch.3 "Level Turns"; FAA-H-8083-15B Instrument Flying Handbook "Turns to Predetermined
-//   Headings"); 30 s with no bank ends it (no turn is forced);
+//   Headings"); 30 s with no bank ends it (no turn is forced), as 30 s with no input ends LAB ahead (toward);
 // src: look — 14 CFR 91.113(b), AC 90-48D, AFH ch.3 "Turns" (the side of the turn cleared first); the head turned 45°
-//   right or more (fly-mode's yaw: + is left)
+//   right or more (fly-mode's yaw: + is left), by the cadet within the task: 20° or more to the right of where it had
+//   been (not the turn to him that his talk leaves, eased back to the front)
 export const INTRO_TASKS = {
   level: { secs: 20, alt: 100, bank: 5, share: 0.8 },
-  look: { max: 15, yaw: -45, hintAt: 6 },
+  look: { max: 15, yaw: -45, turn: 20, hintAt: 6 },
   turn: { to: 180, max: 60, noBank: 30, bank: [10, 25], alt: 150, hdgTol: 10, settle: 2, near: 30 },
-  toward: { max: 45, hdgTol: 10, settle: 4 },
+  toward: { max: 45, idle: 30, hdgTol: 10, settle: 4 },
 };
 // the limits while the cadet flies: a word (soft) or the controls taken back (take). The course's own for a first
 // flight, not regulations. src: soft kias — Vno 125 KIAS, the top of the green arc (sorajima.js pa28 v.no: a teaching
@@ -70,7 +73,7 @@ export function createIntro({ FL, thr0 = 0.84, alt0 = 3000, hdg0 = 90 } = {}) {
   let step = -1, watch = false, hands = false, done = false, crashed = false;
   let task = null;                         // the task flown now: { id, t, ... }
   let take = null;                         // he has taken the controls back: { t, calm, talked }
-  let takes = 0, handsS = 0, airS = 0, sayT = 0, softT = 0, touched = false, trim0 = null;
+  let takes = 0, handsS = 0, airS = 0, talkS = 0, sayT = 0, softT = 0, touched = false, trim0 = null;
   let bug = hdg0, lab = null;
   let dtS = 0, posNow = null;              // (this frame's physics seconds and position, for the tasks)
   const out = { level: null, look: null, turn: null, toward: null };
@@ -84,10 +87,14 @@ export function createIntro({ FL, thr0 = 0.84, alt0 = 3000, hdg0 = 90 } = {}) {
     step++;
     const s = INTRO_STEPS[step];
     if (!s) return;
-    if (s.talk) { task = null; evs.push({ type: 'talk', id: s.talk }); } else begin(s.task, evs);
+    if (s.talk) {
+      // (a line of his in the frame a talk begins would go at once with the flight's screen: the talk says how it went)
+      for (let i = evs.length - 1; i >= 0; i--) if (evs[i].type === 'say') evs.splice(i, 1);
+      task = null; evs.push({ type: 'talk', id: s.talk });
+    } else begin(s.task, evs);
   }
   function begin(id, evs) {
-    task = { id, t: 0, in: 0, took: false, banked: false, rolled: false, out: false, settle: 0, lo: 0, hi: 0, peak: 0, nolook: !!(task && task.nolook) };
+    task = { id, t: 0, in: 0, took: false, banked: false, rolled: false, out: false, settle: 0, lo: 0, hi: 0, peak: 0, from: null, acted: false, nolook: !!(task && task.nolook) };
     said.clear();
     if (id === 'turn') bug = INTRO_TASKS.turn.to;
     if (id === 'toward' && lab) bug = round5(lab.brg);
@@ -97,7 +104,7 @@ export function createIntro({ FL, thr0 = 0.84, alt0 = 3000, hdg0 = 90 } = {}) {
   }
   function finish(result, evs) {
     out[task.id] = result;
-    log.push({ task: task.id, secs: task.t, result, peak: task.peak, lo: task.lo, hi: task.hi });
+    log.push({ task: task.id, secs: task.t, result, peak: task.peak, lo: task.lo, hi: task.hi, acted: task.acted });
     next(evs);
   }
 
@@ -115,7 +122,9 @@ export function createIntro({ FL, thr0 = 0.84, alt0 = 3000, hdg0 = 90 } = {}) {
   function look(c, evs, lookDeg) {
     const T = INTRO_TASKS.look;
     if (watch) { if (task.t >= 3) finish('watch', evs); return; }
-    if (lookDeg <= T.yaw) { say(evs, 'K_ok', true); finish(task.nolook ? 'late' : 'ok', evs); return; }
+    // (the head's yaw furthest left in the task: a look is a turn of the cadet's from there)
+    task.from = Math.max(task.from ?? lookDeg, lookDeg);
+    if (lookDeg <= T.yaw && task.from - lookDeg >= T.turn) { task.acted = true; say(evs, 'K_ok', true); finish(task.nolook ? 'late' : 'ok', evs); return; }
     // (banked before looking: said once, and the turn will say it again)
     if (!task.nolook && task.rolled && Math.abs(c.bank) > 5) { task.nolook = true; say(evs, 'K_first', true); }
     else if (task.t >= T.hintAt && sayT <= 0 && once('K_how')) say(evs, 'K_how');
@@ -136,12 +145,12 @@ export function createIntro({ FL, thr0 = 0.84, alt0 = 3000, hdg0 = 90 } = {}) {
       else if (!task.out && toGo <= T.near && toGo > lead && once('T_near')) say(evs, 'T_near');
     }
     task.settle = Math.abs(toGo) <= T.hdgTol && Math.abs(c.bank) < 5 ? task.settle + dtS : 0;
+    // (not settled on 180 in time: taken back, banked before looking, banked but not rolled out there — or no bank)
+    const short = () => (watch ? 'watch' : task.took ? 'took' : task.nolook ? 'nolook' : task.banked ? 'time' : 'none');
     if (task.settle >= T.settle) {
-      if (!watch) say(evs, 'T_ok', true);
       lab = relLab(FL, posNow, c.hdg);
       finish(watch ? 'watch' : task.took ? 'took' : task.nolook ? 'nolook' : task.lo < -T.alt ? 'low' : task.hi > T.alt ? 'high' : 'good', evs);
-    } else if (!watch && !task.banked && task.t >= T.noBank) { lab = relLab(FL, posNow, c.hdg); finish('none', evs); }
-    else if (task.t >= T.max) { say(evs, 'T_time', true); lab = relLab(FL, posNow, c.hdg); finish(watch ? 'watch' : 'none', evs); }
+    } else if ((!watch && !task.banked && task.t >= T.noBank) || task.t >= T.max) { lab = relLab(FL, posNow, c.hdg); finish(short(), evs); }
   }
   function toward(c, evs) {
     const T = INTRO_TASKS.toward, toGo = wrap180(bug - c.hdg), dAlt = c.alt - alt0;
@@ -151,8 +160,8 @@ export function createIntro({ FL, thr0 = 0.84, alt0 = 3000, hdg0 = 90 } = {}) {
       else if (dAlt > 80) say(evs, 'T_high');
     }
     task.settle = Math.abs(toGo) <= T.hdgTol ? task.settle + dtS : 0;
-    if (task.settle >= T.settle) { say(evs, 'W_ok', true); finish(watch ? 'watch' : 'good', evs); }
-    else if (task.t >= T.max) { say(evs, 'W_time', true); finish(watch ? 'watch' : 'time', evs); }
+    if (task.settle >= T.settle) finish(watch ? 'watch' : 'good', evs);
+    else if (task.t >= T.max || (!watch && !task.acted && task.t >= T.idle)) finish(watch ? 'watch' : 'time', evs);
   }
 
   // ---- the limits while the cadet flies
@@ -198,7 +207,7 @@ export function createIntro({ FL, thr0 = 0.84, alt0 = 3000, hdg0 = 90 } = {}) {
     s.thr = thr0; s.flapIdx = 0; s.trim = trim0; s.opts.autoRud = true; s.opts.levelT = 0;
     if (hands && !take && !done) {
       s.opts.assist = false;
-      if (Math.abs(s.pKey || 0) > 0.05 || Math.abs(s.rKey || 0) > 0.05) touched = true;
+      if (Math.abs(s.pKey || 0) > 0.05 || Math.abs(s.rKey || 0) > 0.05) { touched = true; if (task) task.acted = true; }
       if (task && task.id === 'look' && Math.abs(s.rKey || 0) > 0.2) task.rolled = true;
       return;
     }
@@ -206,9 +215,10 @@ export function createIntro({ FL, thr0 = 0.84, alt0 = 3000, hdg0 = 90 } = {}) {
     s.opts.assist = true; s.keyHold = false; s.pTgt = null; s.pIn = 0;
     s.rIn = clamp(demoBank(L.last) / (P.SENS[s.opts.sens] || P.SENS.low).bank, -1, 1);
   }
-  // the flight as it went: for the logbook (airSec: the seconds flown here; cut: left before the end) and the tests
+  // the flight as it went: for the logbook (airSec: the seconds in the air here — his talks too: the flight waits for
+  // them on the screen, not in the air; cut: left before the end) and the tests
   function summary({ cut = false } = {}) {
-    return { cut: cut || crashed, watched: watch, airSec: airS, handsS, takes, level: out.level, look: out.look, turn: out.turn, toward: out.toward, labSide: lab ? lab.side : null, labRel: lab ? lab.rel : null };
+    return { cut: cut || crashed, watched: watch, airSec: airS + talkS, handsS, takes, level: out.level, look: out.look, turn: out.turn, toward: out.toward, labSide: lab ? lab.side : null, labRel: lab ? lab.rel : null };
   }
 
   return {
@@ -224,8 +234,8 @@ export function createIntro({ FL, thr0 = 0.84, alt0 = 3000, hdg0 = 90 } = {}) {
         if (tooFar(c)) { takeOver(evs); return evs; }
         handsS += physS;
         soft(c, evs);
-        // (the minutes at the controls kept short: on to the hand-back)
-        if (handsS >= INTRO_LIMITS.handsMax) { out[task.id] = out[task.id] || 'time'; log.push({ task: task.id, secs: task.t, result: 'time' }); step = INTRO_STEPS.length - 2; next(evs); return evs; }
+        // (the minutes at the controls kept short: on to the hand-back; a turn cut short with no bank made: none)
+        if (handsS >= INTRO_LIMITS.handsMax) { const r = task.id === 'turn' && !task.banked ? 'none' : 'time'; out[task.id] = out[task.id] || r; log.push({ task: task.id, secs: task.t, result: r, acted: task.acted }); step = INTRO_STEPS.length - 2; next(evs); return evs; }
       }
       task.t += physS;
       if (task.id === 'level') level(c, evs);
@@ -234,6 +244,8 @@ export function createIntro({ FL, thr0 = 0.84, alt0 = 3000, hdg0 = 90 } = {}) {
       else if (task.id === 'toward') toward(c, evs);
       return evs;
     },
+    // a talk of his open for `sec` seconds (fly-mode: the menu's pauses not counted): in the air, for the logbook
+    talked(sec) { if (!done && step >= 0 && sec > 0) talkS += sec; },
     // a talk over, with its last 'intro' hook: what comes next
     onTalkEnd(go) {
       const evs = [];
@@ -262,8 +274,9 @@ export function createIntro({ FL, thr0 = 0.84, alt0 = 3000, hdg0 = 90 } = {}) {
 }
 
 // ---- a scripted cadet (the measure, the tests): the keys held for a task, from the aircraft's state.
-// cadet: hands off for the 20 s (the trim and the pitch hold keep it), the head to the right, D held to 12° (the roll
-// goes on to about 19° once it is let go), tapped again under 10°, A at the lead (half the bank), S when 60 ft low;
+// cadet: a light hand for the 20 s (A or D when the wings are 2° off; the trim and the pitch hold keep the height), the
+// head to the right, D held to 12° (the roll goes on to about 19° once it is let go), tapped again under 10°, A at the
+// lead (half the bank), S when 60 ft low;
 // none: nothing at all; watch: D held all along (the gamepad's stick, which fly-mode's key filter does not stop: his
 // hands must win); wild: S, then W, then D, 10 s each (the takeovers). mem: what it keeps between frames (per task)
 export function scriptedKeys(hands, task, c, t, mem = {}, alt0 = 3000) {
@@ -271,10 +284,11 @@ export function scriptedKeys(hands, task, c, t, mem = {}, alt0 = 3000) {
   if (!c || hands === 'none') return k;
   if (hands === 'watch') { k.add('KeyD'); return k; }
   if (hands === 'wild') { const w = t < 1 ? null : ['KeyS', 'KeyW', 'KeyD'][Math.floor((t - 1) / 10) % 3]; if (w) k.add(w); return k; }
-  if (task !== 'turn' && task !== 'toward') return k;
+  if (task !== 'level' && task !== 'turn' && task !== 'toward') return k;
   // (a moment to reach for the yoke: a key already held when the flight goes on waits for its release, controls.js)
   if (mem.t0 == null) mem.t0 = t;
   if (t - mem.t0 < 0.3) return k;
+  if (task === 'level') { if (c.bank > 2) k.add('KeyA'); else if (c.bank < -2) k.add('KeyD'); return k; }
   const toGo = task === 'turn' ? wrap180(INTRO_TASKS.turn.to - c.hdg) : wrap180(mem.bug - c.hdg), dir = task === 'turn' ? 1 : Math.sign(toGo) || 1;
   const key = dir > 0 ? 'KeyD' : 'KeyA', b = c.bank * dir;
   if (!mem.out && Math.abs(toGo) > Math.abs(c.bank) / 2 + 2) {
@@ -287,9 +301,10 @@ export function scriptedKeys(hands, task, c, t, mem = {}, alt0 = 3000) {
 
 // the whole introductory flight flown by a scripted cadet: FLIGHT LAB's free start 'area' through flight/flight.js
 // (createFlight passed in: a store of its own), the talks answered by policy (v → a choice's index, or null: the right
-// one where a check asks, else the first; the watch: its choice), the frames 1/60 s. keys(task, c, t) in place of
+// one where a check asks, else the first; the watch: its choice; each line read at school.js's pace, his talks being in
+// the air too), the frames 1/60 s. keys(task, c, t) in place of
 // scriptedKeys (the tests' random hands); onFrame(c, view) after each frame (the tests' watch on the aircraft).
-// → { steps: [{ talk, id, ctx } | { task, id, secs, result, peak }], sum, says, flight, t }
+// → { steps: [{ talk, id, ctx } | { task, id, secs, result, peak, acted }], sum, says, flight, t }
 export function runIntroScripted(FL, createFlight, { hands = 'cadet', store = null, policy = null, keys = null, onFrame = null, maxSec = 600 } = {}) {
   const P = FL.physics, flight = createFlight(FL, { store });
   flight.startFree('area', 'pa28', { sens: 'low', autoRud: true, assist: false, wind: { rel: INTRO_WIND.fromDeg - P.LAB_RWY.trueHdg, kt: INTRO_WIND.kt, gust: 0.5 } });
@@ -309,7 +324,7 @@ export function runIntroScripted(FL, createFlight, { hands = 'cadet', store = nu
     let go = null;
     const r = createRunner({ data, state, ctx, hooks: { onHook: (n, a) => { if (n === 'intro') go = a; } } });
     r.start(id);
-    for (let k = 0; k < 200 && r.running; k++) { const v = r.view(); if (v.choices.length) r.choose(pick(v)); else r.next(); }
+    for (let k = 0; k < 200 && r.running; k++) { const v = r.view(); intro.talked(readingSeconds(v.text)); if (v.choices.length) r.choose(pick(v)); else r.next(); }
     flight.controls.clearKeys();                     // (fly-mode: the keys held through a talk wait for their release)
     return go;
   };
@@ -330,8 +345,9 @@ export function runIntroScripted(FL, createFlight, { hands = 'cadet', store = nu
     const res = flight.frame(1 / 60, held ? { has: (k) => held.has(k) } : NO, { pilot: intro.pilot });
     t += res.steps * H;
     for (const ev of res.events) if (ev.type === 'crash') pending.push(...intro.crashed(ev.why));
-    // (the head: to the right two seconds into the look)
-    const lookDeg = (hands === 'cadet' || hands === 'wild') && v.task === 'look' && t - taskT >= 2 ? -60 : 0;
+    // (the head: as his talk leaves it — turned to him in the right seat, about 90° right — eased back to the front as
+    // fly-mode does (0.3 s); the cadet's to the right two seconds into the look)
+    const since = t - taskT, lookDeg = v.task !== 'look' ? 0 : (hands === 'cadet' || hands === 'wild') && since >= 2 ? -60 : -90 * Math.exp(-since / 0.3);
     pending.push(...intro.update(res.steps * H, flight.L.last, P.ne(flight.s), lookDeg));
     if (onFrame) onFrame(flight.L.last, intro.view());
   }

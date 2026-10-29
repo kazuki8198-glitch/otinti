@@ -76,9 +76,11 @@ function careerToSolo(intro) {
         career.done('brief', 'meet'); career.finishPrologue();
         if (intro === 'fly') {
           assert.equal(done, 'meet:fly');
-          const store = memStore(), r = runIntroScripted(FL, createFlight, { hands: 'cadet', store });
-          assert.ok(r.sum && !r.sum.cut, 'the flight flown to its end'); r.flight.discard();
-          assert.equal(store.getItem(`cadet.${SC.PROG_KEY}`), null, 'nothing of FLIGHT LAB\'s kept');
+          const r = runIntroScripted(FL, createFlight, { hands: 'cadet', store: memStore() });
+          assert.ok(r.sum && !r.sum.cut, 'the flight flown to its end');
+          // (discarded as fly-mode's leave does: a finish after it keeps nothing of FLIGHT LAB's)
+          r.flight.discard(); r.flight.finish();
+          assert.equal(r.flight.progress().time, 0, 'nothing of FLIGHT LAB\'s kept'); assert.deepEqual(r.flight.records(), []);
           career.done('intro', 'flight');
         } else { assert.equal(done, 'meet'); career.done('intro', 'no'); }
       }

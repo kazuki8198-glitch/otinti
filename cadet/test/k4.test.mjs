@@ -100,6 +100,15 @@ test('k4: every call the cadet makes has a word to hear besides the call sign; w
   assert.equal(held.view().phase, 'hear', 'the line still heard');
   speaking = false; for (let k = 0; k < 400 && held.view().phase !== 'choose'; k++) held.update(0.25);
   assert.equal(held.view().phase, 'choose'); assert.equal(held.view().timeLeft, held.view().time, 'the clock from the end of the line');
+  // (a line spoken for as long as its time, or a little less: heard in its time — the longer of the two, not their sum)
+  const one = sc.items.find(x => x.id === 'atis:letter'), lineS = Math.max(LINE_S(one.hear[0].en), 0.8);
+  assert.equal(one.hear.length, 1);
+  for (const voiceS of [0, lineS - 1, lineS + 3]) {
+    let t = 0; const run = createChairFlight(sc, { stage: 3, seed: 7, only: ['atis:letter'], hold: () => t < voiceS });
+    assert.equal(run.view().phase, 'hear');
+    for (; t < 30 && run.view().phase !== 'choose'; t += 0.25) run.update(0.25);
+    assert.ok(t <= Math.max(lineS, voiceS) + 0.75 && t >= Math.max(lineS, voiceS) - 0.25, `voice ${voiceS.toFixed(1)} s: the turn after ${t} s (line ${lineS.toFixed(2)} s)`);
+  }
 });
 
 test('k4 scored: 80% passes, not passed is flown again the same day (the lecturer\'s choices), twice not passed practises the missed ones; the debrief names what was left out and opens its section', () => {
@@ -164,4 +173,86 @@ test('k4 changes from run to run, and says little of the class\'s own English (t
   }
   const same = [...k4].filter(e => said.has(e));
   assert.ok(same.length <= 5, `${same.length} the same: ${same.join(' | ')}`);
+});
+
+test('k4, as the second review found it: the other traffic not cleared onto our runway, the missed ones practised with what they answer, the first line voiced, a late initial call not "how do you hear", the debrief\'s words', () => {
+  for (let seed = 1; seed <= 30; seed++) {
+    const sc = chairScript(FL, { seed });
+    for (const it of sc.items) for (const h of [...(it.hear || []), ...(it.kind === 'ex' ? it.ex.hear || [] : [])]) if (/Kilo Papa/.test(h.en)) assert.doesNotMatch(h.en, /runway|cleared/, `seed ${seed}: ${h.en}`);
+    // (only the read-backs and say again: each heard with the transmission before it)
+    const only = sc.items.filter(x => x.kind === 'ex' && (x.ex.kind === 'readback' || x.id === 'say_again')).map(x => x.id);
+    const run = createChairFlight(sc, { stage: 1, seed, only });
+    assert.deepEqual(run.items.map(x => x.id), only);
+    for (const it of run.items) assert.ok(it.ex.hear && it.ex.hear.length, `seed ${seed}: ${it.id} heard with nothing to read back`);
+    // (the first line of a run that begins with something heard: given to the voice too)
+    const first = createChairFlight(sc, { stage: 1, seed, only: ['atis:letter'] });
+    assert.ok(first.update(0).some(e => e.type === 'say' && /information/.test(e.en)), 'the ATIS letter spoken');
+  }
+  // (late at stage 3: an initial call is not answered by the controller; a read-back is asked for)
+  const sc = chairScript(FL, { seed: 2 });
+  const lateAt = (id) => {
+    const run = createChairFlight(sc, { stage: 3, seed: 2 });
+    for (let k = 0; k < 20000 && !run.done; k++) {
+      const v = run.view();
+      if (v && v.phase === 'choose') { if (v.id === id) { const ev = []; for (let t = 0; t < 120; t++) ev.push(...run.update(0.5)); return ev; } run.answer(run.rightIndex()); }
+      else run.update(0.5);
+    }
+    return null;
+  };
+  assert.ok(!lateAt('gnd_call').some(e => e.type === 'say' && /how do you hear/.test(e.en)), 'the first call to Ground, late: Ground has not been called — it says nothing');
+  assert.ok(lateAt('gnd_rb').some(e => e.type === 'say' && /how do you hear/.test(e.en)), 'a read-back late: Ground asks');
+  // (the debrief: no “over” for the position, late said as it was, a right answer given late said to be right)
+  const sum = { stage: 3, n: 4, first: 0, pct: 0, pass: false, missed: [], items: [
+    { id: 'twr_back', part: 'back', sec: 'comm.arrive', kind: 'ex', station: 'TWR', exKind: 'call', ok: false, late: false, tries: 2, said: ['LAB Tower, Archer 8SY, landing.'], right: 'LAB Tower, Archer 8SY, over the practice area, three thousand, with information Bravo, inbound for landing.', missing: ['“inbound for landing”'] },
+    { id: 'xpdr', part: 'ground', sec: 'comm.radar', kind: 'op', station: 'OPS', exKind: '', ok: false, late: true, tries: 1, said: ['1200（VFR）'], right: '1200（VFR）', missing: [] },
+    { id: 'gnd_rb', part: 'ground', sec: 'comm.readback', kind: 'ex', station: 'GND', exKind: 'readback', ok: false, late: true, tries: 1, said: ['Roger, Archer 8SY.'], right: 'Runway three six, taxi via Alpha, hold short of runway three six at Alpha One, Archer 8SY.', missing: [] },
+    { id: 'atis', part: 'atis', sec: 'comm.atis', kind: 'ex', station: 'ATIS', exKind: 'listen', ok: false, late: false, tries: 2, said: ['30.22'], right: '30.12', missing: [] }] };
+  const text = Object.values(S.chairDebriefDialogs(FL, sum, sc).dialogs.ftd.nodes).map(n => n.text).join('\n');
+  assert.doesNotMatch(text, /“over”/);
+  assert.match(text, /時間内に答えられませんでした。答えの「1200（VFR）」は合っていました/);
+  assert.match(text, /返事が遅れて、管制官に呼び直されました。\n?正しくは/);
+  assert.match(text, /最初は“30\.22”でした/);
+});
+
+test('k4, as the review\'s second pass found it: なぜ？ not before the first answer (stages 2 and 3), a reason for every turn, the clock long enough to read the choices, the ATIS again on COM2 before COM1 goes to Tower, the first call to Ground in full, the Archer\'s call sign on a twin\'s day', async () => {
+  const { setCall, CALL } = await import('../src/content/dialog/atc.js');
+  for (const seed of [1, 2, 3, 7]) {
+    const sc = chairScript(FL, { seed }), ids = sc.items.map(x => x.id);
+    for (const it of sc.items) assert.ok((it.kind === 'ex' ? it.ex.note : it.note), `seed ${seed} ${it.id}: a reason for H`);
+    assert.ok(ids.indexOf('atis:again') < ids.indexOf('com:back') && ids.indexOf('com:back') < ids.indexOf('twr_back'), `seed ${seed}: the ATIS again, then COM1 to Tower, then the call`);
+    assert.match(sc.items.find(x => x.id === 'atis:again').q, /COM2/);
+    const gin = sc.items.find(x => x.id === 'gnd_in').ex.choices.find(c => c.ok).en;
+    assert.ok(gin.includes(sc.radio.call.full), `seed ${seed}: the first call to Ground in full — ${gin}`);
+    const sa = sc.items.find(x => x.id === 'say_again');
+    if (sa) assert.ok(!sa.ex.choices.some(c => /say again your request/.test(c.negative || '')), 'a partial read-back is not answered "say again your request"');
+    for (const stage of [2, 3]) {
+      const run = createChairFlight(sc, { stage, seed });
+      for (let t = 0; t < 60 && run.view().phase !== 'choose'; t += 0.25) run.update(0.25);
+      assert.equal(run.view().phase, 'choose');
+      assert.doesNotMatch(run.why(), /127\.65|Delta|Alpha|Bravo|Charlie|Echo|Foxtrot/, `stage ${stage}: H before the answer gives nothing away`);
+      assert.match(run.view().why, /答えを選んだあと/);
+      const k = run.rightIndex(); run.answer((k + 1) % 3);
+      assert.equal(run.view().why, sc.items[0].note, 'after an answer, the reason');
+    }
+    // (stage 3: every turn answered right once its question and choices are read — 10 characters a second — and 6 s more:
+    // never late)
+    const run = createChairFlight(sc, { stage: 3, seed });
+    for (let t = 0; t < 3600 && !run.done; ) {
+      const v = run.view();
+      if (v && v.phase === 'choose') {
+        const read = 6 + [v.q, ...v.choices.map(c => c.en)].join('').length / 10;
+        for (let w = 0; w < read; w += 0.25) { run.update(0.25); t += 0.25; }
+        run.answer(run.rightIndex());
+      } else { run.update(0.25); t += 0.25; }
+    }
+    const sum = run.summary();
+    assert.equal(sum.late, 0, `seed ${seed}: late ${sum.items.filter(x => x.late).map(x => x.id).join(' ')}`);
+  }
+  // a twin's day (Seminole): the first flight's radio still the Archer's, today's put back after
+  setCall('pa44');
+  try {
+    const sc = chairScript(FL, { seed: 1 }), all = JSON.stringify(sc.items);
+    assert.ok(!/Seminole/.test(all) && /Archer Seven Three Eight Sierra Yankee/.test(all), 'the Archer\'s call sign');
+    assert.equal(sc.radio.call.short, 'Archer 8SY'); assert.match(CALL.short, /^Seminole/, 'today\'s call sign kept');
+  } finally { setCall('pa28'); }
 });

@@ -419,7 +419,7 @@ test('school: a class\'s choices — the section again, the section in the textb
     assert.ok(q.hooks.some(h => h[0] === 'done' && h[1] === 'class'), `class ${i}: 要点だけ done`);
     assert.equal(q.ctx.quiz.right, d.questions.length);
     assert.ok(q.views.length < full.views.length / 2, `class ${i}: 要点だけ is short (${q.views.length} lines, ${full.views.length} in full)`);
-    for (const sec of sectionsOf(i)) assert.ok(q.views.some(v => v.text.includes(`「${sec.title}」`)), `${sec.id}: its title`);
+    for (const sec of sectionsOf(i)) assert.ok(q.views.some(v => v.text.includes(qq(sec.title))), `${sec.id}: its title`);
     assert.ok(!q.hooks.some(h => h[0] === 'progress'), '(a review keeps no place)');
     for (const [, arg] of q.hooks.filter(h => h[0] === 'page')) assert.ok(lecturePage(FL, arg));
   }
@@ -474,7 +474,7 @@ test('school: the training device — k1 told through, k4 begun (its chair fligh
       assert.deepEqual(validateDialogs(after).errors, [], 'k4 after the pass');
       const listen = run(after, 'ftd', { pick: (v) => (v.node === 'k4:stage' ? v.choices.findIndex(c => /^教科書の例を通しで聞く/.test(c.text)) : null) });
       clean(listen.lines, 'k4 listen');
-      assert.ok(listen.hooks.filter(h => h[0] === 'say').length > 10 && listen.lines.some(l => /別の空港/.test(l)), 'after the pass, the textbook\'s flight to listen to, said to be another airport\'s');
+      assert.ok(listen.hooks.filter(h => h[0] === 'say').length > 10 && listen.lines.some(l => /配置の違う空港/.test(l)), 'after the pass, the textbook\'s flight to listen to, said to be another airport\'s');
       continue;
     }
     assert.ok(good.hooks.some(h => h[0] === 'done' && h[1] === 'pass'), `${k} passed`);
@@ -501,6 +501,14 @@ test('school: the training device — k1 told through, k4 begun (its chair fligh
   }
 });
 
+test('school: a device lesson with nothing of it taught yet (a record from the order before) says so, and does not break', () => {
+  for (const k of ['k3', 'k5', 'k6']) {
+    const d = ftdDialogs(FL, k, { heard: new Set() }), N = d.dialogs.ftd.nodes;
+    assert.equal(d.questions.length, 0); assert.match(N.intro.text, /まだ授業で話していません/); assert.equal(N.intro.end, true);
+    assert.deepEqual(validateDialogs(d).errors, [], k);
+  }
+});
+
 test('school: the textbook as it opens (sectionHtml): every section with today\'s call sign, never FLIGHT LAB\'s', () => {
   let n = 0;
   for (const c of BOOK.chapters) for (const { id } of c.sections) { const sec = BOOK.section(id), h = sectionHtml(sec); assert.doesNotMatch(h, /Seven Lima Alpha|7LA/, sec.id); if (/Archer 8SY|Archer Seven Three Eight Sierra Yankee/.test(h)) n++; }
@@ -520,4 +528,41 @@ test('school: the written tests — from FLIGHT LAB\'s banks, as many questions 
     assert.deepEqual(examDialogs(FL, id, { seed: 2 }).questions, d.questions);
     assert.notDeepEqual(examDialogs(FL, id, { seed: 3 }).questions, d.questions);
   }
+});
+
+test('school: the device lessons k3, k5 and k6 never ask about the textbook\'s other airport (its west ramp) nor say FLIGHT LAB\'s call sign — any seed, any try', () => {
+  for (const k of ['k3', 'k5', 'k6']) for (let seed = 1; seed <= 20; seed++) for (const attempt of [0, 1, 2]) {
+    const d = ftdDialogs(FL, k, { seed, attempt }), all = JSON.stringify([d.questions, d.dialogs]);
+    // (FLIGHT LAB's call sign whole or shortened — "Seven Lima Alpha", "Archer Lima Alpha", "7LA"; other aircraft and a
+    // drill's own registration may say "Two Lima Alpha" or "Seven Lima Yankee")
+    const bad = /.{0,40}(西のエプロン|[Ww]est ramp|Seven Lima Alpha|(Archer|Seminole) Lima Alpha|7LA).{0,40}/.exec(all);
+    assert.ok(!bad, `${k} seed ${seed}/${attempt}: ${bad && bad[0]}`);
+  }
+});
+
+test('school, as the review\'s second pass found it: a resumed class greets as a resumed one; no space before a particle after Japanese, nor after a row\'s は before Japanese; a question read off a table never offers a shorter or longer form of its answer as wrong', () => {
+  const core = (v) => v.replace(/[（(][^（）()]*[）)]/g, '').replace(/^(大きく|少し|やや|かなり)/, '').trim();
+  let tables = 0;
+  for (let i = 0; i < CLASS_CHAPTERS.length; i++) {
+    for (const seed of [1, 2, 3, 4, 5]) {
+      const N = classDialogs(FL, i, { seed }).dialogs.class.nodes;
+      for (const [id, n] of Object.entries(N)) {
+        const t = n.text || '';
+        assert.ok(!(/：[^：。]{0,30}は (?=[ぁ-ゖァ-ヺ一-龥])/.test(t) && !/答えは|正解は/.test(t)), `class ${i} ${id}: a row's は spaced before Japanese — ${t}`);
+        assert.doesNotMatch(t, /[ぁ-ゖァ-ヺ一-龥）」] (でした|になっています|です)。/, `class ${i} ${id}: a particle spaced`);
+        if (n.choices && /表/.test(t) && n.choices.some(c => /:ok$/.test(c.next || ''))) {
+          const ok = n.choices.find(c => /:ok$/.test(c.next)).text; tables++;
+          for (const c of n.choices) if (c.text !== ok) assert.ok(!(core(c.text).includes(core(ok)) || core(ok).includes(core(c.text))), `class ${i} seed ${seed} ${id}: "${c.text}" is "${ok}" too`);
+        }
+      }
+    }
+    // (taken up again from its second section: not the first day's greeting)
+    const all = classDialogs(FL, i, {}).dialogs.class.nodes, d = classDialogs(FL, i, { from: 1 }).dialogs.class.nodes;
+    assert.notEqual(d.hello.text, all.hello.text, `class ${i}: resumed, its own greeting`);
+    assert.match(d.hello.text, /続き/);
+  }
+  assert.ok(tables > 50, `${tables} table questions`);
+  // (the textbook's page on call signs as the class says it: today's shortened, not "3 文字なのでそのまま")
+  const cs = sectionHtml(BOOK.section('comm.callsign'));
+  assert.doesNotMatch(cs, /3 文字なのでそのまま/); assert.match(cs, /Archer Eight Sierra Yankee/);
 });

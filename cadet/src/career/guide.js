@@ -17,7 +17,7 @@ export function nextStep(s) {
   const plan = (s.plan || []).filter(x => x.kind !== 'off');
   if (s.graduated) return { text: '修了しました。ラウンジで同期と話したり、航空日誌を見返したり（Tab）。正面入口から寮へ帰れます', who: null, room: 'outside', at: 'entrance' };
   if (!plan.length) return { text: '今日は休日。ラウンジで休んでも、自習してもいい。正面入口から寮に帰ると次の日になります', who: null, room: 'outside', at: 'entrance' };
-  const cur = plan.find(x => x.state === 'now' || x.state === 'later');
+  const cur = plan.find(x => x.state === 'now' || x.state === 'retry' || x.state === 'later');
   if (!cur) {
     const evening = s.slot === 'evening';
     // (chapter 1: tomorrow said — content/day-flow.js doneLine)
@@ -40,8 +40,8 @@ export function nextStep(s) {
     ceremony: { text: 'ロビーで、真壁 主任教官の歓迎の言葉を聞く（近づいて E で話しかける）', who: 'chief', room: 'lobby' },
     tour: { text: '運航管理（ロビーの北）の佐伯さんに話しかけて、訓練所を案内してもらう', who: 'dispatcher', room: 'dispatch' },
     brief: { text: 'ブリーフィング室 1 で、担当の早瀬 教官に会う', who: 'instructor', room: 'brief-1' },
-    class: { text: `ブリーフィング室 2 で、ミラー講師の授業を受ける（${cur.title}）`, who: 'lecturer', room: 'brief-2' },
-    ftd: { text: `訓練装置室で、ミラー講師と${cur.title}`, who: 'lecturer', room: 'sim' },
+    class: { text: `ブリーフィング室 2 で、ミラー講師の授業を受ける：${cur.title}`, who: 'lecturer', room: 'brief-2' },
+    ftd: { text: cur.state === 'retry' ? `訓練装置室で、ミラー講師と${cur.title}をもう一度（Tab の「次の予定まで待つ」で、先へ進むこともできます）` : `訓練装置室で、ミラー講師と${cur.title}を受ける`, who: 'lecturer', room: 'sim' },
     exam: { text: `${cur.title}を受ける（${cur.who === 'lecturer' ? 'ミラー講師' : '早瀬 教官'}に話しかける）`, who: cur.who, room: cur.who === 'lecturer' ? 'planning' : 'brief-1' },
     navlog: { text: 'ブリーフィング室 1 で、早瀬 教官と航法ログを作る', who: 'instructor', room: 'brief-1' },
     graduation: { text: 'ロビーで修了式。真壁 主任教官に話しかける', who: 'chief', room: 'lobby' },

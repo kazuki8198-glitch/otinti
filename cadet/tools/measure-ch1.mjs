@@ -161,7 +161,8 @@ export function answerHeard(L, id, heard, k1Parts) {
 // pace: 'need' | 'full' | 'quick' (the class's choice, by its label); seed: the career's; skip: the moves skipped when
 // the game offers it (the second time on)
 const PACE_LABEL = { need: /^今日の訓練に要る/, full: /^じっくり/, quick: /^要点だけ/ };
-export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong = 0 } = {}) {
+// think: at a 考えてみよう, 'try' (考えてみます: its candidates asked — the default, the first choice) or 'hear' (答えを聞きます)
+export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong = 0, think = 'try' } = {}) {
   const L = await load(), C = L.career, S = L.school, FL = L.FL;
   const store = (() => { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k) }; })();
   const career = C.createCareer({ store, seed });
@@ -171,7 +172,10 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
   let heard = '';
   const asked = [];
   const classDay = {}, ftdDay = {};
-  const pacePick = (v) => { if (v.node !== 'pace' && v.node !== 'pace:2') return null; const i = v.choices.findIndex(c => PACE_LABEL[pace].test(c.text)); return i >= 0 ? i : null; };
+  const pacePick = (v) => {
+    if (think === 'hear') { const h = v.choices.findIndex(c => c.text === '答えを聞きます'); if (h >= 0) return h; }
+    if (v.node !== 'pace' && v.node !== 'pace:2') return null; const i = v.choices.findIndex(c => PACE_LABEL[pace].test(c.text)); return i >= 0 ? i : null;
+  };
   let wrongLeft = wrong;
   const answerPolicy = (base) => (v, k, x) => { const p = base ? base(v, k, x) : null; if (p != null) return p; if (x && wrongLeft > 0) { wrongLeft--; const ok = v.choices.findIndex(c => c.text === x.opts[x.ok]); return (ok + 1) % v.choices.length; } return null; };
   // (what the game does with the talks' hooks to the career: the sections heard, the pace, the answers)
@@ -182,7 +186,7 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
     const st = career.state, d = st.day, w = career.weather(prog), sch = career.schedule(prog, { trust: 50, weather: w });
     const day = { day: d, date: C.dateText(d), chapter: st.chapter, plan: sch.map(x => `${x.slot}:${x.kind}:${x.id || ''}`), talks: [], fixed: [], walkS: 0, cardS: 0, toastS: 0, lines: 0, decisions: 0, longestGap: 0, time: 0 };
     days.push(day);
-    const fixed = (what, text, t) => { day.fixed.push({ what, text, t }); };
+    const fixed = (what, text, t, more = {}) => { day.fixed.push({ what, text, t, ...more }); };
     // the morning: the card (0.65 s in, its time, 0.65 s out), the day's toast
     fixed('card', `${C.CHAPTERS[st.chapter].title} ${C.dateText(d)}`, 1.3 + 1.7);
     if (d === 10) break;                                                         // (the first flight's morning: here it ends)
@@ -223,24 +227,26 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
           guideLine(L.guide.nextStep({ chapter: st.chapter, slot: it.slot, plan: sch.map(x => ({ ...x, state: x === it ? 'now' : 'later' })) }).text);
           walk(placeOfPerson(L, 'lecturer', 'am', 'ch1', sch), 'ブリーフィング室 2');
           const q = { quiz: {} }, s2 = L.engine.createDialogState();
-          const data = S.classDialogs(FL, +it.id, { seed: st.seed, ...(S.classOptions ? S.classOptions(FL, career.state, +it.id, { attempt: career.attempt ? career.attempt(`class:${it.id}`) : 0 }) : {}) });
+          const data = S.classDialogs(FL, +it.id, { seed: st.seed, ...(S.classOptions ? S.classOptions(FL, career.state, +it.id, { attempt: career.attempt ? career.attempt(`class:${it.id}`) : 0, afternoon: (sch.find(x => x.kind === 'ftd') || {}).id || null }) : {}) });
           const r = doTalk(`class ${it.id}`, data, 'class', { state: s2, ctx: q, policy: answerPolicy(pacePick), kind: 'class', onHook: (n, a) => { if (n === 'quizEnd') q.quiz = S.scoreOf(s2, +a); careerHook(n, a); } });
           noteAsked(L, r, asked, d, `class ${it.id}`, heardBefore(heardAll, r), k1Parts);
           career.done('class', it.id); career.tire(6); career.advance('pm');
           classDay[it.id] = { day: d, chapters: S.CLASS_CHAPTERS[+it.id] };
-          const tc = L.flow ? L.flow.afterClassToast(+it.id) : '午後：訓練装置室（FTD）で訓練装置の課目です'; after(tc);
+          const tc = L.flow ? L.flow.afterClassToast(+it.id, sch) : '午後：訓練装置室（FTD）で訓練装置の課目です'; after(tc);
         } else if (it.kind === 'ftd') {
           guideLine(L.guide.nextStep({ chapter: st.chapter, slot: it.slot, plan: sch.map(x => ({ ...x, state: x === it ? 'now' : x.slot === 'am' ? 'done' : 'later' })) }).text);
           walk(placeOfPerson(L, 'lecturer', 'pm', 'ch1', sch.filter(x => x.kind === 'ftd').map(x => ({ ...x, slot: 'pm' }))), '訓練装置室');
           const q = { quiz: {} }, s2 = L.engine.createDialogState();
           let result = null;
-          const data = S.ftdDialogs(FL, it.id, { seed: st.seed + st.day, ...(S.heardOf ? { heard: S.heardOf(FL, career.state), attempt: career.attempt(`ftd:${it.id}`) } : {}), ...(it.id === 'k4' ? { k4: { passed: false, fails: 0, missed: [] } } : {}) });
+          const data = S.ftdDialogs(FL, it.id, { own: sch.some(x => x.kind === 'class' && C.CLASS_FTD[+x.id] === it.id), seed: st.seed + st.day, ...(S.heardOf ? { heard: S.heardOf(FL, career.state), attempt: career.attempt(`ftd:${it.id}`) } : {}), ...(it.id === 'k4' ? { k4: { passed: false, fails: 0, missed: [] } } : {}) });
           let stage = null;
           const r = doTalk(`ftd ${it.id}`, data, 'ftd', { state: s2, ctx: q, kind: 'ftd', policy: answerPolicy(ftdPolicy), onHook: (n, a) => { if (n === 'quizEnd') q.quiz = S.scoreOf(s2, +a); if (n === 'done') result = a; if (n === 'chair') stage = +String(a).split(':')[0]; careerHook(n, a); } });
           noteAsked(L, r, asked, d, `ftd ${it.id}`, heardBefore(heardAll, r), k1Parts);
           // (k4 rebuilt: the chair flight itself at the stage chosen, then its end — the lecturer's)
           if (stage && L.chair) {
-            const sc = L.chair.content.chairScript(FL, { seed: (st.seed * 31 + 977 + 1) >>> 0 }), res = L.chair.runner.runChairFlight(sc, { stage, seed: st.seed });
+            // (the script the cadet flies: main.js startChair's seed, this run's try counted as it counts it)
+            const kseed = (st.seed * 31 + career.attempt('k4:run') * 977 + 1) >>> 0;
+            const sc = L.chair.content.chairScript(FL, { seed: kseed }), res = L.chair.runner.runChairFlight(sc, { stage, seed: kseed });
             const lines = L.chair.runner.chairLines(res.run, readingSeconds);
             day.talks.push({ label: 'ftd k4 run', ...summarize(lines), lines, k4: res.summary });
             for (const l of lines) { heardAll.push(l.text); heard += squash(l.text); }
@@ -276,12 +282,13 @@ export async function measureCh1({ pace = 'full', seed = 1, skip = false, wrong 
       career.done('event', it.id);
     }
     // home: the guide's line, the walk to the front door, the dorm's card (read, chosen)
-    const done = (L.flow && L.flow.doneLine(career.state)) || '今日の予定は終わり。ラウンジで同期と話せます。正面入口から寮に帰ると次の日になります';
+    const nextFtd = C.GROUND.find(id => !(prog.lessons[id] && prog.lessons[id].pass)) || null;
+    const done = (L.flow && L.flow.doneLine(career.state, { nextFtd })) || '今日の予定は終わり。ラウンジで同期と話せます。正面入口から寮に帰ると次の日になります';
     guideLine(done);
     walk(PLACES.home, '正面入口');
-    const dc = L.flow ? L.flow.dormCard(career.state, sch, { short: skip }) : null;
+    const dc = L.flow ? L.flow.dormCard(career.state, sch, { short: skip, nextFtd }) : null;
     const dorm = dc ? [dc.title, dc.text, ...dc.choices.map(c => c.text)].filter(Boolean).join(' ') : '寮へ帰る 今日の訓練はここまで。寮に帰って休みます。 すぐに寝る 少し自習してから寝る（疲れが残る） やっぱり残る';
-    fixed('dorm', dorm, readingSeconds(dorm));
+    fixed('dorm', dorm, readingSeconds(dorm), { body: dc ? [dc.title, dc.text].filter(Boolean).join(' ') : '' });
     career.sleep(); career.advanceChapter(prog, 50);
   }
   for (const day of days) {
@@ -335,6 +342,15 @@ export function dayPatterns(run) {
       if (/^ftd/.test(t.label) && t.lines.length) add('ftd:first', t.lines[0].text, day.day);
     }
     for (const f of day.fixed) if (f.what === 'toast' || f.what === 'guide' || f.what === 'dorm') add(f.what, f.text, day.day);
+  }
+  return Object.entries(where).map(([p, s]) => ({ pattern: p, days: [...s].sort((a, b) => a - b) })).sort((a, b) => b.days.length - a.days.length);
+}
+// …and sentence by sentence (the toasts, the guide, the dorm's card without its buttons): a fixed sentence joined to
+// the day's own words comes back as itself
+export function daySentencePatterns(run) {
+  const where = {};
+  for (const day of run.days) for (const f of day.fixed) if (f.what === 'toast' || f.what === 'guide' || f.what === 'dorm') {
+    for (const sen of String(f.body ?? f.text).split(/。/).map(x => x.trim()).filter(Boolean)) { const p = `${f.what}｜${patternOf(sen)}`; (where[p] = where[p] || new Set()).add(day.day); }
   }
   return Object.entries(where).map(([p, s]) => ({ pattern: p, days: [...s].sort((a, b) => a - b) })).sort((a, b) => b.days.length - a.days.length);
 }

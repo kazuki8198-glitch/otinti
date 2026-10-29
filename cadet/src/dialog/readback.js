@@ -11,7 +11,7 @@ const PHON = { alpha: 'a', alfa: 'a', bravo: 'b', charlie: 'c', delta: 'd', echo
 // the instruction's own words (as the radio says them: "straight-in" is "straight in")
 export const PHRASES = ['hold short', 'line up and wait', 'cleared for takeoff', 'cleared to land', 'closed traffic', 'straight in', 'report final', 'report midfield downwind',
   'report returning', 'frequency change approved', 'request taxi', 'ready for departure', 'inbound for landing', 'clear of runway', 'east ramp', 'student pilot', 'first solo',
-  'right at', 'left at', 'left closed', 'right closed', 'downwind', 'final', 'taking off', 'roger', 'bye', 'ready to go', 'landing', 'over',
+  'right at', 'left at', 'left closed', 'right closed', 'downwind', 'final', 'taking off', 'roger', 'bye', 'ready to go', 'landing', 'over the practice area', 'over',
   // (k4, the chair flight: its calls have a word of their own besides the call sign — asking again, the wrong ones)
   'say again', 'contact departure', 'inbound', 'clear of the runway'];
 
@@ -58,6 +58,10 @@ export function keysOf(en, call = null, { number = false } = {}) {
   const ws = normalize(en), g = glued(ws), keys = [];
   const add = (kind, want, ja) => { if (!keys.some(k => k.kind === kind && k.want === want)) keys.push({ kind, want, ja }); };
   if (number) { const n = ws.join('').replace(/[^0-9.]/g, ''); if (n) add('number', n, n); return keys; }
+  // (who is called: a call begins with the station — "LAB Ground, …", "Tower, …" — and a call to the wrong one is not the
+  // right call; a read-back does not begin with one)
+  const st = /^(?:lab )?(ground|tower)$/.exec(ws.slice(0, 2).join(' ')) || /^(ground|tower)$/.exec(ws[0] || '');
+  if (st) add('station', st[1], `呼ぶ相手（LAB ${st[1] === 'ground' ? 'Ground' : 'Tower'}）`);
   if (call) {
     const full = callId(call.full), short = callId(call.short);
     if (full && g.includes(full)) add('call', full, `コールサイン（${call.full}）`);
@@ -65,7 +69,8 @@ export function keysOf(en, call = null, { number = false } = {}) {
   }
   for (const m of g.matchAll(/ runway (\d+) /g)) add('runway', m[1], `滑走路 ${m[1]}`);
   for (const m of g.matchAll(/ (\d{3,5}) (?!\.)/g)) if (/000$|00$/.test(m[1]) && +m[1] >= 500) add('altitude', m[1], `高度 ${(+m[1]).toLocaleString('en-US')} ft`);
-  for (const m of g.matchAll(/ (\d{3})?\.(\d{1,3}) /g)) add('freq', (m[1] || '') + '.' + m[2], `周波数 ${(m[1] || '') + '.' + m[2]}`);
+  // (a frequency said in part — "Ground point seven", 121.7 — named as it is said)
+  for (const m of g.matchAll(/ (\d{3})?\.(\d{1,3}) /g)) add('freq', (m[1] || '') + '.' + m[2], m[1] ? `周波数 ${m[1]}.${m[2]}` : `周波数（point ${m[2]}）`);
   for (const m of g.matchAll(/ squawk (\d{4}) /g)) add('squawk', m[1], `スコーク ${m[1]}`);
   for (const m of g.matchAll(/ (?:at|via) ([a-z]\d?) /g)) add('taxiway', m[1], `誘導路 ${m[1].toUpperCase()}`);
   for (const m of g.matchAll(/ information ([a-z]) /g)) add('info', m[1], `ATIS の符号 ${m[1].toUpperCase()}`);
@@ -74,6 +79,8 @@ export function keysOf(en, call = null, { number = false } = {}) {
     if (!plain.includes(` ${p} `)) continue;
     // a shorter phrase inside one already taken ("final" in "report final", "landing" in "inbound for landing") is not its own key
     if (keys.some(k => k.kind === 'phrase' && k.want.includes(p))) continue;
+    // ("over" the procedure word ends a transmission; "over the practice area" is a place)
+    if (p === 'over' && !/ over $/.test(plain)) continue;
     add('phrase', p, `“${p}”`);
   }
   return keys;
@@ -81,6 +88,10 @@ export function keysOf(en, call = null, { number = false } = {}) {
 // a phrase heard: its words (but and / for / to / of, which the recognizer may lose or mishear) in order, each within
 // two words of the one before ("line up in wait", "cleared for take off")
 const SMALL = new Set(['and', 'for', 'to', 'of', 'the']);
+// (words said with a right call that do not make it another one: "Roger" before a read-back, "over" at the end)
+const BENIGN = new Set(['roger', 'over']);
+// (a phrase by its own words, as it is heard: "clear of the runway" is "clear of runway")
+const sig = (p) => p.split(' ').filter(w => !SMALL.has(w)).join(' ');
 function said(ws, phrase) {
   const want = phrase.split(' ').filter(w => !SMALL.has(w));
   for (let i = 0; i < ws.length; i++) {
@@ -107,6 +118,8 @@ export function hearKeys(keys, heard) {
               : k.kind === 'squawk' ? g.includes(` ${k.want} `) || g.includes(k.want)
                 : k.kind === 'taxiway' ? g.includes(` ${k.want} `)
                   : k.kind === 'info' ? g.includes(` information ${k.want} `) || g.includes(` ${k.want} `)
+                    // (the station called: among the first words, before the call sign)
+                    : k.kind === 'station' ? ws.slice(0, 3).includes(k.want)
                     : g.includes(` ${k.want} `);
     (ok ? have : missing).push(k);
   }
@@ -116,7 +129,10 @@ export function hearKeys(keys, heard) {
 // guesses) → { pick: index | -1, right: index, missing: [keys of the right one not heard], heard }
 // An answer counts as said when all its key words were heard; the right one first, else the one with most key words
 // (a wrong one needs at least two key words, or one on the ATIS's number question, so a call sign alone never picks
-// "Roger"; and no more of the right one heard than it has itself). The best of the guesses is the one that says an answer, else the one that leaves least missing.
+// "Roger"; and no more of the right one heard than it has itself — but a wrong one of one word of its own, "Bye.", when
+// nothing of the right one was heard). The right one is not taken when what was said also has a wrong one's own words
+// ("line up and wait, cleared for takeoff": the clearance not given). The best of the guesses is the one that says an
+// answer, else the one that leaves least missing.
 export function matchReadback(choices, heard, { call = null, number = false } = {}) {
   const right = choices.findIndex(c => c.ok);
   const keys = choices.map(c => keysOf(c.en, call, { number }));
@@ -127,8 +143,15 @@ export function matchReadback(choices, heard, { call = null, number = false } = 
     // (a wrong one only when no more of the right one was heard than the wrong one has: "taxi via Alpha, 8SY" inside a
     // nearly whole read-back that left out the squawk is not that wrong answer — the squawk is what is missing)
     const near = right >= 0 ? res[right].have.length : 0;
-    const full = res.map((r, i) => (keys[i].length && !r.missing.length && (i === right || (keys[i].length >= (number ? 1 : 2) && near <= keys[i].length)) ? i : -1)).filter(i => i >= 0);
-    const pick = full.includes(right) ? right : full.sort((a, b) => keys[b].length - keys[a].length)[0] ?? -1;
+    // (a wrong one's own words: not the right one's, nor inside one of its phrases as heard — "inbound" in "inbound for
+    // landing", "clear of the runway" in "clear of runway")
+    const own = (i) => (right >= 0 ? keys[i].filter(k => !['call', 'station'].includes(k.kind) && !BENIGN.has(k.want)
+      && !keys[right].some(x => x.kind === k.kind && (x.want === k.want || (k.kind === 'phrase' && sig(x.want).includes(sig(k.want)))))) : []);
+    const enough = (i) => keys[i].length >= (number ? 1 : 2) || (!number && near === 0 && own(i).length === 1 && keys[i].length === 1);
+    const full = res.map((r, i) => (keys[i].length && !r.missing.length && (i === right || (enough(i) && near <= keys[i].length)) ? i : -1)).filter(i => i >= 0);
+    // (a wrong one's own words heard with the right one's: not the right one)
+    const extra = !number && right >= 0 && res.some((r, i) => i !== right && own(i).some(k => r.have.includes(k)));
+    const pick = full.includes(right) && !extra ? right : full.filter(i => i !== right).sort((a, b) => keys[b].length - keys[a].length)[0] ?? -1;
     const cand = { pick, right, missing: right >= 0 ? res[right].missing : [], heard: h };
     if (!best || (best.pick < 0 && pick >= 0) || (best.pick !== right && pick === right) || (best.pick < 0 && pick < 0 && cand.missing.length < best.missing.length)) best = cand;
   }

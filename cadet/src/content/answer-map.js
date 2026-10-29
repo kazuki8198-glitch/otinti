@@ -52,7 +52,8 @@ export const BANK_ANSWERS = {
   ],
   q_perf: [
     { q: '密度高度が高くなる', a: one('perf.da', '高い・暑い・湿った（High, Hot, Humid）', '湿度も密度を下げます') },
-    { q: '気圧高度を読むには', a: one('perf.da', '気圧高度 ≒ 標高 ＋（29.92 − 高度計規正値）× 1,000 ft') },
+    // (part 1 gives the formula, not the setting to read it with — 29.92 — so chapter 1 does not ask it)
+    { q: '気圧高度を読むには', a: null },
     { q: '離陸滑走距離が長く', a: one('perf.tol', '密度高度が高い：離陸距離は延びる', '追い風：離陸距離は大きく延びる', '芝・濡れた滑走路：離陸距離は延びる', '上り坂：離陸距離は延びる') },
     { q: 'モーメントの計算', a: one('perf.wb', '各項目の重量 × アーム（基準線からの距離）＝ モーメントです') },
     { q: '航空ガソリン 1 ガロン', a: null },                       // (6 lb/gal: not in part 1)
@@ -137,14 +138,15 @@ export const EVENT_ANSWERS = {
     one('aero.left', 'P ファクター：機首上げでは右側の下がるブレードの推力が大きく、機首が左へ', '離陸・上昇では右ラダー')],
   pitot: [one('sys.g1000', 'ピトー管と排水穴の両方が詰まる：速度計は高度計のように動く（上昇で速度が増えて見える）'), one('sys.fuel', '各タンクとストレーナーからサンプリング（水・ごみ・燃料の種類）'),
     one('sys.g1000', '静圧孔が詰まる：速度計は上昇で遅く、降下で速く表示、高度計は止まる、昇降計は 0')],
-  spell: [[['comm.basic', '文字は ICAO のフォネティックアルファベットで言います'], ...N.digits], N.frq, [N.alt[0]]],
+  spell: [[['comm.basic', '文字は ICAO のフォネティックアルファベットで言います'], ...N.digits, ['comm.callsign', '機種名を言うときは先頭の N を省きます']], N.frq, [N.alt[0]]],
   readback: [one('comm.readback', '地上走行では 滑走路の指定・滑走路に入る許可・hold short・line up and wait を必ず復唱です'),
     one('comm.mistakes', 'line up and wait を離陸許可と思う：cleared for takeoff を待ちます')],
-  metar: [one('wx.metar', 'VFR の判断は雲高と視程の両方で'), one('wx.metar', '「BKN / OVC の最も低い層」が雲高です')],
+  metar: [[['wx.brief', '訓練生のうちは雲高 3,000 ft・視程 5 SM 以上'], ['wx.metar', '10SM：視程 10 statute mile']], one('wx.metar', '「BKN / OVC の最も低い層」が雲高です')],
   imsafe: [one('hf.self', 'M：Medication（薬）'), one('hf.self', 'F：Fatigue（疲労）')],
 };
 export const SCENE_ANSWERS = {
-  r_first: [['comm.pattern', '最初の呼び出し：相手 → 自分 → 場所 → 要求（＋ATIS の記号）'], ['comm.callsign', '最初の交信では省略しない'], ['comm.dep', 'student pilot, at the west ramp with information Bravo']],
+  // (its right call is the textbook's example airport's — the west ramp — not LAB's east ramp: not practised at LAB)
+  r_first: null,
   r_altim: [N.alts[0]],
   r_info: one('comm.atis', '最初の交信で “with information Bravo” と言うと、管制官は ATIS の内容を繰り返さなくてよくなります', '“have numbers”（風・滑走路・高度計だけ聞いた）は ATIS を聞いた意味にはなりません'),
   r_taxi: one('comm.dep', 'Runway three six, taxi via Alpha, hold short of Charlie', 'departure one one niner point seven five, squawk four two seven one, Archer 8SY'),

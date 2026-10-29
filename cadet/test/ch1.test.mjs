@@ -5,8 +5,9 @@
 // start, a day at the pace for today's training within 40 minutes.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { load, measureCh1, framePatterns, dayPatterns, answerScenes, sectionStages, runTalk } from '../tools/measure-ch1.mjs';
+import { load, measureCh1, framePatterns, dayPatterns, daySentencePatterns, answerScenes, sectionStages, runTalk } from '../tools/measure-ch1.mjs';
 import * as TALK from '../src/content/class-talk.js';
+import fs from 'node:fs';
 
 const L = await load(), S = L.school, FL = L.FL;
 // the wordings said 8 times or more that stay, and why: the book's own content, its words masked by the pattern
@@ -45,13 +46,13 @@ test('a class\'s sections do not go the same way three in a row (the parts in th
   }
 });
 
-test('no long stretch without a choice: at most 2 minutes at the pace for today\'s training and at 要点だけ, 3 in full; a day at the first within 40 minutes', async () => {
+test('no long stretch without a choice: at most 2 minutes at the pace for today\'s training and at 要点だけ, 3 in full; a day at the first within 40 minutes — 考えてみよう tried or its answer heard', async () => {
   const LIMIT = { need: 120, quick: 120, full: 180 };
-  for (const pace of ['need', 'full', 'quick']) for (const seed of [1, 2, 3, 4, 5]) {
-    const r = await measureCh1({ pace, seed });
+  for (const think of ['try', 'hear']) for (const pace of ['need', 'full', 'quick']) for (const seed of think === 'try' ? [1, 2, 3, 4, 5] : [1, 2]) {
+    const r = await measureCh1({ pace, seed, think });
     for (const d of r.days) {
-      assert.ok(d.longestGap <= LIMIT[pace], `${pace} seed ${seed} day ${d.day}: ${(d.longestGap / 60).toFixed(2)} min without a choice`);
-      if (pace === 'need') assert.ok(d.time <= 40 * 60, `need seed ${seed} day ${d.day}: ${(d.time / 60).toFixed(1)} min`);
+      assert.ok(d.longestGap <= LIMIT[pace], `${pace} seed ${seed} (${think}) day ${d.day}: ${(d.longestGap / 60).toFixed(2)} min without a choice`);
+      if (pace === 'need') assert.ok(d.time <= 40 * 60, `need seed ${seed} (${think}) day ${d.day}: ${(d.time / 60).toFixed(1)} min`);
     }
   }
 });
@@ -95,6 +96,20 @@ test('each day its own words: the toasts, the guide\'s lines and the dorm\'s car
   for (const skip of [false, true]) for (const pace of ['need', 'full', 'quick']) {
     const r = await measureCh1({ pace, seed: 1, skip });
     for (const p of dayPatterns(r).filter(x => x.days.length >= 3)) assert.fail(`${pace}${skip ? ' (skipping)' : ''}: "${p.pattern}" on days ${p.days.join(', ')}`);
+  }
+});
+
+// the sentences of those that come back on 3 days or more, and why: each says the day's own (its number or its lesson —
+// masked by the pattern), not a direction the cadet already knows
+const KEPT_SENTENCES = [
+  [/^toast｜k# 合格$/, 'the day\'s lesson passed, by its name (k2, k3, …)'],
+  [/^toast｜午後：訓練装置室で k#「…」$/, 'the afternoon\'s lesson, by its name and title'],
+  [/^toast｜前の間違い # 問は、授業の最初に$/, 'how many questions missed before come first today'],
+];
+test('each day its own words, sentence by sentence: no direction said on 3 days or more (the way home, the study, Tab) — but those listed with their reason', async () => {
+  for (const skip of [false, true]) for (const pace of ['need', 'full', 'quick']) for (const seed of [1, 2]) {
+    const r = await measureCh1({ pace, seed, skip });
+    for (const p of daySentencePatterns(r).filter(x => x.days.length >= 3)) if (!KEPT_SENTENCES.some(([re]) => re.test(p.pattern))) assert.fail(`${pace} seed ${seed}${skip ? ' (skipping)' : ''}: "${p.pattern}" on days ${p.days.join(', ')}`);
   }
 });
 
@@ -166,6 +181,100 @@ test('the evening\'s study: three questions of the classes done, the one missed 
   const after = { ...st, answers: { ...st.answers, 'q_aero#3': [1, 1, 1, 3] } };
   assert.equal(marks(after)[sec3], '✓');
   assert.equal(marks(st)['sys.ctl'], '', 'not heard yet: no mark');
+  // (the device lessons' answers too: k5's scenes by their sections — answer-map.js)
+  const radio = { ...st, day: 7, done: { 'class:0': 2, 'class:1': 3, 'class:2': 5, 'class:3': 6 }, heard: {}, answers: { 'scene:r_exit': [0, 1, 0, 7], 'scene:r_correct': [1, 0, 1, 7] } };
+  assert.equal(marks(radio)['comm.arrive'], '△', 'k5 missed: △'); assert.equal(marks(radio)['comm.clarify'], '✓', 'k5 right: ✓');
+  assert.match(Object.values(N).map(n => n.text).join(''), /タブレットの「進み具合」/, 'the tablet\'s page by its name');
   const ready = S2.written1Readiness(FL, st);
   assert.ok(ready.find(b => b.bank === 'q_aero').taught >= 4 && ready.find(b => b.bank === 'q_law').taught === 0, JSON.stringify(ready.map(b => `${b.bank} ${b.taught}`)));
+});
+
+test('a lesson not passed: the day goes on — the guide back to the lecturer (or on, waiting), the day\'s words, the class and the lesson naming the plan\'s afternoon, tomorrow\'s the lesson still to pass', () => {
+  const F = L.flow, G = L.guide;
+  // (k2 tried and not passed on day 3: the guide to the lecturer again, the day not stuck)
+  const plan = [{ slot: 'am', kind: 'class', id: '1', title: '座学 2 / 6', state: 'done' }, { slot: 'pm', kind: 'ftd', id: 'k2', title: '訓練装置 k2・PFD の読み取り（10 問）', state: 'retry' },
+    { slot: 'evening', kind: 'event', id: 'pitot', title: '駐機場の大城さんと…', who: 'mechanic', state: 'later' }];
+  const g = G.nextStep({ chapter: 'ch1', slot: 'pm', plan });
+  assert.equal(g.who, 'lecturer'); assert.match(g.text, /k2.*もう一度/); assert.match(g.text, /待つ/);
+  // (day 5: class 2 in the morning, k2 again in the afternoon — named as the plan has it, not k3)
+  const st = { chapter: 'ch1', day: 5, done: { 'class:0': 2, 'class:1': 3 }, exams: {} };
+  const sch = [{ slot: 'am', kind: 'class', id: '2' }, { slot: 'pm', kind: 'ftd', id: 'k2' }, { slot: 'evening', kind: 'event', id: 'spell' }];
+  for (const t of [F.dayToast(st, sch), F.dayToast(st, sch, { short: true }), F.dayToast(st, sch, { missed: 2 }), F.afterClassToast(2, sch), F.dormCard({ ...st, done: { ...st.done, 'class:2': 5 } }, sch).text]) {
+    assert.match(t, /k2/, t); assert.doesNotMatch(t, /k3/, t);
+  }
+  const d = S.classDialogs(FL, 2, { afternoon: 'k2' }), hello = Object.entries(d.dialogs.class.nodes).filter(([id]) => /^(hello|preview)/.test(id)).map(([, n]) => n.text).join('\n');
+  assert.match(hello, /訓練装置 k2/); assert.doesNotMatch(hello, /k3/);
+  assert.doesNotMatch(S.ftdDialogs(FL, 'k2', { own: false }).dialogs.ftd.nodes.hello.text, /午前/);
+  // (tomorrow: the lesson still to pass, or a retake before the written test)
+  assert.match(F.tomorrowText({ ...st, done: { ...st.done, 'class:2': 5 } }, { nextFtd: 'k2' }), /午後は k2/);
+  assert.match(F.tomorrowText({ chapter: 'ch1', day: 8, done: Object.fromEntries([0, 1, 2, 3, 4, 5].map(i => [`class:${i}`, 2 + i])), exams: {} }, { nextFtd: 'k6' }), /k6 のやり直し/);
+  // (no afternoon at all: the class says so, the evening next)
+  assert.match(F.afterClassToast(5, [{ slot: 'am', kind: 'class', id: '5' }, { slot: 'evening', kind: 'event', id: 'imsafe', title: '教官室の真壁 主任教官と…' }]), /夜：/);
+});
+
+test('the written test failed on a Friday: no one says the first flight is tomorrow when tomorrow is Sunday', () => {
+  const F = L.flow, all = Object.fromEntries([0, 1, 2, 3, 4, 5].map(i => [`class:${i}`, 2 + i]));
+  const day = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].find(d => !L.career.isOff(d) && L.career.isOff(d + 1));
+  const st = { chapter: 'ch1', day, done: all, exams: { written1: { pass: false } } };
+  for (const t of [F.dayToast(st, [{ slot: 'am', kind: 'exam', id: 'written1' }]), F.dayToast(st, [{ slot: 'am', kind: 'exam', id: 'written1' }], { short: true })]) assert.doesNotMatch(t, /明日は(、いよいよ)?初飛行/, t);
+  assert.doesNotMatch(F.tomorrowText({ ...st, day: day - 1 }, { nextFtd: null }), /次の日が初飛行/);
+});
+
+test('the people\'s lines of chapter 1 do not name a class as today\'s: they are said on the days after it too (and on Sunday)', () => {
+  const src = ['people.js', 'instructor-career.js'].map(f => fs.readFileSync(new URL(`../src/content/dialog/${f}`, import.meta.url), 'utf8')).join('\n');
+  const lists = [...src.matchAll(/byClass\(say, '[^']+', \[([\s\S]*?)\]/g)].map(m => m[1]);
+  assert.ok(lists.length >= 7);
+  for (const l of lists) assert.doesNotMatch(l, /今日の(授業|性能|k\d|METAR|気象|交信)|明日の?(学科)?試験|明後日/, l.slice(0, 80));
+});
+
+test('the classes, as the second review found them: a prediction before the section\'s first line at 要点だけ, no doubled quotes, the recall checks not the same every day, the review not asked again, a resumed class promises no score, the written test not asking its warm-up again, k3 not saying its answer first', () => {
+  const runAll = (d, pace) => runTalk(L, d, 'class', { policy: (v) => (v.node === 'pace' ? v.choices.findIndex(c => ({ need: /^今日の訓練に要る/, full: /^じっくり/, quick: /^要点だけ/ })[pace].test(c.text)) : null), ctx: { quiz: { right: 0, n: 0, pct: 0, pass: false } } }).lines;
+  for (let i = 0; i < 6; i++) for (const pace of ['quick', 'full']) {
+    const lines = runAll(S.classDialogs(FL, i, { seed: 3 }), pace);
+    for (const l of lines) assert.doesNotMatch(l.text + (l.choices || []).join(''), /「「|」」/, `class ${i} ${pace}: ${l.text}`);
+    // (a prediction at 要点だけ comes right after the section's title alone)
+    lines.forEach((l, k) => { if (/^r\d+s\d+:pr$/.test(l.node)) assert.match(lines[k - 1].node, /^r\d+s\d+$/, `class ${i}: before ${l.node}`); });
+  }
+  // (the recall checks of a later class: not the same questions for every seed)
+  const recalls = new Set();
+  for (const seed of [1, 2, 3, 4, 5, 6]) for (const l of runAll(S.classDialogs(FL, 3, { seed }), 'full')) if (l.q && /:ck$/.test(l.node) && /^q_(aero|sys|perf)/.test(l.q.id)) recalls.add(`${seed}:${l.q.id}`);
+  assert.ok(new Set([...recalls].map(x => x.split(':')[1])).size >= 3, `recalled: ${[...recalls].join(' ')}`);
+  // (the review's questions not asked again as checks the same day)
+  const st = { seed: 4, day: 6, done: { 'class:0': 2, 'class:1': 3, 'class:2': 5 }, heard: {}, attempts: {}, answers: {} };
+  const o = S.classOptions(FL, st, 3, {}), rv = new Set(o.review.ids), lines = runAll(S.classDialogs(FL, 3, { seed: 4, ...o }), 'full');
+  for (const l of lines) if (l.q && /:ck$/.test(l.node)) assert.ok(!rv.has(l.q.id), `${l.q.id} reviewed, then checked`);
+  // (resumed: the questions' end without 採点しますね)
+  const resumed = runTalk(L, S.classDialogs(FL, 1, { from: 5 }), 'class', { ctx: { quiz: { right: 0, n: 0, pct: 0, pass: false } } }).lines;
+  assert.ok(!resumed.some(l => /採点しますね/.test(l.text)) && resumed.some(l => l.text === '今日の問題は以上です。'));
+  // (written1: its warm-up's three not among the 28)
+  for (const seed of [1, 2, 3, 4, 5]) {
+    const all = Object.fromEntries([0, 1, 2, 3, 4, 5].map(i => [`class:${i}`, 2 + i])), s2 = { seed, day: 9, done: all, heard: {}, attempts: {}, answers: {} };
+    const warm = S.mixedReview(FL, s2, {}), d = S.examDialogs(FL, 'written1', { seed: seed + 9, warm }), w = new Set(warm.map(x => x.id));
+    assert.ok(!d.questions.some(x => w.has(x.id)), `seed ${seed}: a warm-up question in the test`);
+  }
+  // (k3: the right way to say it is spoken once answered, not with the question)
+  const k3 = S.ftdDialogs(FL, 'k3', {}).dialogs.ftd.nodes;
+  for (const [id, n] of Object.entries(k3)) if (/^q\d+(:p\d+)?$/.test(id)) assert.ok(!(n.hook && n.hook.name === 'say'), `${id} speaks its answer`);
+  assert.ok(Object.entries(k3).some(([id, n]) => /^q\d+:ok$/.test(id) && n.hook && n.hook.name === 'say'), 'spoken after the answer');
+});
+
+test('the evening\'s METAR: the visibility question\'s right answer read off the morning\'s METAR (5 SM the class\'s example), the day\'s decision told after it', () => {
+  for (const [metar, enough] of [['KLAB 121353Z 36005KT 10SM FEW035 19/12 A2992', true], ['KLAB 121353Z 00000KT 1/2SM FG VV002 14/14 A2992', false], ['KLAB 121353Z 00000KT 5SM BR OVC006 15/14 A2992', true],
+    ['KLAB 121353Z 18012G22KT 2SM TSRA BKN015CB 16/15 A2992', false], ['KLAB 121353Z 20015G28KT 1 1/2SM +TSRA OVC012CB 15/14 A2992', false]]) {
+    const ev = L.events.eventDialogs('metar', { weather: { metar, decision: enough ? 'go' : 'wait', why: '理由。' } }), N = ev.dialogs.ev.nodes;
+    const q = Object.values(N).find(n => n.choices && /視程/.test(n.text));
+    const right = q.choices.find(c => /:ok$/.test(c.next));
+    assert.match(right.text, enough ? /^満たしている/ : /^満たしていない/, metar);
+    assert.match(Object.values(N).map(n => n.text).join(''), new RegExp(`今日の判断は「${enough ? '予定どおり飛ぶ' : '午後まで待つ'}`), metar);
+  }
+});
+
+test('after chapter 1: the dorm\'s study is a late night again (no chapter 1 questions), the record page no longer readies the written test', () => {
+  const F = L.flow, st = { ...L.career.newCareer(4), chapter: 'ch3', day: 30, done: { prologue: 1, 'class:0': 2 }, exams: { written1: { tries: 1, best: 90, pass: true } } };
+  const card = F.dormCard(st, [], {});
+  assert.ok(!card.choices.some(c => /3 問/.test(c.text)), JSON.stringify(card.choices));
+  assert.ok(!F.dormCard(st, [], { short: true }).choices.some(c => /3 問/.test(c.text)));
+  const main = fs.readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /ch\.act === 'late' && career\.chapter === 'ch1'/, 'the study only in chapter 1');
+  assert.match(main, /written1: st\.chapter === 'ch1' && !\(st\.exams\.written1 && st\.exams\.written1\.pass\)/, 'the readiness only while the test is ahead');
 });

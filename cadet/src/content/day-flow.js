@@ -16,6 +16,9 @@ const classWords = (i) => (CLASSES[i] || []).map(id => CHAPTER_SHORT[id]).join('
 const classesDone = (st) => CLASSES.filter((_, i) => st.done && st.done[`class:${i}`]).length;
 // the class today (of today's plan), or -1
 const classToday = (sch) => { const c = (sch || []).find(x => x.kind === 'class'); return c ? +c.id : -1; };
+// the device lesson of today's plan (the first not passed: after a lesson not passed, not the class's own), or null
+const ftdToday = (sch) => { const f = (sch || []).find(x => x.kind === 'ftd'); return f ? f.id : null; };
+const passed1 = (st) => !!(st.exams && st.exams.written1 && st.exams.written1.pass);
 
 // the morning: the day's chapters and its afternoon's lesson; the question missed the day before, asked again first
 // (short: the cadet skips the ways — G — so the day's words are short too)
@@ -24,39 +27,44 @@ export function dayToast(st, sch, { missed = 0, short = false } = {}) {
   if (short) {
     const i = classToday(sch), off = (sch || []).some(x => x.kind === 'off');
     if (off) return (sch || []).some(x => x.kind === 'event') ? '日曜、休み。朝日さんが復習に誘っています' : '日曜、休み';
-    if (i >= 0) return `今日は${classWords(i)}、午後は ${CLASS_FTD[i]}${missed ? `、前の間違い ${missed} 問` : ''}`;
-    if ((sch || []).some(x => x.kind === 'exam')) return '今日は学科試験、明日は初飛行';
+    if (i >= 0) { const k = ftdToday(sch); return `今日は${classWords(i)}${k ? `、午後は ${k}` : ''}${missed ? `、前の間違い ${missed} 問` : ''}`; }
+    if ((sch || []).some(x => x.kind === 'exam')) return `今日は学科試験、${isOff(st.day + 1) ? '初飛行は休みの次の日' : '明日は初飛行'}`;
   }
   if ((sch || []).some(x => x.kind === 'off')) return (sch || []).some(x => x.kind === 'event')
     ? '今日は日曜、休みです。ラウンジの朝日さんが、今週の復習に誘っています（しなくてもいい）。正面入口から寮に帰れば明日になります'
     : '今日は日曜、休みです。正面入口から寮に帰れば明日になります';
   const i = classToday(sch);
   if (i >= 0) {
-    // (a question missed before: said instead of the tablet's hint — one line still)
-    const k = CLASS_FTD[i];
-    return missed ? `今日は${classWords(i)}、午後は ${k}「${FTD_TITLES[k]}」。前の間違い ${missed} 問は、授業の最初に` : `今日は${classShort(i)}。午後は ${k}「${FTD_TITLES[k]}」（Tab で今日の予定）`;
+    // (a question missed before: said instead of the tablet's hint — one line still; the afternoon's the plan's)
+    const k = ftdToday(sch), pm = k ? `午後は ${k}「${FTD_TITLES[k]}」` : '';
+    // (the hints — Tab for the plan — on the first days only: after them the cadet knows)
+    return missed ? `今日は${classWords(i)}${pm ? `、${pm}` : ''}。前の間違い ${missed} 問は、授業の最初に` : `今日は${classShort(i)}。${pm || '午後の訓練装置はありません'}${st.day <= 3 ? '（Tab で今日の予定）' : ''}`;
   }
-  if ((sch || []).some(x => x.kind === 'exam')) return '今日は第 1 章の学科試験（28 問、80% で合格）。明日は、いよいよ初飛行です（Tab で今日の予定）';
+  if ((sch || []).some(x => x.kind === 'exam')) return `今日は第 1 章の学科試験（28 問、80% で合格）。${isOff(st.day + 1) ? '合格すれば、休みの次の日が初飛行です' : '明日は、いよいよ初飛行です'}（Tab で今日の予定）`;
   if ((sch || []).some(x => x.kind === 'ftd')) { const f = sch.find(x => x.kind === 'ftd'); return `今日は訓練装置 ${f.id}「${FTD_TITLES[f.id]}」のやり直しから（Tab で今日の予定）`; }
   return null;
 }
-// after the class: the afternoon's lesson, and what of the morning it uses
-export function afterClassToast(i) {
-  const k = CLASS_FTD[i];
-  return k ? `午後：訓練装置室で ${k}「${FTD_TITLES[k]}」。${FTD_USE[k]}` : '午後：訓練装置室へ';
+// after the class: the afternoon's lesson of today's plan (sch), and what of the morning it uses when it is the class's
+// own; none, the evening's event
+export function afterClassToast(i, sch) {
+  const k = sch ? ftdToday(sch) : CLASS_FTD[i], ev = (sch || []).find(x => x.kind === 'event');
+  if (!k) return ev ? `午後の訓練装置はありません。夜：${ev.title}` : '今日の予定は、授業までです';
+  return k === CLASS_FTD[i] ? `午後：訓練装置室で ${k}「${FTD_TITLES[k]}」。${FTD_USE[k]}` : `午後：訓練装置室で ${k}「${FTD_TITLES[k]}」をもう一度`;
 }
 // after the training device: passed, and the evening's event (or the day's end)
 export function afterFtdToast(k, sch) {
   const ev = (sch || []).find(x => x.kind === 'event');
   return ev ? `${k} 合格。夜：${ev.title}` : `${k} 合格。今日の予定は終わりです`;
 }
-// what tomorrow brings (from what is done so far)
-export function tomorrowText(st) {
-  const n = classesDone(st), next = st.day + 1;
+// what tomorrow brings (from what is done so far). nextFtd: the first device lesson not passed (career/career.js
+// schedule() gives it tomorrow) — null: all passed; left out: the next class's own
+export function tomorrowText(st, { nextFtd } = {}) {
+  const n = classesDone(st), next = st.day + 1, k = nextFtd === undefined ? CLASS_FTD[n] : nextFtd;
   if (st.chapter !== 'ch1') return '';
   if (isOff(next)) return '明日は日曜、休みです';
-  if (n < CLASSES.length) return `明日は${classWords(n)}、午後は ${CLASS_FTD[n]}`;
-  if (!(st.exams && st.exams.written1 && st.exams.written1.pass)) return '明日は学科試験、そして次の日が初飛行です';
+  if (n < CLASSES.length) return `明日は${classWords(n)}${k ? `、午後は ${k}` : ''}`;
+  if (k) return `明日は訓練装置 ${k} のやり直し、そのあとが学科試験です`;
+  if (!passed1(st)) return isOff(st.day + 2) ? '明日は学科試験です' : '明日は学科試験、そして次の日が初飛行です';
   return '明日は、いよいよ初飛行（a1）です';
 }
 // the first day's words (the prologue: its morning, then after the welcome, the tour and the meeting); short: the
@@ -69,28 +77,35 @@ export const PROLOGUE_WORDS = {
 };
 export const prologueWord = (k, { short = false } = {}) => PROLOGUE_WORDS[k][short ? 1 : 0];
 // (tomorrow in a few words: the skipping cadet's dorm card)
-function shortTomorrow(st) {
+function shortTomorrow(st, { nextFtd } = {}) {
   const n = classesDone(st);
   if (st.chapter === 'prologue') return `明日から座学（${classWords(0)}）`;
   if (st.chapter !== 'ch1') return '';
   if (isOff(st.day + 1)) return '明日は休み';
   if (n < CLASSES.length) return `明日は${classWords(n)}`;
-  return (st.exams && st.exams.written1 && st.exams.written1.pass) ? '明日は初飛行' : '明日は学科試験';
+  if (nextFtd) return `明日は ${nextFtd} のやり直し`;
+  return passed1(st) ? '明日は初飛行' : '明日は学科試験';
 }
-// the guide once today's plan is done (chapter 1): tomorrow, and the way home
-export function doneLine(st) {
-  const t = tomorrowText(st);
-  return t ? `今日の予定は終わり。${t}。正面入口から寮に帰ると次の日になります` : null;
+// the guide once today's plan is done (chapter 1): tomorrow, and the way home — the way said on the first two days
+// only (the guide's mark shows it after them: the same sentence every evening is the repetition the cadet tires of)
+export function doneLine(st, o = {}) {
+  const t = tomorrowText(st, o);
+  if (!t) return null;
+  return st.day <= 2 ? `今日の予定は終わり。${t}。正面入口から寮に帰ると次の日になります` : `今日の予定は終わり、${t}`;
 }
 // the dorm's card: the day said back, and what the evening's study is
-export function dormCard(st, sch, { short = false } = {}) {
-  const i = classToday(sch), t = tomorrowText(st);
+export function dormCard(st, sch, { short = false, nextFtd } = {}) {
+  const i = classToday(sch), t = tomorrowText(st, { nextFtd }), k = ftdToday(sch);
   // (no class done yet — the first day — nothing to study: to bed, or stay)
   if (!classesDone(st) && (st.chapter === 'prologue' || st.chapter === 'ch1')) return { title: '寮へ帰る', text: short ? shortTomorrow(st) : `${t || '明日から座学です'}。今日はゆっくり休みましょう。`, choices: [{ k: 1, text: '寝る', act: 'early' }, { k: 2, text: 'やっぱり残る', act: 'stay' }] };
-  if (short) return { title: '寮へ帰る', text: shortTomorrow(st) || '今日の訓練はここまで', choices: [{ k: 1, text: 'すぐに寝る', act: 'early' }, { k: 2, text: '自習してから寝る（3 問）', act: 'late' }, { k: 3, text: 'やっぱり残る', act: 'stay' }] };
-  const today = i >= 0 ? `今日は${classWords(i)}と ${CLASS_FTD[i]}。` : (sch || []).some(x => x.kind === 'exam') ? '学科試験、おつかれさまでした。' : '';
-  const text = st.chapter === 'ch1' ? `${today}${t ? `${t}。` : ''}自習なら、間違えた問題と期限が来た問題を 3 問（約 3 分）。` : '今日の訓練はここまで。寮に帰って休みます。';
-  return { title: '寮へ帰る', text, choices: [{ k: 1, text: 'すぐに寝る', act: 'early' }, { k: 2, text: '少し自習してから寝る（3 問・疲れが少し残る）', act: 'late' }, { k: 3, text: 'やっぱり残る', act: 'stay' }] };
+  if (short) return { title: '寮へ帰る', text: shortTomorrow(st, { nextFtd }) || '今日の訓練はここまで', choices: [{ k: 1, text: 'すぐに寝る', act: 'early' }, { k: 2, text: st.chapter === 'ch1' ? '自習してから寝る（3 問）' : '自習してから寝る', act: 'late' }, { k: 3, text: 'やっぱり残る', act: 'stay' }] };
+  const today = i >= 0 ? `今日は${classWords(i)}${k ? `と ${k}` : ''}。` : (sch || []).some(x => x.kind === 'exam') ? '学科試験、おつかれさまでした。' : '';
+  // (what the study is: said the first two evenings with a class done — not on Sunday's; then the choice's own words
+  // say it)
+  const study = classesDone(st) <= 2 && !isOff(st.day) ? '自習なら、間違えた問題と期限が来た問題を 3 問（約 3 分）。' : '';
+  const text = st.chapter === 'ch1' ? `${today}${t ? `${t}。` : ''}${study}` : '今日の訓練はここまで。寮に帰って休みます。';
+  // (the study's 3 questions are chapter 1's; after it, a late night, as before)
+  return { title: '寮へ帰る', text, choices: [{ k: 1, text: 'すぐに寝る', act: 'early' }, { k: 2, text: st.chapter === 'ch1' ? '少し自習してから寝る（3 問・疲れが少し残る）' : '少し自習してから寝る（疲れが残る）', act: 'late' }, { k: 3, text: 'やっぱり残る', act: 'stay' }] };
 }
 // the evening's event of the day's plan (career/career.js CH1_EVENTS), if any
 export const eventOf = (sch) => { const e = (sch || []).find(x => x.kind === 'event'); return e ? CH1_EVENTS.find(x => x.id === e.id) || null : null; };

@@ -9,7 +9,7 @@
 // instruction cut by noise (say again). These are only added to day 10's order, never put in its place.
 // The airport LAB, its frequencies and the call sign are fictional (atc.js). Facts as the textbook's part 1 says them
 // (each item names its section: the debrief links to it).
-import { dayRadio, CALL, FREQ } from './dialog/atc.js';
+import { dayRadio, CALL, FREQ, setCall } from './dialog/atc.js';
 import { stepsFor, planFor, STEPS } from '../career/day.js';
 
 function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
@@ -51,7 +51,14 @@ const otherQnh = (q, d) => (q + d).toFixed(2);
 // item: { kind: 'op' | 'ex', id, part, sec, …} — op: { q, hear?: [lines], choices: [{ t, ok, why }], note, value }
 // (a switch set: COM1, the altimeter, the code; or what to do before calling); ex: { ex } (an exchange of atc.js's
 // shape: hear, q, choices [{ en, ok, why, negative }], reply, note, time)
-export function chairScript(FL, { seed = 1 } = {}) {
+// (the first flight's radio is the Archer's, whatever today's aircraft — practised from the tablet on a twin's day too:
+// its call sign made the Archer's while the script is written, today's put back after)
+export function chairScript(FL, o = {}) {
+  const was = { ...CALL };
+  setCall('pa28');
+  try { return archerScript(FL, o); } finally { Object.assign(CALL, was); }
+}
+function archerScript(FL, { seed = 1 } = {}) {
   const r = rng(seed * 104729 + 17), W = weatherOf(r), exit = r() < 0.5 ? 'A2' : 'A3';
   const plan = planFor(FL, FIRST_FLIGHT);
   const radio = dayRadio({ ...W, intent: 'area' }), back = dayRadio({ ...W, info: W.next, zulu: String(+W.zulu + 100).padStart(4, '0'), intent: 'area' });
@@ -59,10 +66,14 @@ export function chairScript(FL, { seed = 1 } = {}) {
   const events = r() < 0.5 ? ['other', 'partial'] : r() < 0.5 ? ['other'] : ['partial'];
   const S = CALL.short, items = [];
   const op = (part, id, q, choices, more = {}) => items.push({ kind: 'op', part, sec: more.sec || PART[part].sec, id, q, choices, note: more.note || '', hear: more.hear || [] });
-  const ex = (part, id, x, more = {}) => items.push({ kind: 'ex', part, sec: more.sec || PART[part].sec, id, ex: x });
-  const com = (part, id, want, why) => op(part, `com:${id}`, `COM1 の周波数を合わせます。${want.ja}は？`,
+  // (an exchange with no note of its own: what every call or read-back of its kind does — src: AIM 4-2-3 (the first call:
+  // who is called, who calls, where, what is wanted), AIM 4-4-7 (read back the runway, the altitude, the heading))
+  const KIND_NOTE = { call: '呼ぶときは、相手 → 自分のコールサイン → 位置 → 要求の順です（AIM 4-2-3）。', readback: '滑走路・高度・針路・hold short は、言われたとおりに復唱します（AIM 4-4-7）。' };
+  const ex = (part, id, x, more = {}) => items.push({ kind: 'ex', part, sec: more.sec || PART[part].sec, id, ex: x.note ? x : { ...x, note: KIND_NOTE[x.kind] || '' } });
+  const wa = (ja) => `${ja}${/[A-Za-z]$/.test(ja) ? ' ' : ''}は`;            // (ATIS は: the book's spacing)
+  const com = (part, id, want, why) => op(part, `com:${id}`, `COM1 の周波数を合わせます。${wa(want.ja)}？`,
     [{ t: `${FREQ.atis}（LAB ATIS）`, ok: want.f === FREQ.atis }, { t: `${FREQ.ground}（LAB Ground）`, ok: want.f === FREQ.ground }, { t: `${FREQ.tower}（LAB Tower）`, ok: want.f === FREQ.tower }]
-      .map(c => ({ ...c, why: c.ok ? '' : why })), { sec: 'radio.why', note: `${want.ja}は ${want.f}。壁の画面の周波数表にあります。` });
+      .map(c => ({ ...c, why: c.ok ? '' : why })), { sec: 'radio.why', note: `${wa(want.ja)} ${want.f}。壁の画面の周波数表にあります。` });
   for (const p of radioPlan(FL, plan.lessons, radio)) {
     const R = p.seq === 'back' || p.seq === 'final' || p.seq === 'exit' || p.seq === 'groundIn' ? back : radio;
     const X = (id) => { const x = R.exchanges[id]; return typeof x === 'function' ? x(exit) : x; };
@@ -86,7 +97,7 @@ export function chairScript(FL, { seed = 1 } = {}) {
         ex('ground', 'gnd_call', { ...call, reply: [{ who: 'GND', en: cut, ja: '（途中が雑音で聞こえない）' }] });
         ex('ground', 'say_again', { station: 'GND', freq: FREQ.ground, kind: 'call', q: '指示の途中が聞き取れませんでした。何と言いますか？', time: 20,
           choices: [{ en: `LAB Ground, ${S}, say again.`, ok: true },
-            { en: `Taxi via Alpha, ${S}.`, why: '聞こえた所だけ復唱すると、残りも受け取ったと思われます。推測で動かず、聞き直します（comm.clarify）。', negative: `${S}, negative, say again your request.` },
+            { en: `Taxi via Alpha, ${S}.`, why: '聞こえた所だけ復唱すると、残りも受け取ったと思われます。推測で動かず、聞き直します（第 8 章「わからないとき・従えないとき」）。', negative: `${S}, negative. Read back hold short instructions.` },
             { en: `Roger, ${S}.`, why: 'Roger は「受け取った」だけです。何を止まるのか分からないまま動けません。“Say again” で聞き直します。', negative: `${S}, read back hold short instructions.` }],
           reply: [full], note: '聞き取れなかった所は、推測しないで “Say again”。' }, { sec: 'comm.clarify' });
       } else ex('ground', 'gnd_call', call);
@@ -102,23 +113,27 @@ export function chairScript(FL, { seed = 1 } = {}) {
       op('tower', 'listen', other ? '周波数を変えたら、ほかの機の交信が聞こえました。どうしますか？' : '周波数を変えました。呼ぶ前に、することは？',
         other ? [{ t: '自分宛てではない。交信が終わって空くまで待ってから呼ぶ', ok: true }, { t: `“Roger, ${S}.” と答える`, why: `呼ばれたのは別の機です。自分のコールサイン（${S}）ではない交信には答えません。` }, { t: 'すぐに呼ぶ', why: 'ほかの機が話しているときに送信すると、両方とも聞こえなくなります（ブロック）。まず聞きます。' }]
           : [{ t: '数秒聞いて、誰も話していないのを確かめる', ok: true }, { t: 'すぐに呼ぶ', why: '周波数を変えた直後は、ほかの交信が続いていることがあります。まず聞きます（AIM 4-2-2）。' }, { t: '管制塔からの呼びかけを待つ', why: '準備ができたことは、こちらから伝えます。まず聞いて、空いていたら呼びます。' }],
-        { sec: 'radio.technique', hear: other ? [{ who: 'TWR', en: 'November Four Two Kilo Papa, LAB Tower, runway three six, cleared to land.', ja: '（ほかの機 N42KP への着陸許可）' }] : [], note: '「聞く」が 7 割。空いてから呼びます。' });
+        { sec: 'radio.technique', hear: other ? [{ who: 'TWR', en: 'November Four Two Kilo Papa, LAB Tower, frequency change approved.', ja: '（出ていくほかの機 N42KP に、周波数の変更の承認）' }] : [], note: '「聞く」が 7 割。空いてから呼びます。' });
       for (const id of p.ids) ex('tower', id, X(id));
       continue;
     }
     if (p.seq === 'back') {
-      com('back', 'back', { ja: '管制塔（LAB Tower）', f: FREQ.tower }, '訓練空域から帰るときに呼ぶのは、出ていくときと同じ管制塔（118.3）です。');
-      // (the ATIS listened to again before coming back: it has changed)
+      // (the ATIS listened to again before coming back — it has changed — on the other radio, COM2: COM1 keeps Tower's
+      // frequency; then COM1 checked before the call) src: the textbook's comm.arrive (the ATIS, then Tower); radio.equip
+      // (two radios, COM1 and COM2)
       const [a2] = atisParts(back.atisText);
-      op('back', 'atis:again', '呼ぶ前に ATIS を聞き直しました。いまの情報の記号は？', [W.next, W.info, LETTERS[(LETTERS.indexOf(W.next) + 2) % 6]].map((t, k) => ({ t: `${t}（${t[0]}）`, ok: k === 0, why: k ? `出発のときは ${W.info} でしたが、いまの放送は “information ${W.next}” です。新しい記号を伝えます。` : '' })),
+      op('back', 'atis:again', '帰る前に、COM2 で ATIS を聞き直しました。いまの情報の記号は？', [W.next, W.info, LETTERS[(LETTERS.indexOf(W.next) + 2) % 6]].map((t, k) => ({ t: `${t}（${t[0]}）`, ok: k === 0, why: k ? `出発のときは ${W.info} でしたが、いまの放送は “information ${W.next}” です。新しい記号を伝えます。` : '' })),
         { sec: 'comm.arrive', hear: [{ who: 'ATIS', en: a2, ja: `LAB の情報 ${W.next[0]}（記号が変わった）。` }], note: `記号が ${W.info} から ${W.next} に変わりました。呼ぶときは “with information ${W.next}”。` });
+      com('back', 'back', { ja: '管制塔（LAB Tower）', f: FREQ.tower }, '訓練空域から帰るときに呼ぶのは、出ていくときと同じ管制塔（118.3）です。');
     }
     if (p.seq === 'groundIn') com('groundIn', 'groundIn', { ja: '地上管制（LAB Ground）', f: FREQ.ground }, '“Ground point seven” は 121.7 です。滑走路を出て止まったら、地上管制を呼びます。');
     for (const id of p.ids) ex(p.seq, id, X(id));
   }
   // (the altimeter is set from the ATIS: the ATIS's question is that; the wrong choices, near ones)
   void otherQnh;
-  return { items, radio, back, weather: W, exit, plan, events, parts: PART };
+  // (the call sign kept as it is now, the Archer's: CALL itself is today's again after)
+  const call = { ...CALL };
+  return { items, radio: { ...radio, call }, back: { ...back, call }, weather: W, exit, plan, events, parts: PART };
 }
 // (the ATIS's last part, the altimeter and the runway, then the request on a line of its own)
 const splitLast = (t) => { const i = t.indexOf(' Advise'); return i > 0 ? [t.slice(0, i), t.slice(i + 1)] : [t, null]; };

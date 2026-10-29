@@ -62,7 +62,14 @@ test('answer map: every answer\'s words are a line of its own section, as the cl
     }
   }
   assert.ok(n > 200, `${n} lines checked`);
-  // (what part 1 does not say is not asked in chapter 1: a few only)
+  // (what part 1 does not say is not asked in chapter 1: these only, each with its reason — a new one must be added here)
+  const NONE = {
+    'q_perf#1': 'part 1 gives the formula, not the setting (29.92) to read pressure altitude with',
+    'q_perf#4': '6 lb a gallon of avgas: not in part 1', 'q_perf#6': 'the Archer\'s demonstrated crosswind: not in part 1',
+    'q_wx#3': 'the thunderstorm\'s three stages: not in part 1', 'q_hf#6': 'the kinds of hypoxia: not in part 1',
+    'q_hf#7': 'oxygen at all times above 14,000 ft: part 1 says only 12,500–14,000', 'q_hf#8': 'off-centre viewing at night: not in part 1',
+    r_first: 'its right call is the textbook\'s other airport\'s (the west ramp), not LAB\'s', altdir: 'the VFR cruising altitudes (91.159): not in part 1',
+  };
   const none = all.filter(([, a]) => a === null).map(([id]) => id);
-  assert.ok(none.length <= 8, `not in part 1: ${none.join(' ')}`);
+  assert.deepEqual(none.sort(), Object.keys(NONE).sort(), `not in part 1: ${none.join(' ')}`);
 });

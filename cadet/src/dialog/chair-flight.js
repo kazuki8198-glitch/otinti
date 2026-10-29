@@ -24,13 +24,22 @@ export function panelParts(en, max = 110) {
 }
 export const PASS = 80;
 const TIME = { op: 20 };
+// the clock of a turn (stage 3): the item's own time, but never less than the question and its choices read (10
+// characters a second, as the measure reads) and 8 s to choose — a cadet who reads every choice is not late for it
+const timeOf = (it) => {
+  const base = it.kind === 'ex' ? it.ex.time || 25 : TIME.op, cs = it.kind === 'ex' ? it.ex.choices.map(c => c.en) : it.choices.map(c => c.t);
+  return Math.max(base, Math.ceil(8 + [it.kind === 'ex' ? it.ex.q : it.q, ...cs].join('').length / 10));
+};
 
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
 // createChairFlight(script, { stage, seed, only, hold }) → the runner. only: the items' ids to go through (practising
 // the ones missed); hold(): true while the last line is still being spoken (the clock waits)
 export function createChairFlight(script, { stage = 2, seed = 1, only = null, hold = () => false, call } = {}) {
-  const R = rng(seed * 7 + stage), items = only ? script.items.filter(x => only.includes(x.id)) : script.items.slice();
+  // (practising only some: a read-back — or a "say again" — is heard with the transmission it answers, the reply of the
+  // item before it, so there is something to read back)
+  const all = script.items, ctx = (x, k) => { const p = all[k - 1]; return x.kind === 'ex' && !(x.ex.hear && x.ex.hear.length) && p && p.kind === 'ex' && p.ex.reply && p.ex.reply.length ? { ...x, ex: { ...x.ex, hear: p.ex.reply } } : x; };
+  const R = rng(seed * 7 + stage), items = only ? all.map(ctx).filter(x => only.includes(x.id)) : all.slice();
   const out = [], log = [], events = [], turns = [];
   let i = -1, cur = null, com = '', alt = '', done = false, clock = 0;
   const callSign = call || (script.radio && script.radio.call) || null;
@@ -44,7 +53,7 @@ export function createChairFlight(script, { stage = 2, seed = 1, only = null, ho
     const cs = choicesOf(it), order = cs.map((_, k) => k);
     for (let k = order.length - 1; k > 0; k--) { const j = Math.floor(R() * (k + 1)); [order[k], order[j]] = [order[j], order[k]]; }
     const hear = (it.kind === 'ex' ? it.ex.hear || [] : it.hear || []).slice();
-    cur = { it, cs, order, phase: 'hear', queue: hear, lines: [], t: 0.4, timeLeft: it.kind === 'ex' ? it.ex.time || 25 : TIME.op, tries: 0, late: false, last: null, said: [], why: false };
+    cur = { it, cs, order, phase: 'hear', queue: hear, lines: [], t: 0.4, timeLeft: timeOf(it), tries: 0, late: false, last: null, said: [], why: false };
     events.push({ type: 'item', id: it.id, part: it.part });
     pump();
   }
@@ -59,26 +68,30 @@ export function createChairFlight(script, { stage = 2, seed = 1, only = null, ho
     if (cur.phase === 'hear' || cur.phase === 'negative') { cur.phase = 'choose'; cur.t = 0; return; }
     if (cur.phase === 'reply') {
       const it = cur.it, firstOk = cur.tries === 1 && !cur.late;
-      out.push({ id: it.id, part: it.part, sec: it.sec, kind: it.kind, ok: firstOk, late: cur.late, tries: cur.tries, said: cur.said.slice(), right: cur.cs.find(c => c.ok).text, missing: cur.missing || [] });
+      out.push({ id: it.id, part: it.part, sec: it.sec, kind: it.kind, station: station(it), exKind: it.kind === 'ex' ? it.ex.kind || '' : '', ok: firstOk, late: cur.late, tries: cur.tries, said: cur.said.slice(), right: cur.cs.find(c => c.ok).text, missing: cur.missing || [] });
       next();
     }
   }
   function update(dt) {
-    events.length = 0;
+    // (what came before this step — the first item's line, begun with the run — given now, so the voice says it too)
+    const before = events.splice(0), out = (e) => (before.length ? before.concat(e) : e);
     clock += dt;
-    if (!cur) return events;
+    if (!cur) return out(events);
     if (cur.phase === 'choose') {
-      if (stage < 3 || hold()) return events;                   // (no clock at stages 1 and 2; nor while the voice goes on)
+      if (stage < 3 || hold()) return out(events);              // (no clock at stages 1 and 2; nor while the voice goes on)
       cur.timeLeft -= dt;
       if (cur.timeLeft <= 0 && !cur.late) {
-        cur.late = true; cur.timeLeft = cur.it.kind === 'ex' ? cur.it.ex.time || 25 : TIME.op;
-        if (cur.it.kind === 'ex' && cur.it.ex.station !== 'ATIS') {
+        cur.late = true; cur.timeLeft = timeOf(cur.it);
+        // (the controller asks only for a reply to what was said to the cadet — a read-back — not for a call the cadet
+        // has yet to make, nor for a switch or the ATIS: those are late without a word)
+        if (cur.it.kind === 'ex' && cur.it.ex.station !== 'ATIS' && cur.it.ex.kind !== 'call' && cur.it.ex.kind !== 'listen') {
           const st = cur.it.ex.station, again = { who: st, en: `${callSign ? callSign.short : 'Archer'}, LAB ${st === 'GND' ? 'Ground' : 'Tower'}, how do you hear?`, ja: '聞こえていますか？（応答がない）' };
           cur.lines.push(again); log.push({ ...again, item: cur.it.id, at: clock }); events.push({ type: 'say', who: again.who, en: again.en });
         } else events.push({ type: 'late' });
       }
-    } else if (!hold() && (cur.t -= dt) <= 0) pump();
-    return events;
+    // (a line's time runs while the voice says it; the next waits for both: the longer of the two, not their sum)
+    } else if ((cur.t -= dt) <= 0 && !hold()) pump();
+    return out(events);
   }
   // the cadet's answer: the k-th choice on screen → { ok, why, text } | null
   function answer(k) {
@@ -97,12 +110,18 @@ export function createChairFlight(script, { stage = 2, seed = 1, only = null, ho
     else {
       cur.phase = 'negative';
       cur.queue = it.kind === 'ex' && c.negative ? [{ who: it.ex.station, en: c.negative, ja: '（訂正）' }] : [];
-      cur.t = 0.4; cur.timeLeft = it.kind === 'ex' ? it.ex.time || 25 : TIME.op;
+      cur.t = 0.4; cur.timeLeft = timeOf(it);
     }
     return { ...cur.last };
   }
-  // なぜ？ — the reason for the current turn (the right choice's note; said only when asked, or after a wrong answer)
-  function why() { if (!cur) return ''; cur.why = true; const it = cur.it; return (it.kind === 'ex' ? it.ex.note : it.note) || ''; }
+  // なぜ？ — the reason for the current turn (the right choice's note; said only when asked, or after a wrong answer).
+  // At stages 2 and 3 not before the first answer: the note would give the answer away, and the score is the first try's
+  function why() {
+    if (!cur) return '';
+    cur.why = true;
+    if (stage >= 2 && cur.phase === 'choose' && cur.tries === 0) return '理由は、答えを選んだあとで言います。';
+    const it = cur.it; return (it.kind === 'ex' ? it.ex.note : it.note) || '';
+  }
   const rightIndex = () => (cur && cur.phase === 'choose' ? cur.order.findIndex(k => cur.cs[k].ok) : -1);
   function view() {
     if (!cur) return null;
@@ -114,7 +133,7 @@ export function createChairFlight(script, { stage = 2, seed = 1, only = null, ho
       choices: cur.phase === 'choose' ? cur.order.map((k, j) => ({ k: j, en: cur.cs[k].text })) : [],
       // (stage 1: the right one marked, the script in view)
       script: stage === 1 && cur.phase === 'choose' ? rightIndex() : -1,
-      timeLeft: Math.max(0, cur.timeLeft), time: it.kind === 'ex' ? it.ex.time || 25 : TIME.op, clock: stage === 3,
+      timeLeft: Math.max(0, cur.timeLeft), time: timeOf(it), clock: stage === 3,
       last: cur.last, why: cur.why ? why() : '', com, alt,
     };
   }

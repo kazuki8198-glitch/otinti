@@ -1,18 +1,18 @@
 {
- "built": "2026-10-27",
+ "built": "2026-10-29",
  "paces": {
   "need": {
-   "totalMin": 131.83906442038403,
+   "totalMin": 133.32906442038401,
    "breakdownMin": {
-    "classes": 80.57333333333335,
-    "ftd": 16.525666666666666,
-    "k4": 5.277666666666666,
-    "exam": 5.824999999999999,
+    "classes": 81.24333333333335,
+    "ftd": 17.57233333333333,
+    "k4": 5.601333333333331,
+    "exam": 5.948333333333333,
     "prologue": 1.8283333333333331,
-    "events": 4.256666666666666,
+    "events": 4.44,
     "study": 0,
     "walk": 15.878397753717348,
-    "fixedNoWalk": 6.951666666666666
+    "fixedNoWalk": 6.418333333333333
    },
    "days": [
     {
@@ -60,20 +60,20 @@
       "pm:ftd:k1",
       "evening:event:forces"
      ],
-     "minutes": 15.7,
-     "talkMin": 12.3,
+     "minutes": 16,
+     "talkMin": 12.7,
      "fixedS": 200,
      "walkS": 148,
-     "lines": 142,
-     "decisions": 14,
-     "longestGapMin": 1.73,
+     "lines": 145,
+     "decisions": 15,
+     "longestGapMin": 1.49,
      "talks": [
       {
        "label": "class 0",
-       "lines": 124,
-       "minutes": 10.8,
-       "decisions": 11,
-       "longestGapMin": 1.73
+       "lines": 127,
+       "minutes": 11.1,
+       "decisions": 12,
+       "longestGapMin": 1.49
       },
       {
        "label": "ftd k1",
@@ -98,18 +98,18 @@
       "pm:ftd:k2",
       "evening:event:pitot"
      ],
-     "minutes": 13.2,
+     "minutes": 13.1,
      "talkMin": 9.8,
-     "fixedS": 201,
+     "fixedS": 200,
      "walkS": 148,
-     "lines": 114,
+     "lines": 113,
      "decisions": 23,
      "longestGapMin": 1.57,
      "talks": [
       {
        "label": "class 1",
-       "lines": 81,
-       "minutes": 7.7,
+       "lines": 80,
+       "minutes": 7.6,
        "decisions": 10,
        "longestGapMin": 1.57
       },
@@ -137,7 +137,7 @@
      ],
      "minutes": 2.4,
      "talkMin": 0.7,
-     "fixedS": 103,
+     "fixedS": 98,
      "walkS": 73,
      "lines": 8,
      "decisions": 3,
@@ -159,20 +159,20 @@
       "pm:ftd:k3",
       "evening:event:spell"
      ],
-     "minutes": 21.6,
-     "talkMin": 19,
-     "fixedS": 158,
+     "minutes": 21.8,
+     "talkMin": 19.3,
+     "fixedS": 153,
      "walkS": 102,
-     "lines": 181,
+     "lines": 183,
      "decisions": 32,
-     "longestGapMin": 1.75,
+     "longestGapMin": 1.73,
      "talks": [
       {
        "label": "class 2",
-       "lines": 147,
-       "minutes": 15.9,
+       "lines": 149,
+       "minutes": 16.1,
        "decisions": 19,
-       "longestGapMin": 1.75
+       "longestGapMin": 1.73
       },
       {
        "label": "ftd k3",
@@ -186,7 +186,7 @@
        "lines": 8,
        "minutes": 0.6,
        "decisions": 3,
-       "longestGapMin": 0.17
+       "longestGapMin": 0.2
       }
      ]
     },
@@ -197,18 +197,18 @@
       "pm:ftd:k4",
       "evening:event:readback"
      ],
-     "minutes": 38.3,
-     "talkMin": 35.1,
-     "fixedS": 190,
+     "minutes": 38.6,
+     "talkMin": 35.5,
+     "fixedS": 185,
      "walkS": 137,
-     "lines": 350,
-     "decisions": 50,
+     "lines": 355,
+     "decisions": 51,
      "longestGapMin": 1.91,
      "talks": [
       {
        "label": "class 3",
-       "lines": 280,
-       "minutes": 29,
+       "lines": 281,
+       "minutes": 29.1,
        "decisions": 25,
        "longestGapMin": 1.91
       },
@@ -221,9 +221,9 @@
       },
       {
        "label": "ftd k4 run",
-       "lines": 54,
-       "minutes": 4.5,
-       "decisions": 23,
+       "lines": 58,
+       "minutes": 4.8,
+       "decisions": 24,
        "longestGapMin": 0.49
       },
       {
@@ -236,7 +236,7 @@
       {
        "label": "event readback",
        "lines": 8,
-       "minutes": 0.8,
+       "minutes": 0.9,
        "decisions": 2,
        "longestGapMin": 0.32
       }
@@ -249,34 +249,34 @@
       "pm:ftd:k5",
       "evening:event:metar"
      ],
-     "minutes": 15.3,
-     "talkMin": 12.7,
-     "fixedS": 158,
+     "minutes": 16.1,
+     "talkMin": 13.6,
+     "fixedS": 153,
      "walkS": 102,
-     "lines": 117,
+     "lines": 122,
      "decisions": 22,
      "longestGapMin": 1.78,
      "talks": [
       {
        "label": "class 4",
        "lines": 81,
-       "minutes": 8.3,
+       "minutes": 8.4,
        "decisions": 10,
        "longestGapMin": 1.78
       },
       {
        "label": "ftd k5",
-       "lines": 29,
-       "minutes": 3.9,
+       "lines": 34,
+       "minutes": 4.6,
        "decisions": 10,
-       "longestGapMin": 0.46
+       "longestGapMin": 0.62
       },
       {
        "label": "event metar",
        "lines": 7,
-       "minutes": 0.5,
+       "minutes": 0.6,
        "decisions": 2,
-       "longestGapMin": 0.25
+       "longestGapMin": 0.3
       }
      ]
     },
@@ -288,19 +288,19 @@
       "evening:event:imsafe"
      ],
      "minutes": 14.4,
-     "talkMin": 11.7,
-     "fixedS": 160,
+     "talkMin": 11.8,
+     "fixedS": 155,
      "walkS": 107,
-     "lines": 116,
+     "lines": 117,
      "decisions": 23,
-     "longestGapMin": 1.56,
+     "longestGapMin": 1.64,
      "talks": [
       {
        "label": "class 5",
-       "lines": 84,
+       "lines": 85,
        "minutes": 9,
        "decisions": 11,
-       "longestGapMin": 1.56
+       "longestGapMin": 1.64
       },
       {
        "label": "ftd k6",
@@ -314,7 +314,7 @@
        "lines": 7,
        "minutes": 0.5,
        "decisions": 2,
-       "longestGapMin": 0.24
+       "longestGapMin": 0.23
       }
      ]
     },
@@ -324,19 +324,19 @@
       "am:exam:written1"
      ],
      "minutes": 7.5,
-     "talkMin": 5.8,
-     "fixedS": 101,
+     "talkMin": 5.9,
+     "fixedS": 96,
      "walkS": 70,
      "lines": 68,
      "decisions": 31,
-     "longestGapMin": 0.33,
+     "longestGapMin": 0.36,
      "talks": [
       {
        "label": "exam written1",
        "lines": 68,
-       "minutes": 5.8,
+       "minutes": 5.9,
        "decisions": 31,
-       "longestGapMin": 0.33
+       "longestGapMin": 0.36
       }
      ]
     },
@@ -364,8 +364,8 @@
     "notInBook": 0,
     "byWhere": {
      "class 0": {
-      "asked": 5,
-      "saidBefore": 5
+      "asked": 6,
+      "saidBefore": 6
      },
      "event forces": {
       "asked": 3,
@@ -388,8 +388,8 @@
       "saidBefore": 3
      },
      "class 2": {
-      "asked": 13,
-      "saidBefore": 13
+      "asked": 12,
+      "saidBefore": 12
      },
      "ftd k3": {
       "asked": 10,
@@ -508,11 +508,11 @@
     }
    },
    "k4": {
-    "decisions": 23,
+    "decisions": 24,
     "longestGapS": 29.2,
-    "runMin": 4.46,
-    "allMin": 5.28,
-    "lines": 54
+    "runMin": 4.78,
+    "allMin": 5.6,
+    "lines": 58
    },
    "dayPatterns": [],
    "framePatterns": [
@@ -523,25 +523,21 @@
     {
      "pattern": "“…”",
      "count": 16
-    },
-    {
-     "pattern": "［選択］#",
-     "count": 8
     }
    ]
   },
   "full": {
-   "totalMin": 254.95239775371732,
+   "totalMin": 256.14573108705065,
    "breakdownMin": {
-    "classes": 203.5983333333333,
-    "ftd": 16.525666666666666,
-    "k4": 5.277666666666666,
-    "exam": 5.913333333333332,
+    "classes": 204.11666666666665,
+    "ftd": 17.57233333333333,
+    "k4": 5.601333333333331,
+    "exam": 5.891666666666666,
     "prologue": 1.8283333333333331,
-    "events": 4.256666666666666,
+    "events": 4.44,
     "study": 0,
     "walk": 15.878397753717348,
-    "fixedNoWalk": 6.951666666666666
+    "fixedNoWalk": 6.418333333333333
    },
    "days": [
     {
@@ -589,19 +585,19 @@
       "pm:ftd:k1",
       "evening:event:forces"
      ],
-     "minutes": 34,
-     "talkMin": 30.7,
+     "minutes": 34.2,
+     "talkMin": 30.9,
      "fixedS": 200,
      "walkS": 148,
-     "lines": 350,
-     "decisions": 32,
+     "lines": 352,
+     "decisions": 33,
      "longestGapMin": 2.26,
      "talks": [
       {
        "label": "class 0",
-       "lines": 332,
-       "minutes": 29.1,
-       "decisions": 29,
+       "lines": 334,
+       "minutes": 29.3,
+       "decisions": 30,
        "longestGapMin": 2.26
       },
       {
@@ -627,18 +623,18 @@
       "pm:ftd:k2",
       "evening:event:pitot"
      ],
-     "minutes": 37.6,
-     "talkMin": 34.2,
-     "fixedS": 201,
+     "minutes": 37.7,
+     "talkMin": 34.3,
+     "fixedS": 200,
      "walkS": 148,
-     "lines": 387,
+     "lines": 388,
      "decisions": 40,
      "longestGapMin": 2.55,
      "talks": [
       {
        "label": "class 1",
-       "lines": 354,
-       "minutes": 32.1,
+       "lines": 355,
+       "minutes": 32.2,
        "decisions": 27,
        "longestGapMin": 2.55
       },
@@ -666,7 +662,7 @@
      ],
      "minutes": 2.4,
      "talkMin": 0.7,
-     "fixedS": 103,
+     "fixedS": 98,
      "walkS": 73,
      "lines": 8,
      "decisions": 3,
@@ -689,8 +685,8 @@
       "evening:event:spell"
      ],
      "minutes": 39,
-     "talkMin": 36.4,
-     "fixedS": 158,
+     "talkMin": 36.5,
+     "fixedS": 153,
      "walkS": 102,
      "lines": 356,
      "decisions": 44,
@@ -715,7 +711,7 @@
        "lines": 8,
        "minutes": 0.6,
        "decisions": 3,
-       "longestGapMin": 0.17
+       "longestGapMin": 0.2
       }
      ]
     },
@@ -726,18 +722,18 @@
       "pm:ftd:k4",
       "evening:event:readback"
      ],
-     "minutes": 53.2,
-     "talkMin": 50,
-     "fixedS": 190,
+     "minutes": 53.6,
+     "talkMin": 50.5,
+     "fixedS": 185,
      "walkS": 137,
-     "lines": 501,
-     "decisions": 59,
+     "lines": 505,
+     "decisions": 60,
      "longestGapMin": 2.58,
      "talks": [
       {
        "label": "class 3",
        "lines": 431,
-       "minutes": 43.9,
+       "minutes": 44.1,
        "decisions": 34,
        "longestGapMin": 2.58
       },
@@ -750,9 +746,9 @@
       },
       {
        "label": "ftd k4 run",
-       "lines": 54,
-       "minutes": 4.5,
-       "decisions": 23,
+       "lines": 58,
+       "minutes": 4.8,
+       "decisions": 24,
        "longestGapMin": 0.49
       },
       {
@@ -765,7 +761,7 @@
       {
        "label": "event readback",
        "lines": 8,
-       "minutes": 0.8,
+       "minutes": 0.9,
        "decisions": 2,
        "longestGapMin": 0.32
       }
@@ -778,34 +774,34 @@
       "pm:ftd:k5",
       "evening:event:metar"
      ],
-     "minutes": 41,
-     "talkMin": 38.4,
-     "fixedS": 158,
+     "minutes": 41.7,
+     "talkMin": 39.2,
+     "fixedS": 153,
      "walkS": 102,
-     "lines": 380,
+     "lines": 385,
      "decisions": 44,
      "longestGapMin": 2.59,
      "talks": [
       {
        "label": "class 4",
        "lines": 344,
-       "minutes": 33.9,
+       "minutes": 34,
        "decisions": 32,
        "longestGapMin": 2.59
       },
       {
        "label": "ftd k5",
-       "lines": 29,
-       "minutes": 3.9,
+       "lines": 34,
+       "minutes": 4.6,
        "decisions": 10,
-       "longestGapMin": 0.46
+       "longestGapMin": 0.62
       },
       {
        "label": "event metar",
        "lines": 7,
-       "minutes": 0.5,
+       "minutes": 0.6,
        "decisions": 2,
-       "longestGapMin": 0.25
+       "longestGapMin": 0.3
       }
      ]
     },
@@ -816,9 +812,9 @@
       "pm:ftd:k6",
       "evening:event:imsafe"
      ],
-     "minutes": 36.7,
+     "minutes": 36.6,
      "talkMin": 34,
-     "fixedS": 160,
+     "fixedS": 155,
      "walkS": 107,
      "lines": 347,
      "decisions": 39,
@@ -827,7 +823,7 @@
       {
        "label": "class 5",
        "lines": 315,
-       "minutes": 31.2,
+       "minutes": 31.3,
        "decisions": 27,
        "longestGapMin": 2.29
       },
@@ -843,7 +839,7 @@
        "lines": 7,
        "minutes": 0.5,
        "decisions": 2,
-       "longestGapMin": 0.24
+       "longestGapMin": 0.23
       }
      ]
     },
@@ -852,20 +848,20 @@
      "plan": [
       "am:exam:written1"
      ],
-     "minutes": 7.6,
+     "minutes": 7.5,
      "talkMin": 5.9,
-     "fixedS": 101,
+     "fixedS": 96,
      "walkS": 70,
      "lines": 68,
      "decisions": 31,
-     "longestGapMin": 0.35,
+     "longestGapMin": 0.38,
      "talks": [
       {
        "label": "exam written1",
        "lines": 68,
        "minutes": 5.9,
        "decisions": 31,
-       "longestGapMin": 0.35
+       "longestGapMin": 0.38
       }
      ]
     },
@@ -885,24 +881,24 @@
     }
    ],
    "questions": {
-    "asked": 157,
-    "known": 157,
-    "inBook": 157,
-    "saidBefore": 157,
+    "asked": 159,
+    "known": 159,
+    "inBook": 159,
+    "saidBefore": 159,
     "saidBeforePct": 100,
     "notInBook": 0,
     "byWhere": {
      "class 0": {
-      "asked": 4,
-      "saidBefore": 4
+      "asked": 5,
+      "saidBefore": 5
      },
      "event forces": {
       "asked": 3,
       "saidBefore": 3
      },
      "class 1": {
-      "asked": 10,
-      "saidBefore": 10
+      "asked": 11,
+      "saidBefore": 11
      },
      "ftd k2": {
       "asked": 10,
@@ -1037,11 +1033,11 @@
     }
    },
    "k4": {
-    "decisions": 23,
+    "decisions": 24,
     "longestGapS": 29.2,
-    "runMin": 4.46,
-    "allMin": 5.28,
-    "lines": 54
+    "runMin": 4.78,
+    "allMin": 5.6,
+    "lines": 58
    },
    "dayPatterns": [],
    "framePatterns": [
@@ -1058,18 +1054,6 @@
      "count": 11
     },
     {
-     "pattern": "［選択］# G・約 #% 増",
-     "count": 9
-    },
-    {
-     "pattern": "［選択］# kt",
-     "count": 8
-    },
-    {
-     "pattern": "［選択］#",
-     "count": 8
-    },
-    {
      "pattern": "［選択］「…」",
      "count": 8
     },
@@ -1084,17 +1068,17 @@
    ]
   },
   "quick": {
-   "totalMin": 104.25906442038402,
+   "totalMin": 104.79239775371734,
    "breakdownMin": {
-    "classes": 52.96166666666668,
-    "ftd": 16.525666666666666,
-    "k4": 5.277666666666666,
-    "exam": 5.8566666666666665,
+    "classes": 52.66666666666668,
+    "ftd": 17.57233333333333,
+    "k4": 5.601333333333331,
+    "exam": 5.9883333333333315,
     "prologue": 1.8283333333333331,
-    "events": 4.256666666666666,
+    "events": 4.44,
     "study": 0,
     "walk": 15.878397753717348,
-    "fixedNoWalk": 6.951666666666666
+    "fixedNoWalk": 6.418333333333333
    },
    "days": [
     {
@@ -1142,20 +1126,20 @@
       "pm:ftd:k1",
       "evening:event:forces"
      ],
-     "minutes": 11.9,
-     "talkMin": 8.6,
+     "minutes": 12,
+     "talkMin": 8.7,
      "fixedS": 200,
      "walkS": 148,
-     "lines": 96,
+     "lines": 97,
      "decisions": 9,
-     "longestGapMin": 1.73,
+     "longestGapMin": 1.71,
      "talks": [
       {
        "label": "class 0",
-       "lines": 78,
-       "minutes": 7,
+       "lines": 79,
+       "minutes": 7.1,
        "decisions": 6,
-       "longestGapMin": 1.73
+       "longestGapMin": 1.71
       },
       {
        "label": "ftd k1",
@@ -1180,18 +1164,18 @@
       "pm:ftd:k2",
       "evening:event:pitot"
      ],
-     "minutes": 13.2,
+     "minutes": 13.1,
      "talkMin": 9.8,
-     "fixedS": 201,
+     "fixedS": 200,
      "walkS": 148,
-     "lines": 114,
+     "lines": 113,
      "decisions": 23,
      "longestGapMin": 1.57,
      "talks": [
       {
        "label": "class 1",
-       "lines": 81,
-       "minutes": 7.7,
+       "lines": 80,
+       "minutes": 7.6,
        "decisions": 10,
        "longestGapMin": 1.57
       },
@@ -1219,7 +1203,7 @@
      ],
      "minutes": 2.4,
      "talkMin": 0.7,
-     "fixedS": 103,
+     "fixedS": 98,
      "walkS": 73,
      "lines": 8,
      "decisions": 3,
@@ -1241,20 +1225,20 @@
       "pm:ftd:k3",
       "evening:event:spell"
      ],
-     "minutes": 15.3,
-     "talkMin": 12.7,
-     "fixedS": 158,
+     "minutes": 15.6,
+     "talkMin": 13,
+     "fixedS": 153,
      "walkS": 102,
-     "lines": 122,
+     "lines": 125,
      "decisions": 25,
-     "longestGapMin": 1.64,
+     "longestGapMin": 1.53,
      "talks": [
       {
        "label": "class 2",
-       "lines": 88,
-       "minutes": 9.6,
+       "lines": 91,
+       "minutes": 9.9,
        "decisions": 12,
-       "longestGapMin": 1.64
+       "longestGapMin": 1.53
       },
       {
        "label": "ftd k3",
@@ -1268,7 +1252,7 @@
        "lines": 8,
        "minutes": 0.6,
        "decisions": 3,
-       "longestGapMin": 0.17
+       "longestGapMin": 0.2
       }
      ]
     },
@@ -1279,20 +1263,20 @@
       "pm:ftd:k4",
       "evening:event:readback"
      ],
-     "minutes": 20.6,
-     "talkMin": 17.4,
-     "fixedS": 190,
+     "minutes": 20.2,
+     "talkMin": 17.1,
+     "fixedS": 185,
      "walkS": 137,
-     "lines": 178,
-     "decisions": 37,
-     "longestGapMin": 1.81,
+     "lines": 179,
+     "decisions": 38,
+     "longestGapMin": 1.7,
      "talks": [
       {
        "label": "class 3",
-       "lines": 108,
-       "minutes": 11.3,
+       "lines": 105,
+       "minutes": 10.7,
        "decisions": 12,
-       "longestGapMin": 1.81
+       "longestGapMin": 1.7
       },
       {
        "label": "ftd k4",
@@ -1303,9 +1287,9 @@
       },
       {
        "label": "ftd k4 run",
-       "lines": 54,
-       "minutes": 4.5,
-       "decisions": 23,
+       "lines": 58,
+       "minutes": 4.8,
+       "decisions": 24,
        "longestGapMin": 0.49
       },
       {
@@ -1318,7 +1302,7 @@
       {
        "label": "event readback",
        "lines": 8,
-       "minutes": 0.8,
+       "minutes": 0.9,
        "decisions": 2,
        "longestGapMin": 0.32
       }
@@ -1331,34 +1315,34 @@
       "pm:ftd:k5",
       "evening:event:metar"
      ],
-     "minutes": 15.2,
-     "talkMin": 12.6,
-     "fixedS": 158,
+     "minutes": 16.1,
+     "talkMin": 13.6,
+     "fixedS": 153,
      "walkS": 102,
-     "lines": 117,
+     "lines": 122,
      "decisions": 22,
      "longestGapMin": 1.78,
      "talks": [
       {
        "label": "class 4",
        "lines": 81,
-       "minutes": 8.2,
+       "minutes": 8.4,
        "decisions": 10,
        "longestGapMin": 1.78
       },
       {
        "label": "ftd k5",
-       "lines": 29,
-       "minutes": 3.9,
+       "lines": 34,
+       "minutes": 4.6,
        "decisions": 10,
-       "longestGapMin": 0.46
+       "longestGapMin": 0.62
       },
       {
        "label": "event metar",
        "lines": 7,
-       "minutes": 0.5,
+       "minutes": 0.6,
        "decisions": 2,
-       "longestGapMin": 0.25
+       "longestGapMin": 0.3
       }
      ]
     },
@@ -1369,20 +1353,20 @@
       "pm:ftd:k6",
       "evening:event:imsafe"
      ],
-     "minutes": 14.7,
-     "talkMin": 12,
-     "fixedS": 160,
+     "minutes": 14.4,
+     "talkMin": 11.8,
+     "fixedS": 155,
      "walkS": 107,
-     "lines": 118,
+     "lines": 117,
      "decisions": 23,
-     "longestGapMin": 1.76,
+     "longestGapMin": 1.64,
      "talks": [
       {
        "label": "class 5",
-       "lines": 86,
-       "minutes": 9.2,
+       "lines": 85,
+       "minutes": 9,
        "decisions": 11,
-       "longestGapMin": 1.76
+       "longestGapMin": 1.64
       },
       {
        "label": "ftd k6",
@@ -1396,7 +1380,7 @@
        "lines": 7,
        "minutes": 0.5,
        "decisions": 2,
-       "longestGapMin": 0.24
+       "longestGapMin": 0.23
       }
      ]
     },
@@ -1405,20 +1389,20 @@
      "plan": [
       "am:exam:written1"
      ],
-     "minutes": 7.5,
-     "talkMin": 5.9,
-     "fixedS": 101,
+     "minutes": 7.6,
+     "talkMin": 6,
+     "fixedS": 96,
      "walkS": 70,
      "lines": 68,
      "decisions": 31,
-     "longestGapMin": 0.33,
+     "longestGapMin": 0.35,
      "talks": [
       {
        "label": "exam written1",
        "lines": 68,
-       "minutes": 5.9,
+       "minutes": 6,
        "decisions": 31,
-       "longestGapMin": 0.33
+       "longestGapMin": 0.35
       }
      ]
     },
@@ -1438,10 +1422,10 @@
     }
    ],
    "questions": {
-    "asked": 142,
-    "known": 142,
-    "inBook": 142,
-    "saidBefore": 142,
+    "asked": 143,
+    "known": 143,
+    "inBook": 143,
+    "saidBefore": 143,
     "saidBeforePct": 100,
     "notInBook": 0,
     "byWhere": {
@@ -1470,8 +1454,8 @@
       "saidBefore": 3
      },
      "class 2": {
-      "asked": 10,
-      "saidBefore": 10
+      "asked": 9,
+      "saidBefore": 9
      },
      "ftd k3": {
       "asked": 10,
@@ -1482,8 +1466,8 @@
       "saidBefore": 3
      },
      "class 3": {
-      "asked": 8,
-      "saidBefore": 8
+      "asked": 10,
+      "saidBefore": 10
      },
      "event readback": {
       "asked": 2,
@@ -1590,17 +1574,17 @@
     }
    },
    "k4": {
-    "decisions": 23,
+    "decisions": 24,
     "longestGapS": 29.2,
-    "runMin": 4.46,
-    "allMin": 5.28,
-    "lines": 54
+    "runMin": 4.78,
+    "allMin": 5.6,
+    "lines": 58
    },
    "dayPatterns": [],
    "framePatterns": [
     {
      "pattern": "あなた：“…”",
-     "count": 11
+     "count": 10
     }
    ]
   }

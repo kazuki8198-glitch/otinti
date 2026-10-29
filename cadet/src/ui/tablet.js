@@ -155,7 +155,7 @@ export function createTablet({ doc = document, model, act, onClose } = {}) {
       put(scr, make('h2', '', '交信の練習（チェアフライト）'), make('p', 'sub', '初飛行の日の交信を、ATIS から駐機場まで、自分がパイロットになって通します（毎回少しずつ変わります。記録には残りません）。'));
       const c = make('div', 'tb-card');
       put(c, btn('① 台本を見ながら', () => { close(); act.chair(1); }), btn('② 自分の台詞を隠して', () => { close(); act.chair(2); }));
-      if (m.k4 && m.k4.passed) put(c, btn('③ 本番（時間制限あり）', () => { close(); act.chair(3); }), btn('教科書の例を通しで聞く（別の空港の交信）', () => { close(); act.chairListen(); }, 'tb-btn ghost'));
+      if (m.k4 && m.k4.passed) put(c, btn('③ 本番（時間制限あり）', () => { close(); act.chair(3); }), btn('教科書の例を通しで聞く（配置の違う、教科書の空港）', () => { close(); act.chairListen(); }, 'tb-btn ghost'));
       put(scr, c);
     }
     put(scr, make('h2', '', '学科テストの練習'), make('p', 'sub', m.chapter1 ? '分野を選ぶと、10 問までの練習が始まります（成績には入りません。授業でもう話したことだけから出ます）。' : '分野を選ぶと、10 問の練習が始まります（成績には入りません）。'));

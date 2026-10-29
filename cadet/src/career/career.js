@@ -77,7 +77,7 @@ export const CH1_EVENTS = [
   { id: 'pitot', cls: 1, who: 'mechanic', where: 'outside', title: '駐機場の大城さんと、Archer のピトー管と燃料のサンプを見る' },
   { id: 'spell', cls: 2, who: 'dispatcher', where: 'dispatch', title: '運航管理の佐伯さんと、登録記号と周波数を声に出す' },
   { id: 'readback', cls: 3, who: 'kiryu', where: 'lounge', title: 'ラウンジで、桐生の管制官役に復唱する' },
-  { id: 'metar', cls: 4, who: 'dispatcher', where: 'dispatch', title: '運航管理の佐伯さんと、今日の METAR で飛ぶかを決めてみる' },
+  { id: 'metar', cls: 4, who: 'dispatcher', where: 'dispatch', title: '運航管理の佐伯さんと、今朝の METAR を読んで、今日の判断を聞く' },
   { id: 'imsafe', cls: 5, who: 'chief', where: 'instructors', title: '教官室の真壁 主任教官と、IMSAFE を確かめる' },
   { id: 'week', cls: -1, who: 'asahi', where: 'lounge', title: 'ラウンジの朝日と、今週の復習（しなくてもよい）', optional: true },
 ];
@@ -143,17 +143,19 @@ export function weatherFor(seed, day, o = {}) {
   if (force) kind = force;
   const W = WEATHER[kind];
   const tempC = 17 + Math.floor(r() * 9), dewC = tempC - 4 - Math.floor(r() * 6), qnh = 29.92;
+  // (a METAR's temperature / dew point: the dew point never above the temperature)
+  const td = (t, d) => `${pad2(t)}/${pad2(Math.min(d, t))}`;
   const z = (h) => `${pad2(h)}53Z`, q = `A${String(Math.round(qnh * 100))}`;
   const wind = kind === 'crosswind' ? '09016G24KT' : kind === 'lowCloud' ? '03006KT' : '36005KT';
   const m = {
-    good: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 10SM FEW035 ${pad2(tempC - 3)}/${pad2(dewC)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 10SM SCT045 ${pad2(tempC)}/${pad2(dewC)} ${q}` },
-    amFog: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} 00000KT 1/2SM FG VV002 ${pad2(tempC - 5)}/${pad2(tempC - 5)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 10SM FEW030 ${pad2(tempC)}/${pad2(dewC)} ${q}` },
-    pmStorm: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 10SM FEW040 ${pad2(tempC - 2)}/${pad2(dewC + 3)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} 22018G30KT 3SM +TSRA BKN025CB ${pad2(tempC - 4)}/${pad2(dewC + 2)} ${q}` },
-    crosswind: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 10SM SCT035 ${pad2(tempC)}/${pad2(dewC)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 10SM SCT040 ${pad2(tempC + 1)}/${pad2(dewC)} ${q}` },
-    lowCloud: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 3SM BR BKN008 OVC015 ${pad2(tempC - 4)}/${pad2(tempC - 5)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 4SM BR OVC009 ${pad2(tempC - 3)}/${pad2(tempC - 4)} ${q}` },
-    amLowCloud: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} 00000KT 5SM BR OVC006 ${pad2(tempC - 4)}/${pad2(tempC - 5)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 10SM SCT035 ${pad2(tempC)}/${pad2(dewC)} ${q}` },
-    pmWind: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 10SM FEW040 ${pad2(tempC - 2)}/${pad2(dewC)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} 09018G26KT 10SM SCT040 ${pad2(tempC + 1)}/${pad2(dewC)} ${q}` },
-    storm: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} 18012G22KT 2SM TSRA BKN015CB ${pad2(tempC - 4)}/${pad2(tempC - 5)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} 20015G28KT 1 1/2SM +TSRA OVC012CB ${pad2(tempC - 5)}/${pad2(tempC - 6)} ${q}` },
+    good: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 10SM FEW035 ${td(tempC - 3, dewC)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 10SM SCT045 ${td(tempC, dewC)} ${q}` },
+    amFog: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} 00000KT 1/2SM FG VV002 ${td(tempC - 5, tempC - 5)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 10SM FEW030 ${td(tempC, dewC)} ${q}` },
+    pmStorm: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 10SM FEW040 ${td(tempC - 2, dewC + 3)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} 22018G30KT 3SM +TSRA BKN025CB ${td(tempC - 4, dewC + 2)} ${q}` },
+    crosswind: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 10SM SCT035 ${td(tempC, dewC)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 10SM SCT040 ${td(tempC + 1, dewC)} ${q}` },
+    lowCloud: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 3SM BR BKN008 OVC015 ${td(tempC - 4, tempC - 5)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 4SM BR OVC009 ${td(tempC - 3, tempC - 4)} ${q}` },
+    amLowCloud: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} 00000KT 5SM BR OVC006 ${td(tempC - 4, tempC - 5)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} ${wind} 10SM SCT035 ${td(tempC, dewC)} ${q}` },
+    pmWind: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} ${wind} 10SM FEW040 ${td(tempC - 2, dewC)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} 09018G26KT 10SM SCT040 ${td(tempC + 1, dewC)} ${q}` },
+    storm: { am: `KLAB ${pad2(dateOf(day).d)}${z(13)} 18012G22KT 2SM TSRA BKN015CB ${td(tempC - 4, tempC - 5)} ${q}`, pm: `KLAB ${pad2(dateOf(day).d)}${z(18)} 20015G28KT 1 1/2SM +TSRA OVC012CB ${td(tempC - 5, tempC - 6)} ${q}` },
   }[kind];
   const taf = {
     good: 'TAF KLAB … 01005KT P6SM FEW035 FM1800 03008KT P6SM SCT045',
@@ -204,6 +206,10 @@ export function cleanCareer(o) {
     CLASSES_BEFORE.forEach((ids, i) => { const d = s.done[`class:${i}`]; if (d != null) for (const id of ids) chapters.set(id, d); });
     for (const k of before) delete s.done[k];
     CLASSES.forEach((ids, i) => { if (ids.every(id => chapters.has(id))) s.done[`class:${i}`] = Math.max(...ids.map(id => chapters.get(id))); });
+    // (a class of today's no longer a class done — its chapters part of one still to come: today begun again from its
+    // morning, so the class comes before its afternoon)
+    const today = (d) => d === s.day;
+    if (s.chapter === 'ch1' && [...chapters.values()].some(today) && !CLASSES.some((_, i) => today(s.done[`class:${i}`]))) s.slot = 'morning';
   }
   if (PACE_IDS.includes(o.lastPace)) s.lastPace = o.lastPace;
   if (isObj(o.attempts)) for (const [k, v] of Object.entries(o.attempts)) if (ATTEMPT_ID.test(k) && Number.isInteger(v) && v >= 0) s.attempts[k] = Math.min(v, 9999);
@@ -275,11 +281,14 @@ export function schedule(state, prog, { trust = 50, weather = null } = {}) {
     // (what was done today stays today's: the plan does not move on to tomorrow's work)
     const today = (key) => state.done[key] === day;
     const cls = CLASSES.findIndex((_, i) => !state.done[`class:${i}`] || today(`class:${i}`));
-    const k = GROUND.find(id => !groundPassed(prog, id) || today(`ftd:${id}`));
+    // (a device lesson waits for the class that teaches it — today's, or one before: a save from the classes' order before
+    // can have a lesson whose class is still to come)
+    const k0 = GROUND.find(id => !groundPassed(prog, id) || today(`ftd:${id}`)), ci = k0 ? CLASS_FTD.indexOf(k0) : -1;
+    const k = k0 && (ci < 0 || state.done[`class:${ci}`] != null || ci === cls) ? k0 : null;
     if (cls >= 0) out.push({ slot: 'am', kind: 'class', id: String(cls), title: `座学 ${cls + 1} / ${CLASSES.length}（${classShort(cls)}）`, where: 'brief-2', who: 'lecturer' });
-    if (k) out.push({ slot: cls >= 0 ? 'pm' : 'am', kind: 'ftd', id: k, title: `訓練装置 ${k}（${FTD_TITLES[k]}）`, where: 'sim', who: 'lecturer' });
-    // (the evening's event of the day's class)
-    const ev = cls >= 0 && CH1_EVENTS.find(e => e.cls === cls);
+    if (k) out.push({ slot: cls >= 0 ? 'pm' : 'am', kind: 'ftd', id: k, title: `訓練装置 ${k}・${FTD_TITLES[k]}`, where: 'sim', who: 'lecturer' });
+    // (the evening's event of the day's class: the class taken today, or still to come this morning — not a class missed)
+    const ev = cls >= 0 && (today(`class:${cls}`) || SLOTS.indexOf(state.slot) <= SLOTS.indexOf('am')) && CH1_EVENTS.find(e => e.cls === cls);
     if (ev && (!state.done[`event:${ev.id}`] || today(`event:${ev.id}`))) out.push({ slot: 'evening', kind: 'event', id: ev.id, title: ev.title, where: ev.where, who: ev.who });
     const ex = state.exams.written1;
     if (cls < 0 && !k && (!(ex && ex.pass) || today('exam:written1'))) out.push({ slot: out.length ? 'pm' : 'am', kind: 'exam', id: 'written1', title: EXAMS.written1.title, where: 'planning', who: 'lecturer' });

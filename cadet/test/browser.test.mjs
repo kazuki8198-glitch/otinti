@@ -315,8 +315,9 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     assert.ok(!t.lines.some(l => /最初は「飛行機に働く 4 つの力」です。/.test(l)), 'not from the start');
     st = await career();
     assert.deepEqual([st.slot, st.done['class:0'], st.done['lecture:0']], ['pm', 2, undefined], 'done: its place forgotten');
-    // the device (k2 as the next one: k1 passed): ten PFD pictures to read, every one right — passed
-    await ev((p) => window.__cadet.career.set({ progress: { lessons: { k1: p.k1 } }, place: false }), GROUND_OK);
+    // the device (k2 as the next one: k1 passed — and class 1, which teaches it: a lesson waits for its class): ten PFD
+    // pictures to read, every one right — passed
+    await ev((p) => { const C = window.__cadet, st = C.career.state(); C.career.set({ state: { done: { ...st.done, 'class:1': st.day } }, progress: { lessons: { k1: p.k1 } }, place: false }); }, GROUND_OK);
     await ev(() => window.__cadet.career.advance('pm'));
     assert.deepEqual((await ev(() => window.__cadet.career.schedule())).find(x => x.kind === 'ftd').id, 'k2');
     t = await talkThrough('lecturer');
@@ -347,7 +348,10 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     // (M7) the day's plan done before the evening: the guide says to go home, and the front doors agree — walking out is
     // enough (no E, no card): the next morning, chapter 2
     await g.page.waitForTimeout(700);
-    assert.match(await ev(() => { const C = window.__cadet; C.followGuide({ maxT: 0.1 }); return C.guide().text; }), /正面入口から寮に帰ると/);
+    // (the way home said in words on the first two days only — the same sentence every evening was the repetition the
+    // brief names; after them the guide's mark leads to the front doors)
+    const gd = await ev(() => { const C = window.__cadet; C.followGuide({ maxT: 0.1 }); return C.guide(); });
+    assert.match(gd.text, /^今日の予定は終わり、明日は/); assert.equal(gd.at, 'entrance', 'the guide to the front doors');
     assert.equal(await ev(() => { const C = window.__cadet; C.placeWalker(655.0, 273.8, { a: 655.0, c: 285 }); C.lookAt(655.0, 276.2, 1.3); return C.current(); }), 'home');
     assert.match(await ev(() => document.querySelector('#prompt').textContent), /寮へ帰る/);
     r = await out();
@@ -424,8 +428,19 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     await g.page.keyboard.press('KeyM');
     await g.page.waitForFunction(() => { const v = window.__cadet.career.chair.view(); return v && (v.id !== 'gnd_call' || v.phase !== 'choose'); }, null, { timeout: 5000 });
     assert.equal((await ev(() => window.__cadet.career.chair.view())).last.ok, true, 'said into the microphone, taken as the right call');
-    // no answer in time: the controller asks again
-    r = await ev(() => { const K = window.__cadet.career.chair; for (let k = 0; k < 400 && K.view().phase !== 'choose'; k++) K.step(0.25); const id = K.view().id; for (let k = 0; k < 300 && K.view().id === id && !K.view().lines.some(l => /how do you hear/.test(l.en)); k++) K.step(0.25); return K.view(); });
+    // M, then the menu before the words come: the microphone stops — nothing answers the turn behind the menu
+    await ev(() => { const K = window.__cadet.career.chair; for (let k = 0; k < 800; k++) { const v = K.view(); if (v.phase === 'choose' && v.kind !== 'op') break; if (v.phase === 'choose') K.answer(true); else K.step(0.25); } const v = K.view(); window.__micSay = v.choices[K.rightIndex()].en.toLowerCase(); });
+    await g.page.keyboard.press('KeyM');
+    await ev(() => window.__cadet.menu.open('settings'));
+    await g.page.waitForTimeout(300);
+    assert.equal(await ev(() => !!window.__cadet.career.chair.view().last), false, 'nothing answered behind the menu');
+    await ev(() => window.__cadet.menu.close());
+    // no answer in time to a read-back: the controller asks again (a call the cadet has yet to make is late without a word)
+    r = await ev(() => {
+      const K = window.__cadet.career.chair;
+      for (let k = 0; k < 4000; k++) { const v = K.view(); if (!v) break; if (v.phase === 'choose') { if (v.kind === 'readback') break; K.answer(true); } else K.step(0.25); }
+      const id = K.view().id; for (let k = 0; k < 400 && K.view().id === id && !K.view().lines.some(l => /how do you hear/.test(l.en)); k++) K.step(0.25); return K.view();
+    });
     assert.ok(r.lines.some(l => /how do you hear\?/.test(l.en)), `called after: ${JSON.stringify(r.lines)}`);
     await g.page.keyboard.press('KeyQ');
     assert.equal(await ev(() => window.__cadet.career.chair.active()), false, 'Q left it');
@@ -1271,14 +1286,17 @@ describe('browser', { skip: !chromium && 'Playwright not found', timeout: 360000
     await ev(() => window.__cadet.settings.set('crewEnglish', true));
     await ev((ins) => { const C = window.__cadet; C.placeWalker(ins.a + 2.4, ins.c - 0.6, { a: ins.a, c: ins.c }); C.lookAt(ins.a, ins.c, 1.5); }, ins);
     assert.equal(await ev(() => window.__cadet.use()), 'talk');
-    await g.page.waitForFunction(() => !window.__cadet.dialog().typing, null, { timeout: 15000 });
+    // (the line shown whole: typing runs on the animation frames, which the software renderer can hold back for many
+    // seconds on a loaded machine — what is checked is the line, not its typing)
+    await ev(() => window.__cadet.dialogReveal());
+    assert.equal(await ev(() => window.__cadet.dialog().typing), false);
     const shown = await ev(() => ({ en: document.querySelector('#dlg .dlg-text').textContent, ja: document.querySelector('#dlg .dlg-ja').textContent, jaShown: !document.querySelector('#dlg .dlg-ja').hidden, view: window.__cadet.dialog() }));
     assert.ok(shown.view.en && shown.en === shown.view.en, `the English on screen: ${shown.en}`);
     assert.doesNotMatch(shown.en, /[ぁ-ん]/);
     assert.ok(shown.jaShown && shown.ja === shown.view.text, 'the Japanese under it');
     await ev(() => window.__cadet.settings.set('crewEnglishJa', false));
     await ev(() => window.__cadet.dialogChoose(0));
-    await g.page.waitForFunction(() => !window.__cadet.dialog().typing, null, { timeout: 15000 });
+    await ev(() => window.__cadet.dialogReveal());
     assert.equal(await ev(() => document.querySelector('#dlg .dlg-ja').hidden), true, 'no Japanese when that is off');
     await ev(() => { const C = window.__cadet; C.setMode('spectator'); C.setMode('walk'); C.settings.set('crewEnglish', false); C.settings.set('crewEnglishJa', true); C.settings.set('textSpeed', 1); });
   });

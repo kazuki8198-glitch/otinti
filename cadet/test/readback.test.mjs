@@ -32,9 +32,22 @@ test('numbers, letters and the call sign as the radio says them', () => {
   const k = keysOf('Runway three six, hold short of runway three six at Alpha One, squawk four two one five, Archer 8SY.', CALL);
   assert.deepEqual(k.map(x => `${x.kind}:${x.want}`), ['call:8sy', 'runway:36', 'squawk:4215', 'taxiway:a1', 'phrase:hold short']);
   assert.deepEqual(keysOf('LAB Tower, Archer Seven Three Eight Sierra Yankee, over the practice area, three thousand, with information Bravo, inbound for landing.', CALL).map(x => `${x.kind}:${x.want}`),
-    ['call:738sy', 'altitude:3000', 'info:b', 'phrase:inbound for landing', 'phrase:over']);
+    ['station:tower', 'call:738sy', 'altitude:3000', 'info:b', 'phrase:inbound for landing', 'phrase:over the practice area']);
+  // ("over" the procedure word only where it ends a call: k4 teaches not to use it)
+  assert.ok(keysOf('LAB Tower, Archer 8SY, ready, over.', CALL).some(x => x.want === 'over'));
   assert.deepEqual(keysOf('Right at Alpha Two, Ground point seven, Archer 8SY.', CALL).map(x => `${x.kind}:${x.want}`), ['call:8sy', 'freq:.7', 'taxiway:a2', 'phrase:right at']);
-  assert.deepEqual(keysOf('LAB Ground, Archer 8SY, ready for departure.', CALL).map(x => x.ja), ['コールサイン（Archer 8SY）', '“ready for departure”']);
+  assert.deepEqual(keysOf('LAB Ground, Archer 8SY, ready for departure.', CALL).map(x => x.ja), ['呼ぶ相手（LAB Ground）', 'コールサイン（Archer 8SY）', '“ready for departure”']);
+  // (the station called is a key word of a call: the right call to the wrong one is not the right call; a read-back has none)
+  const twr = [{ en: 'LAB Tower, Archer 8SY, holding short runway three six at Alpha One, ready for departure.', ok: true }, { en: 'LAB Ground, Archer 8SY, ready for departure.' }, { en: 'Ready, over.' }];
+  const toGround = matchReadback(twr, 'lab ground archer 8 sierra yankee holding short runway 36 at alpha 1 ready for departure', { call: CALL });
+  assert.ok(toGround.pick !== 0 && toGround.missing.some(k => k.kind === 'station' && k.want === 'tower'), 'to Ground: not the right call, the station named');
+  assert.equal(matchReadback(twr, 'lab tower archer 8 sierra yankee ready for departure', { call: CALL }).pick, -1, 'to Tower, words left out: not the call to Ground');
+  assert.equal(matchReadback(twr, 'lab tower archer 8 sierra yankee holding short runway 36 at alpha 1 ready for departure', { call: CALL }).pick, 0);
+  assert.equal(keysOf('Runway three six, line up and wait, Archer 8SY.', CALL).some(x => x.kind === 'station'), false);
+  // (a wrong one's own words said with the right one: not the right one — the clearance not given)
+  const luaw = [{ en: 'Runway three six, line up and wait, Archer 8SY.', ok: true }, { en: 'Runway three six, cleared for takeoff, Archer 8SY.' }, { en: 'Roger, Archer 8SY.' }];
+  assert.notEqual(matchReadback(luaw, 'runway 36 line up and wait cleared for takeoff archer 8 sierra yankee', { call: CALL }).pick, 0);
+  assert.equal(matchReadback(luaw, 'roger runway 36 line up and wait archer 8 sierra yankee', { call: CALL }).pick, 0, '"Roger" before it: still the read-back');
   // a phrase heard with the small words lost or misheard
   assert.equal(hearKeys(keysOf('line up and wait'), 'line up in wait').missing.length, 0);
   assert.equal(hearKeys(keysOf('cleared for takeoff'), 'cleared take off').missing.length, 0);
@@ -59,7 +72,10 @@ for (const type of ['pa28', 'pa44']) {
             if (i === right) return;
             const m = matchReadback(x.choices, asHeard(c.en), { call, number });
             const keys = keysOf(c.en, call, { number });
+            const own = keys.filter(k => k.kind === 'phrase' && !['roger', 'over'].includes(k.want) && !keysOf(x.choices[right].en, call, { number }).some(o => o.want === k.want));
             if (number || keys.length >= 2) assert.ok(m.pick === i || m.pick === -1, `${name} ${id}: wrong "${c.en}" → ${m.pick}`);
+            // (one word of its own — "Bye." — is that one; a call sign or "Roger" alone is nothing)
+            else if (own.length === 1) assert.equal(m.pick, i, `${name} ${id}: "${c.en}" is that one`);
             else assert.equal(m.pick, -1, `${name} ${id}: "${c.en}" has too few key words to be taken`);
             assert.notEqual(m.pick, right, `${name} ${id}: "${c.en}" is not the right one`);
           });

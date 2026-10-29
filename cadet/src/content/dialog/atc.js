@@ -19,7 +19,8 @@ export function setCall(type = 'pa28') { Object.assign(CALL, CALLS[type] || CALL
 export const FREQ = { atis: '127.65', ground: '121.7', tower: '118.3' };      // (fictional, as FLIGHT LAB's)
 export function ourCall(text) {
   if (typeof text !== 'string') return text;
-  return text.replace(/(Archer|Seminole) Seven Lima Alpha/g, CALL.full).replace(/(Archer|Seminole) 7LA/g, CALL.short);
+  // (and the textbook's fragment of a call sign heard in part — "…Seven Lima…" — as today's, in part)
+  return text.replace(/(Archer|Seminole) Seven Lima Alpha/g, CALL.full).replace(/(Archer|Seminole) 7LA/g, CALL.short).replace(/…Seven Lima…/g, `…${CALL.full.split(' ').slice(2, 4).join(' ')}…`);
 }
 // what the speech synthesis says: the short call sign in words
 export const spoken = (s) => String(s).replace(/Archer 8SY|Seminole 2SY/g, CALL.spokenShort);
@@ -159,7 +160,8 @@ export function dayRadio(weather) {
   X.gnd_in = (exit) => ({ station: 'GND', freq: FREQ.ground, kind: 'call',
     q: '滑走路を出ました。地上管制を呼びます。',
     choices: [
-      { en: `LAB Ground, ${S}, clear of runway three six at ${CX[exit]}, taxi to the east ramp.`, ok: true },
+      // (the first call to Ground: the call sign in full, as the textbook's comm.arrive — AIM 4-2-4)
+      { en: `LAB Ground, ${F}, clear of runway three six at ${CX[exit]}, taxi to the east ramp.`, ok: true },
       { en: `LAB Ground, ${S}, request taxi.`, why: 'どこにいて（滑走路を出た）、どこへ行きたいか（エプロン）を伝えます。', negative: `${S}, say position.` },
       { en: `LAB Tower, ${S}, clear of the runway.`, why: '「Ground point seven」と言われました。地上管制 121.7 に変えて呼びます。', negative: `${S}, contact Ground point seven.` },
     ],

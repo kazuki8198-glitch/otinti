@@ -7,7 +7,9 @@
 //           a blocked static port (sys.g1000, sys.fuel; the walk-around's own points, content/walkaround-archer.js);
 //   spell   (第 6・7 章) 佐伯さん at dispatch: today's aircraft's registration, a frequency and an altitude said aloud;
 //   readback (第 8・9 章) 桐生, in the lounge, as the controller: the read-backs a hold short and a line up and wait need;
-//   metar   (第 4・10 章) 佐伯さん: today's METAR read with her — if today were the first flight, would it go;
+//   metar   (第 4・10 章) 佐伯さん: this morning's METAR read with her — its visibility against the class's example of a
+//           trainee's minimums (wx.brief: 5 SM); the day's go / no-go and its reason told, not asked (it may rest on the
+//           TAF or a crosswind limit the class did not say);
 //   imsafe  (第 5・11 章) 真壁 主任教官: IMSAFE's letters, and the cadet's own today (his third promise);
 //   week    (Sunday) 朝日: the week's questions, if the cadet likes (career's review: those missed first).
 // fromBank: the classes' questions (content/school.js) for the week's review. Each question of the others is on a
@@ -69,32 +71,41 @@ export function eventDialogs(id, { seed = 1, weather = null, tired = false, revi
   ], '機体のことで気になったら、いつでも言ってくれ。勘違いでいい。', r);
   if (id === 'spell') N = scene('dispatcher', [
     { text: '今日はアルファベットと数字の授業でしたね。せっかくなので、ここで声に出してみましょう。', hook: { name: 'look', arg: 'player' } },
-    { q: '初飛行で使う機体、N738SY を無線で言うと？', opts: ['November Seven Three Eight Sierra Yankee', 'November Seventy-Three Eight SY', 'N Seven Thirty-Eight Sierra Yankee'], ok: 'Perfect. 数字は 1 つずつ、文字はフォネティックで。', ng: '数字は 1 けたずつ、文字はフォネティックです。November Seven Three Eight Sierra Yankee。' },
+    // (the call sign as the class gave it and the first flight says it: the type's name, then the registration without
+    // its N — src: AIM 4-2-4; the book's comm.callsign)
+    { q: '初飛行で使う機体、Archer の N738SY を、機種名をつけて無線で言うと？', opts: ['Archer Seven Three Eight Sierra Yankee', 'Archer November Seven Three Eight Sierra Yankee', 'Archer Seventy-Three Eight SY'],
+      ok: 'Perfect. 機種名を言うときは先頭の N を省いて、数字は 1 つずつ、文字はフォネティックで。', ng: '機種名を言うときは先頭の N を省きます。数字は 1 けたずつ、文字はフォネティック。Archer Seven Three Eight Sierra Yankee。' },
     { q: 'Ground の周波数、121.7 は？', opts: ['one two one point seven', 'one twenty-one seven', 'twelve one seven'], ok: 'そうです。小数点は point。', ng: '1 けたずつ、小数点は point です。one two one point seven。' },
     { q: '高度 4,500 ft は？', opts: ['four thousand five hundred', 'four five zero zero', 'forty-five hundred'], ok: 'はい。高度は千と百で言います。', ng: '高度は「千・百」で言います。four thousand five hundred。' },
-  ], 'ばっちりです。初飛行の日、管制官に言うときも、このとおりで。', r);
+  ], '数字は 1 けたずつ、文字はフォネティック。初飛行の日、管制官に言うときも、このとおりで。', r);
   if (id === 'readback') N = scene('kiryu', [
     { text: '今日の交信の型、復習しようぜ。俺が管制官をやるから、復唱してみて。', hook: { name: 'look', arg: 'player' } },
     { text: '“Archer Eight Sierra Yankee, LAB Ground, runway three six, taxi via Alpha, hold short of runway three six at Alpha One.”' },
     { q: 'さあ、復唱は？', opts: ['Runway three six, taxi via Alpha, hold short of runway three six at Alpha One, Archer Eight Sierra Yankee.', 'Roger, Archer Eight Sierra Yankee.', 'Wilco.'], ok: '……正解。hold short は、滑走路の名前まで復唱だよな。', ng: 'それじゃ駄目だ。hold short の指示は、滑走路の名前まで全部復唱する。Roger だけでは足りない。' },
     { text: '“Archer Eight Sierra Yankee, LAB Tower, runway three six, line up and wait.”' },
     { q: 'これは、離陸の許可？', opts: ['いいえ。滑走路に入って待つだけ', 'はい。そのまま離陸してよい', '滑走路を出ろという意味'], ok: 'そう。cleared for takeoff が来るまで待つ。……引っかからないか。やるな。', ng: '違う。line up and wait は、入って待つだけだ。離陸は cleared for takeoff を聞いてから。' },
-  ], 'くそ、もう一回くらい引っかかると思ったのに。……今日の k4 みたいに、初飛行の本物の管制官にもその調子でな。', r);
+  ], 'hold short は滑走路の名前まで、line up and wait は入って待つだけ。……初飛行の本物の管制官にも、それでいこうぜ。', r);
   if (id === 'metar') {
     const w = weather || { metar: 'KLAB 121353Z 36005KT 10SM FEW035 19/12 A2992', decision: 'go', why: '視程・雲・風とも基準内です。' };
     const opts = { go: '予定どおり飛ぶ', wait: '午後まで待つ（回復を待つ）', early: '早めに出て、午前のうちに戻る', cancel: '今日は飛ばない' };
+    // (the visibility read off the METAR: "10SM", "1/2SM", "1 1/2SM")
+    const m = /\s(?:(\d+)\s)?(\d+)(?:\/(\d+))?SM\b/.exec(` ${w.metar}`), vis = m ? (+(m[1] || 0)) + (m[3] ? +m[2] / +m[3] : +m[2]) : null, enough = vis != null && vis >= 5;
+    const yes = '満たしている（5 SM 以上）', no = '満たしていない（5 SM 未満）', told = `今日の判断は「${opts[w.decision]}」です。${w.why}`;
+    // (a sky hidden by fog — VV, the vertical visibility — is a ceiling too: src: 14 CFR 1.1 "ceiling")
+    const vv = /\bVV\d{3}\b/.test(w.metar) ? '今朝の VV（霧で空が見えないときの垂直視程）も、雲高として扱います。' : '';
     N = scene('dispatcher', [
-      { text: '天気の授業、どうでした？ 画面の今日の METAR、一緒に読んでみましょう。', hook: { name: 'point', arg: 'weather' } },
-      { text: `いまの METAR は「${w.metar}」です。` },
-      { q: 'もし今日が初飛行の日だったら、どうしますか？', opts: [opts[w.decision], ...Object.entries(opts).filter(([k]) => k !== w.decision).map(([, v]) => v).slice(0, 2)], ok: `私もそう思います。${w.why}`, ng: `私なら「${opts[w.decision]}」です。${w.why}` },
-      { q: 'METAR の BKN や OVC の雲の高さを、何と呼ぶでしょう？', opts: ['雲高（シーリング）', '視程', '露点'], ok: 'そうです。BKN と OVC の一番低い層が雲高です。', ng: '雲高（シーリング）です。BKN と OVC の一番低い層のことです。' },
+      { text: '天気の授業、どうでした？ 画面の今朝の METAR、一緒に読んでみましょう。', hook: { name: 'point', arg: 'weather' } },
+      { text: `今朝の METAR は「${w.metar}」です。` },
+      { q: 'この METAR の視程は、授業の「訓練生の最低条件」の例（視程 5 SM 以上）を満たしていますか？', opts: [enough ? yes : no, enough ? no : yes, 'METAR には視程が書かれていない'],
+        ok: `そうです。視程は ${m ? m[0].trim() : '—'}。${told}`, ng: `視程は ${m ? m[0].trim() : '—'}、${enough ? '5 SM 以上あります' : '5 SM に足りません'}。${told}` },
+      { q: 'METAR の BKN や OVC の雲の高さを、何と呼ぶでしょう？', opts: ['雲高（シーリング）', '視程', '露点'], ok: `そうです。BKN と OVC の一番低い層が雲高です。${vv}`, ng: `雲高（シーリング）です。BKN と OVC の一番低い層のことです。${vv}` },
     ], '初飛行の朝も、ここで同じように決めます。理由まで言えたら、早瀬教官も安心です。', r);
   }
   if (id === 'imsafe') N = scene('chief', [
     { text: '入社の日の 3 つ目の約束、覚えていますか。疲れているとき、体調がよくないときは、正直に言う。今日の授業の IMSAFE は、その約束を形にしたものです。', hook: { name: 'look', arg: 'player' } },
     { q: 'IMSAFE の M は？', opts: ['Medication（薬）', 'Mission（任務）', 'Maintenance（整備）'], ok: 'そうです。市販の薬でも、眠くなるものは飛ぶ前に確かめます。', ng: 'Medication、薬です。市販の薬でも、眠くなるものは確かめます。' },
     { q: 'F は？', opts: ['Fatigue（疲れ）', 'Fuel（燃料）', 'Flaps（フラップ）'], ok: '疲れです。いちばん自分では気づきにくい。', ng: 'Fatigue、疲れです。自分では気づきにくいものです。' },
-    { text: tired ? '……今日のあなたは、少し疲れているように見えます。明後日の初飛行の前の夜は、早く寝てください。' : '今日のあなたは、顔色もいい。明後日の初飛行の朝も、正直に答えてください。' },
+    { text: tired ? '……今日のあなたは、少し疲れているように見えます。初飛行の前の夜は、早く寝てください。' : '今日のあなたは、顔色もいい。初飛行の朝も、正直に答えてください。' },
   ], 'わからないことは、わからないと言う。疲れているときは、そう言う。それができる人を、私は信頼します。', r);
   if (id === 'week') {
     const qs = review.slice(0, 3);
@@ -102,7 +113,7 @@ export function eventDialogs(id, { seed = 1, weather = null, tired = false, revi
       { text: '日曜だね！ よかったら、今週の授業を少しだけ一緒に復習しない？ 間違えたところから。', hook: { name: 'look', arg: 'player' } },
       ...qs.map((x, k) => ({ who: 'asahi', q: `${k ? 'もう一つ。' : ''}${x.q}`, opts: [x.opts[x.ok], ...x.opts.filter((_, j) => j !== x.ok)], ok: `正解！ ${x.why}`.trim(), ng: `答えは「${x.opts[x.ok]}」だって。${x.why}`.trim(), id: x.id })),
       ...(qs.length ? [] : [{ text: '……と思ったけど、まだ問題がないね。じゃあ、ゆっくり休もう。' }]),
-    ], 'ありがと！ 人と一緒だと覚えるね。明日からまた授業、がんばろう。', r);
+    ], 'ありがと！ 人と一緒だと覚えるね。明日からも、がんばろう。', r);
   }
   if (!N) throw new Error(`eventDialogs: no event ${id}`);
   const flags = [];

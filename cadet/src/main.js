@@ -44,7 +44,7 @@ import { createLogbook, entryFrom } from './career/logbook.js';
 import { buildWalkaroundProps } from './aircraft/walkaround-props.js';
 import { apronDialogs } from './content/dialog/day1.js';
 import { KITS } from './aircraft/walkaround.js';
-import { createCareer, prologueFlags, STAGE, CHECKS, LATER, SLOT_HOURS, SLOT_NAMES, CHAPTERS, CH2, GROUND, EXAMS, CLASSES, SOLO_TRUST, dateText, dateOf, passedAt, groundPassed } from './career/career.js';
+import { createCareer, prologueFlags, STAGE, CHECKS, LATER, SLOT_HOURS, SLOT_NAMES, CHAPTERS, CH2, GROUND, EXAMS, CLASSES, CLASS_FTD, SOLO_TRUST, dateText, dateOf, passedAt, groundPassed } from './career/career.js';
 import { planFor } from './career/day.js';
 import { temFor } from './career/tem.js';
 import { exportArchive, importArchive } from './career/archive.js';
@@ -116,7 +116,11 @@ async function boot() {
   const VETERAN = 'cadet.veteran';
   // (the career that set it does not count: its seed is kept)
   const veteran = () => { try { const v = store && store.getItem(VETERAN); return !!v && v !== String(career.state.seed); } catch (e) { return false; } };
+  // (a career begun before the mark was kept — an older build's save, or one read from a file — whose prologue is done:
+  // marked as the first, so the next one counts as a second career)
+  const markFirst = () => { try { if (store && !store.getItem(VETERAN) && career.state.done && career.state.done.prologue != null) store.setItem(VETERAN, String(career.state.seed)); } catch (e) { /* not kept */ } };
   const career = createCareer({ store, seed: params.get('seed') ? +params.get('seed') : undefined });
+  markFirst();
 
   bootMsg('画像を読み込んでいます…', 0.05);
   await loadTextures((k) => bootMsg('画像を読み込んでいます…', 0.05 + 0.25 * k));
@@ -620,7 +624,7 @@ async function boot() {
       relockQueued = false;
       if (!started || menu.isOpen || tablet.isOpen) return;
       if (talkingNow()) { if (talkWantsLock()) input.requestLock(); }
-      else if (mode === 'walk' || mode === 'epilogue') input.requestLock();
+      else if ((mode === 'walk' && !chair) || mode === 'epilogue') input.requestLock();
     });
   }
   // who: 'instructor' or one of the cast; the talk chosen by the career (today's work comes first)
@@ -652,13 +656,13 @@ async function boot() {
         // (a class left midway: it offers to go on from the section it reached; what has been heard, the pace chosen
         // last time, how many times it was begun — the career's)
         pageSec = null;                                       // (its first page sets the whiteboard and turns the eyes again)
-        return { run: startLesson('class', +cls.id, classDialogs(FL, +cls.id, { seed: st.seed, ...classOptions(FL, st, +cls.id, { attempt: career.attempt(`class:${cls.id}`) }) })), dialog: 'class' };
+        return { run: startLesson('class', +cls.id, classDialogs(FL, +cls.id, { seed: st.seed, ...classOptions(FL, st, +cls.id, { attempt: career.attempt(`class:${cls.id}`), afternoon: (sch.find(x => x.kind === 'ftd') || {}).id || null }) })), dialog: 'class' };
       }
       // (a lesson or the written test not passed can be taken again the same day: its questions in another order)
       // (k4: a run's end first, when one has just ended; else its start — after the pass, the tablet's 練習 flies it again)
       if (chairEnd) { const d = chairEnd; chairEnd = null; return { run: startLesson('ftd', 'k4', d), dialog: 'ftd' }; }
       if (ftd && ftd.id === 'k4' && !(career.doneToday('ftd', 'k4') && groundPassed(prog(), 'k4'))) return { run: startLesson('ftd', 'k4', ftdDialogs(FL, 'k4', { k4: k4State() })), dialog: 'ftd' };
-      if (ftd && !(career.doneToday('ftd', ftd.id) && groundPassed(prog(), ftd.id))) return { run: startLesson('ftd', ftd.id, ftdDialogs(FL, ftd.id, { seed: st.seed + st.day, heard: heardOf(FL, st), attempt: career.attempt(`ftd:${ftd.id}`) })), dialog: 'ftd' };
+      if (ftd && !(career.doneToday('ftd', ftd.id) && groundPassed(prog(), ftd.id))) return { run: startLesson('ftd', ftd.id, ftdDialogs(FL, ftd.id, { seed: st.seed + st.day, heard: heardOf(FL, st), attempt: career.attempt(`ftd:${ftd.id}`), own: sch.some(x => x.kind === 'class' && CLASS_FTD[+x.id] === ftd.id) })), dialog: 'ftd' };
       if (ex && ex.id === 'written1' && !(career.doneToday('exam', ex.id) && st.exams.written1 && st.exams.written1.pass)) { const n = career.attempt('exam:written1'); return { run: startLesson('exam', ex.id, examDialogs(FL, ex.id, { seed: st.seed + st.day, heard: heardOf(FL, st), attempt: n, warm: mixedReview(FL, st, { attempt: n }) })), dialog: 'exam' }; }
       return { run: peopleRunner, dialog: 'lecturer' };
     }
@@ -701,15 +705,21 @@ async function boot() {
     // briefed: he goes out to the aircraft (out of sight: while the cadet is still in the room he stays to see them off)
     if (who === 'instructor' && insAt === 'room' && insWhere() === 'apron') insGoOut = true;
     afterTalk.splice(0).forEach(f => f());
+    // (a device lesson over: its pictures off the device room's screen — unless k4's run has it now)
+    if (lessonKind && lessonKind.kind === 'ftd' && !chair) academy.redraw('sim', 'wall_screen', null);
     lessonKind = null;
   }
   const afterTalk = [];                                       // what happens once the talk is over (a fade to the afternoon…)
   let insGoOut = false;
   // the pause menu's "erase the record": a new career, the instructor meets you again for the first time
   function resetProgress() {
-    closeChair(); chairEnd = null; chairMissed = [];
+    markFirst();
+    closeChair(); chairEnd = null; chairLast = null;
     if (epi.on) leaveEpilogue('walk');          // (M8: out of Haneda first; the epilogue_seen it saves goes with the rest)
+    // (what the talk left to do afterwards — a chair flight to begin — is the old career's: not done)
+    afterTalk.length = 0;
     if (talk && talkRun) talkRun.stop();
+    forgetWays();
     const fresh = createDialogState();
     for (const k of Object.keys(talkState)) delete talkState[k];
     Object.assign(talkState, fresh);
@@ -744,7 +754,7 @@ async function boot() {
     else if (name === 'say') speakEnglish(arg);
     else if (name === 'quizEnd') { cx.quiz = scoreOf(lessonState, +arg); }
     // (chapter 1's classes and lessons: the pace chosen, a section heard, a question answered — kept with the career)
-    else if (name === 'chair') { const [st0, only] = String(arg).split(':'); afterTalk.push(() => startChair(+st0, { only: only === 'missed' ? chairMissed : null, practice: talkWho === 'tablet' })); }
+    else if (name === 'chair') { const [st0, only] = String(arg).split(':'); afterTalk.push(() => startChair(+st0, { only: only === 'missed' && chairLast ? chairLast.missed : null, practice: talkWho === 'tablet' })); }
     else if (name === 'pace') career.setPace(arg);
     else if (name === 'heard') { const [id, how] = String(arg).split('|'); career.heardSection(id, how); }
     else if (name === 'ans') { const [id, ok] = String(arg).split('|'); career.answered(id, ok === '1'); }
@@ -924,16 +934,18 @@ async function boot() {
   // device room, the flight HUD's radio and task panels alone (#fhud.k4), the wall screen's map of the field; 1–3 (or a
   // click) answers, M says it into the microphone, H asks why, Esc pauses (the menu). Its end: the lecturer's debrief
   // (chairDebriefDialogs) — or, from the tablet, the tablet's (a practice: nothing recorded)
-  let chair = null, chairEnd = null, chairMissed = [];
-  const K4_FAILS = 'k4:fails';
-  const k4State = () => ({ passed: groundPassed(prog(), 'k4'), fails: career.state.attempts[K4_FAILS] || 0, missed: chairMissed });
+  // (chairLast: the last scored run of the lesson's — its misses and its script's seed, for practising those alone on the
+  // same script; a practice run or one with the script in view does not change it)
+  let chair = null, chairEnd = null, chairLast = null;
+  const K4_FAILS = 'k4:fails', K4_FAIL_DAY = 'k4:failday';
+  const k4State = () => ({ passed: groundPassed(prog(), 'k4'), fails: career.state.attempts[K4_FAILS] || 0, missed: chairLast ? chairLast.missed : [], today: career.state.attempts[K4_FAIL_DAY] === career.day });
   const DESK = { a: 624.2, c: 267.2, face: { a: 629.9, c: 270.6 } };          // (the desk nearest the screen, facing it)
   function startChair(stage, { only = null, practice = false } = {}) {
-    if (chair || !(stage >= 1 && stage <= 3)) return;
-    const st = career.state, seed = (st.seed * 31 + career.attempt('k4:run') * 977 + 1) >>> 0;
+    if (chair || mode !== 'walk' || !(stage >= 1 && stage <= 3)) return;
+    const st = career.state, seed = only && only.length && chairLast ? chairLast.seed : (st.seed * 31 + career.attempt('k4:run') * 977 + 1) >>> 0;
     const script = chairScript(FL, { seed });
     const run = createChairFlight(script, { stage, seed, only: only && only.length ? only : null, hold: voiceBusy });
-    chair = { run, script, stage, practice, atis: {}, screenAt: '', micState: null, mic: null };
+    chair = { run, script, stage, practice, seed, atis: {}, screenAt: '', micState: null, mic: null };
     if (!practice && academy.roomOf(walker.framePos.a, walker.framePos.c)?.id === 'sim') placeWalker(DESK.a, DESK.c, DESK.face);
     input.exitLock(); interactor.closeCard(); hud.prompt(null);
     flightHud.show(true); $('#fhud').classList.add('k4'); document.body.classList.add('k4');      // (body.k4: the walking hint away)
@@ -946,40 +958,52 @@ async function boot() {
     if (c.run.done) { finishChair(); return; }
     const v = c.run.view(); if (!v) return;
     const mic = !!settings.get('micRadio');
+    // (what the microphone heard is shown for its own turn only: gone when the next one comes)
+    if (c.micState && c.micState.item && c.micState.item !== v.id) c.micState = null;
     dayHud.setRadio(v, { mic }); dayHud.setMic(c.micState);
     dayHud.setTask({ kicker: `k4 交信のチェアフライト　${v.n} / ${v.of}`, title: v.partJa, text: v.kind === 'op' ? '操作：COM1・高度計・トランスポンダー・呼ぶ前に聞く' : '', keys: [['1〜3', '答える'], ['H', 'なぜ？'], ...(mic ? [['M', '声で答える']] : []), ['Z', '壁の画面'], ['Q', 'やめる'], ['Esc', '一時停止']],
       flow: c.run.items.map((x, i) => ({ done: i < v.n - 1, cur: i === v.n - 1 })) });
     const at = `${v.id}:${v.com}:${c.atis.letter || ''}:${c.atis.alt || ''}`;
     if (c.screenAt !== at) { c.screenAt = at; academy.redraw('sim', 'wall_screen', (g, w, h) => drawChairScreen(g, w, h, { v, atis: c.atis, exit: c.script.exit })); scrT = 0; }
   }
-  function chairAnswer(k) {
+  // said: the answer came from the microphone (the cadet's own voice said it: not said again in the pilot's)
+  function chairAnswer(k, { said = false } = {}) {
     const c = chair; if (!c) return;
     const v = c.run.view(); if (!v || v.phase !== 'choose') return;
     const r = c.run.answer(k); if (!r) return;
     if (audio.click) audio.click();
     // (what the cadet said, said in the pilot's voice; the kneeboard filled in as the ATIS is copied)
-    if (v.kind !== 'op' && v.kind !== 'listen') speakEnglish(r.en, 'P');
+    if (v.kind !== 'op' && v.kind !== 'listen' && !said) speakEnglish(r.en, 'P');
     if (r.ok && /^atis:/.test(v.id)) c.atis.letter = r.en.split('（')[0];
     if (r.ok && v.id === 'atis') { c.atis.alt = r.en; c.atis.wind = `${String(c.script.weather.windMag).padStart(3, '0')}° ${c.script.weather.windKt} kt`; }
+    // (answered by key while the microphone listens: it stops — nothing it hears now is this turn's)
+    if (!said && c.mic && c.mic.busy) { c.micToken = null; c.mic.stop(); }
     c.micState = null;
   }
   function chairMic() {
-    const c = chair; if (!c || !settings.get('micRadio')) return;
+    const c = chair; if (!c || !settings.get('micRadio') || menu.isOpen) return;
     const v = c.run.view(); if (!v || v.phase !== 'choose' || v.kind === 'op') return;
     if (!c.mic) c.mic = createMic();
-    if (c.mic.busy) { c.mic.stop(); return; }
     const id = `${v.id}:${v.last ? v.last.en : ''}`;
-    c.micState = { on: true };
+    // (M again on the same turn: stop listening; a listen left from a turn before is stopped and this one begins)
+    if (c.mic.busy && c.micFor === id) { c.micToken = null; c.mic.stop(); c.micState = null; return; }
+    const token = {}; c.micToken = token; c.micFor = id;
+    c.micState = { on: true, item: v.id };
     c.mic.listen().then((r) => {
-      const v2 = chair === c ? c.run.view() : null;
-      if (!v2 || v2.phase !== 'choose' || `${v2.id}:${v2.last ? v2.last.en : ''}` !== id) { if (chair === c) c.micState = null; return; }
-      if (!r.ok) { c.micState = { msg: MIC_REASON_JA[r.reason] || MIC_REASON_JA['no-speech'] }; return; }
+      if (chair !== c || c.micToken !== token) return;                      // (stopped, or another listen since)
+      c.micToken = null;
+      const v2 = c.run.view();
+      // (the turn gone by, or the menu open: what was heard answers nothing — the run waits behind the menu)
+      if (!v2 || v2.phase !== 'choose' || `${v2.id}:${v2.last ? v2.last.en : ''}` !== id || menu.isOpen) { c.micState = null; return; }
+      if (!r.ok) { c.micState = { msg: MIC_REASON_JA[r.reason] || MIC_REASON_JA['no-speech'], item: v2.id }; return; }
       const right = c.run.rightIndex();
       const m = matchReadback(v2.choices.map((x, i) => ({ en: x.en, ok: i === right })), r.texts, { call: c.script.radio.call, number: v2.kind === 'listen' });
-      if (m.pick >= 0) { chairAnswer(m.pick); c.micState = { heard: m.heard }; }
-      else c.micState = { heard: m.heard, missing: m.missing.map(x => x.ja), msg: 'もう一度 M で言い直すか、1〜3 キーで答えてください' };
+      if (m.pick >= 0) { chairAnswer(m.pick, { said: true }); c.micState = { heard: m.heard, item: v2.id }; }
+      else c.micState = { heard: m.heard, missing: m.missing.map(x => x.ja), msg: 'もう一度 M で言い直すか、1〜3 キーで答えてください', item: v2.id };
     });
   }
+  // (k4's microphone stopped: the menu opened, or the microphone turned off)
+  function stopChairMic(msg) { const c = chair; if (!c || !c.mic || !c.mic.busy) return; c.micToken = null; c.mic.stop(); c.micState = msg ? { msg } : null; }
   function closeChair() {
     const c = chair; if (!c) return null;
     chair = null;
@@ -998,9 +1022,8 @@ async function boot() {
   function finishChair() {
     const c = closeChair(); if (!c) return;
     const sum = c.run.summary(), fails = career.state.attempts[K4_FAILS] || 0;
-    chairMissed = sum.missed;
     cx.quiz = { right: sum.first, n: sum.n, pct: sum.pct, pass: sum.pass };
-    if (!c.practice && sum.stage >= 2) { career.state.attempts[K4_FAILS] = sum.pass ? 0 : fails + 1; career.save(); }
+    if (!c.practice && sum.stage >= 2) { chairLast = { missed: sum.missed, seed: c.seed }; career.state.attempts[K4_FAILS] = sum.pass ? 0 : fails + 1; career.state.attempts[K4_FAIL_DAY] = career.day; career.save(); }
     const d = chairDebriefDialogs(FL, sum, c.script, { fails, practice: c.practice });
     if (c.practice) tabletTalk('chair', 'k4', d, 'ftd', 'タブレット（交信の練習）');
     else { chairEnd = d; startTalk('lecturer'); }
@@ -1255,12 +1278,18 @@ async function boot() {
     if (arg === 'ceremony') { career.done('ceremony', 'welcome'); afterTalk.push(() => { career.advance('am'); applySlot(); toast(prologueWord('ceremony', { short: shortWords() }), 5200); }); }
     else if (arg === 'tour') { career.done('tour', 'tour'); afterTalk.push(() => { career.advance('pm'); applySlot(); toast(prologueWord('tour', { short: shortWords() }), 5200); }); }
     else if (arg === 'meet') { career.done('brief', 'meet'); career.finishPrologue(); try { if (store && !store.getItem(VETERAN)) store.setItem(VETERAN, String(career.state.seed)); } catch (e) { /* not kept */ } afterTalk.push(() => { career.advance('evening'); applySlot(); toast(prologueWord('meet', { short: shortWords() }), 6000); }); }
-    else if (arg === 'class' && k) { career.done('class', String(k.id)); career.tire(6); afterTalk.push(() => { next(); applySlot(); if (skipDay !== career.day) toast(afterClassToast(+k.id), 5200); }); }
+    else if (arg === 'class' && k) {
+      career.done('class', String(k.id)); career.tire(6);
+      // (the time moves on with the record, as the hook comes — a page closed on the last line keeps both; no afternoon
+      // in today's plan — a record from the order before, its lesson passed already: on to the evening)
+      next(); if (career.slot === 'pm' && !planToday().some(x => x.slot === 'pm')) career.advance('evening');
+      afterTalk.push(() => { applySlot(); if (skipDay !== career.day) toast(afterClassToast(+k.id, planToday()), 5200); });
+    }
     else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'ftd') {
       career.done('ftd', k.id); career.tire(6);
-      if (arg === 'pass') groundPass(k.id, k.n || k.id === 'k4' ? cx.quiz.pct : 100);
+      if (arg === 'pass') { groundPass(k.id, k.n || k.id === 'k4' ? cx.quiz.pct : 100); next(); }        // (the time with the record: see the class's)
       // (not passed: the time stays, and the lecturer takes it again whenever the cadet is ready)
-      afterTalk.push(() => { if (arg === 'pass') { next(); applySlot(); } if (arg !== 'pass' || skipDay !== career.day) toast(arg === 'pass' ? (career.slot === 'evening' ? afterFtdToast(k.id, planToday()) : `${k.id} 合格。`) : 'もう一度受けるときは、ミラー講師に話しかけてください（問題の順番は変わります）', 4200); });
+      afterTalk.push(() => { if (arg === 'pass') applySlot(); if (arg !== 'pass' || skipDay !== career.day) toast(arg === 'pass' ? (career.slot === 'evening' ? afterFtdToast(k.id, planToday()) : `${k.id} 合格。`) : 'もう一度受けるときは、ミラー講師に話しかけてください（問題の順番は変わります）', 4200); });
     } else if ((arg === 'pass' || arg === 'fail') && k && k.kind === 'exam') {
       career.exam(k.id, cx.quiz.pct);
       afterTalk.push(() => { if (arg === 'pass' || k.id !== 'written1') { next(); applySlot(); } else toast('もう一度受けるときは、ミラー講師に話しかけてください（問題は入れ替わります）', 4200); });
@@ -1276,7 +1305,7 @@ async function boot() {
       });
     } else if (arg === 'epilogue') { afterTalk.push(() => finishEpilogue());
     } else if (arg === 'study') { career.done('study', grounded() ? 'imsafe' : 'weather'); career.tire(4); afterTalk.push(() => { next(); applySlot(); }); }
-    else if (arg === 'event' && k && k.kind === 'event') { career.done('event', k.id); afterTalk.push(() => { applySlot(); const d = doneLine(career.state); if (d && skipDay !== career.day) toast(d, 5200); }); }
+    else if (arg === 'event' && k && k.kind === 'event') { career.done('event', k.id); afterTalk.push(() => { applySlot(); const d = doneLine(career.state, { nextFtd: nextGround() }); if (d && skipDay !== career.day) toast(d, 5200); }); }
     // (the evening's study over: to bed, a little late)
     else if (arg === 'night') afterTalk.push(() => sleepNow({ late: true }));
   }
@@ -1385,24 +1414,27 @@ async function boot() {
   // the day is over: the evening, a day off, or everything on today's plan done (or gone by)
   function dayIsDone() {
     if (career.state.slot === 'evening' || planToday().some(x => x.kind === 'off')) return true;
-    return planStates().filter(x => x.kind !== 'off').every(x => x.state === 'done' || x.state === 'missed');
+    return planStates().filter(x => x.kind !== 'off').every(x => x.state === 'done' || x.state === 'missed' || x.state === 'retry');
   }
   function goHome() {
     if (!dayIsDone()) { toast('まだ今日の予定が残っています（Tab でタブレット）', 3000); return 'closed'; }
     homeOpen = true;
-    const c = homeCard = dormCard(career.state, planToday(), { short: shortWords() });
+    const c = homeCard = dormCard(career.state, planToday(), { short: shortWords(), nextFtd: nextGround() });
     interactor.showCard(c.title, c.text, c.choices);
     return 'examined';
   }
   // (the k-th of the dorm card's choices, by what it does: early, late — the study first, once a class is done — stay)
   let homeCard = null;
+  // (the first device lesson not passed: tomorrow's, as the day's words say it)
+  function nextGround() { const p = prog(); return GROUND.find(id => !groundPassed(p, id)) || null; }
   function homeChoose(k) {
     const ch = homeOpen && homeCard ? homeCard.choices[k] : null;
     if (!ch) return false;
     homeOpen = false; interactor.closeCard();
     if (ch.act === 'stay') return true;
     // (the study: three questions of the classes done, those missed first — then to bed, a little late)
-    if (ch.act === 'late' && CLASSES.some((_, i) => career.state.done[`class:${i}`])) { tabletTalk('study', 'night', studyDialogs(FL, career.state, { attempt: career.attempt('study:night') }), 'study', 'タブレット（自習）'); return true; }
+    // (the evening's study is chapter 1's: its classes' questions; after it, a late night as before)
+    if (ch.act === 'late' && career.chapter === 'ch1' && CLASSES.some((_, i) => career.state.done[`class:${i}`])) { tabletTalk('study', 'night', studyDialogs(FL, career.state, { attempt: career.attempt('study:night') }), 'study', 'タブレット（自習）'); return true; }
     sleepNow({ late: ch.act === 'late' });
     return true;
   }
@@ -1482,7 +1514,8 @@ async function boot() {
         ground: GROUND.map(id => ({ id, title: FTD_TITLES[id], pass: groundPassed(p, id) })),
         classes: { done: CLASSES.filter((_, i) => career.isDone('class', String(i))).length, total: CLASSES.length },
         // (the sections heard and how they were answered; written1's banks taught)
-        marks: sectionMarks(FL, st), written1: written1Readiness(FL, st),
+        // (the written test's readiness while it is still ahead: chapter 1, not passed)
+        marks: sectionMarks(FL, st), written1: st.chapter === 'ch1' && !(st.exams.written1 && st.exams.written1.pass) ? written1Readiness(FL, st) : null,
         exams: Object.entries(EXAMS).map(([id, e]) => ({ title: e.title, ...(st.exams[id] || { best: 0, pass: false, tries: 0 }) })),
         lessons: [...CH2, 'c1', ...LATER.filter(c => CHAPTERS[c].n <= CHAPTERS[st.chapter].n).flatMap(c => STAGE[c].lessons)].map(id => ({ id, title: FL.school.lesson(id).title, best: p.lessons[id] ? p.lessons[id].best : '', pass: passedAt(p, id) })),
         trust: [['instructor', INSTRUCTOR.title_ja], ['chief', PEOPLE.chief.title], ['dispatcher', PEOPLE.dispatcher.title], ['mechanic', PEOPLE.mechanic.title]].map(([k, n]) => ({ name: n, v: Math.round(trustOf(talkState, k)) })),
@@ -1510,7 +1543,7 @@ async function boot() {
           Object.assign(talkState, a.talk); saved.save(talkState);
           logbook.replace(a.logbook);
           FL.school.saveProgress(fly.flight.store, a.progress); FL.school.saveRecords(fly.flight.store, a.records);
-          tablet.close(); startDay({ card: true, place: true });
+          forgetWays(); tablet.close(); startDay({ card: true, place: true });
           return '読み込みました。';
         } catch (e) { return `読み込めませんでした：${e.message}`; }
       },
@@ -1524,7 +1557,7 @@ async function boot() {
       epilogue: () => beginEpilogue(),
       wait: () => { if (career.advance()) { cards.show({ kicker: SLOT_NAMES[career.slot], title: dateText(career.day), sub: '', ms: 900, onDark: () => applySlot() }); } },
     },
-    onClose: () => { if (mode === 'walk' && !talk && !menu.isOpen) input.requestLock(); },
+    onClose: () => { if (mode === 'walk' && !talk && !chair && !menu.isOpen) input.requestLock(); },        // (k4's panel: the mouse free)
   });
   // a practice test (the tablet): ten questions from one bank, said by the tablet itself (not scored)
   function practice(bankId) {
@@ -1588,16 +1621,16 @@ async function boot() {
   document.body.classList.add('mode-walk');
   const menu = createMenu({
     root: document.body, settings, presets: ORDER.map(id => ({ id, label: PRESETS[id].label })), version: buildInfo,
-    onResume: () => { input.enabled = true; if (talkingNow() ? talkWantsLock() : !(fly && fly.debrief)) input.requestLock(); audio.ui('close'); },
+    onResume: () => { input.enabled = true; if (talkingNow() ? talkWantsLock() : !(fly && fly.debrief) && !chair) input.requestLock(); audio.ui('close'); },
     onQuality: (id) => setQuality(id), onMode: (m) => { if (mode === 'epilogue') { finishEpilogue(); return; } if (!(fly && fly.fading)) setMode(m); }, getMode: () => mode, getPreset: () => preset.id,
     onResetProgress: () => resetProgress(),
     // (M8) the API key's field (ai/keys.js), and the bench with its result to copy
     ai: { keys: aiKeys, keyName: KEY_NAME, defaultModel: DEFAULT_MODEL },
     onBench: () => { input.enabled = true; if (epi.on) { toast('性能の計測は、終章を終えてからできます（Esc →「終章を終える」）', 4000); return; } runBench().then((r) => showBenchReport(r)); },
-    onLogbook: () => { input.enabled = true; input.exitLock(); dayHud.showLogbook(logbook.entries, logbook.totals(), { onClose: () => { if ((mode === 'walk' || mode === 'fly') && !talk && !(fly && (fly.talking || fly.debrief))) input.requestLock(); } }); },
+    onLogbook: () => { input.enabled = true; input.exitLock(); dayHud.showLogbook(logbook.entries, logbook.totals(), { onClose: () => { if ((mode === 'walk' || mode === 'fly') && !talk && !chair && !(fly && (fly.talking || fly.debrief))) input.requestLock(); } }); },
   });
   // (M8) text to take away: the bench's results for README, the player's notes
-  const report = createReport({ onClose: () => { if ((mode === 'walk' || mode === 'fly') && !talk && !menu.isOpen && !tablet.isOpen && !(fly && (fly.talking || fly.debrief))) input.requestLock(); } });
+  const report = createReport({ onClose: () => { if ((mode === 'walk' || mode === 'fly') && !talk && !chair && !menu.isOpen && !tablet.isOpen && !(fly && (fly.talking || fly.debrief))) input.requestLock(); } });
   function showBenchReport(r) {
     if (!r) return;
     input.exitLock();
@@ -1608,9 +1641,12 @@ async function boot() {
     if (menu.isOpen || (fly && fly.fading)) return;
     // (M8: not listening behind the menu — the first time, the browser's question about the microphone lets the mouse go)
     if (fly && fly.dayMode) fly.dayMode.stopMic({ note: 'マイクを止めました（メニューを開いたため）。マイクを許可したら、もう一度 M で話してください' });
+    stopChairMic('マイクを止めました（メニューを開いたため）。もう一度 M で話してください');
     interactor.closeCard(); input.enabled = false; input.exitLock(); menu.open(tab); audio.ui('open');
   }
   input.onLock((on, bySelf) => {
+    // (k4: its panel is clicked — a lock that lands while it runs, asked for before it began, let go again)
+    if (on && chair) { input.exitLock(); return; }
     document.body.classList.toggle('locked', on);
     if (!on) lostAt = performance.now();
     if (!on && !bySelf) {
@@ -1649,7 +1685,8 @@ async function boot() {
       return;
     }
     if (mode === 'walk' && walkOpen && /^(Digit|Numpad)[1-4]$/.test(e.code)) { walkChoose(+e.code.slice(-1) - 1); return; }
-    if (mode === 'walk' && e.code === 'KeyG' && !talk && !homeOpen && !interactor.cardOpen) { if (!jumpNext()) { const j = jumpPlan(true); toast(j && j.no ? j.no : 'G で行けるのは、一度歩いて入ったことのある部屋です', 2600); } return; }
+    // (G: the next step worked out now — the guide's line may be off in the menu, and then not kept up to date)
+    if (mode === 'walk' && e.code === 'KeyG' && !talk && !homeOpen && !interactor.cardOpen) { computeGuide(walker.framePos.a, walker.framePos.c); if (!jumpNext()) { const j = jumpPlan(true); toast(j && j.no ? j.no : 'G で行けるのは、一度歩いて入ったことのある部屋です', 2600); } return; }
     if (mode === 'walk' && homeOpen && /^(Digit|Numpad)[1-3]$/.test(e.code)) { homeChoose(+e.code.slice(-1) - 1); return; }
     if (e.code === 'Tab' && mode === 'walk' && !talk) {
       e.preventDefault();
@@ -1685,6 +1722,7 @@ async function boot() {
       else { const r = talkRunner(); if (r && r.running && (talk || (fly && fly.talking))) { const w = r.view(); if (w) dui.show(w); } }
     }
     if (k === 'micRadio' && !v && fly && fly.dayMode) fly.dayMode.stopMic({ all: true });
+    if (k === 'micRadio' && !v) stopChairMic(null);
   });
   $('#perf').style.display = settings.get('showPerf') ? '' : 'none';
   document.documentElement.style.setProperty('--sub-k', String(settings.get('subSize') || 1));
@@ -1738,7 +1776,9 @@ async function boot() {
   const guideAt = { a: 0, c: 0, ok: false }, guideW = new THREE.Vector3();
   function planStates() {
     const st = career.state, order = ['morning', 'am', 'pm', 'evening'];
-    return planToday().map(x => ({ ...x, state: career.doneToday(x.kind, x.id) ? 'done' : order.indexOf(x.slot) < order.indexOf(st.slot) ? 'missed' : x.slot === st.slot ? 'now' : 'later' }));
+    // (a device lesson tried today and not passed: to be taken again — or left, the day going on: 'retry')
+    const retry = (x) => x.kind === 'ftd' && x.slot === st.slot && !groundPassed(prog(), x.id);
+    return planToday().map(x => ({ ...x, state: career.doneToday(x.kind, x.id) ? (retry(x) ? 'retry' : 'done') : order.indexOf(x.slot) < order.indexOf(st.slot) ? 'missed' : x.slot === st.slot ? 'now' : 'later' }));
   }
   // where the step is: a person, the walk-around's next place, the aircraft's door, the front doors, a room
   function guideTarget(g) {
@@ -1758,7 +1798,7 @@ async function boot() {
   function computeGuide(pa, pc) {
     const it = flightItem(), checkride = it && it.kind === 'checkride';
     const sm = today ? today.walk.summary() : null;
-    guideStep = nextStep({ chapter: career.chapter, slot: career.slot, plan: planStates(), decided: !!career.decidedToday(), graduated: !!career.state.graduated, doneText: doneLine(career.state),
+    guideStep = nextStep({ chapter: career.chapter, slot: career.slot, plan: planStates(), decided: !!career.decidedToday(), graduated: !!career.state.graduated, doneText: doneLine(career.state, { nextFtd: nextGround() }),
       briefed: !!(checkride ? talkState.flags.c1_briefed : talkState.flags.briefed_today), walk: sm ? { done: sm.done, total: sm.total } : null, flown: flownToday() });
     const t = guideTarget(guideStep);
     if (!t) { guideWay = null; return; }
@@ -1773,6 +1813,8 @@ async function boot() {
   let lastRoom = null, skipDay = -1, jumpOk = false, jumping = false;
   // (the ways skipped before in this career: the day's words said short — content/day-flow.js)
   const skipping = () => career.tries('skip:g') > 0;
+  // (another career — erased, or read from a file: the ways skipped and the room last stood in were the old one's)
+  function forgetWays() { skipDay = -1; lastRoom = null; jumping = false; }
   // (the day's words short: the ways skipped, or a career begun after another — G may go anywhere)
   const shortWords = () => skipping() || veteran();
   const roomAt = (a, c) => (academy.inside(a, c) ? (academy.roomOf(a, c)?.id || null) : 'outside');
@@ -1794,15 +1836,16 @@ async function boot() {
     const { g, t } = j;
     // (by a person: in front of them, as they face; the front doors: inside them; a room: its middle)
     const at = g.at === 'person' ? standBy(g.who, t) : g.at === 'entrance' ? ENTRANCE : { a: t.a, c: t.c, face: null };
-    cards.show({ kicker: '', title: '移動', sub: g.text.replace(/（.*$/, ''), ms: 200, fade: 300, onDark: () => { placeWalker(at.a, at.c, at.face || null); lastRoom = roomAt(at.a, at.c); } })
+    cards.show({ kicker: '', title: '移動', sub: g.text.replace(/（[^（）]*(?:（[^（）]*）[^（）]*)*）$/, ''), ms: 200, fade: 300, onDark: () => { placeWalker(at.a, at.c, at.face || null); lastRoom = roomAt(at.a, at.c); } })
       .then(() => { jumping = false; if (g.at === 'person' && g.who) startTalk(g.who); else if (g.at === 'entrance') goHome(); });
     return true;
   }
   function standBy(who, t) {
     const p = who === 'instructor' ? null : cast.where(who), f = p && p.face ? p.face : null;
     if (!f) return { a: t.a + 1.2, c: t.c, face: { a: t.a, c: t.c } };
-    const d = Math.hypot(f.a - t.a, f.c - t.c) || 1;
-    return { a: t.a + (f.a - t.a) / d * 1.4, c: t.c + (f.c - t.c) / d * 1.4, face: { a: t.a, c: t.c } };
+    // (the dispatcher stands behind her counter, 1.5 m deep with its desk: the cadet before it, not inside it)
+    const d = Math.hypot(f.a - t.a, f.c - t.c) || 1, k = who === 'dispatcher' ? 2.7 : 1.4;
+    return { a: t.a + (f.a - t.a) / d * k, c: t.c + (f.c - t.c) / d * k, face: { a: t.a, c: t.c } };
   }
   // ---- the room's screen, copied small at the top while it is in use — a class (briefing room 2), a device lesson and k4
   // (the device room): the canvas the wall shows (academy.surfaceCanvas), copied twice a second; Z shows it large

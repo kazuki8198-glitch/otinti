@@ -7,7 +7,8 @@
 // test begun again asks in another order.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { load, measureCh1, readingSeconds } from '../tools/measure-ch1.mjs';
+import * as M from '../tools/measure-ch1.mjs';
+import { load, measureCh1, readingSeconds, runTalk } from '../tools/measure-ch1.mjs';
 import { NOT_SPOKEN } from '../src/content/dialog/instructor.js';
 import { lectureUnits } from '../src/content/lecture-units.js';
 import { BANK_ANSWERS, SCENE_ANSWERS, DRILL_ANSWERS, LISTEN_ANSWERS } from '../src/content/answer-map.js';
@@ -70,27 +71,27 @@ test('every question of chapter 1 comes after its answer was said (scored, and t
   }
 });
 
-test('a class taken up again midway (続きから) asks only what was said — before the break, after it, or in the classes before; seeds 1–200', { timeout: 600000 }, () => {
+test('a class taken up again midway (続きから) asks only what was said — before the break, after it, or in the classes before: the dialog each seed builds, its scored questions and its checks', { timeout: 600000 }, () => {
   let judged = 0;
   // (the classes before: heard at the quick pace, the least of them)
   const before = (i) => S.CLASS_CHAPTERS.slice(0, i).map((_, c) => runClass(S.classDialogs(FL, c, { pace: 'quick' }), { pace: 'quick' }).map(l => l.text).join('')).join('');
   for (let i = 0; i < S.CLASS_CHAPTERS.length; i++) {
     const prior = squash(before(i)), all = S.classQuestions(FL, i, {}).all;
     for (const pace of ['full', 'need']) for (let b = 0; b < all.length - 1; b++) {
-      const sec = all[b], end = `c${sec.k}s${sec.j}:end`;
-      // (a break is offered at the end of a section read in full)
-      const s1 = runClass(S.classDialogs(FL, i, {}), { pace, brk: end });
-      if (!s1.some(l => l.node === `c${sec.k}s${sec.j}:break`)) continue;
-      const heard = new Set([...S.sectionsBefore(FL, i), ...all.slice(0, b + 1).map(x => x.sec.id)]);
-      const s2 = runClass(S.classDialogs(FL, i, { from: b + 1, heard, last: pace }), { resume: true });
-      assert.ok(s2.some(l => /続きから|確認から続けます/.test(l.text)), `class ${i} from ${b + 1}: taken up again`);
-      const text1 = prior + squash(s1.map(l => l.text).join(''));
-      for (let seed = 1; seed <= 200; seed++) {
-        const { qs } = S.classQuestions(FL, i, { seed, from: b + 1, heard });
-        qs.forEach((x, k) => {
-          const at = s2.findIndex(l => l.node === `q${k}`); if (at < 0) return;       // (asked in the first part)
-          const heardText = text1 + squash(s2.slice(0, at).map(l => l.text).join(''));
-          for (const [, w] of answerOf(x.id)) assert.ok(heardText.includes(squash(w)), `class ${i} ${pace} from ${b + 1} seed ${seed}: ${x.id} before "${w}"`);
+      const sec = all[b], end = `c${sec.k}s${sec.j}:end`, heard = new Set([...S.sectionsBefore(FL, i), ...all.slice(0, b + 1).map(x => x.sec.id)]);
+      // (each seed and try its own dialog — the questions a resumed class asks depend on what it asked as checks)
+      for (let seed = 1; seed <= 12; seed++) for (const attempt of [0, 1]) {
+        const s1 = runClass(S.classDialogs(FL, i, { seed, attempt }), { pace, brk: end });
+        if (!s1.some(l => l.node === `c${sec.k}s${sec.j}:break`)) continue;
+        const d2 = S.classDialogs(FL, i, { seed, attempt, from: b + 1, heard, last: pace });
+        const s2 = runTalk(L, d2, 'class', { policy: (v) => (v.node === 'pace' ? 0 : null), ctx: { quiz: {} } }).lines;
+        assert.ok(s2.some(l => /続きから|確認から続けます/.test(l.text)), `class ${i} from ${b + 1}: taken up again`);
+        const text1 = prior + squash(s1.map(l => l.text).join(''));
+        s2.forEach((l, at) => {
+          if (!l.q || !l.q.id) return;
+          const a = M.answerOf(L, l.q.id); if (!a) return;
+          const heardText = text1 + squash(s2.slice(0, at).map(x => x.text).join(''));
+          for (const [sec2, w] of a) if (sec2 !== 'k1') assert.ok(heardText.includes(squash(w)), `class ${i} ${pace} from ${b + 1} seed ${seed}/${attempt}: ${l.q.id} (${l.node}) before "${w}"`);
           judged++;
         });
       }

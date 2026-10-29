@@ -115,6 +115,11 @@ test('career: the save — another version or broken data is not read, values of
   assert.deepEqual(old({ 'class:0': 2, 'class:1': 3, 'class:2': 5, 'class:3': 6, 'class:4': 7, 'lecture:5': 4 }), { prologue: 1, 'class:0': 2, 'class:1': 3, 'class:2': 7, 'class:5': 6 });
   assert.deepEqual(old(Object.fromEntries([0, 1, 2, 3, 4, 5].map(i => [`class:${i}`, 2 + i]))), { prologue: 1, ...Object.fromEntries([[0, 2], [1, 3], [2, 6], [3, 7], [4, 7], [5, 5]].map(([i, d]) => [`class:${i}`, d])) });
   assert.deepEqual(cleanCareer({ v: 1, seed: 3, day: 8, chapter: 'ch1', done: { 'class:2': 5, 'lecture:3': 4 }, heard: {} }).done, { 'class:2': 5, 'lecture:3': 4 }, 'a save of this order as it is');
+  // (saved the afternoon of the old weather class: that class is not done now — the day begun again from its morning,
+  // the class before its afternoon; a day whose class is still done keeps its time)
+  const pm = (done, day) => cleanCareer({ v: 1, seed: 3, day, slot: 'pm', chapter: 'ch1', done: { prologue: 1, ...done } }).slot;
+  assert.equal(pm({ 'class:0': 2, 'class:1': 3, 'class:2': 5 }, 5), 'morning');
+  assert.equal(pm({ 'class:0': 2, 'class:1': 3 }, 3), 'pm');
   const broken = memStore(); broken.setItem(CAREER_KEY, '{nope');
   assert.equal(createCareer({ store: broken, seed: 2 }).day, 1, 'broken: a new career');
   assert.equal(createCareer({ store: null, seed: 2 }).slot, SLOTS[0], 'no storage: still a career');
@@ -241,4 +246,29 @@ test('career M6: the checks and their aircraft, the weather of the later chapter
 test('career: the first day is a fine one, whatever the seed', () => {
   const memStore = () => { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k) }; };
   for (let seed = 1; seed < 60; seed++) assert.equal(createCareer({ store: memStore(), seed }).weather().kind, 'good', `seed ${seed}`);
+});
+
+test('career: every METAR\'s dew point at or below its temperature — every kind of day, any seed', () => {
+  let n = 0;
+  for (const force of [undefined, ...Object.keys(WEATHER)]) for (let seed = 1; seed <= 30; seed++) for (let day = 1; day <= 40; day++) {
+    const w = weatherFor(seed, day, { force });
+    for (const m of [w.metar.am, w.metar.pm]) {
+      const [, t, d] = / (M?\d\d)\/(M?\d\d) A\d{4}$/.exec(m), c = (x) => (x[0] === 'M' ? -x.slice(1) : +x);
+      assert.ok(c(d) <= c(t), `seed ${seed} day ${day} ${w.kind}: ${m}`); n++;
+    }
+  }
+  assert.ok(n > 2000);
+});
+
+test('career: chapter 1\'s plan from a save of the classes\' order before — a device lesson waits for its class, no evening event for a class not taken', () => {
+  // (classes 0, 1 and 5 done, k1–k4 passed: today's class is 2 — k5 waits for class 4, which teaches it)
+  const st = { ...newCareer(3), chapter: 'ch1', day: 6, slot: 'morning', done: { prologue: 1, 'class:0': 2, 'class:1': 3, 'class:5': 5 } };
+  const plan = schedule(st, progWith(['k1', 'k2', 'k3', 'k4'], ['basic']));
+  assert.deepEqual(plan.map(x => `${x.kind}:${x.id}`), ['class:2', 'event:spell'], JSON.stringify(plan));
+  // (the afternoon, class 2 not taken today: no evening event of its own)
+  const pm = schedule({ ...st, slot: 'pm' }, progWith(['k1', 'k2', 'k3', 'k4'], ['basic']));
+  assert.ok(!pm.some(x => x.kind === 'event'), JSON.stringify(pm));
+  // (taken today: its event in the evening, its own lesson in the afternoon)
+  const done = schedule({ ...st, slot: 'pm', done: { ...st.done, 'class:2': 6 } }, progWith(['k1', 'k2'], ['basic']));
+  assert.deepEqual(done.map(x => `${x.kind}:${x.id}`), ['class:2', 'ftd:k3', 'event:spell']);
 });

@@ -115,13 +115,14 @@ export const RADIO_ASK = [
   (e) => `いまの例で、${e}は何という意味でしたか？`, (e) => `聞いた交信のうち、${e}の意味は？`, (e) => `画面の例の${e}、何と言っていましたか？`,
 ];
 // right and wrong at a question of the screen or a check (v: the right answer, said plainly in the sentence — a word, a
-// phrase or a sentence: so after は or a colon)
+// phrase or a sentence: so after は or a colon; a particle after it spaced only after a Latin word or a number)
+const sp = (v) => (/[A-Za-z0-9”"]$/.test(String(v)) ? ' ' : '');
 export const RIGHT = [
   (v) => `そうです、答えは ${v}。`, (v) => `合っています、正解は ${v}。`, (v) => `Good. 正解：${v}。`, (v) => `正解です、${v}。`,
   (v) => `That's it. 答え：${v}。`, (v) => `はい、正解は ${v}。`, (v) => `Right. 答えは ${v}。`, (v) => `そのとおり、${v}。`,
 ];
 export const WRONG = [
-  (v) => `正しくは、${v}。`, (v) => `ここは、答えは ${v}。`, (v) => `ここの答えは ${v}。`, (v) => `答えは ${v} でした。`,
+  (v) => `正しくは、${v}。`, (v) => `ここは、答えは ${v}。`, (v) => `ここの答えは ${v}。`, (v) => `答えは ${v}${sp(v)}でした。`,
   (v) => `惜しいですね、正解は ${v}。`, (v) => `正しい答えは ${v}。`, (v) => `覚えておいてください、答えは ${v}。`, (v) => `違います、正解は ${v}。`,
 ];
 // (read off the screen: said so)
@@ -130,8 +131,8 @@ export const SEEN_RIGHT = [
   (v) => `そうです、画面では ${v}。`, (v) => `Good. 画面の答えは ${v}。`,
 ];
 export const SEEN_WRONG = [
-  (v) => `よく見ると、答えは ${v}。`, (v) => `もう一度見てください、答えは ${v}。`, (v) => `画面では、${v} になっています。`, (v) => `見直すと、答えは ${v}。`,
-  (v) => `惜しい、画面の答えは ${v}。`, (v) => `画面をよく見ると ${v} です。`,
+  (v) => `よく見ると、答えは ${v}。`, (v) => `もう一度見てください、答えは ${v}。`, (v) => `画面では、${v}${sp(v)}になっています。`, (v) => `見直すと、答えは ${v}。`,
+  (v) => `惜しい、画面の答えは ${v}。`, (v) => `画面をよく見ると ${v}${sp(v)}です。`,
 ];
 // a check in the middle of a section, on what was just said (not scored)
 export const CHECK = [
@@ -160,7 +161,7 @@ export const CHAPTER_INTRO = {
   sys: (c, s) => `まず第 ${c.n} 章${c.title}、${s} 節、これから毎日乗る Archer の中身です。`,
   perf: (c, s) => `続く第 ${c.n} 章は${c.title}、${s} 節、暑い日や重い日に機体の何が変わるかを見ます。`,
   radio1: (c, s) => `今日は第 ${c.n} 章${c.title}から、${s} 節で誰とどうやって話すのかを見ます。`,
-  radio2: (c, s) => `Next, 第 ${c.n} 章${c.title}、${s} 節は午後の k3 にそのまま出ます。`,
+  radio2: (c, s) => `Next, 第 ${c.n} 章${c.title}、${s} 節、k3 の数字とアルファベットはここから出ます。`,
   radio3: (c, s) => `第 ${c.n} 章${c.title}、${s} 節、どの交信にも使う型です。`,
   radio4: (c, s) => `次は第 ${c.n} 章${c.title}で、${s} 節が 1 回の飛行の順に並んでいます。`,
   wx: (c, s) => `第 ${c.n} 章${c.title}、${s} 節、飛ぶか飛ばないかを決める材料です。`,
@@ -189,18 +190,18 @@ export const CLASS_DAY = [
   { hello: ['Morning! 今日は交信の型と、1 回の飛行の交信の流れ、第 8 章と第 9 章です。', '午後の k4 では、あなたがパイロット、わたしが管制官になって、初飛行と同じ交信を机の上で飛びます。'],
     review: '最初に、昨日の言い方を覚えているか確かめます。',
     pace: '今日の 2 章、どのペースで行きますか？',
-    preview: ['午後の k4 は交信のチェアフライトです。ATIS、Ground、Tower、今日の第 9 章の流れを LAB の初飛行で練習します。', '教科書の例は別の空港です。LAB では東エプロンと誘導路 Alpha を使います。'],
+    preview: ['午後の k4 は交信のチェアフライトです。ATIS、Ground、Tower、今日の第 9 章の流れを LAB の初飛行で練習します。', '教科書の例の空港は、名前が同じでも配置が違います（西のエプロン）。この訓練所では東エプロンと誘導路 Alpha を使います。'],
     bye: 'Well done. 交信は声に出すと身につきます、午後にまた。' },
   { hello: ['おはようございます。今日は第 4 章の天気と、第 10 章の管制塔のない空港や緊急の交信です。', '午後の k5 は復唱と応答の 10 問、これまでに習った場面から出ます。'],
     review: '天気の前に、交信の型を一つ二つ思い出しましょう。',
     pace: 'どう進めましょうか？ 時間は、話を聞く速さの目安です。',
     preview: ['午後の k5 は復唱と応答の 10 問です。第 8 章の復唱の型を思い出しながら答えてください。'],
     bye: 'Great. 明日の朝は、タブレットの天気を自分で読んでから来てください。' },
-  { hello: ['Good morning. 座学の最後は、第 5 章の規則と空域、第 11 章の人間の能力と判断です。', '午後の k6 は英語の聞き取りです。明日は筆記試験、その次の日が初飛行です。'],
+  { hello: ['Good morning. 座学の最後は、第 5 章の規則と空域、第 11 章の人間の能力と判断です。', '午後の k6 は英語の聞き取りです。座学が終わったら学科試験、そのあとが初飛行です。'],
     review: '最後の授業の前に、これまでの問題から少し。',
     pace: '最後の授業です。進め方を選んでください。',
-    preview: ['午後の k6 は聞き取りの 10 問です。明日の筆記試験は 28 問、そしてあさってが初飛行。今日の IMSAFE は、その朝にも使います。'],
-    bye: 'That\'s the end of ground school. 座学はこれでおしまいです、明日の筆記試験は落ち着いていきましょう。' },
+    preview: ['午後の k6 は聞き取りの 10 問です。そのあとに学科試験の 28 問、そして初飛行。今日の IMSAFE は、その朝にも使います。'],
+    bye: 'That\'s the end of ground school. 座学はこれでおしまいです、学科試験は落ち着いていきましょう。' },
 ];
 // the review's lines: a question missed before asked again first (said so)
 export const REVIEW_MISSED = ['前に間違えた問題から始めます。', 'この前つまずいた問題を、もう一度。', '前回の間違いから一つ。'];

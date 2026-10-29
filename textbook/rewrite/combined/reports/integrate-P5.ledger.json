@@ -1,0 +1,22 @@
+{
+ "unit": "W10",
+ "about": "統合 P5：W10 の行で、3 つの章の登録の外に残っていた ERRATA T.overview.T2（章 sim の出典 AC 61-136B が現行か）と UNVERIFIED U.ac61-136 を、統合役が一次資料で確かめて閉じた",
+ "patches": [
+  {
+   "id": "T.overview.T2",
+   "status": "not-error",
+   "by": "W10",
+   "reason": "FAA の AC の一覧（https://www.faa.gov/regulations_policies/advisory_circulars/index.cfm/go/document.information/documentID/1034348）で、AC 61-136B「FAA Approval of Aviation Training Devices and Their Use for Training and Experience」は Status Active・Date issued 2018-09-12（2026-10-29 に読んだ）。sim.can の出典 R.ac61136（AC 61-136B・2018）は現行の版で、直す所はない",
+   "note": "統合 P5（2026-10-29）：W10 の行で章 sim の分（W10 の 3 つの書き手の持ち物ではなかった）。統合役が一次資料で確かめて閉じた"
+  },
+  {
+   "id": "U.ac61-136",
+   "status": "resolved",
+   "by": "W10",
+   "value": "AC 61-136B（Active、2018-09-12 発行。AC 61-136A を取り消した版）",
+   "sourceUrl": "https://www.faa.gov/regulations_policies/advisory_circulars/index.cfm/go/document.information/documentID/1034348",
+   "checkedOn": "2026-10-29",
+   "note": "統合 P5（2026-10-29）：FAA の AC の一覧のページで確かめた（ERRATA T.overview.T2）"
+  }
+ ]
+}

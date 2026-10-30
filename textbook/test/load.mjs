@@ -18,7 +18,7 @@ export function loadBook() {
 // textbook/rewrite/combined/TEST-CONSTANTS.md)
 //  parts (FL.book.PARTS: the front part 序部 p0 and parts 1–6), chapters, secs, quiz, terms, examples, cautions,
 //  refs (source links in the end matter), lessons (end matter), figs (SVG figures), photos (bk.photo uses), calcs (calculators), simTags (lesson buttons inside "シミュレータで体験" boxes), details (考えてみよう), folds (もっと深く・計算演習: bk.deep, bk.drill)
-export const COUNTS = { parts: 7, chapters: 32, secs: 198, quiz: 187, terms: 671, examples: 101, cautions: 87, refs: 386, lessons: 75, figs: 159, photos: 45, calcs: 10, simTags: 71, details: 146, folds: 49 };
+export const COUNTS = { parts: 7, chapters: 32, secs: 199, quiz: 193, terms: 697, examples: 105, cautions: 87, refs: 398, lessons: 75, figs: 161, photos: 47, calcs: 10, simTags: 71, details: 147, folds: 49 };
 export const ORDER = ['intro', 'basics', 'english', 'sim', 'aero', 'sys', 'inst', 'perf', 'wb', 'wx', 'navb', 'law', 'radio1', 'radio2', 'radio3', 'radio4', 'radio5', 'hf', 'ground', 'ops', 'tl', 'emg', 'solo', 'navp', 'navr', 'navd', 'ifr', 'ifrp', 'me', 'oei', 'crm', 'jet'];
 export const NOTICE = [
   'このページは公開情報を基にした非公式の自主学習用教材です。実機訓練、教官の指示、POH/AFM、SOP、航空法規を優先してください。',

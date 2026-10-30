@@ -1,11 +1,11 @@
 {
  "ledger": "CLAIMS",
- "draft": "textbook/rewrite/combined/drafts/radio.js",
+ "draft": "textbook/rewrite/combined/drafts/radio1-5.js",
  "unit": "W19",
  "chapter": "radio1, radio2, radio3, radio4, radio5",
  "updated": "2026-10-30",
- "by": "W19",
- "about": "第 1 部 第 13〜17 章 radio1〜radio5（下書き）の主張の札（DESIGN 5 章の基準 3）。行は check-chapter.mjs --claims-out（check-claims.mjs の claimId）が抜き出した文ごと（節の本文・図のキャプション・表の行・囲み）。章を登録するコミットで、統合役が CLAIMS.json に op: add で足す（パッチ reports/W19-radio.ledger.json にも同じ行がある）。checkedBy は事実確認役（W19 と別）が付ける。kind: 例題 は、この本の架空の練習用の台本や仮の値の文（札は 参考値）。kind: 本の決まり は、この本の説明の数（「1 回の飛行」など）。囲みの行（FL.jur が描く文）は W06 が確かめた値。R1 で W07a・W12 が一次資料と照らした教科書の文は、その旨を source に書いた（W19 は同じ段落を読み直した）。",
+ "by": "W19（2026-10-30）、revise-radio（2026-10-30：直した文・新しい文の行。by: revise-radio）",
+ "about": "第 1 部 第 13〜17 章 radio1〜radio5（下書き）の主張の札（DESIGN 5 章の基準 3）。行は check-chapter.mjs --claims-out（check-claims.mjs の claimId）が抜き出した文ごと（節の本文・図のキャプション・表の行・囲み）。章を登録するコミットで、統合役が CLAIMS.json に op: add で足す（パッチ reports/W19-radio.ledger.json にも同じ行がある）。checkedBy は事実確認役（W19 と別）が付ける。kind: 例題 は、この本の架空の練習用の台本や仮の値の文（札は 参考値）。kind: 本の決まり は、この本の説明の数（「1 回の飛行」など）。囲みの行（FL.jur が描く文）は W06 が確かめた値。R1 で W07a・W12 が一次資料と照らした教科書の文は、その旨を source に書いた（W19 は同じ段落を読み直した）。 revise-radio（2026-10-30）：factcheck-radio・reader-radio・expert-radio の指摘で直した文と新しい文の行を、check-chapter.mjs --claims-out で作り直した（直していない文の行はそのまま）。札のある文の中の {ch:} は bk.see に替えたので、行の ID は章の番号で変わらない（factcheck S3）。W19-radio.ledger.json の CLAIMS の 308 行は古いので、登録ではこのファイルの行を使う（reports/revise-radio.md）。",
  "format": {
   "id": "<節ID>#<8 桁>",
   "sec": "節 ID",
@@ -18,16 +18,16 @@
   "checkedOn": "確認日"
  },
  "counts": {
-  "rows": 308,
+  "rows": 365,
   "byTag": {
-   "参考値": 276,
-   "条文": 31,
-   "教材値": 1
+   "参考値": 330,
+   "条文": 33,
+   "教材値": 2
   },
   "byKind": {
    "本の決まり": 14,
-   "-": 261,
-   "例題": 33
+   "-": 315,
+   "例題": 36
   }
  },
  "rows": [
@@ -99,12 +99,12 @@
    "by": "W19"
   },
   {
-   "id": "radio.why#16fa26b8",
+   "id": "radio.why#919e097a",
    "sec": "radio.why",
-   "text": "UNICOM などの周波数が CTAF に決められている（AIM 4-1-9・第 14 章） ｜",
+   "text": "UNICOM などの周波数が CTAF に決められている（AIM 4-1-9）。",
    "tag": "参考値",
-   "source": "FAA AIM 4-1-9（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 4-1-9（CTAF は UNICOM・MULTICOM・FSS（Alaska だけ）・tower の周波数）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "radio.why#c6b0ce1d",
@@ -139,20 +139,28 @@
    "by": "W19"
   },
   {
-   "id": "radio.why#2e39d5b6",
+   "id": "radio.why#4940e99a",
    "sec": "radio.why",
-   "text": "滑走路を出たら、管制官から別の指示がなければ、停止線（runway holding position marking）を越えて止まります（AIM 4-3-21）。",
+   "text": "管制官が認めないかぎり、ほかの滑走路へは出ません（AIM 4-3-21）。",
    "tag": "参考値",
-   "source": "FAA AIM 4-3-21（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 4-3-21（Pilots must not exit the landing runway onto another runway unless authorized by ATC）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
-   "id": "radio.equip#606d444d",
+   "id": "radio.why#97a5e3c3",
+   "sec": "radio.why",
+   "text": "別の指示がなければ、機体の全部が停止線（runway holding position marking）を越えた所で止まります（AIM 4-3-21）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-21（once all parts of the aircraft have crossed the runway holding position markings, the pilot must hold unless further instructions）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "radio.equip#82d55cf6",
    "sec": "radio.equip",
-   "text": "航空機の通信（COM）は、VHF の 118.000〜136.975 MHz を使います。",
+   "text": "航空機の通信（COM）は、VHF（very high frequency：超短波）の 118.000〜136.975 MHz を使います。",
    "tag": "参考値",
    "source": "47 CFR 87.173（航空移動業務の周波数の表：118.000〜136.975 MHz、25 kHz 間隔。eCFR を 2026-10-30 に読んだ）",
-   "by": "W19"
+   "by": "revise-radio"
   },
   {
    "id": "radio.equip#02694abc",
@@ -211,12 +219,20 @@
    "by": "W19"
   },
   {
-   "id": "radio.technique#493f8864",
+   "id": "radio.technique#4d6e5ef7",
    "sec": "radio.technique",
-   "text": "AIM 4-2-4 は、学生操縦士が最初の呼び出しで “student pilot” と名乗ることを勧めています（例：「Dayton tower, Fleetwing One Two Three Four, student pilot.」）。",
+   "text": "AIM 4-2-4 は、学生操縦士が最初の呼び出しで “student pilot” と名乗ることを勧めています。",
    "tag": "参考値",
-   "source": "FAA AIM 4-2-4（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 4-2-4（student pilot を最初の呼び出しで名乗る）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "radio.technique#b8bae616",
+   "sec": "radio.technique",
+   "text": "AIM の例は「Dayton tower, Fleetwing One Two Three Four, student pilot.」です。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-2-4（EXAMPLE「Dayton tower, Fleetwing One Two Three Four, student pilot」）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "radio.technique#1d3f2826",
@@ -293,27 +309,19 @@
    "by": "W19"
   },
   {
+   "id": "comm.basic#7539a6a2",
+   "sec": "comm.basic",
+   "text": "AIM の例文には Alpha とつづるものもあり、この本のコールサインも Alpha と書きます。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-2-4・TBL 4-2-7（表のつづりは Alfa、4-2-4 の例文は Aztec Two Four Six Four Alpha）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
    "id": "comm.basic#2a97ab20",
    "sec": "comm.basic",
    "text": "真方位（true direction）のときは、そう付け加えます（AIM 4-2-10）。",
    "tag": "参考値",
    "source": "FAA AIM 4-2-10（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）",
-   "by": "W19"
-  },
-  {
-   "id": "comm.basic#e409893d",
-   "sec": "comm.basic",
-   "text": "横風（crosswind）の日は、窓から見える方位とずれます（AIM 4-1-15）。",
-   "tag": "参考値",
-   "source": "FAA AIM 4-1-15（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）",
-   "by": "W19"
-  },
-  {
-   "id": "comm.basic#3b09055e",
-   "sec": "comm.basic",
-   "text": "機種名を言うときは N を省いて、たとえば「Archer One Two Alfa Bravo」と名乗ります（AIM 4-2-4）。",
-   "tag": "参考値",
-   "source": "FAA AIM 4-2-4（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
    "by": "W19"
   },
   {
@@ -525,12 +533,12 @@
    "by": "W19"
   },
   {
-   "id": "comm.words#734198e2",
+   "id": "comm.words#149df949",
    "sec": "comm.words",
-   "text": "Hold short of … ｜ …の手前で止まれ（JO 7110.65 3-7-2） ｜ 必ず復唱する（AIM 4-3-18） ｜",
+   "text": "管制官も復唱を求める（AIM 4-3-18・JO 7110.65 3-7-2） ｜",
    "tag": "参考値",
-   "source": "FAA AIM 4-3-18（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）／FAA Order JO 7110.65 3-7-2（HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 4-3-18（NOTE：ATC is required to obtain a readback … of all runway hold short instructions）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）／FAA JO 7110.65 3-7-2（READ BACK HOLD INSTRUCTIONS）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.words#3a1e3499",
@@ -541,12 +549,12 @@
    "by": "W19"
   },
   {
-   "id": "comm.words#ba869d0a",
+   "id": "comm.words#64d0768b",
    "sec": "comm.words",
-   "text": "仲間うちの言葉や、CB 無線のような言い方（Ten-four など）は使いません（AIM 4-2-1）。",
+   "text": "仲間うちの言葉や、市民無線（CB）の俗語（Ten-four など）は使いません（AIM 4-2-1）。",
    "tag": "参考値",
-   "source": "FAA AIM 4-2-1（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 4-2-1（jargon, chatter, and \"CB\" slang have no place in ATC communications）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.words#f5bab525",
@@ -640,12 +648,12 @@
    "by": "W19"
   },
   {
-   "id": "comm.pattern#49914297",
+   "id": "comm.pattern#98b29a9e",
    "sec": "comm.pattern",
-   "text": "管制官が必要な手助けをしてくれます（AIM 4-2-4・第 10 章）。",
+   "text": "管制官が必要な手助けをしてくれます（AIM 4-2-4・）。",
    "tag": "参考値",
-   "source": "FAA AIM 4-2-4（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 4-2-4（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.pattern#9a873365",
@@ -681,12 +689,13 @@
    "by": "W19"
   },
   {
-   "id": "comm.pattern#c7a5e5d0",
+   "id": "comm.pattern#3cb9d061",
    "sec": "comm.pattern",
-   "text": "例：“LAB Departure, Archer Seven Lima Alpha, student pilot, one thousand two hundred, climbing to three thousand five hundred.”（AIM 4-1-20・第 13 章）",
+   "text": "例：“LAB Departure, Archer Seven Lima Alpha, student pilot, one thousand two hundred, climbing to three thousand five hundred.”（AIM 4-1-20・）",
    "tag": "参考値",
-   "source": "FAA AIM 4-1-20（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 4-1-20（初めの交信で 100 ft 単位の高度）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）。台本の値は架空（この本の架空の練習用の台本（LAB 空港・Lakeside 空港・周波数・コード・コールサイン・位置と高度・天気は架空。言い方の型は AIM 4-2・4-3・JO 7110.65 による））",
+   "kind": "例題",
+   "by": "revise-radio"
   },
   {
    "id": "comm.ack#6a2ab68b",
@@ -706,13 +715,13 @@
    "by": "W19"
   },
   {
-   "id": "comm.ack#d3fe1390",
+   "id": "comm.ack#9de19640",
    "sec": "comm.ack",
-   "text": "Tower ｜ Archer 7LA, report two mile final. ｜ 2 マイルの最終進入で報告せよ。",
+   "text": "Tower ｜ Archer 7LA, report two mile final. ｜ 滑走路の手前 2 マイルのファイナル（final approach leg）で報告せよ。",
    "tag": "参考値",
-   "source": "この本の架空の練習用の台本（LAB 空港・Lakeside 空港・周波数・コード・コールサイン・位置と高度・天気は架空。言い方の型は AIM 4-2・4-3・JO 7110.65 による）",
+   "source": "この本の架空の練習用の台本（LAB 空港・Lakeside 空港・周波数・コード・コールサイン・位置と高度・天気は架空。言い方の型は AIM 4-2・4-3・JO 7110.65 による）。ファイナルの語は PCG：Traffic Pattern",
    "kind": "例題",
-   "by": "W19"
+   "by": "revise-radio"
   },
   {
    "id": "comm.ack#6cedc012",
@@ -748,12 +757,12 @@
    "by": "W19"
   },
   {
-   "id": "comm.ack#0f4be7a8",
+   "id": "comm.ack#0c644e13",
    "sec": "comm.ack",
-   "text": "誰も話していないことを確かめてから呼びます（AIM 4-2-2・第 10 章）。",
+   "text": "誰も話していないことを確かめてから呼びます（AIM 4-2-2・）。",
    "tag": "参考値",
-   "source": "FAA AIM 4-2-2（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 4-2-2（listen before you transmit）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.ack#9596de0f",
@@ -764,36 +773,37 @@
    "by": "W19"
   },
   {
-   "id": "comm.ack#e911b4fc",
+   "id": "comm.ack#d7f76a75",
    "sec": "comm.ack",
-   "text": "中にいる間は、交信を続けなければなりません（14 CFR 91.130・第 9 章）。",
-   "tag": "条文",
-   "source": "eCFR 14 CFR 91.130（2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
-  },
-  {
-   "id": "comm.ack#010eff9e",
-   "sec": "comm.ack",
-   "text": "確立したかどうかは、管制官の応答で決まります（AIM 3-2-4）。",
+   "text": "下の 3 つは、管制官の答えの例です（AIM 3-2-4）。",
    "tag": "参考値",
-   "source": "FAA AIM 3-2-4（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 3-2-4（NOTE と EXAMPLE：(callsign) standby は確立、remain outside the Class Charlie airspace and standby、Aircraft calling … standby は確立していない）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
-   "id": "comm.ack#16b8d184",
+   "id": "comm.ack#174a429b",
    "sec": "comm.ack",
-   "text": "Class D 空域も同じ考え方です（14 CFR 91.129・AIM 3-2-5）。",
-   "tag": "条文",
-   "source": "FAA AIM 3-2-5（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）／eCFR 14 CFR 91.129（2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "text": "北東 15 マイル、2,500 ft、コード 1200、ATIS C を聞いた。",
+   "tag": "参考値",
+   "source": "この本の架空の練習用の台本（LAB 空港・Lakeside 空港・周波数・コード・コールサイン・位置と高度・天気は架空。言い方の型は AIM 4-2・4-3・JO 7110.65 による）。最初の呼び出しの中身（位置・高度・コード・行き先）は AIM 3-2-4・4-1-18",
+   "kind": "例題",
+   "by": "revise-radio"
   },
   {
-   "id": "comm.readback#8a7976bc",
+   "id": "comm.ack#f93e3528",
+   "sec": "comm.ack",
+   "text": "管制官が自分のコールサインを言って答えたら、確立です（14 CFR 91.130・91.129・AIM 3-2-4）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.130(c)・91.129(c)（Class C・D に入る前に双方向の交信を確立）（eCFR versioner API、2026-10-28 の版。2026-10-30 に revise-radio が本文を読んだ）／FAA AIM 3-2-4（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.readback#4adb0095",
    "sec": "comm.readback",
-   "text": "下は、AIM が必ず復唱するとしているもの。",
+   "text": "下は、AIM がいつも復唱するよう求めているもの。",
    "tag": "参考値",
-   "source": "FAA AIM 4-4-7・4-3-18（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（図のキャプション）",
-   "by": "W19"
+   "source": "FAA AIM 4-4-7・4-3-18（pilots should (always) read back）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.readback#4dac27b1",
@@ -804,12 +814,20 @@
    "by": "W19"
   },
   {
-   "id": "comm.readback#7e116b80",
+   "id": "comm.readback#f8ff5011",
    "sec": "comm.readback",
-   "text": "空中：高度の指定・高度の制限・針路の指示（vector）・滑走路の指定を復唱します（AIM 4-4-7）。",
+   "text": "AIM は、次のものを、いつも復唱するよう求めています。",
    "tag": "参考値",
-   "source": "FAA AIM 4-4-7（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 4-4-7・4-3-18（pilots should (always) read back）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）／FAA JO 7110.65 3-7-2（hold short の復唱を求める）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.readback#37f7b065",
+   "sec": "comm.readback",
+   "text": "空中：高度の指定・高度の制限（ある地点を決まった高度以上・以下で通れ、などの条件）・針路の指示（vector）・滑走路の指定を復唱します（AIM 4-4-7）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-4-7（altitude assignments（altitude restrictions）, vectors, or runway assignments）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.readback#370f1bc3",
@@ -836,21 +854,21 @@
    "by": "W19"
   },
   {
-   "id": "comm.readback#303ba843",
+   "id": "comm.readback#95e601d4",
    "sec": "comm.readback",
-   "text": "“cleared for takeoff” を聞くまで離陸しません（AIM 5-2-5）。",
+   "text": "line up and wait（LUAW）は、離陸の許可ではありません（AIM 5-2-5）。",
    "tag": "参考値",
-   "source": "FAA AIM 5-2-5（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 5-2-5（LUAW is not a takeoff clearance）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
-   "id": "comm.readback#ec2b6d62",
+   "id": "comm.readback#eb20b44b",
    "sec": "comm.readback",
-   "text": "5 マイルの最終進入に Cessna。",
+   "text": "5 マイルのファイナルに Cessna。",
    "tag": "参考値",
    "source": "この本の架空の練習用の台本（LAB 空港・Lakeside 空港・周波数・コード・コールサイン・位置と高度・天気は架空。言い方の型は AIM 4-2・4-3・JO 7110.65 による）",
    "kind": "例題",
-   "by": "W19"
+   "by": "revise-radio"
   },
   {
    "id": "comm.readback#40892dcc",
@@ -862,21 +880,21 @@
    "by": "W19"
   },
   {
-   "id": "comm.readback#cfd26119",
+   "id": "comm.readback#8c053078",
    "sec": "comm.readback",
-   "text": "4 マイルの最終進入に Cessna。",
+   "text": "4 マイルのファイナルに Cessna。",
    "tag": "参考値",
    "source": "この本の架空の練習用の台本（LAB 空港・Lakeside 空港・周波数・コード・コールサイン・位置と高度・天気は架空。言い方の型は AIM 4-2・4-3・JO 7110.65 による）",
    "kind": "例題",
-   "by": "W19"
+   "by": "revise-radio"
   },
   {
-   "id": "comm.readback#b4321929",
+   "id": "comm.readback#534d709e",
    "sec": "comm.readback",
-   "text": "出発の周波数とトランスポンダー（transponder）のコードは、AIM が「必ず復唱する」としているものではありません。",
+   "text": "出発の周波数とトランスポンダー（transponder）のコードは、AIM が「いつも復唱する」よう求めているものではありません。",
    "tag": "参考値",
-   "source": "FAA AIM 4-4-7（altitude assignments, vectors, or runway assignments）・4-3-18（runway assignment, clearance to enter, hold short, line up and wait）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）：周波数・コード・高度計規正値はこの列にない",
-   "by": "W19"
+   "source": "FAA AIM 4-4-7・4-3-18（復唱するよう求めるのは高度・高度の制限・針路・滑走路の指定と、地上の滑走路の指定・入る許可・hold short・LUAW。周波数とコードは入っていない）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.readback#d16274d1",
@@ -942,6 +960,14 @@
    "tag": "条文",
    "source": "eCFR 14 CFR 91.3（2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
    "by": "W19"
+  },
+  {
+   "id": "comm.clarify#2f17a0b4",
+   "sec": "comm.clarify",
+   "text": "経路の許可＝管制承認（クリアランス、ATC clearance）：cleared to Chicago Midway Airport via Victor Eight（AIM 4-3-18 の例） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-18（Receipt of ATC clearance の例「cleared to the Chicago Midway Airport via Victor Eight, maintain eight thousand」）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）／PCG：Air Traffic Clearance。呼び分けは FL.terms の clearance（管制承認。着陸許可・離陸許可は別の語）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.clarify#48a9bcf4",
@@ -1072,12 +1098,12 @@
    "by": "W19"
   },
   {
-   "id": "comm.mistakes#00e28236",
+   "id": "comm.mistakes#305dd2d4",
    "sec": "comm.mistakes",
-   "text": "ほかの交信にかぶせて話す ｜ 送信する前に聞く（AIM 4-2-2・第 10 章） ｜",
+   "text": "ほかの交信にかぶせて話す ｜ 送信する前に聞く（AIM 4-2-2） ｜",
    "tag": "参考値",
-   "source": "FAA AIM 4-2-2（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 4-2-2（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.mistakes#b8eeb030",
@@ -1088,12 +1114,12 @@
    "by": "W19"
   },
   {
-   "id": "comm.mistakes#6d5483e7",
+   "id": "comm.mistakes#a7fcb47f",
    "sec": "comm.mistakes",
-   "text": "実線の側で止まり、破線の側が滑走路です（AIM 2-3-5）。",
+   "text": "hold short と言われたら、機体のどこも、この線を越えないように止まります（AIM 2-3-5）。",
    "tag": "参考値",
-   "source": "FAA AIM 2-3-5（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 2-3-5（no part of the aircraft extends beyond the runway holding position marking）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.runway#9fc17e6c",
@@ -1104,12 +1130,20 @@
    "by": "W19"
   },
   {
-   "id": "comm.runway#7545322e",
+   "id": "comm.runway#64c776a5",
    "sec": "comm.runway",
-   "text": "赤地に白の標識は滑走路の名前、黒地に黄は今いる誘導路です（AIM 2-3-8・2-3-9）",
+   "text": "赤地に白の標識は滑走路の名前、黒地に黄は今いる誘導路です（AIM 2-3-8・2-3-9）。",
    "tag": "参考値",
-   "source": "FAA AIM 2-3-8・2-3-9（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）",
-   "by": "W19"
+   "source": "FAA AIM 2-3-8・2-3-9（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.runway#ddf731c6",
+   "sec": "comm.runway",
+   "text": "中心線の両側の破線は、停止線が近い合図です（AIM 2-3-4）",
+   "tag": "参考値",
+   "source": "FAA AIM 2-3-4（Enhanced Centerline：warn the pilot that he/she is approaching a runway holding position marking）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.runway#e86dd67c",
@@ -1128,6 +1162,22 @@
    "by": "W19"
   },
   {
+   "id": "comm.runway#327fe4d7",
+   "sec": "comm.runway",
+   "text": "AIM は taxi clearance とも書きますが、管制官は地上滑走に “cleared” の言葉を使いません。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-18・4-3-21（4-3-18：ATC will not use the word \"cleared\" in conjunction with authorization for aircraft to taxi。4-3-21：obtain a taxi clearance）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.runway#5557f67c",
+   "sec": "comm.runway",
+   "text": "地上滑走の指示は、滑走路に入る・横切る許可を含みません（AIM 4-3-18・4-3-21）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-18・4-3-21（does not authorize the aircraft to \"enter\" or \"cross\"）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
    "id": "comm.runway#13ed6b5c",
    "sec": "comm.runway",
    "text": "hold short と言われたら、機体のどこも線を越えないように止まります（AIM 2-3-5）。",
@@ -1136,12 +1186,12 @@
    "by": "W19"
   },
   {
-   "id": "comm.runway#128eb22b",
+   "id": "comm.runway#a231bfd9",
    "sec": "comm.runway",
-   "text": "「18-36」なら、左が滑走路 18 の端、右が 36 の端です（AIM 2-3-8）。",
+   "text": "「18-36」なら、左に滑走路 18 の進入端（threshold）、右に 36 の進入端があります（AIM 2-3-8）。",
    "tag": "参考値",
-   "source": "FAA AIM 2-3-8（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）",
-   "by": "W19"
+   "source": "FAA AIM 2-3-8（\"15-33\" indicates that the threshold for Runway 15 is to the left and the threshold for Runway 33 is to the right）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.runway#bf19e0e2",
@@ -1150,6 +1200,70 @@
    "tag": "参考値",
    "source": "FAA AIM 2-3-5（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）",
    "by": "W19"
+  },
+  {
+   "id": "comm.runway#608ae57a",
+   "sec": "comm.runway",
+   "text": "赤地に白の標識は、滑走路の入口と、入ってはいけない所を示します（AIM 2-3-8）。",
+   "tag": "参考値",
+   "source": "FAA AIM 2-3-8（Mandatory Instruction Signs：an entrance to a runway or critical area; areas where an aircraft is prohibited from entering）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.runway#bfbe22dd",
+   "sec": "comm.runway",
+   "text": "停止線の手前、最大 150 ft にある（おもに大きな空港） ｜ 停止線が近い合図。",
+   "tag": "参考値",
+   "source": "FAA AIM 2-3-4（enhanced for a maximum of 150 feet prior to a runway holding position marking。mostly the larger commercial service airports）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.runway#9d96b70e",
+   "sec": "comm.runway",
+   "text": "許可がなければ止まる用意をする（AIM 2-3-4） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 2-3-4（should prepare to stop unless he/she has been cleared onto or across the runway）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.runway#791cfec5",
+   "sec": "comm.runway",
+   "text": "機体のどこも越えない（AIM 2-3-5） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 2-3-5（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.runway#abdb9c4d",
+   "sec": "comm.runway",
+   "text": "許可なく越えない（AIM 2-3-8） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 2-3-8（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.runway#a58d74cb",
+   "sec": "comm.runway",
+   "text": "同じ所に停止線がある ｜ “hold short of runway three six approach” と言われたら、そこで止まる（AIM 2-3-5・2-3-8） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 2-3-5・2-3-8（Runway Approach Area Holding Position：「15-APCH」の形の標識。\"Hold short of Runway XX approach\" で止まる。例の 36 は架空の LAB の滑走路）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.runway#fe6b4206",
+   "sec": "comm.runway",
+   "text": "言われたら、そこで止まる（AIM 2-3-5・2-3-8） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 2-3-5・2-3-8（ILS critical area の停止位置：two yellow solid lines … connected by pairs of solid lines、標識の「ILS」）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.runway#8d32b4ac",
+   "sec": "comm.runway",
+   "text": "No Entry の標識 ｜ 赤地に白の標識 ｜ その先に入ってはいけない（一方通行の誘導路・車の道など。AIM 2-3-8） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 2-3-8（No Entry Sign：prohibits an aircraft from entering an area（one direction の誘導路・vehicle roadways））（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.runway#b68059ee",
@@ -1200,12 +1314,12 @@
    "by": "W19"
   },
   {
-   "id": "comm.runway#908c096e",
+   "id": "comm.runway#09a474bf",
    "sec": "comm.runway",
-   "text": "滑走路に入る許可をもらったら、1 人で操縦する機は、管制の交信だけを聞きます。",
+   "text": "1 人で操縦する機は、管制の交信だけを聞き、ATIS などほかの音は聞きません。",
    "tag": "参考値",
-   "source": "FAA AIM 4-3-18（Pilots operating a single pilot aircraft should monitor only assigned ATC communications after being cleared onto the active runway for departure）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）",
-   "by": "W19"
+   "source": "FAA AIM 4-3-18（Single pilot aircraft should not monitor other than ATC communications … from after receipt of the clearance for landing until the landing and taxi activities are complete）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.runway#446f2072",
@@ -1232,6 +1346,30 @@
    "by": "W19"
   },
   {
+   "id": "comm.runway#6f2d8b22",
+   "sec": "comm.runway",
+   "text": "ファイナルの機と管制官から見えやすくするためです（AIM 4-3-24）",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-24（all exterior lights … when taxiing on or across any runway; LUAW では landing lights を除いて全部、landing lights は takeoff clearance で）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.runway#e429efc8",
+   "sec": "comm.runway",
+   "text": "管制塔のある空港では、許可なく滑走路の上で止まったり、引き返したりしません（AIM 4-3-21）",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-21（should not stop or reverse course on the runway without first obtaining ATC approval）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.runway#225abbad",
+   "sec": "comm.runway",
+   "text": "動いている間は、チェックリスト（checklist）と要らない交信をしません（AIM 4-3-19）",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-19（Checklists and nonessential communication should be withheld until the aircraft is stopped）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
    "id": "comm.runway#5f44aabd",
    "sec": "comm.runway",
    "text": "黒地に黄色の文字は、いまいる誘導路を示します（AIM 2-3-9）。",
@@ -1248,12 +1386,12 @@
    "by": "W19"
   },
   {
-   "id": "comm.runway#97895f91",
+   "id": "comm.runway#18be0e00",
    "sec": "comm.runway",
-   "text": "停止線の前で止まり、自分で滑走路と最終進入を見て、ほかの機・車両・人と十分に離れていることを確かめてから越えます（AIM 2-3-5）。",
+   "text": "停止線の手前で、自分で滑走路とファイナルを見て、ほかの機・車両・人と十分に離れていることを確かめてから越えます（AIM 2-3-5）。",
    "tag": "参考値",
-   "source": "FAA AIM 2-3-5（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）",
-   "by": "W19"
+   "source": "FAA AIM 2-3-5（airports without an operating control tower must ensure adequate separation … prior to crossing。止まって確かめるのはこの本の勧め）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.runway#c27b94e5",
@@ -1289,37 +1427,13 @@
    "by": "W19"
   },
   {
-   "id": "comm.flow#dd54321f",
+   "id": "comm.flow#0f820f27",
    "sec": "comm.flow",
-   "text": "Class C 空域は、ふつう 2 つの部分でできています（AIM 3-2-4・第 9 章）。",
-   "tag": "参考値",
-   "source": "FAA AIM 3-2-4（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
-  },
-  {
-   "id": "comm.flow#5c5b2d6b",
-   "sec": "comm.flow",
-   "text": "空港から半径 5 NM の部分は、地上から空港の標高＋4,000 ft までです。",
-   "tag": "参考値",
-   "source": "FAA AIM 3-2-4（surface area 5 NM・shelf 10 NM、airport elevation＋4,000 ft、shelf base 1,200 ft）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
-  },
-  {
-   "id": "comm.flow#47cde4f8",
-   "sec": "comm.flow",
-   "text": "半径 10 NM までの棚は、空港の標高＋1,200 ft から＋4,000 ft までです。",
-   "tag": "参考値",
-   "source": "FAA AIM 3-2-4（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
-  },
-  {
-   "id": "comm.flow#e43a8630",
-   "sec": "comm.flow",
-   "text": "② ｜ LAB Ground ｜ 121.7 ｜ 地上滑走の許可。",
+   "text": "② ｜ LAB Ground ｜ 121.7 ｜ 地上滑走の指示。",
    "tag": "参考値",
    "source": "この本の架空の練習用の台本（LAB 空港・Lakeside 空港・周波数・コード・コールサイン・位置と高度・天気は架空。言い方の型は AIM 4-2・4-3・JO 7110.65 による）",
    "kind": "例題",
-   "by": "W19"
+   "by": "revise-radio"
   },
   {
    "id": "comm.flow#16a56022",
@@ -1329,6 +1443,15 @@
    "source": "この本の架空の練習用の台本（LAB 空港・Lakeside 空港・周波数・コード・コールサイン・位置と高度・天気は架空。言い方の型は AIM 4-2・4-3・JO 7110.65 による）",
    "kind": "例題",
    "by": "W19"
+  },
+  {
+   "id": "comm.flow#a6d0fecb",
+   "sec": "comm.flow",
+   "text": "4271 と 0425 は管制官から言われる架空の値で、1200 は VFR の決まったコードです（AIM 4-1-20）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-1-20（VFR は Mode 3/A Code 1200）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）。4271・0425 は架空（この本の架空の練習用の台本（LAB 空港・Lakeside 空港・周波数・コード・コールサイン・位置と高度・天気は架空。言い方の型は AIM 4-2・4-3・JO 7110.65 による））",
+   "kind": "例題",
+   "by": "revise-radio"
   },
   {
    "id": "comm.flow#cc30c1ec",
@@ -1347,12 +1470,12 @@
    "by": "W19"
   },
   {
-   "id": "comm.flow#370cdbe6",
+   "id": "comm.flow#5cb29e29",
    "sec": "comm.flow",
-   "text": "トランスポンダーのない機は、機内の交通の表示（TIS-B）に出ません（AIM 4-5-8）。",
+   "text": "トランスポンダーのない機は、機内の画面に映る交通の表示（TIS-B）に出ません（AIM 4-5-8）。",
    "tag": "参考値",
-   "source": "FAA AIM 4-5-8（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）",
-   "by": "W19"
+   "source": "FAA AIM 4-5-8（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.flow#94d45974",
@@ -1363,20 +1486,52 @@
    "by": "W19"
   },
   {
-   "id": "comm.flow#293f894c",
+   "id": "comm.flow#aab60df2",
    "sec": "comm.flow",
-   "text": "要求は、管制の返事があるまで承認ではありません（AIM 4-4-10）",
+   "text": "針路（ヘディング、heading）・高度・経路の指示を受けて飛んでいるときは、新しい指示をもらってから変えます（AIM 4-4-10・4-1-18）。",
    "tag": "参考値",
-   "source": "FAA AIM 4-4-10（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）",
-   "by": "W19"
+   "source": "FAA AIM 4-4-10・4-1-18（4-4-10：must not deviate … unless an amended clearance is obtained。4-1-18：a revised clearance or instruction obtained）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
-   "id": "comm.flow#d63d0409",
+   "id": "comm.flow#6f3baa0b",
    "sec": "comm.flow",
-   "text": "閉じないと、到達予定時刻（到着予定時刻、estimated time of arrival）の 30 分後に捜索救難の手続きが始まります（AIM 5-1-14）",
+   "text": "そして、新しい指示を求めます（PCG：Air Traffic Clearance・AIM 4-1-18）。",
    "tag": "参考値",
-   "source": "FAA AIM 5-1-14（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）",
-   "by": "W19"
+   "source": "PCG：AIR TRAFFIC CLEARANCE（THE PILOT IS RESPONSIBLE TO REQUEST AN AMENDED CLEARANCE if ATC issues a clearance that would cause a pilot to deviate from a rule or regulation, or … would place the aircraft in jeopardy）／FAA AIM 4-1-18（PILOT RESPONSIBILITY：weather minimums を守れなくなりそうなら伝えて revised clearance or instruction を得る。6-2-1 も参照）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.flow#05178d62",
+   "sec": "comm.flow",
+   "text": "緊急で指示から外れたら、できるだけ早く管制に伝えます（14 CFR 91.123(c)）",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.123(c)（deviates from an ATC clearance or instruction shall notify ATC of that deviation as soon as possible）（eCFR versioner API、2026-10-28 の版。2026-10-30 に revise-radio が本文を読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.flow#fcf0039b",
+   "sec": "comm.flow",
+   "text": "交通情報だけを受けていて、指示を受けていないときは、VFR の巡航高度（cruising altitude）を変えるときに管制官に知らせます（AIM 4-1-15）",
+   "tag": "参考値",
+   "source": "FAA AIM 4-1-15（Pilots should also inform the controller when changing VFR cruising altitude）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.flow#112119bd",
+   "sec": "comm.flow",
+   "text": "始まるのは、到達予定時刻（到着予定時刻、estimated time of arrival）の 30 分後です（AIM 5-1-14）",
+   "tag": "参考値",
+   "source": "FAA AIM 5-1-14（If you fail to report or cancel your flight plan within 1/2 hour after your ETA, search and rescue procedures are started）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.flow#1861db74",
+   "sec": "comm.flow",
+   "text": "Class C 空域は、空港から半径 5 NM の中心部と、半径 10 NM までの棚でできています（AIM 3-2-4）。",
+   "tag": "参考値",
+   "source": "FAA AIM 3-2-4（surface area 5 NM・shelf 10 NM、airport elevation＋4,000 ft、shelf base 1,200 ft）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.atis#a583ed52",
@@ -1488,6 +1643,14 @@
    "by": "W19"
   },
   {
+   "id": "comm.atis#e3a48198",
+   "sec": "comm.atis",
+   "text": "雲の高さは地上からの高さ（AGL）ですが、LAB の標高は 55 ft（教材値）と低いので、ほぼそのまま比べられます。",
+   "tag": "教材値",
+   "source": "教材値：flight-lab/src/physics.js の GROUND_FT = 55（LAB の地面の標高）。参考値：KSFB の標高 54.8 ft（AirNav、FAA の空港データ 2026-10-01 有効。book-core.js の R.sfbData。basics.alt と同じ）。雲の高さが地上からの高さ（AGL）であることは、序部 basics.alt と wx.metar で学んだこと",
+   "by": "revise-radio"
+  },
+  {
    "id": "comm.atis#afaf08c3",
    "sec": "comm.atis",
    "text": "雲の下 1,500 ft なので、VFR の決まりを満たします。",
@@ -1512,12 +1675,12 @@
    "by": "W19"
   },
   {
-   "id": "comm.atis#21443c94",
+   "id": "comm.atis#2eb84ce1",
    "sec": "comm.atis",
-   "text": "その高さで飛ぶなら、雲から横に 2,000 ft 以上離れます（第 9 章）。",
+   "text": "その高さで飛ぶなら、雲から横に 2,000 ft 以上離れます（）。",
    "tag": "参考値",
    "source": "例題。eCFR 14 CFR 91.155(a)（2026-10-30 に読んだ）",
-   "by": "W19"
+   "by": "revise-radio"
   },
   {
    "id": "comm.dep#a9bf1ba4",
@@ -1561,20 +1724,20 @@
    "by": "W19"
   },
   {
-   "id": "comm.dep#da529f12",
+   "id": "comm.dep#379a9fdc",
    "sec": "comm.dep",
-   "text": "滑走路の指定と hold short は必ず復唱（AIM 4-3-18）。",
+   "text": "滑走路の指定は、いつも復唱（AIM 4-3-18）。",
    "tag": "参考値",
-   "source": "FAA AIM 4-3-18（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 4-3-18（pilots should always read back the runway assignment）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
-   "id": "comm.dep#84532edb",
+   "id": "comm.dep#08e98859",
    "sec": "comm.dep",
-   "text": "コールサインを付ける（AIM 4-4-7・第 12 章） ｜",
+   "text": "コールサインを付ける（AIM 4-4-7） ｜",
    "tag": "参考値",
-   "source": "FAA AIM 4-4-7（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 4-4-7（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.dep#f29da608",
@@ -1593,6 +1756,14 @@
    "by": "W19"
   },
   {
+   "id": "comm.dep#ad574107",
+   "sec": "comm.dep",
+   "text": "滑走路に入る・横切るには、滑走路ごとにはっきりした許可が要ります（AIM 4-3-18）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-18（ATC will issue an explicit clearance for all runway crossings）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
    "id": "comm.tower#5a9c954f",
    "sec": "comm.tower",
    "text": "誰も話していないことを確かめてから呼びます（AIM 4-2-2）。",
@@ -1609,13 +1780,13 @@
    "by": "W19"
   },
   {
-   "id": "comm.tower#ec2b6d62",
+   "id": "comm.tower#c7e512ba",
    "sec": "comm.tower",
-   "text": "5 マイルの最終進入に Cessna。",
+   "text": "5 マイルのファイナル（final approach leg）に Cessna。",
    "tag": "参考値",
    "source": "この本の架空の練習用の台本（LAB 空港・Lakeside 空港・周波数・コード・コールサイン・位置と高度・天気は架空。言い方の型は AIM 4-2・4-3・JO 7110.65 による）",
    "kind": "例題",
-   "by": "W19"
+   "by": "revise-radio"
   },
   {
    "id": "comm.tower#6e12735d",
@@ -1643,21 +1814,21 @@
    "by": "W19"
   },
   {
-   "id": "comm.tower#cfd26119",
+   "id": "comm.tower#8c053078",
    "sec": "comm.tower",
-   "text": "4 マイルの最終進入に Cessna。",
+   "text": "4 マイルのファイナルに Cessna。",
    "tag": "参考値",
    "source": "この本の架空の練習用の台本（LAB 空港・Lakeside 空港・周波数・コード・コールサイン・位置と高度・天気は架空。言い方の型は AIM 4-2・4-3・JO 7110.65 による）",
    "kind": "例題",
-   "by": "W19"
+   "by": "revise-radio"
   },
   {
-   "id": "comm.tower#4667deae",
+   "id": "comm.tower#53c8be3c",
    "sec": "comm.tower",
-   "text": "離陸の許可の復唱には、必ず滑走路の番号（AIM 4-4-7） ｜",
+   "text": "離陸の許可の復唱には、滑走路の番号を入れる（AIM 4-4-7） ｜",
    "tag": "参考値",
-   "source": "FAA AIM 4-4-7（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 4-4-7（initial read back of a taxi, departure or landing clearance should include the runway assignment）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.tower#739061ac",
@@ -1676,12 +1847,20 @@
    "by": "W19"
   },
   {
-   "id": "comm.tower#4ff4f5ba",
+   "id": "comm.tower#d27f9355",
    "sec": "comm.tower",
-   "text": "長く待たされたら確かめます（AIM 5-2-5・第 12 章）。",
+   "text": "長く待たされたら確かめます（AIM 5-2-5）。",
    "tag": "参考値",
-   "source": "FAA AIM 5-2-5（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 5-2-5（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.tower#abc977b1",
+   "sec": "comm.tower",
+   "text": "“cleared for takeoff” を聞いてから離陸します（AIM 5-2-5）。",
+   "tag": "参考値",
+   "source": "FAA AIM 5-2-5（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.radar#13045351",
@@ -1767,6 +1946,54 @@
    "by": "W19"
   },
   {
+   "id": "comm.radar#68238264",
+   "sec": "comm.radar",
+   "text": "針路の案内は、管制官の手が空いている範囲で ｜ AIM 4-1-18 ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 4-1-18（Basic Radar Service：safety alerts, traffic advisories, limited radar vectoring (on a workload permitting basis), sequencing）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.radar#4f454f9f",
+   "sec": "comm.radar",
+   "text": "どうするかは操縦士が決める ｜ AIM 4-1-16 ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 4-1-16（Once the alert is issued, it is solely the pilot's prerogative to determine what course of action, if any, to take）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.radar#655a0293",
+   "sec": "comm.radar",
+   "text": "Class C の業務 ｜ 基本の業務に加えて、IFR の機と VFR の機の間隔をとり、主な空港への VFR の到着機を順序づける ｜ AIM 4-1-18 ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 4-1-18（Class C Service：in addition to basic radar service, approved separation between IFR and VFR aircraft, and sequencing of VFR arrivals to the primary airport）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.radar#3e0d661e",
+   "sec": "comm.radar",
+   "text": "出発のときは、Ground への最初の交信で頼めます（AIM 4-1-18）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-1-18（Pilots of departing VFR aircraft are encouraged to request radar traffic information by notifying ground control … on initial contact）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.radar#e5095c8f",
+   "sec": "comm.radar",
+   "text": "交通をよける針路は、頼んだときだけもらえます（AIM 4-1-15）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-1-15（VFR radar advisory service does not include vectors away from conflicting traffic unless requested by the pilot）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.radar#5d9a8e72",
+   "sec": "comm.radar",
+   "text": "業務を受けている間に VFR の巡航高度を変えるときは、管制官に知らせます（AIM 4-1-15）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-1-15（Pilots should also inform the controller when changing VFR cruising altitude）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
    "id": "comm.radar#5a0ba806",
    "sec": "comm.radar",
    "text": "考えてみよう：右からの横風で、機首を航跡より 10° 右に向けて飛んでいる。",
@@ -1835,12 +2062,12 @@
    "by": "W19"
   },
   {
-   "id": "comm.arrive#7882dfd6",
+   "id": "comm.arrive#dcc5109f",
    "sec": "comm.arrive",
-   "text": "磁航路（magnetic course）180〜359° の南西向きなら、偶数千 ft＋500 ft（4,500 ft など）です。",
+   "text": "磁航路（magnetic course）が 180〜359° のとき（南西向きも入る）は、偶数千 ft＋500 ft（4,500 ft など）です。",
    "tag": "条文",
    "source": "eCFR 14 CFR 91.159(a)(2)（磁航路 180〜359°：偶数千 ft＋500 ft）（2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "by": "revise-radio"
   },
   {
    "id": "comm.arrive#071f6338",
@@ -1894,6 +2121,14 @@
    "by": "W19"
   },
   {
+   "id": "comm.arrive#9a645aab",
+   "sec": "comm.arrive",
+   "text": "前の機に続けという指示は、前の機への許可や指示を自分に許すものではない（AIM 4-1-18） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 4-1-18（THE ATC INSTRUCTION TO FOLLOW THE PRECEDING AIRCRAFT DOES NOT AUTHORIZE THE PILOT TO COMPLY WITH ANY ATC CLEARANCE OR INSTRUCTION ISSUED TO THE PRECEDING AIRCRAFT）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
    "id": "comm.arrive#50765c7a",
    "sec": "comm.arrive",
    "text": "地上管制 121.7 と交信せよ。",
@@ -1917,6 +2152,14 @@
    "tag": "参考値",
    "source": "FAA AIM 4-3-14（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
    "by": "W19"
+  },
+  {
+   "id": "comm.arrive#a69aeb4a",
+   "sec": "comm.arrive",
+   "text": "ほかの滑走路へは、管制官が認めないかぎり出ません（AIM 4-3-21）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-21（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.arrive#47350c33",
@@ -1943,12 +2186,12 @@
    "by": "W19"
   },
   {
-   "id": "comm.option#ae89a0c8",
+   "id": "comm.option#491747d2",
    "sec": "comm.option",
-   "text": "タッチアンドゴー・ローアプローチ・ミストアプローチ・ストップアンドゴー・フルストップのどれでもよい（AIM 4-3-23） ｜",
+   "text": "タッチアンドゴー・ローアプローチ・進入復行（missed approach）・ストップアンドゴー・フルストップのどれでもよい（AIM 4-3-23） ｜",
    "tag": "参考値",
-   "source": "FAA AIM 4-3-23（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 4-3-23（touch-and-go, low approach, missed approach, stop-and-go, or full stop landing）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.option#1d51ebe5",
@@ -1957,6 +2200,14 @@
    "tag": "参考値",
    "source": "FAA AIM 4-3-23（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）／FAA Pilot/Controller Glossary（AIM と同じ版。HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
    "by": "W19"
+  },
+  {
+   "id": "comm.option#2c1ebc08",
+   "sec": "comm.option",
+   "text": "フルストップ（full stop） ｜ 着陸して止まり、滑走路を出る（AIM 4-3-23 の言い方） ｜",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-23（\"full stop landing\" の言い方）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）／PCG：Option Approach",
+   "by": "revise-radio"
   },
   {
    "id": "comm.ctaf#d0e7725f",
@@ -1997,6 +2248,14 @@
    "tag": "参考値",
    "source": "FAA AIM 4-1-9（MULTICOM frequency 122.9）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
    "by": "W19"
+  },
+  {
+   "id": "comm.ctaf#9f48ccb3",
+   "sec": "comm.ctaf",
+   "text": "管制塔のない空港でも、自動の気象の放送（AWOS など）や自動の UNICOM で、風と天気を聞けるところがあります（AIM 4-1-9）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-1-9（completely automated weather, radio check capability and airport advisory information on an automated UNICOM system／wind and weather … via ATIS or AWOS frequency）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.ctaf#ff71398b",
@@ -2056,6 +2315,14 @@
    "by": "W19"
   },
   {
+   "id": "comm.ctaf#41838692",
+   "sec": "comm.ctaf",
+   "text": "場周では、ほかの機を特によく探します（AC 90-66C 9.12.2）。",
+   "tag": "参考値",
+   "source": "FAA AC 90-66C（2023-06-06。PDF を 2026-10-30 に revise-radio が読んだ：R.ac9066）9.12.2 No-Radio Aircraft（procedures at airports without operating control towers generally do not require the use of two-way radios; therefore, pilots should be especially vigilant）",
+   "by": "revise-radio"
+  },
+  {
    "id": "comm.ctaf#e49e647f",
    "sec": "comm.ctaf",
    "text": "言う所：地上滑走の前・滑走路に入る前・10 マイル手前・ダウンウインド・ベース・ファイナル・滑走路を出たとき",
@@ -2064,20 +2331,20 @@
    "by": "W19"
   },
   {
-   "id": "comm.xpdr#ba45707e",
+   "id": "comm.xpdr#7673c02d",
    "sec": "comm.xpdr",
-   "text": "コードを変える途中で、7500・7600・7700 を通らないようにします（AIM 4-1-20）",
+   "text": "つまみは、ふつう高度を送る位置（ALT）にします（AIM 4-1-20）",
    "tag": "参考値",
-   "source": "FAA AIM 4-1-20（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 4-1-20（operate with the transponder in the altitude reporting mode … any time the aircraft is positioned on any portion of the airport movement area。controlled airspace では altitude reporting enabled）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
-   "id": "comm.xpdr#7e2a8b1d",
+   "id": "comm.xpdr#99ab2c0f",
    "sec": "comm.xpdr",
-   "text": "Class B・C 空域や、その上などでは、どちらも必要です（14 CFR 91.215・91.225・第 9 章）。",
+   "text": "Class B・C 空域や、その上などでは、どちらも必要です（14 CFR 91.215・91.225。くわしくは ）。",
    "tag": "条文",
    "source": "eCFR 14 CFR 91.215・91.225（2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "by": "revise-radio"
   },
   {
    "id": "comm.xpdr#65681c65",
@@ -2126,6 +2393,86 @@
    "tag": "参考値",
    "source": "FAA AIM 4-1-20（switching from Code 2700 to Code 7200, switch first to 2200 then to 7200, NOT to 7700）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）",
    "by": "W19"
+  },
+  {
+   "id": "comm.xpdr#ad0cacd2",
+   "sec": "comm.xpdr",
+   "text": "管制空域では、トランスポンダーを高度を送る位置にして、言われたコードで動かします（14 CFR 91.215(c)・AIM 4-1-20）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.215(c)（Transponder-on operation … in all controlled airspace … shall operate the transponder, including Mode C equipment if installed）（eCFR versioner API、2026-10-28 の版。2026-10-30 に revise-radio が本文を読んだ）／FAA AIM 4-1-20（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.xpdr#734f630a",
+   "sec": "comm.xpdr",
+   "text": "ADS-B Out を積んでいる機は、いつも送信にしておきます（14 CFR 91.225(f)）。",
+   "tag": "条文",
+   "source": "eCFR 14 CFR 91.225(f)（must operate this equipment in the transmit mode at all times）（eCFR versioner API、2026-10-28 の版。2026-10-30 に revise-radio が本文を読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.xpdr#c6e04a98",
+   "sec": "comm.xpdr",
+   "text": "駐機場に着いたら、STBY か OFF にします（AIM 4-1-20）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-1-20（Arrivals：Select STBY or OFF for transponder and ADS-B upon arriving at the aircraft's parking spot or gate）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.xpdr#5172972e",
+   "sec": "comm.xpdr",
+   "text": "RWSL のある空港では、駐機場を出てから戻るまで入れておきます（AIM 2-1-6）。",
+   "tag": "参考値",
+   "source": "FAA AIM 2-1-6（pilots will operate with the transponder/ADS-B \"On\" when departing the gate or parking area until it is shut down upon arrival … ASDE-X/ASSC which provide information to the RWSL system）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.xpdr#52d97f1d",
+   "sec": "comm.xpdr",
+   "text": "規正値を確かめます（AIM 4-1-20）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-1-20（STOP ALTITUDE SQUAWK … may be an indication that the transmitted altitude information is incorrect, or that the aircraft's altimeter setting is incorrect）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.xpdr#3e694164",
+   "sec": "comm.xpdr",
+   "text": "一次レーダーは、電波を出して、機体に当たって返ってきた反射で機を見ます（AIM 4-5-1）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-5-1（radio waves … received when they have been reflected by an object）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.xpdr#06f3ae38",
+   "sec": "comm.xpdr",
+   "text": "小型機は反射が小さく、一次レーダーに映りにくくなります（AIM 4-5-1）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-5-1（a small light airplane … will be more difficult to see on primary radar）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.xpdr#ded32cd4",
+   "sec": "comm.xpdr",
+   "text": "二次レーダー（ATCRBS：Air Traffic Control Radar Beacon System）は、質問と答えで機を見ます（AIM 4-5-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-5-2（ATCRBS, sometimes referred to as secondary surveillance radar：interrogator・transponder・radarscope）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.xpdr#1d28813e",
+   "sec": "comm.xpdr",
+   "text": "答えは反射よりずっと強く、管制官はコードで機をすぐに見分けられます（AIM 4-5-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-5-2（These replies are independent of, and much stronger than a primary radar return。Rapid target identification）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.xpdr#969271ed",
+   "sec": "comm.xpdr",
+   "text": "高度を 100 ft ごとに自動で送る機能は、Mode C と Mode S にあります（AIM 4-1-20）。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-1-20（Most transponders (Modes C and S) … automatic altitude reporting … in 100-foot increments）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.xpdr#c05fd9fb",
@@ -2227,12 +2574,20 @@
    "by": "W19"
   },
   {
-   "id": "comm.mayday#b1588f91",
+   "id": "comm.mayday#435aa1bc",
    "sec": "comm.mayday",
-   "text": "交信できないときは 7700 にします（AIM 6-3-2）。",
+   "text": "すぐに交信できないときは 7700 にします（AIM 6-3-2）。",
    "tag": "参考値",
-   "source": "FAA AIM 6-3-2（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA AIM 6-3-2（If unable to immediately establish communications with an air traffic facility/agency, squawk Mode A/3, Code 7700）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.mayday#27a09168",
+   "sec": "comm.mayday",
+   "text": "7700 にしたら、すぐに交信を始めます（AIM 6-2-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM 6-2-2（squawk … Code 7700 … and then immediately establish communications with the ATC facility）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.mayday#77100c47",
@@ -2243,12 +2598,76 @@
    "by": "W19"
   },
   {
-   "id": "comm.mayday#9b11008d",
+   "id": "comm.mayday#9674e5fa",
    "sec": "comm.mayday",
-   "text": "ただし、IFR の気象状態の管制空域では、許可なく上昇・降下してはいけません（緊急のときの 14 CFR 91.3(b) の場合を除く。AIM 6-3-2）。",
+   "text": "それができなければ、資格がないことを伝えて、遭難（MAYDAY）を宣言します（AIM 6-2-1）。",
+   "tag": "参考値",
+   "source": "FAA AIM 6-2-1（If continued flight in VFR conditions is not possible, the noninstrument rated pilot should so advise the controller and indicating the lack of an instrument rating, declare a distress condition）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.mayday#7ad8fd43",
+   "sec": "comm.mayday",
+   "text": "緊急のときの 14 CFR 91.3(b) の場合は除きます（AIM 6-3-2）。",
    "tag": "条文",
-   "source": "FAA AIM 6-3-2（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）／eCFR 14 CFR 91.3(b)（2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "eCFR 14 CFR 91.3(b)（eCFR versioner API、2026-10-28 の版。2026-10-30 に revise-radio が本文を読んだ）／FAA AIM 6-3-2（unauthorized climb or descent under IFR conditions within controlled airspace is prohibited, except as permitted by 14 CFR section 91.3(b)）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.mayday#075b6888",
+   "sec": "comm.mayday",
+   "text": "必要なら、捜索救難の機関に知らせます（AIM 6-3-1）。",
+   "tag": "参考値",
+   "source": "FAA AIM 6-3-1（The station addressed should immediately acknowledge … provide assistance, coordinate and direct the activities of assisting facilities, and alert the appropriate search and rescue coordinator if warranted）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.mayday#577e9ab7",
+   "sec": "comm.mayday",
+   "text": "案内は助言で、安全に飛ぶ責任は操縦士に残ります（AIM 6-2-1）。",
+   "tag": "参考値",
+   "source": "FAA AIM 6-2-1（navigational guidance information is advisory in nature, and the responsibility for flying the aircraft safely remains with the pilot）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.mayday#4c9d6c2a",
+   "sec": "comm.mayday",
+   "text": "どうしても必要でなければ、周波数を変えません（AIM 6-3-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM 6-3-2（Do not change frequency or change to another ground station unless absolutely necessary）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.mayday#52455fa4",
+   "sec": "comm.mayday",
+   "text": "不時着が迫ったら、時間があれば ELT（航空機用救命無線機）の状態・目に見える目印・機体の色も伝えます（AIM 6-3-2）。",
+   "tag": "参考値",
+   "source": "FAA AIM 6-3-2（crash landing … imminent：ELT status, visible landmarks, aircraft color）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.mayday#2a7aa87b",
+   "sec": "comm.mayday",
+   "text": "燃料が減って、着いても遅れをほとんど受け入れられないときは、最初の交信でコールサインのあとに “minimum fuel” と言います（AIM 5-5-15）。",
+   "tag": "参考値",
+   "source": "FAA AIM 5-5-15 Minimum Fuel Advisory（cannot accept any undue delay。On initial contact the term \"minimum fuel\" should be used after stating call sign）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）：NEW_R.aim55",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.mayday#dbb5d24c",
+   "sec": "comm.mayday",
+   "text": "優先の扱いも意味しません（AIM 5-5-15・PCG）。",
+   "tag": "参考値",
+   "source": "FAA AIM 5-5-15（not an emergency situation … does not imply a need for traffic priority）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）／PCG：MINIMUM FUEL",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.mayday#809136bf",
+   "sec": "comm.mayday",
+   "text": "安全に降りるのに優先が要りそうなら、燃料の不足で緊急を宣言し、残りの燃料を分で言います（AIM 5-5-15）。",
+   "tag": "参考値",
+   "source": "FAA AIM 5-5-15（If the remaining usable fuel supply suggests the need for traffic priority to ensure a safe landing, you should declare an emergency due to low fuel and report fuel remaining in minutes）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.mayday#004a354b",
@@ -2313,6 +2732,14 @@
    "tag": "参考値",
    "source": "FAA AIM 4-2-13（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
    "by": "W19"
+  },
+  {
+   "id": "comm.nordo#0c9d1369",
+   "sec": "comm.nordo",
+   "text": "受信機が故障（聞こえない） ｜ 管制塔のある空港の地表区域（AIM は Class D の地表区域と書く）の外か上で、使われている滑走路と流れを見きわめる。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-2-13（Receiver inoperative：remain outside or above the Class D surface area to determine the direction and flow of traffic）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に revise-radio が読んだ）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.nordo#194133ee",
@@ -2403,12 +2830,12 @@
    "by": "W19"
   },
   {
-   "id": "comm.sfb#7207e741",
+   "id": "comm.sfb#ef8a1d99",
    "sec": "comm.sfb",
-   "text": "9L/27R に着陸して 18 に出るよう言われた機も同じです。",
+   "text": "9L/27R に着陸して、滑走路 18 へ出てから誘導路 C へ右に曲がるよう言われた機も、同じ取り違えをしています。",
    "tag": "参考値",
-   "source": "FAA「From the Flight Deck: Orlando Sanford（SFB）」（R.sfb。2026 年 6 月 2 日更新）と AirNav の KSFB（FAA の空港データ、2026-10-01 有効：R.sfbData）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "source": "FAA「From the Flight Deck: Orlando Sanford（SFB）」（R.sfb。2026 年 6 月 2 日更新。2026-10-30 に revise-radio が読んだ）HS1：Aircraft landing RWY 18, as well as aircraft landing on RWY 9L/27R, instructed to exit onto RWY 18 then turn right onto TWY C, have mistakenly turned right onto RWY 27C",
+   "by": "revise-radio"
   },
   {
    "id": "comm.sfb#fca2f012",
@@ -2443,28 +2870,52 @@
    "by": "W19"
   },
   {
-   "id": "comm.sfb#b9dc0965",
+   "id": "comm.sfb#0e5508fd",
    "sec": "comm.sfb",
-   "text": "同じデータでは、滑走路の長さは 9L/27R が 11,002 ft、9C/27C が 3,578 ft、9R/27L が 5,839 ft、18/36 が 6,002 ft です。",
+   "text": "9L/27R ｜ 11,002 ft ｜ 北側。",
    "tag": "参考値",
    "source": "FAA「From the Flight Deck: Orlando Sanford（SFB）」（R.sfb。2026 年 6 月 2 日更新）と AirNav の KSFB（FAA の空港データ、2026-10-01 有効：R.sfbData）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "by": "revise-radio"
   },
   {
-   "id": "comm.sfb#fd8a52b6",
+   "id": "comm.sfb#55b6fc22",
    "sec": "comm.sfb",
-   "text": "場周は、9L/27R が北側で、9L は左回り・27R は右回りです。",
+   "text": "9L は左回り・27R は右回り ｜",
    "tag": "参考値",
    "source": "FAA「From the Flight Deck: Orlando Sanford（SFB）」（R.sfb。2026 年 6 月 2 日更新）と AirNav の KSFB（FAA の空港データ、2026-10-01 有効：R.sfbData）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "by": "revise-radio"
   },
   {
-   "id": "comm.sfb#81507321",
+   "id": "comm.sfb#46523824",
    "sec": "comm.sfb",
-   "text": "9R/27L と 9C/27C は南側で、9R・9C は右回り、27L・27C は左回りです。",
+   "text": "9C/27C ｜ 3,578 ft ｜ 南側。",
    "tag": "参考値",
    "source": "FAA「From the Flight Deck: Orlando Sanford（SFB）」（R.sfb。2026 年 6 月 2 日更新）と AirNav の KSFB（FAA の空港データ、2026-10-01 有効：R.sfbData）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.sfb#d1d607ec",
+   "sec": "comm.sfb",
+   "text": "9R/27L ｜ 5,839 ft ｜ 南側。",
+   "tag": "参考値",
+   "source": "FAA「From the Flight Deck: Orlando Sanford（SFB）」（R.sfb。2026 年 6 月 2 日更新）と AirNav の KSFB（FAA の空港データ、2026-10-01 有効：R.sfbData）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.sfb#915be47a",
+   "sec": "comm.sfb",
+   "text": "9R は右回り・27L は左回り ｜",
+   "tag": "参考値",
+   "source": "FAA「From the Flight Deck: Orlando Sanford（SFB）」（R.sfb。2026 年 6 月 2 日更新）と AirNav の KSFB（FAA の空港データ、2026-10-01 有効：R.sfbData）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.sfb#087a9d87",
+   "sec": "comm.sfb",
+   "text": "18/36 ｜ 6,002 ft ｜ 東側。",
+   "tag": "参考値",
+   "source": "FAA「From the Flight Deck: Orlando Sanford（SFB）」（R.sfb。2026 年 6 月 2 日更新）と AirNav の KSFB（FAA の空港データ、2026-10-01 有効：R.sfbData）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.icao#16538644",
@@ -2475,20 +2926,28 @@
    "by": "W19"
   },
   {
-   "id": "comm.icao#5b2ab0af",
+   "id": "comm.icao#62e77c98",
    "sec": "comm.icao",
-   "text": "小数点 ｜ point（one two one point seven） ｜ decimal（one two one decimal seven。AIM 4-2-8 の注記にも） ｜ — ｜",
+   "text": "小数点 ｜ point（one two one point seven） ｜ decimal（one two one decimal seven。米国の AIM 4-2-8 の注にも、この言い方がある） ｜ — ｜",
    "tag": "参考値",
    "source": "FAA AIM 4-2-8（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）／UK CAA CAP 413 第 24 版（2026-07-01 発効。PDF を読んだ：R.cap413） 2.14（decimal）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "by": "revise-radio"
   },
   {
-   "id": "comm.icao#f839c3cd",
+   "id": "comm.icao#66a97ddc",
    "sec": "comm.icao",
-   "text": "フライトレベルに変わる高度 ｜ 18,000 ft（全国共通） ｜ 空域ごとに決められていて、米国よりずっと低い（英国の AIP で確かめる） ｜ — ｜",
+   "text": "FL に変わる高度 ｜ 18,000 ft（全国共通） ｜ 空域ごとに決められていて、米国よりずっと低い（英国の AIP で確かめる） ｜ — ｜",
    "tag": "参考値",
    "source": "FAA AIM 4-2-9・14 CFR 91.121（米国は 18,000 ft MSL から）（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）／UK CAA CAP 413 第 24 版（2026-07-01 発効。PDF を読んだ：R.cap413）（英国は空域ごとの転移高度）（R1 の W07a・W12 で一次資料と照らした教科書の文。W19 が同じ段落を読み直した）",
-   "by": "W19"
+   "by": "revise-radio"
+  },
+  {
+   "id": "comm.icao#934415e8",
+   "sec": "comm.icao",
+   "text": "復唱するもの ｜ AIM がいつも復唱するよう求めるもの：高度・高度の制限・針路・滑走路の指定。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-4-7・4-3-18（Change 3、2026-07-09 発効。FAA の HTML 版を 2026-10-30 に読んだ）／UK CAA CAP 413 第 24 版（2026-07-01 発効。PDF を読んだ：R.cap413） 2.69（read back in full の 14 項目）。日本の欄は FL.jur の readback（W06。〔要確認〕：U.readback-japan）",
+   "by": "revise-radio"
   },
   {
    "id": "comm.icao#955d3024",
@@ -2507,13 +2966,13 @@
    "by": "W19"
   },
   {
-   "id": "comm.practice#6fe5d9ca",
+   "id": "comm.practice#5fcf89fa",
    "sec": "comm.practice",
-   "text": "型を覚える：最初の呼び出し（第 12 章）と、1 回の飛行の交信（第 13 章）を、表を見ずに言えるようにします。",
+   "text": "型を覚える：最初の呼び出し（）と、1 回の飛行の交信（）を、表を見ずに言えるようにします。",
    "tag": "参考値",
    "source": "この本の説明の数（外の事実ではない）",
    "kind": "本の決まり",
-   "by": "W19"
+   "by": "revise-radio"
   },
   {
    "id": "comm.practice#506054e8",

@@ -46,7 +46,7 @@
     aim42: { label: 'FAA AIM 4-2 Radio Communications Phraseology and Techniques（交信の言い方と技術）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_2.html' },
     aim43: { label: 'FAA AIM 4-3 Airport Operations（空港での運用・地上走行・灯火信号）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html' },
     aim44: { label: 'FAA AIM 4-4 ATC Clearances and Aircraft Separation（4-4-7 許可と指示の復唱）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_4.html' },
-    aim21: { label: 'FAA AIM 2-1 Airport Lighting Aids（空港の灯火・2-1-2 PAPI などの進入角の灯）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap2_section_1.html' },
+    aim21: { label: 'FAA AIM 2-1 Airport Lighting Aids（空港の灯火・2-1-2 PAPI などの進入角の灯・2-1-6 滑走路状態表示灯（RWSL））', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap2_section_1.html' },
     ac9066: { label: 'FAA AC 90-66C Non-Towered Airport Flight Operations（管制塔のない空港の運用・2023）', url: 'https://www.faa.gov/documentlibrary/media/advisory_circular/ac_90-66c.pdf' },
     aim23: { label: 'FAA AIM 2-3 Airport Marking Aids and Signs（空港の標示と標識・残り距離標識）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap2_section_3.html' },
     aim76: { label: 'FAA AIM 7-6 Potential Flight Hazards（7-6-7 山岳飛行と密度高度・7-6-8 滑走路の中間点の目安）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_6.html' },
@@ -78,7 +78,7 @@
     cfr121: { label: '14 CFR Part 121（エアラインの運航規則）— 121.436 操縦士の資格', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-G/part-121/subpart-M/section-121.436' },
     cfr23: { label: '14 CFR Part 23（普通類の飛行機の耐空性）', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-C/part-23' },
     sfb: { label: 'FAA From the Flight Deck: Orlando Sanford（SFB）', url: 'https://www.faa.gov/flight_deck/sfb' },
-    sfbData: { label: 'AirNav：KSFB Orlando Sanford International Airport（FAA の空港データ。2026-10-01 有効。滑走路の位置・長さ・場周の向き）', url: 'https://www.airnav.com/airport/KSFB' },
+    sfbData: { label: 'AirNav：KSFB Orlando Sanford International Airport（FAA の空港データ。2026-10-29 有効。滑走路の位置・長さ・場周の向き）', url: 'https://www.airnav.com/airport/KSFB' },
     vfr: { label: 'FAA VFR Charts（セクショナルチャート）', url: 'https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/vfr/' },
     chartUG: { label: 'FAA Chart Users\' Guide（チャートの記号の手引き・2026-07-09 有効の版）', url: 'https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/aero_guide/' },
     awc: { label: 'Aviation Weather Center（METAR・TAF・気象情報）', url: 'https://aviationweather.gov/' },
@@ -208,6 +208,11 @@
     cfr99: { label: '14 CFR Part 99 Security Control of Air Traffic（ADIZ・99.7 特別保安指示）', url: 'https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-99' },
     faaSaib: { label: 'FAA Special Airworthiness Information Bulletins（SAIB は規則ではない情報。AD の基準に当たらないもの）', url: 'https://www.faa.gov/aircraft/safety/alerts/SAIB' },
     usnoTwilight: { label: 'U.S. Naval Observatory：Rise, Set, and Twilight Definitions（市民薄明は太陽の中心が地平線の下 6°）。日ごとの値は USNO の Sun and Moon Data for One Day（28.78°N 81.24°W、2026 年の各月 15 日で計算）', url: 'https://aa.usno.navy.mil/faq/RST_defs' },
+    // Part 1 rewritten (R2): the sources the chapter radio1-5 added (drafts/radio1-5.js's NEW_R; one entry for a URL two drafts cite)
+    faaRI: { label: 'FAA Runway Safety「Runway Incursions」（滑走路誤進入の定義・4 つの区分・原因の 3 つの種類）', url: 'https://www.faa.gov/airports/runway_safety/resources/runway_incursions' },
+    aim45: { label: 'FAA AIM 4-5 Surveillance Systems（4-5-1 レーダーの限界・4-5-2 二次レーダー（ATCRBS）・4-5-7 ADS-B・4-5-8 TIS-B）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_5.html' },
+    aim55: { label: 'FAA AIM 5-5 Pilot/Controller Roles and Responsibilities（5-5-15 Minimum Fuel Advisory）', url: 'https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap5_section_5.html' },
+    asrsDL1: { label: 'NASA ASRS Directline 第 1 号「Readback / Hearback」（1991 年 3 月。hearback の語・管制官が黙っていても復唱が正しい証明ではない）', url: 'https://asrs.arc.nasa.gov/publications/directline/dl1_read.htm' },
   };
   // parts 1–6 (phase: the syllabus's stages that go with the part). The front part p0 (序部, book-0.js) and Part 7 (p7,
   // book-7.js) are not written here: the file that holds a part's chapters adds it (addPart below), so a product that

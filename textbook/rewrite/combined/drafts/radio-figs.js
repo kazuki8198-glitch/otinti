@@ -1,7 +1,7 @@
 // DRAFT (W19, R2) — the figures of Part 1's chapters 'radio1'〜'radio5'「英語の交信」 (textbook/rewrite/combined/DESIGN.md
 // 3.3 第 1 部 第 13〜17 章). No product reads this file: it is checked with the chapter draft
 //   node textbook/rewrite/combined/tools/check-chapter.mjs textbook/rewrite/combined/drafts/radio-figs.js \
-//     textbook/rewrite/combined/drafts/radio.js
+//     textbook/rewrite/combined/drafts/radio1-5.js
 // and, when the chapters are registered, its functions go into flight-lab/src/book-figs.js (FIG) as they are (same keys,
 // same helpers there: C, svg, T, L, A, P, TL, BOX, NFN). Until then the few helpers they need are repeated here.
 //
@@ -26,6 +26,10 @@
 //                        change 2700 → 7200 made through 2200, not through 7700 (AIM 4-1-20). A drawing, not a photo of an
 //                        instrument screen (STYLE「写真」); the photo ch04-photo5 comes after it.
 // Every number drawn here is one the text gives with its source (radio.claims.json); text ≥ 12 (≥ 10 px at 390 px).
+// Revised by revise-radio (2026-10-30): readbackLoop's chips no longer touch the viewBox edge and say「いつも復唱するもの
+// （AIM）」(AIM says "should always read back"); runwayEntry's REL lights start at the hold line (AIM 2-1-6), the arrow from
+// ① goes above and right of the signs, the enhanced taxiway centerline is drawn (AIM 2-3-4) and the sign note says
+// 進入端 (threshold, AIM 2-3-8); xpdrCodes says the mode knob is normally ALT, on the ground too (AIM 4-1-20).
 (function (FL) {
   'use strict';
   FL.bookFigs = FL.bookFigs || {};
@@ -53,15 +57,15 @@
       // back to ① when it was wrong
       s += P([[36, 220], [18, 220], [18, 40]], C.rd, 2, 'none', '5 4') + A(18, 40, 34, 40, C.rd, 2);
       // what must be read back
-      s += T(8, 256, '必ず復唱するもの', { c: C.ink, b: 1, a: 'start', fs: 13 });
+      s += T(8, 256, 'いつも復唱するもの（AIM）', { c: C.ink, b: 1, a: 'start', fs: 13 });
       // a row of rounded labels, laid out left to right (width from the text: CJK ≈ 12 px, latin ≈ 7 px at size 12)
-      const chips = (x, y, list, c) => list.map(tx => { const w = [...tx].reduce((a, ch) => a + (ch > '　' ? 12 : 7), 14), r = `<rect x="${x}" y="${y}" width="${w}" height="22" rx="11" fill="${c}" fill-opacity="0.18" stroke="${c}"/>` + T(x + w / 2, y + 15, tx, { c: C.ink, fs: 12 }); x += w + 6; return r; }).join('');
+      const chips = (x, y, list, c) => list.map(tx => { const w = [...tx].reduce((a, ch) => a + (ch > '　' ? 12 : 7), 14), r = `<rect x="${x}" y="${y}" width="${w}" height="22" rx="11" fill="${c}" fill-opacity="0.18" stroke="${c}"/>` + T(x + w / 2, y + 15, tx, { c: C.ink, fs: 12 }); x += w + 4; return r; }).join('');
       s += T(8, 282, '空中', { c: C.cy, b: 1, a: 'start', fs: 12 }) + T(8, 298, 'AIM 4-4-7', { c: C.mut, a: 'start', fs: 12 });
       s += chips(80, 268, ['高度', '高度の制限', '針路（vector）', '滑走路の指定'], C.cy);
       s += T(8, 330, '地上', { c: C.gr, b: 1, a: 'start', fs: 12 }) + T(8, 346, 'AIM 4-3-18', { c: C.mut, a: 'start', fs: 12 });
       s += chips(80, 316, ['滑走路の指定', '滑走路に入る許可'], C.gr) + chips(80, 346, ['滑走路の hold short', 'line up and wait'], C.gr);
       s += T(8, 392, '“Roger” だけ → 管制官「read back hold instructions」', { c: C.rd, a: 'start', fs: 12 });
-      return svg(400, 404, s, '図：復唱の輪。指示を言われた順に復唱し、管制官が聞いて確かめます（ヒアバック）。復唱したら、管制官の返事を最後まで聞きます。下は、AIM が必ず復唱するとしているもの。hold short に Roger だけで答えると、管制官は復唱を求めます（JO 7110.65 3-7-2）');
+      return svg(400, 404, s, '図：復唱の輪。指示を言われた順に復唱し、管制官が聞いて確かめます（ヒアバック）。復唱したら、管制官の返事を最後まで聞きます。下は、AIM がいつも復唱するよう求めているもの。hold short に Roger だけで答えると、管制官は復唱を求めます（JO 7110.65 3-7-2）');
     },
 
     // ---------------------------------------------------------------- comm.runway (new) — the hold line and what each word allows
@@ -72,6 +76,8 @@
       s += T(313, 176, '36', { c: C.ink, fs: 15, b: 1 }) + T(313, 18, '18', { c: C.ink, fs: 15, b: 1, rot: 180 });
       // taxiway A from the west, its yellow centreline
       s += `<rect x="8" y="118" width="274" height="40" fill="#1e2733"/>` + L(8, 138, 282, 138, C.am, 2);
+      // the enhanced taxiway centerline: dashes on both sides of the centreline before the hold line (AIM 2-3-4)
+      s += L(156, 133, 238, 133, C.am, 1.5, '6 4') + L(156, 143, 238, 143, C.am, 1.5, '6 4');
       // the runway holding position marking: two solid lines (the side where the aircraft holds) and two dashed lines
       s += L(240, 118, 240, 158, C.am, 2.6) + L(245, 118, 245, 158, C.am, 2.6) + L(251, 118, 251, 158, C.am, 2.6, '5 4') + L(256, 118, 256, 158, C.am, 2.6, '5 4');
       // the signs on the left of the taxiway (north side): taxiway location sign "A" (outboard) and runway holding position sign "18-36"
@@ -79,21 +85,22 @@
       s += `<rect x="186" y="84" width="54" height="24" fill="#c8102e"/>` + T(213, 101, '18-36', { c: '#ffffff', fs: 13, b: 1 });
       s += L(212, 108, 212, 116, C.mut, 1.5);
       // the runway entrance lights at the hold line (red when the runway is busy)
-      for (const x of [262, 270, 278]) s += `<circle cx="${x}" cy="138" r="3" fill="${C.rd}"/>`;
+      for (const x of [256, 264, 272, 280]) s += `<circle cx="${x}" cy="138" r="3" fill="${C.rd}"/>`;
       // the airplane taxiing east on A
       s += L(84, 138, 126, 138, C.cy, 4) + L(108, 122, 108, 154, C.cy, 4) + L(88, 130, 88, 146, C.cy, 3);
       s += T(60, 110, '誘導路 A', { c: C.ink, fs: 12, b: 1 });
       // what each part means
       s += T(14, 30, '① 地上滑走の指示', { c: C.gr, fs: 13, b: 1, a: 'start' }) + T(14, 48, '（runway 36, taxi via A）', { c: C.gr, fs: 12, a: 'start' });
       s += T(14, 66, '→ 停止線の手前まで', { c: C.gr, fs: 12, a: 'start' });
-      s += A(150, 70, 234, 124, C.gr, 2);
+      s += L(132, 62, 246, 62, C.gr, 2) + A(246, 62, 246, 114, C.gr, 2);
       s += T(14, 204, '② 停止線を越える → 入る・横切る・離陸の許可が要る', { c: C.am, fs: 12, a: 'start' });
       s += T(14, 224, '実線の側で止まる。機体のどこも線を越えない', { c: C.ink, fs: 12, a: 'start' });
-      s += T(14, 244, '赤地に白：滑走路の標識（左が 18、右が 36 の端）', { c: C.ink, fs: 12, a: 'start' });
+      s += T(14, 244, '赤地に白：滑走路の標識（左に 18、右に 36 の進入端）', { c: C.ink, fs: 12, a: 'start' });
       s += T(14, 264, '黒地に黄：いま居る誘導路（A）', { c: C.ink, fs: 12, a: 'start' });
       s += T(14, 284, '停止線の赤い灯（REL）がついたら、止まって管制に確かめる', { c: C.rd, fs: 12, a: 'start' });
-      s += NFN(392, 312);
-      return svg(400, 322, s, '図：誘導路が滑走路に出会う所（模式図）。地上滑走の指示で行けるのは停止線の手前までです。黄色の 4 本の線の実線の側で止まり、入る・横切る許可をもらうまで越えません（AIM 2-3-5・4-3-18）。赤地に白の標識は滑走路の名前、黒地に黄は今いる誘導路です（AIM 2-3-8・2-3-9）');
+      s += T(14, 304, '中心線の両側の黄色の破線：停止線が近い合図', { c: C.am, fs: 12, a: 'start' });
+      s += NFN(392, 332);
+      return svg(400, 342, s, '図：誘導路が滑走路に出会う所（模式図）。地上滑走の指示で行けるのは停止線の手前までです。黄色の 4 本の線の実線の側で止まり、入る・横切る許可をもらうまで越えません（AIM 2-3-5・4-3-18）。赤地に白の標識は滑走路の名前、黒地に黄は今いる誘導路です（AIM 2-3-8・2-3-9）。中心線の両側の破線は、停止線が近い合図です（AIM 2-3-4）');
     },
 
     // ---------------------------------------------------------------- comm.xpdr (new) — the transponder and its four codes
@@ -120,7 +127,8 @@
       s += A(334, 84, 334, 104, C.gr, 2) + T(318, 120, '7200', { c: C.gr, fs: 13, b: 1, a: 'start' });
       s += T(250, 146, '7700 を通らない', { c: C.rd, fs: 12, a: 'start' });
       s += T(250, 166, '（警報が出てしまう）', { c: C.rd, fs: 12, a: 'start' });
-      return svg(400, 238, s, '図：トランスポンダーの表示（模式図）と決まったコード。VFR は 1200、7500・7600・7700 は特別なコードです。コードを変える途中で、7500・7600・7700 を通らないようにします（AIM 4-1-20）');
+      s += T(250, 196, 'つまみ：ふつうは ALT', { c: C.am, fs: 12, a: 'start' }) + T(250, 214, '（高度を送る。地上でも）', { c: C.am, fs: 12, a: 'start' });
+      return svg(400, 238, s, '図：トランスポンダーの表示（模式図）と決まったコード。VFR は 1200、7500・7600・7700 は特別なコードです。コードを変える途中で、7500・7600・7700 を通らないようにします。つまみは、ふつう高度を送る位置（ALT）にします（AIM 4-1-20）');
     },
   });
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

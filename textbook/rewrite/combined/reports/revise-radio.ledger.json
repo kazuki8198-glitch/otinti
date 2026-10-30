@@ -1,0 +1,177 @@
+{
+ "unit": "W19",
+ "about": "revise-radio（W19 の章 radio1〜radio5 の直し役、2026-10-30）のパッチ。章を登録するコミットで、W19-radio.ledger.json のあとに取り込む。主張の札はこのパッチに入れず、drafts/radio.claims.json（364 行）を使う（W19-radio.ledger.json の CLAIMS の 308 行のうち 52 行は文が変わって古い：reports/revise-radio.md の 4）。unit は台帳の検査（src/schema.mjs の UNIT）が作業の単位の形を求めるので W19 にした。",
+ "patches": [
+  {
+   "op": "add",
+   "id": "C.two-way-comms",
+   "kind": "address",
+   "name": "Class C・D 空域に入る前の双方向の交信の確立（コールサインつきの応答）",
+   "address": "law.airspace",
+   "recalls": [
+    "comm.ack"
+   ],
+   "maxLines": 3,
+   "basis": "expert-radio S8・expert-law S9・reader-radio AC2（DESIGN 3.2「1 つの概念に住所は 1 つ」・5 章の基準 15）",
+   "unit": "W19",
+   "recallUnits": [
+    "W19"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "W19",
+   "checkedBy": null,
+   "note": "revise-radio（2026-10-30）：住所は law.airspace（「交信の確立」とは。完全な説明）。comm.ack は表を外し、言い方の練習の台本（3 つの答え）と、ここが大切のあとの思い出そう（law.airspace へのリンク）にした。revise-law も W03 に同じ行を頼んでいる（reports/revise-law.md の 7 の 10）ので、統合役は 1 行だけ取り込む"
+  },
+  {
+   "op": "add",
+   "id": "C.class-c-shape",
+   "kind": "address",
+   "name": "Class C 空域の形（半径 5 NM の中心部と 10 NM までの棚）",
+   "address": "law.airspace",
+   "recalls": [
+    "comm.flow"
+   ],
+   "maxLines": 3,
+   "basis": "expert-radio S8（DESIGN 3.2・5 章の基準 15：comm.flow が law.airspace の表と同じ数字で説明し直していた）",
+   "unit": "W19",
+   "recallUnits": [
+    "W19"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "W19",
+   "checkedBy": null,
+   "note": "revise-radio（2026-10-30）：comm.flow の Class C の形の段落を外し、ここが大切のあとの思い出そう（2 文と law.airspace へのリンク）にした"
+  },
+  {
+   "op": "add",
+   "id": "C.runway-clearances",
+   "kind": "address",
+   "name": "滑走路の許可の区別（地上滑走の指示は停止線の手前まで・横切る許可・line up and wait は離陸の許可でない・continue は着陸の許可でない）",
+   "address": "comm.runway",
+   "recalls": [
+    "comm.dep",
+    "comm.tower",
+    "ground.taxi"
+   ],
+   "maxLines": 3,
+   "basis": "expert-radio S8・N5・reader-radio C3（DESIGN 3.2・5 章の基準 15）",
+   "unit": "W19",
+   "recallUnits": [
+    "W19",
+    "W28"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "W19",
+   "checkedBy": null,
+   "note": "revise-radio（2026-10-30）：住所は comm.runway（地上滑走の指示（taxi instructions）の 1 回だけの定義と、言葉ごとにしてよいことの表）。comm.dep・comm.tower には思い出そう（comm.runway へのリンク）を置いた。comm.readback・comm.mistakes・comm.words・comm.sfb は comm.runway より前か同じ章の短い言及で、comm.runway へのリンクにした。ground.taxi（第 2 部、W28）は {ch:radio4} を指したままなので、W28 が停止線の段落を思い出そうに縮め、リンクを bk.see('comm.runway', '滑走路に入る許可と誤進入の防ぎ方') にするまで、この行の ground.taxi は warn になる"
+  },
+  {
+   "id": "ch09-fig9-9",
+   "by": "W19",
+   "note": "revise-radio（2026-10-30）：radio の分は、comm.readback の図 readbackLoop（教科書の図の描き直し）が受け持つ（新しい図。原図の描き直しではない）。factcheck-radio N15"
+  },
+  {
+   "id": "ch09-fig9-10",
+   "by": "W19",
+   "note": "revise-radio（2026-10-30）：radio の分は、comm.runway の図 runwayEntry（AIM 2-3-4・2-3-5・2-3-8・2-3-9・2-1-6 からの新しい図。原図の描き直しではない）が受け持つ。factcheck-radio N15"
+  },
+  {
+   "id": "kiso09.27",
+   "by": "W19",
+   "note": "revise-radio（2026-10-30）：comm.flow の判断の目を expert-radio M1〔安全〕で直した。「要求は返事があるまで承認ではない」を外し、管制の指示を受けているときは新しい指示をもらってから変える（AIM 4-4-10・4-1-18）、ただし雲に入る・地形に近づく指示には待たずに unable（PCG：Air Traffic Clearance）、緊急で外れたらすぐに伝える（14 CFR 91.123(c)）、交通情報だけのときは VFR の巡航高度を変えるときに知らせる（AIM 4-1-15）にした。原本の「緊急時に必要となる対応は通常の変更要求と区別」の考え方を戻した。radio4 の例 3・説明してみよう 2（kiso09.q27）も同じ"
+  },
+  {
+   "id": "kiso09.19",
+   "by": "W19",
+   "note": "revise-radio（2026-10-30）：comm.readback の「ヒアバック（hearback）」の語と「管制官が黙っていても復唱が正しい証明ではない」の出典を NASA ASRS Directline 第 1 号「Readback / Hearback」にした（JO 7110.65 2-4-3 は確かめる義務）。factcheck-radio N1"
+  },
+  {
+   "id": "PA.II.D.K5",
+   "sections": [
+    "sys.lights",
+    "ground.taxi",
+    "comm.runway"
+   ],
+   "by": "W19",
+   "note": "revise-radio（2026-10-30）：comm.runway の判断の目に、滑走路を横切るとき・line up and wait のときの灯火（AIM 4-3-24）を足したので、節に comm.runway を足した（expert-radio S5）"
+  },
+  {
+   "id": "PA.VI.D.K2",
+   "sections": [
+    "nav.lost",
+    "comm.radar",
+    "comm.mayday"
+   ],
+   "by": "W19",
+   "note": "revise-radio（2026-10-30）：comm.mayday の PAN-PAN の例（位置が不確か・LAB への針路の案内を求める）と「管制がしてくれること」（AIM 6-3-1・6-2-1）が答えになるので、節に comm.mayday を足した（expert-radio 4.1・N11）"
+  },
+  {
+   "id": "ppl.4.1.2.4",
+   "sections": [
+    "jatc.emerg",
+    "comm.mayday",
+    "comm.nordo"
+   ],
+   "by": "W19",
+   "note": "revise-radio（2026-10-30）：通信機故障時の措置の米国の原理（7600・灯火信号・AIM 4-2-13・6-4）は comm.nordo にあるので、節に comm.nordo を足した（expert-radio 4.2）"
+  },
+  {
+   "id": "cpl.4.1.2.4",
+   "sections": [
+    "jatc.emerg",
+    "comm.mayday",
+    "comm.nordo"
+   ],
+   "by": "W19",
+   "note": "revise-radio（2026-10-30）：ppl.4.1.2.4 と同じ（comm.nordo を足した）"
+  },
+  {
+   "id": "PA.III.B.K4",
+   "sections": [
+    "comm.atis",
+    "wx.metar",
+    "comm.ctaf"
+   ],
+   "by": "W19",
+   "note": "revise-radio（2026-10-30）：comm.ctaf に、管制塔のない空港の自動の気象の放送（AWOS など）と自動の UNICOM（AIM 4-1-9）を足したので、節に comm.ctaf を足した（expert-radio N7）"
+  },
+  {
+   "id": "PA.II.D.K3",
+   "by": "W19",
+   "note": "revise-radio（2026-10-30）：comm.runway に、停止線のまわりの標示と標識の表（強化された誘導路中心線 AIM 2-3-4・停止線・滑走路の手前の標識・進入区域の停止位置・ILS の停止位置・No Entry の標識：AIM 2-3-5・2-3-8）を足し、図 runwayEntry に強化された中心線を描いた（expert-radio S6）"
+  },
+  {
+   "id": "PA.II.D.K6",
+   "by": "W19",
+   "note": "revise-radio（2026-10-30）：comm.runway の判断の目に低視程の地上滑走（AIM 4-3-19：管制塔から見えないことがある・迷いそうならすぐ伝える・太陽に向かうとき・動いている間はチェックリストと不要な交信をしない）と、着陸して出るときの決まり（AIM 4-3-21）を足した（expert-radio S5・S6）。K6e は comm.runway が受け持つ。K6d（夜の地上滑走）は ops.night"
+  },
+  {
+   "id": "PA.III.A.K4",
+   "by": "W19",
+   "note": "revise-radio（2026-10-30）：comm.xpdr に「動かし方」（管制空域では高度を送る位置：14 CFR 91.215(c)・AIM 4-1-20、ADS-B Out はいつも送信：91.225(f)、誘導路と滑走路の上でも ALT・駐機場で STBY か OFF：AIM 4-1-20、RWSL：AIM 2-1-6、stop altitude squawk）を足した（expert-radio S3）"
+  },
+  {
+   "id": "PA.VI.B.K4",
+   "by": "W19",
+   "note": "revise-radio（2026-10-30）：comm.xpdr に一次レーダーと二次レーダー（AIM 4-5-1・4-5-2）、Mode A・C（PCG：Mode）、Mode C と S の高度の自動通報（AIM 4-1-20）を足した（expert-radio S3）"
+  },
+  {
+   "id": "PA.III.A.K7",
+   "by": "W19",
+   "note": "revise-radio（2026-10-30）：comm.radar に VFR の機が受けられるレーダーの業務の表（基本のレーダー業務・安全の警告・Class C の業務：AIM 4-1-16・4-1-18）と flight following（PCG）、交通をよける針路は頼んだときだけ・巡航高度を変えるときは知らせる（AIM 4-1-15）を足した（expert-radio S4）"
+  },
+  {
+   "id": "PA.VI.B.K3",
+   "by": "W19",
+   "note": "revise-radio（2026-10-30）：PA.III.A.K7 と同じ（comm.radar の業務の表。expert-radio S4）"
+  },
+  {
+   "id": "PA.IX.B.K6",
+   "by": "W19",
+   "note": "revise-radio（2026-10-30）：comm.mayday に「管制がしてくれること」（呼ばれた局は応え・助け・機関を動かし・捜索救難に知らせる：AIM 6-3-1、VFR 機への針路の案内は助言：AIM 6-2-1、交信を確立したら指示に従い周波数を変えない・不時着が迫ったら ELT・目印・機体の色：AIM 6-3-2）を足した（expert-radio S2）"
+  }
+ ]
+}

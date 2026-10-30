@@ -250,7 +250,15 @@
 
   // ---------------------------------------------------------------- PFD (left screen)
   // d: { o (physics outputs), av, nav, varW, qnh, engine: { running }, hood }
+  // the drawing is laid out in a canonical 640-wide frame — every letter size and line weight in it is tuned for
+  // that frame — so a caller with a wider frame (CADET's glass, at a logical 1280 × 800 since its displays were
+  // raised to the real units' density) is scaled up whole: the same picture at twice the drawing density, its
+  // proportions unchanged. FLIGHT LAB's own callers all pass 640 and take the direct path.
   function drawPFD(g, W, H, d) {
+    if (W !== 640) { const S = W / 640; g.save(); g.scale(S, S); drawPFDFrame(g, 640, H / S, d); g.restore(); return; }
+    drawPFDFrame(g, W, H, d);
+  }
+  function drawPFDFrame(g, W, H, d) {
     const o = d.o, av = d.av, nav = d.nav;
     const pitch = fin(o.pitch), bank = fin(o.bank), ias = Math.max(0, fin(o.ias)), vsi = fin(o.vsi);
     const altInd = indicatedAlt(fin(o.altTrue), fin(d.qnh, 29.92), av.baro);
@@ -447,6 +455,10 @@
 
   // ---------------------------------------------------------------- MFD (right screen): engine strip + MAP / FPL
   function drawMFD(g, W, H, d) {
+    if (W !== 640) { const S = W / 640; g.save(); g.scale(S, S); drawMFDFrame(g, 640, H / S, d); g.restore(); return; }
+    drawMFDFrame(g, W, H, d);
+  }
+  function drawMFDFrame(g, W, H, d) {
     const o = d.o, av = d.av, nav = d.nav;
     g.save();
     g.fillStyle = '#000'; g.fillRect(0, 0, W, H);

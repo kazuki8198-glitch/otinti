@@ -1,6 +1,8 @@
 // CADET — cockpit tests (node --test): the flown Archer's cabin (src/aircraft/cockpit.js, src/aircraft/g1000.js), without a
 // browser (the canvases are fakes that take every 2D call).
-//  - it builds within budget: ≤ 40 draw calls, ≤ 40,000 triangles, ≤ 6 MB of textures; the screens are unlit (their
+//  - it builds within budget: ≤ 40 draw calls, ≤ 40,000 triangles, ≤ 29 MB of textures (the ceiling rose from 6 MB
+//    with the displays' raise to 2048 × 1280, then to 29 MB with the label atlas's raise to 4096 × 1024 — changes of
+//    spec, 2026-10-30, graphics stages A1 and A2); the screens are unlit (their
 //    material not tone mapped: CADET's OutputPass still tone maps the whole image), never mipmapped;
 //  - the view from the left seat: the PFD ahead and below, the MFD to its right, the whole of both displays in sight
 //    (the bezels' lips hide nothing), the glareshield ~12–15° below the eye with the cowling over it, the roof ~0.2 m
@@ -77,18 +79,18 @@ test('cockpit: builds within budget', () => {
   assert.equal(calls, cp.meshes.length, 'every drawn mesh is listed');
   assert.ok(cp.triangles <= 40000, `${cp.triangles} triangles`);
   assert.equal(count, cp.triangles);
-  assert.ok(cp.textureBytes > 0 && cp.textureBytes <= 6e6, `${(cp.textureBytes / 1e6).toFixed(2)} MB of textures`);
+  assert.ok(cp.textureBytes > 0 && cp.textureBytes <= 29e6, `${(cp.textureBytes / 1e6).toFixed(2)} MB of textures`);
   assert.ok(!cp.atlasFull, 'the labels fit their atlas');
   for (const n of ['cockpit-shell', 'cockpit-labels', 'cockpit-glass', 'cockpit-cowl', 'cockpit-pfd', 'cockpit-mfd', 'cockpit-yokeL', 'cockpit-yokeR',
     'cockpit-pedalsL', 'cockpit-pedalsR', 'cockpit-throttle', 'cockpit-mixture', 'cockpit-carb', 'cockpit-brake', 'cockpit-flap', 'cockpit-trim', 'cockpit-trimInd', 'cockpit-fuel', 'cockpit-compass-card',
     'cockpit-rockers', 'cockpit-rocker-print', 'cockpit-lit']) assert.ok(names.has(n), n);
   for (const n of ['cockpit-rockers-pa44', 'cockpit-rocker-print-pa44', 'cockpit-altAir', 'cockpit-cowlFlaps', 'cockpit-brakeK']) assert.ok(!names.has(n), `the Archer: no ${n}`);
-  // the screens: unlit, the material not tone mapped, 1024 × 640, never mipmapped
+  // the screens: unlit, the material not tone mapped, 2048 × 1280, never mipmapped
   for (const k of ['pfd', 'mfd']) {
     const m = cp.screens[k].material;
     assert.ok(m.isMeshBasicMaterial && m.toneMapped === false, `${k}: unlit`);
     const tx = m.map;
-    assert.equal(tx.image.width, 1024); assert.equal(tx.image.height, 640);
+    assert.equal(tx.image.width, 2048); assert.equal(tx.image.height, 1280);
     assert.equal(tx.generateMipmaps, false); assert.equal(tx.minFilter, THREE.LinearFilter); assert.equal(tx.colorSpace, THREE.SRGBColorSpace);
     assert.equal(cp.screens[k].castShadow, false);
   }
@@ -782,7 +784,7 @@ test('cockpit: no gear lights — the Seminole\'s landing gear on its MFD, on it
   const cp = buildCockpit(FL, AC('pa28'), { makeCanvas: rec, twin: AC('pa44') }), L = SC.startLesson('m1', 'basic');
   for (let i = 0; i < 60; i++) { P.step(L.s, 1 / 120); SC.update(L, 1 / 120); }
   assert.ok(!cp.meshes.some(m => /^cockpit-lit-pa(28|44)$/.test(m.name)), 'no gear lamps\' mesh');
-  const [pfd, mfd] = made.filter(c => c.w === 1024 && c.h === 640), gearOn = c => c.texts.includes('LANDING GEAR');
+  const [pfd, mfd] = made.filter(c => c.w === 2048 && c.h === 1280), gearOn = c => c.texts.includes('LANDING GEAR');
   const clear = () => { pfd.texts.length = 0; mfd.texts.length = 0; };
   run(cp, lesson(), 0.3);
   assert.ok(!gearOn(pfd) && !gearOn(mfd), 'the Archer: no landing gear box');

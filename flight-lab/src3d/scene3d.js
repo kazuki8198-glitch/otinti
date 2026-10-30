@@ -29,7 +29,8 @@ import { createSky } from '../../cadet/src/render/sky.js';
 import { PRESETS, guessPreset, gpuName, makeDynRes } from '../../cadet/src/core/quality.js';
 import { setAnisotropy } from '../../cadet/src/render/textures.js';
 import { makeLayout } from '../../cadet/src/world/layout.js';
-import { liveAircraft } from '../../cadet/src/aircraft/exterior.js';
+import { liveAircraft, setPaintDetail, setGlowQuality } from '../../cadet/src/aircraft/exterior.js';
+import { setGlassRainQuality } from '../../cadet/src/render/materials.js';
 import { buildCockpit } from '../../cadet/src/aircraft/cockpit.js';
 import { createWorld } from './world3d.js';
 import { createInput, LOOK } from './input3d.js';
@@ -85,6 +86,9 @@ export function createScene(FL, wrap, opt = {}) {
     pipe = createPipeline(host, preset);
     gpu = gpuName(pipe.renderer);
     if (!PRESETS[opt.quality]) { const g = PRESETS[guessPreset(gpu)]; if (g !== preset) { preset = g; pipe.setQuality(preset); } }
+    setPaintDetail(preset.paintDetail ?? 1);
+    setGlassRainQuality(preset.glassRain ?? 1);
+    setGlowQuality(preset.glowDetail ?? 1);
   } catch (e) {
     if (pipe) { pipe.renderer.dispose(); pipe.renderer.forceContextLoss(); }
     throw e;
@@ -102,7 +106,7 @@ export function createScene(FL, wrap, opt = {}) {
     lives = parts.lives = { pa28: liveAircraft(FL, A28) };
     if (A44) lives.pa44 = liveAircraft(FL, A44, { reg: 'N452SY' });
     for (const l of Object.values(lives)) { l.root.visible = false; scene.add(l.root); }
-    cockpit = parts.cockpit = buildCockpit(FL, A28, { anisotropy: Math.min(8, maxAniso), twin: A44 || null, makeCanvas });
+    cockpit = parts.cockpit = buildCockpit(FL, A28, { anisotropy: Math.min(8, maxAniso), twin: A44 || null, makeCanvas, quality: preset });
     lives.pa28.root.add(cockpit.root);
     // ---- the scenery that needs no pictures (the rest comes with the textures)
     world = parts.world = createWorld(FL, L, scene, preset);
@@ -312,7 +316,7 @@ export function createScene(FL, wrap, opt = {}) {
     placeCamera(s, dt);
     camera.getWorldPosition(camWorld);
     sky.update(camera, t, live.root.position);
-    world.update(t, camWorld, s.wind || { fromDeg: 0, kt: 0 }, sky.state.lightsOn);
+    world.update(t, camWorld, s.wind || { fromDeg: 0, kt: 0 }, sky.state.lightsOn, sky);
     switchesStep(dt);
     cockOpt.s = s; cockOpt.L = st.L || null; cockOpt.av = st.L ? st.L.av : null; cockOpt.rTrim = st.rTrim || 0;
     cockOpt.night = 1 - THREE.MathUtils.smoothstep(sky.state.el, -4, 6);
@@ -363,7 +367,7 @@ export function createScene(FL, wrap, opt = {}) {
     const q = PRESETS[id];
     if (!q || q === preset) return;
     preset = q;
-    pipe.setQuality(q); resizeTo(pipe.dpr);
+    pipe.setQuality(q); setPaintDetail(q.paintDetail ?? 1); setGlassRainQuality(q.glassRain ?? 1); resizeTo(pipe.dpr);
     sky.applyQuality(q); shadowHalf = undefined;
     world.veg.setNearRadius(q.treeNear);
     if (world.ground) setAnisotropy(Math.min(q.aniso, maxAniso));

@@ -20,7 +20,10 @@ const PLAIN = /(である|であった|だ|だった|ない|なかった|る|た
 const UNIT_RE = /(?<![A-Za-z0-9.,])\d[\d,]*(?:\.\d+)?(kt|KIAS|KTAS|KCAS|ft|fpm|NM|SM|inHg|hPa|lb|lbs|gal|rpm|MHz|kHz)(?![A-Za-z])/g;
 
 export const skipForStyle = path => inTag(path, 'figure', 'svg', 'table', 'summary', 'button', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'code', 'pre', 'a')
-  || inCls(path, 'bk-key', 'bk-src', 'bk-f', 'bk-calc', 'bk-credit', 'tag', 'bk-photo', 'bk-t', 'jur-h', 'jur-foot');   // jur-h: a US–Japan box's heading (「米国では」); jur-foot: its versions and links
+  || inCls(path, 'bk-key', 'bk-src', 'bk-f', 'bk-calc', 'bk-credit', 'tag', 'bk-photo', 'bk-t', 'jur-h', 'jur-foot')   // jur-h: a US–Japan box's heading (「米国では」); jur-foot: its versions and links
+  // the heading of a W10b box (bk.judge 判断の目・bk.dont ここを混同しない・bk.recall 思い出そう・bk.drill's 答えと解き方): a label, not a
+  // sentence (R2's chapter units, reports/W14.md 5.2; added by the R2B integrator)
+  || (path.length >= 2 && path[path.length - 1].tag === 'b' && ['bk-judge', 'bk-dont', 'bk-recall', 'bk-drill-a'].some(n => path[path.length - 2].cls.has(n)));
 
 // the end of a sentence: 'polite' | 'plain' | 'noun' (体言止め) | 'skip'
 export function ending(sentence) {

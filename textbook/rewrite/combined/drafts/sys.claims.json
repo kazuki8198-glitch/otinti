@@ -1,0 +1,838 @@
+{
+ "ledger": "CLAIMS",
+ "draft": "textbook/rewrite/combined/drafts/sys.js",
+ "unit": "W14",
+ "chapter": "sys",
+ "updated": "2026-10-30",
+ "by": "W14",
+ "about": "第 1 部の章 sys（下書き）の主張の札（DESIGN 5 章の基準 3）。行は check-chapter.mjs --claims-out（check-claims.mjs の claimId）が抜き出した文ごと（節の本文。図の中の文字は抜き出さない：図の数字は本文の文と同じ出典）。章を登録するコミットで、統合役が CLAIMS.json に op: add で足す（パッチ reports/W14.ledger.json にも同じ行がある）。checkedBy は事実確認役（W14 と別）が付ける。kind: 例題 は、この本で決めた仮定の値の計算の文（札は 参考値。仮定の値に出典はなく、W14 が検算した）。sys.lights の囲みの 2 行は FL.jur が描く文で、W06 が確かめた値。",
+ "format": {
+  "id": "<節ID>#<8 桁>",
+  "sec": "節 ID",
+  "text": "文",
+  "tag": "教材値／参考値／条文／推測・要確認",
+  "source": "出典と確かめた日",
+  "kind": "例題（仮定の値の計算）のときだけ",
+  "by": "書いた単位",
+  "checkedBy": "確かめ役（書いた人と別）",
+  "checkedOn": "確認日"
+ },
+ "counts": {
+  "rows": 79,
+  "byTag": {
+   "参考値": 72,
+   "条文": 5,
+   "教材値": 2
+  },
+  "examples": 17
+ },
+ "rows": [
+  {
+   "id": "sys.ctl#ae7416eb",
+   "sec": "sys.ctl",
+   "text": "Piper Archer（PA-28-181）は、低翼（翼が胴体の下にある）・4 人乗り・単発の練習機です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.1（single-engine, low-wing … four-place seating）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.ctl#e1ac0508",
+   "sec": "sys.ctl",
+   "text": "翼が胴体の下にある低翼・単発・固定脚の 4 人乗りです。",
+   "tag": "参考値",
+   "source": "写真 archer のキャプション（book-photos.js、教科書の既存の文）。Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ） 7.1・7.7（固定脚）と合う",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.ctl#af09c0fe",
+   "sec": "sys.ctl",
+   "text": "フラップ（flaps）のレバー（前席の間） ｜ フラップ（UP・10°・25°・40°） ｜ 揚力（lift）と抗力（drag）を増やす ｜",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.9（flaps have three extended positions, 10, 25 and 40 degrees）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.airframe#6c6f94a0",
+   "sec": "sys.airframe",
+   "text": "仮の翼で、揚力をまとめた力 12,000 N が、付け根から 3.0 m の所にかかるとします。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した（基礎教材 kiso02.02 の仮の例を書き直した。M＝F×d）",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.airframe#41aaa322",
+   "sec": "sys.airframe",
+   "text": "12,000 N × 3.0 m ＝ 36,000 N·m です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した：12,000 × 3.0 ＝ 36,000",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.airframe#ae8bbd2d",
+   "sec": "sys.airframe",
+   "text": "1 回では壊れない小さな力でも、何度もくり返し受けると、部材の傷が少しずつ広がります。",
+   "tag": "参考値",
+   "source": "kiso02.03 の疲労の説明を書き直した。数は「1 回」だけで値の主張ではない（疲労＝くり返しの力による損傷：PHAK 第 3 章の composite の段落も金属の疲労と比べる）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.gear#33f77355",
+   "sec": "sys.gear",
+   "text": "ペダルとブレーキで、前輪の向きは左右に 20° まで変わります（POH 7.7）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.7（nose gear is steerable through a 20 degree arc each side of center … shimmy dampener）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.gear#1930621e",
+   "sec": "sys.gear",
+   "text": "外部点検では伸び具合を見ます（POH 7.7：ふつうの伸びは主脚 4.50 in・前脚 3.25 in）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.7（normal extension of 3.25 inches for the nose gear and 4.50 inches for the main gear）。Archer III w/ G1000 Pilot's Checklist（MGA 2025、R.archerCk。W14 が 2026-10-30 に読んだ）（Main Gear Strut 4.5 in・Nose Gear Strut 3.25 in）とも合う",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.gear#813e7f51",
+   "sec": "sys.gear",
+   "text": "接地の速度が 20% 速いと、止めるエネルギーは 1.2 × 1.2 ＝ 1.44 倍になります。",
+   "tag": "参考値",
+   "source": "物理（運動エネルギー ½mV²）：1.2² ＝ 1.44。kiso02.15 の例の考え方。W14 が検算",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.gear#c1333cf4",
+   "sec": "sys.gear",
+   "text": "Archer の主輪の空気圧は 24 psi です（POH 8.23）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：8.23（24 psi for the main gear, 18 psi for the nose gear）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.gear#819d92e0",
+   "sec": "sys.gear",
+   "text": "この目安では 9 × √24 ≈ 44 kt です。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 11 章 Water on the Runway and Dynamic Hydroplaning（W14 が 2026-10-30 に読んだ）（minimum hydroplaning speed ＝ 9 × √(main gear tire pressure psi)、例 36 psi → 54 kt）。9 × √24 ＝ 44.09 を W14 が検算",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.lights#375fd657",
+   "sec": "sys.lights",
+   "text": "米国の規則（14 CFR 91.209）では、日没から日の出までつけます。",
+   "tag": "条文",
+   "source": "14 CFR 91.209（eCFR。教科書の既存の文：W07a が確かめ W12 が署名した行と同じ趣旨）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.lights#29aeed09",
+   "sec": "sys.lights",
+   "text": "ただし、安全のために機長（pilot in command）が消すことはできます（米国の 14 CFR 91.209）。",
+   "tag": "条文",
+   "source": "14 CFR 91.209(b)（pilot in command may turn off anti-collision lights for safety）。教科書の既存の文に「機長（pilot in command）」を足しただけ",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.lights#18061062",
+   "sec": "sys.lights",
+   "text": "米国の AIM 4-3-24 は、空港の近くや低い高度では、昼でもつけることを勧めています。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-24 Use of Aircraft Lights（教科書の既存の文。W07a・W12）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.lights#e2cd67f4",
+   "sec": "sys.lights",
+   "text": "左舷灯と右舷灯は前から横の 110° まで、尾灯は後ろの 140° を照らします（米国の耐空性の基準、旧 14 CFR 23.1387）。",
+   "tag": "参考値",
+   "source": "旧 14 CFR 23.1387（航空灯の配光：前方 110°・後方 140°）。教科書の既存の文（W07a・W12）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.lights#85d3461f",
+   "sec": "sys.lights",
+   "text": "衝突防止灯を装備していればつける（安全のために消してよいときがある）（14 CFR 91.209） ｜ 夜間（日没から日出まで）に空中と地上を航行するときは、衝突防止灯・右舷灯・左舷灯・尾灯をつける（航空法第 64 条・航空法施行規則第 154 条） ｜",
+   "tag": "条文",
+   "source": "FL.jur lights.ac（flight-lab/src/book-jur.js。W06 が 14 CFR 91.209 と e-Gov の航空法第 64 条・施行規則第 154 条で確かめた。囲みが描く文）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.lights#70635bb8",
+   "sec": "sys.lights",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）・航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.jur の LAWS（e-Gov の版と確認日。W05・W06）。囲みが描く文",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#58a1ad47",
+   "sec": "sys.piston",
+   "text": "吸入・圧縮・膨張・排気をくり返し、4 つの行程でクランク軸は 2 回転します。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（four-stroke cycle）。図のキャプション",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#27c52cb4",
+   "sec": "sys.piston",
+   "text": "ピストンが上から下、または下から上へ 1 回動くことを行程（stroke）といいます。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（four-stroke：intake, compression, power, exhaust strokes of the piston）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#9b8043e1",
+   "sec": "sys.piston",
+   "text": "4 つの行程で、クランク軸は 2 回転します。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）・基礎教材 kiso03.4（1 サイクルにクランク軸 2 回転 720°）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#1f8b2f53",
+   "sec": "sys.piston",
+   "text": "だから、1 つのシリンダーが燃えるのは 2 回転に 1 回です。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（4 行程・クランク軸 2 回転に 1 回の膨張）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#5afe7c64",
+   "sec": "sys.piston",
+   "text": "2,400 rpm なら、1 つのシリンダーは毎秒 20 回燃えます（2,400 ÷ 60 ÷ 2）。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した：2,400 ÷ 60 ÷ 2 ＝ 20（kiso03.4 の 3,000 rpm → 25 の例を Archer の回転で）",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#af1fcbbc",
+   "sec": "sys.piston",
+   "text": "例：O-360-A4M の定格は 2,700 rpm で 180 hp です（POH 2.7）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：2.7（O-360-A4M、180 BHP、2700 RPM）。Lycoming SSP-110-3 Certified Engines（2025-07。O-360-A4M：180 hp・2,700 rpm・100/100LL・8.50:1。W14 が 2026-10-30 に読んだ）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#f742833f",
+   "sec": "sys.piston",
+   "text": "米国の 14 CFR 1.1 の定義で、国際標準大気（標準大気、International Standard Atmosphere）の条件で決めます。",
+   "tag": "条文",
+   "source": "14 CFR 1.1 Critical altitude（eCFR の本文。W14 が 2026-10-30 に読んだ：maximum altitude at which, in standard atmosphere, it is possible to maintain, at a specified rotational speed, a specified power or a specified manifold pressure）。PHAK 第 7 章と用語集も同じ趣旨",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#ec313ca0",
+   "sec": "sys.piston",
+   "text": "クランク軸 2 回転で 1 回燃える",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（ここが大切の短い言い切り）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#5eab0e73",
+   "sec": "sys.piston",
+   "text": "考えてみよう：2,700 rpm のとき、1 つのシリンダーは毎秒何回燃えますか。",
+   "tag": "参考値",
+   "source": "考えてみよう（問）。値の主張ではない",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#1db9e8fb",
+   "sec": "sys.piston",
+   "text": "2,700 ÷ 60 ÷ 2 ＝ 22.5 回です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した：2,700 ÷ 60 ÷ 2 ＝ 22.5",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.piston#7de7a1fd",
+   "sec": "sys.piston",
+   "text": "4 つの行程でクランク軸が 2 回転し、そのうち燃えるのは 1 回だからです。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（4 行程でクランク軸 2 回転）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.engine#c7e86c16",
+   "sec": "sys.engine",
+   "text": "POH は、5,000 ft より上の巡航で混合気を絞るように書いています。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：4.5k（mixture should be leaned during cruising operation above 5000 ft）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.engine#f7cce60e",
+   "sec": "sys.engine",
+   "text": "出力が 75% 以下なら、それより低くても絞ってかまいません。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：4.5k（and at pilot's discretion at lower altitudes when 75% power or less is being used）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.engine#4b3165bd",
+   "sec": "sys.engine",
+   "text": "出力が分からないときは、5,000 ft 未満ではいっぱいに押した FULL RICH にします（POH 4.5k）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：4.5k（if any doubt … mixture full RICH for all operations under 5000 feet）。Archer III w/ G1000 Pilot's Checklist（MGA 2025、R.archerCk。W14 が 2026-10-30 に読んだ）（Mixture FULL RICH BELOW 5000 FT）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.engine#cf899b6b",
+   "sec": "sys.engine",
+   "text": "POH は、ピーク EGT を最良の燃費、ピークから 100°F 濃い側を最良の出力の混合比としています（POH 4.5k）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：4.5k（best economy at peak EGT; best power … 100°F rich of the peak; roughness before peak → use as peak）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.engine#93191433",
+   "sec": "sys.engine",
+   "text": "止まって全開にしたときの回転は、2,240〜2,340 rpm です（POH 2.7）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：2.7(10)（static RPM at maximum permissible throttle at sea level: not above 2340, not below 2240）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.engine#d5053812",
+   "sec": "sys.engine",
+   "text": "回転の赤線は 2,700 rpm です（POH 2.9）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：2.9(a)（Tachometer red line 2700 RPM）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.engine#d47e8ecc",
+   "sec": "sys.engine",
+   "text": "POH のふつうの降下は、スロットルで 2,500 rpm に合わせます（POH 4.51）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：4.51（Normal Descent: THROTTLE 2500 RPM）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.engine#6da22770",
+   "sec": "sys.engine",
+   "text": "PHAK は、プロペラの効率を 50〜87% としています（PHAK 第 5 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 5 章 Propellers（W14 が 2026-10-30 に読んだ）（propeller efficiency varies from 50 to 87 percent）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.engine#faffc1c8",
+   "sec": "sys.engine",
+   "text": "例：軸の出力 100 kW、効率 0.80、速度 60 m/s なら、推力は 0.80 × 100,000 ÷ 60 ≈ 1,333 N です（計算用の仮の値）。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した（kiso03.15 の仮の例）：0.80 × 100,000 ÷ 60 ＝ 1,333.3。η ＝ TV／P は FAA PHAK FAA-H-8083-25C 第 5 章 Propellers（W14 が 2026-10-30 に読んだ） の thrust horsepower／brake horsepower と同じ",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.eis#0c86021b",
+   "sec": "sys.eis",
+   "text": "赤い線（25 psi・115 psi）の外に出ると警報になります（POH 2.9・7.13）",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：2.9（oil pressure red line 25・115 PSI）・3.1 の CAS（Oil Pressure less than 25 PSI or greater than 115 PSI）・7.13（warning: flashing）。図のキャプション",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.eis#937f8733",
+   "sec": "sys.eis",
+   "text": "暑いフロリダでの長い上昇は、巡航上昇の速度で登ります（公開チェックリストの例：87 KIAS）。",
+   "tag": "参考値",
+   "source": "Archer III w/ G1000 Pilot's Checklist（MGA 2025、R.archerCk。W14 が 2026-10-30 に読んだ）（En Route Climb 87 KIAS）。冷やすために速度をつけること：PHAK 第 7 章（increase airspeed）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.eis#b83c5437",
+   "sec": "sys.eis",
+   "text": "Archer の油圧は、緑が 55〜95 psi、赤い線が 25 psi と 115 psi です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：2.9(c)（Oil Pressure green 55–95 PSI, red line 25 and 115 PSI）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.eis#76a13bae",
+   "sec": "sys.eis",
+   "text": "油温の上限は 245°F、回転の上限は 2,700 rpm です（POH 2.7・2.9）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：2.7（Max. Oil Temperature 245°F、Max. Propeller Speed 2700 RPM）・2.9",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.eis#6048d67a",
+   "sec": "sys.eis",
+   "text": "たとえば、回転が 1,100 rpm より高いときに油圧が 26〜55 psi なら、注意です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：3.1 Caution（Oil Pressure between 26 PSI and 55 PSI when RPM greater than 1100）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.eis#5e419dff",
+   "sec": "sys.eis",
+   "text": "油圧が 25 psi より低いか、115 psi より高ければ、警報です（POH 3.1）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：3.1 Warning（Oil Pressure less than 25 PSI or greater than 115 PSI）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.carb#7e2eacf5",
+   "sec": "sys.carb",
+   "text": "そのため温度が大きく下がり（PHAK：最大で 60〜70°F、約 33〜39℃）、空気中の水分が氷になって空気の通り道をふさぎます。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（7-9〜7-10：temperature drop as much as 60 to 70 Fahrenheit degrees ＝ 33〜39 ℃ の差）。教科書の既存の文",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.carb#6a263ac5",
+   "sec": "sys.carb",
+   "text": "起きやすい条件：気温 21℃（70°F）より低く、湿度が 80% より高いときです。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（most likely below 70°F/21°C and relative humidity above 80 percent）。R.carb-ice-temp・K.systems.K2",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.carb#a1245600",
+   "sec": "sys.carb",
+   "text": "急に冷えるので、気温 38℃（100°F）・湿度 50% でも起こります（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（icing can occur … as high as 100°F (38°C) and humidity as low as 50 percent）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.carb#7049d6da",
+   "sec": "sys.carb",
+   "text": "Archer の POH は「−5〜20℃ の湿った空気」と書いていますが、それより暖かくても起きます（POH 3.5j）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：3.5j（Under certain moist atmospheric conditions at temperatures of -5°C to 20°C …）。R.carb-ice-temp（PHAK の値を主に、POH の値も）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.carb#c543431a",
+   "sec": "sys.carb",
+   "text": "とけた水でエンジンは 30 秒から数分荒れますが、ヒーターはいっぱいのまま、ふつうの出力が戻るまで待ちます（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（roughness as melted ice goes through … may last from 30 seconds to several minutes … must resist the temptation to decrease the carburetor heat）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#2795fe1c",
+   "sec": "sys.fuel",
+   "text": "左右の翼のタンク（使える燃料は片側 24 US gal：教材値）から、セレクターで選んだ側の燃料をポンプで送ります。",
+   "tag": "教材値",
+   "source": "FL.physics の pa28 の fuelCap（24 US gal）を図が描く。参考値は Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ） 2.21（24.0 gallons in each wing）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#1a2306aa",
+   "sec": "sys.fuel",
+   "text": "使える燃料は、片側 24 US gal、合わせて 48 US gal です（教材値）。",
+   "tag": "教材値",
+   "source": "FL.physics の pa28 の fuelCap（24 US gal）。参考値は同じ節の次の文（POH 2.21）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#32692e9d",
+   "sec": "sys.fuel",
+   "text": "参考値の POH 2.21 も同じで、総容量は 50 US gal、そのうち 2 US gal（片側 1 US gal）は使えない燃料です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：1.7・2.21（Total 50 U.S. GAL、Unusable 2 U.S. GAL＝1.0 gallon in each wing、Usable 48 U.S. GAL）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#2e12cca2",
+   "sec": "sys.fuel",
+   "text": "POH の例は、離陸から 1 時間は片方、次の 2 時間はもう片方、そのあと最初のタンクへ戻すやり方です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：4.5k（one tank … for one hour after takeoff, then the other tank … for two hours; then return to the first tank）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#717b3b1a",
+   "sec": "sys.fuel",
+   "text": "ストレーナーは、セレクターをそれぞれのタンクにして 2 回抜きます（POH 8.21）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：8.21(d)（the fuel strainer should be drained twice, once with the fuel selector valve on each tank）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#60e74032",
+   "sec": "sys.fuel",
+   "text": "目で見る：給油口の中の目印のタブの下の端まであると、そのタンクの使える燃料は 17 US gal です（POH 7.15）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.15（17 gallons of usable fuel is measured at the bottom of each indicator tab）・8.21(c)",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#86f0451e",
+   "sec": "sys.fuel",
+   "text": "飛行前に目でタンクの中を見て、飛行中は「飛んだ時間 × 1 時間あたりの消費量」でも確かめます。",
+   "tag": "参考値",
+   "source": "教科書の既存の文（時間×消費量で確かめる：PHAK 第 7 章 fuel gauges の段落の考え方）。数は「1 時間あたり」だけ",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#b13fcb65",
+   "sec": "sys.fuel",
+   "text": "出発のとき、目で見て合わせて 40 US gal ありました。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した（kiso02.13 の燃料の収支の例を Archer の US gal で）",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#b911a40a",
+   "sec": "sys.fuel",
+   "text": "燃料の計算の「使った量」は 18 US gal です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#0183b96b",
+   "sec": "sys.fuel",
+   "text": "燃料計は合わせて 19 US gal を示しています。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.fuel#62671a5a",
+   "sec": "sys.fuel",
+   "text": "差 ＝ 出発の量 −（残りの量 ＋ 使った量）＝ 40 −（19 ＋ 18）＝ 3 US gal です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した：40 −（19 ＋ 18）＝ 3",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.elec#5d589295",
+   "sec": "sys.elec",
+   "text": "Archer の電気系統は 28 V です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.17（The 28 volt electrical system …）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.elec#f51ae599",
+   "sec": "sys.elec",
+   "text": "24 V のバッテリーと、エンジンがベルトで回す 70 A・28 V の発電機を持ちます（POH 7.17）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.17（24 volt primary battery, a 70 ampere 28 volt alternator; the alternator is belt driven directly from the engine）・7.5",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.elec#8e898a69",
+   "sec": "sys.elec",
+   "text": "Archer の電圧調整器は 28 V に保ち、32 V を超えると発電機を回路から外して ALTR FAIL の警報を出します（POH 7.17）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.17 Voltage regulator（regulate … to 28 volts … removing the alternator from the circuit if its output exceeds 32 volts … ALTR FAIL）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.elec#d786d09a",
+   "sec": "sys.elec",
+   "text": "予備計器、PFD（無線は 1 番だけ）、オーディオパネルが、少なくとも 30 分使えます（POH 7.17。出発前の電圧が 23.3 V より高いとき）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.17（emergency bus: standby instrument functions, PFD functions (nav/com #1 only), audio panel; minimum duration of 30 minutes; CAUTION: only if voltage greater than 23.3 volts prior to flight）。教科書の既存の文",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.elec#f07d2c10",
+   "sec": "sys.elec",
+   "text": "非常用バッテリーで使えるのは 30 分ほどです。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.17（minimum duration of 30 minutes）。教科書の既存の文",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.elec#260152bf",
+   "sec": "sys.elec",
+   "text": "飛び出してから少なくとも 1 分待ったこと",
+   "tag": "参考値",
+   "source": "FAA SAIB CE-10-11（2009-12-23：wait at least one minute）。教科書の既存の文（W07a・W12）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.elec#44d12a8b",
+   "sec": "sys.elec",
+   "text": "戻すのは1 回だけです。",
+   "tag": "参考値",
+   "source": "FAA SAIB CE-10-11（reset only once）。教科書の既存の文（W07a・W12）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.elec#3f88fc76",
+   "sec": "sys.elec",
+   "text": "28 V のバスに、仮に 140 W の装置と 84 W の装置をつなぎました。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した（kiso02.06 の例を Archer の 28 V で）",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.elec#90f2efcc",
+   "sec": "sys.elec",
+   "text": "電流 ＝ 電力 ÷ 電圧（P ＝ VI）なので、140 ÷ 28 ＝ 5.0 A、84 ÷ 28 ＝ 3.0 A、合計 8.0 A です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した：140 ÷ 28 ＝ 5.0、84 ÷ 28 ＝ 3.0。P＝VI は NIST SP 811 第 4 章 表 3（W＝J/s、V＝W/A、Ω＝V/A）と付録 B.9（1 hp＝745.6999 W）。W14 が 2026-10-30 に読んだ",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.elec#2510ff3e",
+   "sec": "sys.elec",
+   "text": "ブレーカーは、必要な系統だけ、1 分待ち、煙がなければ 1 回だけ戻す",
+   "tag": "参考値",
+   "source": "FAA SAIB CE-10-11（ここが大切の短い言い切り。教科書の既存の文）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.radio#fbf6a94f",
+   "sec": "sys.radio",
+   "text": "電圧（V、ボルト）は電気を押す力の差、電流（A、アンペア）は流れる電気の量、電力（W、ワット）は 1 秒あたりのエネルギーです。",
+   "tag": "参考値",
+   "source": "NIST SP 811 第 4 章 表 3（W＝J/s、V＝W/A、Ω＝V/A）と付録 B.9（1 hp＝745.6999 W）。W14 が 2026-10-30 に読んだ（W は J/s）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.radio#4e8076fb",
+   "sec": "sys.radio",
+   "text": "どちらも、SI の単位の決め方（1 W ＝ 1 V × 1 A、1 Ω ＝ 1 V ÷ 1 A）と同じです（NIST SP 811）。",
+   "tag": "参考値",
+   "source": "NIST SP 811 第 4 章 表 3（W＝J/s、V＝W/A、Ω＝V/A）と付録 B.9（1 hp＝745.6999 W）。W14 が 2026-10-30 に読んだ",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.radio#658f6a90",
+   "sec": "sys.radio",
+   "text": "容量 30 Ah のバッテリーを、一定の 10 A で使います。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した（kiso02.q7 の仮の例）",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.radio#c36ecd34",
+   "sec": "sys.radio",
+   "text": "30 ÷ 10 ＝ 3.0 時間です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した：30 ÷ 10 ＝ 3.0",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.radio#e529d509",
+   "sec": "sys.radio",
+   "text": "航空の VHF の無線は 118.000〜136.975 MHz を使い、AM（振幅変調）で声を送ります。",
+   "tag": "参考値",
+   "source": "FAA Aviation Maintenance Technician Handbook — Airframe Vol. 2（FAA-H-8083-31A）第 11 章（W14 が 2026-10-30 に PDF を読んだ）（VHF communication radios … from 118.0 MHz to 136.975 MHz；AM is used in aircraft VHF communication radios）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.radio#f1003d38",
+   "sec": "sys.radio",
+   "text": "米国の FAA の資料では 25 kHz ごとにチャンネルを分け、欧州では 8.33 kHz ごとに分けています（FAA の整備士のハンドブック）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Maintenance Technician Handbook — Airframe Vol. 2（FAA-H-8083-31A）第 11 章（W14 が 2026-10-30 に PDF を読んだ）（25 kilohertz spacing … in Europe where 8.33 kilohertz separate each VHF communication channel）。同じ所の「720 のチャンネル」は 136.975 MHz までとは合わない（760 になる）ので書いていない",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.radio#fd859563",
+   "sec": "sys.radio",
+   "text": "1 つの周波数で話せるのは、一度に 1 人だけです。",
+   "tag": "参考値",
+   "source": "FAA Aviation Maintenance Technician Handbook — Airframe Vol. 2（FAA-H-8083-31A）第 11 章（W14 が 2026-10-30 に PDF を読んだ）（each party transmits and receives on the same channel. Only one party can transmit at any one time）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.radio#76624a30",
+   "sec": "sys.radio",
+   "text": "波長は「光の速さ ÷ 周波数」なので、120 MHz なら約 2.5 m です。",
+   "tag": "参考値",
+   "source": "物理：λ＝c／f、3×10⁸ ÷ 1.2×10⁸ ＝ 2.5 m（FAA Aviation Maintenance Technician Handbook — Airframe Vol. 2（FAA-H-8083-31A）第 11 章（W14 が 2026-10-30 に PDF を読んだ） の『電波の速さ 約 3 億 m/s』）。W14 が検算",
+   "kind": "例題",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.radio#763b77cf",
+   "sec": "sys.radio",
+   "text": "機体の金属の胴体を地面の代わりにして、その 4 分の 1 の長さのアンテナがよく使われます。",
+   "tag": "参考値",
+   "source": "FAA Aviation Maintenance Technician Handbook — Airframe Vol. 2（FAA-H-8083-31A）第 11 章（W14 が 2026-10-30 に PDF を読んだ）（antennas one-quarter of the wavelength … the fuselage acts as the missing one-quarter length）",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  },
+  {
+   "id": "sys.radio#29026d55",
+   "sec": "sys.radio",
+   "text": "航空の VHF は 118〜137 MHz の AM。",
+   "tag": "参考値",
+   "source": "FAA Aviation Maintenance Technician Handbook — Airframe Vol. 2（FAA-H-8083-31A）第 11 章（W14 が 2026-10-30 に PDF を読んだ）（Figure 11-75：VHF comm 118–137 MHz、AM）。ここが大切の短い言い切り",
+   "by": "W14",
+   "checkedBy": null,
+   "checkedOn": null
+  }
+ ]
+}

@@ -1,0 +1,1279 @@
+{
+ "unit": "W14",
+ "about": "R2 の W14（章 sys の下書き：drafts/sys.js・sys-figs.js・sys.claims.json）の台帳のパッチ。下書きが本に入る前に取り込むと、由来表の行が本にない節を指して閉じてしまうので、統合役が章 sys を登録するコミット（節 sys.g1000・sys.compass を inst へ移すのと同じコミット）で apply-patches.mjs に流す。CLAIMS の 79 行は sys.claims.json と同じ（文が変わったら check-chapter.mjs --claims-out で抜き出し直す）",
+ "patches": [
+  {
+   "id": "kiso02.01",
+   "status": "done",
+   "where": "sys.airframe（from）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.02",
+   "status": "done",
+   "where": "sys.airframe（from。曲げモーメントの計算演習）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.03",
+   "status": "done",
+   "where": "sys.airframe（from。疲労・複合材の傷・判断の目）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.06",
+   "status": "done",
+   "where": "sys.elec（from。計算演習）・sys.radio（from。電気の量・計算演習）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.08",
+   "status": "done",
+   "where": "sys.elec（from。電流計を読む・ブレーカーとリセットの区別）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.11",
+   "status": "done",
+   "where": "sys.fuel（from。使えない燃料・通気口・ベーパーロック・ボンディング）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.1",
+   "status": "done",
+   "where": "sys.piston（from。もっと深く「出力・トルク・回転数」）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.2",
+   "status": "done",
+   "where": "sys.piston（from。よくある間違い）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.3",
+   "status": "done",
+   "where": "sys.piston（from。構造・圧縮比・写真 ch03-photo2）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.4",
+   "status": "done",
+   "where": "sys.piston（from。4 つの行程・図 sysFourStroke）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.5",
+   "status": "done",
+   "where": "sys.piston（from。正常燃焼と異常燃焼）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.6",
+   "status": "done",
+   "where": "sys.piston（from。燃料と空気の混ぜ方）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.7",
+   "status": "done",
+   "where": "sys.engine（from。EGT と POH 4.5k のリーン）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.8",
+   "status": "done",
+   "where": "sys.carb（from。定速プロペラでは吸気圧力に出る・代替空気）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.9",
+   "status": "done",
+   "where": "sys.piston（from。もっと深く「過給機とクリティカル高度」）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.10",
+   "status": "done",
+   "where": "sys.engine（from。始動と点火の区別・P リード）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.11",
+   "status": "done",
+   "where": "sys.eis（from。オイル）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.12",
+   "status": "done",
+   "where": "sys.eis（from。冷却）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.13",
+   "status": "done",
+   "where": "sys.eis（from。色の帯・吸気圧力と回転）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.14",
+   "status": "done",
+   "where": "sys.engine（from。羽根の迎え角とねじり）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.15",
+   "status": "done",
+   "where": "sys.engine（from。固定ピッチの回転・もっと深く「プロペラの効率」）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.cover",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。summary:sys の学習目標に書き直した（部品の名前だけでなく正常な流れと故障の影響を説明する）。tsys の分は W32",
+   "by": "W14"
+  },
+  {
+   "id": "kiso03.cover",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。summary:sys の学習目標に書き直した（表示の意味を根拠つきで）。me・tsys の分は W31・W32",
+   "by": "W14"
+  },
+  {
+   "id": "kiso02.05",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。sys.ctl に from（Archer はケーブル式の機械式・操縦士の力。電気の指令と油圧の動力の区別は 1 文）。tsys.power の分は W32",
+   "by": "W14"
+  },
+  {
+   "id": "kiso02.07",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。sys.elec に from（28 V・24 V・発電機・電圧の差で充電・非常用バッテリー）。交流・APU・RAT の分（tsys.power）は W32",
+   "by": "W14"
+  },
+  {
+   "id": "kiso02.13",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。sys.fuel に from（燃料の収支の計算演習を Archer の US gal で・FUEL CALC と FOB SYNC）。kg の燃料管理（tsys.power）は W32",
+   "by": "W14"
+  },
+  {
+   "id": "kiso02.14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。sys.gear に from（前輪式・ショックストラット・シミー）。引込脚の指令・位置・ロック（me.sys）は W31",
+   "by": "W14"
+  },
+  {
+   "id": "kiso02.15",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。sys.gear に from（油圧ブレーキ・運動エネルギーは速度の 2 乗）。アンチスキッド・オートブレーキ（tsys.power）は W32",
+   "by": "W14"
+  },
+  {
+   "id": "kiso02.16",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。sys.elec に from（排気の熱の暖房と一酸化炭素）。抽気・APU（tsys.env）は W32",
+   "by": "W14"
+  },
+  {
+   "id": "kiso01.25",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。sys.engine に from（固定ピッチでも前進の速さで羽根の迎え角が変わる・ねじり・効率）。aero.left（W13）・me.prop（W31）の分は残る",
+   "by": "W14"
+  },
+  {
+   "id": "kiso03.28",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。章末の説明してみよう written:sys の最後の課題（Archer の POH で型式・燃料・オイル・限界・手順を調べて書き、教官に説明する。from は kiso03.q28）。g1.review の分は W25",
+   "by": "W14"
+  },
+  {
+   "id": "kiso02.q1",
+   "status": "done",
+   "where": "written:sys 問 1",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.q2",
+   "status": "done",
+   "where": "written:sys 問 2",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.q3",
+   "status": "done",
+   "where": "written:sys 問 3",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.q6",
+   "status": "done",
+   "where": "written:sys 問 4（28 V の例に）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.q7",
+   "status": "done",
+   "where": "written:sys 問 5",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.q8",
+   "status": "done",
+   "where": "written:sys 問 6（Archer の ALTR AMPS）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.q9",
+   "status": "done",
+   "where": "written:sys 問 7（SAIB CE-10-11）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.q13",
+   "status": "done",
+   "where": "written:sys 問 8（Archer の 50・48 US gal）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.q15",
+   "status": "done",
+   "where": "written:sys 問 9（Archer の US gal・lb に）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.q17",
+   "status": "done",
+   "where": "written:sys 問 10（運動エネルギーの部分。アンチスキッド・オートブレーキは tsys）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.q18",
+   "status": "done",
+   "where": "written:sys 問 11",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.q1",
+   "status": "done",
+   "where": "written:sys 問 12（O-360-A4M の 180 hp・2,700 rpm に）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.q2",
+   "status": "done",
+   "where": "written:sys 問 13",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.q3",
+   "status": "done",
+   "where": "written:sys 問 14（q4 と 1 問に）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.q4",
+   "status": "done",
+   "where": "written:sys 問 14（q3 と 1 問に）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.q5",
+   "status": "done",
+   "where": "written:sys 問 15",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.q7",
+   "status": "done",
+   "where": "written:sys 問 16（POH 4.5k）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.q8",
+   "status": "done",
+   "where": "written:sys 問 17（PHAK の 21℃・80%・38℃・50%）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.q9",
+   "status": "done",
+   "where": "written:sys 問 18",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.q10",
+   "status": "done",
+   "where": "written:sys 問 19",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.q12",
+   "status": "done",
+   "where": "written:sys 問 20",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.q13",
+   "status": "done",
+   "where": "written:sys 問 21",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso03.q28",
+   "status": "done",
+   "where": "written:sys 問 22（Archer の POH を調べる課題。kiso03.28 と一緒に）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "kiso02.q5",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。使っていない（フライバイワイヤの指令・動力・フィードバック：tsys の章の説明してみようの候補。W23・W32）",
+   "by": "W14"
+  },
+  {
+   "id": "kiso02.q16",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。使っていない（脚レバーとダウンロック：Archer は固定脚。me.sys の候補。W23・W31）",
+   "by": "W14"
+  },
+  {
+   "id": "kiso03.q6",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。使っていない（空燃比の計算：W23 が足すなら sys.piston の「燃料と空気の混ぜ方」へ）",
+   "by": "W14"
+  },
+  {
+   "id": "kiso03.q11",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。使っていない（調圧弁とフィルターバイパス：sys.eis は扱っていない。W23）",
+   "by": "W14"
+  },
+  {
+   "id": "kiso03.q14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。使っていない（羽根の迎え角の単純な模型の計算：me.prop の候補。W23・W31）",
+   "by": "W14"
+  },
+  {
+   "id": "kiso03.q15",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。説明してみようには使っていない。同じ数（100 kW・0.80・60 m/s）を sys.engine のもっと深く「プロペラの効率」の例に書き直した。W23 が written にするかを決める",
+   "by": "W14"
+  },
+  {
+   "id": "ch02-fig1",
+   "status": "done",
+   "where": "FIG.sysAirframe（sys.airframe。暗い板に描き直した：翼と胴体の部材・セミモノコック）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。W21 の持ち物の図を章の単位が描いた。W21 の目視で確かめてほしい"
+  },
+  {
+   "id": "ch03-fig3-2",
+   "status": "done",
+   "where": "FIG.sysFourStroke（sys.piston。暗い板に 2×2 で描き直した：4 行程）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。W21 の持ち物の図を章の単位が描いた。W21 の目視で確かめてほしい"
+  },
+  {
+   "id": "ch03-photo2",
+   "status": "done",
+   "where": "sys.piston（bk.photo('ch03-photo2')。W22 のキャプションのまま）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "ch03-photo3",
+   "status": "done",
+   "where": "sys.carb（bk.photo('ch03-photo3')。W22 のキャプションのまま）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む"
+  },
+  {
+   "id": "K.systems.K2",
+   "status": "fixed",
+   "where": "drafts/sys.js sys.carb（起きやすい条件：PHAK の 21℃（70°F）・80%、38℃（100°F）・50% を先に、POH 3.5j の −5〜20℃ を並べて「それより暖かくても起きる」）",
+   "verified": true,
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。PHAK 25C 第 7 章（7-9〜7-10）と Archer III POH 3.5j の本文で確かめた"
+  },
+  {
+   "id": "R.carb-ice-temp",
+   "status": "fixed",
+   "where": "drafts/sys.js sys.carb（PHAK の数値を主に、POH の −5〜20℃ も。名前は FL.terms の 気化器着氷（キャブレターアイス、carburetor icing）・キャブレターヒーター）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。節の題も「気化器着氷（キャブレターアイス）」にした"
+  },
+  {
+   "id": "K.systems.K1",
+   "status": "fixed",
+   "where": "drafts/sys.js sys.eis「吸気圧力と回転」（止まっていると外の気圧、回るとそれより低い、自然吸気では外の気圧より高くできない：PHAK 第 7 章）・sys.piston のもっと深く「過給機とクリティカル高度」",
+   "verified": true,
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。直し方の後半「高速ではわずかに上がることがある」（ラム効果）は一次資料（PHAK・AFH・FAA の整備士のハンドブック）で見つからず、書いていない（DESIGN の決まり：確かめられない規則は書かない）。事実確認役が一次資料を見つけたら 1 文足す"
+  },
+  {
+   "id": "R.manifold-pressure",
+   "status": "fixed",
+   "where": "drafts/sys.js sys.eis「吸気圧力と回転」（ふつうは外気圧以下：PHAK。吸気圧力の名前は FL.terms）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。裁定の後半「ラム効果でわずかに上がる」は一次資料が見つからず書いていない（K.systems.K1 の note）。裁定の文をそのとおりに直すかは W27・事実確認役"
+  },
+  {
+   "id": "cpl.1.6.2.3",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。sys.eis は回転角の遠隔表示（シンクロ）を扱っていない。sections の sys.eis を外し inst.flow だけにするのがよい（W15・W42）",
+   "by": "W14"
+  },
+  {
+   "id": "ir.2.2",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。sys.eis はジャイロを扱っていない（inst.gyro の範囲）。sections の sys.eis を外し inst.gyro・inst.flow にするのがよい（W15・W42）",
+   "by": "W14"
+  },
+  {
+   "id": "cpl.1.2.2.2",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。sys.airframe は荷重経路と曲げモーメントまで。安全率とフェイルセイフは aero.struct（W13）",
+   "by": "W14"
+  },
+  {
+   "id": "cpl.1.5.3.2",
+   "note": "W14（2026-10-30）：章 sys の下書き drafts/sys.js。このパッチは、章を登録するコミット（inst と同じコミット）で取り込む。sys.radio に AM（振幅変調）と SSB・VHF の周波数の帯。DSB の送受信機の中身は書いていない",
+   "by": "W14"
+  },
+  {
+   "op": "add",
+   "id": "sys.ctl#ae7416eb",
+   "sec": "sys.ctl",
+   "text": "Piper Archer（PA-28-181）は、低翼（翼が胴体の下にある）・4 人乗り・単発の練習機です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.1（single-engine, low-wing … four-place seating）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.ctl#e1ac0508",
+   "sec": "sys.ctl",
+   "text": "翼が胴体の下にある低翼・単発・固定脚の 4 人乗りです。",
+   "tag": "参考値",
+   "source": "写真 archer のキャプション（book-photos.js、教科書の既存の文）。Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ） 7.1・7.7（固定脚）と合う",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.ctl#af09c0fe",
+   "sec": "sys.ctl",
+   "text": "フラップ（flaps）のレバー（前席の間） ｜ フラップ（UP・10°・25°・40°） ｜ 揚力（lift）と抗力（drag）を増やす ｜",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.9（flaps have three extended positions, 10, 25 and 40 degrees）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.airframe#6c6f94a0",
+   "sec": "sys.airframe",
+   "text": "仮の翼で、揚力をまとめた力 12,000 N が、付け根から 3.0 m の所にかかるとします。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した（基礎教材 kiso02.02 の仮の例を書き直した。M＝F×d）",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.airframe#41aaa322",
+   "sec": "sys.airframe",
+   "text": "12,000 N × 3.0 m ＝ 36,000 N·m です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した：12,000 × 3.0 ＝ 36,000",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.airframe#ae8bbd2d",
+   "sec": "sys.airframe",
+   "text": "1 回では壊れない小さな力でも、何度もくり返し受けると、部材の傷が少しずつ広がります。",
+   "tag": "参考値",
+   "source": "kiso02.03 の疲労の説明を書き直した。数は「1 回」だけで値の主張ではない（疲労＝くり返しの力による損傷：PHAK 第 3 章の composite の段落も金属の疲労と比べる）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.gear#33f77355",
+   "sec": "sys.gear",
+   "text": "ペダルとブレーキで、前輪の向きは左右に 20° まで変わります（POH 7.7）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.7（nose gear is steerable through a 20 degree arc each side of center … shimmy dampener）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.gear#1930621e",
+   "sec": "sys.gear",
+   "text": "外部点検では伸び具合を見ます（POH 7.7：ふつうの伸びは主脚 4.50 in・前脚 3.25 in）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.7（normal extension of 3.25 inches for the nose gear and 4.50 inches for the main gear）。Archer III w/ G1000 Pilot's Checklist（MGA 2025、R.archerCk。W14 が 2026-10-30 に読んだ）（Main Gear Strut 4.5 in・Nose Gear Strut 3.25 in）とも合う",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.gear#813e7f51",
+   "sec": "sys.gear",
+   "text": "接地の速度が 20% 速いと、止めるエネルギーは 1.2 × 1.2 ＝ 1.44 倍になります。",
+   "tag": "参考値",
+   "source": "物理（運動エネルギー ½mV²）：1.2² ＝ 1.44。kiso02.15 の例の考え方。W14 が検算",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.gear#c1333cf4",
+   "sec": "sys.gear",
+   "text": "Archer の主輪の空気圧は 24 psi です（POH 8.23）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：8.23（24 psi for the main gear, 18 psi for the nose gear）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.gear#819d92e0",
+   "sec": "sys.gear",
+   "text": "この目安では 9 × √24 ≈ 44 kt です。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 11 章 Water on the Runway and Dynamic Hydroplaning（W14 が 2026-10-30 に読んだ）（minimum hydroplaning speed ＝ 9 × √(main gear tire pressure psi)、例 36 psi → 54 kt）。9 × √24 ＝ 44.09 を W14 が検算",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.lights#375fd657",
+   "sec": "sys.lights",
+   "text": "米国の規則（14 CFR 91.209）では、日没から日の出までつけます。",
+   "tag": "条文",
+   "source": "14 CFR 91.209（eCFR。教科書の既存の文：W07a が確かめ W12 が署名した行と同じ趣旨）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.lights#29aeed09",
+   "sec": "sys.lights",
+   "text": "ただし、安全のために機長（pilot in command）が消すことはできます（米国の 14 CFR 91.209）。",
+   "tag": "条文",
+   "source": "14 CFR 91.209(b)（pilot in command may turn off anti-collision lights for safety）。教科書の既存の文に「機長（pilot in command）」を足しただけ",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.lights#18061062",
+   "sec": "sys.lights",
+   "text": "米国の AIM 4-3-24 は、空港の近くや低い高度では、昼でもつけることを勧めています。",
+   "tag": "参考値",
+   "source": "FAA AIM 4-3-24 Use of Aircraft Lights（教科書の既存の文。W07a・W12）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.lights#e2cd67f4",
+   "sec": "sys.lights",
+   "text": "左舷灯と右舷灯は前から横の 110° まで、尾灯は後ろの 140° を照らします（米国の耐空性の基準、旧 14 CFR 23.1387）。",
+   "tag": "参考値",
+   "source": "旧 14 CFR 23.1387（航空灯の配光：前方 110°・後方 140°）。教科書の既存の文（W07a・W12）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.lights#85d3461f",
+   "sec": "sys.lights",
+   "text": "衝突防止灯を装備していればつける（安全のために消してよいときがある）（14 CFR 91.209） ｜ 夜間（日没から日出まで）に空中と地上を航行するときは、衝突防止灯・右舷灯・左舷灯・尾灯をつける（航空法第 64 条・航空法施行規則第 154 条） ｜",
+   "tag": "条文",
+   "source": "FL.jur lights.ac（flight-lab/src/book-jur.js。W06 が 14 CFR 91.209 と e-Gov の航空法第 64 条・施行規則第 154 条で確かめた。囲みが描く文）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.lights#70635bb8",
+   "sec": "sys.lights",
+   "text": "日本の法令は e-Gov 法令検索の版：航空法（令和 7 年 12 月 1 日施行）・航空法施行規則（令和 8 年 10 月 1 日施行）。",
+   "tag": "条文",
+   "source": "FL.jur の LAWS（e-Gov の版と確認日。W05・W06）。囲みが描く文",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.piston#58a1ad47",
+   "sec": "sys.piston",
+   "text": "吸入・圧縮・膨張・排気をくり返し、4 つの行程でクランク軸は 2 回転します。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（four-stroke cycle）。図のキャプション",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.piston#27c52cb4",
+   "sec": "sys.piston",
+   "text": "ピストンが上から下、または下から上へ 1 回動くことを行程（stroke）といいます。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（four-stroke：intake, compression, power, exhaust strokes of the piston）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.piston#9b8043e1",
+   "sec": "sys.piston",
+   "text": "4 つの行程で、クランク軸は 2 回転します。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）・基礎教材 kiso03.4（1 サイクルにクランク軸 2 回転 720°）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.piston#1f8b2f53",
+   "sec": "sys.piston",
+   "text": "だから、1 つのシリンダーが燃えるのは 2 回転に 1 回です。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（4 行程・クランク軸 2 回転に 1 回の膨張）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.piston#5afe7c64",
+   "sec": "sys.piston",
+   "text": "2,400 rpm なら、1 つのシリンダーは毎秒 20 回燃えます（2,400 ÷ 60 ÷ 2）。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した：2,400 ÷ 60 ÷ 2 ＝ 20（kiso03.4 の 3,000 rpm → 25 の例を Archer の回転で）",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.piston#af1fcbbc",
+   "sec": "sys.piston",
+   "text": "例：O-360-A4M の定格は 2,700 rpm で 180 hp です（POH 2.7）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：2.7（O-360-A4M、180 BHP、2700 RPM）。Lycoming SSP-110-3 Certified Engines（2025-07。O-360-A4M：180 hp・2,700 rpm・100/100LL・8.50:1。W14 が 2026-10-30 に読んだ）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.piston#f742833f",
+   "sec": "sys.piston",
+   "text": "米国の 14 CFR 1.1 の定義で、国際標準大気（標準大気、International Standard Atmosphere）の条件で決めます。",
+   "tag": "条文",
+   "source": "14 CFR 1.1 Critical altitude（eCFR の本文。W14 が 2026-10-30 に読んだ：maximum altitude at which, in standard atmosphere, it is possible to maintain, at a specified rotational speed, a specified power or a specified manifold pressure）。PHAK 第 7 章と用語集も同じ趣旨",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.piston#ec313ca0",
+   "sec": "sys.piston",
+   "text": "クランク軸 2 回転で 1 回燃える",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（ここが大切の短い言い切り）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.piston#5eab0e73",
+   "sec": "sys.piston",
+   "text": "考えてみよう：2,700 rpm のとき、1 つのシリンダーは毎秒何回燃えますか。",
+   "tag": "参考値",
+   "source": "考えてみよう（問）。値の主張ではない",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.piston#1db9e8fb",
+   "sec": "sys.piston",
+   "text": "2,700 ÷ 60 ÷ 2 ＝ 22.5 回です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した：2,700 ÷ 60 ÷ 2 ＝ 22.5",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.piston#7de7a1fd",
+   "sec": "sys.piston",
+   "text": "4 つの行程でクランク軸が 2 回転し、そのうち燃えるのは 1 回だからです。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（4 行程でクランク軸 2 回転）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.engine#c7e86c16",
+   "sec": "sys.engine",
+   "text": "POH は、5,000 ft より上の巡航で混合気を絞るように書いています。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：4.5k（mixture should be leaned during cruising operation above 5000 ft）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.engine#f7cce60e",
+   "sec": "sys.engine",
+   "text": "出力が 75% 以下なら、それより低くても絞ってかまいません。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：4.5k（and at pilot's discretion at lower altitudes when 75% power or less is being used）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.engine#4b3165bd",
+   "sec": "sys.engine",
+   "text": "出力が分からないときは、5,000 ft 未満ではいっぱいに押した FULL RICH にします（POH 4.5k）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：4.5k（if any doubt … mixture full RICH for all operations under 5000 feet）。Archer III w/ G1000 Pilot's Checklist（MGA 2025、R.archerCk。W14 が 2026-10-30 に読んだ）（Mixture FULL RICH BELOW 5000 FT）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.engine#cf899b6b",
+   "sec": "sys.engine",
+   "text": "POH は、ピーク EGT を最良の燃費、ピークから 100°F 濃い側を最良の出力の混合比としています（POH 4.5k）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：4.5k（best economy at peak EGT; best power … 100°F rich of the peak; roughness before peak → use as peak）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.engine#93191433",
+   "sec": "sys.engine",
+   "text": "止まって全開にしたときの回転は、2,240〜2,340 rpm です（POH 2.7）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：2.7(10)（static RPM at maximum permissible throttle at sea level: not above 2340, not below 2240）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.engine#d5053812",
+   "sec": "sys.engine",
+   "text": "回転の赤線は 2,700 rpm です（POH 2.9）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：2.9(a)（Tachometer red line 2700 RPM）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.engine#d47e8ecc",
+   "sec": "sys.engine",
+   "text": "POH のふつうの降下は、スロットルで 2,500 rpm に合わせます（POH 4.51）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：4.51（Normal Descent: THROTTLE 2500 RPM）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.engine#6da22770",
+   "sec": "sys.engine",
+   "text": "PHAK は、プロペラの効率を 50〜87% としています（PHAK 第 5 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 5 章 Propellers（W14 が 2026-10-30 に読んだ）（propeller efficiency varies from 50 to 87 percent）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.engine#faffc1c8",
+   "sec": "sys.engine",
+   "text": "例：軸の出力 100 kW、効率 0.80、速度 60 m/s なら、推力は 0.80 × 100,000 ÷ 60 ≈ 1,333 N です（計算用の仮の値）。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した（kiso03.15 の仮の例）：0.80 × 100,000 ÷ 60 ＝ 1,333.3。η ＝ TV／P は FAA PHAK FAA-H-8083-25C 第 5 章 Propellers（W14 が 2026-10-30 に読んだ） の thrust horsepower／brake horsepower と同じ",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.eis#0c86021b",
+   "sec": "sys.eis",
+   "text": "赤い線（25 psi・115 psi）の外に出ると警報になります（POH 2.9・7.13）",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：2.9（oil pressure red line 25・115 PSI）・3.1 の CAS（Oil Pressure less than 25 PSI or greater than 115 PSI）・7.13（warning: flashing）。図のキャプション",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.eis#937f8733",
+   "sec": "sys.eis",
+   "text": "暑いフロリダでの長い上昇は、巡航上昇の速度で登ります（公開チェックリストの例：87 KIAS）。",
+   "tag": "参考値",
+   "source": "Archer III w/ G1000 Pilot's Checklist（MGA 2025、R.archerCk。W14 が 2026-10-30 に読んだ）（En Route Climb 87 KIAS）。冷やすために速度をつけること：PHAK 第 7 章（increase airspeed）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.eis#b83c5437",
+   "sec": "sys.eis",
+   "text": "Archer の油圧は、緑が 55〜95 psi、赤い線が 25 psi と 115 psi です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：2.9(c)（Oil Pressure green 55–95 PSI, red line 25 and 115 PSI）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.eis#76a13bae",
+   "sec": "sys.eis",
+   "text": "油温の上限は 245°F、回転の上限は 2,700 rpm です（POH 2.7・2.9）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：2.7（Max. Oil Temperature 245°F、Max. Propeller Speed 2700 RPM）・2.9",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.eis#6048d67a",
+   "sec": "sys.eis",
+   "text": "たとえば、回転が 1,100 rpm より高いときに油圧が 26〜55 psi なら、注意です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：3.1 Caution（Oil Pressure between 26 PSI and 55 PSI when RPM greater than 1100）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.eis#5e419dff",
+   "sec": "sys.eis",
+   "text": "油圧が 25 psi より低いか、115 psi より高ければ、警報です（POH 3.1）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：3.1 Warning（Oil Pressure less than 25 PSI or greater than 115 PSI）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.carb#7e2eacf5",
+   "sec": "sys.carb",
+   "text": "そのため温度が大きく下がり（PHAK：最大で 60〜70°F、約 33〜39℃）、空気中の水分が氷になって空気の通り道をふさぎます。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（7-9〜7-10：temperature drop as much as 60 to 70 Fahrenheit degrees ＝ 33〜39 ℃ の差）。教科書の既存の文",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.carb#6a263ac5",
+   "sec": "sys.carb",
+   "text": "起きやすい条件：気温 21℃（70°F）より低く、湿度が 80% より高いときです。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（most likely below 70°F/21°C and relative humidity above 80 percent）。R.carb-ice-temp・K.systems.K2",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.carb#a1245600",
+   "sec": "sys.carb",
+   "text": "急に冷えるので、気温 38℃（100°F）・湿度 50% でも起こります（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（icing can occur … as high as 100°F (38°C) and humidity as low as 50 percent）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.carb#7049d6da",
+   "sec": "sys.carb",
+   "text": "Archer の POH は「−5〜20℃ の湿った空気」と書いていますが、それより暖かくても起きます（POH 3.5j）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：3.5j（Under certain moist atmospheric conditions at temperatures of -5°C to 20°C …）。R.carb-ice-temp（PHAK の値を主に、POH の値も）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.carb#c543431a",
+   "sec": "sys.carb",
+   "text": "とけた水でエンジンは 30 秒から数分荒れますが、ヒーターはいっぱいのまま、ふつうの出力が戻るまで待ちます（PHAK 第 7 章）。",
+   "tag": "参考値",
+   "source": "FAA PHAK FAA-H-8083-25C 第 7 章（全文の PDF を W14 が 2026-10-30 に読んだ）（roughness as melted ice goes through … may last from 30 seconds to several minutes … must resist the temptation to decrease the carburetor heat）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.fuel#2795fe1c",
+   "sec": "sys.fuel",
+   "text": "左右の翼のタンク（使える燃料は片側 24 US gal：教材値）から、セレクターで選んだ側の燃料をポンプで送ります。",
+   "tag": "教材値",
+   "source": "FL.physics の pa28 の fuelCap（24 US gal）を図が描く。参考値は Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ） 2.21（24.0 gallons in each wing）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.fuel#1a2306aa",
+   "sec": "sys.fuel",
+   "text": "使える燃料は、片側 24 US gal、合わせて 48 US gal です（教材値）。",
+   "tag": "教材値",
+   "source": "FL.physics の pa28 の fuelCap（24 US gal）。参考値は同じ節の次の文（POH 2.21）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.fuel#32692e9d",
+   "sec": "sys.fuel",
+   "text": "参考値の POH 2.21 も同じで、総容量は 50 US gal、そのうち 2 US gal（片側 1 US gal）は使えない燃料です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：1.7・2.21（Total 50 U.S. GAL、Unusable 2 U.S. GAL＝1.0 gallon in each wing、Usable 48 U.S. GAL）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.fuel#2e12cca2",
+   "sec": "sys.fuel",
+   "text": "POH の例は、離陸から 1 時間は片方、次の 2 時間はもう片方、そのあと最初のタンクへ戻すやり方です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：4.5k（one tank … for one hour after takeoff, then the other tank … for two hours; then return to the first tank）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.fuel#717b3b1a",
+   "sec": "sys.fuel",
+   "text": "ストレーナーは、セレクターをそれぞれのタンクにして 2 回抜きます（POH 8.21）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：8.21(d)（the fuel strainer should be drained twice, once with the fuel selector valve on each tank）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.fuel#60e74032",
+   "sec": "sys.fuel",
+   "text": "目で見る：給油口の中の目印のタブの下の端まであると、そのタンクの使える燃料は 17 US gal です（POH 7.15）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.15（17 gallons of usable fuel is measured at the bottom of each indicator tab）・8.21(c)",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.fuel#86f0451e",
+   "sec": "sys.fuel",
+   "text": "飛行前に目でタンクの中を見て、飛行中は「飛んだ時間 × 1 時間あたりの消費量」でも確かめます。",
+   "tag": "参考値",
+   "source": "教科書の既存の文（時間×消費量で確かめる：PHAK 第 7 章 fuel gauges の段落の考え方）。数は「1 時間あたり」だけ",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.fuel#b13fcb65",
+   "sec": "sys.fuel",
+   "text": "出発のとき、目で見て合わせて 40 US gal ありました。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した（kiso02.13 の燃料の収支の例を Archer の US gal で）",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.fuel#b911a40a",
+   "sec": "sys.fuel",
+   "text": "燃料の計算の「使った量」は 18 US gal です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.fuel#0183b96b",
+   "sec": "sys.fuel",
+   "text": "燃料計は合わせて 19 US gal を示しています。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.fuel#62671a5a",
+   "sec": "sys.fuel",
+   "text": "差 ＝ 出発の量 −（残りの量 ＋ 使った量）＝ 40 −（19 ＋ 18）＝ 3 US gal です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した：40 −（19 ＋ 18）＝ 3",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.elec#5d589295",
+   "sec": "sys.elec",
+   "text": "Archer の電気系統は 28 V です。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.17（The 28 volt electrical system …）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.elec#f51ae599",
+   "sec": "sys.elec",
+   "text": "24 V のバッテリーと、エンジンがベルトで回す 70 A・28 V の発電機を持ちます（POH 7.17）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.17（24 volt primary battery, a 70 ampere 28 volt alternator; the alternator is belt driven directly from the engine）・7.5",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.elec#8e898a69",
+   "sec": "sys.elec",
+   "text": "Archer の電圧調整器は 28 V に保ち、32 V を超えると発電機を回路から外して ALTR FAIL の警報を出します（POH 7.17）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.17 Voltage regulator（regulate … to 28 volts … removing the alternator from the circuit if its output exceeds 32 volts … ALTR FAIL）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.elec#d786d09a",
+   "sec": "sys.elec",
+   "text": "予備計器、PFD（無線は 1 番だけ）、オーディオパネルが、少なくとも 30 分使えます（POH 7.17。出発前の電圧が 23.3 V より高いとき）。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.17（emergency bus: standby instrument functions, PFD functions (nav/com #1 only), audio panel; minimum duration of 30 minutes; CAUTION: only if voltage greater than 23.3 volts prior to flight）。教科書の既存の文",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.elec#f07d2c10",
+   "sec": "sys.elec",
+   "text": "非常用バッテリーで使えるのは 30 分ほどです。",
+   "tag": "参考値",
+   "source": "Piper PA-28-181 Archer III POH VB-2266（2013、R.archerPoh の公開の写し。W14 が 2026-10-30 に本文を読んだ）：7.17（minimum duration of 30 minutes）。教科書の既存の文",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.elec#260152bf",
+   "sec": "sys.elec",
+   "text": "飛び出してから少なくとも 1 分待ったこと",
+   "tag": "参考値",
+   "source": "FAA SAIB CE-10-11（2009-12-23：wait at least one minute）。教科書の既存の文（W07a・W12）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.elec#44d12a8b",
+   "sec": "sys.elec",
+   "text": "戻すのは1 回だけです。",
+   "tag": "参考値",
+   "source": "FAA SAIB CE-10-11（reset only once）。教科書の既存の文（W07a・W12）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.elec#3f88fc76",
+   "sec": "sys.elec",
+   "text": "28 V のバスに、仮に 140 W の装置と 84 W の装置をつなぎました。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した（kiso02.06 の例を Archer の 28 V で）",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.elec#90f2efcc",
+   "sec": "sys.elec",
+   "text": "電流 ＝ 電力 ÷ 電圧（P ＝ VI）なので、140 ÷ 28 ＝ 5.0 A、84 ÷ 28 ＝ 3.0 A、合計 8.0 A です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した：140 ÷ 28 ＝ 5.0、84 ÷ 28 ＝ 3.0。P＝VI は NIST SP 811 第 4 章 表 3（W＝J/s、V＝W/A、Ω＝V/A）と付録 B.9（1 hp＝745.6999 W）。W14 が 2026-10-30 に読んだ",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.elec#2510ff3e",
+   "sec": "sys.elec",
+   "text": "ブレーカーは、必要な系統だけ、1 分待ち、煙がなければ 1 回だけ戻す",
+   "tag": "参考値",
+   "source": "FAA SAIB CE-10-11（ここが大切の短い言い切り。教科書の既存の文）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.radio#fbf6a94f",
+   "sec": "sys.radio",
+   "text": "電圧（V、ボルト）は電気を押す力の差、電流（A、アンペア）は流れる電気の量、電力（W、ワット）は 1 秒あたりのエネルギーです。",
+   "tag": "参考値",
+   "source": "NIST SP 811 第 4 章 表 3（W＝J/s、V＝W/A、Ω＝V/A）と付録 B.9（1 hp＝745.6999 W）。W14 が 2026-10-30 に読んだ（W は J/s）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.radio#4e8076fb",
+   "sec": "sys.radio",
+   "text": "どちらも、SI の単位の決め方（1 W ＝ 1 V × 1 A、1 Ω ＝ 1 V ÷ 1 A）と同じです（NIST SP 811）。",
+   "tag": "参考値",
+   "source": "NIST SP 811 第 4 章 表 3（W＝J/s、V＝W/A、Ω＝V/A）と付録 B.9（1 hp＝745.6999 W）。W14 が 2026-10-30 に読んだ",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.radio#658f6a90",
+   "sec": "sys.radio",
+   "text": "容量 30 Ah のバッテリーを、一定の 10 A で使います。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した（kiso02.q7 の仮の例）",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.radio#c36ecd34",
+   "sec": "sys.radio",
+   "text": "30 ÷ 10 ＝ 3.0 時間です。",
+   "tag": "参考値",
+   "source": "この本で決めた仮定の値（計算の例）。W14 が検算した：30 ÷ 10 ＝ 3.0",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.radio#e529d509",
+   "sec": "sys.radio",
+   "text": "航空の VHF の無線は 118.000〜136.975 MHz を使い、AM（振幅変調）で声を送ります。",
+   "tag": "参考値",
+   "source": "FAA Aviation Maintenance Technician Handbook — Airframe Vol. 2（FAA-H-8083-31A）第 11 章（W14 が 2026-10-30 に PDF を読んだ）（VHF communication radios … from 118.0 MHz to 136.975 MHz；AM is used in aircraft VHF communication radios）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.radio#f1003d38",
+   "sec": "sys.radio",
+   "text": "米国の FAA の資料では 25 kHz ごとにチャンネルを分け、欧州では 8.33 kHz ごとに分けています（FAA の整備士のハンドブック）。",
+   "tag": "参考値",
+   "source": "FAA Aviation Maintenance Technician Handbook — Airframe Vol. 2（FAA-H-8083-31A）第 11 章（W14 が 2026-10-30 に PDF を読んだ）（25 kilohertz spacing … in Europe where 8.33 kilohertz separate each VHF communication channel）。同じ所の「720 のチャンネル」は 136.975 MHz までとは合わない（760 になる）ので書いていない",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.radio#fd859563",
+   "sec": "sys.radio",
+   "text": "1 つの周波数で話せるのは、一度に 1 人だけです。",
+   "tag": "参考値",
+   "source": "FAA Aviation Maintenance Technician Handbook — Airframe Vol. 2（FAA-H-8083-31A）第 11 章（W14 が 2026-10-30 に PDF を読んだ）（each party transmits and receives on the same channel. Only one party can transmit at any one time）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.radio#76624a30",
+   "sec": "sys.radio",
+   "text": "波長は「光の速さ ÷ 周波数」なので、120 MHz なら約 2.5 m です。",
+   "tag": "参考値",
+   "source": "物理：λ＝c／f、3×10⁸ ÷ 1.2×10⁸ ＝ 2.5 m（FAA Aviation Maintenance Technician Handbook — Airframe Vol. 2（FAA-H-8083-31A）第 11 章（W14 が 2026-10-30 に PDF を読んだ） の『電波の速さ 約 3 億 m/s』）。W14 が検算",
+   "kind": "例題",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.radio#763b77cf",
+   "sec": "sys.radio",
+   "text": "機体の金属の胴体を地面の代わりにして、その 4 分の 1 の長さのアンテナがよく使われます。",
+   "tag": "参考値",
+   "source": "FAA Aviation Maintenance Technician Handbook — Airframe Vol. 2（FAA-H-8083-31A）第 11 章（W14 が 2026-10-30 に PDF を読んだ）（antennas one-quarter of the wavelength … the fuselage acts as the missing one-quarter length）",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  },
+  {
+   "op": "add",
+   "id": "sys.radio#29026d55",
+   "sec": "sys.radio",
+   "text": "航空の VHF は 118〜137 MHz の AM。",
+   "tag": "参考値",
+   "source": "FAA Aviation Maintenance Technician Handbook — Airframe Vol. 2（FAA-H-8083-31A）第 11 章（W14 が 2026-10-30 に PDF を読んだ）（Figure 11-75：VHF comm 118–137 MHz、AM）。ここが大切の短い言い切り",
+   "by": "W14",
+   "note": "W14（2026-10-30）：drafts/sys.claims.json から。章 sys を登録するコミットで取り込む。確かめ役の署名は事実確認役（W14 と別）"
+  }
+ ]
+}

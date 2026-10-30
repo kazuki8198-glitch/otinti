@@ -655,6 +655,53 @@ test('ground-school tests: ≥ 12 banks of 4-choice questions with reasons, link
   assert.ok(n >= 120, `${n} questions`);
 });
 
+// The banks are CADET's written exams (cadet/src/career/career.js EXAMS) as well as FLIGHT LAB's tests: their ids and
+// order stay, questions are only added at the end (DESIGN 6.2 rule 4), and an added question carries its meta
+// { sec, scope, jur? } (quiz.js): the section its reason cites (the {ch:} is that section's chapter, one CADET has),
+// scope 'common' or 'us' only — never Japanese law (rule 14, 5 criterion 18) —, an FL.jur item it cites when it has one.
+// Each bank's added questions spread their right answers over the four places (15–35 % each).
+test('ground-school tests: the 14 banks in order; questions added only at the end, each with its section and a common/us scope, no Japanese law, answers spread', () => {
+  const BASE = { q_aero: 10, q_sys: 10, q_perf: 10, q_wx: 10, q_law: 10, q_comm: 10, q_radio: 15, q_hf: 10, q_ops: 10, q_emg: 10, q_nav: 10, q_ifr: 10, q_me: 10, q_crm: 10 };
+  assert.deepEqual(QZ.BANKS.slice(0, 14).map(b => b.id), Object.keys(BASE));
+  const NOT_IN_CADET = /^(intro|english|sim|g\d+|jlaw|jair|jatc|jwx|jifr|jexam)$/;
+  const JP_LAW = /航空法(?!規)|施行規則|第\s?\d+\s?条|電波法|告示|通達/;
+  const US_RULE = /14\s?CFR|(?<![A-Za-z])Part\s?(?:1|23|43|61|67|91|97|121|135|141|830)\b|(?<![\d.,])(?:43|61|67|91|97|121|135|141)\.\d{1,4}|(?<![A-Za-z])AIM(?![A-Za-z])|(?<![A-Za-z])FARs?(?![A-Za-z])/;
+  const GAME = /ゲーム|ソフト|プレイヤー|FLIGHT LAB|シミュレータ|キーボード|メニュー/;   // what CADET's teachers never say (cadet/test/school.test.mjs)
+  let added = 0;
+  for (const b of QZ.BANKS.slice(0, 14)) {
+    const base = BASE[b.id], old = b.qs.slice(0, base), more = b.qs.slice(base);
+    assert.equal(old.length, base, `${b.id}: the first ${base} questions are there`);
+    assert.ok(old.every(q => q.length === 4), `${b.id}: the first ${base} questions are the old ones (no meta)`);
+    more.forEach((q, i) => {
+      const at = `${b.id}[${base + i}]`, [text, choices, , why, meta] = q, all = [text, ...choices, why].join('\n');
+      assert.ok(meta && typeof meta === 'object', `${at}: meta`);
+      assert.ok(['common', 'us'].includes(meta.scope), `${at}: scope ${meta.scope}`);
+      const found = BK.findSection(meta.sec);
+      assert.ok(found, `${at}: section ${meta.sec}`);
+      assert.ok(['common', 'us'].includes(found.sec.scope), `${at}: ${meta.sec} is ${found.sec.scope}`);
+      const chs = [...why.matchAll(/\{ch:([a-z0-9]+)\}/g)].map(m => m[1]);
+      assert.equal(chs[0], found.ch.id, `${at}: the reason's {ch:} is the chapter of ${meta.sec}`);
+      for (const c of chs) assert.ok(!NOT_IN_CADET.test(c), `${at}: {ch:${c}} is not in CADET's book`);
+      assert.doesNotMatch(all, JP_LAW, `${at}: Japanese law in a bank CADET reads`);
+      if (US_RULE.test(all)) assert.equal(meta.scope, 'us', `${at}: a US rule, so scope us`);
+      assert.doesNotMatch(choices.join('\n'), /\{ch:/, `${at}: choices are shown as written`);
+      assert.doesNotMatch(all.replace(/\{ch:[a-z0-9]+\}/g, ''), /[{}]/, `${at}: a brace (CADET reads {…} as a placeholder)`);
+      assert.doesNotMatch(all, GAME, `${at}: words about the game`);
+      if (meta.jur) {
+        const row = FL.jur.byId(meta.jur);
+        assert.ok(row, `${at}: FL.jur ${meta.jur}`);
+        assert.ok((row.usSrc.match(/\d+-\d+-\d+|\d{1,3}\.\d+/g) || []).some(t => why.includes(t)), `${at}: cites ${row.usSrc} as FL.jur ${meta.jur} does`);
+      }
+      added++;
+    });
+    if (more.length >= 6) {
+      const c = [0, 0, 0, 0]; for (const q of more) c[q[2]]++;
+      for (let k = 0; k < 4; k++) { const s = c[k] / more.length; assert.ok(s >= 0.15 && s <= 0.35, `${b.id}: the added questions' right answer is ${'ABCD'[k]} ${(s * 100).toFixed(0)}%`); }
+    }
+  }
+  assert.ok(added >= 81, `${added} questions added (R2: Part 1)`);
+});
+
 test('Sanford: the four runways, the hot spot, the airspace, a schematic labelled NOT FOR NAVIGATION, ≥ 4 ATC scenes', () => {
   assert.deepEqual(SF.RUNWAYS.map(r => r.id), ['09L/27R', '09C/27C', '09R/27L', '18/36']);
   const facts = SF.FACTS.map(f => f.t).join(' ');

@@ -1,12 +1,12 @@
 {
   "ledger": "COUNTS",
   "version": 1,
-  "updated": "2026-10-29",
+  "updated": "2026-10-30",
   "by": "W03",
   "about": "この設計の数（DESIGN 1.2・3.1・3.3・4.2・8.1・10）を目次と原本の JSON から数え直したもの（DESIGN 5 章の終わり）。design は設計書の値、recount は W03 が今数えた値、built は作った本の値（版の確かめの単位が記入）。match:false は設計書の中の食い違い",
   "counts": { "rows": 86, "exact": 64, "mismatch": 3 },
   "mismatches": [ "origin.kiso: design 67 / recount 75", "origin.written.other: design 16 / recount 8", "rulings.rows: design 74 / recount 80" ],
-  "applied": [ "integrate-P1.ledger.json", "integrate-P2.ledger.json", "integrate-P3.ledger.json", "W12.ledger.json", "integrate-R2A.ledger.json" ],
+  "applied": [ "integrate-P1.ledger.json", "integrate-P2.ledger.json", "integrate-P3.ledger.json", "W12.ledger.json", "integrate-R2A.ledger.json", "W23.ledger.json" ],
   "rows": [
     {"id":"toc.p0.chapters","what":"p0 の章の数","design":4,"recount":4,"match":true,"source":"DESIGN 3.3 の部の見出し","built":4,"builtBy":"W12","builtOn":"2026-10-29","note":"W12（2026-10-29）：R1 の終わりの本で数えた","by":"W12"},
     {"id":"toc.p0.sections","what":"p0 の節の数","design":22,"recount":22,"match":true,"source":"DESIGN 3.3 の部の見出し","built":22,"builtBy":"W12","builtOn":"2026-10-29","note":"W12（2026-10-29）：R1 の終わりの本で数えた。intro 7・basics 9・english 2・sim 4","by":"W12"},
@@ -83,7 +83,7 @@
     {"id":"book.figures","what":"図","design":"約 198（教科書 100（約 12 を直す）＋基礎教材の描き直し 約 55＋新しい図 約 43（第 7 部 18 を含む））","recount":null,"match":null,"source":"DESIGN 8.1","built":null,"builtBy":null,"builtOn":null,"note":"作った本で数える（built に記入）"},
     {"id":"book.photos","what":"写真","design":"81〜85（教科書 30＋基礎教材から 51＋条件つき 0〜4。ch09-photo4 は holdShort の差し替え）","recount":null,"match":null,"source":"DESIGN 8.1","built":"入れ物に 81 枚（教科書 30・基礎教材 51）、本に置いた写真 31 枚（R2 の始め：教科書 30＋ch00-photo5）","builtBy":"W22","builtOn":"2026-10-29","note":"作った本で数える（built に記入） ／ 統合 R2A（2026-10-29）：写真のデコード後の合計 3,364,306 バイト（W22 の photo.py check）","by":"W22"},
     {"id":"book.chapterQuiz","what":"章末の 4 択","design":"約 255（今の 135＋新しい章 約 70＋既存の章の後ろに 約 50）","recount":null,"match":null,"source":"DESIGN 8.1","built":null,"builtBy":null,"builtOn":null,"note":"作った本で数える（built に記入）"},
-    {"id":"book.quiz","what":"学科テスト","design":"14 分野 約 205 問（今 145。common・us だけ）＋JCAB 形式 6 分野 約 300 問","recount":null,"match":null,"source":"DESIGN 8.1・基準 18・19","built":null,"builtBy":null,"builtOn":null,"note":"作った本で数える（built に記入）"},
+    {"id":"book.quiz","what":"学科テスト","design":"14 分野 約 205 問（今 145。common・us だけ）＋JCAB 形式 6 分野 約 300 問","recount":null,"match":null,"source":"DESIGN 8.1・基準 18・19","built":null,"builtBy":null,"builtOn":null,"note":"作った本で数える（built に記入） ／ W23（2026-10-30、R2・学科テストの分）：今の 14 分野の後ろに第 1 部の新しい中身の 81 問を足した（145 → 226。q_aero 10・q_sys 10・q_perf 10・q_wx 10・q_law 8・q_comm 6・q_radio 8・q_hf 11・q_nav 8。範囲は common 50・us 31、日本の法令 0）。分野の ID・並び・前からの問は同じ。足した問は 5 つめの要素 { sec, scope, jur? } を持ち、flight-lab/test/flight.test.mjs の「ground-school tests: the 14 banks in order …」が確かめる。DESIGN 8.1 の見込み（14 分野 約 205 問）を超えた。第 2〜6 部の 5 分野（q_ops・q_emg・q_ifr・q_me・q_crm）は W34。built は版の確かめ（W27）が数える","by":"W23"},
     {"id":"book.written","what":"説明してみよう・口述の練習","design":"約 280（基礎教材から）＋部のまとめの問い 約 100","recount":null,"match":null,"source":"DESIGN 8.1・4.2","built":null,"builtBy":null,"builtOn":null,"note":"作った本で数える（built に記入）"},
     {"id":"book.kisoQuestions","what":"基礎教材の記述問題の行き先","design":"約 280 を説明してみよう・口述へ、約 90 を 4 択へ（一部は両方）、約 20 を理由つきで外す","recount":null,"match":null,"source":"DESIGN 4.2","built":null,"builtBy":null,"builtOn":null,"note":"作った本で数える（built に記入）"},
     {"id":"book.terms","what":"用語","design":"約 800（教科書 446＋基礎教材 555 を整理）。用語の表 FL.terms は約 150 語","recount":null,"match":null,"source":"DESIGN 8.1・3.5","built":null,"builtBy":null,"builtOn":null,"note":"作った本で数える（built に記入） ／ 統合 P2（2026-10-27）：用語の表 FL.terms は W04 で 297 語（DESIGN 3.5 の「約 150 語」より多い：RULINGS の C の 42 行の語・CADET の通称 68・テストと CADET が決めている語・今の章末の用語の表の語のうち JCAB の資料に名前があるものを全部載せたため。数合わせの行はない：reports/W04.md の 2.6）。用語集（約 800）は W47 が作る","by":"W04"},

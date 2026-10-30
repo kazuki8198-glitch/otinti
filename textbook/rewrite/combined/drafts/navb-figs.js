@@ -42,6 +42,12 @@
 //                        rate of 9.0 gal/h (6.0 gal and 7.5 gal), the two formulas, and decimal hours turned into minutes
 //                        (0.5 h = 30 min, 0.3 h = 18 min, 0.67 h ≈ 40 min). Content: kiso08.3, 08.10, 08.11 (litres
 //                        changed to US gallons); PHAK 25C ch. 16 (time, fuel consumption, converting minutes to hours).
+// Revised by revise-navb (2026-10-30; reports/revise-navb.md): navbLatLon — a leader line from「経線（子午線）」to a
+// meridian (reader E12); navbProjections — 「↑ 上が北」(reader E11) and the caption says the Mercator parallels spread
+// toward the pole (expert S4); navbNorths — the caption says why the deviation is E (compass north east of magnetic
+// north: Bowditch 945, expert S2); windTriangle — the boxes show TC・TH・MH・CH (reader C3), both steps are written
+// with E/W and a sign (「偏差 6°W ＋6°」「自差 2°W ＋2°」, reader W6), and the MC line says the cruising-altitude rule is
+// the US one; navbTimeFuel — the bars are labelled as time (reader T8).
 // Every number drawn here is one the text gives with its source (navb.claims.json); text ≥ 12 (≥ 10 px at 390 px).
 (function (FL) {
   'use strict';
@@ -82,6 +88,7 @@
       s += T(cx - 30, cy - R * Math.sin(30 * DEG) - 8, '緯線', { c: C.cy, fs: 12, b: 1, halo: 1 });
       s += T(cx + 26, cy + 30, '赤道（緯度 0°）', { c: C.am, fs: 12, b: 1, halo: 1 });
       s += T(cx, cy + R + 20, '経線（子午線）', { c: C.mut, fs: 12, b: 1 });
+      s += L(cx + 30, cy + R + 6, (cx + R * Math.sin(35 * DEG) * 0.5).toFixed(1), (cy + R * 0.866).toFixed(1), C.mut, 1);   // leader to the 35° meridian (revise-navb: reader E12)
       // a one-degree square: 28°N–29°N, 82°W–81°W (west longitudes grow to the left)
       const x0 = 250, x1 = 390, y0 = 60, y1 = 200, xm = (x0 + x1) / 2, ym = (y0 + y1) / 2;
       s += T(320, 40, '緯度と経度の格子（例）', { c: C.ink, fs: 12, b: 1 });
@@ -114,8 +121,8 @@
       s += `<path d="M226 200 Q 292 64 382 80" stroke="${C.cy}" stroke-width="2.5" fill="none" stroke-dasharray="6 4"/>`;
       s += T(220, 216, 'A', { c: C.am, fs: 13, b: 1 }) + T(388, 74, 'B', { c: C.am, fs: 13, b: 1, a: 'end' });
       s += T(302, 246, '直線 ＝ 航程線（向きが一定）', { c: C.am, fs: 12, b: 1 }) + T(302, 266, '点線 ＝ 大圏（最短）は曲線', { c: C.cy, fs: 12 });
-      s += NFN(392, 294);
-      return svg(400, 304, s, '図：同じ 2 点 A・B を、2 つの投影法の図に描いたもの。ランベルト正角円錐図法では直線が大圏にとても近く、メルカトル図法では直線が航程線になります（模式図）');
+      s += NFN(392, 294) + T(8, 294, '↑ 上が北', { c: C.mut, fs: 12, a: 'start' });
+      return svg(400, 304, s, '図：同じ 2 点 A・B を、2 つの投影法の図に描いたもの。ランベルト正角円錐図法では直線が大圏にとても近く、メルカトル図法では直線が航程線になります。メルカトル図法の緯線の間隔は、上（高緯度）ほど広くなります（模式図）');
     },
     // ---------------------------------------------------------------- navb.north — ch08-fig8-3 redrawn
     navbNorths() {
@@ -137,7 +144,7 @@
         if (i < 2) s += A(bx + bw / 2, y + 47, bx + bw / 2, y + 72, C.mut, 2) + T(bx + bw / 2 - 8, y + 64, i === 0 ? `＋${VAR}°（W は足す）` : `−${DEV}°（E は引く）`, { c: i === 0 ? C.am : C.rd, fs: 12, b: 1, a: 'end' });
       });
       s += T(315, 270, '角度は大きく描いています', { c: C.mut, fs: 12 });
-      return svg(400, 284, s, `図：3 つの北と、機首の向きの直し方。真北から 090° の向きは、磁北からは ${pad3(90 + VAR)}°、コンパスでは ${pad3(90 + VAR - DEV)}° です（偏差 ${VAR}°W はこの教材の値、自差 ${DEV}°E は例。W は足し、E は引く）`);
+      return svg(400, 284, s, `図：3 つの北と、機首の向きの直し方。真北から 090° の向きは、磁北からは ${pad3(90 + VAR)}°、コンパスでは ${pad3(90 + VAR - DEV)}° です（偏差 ${VAR}°W はこの教材の値、自差 ${DEV}°E は例。コンパスの北が磁北の東にあるので E。真 → 磁 → コンパスでは W は足し、E は引く）`);
     },
     // ---------------------------------------------------------------- navb.wind (1) — ch08-fig8-5 and 8-6 redrawn, to scale
     navbWindFix() {
@@ -197,10 +204,10 @@
       s += T(O[0], O[1] + 44, `偏流修正角 ${Math.round(Math.abs(wca))}°（機首を風上の左へ）`, { c: C.rd, b: 1, a: 'start', fs: 12, halo: 1 });
       s += A(380, 62, 380, 30, C.mut, 2) + T(380, 76, '北', { c: C.mut, fs: 12 });
       // the chain: true course → true heading → magnetic heading → compass heading
-      const vals = [['真航路 TC', tc], ['真針路 TH', th], ['磁針路 MH', th + VAR], ['コンパス針路', th + VAR + dev]], steps = [`風 −${Math.round(Math.abs(wca))}°`, `西偏 ＋${VAR}°`, `自差 ${dev}°W`];
-      vals.forEach(([n, v], i) => { const x = 4 + i * 100; s += `<rect x="${x}" y="182" width="86" height="50" rx="8" fill="${C.cy}" fill-opacity="0.1" stroke="${C.cy}"/>` + T(x + 43, 202, n, { c: C.ink, fs: 12 }) + T(x + 43, 222, `${String(Math.round(v)).padStart(3, '0')}°`, { c: C.ink, b: 1, fs: 14 }); if (i < 3) s += A(x + 88, 207, x + 102, 207, C.ink, 2) + T(x + 93, 250, steps[i], { c: C.am, b: 1, fs: 12 }); });
-      s += T(200, 276, `磁航路 MC ＝ 真航路 ＋ 西偏 ＝ ${String(tc + VAR).padStart(3, '0')}°（VFR の巡航高度の規則に使う）`, { c: C.mut, fs: 12 });
-      return svg(400, 288, s, `図：風力三角形（真航路 ${String(tc).padStart(3, '0')}°・真対気速度 ${tas} kt・風 ${String(wd).padStart(3, '0')}°/${ws} kt の例を縮尺どおりに描いたもの）と、真航路からコンパス針路までの計算の順番。偏差の ${VAR}°W はこの教材の値、自差の ${dev}°W は例です（偏差も自差も W は足し、E は引く）`);
+      const vals = [['真航路', 'TC', tc], ['真針路', 'TH', th], ['磁針路', 'MH', th + VAR], ['コンパス針路', 'CH', th + VAR + dev]], steps = [`風 −${Math.round(Math.abs(wca))}°`, `偏差 ${VAR}°W ＋${VAR}°`, `自差 ${dev}°W ＋${dev}°`];
+      vals.forEach(([n, ab, v], i) => { const x = 4 + i * 100; s += `<rect x="${x}" y="182" width="86" height="50" rx="8" fill="${C.cy}" fill-opacity="0.1" stroke="${C.cy}"/>` + T(x + 43, 202, n, { c: C.ink, fs: 12 }) + T(x + 43, 222, `${ab} ${String(Math.round(v)).padStart(3, '0')}°`, { c: C.ink, b: 1, fs: 14 }); if (i < 3) s += A(x + 88, 207, x + 102, 207, C.ink, 2) + T(x + 93, 250, steps[i], { c: C.am, b: 1, fs: 12 }); });
+      s += T(200, 276, `磁航路 MC ＝ 真航路 ＋ 偏差 ＝ ${String(tc + VAR).padStart(3, '0')}°（米国の VFR の巡航高度に使う）`, { c: C.mut, fs: 12 });
+      return svg(400, 288, s, `図：風力三角形（真航路 ${String(tc).padStart(3, '0')}°・真対気速度 ${tas} kt・風 ${String(wd).padStart(3, '0')}°/${ws} kt の例を縮尺どおりに描いたもの）と、真航路からコンパス針路までの計算の順番。偏差の ${VAR}°W はこの教材の値、自差の ${dev}°W は例です（真 → 磁 → コンパスでは、偏差も自差も W は足し、E は引く）`);
     },
     // ---------------------------------------------------------------- navb.calc — time and fuel on one leg
     navbTimeFuel() {
@@ -208,6 +215,7 @@
       let s = L(40, 48, 360, 48, C.ink, 2.5);
       for (let i = 0; i <= dist / 10; i++) { const x = 40 + i * (320 / (dist / 10)); s += L(x, 42, x, 54, C.ink, 1.5); }
       s += T(40, 34, 'A', { c: C.ink, fs: 13, b: 1 }) + T(360, 34, 'B', { c: C.ink, fs: 13, b: 1 }) + T(200, 34, `区間 ${dist} NM`, { c: C.ink, fs: 12, b: 1 });
+      s += T(80, 72, '帯の長さ ＝ かかる時間', { c: C.mut, fs: 12, a: 'start' });
       rows.forEach(([gs, c], i) => {
         const y = 86 + i * 36, min = dist / gs * 60, gal = ff * min / 60;
         s += T(8, y + 5, `GS ${gs} kt`, { c, fs: 12, b: 1, a: 'start' });
@@ -219,7 +227,7 @@
       s += T(200, 232, '小数の時間は 60 を掛けて分に', { c: C.ink, fs: 12, b: 1 });
       [['0.5 時間 ＝ 30 分', 68], ['0.3 時間 ＝ 18 分', 200], ['0.67 時間 ≈ 40 分', 332]].forEach(([t, x]) => { s += `<rect x="${x - 62}" y="242" width="124" height="26" rx="13" fill="${C.vi}" fill-opacity="0.15" stroke="${C.vi}"/>` + T(x, 259, t, { c: C.ink, fs: 12 }); });
       s += T(200, 290, `燃料消費率 ${ff.toFixed(1)} gal/h は例題の値`, { c: C.mut, fs: 12 });
-      return svg(400, 300, s, `図：同じ ${dist} NM の区間でも、GS が ${rows[0][0]} kt から ${rows[1][0]} kt に下がると、時間は 40 分から 50 分に延び、燃料も増えます（燃料消費率 ${ff.toFixed(1)} gal/h の例題）`);
+      return svg(400, 300, s, `図：同じ ${dist} NM の区間でも、GS が ${rows[0][0]} kt から ${rows[1][0]} kt に下がると、時間は 40 分から 50 分に延び、燃料も増えます（帯の長さは時間。燃料消費率 ${ff.toFixed(1)} gal/h の例題）`);
     },
   });
 })(typeof globalThis !== 'undefined' ? (globalThis.FL = globalThis.FL || {}) : {});

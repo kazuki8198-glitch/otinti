@@ -185,6 +185,10 @@
     jmaTech362: { label: '気象庁「配信資料に関する技術情報（気象編）第 362 号」（2012 年。国内悪天予想図の MOD（並）・MOD TO SEV（並から強））', url: 'https://www.data.jma.go.jp/suishin/jyouhou/pdf/362.pdf' },
     jmaKosa: { label: '気象庁「黄砂に関する基礎知識」', url: 'https://www.jma.go.jp/jma/kishou/know/env/kosahp/4-4kosa.html' },
     jmaSigmet: { label: '気象庁「空域に関する気象情報」（日本の SIGMET）', url: 'https://www.jma.go.jp/jma/kishou/know/kouku/3_yohou/32_kuuiki/32_kuuiki.html' },
+    // Part 1 rewritten (R2): the sources the chapter navb added (drafts/navb.js's NEW_R; one entry for a URL two drafts cite)
+    bowditch: { label: 'NGA Pub. No. 9 American Practical Navigator（Bowditch）2024 年版 第 1 巻 — 103（海里）・104〜106（大圏と小圏・緯度と経度・航程線）・204（緯度 1° の長さ）・501〜513（投影法：メルカトル図法とランベルト正角円錐図法）・907（世界磁気モデル）・945・946（偏差と自差・直す向き）・1702〜1708（時刻：視太陽時・平均太陽時・経度と時刻・時間帯）・3419（ランベルト図での距離と向きの測り方）。本文の「Bowditch 105」などは項の番号', url: 'https://msi.nga.mil/Publications/APN' },
+    gsiMag: { label: '国土地理院「地磁気測量」（地図の北と方位磁石の北のずれ「偏角」）', url: 'https://www.gsi.go.jp/buturisokuchi/geomag_index.html' },
+    nictJst: { label: '情報通信研究機構（NICT）「日本標準時」（東経 135 度の子午線の時刻は、グリニッジの時刻より 9 時間進んでいる）', url: 'https://www.nict.go.jp/sts/jst.html' },
   };
   // parts 1–6 (phase: the syllabus's stages that go with the part). The front part p0 (序部, book-0.js) and Part 7 (p7,
   // book-7.js) are not written here: the file that holds a part's chapters adds it (addPart below), so a product that

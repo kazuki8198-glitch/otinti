@@ -1,0 +1,52 @@
+{
+ "unit": "W18",
+ "about": "revise-navb（W18 の章 navb の直し役、2026-10-30）のパッチ：expert-navb S11・S12 の CONCEPTS の 2 行（案）。主張の札はこのパッチに入れず、drafts/navb.claims.json（189 行）を章の登録のときに入れる（reports/revise-navb.md の 4）。unit は台帳の検査（src/schema.mjs の UNIT）が作業の単位の形を求めるので W18 にした。",
+ "patches": [
+  {
+   "op": "add",
+   "id": "C.variation-deviation",
+   "kind": "address",
+   "name": "偏差と自差（E/W の決め方・足し引きの向き・自差表）",
+   "address": "navb.north",
+   "recalls": [
+    "basics.time",
+    "sys.compass",
+    "nav.plan"
+   ],
+   "maxLines": 3,
+   "basis": "expert-navb S12・reader-navb C10（DESIGN 3.2「1 つの概念に住所は 1 つ」・5 章の基準 15。check-chapter navb の concepts warn 3：偏差・自差の太字が sys.compass・nav.plan にもある）",
+   "unit": "W18",
+   "recallUnits": [
+    "W10",
+    "W15",
+    "W29"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "W18",
+   "checkedBy": null,
+   "note": "revise-navb（W18 の直し役）（2026-10-30）：navb.north を住所にする案（太字の定義・E/W の決め方・真 → 磁 → コンパスの足し引きと逆向き・自差表の読み方がここにある）。basics.time（序部の短い説明）はそのまま呼び戻しでよい。sys.compass（W15）は自差表の段落と「偏差の足し引きは序部で学んだ」の文を、navb.north への予告つきの思い出そうに縮める。nav.plan（W29）は太字を外して navb.north を呼び戻す。章の登録の順（sys.compass の inst が先）に合わせて、統合役が状態を決める"
+  },
+  {
+   "op": "add",
+   "id": "C.fuel-planning",
+   "kind": "address",
+   "name": "積む燃料の計画と予備（使える燃料と比べる）",
+   "address": "perf.fuel",
+   "recalls": [
+    "navb.calc"
+   ],
+   "maxLines": 3,
+   "basis": "expert-navb S11（DESIGN 3.2・5 章の基準 15：燃料の計画・予備・使える燃料が perf.fuel と navb.calc の 2 か所）",
+   "unit": "W16",
+   "recallUnits": [
+    "W18"
+   ],
+   "status": "open",
+   "where": null,
+   "by": "W18",
+   "checkedBy": null,
+   "note": "revise-navb（W18 の直し役）（2026-10-30）：住所は perf.fuel（14 CFR 91.151 の囲み・手順・太字の「使える燃料（usable fuel）」）。navb.calc は区間の燃料の計算・燃料消費率の使い方・比重と温度・日本の囲みを持ち、積む燃料の手順は perf.fuel へのリンクと思い出そうにした（太字の定義は置かない）。燃料消費率の太字の定義は perf.range（W16 の下書き）のまま。統合役が決める（expert-navb の未解決 3）"
+  }
+ ]
+}

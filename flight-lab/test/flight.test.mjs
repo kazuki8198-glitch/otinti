@@ -273,6 +273,31 @@ test('physics: Seminole one engine out — the rudder needed grows as the speed 
   assert.ok(h56.rud > 0.97, `56 kt: full rudder ${h56.rud.toFixed(2)} — no margin left (the red line)`);
 });
 
+test('physics: Vmc at the certification bank (2.5°) — the rudder saturates at the 56 kt red line, not before or after', () => {
+  // the audit's measurement, as a standing check: left engine failed, right at full power, only 2.5° of bank
+  // into the live engine (the least help the rules allow credit for), slowed in steps; the speed where the
+  // heading hold's rudder demand saturates and the heading goes is the model's Vmc
+  const hold = kias => {
+    const s = P.newState({ aircraft: 'pa44' }); P.placeInAir(s, 0, -40000, 1000, 354, kias + 10, 0, 0, 1);
+    s.gearDown = false; s.gearPos = 0; s.eng[0].failed = true; s.thr = 1; s.ovr = { elev: 0, ail: 0, rud: 0 };
+    let eI = 0, pT = s.out.pitch, drift = 0, rudSum = 0, n = 0;
+    for (let i = 0; i < 120 * 40 && !s.crashed; i++) {
+      const o = s.out, tgt = i < 120 * 15 ? kias + 10 - 10 * i / (120 * 15) : kias;
+      pT = clamp(pT + (o.ias - tgt) * 0.5 / 120, -10, 30); eI = clamp(eI + (pT - o.pitch) * 0.02 / 12, -1, 1);
+      s.ovr.elev = clamp(0.06 * (pT - o.pitch) - 0.03 * s.w[0] / P.DEG + eI, -1, 1);
+      s.ovr.ail = clamp(0.06 * (2.5 - o.bank) + 0.02 * s.w[2] / P.DEG, -1, 1);
+      s.ovr.rud = clamp(-0.25 * P.wrap180(o.hdgTrue - 354) + 0.5 * s.w[1] / P.DEG + (s.rudNeed || 0), -1, 1);
+      P.step(s, DT);
+      if (i > 120 * 30) { drift = Math.max(drift, Math.abs(P.wrap180(s.out.hdgTrue - 354))); rudSum += Math.abs(s.ovr.rud); n++; }
+    }
+    return { drift, rud: rudSum / n };
+  };
+  const h66 = hold(66), h58 = hold(58), h52 = hold(52);
+  assert.ok(h66.drift < 10 && h66.rud < 0.85, `66 kt: held with ${h66.rud.toFixed(2)} rudder — margin above the line`);
+  assert.ok(h58.rud > 0.88 && h58.drift < 10, `58 kt: nearly out of rudder (${h58.rud.toFixed(2)}) but still held`);
+  assert.ok(h52.rud > 0.97 && h52.drift > 10, `52 kt: rudder saturated (${h52.rud.toFixed(2)}), heading lost by ${h52.drift.toFixed(0)}° — saturation falls between 58 and 52 kt, i.e. at the 56 kt red line ±6`);
+});
+
 test('physics: feathering the dead engine\'s propeller reduces drag (better climb or less descent at Vyse)', () => {
   const fly = feather => { const s = P.newState({ aircraft: 'pa44' }); P.placeInAir(s, 0, -40000, 4000, 354, 88, 0, 0, 1); s.gearDown = false; s.gearPos = 0; s.eng[0].failed = true; s.eng[0].feather = feather; s.opts.autoRud = true; const vs = [];
     run(s, 40, x => { hands(x, 88, s.eng[0].failed ? 3 : 0); if (x.t > 20) vs.push(x.out.vsi); }); return vs.reduce((a, b) => a + b, 0) / vs.length; };
@@ -785,6 +810,66 @@ test('wb: the mass reaches the flight — heavier rolls further and climbs slowe
   assert.ok(cHeavy < cStd - 80, `climb at Vy: heavy ${Math.round(cHeavy)} < standard ${Math.round(cStd)} fpm`);
   const tStd = wbClimb(P, 'pa44', undefined), tSolo = wbClimb(P, 'pa44', { front: 1 });
   assert.ok(tSolo > tStd + 50, `the twin too: solo ${Math.round(tSolo)} > dual ${Math.round(tStd)} fpm`);
+});
+
+test('wb: the centre of gravity moves the stability itself — aft is less stable in pitch, and the trim follows', () => {
+  const P = FL.physics, A = P.AIRCRAFT[0];
+  const mk = ld => { const s = P.newState({}); P.placeOnRunway(s); P.applyLoading(s, ld); return s; };
+  const fwd = mk({ fuel: 'tabs', front: 2, rear: 0, bagKg: 0 }), std = mk(P.stdLoading()), aft = mk({ fuel: 'half', front: 1, rear: 2, bagKg: 0 });
+  assert.ok(Math.abs(std.AC.Cma - A.phys.Cma) < 1e-12 && Math.abs(std.AC.Cm0 - A.phys.Cm0) < 1e-12, 'the standard load keeps the reference stability and trim, exactly');
+  assert.ok(fwd.wb.cgIn < std.wb.cgIn && aft.wb.cgIn > std.wb.cgIn + 3, `cg: fwd ${fwd.wb.cgIn.toFixed(1)} / std ${std.wb.cgIn.toFixed(1)} / aft ${aft.wb.cgIn.toFixed(1)} in`);
+  assert.ok(fwd.AC.Cma < std.AC.Cma && aft.AC.Cma > std.AC.Cma + 0.2, `Cma: fwd ${fwd.AC.Cma.toFixed(2)} / std ${std.AC.Cma.toFixed(2)} / aft ${aft.AC.Cma.toFixed(2)} — the static margin shrinks as the CG moves aft`);
+  assert.ok(aft.AC.I[0] > std.AC.I[0] * 1.15, `the spread load is harder to pitch: I ${Math.round(aft.AC.I[0])} vs ${Math.round(std.AC.I[0])}`);
+  // the free response: trimmed at 90 kt, the nose pushed 5° up and the elevator then frozen — the restoring
+  // angular acceleration in the first moments is the stability itself, and it is much weaker aft
+  const kick = s => {
+    P.placeInAir(s, 0, -40000, 3000, 354, 90, 0, 0, null);
+    const trim = s.trim, att = P.attitude(s);
+    s.q = P.qFromHPB(354, att.pitch + 5, 0); s.w = [0, 0, 0]; s.keyHold = false; s.ovr = { elev: 0, ail: 0, rud: 0 };
+    const w0 = s.w[0]; run(s, 0.15); s.ovr = null;
+    return { trim, acc: (s.w[0] - w0) / 0.15 };
+  };
+  const ks = kick(std), ka = kick(aft);
+  assert.ok(ks.acc < 0 && ka.acc < 0, `both restore (${ks.acc.toFixed(2)}, ${ka.acc.toFixed(2)} rad/s²)`);
+  assert.ok(Math.abs(ks.acc) > Math.abs(ka.acc) * 1.3, `the aft CG restores far more weakly: ${ks.acc.toFixed(2)} vs ${ka.acc.toFixed(2)} rad/s²`);
+  assert.ok(Math.abs(ks.trim - ka.trim) > 0.03, `and the trim differs: std ${ks.trim.toFixed(3)} vs aft ${ka.trim.toFixed(3)}`);
+});
+
+test('physics: density altitude — a hot day thins the air the flight and the instructor\'s numbers both breathe', () => {
+  const P = FL.physics;
+  const isa = P.newState({}), hot = P.newState({}); hot.oatDev = 20;
+  const cIsa = P.steadyState(isa, 76, null, { pwr: 'full', altFt: 55 }).fpm, cHot = P.steadyState(hot, 76, null, { pwr: 'full', altFt: 55 }).fpm;
+  assert.ok(cHot < cIsa - 60, `full-power climb at Vy from the field: ISA ${Math.round(cIsa)} fpm vs ISA+20 ${Math.round(cHot)} fpm`);
+  const zero = P.newState({}); zero.oatDev = 0;
+  assert.equal(JSON.stringify(P.steadyState(zero, 76, null, { pwr: 'full', altFt: 55 })), JSON.stringify(P.steadyState(isa, 76, null, { pwr: 'full', altFt: 55 })), 'no deviation said, standard air — bit-identical');
+  // and the flight itself: the same field, the same day, thinner air on the gauge the physics integrates with
+  const f = (s) => { P.placeOnRunway(s); run(s, 1); return s.rho; };
+  assert.ok(f(hot) < f(isa) * 0.95, `density at the field: ${f(isa).toFixed(3)} vs ${f(hot).toFixed(3)} kg/m³`);
+});
+
+test('physics: the brakes are a travel — part brake stops longer, a wet runway locks a stomped wheel, rudder splits them', () => {
+  const P = FL.physics;
+  const stop = (brake, wet, extra = {}) => {
+    const s = P.newState({}); P.placeOnRunway(s); Object.assign(s, extra);
+    s.surfaceWet = wet; s.thr = 0; s.brake = brake;
+    const fwd = P.qrot(s.q, [0, 0, -1]); s.vel = [fwd[0] * 35, 0, fwd[2] * 35];
+    const p0 = s.pos.slice(); let lock = 0, n = 0;
+    for (let i = 0; i < 120 * 60; i++) { P.step(s, DT); n++; if (s.wheelLock) lock++; if (Math.hypot(s.vel[0], s.vel[2]) < 0.05 && i > 240) break; }
+    return { d: Math.hypot(s.pos[0] - p0[0], s.pos[2] - p0[2]), lock: lock / n };
+  };
+  const dryFull = stop(true, 0), dryFloat = stop(1, 0), dryHalf = stop(0.5, 0);
+  assert.ok(Math.abs(dryFull.d - dryFloat.d) < 1e-9, `a boolean brake is full brake, exactly (${dryFull.d.toFixed(1)} m)`);
+  assert.ok(dryHalf.d > dryFull.d * 1.4, `half brake stops much longer: ${dryHalf.d.toFixed(0)} m vs ${dryFull.d.toFixed(0)} m`);
+  const wetSoft = stop(0.7, 1), wetStomp = stop(1, 1);
+  assert.ok(wetSoft.lock < 0.05, 'a measured application on a wet runway does not lock');
+  assert.ok(wetStomp.lock > 0.5 && wetStomp.d > wetSoft.d + 8, `a stomp locks the wheels and stops longer: ${wetStomp.d.toFixed(0)} m locked vs ${wetSoft.d.toFixed(0)} m rolling`);
+  // differential braking: the rudder held with the brakes at taxi pace turns the aircraft — unless refused
+  const turn = diff => {
+    const s = P.newState({}); P.placeOnRunway(s); s.opts.diffBrake = diff;
+    const fwd = P.qrot(s.q, [0, 0, -1]); s.vel = [fwd[0] * 5, 0, fwd[2] * 5]; s.thr = 0.25; s.brake = 0.6; s.rud = 0.8;
+    const h0 = s.out.hdgTrue; run(s, 3); return Math.abs(P.wrap180(s.out.hdgTrue - h0));
+  };
+  assert.ok(turn(true) > turn(false) + 5, `rudder + brake turns tighter (${turn(true).toFixed(0)}° vs ${turn(false).toFixed(0)}° in 3 s)`);
 });
 
 test('wb: the before-takeoff checklist refuses an out-of-envelope load, and passes the standard one', () => {

@@ -9,7 +9,7 @@ import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { installSorajima } from '../src/flight/sorajima.js';
-import { trafficForDay, createTraffic, circuitPose, CIRCUIT_S, TRAFFIC_CALLS } from '../src/flight/traffic.js';
+import { trafficForDay, trafficForTwinDay, createTraffic, circuitPose, CIRCUIT_S, TRAFFIC_CALLS, TRAFFIC_TWIN } from '../src/flight/traffic.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const FLSRC = path.join(here, '../../flight-lab/src');
@@ -101,6 +101,62 @@ test('traffic: the system — spacing, calls on the legs, the tower replying, de
   // and an empty day stays silent
   const none = createTraffic(P); none.set(0, 5);
   for (let t = 0; t < 300; t += 0.5) assert.equal(none.update(0.5).length, 0);
+});
+
+test('traffic: reactions — the runway is the player\'s, sequencing, spacing, near miss and wake (B4.2)', () => {
+  const frame = (sys) => { const p = sys.poses[0], rc = P.rwyCoords(P.LAB_RWY, p.n, p.e); return { along: rc.along, cross: rc.cross, altFt: p.y * P.FT }; };
+  // (a) the player sitting on the runway sends the trainer on final around
+  {
+    const sys = createTraffic(P); sys.set(1, 99);
+    const player = { along: 300, cross: 0, altFt: 55, call: 'Archer 8SY' };
+    let ga = null;
+    for (let t = 0; t < CIRCUIT_S * 2 && !ga; t += 0.25) for (const ev of sys.update(0.25, player)) if (ev.kind === 'trafficGoAround') ga = ev;
+    assert.ok(ga && /going around, traffic on the runway/.test(ga.en), 'the trainer goes around for the occupied runway');
+  }
+  // (b) the player established on final: he is sequenced number two, told to go around when spacing
+  // collapses, the trainer ahead is protected — and a close pass is a near-miss event with wake behind it
+  {
+    const sys = createTraffic(P); sys.set(1, 7);
+    sys.update(0.25);
+    let sawSeq = false, sawGA = false, sawNear = false, wakeMax = 0, steps = 0;
+    while (steps++ < CIRCUIT_S * 4 / 0.25) {
+      const f = frame(sys);
+      const onFinal = Math.abs(f.cross) < 60 && f.along < -250;
+      // shadow the trainer: 120 m behind it on final, 400 m behind it elsewhere
+      const player = { along: f.along - (onFinal ? 120 : 400), cross: f.cross, altFt: f.altFt, call: 'Archer 8SY' };
+      for (const ev of sys.update(0.25, player)) {
+        if (ev.kind === 'sequence' && /number two, follow/.test(ev.en)) sawSeq = true;
+        if (ev.kind === 'playerGoAround') sawGA = true;
+        if (ev.kind === 'nearMiss') sawNear = true;
+      }
+      wakeMax = Math.max(wakeMax, sys.wake);
+      if (sawSeq && sawGA && sawNear && wakeMax > 0.3) break;
+    }
+    assert.ok(sawSeq, 'the tower sequences the player number two from the real positions');
+    assert.ok(sawGA, 'spacing collapse brings the tower go-around instruction');
+    assert.ok(sawNear, 'a pass within 150 m is a near-miss event');
+    assert.ok(wakeMax > 0.3, `the wake level rises behind the trainer (${wakeMax.toFixed(2)})`);
+  }
+  // (c) without a player nothing changed: no kind-tagged events at all
+  {
+    const sys = createTraffic(P); sys.set(2, 7);
+    for (let t = 0; t < CIRCUIT_S * 2; t += 0.25) for (const ev of sys.update(0.25)) assert.ok(!ev.kind, `no reactions without a player (${ev.kind})`);
+    assert.equal(sys.wake, 0);
+  }
+});
+
+test('traffic: the twin day — one Seminole in the advanced chapter, none in the old gates (item 6)', () => {
+  const day = { seed: 4, kind: 'flight', chapter: 'ch5', weather: 'good', slot: 'am' };
+  assert.equal(trafficForDay(day), 0, 'the Archer gate still excludes ch5');
+  let ones = 0; for (let seed = 1; seed <= 40; seed++) ones += trafficForTwinDay({ ...day, seed });
+  assert.ok(ones >= 8 && ones <= 32, `twin days ${ones}/40`);
+  assert.equal(trafficForTwinDay({ ...day, chapter: 'ch3' }), 0);
+  assert.equal(trafficForTwinDay({ ...day, weather: 'pmStorm' }), 0);
+  const sys = createTraffic(P); sys.set(1, 4, { twin: true }); sys.update(0.25);
+  assert.equal(sys.poses.length, 1);
+  let call = null;
+  for (let t = 0; t < CIRCUIT_S * 1.5 && !call; t += 0.25) for (const ev of sys.update(0.25)) if (ev.en.includes(TRAFFIC_TWIN.short)) call = ev;
+  assert.ok(call, 'the Seminole makes its position calls');
 });
 
 test('traffic: a go-around in five cycles or so, called on the final', () => {

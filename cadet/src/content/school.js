@@ -1199,14 +1199,17 @@ export const scoreOf = (state, n) => { let right = 0; for (let k = 0; k < n; k++
 // bank under the floor — a weak field named for the result, so the review can be aimed at it. A question
 // carries its bank in its id (`bank#k`); titles names the banks for that line
 export const EXAM_BANK_FLOOR = 60;
-export function examScoreOf(state, questions, titles = {}) {
+// the banks' names in English (the weakest-bank hint in English mode: dialog/en.js reads weakTextEn)
+export const BANK_TITLES_EN = { q_aero: 'Principles of Flight', q_sys: 'Aircraft & Equipment', q_perf: 'Performance & Weight and Balance', q_wx: 'Aviation Weather', q_law: 'Regulations & Airspace', q_comm: 'Aviation English & ATC', q_radio: 'Radio Communication (Practical)', q_hf: 'Human Factors & Decision-Making', q_ops: 'Basic Flying, Takeoff & Landing', q_emg: 'Emergency Procedures', q_nav: 'Navigation', q_ifr: 'Instrument Flight', q_me: 'Multi-Engine (Seminole)', q_crm: 'CRM, TEM & Automation' };
+export function examScoreOf(state, questions, titles = {}, titlesEn = BANK_TITLES_EN) {
   const per = {};
   (questions || []).forEach((q, k) => { const b = String(q && q.id || '').split('#')[0] || '?'; const e = per[b] || (per[b] = { right: 0, n: 0 }); e.n++; if (state.flags[`qz_${k}`]) e.right++; });
   const banks = {}; for (const [b, e] of Object.entries(per)) banks[b] = { right: e.right, n: e.n, pct: e.n ? Math.round(e.right / e.n * 100) : 0 };
   const weak = Object.keys(banks).filter(b => banks[b].pct < EXAM_BANK_FLOOR);
   const base = scoreOf(state, (questions || []).length);
   const weakText = weak.length ? `弱い分野は ${weak.map(b => `${titles[b] || b}（${banks[b].pct}%）`).join('・')} で、6 割に届いていません。` : '';
-  return { ...base, pass: base.pass && !weak.length, banks, weak, weakText };
+  const weakTextEn = weak.length ? `Your weaker areas are ${weak.map(b => `${titlesEn[b] || titles[b] || b} (${banks[b].pct}%)`).join(' and ')} — below the 60% floor. ` : '';
+  return { ...base, pass: base.pass && !weak.length, banks, weak, weakText, weakTextEn };
 }
 
 // ---------------------------------------------------------------- the navigation log (M6: the solo cross-country's morning)

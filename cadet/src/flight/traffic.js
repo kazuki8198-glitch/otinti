@@ -4,11 +4,16 @@
 // 1,000 ft AGL (the same circuit FLIGHT LAB's t2 teaches: downwind 1,600 m west of the runway, the same
 // speeds), spaced round the circuit, flying touch-and-go cycles — scripted, analytic flight: a pose is a pure
 // function of the time round the loop, so there is no integration to drift and nothing per frame to allocate.
-// They are ghosts: no collision with the player (if you are on final and one is ahead of you, that is the
-// lesson — go around). Their position calls are heard on the tower frequency, timed to the legs.
+// They are still non-collidable, but they are no longer pure ghosts (gap audit v2, B4.2): with a player
+// pose passed to update(), the pattern reacts in the two places spacing is taught — a trainer on final
+// goes around when the player is on the runway, and a trainer on downwind extends when the player cuts
+// in ahead of it on final. The tower sequences the player ("number two, follow…") from the actual
+// relative positions, a spacing collapse on final brings the tower's go-around instruction to the
+// player, a pass within ~150 m is a near-miss event (for the debrief, not a crash), and crossing close
+// behind/below one on final sets sys.wake (a light turbulence level the flight model can take as a gust).
 // Not modelled (deliberately): taxiing traffic, full-stop landings and parking, departures to the practice
-// area, a second runway direction (LAB flies 36 in the career), and any right of way logic — they never
-// react to the player. One cycle in five or so ends in a go-around instead of a touch-and-go.
+// area, and a second runway direction (LAB flies 36 in the career). One cycle in five or so ends in a
+// go-around instead of a touch-and-go.
 // Pure logic: no three.js, no DOM. The drawing is flight/traffic-view.js; the day decides (trafficForDay).
 
 // ---------------------------------------------------------------- the day's traffic
@@ -16,7 +21,7 @@
 // belongs to ordinary Archer lesson days of the flying chapters, in weather a VFR pattern can work in. The
 // sky stays clear on the days the design wants it clear: the first solo and the solo cross-country (kind
 // 'solo' / 'xc'), the check rides ('checkride'), exams and ground days, and the Seminole / final chapters.
-const VFR_KINDS = new Set(['good', 'crosswind', 'pmWind']);
+const VFR_KINDS = new Set(['good', 'crosswind', 'pmWind', 'southFlow']);
 export function trafficForDay({ seed = 0, kind = '', chapter = '', weather = '', slot = '' } = {}) {
   if (kind !== 'flight') return 0;
   if (chapter !== 'ch2' && chapter !== 'ch3' && chapter !== 'ch4') return 0;
@@ -90,41 +95,108 @@ export const TRAFFIC_CALLS = [
   { short: 'Archer 5SY', spoken: 'Archer Five Sierra Yankee', reg: 'N735SY' },
   { short: 'Archer 9SY', spoken: 'Archer Niner Sierra Yankee', reg: 'N739SY' },
 ];
+// (gap audit v2, B4/item 6) the twin does not vanish in the advanced chapters: on a Seminole-chapter day
+// one Seminole flies the same circuit (visual + radio only). trafficForDay stays Archer-chapters-only (its
+// gating is tested); the twin day is its own gate, asked for by name.
+export const TRAFFIC_TWIN = { short: 'Seminole 4SY', spoken: 'Seminole Four Sierra Yankee', reg: 'N454SY' };
+export function trafficForTwinDay({ seed = 0, kind = '', chapter = '', weather = '', slot = '' } = {}) {
+  if (kind !== 'flight' || chapter !== 'ch5') return 0;
+  const vfr = VFR_KINDS.has(weather) || ((weather === 'amFog' || weather === 'amLowCloud') && slot === 'pm');
+  if (!vfr) return 0;
+  return mix((seed | 0) >>> 0) % 2 === 0 ? 1 : 0;      // about half the twin's VFR days share the circuit
+}
 
-// createTraffic(P) → { set(count, seed), update(dt) → [heard calls], poses, count }
+// createTraffic(P) → { set(count, seed, runway | { twin, runway }), update(dt, player?) → [events], poses, count, wake }
 // poses[i] = { n, e, y (m MSL), q (the physics quaternion) } in FLIGHT LAB's world, ready to draw.
+// runway '18' mirrors the circuit (the day's active runway: the pattern turns the other way, on the other
+// side, and the calls name 18); the circuit itself is only ever drawn for 36 and mirrored here.
+// player (optional): { along, cross, altFt, call } in the circuit frame — passing it turns the reactions
+// on (spacing, sequencing, near-miss, wake). Without it the system is exactly the old analytic pattern.
+// Events are the heard calls ({ name, en, say }) plus, with a player, kind-tagged ones the game routes
+// differently: 'sequence' / 'playerGoAround' (tower calls to the player, heard), 'nearMiss' (not a radio
+// call: { kind, with } for the debrief), 'trafficGoAround' (a heard call, tagged so the day can note it).
 export function createTraffic(P) {
-  const sys = { count: 0, t: 0, poses: [], update, set };
-  let seed = -1, rand = rng(1), ac = [], pending = [];
-  const evs = [], pose = {}, heard = { name: '', en: '', say: '' };
-  function set(count, sd) {
-    if (count === sys.count && sd === seed) return;
-    sys.count = count; seed = sd; rand = rng(sd >>> 0 || 1); ac = []; pending = [];
+  const sys = { count: 0, t: 0, poses: [], wake: 0, update, set };
+  let seed = -1, twin = false, rand = rng(1), ac = [], pending = [], rwy = '36';
+  const evs = [], pose = {};
+  function set(count, sd, opts = {}) {
+    const tw = typeof opts === 'object' ? !!opts.twin : false;
+    const runway = typeof opts === 'string' ? opts : (opts.runway || '36');
+    if (count === sys.count && sd === seed && tw === twin && runway === rwy) return;
+    sys.count = count; seed = sd; twin = tw; rwy = runway; rand = rng(sd >>> 0 || 1); ac = []; pending = [];
     sys.poses.length = 0;
     for (let i = 0; i < count; i++) {
-      ac.push({ cs: TRAFFIC_CALLS[i % TRAFFIC_CALLS.length], off: CIRCUIT_S * i / Math.max(1, count) + (rand() - 0.5) * 24,
-        cycle: -1, ga: false, gaSaid: false, prevSeg: -1, prevFrac: 0 });
+      ac.push({ cs: tw && i === 0 ? TRAFFIC_TWIN : TRAFFIC_CALLS[i % TRAFFIC_CALLS.length], off: CIRCUIT_S * i / Math.max(1, count) + (rand() - 0.5) * 24,
+        cycle: -1, ga: false, gaSaid: false, prevSeg: -1, prevFrac: 0,
+        delay: 0, extSaid: false, seqSaid: false, gaIns: false, lastNear: -1e9 });
       sys.poses.push({ n: 0, e: 0, y: 0, q: [0, 0, 0, 1] });
     }
   }
-  const call = (a, name, en, say) => { evs.push({ name, en, say }); };
-  function update(dt) {
+  const call = (a, name, en, say, kind) => { evs.push(kind ? { name, en, say, kind } : { name, en, say }); };
+  function update(dt, player) {
     evs.length = 0;
-    if (!ac.length) return evs;
-    sys.t += Math.max(0, dt || 0);
+    if (!ac.length) { sys.wake = 0; return evs; }
+    dt = Math.max(0, dt || 0);
+    sys.t += dt;
     for (let i = 0; i < pending.length; i++) if (pending[i].at <= sys.t) { evs.push(pending[i].ev); pending.splice(i--, 1); }
+    // the player's situation, in the circuit's own terms
+    const pOnRwy = !!player && player.altFt < ELEV + 25 && player.along > -200 && player.along < 1400 && Math.abs(player.cross) < 30;
+    const pOnFinal = !!player && Math.abs(player.cross) < 150 && player.along < -250 && player.altFt < 750;
+    const pCall = (player && player.call) || 'Archer 8SY', pSpoken = (player && player.spoken) || 'Archer Eight Sierra Yankee';
+    let wakeWant = 0;
     for (let i = 0; i < ac.length; i++) {
-      const a = ac[i], lt = sys.t + a.off, cyc = Math.floor(lt / CIRCUIT_S);
-      if (cyc !== a.cycle) { a.cycle = cyc; a.ga = rand() < 0.18; a.gaSaid = false; }
+      const a = ac[i];
+      // (extending downwind: while the player is established on final ahead of this trainer's turn, the
+      // trainer's clock is held — its downwind stretches instead of cutting in behind too close)
+      if (player && dt > 0) {
+        circuitPose(((sys.t + a.off - a.delay) % CIRCUIT_S + CIRCUIT_S) % CIRCUIT_S, a.ga, pose);
+        const mine = pose.seg === SEG_DOWNWIND || pose.seg === SEG_BASE;
+        if (mine && pOnFinal && a.delay < 45) {
+          a.delay += dt;
+          if (!a.extSaid) { a.extSaid = true; call(a, a.cs.short, `LAB Tower, ${a.cs.short}, extending downwind for spacing.`, `LAB Tower, ${a.cs.spoken}, extending downwind for spacing.`); }
+        }
+      }
+      const lt = sys.t + a.off - a.delay, cyc = Math.floor(lt / CIRCUIT_S);
+      if (cyc !== a.cycle) { a.cycle = cyc; a.ga = rand() < 0.18; a.gaSaid = false; a.delay = 0; a.extSaid = false; a.seqSaid = false; a.gaIns = false; }
       circuitPose(lt - cyc * CIRCUIT_S, a.ga, pose);
+      // (the runway is the player's: a trainer on final goes around rather than landing on top of him)
+      if (player && pose.seg === SEG_FINAL && pOnRwy && !a.ga) {
+        a.ga = true; circuitPose(lt - cyc * CIRCUIT_S, true, pose);
+        if (!a.gaSaid) { a.gaSaid = true; call(a, a.cs.short, `LAB Tower, ${a.cs.short}, going around, traffic on the runway.`, `LAB Tower, ${a.cs.spoken}, going around, traffic on the runway.`, 'trafficGoAround'); }
+      }
+      if (player) {
+        // sequencing + spacing on a shared final, from the actual positions
+        if (pose.seg === SEG_FINAL && pOnFinal) {
+          const gap = pose.along - player.along;          // > 0: the trainer is ahead (nearer the threshold)
+          if (gap > 0 && !a.seqSaid) {
+            a.seqSaid = true;
+            call(a, '管制塔', `${pCall}, LAB Tower, number two, follow ${a.cs.short} on final, runway ${rwy}, cleared to land.`, `${pSpoken}, LAB Tower, number two, follow ${a.cs.spoken} on final, runway ${rwy}, cleared to land.`, 'sequence');
+          } else if (gap < 0 && gap > -1100 && !a.seqSaid) {
+            a.seqSaid = true;
+            call(a, '管制塔', `${a.cs.short}, LAB Tower, number two, follow the traffic on final ahead.`, `${a.cs.short}, LAB Tower, number two, follow the traffic on final ahead.`, 'sequence');
+          }
+          if (gap > 0 && gap < 450 && player.altFt > ELEV + 60 && !a.gaIns) {
+            a.gaIns = true;
+            call(a, '管制塔', `${pCall}, LAB Tower, go around, traffic ahead on final.`, `${pSpoken}, LAB Tower, go around, traffic ahead on final.`, 'playerGoAround');
+          }
+          // the wake: close behind and not above the one ahead
+          if (gap > 0 && gap < 200 && player.altFt <= pose.altFt + 100 && player.altFt >= pose.altFt - 220) wakeWant = 1;
+        }
+        // a near miss is an event for the debrief (the aircraft stay non-collidable)
+        const d3 = Math.hypot(pose.along - player.along, pose.cross - player.cross, (pose.altFt - player.altFt) * 0.3048);
+        if (d3 < 150 && sys.t - a.lastNear > 60) { a.lastNear = sys.t; evs.push({ kind: 'nearMiss', with: a.cs.short, dist: Math.round(d3) }); }
+      }
+      if (rwy === '18') {          // the circuit turned end for end (a half-turn about the field's centre): the
+        pose.along = 1200 - pose.along; pose.cross = -pose.cross; pose.hdgTrue = wrap360(pose.hdgTrue + 180);   // pattern on the east side, still left traffic, so the bank keeps its sign
+      }
       const cs = a.cs.short, sp = a.cs.spoken;
       if (pose.seg === SEG_DOWNWIND && a.prevSeg === SEG_DOWNWIND && a.prevFrac < ABEAM && pose.frac >= ABEAM)
-        call(a, cs, `LAB Tower, ${cs}, abeam, left downwind runway 36, touch and go.`, `LAB Tower, ${sp}, abeam, left downwind runway 36, touch and go.`);
+        call(a, cs, `LAB Tower, ${cs}, abeam, left downwind runway ${rwy}, touch and go.`, `LAB Tower, ${sp}, abeam, left downwind runway ${rwy}, touch and go.`);
       if (pose.seg === SEG_BASE && a.prevSeg !== SEG_BASE && a.prevSeg !== -1)
-        call(a, cs, `LAB Tower, ${cs}, turning base, runway 36.`, `LAB Tower, ${sp}, turning base, runway 36.`);
+        call(a, cs, `LAB Tower, ${cs}, turning base, runway ${rwy}${player && pOnFinal ? ', traffic on final in sight' : ''}.`, `LAB Tower, ${sp}, turning base, runway ${rwy}${player && pOnFinal ? ', traffic on final in sight' : ''}.`);
       if (pose.seg === SEG_FINAL && a.prevSeg !== SEG_FINAL) {
-        call(a, cs, `LAB Tower, ${cs}, final runway 36, touch and go.`, `LAB Tower, ${sp}, final runway 36, touch and go.`);
-        pending.push({ at: sys.t + 2.4, ev: { name: '管制塔', en: `${cs}, LAB Tower, runway 36, cleared touch and go.`, say: `${sp}, LAB Tower, runway 36, cleared touch and go.` } });
+        call(a, cs, `LAB Tower, ${cs}, final runway ${rwy}, touch and go.`, `LAB Tower, ${sp}, final runway ${rwy}, touch and go.`);
+        pending.push({ at: sys.t + 2.4, ev: { name: '管制塔', en: `${cs}, LAB Tower, runway ${rwy}, cleared touch and go.`, say: `${sp}, LAB Tower, runway ${rwy}, cleared touch and go.` } });
       }
       if (a.ga && pose.seg === SEG_FINAL && pose.frac >= 0.8 && !a.gaSaid) {
         a.gaSaid = true;
@@ -134,6 +206,8 @@ export function createTraffic(P) {
       const p = sys.poses[i], [n, e] = P.rwyToNE(P.LAB_RWY, pose.along, pose.cross), q = P.qFromHPB(pose.hdgTrue, pose.pitch, pose.bank);
       p.n = n; p.e = e; p.y = pose.altFt / P.FT; p.q[0] = q[0]; p.q[1] = q[1]; p.q[2] = q[2]; p.q[3] = q[3];
     }
+    sys.wake += (wakeWant - sys.wake) * Math.min(1, dt * 1.5);   // (builds and fades like a gust, ~1 s)
+    if (sys.wake < 0.01 && !wakeWant) sys.wake = 0;
     return evs;
   }
   return sys;

@@ -356,3 +356,22 @@ test('sfx (M7): the gear pump while the wheels travel; the radio hiss for a tran
   assert.deepEqual(tg.slice(0, 3), [0, 0.2, 0.5]);
   assert.doesNotThrow(() => a.setVolumes({ engine: NaN, amb: 5 }));
 });
+
+test('sfx: the ident keys the aid in Morse at 1020 Hz on the radio bus; the AP warble sounds', () => {
+  const { a, ctx } = fresh();
+  const master = masterOf(ctx);
+  const n0 = ctx.nodes.length;
+  const dur = a.ident('LBV');
+  assert.ok(dur > 1.5 && dur < 5, `the code takes ${dur.toFixed(2)} s`);
+  const oscs = ctx.nodes.slice(n0).filter(n => n.kind === 'osc');
+  assert.ok(oscs.length >= 8, `L B V in Morse is 10 elements, got ${oscs.length} tones`);
+  assert.ok(oscs.every(n => n.frequency.value === 1020), 'all at the ident frequency');
+  // the tones must NOT reach the master directly: they hang off the radio bus (a gain under the master)
+  const buses = ctx.nodes.filter(n => n.kind === 'gain' && n.outs.includes(master));
+  assert.ok(oscs.every(n => { const g = n.outs.find(o => o.kind === 'gain'); return g && below(g).has(master) && g !== master; }), 'routed through a bus gain');
+  assert.ok(buses.length >= 3, 'the three buses exist');
+  const n1 = ctx.nodes.length;
+  assert.doesNotThrow(() => a.apDisc());
+  assert.ok(ctx.nodes.slice(n1).some(n => n.kind === 'osc'), 'the disconnect warble makes its tones');
+  assert.equal(a.ident(''), 0, 'no code, no ident');
+});

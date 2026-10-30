@@ -44,14 +44,76 @@ const CSS = `
 
 // ai: { keys (ai/keys.js), keyName, defaultModel } — the M8 tab's API key field
 // modeLabel() → the mode button's own words for now (the introductory flight's), or null
-export function createMenu({ root = document.body, settings, presets = [], onResume = () => {}, onQuality = () => {}, onMode = () => {}, getMode = () => 'walk', getPreset = () => null, onResetProgress = null, onLogbook = null, version = '', ai = null, onBench = null, modeLabel = () => null }) {
+// the gamepad axis map's rows (the padMap setting): the function, its standard axis (null = unmapped)
+const AXIS_ROWS = [['pitch', 'ピッチ（昇降舵）', 1], ['roll', 'ロール（補助翼）', 0], ['yaw', 'ヨー（ラダー）', 2], ['trim', 'トリム', 3], ['thr', 'スロットル（共通）', null], ['thrL', 'スロットル 左', null], ['thrR', 'スロットル 右', null], ['brakeL', '左トーブレーキ', null], ['brakeR', '右トーブレーキ', null]];
+const AXKEY = { ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', Space: 'Space' };
+// the held flight keys' rows (the heldBinds setting) and the discrete actions' rows (the keyBinds setting)
+const HELD_ROWS = [['up', 'ピッチ下げ（機首下げ）', 'KeyW'], ['down', 'ピッチ上げ（機首上げ）', 'KeyS'], ['left', '左バンク', 'KeyA'], ['right', '右バンク', 'KeyD'], ['rudL', '左ラダー', 'KeyQ'], ['rudR', '右ラダー', 'KeyE'], ['thrUp', 'スロットル上げる', 'KeyR'], ['thrDn', 'スロットル下げる', 'KeyF'], ['brake', 'ブレーキ', 'KeyB']];
+const ACT_ROWS = [['flaps', 'フラップ 下げる', 'KeyV'], ['flapsUp', 'フラップ 上げる', 'Shift+KeyV'], ['gear', '脚（ギア）', 'KeyG'], ['level', '水平に戻す', 'KeyL'], ['autoRud', '自動ラダー 切替', 'KeyU'], ['trim', 'トリム（速度に合わせる）', 'KeyT'], ['feather0', '左エンジン フェザー', 'BracketLeft'], ['feather1', '右エンジン フェザー', 'BracketRight']];
+const codeName = (c) => AXKEY[c] || String(c || '').replace(/^Key/, '').replace(/^Digit/, '');
+
+export function createMenu({ root = document.body, settings, presets = [], onResume = () => {}, onQuality = () => {}, onMode = () => {}, getMode = () => 'walk', getPreset = () => null, onResetProgress = null, onLogbook = null, version = '', ai = null, onBench = null, modeLabel = () => null, onFreeSetup = null }) {
   if (!document.getElementById('menu-css')) { const st = document.createElement('style'); st.id = 'menu-css'; st.textContent = CSS; document.head.appendChild(st); }
   const el = document.createElement('div'); el.id = 'menu'; el.hidden = true; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', '一時停止メニュー');
   root.appendChild(el);
   let tab = 'main', open = false;
-  const TABS = [['main', '再開'], ['settings', '設定'], ['net', 'AI・マイク・英語'], ['keys', '操作'], ['about', 'このゲームについて']];
+  const TABS = [['main', '再開'], ['settings', '設定'], ['net', 'AI・マイク・英語'], ['keys', '操作'], ...(onFreeSetup ? [['free', '自由飛行']] : []), ['about', 'このゲームについて']];
+  // the free-flight setup's working values (kept while the menu is open; the start hands them over whole)
+  const freeCfg = { start: 'ramp', aircraft: 'pa28', hour: 10, wind: 'light', windRel: 40, windKt: 12, loading: 'std', fail: 'none' };
   let keyMsg = '', keyBad = false;
+  let bindMsg = '';                       // the rebind row's note (a duplicate warning included)
+  // capture one key for a rebind: the next keydown while the menu is open becomes the binding (Esc cancels —
+  // it still closes the menu afterwards, as Esc always does). A key already used by another flight key is
+  // allowed but warned about, so a clash is seen rather than hidden
+  let capture = null;                     // { kind: 'held'|'act', name }
+  function startCapture(btn) {
+    const [kind, name] = btn.dataset.rebind.split(':');
+    capture = { kind, name };
+    bindMsg = '割り当てたいキーを押してください（Esc でやめます）'; render();
+    const btn2 = el.querySelector(`[data-rebind="${kind}:${name}"]`); if (btn2) btn2.focus();
+  }
+  function applyCapture(code) {
+    if (!capture || !code || code === 'Escape') { capture = null; return; }
+    const { kind, name } = capture; capture = null;
+    const key = kind === 'held' ? 'heldBinds' : 'keyBinds';
+    const cur = { ...(settings.get(key) || {}) };
+    cur[name] = code;
+    settings.set(key, cur);
+    const usedBy = (kind === 'held' ? HELD_ROWS : ACT_ROWS).filter(([n, , d]) => n !== name && ((settings.get(key) || {})[n] || d.replace(/^Shift\+/, '')) === code).map(([, l]) => l);
+    bindMsg = usedBy.length ? `注意：${codeName(code)} は「${usedBy.join('、')}」と重なっています` : `${codeName(code)} に割り当てました`;
+    render();
+  }
   const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  // one advanced quality switch (自動 / ON / OFF chips; 自動 = follow the preset)
+  function advQ(k, label) {
+    const v = settings.get(k);
+    const chip = (val, text) => `<button data-qadv="${k}:${val}" aria-pressed="${String(v) === val}">${text}</button>`;
+    return `<div class="m-row"><span>${label}</span><span></span><div class="m-chips" style="grid-column:1/-1">${chip('auto', '自動')}${chip('on', 'ON')}${chip('off', 'OFF')}</div></div>`;
+  }
+  // the gamepad axis map's editor: per function, an axis picker, an invert switch and a pad picker (−1 = any).
+  // Unmapped functions (the toe brakes, a quadrant's levers) start as なし — the standard layout is FLIGHT LAB's
+  function axisMapHtml(v) {
+    const map = v.padMap || {};
+    const rows = AXIS_ROWS.map(([fn, label, std]) => {
+      const e = map[fn] !== undefined ? map[fn] : (std == null ? null : { axis: std, inv: false, pad: -1 });
+      const opts = [`<option value="-1" ${!e ? 'selected' : ''}>なし</option>`]
+        .concat(Array.from({ length: 12 }, (_, i) => `<option value="${i}" ${e && e.axis === i ? 'selected' : ''}>軸 ${i}</option>`)).join('');
+      const padOpts = [`<option value="-1" ${!e || (e.pad ?? -1) === -1 ? 'selected' : ''}>どのパッドでも</option>`]
+        .concat([0, 1, 2, 3].map(i => `<option value="${i}" ${e && e.pad === i ? 'selected' : ''}>パッド ${i + 1}</option>`)).join('');
+      return `<div class="m-row"><span>${label}</span><span><select data-axis="${fn}" aria-label="${label}の軸">${opts}</select>
+        <label><input type="checkbox" data-axisinv="${fn}" ${e && e.inv ? 'checked' : ''} ${!e ? 'disabled' : ''}> 反転</label>
+        <select data-axispad="${fn}" aria-label="${label}のパッド">${padOpts}</select></span></div>`;
+    }).join('');
+    return `<h3>ゲームパッドの軸の割り当て</h3>${rows}<p class="m-note">ヨーク・スロットルクアドラント・ペダルを別々の機器でつないでも使えます（接続した全部のパッドを読みます）。「なし」はその機能をパッドで動かしません。トーブレーキはペダルの軸を割り当てると効きます。</p>
+      <div class="m-big"><button data-act="pad-reset">軸の割り当てを標準に戻す</button></div>`;
+  }
+
+  // one rebind row: the function, the key it is on now (Shift+ shown for the actions that live there), 変える
+  function bindRow(kind, name, label, code, shifted = false) {
+    const busy = capture && capture.kind === kind && capture.name === name;
+    return `<tr><td>${label}</td><td>${esc((shifted ? 'Shift+' : '') + codeName(code))}</td><td><button data-rebind="${kind}:${name}">${busy ? 'キーを押してください…' : '変える'}</button></td></tr>`;
+  }
 
   function body() {
     if (tab === 'main') {
@@ -85,7 +147,17 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         + sw('atcVoice', '管制官の声（英語の読み上げ）', 'ブラウザの音声合成で管制官の英語を読み上げます（英語の声がある場合）')
         + sw('radioJa', '無線の日本語訳', '無線の画面で、英語の下に日本語の意味を出します')
         + sw('autoRud', '自動ラダー', 'ON：ボールを自動で中央に保ちます。飛んでいる間は U で切り替え')
-        + sw('showPerf', '性能の表示', 'fps・描画回数・三角形の数を右上に表示');
+        + sw('pitchHold', 'ピッチ保持（キーボード）', 'ON：W / S で決めた機首の姿勢を、キーを離しても保ちます。OFF：姿勢はトリムで保つ練習になります')
+        + sw('stickBoost', 'スティック補正を強く（旧感触）', '高速域でスティックの効きを自動で増やす補正の上限です。OFF：上限1.7倍（穏やか）。ON：上限2.6倍（以前の感触）')
+        + sw('showPerf', '性能の表示', 'fps・描画回数・三角形の数を右上に表示')
+        + `<h3>コントローラーとキーボードの感じ</h3>`
+        + sw('subtitles', '字幕', '会話・教官の言葉・無線の字幕を出す')
+        + range('padDz', 'ゲームパッドの遊び（デッドゾーン）', 0, 0.4, 0.01, x => x.toFixed(2), 'スティックの中心の無反応の幅。ドリフトするときは広げる')
+        + range('holdSens', 'キーボードの姿勢保持の速さ', 0.5, 2, 0.25, x => `×${x.toFixed(2)}`, 'W/S・A/D を押し続けたとき、目標の姿勢が動く速さ')
+        + `<details class="m-adv"><summary>高度な設定（画質の個別指定）</summary>`
+        + advQ('qShadow', '影') + advQ('qAO', '環境光の遮蔽（AO）') + advQ('qBloom', 'ブルーム（光のにじみ）')
+        + `<small>「自動」は画質プリセットに従います。個別に変えると、その項目だけプリセットより優先されます。</small></details>`
+        + axisMapHtml(v);
     }
     if (tab === 'net') {
       const v = settings.all();
@@ -128,10 +200,30 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
         <tr><td>G</td><td>脚の上げ下げ（Seminole：緑のランプ 3 つで DOWN、赤は作動中）</td></tr><tr><td>Z / X</td><td>ラダートリム 左 / 右</td></tr><tr><td>U</td><td>自動ラダー</td></tr><tr><td>L</td><td>翼を水平に戻す（自由飛行だけ）</td></tr>
         <tr><td>Enter / 1〜3</td><td>チェックリストを進める / 無線の復唱を選ぶ</td></tr>
         <tr><td>マウス</td><td>見回す。右ボタンを押したままで近くを見る</td></tr><tr><td>左クリック / ホイール</td><td>照準の先のスイッチ・レバー・つまみを操作する</td></tr>
-        <tr><td>C</td><td>操縦席 ⇄ 外からの視点</td></tr><tr><td>Tab</td><td>画面の計器盤（PFD・MFD）</td></tr><tr><td>H</td><td>操作の説明</td></tr>
+        <tr><td>C</td><td>操縦席 ⇄ 外からの視点（オートパイロットや教官が飛ばしているときは固定視点も）</td></tr><tr><td>6〜9</td><td>固定視点（滑走路端・管制塔・最終進入 2 km・エプロン）— 他人が飛ばしているときと再生中</td></tr>
+        <tr><td>P</td><td>直前の飛行の再生（デブリーフの「飛行を再生」からも。再生中は Space で一時停止、←→ で 5 秒移動、P で終了）</td></tr><tr><td>F7</td><td>シムレート（1× → 2× → 4×。巡航だけ：1,000 ft AGL 未満では自動で 1×）</td></tr><tr><td>F8</td><td>アクティブポーズ（物理を止めて、見回しとパネル操作だけ続ける）</td></tr><tr><td>F9</td><td>スクリーンショット（PNG で保存）</td></tr>
+        <tr><td>Tab</td><td>画面の計器盤（PFD・MFD）</td></tr><tr><td>H</td><td>操作の説明</td></tr>
         <tr><td>Enter</td><td>チェックリストの項目を確かめた（◇ の項目）</td></tr><tr><td>Y</td><td>チェックリストや地上走行を教官に任せる</td></tr>
         <tr><td>1〜3</td><td>無線で答える（管制との交信）</td></tr><tr><td>M</td><td>無線の答えを声で言う（「マイクで交信」が ON のとき）</td></tr></table>
-        <p class="m-note">ゲームパッドも使えます（FLIGHT LAB と同じ配置）。</p>`;
+        <p class="m-note">ゲームパッドも使えます（FLIGHT LAB と同じ配置）。</p>
+        <h3>キーの割り当てを変える（操縦席）</h3>
+        ${bindMsg ? `<p class="m-note">${esc(bindMsg)}</p>` : ''}
+        <table>${HELD_ROWS.map(([n, label, d]) => bindRow('held', n, label, (settings.get('heldBinds') || {})[n] || d)).join('')}</table>
+        <table>${ACT_ROWS.map(([n, label, d]) => bindRow('act', n, label, (settings.get('keyBinds') || {})[n] || d.replace(/^Shift\+/, ''), /^Shift\+/.test(d))).join('')}</table>
+        <p class="m-note">「変える」を押してから、割り当てたいキーを押します。矢印キーと Space は予備として常に効きます。重なったときは注意が出ます（そのまま使えます）。</p>
+        <div class="m-big"><button data-act="keys-reset">キーの割り当てを標準に戻す</button></div>`;
+    }
+    if (tab === 'free' && onFreeSetup) {
+      const sel = (k, label, opts) => `<label class="m-row"><span>${label}</span><select data-free="${k}" aria-label="${label}">${opts.map(([val, text]) => `<option value="${val}" ${String(freeCfg[k]) === String(val) ? 'selected' : ''}>${text}</option>`).join('')}</select></label>`;
+      return sel('start', '開始位置', [['ramp', 'ランプ（駐機・エンジンは自分で始動）'], ['rwy', '滑走路上（エンジン運転中）'], ['pattern', 'ダウンウインド 1,000 ft'], ['final', '最終進入 5 km'], ['area', '訓練空域 3,000 ft'], ['ils', 'ILS 開始点 2,000 ft']])
+        + sel('aircraft', '機体', [['pa28', 'Archer（単発）'], ['pa44', 'Seminole（双発）']])
+        + sel('hour', '時刻', [[6, '朝 6 時'], [9, '午前 9 時'], [12, '正午'], [15, '午後 3 時'], [18, '夕方 6 時'], [21, '夜 9 時'], [0, '深夜 0 時']])
+        + sel('wind', '風', [['calm', '無風'], ['light', '軽い風（滑走路方向 5 kt）'], ['cross', '横風 10 kt'], ['strong', '強い風 16 kt・ガスト'], ['custom', 'カスタム']])
+        + (freeCfg.wind === 'custom' ? `<label class="m-row"><span>カスタム風（滑走路から何度・何 kt）</span><span><input type="number" min="0" max="359" value="${freeCfg.windRel}" data-free-num="windRel" style="width:5em"> 度 <input type="number" min="0" max="40" value="${freeCfg.windKt}" data-free-num="windKt" style="width:4em"> kt</span></label>` : '')
+        + sel('loading', '搭載（重量・重心）', [['std', '標準（前席 2 名）'], ['light', '軽い（前席 1 名）'], ['heavy', '重い（4 名＋荷物）']])
+        + sel('fail', '故障（練習）', [['none', 'なし'], ['mag', 'マグネトー不良（ランナップで分かる）'], ['carb', 'キャブレター着氷（湿度の高い日）'], ['elec', 'オルタネーター故障（電圧低下）'], ['engine', 'エンジン停止（飛行中）'], ['engL', '左エンジン停止（双発）'], ['engR', '右エンジン停止（双発）'], ['ahrs', 'AHRS 故障（姿勢表示）'], ['gps', 'GPS 故障']])
+        + `<div class="m-big"><button class="primary" data-act="free-start">この条件で飛ぶ</button></div>
+        <p class="m-note">訓練の日とは別の、自由な飛行です。記録（飛行日誌）には数えません。故障は選んだものが 1 つだけ起きます。エンジン停止は飛行中に起きるので、高度のある開始位置がおすすめです。</p>`;
     }
     return `<p><b>CADET</b>（パイロット訓練生シミュレーター）${version ? ` <span class="m-val">${esc(version)}</span>` : ''}</p>
       <p>公開情報を基にした非公式のゲームです。航空会社（翔洋航空）・訓練所・人物はすべて架空です。実機訓練の代わりにはならず、航法には使えません（NOT FOR NAVIGATION）。飛行モデル・課目・教科書は FLIGHT LAB（同じリポジトリの自主学習教材）を使っています。</p>
@@ -165,6 +257,21 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
     }
     if (b.dataset.act === 'key-clear' && ai) { ai.keys.clear(); keyMsg = 'キーを消しました（このブラウザからも）'; keyBad = false; render(); return; }
     if (b.dataset.act === 'bench' && onBench) { close(false); onBench(); return; }
+    if (b.dataset.qadv) {
+      const [k, val] = b.dataset.qadv.split(':');
+      settings.set(k, val === 'auto' ? null : val === 'on'); onQuality(); render(); return;
+    }
+    if (b.dataset.act === 'pad-reset') { settings.set('padMap', null); render(); return; }
+    if (b.dataset.act === 'free-start' && onFreeSetup) {
+      const WINDS = { calm: { rel: 0, kt: 0, gust: 0 }, light: { rel: 10, kt: 5, gust: 0.5 }, cross: { rel: 80, kt: 10, gust: 0.5 }, strong: { rel: 30, kt: 16, gust: 1 } };
+      const LOADS = { std: { fuel: 'std', front: 2, rear: 0, bagKg: 0 }, light: { fuel: 'std', front: 1, rear: 0, bagKg: 0 }, heavy: { fuel: 'std', front: 2, rear: 2, bagKg: 25 } };
+      const cfg = { start: freeCfg.start, aircraft: freeCfg.aircraft, hour: +freeCfg.hour,
+        wind: freeCfg.wind === 'custom' ? { rel: +freeCfg.windRel || 0, kt: +freeCfg.windKt || 0, gust: 0.5 } : WINDS[freeCfg.wind] || WINDS.light,
+        loading: LOADS[freeCfg.loading] || LOADS.std, fail: freeCfg.fail === 'none' ? null : freeCfg.fail };
+      close(false); onFreeSetup(cfg); return;
+    }
+    if (b.dataset.act === 'keys-reset') { settings.set('keyBinds', null); settings.set('heldBinds', null); bindMsg = ''; render(); return; }
+    if (b.dataset.rebind) { startCapture(b); return; }
     if (b.dataset.toggle) { const k = b.dataset.toggle; settings.set(k, !settings.get(k)); b.setAttribute('aria-checked', String(!!settings.get(k))); return; }
     if (b.dataset.quality) { settings.set('quality', b.dataset.quality); onQuality(b.dataset.quality); el.querySelectorAll('[data-quality]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.quality === b.dataset.quality))); }
   });
@@ -172,6 +279,30 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
   el.addEventListener('change', (e) => {
     const k = e.target.dataset && e.target.dataset.text; if (!k) return;
     if (!settings.set(k, e.target.value)) e.target.value = settings.get(k);
+  });
+  // the axis map's editors and the key rebindings (change = a select or a tick; the rebind capture is a click)
+  el.addEventListener('change', (e) => {
+    const d = e.target.dataset || {};
+    if (d.free) { freeCfg[d.free] = e.target.value; render(); return; }
+    if (d.freeNum) { freeCfg[d.freeNum] = e.target.value; return; }
+    const patchAxis = (fn, patch) => {
+      const cur = { ...(settings.get('padMap') || {}) };
+      const std = AXIS_ROWS.find(r => r[0] === fn);
+      const base = cur[fn] !== undefined ? cur[fn] : (std && std[2] != null ? { axis: std[2], inv: false, pad: -1 } : null);
+      const next = patch(base);
+      if (next === undefined) return;
+      if (next === null) delete cur[fn]; else cur[fn] = next;
+      settings.set('padMap', Object.keys(cur).length ? cur : null); render();
+    };
+    if (d.axis) {
+      const a = parseInt(e.target.value, 10);
+      patchAxis(d.axis, (base) => a < 0 ? null : { axis: a, inv: !!(base && base.inv), pad: base && typeof base.pad === 'number' ? base.pad : -1 });
+    } else if (d.axispad) {
+      const p = parseInt(e.target.value, 10);
+      patchAxis(d.axispad, (base) => base ? { ...base, pad: p } : undefined);
+    } else if (d.axisinv) {
+      patchAxis(d.axisinv, (base) => base ? { ...base, inv: e.target.checked } : undefined);
+    }
   });
   // (the remember box alone: the key already given is kept, or forgotten, in this browser)
   el.addEventListener('change', (e) => {
@@ -182,9 +313,10 @@ export function createMenu({ root = document.body, settings, presets = [], onRes
     const k = e.target.dataset && e.target.dataset.set; if (!k) return;
     settings.set(k, parseFloat(e.target.value));
     const v = settings.get(k), out = el.querySelector(`[data-val="${k}"]`);
-    if (out) out.textContent = k === 'sensitivity' ? v.toFixed(2) : k === 'fov' ? `${v}°` : k === 'textSpeed' || k === 'subSize' ? `×${v.toFixed(2)}` : `${Math.round(v * 100)}%`;
+    if (out) out.textContent = k === 'sensitivity' ? v.toFixed(2) : k === 'fov' ? `${v}°` : k === 'textSpeed' || k === 'subSize' || k === 'holdSens' ? `×${v.toFixed(2)}` : k === 'padDz' ? v.toFixed(2) : `${Math.round(v * 100)}%`;
   });
   el.addEventListener('keydown', (e) => {
+    if (capture) { e.preventDefault(); e.stopPropagation(); const code = e.code; applyCapture(code); return; }
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(true); return; }
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
       const t = e.target.closest('[role=tab]'); if (!t) return;

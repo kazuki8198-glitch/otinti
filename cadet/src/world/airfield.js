@@ -90,7 +90,7 @@ export function buildAirfield(L, FL, { quality }) {
     update(t, { cameraWorld, windFromDeg = 330, windKt = 8, lightsOn = 0 }) {
       sock.update(t, windFromDeg - L.R.trueHdg, windKt);
       papi.update(cameraWorld, frame);
-      lights.setOn(lightsOn);
+      if (lights.update) lights.update(t, lightsOn); else lights.setOn(lightsOn);
     },
   };
 }
@@ -288,6 +288,9 @@ function buildLights(LEN, HW) {
     items.push([c, a, BLUE]);
   }
   for (const k of CONNECTORS) for (let c = HW + 12; c < 94; c += 20) for (const a of [k.a - 0.8, k.a + 15.8]) items.push([c, a, BLUE]);
+  // the approach light system for runway 36 (the ILS runway): centreline barrettes every 60 m out to 420 m
+  // before the threshold — steady white, part of the same instanced set as the edge lights
+  for (let a = -420; a <= -60; a += 60) for (let c = -3; c <= 3; c += 1.5) items.push([c, a, WHITE]);
   const base = new THREE.CylinderGeometry(0.05, 0.07, 0.32, 8); base.translate(0, 0.16, 0);
   const cap = new THREE.SphereGeometry(0.085, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2); cap.translate(0, 0.32, 0);
   const pole = new THREE.InstancedMesh(base, new THREE.MeshStandardMaterial({ color: 0xc9b23a, roughness: 0.6, metalness: 0.3 }), items.length);
@@ -300,7 +303,33 @@ function buildLights(LEN, HW) {
   });
   pole.castShadow = true;
   group.add(pole, glass);
-  return { group, setOn: (k) => { capMat.emissiveIntensity = 0.15 + 9 * k; } };
+  // the strobes: the sequenced flashers of the ALS ("the rabbit", running towards the threshold) and the two
+  // REIL at the 36 threshold corners, flashing together. One instanced mesh; the sequence is the instance
+  // colours, rewritten as the phase runs (a handful of instances, twice a second at most in effect).
+  const strobeAt = [];
+  for (let a = -300; a <= -60; a += 60) strobeAt.push([0, a]);                    // the rabbit, far to near
+  strobeAt.push([-(HW + 3), 0], [HW + 3, 0]);                                     // the REIL pair
+  const strobeGeo = new THREE.SphereGeometry(0.14, 10, 8); strobeGeo.translate(0, 0.9, 0);
+  const strobeMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.3, emissive: 0xffffff, emissiveIntensity: 0 });
+  const strobes = new THREE.InstancedMesh(strobeGeo, strobeMat, strobeAt.length);
+  strobeAt.forEach(([c, a], i) => { m.makeTranslation(c, 0, -a); strobes.setMatrixAt(i, m); strobes.setColorAt(i, col.setRGB(0, 0, 0)); });
+  group.add(strobes);
+  const setOn = (k) => { capMat.emissiveIntensity = 0.15 + 9 * k; };
+  return {
+    group, setOn,
+    update(t, on = 0) {
+      setOn(on);
+      // the rabbit runs once a second: each flasher fires in turn, farthest first; the REIL fires with the nearest
+      const ph = (t % 1) * strobeAt.length;
+      for (let i = 0; i < strobeAt.length; i++) {
+        const d = Math.abs(ph - i);
+        const b = on > 0.02 ? Math.max(0, 1 - Math.min(d, strobeAt.length - d) * 2.2) : 0;
+        strobes.setColorAt(i, col.setRGB(b, b, b * 0.98));
+      }
+      if (strobes.instanceColor) strobes.instanceColor.needsUpdate = true;
+      strobeMat.emissiveIntensity = on > 0.02 ? 6 : 0;
+    },
+  };
 }
 
 // ---------------------------------------------------------------- signs (FAA colours): hold-position, location, direction, distance remaining
@@ -346,14 +375,20 @@ function buildPapi(LEN, HW) {
   const boxGeo = new THREE.BoxGeometry(1.4, 0.55, 0.9); boxGeo.translate(0, 0.55, 0);
   const lensGeo = new THREE.CircleGeometry(0.13, 16);
   const body = new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.5, metalness: 0.4 });
-  for (let k = 0; k < 4; k++) {
-    const c = -HW - 15 - k * 9, a = 300;
-    const g = new THREE.Group(); g.position.set(c, 0, -a);
-    const b = new THREE.Mesh(boxGeo, body); b.castShadow = true; g.add(b);
-    const lm = new THREE.MeshStandardMaterial({ color: 0x111111, emissive: 0xffffff, emissiveIntensity: 6, roughness: 0.2 });
-    for (const x of [-0.35, 0.35]) { const l = new THREE.Mesh(lensGeo, lm); l.position.set(x, 0.62, 0.451); g.add(l); }
-    group.add(g); units.push({ g, lm, ang: ANG[k] });
-  }
+  // one end's set: the units stand on the pilot's left, 300 m past that end's threshold, their lenses facing
+  // the approaching aircraft (flip: +1 for the 36 end, whose traffic comes from the south; −1 for the 18 end)
+  const end = (a, side, flip) => {
+    for (let k = 0; k < 4; k++) {
+      const c = side * (HW + 15 + k * 9);
+      const g = new THREE.Group(); g.position.set(c, 0, -a);
+      const b = new THREE.Mesh(boxGeo, body); b.castShadow = true; g.add(b);
+      const lm = new THREE.MeshStandardMaterial({ color: 0x111111, emissive: 0xffffff, emissiveIntensity: 6, roughness: 0.2 });
+      for (const x of [-0.35, 0.35]) { const l = new THREE.Mesh(lensGeo, lm); l.position.set(x, 0.62, 0.451 * flip); if (flip < 0) l.rotation.y = Math.PI; g.add(l); }
+      group.add(g); units.push({ g, lm, ang: ANG[k] });
+    }
+  };
+  end(300, -1, 1);            // runway 36: left of a northbound approach is the west side
+  end(LEN - 300, 1, -1);      // runway 18: left of a southbound approach is the east side
   const wp = new THREE.Vector3();
   return {
     group, update(cam, frame) {

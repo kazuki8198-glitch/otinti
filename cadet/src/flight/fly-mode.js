@@ -40,10 +40,13 @@ import { createSystems, RUNNING } from '../aircraft/systems.js';
 import { FOCUS_FRAME, FOCUS_LOOK, FOCUS_T, STBY_OFF, nextFocus, zoomStep, smooth01, lerpAngle } from './panel-view.js';
 import { createDayMode } from './day-mode.js';
 import { createTraffic } from './traffic.js';
+import { cbEffect } from './cb.js';
+import { iceStep, iceApply } from './ice.js';
+import { createRecorder, sampleAt as recSampleAt, duration as recDuration } from './recorder.js';
 import { createTrafficView } from './traffic-view.js';
 import { createAutopilot, drawApStrip } from './autopilot.js';
 import { createRouteLine } from '../world/route-line.js';
-import { ourCall } from '../content/dialog/atc.js';
+import { ourCall, CALL } from '../content/dialog/atc.js';
 
 const DEG = Math.PI / 180;
 const FADE_MS = 420;
@@ -67,10 +70,18 @@ export function createFlyMode(ctx) {
   // who is in the right seat (chosen when boarding): the instructor's actor, or the chief instructor's, or no one
   let crew = ctx.instructor, crewName = ctx.instructorName || '早瀬 教官', crewColor = null, crewId = 'instructor';
   const P = FL.physics, AV = FL.avionics;
+  // (the day's air: the ATIS temperature against ISA at the field (55 ft ≈ 15 °C) — the day's lessons fly in
+  // it, and the instructor's steady-state numbers breathe it too; outside a day, standard air)
+  const dayOatDev = () => { const d = ctx.today && ctx.today(); const t = d && d.radio && d.radio.weather && d.radio.weather.tempC; return t != null ? Math.round(t - 15) : undefined; };
+  const CB_CENTRE = P.rwyToNE(P.LAB_RWY, 600, 0);   // (B3.3) the field's centre in NE, the CB's offsets' origin
   const A = P.AIRCRAFT.find(a => a.id === 'pa28');
   const flight = createFlight(FL, {
-    prefs: { autoRud: settings.get('autoRud') },
+    prefs: { autoRud: settings.get('autoRud'), hold: settings.get('pitchHold') ? 'hold' : 'spring', gainCap: settings.get('stickBoost') ? 2.6 : 1.7, padDz: settings.get('padDz'), holdSens: settings.get('holdSens'), padMap: settings.get('padMap'), keyBinds: settings.get('keyBinds'), heldBinds: settings.get('heldBinds') },
     savePrefs: (p) => { if (typeof p.autoRud === 'boolean') settings.set('autoRud', p.autoRud); },
+  });
+  // the controls' live preferences follow the settings screen (the axis map, the bindings, the feels)
+  if (typeof settings.onChange === 'function') settings.onChange((k) => {
+    if (k === 'padMap' || k === 'keyBinds' || k === 'heldBinds' || k === 'padDz' || k === 'holdSens') flight.controls.setPrefs({ [k]: settings.get(k) });
   });
   const fh = ctx.flightHud || null;
   // the HUD's checklist and read-back answers take clicks too (as Enter and 1–3 do)
@@ -102,6 +113,7 @@ export function createFlyMode(ctx) {
   const systems = createSystems(cockpit.switches);
   const engShow = { rpm: 0, run: false, twin: systems.twinLive, oil: 0, oilT: null, elec: null, hobbs: 471.2 };
   let elecWarned = false, elecLowSeen = false;             // (the alternator-failure day: warned once, noted for the logbook)
+  let wakeAdd = 0;                                          // (traffic wake currently added to the wind's gust)
   // the ring round the control to use next (the day's checklists): drawn over everything, pulsing
   const guide = new THREE.Mesh(new THREE.RingGeometry(0.02, 0.0275, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.0, 0.7), transparent: true, opacity: 0.9, depthTest: false, depthWrite: false, side: THREE.DoubleSide }));
   guide.renderOrder = 10; guide.visible = false; guide.name = 'cockpit-guide';
@@ -117,7 +129,22 @@ export function createFlyMode(ctx) {
   // keys stay the cadet's (the throttle, the flaps — and a held pitch / roll key takes the controls back)
   const ap = createAutopilot(FL);
   const apPilot = (Lh, dt) => ap.pilot(Lh, dt);
-  const AP_WHATS = new Set(['AP', 'AP_HDG', 'AP_ALT']);
+  // the navaid ident's clock, and which aid (if any) is audible now: a NAV radio's tuned aid, monitored
+  // on the audio panel, close enough to hear (a VOR's ident carries ~40 NM, a localizer's ~25)
+  let identT = 0;
+  const monitoredAid = () => {
+    const av = flight.av, s = flight.s;
+    if (!av || !s || !av.audio || !av.audio.monitor) return null;
+    for (const [radio, mon] of [['nav1', 'NAV1'], ['nav2', 'NAV2']]) {
+      if (!av.audio.monitor[mon]) continue;
+      const aid = AV.NAVAIDS.find(a => a.freq === av[radio].act);
+      if (!aid || aid.n == null) continue;
+      const dn = aid.n + s.pos[2], de = aid.e - s.pos[0];
+      if (Math.hypot(dn, de) / 1852 <= (aid.kind === 'LOC' ? 25 : 40)) return aid;
+    }
+    return null;
+  };
+  const AP_WHATS = new Set(['AP', 'AP_HDG', 'AP_ALT', 'AP_NAV', 'AP_APR', 'AP_VS', 'AP_LVL', 'FD']);
   // the first day (what it borrows from here)
   const NOHUD = { setTask() {}, setChecklist() {}, setRadio() {}, hideAll() {} };
   const dayMode = createDayMode({ FL, flight, systems, audio, settings, routeLine, dayHud: ctx.dayHud || NOHUD,
@@ -129,7 +156,23 @@ export function createFlyMode(ctx) {
   // ---- state
   let active = false, phase = 'off';          // 'board' (talking in the seat) | 'ground' | 'lesson' | 'debrief' | 'leaving'
   let carbDay = 0;                            // a humid day's carburettor-ice risk (set by beginDay; 0 = it cannot form)
+  let faultKind = null;                       // the day's fault kind (mag / carb / pitot / gear / pump), applied to the physics each frame
   let view = 'cockpit', yaw = 0, pitch = 0, chaseYaw = 0, chasePitch = 0.08, psiS = null, fov = null;
+  // the flight recorder (recorder.js): every flight is kept at 10 Hz for the debrief's replay and the
+  // logbook's export. The fixed viewpoint cameras (the spectator's presets, in the runway frame): usable
+  // while someone else flies (the autopilot, the instructor's hands, the introductory flight) and in replay
+  const recorder = createRecorder();
+  let simRate = 1, activePause = false, rateWasHigh = false;   // (the cruise's time compression + the frozen frame)
+  let replay = null;                            // { rec, t, playing, wasDebrief }
+  let pilotFlying = false;                      // (last frame's pilot hook: the instructor / a demo at the controls)
+  let fixedIdx = 0;
+  const FIXED_CAMS = [
+    { label: '滑走路端（36 側）', pos: () => L.rwyToLocal(-28, -3, 1.65), look: () => L.rwyToLocal(700, 0, 0) },
+    { label: '管制塔', pos: () => L.rwyToLocal(716, 258, 19.2), look: () => L.rwyToLocal(520, 40, 0) },
+    { label: '最終進入 2 km', pos: () => L.rwyToLocal(-2000, 0, 2 + 2000 * Math.tan(3 * Math.PI / 180)), look: () => L.rwyToLocal(320, 0, 0) },
+    { label: 'エプロン', pos: () => L.rwyToLocal(598, 146, 1.65), look: () => L.rwyToLocal(430, 205, 1) },
+  ];
+  const canFixed = () => !!(replay || (ap && ap.on) || intro || pilotFlying);
   // the instruments up close (panel-view.js): the unit in focus, the head's small turn inside it, the wheel's zoom
   // (a target field of view; null = the setting's, or the focus view's own framing), and the camera's move between
   // poses (a snapshot of the pose it leaves, blended over FOCUS_T)
@@ -291,6 +334,10 @@ export function createFlyMode(ctx) {
       lesson: { fromDeg: surfT, kt: A.surfKt, gust: 0.6, topFrom: topT, topKt: A.kt, topFt: A.altFt } };
   };
   const dayWind = () => { const f = dayField(); if (f) return f.free; const w = ctx.wind || { fromDeg: 330, kt: 8 }; return { rel: w.fromDeg - P.LAB_RWY.trueHdg, kt: w.kt, gust: 0.5 }; };
+  // the day's air carries the day's QNH (career weather's, no longer a constant): the altimeter's air is the
+  // day's, so the setting the cadet makes from the ATIS is the day's own — left at the standard 29.92 it is
+  // wrong by the day's difference, as it should be
+  const applyDayQnh = () => { const d = ctx.today ? ctx.today() : null; if (d && d.qnh && flight.s) flight.s.qnh = d.qnh; };
   function board({ instant = false } = {}) {
     if (active) return 'flying';
     active = true; phase = 'board';
@@ -298,6 +345,7 @@ export function createFlyMode(ctx) {
       const [n, e] = P.rwyToNE(P.LAB_RWY, ctx.stand.a, ctx.stand.c);
       useAircraft(todayType());
       flight.startOnGround(n, e, ctx.stand.hdgTrue, liveId, { autoRud: settings.get('autoRud'), wind: dayWind() });
+      applyDayQnh();
       parked().visible = false; ctx.todayColliders(false);
       live.root.visible = true; cockpit.setVisible(true); setView('cockpit');
       systems.setCold(flight.s); rpmVisual = 0;                     // the aircraft as left on the stand: everything off
@@ -328,11 +376,15 @@ export function createFlyMode(ctx) {
   }
   function leave({ instant = false, then = 'walk' } = {}) {
     if (!active || phase === 'leaving') return;
+    if (replay) { replay = null; }              // (leaving ends a replay without handing the debrief back)
+    simRate = 1; activePause = false;
+    hideCrashPanel();
+    recorder.done();
     phase = 'leaving';
     if (runner.running) runner.stop();
     // (the introductory flight: how it went, for main.js; its time and landings not FLIGHT LAB's — dropped, no record)
     let sum = null;
-    if (intro) { sum = intro.summary({ cut: !intro.done }); intro = null; introGo = null; flight.discard(); if (fh && fh.setFreeKeys) { fh.setFreeKeys(); fh.setStrip(true); } }
+    if (intro) { sum = intro.summary({ cut: !intro.done }); intro = null; introGo = null; flight.discard(); flight.prefs.hold = settings.get('pitchHold') ? 'hold' : 'spring'; if (fh && fh.setFreeKeys) { fh.setFreeKeys(); fh.setStrip(true); } }
     else if (flight.L && !flight.free && !flight.L.done) { flight.abort('中止'); flight.finish(); }
     else if (flight.L && flight.free) flight.finish();
     fade(() => {
@@ -346,6 +398,7 @@ export function createFlyMode(ctx) {
       if (dayMode.active) { if (ctx.onDayOver) ctx.onDayOver(dayMode.day); dayMode.end(); }
       if (audio.crank) audio.crank(false);
       if (audio.engine) audio.engine(null);
+      if (audio.traffic) audio.traffic(null);
       if (fh) { fh.hideDebrief(); fh.setHelp(false); fh.show(false); }
       (ctx.dayHud || NOHUD).setTask(null);
       debriefShown = false;
@@ -364,6 +417,11 @@ export function createFlyMode(ctx) {
     active = true; phase = 'board';
     useAircraft('pa28');
     flight.startFree('area', 'pa28', { sens: 'low', autoRud: true, assist: false, wind: dayWind() });
+    // (this flight is flown on the instructor's terms, as it was designed: the pitch hold is on for it —
+    // the cadet steers, the trim and the hold keep the height — whatever the player's own default is now;
+    // leave() gives the preference back)
+    flight.prefs.hold = 'hold';
+    applyDayQnh();
     systems.setRunning(flight.s); rpmVisual = null; psiS = null; debriefShown = false;
     parked().visible = false; ctx.todayColliders(false);
     live.root.visible = true; cockpit.setVisible(true);
@@ -403,9 +461,46 @@ export function createFlyMode(ctx) {
   // a key that is his today (the throttle, the flaps, the trim, the rudder, the brakes): a word, not too often
   function refuse() { if (performance.now() - refusedAt > 4000) { refusedAt = performance.now(); say(INTRO_AIR.R_keys, 4200); } }
   function beginFree() {
-    phase = 'ground'; carbDay = 0;
+    phase = 'ground'; carbDay = 0; faultKind = null;
     if (fh) fh.setMode('free');
+    recorder.start({ title: '自由飛行', aircraft: todayType(), startISO: new Date().toISOString() });
     startEngine();
+  }
+  // a free flight set up from the menu (the setup screen): the start, the aircraft, the wind, the load and
+  // one failure, if any — the day's plumbing reused (the day faults through the systems, FLIGHT LAB's
+  // failNow for the engine / AHRS / GPS). No crew, no day: the cadet starts a ramp start cold, by hand
+  function startFreeSession(cfg = {}) {
+    if (active) return false;
+    active = true; phase = 'board';
+    fade(() => {
+      useAircraft(cfg.aircraft === 'pa44' ? 'pa44' : 'pa28');
+      const wind = cfg.wind || { rel: 10, kt: 5, gust: 0.5 };
+      const ramp = cfg.start === 'ramp';
+      if (ramp) {
+        const [n, e] = P.rwyToNE(P.LAB_RWY, ctx.stand.a, ctx.stand.c);
+        flight.startOnGround(n, e, ctx.stand.hdgTrue, liveId, { autoRud: settings.get('autoRud'), wind });
+        systems.setCold(flight.s); rpmVisual = 0;
+        if (cfg.loading && P.applyLoading) P.applyLoading(flight.s, cfg.loading);
+      } else {
+        flight.startFree(cfg.start || 'rwy', liveId, { autoRud: settings.get('autoRud'), wind, loading: cfg.loading || undefined });
+        systems.setRunning(flight.s);
+      }
+      parked().visible = false; ctx.todayColliders(false);
+      live.root.visible = true; cockpit.setVisible(true); setView('cockpit');
+      seatCrew(null);
+      carbDay = cfg.fail === 'carb' ? 1 : 0;
+      systems.setFault(cfg.fail === 'mag' ? { dropL: 200 } : null);
+      systems.setElecFault(cfg.fail === 'elec');
+      if (['engine', 'engL', 'engR', 'ahrs', 'gps'].includes(cfg.fail) && FL.school && FL.school.failNow) FL.school.failNow(flight.L, cfg.fail);
+      yaw = 0; pitch = HOME_PITCH; setFocus(null, true); zoomFov = null;
+      ctx.onEnter();
+      placeNow();
+      if (fh) { fh.show(true); fh.setMode('free'); if (fh.setFreeTitle) fh.setFreeTitle('自由飛行', '設定した条件で飛ぶ・H でキーの一覧'); if (fh.setFreeKeys) { fh.setFreeKeys(); fh.setStrip(true); } if (settings.get('panel2D') !== fh.panel2D) fh.setPanel2D(!!settings.get('panel2D')); }
+      phase = 'ground';
+      recorder.start({ title: '自由飛行', aircraft: liveId, startISO: new Date().toISOString() });
+      input.requestLock();
+    }, cfg.instant);
+    return true;
   }
   // the instructor starts the engine (a free flight): everything on as for the flight, primed, the throttle cracked,
   // the key to START; the systems turn it over until it catches
@@ -418,7 +513,9 @@ export function createFlyMode(ctx) {
   function beginLesson(level, { instant = false, lessonId = ctx.lessonId || 'a2' } = {}) {
     lastLevel = level; settings.set('lessonLevel', level); lastLesson = lessonId;
     fade(() => {
-      flight.startLesson(lessonId, level, { autoRud: settings.get('autoRud') });
+      flight.startLesson(lessonId, level, { autoRud: settings.get('autoRud'), oatDev: dayOatDev() });
+      applyDayQnh();
+      recorder.start({ title: lessonId, aircraft: todayType(), startISO: new Date().toISOString() });
       systems.setRunning(flight.s);
       phase = 'lesson'; rpmVisual = null; lastChime = -1; lastHint = ''; hintCool = 0; debriefShown = false;
       yaw = 0; pitch = HOME_PITCH; homeT = 0; faceT = 0; psiS = null; setFocus(null, true); zoomFov = null;
@@ -432,8 +529,10 @@ export function createFlyMode(ctx) {
   function freeFromHere() {
     if (fh) fh.hideDebrief(); debriefShown = false;
     fade(() => {
-      flight.startFree('area', liveId, { autoRud: settings.get('autoRud'), wind: dayWind() });
+      flight.startFree('area', liveId, { autoRud: settings.get('autoRud'), wind: dayWind(), oatDev: dayOatDev() });
+      applyDayQnh();
       systems.setRunning(flight.s);
+      recorder.start({ title: '自由飛行', aircraft: todayType(), startISO: new Date().toISOString() });
       phase = 'ground'; rpmVisual = null; psiS = null; setFocus(null, true); zoomFov = null;
       if (fh) fh.setMode('free');
       placeNow();
@@ -453,6 +552,7 @@ export function createFlyMode(ctx) {
     systems.setElecFault(!!(d.st && d.st.elecFault));         // the alternator-failure day, when the day has one
     elecWarned = false; elecLowSeen = false;
     carbDay = d.st.fault && d.st.fault.kind === 'carb' ? 1 : 0;                            // a humid day: carburettor ice can build in flight (the physics reads it each frame)
+    faultKind = d.st.fault ? d.st.fault.kind : null;
     dayMode.begin(d, level);
   }
   // a lesson of the day: from where the cadet is (handoff: FLIGHT LAB's own start, the picture blending the last
@@ -463,7 +563,8 @@ export function createFlyMode(ctx) {
       // (the cross-country's own lesson flies in the day's wind field — the nav log's wind, not the lesson's
       // own; the day's other lessons (the take-off, the landing) keep theirs, as every scored lesson does)
       const f = id === 'n2' ? dayField() : null;
-      flight.startLesson(id, level, { autoRud: settings.get('autoRud'), ...(f ? { wind: f.lesson } : {}) });
+      flight.startLesson(id, level, { autoRud: settings.get('autoRud'), oatDev: dayOatDev(), ...(f ? { wind: f.lesson } : {}) });
+      applyDayQnh();
       systems.adopt(flight.s);
       // (the day's load again on the lesson's own state: two in front with the instructor, one alone)
       if (P.applyLoading) P.applyLoading(flight.s, { front: crew ? 2 : 1 });
@@ -488,7 +589,8 @@ export function createFlyMode(ctx) {
   let debSum = null;
   function signLogbook() {
     const d = dayMode.day, sum = debSum; if (!d || !sum) return;
-    const remark = (sum.fault ? 'ランナップで左マグネトーの低下が制限超過。離陸を中止し整備へ（課目なし）。' : sum.lessons.every(l => l.passed) ? '今日の 3 課目は基準内。' : '再訓練の課目あり。') + (sum.walk.missed.length ? '外部点検の見落としあり。' : '') + (sum.incursion ? '停止線の越境あり（指導済み）。' : '') + (sum.elecLow ? '飛行中に電圧低下（オルタネーター不作動の疑い）。負荷を落として着陸、整備へ報告。' : '');
+    const remark = (sum.fault ? 'ランナップで左マグネトーの低下が制限超過。離陸を中止し整備へ（課目なし）。' : sum.lessons.every(l => l.passed) ? '今日の 3 課目は基準内。' : '再訓練の課目あり。') + (sum.walk.missed.length ? '外部点検の見落としあり。' : '') + (sum.incursion ? '停止線の越境あり（指導済み）。' : '') + (sum.elecLow ? '飛行中に電圧低下（オルタネーター不作動の疑い）。負荷を落として着陸、整備へ報告。' : '')
+      + (sum.atcState && sum.atcState.noClearTakeoff ? '許可のない離陸あり（指導済み）。' : '') + (sum.atcState && sum.atcState.noClearLanding ? '着陸許可のない進入あり（指導済み）。' : '') + (sum.atcState && sum.atcState.nearMiss.length ? `他機との接近あり（${sum.atcState.nearMiss.join('・')}）。` : '');
     const done = () => { if (dayMode.day) dayMode.day.debriefRead(); say('今日はここまで。降りるときは、右のドアの取っ手をどうぞ。', 5200); };
     const p = ctx.onLogbook ? ctx.onLogbook(sum, remark) : null;
     if (p && p.then) p.then(done); else done();
@@ -505,6 +607,27 @@ export function createFlyMode(ctx) {
     hud.prompt(null); hover = null;
     if (!inside) psiS = null;
   }
+  // ---- the replay: watch the flight (or its landing) again. The live flight is NOT touched — the physics
+  // waits (frame() is not called), the drawn aircraft follows the recording, and ending the replay puts
+  // everything back. Space pauses, ←/→ step 5 s, C changes the camera (the fixed ones included), P or
+  // Esc ends it. From the debrief, the card comes back when it ends
+  let debCbs = null;                            // (the debrief's buttons, so the replay can hand the card back)
+  function startReplay(atEnd = false) {
+    const rec = recorder.last();
+    if (!rec || !active || recorder.recording()) return false;
+    const dur = recDuration(rec);
+    replay = { rec, t: atEnd ? Math.max(0, dur - 45) : 0, playing: true, sample: null, wasDebrief: debriefShown };
+    if (fh && debriefShown) { fh.hideDebrief(); debriefShown = false; }
+    toast(`再生：${rec.meta.title || '飛行'}（${Math.round(dur)} 秒）— Space 一時停止・←→ 5 秒・C カメラ・P 終了`, 3600);
+    return true;
+  }
+  function endReplay() {
+    if (!replay) return;
+    const was = replay.wasDebrief; replay = null;
+    if (view === 'fixed') setView('cockpit');
+    placeNow();
+    if (was && fh && debCbs) { fh.showDebrief(flight.status(), debCbs); debriefShown = true; }
+  }
   // the sun's shadow box: small and sharp round the cockpit in the air; on the ground wide enough for the hangars, the
   // parked aircraft and the whole wing (the chase view keeps the preset's box)
   function applyShadow() {
@@ -516,6 +639,14 @@ export function createFlyMode(ctx) {
   // On the ground FLIGHT LAB's spring gear sinks about 11 cm under the aircraft's weight; drawn as it is, the tyres
   // would be half in the concrete: the drawing (only) is lifted until the lowest wheel touches.
   function placeNow() {
+    if (replay && replay.sample) {
+      // the replay's pose: the recorded sample, drawn where it was (the live flight is untouched underneath)
+      const x = replay.sample, loc = L.toLocal(x.n, x.e, x.h);
+      live.root.quaternion.set(x.q[0], x.q[1], x.q[2], x.q[3]);
+      live.root.position.set(loc[0], loc[1], loc[2]);
+      live.root.updateMatrixWorld(true);
+      return;
+    }
     flight.pose(pose);
     live.root.quaternion.set(pose.q[0], pose.q[1], pose.q[2], pose.q[3]);
     let lift = 0;
@@ -549,9 +680,13 @@ export function createFlyMode(ctx) {
       live.root.localToWorld(v1); camera.position.copy(v1);
       eHead.set(camPose.pitch, camPose.yaw, 0); qHead.setFromEuler(eHead);
       camera.quaternion.copy(live.root.quaternion).multiply(qHead);
+    } else if (view === 'fixed') {
+      // a fixed viewpoint (the tower, the threshold, the final): the aircraft flies through the frame
+      const c = FIXED_CAMS[fixedIdx % FIXED_CAMS.length], p = c.pos(), t = c.look();
+      camera.position.set(p[0], p[1], p[2]); v2.set(t[0], t[1], t[2]); camera.lookAt(v2);
     } else {
       // FLIGHT LAB's chase view: behind the aircraft along its smoothed heading, level, 2.6 m up; the mouse orbits it
-      const s = flight.s, f = P.qrot(s.q, [0, 0, -1]), psi = Math.atan2(f[0], -f[2]);
+      const s = flight.s, fq = replay && replay.sample ? replay.sample.q : s.q, f = P.qrot(fq, [0, 0, -1]), psi = Math.atan2(f[0], -f[2]);
       if (psiS == null) psiS = psi;
       let d = psi - psiS; d = Math.atan2(Math.sin(d), Math.cos(d)); psiS += d * (1 - Math.exp(-dt / 0.2));
       const dist = 8 + A.phys.L, ang = psiS + chaseYaw, cp = Math.cos(chasePitch);
@@ -580,6 +715,9 @@ export function createFlyMode(ctx) {
       if (audio.click) audio.click();
     } else if (d.type === 'select') {
       cockpit.switches[d.id] = d.value;              // (the key springs back from START by itself: aircraft/systems.js)
+      if (audio.click) audio.click();
+    } else if (d.type === 'gearEmerg') {
+      if (flight.s && !flight.s.gearEmerg) { flight.s.gearEmerg = true; toast('非常用の脚下げハンドルを引いた。脚が落ちてきます', 2800); }
       if (audio.click) audio.click();
     } else if (d.type === 'prime') {
       const n = systems.prime();
@@ -628,21 +766,93 @@ export function createFlyMode(ctx) {
     const resumed = wasStop && !stop;
     if (resumed) flight.controls.clearKeys();
     wasStop = stop;
-    // the flight (FLIGHT LAB's tick: the keys once, then 1/120 s steps)
-    frameOpt.paused = stop || phase === 'board' || phase === 'leaving';
+    // the replay: the physics waits; the drawn aircraft follows the recording, the camera is free (the
+    // cockpit, the chase, the fixed viewpoints), the engine sounds as it did. Nothing else runs
+    if (replay) {
+      if (replay.playing) replay.t += dt;
+      const dur = recDuration(replay.rec);
+      if (replay.t >= dur) { replay.t = dur; replay.playing = false; }
+      replay.sample = recSampleAt(replay.rec, replay.rec.samples[0].t + replay.t);
+      const sens = 0.0022 * settings.get('sensitivity'), inv = settings.get('invertY') ? -1 : 1;
+      if (view === 'chase') { chaseYaw -= look.x * sens; chasePitch = THREE.MathUtils.clamp(chasePitch - look.y * sens * inv, -0.15, 1.2); }
+      placeNow(); placeCamera(dt);
+      if (audio.engine) { const x = replay.sample; audio.engine({ rpm: x.rpm, thr: x.thr, ias: x.ias, onGround: x.onGround, stall: false, inside: view === 'cockpit', running: x.rpm > 300, rough: 0 }); }
+      if (audio.traffic) audio.traffic(null);
+      return;
+    }
+    // the active pause: the physics frozen, the camera and the panel alive (look around, work the panel)
+    if (activePause && !stop) {
+      if (view === 'cockpit' && !focusId) {
+        const sens = 0.0022 * settings.get('sensitivity'), inv = settings.get('invertY') ? -1 : 1;
+        yaw = THREE.MathUtils.clamp(yaw - look.x * sens, -LOOK.yaw, LOOK.yaw);
+        pitch = THREE.MathUtils.clamp(pitch - look.y * sens * inv, -LOOK.down, LOOK.up);
+      } else if (view === 'chase') {
+        const sens = 0.0022 * settings.get('sensitivity'), inv = settings.get('invertY') ? -1 : 1;
+        chaseYaw -= look.x * sens; chasePitch = THREE.MathUtils.clamp(chasePitch - look.y * sens * inv, -0.15, 1.2);
+      }
+      placeNow(); placeCamera(dt);
+      return;
+    }
+    // the flight (FLIGHT LAB's tick: the keys once, then 1/120 s steps). The sim rate compresses the cruise
+    // only: below 1,000 ft AGL it is 1× again by itself, and says so once
+    const rateNow = simRate > 1 && flight.s && !flight.s.onGround && flight.s.out && flight.s.out.agl >= 1000 ? simRate : 1;
+    if (simRate > 1 && rateNow === 1 && flight.s && !flight.s.onGround && !rateWasHigh) { rateWasHigh = true; toast('1,000 ft AGL 以下：シムレートは 1× に戻りました', 2400); }
+    if (rateNow > 1) rateWasHigh = false;
+    frameOpt.paused = stop || phase === 'board' || phase === 'leaving' || crashFrozen;
     // the instructor taxiing (I have control); on the introductory flight, his hands on what is his —
     // or, on an ordinary day, the autopilot's hands (its own hook, and only when no one else is flying)
     const taxiPilot = intro ? intro.pilot : dayMode.pilot;
-    frameOpt.pilot = taxiPilot || (ap.on ? apPilot : null);
-    frameOpt.airPilot = !taxiPilot && ap.on;                      // (the AP's hook runs in a lesson too; the taxi pilot's does not need it)
-    const res = flight.frame(dt, intro ? (stop || !intro.cadetHands ? NO_KEYS : INTRO_KEYS) : keysFor(stop || !!taxiPilot), frameOpt);
-    if (flight.s) flight.s.carbRisk = carbDay;                // the day's humidity, for the physics' carburettor ice
+    frameOpt.pilot = taxiPilot || (ap.on || ap.fdOn ? apPilot : null);
+    frameOpt.airPilot = !taxiPilot && (ap.on || ap.fdOn);         // (the AP's hook runs in a lesson too; the taxi pilot's does not need it)
+    pilotFlying = !!frameOpt.pilot;
+    const res = flight.frame(dt * rateNow, intro ? (stop || !intro.cadetHands ? NO_KEYS : INTRO_KEYS) : keysFor(stop || !!taxiPilot), frameOpt);
+    if (flight.s) recorder.push(flight.s, flight.s.t || 0);
+    if (flight.s) { flight.s.carbRisk = carbDay;                // the day's humidity, for the physics' carburettor ice
+      // the day's other faults, on the physics state (re-applied each frame: a lesson's fresh state starts clean)
+      if (faultKind === 'pitot') flight.s.pitotRisk = 2;
+      else if (faultKind === 'mag') for (const e of flight.s.eng) e.magBad = 'L';
+      else if (faultKind === 'gear') flight.s.gearFault = true;
+      else if (faultKind === 'pump') flight.s.eng[0].pumpFail = true;
+      // the day's rain on the surface: at storm strength the runway is wet (the physics reads the flag for its
+      // friction; the world branch only sets it, from the day's precipitation)
+      flight.s.surfaceWet = (ctx.precip ? ctx.precip() : 0) >= 0.3;
+    }
+    // (B3.3) the day's cumulonimbus: inside its volume the air moves — the gust scale rises and the core
+    // sinks. The lesson's own wind is restored on the way out (its base kept on the state).
+    if (flight.s && !frameOpt.paused) {
+      const s = flight.s, cb = ctx.cb ? ctx.cb() : null;
+      let k = 0;
+      if (cb) { const [cn, ce] = CB_CENTRE, [n, e] = P.ne(s); k = cbEffect(cb, n - cn, e - ce, s.agl || 0); }
+      if (s.wind) {
+        if (k > 0) { if (s._cbBase == null) s._cbBase = s.wind.gust; s.wind.gust = s._cbBase + k * 4; if ((s.agl || 0) > 3) s.vel[1] -= 5.5 * k * dt * rateNow; }
+        else if (s._cbBase != null) { s.wind.gust = s._cbBase; s._cbBase = null; }
+      }
+    }
+    // (B3.4) airframe icing, on the day's seeded cold low-cloud days only: in the cloud band at icing
+    // temperature, ice accretes on the state (s.ice 0..1); the aero feels it through the state's own
+    // derived aircraft — less lift, more drag, an earlier stall, the weight of the ice — and warm air
+    // (or leaving the band) melts it off again. The pitot/static side is the systems branch's, not this.
+    if (flight.s && !frameOpt.paused) {
+      const s = flight.s;
+      if (s._iceAC !== s.AC) { s._iceAC = s.AC; s._iceBase = { CL0: s.AC.CL0, CD0: s.AC.CD0, aStall: s.AC.aStall, mass: s.AC.mass }; if (s.ice == null) s.ice = 0; }
+      const aglFt = (s.agl || 0) * 3.28084, oat = s.oat != null ? s.oat : 99;
+      s.ice = iceStep(s.ice, !!(ctx.icing && ctx.icing()), aglFt, oat, dt * rateNow);
+      iceApply(s.AC, s._iceBase, s.ice);
+    }
     // the autopilot's own frame: its disconnects (low, a stall warning, the hands taking over), its strip
     const apMsg = ap.update(frameOpt.paused ? 0 : dt, flight, input);
     if (apMsg) toast(apMsg, 2600);
+    if (ap.takeDiscTone() && audio.apDisc) audio.apDisc();        // (the disconnect warble)
     ap.sync(flight.av);
-    // the engine and the electrics
-    for (const ev of systems.update(frameOpt.paused ? 0 : dt, flight.s)) onSystems(ev);
+    // the monitored navaid's ident, keyed again and again while it stays in range and selected on the
+    // audio panel (the receiver's own behaviour; the radio bus carries it, so its volume is the radio's)
+    identT -= frameOpt.paused ? 0 : dt;
+    if (identT <= 0) {
+      const aid = monitoredAid();
+      if (aid && audio.ident) identT = audio.ident(aid.id) + 4; else identT = 0.6;
+    }
+    // the engine and the electrics (on the flight's clock: the sim rate takes them with it)
+    for (const ev of systems.update(frameOpt.paused ? 0 : dt * rateNow, flight.s)) onSystems(ev);
     for (const ev of res.events) onEvent(ev);
     if (res.ended) onEnded();
     for (const r of res.pad || []) {
@@ -678,7 +888,7 @@ export function createFlyMode(ctx) {
     else if (intro && talkOn && !stopHead) intro.talked(dt);
     // the propeller as the systems turn it (the starter, the run-up's magneto drop: the picture and the sound)
     rpmVisual = systems.rpm; engShow.rpm = systems.rpm; engShow.run = systems.running;
-    engShow.oil = systems.oil; engShow.oilT = systems.oilT; engShow.elec = systems.elec; engShow.hobbs = systems.hobbs;
+    engShow.oil = systems.oil; engShow.oilT = systems.oilT; engShow.elec = systems.elec; engShow.hobbs = systems.hobbs; engShow.starterHot = systems.starterHot; engShow.alerts = systems.alerts;
     // the alternator-failure day making itself known: the volts sag with nothing charging — warn once in the
     // air, and remember it for the logbook either way
     if (systems.elecFault && systems.elec.volts > 0 && systems.elec.volts < 11.8) {
@@ -692,11 +902,20 @@ export function createFlyMode(ctx) {
     const tp = (ctx.today ? ctx.today() : null)?.traffic;
     trafficView.set(tp ? tp.count : 0);
     if (tp && tp.count) {
-      traffic.set(tp.count, tp.seed);
-      const evs = traffic.update(frameOpt.paused ? 0 : dt);
+      traffic.set(tp.count, tp.seed, { twin: !!tp.twin, runway: tp.runway || '36' });
+      // (gap audit v2, B4.2) the pattern reacts to the cadet: his pose in the circuit's frame goes in;
+      // the wake comes back as a gust on the flight state; near misses go to the day's debrief record
+      const pn = P.ne(flight.s), prc = P.rwyCoords(P.LAB_RWY, pn.n, pn.e);
+      const evs = traffic.update(frameOpt.paused ? 0 : dt, { along: prc.along, cross: prc.cross, altFt: flight.s.out.altTrue, call: CALL.short, spoken: CALL.spokenShort });
       trafficView.show(traffic, true);
-      for (const ev of evs) hearTraffic(ev);
-    } else trafficView.show(traffic, false);
+      if (flight.av) flight.av.trafficPos = traffic.poses;      // (the same traffic on the MFD map)
+      if (flight.s.wind) { flight.s.wind.gust -= wakeAdd; wakeAdd = traffic.wake > 0.02 ? traffic.wake * 1.6 : 0; flight.s.wind.gust += wakeAdd; }
+      for (const ev of evs) {
+        if (ev.kind === 'nearMiss') { if (dayMode.active && dayMode.day) dayMode.day.noteTraffic('nearMiss', ev.with); toast(`他機との接近（${ev.with}・約 ${ev.dist} m）：見張りを続けましょう`, 4200); }
+        else if (ev.kind === 'trafficGoAround') { if (dayMode.active && dayMode.day) dayMode.day.noteTraffic('trafficGoAround'); hearTraffic(ev); }
+        else hearTraffic(ev);
+      }
+    } else { trafficView.show(traffic, false); if (flight.av) flight.av.trafficPos = null; if (flight.s.wind && wakeAdd) { flight.s.wind.gust -= wakeAdd; wakeAdd = 0; } }
     placeNow();
     applyShadow();
     liveOpt.dt = dt; liveOpt.rpmVisual = rpmVisual; liveOpt.lights = lights(); liveOpt.inside = view === 'cockpit';
@@ -723,7 +942,8 @@ export function createFlyMode(ctx) {
       } else if (wheel && !resumed) stepWheelZoom(wheel);     // off a control, the wheel zooms the view instead
     } else if (hover) { hover = null; hud.prompt(null); }
     cockOpt.s = flight.s; cockOpt.L = flight.L; cockOpt.av = flight.av; cockOpt.parkBrake = flight.controls.parkBrake; cockOpt.night = night(); cockOpt.eng = engShow;
-    cockOpt.elecDead = systems.elec.volts < 1;               // (a dead bus: the glass goes dark, as it would)
+    cockOpt.elecDead = !systems.elec.pfdOn;                  // (a dead essential bus: the PFD goes dark, as it would)
+    cockOpt.elecPfd = systems.elec.pfdOn; cockOpt.elecMfd = systems.elec.mfdOn; cockOpt.elecStandby = systems.elec.standbyOn;   // (the bus stages, per screen; the standby on its own battery)
     cockpit.update(dt, cockOpt);
     placeGuide(dt, stop);
     // the instructor: looks at you while he speaks, otherwise round the panel and outside (unseen from outside: left be)
@@ -748,14 +968,30 @@ export function createFlyMode(ctx) {
       engOpt.rpm = systems.rpm; engOpt.thr = s.thr; engOpt.ias = o.ias; engOpt.onGround = s.onGround;
       engOpt.stall = !stop && !!o.stallWarn; engOpt.inside = view === 'cockpit';
       engOpt.running = systems.running;
+      // the roughness is heard (audio/sfx.js): the physics' own (over-lean, carburettor ice), and a single
+      // magneto's, when the systems layer exposes it (read defensively — it may not be there)
+      engOpt.rough = Math.max(o.rough || 0, o.magRough || 0);
       // (the Seminole: each engine its own voice, as far along its start as it is; the gear's pump while it travels)
       if (todayType() === 'pa44') {
         const tw = systems.twinLive;
-        if (!engOpt.engines) engOpt.engines = [{ rpm: 0, running: false }, { rpm: 0, running: false }];
-        for (let k = 0; k < 2; k++) { engOpt.engines[k].rpm = tw[k].rpm; engOpt.engines[k].running = tw[k].eng === 'run' || tw[k].eng === 'stopping'; }
+        if (!engOpt.engines) engOpt.engines = [{ rpm: 0, running: false, rough: 0 }, { rpm: 0, running: false, rough: 0 }];
+        for (let k = 0; k < 2; k++) { engOpt.engines[k].rpm = tw[k].rpm; engOpt.engines[k].running = tw[k].eng === 'run' || tw[k].eng === 'stopping'; engOpt.engines[k].rough = Math.max((s.eng[k] && s.eng[k].rough) || 0, o['magRough' + k] || 0); }
         engOpt.gearMoving = s.gearPos > 0.005 && s.gearPos < 0.995;
       } else { engOpt.engines = null; engOpt.gearMoving = false; }
       audio.engine(engOpt);
+    }
+    // the nearest other trainer is heard too: its buzz placed by the bearing from the nose, thinned by the
+    // distance (audio/sfx.js traffic(); nothing when the pattern is empty or the day has none)
+    if (audio.traffic) {
+      let near = null;
+      if (traffic.poses && flight.s) {
+        const [pn, pe] = P.ne(flight.s), hdg = P.attitude(flight.s).hdg * Math.PI / 180;
+        for (const p of traffic.poses) {
+          const dn = p.n - pn, de = p.e - pe, d = Math.hypot(dn, de);
+          if (!near || d < near.d) near = { d, rel: Math.atan2(de, dn) - hdg };
+        }
+      }
+      audio.traffic(near ? { gain: Math.max(0, 1 - near.d / 2600), pan: Math.sin(near.rel), f: 80 } : null);
     }
     if (flight.free && (phase === 'ground' || phase === 'day')) taxiCheck();
   }
@@ -764,7 +1000,9 @@ export function createFlyMode(ctx) {
   function hearTraffic(ev) {
     if (!fh || talkOn || debriefShown) return;
     const av = flight.av;
-    if (!av || av.com1.act !== 118300) return;                        // the tower frequency
+    // the tower frequency: on the selected COM1, or on COM2 while the audio panel monitors it (the
+    // transmission is the same programme either way — monitoring is how a second radio is listened to)
+    if (!av || !(av.com1.act === 118300 || (av.audio && av.audio.monitor && av.audio.monitor.COM2 && av.com2.act === 118300))) return;
     if (!systems.running && !(flight.L && !flight.free)) return;      // the radio is on: engine running, or a lesson
     fh.say(ev.name, ev.en, 5600);
     if (settings.get('radioVoice')) dayMode.speak(ev.say);
@@ -846,10 +1084,37 @@ export function createFlyMode(ctx) {
       if (!/^良い調子/.test(st.hint) || Math.random() < 0.3) say(flightLine(st.hint), 4200);
     }
   }
+  // the crash, presented (4-5 lite): the frame freezes where it stopped and a small panel says what the
+  // instruments measured at the impact (sink, bank, speed) before the day / the flight ends as it always did
+  let crashFrozen = false, crashPanel = null;
+  function showCrashPanel(why) {
+    crashFrozen = true;
+    if (audio.engine) audio.engine(null);
+    if (audio.traffic) audio.traffic(null);
+    if (typeof document === 'undefined' || !document.body) return;
+    const s = flight.s, o = s && s.out ? s.out : {}, at = s ? P.attitude(s) : { roll: 0 };
+    hideCrashPanel(true);
+    crashPanel = document.createElement('div');
+    crashPanel.id = 'crash-panel';
+    crashPanel.setAttribute('role', 'alert');
+    crashPanel.style.cssText = 'position:fixed;left:50%;top:16%;transform:translateX(-50%);z-index:40;background:rgba(24,8,8,.92);border:1px solid rgba(255,120,90,.55);color:#ffe9e2;border-radius:14px;padding:16px 22px;font:14px/1.7 system-ui,sans-serif;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.5)';
+    const rows = [`速度 ${Math.round(o.ias || 0)} kt`, `バンク ${Math.abs(Math.round(at.roll || 0))}°`, `降下率 ${Math.round(o.vs || 0)} fpm`].join('　・　');
+    crashPanel.innerHTML = '';
+    const h = document.createElement('div'); h.style.cssText = 'font-size:17px;font-weight:800;letter-spacing:.05em'; h.textContent = `機体損傷：${why}`;
+    const r = document.createElement('div'); r.textContent = `衝突の瞬間　${rows}`;
+    const n = document.createElement('div'); n.style.opacity = '0.75'; n.textContent = 'この飛行はここまでです。デブリーフで振り返ります。';
+    crashPanel.append(h, r, n); document.body.appendChild(crashPanel);
+  }
+  function hideCrashPanel(keepFrozen = false) {
+    if (crashPanel) { crashPanel.remove(); crashPanel = null; }
+    if (!keepFrozen) crashFrozen = false;
+  }
   function onEvent(ev) {
+    if (ev.type === 'crash') recorder.mark(flight.s, flight.s ? flight.s.t || 0 : 0);
     // (the introductory flight: the limits take it back long before; were it ever damaged, his word and the end)
     if (ev.type === 'crash' && intro) { handle(intro.crashed(ev.why)); return; }
     if (ev.type === 'touchdown') {
+      recorder.mark(flight.s, flight.s ? flight.s.t || 0 : 0);
       if (audio.touchdown) audio.touchdown(ev.fpm);
       toast(`接地：${ev.fpm} fpm・${ev.kias} kt・中心線から ${Math.abs(ev.cross)} m ${ev.cross >= 0 ? '右' : '左'}${ev.onRunway ? '' : '（滑走路の外）'}`, 3200);
     } else if (ev.type === 'hard_landing') say('ハードランディングです。フレアが遅れたか、進入が速すぎました。', 4200);
@@ -857,15 +1122,18 @@ export function createFlyMode(ctx) {
     else if (ev.type === 'tail_strike') say('尾部を擦りました。機首の上げすぎです。', 3800);
     else if (ev.type === 'engine_stop') toast(`エンジン停止：${ev.why}`, 3500);
     else if (ev.type === 'crash' && dayMode.active && flight.free) {
-      // the day ends there: the debrief in the seat
-      toast(`機体損傷：${ev.why}`, 5000); say('止まって！……ぶつけてしまいましたね。今日の飛行はここまでにします。', 5000);
+      // the day ends there: the debrief in the seat (the frame frozen on the panel above meanwhile)
+      showCrashPanel(ev.why);
+      say('止まって！……ぶつけてしまいましたね。今日の飛行はここまでにします。', 5000);
       const d = dayMode.day; d.st.crash = ev.why;
-      setTimeout(() => { if (dayMode.day === d && d.phase !== 'debrief' && d.phase !== 'done') d.abortTo('debrief'); }, 2500);
+      setTimeout(() => { hideCrashPanel(); if (dayMode.day === d && d.phase !== 'debrief' && d.phase !== 'done') d.abortTo('debrief'); }, 2500);
     }
-    else if (ev.type === 'crash') { toast(`機体損傷：${ev.why}`, 5000); if (flight.free) { const L0 = flight.L; setTimeout(() => { if (flight.L === L0) showFreeEnd(); }, 1500); } }
+    else if (ev.type === 'crash') { if (flight.free) { showCrashPanel(ev.why); const L0 = flight.L; setTimeout(() => { hideCrashPanel(); if (flight.L === L0) showFreeEnd(); }, 1500); } else toast(`機体損傷：${ev.why}`, 5000); }
   }
   function onEnded() {
     flight.finish();
+    hideCrashPanel();
+    recorder.done();
     const st = flight.status(), L0 = flight.L;
     if (dayMode.active) {
       // the day goes on: a word from the instructor, the grade on the screen, the flight carries on as CADET's own
@@ -878,12 +1146,14 @@ export function createFlyMode(ctx) {
     setTimeout(() => {
       if (!active || flight.L !== L0 || debriefShown || flight.status().done !== true) return;
       say(debriefLine(st), 6000);
-      if (fh) { fh.showDebrief(st, { onRetry: retry, onFree: freeFromHere, onReturn: () => leave() }); debriefShown = true; input.exitLock(); }
+      if (fh) { debCbs = { onRetry: retry, onFree: freeFromHere, onReturn: () => leave(), onReplay: recorder.last() ? () => startReplay(true) : null }; fh.showDebrief(st, debCbs); debriefShown = true; input.exitLock(); }
     }, st.crashed ? 1500 : 600);
   }
   function showFreeEnd() {
     if (!active || !fh || debriefShown || phase === 'leaving' || intro) return;
-    fh.showDebrief(flight.status(), { onRetry: () => { fh.hideDebrief(); debriefShown = false; fade(() => { const [n, e] = P.rwyToNE(P.LAB_RWY, ctx.stand.a, ctx.stand.c); flight.startOnGround(n, e, ctx.stand.hdgTrue, liveId, { autoRud: settings.get('autoRud'), wind: dayWind() }); phase = 'ground'; systems.setCold(flight.s); startEngine(); psiS = null; placeNow(); }); input.requestLock(); }, onFree: null, onReturn: () => leave() });
+    recorder.done();
+    debCbs = { onRetry: () => { fh.hideDebrief(); debriefShown = false; fade(() => { const [n, e] = P.rwyToNE(P.LAB_RWY, ctx.stand.a, ctx.stand.c); flight.startOnGround(n, e, ctx.stand.hdgTrue, liveId, { autoRud: settings.get('autoRud'), wind: dayWind() }); phase = 'ground'; systems.setCold(flight.s); startEngine(); psiS = null; placeNow(); }); input.requestLock(); }, onFree: null, onReturn: () => leave(), onReplay: recorder.last() ? () => startReplay(true) : null };
+    fh.showDebrief(flight.status(), debCbs);
     debriefShown = true; input.exitLock();
   }
   // taxiing into a hangar, a building or another aircraft: the colliders the walker uses (the aircraft's nose, wing
@@ -907,8 +1177,27 @@ export function createFlyMode(ctx) {
   // ---- keys (keydown, once per press): FLIGHT LAB's actions, the view, the help, the panel
   function key(e) {
     if (!active || e.repeat) return false;
+    if (replay) {
+      // the replay's own keys (the debrief is hidden, no talk runs): transport, cameras, out
+      if (e.code === 'Space') { e.preventDefault(); replay.playing = !replay.playing; return true; }
+      if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') { e.preventDefault(); replay.t = Math.max(0, Math.min(recDuration(replay.rec), replay.t + (e.code === 'ArrowRight' ? 5 : -5))); return true; }
+      if (e.code === 'KeyC') { setView(view === 'cockpit' ? 'chase' : view === 'chase' ? 'fixed' : 'cockpit'); return true; }
+      if (/^Digit[6-9]$/.test(e.code)) { fixedIdx = Number(e.code.slice(5)) - 6; if (view !== 'fixed') setView('fixed'); return true; }
+      if (e.code === 'KeyP') { endReplay(); return true; }
+      return false;
+    }
     if (talkOn || debriefShown || fading) return false;
-    if (e.code === 'KeyC') { setView(view === 'cockpit' ? 'chase' : 'cockpit'); return true; }
+    if (e.code === 'F7') { e.preventDefault(); simRate = simRate === 1 ? 2 : simRate === 2 ? 4 : 1; toast(`シムレート ${simRate}×${simRate > 1 ? '（1,000 ft AGL 未満では 1×）' : ''}`, 1800); return true; }
+    if (e.code === 'F8') { e.preventDefault(); activePause = !activePause; toast(activePause ? 'アクティブポーズ：物理は止まっています（F8 で再開）' : '再開', 1800); return true; }
+    if (e.code === 'KeyP') { if (recorder.last() && !recorder.recording()) { startReplay(true); return true; } return false; }
+    if (e.code === 'KeyC') {
+      // the fixed viewpoints join the cycle only while someone else flies (the AP, the instructor, a demo)
+      if (view === 'cockpit') setView('chase');
+      else if (view === 'chase' && canFixed()) { setView('fixed'); toast(`固定視点：${FIXED_CAMS[fixedIdx % FIXED_CAMS.length].label}（6〜9 で切替、C で戻る）`, 2400); }
+      else setView('cockpit');
+      return true;
+    }
+    if (/^Digit[6-9]$/.test(e.code) && canFixed()) { fixedIdx = Number(e.code.slice(5)) - 6; setView('fixed'); toast(`固定視点：${FIXED_CAMS[fixedIdx].label}`, 1600); return true; }
     if (e.code === 'KeyH') { if (fh) fh.setHelp(!fh.help); return true; }
     if (e.code === 'Tab') { e.preventDefault(); if (fh) { const on = !fh.panel2D; fh.setPanel2D(on); settings.set('panel2D', on); } return true; }
     // the instruments up close: I visits the PFD, the MFD, the standby dials, then the pilot's view again (a click
@@ -919,7 +1208,7 @@ export function createFlyMode(ctx) {
     if (phase === 'board') return false;
     // (the introductory flight: the yoke only — the throttle, the flaps, the trim, the rudder and the brakes are his)
     if (intro) {
-      if (!actionForKey(e.code, e.shiftKey) && !(FLY_HELD.includes(e.code) && !INTRO_HELD.includes(e.code))) return false;
+      if (!flight.controls.actionFor(e.code, e.shiftKey) && !(FLY_HELD.includes(e.code) && !INTRO_HELD.includes(e.code))) return false;
       refuse(); e.preventDefault(); return true;
     }
     // the day's own keys (Enter: the checklist item looked at; Y: leave it to the instructor; 1–3: the radio)
@@ -952,6 +1241,7 @@ export function createFlyMode(ctx) {
     get active() { return active; }, get phase() { return phase; }, get view() { return view; }, get talking() { return talkOn; },
     get debrief() { return debriefShown; }, get runner() { return talkKind === 'debrief' && debRunner ? debRunner : runner; }, get fading() { return fading; },
     systems, dayMode, routeLine, beginDay, get crewId() { return crewId; },
+    get ice() { return flight.s ? flight.s.ice || 0 : 0; },   // (B3.4) the airframe's ice, for the frost on the glass
     board, leave, setView, update, key, draw2D, canExit,
     // the introductory flight: set (behind the card), begun, the one going on; flown by the scripted cadet for `sec`
     // seconds — until a talk begins (the tests: the flight and its tasks stepped as frames do, the head as a talk left it
@@ -975,6 +1265,10 @@ export function createFlyMode(ctx) {
     },
     actOn(id, dir = 1, wheel = false) { const c = cockpit.controls.find(x => x.id === id); if (!c) return null; const d = c.act(dir, wheel); applyAct(d); return d; },
     beginLesson, retry, freeFromHere,
+    // the recorder and the replay (the logbook's export reads the recordings; the debrief offers the replay)
+    recorder, startReplay, endReplay, startFreeSession,
+    get replaying() { return !!replay; },
+    get simRate() { return simRate; }, get activePause() { return activePause; },
     // the head (degrees: yaw + to the left, pitch + up) and looking closer, as the mouse would (for the tests)
     look(yawDeg, pitchDeg) { yaw = yawDeg * DEG; pitch = pitchDeg * DEG; homeT = 0; faceT = 0; },
     setZoom(on) { zoomHold = !!on; },

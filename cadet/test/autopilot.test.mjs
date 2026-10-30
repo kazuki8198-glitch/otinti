@@ -168,3 +168,75 @@ test('ap: the PFD softkeys and the annunciation strip', () => {
   drawApStrip(g, 640, { ap: { on: false, hdg: false, alt: false, flash: 2.4 } });
   assert.ok(draws.some(t => /A P/.test(t)), 'the flashing AP after a disconnect');
 });
+
+test('ap: NAV tracks the GPS leg to a direct-to point', () => {
+  const { flight, ap, pilot } = airborne();
+  AV.control(flight.av, 'DIRECT', 'LABED');
+  assert.match(ap.control(flight, 'AP_NAV'), /接続/);
+  assert.ok(ap.on && ap.nav && !ap.hdg && !ap.alt, 'NAV engages lateral only (pitch hold), like the real unit');
+  ap.control(flight, 'AP_ALT');                        // the pilot adds the altitude hold
+  flight.runScripted(pilot, 90);
+  const nav = AV.navSolve(flight.av, P.ne(flight.s), flight.s.out, P.MAGVAR_W, P.LAB_RWY);
+  assert.ok(Math.abs(nav.dots) <= 0.6, `CDI dots ${nav.dots}`);
+  assert.ok(Math.abs(w180(nav.dtk - flight.L.last.hdg)) <= 15, `heading ${flight.L.last.hdg} vs dtk ${nav.dtk}`);
+});
+
+test('ap: VS flies its rate and the armed ALT captures', () => {
+  const { flight, ap, pilot } = airborne();
+  flight.runScripted((L) => { L.s.keyHold = true; L.s.pTgt = 7; L.s.pRate = 0; }, 4);   // a climb first
+  assert.ok(flight.L.last.vs > 250, `climbing at ${Math.round(flight.L.last.vs)}`);
+  flight.av.altSel = 3400;
+  assert.match(ap.control(flight, 'AP_VS'), /接続/);
+  assert.ok(ap.vs && ap.alt, 'VS active, ALT armed');
+  flight.runScripted(pilot, 90);
+  assert.equal(ap.vs, false, 'VS gives up its rate at the capture');
+  assert.ok(Math.abs(flight.L.last.alt - 3400) <= 90, `altitude ${flight.L.last.alt}`);
+});
+
+test('ap: APR refuses without a localizer, then flies LOC + GS down the path', () => {
+  const { flight, ap, pilot } = airborne();
+  assert.match(ap.control(flight, 'AP_APR'), /ローカライザー/); assert.equal(ap.on, false);
+  const R = P.LAB_RWY, [n, e] = P.rwyToNE(R, -6000, 300);
+  const pathFt = R.elevFt + (300 + 6000) * Math.tan(3 * Math.PI / 180) * 3.28084;
+  P.placeInAir(flight.s, n, e, pathFt, R.trueHdg, 90);
+  flight.runScripted(() => {}, 1);
+  flight.av.cdi = 'NAV1'; flight.av.nav1.act = 109900; flight.av.altSel = 3000;
+  assert.match(ap.control(flight, 'AP_APR'), /接続/);
+  assert.ok(ap.apr && ap.nav);
+  const alt0 = flight.L.last.alt;
+  flight.runScripted(pilot, 45);
+  const nav = AV.navSolve(flight.av, P.ne(flight.s), flight.s.out, P.MAGVAR_W, R);
+  assert.ok(Math.abs(nav.dots) <= 0.6, `LOC dots ${nav.dots}`);
+  assert.ok(Math.abs(nav.gsDots) <= 1.1, `GS dots ${nav.gsDots}`);
+  assert.ok(flight.L.last.alt < alt0 - 200, `descended ${Math.round(alt0)} → ${Math.round(flight.L.last.alt)}`);
+});
+
+test('ap: the gamepad stick takes the controls too, and the disconnect asks for its tone', () => {
+  const { flight, ap, pilot } = airborne();
+  ap.control(flight, 'AP'); flight.runScripted(pilot, 2);
+  flight.s.rKey = 0.6;
+  assert.equal(ap.update(0.2, flight, NOINPUT), '');
+  assert.match(ap.update(0.2, flight, NOINPUT), /操縦入力/);
+  assert.equal(ap.on, false);
+  assert.equal(ap.takeDiscTone(), true); assert.equal(ap.takeDiscTone(), false);
+  flight.s.rKey = 0;
+});
+
+test('ap: FD alone computes the bars and touches nothing; LVL levels the wings', () => {
+  const { flight, ap, pilot } = airborne();
+  assert.match(ap.control(flight, 'FD'), /FD オン/);
+  const pitch0 = flight.s.out.pitch;
+  flight.runScripted(pilot, 6);
+  ap.sync(flight.av);
+  assert.equal(ap.on, false);
+  assert.ok(flight.av.fd && flight.av.fd.on, 'the FD is annunciated for the PFD');
+  assert.ok(Math.abs(flight.av.fd.pitch - pitch0) <= 2, `FD pitch ${flight.av.fd.pitch} vs ${pitch0}`);
+  // LVL from a bank: engage, roll via HDG off-path, then LVL
+  ap.control(flight, 'FD');
+  flight.runScripted((L) => { L.s.rIn = 0.55; }, 1.2);
+  assert.ok(Math.abs(flight.L.last.bank) > 8);
+  assert.match(ap.control(flight, 'AP_LVL'), /LVL/);
+  assert.ok(ap.on && ap.lvl && !ap.hdg && !ap.nav);
+  flight.runScripted(pilot, 14);
+  assert.ok(Math.abs(flight.L.last.bank) <= 3, `bank after LVL ${flight.L.last.bank}`);
+});

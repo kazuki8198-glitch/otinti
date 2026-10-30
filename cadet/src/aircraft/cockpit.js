@@ -42,10 +42,10 @@ const FLAP = { y: -0.268, z: -0.40, det: [0, 11 * DEG, 22 * DEG, 33 * DEG] };
 const TRIMW = { y: -0.30, z: -0.64, r: 0.072, turns: 1.6 };
 const COMPASS = [0, 0.737, -0.892];
 const KEYSW = [-0.488, 0.10];                     // the key: just right of where the yoke's left horn hides the panel
-const ROCKERS = [['master', 'MASTER'], ['avionics', 'AVIONICS'], ['fuelPump', 'FUEL PUMP'], ['beacon', 'BEACON'], ['nav', 'NAV'], ['strobe', 'STROBE'],
+const ROCKERS = [['bat', 'BAT'], ['alt', 'ALT'], ['avionics', 'AVIONICS'], ['fuelPump', 'FUEL PUMP'], ['beacon', 'BEACON'], ['nav', 'NAV'], ['strobe', 'STROBE'],
   ['landing', 'LANDING'], ['taxi', 'TAXI'], ['pitot', 'PITOT HEAT']];
 const ROCKER = { x0: -0.428, dx: 0.036, y: 0.095, tilt: 12 * DEG };
-const SWITCH_JA = { master: 'マスター', avionics: 'アビオニクス', fuelPump: '燃料ポンプ', beacon: 'ビーコン', nav: '航法灯', strobe: 'ストロボ', landing: '着陸灯', taxi: 'タキシー灯', pitot: 'ピトー ヒート' };
+const SWITCH_JA = { master: 'マスター', bat: 'バッテリー', alt: 'オルタネーター', avionics: 'アビオニクス', fuelPump: '燃料ポンプ', beacon: 'ビーコン', nav: '航法灯', strobe: 'ストロボ', landing: '着陸灯', taxi: 'タキシー灯', pitot: 'ピトー ヒート' };
 const MAG = ['OFF', 'R', 'L', 'BOTH', 'START'], MAG_ANG = [-70 * DEG, -35 * DEG, 0, 35 * DEG, 70 * DEG];
 const FUEL_ANG = { L: 50 * DEG, R: -50 * DEG, OFF: 180 * DEG };
 const FUEL = ['L', 'R', 'OFF'];
@@ -522,7 +522,7 @@ export function buildCockpit(FL, A, opts = {}) {
     return ctl;
   }
   const cur = { s: null, av: null, L: null };                 // the last state update() saw (act() reads it)
-  const switches = { master: true, avionics: true, fuelPump: true, beacon: true, nav: true, strobe: true, landing: false, taxi: false, pitot: false, mag: 'BOTH', fuelSel: 'L', mixture: 1, carbHeat: false, propCycleT: 0, propCycled: false };
+  const switches = { master: true, bat: true, alt: true, avionics: true, fuelPump: true, beacon: true, nav: true, strobe: true, landing: false, taxi: false, pitot: false, mag: 'BOTH', fuelSel: 'L', fuelSelL: 'ON', fuelSelR: 'ON', xfeed: false, mixture: 1, carbHeat: false, propCycleT: 0, propCycled: false };
   const twinA = opts.twin || null;                            // (M6) the Seminole's own parts too: setType('pa44') shows them
   const flight = (name, arg) => (arg === undefined ? { type: 'flight', name } : { type: 'flight', name, arg });
   const info = text => ({ type: 'info', text });
@@ -665,9 +665,10 @@ export function buildCockpit(FL, A, opts = {}) {
     const wps = AV.WAYPOINTS.filter(w => w.kind !== 'ref').map(w => w.id);
     const acts = {
       navSwap: () => avc('NAV_SWAP'), comSwap: () => avc('COM_SWAP'), fpl: () => avc('MFD_PAGE'),
-      direct: () => { const now = cur.av && cur.av.direct, i = wps.indexOf(now); return avc('DIRECT', i + 1 < wps.length ? wps[i + 1] : null); },
+      direct: () => { if (cur.av && cur.av.fplEdit) return avc('FPL_PICK', 1); const now = cur.av && cur.av.direct, i = wps.indexOf(now); return avc('DIRECT', i + 1 < wps.length ? wps[i + 1] : null); },
+      proc: () => avc('PROC'), ent: () => avc('KEY_ENT'), clr: () => avc('KEY_CLR'),
     };
-    const labels = { navSwap: 'NAV 周波数の入れ替え', comSwap: 'COM 周波数の入れ替え', fpl: 'FPL（飛行計画のページ）', direct: 'D→（直行先を順に選ぶ）', menu: 'MENU キー', proc: 'PROC キー', clr: 'CLR キー', ent: 'ENT キー' };
+    const labels = { navSwap: 'NAV 周波数の入れ替え', comSwap: 'COM 周波数の入れ替え', fpl: 'FPL（飛行計画のページ）', direct: 'D→（直行先を順に選ぶ。計画の編集中は挿入先の選択）', menu: 'MENU キー', proc: 'PROC キー（ILS 36 の読み込み／ミストアプローチ）', clr: 'CLR キー（計画の編集中は点の削除）', ent: 'ENT キー（確定：NRST の直行・計画の編集と挿入）' };
     control({ id, label: labels[k.id], kind: 'button', size, pos, act: acts[k.id] || (() => info('このキーはこの飛行では使いません')) });
   }
   // the screens' and strips' textures come later (createGlass); remember the quads
@@ -878,6 +879,27 @@ export function buildCockpit(FL, A, opts = {}) {
     label('GEAR UNSAFE', [GEAR.x, GEAR.y + 0.097, PZ + 0.0002], { size: 1.2, wmm: 22 });
     control({ id: 'gear', label: () => `脚のレバー（${cur.s && !cur.s.gearDown ? 'UP' : 'DOWN'}・G）`, kind: 'lever', part: 'gearLever', size: [0.03, 0.03, 0.03], pos: [GEAR.x, GEAR.y, PZ + GEAR.len + 0.004],
       act: () => flight('gear') });
+    // the emergency extension: a red handle beside the gear lever — pulled, the gear free-falls and locks;
+    // it cannot be put back (the handle stays out, the gear stays down)
+    add(at(rbox(0.032, 0.012, 0.05, 0.003), [GEAR.x + 0.078, GEAR.y - 0.005, PZ + 0.018]), S.red, 'gearEmerg');
+    label('EMERG GEAR', [GEAR.x + 0.078, GEAR.y - 0.042, PZ + 0.0002], { size: 1.1, wmm: 26 });
+    control({ id: 'gearEmerg', label: '非常用 脚下げハンドル（引くと脚が自由落下で下りる）', kind: 'lever', part: 'gearEmerg', size: [0.045, 0.035, 0.06], pos: [GEAR.x + 0.078, GEAR.y - 0.005, PZ + 0.018],
+      act: () => (cur.s && cur.s.gearEmerg ? null : { type: 'gearEmerg' }) });
+    // the fuel system (the PA-44's): a selector valve at each engine's own tank, and the crossfeed valve
+    // between them — each engine drinks its own tank with its selector ON; crossfeed open and one selector
+    // ON lets both drink from that side (the single-engine drill)
+    for (const [id, part, lbl, dx] of [['fuelSelL', 'fuelL', 'FUEL L', -0.055], ['fuelSelR', 'fuelR', 'FUEL R', 0.055]]) {
+      add(at(new THREE.CircleGeometry(0.017, 20), [GEAR.x + dx, GEAR.y - 0.088, PZ + 0.001]), S.caseBlack);
+      add(at(cylZ(0.0085, 0.0085, 0.008, 14), [GEAR.x + dx, GEAR.y - 0.088, PZ + 0.005]), S.black, part);
+      add(at(rbox(0.005, 0.013, 0.004, 0.0015), [GEAR.x + dx, GEAR.y - 0.088 + 0.007, PZ + 0.009]), S.white, part);
+      label(lbl, [GEAR.x + dx, GEAR.y - 0.112, PZ + 0.0002], { size: 1.25, wmm: 20 });
+      control({ id, label: () => `燃料セレクター ${id === 'fuelSelL' ? '左' : '右'}（${switches[id] === 'OFF' ? 'OFF' : 'ON'}）`, kind: 'switch', part, size: [0.032, 0.032, 0.03], pos: [GEAR.x + dx, GEAR.y - 0.088, PZ + 0.006],
+        act: () => ({ type: 'select', id, value: switches[id] === 'OFF' ? 'ON' : 'OFF' }) });
+    }
+    add(at(rbox(0.013, 0.028, 0.006, 0.002), [GEAR.x, GEAR.y - 0.088, PZ + 0.004]), S.black, 'xfeed');
+    label('XFEED', [GEAR.x, GEAR.y - 0.112, PZ + 0.0002], { size: 1.25, wmm: 20 });
+    control({ id: 'xfeed', label: () => `クロスフィード（${switches.xfeed ? '開' : '閉'}）`, kind: 'lever', part: 'xfeed', size: [0.03, 0.04, 0.03], pos: [GEAR.x, GEAR.y - 0.088, PZ + 0.006],
+      act: (dir, wheel) => { const on = wheel ? dir > 0 : !switches.xfeed; return on === switches.xfeed ? null : { type: 'switch', id: 'xfeed', on }; } });
     B.variant = null;
   }
   function ribbed(w, h, d) {
@@ -1203,6 +1225,7 @@ export function buildCockpit(FL, A, opts = {}) {
     throttle: [-0.005, LEVER.y, LEVER.z], mixture: [0.045, LEVER.y, LEVER.z], carb: [-0.05, LEVER.y, LEVER.z],
     ...Object.fromEntries(Object.entries(TWIN_LV).map(([k, x]) => [k, [x, LEVER.y, LEVER.z]])), gearLever: [GEAR.x, GEAR.y, PZ],
     flap: [0, FLAP.y, FLAP.z], trim: [0, TRIMW.y, TRIMW.z], key: [KEYSW[0], KEYSW[1], PZ], fuel: [-lowX(-0.13) + 0.004, -0.13, -1.0], brake: [-0.135, 0.036, PZ - 0.012],
+    fuelL: [GEAR.x - 0.055, GEAR.y - 0.088, PZ], fuelR: [GEAR.x + 0.055, GEAR.y - 0.088, PZ], xfeed: [GEAR.x, GEAR.y - 0.088, PZ], gearEmerg: [GEAR.x + 0.078, GEAR.y - 0.005, PZ],
   };
   const parts = {}, CASTS = new Set(['yokeL', 'yokeR', 'throttle', 'mixture', 'flap', 'thrL', 'thrR']);   // the small ones cast no shadow
   for (const [name, list] of B.moving) {
@@ -1227,7 +1250,7 @@ export function buildCockpit(FL, A, opts = {}) {
   const rockers = new THREE.InstancedMesh(rkGeo, kitMat, ROCKERS.length);
   rockers.name = 'cockpit-rockers'; rockers.castShadow = false; rockers.receiveShadow = true; meshes.push(rockers);
   const red = new THREE.Color(S.red.c), blk = new THREE.Color(0x1f2023);
-  ROCKERS.forEach(([id], i) => rockers.setColorAt(i, id === 'master' ? red : blk));
+  ROCKERS.forEach(([id], i) => rockers.setColorAt(i, id === 'bat' ? red : blk));
   cabin.add(rockers);
 
   // the hit meshes: on their moving part, or on the cabin; the aim points in the cockpit's (root's) frame
@@ -1259,6 +1282,7 @@ export function buildCockpit(FL, A, opts = {}) {
   const lampCols = [...new Set(lamps.map(l => l.col))];     // (the colours of the unlit meshes the lamps are in)
   const comp = { a: 0, v: 0, init: false };
   const t = { pfd: 1, mfd: 1, stby: 1 };
+  let mfdPowSeen = null;
   const RATE = { pfd: 1 / 30, mfd: 1 / 10, stby: 1 / 15 };
   let visible = true, flapAng = 0, night = -1, type = 'pa28', gearSeen = -1;
 
@@ -1351,6 +1375,10 @@ export function buildCockpit(FL, A, opts = {}) {
     parts.trim.rotation.x = (s.trim || 0) / P.TRIM_MAX * TRIMW.turns * Math.PI * 2;
     parts.key.rotation.z = -MAG_ANG[Math.max(0, MAG.indexOf(switches.mag))];
     parts.fuel.rotation.x = FUEL_ANG[switches.fuelSel] || 0;
+    if (switches.bat !== undefined) switches.master = !!(switches.bat || switches.alt);   // (the legacy switch mirrors the split ones for everything that still reads it)
+    if (parts.fuelL) { parts.fuelL.rotation.z = switches.fuelSelL === 'OFF' ? Math.PI : -50 * DEG; parts.fuelR.rotation.z = switches.fuelSelR === 'OFF' ? Math.PI : -50 * DEG; }
+    if (parts.xfeed) parts.xfeed.rotation.x = switches.xfeed ? -0.32 : 0.32;
+    if (parts.gearEmerg) parts.gearEmerg.rotation.x = s.gearEmerg ? 0.85 : 0;
     parts.brake.rotation.x = o.parkBrake ? -38 * DEG : 0;
     // the wet compass: the card follows the magnetic heading, a little behind and swinging (damped)
     const mag = ((s.out.hdgTrue || 0) + P.MAGVAR_W) * DEG;
@@ -1365,18 +1393,24 @@ export function buildCockpit(FL, A, opts = {}) {
     // fly-mode passes elecDead when the systems' voltage is gone)
     refreshHobbs(o.eng && o.eng.hobbs != null ? o.eng.hobbs : s.hobbs);
     if (!visible) return;
-    const powered = !!(switches.master && switches.avionics && !o.elecDead);
+    // power per screen (E2): the PFD rides the essential bus and outlives the MFD when the battery fades —
+    // fly-mode passes elecPfd / elecMfd from the systems' bus stages; without them, the one elecDead for both
+    const busOn = !!((switches.bat || switches.alt || switches.master) && switches.avionics);
+    const pfdP = busOn && (o.elecPfd !== undefined ? !!o.elecPfd : !o.elecDead);
+    const mfdP = busOn && (o.elecMfd !== undefined ? !!o.elecMfd : !o.elecDead);
+    const powered = pfdP;
     t.pfd += dt; t.mfd += dt; t.stby += dt;
     if (av && avChanged(av, powered)) {
       glassPanel.drawStrips(av, powered); setLamps(av, powered);
-      if (!powered) { glassPanel.blankScreen('pfd'); glassPanel.blankScreen('mfd'); }
+      if (!pfdP) glassPanel.blankScreen('pfd');
       t.pfd = RATE.pfd; t.mfd = RATE.mfd;
     }
-    if (powered && av) {
-      if (t.pfd >= RATE.pfd - 1e-6) { t.pfd = Math.min(t.pfd - RATE.pfd, RATE.pfd); glassPanel.drawScreen('pfd', s, av, o.eng); }
-      if (t.mfd >= RATE.mfd - 1e-6) { t.mfd = Math.min(t.mfd - RATE.mfd, RATE.mfd); glassPanel.drawScreen('mfd', s, av, o.eng); }
+    if (mfdP !== mfdPowSeen) { mfdPowSeen = mfdP; if (!mfdP && av) glassPanel.blankScreen('mfd'); }
+    if (av) {
+      if (pfdP && t.pfd >= RATE.pfd - 1e-6) { t.pfd = Math.min(t.pfd - RATE.pfd, RATE.pfd); glassPanel.drawScreen('pfd', s, av, o.eng); }
+      if (mfdP && t.mfd >= RATE.mfd - 1e-6) { t.mfd = Math.min(t.mfd - RATE.mfd, RATE.mfd); glassPanel.drawScreen('mfd', s, av, o.eng); }
     }
-    if (t.stby >= RATE.stby - 1e-6) {
+    if ((o.elecStandby === undefined || o.elecStandby) && t.stby >= RATE.stby - 1e-6) {
       t.stby = Math.min(t.stby - RATE.stby, RATE.stby);
       const baro = av ? av.baro : s.qnh;
       glassPanel.drawStandby(s.out, AV.indicatedAlt(s.out.altTrue || 0, s.qnh, baro), baro, !!(av && av.baroUnit === 'HPA'), s.A.v);

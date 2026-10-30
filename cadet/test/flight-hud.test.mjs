@@ -36,7 +36,7 @@ function flyA1(stop = () => false, hook) {
 }
 // the same in real time (frame at 60 fps, no keys held: the keyboard's pitch hold flies it), each(L) before a frame
 function flyRT(stop, each) {
-  const f = createFlight(FL, { store: null }), K = { has: () => false };
+  const f = createFlight(FL, { store: null, prefs: { hold: 'hold' } }), K = { has: () => false };   // (the hold is a setting since B1, off by default: this path is flown by it, so it is switched on here)
   f.startLesson('a1', 'basic');
   for (let n = 0; n < 300 * 60 && !f.L.done && !stop(f.L); n++) { if (each) each(f.L); f.frame(1 / 60, K); }
   return f;

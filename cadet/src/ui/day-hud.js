@@ -191,8 +191,9 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
   doc.body.appendChild(book);
   let bookClose = null;
   const fmtH = (h) => h.toFixed(1);
-  // entries (career/logbook.js), totals; opts { fresh: the index just written (its signature is written in), onClose }
-  function showLogbook(entries, totals, { fresh = -1, onClose = null } = {}) {
+  // entries (career/logbook.js), totals; opts { fresh: the index just written (its signature is written in),
+  // onClose, exports: [{ label, onClick }] — extra footer buttons (the last flight's CSV / GPX, when kept) }
+  function showLogbook(entries, totals, { fresh = -1, onClose = null, exports: exps = [] } = {}) {
     bookClose = onClose;
     book.textContent = '';
     const page = make('section', 'dh-page');
@@ -217,7 +218,13 @@ export function createDayHUD({ doc = document, settings = null } = {}) {
     put(tbl, tb, tf);
     const btn = Object.assign(make('button', '', '閉じる'), { type: 'button' });
     btn.addEventListener('click', () => hideLogbook());
-    const foot = put(make('footer'), make('span', '', '飛行時間は 1/10 時間（6 分）単位。訓練所の記録です。'), btn);
+    const foot = put(make('footer'), make('span', '', '飛行時間は 1/10 時間（6 分）単位。訓練所の記録です。'));
+    for (const x of exps || []) {
+      const b = Object.assign(make('button', '', x.label), { type: 'button' });
+      b.addEventListener('click', () => x.onClick());
+      put(foot, b);
+    }
+    put(foot, btn);
     put(page, head, tbl, foot); put(book, page);
     book.hidden = false;
     setTimeout(() => btn.focus(), 0);

@@ -93,7 +93,8 @@ export function debriefDialogs(sum, { voice = 'instructor' } = {}) {
   // (growth design v1 §4.5) flown tired (the fatigue at the flight's end was 65 or more) and something was
   // flown: after the lessons, the fatigue is named — the same words whoever gives the debrief
   const tiredFlown = !!(sum.tired && sum.lessons.some(l => l.done));
-  const order = ['open', 'walk', 'radio', 'taxi', ...(sum.fault ? ['fault'] : []), ...sum.lessons.map(l => 'lesson:' + l.id), ...(sum.tem ? ['tem'] : []), ...(tiredFlown ? ['tired'] : []), 'next', 'trust', 'sign'];
+  const atcNote = !!(sum.atcState && (sum.atcState.noClearTakeoff || sum.atcState.noClearLanding || sum.atcState.staleAtis || sum.atcState.nearMiss.length));
+  const order = ['open', 'walk', 'radio', 'taxi', ...(sum.fault ? ['fault'] : []), ...(atcNote ? ['atc'] : []), ...sum.lessons.map(l => 'lesson:' + l.id), ...(sum.tem ? ['tem'] : []), ...(tiredFlown ? ['tired'] : []), 'next', 'trust', 'sign'];
   const nx = (k) => order[order.indexOf(k) + 1];
   N.open = say('エンジン停止、お疲れさまでした。今日の 1 日を、順番に振り返りましょう。', 'Engine off. Well done. Let\'s go over today, step by step.', { if: { not: { flag: 'day1_done' } }, else: 'again', hook: { name: 'look', arg: 'player' }, next: nx('open') });
   N.again = say('お疲れさまでした。今日の飛行も、順番に振り返りましょう。', 'Well done. Let\'s go over today\'s flight, step by step.', { hook: { name: 'look', arg: 'player' }, next: nx('open') });
@@ -130,6 +131,16 @@ export function debriefDialogs(sum, { voice = 'instructor' } = {}) {
       ? `At the run-up, the left magneto's rpm drop was past its limit. ${burntEn}Stopping and coming back was the right decision. Mr. Oshiro will check the plugs and the magneto. We couldn't fly the lessons today, but this is important training too.`
       : `At the run-up, the left magneto was past its limit. ${burntEn}Still trying to take off was wrong. Limits leave a margin for when something happens up there. Past a limit, we don't fly.`,
     { hook: { name: f.decided === 'return' ? 'nod' : 'look', arg: 'player' }, next: nx('fault') });
+  }
+  // (gap audit v2, B4) the clearance state and the sky's events, in the instructor's words
+  if (atcNote) {
+    const A = sum.atcState, ja = [], en = [];
+    if (A.noClearTakeoff) { ja.push('許可のない離陸がありました。滑走路は、管制塔の許可があって初めて使うものです。'); en.push('You departed once without a takeoff clearance. The runway is yours only when the tower gives it.'); }
+    if (A.noClearLanding) { ja.push('着陸許可のない進入がありました。許可がなければ、ファイナルで復行します。'); en.push('You approached without a landing clearance. Without one, you go around on final.'); }
+    if (A.staleAtis) { ja.push(`ATIS は途中で新しい情報（${A.current}）に替わっていました。戻るときは、いまの情報を確かめます。`); en.push(`The ATIS changed while you were out — information ${A.current} was current on your return. Check the current one when you come back.`); }
+    if (A.nearMiss.length) { ja.push(`他機との接近がありました（${A.nearMiss.join('、')}）。見張りは、計器と同じくらい大事な仕事です。近づいたら、早めに避ける側に回りましょう。`); en.push(`There was a close pass with other traffic (${A.nearMiss.join(', ')}). The lookout matters as much as the instruments; when it gets close, give way early.`); }
+    if (A.trafficGA) { ja.push('あなたが滑走路にいたため、着陸機が復行しました。滑走路の占有は短く、が原則です。'); en.push('A landing aircraft went around because you were on the runway. Keep runway occupancy short.'); }
+    N.atc = say(ja.join(''), en.join(' '), { hook: { name: 'look', arg: 'player' }, next: nx('atc') });
   }
   // one line a lesson (the first with the word that the lessons come now)
   sum.lessons.forEach((l, k) => { const id = 'lesson:' + l.id; N[id] = say((k ? '' : '課目です。') + lessonLine(l), (k ? '' : 'The lessons. ') + lessonLineEn(l), { next: nx(id) }); });

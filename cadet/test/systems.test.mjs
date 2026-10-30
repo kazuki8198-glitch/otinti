@@ -109,7 +109,7 @@ test('systems: the run-up — 2,000 rpm, the magneto drops and carb heat inside 
   assert.ok(Math.abs(both - 2000) < 120, `run-up rpm ${both}`);
   sw.mag = 'L'; A.run(0.5); const l = both - sys.rpm;
   sw.mag = 'R'; A.run(0.5); const r = both - sys.rpm;
-  sw.mag = 'BOTH'; A.run(0.5);
+  sw.mag = 'BOTH'; A.run(2);   // (the tach settles back behind the real power loss now: a second or two, not at once)
   assert.ok(Math.abs(sys.rpm - both) < 1);
   assert.ok(l > 50 && l <= RUNUP.maxDrop && r > 50 && r <= RUNUP.maxDrop && Math.abs(l - r) <= RUNUP.maxDiff, `drops ${l} ${r}`);
   sw.carbHeat = true; A.run(0.5); const c = both - sys.rpm; sw.carbHeat = false;
@@ -205,4 +205,119 @@ test('systems: the engine controls reach the physics (the mirror), and the burn 
   const f = [...fl.s.fuel]; A.run(60);
   assert.equal(fl.s.fuel[0], f[0], 'the left tank does not fall while the right one feeds');
   assert.ok(fl.s.fuel[1] < f[1] - 0.005, `the right tank falls (${f[1].toFixed(2)} → ${fl.s.fuel[1].toFixed(2)})`);
+});
+
+test('systems: the split bus — ALT off discharges on a timer, BAT off leaves the bus on the alternator alone', () => {
+  const A = apron(); A.sys.setRunning(A.fl.s); A.run(1);
+  A.sw.alt = false; A.run(2);                                    // (ALT off: the battery carries everything)
+  assert.ok(A.sys.elec.gen === 0 && A.sys.elec.batOn && !A.sys.elec.altOn && A.sys.elec.pfdOn, 'everything works on the battery');
+  assert.ok(A.sys.elec.volts < 13, `battery volts ${A.sys.elec.volts}`);
+  const b0 = A.sys.elec.batt; A.run(60); assert.ok(A.sys.elec.batt < b0 - 0.005, 'it discharges on a timer');
+  const B = apron(); B.sys.setRunning(B.fl.s); B.run(1);
+  B.sw.bat = false; const bb = B.sys.elec.batt; B.run(10);       // (BAT off: the alternator alone, no buffer)
+  assert.ok(B.sys.elec.volts > 13.5 && B.sys.elec.amps === 0 && B.sys.elec.batt === bb && B.sys.elec.pfdOn, 'bus powered, battery untouched and out of circuit');
+});
+
+test('systems: two-stage shedding — the MFD drops first, and shedding the avionics master stretches the PFD measurably', () => {
+  const drain = (avionics) => {                                  // (alternator failed at half a battery; the systems alone, stepped without the physics — the bus does not care)
+    const C = apron(); C.sys.setRunning(C.fl.s); C.sys.setElecFault(true); C.sw.avionics = avionics; C.sys.elec.batt = 0.5;
+    let t = 0; do { for (let i = 0; i < 600; i++) C.sys.update(1 / 60, C.fl.s); t += 10; } while (C.sys.elec.pfdOn && t < 20000); return t;
+  };
+  const withAv = drain(true), shedEarly = drain(false);
+  assert.ok(shedEarly > withAv * 1.3, `shedding the avionics master stretches the PFD: ${shedEarly}s against ${withAv}s`);
+  const D = apron(); D.sys.setRunning(D.fl.s); D.sys.setElecFault(true); D.sys.elec.batt = 0.44; D.run(2);
+  assert.ok(D.sys.elec.shed === 1 && !D.sys.elec.mfdOn && D.sys.elec.pfdOn, 'below 45%: the MFD sheds, the PFD stays');
+  const E = apron(); E.sys.setRunning(E.fl.s); E.sys.setElecFault(true); E.sys.elec.batt = 0; E.run(2);
+  assert.ok(!E.sys.elec.pfdOn && E.sys.elec.standbyOn, 'with the main bus dead the standby instruments live on their own battery');
+});
+
+test('systems: starter duty — about 30 s of cranking in total overheats and locks it, and it cools back', () => {
+  const A = apron(), { sw, sys } = A;
+  sw.fuelSel = 'L'; sw.mixture = 1; sw.master = true;            // (never primed: it cranks and never catches)
+  let hot = null;
+  for (let i = 0; i < 24 && !sys.st.crankLock; i++) { sw.mag = 'START'; const ev = A.run(7); hot = hot || ev.find(e => e.type === 'nocatch' && /熱で回らなくなりました/.test(e.why)); }
+  assert.ok(sys.st.crankLock && sys.starterHot, 'locked out hot');
+  assert.ok(hot, 'and the instructor said why');
+  A.run(45);
+  assert.ok(!sys.st.crankLock && !sys.starterHot, 'cooled back below the latch');
+});
+
+test('systems: the alert state — low fuel and a failed alternator collected, stable, and on the outputs', () => {
+  const A = apron(); A.sys.setRunning(A.fl.s); A.run(1);
+  A.fl.s.fuel[0] = 2; A.sys.setElecFault(true); A.run(5);
+  const ids = A.sys.alerts.map(a => a.id);
+  assert.ok(ids.includes('FUEL L') && ids.includes('ALTERNATOR'), JSON.stringify(ids));
+  assert.ok(Array.isArray(A.fl.s.out.alerts) && A.fl.s.out.alerts.length === A.sys.alerts.length, 'mirrored on s.out.alerts');
+  assert.ok(A.sys.alerts.every(a => (a.level === 'warn' || a.level === 'caution') && a.text), 'the shape the avionics draw');
+});
+
+test('systems depth: a blocked static port freezes the altimeter and the VSI; the alternate source restores them, reading high', () => {
+  const L = FL.school.startFree('area', 'pa28'), s = L.s;
+  P.step(s, 1 / 120); const alt0 = s.out.altTrue;
+  FL.school.failNow(L, 'static'); s.thr = 0.9;
+  for (let i = 0; i < 240; i++) P.step(s, 1 / 120);
+  assert.ok(s.out.staticBlocked && Math.abs(s.out.altTrue - alt0) < 0.01 && s.out.vsi === 0, `frozen at ${s.out.altTrue} (was ${alt0})`);
+  s.altStatic = true; P.step(s, 1 / 120);
+  assert.ok(!s.out.staticBlocked && Math.abs(s.out.altTrue - (alt0 + 80)) < 1.5, 'the cabin source: live again, about 80 ft high');
+});
+
+test('systems depth: pitot ice blocks the tube in the band with the heat off, and the heat melts it back', () => {
+  const L = FL.school.startFree('area', 'pa28'), s = L.s;
+  FL.school.failNow(L, 'pitot');
+  const hold = () => { s.pos[1] = 1829; s.vel = [0, 0, -30]; };   // (held at 6,000 ft, in the band, whatever the flight does)
+  for (let i = 0; i < 3600; i++) { if (i % 120 === 0) hold(); P.step(s, 1 / 120); }
+  assert.ok(s.out.pitotBlocked && s.pitotIce >= 0.999, `blocked (${s.pitotIce})`);
+  const frozen = s.out.ias; hold(); s.vel = [0, 0, -55]; P.step(s, 1 / 120);
+  assert.equal(s.out.ias, frozen, 'a blocked tube: the speed will not change with the airflow');
+  s.pitotHeat = true;
+  for (let i = 0; i < 3600; i++) { if (i % 120 === 0) hold(); P.step(s, 1 / 120); }
+  assert.ok(!s.out.pitotBlocked && s.pitotIce < 0.05, `melted (${s.pitotIce})`);
+});
+
+test('systems depth: one magneto costs real power and roughens the engine; the bad magneto of a fault roughens at rpm', () => {
+  const L = FL.school.startFree('area', 'pa28'), s = L.s;
+  s.thr = 0.79; for (let i = 0; i < 1200; i++) P.step(s, 1 / 120);
+  const both = s.eng[0].powK;
+  s.eng[0].mag = 'L'; for (let i = 0; i < 240; i++) P.step(s, 1 / 120);
+  assert.ok(Math.abs(s.eng[0].powK - both * 0.97) < 0.01, `single mag: powK ${s.eng[0].powK} against ${both}`);
+  assert.ok(s.out.rough >= 0.25, `rough on one mag (${s.out.rough})`);
+  s.eng[0].mag = 'BOTH'; s.eng[0].magBad = 'L'; for (let i = 0; i < 240; i++) P.step(s, 1 / 120);
+  assert.ok(s.out.rough >= 0.5, `a bad mag in circuit roughens (${s.out.rough})`);
+});
+
+test('systems depth: the Seminole feed matrix — own tank, crossfeed, both off', () => {
+  const L = FL.school.startFree('area', 'pa44'), s = L.s;
+  s.eng[0].sel = 'ON'; s.eng[1].sel = 'OFF'; s.xfeed = false; P.step(s, 1 / 120);
+  assert.equal(s.eng[0].feed, 0); assert.equal(s.eng[1].feed, -1, 'right selector off, no crossfeed: the right engine starves');
+  s.xfeed = true; P.step(s, 1 / 120);
+  assert.equal(s.eng[1].feed, 0, 'crossfeed open: both engines drink from the left tank');
+  s.eng[0].sel = 'OFF'; P.step(s, 1 / 120);
+  assert.equal(s.eng[0].feed, -1); assert.equal(s.eng[1].feed, -1, 'both selectors off: nothing feeds either engine, crossfeed or not');
+});
+
+test('systems depth: a failed engine-driven pump starves the engine at low rpm — the boost pump is the way back', () => {
+  const L = FL.school.startFree('area', 'pa28'), s = L.s, e = s.eng[0];
+  s.thr = 0; FL.school.failNow(L, 'pump'); s.boostPump = false;
+  for (let i = 0; i < 720; i++) P.step(s, 1 / 120);
+  assert.ok(e.fuelPress < 0.1 && e.on === false, `starved at idle (press ${e.fuelPress}, on ${e.on})`);
+  const L2 = FL.school.startFree('area', 'pa28'), s2 = L2.s, e2 = s2.eng[0];
+  s2.thr = 0; FL.school.failNow(L2, 'pump'); s2.boostPump = true;
+  for (let i = 0; i < 720; i++) P.step(s2, 1 / 120);
+  assert.ok(e2.fuelPress > 0.6 && e2.on === true, `the boost pump carries it (press ${e2.fuelPress})`);
+  assert.ok(s2.out.fuelPress > 0.6 && s2.out.fuelRemain > 0 && s2.out.cyl.length === 4 && s2.out.oilQ[0] > 0, 'the new outputs ride along');
+});
+
+test('systems depth: a gear fault stalls the transit — the emergency extension drops it and it stays down', () => {
+  const L = FL.school.startFree('area', 'pa44'), s = L.s;
+  s.gearDown = false; for (let i = 0; i < 1200; i++) P.step(s, 1 / 120);
+  assert.ok(s.gearPos < 0.02, `retracted (${s.gearPos})`);
+  FL.school.failNow(L, 'gear'); s.gearDown = true;
+  for (let i = 0; i < 1800; i++) P.step(s, 1 / 120);
+  assert.ok(s.gearPos > 0.4 && s.gearPos < 0.99 && s.out.gearFault, `the transit stalls part-way (${s.gearPos})`);
+  s.gearEmerg = true;
+  for (let i = 0; i < 720; i++) P.step(s, 1 / 120);
+  assert.equal(s.gearPos, 1, 'the free-fall extension locks it down');
+  s.gearDown = false;
+  for (let i = 0; i < 960; i++) P.step(s, 1 / 120);
+  assert.equal(s.gearPos, 1, 'and it cannot be retracted afterwards');
 });

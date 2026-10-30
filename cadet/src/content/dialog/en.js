@@ -311,7 +311,7 @@ export const EN = {
   '{quiz.right} / {quiz.n} 問、{quiz.pct}% でした。': '{quiz.right} out of {quiz.n}: {quiz.pct}%.',
   '合格です。これで、ソロ前の審査に進めます。': 'A pass. You can go on to the pre-solo check.',
   '今回は届きませんでした。間違えた問題の理由を、教科書でもう一度確かめてください。また受けられます。': 'Not this time. Check the reasons for the ones you missed in the textbook again. You can take it again.',
-  '今回は届きませんでした。{quiz.weakText}間違えた問題の理由を、教科書でもう一度確かめてください。また明日、受けられます。': 'Not this time. {quiz.weakText}Check the reasons for the ones you missed in the textbook again. You can take it again tomorrow.',
+  '今回は届きませんでした。{quiz.weakText}間違えた問題の理由を、教科書でもう一度確かめてください。また明日、受けられます。': 'Not this time. {quiz.weakTextEn}Check the reasons for the ones you missed in the textbook again. You can take it again tomorrow.',
   '合格です。航法ログを作って、ひとりで遠くまで飛ぶ準備ができました。': 'A pass. You\'re ready to make a nav log and fly far, alone.',
   '合格です。計器の審査に進めます。': 'A pass. You can go on to the instrument check.',
   '合格です。双発の審査に進めます。': 'A pass. You can go on to the multi-engine check.',
@@ -454,6 +454,7 @@ const AIR = new Map([
     prime: 'The engine is cold, so two or three strokes of the primer first, then start.',
     flooded: 'Too much priming: there\'s too much fuel. Open the throttle about halfway and try again (pull it back as soon as it catches).',
     starter: 'Don\'t keep the starter turning for long. Wait a moment, then try again.',
+    hot: 'You cranked the starter too long and it has overheated and stopped. Let it cool for about a minute, then try again.',
   }).map(([k, en]) => [NOCATCH[k], en]),
 ]);
 // what he found undone on the walk-around (walkaround-*.js TASK_MISSED), and why an engine stopped (aircraft/systems.js)

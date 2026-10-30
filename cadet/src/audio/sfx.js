@@ -251,17 +251,24 @@ export function createAudio() {
     eng.last.set(p, v); p.setTargetAtTime(v, ctx.currentTime, tc);
   }
   // one engine's voice at rpm (running: firing; false while its start is under way: only the starter's sound then)
-  function voice(e, rpm, thr, running, inside) {
+  // rough 0..1: the physics' roughness (an over-lean mixture, carburettor ice, one magneto's fouled plugs) —
+  // heard, not just felt: the speed's wander and the pulses' scatter grow, and whole firings drop out
+  // (misfire thinning: a new keep/drop decision a few times a second, smoothed into the exhaust's level)
+  function voice(e, rpm, thr, running, inside, rough = 0) {
     const since = e.cranked >= 0 ? ctx.currentTime - e.cranked : cranked >= 0 ? ctx.currentTime - cranked : 1e9;
     const fire = running ? sm(rpm, 250, 480) : since < 3.5 ? sm(since, 1.75, 2.45) : 0;
-    const r = rpm / 2400, idle = 1 - sm(rpm, 750, 1600), fc = Math.max(rpm, 60) / 120;
+    const r = rpm / 2400, idle = 1 - sm(rpm, 750, 1600), fc = Math.max(rpm, 60) / 120, rg = cl(+rough || 0);
+    if (rg > 0.02 && fire > 0) {
+      const t = ctx.currentTime;
+      if (e.missAt === undefined || t >= e.missAt) { e.missAt = t + 0.05 + Math.random() * 0.11; e.miss = Math.random() < rg * 0.55 ? 0.08 + Math.random() * 0.25 : 1; }
+    } else e.miss = 1;
     glide(e.cyc.frequency, fc, 0.03); glide(e.envO.frequency, fc, 0.03); glide(e.prop.frequency, fc * 4, 0.03);
-    glide(e.jd.gain, 25 + 160 * idle, 0.3);                                      // cents, before its 7 Hz low-pass
-    // the exhaust: stronger and brighter with power
-    const ex = fire * (0.14 + 0.2 * thr + 0.06 * r);
-    glide(e.exG.gain, ex, 0.05); glide(e.ja.gain, ex * (0.12 + 0.4 * idle), 0.05);
+    glide(e.jd.gain, 25 + 160 * idle + 300 * rg, 0.3);                                      // cents, before its 7 Hz low-pass
+    // the exhaust: stronger and brighter with power; roughness thins it (the dropped firings) and scatters it
+    const ex = fire * (0.14 + 0.2 * thr + 0.06 * r) * (rg > 0.02 ? (e.miss == null ? 1 : e.miss) : 1);
+    glide(e.exG.gain, ex, 0.05); glide(e.ja.gain, ex * (0.12 + 0.4 * idle + 1.1 * rg), 0.05);
     glide(e.exLP.frequency, 380 + 1000 * thr + 500 * r, 0.06);
-    const cr = fire * (0.22 + 0.3 * thr + 0.1 * idle);
+    const cr = fire * (0.22 + 0.3 * thr + 0.1 * idle) * (1 + 0.8 * rg);
     glide(e.am.gain, cr, 0.05); glide(e.crG.gain, cr * 0.2, 0.05); glide(e.crBP.frequency, 650 + 900 * thr, 0.1);
     glide(e.mkG.gain, fire * 0.02 * thr, 0.1); glide(e.mkAm.gain, fire * 0.12 * (0.3 + r), 0.1);
     // the propeller: grows fast with rpm (its tips' speed), more of it outside
@@ -270,8 +277,8 @@ export function createAudio() {
     glide(e.swG.gain, sw, 0.05); glide(e.swAm.gain, sw, 0.05); glide(e.swBP.frequency, 450 + 900 * r, 0.1);
   }
   // o: { rpm, thr 0..1, ias kt, onGround, stall, inside (the cockpit view; default true), running (false while the
-  // start is under way: only starter()'s sound then; default true), engines (a twin: [{ rpm, running }, …] each),
-  // gearMoving } every frame; null: fade out and let the nodes go
+  // start is under way: only starter()'s sound then; default true), engines (a twin: [{ rpm, running, rough }, …]
+  // each), rough 0..1 (the single engine's), gearMoving } every frame; null: fade out and let the nodes go
   function engine(o) {
     if (!o) { stopEngine(); return; }
     const n = Array.isArray(o.engines) && o.engines.length > 1 ? o.engines.length : 1;
@@ -279,8 +286,8 @@ export function createAudio() {
     if (!ok() || (!eng && !buildEngine(n))) return;
     const e = eng, thr = cl(+o.thr || 0), ias = cl(+o.ias || 0, 0, 300), inside = o.inside !== false;
     e.inside = inside;
-    if (n > 1) e.voices.forEach((v, k) => { const x = o.engines[k] || {}; voice(v, cl(+x.rpm || 0, 0, 3200), thr, x.running !== false, inside); });
-    else voice(e.voices[0], cl(+o.rpm || 0, 0, 3200), thr, o.running !== false, inside);
+    if (n > 1) e.voices.forEach((v, k) => { const x = o.engines[k] || {}; voice(v, cl(+x.rpm || 0, 0, 3200), thr, x.running !== false, inside, x.rough); });
+    else voice(e.voices[0], cl(+o.rpm || 0, 0, 3200), thr, o.running !== false, inside, o.rough);
     // the cabin, or the open air
     glide(e.mixG.gain, inside ? 0.62 : 0.72, 0.08);
     glide(e.lp1.frequency, inside ? 1000 : 9000, 0.08); glide(e.lp2.frequency, inside ? 2000 : 16000, 0.08); glide(e.boom.gain, inside ? 3 : 0, 0.08);
@@ -420,16 +427,72 @@ export function createAudio() {
     burst({ f: 420, q: 0.7, d: 0.1 + 0.15 * k, g: 0.08 + 0.3 * k, type: 'lowpass', thump: 0.9, thumpF: 70 + 30 * k, to: engOut });
     if (k > 0.6) burst({ f: 900, q: 1, d: 0.08, g: 0.12 * k, at: 0.09, to: engOut });      // a hard one rattles
   }
+  // the autopilot's disconnect warble (the GFC700's two-tone complaint, about a second of it)
+  function apDisc() { if (!ok()) return; for (let i = 0; i < 6; i++) tone(i % 2 ? 940 : 1240, i % 2 ? 940 : 1240, 0.1, 0.045, 'sine', i * 0.115); }
+  // a tone on the radio bus (so the radio group's volume governs it, like a received signal)
+  function toneRad(f, d, g, at = 0) {
+    if (!ok()) return;
+    const t = ctx.currentTime + at, o = ctx.createOscillator(), ga = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = f; o.connect(ga).connect(radOut); env(ga, t, 0.008, g, d); o.start(t); o.stop(t + d + 0.05);
+  }
+  // the Morse ident of a navaid, keyed at 1,020 Hz as the receiver reproduces it: dit 0.12 s, dah three
+  // times that, a letter gap between characters. Plays the code once and returns its length in seconds —
+  // the caller repeats it while the aid stays monitored, as the real ident does.
+  const MORSE = { A: '.-', B: '-...', C: '-.-.', D: '-..', E: '.', F: '..-.', G: '--.', H: '....', I: '..', J: '.---', K: '-.-', L: '.-..', M: '--', N: '-.', O: '---', P: '.--.', Q: '--.-', R: '.-.', S: '...', T: '-', U: '..-', V: '...-', W: '.--', X: '-..-', Y: '-.--', Z: '--..', 0: '-----', 1: '.----', 2: '..---', 3: '...--', 4: '....-', 5: '.....', 6: '-....', 7: '--...', 8: '---..', 9: '----.' };
+  function ident(code) {
+    if (!ok() || !code) return 0;
+    let at = 0;
+    for (const ch of String(code).toUpperCase()) {
+      const seq = MORSE[ch]; if (!seq) { at += 0.36; continue; }
+      for (const el of seq) { const d = el === '-' ? 0.36 : 0.12; toneRad(1020, d, 0.05, at); at += d + 0.12; }
+      at += 0.24;
+    }
+    return at;
+  }
   // the cockpit's chime at a new lesson step (two soft tones), a switch or lever (a crisp snap), a knob's detent (a tick)
   function chime() { if (!ok()) return; tone(1175, 1175, 0.3, 0.032); tone(880, 880, 0.42, 0.03, 'sine', 0.17); }
+  // thunder: the flash is seen first; the clap arrives late (the storm's distance), a low rumble off the
+  // noise buffer with a deep thump under it
+  function thunder(delay = 1.2, k = 1) {
+    if (!ok()) return;
+    burst({ f: 140, q: 0.5, d: 1.6, g: 0.5 * k, type: 'lowpass', thump: 0.8, thumpF: 55, at: delay, to: ambOut });
+    burst({ f: 90, q: 0.5, d: 2.6, g: 0.3 * k, type: 'lowpass', at: delay + 0.35, to: ambOut });
+  }
   function click() { if (!ok()) return; burst({ f: 3600, q: 1.6, d: 0.014, g: 0.3, thump: 0.25, thumpF: 320 }); }
   function knob() { if (!ok()) return; burst({ f: 4800, q: 2, d: 0.008, g: 0.2 }); }
+
+  // ---------------------------------------------------------------- the other traffic
+  // one nearby trainer heard (3-2 lite): a light propeller buzz through a low-pass, its level set by the
+  // distance and its place by the relative bearing (a StereoPanner — no HRTF in this build). traffic({ gain
+  // 0..1, pan −1..1, f Hz }) every frame; traffic(null), or gain 0, lets it fade. The nodes are made once.
+  let traf = null;
+  function traffic(o) {
+    if (!ok()) return;
+    if (!traf) {
+      try {
+        const g = ctx.createGain(), lp = ctx.createBiquadFilter(), p = ctx.createStereoPanner(), srcs = [];
+        lp.type = 'lowpass'; lp.frequency.value = 520; g.gain.value = 0;
+        g.connect(lp).connect(p).connect(ambOut);
+        for (const [h, a] of [[1, 1], [2, 0.55], [3, 0.3]]) {
+          const os = ctx.createOscillator(), og = ctx.createGain(); os.type = 'sawtooth'; og.gain.value = a * 0.3; os.frequency.value = 82 * h;
+          os.connect(og).connect(g); os.start(); srcs.push(os);
+        }
+        traf = { g, p, srcs, last: new Map() };
+      } catch (e) { traf = null; return; }
+    }
+    const t = ctx.currentTime, set = (param, v, tc) => { const was = traf.last.get(param); if (was !== undefined && Math.abs(was - v) < 1e-4) return; traf.last.set(param, v); param.setTargetAtTime(v, t, tc); };
+    if (!o || !(+o.gain > 0)) { set(traf.g.gain, 0, 0.4); return; }
+    set(traf.g.gain, cl(+o.gain || 0) * 0.055, 0.25);
+    set(traf.p.pan, cl(+o.pan || 0, -1, 1), 0.15);
+    const f = cl(+o.f || 82, 40, 160);
+    traf.srcs.forEach((os, i) => set(os.frequency, f * (i + 1), 0.3));
+  }
 
   return {
     unlock,
     setVolume(v) { volume = Math.max(0, Math.min(1, +v || 0)); if (ok()) master.gain.setTargetAtTime(volume, ctx.currentTime, 0.05); },
     footstep, door, ui, update,
-    engine, starter, crank, fire, squelch, radio, touchdown, chime, click, knob,
+    engine, traffic, starter, crank, fire, squelch, radio, touchdown, chime, click, knob, apDisc, ident, thunder,
     // the three groups' levels (0..1 each, under the overall volume)
     setVolumes({ engine = vols.engine, amb = vols.amb, radio: rv = vols.radio } = {}) {
       vols.engine = cl(+engine || 0); vols.amb = cl(+amb || 0); vols.radio = cl(+rv || 0);

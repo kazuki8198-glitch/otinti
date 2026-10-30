@@ -12,6 +12,8 @@ import { createPipeline } from './render/post.js';
 import { createSky } from './render/sky.js';
 import { installIndoorShading, indoorAt, createLightPool, roomClusters } from './render/indoor.js';
 import { buildGround } from './world/ground.js';
+import { createCb } from './world/cb.js';
+import { cbFor } from './flight/cb.js';
 import { buildAirfield, airfieldColliders, STANDS } from './world/airfield.js';
 import { buildBuildings } from './world/buildings.js';
 import { buildAcademy, ACADEMY } from './world/academy.js';
@@ -19,6 +21,8 @@ import { createPropKit } from './world/props.js';
 import { academySpec } from './content/academy-spec.js';
 import { buildVegetation } from './world/vegetation.js';
 import { buildLandmarks } from './world/landmarks.js';
+import { buildStrip } from './world/strip.js';
+import { STRIP_LABEF, airfields } from './flight/airfields.js';
 import { parkedAircraft, colliderBoxes } from './aircraft/exterior.js';
 import { TODAY, PARKED_ARCHERS, PARKED_SEMINOLES } from './aircraft/registrations.js';
 import { PRESETS, ORDER, gpuName, pickPreset, rememberPreset, makeDynRes } from './core/quality.js';
@@ -45,10 +49,11 @@ import { INTRO_CARDS } from './content/dialog/intro.js';
 import { buildWalkaroundProps } from './aircraft/walkaround-props.js';
 import { apronDialogs } from './content/dialog/day1.js';
 import { KITS } from './aircraft/walkaround.js';
-import { createCareer, prologueFlags, STAGE, CHECKS, LATER, SLOT_HOURS, SLOT_NAMES, CHAPTERS, CH2, GROUND, EXAMS, CLASSES, CLASS_FTD, SOLO_TRUST, dateText, dateOf, passedAt, groundPassed, noteGround, lessonGrowth, ftdGrowth, classGrowth, trustBand, graduationRank, missAsk } from './career/career.js';
+import { createCareer, prologueFlags, STAGE, CHECKS, LATER, SLOT_HOURS, SLOT_NAMES, CHAPTERS, CH2, GROUND, EXAMS, CLASSES, CLASS_FTD, SOLO_TRUST, dateText, dateOf, dayOfYear, activeRunway, weatherAt, passedAt, groundPassed, noteGround, lessonGrowth, ftdGrowth, classGrowth, trustBand, graduationRank, missAsk } from './career/career.js';
 import { planFor } from './career/day.js';
 import { temFor } from './career/tem.js';
-import { trafficForDay } from './flight/traffic.js';
+import { trafficForDay, trafficForTwinDay } from './flight/traffic.js';
+import { toCSV as recToCSV, toGPX as recToGPX } from './flight/recorder.js';
 import { exportArchive, importArchive } from './career/archive.js';
 import { PEOPLE, PEERS } from './content/people.js';
 import { createCast, FAR as CAST_FAR } from './npc/cast.js';
@@ -137,6 +142,9 @@ async function boot() {
   const gpu = gpuName(pipe.renderer);
   const chosen = params.get('q') && PRESETS[params.get('q')] ? params.get('q') : settings.get('quality') || pickPreset(gpu);
   preset = PRESETS[chosen] || PRESETS.high;
+  // the advanced per-item switches apply from the start, as in setQuality
+  if (settings.get('qShadow') === false || settings.get('qAO') != null || settings.get('qBloom') != null)
+    preset = { ...preset, ...(settings.get('qShadow') === false ? { shadow: 0 } : {}), ...(settings.get('qAO') != null ? { ao: settings.get('qAO') } : {}), ...(settings.get('qBloom') != null ? { bloom: settings.get('qBloom') } : {}) };
   pipe.setQuality(preset);
   const { scene, camera, renderer } = pipe;
   setAnisotropy(Math.min(preset.aniso, renderer.capabilities.getMaxAnisotropy()));
@@ -148,6 +156,7 @@ async function boot() {
 
   bootMsg('飛行場を作っています…', 0.35); await frame();
   const ground = buildGround(L, FL, { quality: preset }); scene.add(ground.group);
+  const cbVis = createCb(scene);   // (B3.3) the day's cumulonimbus, when the day has one
   const airfield = buildAirfield(L, FL, { quality: preset }); scene.add(airfield.group); airfieldColliders(airfield, world);
   bootMsg('訓練所を作っています…', 0.45); await frame();
   const buildings = buildBuildings(L, { world }); scene.add(buildings.group);
@@ -156,6 +165,9 @@ async function boot() {
   bootMsg('木と景色を作っています…', 0.6); await frame();
   const veg = buildVegetation(L, FL, { quality: preset }); scene.add(veg.group);
   const landmarks = buildLandmarks(L, FL); scene.add(landmarks.group);
+  // (B2.5) the second airfield: the grass strip at LAB-F, and the world's airfield data for whoever lists it
+  const strip = buildStrip(L, STRIP_LABEF); scene.add(strip.group);
+  window.__cadetAirfields = airfields(FL.physics);
   bootMsg('機体を並べています…', 0.7); await frame();
 
   // the runway frame (where the colliders live): x = across, z = −along
@@ -215,7 +227,7 @@ async function boot() {
   }
   let hours = parseFloat(params.get('t')) || career.hours;
   const applyTime = () => {
-    const st = sky.setTime(hours);
+    const st = sky.setTime(hours, dayOfYear(career.day));   // (the sun for the career's own date: the days drift from April to the autumn)
     pipe.setHaze({ sunDir: st.dir, el: st.el });
     buildings.setNight(st.lightsOn); academy.setNight(st.lightsOn);
     $('#time').value = String(hours);
@@ -291,7 +303,9 @@ async function boot() {
     // in six), or — on a humid day, a different hash — carburettor ice waits in flight, announced only by the rpm
     const it0 = flightItem(), h = (career.state.seed * 13 + career.day * 7) >>> 0;
     const magDay = it0 && it0.kind === 'flight' && ['ch3', 'ch4'].includes(career.chapter) && todayType === 'pa28' && it0.id !== (STAGE[career.chapter] || { lessons: [] }).lessons[0];
-    const fault = forceFault != null ? forceFault : magDay && h % 6 === 4 ? 'mag' : magDay && h % 6 === 2 && (w.tempC - w.dewC) <= 4 ? 'carb' : null;
+    const pitotDay = it0 && it0.kind === 'flight' && career.chapter === 'ch4' && todayType === 'pa28' && it0.id !== (STAGE[career.chapter] || { lessons: [] }).lessons[0];
+    const gearDay = it0 && it0.kind === 'flight' && ['ch5', 'ch6'].includes(career.chapter) && todayType === 'pa44' && it0.id !== (STAGE[career.chapter] || { lessons: [] }).lessons[0];
+    const fault = forceFault != null ? forceFault : magDay && h % 6 === 4 ? 'mag' : magDay && h % 6 === 2 && (w.tempC - w.dewC) <= 4 ? 'carb' : pitotDay && h % 6 === 0 ? 'pitot' : gearDay && h % 6 === 3 ? 'gear' : null;
     // the alternator-failure day: from chapter 3 on, either type, never the chapter's first lesson and never
     // together with the day's other faults (h2's day term is ×11: a ×7 term would vanish mod 7)
     const h2 = (career.state.seed * 29 + career.day * 11) >>> 0;
@@ -299,11 +313,13 @@ async function boot() {
       : forceFault != null || fault ? false
       : !!(it0 && it0.kind === 'flight' && ['ch3', 'ch4', 'ch5', 'ch6'].includes(career.chapter) && it0.id !== (STAGE[career.chapter] || { lessons: [] }).lessons[0] && h2 % 7 === 3);
     today = createDay(FL, { fault, elecFault, seed: career.state.seed * 31 + career.day * 7 + dayN, stand: { a: tg.a, c: tg.c }, anomalies: dayN === 1 ? planted : undefined, plan: planOf(flightItem()),
-      weather: { info: PHON[(career.day * 2 + (pm ? 1 : 0)) % 26], zulu: pm ? '1853' : '1353', tempC: w.tempC + (pm ? 3 : 0), dewC: w.dewC, ifr: w.kind === 'lowCloud' } });
+      weather: { info: PHON[(career.day * 2 + (pm ? 1 : 0)) % 26], zulu: pm ? '1853' : '1353', tempC: w.tempC + (pm ? 3 : 0), dewC: w.dewC, ifr: w.kind === 'lowCloud', runway: activeRunway(w), qnh: w.qnh } });
     // the other trainers in the pattern today (flight/traffic.js): seeded like the fault; the morning's TEM
     // threat counts them, and fly-mode flies them while the cadet is in the aircraft
     const daySeed = (career.state.seed * 31 + career.day * 7 + dayN) >>> 0;
-    today.traffic = { seed: daySeed, count: forceTraffic != null ? forceTraffic : trafficForDay({ seed: daySeed, kind: it0 ? it0.kind : '', chapter: career.chapter, weather: w.kind, slot: career.slot }) };
+    // (gap audit v2: traffic does not vanish in the twin chapter — one Seminole shares the circuit)
+    const twinN = trafficForTwinDay({ seed: daySeed, kind: it0 ? it0.kind : '', chapter: career.chapter, weather: w.kind, slot: career.slot });
+    today.traffic = { seed: daySeed, runway: activeRunway(w), count: forceTraffic != null ? forceTraffic : (trafficForDay({ seed: daySeed, kind: it0 ? it0.kind : '', chapter: career.chapter, weather: w.kind, slot: career.slot }) || twinN), twin: twinN > 0 && career.chapter === 'ch5' };
     walkProps.set(today.walk.props()); renderWalk(); return today;
   };
   todays.pa28.props = buildWalkaroundProps('pa28'); todays.pa44.props = buildWalkaroundProps('pa44');
@@ -491,7 +507,7 @@ async function boot() {
   // the winds-aloft line (an FD in words) for the tablet's weather page: the day's field, its top and its surface
   const fdText = (A) => { const d3 = (v) => String(Math.round((v + 360) % 360) || 360).padStart(3, '0'); return `FD 上空の風：3,000 ft で ${d3(A.from)}°から ${A.kt} kt（地上は ${d3(A.surfFrom)}°・${A.surfKt} kt）`; };
   const planToday = () => career.schedule(prog(), { trust: trustI(), weather: weatherNow() });
-  const FLY_KINDS = ['flight', 'checkride', 'solo', 'xc'];
+  const FLY_KINDS = ['flight', 'checkride', 'solo', 'xc', 'night'];
   // (M6) the chapters that fly (from chapter 2 on)
   const flyingChapter = () => career.chapter !== 'prologue' && career.chapter !== 'ch1';
   const flightItem = () => planToday().find(x => FLY_KINDS.includes(x.kind)) || null;
@@ -536,7 +552,7 @@ async function boot() {
     Object.assign(cx.weather, { ja: w.ja, metarAm: w.metar.am, metarPm: w.metar.pm, taf: w.taf, why: w.why });
     // (M7) the later chapters' checks too: the chief's or the examiner's briefing asks for it
     const temOn = !!(it && (it.kind === 'flight' || it.kind === 'xc' || (it.kind === 'checkride' && it.id !== 'c1')) && STAGE[st.chapter] && !st.graduated && !flownToday());
-    temData = temOn ? temFor({ weather: w.kind, fatigue: st.fatigue, chapter: st.chapter, aircraft: todayType, check: it.kind === 'checkride', xc: it.kind === 'xc', day: st.day, traffic: today && today.traffic ? today.traffic.count : 0 }) : null;
+    temData = temOn ? temFor({ weather: w.kind, fatigue: st.fatigue, chapter: st.chapter, aircraft: todayType, check: it.kind === 'checkride', xc: it.kind === 'xc', day: st.day, traffic: today && today.traffic ? today.traffic.count : 0, cb: w.kind === 'pmStorm' }) : null;
     missData = missAsk(st);
     if (missData) Object.assign(cx.miss, { on: true, label: missData.label, o0: missData.options[0], o1: missData.options[1], o2: missData.options[2] });
     else cx.miss.on = false;
@@ -1129,9 +1145,10 @@ async function boot() {
     epi.depart = null; epi.shake = 0; haneda.jet.position.set(0, 0, 0); haneda.jet.rotation.set(0, 0, 0);      // (the aircraft at its gate again)
     for (const g of LAB_GROUPS()) g.visible = false;
     if (crowd.setHidden) crowd.setHidden(true);
-    // a clear winter morning: the sun low in the south-east, the haze thin (Mt Fuji shows)
+    // a clear winter morning: the sun low in the south-east, the haze thin (Mt Fuji shows) — a winter date, said
+    // out loud (day 355) rather than the sky's old fixed one
     hours = 8.6; sky.setWeather({ overcast: 0 });
-    const st = sky.setTime(hours);
+    const st = sky.setTime(hours, 355);
     pipe.setHaze({ sunDir: st.dir, el: st.el, fog: 0, grey: 0, clear: 0.3 });
     haneda.group.rotation.y = Math.atan2(st.dir.x, st.dir.z) + 0.55;      // (the terminal's front, behind our nose, lit by it)
     haneda.group.visible = true; haneda.showOwn(false); if (haneda.jets) haneda.jets.visible = true; epi.frozen = false;
@@ -1292,7 +1309,7 @@ async function boot() {
       const sig = chk ? { name: PEOPLE[chk.who].name, cert: chk.who === 'examiner' ? '試験官 DPE-0907（架空）' : '主任教官 CFI-0007（架空）' } : null;
       logbook.add(entryFrom(sum, { remarks, date: dateOf(career.day).iso, dayN: career.day, skippedSec: sum.transit === 'skip' ? 600 : 0, sig }));
       input.exitLock();
-      dayHud.showLogbook(logbook.entries, logbook.totals(), { fresh: logbook.entries.length - 1, onClose: () => { done(); if (mode === 'fly' && !menu.isOpen) input.requestLock(); } });
+      dayHud.showLogbook(logbook.entries, logbook.totals(), { fresh: logbook.entries.length - 1, exports: flightExports(), onClose: () => { done(); if (mode === 'fly' && !menu.isOpen) input.requestLock(); } });
     }),
     // out of the aircraft after a day (done or given up): the next one is a new day (a new walk-around)
     onDayOver: (d) => { pendingNewDay = true; dayOver(d); },
@@ -1303,6 +1320,12 @@ async function boot() {
     aloftWind: () => career.aloft(prog()),
     parkedToday: () => todayAc.root, aircraft: () => todayType, toFrame,
     tem: () => (temPick && temPick.day === career.state.day ? temPick : null),
+    // the day's precipitation 0..1, for the wet-runway flag on the flight state
+    precip: () => precipNow,
+    // (B3.3) the day's cumulonimbus cell (flight/cb.js), for the air inside it
+    cb: () => cbNow,
+    // (B3.4) the day carries the seeded icing modifier (a cold low-cloud day), for the accretion on the state
+    icing: () => !!career.weather(prog()).icing,
     // (growth design v1 §4.5) the debrief says it when the cadet flew tired (the fatigue as the flight ended)
     tired: () => career.tired(),
     todayColliders: (on) => { for (const id of todayIds) world.setEnabled(id, on); },
@@ -1340,17 +1363,37 @@ async function boot() {
   const cards = createCards();
   const ENTRANCE = { a: 655.0, c: 274.6, face: { a: 655.0, c: 266.0 } };            // inside the front doors, facing the lobby
   const windNow = () => { const k = career.weather(prog()).kind; return k === 'crosswind' || (k === 'pmWind' && (career.slot === 'pm' || career.slot === 'evening')) ? XWIND : DAY_WIND; };
+  // the day's precipitation at this slot (0..1): a storm day builds through the morning and rains in the
+  // afternoon; a busted forecast is dry until the front, then wet. The render chain draws it, the physics
+  // reads the wet flag from it (fly-mode), and other branches read window.__cadetPrecip.
+  let precipNow = 0, strikeT = 4, cbNow = null;
+  const precipFor = (kind, slot) => {
+    if (kind === 'pmStorm') return slot === 'pm' ? 0.85 : slot === 'evening' ? 0.35 : 0.1;
+    if (kind === 'forecastBust') return slot === 'pm' || slot === 'evening' ? 0.9 : 0;
+    return 0;
+  };
   // the light and the sky for the time of day and the weather
   function applySlot() {
     if (!(parseFloat(params.get('t')) > 0)) { hours = career.hours; }        // (?t=H keeps the sky at H: the tests, the bench)
+    // (B5.1-M) the night flight's evening is a true night, not the 18.6 twilight: the pattern is flown on
+    // the lights. The career's autumn sun (the day-of-year now fed to the sky) is long down by then.
+    { const itN = flightItem(); if (itN && itN.kind === 'night' && career.slot === 'evening') hours = 19.9; }
     const w = career.weather(prog()), slot = career.slot;
-    const low = w.kind === 'lowCloud' || (w.kind === 'amLowCloud' && (slot === 'morning' || slot === 'am'));   // (M6) low cloud: mist under an overcast at 800 ft (600 in the morning)
-    const fog = w.kind === 'amFog' && (slot === 'morning' || slot === 'am') ? 0.85 : low ? 0.55 : 0;
+    // (the day's weather at this hour, not at the slot's edge: the fog thins and the low cloud lifts as the
+    // morning goes on — career/career.js weatherAt)
+    const wxNow = weatherAt(w, hours);
+    const low = w.kind === 'lowCloud' || (w.kind === 'amLowCloud' && wxNow.ceilingFt != null && wxNow.ceilingFt < 1500);   // (M6) low cloud: mist under an overcast at 800 ft (600 in the morning)
+    const fog = w.kind === 'amFog' || w.kind === 'amLowCloud' ? wxNow.fog : low ? 0.55 : 0;
     const overcast = w.kind === 'storm' || low ? 1 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.95 : fog ? 0.9 : w.kind === 'crosswind' || (w.kind === 'pmWind' && (slot === 'pm' || slot === 'evening')) ? 0.35 : 0;
     const grey = w.kind === 'storm' ? 0.7 : w.kind === 'pmStorm' && (slot === 'pm' || slot === 'evening') ? 0.6 : low ? 0.55 : 0;
     sky.setWeather({ overcast });
-    const st = sky.setTime(hours);
+    const st = sky.setTime(hours, dayOfYear(career.day));
     pipe.setHaze({ sunDir: st.dir, el: st.el, fog, grey });
+    precipNow = precipFor(w.kind, slot); pipe.setPrecip(precipNow);
+    window.__cadetPrecip = { k: precipNow, wet: precipNow >= 0.3, kind: w.kind };
+    // (B3.3) the day's CB stands from the morning on a storm day, out west; fly-mode reads it through the ctx
+    cbNow = w.kind === 'pmStorm' ? cbFor(career.state.seed, career.day) : null;
+    { const [cn, ce] = FL.physics.rwyToNE(FL.physics.LAB_RWY, 600, 0); cbVis.show(ce, -cn, cbNow ? cbNow.dn : 0, cbNow ? cbNow.de : 0, !!cbNow); }
     haze0 = { sunDir: st.dir.clone ? st.dir.clone() : st.dir, el: st.el, fog, grey, kind: w.kind }; cloudK = fog;
     buildings.setNight(st.lightsOn); academy.setNight(st.lightsOn);
     $('#time').value = String(hours);
@@ -1555,9 +1598,28 @@ async function boot() {
     if (career.slot === 'morning' || career.slot === 'am') career.advance('pm'); else career.advance('evening');
     afterTalkOrNow(() => { applySlot(); buildInstructorTalk(); toast(pass ? '単独の野外飛行、合格。第 3 章の関門を越えました。明日から計器飛行です' : '今回は基準に届きませんでした。別の日にもう一度', 6400); });
   }
+  // the last recorded flight, taken away as a file (the recorder's samples; the logbook's footer offers them).
+  // Sorajima is a fictional field: the GPX places it at a nominal 35°N 140°E purely so the file opens in
+  // track tools — export compatibility only, NOT FOR NAVIGATION, as everywhere in this game
+  const SORA_GEO = { lat: 35, lon: 140 };
+  const neToLatLon = ([n, e]) => [SORA_GEO.lat + n / 111320, SORA_GEO.lon + e / (111320 * Math.cos(SORA_GEO.lat * Math.PI / 180))];
+  function flightExports() {
+    const rec = fly && fly.recorder ? fly.recorder.last() : null;
+    if (!rec) return [];
+    const dl = (name, text, type) => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    };
+    const stamp = String((rec.meta && rec.meta.startISO) || '').slice(0, 10) || 'flight';
+    return [
+      { label: '直前の飛行を書き出す（CSV）', onClick: () => dl(`cadet-flight-${stamp}.csv`, recToCSV(rec), 'text/csv') },
+      { label: '直前の飛行を書き出す（GPX）', onClick: () => dl(`cadet-flight-${stamp}.gpx`, recToGPX(rec, neToLatLon), 'application/gpx+xml') },
+    ];
+  }
   function showLogbookNow(fresh = -1) {
     input.exitLock();
-    dayHud.showLogbook(logbook.entries, logbook.totals(), { fresh, onClose: () => { if ((mode === 'walk' || mode === 'fly') && !tablet.isOpen && (talkingNow() ? talkWantsLock() : !(fly && fly.debrief))) input.requestLock(); } });
+    dayHud.showLogbook(logbook.entries, logbook.totals(), { fresh, exports: flightExports(), onClose: () => { if ((mode === 'walk' || mode === 'fly') && !tablet.isOpen && (talkingNow() ? talkWantsLock() : !(fly && fly.debrief))) input.requestLock(); } });
   }
   // a new day (or the game's start): the card, the cadet at the front door, everyone in place
   function startDay({ card = true, place = true } = {}) {
@@ -1816,6 +1878,15 @@ async function boot() {
     ai: { keys: aiKeys, keyName: KEY_NAME, defaultModel: DEFAULT_MODEL },
     onBench: () => { input.enabled = true; if (epi.on) { toast('性能の計測は、終章を終えてからできます（Esc →「終章を終える」）', 4000); return; } runBench().then((r) => showBenchReport(r)); },
     onLogbook: () => { input.enabled = true; input.exitLock(); dayHud.showLogbook(logbook.entries, logbook.totals(), { onClose: () => { if ((mode === 'walk' || mode === 'fly') && !talk && !chair && !(fly && (fly.talking || fly.debrief))) input.requestLock(); } }); },
+    // the free-flight setup screen: the world's clock goes to the chosen hour, then a standalone session
+    // (no day, no crew) starts in the aircraft. Not while a day or a flight is under way
+    onFreeSetup: (cfg) => {
+      input.enabled = true;
+      if (mode === 'fly' || (fly && fly.status().active)) { toast('飛行中は使えません。先に飛行を終えてください', 3000); return; }
+      if (fly && fly.status().day) { toast('訓練の日の途中では使えません。今日の訓練を終えてから', 3000); return; }
+      hours = cfg.hour; applyTime();
+      if (fly) fly.startFreeSession(cfg);
+    },
   });
   // (M8) text to take away: the bench's results for README, the player's notes
   const report = createReport({ onClose: () => { if ((mode === 'walk' || mode === 'fly') && !talk && !chair && !menu.isOpen && !tablet.isOpen && !(fly && (fly.talking || fly.debrief))) input.requestLock(); } });
@@ -1856,6 +1927,22 @@ async function boot() {
   });
   addEventListener('keydown', (e) => {
     if (!started || input.typing()) return;
+    // F9: a screenshot of the canvas as it stands (rendered this instant, so the PNG is the current frame)
+    if (e.code === 'F9') {
+      e.preventDefault();
+      try {
+        renderer.render(scene, camera);
+        renderer.domElement.toBlob((blob) => {
+          if (!blob) return;
+          const a = document.createElement('a'), d = new Date(), p2 = (n) => String(n).padStart(2, '0');
+          a.href = URL.createObjectURL(blob);
+          a.download = `cadet-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.png`;
+          a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+          toast('スクリーンショットを保存しました', 2000);
+        }, 'image/png');
+      } catch (err) { /* a tainted or busy canvas: no picture, no harm */ }
+      return;
+    }
     if (e.code === 'Escape') {
       if (menu.isOpen) menu.close(true);
       else if (interactor.cardOpen) interactor.closeCard();
@@ -1903,6 +1990,9 @@ async function boot() {
     if (k === 'showPerf') $('#perf').style.display = v ? '' : 'none';
     // the auto rudder, changed in the menu while flying: as U would (FLIGHT LAB's action, which also keeps the setting)
     if (k === 'autoRud' && fly && fly.active && fly.flight.s && !!fly.flight.s.opts.autoRud !== !!v) fly.flight.action('autoRud');
+    // the pitch hold, changed in the menu: the controls read their prefs every frame, so the new default applies at once
+    if (k === 'pitchHold' && fly && fly.flight) fly.flight.prefs.hold = v ? 'hold' : 'spring';
+    if (k === 'stickBoost' && fly && fly.flight) fly.flight.prefs.gainCap = v ? 2.6 : 1.7;
     // (M8) turned off: nothing more goes out — an open AI talk ends (back to the talk it came from), its offer goes from
     // the choices on screen; the microphone stops listening
     if (k === 'aiTutor' && !v) {
@@ -1932,11 +2022,18 @@ async function boot() {
   $('#panel').addEventListener('click', (e) => { if (e.detail > 0 && e.target.closest('button')) e.target.closest('button').blur(); });
   $('#time').addEventListener('pointerup', (e) => e.target.blur());
   function setQuality(id) {
+    if (!PRESETS[id]) id = preset.id;
     if (!PRESETS[id]) return;
-    preset = PRESETS[id]; rememberPreset(id); settings.set('quality', id);
+    // the advanced per-item switches (settings qShadow / qAO / qBloom: null = the preset's own choice)
+    // ride on a copy of the preset, so the preset itself is never mutated
+    preset = { ...PRESETS[id],
+      ...(settings.get('qShadow') === false ? { shadow: 0 } : {}),
+      ...(settings.get('qAO') != null ? { ao: settings.get('qAO') } : {}),
+      ...(settings.get('qBloom') != null ? { bloom: settings.get('qBloom') } : {}) };
+    rememberPreset(id); settings.set('quality', id);
     pipe.setQuality(preset); sky.applyQuality(preset); veg.setNearRadius(preset.treeNear);
     setAnisotropy(Math.min(preset.aniso, renderer.capabilities.getMaxAnisotropy()));
-    renderChips(); toast(`画質：${preset.label}`);
+    renderChips(); toast(`画質：${PRESETS[id].label}`);
   }
   let toastT = 0;
   function toast(text, ms = 2200) { const t = $('#toast'); t.textContent = text; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms); }
@@ -2164,6 +2261,9 @@ async function boot() {
     // the shadow follows a point a little ahead of the camera, on the ground
     if (mode === 'fly' && fly && fly.active) fly.shadowFocus(focus);               // round the aircraft (its cockpit)
     else focus.set(0, 0, -1).applyQuaternion(camera.quaternion).setY(0).normalize().multiplyScalar(Math.min(preset.shadowHalf * 0.5, 40)).add(camWorld).setY(G);
+    // lightning on a stormy afternoon: the flash first, the thunder after it (the distance between them)
+    if (precipNow >= 0.6 && mode !== 'title') { strikeT -= dt; if (strikeT <= 0) { strikeT = 5 + Math.random() * 9; pipe.flash(); if (audio.thunder) audio.thunder(0.8 + Math.random() * 1.6, 0.7 + Math.random() * 0.5); } }
+    pipe.setFrost(fly && fly.active ? fly.ice : 0);   // (B3.4) the ice on the airframe shows on the glass
     sky.update(camera, t, focus);
     ground.update(t);
     const w = mode === 'fly' && fly ? fly.wind() : null;

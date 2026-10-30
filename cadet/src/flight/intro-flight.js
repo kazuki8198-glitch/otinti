@@ -204,7 +204,7 @@ export function createIntro({ FL, thr0 = 0.84, alt0 = 3000, hdg0 = 90 } = {}) {
   function pilot(L) {
     const s = L.s;
     if (trim0 == null) trim0 = s.trim;
-    s.thr = thr0; s.flapIdx = 0; s.trim = trim0; s.opts.autoRud = true; s.opts.levelT = 0;
+    s.thr = thr0; s.flapIdx = 0; s.trim = trim0; s.trimTgt = null; s.opts.autoRud = true; s.opts.levelT = 0;
     if (hands && !take && !done) {
       s.opts.assist = false;
       if (Math.abs(s.pKey || 0) > 0.05 || Math.abs(s.rKey || 0) > 0.05) { touched = true; if (task) task.acted = true; }
@@ -306,7 +306,7 @@ export function scriptedKeys(hands, task, c, t, mem = {}, alt0 = 3000) {
 // scriptedKeys (the tests' random hands); onFrame(c, view) after each frame (the tests' watch on the aircraft).
 // → { steps: [{ talk, id, ctx } | { task, id, secs, result, peak, acted }], sum, says, flight, t }
 export function runIntroScripted(FL, createFlight, { hands = 'cadet', store = null, policy = null, keys = null, onFrame = null, maxSec = 600 } = {}) {
-  const P = FL.physics, flight = createFlight(FL, { store });
+  const P = FL.physics, flight = createFlight(FL, { store, prefs: { hold: 'hold' } });   // (flown on the instructor's terms, as in the game: the pitch hold is part of this flight, not of the player's defaults)
   flight.startFree('area', 'pa28', { sens: 'low', autoRud: true, assist: false, wind: { rel: INTRO_WIND.fromDeg - P.LAB_RWY.trueHdg, kt: INTRO_WIND.kt, gust: 0.5 } });
   const intro = createIntro({ FL, thr0: flight.s.thr, alt0: flight.L.alt0, hdg0: flight.L.hdg0 });
   const data = introAirDialogs(), state = createDialogState(), steps = [], says = [];

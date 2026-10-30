@@ -286,8 +286,8 @@ test('controls: CADET\'s cockpit steps — trim wheel 4 % of its range a notch (
   for (let i = 0; i < 30; i++) f.action('thrStep', -1);
   assert.equal(s.thr, 0);
   assert.match(f.action('parkBrake'), /セット/); assert.equal(f.controls.parkBrake, true);
-  f.frame(1 / 60, NOKEYS); assert.equal(s.brake, true, 'held every frame without a key');
-  f.action('parkBrake'); f.frame(1 / 60, NOKEYS); assert.equal(s.brake, false);
+  f.frame(1 / 60, NOKEYS); assert.equal(s.brake, 1, 'held every frame without a key');   // (the brake is a travel now, 0..1: the latch is full)
+  f.action('parkBrake'); for (let i = 0; i < 30; i++) f.frame(1 / 60, NOKEYS); assert.equal(s.brake, 0, 'released, the travel eases back to none');
   const A = f.startFree('area', 'pa28', { assist: true }), tA = A.s.trim;
   assert.match(f.action('trimStep', +1), /アシスト/); assert.equal(A.s.trim, tA, 'refused under the assist');
 });
@@ -331,13 +331,13 @@ test('realtime: frame() is app.js tick (controls once per frame, 1/120 s steps f
   const CASES = {
     'a1 basic': [f => f.startLesson('a1', 'basic', { sens: 'low', autoRud: true }), () => { const L = SC.startLesson('a1', 'basic', { sens: 'low', autoRud: true }); L.s.opts.assist = false; return L; }, 5],
     'a2 intro': [f => f.startLesson('a2', 'intro', { sens: 'low', autoRud: true }), () => { const L = SC.startLesson('a2', 'intro', { sens: 'low', autoRud: true }); L.s.opts.assist = false; return L; }, 6],
-    'free, runway, gusty': [f => f.startFree('rwy', 'pa28', { wind: 'gusty' }), () => SC.startFree('rwy', 'pa28', { sens: 'low', autoRud: true, assist: false, wind: WINDS.gusty }), 7, true],
+    'free, runway, gusty': [f => f.startFree('rwy', 'pa28', { wind: 'gusty', autoRud: true }), () => SC.startFree('rwy', 'pa28', { sens: 'low', autoRud: true, assist: false, wind: WINDS.gusty }), 7, true],   // (autoRud given on both sides: CADET's default is off since B1)
     'apron stand, brake released': [f => { const L = f.startOnGround(sn, se, 264); f.action('parkBrake'); return L; },
       () => { const g = createFlight(FL, { store: null }), L = g.startOnGround(sn, se, 264); g.action('parkBrake'); return L; }, 8, true],
   };
   for (const [what, [startB, startA, seed, ground]] of Object.entries(CASES)) {
-    const r = rng(seed), A = appSandbox(), down = new Set();
-    const f = createFlight(FL, { store: null });
+    const r = rng(seed), A = appSandbox({ hold: 'hold' }), down = new Set();   // (the pitch hold on, as FLIGHT LAB's pilot environment had it: B1 made CADET's default the spring, and this comparison flies the same pref on both sides)
+    const f = createFlight(FL, { store: null, prefs: { hold: 'hold' } });
     const LB = startB(f), LA = startA();
     assert.deepStrictEqual(view(LB.s), view(LA.s), `${what}: the same start`);
     A.S.L = LA;
@@ -360,15 +360,19 @@ test('realtime: frame() is app.js tick (controls once per frame, 1/120 s steps f
       if (LB.s.onGround) rolled = Math.max(rolled, LB.s.out.gs);
     }
     assert.deepStrictEqual(LB.results, LA.results);
-    // (every step reported; a run that ends in a crash has one step more than its clock: the clock stops there)
-    assert.equal(steps, Math.round(LB.s.t * 120) + (LB.s.crashed ? 1 : 0), `${what}: every step reported${LB.s.crashed ? ' (crashed)' : ''}`);
+    // (every step reported: the steps frame() ran are the steps the clock advanced. A run that ends in a
+    // crash stops its clock at the crash, while the rest of that last frame's steps still run (and are
+    // reported) as no-ops — up to a frame's worth. The exact surplus is the crash's place in its frame,
+    // which the flight model's feel changes legitimately move; the old text pinned it to exactly one)
+    const surplus = steps - Math.round(LB.s.t * 120);
+    assert.ok(LB.s.crashed ? (surplus >= 0 && surplus <= MAX_STEPS) : surplus === 0, `${what}: every step reported${LB.s.crashed ? ' (crashed)' : ''} — surplus ${surplus}`);
     if (ground) assert.ok(rolled > 5, `${what}: it rolled (${rolled.toFixed(1)} kt)`);
   }
 });
 
 test('realtime: hands off, a1 passes with S at every level (the keyboard pitch hold keeps the attitude)', () => {
   for (const lv of ['intro', 'basic', 'precision']) {
-    const f = createFlight(FL, { store: null });
+    const f = createFlight(FL, { store: null, prefs: { hold: 'hold' } });   // (the hold is a setting since B1, off by default: this test flies with it on)
     const L = f.startLesson('a1', lv);
     let ended = 0, chime = 0;
     for (let i = 0; i < 60 * 200 && !L.done; i++) { const r = f.frame(1 / 60, NOKEYS); if (r.ended) ended++; chime = Math.max(chime, f.status().chime); }
@@ -476,7 +480,7 @@ test('keys: Enter steps the checklist, 1–3 answer the tower, V / Shift+V / Shi
   assert.equal(f.key('KeyC'), null); assert.equal(f.key('KeyH'), null);
   // the player's preference for the automatic rudder (U) carries over to the next lesson, as in FLIGHT LAB
   const saved = [];
-  const g = createFlight(FL, { store: null, savePrefs: p => saved.push({ ...p }) });
+  const g = createFlight(FL, { store: null, prefs: { autoRud: true }, savePrefs: p => saved.push({ ...p }) });   // (autoRud's default is off since B1: start from the pref on, the carry-over is what is tested)
   g.startLesson('a1', 'intro'); assert.equal(g.s.opts.autoRud, true);
   g.key('KeyU'); assert.equal(g.s.opts.autoRud, false); assert.equal(saved.at(-1).autoRud, false);
   g.startLesson('a1', 'intro'); assert.equal(g.s.opts.autoRud, false);

@@ -72,8 +72,8 @@
     toast(`${def.title}（${S.L.level.name}）を開始。教官の指示は左上、使うキーは H で確認できます`, 3600);
   }
   function startFree(startId = 'rwy', aircraft = 'pa28', wind) {
-    const W = { calm: { rel: 0, kt: 0, gust: 0.3 }, light: { rel: 10, kt: 5, gust: 0.5 }, cross: { rel: 60, kt: 12, gust: 1.2 }, gusty: { rel: 70, kt: 15, gust: 2.5 } }[wind || 'light'];
-    S.L = SC.startFree(startId, aircraft, { ...lessonOpts(), assist: S.prefs.assist, wind: W });
+    const W = { calm: { rel: 0, kt: 0, gust: 0.3 }, light: { rel: 10, kt: 5, gust: 0.5 }, cross: { rel: 60, kt: 12, gust: 1.2 }, gusty: { rel: 70, kt: 15, gust: 2.5 }, hot: { rel: 10, kt: 5, gust: 0.5, oatDev: 20 } }[wind || 'light'];
+    S.L = SC.startFree(startId, aircraft, { ...lessonOpts(), assist: S.prefs.assist, wind: W, oatDev: W.oatDev || 0 });
     S.recId = null; S.rTrim = 0; S.keys.clear();
     applyLayout(); lookAhead();
     renderAudio(); renderSoftkeys();
@@ -129,14 +129,14 @@
       s.gearDown = !s.gearDown;
       toast(s.gearDown ? '脚 DOWN：着陸に備える（緑のランプ 3 つで確認）。抗力が増える' : '脚 UP：抗力が減って上昇・加速しやすくなる（正の上昇を確認してから）', 2400);
     } else if (a === 'trim') {
-      if (s.onGround) { s.trim = 0; s.trimHold = 0; toast('地上ではトリムを離陸位置（中立）にしました', 1500); return; }
+      if (s.onGround) { s.trim = 0; s.trimHold = 0; s.trimTgt = null; toast('地上ではトリムを離陸位置（中立）にしました', 1500); return; }
       if (s.opts.assist) { toast('操縦アシスト中はトリムは自動です', 1500); return; }
-      s.trimHold = s.elev; s.trim = P.trimLevel(s);
-      toast(`トリム ${s.trim >= 0 ? '機首上げ' : '機首下げ'} ${Math.abs(Math.round(s.trim / P.TRIM_MAX * 100))}%：いまの速度で、手を離してもこの姿勢が続くように合わせました`, 2600);
+      s.trimHold = s.elev; s.trimTgt = P.trimLevel(s);   // (the wheel winds to it over the next second or so — B3: trim runs in at a finite rate, it does not jump)
+      toast(`トリム ${s.trimTgt >= 0 ? '機首上げ' : '機首下げ'} ${Math.abs(Math.round(s.trimTgt / P.TRIM_MAX * 100))}%：いまの速度で、手を離してもこの姿勢が続くように合わせました（ホイールが回り込んでいきます）`, 2600);
     } else if (a === 'thrFull' || a === 'thrIdle') {
       s.thr = a === 'thrFull' ? 1 : 0;
       toast(a === 'thrFull' ? 'スロットル全開（Shift+R）：離陸・ゴーアラウンド・失速の回復で一気に出力を出す' : 'スロットル アイドル（Shift+F）：離陸中止・エンジン故障の模擬・着陸の接地前に一気に絞る', 1800);
-    } else if (a === 'trimReset') { s.trim = 0; s.trimHold = 0; toast('トリムを中立（離陸位置）に戻しました', 1400); }
+    } else if (a === 'trimReset') { s.trim = 0; s.trimHold = 0; s.trimTgt = null; toast('トリムを中立（離陸位置）に戻しました', 1400); }
     else if (a === 'level') {
       if (!L.free) { toast('L（水平に戻すアシスト）は自由飛行だけで使えます。訓練では自分で回復します', 2200); return; }
       s.opts.levelT = 4; toast('数秒間、自動で翼を水平・水平飛行に戻します（教材の補助）', 1800);
@@ -180,7 +180,7 @@
       else if (r.name === 'thrStep') { s.thr = clamp(s.thr + (r.arg < 0 ? -0.05 : 0.05), 0, 1); toast(`スロットル ${Math.round(s.thr * 100)}%（R / F で連続して動かせます）`, 1400); }
       else if (r.name === 'trimStep') {
         if (s.opts.assist) { toast('操縦アシスト中はトリムは自動です', 1500); return; }
-        s.trim = clamp(s.trim + (r.arg < 0 ? -1 : 1) * P.TRIM_MAX * 0.04, -P.TRIM_MAX, P.TRIM_MAX); s.trimHold = s.elev;
+        s.trim = clamp(s.trim + (r.arg < 0 ? -1 : 1) * P.TRIM_MAX * 0.04, -P.TRIM_MAX, P.TRIM_MAX); s.trimHold = s.elev; s.trimTgt = null;
         const pc = Math.round(s.trim / P.TRIM_MAX * 100);
         toast(`トリム ${pc === 0 ? '中立' : `${pc > 0 ? '機首上げ' : '機首下げ'} ${Math.abs(pc)}%`}（T でいまの速度に一度で合わせられます）`, 1400);
       } else if (r.name === 'parkBrake') toast('FLIGHT LAB にパーキングブレーキはありません。止めておくときは B / Space（押している間ブレーキ）', 2600);
@@ -229,13 +229,13 @@
     const lx = dz(ax[0]), ly = dz(ax[1]), rx = dz(ax[2]), ry = dz(ax[3], 0.2);
     if (lx || ly) { out.stick = true; out.tr = lx; out.tp = ly; }
     out.ty = clamp(rx + (b(5) - b(4)), -1, 1);
-    if (ry && !S.L.s.opts.assist) S.L.s.trim = clamp(S.L.s.trim + ry * 0.12 * dt, -P.TRIM_MAX, P.TRIM_MAX);
+    if (ry && !S.L.s.opts.assist) { S.L.s.trim = clamp(S.L.s.trim + ry * 0.12 * dt, -P.TRIM_MAX, P.TRIM_MAX); S.L.s.trimTgt = null; }
     S.L.s.thr = clamp(S.L.s.thr + (b(7) - b(6)) * 0.5 * dt, 0, 1);
     if (b(0) > 0.5 && !S.L.check) out.brake = true;
     if (!S.L.atc) { if (E[1]) doAction('flaps'); if (E[2]) doAction('flapsUp'); if (E[3]) cycleView(); }
     if (E[8]) doAction('gear');
     if (E[9]) { pause(); return out; }
-    if (E[12] || E[13]) { const s = S.L.s; s.trim = clamp(s.trim + (E[13] ? 0.02 : -0.02), -P.TRIM_MAX, P.TRIM_MAX); }
+    if (E[12] || E[13]) { const s = S.L.s; s.trim = clamp(s.trim + (E[13] ? 0.02 : -0.02), -P.TRIM_MAX, P.TRIM_MAX); s.trimTgt = null; }
     if (E[10]) doAction('level');
     if (E[11]) doAction('autoRud');
     if (E[14]) doAction('feather0');
@@ -285,7 +285,9 @@
     const thRate = S.thrHeld < 0.4 ? 0.45 : 1.6;
     if (thU) s.thr = clamp(s.thr + thRate * dt, 0, 1);
     if (thD) s.thr = clamp(s.thr - thRate * dt, 0, 1);
-    s.brake = brake;
+    // the brakes travel, they do not switch: the key feeds a pedal position, on in ~0.4 s, off faster
+    S.brAmt = clamp((S.brAmt || 0) + (brake ? 2.5 : -5) * dt, 0, 1);
+    s.brake = S.brAmt;
   }
 
   // ---------------------------------------------------------------- the loop

@@ -170,10 +170,17 @@ export function createDayMode(h) {
     return `${T.name}へ：針路 ${String(mag).padStart(3, '0')}°・${(d / 1852).toFixed(1)} NM・${T.ft.toLocaleString('en-US')} ft`;
   }
 
+  let atisT = 0;
   // ---- every frame (stop: talking, a fade, the menu)
   function update(dt, { stop = false } = {}) {
     if (!day) return;
     pumpLines(dt);
+    // (B4.4) the ATIS is a broadcast: tuning COM1 to it at any time plays the current information and
+    // copies it afresh (outside the day's own ATIS step, which is the scripted first copy)
+    if ((atisT -= dt) <= 0 && flight.av && flight.av.com1 && flight.av.com1.act === 127650 && day.phase !== 'atis') {
+      atisT = 45;
+      const l = day.listenAtis(); speak(l.en); note(`ATIS：情報 ${l.letter} を聞きました`, 4000);
+    }
     if ((flashT -= dt) <= 0) flash = '';
     // the instructor's 'recover' (after a forced landing): his words, then the fade to the next lesson
     if (recoverT > 0 && !stop && (recoverT -= dt) <= 0 && day.info(day.phase).move === 'recover') startNext();
@@ -184,6 +191,8 @@ export function createDayMode(h) {
         if (ev.type === 'phase') onPhase(ev.to);
         else if (ev.type === 'radio' && ev.kind === 'say') speak(ev.en);
         else if (ev.type === 'incursion') { say(EVENT_LINES.incursion, 4500); if (h.audio.chime) h.audio.chime(); }
+        // (gap audit v2, B4.1) the clearance state's call-outs: the tower speaks, the cadet notes it
+        else if (ev.type === 'atc') { speak(ev.en); note(ev.kind === 'staleAtis' ? 'ATIS の情報が新しくなっています' : '管制塔からの注意がありました（講評に記録）', 4200); }
         // (M7) the run-up's fault: the instructor asks (his talk: the hook 'go' → onFault)
         else if (ev.type === 'fault') { assistOn = false; h.talk(ev.tries ? 'fault2' : 'fault'); }
         else if (ev.type === 'tick' && h.audio.knob) h.audio.knob();

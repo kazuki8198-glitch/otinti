@@ -274,6 +274,8 @@
     const def = lesson(id); if (!def || !def.steps) throw new Error('unknown flight lesson ' + id);
     const ph = P(), su = def.setup || {};
     const s = ph.newState({ aircraft: def.aircraft || su.aircraft || 'pa28', seed: opt.seed || 7 });
+    s.oatDev = opt.oatDev != null ? opt.oatDev : 0;   // (the day's temperature against ISA — density altitude; nothing said, standard air)
+    s.opts.gainCap = opt.gainCap != null ? opt.gainCap : 1.7;   // stick-gain speed boost cap (B2; the old feel was 2.6) — always set, so a state built here and one built by an app carry the same field
     s.opts.sens = opt.sens || 'low'; s.opts.autoRud = opt.autoRud != null ? !!opt.autoRud : !!def.autoRud;
     // the wind (relative to the runway), the gusts
     const R = ph.LAB_RWY;
@@ -330,6 +332,10 @@
     else if (kind === 'engR') { s.eng[s.eng.length - 1].failed = true; }
     else if (kind === 'ahrs') { L.av.fail = Object.assign({}, L.av.fail, { ahrs: true }); }
     else if (kind === 'gps') { L.av.fail = Object.assign({}, L.av.fail, { gps: true }); if (L.av.cdi === 'GPS') L.av.direct = null; }
+    else if (kind === 'pitot') { s.pitotRisk = 3; }            // (pitot ice: in the band with the heat off the tube blocks over a minute or two — the heat is the cure)
+    else if (kind === 'static') { s.staticBlocked = true; }    // (a blocked static port: the altimeter and the VSI freeze; the alternate static source restores them, reading a little high)
+    else if (kind === 'pump') { s.eng[0].pumpFail = true; }    // (the engine-driven fuel pump fails: it starves at low rpm and dies at idle unless the boost pump is on)
+    else if (kind === 'gear') { s.gearFault = true; }          // (the gear's transit stalls part-way, no greens: the emergency free-fall extension is the way down)
   }
   function setUpset(L, kind) {
     const ph = P(), s = L.s, a = ph.attitude(s), h = a.hdg * DEG;
@@ -482,6 +488,8 @@
   function startFree(startId = 'rwy', aircraft = 'pa28', opt = {}) {
     const st = FREE_STARTS.find(x => x.id === startId) || FREE_STARTS[0], ph = P();
     const s = ph.newState({ aircraft, seed: opt.seed || 7 });
+    s.oatDev = opt.oatDev != null ? opt.oatDev : 0;   // (the day's temperature against ISA — the free flight's hot-day preset sets it)
+    s.opts.gainCap = opt.gainCap != null ? opt.gainCap : 1.7;   // (stick-gain boost cap, as in lessons)
     s.opts.sens = opt.sens || 'low'; s.opts.autoRud = !!opt.autoRud; s.opts.assist = !!opt.assist;
     const W = opt.wind || { rel: 10, kt: 5, gust: 0.5 };
     s.wind = { fromDeg: w360(ph.LAB_RWY.trueHdg + W.rel), kt: W.kt, gust: W.gust ?? 0.5 };
